@@ -1,0 +1,28 @@
+version: '3'
+services:
+  porter:
+    build:
+      context: .
+      dockerfile: ./docker/dev.Dockerfile
+    ports:
+      - 8080:8080
+    depends_on:
+      - postgres
+    command: ./docker/bin/start.sh
+    restart: on-failure
+
+  postgres:
+    image: postgres:latest
+    container_name: postgres
+    environment:
+      - POSTGRES_USER=porter
+      - POSTGRES_PASSWORD=porter
+      - POSTGRES_DB=porter
+      - DATABASE_HOST=127.0.0.1
+    ports:
+      - 5432:5432
+    volumes:
+      - db:/var/lib/postgresql/data
+
+volumes:
+  db:

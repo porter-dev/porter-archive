@@ -19,6 +19,11 @@ func (app *App) HandleCreateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if err := app.validator.Struct(form); err != nil {
+		app.handleUnprocessableEntity(err, w)
+		return
+	}
+
 	userModel, err := form.ToUser()
 
 	if err != nil {

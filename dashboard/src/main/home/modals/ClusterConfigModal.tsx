@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
 import styled from 'styled-components';
+import { textChangeRangeIsUnchanged } from 'typescript';
 import close from '../../../assets/close.png';
 
 import { Context } from '../../../Context';
@@ -21,6 +22,25 @@ export default class ClusterConfigModal extends Component<PropsType, StateType> 
       return <Highlight />
     }
   }
+  
+  /*
+  renderTabContents = () => {
+    if (this.state.currentTab === 'kubeconfig') {
+      return (
+        <div>
+          <Subtitle>Copy and paste your kubeconfig below.</Subtitle>
+          <ImageList>
+            {this.renderImageList(images)}
+            {this.renderCustomImageList()}
+          </ImageList>
+          <Footer>
+            <SaveButton />
+          </Footer>
+        </div>
+      )
+    }
+  }
+  */
 
   render() {
     return (

@@ -8,7 +8,7 @@ import (
 // New returns a new gorm database instance
 // TODO -- accept config to generate connection
 func New() (*gorm.DB, error) {
-	dsn := "user=porter password=porter dbname=porter port=5400 host=localhost sslmode=disable"
+	dsn := "user=porter password=porter dbname=porter port=5432 host=postgres sslmode=disable"
 
 	return gorm.Open(postgres.Open(dsn), &gorm.Config{})
 }

@@ -2,7 +2,6 @@ package api
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 
 	"github.com/porter-dev/porter/internal/queries"
@@ -10,30 +9,27 @@ import (
 	"github.com/porter-dev/porter/internal/models"
 )
 
-// HandleCreateUser is majestic
+// HandleCreateUser validates a user form entry, converts the user to a gorm
+// model, and saves the user to the database
 func (app *App) HandleCreateUser(w http.ResponseWriter, r *http.Request) {
 	form := &models.CreateUserForm{}
 
 	if err := json.NewDecoder(r.Body).Decode(form); err != nil {
-		app.logger.Warn().Err(err).Msg("")
-		w.WriteHeader(http.StatusUnprocessableEntity)
-		fmt.Fprintf(w, `{"error": "%v"}`, appErrFormDecodingFailure)
+		app.handleUnprocessableEntity(err, w)
 		return
 	}
 
 	userModel, err := form.ToUser()
+
 	if err != nil {
-		app.logger.Warn().Err(err).Msg("")
-		w.WriteHeader(http.StatusUnprocessableEntity)
-		fmt.Fprintf(w, `{"error": "%v"}`, appErrFormDecodingFailure)
+		app.handleUnprocessableEntity(err, w)
 		return
 	}
 
 	user, err := queries.CreateUser(app.db, userModel)
+
 	if err != nil {
-		app.logger.Warn().Err(err).Msg("")
-		w.WriteHeader(http.StatusInternalServerError)
-		fmt.Fprintf(w, `{"error": "%v"}`, appErrDataCreationFailure)
+		app.handleDataWriteFailure(err, w)
 		return
 	}
 

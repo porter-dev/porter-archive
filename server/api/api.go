@@ -5,18 +5,14 @@ import (
 	"gorm.io/gorm"
 )
 
-const (
-	appErrDataCreationFailure = "data creation failure"
-	appErrFormDecodingFailure = "form decoding failure"
-)
-
-// App is majestic
+// App represents an API instance with handler methods attached, a DB connection
+// and a logger instance
 type App struct {
 	logger *lr.Logger
 	db     *gorm.DB
 }
 
-// New is majestic
+// New returns a new App instance
 func New(
 	logger *lr.Logger,
 	db *gorm.DB,
@@ -27,7 +23,7 @@ func New(
 	}
 }
 
-// Logger is majestic
+// Logger returns the logger instance in use by App
 func (app *App) Logger() *lr.Logger {
 	return app.logger
 }

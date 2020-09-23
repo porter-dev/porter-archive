@@ -15,26 +15,26 @@ func (app *App) HandleCreateUser(w http.ResponseWriter, r *http.Request) {
 	form := &models.CreateUserForm{}
 
 	if err := json.NewDecoder(r.Body).Decode(form); err != nil {
-		app.handleUnprocessableEntity(err, w)
+		app.handleErrorFormDecoding(err, ErrUserDecode, w)
 		return
 	}
 
 	if err := app.validator.Struct(form); err != nil {
-		app.handleUnprocessableEntity(err, w)
+		app.handleErrorFormValidation(err, ErrUserValidateFields, w)
 		return
 	}
 
 	userModel, err := form.ToUser()
 
 	if err != nil {
-		app.handleUnprocessableEntity(err, w)
+		app.handleErrorFormDecoding(err, ErrUserDecode, w)
 		return
 	}
 
 	user, err := queries.CreateUser(app.db, userModel)
 
 	if err != nil {
-		app.handleDataWriteFailure(err, w)
+		app.handleErrorDataWrite(err, ErrUserDataWrite, w)
 		return
 	}
 

@@ -1,15 +1,15 @@
 version: '3'
 services:
-  # porter:
-  #   build:
-  #     context: .
-  #     dockerfile: ./docker/dev.Dockerfile
-  #   ports:
-  #     - 8080:8080
-  #   depends_on:
-  #     - postgres
-  #   command: ./docker/bin/start.sh
-  #   restart: on-failure
+  porter:
+    build:
+      context: .
+      dockerfile: ./docker/dev.Dockerfile
+    ports:
+      - 8080:8080
+    depends_on:
+      - postgres
+    command: ./docker/bin/start.sh
+    restart: on-failure
 
   postgres:
     image: postgres:latest

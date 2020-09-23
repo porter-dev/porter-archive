@@ -11,6 +11,7 @@ RUN go mod download
 COPY . ./
 
 RUN go build -ldflags '-w -s' -a -o ./bin/app ./cmd/app \
+    && go build -ldflags '-w -s' -a -o ./bin/migrate ./cmd/migrate \
     && chmod +x /porter/docker/bin/*
 
 # TODO -- WILL HAVE MIGRATION

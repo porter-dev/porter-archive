@@ -7,8 +7,8 @@ import (
 // User type that extends gorm.Model
 type User struct {
 	gorm.Model
-	// Unique username for each user
-	Username,
+	// Unique email for each user
+	Email,
 	// Hashed password
 	Password string
 	// The clusters that this user has linked
@@ -20,15 +20,15 @@ type User struct {
 // UserExternal represents the User type that is sent over REST
 type UserExternal struct {
 	ID            uint                     `json:"id"`
-	Username      string                   `json:"username"`
+	Email         string                   `json:"email"`
 	Clusters      []*ClusterConfigExternal `json:"clusters"`
 	RawKubeConfig string                   `json:"rawKubeConfig"`
 }
 
 // CreateUserForm represents the accepted values for creating a user
 type CreateUserForm struct {
-	Username string `json:"username"`
-	Password string `json:"password"`
+	Email    string `json:"email" form:"required,max=255,email"`
+	Password string `json:"password" form:"required,max=255"`
 }
 
 // UpdateUserForm represents the accepted values for updating a user
@@ -46,7 +46,7 @@ func (u *User) Externalize() *UserExternal {
 
 	return &UserExternal{
 		ID:            u.ID,
-		Username:      u.Username,
+		Email:         u.Email,
 		Clusters:      clustersExt,
 		RawKubeConfig: string(u.RawKubeConfig),
 	}
@@ -57,7 +57,7 @@ func (u *User) Externalize() *UserExternal {
 // TODO -- PASSWORD HASHING HERE
 func (cuf *CreateUserForm) ToUser() (*User, error) {
 	return &User{
-		Username: cuf.Username,
+		Email:    cuf.Email,
 		Password: cuf.Password,
 	}, nil
 }

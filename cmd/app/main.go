@@ -7,21 +7,24 @@ import (
 
 	"github.com/porter-dev/porter/server/api"
 
-	dbConn "github.com/porter-dev/porter/internal/gorm"
+	adapter "github.com/porter-dev/porter/internal/adapter"
 	lr "github.com/porter-dev/porter/internal/logger"
+	vr "github.com/porter-dev/porter/internal/validator"
 	"github.com/porter-dev/porter/server/router"
 )
 
 func main() {
 	logger := lr.NewConsole(true)
-	db, err := dbConn.New()
+	db, err := adapter.New()
 
 	if err != nil {
 		logger.Fatal().Err(err).Msg("")
 		return
 	}
 
-	a := api.New(logger, db)
+	validator := vr.New()
+
+	a := api.New(logger, db, validator)
 
 	appRouter := router.New(a)
 

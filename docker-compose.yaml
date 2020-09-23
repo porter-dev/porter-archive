@@ -8,8 +8,9 @@ services:
       - 8080:8080
     depends_on:
       - postgres
-    command: ./docker/bin/start.sh
     restart: on-failure
+    volumes:
+      - ./:/porter
 
   postgres:
     image: postgres:latest

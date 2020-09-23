@@ -4,6 +4,7 @@ import { textChangeRangeIsUnchanged } from 'typescript';
 import close from '../../../assets/close.png';
 
 import { Context } from '../../../Context';
+import YamlEditor from '../../../lib/YamlEditor';
 
 type PropsType = {
 };
@@ -23,24 +24,17 @@ export default class ClusterConfigModal extends Component<PropsType, StateType> 
     }
   }
   
-  /*
   renderTabContents = () => {
     if (this.state.currentTab === 'kubeconfig') {
       return (
         <div>
           <Subtitle>Copy and paste your kubeconfig below.</Subtitle>
-          <ImageList>
-            {this.renderImageList(images)}
-            {this.renderCustomImageList()}
-          </ImageList>
-          <Footer>
-            <SaveButton />
-          </Footer>
+          <YamlEditor />
+          <Button>Save Kubeconfig</Button>
         </div>
       )
     }
   }
-  */
 
   render() {
     return (
@@ -64,12 +58,47 @@ export default class ClusterConfigModal extends Component<PropsType, StateType> 
             {this.renderLine('select')}
           </Tab>
         </TabSelector>
+        {this.renderTabContents()}
       </StyledClusterConfigModal>
     );
   }
 }
 
 ClusterConfigModal.contextType = Context;
+
+const Button = styled.button`
+  position: absolute;
+  bottom: 25px;
+  right: 27px;
+  height: 40px;
+  font-size: 13px;
+  font-weight: 500;
+  font-family: 'Work Sans', sans-serif;
+  color: white;
+  padding: 6px 20px 7px 20px;
+  text-align: left;
+  border: 0;
+  border-radius: 5px;
+  background: ${(props) => (!props.disabled ? '#616FEEcc' : '#ddd')};
+  box-shadow: ${(props) => (!props.disabled ? '0 2px 5px 0 #00000030' : 'none')};
+  cursor: ${(props) => (!props.disabled ? 'pointer' : 'default')};
+  user-select: none;
+  :focus { outline: 0 }
+  :hover {
+    background: ${(props) => (!props.disabled ? '#616FEEff' : '#ddd')};
+  }
+`;
+
+const Subtitle = styled.div`
+  padding: 15px 0px;
+  font-family: 'Work Sans', sans-serif;
+  font-size: 13px;
+  color: #aaa;
+  margin-top: 8px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+`;
 
 const Highlight = styled.div`
   width: 80%;

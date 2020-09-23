@@ -16,6 +16,7 @@ func New(a *api.App) *chi.Mux {
 		r.Use(middleware.ContentTypeJSON)
 
 		// /api/users routes
+		r.Method("POST", "/users", requestlog.NewHandler(a.HandleCreateUser, l))
 		r.Method("GET", "/users", requestlog.NewHandler(a.HandleReadUser, l))
 	})
 

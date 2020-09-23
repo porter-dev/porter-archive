@@ -7,13 +7,21 @@ import (
 
 	"github.com/porter-dev/porter/server/api"
 
+	dbConn "github.com/porter-dev/porter/internal/gorm"
 	lr "github.com/porter-dev/porter/internal/logger"
 	"github.com/porter-dev/porter/server/router"
 )
 
 func main() {
 	logger := lr.NewConsole(true)
-	a := api.New(logger)
+	db, err := dbConn.New()
+
+	if err != nil {
+		logger.Fatal().Err(err).Msg("")
+		return
+	}
+
+	a := api.New(logger, db)
 
 	appRouter := router.New(a)
 

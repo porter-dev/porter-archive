@@ -8,8 +8,14 @@ services:
       - 8080:8080
     depends_on:
       - postgres
-    command: ./docker/bin/start.sh
+    env_file:
+      - ./docker/.env
+    command: /bin/sh -c '/porter/bin/migrate; air -c .air.toml;'
     restart: on-failure
+    volumes:
+      - ./cmd:/porter/cmd
+      - ./internal:/porter/internal
+      - ./server:/porter/server
 
   postgres:
     image: postgres:latest
@@ -18,9 +24,8 @@ services:
       - POSTGRES_USER=porter
       - POSTGRES_PASSWORD=porter
       - POSTGRES_DB=porter
-      - DATABASE_HOST=127.0.0.1
     ports:
-      - 5432:5432
+      - 5400:5432
     volumes:
       - db:/var/lib/postgresql/data
 

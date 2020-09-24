@@ -11,6 +11,9 @@ type PropsType = {
 };
 
 type StateType = {
+  configExists: boolean,
+  showDrawer: boolean,
+  initializedDrawer: boolean
 };
 
 export default class ClusterSection extends Component<PropsType, StateType> {
@@ -20,7 +23,7 @@ export default class ClusterSection extends Component<PropsType, StateType> {
     configExists: true,
     showDrawer: false,
     initializedDrawer: false,
-  }
+  };
 
   // Need to override showDrawer when the sidebar is closed
   componentDidUpdate(prevProps: PropsType) {
@@ -32,14 +35,14 @@ export default class ClusterSection extends Component<PropsType, StateType> {
     }
   }
   
-  toggleDrawer = () => {
+  toggleDrawer = (): void => {
     if (!this.state.initializedDrawer) {
       this.setState({ initializedDrawer: true });
     }
     this.setState({ showDrawer: !this.state.showDrawer });
-  }
+  };
 
-  renderDrawer = () => {
+  renderDrawer = (): JSX.Element | undefined => {
     if (this.state.initializedDrawer) {
       return (
         <Drawer
@@ -48,9 +51,9 @@ export default class ClusterSection extends Component<PropsType, StateType> {
         />
       );
     }
-  }
+  };
 
-  renderContents = () => {
+  renderContents = (): JSX.Element => {
     if (this.state.configExists) {
       return (
         <ClusterSelector showDrawer={this.state.showDrawer}>
@@ -73,7 +76,7 @@ export default class ClusterSection extends Component<PropsType, StateType> {
         <Plus>+</Plus> Add a Cluster
       </InitializeButton>
     )
-  }
+  };
 
   render() {
     return (

@@ -20,7 +20,7 @@ export default class App extends Component<PropsType, StateType> {
     isLoading: false,
     isLoggedIn: false,
     uninitialized: true,
-  }
+  };
 
   renderContents = (): JSX.Element => {
     if (this.state.isLoading) {
@@ -31,7 +31,7 @@ export default class App extends Component<PropsType, StateType> {
       return <Register authenticate={() => this.setState({ isLoggedIn: true })} />
     }
     return <Login authenticate={() => this.setState({ isLoggedIn: true })} />
-  }
+  };
 
   render() {
     return (

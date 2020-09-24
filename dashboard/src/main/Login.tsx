@@ -7,7 +7,10 @@ type PropsType = {
   authenticate: () => void
 };
 
-export default class Login extends Component<PropsType> {
+type StateType = {
+};
+
+export default class Login extends Component<PropsType, StateType> {
   render() {
     return (
       <StyledLogin>
@@ -74,10 +77,7 @@ const Prompt = styled.div`
 const Logo = styled.img`
   width: 150px;
   margin-top: 63px;
-<<<<<<< HEAD
   user-select: none;
-=======
->>>>>>> 00bdb9028faac5bb0c17eabe2b90abe0400be933
 `;
 
 const FormWrapper = styled.div`

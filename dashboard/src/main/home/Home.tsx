@@ -13,7 +13,7 @@ type PropsType = {
 type StateType = {
 };
 
-export default class Home extends Component<PropsType> {
+export default class Home extends Component<PropsType, StateType> {
   render() {
     return (
       <StyledHome>

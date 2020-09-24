@@ -29,25 +29,25 @@ export default class ClusterConfigModal extends Component<PropsType, StateType> 
   state = {
     currentTab: 'kubeconfig',
     clusters: new Array<ClusterOption>(),
-  }
+  };
 
   componentDidMount() {
     this.setState({ clusters: dummyClusters });
   }
 
-  renderLine = (tab: string) => {
+  renderLine = (tab: string): JSX.Element | undefined => {
     if (this.state.currentTab == tab) {
       return <Highlight />
     }
-  }
+  };
 
-  toggleCluster = (i: number) => {
+  toggleCluster = (i: number): void => {
     let newClusters = this.state.clusters;
     newClusters[i].selected = !this.state.clusters[i].selected;
     this.setState({ clusters: newClusters });
-  }
+  };
 
-  renderClusterList = () => {
+  renderClusterList = (): JSX.Element[] | JSX.Element => {
     if (this.state.clusters.length > 0) {
       return this.state.clusters.map((cluster: ClusterOption, i) => {
         return (
@@ -70,9 +70,9 @@ export default class ClusterConfigModal extends Component<PropsType, StateType> 
         first
       </Placeholder>
     );
-  }
+  };
   
-  renderTabContents = () => {
+  renderTabContents = (): JSX.Element => {
     if (this.state.currentTab === 'kubeconfig') {
       return (
         <div>
@@ -92,7 +92,7 @@ export default class ClusterConfigModal extends Component<PropsType, StateType> 
         <Button disabled={true}>Save Selected</Button>
       </div>
     )
-  }
+  };
 
   render() {
     return (

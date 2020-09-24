@@ -9,9 +9,12 @@ type PropsType = {
   toggleDrawer: () => void
 };
 
+type StateType = {
+};
+
 type ClusterOption = {
   name: string
-}
+};
 
 const dummyClusters: ClusterOption[]  = [
   { name: 'happy-lil-trees' },
@@ -19,9 +22,9 @@ const dummyClusters: ClusterOption[]  = [
   { name: 'friendly-small-bush' }
 ];
 
-export default class Drawer extends Component<PropsType> {
+export default class Drawer extends Component<PropsType, StateType> {
 
-  renderClusterList = () => {
+  renderClusterList = (): JSX.Element[] => {
     return dummyClusters.map((cluster, i) => {
       /*
       let active = this.context.activeProject &&
@@ -35,15 +38,15 @@ export default class Drawer extends Component<PropsType> {
         </ClusterOption>
       );
     });
-  }
+  };
 
-  renderCloseOverlay = () => {
+  renderCloseOverlay = (): JSX.Element | undefined => {
     if (this.props.showDrawer) {
       return (
         <CloseOverlay onClick={this.props.toggleDrawer} />
       );
     }
-  }
+  };
 
   render() {
     return (

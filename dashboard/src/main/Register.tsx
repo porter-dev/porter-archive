@@ -7,12 +7,15 @@ type PropsType = {
   authenticate: () => void
 };
 
-export default class Register extends Component<PropsType> {
-  handleRegister = () => {
+type StateType = {
+};
+
+export default class Register extends Component<PropsType, StateType> {
+  handleRegister = (): void => {
     // TODO: Register user
 
     this.props.authenticate();
-  }
+  };
 
   render() {
     return (

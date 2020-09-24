@@ -8,9 +8,14 @@ services:
       - 8080:8080
     depends_on:
       - postgres
+    env_file:
+      - ./docker/.env
+    command: /bin/sh -c '/porter/bin/migrate; air -c .air.toml;'
     restart: on-failure
     volumes:
-      - ./:/porter
+      - ./cmd:/porter/cmd
+      - ./internal:/porter/internal
+      - ./server:/porter/server
 
   postgres:
     image: postgres:latest

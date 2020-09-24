@@ -1,21 +1,24 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"net/http"
-	"time"
 
 	"github.com/porter-dev/porter/server/api"
 
 	adapter "github.com/porter-dev/porter/internal/adapter"
+	"github.com/porter-dev/porter/internal/config"
 	lr "github.com/porter-dev/porter/internal/logger"
 	vr "github.com/porter-dev/porter/internal/validator"
 	"github.com/porter-dev/porter/server/router"
 )
 
 func main() {
-	logger := lr.NewConsole(true)
-	db, err := adapter.New()
+	appConf := config.AppConfig()
+
+	logger := lr.NewConsole(appConf.Debug)
+	db, err := adapter.New(&appConf.Db)
 
 	if err != nil {
 		logger.Fatal().Err(err).Msg("")
@@ -28,14 +31,16 @@ func main() {
 
 	appRouter := router.New(a)
 
-	logger.Info().Msgf("Starting server %v", "8080")
+	address := fmt.Sprintf(":%d", appConf.Server.Port)
+
+	logger.Info().Msgf("Starting server %v", address)
 
 	s := &http.Server{
-		Addr:         ":8080",
+		Addr:         address,
 		Handler:      appRouter,
-		ReadTimeout:  30 * time.Second,
-		WriteTimeout: 30 * time.Second,
-		IdleTimeout:  120 * time.Second,
+		ReadTimeout:  appConf.Server.TimeoutRead,
+		WriteTimeout: appConf.Server.TimeoutWrite,
+		IdleTimeout:  appConf.Server.TimeoutIdle,
 	}
 
 	if err := s.ListenAndServe(); err != nil && err != http.ErrServerClosed {

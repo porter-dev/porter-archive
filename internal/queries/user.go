@@ -14,10 +14,10 @@ func CreateUser(db *gorm.DB, user *models.User) (*models.User, error) {
 }
 
 // UpdateUser modifies an existing User in the database
-func UpdateUser(db *gorm.DB, user *models.User) error {
+func UpdateUser(db *gorm.DB, user *models.User) (*models.User, error) {
 	if err := db.First(&models.User{}, user.ID).Updates(user).Error; err != nil {
-		return err
+		return nil, err
 	}
 
-	return nil
+	return user, nil
 }

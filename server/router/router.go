@@ -17,7 +17,9 @@ func New(a *api.App) *chi.Mux {
 
 		// /api/users routes
 		r.Method("POST", "/users", requestlog.NewHandler(a.HandleCreateUser, l))
-		r.Method("GET", "/users", requestlog.NewHandler(a.HandleReadUser, l))
+		r.Method("PUT", "/users/{id}", requestlog.NewHandler(a.HandleUpdateUser, l))
+
+		// r.Method("GET", "/users", requestlog.NewHandler(a.HandleReadUser, l))
 	})
 
 	return r

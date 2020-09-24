@@ -3,44 +3,26 @@ package api
 import (
 	"encoding/json"
 	"net/http"
+	"strconv"
 
-	"github.com/porter-dev/porter/internal/queries"
-
+	"github.com/go-chi/chi"
+	"github.com/porter-dev/porter/internal/forms"
 	"github.com/porter-dev/porter/internal/models"
+	"github.com/porter-dev/porter/internal/queries"
+	"gorm.io/gorm"
 )
 
 // HandleCreateUser validates a user form entry, converts the user to a gorm
 // model, and saves the user to the database
 func (app *App) HandleCreateUser(w http.ResponseWriter, r *http.Request) {
-	form := &models.CreateUserForm{}
+	form := &forms.CreateUserForm{}
 
-	if err := json.NewDecoder(r.Body).Decode(form); err != nil {
-		app.handleErrorFormDecoding(err, ErrUserDecode, w)
-		return
+	user, err := app.writeUser(form, queries.CreateUser, w, r)
+
+	if err == nil {
+		app.logger.Info().Msgf("New user created: %d", user.ID)
+		w.WriteHeader(http.StatusCreated)
 	}
-
-	if err := app.validator.Struct(form); err != nil {
-		app.handleErrorFormValidation(err, ErrUserValidateFields, w)
-		return
-	}
-
-	userModel, err := form.ToUser()
-
-	if err != nil {
-		app.handleErrorFormDecoding(err, ErrUserDecode, w)
-		return
-	}
-
-	user, err := queries.CreateUser(app.db, userModel)
-
-	if err != nil {
-		app.handleErrorDataWrite(err, ErrUserDataWrite, w)
-		return
-	}
-
-	app.logger.Info().Msgf("New user created: %d", user.ID)
-
-	w.WriteHeader(http.StatusCreated)
 }
 
 // HandleReadUser is majestic
@@ -49,9 +31,26 @@ func (app *App) HandleReadUser(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("{}"))
 }
 
-// HandleUpdateUser is majestic
+// HandleUpdateUser validates an update user form entry, updates the user
+// in the database, and writes status accepted
 func (app *App) HandleUpdateUser(w http.ResponseWriter, r *http.Request) {
-	w.WriteHeader(http.StatusAccepted)
+	id, err := strconv.ParseUint(chi.URLParam(r, "id"), 0, 64)
+
+	if err != nil || id == 0 {
+		app.handleErrorFormDecoding(err, ErrUserDecode, w)
+		return
+	}
+
+	form := &forms.UpdateUserForm{
+		ID: id,
+	}
+
+	user, err := app.writeUser(form, queries.UpdateUser, w, r)
+
+	if err == nil {
+		app.logger.Info().Msgf("User updated: %d", user.ID)
+		w.WriteHeader(http.StatusAccepted)
+	}
 }
 
 // HandleDeleteUser is majestic
@@ -59,30 +58,44 @@ func (app *App) HandleDeleteUser(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusAccepted)
 }
 
-// GenerateUser creates a new user based on a unique ID and a kubeconfig
-// func GenerateUser(id string, kubeconfig []byte) *User {
-// 	conf := kubernetes.KubeConfig{}
+// ------------------------ User handler helper functions ------------------------ //
 
-// 	err := yaml.Unmarshal(kubeconfig, &conf)
+// writeUser will take a POST or PUT request to the /api/users endpoint and decode
+// the request into a forms.WriteUserForm model, convert it to a models.User, and
+// write to the database.
+func (app *App) writeUser(
+	form forms.WriteUserForm,
+	dbWrite func(db *gorm.DB, user *models.User) (*models.User, error),
+	w http.ResponseWriter,
+	r *http.Request,
+) (*models.User, error) {
+	// decode from JSON to form value
+	if err := json.NewDecoder(r.Body).Decode(form); err != nil {
+		app.handleErrorFormDecoding(err, ErrUserDecode, w)
+		return nil, err
+	}
 
-// 	// TODO -- HANDLE ERROR
-// 	if err != nil {
-// 		fmt.Println("ERROR IN UNMARSHALING")
-// 	}
+	// validate the form
+	if err := app.validator.Struct(form); err != nil {
+		app.handleErrorFormValidation(err, ErrUserValidateFields, w)
+		return nil, err
+	}
 
-// 	// generate the user's clusters
-// 	clusters := conf.ToClusterConfigs()
+	// convert the form to a user model -- WriteUserForm must implement ToUser
+	userModel, err := form.ToUser()
 
-// 	return &User{
-// 		ID:            id,
-// 		Clusters:      clusters,
-// 		RawKubeConfig: kubeconfig,
-// 	}
-// }
+	if err != nil {
+		app.handleErrorFormDecoding(err, ErrUserDecode, w)
+		return nil, err
+	}
 
-// // printUser is a helper function to print a user's config without sensitive information
-// func (u *User) printUser() {
-// 	for _, cluster := range u.Clusters {
-// 		fmt.Println(cluster.Name, cluster.Context, cluster.Server, cluster.User)
-// 	}
-// }
+	// handle write to the database
+	user, err := dbWrite(app.db, userModel)
+
+	if err != nil {
+		app.handleErrorDataWrite(err, ErrUserDataWrite, w)
+		return nil, err
+	}
+
+	return user, nil
+}

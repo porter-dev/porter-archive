@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import styled from 'styled-components';
 import close from '../../../assets/close.png';
 
-import { Context } from '../../../Context';
+import { Context } from '../../../shared/Context';
 
 type PropsType = {
   showDrawer: boolean,

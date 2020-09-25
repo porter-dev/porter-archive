@@ -3,8 +3,8 @@ import styled from 'styled-components';
 import { textChangeRangeIsUnchanged } from 'typescript';
 import close from '../../../assets/close.png';
 
-import { Context } from '../../../Context';
-import YamlEditor from '../../../lib/YamlEditor';
+import { Context } from '../../../shared/Context';
+import YamlEditor from '../../../components/YamlEditor';
 
 type ClusterOption = {
   name: string,
@@ -36,7 +36,7 @@ export default class ClusterConfigModal extends Component<PropsType, StateType> 
   }
 
   renderLine = (tab: string): JSX.Element | undefined => {
-    if (this.state.currentTab == tab) {
+    if (this.state.currentTab === tab) {
       return <Highlight />
     }
   };
@@ -149,7 +149,8 @@ const Row = styled.div`
   display: flex;
   align-items: center;
   color: #ffffff;
-  font-size: 14px;
+  font-size: 13px;
+  font-family: 'Work Sans', sans-serif;
   cursor: pointer;
   
   :hover {

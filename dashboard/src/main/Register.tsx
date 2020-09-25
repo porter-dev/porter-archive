@@ -1,34 +1,134 @@
-import React, { Component } from 'react';
+import React, { ChangeEvent, Component, useContext } from 'react';
 import styled from 'styled-components';
-
 import logo from '../assets/logo.png';
+
+import api from '../shared/api';
+import { emailRegex } from '../shared/regex';
+import { Context } from '../shared/Context';
 
 type PropsType = {
   authenticate: () => void
 };
 
 type StateType = {
+  email: string,
+  password: string,
+  confirmPassword: string,
+  emailError: boolean,
+  confirmPasswordError: boolean
 };
 
 export default class Register extends Component<PropsType, StateType> {
-  handleRegister = (): void => {
-    // TODO: Register user
+  state = {
+    email: '',
+    password: '',
+    confirmPassword: '',
+    emailError: false,
+    confirmPasswordError: false
+  }
 
-    this.props.authenticate();
+  handleRegister = (): void => {
+    let { email, password, confirmPassword } = this.state;
+    let { authenticate } = this.props;
+    let { setCurrentError } = this.context;
+
+    if (!emailRegex.test(email)) {
+      this.setState({ emailError: true });
+    }
+
+    if (confirmPassword !== password) {
+      this.setState({ confirmPasswordError: true });
+    }
+    
+    // Check for valid input
+    if (emailRegex.test(email) && confirmPassword === password) {
+
+      // Attempt user registration
+      api.registerUser('', {
+        email: email,
+        password: password
+      }, (err, res) => {
+        err ? setCurrentError(JSON.stringify(err)) : authenticate();
+      });
+    } 
   };
 
+  renderEmailError = () => {
+    let { emailError } = this.state;
+    if (emailError) {
+      return (
+        <ErrorHelper><div />Please enter a valid email</ErrorHelper>
+      );
+    }
+  }
+
+  renderConfirmPasswordError = () => {
+    let { confirmPasswordError } = this.state;
+    if (confirmPasswordError) {
+      return (
+        <ErrorHelper><div />Password does not match</ErrorHelper>
+      );
+    }
+  }
+
   render() {
+    let { 
+      email,
+      password, 
+      confirmPassword, 
+      emailError,
+      confirmPasswordError
+    } = this.state;
+
     return (
       <StyledRegister>
         <LoginPanel>
-          <GradientBg />
+          <OverflowWrapper>
+            <GradientBg />
+          </OverflowWrapper>
           <FormWrapper>
             <Logo src={logo} />
             <Line />
             <Prompt>Create Account</Prompt>
-            <Input placeholder='Username' />
-            <Input type='password' placeholder='Password' />
-            <Input type='password' placeholder='Confirm Password' />
+            <InputWrapper>
+              <Input 
+                type='email'
+                placeholder='Email'
+                value={email}
+                onChange={(e: ChangeEvent<HTMLInputElement>) => 
+                  this.setState({ email: e.target.value, emailError: false })
+                }
+                valid={!emailError}
+              />
+              {this.renderEmailError()}
+            </InputWrapper>
+            <Input 
+              type='password' 
+              placeholder='Password'
+              value={password}
+              onChange={(e: ChangeEvent<HTMLInputElement>) => 
+                this.setState({ 
+                  password: e.target.value,
+                  confirmPasswordError: false
+                })
+              }
+              valid={true}
+            />
+            <InputWrapper>
+              <Input 
+                type='password' 
+                placeholder='Confirm Password'
+                value={confirmPassword}
+                onChange={(e: ChangeEvent<HTMLInputElement>) => 
+                  this.setState({ 
+                    confirmPassword: e.target.value, 
+                    confirmPasswordError: false 
+                  })
+                }
+                valid={!confirmPasswordError}
+              />
+              {this.renderConfirmPasswordError()}
+            </InputWrapper>
             <Button onClick={this.handleRegister}>Continue</Button>
           </FormWrapper>
         </LoginPanel>
@@ -36,6 +136,50 @@ export default class Register extends Component<PropsType, StateType> {
     );
   }
 }
+
+Register.contextType = Context;
+
+const OverflowWrapper = styled.div`
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  border-radius: 10px;
+`;
+
+const InputWrapper = styled.div`
+  position: relative;
+`;
+
+const ErrorHelper = styled.div`
+  position: absolute;
+  right: -185px;
+  top: 8px;
+  height: 30px;
+  width: 170px;
+  user-select: none;
+  background: #272731;
+  font-family: 'Work Sans', sans-serif;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ff3b62;
+  border-radius: 3px;
+
+  > div {
+    background: #272731;
+    height: 15px;
+    width: 15px;
+    position: absolute;
+    left: -3px;
+    top: 7px;
+    transform: rotate(45deg);
+    z-index: -1;
+  }
+`;
 
 const Line = styled.div`
   height: 3px;
@@ -69,7 +213,7 @@ const Input = styled.input`
   padding: 8px;
   background: #ffffff12;
   color: #ffffff;
-  border: 0;
+  border: ${(props: { valid?: boolean }) => props.valid ? '0' : '1px solid #ff3b62'};
   border-radius: 2px;
   font-size: 14px
 `;
@@ -103,6 +247,8 @@ const GradientBg = styled.div`
   width: 180%;
   height: 180%;
   position: absolute;
+  top: -40%;
+  left: -40%;
   animation: flip 6s infinite linear;
   @keyframes flip {
     from { transform: rotate(0deg); }
@@ -116,7 +262,6 @@ const LoginPanel = styled.div`
   background: white;
   margin-top: -20px;
   border-radius: 10px;
-  overflow: hidden;
   display: flex;
   justify-content: center;
   position: relative;

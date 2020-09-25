@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import styled from 'styled-components';
 import drawerBg from '../../../assets/drawer-bg.png';
 
-import { Context } from '../../../Context';
+import { Context } from '../../../shared/Context';
 import Drawer from './Drawer';
 
 type PropsType = {

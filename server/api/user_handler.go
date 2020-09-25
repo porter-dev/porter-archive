@@ -12,6 +12,14 @@ import (
 	"gorm.io/gorm"
 )
 
+// Enumeration of user API error codes, represented as int64
+const (
+	ErrUserDecode ErrorCode = iota
+	ErrUserValidateFields
+	ErrUserDataWrite
+	ErrUserDataRead
+)
+
 // HandleCreateUser validates a user form entry, converts the user to a gorm
 // model, and saves the user to the database
 func (app *App) HandleCreateUser(w http.ResponseWriter, r *http.Request) {
@@ -25,10 +33,31 @@ func (app *App) HandleCreateUser(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// HandleReadUser is majestic
+// HandleReadUser returns an externalized User (models.UserExternal)
+// based on an ID
 func (app *App) HandleReadUser(w http.ResponseWriter, r *http.Request) {
+	id, err := strconv.ParseUint(chi.URLParam(r, "id"), 0, 64)
+
+	if err != nil || id == 0 {
+		app.handleErrorFormDecoding(err, ErrUserDecode, w)
+		return
+	}
+
+	user, err := queries.ReadUser(app.db, uint(id))
+
+	if err != nil {
+		app.handleErrorRead(err, ErrUserDataRead, w)
+		return
+	}
+
+	extUser := user.Externalize()
+
+	if err := json.NewEncoder(w).Encode(extUser); err != nil {
+		app.handleErrorFormDecoding(err, ErrUserDecode, w)
+		return
+	}
+
 	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("{}"))
 }
 
 // HandleUpdateUser validates an update user form entry, updates the user
@@ -42,7 +71,7 @@ func (app *App) HandleUpdateUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	form := &forms.UpdateUserForm{
-		ID: id,
+		ID: uint(id),
 	}
 
 	user, err := app.writeUser(form, queries.UpdateUser, w, r)
@@ -55,7 +84,25 @@ func (app *App) HandleUpdateUser(w http.ResponseWriter, r *http.Request) {
 
 // HandleDeleteUser is majestic
 func (app *App) HandleDeleteUser(w http.ResponseWriter, r *http.Request) {
-	w.WriteHeader(http.StatusAccepted)
+	id, err := strconv.ParseUint(chi.URLParam(r, "id"), 0, 64)
+
+	if err != nil || id == 0 {
+		app.handleErrorFormDecoding(err, ErrUserDecode, w)
+		return
+	}
+
+	// TODO -- HASH AND VERIFY PASSWORD BEFORE USER DELETION
+	form := &forms.DeleteUserForm{
+		ID:       uint(id),
+		Password: "testing",
+	}
+
+	user, err := app.writeUser(form, queries.DeleteUser, w, r)
+
+	if err == nil {
+		app.logger.Info().Msgf("User deleted: %d", user.ID)
+		w.WriteHeader(http.StatusAccepted)
+	}
 }
 
 // ------------------------ User handler helper functions ------------------------ //

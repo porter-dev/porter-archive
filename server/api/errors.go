@@ -6,11 +6,14 @@ import (
 	"net/http"
 
 	"github.com/go-playground/validator/v10"
+	"gorm.io/gorm"
 )
 
 const (
 	appErrDataWrite    = "data write error"
+	appErrDataRead     = "data read error"
 	appErrFormDecoding = "could not process JSON body"
+	appErrReadNotFound = "could not find requested object"
 )
 
 // HTTPError is the object returned when the API encounters an error: this
@@ -22,13 +25,6 @@ type HTTPError struct {
 
 // ErrorCode is a custom Porter error code, useful for frontend messages
 type ErrorCode int64
-
-// Enumeration of API error codes, represented as int64
-const (
-	ErrUserDecode ErrorCode = iota
-	ErrUserValidateFields
-	ErrUserDataWrite
-)
 
 // ------------------------ Error helper functions ------------------------ //
 
@@ -68,6 +64,7 @@ func (app *App) handleErrorFormDecoding(err error, code ErrorCode, w http.Respon
 	intErr := app.sendExternalError(err, errExt, w)
 
 	if intErr == nil {
+		app.logger.Warn().Err(err).Msg("")
 		w.WriteHeader(http.StatusUnprocessableEntity)
 	}
 }
@@ -93,11 +90,38 @@ func (app *App) handleErrorFormValidation(err error, code ErrorCode, w http.Resp
 	intErr := app.sendExternalError(err, errExt, w)
 
 	if intErr == nil {
+		app.logger.Warn().Err(err).Msg("")
 		w.WriteHeader(http.StatusUnprocessableEntity)
 	}
 }
 
-// handleErrorDataWrite handles a database write error
+// handleErrorRead handles an error in reading a record from the DB. If the record is
+// not found, the error message is more descriptive; otherwise, a generic dataRead
+// error is sent.
+func (app *App) handleErrorRead(err error, code ErrorCode, w http.ResponseWriter) {
+	// first check if the error is RecordNotFound -- send a more descriptive
+	// message if that is the case
+	if err == gorm.ErrRecordNotFound {
+		errExt := HTTPError{
+			Code:   code,
+			Errors: []string{appErrReadNotFound},
+		}
+
+		intErr := app.sendExternalError(err, errExt, w)
+
+		if intErr == nil {
+			app.logger.Warn().Err(err).Msg("")
+			w.WriteHeader(http.StatusNotFound)
+		}
+
+		return
+	}
+
+	app.handleErrorDataRead(err, code, w)
+}
+
+// handleErrorDataWrite handles a database write error due to either a connection
+// error with the database or failure to write that wasn't caught by the validators
 func (app *App) handleErrorDataWrite(err error, code ErrorCode, w http.ResponseWriter) {
 	errExt := HTTPError{
 		Code:   code,
@@ -107,7 +131,24 @@ func (app *App) handleErrorDataWrite(err error, code ErrorCode, w http.ResponseW
 	intErr := app.sendExternalError(err, errExt, w)
 
 	if intErr == nil {
+		app.logger.Warn().Err(err).Msg("")
 		w.WriteHeader(http.StatusUnprocessableEntity)
+	}
+}
+
+// handleErrorDataRead handles a database read error due to an internal error, such as
+// the database connection or gorm internals
+func (app *App) handleErrorDataRead(err error, code ErrorCode, w http.ResponseWriter) {
+	errExt := HTTPError{
+		Code:   code,
+		Errors: []string{appErrDataRead},
+	}
+
+	intErr := app.sendExternalError(err, errExt, w)
+
+	if intErr == nil {
+		app.logger.Warn().Err(err).Msg("")
+		w.WriteHeader(http.StatusInternalServerError)
 	}
 }
 

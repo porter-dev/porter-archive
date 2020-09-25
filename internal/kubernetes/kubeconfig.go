@@ -1,6 +1,10 @@
 package kubernetes
 
-import "github.com/porter-dev/porter/internal/models"
+import (
+	"fmt"
+
+	"github.com/porter-dev/porter/internal/models"
+)
 
 // KubeConfigCluster represents the cluster field in a kubeconfig
 type KubeConfigCluster struct {
@@ -47,6 +51,8 @@ func (k *KubeConfig) ToClusterConfigs(allowedClusters []string) []models.Cluster
 	// put allowed clusters in map
 	aClusterMap := createAllowedClusterMap(allowedClusters)
 
+	fmt.Println(allowedClusters, aClusterMap)
+
 	// iterate through context maps and link to a user-cluster pair
 	for contextName, context := range contextMap {
 		userName := context.Context.User
@@ -56,6 +62,8 @@ func (k *KubeConfig) ToClusterConfigs(allowedClusters []string) []models.Cluster
 
 		// make sure the cluster is "allowed"
 		_, aClusterFound := aClusterMap[clusterName]
+
+		fmt.Println(userFound, clusterFound, aClusterFound)
 
 		if userFound && clusterFound && aClusterFound {
 			clusters = append(clusters, models.ClusterConfig{

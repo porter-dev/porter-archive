@@ -2,7 +2,8 @@ import React, { Component } from 'react';
 import styled from 'styled-components';
 import ReactModal from 'react-modal';
 
-import { Context } from '../../Context';
+import { Context } from '../../shared/Context';
+
 import Sidebar from './sidebar/Sidebar';
 import ClusterConfigModal from './modals/ClusterConfigModal';
 
@@ -13,7 +14,7 @@ type PropsType = {
 type StateType = {
 };
 
-export default class Home extends Component<PropsType> {
+export default class Home extends Component<PropsType, StateType> {
   render() {
     return (
       <StyledHome>

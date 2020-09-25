@@ -5,7 +5,7 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/porter-dev/porter/internal/repository"
+	"github.com/porter-dev/porter/internal/repository/gorm"
 
 	"github.com/porter-dev/porter/server/api"
 
@@ -28,7 +28,7 @@ func main() {
 	}
 
 	validator := vr.New()
-	repo := repository.NewDefaultRepository(db)
+	repo := gorm.NewRepository(db)
 
 	a := api.New(logger, repo, validator)
 

@@ -1,18 +1,22 @@
-package sessionstore
+package main
 
 import (
 	"fmt"
 	"net/http"
 
-	"github.com/gorilla/sessions"
+	dbConn "github.com/porter-dev/porter/internal/adapter"
+	sessionstore "github.com/porter-dev/porter/internal/auth"
 )
 
+var db, dbErr = dbConn.New()
+
 var (
-	key   = []byte("secret") // change to os.Getenv("SESSION_KEY")
-	store = sessions.NewCookieStore(key)
+	key      = []byte("secret") // change to os.Getenv("SESSION_KEY")
+	store, _ = sessionstore.NewStore(db, key)
 )
 
 func secret(w http.ResponseWriter, r *http.Request) {
+
 	session, _ := store.Get(r, "cookie-name")
 	fmt.Println(session.Values["authenticated"])
 

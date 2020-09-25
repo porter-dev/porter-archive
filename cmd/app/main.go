@@ -5,6 +5,8 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/porter-dev/porter/internal/repository"
+
 	"github.com/porter-dev/porter/server/api"
 
 	adapter "github.com/porter-dev/porter/internal/adapter"
@@ -26,8 +28,9 @@ func main() {
 	}
 
 	validator := vr.New()
+	repo := repository.NewDefaultRepository(db)
 
-	a := api.New(logger, db, validator)
+	a := api.New(logger, repo, validator)
 
 	appRouter := router.New(a)
 

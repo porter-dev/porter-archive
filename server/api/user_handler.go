@@ -8,8 +8,7 @@ import (
 	"github.com/go-chi/chi"
 	"github.com/porter-dev/porter/internal/forms"
 	"github.com/porter-dev/porter/internal/models"
-	"github.com/porter-dev/porter/internal/queries"
-	"gorm.io/gorm"
+	"github.com/porter-dev/porter/internal/repository"
 )
 
 // Enumeration of user API error codes, represented as int64
@@ -25,7 +24,7 @@ const (
 func (app *App) HandleCreateUser(w http.ResponseWriter, r *http.Request) {
 	form := &forms.CreateUserForm{}
 
-	user, err := app.writeUser(form, queries.CreateUser, w, r)
+	user, err := app.writeUser(form, app.repo.User.CreateUser, w, r)
 
 	if err == nil {
 		app.logger.Info().Msgf("New user created: %d", user.ID)
@@ -43,7 +42,7 @@ func (app *App) HandleReadUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, err := queries.ReadUser(app.db, uint(id))
+	user, err := app.repo.User.ReadUser(uint(id))
 
 	if err != nil {
 		app.handleErrorRead(err, ErrUserDataRead, w)
@@ -74,7 +73,7 @@ func (app *App) HandleUpdateUser(w http.ResponseWriter, r *http.Request) {
 		ID: uint(id),
 	}
 
-	user, err := app.writeUser(form, queries.UpdateUser, w, r)
+	user, err := app.writeUser(form, app.repo.User.UpdateUser, w, r)
 
 	if err == nil {
 		app.logger.Info().Msgf("User updated: %d", user.ID)
@@ -97,7 +96,7 @@ func (app *App) HandleDeleteUser(w http.ResponseWriter, r *http.Request) {
 		Password: "testing",
 	}
 
-	user, err := app.writeUser(form, queries.DeleteUser, w, r)
+	user, err := app.writeUser(form, app.repo.User.DeleteUser, w, r)
 
 	if err == nil {
 		app.logger.Info().Msgf("User deleted: %d", user.ID)
@@ -112,7 +111,7 @@ func (app *App) HandleDeleteUser(w http.ResponseWriter, r *http.Request) {
 // write to the database.
 func (app *App) writeUser(
 	form forms.WriteUserForm,
-	dbWrite func(db *gorm.DB, user *models.User) (*models.User, error),
+	dbWrite repository.WriteUser,
 	w http.ResponseWriter,
 	r *http.Request,
 ) (*models.User, error) {
@@ -137,7 +136,7 @@ func (app *App) writeUser(
 	}
 
 	// handle write to the database
-	user, err := dbWrite(app.db, userModel)
+	user, err := dbWrite(userModel)
 
 	if err != nil {
 		app.handleErrorDataWrite(err, ErrUserDataWrite, w)

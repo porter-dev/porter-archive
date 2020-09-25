@@ -5,14 +5,14 @@ import (
 	ut "github.com/go-playground/universal-translator"
 	"github.com/go-playground/validator/v10"
 	lr "github.com/porter-dev/porter/internal/logger"
-	"gorm.io/gorm"
+	"github.com/porter-dev/porter/internal/repository"
 )
 
 // App represents an API instance with handler methods attached, a DB connection
 // and a logger instance
 type App struct {
 	logger     *lr.Logger
-	db         *gorm.DB
+	repo       *repository.Repository
 	validator  *validator.Validate
 	translator *ut.Translator
 }
@@ -20,7 +20,7 @@ type App struct {
 // New returns a new App instance
 func New(
 	logger *lr.Logger,
-	db *gorm.DB,
+	repo *repository.Repository,
 	validator *validator.Validate,
 ) *App {
 	// for now, will just support the english translator from the
@@ -31,7 +31,7 @@ func New(
 
 	return &App{
 		logger:     logger,
-		db:         db,
+		repo:       repo,
 		validator:  validator,
 		translator: &trans,
 	}

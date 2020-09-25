@@ -1,10 +1,8 @@
 import React, { Component } from 'react';
 import styled, { createGlobalStyle } from 'styled-components';
 
-import { ContextProvider } from './Context';
-import Login from './main/Login';
-import Register from './main/Register';
-import Home from './main/home/Home';
+import { ContextProvider } from './shared/Context';
+import Main from './main/Main';
 
 type PropsType = {
 };
@@ -16,30 +14,10 @@ type StateType = {
 };
 
 export default class App extends Component<PropsType, StateType> {
-  state = {
-    isLoading: false,
-    isLoggedIn: false,
-    uninitialized: true,
-  }
-
-  renderContents = (): JSX.Element => {
-    if (this.state.isLoading) {
-      return <h1>Loading...</h1>
-    } else if (this.state.isLoggedIn) {
-      return <Home logOut={() => this.setState({ isLoggedIn: false })} />
-    } else if (this.state.uninitialized) {
-      return <Register authenticate={() => this.setState({ isLoggedIn: true })} />
-    }
-    return <Login authenticate={() => this.setState({ isLoggedIn: true })} />
-  }
-
   render() {
     return (
       <ContextProvider>
-        <StyledApp>
-          <GlobalStyle />
-          {this.renderContents()}
-        </StyledApp>
+        <Main />
       </ContextProvider>
     );
   }

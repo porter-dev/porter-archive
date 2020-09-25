@@ -8,7 +8,15 @@ type PropsType = {
   logOut: () => void
 };
 
-export default class Sidebar extends Component<PropsType> {
+type StateType = {
+  showSidebar: boolean,
+  initializedSidebar: boolean,
+  pressingCtrl: boolean,
+  showTooltip: boolean,
+  forceCloseDrawer: boolean
+};
+
+export default class Sidebar extends Component<PropsType, StateType> {
 
   // Need closeDrawer to hide drawer on sidebar close
   state = {
@@ -17,7 +25,7 @@ export default class Sidebar extends Component<PropsType> {
     pressingCtrl: false,
     showTooltip: false,
     forceCloseDrawer: false,
-  }
+  };
 
   componentDidMount() {
     document.addEventListener('keydown', this.handleKeyDown);
@@ -29,23 +37,23 @@ export default class Sidebar extends Component<PropsType> {
     document.removeEventListener('keyup', this.handleKeyUp);
   }
 
-  handleKeyDown = (e: any): void => {
-    if (e.keyCode === 17 || e.keyCode === 91 || e.keyCode === 93) {
+  handleKeyDown = (e: KeyboardEvent): void => {
+    if (e.key === 'Meta' || e.key === 'Control') {
       this.setState({ pressingCtrl: true });
     } else if (e.keyCode === 220 && this.state.pressingCtrl) {
       this.toggleSidebar();
     }
-  }
+  };
 
-  handleKeyUp = (e: any): void => {
-    if (e.keyCode === 17 || e.keyCode === 91 || e.keyCode === 93) {
+  handleKeyUp = (e: KeyboardEvent): void => {
+    if (e.key === 'Meta' || e.key === 'Control') {
       this.setState({ pressingCtrl: false });
     }
-  }
+  };
 
   toggleSidebar = (): void => {
     this.setState({ showSidebar: !this.state.showSidebar, forceCloseDrawer: true });
-  }
+  };
 
   renderPullTab = (): JSX.Element | undefined => {
     if (!this.state.showSidebar) {
@@ -55,7 +63,7 @@ export default class Sidebar extends Component<PropsType> {
         </PullTab>
       );
     }
-  }
+  };
 
   renderTooltip = (): JSX.Element | undefined => {
     if (this.state.showTooltip) {
@@ -63,7 +71,7 @@ export default class Sidebar extends Component<PropsType> {
         <Tooltip>⌘/CTRL + \</Tooltip>
       );
     }
-  }
+  };
 
   // SidebarBg is separate to cover retracted drawer
   render() {

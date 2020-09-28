@@ -10,10 +10,10 @@ RUN go mod download
 
 COPY . ./
 
-RUN go build -ldflags '-w -s' -a -o ./bin/app ./cmd/app \
+RUN go build -ldflags '-w -s' -a -o ./bin/migrate ./cmd/migrate \
     && chmod +x /porter/docker/bin/*
 
-# TODO -- WILL HAVE MIGRATION
-# RUN go build -ldflags '-w -s' -a -o ./bin/migrate ./cmd/migrate
+# for live reloading of go container
+RUN go get github.com/cosmtrek/air
 
-EXPOSE 8080
+CMD air -c .air.toml

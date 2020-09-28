@@ -19,7 +19,6 @@ import (
 const (
 	ErrUserDecode ErrorCode = iota + 600
 	ErrUserValidateFields
-	ErrUserDataWrite
 	ErrUserDataRead
 )
 
@@ -179,7 +178,7 @@ func (app *App) writeUser(
 	user, err := dbWrite(userModel)
 
 	if err != nil {
-		app.handleErrorDataWrite(err, ErrUserDataWrite, w)
+		app.handleErrorDataWrite(err, w)
 		return nil, err
 	}
 

@@ -7,20 +7,20 @@ import (
 	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
+	"github.com/go-test/deep"
+	"github.com/jinzhu/gorm"
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
-
-	"github.com/jinzhu/gorm"
 )
 
 type Suite struct {
 	suite.Suite
-	DB   *gorm.DB
+	db   *gorm.DB
 	mock sqlmock.Sqlmock
 
-	repository Repository
-	session    *models.Session
+	repo    Repository
+	session *models.Session
 }
 
 func (s *Suite) SetupSuite() {
@@ -30,14 +30,16 @@ func (s *Suite) SetupSuite() {
 	)
 
 	db, s.mock, err = sqlmock.New()
+	// db, s.mock, err = sqlmock.New(sqlmock.QueryMatcherOption(sqlmock.QueryMatcherRegexp))
+
 	require.NoError(s.T(), err)
 
-	s.DB, err = gorm.Open("postgres", db)
+	s.db, err = gorm.Open("postgres", db)
 	require.NoError(s.T(), err)
 
-	s.DB.LogMode(true)
+	s.db.LogMode(true)
 
-	// s.repository = CreateRepository(s.DB)
+	s.repo = CreateRepository(s.db)
 }
 
 func (s *Suite) AfterTest(_, _ string) {
@@ -48,58 +50,96 @@ func TestInit(t *testing.T) {
 	suite.Run(t, new(Suite))
 }
 
-func (s *Suite) TestShouldCreateNewSession(t *testing.T) {
+func (s *Suite) TestShouldCreateNewSession() {
 	var (
 		key       = "onekey"
 		data      = []byte("onedata")
 		expiresAt = time.Now()
 	)
 
-	s.mock.ExpectQuery(regexp.QuoteMeta(
-		`INSERT INTO "sessions" ("key","data","expires_at") 
-			VALUES ($1,$2, $3) RETURNING "key"."data"."expires_at`)).
-		WithArgs(key, data, expiresAt).
-		WillReturnRows(
-			sqlmock.NewRows([]string{"key"}).AddRow(key))
+	rows := sqlmock.NewRows([]string{"id"}).AddRow("111")
 
-	// db.AutoMigrate(&models.Session{})
-	// defer db.Close()
+	s.mock.ExpectBegin()
+	s.mock.ExpectQuery(regexp.QuoteMeta(
+		`INSERT INTO "sessions" ("created_at","updated_at","deleted_at","key","data","expires_at")
+		VALUES ($1,$2,$3,$4,$5,$6) RETURNING "sessions"."id"`)).
+		WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), key, data, expiresAt).
+		WillReturnRows(rows)
+	s.mock.ExpectCommit()
 
 	// test function
-	_, err := CreateSession(s.DB, &models.Session{Key: key, Data: data, ExpiresAt: expiresAt})
+	_, err := s.repo.CreateSession(&models.Session{
+		Key:       key,
+		Data:      data,
+		ExpiresAt: expiresAt,
+	})
+
 	require.NoError(s.T(), err)
-	// db.Migrator().DropTable(&models.Session{})
 }
 
-// func TestShouldUpdateSessionByKey(t *testing.T) {
-// 	db, _ := dbConn.New()
-// 	// db.AutoMigrate(&models.Session{})
-// 	// defer db.Close()
+func (s *Suite) TestShoudSelectSessionByKey() {
+	var (
+		key = "onekey"
+	)
 
-// 	// test function
-// 	UpdateSession(db, &models.Session{Key: "hia", Data: []byte("pls"), ExpiresAt: time.Now()})
+	rows := sqlmock.NewRows([]string{"Key"}).AddRow(key)
 
-// 	// db.Migrator().DropTable(&models.Session{})
-// }
+	s.mock.ExpectQuery(`.*`). // do proper regex labor later as meditative exercise
+					WithArgs(key).
+					WillReturnRows(rows)
 
-// func TestShouldDeleteSessionByKey(t *testing.T) {
-// 	db, _ := dbConn.New()
-// 	// db.AutoMigrate(&models.Session{})
-// 	// defer db.Close()
+	// test function
+	res, err := s.repo.SelectSession(&models.Session{
+		Key: key,
+	})
 
-// 	// test function
-// 	DeleteSession(db, &models.Session{Key: "hia"})
+	require.NoError(s.T(), err)
+	require.Nil(s.T(), deep.Equal(&models.Session{Key: key}, res))
+}
 
-// 	// db.Migrator().DropTable(&models.Session{})
-// }
+func (s *Suite) TestShouldUpdateSessionByKey() {
+	var (
+		key       = "onekey"
+		data      = []byte("chobanilime")
+		expiresAt = time.Now()
+	)
 
-// func TestShoudSelectSessionByKey(t *testing.T) {
-// 	db, _ := dbConn.New()
-// 	// db.AutoMigrate(&models.Session{})
-// 	// defer db.Close()
+	// rows := sqlmock.NewRows([]string{"Key"}).AddRow(key)
 
-// 	// test function
-// 	SelectSession(db, &models.Session{Key: "hi"})
+	s.mock.ExpectBegin()
+	s.mock.ExpectExec(`.*`). // do proper regex labor later as meditative exercise
+					WithArgs(data, sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), key).
+					WillReturnResult(sqlmock.NewResult(1, 1))
+	s.mock.ExpectCommit()
 
-// 	// db.Migrator().DropTable(&models.Session{})
-// }
+	// test function
+	_, err := s.repo.UpdateSession(&models.Session{
+		Key:       key,
+		Data:      data,
+		ExpiresAt: expiresAt,
+	})
+
+	require.NoError(s.T(), err)
+	// require.Nil(s.T(), deep.Equal(&models.Session{Data: data}, res))
+}
+
+func (s *Suite) TestShouldDeleteSession() {
+	var (
+		key = "onekey"
+	)
+
+	// rows := sqlmock.NewRows([]string{"id"}).AddRow("111")
+
+	s.mock.ExpectBegin()
+	s.mock.ExpectExec(`.*`).
+		WithArgs(sqlmock.AnyArg(), key).
+		WillReturnResult(sqlmock.NewResult(1, 1))
+	s.mock.ExpectCommit()
+
+	// test function
+	_, err := s.repo.DeleteSession(&models.Session{
+		Key: key,
+	})
+
+	require.NoError(s.T(), err)
+}

@@ -1,6 +1,6 @@
-## `/api/users`
+### `/api/users`
 
-### `GET /api/users/{id}`
+#### `GET /api/users/{id}`
 
 **Description:** Gets a user object matching a specific `id`. 
 
@@ -30,9 +30,9 @@ User{
 
 **Errors:**
 
-### `GET /api/users/{id}/clusters`
+#### `GET /api/users/{id}/clusters`
 
-### `GET /api/users/{id}/clusters/all`
+#### `GET /api/users/{id}/clusters/all`
 
 **Description:** Parses all cluster names from the user's kubeconfig and returns a list of viable cluster names. 
 
@@ -52,11 +52,11 @@ User{
 }
 ```
 
-### `POST /api/users/{id}`
+#### `POST /api/users/{id}`
 
-### `POST /api/users/{id}/clusters`
+#### `POST /api/users/{id}/clusters`
 
-### `PUT /api/users/{id}`
+#### `PUT /api/users/{id}`
 
-### `DELETE /api/users/{id}`
+#### `DELETE /api/users/{id}`
 

@@ -2,8 +2,12 @@ package api
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 	"strconv"
+	"strings"
+
+	"gorm.io/gorm"
 
 	"github.com/go-chi/chi"
 	"github.com/porter-dev/porter/internal/forms"
@@ -13,7 +17,7 @@ import (
 
 // Enumeration of user API error codes, represented as int64
 const (
-	ErrUserDecode ErrorCode = iota
+	ErrUserDecode ErrorCode = iota + 600
 	ErrUserValidateFields
 	ErrUserDataWrite
 	ErrUserDataRead
@@ -24,7 +28,13 @@ const (
 func (app *App) HandleCreateUser(w http.ResponseWriter, r *http.Request) {
 	form := &forms.CreateUserForm{}
 
-	user, err := app.writeUser(form, app.repo.User.CreateUser, w, r)
+	user, err := app.writeUser(
+		form,
+		app.repo.User.CreateUser,
+		w,
+		r,
+		doesUserExist,
+	)
 
 	if err == nil {
 		app.logger.Info().Msgf("New user created: %d", user.ID)
@@ -114,6 +124,7 @@ func (app *App) writeUser(
 	dbWrite repository.WriteUser,
 	w http.ResponseWriter,
 	r *http.Request,
+	validators ...func(repo *repository.Repository, user *models.User) *HTTPError,
 ) (*models.User, error) {
 	// decode from JSON to form value
 	if err := json.NewDecoder(r.Body).Decode(form); err != nil {
@@ -135,6 +146,35 @@ func (app *App) writeUser(
 		return nil, err
 	}
 
+	// Check any additional validators for any semantic errors
+	// We have completed all syntax checks, so these will be sent
+	// with http.StatusUnprocessableEntity (422), unless this is
+	// an internal server error
+	for _, validator := range validators {
+		err := validator(app.repo, userModel)
+
+		if err != nil {
+			goErr := errors.New(strings.Join(err.Errors, ", "))
+			if err.Code == 500 {
+				app.sendExternalError(
+					goErr,
+					http.StatusInternalServerError,
+					*err,
+					w,
+				)
+			} else {
+				app.sendExternalError(
+					goErr,
+					http.StatusUnprocessableEntity,
+					*err,
+					w,
+				)
+			}
+
+			return nil, goErr
+		}
+	}
+
 	// handle write to the database
 	user, err := dbWrite(userModel)
 
@@ -144,4 +184,23 @@ func (app *App) writeUser(
 	}
 
 	return user, nil
+}
+
+func doesUserExist(repo *repository.Repository, user *models.User) *HTTPError {
+	user, err := repo.User.ReadUserByEmail(user.Email)
+
+	if user != nil && err == nil {
+		return &HTTPError{
+			Code: ErrUserValidateFields,
+			Errors: []string{
+				"Email already taken",
+			},
+		}
+	}
+
+	if err != gorm.ErrRecordNotFound {
+		return &ErrorDataRead
+	}
+
+	return nil
 }

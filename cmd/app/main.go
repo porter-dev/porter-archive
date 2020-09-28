@@ -5,17 +5,15 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/porter-dev/porter/server/api"
-
-	dbConn "github.com/porter-dev/porter/internal/gorm"
+	dbConn "github.com/porter-dev/porter/internal/adapter"
 	lr "github.com/porter-dev/porter/internal/logger"
+	"github.com/porter-dev/porter/server/api"
 	"github.com/porter-dev/porter/server/router"
 )
 
 func main() {
 	logger := lr.NewConsole(true)
 	db, err := dbConn.New()
-
 	if err != nil {
 		logger.Fatal().Err(err).Msg("")
 		return

@@ -7,12 +7,12 @@ import (
 )
 
 var (
-	key   = []byte("secret") // change to os.Getenv("SESSION_KEY")
-	store = sessions.NewCookieStore(key)
+	key   = []byte("secret")             // change to os.Getenv("SESSION_KEY")
+	store = sessions.NewCookieStore(key) // Swap out with custom store
 )
 
-// ContentTypeJSON sets the content type for requests to application/json
-func authenticate(next http.Handler) http.Handler {
+// Authenticate is middleware for authentication
+func Authenticate(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if isLoggedIn(r) {
 			next.ServeHTTP(w, r)

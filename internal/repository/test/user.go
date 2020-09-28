@@ -2,9 +2,11 @@ package test
 
 import (
 	"errors"
+	"fmt"
 
-	"gorm.io/gorm"
 	"github.com/porter-dev/porter/internal/models"
+	"github.com/porter-dev/porter/internal/repository"
+	"gorm.io/gorm"
 )
 
 // UserRepository will return errors on queries if canQuery is false
@@ -16,24 +18,34 @@ type UserRepository struct {
 }
 
 // NewUserRepository will return errors
-func NewUserRepository(canQuery bool) *UserRepository {
+func NewUserRepository(canQuery bool) repository.UserRepository {
 	return &UserRepository{canQuery, []*models.User{}}
 }
 
 // CreateUser adds a new User row to the Users table in array memory
-func (repo UserRepository) CreateUser(user *models.User) (*models.User, error) {
+func (repo *UserRepository) CreateUser(user *models.User) (*models.User, error) {
 	if !repo.canQuery {
 		return nil, errors.New("Cannot write database")
 	}
 
+	fmt.Println(len(repo.users))
+
+	// make sure email doesn't exist
+	for _, u := range repo.users {
+		if u.Email == user.Email {
+			return nil, errors.New("Cannot write database")
+		}
+	}
+
 	users := repo.users
 	users = append(users, user)
-	user.ID = uint(len(users))
+	repo.users = users
+	user.ID = uint(len(repo.users))
 	return user, nil
 }
 
 // ReadUser finds a single user based on their unique id
-func (repo UserRepository) ReadUser(id uint) (*models.User, error) {
+func (repo *UserRepository) ReadUser(id uint) (*models.User, error) {
 	if !repo.canQuery {
 		return nil, errors.New("Cannot read from database")
 	}
@@ -47,7 +59,7 @@ func (repo UserRepository) ReadUser(id uint) (*models.User, error) {
 }
 
 // UpdateUser modifies an existing User in the database
-func (repo UserRepository) UpdateUser(user *models.User) (*models.User, error) {
+func (repo *UserRepository) UpdateUser(user *models.User) (*models.User, error) {
 	if !repo.canQuery {
 		return nil, errors.New("Cannot write database")
 	}
@@ -63,7 +75,7 @@ func (repo UserRepository) UpdateUser(user *models.User) (*models.User, error) {
 }
 
 // DeleteUser deletes a single user using their unique id
-func (repo UserRepository) DeleteUser(user *models.User) (*models.User, error) {
+func (repo *UserRepository) DeleteUser(user *models.User) (*models.User, error) {
 	if !repo.canQuery {
 		return nil, errors.New("Cannot write database")
 	}

@@ -2,6 +2,7 @@ package gorm
 
 import (
 	"github.com/porter-dev/porter/internal/models"
+	"github.com/porter-dev/porter/internal/repository"
 	"gorm.io/gorm"
 )
 
@@ -12,12 +13,12 @@ type UserRepository struct {
 
 // NewUserRepository returns a DefaultUserRepository which uses
 // gorm.DB for querying the database
-func NewUserRepository(db *gorm.DB) *UserRepository {
+func NewUserRepository(db *gorm.DB) repository.UserRepository {
 	return &UserRepository{db}
 }
 
 // CreateUser adds a new User row to the Users table in the database
-func (repo UserRepository) CreateUser(user *models.User) (*models.User, error) {
+func (repo *UserRepository) CreateUser(user *models.User) (*models.User, error) {
 	if err := repo.db.Create(user).Error; err != nil {
 		return nil, err
 	}
@@ -25,7 +26,7 @@ func (repo UserRepository) CreateUser(user *models.User) (*models.User, error) {
 }
 
 // ReadUser finds a single user based on their unique id
-func (repo UserRepository) ReadUser(id uint) (*models.User, error) {
+func (repo *UserRepository) ReadUser(id uint) (*models.User, error) {
 	user := &models.User{}
 	if err := repo.db.Where("id = ?", id).First(&user).Error; err != nil {
 		return nil, err
@@ -34,7 +35,7 @@ func (repo UserRepository) ReadUser(id uint) (*models.User, error) {
 }
 
 // UpdateUser modifies an existing User in the database
-func (repo UserRepository) UpdateUser(user *models.User) (*models.User, error) {
+func (repo *UserRepository) UpdateUser(user *models.User) (*models.User, error) {
 	if err := repo.db.First(&models.User{}, user.ID).Updates(user).Error; err != nil {
 		return nil, err
 	}
@@ -43,7 +44,7 @@ func (repo UserRepository) UpdateUser(user *models.User) (*models.User, error) {
 }
 
 // DeleteUser deletes a single user using their unique id
-func (repo UserRepository) DeleteUser(user *models.User) (*models.User, error) {
+func (repo *UserRepository) DeleteUser(user *models.User) (*models.User, error) {
 	if err := repo.db.First(&models.User{}, user.ID).Delete(&user).Error; err != nil {
 		return nil, err
 	}

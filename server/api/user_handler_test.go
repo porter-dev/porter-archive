@@ -117,7 +117,7 @@ var createUserTests = []userTest{
 			"password": "hello"
 		}`,
 		expStatus: http.StatusUnprocessableEntity,
-		expBody:   `{"code":601,"errors":["Email already taken"]}`,
+		expBody:   `{"code":601,"errors":["email already taken"]}`,
 		canQuery:  true,
 	},
 }

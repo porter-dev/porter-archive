@@ -120,7 +120,7 @@ User{
     ```json
     {
         "code":601,
-        "errors":["Email already taken"]
+        "errors":["email already taken"]
     }
     ```
 

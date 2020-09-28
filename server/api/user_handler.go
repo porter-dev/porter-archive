@@ -192,7 +192,7 @@ func doesUserExist(repo *repository.Repository, user *models.User) *HTTPError {
 		return &HTTPError{
 			Code: ErrUserValidateFields,
 			Errors: []string{
-				"Email already taken",
+				"email already taken",
 			},
 		}
 	}

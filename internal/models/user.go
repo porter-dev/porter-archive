@@ -1,14 +1,15 @@
 package models
 
 import (
-	"github.com/jinzhu/gorm"
+	"gorm.io/gorm"
 )
 
 // User type that extends gorm.Model
 type User struct {
 	gorm.Model
 	// Unique email for each user
-	Email,
+	// Email string `gorm:"unique"`
+	Email string
 	// Hashed password
 	Password string
 	// The clusters that this user has linked

@@ -1,7 +1,9 @@
 package test
 
 import (
-	"github.com/jinzhu/gorm"
+	"errors"
+
+	"gorm.io/gorm"
 	"github.com/porter-dev/porter/internal/models"
 )
 
@@ -20,6 +22,10 @@ func NewUserRepository(canQuery bool) *UserRepository {
 
 // CreateUser adds a new User row to the Users table in array memory
 func (repo UserRepository) CreateUser(user *models.User) (*models.User, error) {
+	if !repo.canQuery {
+		return nil, errors.New("Cannot write database")
+	}
+
 	users := repo.users
 	users = append(users, user)
 	user.ID = uint(len(users))
@@ -28,6 +34,10 @@ func (repo UserRepository) CreateUser(user *models.User) (*models.User, error) {
 
 // ReadUser finds a single user based on their unique id
 func (repo UserRepository) ReadUser(id uint) (*models.User, error) {
+	if !repo.canQuery {
+		return nil, errors.New("Cannot read from database")
+	}
+
 	if int(id-1) >= len(repo.users) || repo.users[id] == nil {
 		return nil, gorm.ErrRecordNotFound
 	}
@@ -38,6 +48,10 @@ func (repo UserRepository) ReadUser(id uint) (*models.User, error) {
 
 // UpdateUser modifies an existing User in the database
 func (repo UserRepository) UpdateUser(user *models.User) (*models.User, error) {
+	if !repo.canQuery {
+		return nil, errors.New("Cannot write database")
+	}
+
 	if int(user.ID-1) >= len(repo.users) || repo.users[user.ID] == nil {
 		return nil, gorm.ErrRecordNotFound
 	}
@@ -50,6 +64,10 @@ func (repo UserRepository) UpdateUser(user *models.User) (*models.User, error) {
 
 // DeleteUser deletes a single user using their unique id
 func (repo UserRepository) DeleteUser(user *models.User) (*models.User, error) {
+	if !repo.canQuery {
+		return nil, errors.New("Cannot write database")
+	}
+
 	if int(user.ID-1) >= len(repo.users) || repo.users[user.ID] == nil {
 		return nil, gorm.ErrRecordNotFound
 	}

@@ -1,7 +1,7 @@
 package forms
 
 import (
-	"github.com/jinzhu/gorm"
+	"gorm.io/gorm"
 	"github.com/porter-dev/porter/internal/kubernetes"
 	"github.com/porter-dev/porter/internal/models"
 	"gopkg.in/yaml.v2"

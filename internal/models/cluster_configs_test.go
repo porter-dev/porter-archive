@@ -3,7 +3,7 @@ package models_test
 import (
 	"testing"
 
-	"github.com/jinzhu/gorm"
+	"gorm.io/gorm"
 	"github.com/porter-dev/porter/internal/models"
 )
 

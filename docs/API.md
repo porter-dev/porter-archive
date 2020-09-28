@@ -1,6 +1,17 @@
+Errors are passed via both a non-`2xx` status code and an HTTPError response body:
+
+```js
+HTTPError{
+    // The Porter custom error code
+    Code: Number,
+    // A descriptive error message
+    Errors: []String,
+}
+```
+
 ### Global Errors
 
-#### Database Write Error
+#### `ErrorDataWrite`
 
 **Description:** occurs when a write is attempted against the database and fails. 
 
@@ -8,16 +19,16 @@
 
 **Response Body:**
 
-```js
+```json
 {
-	Code: 500,
-	Errors: []String{
-		"Could not write to database",
-	},
+	"Code": 500,
+	"Errors": [{
+		"Could not write to database"
+	}],
 }
 ```
 
-#### Database Write Error
+#### `ErrorDataRead`
 
 **Description:** occurs when a read is attempted against the database and fails. 
 
@@ -25,16 +36,16 @@
 
 **Response Body:**
 
-```js
+```json
 {
-	Code: 500,
-	Errors: []String{
-		"Could not read from database",
-	},
+	"Code": 500,
+	"Errors": [{
+		"Could not read from database"
+	}],
 }
 ```
 
-#### Internal Server Error
+#### `ErrorInternal`
 
 **Description:** occurs with a generic internal server error
 
@@ -42,12 +53,12 @@
 
 **Response Body:**
 
-```js
+```json
 {
-	Code: 500,
-	Errors: []String{
-		"Internal server error",
-	},
+	"Code": 500,
+	"Errors": [{
+		"Internal server error"
+	}],
 }
 ```
 
@@ -83,11 +94,66 @@ User{
 
 **Errors:**
 
+- Invalid email (example: `{"email": "notanemail"}`)
+  - Status Code: `422`
+  - Request Body:
+    ```json
+    {
+        "code":601,
+        "errors":["email validation failed"]
+    }
+    ```
+
+- Missing field
+  - Status Code: `422`
+  - Request Body:
+    ```json
+    {
+        "code":601,
+        "errors":["required validation failed"]
+    }`
+    ```
+
+- Email already taken 
+  - Status Code: `422`
+  - Request Body:
+    ```json
+    {
+        "code":601,
+        "errors":["Email already taken"]
+    }
+    ```
+
 #### `GET /api/users/{id}/clusters`
+
+**Description:** Retrieves the clusters that are currently linked to a User account. 
+
+**URL parameters:** 
+
+- `id` The user's ID. 
+
+**Query parameters:** N/A
+
+**Request Body**: N/A
+
+**Successful Response Body**: 
+
+```js
+{
+    "clusters": []ClusterConfig{
+        "name": String,
+        "server": String,
+        "context": String,
+        "user": String,
+    },
+}
+```
+
+**Errors:** TBD
 
 #### `GET /api/users/{id}/clusters/all`
 
-**Description:** Parses all cluster names from the user's kubeconfig and returns a list of viable cluster names. 
+**Description:** Parses all clusters from the user's kubeconfig and returns a list of viable cluster configs. 
 
 **URL parameters:** 
 
@@ -101,9 +167,16 @@ User{
 
 ```js
 {
-    "clusters": []String
+    "clusters": []ClusterConfig{
+        "name": String,
+        "server": String,
+        "context": String,
+        "user": String,
+    },
 }
 ```
+
+**Errors:** TBD
 
 #### `POST /api/users/{id}`
 

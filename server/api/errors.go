@@ -125,7 +125,7 @@ func (app *App) handleErrorRead(err error, code ErrorCode, w http.ResponseWriter
 
 // handleErrorDataWrite handles a database write error due to either a connection
 // error with the database or failure to write that wasn't caught by the validators
-func (app *App) handleErrorDataWrite(err error, code ErrorCode, w http.ResponseWriter) {
+func (app *App) handleErrorDataWrite(err error, w http.ResponseWriter) {
 	app.sendExternalError(err, http.StatusInternalServerError, ErrorDataWrite, w)
 }
 

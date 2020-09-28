@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/porter-dev/porter/internal/config"
-	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/repository"
 	"github.com/porter-dev/porter/internal/repository/test"
 	"github.com/porter-dev/porter/server/api"
@@ -99,9 +98,6 @@ var createUserTests = []userTest{
 		canQuery:  false,
 	},
 	userTest{
-		init: func(repo *repository.Repository) {
-			repo.User.CreateUser(&models.User{})
-		},
 		msg:      "Create user same email",
 		method:   "POST",
 		endpoint: "/api/users",

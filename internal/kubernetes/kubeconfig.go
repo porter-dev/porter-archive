@@ -1,5 +1,11 @@
 package kubernetes
 
+import (
+	"fmt"
+
+	"github.com/porter-dev/porter/internal/models"
+)
+
 // KubeConfigCluster represents the cluster field in a kubeconfig
 type KubeConfigCluster struct {
 	Cluster struct {
@@ -30,28 +36,22 @@ type KubeConfig struct {
 	Users          []KubeConfigUser    `yaml:"users"`
 }
 
-// ClusterConfig represents the configuration for a single cluster-user pair. This gets
-// associated with a specific user, and is primarily used for simplicity.
-type ClusterConfig struct {
-	// Name is the name of the cluster
-	Name,
-	// Server is the endpoint of the kube apiserver for a cluster
-	Server,
-	// Context is the name of the context
-	Context,
-	// User is the name of the user for a cluster
-	User string
-}
-
-// ToClusterConfigs converts a KubeConfig to a set of ClusterConfigs by
+// ToClusterConfigs converts a KubeConfig to a set of ClusterConfigExternals by
 // joining users and clusters on the context.
-func (k *KubeConfig) ToClusterConfigs() []*ClusterConfig {
-	clusters := make([]*ClusterConfig, 0)
+//
+// It accepts a list of cluster names that the user wishes to connect to
+func (k *KubeConfig) ToClusterConfigs(allowedClusters []string) []models.ClusterConfig {
+	clusters := make([]models.ClusterConfig, 0)
 
 	// convert clusters, contexts, and users to maps for fast lookup
-	clusterMap := k.CreateClusterMap()
-	contextMap := k.CreateContextMap()
-	userMap := k.CreateUserMap()
+	clusterMap := k.createClusterMap()
+	contextMap := k.createContextMap()
+	userMap := k.createUserMap()
+
+	// put allowed clusters in map
+	aClusterMap := createAllowedClusterMap(allowedClusters)
+
+	fmt.Println(allowedClusters, aClusterMap)
 
 	// iterate through context maps and link to a user-cluster pair
 	for contextName, context := range contextMap {
@@ -60,8 +60,13 @@ func (k *KubeConfig) ToClusterConfigs() []*ClusterConfig {
 		_, userFound := userMap[userName]
 		cluster, clusterFound := clusterMap[clusterName]
 
-		if userFound && clusterFound {
-			clusters = append(clusters, &ClusterConfig{
+		// make sure the cluster is "allowed"
+		_, aClusterFound := aClusterMap[clusterName]
+
+		fmt.Println(userFound, clusterFound, aClusterFound)
+
+		if userFound && clusterFound && aClusterFound {
+			clusters = append(clusters, models.ClusterConfig{
 				Name:    clusterName,
 				Server:  cluster.Cluster.Server,
 				Context: contextName,
@@ -73,8 +78,19 @@ func (k *KubeConfig) ToClusterConfigs() []*ClusterConfig {
 	return clusters
 }
 
-// CreateClusterMap creates a map from a cluster name to a KubeConfigCluster object
-func (k *KubeConfig) CreateClusterMap() map[string]KubeConfigCluster {
+// createAllowedClusterMap creates a map from a cluster name to a KubeConfigCluster object
+func createAllowedClusterMap(clusters []string) map[string]string {
+	aClusterMap := make(map[string]string)
+
+	for _, cluster := range clusters {
+		aClusterMap[cluster] = cluster
+	}
+
+	return aClusterMap
+}
+
+// createClusterMap creates a map from a cluster name to a KubeConfigCluster object
+func (k *KubeConfig) createClusterMap() map[string]KubeConfigCluster {
 	clusterMap := make(map[string]KubeConfigCluster)
 
 	for _, cluster := range k.Clusters {
@@ -84,8 +100,8 @@ func (k *KubeConfig) CreateClusterMap() map[string]KubeConfigCluster {
 	return clusterMap
 }
 
-// CreateContextMap creates a map from a context name to a KubeConfigContext object
-func (k *KubeConfig) CreateContextMap() map[string]KubeConfigContext {
+// createContextMap creates a map from a context name to a KubeConfigContext object
+func (k *KubeConfig) createContextMap() map[string]KubeConfigContext {
 	contextMap := make(map[string]KubeConfigContext)
 
 	for _, context := range k.Contexts {
@@ -95,8 +111,8 @@ func (k *KubeConfig) CreateContextMap() map[string]KubeConfigContext {
 	return contextMap
 }
 
-// CreateUserMap creates a map from a user name to a KubeConfigUser object
-func (k *KubeConfig) CreateUserMap() map[string]KubeConfigUser {
+// createUserMap creates a map from a user name to a KubeConfigUser object
+func (k *KubeConfig) createUserMap() map[string]KubeConfigUser {
 	userMap := make(map[string]KubeConfigUser)
 
 	for _, user := range k.Users {

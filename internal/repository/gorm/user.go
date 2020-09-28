@@ -34,6 +34,15 @@ func (repo *UserRepository) ReadUser(id uint) (*models.User, error) {
 	return user, nil
 }
 
+// ReadUserByEmail finds a single user based on their unique email
+func (repo *UserRepository) ReadUserByEmail(email string) (*models.User, error) {
+	user := &models.User{}
+	if err := repo.db.Where("email = ?", email).First(&user).Error; err != nil {
+		return nil, err
+	}
+	return user, nil
+}
+
 // UpdateUser modifies an existing User in the database
 func (repo *UserRepository) UpdateUser(user *models.User) (*models.User, error) {
 	if err := repo.db.First(&models.User{}, user.ID).Updates(user).Error; err != nil {

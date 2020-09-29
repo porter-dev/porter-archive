@@ -10,6 +10,7 @@ import (
 	"github.com/porter-dev/porter/server/api"
 
 	adapter "github.com/porter-dev/porter/internal/adapter"
+	sessionstore "github.com/porter-dev/porter/internal/auth/"
 	"github.com/porter-dev/porter/internal/config"
 	lr "github.com/porter-dev/porter/internal/logger"
 	vr "github.com/porter-dev/porter/internal/validator"
@@ -27,10 +28,13 @@ func main() {
 		return
 	}
 
+	key = []byte("secret") // TODO: change to os.Getenv("SESSION_KEY")
+	store, _ = sessionstore.NewStore(db, key)
+
 	validator := vr.New()
 	repo := gorm.NewRepository(db)
 
-	a := api.New(logger, repo, validator)
+	a := api.New(logger, repo, validator, store)
 
 	appRouter := router.New(a)
 

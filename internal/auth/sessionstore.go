@@ -21,7 +21,7 @@ import (
 
 // structs
 
-// PGStore is not exported.
+// PGStore is a wrapper around gorilla/sessions store.
 type PGStore struct {
 	Codecs  []securecookie.Codec
 	Options *sessions.Options

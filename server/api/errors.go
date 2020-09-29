@@ -2,15 +2,17 @@ package api
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 
 	"github.com/go-playground/validator/v10"
+	"gorm.io/gorm"
 )
 
 const (
 	appErrDataWrite    = "data write error"
+	appErrDataRead     = "data read error"
 	appErrFormDecoding = "could not process JSON body"
+	appErrReadNotFound = "could not find requested object"
 )
 
 // HTTPError is the object returned when the API encounters an error: this
@@ -23,13 +25,6 @@ type HTTPError struct {
 // ErrorCode is a custom Porter error code, useful for frontend messages
 type ErrorCode int64
 
-// Enumeration of API error codes, represented as int64
-const (
-	ErrUserDecode ErrorCode = iota
-	ErrUserValidateFields
-	ErrUserDataWrite
-)
-
 // ------------------------ Error helper functions ------------------------ //
 
 // sendExternalError marshals an HTTPError into JSON: this function will return an error if
@@ -37,11 +32,16 @@ const (
 // client.
 //
 // It then logs it via the app.logger and sends a formatted error to the client.
-func (app *App) sendExternalError(err error, errExt HTTPError, w http.ResponseWriter) (intErr error) {
+func (app *App) sendExternalError(
+	err error,
+	code int,
+	errExt HTTPError,
+	w http.ResponseWriter,
+) (intErr error) {
 	respBytes, newErr := json.Marshal(errExt)
 
 	if newErr != nil {
-		app.handleErrorInternalError(newErr, w)
+		app.handleErrorInternal(newErr, w)
 		return newErr
 	}
 
@@ -51,7 +51,8 @@ func (app *App) sendExternalError(err error, errExt HTTPError, w http.ResponseWr
 		Str("errExt", respBody).
 		Msg("")
 
-	fmt.Fprintf(w, respBody)
+	w.WriteHeader(code)
+	w.Write(respBytes)
 
 	return nil
 }
@@ -65,11 +66,7 @@ func (app *App) handleErrorFormDecoding(err error, code ErrorCode, w http.Respon
 		Errors: []string{appErrFormDecoding},
 	}
 
-	intErr := app.sendExternalError(err, errExt, w)
-
-	if intErr == nil {
-		w.WriteHeader(http.StatusUnprocessableEntity)
-	}
+	app.sendExternalError(err, http.StatusBadRequest, errExt, w)
 }
 
 // handleErrorFormValidation handles an error in the validation of form fields, and
@@ -90,31 +87,55 @@ func (app *App) handleErrorFormValidation(err error, code ErrorCode, w http.Resp
 		Errors: res,
 	}
 
-	intErr := app.sendExternalError(err, errExt, w)
-
-	if intErr == nil {
-		w.WriteHeader(http.StatusUnprocessableEntity)
-	}
+	app.sendExternalError(err, http.StatusUnprocessableEntity, errExt, w)
 }
 
-// handleErrorDataWrite handles a database write error
+// handleErrorRead handles an error in reading a record from the DB. If the record is
+// not found, the error message is more descriptive; otherwise, a generic dataRead
+// error is sent.
+func (app *App) handleErrorRead(err error, code ErrorCode, w http.ResponseWriter) {
+	// first check if the error is RecordNotFound -- send a more descriptive
+	// message if that is the case
+	if err == gorm.ErrRecordNotFound {
+		errExt := HTTPError{
+			Code:   code,
+			Errors: []string{appErrReadNotFound},
+		}
+
+		app.sendExternalError(err, http.StatusNotFound, errExt, w)
+
+		return
+	}
+
+	app.handleErrorDataRead(err, code, w)
+}
+
+// handleErrorDataWrite handles a database write error due to either a connection
+// error with the database or failure to write that wasn't caught by the validators
 func (app *App) handleErrorDataWrite(err error, code ErrorCode, w http.ResponseWriter) {
 	errExt := HTTPError{
 		Code:   code,
 		Errors: []string{appErrDataWrite},
 	}
 
-	intErr := app.sendExternalError(err, errExt, w)
+	app.sendExternalError(err, http.StatusInternalServerError, errExt, w)
+}
 
-	if intErr == nil {
-		w.WriteHeader(http.StatusUnprocessableEntity)
+// handleErrorDataRead handles a database read error due to an internal error, such as
+// the database connection or gorm internals
+func (app *App) handleErrorDataRead(err error, code ErrorCode, w http.ResponseWriter) {
+	errExt := HTTPError{
+		Code:   code,
+		Errors: []string{appErrDataRead},
 	}
+
+	app.sendExternalError(err, http.StatusInternalServerError, errExt, w)
 }
 
 // handleErrorInternalError is a catch-all for internal errors that occur during the
 // processing of a request
-func (app *App) handleErrorInternalError(err error, w http.ResponseWriter) {
+func (app *App) handleErrorInternal(err error, w http.ResponseWriter) {
 	app.logger.Warn().Err(err).Msg("")
 	w.WriteHeader(http.StatusInternalServerError)
-	fmt.Fprintf(w, `{"error": "Internal server error"}`)
+	w.Write([]byte(`{"error": "Internal server error"}`))
 }

@@ -1,3 +1,18 @@
+**Table of Contents:**
+
+- [Overview](#overview)
+- [Global Errors](#global-errors)
+  - [`ErrorDataWrite`](#errordatawrite)
+  - [`ErrorDataRead`](#errordataread)
+  - [`ErrorInternal`](#errorinternal)
+- [`/api/users`](#apiusers)
+  - [`GET /api/users/{id}`](#get-apiusersid)
+  - [`GET /api/users/{id}/clusters`](#get-apiusersidclusters)
+  - [`GET /api/users/{id}/clusters/all`](#get-apiusersidclustersall)
+  - [`POST /api/users`](#post-apiusers)
+  - [`PUT /api/users/{id}`](#put-apiusersid)
+  - [`DELETE /api/users/{id}`](#delete-apiusersid)
+
 ### Overview
 
 This is the API specification that the Go server is implementing. 
@@ -33,7 +48,7 @@ Internal server errors are shared across all endpoints and are listed in the [Gl
 {
 	"Code": 500,
 	"Errors": [{
-		"Could not write to database"
+		"could not write to database"
 	}],
 }
 ```
@@ -50,7 +65,7 @@ Internal server errors are shared across all endpoints and are listed in the [Gl
 {
 	"Code": 500,
 	"Errors": [{
-		"Could not read from database"
+		"could not read from database"
 	}],
 }
 ```
@@ -67,7 +82,7 @@ Internal server errors are shared across all endpoints and are listed in the [Gl
 {
 	"Code": 500,
 	"Errors": [{
-		"Internal server error"
+		"internal server error"
 	}],
 }
 ```
@@ -106,6 +121,15 @@ User{
 
 **Errors:**
 
+- User not found
+  - Status Code: `404`
+  - Request Body:
+    ```json
+    {
+        "code":602,
+        "errors":["could not find requested object"]
+    }
+    ```
 - Invalid `id` URL parameter
   - Status Code: `400`
   - Request Body:
@@ -144,7 +168,15 @@ User{
 **Successful Status Code**: `200`
 
 **Errors:** 
-
+- User not found
+  - Status Code: `404`
+  - Request Body:
+    ```json
+    {
+        "code":602,
+        "errors":["could not find requested object"]
+    }
+    ```
 - Invalid `id` URL parameter
   - Status Code: `400`
   - Request Body:
@@ -183,7 +215,15 @@ User{
 **Successful Status Code**: `200`
 
 **Errors:** 
-
+- User not found
+  - Status Code: `404`
+  - Request Body:
+    ```json
+    {
+        "code":602,
+        "errors":["could not find requested object"]
+    }
+    ```
 - Invalid `id` URL parameter
   - Status Code: `400`
   - Request Body:

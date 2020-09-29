@@ -1,10 +1,11 @@
 package forms
 
 import (
-	"gorm.io/gorm"
 	"github.com/porter-dev/porter/internal/kubernetes"
 	"github.com/porter-dev/porter/internal/models"
+	"golang.org/x/crypto/bcrypt"
 	"gopkg.in/yaml.v2"
+	"gorm.io/gorm"
 )
 
 // WriteUserForm is a generic form for write operations to the User model
@@ -23,9 +24,15 @@ type CreateUserForm struct {
 //
 // TODO -- PASSWORD HASHING HERE
 func (cuf *CreateUserForm) ToUser() (*models.User, error) {
+	hashed, err := bcrypt.GenerateFromPassword([]byte(cuf.Password), 8)
+
+	if err != nil {
+		return nil, err
+	}
+
 	return &models.User{
 		Email:    cuf.Email,
-		Password: cuf.Password,
+		Password: string(hashed),
 	}, nil
 }
 

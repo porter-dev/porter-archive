@@ -32,6 +32,18 @@ func (app *App) HandleCreateUser(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// HandleLoginUser checks the request header for cookie and validates the user.
+func (app *App) HandleLoginUser(w http.ResponseWriter, r *http.Request) {
+	session, _ := app.store.Get(r, "cookie-name")
+
+	// Authentication goes here
+	// ...
+
+	// Set user as authenticated
+	session.Values["authenticated"] = true
+	session.Save(r, w)
+}
+
 // HandleReadUser returns an externalized User (models.UserExternal)
 // based on an ID
 func (app *App) HandleReadUser(w http.ResponseWriter, r *http.Request) {

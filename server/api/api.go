@@ -4,6 +4,7 @@ import (
 	"github.com/go-playground/locales/en"
 	ut "github.com/go-playground/universal-translator"
 	"github.com/go-playground/validator/v10"
+	sessionstore "github.com/porter-dev/porter/internal/auth"
 	lr "github.com/porter-dev/porter/internal/logger"
 	"github.com/porter-dev/porter/internal/repository"
 )
@@ -14,6 +15,7 @@ type App struct {
 	logger     *lr.Logger
 	repo       *repository.Repository
 	validator  *validator.Validate
+	store      *sessionstore.PGStore
 	translator *ut.Translator
 }
 
@@ -22,6 +24,7 @@ func New(
 	logger *lr.Logger,
 	repo *repository.Repository,
 	validator *validator.Validate,
+	store *sessionstore.PGStore,
 ) *App {
 	// for now, will just support the english translator from the
 	// validator/translations package
@@ -33,6 +36,7 @@ func New(
 		logger:     logger,
 		repo:       repo,
 		validator:  validator,
+		store:      store,
 		translator: &trans,
 	}
 }

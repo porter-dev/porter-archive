@@ -78,6 +78,7 @@ func (app *App) HandleLoginUser(w http.ResponseWriter, r *http.Request) {
 	// Set user as authenticated
 	session.Values["authenticated"] = true
 	session.Save(r, w)
+	w.WriteHeader(http.StatusOK)
 }
 
 // HandleReadUser returns an externalized User (models.UserExternal)

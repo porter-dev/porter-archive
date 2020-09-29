@@ -101,8 +101,7 @@ func (app *App) HandleDeleteUser(w http.ResponseWriter, r *http.Request) {
 
 	// TODO -- HASH AND VERIFY PASSWORD BEFORE USER DELETION
 	form := &forms.DeleteUserForm{
-		ID:       uint(id),
-		Password: "testing",
+		ID: uint(id),
 	}
 
 	user, err := app.writeUser(form, app.repo.User.DeleteUser, w, r)

@@ -23,7 +23,7 @@ var (
 	ErrorDataWrite = HTTPError{
 		Code: 500,
 		Errors: []string{
-			"Could not write to database",
+			"could not write to database",
 		},
 	}
 
@@ -31,7 +31,7 @@ var (
 	ErrorDataRead = HTTPError{
 		Code: 500,
 		Errors: []string{
-			"Could not read from database",
+			"could not read from database",
 		},
 	}
 
@@ -39,7 +39,7 @@ var (
 	ErrorInternal = HTTPError{
 		Code: 500,
 		Errors: []string{
-			"Internal server error",
+			"internal server error",
 		},
 	}
 )
@@ -76,7 +76,7 @@ func (app *App) sendExternalError(
 func (app *App) handleErrorFormDecoding(err error, code ErrorCode, w http.ResponseWriter) {
 	errExt := HTTPError{
 		Code:   code,
-		Errors: []string{"Could not process request"},
+		Errors: []string{"could not process request"},
 	}
 
 	app.sendExternalError(err, http.StatusBadRequest, errExt, w)
@@ -112,7 +112,7 @@ func (app *App) handleErrorRead(err error, code ErrorCode, w http.ResponseWriter
 	if err == gorm.ErrRecordNotFound {
 		errExt := HTTPError{
 			Code:   code,
-			Errors: []string{"Could not find requested object"},
+			Errors: []string{"could not find requested object"},
 		}
 
 		app.sendExternalError(err, http.StatusNotFound, errExt, w)

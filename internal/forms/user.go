@@ -1,10 +1,9 @@
 package forms
 
 import (
-	"gorm.io/gorm"
 	"github.com/porter-dev/porter/internal/kubernetes"
 	"github.com/porter-dev/porter/internal/models"
-	"gopkg.in/yaml.v2"
+	"gorm.io/gorm"
 )
 
 // WriteUserForm is a generic form for write operations to the User model
@@ -42,15 +41,12 @@ type UpdateUserForm struct {
 // ToUser converts an UpdateUserForm to models.User by parsing the kubeconfig
 // and the allowed clusters to generate a list of ClusterConfigs.
 func (uuf *UpdateUserForm) ToUser() (*models.User, error) {
-	conf := kubernetes.KubeConfig{}
 	rawBytes := []byte(uuf.RawKubeConfig)
-	err := yaml.Unmarshal(rawBytes, &conf)
+	clusters, err := kubernetes.GetAllowedClusterConfigsFromBytes(rawBytes, uuf.AllowedClusters)
 
 	if err != nil {
 		return nil, err
 	}
-
-	clusters := conf.ToClusterConfigs(uuf.AllowedClusters)
 
 	return &models.User{
 		Model: gorm.Model{

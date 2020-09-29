@@ -42,16 +42,50 @@ func initApi(canQuery bool) (*api.App, *repository.Repository) {
 	return api.New(logger, repo, validator), repo
 }
 
+func testUserRequest(t *testing.T, c userTest) {
+	// create a mock API
+	api, repo := initApi(c.canQuery)
+	r := router.New(api)
+
+	if c.init != nil {
+		c.init(repo)
+	}
+
+	req, err := http.NewRequest(
+		c.method,
+		c.endpoint,
+		strings.NewReader(c.body),
+	)
+
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	rr := httptest.NewRecorder()
+	r.ServeHTTP(rr, req)
+
+	// first, check that the status matches
+	if status := rr.Code; status != c.expStatus {
+		t.Errorf("%s, handler returned wrong status code: got %v want %v",
+			c.msg, status, c.expStatus)
+	}
+
+	// if there's a validator, call it
+	for _, validate := range c.validators {
+		validate(rr, c, r, t)
+	}
+}
+
 type userTest struct {
 	init func(repo *repository.Repository)
 	msg,
 	method,
 	endpoint,
 	body string
-	expStatus int
-	expBody   string
-	canQuery  bool
-	validate  func(r *chi.Mux, t *testing.T)
+	expStatus  int
+	expBody    string
+	canQuery   bool
+	validators []func(rr *httptest.ResponseRecorder, c userTest, r *chi.Mux, t *testing.T)
 }
 
 var createUserTests = []userTest{
@@ -78,6 +112,9 @@ var createUserTests = []userTest{
 		expStatus: http.StatusUnprocessableEntity,
 		expBody:   `{"code":601,"errors":["email validation failed"]}`,
 		canQuery:  true,
+		validators: []func(rr *httptest.ResponseRecorder, c userTest, r *chi.Mux, t *testing.T){
+			BasicBodyValidator,
+		},
 	},
 	userTest{
 		msg:      "Create user missing field",
@@ -89,6 +126,9 @@ var createUserTests = []userTest{
 		expStatus: http.StatusUnprocessableEntity,
 		expBody:   `{"code":601,"errors":["required validation failed"]}`,
 		canQuery:  true,
+		validators: []func(rr *httptest.ResponseRecorder, c userTest, r *chi.Mux, t *testing.T){
+			BasicBodyValidator,
+		},
 	},
 	userTest{
 		msg:      "Create user cannot write to db",
@@ -101,6 +141,9 @@ var createUserTests = []userTest{
 		expStatus: http.StatusInternalServerError,
 		expBody:   `{"code":500,"errors":["could not read from database"]}`,
 		canQuery:  false,
+		validators: []func(rr *httptest.ResponseRecorder, c userTest, r *chi.Mux, t *testing.T){
+			BasicBodyValidator,
+		},
 	},
 	userTest{
 		init: func(repo *repository.Repository) {
@@ -119,41 +162,15 @@ var createUserTests = []userTest{
 		expStatus: http.StatusUnprocessableEntity,
 		expBody:   `{"code":601,"errors":["email already taken"]}`,
 		canQuery:  true,
+		validators: []func(rr *httptest.ResponseRecorder, c userTest, r *chi.Mux, t *testing.T){
+			BasicBodyValidator,
+		},
 	},
 }
 
 func TestHandleCreateUser(t *testing.T) {
 	for _, c := range createUserTests {
-		// create a mock API
-		api, repo := initApi(c.canQuery)
-		r := router.New(api)
-
-		if c.init != nil {
-			c.init(repo)
-		}
-
-		req, err := http.NewRequest(
-			c.method,
-			c.endpoint,
-			strings.NewReader(c.body),
-		)
-
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		rr := httptest.NewRecorder()
-		r.ServeHTTP(rr, req)
-
-		if status := rr.Code; status != c.expStatus {
-			t.Errorf("%s, handler returned wrong status code: got %v want %v",
-				c.msg, status, c.expStatus)
-		}
-
-		if body := rr.Body.String(); body != c.expBody {
-			t.Errorf("%s, handler returned wrong body: got %v want %v",
-				c.msg, body, c.expBody)
-		}
+		testUserRequest(t, c)
 	}
 }
 
@@ -181,6 +198,9 @@ var readUserTests = []userTest{
 		expStatus: http.StatusOK,
 		expBody:   `{"id":1,"email":"belanger@getporter.dev","clusters":[{"name":"cluster-test","server":"https://localhost","context":"context-test","user":"test-admin"}],"rawKubeConfig":"apiVersion: v1\nkind: Config\npreferences: {}\ncurrent-context: default\nclusters:\n- cluster:\n    server: https://localhost\n  name: cluster-test\ncontexts:\n- context:\n    cluster: cluster-test\n    user: test-admin\n  name: context-test\nusers:\n- name: test-admin"}`,
 		canQuery:  true,
+		validators: []func(rr *httptest.ResponseRecorder, c userTest, r *chi.Mux, t *testing.T){
+			UserModelBodyValidator,
+		},
 	},
 	userTest{
 		init: func(repo *repository.Repository) {
@@ -196,6 +216,9 @@ var readUserTests = []userTest{
 		expStatus: http.StatusBadRequest,
 		expBody:   `{"code":600,"errors":["could not process request"]}`,
 		canQuery:  true,
+		validators: []func(rr *httptest.ResponseRecorder, c userTest, r *chi.Mux, t *testing.T){
+			BasicBodyValidator,
+		},
 	},
 	userTest{
 		init: func(repo *repository.Repository) {
@@ -211,56 +234,80 @@ var readUserTests = []userTest{
 		expStatus: http.StatusNotFound,
 		expBody:   `{"code":602,"errors":["could not find requested object"]}`,
 		canQuery:  true,
+		validators: []func(rr *httptest.ResponseRecorder, c userTest, r *chi.Mux, t *testing.T){
+			BasicBodyValidator,
+		},
 	},
 }
 
 func TestHandleReadUser(t *testing.T) {
 	for _, c := range readUserTests {
-		// create a mock API
-		api, repo := initApi(c.canQuery)
-		r := router.New(api)
+		testUserRequest(t, c)
+	}
+}
 
-		if c.init != nil {
-			c.init(repo)
-		}
+var readUserClustersTests = []userTest{
+	userTest{
+		init: func(repo *repository.Repository) {
+			repo.User.CreateUser(&models.User{
+				Email:    "belanger@getporter.dev",
+				Password: "hello",
+				Clusters: []models.ClusterConfig{
+					models.ClusterConfig{
+						Name:    "cluster-test",
+						Server:  "https://localhost",
+						Context: "context-test",
+						User:    "test-admin",
+					},
+				},
+				RawKubeConfig: []byte("apiVersion: v1\nkind: Config\npreferences: {}\ncurrent-context: default\nclusters:\n- cluster:\n    server: https://localhost\n  name: cluster-test\ncontexts:\n- context:\n    cluster: cluster-test\n    user: test-admin\n  name: context-test\nusers:\n- name: test-admin"),
+			})
+		},
+		msg:       "Read user successful",
+		method:    "GET",
+		endpoint:  "/api/users/1/clusters",
+		body:      "",
+		expStatus: http.StatusOK,
+		expBody:   `[{"name":"cluster-test","server":"https://localhost","context":"context-test","user":"test-admin"}]`,
+		canQuery:  true,
+		validators: []func(rr *httptest.ResponseRecorder, c userTest, r *chi.Mux, t *testing.T){
+			ClusterBodyValidator,
+		},
+	},
+}
 
-		req, err := http.NewRequest(
-			c.method,
-			c.endpoint,
-			strings.NewReader(c.body),
-		)
+func TestHandleReadUserClusters(t *testing.T) {
+	for _, c := range readUserClustersTests {
+		testUserRequest(t, c)
+	}
+}
 
-		if err != nil {
-			t.Fatal(err)
-		}
+var readUserClustersAllTests = []userTest{
+	userTest{
+		init: func(repo *repository.Repository) {
+			repo.User.CreateUser(&models.User{
+				Email:         "belanger@getporter.dev",
+				Password:      "hello",
+				Clusters:      []models.ClusterConfig{},
+				RawKubeConfig: []byte("apiVersion: v1\nkind: Config\npreferences: {}\ncurrent-context: default\nclusters:\n- cluster:\n    server: https://localhost\n  name: cluster-test\ncontexts:\n- context:\n    cluster: cluster-test\n    user: test-admin\n  name: context-test\nusers:\n- name: test-admin"),
+			})
+		},
+		msg:       "Read user successful",
+		method:    "GET",
+		endpoint:  "/api/users/1/clusters/all",
+		body:      "",
+		expStatus: http.StatusOK,
+		expBody:   `[{"name":"cluster-test","server":"https://localhost","context":"context-test","user":"test-admin"}]`,
+		canQuery:  true,
+		validators: []func(rr *httptest.ResponseRecorder, c userTest, r *chi.Mux, t *testing.T){
+			ClusterBodyValidator,
+		},
+	},
+}
 
-		rr := httptest.NewRecorder()
-		r.ServeHTTP(rr, req)
-
-		if status := rr.Code; status != c.expStatus {
-			t.Errorf("%s, handler returned wrong status code: got %v want %v",
-				c.msg, status, c.expStatus)
-		}
-
-		if status := rr.Code; status == 200 {
-			// if status is expected to be 200, parse the body for UserExternal
-			gotBody := &models.UserExternal{}
-			expBody := &models.UserExternal{}
-
-			json.Unmarshal(rr.Body.Bytes(), gotBody)
-			json.Unmarshal([]byte(c.expBody), expBody)
-
-			if !reflect.DeepEqual(gotBody, expBody) {
-				t.Errorf("%s, handler returned wrong body: got %v want %v",
-					c.msg, gotBody, expBody)
-			}
-		} else {
-			// if status is expected to not be 200, look for error
-			if body := rr.Body.String(); body != c.expBody {
-				t.Errorf("%s, handler returned wrong body: got %v want %v",
-					c.msg, body, c.expBody)
-			}
-		}
+func TestHandleReadUserClustersAll(t *testing.T) {
+	for _, c := range readUserClustersAllTests {
+		testUserRequest(t, c)
 	}
 }
 
@@ -279,30 +326,32 @@ var updateUserTests = []userTest{
 		expStatus: http.StatusNoContent,
 		expBody:   "",
 		canQuery:  true,
-		validate: func(r *chi.Mux, t *testing.T) {
-			req, err := http.NewRequest(
-				"GET",
-				"/api/users/1",
-				strings.NewReader(""),
-			)
+		validators: []func(rr *httptest.ResponseRecorder, c userTest, r *chi.Mux, t *testing.T){
+			func(rr *httptest.ResponseRecorder, c userTest, r *chi.Mux, t *testing.T) {
+				req, err := http.NewRequest(
+					"GET",
+					"/api/users/1",
+					strings.NewReader(""),
+				)
 
-			if err != nil {
-				t.Fatal(err)
-			}
+				if err != nil {
+					t.Fatal(err)
+				}
 
-			rr := httptest.NewRecorder()
-			r.ServeHTTP(rr, req)
+				rr2 := httptest.NewRecorder()
+				r.ServeHTTP(rr2, req)
 
-			gotBody := &models.UserExternal{}
-			expBody := &models.UserExternal{}
+				gotBody := &models.UserExternal{}
+				expBody := &models.UserExternal{}
 
-			json.Unmarshal(rr.Body.Bytes(), gotBody)
-			json.Unmarshal([]byte(`{"id":1,"email":"belanger@getporter.dev","clusters":[],"rawKubeConfig":"apiVersion: v1\nkind: Config\npreferences: {}\ncurrent-context: default\nclusters:\n- cluster:\n    server: https://localhost\n  name: cluster-test\ncontexts:\n- context:\n    cluster: cluster-test\n    user: test-admin\n  name: context-test\nusers:\n- name: test-admin"}`), expBody)
+				json.Unmarshal(rr2.Body.Bytes(), gotBody)
+				json.Unmarshal([]byte(`{"id":1,"email":"belanger@getporter.dev","clusters":[],"rawKubeConfig":"apiVersion: v1\nkind: Config\npreferences: {}\ncurrent-context: default\nclusters:\n- cluster:\n    server: https://localhost\n  name: cluster-test\ncontexts:\n- context:\n    cluster: cluster-test\n    user: test-admin\n  name: context-test\nusers:\n- name: test-admin"}`), expBody)
 
-			if !reflect.DeepEqual(gotBody, expBody) {
-				t.Errorf("%s, handler returned wrong body: got %v want %v",
-					"validator failed", gotBody, expBody)
-			}
+				if !reflect.DeepEqual(gotBody, expBody) {
+					t.Errorf("%s, handler returned wrong body: got %v want %v",
+						"validator failed", gotBody, expBody)
+				}
+			},
 		},
 	},
 	userTest{
@@ -319,45 +368,15 @@ var updateUserTests = []userTest{
 		expStatus: http.StatusBadRequest,
 		expBody:   `{"code":600,"errors":["could not process request"]}`,
 		canQuery:  true,
+		validators: []func(rr *httptest.ResponseRecorder, c userTest, r *chi.Mux, t *testing.T){
+			BasicBodyValidator,
+		},
 	},
 }
 
 func TestHandleUpdateUser(t *testing.T) {
 	for _, c := range updateUserTests {
-		// create a mock API
-		api, repo := initApi(c.canQuery)
-		r := router.New(api)
-
-		if c.init != nil {
-			c.init(repo)
-		}
-
-		req, err := http.NewRequest(
-			c.method,
-			c.endpoint,
-			strings.NewReader(c.body),
-		)
-
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		rr := httptest.NewRecorder()
-		r.ServeHTTP(rr, req)
-
-		if status := rr.Code; status != c.expStatus {
-			t.Errorf("%s, handler returned wrong status code: got %v want %v",
-				c.msg, status, c.expStatus)
-		}
-
-		if body := rr.Body.String(); body != c.expBody {
-			t.Errorf("%s, handler returned wrong body: got %v want %v",
-				c.msg, body, c.expBody)
-		}
-
-		if c.validate != nil {
-			c.validate(r, t)
-		}
+		testUserRequest(t, c)
 	}
 }
 
@@ -376,74 +395,78 @@ var deleteUserTests = []userTest{
 		expStatus: http.StatusNoContent,
 		expBody:   "",
 		canQuery:  true,
-		validate: func(r *chi.Mux, t *testing.T) {
-			req, err := http.NewRequest(
-				"GET",
-				"/api/users/1",
-				strings.NewReader(""),
-			)
+		validators: []func(rr *httptest.ResponseRecorder, c userTest, r *chi.Mux, t *testing.T){
+			func(rr *httptest.ResponseRecorder, c userTest, r *chi.Mux, t *testing.T) {
+				req, err := http.NewRequest(
+					"GET",
+					"/api/users/1",
+					strings.NewReader(""),
+				)
 
-			if err != nil {
-				t.Fatal(err)
-			}
+				if err != nil {
+					t.Fatal(err)
+				}
 
-			rr := httptest.NewRecorder()
-			r.ServeHTTP(rr, req)
+				rr2 := httptest.NewRecorder()
 
-			gotBody := &models.UserExternal{}
-			expBody := &models.UserExternal{}
+				r.ServeHTTP(rr2, req)
 
-			if status := rr.Code; status != 404 {
-				t.Errorf("DELETE user validation, handler returned wrong status code: got %v want %v",
-					status, 404)
-			}
+				gotBody := &models.UserExternal{}
+				expBody := &models.UserExternal{}
 
-			json.Unmarshal(rr.Body.Bytes(), gotBody)
-			json.Unmarshal([]byte(`{"code":602,"errors":["could not find requested object"]}`), expBody)
+				if status := rr2.Code; status != 404 {
+					t.Errorf("DELETE user validation, handler returned wrong status code: got %v want %v",
+						status, 404)
+				}
 
-			if !reflect.DeepEqual(gotBody, expBody) {
-				t.Errorf("%s, handler returned wrong body: got %v want %v",
-					"validator failed", gotBody, expBody)
-			}
+				json.Unmarshal(rr2.Body.Bytes(), gotBody)
+				json.Unmarshal([]byte(`{"code":602,"errors":["could not find requested object"]}`), expBody)
+
+				if !reflect.DeepEqual(gotBody, expBody) {
+					t.Errorf("%s, handler returned wrong body: got %v want %v",
+						"validator failed", gotBody, expBody)
+				}
+			},
 		},
 	},
 }
 
 func TestHandleDeleteUser(t *testing.T) {
 	for _, c := range deleteUserTests {
-		// create a mock API
-		api, repo := initApi(c.canQuery)
-		r := router.New(api)
+		testUserRequest(t, c)
+	}
+}
 
-		if c.init != nil {
-			c.init(repo)
-		}
+func BasicBodyValidator(rr *httptest.ResponseRecorder, c userTest, r *chi.Mux, t *testing.T) {
+	if body := rr.Body.String(); body != c.expBody {
+		t.Errorf("%s, handler returned wrong body: got %v want %v",
+			c.msg, body, c.expBody)
+	}
+}
 
-		req, err := http.NewRequest(
-			c.method,
-			c.endpoint,
-			strings.NewReader(c.body),
-		)
+func UserModelBodyValidator(rr *httptest.ResponseRecorder, c userTest, r *chi.Mux, t *testing.T) {
+	gotBody := &models.UserExternal{}
+	expBody := &models.UserExternal{}
 
-		if err != nil {
-			t.Fatal(err)
-		}
+	json.Unmarshal(rr.Body.Bytes(), gotBody)
+	json.Unmarshal([]byte(c.expBody), expBody)
 
-		rr := httptest.NewRecorder()
-		r.ServeHTTP(rr, req)
+	if !reflect.DeepEqual(gotBody, expBody) {
+		t.Errorf("%s, handler returned wrong body: got %v want %v",
+			c.msg, gotBody, expBody)
+	}
+}
 
-		if status := rr.Code; status != c.expStatus {
-			t.Errorf("%s, handler returned wrong status code: got %v want %v",
-				c.msg, status, c.expStatus)
-		}
+func ClusterBodyValidator(rr *httptest.ResponseRecorder, c userTest, r *chi.Mux, t *testing.T) {
+	// if status is expected to be 200, parse the body for UserExternal
+	gotBody := &[]models.ClusterConfigExternal{}
+	expBody := &[]models.ClusterConfigExternal{}
 
-		if body := rr.Body.String(); body != c.expBody {
-			t.Errorf("%s, handler returned wrong body: got %v want %v",
-				c.msg, body, c.expBody)
-		}
+	json.Unmarshal(rr.Body.Bytes(), gotBody)
+	json.Unmarshal([]byte(c.expBody), expBody)
 
-		if c.validate != nil {
-			c.validate(r, t)
-		}
+	if !reflect.DeepEqual(gotBody, expBody) {
+		t.Errorf("%s, handler returned wrong body: got %v want %v",
+			c.msg, gotBody, expBody)
 	}
 }

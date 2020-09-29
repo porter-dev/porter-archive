@@ -346,6 +346,16 @@ User{
         "errors":["invalid password"]
     }
     ```
+    
+- Missing field
+  - Status Code: `422`
+  - Request Body:
+    ```json
+    {
+        "code":601,
+        "errors":["required validation failed"]
+    }`
+    ```
 
 - Invalid `id` URL parameter
   - Status Code: `400`

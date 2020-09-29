@@ -185,7 +185,7 @@ var readUserTests = []userTest{
 		endpoint:  "/api/users/aldkfjas",
 		body:      "",
 		expStatus: http.StatusBadRequest,
-		expBody:   `{"code":600,"errors":["Could not process JSON body"]}`,
+		expBody:   `{"code":600,"errors":["Could not process request"]}`,
 		canQuery:  true,
 	},
 	userTest{
@@ -200,7 +200,7 @@ var readUserTests = []userTest{
 		endpoint:  "/api/users/2",
 		body:      "",
 		expStatus: http.StatusNotFound,
-		expBody:   `{"code":603,"errors":["Could not find requested object"]}`,
+		expBody:   `{"code":602,"errors":["Could not find requested object"]}`,
 		canQuery:  true,
 	},
 }

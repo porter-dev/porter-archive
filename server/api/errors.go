@@ -76,7 +76,7 @@ func (app *App) sendExternalError(
 func (app *App) handleErrorFormDecoding(err error, code ErrorCode, w http.ResponseWriter) {
 	errExt := HTTPError{
 		Code:   code,
-		Errors: []string{"Could not process JSON body"},
+		Errors: []string{"Could not process request"},
 	}
 
 	app.sendExternalError(err, http.StatusBadRequest, errExt, w)

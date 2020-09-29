@@ -94,6 +94,113 @@ User{
 
 **Errors:**
 
+- Invalid `id` URL parameter
+  - Status Code: `400`
+  - Request Body:
+    ```json
+    {
+        "code":600,
+        "errors":["could not process request"]
+    }
+    ```
+
+#### `GET /api/users/{id}/clusters`
+
+**Description:** Retrieves the clusters that are currently linked to a User account. 
+
+**URL parameters:** 
+
+- `id` The user's ID. 
+
+**Query parameters:** N/A
+
+**Request Body**: N/A
+
+**Successful Response Body**: 
+
+```js
+{
+    "clusters": []ClusterConfig{
+        "name": String,
+        "server": String,
+        "context": String,
+        "user": String,
+    },
+}
+```
+
+**Errors:** 
+
+- Invalid `id` URL parameter
+  - Status Code: `400`
+  - Request Body:
+    ```json
+    {
+        "code":600,
+        "errors":["could not process request"]
+    }
+    ```
+
+#### `GET /api/users/{id}/clusters/all`
+
+**Description:** Parses all clusters from the user's kubeconfig and returns a list of viable cluster configs. 
+
+**URL parameters:** 
+
+- `id` The user's ID. 
+
+**Query parameters:** N/A
+
+**Request Body**: N/A
+
+**Successful Response Body**: 
+
+```js
+{
+    "clusters": []ClusterConfig{
+        "name": String,
+        "server": String,
+        "context": String,
+        "user": String,
+    },
+}
+```
+
+**Errors:** 
+
+- Invalid `id` URL parameter
+  - Status Code: `400`
+  - Request Body:
+    ```json
+    {
+        "code":600,
+        "errors":["could not process request"]
+    }
+    ```
+
+#### `POST /api/users`
+
+**Description:** Creates a new user with a given email and password.
+
+**URL parameters:** 
+
+- `id` The user's ID. 
+
+**Query parameters:** N/A
+
+**Request Body**: 
+
+```js
+{
+    "email": String,
+    "password": String,
+}
+```
+
+**Successful Response Body**: N/A
+
+**Errors:**
+
 - Invalid email (example: `{"email": "notanemail"}`)
   - Status Code: `422`
   - Request Body:
@@ -124,65 +231,55 @@ User{
     }
     ```
 
-#### `GET /api/users/{id}/clusters`
-
-**Description:** Retrieves the clusters that are currently linked to a User account. 
-
-**URL parameters:** 
-
-- `id` The user's ID. 
-
-**Query parameters:** N/A
-
-**Request Body**: N/A
-
-**Successful Response Body**: 
-
-```js
-{
-    "clusters": []ClusterConfig{
-        "name": String,
-        "server": String,
-        "context": String,
-        "user": String,
-    },
-}
-```
-
-**Errors:** TBD
-
-#### `GET /api/users/{id}/clusters/all`
-
-**Description:** Parses all clusters from the user's kubeconfig and returns a list of viable cluster configs. 
-
-**URL parameters:** 
-
-- `id` The user's ID. 
-
-**Query parameters:** N/A
-
-**Request Body**: N/A
-
-**Response Body**: 
-
-```js
-{
-    "clusters": []ClusterConfig{
-        "name": String,
-        "server": String,
-        "context": String,
-        "user": String,
-    },
-}
-```
-
-**Errors:** TBD
-
-#### `POST /api/users/{id}`
-
-#### `POST /api/users/{id}/clusters`
-
 #### `PUT /api/users/{id}`
 
+**Description:** Updates an existing user
+
+**URL parameters:** 
+
+- `id` The user's ID. 
+
+**Query parameters:** N/A
+
+**Request body:**
+
+**Successful Response Body**: N/A
+
+**Errors:** 
+
+- Invalid `id` URL parameter
+  - Status Code: `400`
+  - Request Body:
+    ```json
+    {
+        "code":600,
+        "errors":["could not process request"]
+    }
+    ```
+
 #### `DELETE /api/users/{id}`
+
+**Description:** Deletes an existing user
+
+**URL parameters:** 
+
+- `id` The user's ID. 
+
+**Query parameters:** N/A
+
+**Request body:**
+
+**Successful Response Body**: N/A
+
+**Errors:** 
+
+- Invalid `id` URL parameter
+  - Status Code: `400`
+  - Request Body:
+    ```json
+    {
+        "code":600,
+        "errors":["could not process request"]
+    }
+    ```
 

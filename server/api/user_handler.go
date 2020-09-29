@@ -47,25 +47,31 @@ func (app *App) HandleCreateUser(w http.ResponseWriter, r *http.Request) {
 // HandleLoginUser checks the request header for cookie and validates the user.
 func (app *App) HandleLoginUser(w http.ResponseWriter, r *http.Request) {
 	session, _ := app.store.Get(r, "cookie-name")
+	form := &forms.LoginUserForm{}
 
-	// read in email and password from request
-	email := chi.URLParam(r, "email")
-	password := chi.URLParam(r, "password")
-
-	// Authentication goes here
-	// Select User by Username (app.repo.User.ReadUserByUsername) and return storedCreds object that has Password.
-	storedUser, readErr := app.repo.User.ReadUserByEmail(email)
-
-	if readErr != nil {
-		// You're not registered error
-		app.logger.Warn().Err(readErr)
-		w.WriteHeader(http.StatusUnauthorized)
+	// decode from JSON to form value
+	if err := json.NewDecoder(r.Body).Decode(form); err != nil {
+		app.handleErrorFormDecoding(err, ErrUserDecode, w)
 		return
 	}
 
-	if err := bcrypt.CompareHashAndPassword([]byte(storedUser.Password), []byte(password)); err != nil {
-		// If the two passwords don't match, return a 401 status
-		w.WriteHeader(http.StatusUnauthorized)
+	storedUser, readErr := app.repo.User.ReadUserByEmail(form.Email)
+
+	if readErr != nil {
+		app.sendExternalError(readErr, http.StatusUnauthorized, HTTPError{
+			Errors: []string{"email not registered"},
+			Code:   http.StatusUnauthorized,
+		}, w)
+
+		return
+	}
+
+	if err := bcrypt.CompareHashAndPassword([]byte(storedUser.Password), []byte(form.Password)); err != nil {
+		app.sendExternalError(readErr, http.StatusUnauthorized, HTTPError{
+			Errors: []string{"incorrect password"},
+			Code:   http.StatusUnauthorized,
+		}, w)
+
 		return
 	}
 

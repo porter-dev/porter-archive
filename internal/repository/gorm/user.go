@@ -35,13 +35,13 @@ func (repo *UserRepository) ReadUser(id uint) (*models.User, error) {
 	return user, nil
 }
 
-// ReadUserByEmail finds a single user based on their Email. Used primarily for Login.
+// ReadUserByEmail finds a single user based on their unique email
 func (repo *UserRepository) ReadUserByEmail(email string) (*models.User, error) {
-	u := &models.User{}
-	if err := repo.db.Where("email = ?", email).First(&u).Error; err != nil {
+	user := &models.User{}
+	if err := repo.db.Where("email = ?", email).First(&user).Error; err != nil {
 		return nil, err
 	}
-	return u, nil
+	return user, nil
 }
 
 // UpdateUser modifies an existing User in the database

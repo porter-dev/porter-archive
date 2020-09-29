@@ -4,7 +4,6 @@ import (
 	"github.com/porter-dev/porter/internal/kubernetes"
 	"github.com/porter-dev/porter/internal/models"
 	"golang.org/x/crypto/bcrypt"
-	"gopkg.in/yaml.v2"
 	"gorm.io/gorm"
 )
 
@@ -34,6 +33,31 @@ func (cuf *CreateUserForm) ToUser() (*models.User, error) {
 	}, nil
 }
 
+// LoginUserForm represents the accepted values for logging a user in
+type LoginUserForm struct {
+	WriteUserForm
+	ID       uint   `form:"required"`
+	Email    string `json:"email" form:"required,max=255,email"`
+	Password string `json:"password" form:"required,max=255"`
+}
+
+// ToUser converts a LoginUserForm to models.User
+func (luf *LoginUserForm) ToUser() (*models.User, error) {
+	hashed, err := bcrypt.GenerateFromPassword([]byte(luf.Password), 8)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &models.User{
+		Model: gorm.Model{
+			ID: luf.ID,
+		},
+		Email:    luf.Email,
+		Password: string(hashed),
+	}, nil
+}
+
 // UpdateUserForm represents the accepted values for updating a user
 //
 // ID is a query parameter, the other two are sent in JSON body
@@ -47,15 +71,12 @@ type UpdateUserForm struct {
 // ToUser converts an UpdateUserForm to models.User by parsing the kubeconfig
 // and the allowed clusters to generate a list of ClusterConfigs.
 func (uuf *UpdateUserForm) ToUser() (*models.User, error) {
-	conf := kubernetes.KubeConfig{}
 	rawBytes := []byte(uuf.RawKubeConfig)
-	err := yaml.Unmarshal(rawBytes, &conf)
+	clusters, err := kubernetes.GetAllowedClusterConfigsFromBytes(rawBytes, uuf.AllowedClusters)
 
 	if err != nil {
 		return nil, err
 	}
-
-	clusters := conf.ToClusterConfigs(uuf.AllowedClusters)
 
 	return &models.User{
 		Model: gorm.Model{

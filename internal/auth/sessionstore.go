@@ -9,14 +9,12 @@ import (
 	"strings"
 	"time"
 
-	"gorm.io/gorm"
-
 	"github.com/gorilla/securecookie"
 	"github.com/gorilla/sessions"
 	"github.com/pkg/errors"
 
 	"github.com/porter-dev/porter/internal/models"
-	rp "github.com/porter-dev/porter/internal/repository/gorm"
+	"github.com/porter-dev/porter/internal/repository"
 )
 
 // structs
@@ -26,7 +24,7 @@ type PGStore struct {
 	Codecs  []securecookie.Codec
 	Options *sessions.Options
 	Path    string
-	DbPool  *gorm.DB
+	Repo    *repository.Repository
 }
 
 // Helpers
@@ -35,8 +33,8 @@ type PGStore struct {
 // If l is 0 there is no limit to the size of a session, use with caution.
 // The default for a new PGStore is 4096. PostgreSQL allows for max
 // value sizes of up to 1GB (http://www.postgresql.org/docs/current/interactive/datatype-character.html)
-func (db *PGStore) MaxLength(l int) {
-	for _, c := range db.Codecs {
+func (store *PGStore) MaxLength(l int) {
+	for _, c := range store.Codecs {
 		if codec, ok := c.(*securecookie.SecureCookie); ok {
 			codec.MaxLength(l)
 		}
@@ -46,11 +44,11 @@ func (db *PGStore) MaxLength(l int) {
 // MaxAge sets the maximum age for the store and the underlying cookie
 // implementation. Individual sessions can be deleted by setting Options.MaxAge
 // = -1 for that session.
-func (db *PGStore) MaxAge(age int) {
-	db.Options.MaxAge = age
+func (store *PGStore) MaxAge(age int) {
+	store.Options.MaxAge = age
 
 	// Set the maxAge for each securecookie instance.
-	for _, codec := range db.Codecs {
+	for _, codec := range store.Codecs {
 		if sc, ok := codec.(*securecookie.SecureCookie); ok {
 			sc.MaxAge(age)
 		}
@@ -59,21 +57,20 @@ func (db *PGStore) MaxAge(age int) {
 
 // load fetches a session by ID from the database and decodes its content
 // into session.Values.
-func (db *PGStore) load(session *sessions.Session) error {
-	repo := rp.NewRepository(db.DbPool)
-	res, err := repo.Session.SelectSession(&models.Session{Key: session.ID})
+func (store *PGStore) load(session *sessions.Session) error {
+	res, err := store.Repo.Session.SelectSession(&models.Session{Key: session.ID})
 
 	if err != nil {
 		return err
 	}
 
-	return securecookie.DecodeMulti(session.Name(), string(res.Data), &session.Values, db.Codecs...)
+	return securecookie.DecodeMulti(session.Name(), string(res.Data), &session.Values, store.Codecs...)
 }
 
 // save writes encoded session.Values to a database record.
 // writes to http_sessions table by default.
-func (db *PGStore) save(session *sessions.Session) error {
-	encoded, err := securecookie.EncodeMulti(session.Name(), session.Values, db.Codecs...)
+func (store *PGStore) save(session *sessions.Session) error {
+	encoded, err := securecookie.EncodeMulti(session.Name(), session.Values, store.Codecs...)
 	if err != nil {
 		return err
 	}
@@ -91,34 +88,34 @@ func (db *PGStore) save(session *sessions.Session) error {
 		}
 	}
 
-	s := models.Session{
+	s := &models.Session{
 		Key:       session.ID,
 		Data:      []byte(encoded),
 		ExpiresAt: expiresOn,
 	}
 
-	repo := rp.NewRepository(db.DbPool)
+	repo := store.Repo
 
 	if session.IsNew {
-		_, createErr := repo.Session.CreateSession(&s)
+		_, createErr := repo.Session.CreateSession(s)
 		return createErr
 	}
 
-	_, updateErr := repo.Session.UpdateSession(&s)
+	_, updateErr := repo.Session.UpdateSession(s)
 	return updateErr
 }
 
 // Implementation of the interface (Get, New, Save)
 
 // NewStore takes an initialized db and session key pairs to create a session-store in postgres db.
-func NewStore(db *gorm.DB, keyPairs ...[]byte) (*PGStore, error) {
+func NewStore(repo *repository.Repository, keyPairs ...[]byte) (*PGStore, error) {
 	dbStore := &PGStore{
 		Codecs: securecookie.CodecsFromPairs(keyPairs...),
 		Options: &sessions.Options{
 			Path:   "/",
 			MaxAge: 86400 * 30,
 		},
-		DbPool: db,
+		Repo: repo,
 	}
 
 	return dbStore, nil
@@ -126,26 +123,26 @@ func NewStore(db *gorm.DB, keyPairs ...[]byte) (*PGStore, error) {
 
 // Get Fetches a session for a given name after it has been added to the
 // registry.
-func (db *PGStore) Get(r *http.Request, name string) (*sessions.Session, error) {
-	return sessions.GetRegistry(r).Get(db, name)
+func (store *PGStore) Get(r *http.Request, name string) (*sessions.Session, error) {
+	return sessions.GetRegistry(r).Get(store, name)
 }
 
 // New returns a new session for the given name without adding it to the registry.
-func (db *PGStore) New(r *http.Request, name string) (*sessions.Session, error) {
-	session := sessions.NewSession(db, name)
+func (store *PGStore) New(r *http.Request, name string) (*sessions.Session, error) {
+	session := sessions.NewSession(store, name)
 	if session == nil {
 		return nil, nil
 	}
 
-	opts := *db.Options
+	opts := *store.Options
 	session.Options = &(opts)
 	session.IsNew = true
 
 	var err error
 	if c, errCookie := r.Cookie(name); errCookie == nil {
-		err = securecookie.DecodeMulti(name, c.Value, &session.ID, db.Codecs...)
+		err = securecookie.DecodeMulti(name, c.Value, &session.ID, store.Codecs...)
 		if err == nil {
-			err = db.load(session)
+			err = store.load(session)
 			if err == nil {
 				session.IsNew = false
 			} else if errors.Cause(err) == sql.ErrNoRows {
@@ -154,14 +151,14 @@ func (db *PGStore) New(r *http.Request, name string) (*sessions.Session, error) 
 		}
 	}
 
-	db.MaxAge(db.Options.MaxAge)
+	store.MaxAge(store.Options.MaxAge)
 
 	return session, err
 }
 
 // Save saves the given session into the database and deletes cookies if needed
-func (db *PGStore) Save(r *http.Request, w http.ResponseWriter, session *sessions.Session) error {
-	repo := rp.NewRepository(db.DbPool)
+func (store *PGStore) Save(r *http.Request, w http.ResponseWriter, session *sessions.Session) error {
+	repo := store.Repo
 
 	// Set delete if max-age is < 0
 	if session.Options.MaxAge < 0 {
@@ -180,12 +177,12 @@ func (db *PGStore) Save(r *http.Request, w http.ResponseWriter, session *session
 			), "=")
 	}
 
-	if err := db.save(session); err != nil {
+	if err := store.save(session); err != nil {
 		return err
 	}
 
 	// Keep the session ID key in a cookie so it can be looked up in DB later.
-	encoded, err := securecookie.EncodeMulti(session.Name(), session.ID, db.Codecs...)
+	encoded, err := securecookie.EncodeMulti(session.Name(), session.ID, store.Codecs...)
 	if err != nil {
 		return err
 	}

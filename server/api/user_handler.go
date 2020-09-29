@@ -2,8 +2,14 @@ package api
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 	"strconv"
+	"strings"
+
+	"github.com/porter-dev/porter/internal/kubernetes"
+
+	"gorm.io/gorm"
 
 	"github.com/go-chi/chi"
 	"github.com/porter-dev/porter/internal/forms"
@@ -14,9 +20,8 @@ import (
 
 // Enumeration of user API error codes, represented as int64
 const (
-	ErrUserDecode ErrorCode = iota
+	ErrUserDecode ErrorCode = iota + 600
 	ErrUserValidateFields
-	ErrUserDataWrite
 	ErrUserDataRead
 )
 
@@ -25,7 +30,13 @@ const (
 func (app *App) HandleCreateUser(w http.ResponseWriter, r *http.Request) {
 	form := &forms.CreateUserForm{}
 
-	user, err := app.writeUser(form, app.repo.User.CreateUser, w, r)
+	user, err := app.writeUser(
+		form,
+		app.repo.User.CreateUser,
+		w,
+		r,
+		doesUserExist,
+	)
 
 	if err == nil {
 		app.logger.Info().Msgf("New user created: %d", user.ID)
@@ -36,47 +47,47 @@ func (app *App) HandleCreateUser(w http.ResponseWriter, r *http.Request) {
 // HandleLoginUser checks the request header for cookie and validates the user.
 func (app *App) HandleLoginUser(w http.ResponseWriter, r *http.Request) {
 	session, _ := app.store.Get(r, "cookie-name")
+	form := &forms.LoginUserForm{}
 
-	// read in email and password from request
-	email := chi.URLParam(r, "email")
-	password := chi.URLParam(r, "password")
-
-	// Authentication goes here
-	// Select User by Username (app.repo.User.ReadUserByUsername) and return storedCreds object that has Password.
-	storedUser, readErr := app.repo.User.ReadUserByEmail(email)
-
-	if readErr != nil {
-		// You're not registered error
-		app.logger.Warn().Err(readErr)
-		w.WriteHeader(http.StatusUnauthorized)
+	// decode from JSON to form value
+	if err := json.NewDecoder(r.Body).Decode(form); err != nil {
+		app.handleErrorFormDecoding(err, ErrUserDecode, w)
 		return
 	}
 
-	if err := bcrypt.CompareHashAndPassword([]byte(storedUser.Password), []byte(password)); err != nil {
-		// If the two passwords don't match, return a 401 status
-		w.WriteHeader(http.StatusUnauthorized)
+	storedUser, readErr := app.repo.User.ReadUserByEmail(form.Email)
+
+	if readErr != nil {
+		app.sendExternalError(readErr, http.StatusUnauthorized, HTTPError{
+			Errors: []string{"email not registered"},
+			Code:   http.StatusUnauthorized,
+		}, w)
+
+		return
+	}
+
+	if err := bcrypt.CompareHashAndPassword([]byte(storedUser.Password), []byte(form.Password)); err != nil {
+		app.sendExternalError(readErr, http.StatusUnauthorized, HTTPError{
+			Errors: []string{"incorrect password"},
+			Code:   http.StatusUnauthorized,
+		}, w)
+
 		return
 	}
 
 	// Set user as authenticated
 	session.Values["authenticated"] = true
 	session.Save(r, w)
+	w.WriteHeader(http.StatusOK)
 }
 
 // HandleReadUser returns an externalized User (models.UserExternal)
 // based on an ID
 func (app *App) HandleReadUser(w http.ResponseWriter, r *http.Request) {
-	id, err := strconv.ParseUint(chi.URLParam(r, "id"), 0, 64)
+	user, err := app.readUser(w, r)
 
-	if err != nil || id == 0 {
-		app.handleErrorFormDecoding(err, ErrUserDecode, w)
-		return
-	}
-
-	user, err := app.repo.User.ReadUser(uint(id))
-
+	// error already handled by helper
 	if err != nil {
-		app.handleErrorRead(err, ErrUserDataRead, w)
 		return
 	}
 
@@ -88,6 +99,59 @@ func (app *App) HandleReadUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusOK)
+}
+
+// HandleReadUserClusters returns the externalized User.Clusters (models.ClusterConfigs)
+// based on a user ID
+func (app *App) HandleReadUserClusters(w http.ResponseWriter, r *http.Request) {
+	user, err := app.readUser(w, r)
+
+	// error already handled by helper
+	if err != nil {
+		return
+	}
+
+	extClusters := make([]models.ClusterConfigExternal, 0)
+
+	for _, cluster := range user.Clusters {
+		extClusters = append(extClusters, *cluster.Externalize())
+	}
+
+	if err := json.NewEncoder(w).Encode(extClusters); err != nil {
+		app.handleErrorFormDecoding(err, ErrUserDecode, w)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+}
+
+// HandleReadUserClustersAll returns all models.ClusterConfigs parsed from a KubeConfig
+// that is attached to a specific user, identified through the user ID
+func (app *App) HandleReadUserClustersAll(w http.ResponseWriter, r *http.Request) {
+	user, err := app.readUser(w, r)
+
+	// if there is an error, it's already handled by helper
+	if err == nil {
+		clusters, err := kubernetes.GetAllClusterConfigsFromBytes(user.RawKubeConfig)
+
+		if err != nil {
+			app.handleErrorFormDecoding(err, ErrUserDecode, w)
+			return
+		}
+
+		extClusters := make([]models.ClusterConfigExternal, 0)
+
+		for _, cluster := range clusters {
+			extClusters = append(extClusters, *cluster.Externalize())
+		}
+
+		if err := json.NewEncoder(w).Encode(extClusters); err != nil {
+			app.handleErrorFormDecoding(err, ErrUserDecode, w)
+			return
+		}
+
+		w.WriteHeader(http.StatusOK)
+	}
 }
 
 // HandleUpdateUser validates an update user form entry, updates the user
@@ -108,11 +172,11 @@ func (app *App) HandleUpdateUser(w http.ResponseWriter, r *http.Request) {
 
 	if err == nil {
 		app.logger.Info().Msgf("User updated: %d", user.ID)
-		w.WriteHeader(http.StatusAccepted)
+		w.WriteHeader(http.StatusNoContent)
 	}
 }
 
-// HandleDeleteUser is majestic
+// HandleDeleteUser removes a user after checking that the sent password is correct
 func (app *App) HandleDeleteUser(w http.ResponseWriter, r *http.Request) {
 	id, err := strconv.ParseUint(chi.URLParam(r, "id"), 0, 64)
 
@@ -123,15 +187,14 @@ func (app *App) HandleDeleteUser(w http.ResponseWriter, r *http.Request) {
 
 	// TODO -- HASH AND VERIFY PASSWORD BEFORE USER DELETION
 	form := &forms.DeleteUserForm{
-		ID:       uint(id),
-		Password: "testing",
+		ID: uint(id),
 	}
 
 	user, err := app.writeUser(form, app.repo.User.DeleteUser, w, r)
 
 	if err == nil {
 		app.logger.Info().Msgf("User deleted: %d", user.ID)
-		w.WriteHeader(http.StatusAccepted)
+		w.WriteHeader(http.StatusNoContent)
 	}
 }
 
@@ -145,6 +208,7 @@ func (app *App) writeUser(
 	dbWrite repository.WriteUser,
 	w http.ResponseWriter,
 	r *http.Request,
+	validators ...func(repo *repository.Repository, user *models.User) *HTTPError,
 ) (*models.User, error) {
 	// decode from JSON to form value
 	if err := json.NewDecoder(r.Body).Decode(form); err != nil {
@@ -166,13 +230,79 @@ func (app *App) writeUser(
 		return nil, err
 	}
 
+	// Check any additional validators for any semantic errors
+	// We have completed all syntax checks, so these will be sent
+	// with http.StatusUnprocessableEntity (422), unless this is
+	// an internal server error
+	for _, validator := range validators {
+		err := validator(app.repo, userModel)
+
+		if err != nil {
+			goErr := errors.New(strings.Join(err.Errors, ", "))
+			if err.Code == 500 {
+				app.sendExternalError(
+					goErr,
+					http.StatusInternalServerError,
+					*err,
+					w,
+				)
+			} else {
+				app.sendExternalError(
+					goErr,
+					http.StatusUnprocessableEntity,
+					*err,
+					w,
+				)
+			}
+
+			return nil, goErr
+		}
+	}
+
 	// handle write to the database
 	user, err := dbWrite(userModel)
 
 	if err != nil {
-		app.handleErrorDataWrite(err, ErrUserDataWrite, w)
+		app.handleErrorDataWrite(err, w)
 		return nil, err
 	}
 
 	return user, nil
+}
+
+func (app *App) readUser(w http.ResponseWriter, r *http.Request) (*models.User, error) {
+	id, err := strconv.ParseUint(chi.URLParam(r, "id"), 0, 64)
+
+	if err != nil || id == 0 {
+		app.handleErrorFormDecoding(err, ErrUserDecode, w)
+		return nil, err
+	}
+
+	user, err := app.repo.User.ReadUser(uint(id))
+
+	if err != nil {
+		app.handleErrorRead(err, ErrUserDataRead, w)
+		return nil, err
+	}
+
+	return user, nil
+}
+
+func doesUserExist(repo *repository.Repository, user *models.User) *HTTPError {
+	user, err := repo.User.ReadUserByEmail(user.Email)
+
+	if user != nil && err == nil {
+		return &HTTPError{
+			Code: ErrUserValidateFields,
+			Errors: []string{
+				"email already taken",
+			},
+		}
+	}
+
+	if err != gorm.ErrRecordNotFound {
+		return &ErrorDataRead
+	}
+
+	return nil
 }

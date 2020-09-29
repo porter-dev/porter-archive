@@ -2,10 +2,10 @@ package test
 
 import (
 	"errors"
-	"fmt"
 
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/repository"
+	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 )
 
@@ -28,8 +28,6 @@ func (repo *UserRepository) CreateUser(user *models.User) (*models.User, error) 
 		return nil, errors.New("Cannot write database")
 	}
 
-	fmt.Println(len(repo.users))
-
 	// make sure email doesn't exist
 	for _, u := range repo.users {
 		if u.Email == user.Email {
@@ -50,12 +48,27 @@ func (repo *UserRepository) ReadUser(id uint) (*models.User, error) {
 		return nil, errors.New("Cannot read from database")
 	}
 
-	if int(id-1) >= len(repo.users) || repo.users[id] == nil {
+	if int(id-1) >= len(repo.users) || repo.users[id-1] == nil {
 		return nil, gorm.ErrRecordNotFound
 	}
 
 	index := int(id - 1)
 	return repo.users[index], nil
+}
+
+// ReadUserByEmail finds a single user based on their unique email
+func (repo *UserRepository) ReadUserByEmail(email string) (*models.User, error) {
+	if !repo.canQuery {
+		return nil, errors.New("Cannot read from database")
+	}
+
+	for _, u := range repo.users {
+		if u.Email == email {
+			return u, nil
+		}
+	}
+
+	return nil, gorm.ErrRecordNotFound
 }
 
 // UpdateUser modifies an existing User in the database
@@ -64,12 +77,15 @@ func (repo *UserRepository) UpdateUser(user *models.User) (*models.User, error) 
 		return nil, errors.New("Cannot write database")
 	}
 
-	if int(user.ID-1) >= len(repo.users) || repo.users[user.ID] == nil {
+	if int(user.ID-1) >= len(repo.users) || repo.users[user.ID-1] == nil {
 		return nil, gorm.ErrRecordNotFound
 	}
 
 	index := int(user.ID - 1)
+	oldUser := *repo.users[index]
 	repo.users[index] = user
+	user.Email = oldUser.Email
+	user.Password = oldUser.Password
 
 	return user, nil
 }
@@ -80,7 +96,7 @@ func (repo *UserRepository) DeleteUser(user *models.User) (*models.User, error) 
 		return nil, errors.New("Cannot write database")
 	}
 
-	if int(user.ID-1) >= len(repo.users) || repo.users[user.ID] == nil {
+	if int(user.ID-1) >= len(repo.users) || repo.users[user.ID-1] == nil {
 		return nil, gorm.ErrRecordNotFound
 	}
 
@@ -88,4 +104,24 @@ func (repo *UserRepository) DeleteUser(user *models.User) (*models.User, error) 
 	repo.users[index] = nil
 
 	return user, nil
+}
+
+// CheckPassword checks the input password is correct for the provided user id.
+func (repo *UserRepository) CheckPassword(id int, pwd string) (bool, error) {
+	if !repo.canQuery {
+		return false, errors.New("Cannot write database")
+	}
+
+	if int(id-1) >= len(repo.users) || repo.users[id-1] == nil {
+		return false, gorm.ErrRecordNotFound
+	}
+
+	index := int(id - 1)
+	user := *repo.users[index]
+
+	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(pwd)); err != nil {
+		return false, err
+	}
+
+	return true, nil
 }

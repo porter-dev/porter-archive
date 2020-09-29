@@ -10,7 +10,7 @@ import (
 type Session struct {
 	gorm.Model
 	// Session ID
-	Key string
+	Key string `gorm:"unique"`
 	// encrypted cookie
 	Data []byte
 	// Time the session will expire

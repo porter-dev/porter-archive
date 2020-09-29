@@ -86,7 +86,7 @@ func (app *App) HandleUpdateUser(w http.ResponseWriter, r *http.Request) {
 
 	if err == nil {
 		app.logger.Info().Msgf("User updated: %d", user.ID)
-		w.WriteHeader(http.StatusAccepted)
+		w.WriteHeader(http.StatusNoContent)
 	}
 }
 
@@ -109,7 +109,7 @@ func (app *App) HandleDeleteUser(w http.ResponseWriter, r *http.Request) {
 
 	if err == nil {
 		app.logger.Info().Msgf("User deleted: %d", user.ID)
-		w.WriteHeader(http.StatusAccepted)
+		w.WriteHeader(http.StatusNoContent)
 	}
 }
 

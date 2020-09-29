@@ -267,7 +267,7 @@ var updateUserTests = []userTest{
 		method:    "PUT",
 		endpoint:  "/api/users/1",
 		body:      `{"rawKubeConfig":"apiVersion: v1\nkind: Config\npreferences: {}\ncurrent-context: default\nclusters:\n- cluster:\n    server: https://localhost\n  name: cluster-test\ncontexts:\n- context:\n    cluster: cluster-test\n    user: test-admin\n  name: context-test\nusers:\n- name: test-admin", "allowedClusters":[]}`,
-		expStatus: http.StatusAccepted,
+		expStatus: http.StatusNoContent,
 		expBody:   "",
 		canQuery:  true,
 		validate: func(r *chi.Mux, t *testing.T) {

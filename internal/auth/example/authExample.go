@@ -4,11 +4,15 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/porter-dev/porter/internal/config"
+
 	dbConn "github.com/porter-dev/porter/internal/adapter"
 	sessionstore "github.com/porter-dev/porter/internal/auth"
 )
 
-var db, dbErr = dbConn.New()
+var appConf = config.AppConfig()
+
+var db, dbErr = dbConn.New(&appConf.Db)
 
 var (
 	key      = []byte("secret") // change to os.Getenv("SESSION_KEY")

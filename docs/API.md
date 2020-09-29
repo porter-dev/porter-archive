@@ -1,3 +1,9 @@
+### Overview
+
+This is the API specification that the Go server is implementing. 
+
+**Error handling:**
+
 Errors are passed via both a non-`2xx` status code and an HTTPError response body:
 
 ```js
@@ -8,6 +14,10 @@ HTTPError{
     Errors: []String,
 }
 ```
+
+Internal server errors are shared across all endpoints and are listed in the [Global Errors](#global-errors) section. 
+
+**Authentication:** The current authentication method is cookie-based sessions--most endpoints require a cookie-based session. 
 
 ### Global Errors
 
@@ -92,6 +102,8 @@ User{
 }
 ```
 
+**Successful Status Code**: `200`
+
 **Errors:**
 
 - Invalid `id` URL parameter
@@ -128,6 +140,8 @@ User{
     },
 }
 ```
+
+**Successful Status Code**: `200`
 
 **Errors:** 
 
@@ -166,6 +180,8 @@ User{
 }
 ```
 
+**Successful Status Code**: `200`
+
 **Errors:** 
 
 - Invalid `id` URL parameter
@@ -198,6 +214,8 @@ User{
 ```
 
 **Successful Response Body**: N/A
+
+**Successful Status Code**: `201`
 
 **Errors:**
 
@@ -233,7 +251,7 @@ User{
 
 #### `PUT /api/users/{id}`
 
-**Description:** Updates an existing user
+**Description:** Updates an existing user.
 
 **URL parameters:** 
 
@@ -244,6 +262,8 @@ User{
 **Request body:**
 
 **Successful Response Body**: N/A
+
+**Successful Status Code**: `204`
 
 **Errors:** 
 
@@ -259,7 +279,7 @@ User{
 
 #### `DELETE /api/users/{id}`
 
-**Description:** Deletes an existing user
+**Description:** Deletes an existing user, requires the password to be sent before deletion. 
 
 **URL parameters:** 
 
@@ -269,9 +289,27 @@ User{
 
 **Request body:**
 
+```js
+{
+    "password": String,
+}
+```
+
 **Successful Response Body**: N/A
 
+**Successful Status Code**: `204`
+
 **Errors:** 
+
+- Invalid `password`
+  - Status Code: `400`
+  - Request Body:
+    ```json
+    {
+        "code":601,
+        "errors":["invalid password"]
+    }
+    ```
 
 - Invalid `id` URL parameter
   - Status Code: `400`

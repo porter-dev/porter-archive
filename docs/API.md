@@ -121,6 +121,15 @@ User{
 
 **Errors:**
 
+- User not found
+  - Status Code: `404`
+  - Request Body:
+    ```json
+    {
+        "code":602,
+        "errors":["could not find requested object"]
+    }
+    ```
 - Invalid `id` URL parameter
   - Status Code: `400`
   - Request Body:
@@ -159,7 +168,15 @@ User{
 **Successful Status Code**: `200`
 
 **Errors:** 
-
+- User not found
+  - Status Code: `404`
+  - Request Body:
+    ```json
+    {
+        "code":602,
+        "errors":["could not find requested object"]
+    }
+    ```
 - Invalid `id` URL parameter
   - Status Code: `400`
   - Request Body:
@@ -198,7 +215,15 @@ User{
 **Successful Status Code**: `200`
 
 **Errors:** 
-
+- User not found
+  - Status Code: `404`
+  - Request Body:
+    ```json
+    {
+        "code":602,
+        "errors":["could not find requested object"]
+    }
+    ```
 - Invalid `id` URL parameter
   - Status Code: `400`
   - Request Body:

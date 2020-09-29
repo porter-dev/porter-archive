@@ -28,11 +28,12 @@ func main() {
 		return
 	}
 
+	repo := gorm.NewRepository(db)
+
 	key := []byte("secret") // TODO: change to os.Getenv("SESSION_KEY")
-	store, _ := sessionstore.NewStore(db, key)
+	store, _ := sessionstore.NewStore(repo, key)
 
 	validator := vr.New()
-	repo := gorm.NewRepository(db)
 
 	a := api.New(logger, repo, validator, store)
 

@@ -99,7 +99,7 @@ var createUserTests = []userTest{
 			"password": "hello"
 		}`,
 		expStatus: http.StatusInternalServerError,
-		expBody:   `{"code":500,"errors":["Could not read from database"]}`,
+		expBody:   `{"code":500,"errors":["could not read from database"]}`,
 		canQuery:  false,
 	},
 	userTest{
@@ -163,6 +163,15 @@ var readUserTests = []userTest{
 			repo.User.CreateUser(&models.User{
 				Email:    "belanger@getporter.dev",
 				Password: "hello",
+				Clusters: []models.ClusterConfig{
+					models.ClusterConfig{
+						Name:    "cluster-test",
+						Server:  "https://localhost",
+						Context: "context-test",
+						User:    "test-admin",
+					},
+				},
+				RawKubeConfig: []byte("apiVersion: v1\nkind: Config\npreferences: {}\ncurrent-context: default\nclusters:\n- cluster:\n    server: https://localhost\n  name: cluster-test\ncontexts:\n- context:\n    cluster: cluster-test\n    user: test-admin\n  name: context-test\nusers:\n- name: test-admin"),
 			})
 		},
 		msg:       "Read user successful",
@@ -170,7 +179,7 @@ var readUserTests = []userTest{
 		endpoint:  "/api/users/1",
 		body:      "",
 		expStatus: http.StatusOK,
-		expBody:   `{"id":1,"email":"belanger@getporter.dev","clusters":[],"rawKubeConfig":""}`,
+		expBody:   `{"id":1,"email":"belanger@getporter.dev","clusters":[{"name":"cluster-test","server":"https://localhost","context":"context-test","user":"test-admin"}],"rawKubeConfig":"apiVersion: v1\nkind: Config\npreferences: {}\ncurrent-context: default\nclusters:\n- cluster:\n    server: https://localhost\n  name: cluster-test\ncontexts:\n- context:\n    cluster: cluster-test\n    user: test-admin\n  name: context-test\nusers:\n- name: test-admin"}`,
 		canQuery:  true,
 	},
 	userTest{
@@ -185,7 +194,7 @@ var readUserTests = []userTest{
 		endpoint:  "/api/users/aldkfjas",
 		body:      "",
 		expStatus: http.StatusBadRequest,
-		expBody:   `{"code":600,"errors":["Could not process request"]}`,
+		expBody:   `{"code":600,"errors":["could not process request"]}`,
 		canQuery:  true,
 	},
 	userTest{
@@ -200,7 +209,7 @@ var readUserTests = []userTest{
 		endpoint:  "/api/users/2",
 		body:      "",
 		expStatus: http.StatusNotFound,
-		expBody:   `{"code":602,"errors":["Could not find requested object"]}`,
+		expBody:   `{"code":602,"errors":["could not find requested object"]}`,
 		canQuery:  true,
 	},
 }
@@ -296,6 +305,21 @@ var updateUserTests = []userTest{
 			}
 		},
 	},
+	userTest{
+		init: func(repo *repository.Repository) {
+			repo.User.CreateUser(&models.User{
+				Email:    "belanger@getporter.dev",
+				Password: "hello",
+			})
+		},
+		msg:       "Update user invalid id",
+		method:    "PUT",
+		endpoint:  "/api/users/alsdfjk",
+		body:      `{"rawKubeConfig":"apiVersion: v1\nkind: Config\npreferences: {}\ncurrent-context: default\nclusters:\n- cluster:\n    server: https://localhost\n  name: cluster-test\ncontexts:\n- context:\n    cluster: cluster-test\n    user: test-admin\n  name: context-test\nusers:\n- name: test-admin", "allowedClusters":[]}`,
+		expStatus: http.StatusBadRequest,
+		expBody:   `{"code":600,"errors":["could not process request"]}`,
+		canQuery:  true,
+	},
 }
 
 func TestHandleUpdateUser(t *testing.T) {
@@ -331,6 +355,95 @@ func TestHandleUpdateUser(t *testing.T) {
 				c.msg, body, c.expBody)
 		}
 
-		c.validate(r, t)
+		if c.validate != nil {
+			c.validate(r, t)
+		}
+	}
+}
+
+var deleteUserTests = []userTest{
+	userTest{
+		init: func(repo *repository.Repository) {
+			repo.User.CreateUser(&models.User{
+				Email:    "belanger@getporter.dev",
+				Password: "hello",
+			})
+		},
+		msg:       "Delete user successful",
+		method:    "DELETE",
+		endpoint:  "/api/users/1",
+		body:      `{"password":"hello"}`,
+		expStatus: http.StatusNoContent,
+		expBody:   "",
+		canQuery:  true,
+		validate: func(r *chi.Mux, t *testing.T) {
+			req, err := http.NewRequest(
+				"GET",
+				"/api/users/1",
+				strings.NewReader(""),
+			)
+
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			rr := httptest.NewRecorder()
+			r.ServeHTTP(rr, req)
+
+			gotBody := &models.UserExternal{}
+			expBody := &models.UserExternal{}
+
+			if status := rr.Code; status != 404 {
+				t.Errorf("DELETE user validation, handler returned wrong status code: got %v want %v",
+					status, 404)
+			}
+
+			json.Unmarshal(rr.Body.Bytes(), gotBody)
+			json.Unmarshal([]byte(`{"code":602,"errors":["could not find requested object"]}`), expBody)
+
+			if !reflect.DeepEqual(gotBody, expBody) {
+				t.Errorf("%s, handler returned wrong body: got %v want %v",
+					"validator failed", gotBody, expBody)
+			}
+		},
+	},
+}
+
+func TestHandleDeleteUser(t *testing.T) {
+	for _, c := range deleteUserTests {
+		// create a mock API
+		api, repo := initApi(c.canQuery)
+		r := router.New(api)
+
+		if c.init != nil {
+			c.init(repo)
+		}
+
+		req, err := http.NewRequest(
+			c.method,
+			c.endpoint,
+			strings.NewReader(c.body),
+		)
+
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		rr := httptest.NewRecorder()
+		r.ServeHTTP(rr, req)
+
+		if status := rr.Code; status != c.expStatus {
+			t.Errorf("%s, handler returned wrong status code: got %v want %v",
+				c.msg, status, c.expStatus)
+		}
+
+		if body := rr.Body.String(); body != c.expBody {
+			t.Errorf("%s, handler returned wrong body: got %v want %v",
+				c.msg, body, c.expBody)
+		}
+
+		if c.validate != nil {
+			c.validate(r, t)
+		}
 	}
 }

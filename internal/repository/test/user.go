@@ -95,7 +95,7 @@ func (repo *UserRepository) DeleteUser(user *models.User) (*models.User, error) 
 		return nil, errors.New("Cannot write database")
 	}
 
-	if int(user.ID-1) >= len(repo.users) || repo.users[user.ID] == nil {
+	if int(user.ID-1) >= len(repo.users) || repo.users[user.ID-1] == nil {
 		return nil, gorm.ErrRecordNotFound
 	}
 

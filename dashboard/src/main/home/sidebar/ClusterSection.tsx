@@ -2,7 +2,9 @@ import React, { Component } from 'react';
 import styled from 'styled-components';
 import drawerBg from '../../../assets/drawer-bg.png';
 
-import { Context } from '../../../Context';
+import api from '../../../shared/api';
+import { Context } from '../../../shared/Context';
+
 import Drawer from './Drawer';
 
 type PropsType = {
@@ -11,15 +13,34 @@ type PropsType = {
 };
 
 type StateType = {
+  configExists: boolean,
+  showDrawer: boolean,
+  initializedDrawer: boolean,
+  clusters: any[]
 };
 
 export default class ClusterSection extends Component<PropsType, StateType> {
 
   // Need to track initialized for animation mounting
   state = {
-    configExists: true,
+    configExists: false,
     showDrawer: false,
     initializedDrawer: false,
+    clusters: [],
+  };
+
+  componentDidMount() {
+    let { setCurrentError } = this.context;
+
+    api.getClusters('<token>', {}, { id: 0 }, (err: any, res: any) => {      
+      if (err) {
+        setCurrentError(JSON.stringify(err));
+      } else {
+        // TODO: need a separate query for checking if config has been set
+
+        this.setState({ clusters: res.data.clusters });
+      }
+    });
   }
 
   // Need to override showDrawer when the sidebar is closed
@@ -32,14 +53,14 @@ export default class ClusterSection extends Component<PropsType, StateType> {
     }
   }
   
-  toggleDrawer = () => {
+  toggleDrawer = (): void => {
     if (!this.state.initializedDrawer) {
       this.setState({ initializedDrawer: true });
     }
     this.setState({ showDrawer: !this.state.showDrawer });
-  }
+  };
 
-  renderDrawer = () => {
+  renderDrawer = (): JSX.Element | undefined => {
     if (this.state.initializedDrawer) {
       return (
         <Drawer
@@ -48,9 +69,9 @@ export default class ClusterSection extends Component<PropsType, StateType> {
         />
       );
     }
-  }
+  };
 
-  renderContents = () => {
+  renderContents = (): JSX.Element => {
     if (this.state.configExists) {
       return (
         <ClusterSelector showDrawer={this.state.showDrawer}>
@@ -73,7 +94,7 @@ export default class ClusterSection extends Component<PropsType, StateType> {
         <Plus>+</Plus> Add a Cluster
       </InitializeButton>
     )
-  }
+  };
 
   render() {
     return (

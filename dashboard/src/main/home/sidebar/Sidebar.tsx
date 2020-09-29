@@ -2,13 +2,24 @@ import React, { Component } from 'react';
 import styled from 'styled-components';
 import gradient from '../../../assets/grad.jpg';
 
+import api from '../../../shared/api';
+import { Context } from '../../../shared/Context';
+
 import ClusterSection from './ClusterSection';
 
 type PropsType = {
   logOut: () => void
 };
 
-export default class Sidebar extends Component<PropsType> {
+type StateType = {
+  showSidebar: boolean,
+  initializedSidebar: boolean,
+  pressingCtrl: boolean,
+  showTooltip: boolean,
+  forceCloseDrawer: boolean
+};
+
+export default class Sidebar extends Component<PropsType, StateType> {
 
   // Need closeDrawer to hide drawer on sidebar close
   state = {
@@ -17,7 +28,7 @@ export default class Sidebar extends Component<PropsType> {
     pressingCtrl: false,
     showTooltip: false,
     forceCloseDrawer: false,
-  }
+  };
 
   componentDidMount() {
     document.addEventListener('keydown', this.handleKeyDown);
@@ -29,23 +40,23 @@ export default class Sidebar extends Component<PropsType> {
     document.removeEventListener('keyup', this.handleKeyUp);
   }
 
-  handleKeyDown = (e: any): void => {
-    if (e.keyCode === 17 || e.keyCode === 91 || e.keyCode === 93) {
+  handleKeyDown = (e: KeyboardEvent): void => {
+    if (e.key === 'Meta' || e.key === 'Control') {
       this.setState({ pressingCtrl: true });
     } else if (e.keyCode === 220 && this.state.pressingCtrl) {
       this.toggleSidebar();
     }
-  }
+  };
 
-  handleKeyUp = (e: any): void => {
-    if (e.keyCode === 17 || e.keyCode === 91 || e.keyCode === 93) {
+  handleKeyUp = (e: KeyboardEvent): void => {
+    if (e.key === 'Meta' || e.key === 'Control') {
       this.setState({ pressingCtrl: false });
     }
-  }
+  };
 
   toggleSidebar = (): void => {
     this.setState({ showSidebar: !this.state.showSidebar, forceCloseDrawer: true });
-  }
+  };
 
   renderPullTab = (): JSX.Element | undefined => {
     if (!this.state.showSidebar) {
@@ -55,7 +66,7 @@ export default class Sidebar extends Component<PropsType> {
         </PullTab>
       );
     }
-  }
+  };
 
   renderTooltip = (): JSX.Element | undefined => {
     if (this.state.showTooltip) {
@@ -63,6 +74,18 @@ export default class Sidebar extends Component<PropsType> {
         <Tooltip>⌘/CTRL + \</Tooltip>
       );
     }
+  };
+
+  handleLogout = (): void => {
+    let { logOut } = this.props;
+    let { setCurrentError } = this.context;
+
+    // Attempt user logout
+    api.logOutUser('<token>', {}, {}, (err: any, res: any) => {
+      // TODO: case and set logout error
+      
+      err ? setCurrentError(JSON.stringify(err)) : logOut();
+    });
   }
 
   // SidebarBg is separate to cover retracted drawer
@@ -94,7 +117,7 @@ export default class Sidebar extends Component<PropsType> {
             releaseDrawer={() => this.setState({ forceCloseDrawer: false })}
           />
 
-          <LogOutButton onClick={this.props.logOut}>
+          <LogOutButton onClick={this.handleLogout}>
             Log Out <i className="material-icons">keyboard_return</i>
           </LogOutButton>
         </StyledSidebar>
@@ -102,6 +125,8 @@ export default class Sidebar extends Component<PropsType> {
     );
   }
 }
+
+Sidebar.contextType = Context;
 
 const NavButton = styled.div`
   display: block;

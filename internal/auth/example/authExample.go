@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/porter-dev/porter/internal/config"
+	"github.com/porter-dev/porter/internal/repository/gorm"
 
 	dbConn "github.com/porter-dev/porter/internal/adapter"
 	sessionstore "github.com/porter-dev/porter/internal/auth"
@@ -16,7 +17,7 @@ var db, dbErr = dbConn.New(&appConf.Db)
 
 var (
 	key      = []byte("secret") // change to os.Getenv("SESSION_KEY")
-	store, _ = sessionstore.NewStore(db, key)
+	store, _ = sessionstore.NewStore(gorm.NewRepository(db), key)
 )
 
 func secret(w http.ResponseWriter, r *http.Request) {

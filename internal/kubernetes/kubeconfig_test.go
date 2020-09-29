@@ -65,7 +65,7 @@ func TestToClusterConfigsMissingFields(t *testing.T) {
 			t.Errorf("Testing: %s, Error: %v\n", c.msg, err)
 		}
 
-		res := conf.ToClusterConfigs(c.allowedClusters)
+		res := conf.ToAllowedClusterConfigs(c.allowedClusters)
 
 		isEqual := reflect.DeepEqual(c.expected, res)
 
@@ -95,7 +95,7 @@ func TestToClusterConfigsNoAllowedClusters(t *testing.T) {
 			t.Errorf("Testing: %s, Error: %v\n", c.msg, err)
 		}
 
-		res := conf.ToClusterConfigs(c.allowedClusters)
+		res := conf.ToAllowedClusterConfigs(c.allowedClusters)
 
 		isEqual := reflect.DeepEqual(c.expected, res)
 
@@ -131,7 +131,7 @@ func TestToClusterConfigsBasic(t *testing.T) {
 			t.Errorf("Testing: %s, Error: %v\n", c.msg, err)
 		}
 
-		res := conf.ToClusterConfigs(c.allowedClusters)
+		res := conf.ToAllowedClusterConfigs(c.allowedClusters)
 
 		isEqual := reflect.DeepEqual(c.expected, res)
 

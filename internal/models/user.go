@@ -7,15 +7,11 @@ import (
 // User type that extends gorm.Model
 type User struct {
 	gorm.Model
-	// Unique email for each user
-	// Email string `gorm:"unique"`
-	Email string
-	// Hashed password
-	Password string
-	// The clusters that this user has linked
-	Clusters []ClusterConfig
-	// The raw kubeconfig uploaded by this user
-	RawKubeConfig []byte
+
+	Email         string          `json:"email" gorm:"unique"`
+	Password      string          `json:"password"`
+	Clusters      []ClusterConfig `json:"clusters"`
+	RawKubeConfig []byte          `json:"rawKubeConfig"`
 }
 
 // UserExternal represents the User type that is sent over REST

@@ -6,20 +6,18 @@ import (
 	"gorm.io/gorm"
 )
 
-type sessionrepo struct {
+// SessionRepository uses gorm.DB for querying the database
+type SessionRepository struct {
 	db *gorm.DB
 }
 
 // NewSessionRepository returns pointer to repo along with the db
 func NewSessionRepository(db *gorm.DB) repository.SessionRepository {
-	return &sessionrepo{
-		db: db,
-	}
+	return &SessionRepository{db}
 }
 
 // CreateSession must take in Key, Data, and ExpiresAt as arguments.
-func (s *sessionrepo) CreateSession(session *models.Session) (*models.Session, error) {
-	// TODO: check for duplicate and return error
+func (s *SessionRepository) CreateSession(session *models.Session) (*models.Session, error) {
 	if err := s.db.Create(session).Error; err != nil {
 		return nil, err
 	}
@@ -27,7 +25,7 @@ func (s *sessionrepo) CreateSession(session *models.Session) (*models.Session, e
 }
 
 // UpdateSession updates only the Data field using Key as selector.
-func (s *sessionrepo) UpdateSession(session *models.Session) (*models.Session, error) {
+func (s *SessionRepository) UpdateSession(session *models.Session) (*models.Session, error) {
 	if err := s.db.Model(session).Where("Key = ?", session.Key).Updates(session).Error; err != nil {
 		return nil, err
 	}
@@ -35,7 +33,7 @@ func (s *sessionrepo) UpdateSession(session *models.Session) (*models.Session, e
 }
 
 // DeleteSession deletes a session by Key
-func (s *sessionrepo) DeleteSession(session *models.Session) (*models.Session, error) {
+func (s *SessionRepository) DeleteSession(session *models.Session) (*models.Session, error) {
 
 	if err := s.db.Where("Key = ?", session.Key).Delete(session).Error; err != nil {
 		return nil, err
@@ -45,7 +43,7 @@ func (s *sessionrepo) DeleteSession(session *models.Session) (*models.Session, e
 }
 
 // SelectSession returns a session with matching key
-func (s *sessionrepo) SelectSession(session *models.Session) (*models.Session, error) {
+func (s *SessionRepository) SelectSession(session *models.Session) (*models.Session, error) {
 
 	if err := s.db.Where("Key = ?", session.Key).First(session).Error; err != nil {
 		return nil, err

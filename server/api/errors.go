@@ -8,13 +8,6 @@ import (
 	"gorm.io/gorm"
 )
 
-const (
-	appErrDataWrite    = "data write error"
-	appErrDataRead     = "data read error"
-	appErrFormDecoding = "could not process JSON body"
-	appErrReadNotFound = "could not find requested object"
-)
-
 // HTTPError is the object returned when the API encounters an error: this
 // gets marshaled into JSON
 type HTTPError struct {
@@ -24,6 +17,32 @@ type HTTPError struct {
 
 // ErrorCode is a custom Porter error code, useful for frontend messages
 type ErrorCode int64
+
+var (
+	// ErrorDataWrite describes an error in writing to the database
+	ErrorDataWrite = HTTPError{
+		Code: 500,
+		Errors: []string{
+			"could not write to database",
+		},
+	}
+
+	// ErrorDataRead describes an error when reading from the database
+	ErrorDataRead = HTTPError{
+		Code: 500,
+		Errors: []string{
+			"could not read from database",
+		},
+	}
+
+	// ErrorInternal describes a generic internal server error
+	ErrorInternal = HTTPError{
+		Code: 500,
+		Errors: []string{
+			"internal server error",
+		},
+	}
+)
 
 // ------------------------ Error helper functions ------------------------ //
 
@@ -38,13 +57,7 @@ func (app *App) sendExternalError(
 	errExt HTTPError,
 	w http.ResponseWriter,
 ) (intErr error) {
-	respBytes, newErr := json.Marshal(errExt)
-
-	if newErr != nil {
-		app.handleErrorInternal(newErr, w)
-		return newErr
-	}
-
+	respBytes, _ := json.Marshal(errExt)
 	respBody := string(respBytes)
 
 	app.logger.Warn().Err(err).
@@ -63,7 +76,7 @@ func (app *App) sendExternalError(
 func (app *App) handleErrorFormDecoding(err error, code ErrorCode, w http.ResponseWriter) {
 	errExt := HTTPError{
 		Code:   code,
-		Errors: []string{appErrFormDecoding},
+		Errors: []string{"could not process request"},
 	}
 
 	app.sendExternalError(err, http.StatusBadRequest, errExt, w)
@@ -99,7 +112,7 @@ func (app *App) handleErrorRead(err error, code ErrorCode, w http.ResponseWriter
 	if err == gorm.ErrRecordNotFound {
 		errExt := HTTPError{
 			Code:   code,
-			Errors: []string{appErrReadNotFound},
+			Errors: []string{"could not find requested object"},
 		}
 
 		app.sendExternalError(err, http.StatusNotFound, errExt, w)
@@ -112,30 +125,18 @@ func (app *App) handleErrorRead(err error, code ErrorCode, w http.ResponseWriter
 
 // handleErrorDataWrite handles a database write error due to either a connection
 // error with the database or failure to write that wasn't caught by the validators
-func (app *App) handleErrorDataWrite(err error, code ErrorCode, w http.ResponseWriter) {
-	errExt := HTTPError{
-		Code:   code,
-		Errors: []string{appErrDataWrite},
-	}
-
-	app.sendExternalError(err, http.StatusInternalServerError, errExt, w)
+func (app *App) handleErrorDataWrite(err error, w http.ResponseWriter) {
+	app.sendExternalError(err, http.StatusInternalServerError, ErrorDataWrite, w)
 }
 
 // handleErrorDataRead handles a database read error due to an internal error, such as
 // the database connection or gorm internals
 func (app *App) handleErrorDataRead(err error, code ErrorCode, w http.ResponseWriter) {
-	errExt := HTTPError{
-		Code:   code,
-		Errors: []string{appErrDataRead},
-	}
-
-	app.sendExternalError(err, http.StatusInternalServerError, errExt, w)
+	app.sendExternalError(err, http.StatusInternalServerError, ErrorDataRead, w)
 }
 
 // handleErrorInternalError is a catch-all for internal errors that occur during the
 // processing of a request
 func (app *App) handleErrorInternal(err error, w http.ResponseWriter) {
-	app.logger.Warn().Err(err).Msg("")
-	w.WriteHeader(http.StatusInternalServerError)
-	w.Write([]byte(`{"error": "Internal server error"}`))
+	app.sendExternalError(err, http.StatusInternalServerError, ErrorInternal, w)
 }

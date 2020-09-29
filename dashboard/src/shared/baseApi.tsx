@@ -1,15 +1,15 @@
 import axios from 'axios';
 
 // Partial function that accepts a generic params type and returns an api method
-export const baseApi = <T extends {}, S = {}>(requestType: string, endpoint: ((pathParams?: S) => string) | string) => {
-  return (token: string, params: T, callback?: (err: any, res: any) => void) => {
+export const baseApi = <T extends {}, S = {}>(requestType: string, endpoint: ((pathParams: S) => string) | string) => {
+  return (token: string, params: T, pathParams: S, callback?: (err: any, res: any) => void) => {
 
     // Generate endpoint literal
     let endpointString: ((pathParams: S) => string) | string;
     if (typeof endpoint === 'string') {
       endpointString = endpoint;
     } else {
-      endpointString = 'fuck'
+      endpointString = endpoint(pathParams);
     }
 
     // Handle request type (can refactor)

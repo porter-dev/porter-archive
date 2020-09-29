@@ -39,7 +39,7 @@ export default class Login extends Component<PropsType, StateType> {
       api.logInUser('<token>', {
         email: email,
         password: password
-      }, (err: any, res: any) => {
+      }, {}, (err: any, res: any) => {
         // TODO: case and set credential error
 
         console.log(err)

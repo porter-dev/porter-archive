@@ -81,7 +81,7 @@ export default class Sidebar extends Component<PropsType, StateType> {
     let { setCurrentError } = this.context;
 
     // Attempt user logout
-    api.logOutUser('<token>', {}, (err, res) => {
+    api.logOutUser('<token>', {}, {}, (err: any, res: any) => {
       // TODO: case and set logout error
       
       err ? setCurrentError(JSON.stringify(err)) : logOut();

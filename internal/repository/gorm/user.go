@@ -3,6 +3,7 @@ package gorm
 import (
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/repository"
+	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 )
 
@@ -58,4 +59,19 @@ func (repo *UserRepository) DeleteUser(user *models.User) (*models.User, error) 
 		return nil, err
 	}
 	return user, nil
+}
+
+// CheckPassword checks the input password is correct for the provided user id.
+func (repo *UserRepository) CheckPassword(id int, pwd string) (bool, error) {
+	u := &models.User{}
+
+	if err := repo.db.First(u, id).Error; err != nil {
+		return false, err
+	}
+
+	if err := bcrypt.CompareHashAndPassword([]byte(u.Password), []byte(pwd)); err != nil {
+		return false, err
+	}
+
+	return true, nil
 }

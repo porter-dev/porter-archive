@@ -15,6 +15,7 @@ import (
 	"github.com/porter-dev/porter/internal/forms"
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/repository"
+	"golang.org/x/crypto/bcrypt"
 )
 
 // Enumeration of user API error codes, represented as int64
@@ -41,6 +42,36 @@ func (app *App) HandleCreateUser(w http.ResponseWriter, r *http.Request) {
 		app.logger.Info().Msgf("New user created: %d", user.ID)
 		w.WriteHeader(http.StatusCreated)
 	}
+}
+
+// HandleLoginUser checks the request header for cookie and validates the user.
+func (app *App) HandleLoginUser(w http.ResponseWriter, r *http.Request) {
+	session, _ := app.store.Get(r, "cookie-name")
+
+	// read in email and password from request
+	email := chi.URLParam(r, "email")
+	password := chi.URLParam(r, "password")
+
+	// Authentication goes here
+	// Select User by Username (app.repo.User.ReadUserByUsername) and return storedCreds object that has Password.
+	storedUser, readErr := app.repo.User.ReadUserByEmail(email)
+
+	if readErr != nil {
+		// You're not registered error
+		app.logger.Warn().Err(readErr)
+		w.WriteHeader(http.StatusUnauthorized)
+		return
+	}
+
+	if err := bcrypt.CompareHashAndPassword([]byte(storedUser.Password), []byte(password)); err != nil {
+		// If the two passwords don't match, return a 401 status
+		w.WriteHeader(http.StatusUnauthorized)
+		return
+	}
+
+	// Set user as authenticated
+	session.Values["authenticated"] = true
+	session.Save(r, w)
 }
 
 // HandleReadUser returns an externalized User (models.UserExternal)

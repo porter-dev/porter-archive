@@ -9,7 +9,6 @@
   - [`GET /api/users/{id}`](#get-apiusersid)
   - [`GET /api/users/{id}/clusters`](#get-apiusersidclusters)
   - [`GET /api/users/{id}/clusters/all`](#get-apiusersidclustersall)
-  - [`GET /api/users/{id}/clusters`](#get-apiusersidclusters)
   - [`POST /api/users`](#post-apiusers)
   - [`PUT /api/users/{id}`](#put-apiusersid)
   - [`DELETE /api/users/{id}`](#delete-apiusersid)

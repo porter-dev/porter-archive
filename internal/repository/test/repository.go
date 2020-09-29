@@ -8,6 +8,7 @@ import (
 // and accepts a parameter that can trigger read/write errors
 func NewRepository(canQuery bool) *repository.Repository {
 	return &repository.Repository{
-		User: NewUserRepository(canQuery),
+		User:    NewUserRepository(canQuery),
+		Session: NewSessionRepository(canQuery),
 	}
 }

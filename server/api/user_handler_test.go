@@ -17,6 +17,7 @@ import (
 	"github.com/porter-dev/porter/server/api"
 	"github.com/porter-dev/porter/server/router"
 
+	sessionstore "github.com/porter-dev/porter/internal/auth"
 	lr "github.com/porter-dev/porter/internal/logger"
 	vr "github.com/porter-dev/porter/internal/validator"
 )
@@ -39,7 +40,10 @@ func initApi(canQuery bool) (*api.App, *repository.Repository) {
 
 	repo := test.NewRepository(canQuery)
 
-	return api.New(logger, repo, validator), repo
+	key := []byte("secret") // TODO: change to os.Getenv("SESSION_KEY")
+	store, _ := sessionstore.NewStore(db, key)
+
+	return api.New(logger, repo, validator, store), repo
 }
 
 func testUserRequest(t *testing.T, c userTest) {

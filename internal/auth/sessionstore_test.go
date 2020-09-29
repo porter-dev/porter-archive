@@ -7,8 +7,7 @@ import (
 
 	"github.com/gorilla/securecookie"
 	"github.com/gorilla/sessions"
-
-	dbConn "github.com/porter-dev/porter/internal/adapter"
+	"github.com/porter-dev/porter/internal/repository/test"
 )
 
 type headerOnlyResponseWriter http.Header
@@ -28,9 +27,9 @@ func (ho headerOnlyResponseWriter) WriteHeader(int) {
 var secret = "secret"
 
 func TestPGStore(t *testing.T) {
-	db, _ := dbConn.New()
+	repo := test.NewRepository(true)
 
-	ss, err := NewStore(db, []byte(secret))
+	ss, err := NewStore(repo, []byte(secret))
 	if err != nil {
 		t.Fatal("Failed to get store", err)
 	}
@@ -125,9 +124,9 @@ func TestPGStore(t *testing.T) {
 }
 
 func TestSessionOptionsAreUniquePerSession(t *testing.T) {
-	db, _ := dbConn.New()
+	repo := test.NewRepository(true)
 
-	ss, err := NewStore(db, []byte(secret))
+	ss, err := NewStore(repo, []byte(secret))
 	if err != nil {
 		t.Fatal("Failed to get store", err)
 	}

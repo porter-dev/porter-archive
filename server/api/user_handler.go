@@ -7,6 +7,8 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/porter-dev/porter/internal/kubernetes"
+
 	"gorm.io/gorm"
 
 	"github.com/go-chi/chi"
@@ -44,23 +46,71 @@ func (app *App) HandleCreateUser(w http.ResponseWriter, r *http.Request) {
 // HandleReadUser returns an externalized User (models.UserExternal)
 // based on an ID
 func (app *App) HandleReadUser(w http.ResponseWriter, r *http.Request) {
-	id, err := strconv.ParseUint(chi.URLParam(r, "id"), 0, 64)
+	user, err := app.readUser(w, r)
 
-	if err != nil || id == 0 {
-		app.handleErrorFormDecoding(err, ErrUserDecode, w)
-		return
-	}
-
-	user, err := app.repo.User.ReadUser(uint(id))
-
+	// error already handled by helper
 	if err != nil {
-		app.handleErrorRead(err, ErrUserDataRead, w)
 		return
 	}
 
 	extUser := user.Externalize()
 
 	if err := json.NewEncoder(w).Encode(extUser); err != nil {
+		app.handleErrorFormDecoding(err, ErrUserDecode, w)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+}
+
+// HandleReadUserClusters returns the externalized User.Clusters (models.ClusterConfigs)
+// based on a user ID
+func (app *App) HandleReadUserClusters(w http.ResponseWriter, r *http.Request) {
+	user, err := app.readUser(w, r)
+
+	// error already handled by helper
+	if err != nil {
+		return
+	}
+
+	extClusters := make([]models.ClusterConfigExternal, 0)
+
+	for _, cluster := range user.Clusters {
+		extClusters = append(extClusters, *cluster.Externalize())
+	}
+
+	if err := json.NewEncoder(w).Encode(extClusters); err != nil {
+		app.handleErrorFormDecoding(err, ErrUserDecode, w)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+}
+
+// HandleReadUserClustersAll returns all models.ClusterConfigs parsed from a KubeConfig
+// that is attached to a specific user, identified through the user ID
+func (app *App) HandleReadUserClustersAll(w http.ResponseWriter, r *http.Request) {
+	user, err := app.readUser(w, r)
+
+	// error already handled by helper
+	if err != nil {
+		return
+	}
+
+	clusters, err := kubernetes.GetAllClusterConfigsFromBytes(user.RawKubeConfig)
+
+	if err != nil {
+		app.handleErrorFormDecoding(err, ErrUserDecode, w)
+		return
+	}
+
+	extClusters := make([]models.ClusterConfigExternal, 0)
+
+	for _, cluster := range clusters {
+		extClusters = append(extClusters, *cluster.Externalize())
+	}
+
+	if err := json.NewEncoder(w).Encode(extClusters); err != nil {
 		app.handleErrorFormDecoding(err, ErrUserDecode, w)
 		return
 	}
@@ -178,6 +228,24 @@ func (app *App) writeUser(
 
 	if err != nil {
 		app.handleErrorDataWrite(err, w)
+		return nil, err
+	}
+
+	return user, nil
+}
+
+func (app *App) readUser(w http.ResponseWriter, r *http.Request) (*models.User, error) {
+	id, err := strconv.ParseUint(chi.URLParam(r, "id"), 0, 64)
+
+	if err != nil || id == 0 {
+		app.handleErrorFormDecoding(err, ErrUserDecode, w)
+		return nil, err
+	}
+
+	user, err := app.repo.User.ReadUser(uint(id))
+
+	if err != nil {
+		app.handleErrorRead(err, ErrUserDataRead, w)
 		return nil, err
 	}
 

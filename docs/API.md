@@ -48,7 +48,7 @@ Internal server errors are shared across all endpoints and are listed in the [Gl
 {
 	"Code": 500,
 	"Errors": [{
-		"Could not write to database"
+		"could not write to database"
 	}],
 }
 ```
@@ -65,7 +65,7 @@ Internal server errors are shared across all endpoints and are listed in the [Gl
 {
 	"Code": 500,
 	"Errors": [{
-		"Could not read from database"
+		"could not read from database"
 	}],
 }
 ```
@@ -82,7 +82,7 @@ Internal server errors are shared across all endpoints and are listed in the [Gl
 {
 	"Code": 500,
 	"Errors": [{
-		"Internal server error"
+		"internal server error"
 	}],
 }
 ```

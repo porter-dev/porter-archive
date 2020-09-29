@@ -20,10 +20,14 @@ export default class ClusterSection extends Component<PropsType, StateType> {
 
   // Need to track initialized for animation mounting
   state = {
-    configExists: true,
+    configExists: false,
     showDrawer: false,
     initializedDrawer: false,
   };
+
+  componentDidMount() {
+    // TODO: Check if
+  }
 
   // Need to override showDrawer when the sidebar is closed
   componentDidUpdate(prevProps: PropsType) {

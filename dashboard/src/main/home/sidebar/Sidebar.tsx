@@ -2,6 +2,9 @@ import React, { Component } from 'react';
 import styled from 'styled-components';
 import gradient from '../../../assets/grad.jpg';
 
+import api from '../../../shared/api';
+import { Context } from '../../../shared/Context';
+
 import ClusterSection from './ClusterSection';
 
 type PropsType = {
@@ -73,6 +76,18 @@ export default class Sidebar extends Component<PropsType, StateType> {
     }
   };
 
+  handleLogout = (): void => {
+    let { logOut } = this.props;
+    let { setCurrentError } = this.context;
+
+    // Attempt user logout
+    api.logOutUser('<token>', {}, (err, res) => {
+      // TODO: case and set logout error
+      
+      err ? setCurrentError(JSON.stringify(err)) : logOut();
+    });
+  }
+
   // SidebarBg is separate to cover retracted drawer
   render() {
     return (
@@ -102,7 +117,7 @@ export default class Sidebar extends Component<PropsType, StateType> {
             releaseDrawer={() => this.setState({ forceCloseDrawer: false })}
           />
 
-          <LogOutButton onClick={this.props.logOut}>
+          <LogOutButton onClick={this.handleLogout}>
             Log Out <i className="material-icons">keyboard_return</i>
           </LogOutButton>
         </StyledSidebar>
@@ -110,6 +125,8 @@ export default class Sidebar extends Component<PropsType, StateType> {
     );
   }
 }
+
+Sidebar.contextType = Context;
 
 const NavButton = styled.div`
   display: block;

@@ -47,7 +47,7 @@ export default class Register extends Component<PropsType, StateType> {
       api.registerUser('', {
         email: email,
         password: password
-      }, (err, res) => {
+      }, (err: any, res: any) => {
         err ? setCurrentError(JSON.stringify(err)) : authenticate();
       });
     } 

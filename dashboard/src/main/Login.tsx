@@ -36,12 +36,13 @@ export default class Login extends Component<PropsType, StateType> {
     } else {
       
       // Attempt user login
-      api.logInUser('', {
+      api.logInUser('<token>', {
         email: email,
         password: password
-      }, (err, res) => {
+      }, {}, (err: any, res: any) => {
         // TODO: case and set credential error
-        
+
+        console.log(err)
         err ? setCurrentError(JSON.stringify(err)) : authenticate();
       });
     }

@@ -21,9 +21,14 @@ const logInUser = baseApi<{
 
 const logOutUser = baseApi<{}>('GET', '/api/logout');
 
+const getClusters = baseApi<{}, { id: number }>('GET', (pathParams) => {
+  return `/api/users/${pathParams.id}/clusters`;
+});
+
 // Bundle export to allow default api import
 export default {
   registerUser,
   logInUser,
-  logOutUser
+  logOutUser,
+  getClusters
 }

@@ -2,7 +2,9 @@ import React, { Component } from 'react';
 import styled from 'styled-components';
 import drawerBg from '../../../assets/drawer-bg.png';
 
+import api from '../../../shared/api';
 import { Context } from '../../../shared/Context';
+
 import Drawer from './Drawer';
 
 type PropsType = {
@@ -13,7 +15,8 @@ type PropsType = {
 type StateType = {
   configExists: boolean,
   showDrawer: boolean,
-  initializedDrawer: boolean
+  initializedDrawer: boolean,
+  clusters: any[]
 };
 
 export default class ClusterSection extends Component<PropsType, StateType> {
@@ -23,10 +26,21 @@ export default class ClusterSection extends Component<PropsType, StateType> {
     configExists: false,
     showDrawer: false,
     initializedDrawer: false,
+    clusters: [],
   };
 
   componentDidMount() {
-    // TODO: Check if
+    let { setCurrentError } = this.context;
+
+    api.getClusters('<token>', {}, { id: 0 }, (err: any, res: any) => {      
+      if (err) {
+        setCurrentError(JSON.stringify(err));
+      } else {
+        // TODO: need a separate query for checking if config has been set
+
+        this.setState({ clusters: res.data.clusters });
+      }
+    });
   }
 
   // Need to override showDrawer when the sidebar is closed

@@ -20,8 +20,8 @@ type StateType = {
 export default class Main extends Component<PropsType, StateType> {
   state = {
     isLoading: false,
-    isLoggedIn: true,
-    uninitialized: false,
+    isLoggedIn: false,
+    uninitialized: true,
   };
 
   componentDidMount() {

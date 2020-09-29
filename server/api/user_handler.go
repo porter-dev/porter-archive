@@ -92,30 +92,28 @@ func (app *App) HandleReadUserClusters(w http.ResponseWriter, r *http.Request) {
 func (app *App) HandleReadUserClustersAll(w http.ResponseWriter, r *http.Request) {
 	user, err := app.readUser(w, r)
 
-	// error already handled by helper
-	if err != nil {
-		return
+	// if there is an error, it's already handled by helper
+	if err == nil {
+		clusters, err := kubernetes.GetAllClusterConfigsFromBytes(user.RawKubeConfig)
+
+		if err != nil {
+			app.handleErrorFormDecoding(err, ErrUserDecode, w)
+			return
+		}
+
+		extClusters := make([]models.ClusterConfigExternal, 0)
+
+		for _, cluster := range clusters {
+			extClusters = append(extClusters, *cluster.Externalize())
+		}
+
+		if err := json.NewEncoder(w).Encode(extClusters); err != nil {
+			app.handleErrorFormDecoding(err, ErrUserDecode, w)
+			return
+		}
+
+		w.WriteHeader(http.StatusOK)
 	}
-
-	clusters, err := kubernetes.GetAllClusterConfigsFromBytes(user.RawKubeConfig)
-
-	if err != nil {
-		app.handleErrorFormDecoding(err, ErrUserDecode, w)
-		return
-	}
-
-	extClusters := make([]models.ClusterConfigExternal, 0)
-
-	for _, cluster := range clusters {
-		extClusters = append(extClusters, *cluster.Externalize())
-	}
-
-	if err := json.NewEncoder(w).Encode(extClusters); err != nil {
-		app.handleErrorFormDecoding(err, ErrUserDecode, w)
-		return
-	}
-
-	w.WriteHeader(http.StatusOK)
 }
 
 // HandleUpdateUser validates an update user form entry, updates the user
@@ -140,7 +138,7 @@ func (app *App) HandleUpdateUser(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// HandleDeleteUser is majestic
+// HandleDeleteUser removes a user after checking that the sent password is correct
 func (app *App) HandleDeleteUser(w http.ResponseWriter, r *http.Request) {
 	id, err := strconv.ParseUint(chi.URLParam(r, "id"), 0, 64)
 

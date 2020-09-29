@@ -131,7 +131,7 @@ var createUserTests = []userTest{
 		},
 	},
 	userTest{
-		msg:      "Create user cannot write to db",
+		msg:      "Create user db connection down",
 		method:   "POST",
 		endpoint: "/api/users",
 		body: `{
@@ -161,6 +161,21 @@ var createUserTests = []userTest{
 		}`,
 		expStatus: http.StatusUnprocessableEntity,
 		expBody:   `{"code":601,"errors":["email already taken"]}`,
+		canQuery:  true,
+		validators: []func(rr *httptest.ResponseRecorder, c userTest, r *chi.Mux, t *testing.T){
+			BasicBodyValidator,
+		},
+	},
+	userTest{
+		msg:      "Create user invalid field type",
+		method:   "POST",
+		endpoint: "/api/users",
+		body: `{
+			"email": "belanger@getporter.dev",
+			"password": 0
+		}`,
+		expStatus: http.StatusBadRequest,
+		expBody:   `{"code":600,"errors":["could not process request"]}`,
 		canQuery:  true,
 		validators: []func(rr *httptest.ResponseRecorder, c userTest, r *chi.Mux, t *testing.T){
 			BasicBodyValidator,
@@ -303,6 +318,26 @@ var readUserClustersAllTests = []userTest{
 			ClusterBodyValidator,
 		},
 	},
+	userTest{
+		init: func(repo *repository.Repository) {
+			repo.User.CreateUser(&models.User{
+				Email:         "belanger@getporter.dev",
+				Password:      "hello",
+				Clusters:      []models.ClusterConfig{},
+				RawKubeConfig: []byte("apiVersion: \xc5\n"),
+			})
+		},
+		msg:       "Read user with invalid utf-8 \xc5 in kubeconfig",
+		method:    "GET",
+		endpoint:  "/api/users/1/clusters/all",
+		body:      "",
+		expStatus: http.StatusBadRequest,
+		expBody:   `{"code":600,"errors":["could not process request"]}`,
+		canQuery:  true,
+		validators: []func(rr *httptest.ResponseRecorder, c userTest, r *chi.Mux, t *testing.T){
+			BasicBodyValidator,
+		},
+	},
 }
 
 func TestHandleReadUserClustersAll(t *testing.T) {
@@ -372,6 +407,42 @@ var updateUserTests = []userTest{
 			BasicBodyValidator,
 		},
 	},
+	userTest{
+		init: func(repo *repository.Repository) {
+			repo.User.CreateUser(&models.User{
+				Email:    "belanger@getporter.dev",
+				Password: "hello",
+			})
+		},
+		msg:       "Update user bad kubeconfig",
+		method:    "PUT",
+		endpoint:  "/api/users/1",
+		body:      `{"rawKubeConfig":"notvalidyaml", "allowedClusters":[]}`,
+		expStatus: http.StatusBadRequest,
+		expBody:   `{"code":600,"errors":["could not process request"]}`,
+		canQuery:  true,
+		validators: []func(rr *httptest.ResponseRecorder, c userTest, r *chi.Mux, t *testing.T){
+			BasicBodyValidator,
+		},
+	},
+	userTest{
+		init: func(repo *repository.Repository) {
+			repo.User.CreateUser(&models.User{
+				Email:    "belanger@getporter.dev",
+				Password: "hello",
+			})
+		},
+		msg:       "Update user db connection down",
+		method:    "PUT",
+		endpoint:  "/api/users/1",
+		body:      `{"rawKubeConfig":"apiVersion: v1\nkind: Config\npreferences: {}\ncurrent-context: default\nclusters:\n- cluster:\n    server: https://localhost\n  name: cluster-test\ncontexts:\n- context:\n    cluster: cluster-test\n    user: test-admin\n  name: context-test\nusers:\n- name: test-admin", "allowedClusters":[]}`,
+		expStatus: http.StatusInternalServerError,
+		expBody:   `{"code":500,"errors":["could not write to database"]}`,
+		canQuery:  false,
+		validators: []func(rr *httptest.ResponseRecorder, c userTest, r *chi.Mux, t *testing.T){
+			BasicBodyValidator,
+		},
+	},
 }
 
 func TestHandleUpdateUser(t *testing.T) {
@@ -427,6 +498,42 @@ var deleteUserTests = []userTest{
 						"validator failed", gotBody, expBody)
 				}
 			},
+		},
+	},
+	userTest{
+		init: func(repo *repository.Repository) {
+			repo.User.CreateUser(&models.User{
+				Email:    "belanger@getporter.dev",
+				Password: "hello",
+			})
+		},
+		msg:       "Delete user invalid id",
+		method:    "DELETE",
+		endpoint:  "/api/users/aldkjf",
+		body:      `{"password":"hello"}`,
+		expStatus: http.StatusBadRequest,
+		expBody:   `{"code":600,"errors":["could not process request"]}`,
+		canQuery:  true,
+		validators: []func(rr *httptest.ResponseRecorder, c userTest, r *chi.Mux, t *testing.T){
+			BasicBodyValidator,
+		},
+	},
+	userTest{
+		init: func(repo *repository.Repository) {
+			repo.User.CreateUser(&models.User{
+				Email:    "belanger@getporter.dev",
+				Password: "hello",
+			})
+		},
+		msg:       "Delete user missing password",
+		method:    "DELETE",
+		endpoint:  "/api/users/1",
+		body:      `{}`,
+		expStatus: http.StatusUnprocessableEntity,
+		expBody:   `{"code":601,"errors":["required validation failed"]}`,
+		canQuery:  true,
+		validators: []func(rr *httptest.ResponseRecorder, c userTest, r *chi.Mux, t *testing.T){
+			BasicBodyValidator,
 		},
 	},
 }

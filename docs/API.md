@@ -155,13 +155,11 @@ User{
 **Successful Response Body**: 
 
 ```js
-{
-    "clusters": []ClusterConfig{
-        "name": String,
-        "server": String,
-        "context": String,
-        "user": String,
-    },
+[]ClusterConfig{
+  "name": String,
+  "server": String,
+  "context": String,
+  "user": String,
 }
 ```
 
@@ -202,13 +200,11 @@ User{
 **Successful Response Body**: 
 
 ```js
-{
-    "clusters": []ClusterConfig{
-        "name": String,
-        "server": String,
-        "context": String,
-        "user": String,
-    },
+[]ClusterConfig{
+  "name": String,
+  "server": String,
+  "context": String,
+  "user": String,
 }
 ```
 

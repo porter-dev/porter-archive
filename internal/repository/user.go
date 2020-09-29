@@ -11,6 +11,7 @@ type WriteUser func(user *models.User) (*models.User, error)
 type UserRepository interface {
 	CreateUser(user *models.User) (*models.User, error)
 	ReadUser(id uint) (*models.User, error)
+	ReadUserByEmail(email string) (*models.User, error)
 	UpdateUser(user *models.User) (*models.User, error)
 	DeleteUser(user *models.User) (*models.User, error)
 }

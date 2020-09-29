@@ -21,8 +21,6 @@ type CreateUserForm struct {
 }
 
 // ToUser converts a CreateUserForm to models.User
-//
-// TODO -- PASSWORD HASHING HERE
 func (cuf *CreateUserForm) ToUser() (*models.User, error) {
 	hashed, err := bcrypt.GenerateFromPassword([]byte(cuf.Password), 8)
 

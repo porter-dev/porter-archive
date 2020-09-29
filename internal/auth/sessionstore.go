@@ -1,6 +1,5 @@
 // Package sessionstore is a postgresql backend implementation of gorilla/sessions Session interface, based on
 // antonlindstrom/pgstore. Key change is to use GORM instead of typical sql driver using queries.
-// All queries are in queries/session, alias'd as "sq".
 package sessionstore
 
 import (
@@ -15,8 +14,9 @@ import (
 	"github.com/gorilla/securecookie"
 	"github.com/gorilla/sessions"
 	"github.com/pkg/errors"
+
 	"github.com/porter-dev/porter/internal/models"
-	sq "github.com/porter-dev/porter/internal/queries/session"
+	rp "github.com/porter-dev/porter/internal/repository/gorm"
 )
 
 // structs
@@ -60,7 +60,8 @@ func (db *PGStore) MaxAge(age int) {
 // load fetches a session by ID from the database and decodes its content
 // into session.Values.
 func (db *PGStore) load(session *sessions.Session) error {
-	res, err := sq.SelectSession(db.DbPool, &models.Session{Key: session.ID})
+	repo := rp.NewRepository(db.DbPool)
+	res, err := repo.Session.SelectSession(&models.Session{Key: session.ID})
 
 	if err != nil {
 		return err
@@ -96,12 +97,14 @@ func (db *PGStore) save(session *sessions.Session) error {
 		ExpiresAt: expiresOn,
 	}
 
+	repo := rp.NewRepository(db.DbPool)
+
 	if session.IsNew {
-		_, createErr := sq.CreateSession(db.DbPool, &s)
+		_, createErr := repo.Session.CreateSession(&s)
 		return createErr
 	}
 
-	_, updateErr := sq.UpdateSession(db.DbPool, &s)
+	_, updateErr := repo.Session.UpdateSession(&s)
 	return updateErr
 }
 
@@ -158,9 +161,11 @@ func (db *PGStore) New(r *http.Request, name string) (*sessions.Session, error) 
 
 // Save saves the given session into the database and deletes cookies if needed
 func (db *PGStore) Save(r *http.Request, w http.ResponseWriter, session *sessions.Session) error {
+	repo := rp.NewRepository(db.DbPool)
+
 	// Set delete if max-age is < 0
 	if session.Options.MaxAge < 0 {
-		if _, err := sq.DeleteSession(db.DbPool, &models.Session{Key: session.ID}); err != nil {
+		if _, err := repo.Session.DeleteSession(&models.Session{Key: session.ID}); err != nil {
 			return err
 		}
 		http.SetCookie(w, sessions.NewCookie(session.Name(), "", session.Options))

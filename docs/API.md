@@ -1,3 +1,19 @@
+**Table of Contents:**
+
+- [Overview](#overview)
+- [Global Errors](#global-errors)
+  - [`ErrorDataWrite`](#errordatawrite)
+  - [`ErrorDataRead`](#errordataread)
+  - [`ErrorInternal`](#errorinternal)
+- [`/api/users`](#apiusers)
+  - [`GET /api/users/{id}`](#get-apiusersid)
+  - [`GET /api/users/{id}/clusters`](#get-apiusersidclusters)
+  - [`GET /api/users/{id}/clusters/all`](#get-apiusersidclustersall)
+  - [`GET /api/users/{id}/clusters`](#get-apiusersidclusters)
+  - [`POST /api/users`](#post-apiusers)
+  - [`PUT /api/users/{id}`](#put-apiusersid)
+  - [`DELETE /api/users/{id}`](#delete-apiusersid)
+
 ### Overview
 
 This is the API specification that the Go server is implementing. 

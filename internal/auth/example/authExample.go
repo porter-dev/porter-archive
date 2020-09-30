@@ -11,13 +11,12 @@ import (
 	sessionstore "github.com/porter-dev/porter/internal/auth"
 )
 
-var appConf = config.AppConfig()
+var appConf = config.FromEnv()
 
 var db, dbErr = dbConn.New(&appConf.Db)
 
 var (
-	key      = []byte("secret") // change to os.Getenv("SESSION_KEY")
-	store, _ = sessionstore.NewStore(gorm.NewRepository(db), key)
+	store, _ = sessionstore.NewStore(gorm.NewRepository(db), appConf.Server)
 )
 
 func secret(w http.ResponseWriter, r *http.Request) {

@@ -12,7 +12,7 @@ import (
 func main() {
 	fmt.Println("running migrations...")
 
-	appConf := config.AppConfig()
+	appConf := config.FromEnv()
 
 	logger := lr.NewConsole(true)
 	db, err := adapter.New(&appConf.Db)

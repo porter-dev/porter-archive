@@ -50,9 +50,6 @@ func (luf *LoginUserForm) ToUser() (*models.User, error) {
 	}
 
 	return &models.User{
-		Model: gorm.Model{
-			ID: luf.ID,
-		},
 		Email:    luf.Email,
 		Password: string(hashed),
 	}, nil

@@ -1,13 +1,17 @@
-package sessionstore
+package sessionstore_test
 
 import (
 	"encoding/base64"
 	"net/http"
 	"testing"
 
+	"github.com/porter-dev/porter/internal/config"
+
 	"github.com/gorilla/securecookie"
 	"github.com/gorilla/sessions"
 	"github.com/porter-dev/porter/internal/repository/test"
+
+	sessionstore "github.com/porter-dev/porter/internal/auth"
 )
 
 type headerOnlyResponseWriter http.Header
@@ -29,7 +33,10 @@ var secret = "secret"
 func TestPGStore(t *testing.T) {
 	repo := test.NewRepository(true)
 
-	ss, err := NewStore(repo, []byte(secret))
+	ss, err := sessionstore.NewStore(repo, config.ServerConf{
+		CookieSecrets: [][]byte{[]byte("secret")},
+	})
+
 	if err != nil {
 		t.Fatal("Failed to get store", err)
 	}
@@ -126,7 +133,10 @@ func TestPGStore(t *testing.T) {
 func TestSessionOptionsAreUniquePerSession(t *testing.T) {
 	repo := test.NewRepository(true)
 
-	ss, err := NewStore(repo, []byte(secret))
+	ss, err := sessionstore.NewStore(repo, config.ServerConf{
+		CookieSecrets: [][]byte{[]byte("secret")},
+	})
+
 	if err != nil {
 		t.Fatal("Failed to get store", err)
 	}

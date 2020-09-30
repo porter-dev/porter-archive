@@ -17,6 +17,7 @@ type App struct {
 	validator  *validator.Validate
 	store      *sessionstore.PGStore
 	translator *ut.Translator
+	cookieName string
 }
 
 // New returns a new App instance
@@ -25,6 +26,7 @@ func New(
 	repo *repository.Repository,
 	validator *validator.Validate,
 	store *sessionstore.PGStore,
+	cookieName string,
 ) *App {
 	// for now, will just support the english translator from the
 	// validator/translations package
@@ -38,6 +40,7 @@ func New(
 		validator:  validator,
 		store:      store,
 		translator: &trans,
+		cookieName: cookieName,
 	}
 }
 

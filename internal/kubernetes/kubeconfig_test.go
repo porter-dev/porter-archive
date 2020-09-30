@@ -6,7 +6,6 @@ import (
 
 	"github.com/porter-dev/porter/internal/kubernetes"
 	"github.com/porter-dev/porter/internal/models"
-	"gopkg.in/yaml.v2"
 )
 
 type KubeConfigTest struct {
@@ -55,17 +54,13 @@ var MissingFieldsTest = []KubeConfigTest{
 	},
 }
 
-func TestToClusterConfigsMissingFields(t *testing.T) {
+func TestMissingFields(t *testing.T) {
 	for _, c := range MissingFieldsTest {
-		// take raw and decode
-		conf := kubernetes.KubeConfig{}
-		err := yaml.Unmarshal(c.raw, &conf)
+		res, err := kubernetes.GetAllowedClusterConfigsFromBytes(c.raw, c.allowedClusters)
 
 		if err != nil {
-			t.Errorf("Testing: %s, Error: %v\n", c.msg, err)
+			t.Fatalf("Testing %s returned an error: %v\n", c.msg, err.Error())
 		}
-
-		res := conf.ToAllowedClusterConfigs(c.allowedClusters)
 
 		isEqual := reflect.DeepEqual(c.expected, res)
 
@@ -84,18 +79,13 @@ var NoAllowedClustersTests = []KubeConfigTest{
 	},
 }
 
-func TestToClusterConfigsNoAllowedClusters(t *testing.T) {
+func TestNoAllowedClusters(t *testing.T) {
 	for _, c := range NoAllowedClustersTests {
-		// take raw and decode
-
-		conf := kubernetes.KubeConfig{}
-		err := yaml.Unmarshal(c.raw, &conf)
+		res, err := kubernetes.GetAllowedClusterConfigsFromBytes(c.raw, c.allowedClusters)
 
 		if err != nil {
-			t.Errorf("Testing: %s, Error: %v\n", c.msg, err)
+			t.Fatalf("Testing %s returned an error: %v\n", c.msg, err.Error())
 		}
-
-		res := conf.ToAllowedClusterConfigs(c.allowedClusters)
 
 		isEqual := reflect.DeepEqual(c.expected, res)
 
@@ -105,7 +95,7 @@ func TestToClusterConfigsNoAllowedClusters(t *testing.T) {
 	}
 }
 
-var BasicClustersTests = []KubeConfigTest{
+var BasicClustersAllowedTests = []KubeConfigTest{
 	KubeConfigTest{
 		msg:             "basic test",
 		raw:             []byte(basic),
@@ -121,17 +111,45 @@ var BasicClustersTests = []KubeConfigTest{
 	},
 }
 
-func TestToClusterConfigsBasic(t *testing.T) {
-	for _, c := range BasicClustersTests {
-		// take raw and decode
-		conf := kubernetes.KubeConfig{}
-		err := yaml.Unmarshal(c.raw, &conf)
+func TestBasicAllowed(t *testing.T) {
+	for _, c := range BasicClustersAllowedTests {
+		res, err := kubernetes.GetAllowedClusterConfigsFromBytes(c.raw, c.allowedClusters)
 
 		if err != nil {
-			t.Errorf("Testing: %s, Error: %v\n", c.msg, err)
+			t.Fatalf("Testing %s returned an error: %v\n", c.msg, err.Error())
 		}
 
-		res := conf.ToAllowedClusterConfigs(c.allowedClusters)
+		isEqual := reflect.DeepEqual(c.expected, res)
+
+		if !isEqual {
+			t.Errorf("Testing: %s, Expected: %v, Got: %v\n", c.msg, c.expected, res)
+		}
+	}
+}
+
+var BasicClustersAllTests = []KubeConfigTest{
+	KubeConfigTest{
+		msg:             "basic test",
+		raw:             []byte(basic),
+		allowedClusters: []string{"cluster-test"},
+		expected: []models.ClusterConfig{
+			models.ClusterConfig{
+				Name:    "cluster-test",
+				Server:  "https://localhost",
+				Context: "context-test",
+				User:    "test-admin",
+			},
+		},
+	},
+}
+
+func TestBasicAll(t *testing.T) {
+	for _, c := range BasicClustersAllTests {
+		res, err := kubernetes.GetAllClusterConfigsFromBytes(c.raw)
+
+		if err != nil {
+			t.Fatalf("Testing %s returned an error: %v\n", c.msg, err.Error())
+		}
 
 		isEqual := reflect.DeepEqual(c.expected, res)
 

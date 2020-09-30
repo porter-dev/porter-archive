@@ -4,6 +4,7 @@ import drawerBg from '../../../assets/drawer-bg.png';
 
 import api from '../../../shared/api';
 import { Context } from '../../../shared/Context';
+import { ClusterConfig } from '../../../shared/types';
 
 import Drawer from './Drawer';
 
@@ -16,28 +17,52 @@ type StateType = {
   configExists: boolean,
   showDrawer: boolean,
   initializedDrawer: boolean,
-  clusters: any[]
+  clusters: any[],
+  activeIndex: number,
 };
+
+const dummyClusters: ClusterConfig[]  = [
+  { 
+    name: 'happy-ol-trees', 
+    server: 'idc',
+    context: 'idk',
+    user: 'jusrhee'
+  },
+  { 
+    name: 'joyous-petite-rocks', 
+    server: 'idc',
+    context: 'idk',
+    user: 'jusrhee'
+  },
+  { 
+    name: 'friendly-small-bush', 
+    server: 'idc',
+    context: 'idk',
+    user: 'jusrhee'
+  }
+];
 
 export default class ClusterSection extends Component<PropsType, StateType> {
 
   // Need to track initialized for animation mounting
   state = {
-    configExists: false,
+    configExists: true,
     showDrawer: false,
     initializedDrawer: false,
-    clusters: [],
+    clusters: [] as ClusterConfig[],
+    activeIndex: 0,
   };
 
   componentDidMount() {
+    // TODO: remove
+    // this.setState({ clusters: dummyClusters });
+
     let { setCurrentError } = this.context;
 
     api.getClusters('<token>', {}, { id: 0 }, (err: any, res: any) => {      
       if (err) {
         setCurrentError(JSON.stringify(err));
       } else {
-        // TODO: need a separate query for checking if config has been set
-
         this.setState({ clusters: res.data.clusters });
       }
     });
@@ -66,22 +91,27 @@ export default class ClusterSection extends Component<PropsType, StateType> {
         <Drawer
           toggleDrawer={this.toggleDrawer}
           showDrawer={this.state.showDrawer}
+          clusters={this.state.clusters}
+          activeIndex={this.state.activeIndex}
+          setActiveIndex={(i: number): void => this.setState({ activeIndex: i })}
         />
       );
     }
   };
 
   renderContents = (): JSX.Element => {
-    if (this.state.configExists) {
+    let { clusters, activeIndex, showDrawer } = this.state;
+
+    if (clusters.length > 0) {
       return (
-        <ClusterSelector showDrawer={this.state.showDrawer}>
+        <ClusterSelector showDrawer={showDrawer}>
           <LinkWrapper>
             <ClusterIcon><i className="material-icons">polymer</i></ClusterIcon>
-            <ClusterName>happy-lil-trees</ClusterName>
+            <ClusterName>{clusters[activeIndex].name}</ClusterName>
           </LinkWrapper>
           <DrawerButton onClick={this.toggleDrawer}>
             <BgAccent src={drawerBg} />
-            <DropdownIcon showDrawer={this.state.showDrawer}>
+            <DropdownIcon showDrawer={showDrawer}>
               <i className="material-icons">arrow_drop_down</i>
             </DropdownIcon>
           </DrawerButton>

@@ -6,21 +6,18 @@ import 'ace-builds/src-noconflict/mode-yaml';
 import 'ace-builds/src-noconflict/theme-monokai';
 
 type PropsType = {
+  value: string,
+  onChange: (e: any) => void,
 }
 
-class YamlEditor extends Component {
-  constructor(props: PropsType) {
-    super(props);
-    this.state = {
-      yaml: ``,
-    }
-    this.handleChange = this.handleChange.bind(this);
-    this.handleSubmit = this.handleSubmit.bind(this);
-  }
+type StateType = {
+}
+
+class YamlEditor extends Component<PropsType, StateType> {
 
   // Uses the yaml-lint library to determine if a given string is valid yaml.
   // If the code is invalid, it returns an error message detailing what went wrong.
-  checkYaml = (y: string) => {
+  checkYaml = () => {
     /*
     yamlLint.lint(y).then(() => {
       alert('Valid YAML file.');
@@ -36,7 +33,7 @@ class YamlEditor extends Component {
   }
 
   handleSubmit = (e: any) => {
-    this.checkYaml('dummyText');
+    this.checkYaml();
     e.preventDefault();
   }
 
@@ -46,12 +43,12 @@ class YamlEditor extends Component {
         <Editor onSubmit={this.handleSubmit}>
           <AceEditor
             mode='yaml'
+            value={this.props.value}
             theme='monokai'
-            onChange={this.handleChange}
+            onChange={this.props.onChange}
             name='codeEditor'
             editorProps={{ $blockScrolling: true }}
             width='100%'
-            defaultValue={`# If you are using certificate files, include those explicitly`}
             style={{ borderRadius: '5px' }}
           />
         </Editor>

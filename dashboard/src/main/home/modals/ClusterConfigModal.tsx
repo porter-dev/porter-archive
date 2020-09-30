@@ -1,20 +1,33 @@
 import React, { Component } from 'react';
 import styled from 'styled-components';
-import { textChangeRangeIsUnchanged } from 'typescript';
 import close from '../../../assets/close.png';
 
+import api from '../../../shared/api';
 import { Context } from '../../../shared/Context';
+import { ClusterConfig } from '../../../shared/types';
+
 import YamlEditor from '../../../components/YamlEditor';
+import SaveButton from '../../../components/SaveButton';
 
-type ClusterOption = {
-  name: string,
-  selected: boolean,
-}
-
-const dummyClusters: ClusterOption[]  = [
-  { name: 'happy-lil-trees', selected: true },
-  { name: 'joyous-petite-rocks', selected: false },
-  { name: 'friendly-small-bush', selected: false }
+const dummyClusters: ClusterConfig[]  = [
+  { 
+    name: 'happy-lil-trees', 
+    server: 'idc',
+    context: 'idk',
+    user: 'jusrhee'
+  },
+  { 
+    name: 'joyous-petite-rocks', 
+    server: 'idc',
+    context: 'idk',
+    user: 'jusrhee'
+  },
+  { 
+    name: 'friendly-small-bush', 
+    server: 'idc',
+    context: 'idk',
+    user: 'jusrhee'
+  }
 ];
 
 type PropsType = {
@@ -22,17 +35,31 @@ type PropsType = {
 
 type StateType = {
   currentTab: string,
-  clusters: ClusterOption[]
+  clusters: ClusterConfig[],
+  selected: boolean[],
+  rawKubeconfig: string,
+  saveKubeconfigStatus: string | null,
 };
 
 export default class ClusterConfigModal extends Component<PropsType, StateType> {
   state = {
     currentTab: 'kubeconfig',
-    clusters: new Array<ClusterOption>(),
+    clusters: [] as ClusterConfig[],
+    selected: [] as boolean[],
+    rawKubeconfig: '# If you are using certificate files, include those explicitly',
+    saveKubeconfigStatus: null,
   };
 
   componentDidMount() {
-    this.setState({ clusters: dummyClusters });
+    let { setCurrentError } = this.context;
+
+    api.getUser('<token>', {}, { id: 0 }, (err: any, res: any) => {      
+      if (err) {
+        setCurrentError(JSON.stringify(err));
+      } else {
+        this.setState({ rawKubeconfig: res.data.rawKubeConfig });
+      }
+    });
   }
 
   renderLine = (tab: string): JSX.Element | undefined => {
@@ -42,17 +69,17 @@ export default class ClusterConfigModal extends Component<PropsType, StateType> 
   };
 
   toggleCluster = (i: number): void => {
-    let newClusters = this.state.clusters;
-    newClusters[i].selected = !this.state.clusters[i].selected;
-    this.setState({ clusters: newClusters });
+    let newSelected = this.state.selected;
+    newSelected[i] = !this.state.selected[i];
+    this.setState({ selected: newSelected });
   };
 
   renderClusterList = (): JSX.Element[] | JSX.Element => {
     if (this.state.clusters.length > 0) {
-      return this.state.clusters.map((cluster: ClusterOption, i) => {
+      return this.state.clusters.map((cluster: ClusterConfig, i) => {
         return (
           <Row key={i} onClick={() => this.toggleCluster(i)}>
-            <Checkbox checked={cluster.selected}>
+            <Checkbox checked={this.state.selected[i]}>
               <i className="material-icons">done</i>
             </Checkbox>
             {cluster.name}
@@ -71,14 +98,43 @@ export default class ClusterConfigModal extends Component<PropsType, StateType> 
       </Placeholder>
     );
   };
+
+  handleSaveKubeconfig = () => {
+    let { rawKubeconfig } = this.state;
+    let { setCurrentError } = this.context;
+
+    this.setState({ saveKubeconfigStatus: 'loading' });
+    api.updateRawKubeconfig(
+      '<token>',
+      { rawKubeconfig },
+      { id: 0 },
+      (err: any, res: any) => {
+        if (err) {
+          this.setState({ saveKubeconfigStatus: 'error' });
+        } else {
+          this.setState({ 
+            rawKubeconfig: res.data.rawKubeConfig,
+            saveKubeconfigStatus: 'successful'
+          });
+        }
+      }
+    );
+  }
   
   renderTabContents = (): JSX.Element => {
     if (this.state.currentTab === 'kubeconfig') {
       return (
         <div>
           <Subtitle>Copy and paste your kubeconfig below</Subtitle>
-          <YamlEditor />
-          <Button>Save Kubeconfig</Button>
+          <YamlEditor 
+            value={this.state.rawKubeconfig}
+            onChange={(e: any) => this.setState({ rawKubeconfig: e })}
+          />
+          <SaveButton
+            text='Save Kubeconfig'
+            onClick={this.handleSaveKubeconfig}
+            status={this.state.saveKubeconfigStatus}
+          />
         </div>
       )
     }
@@ -89,7 +145,11 @@ export default class ClusterConfigModal extends Component<PropsType, StateType> 
         <ClusterList>
           {this.renderClusterList()}
         </ClusterList>
-        <Button disabled={true}>Save Selected</Button>
+        <SaveButton
+          text='Save Selected'
+          disabled={true}
+          onClick={() => alert('unimplemented')}
+        />
       </div>
     )
   };
@@ -185,29 +245,6 @@ const ClusterList = styled.div`
   border-radius: 5px;
   background: #ffffff06;
   border: 1px solid #ffffff22;
-`;
-
-const Button = styled.button`
-  position: absolute;
-  bottom: 25px;
-  right: 27px;
-  height: 40px;
-  font-size: 13px;
-  font-weight: 500;
-  font-family: 'Work Sans', sans-serif;
-  color: white;
-  padding: 6px 20px 7px 20px;
-  text-align: left;
-  border: 0;
-  border-radius: 5px;
-  background: ${(props) => (!props.disabled ? '#616FEEcc' : '#bbd')};
-  box-shadow: ${(props) => (!props.disabled ? '0 2px 5px 0 #00000030' : 'none')};
-  cursor: ${(props) => (!props.disabled ? 'pointer' : 'default')};
-  user-select: none;
-  :focus { outline: 0 }
-  :hover {
-    background: ${(props) => (!props.disabled ? '#616FEEff' : '#bbd')};
-  }
 `;
 
 const Subtitle = styled.div`

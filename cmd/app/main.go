@@ -18,7 +18,7 @@ import (
 )
 
 func main() {
-	appConf := config.AppConfig()
+	appConf := config.FromEnv()
 
 	logger := lr.NewConsole(appConf.Debug)
 	db, err := adapter.New(&appConf.Db)
@@ -30,12 +30,11 @@ func main() {
 
 	repo := gorm.NewRepository(db)
 
-	key := []byte("secret") // TODO: change to os.Getenv("SESSION_KEY")
-	store, _ := sessionstore.NewStore(repo, key)
+	store, _ := sessionstore.NewStore(repo, appConf.Server)
 
 	validator := vr.New()
 
-	a := api.New(logger, repo, validator, store)
+	a := api.New(logger, repo, validator, store, appConf.Server.CookieName)
 
 	appRouter := router.New(a)
 

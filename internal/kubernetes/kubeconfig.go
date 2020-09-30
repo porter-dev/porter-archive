@@ -45,7 +45,7 @@ func GetAllowedClusterConfigsFromBytes(bytes []byte, allowedClusters []string) (
 		return nil, err
 	}
 
-	clusters := conf.ToAllowedClusterConfigs(allowedClusters)
+	clusters := conf.toAllowedClusterConfigs(allowedClusters)
 
 	return clusters, nil
 }
@@ -60,16 +60,16 @@ func GetAllClusterConfigsFromBytes(bytes []byte) ([]models.ClusterConfig, error)
 		return nil, err
 	}
 
-	clusters := conf.ToAllClusterConfigs()
+	clusters := conf.toAllClusterConfigs()
 
 	return clusters, nil
 }
 
-// ToAllowedClusterConfigs converts a KubeConfig to a set of ClusterConfigs by
+// toAllowedClusterConfigs converts a KubeConfig to a set of ClusterConfigs by
 // joining users and clusters on the context.
 //
 // It accepts a list of cluster names that the user wishes to connect to
-func (k *KubeConfig) ToAllowedClusterConfigs(allowedClusters []string) []models.ClusterConfig {
+func (k *KubeConfig) toAllowedClusterConfigs(allowedClusters []string) []models.ClusterConfig {
 	clusters := make([]models.ClusterConfig, 0)
 
 	// convert clusters, contexts, and users to maps for fast lookup
@@ -103,9 +103,9 @@ func (k *KubeConfig) ToAllowedClusterConfigs(allowedClusters []string) []models.
 	return clusters
 }
 
-// ToAllClusterConfigs converts a KubeConfig to a set of ClusterConfigs by
+// toAllClusterConfigs converts a KubeConfig to a set of ClusterConfigs by
 // joining users and clusters on the context.
-func (k *KubeConfig) ToAllClusterConfigs() []models.ClusterConfig {
+func (k *KubeConfig) toAllClusterConfigs() []models.ClusterConfig {
 	clusters := make([]models.ClusterConfig, 0)
 
 	// convert clusters, contexts, and users to maps for fast lookup

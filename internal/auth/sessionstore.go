@@ -9,6 +9,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/porter-dev/porter/internal/config"
+
 	"github.com/gorilla/securecookie"
 	"github.com/gorilla/sessions"
 	"github.com/pkg/errors"
@@ -108,7 +110,9 @@ func (store *PGStore) save(session *sessions.Session) error {
 // Implementation of the interface (Get, New, Save)
 
 // NewStore takes an initialized db and session key pairs to create a session-store in postgres db.
-func NewStore(repo *repository.Repository, keyPairs ...[]byte) (*PGStore, error) {
+func NewStore(repo *repository.Repository, conf config.ServerConf) (*PGStore, error) {
+	keyPairs := conf.CookieSecrets
+
 	dbStore := &PGStore{
 		Codecs: securecookie.CodecsFromPairs(keyPairs...),
 		Options: &sessions.Options{

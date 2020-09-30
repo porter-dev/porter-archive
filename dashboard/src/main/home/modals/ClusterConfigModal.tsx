@@ -9,27 +9,6 @@ import { ClusterConfig } from '../../../shared/types';
 import YamlEditor from '../../../components/YamlEditor';
 import SaveButton from '../../../components/SaveButton';
 
-const dummyClusters: ClusterConfig[]  = [
-  { 
-    name: 'happy-lil-trees', 
-    server: 'idc',
-    context: 'idk',
-    user: 'jusrhee'
-  },
-  { 
-    name: 'joyous-petite-rocks', 
-    server: 'idc',
-    context: 'idk',
-    user: 'jusrhee'
-  },
-  { 
-    name: 'friendly-small-bush', 
-    server: 'idc',
-    context: 'idk',
-    user: 'jusrhee'
-  }
-];
-
 type PropsType = {
 };
 
@@ -39,6 +18,7 @@ type StateType = {
   selected: boolean[],
   rawKubeconfig: string,
   saveKubeconfigStatus: string | null,
+  saveSelectedStatus: string | null
 };
 
 export default class ClusterConfigModal extends Component<PropsType, StateType> {
@@ -48,7 +28,32 @@ export default class ClusterConfigModal extends Component<PropsType, StateType> 
     selected: [] as boolean[],
     rawKubeconfig: '# If you are using certificate files, include those explicitly',
     saveKubeconfigStatus: null,
+    saveSelectedStatus: null,
   };
+  
+  updateChecklist = () => {
+    let { setCurrentError } = this.context;
+
+    // Parse kubeconfig to retrieve all possible clusters
+    api.getAllClusters('<token>', {}, { id: 0 }, (err: any, res: any) => {
+      if (err) {
+        setCurrentError(JSON.stringify(err));
+      } else {
+        let clusters = res.data.clusters;
+        this.setState({ clusters });
+
+        // Check against list of connected clusters
+        api.getClusters('<token>', {}, { id: 0 }, (err: any, res: any) => {
+          if (err) {
+            setCurrentError(JSON.stringify(err));
+          } else {
+            let selected = clusters.map((x: ClusterConfig) => res.data.clusters.includes(x));
+            this.setState({ selected });
+          }
+        });
+      }
+    });
+  }
 
   componentDidMount() {
     let { setCurrentError } = this.context;
@@ -60,6 +65,8 @@ export default class ClusterConfigModal extends Component<PropsType, StateType> 
         this.setState({ rawKubeconfig: res.data.rawKubeConfig });
       }
     });
+
+    this.updateChecklist();
   }
 
   renderLine = (tab: string): JSX.Element | undefined => {
@@ -101,10 +108,9 @@ export default class ClusterConfigModal extends Component<PropsType, StateType> 
 
   handleSaveKubeconfig = () => {
     let { rawKubeconfig } = this.state;
-    let { setCurrentError } = this.context;
 
     this.setState({ saveKubeconfigStatus: 'loading' });
-    api.updateRawKubeconfig(
+    api.updateUser(
       '<token>',
       { rawKubeconfig },
       { id: 0 },
@@ -116,6 +122,34 @@ export default class ClusterConfigModal extends Component<PropsType, StateType> 
             rawKubeconfig: res.data.rawKubeConfig,
             saveKubeconfigStatus: 'successful'
           });
+
+          this.updateChecklist();
+        }
+      }
+    );
+  }
+
+  handleSaveSelected = () => {
+    let { clusters, selected } = this.state;
+
+    this.setState({ saveSelectedStatus: 'loading' });
+
+    let allowedClusters: string[] = [];
+    clusters.forEach((x, i) => {
+      if (selected[i]) {
+        allowedClusters.push(x.name);
+      }
+    });
+
+    api.updateUser(
+      '<token>',
+      { allowedClusters },
+      { id: 0 },
+      (err: any, res: any) => {
+        if (err) {
+          this.setState({ saveSelectedStatus: 'error' });
+        } else {
+          this.setState({ saveSelectedStatus: 'successful' });
         }
       }
     );
@@ -147,8 +181,8 @@ export default class ClusterConfigModal extends Component<PropsType, StateType> 
         </ClusterList>
         <SaveButton
           text='Save Selected'
-          disabled={true}
-          onClick={() => alert('unimplemented')}
+          disabled={this.state.clusters.length === 0}
+          onClick={this.handleSaveSelected}
         />
       </div>
     )

@@ -26,7 +26,7 @@ func (auth *Auth) BasicAuthenticate(next http.Handler) http.Handler {
 		if auth.isLoggedIn(r) {
 			next.ServeHTTP(w, r)
 		} else {
-			http.Error(w, http.StatusText(403), 403)
+			http.Error(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)
 			return
 		}
 
@@ -43,7 +43,7 @@ func (auth *Auth) DoesUserIDMatch(next http.Handler) http.Handler {
 		if err == nil && auth.doesSessionMatchID(r, uint(id)) {
 			next.ServeHTTP(w, r)
 		} else {
-			http.Error(w, http.StatusText(403), 403)
+			http.Error(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)
 			return
 		}
 

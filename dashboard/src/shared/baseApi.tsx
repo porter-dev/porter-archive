@@ -1,8 +1,12 @@
 import axios from 'axios';
 
 // Partial function that accepts a generic params type and returns an api method
-export const baseApi = <T extends {}, S = {}>(requestType: string, endpoint: ((pathParams: S) => string) | string) => {
+export const baseApi = <T extends {}, S = {}>(requestType: string, endpoint: ((pathParams: S) => string) | string, baseUrlOverride?: string) => {
   return (token: string, params: T, pathParams: S, callback?: (err: any, res: any) => void) => {
+    let baseUrl = (process as any).env.API_SERVER;
+    if (baseUrlOverride) {
+      baseUrl = baseUrlOverride;
+    }
 
     // Generate endpoint literal
     let endpointString: ((pathParams: S) => string) | string;
@@ -14,7 +18,7 @@ export const baseApi = <T extends {}, S = {}>(requestType: string, endpoint: ((p
 
     // Handle request type (can refactor)
     if (requestType === 'POST') {
-      axios.post(`https://${(process as any).env.API_SERVER + endpointString}`, params, {
+      axios.post(`https://${baseUrl + endpointString}`, params, {
         headers: {
           Authorization: `Bearer ${token}`
         }
@@ -26,7 +30,7 @@ export const baseApi = <T extends {}, S = {}>(requestType: string, endpoint: ((p
         callback && callback(err, null);
       });
     } else if (requestType === 'PUT') {
-      axios.put(`https://${(process as any).env.API_SERVER + endpointString}`, params, {
+      axios.put(`https://${baseUrl + endpointString}`, params, {
         headers: {
           Authorization: `Bearer ${token}`
         }
@@ -38,7 +42,7 @@ export const baseApi = <T extends {}, S = {}>(requestType: string, endpoint: ((p
         callback && callback(err, null);
       });
     } else {
-      axios.get(`https://${(process as any).env.API_SERVER + endpoint}`, {
+      axios.get(`https://${baseUrl + endpoint}`, {
         headers: {
           Authorization: `Bearer ${token}`
         },

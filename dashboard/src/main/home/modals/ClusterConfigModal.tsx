@@ -27,8 +27,8 @@ export default class ClusterConfigModal extends Component<PropsType, StateType> 
     clusters: [] as ClusterConfig[],
     selected: [] as boolean[],
     rawKubeconfig: '# If you are using certificate files, include those explicitly',
-    saveKubeconfigStatus: null,
-    saveSelectedStatus: null,
+    saveKubeconfigStatus: null as (string | null),
+    saveSelectedStatus: null as (string | null),
   };
   
   updateChecklist = () => {

@@ -155,7 +155,7 @@ const InitializeButton = styled.div`
   font-weight: 500;
   border-radius: 3px;
   color: #ffffff;
-  padding-bottom: 3px;
+  padding-bottom: 1px;
   cursor: pointer;
   background: #ffffff11;
 

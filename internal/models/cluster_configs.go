@@ -1,6 +1,6 @@
 package models
 
-import "github.com/jinzhu/gorm"
+import "gorm.io/gorm"
 
 // ClusterConfig that extends gorm.Model
 //

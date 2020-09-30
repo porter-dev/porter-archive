@@ -22,8 +22,12 @@ func main() {
 		return
 	}
 
-	db.AutoMigrate(
+	err = db.AutoMigrate(
 		&models.User{},
 		&models.ClusterConfig{},
 	)
+
+	if err != nil {
+		panic(err)
+	}
 }

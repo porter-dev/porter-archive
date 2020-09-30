@@ -21,7 +21,17 @@ const logInUser = baseApi<{
 
 const logOutUser = baseApi<{}>('GET', '/api/logout');
 
-const getClusters = baseApi<{}, { id: number }>('GET', (pathParams) => {
+const getUser = baseApi<{}, { id: number }>('GET', pathParams => {
+  return `/api/users/${pathParams.id}`;
+});
+
+const updateRawKubeconfig = baseApi<{
+  rawKubeconfig: string
+}, { id: number }>('PUT', pathParams => {
+  return `/api/users/${pathParams.id}`;
+});
+
+const getClusters = baseApi<{}, { id: number }>('GET', pathParams => {
   return `/api/users/${pathParams.id}/clusters`;
 });
 
@@ -30,5 +40,7 @@ export default {
   registerUser,
   logInUser,
   logOutUser,
+  getUser,
+  updateRawKubeconfig,
   getClusters
 }

@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import { isNullishCoalesce } from 'typescript';
 
 type ContextProps = {
 }
@@ -28,6 +29,10 @@ class ContextProvider extends Component {
     currentError: null,
     setCurrentError: (currentError: string): void => {
       this.setState({ currentError });
+    },
+    currentCluster: null,
+    setCurrentCluster: (currentCluster: string): void => {
+      this.setState({ currentCluster });
     }
   };
 

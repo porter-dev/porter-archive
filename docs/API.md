@@ -297,6 +297,13 @@ User{
 
 **Request body:**
 
+```js
+{
+  "rawKubeConfig": String,
+  "allowedClusters": []String,
+}
+```
+
 **Successful Response Body**: N/A
 
 **Successful Status Code**: `204`

@@ -9,7 +9,6 @@ import (
 )
 
 // New returns a new gorm database instance
-// TODO -- accept config to generate connection
 func New(conf *config.DBConf) (*gorm.DB, error) {
 	dsn := fmt.Sprintf(
 		"user=%s password=%s port=%d host=%s sslmode=disable",

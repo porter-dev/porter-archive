@@ -1,6 +1,9 @@
 package kubernetes
 
-import "github.com/porter-dev/porter/internal/models"
+import (
+	"github.com/porter-dev/porter/internal/models"
+	"gopkg.in/yaml.v2"
+)
 
 // KubeConfigCluster represents the cluster field in a kubeconfig
 type KubeConfigCluster struct {
@@ -32,10 +35,78 @@ type KubeConfig struct {
 	Users          []KubeConfigUser    `yaml:"users"`
 }
 
-// ToClusterConfigs converts a KubeConfig to a set of ClusterConfigExternals by
+// GetAllowedClusterConfigsFromBytes converts a raw string to a set of ClusterConfigs
+// by unmarshaling and calling (*KubeConfig).ToAllowedClusterConfigs
+func GetAllowedClusterConfigsFromBytes(bytes []byte, allowedClusters []string) ([]models.ClusterConfig, error) {
+	conf := KubeConfig{}
+	err := yaml.Unmarshal(bytes, &conf)
+
+	if err != nil {
+		return nil, err
+	}
+
+	clusters := conf.ToAllowedClusterConfigs(allowedClusters)
+
+	return clusters, nil
+}
+
+// GetAllClusterConfigsFromBytes converts a raw string to a set of ClusterConfigs
+// by unmarshaling and calling (*KubeConfig).ToAllClusterConfigs
+func GetAllClusterConfigsFromBytes(bytes []byte) ([]models.ClusterConfig, error) {
+	conf := KubeConfig{}
+	err := yaml.Unmarshal(bytes, &conf)
+
+	if err != nil {
+		return nil, err
+	}
+
+	clusters := conf.ToAllClusterConfigs()
+
+	return clusters, nil
+}
+
+// ToAllowedClusterConfigs converts a KubeConfig to a set of ClusterConfigs by
 // joining users and clusters on the context.
-func (k *KubeConfig) ToClusterConfigs() []*models.ClusterConfigExternal {
-	clusters := make([]*models.ClusterConfigExternal, 0)
+//
+// It accepts a list of cluster names that the user wishes to connect to
+func (k *KubeConfig) ToAllowedClusterConfigs(allowedClusters []string) []models.ClusterConfig {
+	clusters := make([]models.ClusterConfig, 0)
+
+	// convert clusters, contexts, and users to maps for fast lookup
+	clusterMap := k.createClusterMap()
+	contextMap := k.createContextMap()
+	userMap := k.createUserMap()
+
+	// put allowed clusters in map
+	aClusterMap := createAllowedClusterMap(allowedClusters)
+
+	// iterate through context maps and link to a user-cluster pair
+	for contextName, context := range contextMap {
+		userName := context.Context.User
+		clusterName := context.Context.Cluster
+		_, userFound := userMap[userName]
+		cluster, clusterFound := clusterMap[clusterName]
+
+		// make sure the cluster is "allowed"
+		_, aClusterFound := aClusterMap[clusterName]
+
+		if userFound && clusterFound && aClusterFound {
+			clusters = append(clusters, models.ClusterConfig{
+				Name:    clusterName,
+				Server:  cluster.Cluster.Server,
+				Context: contextName,
+				User:    userName,
+			})
+		}
+	}
+
+	return clusters
+}
+
+// ToAllClusterConfigs converts a KubeConfig to a set of ClusterConfigs by
+// joining users and clusters on the context.
+func (k *KubeConfig) ToAllClusterConfigs() []models.ClusterConfig {
+	clusters := make([]models.ClusterConfig, 0)
 
 	// convert clusters, contexts, and users to maps for fast lookup
 	clusterMap := k.createClusterMap()
@@ -50,7 +121,7 @@ func (k *KubeConfig) ToClusterConfigs() []*models.ClusterConfigExternal {
 		cluster, clusterFound := clusterMap[clusterName]
 
 		if userFound && clusterFound {
-			clusters = append(clusters, &models.ClusterConfigExternal{
+			clusters = append(clusters, models.ClusterConfig{
 				Name:    clusterName,
 				Server:  cluster.Cluster.Server,
 				Context: contextName,
@@ -60,6 +131,17 @@ func (k *KubeConfig) ToClusterConfigs() []*models.ClusterConfigExternal {
 	}
 
 	return clusters
+}
+
+// createAllowedClusterMap creates a map from a cluster name to a KubeConfigCluster object
+func createAllowedClusterMap(clusters []string) map[string]string {
+	aClusterMap := make(map[string]string)
+
+	for _, cluster := range clusters {
+		aClusterMap[cluster] = cluster
+	}
+
+	return aClusterMap
 }
 
 // createClusterMap creates a map from a cluster name to a KubeConfigCluster object

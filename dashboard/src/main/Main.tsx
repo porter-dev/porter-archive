@@ -20,7 +20,7 @@ type StateType = {
 export default class Main extends Component<PropsType, StateType> {
   state = {
     isLoading: false,
-    isLoggedIn: false,
+    isLoggedIn: true,
     uninitialized: true,
   };
 
@@ -105,7 +105,7 @@ const ErrorText = styled.div`
 const CurrentError = styled.div`
   position: fixed;
   bottom: 20px;
-  width: 220px;
+  width: 300px;
   left: 17px;
   padding: 15px;
   padding-right: 0px;

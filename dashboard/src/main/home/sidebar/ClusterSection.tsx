@@ -54,6 +54,7 @@ export default class ClusterSection extends Component<PropsType, StateType> {
   };
 
   componentDidMount() {
+    console.log(process.env.API_SERVER);
     // TODO: remove
     // this.setState({ clusters: dummyClusters });
 

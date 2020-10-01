@@ -2,7 +2,6 @@ package router
 
 import (
 	"github.com/go-chi/chi"
-	"github.com/go-chi/cors"
 	"github.com/porter-dev/porter/server/api"
 	"github.com/porter-dev/porter/server/requestlog"
 	"github.com/porter-dev/porter/server/router/middleware"
@@ -18,15 +17,6 @@ func New(a *api.App, store *sessionstore.PGStore, cookieName string) *chi.Mux {
 
 	r.Route("/api", func(r chi.Router) {
 		r.Use(middleware.ContentTypeJSON)
-
-		r.Use(cors.Handler(cors.Options{
-			AllowedOrigins:   []string{"http://localhost:5000"},
-			AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
-			AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
-			ExposedHeaders:   []string{"Link"},
-			AllowCredentials: true,
-			MaxAge:           300, // Maximum value not ignored by any of major browsers
-		}))
 
 		// /api/users routes
 		r.Method("GET", "/users/{id}", auth.DoesUserIDMatch(requestlog.NewHandler(a.HandleReadUser, l)))

@@ -34,15 +34,12 @@ export default class Login extends Component<PropsType, StateType> {
     if (!emailRegex.test(email)) {
       this.setState({ emailError: true });
     } else {
-      
       // Attempt user login
-      api.logInUser('<token>', {
+      api.logInUser('', {
         email: email,
         password: password
       }, {}, (err: any, res: any) => {
         // TODO: case and set credential error
-
-        console.log(err)
         err ? setCurrentError(JSON.stringify(err)) : authenticate();
       });
     }
@@ -64,6 +61,13 @@ export default class Login extends Component<PropsType, StateType> {
         <ErrorHelper><div />Incorrect email or password</ErrorHelper>
       );
     }
+  }
+
+  componentDidMount() {
+    api.checkAuth('', {}, {}, (err: any, res: any) => {
+      console.log(res.data)
+      // err ? setCurrentError(JSON.stringify(err)) : authenticate();
+    });
   }
 
   render() {

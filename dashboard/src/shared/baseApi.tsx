@@ -14,8 +14,8 @@ export const baseApi = <T extends {}, S = {}>(requestType: string, endpoint: ((p
 
     // Handle request type (can refactor)
     if (requestType === 'POST') {
-      axios.post(`https://${(process as any).env.API_SERVER + endpointString}`, params, {
-        headers: {
+      axios.post(`http://localhost:8080${endpointString}`, params, {
+      headers: {
           Authorization: `Bearer ${token}`
         }
       })
@@ -26,7 +26,7 @@ export const baseApi = <T extends {}, S = {}>(requestType: string, endpoint: ((p
         callback && callback(err, null);
       });
     } else if (requestType === 'PUT') {
-      axios.put(`https://${(process as any).env.API_SERVER + endpointString}`, params, {
+      axios.put(`http://localhost:8080/${endpointString}`, params, {
         headers: {
           Authorization: `Bearer ${token}`
         }
@@ -38,14 +38,14 @@ export const baseApi = <T extends {}, S = {}>(requestType: string, endpoint: ((p
         callback && callback(err, null);
       });
     } else {
-      axios.get(`https://${(process as any).env.API_SERVER + endpoint}`, {
+      axios.get(`http://localhost:8080${endpointString}`, {
         headers: {
           Authorization: `Bearer ${token}`
         },
         params
       })
       .then(res => {
-        callback && callback(null, res.data);
+        callback && callback(null, res);
       })
       .catch(err => {
         callback && callback(err, null);

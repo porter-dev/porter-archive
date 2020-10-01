@@ -25,13 +25,16 @@ export default class Main extends Component<PropsType, StateType> {
   };
 
   componentDidMount() {
-    // Check if Porter has already been initialized
-    if (false) {
-      // Check if user is logged in
-      if (false) {
-        this.setState({ isLoggedIn: true });
-      }
-    }
+    // let user = localStorage.getItem('user')
+    // console.log(user);
+    // // Check if Porter has already been initialized
+    // if (user) {
+    //   this.setState({ uninitialized: true })
+    //   // Check if user is logged in
+    //   if (user) {
+    //     this.setState({ isLoggedIn: true });
+    //   }
+    // }
   }
 
   renderContents = (): JSX.Element => {
@@ -62,7 +65,8 @@ export default class Main extends Component<PropsType, StateType> {
     return (
       <StyledMain>
         <GlobalStyle />
-        {this.renderContents()}
+        {/* {this.renderContents()} */}
+
         {this.renderCurrentError()}
       </StyledMain>
     );

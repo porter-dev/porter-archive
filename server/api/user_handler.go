@@ -104,7 +104,7 @@ func (app *App) HandleLogoutUser(w http.ResponseWriter, r *http.Request) {
 		app.handleErrorDataRead(err, ErrUserDataRead, w)
 	}
 
-	session.Values["authenticated"] = true
+	session.Values["authenticated"] = false
 	session.Values["user_id"] = nil
 	session.Save(r, w)
 	w.WriteHeader(http.StatusOK)

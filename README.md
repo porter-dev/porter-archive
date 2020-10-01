@@ -1,12 +1,12 @@
 # Porter
 
-Boilerplate set up. Run:
+For development:
 
 ```sh
-docker-compose up
+docker-compose -f docker-compose.dev.yaml up --build
 ```
 
-And then visit `localhost:8080/user` in the browser. 
+And then visit `localhost:8080` in the browser. 
 
 ### Testing
 

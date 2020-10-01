@@ -38,6 +38,8 @@ export default class App extends Component<PropsType, StateType> {
       } else {
         this.setState({ isLoggedIn: false, uninitialized: true })
       }
+
+      localStorage.getitem("init") ? this.setState({uninitialized: false}) : this.setState({uninitialized: true})
       // err ? setCurrentError(JSON.stringify(err)) : authenticate();
     });
   }
@@ -55,6 +57,7 @@ export default class App extends Component<PropsType, StateType> {
                 return <Login authenticate={() => this.setState({ isLoggedIn: true })} />
               }
             }} />
+
             <Route path='/register' render={() => <Register authenticate={() => this.setState({ isLoggedIn: true })} />} />
             <Route path='/dashboard' render={() => <Home logOut={() => this.setState({ isLoggedIn: false })} />}/>
             <Route path='/' render={() => {

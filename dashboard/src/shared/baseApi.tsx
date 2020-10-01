@@ -18,7 +18,7 @@ export const baseApi = <T extends {}, S = {}>(requestType: string, endpoint: ((p
 
     // Handle request type (can refactor)
     if (requestType === 'POST') {
-      axios.post(`http://localhost:8080${endpointString}`, params, {
+      axios.post(`http://${baseUrl + endpointString}`, params, {
       headers: {
           Authorization: `Bearer ${token}`
         }
@@ -30,7 +30,7 @@ export const baseApi = <T extends {}, S = {}>(requestType: string, endpoint: ((p
         callback && callback(err, null);
       });
     } else if (requestType === 'PUT') {
-      axios.put(`http://localhost:8080/${endpointString}`, params, {
+      axios.put(`http://${baseUrl + endpointString}`, params, {
         headers: {
           Authorization: `Bearer ${token}`
         }
@@ -42,10 +42,8 @@ export const baseApi = <T extends {}, S = {}>(requestType: string, endpoint: ((p
         callback && callback(err, null);
       });
     } else {
-      axios.get(`http://localhost:8080${endpointString}`, {
-        headers: {
-          Authorization: `Bearer ${token}`
-        },
+      axios.get(`http://${baseUrl + endpointString}`, {
+        withCredentials: true,
         params
       })
       .then(res => {

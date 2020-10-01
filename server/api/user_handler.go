@@ -3,12 +3,12 @@ package api
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
 
 	"github.com/porter-dev/porter/internal/kubernetes"
-	"golang.org/x/crypto/bcrypt"
 
 	"gorm.io/gorm"
 
@@ -55,13 +55,15 @@ func (app *App) HandleCreateUser(w http.ResponseWriter, r *http.Request) {
 
 // HandleAuthCheck checks whether current session is authenticated.
 func (app *App) HandleAuthCheck(w http.ResponseWriter, r *http.Request) {
-	session, err := app.store.Get(r, "cookie-name")
+	session, err := app.store.Get(r, app.cookieName)
+	cook, _ := r.Cookie("porter")
+	fmt.Println("cooki", cook)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 
 	if auth, ok := session.Values["authenticated"].(bool); !auth || !ok {
-		app.logger.Info().Msgf("auth")
+		app.logger.Info().Msgf(strconv.FormatBool(auth))
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte("false"))
 		return
@@ -78,38 +80,40 @@ func (app *App) HandleLoginUser(w http.ResponseWriter, r *http.Request) {
 		app.handleErrorDataRead(err, ErrUserDataRead, w)
 	}
 
-	form := &forms.LoginUserForm{}
-	app.logger.Info().Msgf("Login")
-	// decode from JSON to form value
-	if err := json.NewDecoder(r.Body).Decode(form); err != nil {
-		app.handleErrorFormDecoding(err, ErrUserDecode, w)
-		return
-	}
+	// form := &forms.LoginUserForm{}
+	// // decode from JSON to form value
+	// if err := json.NewDecoder(r.Body).Decode(form); err != nil {
+	// 	app.handleErrorFormDecoding(err, ErrUserDecode, w)
+	// 	return
+	// }
 
-	storedUser, readErr := app.repo.User.ReadUserByEmail(form.Email)
+	// storedUser, readErr := app.repo.User.ReadUserByEmail(form.Email)
 
-	if readErr != nil {
-		app.sendExternalError(readErr, http.StatusUnauthorized, HTTPError{
-			Errors: []string{"email not registered"},
-			Code:   http.StatusUnauthorized,
-		}, w)
+	// if readErr != nil {
+	// 	app.sendExternalError(readErr, http.StatusUnauthorized, HTTPError{
+	// 		Errors: []string{"email not registered"},
+	// 		Code:   http.StatusUnauthorized,
+	// 	}, w)
 
-		return
-	}
+	// 	return
+	// }
 
-	if err := bcrypt.CompareHashAndPassword([]byte(storedUser.Password), []byte(form.Password)); err != nil {
-		app.sendExternalError(readErr, http.StatusUnauthorized, HTTPError{
-			Errors: []string{"incorrect password"},
-			Code:   http.StatusUnauthorized,
-		}, w)
+	// if err := bcrypt.CompareHashAndPassword([]byte(storedUser.Password), []byte(form.Password)); err != nil {
+	// 	app.sendExternalError(readErr, http.StatusUnauthorized, HTTPError{
+	// 		Errors: []string{"incorrect password"},
+	// 		Code:   http.StatusUnauthorized,
+	// 	}, w)
 
-		return
-	}
+	// 	return
+	// }
 
 	// Set user as authenticated
 	session.Values["authenticated"] = true
-	session.Values["user_id"] = storedUser.ID
-	session.Save(r, w)
+	// session.Values["user_id"] = storedUser.ID
+	if err := session.Save(r, w); err != nil {
+		// app.logger.Warn().Msgf()
+		fmt.Println(err)
+	}
 	w.WriteHeader(http.StatusOK)
 }
 

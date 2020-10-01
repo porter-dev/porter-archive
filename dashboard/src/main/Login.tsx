@@ -62,14 +62,7 @@ export default class Login extends Component<PropsType, StateType> {
       );
     }
   }
-
-  componentDidMount() {
-    api.checkAuth('', {}, {}, (err: any, res: any) => {
-      console.log(res.data)
-      // err ? setCurrentError(JSON.stringify(err)) : authenticate();
-    });
-  }
-
+  
   render() {
     let { email, password, credentialError, emailError } = this.state;
 

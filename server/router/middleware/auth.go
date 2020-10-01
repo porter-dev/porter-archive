@@ -2,22 +2,48 @@ package middleware
 
 import (
 	"net/http"
+	"strconv"
 
-	"github.com/gorilla/sessions"
+	"github.com/go-chi/chi"
+	sessionstore "github.com/porter-dev/porter/internal/auth"
 )
 
-var (
-	key   = []byte("secret")             // change to os.Getenv("SESSION_KEY")
-	store = sessions.NewCookieStore(key) // Swap out with custom store
-)
+type Auth struct {
+	store      *sessionstore.PGStore
+	cookieName string
+}
 
-// Authenticate is middleware for authentication
-func Authenticate(next http.Handler) http.Handler {
+func NewAuth(
+	store *sessionstore.PGStore,
+	cookieName string,
+) *Auth {
+	return &Auth{store, cookieName}
+}
+
+// BasicAuthenticate just checks that a user is logged in
+func (auth *Auth) BasicAuthenticate(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if isLoggedIn(r) {
+		if auth.isLoggedIn(r) {
 			next.ServeHTTP(w, r)
 		} else {
-			http.Error(w, http.StatusText(403), 403)
+			http.Error(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)
+			return
+		}
+
+		return
+	})
+}
+
+// DoesUserIDMatch checks the id URL parameter and verifies that it matches
+// the one stored in the session
+func (auth *Auth) DoesUserIDMatch(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		id, err := strconv.ParseUint(chi.URLParam(r, "id"), 0, 64)
+
+		if err == nil && auth.doesSessionMatchID(r, uint(id)) {
+			next.ServeHTTP(w, r)
+		} else {
+			http.Error(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)
 			return
 		}
 
@@ -26,9 +52,18 @@ func Authenticate(next http.Handler) http.Handler {
 }
 
 // Helpers
+func (auth *Auth) doesSessionMatchID(r *http.Request, id uint) bool {
+	session, _ := auth.store.Get(r, auth.cookieName)
 
-func isLoggedIn(r *http.Request) bool {
-	session, _ := store.Get(r, "session-id")
+	if sessID, ok := session.Values["user_id"].(uint); !ok || sessID != id {
+		return false
+	}
+
+	return true
+}
+
+func (auth *Auth) isLoggedIn(r *http.Request) bool {
+	session, _ := auth.store.Get(r, auth.cookieName)
 
 	if auth, ok := session.Values["authenticated"].(bool); !auth || !ok {
 		return false

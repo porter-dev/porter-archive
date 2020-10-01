@@ -28,6 +28,12 @@ const (
 // HandleCreateUser validates a user form entry, converts the user to a gorm
 // model, and saves the user to the database
 func (app *App) HandleCreateUser(w http.ResponseWriter, r *http.Request) {
+	session, err := app.store.Get(r, app.cookieName)
+
+	if err != nil {
+		app.handleErrorDataRead(err, ErrUserDataRead, w)
+	}
+
 	form := &forms.CreateUserForm{}
 
 	user, err := app.writeUser(
@@ -40,6 +46,9 @@ func (app *App) HandleCreateUser(w http.ResponseWriter, r *http.Request) {
 
 	if err == nil {
 		app.logger.Info().Msgf("New user created: %d", user.ID)
+		session.Values["authenticated"] = true
+		session.Values["user_id"] = user.ID
+		session.Save(r, w)
 		w.WriteHeader(http.StatusCreated)
 	}
 }
@@ -63,7 +72,12 @@ func (app *App) HandleAuthCheck(w http.ResponseWriter, r *http.Request) {
 
 // HandleLoginUser checks the request header for cookie and validates the user.
 func (app *App) HandleLoginUser(w http.ResponseWriter, r *http.Request) {
-	session, _ := app.store.Get(r, "cookie-name")
+	session, err := app.store.Get(r, app.cookieName)
+
+	if err != nil {
+		app.handleErrorDataRead(err, ErrUserDataRead, w)
+	}
+
 	form := &forms.LoginUserForm{}
 	app.logger.Info().Msgf("Login")
 	// decode from JSON to form value
@@ -94,6 +108,7 @@ func (app *App) HandleLoginUser(w http.ResponseWriter, r *http.Request) {
 
 	// Set user as authenticated
 	session.Values["authenticated"] = true
+	session.Values["user_id"] = storedUser.ID
 	session.Save(r, w)
 	w.WriteHeader(http.StatusOK)
 }

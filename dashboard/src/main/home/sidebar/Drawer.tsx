@@ -3,36 +3,34 @@ import styled from 'styled-components';
 import close from '../../../assets/close.png';
 
 import { Context } from '../../../shared/Context';
+import { ClusterConfig } from '../../../shared/types';
 
 type PropsType = {
+  toggleDrawer: () => void,
   showDrawer: boolean,
-  toggleDrawer: () => void
+  clusters: ClusterConfig[],
+  activeIndex: number,
+  setActiveIndex: (i: number) => void
 };
 
 type StateType = {
 };
 
-type ClusterOption = {
-  name: string
-};
-
-const dummyClusters: ClusterOption[]  = [
-  { name: 'happy-lil-trees' },
-  { name: 'joyous-petite-rocks' },
-  { name: 'friendly-small-bush' }
-];
-
 export default class Drawer extends Component<PropsType, StateType> {
 
   renderClusterList = (): JSX.Element[] => {
-    return dummyClusters.map((cluster, i) => {
+    return this.props.clusters.map((cluster, i) => {
       /*
       let active = this.context.activeProject &&
         this.context.activeProject.namespace == val.namespace; 
       */
 
       return (
-        <ClusterOption key={i}>
+        <ClusterOption 
+          key={i}
+          active={i === this.props.activeIndex}
+          onClick={() => this.props.setActiveIndex(i)}
+        >
           <ClusterIcon><i className="material-icons">polymer</i></ClusterIcon>
           <ClusterName>{cluster.name}</ClusterName>
         </ClusterOption>
@@ -97,10 +95,10 @@ const InitializeButton = styled.div`
   color: #ffffff;
   padding-bottom: 3px;
   cursor: pointer;
-  background: #ffffff11;
+  background: #ffffff22;
 
   :hover {
-    background: #ffffff22;
+    background: #ffffff33;
   }
 `;
 
@@ -118,8 +116,9 @@ const ClusterOption = styled.div`
   overflow: hidden;
   text-overflow: ellipsis;
   cursor: pointer;
+  background: ${(props: { active: boolean }) => props.active ? '#ffffff22' : ''};
   :hover {
-    background: #ffffff18;
+    background: #ffffff33;
   }
 `;
 

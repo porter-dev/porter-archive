@@ -2,48 +2,46 @@ import React, { Component } from 'react';
 import styled, { createGlobalStyle } from 'styled-components';
 import close from '../assets/close.png';
 
+import api from '../shared/api';
 import { Context } from '../shared/Context';
 
 import Login from './Login';
 import Register from './Register';
 import Home from './home/Home';
+import { BrowserRouter, Route, Redirect, Switch } from 'react-router-dom';
 
 type PropsType = {
 };
 
 type StateType = {
   isLoading: boolean,
-  isLoggedIn: boolean
-  uninitialized: boolean,
+  isLoggedIn: boolean,
+  initialized: boolean,
 };
 
 export default class Main extends Component<PropsType, StateType> {
+  
   state = {
     isLoading: false,
-    isLoggedIn: true,
-    uninitialized: true,
-  };
-
-  componentDidMount() {
-    // Check if Porter has already been initialized
-    if (false) {
-      // Check if user is logged in
-      if (false) {
-        this.setState({ isLoggedIn: true });
-      }
-    }
+    isLoggedIn : false,
+    initialized: false
   }
 
-  renderContents = (): JSX.Element => {
-    if (this.state.isLoading) {
-      return <h1>Loading...</h1>
-    } else if (this.state.isLoggedIn) {
-      return <Home logOut={() => this.setState({ isLoggedIn: false })} />
-    } else if (this.state.uninitialized) {
-      return <Register authenticate={() => this.setState({ isLoggedIn: true })} />
-    }
-    return <Login authenticate={() => this.setState({ isLoggedIn: true })} />
-  };
+  componentDidMount() {
+    localStorage.getItem("init") == 'true' ? this.setState({initialized: true}) : this.setState({initialized: false})
+    api.checkAuth('', {}, {}, (err: any, res: any) => {
+      if (res.data) {
+        this.setState({ isLoggedIn: true, initialized: true})
+      } else {
+        this.setState({ isLoggedIn: false })
+      }
+    });
+  }
+
+  initialize = () => {
+    this.setState({isLoggedIn: true, initialized: true});
+    localStorage.setItem('init', 'true');
+  }
 
   renderCurrentError = (): JSX.Element | undefined => {
     if (this.context.currentError) {
@@ -60,9 +58,46 @@ export default class Main extends Component<PropsType, StateType> {
 
   render() {
     return (
+
       <StyledMain>
         <GlobalStyle />
-        {this.renderContents()}
+        <BrowserRouter>
+          <Switch>
+            <Route path='/login' render={() => {
+              if (!this.state.isLoggedIn && this.state.initialized) {
+                return <Login authenticate={() => this.setState({ isLoggedIn: true, initialized: true })} />
+              } else {
+                return <Redirect to='/' />
+              }
+            }} />
+
+            <Route path='/register' render={() => {
+              if (!this.state.initialized) {
+                return <Register authenticate={this.initialize} />
+              } else {
+                return <Redirect to='/' />
+              }
+            }} />
+
+            <Route path='/dashboard' render={() => {
+              if (this.state.isLoggedIn && this.state.initialized) {
+                return <Home logOut={() => this.setState({ isLoggedIn: false, initialized: true })} />
+              } else {
+                return <Redirect to='/' />
+              }
+            }}/>
+
+            <Route path='/' render={() => {
+              if (this.state.isLoggedIn) {
+                return <Redirect to='/dashboard'/>
+              } else if (this.state.initialized) {
+                return <Redirect to='/login'/>
+              } else {
+                return <Redirect to='/register' />
+              }
+            }}/>
+          </Switch>
+        </BrowserRouter>
         {this.renderCurrentError()}
       </StyledMain>
     );

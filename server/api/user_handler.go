@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/porter-dev/porter/internal/kubernetes"
+	"golang.org/x/crypto/bcrypt"
 
 	"gorm.io/gorm"
 
@@ -15,7 +16,6 @@ import (
 	"github.com/porter-dev/porter/internal/forms"
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/repository"
-	"golang.org/x/crypto/bcrypt"
 )
 
 // Enumeration of user API error codes, represented as int64
@@ -44,11 +44,28 @@ func (app *App) HandleCreateUser(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// HandleAuthCheck checks whether current session is authenticated.
+func (app *App) HandleAuthCheck(w http.ResponseWriter, r *http.Request) {
+	session, err := app.store.Get(r, "cookie-name")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+
+	if auth, ok := session.Values["authenticated"].(bool); !auth || !ok {
+		app.logger.Info().Msgf("auth")
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("false"))
+		return
+	}
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("true"))
+}
+
 // HandleLoginUser checks the request header for cookie and validates the user.
 func (app *App) HandleLoginUser(w http.ResponseWriter, r *http.Request) {
 	session, _ := app.store.Get(r, "cookie-name")
 	form := &forms.LoginUserForm{}
-
+	app.logger.Info().Msgf("Login")
 	// decode from JSON to form value
 	if err := json.NewDecoder(r.Body).Decode(form); err != nil {
 		app.handleErrorFormDecoding(err, ErrUserDecode, w)

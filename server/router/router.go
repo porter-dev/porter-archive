@@ -33,6 +33,7 @@ func New(a *api.App) *chi.Mux {
 		r.Method("PUT", "/users/{id}", requestlog.NewHandler(a.HandleUpdateUser, l))
 		r.Method("DELETE", "/users/{id}", requestlog.NewHandler(a.HandleDeleteUser, l))
 		r.Method("POST", "/login", requestlog.NewHandler(a.HandleLoginUser, l))
+		r.Method("GET", "/auth/check", requestlog.NewHandler(a.HandleAuthCheck, l))
 	})
 
 	return r

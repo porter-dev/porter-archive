@@ -21,7 +21,7 @@ const logInUser = baseApi<{
   password: string
 }>('POST', '/api/login');
 
-const logOutUser = baseApi('GET', '/api/logout');
+const logOutUser = baseApi('POST', '/api/logout');
 
 const getUser = baseApi<{}, { id: number }>('GET', pathParams => {
   return `/api/users/${pathParams.id}`;

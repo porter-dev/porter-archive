@@ -96,6 +96,20 @@ func (app *App) HandleLoginUser(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
+// HandleLogoutUser detaches the user from the session
+func (app *App) HandleLogoutUser(w http.ResponseWriter, r *http.Request) {
+	session, err := app.store.Get(r, app.cookieName)
+
+	if err != nil {
+		app.handleErrorDataRead(err, ErrUserDataRead, w)
+	}
+
+	session.Values["authenticated"] = true
+	session.Values["user_id"] = nil
+	session.Save(r, w)
+	w.WriteHeader(http.StatusOK)
+}
+
 // HandleReadUser returns an externalized User (models.UserExternal)
 // based on an ID
 func (app *App) HandleReadUser(w http.ResponseWriter, r *http.Request) {

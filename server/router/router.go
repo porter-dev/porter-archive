@@ -26,6 +26,7 @@ func New(a *api.App, store *sessionstore.PGStore, cookieName string) *chi.Mux {
 		r.Method("PUT", "/users/{id}", auth.DoesUserIDMatch(requestlog.NewHandler(a.HandleUpdateUser, l)))
 		r.Method("DELETE", "/users/{id}", auth.DoesUserIDMatch(requestlog.NewHandler(a.HandleDeleteUser, l)))
 		r.Method("POST", "/login", requestlog.NewHandler(a.HandleLoginUser, l))
+		r.Method("POST", "/logout", auth.BasicAuthenticate(requestlog.NewHandler(a.HandleLogoutUser, l)))
 	})
 
 	return r

@@ -10,6 +10,8 @@
   - [`GET /api/users/{id}/clusters`](#get-apiusersidclusters)
   - [`GET /api/users/{id}/clusters/all`](#get-apiusersidclustersall)
   - [`POST /api/users`](#post-apiusers)
+  - [`POST /api/login`](#post-apilogin)
+  - [`POST /api/logout`](#post-apilogout)
   - [`PUT /api/users/{id}`](#put-apiusersid)
   - [`DELETE /api/users/{id}`](#delete-apiusersid)
 
@@ -283,6 +285,72 @@ User{
         "code":601,
         "errors":["email already taken"]
     }
+    ```
+
+#### `POST /api/login`
+
+**Description:** Logs a user in via email and password.
+
+**URL parameters:** N/A
+
+**Query parameters:** N/A
+
+**Request Body**: 
+
+```js
+{
+    "email": String,
+    "password": String,
+}
+```
+
+**Successful Response Body**: N/A
+
+**Successful Status Code**: `200`
+
+**Errors:**
+
+- Email not registered
+  - Status Code: `401`
+  - Request Body:
+    ```json
+    {
+        "code": 401,
+        "errors": ["email not registered"]
+    }
+    ```
+
+- Incorrect password
+  - Status Code: `401`
+  - Request Body:
+    ```json
+    {
+        "code":401,
+        "errors":["incorrect password"]
+    }
+    ```
+
+#### `POST /api/logout`
+
+**Description:** Logs a user out by detaching a user from the cookie-based session. 
+
+**URL parameters:** N/A
+
+**Query parameters:** N/A
+
+**Request Body**: N/A
+
+**Successful Response Body**: N/A
+
+**Successful Status Code**: `200`
+
+**Errors:**
+
+- Not logged in
+  - Status Code: `403`
+  - Request Body:
+    ```sh
+    "Forbidden"
     ```
 
 #### `PUT /api/users/{id}`

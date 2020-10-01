@@ -339,6 +339,51 @@ func TestHandleLoginUser(t *testing.T) {
 	testUserRequests(t, loginUserTests, true)
 }
 
+var logoutUserTests = []*userTest{
+	&userTest{
+		initializers: []func(tester *tester){
+			initUserDefault,
+		},
+		msg:      "Logout user successful",
+		method:   "POST",
+		endpoint: "/api/logout",
+		body: `{
+			"email": "belanger@getporter.dev",
+			"password": "hello"
+		}`,
+		expStatus: http.StatusOK,
+		expBody:   ``,
+		useCookie: true,
+		validators: []func(c *userTest, tester *tester, t *testing.T){
+			func(c *userTest, tester *tester, t *testing.T) {
+				req, err := http.NewRequest(
+					"GET",
+					"/api/users/1",
+					strings.NewReader(""),
+				)
+
+				req.AddCookie(tester.cookie)
+
+				if err != nil {
+					t.Fatal(err)
+				}
+
+				rr2 := httptest.NewRecorder()
+				tester.router.ServeHTTP(rr2, req)
+
+				if status := rr2.Code; status != http.StatusForbidden {
+					t.Errorf("%s, handler returned wrong status: got %v want %v",
+						"validator failed", status, http.StatusForbidden)
+				}
+			},
+		},
+	},
+}
+
+func TestHandleLogoutUser(t *testing.T) {
+	testUserRequests(t, logoutUserTests, true)
+}
+
 var readUserTests = []*userTest{
 	&userTest{
 		initializers: []func(tester *tester){

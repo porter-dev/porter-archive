@@ -35,10 +35,9 @@ export default class Main extends Component<PropsType, StateType> {
       } else {
         this.setState({ isLoggedIn: false })
       }
-
-      // err ? setCurrentError(JSON.stringify(err)) : authenticate();
     });
   }
+
   initialize = () => {
     this.setState({isLoggedIn: true, initialized: true});
     localStorage.setItem('init', 'true');
@@ -65,26 +64,26 @@ export default class Main extends Component<PropsType, StateType> {
         <BrowserRouter>
           <Switch>
             <Route path='/login' render={() => {
-              if (this.state.isLoggedIn) {
-                return <Redirect to='/' />
-              } else {
+              if (!this.state.isLoggedIn && this.state.initialized) {
                 return <Login authenticate={() => this.setState({ isLoggedIn: true, initialized: true })} />
+              } else {
+                return <Redirect to='/' />
               }
             }} />
 
             <Route path='/register' render={() => {
-              if (this.state.initialized) {
-                return <Redirect to='/' />
-              } else {
+              if (!this.state.initialized) {
                 return <Register authenticate={this.initialize} />
+              } else {
+                return <Redirect to='/' />
               }
             }} />
 
             <Route path='/dashboard' render={() => {
-              if (!this.state.isLoggedIn) {
-                return <Redirect to='/' />
-              } else {
+              if (this.state.isLoggedIn && this.state.initialized) {
                 return <Home logOut={() => this.setState({ isLoggedIn: false, initialized: true })} />
+              } else {
+                return <Redirect to='/' />
               }
             }}/>
 
@@ -99,7 +98,7 @@ export default class Main extends Component<PropsType, StateType> {
             }}/>
           </Switch>
         </BrowserRouter>
-        {this.renderCurrentError()} */}
+        {this.renderCurrentError()}
       </StyledMain>
     );
   }

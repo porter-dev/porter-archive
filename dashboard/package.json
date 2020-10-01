@@ -14,7 +14,7 @@
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "webpack-dev-server --open",
+    "start": "webpack-dev-server --host 0.0.0.0 --hot --inline --port 8080",
     "build": "webpack"
   },
   "devDependencies": {

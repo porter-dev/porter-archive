@@ -86,7 +86,7 @@ func initUserWithClusters(tester *tester) {
 			User:    "test-admin",
 		},
 	}
-	user.RawKubeConfig = []byte("apiVersion: v1\nkind: Config\npreferences: {}\ncurrent-context: default\nclusters:\n- cluster:\n    server: https://localhost\n  name: cluster-test\ncontexts:\n- context:\n    cluster: cluster-test\n    user: test-admin\n  name: context-test\nusers:\n- name: test-admin")
+	user.RawKubeConfig = []byte("apiVersion: v1\nkind: Config\npreferences: {}\ncurrent-context: context-test\nclusters:\n- cluster:\n    server: https://localhost\n  name: cluster-test\ncontexts:\n- context:\n    cluster: cluster-test\n    user: test-admin\n  name: context-test\nusers:\n- name: test-admin")
 
 	tester.repo.User.UpdateUser(user)
 }
@@ -349,7 +349,7 @@ var readUserTests = []*userTest{
 		endpoint:  "/api/users/1",
 		body:      "",
 		expStatus: http.StatusOK,
-		expBody:   `{"id":1,"email":"belanger@getporter.dev","clusters":[{"name":"cluster-test","server":"https://localhost","context":"context-test","user":"test-admin"}],"rawKubeConfig":"apiVersion: v1\nkind: Config\npreferences: {}\ncurrent-context: default\nclusters:\n- cluster:\n    server: https://localhost\n  name: cluster-test\ncontexts:\n- context:\n    cluster: cluster-test\n    user: test-admin\n  name: context-test\nusers:\n- name: test-admin"}`,
+		expBody:   `{"id":1,"email":"belanger@getporter.dev","clusters":[{"name":"cluster-test","server":"https://localhost","context":"context-test","user":"test-admin"}],"rawKubeConfig":"apiVersion: v1\nkind: Config\npreferences: {}\ncurrent-context: context-test\nclusters:\n- cluster:\n    server: https://localhost\n  name: cluster-test\ncontexts:\n- context:\n    cluster: cluster-test\n    user: test-admin\n  name: context-test\nusers:\n- name: test-admin"}`,
 		useCookie: true,
 		validators: []func(c *userTest, tester *tester, t *testing.T){
 			UserModelBodyValidator,
@@ -452,7 +452,7 @@ var updateUserTests = []*userTest{
 		msg:       "Update user successful",
 		method:    "PUT",
 		endpoint:  "/api/users/1",
-		body:      `{"rawKubeConfig":"apiVersion: v1\nkind: Config\npreferences: {}\ncurrent-context: default\nclusters:\n- cluster:\n    server: https://localhost\n  name: cluster-test\ncontexts:\n- context:\n    cluster: cluster-test\n    user: test-admin\n  name: context-test\nusers:\n- name: test-admin", "allowedClusters":[]}`,
+		body:      `{"rawKubeConfig":"apiVersion: v1\nkind: Config\npreferences: {}\ncurrent-context: context-test\nclusters:\n- cluster:\n    server: https://localhost\n  name: cluster-test\ncontexts:\n- context:\n    cluster: cluster-test\n    user: test-admin\n  name: context-test\nusers:\n- name: test-admin", "allowedClusters":[]}`,
 		expStatus: http.StatusNoContent,
 		expBody:   "",
 		useCookie: true,
@@ -477,7 +477,7 @@ var updateUserTests = []*userTest{
 				expBody := &models.UserExternal{}
 
 				json.Unmarshal(rr2.Body.Bytes(), gotBody)
-				json.Unmarshal([]byte(`{"id":1,"email":"belanger@getporter.dev","clusters":[],"rawKubeConfig":"apiVersion: v1\nkind: Config\npreferences: {}\ncurrent-context: default\nclusters:\n- cluster:\n    server: https://localhost\n  name: cluster-test\ncontexts:\n- context:\n    cluster: cluster-test\n    user: test-admin\n  name: context-test\nusers:\n- name: test-admin"}`), expBody)
+				json.Unmarshal([]byte(`{"id":1,"email":"belanger@getporter.dev","clusters":[],"rawKubeConfig":"apiVersion: v1\nkind: Config\npreferences: {}\ncurrent-context: context-test\nclusters:\n- cluster:\n    server: https://localhost\n  name: cluster-test\ncontexts:\n- context:\n    cluster: cluster-test\n    user: test-admin\n  name: context-test\nusers:\n- name: test-admin"}`), expBody)
 
 				if !reflect.DeepEqual(gotBody, expBody) {
 					t.Errorf("%s, handler returned wrong body: got %v want %v",
@@ -493,7 +493,7 @@ var updateUserTests = []*userTest{
 		msg:       "Update user invalid id",
 		method:    "PUT",
 		endpoint:  "/api/users/alsdfjk",
-		body:      `{"rawKubeConfig":"apiVersion: v1\nkind: Config\npreferences: {}\ncurrent-context: default\nclusters:\n- cluster:\n    server: https://localhost\n  name: cluster-test\ncontexts:\n- context:\n    cluster: cluster-test\n    user: test-admin\n  name: context-test\nusers:\n- name: test-admin", "allowedClusters":[]}`,
+		body:      `{"rawKubeConfig":"apiVersion: v1\nkind: Config\npreferences: {}\ncurrent-context: context-test\nclusters:\n- cluster:\n    server: https://localhost\n  name: cluster-test\ncontexts:\n- context:\n    cluster: cluster-test\n    user: test-admin\n  name: context-test\nusers:\n- name: test-admin", "allowedClusters":[]}`,
 		expStatus: http.StatusForbidden,
 		expBody:   http.StatusText(http.StatusForbidden) + "\n",
 		validators: []func(c *userTest, tester *tester, t *testing.T){

@@ -10,12 +10,7 @@ services:
       - postgres
     env_file:
       - ./docker/.env
-    command: /bin/sh -c '/porter/bin/migrate; air -c .air.toml;'
     restart: on-failure
-    volumes:
-      - ./cmd:/porter/cmd
-      - ./internal:/porter/internal
-      - ./server:/porter/server
 
   postgres:
     image: postgres:latest
@@ -28,23 +23,6 @@ services:
       - 5400:5432
     volumes:
       - db:/var/lib/postgresql/data
-
-  metabase:
-    image: metabase/metabase
-    restart: always
-    ports: 
-      - 3000:3000
-    volumes: 
-      - metabase:/metabase-data
-    environment:
-      MB_DB_TYPE: postgres
-      MB_DB_DBNAME: porter
-      MB_DB_PORT: 5432
-      MB_DB_USER: porter
-      MB_DB_PASS: porter
-      MB_DB_HOST: postgres
-    depends_on:
-      - postgres
 
 volumes:
   db:

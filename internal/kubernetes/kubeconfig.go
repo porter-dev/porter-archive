@@ -2,65 +2,117 @@ package kubernetes
 
 import (
 	"github.com/porter-dev/porter/internal/models"
-	"gopkg.in/yaml.v2"
+	"k8s.io/client-go/tools/clientcmd"
+	"k8s.io/client-go/tools/clientcmd/api"
 )
 
-// KubeConfigCluster represents the cluster field in a kubeconfig
-type KubeConfigCluster struct {
-	Cluster struct {
-		Server string `yaml:"server"`
-	} `yaml:"cluster"`
-	Name string `yaml:"name"`
-}
-
-// KubeConfigContext represents the context field in a kubeconfig
-type KubeConfigContext struct {
-	Context struct {
-		Cluster string `yaml:"cluster"`
-		User    string `yaml:"user"`
-	} `yaml:"context"`
-	Name string `yaml:"name"`
-}
-
-// KubeConfigUser represents the user field in a kubeconfig
-type KubeConfigUser struct {
-	Name string `yaml:"name"`
-}
-
-// KubeConfig represents an unmarshaled kubeconfig
-type KubeConfig struct {
-	CurrentContext string              `yaml:"current-context"`
-	Clusters       []KubeConfigCluster `yaml:"clusters"`
-	Contexts       []KubeConfigContext `yaml:"contexts"`
-	Users          []KubeConfigUser    `yaml:"users"`
-}
-
-// GetAllowedClusterConfigsFromBytes converts a raw string to a set of ClusterConfigs
-// by unmarshaling and calling (*KubeConfig).ToAllowedClusterConfigs
-func GetAllowedClusterConfigsFromBytes(bytes []byte, allowedClusters []string) ([]models.ClusterConfig, error) {
-	conf := KubeConfig{}
-	err := yaml.Unmarshal(bytes, &conf)
+// GetRestrictedClientConfigFromBytes returns a clientcmd.ClientConfig from a raw kubeconfig,
+// a context name, and the set of allowed clusters.
+func GetRestrictedClientConfigFromBytes(
+	bytes []byte,
+	contextName string,
+	allowedClusters []string,
+) (clientcmd.ClientConfig, error) {
+	config, err := clientcmd.NewClientConfigFromBytes(bytes)
 
 	if err != nil {
 		return nil, err
 	}
 
-	clusters := conf.toAllowedClusterConfigs(allowedClusters)
+	rawConf, err := config.RawConfig()
 
-	return clusters, nil
+	if err != nil {
+		return nil, err
+	}
+
+	// grab a copy to get the pointer and set clusters, authinfos, and contexts to empty
+	copyConf := rawConf.DeepCopy()
+
+	copyConf.Clusters = make(map[string]*api.Cluster)
+	copyConf.AuthInfos = make(map[string]*api.AuthInfo)
+	copyConf.Contexts = make(map[string]*api.Context)
+	copyConf.CurrentContext = contextName
+
+	// put allowed clusters in a map
+	aClusterMap := createAllowedClusterMap(allowedClusters)
+
+	// discover all allowed clusters
+	for contextName, context := range rawConf.Contexts {
+		userName := context.AuthInfo
+		clusterName := context.Cluster
+		authInfo, userFound := rawConf.AuthInfos[userName]
+		cluster, clusterFound := rawConf.Clusters[clusterName]
+
+		// make sure the cluster is "allowed"
+		_, aClusterFound := aClusterMap[clusterName]
+
+		if userFound && clusterFound && aClusterFound {
+			copyConf.Clusters[clusterName] = cluster
+			copyConf.AuthInfos[userName] = authInfo
+			copyConf.Contexts[contextName] = context
+		}
+	}
+
+	// validate the copyConf and create a ClientConfig
+	err = clientcmd.Validate(*copyConf)
+
+	if err != nil {
+		return nil, err
+	}
+
+	clientConf := clientcmd.NewDefaultClientConfig(*copyConf, &clientcmd.ConfigOverrides{})
+
+	return clientConf, nil
 }
 
 // GetAllClusterConfigsFromBytes converts a raw string to a set of ClusterConfigs
 // by unmarshaling and calling (*KubeConfig).ToAllClusterConfigs
 func GetAllClusterConfigsFromBytes(bytes []byte) ([]models.ClusterConfig, error) {
-	conf := KubeConfig{}
-	err := yaml.Unmarshal(bytes, &conf)
+	config, err := clientcmd.NewClientConfigFromBytes(bytes)
 
 	if err != nil {
 		return nil, err
 	}
 
-	clusters := conf.toAllClusterConfigs()
+	rawConf, err := config.RawConfig()
+
+	if err != nil {
+		return nil, err
+	}
+
+	err = clientcmd.Validate(rawConf)
+
+	if err != nil {
+		return nil, err
+	}
+
+	clusters := toAllClusterConfigs(&rawConf)
+
+	return clusters, nil
+}
+
+// GetAllowedClusterConfigsFromBytes converts a raw string to a set of ClusterConfigs
+// by unmarshaling and calling (*KubeConfig).ToAllowedClusterConfigs
+func GetAllowedClusterConfigsFromBytes(bytes []byte, allowedClusters []string) ([]models.ClusterConfig, error) {
+	config, err := clientcmd.NewClientConfigFromBytes(bytes)
+
+	if err != nil {
+		return nil, err
+	}
+
+	rawConf, err := config.RawConfig()
+
+	if err != nil {
+		return nil, err
+	}
+
+	err = clientcmd.Validate(rawConf)
+
+	if err != nil {
+		return nil, err
+	}
+
+	clusters := toAllowedClusterConfigs(&rawConf, allowedClusters)
 
 	return clusters, nil
 }
@@ -69,23 +121,18 @@ func GetAllClusterConfigsFromBytes(bytes []byte) ([]models.ClusterConfig, error)
 // joining users and clusters on the context.
 //
 // It accepts a list of cluster names that the user wishes to connect to
-func (k *KubeConfig) toAllowedClusterConfigs(allowedClusters []string) []models.ClusterConfig {
+func toAllowedClusterConfigs(rawConf *api.Config, allowedClusters []string) []models.ClusterConfig {
 	clusters := make([]models.ClusterConfig, 0)
-
-	// convert clusters, contexts, and users to maps for fast lookup
-	clusterMap := k.createClusterMap()
-	contextMap := k.createContextMap()
-	userMap := k.createUserMap()
 
 	// put allowed clusters in map
 	aClusterMap := createAllowedClusterMap(allowedClusters)
 
 	// iterate through context maps and link to a user-cluster pair
-	for contextName, context := range contextMap {
-		userName := context.Context.User
-		clusterName := context.Context.Cluster
-		_, userFound := userMap[userName]
-		cluster, clusterFound := clusterMap[clusterName]
+	for contextName, context := range rawConf.Contexts {
+		userName := context.AuthInfo
+		clusterName := context.Cluster
+		_, userFound := rawConf.AuthInfos[userName]
+		cluster, clusterFound := rawConf.Clusters[clusterName]
 
 		// make sure the cluster is "allowed"
 		_, aClusterFound := aClusterMap[clusterName]
@@ -93,7 +140,7 @@ func (k *KubeConfig) toAllowedClusterConfigs(allowedClusters []string) []models.
 		if userFound && clusterFound && aClusterFound {
 			clusters = append(clusters, models.ClusterConfig{
 				Name:    clusterName,
-				Server:  cluster.Cluster.Server,
+				Server:  cluster.Server,
 				Context: contextName,
 				User:    userName,
 			})
@@ -105,25 +152,20 @@ func (k *KubeConfig) toAllowedClusterConfigs(allowedClusters []string) []models.
 
 // toAllClusterConfigs converts a KubeConfig to a set of ClusterConfigs by
 // joining users and clusters on the context.
-func (k *KubeConfig) toAllClusterConfigs() []models.ClusterConfig {
+func toAllClusterConfigs(rawConf *api.Config) []models.ClusterConfig {
 	clusters := make([]models.ClusterConfig, 0)
 
-	// convert clusters, contexts, and users to maps for fast lookup
-	clusterMap := k.createClusterMap()
-	contextMap := k.createContextMap()
-	userMap := k.createUserMap()
-
 	// iterate through context maps and link to a user-cluster pair
-	for contextName, context := range contextMap {
-		userName := context.Context.User
-		clusterName := context.Context.Cluster
-		_, userFound := userMap[userName]
-		cluster, clusterFound := clusterMap[clusterName]
+	for contextName, context := range rawConf.Contexts {
+		userName := context.AuthInfo
+		clusterName := context.Cluster
+		_, userFound := rawConf.AuthInfos[userName]
+		cluster, clusterFound := rawConf.Clusters[clusterName]
 
 		if userFound && clusterFound {
 			clusters = append(clusters, models.ClusterConfig{
 				Name:    clusterName,
-				Server:  cluster.Cluster.Server,
+				Server:  cluster.Server,
 				Context: contextName,
 				User:    userName,
 			})
@@ -142,37 +184,4 @@ func createAllowedClusterMap(clusters []string) map[string]string {
 	}
 
 	return aClusterMap
-}
-
-// createClusterMap creates a map from a cluster name to a KubeConfigCluster object
-func (k *KubeConfig) createClusterMap() map[string]KubeConfigCluster {
-	clusterMap := make(map[string]KubeConfigCluster)
-
-	for _, cluster := range k.Clusters {
-		clusterMap[cluster.Name] = cluster
-	}
-
-	return clusterMap
-}
-
-// createContextMap creates a map from a context name to a KubeConfigContext object
-func (k *KubeConfig) createContextMap() map[string]KubeConfigContext {
-	contextMap := make(map[string]KubeConfigContext)
-
-	for _, context := range k.Contexts {
-		contextMap[context.Name] = context
-	}
-
-	return contextMap
-}
-
-// createUserMap creates a map from a user name to a KubeConfigUser object
-func (k *KubeConfig) createUserMap() map[string]KubeConfigUser {
-	userMap := make(map[string]KubeConfigUser)
-
-	for _, user := range k.Users {
-		userMap[user.Name] = user
-	}
-
-	return userMap
 }

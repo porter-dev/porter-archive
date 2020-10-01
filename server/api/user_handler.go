@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/porter-dev/porter/internal/kubernetes"
+	"golang.org/x/crypto/bcrypt"
 
 	"gorm.io/gorm"
 
@@ -80,40 +81,40 @@ func (app *App) HandleLoginUser(w http.ResponseWriter, r *http.Request) {
 		app.handleErrorDataRead(err, ErrUserDataRead, w)
 	}
 
-	// form := &forms.LoginUserForm{}
-	// // decode from JSON to form value
-	// if err := json.NewDecoder(r.Body).Decode(form); err != nil {
-	// 	app.handleErrorFormDecoding(err, ErrUserDecode, w)
-	// 	return
-	// }
+	form := &forms.LoginUserForm{}
+	// decode from JSON to form value
+	if err := json.NewDecoder(r.Body).Decode(form); err != nil {
+		app.handleErrorFormDecoding(err, ErrUserDecode, w)
+		return
+	}
 
-	// storedUser, readErr := app.repo.User.ReadUserByEmail(form.Email)
+	storedUser, readErr := app.repo.User.ReadUserByEmail(form.Email)
 
-	// if readErr != nil {
-	// 	app.sendExternalError(readErr, http.StatusUnauthorized, HTTPError{
-	// 		Errors: []string{"email not registered"},
-	// 		Code:   http.StatusUnauthorized,
-	// 	}, w)
+	if readErr != nil {
+		app.sendExternalError(readErr, http.StatusUnauthorized, HTTPError{
+			Errors: []string{"email not registered"},
+			Code:   http.StatusUnauthorized,
+		}, w)
 
-	// 	return
-	// }
+		return
+	}
 
-	// if err := bcrypt.CompareHashAndPassword([]byte(storedUser.Password), []byte(form.Password)); err != nil {
-	// 	app.sendExternalError(readErr, http.StatusUnauthorized, HTTPError{
-	// 		Errors: []string{"incorrect password"},
-	// 		Code:   http.StatusUnauthorized,
-	// 	}, w)
+	if err := bcrypt.CompareHashAndPassword([]byte(storedUser.Password), []byte(form.Password)); err != nil {
+		app.sendExternalError(readErr, http.StatusUnauthorized, HTTPError{
+			Errors: []string{"incorrect password"},
+			Code:   http.StatusUnauthorized,
+		}, w)
 
-	// 	return
-	// }
+		return
+	}
 
 	// Set user as authenticated
 	session.Values["authenticated"] = true
-	// session.Values["user_id"] = storedUser.ID
+	session.Values["user_id"] = storedUser.ID
 	if err := session.Save(r, w); err != nil {
-		// app.logger.Warn().Msgf()
-		fmt.Println(err)
+		app.logger.Warn().Err(err)
 	}
+
 	w.WriteHeader(http.StatusOK)
 }
 

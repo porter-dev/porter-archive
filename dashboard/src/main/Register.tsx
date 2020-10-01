@@ -66,7 +66,7 @@ export default class Register extends Component<PropsType, StateType> {
     let { confirmPasswordError } = this.state;
     if (confirmPasswordError) {
       return (
-        <ErrorHelper><div />Password does not match</ErrorHelper>
+        <ErrorHelper><div />Passwords do not match</ErrorHelper>
       );
     }
   }

@@ -23,15 +23,33 @@ const logInUser = baseApi<{
 
 const logOutUser = baseApi('GET', '/api/logout');
 
-const getClusters = baseApi<{}, { id: number }>('GET', (pathParams) => {
+const getUser = baseApi<{}, { id: number }>('GET', pathParams => {
+  return `/api/users/${pathParams.id}`;
+});
+
+const updateUser = baseApi<{
+  rawKubeconfig?: string,
+  allowedClusters?: string[]
+}, { id: number }>('PUT', pathParams => {
+  return `/api/users/${pathParams.id}`;
+});
+
+const getClusters = baseApi<{}, { id: number }>('GET', pathParams => {
   return `/api/users/${pathParams.id}/clusters`;
 });
 
-// Bundle export to allow default api import
+const getAllClusters = baseApi<{}, { id: number }>('GET', pathParams => {
+  return `/api/users/${pathParams.id}/clusters/all`;
+});
+
+// Bundle export to allow default api import (api.<method> is more readable)
 export default {
   checkAuth,
   registerUser,
   logInUser,
   logOutUser,
+  getUser,
+  updateUser,
   getClusters,
+  getAllClusters
 }

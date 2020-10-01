@@ -1,9 +1,12 @@
 import React, { Component } from 'react';
 
-type ContextProps = {
+type PropsType = {
 }
 
-const Context = React.createContext<ContextProps>({});
+type StateType = {
+}
+
+const Context = React.createContext({});
 
 const { Provider } = Context;
 const ContextConsumer = Context.Consumer;
@@ -21,13 +24,17 @@ const ContextConsumer = Context.Consumer;
  */
 class ContextProvider extends Component {
   state = {
-    currentModal: null,
+    currentModal: null as string | null,
     setCurrentModal: (currentModal: string): void => {
       this.setState({ currentModal });
     },
-    currentError: null,
+    currentError: null as string | null,
     setCurrentError: (currentError: string): void => {
       this.setState({ currentError });
+    },
+    currentCluster: null as string | null,
+    setCurrentCluster: (currentCluster: string): void => {
+      this.setState({ currentCluster });
     }
   };
 

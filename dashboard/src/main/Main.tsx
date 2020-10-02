@@ -7,6 +7,7 @@ import { Context } from '../shared/Context';
 
 import Login from './Login';
 import Register from './Register';
+import CurrentError from './CurrentError';
 import Home from './home/Home';
 import { BrowserRouter, Route, Redirect, Switch } from 'react-router-dom';
 
@@ -42,18 +43,9 @@ export default class Main extends Component<PropsType, StateType> {
     this.setState({isLoggedIn: true, initialized: true});
     localStorage.setItem('init', 'true');
   }
-
-  renderCurrentError = (): JSX.Element | undefined => {
-    if (this.context.currentError) {
-      return (
-        <CurrentError>
-          <ErrorText>Error: {this.context.currentError}</ErrorText>
-          <CloseButton onClick={() => { this.context.setCurrentError(null) }}>
-            <CloseButtonImg src={close} />
-          </CloseButton>
-        </CurrentError>
-      );
-    }
+  
+  authenticate = () => {
+    this.setState({ isLoggedIn: true, initialized: true });
   }
 
   render() {
@@ -65,7 +57,7 @@ export default class Main extends Component<PropsType, StateType> {
           <Switch>
             <Route path='/login' render={() => {
               if (!this.state.isLoggedIn && this.state.initialized) {
-                return <Login authenticate={() => this.setState({ isLoggedIn: true, initialized: true })} />
+                return <Login authenticate={this.authenticate} />
               } else {
                 return <Redirect to='/' />
               }
@@ -98,7 +90,7 @@ export default class Main extends Component<PropsType, StateType> {
             }}/>
           </Switch>
         </BrowserRouter>
-        {this.renderCurrentError()}
+        <CurrentError />
       </StyledMain>
     );
   }
@@ -106,68 +98,9 @@ export default class Main extends Component<PropsType, StateType> {
 
 Main.contextType = Context;
 
-const CloseButton = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 30px;
-  height: 30px;
-  border-radius: 50%;
-  margin-left: 10px;
-  cursor: pointer;
-  :hover {
-    background-color: #ffffff11;
-  }
-`;
-
-const CloseButtonImg = styled.img`
-  width: 10px;
-`;
-
 const GlobalStyle = createGlobalStyle`
   * {
     box-sizing: border-box;
-  }
-`;
-
-const ErrorText = styled.div`
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  width: calc(100% - 50px);
-`;
-
-const CurrentError = styled.div`
-  position: fixed;
-  bottom: 20px;
-  width: 300px;
-  left: 17px;
-  padding: 15px;
-  padding-right: 0px;
-  font-family: 'Work Sans', sans-serif;
-  height: 50px;
-  font-size: 13px;
-  border-radius: 3px;
-  background: #383842dd;
-  border: 1px solid #ffffff55;
-  display: flex;
-  align-items: center;
-
-  > i {
-    font-size: 18px;
-    margin-right: 10px;
-  }
-
-  animation: floatIn 0.5s;
-  animation-fill-mode: forwards;
-
-  @keyframes floatIn {
-    from {
-      opacity: 0; transform: translateY(20px);
-    }
-    to {
-      opacity: 1; transform: translateY(0px);
-    }
   }
 `;
 

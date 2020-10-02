@@ -2,6 +2,7 @@ package kubernetes_test
 
 import (
 	"reflect"
+	"strings"
 	"testing"
 
 	"github.com/porter-dev/porter/internal/kubernetes"
@@ -15,60 +16,59 @@ type kubeConfigTest struct {
 	expected        []models.ClusterConfig
 }
 
-// var MissingFieldsTest = []kubeConfigTest{
-// 	kubeConfigTest{
-// 		msg:             "no fields at all",
-// 		raw:             []byte(""),
-// 		allowedClusters: []string{},
-// 		expected:        []models.ClusterConfig{},
-// 	},
-// 	kubeConfigTest{
-// 		msg:             "no contexts to join",
-// 		raw:             []byte(noContexts),
-// 		allowedClusters: []string{},
-// 		expected:        []models.ClusterConfig{},
-// 	},
-// 	kubeConfigTest{
-// 		msg:             "no clusters to join",
-// 		raw:             []byte(noClusters),
-// 		allowedClusters: []string{},
-// 		expected:        []models.ClusterConfig{},
-// 	},
-// 	kubeConfigTest{
-// 		msg:             "no users to join",
-// 		raw:             []byte(noUsers),
-// 		allowedClusters: []string{},
-// 		expected:        []models.ClusterConfig{},
-// 	},
-// 	kubeConfigTest{
-// 		msg:             "no cluster contexts to join",
-// 		raw:             []byte(noContextClusters),
-// 		allowedClusters: []string{},
-// 		expected:        []models.ClusterConfig{},
-// 	},
-// 	kubeConfigTest{
-// 		msg:             "no cluster users to join",
-// 		raw:             []byte(noContextUsers),
-// 		allowedClusters: []string{},
-// 		expected:        []models.ClusterConfig{},
-// 	},
-// }
+type kubeConfigTestValidateError struct {
+	msg             string
+	raw             []byte
+	allowedClusters []string
+	contextName     string
+	errorContains   string // a string that the error message should contain
+}
 
-// func TestMissingFields(t *testing.T) {
-// 	for _, c := range MissingFieldsTest {
-// 		res, err := kubernetes.GetAllowedClusterConfigsFromBytes(c.raw, c.allowedClusters)
+var ValidateErrorTests = []kubeConfigTestValidateError{
+	kubeConfigTestValidateError{
+		msg:             "No configuration",
+		raw:             []byte(""),
+		allowedClusters: []string{},
+		contextName:     "",
+		errorContains:   "invalid configuration: no configuration has been provided",
+	},
+	kubeConfigTestValidateError{
+		msg:             "Context name does not exist",
+		raw:             []byte(noContexts),
+		allowedClusters: []string{"porter-test-1"},
+		contextName:     "context-test",
+		errorContains:   "invalid configuration: context was not found for specified context: context-test",
+	},
+	kubeConfigTestValidateError{
+		msg:             "Cluster to join does not exist",
+		raw:             []byte(noClusters),
+		allowedClusters: []string{"porter-test-1"},
+		contextName:     "context-test",
+		errorContains:   "invalid configuration: context was not found for specified context: context-test",
+	},
+	kubeConfigTestValidateError{
+		msg:             "User to join does not exist",
+		raw:             []byte(noUsers),
+		allowedClusters: []string{"porter-test-1"},
+		contextName:     "context-test",
+		errorContains:   "invalid configuration: context was not found for specified context: context-test",
+	},
+}
 
-// 		if err != nil {
-// 			t.Fatalf("Testing %s returned an error: %v\n", c.msg, err.Error())
-// 		}
+func TestValidateErrors(t *testing.T) {
+	for _, c := range ValidateErrorTests {
 
-// 		isEqual := reflect.DeepEqual(c.expected, res)
+		_, err := kubernetes.GetRestrictedClientConfigFromBytes(c.raw, c.contextName, c.allowedClusters)
 
-// 		if !isEqual {
-// 			t.Errorf("Testing: %s, Expected: %v, Got: %v\n", c.msg, c.expected, res)
-// 		}
-// 	}
-// }
+		if err == nil {
+			t.Fatalf("Testing %s did not return an error\n", c.msg)
+		}
+
+		if !strings.Contains(err.Error(), c.errorContains) {
+			t.Errorf("Testing %s -- Error was:\n \"%s\" \n It did not contain string \"%s\"\n", c.msg, err.Error(), c.errorContains)
+		}
+	}
+}
 
 var NoAllowedClustersTests = []kubeConfigTest{
 	kubeConfigTest{
@@ -196,7 +196,7 @@ clusters:
 - cluster:
     server: https://localhost
   name: porter-test-1
-current-context: default
+current-context: context-test
 users:
 - name: test-admin
   user:
@@ -206,7 +206,7 @@ const noClusters string = `
 apiVersion: v1
 kind: Config
 preferences: {}
-current-context: default
+current-context: context-test
 contexts:
 - context:
     cluster: porter-test-1

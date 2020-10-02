@@ -3,8 +3,8 @@ package models_test
 import (
 	"testing"
 
-	"gorm.io/gorm"
 	"github.com/porter-dev/porter/internal/models"
+	"gorm.io/gorm"
 )
 
 func TestClusterConfigExternalize(t *testing.T) {

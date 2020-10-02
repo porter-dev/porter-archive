@@ -61,8 +61,8 @@ func (luf *LoginUserForm) ToUser() (*models.User, error) {
 type UpdateUserForm struct {
 	WriteUserForm
 	ID              uint     `form:"required"`
-	RawKubeConfig   string   `json:"rawKubeConfig"`
-	AllowedClusters []string `json:"allowedClusters"`
+	RawKubeConfig   string   `json:"rawKubeConfig,omitempty"`
+	AllowedClusters []string `json:"allowedClusters,omitempty"`
 }
 
 // ToUser converts an UpdateUserForm to models.User by parsing the kubeconfig

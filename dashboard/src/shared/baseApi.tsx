@@ -20,7 +20,7 @@ export const baseApi = <T extends {}, S = {}>(requestType: string, endpoint: ((p
         }
       })
       .then(res => {
-        callback && callback(null, res.data);
+        callback && callback(null, res);
       })
       .catch(err => {
         callback && callback(err, null);
@@ -32,7 +32,7 @@ export const baseApi = <T extends {}, S = {}>(requestType: string, endpoint: ((p
         }
       })
       .then(res => {
-        callback && callback(null, res.data);
+        callback && callback(null, res);
       })
       .catch(err => {
         callback && callback(err, null);

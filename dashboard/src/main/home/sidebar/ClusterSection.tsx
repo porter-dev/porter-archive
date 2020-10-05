@@ -54,17 +54,13 @@ export default class ClusterSection extends Component<PropsType, StateType> {
   };
 
   componentDidMount() {
-    console.log(process.env.API_SERVER);
-    // TODO: remove
-    // this.setState({ clusters: dummyClusters });
+    let { setCurrentError, userId } = this.context;
 
-    let { setCurrentError } = this.context;
-
-    api.getClusters('<token>', {}, { id: 0 }, (err: any, res: any) => {      
+    api.getClusters('<token>', {}, { id: userId }, (err: any, res: any) => {      
       if (err) {
         setCurrentError(JSON.stringify(err));
       } else {
-        this.setState({ clusters: res.data.clusters });
+        this.setState({ clusters: res.data });
       }
     });
   }

@@ -28,7 +28,7 @@ const getUser = baseApi<{}, { id: number }>('GET', pathParams => {
 });
 
 const updateUser = baseApi<{
-  rawKubeconfig?: string,
+  rawKubeConfig?: string,
   allowedClusters?: string[]
 }, { id: number }>('PUT', pathParams => {
   return `/api/users/${pathParams.id}`;

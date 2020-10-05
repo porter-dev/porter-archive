@@ -123,7 +123,7 @@ func (app *App) HandleLogoutUser(w http.ResponseWriter, r *http.Request) {
 	session, err := app.store.Get(r, app.cookieName)
 
 	if err != nil {
-		app.handleErrorDataRead(err, ErrUserDataRead, w)
+		app.handleErrorDataRead(err, w)
 	}
 
 	session.Values["authenticated"] = false
@@ -274,7 +274,7 @@ func (app *App) writeUser(
 	}
 
 	// convert the form to a user model -- WriteUserForm must implement ToUser
-	userModel, err := form.ToUser()
+	userModel, err := form.ToUser(app.repo.User)
 
 	if err != nil {
 		app.handleErrorFormDecoding(err, ErrUserDecode, w)

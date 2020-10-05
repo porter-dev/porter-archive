@@ -31,7 +31,7 @@ func (app *App) HandleCreateUser(w http.ResponseWriter, r *http.Request) {
 	session, err := app.store.Get(r, app.cookieName)
 
 	if err != nil {
-		app.handleErrorDataRead(err, ErrUserDataRead, w)
+		app.handleErrorDataRead(err, w)
 	}
 
 	form := &forms.CreateUserForm{}
@@ -58,7 +58,7 @@ func (app *App) HandleLoginUser(w http.ResponseWriter, r *http.Request) {
 	session, err := app.store.Get(r, app.cookieName)
 
 	if err != nil {
-		app.handleErrorDataRead(err, ErrUserDataRead, w)
+		app.handleErrorDataRead(err, w)
 	}
 
 	form := &forms.LoginUserForm{}

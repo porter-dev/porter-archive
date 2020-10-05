@@ -3,13 +3,14 @@ package forms
 import (
 	"github.com/porter-dev/porter/internal/kubernetes"
 	"github.com/porter-dev/porter/internal/models"
+	"github.com/porter-dev/porter/internal/repository"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 )
 
 // WriteUserForm is a generic form for write operations to the User model
 type WriteUserForm interface {
-	ToUser() (*models.User, error)
+	ToUser(repo repository.UserRepository) (*models.User, error)
 }
 
 // CreateUserForm represents the accepted values for creating a user
@@ -20,7 +21,7 @@ type CreateUserForm struct {
 }
 
 // ToUser converts a CreateUserForm to models.User
-func (cuf *CreateUserForm) ToUser() (*models.User, error) {
+func (cuf *CreateUserForm) ToUser(_ repository.UserRepository) (*models.User, error) {
 	hashed, err := bcrypt.GenerateFromPassword([]byte(cuf.Password), 8)
 
 	if err != nil {
@@ -42,7 +43,7 @@ type LoginUserForm struct {
 }
 
 // ToUser converts a LoginUserForm to models.User
-func (luf *LoginUserForm) ToUser() (*models.User, error) {
+func (luf *LoginUserForm) ToUser(_ repository.UserRepository) (*models.User, error) {
 	hashed, err := bcrypt.GenerateFromPassword([]byte(luf.Password), 8)
 
 	if err != nil {
@@ -67,12 +68,29 @@ type UpdateUserForm struct {
 
 // ToUser converts an UpdateUserForm to models.User by parsing the kubeconfig
 // and the allowed clusters to generate a list of ClusterConfigs.
-func (uuf *UpdateUserForm) ToUser() (*models.User, error) {
+func (uuf *UpdateUserForm) ToUser(repo repository.UserRepository) (*models.User, error) {
 	rawBytes := []byte(uuf.RawKubeConfig)
-	clusters, err := kubernetes.GetAllowedClusterConfigsFromBytes(rawBytes, uuf.AllowedClusters)
 
-	if err != nil {
-		return nil, err
+	// if the rawKubeConfig is empty, query the DB for a non-empty one
+	if uuf.RawKubeConfig == "" {
+		savedUser, err := repo.ReadUser(uuf.ID)
+
+		if err != nil {
+			return nil, err
+		}
+
+		rawBytes = savedUser.RawKubeConfig
+	}
+
+	clusters := make([]models.ClusterConfig, 0)
+	var err error
+
+	if len(rawBytes) > 0 {
+		clusters, err = kubernetes.GetAllowedClusterConfigsFromBytes(rawBytes, uuf.AllowedClusters)
+
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return &models.User{
@@ -92,7 +110,7 @@ type DeleteUserForm struct {
 }
 
 // ToUser converts a DeleteUserForm to models.User using the user ID
-func (uuf *DeleteUserForm) ToUser() (*models.User, error) {
+func (uuf *DeleteUserForm) ToUser(_ repository.UserRepository) (*models.User, error) {
 	return &models.User{
 		Model: gorm.Model{
 			ID: uuf.ID,

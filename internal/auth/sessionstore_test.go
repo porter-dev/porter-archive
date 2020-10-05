@@ -34,7 +34,7 @@ func TestPGStore(t *testing.T) {
 	repo := test.NewRepository(true)
 
 	ss, err := sessionstore.NewStore(repo, config.ServerConf{
-		CookieSecrets: [][]byte{[]byte("secret")},
+		CookieSecret: []byte("secret"),
 	})
 
 	if err != nil {
@@ -134,7 +134,7 @@ func TestSessionOptionsAreUniquePerSession(t *testing.T) {
 	repo := test.NewRepository(true)
 
 	ss, err := sessionstore.NewStore(repo, config.ServerConf{
-		CookieSecrets: [][]byte{[]byte("secret")},
+		CookieSecret: []byte("secret"),
 	})
 
 	if err != nil {

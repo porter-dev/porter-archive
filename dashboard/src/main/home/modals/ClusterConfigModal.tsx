@@ -32,36 +32,40 @@ export default class ClusterConfigModal extends Component<PropsType, StateType> 
   };
   
   updateChecklist = () => {
-    let { setCurrentError } = this.context;
+    let { setCurrentError, userId } = this.context;
 
     // Parse kubeconfig to retrieve all possible clusters
-    api.getAllClusters('<token>', {}, { id: 0 }, (err: any, res: any) => {
+    api.getAllClusters('<token>', {}, { id: userId }, (err: any, res: any) => {
       if (err) {
-        setCurrentError(JSON.stringify(err));
+        setCurrentError('getAllClusters: ' + JSON.stringify(err));
       } else {
-        let clusters = res.data.clusters;
+        let clusters = res.data;
         this.setState({ clusters });
 
-        // Check against list of connected clusters
-        api.getClusters('<token>', {}, { id: 0 }, (err: any, res: any) => {
-          if (err) {
-            setCurrentError(JSON.stringify(err));
-          } else {
-            let selected = clusters.map((x: ClusterConfig) => res.data.clusters.includes(x));
-            this.setState({ selected });
-          }
-        });
+        if (clusters && clusters.length > 0) {
+          
+          // Check against list of connected clusters
+          api.getClusters('<token>', {}, { id: userId }, (err: any, res: any) => {
+            if (err) {
+              setCurrentError('getClusters: ' + JSON.stringify(err));
+            } else {
+              console.log(res)
+              let selected = clusters.map((x: ClusterConfig) => res.data.includes(x));
+              this.setState({ selected });
+            }
+          });
+        }
       }
     });
   }
 
   componentDidMount() {
-    let { setCurrentError } = this.context;
+    let { setCurrentError, userId } = this.context;
 
-    api.getUser('<token>', {}, { id: 0 }, (err: any, res: any) => {      
+    api.getUser('<token>', {}, { id: userId }, (err: any, res: any) => {
       if (err) {
-        setCurrentError(JSON.stringify(err));
-      } else {
+        setCurrentError('getUser: ' + JSON.stringify(err));
+      } else if (res.data.rawKubeConfig !== '') {
         this.setState({ rawKubeconfig: res.data.rawKubeConfig });
       }
     });
@@ -82,11 +86,13 @@ export default class ClusterConfigModal extends Component<PropsType, StateType> 
   };
 
   renderClusterList = (): JSX.Element[] | JSX.Element => {
-    if (this.state.clusters.length > 0) {
-      return this.state.clusters.map((cluster: ClusterConfig, i) => {
+    let { clusters, selected } = this.state;
+
+    if (clusters && clusters.length > 0) {
+      return clusters.map((cluster: ClusterConfig, i) => {
         return (
           <Row key={i} onClick={() => this.toggleCluster(i)}>
-            <Checkbox checked={this.state.selected[i]}>
+            <Checkbox checked={selected[i]}>
               <i className="material-icons">done</i>
             </Checkbox>
             {cluster.name}
@@ -108,12 +114,13 @@ export default class ClusterConfigModal extends Component<PropsType, StateType> 
 
   handleSaveKubeconfig = () => {
     let { rawKubeconfig } = this.state;
+    let { userId } = this.context;
 
     this.setState({ saveKubeconfigStatus: 'loading' });
     api.updateUser(
       '<token>',
-      { rawKubeconfig },
-      { id: 0 },
+      { rawKubeConfig: rawKubeconfig },
+      { id: userId },
       (err: any, res: any) => {
         if (err) {
           this.setState({ saveKubeconfigStatus: 'error' });
@@ -131,9 +138,9 @@ export default class ClusterConfigModal extends Component<PropsType, StateType> 
 
   handleSaveSelected = () => {
     let { clusters, selected } = this.state;
+    let { userId } = this.context;
 
     this.setState({ saveSelectedStatus: 'loading' });
-
     let allowedClusters: string[] = [];
     clusters.forEach((x, i) => {
       if (selected[i]) {
@@ -141,10 +148,12 @@ export default class ClusterConfigModal extends Component<PropsType, StateType> 
       }
     });
 
+    console.log(allowedClusters);
+    
     api.updateUser(
       '<token>',
       { allowedClusters },
-      { id: 0 },
+      { id: userId },
       (err: any, res: any) => {
         if (err) {
           this.setState({ saveSelectedStatus: 'error' });
@@ -183,6 +192,7 @@ export default class ClusterConfigModal extends Component<PropsType, StateType> 
           text='Save Selected'
           disabled={this.state.clusters.length === 0}
           onClick={this.handleSaveSelected}
+          status={this.state.saveSelectedStatus}
         />
       </div>
     )

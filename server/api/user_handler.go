@@ -3,11 +3,13 @@ package api
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
 
 	"github.com/porter-dev/porter/internal/kubernetes"
+	"golang.org/x/crypto/bcrypt"
 
 	"gorm.io/gorm"
 
@@ -15,7 +17,6 @@ import (
 	"github.com/porter-dev/porter/internal/forms"
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/repository"
-	"golang.org/x/crypto/bcrypt"
 )
 
 // Enumeration of user API error codes, represented as int64
@@ -53,6 +54,25 @@ func (app *App) HandleCreateUser(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// HandleAuthCheck checks whether current session is authenticated.
+func (app *App) HandleAuthCheck(w http.ResponseWriter, r *http.Request) {
+	session, err := app.store.Get(r, app.cookieName)
+	cook, _ := r.Cookie("porter")
+	fmt.Println("cooki", cook)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+
+	if auth, ok := session.Values["authenticated"].(bool); !auth || !ok {
+		app.logger.Info().Msgf(strconv.FormatBool(auth))
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("false"))
+		return
+	}
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("true"))
+}
+
 // HandleLoginUser checks the request header for cookie and validates the user.
 func (app *App) HandleLoginUser(w http.ResponseWriter, r *http.Request) {
 	session, err := app.store.Get(r, app.cookieName)
@@ -62,7 +82,6 @@ func (app *App) HandleLoginUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	form := &forms.LoginUserForm{}
-
 	// decode from JSON to form value
 	if err := json.NewDecoder(r.Body).Decode(form); err != nil {
 		app.handleErrorFormDecoding(err, ErrUserDecode, w)
@@ -92,6 +111,23 @@ func (app *App) HandleLoginUser(w http.ResponseWriter, r *http.Request) {
 	// Set user as authenticated
 	session.Values["authenticated"] = true
 	session.Values["user_id"] = storedUser.ID
+	if err := session.Save(r, w); err != nil {
+		app.logger.Warn().Err(err)
+	}
+
+	w.WriteHeader(http.StatusOK)
+}
+
+// HandleLogoutUser detaches the user from the session
+func (app *App) HandleLogoutUser(w http.ResponseWriter, r *http.Request) {
+	session, err := app.store.Get(r, app.cookieName)
+
+	if err != nil {
+		app.handleErrorDataRead(err, ErrUserDataRead, w)
+	}
+
+	session.Values["authenticated"] = false
+	session.Values["user_id"] = nil
 	session.Save(r, w)
 	w.WriteHeader(http.StatusOK)
 }

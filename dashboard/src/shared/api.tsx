@@ -9,17 +9,19 @@ import { baseApi } from './baseApi';
  * @param {(err: Object, res: Object) => void} callback - Callback function.
  */
 
+const checkAuth = baseApi('GET', '/api/auth/check');
+
 const registerUser = baseApi<{ 
   email: string, 
   password: string
-}>('POST', '/api/register');
+}>('POST', '/api/users');
 
 const logInUser = baseApi<{
   email: string,
   password: string
 }>('POST', '/api/login');
 
-const logOutUser = baseApi<{}>('GET', '/api/logout');
+const logOutUser = baseApi('POST', '/api/logout');
 
 const getUser = baseApi<{}, { id: number }>('GET', pathParams => {
   return `/api/users/${pathParams.id}`;
@@ -42,6 +44,7 @@ const getAllClusters = baseApi<{}, { id: number }>('GET', pathParams => {
 
 // Bundle export to allow default api import (api.<method> is more readable)
 export default {
+  checkAuth,
   registerUser,
   logInUser,
   logOutUser,

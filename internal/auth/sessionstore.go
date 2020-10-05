@@ -111,7 +111,9 @@ func (store *PGStore) save(session *sessions.Session) error {
 
 // NewStore takes an initialized db and session key pairs to create a session-store in postgres db.
 func NewStore(repo *repository.Repository, conf config.ServerConf) (*PGStore, error) {
-	keyPairs := conf.CookieSecrets
+	keyPairs := [][]byte{
+		conf.CookieSecret,
+	}
 
 	dbStore := &PGStore{
 		Codecs: securecookie.CodecsFromPairs(keyPairs...),

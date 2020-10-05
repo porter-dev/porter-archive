@@ -20,8 +20,7 @@ func New(a *api.App, store *sessionstore.PGStore, cookieName string) *chi.Mux {
 
 		// /api/users routes
 		r.Method("GET", "/users/{id}", auth.DoesUserIDMatch(requestlog.NewHandler(a.HandleReadUser, l)))
-		r.Method("GET", "/users/{id}/clusters", auth.DoesUserIDMatch(requestlog.NewHandler(a.HandleReadUserClusters, l)))
-		r.Method("GET", "/users/{id}/clusters/all", auth.DoesUserIDMatch(requestlog.NewHandler(a.HandleReadUserClustersAll, l)))
+		r.Method("GET", "/users/{id}/contexts", auth.DoesUserIDMatch(requestlog.NewHandler(a.HandleReadUserContexts, l)))
 		r.Method("POST", "/users", requestlog.NewHandler(a.HandleCreateUser, l))
 		r.Method("PUT", "/users/{id}", auth.DoesUserIDMatch(requestlog.NewHandler(a.HandleUpdateUser, l)))
 		r.Method("DELETE", "/users/{id}", auth.DoesUserIDMatch(requestlog.NewHandler(a.HandleDeleteUser, l)))

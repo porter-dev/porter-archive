@@ -137,7 +137,7 @@ export default class ClusterConfigModal extends Component<PropsType, StateType> 
   }
 
   handleSaveSelected = () => {
-    let { clusters, selected, rawKubeconfig } = this.state;
+    let { clusters, selected } = this.state;
     let { userId } = this.context;
 
     this.setState({ saveSelectedStatus: 'loading' });
@@ -149,10 +149,10 @@ export default class ClusterConfigModal extends Component<PropsType, StateType> 
     });
 
     console.log(allowedClusters);
-
+    
     api.updateUser(
       '<token>',
-      { rawKubeConfig: rawKubeconfig, allowedClusters },
+      { allowedClusters },
       { id: userId },
       (err: any, res: any) => {
         if (err) {

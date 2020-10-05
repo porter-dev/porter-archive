@@ -30,6 +30,7 @@ class ContextProvider extends Component {
     },
     currentError: null as string | null,
     setCurrentError: (currentError: string): void => {
+      console.log('setting err', currentError)
       this.setState({ currentError });
     },
     currentCluster: null as string | null,

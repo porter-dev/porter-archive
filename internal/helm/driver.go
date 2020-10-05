@@ -54,10 +54,13 @@ func newConfigMapsStorageDriver(
 
 // NewMemoryStorageDriver returns a storage using the In-Memory driver.
 func newMemoryStorageDriver(
-	l *logger.Logger,
+	_ *logger.Logger,
 	namespace string,
-	clientset *kubernetes.Clientset,
+	_ *kubernetes.Clientset,
 ) *storage.Storage {
 	d := driver.NewMemory()
-	return storage.Init(d)
+	store := storage.Init(d)
+
+	store.Driver.(*driver.Memory).SetNamespace(namespace)
+	return store
 }

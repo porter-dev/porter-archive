@@ -18,7 +18,7 @@ type Conf struct {
 type ServerConf struct {
 	Port         int           `env:"SERVER_PORT,default=8080"`
 	CookieName   string        `env:"COOKIE_NAME,default=porter"`
-	CookieSecret []byte        `env:"COOKIE_SECRETS,default=secret"`
+	CookieSecret []byte        `env:"COOKIE_SECRET,default=secret"`
 	TimeoutRead  time.Duration `env:"SERVER_TIMEOUT_READ,default=5s"`
 	TimeoutWrite time.Duration `env:"SERVER_TIMEOUT_WRITE,default=10s"`
 	TimeoutIdle  time.Duration `env:"SERVER_TIMEOUT_IDLE,default=15s"`

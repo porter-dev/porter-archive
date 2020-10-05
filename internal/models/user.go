@@ -8,32 +8,32 @@ import (
 type User struct {
 	gorm.Model
 
-	Email         string          `json:"email" gorm:"unique"`
-	Password      string          `json:"password"`
-	Clusters      []ClusterConfig `json:"clusters"`
-	RawKubeConfig []byte          `json:"rawKubeConfig"`
+	Email         string   `json:"email" gorm:"unique"`
+	Password      string   `json:"password"`
+	Contexts      []string `json:"contexts"`
+	RawKubeConfig []byte   `json:"rawKubeConfig"`
 }
 
 // UserExternal represents the User type that is sent over REST
 type UserExternal struct {
-	ID            uint                     `json:"id"`
-	Email         string                   `json:"email"`
-	Clusters      []*ClusterConfigExternal `json:"clusters"`
-	RawKubeConfig string                   `json:"rawKubeConfig"`
+	ID            uint     `json:"id"`
+	Email         string   `json:"email"`
+	Contexts      []string `json:"contexts"`
+	RawKubeConfig string   `json:"rawKubeConfig"`
 }
 
 // Externalize generates an external User to be shared over REST
 func (u *User) Externalize() *UserExternal {
-	clustersExt := make([]*ClusterConfigExternal, 0)
+	contexts := u.Contexts
 
-	for _, cluster := range u.Clusters {
-		clustersExt = append(clustersExt, cluster.Externalize())
+	if contexts == nil {
+		contexts = []string{}
 	}
 
 	return &UserExternal{
 		ID:            u.ID,
 		Email:         u.Email,
-		Clusters:      clustersExt,
+		Contexts:      contexts,
 		RawKubeConfig: string(u.RawKubeConfig),
 	}
 }

@@ -13,16 +13,9 @@ func TestUserExternalize(t *testing.T) {
 		Model: gorm.Model{
 			ID: 1,
 		},
-		Email:    "testing@testing.com",
-		Password: "testing123",
-		Clusters: []models.ClusterConfig{
-			models.ClusterConfig{
-				Name:   "test",
-				Server: "localhost",
-				User:   "test",
-				UserID: 1,
-			},
-		},
+		Email:         "testing@testing.com",
+		Password:      "testing123",
+		Contexts:      []string{"test"},
 		RawKubeConfig: []byte{},
 	}
 
@@ -36,8 +29,8 @@ func TestUserExternalize(t *testing.T) {
 		t.Errorf("Field: %s\t Int: %v\t Ext: %v\n", "Email", user.Email, extUser.Email)
 	}
 
-	if len(extUser.Clusters) != 1 {
-		t.Errorf("Field: %s\t Int: %v\t Ext: %v\n", "Length Clusters", len(extUser.Clusters), 1)
+	if len(extUser.Contexts) != 1 {
+		t.Errorf("Field: %s\t Int: %v\t Ext: %v\n", "Length Contexts", len(extUser.Contexts), 1)
 	}
 
 	if len(extUser.RawKubeConfig) != 0 {

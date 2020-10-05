@@ -109,12 +109,7 @@ Internal server errors are shared across all endpoints and are listed in the [Gl
 User{
     "id": Number,
     "email": String,
-    "clusters": []ClusterConfig{
-        "name": String,
-        "server": String,
-        "context": String,
-        "user": String,
-    },
+    "clusters": []String,
     "rawKubeConfig": String,
 }
 ```

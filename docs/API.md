@@ -7,8 +7,7 @@
   - [`ErrorInternal`](#errorinternal)
 - [`/api/users`](#apiusers)
   - [`GET /api/users/{id}`](#get-apiusersid)
-  - [`GET /api/users/{id}/clusters`](#get-apiusersidclusters)
-  - [`GET /api/users/{id}/clusters/all`](#get-apiusersidclustersall)
+  - [`GET /api/users/{id}/contexts`](#get-apiusersidcontexts)
   - [`POST /api/users`](#post-apiusers)
   - [`POST /api/login`](#post-apilogin)
   - [`POST /api/logout`](#post-apilogout)
@@ -109,7 +108,7 @@ Internal server errors are shared across all endpoints and are listed in the [Gl
 User{
     "id": Number,
     "email": String,
-    "clusters": []String,
+    "contexts": []String,
     "rawKubeConfig": String,
 }
 ```
@@ -137,54 +136,9 @@ User{
     }
     ```
 
-#### `GET /api/users/{id}/clusters`
+#### `GET /api/users/{id}/contexts`
 
-**Description:** Retrieves the clusters that are currently linked to a User account. 
-
-**URL parameters:** 
-
-- `id` The user's ID. 
-
-**Query parameters:** N/A
-
-**Request Body**: N/A
-
-**Successful Response Body**: 
-
-```js
-[]ClusterConfig{
-  "name": String,
-  "server": String,
-  "context": String,
-  "user": String,
-}
-```
-
-**Successful Status Code**: `200`
-
-**Errors:** 
-- User not found
-  - Status Code: `404`
-  - Request Body:
-    ```json
-    {
-        "code":602,
-        "errors":["could not find requested object"]
-    }
-    ```
-- Invalid `id` URL parameter
-  - Status Code: `400`
-  - Request Body:
-    ```json
-    {
-        "code":600,
-        "errors":["could not process request"]
-    }
-    ```
-
-#### `GET /api/users/{id}/clusters/all`
-
-**Description:** Parses all clusters from the user's kubeconfig and returns a list of viable cluster configs. 
+**Description:** Retrieves a list of contexts parsed from the provided kubeconfig. 
 
 **URL parameters:** 
 
@@ -197,11 +151,12 @@ User{
 **Successful Response Body**: 
 
 ```js
-[]ClusterConfig{
+[]Context{
   "name": String,
   "server": String,
-  "context": String,
+  "cluster": String,
   "user": String,
+  "selected": Boolean,
 }
 ```
 
@@ -363,7 +318,7 @@ User{
 ```js
 {
   "rawKubeConfig": String,
-  "allowedClusters": []String,
+  "allowedContexts": []String,
 }
 ```
 

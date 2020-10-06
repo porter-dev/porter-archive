@@ -7,6 +7,7 @@ import (
 	"github.com/porter-dev/porter/internal/kubernetes"
 	"github.com/porter-dev/porter/internal/logger"
 	"helm.sh/helm/v3/pkg/action"
+	"helm.sh/helm/v3/pkg/kube"
 	"helm.sh/helm/v3/pkg/release"
 	"helm.sh/helm/v3/pkg/storage"
 
@@ -68,20 +69,13 @@ func (h *Form) ToAgent(
 		return nil, err
 	}
 
-	// use k8s agent to create a new helm agent
-	actionConfig, err := NewActionConfig(
-		l,
-		StorageMap[h.Storage],
-		k8sAgent.ClientConfig,
-		k8sAgent.Clientset,
-		h.Namespace,
-	)
-
-	if err != nil {
-		return nil, err
-	}
-
-	return &Agent{actionConfig}, nil
+	// use k8s agent to create Helm agent
+	return &Agent{&action.Configuration{
+		RESTClientGetter: k8sAgent.RESTClientGetter,
+		KubeClient:       kube.New(k8sAgent.RESTClientGetter),
+		Releases:         StorageMap[h.Storage](l, h.Namespace, k8sAgent.Clientset),
+		Log:              l.Printf,
+	}}, nil
 }
 
 // ListReleases lists releases based on a ListFilter

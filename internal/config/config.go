@@ -12,6 +12,7 @@ type Conf struct {
 	Debug  bool `env:"DEBUG,default=false"`
 	Server ServerConf
 	Db     DBConf
+	Helm   HelmGlobalConf
 }
 
 // ServerConf is the server configuration
@@ -32,6 +33,11 @@ type DBConf struct {
 	Username string `env:"DB_USER,default=porter"`
 	Password string `env:"DB_PASS,default=porter"`
 	DbName   string `env:"DB_NAME,default=porter"`
+}
+
+// HelmGlobalConf is the global configuration for the Helm agent
+type HelmGlobalConf struct {
+	IsTesting bool `env:"HELM_IS_TESTING,default=false"`
 }
 
 // FromEnv generates a configuration from environment variables

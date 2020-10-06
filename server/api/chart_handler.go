@@ -33,7 +33,7 @@ func (app *App) HandleListCharts(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// create a new agent
-	agent, err := form.HelmOptions.ToAgent(app.logger, false)
+	agent, err := form.HelmOptions.ToAgent(app.logger, app.helmConf, app.HelmTestStorageDriver)
 
 	releases, err := agent.ListReleases(form.HelmOptions.Namespace, form.ListFilter)
 

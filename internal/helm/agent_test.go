@@ -3,6 +3,9 @@ package helm_test
 import (
 	"testing"
 
+	"helm.sh/helm/v3/pkg/storage/driver"
+
+	"github.com/porter-dev/porter/internal/config"
 	"github.com/porter-dev/porter/internal/helm"
 	"github.com/porter-dev/porter/internal/logger"
 
@@ -14,11 +17,13 @@ func newAgentFixture(t *testing.T, namespace string) *helm.Agent {
 	t.Helper()
 
 	l := logger.NewConsole(true)
-	opts := &helm.HelmForm{
+	opts := &helm.Form{
 		Namespace: namespace,
 	}
 
-	agent, _ := opts.ToAgent(l, true)
+	agent, _ := opts.ToAgent(l, &config.HelmGlobalConf{
+		IsTesting: true,
+	}, nil)
 
 	return agent
 }
@@ -35,6 +40,7 @@ type releaseStub struct {
 func makeReleases(t *testing.T, agent *helm.Agent, rels []releaseStub) {
 	t.Helper()
 	storage := agent.ActionConfig.Releases
+
 	for _, r := range rels {
 		rel := &release.Release{
 			Name:      r.name,
@@ -50,7 +56,9 @@ func makeReleases(t *testing.T, agent *helm.Agent, rels []releaseStub) {
 				},
 			},
 		}
+
 		err := storage.Create(rel)
+
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -125,26 +133,26 @@ var listReleaseTests = []listReleaseTest{
 			releaseStub{"wordpress", "default", 1, "1.0.1", release.StatusDeployed},
 		},
 	},
-	// listReleaseTest{
-	// 	name:      "simple test limit",
-	// 	namespace: "",
-	// 	filter: &helm.ListFilter{
-	// 		Namespace:    "",
-	// 		Limit:        2,
-	// 		Skip:         0,
-	// 		ByDate:       false,
-	// 		StatusFilter: []string{"deployed"},
-	// 	},
-	// 	releases: []releaseStub{
-	// 		releaseStub{"airwatch", "default", 1, "1.0.0", release.StatusDeployed},
-	// 		releaseStub{"not-in-default-namespace", "other", 1, "1.0.1", release.StatusDeployed},
-	// 		releaseStub{"wordpress", "default", 1, "1.0.2", release.StatusDeployed},
-	// 	},
-	// 	expRes: []releaseStub{
-	// 		releaseStub{"airwatch", "default", 1, "1.0.0", release.StatusDeployed},
-	// 		releaseStub{"not-in-default-namespace", "other", 1, "1.0.1", release.StatusDeployed},
-	// 	},
-	// },
+	listReleaseTest{
+		name:      "simple test limit",
+		namespace: "",
+		filter: &helm.ListFilter{
+			Namespace:    "",
+			Limit:        2,
+			Skip:         0,
+			ByDate:       false,
+			StatusFilter: []string{"deployed"},
+		},
+		releases: []releaseStub{
+			releaseStub{"airwatch", "default", 1, "1.0.0", release.StatusDeployed},
+			releaseStub{"not-in-default-namespace", "other", 1, "1.0.1", release.StatusDeployed},
+			releaseStub{"wordpress", "default", 1, "1.0.2", release.StatusDeployed},
+		},
+		expRes: []releaseStub{
+			releaseStub{"airwatch", "default", 1, "1.0.0", release.StatusDeployed},
+			releaseStub{"not-in-default-namespace", "other", 1, "1.0.1", release.StatusDeployed},
+		},
+	},
 }
 
 func TestListReleases(t *testing.T) {
@@ -152,7 +160,12 @@ func TestListReleases(t *testing.T) {
 		agent := newAgentFixture(t, tc.namespace)
 		makeReleases(t, agent, tc.releases)
 
+		// calling agent.ActionConfig.Releases.Create in makeReleases will automatically set the
+		// namespace, so we have to reset the namespace of the storage driver
+		agent.ActionConfig.Releases.Driver.(*driver.Memory).SetNamespace(tc.namespace)
+
 		releases, err := agent.ListReleases(tc.namespace, tc.filter)
+
 		if err != nil {
 			t.Errorf("%v", err)
 		}

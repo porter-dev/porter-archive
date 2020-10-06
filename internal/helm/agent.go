@@ -3,10 +3,12 @@ package helm
 import (
 	"io/ioutil"
 
+	"github.com/porter-dev/porter/internal/config"
 	"github.com/porter-dev/porter/internal/kubernetes"
 	"github.com/porter-dev/porter/internal/logger"
 	"helm.sh/helm/v3/pkg/action"
 	"helm.sh/helm/v3/pkg/release"
+	"helm.sh/helm/v3/pkg/storage"
 
 	"helm.sh/helm/v3/pkg/chartutil"
 	kubefake "helm.sh/helm/v3/pkg/kube/fake"
@@ -17,21 +19,32 @@ type Agent struct {
 	ActionConfig *action.Configuration
 }
 
-type HelmForm struct {
-	KubeConfig      []byte   `form:"required"`
-	AllowedContexts []string `form:"required"`
-	Context         string   `json:"context" form:"required"`
-	Storage         string   `json:"storage" form:"oneof=secret configmap memory"`
-	Namespace       string   `json:"namespace"`
+// Form represents the options for connecting to a cluster and
+// creating a Helm agent
+type Form struct {
+	KubeConfig      []byte
+	AllowedContexts []string
+	Context         string `json:"context" form:"required"`
+	Storage         string `json:"storage" form:"oneof=secret configmap memory"`
+	Namespace       string `json:"namespace"`
 }
 
-func (h *HelmForm) ToAgent(
+// ToAgent uses the Form to generate an agent. Setting testing=true will create
+// a test agent with in-memory storage
+func (h *Form) ToAgent(
 	l *logger.Logger,
-	testing bool,
+	helmConf *config.HelmGlobalConf,
+	storage *storage.Storage,
 ) (*Agent, error) {
-	if testing {
+	if helmConf.IsTesting {
+		testStorage := storage
+
+		if testStorage == nil {
+			testStorage = StorageMap["memory"](nil, h.Namespace, nil)
+		}
+
 		return &Agent{&action.Configuration{
-			Releases: StorageMap["memory"](l, h.Namespace, nil),
+			Releases: testStorage,
 			KubeClient: &kubefake.FailingKubeClient{
 				PrintingKubeClient: kubefake.PrintingKubeClient{
 					Out: ioutil.Discard,

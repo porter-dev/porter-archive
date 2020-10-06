@@ -117,9 +117,14 @@ export default class Sidebar extends Component<PropsType, StateType> {
             releaseDrawer={() => this.setState({ forceCloseDrawer: false })}
           />
 
-          <LogOutButton onClick={this.handleLogout}>
-            Log Out <i className="material-icons">keyboard_return</i>
-          </LogOutButton>
+          <BottomSection>
+            <LogOutButton onClick={this.handleLogout}>
+              <i className="material-icons">keyboard_return</i> DevOps Mode
+            </LogOutButton>
+            <LogOutButton onClick={this.handleLogout}>
+              Log Out <i className="material-icons">keyboard_return</i>
+            </LogOutButton>
+          </BottomSection>
         </StyledSidebar>
       </div>
     );
@@ -160,10 +165,14 @@ const NavButton = styled.div`
   }
 `;
 
-const LogOutButton = styled(NavButton)`
+const BottomSection = styled.div`
   position: absolute;
-  width: calc(100% - 55px); 
+  width: 100%;
   bottom: 12px;
+`;
+
+const LogOutButton = styled(NavButton)`
+  width: calc(100% - 55px); 
   border-top-right-radius: 3px;
   border-bottom-right-radius: 3px;
   margin-left: -1px;

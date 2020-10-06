@@ -41,6 +41,10 @@ class ContextProvider extends Component {
     setUserId: (userId: number): void => {
       this.setState({ userId });
     },
+    devOpsMode: true,
+    setDevOpsMode: (devOpsMode: boolean): void => {
+      this.setState({ devOpsMode });
+    }
   };
 
   componentDidMount() {

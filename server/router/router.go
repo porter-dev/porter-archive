@@ -30,6 +30,7 @@ func New(a *api.App, store *sessionstore.PGStore, cookieName string) *chi.Mux {
 
 		// /api/charts routes
 		r.Method("GET", "/charts", auth.DoesUserIDMatch(requestlog.NewHandler(a.HandleListCharts, l), mw.BodyParam))
+		r.Method("GET", "/charts/{name}/{revision}", auth.DoesUserIDMatch(requestlog.NewHandler(a.HandleGetChart, l), mw.BodyParam))
 	})
 
 	return r

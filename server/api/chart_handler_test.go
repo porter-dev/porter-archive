@@ -142,6 +142,35 @@ func TestHandleListCharts(t *testing.T) {
 	testChartRequests(t, listChartsTests, true)
 }
 
+var getChartTests = []*chartTest{
+	&chartTest{
+		initializers: []func(tester *tester){
+			initDefaultCharts,
+		},
+		msg:      "Get charts",
+		method:   "GET",
+		endpoint: "/api/charts/airwatch/0",
+		body: `{
+			"user_id": 1,
+			"helm": {
+				"namespace": "",
+				"context": "context-test",
+				"storage": "memory"
+			}
+		}`,
+		expStatus: http.StatusOK,
+		expBody:   releaseStubToChartJSON(sampleReleaseStubs[0]),
+		useCookie: true,
+		validators: []func(c *chartTest, tester *tester, t *testing.T){
+			chartReleaseBodyValidator,
+		},
+	},
+}
+
+func TestHandleGetChart(t *testing.T) {
+	testChartRequests(t, getChartTests, true)
+}
+
 // ------------------------- INITIALIZERS AND VALIDATORS ------------------------- //
 
 func initDefaultCharts(tester *tester) {
@@ -185,6 +214,14 @@ func releaseStubsToChartJSON(rels []releaseStub) string {
 	}
 
 	str, _ := json.Marshal(releases)
+
+	return string(str)
+}
+
+func releaseStubToChartJSON(r releaseStub) string {
+	rel := releaseStubToRelease(r)
+
+	str, _ := json.Marshal(rel)
 
 	return string(str)
 }

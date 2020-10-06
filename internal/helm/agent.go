@@ -105,9 +105,12 @@ func (a *Agent) ListReleases(
 // GetRelease returns the info of a release.
 func (a *Agent) GetRelease(
 	name string,
+	version int,
 ) (*release.Release, error) {
 	// Namespace is already known by the RESTClientGetter.
 	cmd := action.NewGet(a.ActionConfig)
+
+	cmd.Version = version
 
 	return cmd.Run(name)
 }

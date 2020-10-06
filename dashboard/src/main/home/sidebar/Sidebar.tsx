@@ -119,9 +119,6 @@ export default class Sidebar extends Component<PropsType, StateType> {
 
           <BottomSection>
             <LogOutButton onClick={this.handleLogout}>
-              <i className="material-icons">keyboard_return</i> DevOps Mode
-            </LogOutButton>
-            <LogOutButton onClick={this.handleLogout}>
               Log Out <i className="material-icons">keyboard_return</i>
             </LogOutButton>
           </BottomSection>

@@ -59,8 +59,5 @@ func newMemoryStorageDriver(
 	_ *kubernetes.Clientset,
 ) *storage.Storage {
 	d := driver.NewMemory()
-	store := storage.Init(d)
-
-	store.Driver.(*driver.Memory).SetNamespace(namespace)
-	return store
+	return storage.Init(d)
 }

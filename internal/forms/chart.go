@@ -7,7 +7,7 @@ import (
 
 // ListChartForm represents the accepted values for listing Helm charts
 type ListChartForm struct {
-	HelmOptions *helm.HelmForm   `json:"helm" form:"required"`
+	HelmOptions *helm.Form       `json:"helm" form:"required"`
 	ListFilter  *helm.ListFilter `json:"filter" form:"required"`
 	UserID      uint             `json:"user_id"`
 }

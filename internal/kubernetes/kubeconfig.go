@@ -7,11 +7,11 @@ import (
 )
 
 // GetRestrictedClientConfigFromBytes returns a clientcmd.ClientConfig from a raw kubeconfig,
-// a context name, and the set of allowed clusters.
+// a context name, and the set of allowed contexts.
 func GetRestrictedClientConfigFromBytes(
 	bytes []byte,
 	contextName string,
-	allowedClusters []string,
+	allowedContexts []string,
 ) (clientcmd.ClientConfig, error) {
 	config, err := clientcmd.NewClientConfigFromBytes(bytes)
 
@@ -34,19 +34,19 @@ func GetRestrictedClientConfigFromBytes(
 	copyConf.CurrentContext = contextName
 
 	// put allowed clusters in a map
-	aClusterMap := createAllowedClusterMap(allowedClusters)
+	aContextMap := createAllowedContextMap(allowedContexts)
 
 	// discover all allowed clusters
-	for contextName, context := range rawConf.Contexts {
+	for name, context := range rawConf.Contexts {
 		userName := context.AuthInfo
 		clusterName := context.Cluster
 		authInfo, userFound := rawConf.AuthInfos[userName]
 		cluster, clusterFound := rawConf.Clusters[clusterName]
 
 		// make sure the cluster is "allowed"
-		_, aClusterFound := aClusterMap[clusterName]
+		_, isAllowed := aContextMap[name]
 
-		if userFound && clusterFound && aClusterFound {
+		if userFound && clusterFound && isAllowed {
 			copyConf.Clusters[clusterName] = cluster
 			copyConf.AuthInfos[userName] = authInfo
 			copyConf.Contexts[contextName] = context
@@ -65,9 +65,9 @@ func GetRestrictedClientConfigFromBytes(
 	return clientConf, nil
 }
 
-// GetAllClusterConfigsFromBytes converts a raw string to a set of ClusterConfigs
-// by unmarshaling and calling (*KubeConfig).ToAllClusterConfigs
-func GetAllClusterConfigsFromBytes(bytes []byte) ([]models.ClusterConfig, error) {
+// GetContextsFromBytes converts a raw string to a set of Contexts
+// by unmarshaling and calling toContexts
+func GetContextsFromBytes(bytes []byte, allowedContexts []string) ([]models.Context, error) {
 	config, err := clientcmd.NewClientConfigFromBytes(bytes)
 
 	if err != nil {
@@ -86,102 +86,53 @@ func GetAllClusterConfigsFromBytes(bytes []byte) ([]models.ClusterConfig, error)
 		return nil, err
 	}
 
-	clusters := toAllClusterConfigs(&rawConf)
+	contexts := toContexts(&rawConf, allowedContexts)
 
-	return clusters, nil
+	return contexts, nil
+
 }
 
-// GetAllowedClusterConfigsFromBytes converts a raw string to a set of ClusterConfigs
-// by unmarshaling and calling (*KubeConfig).ToAllowedClusterConfigs
-func GetAllowedClusterConfigsFromBytes(bytes []byte, allowedClusters []string) ([]models.ClusterConfig, error) {
-	config, err := clientcmd.NewClientConfigFromBytes(bytes)
-
-	if err != nil {
-		return nil, err
-	}
-
-	rawConf, err := config.RawConfig()
-
-	if err != nil {
-		return nil, err
-	}
-
-	err = clientcmd.Validate(rawConf)
-
-	if err != nil {
-		return nil, err
-	}
-
-	clusters := toAllowedClusterConfigs(&rawConf, allowedClusters)
-
-	return clusters, nil
-}
-
-// toAllowedClusterConfigs converts a KubeConfig to a set of ClusterConfigs by
-// joining users and clusters on the context.
-//
-// It accepts a list of cluster names that the user wishes to connect to
-func toAllowedClusterConfigs(rawConf *api.Config, allowedClusters []string) []models.ClusterConfig {
-	clusters := make([]models.ClusterConfig, 0)
+func toContexts(rawConf *api.Config, allowedContexts []string) []models.Context {
+	contexts := make([]models.Context, 0)
 
 	// put allowed clusters in map
-	aClusterMap := createAllowedClusterMap(allowedClusters)
+	aContextMap := createAllowedContextMap(allowedContexts)
 
-	// iterate through context maps and link to a user-cluster pair
-	for contextName, context := range rawConf.Contexts {
-		userName := context.AuthInfo
-		clusterName := context.Cluster
-		_, userFound := rawConf.AuthInfos[userName]
-		cluster, clusterFound := rawConf.Clusters[clusterName]
+	// iterate through contexts and switch on selected
+	for name, context := range rawConf.Contexts {
+		_, isAllowed := aContextMap[name]
+		_, userFound := rawConf.AuthInfos[context.AuthInfo]
+		cluster, clusterFound := rawConf.Clusters[context.Cluster]
 
-		// make sure the cluster is "allowed"
-		_, aClusterFound := aClusterMap[clusterName]
-
-		if userFound && clusterFound && aClusterFound {
-			clusters = append(clusters, models.ClusterConfig{
-				Name:    clusterName,
-				Server:  cluster.Server,
-				Context: contextName,
-				User:    userName,
+		if userFound && clusterFound && isAllowed {
+			contexts = append(contexts, models.Context{
+				Name:     name,
+				Server:   cluster.Server,
+				Cluster:  context.Cluster,
+				User:     context.AuthInfo,
+				Selected: true,
+			})
+		} else if userFound && clusterFound {
+			contexts = append(contexts, models.Context{
+				Name:     name,
+				Server:   cluster.Server,
+				Cluster:  context.Cluster,
+				User:     context.AuthInfo,
+				Selected: false,
 			})
 		}
 	}
 
-	return clusters
+	return contexts
 }
 
-// toAllClusterConfigs converts a KubeConfig to a set of ClusterConfigs by
-// joining users and clusters on the context.
-func toAllClusterConfigs(rawConf *api.Config) []models.ClusterConfig {
-	clusters := make([]models.ClusterConfig, 0)
+// createAllowedContextMap creates a dummy map from context name to context name
+func createAllowedContextMap(contexts []string) map[string]string {
+	aContextMap := make(map[string]string)
 
-	// iterate through context maps and link to a user-cluster pair
-	for contextName, context := range rawConf.Contexts {
-		userName := context.AuthInfo
-		clusterName := context.Cluster
-		_, userFound := rawConf.AuthInfos[userName]
-		cluster, clusterFound := rawConf.Clusters[clusterName]
-
-		if userFound && clusterFound {
-			clusters = append(clusters, models.ClusterConfig{
-				Name:    clusterName,
-				Server:  cluster.Server,
-				Context: contextName,
-				User:    userName,
-			})
-		}
+	for _, context := range contexts {
+		aContextMap[context] = context
 	}
 
-	return clusters
-}
-
-// createAllowedClusterMap creates a map from a cluster name to a KubeConfigCluster object
-func createAllowedClusterMap(clusters []string) map[string]string {
-	aClusterMap := make(map[string]string)
-
-	for _, cluster := range clusters {
-		aClusterMap[cluster] = cluster
-	}
-
-	return aClusterMap
+	return aContextMap
 }

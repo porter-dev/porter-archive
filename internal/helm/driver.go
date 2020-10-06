@@ -22,8 +22,16 @@ import (
 // NewStorageDriver is a function type for returning a new storage driver
 type NewStorageDriver func(l *logger.Logger, namespace string, clientset *kubernetes.Clientset) *storage.Storage
 
+// StorageMap is a map from storage configuration env variables to a function
+// that initializes that Helm storage driver.
+var StorageMap map[string]NewStorageDriver = map[string]NewStorageDriver{
+	"secret":    newSecretStorageDriver,
+	"configmap": newConfigMapsStorageDriver,
+	"memory":    newMemoryStorageDriver,
+}
+
 // NewSecretStorageDriver returns a storage using the Secret driver.
-func NewSecretStorageDriver(
+func newSecretStorageDriver(
 	l *logger.Logger,
 	namespace string,
 	clientset *kubernetes.Clientset,
@@ -34,7 +42,7 @@ func NewSecretStorageDriver(
 }
 
 // NewConfigMapsStorageDriver returns a storage using the ConfigMap driver.
-func NewConfigMapsStorageDriver(
+func newConfigMapsStorageDriver(
 	l *logger.Logger,
 	namespace string,
 	clientset *kubernetes.Clientset,
@@ -45,7 +53,7 @@ func NewConfigMapsStorageDriver(
 }
 
 // NewMemoryStorageDriver returns a storage using the In-Memory driver.
-func NewMemoryStorageDriver(
+func newMemoryStorageDriver(
 	l *logger.Logger,
 	namespace string,
 	clientset *kubernetes.Clientset,

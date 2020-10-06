@@ -63,33 +63,46 @@ type UpdateUserForm struct {
 	WriteUserForm
 	ID              uint     `form:"required"`
 	RawKubeConfig   string   `json:"rawKubeConfig,omitempty"`
-	AllowedClusters []string `json:"allowedClusters,omitempty"`
+	AllowedContexts []string `json:"allowedContexts,omitempty"`
 }
 
 // ToUser converts an UpdateUserForm to models.User by parsing the kubeconfig
 // and the allowed clusters to generate a list of ClusterConfigs.
 func (uuf *UpdateUserForm) ToUser(repo repository.UserRepository) (*models.User, error) {
 	rawBytes := []byte(uuf.RawKubeConfig)
+	contexts := uuf.AllowedContexts
+
+	savedUser, err := repo.ReadUser(uuf.ID)
+
+	if err != nil {
+		return nil, err
+	}
 
 	// if the rawKubeConfig is empty, query the DB for a non-empty one
 	if uuf.RawKubeConfig == "" {
-		savedUser, err := repo.ReadUser(uuf.ID)
+		rawBytes = savedUser.RawKubeConfig
+	}
+
+	// if the allowedContexts is nil, query the DB for a non-nil one
+	if uuf.AllowedContexts == nil {
+		contexts = savedUser.Contexts
+	}
+
+	if len(rawBytes) > 0 {
+		// validate the kubeconfig
+		_contexts, err := kubernetes.GetContextsFromBytes(rawBytes, contexts)
 
 		if err != nil {
 			return nil, err
 		}
 
-		rawBytes = savedUser.RawKubeConfig
-	}
+		contexts = make([]string, 0)
 
-	clusters := make([]models.ClusterConfig, 0)
-	var err error
-
-	if len(rawBytes) > 0 {
-		clusters, err = kubernetes.GetAllowedClusterConfigsFromBytes(rawBytes, uuf.AllowedClusters)
-
-		if err != nil {
-			return nil, err
+		// ensure only joined contexts get written
+		for _, context := range _contexts {
+			if context.Selected {
+				contexts = append(contexts, context.Name)
+			}
 		}
 	}
 
@@ -97,7 +110,7 @@ func (uuf *UpdateUserForm) ToUser(repo repository.UserRepository) (*models.User,
 		Model: gorm.Model{
 			ID: uuf.ID,
 		},
-		Clusters:      clusters,
+		Contexts:      contexts,
 		RawKubeConfig: rawBytes,
 	}, nil
 }

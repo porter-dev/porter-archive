@@ -2,6 +2,7 @@ package api_test
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"reflect"
@@ -378,6 +379,8 @@ var updateUserTests = []*userTest{
 				json.Unmarshal(rr2.Body.Bytes(), gotBody)
 				json.Unmarshal([]byte(`{"id":1,"email":"belanger@getporter.dev","contexts":[],"rawKubeConfig":"apiVersion: v1\nkind: Config\npreferences: {}\ncurrent-context: context-test\nclusters:\n- cluster:\n    server: https://localhost\n  name: cluster-test\ncontexts:\n- context:\n    cluster: cluster-test\n    user: test-admin\n  name: context-test\nusers:\n- name: test-admin"}`), expBody)
 
+				fmt.Println(rr2.Body.String())
+
 				if !reflect.DeepEqual(gotBody, expBody) {
 					t.Errorf("%s, handler returned wrong body: got %v want %v",
 						"validator failed", gotBody, expBody)
@@ -636,7 +639,7 @@ func initUserWithContexts(tester *tester) {
 	initUserDefault(tester)
 
 	user, _ := tester.repo.User.ReadUserByEmail("belanger@getporter.dev")
-	user.Contexts = []string{"context-test"}
+	user.Contexts = "context-test"
 
 	user.RawKubeConfig = []byte("apiVersion: v1\nkind: Config\npreferences: {}\ncurrent-context: context-test\nclusters:\n- cluster:\n    server: https://localhost\n  name: cluster-test\ncontexts:\n- context:\n    cluster: cluster-test\n    user: test-admin\n  name: context-test\nusers:\n- name: test-admin")
 

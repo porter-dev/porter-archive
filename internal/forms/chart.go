@@ -20,7 +20,8 @@ func (lcf *ListChartForm) PopulateHelmOptions(repo repository.UserRepository) er
 		return err
 	}
 
-	lcf.HelmOptions.AllowedContexts = user.Contexts
+	lcf.HelmOptions.AllowedContexts = user.ContextToSlice()
+
 	lcf.HelmOptions.KubeConfig = user.RawKubeConfig
 	return nil
 }

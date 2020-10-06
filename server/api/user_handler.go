@@ -162,7 +162,7 @@ func (app *App) HandleReadUserContexts(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	contexts, err := kubernetes.GetContextsFromBytes(user.RawKubeConfig, user.Contexts)
+	contexts, err := kubernetes.GetContextsFromBytes(user.RawKubeConfig, user.ContextToSlice())
 
 	if err != nil {
 		app.handleErrorFormDecoding(err, ErrUserDecode, w)

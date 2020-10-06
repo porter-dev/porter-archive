@@ -1,6 +1,8 @@
 package models
 
 import (
+	"strings"
+
 	"gorm.io/gorm"
 )
 
@@ -8,10 +10,10 @@ import (
 type User struct {
 	gorm.Model
 
-	Email         string   `json:"email" gorm:"unique"`
-	Password      string   `json:"password"`
-	Contexts      []string `json:"contexts"`
-	RawKubeConfig []byte   `json:"rawKubeConfig"`
+	Email         string `json:"email" gorm:"unique"`
+	Password      string `json:"password"`
+	Contexts      string `json:"contexts"`
+	RawKubeConfig []byte `json:"rawKubeConfig"`
 }
 
 // UserExternal represents the User type that is sent over REST
@@ -24,16 +26,21 @@ type UserExternal struct {
 
 // Externalize generates an external User to be shared over REST
 func (u *User) Externalize() *UserExternal {
-	contexts := u.Contexts
-
-	if contexts == nil {
-		contexts = []string{}
-	}
-
 	return &UserExternal{
 		ID:            u.ID,
 		Email:         u.Email,
-		Contexts:      contexts,
+		Contexts:      u.ContextToSlice(),
 		RawKubeConfig: string(u.RawKubeConfig),
 	}
+}
+
+// ContextToSlice converts the serialized context string to an array of strings
+func (u *User) ContextToSlice() []string {
+	contexts := strings.Split(u.Contexts, ",")
+
+	if u.Contexts == "" {
+		contexts = make([]string, 0)
+	}
+
+	return contexts
 }

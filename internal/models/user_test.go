@@ -15,7 +15,7 @@ func TestUserExternalize(t *testing.T) {
 		},
 		Email:         "testing@testing.com",
 		Password:      "testing123",
-		Contexts:      []string{"test"},
+		Contexts:      "test",
 		RawKubeConfig: []byte{},
 	}
 

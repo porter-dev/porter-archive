@@ -15,6 +15,7 @@
   - [`DELETE /api/users/{id}`](#delete-apiusersid)
 - [`/api/charts`](#apicharts)
   - [`GET /api/charts`](#get-apicharts)
+  - [`GET /api/charts/{name}/{revision}`](#get-apichartsnamerevision)
 
 ### Overview
 

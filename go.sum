@@ -1263,6 +1263,7 @@ gorm.io/gorm v1.20.2/go.mod h1:0HFTzE/SqkGTzK6TlDPPQbAYCluiVvhzoA1+aVyzenw=
 gotest.tools v2.2.0+incompatible/go.mod h1:DsYFclhRJ6vuDpmuTbkuFWG+y2sxOXAzmJt81HFBacw=
 helm.sh/helm v1.2.1 h1:Jrn7kKQqQ/hnFWZEX+9pMFvYqFexkzrBnGqYBmIph7c=
 helm.sh/helm v2.16.12+incompatible h1:nQfifk10KcpAGD1RJaNZVW/fWiqluV0JMuuDwdba4rw=
+helm.sh/helm v2.16.12+incompatible/go.mod h1:0Xbc6ErzwWH9qC55X1+hE3ZwhM3atbhCm/NbFZw5i+4=
 helm.sh/helm/v3 v3.3.4 h1:tbad6WQVMxEw1HlVBvI2rQqOblmI5lgXOrWAMwJ198M=
 helm.sh/helm/v3 v3.3.4/go.mod h1:CyCGQa53/k1JFxXvXveGwtfJ4cuB9zkaBSGa5rnAiHU=
 honnef.co/go/tools v0.0.0-20180728063816-88497007e858/go.mod h1:rf3lG4BRIbNafJWhAfAdb/ePZxsR/4RtNHQocxwk9r4=
@@ -1364,6 +1365,9 @@ k8s.io/component-base v0.18.8/go.mod h1:00frPRDas29rx58pPCxNkhUfPbwajlyyvu8ruNgS
 k8s.io/gengo v0.0.0-20190128074634-0689ccc1d7d6/go.mod h1:ezvh/TsK7cY6rbqRK0oQQ8IAqLxYwwyPxAX1Pzy0ii0=
 k8s.io/gengo v0.0.0-20200114144118-36b2048a9120/go.mod h1:ezvh/TsK7cY6rbqRK0oQQ8IAqLxYwwyPxAX1Pzy0ii0=
 k8s.io/gengo v0.0.0-20200413195148-3a45101e95ac/go.mod h1:ezvh/TsK7cY6rbqRK0oQQ8IAqLxYwwyPxAX1Pzy0ii0=
+k8s.io/helm v1.2.1 h1:Ny4wgW4p7X3tFXR34PziNkUxw2pV0G1DIFmI1QRDdo0=
+k8s.io/helm v2.16.12+incompatible h1:K2zhF8+B85Ya1n7n3eH34xwwp5qNUM42TBFENDZJT7w=
+k8s.io/helm v2.16.12+incompatible/go.mod h1:LZzlS4LQBHfciFOurYBFkCMTaZ0D1l+p0teMg7TSULI=
 k8s.io/klog v0.0.0-20181102134211-b9b56d5dfc92/go.mod h1:Gq+BEi5rUBO/HRz0bTSXDUcqjScdoY3a9IHpCEIOOfk=
 k8s.io/klog v0.3.0/go.mod h1:Gq+BEi5rUBO/HRz0bTSXDUcqjScdoY3a9IHpCEIOOfk=
 k8s.io/klog v1.0.0 h1:Pt+yjF5aB1xDSVbau4VsWe+dQNzA0qv1LlXdC2dF6Q8=

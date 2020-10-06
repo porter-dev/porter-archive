@@ -41,12 +41,14 @@ require (
 	gopkg.in/yaml.v2 v2.3.0
 	gorm.io/driver/postgres v1.0.2
 	gorm.io/gorm v1.20.2
+	helm.sh/helm v2.16.12+incompatible
 	helm.sh/helm/v3 v3.3.4
 	k8s.io/api v0.18.8
 	k8s.io/apimachinery v0.18.8
 	k8s.io/cli-runtime v0.18.8
 	k8s.io/client-go v0.18.8
 	k8s.io/gengo v0.0.0-20200413195148-3a45101e95ac // indirect
+	k8s.io/helm v2.16.12+incompatible // indirect
 	k8s.io/klog v1.0.0 // indirect
 	k8s.io/klog/v2 v2.2.0 // indirect
 	k8s.io/utils v0.0.0-20200912215256-4140de9c8800 // indirect

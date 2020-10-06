@@ -55,31 +55,25 @@ func (h *Form) ToAgent(
 		}}, nil
 	}
 
-	// create a client config using the app's helm/kubernetes agents
-	conf, err := kubernetes.GetRestrictedClientConfigFromBytes(
-		h.KubeConfig,
-		h.Context,
-		h.AllowedContexts,
-	)
+	// create a kubernetes agent
+	k8sForm := &kubernetes.Form{
+		KubeConfig:      h.KubeConfig,
+		AllowedContexts: h.AllowedContexts,
+		Context:         h.Context,
+	}
+
+	k8sAgent, err := k8sForm.ToAgent()
 
 	if err != nil {
 		return nil, err
 	}
 
-	restConf, err := conf.ClientConfig()
-
-	clientset, err := kubernetes.GetClientsetFromConfig(conf)
-
-	if err != nil {
-		return nil, err
-	}
-
-	// create a new agent
+	// use k8s agent to create a new helm agent
 	actionConfig, err := NewActionConfig(
 		l,
 		StorageMap[h.Storage],
-		restConf,
-		clientset,
+		k8sAgent.ClientConfig,
+		k8sAgent.Clientset,
 		h.Namespace,
 	)
 

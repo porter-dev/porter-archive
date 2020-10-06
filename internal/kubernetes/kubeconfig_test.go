@@ -12,14 +12,14 @@ import (
 type kubeConfigTest struct {
 	msg             string
 	raw             []byte
-	allowedClusters []string
-	expected        []models.ClusterConfig
+	allowedContexts []string
+	expected        []models.Context
 }
 
 type kubeConfigTestValidateError struct {
 	msg             string
 	raw             []byte
-	allowedClusters []string
+	allowedContexts []string
 	contextName     string
 	errorContains   string // a string that the error message should contain
 }
@@ -28,28 +28,28 @@ var ValidateErrorTests = []kubeConfigTestValidateError{
 	kubeConfigTestValidateError{
 		msg:             "No configuration",
 		raw:             []byte(""),
-		allowedClusters: []string{},
+		allowedContexts: []string{},
 		contextName:     "",
 		errorContains:   "invalid configuration: no configuration has been provided",
 	},
 	kubeConfigTestValidateError{
 		msg:             "Context name does not exist",
 		raw:             []byte(noContexts),
-		allowedClusters: []string{"porter-test-1"},
+		allowedContexts: []string{"porter-test-1"},
 		contextName:     "context-test",
 		errorContains:   "invalid configuration: context was not found for specified context: context-test",
 	},
 	kubeConfigTestValidateError{
 		msg:             "Cluster to join does not exist",
 		raw:             []byte(noClusters),
-		allowedClusters: []string{"porter-test-1"},
+		allowedContexts: []string{"porter-test-1"},
 		contextName:     "context-test",
 		errorContains:   "invalid configuration: context was not found for specified context: context-test",
 	},
 	kubeConfigTestValidateError{
 		msg:             "User to join does not exist",
 		raw:             []byte(noUsers),
-		allowedClusters: []string{"porter-test-1"},
+		allowedContexts: []string{"porter-test-1"},
 		contextName:     "context-test",
 		errorContains:   "invalid configuration: context was not found for specified context: context-test",
 	},
@@ -58,7 +58,7 @@ var ValidateErrorTests = []kubeConfigTestValidateError{
 func TestValidateErrors(t *testing.T) {
 	for _, c := range ValidateErrorTests {
 
-		_, err := kubernetes.GetRestrictedClientConfigFromBytes(c.raw, c.contextName, c.allowedClusters)
+		_, err := kubernetes.GetRestrictedClientConfigFromBytes(c.raw, c.contextName, c.allowedContexts)
 
 		if err == nil {
 			t.Fatalf("Testing %s did not return an error\n", c.msg)
@@ -70,50 +70,26 @@ func TestValidateErrors(t *testing.T) {
 	}
 }
 
-var NoAllowedClustersTests = []kubeConfigTest{
+var BasicContextAllowedTests = []kubeConfigTest{
 	kubeConfigTest{
 		msg:             "basic test",
 		raw:             []byte(basic),
-		allowedClusters: []string{},
-		expected:        []models.ClusterConfig{},
-	},
-}
-
-func TestNoAllowedClusters(t *testing.T) {
-	for _, c := range NoAllowedClustersTests {
-		res, err := kubernetes.GetAllowedClusterConfigsFromBytes(c.raw, c.allowedClusters)
-
-		if err != nil {
-			t.Fatalf("Testing %s returned an error: %v\n", c.msg, err.Error())
-		}
-
-		isEqual := reflect.DeepEqual(c.expected, res)
-
-		if !isEqual {
-			t.Errorf("Testing: %s, Expected: %v, Got: %v\n", c.msg, c.expected, res)
-		}
-	}
-}
-
-var BasicClustersAllowedTests = []kubeConfigTest{
-	kubeConfigTest{
-		msg:             "basic test",
-		raw:             []byte(basic),
-		allowedClusters: []string{"cluster-test"},
-		expected: []models.ClusterConfig{
-			models.ClusterConfig{
-				Name:    "cluster-test",
-				Server:  "https://localhost",
-				Context: "context-test",
-				User:    "test-admin",
+		allowedContexts: []string{"context-test"},
+		expected: []models.Context{
+			models.Context{
+				Name:     "context-test",
+				Server:   "https://localhost",
+				Cluster:  "cluster-test",
+				User:     "test-admin",
+				Selected: true,
 			},
 		},
 	},
 }
 
 func TestBasicAllowed(t *testing.T) {
-	for _, c := range BasicClustersAllowedTests {
-		res, err := kubernetes.GetAllowedClusterConfigsFromBytes(c.raw, c.allowedClusters)
+	for _, c := range BasicContextAllowedTests {
+		res, err := kubernetes.GetContextsFromBytes(c.raw, c.allowedContexts)
 
 		if err != nil {
 			t.Fatalf("Testing %s returned an error: %v\n", c.msg, err.Error())
@@ -127,25 +103,26 @@ func TestBasicAllowed(t *testing.T) {
 	}
 }
 
-var BasicClustersAllTests = []kubeConfigTest{
+var BasicContextAllTests = []kubeConfigTest{
 	kubeConfigTest{
 		msg:             "basic test",
 		raw:             []byte(basic),
-		allowedClusters: []string{"cluster-test"},
-		expected: []models.ClusterConfig{
-			models.ClusterConfig{
-				Name:    "cluster-test",
-				Server:  "https://localhost",
-				Context: "context-test",
-				User:    "test-admin",
+		allowedContexts: []string{},
+		expected: []models.Context{
+			models.Context{
+				Name:     "context-test",
+				Server:   "https://localhost",
+				Cluster:  "cluster-test",
+				User:     "test-admin",
+				Selected: false,
 			},
 		},
 	},
 }
 
 func TestBasicAll(t *testing.T) {
-	for _, c := range BasicClustersAllTests {
-		res, err := kubernetes.GetAllClusterConfigsFromBytes(c.raw)
+	for _, c := range BasicContextAllTests {
+		res, err := kubernetes.GetContextsFromBytes(c.raw, c.allowedContexts)
 
 		if err != nil {
 			t.Fatalf("Testing %s returned an error: %v\n", c.msg, err.Error())
@@ -160,10 +137,10 @@ func TestBasicAll(t *testing.T) {
 }
 
 func TestGetRestrictedClientConfig(t *testing.T) {
-	clusters := []string{"cluster-test"}
+	contexts := []string{"context-test"}
 	contextName := "context-test"
 
-	clientConf, err := kubernetes.GetRestrictedClientConfigFromBytes([]byte(basic), contextName, clusters)
+	clientConf, err := kubernetes.GetRestrictedClientConfigFromBytes([]byte(basic), contextName, contexts)
 
 	if err != nil {
 		t.Fatalf("Fatal error: %s\n", err.Error())

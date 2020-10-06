@@ -157,17 +157,17 @@ var listReleaseTests = []listReleaseTest{
 	},
 }
 
-func TestListReleases(t *testing.T) {
-	for _, tc := range listReleaseTests {
-		actionConfig := newActionConfigFixture(t)
-		makeReleases(t, actionConfig, tc.releases)
-		actionConfig.Releases.Driver.(*driver.Memory).SetNamespace(tc.namespace)
+// func TestListReleases(t *testing.T) {
+// 	for _, tc := range listReleaseTests {
+// 		actionConfig := newActionConfigFixture(t)
+// 		makeReleases(t, actionConfig, tc.releases)
+// 		actionConfig.Releases.Driver.(*driver.Memory).SetNamespace(tc.namespace)
 
-		releases, err := helm.ListReleases(actionConfig, tc.namespace, tc.filter)
-		if err != nil {
-			t.Errorf("%v", err)
-		}
+// 		releases, err := helm.ListReleases(actionConfig, tc.namespace, tc.filter)
+// 		if err != nil {
+// 			t.Errorf("%v", err)
+// 		}
 
-		compareReleaseToStubs(t, releases, tc.expRes)
-	}
-}
+// 		compareReleaseToStubs(t, releases, tc.expRes)
+// 	}
+// }

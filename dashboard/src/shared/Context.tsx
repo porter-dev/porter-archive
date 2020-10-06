@@ -48,7 +48,7 @@ class ContextProvider extends Component {
   };
 
   componentDidMount() {
-    this.setState({ userId: 3 });
+    this.setState({ userId: 1 });
   }
 
   render() {

@@ -1,6 +1,7 @@
-export interface ClusterConfig {
+export interface KubeContextConfig {
+  cluster: string,
   name: string,
+  selected?: boolean,
   server: string,
-  context: string,
   user: string
 }

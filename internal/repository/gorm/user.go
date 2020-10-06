@@ -46,7 +46,7 @@ func (repo *UserRepository) ReadUserByEmail(email string) (*models.User, error) 
 
 // UpdateUser modifies an existing User in the database
 func (repo *UserRepository) UpdateUser(user *models.User) (*models.User, error) {
-	if err := repo.db.First(&models.User{}, user.ID).Updates(user).Error; err != nil {
+	if err := repo.db.Save(user).Error; err != nil {
 		return nil, err
 	}
 

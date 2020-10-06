@@ -7,6 +7,7 @@ import (
 	v1Machinery "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
 )
 
 // Agent is a Kubernetes agent for performing operations that interact with the
@@ -16,7 +17,7 @@ type Agent struct {
 	Clientset        *kubernetes.Clientset
 }
 
-// Form represents the options for connecting to a cluster and
+// Form represents the options for connecting to a cluster externally and
 // creating an Agent
 type Form struct {
 	KubeConfig      []byte
@@ -50,6 +51,21 @@ func (h *Form) ToAgent() (*Agent, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	return &Agent{restClientGetter, clientset}, nil
+}
+
+// AgentFromInClusterConfig uses the service account that kubernetes
+// gives to pods to connect
+func AgentFromInClusterConfig() (*Agent, error) {
+	conf, err := rest.InClusterConfig()
+
+	if err != nil {
+		return nil, err
+	}
+
+	restClientGetter := NewRESTClientGetterFromClientConfig(conf)
+	clientset, err := kubernetes.NewForConfig(conf)
 
 	return &Agent{restClientGetter, clientset}, nil
 }

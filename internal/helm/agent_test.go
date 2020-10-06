@@ -1,36 +1,31 @@
 package helm_test
 
 import (
-	"io/ioutil"
 	"testing"
 
+	"helm.sh/helm/v3/pkg/storage/driver"
+
+	"github.com/porter-dev/porter/internal/config"
 	"github.com/porter-dev/porter/internal/helm"
 	"github.com/porter-dev/porter/internal/logger"
 
-	"helm.sh/helm/v3/pkg/action"
 	"helm.sh/helm/v3/pkg/chart"
-	"helm.sh/helm/v3/pkg/chartutil"
-	kubefake "helm.sh/helm/v3/pkg/kube/fake"
 	"helm.sh/helm/v3/pkg/release"
-	"helm.sh/helm/v3/pkg/storage"
-	"helm.sh/helm/v3/pkg/storage/driver"
 )
 
-func newActionConfigFixture(t *testing.T) *action.Configuration {
+func newAgentFixture(t *testing.T, namespace string) *helm.Agent {
 	t.Helper()
 
 	l := logger.NewConsole(true)
-
-	return &action.Configuration{
-		Releases: storage.Init(driver.NewMemory()),
-		KubeClient: &kubefake.FailingKubeClient{
-			PrintingKubeClient: kubefake.PrintingKubeClient{
-				Out: ioutil.Discard,
-			},
-		},
-		Capabilities: chartutil.DefaultCapabilities,
-		Log:          l.Printf,
+	opts := &helm.Form{
+		Namespace: namespace,
 	}
+
+	agent, _ := opts.ToAgent(l, &config.HelmGlobalConf{
+		IsTesting: true,
+	}, nil)
+
+	return agent
 }
 
 type releaseStub struct {
@@ -42,9 +37,10 @@ type releaseStub struct {
 }
 
 // makeReleases adds a slice of releases to the configured storage.
-func makeReleases(t *testing.T, actionConfig *action.Configuration, rels []releaseStub) {
+func makeReleases(t *testing.T, agent *helm.Agent, rels []releaseStub) {
 	t.Helper()
-	storage := actionConfig.Releases
+	storage := agent.ActionConfig.Releases
+
 	for _, r := range rels {
 		rel := &release.Release{
 			Name:      r.name,
@@ -60,7 +56,9 @@ func makeReleases(t *testing.T, actionConfig *action.Configuration, rels []relea
 				},
 			},
 		}
+
 		err := storage.Create(rel)
+
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -157,17 +155,21 @@ var listReleaseTests = []listReleaseTest{
 	},
 }
 
-// func TestListReleases(t *testing.T) {
-// 	for _, tc := range listReleaseTests {
-// 		actionConfig := newActionConfigFixture(t)
-// 		makeReleases(t, actionConfig, tc.releases)
-// 		actionConfig.Releases.Driver.(*driver.Memory).SetNamespace(tc.namespace)
+func TestListReleases(t *testing.T) {
+	for _, tc := range listReleaseTests {
+		agent := newAgentFixture(t, tc.namespace)
+		makeReleases(t, agent, tc.releases)
 
-// 		releases, err := helm.ListReleases(actionConfig, tc.namespace, tc.filter)
-// 		if err != nil {
-// 			t.Errorf("%v", err)
-// 		}
+		// calling agent.ActionConfig.Releases.Create in makeReleases will automatically set the
+		// namespace, so we have to reset the namespace of the storage driver
+		agent.ActionConfig.Releases.Driver.(*driver.Memory).SetNamespace(tc.namespace)
 
-// 		compareReleaseToStubs(t, releases, tc.expRes)
-// 	}
-// }
+		releases, err := agent.ListReleases(tc.namespace, tc.filter)
+
+		if err != nil {
+			t.Errorf("%v", err)
+		}
+
+		compareReleaseToStubs(t, releases, tc.expRes)
+	}
+}

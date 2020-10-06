@@ -1,6 +1,8 @@
 package forms
 
 import (
+	"strings"
+
 	"github.com/porter-dev/porter/internal/kubernetes"
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/repository"
@@ -85,7 +87,7 @@ func (uuf *UpdateUserForm) ToUser(repo repository.UserRepository) (*models.User,
 
 	// if the allowedContexts is nil, query the DB for a non-nil one
 	if uuf.AllowedContexts == nil {
-		contexts = savedUser.Contexts
+		contexts = savedUser.ContextToSlice()
 	}
 
 	if len(rawBytes) > 0 {
@@ -106,11 +108,13 @@ func (uuf *UpdateUserForm) ToUser(repo repository.UserRepository) (*models.User,
 		}
 	}
 
+	contextsJoin := strings.Join(contexts, ",")
+
 	return &models.User{
 		Model: gorm.Model{
 			ID: uuf.ID,
 		},
-		Contexts:      contexts,
+		Contexts:      contextsJoin,
 		RawKubeConfig: rawBytes,
 	}, nil
 }

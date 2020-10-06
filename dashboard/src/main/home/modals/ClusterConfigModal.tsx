@@ -4,7 +4,7 @@ import close from '../../../assets/close.png';
 
 import api from '../../../shared/api';
 import { Context } from '../../../shared/Context';
-import { ClusterConfig } from '../../../shared/types';
+import { KubeContextConfig } from '../../../shared/types';
 
 import YamlEditor from '../../../components/YamlEditor';
 import SaveButton from '../../../components/SaveButton';
@@ -14,8 +14,7 @@ type PropsType = {
 
 type StateType = {
   currentTab: string,
-  clusters: ClusterConfig[],
-  selected: boolean[],
+  kubeContexts: KubeContextConfig[],
   rawKubeconfig: string,
   saveKubeconfigStatus: string | null,
   saveSelectedStatus: string | null
@@ -24,8 +23,7 @@ type StateType = {
 export default class ClusterConfigModal extends Component<PropsType, StateType> {
   state = {
     currentTab: 'kubeconfig',
-    clusters: [] as ClusterConfig[],
-    selected: [] as boolean[],
+    kubeContexts: [] as KubeContextConfig[],
     rawKubeconfig: '# If you are using certificate files, include those explicitly',
     saveKubeconfigStatus: null as (string | null),
     saveSelectedStatus: null as (string | null),
@@ -35,26 +33,12 @@ export default class ClusterConfigModal extends Component<PropsType, StateType> 
     let { setCurrentError, userId } = this.context;
 
     // Parse kubeconfig to retrieve all possible clusters
-    api.getAllClusters('<token>', {}, { id: userId }, (err: any, res: any) => {
+    api.getContexts('<token>', {}, { id: userId }, (err: any, res: any) => {
       if (err) {
         setCurrentError('getAllClusters: ' + JSON.stringify(err));
       } else {
-        let clusters = res.data;
-        this.setState({ clusters });
-
-        if (clusters && clusters.length > 0) {
-          
-          // Check against list of connected clusters
-          api.getClusters('<token>', {}, { id: userId }, (err: any, res: any) => {
-            if (err) {
-              setCurrentError('getClusters: ' + JSON.stringify(err));
-            } else {
-              console.log(res)
-              let selected = clusters.map((x: ClusterConfig) => res.data.includes(x));
-              this.setState({ selected });
-            }
-          });
-        }
+        console.log(res.data)
+        this.setState({ kubeContexts: res.data })
       }
     });
   }
@@ -64,7 +48,7 @@ export default class ClusterConfigModal extends Component<PropsType, StateType> 
 
     api.getUser('<token>', {}, { id: userId }, (err: any, res: any) => {
       if (err) {
-        setCurrentError('getUser: ' + JSON.stringify(err));
+        setCurrentError(JSON.stringify(err));
       } else if (res.data.rawKubeConfig !== '') {
         this.setState({ rawKubeconfig: res.data.rawKubeConfig });
       }
@@ -80,22 +64,22 @@ export default class ClusterConfigModal extends Component<PropsType, StateType> 
   };
 
   toggleCluster = (i: number): void => {
-    let newSelected = this.state.selected;
-    newSelected[i] = !this.state.selected[i];
-    this.setState({ selected: newSelected });
+    let newKubeContexts = this.state.kubeContexts;
+    newKubeContexts[i].selected = !newKubeContexts[i].selected;
+    this.setState({ kubeContexts: newKubeContexts });
   };
 
   renderClusterList = (): JSX.Element[] | JSX.Element => {
-    let { clusters, selected } = this.state;
+    let { kubeContexts } = this.state;
 
-    if (clusters && clusters.length > 0) {
-      return clusters.map((cluster: ClusterConfig, i) => {
+    if (kubeContexts && kubeContexts.length > 0) {
+      return kubeContexts.map((kubeContext: KubeContextConfig, i) => {
         return (
           <Row key={i} onClick={() => this.toggleCluster(i)}>
-            <Checkbox checked={selected[i]}>
+            <Checkbox checked={kubeContext.selected}>
               <i className="material-icons">done</i>
             </Checkbox>
-            {cluster.name}
+            {kubeContext.name}
           </Row>
         );
       })
@@ -137,22 +121,22 @@ export default class ClusterConfigModal extends Component<PropsType, StateType> 
   }
 
   handleSaveSelected = () => {
-    let { clusters, selected } = this.state;
+    let { kubeContexts } = this.state;
     let { userId } = this.context;
 
     this.setState({ saveSelectedStatus: 'loading' });
-    let allowedClusters: string[] = [];
-    clusters.forEach((x, i) => {
-      if (selected[i]) {
-        allowedClusters.push(x.name);
+    let allowedContexts: string[] = [];
+    kubeContexts.forEach((x, i) => {
+      if (x.selected) {
+        allowedContexts.push(x.name);
       }
     });
 
-    console.log(allowedClusters);
+    console.log(allowedContexts);
     
     api.updateUser(
       '<token>',
-      { allowedClusters },
+      { allowedContexts },
       { id: userId },
       (err: any, res: any) => {
         if (err) {
@@ -190,7 +174,7 @@ export default class ClusterConfigModal extends Component<PropsType, StateType> 
         </ClusterList>
         <SaveButton
           text='Save Selected'
-          disabled={this.state.clusters.length === 0}
+          disabled={this.state.kubeContexts.length === 0}
           onClick={this.handleSaveSelected}
           status={this.state.saveSelectedStatus}
         />

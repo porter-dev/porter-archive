@@ -3,12 +3,11 @@ import styled from 'styled-components';
 import close from '../../../assets/close.png';
 
 import { Context } from '../../../shared/Context';
-import { ClusterConfig } from '../../../shared/types';
 
 type PropsType = {
   toggleDrawer: () => void,
   showDrawer: boolean,
-  clusters: ClusterConfig[],
+  kubeContexts: string[],
   activeIndex: number,
   setActiveIndex: (i: number) => void
 };
@@ -19,7 +18,7 @@ type StateType = {
 export default class Drawer extends Component<PropsType, StateType> {
 
   renderClusterList = (): JSX.Element[] => {
-    return this.props.clusters.map((cluster, i) => {
+    return this.props.kubeContexts.map((kubeContext: string, i: number) => {
       /*
       let active = this.context.activeProject &&
         this.context.activeProject.namespace == val.namespace; 
@@ -32,7 +31,7 @@ export default class Drawer extends Component<PropsType, StateType> {
           onClick={() => this.props.setActiveIndex(i)}
         >
           <ClusterIcon><i className="material-icons">polymer</i></ClusterIcon>
-          <ClusterName>{cluster.name}</ClusterName>
+          <ClusterName>{kubeContext}</ClusterName>
         </ClusterOption>
       );
     });

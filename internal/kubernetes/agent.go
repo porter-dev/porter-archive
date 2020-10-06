@@ -5,15 +5,15 @@ import (
 
 	v1 "k8s.io/api/core/v1"
 	v1Machinery "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/cli-runtime/pkg/genericclioptions"
 	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/rest"
 )
 
 // Agent is a Kubernetes agent for performing operations that interact with the
 // api server
 type Agent struct {
-	ClientConfig *rest.Config
-	Clientset    *kubernetes.Clientset
+	RESTClientGetter genericclioptions.RESTClientGetter
+	Clientset        *kubernetes.Clientset
 }
 
 // Form represents the options for connecting to a cluster and
@@ -22,6 +22,7 @@ type Form struct {
 	KubeConfig      []byte
 	AllowedContexts []string
 	Context         string `json:"context" form:"required"`
+	ConfigFlags     *genericclioptions.ConfigFlags
 }
 
 // ToAgent uses the Form to generate an agent
@@ -43,13 +44,14 @@ func (h *Form) ToAgent() (*Agent, error) {
 		return nil, err
 	}
 
+	restClientGetter := NewRESTClientGetterFromClientConfig(clientConf)
 	clientset, err := kubernetes.NewForConfig(clientConf)
 
 	if err != nil {
 		return nil, err
 	}
 
-	return &Agent{clientConf, clientset}, nil
+	return &Agent{restClientGetter, clientset}, nil
 }
 
 // ListNamespaces simply lists namespaces

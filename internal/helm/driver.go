@@ -8,8 +8,10 @@ package helm
 // - memory
 // - postgres
 //
-// This file implements first-class support for each driver type, and integrates with the
-// logger.
+// This file implements first-class support for the first three driver types,
+// and integrates with the logger.
+//
+// TODO -- include support for SQL storage...
 
 import (
 	"github.com/porter-dev/porter/internal/logger"

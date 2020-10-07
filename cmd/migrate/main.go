@@ -25,6 +25,7 @@ func main() {
 	err = db.AutoMigrate(
 		&models.User{},
 		&models.ClusterConfig{},
+		&models.Session{},
 	)
 
 	if err != nil {

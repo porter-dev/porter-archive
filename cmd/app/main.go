@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/gorilla/sessions"
 	"github.com/porter-dev/porter/internal/repository/gorm"
 
 	"github.com/porter-dev/porter/server/api"
@@ -30,7 +31,9 @@ func main() {
 
 	repo := gorm.NewRepository(db)
 
-	store, _ := sessionstore.NewStore(repo, appConf.Server)
+	// declare as Store interface (methods Get, New, Save)
+	var store sessions.Store
+	store, _ = sessionstore.NewStore(repo, appConf.Server)
 
 	validator := vr.New()
 

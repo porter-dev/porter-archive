@@ -2,9 +2,12 @@ package gorm
 
 import (
 	"fmt"
+	"os"
+	"strconv"
 
 	"github.com/porter-dev/porter/internal/config"
 	"gorm.io/driver/postgres"
+	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 )
 
@@ -18,5 +21,10 @@ func New(conf *config.DBConf) (*gorm.DB, error) {
 		conf.Host,
 	)
 
-	return gorm.Open(postgres.Open(dsn), &gorm.Config{})
+	if auth, _ := strconv.ParseBool(os.Getenv("ENABLE_AUTH")); auth {
+		return gorm.Open(postgres.Open(dsn), &gorm.Config{})
+	} else {
+		return gorm.Open(sqlite.Open("./internal/porter.db"), &gorm.Config{})
+	}
+
 }

@@ -84,8 +84,8 @@ export default class Sidebar extends Component<PropsType, StateType> {
     api.logOutUser('<token>', {}, {}, (err: any, res: any) => {
       // TODO: case and set logout error
       
-      err ? setCurrentError(JSON.stringify(err)) : logOut();
-    });
+      err ? setCurrentError(err.response.data.errors[0]) : logOut();
+    }); 
   }
 
   // SidebarBg is separate to cover retracted drawer

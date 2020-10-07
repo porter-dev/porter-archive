@@ -39,7 +39,6 @@ export const baseApi = <T extends {}, S = {}>(requestType: string, endpoint: ((p
       });
     } else {
       axios.get(endpointString, {
-        withCredentials: true,
         params
       })
       .then(res => {

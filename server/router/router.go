@@ -2,15 +2,14 @@ package router
 
 import (
 	"github.com/go-chi/chi"
+	"github.com/gorilla/sessions"
 	"github.com/porter-dev/porter/server/api"
 	"github.com/porter-dev/porter/server/requestlog"
 	"github.com/porter-dev/porter/server/router/middleware"
-
-	sessionstore "github.com/porter-dev/porter/internal/auth"
 )
 
 // New creates a new Chi router instance
-func New(a *api.App, store *sessionstore.PGStore, cookieName string) *chi.Mux {
+func New(a *api.App, store sessions.Store, cookieName string) *chi.Mux {
 	l := a.Logger()
 	r := chi.NewRouter()
 	auth := middleware.NewAuth(store, cookieName)

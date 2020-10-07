@@ -9,13 +9,13 @@ import { StorageType } from '../../../shared/types';
 class Dashboard extends Component {
 
   componentDidMount() {
-    let { userId, setCurrentError } = this.context;
-    /*
+    let { userId, setCurrentError, currentCluster } = this.context;
+    
     api.getCharts('<token>', {
       user_id: userId,
       helm: {
         namespace: '',
-        context: 'minikube',
+        context: currentCluster,
         storage: 'memory',
       },
       filter: {
@@ -33,7 +33,6 @@ class Dashboard extends Component {
         console.log(res);
       }
     });
-    */
   }
 
   render() {
@@ -57,7 +56,7 @@ class Dashboard extends Component {
               <i className="material-icons">info</i> Info
             </InfoLabel>
           </TopRow>
-          <Description></Description>
+            <Description>Porter dashboard for {currentCluster}.</Description>
         </InfoSection>
 
         <LineBreak />

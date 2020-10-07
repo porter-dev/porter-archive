@@ -4,6 +4,7 @@ import drawerBg from '../../../assets/drawer-bg.png';
 
 import api from '../../../shared/api';
 import { Context } from '../../../shared/Context';
+import { KubeContextConfig } from '../../../shared/types';
 
 import Drawer from './Drawer';
 
@@ -16,7 +17,7 @@ type StateType = {
   configExists: boolean,
   showDrawer: boolean,
   initializedDrawer: boolean,
-  kubeContexts: string[],
+  kubeContexts: KubeContextConfig[],
   activeIndex: number,
 };
 
@@ -27,20 +28,28 @@ export default class ClusterSection extends Component<PropsType, StateType> {
     configExists: true,
     showDrawer: false,
     initializedDrawer: false,
-    kubeContexts: [] as string[],
+    kubeContexts: [] as KubeContextConfig[],
     activeIndex: 0,
   };
 
-  componentDidMount() {
+  updateClusters = () => {
     let { setCurrentError, userId } = this.context;
 
-    api.getContexts('<token>', {}, { id: userId }, (err: any, res: any) => {      
+    // TODO: query with selected filter once implemented
+    api.getContexts('<token>', {}, { id: userId }, (err: any, res: any) => {
       if (err) {
-        setCurrentError(JSON.stringify(err));
+        setCurrentError('getContexts: ' + JSON.stringify(err));
       } else {
-        this.setState({ kubeContexts: res });
+
+        // Filter selected (temporary)
+        let kubeContexts = res.data.filter((x: KubeContextConfig) => x.selected);
+        this.setState({ kubeContexts });
       }
     });
+  }
+
+  componentDidMount() {
+    this.updateClusters();
   }
 
   // Need to override showDrawer when the sidebar is closed
@@ -64,6 +73,7 @@ export default class ClusterSection extends Component<PropsType, StateType> {
     if (this.state.initializedDrawer) {
       return (
         <Drawer
+          updateClusters={this.updateClusters}
           toggleDrawer={this.toggleDrawer}
           showDrawer={this.state.showDrawer}
           kubeContexts={this.state.kubeContexts}
@@ -74,6 +84,11 @@ export default class ClusterSection extends Component<PropsType, StateType> {
     }
   };
 
+  showClusterConfigModal = () => {
+    this.context.setCurrentModal('ClusterConfigModal');
+    this.context.setCurrentModalData({ updateClusters: this.updateClusters });
+  }
+
   renderContents = (): JSX.Element => {
     let { kubeContexts, activeIndex, showDrawer } = this.state;
 
@@ -82,7 +97,7 @@ export default class ClusterSection extends Component<PropsType, StateType> {
         <ClusterSelector showDrawer={showDrawer}>
           <LinkWrapper>
             <ClusterIcon><i className="material-icons">polymer</i></ClusterIcon>
-            <ClusterName>{kubeContexts[activeIndex]}</ClusterName>
+            <ClusterName>{kubeContexts[activeIndex].name}</ClusterName>
           </LinkWrapper>
           <DrawerButton onClick={this.toggleDrawer}>
             <BgAccent src={drawerBg} />
@@ -95,7 +110,7 @@ export default class ClusterSection extends Component<PropsType, StateType> {
     }
 
     return (
-      <InitializeButton onClick={() => this.context.setCurrentModal('ClusterConfigModal')}>
+      <InitializeButton onClick={this.showClusterConfigModal}>
         <Plus>+</Plus> Add a Cluster
       </InitializeButton>
     )

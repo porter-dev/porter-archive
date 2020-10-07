@@ -37,8 +37,7 @@ export default class ClusterConfigModal extends Component<PropsType, StateType> 
       if (err) {
         setCurrentError('getAllClusters: ' + JSON.stringify(err));
       } else {
-        console.log(res.data)
-        this.setState({ kubeContexts: res.data })
+        this.setState({ kubeContexts: res.data });
       }
     });
   }
@@ -115,6 +114,7 @@ export default class ClusterConfigModal extends Component<PropsType, StateType> 
           });
 
           this.updateChecklist();
+          this.context.currentModalData.updateClusters();
         }
       }
     );
@@ -131,8 +131,6 @@ export default class ClusterConfigModal extends Component<PropsType, StateType> 
         allowedContexts.push(x.name);
       }
     });
-
-    console.log(allowedContexts);
     
     api.updateUser(
       '<token>',
@@ -143,6 +141,8 @@ export default class ClusterConfigModal extends Component<PropsType, StateType> 
           this.setState({ saveSelectedStatus: 'error' });
         } else {
           this.setState({ saveSelectedStatus: 'successful' });
+          this.updateChecklist();
+          this.context.currentModalData.updateClusters();
         }
       }
     );
@@ -168,7 +168,7 @@ export default class ClusterConfigModal extends Component<PropsType, StateType> 
 
     return (
       <div>
-        <Subtitle>Select the clusters you want Porter to connect to</Subtitle>
+        <Subtitle>Select the contexts you want Porter to use</Subtitle>
         <ClusterList>
           {this.renderClusterList()}
         </ClusterList>
@@ -185,7 +185,10 @@ export default class ClusterConfigModal extends Component<PropsType, StateType> 
   render() {
     return (
       <StyledClusterConfigModal>
-        <CloseButton onClick={() => { this.context.setCurrentModal(null) }}>
+        <CloseButton onClick={() => {
+          this.context.setCurrentModal(null);
+          this.context.setCurrentModalData(null);
+        }}>
           <CloseButtonImg src={close} />
         </CloseButton>
 

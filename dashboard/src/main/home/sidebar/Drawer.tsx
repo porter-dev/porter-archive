@@ -3,13 +3,15 @@ import styled from 'styled-components';
 import close from '../../../assets/close.png';
 
 import { Context } from '../../../shared/Context';
+import { KubeContextConfig } from '../../../shared/types';
 
 type PropsType = {
   toggleDrawer: () => void,
   showDrawer: boolean,
-  kubeContexts: string[],
+  kubeContexts: KubeContextConfig[],
   activeIndex: number,
-  setActiveIndex: (i: number) => void
+  setActiveIndex: (i: number) => void,
+  updateClusters: () => void
 };
 
 type StateType = {
@@ -17,24 +19,29 @@ type StateType = {
 
 export default class Drawer extends Component<PropsType, StateType> {
 
-  renderClusterList = (): JSX.Element[] => {
-    return this.props.kubeContexts.map((kubeContext: string, i: number) => {
-      /*
-      let active = this.context.activeProject &&
-        this.context.activeProject.namespace == val.namespace; 
-      */
+  renderClusterList = (): JSX.Element[] | JSX.Element => {
+    let { kubeContexts, activeIndex, setActiveIndex } = this.props;
+    if (kubeContexts.length > 0) {
+      return kubeContexts.map((kubeContext: KubeContextConfig, i: number) => {
+        /*
+        let active = this.context.activeProject &&
+          this.context.activeProject.namespace == val.namespace; 
+        */
 
-      return (
-        <ClusterOption 
-          key={i}
-          active={i === this.props.activeIndex}
-          onClick={() => this.props.setActiveIndex(i)}
-        >
-          <ClusterIcon><i className="material-icons">polymer</i></ClusterIcon>
-          <ClusterName>{kubeContext}</ClusterName>
-        </ClusterOption>
-      );
-    });
+        return (
+          <ClusterOption
+            key={i}
+            active={i === activeIndex}
+            onClick={() => setActiveIndex(i)}
+          >
+            <ClusterIcon><i className="material-icons">polymer</i></ClusterIcon>
+            <ClusterName>{kubeContext.name}</ClusterName>
+          </ClusterOption>
+        );
+      });
+    }
+
+    return <Placeholder>No clusters selected</Placeholder>
   };
 
   renderCloseOverlay = (): JSX.Element | undefined => {
@@ -56,7 +63,10 @@ export default class Drawer extends Component<PropsType, StateType> {
 
           {this.renderClusterList()}
 
-          <InitializeButton onClick={() => this.context.setCurrentModal('ClusterConfigModal')}>
+          <InitializeButton onClick={() => {
+            this.context.setCurrentModal('ClusterConfigModal');
+            this.context.setCurrentModalData({ updateClusters: this.props.updateClusters });
+          }}>
             <Plus>+</Plus> Manage Clusters
           </InitializeButton>
         </StyledDrawer>
@@ -87,7 +97,7 @@ const InitializeButton = styled.div`
   justify-content: center;
   width: calc(100% - 30px);
   height: 38px;
-  margin: 20px 15px 12px;
+  margin: 45px 15px 12px;
   font-size: 13px;
   font-weight: 500;
   border-radius: 3px;
@@ -107,7 +117,7 @@ const ClusterOption = styled.div`
   padding-right: 30px;
   display: flex;
   align-items: center;
-  height: 50px;
+  height: 42px;
   text-decoration: none;
   color: white;
   font-size: 14px;
@@ -115,9 +125,19 @@ const ClusterOption = styled.div`
   overflow: hidden;
   text-overflow: ellipsis;
   cursor: pointer;
-  background: ${(props: { active: boolean }) => props.active ? '#ffffff22' : ''};
+  background: ${(props: { active?: boolean }) => props.active ? '#ffffff18' : ''};
   :hover {
-    background: #ffffff33;
+    background: #ffffff22;
+  }
+`;
+
+const Placeholder = styled(ClusterOption)`
+  color: #ffffff99;
+  justify-content: center;
+  padding: 0;
+  cursor: default;
+  :hover {
+    background: none;
   }
 `;
 
@@ -166,7 +186,7 @@ const ClusterIcon = styled.div`
 const StyledDrawer = styled.div`
   position: absolute;
   height: 100%;
-  padding-top: 36px;
+  padding-top: 41px;
   width: 230px;
   overflow-y: auto;
   padding-bottom: 40px;

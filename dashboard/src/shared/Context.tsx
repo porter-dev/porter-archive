@@ -28,9 +28,12 @@ class ContextProvider extends Component {
     setCurrentModal: (currentModal: string): void => {
       this.setState({ currentModal });
     },
+    currentModalData: null as any,
+    setCurrentModalData: (currentModalData: any): void => {
+      this.setState({ currentModalData });
+    },
     currentError: null as string | null,
     setCurrentError: (currentError: string): void => {
-      console.log('setting err', currentError)
       this.setState({ currentError });
     },
     currentCluster: null as string | null,

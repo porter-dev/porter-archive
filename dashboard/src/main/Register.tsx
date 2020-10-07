@@ -130,6 +130,10 @@ export default class Register extends Component<PropsType, StateType> {
               {this.renderConfirmPasswordError()}
             </InputWrapper>
             <Button onClick={this.handleRegister}>Continue</Button>
+
+            <Helper>Have an account?
+              <Link href='/login'>Sign in</Link>
+            </Helper>
           </FormWrapper>
         </LoginPanel>
       </StyledRegister>
@@ -138,6 +142,18 @@ export default class Register extends Component<PropsType, StateType> {
 }
 
 Register.contextType = Context;
+
+const Link = styled.a`
+  margin-left: 5px;
+  color: #819BFD;
+`;
+
+const Helper = styled.div`
+  margin: 30px 0px 20px;
+  font-size: 14px;
+  font-family: 'Work Sans', sans-serif;
+  color: #ffffff44;
+`;
 
 const OverflowWrapper = styled.div`
   position: absolute;
@@ -227,7 +243,7 @@ const Prompt = styled.div`
 
 const Logo = styled.img`
   width: 150px;
-  margin-top: 50px;
+  margin-top: 40px;
   user-select: none;
 `;
 
@@ -258,7 +274,7 @@ const GradientBg = styled.div`
 
 const LoginPanel = styled.div`
   width: 330px;
-  height: 430px;
+  height: 450px;
   background: white;
   margin-top: -20px;
   border-radius: 10px;

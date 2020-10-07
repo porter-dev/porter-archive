@@ -10,6 +10,8 @@ class Dashboard extends Component {
 
   componentDidMount() {
     let { userId, setCurrentError, currentCluster } = this.context;
+
+    console.log(currentCluster);
     
     api.getCharts('<token>', {
       user_id: userId,
@@ -20,7 +22,7 @@ class Dashboard extends Component {
       },
       filter: {
         namespace: '',
-        limit: 20,
+        limit: 10,
         skip: 0,
         byDate: false,
         statusFilter: ['deployed']

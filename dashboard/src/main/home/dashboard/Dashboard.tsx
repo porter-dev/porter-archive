@@ -10,7 +10,7 @@ class Dashboard extends Component {
 
   componentDidMount() {
     let { userId, setCurrentError } = this.context;
-
+    /*
     api.getCharts('<token>', {
       user_id: userId,
       helm: {
@@ -33,6 +33,7 @@ class Dashboard extends Component {
         console.log(res);
       }
     });
+    */
   }
 
   render() {
@@ -56,7 +57,7 @@ class Dashboard extends Component {
               <i className="material-icons">info</i> Info
             </InfoLabel>
           </TopRow>
-          <Description>Some description perhaps.</Description>
+          <Description></Description>
         </InfoSection>
 
         <LineBreak />

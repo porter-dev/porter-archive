@@ -7,18 +7,20 @@ import (
 	"time"
 
 	"k8s.io/apimachinery/pkg/api/meta"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 	"k8s.io/client-go/discovery"
 	diskcached "k8s.io/client-go/discovery/cached/disk"
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/kubernetes/fake"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/restmapper"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/util/homedir"
 )
 
-// AgentFromOutOfClusterConfig creates a new Agent using the OutOfClusterConfig
-func AgentFromOutOfClusterConfig(conf *OutOfClusterConfig) (*Agent, error) {
+// GetAgentOutOfClusterConfig creates a new Agent using the OutOfClusterConfig
+func GetAgentOutOfClusterConfig(conf *OutOfClusterConfig) (*Agent, error) {
 	restConf, err := conf.ToRESTConfig()
 
 	if err != nil {
@@ -34,19 +36,24 @@ func AgentFromOutOfClusterConfig(conf *OutOfClusterConfig) (*Agent, error) {
 	return &Agent{conf, clientset}, nil
 }
 
-// AgentFromInClusterConfig uses the service account that kubernetes
+// GetAgentInClusterConfig uses the service account that kubernetes
 // gives to pods to connect
-func AgentFromInClusterConfig() (*Agent, error) {
+func GetAgentInClusterConfig() (*Agent, error) {
 	conf, err := rest.InClusterConfig()
 
 	if err != nil {
 		return nil, err
 	}
 
-	restClientGetter := NewRESTClientGetterFromInClusterConfig(conf)
+	restClientGetter := newRESTClientGetterFromInClusterConfig(conf)
 	clientset, err := kubernetes.NewForConfig(conf)
 
 	return &Agent{restClientGetter, clientset}, nil
+}
+
+// GetAgentTesting creates a new Agent using an optional existing storage class
+func GetAgentTesting(objects ...runtime.Object) *Agent {
+	return &Agent{&fakeRESTClientGetter{}, fake.NewSimpleClientset(objects...)}
 }
 
 // OutOfClusterConfig is the set of parameters required for an out-of-cluster connection.
@@ -119,9 +126,9 @@ func (conf *OutOfClusterConfig) ToRESTMapper() (meta.RESTMapper, error) {
 	return expander, nil
 }
 
-// NewRESTClientGetterFromInClusterConfig returns a RESTClientGetter using
+// newRESTClientGetterFromInClusterConfig returns a RESTClientGetter using
 // default values set from the *rest.Config
-func NewRESTClientGetterFromInClusterConfig(conf *rest.Config) genericclioptions.RESTClientGetter {
+func newRESTClientGetterFromInClusterConfig(conf *rest.Config) genericclioptions.RESTClientGetter {
 	cfs := genericclioptions.NewConfigFlags(false)
 
 	cfs.ClusterName = &conf.ServerName
@@ -142,4 +149,22 @@ func NewRESTClientGetterFromInClusterConfig(conf *rest.Config) genericclioptions
 
 func stringptr(val string) *string {
 	return &val
+}
+
+type fakeRESTClientGetter struct{}
+
+func (f *fakeRESTClientGetter) ToRESTConfig() (*rest.Config, error) {
+	return nil, nil
+}
+
+func (f *fakeRESTClientGetter) ToRawKubeConfigLoader() clientcmd.ClientConfig {
+	return nil
+}
+
+func (f *fakeRESTClientGetter) ToDiscoveryClient() (discovery.CachedDiscoveryInterface, error) {
+	return nil, nil
+}
+
+func (f *fakeRESTClientGetter) ToRESTMapper() (meta.RESTMapper, error) {
+	return nil, nil
 }

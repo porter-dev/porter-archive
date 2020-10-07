@@ -17,7 +17,6 @@ const (
 
 // HandleListNamespaces retrieves a list of namespaces
 func (app *App) HandleListNamespaces(w http.ResponseWriter, r *http.Request) {
-	// get the filter options
 	form := &forms.K8sForm{}
 
 	// decode from JSON to form value
@@ -35,7 +34,14 @@ func (app *App) HandleListNamespaces(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// create a new agent
-	agent, err := kubernetes.AgentFromOutOfClusterConfig(form.K8sOptions)
+	var agent *kubernetes.Agent
+	var err error
+
+	if app.testing {
+		agent = app.TestAgents.K8sAgent
+	} else {
+		agent, err = kubernetes.GetAgentOutOfClusterConfig(form.K8sOptions)
+	}
 
 	namespaces, err := agent.ListNamespaces()
 

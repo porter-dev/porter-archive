@@ -12,7 +12,7 @@ type Conf struct {
 	Debug  bool `env:"DEBUG,default=false"`
 	Server ServerConf
 	Db     DBConf
-	Helm   HelmGlobalConf
+	K8s    K8sConf
 }
 
 // ServerConf is the server configuration
@@ -35,9 +35,9 @@ type DBConf struct {
 	DbName   string `env:"DB_NAME,default=porter"`
 }
 
-// HelmGlobalConf is the global configuration for the Helm agent
-type HelmGlobalConf struct {
-	IsTesting bool `env:"HELM_IS_TESTING,default=false"`
+// K8sConf is the global configuration for the k8s agents
+type K8sConf struct {
+	IsTesting bool `env:"K8S_IS_TESTING,default=false"`
 }
 
 // FromEnv generates a configuration from environment variables

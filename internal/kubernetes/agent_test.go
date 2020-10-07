@@ -7,7 +7,6 @@ import (
 	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/discovery"
-	"k8s.io/client-go/kubernetes/fake"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 
@@ -36,7 +35,7 @@ func (f *fakeRESTClientGetter) ToRESTMapper() (meta.RESTMapper, error) {
 func newAgentFixture(t *testing.T, objects ...runtime.Object) *kubernetes.Agent {
 	t.Helper()
 
-	return &kubernetes.Agent{&fakeRESTClientGetter{}, fake.NewSimpleClientset(objects...)}
+	return kubernetes.GetAgentTesting(objects...)
 }
 
 func TestOutOfClusterConfig(t *testing.T) {

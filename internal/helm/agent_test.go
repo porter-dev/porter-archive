@@ -5,7 +5,6 @@ import (
 
 	"helm.sh/helm/v3/pkg/storage/driver"
 
-	"github.com/porter-dev/porter/internal/config"
 	"github.com/porter-dev/porter/internal/helm"
 	"github.com/porter-dev/porter/internal/logger"
 
@@ -17,15 +16,12 @@ func newAgentFixture(t *testing.T, namespace string) *helm.Agent {
 	t.Helper()
 
 	l := logger.NewConsole(true)
-	opts := &helm.Form{
+
+	form := &helm.Form{
 		Namespace: namespace,
 	}
 
-	agent, _ := opts.ToAgent(l, &config.HelmGlobalConf{
-		IsTesting: true,
-	}, nil)
-
-	return agent
+	return helm.GetAgentTesting(form, nil, l)
 }
 
 type releaseStub struct {

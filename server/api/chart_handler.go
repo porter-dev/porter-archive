@@ -7,6 +7,7 @@ import (
 
 	"github.com/go-chi/chi"
 	"github.com/porter-dev/porter/internal/forms"
+	"github.com/porter-dev/porter/internal/helm"
 )
 
 // Enumeration of chart API error codes, represented as int64
@@ -35,7 +36,14 @@ func (app *App) HandleListCharts(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// create a new agent
-	agent, err := form.HelmOptions.ToAgent(app.logger, app.helmConf, app.HelmTestStorageDriver)
+	var agent *helm.Agent
+	var err error
+
+	if app.testing {
+		agent = app.TestAgents.HelmAgent
+	} else {
+		agent, err = helm.GetAgentOutOfClusterConfig(form.HelmOptions, app.logger)
+	}
 
 	releases, err := agent.ListReleases(form.HelmOptions.Namespace, form.ListFilter)
 
@@ -82,7 +90,13 @@ func (app *App) HandleGetChart(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// create a new agent
-	agent, err := form.HelmOptions.ToAgent(app.logger, app.helmConf, app.HelmTestStorageDriver)
+	var agent *helm.Agent
+
+	if app.testing {
+		agent = app.TestAgents.HelmAgent
+	} else {
+		agent, err = helm.GetAgentOutOfClusterConfig(form.HelmOptions, app.logger)
+	}
 
 	release, err := agent.GetRelease(form.Name, form.Revision)
 

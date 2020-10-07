@@ -584,7 +584,7 @@ Chart{
 
 **Query parameters:** N/A
 
-**Request Body**:
+**Request Body**: the full body is determined by the [namespace specification](https://pkg.go.dev/k8s.io/api/core/v1#NamespaceList), but we're primarily only interested in namespace `name`:
 
 ```js
 {
@@ -596,7 +596,18 @@ Chart{
 }
 ```
 
-**Successful Response Body**: TBD
+**Successful Response Body**:
+
+```js
+{
+  "metadata": {},
+  "items": []Namespace{
+    "metadata": {
+      "name": String
+    }
+  }
+}
+```
 
 **Successful Status Code**: `200`
 

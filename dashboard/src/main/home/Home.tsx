@@ -17,6 +17,7 @@ type StateType = {
 
 export default class Home extends Component<PropsType, StateType> {
   render() {
+    console.log(this.context)
     return (
       <StyledHome>
         <ReactModal

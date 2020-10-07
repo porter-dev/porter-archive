@@ -16,6 +16,9 @@
 - [`/api/charts`](#apicharts)
   - [`GET /api/charts`](#get-apicharts)
   - [`GET /api/charts/{name}/{revision}`](#get-apichartsnamerevision)
+- [`/api/k8s`](#apik8s)
+  - [`GET /api/k8s/namespaces`](#get-apik8snamespaces)
+
 
 ### Overview
 
@@ -566,6 +569,34 @@ Chart{
   "namespace": String
 }
 ```
+
+**Successful Status Code**: `200`
+
+**Errors:** TBD
+
+### `/api/k8s`
+
+#### `GET /api/k8s/namespaces`
+
+**Description:** 
+
+**URL parameters:** N/A
+
+**Query parameters:** N/A
+
+**Request Body**:
+
+```js
+{
+  "user_id": Number,
+  "k8s": {
+    // The name of the context in the kubeconfig being used
+    "context": String,
+  }
+}
+```
+
+**Successful Response Body**: TBD
 
 **Successful Status Code**: `200`
 

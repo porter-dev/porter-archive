@@ -25,28 +25,6 @@ type releaseStub struct {
 	status       release.Status
 }
 
-// type ListFilter struct {
-// 	Namespace    string   `json:"namespace"`
-// 	Limit        int      `json:"limit"`
-// 	Skip         int      `json:"skip"`
-// 	ByDate       bool     `json:"byDate"`
-// 	StatusFilter []string `json:"statusFilter"`
-// }
-
-// type Form struct {
-// 	KubeConfig      []byte   `form:"required"`
-// 	AllowedContexts []string `form:"required"`
-// 	Context         string   `json:"context" form:"required"`
-// 	Storage         string   `json:"storage" form:"oneof=secret configmap memory"`
-// 	Namespace       string   `json:"namespace"`
-// }
-
-// type ListChartForm struct {
-// 	HelmOptions *helm.Form       `json:"helm" form:"required"`
-// 	ListFilter  *helm.ListFilter `json:"filter" form:"required"`
-// 	UserID      uint             `json:"user_id"`
-// }
-
 // ------------------------- TEST TYPES AND MAIN LOOP ------------------------- //
 
 type chartTest struct {

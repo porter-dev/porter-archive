@@ -36,8 +36,20 @@ class ContextProvider extends Component {
     currentCluster: null as string | null,
     setCurrentCluster: (currentCluster: string): void => {
       this.setState({ currentCluster });
+    },
+    userId: null as number | null,
+    setUserId: (userId: number): void => {
+      this.setState({ userId });
+    },
+    devOpsMode: true,
+    setDevOpsMode: (devOpsMode: boolean): void => {
+      this.setState({ devOpsMode });
     }
   };
+
+  componentDidMount() {
+    this.setState({ userId: 1 });
+  }
 
   render() {
     return (

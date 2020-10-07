@@ -31,7 +31,7 @@ func (app *App) HandleCreateUser(w http.ResponseWriter, r *http.Request) {
 	session, err := app.store.Get(r, app.cookieName)
 
 	if err != nil {
-		app.handleErrorDataRead(err, ErrUserDataRead, w)
+		app.handleErrorDataRead(err, w)
 	}
 
 	form := &forms.CreateUserForm{}
@@ -76,7 +76,7 @@ func (app *App) HandleLoginUser(w http.ResponseWriter, r *http.Request) {
 	session, err := app.store.Get(r, app.cookieName)
 
 	if err != nil {
-		app.handleErrorDataRead(err, ErrUserDataRead, w)
+		app.handleErrorDataRead(err, w)
 	}
 
 	form := &forms.LoginUserForm{}
@@ -121,7 +121,7 @@ func (app *App) HandleLogoutUser(w http.ResponseWriter, r *http.Request) {
 	session, err := app.store.Get(r, app.cookieName)
 
 	if err != nil {
-		app.handleErrorDataRead(err, ErrUserDataRead, w)
+		app.handleErrorDataRead(err, w)
 	}
 
 	session.Values["authenticated"] = false
@@ -150,9 +150,9 @@ func (app *App) HandleReadUser(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
-// HandleReadUserClusters returns the externalized User.Clusters (models.ClusterConfigs)
+// HandleReadUserContexts returns the externalized User.Contexts ([]models.Context)
 // based on a user ID
-func (app *App) HandleReadUserClusters(w http.ResponseWriter, r *http.Request) {
+func (app *App) HandleReadUserContexts(w http.ResponseWriter, r *http.Request) {
 	user, err := app.readUser(w, r)
 
 	// error already handled by helper
@@ -160,47 +160,19 @@ func (app *App) HandleReadUserClusters(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	extClusters := make([]models.ClusterConfigExternal, 0)
+	contexts, err := kubernetes.GetContextsFromBytes(user.RawKubeConfig, user.ContextToSlice())
 
-	for _, cluster := range user.Clusters {
-		extClusters = append(extClusters, *cluster.Externalize())
+	if err != nil {
+		app.handleErrorFormDecoding(err, ErrUserDecode, w)
+		return
 	}
 
-	if err := json.NewEncoder(w).Encode(extClusters); err != nil {
+	if err := json.NewEncoder(w).Encode(contexts); err != nil {
 		app.handleErrorFormDecoding(err, ErrUserDecode, w)
 		return
 	}
 
 	w.WriteHeader(http.StatusOK)
-}
-
-// HandleReadUserClustersAll returns all models.ClusterConfigs parsed from a KubeConfig
-// that is attached to a specific user, identified through the user ID
-func (app *App) HandleReadUserClustersAll(w http.ResponseWriter, r *http.Request) {
-	user, err := app.readUser(w, r)
-
-	// if there is an error, it's already handled by helper
-	if err == nil {
-		clusters, err := kubernetes.GetAllClusterConfigsFromBytes(user.RawKubeConfig)
-
-		if err != nil {
-			app.handleErrorFormDecoding(err, ErrUserDecode, w)
-			return
-		}
-
-		extClusters := make([]models.ClusterConfigExternal, 0)
-
-		for _, cluster := range clusters {
-			extClusters = append(extClusters, *cluster.Externalize())
-		}
-
-		if err := json.NewEncoder(w).Encode(extClusters); err != nil {
-			app.handleErrorFormDecoding(err, ErrUserDecode, w)
-			return
-		}
-
-		w.WriteHeader(http.StatusOK)
-	}
 }
 
 // HandleUpdateUser validates an update user form entry, updates the user
@@ -272,7 +244,7 @@ func (app *App) writeUser(
 	}
 
 	// convert the form to a user model -- WriteUserForm must implement ToUser
-	userModel, err := form.ToUser()
+	userModel, err := form.ToUser(app.repo.User)
 
 	if err != nil {
 		app.handleErrorFormDecoding(err, ErrUserDecode, w)

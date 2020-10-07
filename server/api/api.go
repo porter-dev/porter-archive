@@ -6,8 +6,10 @@ import (
 	"github.com/go-playground/validator/v10"
 
 	"github.com/gorilla/sessions"
+	"github.com/porter-dev/porter/internal/config"
 	lr "github.com/porter-dev/porter/internal/logger"
 	"github.com/porter-dev/porter/internal/repository"
+	"helm.sh/helm/v3/pkg/storage"
 )
 
 // App represents an API instance with handler methods attached, a DB connection
@@ -18,7 +20,11 @@ type App struct {
 	validator  *validator.Validate
 	store      sessions.Store
 	translator *ut.Translator
-	cookieName string
+	helmConf   *config.HelmGlobalConf
+	// HelmTestStorageDriver is used by testing libraries to query the in-memory
+	// Helm storage driver
+	HelmTestStorageDriver *storage.Storage
+	cookieName            string
 }
 
 // New returns a new App instance
@@ -27,6 +33,7 @@ func New(
 	repo *repository.Repository,
 	validator *validator.Validate,
 	store sessions.Store,
+	helmConf *config.HelmGlobalConf,
 	cookieName string,
 ) *App {
 	// for now, will just support the english translator from the
@@ -41,6 +48,7 @@ func New(
 		validator:  validator,
 		store:      store,
 		translator: &trans,
+		helmConf:   helmConf,
 		cookieName: cookieName,
 	}
 }

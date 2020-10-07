@@ -5,7 +5,6 @@ import (
 
 	"helm.sh/helm/v3/pkg/storage/driver"
 
-	"github.com/porter-dev/porter/internal/config"
 	"github.com/porter-dev/porter/internal/helm"
 	"github.com/porter-dev/porter/internal/logger"
 
@@ -17,15 +16,12 @@ func newAgentFixture(t *testing.T, namespace string) *helm.Agent {
 	t.Helper()
 
 	l := logger.NewConsole(true)
-	opts := &helm.Form{
+
+	form := &helm.Form{
 		Namespace: namespace,
 	}
 
-	agent, _ := opts.ToAgent(l, &config.HelmGlobalConf{
-		IsTesting: true,
-	}, nil)
-
-	return agent
+	return helm.GetAgentTesting(form, nil, l)
 }
 
 type releaseStub struct {
@@ -171,5 +167,48 @@ func TestListReleases(t *testing.T) {
 		}
 
 		compareReleaseToStubs(t, releases, tc.expRes)
+	}
+}
+
+type getReleaseTest struct {
+	name       string
+	namespace  string
+	releases   []releaseStub
+	getName    string
+	getVersion int
+	expRes     releaseStub
+}
+
+var getReleaseTests = []getReleaseTest{
+	getReleaseTest{
+		name:      "simple get with revision 0 (latest)",
+		namespace: "default",
+		releases: []releaseStub{
+			releaseStub{"airwatch", "default", 1, "1.0.0", release.StatusDeployed},
+			releaseStub{"wordpress", "default", 1, "1.0.1", release.StatusDeployed},
+			releaseStub{"not-in-default-namespace", "other", 1, "1.0.2", release.StatusDeployed},
+		},
+		getName:    "airwatch",
+		getVersion: 0,
+		expRes:     releaseStub{"airwatch", "default", 1, "1.0.0", release.StatusDeployed},
+	},
+}
+
+func TestGetReleases(t *testing.T) {
+	for _, tc := range getReleaseTests {
+		agent := newAgentFixture(t, tc.namespace)
+		makeReleases(t, agent, tc.releases)
+
+		// calling agent.ActionConfig.Releases.Create in makeReleases will automatically set the
+		// namespace, so we have to reset the namespace of the storage driver
+		agent.ActionConfig.Releases.Driver.(*driver.Memory).SetNamespace(tc.namespace)
+
+		rel, err := agent.GetRelease(tc.getName, tc.getVersion)
+
+		if err != nil {
+			t.Errorf("%v", err)
+		}
+
+		compareReleaseToStubs(t, []*release.Release{rel}, []releaseStub{tc.expRes})
 	}
 }

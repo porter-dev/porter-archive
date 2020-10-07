@@ -13,7 +13,6 @@ import (
 	"github.com/porter-dev/porter/internal/repository/test"
 	"github.com/porter-dev/porter/server/api"
 	"github.com/porter-dev/porter/server/router"
-	"helm.sh/helm/v3/pkg/storage"
 
 	sessionstore "github.com/porter-dev/porter/internal/auth"
 	vr "github.com/porter-dev/porter/internal/validator"
@@ -55,7 +54,7 @@ func (t *tester) createUserSession(email string, pw string) {
 	t.reset()
 }
 
-func newTester(canQuery bool, storage *storage.Storage) *tester {
+func newTester(canQuery bool) *tester {
 	appConf := config.Conf{
 		Debug: true,
 		Server: config.ServerConf{
@@ -69,7 +68,7 @@ func newTester(canQuery bool, storage *storage.Storage) *tester {
 		// unimportant here
 		Db: config.DBConf{},
 		// set the helm config to testing
-		Helm: config.HelmGlobalConf{
+		K8s: config.K8sConf{
 			IsTesting: true,
 		},
 	}
@@ -80,8 +79,7 @@ func newTester(canQuery bool, storage *storage.Storage) *tester {
 	repo := test.NewRepository(canQuery)
 
 	store, _ := sessionstore.NewStore(repo, appConf.Server)
-	app := api.New(logger, repo, validator, store, &appConf.Helm, appConf.Server.CookieName)
-	app.HelmTestStorageDriver = storage
+	app := api.New(logger, repo, validator, store, appConf.Server.CookieName, true)
 	r := router.New(app, store, appConf.Server.CookieName)
 
 	return &tester{

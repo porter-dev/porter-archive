@@ -66,6 +66,7 @@ func (auth *Auth) DoesUserIDMatch(next http.Handler, loc IDLocation) http.Handle
 			form := &bodyID{}
 			body, _ := ioutil.ReadAll(r.Body)
 			err = json.Unmarshal(body, form)
+
 			id = form.UserID
 
 			// need to create a new stream for the body

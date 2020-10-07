@@ -7,13 +7,10 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/porter-dev/porter/internal/config"
 	"github.com/porter-dev/porter/internal/helm"
-	"github.com/porter-dev/porter/internal/logger"
 
 	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/release"
-	"helm.sh/helm/v3/pkg/storage"
 	"helm.sh/helm/v3/pkg/storage/driver"
 )
 
@@ -42,8 +39,7 @@ type chartTest struct {
 func testChartRequests(t *testing.T, tests []*chartTest, canQuery bool) {
 	for _, c := range tests {
 		// create a new tester
-		storage := helm.StorageMap["memory"](nil, "", nil)
-		tester := newTester(canQuery, storage)
+		tester := newTester(canQuery)
 
 		// if there's an initializer, call it
 		for _, init := range c.initializers {
@@ -154,26 +150,13 @@ func TestHandleGetChart(t *testing.T) {
 func initDefaultCharts(tester *tester) {
 	initUserDefault(tester)
 
-	agent := newAgentFixture("default", tester.app.HelmTestStorageDriver)
+	agent := tester.app.TestAgents.HelmAgent
 
 	makeReleases(agent, sampleReleaseStubs)
 
 	// calling agent.ActionConfig.Releases.Create in makeReleases will automatically set the
 	// namespace, so we have to reset the namespace of the storage driver
 	agent.ActionConfig.Releases.Driver.(*driver.Memory).SetNamespace("")
-}
-
-func newAgentFixture(namespace string, storage *storage.Storage) *helm.Agent {
-	l := logger.NewConsole(true)
-	opts := &helm.Form{
-		Namespace: namespace,
-	}
-
-	agent, _ := opts.ToAgent(l, &config.HelmGlobalConf{
-		IsTesting: true,
-	}, storage)
-
-	return agent
 }
 
 var sampleReleaseStubs = []releaseStub{

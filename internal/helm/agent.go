@@ -1,89 +1,13 @@
 package helm
 
 import (
-	"errors"
-	"io/ioutil"
-
-	"github.com/porter-dev/porter/internal/config"
-	"github.com/porter-dev/porter/internal/kubernetes"
-	"github.com/porter-dev/porter/internal/logger"
 	"helm.sh/helm/v3/pkg/action"
-	"helm.sh/helm/v3/pkg/kube"
 	"helm.sh/helm/v3/pkg/release"
-	"helm.sh/helm/v3/pkg/storage"
-
-	"helm.sh/helm/v3/pkg/chartutil"
-	kubefake "helm.sh/helm/v3/pkg/kube/fake"
-	k8s "k8s.io/client-go/kubernetes"
 )
 
 // Agent is a Helm agent for performing helm operations
 type Agent struct {
 	ActionConfig *action.Configuration
-}
-
-// Form represents the options for connecting to a cluster and
-// creating a Helm agent
-type Form struct {
-	KubeConfig      []byte
-	AllowedContexts []string
-	Context         string `json:"context" form:"required"`
-	Storage         string `json:"storage" form:"oneof=secret configmap memory"`
-	Namespace       string `json:"namespace"`
-}
-
-// ToAgent uses the Form to generate an agent. Setting testing=true will create
-// a test agent with in-memory storage
-func (h *Form) ToAgent(
-	l *logger.Logger,
-	helmConf *config.HelmGlobalConf,
-	storage *storage.Storage,
-) (*Agent, error) {
-	if helmConf.IsTesting {
-		testStorage := storage
-
-		if testStorage == nil {
-			testStorage = StorageMap["memory"](nil, h.Namespace, nil)
-		}
-
-		return &Agent{&action.Configuration{
-			Releases: testStorage,
-			KubeClient: &kubefake.FailingKubeClient{
-				PrintingKubeClient: kubefake.PrintingKubeClient{
-					Out: ioutil.Discard,
-				},
-			},
-			Capabilities: chartutil.DefaultCapabilities,
-			Log:          l.Printf,
-		}}, nil
-	}
-
-	// create a kubernetes agent
-	conf := &kubernetes.OutOfClusterConfig{
-		KubeConfig:      h.KubeConfig,
-		AllowedContexts: h.AllowedContexts,
-		Context:         h.Context,
-	}
-
-	k8sAgent, err := kubernetes.AgentFromOutOfClusterConfig(conf)
-
-	if err != nil {
-		return nil, err
-	}
-
-	clientset, ok := k8sAgent.Clientset.(*k8s.Clientset)
-
-	if !ok {
-		return nil, errors.New("Agent Clientset was not of type *(k8s.io/client-go/kubernetes).Clientset")
-	}
-
-	// use k8s agent to create Helm agent
-	return &Agent{&action.Configuration{
-		RESTClientGetter: k8sAgent.RESTClientGetter,
-		KubeClient:       kube.New(k8sAgent.RESTClientGetter),
-		Releases:         StorageMap[h.Storage](l, h.Namespace, clientset),
-		Log:              l.Printf,
-	}}, nil
 }
 
 // ListReleases lists releases based on a ListFilter

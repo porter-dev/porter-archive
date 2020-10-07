@@ -49,10 +49,7 @@ class ContextProvider extends Component {
       this.setState({ devOpsMode });
     }
   };
-
-  componentDidMount() {
-  }
-
+  
   render() {
     return (
       <Provider value={this.state}>{this.props.children}</Provider>

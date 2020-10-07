@@ -16,4 +16,4 @@ RUN go build -ldflags '-w -s' -a -o ./bin/migrate ./cmd/migrate \
 # for live reloading of go container
 RUN go get github.com/cosmtrek/air
 
-CMD air -c .air.toml
+CMD /porter/bin/migrate; air -c .air.toml

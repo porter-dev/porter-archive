@@ -136,5 +136,3 @@ func createAllowedContextMap(contexts []string) map[string]string {
 
 	return aContextMap
 }
-
-// func ReadLocalKubeConfig()

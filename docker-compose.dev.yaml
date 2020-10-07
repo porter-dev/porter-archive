@@ -21,7 +21,6 @@ services:
       - ./cmd:/porter/cmd
       - ./internal:/porter/internal
       - ./server:/porter/server
-      - $HOME/.kube/config:/porter/.kubeconfig
   postgres:
     image: postgres:latest
     container_name: postgres

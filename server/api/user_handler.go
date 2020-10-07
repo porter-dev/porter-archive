@@ -49,6 +49,12 @@ func (app *App) HandleCreateUser(w http.ResponseWriter, r *http.Request) {
 		session.Values["authenticated"] = true
 		session.Values["user_id"] = user.ID
 		session.Save(r, w)
+
+		if err := app.sendUserID(w, user.ID); err != nil {
+			app.handleErrorFormDecoding(err, ErrUserDecode, w)
+			return
+		}
+
 		w.WriteHeader(http.StatusCreated)
 	}
 }
@@ -63,11 +69,7 @@ func (app *App) HandleAuthCheck(w http.ResponseWriter, r *http.Request) {
 
 	userID, _ := session.Values["user_id"].(uint)
 
-	resUser := &models.UserExternal{
-		ID: userID,
-	}
-
-	if err := json.NewEncoder(w).Encode(resUser); err != nil {
+	if err := app.sendUserID(w, userID); err != nil {
 		app.handleErrorFormDecoding(err, ErrUserDecode, w)
 		return
 	}
@@ -117,11 +119,7 @@ func (app *App) HandleLoginUser(w http.ResponseWriter, r *http.Request) {
 		app.logger.Warn().Err(err)
 	}
 
-	resUser := &models.UserExternal{
-		ID: storedUser.ID,
-	}
-
-	if err := json.NewEncoder(w).Encode(resUser); err != nil {
+	if err := app.sendUserID(w, storedUser.ID); err != nil {
 		app.handleErrorFormDecoding(err, ErrUserDecode, w)
 		return
 	}
@@ -338,5 +336,16 @@ func doesUserExist(repo *repository.Repository, user *models.User) *HTTPError {
 		return &ErrorDataRead
 	}
 
+	return nil
+}
+
+func (app *App) sendUserID(w http.ResponseWriter, userID uint) error {
+	resUser := &models.UserExternal{
+		ID: userID,
+	}
+
+	if err := json.NewEncoder(w).Encode(resUser); err != nil {
+		return err
+	}
 	return nil
 }

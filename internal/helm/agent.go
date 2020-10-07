@@ -1,6 +1,7 @@
 package helm
 
 import (
+	"errors"
 	"io/ioutil"
 
 	"github.com/porter-dev/porter/internal/config"
@@ -13,6 +14,7 @@ import (
 
 	"helm.sh/helm/v3/pkg/chartutil"
 	kubefake "helm.sh/helm/v3/pkg/kube/fake"
+	k8s "k8s.io/client-go/kubernetes"
 )
 
 // Agent is a Helm agent for performing helm operations
@@ -69,11 +71,17 @@ func (h *Form) ToAgent(
 		return nil, err
 	}
 
+	clientset, ok := k8sAgent.Clientset.(*k8s.Clientset)
+
+	if !ok {
+		return nil, errors.New("Agent Clientset was not of type *(k8s.io/client-go/kubernetes).Clientset")
+	}
+
 	// use k8s agent to create Helm agent
 	return &Agent{&action.Configuration{
 		RESTClientGetter: k8sAgent.RESTClientGetter,
 		KubeClient:       kube.New(k8sAgent.RESTClientGetter),
-		Releases:         StorageMap[h.Storage](l, h.Namespace, k8sAgent.Clientset),
+		Releases:         StorageMap[h.Storage](l, h.Namespace, clientset),
 		Log:              l.Printf,
 	}}, nil
 }

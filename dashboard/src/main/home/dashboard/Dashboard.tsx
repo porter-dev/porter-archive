@@ -41,8 +41,7 @@ class Dashboard extends Component {
     let { currentCluster } = this.context;
 
     return ( 
-      <StyledDashboard>
-        <DashboardWrapper>
+      <div>
         <TitleSection>
           <ProjectIcon>
             <ProjectImage src={gradient} />
@@ -62,8 +61,7 @@ class Dashboard extends Component {
         </InfoSection>
 
         <LineBreak />
-        </DashboardWrapper>
-      </StyledDashboard>
+      </div>
     );
   }
 }
@@ -248,22 +246,4 @@ const TitleSection = styled.div`
     }
     margin-bottom: -3px;
   }
-`;
-
-const StyledDashboard = styled.div`
-  height: 100%;
-  width: 100vw;
-  padding-top: 80px;
-  overflow-y: auto;
-  display: flex;
-  flex: 1;
-  justify-content: center;
-  background: #24272a;
-  position: relative;
-`;
-
-const DashboardWrapper = styled.div`
-  width: 80%;
-  min-width: 300px;
-  padding-bottom: 120px;
 `;

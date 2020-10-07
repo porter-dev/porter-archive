@@ -4,7 +4,8 @@ import (
 	"github.com/go-playground/locales/en"
 	ut "github.com/go-playground/universal-translator"
 	"github.com/go-playground/validator/v10"
-	sessionstore "github.com/porter-dev/porter/internal/auth"
+
+	"github.com/gorilla/sessions"
 	"github.com/porter-dev/porter/internal/helm"
 	"github.com/porter-dev/porter/internal/kubernetes"
 	lr "github.com/porter-dev/porter/internal/logger"
@@ -25,7 +26,7 @@ type App struct {
 	logger     *lr.Logger
 	repo       *repository.Repository
 	validator  *validator.Validate
-	store      *sessionstore.PGStore
+	store      sessions.Store
 	translator *ut.Translator
 	cookieName string
 	testing    bool
@@ -37,7 +38,7 @@ func New(
 	logger *lr.Logger,
 	repo *repository.Repository,
 	validator *validator.Validate,
-	store *sessionstore.PGStore,
+	store sessions.Store,
 	cookieName string,
 	testing bool,
 ) *App {

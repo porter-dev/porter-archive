@@ -57,13 +57,13 @@ func (h *Form) ToAgent(
 	}
 
 	// create a kubernetes agent
-	k8sForm := &kubernetes.Form{
+	conf := &kubernetes.OutOfClusterConfig{
 		KubeConfig:      h.KubeConfig,
 		AllowedContexts: h.AllowedContexts,
 		Context:         h.Context,
 	}
 
-	k8sAgent, err := k8sForm.ToAgent()
+	k8sAgent, err := kubernetes.AgentFromOutOfClusterConfig(conf)
 
 	if err != nil {
 		return nil, err

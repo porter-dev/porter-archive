@@ -2,118 +2,94 @@ package kubernetes_test
 
 import (
 	"reflect"
+	"strings"
 	"testing"
 
 	"github.com/porter-dev/porter/internal/kubernetes"
 	"github.com/porter-dev/porter/internal/models"
 )
 
-type KubeConfigTest struct {
+type kubeConfigTest struct {
 	msg             string
 	raw             []byte
-	allowedClusters []string
-	expected        []models.ClusterConfig
+	allowedContexts []string
+	expected        []models.Context
 }
 
-var MissingFieldsTest = []KubeConfigTest{
-	KubeConfigTest{
-		msg:             "no fields at all",
+type kubeConfigTestValidateError struct {
+	msg             string
+	raw             []byte
+	allowedContexts []string
+	contextName     string
+	errorContains   string // a string that the error message should contain
+}
+
+var ValidateErrorTests = []kubeConfigTestValidateError{
+	kubeConfigTestValidateError{
+		msg:             "No configuration",
 		raw:             []byte(""),
-		allowedClusters: []string{},
-		expected:        []models.ClusterConfig{},
+		allowedContexts: []string{},
+		contextName:     "",
+		errorContains:   "invalid configuration: no configuration has been provided",
 	},
-	KubeConfigTest{
-		msg:             "no contexts to join",
+	kubeConfigTestValidateError{
+		msg:             "Context name does not exist",
 		raw:             []byte(noContexts),
-		allowedClusters: []string{},
-		expected:        []models.ClusterConfig{},
+		allowedContexts: []string{"porter-test-1"},
+		contextName:     "context-test",
+		errorContains:   "invalid configuration: context was not found for specified context: context-test",
 	},
-	KubeConfigTest{
-		msg:             "no clusters to join",
+	kubeConfigTestValidateError{
+		msg:             "Cluster to join does not exist",
 		raw:             []byte(noClusters),
-		allowedClusters: []string{},
-		expected:        []models.ClusterConfig{},
+		allowedContexts: []string{"porter-test-1"},
+		contextName:     "context-test",
+		errorContains:   "invalid configuration: context was not found for specified context: context-test",
 	},
-	KubeConfigTest{
-		msg:             "no users to join",
+	kubeConfigTestValidateError{
+		msg:             "User to join does not exist",
 		raw:             []byte(noUsers),
-		allowedClusters: []string{},
-		expected:        []models.ClusterConfig{},
-	},
-	KubeConfigTest{
-		msg:             "no cluster contexts to join",
-		raw:             []byte(noContextClusters),
-		allowedClusters: []string{},
-		expected:        []models.ClusterConfig{},
-	},
-	KubeConfigTest{
-		msg:             "no cluster users to join",
-		raw:             []byte(noContextUsers),
-		allowedClusters: []string{},
-		expected:        []models.ClusterConfig{},
+		allowedContexts: []string{"porter-test-1"},
+		contextName:     "context-test",
+		errorContains:   "invalid configuration: context was not found for specified context: context-test",
 	},
 }
 
-func TestMissingFields(t *testing.T) {
-	for _, c := range MissingFieldsTest {
-		res, err := kubernetes.GetAllowedClusterConfigsFromBytes(c.raw, c.allowedClusters)
+func TestValidateErrors(t *testing.T) {
+	for _, c := range ValidateErrorTests {
 
-		if err != nil {
-			t.Fatalf("Testing %s returned an error: %v\n", c.msg, err.Error())
+		_, err := kubernetes.GetRestrictedClientConfigFromBytes(c.raw, c.contextName, c.allowedContexts)
+
+		if err == nil {
+			t.Fatalf("Testing %s did not return an error\n", c.msg)
 		}
 
-		isEqual := reflect.DeepEqual(c.expected, res)
-
-		if !isEqual {
-			t.Errorf("Testing: %s, Expected: %v, Got: %v\n", c.msg, c.expected, res)
+		if !strings.Contains(err.Error(), c.errorContains) {
+			t.Errorf("Testing %s -- Error was:\n \"%s\" \n It did not contain string \"%s\"\n", c.msg, err.Error(), c.errorContains)
 		}
 	}
 }
 
-var NoAllowedClustersTests = []KubeConfigTest{
-	KubeConfigTest{
+var BasicContextAllowedTests = []kubeConfigTest{
+	kubeConfigTest{
 		msg:             "basic test",
 		raw:             []byte(basic),
-		allowedClusters: []string{},
-		expected:        []models.ClusterConfig{},
-	},
-}
-
-func TestNoAllowedClusters(t *testing.T) {
-	for _, c := range NoAllowedClustersTests {
-		res, err := kubernetes.GetAllowedClusterConfigsFromBytes(c.raw, c.allowedClusters)
-
-		if err != nil {
-			t.Fatalf("Testing %s returned an error: %v\n", c.msg, err.Error())
-		}
-
-		isEqual := reflect.DeepEqual(c.expected, res)
-
-		if !isEqual {
-			t.Errorf("Testing: %s, Expected: %v, Got: %v\n", c.msg, c.expected, res)
-		}
-	}
-}
-
-var BasicClustersAllowedTests = []KubeConfigTest{
-	KubeConfigTest{
-		msg:             "basic test",
-		raw:             []byte(basic),
-		allowedClusters: []string{"cluster-test"},
-		expected: []models.ClusterConfig{
-			models.ClusterConfig{
-				Name:    "cluster-test",
-				Server:  "https://localhost",
-				Context: "context-test",
-				User:    "test-admin",
+		allowedContexts: []string{"context-test"},
+		expected: []models.Context{
+			models.Context{
+				Name:     "context-test",
+				Server:   "https://localhost",
+				Cluster:  "cluster-test",
+				User:     "test-admin",
+				Selected: true,
 			},
 		},
 	},
 }
 
 func TestBasicAllowed(t *testing.T) {
-	for _, c := range BasicClustersAllowedTests {
-		res, err := kubernetes.GetAllowedClusterConfigsFromBytes(c.raw, c.allowedClusters)
+	for _, c := range BasicContextAllowedTests {
+		res, err := kubernetes.GetContextsFromBytes(c.raw, c.allowedContexts)
 
 		if err != nil {
 			t.Fatalf("Testing %s returned an error: %v\n", c.msg, err.Error())
@@ -127,25 +103,26 @@ func TestBasicAllowed(t *testing.T) {
 	}
 }
 
-var BasicClustersAllTests = []KubeConfigTest{
-	KubeConfigTest{
+var BasicContextAllTests = []kubeConfigTest{
+	kubeConfigTest{
 		msg:             "basic test",
 		raw:             []byte(basic),
-		allowedClusters: []string{"cluster-test"},
-		expected: []models.ClusterConfig{
-			models.ClusterConfig{
-				Name:    "cluster-test",
-				Server:  "https://localhost",
-				Context: "context-test",
-				User:    "test-admin",
+		allowedContexts: []string{},
+		expected: []models.Context{
+			models.Context{
+				Name:     "context-test",
+				Server:   "https://localhost",
+				Cluster:  "cluster-test",
+				User:     "test-admin",
+				Selected: false,
 			},
 		},
 	},
 }
 
 func TestBasicAll(t *testing.T) {
-	for _, c := range BasicClustersAllTests {
-		res, err := kubernetes.GetAllClusterConfigsFromBytes(c.raw)
+	for _, c := range BasicContextAllTests {
+		res, err := kubernetes.GetContextsFromBytes(c.raw, c.allowedContexts)
 
 		if err != nil {
 			t.Fatalf("Testing %s returned an error: %v\n", c.msg, err.Error())
@@ -156,6 +133,35 @@ func TestBasicAll(t *testing.T) {
 		if !isEqual {
 			t.Errorf("Testing: %s, Expected: %v, Got: %v\n", c.msg, c.expected, res)
 		}
+	}
+}
+
+func TestGetRestrictedClientConfig(t *testing.T) {
+	contexts := []string{"context-test"}
+	contextName := "context-test"
+
+	clientConf, err := kubernetes.GetRestrictedClientConfigFromBytes([]byte(basic), contextName, contexts)
+
+	if err != nil {
+		t.Fatalf("Fatal error: %s\n", err.Error())
+	}
+
+	rawConf, err := clientConf.RawConfig()
+
+	if err != nil {
+		t.Fatalf("Fatal error: %s\n", err.Error())
+	}
+
+	if cluster, clusterFound := rawConf.Clusters["cluster-test"]; !clusterFound || cluster.Server != "https://localhost" {
+		t.Errorf("invalid cluster returned")
+	}
+
+	if _, contextFound := rawConf.Contexts["context-test"]; !contextFound {
+		t.Errorf("invalid context returned")
+	}
+
+	if _, authInfoFound := rawConf.AuthInfos["test-admin"]; !authInfoFound {
+		t.Errorf("invalid auth info returned")
 	}
 }
 
@@ -167,7 +173,7 @@ clusters:
 - cluster:
     server: https://localhost
   name: porter-test-1
-current-context: default
+current-context: context-test
 users:
 - name: test-admin
   user:
@@ -177,7 +183,7 @@ const noClusters string = `
 apiVersion: v1
 kind: Config
 preferences: {}
-current-context: default
+current-context: context-test
 contexts:
 - context:
     cluster: porter-test-1
@@ -246,7 +252,7 @@ const basic string = `
 apiVersion: v1
 kind: Config
 preferences: {}
-current-context: default
+current-context: context-test
 clusters:
 - cluster:
     server: https://localhost

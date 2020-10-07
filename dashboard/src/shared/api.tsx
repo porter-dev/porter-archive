@@ -28,18 +28,14 @@ const getUser = baseApi<{}, { id: number }>('GET', pathParams => {
 });
 
 const updateUser = baseApi<{
-  rawKubeconfig?: string,
-  allowedClusters?: string[]
+  rawKubeConfig?: string,
+  allowedContexts?: string[]
 }, { id: number }>('PUT', pathParams => {
   return `/api/users/${pathParams.id}`;
 });
 
-const getClusters = baseApi<{}, { id: number }>('GET', pathParams => {
-  return `/api/users/${pathParams.id}/clusters`;
-});
-
-const getAllClusters = baseApi<{}, { id: number }>('GET', pathParams => {
-  return `/api/users/${pathParams.id}/clusters/all`;
+const getContexts = baseApi<{}, { id: number }>('GET', pathParams => {
+  return `/api/users/${pathParams.id}/contexts`;
 });
 
 // Bundle export to allow default api import (api.<method> is more readable)
@@ -50,6 +46,5 @@ export default {
   logOutUser,
   getUser,
   updateUser,
-  getClusters,
-  getAllClusters
+  getContexts,
 }

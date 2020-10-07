@@ -2,35 +2,17 @@ package api_test
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"reflect"
 	"strings"
 	"testing"
-	"time"
 
-	"github.com/go-chi/chi"
-	"github.com/porter-dev/porter/internal/config"
 	"github.com/porter-dev/porter/internal/models"
-	"github.com/porter-dev/porter/internal/repository"
-	"github.com/porter-dev/porter/internal/repository/test"
-	"github.com/porter-dev/porter/server/api"
-	"github.com/porter-dev/porter/server/router"
-
-	sessionstore "github.com/porter-dev/porter/internal/auth"
-	lr "github.com/porter-dev/porter/internal/logger"
-	vr "github.com/porter-dev/porter/internal/validator"
 )
 
-type tester struct {
-	app    *api.App
-	repo   *repository.Repository
-	store  *sessionstore.PGStore
-	router *chi.Mux
-	req    *http.Request
-	rr     *httptest.ResponseRecorder
-	cookie *http.Cookie
-}
+// ------------------------- TEST TYPES AND MAIN LOOP ------------------------- //
 
 type userTest struct {
 	initializers []func(t *tester)
@@ -44,92 +26,10 @@ type userTest struct {
 	validators   []func(c *userTest, tester *tester, t *testing.T)
 }
 
-func (t *tester) execute() {
-	t.router.ServeHTTP(t.rr, t.req)
-}
-
-func (t *tester) reset() {
-	t.rr = httptest.NewRecorder()
-	t.req = nil
-}
-
-func (t *tester) createUserSession(email string, pw string) {
-	req, _ := http.NewRequest(
-		"POST",
-		"/api/users",
-		strings.NewReader(`{"email":"`+email+`","password":"`+pw+`"}`),
-	)
-
-	t.req = req
-	t.execute()
-
-	if cookies := t.rr.Result().Cookies(); len(cookies) > 0 {
-		t.cookie = cookies[0]
-	}
-
-	t.reset()
-}
-
-func initUserDefault(tester *tester) {
-	tester.createUserSession("belanger@getporter.dev", "hello")
-}
-
-func initUserWithClusters(tester *tester) {
-	initUserDefault(tester)
-
-	user, _ := tester.repo.User.ReadUserByEmail("belanger@getporter.dev")
-	user.Clusters = []models.ClusterConfig{
-		models.ClusterConfig{
-			Name:    "cluster-test",
-			Server:  "https://localhost",
-			Context: "context-test",
-			User:    "test-admin",
-		},
-	}
-	user.RawKubeConfig = []byte("apiVersion: v1\nkind: Config\npreferences: {}\ncurrent-context: default\nclusters:\n- cluster:\n    server: https://localhost\n  name: cluster-test\ncontexts:\n- context:\n    cluster: cluster-test\n    user: test-admin\n  name: context-test\nusers:\n- name: test-admin")
-
-	tester.repo.User.UpdateUser(user)
-}
-
-func newTester(canQuery bool) *tester {
-	appConf := config.Conf{
-		Debug: true,
-		Server: config.ServerConf{
-			Port:          8080,
-			CookieName:    "porter",
-			CookieSecrets: [][]byte{[]byte("secret")},
-			TimeoutRead:   time.Second * 5,
-			TimeoutWrite:  time.Second * 10,
-			TimeoutIdle:   time.Second * 15,
-		},
-		// unimportant here
-		Db: config.DBConf{},
-	}
-
-	logger := lr.NewConsole(appConf.Debug)
-	validator := vr.New()
-
-	repo := test.NewRepository(canQuery)
-
-	store, _ := sessionstore.NewStore(repo, appConf.Server)
-	app := api.New(logger, repo, validator, store, appConf.Server.CookieName)
-	r := router.New(app, store, appConf.Server.CookieName)
-
-	return &tester{
-		app:    app,
-		repo:   repo,
-		store:  store,
-		router: r,
-		req:    nil,
-		rr:     httptest.NewRecorder(),
-		cookie: nil,
-	}
-}
-
 func testUserRequests(t *testing.T, tests []*userTest, canQuery bool) {
 	for _, c := range tests {
 		// create a new tester
-		tester := newTester(canQuery)
+		tester := newTester(canQuery, nil)
 
 		// if there's an initializer, call it
 		for _, init := range c.initializers {
@@ -168,6 +68,8 @@ func testUserRequests(t *testing.T, tests []*userTest, canQuery bool) {
 	}
 }
 
+// ------------------------- TEST FIXTURES AND FUNCTIONS  ------------------------- //
+
 var createUserTests = []*userTest{
 	&userTest{
 		msg:      "Create user",
@@ -191,7 +93,7 @@ var createUserTests = []*userTest{
 		expStatus: http.StatusUnprocessableEntity,
 		expBody:   `{"code":601,"errors":["email validation failed"]}`,
 		validators: []func(c *userTest, tester *tester, t *testing.T){
-			BasicBodyValidator,
+			userBasicBodyValidator,
 		},
 	},
 	&userTest{
@@ -204,7 +106,7 @@ var createUserTests = []*userTest{
 		expStatus: http.StatusUnprocessableEntity,
 		expBody:   `{"code":601,"errors":["required validation failed"]}`,
 		validators: []func(c *userTest, tester *tester, t *testing.T){
-			BasicBodyValidator,
+			userBasicBodyValidator,
 		},
 	},
 	&userTest{
@@ -221,7 +123,7 @@ var createUserTests = []*userTest{
 		expStatus: http.StatusUnprocessableEntity,
 		expBody:   `{"code":601,"errors":["email already taken"]}`,
 		validators: []func(c *userTest, tester *tester, t *testing.T){
-			BasicBodyValidator,
+			userBasicBodyValidator,
 		},
 	},
 	&userTest{
@@ -235,7 +137,7 @@ var createUserTests = []*userTest{
 		expStatus: http.StatusBadRequest,
 		expBody:   `{"code":600,"errors":["could not process request"]}`,
 		validators: []func(c *userTest, tester *tester, t *testing.T){
-			BasicBodyValidator,
+			userBasicBodyValidator,
 		},
 	},
 }
@@ -256,7 +158,7 @@ var createUserTestsWriteFail = []*userTest{
 		expStatus: http.StatusInternalServerError,
 		expBody:   `{"code":500,"errors":["could not read from database"]}`,
 		validators: []func(c *userTest, tester *tester, t *testing.T){
-			BasicBodyValidator,
+			userBasicBodyValidator,
 		},
 	},
 }
@@ -280,7 +182,7 @@ var loginUserTests = []*userTest{
 		expStatus: http.StatusOK,
 		expBody:   ``,
 		validators: []func(c *userTest, tester *tester, t *testing.T){
-			BasicBodyValidator,
+			userBasicBodyValidator,
 		},
 	},
 	&userTest{
@@ -298,7 +200,7 @@ var loginUserTests = []*userTest{
 		expBody:   ``,
 		useCookie: true,
 		validators: []func(c *userTest, tester *tester, t *testing.T){
-			BasicBodyValidator,
+			userBasicBodyValidator,
 		},
 	},
 	&userTest{
@@ -312,7 +214,7 @@ var loginUserTests = []*userTest{
 		expStatus: http.StatusUnauthorized,
 		expBody:   `{"code":401,"errors":["email not registered"]}`,
 		validators: []func(c *userTest, tester *tester, t *testing.T){
-			BasicBodyValidator,
+			userBasicBodyValidator,
 		},
 	},
 	&userTest{
@@ -330,7 +232,7 @@ var loginUserTests = []*userTest{
 		expBody:   `{"code":401,"errors":["incorrect password"]}`,
 		useCookie: true,
 		validators: []func(c *userTest, tester *tester, t *testing.T){
-			BasicBodyValidator,
+			userBasicBodyValidator,
 		},
 	},
 }
@@ -387,17 +289,17 @@ func TestHandleLogoutUser(t *testing.T) {
 var readUserTests = []*userTest{
 	&userTest{
 		initializers: []func(tester *tester){
-			initUserWithClusters,
+			initUserWithContexts,
 		},
 		msg:       "Read user successful",
 		method:    "GET",
 		endpoint:  "/api/users/1",
 		body:      "",
 		expStatus: http.StatusOK,
-		expBody:   `{"id":1,"email":"belanger@getporter.dev","clusters":[{"name":"cluster-test","server":"https://localhost","context":"context-test","user":"test-admin"}],"rawKubeConfig":"apiVersion: v1\nkind: Config\npreferences: {}\ncurrent-context: default\nclusters:\n- cluster:\n    server: https://localhost\n  name: cluster-test\ncontexts:\n- context:\n    cluster: cluster-test\n    user: test-admin\n  name: context-test\nusers:\n- name: test-admin"}`,
+		expBody:   `{"id":1,"email":"belanger@getporter.dev","contexts":["context-test"],"rawKubeConfig":"apiVersion: v1\nkind: Config\npreferences: {}\ncurrent-context: context-test\nclusters:\n- cluster:\n    server: https://localhost\n  name: cluster-test\ncontexts:\n- context:\n    cluster: cluster-test\n    user: test-admin\n  name: context-test\nusers:\n- name: test-admin"}`,
 		useCookie: true,
 		validators: []func(c *userTest, tester *tester, t *testing.T){
-			UserModelBodyValidator,
+			userModelBodyValidator,
 		},
 	},
 	&userTest{
@@ -411,7 +313,7 @@ var readUserTests = []*userTest{
 		expStatus: http.StatusForbidden,
 		expBody:   http.StatusText(http.StatusForbidden) + "\n",
 		validators: []func(c *userTest, tester *tester, t *testing.T){
-			BasicBodyValidator,
+			userBasicBodyValidator,
 		},
 	},
 }
@@ -420,73 +322,49 @@ func TestHandleReadUser(t *testing.T) {
 	testUserRequests(t, readUserTests, true)
 }
 
-var readUserClustersTests = []*userTest{
+var readUserContextsTests = []*userTest{
 	&userTest{
 		initializers: []func(tester *tester){
-			initUserWithClusters,
+			initUserWithContexts,
 		},
-		msg:       "Read user successful",
+		msg:       "Read user context selected successful",
 		method:    "GET",
-		endpoint:  "/api/users/1/clusters",
+		endpoint:  "/api/users/1/contexts",
 		body:      "",
 		expStatus: http.StatusOK,
 		useCookie: true,
-		expBody:   `[{"name":"cluster-test","server":"https://localhost","context":"context-test","user":"test-admin"}]`,
+		expBody:   `[{"name":"context-test","server":"https://localhost","cluster":"cluster-test","user":"test-admin","selected":true}]`,
 		validators: []func(c *userTest, tester *tester, t *testing.T){
-			ClusterBodyValidator,
-		},
-	},
-}
-
-func TestHandleReadUserClusters(t *testing.T) {
-	testUserRequests(t, readUserClustersTests, true)
-}
-
-var readUserClustersAllTests = []*userTest{
-	&userTest{
-		initializers: []func(tester *tester){
-			initUserWithClusters,
-		},
-		msg:       "Read user successful",
-		method:    "GET",
-		endpoint:  "/api/users/1/clusters/all",
-		body:      "",
-		expStatus: http.StatusOK,
-		useCookie: true,
-		expBody:   `[{"name":"cluster-test","server":"https://localhost","context":"context-test","user":"test-admin"}]`,
-		validators: []func(c *userTest, tester *tester, t *testing.T){
-			ClusterBodyValidator,
+			userContextBodyValidator,
 		},
 	},
 	&userTest{
 		initializers: []func(tester *tester){
-			initUserWithClusters,
 			func(tester *tester) {
 				initUserDefault(tester)
 
 				user, _ := tester.repo.User.ReadUserByEmail("belanger@getporter.dev")
-				user.Clusters = []models.ClusterConfig{}
-				user.RawKubeConfig = []byte("apiVersion: \xc5\n")
+				user.Contexts = ""
+				user.RawKubeConfig = []byte("apiVersion: v1\nkind: Config\npreferences: {}\ncurrent-context: context-test\nclusters:\n- cluster:\n    server: https://localhost\n  name: cluster-test\ncontexts:\n- context:\n    cluster: cluster-test\n    user: test-admin\n  name: context-test\nusers:\n- name: test-admin")
 
 				tester.repo.User.UpdateUser(user)
-
 			},
 		},
-		msg:       "Read user with invalid utf-8 \xc5 in kubeconfig",
+		msg:       "Read user context not selected successful",
 		method:    "GET",
-		endpoint:  "/api/users/1/clusters/all",
+		endpoint:  "/api/users/1/contexts",
 		body:      "",
-		expStatus: http.StatusBadRequest,
+		expStatus: http.StatusOK,
 		useCookie: true,
-		expBody:   `{"code":600,"errors":["could not process request"]}`,
+		expBody:   `[{"name":"context-test","server":"https://localhost","cluster":"cluster-test","user":"test-admin","selected":false}]`,
 		validators: []func(c *userTest, tester *tester, t *testing.T){
-			ClusterBodyValidator,
+			userContextBodyValidator,
 		},
 	},
 }
 
-func TestHandleReadUserClustersAll(t *testing.T) {
-	testUserRequests(t, readUserClustersAllTests, true)
+func TestHandleReadUserContexts(t *testing.T) {
+	testUserRequests(t, readUserContextsTests, true)
 }
 
 var updateUserTests = []*userTest{
@@ -497,7 +375,7 @@ var updateUserTests = []*userTest{
 		msg:       "Update user successful",
 		method:    "PUT",
 		endpoint:  "/api/users/1",
-		body:      `{"rawKubeConfig":"apiVersion: v1\nkind: Config\npreferences: {}\ncurrent-context: default\nclusters:\n- cluster:\n    server: https://localhost\n  name: cluster-test\ncontexts:\n- context:\n    cluster: cluster-test\n    user: test-admin\n  name: context-test\nusers:\n- name: test-admin", "allowedClusters":[]}`,
+		body:      `{"rawKubeConfig":"apiVersion: v1\nkind: Config\npreferences: {}\ncurrent-context: context-test\nclusters:\n- cluster:\n    server: https://localhost\n  name: cluster-test\ncontexts:\n- context:\n    cluster: cluster-test\n    user: test-admin\n  name: context-test\nusers:\n- name: test-admin", "allowedContexts":[]}`,
 		expStatus: http.StatusNoContent,
 		expBody:   "",
 		useCookie: true,
@@ -522,7 +400,132 @@ var updateUserTests = []*userTest{
 				expBody := &models.UserExternal{}
 
 				json.Unmarshal(rr2.Body.Bytes(), gotBody)
-				json.Unmarshal([]byte(`{"id":1,"email":"belanger@getporter.dev","clusters":[],"rawKubeConfig":"apiVersion: v1\nkind: Config\npreferences: {}\ncurrent-context: default\nclusters:\n- cluster:\n    server: https://localhost\n  name: cluster-test\ncontexts:\n- context:\n    cluster: cluster-test\n    user: test-admin\n  name: context-test\nusers:\n- name: test-admin"}`), expBody)
+				json.Unmarshal([]byte(`{"id":1,"email":"belanger@getporter.dev","contexts":[],"rawKubeConfig":"apiVersion: v1\nkind: Config\npreferences: {}\ncurrent-context: context-test\nclusters:\n- cluster:\n    server: https://localhost\n  name: cluster-test\ncontexts:\n- context:\n    cluster: cluster-test\n    user: test-admin\n  name: context-test\nusers:\n- name: test-admin"}`), expBody)
+
+				fmt.Println(rr2.Body.String())
+
+				if !reflect.DeepEqual(gotBody, expBody) {
+					t.Errorf("%s, handler returned wrong body: got %v want %v",
+						"validator failed", gotBody, expBody)
+				}
+			},
+		},
+	},
+	&userTest{
+		initializers: []func(tester *tester){
+			initUserDefault,
+		},
+		msg:       "Update user successful without allowedContexts parameter",
+		method:    "PUT",
+		endpoint:  "/api/users/1",
+		body:      `{"rawKubeConfig":"apiVersion: v1\nkind: Config\npreferences: {}\ncurrent-context: context-test\nclusters:\n- cluster:\n    server: https://localhost\n  name: cluster-test\ncontexts:\n- context:\n    cluster: cluster-test\n    user: test-admin\n  name: context-test\nusers:\n- name: test-admin"}`,
+		expStatus: http.StatusNoContent,
+		expBody:   "",
+		useCookie: true,
+		validators: []func(c *userTest, tester *tester, t *testing.T){
+			func(c *userTest, tester *tester, t *testing.T) {
+				req, err := http.NewRequest(
+					"GET",
+					"/api/users/1",
+					strings.NewReader(""),
+				)
+
+				req.AddCookie(tester.cookie)
+
+				if err != nil {
+					t.Fatal(err)
+				}
+
+				rr2 := httptest.NewRecorder()
+				tester.router.ServeHTTP(rr2, req)
+
+				gotBody := &models.UserExternal{}
+				expBody := &models.UserExternal{}
+
+				json.Unmarshal(rr2.Body.Bytes(), gotBody)
+				json.Unmarshal([]byte(`{"id":1,"email":"belanger@getporter.dev","contexts":[],"rawKubeConfig":"apiVersion: v1\nkind: Config\npreferences: {}\ncurrent-context: context-test\nclusters:\n- cluster:\n    server: https://localhost\n  name: cluster-test\ncontexts:\n- context:\n    cluster: cluster-test\n    user: test-admin\n  name: context-test\nusers:\n- name: test-admin"}`), expBody)
+
+				if !reflect.DeepEqual(gotBody, expBody) {
+					t.Errorf("%s, handler returned wrong body: got %v want %v",
+						"validator failed", gotBody, expBody)
+				}
+			},
+		},
+	},
+	&userTest{
+		initializers: []func(tester *tester){
+			initUserDefault,
+		},
+		msg:       "Update user successful with allowedContexts",
+		method:    "PUT",
+		endpoint:  "/api/users/1",
+		body:      `{"rawKubeConfig":"apiVersion: v1\nkind: Config\npreferences: {}\ncurrent-context: context-test\nclusters:\n- cluster:\n    server: https://localhost\n  name: cluster-test\ncontexts:\n- context:\n    cluster: cluster-test\n    user: test-admin\n  name: context-test\nusers:\n- name: test-admin", "allowedContexts":["context-test"]}`,
+		expStatus: http.StatusNoContent,
+		expBody:   "",
+		useCookie: true,
+		validators: []func(c *userTest, tester *tester, t *testing.T){
+			func(c *userTest, tester *tester, t *testing.T) {
+				req, err := http.NewRequest(
+					"GET",
+					"/api/users/1",
+					strings.NewReader(""),
+				)
+
+				req.AddCookie(tester.cookie)
+
+				if err != nil {
+					t.Fatal(err)
+				}
+
+				rr2 := httptest.NewRecorder()
+				tester.router.ServeHTTP(rr2, req)
+
+				gotBody := &models.UserExternal{}
+				expBody := &models.UserExternal{}
+
+				json.Unmarshal(rr2.Body.Bytes(), gotBody)
+				json.Unmarshal([]byte(`{"id":1,"email":"belanger@getporter.dev","contexts":["context-test"],"rawKubeConfig":"apiVersion: v1\nkind: Config\npreferences: {}\ncurrent-context: context-test\nclusters:\n- cluster:\n    server: https://localhost\n  name: cluster-test\ncontexts:\n- context:\n    cluster: cluster-test\n    user: test-admin\n  name: context-test\nusers:\n- name: test-admin"}`), expBody)
+
+				if !reflect.DeepEqual(gotBody, expBody) {
+					t.Errorf("%s, handler returned wrong body: got %v want %v",
+						"validator failed", gotBody, expBody)
+				}
+			},
+		},
+	},
+	&userTest{
+		initializers: []func(tester *tester){
+			initUserWithContexts,
+		},
+		msg:       "Update user successful without rawKubeConfig",
+		method:    "PUT",
+		endpoint:  "/api/users/1",
+		body:      `{"allowedContexts":[]}`,
+		expStatus: http.StatusNoContent,
+		expBody:   "",
+		useCookie: true,
+		validators: []func(c *userTest, tester *tester, t *testing.T){
+			func(c *userTest, tester *tester, t *testing.T) {
+				req, err := http.NewRequest(
+					"GET",
+					"/api/users/1",
+					strings.NewReader(""),
+				)
+
+				req.AddCookie(tester.cookie)
+
+				if err != nil {
+					t.Fatal(err)
+				}
+
+				rr2 := httptest.NewRecorder()
+				tester.router.ServeHTTP(rr2, req)
+
+				gotBody := &models.UserExternal{}
+				expBody := &models.UserExternal{}
+
+				json.Unmarshal(rr2.Body.Bytes(), gotBody)
+				json.Unmarshal([]byte(`{"id":1,"email":"belanger@getporter.dev","contexts":[],"rawKubeConfig":"apiVersion: v1\nkind: Config\npreferences: {}\ncurrent-context: context-test\nclusters:\n- cluster:\n    server: https://localhost\n  name: cluster-test\ncontexts:\n- context:\n    cluster: cluster-test\n    user: test-admin\n  name: context-test\nusers:\n- name: test-admin"}`), expBody)
 
 				if !reflect.DeepEqual(gotBody, expBody) {
 					t.Errorf("%s, handler returned wrong body: got %v want %v",
@@ -538,11 +541,11 @@ var updateUserTests = []*userTest{
 		msg:       "Update user invalid id",
 		method:    "PUT",
 		endpoint:  "/api/users/alsdfjk",
-		body:      `{"rawKubeConfig":"apiVersion: v1\nkind: Config\npreferences: {}\ncurrent-context: default\nclusters:\n- cluster:\n    server: https://localhost\n  name: cluster-test\ncontexts:\n- context:\n    cluster: cluster-test\n    user: test-admin\n  name: context-test\nusers:\n- name: test-admin", "allowedClusters":[]}`,
+		body:      `{"rawKubeConfig":"apiVersion: v1\nkind: Config\npreferences: {}\ncurrent-context: context-test\nclusters:\n- cluster:\n    server: https://localhost\n  name: cluster-test\ncontexts:\n- context:\n    cluster: cluster-test\n    user: test-admin\n  name: context-test\nusers:\n- name: test-admin", "allowedContexts":[]}`,
 		expStatus: http.StatusForbidden,
 		expBody:   http.StatusText(http.StatusForbidden) + "\n",
 		validators: []func(c *userTest, tester *tester, t *testing.T){
-			BasicBodyValidator,
+			userBasicBodyValidator,
 		},
 	},
 	&userTest{
@@ -552,12 +555,12 @@ var updateUserTests = []*userTest{
 		msg:       "Update user bad kubeconfig",
 		method:    "PUT",
 		endpoint:  "/api/users/1",
-		body:      `{"rawKubeConfig":"notvalidyaml", "allowedClusters":[]}`,
+		body:      `{"rawKubeConfig":"notvalidyaml", "allowedContexts":[]}`,
 		expStatus: http.StatusBadRequest,
 		expBody:   `{"code":600,"errors":["could not process request"]}`,
 		useCookie: true,
 		validators: []func(c *userTest, tester *tester, t *testing.T){
-			BasicBodyValidator,
+			userBasicBodyValidator,
 		},
 	},
 }
@@ -625,7 +628,7 @@ var deleteUserTests = []*userTest{
 		expStatus: http.StatusForbidden,
 		expBody:   http.StatusText(http.StatusForbidden) + "\n",
 		validators: []func(c *userTest, tester *tester, t *testing.T){
-			BasicBodyValidator,
+			userBasicBodyValidator,
 		},
 	},
 	&userTest{
@@ -640,7 +643,7 @@ var deleteUserTests = []*userTest{
 		expBody:   `{"code":601,"errors":["required validation failed"]}`,
 		useCookie: true,
 		validators: []func(c *userTest, tester *tester, t *testing.T){
-			BasicBodyValidator,
+			userBasicBodyValidator,
 		},
 	},
 }
@@ -649,14 +652,31 @@ func TestHandleDeleteUser(t *testing.T) {
 	testUserRequests(t, deleteUserTests, true)
 }
 
-func BasicBodyValidator(c *userTest, tester *tester, t *testing.T) {
+// ------------------------- INITIALIZERS AND VALIDATORS ------------------------- //
+
+func initUserDefault(tester *tester) {
+	tester.createUserSession("belanger@getporter.dev", "hello")
+}
+
+func initUserWithContexts(tester *tester) {
+	initUserDefault(tester)
+
+	user, _ := tester.repo.User.ReadUserByEmail("belanger@getporter.dev")
+	user.Contexts = "context-test"
+
+	user.RawKubeConfig = []byte("apiVersion: v1\nkind: Config\npreferences: {}\ncurrent-context: context-test\nclusters:\n- cluster:\n    server: https://localhost\n  name: cluster-test\ncontexts:\n- context:\n    cluster: cluster-test\n    user: test-admin\n  name: context-test\nusers:\n- name: test-admin")
+
+	tester.repo.User.UpdateUser(user)
+}
+
+func userBasicBodyValidator(c *userTest, tester *tester, t *testing.T) {
 	if body := tester.rr.Body.String(); body != c.expBody {
 		t.Errorf("%s, handler returned wrong body: got %v want %v",
 			c.msg, body, c.expBody)
 	}
 }
 
-func UserModelBodyValidator(c *userTest, tester *tester, t *testing.T) {
+func userModelBodyValidator(c *userTest, tester *tester, t *testing.T) {
 	gotBody := &models.UserExternal{}
 	expBody := &models.UserExternal{}
 
@@ -669,10 +689,9 @@ func UserModelBodyValidator(c *userTest, tester *tester, t *testing.T) {
 	}
 }
 
-func ClusterBodyValidator(c *userTest, tester *tester, t *testing.T) {
-	// if status is expected to be 200, parse the body for UserExternal
-	gotBody := &[]models.ClusterConfigExternal{}
-	expBody := &[]models.ClusterConfigExternal{}
+func userContextBodyValidator(c *userTest, tester *tester, t *testing.T) {
+	gotBody := &[]models.Context{}
+	expBody := &[]models.Context{}
 
 	json.Unmarshal(tester.rr.Body.Bytes(), gotBody)
 	json.Unmarshal([]byte(c.expBody), expBody)

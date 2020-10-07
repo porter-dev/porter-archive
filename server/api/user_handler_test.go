@@ -29,7 +29,7 @@ type userTest struct {
 func testUserRequests(t *testing.T, tests []*userTest, canQuery bool) {
 	for _, c := range tests {
 		// create a new tester
-		tester := newTester(canQuery, nil)
+		tester := newTester(canQuery)
 
 		// if there's an initializer, call it
 		for _, init := range c.initializers {

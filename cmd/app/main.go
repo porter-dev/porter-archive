@@ -37,7 +37,7 @@ func main() {
 
 	validator := vr.New()
 
-	a := api.New(logger, repo, validator, store, &appConf.Helm, appConf.Server.CookieName)
+	a := api.New(logger, repo, validator, store, appConf.Server.CookieName, false)
 
 	appRouter := router.New(a, store, appConf.Server.CookieName)
 

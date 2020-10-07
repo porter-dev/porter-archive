@@ -7,13 +7,10 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/porter-dev/porter/internal/config"
 	"github.com/porter-dev/porter/internal/helm"
-	"github.com/porter-dev/porter/internal/logger"
 
 	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/release"
-	"helm.sh/helm/v3/pkg/storage"
 	"helm.sh/helm/v3/pkg/storage/driver"
 )
 
@@ -24,28 +21,6 @@ type releaseStub struct {
 	chartVersion string
 	status       release.Status
 }
-
-// type ListFilter struct {
-// 	Namespace    string   `json:"namespace"`
-// 	Limit        int      `json:"limit"`
-// 	Skip         int      `json:"skip"`
-// 	ByDate       bool     `json:"byDate"`
-// 	StatusFilter []string `json:"statusFilter"`
-// }
-
-// type Form struct {
-// 	KubeConfig      []byte   `form:"required"`
-// 	AllowedContexts []string `form:"required"`
-// 	Context         string   `json:"context" form:"required"`
-// 	Storage         string   `json:"storage" form:"oneof=secret configmap memory"`
-// 	Namespace       string   `json:"namespace"`
-// }
-
-// type ListChartForm struct {
-// 	HelmOptions *helm.Form       `json:"helm" form:"required"`
-// 	ListFilter  *helm.ListFilter `json:"filter" form:"required"`
-// 	UserID      uint             `json:"user_id"`
-// }
 
 // ------------------------- TEST TYPES AND MAIN LOOP ------------------------- //
 
@@ -64,8 +39,7 @@ type chartTest struct {
 func testChartRequests(t *testing.T, tests []*chartTest, canQuery bool) {
 	for _, c := range tests {
 		// create a new tester
-		storage := helm.StorageMap["memory"](nil, "", nil)
-		tester := newTester(canQuery, storage)
+		tester := newTester(canQuery)
 
 		// if there's an initializer, call it
 		for _, init := range c.initializers {
@@ -142,31 +116,47 @@ func TestHandleListCharts(t *testing.T) {
 	testChartRequests(t, listChartsTests, true)
 }
 
+var getChartTests = []*chartTest{
+	&chartTest{
+		initializers: []func(tester *tester){
+			initDefaultCharts,
+		},
+		msg:      "Get charts",
+		method:   "GET",
+		endpoint: "/api/charts/airwatch/0",
+		body: `{
+			"user_id": 1,
+			"helm": {
+				"namespace": "",
+				"context": "context-test",
+				"storage": "memory"
+			}
+		}`,
+		expStatus: http.StatusOK,
+		expBody:   releaseStubToChartJSON(sampleReleaseStubs[0]),
+		useCookie: true,
+		validators: []func(c *chartTest, tester *tester, t *testing.T){
+			chartReleaseBodyValidator,
+		},
+	},
+}
+
+func TestHandleGetChart(t *testing.T) {
+	testChartRequests(t, getChartTests, true)
+}
+
 // ------------------------- INITIALIZERS AND VALIDATORS ------------------------- //
 
 func initDefaultCharts(tester *tester) {
 	initUserDefault(tester)
 
-	agent := newAgentFixture("default", tester.app.HelmTestStorageDriver)
+	agent := tester.app.TestAgents.HelmAgent
 
 	makeReleases(agent, sampleReleaseStubs)
 
 	// calling agent.ActionConfig.Releases.Create in makeReleases will automatically set the
 	// namespace, so we have to reset the namespace of the storage driver
 	agent.ActionConfig.Releases.Driver.(*driver.Memory).SetNamespace("")
-}
-
-func newAgentFixture(namespace string, storage *storage.Storage) *helm.Agent {
-	l := logger.NewConsole(true)
-	opts := &helm.Form{
-		Namespace: namespace,
-	}
-
-	agent, _ := opts.ToAgent(l, &config.HelmGlobalConf{
-		IsTesting: true,
-	}, storage)
-
-	return agent
 }
 
 var sampleReleaseStubs = []releaseStub{
@@ -185,6 +175,14 @@ func releaseStubsToChartJSON(rels []releaseStub) string {
 	}
 
 	str, _ := json.Marshal(releases)
+
+	return string(str)
+}
+
+func releaseStubToChartJSON(r releaseStub) string {
+	rel := releaseStubToRelease(r)
+
+	str, _ := json.Marshal(rel)
 
 	return string(str)
 }

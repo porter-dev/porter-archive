@@ -7,7 +7,6 @@ import { Context } from '../../shared/Context';
 import Sidebar from './sidebar/Sidebar';
 import Dashboard from './dashboard/Dashboard';
 import ClusterConfigModal from './modals/ClusterConfigModal';
-import Loading from '../../components/Loading';
 
 type PropsType = {
   logOut: () => void
@@ -23,7 +22,14 @@ export default class Home extends Component<PropsType, StateType> {
       return <Dashboard />
     }
 
-    return <Loading />
+    return (
+        <Placeholder>
+          <Bold>Porter 101</Bold><br />
+          1. Go to <A onClick={() => {this.context.setCurrentModal('ClusterConfigModal')}}>+ Add a Cluster</A> to connect to your Kubernetes cluster(s).<br /><br />
+          2. Check out the <A onClick={() => {this.context.setCurrentModal('CreateService')}}>Integrations</A> tab to link your repo, image registry, Slack workspace, and more.<br /><br />
+          4. Sync local changes to Porter for easy <A target='_blank' href='https://docs.getporter.dev/docs/cli-documentation#porter-sync'>remote development</A>.
+        </Placeholder>
+    );
   }
 
   render() {
@@ -39,7 +45,11 @@ export default class Home extends Component<PropsType, StateType> {
         </ReactModal>
 
         <Sidebar logOut={this.props.logOut} />
-        {this.renderDashboard()}
+        <StyledDashboard>
+          <DashboardWrapper>
+            {this.renderDashboard()}
+          </DashboardWrapper>
+        </StyledDashboard>
       </StyledHome>
     );
   }
@@ -66,19 +76,42 @@ const MediumModalStyles = {
   },
 };
 
-const DummyDashboard = styled.div`
+const StyledDashboard = styled.div`
   height: 100%;
   width: 100vw;
-  font-family: 'Work Sans', sans-serif;
+  padding-top: 80px;
   overflow-y: auto;
   display: flex;
-  letter-spacing: 10px;
   flex: 1;
   justify-content: center;
-  padding-bottom: 30px;
-  align-items: center;
-  background: ${props => props.theme.bg};
+  background: #24272a;
   position: relative;
+`;
+
+const DashboardWrapper = styled.div`
+  width: 80%;
+  min-width: 300px;
+  padding-bottom: 120px;
+`;
+
+const A = styled.a`
+  color: #ffffff;
+  text-decoration: underline;
+  cursor: pointer;
+`;
+
+const Placeholder = styled.div`
+  font-family: "Work Sans", sans-serif;
+  color: #6f6f6f;
+  font-size: 16px;
+  margin-left: 25px;
+  margin-top: 7vh;
+  user-select: none;
+`;
+
+const Bold = styled.div`
+  font-weight: bold;
+  font-size: 20px;
 `;
 
 const StyledHome = styled.div`

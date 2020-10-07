@@ -322,12 +322,12 @@ func TestHandleReadUser(t *testing.T) {
 	testUserRequests(t, readUserTests, true)
 }
 
-var readUserClustersTests = []*userTest{
+var readUserContextsTests = []*userTest{
 	&userTest{
 		initializers: []func(tester *tester){
 			initUserWithContexts,
 		},
-		msg:       "Read user successful",
+		msg:       "Read user context selected successful",
 		method:    "GET",
 		endpoint:  "/api/users/1/contexts",
 		body:      "",
@@ -338,10 +338,33 @@ var readUserClustersTests = []*userTest{
 			userContextBodyValidator,
 		},
 	},
+	&userTest{
+		initializers: []func(tester *tester){
+			func(tester *tester) {
+				initUserDefault(tester)
+
+				user, _ := tester.repo.User.ReadUserByEmail("belanger@getporter.dev")
+				user.Contexts = ""
+				user.RawKubeConfig = []byte("apiVersion: v1\nkind: Config\npreferences: {}\ncurrent-context: context-test\nclusters:\n- cluster:\n    server: https://localhost\n  name: cluster-test\ncontexts:\n- context:\n    cluster: cluster-test\n    user: test-admin\n  name: context-test\nusers:\n- name: test-admin")
+
+				tester.repo.User.UpdateUser(user)
+			},
+		},
+		msg:       "Read user context not selected successful",
+		method:    "GET",
+		endpoint:  "/api/users/1/contexts",
+		body:      "",
+		expStatus: http.StatusOK,
+		useCookie: true,
+		expBody:   `[{"name":"context-test","server":"https://localhost","cluster":"cluster-test","user":"test-admin","selected":false}]`,
+		validators: []func(c *userTest, tester *tester, t *testing.T){
+			userContextBodyValidator,
+		},
+	},
 }
 
-func TestHandleReadUserClusters(t *testing.T) {
-	testUserRequests(t, readUserClustersTests, true)
+func TestHandleReadUserContexts(t *testing.T) {
+	testUserRequests(t, readUserContextsTests, true)
 }
 
 var updateUserTests = []*userTest{

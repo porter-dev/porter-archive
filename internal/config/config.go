@@ -12,13 +12,14 @@ type Conf struct {
 	Debug  bool `env:"DEBUG,default=false"`
 	Server ServerConf
 	Db     DBConf
+	Helm   HelmGlobalConf
 }
 
 // ServerConf is the server configuration
 type ServerConf struct {
 	Port         int           `env:"SERVER_PORT,default=8080"`
 	CookieName   string        `env:"COOKIE_NAME,default=porter"`
-	CookieSecret []byte        `env:"COOKIE_SECRETS,default=secret"`
+	CookieSecret []byte        `env:"COOKIE_SECRET,default=secret"`
 	TimeoutRead  time.Duration `env:"SERVER_TIMEOUT_READ,default=5s"`
 	TimeoutWrite time.Duration `env:"SERVER_TIMEOUT_WRITE,default=10s"`
 	TimeoutIdle  time.Duration `env:"SERVER_TIMEOUT_IDLE,default=15s"`
@@ -32,6 +33,11 @@ type DBConf struct {
 	Username string `env:"DB_USER,default=porter"`
 	Password string `env:"DB_PASS,default=porter"`
 	DbName   string `env:"DB_NAME,default=porter"`
+}
+
+// HelmGlobalConf is the global configuration for the Helm agent
+type HelmGlobalConf struct {
+	IsTesting bool `env:"HELM_IS_TESTING,default=false"`
 }
 
 // FromEnv generates a configuration from environment variables

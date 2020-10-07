@@ -120,7 +120,7 @@ func (app *App) handleErrorRead(err error, code ErrorCode, w http.ResponseWriter
 		return
 	}
 
-	app.handleErrorDataRead(err, code, w)
+	app.handleErrorDataRead(err, w)
 }
 
 // handleErrorDataWrite handles a database write error due to either a connection
@@ -131,7 +131,7 @@ func (app *App) handleErrorDataWrite(err error, w http.ResponseWriter) {
 
 // handleErrorDataRead handles a database read error due to an internal error, such as
 // the database connection or gorm internals
-func (app *App) handleErrorDataRead(err error, code ErrorCode, w http.ResponseWriter) {
+func (app *App) handleErrorDataRead(err error, w http.ResponseWriter) {
 	app.sendExternalError(err, http.StatusInternalServerError, ErrorDataRead, w)
 }
 

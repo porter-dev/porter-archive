@@ -65,7 +65,7 @@ type UpdateUserForm struct {
 	WriteUserForm
 	ID              uint     `form:"required"`
 	RawKubeConfig   string   `json:"rawKubeConfig,omitempty"`
-	AllowedContexts []string `json:"allowedContexts,omitempty"`
+	AllowedContexts []string `json:"allowedContexts"`
 }
 
 // ToUser converts an UpdateUserForm to models.User by parsing the kubeconfig

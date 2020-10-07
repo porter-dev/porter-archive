@@ -2,15 +2,14 @@ package router
 
 import (
 	"github.com/go-chi/chi"
+	"github.com/gorilla/sessions"
 	"github.com/porter-dev/porter/server/api"
 	"github.com/porter-dev/porter/server/requestlog"
 	mw "github.com/porter-dev/porter/server/router/middleware"
-
-	sessionstore "github.com/porter-dev/porter/internal/auth"
 )
 
 // New creates a new Chi router instance
-func New(a *api.App, store *sessionstore.PGStore, cookieName string) *chi.Mux {
+func New(a *api.App, store sessions.Store, cookieName string) *chi.Mux {
 	l := a.Logger()
 	r := chi.NewRouter()
 	auth := mw.NewAuth(store, cookieName)
@@ -30,6 +29,10 @@ func New(a *api.App, store *sessionstore.PGStore, cookieName string) *chi.Mux {
 
 		// /api/charts routes
 		r.Method("GET", "/charts", auth.DoesUserIDMatch(requestlog.NewHandler(a.HandleListCharts, l), mw.BodyParam))
+		r.Method("GET", "/charts/{name}/{revision}", auth.DoesUserIDMatch(requestlog.NewHandler(a.HandleGetChart, l), mw.BodyParam))
+
+		// /api/k8s routes
+		r.Method("GET", "/k8s/namespaces", auth.DoesUserIDMatch(requestlog.NewHandler(a.HandleListNamespaces, l), mw.BodyParam))
 	})
 
 	return r

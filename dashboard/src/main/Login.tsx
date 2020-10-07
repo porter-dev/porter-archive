@@ -40,7 +40,7 @@ export default class Login extends Component<PropsType, StateType> {
         password: password
       }, {}, (err: any, res: any) => {
         // TODO: case and set credential error
-        err ? setCurrentError(JSON.stringify(err)) : authenticate();
+        err ? setCurrentError(err.response.data.errors[0]) : authenticate();
       });
     }
   }

@@ -127,6 +127,15 @@ func NewStore(repo *repository.Repository, conf config.ServerConf) (*PGStore, er
 	return dbStore, nil
 }
 
+// NewFilesystemStore takes session key pairs to create a session-store in the local fs without using a db.
+func NewFilesystemStore(conf config.ServerConf) *sessions.FilesystemStore {
+
+	// Defaults to os.TempDir() when first argument (path) isn't specified.
+	store := sessions.NewFilesystemStore("", conf.CookieSecret)
+
+	return store
+}
+
 // Get Fetches a session for a given name after it has been added to the
 // registry.
 func (store *PGStore) Get(r *http.Request, name string) (*sessions.Session, error) {

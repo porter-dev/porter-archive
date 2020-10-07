@@ -4,7 +4,8 @@ import (
 	"github.com/go-playground/locales/en"
 	ut "github.com/go-playground/universal-translator"
 	"github.com/go-playground/validator/v10"
-	sessionstore "github.com/porter-dev/porter/internal/auth"
+
+	"github.com/gorilla/sessions"
 	"github.com/porter-dev/porter/internal/config"
 	lr "github.com/porter-dev/porter/internal/logger"
 	"github.com/porter-dev/porter/internal/repository"
@@ -17,7 +18,7 @@ type App struct {
 	logger     *lr.Logger
 	repo       *repository.Repository
 	validator  *validator.Validate
-	store      *sessionstore.PGStore
+	store      sessions.Store
 	translator *ut.Translator
 	helmConf   *config.HelmGlobalConf
 	// HelmTestStorageDriver is used by testing libraries to query the in-memory
@@ -31,7 +32,7 @@ func New(
 	logger *lr.Logger,
 	repo *repository.Repository,
 	validator *validator.Validate,
-	store *sessionstore.PGStore,
+	store sessions.Store,
 	helmConf *config.HelmGlobalConf,
 	cookieName string,
 ) *App {

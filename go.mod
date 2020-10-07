@@ -40,6 +40,7 @@ require (
 	gopkg.in/go-playground/validator.v9 v9.31.0
 	gopkg.in/yaml.v2 v2.3.0
 	gorm.io/driver/postgres v1.0.2
+	gorm.io/driver/sqlite v1.1.3
 	gorm.io/gorm v1.20.2
 	helm.sh/helm v2.16.12+incompatible
 	helm.sh/helm/v3 v3.3.4

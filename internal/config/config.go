@@ -33,6 +33,8 @@ type DBConf struct {
 	Username string `env:"DB_USER,default=porter"`
 	Password string `env:"DB_PASS,default=porter"`
 	DbName   string `env:"DB_NAME,default=porter"`
+
+	SQLLite bool `env:"QUICK_START,default=false"`
 }
 
 // K8sConf is the global configuration for the k8s agents

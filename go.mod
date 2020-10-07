@@ -32,6 +32,7 @@ require (
 	gopkg.in/go-playground/validator.v9 v9.31.0
 	gopkg.in/yaml.v2 v2.3.0
 	gorm.io/driver/postgres v1.0.2
+	gorm.io/driver/sqlite v1.1.3
 	gorm.io/gorm v1.20.2
 	k8s.io/apimachinery v0.19.2
 	k8s.io/client-go v0.0.0-20200917000235-cba7285b7f29

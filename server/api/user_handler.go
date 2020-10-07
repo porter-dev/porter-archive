@@ -3,7 +3,6 @@ package api
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
@@ -57,8 +56,7 @@ func (app *App) HandleCreateUser(w http.ResponseWriter, r *http.Request) {
 // HandleAuthCheck checks whether current session is authenticated.
 func (app *App) HandleAuthCheck(w http.ResponseWriter, r *http.Request) {
 	session, err := app.store.Get(r, app.cookieName)
-	cook, _ := r.Cookie("porter")
-	fmt.Println("cooki", cook)
+
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}

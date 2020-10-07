@@ -176,3 +176,5 @@ func (k *KubeConfig) createUserMap() map[string]KubeConfigUser {
 
 	return userMap
 }
+
+// func ReadLocalKubeConfig()

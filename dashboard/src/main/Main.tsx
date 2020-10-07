@@ -25,11 +25,10 @@ export default class Main extends Component<PropsType, StateType> {
   state = {
     isLoading: false,
     isLoggedIn : false,
-    initialized: false
+    initialized: (localStorage.getItem("init") == 'true')
   }
 
   componentDidMount() {
-    localStorage.getItem("init") == 'true' ? this.setState({initialized: true}) : this.setState({initialized: false})
     api.checkAuth('', {}, {}, (err: any, res: any) => {
       if (res.data) {
         this.setState({ isLoggedIn: true, initialized: true})
@@ -50,13 +49,12 @@ export default class Main extends Component<PropsType, StateType> {
 
   render() {
     return (
-
       <StyledMain>
         <GlobalStyle />
         <BrowserRouter>
           <Switch>
             <Route path='/login' render={() => {
-              if (!this.state.isLoggedIn && this.state.initialized) {
+              if (!this.state.isLoggedIn) {
                 return <Login authenticate={this.authenticate} />
               } else {
                 return <Redirect to='/' />
@@ -64,7 +62,7 @@ export default class Main extends Component<PropsType, StateType> {
             }} />
 
             <Route path='/register' render={() => {
-              if (!this.state.initialized) {
+              if (!this.state.isLoggedIn) {
                 return <Register authenticate={this.initialize} />
               } else {
                 return <Redirect to='/' />

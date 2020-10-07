@@ -5,6 +5,7 @@ import ReactModal from 'react-modal';
 import { Context } from '../../shared/Context';
 
 import Sidebar from './sidebar/Sidebar';
+import Dashboard from './dashboard/Dashboard';
 import ClusterConfigModal from './modals/ClusterConfigModal';
 
 type PropsType = {
@@ -28,9 +29,7 @@ export default class Home extends Component<PropsType, StateType> {
         </ReactModal>
 
         <Sidebar logOut={this.props.logOut} />
-        <DummyDashboard>
-          🏗️🏗️🏗️🏗️🏗️
-        </DummyDashboard>
+        <Dashboard />
       </StyledHome>
     );
   }

@@ -17,8 +17,7 @@ type StateType = {
   configExists: boolean,
   showDrawer: boolean,
   initializedDrawer: boolean,
-  kubeContexts: KubeContextConfig[],
-  activeIndex: number,
+  kubeContexts: KubeContextConfig[]
 };
 
 export default class ClusterSection extends Component<PropsType, StateType> {
@@ -28,22 +27,27 @@ export default class ClusterSection extends Component<PropsType, StateType> {
     configExists: true,
     showDrawer: false,
     initializedDrawer: false,
-    kubeContexts: [] as KubeContextConfig[],
-    activeIndex: 0,
+    kubeContexts: [] as KubeContextConfig[]
   };
 
   updateClusters = () => {
-    let { setCurrentError, userId } = this.context;
+    let { setCurrentError, userId, setCurrentCluster } = this.context;
 
     // TODO: query with selected filter once implemented
     api.getContexts('<token>', {}, { id: userId }, (err: any, res: any) => {
       if (err) {
         setCurrentError('getContexts: ' + JSON.stringify(err));
       } else {
-
+        
         // Filter selected (temporary)
         let kubeContexts = res.data.filter((x: KubeContextConfig) => x.selected);
-        this.setState({ kubeContexts });
+        if (kubeContexts.length > 0) {
+          this.setState({ kubeContexts });
+          setCurrentCluster(kubeContexts[0].name);
+        } else {
+          this.setState({ kubeContexts: [] });
+          setCurrentCluster(null);
+        }
       }
     });
   }
@@ -77,8 +81,6 @@ export default class ClusterSection extends Component<PropsType, StateType> {
           toggleDrawer={this.toggleDrawer}
           showDrawer={this.state.showDrawer}
           kubeContexts={this.state.kubeContexts}
-          activeIndex={this.state.activeIndex}
-          setActiveIndex={(i: number): void => this.setState({ activeIndex: i })}
         />
       );
     }
@@ -90,14 +92,15 @@ export default class ClusterSection extends Component<PropsType, StateType> {
   }
 
   renderContents = (): JSX.Element => {
-    let { kubeContexts, activeIndex, showDrawer } = this.state;
+    let { kubeContexts, showDrawer } = this.state;
+    let { currentCluster } = this.context;
 
     if (kubeContexts.length > 0) {
       return (
         <ClusterSelector showDrawer={showDrawer}>
           <LinkWrapper>
             <ClusterIcon><i className="material-icons">polymer</i></ClusterIcon>
-            <ClusterName>{kubeContexts[activeIndex].name}</ClusterName>
+            <ClusterName>{currentCluster}</ClusterName>
           </LinkWrapper>
           <DrawerButton onClick={this.toggleDrawer}>
             <BgAccent src={drawerBg} />

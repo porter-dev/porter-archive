@@ -5,3 +5,9 @@ export interface KubeContextConfig {
   server: string,
   user: string
 }
+
+export enum StorageType {
+  Secret = 'secret',
+  ConfigMap = 'configmap',
+  Memory = 'memory'
+}

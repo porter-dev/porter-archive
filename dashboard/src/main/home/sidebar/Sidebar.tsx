@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import styled from 'styled-components';
-import gradient from '../../../assets/grad.jpg';
+import gradient from '../../../assets/gradient.jpg';
 
 import api from '../../../shared/api';
 import { Context } from '../../../shared/Context';

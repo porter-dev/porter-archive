@@ -21,10 +21,10 @@ func New(conf *config.DBConf) (*gorm.DB, error) {
 		conf.Host,
 	)
 
-	if auth, _ := strconv.ParseBool(os.Getenv("ENABLE_AUTH")); auth {
-		return gorm.Open(postgres.Open(dsn), &gorm.Config{})
-	} else {
+	if quickstart, _ := strconv.ParseBool(os.Getenv("QUICK_START")); quickstart {
 		return gorm.Open(sqlite.Open("./internal/porter.db"), &gorm.Config{})
+	} else {
+		return gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	}
 
 }

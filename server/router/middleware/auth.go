@@ -8,18 +8,18 @@ import (
 	"strconv"
 
 	"github.com/go-chi/chi"
-	sessionstore "github.com/porter-dev/porter/internal/auth"
+	"github.com/gorilla/sessions"
 )
 
 // Auth implements the authorization functions
 type Auth struct {
-	store      *sessionstore.PGStore
+	store      sessions.Store
 	cookieName string
 }
 
 // NewAuth returns a new Auth instance
 func NewAuth(
-	store *sessionstore.PGStore,
+	store sessions.Store,
 	cookieName string,
 ) *Auth {
 	return &Auth{store, cookieName}

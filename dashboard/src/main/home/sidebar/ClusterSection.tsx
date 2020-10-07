@@ -38,7 +38,7 @@ export default class ClusterSection extends Component<PropsType, StateType> {
       if (err) {
         setCurrentError('getContexts: ' + JSON.stringify(err));
       } else {
-        
+        console.log(res);
         // Filter selected (temporary)
         let kubeContexts = res.data.filter((x: KubeContextConfig) => x.selected);
         if (kubeContexts.length > 0) {

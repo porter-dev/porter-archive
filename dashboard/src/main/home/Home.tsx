@@ -7,6 +7,7 @@ import { Context } from '../../shared/Context';
 import Sidebar from './sidebar/Sidebar';
 import Dashboard from './dashboard/Dashboard';
 import ClusterConfigModal from './modals/ClusterConfigModal';
+import Loading from '../../components/Loading';
 
 type PropsType = {
   logOut: () => void
@@ -16,6 +17,15 @@ type StateType = {
 };
 
 export default class Home extends Component<PropsType, StateType> {
+
+  renderDashboard = () => {
+    if (this.context.currentCluster) {
+      return <Dashboard />
+    }
+
+    return <Loading />
+  }
+
   render() {
     return (
       <StyledHome>
@@ -29,7 +39,7 @@ export default class Home extends Component<PropsType, StateType> {
         </ReactModal>
 
         <Sidebar logOut={this.props.logOut} />
-        <Dashboard />
+        {this.renderDashboard()}
       </StyledHome>
     );
   }

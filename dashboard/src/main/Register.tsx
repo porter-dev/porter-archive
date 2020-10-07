@@ -30,7 +30,7 @@ export default class Register extends Component<PropsType, StateType> {
   handleRegister = (): void => {
     let { email, password, confirmPassword } = this.state;
     let { authenticate } = this.props;
-    let { setCurrentError } = this.context;
+    let { setCurrentError, setUserId } = this.context;
 
     if (!emailRegex.test(email)) {
       this.setState({ emailError: true });
@@ -48,6 +48,7 @@ export default class Register extends Component<PropsType, StateType> {
         email: email,
         password: password
       }, {}, (err: any, res: any) => {
+        setUserId(res?.data?.id)
         err ? setCurrentError(err.response.data.errors[0]) : authenticate();
       });
     } 

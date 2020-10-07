@@ -49,11 +49,17 @@ func (app *App) HandleCreateUser(w http.ResponseWriter, r *http.Request) {
 		session.Values["authenticated"] = true
 		session.Values["user_id"] = user.ID
 		session.Save(r, w)
+
+		if err := app.sendUserID(w, user.ID); err != nil {
+			app.handleErrorFormDecoding(err, ErrUserDecode, w)
+			return
+		}
+
 		w.WriteHeader(http.StatusCreated)
 	}
 }
 
-// HandleAuthCheck checks whether current session is authenticated.
+// HandleAuthCheck checks whether current session is authenticated and returns user ID if so.
 func (app *App) HandleAuthCheck(w http.ResponseWriter, r *http.Request) {
 	session, err := app.store.Get(r, app.cookieName)
 
@@ -61,14 +67,14 @@ func (app *App) HandleAuthCheck(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 
-	if auth, ok := session.Values["authenticated"].(bool); !auth || !ok {
-		app.logger.Info().Msgf(strconv.FormatBool(auth))
-		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("false"))
+	userID, _ := session.Values["user_id"].(uint)
+
+	if err := app.sendUserID(w, userID); err != nil {
+		app.handleErrorFormDecoding(err, ErrUserDecode, w)
 		return
 	}
+
 	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("true"))
 }
 
 // HandleLoginUser checks the request header for cookie and validates the user.
@@ -111,6 +117,11 @@ func (app *App) HandleLoginUser(w http.ResponseWriter, r *http.Request) {
 	session.Values["user_id"] = storedUser.ID
 	if err := session.Save(r, w); err != nil {
 		app.logger.Warn().Err(err)
+	}
+
+	if err := app.sendUserID(w, storedUser.ID); err != nil {
+		app.handleErrorFormDecoding(err, ErrUserDecode, w)
+		return
 	}
 
 	w.WriteHeader(http.StatusOK)
@@ -325,5 +336,16 @@ func doesUserExist(repo *repository.Repository, user *models.User) *HTTPError {
 		return &ErrorDataRead
 	}
 
+	return nil
+}
+
+func (app *App) sendUserID(w http.ResponseWriter, userID uint) error {
+	resUser := &models.UserExternal{
+		ID: userID,
+	}
+
+	if err := json.NewEncoder(w).Encode(resUser); err != nil {
+		return err
+	}
 	return nil
 }

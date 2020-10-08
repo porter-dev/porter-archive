@@ -80,8 +80,7 @@ var listNamespacesTests = []*k8sTest{
 		msg:    "List namespaces",
 		method: "GET",
 		endpoint: "/api/k8s/namespaces?" + url.Values{
-			"namespace": []string{""},
-			"context":   []string{"context-test"},
+			"context": []string{"context-test"},
 		}.Encode(),
 		body:      "",
 		expStatus: http.StatusOK,

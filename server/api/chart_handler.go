@@ -3,6 +3,7 @@ package api
 import (
 	"encoding/json"
 	"net/http"
+	"net/url"
 	"strconv"
 
 	"github.com/go-chi/chi"
@@ -18,16 +19,32 @@ const (
 
 // HandleListCharts retrieves a list of charts with various filter options
 func (app *App) HandleListCharts(w http.ResponseWriter, r *http.Request) {
-	// get the filter options
-	form := &forms.ListChartForm{}
+	session, err := app.store.Get(r, app.cookieName)
 
-	// decode from JSON to form value
-	if err := json.NewDecoder(r.Body).Decode(form); err != nil {
+	if err != nil {
 		app.handleErrorFormDecoding(err, ErrChartDecode, w)
 		return
 	}
 
-	form.PopulateHelmOptions(app.repo.User)
+	vals, err := url.ParseQuery(r.URL.RawQuery)
+
+	if err != nil {
+		app.handleErrorFormDecoding(err, ErrChartDecode, w)
+		return
+	}
+
+	// get the filter options
+	form := &forms.ListChartForm{
+		ChartForm: &forms.ChartForm{
+			Form: &helm.Form{},
+		},
+		ListFilter: &helm.ListFilter{},
+	}
+	form.PopulateListFromQueryParams(vals)
+
+	if sessID, ok := session.Values["user_id"].(uint); ok {
+		form.PopulateHelmOptionsFromUserID(sessID, app.repo.User)
+	}
 
 	// validate the form
 	if err := app.validator.Struct(form); err != nil {
@@ -37,15 +54,14 @@ func (app *App) HandleListCharts(w http.ResponseWriter, r *http.Request) {
 
 	// create a new agent
 	var agent *helm.Agent
-	var err error
 
 	if app.testing {
 		agent = app.TestAgents.HelmAgent
 	} else {
-		agent, err = helm.GetAgentOutOfClusterConfig(form.HelmOptions, app.logger)
+		agent, err = helm.GetAgentOutOfClusterConfig(form.ChartForm.Form, app.logger)
 	}
 
-	releases, err := agent.ListReleases(form.HelmOptions.Namespace, form.ListFilter)
+	releases, err := agent.ListReleases(form.Namespace, form.ListFilter)
 
 	if err != nil {
 		app.handleErrorFormValidation(err, ErrChartValidateFields, w)
@@ -60,28 +76,37 @@ func (app *App) HandleListCharts(w http.ResponseWriter, r *http.Request) {
 
 // HandleGetChart retrieves a single chart based on a name and revision
 func (app *App) HandleGetChart(w http.ResponseWriter, r *http.Request) {
-	name := chi.URLParam(r, "name")
-	revision, err := strconv.ParseUint(chi.URLParam(r, "revision"), 0, 64)
+	session, err := app.store.Get(r, app.cookieName)
 
-	// decode from JSON to form value
 	if err != nil {
 		app.handleErrorFormDecoding(err, ErrChartDecode, w)
 		return
 	}
 
+	name := chi.URLParam(r, "name")
+	revision, err := strconv.ParseUint(chi.URLParam(r, "revision"), 0, 64)
+
 	// get the filter options
 	form := &forms.GetChartForm{
+		ChartForm: &forms.ChartForm{
+			Form: &helm.Form{},
+		},
 		Name:     name,
 		Revision: int(revision),
 	}
 
-	// decode from JSON to form value
-	if err := json.NewDecoder(r.Body).Decode(form); err != nil {
+	vals, err := url.ParseQuery(r.URL.RawQuery)
+
+	if err != nil {
 		app.handleErrorFormDecoding(err, ErrChartDecode, w)
 		return
 	}
 
-	form.PopulateHelmOptions(app.repo.User)
+	form.PopulateHelmOptionsFromQueryParams(vals)
+
+	if sessID, ok := session.Values["user_id"].(uint); ok {
+		form.PopulateHelmOptionsFromUserID(sessID, app.repo.User)
+	}
 
 	// validate the form
 	if err := app.validator.Struct(form); err != nil {
@@ -95,7 +120,7 @@ func (app *App) HandleGetChart(w http.ResponseWriter, r *http.Request) {
 	if app.testing {
 		agent = app.TestAgents.HelmAgent
 	} else {
-		agent, err = helm.GetAgentOutOfClusterConfig(form.HelmOptions, app.logger)
+		agent, err = helm.GetAgentOutOfClusterConfig(form.ChartForm.Form, app.logger)
 	}
 
 	release, err := agent.GetRelease(form.Name, form.Revision)

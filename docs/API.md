@@ -406,30 +406,21 @@ User{
 
 **URL parameters:** N/A
 
-**Query parameters:** N/A
-
-**Request Body**:
+**Query parameters:** 
 
 ```js
 {
-  "user_id": Number,
-  "helm": {
-    // The namespace of the cluster to be used
-    "namespace": String,
-    // The name of the context in the kubeconfig being used
-    "context": String,
-    // The Helm storage option to use
-    "storage": String("secret"|"configmap"|"memory")
-  },
-  "filter": {
-    "namespace": String,
-    "limit": Number,
-    "skip": Number,
-    "byDate": Boolean,
-    "statusFilter": []String
-  }
+  "namespace": String,
+  "context": String,
+  "storage": String("secret"|"configmap"|"memory"),
+  "limit": Number,
+  "skip": Number,
+  "byDate": Boolean,
+  "statusFilter": []String("unknown"|"deployed"|"uninstalled"|"superseded"|"failed"|"uninstalling"|"pending-install"|"pending-upgrade"|"pending-rollback")
 }
 ```
+
+**Request Body**: N/A
 
 **Successful Response Body**: the full body is determined by the [release specification](https://pkg.go.dev/helm.sh/helm/v3@v3.3.4/pkg/release#Release): listed here is a subset of fields deemed to be most relevant. Note that all of the top-level fields are optional.
 
@@ -498,23 +489,20 @@ User{
 - `name` The name of the release.
 - `revision` The number of the release (set to `0` for the latest deployed release).
 
-**Query parameters:** N/A
-
-**Request Body**:
+**Query parameters:** 
 
 ```js
 {
-  "user_id": Number,
-  "helm": {
-    // The namespace of the cluster to be used
-    "namespace": String,
-    // The name of the context in the kubeconfig being used
-    "context": String,
-    // The Helm storage option to use
-    "storage": String("secret"|"configmap"|"memory")
-  }
+  // The namespace of the cluster to be used
+  "namespace": String,
+  // The name of the context in the kubeconfig being used
+  "context": String,
+  // The Helm storage option to use
+  "storage": String("secret"|"configmap"|"memory")
 }
 ```
+
+**Request Body**: N/A
 
 **Successful Response Body**: the full body is determined by the [release specification](https://pkg.go.dev/helm.sh/helm/v3@v3.3.4/pkg/release#Release): listed here is a subset of fields deemed to be most relevant. Note that all of the top-level fields are optional.
 
@@ -584,17 +572,12 @@ Chart{
 
 **Query parameters:** N/A
 
-**Request Body**: 
-
 ```js
-{
-  "user_id": Number,
-  "k8s": {
-    // The name of the context in the kubeconfig being used
-    "context": String,
-  }
-}
+// The name of the context in the kubeconfig being used
+"context": String,
 ```
+
+**Request Body**: N/A
 
 **Successful Response Body**: the full body is determined by the [namespace specification](https://pkg.go.dev/k8s.io/api/core/v1#NamespaceList), but we're primarily only interested in namespace `name`:
 

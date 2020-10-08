@@ -19,10 +19,11 @@ export default class Home extends Component<PropsType, StateType> {
 
   renderDashboard = () => {
     if (this.context.currentCluster) {
-      return <Dashboard />
+      return <DashboardWrapper><Dashboard /></DashboardWrapper>
     }
 
     return (
+      <DashboardWrapper>
         <Placeholder>
           <Bold>Porter - Getting Started</Bold><br /><br />
           1. Navigate to <A onClick={() => {this.context.setCurrentModal('ClusterConfigModal')}}>+ Add a Cluster</A> and provide a kubeconfig. *<br /><br />
@@ -34,6 +35,7 @@ export default class Home extends Component<PropsType, StateType> {
           
           * Make sure all fields are explicitly declared (e.g., certs and keys).
         </Placeholder>
+      </DashboardWrapper>
     );
   }
 
@@ -52,9 +54,7 @@ export default class Home extends Component<PropsType, StateType> {
 
         <Sidebar logOut={this.props.logOut} />
         <StyledDashboard>
-          <DashboardWrapper>
-            {this.renderDashboard()}
-          </DashboardWrapper>
+          {this.renderDashboard()}
         </StyledDashboard>
       </StyledHome>
     );

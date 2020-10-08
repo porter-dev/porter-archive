@@ -15,7 +15,7 @@ full_bin = "tmp/migrate; tmp/app"
 # Watch these filename extensions.
 include_ext = ["go", "mod", "sum", "html"]
 # Ignore these filename extensions or directories.
-exclude_dir = ["tmp"]
+exclude_dir = ["tmp", "dashboard"]
 # Watch these directories if you specified.
 include_dir = []
 # Exclude files.

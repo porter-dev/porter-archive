@@ -216,21 +216,20 @@ func TestGetReleases(t *testing.T) {
 var listReleaseHistoryTests = []listReleaseTest{
 	listReleaseTest{
 		name:      "simple history test",
-		namespace: "",
-		filter:    &helm.ListFilter{},
+		namespace: "default",
 		releases: []releaseStub{
 			releaseStub{"wordpress", "default", 2, "1.0.2", release.StatusDeployed},
 			releaseStub{"wordpress", "default", 1, "1.0.1", release.StatusSuperseded},
 		},
 		expRes: []releaseStub{
-			releaseStub{"wordpress", "default", 2, "1.0.2", release.StatusDeployed},
 			releaseStub{"wordpress", "default", 1, "1.0.1", release.StatusSuperseded},
+			releaseStub{"wordpress", "default", 2, "1.0.2", release.StatusDeployed},
 		},
 	},
 }
 
 func TestListReleaseHistory(t *testing.T) {
-	for _, tc := range listReleaseTests {
+	for _, tc := range listReleaseHistoryTests {
 		agent := newAgentFixture(t, tc.namespace)
 		makeReleases(t, agent, tc.releases)
 

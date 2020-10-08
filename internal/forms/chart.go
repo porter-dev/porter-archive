@@ -1,7 +1,6 @@
 package forms
 
 import (
-	"fmt"
 	"net/url"
 	"strconv"
 
@@ -17,11 +16,7 @@ type ChartForm struct {
 // PopulateHelmOptionsFromQueryParams populates fields in the ChartForm using the passed
 // url.Values (the parsed query params)
 func (cf *ChartForm) PopulateHelmOptionsFromQueryParams(vals url.Values) {
-	fmt.Println("HI THERE", vals, vals["context"])
-
 	if context, ok := vals["context"]; ok && len(context) == 1 {
-		fmt.Println("SETTING CONTEXT", context[0])
-
 		cf.Context = context[0]
 	}
 

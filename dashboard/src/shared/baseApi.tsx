@@ -1,4 +1,5 @@
 import axios from 'axios';
+import qs from 'qs';
 
 // Partial function that accepts a generic params type and returns an api method
 export const baseApi = <T extends {}, S = {}>(requestType: string, endpoint: ((pathParams: S) => string) | string) => {
@@ -39,7 +40,10 @@ export const baseApi = <T extends {}, S = {}>(requestType: string, endpoint: ((p
       });
     } else {
       axios.get(endpointString, {
-        params
+        params,
+        paramsSerializer: function(params) {
+          return qs.stringify(params, { arrayFormat: 'repeat' })
+        }
       })
       .then(res => {
         callback && callback(null, res);

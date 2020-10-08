@@ -36,7 +36,6 @@ export default class ClusterSection extends Component<PropsType, StateType> {
       if (err) {
         setCurrentError('Could not read clusters: ' + JSON.stringify(err));
       } else {
-        console.log(res);
 
         // TODO: handle uninitialized kubeconfig
         if (res.data) {

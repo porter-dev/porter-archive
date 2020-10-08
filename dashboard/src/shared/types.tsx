@@ -6,7 +6,7 @@ export interface KubeContextConfig {
   user: string
 }
 
-export interface Chart {
+export interface ChartType {
   name: string,
   info: {
     last_deployed: string,

@@ -137,6 +137,32 @@ func TestHandleGetChart(t *testing.T) {
 	testChartRequests(t, getChartTests, true)
 }
 
+var listChartHistoryTests = []*chartTest{
+	&chartTest{
+		initializers: []func(tester *tester){
+			initHistoryCharts,
+		},
+		msg:    "List chart history",
+		method: "GET",
+		endpoint: "/api/charts/wordpress/history?" + url.Values{
+			"namespace": []string{""},
+			"context":   []string{"context-test"},
+			"storage":   []string{"memory"},
+		}.Encode(),
+		body:      "",
+		expStatus: http.StatusOK,
+		expBody:   releaseStubsToChartJSON(historyReleaseStubs),
+		useCookie: true,
+		validators: []func(c *chartTest, tester *tester, t *testing.T){
+			chartReleaseBodyValidator,
+		},
+	},
+}
+
+func TestHandleListChartHistory(t *testing.T) {
+	testChartRequests(t, listChartHistoryTests, true)
+}
+
 // ------------------------- INITIALIZERS AND VALIDATORS ------------------------- //
 
 func initDefaultCharts(tester *tester) {
@@ -151,10 +177,27 @@ func initDefaultCharts(tester *tester) {
 	agent.ActionConfig.Releases.Driver.(*driver.Memory).SetNamespace("")
 }
 
+func initHistoryCharts(tester *tester) {
+	initUserDefault(tester)
+
+	agent := tester.app.TestAgents.HelmAgent
+
+	makeReleases(agent, historyReleaseStubs)
+
+	// calling agent.ActionConfig.Releases.Create in makeReleases will automatically set the
+	// namespace, so we have to reset the namespace of the storage driver
+	agent.ActionConfig.Releases.Driver.(*driver.Memory).SetNamespace("")
+}
+
 var sampleReleaseStubs = []releaseStub{
 	releaseStub{"airwatch", "default", 1, "1.0.0", release.StatusDeployed},
 	releaseStub{"not-in-default-namespace", "other", 1, "1.0.1", release.StatusDeployed},
 	releaseStub{"wordpress", "default", 1, "1.0.2", release.StatusDeployed},
+}
+
+var historyReleaseStubs = []releaseStub{
+	releaseStub{"wordpress", "default", 1, "1.0.1", release.StatusSuperseded},
+	releaseStub{"wordpress", "default", 2, "1.0.2", release.StatusDeployed},
 }
 
 func releaseStubsToChartJSON(rels []releaseStub) string {

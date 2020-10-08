@@ -34,3 +34,12 @@ func (a *Agent) GetRelease(
 
 	return cmd.Run(name)
 }
+
+// GetReleaseHistory returns a list of charts for a specific release
+func (a *Agent) GetReleaseHistory(
+	name string,
+) ([]*release.Release, error) {
+	cmd := action.NewHistory(a.ActionConfig)
+
+	return cmd.Run(name)
+}

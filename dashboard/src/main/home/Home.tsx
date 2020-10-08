@@ -24,10 +24,15 @@ export default class Home extends Component<PropsType, StateType> {
 
     return (
         <Placeholder>
-          <Bold>Porter 101</Bold><br />
-          1. Go to <A onClick={() => {this.context.setCurrentModal('ClusterConfigModal')}}>+ Add a Cluster</A> to connect to your Kubernetes cluster(s).<br /><br />
-          2. Check out the <A onClick={() => {this.context.setCurrentModal('CreateService')}}>Integrations</A> tab to link your repo, image registry, Slack workspace, and more.<br /><br />
-          4. Sync local changes to Porter for easy <A target='_blank' href='https://docs.getporter.dev/docs/cli-documentation#porter-sync'>remote development</A>.
+          <Bold>Porter - Getting Started</Bold><br /><br />
+          1. Navigate to <A onClick={() => {this.context.setCurrentModal('ClusterConfigModal')}}>+ Add a Cluster</A> and provide a kubeconfig. *<br /><br />
+          2. Choose which contexts you would like to use from the <A onClick={() => {
+            this.context.setCurrentModal('ClusterConfigModal');
+            this.context.setCurrentModalData({ currentTab: 'select' });
+          }}>Select Clusters</A> tab.<br /><br />
+          3. For additional information, please refer to our <A>docs</A>.<br /><br /><br />
+          
+          * Make sure all fields are explicitly declared (e.g., certs and keys).
         </Placeholder>
     );
   }
@@ -71,7 +76,7 @@ const MediumModalStyles = {
     margin: '0 auto',
     height: '575px',
     top: 'calc(50% - 289px)',
-    backgroundColor: '#24272a',
+    backgroundColor: '#202227',
     animation: 'floatInModal 0.5s 0s',
     overflow: 'visible',
   },
@@ -85,7 +90,7 @@ const StyledDashboard = styled.div`
   display: flex;
   flex: 1;
   justify-content: center;
-  background: #24272a;
+  background: #202227;
   position: relative;
 `;
 
@@ -98,15 +103,15 @@ const DashboardWrapper = styled.div`
 const A = styled.a`
   color: #ffffff;
   text-decoration: underline;
-  cursor: pointer;
+  cursor: ${(props: { disabled?: boolean }) => props.disabled ? 'not-allowed' : 'pointer'};
 `;
 
 const Placeholder = styled.div`
   font-family: "Work Sans", sans-serif;
   color: #6f6f6f;
   font-size: 16px;
-  margin-left: 25px;
-  margin-top: 7vh;
+  margin-left: 20px;
+  margin-top: 24vh;
   user-select: none;
 `;
 

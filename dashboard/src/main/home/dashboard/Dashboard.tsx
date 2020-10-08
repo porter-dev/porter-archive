@@ -3,44 +3,21 @@ import styled from 'styled-components';
 import gradient from '../../../assets/gradient.jpg';
 
 import { Context } from '../../../shared/Context';
-import api from '../../../shared/api';
-import { StorageType } from '../../../shared/types';
 
-class Dashboard extends Component {
+import ChartList from './chart/ChartList';
 
-  componentDidMount() {
-    let { userId, setCurrentError, currentCluster } = this.context;
-    
-    api.getCharts('<token>', {
-      user_id: userId,
-      helm: {
-        namespace: '',
-        context: currentCluster,
-        storage: 'memory',
-      },
-      filter: {
-        namespace: '',
-        limit: 20,
-        skip: 0,
-        byDate: false,
-        statusFilter: ['deployed']
-      }
-    }, {}, (err: any, res: any) => {
-      if (err) {
-        setCurrentError(JSON.stringify(err));
-      } else {
-        
-        console.log(res);
-      }
-    });
-  }
+type PropsType = {
+};
 
+type StateType = {
+};
+
+export default class Dashboard extends Component<PropsType, StateType> {
   render() {
     let { currentCluster } = this.context;
 
     return ( 
-      <StyledDashboard>
-        <DashboardWrapper>
+      <div>
         <TitleSection>
           <ProjectIcon>
             <ProjectImage src={gradient} />
@@ -60,14 +37,14 @@ class Dashboard extends Component {
         </InfoSection>
 
         <LineBreak />
-        </DashboardWrapper>
-      </StyledDashboard>
+
+        <ChartList currentCluster={currentCluster} />
+      </div>
     );
   }
 }
 
 Dashboard.contextType = Context;
-export default Dashboard;
 
 const TopRow = styled.div`
   display: flex;
@@ -228,6 +205,7 @@ const Title = styled.div`
 
 const TitleSection = styled.div`
   height: 80px;
+  margin-top: 10px;
   margin-bottom: 10px;
   display: flex;
   flex-direction: row;
@@ -246,22 +224,4 @@ const TitleSection = styled.div`
     }
     margin-bottom: -3px;
   }
-`;
-
-const StyledDashboard = styled.div`
-  height: 100%;
-  width: 100vw;
-  padding-top: 80px;
-  overflow-y: auto;
-  display: flex;
-  flex: 1;
-  justify-content: center;
-  background: #24272a;
-  position: relative;
-`;
-
-const DashboardWrapper = styled.div`
-  width: 80%;
-  min-width: 300px;
-  padding-bottom: 120px;
 `;

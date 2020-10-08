@@ -1,39 +1,92 @@
 package forms
 
 import (
+	"net/url"
+	"strconv"
+
 	"github.com/porter-dev/porter/internal/helm"
 	"github.com/porter-dev/porter/internal/repository"
 )
 
 // ChartForm is the generic base type for CRUD operations on charts
 type ChartForm struct {
-	HelmOptions *helm.Form `json:"helm" form:"required"`
-	UserID      uint       `json:"user_id"`
+	*helm.Form
 }
 
-// PopulateHelmOptions uses the passed user ID to populate the HelmOptions object
-func (cf *ChartForm) PopulateHelmOptions(repo repository.UserRepository) error {
-	user, err := repo.ReadUser(cf.UserID)
+// PopulateHelmOptionsFromQueryParams populates fields in the ChartForm using the passed
+// url.Values (the parsed query params)
+func (cf *ChartForm) PopulateHelmOptionsFromQueryParams(vals url.Values) {
+	if context, ok := vals["context"]; ok && len(context) == 1 {
+		cf.Context = context[0]
+	}
+
+	if namespace, ok := vals["namespace"]; ok && len(namespace) == 1 {
+		cf.Namespace = namespace[0]
+	}
+
+	if storage, ok := vals["storage"]; ok && len(storage) == 1 {
+		cf.Storage = storage[0]
+	}
+}
+
+// PopulateHelmOptionsFromUserID uses the passed user ID to populate the HelmOptions object
+func (cf *ChartForm) PopulateHelmOptionsFromUserID(userID uint, repo repository.UserRepository) error {
+	user, err := repo.ReadUser(userID)
 
 	if err != nil {
 		return err
 	}
 
-	cf.HelmOptions.AllowedContexts = user.ContextToSlice()
-	cf.HelmOptions.KubeConfig = user.RawKubeConfig
+	cf.AllowedContexts = user.ContextToSlice()
+	cf.KubeConfig = user.RawKubeConfig
 
 	return nil
 }
 
 // ListChartForm represents the accepted values for listing Helm charts
 type ListChartForm struct {
-	ChartForm
-	ListFilter *helm.ListFilter `json:"filter" form:"required"`
+	*ChartForm
+	*helm.ListFilter
+}
+
+// PopulateListFromQueryParams populates fields in the ListChartForm using the passed
+// url.Values (the parsed query params). It calls the underlying
+// PopulateHelmOptionsFromQueryParams
+func (lcf *ListChartForm) PopulateListFromQueryParams(vals url.Values) {
+	lcf.PopulateHelmOptionsFromQueryParams(vals)
+
+	if limit, ok := vals["limit"]; ok && len(limit) == 1 {
+		if limitInt, err := strconv.ParseInt(limit[0], 10, 64); err == nil {
+			lcf.ListFilter.Limit = int(limitInt)
+		}
+	}
+
+	if skip, ok := vals["skip"]; ok && len(skip) == 1 {
+		if skipInt, err := strconv.ParseInt(skip[0], 10, 64); err == nil {
+			lcf.ListFilter.Skip = int(skipInt)
+		}
+	}
+
+	if byDate, ok := vals["byDate"]; ok && len(byDate) == 1 {
+		if byDateBool, err := strconv.ParseBool(byDate[0]); err == nil {
+			lcf.ListFilter.ByDate = byDateBool
+		}
+	}
+
+	if statusFilter, ok := vals["statusFilter"]; ok {
+		lcf.ListFilter.StatusFilter = statusFilter
+	}
 }
 
 // GetChartForm represents the accepted values for getting a single Helm chart
 type GetChartForm struct {
-	ChartForm
+	*ChartForm
 	Name     string `json:"name" form:"required"`
-	Revision int    `json:"release"`
+	Revision int    `json:"revision"`
+}
+
+// ListChartHistoryForm represents the accepted values for getting a single Helm chart
+type ListChartHistoryForm struct {
+	*ChartForm
+	Name string `json:"name" form:"required"`
 }

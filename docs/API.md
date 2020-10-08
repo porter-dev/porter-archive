@@ -15,6 +15,7 @@
   - [`DELETE /api/users/{id}`](#delete-apiusersid)
 - [`/api/charts`](#apicharts)
   - [`GET /api/charts`](#get-apicharts)
+  - [`GET /api/charts/{name}/history`](#get-apichartsnamehistory)
   - [`GET /api/charts/{name}/{revision}`](#get-apichartsnamerevision)
 - [`/api/k8s`](#apik8s)
   - [`GET /api/k8s/namespaces`](#get-apik8snamespaces)
@@ -424,30 +425,102 @@ User object with only the id field. Other fields are empty - with values in para
 
 **URL parameters:** N/A
 
-**Query parameters:** N/A
-
-**Request Body**:
+**Query parameters:** 
 
 ```js
 {
-  "user_id": Number,
-  "helm": {
-    // The namespace of the cluster to be used
-    "namespace": String,
-    // The name of the context in the kubeconfig being used
-    "context": String,
-    // The Helm storage option to use
-    "storage": String("secret"|"configmap"|"memory")
-  },
-  "filter": {
-    "namespace": String,
-    "limit": Number,
-    "skip": Number,
-    "byDate": Boolean,
-    "statusFilter": []String
-  }
+  "namespace": String,
+  "context": String,
+  "storage": String("secret"|"configmap"|"memory"),
+  "limit": Number,
+  "skip": Number,
+  "byDate": Boolean,
+  "statusFilter": []String("unknown"|"deployed"|"uninstalled"|"superseded"|"failed"|"uninstalling"|"pending-install"|"pending-upgrade"|"pending-rollback")
 }
 ```
+
+**Request Body**: N/A
+
+**Successful Response Body**: the full body is determined by the [release specification](https://pkg.go.dev/helm.sh/helm/v3@v3.3.4/pkg/release#Release): listed here is a subset of fields deemed to be most relevant. Note that all of the top-level fields are optional.
+
+```js
+[]Chart{
+  // Name is the name of the release
+  "name": String,
+  "info": Info{
+    // LastDeployed is when the release was last deployed.
+    "last_deployed": String,
+    // Deleted tracks when this object was deleted.
+    "deleted": String,
+    // Description is human-friendly "log entry" about this release.
+    "description": String,
+    // Status is the current state of the release
+    "status": String("unknown"|"deployed"|"uninstalled"|"superseded"|"failed"|"uninstalling"|"pending-install"|"pending-upgrade"|"pending-rollback")
+  },
+  "chart": Chart{
+    "metadata": Metadata{
+      // The name of the chart
+      "name": String,
+      // The URL to a relevant project page, git repo, or contact person
+      "home": String,
+      // Sources is a list of URLs to the source code of this chart
+      "sources": []String,
+      // A SemVer 2 conformant version string of the chart
+      "version": String,
+      // A one-sentence description of the chart
+      "description": String,
+      // The URL to an icon file.
+      "icon": String,
+      // The API Version of this chart.
+      "apiVersion": String,
+    },
+    "templates": []File{
+      // Name is the path-like name of the template.
+      "name": String,
+      // Data is the template as byte data.
+      "data": String
+    },
+    // Values are default config for this chart.
+    "values": Map[String]{}
+  },
+  // The set of extra Values added to the chart, which override the 
+  // default values inside of the chart
+  "config": Map[String]{},
+  // Manifest is the string representation of the rendered template
+  "manifest": String,
+  // Version is an int which represents the revision of the release.
+  "version": Number,
+  // Namespace is the kubernetes namespace of the release.
+  "namespace": String
+}
+```
+
+**Successful Status Code**: `200`
+
+**Errors:** TBD
+
+#### `GET /api/charts/{name}/history`
+
+**Description:** Gets a history of revisions for a given deployed chart based on the release `name`.
+
+**URL parameters:** 
+
+- `name` The name of the release.
+
+**Query parameters:** 
+
+```js
+{
+  // The namespace of the cluster to be used
+  "namespace": String,
+  // The name of the context in the kubeconfig being used
+  "context": String,
+  // The Helm storage option to use
+  "storage": String("secret"|"configmap"|"memory")
+}
+```
+
+**Request Body**: N/A
 
 **Successful Response Body**: the full body is determined by the [release specification](https://pkg.go.dev/helm.sh/helm/v3@v3.3.4/pkg/release#Release): listed here is a subset of fields deemed to be most relevant. Note that all of the top-level fields are optional.
 
@@ -516,23 +589,20 @@ User object with only the id field. Other fields are empty - with values in para
 - `name` The name of the release.
 - `revision` The number of the release (set to `0` for the latest deployed release).
 
-**Query parameters:** N/A
-
-**Request Body**:
+**Query parameters:** 
 
 ```js
 {
-  "user_id": Number,
-  "helm": {
-    // The namespace of the cluster to be used
-    "namespace": String,
-    // The name of the context in the kubeconfig being used
-    "context": String,
-    // The Helm storage option to use
-    "storage": String("secret"|"configmap"|"memory")
-  }
+  // The namespace of the cluster to be used
+  "namespace": String,
+  // The name of the context in the kubeconfig being used
+  "context": String,
+  // The Helm storage option to use
+  "storage": String("secret"|"configmap"|"memory")
 }
 ```
+
+**Request Body**: N/A
 
 **Successful Response Body**: the full body is determined by the [release specification](https://pkg.go.dev/helm.sh/helm/v3@v3.3.4/pkg/release#Release): listed here is a subset of fields deemed to be most relevant. Note that all of the top-level fields are optional.
 
@@ -602,17 +672,12 @@ Chart{
 
 **Query parameters:** N/A
 
-**Request Body**: 
-
 ```js
-{
-  "user_id": Number,
-  "k8s": {
-    // The name of the context in the kubeconfig being used
-    "context": String,
-  }
-}
+// The name of the context in the kubeconfig being used
+"context": String,
 ```
+
+**Request Body**: N/A
 
 **Successful Response Body**: the full body is determined by the [namespace specification](https://pkg.go.dev/k8s.io/api/core/v1#NamespaceList), but we're primarily only interested in namespace `name`:
 

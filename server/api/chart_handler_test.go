@@ -3,6 +3,7 @@ package api_test
 import (
 	"encoding/json"
 	"net/http"
+	"net/url"
 	"reflect"
 	"strings"
 	"testing"
@@ -85,24 +86,18 @@ var listChartsTests = []*chartTest{
 		initializers: []func(tester *tester){
 			initDefaultCharts,
 		},
-		msg:      "List charts",
-		method:   "GET",
-		endpoint: "/api/charts",
-		body: `{
-			"user_id": 1,
-			"helm": {
-				"namespace": "",
-				"context": "context-test",
-				"storage": "memory"
-			},
-			"filter": {
-				"namespace": "",
-				"limit": 20,
-				"skip": 0,
-				"byDate": false,
-				"statusFilter": ["deployed"]
-			}
-		}`,
+		msg:    "List charts",
+		method: "GET",
+		endpoint: "/api/charts?" + url.Values{
+			"namespace":    []string{""},
+			"context":      []string{"context-test"},
+			"storage":      []string{"memory"},
+			"limit":        []string{"20"},
+			"skip":         []string{"0"},
+			"byDate":       []string{"false"},
+			"statusFilter": []string{"deployed"},
+		}.Encode(),
+		body:      "",
 		expStatus: http.StatusOK,
 		expBody:   releaseStubsToChartJSON(sampleReleaseStubs),
 		useCookie: true,
@@ -121,17 +116,14 @@ var getChartTests = []*chartTest{
 		initializers: []func(tester *tester){
 			initDefaultCharts,
 		},
-		msg:      "Get charts",
-		method:   "GET",
-		endpoint: "/api/charts/airwatch/0",
-		body: `{
-			"user_id": 1,
-			"helm": {
-				"namespace": "",
-				"context": "context-test",
-				"storage": "memory"
-			}
-		}`,
+		msg:    "Get charts",
+		method: "GET",
+		endpoint: "/api/charts/airwatch/0?" + url.Values{
+			"namespace": []string{""},
+			"context":   []string{"context-test"},
+			"storage":   []string{"memory"},
+		}.Encode(),
+		body:      "",
 		expStatus: http.StatusOK,
 		expBody:   releaseStubToChartJSON(sampleReleaseStubs[0]),
 		useCookie: true,
@@ -143,6 +135,32 @@ var getChartTests = []*chartTest{
 
 func TestHandleGetChart(t *testing.T) {
 	testChartRequests(t, getChartTests, true)
+}
+
+var listChartHistoryTests = []*chartTest{
+	&chartTest{
+		initializers: []func(tester *tester){
+			initHistoryCharts,
+		},
+		msg:    "List chart history",
+		method: "GET",
+		endpoint: "/api/charts/wordpress/history?" + url.Values{
+			"namespace": []string{""},
+			"context":   []string{"context-test"},
+			"storage":   []string{"memory"},
+		}.Encode(),
+		body:      "",
+		expStatus: http.StatusOK,
+		expBody:   releaseStubsToChartJSON(historyReleaseStubs),
+		useCookie: true,
+		validators: []func(c *chartTest, tester *tester, t *testing.T){
+			chartReleaseBodyValidator,
+		},
+	},
+}
+
+func TestHandleListChartHistory(t *testing.T) {
+	testChartRequests(t, listChartHistoryTests, true)
 }
 
 // ------------------------- INITIALIZERS AND VALIDATORS ------------------------- //
@@ -159,10 +177,27 @@ func initDefaultCharts(tester *tester) {
 	agent.ActionConfig.Releases.Driver.(*driver.Memory).SetNamespace("")
 }
 
+func initHistoryCharts(tester *tester) {
+	initUserDefault(tester)
+
+	agent := tester.app.TestAgents.HelmAgent
+
+	makeReleases(agent, historyReleaseStubs)
+
+	// calling agent.ActionConfig.Releases.Create in makeReleases will automatically set the
+	// namespace, so we have to reset the namespace of the storage driver
+	agent.ActionConfig.Releases.Driver.(*driver.Memory).SetNamespace("")
+}
+
 var sampleReleaseStubs = []releaseStub{
 	releaseStub{"airwatch", "default", 1, "1.0.0", release.StatusDeployed},
 	releaseStub{"not-in-default-namespace", "other", 1, "1.0.1", release.StatusDeployed},
 	releaseStub{"wordpress", "default", 1, "1.0.2", release.StatusDeployed},
+}
+
+var historyReleaseStubs = []releaseStub{
+	releaseStub{"wordpress", "default", 1, "1.0.1", release.StatusSuperseded},
+	releaseStub{"wordpress", "default", 2, "1.0.2", release.StatusDeployed},
 }
 
 func releaseStubsToChartJSON(rels []releaseStub) string {

@@ -30,7 +30,6 @@ export default class Main extends Component<PropsType, StateType> {
 
   componentDidMount() {
     let { setUserId } = this.context;
-    console.log('how')
     api.checkAuth('', {}, {}, (err: any, res: any) => {
       if (res.data) {
         setUserId(res.data.id)

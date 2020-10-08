@@ -3,6 +3,7 @@ package api_test
 import (
 	"encoding/json"
 	"net/http"
+	"net/url"
 	"reflect"
 	"strings"
 	"testing"
@@ -85,24 +86,18 @@ var listChartsTests = []*chartTest{
 		initializers: []func(tester *tester){
 			initDefaultCharts,
 		},
-		msg:      "List charts",
-		method:   "GET",
-		endpoint: "/api/charts",
-		body: `{
-			"user_id": 1,
-			"helm": {
-				"namespace": "",
-				"context": "context-test",
-				"storage": "memory"
-			},
-			"filter": {
-				"namespace": "",
-				"limit": 20,
-				"skip": 0,
-				"byDate": false,
-				"statusFilter": ["deployed"]
-			}
-		}`,
+		msg:    "List charts",
+		method: "GET",
+		endpoint: "/api/charts?" + url.Values{
+			"namespace":    []string{""},
+			"context":      []string{"context-test"},
+			"storage":      []string{"memory"},
+			"limit":        []string{"20"},
+			"skip":         []string{"0"},
+			"byDate":       []string{"false"},
+			"statusFilter": []string{"deployed"},
+		}.Encode(),
+		body:      "",
 		expStatus: http.StatusOK,
 		expBody:   releaseStubsToChartJSON(sampleReleaseStubs),
 		useCookie: true,
@@ -121,17 +116,14 @@ var getChartTests = []*chartTest{
 		initializers: []func(tester *tester){
 			initDefaultCharts,
 		},
-		msg:      "Get charts",
-		method:   "GET",
-		endpoint: "/api/charts/airwatch/0",
-		body: `{
-			"user_id": 1,
-			"helm": {
-				"namespace": "",
-				"context": "context-test",
-				"storage": "memory"
-			}
-		}`,
+		msg:    "Get charts",
+		method: "GET",
+		endpoint: "/api/charts/airwatch/0?" + url.Values{
+			"namespace": []string{""},
+			"context":   []string{"context-test"},
+			"storage":   []string{"memory"},
+		}.Encode(),
+		body:      "",
 		expStatus: http.StatusOK,
 		expBody:   releaseStubToChartJSON(sampleReleaseStubs[0]),
 		useCookie: true,

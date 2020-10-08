@@ -1,10 +1,12 @@
 import axios from 'axios';
 import { baseApi } from './baseApi';
 
+import { StorageType } from './types';
+
 /**
  * Generic api call format
  * @param {string} token - Bearer token.
- * @param {Object} params - Query params.
+ * @param {Object} params - Body params.
  * @param {Object} pathParams - Path params.
  * @param {(err: Object, res: Object) => void} callback - Callback function.
  */
@@ -38,6 +40,16 @@ const getContexts = baseApi<{}, { id: number }>('GET', pathParams => {
   return `/api/users/${pathParams.id}/contexts`;
 });
 
+const getCharts = baseApi<{
+  namespace: string,
+  context: string,
+  storage: string
+  limit: number,
+  skip: number,
+  byDate: boolean,
+  statusFilter: string[]
+}>('GET', '/api/charts');
+
 // Bundle export to allow default api import (api.<method> is more readable)
 export default {
   checkAuth,
@@ -47,4 +59,5 @@ export default {
   getUser,
   updateUser,
   getContexts,
+  getCharts,
 }

@@ -7,6 +7,7 @@ import { Context } from '../../shared/Context';
 import Sidebar from './sidebar/Sidebar';
 import Dashboard from './dashboard/Dashboard';
 import ClusterConfigModal from './modals/ClusterConfigModal';
+import Loading from '../../components/Loading';
 
 type PropsType = {
   logOut: () => void
@@ -18,25 +19,29 @@ type StateType = {
 export default class Home extends Component<PropsType, StateType> {
 
   renderDashboard = () => {
-    if (this.context.currentCluster) {
-      return <DashboardWrapper><Dashboard /></DashboardWrapper>
+    let { currentCluster, setCurrentModal, setCurrentModalData } = this.context;
+
+    if (currentCluster === '') {
+      return (
+        <DashboardWrapper>
+          <Placeholder>
+            <Bold>Porter - Getting Started</Bold><br /><br />
+            1. Navigate to <A onClick={() => setCurrentModal('ClusterConfigModal')}>+ Add a Cluster</A> and provide a kubeconfig. *<br /><br />
+            2. Choose which contexts you would like to use from the <A onClick={() => {
+              setCurrentModal('ClusterConfigModal');
+              setCurrentModalData({ currentTab: 'select' });
+            }}>Select Clusters</A> tab.<br /><br />
+            3. For additional information, please refer to our <A>docs</A>.<br /><br /><br />
+            
+            * Make sure all fields are explicitly declared (e.g., certs and keys).
+          </Placeholder>
+        </DashboardWrapper>
+      );
+    } else if (!currentCluster) {
+      return <Loading />
     }
 
-    return (
-      <DashboardWrapper>
-        <Placeholder>
-          <Bold>Porter - Getting Started</Bold><br /><br />
-          1. Navigate to <A onClick={() => {this.context.setCurrentModal('ClusterConfigModal')}}>+ Add a Cluster</A> and provide a kubeconfig. *<br /><br />
-          2. Choose which contexts you would like to use from the <A onClick={() => {
-            this.context.setCurrentModal('ClusterConfigModal');
-            this.context.setCurrentModalData({ currentTab: 'select' });
-          }}>Select Clusters</A> tab.<br /><br />
-          3. For additional information, please refer to our <A>docs</A>.<br /><br /><br />
-          
-          * Make sure all fields are explicitly declared (e.g., certs and keys).
-        </Placeholder>
-      </DashboardWrapper>
-    );
+    return <DashboardWrapper><Dashboard /></DashboardWrapper>
   }
 
   render() {

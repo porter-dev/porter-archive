@@ -4,119 +4,48 @@ import gradient from '../../../assets/gradient.jpg';
 
 import { Context } from '../../../shared/Context';
 import api from '../../../shared/api';
+import { ChartType } from '../../../shared/types';
 
 import Chart from './chart/Chart';
-
-const dummyCharts = [
-  {
-    name: 'happy-lil-tree',
-    info: {
-      last_deployed: 'Yesterday at 2:00PM',
-      deleted: '',
-      description: 'This is the release description',
-      status: 'deployed'
-    },
-    chart: {
-      metadata: {
-        name: 'mychart',
-        home: 'https://github.com/foo/bar',
-        sources: '',
-        version: '1.10.0',
-        description: 'This is the chart description.',
-        icon: 'https://www.google.com/images/branding/googlelogo/2x/googlelogo_color_272x92dp.png',
-        apiVersion: 'v2'
-      },
-    },
-    version: '9',
-    namespace: 'my-namespace'
-  },
-  {
-    name: 'jolly-tiny-sprout',
-    info: {
-      last_deployed: 'Yesterday at 2:00PM',
-      deleted: '',
-      description: 'This is the release description',
-      status: 'deployed'
-    },
-    chart: {
-      metadata: {
-        name: 'mychart',
-        home: 'https://github.com/foo/bar',
-        sources: '',
-        version: '1.10.0',
-        description: 'This is the chart description.',
-        icon: 'https://www.google.com/images/branding/googlelogo/2x/googlelogo_color_272x92dp.png',
-        apiVersion: 'v2'
-      },
-    },
-    version: '9',
-    namespace: 'my-namespace'
-  },
-  {
-    name: 'ecstatic-puny-seed',
-    info: {
-      last_deployed: 'Yesterday at 2:00PM',
-      deleted: '',
-      description: 'This is the release description',
-      status: 'deployed'
-    },
-    chart: {
-      metadata: {
-        name: 'mychart',
-        home: 'https://github.com/foo/bar',
-        sources: '',
-        version: '1.10.0',
-        description: 'This is the chart description.',
-        icon: 'https://www.google.com/images/branding/googlelogo/2x/googlelogo_color_272x92dp.png',
-        apiVersion: 'v2'
-      },
-    },
-    version: '9',
-    namespace: 'my-namespace'
-  }
-];
 
 type PropsType = {
 };
 
 type StateType = {
+  charts: ChartType[]
 };
 
 export default class Dashboard extends Component<PropsType, StateType> {
+  state = {
+    charts: [] as ChartType[]
+  }
 
   componentDidMount() {
     let { userId, setCurrentError, currentCluster } = this.context;
-
-    console.log(currentCluster);
     
     api.getCharts('<token>', {
-      user_id: userId,
-      helm: {
-        namespace: '',
-        context: currentCluster,
-        storage: 'memory',
-      },
-      filter: {
-        namespace: '',
-        limit: 10,
-        skip: 0,
-        byDate: false,
-        statusFilter: ['deployed']
-      }
+      namespace: '',
+      context: currentCluster,
+      storage: 'secret',
+      limit: 20,
+      skip: 0,
+      byDate: false,
+      statusFilter: ['deployed']
     }, {}, (err: any, res: any) => {
-      if (err) {
+        if (err) {
         setCurrentError(JSON.stringify(err));
       } else {
-        
-        console.log(res);
+        if (res.data) {
+          this.setState({ charts: res.data });
+        }
       }
     });
   }
 
   renderChartList = () => {
-    return dummyCharts.map((x: any, i: number) => {
+    return this.state.charts.map((x: ChartType, i: number) => {
       return (
-        <Chart name={x.name} />
+        <Chart key={i} chart={x} />
       )
     })
   }

@@ -1,8 +1,10 @@
 import React, { Component } from 'react';
 import styled from 'styled-components';
 
+import { ChartType } from '../../../../shared/types';
+
 type PropsType = {
-  name: string
+  chart: ChartType
 };
 
 type StateType = {
@@ -14,6 +16,7 @@ export default class Chart extends Component<PropsType, StateType> {
   }
 
   render() {
+    let { chart } = this.props;
     return ( 
       <StyledChart
         onMouseEnter={() => this.setState({ grow: true })}
@@ -22,11 +25,11 @@ export default class Chart extends Component<PropsType, StateType> {
       >
         <Title>
           <i className="material-icons">polymer</i>
-          {this.props.name}
+          {chart.name}
         </Title>
         <StatusIndicator>
           <StatusColor status={'Running'} />
-          Deployed
+          {chart.info.status}
         </StatusIndicator>
       </StyledChart>
     );
@@ -41,6 +44,7 @@ const StatusIndicator = styled.div`
   font-size: 13px;
   margin-top: 10px;
   flex-direction: row;
+  text-transform: capitalize;
   align-items: center;
   font-family: 'Hind Siliguri', sans-serif;
   margin-left: 20px;
@@ -102,7 +106,7 @@ const Title = styled.div`
 `;
 
 const StyledChart = styled.div`
-  background: #23252a;
+  background: #26282f;
   cursor: pointer;
   margin-bottom: 25px;
   padding: 1px;

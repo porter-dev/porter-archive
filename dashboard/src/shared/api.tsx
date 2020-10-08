@@ -41,19 +41,13 @@ const getContexts = baseApi<{}, { id: number }>('GET', pathParams => {
 });
 
 const getCharts = baseApi<{
-  user_id: number,
-  helm: {
-    namespace: string,
-    context: string,
-    storage: string
-  },
-  filter: {
-    namespace: string,
-    limit: number,
-    skip: number,
-    byDate: boolean,
-    statusFilter: string[]
-  }
+  namespace: string,
+  context: string,
+  storage: string
+  limit: number,
+  skip: number,
+  byDate: boolean,
+  statusFilter: string[]
 }>('GET', '/api/charts');
 
 // Bundle export to allow default api import (api.<method> is more readable)

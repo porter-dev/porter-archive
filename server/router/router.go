@@ -24,15 +24,15 @@ func New(a *api.App, store sessions.Store, cookieName string) *chi.Mux {
 		r.Method("PUT", "/users/{id}", auth.DoesUserIDMatch(requestlog.NewHandler(a.HandleUpdateUser, l), mw.URLParam))
 		r.Method("DELETE", "/users/{id}", auth.DoesUserIDMatch(requestlog.NewHandler(a.HandleDeleteUser, l), mw.URLParam))
 		r.Method("POST", "/login", requestlog.NewHandler(a.HandleLoginUser, l))
-		r.Method("GET", "/auth/check", requestlog.NewHandler(a.HandleAuthCheck, l))
+		r.Method("GET", "/auth/check", auth.BasicAuthenticate(requestlog.NewHandler(a.HandleAuthCheck, l)))
 		r.Method("POST", "/logout", auth.BasicAuthenticate(requestlog.NewHandler(a.HandleLogoutUser, l)))
 
 		// /api/charts routes
-		r.Method("GET", "/charts", auth.DoesUserIDMatch(requestlog.NewHandler(a.HandleListCharts, l), mw.BodyParam))
-		r.Method("GET", "/charts/{name}/{revision}", auth.DoesUserIDMatch(requestlog.NewHandler(a.HandleGetChart, l), mw.BodyParam))
+		r.Method("GET", "/charts", auth.BasicAuthenticate(requestlog.NewHandler(a.HandleListCharts, l)))
+		r.Method("GET", "/charts/{name}/{revision}", auth.BasicAuthenticate(requestlog.NewHandler(a.HandleGetChart, l)))
 
 		// /api/k8s routes
-		r.Method("GET", "/k8s/namespaces", auth.DoesUserIDMatch(requestlog.NewHandler(a.HandleListNamespaces, l), mw.BodyParam))
+		r.Method("GET", "/k8s/namespaces", auth.BasicAuthenticate(requestlog.NewHandler(a.HandleListNamespaces, l)))
 	})
 
 	return r

@@ -9,8 +9,6 @@ type PropsType = {
   toggleDrawer: () => void,
   showDrawer: boolean,
   kubeContexts: KubeContextConfig[],
-  activeIndex: number,
-  setActiveIndex: (i: number) => void,
   updateClusters: () => void
 };
 
@@ -20,7 +18,9 @@ type StateType = {
 export default class Drawer extends Component<PropsType, StateType> {
 
   renderClusterList = (): JSX.Element[] | JSX.Element => {
-    let { kubeContexts, activeIndex, setActiveIndex } = this.props;
+    let { kubeContexts } = this.props;
+    let { currentCluster, setCurrentCluster } = this.context;
+
     if (kubeContexts.length > 0) {
       return kubeContexts.map((kubeContext: KubeContextConfig, i: number) => {
         /*
@@ -31,8 +31,8 @@ export default class Drawer extends Component<PropsType, StateType> {
         return (
           <ClusterOption
             key={i}
-            active={i === activeIndex}
-            onClick={() => setActiveIndex(i)}
+            active={kubeContext.name === currentCluster}
+            onClick={() => setCurrentCluster(kubeContext.name)}
           >
             <ClusterIcon><i className="material-icons">polymer</i></ClusterIcon>
             <ClusterName>{kubeContext.name}</ClusterName>

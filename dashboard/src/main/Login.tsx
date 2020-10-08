@@ -28,7 +28,7 @@ export default class Login extends Component<PropsType, StateType> {
   handleLogin = (): void => {
     let { email, password } = this.state;
     let { authenticate } = this.props;
-    let { setCurrentError } = this.context;
+    let { setCurrentError, setUserId } = this.context;
 
     // Check for valid input
     if (!emailRegex.test(email)) {
@@ -40,6 +40,7 @@ export default class Login extends Component<PropsType, StateType> {
         password: password
       }, {}, (err: any, res: any) => {
         // TODO: case and set credential error
+        setUserId(res?.data?.id)
         err ? setCurrentError(err.response.data.errors[0]) : authenticate();
       });
     }
@@ -108,6 +109,10 @@ export default class Login extends Component<PropsType, StateType> {
               {this.renderCredentialError()}
             </InputWrapper>
             <Button onClick={this.handleLogin}>Continue</Button>
+
+            <Helper>Don't have an account?
+              <Link href='/register'>Sign up</Link>
+            </Helper>
           </FormWrapper>
         </LoginPanel>
       </StyledLogin>
@@ -116,6 +121,18 @@ export default class Login extends Component<PropsType, StateType> {
 }
 
 Login.contextType = Context;
+
+const Link = styled.a`
+  margin-left: 5px;
+  color: #819BFD;
+`;
+
+const Helper = styled.div`
+  margin: 52px 0px 20px;
+  font-size: 14px;
+  font-family: 'Work Sans', sans-serif;
+  color: #ffffff44;
+`;
 
 const OverflowWrapper = styled.div`
   position: absolute;
@@ -205,7 +222,7 @@ const Prompt = styled.div`
 
 const Logo = styled.img`
   width: 150px;
-  margin-top: 63px;
+  margin-top: 53px;
   user-select: none;
 `;
 
@@ -236,7 +253,7 @@ const GradientBg = styled.div`
 
 const LoginPanel = styled.div`
   width: 330px;
-  height: 430px;
+  height: 450px;
   background: white;
   margin-top: -20px;
   border-radius: 10px;

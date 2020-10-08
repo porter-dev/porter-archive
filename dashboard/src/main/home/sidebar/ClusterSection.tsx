@@ -14,7 +14,6 @@ type PropsType = {
 };
 
 type StateType = {
-  configExists: boolean,
   showDrawer: boolean,
   initializedDrawer: boolean,
   kubeContexts: KubeContextConfig[]
@@ -24,7 +23,6 @@ export default class ClusterSection extends Component<PropsType, StateType> {
 
   // Need to track initialized for animation mounting
   state = {
-    configExists: true,
     showDrawer: false,
     initializedDrawer: false,
     kubeContexts: [] as KubeContextConfig[]
@@ -36,17 +34,21 @@ export default class ClusterSection extends Component<PropsType, StateType> {
     // TODO: query with selected filter once implemented
     api.getContexts('<token>', {}, { id: userId }, (err: any, res: any) => {
       if (err) {
-        setCurrentError('getContexts: ' + JSON.stringify(err));
+        setCurrentError('Could not read clusters: ' + JSON.stringify(err));
       } else {
-        
-        // Filter selected (temporary)
-        let kubeContexts = res.data.filter((x: KubeContextConfig) => x.selected);
-        if (kubeContexts.length > 0) {
-          this.setState({ kubeContexts });
-          setCurrentCluster(kubeContexts[0].name);
-        } else {
-          this.setState({ kubeContexts: [] });
-          setCurrentCluster(null);
+
+        // TODO: handle uninitialized kubeconfig
+        if (res.data) {
+
+          // Filter selected (temporary)
+          let kubeContexts = res.data.filter((x: KubeContextConfig) => x.selected);
+          if (kubeContexts.length > 0) {
+            this.setState({ kubeContexts });
+            setCurrentCluster(kubeContexts[0].name);
+          } else {
+            this.setState({ kubeContexts: [] });
+            setCurrentCluster('');
+          }
         }
       }
     });
@@ -99,7 +101,7 @@ export default class ClusterSection extends Component<PropsType, StateType> {
       return (
         <ClusterSelector showDrawer={showDrawer}>
           <LinkWrapper>
-            <ClusterIcon><i className="material-icons">polymer</i></ClusterIcon>
+            <ClusterIcon><i className="material-icons">device_hub</i></ClusterIcon>
             <ClusterName>{currentCluster}</ClusterName>
           </LinkWrapper>
           <DrawerButton onClick={this.toggleDrawer}>
@@ -225,10 +227,10 @@ const DropdownIcon = styled.span`
 
 const ClusterIcon = styled.div`
   > i {
-    font-size: 16px;
+    font-size: 18px;
     display: flex;
     align-items: center;
-    margin-bottom: -2px;
+    margin-bottom: 0px;
     margin-left: 15px;
     margin-right: 10px;
   }

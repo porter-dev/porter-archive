@@ -89,11 +89,11 @@ const StyledCurrentError = styled.div`
   height: 50px;
   font-size: 13px;
   border-radius: 3px;
-  background: #383842dd;
+  background: #272731cc;
   border: 1px solid #ffffff55;
   display: flex;
   align-items: center;
-  color: #FFDB8C;
+  color: #ffffff;
 
   > i {
     font-size: 18px;

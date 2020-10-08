@@ -7,6 +7,7 @@ import { Context } from '../../shared/Context';
 import Sidebar from './sidebar/Sidebar';
 import Dashboard from './dashboard/Dashboard';
 import ClusterConfigModal from './modals/ClusterConfigModal';
+import Loading from '../../components/Loading';
 
 type PropsType = {
   logOut: () => void
@@ -16,8 +17,34 @@ type StateType = {
 };
 
 export default class Home extends Component<PropsType, StateType> {
+
+  renderDashboard = () => {
+    let { currentCluster, setCurrentModal, setCurrentModalData } = this.context;
+
+    if (currentCluster === '') {
+      return (
+        <DashboardWrapper>
+          <Placeholder>
+            <Bold>Porter - Getting Started</Bold><br /><br />
+            1. Navigate to <A onClick={() => setCurrentModal('ClusterConfigModal')}>+ Add a Cluster</A> and provide a kubeconfig. *<br /><br />
+            2. Choose which contexts you would like to use from the <A onClick={() => {
+              setCurrentModal('ClusterConfigModal');
+              setCurrentModalData({ currentTab: 'select' });
+            }}>Select Clusters</A> tab.<br /><br />
+            3. For additional information, please refer to our <A>docs</A>.<br /><br /><br />
+            
+            * Make sure all fields are explicitly declared (e.g., certs and keys).
+          </Placeholder>
+        </DashboardWrapper>
+      );
+    } else if (!currentCluster) {
+      return <Loading />
+    }
+
+    return <DashboardWrapper><Dashboard /></DashboardWrapper>
+  }
+
   render() {
-    console.log(this.context)
     return (
       <StyledHome>
         <ReactModal
@@ -30,7 +57,9 @@ export default class Home extends Component<PropsType, StateType> {
         </ReactModal>
 
         <Sidebar logOut={this.props.logOut} />
-        <Dashboard />
+        <StyledDashboard>
+          {this.renderDashboard()}
+        </StyledDashboard>
       </StyledHome>
     );
   }
@@ -51,25 +80,48 @@ const MediumModalStyles = {
     margin: '0 auto',
     height: '575px',
     top: 'calc(50% - 289px)',
-    backgroundColor: '#24272a',
+    backgroundColor: '#202227',
     animation: 'floatInModal 0.5s 0s',
     overflow: 'visible',
   },
 };
 
-const DummyDashboard = styled.div`
+const StyledDashboard = styled.div`
   height: 100%;
   width: 100vw;
-  font-family: 'Work Sans', sans-serif;
+  padding-top: 80px;
   overflow-y: auto;
   display: flex;
-  letter-spacing: 10px;
   flex: 1;
   justify-content: center;
-  padding-bottom: 30px;
-  align-items: center;
-  background: ${props => props.theme.bg};
+  background: #202227;
   position: relative;
+`;
+
+const DashboardWrapper = styled.div`
+  width: 80%;
+  min-width: 300px;
+  padding-bottom: 120px;
+`;
+
+const A = styled.a`
+  color: #ffffff;
+  text-decoration: underline;
+  cursor: ${(props: { disabled?: boolean }) => props.disabled ? 'not-allowed' : 'pointer'};
+`;
+
+const Placeholder = styled.div`
+  font-family: "Work Sans", sans-serif;
+  color: #6f6f6f;
+  font-size: 16px;
+  margin-left: 20px;
+  margin-top: 24vh;
+  user-select: none;
+`;
+
+const Bold = styled.div`
+  font-weight: bold;
+  font-size: 20px;
 `;
 
 const StyledHome = styled.div`

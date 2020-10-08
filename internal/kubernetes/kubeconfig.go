@@ -36,15 +36,16 @@ func GetRestrictedClientConfigFromBytes(
 	// put allowed clusters in a map
 	aContextMap := createAllowedContextMap(allowedContexts)
 
-	// discover all allowed clusters
-	for name, context := range rawConf.Contexts {
+	context, ok := rawConf.Contexts[contextName]
+
+	if ok {
 		userName := context.AuthInfo
 		clusterName := context.Cluster
 		authInfo, userFound := rawConf.AuthInfos[userName]
 		cluster, clusterFound := rawConf.Clusters[clusterName]
 
 		// make sure the cluster is "allowed"
-		_, isAllowed := aContextMap[name]
+		_, isAllowed := aContextMap[contextName]
 
 		if userFound && clusterFound && isAllowed {
 			copyConf.Clusters[clusterName] = cluster

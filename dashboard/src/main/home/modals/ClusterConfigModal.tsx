@@ -35,7 +35,7 @@ export default class ClusterConfigModal extends Component<PropsType, StateType> 
     // Parse kubeconfig to retrieve all possible clusters
     api.getContexts('<token>', {}, { id: userId }, (err: any, res: any) => {
       if (err) {
-        setCurrentError('getAllClusters: ' + JSON.stringify(err));
+        setCurrentError(JSON.stringify(err));
       } else {
         this.setState({ kubeContexts: res.data });
       }
@@ -43,7 +43,11 @@ export default class ClusterConfigModal extends Component<PropsType, StateType> 
   }
 
   componentDidMount() {
-    let { setCurrentError, userId } = this.context;
+    let { setCurrentError, userId, currentModalData } = this.context;
+
+    if (currentModalData && currentModalData.currentTab) {
+      this.setState({ currentTab: 'select' });
+    }
 
     api.getUser('<token>', {}, { id: userId }, (err: any, res: any) => {
       if (err) {
@@ -391,5 +395,5 @@ const StyledClusterConfigModal= styled.div`
   padding: 25px 30px;
   overflow: hidden;
   border-radius: 6px;
-  background: #24272a;
+  background: #202227;
 `;

@@ -28,11 +28,12 @@ func New(a *api.App, store sessions.Store, cookieName string) *chi.Mux {
 		r.Method("POST", "/logout", auth.BasicAuthenticate(requestlog.NewHandler(a.HandleLogoutUser, l)))
 
 		// /api/charts routes
-		r.Method("GET", "/charts", auth.DoesUserIDMatch(requestlog.NewHandler(a.HandleListCharts, l), mw.BodyParam))
-		r.Method("GET", "/charts/{name}/{revision}", auth.DoesUserIDMatch(requestlog.NewHandler(a.HandleGetChart, l), mw.BodyParam))
+		r.Method("GET", "/charts", auth.BasicAuthenticate(requestlog.NewHandler(a.HandleListCharts, l)))
+		r.Method("GET", "/charts/{name}/history", auth.BasicAuthenticate(requestlog.NewHandler(a.HandleListChartHistory, l)))
+		r.Method("GET", "/charts/{name}/{revision}", auth.BasicAuthenticate(requestlog.NewHandler(a.HandleGetChart, l)))
 
 		// /api/k8s routes
-		r.Method("GET", "/k8s/namespaces", auth.DoesUserIDMatch(requestlog.NewHandler(a.HandleListNamespaces, l), mw.BodyParam))
+		r.Method("GET", "/k8s/namespaces", auth.BasicAuthenticate(requestlog.NewHandler(a.HandleListNamespaces, l)))
 	})
 
 	return r

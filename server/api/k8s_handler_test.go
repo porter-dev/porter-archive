@@ -3,6 +3,7 @@ package api_test
 import (
 	"encoding/json"
 	"net/http"
+	"net/url"
 	"reflect"
 	"strings"
 	"testing"
@@ -76,16 +77,13 @@ var listNamespacesTests = []*k8sTest{
 		initializers: []func(tester *tester){
 			initDefaultK8s,
 		},
-		msg:      "List namespaces",
-		method:   "GET",
-		endpoint: "/api/k8s/namespaces",
-		body: `{
-			"user_id": 1,
-			"k8s": {
-				"namespace": "",
-				"context": "context-test"
-			}
-		}`,
+		msg:    "List namespaces",
+		method: "GET",
+		endpoint: "/api/k8s/namespaces?" + url.Values{
+			"namespace": []string{""},
+			"context":   []string{"context-test"},
+		}.Encode(),
+		body:      "",
 		expStatus: http.StatusOK,
 		expBody:   objectsToJSON(defaultObjects),
 		useCookie: true,

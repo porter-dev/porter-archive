@@ -1,26 +1,35 @@
 package forms
 
 import (
+	"net/url"
+
 	"github.com/porter-dev/porter/internal/kubernetes"
 	"github.com/porter-dev/porter/internal/repository"
 )
 
 // K8sForm is the generic base type for CRUD operations on k8s objects
 type K8sForm struct {
-	K8sOptions *kubernetes.OutOfClusterConfig `json:"k8s" form:"required"`
-	UserID     uint                           `json:"user_id"`
+	*kubernetes.OutOfClusterConfig
 }
 
-// PopulateK8sOptions uses the passed user ID to populate the HelmOptions object
-func (kf *K8sForm) PopulateK8sOptions(repo repository.UserRepository) error {
-	user, err := repo.ReadUser(kf.UserID)
+// PopulateK8sOptionsFromQueryParams populates fields in the ChartForm using the passed
+// url.Values (the parsed query params)
+func (kf *K8sForm) PopulateK8sOptionsFromQueryParams(vals url.Values) {
+	if context, ok := vals["context"]; ok && len(context) == 1 {
+		kf.Context = context[0]
+	}
+}
+
+// PopulateK8sOptionsFromUserID uses the passed userID to populate the HelmOptions object
+func (kf *K8sForm) PopulateK8sOptionsFromUserID(userID uint, repo repository.UserRepository) error {
+	user, err := repo.ReadUser(userID)
 
 	if err != nil {
 		return err
 	}
 
-	kf.K8sOptions.AllowedContexts = user.ContextToSlice()
-	kf.K8sOptions.KubeConfig = user.RawKubeConfig
+	kf.AllowedContexts = user.ContextToSlice()
+	kf.KubeConfig = user.RawKubeConfig
 
 	return nil
 }

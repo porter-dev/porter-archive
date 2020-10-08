@@ -3,6 +3,7 @@ package api
 import (
 	"encoding/json"
 	"net/http"
+	"net/url"
 
 	"github.com/porter-dev/porter/internal/kubernetes"
 
@@ -17,15 +18,29 @@ const (
 
 // HandleListNamespaces retrieves a list of namespaces
 func (app *App) HandleListNamespaces(w http.ResponseWriter, r *http.Request) {
-	form := &forms.K8sForm{}
+	session, err := app.store.Get(r, app.cookieName)
 
-	// decode from JSON to form value
-	if err := json.NewDecoder(r.Body).Decode(form); err != nil {
-		app.handleErrorFormDecoding(err, ErrK8sDecode, w)
+	if err != nil {
+		app.handleErrorFormDecoding(err, ErrChartDecode, w)
 		return
 	}
 
-	form.PopulateK8sOptions(app.repo.User)
+	vals, err := url.ParseQuery(r.URL.RawQuery)
+
+	if err != nil {
+		app.handleErrorFormDecoding(err, ErrChartDecode, w)
+		return
+	}
+
+	// get the filter options
+	form := &forms.K8sForm{
+		OutOfClusterConfig: &kubernetes.OutOfClusterConfig{},
+	}
+	form.PopulateK8sOptionsFromQueryParams(vals)
+
+	if sessID, ok := session.Values["user_id"].(uint); ok {
+		form.PopulateK8sOptionsFromUserID(sessID, app.repo.User)
+	}
 
 	// validate the form
 	if err := app.validator.Struct(form); err != nil {
@@ -35,12 +50,11 @@ func (app *App) HandleListNamespaces(w http.ResponseWriter, r *http.Request) {
 
 	// create a new agent
 	var agent *kubernetes.Agent
-	var err error
 
 	if app.testing {
 		agent = app.TestAgents.K8sAgent
 	} else {
-		agent, err = kubernetes.GetAgentOutOfClusterConfig(form.K8sOptions)
+		agent, err = kubernetes.GetAgentOutOfClusterConfig(form.OutOfClusterConfig)
 	}
 
 	namespaces, err := agent.ListNamespaces()

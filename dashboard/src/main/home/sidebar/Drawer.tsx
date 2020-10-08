@@ -34,7 +34,7 @@ export default class Drawer extends Component<PropsType, StateType> {
             active={kubeContext.name === currentCluster}
             onClick={() => setCurrentCluster(kubeContext.name)}
           >
-            <ClusterIcon><i className="material-icons">polymer</i></ClusterIcon>
+            <ClusterIcon><i className="material-icons">device_hub</i></ClusterIcon>
             <ClusterName>{kubeContext.name}</ClusterName>
           </ClusterOption>
         );
@@ -174,10 +174,10 @@ const CloseButtonImg = styled.img`
 
 const ClusterIcon = styled.div`
   > i {
-    font-size: 16px;
+    font-size: 18px;
     display: flex;
     align-items: center;
-    margin-bottom: -2px;
+    margin-bottom: 0px;
     margin-left: 15px;
     margin-right: 10px;
   }

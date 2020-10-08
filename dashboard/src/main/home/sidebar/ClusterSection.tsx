@@ -47,7 +47,7 @@ export default class ClusterSection extends Component<PropsType, StateType> {
             setCurrentCluster(kubeContexts[0].name);
           } else {
             this.setState({ kubeContexts: [] });
-            setCurrentCluster(null);
+            setCurrentCluster('');
           }
         }
       }
@@ -101,7 +101,7 @@ export default class ClusterSection extends Component<PropsType, StateType> {
       return (
         <ClusterSelector showDrawer={showDrawer}>
           <LinkWrapper>
-            <ClusterIcon><i className="material-icons">polymer</i></ClusterIcon>
+            <ClusterIcon><i className="material-icons">device_hub</i></ClusterIcon>
             <ClusterName>{currentCluster}</ClusterName>
           </LinkWrapper>
           <DrawerButton onClick={this.toggleDrawer}>
@@ -227,10 +227,10 @@ const DropdownIcon = styled.span`
 
 const ClusterIcon = styled.div`
   > i {
-    font-size: 16px;
+    font-size: 18px;
     display: flex;
     align-items: center;
-    margin-bottom: -2px;
+    margin-bottom: 0px;
     margin-left: 15px;
     margin-right: 10px;
   }

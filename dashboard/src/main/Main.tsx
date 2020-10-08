@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
 import styled, { createGlobalStyle } from 'styled-components';
+import { BrowserRouter, Route, Redirect, Switch } from 'react-router-dom';
 import close from '../assets/close.png';
 
 import api from '../shared/api';
@@ -9,13 +10,13 @@ import Login from './Login';
 import Register from './Register';
 import CurrentError from './CurrentError';
 import Home from './home/Home';
-import { BrowserRouter, Route, Redirect, Switch } from 'react-router-dom';
+import Loading from '../components/Loading';
 
 type PropsType = {
 };
 
 type StateType = {
-  isLoading: boolean,
+  loading: boolean,
   isLoggedIn: boolean,
   initialized: boolean,
 };
@@ -23,7 +24,7 @@ type StateType = {
 export default class Main extends Component<PropsType, StateType> {
   
   state = {
-    isLoading: false,
+    loading: true,
     isLoggedIn : false,
     initialized: (localStorage.getItem("init") == 'true')
   }
@@ -32,10 +33,10 @@ export default class Main extends Component<PropsType, StateType> {
     let { setUserId } = this.context;
     api.checkAuth('', {}, {}, (err: any, res: any) => {
       if (res.data) {
-        setUserId(res.data.id)
-        this.setState({ isLoggedIn: true, initialized: true})
+        setUserId(res.data.id);
+        this.setState({ isLoggedIn: true, initialized: true, loading: false });
       } else {
-        this.setState({ isLoggedIn: false })
+        this.setState({ isLoggedIn: false, loading: false })
       }
     });
   }
@@ -49,46 +50,56 @@ export default class Main extends Component<PropsType, StateType> {
     this.setState({ isLoggedIn: true, initialized: true });
   }
 
+  renderMain = () => {
+    if (this.state.loading) {
+      return <Loading />
+    }
+
+    return (
+      <Switch>
+        <Route path='/login' render={() => {
+          if (!this.state.isLoggedIn) {
+            return <Login authenticate={this.authenticate} />
+          } else {
+            return <Redirect to='/' />
+          }
+        }} />
+
+        <Route path='/register' render={() => {
+          if (!this.state.isLoggedIn) {
+            return <Register authenticate={this.initialize} />
+          } else {
+            return <Redirect to='/' />
+          }
+        }} />
+
+        <Route path='/dashboard' render={() => {
+          if (this.state.isLoggedIn && this.state.initialized) {
+            return <Home logOut={() => this.setState({ isLoggedIn: false, initialized: true })} />
+          } else {
+            return <Redirect to='/' />
+          }
+        }}/>
+
+        <Route path='/' render={() => {
+          if (this.state.isLoggedIn) {
+            return <Redirect to='/dashboard'/>
+          } else if (this.state.initialized) {
+            return <Redirect to='/login'/>
+          } else {
+            return <Redirect to='/register' />
+          }
+        }}/>
+      </Switch>
+    );
+  }
+
   render() {
     return (
       <StyledMain>
         <GlobalStyle />
         <BrowserRouter>
-          <Switch>
-            <Route path='/login' render={() => {
-              if (!this.state.isLoggedIn) {
-                return <Login authenticate={this.authenticate} />
-              } else {
-                return <Redirect to='/' />
-              }
-            }} />
-
-            <Route path='/register' render={() => {
-              if (!this.state.isLoggedIn) {
-                return <Register authenticate={this.initialize} />
-              } else {
-                return <Redirect to='/' />
-              }
-            }} />
-
-            <Route path='/dashboard' render={() => {
-              if (this.state.isLoggedIn && this.state.initialized) {
-                return <Home logOut={() => this.setState({ isLoggedIn: false, initialized: true })} />
-              } else {
-                return <Redirect to='/' />
-              }
-            }}/>
-
-            <Route path='/' render={() => {
-              if (this.state.isLoggedIn) {
-                return <Redirect to='/dashboard'/>
-              } else if (this.state.initialized) {
-                return <Redirect to='/login'/>
-              } else {
-                return <Redirect to='/register' />
-              }
-            }}/>
-          </Switch>
+          {this.renderMain()}
         </BrowserRouter>
         <CurrentError />
       </StyledMain>
@@ -101,6 +112,7 @@ Main.contextType = Context;
 const GlobalStyle = createGlobalStyle`
   * {
     box-sizing: border-box;
+    font-family: 'Work Sans', sans-serif;
   }
 `;
 

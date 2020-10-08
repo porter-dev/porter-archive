@@ -22,7 +22,7 @@ export default class Loading extends Component<PropsType, StateType> {
 }
 
 const Spinner = styled.img`
-  width: 25px;
+  width: 20px;
 `;
 
 const StyledLoading = styled.div`

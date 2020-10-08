@@ -3,53 +3,16 @@ import styled from 'styled-components';
 import gradient from '../../../assets/gradient.jpg';
 
 import { Context } from '../../../shared/Context';
-import api from '../../../shared/api';
-import { ChartType } from '../../../shared/types';
 
-import Chart from './chart/Chart';
+import ChartList from './chart/ChartList';
 
 type PropsType = {
 };
 
 type StateType = {
-  charts: ChartType[]
 };
 
 export default class Dashboard extends Component<PropsType, StateType> {
-  state = {
-    charts: [] as ChartType[]
-  }
-
-  componentDidMount() {
-    let { userId, setCurrentError, currentCluster } = this.context;
-    
-    api.getCharts('<token>', {
-      namespace: '',
-      context: currentCluster,
-      storage: 'secret',
-      limit: 20,
-      skip: 0,
-      byDate: false,
-      statusFilter: ['deployed']
-    }, {}, (err: any, res: any) => {
-        if (err) {
-        setCurrentError(JSON.stringify(err));
-      } else {
-        if (res.data) {
-          this.setState({ charts: res.data });
-        }
-      }
-    });
-  }
-
-  renderChartList = () => {
-    return this.state.charts.map((x: ChartType, i: number) => {
-      return (
-        <Chart key={i} chart={x} />
-      )
-    })
-  }
-
   render() {
     let { currentCluster } = this.context;
 
@@ -75,7 +38,7 @@ export default class Dashboard extends Component<PropsType, StateType> {
 
         <LineBreak />
 
-        {this.renderChartList()}
+        <ChartList currentCluster={currentCluster} />
       </div>
     );
   }

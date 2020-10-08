@@ -190,9 +190,10 @@ const SidebarBg = styled.div`
   top: 0;
   left: 0;
   width: 100%;
-  background-color: #333748;
+  background-color: #292c35;
   height: 100%;
   z-index: -1;
+  box-shadow: 8px 0px 8px 0px #00000010;
 `;
 
 const SidebarLabel = styled.div`

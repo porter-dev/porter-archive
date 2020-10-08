@@ -4,9 +4,85 @@ import gradient from '../../../assets/gradient.jpg';
 
 import { Context } from '../../../shared/Context';
 import api from '../../../shared/api';
-import { StorageType } from '../../../shared/types';
 
-class Dashboard extends Component {
+import Chart from './chart/Chart';
+
+const dummyCharts = [
+  {
+    name: 'happy-lil-tree',
+    info: {
+      last_deployed: 'Yesterday at 2:00PM',
+      deleted: '',
+      description: 'This is the release description',
+      status: 'deployed'
+    },
+    chart: {
+      metadata: {
+        name: 'mychart',
+        home: 'https://github.com/foo/bar',
+        sources: '',
+        version: '1.10.0',
+        description: 'This is the chart description.',
+        icon: 'https://www.google.com/images/branding/googlelogo/2x/googlelogo_color_272x92dp.png',
+        apiVersion: 'v2'
+      },
+    },
+    version: '9',
+    namespace: 'my-namespace'
+  },
+  {
+    name: 'jolly-tiny-sprout',
+    info: {
+      last_deployed: 'Yesterday at 2:00PM',
+      deleted: '',
+      description: 'This is the release description',
+      status: 'deployed'
+    },
+    chart: {
+      metadata: {
+        name: 'mychart',
+        home: 'https://github.com/foo/bar',
+        sources: '',
+        version: '1.10.0',
+        description: 'This is the chart description.',
+        icon: 'https://www.google.com/images/branding/googlelogo/2x/googlelogo_color_272x92dp.png',
+        apiVersion: 'v2'
+      },
+    },
+    version: '9',
+    namespace: 'my-namespace'
+  },
+  {
+    name: 'ecstatic-puny-seed',
+    info: {
+      last_deployed: 'Yesterday at 2:00PM',
+      deleted: '',
+      description: 'This is the release description',
+      status: 'deployed'
+    },
+    chart: {
+      metadata: {
+        name: 'mychart',
+        home: 'https://github.com/foo/bar',
+        sources: '',
+        version: '1.10.0',
+        description: 'This is the chart description.',
+        icon: 'https://www.google.com/images/branding/googlelogo/2x/googlelogo_color_272x92dp.png',
+        apiVersion: 'v2'
+      },
+    },
+    version: '9',
+    namespace: 'my-namespace'
+  }
+];
+
+type PropsType = {
+};
+
+type StateType = {
+};
+
+export default class Dashboard extends Component<PropsType, StateType> {
 
   componentDidMount() {
     let { userId, setCurrentError, currentCluster } = this.context;
@@ -37,6 +113,14 @@ class Dashboard extends Component {
     });
   }
 
+  renderChartList = () => {
+    return dummyCharts.map((x: any, i: number) => {
+      return (
+        <Chart name={x.name} />
+      )
+    })
+  }
+
   render() {
     let { currentCluster } = this.context;
 
@@ -61,13 +145,14 @@ class Dashboard extends Component {
         </InfoSection>
 
         <LineBreak />
+
+        {this.renderChartList()}
       </div>
     );
   }
 }
 
 Dashboard.contextType = Context;
-export default Dashboard;
 
 const TopRow = styled.div`
   display: flex;
@@ -228,6 +313,7 @@ const Title = styled.div`
 
 const TitleSection = styled.div`
   height: 80px;
+  margin-top: 10px;
   margin-bottom: 10px;
   display: flex;
   flex-direction: row;

@@ -343,7 +343,6 @@ func (app *App) sendUserID(w http.ResponseWriter, userID uint) error {
 	resUser := &models.UserExternal{
 		ID: userID,
 	}
-
 	if err := json.NewEncoder(w).Encode(resUser); err != nil {
 		return err
 	}

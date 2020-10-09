@@ -3,51 +3,20 @@ import styled from 'styled-components';
 import gradient from '../../../assets/gradient.jpg';
 
 import { Context } from '../../../shared/Context';
-import api from '../../../shared/api';
-import { ChartType } from '../../../shared/types';
 
-import Chart from './chart/Chart';
+import ChartList from './chart/ChartList';
+import NamespaceSelector from './NamespaceSelector';
 
 type PropsType = {
 };
 
 type StateType = {
-  charts: ChartType[]
+  namespace: string
 };
 
 export default class Dashboard extends Component<PropsType, StateType> {
   state = {
-    charts: [] as ChartType[]
-  }
-
-  componentDidMount() {
-    let { userId, setCurrentError, currentCluster } = this.context;
-    
-    api.getCharts('<token>', {
-      namespace: '',
-      context: currentCluster,
-      storage: 'secret',
-      limit: 20,
-      skip: 0,
-      byDate: false,
-      statusFilter: ['deployed']
-    }, {}, (err: any, res: any) => {
-        if (err) {
-        setCurrentError(JSON.stringify(err));
-      } else {
-        if (res.data) {
-          this.setState({ charts: res.data });
-        }
-      }
-    });
-  }
-
-  renderChartList = () => {
-    return this.state.charts.map((x: ChartType, i: number) => {
-      return (
-        <Chart key={i} chart={x} />
-      )
-    })
+    namespace: ''
   }
 
   render() {
@@ -74,14 +43,36 @@ export default class Dashboard extends Component<PropsType, StateType> {
         </InfoSection>
 
         <LineBreak />
+        
+        <ControlRow>
+          <Button disabled={true}>
+            <i className="material-icons">add</i> Add a Chart
+          </Button>
+          <NamespaceSelector
+            setNamespace={(namespace) => this.setState({ namespace })}
+            namespace={this.state.namespace}
+            currentCluster={currentCluster}
+          />
+        </ControlRow>
 
-        {this.renderChartList()}
+        <ChartList
+          currentCluster={currentCluster}
+          namespace={this.state.namespace}
+        />
       </div>
     );
   }
 }
 
 Dashboard.contextType = Context;
+
+const ControlRow = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 35px;
+  padding-left: 0px;
+`;
 
 const TopRow = styled.div`
   display: flex;
@@ -112,43 +103,35 @@ const InfoLabel = styled.div`
 const InfoSection = styled.div`
   margin-top: 20px;
   font-family: 'Work Sans', sans-serif;
-  margin-left: 7px;
+  margin-left: 0px;
   margin-bottom: 35px;
 `;
 
-const ButtonWrap = styled.div`
-  display: flex;
-  align-items: center;
-  font-size: 18px;
-  margin-top: 2px;
-  margin-bottom: 25px;
-  color: #00000020;
-`;
-
 const Button = styled.div`
-  min-width: 145px;
-  max-width: 145px;
   display: flex;
-  flex: 1;
   flex-direction: row;
   align-items: center;
   justify-content: space-between;
   font-size: 13px;
   cursor: pointer;
   font-family: 'Work Sans', sans-serif;
-  margin-left: 5px;
   border-radius: 20px;
   color: white;
-  padding: 6px 8px;
+  height: 30px;
+  padding: 0px 8px;
+  padding-bottom: 1px;
   margin-right: 10px;
-  padding-right: 13px;
+  font-weight: 500;
+  padding-right: 15px;
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
+  box-shadow: 0 5px 8px 0px #00000010;
+  cursor: not-allowed;
 
-  background: #616FEEcc;
+  background: ${(props: { disabled: boolean }) => props.disabled ? '#aaaabbee' :'#616FEEcc'};
   :hover {
-    background: #505edddd;
+    background: ${(props: { disabled: boolean }) => props.disabled ? '' : '#505edddd'};
   }
 
   > i {
@@ -159,7 +142,7 @@ const Button = styled.div`
     border-radius: 20px;
     display: flex;
     align-items: center;
-    margin-top: -1px;
+    margin-right: 8px;
     justify-content: center;
   }
 `;
@@ -233,7 +216,7 @@ const Title = styled.div`
   font-size: 20px;
   font-weight: 500;
   font-family: 'Work Sans', sans-serif;
-  margin-left: 20px;
+  margin-left: 18px;
   color: #ffffff;
   white-space: nowrap;
   overflow: hidden;
@@ -247,7 +230,7 @@ const TitleSection = styled.div`
   display: flex;
   flex-direction: row;
   align-items: center;
-  padding-left: 17px;
+  padding-left: 0px;
 
   > i {
     margin-left: 10px;

@@ -3,7 +3,7 @@ import styled from 'styled-components';
 import AceEditor from 'react-ace';
 
 import 'ace-builds/src-noconflict/mode-yaml';
-import 'ace-builds/src-noconflict/theme-monokai';
+import 'ace-builds/src-noconflict/theme-terminal';
 
 type PropsType = {
   value: string,
@@ -44,7 +44,7 @@ class YamlEditor extends Component<PropsType, StateType> {
           <AceEditor
             mode='yaml'
             value={this.props.value}
-            theme='monokai'
+            theme='terminal'
             onChange={this.props.onChange}
             name='codeEditor'
             editorProps={{ $blockScrolling: true }}

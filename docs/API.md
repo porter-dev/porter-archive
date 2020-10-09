@@ -208,7 +208,16 @@ User{
 }
 ```
 
-**Successful Response Body**: N/A
+**Successful Response Body**:
+User object with only the id field. Other fields are empty - with values in parantheses.
+```js
+{
+  "id": Int,
+  "email": String ("")
+  "contexts": []String (NULL)
+  "rawKubeConfig": String ("")
+}
+```
 
 **Successful Status Code**: `201`
 
@@ -261,7 +270,16 @@ User{
 }
 ```
 
-**Successful Response Body**: N/A
+**Successful Response Body**:
+User object with only the id field. Other fields are empty - with values in parantheses.
+```js
+{
+  "id": Int,
+  "email": String ("")
+  "contexts": []String (NULL)
+  "rawKubeConfig": String ("")
+}
+```
 
 **Successful Status Code**: `200`
 

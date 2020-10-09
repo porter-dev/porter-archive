@@ -27,6 +27,7 @@ type releaseStub struct {
 
 type chartTest struct {
 	initializers []func(tester *tester)
+	namespace    string
 	msg          string
 	method       string
 	endpoint     string
@@ -46,6 +47,8 @@ func testChartRequests(t *testing.T, tests []*chartTest, canQuery bool) {
 		for _, init := range c.initializers {
 			init(tester)
 		}
+
+		tester.app.TestAgents.HelmAgent.ActionConfig.Releases.Driver.(*driver.Memory).SetNamespace(c.namespace)
 
 		req, err := http.NewRequest(
 			c.method,
@@ -100,6 +103,33 @@ var listChartsTests = []*chartTest{
 		body:      "",
 		expStatus: http.StatusOK,
 		expBody:   releaseStubsToChartJSON(sampleReleaseStubs),
+		useCookie: true,
+		validators: []func(c *chartTest, tester *tester, t *testing.T){
+			chartReleaseBodyValidator,
+		},
+	},
+	&chartTest{
+		initializers: []func(tester *tester){
+			initDefaultCharts,
+		},
+		msg:       "List charts",
+		method:    "GET",
+		namespace: "default",
+		endpoint: "/api/charts?" + url.Values{
+			"namespace":    []string{"default"},
+			"context":      []string{"context-test"},
+			"storage":      []string{"memory"},
+			"limit":        []string{"20"},
+			"skip":         []string{"0"},
+			"byDate":       []string{"false"},
+			"statusFilter": []string{"deployed"},
+		}.Encode(),
+		body:      "",
+		expStatus: http.StatusOK,
+		expBody: releaseStubsToChartJSON([]releaseStub{
+			sampleReleaseStubs[0],
+			sampleReleaseStubs[2],
+		}),
 		useCookie: true,
 		validators: []func(c *chartTest, tester *tester, t *testing.T){
 			chartReleaseBodyValidator,

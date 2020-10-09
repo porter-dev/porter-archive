@@ -50,6 +50,10 @@ const getCharts = baseApi<{
   statusFilter: string[]
 }>('GET', '/api/charts');
 
+const getNamespaces = baseApi<{
+  context: string
+}>('GET', '/api/k8s/namespaces');
+
 // Bundle export to allow default api import (api.<method> is more readable)
 export default {
   checkAuth,
@@ -60,4 +64,5 @@ export default {
   updateUser,
   getContexts,
   getCharts,
+  getNamespaces
 }

@@ -189,7 +189,7 @@ var getReleaseTests = []getReleaseTest{
 			releaseStub{"not-in-default-namespace", "other", 1, "1.0.2", release.StatusDeployed},
 		},
 		getName:    "airwatch",
-		getVersion: 0,
+		getVersion: 1,
 		expRes:     releaseStub{"airwatch", "default", 1, "1.0.0", release.StatusDeployed},
 	},
 }
@@ -244,5 +244,44 @@ func TestListReleaseHistory(t *testing.T) {
 		}
 
 		compareReleaseToStubs(t, releases, tc.expRes)
+	}
+}
+
+var rollbackReleaseTests = []getReleaseTest{
+	getReleaseTest{
+		name:      "simple rollback test",
+		namespace: "default",
+		releases: []releaseStub{
+			releaseStub{"wordpress", "default", 2, "1.0.2", release.StatusDeployed},
+			releaseStub{"wordpress", "default", 1, "1.0.1", release.StatusSuperseded},
+		},
+		getName:    "wordpress",
+		getVersion: 3,
+		expRes:     releaseStub{"wordpress", "default", 3, "1.0.1", release.StatusDeployed},
+	},
+}
+
+func TestRollbackRelease(t *testing.T) {
+	for _, tc := range rollbackReleaseTests {
+		agent := newAgentFixture(t, tc.namespace)
+		makeReleases(t, agent, tc.releases)
+
+		// calling agent.ActionConfig.Releases.Create in makeReleases will automatically set the
+		// namespace, so we have to reset the namespace of the storage driver
+		agent.ActionConfig.Releases.Driver.(*driver.Memory).SetNamespace(tc.namespace)
+
+		err := agent.RollbackRelease("wordpress", 1)
+
+		if err != nil {
+			t.Errorf("%v", err)
+		}
+
+		rel, err := agent.GetRelease(tc.getName, tc.getVersion)
+
+		if err != nil {
+			t.Errorf("%v", err)
+		}
+
+		compareReleaseToStubs(t, []*release.Release{rel}, []releaseStub{tc.expRes})
 	}
 }

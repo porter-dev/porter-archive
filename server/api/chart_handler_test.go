@@ -118,7 +118,7 @@ var getChartTests = []*chartTest{
 		},
 		msg:    "Get charts",
 		method: "GET",
-		endpoint: "/api/charts/airwatch/0?" + url.Values{
+		endpoint: "/api/charts/airwatch/1?" + url.Values{
 			"namespace": []string{""},
 			"context":   []string{"context-test"},
 			"storage":   []string{"memory"},
@@ -161,6 +161,36 @@ var listChartHistoryTests = []*chartTest{
 
 func TestHandleListChartHistory(t *testing.T) {
 	testChartRequests(t, listChartHistoryTests, true)
+}
+
+var rollbackChartTests = []*chartTest{
+	&chartTest{
+		initializers: []func(tester *tester){
+			initHistoryCharts,
+		},
+		msg:      "Rollback relase",
+		method:   "POST",
+		endpoint: "/api/charts/rollback/wordpress/1",
+		body: `
+			{
+				"namespace": "default",
+				"context": "context-test",
+				"storage": "memory"
+			}
+		`,
+		expStatus: http.StatusOK,
+		expBody:   releaseStubsToChartJSON(historyReleaseStubs),
+		useCookie: true,
+		validators: []func(c *chartTest, tester *tester, t *testing.T){
+			func(c *chartTest, tester *tester, t *testing.T) {
+				t.Error("asdlkfjasf")
+			},
+		},
+	},
+}
+
+func TestRollbackChart(t *testing.T) {
+	testChartRequests(t, rollbackChartTests, true)
 }
 
 // ------------------------- INITIALIZERS AND VALIDATORS ------------------------- //

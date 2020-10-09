@@ -130,6 +130,26 @@ var listReleaseTests = []listReleaseTest{
 		},
 	},
 	listReleaseTest{
+		name:      "simple test only default namespace",
+		namespace: "",
+		filter: &helm.ListFilter{
+			Namespace:    "",
+			Limit:        20,
+			Skip:         0,
+			ByDate:       false,
+			StatusFilter: []string{"deployed"},
+		},
+		releases: []releaseStub{
+			releaseStub{"airwatch", "default", 1, "1.0.0", release.StatusDeployed},
+			releaseStub{"wordpress", "default", 1, "1.0.1", release.StatusDeployed},
+			releaseStub{"not-in-default-namespace", "other", 1, "1.0.2", release.StatusDeployed},
+		},
+		expRes: []releaseStub{
+			releaseStub{"airwatch", "default", 1, "1.0.0", release.StatusDeployed},
+			releaseStub{"wordpress", "default", 1, "1.0.1", release.StatusDeployed},
+		},
+	},
+	listReleaseTest{
 		name:      "simple test limit",
 		namespace: "",
 		filter: &helm.ListFilter{

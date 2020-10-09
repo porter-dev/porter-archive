@@ -50,12 +50,12 @@ func (app *App) HandleCreateUser(w http.ResponseWriter, r *http.Request) {
 		session.Values["user_id"] = user.ID
 		session.Save(r, w)
 
+		w.WriteHeader(http.StatusCreated)
+
 		if err := app.sendUserID(w, user.ID); err != nil {
 			app.handleErrorFormDecoding(err, ErrUserDecode, w)
 			return
 		}
-
-		w.WriteHeader(http.StatusCreated)
 	}
 }
 

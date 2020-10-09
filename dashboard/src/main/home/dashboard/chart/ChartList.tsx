@@ -9,7 +9,8 @@ import Chart from './Chart';
 import Loading from '../../../../components/Loading';
 
 type PropsType = {
-  currentCluster: string
+  currentCluster: string,
+  namespace: string
 };
 
 type StateType = {
@@ -28,7 +29,7 @@ export default class ChartList extends Component<PropsType, StateType> {
     
     this.setState({ loading: true });
     api.getCharts('<token>', {
-      namespace: '',
+      namespace: this.props.namespace,
       context: currentCluster,
       storage: 'secret',
       limit: 20,

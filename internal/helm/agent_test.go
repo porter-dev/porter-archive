@@ -131,7 +131,7 @@ var listReleaseTests = []listReleaseTest{
 	},
 	listReleaseTest{
 		name:      "simple test only default namespace",
-		namespace: "",
+		namespace: "default",
 		filter: &helm.ListFilter{
 			Namespace:    "",
 			Limit:        20,

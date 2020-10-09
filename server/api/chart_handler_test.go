@@ -2,7 +2,9 @@ package api_test
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
+	"net/http/httptest"
 	"net/url"
 	"reflect"
 	"strings"
@@ -105,7 +107,7 @@ var listChartsTests = []*chartTest{
 		expBody:   releaseStubsToChartJSON(sampleReleaseStubs),
 		useCookie: true,
 		validators: []func(c *chartTest, tester *tester, t *testing.T){
-			chartReleaseBodyValidator,
+			chartReleaseArrBodyValidator,
 		},
 	},
 	&chartTest{
@@ -132,7 +134,7 @@ var listChartsTests = []*chartTest{
 		}),
 		useCookie: true,
 		validators: []func(c *chartTest, tester *tester, t *testing.T){
-			chartReleaseBodyValidator,
+			chartReleaseArrBodyValidator,
 		},
 	},
 }
@@ -146,8 +148,9 @@ var getChartTests = []*chartTest{
 		initializers: []func(tester *tester){
 			initDefaultCharts,
 		},
-		msg:    "Get charts",
-		method: "GET",
+		msg:       "Get charts",
+		method:    "GET",
+		namespace: "default",
 		endpoint: "/api/charts/airwatch/1?" + url.Values{
 			"namespace": []string{""},
 			"context":   []string{"context-test"},
@@ -172,8 +175,9 @@ var listChartHistoryTests = []*chartTest{
 		initializers: []func(tester *tester){
 			initHistoryCharts,
 		},
-		msg:    "List chart history",
-		method: "GET",
+		msg:       "List chart history",
+		method:    "GET",
+		namespace: "default",
 		endpoint: "/api/charts/wordpress/history?" + url.Values{
 			"namespace": []string{""},
 			"context":   []string{"context-test"},
@@ -184,7 +188,7 @@ var listChartHistoryTests = []*chartTest{
 		expBody:   releaseStubsToChartJSON(historyReleaseStubs),
 		useCookie: true,
 		validators: []func(c *chartTest, tester *tester, t *testing.T){
-			chartReleaseBodyValidator,
+			chartReleaseArrBodyValidator,
 		},
 	},
 }
@@ -198,9 +202,10 @@ var rollbackChartTests = []*chartTest{
 		initializers: []func(tester *tester){
 			initHistoryCharts,
 		},
-		msg:      "Rollback relase",
-		method:   "POST",
-		endpoint: "/api/charts/rollback/wordpress/1",
+		msg:       "Rollback relase",
+		method:    "POST",
+		namespace: "default",
+		endpoint:  "/api/charts/rollback/wordpress/1",
 		body: `
 			{
 				"namespace": "default",
@@ -209,11 +214,49 @@ var rollbackChartTests = []*chartTest{
 			}
 		`,
 		expStatus: http.StatusOK,
-		expBody:   releaseStubsToChartJSON(historyReleaseStubs),
+		expBody:   ``,
 		useCookie: true,
 		validators: []func(c *chartTest, tester *tester, t *testing.T){
 			func(c *chartTest, tester *tester, t *testing.T) {
-				t.Error("asdlkfjasf")
+				req, err := http.NewRequest(
+					"GET",
+					"/api/charts/wordpress/3?"+url.Values{
+						"namespace": []string{"default"},
+						"context":   []string{"context-test"},
+						"storage":   []string{"memory"},
+					}.Encode(),
+					strings.NewReader(""),
+				)
+
+				req.AddCookie(tester.cookie)
+
+				if err != nil {
+					t.Fatal(err)
+				}
+
+				rr2 := httptest.NewRecorder()
+				tester.router.ServeHTTP(rr2, req)
+
+				gotBody := &release.Release{}
+				expBody := &release.Release{}
+
+				expBodyJSON := releaseStubToChartJSON(releaseStub{"wordpress", "default", 3, "1.0.1", release.StatusDeployed})
+
+				fmt.Println(rr2.Body.String())
+
+				json.Unmarshal(rr2.Body.Bytes(), gotBody)
+				json.Unmarshal([]byte(expBodyJSON), expBody)
+
+				// just check name and version match, other items will be different
+				if gotBody.Name != expBody.Name {
+					t.Errorf("%s, validation wrong body: got %v want %v",
+						c.msg, gotBody.Name, expBody.Name)
+				}
+
+				if gotBody.Version != expBody.Version {
+					t.Errorf("%s, validation wrong body: got %v want %v",
+						c.msg, gotBody.Version, expBody.Version)
+				}
 			},
 		},
 	},
@@ -310,6 +353,19 @@ func makeReleases(agent *helm.Agent, rels []releaseStub) {
 }
 
 func chartReleaseBodyValidator(c *chartTest, tester *tester, t *testing.T) {
+	gotBody := &release.Release{}
+	expBody := &release.Release{}
+
+	json.Unmarshal(tester.rr.Body.Bytes(), gotBody)
+	json.Unmarshal([]byte(c.expBody), expBody)
+
+	if !reflect.DeepEqual(gotBody, expBody) {
+		t.Errorf("%s, handler returned wrong body: got %v want %v",
+			c.msg, gotBody, expBody)
+	}
+}
+
+func chartReleaseArrBodyValidator(c *chartTest, tester *tester, t *testing.T) {
 	gotBody := &[]release.Release{}
 	expBody := &[]release.Release{}
 

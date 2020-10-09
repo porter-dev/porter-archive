@@ -243,16 +243,16 @@ func (app *App) HandleRollbackChart(w http.ResponseWriter, r *http.Request) {
 		agent, err = helm.GetAgentOutOfClusterConfig(form.ChartForm.Form, app.logger)
 	}
 
-	release, err := agent.GetRelease("wordpress", 1)
+	err = agent.RollbackRelease(form.Name, form.Revision)
 
-	fmt.Println("RELEASE IS", release, err.Error())
+	if err != nil {
+		app.handleErrorInternal(err, w)
+		return
+	}
 
-	// err = agent.RollbackRelease(form.Name, form.Revision)
+	release, err := agent.GetRelease("wordpress", 3)
 
-	// if err != nil {
-	// 	app.handleErrorInternal(err, w)
-	// 	return
-	// }
+	fmt.Println("RELEASE IS", release)
 
 	w.WriteHeader(http.StatusOK)
 }

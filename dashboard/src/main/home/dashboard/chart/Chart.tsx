@@ -2,9 +2,11 @@ import React, { Component } from 'react';
 import styled from 'styled-components';
 
 import { ChartType } from '../../../../shared/types';
+import { Context } from '../../../../shared/Context';
 
 type PropsType = {
-  chart: ChartType
+  chart: ChartType,
+  setCurrentChart: (c: ChartType) => void
 };
 
 type StateType = {
@@ -33,12 +35,14 @@ export default class Chart extends Component<PropsType, StateType> {
   }
 
   render() {
-    let { chart } = this.props;
+    let { chart, setCurrentChart } = this.props;
+
     return ( 
       <StyledChart
         onMouseEnter={() => this.setState({ expand: true })}
         onMouseLeave={() => this.setState({ expand: false })}
         expand={this.state.expand}
+        onClick={() => setCurrentChart(chart)}
       >
         <Title>
           <IconWrapper>
@@ -70,6 +74,8 @@ export default class Chart extends Component<PropsType, StateType> {
     );
   }
 }
+
+Chart.contextType = Context;
 
 const Version = styled.div`
   position: absolute;
@@ -219,7 +225,7 @@ const StyledChart = styled.div`
 
   animation: ${(props: { expand: boolean }) => props.expand ? 'expand' : 'shrink'} 0.12s;
   animation-fill-mode: forwards;
-  animation-timing-function: ease;
+  animation-timing-function: ease-out;
 
   @keyframes expand {
     from { 

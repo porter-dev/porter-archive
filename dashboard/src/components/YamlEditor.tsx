@@ -49,6 +49,7 @@ class YamlEditor extends Component<PropsType, StateType> {
             name='codeEditor'
             editorProps={{ $blockScrolling: true }}
             width='100%'
+            height='295px'
             style={{ borderRadius: '5px' }}
           />
         </Editor>
@@ -65,9 +66,10 @@ const Editor = styled.form`
   width: calc(100% - 0px);
   border-radius: 5px;
   border: 1px solid #ffffff22;
-  height: 295px;
-  overflow: auto;
 `;
 
 const Holder = styled.div`
+  .ace_scrollbar {
+    display: none;
+  }
 `;

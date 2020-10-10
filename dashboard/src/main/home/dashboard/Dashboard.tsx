@@ -3,26 +3,39 @@ import styled from 'styled-components';
 import gradient from '../../../assets/gradient.jpg';
 
 import { Context } from '../../../shared/Context';
+import { ChartType } from '../../../shared/types';
 
 import ChartList from './chart/ChartList';
 import NamespaceSelector from './NamespaceSelector';
+import ExpandedChart from './expanded-chart/ExpandedChart';
 
 type PropsType = {
 };
 
 type StateType = {
-  namespace: string
+  namespace: string,
+  currentChart: ChartType | null
 };
 
 export default class Dashboard extends Component<PropsType, StateType> {
   state = {
-    namespace: ''
+    namespace: '',
+    currentChart: null as (ChartType | null)
   }
 
-  render() {
+  renderContents = () => {
     let { currentCluster } = this.context;
 
-    return ( 
+    if (this.state.currentChart) {
+      return (
+        <ExpandedChart
+          currentChart={this.state.currentChart}
+          setCurrentChart={(x: ChartType | null) => this.setState({ currentChart: x })} 
+        />
+      );
+    }
+
+    return (
       <div>
         <TitleSection>
           <ProjectIcon>
@@ -39,14 +52,14 @@ export default class Dashboard extends Component<PropsType, StateType> {
               <i className="material-icons">info</i> Info
             </InfoLabel>
           </TopRow>
-            <Description>Porter dashboard for {currentCluster}.</Description>
+          <Description>Porter dashboard for {currentCluster}.</Description>
         </InfoSection>
 
         <LineBreak />
         
         <ControlRow>
           <Button disabled={true}>
-            <i className="material-icons">add</i> Add a Chart
+            <i className="material-icons">add</i> Deploy a Chart
           </Button>
           <NamespaceSelector
             setNamespace={(namespace) => this.setState({ namespace })}
@@ -58,7 +71,16 @@ export default class Dashboard extends Component<PropsType, StateType> {
         <ChartList
           currentCluster={currentCluster}
           namespace={this.state.namespace}
+          setCurrentChart={(x: ChartType) => this.setState({ currentChart: x })}
         />
+      </div>
+    );
+  }
+
+  render() {
+    return (
+      <div>
+        {this.renderContents()}
       </div>
     );
   }
@@ -142,7 +164,7 @@ const Button = styled.div`
     border-radius: 20px;
     display: flex;
     align-items: center;
-    margin-right: 8px;
+    margin-right: 5px;
     justify-content: center;
   }
 `;

@@ -54,6 +54,10 @@ const getNamespaces = baseApi<{
   context: string
 }>('GET', '/api/k8s/namespaces');
 
+const getRevisions = baseApi<{}, { name: string }>('GET', pathParams => {
+  return `/api/charts/${pathParams.name}/history`;
+});
+
 // Bundle export to allow default api import (api.<method> is more readable)
 export default {
   checkAuth,
@@ -64,5 +68,6 @@ export default {
   updateUser,
   getContexts,
   getCharts,
-  getNamespaces
+  getNamespaces,
+  getRevisions
 }

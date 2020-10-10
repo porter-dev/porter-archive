@@ -10,23 +10,26 @@ import Loading from '../../../../components/Loading';
 
 type PropsType = {
   currentCluster: string,
-  namespace: string
+  namespace: string,
+  setCurrentChart: (c: ChartType) => void
 };
 
 type StateType = {
   charts: ChartType[],
-  loading: boolean
+  loading: boolean,
+  error: boolean
 };
 
 export default class ChartList extends Component<PropsType, StateType> {
   state = {
     charts: [] as ChartType[],
     loading: false,
+    error: false,
   }
 
   updateCharts = () => {
     let { setCurrentError, currentCluster } = this.context;
-    
+
     this.setState({ loading: true });
     api.getCharts('<token>', {
       namespace: this.props.namespace,
@@ -38,13 +41,13 @@ export default class ChartList extends Component<PropsType, StateType> {
       statusFilter: ['deployed']
     }, {}, (err: any, res: any) => {
       if (err) {
-        setCurrentError(JSON.stringify(err));
-        this.setState({ loading: false });
+        // setCurrentError(JSON.stringify(err));
+        this.setState({ loading: false, error: true });
       } else {
         if (res.data) {
           this.setState({ charts: res.data });
         }
-        this.setState({ loading: false });
+        this.setState({ loading: false, error: false });
       }
     });
   }
@@ -54,7 +57,10 @@ export default class ChartList extends Component<PropsType, StateType> {
   }
 
   componentDidUpdate(prevProps: PropsType) {
-    if (prevProps !== this.props) {
+
+    // Ret2: Prevents reload when opening ClusterConfigModal
+    if (prevProps.currentCluster !== this.props.currentCluster || 
+      prevProps.namespace !== this.props.namespace) {
       this.updateCharts();
     }
   }
@@ -62,11 +68,21 @@ export default class ChartList extends Component<PropsType, StateType> {
   renderChartList = () => {
     if (this.state.loading) {
       return <LoadingWrapper><Loading /></LoadingWrapper>
+    } else if (this.state.error) {
+      return (
+        <Placeholder>
+          <i className="material-icons">error</i> Error connecting to cluster.
+        </Placeholder>
+      );
     }
 
     return this.state.charts.map((x: ChartType, i: number) => {
       return (
-        <Chart key={i} chart={x} />
+        <Chart
+          key={i}
+          chart={x}
+          setCurrentChart={this.props.setCurrentChart}
+        />
       )
     })
   }
@@ -82,6 +98,21 @@ export default class ChartList extends Component<PropsType, StateType> {
 }
 
 ChartList.contextType = Context;
+
+const Placeholder = styled.div`
+  padding-top: 100px;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: #ffffff44;
+  font-size: 14px;
+
+  > i {
+    font-size: 18px;
+    margin-right: 12px;
+  }
+`;
 
 const LoadingWrapper = styled.div`
   padding-top: 100px;

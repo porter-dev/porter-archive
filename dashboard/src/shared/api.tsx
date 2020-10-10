@@ -54,8 +54,20 @@ const getNamespaces = baseApi<{
   context: string
 }>('GET', '/api/k8s/namespaces');
 
-const getRevisions = baseApi<{}, { name: string }>('GET', pathParams => {
+const getRevisions = baseApi<{
+  namespace: string,
+  context: string,
+  storage: string
+}, { name: string }>('GET', pathParams => {
   return `/api/charts/${pathParams.name}/history`;
+});
+
+const rollbackChart = baseApi<{
+  namespace: string,
+  context: string,
+  storage: string
+}, { name: string, revision: number }>('POST', pathParams => {
+  return `/api/charts/rollback/${pathParams.name}/${pathParams.revision}`;
 });
 
 // Bundle export to allow default api import (api.<method> is more readable)
@@ -69,5 +81,6 @@ export default {
   getContexts,
   getCharts,
   getNamespaces,
-  getRevisions
+  getRevisions,
+  rollbackChart
 }

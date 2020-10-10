@@ -31,6 +31,7 @@ export default class Dashboard extends Component<PropsType, StateType> {
         <ExpandedChart
           currentChart={this.state.currentChart}
           setCurrentChart={(x: ChartType | null) => this.setState({ currentChart: x })} 
+          namespace={this.state.namespace}
         />
       );
     }

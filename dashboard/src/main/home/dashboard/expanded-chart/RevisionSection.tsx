@@ -2,61 +2,81 @@ import React, { Component } from 'react';
 import styled from 'styled-components';
 
 import api from '../../../../shared/api';
+import { Context } from '../../../../shared/Context';
 import { ChartType } from '../../../../shared/types';
+import Chart from '../chart/Chart';
 
 type PropsType = {
   showRevisions: boolean,
   toggleShowRevisions: () => void,
-  chart: ChartType
+  chart: ChartType,
+  namespace: string
 };
 
 type StateType = {
+  revisions: ChartType[]
 };
-
-const dummyRevisions = [
-  {
-    version: 3,
-    timestamp: 'Monday at 5:00 PM',
-    status: 'deployed'
-  },
-  {
-    version: 2,
-    timestamp: 'Monday at 5:00 PM',
-    status: 'superseded'
-  },
-  {
-    version: 1,
-    timestamp: 'Monday at 5:00 PM',
-    status: 'superseded'
-  }
-]
 
 export default class RevisionSection extends Component<PropsType, StateType> {
   state = {
+    revisions: [] as ChartType[]
   }
 
   componentDidMount() {
     let { chart } = this.props;
 
-    /*
-    api.getRevisions('<token>', {}, { name: chart.name }, (err: any, res: any) => {
+    api.getRevisions('<token>', {
+      namespace: this.props.namespace,
+      context: this.context.currentCluster,
+      storage: 'secret'
+    }, { name: chart.name }, (err: any, res: any) => {
       if (err) {
-        alert(err);
+        console.log(err)
       } else {
-        console.log(res);
+        this.setState({ revisions: res.data.reverse() });
       }
     });
-    */
+  }
+
+  readableDate = (s: string) => {
+    let ts = new Date(s);
+    let date = ts.toLocaleDateString();
+    let time = ts.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+    return `${time} on ${date}`;
+  }
+
+  handleRollback = (revision: number) => {
+    api.rollbackChart('<token>', {
+      namespace: this.props.namespace,
+      context: this.context.currentCluster,
+      storage: 'secret'
+    }, {
+      name: this.props.chart.name,
+      revision,
+    }, (err: any, res: any) => {
+      if (err) {
+        console.log(err)
+      } else {
+        console.log(res)
+      }
+    });
   }
 
   renderRevisionList = () => {
-    return dummyRevisions.map((revision: any, i: number) => {
+    return this.state.revisions.map((revision: any, i: number) => {
       return (
         <Tr key={i}>
           <Td>{revision.version}</Td>
-          <Td>{revision.timestamp}</Td>
-          <Td>{revision.status}</Td>
-          <Td><RollbackButton disabled={false}>Revert</RollbackButton></Td>
+          <Td>{this.readableDate(revision.info.last_deployed)}</Td>
+          <Td>{revision.info.status}</Td>
+          <Td>
+            <RollbackButton
+              disabled={revision.version === this.props.chart.version}
+              onClick={() => this.handleRollback(revision.version)}
+            >
+              {revision.version === this.props.chart.version ? 'Current' : 'Revert'}
+            </RollbackButton>
+          </Td>
         </Tr>
       );
     });
@@ -66,13 +86,15 @@ export default class RevisionSection extends Component<PropsType, StateType> {
     if (this.props.showRevisions) {
       return (
         <RevisionsTable>
-          <Tr>
-            <Th>Revision No.</Th>
-            <Th>Timestamp</Th>
-            <Th>Status</Th>
-            <Th>Rollback</Th>
-          </Tr>
-          {this.renderRevisionList()}
+          <tbody>
+            <Tr>
+              <Th>Revision No.</Th>
+              <Th>Timestamp</Th>
+              <Th>Status</Th>
+              <Th>Rollback</Th>
+            </Tr>
+            {this.renderRevisionList()}
+          </tbody>
         </RevisionsTable>
       )
     }
@@ -95,8 +117,10 @@ export default class RevisionSection extends Component<PropsType, StateType> {
   }
 }
 
+RevisionSection.contextType = Context;
+
 const RollbackButton = styled.div`
-  cursor: pointer;
+  cursor: ${(props: { disabled: boolean }) => props.disabled ? 'not-allowed' :'pointer'};
   display: flex;
   border-radius: 3px;
   align-items: center;
@@ -104,10 +128,10 @@ const RollbackButton = styled.div`
   font-weight: 500;
   height: 21px;
   font-size: 13px;
-  width: 65px;
+  width: 70px;
   background: ${(props: { disabled: boolean }) => props.disabled ? '#aaaabbee' :'#616FEEcc'};
   :hover {
-    background: ${(props: { disabled: boolean }) => props.disabled ? '' : '#505edddd'};
+    background: ${(props: { disabled: boolean }) => props.disabled ? '' : '#405eddbb'};
   }
 `;
 
@@ -147,6 +171,7 @@ const RevisionHeader = styled.div`
   width: 100%;
   padding-left: 15px;
   cursor: pointer;
+  background: ${(props: { showRevisions: boolean }) => props.showRevisions ? '#ffffff11' : ''};
   :hover {
     background: #ffffff18;
     > i {
@@ -159,6 +184,7 @@ const RevisionHeader = styled.div`
     font-size: 20px;
     cursor: pointer;
     border-radius: 20px;
+    background: ${(props: { showRevisions: boolean }) => props.showRevisions ? '#ffffff18' : ''};
     transform: ${(props: { showRevisions: boolean }) => props.showRevisions ? 'rotate(180deg)' : ''};
   }
 `;
@@ -170,4 +196,10 @@ const StyledRevisionSection = styled.div`
   margin-top: 25px;
   border-radius: 5px;
   overflow-y: auto;
+  animation: ${(props: { showRevisions: boolean }) => props.showRevisions ? 'expandRevisions 0.3s' : ''};
+  animation-timing-function: ease-out;
+  @keyframes expandRevisions {
+    from { max-height: 40px }
+    to { max-height: 250px }
+  }
 `;

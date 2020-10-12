@@ -10,7 +10,7 @@ import RevisionSection from './RevisionSection';
 type PropsType = {
   currentChart: ChartType,
   setCurrentChart: (x: ChartType | null) => void,
-  namespace: string
+  refreshChart: () => void
 };
 
 type StateType = {
@@ -40,7 +40,7 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
   }
 
   render() {
-    let { currentChart, setCurrentChart } = this.props;
+    let { currentChart, setCurrentChart, refreshChart } = this.props;
     let chart = currentChart;
 
     return ( 
@@ -79,7 +79,7 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
           showRevisions={this.state.showRevisions}
           toggleShowRevisions={() => this.setState({ showRevisions: !this.state.showRevisions })}
           chart={chart}
-          namespace={this.props.namespace}
+          refreshChart={refreshChart}
         />
 
         <ChartSection>

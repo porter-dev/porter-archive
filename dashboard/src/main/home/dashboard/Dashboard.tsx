@@ -4,6 +4,7 @@ import gradient from '../../../assets/gradient.jpg';
 
 import { Context } from '../../../shared/Context';
 import { ChartType } from '../../../shared/types';
+import api from '../../../shared/api';
 
 import ChartList from './chart/ChartList';
 import NamespaceSelector from './NamespaceSelector';
@@ -23,6 +24,22 @@ export default class Dashboard extends Component<PropsType, StateType> {
     currentChart: null as (ChartType | null)
   }
 
+  // Allows rollback to update the top-level chart
+  refreshChart = () => {
+    let { currentCluster } = this.context;
+    api.getChart('<token>', {
+      namespace: this.state.namespace,
+      context: currentCluster,
+      storage: 'secret'
+    }, { name: this.state.currentChart.name, revision: 0 }, (err: any, res: any) => {
+      if (err) {
+        console.log(err)
+      } else {
+        this.setState({ currentChart: res.data });
+      }
+    });
+  }
+
   renderContents = () => {
     let { currentCluster } = this.context;
 
@@ -30,8 +47,8 @@ export default class Dashboard extends Component<PropsType, StateType> {
       return (
         <ExpandedChart
           currentChart={this.state.currentChart}
-          setCurrentChart={(x: ChartType | null) => this.setState({ currentChart: x })} 
-          namespace={this.state.namespace}
+          refreshChart={this.refreshChart}
+          setCurrentChart={(x: ChartType | null) => this.setState({ currentChart: x })}
         />
       );
     }

@@ -50,6 +50,14 @@ const getCharts = baseApi<{
   statusFilter: string[]
 }>('GET', '/api/charts');
 
+const getChart = baseApi<{
+  namespace: string,
+  context: string,
+  storage: string
+}, { name: string, revision: number }>('GET', pathParams => {
+  return `/api/charts/${pathParams.name}/${pathParams.revision}`;
+});
+
 const getNamespaces = baseApi<{
   context: string
 }>('GET', '/api/k8s/namespaces');
@@ -80,6 +88,7 @@ export default {
   updateUser,
   getContexts,
   getCharts,
+  getChart,
   getNamespaces,
   getRevisions,
   rollbackChart

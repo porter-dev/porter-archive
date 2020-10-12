@@ -76,3 +76,13 @@ func (a *Agent) UpgradeChart(
 
 	return res, nil
 }
+
+// RollbackRelease rolls a release back to a specified revision/version
+func (a *Agent) RollbackRelease(
+	name string,
+	version int,
+) error {
+	cmd := action.NewRollback(a.ActionConfig)
+	cmd.Version = version
+	return cmd.Run(name)
+}

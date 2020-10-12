@@ -50,12 +50,12 @@ func (app *App) HandleCreateUser(w http.ResponseWriter, r *http.Request) {
 		session.Values["user_id"] = user.ID
 		session.Save(r, w)
 
+		w.WriteHeader(http.StatusCreated)
+
 		if err := app.sendUserID(w, user.ID); err != nil {
 			app.handleErrorFormDecoding(err, ErrUserDecode, w)
 			return
 		}
-
-		w.WriteHeader(http.StatusCreated)
 	}
 }
 
@@ -69,12 +69,12 @@ func (app *App) HandleAuthCheck(w http.ResponseWriter, r *http.Request) {
 
 	userID, _ := session.Values["user_id"].(uint)
 
+	w.WriteHeader(http.StatusOK)
+
 	if err := app.sendUserID(w, userID); err != nil {
 		app.handleErrorFormDecoding(err, ErrUserDecode, w)
 		return
 	}
-
-	w.WriteHeader(http.StatusOK)
 }
 
 // HandleLoginUser checks the request header for cookie and validates the user.
@@ -119,12 +119,12 @@ func (app *App) HandleLoginUser(w http.ResponseWriter, r *http.Request) {
 		app.logger.Warn().Err(err)
 	}
 
+	w.WriteHeader(http.StatusOK)
+
 	if err := app.sendUserID(w, storedUser.ID); err != nil {
 		app.handleErrorFormDecoding(err, ErrUserDecode, w)
 		return
 	}
-
-	w.WriteHeader(http.StatusOK)
 }
 
 // HandleLogoutUser detaches the user from the session
@@ -343,7 +343,6 @@ func (app *App) sendUserID(w http.ResponseWriter, userID uint) error {
 	resUser := &models.UserExternal{
 		ID: userID,
 	}
-
 	if err := json.NewEncoder(w).Encode(resUser); err != nil {
 		return err
 	}

@@ -70,6 +70,42 @@ func testUserRequests(t *testing.T, tests []*userTest, canQuery bool) {
 
 // ------------------------- TEST FIXTURES AND FUNCTIONS  ------------------------- //
 
+var authCheckTests = []*userTest{
+	&userTest{
+		initializers: []func(tester *tester){
+			initUserDefault,
+		},
+		msg:       "Auth check successful. User is logged in.",
+		method:    "GET",
+		endpoint:  "/api/auth/check",
+		expStatus: http.StatusOK,
+		body:      "",
+		expBody:   `{"id":1,"email":"","contexts":null,"rawKubeConfig":""}`,
+		useCookie: true,
+		validators: []func(c *userTest, tester *tester, t *testing.T){
+			userBasicBodyValidator,
+		},
+	},
+	&userTest{
+		initializers: []func(tester *tester){
+			initUserDefault,
+		},
+		msg:       "Auth check failure. User is not logged in.",
+		method:    "GET",
+		endpoint:  "/api/auth/check",
+		body:      "",
+		expStatus: http.StatusForbidden,
+		expBody:   http.StatusText(http.StatusForbidden) + "\n",
+		validators: []func(c *userTest, tester *tester, t *testing.T){
+			userBasicBodyValidator,
+		},
+	},
+}
+
+func TestHandleAuthCheck(t *testing.T) {
+	testUserRequests(t, authCheckTests, true)
+}
+
 var createUserTests = []*userTest{
 	&userTest{
 		msg:      "Create user",
@@ -80,7 +116,7 @@ var createUserTests = []*userTest{
 			"password": "hello"
 		}`,
 		expStatus: http.StatusCreated,
-		expBody:   "",
+		expBody:   `{"id":1,"email":"","contexts":null,"rawKubeConfig":""}`,
 	},
 	&userTest{
 		msg:      "Create user invalid email",
@@ -180,7 +216,7 @@ var loginUserTests = []*userTest{
 			"password": "hello"
 		}`,
 		expStatus: http.StatusOK,
-		expBody:   ``,
+		expBody:   `{"id":1,"email":"","contexts":null,"rawKubeConfig":""}`,
 		validators: []func(c *userTest, tester *tester, t *testing.T){
 			userBasicBodyValidator,
 		},
@@ -197,7 +233,7 @@ var loginUserTests = []*userTest{
 			"password": "hello"
 		}`,
 		expStatus: http.StatusOK,
-		expBody:   ``,
+		expBody:   `{"id":1,"email":"","contexts":null,"rawKubeConfig":""}`,
 		useCookie: true,
 		validators: []func(c *userTest, tester *tester, t *testing.T){
 			userBasicBodyValidator,
@@ -670,7 +706,7 @@ func initUserWithContexts(tester *tester) {
 }
 
 func userBasicBodyValidator(c *userTest, tester *tester, t *testing.T) {
-	if body := tester.rr.Body.String(); body != c.expBody {
+	if body := tester.rr.Body.String(); strings.TrimSpace(body) != strings.TrimSpace(c.expBody) {
 		t.Errorf("%s, handler returned wrong body: got %v want %v",
 			c.msg, body, c.expBody)
 	}

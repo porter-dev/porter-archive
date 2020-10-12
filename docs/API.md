@@ -17,6 +17,7 @@
   - [`GET /api/charts`](#get-apicharts)
   - [`GET /api/charts/{name}/history`](#get-apichartsnamehistory)
   - [`GET /api/charts/{name}/{revision}`](#get-apichartsnamerevision)
+  - [`POST /api/charts/rollback/{name}/{revision}`](#post-apichartsrollbacknamerevision)
 - [`/api/k8s`](#apik8s)
   - [`GET /api/k8s/namespaces`](#get-apik8snamespaces)
 
@@ -208,7 +209,16 @@ User{
 }
 ```
 
-**Successful Response Body**: N/A
+**Successful Response Body**:
+User object with only the id field. Other fields are empty - with values in parantheses.
+```js
+{
+  "id": Int,
+  "email": String ("")
+  "contexts": []String (NULL)
+  "rawKubeConfig": String ("")
+}
+```
 
 **Successful Status Code**: `201`
 
@@ -261,7 +271,16 @@ User{
 }
 ```
 
-**Successful Response Body**: N/A
+**Successful Response Body**:
+User object with only the id field. Other fields are empty - with values in parantheses.
+```js
+{
+  "id": Int,
+  "email": String ("")
+  "contexts": []String (NULL)
+  "rawKubeConfig": String ("")
+}
+```
 
 **Successful Status Code**: `200`
 
@@ -639,6 +658,37 @@ Chart{
   "namespace": String
 }
 ```
+
+**Successful Status Code**: `200`
+
+**Errors:** TBD
+
+#### `POST /api/charts/rollback/{name}/{revision}`
+
+**Description:** Rolls a release back to a specified revision. 
+
+**URL parameters:** 
+
+- `name` The name of the release.
+- `revision` The number of the release. 
+
+**Query parameters:** N/A
+
+**Request Body**:
+
+```js
+{
+  // The namespace of the cluster to be used
+  "namespace": String,
+  // The name of the context in the kubeconfig being used
+  "context": String,
+  // The Helm storage option to use
+  "storage": String("secret"|"configmap"|"memory")
+}
+```
+
+
+**Successful Response Body**: N/A
 
 **Successful Status Code**: `200`
 

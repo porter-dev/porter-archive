@@ -45,7 +45,7 @@ export default class RevisionSection extends Component<PropsType, StateType> {
     return `${time} on ${date}`;
   }
 
-  handleRollback = (revision: number) => {
+  handleRollback = (revision: number) => {    
     api.rollbackChart('<token>', {
       namespace: this.props.namespace,
       context: this.context.currentCluster,

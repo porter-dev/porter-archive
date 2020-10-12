@@ -46,6 +46,8 @@ export default class ChartList extends Component<PropsType, StateType> {
       } else {
         if (res.data) {
           this.setState({ charts: res.data });
+        } else {
+          this.setState({ charts: [] });
         }
         this.setState({ loading: false, error: false });
       }
@@ -66,12 +68,20 @@ export default class ChartList extends Component<PropsType, StateType> {
   }
 
   renderChartList = () => {
-    if (this.state.loading) {
+    let { loading, error, charts } = this.state;
+
+    if (loading) {
       return <LoadingWrapper><Loading /></LoadingWrapper>
-    } else if (this.state.error) {
+    } else if (error) {
       return (
         <Placeholder>
           <i className="material-icons">error</i> Error connecting to cluster.
+        </Placeholder>
+      );
+    } else if (charts.length === 0) {
+      return (
+        <Placeholder>
+          <i className="material-icons">category</i> No charts found in this namespace.
         </Placeholder>
       );
     }

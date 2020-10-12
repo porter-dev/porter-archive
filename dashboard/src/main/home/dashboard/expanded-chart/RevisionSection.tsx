@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
 import styled from 'styled-components';
+import loading from '../../../../assets/loading.gif';
 
 import api from '../../../../shared/api';
 import { Context } from '../../../../shared/Context';
@@ -10,23 +11,27 @@ type PropsType = {
   showRevisions: boolean,
   toggleShowRevisions: () => void,
   chart: ChartType,
-  namespace: string
+  refreshChart: () => void
 };
 
 type StateType = {
-  revisions: ChartType[]
+  revisions: ChartType[],
+  rollbackRevision: number | null,
+  loading: boolean
 };
 
 export default class RevisionSection extends Component<PropsType, StateType> {
   state = {
-    revisions: [] as ChartType[]
+    revisions: [] as ChartType[],
+    rollbackRevision: null as (number | null),
+    loading: false
   }
 
-  componentDidMount() {
+  refreshHistory = () => {
     let { chart } = this.props;
 
     api.getRevisions('<token>', {
-      namespace: this.props.namespace,
+      namespace: chart.namespace,
       context: this.context.currentCluster,
       storage: 'secret'
     }, { name: chart.name }, (err: any, res: any) => {
@@ -38,6 +43,10 @@ export default class RevisionSection extends Component<PropsType, StateType> {
     });
   }
 
+  componentDidMount() {
+    this.refreshHistory();
+  }
+
   readableDate = (s: string) => {
     let ts = new Date(s);
     let date = ts.toLocaleDateString();
@@ -45,19 +54,24 @@ export default class RevisionSection extends Component<PropsType, StateType> {
     return `${time} on ${date}`;
   }
 
-  handleRollback = (revision: number) => {    
+  handleRollback = () => {
+    let revisionNumber = this.state.rollbackRevision;
+    this.setState({ loading: true, rollbackRevision: null });
+
     api.rollbackChart('<token>', {
-      namespace: this.props.namespace,
+      namespace: this.props.chart.namespace,
       context: this.context.currentCluster,
       storage: 'secret'
     }, {
       name: this.props.chart.name,
-      revision,
+      revision: revisionNumber
     }, (err: any, res: any) => {
       if (err) {
         console.log(err)
       } else {
-        console.log(res)
+        this.setState({ loading: false });
+        this.props.refreshChart();
+        this.refreshHistory();
       }
     });
   }
@@ -72,7 +86,7 @@ export default class RevisionSection extends Component<PropsType, StateType> {
           <Td>
             <RollbackButton
               disabled={revision.version === this.props.chart.version}
-              onClick={() => this.handleRollback(revision.version)}
+              onClick={() => this.setState({ rollbackRevision: revision.version })}
             >
               {revision.version === this.props.chart.version ? 'Current' : 'Revert'}
             </RollbackButton>
@@ -100,9 +114,41 @@ export default class RevisionSection extends Component<PropsType, StateType> {
     }
   }
 
-  render() {
+  renderConfirmOverlay = () => {
+    if (this.state.rollbackRevision) {
+      return (
+        <ConfirmOverlay>
+          {`Are you sure you want to revert to version ${this.state.rollbackRevision}?`}
+          <ButtonRow>
+            <ConfirmButton
+              onClick={() => this.handleRollback()}
+            >
+              Yes
+            </ConfirmButton>
+            <ConfirmButton
+              onClick={() => this.setState({ rollbackRevision: null })}
+            >
+              No
+            </ConfirmButton>
+          </ButtonRow>
+        </ConfirmOverlay>
+      );
+    }
+  }
+
+  renderContents = () => {
+    if (this.state.loading) {
+      return (
+        <LoadingPlaceholder>
+          <StatusWrapper>
+            <LoadingGif src={loading} /> Updating . . .
+          </StatusWrapper>
+        </LoadingPlaceholder>
+      )
+    }
+
     return (
-      <StyledRevisionSection showRevisions={this.props.showRevisions}>
+      <div>
         <RevisionHeader
           showRevisions={this.props.showRevisions}
           onClick={this.props.toggleShowRevisions}
@@ -111,13 +157,113 @@ export default class RevisionSection extends Component<PropsType, StateType> {
           <i className="material-icons">expand_more</i>
         </RevisionHeader>
 
-        {this.renderExpanded()}
+        <RevisionList>
+          {this.renderExpanded()}
+        </RevisionList>
+      </div>
+    );
+  }
+
+  render() {
+    return (
+      <StyledRevisionSection showRevisions={this.props.showRevisions}>
+        {this.renderContents()}
+        {this.renderConfirmOverlay()}
       </StyledRevisionSection>
     );
   }
 }
 
 RevisionSection.contextType = Context;
+
+const LoadingPlaceholder = styled.div`
+  height: 40px;
+  display: flex;
+  align-items: center;
+  padding-left: 20px;
+`;
+
+const LoadingGif = styled.img`
+  width: 15px;
+  height: 15px;
+  margin-right: 9px;
+  margin-bottom: 0px;
+`;
+
+const StatusWrapper = styled.div`
+  display: flex;
+  align-items: center;
+  font-family: 'Work Sans', sans-serif;
+  font-size: 13px;
+  color: #ffffff55;
+  margin-right: 25px;
+`;
+
+const ConfirmOverlay = styled.div`
+  position: absolute;
+  top: 0px;
+  opacity: 100%;
+  left: 0px;
+  width: 100%;
+  height: 100%;
+  z-index: 999;
+  display: flex;
+  padding-bottom: 30px;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Work Sans', sans-serif;
+  font-size: 18px;
+  font-weight: 500;
+  color: white;
+  flex-direction: column;
+  background: rgb(0,0,0,0.73);
+  opacity: 0;
+  animation: lindEnter 0.2s;
+  animation-fill-mode: forwards;
+
+  @keyframes lindEnter {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+  }
+`;
+
+const ButtonRow = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 180px;
+  margin-top: 30px;
+`;
+
+const ConfirmButton = styled.div`
+  font-size: 18px;
+  padding: 10px 15px;
+  outline: none; 
+  border: 1px solid white;
+  border-radius: 10px; 
+  text-align: center; 
+  width: 80px;
+  cursor: pointer;
+  opacity: 0;
+  font-family: 'Work Sans', sans-serif;
+  font-size: 18px;
+  font-weight: 500;
+  animation: linEnter 0.3s 0.1s;
+  animation-fill-mode: forwards;
+  @keyframes linEnter {
+    from { transform: translateY(20px); opacity: 0; }
+    to   { transform: translateY(0px); opacity: 1; }
+  }
+  :hover {
+    background: white;
+    color: #232323;
+  }
+`;
+
+const RevisionList = styled.div`
+  overflow-y: auto;
+  max-height: 215px;
+`;
 
 const RollbackButton = styled.div`
   cursor: ${(props: { disabled: boolean }) => props.disabled ? 'not-allowed' :'pointer'};
@@ -191,11 +337,11 @@ const RevisionHeader = styled.div`
 
 const StyledRevisionSection = styled.div`
   width: 100%;
-  max-height: ${(props: { showRevisions: boolean }) => props.showRevisions ? '250px' : '40px'};
+  max-height: ${(props: { showRevisions: boolean }) => props.showRevisions ? '255px' : '40px'};
   background: #ffffff11;
   margin-top: 25px;
+  overflow: hidden;
   border-radius: 5px;
-  overflow-y: auto;
   animation: ${(props: { showRevisions: boolean }) => props.showRevisions ? 'expandRevisions 0.3s' : ''};
   animation-timing-function: ease-out;
   @keyframes expandRevisions {

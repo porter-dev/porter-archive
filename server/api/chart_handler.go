@@ -2,6 +2,7 @@ package api
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -194,4 +195,64 @@ func (app *App) HandleListChartHistory(w http.ResponseWriter, r *http.Request) {
 		app.handleErrorFormDecoding(err, ErrChartDecode, w)
 		return
 	}
+}
+
+// HandleRollbackChart rolls a release back to a specified revision
+func (app *App) HandleRollbackChart(w http.ResponseWriter, r *http.Request) {
+	session, err := app.store.Get(r, app.cookieName)
+
+	if err != nil {
+		app.handleErrorFormDecoding(err, ErrChartDecode, w)
+		return
+	}
+
+	name := chi.URLParam(r, "name")
+	revision, err := strconv.ParseUint(chi.URLParam(r, "revision"), 0, 64)
+
+	// get the filter options
+	form := &forms.GetChartForm{
+		ChartForm: &forms.ChartForm{
+			Form: &helm.Form{},
+		},
+		Name:     name,
+		Revision: int(revision),
+	}
+
+	// decode from JSON to form value
+	if err := json.NewDecoder(r.Body).Decode(form); err != nil {
+		app.handleErrorFormDecoding(err, ErrUserDecode, w)
+		return
+	}
+
+	if sessID, ok := session.Values["user_id"].(uint); ok {
+		form.PopulateHelmOptionsFromUserID(sessID, app.repo.User)
+	}
+
+	// validate the form
+	if err := app.validator.Struct(form); err != nil {
+		app.handleErrorFormValidation(err, ErrChartValidateFields, w)
+		return
+	}
+
+	// create a new agent
+	var agent *helm.Agent
+
+	if app.testing {
+		agent = app.TestAgents.HelmAgent
+	} else {
+		agent, err = helm.GetAgentOutOfClusterConfig(form.ChartForm.Form, app.logger)
+	}
+
+	err = agent.RollbackRelease(form.Name, form.Revision)
+
+	if err != nil {
+		app.handleErrorInternal(err, w)
+		return
+	}
+
+	release, err := agent.GetRelease("wordpress", 3)
+
+	fmt.Println("RELEASE IS", release)
+
+	w.WriteHeader(http.StatusOK)
 }

@@ -43,3 +43,13 @@ func (a *Agent) GetReleaseHistory(
 
 	return cmd.Run(name)
 }
+
+// RollbackRelease rolls a release back to a specified revision/version
+func (a *Agent) RollbackRelease(
+	name string,
+	version int,
+) error {
+	cmd := action.NewRollback(a.ActionConfig)
+	cmd.Version = version
+	return cmd.Run(name)
+}

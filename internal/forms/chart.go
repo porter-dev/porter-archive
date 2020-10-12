@@ -90,3 +90,17 @@ type ListChartHistoryForm struct {
 	*ChartForm
 	Name string `json:"name" form:"required"`
 }
+
+// RollbackChartForm represents the accepted values for getting a single Helm chart
+type RollbackChartForm struct {
+	*ChartForm
+	Name     string `json:"name" form:"required"`
+	Revision int    `json:"revision" form:"required"`
+}
+
+// UpgradeChartForm represents the accepted values for updating a Helm chart
+type UpgradeChartForm struct {
+	*ChartForm
+	Name   string `json:"name" form:"required"`
+	Values string `json:"values" form:"required"`
+}

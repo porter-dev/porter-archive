@@ -195,3 +195,63 @@ func (app *App) HandleListChartHistory(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 }
+
+// HandleUpdateChart upgrades a chart with new values.yaml
+// func (app *App) HandleUpdateChart(w http.ResponseWriter, r *http.Request) {
+// 	session, err := app.store.Get(r, app.cookieName)
+
+// 	if err != nil {
+// 		app.handleErrorFormDecoding(err, ErrChartDecode, w)
+// 		return
+// 	}
+
+// 	name := chi.URLParam(r, "name")
+
+// 	// get the filter options
+// 	form := &forms.ListChartHistoryForm{
+// 		ChartForm: &forms.ChartForm{
+// 			Form: &helm.Form{},
+// 		},
+// 		Name: name,
+// 	}
+
+// 	vals, err := url.ParseQuery(r.URL.RawQuery)
+
+// 	if err != nil {
+// 		app.handleErrorFormDecoding(err, ErrChartDecode, w)
+// 		return
+// 	}
+
+// 	form.PopulateHelmOptionsFromQueryParams(vals)
+
+// 	if sessID, ok := session.Values["user_id"].(uint); ok {
+// 		form.PopulateHelmOptionsFromUserID(sessID, app.repo.User)
+// 	}
+
+// 	// validate the form
+// 	if err := app.validator.Struct(form); err != nil {
+// 		app.handleErrorFormValidation(err, ErrChartValidateFields, w)
+// 		return
+// 	}
+
+// 	// create a new agent
+// 	var agent *helm.Agent
+
+// 	if app.testing {
+// 		agent = app.TestAgents.HelmAgent
+// 	} else {
+// 		agent, err = helm.GetAgentOutOfClusterConfig(form.ChartForm.Form, app.logger)
+// 	}
+
+// 	release, err := agent.GetReleaseHistory(form.Name)
+
+// 	if err != nil {
+// 		app.handleErrorFormValidation(err, ErrChartValidateFields, w)
+// 		return
+// 	}
+
+// 	if err := json.NewEncoder(w).Encode(release); err != nil {
+// 		app.handleErrorFormDecoding(err, ErrChartDecode, w)
+// 		return
+// 	}
+// }

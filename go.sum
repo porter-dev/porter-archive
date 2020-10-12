@@ -1249,6 +1249,7 @@ gorm.io/gorm v1.20.1/go.mod h1:0HFTzE/SqkGTzK6TlDPPQbAYCluiVvhzoA1+aVyzenw=
 gorm.io/gorm v1.20.2 h1:bZzSEnq7NDGsrd+n3evOOedDrY5oLM5QPlCjZJUK2ro=
 gorm.io/gorm v1.20.2/go.mod h1:0HFTzE/SqkGTzK6TlDPPQbAYCluiVvhzoA1+aVyzenw=
 gotest.tools v2.2.0+incompatible/go.mod h1:DsYFclhRJ6vuDpmuTbkuFWG+y2sxOXAzmJt81HFBacw=
+helm.sh/helm v1.2.1 h1:Jrn7kKQqQ/hnFWZEX+9pMFvYqFexkzrBnGqYBmIph7c=
 helm.sh/helm v2.16.12+incompatible h1:nQfifk10KcpAGD1RJaNZVW/fWiqluV0JMuuDwdba4rw=
 helm.sh/helm v2.16.12+incompatible/go.mod h1:0Xbc6ErzwWH9qC55X1+hE3ZwhM3atbhCm/NbFZw5i+4=
 helm.sh/helm/v3 v3.3.4 h1:tbad6WQVMxEw1HlVBvI2rQqOblmI5lgXOrWAMwJ198M=

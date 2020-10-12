@@ -53,7 +53,11 @@ type ListChartForm struct {
 // url.Values (the parsed query params). It calls the underlying
 // PopulateHelmOptionsFromQueryParams
 func (lcf *ListChartForm) PopulateListFromQueryParams(vals url.Values) {
-	lcf.PopulateHelmOptionsFromQueryParams(vals)
+	lcf.ChartForm.PopulateHelmOptionsFromQueryParams(vals)
+
+	if namespace, ok := vals["namespace"]; ok && len(namespace) == 1 {
+		lcf.ListFilter.Namespace = namespace[0]
+	}
 
 	if limit, ok := vals["limit"]; ok && len(limit) == 1 {
 		if limitInt, err := strconv.ParseInt(limit[0], 10, 64); err == nil {

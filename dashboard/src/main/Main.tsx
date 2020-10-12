@@ -114,6 +114,9 @@ const GlobalStyle = createGlobalStyle`
     box-sizing: border-box;
     font-family: 'Work Sans', sans-serif;
   }
+  body {
+    background: #202227;
+  }
 `;
 
 const StyledMain = styled.div`
@@ -122,6 +125,6 @@ const StyledMain = styled.div`
   position: fixed;
   top: 0;
   left: 0;
-  background: #24272a;
+  background: #202227;
   color: white;
 `;

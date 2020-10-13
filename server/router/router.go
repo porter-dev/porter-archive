@@ -28,7 +28,7 @@ func New(a *api.App, store sessions.Store, cookieName string) *chi.Mux {
 		r.Method("POST", "/logout", auth.BasicAuthenticate(requestlog.NewHandler(a.HandleLogoutUser, l)))
 
 		// /api/charts routes
-		r.Method("GET", "/charts", auth.BasicAuthenticate(requestlog.NewHandler(a.HandleListCharts, l)))
+		r.Method("GET", "/charts", auth.BasicAuthenticate(requestlog.NewHandler(a.HandleListReleases, l)))
 		r.Method("GET", "/charts/{name}/history", auth.BasicAuthenticate(requestlog.NewHandler(a.HandleListChartHistory, l)))
 		r.Method("POST", "/charts/{name}/upgrade", auth.BasicAuthenticate(requestlog.NewHandler(a.HandleUpgradeChart, l)))
 		r.Method("GET", "/charts/{name}/{revision}", auth.BasicAuthenticate(requestlog.NewHandler(a.HandleGetChart, l)))

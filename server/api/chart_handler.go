@@ -15,56 +15,36 @@ import (
 const (
 	ErrChartDecode ErrorCode = iota + 600
 	ErrChartValidateFields
+	ErrChartReadData
 )
 
-// HandleListCharts retrieves a list of charts with various filter options
-func (app *App) HandleListCharts(w http.ResponseWriter, r *http.Request) {
-	session, err := app.store.Get(r, app.cookieName)
-
-	if err != nil {
-		app.handleErrorFormDecoding(err, ErrChartDecode, w)
-		return
-	}
-
-	vals, err := url.ParseQuery(r.URL.RawQuery)
-
-	if err != nil {
-		app.handleErrorFormDecoding(err, ErrChartDecode, w)
-		return
-	}
-
-	// get the filter options
+// HandleListReleases retrieves a list of releases for a cluster
+// with various filter options
+func (app *App) HandleListReleases(w http.ResponseWriter, r *http.Request) {
 	form := &forms.ListChartForm{
 		ChartForm: &forms.ChartForm{
 			Form: &helm.Form{},
 		},
 		ListFilter: &helm.ListFilter{},
 	}
-	form.PopulateListFromQueryParams(vals)
 
-	if sessID, ok := session.Values["user_id"].(uint); ok {
-		form.PopulateHelmOptionsFromUserID(sessID, app.repo.User)
-	}
+	agent, err := app.getAgentFromQueryParams(
+		w,
+		r,
+		form.ChartForm,
+		form.ChartForm.PopulateHelmOptionsFromQueryParams,
+		form.PopulateListFromQueryParams,
+	)
 
-	// validate the form
-	if err := app.validator.Struct(form); err != nil {
-		app.handleErrorFormValidation(err, ErrChartValidateFields, w)
+	// errors are handled in app.getAgentFromQueryParams
+	if err != nil {
 		return
-	}
-
-	// create a new agent
-	var agent *helm.Agent
-
-	if app.testing {
-		agent = app.TestAgents.HelmAgent
-	} else {
-		agent, err = helm.GetAgentOutOfClusterConfig(form.ChartForm.Form, app.logger)
 	}
 
 	releases, err := agent.ListReleases(form.Namespace, form.ListFilter)
 
 	if err != nil {
-		app.handleErrorFormValidation(err, ErrChartValidateFields, w)
+		app.handleErrorRead(err, ErrChartReadData, w)
 		return
 	}
 
@@ -76,17 +56,9 @@ func (app *App) HandleListCharts(w http.ResponseWriter, r *http.Request) {
 
 // HandleGetChart retrieves a single chart based on a name and revision
 func (app *App) HandleGetChart(w http.ResponseWriter, r *http.Request) {
-	session, err := app.store.Get(r, app.cookieName)
-
-	if err != nil {
-		app.handleErrorFormDecoding(err, ErrChartDecode, w)
-		return
-	}
-
 	name := chi.URLParam(r, "name")
 	revision, err := strconv.ParseUint(chi.URLParam(r, "revision"), 0, 64)
 
-	// get the filter options
 	form := &forms.GetChartForm{
 		ChartForm: &forms.ChartForm{
 			Form: &helm.Form{},
@@ -95,38 +67,22 @@ func (app *App) HandleGetChart(w http.ResponseWriter, r *http.Request) {
 		Revision: int(revision),
 	}
 
-	vals, err := url.ParseQuery(r.URL.RawQuery)
+	agent, err := app.getAgentFromQueryParams(
+		w,
+		r,
+		form.ChartForm,
+		form.ChartForm.PopulateHelmOptionsFromQueryParams,
+	)
 
+	// errors are handled in app.getAgentFromQueryParams
 	if err != nil {
-		app.handleErrorFormDecoding(err, ErrChartDecode, w)
 		return
-	}
-
-	form.PopulateHelmOptionsFromQueryParams(vals)
-
-	if sessID, ok := session.Values["user_id"].(uint); ok {
-		form.PopulateHelmOptionsFromUserID(sessID, app.repo.User)
-	}
-
-	// validate the form
-	if err := app.validator.Struct(form); err != nil {
-		app.handleErrorFormValidation(err, ErrChartValidateFields, w)
-		return
-	}
-
-	// create a new agent
-	var agent *helm.Agent
-
-	if app.testing {
-		agent = app.TestAgents.HelmAgent
-	} else {
-		agent, err = helm.GetAgentOutOfClusterConfig(form.ChartForm.Form, app.logger)
 	}
 
 	release, err := agent.GetRelease(form.Name, form.Revision)
 
 	if err != nil {
-		app.handleErrorFormValidation(err, ErrChartValidateFields, w)
+		app.handleErrorRead(err, ErrChartReadData, w)
 		return
 	}
 
@@ -138,16 +94,8 @@ func (app *App) HandleGetChart(w http.ResponseWriter, r *http.Request) {
 
 // HandleListChartHistory retrieves a history of charts based on a chart name
 func (app *App) HandleListChartHistory(w http.ResponseWriter, r *http.Request) {
-	session, err := app.store.Get(r, app.cookieName)
-
-	if err != nil {
-		app.handleErrorFormDecoding(err, ErrChartDecode, w)
-		return
-	}
-
 	name := chi.URLParam(r, "name")
 
-	// get the filter options
 	form := &forms.ListChartHistoryForm{
 		ChartForm: &forms.ChartForm{
 			Form: &helm.Form{},
@@ -155,32 +103,16 @@ func (app *App) HandleListChartHistory(w http.ResponseWriter, r *http.Request) {
 		Name: name,
 	}
 
-	vals, err := url.ParseQuery(r.URL.RawQuery)
+	agent, err := app.getAgentFromQueryParams(
+		w,
+		r,
+		form.ChartForm,
+		form.ChartForm.PopulateHelmOptionsFromQueryParams,
+	)
 
+	// errors are handled in app.getAgentFromQueryParams
 	if err != nil {
-		app.handleErrorFormDecoding(err, ErrChartDecode, w)
 		return
-	}
-
-	form.PopulateHelmOptionsFromQueryParams(vals)
-
-	if sessID, ok := session.Values["user_id"].(uint); ok {
-		form.PopulateHelmOptionsFromUserID(sessID, app.repo.User)
-	}
-
-	// validate the form
-	if err := app.validator.Struct(form); err != nil {
-		app.handleErrorFormValidation(err, ErrChartValidateFields, w)
-		return
-	}
-
-	// create a new agent
-	var agent *helm.Agent
-
-	if app.testing {
-		agent = app.TestAgents.HelmAgent
-	} else {
-		agent, err = helm.GetAgentOutOfClusterConfig(form.ChartForm.Form, app.logger)
 	}
 
 	release, err := agent.GetReleaseHistory(form.Name)
@@ -198,16 +130,8 @@ func (app *App) HandleListChartHistory(w http.ResponseWriter, r *http.Request) {
 
 // HandleUpgradeChart upgrades a chart with new values.yaml
 func (app *App) HandleUpgradeChart(w http.ResponseWriter, r *http.Request) {
-	session, err := app.store.Get(r, app.cookieName)
-
-	if err != nil {
-		app.handleErrorFormDecoding(err, ErrChartDecode, w)
-		return
-	}
-
 	name := chi.URLParam(r, "name")
 
-	// get the filter options
 	form := &forms.UpgradeChartForm{
 		ChartForm: &forms.ChartForm{
 			Form: &helm.Form{},
@@ -215,29 +139,20 @@ func (app *App) HandleUpgradeChart(w http.ResponseWriter, r *http.Request) {
 		Name: name,
 	}
 
-	// decode from JSON to form value
 	if err := json.NewDecoder(r.Body).Decode(form); err != nil {
 		app.handleErrorFormDecoding(err, ErrUserDecode, w)
 		return
 	}
 
-	if sessID, ok := session.Values["user_id"].(uint); ok {
-		form.PopulateHelmOptionsFromUserID(sessID, app.repo.User)
-	}
+	agent, err := app.getAgentFromChartForm(
+		w,
+		r,
+		form.ChartForm,
+	)
 
-	// validate the form
-	if err := app.validator.Struct(form); err != nil {
-		app.handleErrorFormValidation(err, ErrChartValidateFields, w)
+	// errors are handled in app.getAgentFromBodyParams
+	if err != nil {
 		return
-	}
-
-	// create a new agent
-	var agent *helm.Agent
-
-	if app.testing {
-		agent = app.TestAgents.HelmAgent
-	} else {
-		agent, err = helm.GetAgentOutOfClusterConfig(form.ChartForm.Form, app.logger)
 	}
 
 	_, err = agent.UpgradeChart(form.Name, form.Values)
@@ -252,18 +167,15 @@ func (app *App) HandleUpgradeChart(w http.ResponseWriter, r *http.Request) {
 
 // HandleRollbackChart rolls a release back to a specified revision
 func (app *App) HandleRollbackChart(w http.ResponseWriter, r *http.Request) {
-	session, err := app.store.Get(r, app.cookieName)
+	name := chi.URLParam(r, "name")
+	revision, err := strconv.ParseUint(chi.URLParam(r, "revision"), 0, 64)
 
 	if err != nil {
 		app.handleErrorFormDecoding(err, ErrChartDecode, w)
 		return
 	}
 
-	name := chi.URLParam(r, "name")
-	revision, err := strconv.ParseUint(chi.URLParam(r, "revision"), 0, 64)
-
-	// get the filter options
-	form := &forms.GetChartForm{
+	form := &forms.RollbackChartForm{
 		ChartForm: &forms.ChartForm{
 			Form: &helm.Form{},
 		},
@@ -271,29 +183,20 @@ func (app *App) HandleRollbackChart(w http.ResponseWriter, r *http.Request) {
 		Revision: int(revision),
 	}
 
-	// decode from JSON to form value
 	if err := json.NewDecoder(r.Body).Decode(form); err != nil {
 		app.handleErrorFormDecoding(err, ErrUserDecode, w)
 		return
 	}
 
-	if sessID, ok := session.Values["user_id"].(uint); ok {
-		form.PopulateHelmOptionsFromUserID(sessID, app.repo.User)
-	}
+	agent, err := app.getAgentFromChartForm(
+		w,
+		r,
+		form.ChartForm,
+	)
 
-	// validate the form
-	if err := app.validator.Struct(form); err != nil {
-		app.handleErrorFormValidation(err, ErrChartValidateFields, w)
+	// errors are handled in app.getAgentFromBodyParams
+	if err != nil {
 		return
-	}
-
-	// create a new agent
-	var agent *helm.Agent
-
-	if app.testing {
-		agent = app.TestAgents.HelmAgent
-	} else {
-		agent, err = helm.GetAgentOutOfClusterConfig(form.ChartForm.Form, app.logger)
 	}
 
 	err = agent.RollbackRelease(form.Name, form.Revision)
@@ -304,4 +207,69 @@ func (app *App) HandleRollbackChart(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusOK)
+}
+
+// ------------------------ Release handler helper functions ------------------------ //
+
+// getAgentFromQueryParams uses the query params to populate a form, and then
+// passes that form to the underlying app.getAgentFromChartForm to create a new
+// Helm agent.
+func (app *App) getAgentFromQueryParams(
+	w http.ResponseWriter,
+	r *http.Request,
+	form *forms.ChartForm,
+	// populate uses the query params to populate a form
+	populate ...func(vals url.Values),
+) (*helm.Agent, error) {
+	vals, err := url.ParseQuery(r.URL.RawQuery)
+
+	if err != nil {
+		app.handleErrorFormDecoding(err, ErrChartDecode, w)
+		return nil, err
+	}
+
+	for _, f := range populate {
+		f(vals)
+	}
+
+	return app.getAgentFromChartForm(w, r, form)
+}
+
+// getAgentFromChartForm uses a non-validated form to construct a new Helm agent based on
+// the userID found in the session and the options required by the Helm agent.
+func (app *App) getAgentFromChartForm(
+	w http.ResponseWriter,
+	r *http.Request,
+	form *forms.ChartForm,
+) (*helm.Agent, error) {
+	// read the session in order to generate the Helm agent
+	session, err := app.store.Get(r, app.cookieName)
+
+	// since we have already authenticated the user, throw a data read error if the session
+	// cannot be found
+	if err != nil {
+		app.handleErrorDataRead(err, w)
+		return nil, err
+	}
+
+	if userID, ok := session.Values["user_id"].(uint); ok {
+		form.PopulateHelmOptionsFromUserID(userID, app.repo.User)
+	}
+
+	// validate the form
+	if err := app.validator.Struct(form); err != nil {
+		app.handleErrorFormValidation(err, ErrChartValidateFields, w)
+		return nil, err
+	}
+
+	// create a new agent
+	var agent *helm.Agent
+
+	if app.testing {
+		agent = app.TestAgents.HelmAgent
+	} else {
+		agent, err = helm.GetAgentOutOfClusterConfig(form.Form, app.logger)
+	}
+
+	return agent, err
 }

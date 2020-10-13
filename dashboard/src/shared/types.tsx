@@ -25,6 +25,7 @@ export interface ChartType {
       apiVersion: string
     },
   },
+  config: string,
   version: number,
   namespace: string
 }

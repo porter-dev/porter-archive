@@ -37,6 +37,7 @@ export default class TabSelector extends Component<PropsType, StateType> {
       this.props.options.map((option: selectOption, i: number) => {
         return (
           <Tab
+            key={i}
             onClick={() => this.handleTabClick(option.value)}
             tabWidth={this.props.tabWidth}
           >

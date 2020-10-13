@@ -49,6 +49,8 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
   }
 
   renderTabContents = () => {
+    let { currentChart, refreshChart } = this.props;
+
     if (this.state.currentTab === 'overview') {
       return (
         <Wrapper>
@@ -57,7 +59,12 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
       );
     }
 
-    return <ValuesYaml />
+    return (
+      <ValuesYaml
+        currentChart={currentChart}
+        refreshChart={refreshChart}
+      />
+    );
   }
 
   render() {
@@ -142,6 +149,7 @@ const ContentSection = styled.div`
   justify-content: center;
   align-items: center;
   font-size: 13px;
+  overflow-y: auto;
 `;
 
 const StatusColor = styled.div`

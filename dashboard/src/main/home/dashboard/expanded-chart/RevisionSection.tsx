@@ -47,6 +47,13 @@ export default class RevisionSection extends Component<PropsType, StateType> {
     this.refreshHistory();
   }
 
+  // Handle update of values.yaml
+  componentDidUpdate(prevProps: PropsType) {
+    if (this.props.chart !== prevProps.chart) {
+      this.refreshHistory();
+    }
+  }
+
   readableDate = (s: string) => {
     let ts = new Date(s);
     let date = ts.toLocaleDateString();
@@ -61,10 +68,10 @@ export default class RevisionSection extends Component<PropsType, StateType> {
     api.rollbackChart('<token>', {
       namespace: this.props.chart.namespace,
       context: this.context.currentCluster,
-      storage: 'secret'
-    }, {
-      name: this.props.chart.name,
+      storage: 'secret',
       revision: revisionNumber
+    }, {
+      name: this.props.chart.name
     }, (err: any, res: any) => {
       if (err) {
         console.log(err)
@@ -301,6 +308,7 @@ const RevisionsTable = styled.table`
   margin-top: 5px;
   padding-left: 32px;
   padding-bottom: 20px;
+  min-width: 500px;
 `;
 
 const Revision = styled.div`

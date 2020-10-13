@@ -459,21 +459,21 @@ User object with only the id field. Other fields are empty - with values in para
     // Status is the current state of the release
     "status": String("unknown"|"deployed"|"uninstalled"|"superseded"|"failed"|"uninstalling"|"pending-install"|"pending-upgrade"|"pending-rollback")
   },
-  "release": Release{
+  "chart": Chart{
     "metadata": Metadata{
-      // The name of the release
+      // The name of the chart
       "name": String,
       // The URL to a relevant project page, git repo, or contact person
       "home": String,
-      // Sources is a list of URLs to the source code of this release
+      // Sources is a list of URLs to the source code of this chart
       "sources": []String,
-      // A SemVer 2 conformant version string of the release
+      // A SemVer 2 conformant version string of the chart
       "version": String,
-      // A one-sentence description of the release
+      // A one-sentence description of the chart
       "description": String,
       // The URL to an icon file.
       "icon": String,
-      // The API Version of this release.
+      // The API Version of this chart.
       "apiVersion": String,
     },
     "templates": []File{
@@ -482,11 +482,11 @@ User object with only the id field. Other fields are empty - with values in para
       // Data is the template as byte data.
       "data": String
     },
-    // Values are default config for this release.
+    // Values are default config for this chart.
     "values": Map[String]{}
   },
   // The set of extra Values added to the release, which override the 
-  // default values inside of the release
+  // default values inside of the chart
   "config": Map[String]{},
   // Manifest is the string representation of the rendered template
   "manifest": String,
@@ -540,21 +540,21 @@ User object with only the id field. Other fields are empty - with values in para
     // Status is the current state of the release
     "status": String("unknown"|"deployed"|"uninstalled"|"superseded"|"failed"|"uninstalling"|"pending-install"|"pending-upgrade"|"pending-rollback")
   },
-  "release": Release{
+  "chart": Chart{
     "metadata": Metadata{
-      // The name of the release
+      // The name of the chart
       "name": String,
       // The URL to a relevant project page, git repo, or contact person
       "home": String,
-      // Sources is a list of URLs to the source code of this release
+      // Sources is a list of URLs to the source code of this chart
       "sources": []String,
-      // A SemVer 2 conformant version string of the release
+      // A SemVer 2 conformant version string of the chart
       "version": String,
-      // A one-sentence description of the release
+      // A one-sentence description of the chart
       "description": String,
       // The URL to an icon file.
       "icon": String,
-      // The API Version of this release.
+      // The API Version of this chart.
       "apiVersion": String,
     },
     "templates": []File{
@@ -563,11 +563,11 @@ User object with only the id field. Other fields are empty - with values in para
       // Data is the template as byte data.
       "data": String
     },
-    // Values are default config for this release.
+    // Values are default config for this chart.
     "values": Map[String]{}
   },
   // The set of extra Values added to the release, which override the 
-  // default values inside of the release
+  // default values inside of the chart
   "config": Map[String]{},
   // Manifest is the string representation of the rendered template
   "manifest": String,
@@ -609,7 +609,7 @@ User object with only the id field. Other fields are empty - with values in para
 **Successful Response Body**: the full body is determined by the [release specification](https://pkg.go.dev/helm.sh/helm/v3@v3.3.4/pkg/release#Release): listed here is a subset of fields deemed to be most relevant. Note that all of the top-level fields are optional.
 
 ```js
-Release{
+[]Release{
   // Name is the name of the release
   "name": String,
   "info": Info{
@@ -622,21 +622,21 @@ Release{
     // Status is the current state of the release
     "status": String("unknown"|"deployed"|"uninstalled"|"superseded"|"failed"|"uninstalling"|"pending-install"|"pending-upgrade"|"pending-rollback")
   },
-  "release": Release{
+  "chart": Chart{
     "metadata": Metadata{
-      // The name of the release
+      // The name of the chart
       "name": String,
       // The URL to a relevant project page, git repo, or contact person
       "home": String,
-      // Sources is a list of URLs to the source code of this release
+      // Sources is a list of URLs to the source code of this chart
       "sources": []String,
-      // A SemVer 2 conformant version string of the release
+      // A SemVer 2 conformant version string of the chart
       "version": String,
-      // A one-sentence description of the release
+      // A one-sentence description of the chart
       "description": String,
       // The URL to an icon file.
       "icon": String,
-      // The API Version of this release.
+      // The API Version of this chart.
       "apiVersion": String,
     },
     "templates": []File{
@@ -645,11 +645,11 @@ Release{
       // Data is the template as byte data.
       "data": String
     },
-    // Values are default config for this release.
+    // Values are default config for this chart.
     "values": Map[String]{}
   },
   // The set of extra Values added to the release, which override the 
-  // default values inside of the release
+  // default values inside of the chart
   "config": Map[String]{},
   // Manifest is the string representation of the rendered template
   "manifest": String,

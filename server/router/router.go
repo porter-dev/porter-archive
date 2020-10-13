@@ -27,12 +27,12 @@ func New(a *api.App, store sessions.Store, cookieName string) *chi.Mux {
 		r.Method("GET", "/auth/check", auth.BasicAuthenticate(requestlog.NewHandler(a.HandleAuthCheck, l)))
 		r.Method("POST", "/logout", auth.BasicAuthenticate(requestlog.NewHandler(a.HandleLogoutUser, l)))
 
-		// /api/charts routes
-		r.Method("GET", "/charts", auth.BasicAuthenticate(requestlog.NewHandler(a.HandleListCharts, l)))
-		r.Method("GET", "/charts/{name}/history", auth.BasicAuthenticate(requestlog.NewHandler(a.HandleListChartHistory, l)))
-		r.Method("POST", "/charts/{name}/upgrade", auth.BasicAuthenticate(requestlog.NewHandler(a.HandleUpgradeChart, l)))
-		r.Method("GET", "/charts/{name}/{revision}", auth.BasicAuthenticate(requestlog.NewHandler(a.HandleGetChart, l)))
-		r.Method("POST", "/charts/rollback/{name}/{revision}", auth.BasicAuthenticate(requestlog.NewHandler(a.HandleRollbackChart, l)))
+		// /api/releases routes
+		r.Method("GET", "/releases", auth.BasicAuthenticate(requestlog.NewHandler(a.HandleListReleases, l)))
+		r.Method("GET", "/releases/{name}/history", auth.BasicAuthenticate(requestlog.NewHandler(a.HandleListReleaseHistory, l)))
+		r.Method("POST", "/releases/{name}/upgrade", auth.BasicAuthenticate(requestlog.NewHandler(a.HandleUpgradeRelease, l)))
+		r.Method("GET", "/releases/{name}/{revision}", auth.BasicAuthenticate(requestlog.NewHandler(a.HandleGetRelease, l)))
+		r.Method("POST", "/releases/{name}/rollback", auth.BasicAuthenticate(requestlog.NewHandler(a.HandleRollbackRelease, l)))
 
 		// /api/k8s routes
 		r.Method("GET", "/k8s/namespaces", auth.BasicAuthenticate(requestlog.NewHandler(a.HandleListNamespaces, l)))

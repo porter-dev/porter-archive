@@ -47,8 +47,8 @@ func (a *Agent) GetReleaseHistory(
 	return cmd.Run(name)
 }
 
-// UpgradeChart upgrades a specific chart using a string of values.yaml
-func (a *Agent) UpgradeChart(
+// UpgradeRelease upgrades a specific release with new values.yaml
+func (a *Agent) UpgradeRelease(
 	name string,
 	values string,
 ) (*release.Release, error) {

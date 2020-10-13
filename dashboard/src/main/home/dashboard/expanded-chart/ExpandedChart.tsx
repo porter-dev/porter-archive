@@ -5,7 +5,9 @@ import close from '../../../../assets/close.png';
 import { ChartType } from '../../../../shared/types';
 import { Context } from '../../../../shared/Context';
 
+import TabSelector from '../../../../components/TabSelector';
 import RevisionSection from './RevisionSection';
+import ValuesYaml from './ValuesYaml';
 
 type PropsType = {
   currentChart: ChartType,
@@ -14,12 +16,19 @@ type PropsType = {
 };
 
 type StateType = {
-  showRevisions: boolean
+  showRevisions: boolean,
+  currentTab: string
 };
+
+const tabOptions = [
+  { label: 'Chart Overview', value: 'overview' },
+  { label: 'Values Editor', value: 'values' }
+]
 
 export default class ExpandedChart extends Component<PropsType, StateType> {
   state = {
-    showRevisions: false
+    showRevisions: false,
+    currentTab: 'overview'
   }
 
   renderIcon = () => {
@@ -37,6 +46,25 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
     let date = ts.toLocaleDateString();
     let time = ts.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
     return `${time} on ${date}`;
+  }
+
+  renderTabContents = () => {
+    let { currentChart, refreshChart } = this.props;
+
+    if (this.state.currentTab === 'overview') {
+      return (
+        <Wrapper>
+          <Placeholder>(Under construction)</Placeholder>
+        </Wrapper>
+      );
+    }
+
+    return (
+      <ValuesYaml
+        currentChart={currentChart}
+        refreshChart={refreshChart}
+      />
+    );
   }
 
   render() {
@@ -82,9 +110,14 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
           refreshChart={refreshChart}
         />
 
-        <ChartSection>
-          <Placeholder>(Under construction)</Placeholder>
-        </ChartSection>
+        <TabSelector
+          options={tabOptions}
+          setCurrentTab={(value: string) => this.setState({ currentTab: value })}
+          tabWidth='120px'
+        />
+        <ContentSection>
+          {this.renderTabContents()}
+        </ContentSection>
       </StyledExpandedChart>
     );
   }
@@ -92,22 +125,31 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
 
 ExpandedChart.contextType = Context;
 
+const Wrapper = styled.div`
+  width: 100%;
+  height: 100%;
+  background: #ffffff11;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+`;
+
 const Placeholder = styled.div`
   color: #ffffff66;
   padding-bottom: 30px;
 `;
 
-const ChartSection = styled.div`
+const ContentSection = styled.div`
   display: flex;
   margin-top: 20px;
   border-radius: 5px;
   flex: 1;
   width: 100%;
-  background: #ffffff11;
   display: flex;
   justify-content: center;
   align-items: center;
   font-size: 13px;
+  overflow-y: auto;
 `;
 
 const StatusColor = styled.div`

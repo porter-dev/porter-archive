@@ -18,16 +18,16 @@ import (
 )
 
 type releaseStub struct {
-	name         string
-	namespace    string
-	version      int
-	chartVersion string
-	status       release.Status
+	name           string
+	namespace      string
+	version        int
+	releaseVersion string
+	status         release.Status
 }
 
 // ------------------------- TEST TYPES AND MAIN LOOP ------------------------- //
 
-type chartTest struct {
+type releaseTest struct {
 	initializers []func(tester *tester)
 	namespace    string
 	msg          string
@@ -37,10 +37,10 @@ type chartTest struct {
 	expStatus    int
 	expBody      string
 	useCookie    bool
-	validators   []func(c *chartTest, tester *tester, t *testing.T)
+	validators   []func(c *releaseTest, tester *tester, t *testing.T)
 }
 
-func testChartRequests(t *testing.T, tests []*chartTest, canQuery bool) {
+func testReleaseRequests(t *testing.T, tests []*releaseTest, canQuery bool) {
 	for _, c := range tests {
 		// create a new tester
 		tester := newTester(canQuery)
@@ -86,14 +86,14 @@ func testChartRequests(t *testing.T, tests []*chartTest, canQuery bool) {
 
 // ------------------------- TEST FIXTURES AND FUNCTIONS  ------------------------- //
 
-var listChartsTests = []*chartTest{
-	&chartTest{
+var listReleasesTests = []*releaseTest{
+	&releaseTest{
 		initializers: []func(tester *tester){
-			initDefaultCharts,
+			initDefaultReleases,
 		},
-		msg:    "List charts",
+		msg:    "List releases",
 		method: "GET",
-		endpoint: "/api/charts?" + url.Values{
+		endpoint: "/api/releases?" + url.Values{
 			"namespace":    []string{""},
 			"context":      []string{"context-test"},
 			"storage":      []string{"memory"},
@@ -104,20 +104,20 @@ var listChartsTests = []*chartTest{
 		}.Encode(),
 		body:      "",
 		expStatus: http.StatusOK,
-		expBody:   releaseStubsToChartJSON(sampleReleaseStubs),
+		expBody:   releaseStubsToReleaseJSON(sampleReleaseStubs),
 		useCookie: true,
-		validators: []func(c *chartTest, tester *tester, t *testing.T){
-			chartReleaseArrBodyValidator,
+		validators: []func(c *releaseTest, tester *tester, t *testing.T){
+			releaseReleaseArrBodyValidator,
 		},
 	},
-	&chartTest{
+	&releaseTest{
 		initializers: []func(tester *tester){
-			initDefaultCharts,
+			initDefaultReleases,
 		},
-		msg:       "List charts",
+		msg:       "List releases",
 		method:    "GET",
 		namespace: "default",
-		endpoint: "/api/charts?" + url.Values{
+		endpoint: "/api/releases?" + url.Values{
 			"namespace":    []string{"default"},
 			"context":      []string{"context-test"},
 			"storage":      []string{"memory"},
@@ -128,84 +128,84 @@ var listChartsTests = []*chartTest{
 		}.Encode(),
 		body:      "",
 		expStatus: http.StatusOK,
-		expBody: releaseStubsToChartJSON([]releaseStub{
+		expBody: releaseStubsToReleaseJSON([]releaseStub{
 			sampleReleaseStubs[0],
 			sampleReleaseStubs[2],
 		}),
 		useCookie: true,
-		validators: []func(c *chartTest, tester *tester, t *testing.T){
-			chartReleaseArrBodyValidator,
+		validators: []func(c *releaseTest, tester *tester, t *testing.T){
+			releaseReleaseArrBodyValidator,
 		},
 	},
 }
 
-func TestHandleListCharts(t *testing.T) {
-	testChartRequests(t, listChartsTests, true)
+func TestHandleListReleases(t *testing.T) {
+	testReleaseRequests(t, listReleasesTests, true)
 }
 
-var getChartTests = []*chartTest{
-	&chartTest{
+var getReleaseTests = []*releaseTest{
+	&releaseTest{
 		initializers: []func(tester *tester){
-			initDefaultCharts,
+			initDefaultReleases,
 		},
-		msg:       "Get charts",
+		msg:       "Get releases",
 		method:    "GET",
 		namespace: "default",
-		endpoint: "/api/charts/airwatch/1?" + url.Values{
+		endpoint: "/api/releases/airwatch/1?" + url.Values{
 			"namespace": []string{""},
 			"context":   []string{"context-test"},
 			"storage":   []string{"memory"},
 		}.Encode(),
 		body:      "",
 		expStatus: http.StatusOK,
-		expBody:   releaseStubToChartJSON(sampleReleaseStubs[0]),
+		expBody:   releaseStubToReleaseJSON(sampleReleaseStubs[0]),
 		useCookie: true,
-		validators: []func(c *chartTest, tester *tester, t *testing.T){
-			chartReleaseBodyValidator,
+		validators: []func(c *releaseTest, tester *tester, t *testing.T){
+			releaseReleaseBodyValidator,
 		},
 	},
 }
 
-func TestHandleGetChart(t *testing.T) {
-	testChartRequests(t, getChartTests, true)
+func TestHandleGetRelease(t *testing.T) {
+	testReleaseRequests(t, getReleaseTests, true)
 }
 
-var listChartHistoryTests = []*chartTest{
-	&chartTest{
+var listReleaseHistoryTests = []*releaseTest{
+	&releaseTest{
 		initializers: []func(tester *tester){
-			initHistoryCharts,
+			initHistoryReleases,
 		},
-		msg:       "List chart history",
+		msg:       "List release history",
 		method:    "GET",
 		namespace: "default",
-		endpoint: "/api/charts/wordpress/history?" + url.Values{
+		endpoint: "/api/releases/wordpress/history?" + url.Values{
 			"namespace": []string{""},
 			"context":   []string{"context-test"},
 			"storage":   []string{"memory"},
 		}.Encode(),
 		body:      "",
 		expStatus: http.StatusOK,
-		expBody:   releaseStubsToChartJSON(historyReleaseStubs),
+		expBody:   releaseStubsToReleaseJSON(historyReleaseStubs),
 		useCookie: true,
-		validators: []func(c *chartTest, tester *tester, t *testing.T){
-			chartReleaseArrBodyValidator,
+		validators: []func(c *releaseTest, tester *tester, t *testing.T){
+			releaseReleaseArrBodyValidator,
 		},
 	},
 }
 
-func TestHandleListChartHistory(t *testing.T) {
-	testChartRequests(t, listChartHistoryTests, true)
+func TestHandleListReleaseHistory(t *testing.T) {
+	testReleaseRequests(t, listReleaseHistoryTests, true)
 }
 
-var upgradeChartTests = []*chartTest{
-	&chartTest{
+var upgradeReleaseTests = []*releaseTest{
+	&releaseTest{
 		initializers: []func(tester *tester){
-			initHistoryCharts,
+			initHistoryReleases,
 		},
 		msg:       "Upgrade relase",
 		method:    "POST",
 		namespace: "default",
-		endpoint:  "/api/charts/wordpress/upgrade",
+		endpoint:  "/api/releases/wordpress/upgrade",
 		body: `
 			{
 				"namespace": "default",
@@ -217,11 +217,11 @@ var upgradeChartTests = []*chartTest{
 		expStatus: http.StatusOK,
 		expBody:   ``,
 		useCookie: true,
-		validators: []func(c *chartTest, tester *tester, t *testing.T){
-			func(c *chartTest, tester *tester, t *testing.T) {
+		validators: []func(c *releaseTest, tester *tester, t *testing.T){
+			func(c *releaseTest, tester *tester, t *testing.T) {
 				req, err := http.NewRequest(
 					"GET",
-					"/api/charts/wordpress/3?"+url.Values{
+					"/api/releases/wordpress/3?"+url.Values{
 						"namespace": []string{"default"},
 						"context":   []string{"context-test"},
 						"storage":   []string{"memory"},
@@ -241,7 +241,7 @@ var upgradeChartTests = []*chartTest{
 				gotBody := &release.Release{}
 				expBody := &release.Release{}
 
-				expBodyJSON := releaseStubToChartJSON(releaseStub{"wordpress", "default", 3, "1.0.2", release.StatusDeployed})
+				expBodyJSON := releaseStubToReleaseJSON(releaseStub{"wordpress", "default", 3, "1.0.2", release.StatusDeployed})
 
 				json.Unmarshal(rr2.Body.Bytes(), gotBody)
 				json.Unmarshal([]byte(expBodyJSON), expBody)
@@ -270,34 +270,35 @@ var upgradeChartTests = []*chartTest{
 	},
 }
 
-func TestUpgradeChart(t *testing.T) {
-	testChartRequests(t, upgradeChartTests, true)
+func TestUpgradeRelease(t *testing.T) {
+	testReleaseRequests(t, upgradeReleaseTests, true)
 }
 
-var rollbackChartTests = []*chartTest{
-	&chartTest{
+var rollbackReleaseTests = []*releaseTest{
+	&releaseTest{
 		initializers: []func(tester *tester){
-			initHistoryCharts,
+			initHistoryReleases,
 		},
 		msg:       "Rollback relase",
 		method:    "POST",
 		namespace: "default",
-		endpoint:  "/api/charts/rollback/wordpress/1",
+		endpoint:  "/api/releases/wordpress/rollback",
 		body: `
 			{
 				"namespace": "default",
 				"context": "context-test",
-				"storage": "memory"
+				"storage": "memory",
+				"revision": 1
 			}
 		`,
 		expStatus: http.StatusOK,
 		expBody:   ``,
 		useCookie: true,
-		validators: []func(c *chartTest, tester *tester, t *testing.T){
-			func(c *chartTest, tester *tester, t *testing.T) {
+		validators: []func(c *releaseTest, tester *tester, t *testing.T){
+			func(c *releaseTest, tester *tester, t *testing.T) {
 				req, err := http.NewRequest(
 					"GET",
-					"/api/charts/wordpress/3?"+url.Values{
+					"/api/releases/wordpress/3?"+url.Values{
 						"namespace": []string{"default"},
 						"context":   []string{"context-test"},
 						"storage":   []string{"memory"},
@@ -317,7 +318,7 @@ var rollbackChartTests = []*chartTest{
 				gotBody := &release.Release{}
 				expBody := &release.Release{}
 
-				expBodyJSON := releaseStubToChartJSON(releaseStub{"wordpress", "default", 3, "1.0.1", release.StatusDeployed})
+				expBodyJSON := releaseStubToReleaseJSON(releaseStub{"wordpress", "default", 3, "1.0.1", release.StatusDeployed})
 
 				fmt.Println(rr2.Body.String())
 
@@ -339,13 +340,13 @@ var rollbackChartTests = []*chartTest{
 	},
 }
 
-func TestRollbackChart(t *testing.T) {
-	testChartRequests(t, rollbackChartTests, true)
+func TestRollbackRelease(t *testing.T) {
+	testReleaseRequests(t, rollbackReleaseTests, true)
 }
 
 // ------------------------- INITIALIZERS AND VALIDATORS ------------------------- //
 
-func initDefaultCharts(tester *tester) {
+func initDefaultReleases(tester *tester) {
 	initUserDefault(tester)
 
 	agent := tester.app.TestAgents.HelmAgent
@@ -357,7 +358,7 @@ func initDefaultCharts(tester *tester) {
 	agent.ActionConfig.Releases.Driver.(*driver.Memory).SetNamespace("")
 }
 
-func initHistoryCharts(tester *tester) {
+func initHistoryReleases(tester *tester) {
 	initUserDefault(tester)
 
 	agent := tester.app.TestAgents.HelmAgent
@@ -380,7 +381,7 @@ var historyReleaseStubs = []releaseStub{
 	releaseStub{"wordpress", "default", 2, "1.0.2", release.StatusDeployed},
 }
 
-func releaseStubsToChartJSON(rels []releaseStub) string {
+func releaseStubsToReleaseJSON(rels []releaseStub) string {
 	releases := make([]*release.Release, 0)
 
 	for _, r := range rels {
@@ -394,7 +395,7 @@ func releaseStubsToChartJSON(rels []releaseStub) string {
 	return string(str)
 }
 
-func releaseStubToChartJSON(r releaseStub) string {
+func releaseStubToReleaseJSON(r releaseStub) string {
 	rel := releaseStubToRelease(r)
 
 	str, _ := json.Marshal(rel)
@@ -412,7 +413,7 @@ func releaseStubToRelease(r releaseStub) *release.Release {
 		},
 		Chart: &chart.Chart{
 			Metadata: &chart.Metadata{
-				Version: r.chartVersion,
+				Version: r.releaseVersion,
 				Icon:    "https://example.com/icon.png",
 			},
 		},
@@ -429,7 +430,7 @@ func makeReleases(agent *helm.Agent, rels []releaseStub) {
 	}
 }
 
-func chartReleaseBodyValidator(c *chartTest, tester *tester, t *testing.T) {
+func releaseReleaseBodyValidator(c *releaseTest, tester *tester, t *testing.T) {
 	gotBody := &release.Release{}
 	expBody := &release.Release{}
 
@@ -442,7 +443,7 @@ func chartReleaseBodyValidator(c *chartTest, tester *tester, t *testing.T) {
 	}
 }
 
-func chartReleaseArrBodyValidator(c *chartTest, tester *tester, t *testing.T) {
+func releaseReleaseArrBodyValidator(c *releaseTest, tester *tester, t *testing.T) {
 	gotBody := &[]release.Release{}
 	expBody := &[]release.Release{}
 

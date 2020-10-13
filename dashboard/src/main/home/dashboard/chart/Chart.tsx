@@ -51,31 +51,41 @@ export default class Chart extends Component<PropsType, StateType> {
           {chart.name}
         </Title>
 
-        <InfoWrapper>
-          <StatusIndicator>
-            <StatusColor status={chart.info.status} />
-            {chart.info.status}
-          </StatusIndicator>
+        <BottomWrapper>
+          <InfoWrapper>
+            <StatusIndicator>
+              <StatusColor status={chart.info.status} />
+              {chart.info.status}
+            </StatusIndicator>
 
-          <LastDeployed>
-            <Dot>•</Dot> Last deployed {this.readableDate(chart.info.last_deployed)}
-          </LastDeployed>
-        </InfoWrapper>
+            <LastDeployed>
+              <Dot>•</Dot> Last deployed {this.readableDate(chart.info.last_deployed)}
+            </LastDeployed>
+          </InfoWrapper>
+
+          <TagWrapper>
+            Namespace
+            <NamespaceTag>
+              {chart.namespace}
+            </NamespaceTag>
+          </TagWrapper>
+        </BottomWrapper>
 
         <Version>v{chart.version}</Version>
-
-        <TagWrapper>
-          Namespace
-          <NamespaceTag>
-            {chart.namespace}
-          </NamespaceTag>
-        </TagWrapper>
       </StyledChart>
     );
   }
 }
 
 Chart.contextType = Context;
+
+const BottomWrapper = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-right: 11px;
+  margin-top: 12px;
+`;
 
 const Version = styled.div`
   position: absolute;
@@ -92,7 +102,10 @@ const Dot = styled.div`
 const InfoWrapper = styled.div`
   display: flex;
   align-items: center;
-  margin-top: 10px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-right: 8px;
 `;
 
 const LastDeployed = styled.div`
@@ -105,9 +118,6 @@ const LastDeployed = styled.div`
 `;
 
 const TagWrapper = styled.div`
-  position: absolute;
-  bottom: 12px;
-  right: 12px;
   height: 20px;
   font-size: 12px;
   display: flex;
@@ -133,6 +143,9 @@ const NamespaceTag = styled.div`
   padding-left: 7px;
   border-top-left-radius: 0px;
   border-bottom-left-radius: 0px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 `;
 
 const Icon = styled.img`
@@ -231,7 +244,7 @@ const StyledChart = styled.div`
     from { 
       width: calc(100% + 2px); 
       padding-top: 4px;
-      padding-bottom: 15px;
+      padding-bottom: 14px;
       margin-left: 0px;
       box-shadow: 0 5px 8px 0px #00000033;
       padding-left: 1px;
@@ -264,7 +277,7 @@ const StyledChart = styled.div`
     to {
       width: calc(100% + 2px); 
       padding-top: 4px;
-      padding-bottom: 15px;
+      padding-bottom: 14px;
       margin-left: 0px; 
       box-shadow: 0 5px 8px 0px #00000033;
       padding-left: 1px;

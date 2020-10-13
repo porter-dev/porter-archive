@@ -28,9 +28,15 @@ export default class ChartList extends Component<PropsType, StateType> {
   }
 
   updateCharts = () => {
-    let { setCurrentError, currentCluster } = this.context;
+    let { currentCluster } = this.context;
 
     this.setState({ loading: true });
+    setTimeout(() => {
+      if (this.state.loading) {
+        this.setState({ loading: false, error: true });
+      }
+    }, 1000);
+
     api.getCharts('<token>', {
       namespace: this.props.namespace,
       context: currentCluster,

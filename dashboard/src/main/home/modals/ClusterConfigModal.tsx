@@ -161,6 +161,9 @@ export default class ClusterConfigModal extends Component<PropsType, StateType> 
             value={this.state.rawKubeconfig}
             onChange={(e: any) => this.setState({ rawKubeconfig: e })}
           />
+          <UploadButton>
+            <i className="material-icons">cloud_upload</i> Upload Kubeconfig
+          </UploadButton>
           <SaveButton
             text='Save Kubeconfig'
             onClick={this.handleSaveKubeconfig}
@@ -218,6 +221,36 @@ export default class ClusterConfigModal extends Component<PropsType, StateType> 
 }
 
 ClusterConfigModal.contextType = Context;
+
+const UploadButton = styled.button`
+  display: flex;
+  align-items: center;
+  position: absolute;
+  bottom: 25px;
+  left: 30px;
+  height: 40px;
+  font-size: 13px;
+  font-weight: 500;
+  font-family: 'Work Sans', sans-serif;
+  color: white;
+  padding: 6px 20px 7px 20px;
+  text-align: left;
+  border: 0;
+  border-radius: 5px;
+  background: #ffffff11;
+  box-shadow: 0 2px 5px 0 #00000030;
+  cursor: not-allowed;
+  user-select: none;
+  :focus { outline: 0 }
+  :hover {
+    background: #ffffff22;
+  }
+
+  > i {
+    font-size: 18px;
+    margin-right: 12px;
+  }
+`;
 
 const Checkbox = styled.div`
   width: 15px;

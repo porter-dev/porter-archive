@@ -50,7 +50,7 @@ func GetAgentOutOfClusterConfig(form *Form, l *logger.Logger) (*Agent, error) {
 	return &Agent{&action.Configuration{
 		RESTClientGetter: k8sAgent.RESTClientGetter,
 		KubeClient:       kube.New(k8sAgent.RESTClientGetter),
-		Releases:         StorageMap[form.Storage](l, form.Namespace, clientset),
+		Releases:         StorageMap[form.Storage](l, clientset.CoreV1(), form.Namespace),
 		Log:              l.Printf,
 	}}, nil
 }
@@ -75,7 +75,7 @@ func GetAgentInClusterConfig(form *Form, l *logger.Logger) (*Agent, error) {
 	return &Agent{&action.Configuration{
 		RESTClientGetter: k8sAgent.RESTClientGetter,
 		KubeClient:       kube.New(k8sAgent.RESTClientGetter),
-		Releases:         StorageMap[form.Storage](l, form.Namespace, clientset),
+		Releases:         StorageMap[form.Storage](l, clientset.CoreV1(), form.Namespace),
 		Log:              l.Printf,
 	}}, nil
 }
@@ -85,7 +85,7 @@ func GetAgentTesting(form *Form, storage *storage.Storage, l *logger.Logger) *Ag
 	testStorage := storage
 
 	if testStorage == nil {
-		testStorage = StorageMap["memory"](nil, form.Namespace, nil)
+		testStorage = StorageMap["memory"](nil, nil, "")
 	}
 
 	return &Agent{&action.Configuration{

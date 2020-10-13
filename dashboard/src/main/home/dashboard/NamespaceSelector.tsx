@@ -29,9 +29,10 @@ export default class NamespaceSelector extends Component<PropsType, StateType> {
 
     api.getNamespaces('<token>', { context: currentCluster }, {}, (err: any, res: any) => {
       if (err) {
-        setCurrentError('Could not read clusters: ' + JSON.stringify(err));
+        // setCurrentError('Could not read clusters: ' + JSON.stringify(err));
+        this.setState({ namespaceOptions: [{ label: 'All', value: '' }] });
       } else {
-        let namespaceOptions: { label: string, value: string }[] = [];
+        let namespaceOptions: { label: string, value: string }[] = [{ label: 'All', value: '' }];
         res.data.items.forEach((x: { metadata: { name: string }}, i: number) => {
           namespaceOptions.push({ label: x.metadata.name, value: x.metadata.name });
         })

@@ -2,7 +2,6 @@ package api
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -197,65 +196,64 @@ func (app *App) HandleListChartHistory(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// HandleUpdateChart upgrades a chart with new values.yaml
-// func (app *App) HandleUpdateChart(w http.ResponseWriter, r *http.Request) {
-// 	session, err := app.store.Get(r, app.cookieName)
+// HandleUpgradeChart upgrades a chart with new values.yaml
+func (app *App) HandleUpgradeChart(w http.ResponseWriter, r *http.Request) {
+	session, err := app.store.Get(r, app.cookieName)
 
-// 	if err != nil {
-// 		app.handleErrorFormDecoding(err, ErrChartDecode, w)
-// 		return
-// 	}
+	if err != nil {
+		app.handleErrorFormDecoding(err, ErrChartDecode, w)
+		return
+	}
 
-// 	name := chi.URLParam(r, "name")
+	name := chi.URLParam(r, "name")
 
-// 	// get the filter options
-// 	form := &forms.ListChartHistoryForm{
-// 		ChartForm: &forms.ChartForm{
-// 			Form: &helm.Form{},
-// 		},
-// 		Name: name,
-// 	}
+	// get the filter options
+	form := &forms.UpgradeChartForm{
+		ChartForm: &forms.ChartForm{
+			Form: &helm.Form{},
+		},
+		Name: name,
+	}
 
-// 	vals, err := url.ParseQuery(r.URL.RawQuery)
+	// decode from JSON to form value
+	if err := json.NewDecoder(r.Body).Decode(form); err != nil {
+		app.handleErrorFormDecoding(err, ErrUserDecode, w)
+		return
+	}
 
-// 	if err != nil {
-// 		app.handleErrorFormDecoding(err, ErrChartDecode, w)
-// 		return
-// 	}
+	if sessID, ok := session.Values["user_id"].(uint); ok {
+		form.PopulateHelmOptionsFromUserID(sessID, app.repo.User)
+	}
 
-// 	form.PopulateHelmOptionsFromQueryParams(vals)
+	// validate the form
+	if err := app.validator.Struct(form); err != nil {
+		app.handleErrorFormValidation(err, ErrChartValidateFields, w)
+		return
+	}
 
-// 	if sessID, ok := session.Values["user_id"].(uint); ok {
-// 		form.PopulateHelmOptionsFromUserID(sessID, app.repo.User)
-// 	}
+	// create a new agent
+	var agent *helm.Agent
 
-// 	// validate the form
-// 	if err := app.validator.Struct(form); err != nil {
-// 		app.handleErrorFormValidation(err, ErrChartValidateFields, w)
-// 		return
-// 	}
+	if app.testing {
+		agent = app.TestAgents.HelmAgent
+	} else {
+		agent, err = helm.GetAgentOutOfClusterConfig(form.ChartForm.Form, app.logger)
+	}
 
-// 	// create a new agent
-// 	var agent *helm.Agent
+	rel, err := agent.UpgradeChart(form.Name, form.Values)
 
-// 	if app.testing {
-// 		agent = app.TestAgents.HelmAgent
-// 	} else {
-// 		agent, err = helm.GetAgentOutOfClusterConfig(form.ChartForm.Form, app.logger)
-// 	}
+	if err != nil {
+		app.handleErrorInternal(err, w)
+		return
+	}
 
-// 	release, err := agent.GetReleaseHistory(form.Name)
+	w.WriteHeader(http.StatusOK)
 
-// 	if err != nil {
-// 		app.handleErrorFormValidation(err, ErrChartValidateFields, w)
-// 		return
-// 	}
-
-// 	if err := json.NewEncoder(w).Encode(release); err != nil {
-// 		app.handleErrorFormDecoding(err, ErrChartDecode, w)
-// 		return
-// 	}
-// }
+	if err := json.NewEncoder(w).Encode(rel); err != nil {
+		app.handleErrorFormDecoding(err, ErrChartDecode, w)
+		return
+	}
+}
 
 // HandleRollbackChart rolls a release back to a specified revision
 func (app *App) HandleRollbackChart(w http.ResponseWriter, r *http.Request) {
@@ -309,10 +307,6 @@ func (app *App) HandleRollbackChart(w http.ResponseWriter, r *http.Request) {
 		app.handleErrorInternal(err, w)
 		return
 	}
-
-	release, err := agent.GetRelease("wordpress", 3)
-
-	fmt.Println("RELEASE IS", release)
 
 	w.WriteHeader(http.StatusOK)
 }

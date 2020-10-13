@@ -50,11 +50,8 @@ type ListChartForm struct {
 }
 
 // PopulateListFromQueryParams populates fields in the ListChartForm using the passed
-// url.Values (the parsed query params). It calls the underlying
-// PopulateHelmOptionsFromQueryParams
+// url.Values (the parsed query params)
 func (lcf *ListChartForm) PopulateListFromQueryParams(vals url.Values) {
-	lcf.ChartForm.PopulateHelmOptionsFromQueryParams(vals)
-
 	if namespace, ok := vals["namespace"]; ok && len(namespace) == 1 {
 		lcf.ListFilter.Namespace = namespace[0]
 	}

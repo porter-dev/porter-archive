@@ -48,14 +48,14 @@ const getCharts = baseApi<{
   skip: number,
   byDate: boolean,
   statusFilter: string[]
-}>('GET', '/api/charts');
+}>('GET', '/api/releases');
 
 const getChart = baseApi<{
   namespace: string,
   context: string,
   storage: string
 }, { name: string, revision: number }>('GET', pathParams => {
-  return `/api/charts/${pathParams.name}/${pathParams.revision}`;
+  return `/api/releases/${pathParams.name}/${pathParams.revision}`;
 });
 
 const getNamespaces = baseApi<{
@@ -67,15 +67,25 @@ const getRevisions = baseApi<{
   context: string,
   storage: string
 }, { name: string }>('GET', pathParams => {
-  return `/api/charts/${pathParams.name}/history`;
+  return `/api/releases/${pathParams.name}/history`;
 });
 
 const rollbackChart = baseApi<{
   namespace: string,
   context: string,
-  storage: string
-}, { name: string, revision: number }>('POST', pathParams => {
-  return `/api/charts/rollback/${pathParams.name}/${pathParams.revision}`;
+  storage: string,
+  revision: number
+}, { name: string }>('POST', pathParams => {
+  return `/api/releases/${pathParams.name}/rollback`;
+});
+
+const upgradeChartValues = baseApi<{
+  namespace: string,
+  context: string,
+  storage: string,
+  values: string
+}, { name: string }>('POST', pathParams => {
+  return `/api/releases/${pathParams.name}/upgrade`;
 });
 
 // Bundle export to allow default api import (api.<method> is more readable)
@@ -91,5 +101,6 @@ export default {
   getChart,
   getNamespaces,
   getRevisions,
-  rollbackChart
+  rollbackChart,
+  upgradeChartValues
 }

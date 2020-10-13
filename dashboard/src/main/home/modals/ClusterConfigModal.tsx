@@ -161,6 +161,7 @@ export default class ClusterConfigModal extends Component<PropsType, StateType> 
             value={this.state.rawKubeconfig}
             onChange={(e: any) => this.setState({ rawKubeconfig: e })}
             height='295px'
+            border={true}
           />
           <UploadButton>
             <i className="material-icons">cloud_upload</i> Upload Kubeconfig
@@ -315,7 +316,7 @@ const Subtitle = styled.div`
   padding: 15px 0px;
   font-family: 'Work Sans', sans-serif;
   font-size: 13px;
-  color: #aaa;
+  color: #aaaabb;
   margin-top: 8px;
   overflow: hidden;
   white-space: nowrap;

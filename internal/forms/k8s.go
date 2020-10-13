@@ -12,7 +12,7 @@ type K8sForm struct {
 	*kubernetes.OutOfClusterConfig
 }
 
-// PopulateK8sOptionsFromQueryParams populates fields in the ChartForm using the passed
+// PopulateK8sOptionsFromQueryParams populates fields in the ReleaseForm using the passed
 // url.Values (the parsed query params)
 func (kf *K8sForm) PopulateK8sOptionsFromQueryParams(vals url.Values) {
 	if context, ok := vals["context"]; ok && len(context) == 1 {

@@ -8,6 +8,7 @@ import 'ace-builds/src-noconflict/theme-terminal';
 type PropsType = {
   value: string,
   onChange: (e: any) => void,
+  height?: string
 }
 
 type StateType = {
@@ -48,8 +49,8 @@ class YamlEditor extends Component<PropsType, StateType> {
             onChange={this.props.onChange}
             name='codeEditor'
             editorProps={{ $blockScrolling: true }}
+            height={this.props.height}
             width='100%'
-            height='295px'
             style={{ borderRadius: '5px' }}
           />
         </Editor>
@@ -61,9 +62,6 @@ class YamlEditor extends Component<PropsType, StateType> {
 export default YamlEditor;
 
 const Editor = styled.form`
-  margin-top: 0px;
-  margin-bottom: 12px;
-  width: calc(100% - 0px);
   border-radius: 5px;
   border: 1px solid #ffffff22;
 `;

@@ -8,6 +8,7 @@ import { KubeContextConfig } from '../../../shared/types';
 
 import YamlEditor from '../../../components/YamlEditor';
 import SaveButton from '../../../components/SaveButton';
+import TabSelector from '../../../components/TabSelector';
 
 type PropsType = {
 };
@@ -19,6 +20,11 @@ type StateType = {
   saveKubeconfigStatus: string | null,
   saveSelectedStatus: string | null
 };
+
+const tabOptions = [
+  { label: 'Raw Kubeconfig', value: 'kubeconfig' },
+  { label: 'Select Clusters', value: 'select' }
+]
 
 export default class ClusterConfigModal extends Component<PropsType, StateType> {
   state = {
@@ -59,12 +65,6 @@ export default class ClusterConfigModal extends Component<PropsType, StateType> 
 
     this.updateChecklist();
   }
-
-  renderLine = (tab: string): JSX.Element | undefined => {
-    if (this.state.currentTab === tab) {
-      return <Highlight />
-    }
-  };
 
   toggleCluster = (i: number): void => {
     let newKubeContexts = this.state.kubeContexts;
@@ -160,6 +160,7 @@ export default class ClusterConfigModal extends Component<PropsType, StateType> 
           <YamlEditor 
             value={this.state.rawKubeconfig}
             onChange={(e: any) => this.setState({ rawKubeconfig: e })}
+            height='295px'
           />
           <UploadButton>
             <i className="material-icons">cloud_upload</i> Upload Kubeconfig
@@ -204,16 +205,11 @@ export default class ClusterConfigModal extends Component<PropsType, StateType> 
           Manage Clusters
         </Header>
         <ModalTitle>Connect from Kubeconfig</ModalTitle>
-        <TabSelector>
-          <Tab onClick={() => this.setState({ currentTab: 'kubeconfig' })}>
-            Raw Kubeconfig
-            {this.renderLine('kubeconfig')}
-          </Tab>
-          <Tab onClick={() => this.setState({ currentTab: 'select' })}>
-            Select Clusters
-            {this.renderLine('select')}
-          </Tab>
-        </TabSelector>
+        <TabSelector
+          options={tabOptions}
+          setCurrentTab={(value: string) => this.setState({ currentTab: value })}
+          tabWidth='120px'
+        />
         {this.renderTabContents()}
       </StyledClusterConfigModal>
     );
@@ -326,54 +322,8 @@ const Subtitle = styled.div`
   text-overflow: ellipsis;
 `;
 
-const Highlight = styled.div`
-  width: 80%;
-  height: 1px;
-  margin-top: 5px;
-  background: #949EFFcc;
-
-  opacity: 0;
-  animation: lineEnter 0.5s 0s;
-  animation-fill-mode: forwards;
-  @keyframes lineEnter {
-    from { width: 0%; opacity: 0; }
-    to   { width: 80%; opacity: 1; }
-  }
-`; 
-
-const Tab = styled.div`
-  width: 180px;
-  height: 30px;
-  padding: 0 10px;
-  margin-right: 15px;
-  display: flex;
-  font-family: 'Work Sans', sans-serif;
-  font-size: 13px;
-  user-select: none;
-  color: #949effcc;
-  flex-direction: column;
-  padding-top: 7px;
-  align-items: center;
-  cursor: pointer;
-  white-space: nowrap;
-  
-  :hover {
-    background: #949EFF22;
-    border-radius: 5px;
-  }
-`;
-
-const TabSelector = styled.div`
-  display: flex;
-  width: 260px;
-  max-width: 100%;
-  margin-left: 0px;
-  justify-content: space-between;
-  margin-top: 23px;
-`;
-
 const ModalTitle = styled.div`
-  margin-top: 21px;
+  margin: 21px 2px 23px;
   display: flex;
   flex: 1;
   font-family: 'Assistant';

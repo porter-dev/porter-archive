@@ -339,7 +339,7 @@ const StyledRevisionSection = styled.div`
   width: 100%;
   max-height: ${(props: { showRevisions: boolean }) => props.showRevisions ? '255px' : '40px'};
   background: #ffffff11;
-  margin-top: 25px;
+  margin: 25px 0px;
   overflow: hidden;
   border-radius: 5px;
   animation: ${(props: { showRevisions: boolean }) => props.showRevisions ? 'expandRevisions 0.3s' : ''};

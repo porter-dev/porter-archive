@@ -17,7 +17,7 @@
   - [`GET /api/releases`](#get-apireleases)
   - [`GET /api/releases/{name}/history`](#get-apireleasesnamehistory)
   - [`GET /api/releases/{name}/{revision}`](#get-apireleasesnamerevision)
-  - [`POST /api/releases/{name}/rollback`](#post-apireleasesnamerollbackrevision)
+  - [`POST /api/releases/{name}/rollback`](#post-apireleasesnamerollback)
   - [`POST /api/releases/{name}/upgrade`](#post-apireleasesnameupgrade)
 - [`/api/k8s`](#apik8s)
   - [`GET /api/k8s/namespaces`](#get-apik8snamespaces)

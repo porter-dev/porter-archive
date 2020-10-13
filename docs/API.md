@@ -18,6 +18,7 @@
   - [`GET /api/charts/{name}/history`](#get-apichartsnamehistory)
   - [`GET /api/charts/{name}/{revision}`](#get-apichartsnamerevision)
   - [`POST /api/charts/rollback/{name}/{revision}`](#post-apichartsrollbacknamerevision)
+  - [`POST /api/charts/{name}/upgrade`](#post-apichartsnameupgrade)
 - [`/api/k8s`](#apik8s)
   - [`GET /api/k8s/namespaces`](#get-apik8snamespaces)
 
@@ -687,6 +688,71 @@ Chart{
 }
 ```
 
+
+**Successful Response Body**: N/A
+
+**Successful Status Code**: `200`
+
+**Errors:** TBD
+
+### `/api/k8s`
+
+#### `GET /api/k8s/namespaces`
+
+**Description:** 
+
+**URL parameters:** N/A
+
+**Query parameters:** N/A
+
+```js
+// The name of the context in the kubeconfig being used
+"context": String,
+```
+
+**Request Body**: N/A
+
+**Successful Response Body**: the full body is determined by the [namespace specification](https://pkg.go.dev/k8s.io/api/core/v1#NamespaceList), but we're primarily only interested in namespace `name`:
+
+```js
+{
+  "metadata": {},
+  "items": []Namespace{
+    "metadata": {
+      "name": String
+    }
+  }
+}
+```
+
+**Successful Status Code**: `200`
+
+**Errors:** TBD
+
+#### `POST /api/charts/{name}/upgrade`
+
+**Description:** Upgrades a chart with new `values.yaml`. 
+
+**URL parameters:** 
+
+- `name` The name of the release.
+
+**Query parameters:** N/A
+
+**Request Body**:
+
+```js
+{
+  // The namespace of the cluster to be used
+  "namespace": String,
+  // The name of the context in the kubeconfig being used
+  "context": String,
+  // The Helm storage option to use
+  "storage": String("secret"|"configmap"|"memory"),
+  // The string of values to use
+  "values": String
+}
+```
 
 **Successful Response Body**: N/A
 

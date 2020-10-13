@@ -283,7 +283,7 @@ var upgradeTests = []listReleaseTest{
 	},
 }
 
-func TestUpgradeChart(t *testing.T) {
+func TestUpgradeRelease(t *testing.T) {
 	for _, tc := range upgradeTests {
 		agent := newAgentFixture(t, tc.namespace)
 		makeReleases(t, agent, tc.releases)
@@ -292,7 +292,7 @@ func TestUpgradeChart(t *testing.T) {
 		// namespace, so we have to reset the namespace of the storage driver
 		agent.ActionConfig.Releases.Driver.(*driver.Memory).SetNamespace(tc.namespace)
 
-		agent.UpgradeChart("wordpress", "")
+		agent.UpgradeRelease("wordpress", "")
 
 		releases, err := agent.GetReleaseHistory("wordpress")
 

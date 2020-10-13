@@ -11,18 +11,18 @@ import (
 	"github.com/porter-dev/porter/internal/helm"
 )
 
-// Enumeration of chart API error codes, represented as int64
+// Enumeration of release API error codes, represented as int64
 const (
-	ErrChartDecode ErrorCode = iota + 600
-	ErrChartValidateFields
-	ErrChartReadData
+	ErrReleaseDecode ErrorCode = iota + 600
+	ErrReleaseValidateFields
+	ErrReleaseReadData
 )
 
 // HandleListReleases retrieves a list of releases for a cluster
 // with various filter options
 func (app *App) HandleListReleases(w http.ResponseWriter, r *http.Request) {
-	form := &forms.ListChartForm{
-		ChartForm: &forms.ChartForm{
+	form := &forms.ListReleaseForm{
+		ReleaseForm: &forms.ReleaseForm{
 			Form: &helm.Form{},
 		},
 		ListFilter: &helm.ListFilter{},
@@ -31,8 +31,8 @@ func (app *App) HandleListReleases(w http.ResponseWriter, r *http.Request) {
 	agent, err := app.getAgentFromQueryParams(
 		w,
 		r,
-		form.ChartForm,
-		form.ChartForm.PopulateHelmOptionsFromQueryParams,
+		form.ReleaseForm,
+		form.ReleaseForm.PopulateHelmOptionsFromQueryParams,
 		form.PopulateListFromQueryParams,
 	)
 
@@ -44,23 +44,23 @@ func (app *App) HandleListReleases(w http.ResponseWriter, r *http.Request) {
 	releases, err := agent.ListReleases(form.Namespace, form.ListFilter)
 
 	if err != nil {
-		app.handleErrorRead(err, ErrChartReadData, w)
+		app.handleErrorRead(err, ErrReleaseReadData, w)
 		return
 	}
 
 	if err := json.NewEncoder(w).Encode(releases); err != nil {
-		app.handleErrorFormDecoding(err, ErrChartDecode, w)
+		app.handleErrorFormDecoding(err, ErrReleaseDecode, w)
 		return
 	}
 }
 
-// HandleGetChart retrieves a single chart based on a name and revision
-func (app *App) HandleGetChart(w http.ResponseWriter, r *http.Request) {
+// HandleGetRelease retrieves a single release based on a name and revision
+func (app *App) HandleGetRelease(w http.ResponseWriter, r *http.Request) {
 	name := chi.URLParam(r, "name")
 	revision, err := strconv.ParseUint(chi.URLParam(r, "revision"), 0, 64)
 
-	form := &forms.GetChartForm{
-		ChartForm: &forms.ChartForm{
+	form := &forms.GetReleaseForm{
+		ReleaseForm: &forms.ReleaseForm{
 			Form: &helm.Form{},
 		},
 		Name:     name,
@@ -70,8 +70,8 @@ func (app *App) HandleGetChart(w http.ResponseWriter, r *http.Request) {
 	agent, err := app.getAgentFromQueryParams(
 		w,
 		r,
-		form.ChartForm,
-		form.ChartForm.PopulateHelmOptionsFromQueryParams,
+		form.ReleaseForm,
+		form.ReleaseForm.PopulateHelmOptionsFromQueryParams,
 	)
 
 	// errors are handled in app.getAgentFromQueryParams
@@ -82,22 +82,22 @@ func (app *App) HandleGetChart(w http.ResponseWriter, r *http.Request) {
 	release, err := agent.GetRelease(form.Name, form.Revision)
 
 	if err != nil {
-		app.handleErrorRead(err, ErrChartReadData, w)
+		app.handleErrorRead(err, ErrReleaseReadData, w)
 		return
 	}
 
 	if err := json.NewEncoder(w).Encode(release); err != nil {
-		app.handleErrorFormDecoding(err, ErrChartDecode, w)
+		app.handleErrorFormDecoding(err, ErrReleaseDecode, w)
 		return
 	}
 }
 
-// HandleListChartHistory retrieves a history of charts based on a chart name
-func (app *App) HandleListChartHistory(w http.ResponseWriter, r *http.Request) {
+// HandleListReleaseHistory retrieves a history of releases based on a release name
+func (app *App) HandleListReleaseHistory(w http.ResponseWriter, r *http.Request) {
 	name := chi.URLParam(r, "name")
 
-	form := &forms.ListChartHistoryForm{
-		ChartForm: &forms.ChartForm{
+	form := &forms.ListReleaseHistoryForm{
+		ReleaseForm: &forms.ReleaseForm{
 			Form: &helm.Form{},
 		},
 		Name: name,
@@ -106,8 +106,8 @@ func (app *App) HandleListChartHistory(w http.ResponseWriter, r *http.Request) {
 	agent, err := app.getAgentFromQueryParams(
 		w,
 		r,
-		form.ChartForm,
-		form.ChartForm.PopulateHelmOptionsFromQueryParams,
+		form.ReleaseForm,
+		form.ReleaseForm.PopulateHelmOptionsFromQueryParams,
 	)
 
 	// errors are handled in app.getAgentFromQueryParams
@@ -118,22 +118,22 @@ func (app *App) HandleListChartHistory(w http.ResponseWriter, r *http.Request) {
 	release, err := agent.GetReleaseHistory(form.Name)
 
 	if err != nil {
-		app.handleErrorFormValidation(err, ErrChartValidateFields, w)
+		app.handleErrorFormValidation(err, ErrReleaseValidateFields, w)
 		return
 	}
 
 	if err := json.NewEncoder(w).Encode(release); err != nil {
-		app.handleErrorFormDecoding(err, ErrChartDecode, w)
+		app.handleErrorFormDecoding(err, ErrReleaseDecode, w)
 		return
 	}
 }
 
-// HandleUpgradeChart upgrades a chart with new values.yaml
-func (app *App) HandleUpgradeChart(w http.ResponseWriter, r *http.Request) {
+// HandleUpgradeRelease upgrades a release with new values.yaml
+func (app *App) HandleUpgradeRelease(w http.ResponseWriter, r *http.Request) {
 	name := chi.URLParam(r, "name")
 
-	form := &forms.UpgradeChartForm{
-		ChartForm: &forms.ChartForm{
+	form := &forms.UpgradeReleaseForm{
+		ReleaseForm: &forms.ReleaseForm{
 			Form: &helm.Form{},
 		},
 		Name: name,
@@ -144,10 +144,10 @@ func (app *App) HandleUpgradeChart(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	agent, err := app.getAgentFromChartForm(
+	agent, err := app.getAgentFromReleaseForm(
 		w,
 		r,
-		form.ChartForm,
+		form.ReleaseForm,
 	)
 
 	// errors are handled in app.getAgentFromBodyParams
@@ -155,7 +155,7 @@ func (app *App) HandleUpgradeChart(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = agent.UpgradeChart(form.Name, form.Values)
+	_, err = agent.UpgradeRelease(form.Name, form.Values)
 
 	if err != nil {
 		app.handleErrorInternal(err, w)
@@ -165,22 +165,15 @@ func (app *App) HandleUpgradeChart(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
-// HandleRollbackChart rolls a release back to a specified revision
-func (app *App) HandleRollbackChart(w http.ResponseWriter, r *http.Request) {
+// HandleRollbackRelease rolls a release back to a specified revision
+func (app *App) HandleRollbackRelease(w http.ResponseWriter, r *http.Request) {
 	name := chi.URLParam(r, "name")
-	revision, err := strconv.ParseUint(chi.URLParam(r, "revision"), 0, 64)
 
-	if err != nil {
-		app.handleErrorFormDecoding(err, ErrChartDecode, w)
-		return
-	}
-
-	form := &forms.RollbackChartForm{
-		ChartForm: &forms.ChartForm{
+	form := &forms.RollbackReleaseForm{
+		ReleaseForm: &forms.ReleaseForm{
 			Form: &helm.Form{},
 		},
-		Name:     name,
-		Revision: int(revision),
+		Name: name,
 	}
 
 	if err := json.NewDecoder(r.Body).Decode(form); err != nil {
@@ -188,10 +181,10 @@ func (app *App) HandleRollbackChart(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	agent, err := app.getAgentFromChartForm(
+	agent, err := app.getAgentFromReleaseForm(
 		w,
 		r,
-		form.ChartForm,
+		form.ReleaseForm,
 	)
 
 	// errors are handled in app.getAgentFromBodyParams
@@ -212,19 +205,19 @@ func (app *App) HandleRollbackChart(w http.ResponseWriter, r *http.Request) {
 // ------------------------ Release handler helper functions ------------------------ //
 
 // getAgentFromQueryParams uses the query params to populate a form, and then
-// passes that form to the underlying app.getAgentFromChartForm to create a new
+// passes that form to the underlying app.getAgentFromReleaseForm to create a new
 // Helm agent.
 func (app *App) getAgentFromQueryParams(
 	w http.ResponseWriter,
 	r *http.Request,
-	form *forms.ChartForm,
+	form *forms.ReleaseForm,
 	// populate uses the query params to populate a form
 	populate ...func(vals url.Values),
 ) (*helm.Agent, error) {
 	vals, err := url.ParseQuery(r.URL.RawQuery)
 
 	if err != nil {
-		app.handleErrorFormDecoding(err, ErrChartDecode, w)
+		app.handleErrorFormDecoding(err, ErrReleaseDecode, w)
 		return nil, err
 	}
 
@@ -232,15 +225,15 @@ func (app *App) getAgentFromQueryParams(
 		f(vals)
 	}
 
-	return app.getAgentFromChartForm(w, r, form)
+	return app.getAgentFromReleaseForm(w, r, form)
 }
 
-// getAgentFromChartForm uses a non-validated form to construct a new Helm agent based on
+// getAgentFromReleaseForm uses a non-validated form to construct a new Helm agent based on
 // the userID found in the session and the options required by the Helm agent.
-func (app *App) getAgentFromChartForm(
+func (app *App) getAgentFromReleaseForm(
 	w http.ResponseWriter,
 	r *http.Request,
-	form *forms.ChartForm,
+	form *forms.ReleaseForm,
 ) (*helm.Agent, error) {
 	// read the session in order to generate the Helm agent
 	session, err := app.store.Get(r, app.cookieName)
@@ -258,7 +251,7 @@ func (app *App) getAgentFromChartForm(
 
 	// validate the form
 	if err := app.validator.Struct(form); err != nil {
-		app.handleErrorFormValidation(err, ErrChartValidateFields, w)
+		app.handleErrorFormValidation(err, ErrReleaseValidateFields, w)
 		return nil, err
 	}
 

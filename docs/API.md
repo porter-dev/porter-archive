@@ -13,12 +13,12 @@
   - [`POST /api/logout`](#post-apilogout)
   - [`PUT /api/users/{id}`](#put-apiusersid)
   - [`DELETE /api/users/{id}`](#delete-apiusersid)
-- [`/api/charts`](#apicharts)
-  - [`GET /api/charts`](#get-apicharts)
-  - [`GET /api/charts/{name}/history`](#get-apichartsnamehistory)
-  - [`GET /api/charts/{name}/{revision}`](#get-apichartsnamerevision)
-  - [`POST /api/charts/rollback/{name}/{revision}`](#post-apichartsrollbacknamerevision)
-  - [`POST /api/charts/{name}/upgrade`](#post-apichartsnameupgrade)
+- [`/api/releases`](#apireleases)
+  - [`GET /api/releases`](#get-apireleases)
+  - [`GET /api/releases/{name}/history`](#get-apireleasesnamehistory)
+  - [`GET /api/releases/{name}/{revision}`](#get-apireleasesnamerevision)
+  - [`POST /api/releases/{name}/rollback/{revision}`](#post-apireleasesnamerollbackrevision)
+  - [`POST /api/releases/{name}/upgrade`](#post-apireleasesnameupgrade)
 - [`/api/k8s`](#apik8s)
   - [`GET /api/k8s/namespaces`](#get-apik8snamespaces)
 
@@ -419,11 +419,11 @@ User object with only the id field. Other fields are empty - with values in para
     }
     ```
 
-### `/api/charts`
+### `/api/releases`
 
-#### `GET /api/charts`
+#### `GET /api/releases`
 
-**Description:** Gets a list of charts for a current context and a kubeconfig retrieved from the user's ID. 
+**Description:** Gets a list of releases for a current context and a kubeconfig retrieved from the user's ID. 
 
 **URL parameters:** N/A
 
@@ -446,7 +446,7 @@ User object with only the id field. Other fields are empty - with values in para
 **Successful Response Body**: the full body is determined by the [release specification](https://pkg.go.dev/helm.sh/helm/v3@v3.3.4/pkg/release#Release): listed here is a subset of fields deemed to be most relevant. Note that all of the top-level fields are optional.
 
 ```js
-[]Chart{
+[]Release{
   // Name is the name of the release
   "name": String,
   "info": Info{
@@ -459,21 +459,21 @@ User object with only the id field. Other fields are empty - with values in para
     // Status is the current state of the release
     "status": String("unknown"|"deployed"|"uninstalled"|"superseded"|"failed"|"uninstalling"|"pending-install"|"pending-upgrade"|"pending-rollback")
   },
-  "chart": Chart{
+  "release": Release{
     "metadata": Metadata{
-      // The name of the chart
+      // The name of the release
       "name": String,
       // The URL to a relevant project page, git repo, or contact person
       "home": String,
-      // Sources is a list of URLs to the source code of this chart
+      // Sources is a list of URLs to the source code of this release
       "sources": []String,
-      // A SemVer 2 conformant version string of the chart
+      // A SemVer 2 conformant version string of the release
       "version": String,
-      // A one-sentence description of the chart
+      // A one-sentence description of the release
       "description": String,
       // The URL to an icon file.
       "icon": String,
-      // The API Version of this chart.
+      // The API Version of this release.
       "apiVersion": String,
     },
     "templates": []File{
@@ -482,11 +482,11 @@ User object with only the id field. Other fields are empty - with values in para
       // Data is the template as byte data.
       "data": String
     },
-    // Values are default config for this chart.
+    // Values are default config for this release.
     "values": Map[String]{}
   },
-  // The set of extra Values added to the chart, which override the 
-  // default values inside of the chart
+  // The set of extra Values added to the release, which override the 
+  // default values inside of the release
   "config": Map[String]{},
   // Manifest is the string representation of the rendered template
   "manifest": String,
@@ -501,9 +501,9 @@ User object with only the id field. Other fields are empty - with values in para
 
 **Errors:** TBD
 
-#### `GET /api/charts/{name}/history`
+#### `GET /api/releases/{name}/history`
 
-**Description:** Gets a history of revisions for a given deployed chart based on the release `name`.
+**Description:** Gets a history of revisions for a given deployed release based on the release `name`.
 
 **URL parameters:** 
 
@@ -527,7 +527,7 @@ User object with only the id field. Other fields are empty - with values in para
 **Successful Response Body**: the full body is determined by the [release specification](https://pkg.go.dev/helm.sh/helm/v3@v3.3.4/pkg/release#Release): listed here is a subset of fields deemed to be most relevant. Note that all of the top-level fields are optional.
 
 ```js
-[]Chart{
+[]Release{
   // Name is the name of the release
   "name": String,
   "info": Info{
@@ -540,21 +540,21 @@ User object with only the id field. Other fields are empty - with values in para
     // Status is the current state of the release
     "status": String("unknown"|"deployed"|"uninstalled"|"superseded"|"failed"|"uninstalling"|"pending-install"|"pending-upgrade"|"pending-rollback")
   },
-  "chart": Chart{
+  "release": Release{
     "metadata": Metadata{
-      // The name of the chart
+      // The name of the release
       "name": String,
       // The URL to a relevant project page, git repo, or contact person
       "home": String,
-      // Sources is a list of URLs to the source code of this chart
+      // Sources is a list of URLs to the source code of this release
       "sources": []String,
-      // A SemVer 2 conformant version string of the chart
+      // A SemVer 2 conformant version string of the release
       "version": String,
-      // A one-sentence description of the chart
+      // A one-sentence description of the release
       "description": String,
       // The URL to an icon file.
       "icon": String,
-      // The API Version of this chart.
+      // The API Version of this release.
       "apiVersion": String,
     },
     "templates": []File{
@@ -563,11 +563,11 @@ User object with only the id field. Other fields are empty - with values in para
       // Data is the template as byte data.
       "data": String
     },
-    // Values are default config for this chart.
+    // Values are default config for this release.
     "values": Map[String]{}
   },
-  // The set of extra Values added to the chart, which override the 
-  // default values inside of the chart
+  // The set of extra Values added to the release, which override the 
+  // default values inside of the release
   "config": Map[String]{},
   // Manifest is the string representation of the rendered template
   "manifest": String,
@@ -582,9 +582,9 @@ User object with only the id field. Other fields are empty - with values in para
 
 **Errors:** TBD
 
-#### `GET /api/charts/{name}/{revision}`
+#### `GET /api/releases/{name}/{revision}`
 
-**Description:** Gets a single chart for a current context and a kubeconfig retrieved from the user's ID based on a **name** and **revision**. To retrieve the latest deployed chart, set **revision** to 0. 
+**Description:** Gets a single release for a current context and a kubeconfig retrieved from the user's ID based on a **name** and **revision**. To retrieve the latest deployed release, set **revision** to 0. 
 
 **URL parameters:** 
 
@@ -609,7 +609,7 @@ User object with only the id field. Other fields are empty - with values in para
 **Successful Response Body**: the full body is determined by the [release specification](https://pkg.go.dev/helm.sh/helm/v3@v3.3.4/pkg/release#Release): listed here is a subset of fields deemed to be most relevant. Note that all of the top-level fields are optional.
 
 ```js
-Chart{
+Release{
   // Name is the name of the release
   "name": String,
   "info": Info{
@@ -622,21 +622,21 @@ Chart{
     // Status is the current state of the release
     "status": String("unknown"|"deployed"|"uninstalled"|"superseded"|"failed"|"uninstalling"|"pending-install"|"pending-upgrade"|"pending-rollback")
   },
-  "chart": Chart{
+  "release": Release{
     "metadata": Metadata{
-      // The name of the chart
+      // The name of the release
       "name": String,
       // The URL to a relevant project page, git repo, or contact person
       "home": String,
-      // Sources is a list of URLs to the source code of this chart
+      // Sources is a list of URLs to the source code of this release
       "sources": []String,
-      // A SemVer 2 conformant version string of the chart
+      // A SemVer 2 conformant version string of the release
       "version": String,
-      // A one-sentence description of the chart
+      // A one-sentence description of the release
       "description": String,
       // The URL to an icon file.
       "icon": String,
-      // The API Version of this chart.
+      // The API Version of this release.
       "apiVersion": String,
     },
     "templates": []File{
@@ -645,11 +645,11 @@ Chart{
       // Data is the template as byte data.
       "data": String
     },
-    // Values are default config for this chart.
+    // Values are default config for this release.
     "values": Map[String]{}
   },
-  // The set of extra Values added to the chart, which override the 
-  // default values inside of the chart
+  // The set of extra Values added to the release, which override the 
+  // default values inside of the release
   "config": Map[String]{},
   // Manifest is the string representation of the rendered template
   "manifest": String,
@@ -664,14 +664,13 @@ Chart{
 
 **Errors:** TBD
 
-#### `POST /api/charts/rollback/{name}/{revision}`
+#### `POST /api/releases/{name}/rollback`
 
 **Description:** Rolls a release back to a specified revision. 
 
 **URL parameters:** 
 
 - `name` The name of the release.
-- `revision` The number of the release. 
 
 **Query parameters:** N/A
 
@@ -684,7 +683,9 @@ Chart{
   // The name of the context in the kubeconfig being used
   "context": String,
   // The Helm storage option to use
-  "storage": String("secret"|"configmap"|"memory")
+  "storage": String("secret"|"configmap"|"memory"),
+  // The revision number of the desired rollback target
+  "revision": Number
 }
 ```
 
@@ -729,9 +730,9 @@ Chart{
 
 **Errors:** TBD
 
-#### `POST /api/charts/{name}/upgrade`
+#### `POST /api/releases/{name}/upgrade`
 
-**Description:** Upgrades a chart with new `values.yaml`. 
+**Description:** Upgrades a release with new `values.yaml`. 
 
 **URL parameters:** 
 

@@ -115,7 +115,7 @@ func TestParseObj(t *testing.T) {
 			t.Errorf("Error reading file %s", k8sObj.FilePath)
 		}
 
-		yamlArr := grapher.Parse(file)
+		yamlArr := grapher.ImportMultiDocYAML(file)
 		objects := []grapher.Object{}
 
 		for _, y := range yamlArr {

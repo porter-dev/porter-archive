@@ -197,6 +197,83 @@ func TestHandleListChartHistory(t *testing.T) {
 	testChartRequests(t, listChartHistoryTests, true)
 }
 
+var upgradeChartTests = []*chartTest{
+	&chartTest{
+		initializers: []func(tester *tester){
+			initHistoryCharts,
+		},
+		msg:       "Upgrade relase",
+		method:    "POST",
+		namespace: "default",
+		endpoint:  "/api/charts/wordpress/upgrade",
+		body: `
+			{
+				"namespace": "default",
+				"context": "context-test",
+				"storage": "memory",
+				"values": "\nfoo: bar\n"
+			}
+		`,
+		expStatus: http.StatusOK,
+		expBody:   ``,
+		useCookie: true,
+		validators: []func(c *chartTest, tester *tester, t *testing.T){
+			func(c *chartTest, tester *tester, t *testing.T) {
+				req, err := http.NewRequest(
+					"GET",
+					"/api/charts/wordpress/3?"+url.Values{
+						"namespace": []string{"default"},
+						"context":   []string{"context-test"},
+						"storage":   []string{"memory"},
+					}.Encode(),
+					strings.NewReader(""),
+				)
+
+				req.AddCookie(tester.cookie)
+
+				if err != nil {
+					t.Fatal(err)
+				}
+
+				rr2 := httptest.NewRecorder()
+				tester.router.ServeHTTP(rr2, req)
+
+				gotBody := &release.Release{}
+				expBody := &release.Release{}
+
+				expBodyJSON := releaseStubToChartJSON(releaseStub{"wordpress", "default", 3, "1.0.2", release.StatusDeployed})
+
+				json.Unmarshal(rr2.Body.Bytes(), gotBody)
+				json.Unmarshal([]byte(expBodyJSON), expBody)
+
+				// just check name and version match, other items will be different
+				if gotBody.Name != expBody.Name {
+					t.Errorf("%s, validation wrong body: got %v want %v",
+						c.msg, gotBody.Name, expBody.Name)
+				}
+
+				if gotBody.Version != expBody.Version {
+					t.Errorf("%s, validation wrong body: got %v want %v",
+						c.msg, gotBody.Version, expBody.Version)
+				}
+
+				expConfig := map[string]interface{}{
+					"foo": "bar",
+				}
+
+				if !reflect.DeepEqual(gotBody.Config, expConfig) {
+					t.Errorf("%s, validation wrong config: got %v want %v",
+						c.msg, gotBody.Config, expConfig)
+				}
+			},
+		},
+	},
+}
+
+func TestUpgradeChart(t *testing.T) {
+	testChartRequests(t, upgradeChartTests, true)
+}
+
 var rollbackChartTests = []*chartTest{
 	&chartTest{
 		initializers: []func(tester *tester){

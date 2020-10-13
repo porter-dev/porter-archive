@@ -240,7 +240,7 @@ func (app *App) HandleUpgradeChart(w http.ResponseWriter, r *http.Request) {
 		agent, err = helm.GetAgentOutOfClusterConfig(form.ChartForm.Form, app.logger)
 	}
 
-	rel, err := agent.UpgradeChart(form.Name, form.Values)
+	_, err = agent.UpgradeChart(form.Name, form.Values)
 
 	if err != nil {
 		app.handleErrorInternal(err, w)
@@ -248,11 +248,6 @@ func (app *App) HandleUpgradeChart(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusOK)
-
-	if err := json.NewEncoder(w).Encode(rel); err != nil {
-		app.handleErrorFormDecoding(err, ErrChartDecode, w)
-		return
-	}
 }
 
 // HandleRollbackChart rolls a release back to a specified revision

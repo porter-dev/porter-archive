@@ -32,6 +32,18 @@ var c4 = grapher.Object{
 	Relations: make([]grapher.Relation, 0),
 }
 
+var c5 = grapher.Object{
+	Kind:      "Pod",
+	Name:      "my-release-cassandra-1",
+	Relations: make([]grapher.Relation, 0),
+}
+
+var c6 = grapher.Object{
+	Kind:      "Pod",
+	Name:      "my-release-cassandra-2",
+	Relations: make([]grapher.Relation, 0),
+}
+
 // Expected objects for helm Cassandra chart
 var k1 = grapher.Object{
 	Kind:      "ServiceAccount",
@@ -76,18 +88,30 @@ var k7 = grapher.Object{
 }
 
 var k8 = grapher.Object{
+	Kind:      "Pod",
+	Name:      "my-release-zookeeper-1",
+	Relations: make([]grapher.Relation, 0),
+}
+
+var k9 = grapher.Object{
 	Kind:      "StatefulSet",
 	Name:      "my-release-kafka",
 	Relations: make([]grapher.Relation, 0),
 }
 
+var k10 = grapher.Object{
+	Kind:      "Pod",
+	Name:      "my-release-kafka-1",
+	Relations: make([]grapher.Relation, 0),
+}
+
 var expObjs1 = []grapher.Object{
-	c1, c2, c3, c4,
+	c1, c2, c3, c4, c5, c6,
 }
 
 var expObjs2 = []grapher.Object{
-	k1, k2, k3, k4,
-	k5, k6, k7, k8,
+	k1, k2, k3, k4, k5,
+	k6, k7, k8, k9, k10,
 }
 
 type k8sObj struct {
@@ -120,7 +144,7 @@ func TestParseObj(t *testing.T) {
 
 		for _, y := range yamlArr {
 			strmap := grapher.ConvertYAMLToStringKeys(y)
-			objects = append(objects, grapher.ParseObj(strmap))
+			objects = append(objects, grapher.ParseObj(strmap)...)
 		}
 
 		for i, o := range objects {

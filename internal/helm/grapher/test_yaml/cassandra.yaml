@@ -95,7 +95,7 @@ spec:
       app.kubernetes.io/instance: my-release
   serviceName: my-release-cassandra-headless
   podManagementPolicy: OrderedReady
-  replicas: 1
+  replicas: 2
   updateStrategy:
     type: RollingUpdate
   template:

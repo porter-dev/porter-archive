@@ -267,6 +267,43 @@ func TestListReleaseHistory(t *testing.T) {
 	}
 }
 
+var upgradeTests = []listReleaseTest{
+	listReleaseTest{
+		name:      "simple history test",
+		namespace: "default",
+		releases: []releaseStub{
+			releaseStub{"wordpress", "default", 2, "1.0.2", release.StatusDeployed},
+			releaseStub{"wordpress", "default", 1, "1.0.1", release.StatusSuperseded},
+		},
+		expRes: []releaseStub{
+			releaseStub{"wordpress", "default", 1, "1.0.1", release.StatusSuperseded},
+			releaseStub{"wordpress", "default", 2, "1.0.2", release.StatusSuperseded},
+			releaseStub{"wordpress", "default", 3, "1.0.2", release.StatusDeployed},
+		},
+	},
+}
+
+func TestUpgradeRelease(t *testing.T) {
+	for _, tc := range upgradeTests {
+		agent := newAgentFixture(t, tc.namespace)
+		makeReleases(t, agent, tc.releases)
+
+		// calling agent.ActionConfig.Releases.Create in makeReleases will automatically set the
+		// namespace, so we have to reset the namespace of the storage driver
+		agent.ActionConfig.Releases.Driver.(*driver.Memory).SetNamespace(tc.namespace)
+
+		agent.UpgradeRelease("wordpress", "")
+
+		releases, err := agent.GetReleaseHistory("wordpress")
+
+		if err != nil {
+			t.Errorf("%v", err)
+		}
+
+		compareReleaseToStubs(t, releases, tc.expRes)
+	}
+}
+
 var rollbackReleaseTests = []getReleaseTest{
 	getReleaseTest{
 		name:      "simple rollback test",

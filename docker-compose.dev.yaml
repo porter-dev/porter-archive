@@ -7,6 +7,7 @@ services:
     restart: on-failure
     volumes:
       - ./dashboard:/webpack:rw,cached
+      - /webpack/node_modules
   porter:
     build:
       context: .

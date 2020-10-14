@@ -8,7 +8,7 @@ package helm
 // - memory
 // - postgres
 //
-// This file implements first-class support for the first three driver types,
+// This file implements first-class support for the first three driver types
 // and integrates with the logger.
 //
 // TODO -- include support for SQL storage...
@@ -18,11 +18,15 @@ import (
 
 	"helm.sh/helm/v3/pkg/storage"
 	"helm.sh/helm/v3/pkg/storage/driver"
-	"k8s.io/client-go/kubernetes"
+	corev1 "k8s.io/client-go/kubernetes/typed/core/v1"
 )
 
 // NewStorageDriver is a function type for returning a new storage driver
-type NewStorageDriver func(l *logger.Logger, namespace string, clientset *kubernetes.Clientset) *storage.Storage
+type NewStorageDriver func(
+	l *logger.Logger,
+	v1Interface corev1.CoreV1Interface,
+	namespace string,
+) *storage.Storage
 
 // StorageMap is a map from storage configuration env variables to a function
 // that initializes that Helm storage driver.
@@ -35,10 +39,10 @@ var StorageMap map[string]NewStorageDriver = map[string]NewStorageDriver{
 // NewSecretStorageDriver returns a storage using the Secret driver.
 func newSecretStorageDriver(
 	l *logger.Logger,
+	v1Interface corev1.CoreV1Interface,
 	namespace string,
-	clientset *kubernetes.Clientset,
 ) *storage.Storage {
-	d := driver.NewSecrets(clientset.CoreV1().Secrets(namespace))
+	d := driver.NewSecrets(v1Interface.Secrets(namespace))
 	d.Log = l.Printf
 	return storage.Init(d)
 }
@@ -46,10 +50,10 @@ func newSecretStorageDriver(
 // NewConfigMapsStorageDriver returns a storage using the ConfigMap driver.
 func newConfigMapsStorageDriver(
 	l *logger.Logger,
+	v1Interface corev1.CoreV1Interface,
 	namespace string,
-	clientset *kubernetes.Clientset,
 ) *storage.Storage {
-	d := driver.NewConfigMaps(clientset.CoreV1().ConfigMaps(namespace))
+	d := driver.NewConfigMaps(v1Interface.ConfigMaps(namespace))
 	d.Log = l.Printf
 	return storage.Init(d)
 }
@@ -57,8 +61,8 @@ func newConfigMapsStorageDriver(
 // NewMemoryStorageDriver returns a storage using the In-Memory driver.
 func newMemoryStorageDriver(
 	_ *logger.Logger,
-	namespace string,
-	_ *kubernetes.Clientset,
+	_ corev1.CoreV1Interface,
+	_ string,
 ) *storage.Storage {
 	d := driver.NewMemory()
 	return storage.Init(d)

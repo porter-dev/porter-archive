@@ -1,6 +1,9 @@
 package router
 
 import (
+	"net/http"
+	"os"
+
 	"github.com/go-chi/chi"
 	"github.com/gorilla/sessions"
 	"github.com/porter-dev/porter/server/api"
@@ -9,7 +12,12 @@ import (
 )
 
 // New creates a new Chi router instance
-func New(a *api.App, store sessions.Store, cookieName string) *chi.Mux {
+func New(
+	a *api.App,
+	store sessions.Store,
+	cookieName string,
+	staticFilePath string,
+) *chi.Mux {
 	l := a.Logger()
 	r := chi.NewRouter()
 	auth := mw.NewAuth(store, cookieName)
@@ -36,6 +44,16 @@ func New(a *api.App, store sessions.Store, cookieName string) *chi.Mux {
 
 		// /api/k8s routes
 		r.Method("GET", "/k8s/namespaces", auth.BasicAuthenticate(requestlog.NewHandler(a.HandleListNamespaces, l)))
+	})
+
+	fs := http.FileServer(http.Dir(staticFilePath))
+
+	r.Get("/*", func(w http.ResponseWriter, r *http.Request) {
+		if _, err := os.Stat(staticFilePath + r.RequestURI); os.IsNotExist(err) {
+			http.StripPrefix(r.RequestURI, fs).ServeHTTP(w, r)
+		} else {
+			fs.ServeHTTP(w, r)
+		}
 	})
 
 	return r

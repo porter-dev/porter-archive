@@ -41,7 +41,7 @@ export default class Home extends Component<PropsType, StateType> {
       return <Loading />
     }
 
-    return <DashboardWrapper><Dashboard /></DashboardWrapper>
+    return <DashboardWrapper><Dashboard currentCluster={currentCluster} /></DashboardWrapper>
   }
 
   render() {

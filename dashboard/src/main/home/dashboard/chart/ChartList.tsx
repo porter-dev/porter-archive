@@ -3,7 +3,7 @@ import styled from 'styled-components';
 
 import { Context } from '../../../../shared/Context';
 import api from '../../../../shared/api';
-import { ChartType } from '../../../../shared/types';
+import { ChartType, StorageType } from '../../../../shared/types';
 
 import Chart from './Chart';
 import Loading from '../../../../components/Loading';
@@ -40,7 +40,7 @@ export default class ChartList extends Component<PropsType, StateType> {
     api.getCharts('<token>', {
       namespace: this.props.namespace,
       context: currentCluster,
-      storage: 'secret',
+      storage: StorageType.Secret,
       limit: 20,
       skip: 0,
       byDate: false,

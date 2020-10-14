@@ -147,17 +147,28 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
     let chart = currentChart;
 
     return ( 
-      <StyledExpandedChart>
-        {this.renderInfo()}
-        <ContentSection>
-          {this.renderTabContents()}
-        </ContentSection>
-      </StyledExpandedChart>
+      <div>
+        <CloseOverlay onClick={() => setCurrentChart(null)}/>
+        <StyledExpandedChart>
+          {this.renderInfo()}
+          <ContentSection>
+            {this.renderTabContents()}
+          </ContentSection>
+        </StyledExpandedChart>
+      </div>
     );
   }
 }
 
 ExpandedChart.contextType = Context;
+
+const CloseOverlay = styled.div`
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+`;
 
 const HeaderWrapper = styled.div`
   margin-bottom: 20px;
@@ -217,13 +228,14 @@ const TagWrapper = styled.div`
   border: 1px solid #ffffff44;
   border-radius: 3px;
   padding-left: 5px;
+  background: #26282E;
 `;
 
 const NamespaceTag = styled.div`
   height: 20px;
   margin-left: 6px;
   color: #aaaabb;
-  background: #ffffff22;
+  background: #43454A;
   border-radius: 3px;
   font-size: 12px;
   display: flex;

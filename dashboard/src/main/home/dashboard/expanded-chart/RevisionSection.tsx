@@ -4,7 +4,7 @@ import loading from '../../../../assets/loading.gif';
 
 import api from '../../../../shared/api';
 import { Context } from '../../../../shared/Context';
-import { ChartType } from '../../../../shared/types';
+import { ChartType, StorageType } from '../../../../shared/types';
 import Chart from '../chart/Chart';
 
 type PropsType = {
@@ -33,7 +33,7 @@ export default class RevisionSection extends Component<PropsType, StateType> {
     api.getRevisions('<token>', {
       namespace: chart.namespace,
       context: this.context.currentCluster,
-      storage: 'secret'
+      storage: StorageType.Secret
     }, { name: chart.name }, (err: any, res: any) => {
       if (err) {
         console.log(err)
@@ -70,7 +70,7 @@ export default class RevisionSection extends Component<PropsType, StateType> {
     api.rollbackChart('<token>', {
       namespace: this.props.chart.namespace,
       context: currentCluster,
-      storage: 'secret',
+      storage: StorageType.Secret,
       revision: revisionNumber
     }, {
       name: this.props.chart.name

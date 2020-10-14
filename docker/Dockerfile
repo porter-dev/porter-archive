@@ -1,8 +1,8 @@
 # syntax=docker/dockerfile:1.1.7-experimental
 
-# Build environment for app
-# -------------------------
-FROM golang:1.15-alpine as build-env-1
+# Base Go environment
+# -------------------
+FROM golang:1.15-alpine as base
 WORKDIR /porter
 
 RUN apk update && apk add --no-cache gcc musl-dev git
@@ -15,13 +15,26 @@ COPY /server ./server
 RUN --mount=type=cache,target=$GOPATH/pkg/mod \
     go mod download
 
+# Go build environment
+# --------------------
+FROM base AS build-go
+
 RUN --mount=type=cache,target=/root/.cache/go-build \
+    --mount=type=cache,target=$GOPATH/pkg/mod \
     go build -ldflags '-w -s' -a -o ./bin/app ./cmd/app && \
     go build -ldflags '-w -s' -a -o ./bin/migrate ./cmd/migrate
-    
-# Build environment for dashboard
-# -------------------------------
-FROM node:latest as build-env-2
+
+# Go test environment
+# -------------------
+FROM base AS porter-test
+
+RUN --mount=type=cache,target=/root/.cache/go-build \
+    --mount=type=cache,target=$GOPATH/pkg/mod \
+    go test ./...
+
+# Webpack build environment
+# -------------------------
+FROM node:latest as build-webpack
 WORKDIR /webpack
 
 COPY ./dashboard ./
@@ -30,8 +43,6 @@ RUN npm i
 
 ENV NODE_ENV=production
 
-# COPY /dashboard/src /webpack/src
-
 RUN npm run build
 
 # Deployment environment
@@ -39,9 +50,9 @@ RUN npm run build
 FROM alpine
 RUN apk update
 
-COPY --from=build-env-1 /porter/bin/app /porter/
-COPY --from=build-env-1 /porter/bin/migrate /porter/
-COPY --from=build-env-2 /webpack/build /porter/static
+COPY --from=build-go /porter/bin/app /porter/
+COPY --from=build-go /porter/bin/migrate /porter/
+COPY --from=build-webpack /webpack/build /porter/static
 
 ENV DEBUG=false
 ENV STATIC_FILE_PATH=/porter/static

@@ -8,6 +8,7 @@ import { Context } from '../../../../shared/Context';
 import TabSelector from '../../../../components/TabSelector';
 import RevisionSection from './RevisionSection';
 import ValuesYaml from './ValuesYaml';
+import OverviewSection from './OverviewSection';
 
 type PropsType = {
   currentChart: ChartType,
@@ -17,7 +18,8 @@ type PropsType = {
 
 type StateType = {
   showRevisions: boolean,
-  currentTab: string
+  currentTab: string,
+  isExpanded: boolean
 };
 
 const tabOptions = [
@@ -28,7 +30,8 @@ const tabOptions = [
 export default class ExpandedChart extends Component<PropsType, StateType> {
   state = {
     showRevisions: false,
-    currentTab: 'overview'
+    currentTab: 'overview',
+    isExpanded: false,
   }
 
   renderIcon = () => {
@@ -53,9 +56,10 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
 
     if (this.state.currentTab === 'overview') {
       return (
-        <Wrapper>
-          <Placeholder>(Under construction)</Placeholder>
-        </Wrapper>
+        <OverviewSection
+          toggleExpanded={() => this.setState({ isExpanded: !this.state.isExpanded })}
+          isExpanded={this.state.isExpanded}
+        />
       );
     }
 
@@ -67,12 +71,61 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
     );
   }
 
-  render() {
+  renderInfo = () => {
     let { currentChart, setCurrentChart, refreshChart } = this.props;
     let chart = currentChart;
 
-    return ( 
-      <StyledExpandedChart>
+    if (!this.state.isExpanded) {
+      return (
+        <HeaderWrapper>
+          <TitleSection>
+            <Title>
+              <IconWrapper>
+                {this.renderIcon()}
+              </IconWrapper>
+              {chart.name}
+            </Title>
+            <InfoWrapper>
+              <StatusIndicator>
+                <StatusColor status={chart.info.status} />
+                {chart.info.status}
+              </StatusIndicator>
+
+              <LastDeployed>
+                <Dot>•</Dot>Last deployed {this.readableDate(chart.info.last_deployed)}
+              </LastDeployed>
+            </InfoWrapper>
+
+            <TagWrapper>
+              Namespace
+            <NamespaceTag>
+                {chart.namespace}
+              </NamespaceTag>
+            </TagWrapper>
+          </TitleSection>
+
+          <CloseButton onClick={() => setCurrentChart(null)}>
+            <CloseButtonImg src={close} />
+          </CloseButton>
+
+          <RevisionSection
+            showRevisions={this.state.showRevisions}
+            toggleShowRevisions={() => this.setState({ showRevisions: !this.state.showRevisions })}
+            chart={chart}
+            refreshChart={refreshChart}
+          />
+
+          <TabSelector
+            options={tabOptions}
+            setCurrentTab={(value: string) => this.setState({ currentTab: value })}
+            tabWidth='120px'
+          />
+        </HeaderWrapper>
+      );
+    }
+
+    return (
+      <HeaderWrapper>
         <TitleSection>
           <Title>
             <IconWrapper>
@@ -80,41 +133,22 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
             </IconWrapper>
             {chart.name}
           </Title>
-          <InfoWrapper>
-            <StatusIndicator>
-              <StatusColor status={chart.info.status} />
-              {chart.info.status}
-            </StatusIndicator>
-
-            <LastDeployed>
-              <Dot>•</Dot>Last deployed {this.readableDate(chart.info.last_deployed)}
-            </LastDeployed>
-          </InfoWrapper>
-
-          <TagWrapper>
-            Namespace
-            <NamespaceTag>
-              {chart.namespace}
-            </NamespaceTag>
-          </TagWrapper>
         </TitleSection>
 
         <CloseButton onClick={() => setCurrentChart(null)}>
           <CloseButtonImg src={close} />
         </CloseButton>
+      </HeaderWrapper>
+    );
+  }
 
-        <RevisionSection
-          showRevisions={this.state.showRevisions}
-          toggleShowRevisions={() => this.setState({ showRevisions: !this.state.showRevisions })}
-          chart={chart}
-          refreshChart={refreshChart}
-        />
+  render() {
+    let { currentChart, setCurrentChart, refreshChart } = this.props;
+    let chart = currentChart;
 
-        <TabSelector
-          options={tabOptions}
-          setCurrentTab={(value: string) => this.setState({ currentTab: value })}
-          tabWidth='120px'
-        />
+    return ( 
+      <StyledExpandedChart>
+        {this.renderInfo()}
         <ContentSection>
           {this.renderTabContents()}
         </ContentSection>
@@ -125,23 +159,12 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
 
 ExpandedChart.contextType = Context;
 
-const Wrapper = styled.div`
-  width: 100%;
-  height: 100%;
-  background: #ffffff11;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-`;
-
-const Placeholder = styled.div`
-  color: #ffffff66;
-  padding-bottom: 30px;
+const HeaderWrapper = styled.div`
+  margin-bottom: 20px;
 `;
 
 const ContentSection = styled.div`
   display: flex;
-  margin-top: 20px;
   border-radius: 5px;
   flex: 1;
   width: 100%;

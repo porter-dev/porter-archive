@@ -30,6 +30,12 @@ export interface ChartType {
   namespace: string
 }
 
+export interface ResourceType {
+  kind: string,
+  name: string,
+  rawYaml: Object
+}
+
 export enum StorageType {
   Secret = 'secret',
   ConfigMap = 'configmap',

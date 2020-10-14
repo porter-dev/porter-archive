@@ -743,41 +743,7 @@ User object with only the id field. Other fields are empty - with values in para
 
 **Successful Status Code**: `200`
 
-**Errors:** TBD
-
-### `/api/k8s`
-
-#### `GET /api/k8s/namespaces`
-
-**Description:** 
-
-**URL parameters:** N/A
-
-**Query parameters:** N/A
-
-```js
-// The name of the context in the kubeconfig being used
-"context": String,
-```
-
-**Request Body**: N/A
-
-**Successful Response Body**: the full body is determined by the [namespace specification](https://pkg.go.dev/k8s.io/api/core/v1#NamespaceList), but we're primarily only interested in namespace `name`:
-
-```js
-{
-  "metadata": {},
-  "items": []Namespace{
-    "metadata": {
-      "name": String
-    }
-  }
-}
-```
-
-**Successful Status Code**: `200`
-
-**Errors:** 
+**Errors:**
 
 - Rollback failed
   - Status Code: `500`
@@ -827,7 +793,26 @@ User object with only the id field. Other fields are empty - with values in para
 
 **Successful Status Code**: `200`
 
-**Errors:** TBD
+**Errors:** 
+
+- Upgrade failed
+  - Status Code: `500`
+  - Request Body:
+    ```json
+    {
+      "code":603,
+      "errors":["upgrade failed: <error>"]
+    }
+    ```
+- Missing required field
+  - Status Code: `422`
+  - Request Body:
+    ```json
+    {
+      "code":601,
+      "errors":["required validation failed"]
+    }
+    ```
 
 ### `/api/k8s`
 
@@ -861,23 +846,4 @@ User object with only the id field. Other fields are empty - with values in para
 
 **Successful Status Code**: `200`
 
-**Errors:** 
-
-- Upgrade failed
-  - Status Code: `500`
-  - Request Body:
-    ```json
-    {
-      "code":603,
-      "errors":["upgrade failed: <error>"]
-    }
-    ```
-- Missing required field
-  - Status Code: `422`
-  - Request Body:
-    ```json
-    {
-      "code":601,
-      "errors":["required validation failed"]
-    }
-    ```
+**Errors:** TBD

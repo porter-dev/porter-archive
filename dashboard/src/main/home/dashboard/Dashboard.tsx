@@ -11,6 +11,7 @@ import NamespaceSelector from './NamespaceSelector';
 import ExpandedChart from './expanded-chart/ExpandedChart';
 
 type PropsType = {
+  currentCluster: string
 };
 
 type StateType = {
@@ -24,9 +25,17 @@ export default class Dashboard extends Component<PropsType, StateType> {
     currentChart: null as (ChartType | null)
   }
 
+  componentDidUpdate(prevProps: PropsType) {
+
+    // Reset namespace filter and close expanded chart on cluster change
+    if (prevProps.currentCluster !== this.props.currentCluster) {
+      this.setState({ namespace: '', currentChart: null });
+    }
+  }
+
   // Allows rollback to update the top-level chart
   refreshChart = () => {
-    let { currentCluster } = this.context;
+    let { currentCluster } = this.props;
     api.getChart('<token>', {
       namespace: this.state.namespace,
       context: currentCluster,
@@ -41,7 +50,7 @@ export default class Dashboard extends Component<PropsType, StateType> {
   }
 
   renderContents = () => {
-    let { currentCluster } = this.context;
+    let { currentCluster } = this.props;
 
     if (this.state.currentChart) {
       return (

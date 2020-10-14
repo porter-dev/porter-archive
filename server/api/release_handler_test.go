@@ -91,7 +91,7 @@ var listReleasesTests = []*releaseTest{
 		initializers: []func(tester *tester){
 			initDefaultReleases,
 		},
-		msg:    "List releases",
+		msg:    "List releases no namespace",
 		method: "GET",
 		endpoint: "/api/releases?" + url.Values{
 			"namespace":    []string{""},
@@ -114,7 +114,7 @@ var listReleasesTests = []*releaseTest{
 		initializers: []func(tester *tester){
 			initDefaultReleases,
 		},
-		msg:       "List releases",
+		msg:       "List releases with namespace",
 		method:    "GET",
 		namespace: "default",
 		endpoint: "/api/releases?" + url.Values{
@@ -135,6 +135,29 @@ var listReleasesTests = []*releaseTest{
 		useCookie: true,
 		validators: []func(c *releaseTest, tester *tester, t *testing.T){
 			releaseReleaseArrBodyValidator,
+		},
+	},
+	&releaseTest{
+		initializers: []func(tester *tester){
+			initDefaultReleases,
+		},
+		msg:       "List releases missing required",
+		method:    "GET",
+		namespace: "default",
+		endpoint: "/api/releases?" + url.Values{
+			"namespace":    []string{"default"},
+			"storage":      []string{"memory"},
+			"limit":        []string{"20"},
+			"skip":         []string{"0"},
+			"byDate":       []string{"false"},
+			"statusFilter": []string{"deployed"},
+		}.Encode(),
+		body:      "",
+		expStatus: http.StatusUnprocessableEntity,
+		expBody:   `{"code":601,"errors":["required validation failed"]}`,
+		useCookie: true,
+		validators: []func(c *releaseTest, tester *tester, t *testing.T){
+			releaseBasicBodyValidator,
 		},
 	},
 }
@@ -164,6 +187,26 @@ var getReleaseTests = []*releaseTest{
 			releaseReleaseBodyValidator,
 		},
 	},
+	&releaseTest{
+		initializers: []func(tester *tester){
+			initDefaultReleases,
+		},
+		msg:       "Release not found",
+		method:    "GET",
+		namespace: "default",
+		endpoint: "/api/releases/airwatch/5?" + url.Values{
+			"namespace": []string{""},
+			"context":   []string{"context-test"},
+			"storage":   []string{"memory"},
+		}.Encode(),
+		body:      "",
+		expStatus: http.StatusNotFound,
+		expBody:   `{"code":602,"errors":["release not found"]}`,
+		useCookie: true,
+		validators: []func(c *releaseTest, tester *tester, t *testing.T){
+			releaseBasicBodyValidator,
+		},
+	},
 }
 
 func TestHandleGetRelease(t *testing.T) {
@@ -189,6 +232,26 @@ var listReleaseHistoryTests = []*releaseTest{
 		useCookie: true,
 		validators: []func(c *releaseTest, tester *tester, t *testing.T){
 			releaseReleaseArrBodyValidator,
+		},
+	},
+	&releaseTest{
+		initializers: []func(tester *tester){
+			initDefaultReleases,
+		},
+		msg:       "Release not found",
+		method:    "GET",
+		namespace: "default",
+		endpoint: "/api/releases/asldfkja/history?" + url.Values{
+			"namespace": []string{""},
+			"context":   []string{"context-test"},
+			"storage":   []string{"memory"},
+		}.Encode(),
+		body:      "",
+		expStatus: http.StatusNotFound,
+		expBody:   `{"code":602,"errors":["release not found"]}`,
+		useCookie: true,
+		validators: []func(c *releaseTest, tester *tester, t *testing.T){
+			releaseBasicBodyValidator,
 		},
 	},
 }
@@ -427,6 +490,13 @@ func makeReleases(agent *helm.Agent, rels []releaseStub) {
 		rel := releaseStubToRelease(r)
 
 		storage.Create(rel)
+	}
+}
+
+func releaseBasicBodyValidator(c *releaseTest, tester *tester, t *testing.T) {
+	if body := tester.rr.Body.String(); strings.TrimSpace(body) != strings.TrimSpace(c.expBody) {
+		t.Errorf("%s, handler returned wrong body: got %v want %v",
+			c.msg, body, c.expBody)
 	}
 }
 

@@ -499,7 +499,17 @@ User object with only the id field. Other fields are empty - with values in para
 
 **Successful Status Code**: `200`
 
-**Errors:** TBD
+**Errors:** 
+
+- Missing required field
+  - Status Code: `422`
+  - Request Body:
+    ```json
+    {
+      "code":601,
+      "errors":["required validation failed"]
+    }
+    ```
 
 #### `GET /api/releases/{name}/history`
 
@@ -580,7 +590,27 @@ User object with only the id field. Other fields are empty - with values in para
 
 **Successful Status Code**: `200`
 
-**Errors:** TBD
+**Errors:** 
+
+- Release not found
+  - Status Code: `404`
+  - Request Body:
+    ```json
+    {
+      "code":602,
+      "errors":["release not found"]
+    }
+    ```
+- Missing required field
+  - Status Code: `422`
+  - Request Body:
+    ```json
+    {
+      "code":601,
+      "errors":["required validation failed"]
+    }
+    ```
+
 
 #### `GET /api/releases/{name}/{revision}`
 
@@ -662,7 +692,26 @@ User object with only the id field. Other fields are empty - with values in para
 
 **Successful Status Code**: `200`
 
-**Errors:** TBD
+**Errors:** 
+
+- Release not found
+  - Status Code: `404`
+  - Request Body:
+    ```json
+    {
+      "code":602,
+      "errors":["release not found"]
+    }
+    ```
+- Missing required field
+  - Status Code: `422`
+  - Request Body:
+    ```json
+    {
+      "code":601,
+      "errors":["required validation failed"]
+    }
+    ```
 
 #### `POST /api/releases/{name}/rollback`
 
@@ -728,7 +777,26 @@ User object with only the id field. Other fields are empty - with values in para
 
 **Successful Status Code**: `200`
 
-**Errors:** TBD
+**Errors:** 
+
+- Rollback failed
+  - Status Code: `500`
+  - Request Body:
+    ```json
+    {
+      "code":603,
+      "errors":["rollback failed: <error>"]
+    }
+    ```
+- Missing required field
+  - Status Code: `422`
+  - Request Body:
+    ```json
+    {
+      "code":601,
+      "errors":["required validation failed"]
+    }
+    ```
 
 #### `POST /api/releases/{name}/upgrade`
 
@@ -793,4 +861,23 @@ User object with only the id field. Other fields are empty - with values in para
 
 **Successful Status Code**: `200`
 
-**Errors:** TBD
+**Errors:** 
+
+- Upgrade failed
+  - Status Code: `500`
+  - Request Body:
+    ```json
+    {
+      "code":603,
+      "errors":["upgrade failed: <error>"]
+    }
+    ```
+- Missing required field
+  - Status Code: `422`
+  - Request Body:
+    ```json
+    {
+      "code":601,
+      "errors":["required validation failed"]
+    }
+    ```

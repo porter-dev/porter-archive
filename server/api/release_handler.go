@@ -16,6 +16,7 @@ const (
 	ErrReleaseDecode ErrorCode = iota + 600
 	ErrReleaseValidateFields
 	ErrReleaseReadData
+	ErrReleaseDeploy
 )
 
 // HandleListReleases retrieves a list of releases for a cluster
@@ -82,7 +83,11 @@ func (app *App) HandleGetRelease(w http.ResponseWriter, r *http.Request) {
 	release, err := agent.GetRelease(form.Name, form.Revision)
 
 	if err != nil {
-		app.handleErrorRead(err, ErrReleaseReadData, w)
+		app.sendExternalError(err, http.StatusNotFound, HTTPError{
+			Code:   ErrReleaseReadData,
+			Errors: []string{"release not found"},
+		}, w)
+
 		return
 	}
 
@@ -118,7 +123,11 @@ func (app *App) HandleListReleaseHistory(w http.ResponseWriter, r *http.Request)
 	release, err := agent.GetReleaseHistory(form.Name)
 
 	if err != nil {
-		app.handleErrorFormValidation(err, ErrReleaseValidateFields, w)
+		app.sendExternalError(err, http.StatusNotFound, HTTPError{
+			Code:   ErrReleaseReadData,
+			Errors: []string{"release not found"},
+		}, w)
+
 		return
 	}
 
@@ -158,7 +167,11 @@ func (app *App) HandleUpgradeRelease(w http.ResponseWriter, r *http.Request) {
 	_, err = agent.UpgradeRelease(form.Name, form.Values)
 
 	if err != nil {
-		app.handleErrorInternal(err, w)
+		app.sendExternalError(err, http.StatusInternalServerError, HTTPError{
+			Code:   ErrReleaseDeploy,
+			Errors: []string{"error upgrading release " + err.Error()},
+		}, w)
+
 		return
 	}
 
@@ -195,7 +208,11 @@ func (app *App) HandleRollbackRelease(w http.ResponseWriter, r *http.Request) {
 	err = agent.RollbackRelease(form.Name, form.Revision)
 
 	if err != nil {
-		app.handleErrorInternal(err, w)
+		app.sendExternalError(err, http.StatusInternalServerError, HTTPError{
+			Code:   ErrReleaseDeploy,
+			Errors: []string{"error rolling back release " + err.Error()},
+		}, w)
+
 		return
 	}
 

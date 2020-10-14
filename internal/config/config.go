@@ -17,12 +17,13 @@ type Conf struct {
 
 // ServerConf is the server configuration
 type ServerConf struct {
-	Port         int           `env:"SERVER_PORT,default=8080"`
-	CookieName   string        `env:"COOKIE_NAME,default=porter"`
-	CookieSecret []byte        `env:"COOKIE_SECRET,default=secret"`
-	TimeoutRead  time.Duration `env:"SERVER_TIMEOUT_READ,default=5s"`
-	TimeoutWrite time.Duration `env:"SERVER_TIMEOUT_WRITE,default=10s"`
-	TimeoutIdle  time.Duration `env:"SERVER_TIMEOUT_IDLE,default=15s"`
+	Port           int           `env:"SERVER_PORT,default=8080"`
+	StaticFilePath string        `env:"STATIC_FILE_PATH,default=/porter/static"`
+	CookieName     string        `env:"COOKIE_NAME,default=porter"`
+	CookieSecret   []byte        `env:"COOKIE_SECRET,default=secret"`
+	TimeoutRead    time.Duration `env:"SERVER_TIMEOUT_READ,default=5s"`
+	TimeoutWrite   time.Duration `env:"SERVER_TIMEOUT_WRITE,default=10s"`
+	TimeoutIdle    time.Duration `env:"SERVER_TIMEOUT_IDLE,default=15s"`
 }
 
 // DBConf is the database configuration: if generated from environment variables,
@@ -34,7 +35,8 @@ type DBConf struct {
 	Password string `env:"DB_PASS,default=porter"`
 	DbName   string `env:"DB_NAME,default=porter"`
 
-	SQLLite bool `env:"QUICK_START,default=false"`
+	SQLLite     bool   `env:"QUICK_START,default=false"`
+	SQLLitePath string `env:"SQL_LITE_PATH,default=/porter/porter.db"`
 }
 
 // K8sConf is the global configuration for the k8s agents

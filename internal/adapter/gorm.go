@@ -12,7 +12,7 @@ import (
 // New returns a new gorm database instance
 func New(conf *config.DBConf) (*gorm.DB, error) {
 	if conf.SQLLite {
-		return gorm.Open(sqlite.Open("./internal/porter.db"), &gorm.Config{})
+		return gorm.Open(sqlite.Open(conf.SQLLitePath), &gorm.Config{})
 	}
 
 	dsn := fmt.Sprintf(

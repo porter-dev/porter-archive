@@ -56,7 +56,7 @@ func (a *Agent) UpgradeRelease(
 	rel, err := a.GetRelease(name, 0)
 
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Could not get release to be upgraded: %v", err)
 	}
 
 	ch := rel.Chart
@@ -65,13 +65,13 @@ func (a *Agent) UpgradeRelease(
 	valuesYaml, err := chartutil.ReadValues([]byte(values))
 
 	if err != nil {
-		return nil, fmt.Errorf("Unable to upgrade the release because values could not be parsed: %v", err)
+		return nil, fmt.Errorf("Values could not be parsed: %v", err)
 	}
 
 	res, err := cmd.Run(name, ch, valuesYaml)
 
 	if err != nil {
-		return nil, fmt.Errorf("Unable to upgrade the release: %v", err)
+		return nil, fmt.Errorf("Upgrade failed: %v", err)
 	}
 
 	return res, nil

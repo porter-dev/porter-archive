@@ -499,7 +499,17 @@ User object with only the id field. Other fields are empty - with values in para
 
 **Successful Status Code**: `200`
 
-**Errors:** TBD
+**Errors:** 
+
+- Missing required field
+  - Status Code: `422`
+  - Request Body:
+    ```json
+    {
+      "code":601,
+      "errors":["required validation failed"]
+    }
+    ```
 
 #### `GET /api/releases/{name}/history`
 
@@ -580,7 +590,27 @@ User object with only the id field. Other fields are empty - with values in para
 
 **Successful Status Code**: `200`
 
-**Errors:** TBD
+**Errors:** 
+
+- Release not found
+  - Status Code: `404`
+  - Request Body:
+    ```json
+    {
+      "code":602,
+      "errors":["release not found"]
+    }
+    ```
+- Missing required field
+  - Status Code: `422`
+  - Request Body:
+    ```json
+    {
+      "code":601,
+      "errors":["required validation failed"]
+    }
+    ```
+
 
 #### `GET /api/releases/{name}/{revision}`
 
@@ -662,7 +692,26 @@ User object with only the id field. Other fields are empty - with values in para
 
 **Successful Status Code**: `200`
 
-**Errors:** TBD
+**Errors:** 
+
+- Release not found
+  - Status Code: `404`
+  - Request Body:
+    ```json
+    {
+      "code":602,
+      "errors":["release not found"]
+    }
+    ```
+- Missing required field
+  - Status Code: `422`
+  - Request Body:
+    ```json
+    {
+      "code":601,
+      "errors":["required validation failed"]
+    }
+    ```
 
 #### `POST /api/releases/{name}/rollback`
 
@@ -694,41 +743,26 @@ User object with only the id field. Other fields are empty - with values in para
 
 **Successful Status Code**: `200`
 
-**Errors:** TBD
+**Errors:**
 
-### `/api/k8s`
-
-#### `GET /api/k8s/namespaces`
-
-**Description:** 
-
-**URL parameters:** N/A
-
-**Query parameters:** N/A
-
-```js
-// The name of the context in the kubeconfig being used
-"context": String,
-```
-
-**Request Body**: N/A
-
-**Successful Response Body**: the full body is determined by the [namespace specification](https://pkg.go.dev/k8s.io/api/core/v1#NamespaceList), but we're primarily only interested in namespace `name`:
-
-```js
-{
-  "metadata": {},
-  "items": []Namespace{
-    "metadata": {
-      "name": String
+- Rollback failed
+  - Status Code: `500`
+  - Request Body:
+    ```json
+    {
+      "code":603,
+      "errors":["rollback failed: <error>"]
     }
-  }
-}
-```
-
-**Successful Status Code**: `200`
-
-**Errors:** TBD
+    ```
+- Missing required field
+  - Status Code: `422`
+  - Request Body:
+    ```json
+    {
+      "code":601,
+      "errors":["required validation failed"]
+    }
+    ```
 
 #### `POST /api/releases/{name}/upgrade`
 
@@ -759,7 +793,26 @@ User object with only the id field. Other fields are empty - with values in para
 
 **Successful Status Code**: `200`
 
-**Errors:** TBD
+**Errors:** 
+
+- Upgrade failed
+  - Status Code: `500`
+  - Request Body:
+    ```json
+    {
+      "code":603,
+      "errors":["upgrade failed: <error>"]
+    }
+    ```
+- Missing required field
+  - Status Code: `422`
+  - Request Body:
+    ```json
+    {
+      "code":601,
+      "errors":["required validation failed"]
+    }
+    ```
 
 ### `/api/k8s`
 

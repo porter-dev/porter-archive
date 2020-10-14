@@ -123,7 +123,7 @@ const RadioOption = styled.div`
   width: 80px;
   padding-right: 5px;
   height: 22px;
-  background: ${(props: { selected: boolean, nudge?: boolean }) => props.selected ? '#ffffff44' : '#ffffff11'};
+  background: ${(props: { selected: boolean, nudge?: boolean }) => props.selected ? '#6A6C70' : '#424349'};
   display: flex;
   align-items: center;
   cursor: pointer;

@@ -3,7 +3,7 @@ import styled from 'styled-components';
 import gradient from '../../../assets/gradient.jpg';
 
 import { Context } from '../../../shared/Context';
-import { ChartType } from '../../../shared/types';
+import { ChartType, StorageType } from '../../../shared/types';
 import api from '../../../shared/api';
 
 import ChartList from './chart/ChartList';
@@ -39,7 +39,7 @@ export default class Dashboard extends Component<PropsType, StateType> {
     api.getChart('<token>', {
       namespace: this.state.namespace,
       context: currentCluster,
-      storage: 'secret'
+      storage: StorageType.Secret
     }, { name: this.state.currentChart.name, revision: 0 }, (err: any, res: any) => {
       if (err) {
         console.log(err)

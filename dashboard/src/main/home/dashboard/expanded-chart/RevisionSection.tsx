@@ -62,19 +62,22 @@ export default class RevisionSection extends Component<PropsType, StateType> {
   }
 
   handleRollback = () => {
+    let { setCurrentError, currentCluster } = this.context;
+
     let revisionNumber = this.state.rollbackRevision;
     this.setState({ loading: true, rollbackRevision: null });
 
     api.rollbackChart('<token>', {
       namespace: this.props.chart.namespace,
-      context: this.context.currentCluster,
+      context: currentCluster,
       storage: 'secret',
       revision: revisionNumber
     }, {
       name: this.props.chart.name
     }, (err: any, res: any) => {
       if (err) {
-        console.log(err)
+        setCurrentError(err.response.data.errors[0]);
+        this.setState({ loading: false });
       } else {
         this.setState({ loading: false });
         this.props.refreshChart();

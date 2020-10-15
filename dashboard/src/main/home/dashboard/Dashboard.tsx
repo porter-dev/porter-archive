@@ -3,26 +3,66 @@ import styled from 'styled-components';
 import gradient from '../../../assets/gradient.jpg';
 
 import { Context } from '../../../shared/Context';
+import { ChartType, StorageType } from '../../../shared/types';
+import api from '../../../shared/api';
 
 import ChartList from './chart/ChartList';
 import NamespaceSelector from './NamespaceSelector';
+import ExpandedChart from './expanded-chart/ExpandedChart';
 
 type PropsType = {
+  currentCluster: string
 };
 
 type StateType = {
-  namespace: string
+  namespace: string,
+  currentChart: ChartType | null
 };
 
 export default class Dashboard extends Component<PropsType, StateType> {
   state = {
-    namespace: ''
+    namespace: '',
+    currentChart: null as (ChartType | null)
   }
 
-  render() {
-    let { currentCluster } = this.context;
+  componentDidUpdate(prevProps: PropsType) {
 
-    return ( 
+    // Reset namespace filter and close expanded chart on cluster change
+    if (prevProps.currentCluster !== this.props.currentCluster) {
+      this.setState({ namespace: '', currentChart: null });
+    }
+  }
+
+  // Allows rollback to update the top-level chart
+  refreshChart = () => {
+    let { currentCluster } = this.props;
+    api.getChart('<token>', {
+      namespace: this.state.namespace,
+      context: currentCluster,
+      storage: StorageType.Secret
+    }, { name: this.state.currentChart.name, revision: 0 }, (err: any, res: any) => {
+      if (err) {
+        console.log(err)
+      } else {
+        this.setState({ currentChart: res.data });
+      }
+    });
+  }
+
+  renderContents = () => {
+    let { currentCluster } = this.props;
+
+    if (this.state.currentChart) {
+      return (
+        <ExpandedChart
+          currentChart={this.state.currentChart}
+          refreshChart={this.refreshChart}
+          setCurrentChart={(x: ChartType | null) => this.setState({ currentChart: x })}
+        />
+      );
+    }
+
+    return (
       <div>
         <TitleSection>
           <ProjectIcon>
@@ -39,14 +79,14 @@ export default class Dashboard extends Component<PropsType, StateType> {
               <i className="material-icons">info</i> Info
             </InfoLabel>
           </TopRow>
-            <Description>Porter dashboard for {currentCluster}.</Description>
+          <Description>Porter dashboard for {currentCluster}.</Description>
         </InfoSection>
 
         <LineBreak />
         
         <ControlRow>
           <Button disabled={true}>
-            <i className="material-icons">add</i> Add a Chart
+            <i className="material-icons">add</i> Deploy a Chart
           </Button>
           <NamespaceSelector
             setNamespace={(namespace) => this.setState({ namespace })}
@@ -58,7 +98,16 @@ export default class Dashboard extends Component<PropsType, StateType> {
         <ChartList
           currentCluster={currentCluster}
           namespace={this.state.namespace}
+          setCurrentChart={(x: ChartType) => this.setState({ currentChart: x })}
         />
+      </div>
+    );
+  }
+
+  render() {
+    return (
+      <div>
+        {this.renderContents()}
       </div>
     );
   }
@@ -142,7 +191,7 @@ const Button = styled.div`
     border-radius: 20px;
     display: flex;
     align-items: center;
-    margin-right: 8px;
+    margin-right: 5px;
     justify-content: center;
   }
 `;

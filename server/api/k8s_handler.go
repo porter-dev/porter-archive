@@ -21,14 +21,14 @@ func (app *App) HandleListNamespaces(w http.ResponseWriter, r *http.Request) {
 	session, err := app.store.Get(r, app.cookieName)
 
 	if err != nil {
-		app.handleErrorFormDecoding(err, ErrChartDecode, w)
+		app.handleErrorFormDecoding(err, ErrReleaseDecode, w)
 		return
 	}
 
 	vals, err := url.ParseQuery(r.URL.RawQuery)
 
 	if err != nil {
-		app.handleErrorFormDecoding(err, ErrChartDecode, w)
+		app.handleErrorFormDecoding(err, ErrReleaseDecode, w)
 		return
 	}
 

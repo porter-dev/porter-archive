@@ -43,16 +43,50 @@ const getContexts = baseApi<{}, { id: number }>('GET', pathParams => {
 const getCharts = baseApi<{
   namespace: string,
   context: string,
-  storage: string
+  storage: StorageType,
   limit: number,
   skip: number,
   byDate: boolean,
   statusFilter: string[]
-}>('GET', '/api/charts');
+}>('GET', '/api/releases');
+
+const getChart = baseApi<{
+  namespace: string,
+  context: string,
+  storage: StorageType
+}, { name: string, revision: number }>('GET', pathParams => {
+  return `/api/releases/${pathParams.name}/${pathParams.revision}`;
+});
 
 const getNamespaces = baseApi<{
   context: string
 }>('GET', '/api/k8s/namespaces');
+
+const getRevisions = baseApi<{
+  namespace: string,
+  context: string,
+  storage: StorageType
+}, { name: string }>('GET', pathParams => {
+  return `/api/releases/${pathParams.name}/history`;
+});
+
+const rollbackChart = baseApi<{
+  namespace: string,
+  context: string,
+  storage: StorageType,
+  revision: number
+}, { name: string }>('POST', pathParams => {
+  return `/api/releases/${pathParams.name}/rollback`;
+});
+
+const upgradeChartValues = baseApi<{
+  namespace: string,
+  context: string,
+  storage: StorageType,
+  values: string
+}, { name: string }>('POST', pathParams => {
+  return `/api/releases/${pathParams.name}/upgrade`;
+});
 
 // Bundle export to allow default api import (api.<method> is more readable)
 export default {
@@ -64,5 +98,9 @@ export default {
   updateUser,
   getContexts,
   getCharts,
-  getNamespaces
+  getChart,
+  getNamespaces,
+  getRevisions,
+  rollbackChart,
+  upgradeChartValues
 }

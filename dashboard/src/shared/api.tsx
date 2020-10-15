@@ -58,6 +58,14 @@ const getChart = baseApi<{
   return `/api/releases/${pathParams.name}/${pathParams.revision}`;
 });
 
+const getChartComponents = baseApi<{
+  namespace: string,
+  context: string,
+  storage: StorageType
+}, { name: string, revision: number }>('GET', pathParams => {
+  return `/api/releases/${pathParams.name}/${pathParams.revision}/components`;
+});
+
 const getNamespaces = baseApi<{
   context: string
 }>('GET', '/api/k8s/namespaces');
@@ -99,6 +107,7 @@ export default {
   getContexts,
   getCharts,
   getChart,
+  getChartComponents,
   getNamespaces,
   getRevisions,
   rollbackChart,

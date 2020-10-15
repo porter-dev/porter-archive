@@ -59,6 +59,7 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
         <OverviewSection
           toggleExpanded={() => this.setState({ isExpanded: !this.state.isExpanded })}
           isExpanded={this.state.isExpanded}
+          currentChart={currentChart}
         />
       );
     }

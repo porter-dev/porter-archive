@@ -36,6 +36,7 @@ export default class Dashboard extends Component<PropsType, StateType> {
   // Allows rollback to update the top-level chart
   refreshChart = () => {
     let { currentCluster } = this.props;
+    console.log(currentCluster)
     api.getChart('<token>', {
       namespace: this.state.namespace,
       context: currentCluster,

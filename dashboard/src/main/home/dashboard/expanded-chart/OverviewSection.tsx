@@ -1,18 +1,22 @@
 import React, { Component } from 'react';
 import styled from 'styled-components';
+import api from '../../../../shared/api';
 
-import { ResourceType } from '../../../../shared/types';
+import { Context } from '../../../../shared/Context';
+import { ResourceType, StorageType, ChartType } from '../../../../shared/types';
 
 import ResourceItem from './ResourceItem';
 
 type PropsType = {
   toggleExpanded: () => void,
-  isExpanded: boolean
+  isExpanded: boolean,
+  currentChart: ChartType
 };
 
 type StateType = {
   viewMode: string,
-  showKindLabels: boolean
+  showKindLabels: boolean,
+  components: ResourceType[]
 };
 
 const dummyObjects = [
@@ -52,11 +56,30 @@ const dummyObjects = [
 export default class OverviewSection extends Component<PropsType, StateType> {
   state = {
     viewMode: 'graph',
-    showKindLabels: true
+    showKindLabels: true,
+    components: [] as ResourceType[],
+  }
+
+  componentDidMount() {
+    let { currentCluster, setCurrentError } = this.context;
+    let { currentChart } = this.props;
+    console.log(currentCluster)
+    api.getChartComponents('<token>', {
+      namespace: currentChart.namespace,
+      context: currentCluster,
+      storage: StorageType.Secret
+    }, { name: currentChart.name, revision: 0 }, (err: any, res: any) => {
+      if (err) {
+        console.log(err)
+      } else {
+        console.log(res.data)
+        this.setState({components: res.data})
+      }
+    });
   }
 
   renderResourceList = () => {
-    return dummyObjects.map((resource: ResourceType, i: number) => {
+    return this.state.components.map((resource: ResourceType, i: number) => {
       return (
         <ResourceItem
           key={i}
@@ -112,6 +135,8 @@ export default class OverviewSection extends Component<PropsType, StateType> {
     );
   }
 }
+
+OverviewSection.contextType = Context;
 
 const ResourceList = styled.div`
   width: 100%;

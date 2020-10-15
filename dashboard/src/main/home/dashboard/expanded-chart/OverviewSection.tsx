@@ -17,54 +17,21 @@ type PropsType = {
 type StateType = {
   viewMode: string,
   showKindLabels: boolean,
-  components: ResourceType[]
+  components: ResourceType[],
+  isLoaded: boolean
 };
-
-const dummyObjects = [
-  {
-    kind: 'deployment', name: 'radical-conspirator', rawYaml: {
-      stuff: {
-        idk: 'test'
-      }
-    }
-  },
-  { kind: 'service', name: 'fawkes-guy', rawYaml: {
-      stuff: {
-        idk: 'test'
-      }
-    }
-  },
-  { kind: 'ingress', name: 'bellion-john', rawYaml: {
-      stuff: {
-        idk: 'test'
-      }
-    }
-  },
-  { kind: 'pod', name: 'tenet-tenet', rawYaml: {
-      stuff: {
-        idk: 'test'
-      }
-    }
-  },
-  { kind: 'statefulset', name: 'brokerage-farm', rawYaml: {
-      stuff: {
-        idk: 'test'
-      }
-    }
-  }
-];
 
 export default class OverviewSection extends Component<PropsType, StateType> {
   state = {
     viewMode: 'graph',
     showKindLabels: true,
     components: [] as ResourceType[],
+    isLoaded: false
   }
 
   componentDidMount() {
     let { currentCluster, setCurrentError } = this.context;
     let { currentChart } = this.props;
-    console.log(currentCluster)
     api.getChartComponents('<token>', {
       namespace: currentChart.namespace,
       context: currentCluster,
@@ -73,8 +40,9 @@ export default class OverviewSection extends Component<PropsType, StateType> {
       if (err) {
         console.log(err)
       } else {
-        console.log(res.data)
-        this.setState({components: res.data})
+        this.setState({components: res.data}, () => {
+          this.setState({isLoaded: true})
+        })
       }
     });
   }
@@ -101,10 +69,15 @@ export default class OverviewSection extends Component<PropsType, StateType> {
       )
     }
 
-    return <GraphDisplay />
+    return <GraphDisplay components={this.state.components}/>
   }
 
   render() {
+    if (!this.state.isLoaded) {
+      return <StyledOverviewSection>
+        Loading...
+      </StyledOverviewSection>
+    }
     return (
       <StyledOverviewSection>
         {this.renderContents()}

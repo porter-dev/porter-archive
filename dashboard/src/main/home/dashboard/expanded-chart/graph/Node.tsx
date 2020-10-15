@@ -3,6 +3,7 @@ import styled from 'styled-components';
 
 type NodeType = {
   id: number,
+  name: string,
   x: number,
   y: number,
   w: number,
@@ -26,7 +27,7 @@ export default class Node extends Component<PropsType, StateType> {
   }
 
   render() {
-    let { x, y, w, h } = this.props.node;
+    let { x, y, w, h, name } = this.props.node;
     let { originX, originY, nodeMouseDown, nodeMouseUp, isActive } = this.props;
     return (
       <StyledNode
@@ -39,7 +40,7 @@ export default class Node extends Component<PropsType, StateType> {
         isActive={isActive}
       >
         <i className="material-icons">category</i>
-        <NodeLabel>some-object-name</NodeLabel>
+        <NodeLabel>{name}</NodeLabel>
       </StyledNode>
     );
   }

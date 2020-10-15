@@ -7,38 +7,64 @@ import (
 	"github.com/porter-dev/porter/internal/helm/grapher"
 )
 
-var expControlRels1 = []grapher.ControlRel{
-	grapher.ControlRel{
-		Relation: grapher.Relation{
-			Type:   "ControlRel",
-			Source: "my-release-cassandra",
-			Target: "temp",
+var c7 = grapher.Object{
+	Kind: "StatefulSet",
+	Relations: grapher.Relations{
+		ControlRels: []grapher.ControlRel{
+			grapher.ControlRel{
+				Relation: grapher.Relation{
+					Source: 3,
+					Target: 4,
+				},
+				Replicas: 2,
+			},
+			grapher.ControlRel{
+				Relation: grapher.Relation{
+					Source: 3,
+					Target: 5,
+				},
+				Replicas: 2,
+			},
 		},
-		Replicas: 1,
 	},
 }
 
-var expControlRels2 = []grapher.ControlRel{
-	grapher.ControlRel{
-		Relation: grapher.Relation{
-			Type:   "ControlRel",
-			Source: "my-release-zookeeper",
-			Target: "temp",
+var c5 = grapher.Object{
+	Kind: "Pod",
+	Relations: grapher.Relations{
+		ControlRels: []grapher.ControlRel{
+			grapher.ControlRel{
+				Relation: grapher.Relation{
+					Source: 3,
+					Target: 4,
+				},
+				Replicas: 2,
+			},
 		},
-		Replicas: 1,
 	},
-	grapher.ControlRel{
-		Relation: grapher.Relation{
-			Type:   "ControlRel",
-			Source: "my-release-kafka",
-			Target: "temp",
+}
+
+var c6 = grapher.Object{
+	Kind: "Pod",
+	Relations: grapher.Relations{
+		ControlRels: []grapher.ControlRel{
+			grapher.ControlRel{
+				Relation: grapher.Relation{
+					Source: 3,
+					Target: 5,
+				},
+				Replicas: 2,
+			},
 		},
-		Replicas: 1,
 	},
+}
+
+var expControlRels1 = []grapher.Object{
+	c1, c2, c3, c7, c5, c6,
 }
 
 type test struct {
-	Expected []grapher.ControlRel
+	Expected []grapher.Object
 	FilePath string
 }
 
@@ -47,10 +73,6 @@ func TestControlRels(t *testing.T) {
 		test{
 			Expected: expControlRels1,
 			FilePath: "./test_yaml/cassandra.yaml",
-		},
-		test{
-			Expected: expControlRels2,
-			FilePath: "./test_yaml/kafka.yaml",
 		},
 	}
 
@@ -63,27 +85,65 @@ func TestControlRels(t *testing.T) {
 		}
 
 		yamlArr := grapher.ImportMultiDocYAML(file)
-		rs := []*grapher.ControlRel{}
-
-		for _, y := range yamlArr {
-			strmap := grapher.ConvertYAMLToStringKeys(y)
-			if crel := grapher.GetControlRel(strmap); crel != nil {
-				rs = append(rs, crel)
-			}
+		objects := grapher.ParseObjs(yamlArr)
+		parsed := grapher.ParsedObjs{
+			Objects: objects,
 		}
 
-		for i, o := range rs {
-			if r.Expected[i].Replicas != o.Replicas {
-				t.Errorf("Number of Replicas are different at position %d. Expected %d, Got %d\n", i, r.Expected[i].Replicas, o.Replicas)
+		parsed.GetControlRel()
+
+		for i, o := range parsed.Objects {
+			e := r.Expected[i]
+			if len(e.Relations.ControlRels) != len(o.Relations.ControlRels) {
+				t.Errorf("Number of ControlRel differs for %s of type %s. Expected %d. Got %d",
+					e.Name, e.Kind, len(e.Relations.ControlRels), len(o.Relations.ControlRels))
 			}
 
-			if r.Expected[i].Source != o.Source {
-				t.Errorf("Source names are different at position %d. Expected %s, Got %s\n", i, r.Expected[i].Source, o.Source)
-			}
+			for j, crel := range o.Relations.ControlRels {
+				expCrel := e.Relations.ControlRels[j]
 
-			if r.Expected[i].Target != o.Target {
-				t.Errorf("Target names are different at position %d. Expected %s, Got %s\n", i, r.Expected[i].Target, o.Target)
+				if expCrel.Relation.Source != crel.Relation.Source {
+					t.Errorf("Source in ControlRel differs for %s of type %s. Expected %d. Got %d",
+						o.Name, o.Kind, expCrel.Relation.Source, crel.Relation.Source)
+				}
+
+				if expCrel.Relation.Target != crel.Relation.Target {
+					t.Errorf("Target in ControlRel differs for %s of type %s. Expected %d. Got %d",
+						o.Name, o.Kind, expCrel.Relation.Target, crel.Relation.Target)
+				}
+
+				if expCrel.Replicas != crel.Replicas {
+					t.Errorf("Number of replicas in ControlRel differs for %s of type %s. Expected %d. Got %d",
+						o.Name, o.Kind, expCrel.Replicas, crel.Replicas)
+				}
 			}
 		}
+	}
+}
+
+func TestLabelRels(t *testing.T) {
+	ts := []test{
+		test{
+			Expected: expControlRels1,
+			FilePath: "./test_yaml/cassandra.yaml",
+		},
+	}
+
+	for _, r := range ts {
+		// Load in yaml from test files
+		file, err := ioutil.ReadFile(r.FilePath)
+
+		if err != nil {
+			t.Errorf("Error reading file %s", r.FilePath)
+		}
+
+		yamlArr := grapher.ImportMultiDocYAML(file)
+		objects := grapher.ParseObjs(yamlArr)
+		parsed := grapher.ParsedObjs{
+			Objects: objects,
+		}
+
+		parsed.GetLabelRel()
+		t.Errorf("label")
 	}
 }

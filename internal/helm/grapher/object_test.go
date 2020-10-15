@@ -9,109 +9,73 @@ import (
 
 // Expected objects for helm Cassandra chart
 var c1 = grapher.Object{
-	Kind:      "Secret",
-	Name:      "my-release-cassandra",
-	Relations: make([]grapher.Relation, 0),
+	Kind: "Secret",
+	Name: "my-release-cassandra",
 }
 
 var c2 = grapher.Object{
-	Kind:      "Service",
-	Name:      "my-release-cassandra-headless",
-	Relations: make([]grapher.Relation, 0),
+	Kind: "Service",
+	Name: "my-release-cassandra-headless",
 }
 
 var c3 = grapher.Object{
-	Kind:      "Service",
-	Name:      "my-release-cassandra",
-	Relations: make([]grapher.Relation, 0),
+	Kind: "Service",
+	Name: "my-release-cassandra",
 }
 
 var c4 = grapher.Object{
-	Kind:      "StatefulSet",
-	Name:      "my-release-cassandra",
-	Relations: make([]grapher.Relation, 0),
-}
-
-var c5 = grapher.Object{
-	Kind:      "Pod",
-	Name:      "my-release-cassandra-1",
-	Relations: make([]grapher.Relation, 0),
-}
-
-var c6 = grapher.Object{
-	Kind:      "Pod",
-	Name:      "my-release-cassandra-2",
-	Relations: make([]grapher.Relation, 0),
+	Kind: "StatefulSet",
+	Name: "my-release-cassandra",
 }
 
 // Expected objects for helm Cassandra chart
 var k1 = grapher.Object{
-	Kind:      "ServiceAccount",
-	Name:      "my-release-kafka",
-	Relations: make([]grapher.Relation, 0),
+	Kind: "ServiceAccount",
+	Name: "my-release-kafka",
 }
 
 var k2 = grapher.Object{
-	Kind:      "ConfigMap",
-	Name:      "my-release-kafka-scripts",
-	Relations: make([]grapher.Relation, 0),
+	Kind: "ConfigMap",
+	Name: "my-release-kafka-scripts",
 }
 
 var k3 = grapher.Object{
-	Kind:      "Service",
-	Name:      "my-release-zookeeper-headless",
-	Relations: make([]grapher.Relation, 0),
+	Kind: "Service",
+	Name: "my-release-zookeeper-headless",
 }
 
 var k4 = grapher.Object{
-	Kind:      "Service",
-	Name:      "my-release-zookeeper",
-	Relations: make([]grapher.Relation, 0),
+	Kind: "Service",
+	Name: "my-release-zookeeper",
 }
 
 var k5 = grapher.Object{
-	Kind:      "Service",
-	Name:      "my-release-kafka-headless",
-	Relations: make([]grapher.Relation, 0),
+	Kind: "Service",
+	Name: "my-release-kafka-headless",
 }
 
 var k6 = grapher.Object{
-	Kind:      "Service",
-	Name:      "my-release-kafka",
-	Relations: make([]grapher.Relation, 0),
+	Kind: "Service",
+	Name: "my-release-kafka",
 }
 
 var k7 = grapher.Object{
-	Kind:      "StatefulSet",
-	Name:      "my-release-zookeeper",
-	Relations: make([]grapher.Relation, 0),
+	Kind: "StatefulSet",
+	Name: "my-release-zookeeper",
 }
 
 var k8 = grapher.Object{
-	Kind:      "Pod",
-	Name:      "my-release-zookeeper-1",
-	Relations: make([]grapher.Relation, 0),
-}
-
-var k9 = grapher.Object{
-	Kind:      "StatefulSet",
-	Name:      "my-release-kafka",
-	Relations: make([]grapher.Relation, 0),
-}
-
-var k10 = grapher.Object{
-	Kind:      "Pod",
-	Name:      "my-release-kafka-1",
-	Relations: make([]grapher.Relation, 0),
+	Kind: "StatefulSet",
+	Name: "my-release-kafka",
 }
 
 var expObjs1 = []grapher.Object{
-	c1, c2, c3, c4, c5, c6,
+	c1, c2, c3, c4,
 }
 
 var expObjs2 = []grapher.Object{
-	k1, k2, k3, k4, k5,
-	k6, k7, k8, k9, k10,
+	k1, k2, k3, k4,
+	k5, k6, k7, k8,
 }
 
 type k8sObj struct {
@@ -140,12 +104,7 @@ func TestParseObj(t *testing.T) {
 		}
 
 		yamlArr := grapher.ImportMultiDocYAML(file)
-		objects := []grapher.Object{}
-
-		for _, y := range yamlArr {
-			strmap := grapher.ConvertYAMLToStringKeys(y)
-			objects = append(objects, grapher.ParseObj(strmap)...)
-		}
+		objects := grapher.ParseObjs(yamlArr)
 
 		for i, o := range objects {
 			if k8sObj.Expected[i].Kind != o.Kind {

@@ -5,12 +5,12 @@ import { ResourceType } from '../../../../shared/types';
 import YamlEditor from '../../../../components/YamlEditor';
 
 const kindToIcon: any = {
-  'deployment': 'category',
-  'pod': 'fiber_manual_record',
-  'service': 'alt_route',
-  'ingress': 'sensor_door',
-  'statefulset': 'location_city',
-  'secret': 'vpn_key',
+  'Deployment': 'category',
+  'Pod': 'fiber_manual_record',
+  'Service': 'alt_route',
+  'Ingress': 'sensor_door',
+  'StatefulSet': 'location_city',
+  'Secret': 'vpn_key',
 }
 
 type PropsType = {
@@ -21,14 +21,14 @@ type PropsType = {
 
 type StateType = {
   expanded: boolean,
-  rawYaml: string
+  RawYAML: string
 };
 
 // A single resource block in the expanded chart list view
 export default class ResourceItem extends Component<PropsType, StateType> {
   state = {
     expanded: false,
-    rawYaml: '# this is placeholder yaml'
+    RawYAML: JSON.stringify(this.props.resource.RawYAML)
   }
 
   renderIcon = (kind: string) => {
@@ -50,8 +50,8 @@ export default class ResourceItem extends Component<PropsType, StateType> {
       return (
         <ExpandWrapper>
           <YamlEditor
-            value={this.state.rawYaml}
-            onChange={(e: any) => this.setState({ rawYaml: e })}
+            value={this.state.RawYAML}
+            onChange={(e: any) => this.setState({ RawYAML: e })}
             height='300px'
           />
         </ExpandWrapper>
@@ -70,14 +70,14 @@ export default class ResourceItem extends Component<PropsType, StateType> {
           <i className="material-icons">arrow_right</i>
 
           <ClickWrapper onClick={toggleKindLabels}>
-            {this.renderIcon(resource.kind)}
-            {showKindLabels ? `${resource.kind}` : null}
+            {this.renderIcon(resource.Kind)}
+            {showKindLabels ? `${resource.Kind}` : null}
           </ClickWrapper>
 
           <ResourceName
             showKindLabels={showKindLabels}
           >
-            {resource.name}
+            {resource.Name}
           </ResourceName>
         </ResourceHeader>
         {this.renderExpanded()}

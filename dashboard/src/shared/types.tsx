@@ -31,9 +31,9 @@ export interface ChartType {
 }
 
 export interface ResourceType {
-  kind: string,
-  name: string,
-  rawYaml: Object
+  Kind: string,
+  Name: string,
+  RawYAML: Object
 }
 
 export enum StorageType {

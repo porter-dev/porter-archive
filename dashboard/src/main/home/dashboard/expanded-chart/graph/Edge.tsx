@@ -48,13 +48,13 @@ const StyledEdge: any = styled.div.attrs((props: any) => ({
   style: {
     top: props.cy + 'px',
     left: props.cx + 'px',
-    },
+    transform: 'rotate(' + props.angle + 'deg)',
+    width: props.length + 'px'
+  },
 }))`
   position: absolute;
-  width: ${(props: any) => props.length + 'px'};
   height: ${thickness}px;
   background: #ffffff66;
   color: #ffffff22;
   z-index: 0;
-  transform: rotate(${(props: any) => props.angle}deg);
 `;

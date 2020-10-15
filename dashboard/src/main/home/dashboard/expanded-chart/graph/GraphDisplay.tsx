@@ -76,8 +76,14 @@ export default class GraphDisplay extends Component<PropsType, StateType> {
       originY: Math.round(height / 2)
     });
 
-    this.myRef.addEventListener("touchmove", (e: any) => e.preventDefault(), false);
-    this.myRef.addEventListener("mousewheel", (e: any) => e.preventDefault(), false);
+    // Suppress trackpad gestures
+    this.myRef.addEventListener("touchmove", (e: any) => e.preventDefault());
+    this.myRef.addEventListener("mousewheel", (e: any) => e.preventDefault());
+  }
+
+  componentWillUnmount() {
+    this.myRef.removeEventListener("touchmove", (e: any) => e.preventDefault());
+    this.myRef.removeEventListener("mousewheel", (e: any) => e.preventDefault());
   }
 
   // Push to activeIds if not already present
@@ -128,8 +134,8 @@ export default class GraphDisplay extends Component<PropsType, StateType> {
     }
   }
 
+  // Set zoom scale
   handleOnWheel = (e: any) => {
-    e.preventDefault();
     var scale = 1;
     scale -= e.deltaY * zoomConstant;
     this.setState({ scale });
@@ -137,7 +143,7 @@ export default class GraphDisplay extends Component<PropsType, StateType> {
 
   // Pass origin to node for offset
   renderNodes = () => {
-    let { activeIds, originX, originY, cursorX, cursorY } = this.state;
+    let { activeIds, originX, originY, cursorX, cursorY, scale } = this.state;
 
     return this.state.nodes.map((node: NodeType, i: number) => {
 
@@ -153,8 +159,11 @@ export default class GraphDisplay extends Component<PropsType, StateType> {
         node.y -= this.state.deltaY;
       }
 
-      node.x *= this.state.scale;
-      node.y *= this.state.scale;
+      // Apply cursor-centered zoom
+      if (this.state.scale !== 1) {
+        node.x = cursorX + scale * (node.x - cursorX);
+        node.y = cursorY + scale * (node.y - cursorY);
+      }
       
       return (
         <Node

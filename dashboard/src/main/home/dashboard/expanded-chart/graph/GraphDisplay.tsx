@@ -3,6 +3,7 @@ import styled from 'styled-components';
 
 import Node from './Node';
 import Edge from './Edge';
+import { ResourceType } from '../../../../../shared/types';
 
 const nodes = [
   { id: 0, x: 0, y: 0, w: 40, h: 40 },
@@ -24,6 +25,7 @@ const zoomConstant = 0.01;
 
 type NodeType = {
   id: number,
+  name: string,
   x: number,
   y: number,
   w: number,
@@ -32,12 +34,19 @@ type NodeType = {
   toCursorY?: number,
 }
 
+type EdgeType = {
+  type: string,
+  source: number,
+  target: number,
+}
+
 type PropsType = {
+  components: ResourceType[]
 };
 
 type StateType = {
   nodes: NodeType[],
-  edges: [number, number][],
+  edges: EdgeType[],
   originX: number | null,
   originY: number | null,
   activeIds: number[],
@@ -52,8 +61,8 @@ type StateType = {
 
 export default class GraphDisplay extends Component<PropsType, StateType> {
   state = {
-    nodes: nodes as NodeType[],
-    edges: edges as [number, number][],
+    nodes: [] as NodeType[],
+    edges: [] as EdgeType[],
     originX: null as (number | null),
     originY: null as (number | null),
     activeIds: [] as number[],
@@ -63,12 +72,13 @@ export default class GraphDisplay extends Component<PropsType, StateType> {
     deltaY: null as (number | null),
     dragBg: false,
     preventDrag: false,
-    scale: 1
+    scale: 0.5
   }
 
   myRef: any = React.createRef();
 
   componentDidMount() {
+    let { components } = this.props;
     let height = this.myRef.offsetHeight;
     let width = this.myRef.offsetWidth;
     this.setState({
@@ -79,6 +89,11 @@ export default class GraphDisplay extends Component<PropsType, StateType> {
     // Suppress trackpad gestures
     this.myRef.addEventListener("touchmove", (e: any) => e.preventDefault());
     this.myRef.addEventListener("mousewheel", (e: any) => e.preventDefault());
+    let nodes = components.map( (c: ResourceType) => {
+      return {id: c.ID, name: c.Name, x:0, y:0, w:40, h:40}
+    })
+
+    this.setState({nodes})
   }
 
   componentWillUnmount() {
@@ -180,21 +195,23 @@ export default class GraphDisplay extends Component<PropsType, StateType> {
   }
 
   renderEdges = () => {
-    return this.state.edges.map((edge: [number, number], i: number) => {
+    return this.state.edges.map((edge: EdgeType, i: number) => {
       return (
         <Edge
+          key={i}
           originX={this.state.originX}
           originY={this.state.originY}
-          x1={this.state.nodes[edge[0]].x}
-          y1={this.state.nodes[edge[0]].y}
-          x2={this.state.nodes[edge[1]].x}
-          y2={this.state.nodes[edge[1]].y}
+          x1={this.state.nodes[edge.source].x}
+          y1={this.state.nodes[edge.source].y}
+          x2={this.state.nodes[edge.target].x}
+          y2={this.state.nodes[edge.target].y}
         />
       );
     });
   }
 
   render() {
+    console.log('rendering graph display')
     return (
       <StyledGraphDisplay
         ref={element => this.myRef = element}

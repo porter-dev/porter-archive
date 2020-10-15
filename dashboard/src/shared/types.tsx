@@ -31,9 +31,11 @@ export interface ChartType {
 }
 
 export interface ResourceType {
+  ID: number,
   Kind: string,
   Name: string,
-  RawYAML: Object
+  RawYAML: Object,
+  Relations: Object
 }
 
 export enum StorageType {

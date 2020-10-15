@@ -5,28 +5,13 @@ import Node from './Node';
 import Edge from './Edge';
 import { ResourceType } from '../../../../../shared/types';
 
-const nodes = [
-  { id: 0, x: 0, y: 0, w: 40, h: 40 },
-  { id: 1, x: 200, y: 50, w: 40, h: 40 },
-  { id: 2, x: -230, y: -250, w: 40, h: 40 },
-  { id: 3, x: -200, y: 150, w: 40, h: 40 },
-];
-
-const edges = [
-  [0, 1],
-  [0, 2],
-  [0, 3],
-  [1, 2],
-  [1, 3],
-  [2, 3]
-];
-
 const zoomConstant = 0.01;
 const panConstant = 0.8;
 
 type NodeType = {
   id: number,
   name: string,
+  kind: string,
   x: number,
   y: number,
   w: number,
@@ -94,10 +79,25 @@ export default class GraphDisplay extends Component<PropsType, StateType> {
     // Suppress trackpad gestures
     this.spaceRef.addEventListener("touchmove", (e: any) => e.preventDefault());
     this.spaceRef.addEventListener("mousewheel", (e: any) => e.preventDefault());
-    let nodes = components.map( (c: ResourceType) => {
-      return {id: c.ID, name: c.Name, x:0, y:0, w:40, h:40}
+    let nodes = components.map((c: ResourceType) => {
+      return {id: c.ID, name: c.Name, kind: c.Kind, x:0, y:0, w:40, h:40}
     })
 
+    let edges = [] as EdgeType[]
+    components.map((c: ResourceType) => {
+      c.Relations.ControlRels.map((rel: any) => {
+        if (rel.Source == c.ID) {
+          edges.push({type: "ControlRel", source: rel.Source, target: rel.Target})
+        }
+      })
+      c.Relations.LabelRels.map((rel: any) => {
+        if (rel.Source == c.ID) {
+          edges.push({type: "LabelRel", source: rel.Source, target: rel.Target})
+        }
+      })
+
+      this.setState({edges})
+    })
     this.setState({nodes})
   }
 

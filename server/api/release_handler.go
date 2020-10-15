@@ -2,7 +2,6 @@ package api
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -134,8 +133,6 @@ func (app *App) HandleGetReleaseComponents(w http.ResponseWriter, r *http.Reques
 
 		return
 	}
-
-	fmt.Println(release.Manifest)
 
 	yamlArr := grapher.ImportMultiDocYAML([]byte(release.Manifest))
 	objects := grapher.ParseObjs(yamlArr)

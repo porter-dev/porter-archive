@@ -9,7 +9,7 @@ import (
 
 // ImportMultiDocYAML is a helper function that goes through a yaml file with multiple documents (or objects)
 // separated by '---' or '...' and returns an array of yamls.
-func ImportMultiDocYAML(source []byte) (arr []map[interface{}]interface{}) {
+func ImportMultiDocYAML(source []byte) (arr []map[string]interface{}) {
 	dec := yaml.NewDecoder(bytes.NewReader(source))
 
 	for {
@@ -17,15 +17,9 @@ func ImportMultiDocYAML(source []byte) (arr []map[interface{}]interface{}) {
 		if dec.Decode(&doc) != nil {
 			return arr
 		}
-		arr = append(arr, doc)
+		strmap := recursiveConv(doc).(map[string]interface{})
+		arr = append(arr, strmap)
 	}
-
-}
-
-// ConvertYAMLToStringKeys enforces all non-string keys in a map to be string keys.
-func ConvertYAMLToStringKeys(yaml map[interface{}]interface{}) map[string]interface{} {
-	strmap := recursiveConv(yaml).(map[string]interface{})
-	return strmap
 }
 
 // recursive helper function that type asserts each layer of nested interfaces to

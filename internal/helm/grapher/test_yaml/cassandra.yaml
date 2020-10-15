@@ -93,6 +93,9 @@ spec:
     matchLabels:
       app.kubernetes.io/name: cassandra
       app.kubernetes.io/instance: my-release
+    matchExpressions:
+      - {key: tier, operator: In, values: [cache]}
+      - {key: environment, operator: NotIn, values: [dev]}
   serviceName: my-release-cassandra-headless
   podManagementPolicy: OrderedReady
   replicas: 2

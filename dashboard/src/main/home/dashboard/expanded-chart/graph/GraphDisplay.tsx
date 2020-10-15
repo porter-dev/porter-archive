@@ -202,6 +202,7 @@ export default class GraphDisplay extends Component<PropsType, StateType> {
     return this.state.edges.map((edge: [number, number], i: number) => {
       return (
         <Edge
+          key={i}
           originX={this.state.originX}
           originY={this.state.originY}
           x1={this.state.nodes[edge[0]].x}

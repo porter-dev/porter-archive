@@ -13,7 +13,7 @@ type PropsType = {
 type StateType = {
 };
 
-const thickness = 2;
+const thickness = 1;
 
 export default class Edge extends Component<PropsType, StateType> {
   state = {
@@ -55,5 +55,6 @@ const StyledEdge: any = styled.div.attrs((props: any) => ({
   height: ${thickness}px;
   background: #ffffff66;
   color: #ffffff22;
+  z-index: 0;
   transform: rotate(${(props: any) => props.angle}deg);
 `;

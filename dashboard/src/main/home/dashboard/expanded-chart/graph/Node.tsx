@@ -39,10 +39,22 @@ export default class Node extends Component<PropsType, StateType> {
         isActive={isActive}
       >
         <i className="material-icons">category</i>
+        <NodeLabel>some-object-name</NodeLabel>
       </StyledNode>
     );
   }
 }
+
+const NodeLabel = styled.div`
+  position: absolute;
+  bottom: -25px;
+  color: #aaaabb;
+  width: 200px;
+  left: -80px;
+  font-size: 13px;
+  font-family: 'Work Sans', sans-serif;
+  text-align: center;
+`;
 
 const StyledNode: any = styled.div.attrs((props: NodeType) => ({
   style: {
@@ -61,6 +73,7 @@ const StyledNode: any = styled.div.attrs((props: NodeType) => ({
   display: flex;
   align-items: center;
   justify-content: center;
+  z-index: 1;
 
   > i {
     color: white;

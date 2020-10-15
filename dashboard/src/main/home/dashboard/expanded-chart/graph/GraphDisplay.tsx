@@ -20,6 +20,8 @@ const edges = [
   [2, 3]
 ];
 
+const zoomConstant = 0.01;
+
 type NodeType = {
   id: number,
   x: number,
@@ -44,7 +46,8 @@ type StateType = {
   deltaX: number | null,
   deltaY: number | null,
   dragBg: boolean,
-  preventDrag: boolean
+  preventDrag: boolean,
+  scale: number
 };
 
 export default class GraphDisplay extends Component<PropsType, StateType> {
@@ -59,7 +62,8 @@ export default class GraphDisplay extends Component<PropsType, StateType> {
     deltaX: null as (number | null),
     deltaY: null as (number | null),
     dragBg: false,
-    preventDrag: false
+    preventDrag: false,
+    scale: 1
   }
 
   myRef: any = React.createRef();
@@ -71,6 +75,9 @@ export default class GraphDisplay extends Component<PropsType, StateType> {
       originX: Math.round(width / 2),
       originY: Math.round(height / 2)
     });
+
+    this.myRef.addEventListener("touchmove", (e: any) => e.preventDefault(), false);
+    this.myRef.addEventListener("mousewheel", (e: any) => e.preventDefault(), false);
   }
 
   // Push to activeIds if not already present
@@ -107,6 +114,7 @@ export default class GraphDisplay extends Component<PropsType, StateType> {
 
   onMouseMove = (e: any) => {
     let { originX, originY, dragBg, preventDrag } = this.state;
+    this.setState({ scale: 1 });
 
     // Update origin-centered cursor coordinates
     let bounds = this.myRef.getBoundingClientRect();
@@ -119,6 +127,13 @@ export default class GraphDisplay extends Component<PropsType, StateType> {
       this.setState({ deltaX: e.movementX, deltaY: e.movementY });
     }
   }
+
+  handleOnWheel = (e: any) => {
+    e.preventDefault();
+    var scale = 1;
+    scale -= e.deltaY * zoomConstant;
+    this.setState({ scale });
+  };
 
   // Pass origin to node for offset
   renderNodes = () => {
@@ -137,6 +152,9 @@ export default class GraphDisplay extends Component<PropsType, StateType> {
         node.x += this.state.deltaX;
         node.y -= this.state.deltaY;
       }
+
+      node.x *= this.state.scale;
+      node.y *= this.state.scale;
       
       return (
         <Node
@@ -174,9 +192,10 @@ export default class GraphDisplay extends Component<PropsType, StateType> {
         onMouseMove={this.onMouseMove}
         onMouseDown={() => this.setState({ dragBg: true })}
         onMouseUp={() => this.setState({ dragBg: false })}
+        onWheel={this.handleOnWheel}
       >
-        {this.renderEdges()}
         {this.renderNodes()}
+        {this.renderEdges()}
       </StyledGraphDisplay>
     );
   }
@@ -187,5 +206,6 @@ const StyledGraphDisplay = styled.div`
   width: 100%;
   height: 100%;
   overflow: hidden;
+  cursor: move;
   background: #202227;
 `;

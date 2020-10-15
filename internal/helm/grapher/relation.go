@@ -1,7 +1,6 @@
 package grapher
 
 import (
-	"fmt"
 	"strconv"
 )
 
@@ -20,24 +19,29 @@ type ControlRel struct {
 	Template map[string]interface{}
 }
 
+// LabelRel connects objects with spec.selector with pods that have corresponding metadata.labels.
 type LabelRel struct {
 	Relation
 }
 
+// ParsedObjs has methods GetControlRel and GetLabelRel that updates its objects array.
 type ParsedObjs struct {
 	Objects []Object
 }
 
+// Relations is embedded into the Object struct and contains arrays of the three types of relationships.
 type Relations struct {
 	ControlRels []ControlRel
 	LabelRels   []LabelRel
 }
 
+// MatchLabel is used to match Equality label selector.
 type MatchLabel struct {
 	key   string
 	value string
 }
 
+// MatchExpression is used to match Set-based label selectors.
 type MatchExpression struct {
 	key      string
 	operator string // In, NotIn, Exists, DoesNotExist are valid
@@ -50,7 +54,7 @@ type MatchExpression struct {
 // Note that this only includes controllers whose children are 1) pods and 2) do not have its own YAML.
 // i.e. Children relies entirely on the parent's template. Controllers like CronJob are excluded because its children are not pods.
 func (parsed *ParsedObjs) GetControlRel() {
-	// First collect all children.
+	// First collect all children (Pods) that are not included in the yaml as top-level object.
 	children := []Object{}
 	for i, obj := range parsed.Objects {
 		yaml := obj.RawYAML
@@ -93,11 +97,12 @@ func (parsed *ParsedObjs) GetControlRel() {
 		}
 	}
 
-	// add children to the objects array
+	// add children to the objects array at the end.
 	parsed.Objects = append(parsed.Objects, children...)
 }
 
-// GetLabelRel is sdflk
+// GetLabelRel is generates relationships between objects connected by selector-label.
+// It supports both Equality-based and Set-based operators with MatchLabels and MatchExpressions, respectively.
 func (parsed *ParsedObjs) GetLabelRel() {
 	for i, o := range parsed.Objects {
 		// Skip Pods
@@ -105,6 +110,7 @@ func (parsed *ParsedObjs) GetLabelRel() {
 		matchLabels := []MatchLabel{}
 		matchExpressions := []MatchExpression{}
 
+		// First check for the outdated syntax (matchLabels were added in recent k8s version)
 		if l := getField(yaml, "spec", "selector"); l != nil {
 			simple := true
 			if ml := getField(yaml, "spec", "selector", "matchLabels"); ml != nil {
@@ -132,10 +138,8 @@ func (parsed *ParsedObjs) GetLabelRel() {
 				matchLabels = addMatchLabels(matchLabels, l.(map[string]interface{}))
 			}
 		}
-		// fmt.Println("For object", o.Name)
-		// fmt.Println("matchLabels", matchLabels)
-		// fmt.Println("matchExp", matchExpressions)
 
+		// Find ID's of targets that match the label selector
 		targetID := parsed.findLabelsBySelector(o.ID, matchLabels, matchExpressions)
 		lrels := o.Relations.LabelRels
 		for _, tid := range targetID {
@@ -148,7 +152,6 @@ func (parsed *ParsedObjs) GetLabelRel() {
 			lrels = append(lrels, newrel)
 		}
 
-		fmt.Println(lrels)
 		parsed.Objects[i].Relations.LabelRels = lrels
 	}
 }
@@ -163,15 +166,17 @@ func addMatchLabels(matchLabels []MatchLabel, ml map[string]interface{}) []Match
 	return matchLabels
 }
 
+// TODO: Implement MatchExpression for set based operations.
 func (parsed *ParsedObjs) findLabelsBySelector(parentID int, ml []MatchLabel, me []MatchExpression) []int {
 	matchedObjs := []int{}
 	for i, o := range parsed.Objects {
-		// find Pods that match labels
 
+		// Only Pods can be selected by spec.selector
 		if o.Kind != "Pod" {
 			continue
 		}
 
+		// find Pods that match labels
 		labels := getField(o.RawYAML, "metadata", "labels")
 		match := 0
 		for _, l := range ml {
@@ -179,6 +184,8 @@ func (parsed *ParsedObjs) findLabelsBySelector(parentID int, ml []MatchLabel, me
 				match++
 			}
 		}
+
+		// Returns only if labels meet all conditions of the selector.
 		if match == len(ml) && match > 0 {
 			newrel := LabelRel{
 				Relation{
@@ -186,6 +193,8 @@ func (parsed *ParsedObjs) findLabelsBySelector(parentID int, ml []MatchLabel, me
 					Target: o.ID,
 				},
 			}
+
+			// Add bidirectional link from children as well.
 			parsed.Objects[i].Relations.LabelRels = append(parsed.Objects[i].Relations.LabelRels, newrel)
 			matchedObjs = append(matchedObjs, o.ID)
 		}

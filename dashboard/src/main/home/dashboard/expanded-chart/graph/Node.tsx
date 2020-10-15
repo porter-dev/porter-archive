@@ -39,10 +39,26 @@ export default class Node extends Component<PropsType, StateType> {
         isActive={isActive}
       >
         <i className="material-icons">category</i>
+        <NodeLabel>some-object-name</NodeLabel>
       </StyledNode>
     );
   }
 }
+
+const NodeLabel = styled.div`
+  position: absolute;
+  bottom: -25px;
+  color: #aaaabb;
+  padding-top: 12px;
+  width: 40px;
+  left: 0px;
+  font-size: 13px;
+  white-space: nowrap;
+  font-family: 'Work Sans', sans-serif;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+`;
 
 const StyledNode: any = styled.div.attrs((props: NodeType) => ({
   style: {
@@ -55,12 +71,16 @@ const StyledNode: any = styled.div.attrs((props: NodeType) => ({
   height: ${(props: NodeType) => props.h + 'px'};;
   background: #444446;
   box-shadow: ${(props: any) => props.isActive ? '0 0 10px #ffffff66' : '0px 0px 10px 2px #00000022'};
-  cursor: pointer;
+  cursor: grab;
   border-radius: 5px;
   color: #ffffff22;
   display: flex;
   align-items: center;
   justify-content: center;
+  z-index: 1;
+  :hover {
+    background: #555556;
+  }
 
   > i {
     color: white;

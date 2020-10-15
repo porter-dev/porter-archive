@@ -6,6 +6,7 @@ import { Context } from '../../../../shared/Context';
 import { ResourceType, StorageType, ChartType } from '../../../../shared/types';
 
 import ResourceItem from './ResourceItem';
+import GraphDisplay from './graph/GraphDisplay';
 
 type PropsType = {
   toggleExpanded: () => void,
@@ -99,6 +100,8 @@ export default class OverviewSection extends Component<PropsType, StateType> {
         </ResourceList>
       )
     }
+
+    return <GraphDisplay />
   }
 
   render() {

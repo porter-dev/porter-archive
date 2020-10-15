@@ -116,6 +116,7 @@ const GlobalStyle = createGlobalStyle`
   }
   body {
     background: #202227;
+    overscroll-behavior-x: none;
   }
 `;
 

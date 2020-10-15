@@ -5,6 +5,7 @@ go 1.14
 require (
 	github.com/Azure/go-autorest/autorest v0.11.1 // indirect
 	github.com/DATA-DOG/go-sqlmock v1.5.0
+	github.com/Masterminds/semver v1.5.0 // indirect
 	github.com/cosmtrek/air v1.21.2 // indirect
 	github.com/creack/pty v1.1.11 // indirect
 	github.com/docopt/docopt-go v0.0.0-20180111231733-ee0de3bc6815 // indirect
@@ -49,7 +50,7 @@ require (
 	k8s.io/cli-runtime v0.18.8
 	k8s.io/client-go v0.18.8
 	k8s.io/gengo v0.0.0-20200413195148-3a45101e95ac // indirect
-	k8s.io/helm v2.16.12+incompatible // indirect
+	k8s.io/helm v2.16.12+incompatible
 	k8s.io/klog v1.0.0 // indirect
 	k8s.io/klog/v2 v2.2.0 // indirect
 	k8s.io/utils v0.0.0-20200912215256-4140de9c8800 // indirect

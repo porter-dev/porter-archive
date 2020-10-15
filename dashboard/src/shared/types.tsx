@@ -25,8 +25,15 @@ export interface ChartType {
       apiVersion: string
     },
   },
+  config: string,
   version: number,
   namespace: string
+}
+
+export interface ResourceType {
+  kind: string,
+  name: string,
+  rawYaml: Object
 }
 
 export enum StorageType {

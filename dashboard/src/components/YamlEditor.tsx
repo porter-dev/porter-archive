@@ -8,6 +8,8 @@ import 'ace-builds/src-noconflict/theme-terminal';
 type PropsType = {
   value: string,
   onChange: (e: any) => void,
+  height?: string,
+  border?: boolean
 }
 
 type StateType = {
@@ -40,7 +42,10 @@ class YamlEditor extends Component<PropsType, StateType> {
   render() {
     return (
       <Holder>
-        <Editor onSubmit={this.handleSubmit}>
+        <Editor
+          onSubmit={this.handleSubmit}
+          border={this.props.border}
+        >
           <AceEditor
             mode='yaml'
             value={this.props.value}
@@ -48,6 +53,7 @@ class YamlEditor extends Component<PropsType, StateType> {
             onChange={this.props.onChange}
             name='codeEditor'
             editorProps={{ $blockScrolling: true }}
+            height={this.props.height}
             width='100%'
             style={{ borderRadius: '5px' }}
           />
@@ -60,14 +66,18 @@ class YamlEditor extends Component<PropsType, StateType> {
 export default YamlEditor;
 
 const Editor = styled.form`
-  margin-top: 0px;
-  margin-bottom: 12px;
-  width: calc(100% - 0px);
-  border-radius: 5px;
-  border: 1px solid #ffffff22;
-  height: 295px;
-  overflow: auto;
+  border-radius: ${(props: { border: boolean }) => props.border ? '5px' : ''};
+  border: ${(props: { border: boolean }) => props.border ? '1px solid #ffffff22' : ''};
 `;
 
 const Holder = styled.div`
+  .ace_scrollbar {
+    display: none;
+  }
+  .ace_editor, .ace_editor * {
+    font-family: "Monaco", "Menlo", "Ubuntu Mono", "Droid Sans Mono", "Consolas", monospace !important;
+    font-size: 12px !important;
+    font-weight: 400 !important;
+    letter-spacing: 0 !important;
+  }
 `;

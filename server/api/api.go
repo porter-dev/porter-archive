@@ -51,7 +51,7 @@ func New(
 	var testAgents *TestAgents = nil
 
 	if testing {
-		memStorage := helm.StorageMap["memory"](nil, "", nil)
+		memStorage := helm.StorageMap["memory"](nil, nil, "")
 
 		testAgents = &TestAgents{
 			HelmAgent:             helm.GetAgentTesting(&helm.Form{}, nil, logger),

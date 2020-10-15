@@ -13,10 +13,12 @@
   - [`POST /api/logout`](#post-apilogout)
   - [`PUT /api/users/{id}`](#put-apiusersid)
   - [`DELETE /api/users/{id}`](#delete-apiusersid)
-- [`/api/charts`](#apicharts)
-  - [`GET /api/charts`](#get-apicharts)
-  - [`GET /api/charts/{name}/history`](#get-apichartsnamehistory)
-  - [`GET /api/charts/{name}/{revision}`](#get-apichartsnamerevision)
+- [`/api/releases`](#apireleases)
+  - [`GET /api/releases`](#get-apireleases)
+  - [`GET /api/releases/{name}/history`](#get-apireleasesnamehistory)
+  - [`GET /api/releases/{name}/{revision}`](#get-apireleasesnamerevision)
+  - [`POST /api/releases/{name}/rollback`](#post-apireleasesnamerollback)
+  - [`POST /api/releases/{name}/upgrade`](#post-apireleasesnameupgrade)
 - [`/api/k8s`](#apik8s)
   - [`GET /api/k8s/namespaces`](#get-apik8snamespaces)
 
@@ -417,11 +419,11 @@ User object with only the id field. Other fields are empty - with values in para
     }
     ```
 
-### `/api/charts`
+### `/api/releases`
 
-#### `GET /api/charts`
+#### `GET /api/releases`
 
-**Description:** Gets a list of charts for a current context and a kubeconfig retrieved from the user's ID. 
+**Description:** Gets a list of releases for a current context and a kubeconfig retrieved from the user's ID. 
 
 **URL parameters:** N/A
 
@@ -444,7 +446,7 @@ User object with only the id field. Other fields are empty - with values in para
 **Successful Response Body**: the full body is determined by the [release specification](https://pkg.go.dev/helm.sh/helm/v3@v3.3.4/pkg/release#Release): listed here is a subset of fields deemed to be most relevant. Note that all of the top-level fields are optional.
 
 ```js
-[]Chart{
+[]Release{
   // Name is the name of the release
   "name": String,
   "info": Info{
@@ -483,7 +485,7 @@ User object with only the id field. Other fields are empty - with values in para
     // Values are default config for this chart.
     "values": Map[String]{}
   },
-  // The set of extra Values added to the chart, which override the 
+  // The set of extra Values added to the release, which override the 
   // default values inside of the chart
   "config": Map[String]{},
   // Manifest is the string representation of the rendered template
@@ -497,11 +499,21 @@ User object with only the id field. Other fields are empty - with values in para
 
 **Successful Status Code**: `200`
 
-**Errors:** TBD
+**Errors:** 
 
-#### `GET /api/charts/{name}/history`
+- Missing required field
+  - Status Code: `422`
+  - Request Body:
+    ```json
+    {
+      "code":601,
+      "errors":["required validation failed"]
+    }
+    ```
 
-**Description:** Gets a history of revisions for a given deployed chart based on the release `name`.
+#### `GET /api/releases/{name}/history`
+
+**Description:** Gets a history of revisions for a given deployed release based on the release `name`.
 
 **URL parameters:** 
 
@@ -525,7 +537,7 @@ User object with only the id field. Other fields are empty - with values in para
 **Successful Response Body**: the full body is determined by the [release specification](https://pkg.go.dev/helm.sh/helm/v3@v3.3.4/pkg/release#Release): listed here is a subset of fields deemed to be most relevant. Note that all of the top-level fields are optional.
 
 ```js
-[]Chart{
+[]Release{
   // Name is the name of the release
   "name": String,
   "info": Info{
@@ -564,7 +576,7 @@ User object with only the id field. Other fields are empty - with values in para
     // Values are default config for this chart.
     "values": Map[String]{}
   },
-  // The set of extra Values added to the chart, which override the 
+  // The set of extra Values added to the release, which override the 
   // default values inside of the chart
   "config": Map[String]{},
   // Manifest is the string representation of the rendered template
@@ -578,11 +590,31 @@ User object with only the id field. Other fields are empty - with values in para
 
 **Successful Status Code**: `200`
 
-**Errors:** TBD
+**Errors:** 
 
-#### `GET /api/charts/{name}/{revision}`
+- Release not found
+  - Status Code: `404`
+  - Request Body:
+    ```json
+    {
+      "code":602,
+      "errors":["release not found"]
+    }
+    ```
+- Missing required field
+  - Status Code: `422`
+  - Request Body:
+    ```json
+    {
+      "code":601,
+      "errors":["required validation failed"]
+    }
+    ```
 
-**Description:** Gets a single chart for a current context and a kubeconfig retrieved from the user's ID based on a **name** and **revision**. To retrieve the latest deployed chart, set **revision** to 0. 
+
+#### `GET /api/releases/{name}/{revision}`
+
+**Description:** Gets a single release for a current context and a kubeconfig retrieved from the user's ID based on a **name** and **revision**. To retrieve the latest deployed release, set **revision** to 0. 
 
 **URL parameters:** 
 
@@ -607,7 +639,7 @@ User object with only the id field. Other fields are empty - with values in para
 **Successful Response Body**: the full body is determined by the [release specification](https://pkg.go.dev/helm.sh/helm/v3@v3.3.4/pkg/release#Release): listed here is a subset of fields deemed to be most relevant. Note that all of the top-level fields are optional.
 
 ```js
-Chart{
+[]Release{
   // Name is the name of the release
   "name": String,
   "info": Info{
@@ -646,7 +678,7 @@ Chart{
     // Values are default config for this chart.
     "values": Map[String]{}
   },
-  // The set of extra Values added to the chart, which override the 
+  // The set of extra Values added to the release, which override the 
   // default values inside of the chart
   "config": Map[String]{},
   // Manifest is the string representation of the rendered template
@@ -660,7 +692,127 @@ Chart{
 
 **Successful Status Code**: `200`
 
-**Errors:** TBD
+**Errors:** 
+
+- Release not found
+  - Status Code: `404`
+  - Request Body:
+    ```json
+    {
+      "code":602,
+      "errors":["release not found"]
+    }
+    ```
+- Missing required field
+  - Status Code: `422`
+  - Request Body:
+    ```json
+    {
+      "code":601,
+      "errors":["required validation failed"]
+    }
+    ```
+
+#### `POST /api/releases/{name}/rollback`
+
+**Description:** Rolls a release back to a specified revision. 
+
+**URL parameters:** 
+
+- `name` The name of the release.
+
+**Query parameters:** N/A
+
+**Request Body**:
+
+```js
+{
+  // The namespace of the cluster to be used
+  "namespace": String,
+  // The name of the context in the kubeconfig being used
+  "context": String,
+  // The Helm storage option to use
+  "storage": String("secret"|"configmap"|"memory"),
+  // The revision number of the desired rollback target
+  "revision": Number
+}
+```
+
+
+**Successful Response Body**: N/A
+
+**Successful Status Code**: `200`
+
+**Errors:**
+
+- Rollback failed
+  - Status Code: `500`
+  - Request Body:
+    ```json
+    {
+      "code":603,
+      "errors":["rollback failed: <error>"]
+    }
+    ```
+- Missing required field
+  - Status Code: `422`
+  - Request Body:
+    ```json
+    {
+      "code":601,
+      "errors":["required validation failed"]
+    }
+    ```
+
+#### `POST /api/releases/{name}/upgrade`
+
+**Description:** Upgrades a release with new `values.yaml`. 
+
+**URL parameters:** 
+
+- `name` The name of the release.
+
+**Query parameters:** N/A
+
+**Request Body**:
+
+```js
+{
+  // The namespace of the cluster to be used
+  "namespace": String,
+  // The name of the context in the kubeconfig being used
+  "context": String,
+  // The Helm storage option to use
+  "storage": String("secret"|"configmap"|"memory"),
+  // The string of values to use
+  "values": String
+}
+```
+
+**Successful Response Body**: N/A
+
+**Successful Status Code**: `200`
+
+**Errors:** 
+
+- Upgrade failed
+  - Status Code: `500`
+  - Request Body:
+    ```json
+    {
+      "code":603,
+      "errors":["upgrade failed: <error>"]
+    }
+    ```
+- Missing required field
+  - Status Code: `422`
+  - Request Body:
+    ```json
+    {
+      "code":601,
+      "errors":["required validation failed"]
+    }
+    ```
 
 ### `/api/k8s`
 

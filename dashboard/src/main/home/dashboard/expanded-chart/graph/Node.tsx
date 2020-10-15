@@ -1,9 +1,19 @@
 import React, { Component } from 'react';
 import styled from 'styled-components';
 
+const kindToIcon: any = {
+  'Deployment': 'category',
+  'Pod': 'fiber_manual_record',
+  'Service': 'alt_route',
+  'Ingress': 'sensor_door',
+  'StatefulSet': 'location_city',
+  'Secret': 'vpn_key',
+}
+
 type NodeType = {
   id: number,
   name: string,
+  kind: string,
   x: number,
   y: number,
   w: number,
@@ -27,8 +37,14 @@ export default class Node extends Component<PropsType, StateType> {
   }
 
   render() {
-    let { x, y, w, h, name } = this.props.node;
+    let { x, y, w, h, name, kind } = this.props.node;
     let { originX, originY, nodeMouseDown, nodeMouseUp, isActive } = this.props;
+
+    let icon = 'tonality';
+    if (Object.keys(kindToIcon).includes(kind)) {
+      icon = kindToIcon[kind]; 
+    }
+
     return (
       <StyledNode
         x={Math.round(originX + x - (w / 2))}
@@ -39,8 +55,8 @@ export default class Node extends Component<PropsType, StateType> {
         onMouseUp={nodeMouseUp}
         isActive={isActive}
       >
-        <i className="material-icons">category</i>
-        <NodeLabel>{name}</NodeLabel>
+        <i className="material-icons">{icon}</i>
+        <NodeLabel>{kind}: {name}</NodeLabel>
       </StyledNode>
     );
   }

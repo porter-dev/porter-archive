@@ -35,7 +35,7 @@ export interface ResourceType {
   Kind: string,
   Name: string,
   RawYAML: Object,
-  Relations: Object
+  Relations: any
 }
 
 export enum StorageType {

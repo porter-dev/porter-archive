@@ -1,6 +1,7 @@
 package grapher
 
 import (
+	"fmt"
 	"strconv"
 )
 
@@ -75,7 +76,7 @@ func (parsed *ParsedObjs) GetControlRel() {
 					pod := Object{
 						ID:      cid,
 						Kind:    "Pod",
-						Name:    obj.Name + "-" + strconv.Itoa(i), // tentative name pre-deploy
+						Name:    obj.Name + "-" + strconv.Itoa(j), // tentative name pre-deploy
 						RawYAML: template,
 						Relations: Relations{
 							ControlRels: []ControlRel{
@@ -99,6 +100,7 @@ func (parsed *ParsedObjs) GetControlRel() {
 // GetLabelRel is sdflk
 func (parsed *ParsedObjs) GetLabelRel() {
 	for i, o := range parsed.Objects {
+		// Skip Pods
 		yaml := o.RawYAML
 		matchLabels := []MatchLabel{}
 		matchExpressions := []MatchExpression{}
@@ -134,7 +136,7 @@ func (parsed *ParsedObjs) GetLabelRel() {
 		// fmt.Println("matchLabels", matchLabels)
 		// fmt.Println("matchExp", matchExpressions)
 
-		targetID := parsed.findLabelsBySelector(matchLabels, matchExpressions)
+		targetID := parsed.findLabelsBySelector(o.ID, matchLabels, matchExpressions)
 		lrels := o.Relations.LabelRels
 		for _, tid := range targetID {
 			newrel := LabelRel{
@@ -146,6 +148,7 @@ func (parsed *ParsedObjs) GetLabelRel() {
 			lrels = append(lrels, newrel)
 		}
 
+		fmt.Println(lrels)
 		parsed.Objects[i].Relations.LabelRels = lrels
 	}
 }
@@ -160,10 +163,15 @@ func addMatchLabels(matchLabels []MatchLabel, ml map[string]interface{}) []Match
 	return matchLabels
 }
 
-func (parsed *ParsedObjs) findLabelsBySelector(ml []MatchLabel, me []MatchExpression) []int {
+func (parsed *ParsedObjs) findLabelsBySelector(parentID int, ml []MatchLabel, me []MatchExpression) []int {
 	matchedObjs := []int{}
-	for _, o := range parsed.Objects {
-		// find objects that match labels
+	for i, o := range parsed.Objects {
+		// find Pods that match labels
+
+		if o.Kind != "Pod" {
+			continue
+		}
+
 		labels := getField(o.RawYAML, "metadata", "labels")
 		match := 0
 		for _, l := range ml {
@@ -172,6 +180,13 @@ func (parsed *ParsedObjs) findLabelsBySelector(ml []MatchLabel, me []MatchExpres
 			}
 		}
 		if match == len(ml) && match > 0 {
+			newrel := LabelRel{
+				Relation{
+					Source: parentID,
+					Target: o.ID,
+				},
+			}
+			parsed.Objects[i].Relations.LabelRels = append(parsed.Objects[i].Relations.LabelRels, newrel)
 			matchedObjs = append(matchedObjs, o.ID)
 		}
 	}

@@ -16,11 +16,43 @@ var c1 = grapher.Object{
 var c2 = grapher.Object{
 	Kind: "Service",
 	Name: "my-release-cassandra-headless",
+	Relations: grapher.Relations{
+		LabelRels: []grapher.LabelRel{
+			grapher.LabelRel{
+				Relation: grapher.Relation{
+					Source: 1,
+					Target: 4,
+				},
+			},
+			grapher.LabelRel{
+				Relation: grapher.Relation{
+					Source: 1,
+					Target: 5,
+				},
+			},
+		},
+	},
 }
 
 var c3 = grapher.Object{
 	Kind: "Service",
 	Name: "my-release-cassandra",
+	Relations: grapher.Relations{
+		LabelRels: []grapher.LabelRel{
+			grapher.LabelRel{
+				Relation: grapher.Relation{
+					Source: 2,
+					Target: 4,
+				},
+			},
+			grapher.LabelRel{
+				Relation: grapher.Relation{
+					Source: 2,
+					Target: 5,
+				},
+			},
+		},
+	},
 }
 
 var c4 = grapher.Object{

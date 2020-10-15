@@ -21,6 +21,7 @@ const edges = [
 ];
 
 const zoomConstant = 0.01;
+const panConstant = 0.8;
 
 type NodeType = {
   id: number,
@@ -38,52 +39,56 @@ type PropsType = {
 type StateType = {
   nodes: NodeType[],
   edges: [number, number][],
+  activeIds: number[],
   originX: number | null,
   originY: number | null,
-  activeIds: number[],
   cursorX: number | null,
   cursorY: number | null,
   deltaX: number | null,
   deltaY: number | null,
+  panX: number | null,
+  panY: number | null,
   dragBg: boolean,
   preventDrag: boolean,
-  scale: number
+  scale: number,
 };
 
 export default class GraphDisplay extends Component<PropsType, StateType> {
   state = {
     nodes: nodes as NodeType[],
     edges: edges as [number, number][],
+    activeIds: [] as number[],
     originX: null as (number | null),
     originY: null as (number | null),
-    activeIds: [] as number[],
     cursorX: null as (number | null),
     cursorY: null as (number | null),
     deltaX: null as (number | null),
     deltaY: null as (number | null),
+    panX: null as (number | null),
+    panY: null as (number | null),
     dragBg: false,
     preventDrag: false,
-    scale: 1
+    scale: 1,
   }
 
-  myRef: any = React.createRef();
+  spaceRef: any = React.createRef();
 
   componentDidMount() {
-    let height = this.myRef.offsetHeight;
-    let width = this.myRef.offsetWidth;
+    let height = this.spaceRef.offsetHeight;
+    let width = this.spaceRef.offsetWidth;
     this.setState({
       originX: Math.round(width / 2),
       originY: Math.round(height / 2)
     });
 
     // Suppress trackpad gestures
-    this.myRef.addEventListener("touchmove", (e: any) => e.preventDefault());
-    this.myRef.addEventListener("mousewheel", (e: any) => e.preventDefault());
+    this.spaceRef.addEventListener("touchmove", (e: any) => e.preventDefault());
+    this.spaceRef.addEventListener("mousewheel", (e: any) => e.preventDefault());
   }
 
   componentWillUnmount() {
-    this.myRef.removeEventListener("touchmove", (e: any) => e.preventDefault());
-    this.myRef.removeEventListener("mousewheel", (e: any) => e.preventDefault());
+    this.spaceRef.removeEventListener("touchmove", (e: any) => e.preventDefault());
+    this.spaceRef.removeEventListener("mousewheel", (e: any) => e.preventDefault());
   }
 
   // Push to activeIds if not already present
@@ -119,11 +124,15 @@ export default class GraphDisplay extends Component<PropsType, StateType> {
   }
 
   onMouseMove = (e: any) => {
-    let { originX, originY, dragBg, preventDrag } = this.state;
-    this.setState({ scale: 1 });
+    let { originX, originY, dragBg, preventDrag, scale, panX, panY } = this.state;
+    
+    // Suppress navigation gestures
+    if (scale !== 1 || panX !== 0 || panY !== 0) {
+      this.setState({ scale: 1, panX: 0, panY: 0 });
+    }
 
     // Update origin-centered cursor coordinates
-    let bounds = this.myRef.getBoundingClientRect();
+    let bounds = this.spaceRef.getBoundingClientRect();
     let cursorX = e.clientX - bounds.left - originX;
     let cursorY = -(e.clientY - bounds.top - originY);
     this.setState({ cursorX, cursorY });
@@ -134,16 +143,22 @@ export default class GraphDisplay extends Component<PropsType, StateType> {
     }
   }
 
-  // Set zoom scale
+  // Handle pan XOR zoom (two-finger gestures count as onWheel)
   handleOnWheel = (e: any) => {
-    var scale = 1;
-    scale -= e.deltaY * zoomConstant;
-    this.setState({ scale });
+
+    // Pinch/zoom sets e.ctrlKey to true
+    if (e.ctrlKey) {
+      var scale = 1;
+      scale -= e.deltaY * zoomConstant;
+      this.setState({ scale, panX: 0, panY: 0 });
+    } else {
+      this.setState({ panX: e.deltaX, panY: e.deltaY, scale: 1 });
+    }
   };
 
   // Pass origin to node for offset
   renderNodes = () => {
-    let { activeIds, originX, originY, cursorX, cursorY, scale } = this.state;
+    let { activeIds, originX, originY, cursorX, cursorY, scale, panX, panY } = this.state;
 
     return this.state.nodes.map((node: NodeType, i: number) => {
 
@@ -164,6 +179,10 @@ export default class GraphDisplay extends Component<PropsType, StateType> {
         node.x = cursorX + scale * (node.x - cursorX);
         node.y = cursorY + scale * (node.y - cursorY);
       }
+
+      // Apply pan 
+      node.x -= panConstant * panX;
+      node.y += panConstant * panY;
       
       return (
         <Node
@@ -197,7 +216,7 @@ export default class GraphDisplay extends Component<PropsType, StateType> {
   render() {
     return (
       <StyledGraphDisplay
-        ref={element => this.myRef = element}
+        ref={element => this.spaceRef = element}
         onMouseMove={this.onMouseMove}
         onMouseDown={() => this.setState({ dragBg: true })}
         onMouseUp={() => this.setState({ dragBg: false })}

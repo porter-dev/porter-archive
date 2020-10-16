@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
 import styled from 'styled-components';
+import yaml from 'js-yaml';
 
 import { kindToIcon } from '../../../../shared/rosettaStone';
 
@@ -22,7 +23,7 @@ type StateType = {
 export default class ResourceItem extends Component<PropsType, StateType> {
   state = {
     expanded: false,
-    RawYAML: JSON.stringify(this.props.resource.RawYAML)
+    RawYAML: yaml.dump(this.props.resource.RawYAML)
   }
 
   renderIcon = (kind: string) => {

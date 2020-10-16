@@ -9,7 +9,8 @@ import ClusterSection from './ClusterSection';
 
 type PropsType = {
   logOut: () => void,
-  forceSidebar: boolean
+  forceSidebar: boolean,
+  setWelcome: (x: boolean) => void
 };
 
 type StateType = {
@@ -123,6 +124,7 @@ export default class Sidebar extends Component<PropsType, StateType> {
           <ClusterSection 
             forceCloseDrawer={this.state.forceCloseDrawer} 
             releaseDrawer={() => this.setState({ forceCloseDrawer: false })}
+            setWelcome={this.props.setWelcome}
           />
 
           <BottomSection>

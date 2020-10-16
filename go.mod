@@ -6,7 +6,7 @@ require (
 	github.com/Azure/go-autorest/autorest v0.11.1 // indirect
 	github.com/DATA-DOG/go-sqlmock v1.5.0
 	github.com/Masterminds/semver v1.5.0 // indirect
-	github.com/containerd/containerd v1.4.1 // indirect
+	github.com/containerd/containerd v1.4.1
 	github.com/cosmtrek/air v1.21.2 // indirect
 	github.com/creack/pty v1.1.11 // indirect
 	github.com/danieljoos/wincred v1.1.0 // indirect

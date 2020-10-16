@@ -41,7 +41,7 @@ export default class ClusterConfigModal extends Component<PropsType, StateType> 
     // Parse kubeconfig to retrieve all possible clusters
     api.getContexts('<token>', {}, { id: userId }, (err: any, res: any) => {
       if (err) {
-        setCurrentError(JSON.stringify(err));
+        // setCurrentError(JSON.stringify(err));
       } else {
         this.setState({ kubeContexts: res.data });
       }
@@ -57,7 +57,7 @@ export default class ClusterConfigModal extends Component<PropsType, StateType> 
 
     api.getUser('<token>', {}, { id: userId }, (err: any, res: any) => {
       if (err) {
-        setCurrentError(JSON.stringify(err));
+        // setCurrentError(JSON.stringify(err));
       } else if (res.data.rawKubeConfig !== '') {
         this.setState({ rawKubeconfig: res.data.rawKubeConfig });
       }
@@ -207,6 +207,7 @@ export default class ClusterConfigModal extends Component<PropsType, StateType> 
         </Header>
         <ModalTitle>Connect from Kubeconfig</ModalTitle>
         <TabSelector
+          currentTab={this.state.currentTab}
           options={tabOptions}
           setCurrentTab={(value: string) => this.setState({ currentTab: value })}
           tabWidth='120px'
@@ -250,10 +251,10 @@ const UploadButton = styled.button`
 `;
 
 const Checkbox = styled.div`
-  width: 15px;
-  height: 15px;
+  width: 16px;
+  height: 16px;
   border: 1px solid #ffffff44;
-  margin: 0px 15px 0px 12px;
+  margin: 1px 15px 0px 12px;
   border-radius: 3px;
   background: ${(props: { checked: boolean }) => props.checked ? '#ffffff22' : ''};
   display: flex;
@@ -262,7 +263,7 @@ const Checkbox = styled.div`
 
   > i {
     font-size: 12px;
-    padding-left: 1px;
+    padding-left: 0px;
     display: ${(props: { checked: boolean }) => props.checked ? '' : 'none'};
   }
 `;

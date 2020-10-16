@@ -2,36 +2,56 @@ import React, { Component } from 'react';
 import styled from 'styled-components';
 import close from '../../../../assets/close.png';
 
-import { ChartType } from '../../../../shared/types';
+import { ResourceType, ChartType, StorageType } from '../../../../shared/types';
 import { Context } from '../../../../shared/Context';
+import api from '../../../../shared/api';
 
 import TabSelector from '../../../../components/TabSelector';
 import RevisionSection from './RevisionSection';
 import ValuesYaml from './ValuesYaml';
-import OverviewSection from './OverviewSection';
+import GraphSection from './GraphSection';
+import ListSection from './ListSection';
 
 type PropsType = {
   currentChart: ChartType,
   setCurrentChart: (x: ChartType | null) => void,
-  refreshChart: () => void
+  refreshChart: () => void,
+  setSidebar: (x: boolean) => void
 };
 
 type StateType = {
   showRevisions: boolean,
   currentTab: string,
-  isExpanded: boolean
+  components: ResourceType[]
 };
 
 const tabOptions = [
-  { label: 'Chart Overview', value: 'overview' },
+  { label: 'Chart Overview', value: 'graph' },
+  { label: 'Search Chart', value: 'list' },
   { label: 'Values Editor', value: 'values' }
 ]
 
 export default class ExpandedChart extends Component<PropsType, StateType> {
   state = {
     showRevisions: false,
-    currentTab: 'overview',
-    isExpanded: false,
+    currentTab: 'graph',
+    components: [] as ResourceType[]
+  }
+
+  componentDidMount() {
+    let { currentCluster, setCurrentError } = this.context;
+    let { currentChart } = this.props;
+    api.getChartComponents('<token>', {
+      namespace: currentChart.namespace,
+      context: currentCluster,
+      storage: StorageType.Secret
+    }, { name: currentChart.name, revision: 0 }, (err: any, res: any) => {
+      if (err) {
+        console.log(err)
+      } else {
+        this.setState({ components: res.data });
+      }
+    });
   }
 
   renderIcon = () => {
@@ -52,14 +72,20 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
   }
 
   renderTabContents = () => {
-    let { currentChart, refreshChart } = this.props;
+    let { currentChart, refreshChart, setSidebar} = this.props;
 
-    if (this.state.currentTab === 'overview') {
+    if (this.state.currentTab === 'graph') {
       return (
-        <OverviewSection
-          toggleExpanded={() => this.setState({ isExpanded: !this.state.isExpanded })}
-          isExpanded={this.state.isExpanded}
+        <GraphSection
+          components={this.state.components}
+          setSidebar={setSidebar}
+        />
+      );
+    } else if (this.state.currentTab === 'list') {
+      return (
+        <ListSection
           currentChart={currentChart}
+          components={this.state.components}
         />
       );
     }
@@ -72,77 +98,6 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
     );
   }
 
-  renderInfo = () => {
-    let { currentChart, setCurrentChart, refreshChart } = this.props;
-    let chart = currentChart;
-
-    if (!this.state.isExpanded) {
-      return (
-        <HeaderWrapper>
-          <TitleSection>
-            <Title>
-              <IconWrapper>
-                {this.renderIcon()}
-              </IconWrapper>
-              {chart.name}
-            </Title>
-            <InfoWrapper>
-              <StatusIndicator>
-                <StatusColor status={chart.info.status} />
-                {chart.info.status}
-              </StatusIndicator>
-
-              <LastDeployed>
-                <Dot>•</Dot>Last deployed {this.readableDate(chart.info.last_deployed)}
-              </LastDeployed>
-            </InfoWrapper>
-
-            <TagWrapper>
-              Namespace
-            <NamespaceTag>
-                {chart.namespace}
-              </NamespaceTag>
-            </TagWrapper>
-          </TitleSection>
-
-          <CloseButton onClick={() => setCurrentChart(null)}>
-            <CloseButtonImg src={close} />
-          </CloseButton>
-
-          <RevisionSection
-            showRevisions={this.state.showRevisions}
-            toggleShowRevisions={() => this.setState({ showRevisions: !this.state.showRevisions })}
-            chart={chart}
-            refreshChart={refreshChart}
-          />
-
-          <TabSelector
-            options={tabOptions}
-            setCurrentTab={(value: string) => this.setState({ currentTab: value })}
-            tabWidth='120px'
-          />
-        </HeaderWrapper>
-      );
-    }
-
-    return (
-      <HeaderWrapper>
-        <TitleSection>
-          <Title>
-            <IconWrapper>
-              {this.renderIcon()}
-            </IconWrapper>
-            {chart.name}
-          </Title>
-        </TitleSection>
-
-        <CloseButton onClick={() => setCurrentChart(null)}>
-          <CloseButtonImg src={close} />
-        </CloseButton>
-      </HeaderWrapper>
-    );
-  }
-
   render() {
     let { currentChart, setCurrentChart, refreshChart } = this.props;
     let chart = currentChart;
@@ -151,7 +106,51 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
       <div>
         <CloseOverlay onClick={() => setCurrentChart(null)}/>
         <StyledExpandedChart>
-          {this.renderInfo()}
+          <HeaderWrapper>
+            <TitleSection>
+              <Title>
+                <IconWrapper>
+                  {this.renderIcon()}
+                </IconWrapper>
+                {chart.name}
+              </Title>
+              <InfoWrapper>
+                <StatusIndicator>
+                  <StatusColor status={chart.info.status} />
+                  {chart.info.status}
+                </StatusIndicator>
+
+                <LastDeployed>
+                  <Dot>•</Dot>Last deployed {this.readableDate(chart.info.last_deployed)}
+                </LastDeployed>
+              </InfoWrapper>
+
+              <TagWrapper>
+                Namespace
+              <NamespaceTag>
+                  {chart.namespace}
+                </NamespaceTag>
+              </TagWrapper>
+            </TitleSection>
+
+            <CloseButton onClick={() => setCurrentChart(null)}>
+              <CloseButtonImg src={close} />
+            </CloseButton>
+
+            <RevisionSection
+              showRevisions={this.state.showRevisions}
+              toggleShowRevisions={() => this.setState({ showRevisions: !this.state.showRevisions })}
+              chart={chart}
+              refreshChart={refreshChart}
+            />
+
+            <TabSelector
+              options={tabOptions}
+              currentTab={this.state.currentTab}
+              setCurrentTab={(value: string) => this.setState({ currentTab: value })}
+              tabWidth='120px'
+            />
+          </HeaderWrapper>
           <ContentSection>
             {this.renderTabContents()}
           </ContentSection>

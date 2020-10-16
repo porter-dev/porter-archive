@@ -38,7 +38,7 @@ export default class Edge extends Component<PropsType, StateType> {
     var cx = ((x1 + x2) / 2) - (length / 2);
     var cy = ((y1 + y2) / 2) - (thickness / 2);
     // angle
-    var angle = Math.atan2((y1-y2),(x1-x2))*(180/Math.PI);
+    var angle = Math.atan2((y1 - y2), (x1 - x2)) * (180 / Math.PI);
 
     return (
       <StyledEdge
@@ -48,9 +48,10 @@ export default class Edge extends Component<PropsType, StateType> {
         angle={angle}
         onMouseEnter={() => setCurrentEdge(edge)}
         onMouseLeave={() => setCurrentEdge(null)}
+        type={edge.type}
       >
-        <VisibleLine color={edgeColors[edge.type]} />
         {this.state.showArrowHead ? <ArrowHead color={edgeColors[edge.type]} /> : null}
+        <VisibleLine color={edgeColors[edge.type]} />
       </StyledEdge>
     );
   }
@@ -58,12 +59,11 @@ export default class Edge extends Component<PropsType, StateType> {
 
 const ArrowHead = styled.div`
   width: 0; 
-  height: 0; 
+  height: 0;
+  margin-left: 20px;
   border-top: 5px solid transparent;
-  border-bottom: 5px solid transparent;
-  margin-right: 20px;
-
-  border-left: 10px solid ${(props: { color: string }) => props.color ? props.color : '#ffffff66'};
+  border-bottom: 5px solid transparent; 
+  border-right: 10px solid ${(props: { color: string }) => props.color ? props.color : '#ffffff66'};
 `;
 
 const VisibleLine = styled.section`
@@ -83,7 +83,7 @@ const StyledEdge: any = styled.div.attrs((props: any) => ({
   position: absolute;
   height: ${thickness}px;
   cursor: pointer;
-  z-index: 0;
+  z-index: ${(props: { type: string, color: string }) => props.type == 'ControlRel' ? '1' : '0'};
   display: flex;
   align-items: center;
   justify-content: center;

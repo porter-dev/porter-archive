@@ -8,6 +8,6 @@ export const kindToIcon: any = {
 }
 
 export const edgeColors: any = {
-  'ControlRel': '#fcb603',
-  'LabelRel': '#9a93fa'
+  'LabelRel': '#949EFF',
+  'ControlRel': '#fcb603'
 };

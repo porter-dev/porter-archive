@@ -207,6 +207,7 @@ export default class ClusterConfigModal extends Component<PropsType, StateType> 
         </Header>
         <ModalTitle>Connect from Kubeconfig</ModalTitle>
         <TabSelector
+          currentTab={this.state.currentTab}
           options={tabOptions}
           setCurrentTab={(value: string) => this.setState({ currentTab: value })}
           tabWidth='120px'

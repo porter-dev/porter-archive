@@ -58,7 +58,7 @@ func init() {
 		"print",
 		"p",
 		false,
-		"print result to stdout",
+		"print result to stdout, without writing to the fs",
 	)
 }
 
@@ -75,12 +75,6 @@ func generate(kubeconfigPath string, output string, print bool, contexts []strin
 		return err
 	}
 
-	err = clientcmd.WriteToFile(rawConf, output)
-
-	if err != nil {
-		return err
-	}
-
 	if print {
 		bytes, err := clientcmd.Write(rawConf)
 
@@ -89,6 +83,14 @@ func generate(kubeconfigPath string, output string, print bool, contexts []strin
 		}
 
 		fmt.Printf(string(bytes))
+
+		return nil
+	}
+
+	err = clientcmd.WriteToFile(rawConf, output)
+
+	if err != nil {
+		return err
 	}
 
 	return nil

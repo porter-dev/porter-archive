@@ -24,6 +24,11 @@ type LabelRel struct {
 	Relation
 }
 
+// SpecRel connects objects via various spec properties.
+type SpecRel struct {
+	Relation
+}
+
 // ParsedObjs has methods GetControlRel and GetLabelRel that updates its objects array.
 type ParsedObjs struct {
 	Objects []Object
@@ -33,6 +38,7 @@ type ParsedObjs struct {
 type Relations struct {
 	ControlRels []ControlRel
 	LabelRels   []LabelRel
+	SpecRels    []SpecRel
 }
 
 // MatchLabel is used to match Equality label selector.
@@ -78,10 +84,11 @@ func (parsed *ParsedObjs) GetControlRel() {
 					}
 
 					pod := Object{
-						ID:      cid,
-						Kind:    "Pod",
-						Name:    obj.Name + "-" + strconv.Itoa(j), // tentative name pre-deploy
-						RawYAML: template,
+						ID:        cid,
+						Kind:      "Pod",
+						Name:      obj.Name + "-" + strconv.Itoa(j), // tentative name pre-deploy
+						Namespace: obj.Namespace,
+						RawYAML:   template,
 						Relations: Relations{
 							ControlRels: []ControlRel{
 								crel,
@@ -154,6 +161,61 @@ func (parsed *ParsedObjs) GetLabelRel() {
 
 		parsed.Objects[i].Relations.LabelRels = lrels
 	}
+}
+
+// GetSpecRel draws relationships between two objects that are tied via various fields in their spec.
+func (parsed *ParsedObjs) GetSpecRel() {
+	for i, o := range parsed.Objects {
+		switch o.Kind {
+		case "ClusterRoleBinding", "RoleBinding":
+			tid := parsed.findRBACTargets(o.ID, o.RawYAML)
+			rels := o.Relations.SpecRels
+			for _, id := range tid {
+				newrel := SpecRel{
+					Relation{
+						Source: o.ID,
+						Target: id,
+					},
+				}
+				rels = append(rels, newrel)
+			}
+			parsed.Objects[i].Relations.SpecRels = rels
+		}
+	}
+}
+
+// SpecRel helpers
+func (parsed *ParsedObjs) findRBACTargets(parentID int, yaml map[string]interface{}) []int {
+	roleRef := getField(yaml, "roleRef")
+	subjects := getField(yaml, "subjects")
+	rules := append(subjects.([]interface{}), roleRef)
+	targets := []int{}
+	for i, o := range parsed.Objects {
+		for _, r := range rules {
+			tr := r.(map[string]interface{})
+
+			newrel := SpecRel{
+				Relation{
+					Source: parentID,
+					Target: o.ID,
+				},
+			}
+
+			// first consider case of targets added via subjects, which are namespace scoped.
+			if tr["namespace"] != nil && o.Kind == tr["kind"] &&
+				o.Name == tr["name"] && o.Namespace == tr["namespace"] {
+
+				// Add bidirectional link from children as well.
+				parsed.Objects[i].Relations.SpecRels = append(parsed.Objects[i].Relations.SpecRels, newrel)
+				targets = append(targets, o.ID)
+
+			} else if tr["namespace"] == nil && o.Kind == tr["kind"] && o.Name == tr["name"] {
+				parsed.Objects[i].Relations.SpecRels = append(parsed.Objects[i].Relations.SpecRels, newrel)
+				targets = append(targets, o.ID)
+			}
+		}
+	}
+	return targets
 }
 
 func addMatchLabels(matchLabels []MatchLabel, ml map[string]interface{}) []MatchLabel {

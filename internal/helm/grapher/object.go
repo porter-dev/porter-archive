@@ -5,6 +5,7 @@ type Object struct {
 	ID        int
 	Kind      string
 	Name      string
+	Namespace string
 	RawYAML   map[string]interface{}
 	Relations Relations
 }
@@ -17,13 +18,15 @@ func ParseObjs(objs []map[string]interface{}) []Object {
 	for i, obj := range objs {
 		kind := getField(obj, "kind").(string)
 		name := getField(obj, "metadata", "name").(string)
+		namespace := getField(obj, "metadata", "namespace").(string)
 
 		// First add the object that appears on the YAML
 		parsedObj := Object{
-			ID:      i,
-			Kind:    kind,
-			Name:    name,
-			RawYAML: obj,
+			ID:        i,
+			Kind:      kind,
+			Name:      name,
+			Namespace: namespace,
+			RawYAML:   obj,
 			Relations: Relations{
 				ControlRels: []ControlRel{},
 				LabelRels:   []LabelRel{},

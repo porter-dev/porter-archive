@@ -132,6 +132,7 @@ func start(
 	home := homedir.HomeDir()
 	outputConfPath := filepath.Join(home, ".porter", "porter.kubeconfig")
 	containerConfPath := "/porter/porter.kubeconfig"
+	port := 8080
 
 	// if not insecure, or username/pw set incorrectly, prompt for new username/pw
 	if username, pw, err = credstore.Get(); !insecure && err != nil {
@@ -285,7 +286,7 @@ func start(
 	startOpts := docker.PorterStartOpts{
 		Name:          "porter_server",
 		Image:         "porter1/porter:" + imageTag,
-		HostPort:      8080,
+		HostPort:      uint(port),
 		ContainerPort: 8080,
 		Mounts:        mounts,
 		VolumeMap:     volumesMap,
@@ -299,7 +300,7 @@ func start(
 		return err
 	}
 
-	fmt.Println("Server ready: listening on localhost:8080")
+	fmt.Printf("Server ready: listening on localhost:%d\n", port)
 
 	agent.WaitForContainerStop(id)
 

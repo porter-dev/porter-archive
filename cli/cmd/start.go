@@ -299,6 +299,8 @@ func start(
 		return err
 	}
 
+	fmt.Println("Server ready: listening on localhost:8080")
+
 	agent.WaitForContainerStop(id)
 
 	return nil

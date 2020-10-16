@@ -38,6 +38,25 @@ export interface ResourceType {
   Relations: any
 }
 
+export interface NodeType {
+  id: number,
+  name: string,
+  kind: string,
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+  toCursorX?: number,
+  toCursorY?: number
+}
+
+export interface EdgeType {
+  type: string,
+  source: number,
+  target: number
+}
+
+
 export enum StorageType {
   Secret = 'secret',
   ConfigMap = 'configmap',

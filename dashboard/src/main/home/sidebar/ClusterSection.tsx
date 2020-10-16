@@ -10,7 +10,8 @@ import Drawer from './Drawer';
 
 type PropsType = {
   forceCloseDrawer: boolean,
-  releaseDrawer: () => void
+  releaseDrawer: () => void,
+  setWelcome: (x: boolean) => void
 };
 
 type StateType = {
@@ -34,9 +35,12 @@ export default class ClusterSection extends Component<PropsType, StateType> {
     // TODO: query with selected filter once implemented
     api.getContexts('<token>', {}, { id: userId }, (err: any, res: any) => {
       if (err) {
-        setCurrentError('Could not read clusters: ' + JSON.stringify(err));
-      } else {
 
+        // Assume intializing if no contexts
+        this.props.setWelcome(true);
+      } else {
+        this.props.setWelcome(false);
+        
         // TODO: handle uninitialized kubeconfig
         if (res.data) {
 

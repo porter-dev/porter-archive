@@ -1,17 +1,12 @@
 import React, { Component } from 'react';
 import styled from 'styled-components';
+import yaml from 'js-yaml';
+
+import { kindToIcon } from '../../../../shared/rosettaStone';
 
 import { ResourceType } from '../../../../shared/types';
 import YamlEditor from '../../../../components/YamlEditor';
 
-const kindToIcon: any = {
-  'Deployment': 'category',
-  'Pod': 'fiber_manual_record',
-  'Service': 'alt_route',
-  'Ingress': 'sensor_door',
-  'StatefulSet': 'location_city',
-  'Secret': 'vpn_key',
-}
 
 type PropsType = {
   resource: ResourceType,
@@ -28,7 +23,7 @@ type StateType = {
 export default class ResourceItem extends Component<PropsType, StateType> {
   state = {
     expanded: false,
-    RawYAML: JSON.stringify(this.props.resource.RawYAML)
+    RawYAML: yaml.dump(this.props.resource.RawYAML)
   }
 
   renderIcon = (kind: string) => {

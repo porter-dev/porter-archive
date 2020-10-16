@@ -25,6 +25,18 @@ export default class Login extends Component<PropsType, StateType> {
     credentialError: false
   }
 
+  handleKeyDown = (e: any) => {
+    e.key === 'Enter' ? this.handleLogin() : null;
+  }
+
+  componentDidMount() {
+    document.addEventListener("keydown", this.handleKeyDown);
+  }
+
+  componentWillUnmount() {
+    document.removeEventListener("keydown", this.handleKeyDown);
+  }
+
   handleLogin = (): void => {
     let { email, password } = this.state;
     let { authenticate } = this.props;

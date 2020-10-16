@@ -7,28 +7,24 @@ export interface selectOption {
 }
 
 type PropsType = {
+  currentTab: string,
   options: selectOption[],
   setCurrentTab: (value: string) => void,
   tabWidth?: string  
 };
 
 type StateType = {
-  currentTab: string
 };
 
 export default class TabSelector extends Component<PropsType, StateType> {
-  state = {
-    currentTab: 'overview', 
-  }
 
   renderLine = (tab: string): JSX.Element | undefined => {
-    if (this.state.currentTab === tab) {
+    if (this.props.currentTab === tab) {
       return <Highlight />
     }
   };
 
   handleTabClick = (value: string) => {
-    this.setState({ currentTab: value });
     this.props.setCurrentTab(value);
   }
 

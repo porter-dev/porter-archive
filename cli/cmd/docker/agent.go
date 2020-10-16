@@ -168,6 +168,7 @@ func (a *Agent) PullImage(image string) error {
 	return nil
 }
 
+// WaitForContainerStop waits until a container has stopped to exit
 func (a *Agent) WaitForContainerStop(id string) error {
 	// wait for container to stop before exit
 	statusCh, errCh := a.client.ContainerWait(a.ctx, id, container.WaitConditionNotRunning)

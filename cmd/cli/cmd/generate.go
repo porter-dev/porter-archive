@@ -12,9 +12,10 @@ import (
 )
 
 var (
-	outputFile string
-	print      *bool
-	contexts   *[]string
+	outputFile     string
+	kubeconfigPath string
+	print          *bool
+	contexts       *[]string
 )
 
 // generateCmd represents the generate command
@@ -22,7 +23,7 @@ var generateCmd = &cobra.Command{
 	Use:   "generate",
 	Short: "Generates a kubeconfig with certificate data added",
 	Run: func(cmd *cobra.Command, args []string) {
-		generate(outputFile, *print, *contexts)
+		generate(kubeconfigPath, outputFile, *print, *contexts)
 	},
 }
 
@@ -39,6 +40,14 @@ func init() {
 		"output file location",
 	)
 
+	generateCmd.PersistentFlags().StringVarP(
+		&kubeconfigPath,
+		"kubeconfig",
+		"k",
+		"",
+		"path to kubeconfig",
+	)
+
 	contexts = generateCmd.PersistentFlags().StringArray(
 		"contexts",
 		nil,
@@ -53,8 +62,8 @@ func init() {
 	)
 }
 
-func generate(output string, print bool, contexts []string) error {
-	conf, err := kubernetes.GetConfigFromHostWithCertData("", contexts)
+func generate(kubeconfigPath string, output string, print bool, contexts []string) error {
+	conf, err := kubernetes.GetConfigFromHostWithCertData(kubeconfigPath, contexts)
 
 	if err != nil {
 		return err

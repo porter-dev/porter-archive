@@ -4,7 +4,7 @@ import (
 	"log"
 	"testing"
 
-	"github.com/porter-dev/porter/cmd/cli/cmd/credstore"
+	"github.com/porter-dev/porter/cli/cmd/credstore"
 )
 
 func TestSetGet(t *testing.T) {

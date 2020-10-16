@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/porter-dev/porter/cmd/cli/cmd"
+	"github.com/porter-dev/porter/cli/cmd"
 )
 
 func main() {

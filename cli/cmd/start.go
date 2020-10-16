@@ -5,10 +5,10 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/porter-dev/porter/cmd/cli/cmd/docker"
+	"github.com/porter-dev/porter/cli/cmd/docker"
 	"k8s.io/client-go/util/homedir"
 
-	"github.com/porter-dev/porter/cmd/cli/cmd/credstore"
+	"github.com/porter-dev/porter/cli/cmd/credstore"
 
 	"github.com/spf13/cobra"
 

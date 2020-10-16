@@ -15,7 +15,8 @@ import ListSection from './ListSection';
 type PropsType = {
   currentChart: ChartType,
   setCurrentChart: (x: ChartType | null) => void,
-  refreshChart: () => void
+  refreshChart: () => void,
+  setSidebar: (x: boolean) => void
 };
 
 type StateType = {
@@ -71,13 +72,14 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
   }
 
   renderTabContents = () => {
-    let { currentChart, refreshChart } = this.props;
+    let { currentChart, refreshChart, setSidebar} = this.props;
 
     if (this.state.currentTab === 'graph') {
       return (
         <GraphSection
           currentChart={currentChart}
           components={this.state.components}
+          setSidebar={setSidebar}
         />
       );
     } else if (this.state.currentTab === 'list') {

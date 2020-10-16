@@ -11,7 +11,8 @@ import NamespaceSelector from './NamespaceSelector';
 import ExpandedChart from './expanded-chart/ExpandedChart';
 
 type PropsType = {
-  currentCluster: string
+  currentCluster: string,
+  setSidebar: (x: boolean) => void
 };
 
 type StateType = {
@@ -51,7 +52,7 @@ export default class Dashboard extends Component<PropsType, StateType> {
   }
 
   renderContents = () => {
-    let { currentCluster } = this.props;
+    let { currentCluster, setSidebar } = this.props;
 
     if (this.state.currentChart) {
       return (
@@ -59,6 +60,7 @@ export default class Dashboard extends Component<PropsType, StateType> {
           currentChart={this.state.currentChart}
           refreshChart={this.refreshChart}
           setCurrentChart={(x: ChartType | null) => this.setState({ currentChart: x })}
+          setSidebar={setSidebar}
         />
       );
     }

@@ -14,18 +14,20 @@ type PropsType = {
 };
 
 type StateType = {
-  forceSidebar: boolean
+  forceSidebar: boolean,
+  showWelcome: boolean
 };
 
 export default class Home extends Component<PropsType, StateType> {
   state = {
-    forceSidebar: true
+    forceSidebar: true,
+    showWelcome: false
   }
 
   renderDashboard = () => {
     let { currentCluster, setCurrentModal, setCurrentModalData } = this.context;
 
-    if (currentCluster === '') {
+    if (currentCluster === '' || this.state.showWelcome) {
       return (
         <DashboardWrapper>
           <Placeholder>
@@ -67,7 +69,11 @@ export default class Home extends Component<PropsType, StateType> {
           <ClusterConfigModal />
         </ReactModal>
 
-        <Sidebar logOut={this.props.logOut} forceSidebar={this.state.forceSidebar} />
+        <Sidebar
+          logOut={this.props.logOut}
+          forceSidebar={this.state.forceSidebar}
+          setWelcome={(x: boolean) => this.setState({ showWelcome: x })}
+        />
         <StyledDashboard>
           {this.renderDashboard()}
         </StyledDashboard>

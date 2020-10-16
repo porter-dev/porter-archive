@@ -1,3 +1,5 @@
+// +build cli
+
 package main
 
 import (

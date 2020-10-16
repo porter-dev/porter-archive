@@ -110,13 +110,10 @@ func (uuf *UpdateUserForm) ToUser(repo repository.UserRepository) (*models.User,
 
 	contextsJoin := strings.Join(contexts, ",")
 
-	return &models.User{
-		Model: gorm.Model{
-			ID: uuf.ID,
-		},
-		Contexts:      contextsJoin,
-		RawKubeConfig: rawBytes,
-	}, nil
+	savedUser.Contexts = contextsJoin
+	savedUser.RawKubeConfig = rawBytes
+
+	return savedUser, nil
 }
 
 // DeleteUserForm represents the accepted values for deleting a user

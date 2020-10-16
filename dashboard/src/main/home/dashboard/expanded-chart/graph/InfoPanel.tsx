@@ -3,6 +3,7 @@ import styled from 'styled-components';
 
 import { kindToIcon, edgeColors } from '../../../../../shared/rosettaStone';
 import { NodeType, EdgeType} from '../../../../../shared/types';
+import Edge from './Edge';
 
 type PropsType = {
   currentNode: NodeType,
@@ -50,7 +51,7 @@ export default class InfoPanel extends Component<PropsType, StateType> {
       return (
         <EdgeInfo>
           {this.renderColorBlock(currentEdge.type)}
-          {currentEdge.type}
+          {this.renderEdgeMessage(currentEdge)}
         </EdgeInfo>
       )
     }
@@ -63,6 +64,18 @@ export default class InfoPanel extends Component<PropsType, StateType> {
         Hover over a node or edge to display info.
       </Div>
     )
+  }
+
+  renderEdgeMessage = (edge: EdgeType) => {
+    // TODO: render more information about edges (labels, spec property field)
+    switch(edge.type) {
+      case "ControlRel":
+        return "Controller Relation"
+      case "LabelRel":
+        return "Label Relation"
+      case "SpecRel":
+        return "Spec Relation"
+    }
   }
 
   render() {

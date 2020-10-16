@@ -166,25 +166,85 @@ func (parsed *ParsedObjs) GetLabelRel() {
 // GetSpecRel draws relationships between two objects that are tied via various fields in their spec.
 func (parsed *ParsedObjs) GetSpecRel() {
 	for i, o := range parsed.Objects {
+		tid := []int{}
 		switch o.Kind {
 		case "ClusterRoleBinding", "RoleBinding":
-			tid := parsed.findRBACTargets(o.ID, o.RawYAML)
-			rels := o.Relations.SpecRels
-			for _, id := range tid {
-				newrel := SpecRel{
-					Relation{
-						Source: o.ID,
-						Target: id,
-					},
-				}
-				rels = append(rels, newrel)
+			tid = parsed.findRBACTargets(o.ID, o.RawYAML)
+		case "Ingress":
+			// service and resource are mutually exclusive backend types.
+			kind := "Service"
+			name := getField(o.RawYAML, "spec", "rules", "http", "paths", "backend", "service", "name")
+			if name == nil {
+				name = getField(o.RawYAML, "spec", "rules", "http", "paths", "backend", "resource", "name")
+				kind = getField(o.RawYAML, "spec", "rules", "http", "paths", "backend", "resource", "kind").(string)
 			}
-			parsed.Objects[i].Relations.SpecRels = rels
+			tid = parsed.findObjectByNameAndKind(o.ID, name.(string), kind)
+		case "StatefulSet":
+			serviceName := getField(o.RawYAML, "spec", "serviceName").(string)
+			tid = append(tid, parsed.findObjectByNameAndKind(o.ID, serviceName, "Service")...)
+		case "Pod":
+			volume := getField(o.RawYAML, "spec", "volumes")
+			imageSecrets := getField(o.RawYAML, "spec", "ImagePullSecrets")
+			serviceAccount := getField(o.RawYAML, "spec", "serviceaccountname")
+
+			tid = append(tid, parsed.findObjectByNameAndKind(o.ID, imageSecrets, "Secret")...)
+			tid = append(tid, parsed.findObjectByNameAndKind(o.ID, serviceAccount, "ServiceAccount")...)
+
+			for _, v := range volume.([]interface{}) {
+				vt := v.(map[string]interface{})
+				configMap := getField(vt, "configMap", "name")
+				pvc := getField(vt, "persistentVolumeClaim", "claimName")
+				secret := getField(vt, "secret", "secretName")
+
+				tid = append(tid, parsed.findObjectByNameAndKind(o.ID, configMap.(string), "ConfigMap")...)
+				tid = append(tid, parsed.findObjectByNameAndKind(o.ID, pvc.(string), "PersistentVolumeClaim")...)
+				tid = append(tid, parsed.findObjectByNameAndKind(o.ID, secret.(string), "Secret")...)
+			}
 		}
+
+		// Add edges to parent
+		rels := o.Relations.SpecRels
+		for _, id := range tid {
+			newrel := SpecRel{
+				Relation{
+					Source: o.ID,
+					Target: id,
+				},
+			}
+			rels = append(rels, newrel)
+		}
+		parsed.Objects[i].Relations.SpecRels = rels
+
 	}
 }
 
 // SpecRel helpers
+func (parsed *ParsedObjs) findObjectByNameAndKind(parentID int, name interface{}, kind string) []int {
+	targets := []int{}
+
+	if name == nil {
+		return targets
+	}
+
+	name = name.(string)
+	for i, o := range parsed.Objects {
+		newrel := SpecRel{
+			Relation{
+				Source: parentID,
+				Target: o.ID,
+			},
+		}
+
+		if o.Name == name && o.Kind == kind {
+			// Add bidirectional link from children as well.
+			parsed.Objects[i].Relations.SpecRels = append(parsed.Objects[i].Relations.SpecRels, newrel)
+			targets = append(targets, o.ID)
+			return targets
+		}
+	}
+	return targets
+}
+
 func (parsed *ParsedObjs) findRBACTargets(parentID int, yaml map[string]interface{}) []int {
 	roleRef := getField(yaml, "roleRef")
 	subjects := getField(yaml, "subjects")

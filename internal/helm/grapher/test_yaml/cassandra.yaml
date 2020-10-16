@@ -219,6 +219,9 @@ spec:
               mountPath: /bitnami/cassandra
             
       volumes:
+      - name: config-volume
+        configMap:
+          name: config-example
   volumeClaimTemplates:
     - metadata:
         name: data

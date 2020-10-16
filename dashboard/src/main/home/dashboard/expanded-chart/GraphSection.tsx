@@ -10,7 +10,8 @@ import Loading from '../../../../components/Loading';
 
 type PropsType = {
   currentChart: ChartType,
-  components: ResourceType[]
+  components: ResourceType[],
+  setSidebar: (x: boolean) => void
 };
 
 type StateType = {
@@ -35,13 +36,19 @@ export default class GraphSection extends Component<PropsType, StateType> {
     return <Loading offset='-30px' />;
   }
 
+  handleClick = () => {
+    this.setState({ isExpanded: !this.state.isExpanded }, () => {
+      this.props.setSidebar(!this.state.isExpanded);
+    });
+  }
+
   render() {
     return (
       <StyledGraphSection isExpanded={this.state.isExpanded}>
         {this.renderContents()}
         <ButtonSection>
           <ExpandButton
-            onClick={() => this.setState({ isExpanded: !this.state.isExpanded })}
+            onClick={this.handleClick}
           >
             <i className="material-icons">
               {this.state.isExpanded ? 'close_fullscreen' : 'open_in_full'}

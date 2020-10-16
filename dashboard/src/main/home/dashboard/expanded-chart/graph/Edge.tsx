@@ -4,7 +4,7 @@ import styled from 'styled-components';
 import { edgeColors } from '../../../../../shared/rosettaStone';
 import { EdgeType } from '../../../../../shared/types';
 
-const thickness = 8;
+const thickness = 12;
 
 type PropsType = {
   x1: number,
@@ -67,7 +67,7 @@ const ArrowHead = styled.div`
 `;
 
 const VisibleLine = styled.section`
-  height: 1px;
+  height: 2px;
   width: 100%;
   background: ${(props: { color: string }) => props.color ? props.color : '#ffffff66'};
 `;

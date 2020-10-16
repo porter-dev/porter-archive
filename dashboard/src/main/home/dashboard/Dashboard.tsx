@@ -3,7 +3,7 @@ import styled from 'styled-components';
 import gradient from '../../../assets/gradient.jpg';
 
 import { Context } from '../../../shared/Context';
-import { ChartType } from '../../../shared/types';
+import { ChartType, StorageType } from '../../../shared/types';
 import api from '../../../shared/api';
 
 import ChartList from './chart/ChartList';
@@ -11,6 +11,8 @@ import NamespaceSelector from './NamespaceSelector';
 import ExpandedChart from './expanded-chart/ExpandedChart';
 
 type PropsType = {
+  currentCluster: string,
+  setSidebar: (x: boolean) => void
 };
 
 type StateType = {
@@ -24,13 +26,22 @@ export default class Dashboard extends Component<PropsType, StateType> {
     currentChart: null as (ChartType | null)
   }
 
+  componentDidUpdate(prevProps: PropsType) {
+
+    // Reset namespace filter and close expanded chart on cluster change
+    if (prevProps.currentCluster !== this.props.currentCluster) {
+      this.setState({ namespace: '', currentChart: null });
+    }
+  }
+
   // Allows rollback to update the top-level chart
   refreshChart = () => {
-    let { currentCluster } = this.context;
+    let { currentCluster } = this.props;
+    console.log(currentCluster)
     api.getChart('<token>', {
       namespace: this.state.namespace,
       context: currentCluster,
-      storage: 'secret'
+      storage: StorageType.Secret
     }, { name: this.state.currentChart.name, revision: 0 }, (err: any, res: any) => {
       if (err) {
         console.log(err)
@@ -41,7 +52,7 @@ export default class Dashboard extends Component<PropsType, StateType> {
   }
 
   renderContents = () => {
-    let { currentCluster } = this.context;
+    let { currentCluster, setSidebar } = this.props;
 
     if (this.state.currentChart) {
       return (
@@ -49,6 +60,7 @@ export default class Dashboard extends Component<PropsType, StateType> {
           currentChart={this.state.currentChart}
           refreshChart={this.refreshChart}
           setCurrentChart={(x: ChartType | null) => this.setState({ currentChart: x })}
+          setSidebar={setSidebar}
         />
       );
     }

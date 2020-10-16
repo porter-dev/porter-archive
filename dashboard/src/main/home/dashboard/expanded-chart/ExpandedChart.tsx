@@ -2,24 +2,56 @@ import React, { Component } from 'react';
 import styled from 'styled-components';
 import close from '../../../../assets/close.png';
 
-import { ChartType } from '../../../../shared/types';
+import { ResourceType, ChartType, StorageType } from '../../../../shared/types';
 import { Context } from '../../../../shared/Context';
+import api from '../../../../shared/api';
 
+import TabSelector from '../../../../components/TabSelector';
 import RevisionSection from './RevisionSection';
+import ValuesYaml from './ValuesYaml';
+import GraphSection from './GraphSection';
+import ListSection from './ListSection';
 
 type PropsType = {
   currentChart: ChartType,
   setCurrentChart: (x: ChartType | null) => void,
-  refreshChart: () => void
+  refreshChart: () => void,
+  setSidebar: (x: boolean) => void
 };
 
 type StateType = {
-  showRevisions: boolean
+  showRevisions: boolean,
+  currentTab: string,
+  components: ResourceType[]
 };
+
+const tabOptions = [
+  { label: 'Chart Overview', value: 'graph' },
+  { label: 'Search Chart', value: 'list' },
+  { label: 'Values Editor', value: 'values' }
+]
 
 export default class ExpandedChart extends Component<PropsType, StateType> {
   state = {
-    showRevisions: false
+    showRevisions: false,
+    currentTab: 'graph',
+    components: [] as ResourceType[]
+  }
+
+  componentDidMount() {
+    let { currentCluster, setCurrentError } = this.context;
+    let { currentChart } = this.props;
+    api.getChartComponents('<token>', {
+      namespace: currentChart.namespace,
+      context: currentCluster,
+      storage: StorageType.Secret
+    }, { name: currentChart.name, revision: 0 }, (err: any, res: any) => {
+      if (err) {
+        console.log(err)
+      } else {
+        this.setState({ components: res.data });
+      }
+    });
   }
 
   renderIcon = () => {
@@ -39,75 +71,119 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
     return `${time} on ${date}`;
   }
 
+  renderTabContents = () => {
+    let { currentChart, refreshChart, setSidebar} = this.props;
+
+    if (this.state.currentTab === 'graph') {
+      return (
+        <GraphSection
+          components={this.state.components}
+          setSidebar={setSidebar}
+        />
+      );
+    } else if (this.state.currentTab === 'list') {
+      return (
+        <ListSection
+          currentChart={currentChart}
+          components={this.state.components}
+        />
+      );
+    }
+
+    return (
+      <ValuesYaml
+        currentChart={currentChart}
+        refreshChart={refreshChart}
+      />
+    );
+  }
+
   render() {
     let { currentChart, setCurrentChart, refreshChart } = this.props;
     let chart = currentChart;
 
     return ( 
-      <StyledExpandedChart>
-        <TitleSection>
-          <Title>
-            <IconWrapper>
-              {this.renderIcon()}
-            </IconWrapper>
-            {chart.name}
-          </Title>
-          <InfoWrapper>
-            <StatusIndicator>
-              <StatusColor status={chart.info.status} />
-              {chart.info.status}
-            </StatusIndicator>
+      <div>
+        <CloseOverlay onClick={() => setCurrentChart(null)}/>
+        <StyledExpandedChart>
+          <HeaderWrapper>
+            <TitleSection>
+              <Title>
+                <IconWrapper>
+                  {this.renderIcon()}
+                </IconWrapper>
+                {chart.name}
+              </Title>
+              <InfoWrapper>
+                <StatusIndicator>
+                  <StatusColor status={chart.info.status} />
+                  {chart.info.status}
+                </StatusIndicator>
 
-            <LastDeployed>
-              <Dot>•</Dot>Last deployed {this.readableDate(chart.info.last_deployed)}
-            </LastDeployed>
-          </InfoWrapper>
+                <LastDeployed>
+                  <Dot>•</Dot>Last deployed {this.readableDate(chart.info.last_deployed)}
+                </LastDeployed>
+              </InfoWrapper>
 
-          <TagWrapper>
-            Namespace
-            <NamespaceTag>
-              {chart.namespace}
-            </NamespaceTag>
-          </TagWrapper>
-        </TitleSection>
+              <TagWrapper>
+                Namespace
+              <NamespaceTag>
+                  {chart.namespace}
+                </NamespaceTag>
+              </TagWrapper>
+            </TitleSection>
 
-        <CloseButton onClick={() => setCurrentChart(null)}>
-          <CloseButtonImg src={close} />
-        </CloseButton>
+            <CloseButton onClick={() => setCurrentChart(null)}>
+              <CloseButtonImg src={close} />
+            </CloseButton>
 
-        <RevisionSection
-          showRevisions={this.state.showRevisions}
-          toggleShowRevisions={() => this.setState({ showRevisions: !this.state.showRevisions })}
-          chart={chart}
-          refreshChart={refreshChart}
-        />
+            <RevisionSection
+              showRevisions={this.state.showRevisions}
+              toggleShowRevisions={() => this.setState({ showRevisions: !this.state.showRevisions })}
+              chart={chart}
+              refreshChart={refreshChart}
+            />
 
-        <ChartSection>
-          <Placeholder>(Under construction)</Placeholder>
-        </ChartSection>
-      </StyledExpandedChart>
+            <TabSelector
+              options={tabOptions}
+              currentTab={this.state.currentTab}
+              setCurrentTab={(value: string) => this.setState({ currentTab: value })}
+              tabWidth='120px'
+            />
+          </HeaderWrapper>
+          <ContentSection>
+            {this.renderTabContents()}
+          </ContentSection>
+        </StyledExpandedChart>
+      </div>
     );
   }
 }
 
 ExpandedChart.contextType = Context;
 
-const Placeholder = styled.div`
-  color: #ffffff66;
-  padding-bottom: 30px;
+const CloseOverlay = styled.div`
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
 `;
 
-const ChartSection = styled.div`
+const HeaderWrapper = styled.div`
+  margin-bottom: 20px;
+`;
+
+const ContentSection = styled.div`
   display: flex;
-  margin-top: 20px;
   border-radius: 5px;
   flex: 1;
   width: 100%;
-  background: #ffffff11;
   display: flex;
   justify-content: center;
   align-items: center;
   font-size: 13px;
+  overflow-y: auto;
 `;
 
 const StatusColor = styled.div`
@@ -152,13 +228,14 @@ const TagWrapper = styled.div`
   border: 1px solid #ffffff44;
   border-radius: 3px;
   padding-left: 5px;
+  background: #26282E;
 `;
 
 const NamespaceTag = styled.div`
   height: 20px;
   margin-left: 6px;
   color: #aaaabb;
-  background: #ffffff22;
+  background: #43454A;
   border-radius: 3px;
   font-size: 12px;
   display: flex;

@@ -35,7 +35,11 @@ type DBConf struct {
 	Password string `env:"DB_PASS,default=porter"`
 	DbName   string `env:"DB_NAME,default=porter"`
 
-	SQLLite     bool   `env:"QUICK_START,default=false"`
+	AdminInit     bool   `env:"ADMIN_INIT,default=true"`
+	AdminEmail    string `env:"ADMIN_EMAIL,default=admin@example.com"`
+	AdminPassword string `env:"ADMIN_PASSWORD,default=password"`
+
+	SQLLite     bool   `env:"SQL_LITE,default=false"`
 	SQLLitePath string `env:"SQL_LITE_PATH,default=/porter/porter.db"`
 }
 

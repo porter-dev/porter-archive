@@ -21,7 +21,7 @@ type startOps struct {
 	kubeconfigPath string
 	contexts       *[]string
 	imageTag       string `form:"required"`
-	db             string `form:"oneof=sqlite memory postgres"`
+	db             string `form:"oneof=sqlite postgres"`
 }
 
 var opts = &startOps{}
@@ -47,13 +47,20 @@ var startCmd = &cobra.Command{
 
 		if err != nil {
 			fmt.Println("Error running start:", err.Error())
+			fmt.Println("Shutting down...")
+
+			err = stop()
+
+			if err != nil {
+				fmt.Println("Shutdown unsuccessful:", err.Error())
+			}
+
 			os.Exit(1)
 		}
 	},
 }
 
 func init() {
-	// closeHandler(stop)
 	rootCmd.AddCommand(startCmd)
 
 	opts.insecure = startCmd.PersistentFlags().Bool(
@@ -78,7 +85,7 @@ func init() {
 		&opts.db,
 		"db",
 		"sqlite",
-		"the db to use",
+		"the db to use, one of sqlite or postgres",
 	)
 
 	startCmd.PersistentFlags().StringVar(
@@ -181,6 +188,20 @@ func start(
 		mounts = append(mounts, mount)
 	}
 
+	netID, err := agent.CreateBridgeNetworkIfNotExist("porter_network")
+
+	if err != nil {
+		return err
+	}
+
+	env := make([]string, 0)
+
+	env = append(env, []string{
+		"ADMIN_INIT=true",
+		"ADMIN_EMAIL=" + username,
+		"ADMIN_PASSWORD=" + pw,
+	}...)
+
 	switch db {
 	case "sqlite":
 		// check if sqlite volume exists, create it if not
@@ -201,6 +222,11 @@ func start(
 
 		mounts = append(mounts, mount)
 		volumesMap[vol.Name] = struct{}{}
+
+		env = append(env, []string{
+			"SQL_LITE=true",
+			"SQL_LITE_PATH=/sqlite/porter.db",
+		}...)
 	case "postgres":
 		// check if postgres volume exists, create it if not
 		vol, err := agent.CreateLocalVolumeIfNotExist("porter_postgres")
@@ -221,8 +247,37 @@ func start(
 		}
 
 		// create postgres container with mount
-		// TODO
-		fmt.Println(pgMount)
+		startOpts := docker.PostgresOpts{
+			Name:   "porter_postgres",
+			Image:  "postgres:latest",
+			Mounts: pgMount,
+			VolumeMap: map[string]struct{}{
+				"porter_postgres": struct{}{},
+			},
+			NetworkID: netID,
+			Env: []string{
+				"POSTGRES_USER=porter",
+				"POSTGRES_PASSWORD=porter",
+				"POSTGRES_DB=porter",
+			},
+		}
+
+		pgID, err := agent.StartPostgresContainer(startOpts)
+
+		if err != nil {
+			return err
+		}
+
+		env = append(env, []string{
+			"SQL_LITE=false",
+			"DB_USER=porter",
+			"DB_PASS=porter",
+			"DB_NAME=porter",
+			"DB_HOST=porter_postgres",
+			"DB_PORT=5432",
+		}...)
+
+		defer agent.WaitForContainerStop(pgID)
 	}
 
 	// create Porter container
@@ -234,11 +289,17 @@ func start(
 		ContainerPort: 8080,
 		Mounts:        mounts,
 		VolumeMap:     volumesMap,
-		Env: []string{
-			"QUICK_START=true",
-			"SQL_LITE_PATH=/sqlite/porter.db",
-		},
+		NetworkID:     netID,
+		Env:           env,
 	}
 
-	return agent.StartPorterContainerAndWait(startOpts)
+	id, err := agent.StartPorterContainer(startOpts)
+
+	if err != nil {
+		return err
+	}
+
+	agent.WaitForContainerStop(id)
+
+	return nil
 }

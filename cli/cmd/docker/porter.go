@@ -20,35 +20,32 @@ type PorterStartOpts struct {
 	Mounts        []mount.Mount
 	VolumeMap     map[string]struct{}
 	Env           []string
+	NetworkID     string
 }
 
-// StartPorterContainerAndWait pulls a specific Porter image and starts a container
-// using the Docker engine. It returns when the container has stopped.
-func (a *Agent) StartPorterContainerAndWait(opts PorterStartOpts) error {
+// StartPorterContainer pulls a specific Porter image and starts a container
+// using the Docker engine. It returns the container ID
+func (a *Agent) StartPorterContainer(opts PorterStartOpts) (string, error) {
 	id, err := a.upsertPorterContainer(opts)
 
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	err = a.startPorterContainer(id)
 
 	if err != nil {
-		return err
+		return "", err
 	}
 
-	// wait for container to stop before exit
-	statusCh, errCh := a.client.ContainerWait(a.ctx, id, container.WaitConditionNotRunning)
+	// attach container to network
+	err = a.ConnectContainerToNetwork(opts.NetworkID, id, opts.Name)
 
-	select {
-	case err := <-errCh:
-		if err != nil {
-			return a.handleDockerClientErr(err, "Error waiting for stopped container")
-		}
-	case <-statusCh:
+	if err != nil {
+		return "", err
 	}
 
-	return nil
+	return id, nil
 }
 
 // detect if container exists and is running, and stop
@@ -82,12 +79,7 @@ func (a *Agent) upsertPorterContainer(opts PorterStartOpts) (id string, err erro
 
 // create the container and return its id
 func (a *Agent) pullAndCreatePorterContainer(opts PorterStartOpts) (id string, err error) {
-	// pull the specified image
-	_, err = a.client.ImagePull(a.ctx, opts.Image, types.ImagePullOptions{})
-
-	if err != nil {
-		return "", a.handleDockerClientErr(err, "Could not pull Porter image")
-	}
+	a.PullImage(opts.Image)
 
 	// format the port array for binding to host machine
 	ports := []string{fmt.Sprintf("127.0.0.1:%d:%d/tcp", opts.HostPort, opts.ContainerPort)}
@@ -130,27 +122,108 @@ func (a *Agent) startPorterContainer(id string) error {
 	return nil
 }
 
+// PostgresOpts are the options for starting the Postgres DB
+type PostgresOpts struct {
+	Name      string
+	Image     string
+	Env       []string
+	VolumeMap map[string]struct{}
+	Mounts    []mount.Mount
+	NetworkID string
+}
+
+// StartPostgresContainer pulls a specific Porter image and starts a container
+// using the Docker engine
+func (a *Agent) StartPostgresContainer(opts PostgresOpts) (string, error) {
+	id, err := a.upsertPostgresContainer(opts)
+
+	if err != nil {
+		return "", err
+	}
+
+	err = a.startPostgresContainer(id)
+
+	if err != nil {
+		return "", err
+	}
+
+	// attach container to network
+	err = a.ConnectContainerToNetwork(opts.NetworkID, id, opts.Name)
+
+	if err != nil {
+		return "", err
+	}
+
+	return id, nil
+}
+
 // detect if container exists and is running, and stop
 // if it is running, stop it
 // if it is stopped, return id
 // if it does not exist, create it and return it
-// func (a *Agent) upsertPostgresContainer() error {
+func (a *Agent) upsertPostgresContainer(opts PostgresOpts) (id string, err error) {
+	containers, err := a.getContainersCreatedByStart()
 
-// }
+	// stop the matching container and return it
+	for _, container := range containers {
+		if len(container.Names) > 0 && container.Names[0] == "/"+opts.Name {
+			timeout, _ := time.ParseDuration("15s")
+
+			err := a.client.ContainerStop(a.ctx, container.ID, &timeout)
+
+			if err != nil {
+				return "", a.handleDockerClientErr(err, "Could not stop postgres container "+container.ID)
+			}
+
+			return container.ID, nil
+		}
+	}
+
+	return a.pullAndCreatePostgresContainer(opts)
+}
 
 // create the container and return it
-// func (a *Agent) createPostgresContainer() error {
+func (a *Agent) pullAndCreatePostgresContainer(opts PostgresOpts) (id string, err error) {
+	a.PullImage(opts.Image)
 
-// }
+	labels := make(map[string]string)
+	labels[a.label] = "true"
+
+	// create the container with a label specifying this was created via the CLI
+	resp, err := a.client.ContainerCreate(a.ctx, &container.Config{
+		Image:   opts.Image,
+		Tty:     false,
+		Labels:  labels,
+		Volumes: opts.VolumeMap,
+		Env:     opts.Env,
+		ExposedPorts: nat.PortSet{
+			"5432": struct{}{},
+		},
+	}, &container.HostConfig{
+		Mounts: opts.Mounts,
+	}, nil, opts.Name)
+
+	if err != nil {
+		return "", a.handleDockerClientErr(err, "Could not create Porter container")
+	}
+
+	return resp.ID, nil
+}
 
 // start the container in the background
-// func (a *Agent) startPostgresContainer() error {
+func (a *Agent) startPostgresContainer(id string) error {
+	if err := a.client.ContainerStart(a.ctx, id, types.ContainerStartOptions{}); err != nil {
+		return a.handleDockerClientErr(err, "Could not start Postgres container")
+	}
 
-// }
+	return nil
+}
 
 // StopPorterContainers finds all containers that were started via the CLI and stops them
 // without removal.
 func (a *Agent) StopPorterContainers() error {
+	fmt.Println("Stopping containers...")
+
 	containers, err := a.getContainersCreatedByStart()
 
 	if err != nil {

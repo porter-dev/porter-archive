@@ -63,7 +63,8 @@ ENV SERVER_TIMEOUT_IDLE=15s
 
 ENV COOKIE_SECRETS=secret
 
-ENV QUICK_START=true
+ENV SQL_LITE=true
+ENV ADMIN_INIT=false
 
 EXPOSE 8080
 CMD /porter/migrate && /porter/app

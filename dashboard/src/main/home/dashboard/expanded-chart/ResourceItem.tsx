@@ -1,17 +1,11 @@
 import React, { Component } from 'react';
 import styled from 'styled-components';
 
+import { kindToIcon } from '../../../../shared/rosettaStone';
+
 import { ResourceType } from '../../../../shared/types';
 import YamlEditor from '../../../../components/YamlEditor';
 
-const kindToIcon: any = {
-  'Deployment': 'category',
-  'Pod': 'fiber_manual_record',
-  'Service': 'alt_route',
-  'Ingress': 'sensor_door',
-  'StatefulSet': 'location_city',
-  'Secret': 'vpn_key',
-}
 
 type PropsType = {
   resource: ResourceType,

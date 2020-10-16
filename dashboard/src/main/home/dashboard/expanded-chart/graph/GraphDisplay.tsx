@@ -1,33 +1,18 @@
 import React, { Component } from 'react';
 import styled from 'styled-components';
 
+import { ResourceType, NodeType, EdgeType } from '../../../../../shared/types';
+
 import Node from './Node';
 import Edge from './Edge';
-import { ResourceType } from '../../../../../shared/types';
+import InfoPanel from './InfoPanel';
 
 const zoomConstant = 0.01;
 const panConstant = 0.8;
 
-type NodeType = {
-  id: number,
-  name: string,
-  kind: string,
-  x: number,
-  y: number,
-  w: number,
-  h: number,
-  toCursorX?: number,
-  toCursorY?: number,
-}
-
-type EdgeType = {
-  type: string,
-  source: number,
-  target: number,
-}
-
 type PropsType = {
-  components: ResourceType[]
+  components: ResourceType[],
+  isExpanded: boolean
 };
 
 type StateType = {
@@ -45,6 +30,9 @@ type StateType = {
   dragBg: boolean,
   preventDrag: boolean,
   scale: number,
+  showKind: boolean,
+  currentNode: NodeType | null,
+  currentEdge: EdgeType | null,
 };
 
 export default class GraphDisplay extends Component<PropsType, StateType> {
@@ -62,7 +50,10 @@ export default class GraphDisplay extends Component<PropsType, StateType> {
     panY: null as (number | null),
     dragBg: false,
     preventDrag: false,
-    scale: 0.5
+    scale: 0.5,
+    showKind: true,
+    currentNode: null as (NodeType | null),
+    currentEdge: null as (EdgeType | null)
   }
 
   spaceRef: any = React.createRef();
@@ -80,25 +71,37 @@ export default class GraphDisplay extends Component<PropsType, StateType> {
     this.spaceRef.addEventListener("touchmove", (e: any) => e.preventDefault());
     this.spaceRef.addEventListener("mousewheel", (e: any) => e.preventDefault());
     let nodes = components.map((c: ResourceType) => {
-      return {id: c.ID, name: c.Name, kind: c.Kind, x:0, y:0, w:40, h:40}
-    })
+      return { id: c.ID, name: c.Name, kind: c.Kind, x: 0, y: 0, w: 40, h: 40 }
+    });
 
     let edges = [] as EdgeType[]
     components.map((c: ResourceType) => {
       c.Relations.ControlRels.map((rel: any) => {
         if (rel.Source == c.ID) {
-          edges.push({type: "ControlRel", source: rel.Source, target: rel.Target})
+          edges.push({ type: "ControlRel", source: rel.Source, target: rel.Target })
         }
       })
       c.Relations.LabelRels.map((rel: any) => {
         if (rel.Source == c.ID) {
-          edges.push({type: "LabelRel", source: rel.Source, target: rel.Target})
+          edges.push({ type: "LabelRel", source: rel.Source, target: rel.Target })
         }
       })
 
-      this.setState({edges})
-    })
+      this.setState({ edges })
+    });
     this.setState({nodes})
+  }
+
+  // Update origin when expanding/collapsing (can improve w/ resize listener)
+  componentDidUpdate(prevProps: PropsType) {
+    if (this.props.isExpanded !== prevProps.isExpanded) {
+      let height = this.spaceRef.offsetHeight;
+      let width = this.spaceRef.offsetWidth;
+      this.setState({
+        originX: Math.round(width / 2),
+        originY: Math.round(height / 2)
+      });  
+    }
   }
 
   componentWillUnmount() {
@@ -208,6 +211,8 @@ export default class GraphDisplay extends Component<PropsType, StateType> {
           nodeMouseDown={() => this.handleClickNode(node.id)}
           nodeMouseUp={this.handleReleaseNode}
           isActive={activeIds.includes(node.id)}
+          showKind={this.state.showKind}
+          setCurrentNode={(node: NodeType) => this.setState({ currentNode: node })}
         />
       );
     });
@@ -224,13 +229,14 @@ export default class GraphDisplay extends Component<PropsType, StateType> {
           y1={this.state.nodes[edge.source].y}
           x2={this.state.nodes[edge.target].x}
           y2={this.state.nodes[edge.target].y}
+          edge={edge}
+          setCurrentEdge={(edge: EdgeType) => this.setState({ currentEdge: edge })}
         />
       );
     });
   }
 
   render() {
-    console.log('rendering graph display')
     return (
       <StyledGraphDisplay
         ref={element => this.spaceRef = element}
@@ -241,6 +247,10 @@ export default class GraphDisplay extends Component<PropsType, StateType> {
       >
         {this.renderNodes()}
         {this.renderEdges()}
+        <InfoPanel
+          currentNode={this.state.currentNode}
+          currentEdge={this.state.currentEdge}
+        />
       </StyledGraphDisplay>
     );
   }
@@ -252,5 +262,4 @@ const StyledGraphDisplay = styled.div`
   height: 100%;
   overflow: hidden;
   cursor: move;
-  background: #202227;
 `;

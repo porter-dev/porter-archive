@@ -165,7 +165,7 @@ const NavButton = styled.div`
 const BottomSection = styled.div`
   position: absolute;
   width: 100%;
-  bottom: 12px;
+  bottom: 10px;
 `;
 
 const LogOutButton = styled(NavButton)`

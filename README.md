@@ -1,6 +1,6 @@
 # Porter
 
-For development:
+### Development
 
 ```sh
 docker-compose -f docker-compose.dev.yaml up --build
@@ -17,3 +17,7 @@ From the root directory, run `go test ./...` to run all tests and ensure the bui
 From the root directory, run `DOCKER_BUILDKIT=1 docker build . --file ./docker/Dockerfile -t porter`. Then you can run `docker run -p 8080:8080 porter`. 
 
 To build the test container, run `DOCKER_BUILDKIT=1 docker build . --file ./docker/Dockerfile -t porter --target porter-test`. 
+
+### Running
+
+`docker run -p 8080:8080 porter1/porter:latest`

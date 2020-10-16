@@ -14,7 +14,8 @@ const panConstant = 0.8;
 type PropsType = {
   components: ResourceType[],
   isExpanded: boolean,
-  setSidebar: (x: boolean) => void
+  setSidebar: (x: boolean) => void,
+  currentChartName: string
 };
 
 type StateType = {
@@ -69,6 +70,12 @@ export default class GraphDisplay extends Component<PropsType, StateType> {
 
   spaceRef: any = React.createRef();
 
+  getRandomIntBetweenRange = (min: number, max: number) => {
+    min = Math.ceil(min);
+    max = Math.floor(max);
+    return Math.floor(Math.random() * (max - min) + min);  
+  }
+
   componentDidMount() {
     let { components } = this.props;
 
@@ -83,14 +90,49 @@ export default class GraphDisplay extends Component<PropsType, StateType> {
     // Suppress trackpad gestures
     this.spaceRef.addEventListener("touchmove", (e: any) => e.preventDefault());
     this.spaceRef.addEventListener("mousewheel", (e: any) => e.preventDefault());
-    let nodes = components.map((c: ResourceType) => {
-      return { id: c.ID, name: c.Name, kind: c.Kind, x: 0, y: 0, w: 40, h: 40 };
-    });
+
+    let graph = localStorage.getItem(`charts.${this.props.currentChartName}`)
+    let nodes = [] as NodeType[]
+    let edges = [] as EdgeType[]
+
+    if (!graph) {
+      nodes = this.createNodes(components)
+      edges = this.createEdges(components)
+      this.setState({ nodes, edges });
+    } else {
+      let storedState = JSON.parse(localStorage.getItem(`charts.${this.props.currentChartName}`))
+      this.setState(storedState)
+    }
 
     document.addEventListener("keydown", this.handleKeyDown);
     document.addEventListener("keyup", this.handleKeyUp);
+  }
 
-    let edges = [] as EdgeType[];
+  createNodes = (components: ResourceType[]) => {
+    return components.map((c: ResourceType) => {
+      switch(c.Kind) {
+        case "ClusterRoleBinding":
+        case "ClusterRole":
+        case "RoleBinding":
+        case "Role":
+          return { id: c.ID, name: c.Name, kind: c.Kind, x: this.getRandomIntBetweenRange(-1000, 0), y: this.getRandomIntBetweenRange(0, 500), w: 40, h: 40 };
+        case "Deployment":
+        case "StatefulSet":
+        case "Pod":
+        case "ServiceAccount":
+          return { id: c.ID, name: c.Name, kind: c.Kind, x: this.getRandomIntBetweenRange(0, 1000), y: this.getRandomIntBetweenRange(0, 500), w: 40, h: 40 };
+        case "Service":
+        case "Ingress":
+        case "ServiceAccount":
+            return { id: c.ID, name: c.Name, kind: c.Kind, x: this.getRandomIntBetweenRange(0, 1000), y: this.getRandomIntBetweenRange(-500, 0), w: 40, h: 40 };
+        default:
+          return { id: c.ID, name: c.Name, kind: c.Kind, x: this.getRandomIntBetweenRange(-700, 0), y: this.getRandomIntBetweenRange(-500, 0), w: 40, h: 40 };
+        }
+    });
+  }
+
+  createEdges = (components: ResourceType[]) => {
+    let edges = [] as EdgeType[]
     components.map((c: ResourceType) => {
       c.Relations?.ControlRels?.map((rel: any) => {
         if (rel.Source == c.ID) {
@@ -107,12 +149,20 @@ export default class GraphDisplay extends Component<PropsType, StateType> {
           edges.push({ type: "SpecRel", source: rel.Source, target: rel.Target });
         }
       })
-      this.setState({ edges });
     });
-    this.setState({ nodes });
+    return edges
   }
 
   componentWillUnmount() {
+    let graph = this.state;
+    console.log("unmounting...", graph)
+    // flush non-persistent data
+    graph.activeIds = [];
+    graph.currentNode = null;
+    graph.currentEdge = null;
+    graph.isExpanded = false;
+
+    localStorage.setItem(`charts.${this.props.currentChartName}`, JSON.stringify(graph))
     this.spaceRef.removeEventListener("touchmove", (e: any) => e.preventDefault());
     this.spaceRef.removeEventListener("mousewheel", (e: any) => e.preventDefault());
     document.removeEventListener("keydown", this.handleKeyDown);

@@ -172,28 +172,35 @@ func (parsed *ParsedObjs) GetSpecRel() {
 			tid = parsed.findRBACTargets(o.ID, o.RawYAML)
 		case "Ingress":
 			rules := getField(o.RawYAML, "spec", "rules")
+			if rules == nil {
+				rules = []interface{}{}
+			}
 			for _, r := range rules.([]interface{}) {
-				http := getField(r.(map[string]interface{}), "http")
-				paths := getField(http.(map[string]interface{}), "paths")
+				paths := getField(r.(map[string]interface{}), "http", "paths")
+				if paths == nil {
+					paths = []interface{}{}
+				}
 				for _, p := range paths.([]interface{}) {
 					// service and resource are mutually exclusive backend types.
+					name := getField(p.(map[string]interface{}), "backend", "serviceName")
 					kind := "Service"
-					name := getField(p.(map[string]interface{}), "backend", "service", "name")
+					if name == nil {
+						name = getField(p.(map[string]interface{}), "backend", "service", "name")
+					}
 					if name == nil {
 						name = getField(p.(map[string]interface{}), "backend", "resource", "name")
 						kind = getField(p.(map[string]interface{}), "backend", "resource", "kind").(string)
 					}
-					tid = parsed.findObjectByNameAndKind(o.ID, name.(string), kind)
+					tid = parsed.findObjectByNameAndKind(o.ID, name, kind)
 				}
 			}
-
 		case "StatefulSet":
-			serviceName := getField(o.RawYAML, "spec", "serviceName").(string)
+			serviceName := getField(o.RawYAML, "spec", "serviceName")
 			tid = append(tid, parsed.findObjectByNameAndKind(o.ID, serviceName, "Service")...)
 		case "Pod":
 			volume := getField(o.RawYAML, "spec", "volumes")
 			imageSecrets := getField(o.RawYAML, "spec", "ImagePullSecrets")
-			serviceAccount := getField(o.RawYAML, "spec", "serviceaccountname")
+			serviceAccount := getField(o.RawYAML, "spec", "serviceAccountName")
 
 			if imageSecrets == nil {
 				imageSecrets = []interface{}{}

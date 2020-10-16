@@ -41,6 +41,7 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
   componentDidMount() {
     let { currentCluster, setCurrentError } = this.context;
     let { currentChart } = this.props;
+
     api.getChartComponents('<token>', {
       namespace: currentChart.namespace,
       context: currentCluster,
@@ -73,11 +74,11 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
 
   renderTabContents = () => {
     let { currentChart, refreshChart, setSidebar} = this.props;
-
     if (this.state.currentTab === 'graph') {
       return (
         <GraphSection
           components={this.state.components}
+          currentChartName={currentChart.name}
           setSidebar={setSidebar}
         />
       );

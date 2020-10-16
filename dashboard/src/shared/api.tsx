@@ -43,19 +43,27 @@ const getContexts = baseApi<{}, { id: number }>('GET', pathParams => {
 const getCharts = baseApi<{
   namespace: string,
   context: string,
-  storage: string
+  storage: StorageType,
   limit: number,
   skip: number,
   byDate: boolean,
   statusFilter: string[]
-}>('GET', '/api/charts');
+}>('GET', '/api/releases');
 
 const getChart = baseApi<{
   namespace: string,
   context: string,
-  storage: string
+  storage: StorageType
 }, { name: string, revision: number }>('GET', pathParams => {
-  return `/api/charts/${pathParams.name}/${pathParams.revision}`;
+  return `/api/releases/${pathParams.name}/${pathParams.revision}`;
+});
+
+const getChartComponents = baseApi<{
+  namespace: string,
+  context: string,
+  storage: StorageType
+}, { name: string, revision: number }>('GET', pathParams => {
+  return `/api/releases/${pathParams.name}/${pathParams.revision}/components`;
 });
 
 const getNamespaces = baseApi<{
@@ -65,17 +73,27 @@ const getNamespaces = baseApi<{
 const getRevisions = baseApi<{
   namespace: string,
   context: string,
-  storage: string
+  storage: StorageType
 }, { name: string }>('GET', pathParams => {
-  return `/api/charts/${pathParams.name}/history`;
+  return `/api/releases/${pathParams.name}/history`;
 });
 
 const rollbackChart = baseApi<{
   namespace: string,
   context: string,
-  storage: string
-}, { name: string, revision: number }>('POST', pathParams => {
-  return `/api/charts/rollback/${pathParams.name}/${pathParams.revision}`;
+  storage: StorageType,
+  revision: number
+}, { name: string }>('POST', pathParams => {
+  return `/api/releases/${pathParams.name}/rollback`;
+});
+
+const upgradeChartValues = baseApi<{
+  namespace: string,
+  context: string,
+  storage: StorageType,
+  values: string
+}, { name: string }>('POST', pathParams => {
+  return `/api/releases/${pathParams.name}/upgrade`;
 });
 
 // Bundle export to allow default api import (api.<method> is more readable)
@@ -89,7 +107,9 @@ export default {
   getContexts,
   getCharts,
   getChart,
+  getChartComponents,
   getNamespaces,
   getRevisions,
-  rollbackChart
+  rollbackChart,
+  upgradeChartValues
 }

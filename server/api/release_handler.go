@@ -9,6 +9,7 @@ import (
 	"github.com/go-chi/chi"
 	"github.com/porter-dev/porter/internal/forms"
 	"github.com/porter-dev/porter/internal/helm"
+	"github.com/porter-dev/porter/internal/helm/grapher"
 )
 
 // Enumeration of release API error codes, represented as int64
@@ -92,6 +93,58 @@ func (app *App) HandleGetRelease(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := json.NewEncoder(w).Encode(release); err != nil {
+		app.handleErrorFormDecoding(err, ErrReleaseDecode, w)
+		return
+	}
+}
+
+// HandleGetReleaseComponents retrieves a single release based on a name and revision
+func (app *App) HandleGetReleaseComponents(w http.ResponseWriter, r *http.Request) {
+	name := chi.URLParam(r, "name")
+	revision, err := strconv.ParseUint(chi.URLParam(r, "revision"), 0, 64)
+
+	form := &forms.GetReleaseForm{
+		ReleaseForm: &forms.ReleaseForm{
+			Form: &helm.Form{},
+		},
+		Name:     name,
+		Revision: int(revision),
+	}
+
+	agent, err := app.getAgentFromQueryParams(
+		w,
+		r,
+		form.ReleaseForm,
+		form.ReleaseForm.PopulateHelmOptionsFromQueryParams,
+	)
+
+	// errors are handled in app.getAgentFromQueryParams
+	if err != nil {
+		return
+	}
+
+	release, err := agent.GetRelease(form.Name, form.Revision)
+
+	if err != nil {
+		app.sendExternalError(err, http.StatusNotFound, HTTPError{
+			Code:   ErrReleaseReadData,
+			Errors: []string{"release not found"},
+		}, w)
+
+		return
+	}
+
+	yamlArr := grapher.ImportMultiDocYAML([]byte(release.Manifest))
+	objects := grapher.ParseObjs(yamlArr)
+
+	parsed := grapher.ParsedObjs{
+		Objects: objects,
+	}
+
+	parsed.GetControlRel()
+	parsed.GetLabelRel()
+
+	if err := json.NewEncoder(w).Encode(parsed.Objects); err != nil {
 		app.handleErrorFormDecoding(err, ErrReleaseDecode, w)
 		return
 	}

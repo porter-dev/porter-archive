@@ -37,6 +37,7 @@ func New(
 
 		// /api/releases routes
 		r.Method("GET", "/releases", auth.BasicAuthenticate(requestlog.NewHandler(a.HandleListReleases, l)))
+		r.Method("GET", "/releases/{name}/{revision}/components", auth.BasicAuthenticate(requestlog.NewHandler(a.HandleGetReleaseComponents, l)))
 		r.Method("GET", "/releases/{name}/history", auth.BasicAuthenticate(requestlog.NewHandler(a.HandleListReleaseHistory, l)))
 		r.Method("POST", "/releases/{name}/upgrade", auth.BasicAuthenticate(requestlog.NewHandler(a.HandleUpgradeRelease, l)))
 		r.Method("GET", "/releases/{name}/{revision}", auth.BasicAuthenticate(requestlog.NewHandler(a.HandleGetRelease, l)))

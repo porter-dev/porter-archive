@@ -4,7 +4,7 @@ import loading from '../../../../assets/loading.gif';
 
 import api from '../../../../shared/api';
 import { Context } from '../../../../shared/Context';
-import { ChartType } from '../../../../shared/types';
+import { ChartType, StorageType } from '../../../../shared/types';
 import Chart from '../chart/Chart';
 
 type PropsType = {
@@ -33,7 +33,7 @@ export default class RevisionSection extends Component<PropsType, StateType> {
     api.getRevisions('<token>', {
       namespace: chart.namespace,
       context: this.context.currentCluster,
-      storage: 'secret'
+      storage: StorageType.Secret
     }, { name: chart.name }, (err: any, res: any) => {
       if (err) {
         console.log(err)
@@ -47,6 +47,13 @@ export default class RevisionSection extends Component<PropsType, StateType> {
     this.refreshHistory();
   }
 
+  // Handle update of values.yaml
+  componentDidUpdate(prevProps: PropsType) {
+    if (this.props.chart !== prevProps.chart) {
+      this.refreshHistory();
+    }
+  }
+
   readableDate = (s: string) => {
     let ts = new Date(s);
     let date = ts.toLocaleDateString();
@@ -55,19 +62,22 @@ export default class RevisionSection extends Component<PropsType, StateType> {
   }
 
   handleRollback = () => {
+    let { setCurrentError, currentCluster } = this.context;
+
     let revisionNumber = this.state.rollbackRevision;
     this.setState({ loading: true, rollbackRevision: null });
 
     api.rollbackChart('<token>', {
       namespace: this.props.chart.namespace,
-      context: this.context.currentCluster,
-      storage: 'secret'
-    }, {
-      name: this.props.chart.name,
+      context: currentCluster,
+      storage: StorageType.Secret,
       revision: revisionNumber
+    }, {
+      name: this.props.chart.name
     }, (err: any, res: any) => {
       if (err) {
-        console.log(err)
+        setCurrentError(err.response.data.errors[0]);
+        this.setState({ loading: false });
       } else {
         this.setState({ loading: false });
         this.props.refreshChart();
@@ -301,6 +311,7 @@ const RevisionsTable = styled.table`
   margin-top: 5px;
   padding-left: 32px;
   padding-bottom: 20px;
+  min-width: 500px;
 `;
 
 const Revision = styled.div`
@@ -339,7 +350,7 @@ const StyledRevisionSection = styled.div`
   width: 100%;
   max-height: ${(props: { showRevisions: boolean }) => props.showRevisions ? '255px' : '40px'};
   background: #ffffff11;
-  margin-top: 25px;
+  margin: 25px 0px;
   overflow: hidden;
   border-radius: 5px;
   animation: ${(props: { showRevisions: boolean }) => props.showRevisions ? 'expandRevisions 0.3s' : ''};

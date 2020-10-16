@@ -18,14 +18,19 @@ func ParseObjs(objs []map[string]interface{}) []Object {
 	for i, obj := range objs {
 		kind := getField(obj, "kind").(string)
 		name := getField(obj, "metadata", "name").(string)
-		namespace := getField(obj, "metadata", "namespace").(string)
+
+		namespace := getField(obj, "metadata", "namespace")
+
+		if namespace == nil {
+			namespace = ""
+		}
 
 		// First add the object that appears on the YAML
 		parsedObj := Object{
 			ID:        i,
 			Kind:      kind,
 			Name:      name,
-			Namespace: namespace,
+			Namespace: namespace.(string),
 			RawYAML:   obj,
 			Relations: Relations{
 				ControlRels: []ControlRel{},

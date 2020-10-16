@@ -143,6 +143,7 @@ func (app *App) HandleGetReleaseComponents(w http.ResponseWriter, r *http.Reques
 
 	parsed.GetControlRel()
 	parsed.GetLabelRel()
+	parsed.GetSpecRel()
 
 	if err := json.NewEncoder(w).Encode(parsed.Objects); err != nil {
 		app.handleErrorFormDecoding(err, ErrReleaseDecode, w)

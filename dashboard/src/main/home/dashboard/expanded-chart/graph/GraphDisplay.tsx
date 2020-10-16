@@ -92,17 +92,21 @@ export default class GraphDisplay extends Component<PropsType, StateType> {
 
     let edges = [] as EdgeType[];
     components.map((c: ResourceType) => {
-      c.Relations.ControlRels.map((rel: any) => {
+      c.Relations?.ControlRels?.map((rel: any) => {
         if (rel.Source == c.ID) {
           edges.push({ type: "ControlRel", source: rel.Source, target: rel.Target });
         }
       })
-      c.Relations.LabelRels.map((rel: any) => {
+      c.Relations?.LabelRels?.map((rel: any) => {
         if (rel.Source == c.ID) {
           edges.push({ type: "LabelRel", source: rel.Source, target: rel.Target });
         }
       })
-
+      c.Relations?.SpecRels?.map((rel: any) => {
+        if (rel.Source == c.ID) {
+          edges.push({ type: "SpecRel", source: rel.Source, target: rel.Target });
+        }
+      })
       this.setState({ edges });
     });
     this.setState({ nodes });

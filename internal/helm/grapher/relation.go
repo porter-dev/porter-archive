@@ -171,14 +171,22 @@ func (parsed *ParsedObjs) GetSpecRel() {
 		case "ClusterRoleBinding", "RoleBinding":
 			tid = parsed.findRBACTargets(o.ID, o.RawYAML)
 		case "Ingress":
-			// service and resource are mutually exclusive backend types.
-			kind := "Service"
-			name := getField(o.RawYAML, "spec", "rules", "http", "paths", "backend", "service", "name")
-			if name == nil {
-				name = getField(o.RawYAML, "spec", "rules", "http", "paths", "backend", "resource", "name")
-				kind = getField(o.RawYAML, "spec", "rules", "http", "paths", "backend", "resource", "kind").(string)
+			rules := getField(o.RawYAML, "spec", "rules")
+			for _, r := range rules.([]interface{}) {
+				http := getField(r.(map[string]interface{}), "http")
+				paths := getField(http.(map[string]interface{}), "paths")
+				for _, p := range paths.([]interface{}) {
+					// service and resource are mutually exclusive backend types.
+					kind := "Service"
+					name := getField(p.(map[string]interface{}), "backend", "service", "name")
+					if name == nil {
+						name = getField(p.(map[string]interface{}), "backend", "resource", "name")
+						kind = getField(p.(map[string]interface{}), "backend", "resource", "kind").(string)
+					}
+					tid = parsed.findObjectByNameAndKind(o.ID, name.(string), kind)
+				}
 			}
-			tid = parsed.findObjectByNameAndKind(o.ID, name.(string), kind)
+
 		case "StatefulSet":
 			serviceName := getField(o.RawYAML, "spec", "serviceName").(string)
 			tid = append(tid, parsed.findObjectByNameAndKind(o.ID, serviceName, "Service")...)
@@ -187,7 +195,17 @@ func (parsed *ParsedObjs) GetSpecRel() {
 			imageSecrets := getField(o.RawYAML, "spec", "ImagePullSecrets")
 			serviceAccount := getField(o.RawYAML, "spec", "serviceaccountname")
 
-			tid = append(tid, parsed.findObjectByNameAndKind(o.ID, imageSecrets, "Secret")...)
+			if imageSecrets == nil {
+				imageSecrets = []interface{}{}
+			}
+
+			if volume == nil {
+				volume = []interface{}{}
+			}
+
+			for _, sec := range imageSecrets.([]interface{}) {
+				tid = append(tid, parsed.findObjectByNameAndKind(o.ID, sec, "Secret")...)
+			}
 			tid = append(tid, parsed.findObjectByNameAndKind(o.ID, serviceAccount, "ServiceAccount")...)
 
 			for _, v := range volume.([]interface{}) {
@@ -196,9 +214,9 @@ func (parsed *ParsedObjs) GetSpecRel() {
 				pvc := getField(vt, "persistentVolumeClaim", "claimName")
 				secret := getField(vt, "secret", "secretName")
 
-				tid = append(tid, parsed.findObjectByNameAndKind(o.ID, configMap.(string), "ConfigMap")...)
-				tid = append(tid, parsed.findObjectByNameAndKind(o.ID, pvc.(string), "PersistentVolumeClaim")...)
-				tid = append(tid, parsed.findObjectByNameAndKind(o.ID, secret.(string), "Secret")...)
+				tid = append(tid, parsed.findObjectByNameAndKind(o.ID, configMap, "ConfigMap")...)
+				tid = append(tid, parsed.findObjectByNameAndKind(o.ID, pvc, "PersistentVolumeClaim")...)
+				tid = append(tid, parsed.findObjectByNameAndKind(o.ID, secret, "Secret")...)
 			}
 		}
 

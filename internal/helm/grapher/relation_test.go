@@ -221,7 +221,6 @@ func TestLabelRels(t *testing.T) {
 				}
 			}
 		}
-
 	}
 }
 
@@ -229,7 +228,7 @@ func TestSpecRels(t *testing.T) {
 	ts := []test{
 		test{
 			Expected: expControlRels1,
-			FilePath: "./test_yaml/cassandra.yaml",
+			FilePath: "./test_yaml/ingress.yaml",
 		},
 	}
 
@@ -250,29 +249,26 @@ func TestSpecRels(t *testing.T) {
 		parsed.GetControlRel()
 		parsed.GetSpecRel()
 
-		t.Errorf("ok")
-
 		// for i, o := range parsed.Objects {
-		// 	e := r.Expected[i]
-		// 	if len(e.Relations.LabelRels) != len(o.Relations.LabelRels) {
-		// 		t.Errorf("Number of LabelRel differs for %s of type %s. Expected %d. Got %d",
-		// 			e.Name, e.Kind, len(e.Relations.LabelRels), len(o.Relations.LabelRels))
-		// 	}
-
-		// 	for j, rrel := range o.Relations.LabelRels {
-		// 		expRrel := e.Relations.LabelRels[j]
-
-		// 		if expRrel.Relation.Source != rrel.Relation.Source {
-		// 			t.Errorf("Source in ControlRel differs for %s of type %s. Expected %d. Got %d",
-		// 				o.Name, o.Kind, expRrel.Relation.Source, rrel.Relation.Source)
-		// 		}
-
-		// 		if expRrel.Relation.Target != rrel.Relation.Target {
-		// 			t.Errorf("Target in ControlRel differs for %s of type %s. Expected %d. Got %d",
-		// 				o.Name, o.Kind, expRrel.Relation.Target, rrel.Relation.Target)
-		// 		}
-		// 	}
+		// e := r.Expected[i]
+		// if len(e.Relations.SpecRels) != len(o.Relations.SpecRels) {
+		// 	t.Errorf("Number of SpecRel differs for %s of type %s. Expected %d. Got %d",
+		// 		e.Name, e.Kind, len(e.Relations.SpecRels), len(o.Relations.SpecRels))
 		// }
 
+		// for j, rrel := range o.Relations.SpecRels {
+		// 	expRrel := e.Relations.SpecRels[j]
+
+		// 	if expRrel.Relation.Source != rrel.Relation.Source {
+		// 		t.Errorf("Source in ControlRel differs for %s of type %s. Expected %d. Got %d",
+		// 			o.Name, o.Kind, expRrel.Relation.Source, rrel.Relation.Source)
+		// 	}
+
+		// 	if expRrel.Relation.Target != rrel.Relation.Target {
+		// 		t.Errorf("Target in ControlRel differs for %s of type %s. Expected %d. Got %d",
+		// 			o.Name, o.Kind, expRrel.Relation.Target, rrel.Relation.Target)
+		// 	}
+		// }
+		// }
 	}
 }

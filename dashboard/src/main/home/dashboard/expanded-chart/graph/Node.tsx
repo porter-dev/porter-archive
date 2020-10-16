@@ -117,5 +117,5 @@ const StyledNode: any = styled.div.attrs((props: NodeType) => ({
   box-shadow: ${(props: any) => props.isActive ? '0 0 10px #ffffff66' : '0px 0px 10px 2px #00000022'};
   color: #ffffff22;
   border-radius: 100px;
-  z-index: 1;
+  z-index: 3;
 `;

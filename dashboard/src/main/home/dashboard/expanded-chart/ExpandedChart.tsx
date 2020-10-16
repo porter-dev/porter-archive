@@ -77,7 +77,6 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
     if (this.state.currentTab === 'graph') {
       return (
         <GraphSection
-          currentChart={currentChart}
           components={this.state.components}
           setSidebar={setSidebar}
         />

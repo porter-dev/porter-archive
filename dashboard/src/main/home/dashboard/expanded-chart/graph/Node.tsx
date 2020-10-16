@@ -11,7 +11,7 @@ type PropsType = {
   nodeMouseDown: () => void,
   nodeMouseUp: () => void,
   isActive: boolean,
-  showKind: boolean,
+  showKindLabels: boolean,
   setCurrentNode: (node: NodeType) => void,
 };
 
@@ -40,7 +40,7 @@ export default class Node extends Component<PropsType, StateType> {
         isActive={isActive}
       >
         <Kind>
-          {this.props.showKind ? kind : null}
+          {this.props.showKindLabels ? kind : null}
         </Kind>
         <NodeBlock 
           onMouseDown={nodeMouseDown}

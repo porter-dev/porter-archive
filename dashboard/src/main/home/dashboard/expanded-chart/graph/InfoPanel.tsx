@@ -11,15 +11,18 @@ type PropsType = {
   currentNode: NodeType,
   currentEdge: EdgeType,
   openedNode: NodeType,
-  setSuppressDisplayClicks: (x: boolean) => void,
-  closeNode: () => void
+  setSuppressDisplay: (x: boolean) => void,
+  closeNode: () => void,
+  isExpanded: boolean
 };
 
 type StateType = {
+  wrapperHeight: number
 };
 
 export default class InfoPanel extends Component<PropsType, StateType> {
   state = {
+    wrapperHeight: 0
   }
 
   renderIcon = (kind: string) => {
@@ -40,6 +43,20 @@ export default class InfoPanel extends Component<PropsType, StateType> {
     return <ColorBlock color={edgeColors[type]} />;
   }
 
+  wrapperRef: any = React.createRef();
+
+  componentDidMount() {
+    this.setState({ wrapperHeight: this.wrapperRef.offsetHeight });
+  }
+
+  componentDidUpdate(prevProps: PropsType) {
+    if ((prevProps.openedNode !== this.props.openedNode 
+      || prevProps.isExpanded !== this.props.isExpanded) && this.wrapperRef
+    ) {
+      this.setState({ wrapperHeight: this.wrapperRef.offsetHeight });
+    }
+  }
+
   renderContents = () => {
     let { currentNode, currentEdge, openedNode } = this.props;
     if (openedNode) {
@@ -52,11 +69,11 @@ export default class InfoPanel extends Component<PropsType, StateType> {
               {openedNode.name}
             </ResourceName>
           </Div>
-          <YamlWrapper>
+          <YamlWrapper ref={element => this.wrapperRef = element}>
             <YamlEditor
               value={yaml.dump(openedNode.RawYAML)}
               readOnly={true}
-              height='100vw'
+              height={this.state.wrapperHeight + 'px'}
             />
           </YamlWrapper>
         </Wrapped>
@@ -103,15 +120,18 @@ export default class InfoPanel extends Component<PropsType, StateType> {
   }
 
   render() {
+    let { openedNode, closeNode, setSuppressDisplay } = this.props;
+
+    // Only suppress display gestures (click, pan, and zoom) if expanded
     return (
       <StyledInfoPanel
-        expanded={Boolean(this.props.openedNode)}
-        onMouseEnter={() => this.props.setSuppressDisplayClicks(true)}
-        onMouseLeave={() => this.props.setSuppressDisplayClicks(false)}
+        expanded={Boolean(openedNode)}
+        onMouseEnter={openedNode ? () => setSuppressDisplay(true) : null}
+        onMouseLeave={openedNode ? () => setSuppressDisplay(false) : null}
       >
         {this.renderContents()}
 
-        {this.props.openedNode ? <i onClick={this.props.closeNode} className="material-icons">close</i> : null}
+        {openedNode ? <i onClick={closeNode} className="material-icons">close</i> : null}
       </StyledInfoPanel>
     );
   }
@@ -126,9 +146,10 @@ const YamlWrapper = styled.div`
   width: 100%;
   margin-top: 7px;
   height: calc(100% - 44px);
-  overflow: hidden;
   border-radius: 5px;
   border: 1px solid #ffffff22;
+  overflow: hidden;
+  background: #000000;
 `;
 
 const ColorBlock = styled.div`

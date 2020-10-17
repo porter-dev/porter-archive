@@ -44,7 +44,7 @@ type StateType = {
   currentEdge: EdgeType | null,
   openedNode: NodeType | null,
   suppressCloseNode: boolean, // Still click should close opened unless on a node
-  suppressDisplayClicks: boolean, // Ignore clicks on InfoPanel or ButtonSection
+  suppressDisplay: boolean, // Ignore clicks + pan/zoom on InfoPanel or ButtonSection
 };
 
 // TODO: region-based unselect, shift-click, multi-region
@@ -75,7 +75,7 @@ export default class GraphDisplay extends Component<PropsType, StateType> {
     currentEdge: null as (EdgeType | null),
     openedNode: null as (NodeType | null),
     suppressCloseNode: false,
-    suppressDisplayClicks: false
+    suppressDisplay: false
   }
 
   spaceRef: any = React.createRef();
@@ -172,7 +172,7 @@ export default class GraphDisplay extends Component<PropsType, StateType> {
     graph.currentEdge = null;
     graph.isExpanded = false;
     graph.openedNode = null;
-    graph.suppressDisplayClicks = false;
+    graph.suppressDisplay = false;
     graph.suppressCloseNode = false;
 
     localStorage.setItem(`charts.${this.props.currentChartName}`, JSON.stringify(graph))
@@ -312,17 +312,21 @@ export default class GraphDisplay extends Component<PropsType, StateType> {
   // Handle pan XOR zoom (two-finger gestures count as onWheel)
   handleWheel = (e: any) => {
 
-    // Pinch/zoom sets e.ctrlKey to true
-    if (e.ctrlKey) {
-  
-      // Clip deltaY for extreme mousewheel values
-      let deltaY = e.deltaY >= 0 ? Math.min(40, e.deltaY) : Math.max(-40, e.deltaY);
+    // Prevent nav gestures if mouse is over InfoPanel or ButtonSection
+    if (!this.state.suppressDisplay) {
 
-      let scale = 1;
-      scale -= deltaY * zoomConstant;
-      this.setState({ scale, panX: 0, panY: 0 });
-    } else {
-      this.setState({ panX: e.deltaX, panY: e.deltaY, scale: 1 });
+      // Pinch/zoom sets e.ctrlKey to true
+      if (e.ctrlKey) {
+  
+        // Clip deltaY for extreme mousewheel values
+        let deltaY = e.deltaY >= 0 ? Math.min(40, e.deltaY) : Math.max(-40, e.deltaY);
+
+        let scale = 1;
+        scale -= deltaY * zoomConstant;
+        this.setState({ scale, panX: 0, panY: 0 });
+      } else {
+        this.setState({ panX: e.deltaX, panY: e.deltaY, scale: 1 });
+      }
     }
   };
 
@@ -432,8 +436,8 @@ export default class GraphDisplay extends Component<PropsType, StateType> {
         isExpanded={this.state.isExpanded}
         ref={element => this.spaceRef = element}
         onMouseMove={this.handleMouseMove}
-        onMouseDown={this.state.suppressDisplayClicks ? null : this.handleMouseDown}
-        onMouseUp={this.state.suppressDisplayClicks ? null : this.handleMouseUp}
+        onMouseDown={this.state.suppressDisplay ? null : this.handleMouseDown}
+        onMouseUp={this.state.suppressDisplay ? null : this.handleMouseUp}
         onWheel={this.handleWheel}
       >
         {this.renderNodes()}
@@ -441,8 +445,8 @@ export default class GraphDisplay extends Component<PropsType, StateType> {
         {this.renderSelectRegion()}
 
         <ButtonSection
-          onMouseEnter={() => this.setState({ suppressDisplayClicks: true })}
-          onMouseLeave={() => this.setState({ suppressDisplayClicks: false })}
+          onMouseEnter={() => this.setState({ suppressDisplay: true })}
+          onMouseLeave={() => this.setState({ suppressDisplay: false })}
         >
           <ToggleLabel
             onClick={() => this.setState({ showKindLabels: !this.state.showKindLabels })}
@@ -461,11 +465,16 @@ export default class GraphDisplay extends Component<PropsType, StateType> {
           </ExpandButton>
         </ButtonSection>
         <InfoPanel
-          setSuppressDisplayClicks={(x: boolean) => this.setState({ suppressDisplayClicks: x })}
+          setSuppressDisplay={(x: boolean) => this.setState({ suppressDisplay: x })}
           currentNode={this.state.currentNode}
           currentEdge={this.state.currentEdge}
           openedNode={this.state.openedNode}
-          closeNode={() => this.setState({ openedNode: null })}
+
+          // InfoPanel won't trigger onMouseLeave for unsuppressing if close is clicked
+          closeNode={() => this.setState({ openedNode: null, suppressDisplay: false })}
+
+          // For YAML wrapper to trigger resize
+          isExpanded={this.state.isExpanded}
         />
       </StyledGraphDisplay>
     );

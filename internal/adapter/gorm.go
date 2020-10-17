@@ -2,6 +2,7 @@ package gorm
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/porter-dev/porter/internal/config"
 	"gorm.io/driver/postgres"
@@ -12,7 +13,7 @@ import (
 // New returns a new gorm database instance
 func New(conf *config.DBConf) (*gorm.DB, error) {
 	if conf.SQLLite {
-		return gorm.Open(sqlite.Open("./internal/porter.db"), &gorm.Config{})
+		return gorm.Open(sqlite.Open(conf.SQLLitePath), &gorm.Config{})
 	}
 
 	dsn := fmt.Sprintf(
@@ -23,5 +24,28 @@ func New(conf *config.DBConf) (*gorm.DB, error) {
 		conf.Host,
 	)
 
-	return gorm.Open(postgres.Open(dsn), &gorm.Config{})
+	res, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
+
+	// retry the connection 3 times
+	retryCount := 0
+	timeout, _ := time.ParseDuration("5s")
+
+	if err != nil {
+		for {
+			time.Sleep(timeout)
+			res, err = gorm.Open(postgres.Open(dsn), &gorm.Config{})
+
+			if retryCount > 3 {
+				return nil, err
+			}
+
+			if err == nil {
+				return res, nil
+			}
+
+			retryCount++
+		}
+	}
+
+	return res, err
 }

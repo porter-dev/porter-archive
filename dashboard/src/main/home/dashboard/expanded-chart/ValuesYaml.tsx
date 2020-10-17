@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import styled from 'styled-components';
 import yaml from 'js-yaml';
 
-import { ChartType } from '../../../../shared/types';
+import { ChartType, StorageType } from '../../../../shared/types';
 import api from '../../../../shared/api';
 import { Context } from '../../../../shared/Context';
 
@@ -47,7 +47,7 @@ export default class ValuesYaml extends Component<PropsType, StateType> {
     api.upgradeChartValues('<token>', {
       namespace: this.props.currentChart.namespace,
       context: currentCluster,
-      storage: 'secret',
+      storage: StorageType.Secret,
       values: this.state.values
     }, { name: this.props.currentChart.name }, (err: any, res: any) => {
       if (err) {

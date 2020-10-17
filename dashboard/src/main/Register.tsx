@@ -27,6 +27,18 @@ export default class Register extends Component<PropsType, StateType> {
     confirmPasswordError: false
   }
 
+  handleKeyDown = (e: any) => {
+    e.key === 'Enter' ? this.handleRegister() : null;
+  }
+
+  componentDidMount() {
+    document.addEventListener("keydown", this.handleKeyDown);
+  }
+
+  componentWillUnmount() {
+    document.removeEventListener("keydown", this.handleKeyDown);
+  }
+
   handleRegister = (): void => {
     let { email, password, confirmPassword } = this.state;
     let { authenticate } = this.props;

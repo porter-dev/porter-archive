@@ -8,7 +8,9 @@ import { Context } from '../../../shared/Context';
 import ClusterSection from './ClusterSection';
 
 type PropsType = {
-  logOut: () => void
+  logOut: () => void,
+  forceSidebar: boolean,
+  setWelcome: (x: boolean) => void
 };
 
 type StateType = {
@@ -39,6 +41,13 @@ export default class Sidebar extends Component<PropsType, StateType> {
     document.removeEventListener('keydown', this.handleKeyDown);
     document.removeEventListener('keyup', this.handleKeyUp);
   }
+
+  // Need to override showDrawer when the sidebar is closed
+  componentDidUpdate(prevProps: PropsType) {
+    if (prevProps.forceSidebar !== this.props.forceSidebar) {
+      this.setState({ showSidebar: this.props.forceSidebar });
+    }
+  }  
 
   handleKeyDown = (e: KeyboardEvent): void => {
     if (e.key === 'Meta' || e.key === 'Control') {
@@ -115,6 +124,7 @@ export default class Sidebar extends Component<PropsType, StateType> {
           <ClusterSection 
             forceCloseDrawer={this.state.forceCloseDrawer} 
             releaseDrawer={() => this.setState({ forceCloseDrawer: false })}
+            setWelcome={this.props.setWelcome}
           />
 
           <BottomSection>
@@ -165,7 +175,7 @@ const NavButton = styled.div`
 const BottomSection = styled.div`
   position: absolute;
   width: 100%;
-  bottom: 12px;
+  bottom: 10px;
 `;
 
 const LogOutButton = styled(NavButton)`

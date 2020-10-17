@@ -479,6 +479,7 @@ const ButtonSection = styled.div`
   right: 15px;
   display: flex;
   align-items: center;
+  z-index: 999;
 `;
 
 const ExpandButton = styled.div`

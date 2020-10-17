@@ -14,7 +14,10 @@ const panConstant = 0.8;
 type PropsType = {
   components: ResourceType[],
   isExpanded: boolean,
-  setSidebar: (x: boolean) => void
+  showKindLabels: boolean,
+  setCurrentNode: (x: NodeType) => void,
+  setCurrentEdge: (x: EdgeType) => void,
+  setOpenedNode: (x: NodeType) => void
 };
 
 type StateType = {
@@ -34,11 +37,7 @@ type StateType = {
   dragBg: boolean, // Boolean to track if all nodes should move with mouse (bg drag)
   preventBgDrag: boolean, // Prevents bg drag when moving selected with mouse down
   relocateAllowed: boolean, // Suppresses movement of selected when drawing select region
-  scale: number,
-  showKindLabels: boolean,
-  currentNode: NodeType | null,
-  currentEdge: EdgeType | null,
-  isExpanded: boolean
+  scale: number
 };
 
 // TODO: region-based unselect, shift-click, multi-region
@@ -59,12 +58,8 @@ export default class GraphDisplay extends Component<PropsType, StateType> {
     anchorY: null as (number | null),
     dragBg: false,
     preventBgDrag: false,
-    scale: 0.5,
-    showKindLabels: true,
-    currentNode: null as (NodeType | null),
-    currentEdge: null as (EdgeType | null),
     relocateAllowed: false,
-    isExpanded: false
+    scale: 0.5
   }
 
   spaceRef: any = React.createRef();
@@ -115,20 +110,51 @@ export default class GraphDisplay extends Component<PropsType, StateType> {
     document.removeEventListener("keyup", this.handleKeyUp);
   }
 
+  // Update origin on expand/collapse
+  componentDidUpdate(prevProps: PropsType) {
+    if (this.props.isExpanded !== prevProps.isExpanded) {
+      let height = this.spaceRef.offsetHeight;
+      let width = this.spaceRef.offsetWidth;
+      let nudge = 0;
+      if (!this.props.isExpanded) {
+        nudge = 100;
+      }
+      this.setState({
+        originX: Math.round(width / 2) - nudge,
+        originY: Math.round(height / 2)
+      });  
+    }
+  }
+
   // Handle shift key for multi-select
   handleKeyDown = (e: any) => {
     if (e.key === 'Shift') {
       this.setState({
         anchorX: this.state.cursorX,
         anchorY: this.state.cursorY,
-        relocateAllowed: false
+        relocateAllowed: false,
+
+        // Suppress jump when panning with mouse
+        panX: null,
+        panY: null,
+        deltaX: null,
+        deltaY: null
       });
     }
   }
 
   handleKeyUp = (e: any) => {
     if (e.key === 'Shift') {
-      this.setState({ anchorX: null, anchorY: null });
+      this.setState({
+        anchorX: null,
+        anchorY: null,
+
+        // Suppress jump when panning with mouse
+        panX: null,
+        panY: null,
+        deltaX: null,
+        deltaY: null
+      });
     }
   }
 
@@ -204,30 +230,16 @@ export default class GraphDisplay extends Component<PropsType, StateType> {
 
     // Pinch/zoom sets e.ctrlKey to true
     if (e.ctrlKey) {
-      var scale = 1;
-      scale -= e.deltaY * zoomConstant;
+
+      // Clip deltaY to extreme mousewheel values
+      let deltaY = e.deltaY >= 0 ? Math.min(40, e.deltaY) : Math.max(-40, e.deltaY);
+
+      let scale = 1;
+      scale -= deltaY * zoomConstant;
       this.setState({ scale, panX: 0, panY: 0 });
     } else {
       this.setState({ panX: e.deltaX, panY: e.deltaY, scale: 1 });
     }
-  };
-
-  toggleExpanded = () => {
-    this.setState({ isExpanded: !this.state.isExpanded }, () => {
-      this.props.setSidebar(!this.state.isExpanded);
-
-      // Update origin on expand/collapse
-      let height = this.spaceRef.offsetHeight;
-      let width = this.spaceRef.offsetWidth;
-      let nudge = 0;
-      if (!this.state.isExpanded) {
-        nudge = 100;
-      }
-      this.setState({
-        originX: Math.round(width / 2) - nudge,
-        originY: Math.round(height / 2)
-      });  
-    });
   }
 
   // Pass origin to node for offset
@@ -269,8 +281,11 @@ export default class GraphDisplay extends Component<PropsType, StateType> {
           nodeMouseDown={() => this.handleClickNode(node.id)}
           nodeMouseUp={this.handleReleaseNode}
           isActive={activeIds.includes(node.id)}
-          showKindLabels={this.state.showKindLabels}
-          setCurrentNode={(node: NodeType) => this.setState({ currentNode: node })}
+          showKindLabels={this.props.showKindLabels}
+
+          // Parameterized to allow setting to null
+          setCurrentNode={(node: NodeType) => this.props.setCurrentNode(node)}
+          setOpenedNode={(node: NodeType) => this.props.setOpenedNode(node)}
         />
       );
     });
@@ -288,7 +303,7 @@ export default class GraphDisplay extends Component<PropsType, StateType> {
           x2={this.state.nodes[edge.target].x}
           y2={this.state.nodes[edge.target].y}
           edge={edge}
-          setCurrentEdge={(edge: EdgeType) => this.setState({ currentEdge: edge })}
+          setCurrentEdge={(edge: EdgeType) => this.props.setCurrentEdge(edge)}
         />
       );
     });
@@ -312,7 +327,6 @@ export default class GraphDisplay extends Component<PropsType, StateType> {
   render() {
     return (
       <StyledGraphDisplay
-        isExpanded={this.state.isExpanded}
         ref={element => this.spaceRef = element}
         onMouseMove={this.handleMouseMove}
         onMouseDown={() => this.setState({
@@ -331,108 +345,12 @@ export default class GraphDisplay extends Component<PropsType, StateType> {
         {this.renderNodes()}
         {this.renderEdges()}
         {this.renderSelectRegion()}
-
-        <ButtonSection>
-          <ToggleLabel
-            onClick={() => this.setState({ showKindLabels: !this.state.showKindLabels })}
-          >
-            <Checkbox checked={this.state.showKindLabels}>
-                <i className="material-icons">done</i>
-            </Checkbox>
-            Show Type
-          </ToggleLabel>
-          <ExpandButton
-            onClick={this.toggleExpanded}
-          >
-            <i className="material-icons">
-              {this.state.isExpanded ? 'close_fullscreen' : 'open_in_full'}
-            </i>
-          </ExpandButton>
-        </ButtonSection>
-        <InfoPanel
-          currentNode={this.state.currentNode}
-          currentEdge={this.state.currentEdge}
-        />
       </StyledGraphDisplay>
     );
   }
 }
 
-const Checkbox = styled.div`
-  width: 16px;
-  height: 16px;
-  border: 1px solid #ffffff44;
-  margin: 0px 8px 0px 3px;
-  border-radius: 3px;
-  background: ${(props: { checked: boolean }) => props.checked ? '#ffffff22' : ''};
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #ffffff;
-
-  > i {
-    font-size: 12px;
-    padding-left: 0px;
-    display: ${(props: { checked: boolean }) => props.checked ? '' : 'none'};
-  }
-`;
-
-const ToggleLabel = styled.div`
-  font: 12px 'Work Sans';
-  color: #ffffff;
-  position: relative;
-  height: 24px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  border-radius: 3px;
-  padding-right: 5px;
-  cursor: pointer;
-  border: 1px solid #ffffff44;
-  :hover {
-    background: #ffffff22;
-
-    > div {
-      background: #ffffff22;
-    }
-  }
-`;
-
-const ButtonSection = styled.div`
-  position: absolute;
-  top: 17px;
-  right: 15px;
-  display: flex;
-  align-items: center;
-`;
-
-const ExpandButton = styled.div`
-  width: 24px;
-  height: 24px;
-  cursor: pointer;
-  margin-left: 10px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  border-radius: 3px;
-  border: 1px solid #ffffff44;
-
-  :hover {
-    background: #ffffff44; 
-  }
-
-  > i {
-    font-size: 14px;
-  }
-`;
-
 const StyledGraphDisplay = styled.div`
-  overflow: hidden;
-  cursor: move;
-  width: ${(props: { isExpanded: boolean }) => props.isExpanded ? '100vw' : '100%'};
-  height: ${(props: { isExpanded: boolean }) => props.isExpanded ? '100vh' : '100%'};
-  background: #202227;
-  position: ${(props: { isExpanded: boolean }) => props.isExpanded ? 'fixed' : 'relative'};
-  top: ${(props: { isExpanded: boolean }) => props.isExpanded ? '-25px' : ''};
-  right: ${(props: { isExpanded: boolean }) => props.isExpanded ? '-25px' : ''};
+  width: 100%;
+  height: 100%;
 `;

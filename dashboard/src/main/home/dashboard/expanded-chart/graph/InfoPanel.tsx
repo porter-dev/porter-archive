@@ -6,7 +6,8 @@ import { NodeType, EdgeType} from '../../../../../shared/types';
 
 type PropsType = {
   currentNode: NodeType,
-  currentEdge: EdgeType
+  currentEdge: EdgeType,
+  openedNode: NodeType
 };
 
 type StateType = {
@@ -67,7 +68,7 @@ export default class InfoPanel extends Component<PropsType, StateType> {
 
   render() {
     return (
-      <StyledInfoPanel>
+      <StyledInfoPanel expand={Boolean(this.props.openedNode)}>
         {this.renderContents()}
       </StyledInfoPanel>
     );
@@ -125,7 +126,7 @@ const StyledInfoPanel = styled.div`
   right: 15px;
   bottom: 15px;
   color: #ffffff66;
-  height: 40px;
+  height: ${(props: { expand: boolean }) => props.expand ? '200px' : '40px'};
   width: 400px;
   max-width: 600px;
   background: #44444699;

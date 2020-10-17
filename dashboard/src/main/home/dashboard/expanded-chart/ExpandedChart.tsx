@@ -9,7 +9,7 @@ import api from '../../../../shared/api';
 import TabSelector from '../../../../components/TabSelector';
 import RevisionSection from './RevisionSection';
 import ValuesYaml from './ValuesYaml';
-import GraphSection from './GraphSection';
+import GraphSection from './graph/GraphSection';
 import ListSection from './ListSection';
 
 type PropsType = {

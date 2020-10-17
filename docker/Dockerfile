@@ -1,15 +1,70 @@
-FROM golang:1.15-alpine
+# syntax=docker/dockerfile:1.1.7-experimental
+
+# Base Go environment
+# -------------------
+FROM golang:1.15-alpine as base
 WORKDIR /porter
 
 RUN apk update && apk add --no-cache gcc musl-dev git
 
 COPY go.mod go.sum ./
-RUN go mod download
+COPY /cmd ./cmd
+COPY /internal ./internal
+COPY /server ./server
 
-COPY . ./
+RUN --mount=type=cache,target=$GOPATH/pkg/mod \
+    go mod download
 
-RUN go build -ldflags '-w -s' -a -o ./bin/app ./cmd/app \
-    && go build -ldflags '-w -s' -a -o ./bin/migrate ./cmd/migrate \
-    && chmod +x /porter/docker/bin/*
+# Go build environment
+# --------------------
+FROM base AS build-go
 
-CMD ./docker/bin/start.sh
+RUN --mount=type=cache,target=/root/.cache/go-build \
+    --mount=type=cache,target=$GOPATH/pkg/mod \
+    go build -ldflags '-w -s' -a -o ./bin/app ./cmd/app && \
+    go build -ldflags '-w -s' -a -o ./bin/migrate ./cmd/migrate
+
+# Go test environment
+# -------------------
+FROM base AS porter-test
+
+RUN --mount=type=cache,target=/root/.cache/go-build \
+    --mount=type=cache,target=$GOPATH/pkg/mod \
+    go test ./...
+
+# Webpack build environment
+# -------------------------
+FROM node:latest as build-webpack
+WORKDIR /webpack
+
+COPY ./dashboard ./
+
+RUN npm i
+
+ENV NODE_ENV=production
+
+RUN npm run build
+
+# Deployment environment
+# ----------------------
+FROM alpine
+RUN apk update
+
+COPY --from=build-go /porter/bin/app /porter/
+COPY --from=build-go /porter/bin/migrate /porter/
+COPY --from=build-webpack /webpack/build /porter/static
+
+ENV DEBUG=false
+ENV STATIC_FILE_PATH=/porter/static
+ENV SERVER_PORT=8080
+ENV SERVER_TIMEOUT_READ=5s
+ENV SERVER_TIMEOUT_WRITE=10s
+ENV SERVER_TIMEOUT_IDLE=15s
+
+ENV COOKIE_SECRETS=secret
+
+ENV SQL_LITE=true
+ENV ADMIN_INIT=false
+
+EXPOSE 8080
+CMD /porter/migrate && /porter/app

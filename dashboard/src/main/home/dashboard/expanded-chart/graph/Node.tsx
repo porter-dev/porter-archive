@@ -60,11 +60,13 @@ export default class Node extends Component<PropsType, StateType> {
 
 const Kind = styled.div`
   color: #ffffff33;
-  position: absolute;
-  top: -25px;
-  width: 140px;
-  left: -50px;
+  position: relative;
+  margin-top: -25px;
+  padding-bottom: 10px;
+  max-width: 140px;
   text-align: center;
+  min-width: 1px;
+  height: 25px;
   font-size: 13px;
   font-family: 'Work Sans', sans-serif;
   white-space: nowrap;
@@ -73,11 +75,11 @@ const Kind = styled.div`
 `;
 
 const NodeLabel = styled.div`
-  position: absolute;
-  bottom: -25px;
+  position: relative;
+  margin-bottom: -25px;
+  padding-top: 10px;
   color: #aaaabb;
-  width: 140px;
-  left: -50px;
+  max-width: 140px;
   font-size: 13px;
   font-family: 'Work Sans', sans-serif;
   text-align: center;
@@ -94,11 +96,10 @@ const NodeBlock = styled.div`
   align-items: center;
   justify-content: center;
   border-radius: 100px;
-  cursor: grab;
+  cursor: pointer;
   :hover {
     background: #555556;
   }
-
   > i {
     color: white;
     font-size: 18px;
@@ -118,4 +119,7 @@ const StyledNode: any = styled.div.attrs((props: NodeType) => ({
   color: #ffffff22;
   border-radius: 100px;
   z-index: 3;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 `;

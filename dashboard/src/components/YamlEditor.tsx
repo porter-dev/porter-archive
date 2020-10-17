@@ -7,9 +7,10 @@ import 'ace-builds/src-noconflict/theme-terminal';
 
 type PropsType = {
   value: string,
-  onChange: (e: any) => void,
+  onChange?: (e: any) => void, // Might be read-only
   height?: string,
-  border?: boolean
+  border?: boolean,
+  readOnly?: boolean
 }
 
 type StateType = {
@@ -52,6 +53,7 @@ class YamlEditor extends Component<PropsType, StateType> {
             theme='terminal'
             onChange={this.props.onChange}
             name='codeEditor'
+            readOnly={this.props.readOnly}
             editorProps={{ $blockScrolling: true }}
             height={this.props.height}
             width='100%'

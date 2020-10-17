@@ -72,6 +72,7 @@ const Kind = styled.div`
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  z-index: 0;
 `;
 
 const NodeLabel = styled.div`
@@ -86,6 +87,7 @@ const NodeLabel = styled.div`
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  z-index: 0;
 `;
 
 const NodeBlock = styled.div`
@@ -96,6 +98,7 @@ const NodeBlock = styled.div`
   align-items: center;
   justify-content: center;
   border-radius: 100px;
+  z-index: 100;
   cursor: pointer;
   :hover {
     background: #555556;
@@ -118,7 +121,6 @@ const StyledNode: any = styled.div.attrs((props: NodeType) => ({
   box-shadow: ${(props: any) => props.isActive ? '0 0 10px #ffffff66' : '0px 0px 10px 2px #00000022'};
   color: #ffffff22;
   border-radius: 100px;
-  z-index: 3;
   display: flex;
   flex-direction: column;
   align-items: center;

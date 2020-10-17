@@ -80,7 +80,7 @@ func newTester(canQuery bool) *tester {
 
 	store, _ := sessionstore.NewStore(repo, appConf.Server)
 	app := api.New(logger, repo, validator, store, appConf.Server.CookieName, true)
-	r := router.New(app, store, appConf.Server.CookieName)
+	r := router.New(app, store, appConf.Server.CookieName, appConf.Server.StaticFilePath)
 
 	return &tester{
 		app:    app,

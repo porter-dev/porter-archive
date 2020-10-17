@@ -32,7 +32,7 @@ services:
     ports:
       - 5400:5432
     volumes:
-      - db:/var/lib/postgresql/data
+      - database:/var/lib/postgresql/data
   nginx:
     image: nginx:mainline-alpine
     container_name: nginx
@@ -46,5 +46,5 @@ services:
       - webpack    
 
 volumes:
-  db:
+  database:
   metabase:

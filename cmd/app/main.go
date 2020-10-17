@@ -2,10 +2,16 @@ package main
 
 import (
 	"fmt"
+	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
+
+	"github.com/porter-dev/porter/internal/kubernetes"
 
 	"github.com/gorilla/sessions"
+	"github.com/porter-dev/porter/internal/forms"
+	"github.com/porter-dev/porter/internal/repository"
 	"github.com/porter-dev/porter/internal/repository/gorm"
 
 	"github.com/porter-dev/porter/server/api"
@@ -31,6 +37,15 @@ func main() {
 
 	repo := gorm.NewRepository(db)
 
+	// upsert admin if config requires
+	if appConf.Db.AdminInit {
+		err := upsertAdmin(repo.User, appConf.Db.AdminEmail, appConf.Db.AdminPassword)
+
+		if err != nil {
+			fmt.Println("Error while upserting admin: " + err.Error())
+		}
+	}
+
 	// declare as Store interface (methods Get, New, Save)
 	var store sessions.Store
 	store, _ = sessionstore.NewStore(repo, appConf.Server)
@@ -39,7 +54,7 @@ func main() {
 
 	a := api.New(logger, repo, validator, store, appConf.Server.CookieName, false)
 
-	appRouter := router.New(a, store, appConf.Server.CookieName)
+	appRouter := router.New(a, store, appConf.Server.CookieName, appConf.Server.StaticFilePath)
 
 	address := fmt.Sprintf(":%d", appConf.Server.Port)
 
@@ -56,4 +71,66 @@ func main() {
 	if err := s.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 		log.Fatal("Server startup failed")
 	}
+}
+
+func upsertAdmin(repo repository.UserRepository, email, pw string) error {
+	admUser, err := repo.ReadUserByEmail(email)
+
+	// create the user in this case
+	if err != nil {
+		form := forms.CreateUserForm{
+			Email:    email,
+			Password: pw,
+		}
+
+		admUser, err = form.ToUser(repo)
+
+		if err != nil {
+			return err
+		}
+
+		admUser, err = repo.CreateUser(admUser)
+
+		if err != nil {
+			return err
+		}
+	}
+
+	filename := "/porter/porter.kubeconfig"
+
+	// read if kubeconfig file exists, if it does update the user
+	if _, err := os.Stat(filename); !os.IsNotExist(err) {
+		fileBytes, err := ioutil.ReadFile(filename)
+
+		contexts := make([]string, 0)
+		allContexts, err := kubernetes.GetContextsFromBytes(fileBytes, []string{})
+
+		if err != nil {
+			return err
+		}
+
+		for _, context := range allContexts {
+			contexts = append(contexts, context.Name)
+		}
+
+		form := forms.UpdateUserForm{
+			ID:              admUser.ID,
+			RawKubeConfig:   string(fileBytes),
+			AllowedContexts: contexts,
+		}
+
+		admUser, err = form.ToUser(repo)
+
+		if err != nil {
+			return err
+		}
+
+		admUser, err = repo.UpdateUser(admUser)
+
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }

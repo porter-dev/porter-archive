@@ -35,7 +35,7 @@ export default class ChartList extends Component<PropsType, StateType> {
       if (this.state.loading) {
         this.setState({ loading: false, error: true });
       }
-    }, 2000);
+    }, 3000);
 
     api.getCharts('<token>', {
       namespace: this.props.namespace,

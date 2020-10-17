@@ -43,7 +43,7 @@ const getContexts = baseApi<{}, { id: number }>('GET', pathParams => {
 const getCharts = baseApi<{
   namespace: string,
   context: string,
-  storage: string
+  storage: StorageType,
   limit: number,
   skip: number,
   byDate: boolean,
@@ -53,9 +53,17 @@ const getCharts = baseApi<{
 const getChart = baseApi<{
   namespace: string,
   context: string,
-  storage: string
+  storage: StorageType
 }, { name: string, revision: number }>('GET', pathParams => {
   return `/api/releases/${pathParams.name}/${pathParams.revision}`;
+});
+
+const getChartComponents = baseApi<{
+  namespace: string,
+  context: string,
+  storage: StorageType
+}, { name: string, revision: number }>('GET', pathParams => {
+  return `/api/releases/${pathParams.name}/${pathParams.revision}/components`;
 });
 
 const getNamespaces = baseApi<{
@@ -65,7 +73,7 @@ const getNamespaces = baseApi<{
 const getRevisions = baseApi<{
   namespace: string,
   context: string,
-  storage: string
+  storage: StorageType
 }, { name: string }>('GET', pathParams => {
   return `/api/releases/${pathParams.name}/history`;
 });
@@ -73,7 +81,7 @@ const getRevisions = baseApi<{
 const rollbackChart = baseApi<{
   namespace: string,
   context: string,
-  storage: string,
+  storage: StorageType,
   revision: number
 }, { name: string }>('POST', pathParams => {
   return `/api/releases/${pathParams.name}/rollback`;
@@ -82,7 +90,7 @@ const rollbackChart = baseApi<{
 const upgradeChartValues = baseApi<{
   namespace: string,
   context: string,
-  storage: string,
+  storage: StorageType,
   values: string
 }, { name: string }>('POST', pathParams => {
   return `/api/releases/${pathParams.name}/upgrade`;
@@ -99,6 +107,7 @@ export default {
   getContexts,
   getCharts,
   getChart,
+  getChartComponents,
   getNamespaces,
   getRevisions,
   rollbackChart,

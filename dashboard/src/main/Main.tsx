@@ -32,7 +32,7 @@ export default class Main extends Component<PropsType, StateType> {
   componentDidMount() {
     let { setUserId } = this.context;
     api.checkAuth('', {}, {}, (err: any, res: any) => {
-      if (res.data) {
+      if (res?.data) {
         setUserId(res.data.id);
         this.setState({ isLoggedIn: true, initialized: true, loading: false });
       } else {
@@ -116,6 +116,7 @@ const GlobalStyle = createGlobalStyle`
   }
   body {
     background: #202227;
+    overscroll-behavior-x: none;
   }
 `;
 

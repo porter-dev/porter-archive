@@ -3,6 +3,7 @@ import styled from 'styled-components';
 import loading from '../assets/loading.gif';
 
 type PropsType = {
+  offset?: string
 };
 
 type StateType = {
@@ -14,7 +15,7 @@ export default class Loading extends Component<PropsType, StateType> {
 
   render() {
     return (
-      <StyledLoading>
+      <StyledLoading offset={this.props.offset}>
         <Spinner src={loading} />
       </StyledLoading>
     );
@@ -31,4 +32,5 @@ const StyledLoading = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
+  margin-top: ${(props: { offset?: string }) => props.offset};
 `;

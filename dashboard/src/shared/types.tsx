@@ -42,7 +42,7 @@ export interface NodeType {
   id: number,
   name: string,
   kind: string,
-  RawYAML?: string,
+  RawYAML?: Object,
   x: number,
   y: number,
   w: number,

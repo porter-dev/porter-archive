@@ -3,7 +3,6 @@ import styled from 'styled-components';
 import yaml from 'js-yaml';
 
 import { kindToIcon } from '../../../../shared/rosettaStone';
-
 import { ResourceType } from '../../../../shared/types';
 import YamlEditor from '../../../../components/YamlEditor';
 

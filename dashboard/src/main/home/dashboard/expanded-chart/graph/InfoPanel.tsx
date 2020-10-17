@@ -54,7 +54,7 @@ export default class InfoPanel extends Component<PropsType, StateType> {
           </Div>
           <YamlWrapper>
             <YamlEditor
-              value={'# Placeholder resource YAML'}
+              value={yaml.dump(openedNode.RawYAML)}
               readOnly={true}
               height='100vw'
             />

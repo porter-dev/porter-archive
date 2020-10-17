@@ -175,14 +175,29 @@ export default class GraphDisplay extends Component<PropsType, StateType> {
       this.setState({
         anchorX: this.state.cursorX,
         anchorY: this.state.cursorY,
-        relocateAllowed: false
+        relocateAllowed: false,
+
+        // Suppress jump when panning with mouse
+        panX: null,
+        panY: null,
+        deltaX: null,
+        deltaY: null
       });
     }
   }
 
   handleKeyUp = (e: any) => {
     if (e.key === 'Shift') {
-      this.setState({ anchorX: null, anchorY: null });
+      this.setState({
+        anchorX: null,
+        anchorY: null,
+
+        // Suppress jump when panning with mouse
+        panX: null,
+        panY: null,
+        deltaX: null,
+        deltaY: null
+      });
     }
   }
 
@@ -258,8 +273,12 @@ export default class GraphDisplay extends Component<PropsType, StateType> {
 
     // Pinch/zoom sets e.ctrlKey to true
     if (e.ctrlKey) {
-      var scale = 1;
-      scale -= e.deltaY * zoomConstant;
+  
+      // Clip deltaY for extreme mousewheel values
+      let deltaY = e.deltaY >= 0 ? Math.min(40, e.deltaY) : Math.max(-40, e.deltaY);
+
+      let scale = 1;
+      scale -= deltaY * zoomConstant;
       this.setState({ scale, panX: 0, panY: 0 });
     } else {
       this.setState({ panX: e.deltaX, panY: e.deltaY, scale: 1 });
@@ -324,6 +343,8 @@ export default class GraphDisplay extends Component<PropsType, StateType> {
           nodeMouseUp={this.handleReleaseNode}
           isActive={activeIds.includes(node.id)}
           showKindLabels={this.state.showKindLabels}
+
+          // Parameterized to allow setting to null
           setCurrentNode={(node: NodeType) => this.setState({ currentNode: node })}
         />
       );

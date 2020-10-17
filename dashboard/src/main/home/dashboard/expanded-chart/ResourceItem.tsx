@@ -48,6 +48,8 @@ export default class ResourceItem extends Component<PropsType, StateType> {
             value={this.state.RawYAML}
             onChange={(e: any) => this.setState({ RawYAML: e })}
             height='300px'
+            border={true}
+            readOnly={true}
           />
         </ExpandWrapper>
       );

@@ -22,7 +22,7 @@ type StateType = {
   nodes: NodeType[],
   edges: EdgeType[],
   activeIds: number[], // IDs of all currently selected nodes
-  originX: number | null, 
+  originX: number | null,
   originY: number | null,
   cursorX: number | null,
   cursorY: number | null,
@@ -32,14 +32,19 @@ type StateType = {
   panY: number | null, // Two-finger pan y-displacement
   anchorX: number | null, // Initial cursorX during region select
   anchorY: number | null, // Initial cursorY during region select
+  nodeClickX: number | null, // Initial cursorX during node click (drag vs click)
+  nodeClickY: number | null, // Initial cursorY during node click (drag vs click)
   dragBg: boolean, // Boolean to track if all nodes should move with mouse (bg drag)
-  preventBgDrag: boolean, // Prevents bg drag when moving selected with mouse down
-  relocateAllowed: boolean, // Suppresses movement of selected when drawing select region
+  preventBgDrag: boolean, // Prevent bg drag when moving selected with mouse down
+  relocateAllowed: boolean, // Suppress movement of selected when drawing select region
   scale: number,
   showKindLabels: boolean,
+  isExpanded: boolean,
   currentNode: NodeType | null,
   currentEdge: EdgeType | null,
-  isExpanded: boolean
+  openedNode: NodeType | null,
+  suppressCloseNode: boolean, // Still click should close opened unless on a node
+  suppressDisplayClicks: boolean, // Ignore clicks on InfoPanel or ButtonSection
 };
 
 // TODO: region-based unselect, shift-click, multi-region
@@ -58,14 +63,19 @@ export default class GraphDisplay extends Component<PropsType, StateType> {
     panY: null as (number | null),
     anchorX: null as (number | null),
     anchorY: null as (number | null),
+    nodeClickX: null as (number | null),
+    nodeClickY: null as (number | null),
     dragBg: false,
     preventBgDrag: false,
+    relocateAllowed: false,
     scale: 0.5,
     showKindLabels: true,
+    isExpanded: false,
     currentNode: null as (NodeType | null),
     currentEdge: null as (EdgeType | null),
-    relocateAllowed: false,
-    isExpanded: false
+    openedNode: null as (NodeType | null),
+    suppressCloseNode: false,
+    suppressDisplayClicks: false
   }
 
   spaceRef: any = React.createRef();
@@ -101,7 +111,7 @@ export default class GraphDisplay extends Component<PropsType, StateType> {
       this.setState({ nodes, edges });
     } else {
       let storedState = JSON.parse(localStorage.getItem(`charts.${this.props.currentChartName}`))
-      this.setState(storedState)
+      this.setState(storedState);
     }
 
     document.addEventListener("keydown", this.handleKeyDown);
@@ -155,12 +165,15 @@ export default class GraphDisplay extends Component<PropsType, StateType> {
 
   componentWillUnmount() {
     let graph = this.state;
-    console.log("unmounting...", graph)
+
     // flush non-persistent data
     graph.activeIds = [];
     graph.currentNode = null;
     graph.currentEdge = null;
     graph.isExpanded = false;
+    graph.openedNode = null;
+    graph.suppressDisplayClicks = false;
+    graph.suppressCloseNode = false;
 
     localStorage.setItem(`charts.${this.props.currentChartName}`, JSON.stringify(graph))
     this.spaceRef.removeEventListener("touchmove", (e: any) => e.preventDefault());
@@ -201,8 +214,13 @@ export default class GraphDisplay extends Component<PropsType, StateType> {
     }
   }
 
-  // Push to activeIds if not already present
   handleClickNode = (clickedId: number) => {
+    let { cursorX, cursorY } = this.state;
+
+    // Store position for distinguishing click vs drag on release
+    this.setState({ nodeClickX: cursorX, nodeClickY: cursorY, suppressCloseNode: true });
+
+    // Push to activeIds if not already present
     let holding = this.state.activeIds;
     if (!holding.includes(clickedId)) {
       holding.push(clickedId);
@@ -211,28 +229,51 @@ export default class GraphDisplay extends Component<PropsType, StateType> {
     // Track and store offset to grab node from anywhere (must store)
     this.state.nodes.forEach((node: NodeType) => {
       if (this.state.activeIds.includes(node.id)) {
-        if (!node.toCursorX && !node.toCursorY) {
-          node.toCursorX = node.x - this.state.cursorX;
-          node.toCursorY = node.y - this.state.cursorY;
-        } else {
-          node.toCursorX = 0;
-          node.toCursorY = 0;
-        }
+        node.toCursorX = node.x - cursorX;
+        node.toCursorY = node.y - cursorY;
       }
     });
 
     this.setState({ activeIds: holding, preventBgDrag: true, relocateAllowed: true });
   }
 
-  handleReleaseNode = () => {
+  handleReleaseNode = (node: NodeType) => {
+    let { cursorX, cursorY, nodeClickX, nodeClickY } = this.state;
     this.setState({ activeIds: [], preventBgDrag: false });
 
-    // Only update dot position state on release for all active
-    let { activeIds, nodes} = this.state;
-    for (var i=0; i < activeIds.length; i++) {
-      var a = activeIds[i];
-      nodes[a].toCursorX = 0;
-      nodes[a].toCursorY = 0;
+    // Distinguish node click vs drag (can't use onClick since drag counts)
+    if (cursorX === nodeClickX && cursorY === nodeClickY) {
+      this.setState({ openedNode: node });
+    }
+  }
+
+  handleMouseDown = () => {
+    let { cursorX, cursorY } = this.state;
+
+    // Store position for distinguishing click vs drag on release
+    this.setState({ nodeClickX: cursorX, nodeClickY: cursorY });
+
+    this.setState({
+      dragBg: true,
+
+      // Suppress drifting on repeated click
+      deltaX: null,
+      deltaY: null,
+      panX: null,
+      panY: null,
+      scale: 1
+    })
+  }
+
+  handleMouseUp = () => {
+    let { cursorX, nodeClickX, cursorY, nodeClickY, suppressCloseNode } = this.state;
+    this.setState({ dragBg: false, activeIds: [] });
+
+    // Distinguish bg click vs drag for setting closing opened node
+    if (!suppressCloseNode && cursorX === nodeClickX && cursorY === nodeClickY) {
+      this.setState({ openedNode: null });
+    } else if (this.state.suppressCloseNode) {
+      this.setState({ suppressCloseNode: false });
     }
   }
 
@@ -340,9 +381,10 @@ export default class GraphDisplay extends Component<PropsType, StateType> {
           originX={originX}
           originY={originY}
           nodeMouseDown={() => this.handleClickNode(node.id)}
-          nodeMouseUp={this.handleReleaseNode}
+          nodeMouseUp={() => this.handleReleaseNode(node)}
           isActive={activeIds.includes(node.id)}
           showKindLabels={this.state.showKindLabels}
+          isOpen={node === this.state.openedNode}
 
           // Parameterized to allow setting to null
           setCurrentNode={(node: NodeType) => this.setState({ currentNode: node })}
@@ -390,24 +432,18 @@ export default class GraphDisplay extends Component<PropsType, StateType> {
         isExpanded={this.state.isExpanded}
         ref={element => this.spaceRef = element}
         onMouseMove={this.handleMouseMove}
-        onMouseDown={() => this.setState({
-          dragBg: true,
-
-          // Suppress drifting on repeated click
-          deltaX: null,
-          deltaY: null,
-          panX: null,
-          panY: null,
-          scale: 1
-        })}
-        onMouseUp={() => this.setState({ dragBg: false, activeIds: [] })}
+        onMouseDown={this.state.suppressDisplayClicks ? null : this.handleMouseDown}
+        onMouseUp={this.state.suppressDisplayClicks ? null : this.handleMouseUp}
         onWheel={this.handleWheel}
       >
         {this.renderNodes()}
         {this.renderEdges()}
         {this.renderSelectRegion()}
 
-        <ButtonSection>
+        <ButtonSection
+          onMouseEnter={() => this.setState({ suppressDisplayClicks: true })}
+          onMouseLeave={() => this.setState({ suppressDisplayClicks: false })}
+        >
           <ToggleLabel
             onClick={() => this.setState({ showKindLabels: !this.state.showKindLabels })}
           >
@@ -425,8 +461,11 @@ export default class GraphDisplay extends Component<PropsType, StateType> {
           </ExpandButton>
         </ButtonSection>
         <InfoPanel
+          setSuppressDisplayClicks={(x: boolean) => this.setState({ suppressDisplayClicks: x })}
           currentNode={this.state.currentNode}
           currentEdge={this.state.currentEdge}
+          openedNode={this.state.openedNode}
+          closeNode={() => this.setState({ openedNode: null })}
         />
       </StyledGraphDisplay>
     );
@@ -475,11 +514,12 @@ const ToggleLabel = styled.div`
 
 const ButtonSection = styled.div`
   position: absolute;
-  top: 17px;
+  top: 15px;
   right: 15px;
   display: flex;
   align-items: center;
   z-index: 999;
+  cursor: pointer;
 `;
 
 const ExpandButton = styled.div`

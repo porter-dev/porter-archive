@@ -1,13 +1,18 @@
 import React, { Component } from 'react';
 import styled from 'styled-components';
+import yaml from 'js-yaml';
 
 import { kindToIcon, edgeColors } from '../../../../../shared/rosettaStone';
-import { NodeType, EdgeType} from '../../../../../shared/types';
-import Edge from './Edge';
+import { NodeType, EdgeType } from '../../../../../shared/types';
+
+import YamlEditor from '../../../../../components/YamlEditor';
 
 type PropsType = {
   currentNode: NodeType,
-  currentEdge: EdgeType
+  currentEdge: EdgeType,
+  openedNode: NodeType,
+  setSuppressDisplayClicks: (x: boolean) => void,
+  closeNode: () => void
 };
 
 type StateType = {
@@ -36,8 +41,27 @@ export default class InfoPanel extends Component<PropsType, StateType> {
   }
 
   renderContents = () => {
-    let { currentNode, currentEdge } = this.props;
-    if (currentNode) {
+    let { currentNode, currentEdge, openedNode } = this.props;
+    if (openedNode) {
+      return (
+        <Wrapped>
+          <Div>
+            {this.renderIcon(openedNode.kind)}
+            {openedNode.kind}
+            <ResourceName>
+              {openedNode.name}
+            </ResourceName>
+          </Div>
+          <YamlWrapper>
+            <YamlEditor
+              value={'# Placeholder resource YAML'}
+              readOnly={true}
+              height='100vw'
+            />
+          </YamlWrapper>
+        </Wrapped>
+      )
+    } else if (currentNode) {
       return (
         <Div>
           {this.renderIcon(currentNode.kind)}
@@ -80,12 +104,32 @@ export default class InfoPanel extends Component<PropsType, StateType> {
 
   render() {
     return (
-      <StyledInfoPanel>
+      <StyledInfoPanel
+        expanded={Boolean(this.props.openedNode)}
+        onMouseEnter={() => this.props.setSuppressDisplayClicks(true)}
+        onMouseLeave={() => this.props.setSuppressDisplayClicks(false)}
+      >
         {this.renderContents()}
+
+        {this.props.openedNode ? <i onClick={this.props.closeNode} className="material-icons">close</i> : null}
       </StyledInfoPanel>
     );
   }
 }
+
+const Wrapped = styled.div`
+  height: 100%;
+  position: relative;
+`;
+
+const YamlWrapper = styled.div`
+  width: 100%;
+  margin-top: 7px;
+  height: calc(100% - 44px);
+  overflow: hidden;
+  border-radius: 5px;
+  border: 1px solid #ffffff22;
+`;
 
 const ColorBlock = styled.div`
   width: 15px;
@@ -101,12 +145,16 @@ const ColorBlock = styled.div`
 
 const Div = styled.div`
   display: flex;
+  padding-left: 7px;
   align-items: center;
+  padding-right: 23px;
 `;
 
 const EdgeInfo = styled.div`
   display: flex;
   align-items: center;
+  padding-left: 7px;
+  padding-right: 23px;
   margin-top: 5px;
 `;
 
@@ -138,17 +186,32 @@ const StyledInfoPanel = styled.div`
   right: 15px;
   bottom: 15px;
   color: #ffffff66;
-  height: 40px;
-  width: 400px;
+  height: ${(props: { expanded: boolean }) => props.expanded ? 'calc(100% - 68px)' : '40px'};
+  width: ${(props: { expanded: boolean }) => props.expanded ? 'calc(50% - 68px)' : '400px'};
   max-width: 600px;
-  background: #44444699;
+  background: #34373Cdf;
   border-radius: 3px;
-  padding-left: 20px;
+  padding-left: 11px;
   display: inline-block;
   z-index: 999;
   padding-top: 7px;
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
-  padding-right: 13px;
+  padding-right: 11px;
+  cursor: default;
+
+  > i {
+    position: absolute;
+    padding: 5px;
+    top: 6px;
+    right: 6px;
+    border-radius: 50px;
+    font-size: 17px;
+    cursor: pointer;
+    color: white;
+    :hover {
+      background: #ffffff22;
+    }
+  }
 `;

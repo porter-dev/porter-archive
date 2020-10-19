@@ -199,6 +199,12 @@ func (a *Agent) pullAndCreatePostgresContainer(opts PostgresOpts) (id string, er
 		ExposedPorts: nat.PortSet{
 			"5432": struct{}{},
 		},
+		Healthcheck: &container.HealthConfig{
+			Test:     []string{"CMD-SHELL", "pg_isready"},
+			Interval: 10 * time.Second,
+			Timeout:  5 * time.Second,
+			Retries:  3,
+		},
 	}, &container.HostConfig{
 		Mounts: opts.Mounts,
 	}, nil, opts.Name)

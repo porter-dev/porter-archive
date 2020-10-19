@@ -175,7 +175,7 @@ export default class RevisionSection extends Component<PropsType, StateType> {
           showRevisions={this.props.showRevisions}
           onClick={this.props.toggleShowRevisions}
         >
-          {isCurrent ? `Current Revision` : `Previewing Revision`} - <Revision>No. {this.props.chart.version}</Revision>
+          {isCurrent ? `Current Revision` : `Previewing Revision (Not Deployed)`} - <Revision>No. {this.props.chart.version}</Revision>
           <i className="material-icons">expand_more</i>
         </RevisionHeader>
 

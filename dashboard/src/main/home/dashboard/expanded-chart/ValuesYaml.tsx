@@ -26,7 +26,10 @@ export default class ValuesYaml extends Component<PropsType, StateType> {
   }
 
   updateValues() {
-    let values = yaml.dump(this.props.currentChart.config);
+    let values = '# Nothing here yet';
+    if (this.props.currentChart.config) {
+      values = yaml.dump(this.props.currentChart.config);
+    }
     this.setState({ values });
   }
 

@@ -288,7 +288,7 @@ func (parsed *ParsedObjs) findRBACTargets(parentID int, yaml map[string]interfac
 
 			// first consider case of targets added via subjects, which are namespace scoped.
 			if tr["namespace"] != nil && o.Kind == tr["kind"] &&
-				o.Name == tr["name"] && o.Namespace == tr["namespace"] {
+				o.Name == tr["name"] && (o.Namespace == tr["namespace"] || o.Namespace == "default") {
 
 				// Add bidirectional link from children as well.
 				parsed.Objects[i].Relations.SpecRels = append(parsed.Objects[i].Relations.SpecRels, newrel)

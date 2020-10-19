@@ -13,7 +13,8 @@ type PropsType = {
   openedNode: NodeType,
   setSuppressDisplay: (x: boolean) => void,
   closeNode: () => void,
-  isExpanded: boolean
+  isExpanded: boolean,
+  showRevisions: boolean
 };
 
 type StateType = {
@@ -51,7 +52,8 @@ export default class InfoPanel extends Component<PropsType, StateType> {
 
   componentDidUpdate(prevProps: PropsType) {
     if ((prevProps.openedNode !== this.props.openedNode 
-      || prevProps.isExpanded !== this.props.isExpanded) && this.wrapperRef
+      || prevProps.isExpanded !== this.props.isExpanded
+      || prevProps.showRevisions !== this.props.showRevisions) && this.wrapperRef
     ) {
       this.setState({ wrapperHeight: this.wrapperRef.offsetHeight });
     }
@@ -210,6 +212,7 @@ const StyledInfoPanel = styled.div`
   height: ${(props: { expanded: boolean }) => props.expanded ? 'calc(100% - 68px)' : '40px'};
   width: ${(props: { expanded: boolean }) => props.expanded ? 'calc(50% - 68px)' : '400px'};
   max-width: 600px;
+  min-width: 400px;
   background: #34373Cdf;
   border-radius: 3px;
   padding-left: 11px;

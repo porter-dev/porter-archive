@@ -11,20 +11,23 @@ type PropsType = {
   showRevisions: boolean,
   toggleShowRevisions: () => void,
   chart: ChartType,
-  refreshChart: () => void
+  refreshChart: () => void,
+  setRevisionPreview: (preview: ChartType) => void
 };
 
 type StateType = {
   revisions: ChartType[],
   rollbackRevision: number | null,
-  loading: boolean
+  loading: boolean,
+  maxVersion: number
 };
 
 export default class RevisionSection extends Component<PropsType, StateType> {
   state = {
     revisions: [] as ChartType[],
     rollbackRevision: null as (number | null),
-    loading: false
+    loading: false,
+    maxVersion: 0, // Track most recent version even when previewing old revisions
   }
 
   refreshHistory = () => {
@@ -39,7 +42,7 @@ export default class RevisionSection extends Component<PropsType, StateType> {
         console.log(err)
       } else {
         res.data.sort((a: ChartType, b: ChartType) => { return -(a.version - b.version) });
-        this.setState({ revisions: res.data });
+        this.setState({ revisions: res.data, maxVersion: res.data[0].version });
       }
     });
   }
@@ -88,18 +91,23 @@ export default class RevisionSection extends Component<PropsType, StateType> {
   }
 
   renderRevisionList = () => {
-    return this.state.revisions.map((revision: any, i: number) => {
+    return this.state.revisions.map((revision: ChartType, i: number) => {
+      let isCurrent = revision.version === this.state.maxVersion;
       return (
-        <Tr key={i}>
+        <Tr
+          key={i}
+          onClick={() => this.props.setRevisionPreview(revision)}
+          selected={this.props.chart.version === revision.version}
+        >
           <Td>{revision.version}</Td>
           <Td>{this.readableDate(revision.info.last_deployed)}</Td>
           <Td>{revision.info.status}</Td>
           <Td>
             <RollbackButton
-              disabled={revision.version === this.props.chart.version}
+              disabled={isCurrent}
               onClick={() => this.setState({ rollbackRevision: revision.version })}
             >
-              {revision.version === this.props.chart.version ? 'Current' : 'Revert'}
+              {isCurrent ? 'Current' : 'Revert'}
             </RollbackButton>
           </Td>
         </Tr>
@@ -110,17 +118,19 @@ export default class RevisionSection extends Component<PropsType, StateType> {
   renderExpanded = () => {
     if (this.props.showRevisions) {
       return (
-        <RevisionsTable>
-          <tbody>
-            <Tr>
-              <Th>Revision No.</Th>
-              <Th>Timestamp</Th>
-              <Th>Status</Th>
-              <Th>Rollback</Th>
-            </Tr>
-            {this.renderRevisionList()}
-          </tbody>
-        </RevisionsTable>
+        <TableWrapper>
+          <RevisionsTable>
+            <tbody>
+              <Tr disableHover={true}>
+                <Th>Revision No.</Th>
+                <Th>Timestamp</Th>
+                <Th>Status</Th>
+                <Th>Rollback</Th>
+              </Tr>
+              {this.renderRevisionList()}
+            </tbody>
+          </RevisionsTable>
+        </TableWrapper>
       )
     }
   }
@@ -158,13 +168,14 @@ export default class RevisionSection extends Component<PropsType, StateType> {
       )
     }
 
+    let isCurrent = this.props.chart.version === this.state.maxVersion || this.state.maxVersion === 0;
     return (
       <div>
         <RevisionHeader
           showRevisions={this.props.showRevisions}
           onClick={this.props.toggleShowRevisions}
         >
-          Current Revision - <Revision>No. {this.props.chart.version}</Revision>
+          {isCurrent ? `Current Revision` : `Previewing Revision`} - <Revision>No. {this.props.chart.version}</Revision>
           <i className="material-icons">expand_more</i>
         </RevisionHeader>
 
@@ -186,6 +197,10 @@ export default class RevisionSection extends Component<PropsType, StateType> {
 }
 
 RevisionSection.contextType = Context;
+
+const TableWrapper = styled.div`
+  padding-bottom: 20px;
+`;
 
 const LoadingPlaceholder = styled.div`
   height: 40px;
@@ -294,17 +309,24 @@ const RollbackButton = styled.div`
 
 const Tr = styled.tr`
   line-height: 1.8em;
+  cursor: ${(props: { disableHover?: boolean, selected?: boolean }) => props.disableHover ? '' : 'pointer'};
+  background: ${(props: { disableHover?: boolean, selected?: boolean  }) => props.selected ? '#ffffff11' : ''};
+  :hover {
+    background: ${(props: { disableHover?: boolean, selected?: boolean  }) => props.disableHover ? '' : '#ffffff22'};
+  }
 `;
 
 const Td = styled.td`
   font-size: 13px;
   color: #ffffff;
+  padding-left: 32px;
 `;
 
 const Th = styled.td`
   font-size: 13px;
   font-weight: 500;
   color: #aaaabb;
+  padding-left: 32px;
 `;
 
 const RevisionsTable = styled.table`
@@ -313,6 +335,7 @@ const RevisionsTable = styled.table`
   padding-left: 32px;
   padding-bottom: 20px;
   min-width: 500px;
+  border-collapse: collapse;
 `;
 
 const Revision = styled.div`

@@ -25,6 +25,13 @@ export default class ResourceItem extends Component<PropsType, StateType> {
     RawYAML: yaml.dump(this.props.resource.RawYAML)
   }
 
+  // Handle previewing old revisions
+  componentDidUpdate(prevProps: PropsType) {
+    if (prevProps.resource.RawYAML !== this.props.resource.RawYAML) {
+      this.setState({ RawYAML: yaml.dump(this.props.resource.RawYAML) });
+    }
+  }
+
   renderIcon = (kind: string) => {
 
     let icon = 'tonality';

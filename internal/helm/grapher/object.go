@@ -22,7 +22,7 @@ func ParseObjs(objs []map[string]interface{}) []Object {
 		namespace := getField(obj, "metadata", "namespace")
 
 		if namespace == nil {
-			namespace = ""
+			namespace = "default"
 		}
 
 		// First add the object that appears on the YAML

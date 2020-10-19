@@ -3,7 +3,10 @@ package cmd
 import (
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
+	"runtime"
+	"time"
 
 	"github.com/porter-dev/porter/cli/cmd/docker"
 	"k8s.io/client-go/util/homedir"
@@ -300,9 +303,30 @@ func start(
 		return err
 	}
 
+	fmt.Println("Spinning up the Server...")
+	time.Sleep(7 * time.Second)
+	openBrowser(fmt.Sprintf("http://localhost:%d/login?email=%s", port, username))
 	fmt.Printf("Server ready: listening on localhost:%d\n", port)
 
 	agent.WaitForContainerStop(id)
 
 	return nil
+}
+
+// openBrowser opens the specified URL in the default browser of the user.
+func openBrowser(url string) error {
+	var cmd string
+	var args []string
+
+	switch runtime.GOOS {
+	case "windows":
+		cmd = "cmd"
+		args = []string{"/c", "start"}
+	case "darwin":
+		cmd = "open"
+	default: // "linux", "freebsd", "openbsd", "netbsd"
+		cmd = "xdg-open"
+	}
+	args = append(args, url)
+	return exec.Command(cmd, args...).Start()
 }

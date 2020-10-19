@@ -65,15 +65,24 @@ func (parsed *ParsedObjs) GetControlRel() {
 	children := []Object{}
 	for i, obj := range parsed.Objects {
 		yaml := obj.RawYAML
+		kind := getField(yaml, "kind")
 
-		switch kind := getField(yaml, "kind").(string); kind {
+		if kind == nil {
+			kind = ""
+		}
+
+		switch kind.(string) {
 		// Parse for all possible controller types
 		case "Deployment", "StatefulSet", "ReplicaSet", "DaemonSet", "Job":
 			rs := getField(yaml, "spec", "replicas")
 
 			if rs != nil && rs.(int) > 0 {
 				// Add Pods for controller objects
-				template := getField(yaml, "spec", "template").(map[string]interface{})
+				template := getField(yaml, "spec", "template")
+				if template == nil {
+					continue
+				}
+
 				for j := 0; j < rs.(int); j++ {
 					cid := len(parsed.Objects) + len(children)
 					crel := ControlRel{
@@ -89,7 +98,7 @@ func (parsed *ParsedObjs) GetControlRel() {
 						Kind:      "Pod",
 						Name:      obj.Name + "-" + strconv.Itoa(j), // tentative name pre-deploy
 						Namespace: obj.Namespace,
-						RawYAML:   template,
+						RawYAML:   template.(map[string]interface{}),
 						Relations: Relations{
 							ControlRels: []ControlRel{
 								crel,
@@ -291,7 +300,6 @@ func (parsed *ParsedObjs) findRBACTargets(parentID int, yaml map[string]interfac
 			if tr["namespace"] != nil && o.Kind == tr["kind"] && o.Name == tr["name"] &&
 				(o.Namespace == tr["namespace"] || o.Namespace == "default") {
 
-				fmt.Println("subject", o.Name, tr["kind"])
 				// Add bidirectional link from children as well.
 				parsed.Objects[i].Relations.SpecRels = append(parsed.Objects[i].Relations.SpecRels, newrel)
 				targets = append(targets, o.ID)

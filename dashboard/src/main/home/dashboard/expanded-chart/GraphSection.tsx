@@ -10,6 +10,7 @@ import Loading from '../../../../components/Loading';
 type PropsType = {
   components: ResourceType[],
   currentChartName: string,
+  currentChartVersion: number,
   setSidebar: (x: boolean) => void
 };
 
@@ -30,6 +31,7 @@ export default class GraphSection extends Component<PropsType, StateType> {
           components={this.props.components}
           isExpanded={this.state.isExpanded}
           currentChartName={this.props.currentChartName}
+          currentChartVersion={this.props.currentChartVersion}
         />
       );
     }

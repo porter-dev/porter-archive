@@ -2,16 +2,16 @@ import React, { Component } from 'react';
 import styled from 'styled-components';
 
 import { Context } from '../../../../shared/Context';
-import { ResourceType } from '../../../../shared/types';
+import { ResourceType, ChartType } from '../../../../shared/types';
 
 import GraphDisplay from './graph/GraphDisplay';
 import Loading from '../../../../components/Loading';
 
 type PropsType = {
   components: ResourceType[],
-  currentChartName: string,
-  currentChartVersion: number,
-  setSidebar: (x: boolean) => void
+  currentChart: ChartType,
+  setSidebar: (x: boolean) => void,
+  showRevisions: boolean
 };
 
 type StateType = {
@@ -30,8 +30,8 @@ export default class GraphSection extends Component<PropsType, StateType> {
           setSidebar={this.props.setSidebar}
           components={this.props.components}
           isExpanded={this.state.isExpanded}
-          currentChartName={this.props.currentChartName}
-          currentChartVersion={this.props.currentChartVersion}
+          currentChart={this.props.currentChart}
+          showRevisions={this.props.showRevisions}
         />
       );
     }

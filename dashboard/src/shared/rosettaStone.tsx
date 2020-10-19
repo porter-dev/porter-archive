@@ -4,7 +4,14 @@ export const kindToIcon: any = {
   'Service': 'alt_route',
   'Ingress': 'sensor_door',
   'StatefulSet': 'location_city',
-  'Secret': 'vpn_key'
+  'Secret': 'vpn_key',
+  'ServiceAccount': 'home_repair_service',
+  'ClusterRole': 'person',
+  'ClusterRoleBinding': 'swap_horiz',
+  'Role': 'portrait',
+  'RoleBinding': 'swap_horizontal_circle',
+  'ConfigMap': 'map',
+  'PodSecurityPolicy': 'security'
 }
 
 export const edgeColors: any = {

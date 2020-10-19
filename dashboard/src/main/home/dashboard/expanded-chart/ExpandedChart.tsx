@@ -38,8 +38,8 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
     components: [] as ResourceType[]
   }
 
-  componentDidMount() {
-    let { currentCluster, setCurrentError } = this.context;
+  updateResources = () => {
+    let { currentCluster } = this.context;
     let { currentChart } = this.props;
 
     api.getChartComponents('<token>', {
@@ -53,6 +53,16 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
         this.setState({ components: res.data });
       }
     });
+  }
+
+  componentDidMount() {
+    this.updateResources();
+  }
+
+  componentDidUpdate(prevProps: PropsType) {
+    if (this.props.currentChart !== prevProps.currentChart) {
+      this.updateResources();
+    }
   }
 
   renderIcon = () => {
@@ -79,9 +89,11 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
       return (
         <GraphSection
           components={this.state.components}
-          currentChartName={currentChart.name}
-          currentChartVersion={currentChart.version}
+          currentChart={currentChart}
           setSidebar={setSidebar}
+          
+          // Handle resize YAML wrapper
+          showRevisions={this.state.showRevisions}
         />
       );
     } else if (this.state.currentTab === 'list') {

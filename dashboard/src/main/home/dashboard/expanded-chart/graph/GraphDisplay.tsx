@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import styled from 'styled-components';
 
-import { ResourceType, NodeType, EdgeType } from '../../../../../shared/types';
+import { ResourceType, NodeType, EdgeType, ChartType } from '../../../../../shared/types';
 
 import Node from './Node';
 import Edge from './Edge';
@@ -15,8 +15,10 @@ type PropsType = {
   components: ResourceType[],
   isExpanded: boolean,
   setSidebar: (x: boolean) => void,
-  currentChartName: string,
-  currentChartVersion: number
+  currentChart: ChartType,
+
+  // Handle revisions expansion for YAML wrapper
+  showRevisions: boolean
 };
 
 type StateType = {
@@ -46,6 +48,7 @@ type StateType = {
   openedNode: NodeType | null,
   suppressCloseNode: boolean, // Still click should close opened unless on a node
   suppressDisplay: boolean, // Ignore clicks + pan/zoom on InfoPanel or ButtonSection
+  version?: number // Track in localstorage for handling updates when unmounted
 };
 
 // TODO: region-based unselect, shift-click, multi-region
@@ -88,7 +91,7 @@ export default class GraphDisplay extends Component<PropsType, StateType> {
   }
 
   componentDidMount() {
-    let { components } = this.props;
+    let { components, currentChart } = this.props;
 
     // Initialize origin
     let height = this.spaceRef.offsetHeight;
@@ -101,24 +104,40 @@ export default class GraphDisplay extends Component<PropsType, StateType> {
     // Suppress trackpad gestures
     this.spaceRef.addEventListener("touchmove", (e: any) => e.preventDefault());
     this.spaceRef.addEventListener("mousewheel", (e: any) => e.preventDefault());
-    let graph = localStorage.getItem(`charts.${this.props.currentChartName}-${this.props.currentChartVersion}`)
-    let nodes = [] as NodeType[]
-    let edges = [] as EdgeType[]
-
-    if (!graph) {
-      nodes = this.createNodes(components)
-      edges = this.createEdges(components)
-      this.setState({ nodes, edges });
-    } else {
-      let storedState = JSON.parse(localStorage.getItem(
-        `charts.${this.props.currentChartName}-${this.props.currentChartVersion}`
-        )
-      )
-      this.setState(storedState);
-    }
 
     document.addEventListener("keydown", this.handleKeyDown);
     document.addEventListener("keyup", this.handleKeyUp);
+
+    // Handle graph from localstorage
+    let graph = localStorage.getItem(`charts.${currentChart.name}-${currentChart.version}`);
+    let nodes = [] as NodeType[];
+    let edges = [] as EdgeType[];
+    if (!graph) {
+      nodes = this.createNodes(components);
+      edges = this.createEdges(components);
+      this.setState({ nodes, edges });
+    } else {
+      let storedState = JSON.parse(localStorage.getItem(
+        `charts.${currentChart.name}-${currentChart.version}`
+      ));
+      this.setState(storedState);
+    }
+
+    window.onbeforeunload = () => {
+      this.storeChart();
+    }
+  }
+
+  // Live update on rollback/upgrade
+  componentDidUpdate(prevProps: PropsType) {
+    if (prevProps.components !== this.props.components) {
+      let nodes = [] as NodeType[];
+      let edges = [] as EdgeType[];
+  
+      nodes = this.createNodes(this.props.components);
+      edges = this.createEdges(this.props.components);
+      this.setState({ nodes, edges, openedNode: null });
+    }
   }
 
   createNodes = (components: ResourceType[]) => {
@@ -145,7 +164,7 @@ export default class GraphDisplay extends Component<PropsType, StateType> {
   }
 
   createEdges = (components: ResourceType[]) => {
-    let edges = [] as EdgeType[]
+    let edges = [] as EdgeType[];
     components.map((c: ResourceType) => {
       c.Relations?.ControlRels?.map((rel: any) => {
         if (rel.Source == c.ID) {
@@ -163,13 +182,14 @@ export default class GraphDisplay extends Component<PropsType, StateType> {
         }
       })
     });
-    return edges
+    return edges;
   }
 
-  componentWillUnmount() {
-    let graph = this.state;
+  storeChart = () => {
+    let { currentChart } = this.props;
+    let graph = JSON.parse(JSON.stringify(this.state));
 
-    // flush non-persistent data
+    // Flush non-persistent data
     graph.activeIds = [];
     graph.currentNode = null;
     graph.currentEdge = null;
@@ -179,9 +199,13 @@ export default class GraphDisplay extends Component<PropsType, StateType> {
     graph.suppressCloseNode = false;
 
     localStorage.setItem(
-      `charts.${this.props.currentChartName}-${this.props.currentChartVersion}`, 
+      `charts.${currentChart.name}-${currentChart.version}`,
       JSON.stringify(graph)
-    )
+    );
+  }
+
+  componentWillUnmount() {
+    this.storeChart();
     
     this.spaceRef.removeEventListener("touchmove", (e: any) => e.preventDefault());
     this.spaceRef.removeEventListener("mousewheel", (e: any) => e.preventDefault());
@@ -482,6 +506,7 @@ export default class GraphDisplay extends Component<PropsType, StateType> {
 
           // For YAML wrapper to trigger resize
           isExpanded={this.state.isExpanded}
+          showRevisions={this.props.showRevisions}
         />
       </StyledGraphDisplay>
     );

@@ -136,6 +136,8 @@ func start(
 
 	// if not insecure, or username/pw set incorrectly, prompt for new username/pw
 	if username, pw, err = credstore.Get(); !insecure && err != nil {
+		fmt.Println("Please register your admin account with an email and password:")
+
 		username, err = promptPlaintext("Email: ")
 
 		if err != nil {
@@ -300,7 +302,11 @@ func start(
 		return err
 	}
 
-	fmt.Printf("Server ready: listening on localhost:%d\n", port)
+	if !insecure {
+		fmt.Printf("Server ready: go to localhost:%d/login and log in with the admin account you just created.\n", port)
+	} else {
+		fmt.Printf("Server ready: go to localhost:%d/login\n", port)
+	}
 
 	agent.WaitForContainerStop(id)
 

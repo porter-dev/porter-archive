@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"strings"
+	"time"
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
@@ -179,6 +180,29 @@ func (a *Agent) WaitForContainerStop(id string) error {
 			return a.handleDockerClientErr(err, "Error waiting for stopped container")
 		}
 	case <-statusCh:
+	}
+
+	return nil
+}
+
+// WaitForContainerHealthy waits until a container is returning a healthy status. Streak
+// is the maximum number of failures in a row, while timeout is the length of time between
+// checks.
+func (a *Agent) WaitForContainerHealthy(id string, streak int) error {
+	for {
+		cont, err := a.client.ContainerInspect(a.ctx, id)
+
+		if err != nil {
+			return a.handleDockerClientErr(err, "Error waiting for stopped container")
+		}
+
+		health := cont.State.Health
+
+		if health == nil || health.Status == "healthy" || health.FailingStreak >= streak {
+			break
+		}
+
+		time.Sleep(time.Second)
 	}
 
 	return nil

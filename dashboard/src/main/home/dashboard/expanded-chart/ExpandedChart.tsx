@@ -48,7 +48,7 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
       namespace: currentChart.namespace,
       context: currentCluster,
       storage: StorageType.Secret
-    }, { name: currentChart.name, revision: 0 }, (err: any, res: any) => {
+    }, { name: currentChart.name, revision: currentChart.version }, (err: any, res: any) => {
       if (err) {
         console.log(err)
       } else {
@@ -102,9 +102,14 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
   }
 
   renderTabContents = () => {
+<<<<<<< HEAD
     let { currentChart, refreshChart, setSidebar } = this.props;
     let chart = this.state.revisionPreview || currentChart;
     
+=======
+    let { currentChart, refreshChart, setSidebar} = this.props;
+
+>>>>>>> 21e0edcb20b33dbb6af1eaa3649803a275019bdf
     if (this.state.currentTab === 'graph') {
       return (
         <GraphSection

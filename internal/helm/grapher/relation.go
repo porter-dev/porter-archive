@@ -1,7 +1,6 @@
 package grapher
 
 import (
-	"fmt"
 	"strconv"
 )
 
@@ -295,7 +294,7 @@ func (parsed *ParsedObjs) findRBACTargets(parentID int, yaml map[string]interfac
 					Target: o.ID,
 				},
 			}
-			fmt.Println(tr["namespace"], o.Kind, tr["kind"], o.Name, tr["name"])
+
 			// first consider case of targets added via subjects, which are namespace scoped.
 			if tr["namespace"] != nil && o.Kind == tr["kind"] && o.Name == tr["name"] &&
 				(o.Namespace == tr["namespace"] || o.Namespace == "default") {

@@ -17,15 +17,17 @@ func ParseObjs(objs []map[string]interface{}) []Object {
 
 	for i, obj := range objs {
 		kind := getField(obj, "kind")
+
+		// ignore block comments
+		if kind == nil {
+			continue
+		}
+
 		name := getField(obj, "metadata", "name")
 		namespace := getField(obj, "metadata", "namespace")
 
 		if namespace == nil {
 			namespace = "default"
-		}
-
-		if kind == nil {
-			kind = ""
 		}
 
 		if name == nil {

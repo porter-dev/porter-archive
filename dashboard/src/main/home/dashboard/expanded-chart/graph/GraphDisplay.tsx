@@ -147,18 +147,18 @@ export default class GraphDisplay extends Component<PropsType, StateType> {
         case "ClusterRole":
         case "RoleBinding":
         case "Role":
-          return { id: c.ID, RawYAML: c.RawYAML, name: c.Name, kind: c.Kind, x: this.getRandomIntBetweenRange(-1000, 0), y: this.getRandomIntBetweenRange(0, 500), w: 40, h: 40 };
+          return { id: c.ID, RawYAML: c.RawYAML, name: c.Name, kind: c.Kind, x: this.getRandomIntBetweenRange(-500, 0), y: this.getRandomIntBetweenRange(0, 250), w: 40, h: 40 };
         case "Deployment":
         case "StatefulSet":
         case "Pod":
         case "ServiceAccount":
-          return { id: c.ID, RawYAML: c.RawYAML, name: c.Name, kind: c.Kind, x: this.getRandomIntBetweenRange(0, 1000), y: this.getRandomIntBetweenRange(0, 500), w: 40, h: 40 };
+          return { id: c.ID, RawYAML: c.RawYAML, name: c.Name, kind: c.Kind, x: this.getRandomIntBetweenRange(0, 500), y: this.getRandomIntBetweenRange(0, 250), w: 40, h: 40 };
         case "Service":
         case "Ingress":
         case "ServiceAccount":
-            return { id: c.ID, RawYAML: c.RawYAML, name: c.Name, kind: c.Kind, x: this.getRandomIntBetweenRange(0, 1000), y: this.getRandomIntBetweenRange(-500, 0), w: 40, h: 40 };
+            return { id: c.ID, RawYAML: c.RawYAML, name: c.Name, kind: c.Kind, x: this.getRandomIntBetweenRange(0, 500), y: this.getRandomIntBetweenRange(-250, 0), w: 40, h: 40 };
         default:
-          return { id: c.ID, RawYAML: c.RawYAML, name: c.Name, kind: c.Kind, x: this.getRandomIntBetweenRange(-700, 0), y: this.getRandomIntBetweenRange(-500, 0), w: 40, h: 40 };
+          return { id: c.ID, RawYAML: c.RawYAML, name: c.Name, kind: c.Kind, x: this.getRandomIntBetweenRange(-400, 0), y: this.getRandomIntBetweenRange(-250, 0), w: 40, h: 40 };
         }
     });
   }

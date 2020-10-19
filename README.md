@@ -7,14 +7,14 @@ Porter is a **dashboard for Helm** with support for the following features:
 
 **What's next for Porter?** View our [roadmap](https://github.com/porter-dev/porter/projects/1), or read our [mission statement](#mission-statement). 
 
-## Getting Started
-
-### Local Setup
+## Quick Start
 
 To view the dashboard locally, download our CLI and grab the latest release via:
 
 ```sh
-TBD
+curl "https://api.github.com/repos/porter-dev/porter/releases/latest"
+chmod +x ./porter
+sudo mv ./porter /usr/local/bin/porter
 ```
 
 Then run the dashboard (Docker engine must be running on the host machine):
@@ -23,11 +23,14 @@ Then run the dashboard (Docker engine must be running on the host machine):
 porter start
 ```
 
-### In-Cluster Setup
+When prompted, enter the admin email/password you would like to use. After the server has started, go to `localhost:8080` and **log in with the credentials you just set**. 
 
-TBD
+## Differences from Kubeapps
 
-## Alternative Tools
+As a disclaimer, we're big fans of [Kubeapps](https://github.com/kubeapps/kubeapps), and many of the initial features that we build out will be very similar. Currently, Porter's graph-based chart visualization is the only fundamental difference, and it should be assumed that most Kubeapps features will be supported on Porter in the near future. However, on the feature side, Porter will eventually support:
+- IDE-like tooling for chart creation, templating, and packaging
+- Deep integration with GitOps workflows and CI/CD tools
+- Visualization of lifecycle hooks and robust error tracing for deployments
 
 ## Mission Statement
 

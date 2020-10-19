@@ -38,7 +38,8 @@ export default class RevisionSection extends Component<PropsType, StateType> {
       if (err) {
         console.log(err)
       } else {
-        this.setState({ revisions: res.data.reverse() });
+        res.data.sort((a: ChartType, b: ChartType) => { return -(a.version - b.version) });
+        this.setState({ revisions: res.data });
       }
     });
   }

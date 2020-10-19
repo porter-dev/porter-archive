@@ -1,8 +1,6 @@
 # Porter
 
-## Description
-
-Porter is a **dashboard for Helm**. It currently provides the following features:
+Porter is a **dashboard for Helm** with support for the following features:
 - Visualization of all Helm releases with filtering by namespace
 - In-depth view of releases, including revision histories and component graphs
 - Rollback/update of existing releases, including editing of `values.yaml`
@@ -13,13 +11,13 @@ Porter is a **dashboard for Helm**. It currently provides the following features
 
 ### Local Setup
 
-To view the dashboard locally, we expose a `porter start` command via our CLI. To download the CLI, grab the latest release via:
+To view the dashboard locally, download our CLI and grab the latest release via:
 
 ```sh
 TBD
 ```
 
-And run the dashboard:
+Then run the dashboard (Docker engine must be running on the host machine):
 
 ```sh
 porter start

@@ -15,7 +15,8 @@ type PropsType = {
   components: ResourceType[],
   isExpanded: boolean,
   setSidebar: (x: boolean) => void,
-  currentChartName: string
+  currentChartName: string,
+  currentChartVersion: number
 };
 
 type StateType = {
@@ -100,8 +101,7 @@ export default class GraphDisplay extends Component<PropsType, StateType> {
     // Suppress trackpad gestures
     this.spaceRef.addEventListener("touchmove", (e: any) => e.preventDefault());
     this.spaceRef.addEventListener("mousewheel", (e: any) => e.preventDefault());
-
-    let graph = localStorage.getItem(`charts.${this.props.currentChartName}`)
+    let graph = localStorage.getItem(`charts.${this.props.currentChartName}-${this.props.currentChartVersion}`)
     let nodes = [] as NodeType[]
     let edges = [] as EdgeType[]
 
@@ -110,7 +110,10 @@ export default class GraphDisplay extends Component<PropsType, StateType> {
       edges = this.createEdges(components)
       this.setState({ nodes, edges });
     } else {
-      let storedState = JSON.parse(localStorage.getItem(`charts.${this.props.currentChartName}`))
+      let storedState = JSON.parse(localStorage.getItem(
+        `charts.${this.props.currentChartName}-${this.props.currentChartVersion}`
+        )
+      )
       this.setState(storedState);
     }
 
@@ -175,7 +178,11 @@ export default class GraphDisplay extends Component<PropsType, StateType> {
     graph.suppressDisplay = false;
     graph.suppressCloseNode = false;
 
-    localStorage.setItem(`charts.${this.props.currentChartName}`, JSON.stringify(graph))
+    localStorage.setItem(
+      `charts.${this.props.currentChartName}-${this.props.currentChartVersion}`, 
+      JSON.stringify(graph)
+    )
+    
     this.spaceRef.removeEventListener("touchmove", (e: any) => e.preventDefault());
     this.spaceRef.removeEventListener("mousewheel", (e: any) => e.preventDefault());
     document.removeEventListener("keydown", this.handleKeyDown);

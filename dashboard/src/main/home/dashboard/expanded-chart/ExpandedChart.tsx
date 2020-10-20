@@ -32,6 +32,7 @@ const tabOptions = [
   { label: 'Values Editor', value: 'values' }
 ]
 
+// TODO: consolidate revisionPreview and currentChart (currentChart can just be the initial state)
 export default class ExpandedChart extends Component<PropsType, StateType> {
   state = {
     showRevisions: false,
@@ -103,7 +104,11 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
 
   renderTabContents = () => {
     let { currentChart, refreshChart, setSidebar } = this.props;
-    let chart = this.state.revisionPreview || currentChart;
+    let chart = currentChart;
+    if (this.state.revisionPreview) {
+      chart = this.state.revisionPreview;
+    }
+    console.log(chart)
     
     if (this.state.currentTab === 'graph') {
       return (

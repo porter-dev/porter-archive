@@ -48,11 +48,12 @@ func (app *App) HandleCreateUser(w http.ResponseWriter, r *http.Request) {
 		app.logger.Info().Msgf("New user created: %d", user.ID)
 		session.Values["authenticated"] = true
 		session.Values["user_id"] = user.ID
+		session.Values["email"] = user.Email
 		session.Save(r, w)
 
 		w.WriteHeader(http.StatusCreated)
 
-		if err := app.sendUserID(w, user.ID); err != nil {
+		if err := app.sendUser(w, user.ID, user.Email); err != nil {
 			app.handleErrorFormDecoding(err, ErrUserDecode, w)
 			return
 		}
@@ -65,13 +66,14 @@ func (app *App) HandleAuthCheck(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
 	}
 
 	userID, _ := session.Values["user_id"].(uint)
-
+	email, _ := session.Values["email"].(string)
 	w.WriteHeader(http.StatusOK)
 
-	if err := app.sendUserID(w, userID); err != nil {
+	if err := app.sendUser(w, userID, email); err != nil {
 		app.handleErrorFormDecoding(err, ErrUserDecode, w)
 		return
 	}
@@ -116,13 +118,14 @@ func (app *App) HandleLoginUser(w http.ResponseWriter, r *http.Request) {
 	// Set user as authenticated
 	session.Values["authenticated"] = true
 	session.Values["user_id"] = storedUser.ID
+	session.Values["email"] = storedUser.Email
 	if err := session.Save(r, w); err != nil {
 		app.logger.Warn().Err(err)
 	}
 
 	w.WriteHeader(http.StatusOK)
 
-	if err := app.sendUserID(w, storedUser.ID); err != nil {
+	if err := app.sendUser(w, storedUser.ID, storedUser.Email); err != nil {
 		app.handleErrorFormDecoding(err, ErrUserDecode, w)
 		return
 	}
@@ -138,6 +141,7 @@ func (app *App) HandleLogoutUser(w http.ResponseWriter, r *http.Request) {
 
 	session.Values["authenticated"] = false
 	session.Values["user_id"] = nil
+	session.Values["email"] = nil
 	session.Save(r, w)
 	w.WriteHeader(http.StatusOK)
 }
@@ -340,9 +344,10 @@ func doesUserExist(repo *repository.Repository, user *models.User) *HTTPError {
 	return nil
 }
 
-func (app *App) sendUserID(w http.ResponseWriter, userID uint) error {
+func (app *App) sendUser(w http.ResponseWriter, userID uint, email string) error {
 	resUser := &models.UserExternal{
-		ID: userID,
+		ID:    userID,
+		Email: email,
 	}
 	if err := json.NewEncoder(w).Encode(resUser); err != nil {
 		return err

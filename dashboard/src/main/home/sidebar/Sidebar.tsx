@@ -117,7 +117,7 @@ export default class Sidebar extends Component<PropsType, StateType> {
             <RingWrapper>
               <UserIcon src={gradient} />
             </RingWrapper>
-            <UserName>bob_ross</UserName>
+            <UserName>{this.context.user.email}</UserName>
           </UserSection>
 
           <SidebarLabel>Current Cluster</SidebarLabel>

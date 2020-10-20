@@ -7,7 +7,7 @@ builds:
     env:
       - CGO_ENABLED=1
     dir: cli
-    main: ./cli/main.go
+    main: ./main.go
     goos:
       - linux
       - windows

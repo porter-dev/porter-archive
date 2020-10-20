@@ -90,8 +90,26 @@ export default class GraphDisplay extends Component<PropsType, StateType> {
     return Math.floor(Math.random() * (max - min) + min);  
   }
 
-  componentDidMount() {
+  // Handle graph from localstorage
+  getChartGraph = () => {
     let { components, currentChart } = this.props;
+
+    let graph = localStorage.getItem(`charts.${currentChart.name}-${currentChart.version}`);
+    let nodes = [] as NodeType[];
+    let edges = [] as EdgeType[];
+    if (!graph) {
+      nodes = this.createNodes(components);
+      edges = this.createEdges(components);
+      this.setState({ nodes, edges });
+    } else {
+      let storedState = JSON.parse(localStorage.getItem(
+        `charts.${currentChart.name}-${currentChart.version}`
+      ));
+      this.setState(storedState);
+    }
+  }
+
+  componentDidMount() {
 
     // Initialize origin
     let height = this.spaceRef.offsetHeight;
@@ -108,35 +126,17 @@ export default class GraphDisplay extends Component<PropsType, StateType> {
     document.addEventListener("keydown", this.handleKeyDown);
     document.addEventListener("keyup", this.handleKeyUp);
 
-    // Handle graph from localstorage
-    let graph = localStorage.getItem(`charts.${currentChart.name}-${currentChart.version}`);
-    let nodes = [] as NodeType[];
-    let edges = [] as EdgeType[];
-    if (!graph) {
-      nodes = this.createNodes(components);
-      edges = this.createEdges(components);
-      this.setState({ nodes, edges });
-    } else {
-      let storedState = JSON.parse(localStorage.getItem(
-        `charts.${currentChart.name}-${currentChart.version}`
-      ));
-      this.setState(storedState);
-    }
+    this.getChartGraph();
 
     window.onbeforeunload = () => {
-      this.storeChart();
+      this.storeChartGraph();
     }
   }
 
   // Live update on rollback/upgrade
   componentDidUpdate(prevProps: PropsType) {
     if (prevProps.components !== this.props.components) {
-      let nodes = [] as NodeType[];
-      let edges = [] as EdgeType[];
-  
-      nodes = this.createNodes(this.props.components);
-      edges = this.createEdges(this.props.components);
-      this.setState({ nodes, edges, openedNode: null });
+      this.getChartGraph();
     }
   }
 
@@ -185,7 +185,7 @@ export default class GraphDisplay extends Component<PropsType, StateType> {
     return edges;
   }
 
-  storeChart = () => {
+  storeChartGraph = () => {
     let { currentChart } = this.props;
     let graph = JSON.parse(JSON.stringify(this.state));
 
@@ -205,7 +205,7 @@ export default class GraphDisplay extends Component<PropsType, StateType> {
   }
 
   componentWillUnmount() {
-    this.storeChart();
+    this.storeChartGraph();
     
     this.spaceRef.removeEventListener("touchmove", (e: any) => e.preventDefault());
     this.spaceRef.removeEventListener("mousewheel", (e: any) => e.preventDefault());

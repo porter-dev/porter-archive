@@ -3,3 +3,4 @@
 app
 *.db
 test.yaml
+dist

@@ -32,7 +32,7 @@ export default class Login extends Component<PropsType, StateType> {
   componentDidMount() {
     let urlParams = new URLSearchParams(window.location.search);
     let emailFromCLI = urlParams.get('email');
-    emailFromCLI ? this.setState({email: emailFromCLI}) :
+    // emailFromCLI ? this.setState({email: emailFromCLI}) :
     document.addEventListener("keydown", this.handleKeyDown);
   }
 

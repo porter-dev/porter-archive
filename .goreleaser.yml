@@ -14,6 +14,9 @@ builds:
       - darwin
     flags:
       - -tags=cli
+    ignore:
+      - goos: darwin
+        goarch: 386
 archives:
   - replacements:
       darwin: Darwin

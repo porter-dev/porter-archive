@@ -51,7 +51,7 @@ func New(
 
 	r.Get("/*", func(w http.ResponseWriter, r *http.Request) {
 		if _, err := os.Stat(staticFilePath + r.RequestURI); os.IsNotExist(err) {
-			http.StripPrefix(r.RequestURI, fs).ServeHTTP(w, r)
+			http.StripPrefix(r.URL.Path, fs).ServeHTTP(w, r)
 		} else {
 			fs.ServeHTTP(w, r)
 		}

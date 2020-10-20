@@ -3,7 +3,6 @@ import styled from 'styled-components';
 import yaml from 'js-yaml';
 
 import { kindToIcon } from '../../../../shared/rosettaStone';
-
 import { ResourceType } from '../../../../shared/types';
 import YamlEditor from '../../../../components/YamlEditor';
 
@@ -24,6 +23,13 @@ export default class ResourceItem extends Component<PropsType, StateType> {
   state = {
     expanded: false,
     RawYAML: yaml.dump(this.props.resource.RawYAML)
+  }
+
+  // Handle previewing old revisions
+  componentDidUpdate(prevProps: PropsType) {
+    if (prevProps.resource.RawYAML !== this.props.resource.RawYAML) {
+      this.setState({ RawYAML: yaml.dump(this.props.resource.RawYAML) });
+    }
   }
 
   renderIcon = (kind: string) => {
@@ -48,6 +54,8 @@ export default class ResourceItem extends Component<PropsType, StateType> {
             value={this.state.RawYAML}
             onChange={(e: any) => this.setState({ RawYAML: e })}
             height='300px'
+            border={true}
+            readOnly={true}
           />
         </ExpandWrapper>
       );

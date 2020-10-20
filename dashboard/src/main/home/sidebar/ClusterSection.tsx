@@ -30,10 +30,10 @@ export default class ClusterSection extends Component<PropsType, StateType> {
   };
 
   updateClusters = () => {
-    let { setCurrentError, userId, setCurrentCluster } = this.context;
+    let { setCurrentError, user, setCurrentCluster } = this.context;
 
     // TODO: query with selected filter once implemented
-    api.getContexts('<token>', {}, { id: userId }, (err: any, res: any) => {
+    api.getContexts('<token>', {}, { id: user.userId }, (err: any, res: any) => {
       if (err) {
 
         // Assume intializing if no contexts

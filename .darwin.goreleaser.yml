@@ -17,19 +17,12 @@ builds:
     hooks:
       post: gon gon.hcl
 archives:
-  - replacements:
+  - format: binary
+    replacements:
       darwin: Darwin
-      linux: Linux
-      windows: Windows
-      386: i386
-      amd64: x86_64
+release:
+  disable: true
 checksum:
-  name_template: 'checksums.txt'
-snapshot:
-  name_template: "{{ .Tag }}-next"
+  disable: true
 changelog:
-  sort: asc
-  filters:
-    exclude:
-      - '^docs:'
-      - '^test:'
+  skip: true

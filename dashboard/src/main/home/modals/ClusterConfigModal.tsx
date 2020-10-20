@@ -36,10 +36,10 @@ export default class ClusterConfigModal extends Component<PropsType, StateType> 
   };
   
   updateChecklist = () => {
-    let { setCurrentError, userId } = this.context;
+    let { setCurrentError, user } = this.context;
 
     // Parse kubeconfig to retrieve all possible clusters
-    api.getContexts('<token>', {}, { id: userId }, (err: any, res: any) => {
+    api.getContexts('<token>', {}, { id: user.userId }, (err: any, res: any) => {
       if (err) {
         // setCurrentError(JSON.stringify(err));
       } else {
@@ -49,13 +49,13 @@ export default class ClusterConfigModal extends Component<PropsType, StateType> 
   }
 
   componentDidMount() {
-    let { setCurrentError, userId, currentModalData } = this.context;
+    let { setCurrentError, user, currentModalData } = this.context;
 
     if (currentModalData && currentModalData.currentTab) {
       this.setState({ currentTab: 'select' });
     }
 
-    api.getUser('<token>', {}, { id: userId }, (err: any, res: any) => {
+    api.getUser('<token>', {}, { id: user.userId }, (err: any, res: any) => {
       if (err) {
         // setCurrentError(JSON.stringify(err));
       } else if (res.data.rawKubeConfig !== '') {
@@ -101,13 +101,13 @@ export default class ClusterConfigModal extends Component<PropsType, StateType> 
 
   handleSaveKubeconfig = () => {
     let { rawKubeconfig } = this.state;
-    let { userId } = this.context;
+    let { user } = this.context;
 
     this.setState({ saveKubeconfigStatus: 'loading' });
     api.updateUser(
       '<token>',
       { rawKubeConfig: rawKubeconfig },
-      { id: userId },
+      { id: user.userId },
       (err: any, res: any) => {
         if (err) {
           this.setState({ saveKubeconfigStatus: 'error' });
@@ -126,7 +126,7 @@ export default class ClusterConfigModal extends Component<PropsType, StateType> 
 
   handleSaveSelected = () => {
     let { kubeContexts } = this.state;
-    let { userId } = this.context;
+    let { user } = this.context;
 
     this.setState({ saveSelectedStatus: 'loading' });
     let allowedContexts: string[] = [];
@@ -139,7 +139,7 @@ export default class ClusterConfigModal extends Component<PropsType, StateType> 
     api.updateUser(
       '<token>',
       { allowedContexts },
-      { id: userId },
+      { id: user.userId },
       (err: any, res: any) => {
         if (err) {
           this.setState({ saveSelectedStatus: 'error' });

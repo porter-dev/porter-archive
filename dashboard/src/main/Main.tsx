@@ -30,14 +30,14 @@ export default class Main extends Component<PropsType, StateType> {
   }
 
   componentDidMount() {
-    let { setUserId } = this.context;
+    let { setUser } = this.context;
     api.checkAuth('', {}, {}, (err: any, res: any) => {      
       if (err && err.response.status == 403) {
         this.setState({ isLoggedIn: false, loading: false })
       }
 
       if (res && res.data) {
-        setUserId(res.data.id);
+        setUser(res?.data?.id, res?.data?.email);
         this.setState({ isLoggedIn: true, initialized: true, loading: false });
       } else {
         this.setState({ isLoggedIn: false, loading: false })

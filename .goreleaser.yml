@@ -12,11 +12,10 @@ builds:
       - linux
       - windows
       - darwin
+    goarch:
+      - amd64
     flags:
       - -tags=cli
-    ignore:
-      - goos: darwin
-        goarch: 386
 archives:
   - replacements:
       darwin: Darwin

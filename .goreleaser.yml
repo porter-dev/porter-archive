@@ -1,0 +1,33 @@
+before:
+  hooks:
+    - go mod download
+builds:
+  - id: "porter-cli"
+    build: porter
+    env:
+      - CGO_ENABLED=1
+    dir: cli
+    main: ./cli/main.go
+    goos:
+      - linux
+      - windows
+      - darwin
+    flags:
+      - -tags=cli
+archives:
+  - replacements:
+      darwin: Darwin
+      linux: Linux
+      windows: Windows
+      386: i386
+      amd64: x86_64
+checksum:
+  name_template: 'checksums.txt'
+snapshot:
+  name_template: "{{ .Tag }}-next"
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - '^docs:'
+      - '^test:'

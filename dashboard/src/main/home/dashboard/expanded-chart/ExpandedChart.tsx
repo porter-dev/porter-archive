@@ -22,7 +22,8 @@ type PropsType = {
 type StateType = {
   showRevisions: boolean,
   currentTab: string,
-  components: ResourceType[]
+  components: ResourceType[],
+  revisionPreview: ChartType | null
 };
 
 const tabOptions = [
@@ -35,18 +36,46 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
   state = {
     showRevisions: false,
     currentTab: 'graph',
-    components: [] as ResourceType[]
+    components: [] as ResourceType[],
+    revisionPreview: null as (ChartType | null)
   }
 
-  componentDidMount() {
-    let { currentCluster, setCurrentError } = this.context;
+  updateResources = () => {
+    let { currentCluster } = this.context;
     let { currentChart } = this.props;
 
     api.getChartComponents('<token>', {
       namespace: currentChart.namespace,
       context: currentCluster,
       storage: StorageType.Secret
-    }, { name: currentChart.name, revision: 0 }, (err: any, res: any) => {
+    }, { name: currentChart.name, revision: currentChart.version }, (err: any, res: any) => {
+      if (err) {
+        console.log(err)
+      } else {
+        this.setState({ components: res.data });
+      }
+    });
+  }
+
+  componentDidMount() {
+    this.updateResources();
+  }
+
+  componentDidUpdate(prevProps: PropsType) {
+    if (this.props.currentChart !== prevProps.currentChart) {
+      this.updateResources();
+    }
+  }
+
+  setRevisionPreview = (oldChart: ChartType) => {
+    let { currentCluster } = this.context;
+    this.setState({ revisionPreview: oldChart });
+
+    api.getChartComponents('<token>', {
+      namespace: oldChart.namespace,
+      context: currentCluster,
+      storage: StorageType.Secret
+    }, { name: oldChart.name, revision: oldChart.version }, (err: any, res: any) => {
       if (err) {
         console.log(err)
       } else {
@@ -73,19 +102,24 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
   }
 
   renderTabContents = () => {
-    let { currentChart, refreshChart, setSidebar} = this.props;
+    let { currentChart, refreshChart, setSidebar } = this.props;
+    let chart = this.state.revisionPreview || currentChart;
+    
     if (this.state.currentTab === 'graph') {
       return (
         <GraphSection
           components={this.state.components}
-          currentChartName={currentChart.name}
+          currentChart={chart}
           setSidebar={setSidebar}
+
+          // Handle resize YAML wrapper
+          showRevisions={this.state.showRevisions}
         />
       );
     } else if (this.state.currentTab === 'list') {
       return (
         <ListSection
-          currentChart={currentChart}
+          currentChart={chart}
           components={this.state.components}
         />
       );
@@ -93,7 +127,7 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
 
     return (
       <ValuesYaml
-        currentChart={currentChart}
+        currentChart={chart}
         refreshChart={refreshChart}
       />
     );
@@ -101,7 +135,7 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
 
   render() {
     let { currentChart, setCurrentChart, refreshChart } = this.props;
-    let chart = currentChart;
+    let chart = this.state.revisionPreview || currentChart;
 
     return ( 
       <div>
@@ -143,6 +177,7 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
               toggleShowRevisions={() => this.setState({ showRevisions: !this.state.showRevisions })}
               chart={chart}
               refreshChart={refreshChart}
+              setRevisionPreview={this.setRevisionPreview}
             />
 
             <TabSelector

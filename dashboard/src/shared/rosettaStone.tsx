@@ -4,11 +4,18 @@ export const kindToIcon: any = {
   'Service': 'alt_route',
   'Ingress': 'sensor_door',
   'StatefulSet': 'location_city',
-  'Secret': 'vpn_key'
+  'Secret': 'vpn_key',
+  'ServiceAccount': 'home_repair_service',
+  'ClusterRole': 'person',
+  'ClusterRoleBinding': 'swap_horiz',
+  'Role': 'portrait',
+  'RoleBinding': 'swap_horizontal_circle',
+  'ConfigMap': 'map',
+  'PodSecurityPolicy': 'security'
 }
 
 export const edgeColors: any = {
-  'LabelRel': '#949EFF',
+  'LabelRel': '#32a85f',
   'ControlRel': '#fcb603',
-  'SpecRel': '#32a852'
+  'SpecRel': '#949EFF'
 };

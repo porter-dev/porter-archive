@@ -13,6 +13,7 @@ type PropsType = {
   isActive: boolean,
   showKindLabels: boolean,
   setCurrentNode: (node: NodeType) => void,
+  isOpen: boolean
 };
 
 type StateType = {
@@ -37,7 +38,6 @@ export default class Node extends Component<PropsType, StateType> {
         y={Math.round(originY - y - (h / 2))}
         w={Math.round(w)}
         h={Math.round(h)}
-        isActive={isActive}
       >
         <Kind>
           {this.props.showKindLabels ? kind : null}
@@ -47,6 +47,8 @@ export default class Node extends Component<PropsType, StateType> {
           onMouseUp={nodeMouseUp}
           onMouseEnter={() => this.props.setCurrentNode(this.props.node)}
           onMouseLeave={() => this.props.setCurrentNode(null)}
+          isActive={isActive}
+          isOpen={this.props.isOpen}
         >
           <i className="material-icons">{icon}</i>
         </NodeBlock>
@@ -72,6 +74,7 @@ const Kind = styled.div`
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  z-index: 0;
 `;
 
 const NodeLabel = styled.div`
@@ -86,6 +89,7 @@ const NodeLabel = styled.div`
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  z-index: 0;
 `;
 
 const NodeBlock = styled.div`
@@ -96,6 +100,9 @@ const NodeBlock = styled.div`
   align-items: center;
   justify-content: center;
   border-radius: 100px;
+  border: ${(props: { isActive: boolean, isOpen: boolean }) => props.isOpen ? '3px solid #ffffff' : ''};
+  box-shadow: ${(props: { isActive: boolean, isOpen: boolean }) => props.isActive ? '0 0 10px #ffffff66' : '0px 0px 10px 2px #00000022'};
+  z-index: 100;
   cursor: pointer;
   :hover {
     background: #555556;
@@ -113,12 +120,10 @@ const StyledNode: any = styled.div.attrs((props: NodeType) => ({
     },
 }))`
   position: absolute;
-  width: ${(props: NodeType) => props.w + 'px'};;
-  height: ${(props: NodeType) => props.h + 'px'};;
-  box-shadow: ${(props: any) => props.isActive ? '0 0 10px #ffffff66' : '0px 0px 10px 2px #00000022'};
+  width: ${(props: NodeType) => props.w + 'px'};
+  height: ${(props: NodeType) => props.h + 'px'};
   color: #ffffff22;
   border-radius: 100px;
-  z-index: 3;
   display: flex;
   flex-direction: column;
   align-items: center;

@@ -83,6 +83,7 @@ func (app *App) HandleLoginUser(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		app.handleErrorDataRead(err, w)
+		return
 	}
 
 	form := &forms.LoginUserForm{}

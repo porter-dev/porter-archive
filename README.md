@@ -1,29 +1,68 @@
 # Porter
-
 Porter is a **dashboard for Helm** with support for the following features:
 - Visualization of all Helm releases with filtering by namespace
 - In-depth view of releases, including revision histories and component graphs
 - Rollback/update of existing releases, including editing of `values.yaml`
 
+![Graph View](https://user-images.githubusercontent.com/65516095/96605367-221abe00-12c4-11eb-8915-25e70fe7929a.png)
 **What's next for Porter?** View our [roadmap](https://github.com/porter-dev/porter/projects/1), or read our [mission statement](#mission-statement). 
 
 ## Quick Start
 
-To view the dashboard locally, download our CLI and grab the latest release via:
-
-```sh
-curl "https://api.github.com/repos/porter-dev/porter/releases/latest"
-chmod +x ./porter
-sudo mv ./porter /usr/local/bin/porter
-```
-
-Then run the dashboard (Docker engine must be running on the host machine):
+To view the dashboard locally, follow the instructions to install the latest CLI release for [Mac](#mac-installation), [Linux](#linux-installation), or [Windows](#windows-installation). Then, run:
 
 ```sh
 porter start
 ```
 
-When prompted, enter the admin email/password you would like to use. After the server has started, go to `localhost:8080` and **log in with the credentials you just set**. 
+When prompted, enter the admin email/password you would like to use. After the server has started, go to `localhost:8080/login` and **log in with the credentials you just set**. 
+
+### Mac Installation
+
+Run the following command to grab the latest binary:
+
+```sh
+{
+name=$(curl -s https://api.github.com/repos/porter-dev/porter/releases/latest | grep "browser_download_url.*_Darwin_x86_64\.zip" | cut -d ":" -f 2,3 | tr -d \")
+name=$(basename $name)
+curl -L https://github.com/porter-dev/porter/releases/latest/download/$name --output $name
+unzip -a $name
+rm $name
+}
+```
+
+Then move the file into your bin:
+
+```sh
+chmod +x ./porter
+sudo mv ./porter /usr/local/bin/porter
+```
+
+### Linux Installation
+
+Run the following command to grab the latest binary:
+
+```sh
+{
+name=$(curl -s https://api.github.com/repos/porter-dev/porter/releases/latest | grep "browser_download_url.*_Linux_x86_64\.zip" | cut -d ":" -f 2,3 | tr -d \")
+name=$(basename $name)
+curl -L https://github.com/porter-dev/porter/releases/latest/download/$name --output $name
+unzip -a $name
+rm $name
+}
+```
+
+Then move the file into your bin:
+
+```sh
+chmod +x ./porter
+sudo mv ./porter /usr/local/bin/porter
+```
+
+### Windows Installation
+
+Go [here](https://github.com/porter-dev/porter/releases/latest/download/porter_0.1.0-beta.1_Windows_x86_64.zip
+) to download the Windows executable and add the binary to your `PATH`. 
 
 ## Differences from Kubeapps
 

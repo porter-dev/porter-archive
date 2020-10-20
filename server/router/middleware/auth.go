@@ -3,6 +3,7 @@ package middleware
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"strconv"
@@ -28,7 +29,7 @@ func NewAuth(
 // BasicAuthenticate just checks that a user is logged in
 func (auth *Auth) BasicAuthenticate(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if auth.isLoggedIn(r) {
+		if auth.isLoggedIn(w, r) {
 			next.ServeHTTP(w, r)
 		} else {
 			http.Error(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)
@@ -95,8 +96,15 @@ func (auth *Auth) doesSessionMatchID(r *http.Request, id uint) bool {
 	return true
 }
 
-func (auth *Auth) isLoggedIn(r *http.Request) bool {
-	session, _ := auth.store.Get(r, auth.cookieName)
+func (auth *Auth) isLoggedIn(w http.ResponseWriter, r *http.Request) bool {
+	session, err := auth.store.Get(r, auth.cookieName)
+	if err != nil {
+		session.Values["authenticated"] = false
+		if err := session.Save(r, w); err != nil {
+			fmt.Println("error while saving session in isLoggedIn", err)
+		}
+		return false
+	}
 
 	if auth, ok := session.Values["authenticated"].(bool); !auth || !ok {
 		return false

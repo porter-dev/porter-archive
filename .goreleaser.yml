@@ -3,7 +3,7 @@ before:
     - go mod download
 builds:
   - id: "porter-cli"
-    build: porter
+    binary: porter
     env:
       - CGO_ENABLED=1
     dir: cli

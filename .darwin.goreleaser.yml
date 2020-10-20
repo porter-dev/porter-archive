@@ -9,21 +9,20 @@ builds:
     dir: cli
     main: ./main.go
     goos:
-      - linux
-      - windows
+      - darwin
     goarch:
       - amd64
     flags:
       - -tags=cli
+    hooks:
+      post: gon gon.hcl
 archives:
-  - format: zip
+  - format: binary
     replacements:
-      linux: Linux
-      windows: Windows
-      amd64: x86_64
+      darwin: Darwin
 release:
   disable: true
-# checksum:
-#   disable: true
+checksum:
+  disable: true
 changelog:
   skip: true

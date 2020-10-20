@@ -4,3 +4,4 @@ app
 *.db
 test.yaml
 dist
+gon.hcl

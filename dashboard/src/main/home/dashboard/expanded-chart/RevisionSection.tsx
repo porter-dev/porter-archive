@@ -5,7 +5,6 @@ import loading from '../../../../assets/loading.gif';
 import api from '../../../../shared/api';
 import { Context } from '../../../../shared/Context';
 import { ChartType, StorageType } from '../../../../shared/types';
-import Chart from '../chart/Chart';
 
 type PropsType = {
   showRevisions: boolean,

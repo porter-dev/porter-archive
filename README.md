@@ -9,7 +9,7 @@ Porter is a **dashboard for Helm** with support for the following features:
 
 ## Quick Start
 
-To view the dashboard locally, follow the instructions to install the latest CLI release for [Mac](#mac-installation), [Linux](#linux-installation), or [Windows](#windows-installation). Then, run:
+To view the dashboard locally, follow the instructions to install the latest CLI release for [Mac](#mac-installation), [Linux](#linux-installation), or [Windows](#windows-installation). While the Docker engine is running, run:
 
 ```sh
 porter start

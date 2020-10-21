@@ -10,13 +10,13 @@
     - [Passing a context list](#passing-a-context-list)
     - [Skipping initialization steps](#skipping-initialization-steps)
 
-### Prerequisites
+## Prerequisites
 
 You must have access to a Kubernetes cluster with Helm charts installed and the Docker engine must be running on your machine. 
 
-### Installing 
+## Installing 
 
-#### Mac Installation
+### Mac Installation
 
 Run the following command to grab the latest binary:
 
@@ -37,7 +37,7 @@ chmod +x ./porter
 sudo mv ./porter /usr/local/bin/porter
 ```
 
-#### Linux Installation
+### Linux Installation
 
 Run the following command to grab the latest binary:
 
@@ -58,12 +58,12 @@ chmod +x ./porter
 sudo mv ./porter /usr/local/bin/porter
 ```
 
-#### Windows Installation
+### Windows Installation
 
 Go [here](https://github.com/porter-dev/porter/releases/latest/download/porter_0.1.0-beta.1_Windows_x86_64.zip
 ) to download the Windows executable and add the binary to your `PATH`. 
 
-### Local Setup
+## Local Setup
 
 > **Note:** the local setup process is tracked in [issue #60](https://github.com/porter-dev/porter/issues/60), while the overall onboarding flow is tracked in [issue #50](https://github.com/porter-dev/porter/issues/50). 
 
@@ -73,7 +73,7 @@ To view Porter locally, you must have access to a Kubernetes cluster with Helm c
 2. Reads the default `kubeconfig` and populates certificates required by the current context. 
 3. Starts Porter as a Docker container with a persistent storage volume attached (by default, the volume will be called `porter_sqlite`).
 
-#### Passing `kubeconfig` explicitly
+### Passing `kubeconfig` explicitly
 
 You can pass a path to a `kubeconfig` file explicitly via:
 
@@ -81,7 +81,7 @@ You can pass a path to a `kubeconfig` file explicitly via:
 porter start --kubeconfig path/to/kubeconfig
 ```
 
-#### Passing a context list
+### Passing a context list
 
 You can initialize Porter with a set of contexts by passing a context list to start. The contexts that Porter will be able to access are the same as `kubectl config get-contexts`. For example, if I had two contexts named `minikube` and `staging`, I would be able to visualize both of them via:
 
@@ -89,6 +89,6 @@ You can initialize Porter with a set of contexts by passing a context list to st
 porter start --contexts minikube --contexts staging
 ```
 
-#### Skipping Initialization Steps
+### Skipping Initialization Steps
 
 To skip setting the admin account and/or the kubeconfig, `porter start` provides the `--insecure` and `--skip-kubeconfig` options.

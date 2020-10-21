@@ -17,6 +17,8 @@ porter start
 
 When prompted, enter the admin email/password you would like to use. After the server has started, go to `localhost:8080/login` and **log in with the credentials you just set**. 
 
+To view more detailed setup instructions, please consult the [getting started](docs/GETTING_STARTED.md) docs.
+
 ### Mac Installation
 
 Run the following command to grab the latest binary:

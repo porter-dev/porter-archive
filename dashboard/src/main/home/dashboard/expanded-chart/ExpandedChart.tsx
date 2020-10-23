@@ -12,6 +12,7 @@ import ValuesYaml from './ValuesYaml';
 import GraphSection from './GraphSection';
 import ListSection from './ListSection';
 import LogSection from './LogSection';
+import ValuesForm from './values-form/ValuesForm';
 
 type PropsType = {
   currentChart: ChartType,
@@ -31,13 +32,13 @@ type StateType = {
 const tabOptions = [
   { label: 'Chart Overview', value: 'graph' },
   { label: 'Search Chart', value: 'list' },
-  { label: 'Values Editor', value: 'values' },
+  { label: 'Raw Values', value: 'values' },
   { label: 'Logs', value: 'logs' },
 ];
 
 const basicOptions = [
+  { label: 'Update Values', value: 'values-form' },
   { label: 'Environment', value: 'environment' },
-  { label: 'Update Values', value: 'values-abstracted' },
   { label: 'Logs', value: 'logs' },
 ];
 
@@ -45,7 +46,7 @@ const basicOptions = [
 export default class ExpandedChart extends Component<PropsType, StateType> {
   state = {
     showRevisions: false,
-    currentTab: 'environment',
+    currentTab: 'values-form',
     components: [] as ResourceType[],
     revisionPreview: null as (ChartType | null),
     devOpsMode: false
@@ -97,7 +98,7 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
 
   toggleDevOpsMode = () => {
     if (this.state.devOpsMode) {
-      this.setState({ devOpsMode: false, currentTab: 'environment' });
+      this.setState({ devOpsMode: false, currentTab: 'values-form' });
     } else {
       this.setState({ devOpsMode: true, currentTab: 'graph' });
     }
@@ -126,7 +127,6 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
     if (this.state.revisionPreview) {
       chart = this.state.revisionPreview;
     }
-    console.log(chart)
     
     if (this.state.currentTab === 'graph') {
       return (
@@ -156,6 +156,11 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
     } else if (this.state.currentTab === 'logs') {
       return (
         <LogSection
+        />
+      );
+    } else if (this.state.currentTab === 'values-form') {
+      return (
+        <ValuesForm
         />
       );
     }

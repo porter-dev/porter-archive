@@ -5,7 +5,11 @@ type PropsType = {
   activeValue: string,
   options: { value: string, label: string }[],
   setActiveValue: (x: string) => void,
-  dropdownLabel: string
+  width: string,
+  dropdownLabel?: string,
+  dropdownWidth?: string,
+  dropdownMaxHeight?: string,
+  closeOverlay?: boolean
 };
 
 type StateType = {
@@ -16,14 +20,20 @@ export default class Selector extends Component<PropsType, StateType> {
     expanded: false
   }
 
+  handleOptionClick = (option: { value: string, label: string }) => {
+    this.props.setActiveValue(option.value);
+    this.props.closeOverlay ? null : this.setState({ expanded: false });
+  }
+
   renderOptionList = () => {
-    let { options, activeValue, setActiveValue } = this.props;
+    let { options, activeValue } = this.props;
     return options.map((option: { value: string, label: string }, i: number) => {
       return (
         <Option
           key={i}
           selected={option.value === activeValue}
-          onClick={() => setActiveValue(option.value)}
+          onClick={() => this.handleOptionClick(option)}
+          lastItem={i === options.length - 1}
         >
           {option.label}
         </Option>
@@ -35,8 +45,11 @@ export default class Selector extends Component<PropsType, StateType> {
     if (this.state.expanded) {
       return (
         <div>
-          <CloseOverlay onClick={() => this.setState({ expanded: false })}/>
-          <Dropdown>
+          {this.props.closeOverlay ? <CloseOverlay onClick={() => this.setState({ expanded: false })} /> : null}
+          <Dropdown
+            dropdownWidth={this.props.dropdownWidth ? this.props.dropdownWidth : this.props.width}
+            dropdownMaxHeight={this.props.dropdownMaxHeight}
+          >
             <DropdownLabel>
               {this.props.dropdownLabel}
             </DropdownLabel>
@@ -47,6 +60,13 @@ export default class Selector extends Component<PropsType, StateType> {
     }
   }
 
+  getLabel = (value: string): any => {
+    let tgt = this.props.options.find((element: { value: string, label: string }) => element.value === value);
+    if (tgt) {
+      return tgt.label;
+    }
+  }
+
   render() {
     let { activeValue } = this.props;
     return (
@@ -54,9 +74,10 @@ export default class Selector extends Component<PropsType, StateType> {
         <MainSelector
           onClick={() => this.setState({ expanded: !this.state.expanded })}
           expanded={this.state.expanded}
+          width={this.props.width}
         >
           <TextWrap>
-            {activeValue === '' ? 'All' : activeValue}
+            {activeValue === '' ? 'All' : this.getLabel(activeValue)}
           </TextWrap>
           <i className="material-icons">arrow_drop_down</i>
         </MainSelector>
@@ -81,7 +102,7 @@ const DropdownLabel = styled.div`
 
 const Option = styled.div` 
   width: 100%;
-  border-bottom: 1px solid #ffffff10;
+  border-bottom: 1px solid ${(props: { selected: boolean, lastItem: boolean }) => props.lastItem ? '#ffffff00' : '#ffffff15'};
   height: 35px;
   font-size: 13px;
   padding-top: 9px;
@@ -92,7 +113,7 @@ const Option = styled.div`
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  background: ${(props: { selected: boolean }) => props.selected ? '#ffffff11' : ''};
+  background: ${(props: { selected: boolean, lastItem: boolean }) => props.selected ? '#ffffff11' : ''};
 
   :hover {
     background: #ffffff22;
@@ -103,8 +124,8 @@ const CloseOverlay = styled.div`
   position: fixed;
   top: 0;
   left: 0;
-  width: 100vw;
-  height: 100vh;
+  width: 100%;
+  height: 100%;
   z-index: 999;
 `;
 
@@ -113,12 +134,13 @@ const Dropdown = styled.div`
   right: 0;
   top: calc(100% + 5px);
   background: #26282f;
-  width: calc(100% + 80px);
-  max-height: 300px;
-  padding-bottom: 20px;
+  width: ${(props: { dropdownWidth: string, dropdownMaxHeight: string }) => props.dropdownWidth};
+  max-height: ${(props: { dropdownWidth: string, dropdownMaxHeight: string }) => props.dropdownMaxHeight ? props.dropdownMaxHeight : '300px'};
+  padding-bottom: 10px;
   border-radius: 3px;
   z-index: 999;
   overflow-y: auto;
+  margin-bottom: 20px;
   box-shadow: 0 8px 20px 0px #00000055;
 `;
 
@@ -127,9 +149,9 @@ const StyledSelector = styled.div`
 `;
 
 const MainSelector = styled.div`
-  width: 150px;
+  width: ${(props: { expanded: boolean, width: string }) => props.width};
   height: 30px;
-  border: 1px solid #ffffff66;
+  border: 1px solid #ffffff55;
   font-size: 13px;
   padding: 5px 10px;
   padding-left: 12px;
@@ -138,14 +160,13 @@ const MainSelector = styled.div`
   align-items: center;
   justify-content: space-between;
   cursor: pointer;
-  background: ${(props: { expanded: boolean }) => props.expanded ? '#ffffff33' : '#ffffff11'};
-
+  background: ${(props: { expanded: boolean, width: string }) => props.expanded ? '#ffffff33' : '#ffffff11'};
   :hover {
-    background: ${(props: { expanded: boolean }) => props.expanded ? '#ffffff33' : '#ffffff22'};
+    background: ${(props: { expanded: boolean, width: string }) => props.expanded ? '#ffffff33' : '#ffffff22'};
   }
 
   > i {
     font-size: 20px;
-    transform: ${(props: { expanded: boolean }) => props.expanded ? 'rotate(180deg)' : ''};
+    transform: ${(props: { expanded: boolean, width: string }) => props.expanded ? 'rotate(180deg)' : ''};
   }
 `;

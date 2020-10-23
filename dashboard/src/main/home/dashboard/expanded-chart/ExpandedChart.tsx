@@ -11,6 +11,7 @@ import RevisionSection from './RevisionSection';
 import ValuesYaml from './ValuesYaml';
 import GraphSection from './GraphSection';
 import ListSection from './ListSection';
+import LogSection from './LogSection';
 
 type PropsType = {
   currentChart: ChartType,
@@ -152,6 +153,11 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
           refreshChart={refreshChart}
         />
       );
+    } else if (this.state.currentTab === 'logs') {
+      return (
+        <LogSection
+        />
+      );
     }
 
     return (
@@ -252,6 +258,7 @@ const TabButton = styled.div`
   color: ${(props: { devOpsMode: boolean }) => props.devOpsMode ? '#aaaabb' : '#aaaabb55'};
   margin-left: 35px;
   border-radius: 20px;
+  text-shadow: 0px 0px 8px ${(props: { devOpsMode: boolean }) => props.devOpsMode ? '#ffffff66' : 'none'};
   cursor: pointer;
   :hover {
     color: ${(props: { devOpsMode: boolean }) => props.devOpsMode ? '' : '#aaaabb99'};

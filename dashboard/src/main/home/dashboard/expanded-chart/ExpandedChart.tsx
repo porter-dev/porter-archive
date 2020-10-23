@@ -11,6 +11,7 @@ import RevisionSection from './RevisionSection';
 import ValuesYaml from './ValuesYaml';
 import GraphSection from './GraphSection';
 import ListSection from './ListSection';
+import LogSection from './LogSection';
 
 type PropsType = {
   currentChart: ChartType,
@@ -23,22 +24,31 @@ type StateType = {
   showRevisions: boolean,
   currentTab: string,
   components: ResourceType[],
-  revisionPreview: ChartType | null
+  revisionPreview: ChartType | null,
+  devOpsMode: boolean
 };
 
 const tabOptions = [
   { label: 'Chart Overview', value: 'graph' },
   { label: 'Search Chart', value: 'list' },
-  { label: 'Values Editor', value: 'values' }
-]
+  { label: 'Values Editor', value: 'values' },
+  { label: 'Logs', value: 'logs' },
+];
+
+const basicOptions = [
+  { label: 'Environment', value: 'environment' },
+  { label: 'Update Values', value: 'values-abstracted' },
+  { label: 'Logs', value: 'logs' },
+];
 
 // TODO: consolidate revisionPreview and currentChart (currentChart can just be the initial state)
 export default class ExpandedChart extends Component<PropsType, StateType> {
   state = {
     showRevisions: false,
-    currentTab: 'graph',
+    currentTab: 'environment',
     components: [] as ResourceType[],
-    revisionPreview: null as (ChartType | null)
+    revisionPreview: null as (ChartType | null),
+    devOpsMode: false
   }
 
   updateResources = () => {
@@ -85,6 +95,14 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
     });
   }
 
+  toggleDevOpsMode = () => {
+    if (this.state.devOpsMode) {
+      this.setState({ devOpsMode: false, currentTab: 'environment' });
+    } else {
+      this.setState({ devOpsMode: true, currentTab: 'graph' });
+    }
+  }
+
   renderIcon = () => {
     let { currentChart } = this.props;
 
@@ -128,13 +146,22 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
           components={this.state.components}
         />
       );
+    } else if (this.state.currentTab === 'values') {
+      return (
+        <ValuesYaml
+          currentChart={chart}
+          refreshChart={refreshChart}
+        />
+      );
+    } else if (this.state.currentTab === 'logs') {
+      return (
+        <LogSection
+        />
+      );
     }
 
     return (
-      <ValuesYaml
-        currentChart={chart}
-        refreshChart={refreshChart}
-      />
+      <Unimplemented>(Unimplemented)</Unimplemented>
     );
   }
 
@@ -185,12 +212,19 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
               setRevisionPreview={this.setRevisionPreview}
             />
 
-            <TabSelector
-              options={tabOptions}
-              currentTab={this.state.currentTab}
-              setCurrentTab={(value: string) => this.setState({ currentTab: value })}
-              tabWidth='120px'
-            />
+            <TabSelectorWrapper>
+              <TabSelector
+                options={this.state.devOpsMode ? tabOptions : basicOptions}
+                currentTab={this.state.currentTab}
+                setCurrentTab={(value: string) => this.setState({ currentTab: value })}
+                addendum={
+                  <TabButton onClick={this.toggleDevOpsMode} devOpsMode={this.state.devOpsMode}>
+                    <i className="material-icons">offline_bolt</i> DevOps Mode
+                  </TabButton>
+                }
+              />
+            </TabSelectorWrapper>
+
           </HeaderWrapper>
           <ContentSection>
             {this.renderTabContents()}
@@ -202,6 +236,45 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
 }
 
 ExpandedChart.contextType = Context;
+
+const Unimplemented = styled.div`
+  width: 100%;
+  height: 100%;
+  background: #ffffff11;
+  padding-bottom: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+`;
+
+const TabButton = styled.div`
+  position: absolute;
+  right: 0px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  color: ${(props: { devOpsMode: boolean }) => props.devOpsMode ? '#aaaabb' : '#aaaabb55'};
+  margin-left: 35px;
+  border-radius: 20px;
+  text-shadow: 0px 0px 8px ${(props: { devOpsMode: boolean }) => props.devOpsMode ? '#ffffff66' : 'none'};
+  cursor: pointer;
+  :hover {
+    color: ${(props: { devOpsMode: boolean }) => props.devOpsMode ? '' : '#aaaabb99'};
+  }
+
+  > i {
+    font-size: 17px;
+    margin-right: 9px;
+  }
+`;
+
+const TabSelectorWrapper = styled.div`
+  display: flex;
+  align-items: center;
+  margin-bottom: 7px;
+`;
 
 const CloseOverlay = styled.div`
   position: absolute;

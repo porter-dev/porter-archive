@@ -160,7 +160,7 @@ export default class ClusterConfigModal extends Component<PropsType, StateType> 
           <YamlEditor 
             value={this.state.rawKubeconfig}
             onChange={(e: any) => this.setState({ rawKubeconfig: e })}
-            height='295px'
+            height='327px'
             border={true}
           />
           <UploadButton>
@@ -201,16 +201,11 @@ export default class ClusterConfigModal extends Component<PropsType, StateType> 
           <CloseButtonImg src={close} />
         </CloseButton>
 
-        <Header>
-          <Plus>+</Plus>
-          Manage Clusters
-        </Header>
-        <ModalTitle>Connect from Kubeconfig</ModalTitle>
+        <ModalTitle>Manage Clusters</ModalTitle>
         <TabSelector
           currentTab={this.state.currentTab}
           options={tabOptions}
           setCurrentTab={(value: string) => this.setState({ currentTab: value })}
-          tabWidth='120px'
         />
         {this.renderTabContents()}
       </StyledClusterConfigModal>
@@ -307,14 +302,14 @@ const Placeholder = styled.div`
 
 const ClusterList = styled.div`
   width: 100%;
-  height: 295px;
+  height: 327px;
   border-radius: 5px;
   background: #ffffff06;
   border: 1px solid #ffffff22;
 `;
 
 const Subtitle = styled.div`
-  padding: 15px 0px;
+  padding: 17px 2px 25px;
   font-family: 'Work Sans', sans-serif;
   font-size: 13px;
   color: #aaaabb;
@@ -325,7 +320,7 @@ const Subtitle = styled.div`
 `;
 
 const ModalTitle = styled.div`
-  margin: 21px 2px 23px;
+  margin: 0px 2px 13px;
   display: flex;
   flex: 1;
   font-family: 'Assistant';

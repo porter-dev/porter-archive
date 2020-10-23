@@ -307,7 +307,7 @@ const RollbackButton = styled.div`
 `;
 
 const Tr = styled.tr`
-  line-height: 1.8em;
+  line-height: 2.2em;
   cursor: ${(props: { disableHover?: boolean, selected?: boolean }) => props.disableHover ? '' : 'pointer'};
   background: ${(props: { disableHover?: boolean, selected?: boolean  }) => props.selected ? '#ffffff11' : ''};
   :hover {
@@ -373,7 +373,7 @@ const StyledRevisionSection = styled.div`
   width: 100%;
   max-height: ${(props: { showRevisions: boolean }) => props.showRevisions ? '255px' : '40px'};
   background: #ffffff11;
-  margin: 25px 0px;
+  margin: 25px 0px 18px;
   overflow: hidden;
   border-radius: 5px;
   animation: ${(props: { showRevisions: boolean }) => props.showRevisions ? 'expandRevisions 0.3s' : ''};

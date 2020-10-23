@@ -1,6 +1,7 @@
 package grapher
 
 import (
+	"fmt"
 	"strconv"
 )
 
@@ -70,45 +71,49 @@ func (parsed *ParsedObjs) GetControlRel() {
 			kind = ""
 		}
 
+		fmt.Println(kind.(string))
 		switch kind.(string) {
 		// Parse for all possible controller types
 		case "Deployment", "StatefulSet", "ReplicaSet", "DaemonSet", "Job":
 			rs := getField(yaml, "spec", "replicas")
 
-			if rs != nil && rs.(int) > 0 {
-				// Add Pods for controller objects
-				template := getField(yaml, "spec", "template")
-				if template == nil {
-					continue
+			// replica defaults to 1 if unspecified
+			if rs == nil {
+				rs = 1
+			}
+
+			// Add Pods for controller objects
+			template := getField(yaml, "spec", "template")
+			if template == nil {
+				continue
+			}
+
+			for j := 0; j < rs.(int); j++ {
+				cid := len(parsed.Objects) + len(children)
+				crel := ControlRel{
+					Relation: Relation{
+						Source: obj.ID,
+						Target: cid,
+					},
+					Replicas: rs.(int),
 				}
 
-				for j := 0; j < rs.(int); j++ {
-					cid := len(parsed.Objects) + len(children)
-					crel := ControlRel{
-						Relation: Relation{
-							Source: obj.ID,
-							Target: cid,
+				pod := Object{
+					ID:        cid,
+					Kind:      "Pod",
+					Name:      obj.Name + "-" + strconv.Itoa(j), // tentative name pre-deploy
+					Namespace: obj.Namespace,
+					RawYAML:   template.(map[string]interface{}),
+					Relations: Relations{
+						ControlRels: []ControlRel{
+							crel,
 						},
-						Replicas: rs.(int),
-					}
-
-					pod := Object{
-						ID:        cid,
-						Kind:      "Pod",
-						Name:      obj.Name + "-" + strconv.Itoa(j), // tentative name pre-deploy
-						Namespace: obj.Namespace,
-						RawYAML:   template.(map[string]interface{}),
-						Relations: Relations{
-							ControlRels: []ControlRel{
-								crel,
-							},
-						},
-					}
-
-					children = append(children, pod)
-					obj.Relations.ControlRels = append(obj.Relations.ControlRels, crel)
-					parsed.Objects[i] = obj
+					},
 				}
+
+				children = append(children, pod)
+				obj.Relations.ControlRels = append(obj.Relations.ControlRels, crel)
+				parsed.Objects[i] = obj
 			}
 		}
 	}

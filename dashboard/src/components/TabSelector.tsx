@@ -10,20 +10,13 @@ type PropsType = {
   currentTab: string,
   options: selectOption[],
   setCurrentTab: (value: string) => void,
-  tabWidth?: string  
+  addendum?: any
 };
 
 type StateType = {
 };
 
 export default class TabSelector extends Component<PropsType, StateType> {
-
-  renderLine = (tab: string): JSX.Element | undefined => {
-    if (this.props.currentTab === tab) {
-      return <Highlight />
-    }
-  };
-
   handleTabClick = (value: string) => {
     this.props.setCurrentTab(value);
   }
@@ -35,10 +28,10 @@ export default class TabSelector extends Component<PropsType, StateType> {
           <Tab
             key={i}
             onClick={() => this.handleTabClick(option.value)}
-            tabWidth={this.props.tabWidth}
+            lastItem={i === this.props.options.length - 1}
+            highlight={option.value === this.props.currentTab}
           >
             {option.label}
-            {this.renderLine(option.value)}
           </Tab>
         );
       })
@@ -49,6 +42,7 @@ export default class TabSelector extends Component<PropsType, StateType> {
     return (
       <StyledTabSelector>
         {this.renderTabList()}
+        {this.props.addendum}
       </StyledTabSelector>
     );
   }
@@ -58,7 +52,7 @@ const Highlight = styled.div`
   width: 80%;
   height: 1px;
   margin-top: 5px;
-  background: #949EFFcc;
+  background: #949EFFcc00;
 
   opacity: 0;
   animation: lineEnter 0.5s 0s;
@@ -71,27 +65,31 @@ const Highlight = styled.div`
 
 const Tab = styled.div`
   height: 30px;
-  width: ${(props: { tabWidth: string }) => props.tabWidth ? props.tabWidth : ''};
-  padding: 0 10px;
-  margin-right: 12px;
+  margin-right: ${(props: { lastItem: boolean, highlight: boolean }) => props.lastItem ? '' : '30px'};
   display: flex;
   font-family: 'Work Sans', sans-serif;
   font-size: 13px;
   user-select: none;
-  color: #949effcc;
+  color: ${(props: { lastItem: boolean, highlight: boolean }) => props.highlight ? '#949effcc' : '#aaaabb55'};
   flex-direction: column;
   padding-top: 7px;
+  padding-bottom: 2px;
+  margin-bottom: -2px;
   align-items: center;
   cursor: pointer;
   white-space: nowrap;
-  border-radius: 5px;
-  
+  border-bottom: 1px solid ${(props: { lastItem: boolean, highlight: boolean }) => props.highlight ? '#949effcc' : 'none'};
   :hover {
-    background: #949EFF22;
+    color: ${(props: { lastItem: boolean, highlight: boolean }) => props.highlight ? '' : '#aaaabb'};
   }
 `;
 
 const StyledTabSelector = styled.div`
   display: flex;
+  width: calc(100% - 4px);
   align-items: center;
+  border-bottom: 1px solid #aaaabb55;
+  padding-bottom: 1px;
+  margin-left: 2px;
+  position: relative;
 `;

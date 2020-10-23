@@ -516,7 +516,7 @@ export default class GraphDisplay extends Component<PropsType, StateType> {
 const Checkbox = styled.div`
   width: 16px;
   height: 16px;
-  border: 1px solid #ffffff44;
+  border: 1px solid #ffffff55;
   margin: 0px 8px 0px 3px;
   border-radius: 3px;
   background: ${(props: { checked: boolean }) => props.checked ? '#ffffff22' : ''};
@@ -543,7 +543,7 @@ const ToggleLabel = styled.div`
   border-radius: 3px;
   padding-right: 5px;
   cursor: pointer;
-  border: 1px solid #ffffff44;
+  border: 1px solid #ffffff55;
   :hover {
     background: #ffffff22;
 
@@ -572,7 +572,7 @@ const ExpandButton = styled.div`
   justify-content: center;
   align-items: center;
   border-radius: 3px;
-  border: 1px solid #ffffff44;
+  border: 1px solid #ffffff55;
 
   :hover {
     background: #ffffff44; 

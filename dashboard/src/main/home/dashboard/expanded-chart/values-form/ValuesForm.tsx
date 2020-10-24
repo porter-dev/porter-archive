@@ -125,6 +125,7 @@ export default class ValuesForm extends Component<PropsType, StateType> {
     return (
       <Wrapper>
         <StyledValuesForm>
+          <DarkMatter />
           {this.renderFormContents()}
         </StyledValuesForm>
         <SaveButton
@@ -136,6 +137,10 @@ export default class ValuesForm extends Component<PropsType, StateType> {
     );
   }
 }
+
+const DarkMatter = styled.div`
+  margin-top: -5px;
+`;
 
 const Wrapper = styled.div`
   width: 100%;
@@ -153,7 +158,7 @@ const Heading = styled.div`
   color: white;
   font-weight: 500;
   font-size: 16px;
-  margin-top: 30px;
+  margin-top: 35px;
   margin-bottom: 5px;
 `;
 

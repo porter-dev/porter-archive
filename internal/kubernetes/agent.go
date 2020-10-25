@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 
+	"github.com/gorilla/websocket"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
@@ -28,22 +29,24 @@ func (a *Agent) ListNamespaces() (*v1.NamespaceList, error) {
 }
 
 // GetPodLogs streams real-time logs from a given pod.
-func (a *Agent) GetPodLogs(pod *v1.Pod) (string, error) {
-	podLogOpts := v1.PodLogOptions{}
-	req := a.Clientset.CoreV1().Pods(pod.Namespace).GetLogs(pod.Name, &podLogOpts)
+func (a *Agent) GetPodLogs(namespace string, name string, conn *websocket.Conn) error {
+	// follow logs
+	podLogOpts := v1.PodLogOptions{Follow: true}
+	req := a.Clientset.CoreV1().Pods(namespace).GetLogs(name, &podLogOpts)
 	podLogs, err := req.Stream(context.TODO())
+
 	if err != nil {
-		return "Error: Cannot open log stream.", fmt.Errorf("Cannot open log stream for pod %s", pod.Name)
+		return fmt.Errorf("Cannot open log stream for pod %s", name)
 	}
 	defer podLogs.Close()
 
 	buf := new(bytes.Buffer)
 	_, err = io.Copy(buf, podLogs)
+	log := buf.String()
 
-	if err != nil {
-		return "Error: Cannot encode Pod logs.", fmt.Errorf("Cannot copy logs from pod %s to buf", pod.Name)
+	if writeErr := conn.WriteMessage(websocket.TextMessage, []byte(log)); writeErr != nil {
+		return writeErr
 	}
-	str := buf.String()
 
-	return str, nil
+	return err
 }

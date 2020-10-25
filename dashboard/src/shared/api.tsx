@@ -70,6 +70,10 @@ const getNamespaces = baseApi<{
   context: string
 }>('GET', '/api/k8s/namespaces');
 
+const getPodLogs = baseApi<{
+  context: string
+}>('GET', '/api/k8s/pods/logs');
+
 const getRevisions = baseApi<{
   namespace: string,
   context: string,
@@ -109,6 +113,7 @@ export default {
   getChart,
   getChartComponents,
   getNamespaces,
+  getPodLogs,
   getRevisions,
   rollbackChart,
   upgradeChartValues

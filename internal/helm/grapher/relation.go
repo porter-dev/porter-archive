@@ -1,7 +1,6 @@
 package grapher
 
 import (
-	"fmt"
 	"strconv"
 )
 
@@ -71,7 +70,6 @@ func (parsed *ParsedObjs) GetControlRel() {
 			kind = ""
 		}
 
-		fmt.Println(kind.(string))
 		switch kind.(string) {
 		// Parse for all possible controller types
 		case "Deployment", "StatefulSet", "ReplicaSet", "DaemonSet", "Job":

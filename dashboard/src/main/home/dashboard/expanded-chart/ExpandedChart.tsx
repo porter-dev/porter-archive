@@ -126,7 +126,6 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
     if (this.state.revisionPreview) {
       chart = this.state.revisionPreview;
     }
-    console.log(chart)
     
     if (this.state.currentTab === 'graph') {
       return (

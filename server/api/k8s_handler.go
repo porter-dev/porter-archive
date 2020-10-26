@@ -78,7 +78,9 @@ func (app *App) HandleListNamespaces(w http.ResponseWriter, r *http.Request) {
 }
 
 // HandleGetPodLogs returns real-time logs of the pod via websockets
+// TODO: Refactor repeated calls.
 func (app *App) HandleGetPodLogs(w http.ResponseWriter, r *http.Request) {
+
 	// get session to retrieve correct kubeconfig
 	session, err := app.store.Get(r, app.cookieName)
 
@@ -123,11 +125,12 @@ func (app *App) HandleGetPodLogs(w http.ResponseWriter, r *http.Request) {
 		agent, err = kubernetes.GetAgentOutOfClusterConfig(form.OutOfClusterConfig)
 	}
 
-	// allow all hosts for now
+	// allow all hosts for now. TODO: Implement CORS
 	upgrader.CheckOrigin = func(r *http.Request) bool { return true }
 
 	// upgrade to websocket.
 	conn, err := upgrader.Upgrade(w, r, nil)
+
 	if err != nil {
 		app.handleErrorUpgradeWebsocket(err, w)
 	}
@@ -136,16 +139,6 @@ func (app *App) HandleGetPodLogs(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		app.handleErrorWebsocketWrite(err, w)
-		return
-	}
-
-	if err != nil {
-		app.handleErrorFormValidation(err, ErrK8sValidate, w)
-		return
-	}
-
-	if err := json.NewEncoder(w).Encode(logs); err != nil {
-		app.handleErrorFormDecoding(err, ErrK8sDecode, w)
 		return
 	}
 }

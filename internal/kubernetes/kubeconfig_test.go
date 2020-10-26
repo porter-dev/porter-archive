@@ -265,3 +265,32 @@ contexts:
 users:
   - name: test-admin
 `
+
+const oidcPlugin string = `
+apiVersion: v1
+kind: Config
+preferences: {}
+current-context: context-test
+clusters:
+- cluster:
+    server: https://localhost
+  name: cluster-test
+contexts:
+- context:
+    cluster: cluster-test
+    user: test-admin
+  name: context-test
+users:
+  - name: test-admin
+  - name: test-admin
+  user:
+    auth-provider:
+      config:
+        client-id: sampleclientid
+        client-secret: sampleclientsecret
+        id-token: IDTOKEN
+        idp-issuer-url: https://login.example.com/
+		refresh-token: REFRESHTOKEN
+		idp-certificate-authority: /example/file/on/system.pem
+      name: oidc
+`

@@ -8,6 +8,7 @@ import Sidebar from './sidebar/Sidebar';
 import Dashboard from './dashboard/Dashboard';
 import ClusterConfigModal from './modals/ClusterConfigModal';
 import Loading from '../../components/Loading';
+import Templates from './templates/Templates';
 
 type PropsType = {
   logOut: () => void
@@ -15,13 +16,15 @@ type PropsType = {
 
 type StateType = {
   forceSidebar: boolean,
-  showWelcome: boolean
+  showWelcome: boolean,
+  currentView: string,
 };
 
 export default class Home extends Component<PropsType, StateType> {
   state = {
     forceSidebar: true,
-    showWelcome: false
+    showWelcome: false,
+    currentView: 'templates'
   }
 
   renderDashboard = () => {
@@ -57,6 +60,18 @@ export default class Home extends Component<PropsType, StateType> {
     );
   }
 
+  renderContents = () => {
+    if (this.state.currentView === 'dashboard') {
+      return (
+        <StyledDashboard>
+          {this.renderDashboard()}
+        </StyledDashboard>
+      );
+    }
+
+    return <Templates />
+  }
+
   render() {
     return (
       <StyledHome>
@@ -73,10 +88,10 @@ export default class Home extends Component<PropsType, StateType> {
           logOut={this.props.logOut}
           forceSidebar={this.state.forceSidebar}
           setWelcome={(x: boolean) => this.setState({ showWelcome: x })}
+          setCurrentView={(x: string) => this.setState({ currentView: x })}
         />
-        <StyledDashboard>
-          {this.renderDashboard()}
-        </StyledDashboard>
+        
+        {this.renderContents()}
       </StyledHome>
     );
   }

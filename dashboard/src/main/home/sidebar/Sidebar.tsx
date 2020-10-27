@@ -1,6 +1,9 @@
 import React, { Component } from 'react';
 import styled from 'styled-components';
 import gradient from '../../../assets/gradient.jpg';
+import category from '../../../assets/category.svg';
+import pipelines from '../../../assets/pipelines.svg';
+import integrations from '../../../assets/integrations.svg';
 
 import api from '../../../shared/api';
 import { Context } from '../../../shared/Context';
@@ -10,7 +13,8 @@ import ClusterSection from './ClusterSection';
 type PropsType = {
   logOut: () => void,
   forceSidebar: boolean,
-  setWelcome: (x: boolean) => void
+  setWelcome: (x: boolean) => void,
+  setCurrentView: (x: string) => void
 };
 
 type StateType = {
@@ -120,11 +124,28 @@ export default class Sidebar extends Component<PropsType, StateType> {
             <UserName>{this.context.user.email}</UserName>
           </UserSection>
 
+          <SidebarLabel>Home</SidebarLabel>
+          <NavButton onClick={() => this.props.setCurrentView('templates')}>
+            <img src={category} />
+            Templates
+          </NavButton>
+          <NavButton disabled={true}>
+            <img src={pipelines} />
+            Pipelines
+          </NavButton>
+          <NavButton disabled={true}>
+            <img src={integrations} />
+            Integrations
+          </NavButton>
+
+          <br />
+
           <SidebarLabel>Current Cluster</SidebarLabel>
           <ClusterSection 
             forceCloseDrawer={this.state.forceCloseDrawer} 
             releaseDrawer={() => this.setState({ forceCloseDrawer: false })}
             setWelcome={this.props.setWelcome}
+            setCurrentView={this.props.setCurrentView}
           />
 
           <BottomSection>
@@ -150,10 +171,10 @@ const NavButton = styled.div`
   font-size: 14px;
   font-family: 'Hind Siliguri', sans-serif;
   color: #ffffff;
-  cursor: pointer;
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
+  cursor: ${(props: { disabled?: boolean }) => props.disabled ? 'not-allowed': 'pointer'};
 
   :hover {
     background: #ffffff0f;
@@ -165,10 +186,20 @@ const NavButton = styled.div`
     height: 20px;
     width: 20px;
     border-radius: 3px;
-    font-size: 12px;
+    font-size: 18px;
     position: absolute;
-    left: 21px;
-    top: 11px;
+    left: 19px;
+    top: 8px;
+  }
+
+  > img {
+    padding: 4px 4px;
+    height: 23px;
+    width: 23px;
+    border-radius: 3px;
+    position: absolute;
+    left: 20px;
+    top: 9px;
   }
 `;
 
@@ -188,6 +219,8 @@ const LogOutButton = styled(NavButton)`
   > i {
     background: none;
     display: flex;
+    font-size: 12px;
+    top: 11px;
     align-items: center;
     justify-content: center;
     color: #ffffffaa;

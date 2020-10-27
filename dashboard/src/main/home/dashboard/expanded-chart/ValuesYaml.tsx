@@ -19,6 +19,7 @@ type StateType = {
   saveValuesStatus: string | null
 };
 
+// TODO: handle zoom out
 export default class ValuesYaml extends Component<PropsType, StateType> {
   state = {
     values: '',

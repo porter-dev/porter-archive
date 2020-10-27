@@ -12,44 +12,16 @@ type PropsType = {
 type StateType = any;
 
 const naiveFormArray = [
-  { type: 'heading', data: '🍦 Dessert' },
-  { type: 'helper', data: 'Select your favorite dessert' },
-  {
-    field: 'dessert', type: 'select', data: {
-      label: 'Base flavor',
-      options: [
-        { label: 'vanilla', value: 'A' },
-        { label: 'chocolate', value: 'B' },
-        { label: 'wasabi', value: 'C' }
-      ]
-    }
-  },
-  {
-    field: 'topping', type: 'select', data: {
-      label: 'Topping',
-      options: [
-        { label: 'sprinkles', value: 'A' },
-        { label: 'gummy-worms', value: 'B' },
-        { label: 'salt', value: 'C' }
-      ]
-    }
-  },
-  { type: 'heading', data: '⚡ Resources' },
-  { type: 'helper', data: 'Update computing resources and memory for certain resources.' },
-  { field: 'arguable', type: 'checkbox', data: { label: 'Use a persistent volume' } },
-  { field: 'horizon', type: 'checkbox', data: { label: 'Use a refurbished Telecaster' } },
-  { type: 'helper', data: 'Update computing resources and memory for certain resources.' },
-  { field: 'name', type: 'input', data: { type: 'string', label: 'Resource name' } },
-  { field: 'oof', type: 'checkbox', data: { label: 'Use a perspective vortex' } },
-  { field: 'memory', type: 'input', data: { type: 'number', label: 'Memory', unit: 'Mi' } },
-  { type: 'helper', data: 'Update computing resources and memory for certain resources.' },
+  { type: 'heading', data: '⚡ Wordpress Settings' },
+  { type: 'helper', data: 'Enable persistent volume for WordPress' },
+  { field: 'pv-enabled', type: 'checkbox', data: { label: 'Persistent volume enabled' } },
+  { field: 'name', type: 'input', data: { type: 'number', label: 'WordPress volume size', unit: 'Gi' } },
   {
     field: 'ocean', type: 'select', data: {
-      label: 'Some stuff',
+      label: 'Default StorageClass for WordPress',
       options: [
-        { label: 'volcano', value: 'A' },
-        { label: 'typhon', value: 'B' },
-        { label: 'intergalactic', value: 'C' }
+        { label: 'Standard', value: 'A' },
+        { label: 'Custom Storage Class', value: 'B' },
       ]
     }
   },

@@ -5,6 +5,9 @@ import (
 	"path/filepath"
 
 	"github.com/porter-dev/porter/internal/kubernetes/local"
+	"github.com/porter-dev/porter/internal/utils"
+
+	gcpLocal "github.com/porter-dev/porter/internal/providers/gcp/local"
 
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/util/homedir"
@@ -95,4 +98,25 @@ func generate(kubeconfigPath string, output string, print bool, contexts []strin
 	}
 
 	return nil
+}
+
+// TODO -- error handling, stop hard-coding, ask for permissions
+func gcpHelper() {
+	agent, _ := gcpLocal.NewDefaultAgent()
+
+	agent.ProjectID = "PROJECT_ID"
+	name := "porter-dashboard-" + utils.StringWithCharset(6, "abcdefghijklmnopqrstuvwxyz1234567890")
+	resp, err := agent.CreateServiceAccount(name)
+
+	if err != nil {
+		fmt.Printf("Error was %v\n", err)
+		return
+	}
+
+	err = agent.SetServiceAccountIAMPolicy(resp)
+
+	if err != nil {
+		fmt.Printf("Error was %v\n", err)
+		return
+	}
 }

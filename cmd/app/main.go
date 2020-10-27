@@ -54,7 +54,7 @@ func main() {
 
 	a := api.New(logger, repo, validator, store, appConf.Server.CookieName, false)
 
-	appRouter := router.New(a, store, appConf.Server.CookieName, appConf.Server.StaticFilePath)
+	appRouter := router.New(a, store, appConf.Server.CookieName, appConf.Server.StaticFilePath, repo)
 
 	address := fmt.Sprintf(":%d", appConf.Server.Port)
 

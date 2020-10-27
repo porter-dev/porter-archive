@@ -1,5 +1,3 @@
-// +build cli
-
 package local
 
 import (

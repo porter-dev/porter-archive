@@ -1,0 +1,35 @@
+package gorm
+
+import (
+	"errors"
+
+	"github.com/porter-dev/porter/internal/models"
+	"github.com/porter-dev/porter/internal/repository"
+	"gorm.io/gorm"
+)
+
+// ProjectRepository uses gorm.DB for querying the database
+type ProjectRepository struct {
+	db *gorm.DB
+}
+
+// NewProjectRepository returns a ProjectRepository which uses
+// gorm.DB for querying the database
+func NewProjectRepository(db *gorm.DB) repository.ProjectRepository {
+	return &ProjectRepository{db}
+}
+
+// CreateProject creates a new project
+func (repo *ProjectRepository) CreateProject(project *models.Project) (*models.Project, error) {
+	return nil, errors.New("UNIMPLEMENTED")
+}
+
+// CreateProjectRole appends a role to the existing array of roles
+func (repo *ProjectRepository) CreateProjectRole(project *models.Project, role *models.Role) (*models.Role, error) {
+	return nil, errors.New("UNIMPLEMENTED")
+}
+
+// ReadProject gets a projects specified by a unique id
+func (repo *ProjectRepository) ReadProject(id uint) (*models.Project, error) {
+	return nil, errors.New("UNIMPLEMENTED")
+}

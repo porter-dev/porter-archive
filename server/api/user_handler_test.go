@@ -80,7 +80,7 @@ var authCheckTests = []*userTest{
 		endpoint:  "/api/auth/check",
 		expStatus: http.StatusOK,
 		body:      "",
-		expBody:   `{"id":1,"email":"","contexts":null,"rawKubeConfig":""}`,
+		expBody:   `{"id":1,"email":"belanger@getporter.dev","contexts":null,"rawKubeConfig":""}`,
 		useCookie: true,
 		validators: []func(c *userTest, tester *tester, t *testing.T){
 			userBasicBodyValidator,
@@ -116,7 +116,10 @@ var createUserTests = []*userTest{
 			"password": "hello"
 		}`,
 		expStatus: http.StatusCreated,
-		expBody:   `{"id":1,"email":"","contexts":null,"rawKubeConfig":""}`,
+		expBody:   `{"id":1,"email":"belanger@getporter.dev","contexts":null,"rawKubeConfig":""}`,
+		validators: []func(c *userTest, tester *tester, t *testing.T){
+			userModelBodyValidator,
+		},
 	},
 	&userTest{
 		msg:      "Create user invalid email",
@@ -216,7 +219,7 @@ var loginUserTests = []*userTest{
 			"password": "hello"
 		}`,
 		expStatus: http.StatusOK,
-		expBody:   `{"id":1,"email":"","contexts":null,"rawKubeConfig":""}`,
+		expBody:   `{"id":1,"email":"belanger@getporter.dev","contexts":null,"rawKubeConfig":""}`,
 		validators: []func(c *userTest, tester *tester, t *testing.T){
 			userBasicBodyValidator,
 		},
@@ -233,7 +236,7 @@ var loginUserTests = []*userTest{
 			"password": "hello"
 		}`,
 		expStatus: http.StatusOK,
-		expBody:   `{"id":1,"email":"","contexts":null,"rawKubeConfig":""}`,
+		expBody:   `{"id":1,"email":"belanger@getporter.dev","contexts":null,"rawKubeConfig":""}`,
 		useCookie: true,
 		validators: []func(c *userTest, tester *tester, t *testing.T){
 			userBasicBodyValidator,

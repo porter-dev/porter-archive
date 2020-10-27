@@ -6,6 +6,7 @@ import (
 
 	"github.com/go-chi/chi"
 	"github.com/gorilla/sessions"
+	"github.com/porter-dev/porter/internal/repository"
 	"github.com/porter-dev/porter/server/api"
 	"github.com/porter-dev/porter/server/requestlog"
 	mw "github.com/porter-dev/porter/server/router/middleware"
@@ -17,10 +18,11 @@ func New(
 	store sessions.Store,
 	cookieName string,
 	staticFilePath string,
+	repo *repository.Repository,
 ) *chi.Mux {
 	l := a.Logger()
 	r := chi.NewRouter()
-	auth := mw.NewAuth(store, cookieName)
+	auth := mw.NewAuth(store, cookieName, repo)
 
 	r.Route("/api", func(r chi.Router) {
 		r.Use(mw.ContentTypeJSON)
@@ -34,6 +36,10 @@ func New(
 		r.Method("POST", "/login", requestlog.NewHandler(a.HandleLoginUser, l))
 		r.Method("GET", "/auth/check", auth.BasicAuthenticate(requestlog.NewHandler(a.HandleAuthCheck, l)))
 		r.Method("POST", "/logout", auth.BasicAuthenticate(requestlog.NewHandler(a.HandleLogoutUser, l)))
+
+		// /api/projects routes
+		r.Method("GET", "/projects/{id}", auth.BasicAuthenticate(requestlog.NewHandler(a.HandleReadProject, l)))
+		r.Method("POST", "/projects", auth.BasicAuthenticate(requestlog.NewHandler(a.HandleCreateProject, l)))
 
 		// /api/releases routes
 		r.Method("GET", "/releases", auth.BasicAuthenticate(requestlog.NewHandler(a.HandleListReleases, l)))

@@ -11,5 +11,6 @@ func NewRepository(db *gorm.DB) *repository.Repository {
 	return &repository.Repository{
 		User:    NewUserRepository(db),
 		Session: NewSessionRepository(db),
+		Project: NewProjectRepository(db),
 	}
 }

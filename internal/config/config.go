@@ -29,6 +29,9 @@ type ServerConf struct {
 // DBConf is the database configuration: if generated from environment variables,
 // it assumes the default docker-compose configuration is used
 type DBConf struct {
+	// EncryptionKey is the key to use for sensitive values that are encrypted at rest
+	EncryptionKey string `env:"ENCRYPTION_KEY,default=__random_strong_encryption_key__"`
+
 	Host     string `env:"DB_HOST,default=postgres"`
 	Port     int    `env:"DB_PORT,default=5432"`
 	Username string `env:"DB_USER,default=porter"`

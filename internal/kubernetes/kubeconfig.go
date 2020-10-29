@@ -1,10 +1,205 @@
 package kubernetes
 
 import (
+	"errors"
+	"strings"
+
 	"github.com/porter-dev/porter/internal/models"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/tools/clientcmd/api"
 )
+
+// GetServiceAccountCandidates parses a kubeconfig for a list of service account
+// candidates.
+func GetServiceAccountCandidates(kubeconfig []byte) ([]*models.ServiceAccountCandidate, error) {
+	config, err := clientcmd.NewClientConfigFromBytes(kubeconfig)
+
+	if err != nil {
+		return nil, err
+	}
+
+	rawConf, err := config.RawConfig()
+
+	if err != nil {
+		return nil, err
+	}
+
+	res := make([]*models.ServiceAccountCandidate, 0)
+
+	for contextName, context := range rawConf.Contexts {
+		clusterName := context.Cluster
+		authInfoName := context.AuthInfo
+
+		// get the auth mechanism and actions
+		authMechanism, authInfoActions := parseAuthInfoForActions(rawConf.AuthInfos[authInfoName])
+		clusterActions := parseClusterForActions(rawConf.Clusters[clusterName])
+
+		actionsArr := make([]string, 0)
+
+		if authInfoActions != "" {
+			actionsArr = append(actionsArr, strings.Split(authInfoActions, ",")...)
+		}
+
+		if clusterActions != "" {
+			actionsArr = append(actionsArr, strings.Split(clusterActions, ",")...)
+		}
+
+		// join the cluster and auth info actions together
+		actions := strings.Join(actionsArr, ",")
+
+		// if auth mechanism is unsupported, we'll skip it
+		if authMechanism == models.NotAvailable {
+			continue
+		}
+
+		// construct the raw kubeconfig that's relevant for that context
+		contextConf, err := getConfigForContext(&rawConf, contextName)
+
+		if err != nil {
+			continue
+		}
+
+		rawBytes, err := clientcmd.Write(*contextConf)
+
+		if err == nil {
+			// create the candidate service account
+			res = append(res, &models.ServiceAccountCandidate{
+				ActionNames:     actions,
+				Kind:            "connector",
+				ClusterName:     clusterName,
+				ClusterEndpoint: rawConf.Clusters[clusterName].Server,
+				AuthMechanism:   authMechanism,
+				Kubeconfig:      rawBytes,
+			})
+		}
+	}
+
+	return res, nil
+}
+
+// GetRawConfigFromBytes returns the clientcmdapi.Config from kubeconfig
+// bytes
+func GetRawConfigFromBytes(kubeconfig []byte) (*api.Config, error) {
+	config, err := clientcmd.NewClientConfigFromBytes(kubeconfig)
+
+	if err != nil {
+		return nil, err
+	}
+
+	rawConf, err := config.RawConfig()
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &rawConf, nil
+}
+
+// Parsing rules are:
+//
+// (1) If a client certificate + client key exist, uses x509 auth mechanism
+// (2) If an oidc/gcp/aws plugin exists, uses that auth mechanism
+// (3) If a bearer token exists, uses bearer token auth mechanism
+// (4) If a username/password exist, uses basic auth mechanism
+// (5) Otherwise, the config gets skipped
+//
+func parseAuthInfoForActions(authInfo *api.AuthInfo) (authMechanism string, actions string) {
+	actionsArr := make([]string, 0)
+
+	if (authInfo.ClientCertificate != "" || len(authInfo.ClientCertificateData) != 0) &&
+		(authInfo.ClientKey != "" || len(authInfo.ClientKeyData) != 0) {
+		if len(authInfo.ClientCertificateData) == 0 {
+			actionsArr = append(actionsArr, models.ClientCertDataAction)
+		}
+
+		if len(authInfo.ClientKeyData) == 0 {
+			actionsArr = append(actionsArr, models.ClientKeyDataAction)
+		}
+
+		return models.X509, strings.Join(actionsArr, ",")
+	}
+
+	if authInfo.AuthProvider != nil {
+		switch authInfo.AuthProvider.Name {
+		case "oidc":
+			_, isFile := authInfo.AuthProvider.Config["idp-certificate-authority"]
+			data, isData := authInfo.AuthProvider.Config["idp-certificate-authority-data"]
+
+			if isFile && (!isData || data == "") {
+				return models.OIDC, models.OIDCIssuerDataAction
+			}
+
+			return models.OIDC, ""
+		case "gcp":
+			return models.GCP, models.GCPKeyDataAction
+		}
+	}
+
+	if authInfo.Exec != nil {
+		if authInfo.Exec.Command == "aws" || authInfo.Exec.Command == "aws-iam-authenticator" {
+			return models.AWS, models.AWSKeyDataAction
+		}
+	}
+
+	if authInfo.Token != "" || authInfo.TokenFile != "" {
+		if authInfo.Token == "" {
+			return models.Bearer, models.TokenDataAction
+		}
+
+		return models.Bearer, ""
+	}
+
+	if authInfo.Username != "" && authInfo.Password != "" {
+		return models.Basic, ""
+	}
+
+	return models.NotAvailable, ""
+}
+
+// Parses the cluster object to determine actions -- only currently supported action is
+// population of the cluster certificate authority data
+func parseClusterForActions(cluster *api.Cluster) (actions string) {
+	if cluster.CertificateAuthority != "" && len(cluster.CertificateAuthorityData) == 0 {
+		return models.ClusterCADataAction
+	}
+
+	return ""
+}
+
+// getKubeconfigForContext returns the raw kubeconfig associated with only a
+// single context of the raw config
+func getConfigForContext(
+	rawConf *api.Config,
+	contextName string,
+) (*api.Config, error) {
+	copyConf := rawConf.DeepCopy()
+
+	copyConf.Clusters = make(map[string]*api.Cluster)
+	copyConf.AuthInfos = make(map[string]*api.AuthInfo)
+	copyConf.Contexts = make(map[string]*api.Context)
+	copyConf.CurrentContext = contextName
+
+	context, ok := rawConf.Contexts[contextName]
+
+	if ok {
+		userName := context.AuthInfo
+		clusterName := context.Cluster
+		authInfo, userFound := rawConf.AuthInfos[userName]
+		cluster, clusterFound := rawConf.Clusters[clusterName]
+
+		if userFound && clusterFound {
+			copyConf.Clusters[clusterName] = cluster
+			copyConf.AuthInfos[userName] = authInfo
+			copyConf.Contexts[contextName] = context
+		} else {
+			return nil, errors.New("linked user and cluster not found")
+		}
+	} else {
+		return nil, errors.New("context not found")
+	}
+
+	return copyConf, nil
+}
 
 // GetRestrictedClientConfigFromBytes returns a clientcmd.ClientConfig from a raw kubeconfig,
 // a context name, and the set of allowed contexts.

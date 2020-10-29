@@ -68,7 +68,8 @@ export interface PorterChart {
 	Name: string,
 	Description: string,
 	Icon: string,
-	Form: FormYAML
+  Form: FormYAML,
+  Markdown?: string,
 }
 
 // FormYAML represents a chart's values.yaml form abstraction

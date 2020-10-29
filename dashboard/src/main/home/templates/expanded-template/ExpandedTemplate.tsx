@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import styled from 'styled-components';
 import launch from '../../../../assets/launch.svg';
+import Markdown from 'markdown-to-jsx';
 
 import { PorterChart } from '../../../../shared/types';
 
@@ -34,6 +35,19 @@ export default class ExpandedTemplate extends Component<PropsType, StateType> {
     });
   }
 
+  renderMarkdown = () => {
+    let { currentChart } = this.props;
+    if (currentChart.Markdown) {
+      return (
+        <Markdown>{currentChart.Markdown}</Markdown>
+      );
+    } else if (currentChart.Form.Description) {
+      return currentChart.Form.Description;
+    }
+
+    return currentChart.Description;
+  }
+
   render() {
     let { Name, Icon, Description } = this.props.currentChart.Form;
     let { currentChart } = this.props;
@@ -58,11 +72,7 @@ export default class ExpandedTemplate extends Component<PropsType, StateType> {
           {this.renderTagList()}
         </TagSection>
         <ContentSection>
-          <br />
-          [Add Markdown Support] <br /><br />
-          Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. <br /><br />
-          Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. <br /><br />
-          Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. <br /><br />
+          {this.renderMarkdown()}
         </ContentSection>
       </StyledExpandedTemplate>
     );
@@ -70,9 +80,10 @@ export default class ExpandedTemplate extends Component<PropsType, StateType> {
 }
 
 const ContentSection = styled.div`
-  margin-top: 20px;
+  margin-top: 40px;
   font-size: 14px;
   line-height: 1.8em;
+  padding-bottom: 100px;
 `;
 
 const Tag = styled.div`
@@ -125,7 +136,7 @@ const Button = styled.div`
   font-size: 13px;
   padding: 10px 15px;
   border-radius: 3px;
-  cursor: not-allowed;
+  cursor: pointer;
   box-shadow: 0 5px 8px 0px #00000010;
   display: flex;
   flex-direction: row;

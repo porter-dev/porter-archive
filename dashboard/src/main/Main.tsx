@@ -122,6 +122,9 @@ const GlobalStyle = createGlobalStyle`
     background: #202227;
     overscroll-behavior-x: none;
   }
+  a {
+    color: #949eff;
+  }
 `;
 
 const StyledMain = styled.div`

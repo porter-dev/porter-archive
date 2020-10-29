@@ -44,6 +44,7 @@ type PorterChart struct {
 	Description string
 	Icon        string
 	Form        FormYAML
+	Markdown    string
 }
 
 // FormYAML represents a chart's values.yaml form abstraction
@@ -60,7 +61,7 @@ type FormYAML struct {
 			Name     string `yaml:"name,omitempty"`
 			Variable string `yaml:"variable,omitempty"`
 			Settings struct {
-				Default int `yaml:"default"`
+				Default interface{}
 			} `yaml:"settings,omitempty"`
 		} `yaml:"contents"`
 	} `yaml:"sections"`
@@ -68,6 +69,7 @@ type FormYAML struct {
 
 // HandleListTemplates retrieves a list of Porter templates
 // TODO: test and reduce fragility (handle untar/parse error for individual charts)
+// TODO: separate markdown retrieval into its own query if necessary
 func (app *App) HandleListTemplates(w http.ResponseWriter, r *http.Request) {
 	resp, err := http.Get(baseURL + "index.yaml")
 	if err != nil {
@@ -93,7 +95,7 @@ func (app *App) HandleListTemplates(w http.ResponseWriter, r *http.Request) {
 			tarURL = baseURL + tarURL
 		}
 
-		formData, err := getFormData(tarURL)
+		formData, markdown, err := processTarball(tarURL)
 		if err != nil {
 			fmt.Println(err)
 			return
@@ -104,6 +106,9 @@ func (app *App) HandleListTemplates(w http.ResponseWriter, r *http.Request) {
 		porterChart.Description = indexChart.Description
 		porterChart.Icon = indexChart.Icon
 		porterChart.Form = *formData
+		if markdown != "" {
+			porterChart.Markdown = markdown
+		}
 
 		porterCharts = append(porterCharts, porterChart)
 	}
@@ -111,11 +116,11 @@ func (app *App) HandleListTemplates(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(porterCharts)
 }
 
-func getFormData(tarURL string) (*FormYAML, error) {
+func processTarball(tarURL string) (*FormYAML, string, error) {
 	resp, err := http.Get(tarURL)
 	if err != nil {
 		fmt.Println(err)
-		return nil, err
+		return nil, "", err
 	}
 
 	defer resp.Body.Close()
@@ -125,18 +130,19 @@ func getFormData(tarURL string) (*FormYAML, error) {
 	gzf, err := gzip.NewReader(buf)
 	if err != nil {
 		fmt.Println(err)
-		return nil, err
+		return nil, "", err
 	}
 
-	// Process tarball to generate FormYAML
+	// Process tarball to generate FormYAML and retrieve markdown
 	tarReader := tar.NewReader(gzf)
+	markdown := ""
 	for {
 		header, err := tarReader.Next()
 		if err == io.EOF {
 			break
 		} else if err != nil {
 			fmt.Println(err)
-			return nil, err
+			return nil, "", err
 		}
 
 		name := header.Name
@@ -145,6 +151,19 @@ func getFormData(tarURL string) (*FormYAML, error) {
 			continue
 		case tar.TypeReg:
 
+			// Handle info.md if found
+			if strings.Contains(name, "README.md") {
+				bufMd := new(bytes.Buffer)
+
+				_, err := io.Copy(bufMd, tarReader)
+				if err != nil {
+					fmt.Println(err)
+					return nil, "", err
+				}
+
+				markdown = string(bufMd.Bytes())
+			}
+
 			// Handle form.yaml located in archive
 			if strings.Contains(name, "form.yaml") {
 				bufForm := new(bytes.Buffer)
@@ -152,17 +171,16 @@ func getFormData(tarURL string) (*FormYAML, error) {
 				_, err := io.Copy(bufForm, tarReader)
 				if err != nil {
 					fmt.Println(err)
-					return nil, err
+					return nil, "", err
 				}
 
 				// Unmarshal yaml byte buffer
 				form := FormYAML{}
 				if err := yaml.Unmarshal(bufForm.Bytes(), &form); err != nil {
 					fmt.Println(err)
-					return nil, err
+					return nil, "", err
 				}
-
-				return &form, nil
+				return &form, markdown, nil
 			}
 		default:
 			fmt.Printf("%s : %c %s %s\n",
@@ -173,5 +191,5 @@ func getFormData(tarURL string) (*FormYAML, error) {
 			)
 		}
 	}
-	return nil, errors.New("no form.yaml found")
+	return nil, "", errors.New("no form.yaml found")
 }

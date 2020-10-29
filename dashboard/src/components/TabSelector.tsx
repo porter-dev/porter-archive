@@ -10,7 +10,8 @@ type PropsType = {
   currentTab: string,
   options: selectOption[],
   setCurrentTab: (value: string) => void,
-  addendum?: any
+  addendum?: any,
+  color?: string
 };
 
 type StateType = {
@@ -22,6 +23,7 @@ export default class TabSelector extends Component<PropsType, StateType> {
   }
 
   renderTabList = () => {
+    let color = this.props.color || '#949effcc';
     return (
       this.props.options.map((option: selectOption, i: number) => {
         return (
@@ -29,7 +31,7 @@ export default class TabSelector extends Component<PropsType, StateType> {
             key={i}
             onClick={() => this.handleTabClick(option.value)}
             lastItem={i === this.props.options.length - 1}
-            highlight={option.value === this.props.currentTab}
+            highlight={option.value === this.props.currentTab ? color : null}
           >
             {option.label}
           </Tab>
@@ -48,29 +50,14 @@ export default class TabSelector extends Component<PropsType, StateType> {
   }
 }
 
-const Highlight = styled.div`
-  width: 80%;
-  height: 1px;
-  margin-top: 5px;
-  background: #949EFFcc00;
-
-  opacity: 0;
-  animation: lineEnter 0.5s 0s;
-  animation-fill-mode: forwards;
-  @keyframes lineEnter {
-    from { width: 0%; opacity: 0; }
-    to   { width: 80%; opacity: 1; }
-  }
-`; 
-
 const Tab = styled.div`
   height: 30px;
-  margin-right: ${(props: { lastItem: boolean, highlight: boolean }) => props.lastItem ? '' : '30px'};
+  margin-right: ${(props: { lastItem: boolean, highlight: string }) => props.lastItem ? '' : '30px'};
   display: flex;
   font-family: 'Work Sans', sans-serif;
   font-size: 13px;
   user-select: none;
-  color: ${(props: { lastItem: boolean, highlight: boolean }) => props.highlight ? '#949effcc' : '#aaaabb55'};
+  color: ${(props: { lastItem: boolean, highlight: string }) => props.highlight ? props.highlight : '#aaaabb55'};
   flex-direction: column;
   padding-top: 7px;
   padding-bottom: 2px;
@@ -78,9 +65,9 @@ const Tab = styled.div`
   align-items: center;
   cursor: pointer;
   white-space: nowrap;
-  border-bottom: 1px solid ${(props: { lastItem: boolean, highlight: boolean }) => props.highlight ? '#949effcc' : 'none'};
+  border-bottom: 1px solid ${(props: { lastItem: boolean, highlight: string }) => props.highlight ? props.highlight : 'none'};
   :hover {
-    color: ${(props: { lastItem: boolean, highlight: boolean }) => props.highlight ? '' : '#aaaabb'};
+    color: ${(props: { lastItem: boolean, highlight: string }) => props.highlight ? '' : '#aaaabb'};
   }
 `;
 

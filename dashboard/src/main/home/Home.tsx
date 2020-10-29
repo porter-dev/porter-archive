@@ -24,7 +24,7 @@ export default class Home extends Component<PropsType, StateType> {
   state = {
     forceSidebar: true,
     showWelcome: false,
-    currentView: 'templates'
+    currentView: 'dashboard'
   }
 
   renderDashboard = () => {

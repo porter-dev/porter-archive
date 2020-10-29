@@ -49,6 +49,7 @@ type PorterChart struct {
 // FormYAML represents a chart's values.yaml form abstraction
 type FormYAML struct {
 	Name        string   `yaml:"name"`
+	Icon        string   `yaml:"icon"`
 	Description string   `yaml:"description"`
 	Tags        []string `yaml:"tags"`
 	Sections    []struct {
@@ -66,6 +67,7 @@ type FormYAML struct {
 }
 
 // HandleListTemplates retrieves a list of Porter templates
+// TODO: test and reduce fragility (handle untar/parse error for individual charts)
 func (app *App) HandleListTemplates(w http.ResponseWriter, r *http.Request) {
 	resp, err := http.Get(baseURL + "index.yaml")
 	if err != nil {

@@ -96,6 +96,8 @@ const upgradeChartValues = baseApi<{
   return `/api/releases/${pathParams.name}/upgrade`;
 });
 
+const getTemplates = baseApi('GET', '/api/templates');
+
 // Bundle export to allow default api import (api.<method> is more readable)
 export default {
   checkAuth,
@@ -111,5 +113,6 @@ export default {
   getNamespaces,
   getRevisions,
   rollbackChart,
-  upgradeChartValues
+  upgradeChartValues,
+  getTemplates
 }

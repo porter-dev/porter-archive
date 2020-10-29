@@ -11,7 +11,8 @@ import Drawer from './Drawer';
 type PropsType = {
   forceCloseDrawer: boolean,
   releaseDrawer: () => void,
-  setWelcome: (x: boolean) => void
+  setWelcome: (x: boolean) => void,
+  setCurrentView: (x: string) => void
 };
 
 type StateType = {
@@ -104,7 +105,7 @@ export default class ClusterSection extends Component<PropsType, StateType> {
     if (kubeContexts.length > 0) {
       return (
         <ClusterSelector showDrawer={showDrawer}>
-          <LinkWrapper>
+          <LinkWrapper onClick={() => this.props.setCurrentView('dashboard')}>
             <ClusterIcon><i className="material-icons">device_hub</i></ClusterIcon>
             <ClusterName>{currentCluster}</ClusterName>
           </LinkWrapper>

@@ -43,7 +43,7 @@ export default class Dashboard extends Component<PropsType, StateType> {
       storage: StorageType.Secret
     }, { name: this.state.currentChart.name, revision: 0 }, (err: any, res: any) => {
       if (err) {
-        console.log(err)
+        console.log(err);
       } else {
         this.setState({ currentChart: res.data });
       }

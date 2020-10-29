@@ -26,6 +26,14 @@ export default class ExpandedTemplate extends Component<PropsType, StateType> {
     );
   }
 
+  renderTagList = () => {
+    return this.props.currentChart.Form.Tags.map((tag: string, i: number) => {
+      return (
+        <Tag key={i}>{tag}</Tag>
+      )
+    });
+  }
+
   render() {
     let { Name, Icon, Description } = this.props.currentChart.Form;
     let { currentChart } = this.props;
@@ -45,17 +53,56 @@ export default class ExpandedTemplate extends Component<PropsType, StateType> {
             Launch Template
           </Button>
         </TitleSection>
+        <TagSection>
+          <i className="material-icons">local_offer</i>
+          {this.renderTagList()}
+        </TagSection>
+        <ContentSection>
+          <br />
+          [Add Markdown Support] <br /><br />
+          Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. <br /><br />
+          Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. <br /><br />
+          Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. <br /><br />
+        </ContentSection>
       </StyledExpandedTemplate>
     );
   }
 }
+
+const ContentSection = styled.div`
+  margin-top: 20px;
+  font-size: 14px;
+  line-height: 1.8em;
+`;
+
+const Tag = styled.div`
+  border: 1px solid #ffffff44;
+  border-radius: 3px;
+  display: flex;
+  margin-right: 7px;
+  align-items: center;
+  padding: 5px 10px;
+`;
+
+const TagSection = styled.div`
+  margin-top: 20px;
+  display: flex;
+  font-size: 13px;
+  font-family: 'Work Sans', sans-serif;
+  align-items: center;
+
+  > i {
+    font-size: 20px;
+    margin-right: 10px;
+    color: #aaaabb;
+  }
+`;
 
 const Flex = styled.div`
   display: flex;
   align-items: center;
 
   > i {
-    margin-left: 10px;
     cursor: pointer;
     font-size 24px;
     color: #969Fbbaa;
@@ -78,7 +125,7 @@ const Button = styled.div`
   font-size: 13px;
   padding: 10px 15px;
   border-radius: 3px;
-  cursor: pointer;
+  cursor: not-allowed;
   box-shadow: 0 5px 8px 0px #00000010;
   display: flex;
   flex-direction: row;
@@ -135,13 +182,14 @@ const Title = styled.div`
 
 const TitleSection = styled.div`
   display: flex;
+  margin-left: -42px;
   flex-direction: row;
   justify-content: space-between;
-  width: 100%;
+  width: calc(100% + 42px);
   align-items: center;
 `;
 
 const StyledExpandedTemplate = styled.div`
-  width: calc(90% - 10px);
+  width: calc(90% - 70px);
   padding-top: 20px;
 `;

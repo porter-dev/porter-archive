@@ -178,7 +178,12 @@ var SACandidatesTests = []saCandidatesTest{
 		raw:  []byte(ClusterCAWithoutData),
 		expected: []*models.ServiceAccountCandidate{
 			&models.ServiceAccountCandidate{
-				ActionNames:     "upload-cluster-ca-data",
+				Actions: []models.ServiceAccountAction{
+					models.ServiceAccountAction{
+						Name:     "upload-cluster-ca-data",
+						Resolved: false,
+					},
+				},
 				Kind:            "connector",
 				ClusterName:     "cluster-test",
 				ClusterEndpoint: "https://localhost",
@@ -192,7 +197,7 @@ var SACandidatesTests = []saCandidatesTest{
 		raw:  []byte(x509WithData),
 		expected: []*models.ServiceAccountCandidate{
 			&models.ServiceAccountCandidate{
-				ActionNames:     "",
+				Actions:         []models.ServiceAccountAction{},
 				Kind:            "connector",
 				ClusterName:     "cluster-test",
 				ClusterEndpoint: "https://localhost",
@@ -206,7 +211,12 @@ var SACandidatesTests = []saCandidatesTest{
 		raw:  []byte(x509WithoutCertData),
 		expected: []*models.ServiceAccountCandidate{
 			&models.ServiceAccountCandidate{
-				ActionNames:     "upload-client-cert-data",
+				Actions: []models.ServiceAccountAction{
+					models.ServiceAccountAction{
+						Name:     "upload-client-cert-data",
+						Resolved: false,
+					},
+				},
 				Kind:            "connector",
 				ClusterName:     "cluster-test",
 				ClusterEndpoint: "https://localhost",
@@ -220,7 +230,12 @@ var SACandidatesTests = []saCandidatesTest{
 		raw:  []byte(x509WithoutKeyData),
 		expected: []*models.ServiceAccountCandidate{
 			&models.ServiceAccountCandidate{
-				ActionNames:     "upload-client-key-data",
+				Actions: []models.ServiceAccountAction{
+					models.ServiceAccountAction{
+						Name:     "upload-client-key-data",
+						Resolved: false,
+					},
+				},
 				Kind:            "connector",
 				ClusterName:     "cluster-test",
 				ClusterEndpoint: "https://localhost",
@@ -234,7 +249,16 @@ var SACandidatesTests = []saCandidatesTest{
 		raw:  []byte(x509WithoutCertAndKeyData),
 		expected: []*models.ServiceAccountCandidate{
 			&models.ServiceAccountCandidate{
-				ActionNames:     "upload-client-cert-data,upload-client-key-data",
+				Actions: []models.ServiceAccountAction{
+					models.ServiceAccountAction{
+						Name:     "upload-client-cert-data",
+						Resolved: false,
+					},
+					models.ServiceAccountAction{
+						Name:     "upload-client-key-data",
+						Resolved: false,
+					},
+				},
 				Kind:            "connector",
 				ClusterName:     "cluster-test",
 				ClusterEndpoint: "https://localhost",
@@ -248,7 +272,7 @@ var SACandidatesTests = []saCandidatesTest{
 		raw:  []byte(BearerTokenWithData),
 		expected: []*models.ServiceAccountCandidate{
 			&models.ServiceAccountCandidate{
-				ActionNames:     "",
+				Actions:         []models.ServiceAccountAction{},
 				Kind:            "connector",
 				ClusterName:     "cluster-test",
 				ClusterEndpoint: "https://localhost",
@@ -262,7 +286,12 @@ var SACandidatesTests = []saCandidatesTest{
 		raw:  []byte(BearerTokenWithoutData),
 		expected: []*models.ServiceAccountCandidate{
 			&models.ServiceAccountCandidate{
-				ActionNames:     "upload-token-data",
+				Actions: []models.ServiceAccountAction{
+					models.ServiceAccountAction{
+						Name:     "upload-token-data",
+						Resolved: false,
+					},
+				},
 				Kind:            "connector",
 				ClusterName:     "cluster-test",
 				ClusterEndpoint: "https://localhost",
@@ -276,7 +305,12 @@ var SACandidatesTests = []saCandidatesTest{
 		raw:  []byte(GCPPlugin),
 		expected: []*models.ServiceAccountCandidate{
 			&models.ServiceAccountCandidate{
-				ActionNames:     "upload-gcp-key-data",
+				Actions: []models.ServiceAccountAction{
+					models.ServiceAccountAction{
+						Name:     "upload-gcp-key-data",
+						Resolved: false,
+					},
+				},
 				Kind:            "connector",
 				ClusterName:     "cluster-test",
 				ClusterEndpoint: "https://localhost",
@@ -290,7 +324,12 @@ var SACandidatesTests = []saCandidatesTest{
 		raw:  []byte(AWSIamAuthenticatorExec),
 		expected: []*models.ServiceAccountCandidate{
 			&models.ServiceAccountCandidate{
-				ActionNames:     "upload-aws-key-data",
+				Actions: []models.ServiceAccountAction{
+					models.ServiceAccountAction{
+						Name:     "upload-aws-key-data",
+						Resolved: false,
+					},
+				},
 				Kind:            "connector",
 				ClusterName:     "cluster-test",
 				ClusterEndpoint: "https://localhost",
@@ -304,7 +343,12 @@ var SACandidatesTests = []saCandidatesTest{
 		raw:  []byte(AWSEKSGetTokenExec),
 		expected: []*models.ServiceAccountCandidate{
 			&models.ServiceAccountCandidate{
-				ActionNames:     "upload-aws-key-data",
+				Actions: []models.ServiceAccountAction{
+					models.ServiceAccountAction{
+						Name:     "upload-aws-key-data",
+						Resolved: false,
+					},
+				},
 				Kind:            "connector",
 				ClusterName:     "cluster-test",
 				ClusterEndpoint: "https://localhost",
@@ -318,7 +362,12 @@ var SACandidatesTests = []saCandidatesTest{
 		raw:  []byte(OIDCAuthWithoutData),
 		expected: []*models.ServiceAccountCandidate{
 			&models.ServiceAccountCandidate{
-				ActionNames:     "upload-oidc-idp-issuer-ca-data",
+				Actions: []models.ServiceAccountAction{
+					models.ServiceAccountAction{
+						Name:     "upload-oidc-idp-issuer-ca-data",
+						Resolved: false,
+					},
+				},
 				Kind:            "connector",
 				ClusterName:     "cluster-test",
 				ClusterEndpoint: "https://localhost",
@@ -332,7 +381,7 @@ var SACandidatesTests = []saCandidatesTest{
 		raw:  []byte(OIDCAuthWithData),
 		expected: []*models.ServiceAccountCandidate{
 			&models.ServiceAccountCandidate{
-				ActionNames:     "",
+				Actions:         []models.ServiceAccountAction{},
 				Kind:            "connector",
 				ClusterName:     "cluster-test",
 				ClusterEndpoint: "https://localhost",
@@ -346,7 +395,7 @@ var SACandidatesTests = []saCandidatesTest{
 		raw:  []byte(BasicAuth),
 		expected: []*models.ServiceAccountCandidate{
 			&models.ServiceAccountCandidate{
-				ActionNames:     "",
+				Actions:         []models.ServiceAccountAction{},
 				Kind:            "connector",
 				ClusterName:     "cluster-test",
 				ClusterEndpoint: "https://localhost",
@@ -396,18 +445,14 @@ func TestGetServiceAccountCandidates(t *testing.T) {
 					c.name, exp.ClusterEndpoint, res.ClusterEndpoint)
 			}
 
-			// compare action names by splitting the arrays (actions may be out of order)
-			resActions := strings.Split(res.ActionNames, ",")
-			expActions := strings.Split(exp.ActionNames, ",")
-
-			if len(resActions) != len(expActions) {
+			if len(res.Actions) != len(exp.Actions) {
 				t.Errorf("%s failed on action names: expected length %d, got length %d\n",
-					c.name, len(expActions), len(resActions))
+					c.name, len(res.Actions), len(exp.Actions))
 			} else {
-				for _, actionName := range expActions {
-					if !strings.Contains(res.ActionNames, actionName) {
+				for i, action := range exp.Actions {
+					if res.Actions[i].Name != action.Name {
 						t.Errorf("%s failed on action names: expected res to contain %s, got %s\n",
-							c.name, actionName, res.ActionNames)
+							c.name, action.Name, res.Actions[i].Name)
 					}
 				}
 			}

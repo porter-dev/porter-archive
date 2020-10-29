@@ -2,7 +2,6 @@ package kubernetes
 
 import (
 	"errors"
-	"strings"
 
 	"github.com/porter-dev/porter/internal/models"
 	"k8s.io/client-go/tools/clientcmd"
@@ -34,18 +33,7 @@ func GetServiceAccountCandidates(kubeconfig []byte) ([]*models.ServiceAccountCan
 		authMechanism, authInfoActions := parseAuthInfoForActions(rawConf.AuthInfos[authInfoName])
 		clusterActions := parseClusterForActions(rawConf.Clusters[clusterName])
 
-		actionsArr := make([]string, 0)
-
-		if authInfoActions != "" {
-			actionsArr = append(actionsArr, strings.Split(authInfoActions, ",")...)
-		}
-
-		if clusterActions != "" {
-			actionsArr = append(actionsArr, strings.Split(clusterActions, ",")...)
-		}
-
-		// join the cluster and auth info actions together
-		actions := strings.Join(actionsArr, ",")
+		actions := append(authInfoActions, clusterActions...)
 
 		// if auth mechanism is unsupported, we'll skip it
 		if authMechanism == models.NotAvailable {
@@ -64,7 +52,7 @@ func GetServiceAccountCandidates(kubeconfig []byte) ([]*models.ServiceAccountCan
 		if err == nil {
 			// create the candidate service account
 			res = append(res, &models.ServiceAccountCandidate{
-				ActionNames:     actions,
+				Actions:         actions,
 				Kind:            "connector",
 				ClusterName:     clusterName,
 				ClusterEndpoint: rawConf.Clusters[clusterName].Server,
@@ -103,20 +91,26 @@ func GetRawConfigFromBytes(kubeconfig []byte) (*api.Config, error) {
 // (4) If a username/password exist, uses basic auth mechanism
 // (5) Otherwise, the config gets skipped
 //
-func parseAuthInfoForActions(authInfo *api.AuthInfo) (authMechanism string, actions string) {
-	actionsArr := make([]string, 0)
+func parseAuthInfoForActions(authInfo *api.AuthInfo) (authMechanism string, actions []models.ServiceAccountAction) {
+	actions = make([]models.ServiceAccountAction, 0)
 
 	if (authInfo.ClientCertificate != "" || len(authInfo.ClientCertificateData) != 0) &&
 		(authInfo.ClientKey != "" || len(authInfo.ClientKeyData) != 0) {
 		if len(authInfo.ClientCertificateData) == 0 {
-			actionsArr = append(actionsArr, models.ClientCertDataAction)
+			actions = append(actions, models.ServiceAccountAction{
+				Name:     models.ClientCertDataAction,
+				Resolved: false,
+			})
 		}
 
 		if len(authInfo.ClientKeyData) == 0 {
-			actionsArr = append(actionsArr, models.ClientKeyDataAction)
+			actions = append(actions, models.ServiceAccountAction{
+				Name:     models.ClientKeyDataAction,
+				Resolved: false,
+			})
 		}
 
-		return models.X509, strings.Join(actionsArr, ",")
+		return models.X509, actions
 	}
 
 	if authInfo.AuthProvider != nil {
@@ -126,44 +120,71 @@ func parseAuthInfoForActions(authInfo *api.AuthInfo) (authMechanism string, acti
 			data, isData := authInfo.AuthProvider.Config["idp-certificate-authority-data"]
 
 			if isFile && (!isData || data == "") {
-				return models.OIDC, models.OIDCIssuerDataAction
+				return models.OIDC, []models.ServiceAccountAction{
+					models.ServiceAccountAction{
+						Name:     models.OIDCIssuerDataAction,
+						Resolved: false,
+					},
+				}
 			}
 
-			return models.OIDC, ""
+			return models.OIDC, actions
 		case "gcp":
-			return models.GCP, models.GCPKeyDataAction
+			return models.GCP, []models.ServiceAccountAction{
+				models.ServiceAccountAction{
+					Name:     models.GCPKeyDataAction,
+					Resolved: false,
+				},
+			}
 		}
 	}
 
 	if authInfo.Exec != nil {
 		if authInfo.Exec.Command == "aws" || authInfo.Exec.Command == "aws-iam-authenticator" {
-			return models.AWS, models.AWSKeyDataAction
+			return models.AWS, []models.ServiceAccountAction{
+				models.ServiceAccountAction{
+					Name:     models.AWSKeyDataAction,
+					Resolved: false,
+				},
+			}
 		}
 	}
 
 	if authInfo.Token != "" || authInfo.TokenFile != "" {
 		if authInfo.Token == "" {
-			return models.Bearer, models.TokenDataAction
+			return models.Bearer, []models.ServiceAccountAction{
+				models.ServiceAccountAction{
+					Name:     models.TokenDataAction,
+					Resolved: false,
+				},
+			}
 		}
 
-		return models.Bearer, ""
+		return models.Bearer, actions
 	}
 
 	if authInfo.Username != "" && authInfo.Password != "" {
-		return models.Basic, ""
+		return models.Basic, actions
 	}
 
-	return models.NotAvailable, ""
+	return models.NotAvailable, actions
 }
 
 // Parses the cluster object to determine actions -- only currently supported action is
 // population of the cluster certificate authority data
-func parseClusterForActions(cluster *api.Cluster) (actions string) {
+func parseClusterForActions(cluster *api.Cluster) (actions []models.ServiceAccountAction) {
+	actions = make([]models.ServiceAccountAction, 0)
+
 	if cluster.CertificateAuthority != "" && len(cluster.CertificateAuthorityData) == 0 {
-		return models.ClusterCADataAction
+		return []models.ServiceAccountAction{
+			models.ServiceAccountAction{
+				Name:     models.ClusterCADataAction,
+				Resolved: false,
+			},
+		}
 	}
 
-	return ""
+	return actions
 }
 
 // getKubeconfigForContext returns the raw kubeconfig associated with only a

@@ -102,3 +102,52 @@ func (app *App) HandleReadProject(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 }
+
+// HandleCreateProjectSACandidates handles the creation of ServiceAccountCandidates
+// using a kubeconfig and a project id
+func (app *App) HandleCreateProjectSACandidates(w http.ResponseWriter, r *http.Request) {
+	projID, err := strconv.ParseUint(chi.URLParam(r, "project_id"), 0, 64)
+
+	if err != nil || projID == 0 {
+		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
+		return
+	}
+
+	form := &forms.CreateServiceAccountCandidatesForm{
+		ProjectID: uint(projID),
+	}
+
+	// decode from JSON to form value
+	if err := json.NewDecoder(r.Body).Decode(form); err != nil {
+		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
+		return
+	}
+
+	// validate the form
+	if err := app.validator.Struct(form); err != nil {
+		app.handleErrorFormValidation(err, ErrProjectValidateFields, w)
+		return
+	}
+
+	// convert the form to a ServiceAccountCandidate
+	saCandidates, err := form.ToServiceAccountCandidates()
+
+	if err != nil {
+		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
+		return
+	}
+
+	for _, saCandidate := range saCandidates {
+		// handle write to the database
+		saCandidate, err = app.repo.ServiceAccount.CreateServiceAccountCandidate(saCandidate)
+
+		if err != nil {
+			app.handleErrorDataWrite(err, w)
+			return
+		}
+
+		app.logger.Info().Msgf("New service account candidate created: %d", saCandidate.ID)
+	}
+
+	w.WriteHeader(http.StatusCreated)
+}

@@ -1,8 +1,6 @@
 package models
 
 import (
-	"strings"
-
 	"gorm.io/gorm"
 )
 
@@ -25,8 +23,7 @@ type ServiceAccountCandidate struct {
 	ProjectID uint   `json:"project_id"`
 	Kind      string `json:"kind"`
 
-	// a comma-separated list of action names to perform to create a ServiceAccount
-	ActionNames string `json:"action_names"`
+	Actions []ServiceAccountAction `json:"actions"`
 
 	ClusterName     string `json:"cluster_name"`
 	ClusterEndpoint string `json:"cluster_endpoint"`
@@ -37,23 +34,20 @@ type ServiceAccountCandidate struct {
 // ServiceAccountCandidateExternal represents the ServiceAccountCandidate type that is
 // sent over REST
 type ServiceAccountCandidateExternal struct {
-	Actions         []ServiceAccountAction `json:"actions"`
-	ProjectID       uint                   `json:"project_id"`
-	Kind            string                 `json:"kind"`
-	ClusterName     string                 `json:"cluster_name"`
-	ClusterEndpoint string                 `json:"cluster_endpoint"`
-	AuthMechanism   string                 `json:"auth_mechanism"`
+	Actions         []ServiceAccountActionExternal `json:"actions"`
+	ProjectID       uint                           `json:"project_id"`
+	Kind            string                         `json:"kind"`
+	ClusterName     string                         `json:"cluster_name"`
+	ClusterEndpoint string                         `json:"cluster_endpoint"`
+	AuthMechanism   string                         `json:"auth_mechanism"`
 }
 
 // Externalize generates an external ServiceAccountCandidate to be shared over REST
 func (s *ServiceAccountCandidate) Externalize() *ServiceAccountCandidateExternal {
-	actions := make([]ServiceAccountAction, 0)
+	actions := make([]ServiceAccountActionExternal, 0)
 
-	// split the actions string and populate actions
-	actionsArr := strings.Split(s.ActionNames, ",")
-
-	for _, actionName := range actionsArr {
-		actions = append(actions, ServiceAccountsActions[actionName])
+	for _, action := range s.Actions {
+		actions = append(actions, *action.Externalize())
 	}
 
 	return &ServiceAccountCandidateExternal{

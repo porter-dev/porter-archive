@@ -3,9 +3,11 @@ import styled from 'styled-components';
 
 import { Context } from '../../../shared/Context';
 import api from '../../../shared/api';
+import { PorterChart } from '../../../shared/types';
 
 import TabSelector from '../../../components/TabSelector';
-import { AnyNaptrRecord } from 'dns';
+import ExpandedTemplate from './expanded-template/ExpandedTemplate';
+import Loading from '../../../components/Loading';
 
 const tabOptions = [
   { label: 'Community Templates', value: 'community' }
@@ -15,60 +17,94 @@ type PropsType = {
 };
 
 type StateType = {
+  currentChart: PorterChart | null,
   currentTab: string,
-  porterCharts: any[]
+  porterCharts: PorterChart[],
+  loading: boolean,
+  error: boolean
 };
 
 export default class Templates extends Component<PropsType, StateType> {
   state = {
+    currentChart: null as (PorterChart | null),
     currentTab: 'community',
-    porterCharts: [] as any[]
+    porterCharts: [] as PorterChart[],
+    loading: false,
+    error: false,
   }
 
   componentDidMount() {
+
     // Get templates
+    this.setState({ loading: true });
     api.getTemplates('<token>', {}, {}, (err: any, res: any) => {
       if (err) {
-        console.log(err);
+        this.setState({ loading: false, error: true });
       } else {
-        this.setState({ porterCharts: res.data });
+        this.setState({ porterCharts: res.data, loading: false, error: false });
       }
     });
   }
 
   renderIcon = (icon: string) => {
     if (icon) {
-      return <Icon src={icon} />
+      return <Icon src={icon} />;
     }
 
     return (
-        <Polymer><i className="material-icons">layers</i></Polymer>
-    )
+      <Polymer><i className="material-icons">layers</i></Polymer>
+    );
   }
 
-  renderStackList = () => {
-    return this.state.porterCharts.map((template, i) => {
-      console.log(template)
+  renderTemplateList = () => {
+    let { loading, error, porterCharts } = this.state;
+
+    if (loading) {
+      return <LoadingWrapper><Loading /></LoadingWrapper>
+    } else if (error) {
       return (
-        <TemplateBlock key={i}>
-          {this.renderIcon(template.Icon)}
+        <Placeholder>
+          <i className="material-icons">error</i> Error retrieving templates.
+        </Placeholder>
+      );
+    } else if (porterCharts.length === 0) {
+      return (
+        <Placeholder>
+          <i className="material-icons">category</i> No templates found.
+        </Placeholder>
+      );
+    }
+
+    return this.state.porterCharts.map((template: PorterChart, i: number) => {
+      let { Name, Icon, Description } = template.Form;
+      return (
+        <TemplateBlock key={i} onClick={() => this.setState({ currentChart: template })}>
+          {Icon ? this.renderIcon(Icon) : this.renderIcon(template.Icon)}
           <TemplateTitle>
-            {template.Form.Name ? template.Form.Name : template.Name}
+            {Name ? Name : template.Name}
           </TemplateTitle>
           <TemplateDescription>
-            {template.Form.Description ? template.Form.Description : template.Description}
+            {Description ? Description : template.Description}
           </TemplateDescription>
         </TemplateBlock>
       )
-    })
+    });
   }
-  
-  render() {
-    return ( 
-      <StyledTemplates>
-        <TemplatesWrapper>
+
+  renderContents = () => {
+    if (this.state.currentChart) {
+      return (
+        <ExpandedTemplate
+          currentChart={this.state.currentChart}
+          setCurrentChart={(currentChart: PorterChart) => this.setState({ currentChart })}
+        />
+      );
+    }
+
+    return (
+      <TemplatesWrapper>
         <TitleSection>
-          <Title>Template Manager</Title>
+          <Title>Template Explorer</Title>
         </TitleSection>
         <TabSelector
           options={tabOptions}
@@ -76,9 +112,16 @@ export default class Templates extends Component<PropsType, StateType> {
           setCurrentTab={(value: string) => this.setState({ currentTab: value })}
         />
         <TemplateList>
-          {this.renderStackList()}
+          {this.renderTemplateList()}
         </TemplateList>
-        </TemplatesWrapper>
+      </TemplatesWrapper>
+    );
+  }
+  
+  render() {
+    return ( 
+      <StyledTemplates>
+        {this.renderContents()}
       </StyledTemplates>
     );
   }
@@ -86,11 +129,29 @@ export default class Templates extends Component<PropsType, StateType> {
 
 Templates.contextType = Context;
 
+const Placeholder = styled.div`
+  padding-top: 100px;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: #ffffff44;
+  font-size: 14px;
+
+  > i {
+    font-size: 18px;
+    margin-right: 12px;
+  }
+`;
+
+const LoadingWrapper = styled.div`
+  padding-top: 300px;
+`;
 
 const Icon = styled.img`
-  height: 50px;
-  margin-top: 28px;
-  margin-bottom: 15px;
+  height: 42px;
+  margin-top: 35px;
+  margin-bottom: 13px;
 `;
 
 const Polymer = styled.div`
@@ -125,14 +186,6 @@ const TemplateTitle = styled.div`
   text-overflow: ellipsis;
 `;
 
-const CenterWrap = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex: 1;
-  padding-bottom: 15px;
-`;
-
 const TemplateBlock = styled.div`
   background: none;
   border: 1px solid #ffffff44;
@@ -152,9 +205,14 @@ const TemplateBlock = styled.div`
   cursor: pointer;
   color: #ffffff;
   position: relative;
-
   :hover {
-    background: #ffffff08;
+    background: #ffffff11;
+  }
+
+  animation: fadeIn 0.3s 0s;
+  @keyframes fadeIn {
+    from { opacity: 0 }
+    to { opacity: 1 }
   }
 `;
 

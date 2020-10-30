@@ -59,11 +59,11 @@ func (app *App) HandleCreateProject(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// create a new Role with the user as the owner
+	// create a new Role with the user as the admin
 	_, err = app.repo.Project.CreateProjectRole(projModel, &models.Role{
 		UserID:    userID,
 		ProjectID: projModel.ID,
-		Kind:      "Owner",
+		Kind:      models.RoleAdmin,
 	})
 
 	if err != nil {
@@ -79,7 +79,7 @@ func (app *App) HandleCreateProject(w http.ResponseWriter, r *http.Request) {
 // HandleReadProject returns an externalized Project (models.ProjectExternal)
 // based on an ID
 func (app *App) HandleReadProject(w http.ResponseWriter, r *http.Request) {
-	id, err := strconv.ParseUint(chi.URLParam(r, "id"), 0, 64)
+	id, err := strconv.ParseUint(chi.URLParam(r, "project_id"), 0, 64)
 
 	if err != nil || id == 0 {
 		app.handleErrorFormDecoding(err, ErrUserDecode, w)
@@ -98,7 +98,7 @@ func (app *App) HandleReadProject(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 
 	if err := json.NewEncoder(w).Encode(projExt); err != nil {
-		app.handleErrorFormDecoding(err, ErrUserDecode, w)
+		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
 		return
 	}
 }
@@ -137,6 +137,8 @@ func (app *App) HandleCreateProjectSACandidates(w http.ResponseWriter, r *http.R
 		return
 	}
 
+	extSACandidates := make([]*models.ServiceAccountCandidateExternal, 0)
+
 	for _, saCandidate := range saCandidates {
 		// handle write to the database
 		saCandidate, err = app.repo.ServiceAccount.CreateServiceAccountCandidate(saCandidate)
@@ -147,7 +149,187 @@ func (app *App) HandleCreateProjectSACandidates(w http.ResponseWriter, r *http.R
 		}
 
 		app.logger.Info().Msgf("New service account candidate created: %d", saCandidate.ID)
+
+		// if the SA candidate does not have any actions to perform, create the ServiceAccount
+		// automatically
+		if len(saCandidate.Actions) == 0 {
+			saForm := &forms.ServiceAccountActionResolver{
+				ServiceAccountCandidateID: saCandidate.ID,
+				SACandidate:               saCandidate,
+			}
+
+			err := saForm.PopulateServiceAccount(app.repo.ServiceAccount)
+
+			if err != nil {
+				app.handleErrorDataWrite(err, w)
+				return
+			}
+
+			sa, err := app.repo.ServiceAccount.CreateServiceAccount(saForm.SA)
+
+			if err != nil {
+				app.handleErrorDataWrite(err, w)
+				return
+			}
+
+			app.logger.Info().Msgf("New service account created: %d", sa.ID)
+		}
+
+		extSACandidates = append(extSACandidates, saCandidate.Externalize())
 	}
 
 	w.WriteHeader(http.StatusCreated)
+
+	if err := json.NewEncoder(w).Encode(extSACandidates); err != nil {
+		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
+		return
+	}
+}
+
+// HandleListProjectSACandidates returns a list of externalized ServiceAccountCandidate
+// ([]models.ServiceAccountCandidateExternal) based on a project ID
+func (app *App) HandleListProjectSACandidates(w http.ResponseWriter, r *http.Request) {
+	projID, err := strconv.ParseUint(chi.URLParam(r, "project_id"), 0, 64)
+
+	if err != nil || projID == 0 {
+		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
+		return
+	}
+
+	saCandidates, err := app.repo.ServiceAccount.ListServiceAccountCandidatesByProjectID(uint(projID))
+
+	if err != nil {
+		app.handleErrorRead(err, ErrProjectDataRead, w)
+		return
+	}
+
+	extSACandidates := make([]*models.ServiceAccountCandidateExternal, 0)
+
+	for _, saCandidate := range saCandidates {
+		extSACandidates = append(extSACandidates, saCandidate.Externalize())
+	}
+
+	w.WriteHeader(http.StatusOK)
+
+	if err := json.NewEncoder(w).Encode(extSACandidates); err != nil {
+		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
+		return
+	}
+}
+
+// HandleResolveSACandidateActions accepts a list of action configurations for a
+// given ServiceAccountCandidate, which "resolves" that ServiceAccountCandidate
+// and creates a ServiceAccount for a specific project
+func (app *App) HandleResolveSACandidateActions(w http.ResponseWriter, r *http.Request) {
+	projID, err := strconv.ParseUint(chi.URLParam(r, "project_id"), 0, 64)
+
+	if err != nil || projID == 0 {
+		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
+		return
+	}
+
+	candID, err := strconv.ParseUint(chi.URLParam(r, "candidate_id"), 0, 64)
+
+	if err != nil || projID == 0 {
+		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
+		return
+	}
+
+	// decode actions from request
+	actions := make([]*models.ServiceAccountAllActions, 0)
+
+	if err := json.NewDecoder(r.Body).Decode(&actions); err != nil {
+		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
+		return
+	}
+
+	var saResolverBase *forms.ServiceAccountActionResolver = &forms.ServiceAccountActionResolver{
+		ServiceAccountCandidateID: uint(candID),
+		SA:                        nil,
+		SACandidate:               nil,
+	}
+
+	// for each action, create the relevant form and populate the service account
+	// we'll chain the .PopulateServiceAccount functions
+	for _, action := range actions {
+		var err error
+		switch action.Name {
+		case models.ClusterCADataAction:
+			form := &forms.ClusterCADataAction{
+				ServiceAccountActionResolver: saResolverBase,
+				ClusterCAData:                action.ClusterCAData,
+			}
+
+			err = form.PopulateServiceAccount(app.repo.ServiceAccount)
+		case models.ClientCertDataAction:
+			form := &forms.ClientCertDataAction{
+				ServiceAccountActionResolver: saResolverBase,
+				ClientCertData:               action.ClientCertData,
+			}
+
+			err = form.PopulateServiceAccount(app.repo.ServiceAccount)
+		case models.ClientKeyDataAction:
+			form := &forms.ClientKeyDataAction{
+				ServiceAccountActionResolver: saResolverBase,
+				ClientKeyData:                action.ClientKeyData,
+			}
+
+			err = form.PopulateServiceAccount(app.repo.ServiceAccount)
+		case models.OIDCIssuerDataAction:
+			form := &forms.OIDCIssuerDataAction{
+				ServiceAccountActionResolver: saResolverBase,
+				OIDCIssuerCAData:             action.OIDCIssuerCAData,
+			}
+
+			err = form.PopulateServiceAccount(app.repo.ServiceAccount)
+		case models.TokenDataAction:
+			form := &forms.TokenDataAction{
+				ServiceAccountActionResolver: saResolverBase,
+				TokenData:                    action.TokenData,
+			}
+
+			err = form.PopulateServiceAccount(app.repo.ServiceAccount)
+		case models.GCPKeyDataAction:
+			form := &forms.GCPKeyDataAction{
+				ServiceAccountActionResolver: saResolverBase,
+				GCPKeyData:                   action.GCPKeyData,
+			}
+
+			err = form.PopulateServiceAccount(app.repo.ServiceAccount)
+		case models.AWSKeyDataAction:
+			form := &forms.AWSKeyDataAction{
+				ServiceAccountActionResolver: saResolverBase,
+				AWSKeyData:                   action.AWSKeyData,
+			}
+
+			err = form.PopulateServiceAccount(app.repo.ServiceAccount)
+		}
+
+		if err != nil {
+			app.handleErrorFormDecoding(err, ErrProjectDecode, w)
+			return
+		}
+	}
+
+	sa, err := app.repo.ServiceAccount.CreateServiceAccount(saResolverBase.SA)
+
+	if err != nil {
+		app.handleErrorDataWrite(err, w)
+		return
+	}
+
+	if sa != nil {
+		app.logger.Info().Msgf("New service account created: %d", sa.ID)
+
+		saExternal := sa.Externalize()
+
+		w.WriteHeader(http.StatusCreated)
+
+		if err := json.NewEncoder(w).Encode(saExternal); err != nil {
+			app.handleErrorFormDecoding(err, ErrProjectDecode, w)
+			return
+		}
+	} else {
+		w.WriteHeader(http.StatusNotModified)
+	}
 }

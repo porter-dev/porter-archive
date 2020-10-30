@@ -56,6 +56,26 @@ func (repo *ServiceAccountRepository) ReadServiceAccountCandidate(
 	return repo.serviceAccountCandidates[index], nil
 }
 
+// ListServiceAccountCandidatesByProjectID finds all service account candidates
+// for a given project id
+func (repo *ServiceAccountRepository) ListServiceAccountCandidatesByProjectID(
+	projectID uint,
+) ([]*models.ServiceAccountCandidate, error) {
+	if !repo.canQuery {
+		return nil, errors.New("Cannot read from database")
+	}
+
+	res := make([]*models.ServiceAccountCandidate, 0)
+
+	for _, saCandidate := range repo.serviceAccountCandidates {
+		if saCandidate.ProjectID == projectID {
+			res = append(res, saCandidate)
+		}
+	}
+
+	return res, nil
+}
+
 // DeleteServiceAccountCandidate deletes a service account candidate
 func (repo *ServiceAccountRepository) DeleteServiceAccountCandidate(
 	saCandidate *models.ServiceAccountCandidate,
@@ -80,6 +100,10 @@ func (repo *ServiceAccountRepository) CreateServiceAccount(
 ) (*models.ServiceAccount, error) {
 	if !repo.canQuery {
 		return nil, errors.New("Cannot write database")
+	}
+
+	if sa == nil {
+		return nil, nil
 	}
 
 	repo.serviceAccounts = append(repo.serviceAccounts, sa)
@@ -107,6 +131,26 @@ func (repo *ServiceAccountRepository) ReadServiceAccount(
 
 	index := int(id - 1)
 	return repo.serviceAccounts[index], nil
+}
+
+// ListServiceAccountsByProjectID finds all service accounts
+// for a given project id
+func (repo *ServiceAccountRepository) ListServiceAccountsByProjectID(
+	projectID uint,
+) ([]*models.ServiceAccount, error) {
+	if !repo.canQuery {
+		return nil, errors.New("Cannot read from database")
+	}
+
+	res := make([]*models.ServiceAccount, 0)
+
+	for _, sa := range repo.serviceAccounts {
+		if sa.ProjectID == projectID {
+			res = append(res, sa)
+		}
+	}
+
+	return res, nil
 }
 
 // DeleteServiceAccount deletes a service account

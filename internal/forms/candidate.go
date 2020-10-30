@@ -9,13 +9,13 @@ import (
 // creating a list of ServiceAccountCandidates from a kubeconfig
 type CreateServiceAccountCandidatesForm struct {
 	ProjectID  uint   `json:"project_id"`
-	Kubeconfig []byte `json:"kubeconfig"`
+	Kubeconfig string `json:"kubeconfig"`
 }
 
 // ToServiceAccountCandidates creates a ServiceAccountCandidate from the kubeconfig and
 // project id
 func (csa *CreateServiceAccountCandidatesForm) ToServiceAccountCandidates() ([]*models.ServiceAccountCandidate, error) {
-	candidates, err := kubernetes.GetServiceAccountCandidates(csa.Kubeconfig)
+	candidates, err := kubernetes.GetServiceAccountCandidates([]byte(csa.Kubeconfig))
 
 	if err != nil {
 		return nil, err

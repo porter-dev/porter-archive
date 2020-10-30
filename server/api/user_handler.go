@@ -194,7 +194,7 @@ func (app *App) HandleReadUserContexts(w http.ResponseWriter, r *http.Request) {
 // HandleUpdateUser validates an update user form entry, updates the user
 // in the database, and writes status accepted
 func (app *App) HandleUpdateUser(w http.ResponseWriter, r *http.Request) {
-	id, err := strconv.ParseUint(chi.URLParam(r, "id"), 0, 64)
+	id, err := strconv.ParseUint(chi.URLParam(r, "user_id"), 0, 64)
 
 	if err != nil || id == 0 {
 		app.handleErrorFormDecoding(err, ErrUserDecode, w)
@@ -215,7 +215,7 @@ func (app *App) HandleUpdateUser(w http.ResponseWriter, r *http.Request) {
 
 // HandleDeleteUser removes a user after checking that the sent password is correct
 func (app *App) HandleDeleteUser(w http.ResponseWriter, r *http.Request) {
-	id, err := strconv.ParseUint(chi.URLParam(r, "id"), 0, 64)
+	id, err := strconv.ParseUint(chi.URLParam(r, "user_id"), 0, 64)
 
 	if err != nil || id == 0 {
 		app.handleErrorFormDecoding(err, ErrUserDecode, w)
@@ -308,7 +308,7 @@ func (app *App) writeUser(
 }
 
 func (app *App) readUser(w http.ResponseWriter, r *http.Request) (*models.User, error) {
-	id, err := strconv.ParseUint(chi.URLParam(r, "id"), 0, 64)
+	id, err := strconv.ParseUint(chi.URLParam(r, "user_id"), 0, 64)
 
 	if err != nil || id == 0 {
 		app.handleErrorFormDecoding(err, ErrUserDecode, w)

@@ -28,18 +28,57 @@ func New(
 		r.Use(mw.ContentTypeJSON)
 
 		// /api/users routes
-		r.Method("GET", "/users/{id}", auth.DoesUserIDMatch(requestlog.NewHandler(a.HandleReadUser, l), mw.URLParam))
-		r.Method("GET", "/users/{id}/contexts", auth.DoesUserIDMatch(requestlog.NewHandler(a.HandleReadUserContexts, l), mw.URLParam))
+		r.Method("GET", "/users/{user_id}", auth.DoesUserIDMatch(requestlog.NewHandler(a.HandleReadUser, l), mw.URLParam))
+		r.Method("GET", "/users/{user_id}/contexts", auth.DoesUserIDMatch(requestlog.NewHandler(a.HandleReadUserContexts, l), mw.URLParam))
 		r.Method("POST", "/users", requestlog.NewHandler(a.HandleCreateUser, l))
-		r.Method("PUT", "/users/{id}", auth.DoesUserIDMatch(requestlog.NewHandler(a.HandleUpdateUser, l), mw.URLParam))
-		r.Method("DELETE", "/users/{id}", auth.DoesUserIDMatch(requestlog.NewHandler(a.HandleDeleteUser, l), mw.URLParam))
+		r.Method("PUT", "/users/{user_id}", auth.DoesUserIDMatch(requestlog.NewHandler(a.HandleUpdateUser, l), mw.URLParam))
+		r.Method("DELETE", "/users/{user_id}", auth.DoesUserIDMatch(requestlog.NewHandler(a.HandleDeleteUser, l), mw.URLParam))
 		r.Method("POST", "/login", requestlog.NewHandler(a.HandleLoginUser, l))
 		r.Method("GET", "/auth/check", auth.BasicAuthenticate(requestlog.NewHandler(a.HandleAuthCheck, l)))
 		r.Method("POST", "/logout", auth.BasicAuthenticate(requestlog.NewHandler(a.HandleLogoutUser, l)))
 
 		// /api/projects routes
-		r.Method("GET", "/projects/{id}", auth.BasicAuthenticate(requestlog.NewHandler(a.HandleReadProject, l)))
+		r.Method(
+			"GET",
+			"/projects/{project_id}",
+			auth.DoesUserHaveProjectAccess(
+				requestlog.NewHandler(a.HandleReadProject, l),
+				mw.URLParam,
+				mw.ReadAccess,
+			),
+		)
+
 		r.Method("POST", "/projects", auth.BasicAuthenticate(requestlog.NewHandler(a.HandleCreateProject, l)))
+
+		r.Method(
+			"POST",
+			"/projects/{project_id}/candidates",
+			auth.DoesUserHaveProjectAccess(
+				requestlog.NewHandler(a.HandleCreateProjectSACandidates, l),
+				mw.URLParam,
+				mw.WriteAccess,
+			),
+		)
+
+		r.Method(
+			"GET",
+			"/projects/{project_id}/candidates",
+			auth.DoesUserHaveProjectAccess(
+				requestlog.NewHandler(a.HandleListProjectSACandidates, l),
+				mw.URLParam,
+				mw.WriteAccess,
+			),
+		)
+
+		r.Method(
+			"POST",
+			"/projects/{project_id}/candidates/{candidate_id}/resolve",
+			auth.DoesUserHaveProjectAccess(
+				requestlog.NewHandler(a.HandleResolveSACandidateActions, l),
+				mw.URLParam,
+				mw.WriteAccess,
+			),
+		)
 
 		// /api/releases routes
 		r.Method("GET", "/releases", auth.BasicAuthenticate(requestlog.NewHandler(a.HandleListReleases, l)))

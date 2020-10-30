@@ -34,6 +34,7 @@ type ServiceAccountCandidate struct {
 // ServiceAccountCandidateExternal represents the ServiceAccountCandidate type that is
 // sent over REST
 type ServiceAccountCandidateExternal struct {
+	ID              uint                           `json:"id"`
 	Actions         []ServiceAccountActionExternal `json:"actions"`
 	ProjectID       uint                           `json:"project_id"`
 	Kind            string                         `json:"kind"`
@@ -51,6 +52,7 @@ func (s *ServiceAccountCandidate) Externalize() *ServiceAccountCandidateExternal
 	}
 
 	return &ServiceAccountCandidateExternal{
+		ID:              s.ID,
 		Actions:         actions,
 		ProjectID:       s.ProjectID,
 		Kind:            s.Kind,
@@ -113,6 +115,7 @@ type ServiceAccount struct {
 
 // ServiceAccountExternal is an external ServiceAccount to be shared over REST
 type ServiceAccountExternal struct {
+	ID            uint              `json:"id"`
 	ProjectID     uint              `json:"project_id"`
 	Kind          string            `json:"kind"`
 	Clusters      []ClusterExternal `json:"clusters"`
@@ -128,6 +131,7 @@ func (s *ServiceAccount) Externalize() *ServiceAccountExternal {
 	}
 
 	return &ServiceAccountExternal{
+		ID:            s.ID,
 		ProjectID:     s.ProjectID,
 		Kind:          s.Kind,
 		Clusters:      clusters,

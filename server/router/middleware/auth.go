@@ -3,9 +3,11 @@ package middleware
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"net/url"
 	"strconv"
 
 	"github.com/go-chi/chi"
@@ -48,10 +50,12 @@ func (auth *Auth) BasicAuthenticate(next http.Handler) http.Handler {
 type IDLocation uint
 
 const (
-	// URLParam location looks for {id} in the URL
+	// URLParam location looks for a parameter in the URL endpoint
 	URLParam IDLocation = iota
-	// BodyParam location looks for user_id in the body
+	// BodyParam location looks for a parameter in the body
 	BodyParam
+	// QueryParam location looks for a parameter in the query string
+	QueryParam
 )
 
 type bodyUserID struct {
@@ -62,12 +66,16 @@ type bodyProjectID struct {
 	ProjectID uint64 `json:"project_id"`
 }
 
+type bodyServiceAccountID struct {
+	ServiceAccountID uint64 `json:"service_account_id"`
+}
+
 // DoesUserIDMatch checks the id URL parameter and verifies that it matches
 // the one stored in the session
 func (auth *Auth) DoesUserIDMatch(next http.Handler, loc IDLocation) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var err error
-		id := findUserIDInRequest(r, loc)
+		id, err := findUserIDInRequest(r, loc)
 
 		if err == nil && auth.doesSessionMatchID(r, uint(id)) {
 			next.ServeHTTP(w, r)
@@ -98,7 +106,12 @@ func (auth *Auth) DoesUserHaveProjectAccess(
 ) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var err error
-		projID := uint(findProjIDInRequest(r, projLoc))
+		projID, err := findProjIDInRequest(r, projLoc)
+
+		if err != nil {
+			http.Error(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)
+			return
+		}
 
 		session, err := auth.store.Get(r, auth.cookieName)
 
@@ -115,7 +128,7 @@ func (auth *Auth) DoesUserHaveProjectAccess(
 		}
 
 		// get the project
-		proj, err := auth.repo.Project.ReadProject(projID)
+		proj, err := auth.repo.Project.ReadProject(uint(projID))
 
 		if err != nil {
 			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
@@ -136,6 +149,56 @@ func (auth *Auth) DoesUserHaveProjectAccess(
 				}
 
 			}
+		}
+
+		http.Error(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)
+		return
+	})
+}
+
+// DoesUserHaveServiceAccountAccess looks for a project_id parameter and a
+// service_account_id parameter, and verifies that the service account belongs
+// to the project
+func (auth *Auth) DoesUserHaveServiceAccountAccess(
+	next http.Handler,
+	projLoc IDLocation,
+	saLoc IDLocation,
+) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		serviceAccountID, err := findServiceAccountIDInRequest(r, saLoc)
+
+		if err != nil {
+			http.Error(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)
+			return
+		}
+
+		projID, err := findProjIDInRequest(r, projLoc)
+
+		if err != nil {
+			http.Error(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)
+			return
+		}
+
+		// get the service accounts belonging to the project
+		serviceAccounts, err := auth.repo.ServiceAccount.ListServiceAccountsByProjectID(uint(projID))
+
+		if err != nil {
+			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+			return
+		}
+
+		doesExist := false
+
+		for _, sa := range serviceAccounts {
+			if sa.ID == uint(serviceAccountID) {
+				doesExist = true
+				break
+			}
+		}
+
+		if doesExist {
+			next.ServeHTTP(w, r)
+			return
 		}
 
 		http.Error(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)
@@ -170,40 +233,137 @@ func (auth *Auth) isLoggedIn(w http.ResponseWriter, r *http.Request) bool {
 	return true
 }
 
-func findUserIDInRequest(r *http.Request, userLoc IDLocation) uint64 {
+func findUserIDInRequest(r *http.Request, userLoc IDLocation) (uint64, error) {
 	var userID uint64
+	var err error
 
 	if userLoc == URLParam {
-		userID, _ = strconv.ParseUint(chi.URLParam(r, "user_id"), 0, 64)
+		userID, err = strconv.ParseUint(chi.URLParam(r, "user_id"), 0, 64)
+
+		if err != nil {
+			return 0, err
+		}
 	} else if userLoc == BodyParam {
 		form := &bodyUserID{}
-		body, _ := ioutil.ReadAll(r.Body)
-		_ = json.Unmarshal(body, form)
+		body, err := ioutil.ReadAll(r.Body)
+
+		if err != nil {
+			return 0, err
+		}
+
+		err = json.Unmarshal(body, form)
+
+		if err != nil {
+			return 0, err
+		}
 
 		userID = form.UserID
 
 		// need to create a new stream for the body
 		r.Body = ioutil.NopCloser(bytes.NewReader(body))
+	} else {
+		vals, err := url.ParseQuery(r.URL.RawQuery)
+
+		if err != nil {
+			return 0, err
+		}
+
+		if userStrArr, ok := vals["user_id"]; ok && len(userStrArr) == 1 {
+			userID, err = strconv.ParseUint(userStrArr[0], 10, 64)
+		} else {
+			return 0, errors.New("user id not found")
+		}
 	}
 
-	return userID
+	return userID, nil
 }
 
-func findProjIDInRequest(r *http.Request, projLoc IDLocation) uint64 {
+func findProjIDInRequest(r *http.Request, projLoc IDLocation) (uint64, error) {
 	var projID uint64
+	var err error
 
 	if projLoc == URLParam {
-		projID, _ = strconv.ParseUint(chi.URLParam(r, "project_id"), 0, 64)
+		projID, err = strconv.ParseUint(chi.URLParam(r, "project_id"), 0, 64)
+
+		if err != nil {
+			return 0, err
+		}
 	} else if projLoc == BodyParam {
 		form := &bodyProjectID{}
-		body, _ := ioutil.ReadAll(r.Body)
-		_ = json.Unmarshal(body, form)
+		body, err := ioutil.ReadAll(r.Body)
+
+		if err != nil {
+			return 0, err
+		}
+
+		err = json.Unmarshal(body, form)
+
+		if err != nil {
+			return 0, err
+		}
 
 		projID = form.ProjectID
 
 		// need to create a new stream for the body
 		r.Body = ioutil.NopCloser(bytes.NewReader(body))
+	} else {
+		vals, err := url.ParseQuery(r.URL.RawQuery)
+
+		if err != nil {
+			return 0, err
+		}
+
+		if projStrArr, ok := vals["project_id"]; ok && len(projStrArr) == 1 {
+			projID, err = strconv.ParseUint(projStrArr[0], 10, 64)
+		} else {
+			return 0, errors.New("project id not found")
+		}
 	}
 
-	return projID
+	return projID, nil
+}
+
+func findServiceAccountIDInRequest(r *http.Request, saLoc IDLocation) (uint64, error) {
+	var saID uint64
+	var err error
+
+	if saLoc == URLParam {
+		saID, err = strconv.ParseUint(chi.URLParam(r, "service_account_id"), 0, 64)
+
+		if err != nil {
+			return 0, err
+		}
+	} else if saLoc == BodyParam {
+		form := &bodyServiceAccountID{}
+		body, err := ioutil.ReadAll(r.Body)
+
+		if err != nil {
+			return 0, err
+		}
+
+		err = json.Unmarshal(body, form)
+
+		if err != nil {
+			return 0, err
+		}
+
+		saID = form.ServiceAccountID
+
+		// need to create a new stream for the body
+		r.Body = ioutil.NopCloser(bytes.NewReader(body))
+	} else {
+		vals, err := url.ParseQuery(r.URL.RawQuery)
+
+		if err != nil {
+			return 0, err
+		}
+
+		if saStrArr, ok := vals["service_account_id"]; ok && len(saStrArr) == 1 {
+			saID, err = strconv.ParseUint(saStrArr[0], 10, 64)
+		} else {
+			return 0, errors.New("service account id not found")
+		}
+	}
+
+	return saID, nil
 }

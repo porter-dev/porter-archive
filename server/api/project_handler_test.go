@@ -1,7 +1,6 @@
 package api_test
 
 import (
-	"encoding/base64"
 	"encoding/json"
 	"net/http"
 	"reflect"
@@ -146,8 +145,6 @@ var createProjectSACandidatesTests = []*projTest{
 
 				sa := serviceAccounts[0]
 
-				decodedStr, _ := base64.StdEncoding.DecodeString("LS0tLS1CRUdJTiBDRVJ=")
-
 				if len(sa.Clusters) != 1 {
 					t.Fatalf("cluster not written\n")
 				}
@@ -160,9 +157,9 @@ var createProjectSACandidatesTests = []*projTest{
 					t.Errorf("service account auth mechanism is not %s\n", models.OIDC)
 				}
 
-				if string(sa.OIDCCertificateAuthorityData) != string(decodedStr) {
+				if string(sa.OIDCCertificateAuthorityData) != "LS0tLS1CRUdJTiBDRVJ=" {
 					t.Errorf("service account key data and input do not match: expected %s, got %s\n",
-						string(sa.OIDCCertificateAuthorityData), string(decodedStr))
+						string(sa.OIDCCertificateAuthorityData), "LS0tLS1CRUdJTiBDRVJ=")
 				}
 
 				if sa.OIDCClientID != "porter-api" {
@@ -279,6 +276,29 @@ func initProjectSACandidate(tester *tester) {
 	}
 }
 
+func initProjectSADefault(tester *tester) {
+	proj, _ := tester.repo.Project.ReadProject(1)
+
+	form := &forms.CreateServiceAccountCandidatesForm{
+		ProjectID:  uint(proj.ID),
+		Kubeconfig: OIDCAuthWithData,
+	}
+
+	// convert the form to a ServiceAccountCandidate
+	saCandidates, _ := form.ToServiceAccountCandidates()
+
+	for _, saCandidate := range saCandidates {
+		tester.repo.ServiceAccount.CreateServiceAccountCandidate(saCandidate)
+	}
+
+	saForm := forms.ServiceAccountActionResolver{
+		ServiceAccountCandidateID: 1,
+	}
+
+	saForm.PopulateServiceAccount(tester.repo.ServiceAccount)
+	tester.repo.ServiceAccount.CreateServiceAccount(saForm.SA)
+}
+
 func projectBasicBodyValidator(c *projTest, tester *tester, t *testing.T) {
 	if body := tester.rr.Body.String(); strings.TrimSpace(body) != strings.TrimSpace(c.expBody) {
 		t.Errorf("%s, handler returned wrong body: got %v want %v",
@@ -353,5 +373,32 @@ users:
         id-token: token
         idp-issuer-url: https://localhost
         idp-certificate-authority: /fake/path/to/ca.pem
+      name: oidc
+`
+
+const OIDCAuthWithData string = `
+apiVersion: v1
+clusters:
+- cluster:
+    server: https://localhost
+    certificate-authority-data: LS0tLS1CRUdJTiBDRVJ=
+  name: cluster-test
+contexts:
+- context:
+    cluster: cluster-test
+    user: test-admin
+  name: context-test
+current-context: context-test
+kind: Config
+preferences: {}
+users:
+- name: test-admin
+  user:
+    auth-provider:
+      config:
+        client-id: porter-api
+        id-token: token
+        idp-issuer-url: https://localhost
+        idp-certificate-authority-data: LS0tLS1CRUdJTiBDRVJ=
       name: oidc
 `

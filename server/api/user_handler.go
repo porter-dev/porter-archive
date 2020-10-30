@@ -7,7 +7,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/porter-dev/porter/internal/kubernetes"
 	"golang.org/x/crypto/bcrypt"
 
 	"gorm.io/gorm"
@@ -164,53 +163,6 @@ func (app *App) HandleReadUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusOK)
-}
-
-// HandleReadUserContexts returns the externalized User.Contexts ([]models.Context)
-// based on a user ID
-func (app *App) HandleReadUserContexts(w http.ResponseWriter, r *http.Request) {
-	user, err := app.readUser(w, r)
-
-	// error already handled by helper
-	if err != nil {
-		return
-	}
-
-	contexts, err := kubernetes.GetContextsFromBytes(user.RawKubeConfig, user.ContextToSlice())
-
-	if err != nil {
-		app.handleErrorFormDecoding(err, ErrUserDecode, w)
-		return
-	}
-
-	if err := json.NewEncoder(w).Encode(contexts); err != nil {
-		app.handleErrorFormDecoding(err, ErrUserDecode, w)
-		return
-	}
-
-	w.WriteHeader(http.StatusOK)
-}
-
-// HandleUpdateUser validates an update user form entry, updates the user
-// in the database, and writes status accepted
-func (app *App) HandleUpdateUser(w http.ResponseWriter, r *http.Request) {
-	id, err := strconv.ParseUint(chi.URLParam(r, "user_id"), 0, 64)
-
-	if err != nil || id == 0 {
-		app.handleErrorFormDecoding(err, ErrUserDecode, w)
-		return
-	}
-
-	form := &forms.UpdateUserForm{
-		ID: uint(id),
-	}
-
-	user, err := app.writeUser(form, app.repo.User.UpdateUser, w, r)
-
-	if err == nil {
-		app.logger.Info().Msgf("User updated: %d", user.ID)
-		w.WriteHeader(http.StatusNoContent)
-	}
 }
 
 // HandleDeleteUser removes a user after checking that the sent password is correct

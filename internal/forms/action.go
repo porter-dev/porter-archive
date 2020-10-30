@@ -124,14 +124,10 @@ func (sar *ServiceAccountActionResolver) PopulateServiceAccount(
 		}
 
 		if caData, ok := authInfo.AuthProvider.Config["idp-certificate-authority-data"]; ok {
-			decoded, err := base64.StdEncoding.DecodeString(caData)
-
-			// skip if decoding error
-			if err != nil {
-				return err
-			}
-
-			sar.SA.OIDCCertificateAuthorityData = decoded
+			// based on the implementation, the oidc plugin expects the data to be base64 encoded,
+			// which means we will not decode it here
+			// reference: https://github.com/kubernetes/kubernetes/blob/9dfb4c876bfca7a5ae84259fae2bc337ed90c2d7/staging/src/k8s.io/client-go/plugin/pkg/client/auth/oidc/oidc.go#L135
+			sar.SA.OIDCCertificateAuthorityData = caData
 		}
 
 		if idToken, ok := authInfo.AuthProvider.Config["id-token"]; ok {
@@ -254,14 +250,10 @@ func (oida *OIDCIssuerDataAction) PopulateServiceAccount(
 		return err
 	}
 
-	decoded, err := base64.StdEncoding.DecodeString(oida.OIDCIssuerCAData)
-
-	// skip if decoding error
-	if err != nil {
-		return err
-	}
-
-	oida.ServiceAccountActionResolver.SA.OIDCCertificateAuthorityData = decoded
+	// based on the implementation, the oidc plugin expects the data to be base64 encoded,
+	// which means we will not decode it here
+	// reference: https://github.com/kubernetes/kubernetes/blob/9dfb4c876bfca7a5ae84259fae2bc337ed90c2d7/staging/src/k8s.io/client-go/plugin/pkg/client/auth/oidc/oidc.go#L135
+	oida.ServiceAccountActionResolver.SA.OIDCCertificateAuthorityData = oida.OIDCIssuerCAData
 
 	return nil
 }

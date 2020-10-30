@@ -478,7 +478,6 @@ func TestPopulateServiceAccountOIDCAction(t *testing.T) {
 	}
 
 	sa, err := repo.ServiceAccount.CreateServiceAccount(form.ServiceAccountActionResolver.SA)
-	decodedStr, _ := base64.StdEncoding.DecodeString("LS0tLS1CRUdJTiBDRVJ=")
 
 	if len(sa.Clusters) != 1 {
 		t.Fatalf("cluster not written\n")
@@ -492,9 +491,9 @@ func TestPopulateServiceAccountOIDCAction(t *testing.T) {
 		t.Errorf("service account auth mechanism is not %s\n", models.OIDC)
 	}
 
-	if string(sa.OIDCCertificateAuthorityData) != string(decodedStr) {
+	if string(sa.OIDCCertificateAuthorityData) != "LS0tLS1CRUdJTiBDRVJ=" {
 		t.Errorf("service account key data and input do not match: expected %s, got %s\n",
-			string(sa.OIDCCertificateAuthorityData), string(decodedStr))
+			string(sa.OIDCCertificateAuthorityData), "LS0tLS1CRUdJTiBDRVJ=")
 	}
 }
 

@@ -222,6 +222,107 @@ func getConfigForContext(
 	return copyConf, nil
 }
 
+// GetClientConfigFromServiceAccount will construct new clientcmd.ClientConfig using
+// the configuration saved within a ServiceAccount model
+func GetClientConfigFromServiceAccount(
+	sa *models.ServiceAccount,
+	clusterID uint,
+) (clientcmd.ClientConfig, error) {
+	apiConfig, err := createRawConfigFromServiceAccount(sa, clusterID)
+
+	if err != nil {
+		return nil, err
+	}
+
+	config := clientcmd.NewDefaultClientConfig(*apiConfig, &clientcmd.ConfigOverrides{})
+
+	return config, nil
+}
+
+func createRawConfigFromServiceAccount(
+	sa *models.ServiceAccount,
+	clusterID uint,
+) (*api.Config, error) {
+	apiConfig := &api.Config{}
+
+	var cluster *models.Cluster = nil
+
+	// find the cluster within the ServiceAccount configuration
+	for _, _cluster := range sa.Clusters {
+		if _cluster.ID == clusterID {
+			cluster = &_cluster
+		}
+	}
+
+	if cluster == nil {
+		return nil, errors.New("cluster not found")
+	}
+
+	clusterMap := make(map[string]*api.Cluster)
+
+	clusterMap[cluster.Name] = &api.Cluster{
+		LocationOfOrigin:         cluster.LocationOfOrigin,
+		Server:                   cluster.Server,
+		TLSServerName:            cluster.TLSServerName,
+		InsecureSkipTLSVerify:    cluster.InsecureSkipTLSVerify,
+		CertificateAuthorityData: cluster.CertificateAuthorityData,
+	}
+
+	// construct the auth infos
+	authInfoName := cluster.Name + "-" + sa.AuthMechanism
+
+	authInfoMap := make(map[string]*api.AuthInfo)
+
+	authInfoMap[authInfoName] = &api.AuthInfo{
+		LocationOfOrigin:  sa.LocationOfOrigin,
+		Impersonate:       sa.Impersonate,
+		ImpersonateGroups: sa.ImpersonateGroups,
+	}
+
+	switch sa.AuthMechanism {
+	case models.X509:
+		authInfoMap[authInfoName].ClientCertificateData = sa.ClientCertificateData
+		authInfoMap[authInfoName].ClientKeyData = sa.ClientKeyData
+	case models.Basic:
+		authInfoMap[authInfoName].Username = sa.Username
+		authInfoMap[authInfoName].Password = sa.Password
+	case models.Bearer:
+		authInfoMap[authInfoName].Token = sa.Token
+	case models.OIDC:
+		authInfoMap[authInfoName].AuthProvider = &api.AuthProviderConfig{
+			Name: "oidc",
+			Config: map[string]string{
+				"idp-issuer-url":                 sa.OIDCIssuerURL,
+				"client-id":                      sa.OIDCClientID,
+				"client-secret":                  sa.OIDCClientSecret,
+				"idp-certificate-authority-data": sa.OIDCCertificateAuthorityData,
+				"id-token":                       sa.OIDCIDToken,
+				"refresh-token":                  sa.OIDCRefreshToken,
+			},
+		}
+	case models.GCP:
+		return nil, errors.New("gcp unimplemented")
+	case models.AWS:
+		return nil, errors.New("gcp unimplemented")
+	}
+
+	// create a context of the cluster name
+	contextMap := make(map[string]*api.Context)
+
+	contextMap[cluster.Name] = &api.Context{
+		LocationOfOrigin: cluster.LocationOfOrigin,
+		Cluster:          cluster.Name,
+		AuthInfo:         authInfoName,
+	}
+
+	apiConfig.Clusters = clusterMap
+	apiConfig.AuthInfos = authInfoMap
+	apiConfig.Contexts = contextMap
+	apiConfig.CurrentContext = cluster.Name
+
+	return apiConfig, nil
+}
+
 // GetRestrictedClientConfigFromBytes returns a clientcmd.ClientConfig from a raw kubeconfig,
 // a context name, and the set of allowed contexts.
 func GetRestrictedClientConfigFromBytes(

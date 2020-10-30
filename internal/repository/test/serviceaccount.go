@@ -111,7 +111,8 @@ func (repo *ServiceAccountRepository) CreateServiceAccount(
 
 	for i, cluster := range sa.Clusters {
 		(&cluster).ServiceAccountID = sa.ID
-		sa.Clusters[i] = cluster
+		clusterP, _ := repo.createCluster(&cluster)
+		sa.Clusters[i] = *clusterP
 	}
 
 	return sa, nil
@@ -169,4 +170,21 @@ func (repo *ServiceAccountRepository) DeleteServiceAccount(
 	repo.serviceAccounts[index] = nil
 
 	return sa, nil
+}
+
+func (repo *ServiceAccountRepository) createCluster(
+	cluster *models.Cluster,
+) (*models.Cluster, error) {
+	if !repo.canQuery {
+		return nil, errors.New("Cannot write database")
+	}
+
+	if cluster == nil {
+		return nil, nil
+	}
+
+	repo.clusters = append(repo.clusters, cluster)
+	cluster.ID = uint(len(repo.clusters))
+
+	return cluster, nil
 }

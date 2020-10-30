@@ -108,7 +108,7 @@ type ServiceAccount struct {
 	OIDCIssuerURL                string `json:"idp-issuer-url"`
 	OIDCClientID                 string `json:"client-id"`
 	OIDCClientSecret             string `json:"client-secret"`
-	OIDCCertificateAuthorityData []byte `json:"idp-certificate-authority-data"`
+	OIDCCertificateAuthorityData string `json:"idp-certificate-authority-data"`
 	OIDCIDToken                  string `json:"id-token"`
 	OIDCRefreshToken             string `json:"refresh-token"`
 }

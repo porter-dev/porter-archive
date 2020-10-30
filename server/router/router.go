@@ -29,9 +29,7 @@ func New(
 
 		// /api/users routes
 		r.Method("GET", "/users/{user_id}", auth.DoesUserIDMatch(requestlog.NewHandler(a.HandleReadUser, l), mw.URLParam))
-		r.Method("GET", "/users/{user_id}/contexts", auth.DoesUserIDMatch(requestlog.NewHandler(a.HandleReadUserContexts, l), mw.URLParam))
 		r.Method("POST", "/users", requestlog.NewHandler(a.HandleCreateUser, l))
-		r.Method("PUT", "/users/{user_id}", auth.DoesUserIDMatch(requestlog.NewHandler(a.HandleUpdateUser, l), mw.URLParam))
 		r.Method("DELETE", "/users/{user_id}", auth.DoesUserIDMatch(requestlog.NewHandler(a.HandleDeleteUser, l), mw.URLParam))
 		r.Method("POST", "/login", requestlog.NewHandler(a.HandleLoginUser, l))
 		r.Method("GET", "/auth/check", auth.BasicAuthenticate(requestlog.NewHandler(a.HandleAuthCheck, l)))
@@ -80,16 +78,105 @@ func New(
 			),
 		)
 
-		// /api/releases routes
-		r.Method("GET", "/releases", auth.BasicAuthenticate(requestlog.NewHandler(a.HandleListReleases, l)))
-		r.Method("GET", "/releases/{name}/{revision}/components", auth.BasicAuthenticate(requestlog.NewHandler(a.HandleGetReleaseComponents, l)))
-		r.Method("GET", "/releases/{name}/history", auth.BasicAuthenticate(requestlog.NewHandler(a.HandleListReleaseHistory, l)))
-		r.Method("POST", "/releases/{name}/upgrade", auth.BasicAuthenticate(requestlog.NewHandler(a.HandleUpgradeRelease, l)))
-		r.Method("GET", "/releases/{name}/{revision}", auth.BasicAuthenticate(requestlog.NewHandler(a.HandleGetRelease, l)))
-		r.Method("POST", "/releases/{name}/rollback", auth.BasicAuthenticate(requestlog.NewHandler(a.HandleRollbackRelease, l)))
+		// /api/projects/{project_id}/releases routes
+		r.Method(
+			"GET",
+			"/projects/{project_id}/releases",
+			auth.DoesUserHaveProjectAccess(
+				auth.DoesUserHaveServiceAccountAccess(
+					requestlog.NewHandler(a.HandleListReleases, l),
+					mw.URLParam,
+					mw.QueryParam,
+				),
+				mw.URLParam,
+				mw.ReadAccess,
+			),
+		)
 
-		// /api/k8s routes
-		r.Method("GET", "/k8s/namespaces", auth.BasicAuthenticate(requestlog.NewHandler(a.HandleListNamespaces, l)))
+		r.Method(
+			"GET",
+			"/projects/{project_id}/releases/{name}/{revision}/components",
+			auth.DoesUserHaveProjectAccess(
+				auth.DoesUserHaveServiceAccountAccess(
+					requestlog.NewHandler(a.HandleGetReleaseComponents, l),
+					mw.URLParam,
+					mw.QueryParam,
+				),
+				mw.URLParam,
+				mw.ReadAccess,
+			),
+		)
+
+		r.Method(
+			"GET",
+			"/projects/{project_id}/releases/{name}/history",
+			auth.DoesUserHaveProjectAccess(
+				auth.DoesUserHaveServiceAccountAccess(
+					requestlog.NewHandler(a.HandleListReleaseHistory, l),
+					mw.URLParam,
+					mw.QueryParam,
+				),
+				mw.URLParam,
+				mw.ReadAccess,
+			),
+		)
+
+		r.Method(
+			"POST",
+			"/projects/{project_id}/releases/{name}/upgrade",
+			auth.DoesUserHaveProjectAccess(
+				auth.DoesUserHaveServiceAccountAccess(
+					requestlog.NewHandler(a.HandleUpgradeRelease, l),
+					mw.URLParam,
+					mw.QueryParam,
+				),
+				mw.URLParam,
+				mw.ReadAccess,
+			),
+		)
+
+		r.Method(
+			"GET",
+			"/projects/{project_id}/releases/{name}/{revision}",
+			auth.DoesUserHaveProjectAccess(
+				auth.DoesUserHaveServiceAccountAccess(
+					requestlog.NewHandler(a.HandleGetRelease, l),
+					mw.URLParam,
+					mw.QueryParam,
+				),
+				mw.URLParam,
+				mw.ReadAccess,
+			),
+		)
+
+		r.Method(
+			"POST",
+			"/projects/{project_id}/releases/{name}/rollback",
+			auth.DoesUserHaveProjectAccess(
+				auth.DoesUserHaveServiceAccountAccess(
+					requestlog.NewHandler(a.HandleRollbackRelease, l),
+					mw.URLParam,
+					mw.QueryParam,
+				),
+				mw.URLParam,
+				mw.ReadAccess,
+			),
+		)
+
+		// /api/projects/{project_id}/k8s routes
+		r.Method(
+			"GET",
+			"/projects/{project_id}/k8s/namespaces",
+			auth.DoesUserHaveProjectAccess(
+				auth.DoesUserHaveServiceAccountAccess(
+					requestlog.NewHandler(a.HandleListNamespaces, l),
+					mw.URLParam,
+					mw.QueryParam,
+				),
+				mw.URLParam,
+				mw.ReadAccess,
+			),
+		)
 	})
 
 	fs := http.FileServer(http.Dir(staticFilePath))

@@ -1,12 +1,14 @@
 package api_test
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"net/http"
 	"reflect"
 	"strings"
 	"testing"
 
+	"github.com/porter-dev/porter/internal/forms"
 	"github.com/porter-dev/porter/internal/models"
 )
 
@@ -103,7 +105,7 @@ var readProjectTests = []*projTest{
 		endpoint:  "/api/projects/1",
 		body:      ``,
 		expStatus: http.StatusOK,
-		expBody:   `{"id":1,"name":"project-test","roles":[{"id":0,"kind":"Owner","user_id":1,"project_id":1}]}`,
+		expBody:   `{"id":1,"name":"project-test","roles":[{"id":0,"kind":"admin","user_id":1,"project_id":1}]}`,
 		useCookie: true,
 		validators: []func(c *projTest, tester *tester, t *testing.T){
 			projectModelBodyValidator,
@@ -113,6 +115,134 @@ var readProjectTests = []*projTest{
 
 func TestHandleReadProject(t *testing.T) {
 	testProjRequests(t, readProjectTests, true)
+}
+
+var createProjectSACandidatesTests = []*projTest{
+	&projTest{
+		initializers: []func(t *tester){
+			initUserDefault,
+			initProject,
+		},
+		msg:       "Create project SA candidate w/ no actions -- should create SA by default",
+		method:    "POST",
+		endpoint:  "/api/projects/1/candidates",
+		body:      `{"kubeconfig":"` + OIDCAuthWithDataForJSON + `"}`,
+		expStatus: http.StatusCreated,
+		expBody:   `[{"id":1,"actions":[],"project_id":1,"kind":"connector","cluster_name":"cluster-test","cluster_endpoint":"https://localhost","auth_mechanism":"oidc"}]`,
+		useCookie: true,
+		validators: []func(c *projTest, tester *tester, t *testing.T){
+			projectSACandidateBodyValidator,
+			// check that ServiceAccount was created by default
+			func(c *projTest, tester *tester, t *testing.T) {
+				serviceAccounts, err := tester.repo.ServiceAccount.ListServiceAccountsByProjectID(1)
+
+				if err != nil {
+					t.Fatalf("%v\n", err)
+				}
+
+				if len(serviceAccounts) != 1 {
+					t.Fatal("Expected service account to be created by default, but does not exist\n")
+				}
+
+				sa := serviceAccounts[0]
+
+				decodedStr, _ := base64.StdEncoding.DecodeString("LS0tLS1CRUdJTiBDRVJ=")
+
+				if len(sa.Clusters) != 1 {
+					t.Fatalf("cluster not written\n")
+				}
+
+				if sa.Clusters[0].ServiceAccountID != 1 {
+					t.Errorf("service account ID of joined cluster is not 1")
+				}
+
+				if sa.AuthMechanism != models.OIDC {
+					t.Errorf("service account auth mechanism is not %s\n", models.OIDC)
+				}
+
+				if string(sa.OIDCCertificateAuthorityData) != string(decodedStr) {
+					t.Errorf("service account key data and input do not match: expected %s, got %s\n",
+						string(sa.OIDCCertificateAuthorityData), string(decodedStr))
+				}
+
+				if sa.OIDCClientID != "porter-api" {
+					t.Errorf("service account oidc client id is not %s\n", "porter-api")
+				}
+
+				if sa.OIDCIDToken != "token" {
+					t.Errorf("service account oidc id token is not %s\n", "token")
+				}
+			},
+		},
+	},
+	&projTest{
+		initializers: []func(t *tester){
+			initUserDefault,
+			initProject,
+		},
+		msg:       "Create project SA candidate",
+		method:    "POST",
+		endpoint:  "/api/projects/1/candidates",
+		body:      `{"kubeconfig":"` + OIDCAuthWithoutDataForJSON + `"}`,
+		expStatus: http.StatusCreated,
+		expBody:   `[{"id":1,"actions":[{"name":"upload-oidc-idp-issuer-ca-data","docs":"https://github.com/porter-dev/porter","resolved":false,"fields":"oidc_idp_issuer_ca_data"}],"project_id":1,"kind":"connector","cluster_name":"cluster-test","cluster_endpoint":"https://localhost","auth_mechanism":"oidc"}]`,
+		useCookie: true,
+		validators: []func(c *projTest, tester *tester, t *testing.T){
+			projectSACandidateBodyValidator,
+		},
+	},
+}
+
+func TestHandleCreateProjectSACandidate(t *testing.T) {
+	testProjRequests(t, createProjectSACandidatesTests, true)
+}
+
+var listProjectSACandidatesTests = []*projTest{
+	&projTest{
+		initializers: []func(t *tester){
+			initUserDefault,
+			initProject,
+			initProjectSACandidate,
+		},
+		msg:       "List project SA candidates",
+		method:    "GET",
+		endpoint:  "/api/projects/1/candidates",
+		body:      ``,
+		expStatus: http.StatusOK,
+		expBody:   `[{"id":1,"actions":[{"name":"upload-oidc-idp-issuer-ca-data","docs":"https://github.com/porter-dev/porter","resolved":false,"fields":"oidc_idp_issuer_ca_data"}],"project_id":1,"kind":"connector","cluster_name":"cluster-test","cluster_endpoint":"https://localhost","auth_mechanism":"oidc"}]`,
+		useCookie: true,
+		validators: []func(c *projTest, tester *tester, t *testing.T){
+			projectSACandidateBodyValidator,
+		},
+	},
+}
+
+func TestHandleListProjectSACandidates(t *testing.T) {
+	testProjRequests(t, listProjectSACandidatesTests, true)
+}
+
+var resolveProjectSACandidatesTests = []*projTest{
+	&projTest{
+		initializers: []func(t *tester){
+			initUserDefault,
+			initProject,
+			initProjectSACandidate,
+		},
+		msg:       "Resolve project SA candidate",
+		method:    "POST",
+		endpoint:  "/api/projects/1/candidates/1/resolve",
+		body:      `[{"name": "upload-oidc-idp-issuer-ca-data", "oidc_idp_issuer_ca_data": "LS0tLS1CRUdJTiBDRVJ="}]`,
+		expStatus: http.StatusCreated,
+		expBody:   `{"id":1,"project_id":1,"kind":"connector","clusters":[{"service_account_id":1,"server":"https://localhost"}],"auth_mechanism":"oidc"}`,
+		useCookie: true,
+		validators: []func(c *projTest, tester *tester, t *testing.T){
+			projectSABodyValidator,
+		},
+	},
+}
+
+func TestHandleResolveProjectSACandidate(t *testing.T) {
+	testProjRequests(t, resolveProjectSACandidatesTests, true)
 }
 
 // ------------------------- INITIALIZERS AND VALIDATORS ------------------------- //
@@ -129,8 +259,24 @@ func initProject(tester *tester) {
 	tester.repo.Project.CreateProjectRole(projModel, &models.Role{
 		UserID:    user.ID,
 		ProjectID: projModel.ID,
-		Kind:      "Owner",
+		Kind:      models.RoleAdmin,
 	})
+}
+
+func initProjectSACandidate(tester *tester) {
+	proj, _ := tester.repo.Project.ReadProject(1)
+
+	form := &forms.CreateServiceAccountCandidatesForm{
+		ProjectID:  uint(proj.ID),
+		Kubeconfig: OIDCAuthWithoutData,
+	}
+
+	// convert the form to a ServiceAccountCandidate
+	saCandidates, _ := form.ToServiceAccountCandidates()
+
+	for _, saCandidate := range saCandidates {
+		tester.repo.ServiceAccount.CreateServiceAccountCandidate(saCandidate)
+	}
 }
 
 func projectBasicBodyValidator(c *projTest, tester *tester, t *testing.T) {
@@ -152,3 +298,60 @@ func projectModelBodyValidator(c *projTest, tester *tester, t *testing.T) {
 			c.msg, gotBody, expBody)
 	}
 }
+
+func projectSACandidateBodyValidator(c *projTest, tester *tester, t *testing.T) {
+	gotBody := make([]*models.ServiceAccountCandidateExternal, 0)
+	expBody := make([]*models.ServiceAccountCandidateExternal, 0)
+
+	json.Unmarshal(tester.rr.Body.Bytes(), &gotBody)
+	json.Unmarshal([]byte(c.expBody), &expBody)
+
+	if !reflect.DeepEqual(gotBody, expBody) {
+		t.Errorf("%s, handler returned wrong body: got %v want %v",
+			c.msg, gotBody, expBody)
+	}
+}
+
+func projectSABodyValidator(c *projTest, tester *tester, t *testing.T) {
+	gotBody := &models.ServiceAccountExternal{}
+	expBody := &models.ServiceAccountExternal{}
+
+	json.Unmarshal(tester.rr.Body.Bytes(), gotBody)
+	json.Unmarshal([]byte(c.expBody), expBody)
+
+	if !reflect.DeepEqual(gotBody, expBody) {
+		t.Errorf("%s, handler returned wrong body: got %v want %v",
+			c.msg, gotBody, expBody)
+	}
+}
+
+const OIDCAuthWithDataForJSON string = `apiVersion: v1\nclusters:\n- cluster:\n    server: https://localhost\n    certificate-authority-data: LS0tLS1CRUdJTiBDRVJ=\n  name: cluster-test\ncontexts:\n- context:\n    cluster: cluster-test\n    user: test-admin\n  name: context-test\ncurrent-context: context-test\nkind: Config\npreferences: {}\nusers:\n- name: test-admin\n  user:\n    auth-provider:\n      config:\n        client-id: porter-api\n        id-token: token\n        idp-issuer-url: https://localhost\n        idp-certificate-authority-data: LS0tLS1CRUdJTiBDRVJ=\n      name: oidc`
+
+const OIDCAuthWithoutDataForJSON string = `apiVersion: v1\nclusters:\n- cluster:\n    server: https://localhost\n    certificate-authority-data: LS0tLS1CRUdJTiBDRVJ=\n  name: cluster-test\ncontexts:\n- context:\n    cluster: cluster-test\n    user: test-admin\n  name: context-test\ncurrent-context: context-test\nkind: Config\npreferences: {}\nusers:\n- name: test-admin\n  user:\n    auth-provider:\n      config:\n        client-id: porter-api\n        id-token: token\n        idp-issuer-url: https://localhost\n        idp-certificate-authority: /fake/path/to/ca.pem\n      name: oidc`
+
+const OIDCAuthWithoutData string = `
+apiVersion: v1
+clusters:
+- cluster:
+    server: https://localhost
+    certificate-authority-data: LS0tLS1CRUdJTiBDRVJ=
+  name: cluster-test
+contexts:
+- context:
+    cluster: cluster-test
+    user: test-admin
+  name: context-test
+current-context: context-test
+kind: Config
+preferences: {}
+users:
+- name: test-admin
+  user:
+    auth-provider:
+      config:
+        client-id: porter-api
+        id-token: token
+        idp-issuer-url: https://localhost
+        idp-certificate-authority: /fake/path/to/ca.pem
+      name: oidc
+`

@@ -124,7 +124,14 @@ func (sar *ServiceAccountActionResolver) PopulateServiceAccount(
 		}
 
 		if caData, ok := authInfo.AuthProvider.Config["idp-certificate-authority-data"]; ok {
-			sar.SA.OIDCCertificateAuthorityData = []byte(caData)
+			decoded, err := base64.StdEncoding.DecodeString(caData)
+
+			// skip if decoding error
+			if err != nil {
+				return err
+			}
+
+			sar.SA.OIDCCertificateAuthorityData = decoded
 		}
 
 		if idToken, ok := authInfo.AuthProvider.Config["id-token"]; ok {

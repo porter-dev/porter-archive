@@ -10,6 +10,7 @@ import (
 
 	"github.com/go-chi/chi"
 	"github.com/gorilla/sessions"
+	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/repository"
 )
 
@@ -79,12 +80,21 @@ func (auth *Auth) DoesUserIDMatch(next http.Handler, loc IDLocation) http.Handle
 	})
 }
 
-// DoesUserHaveProjectReadAccess looks for a project_id parameter and checks that the
-// user has access to read that project
-func (auth *Auth) DoesUserHaveProjectReadAccess(
+// AccessType represents the various access types for a project
+type AccessType string
+
+// The various access types
+const (
+	ReadAccess  AccessType = "read"
+	WriteAccess AccessType = "write"
+)
+
+// DoesUserHaveProjectAccess looks for a project_id parameter and checks that the
+// user has access via the specified accessType
+func (auth *Auth) DoesUserHaveProjectAccess(
 	next http.Handler,
-	userLoc IDLocation,
 	projLoc IDLocation,
+	accessType AccessType,
 ) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var err error
@@ -115,8 +125,16 @@ func (auth *Auth) DoesUserHaveProjectReadAccess(
 		// look for the user role in the project
 		for _, role := range proj.Roles {
 			if role.UserID == userID {
-				next.ServeHTTP(w, r)
-				return
+				if accessType == ReadAccess {
+					next.ServeHTTP(w, r)
+					return
+				} else if accessType == WriteAccess {
+					if role.Kind == models.RoleAdmin {
+						next.ServeHTTP(w, r)
+						return
+					}
+				}
+
 			}
 		}
 
@@ -156,7 +174,7 @@ func findUserIDInRequest(r *http.Request, userLoc IDLocation) uint64 {
 	var userID uint64
 
 	if userLoc == URLParam {
-		userID, _ = strconv.ParseUint(chi.URLParam(r, "id"), 0, 64)
+		userID, _ = strconv.ParseUint(chi.URLParam(r, "user_id"), 0, 64)
 	} else if userLoc == BodyParam {
 		form := &bodyUserID{}
 		body, _ := ioutil.ReadAll(r.Body)
@@ -175,7 +193,7 @@ func findProjIDInRequest(r *http.Request, projLoc IDLocation) uint64 {
 	var projID uint64
 
 	if projLoc == URLParam {
-		projID, _ = strconv.ParseUint(chi.URLParam(r, "id"), 0, 64)
+		projID, _ = strconv.ParseUint(chi.URLParam(r, "project_id"), 0, 64)
 	} else if projLoc == BodyParam {
 		form := &bodyProjectID{}
 		body, _ := ioutil.ReadAll(r.Body)

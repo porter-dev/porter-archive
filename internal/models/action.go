@@ -44,6 +44,21 @@ type ServiceAccountActionExternal struct {
 	Fields   string `json:"fields"`
 }
 
+// ServiceAccountAllActions is a helper type that contains the fields for
+// all possible actions, so that raw bytes can be unmarshaled in a single
+// read
+type ServiceAccountAllActions struct {
+	Name string `json:"name"`
+
+	ClusterCAData    string `json:"cluster_ca_data" form:"required"`
+	ClientCertData   string `json:"client_cert_data" form:"required"`
+	ClientKeyData    string `json:"client_key_data" form:"required"`
+	OIDCIssuerCAData string `json:"oidc_idp_issuer_ca_data" form:"required"`
+	TokenData        string `json:"token_data" form:"required"`
+	GCPKeyData       string `json:"gcp_key_data" form:"required"`
+	AWSKeyData       string `json:"aws_key_data" form:"required"`
+}
+
 // ServiceAccountActionInfo contains the information for actions to be
 // performed in order to initialize a ServiceAccount
 type ServiceAccountActionInfo struct {

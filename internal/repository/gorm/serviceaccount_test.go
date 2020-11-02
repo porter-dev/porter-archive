@@ -3,6 +3,8 @@ package gorm_test
 import (
 	"testing"
 
+	"github.com/porter-dev/porter/internal/repository"
+
 	"github.com/go-test/deep"
 	"github.com/porter-dev/porter/internal/models"
 	orm "gorm.io/gorm"
@@ -17,6 +19,7 @@ func initServiceAccountCandidate(tester *tester, t *testing.T) {
 		ClusterName:     "cluster-test",
 		ClusterEndpoint: "https://localhost",
 		AuthMechanism:   models.X509,
+		Kubeconfig:      []byte("current-context: testing\n"),
 		Actions: []models.ServiceAccountAction{
 			models.ServiceAccountAction{
 				Name:     models.TokenDataAction,
@@ -45,8 +48,9 @@ func initServiceAccount(tester *tester, t *testing.T) {
 		ClientKeyData:         []byte("-----BEGIN"),
 		Clusters: []models.Cluster{
 			models.Cluster{
-				Name:   "cluster-test",
-				Server: "https://localhost",
+				Name:                     "cluster-test",
+				Server:                   "https://localhost",
+				CertificateAuthorityData: []byte("-----BEGIN"),
 			},
 		},
 	}
@@ -75,6 +79,7 @@ func TestCreateServiceAccountCandidate(t *testing.T) {
 		ClusterName:     "cluster-test",
 		ClusterEndpoint: "https://localhost",
 		AuthMechanism:   models.X509,
+		Kubeconfig:      []byte("current-context: testing\n"),
 	}
 
 	saCandidate, err := tester.repo.ServiceAccount.CreateServiceAccountCandidate(saCandidate)
@@ -101,6 +106,7 @@ func TestCreateServiceAccountCandidate(t *testing.T) {
 		ClusterName:     "cluster-test",
 		ClusterEndpoint: "https://localhost",
 		AuthMechanism:   models.X509,
+		Kubeconfig:      []byte("current-context: testing\n"),
 		Actions:         []models.ServiceAccountAction{},
 	}
 
@@ -108,6 +114,10 @@ func TestCreateServiceAccountCandidate(t *testing.T) {
 
 	// reset fields for reflect.DeepEqual
 	copySACandidate.Model = orm.Model{}
+	copySACandidate.Kubeconfig, _ = repository.Decrypt(
+		copySACandidate.Kubeconfig,
+		tester.key,
+	)
 
 	if diff := deep.Equal(copySACandidate, expSACandidate); diff != nil {
 		t.Errorf("incorrect sa candidate")
@@ -153,6 +163,7 @@ func TestCreateServiceAccountCandidateWithAction(t *testing.T) {
 		ClusterName:     "cluster-test",
 		ClusterEndpoint: "https://localhost",
 		AuthMechanism:   models.X509,
+		Kubeconfig:      []byte("current-context: testing\n"),
 		Actions: []models.ServiceAccountAction{
 			models.ServiceAccountAction{
 				ServiceAccountCandidateID: 1,
@@ -166,6 +177,10 @@ func TestCreateServiceAccountCandidateWithAction(t *testing.T) {
 
 	// reset fields for reflect.DeepEqual
 	copySACandidate.Model = orm.Model{}
+	copySACandidate.Kubeconfig, _ = repository.Decrypt(
+		copySACandidate.Kubeconfig,
+		tester.key,
+	)
 	copySACandidate.Actions[0].Model = orm.Model{}
 
 	if diff := deep.Equal(copySACandidate, expSACandidate); diff != nil {
@@ -203,6 +218,7 @@ func TestListServiceAccountCandidatesByProjectID(t *testing.T) {
 		ClusterName:     "cluster-test",
 		ClusterEndpoint: "https://localhost",
 		AuthMechanism:   models.X509,
+		Kubeconfig:      []byte("current-context: testing\n"),
 		Actions: []models.ServiceAccountAction{
 			models.ServiceAccountAction{
 				ServiceAccountCandidateID: 1,
@@ -216,6 +232,10 @@ func TestListServiceAccountCandidatesByProjectID(t *testing.T) {
 
 	// reset fields for reflect.DeepEqual
 	copySACandidate.Model = orm.Model{}
+	copySACandidate.Kubeconfig, _ = repository.Decrypt(
+		copySACandidate.Kubeconfig,
+		tester.key,
+	)
 	copySACandidate.Actions[0].Model = orm.Model{}
 
 	if diff := deep.Equal(copySACandidate, expSACandidate); diff != nil {
@@ -272,6 +292,8 @@ func TestCreateServiceAccount(t *testing.T) {
 
 	// reset fields for reflect.DeepEqual
 	copySA.Model = orm.Model{}
+	copySA.ClientCertificateData, _ = repository.Decrypt(copySA.ClientCertificateData, tester.key)
+	copySA.ClientKeyData, _ = repository.Decrypt(copySA.ClientKeyData, tester.key)
 
 	if diff := deep.Equal(copySA, expSA); diff != nil {
 		t.Errorf("incorrect service account")
@@ -319,9 +341,10 @@ func TestCreateServiceAccountWithCluster(t *testing.T) {
 		ClientKeyData:         []byte("-----BEGIN"),
 		Clusters: []models.Cluster{
 			models.Cluster{
-				ServiceAccountID: 1,
-				Name:             "cluster-test",
-				Server:           "https://localhost",
+				ServiceAccountID:         1,
+				Name:                     "cluster-test",
+				Server:                   "https://localhost",
+				CertificateAuthorityData: []byte("-----BEGIN"),
 			},
 		},
 	}
@@ -330,7 +353,13 @@ func TestCreateServiceAccountWithCluster(t *testing.T) {
 
 	// reset fields for reflect.DeepEqual
 	copySA.Model = orm.Model{}
+	copySA.ClientCertificateData, _ = repository.Decrypt(copySA.ClientCertificateData, tester.key)
+	copySA.ClientKeyData, _ = repository.Decrypt(copySA.ClientKeyData, tester.key)
 	copySA.Clusters[0].Model = orm.Model{}
+	copySA.Clusters[0].CertificateAuthorityData, _ = repository.Decrypt(
+		copySA.Clusters[0].CertificateAuthorityData,
+		tester.key,
+	)
 
 	if diff := deep.Equal(copySA, expSA); diff != nil {
 		t.Errorf("incorrect service account")
@@ -369,9 +398,10 @@ func TestListServiceAccountsByProjectID(t *testing.T) {
 		ClientKeyData:         []byte("-----BEGIN"),
 		Clusters: []models.Cluster{
 			models.Cluster{
-				ServiceAccountID: 1,
-				Name:             "cluster-test",
-				Server:           "https://localhost",
+				ServiceAccountID:         1,
+				Name:                     "cluster-test",
+				Server:                   "https://localhost",
+				CertificateAuthorityData: []byte("-----BEGIN"),
 			},
 		},
 	}
@@ -380,7 +410,13 @@ func TestListServiceAccountsByProjectID(t *testing.T) {
 
 	// reset fields for reflect.DeepEqual
 	copySA.Model = orm.Model{}
+	copySA.ClientCertificateData, _ = repository.Decrypt(copySA.ClientCertificateData, tester.key)
+	copySA.ClientKeyData, _ = repository.Decrypt(copySA.ClientKeyData, tester.key)
 	copySA.Clusters[0].Model = orm.Model{}
+	copySA.Clusters[0].CertificateAuthorityData, _ = repository.Decrypt(
+		copySA.Clusters[0].CertificateAuthorityData,
+		tester.key,
+	)
 
 	if diff := deep.Equal(copySA, expSA); diff != nil {
 		t.Errorf("incorrect service account")

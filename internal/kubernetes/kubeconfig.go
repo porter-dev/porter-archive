@@ -2,6 +2,7 @@ package kubernetes
 
 import (
 	"errors"
+	"strings"
 
 	"github.com/porter-dev/porter/internal/models"
 	"k8s.io/client-go/tools/clientcmd"
@@ -276,7 +277,7 @@ func createRawConfigFromServiceAccount(
 	authInfoMap[authInfoName] = &api.AuthInfo{
 		LocationOfOrigin:  sa.LocationOfOrigin,
 		Impersonate:       sa.Impersonate,
-		ImpersonateGroups: sa.ImpersonateGroups,
+		ImpersonateGroups: strings.Split(sa.ImpersonateGroups, ","),
 	}
 
 	switch sa.AuthMechanism {

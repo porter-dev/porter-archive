@@ -2,6 +2,7 @@ package forms
 
 import (
 	"encoding/base64"
+	"strings"
 
 	"github.com/porter-dev/porter/internal/kubernetes"
 	"github.com/porter-dev/porter/internal/models"
@@ -74,7 +75,7 @@ func (sar *ServiceAccountActionResolver) PopulateServiceAccount(
 			AuthMechanism:     sar.SACandidate.AuthMechanism,
 			LocationOfOrigin:  authInfo.LocationOfOrigin,
 			Impersonate:       authInfo.Impersonate,
-			ImpersonateGroups: authInfo.ImpersonateGroups,
+			ImpersonateGroups: strings.Join(authInfo.ImpersonateGroups, ","),
 		}
 	} else {
 		doesClusterExist := false

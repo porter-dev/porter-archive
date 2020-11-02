@@ -17,6 +17,7 @@ import (
 
 type tester struct {
 	repo             *repository.Repository
+	key              *[32]byte
 	dbFileName       string
 	initProjects     []*models.Project
 	initSACandidates []*models.ServiceAccountCandidate
@@ -51,7 +52,15 @@ func setupTestEnv(tester *tester, t *testing.T) {
 		t.Fatalf("%v\n", err)
 	}
 
-	tester.repo = gorm.NewRepository(db)
+	var key [32]byte
+
+	for i, b := range []byte("__random_strong_encryption_key__") {
+		key[i] = b
+	}
+
+	tester.key = &key
+
+	tester.repo = gorm.NewRepository(db, &key)
 }
 
 func cleanup(tester *tester, t *testing.T) {

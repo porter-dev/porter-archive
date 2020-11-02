@@ -28,7 +28,12 @@ type ServiceAccountCandidate struct {
 	ClusterName     string `json:"cluster_name"`
 	ClusterEndpoint string `json:"cluster_endpoint"`
 	AuthMechanism   string `json:"auth_mechanism"`
-	Kubeconfig      []byte `json:"kubeconfig"`
+
+	// ------------------------------------------------------------------
+	// All fields below this line are encrypted before storage
+	// ------------------------------------------------------------------
+
+	Kubeconfig []byte `json:"kubeconfig"`
 }
 
 // ServiceAccountCandidateExternal represents the ServiceAccountCandidate type that is
@@ -80,9 +85,9 @@ type ServiceAccount struct {
 	AuthMechanism string `json:"auth_mechanism"`
 
 	// These fields are used by all auth mechanisms
-	LocationOfOrigin string
-	Impersonate      string `json:"act-as,omitempty"`
-	// ImpersonateGroups []string `json:"act-as-groups,omitempty"`
+	LocationOfOrigin  string
+	Impersonate       string `json:"act-as,omitempty"`
+	ImpersonateGroups string `json:"act-as-groups,omitempty"`
 
 	// ------------------------------------------------------------------
 	// All fields below this line are encrypted before storage

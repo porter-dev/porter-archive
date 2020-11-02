@@ -80,9 +80,9 @@ type ServiceAccount struct {
 	AuthMechanism string `json:"auth_mechanism"`
 
 	// These fields are used by all auth mechanisms
-	LocationOfOrigin  string
-	Impersonate       string   `json:"act-as,omitempty"`
-	ImpersonateGroups []string `json:"act-as-groups,omitempty"`
+	LocationOfOrigin string
+	Impersonate      string `json:"act-as,omitempty"`
+	// ImpersonateGroups []string `json:"act-as-groups,omitempty"`
 
 	// ------------------------------------------------------------------
 	// All fields below this line are encrypted before storage

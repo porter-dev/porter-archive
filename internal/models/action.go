@@ -18,6 +18,8 @@ const (
 type ServiceAccountAction struct {
 	gorm.Model
 
+	ServiceAccountCandidateID uint
+
 	// One of the constant action names
 	Name     string `json:"name"`
 	Resolved bool   `json:"resolved"`

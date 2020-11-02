@@ -8,8 +8,10 @@ import (
 type Project struct {
 	gorm.Model
 
-	Name  string `json:"name"`
-	Roles []Role `json:"roles"`
+	Name                     string                    `json:"name"`
+	Roles                    []Role                    `json:"roles"`
+	ServiceAccountCandidates []ServiceAccountCandidate `json:"sa_candidates"`
+	ServiceAccounts          []ServiceAccount          `json:"serviceaccounts"`
 }
 
 // ProjectExternal represents the Project type that is sent over REST

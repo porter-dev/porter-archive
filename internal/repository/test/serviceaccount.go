@@ -76,24 +76,6 @@ func (repo *ServiceAccountRepository) ListServiceAccountCandidatesByProjectID(
 	return res, nil
 }
 
-// DeleteServiceAccountCandidate deletes a service account candidate
-func (repo *ServiceAccountRepository) DeleteServiceAccountCandidate(
-	saCandidate *models.ServiceAccountCandidate,
-) (*models.ServiceAccountCandidate, error) {
-	if !repo.canQuery {
-		return nil, errors.New("Cannot write database")
-	}
-
-	if int(saCandidate.ID-1) >= len(repo.serviceAccountCandidates) || repo.serviceAccountCandidates[saCandidate.ID-1] == nil {
-		return nil, gorm.ErrRecordNotFound
-	}
-
-	index := int(saCandidate.ID - 1)
-	repo.serviceAccountCandidates[index] = nil
-
-	return saCandidate, nil
-}
-
 // CreateServiceAccount creates a new servicea account
 func (repo *ServiceAccountRepository) CreateServiceAccount(
 	sa *models.ServiceAccount,
@@ -152,24 +134,6 @@ func (repo *ServiceAccountRepository) ListServiceAccountsByProjectID(
 	}
 
 	return res, nil
-}
-
-// DeleteServiceAccount deletes a service account
-func (repo *ServiceAccountRepository) DeleteServiceAccount(
-	sa *models.ServiceAccount,
-) (*models.ServiceAccount, error) {
-	if !repo.canQuery {
-		return nil, errors.New("Cannot write database")
-	}
-
-	if int(sa.ID-1) >= len(repo.serviceAccounts) || repo.serviceAccounts[sa.ID-1] == nil {
-		return nil, gorm.ErrRecordNotFound
-	}
-
-	index := int(sa.ID - 1)
-	repo.serviceAccounts[index] = nil
-
-	return sa, nil
 }
 
 func (repo *ServiceAccountRepository) createCluster(

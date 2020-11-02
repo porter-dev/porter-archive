@@ -10,7 +10,7 @@ import (
 
 	"github.com/porter-dev/porter/server/api"
 
-	adapter "github.com/porter-dev/porter/internal/adapter"
+	"github.com/porter-dev/porter/internal/adapter"
 	sessionstore "github.com/porter-dev/porter/internal/auth"
 	"github.com/porter-dev/porter/internal/config"
 	lr "github.com/porter-dev/porter/internal/logger"

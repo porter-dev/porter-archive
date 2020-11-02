@@ -28,7 +28,13 @@ func (repo *ProjectRepository) CreateProject(project *models.Project) (*models.P
 
 // CreateProjectRole appends a role to the existing array of roles
 func (repo *ProjectRepository) CreateProjectRole(project *models.Project, role *models.Role) (*models.Role, error) {
-	if err := repo.db.Model(&project).Association("Roles").Append([]models.Role{*role}); err != nil {
+	assoc := repo.db.Model(&project).Association("Roles")
+
+	if assoc.Error != nil {
+		return nil, assoc.Error
+	}
+
+	if err := assoc.Append(role); err != nil {
 		return nil, err
 	}
 
@@ -38,8 +44,10 @@ func (repo *ProjectRepository) CreateProjectRole(project *models.Project, role *
 // ReadProject gets a projects specified by a unique id
 func (repo *ProjectRepository) ReadProject(id uint) (*models.Project, error) {
 	project := &models.Project{}
-	if err := repo.db.Where("id = ?", id).First(&project).Error; err != nil {
+
+	if err := repo.db.Preload("Roles").Where("id = ?", id).First(&project).Error; err != nil {
 		return nil, err
 	}
+
 	return project, nil
 }

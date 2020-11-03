@@ -2,16 +2,179 @@ package docker
 
 import (
 	"fmt"
+	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/mount"
 	"github.com/docker/go-connections/nat"
+	"k8s.io/client-go/util/homedir"
 )
 
-// PorterStartOpts are the options for starting the Porter container
+// PorterDB is used for enumerating DB types
+type PorterDB int
+
+// The supported DB types
+const (
+	Postgres PorterDB = iota
+	SQLite
+)
+
+// PorterStartOpts are the options for starting the Porter stack
 type PorterStartOpts struct {
+	ProcessID      string
+	ServerImageTag string
+	ServerPort     int
+	DB             PorterDB
+	KubeconfigPath string
+	SkipKubeconfig bool
+	Env            []string
+}
+
+// StartPorter creates a new Docker agent using the host environment, and creates a
+// new Porter instance
+func StartPorter(opts *PorterStartOpts) (agent *Agent, id string, err error) {
+	home := homedir.HomeDir()
+	outputConfPath := filepath.Join(home, ".porter", "porter.kubeconfig")
+	containerConfPath := "/porter/porter.kubeconfig"
+
+	agent, err = NewAgentFromEnv()
+
+	if err != nil {
+		return nil, "", err
+	}
+
+	// the volume mounts to use
+	mounts := make([]mount.Mount, 0)
+
+	// the volumes passed to the Porter container
+	volumesMap := make(map[string]struct{})
+
+	if !opts.SkipKubeconfig {
+		// add a bind mount with the kubeconfig
+		mount := mount.Mount{
+			Type:        mount.TypeBind,
+			Source:      outputConfPath,
+			Target:      containerConfPath,
+			ReadOnly:    true,
+			Consistency: mount.ConsistencyFull,
+		}
+
+		mounts = append(mounts, mount)
+	}
+
+	netID, err := agent.CreateBridgeNetworkIfNotExist("porter_network_" + opts.ProcessID)
+
+	if err != nil {
+		return nil, "", err
+	}
+
+	switch opts.DB {
+	case SQLite:
+		// check if sqlite volume exists, create it if not
+		vol, err := agent.CreateLocalVolumeIfNotExist("porter_sqlite_" + opts.ProcessID)
+
+		if err != nil {
+			return nil, "", err
+		}
+
+		// create mount
+		mount := mount.Mount{
+			Type:        mount.TypeVolume,
+			Source:      vol.Name,
+			Target:      "/sqlite",
+			ReadOnly:    false,
+			Consistency: mount.ConsistencyFull,
+		}
+
+		mounts = append(mounts, mount)
+		volumesMap[vol.Name] = struct{}{}
+
+		opts.Env = append(opts.Env, []string{
+			"SQL_LITE=true",
+			"SQL_LITE_PATH=/sqlite/porter.db",
+		}...)
+	case Postgres:
+		// check if postgres volume exists, create it if not
+		vol, err := agent.CreateLocalVolumeIfNotExist("porter_postgres_" + opts.ProcessID)
+
+		if err != nil {
+			return nil, "", err
+		}
+
+		// pgMount is mount for postgres container
+		pgMount := []mount.Mount{
+			mount.Mount{
+				Type:        mount.TypeVolume,
+				Source:      vol.Name,
+				Target:      "/var/lib/postgresql/data",
+				ReadOnly:    false,
+				Consistency: mount.ConsistencyFull,
+			},
+		}
+
+		// create postgres container with mount
+		startOpts := PostgresOpts{
+			Name:   "porter_postgres_" + opts.ProcessID,
+			Image:  "postgres:latest",
+			Mounts: pgMount,
+			VolumeMap: map[string]struct{}{
+				"porter_postgres": struct{}{},
+			},
+			NetworkID: netID,
+			Env: []string{
+				"POSTGRES_USER=porter",
+				"POSTGRES_PASSWORD=porter",
+				"POSTGRES_DB=porter",
+			},
+		}
+
+		pgID, err := agent.StartPostgresContainer(startOpts)
+
+		fmt.Println("Waiting for postgres:latest to be healthy...")
+		agent.WaitForContainerHealthy(pgID, 10)
+
+		if err != nil {
+			return nil, "", err
+		}
+
+		opts.Env = append(opts.Env, []string{
+			"SQL_LITE=false",
+			"DB_USER=porter",
+			"DB_PASS=porter",
+			"DB_NAME=porter",
+			"DB_HOST=porter_postgres_" + opts.ProcessID,
+			"DB_PORT=5432",
+		}...)
+
+		defer agent.WaitForContainerStop(pgID)
+	}
+
+	// create Porter container
+	startOpts := PorterServerStartOpts{
+		Name:          "porter_server_" + opts.ProcessID,
+		Image:         "porter1/porter:" + opts.ServerImageTag,
+		HostPort:      uint(opts.ServerPort),
+		ContainerPort: 8080,
+		Mounts:        mounts,
+		VolumeMap:     volumesMap,
+		NetworkID:     netID,
+		Env:           opts.Env,
+	}
+
+	id, err = agent.StartPorterContainer(startOpts)
+
+	if err != nil {
+		return nil, "", err
+	}
+
+	return agent, id, nil
+}
+
+// PorterServerStartOpts are the options for starting the Porter server
+type PorterServerStartOpts struct {
 	Name          string
 	Image         string
 	StartCmd      []string
@@ -25,7 +188,7 @@ type PorterStartOpts struct {
 
 // StartPorterContainer pulls a specific Porter image and starts a container
 // using the Docker engine. It returns the container ID
-func (a *Agent) StartPorterContainer(opts PorterStartOpts) (string, error) {
+func (a *Agent) StartPorterContainer(opts PorterServerStartOpts) (string, error) {
 	id, err := a.upsertPorterContainer(opts)
 
 	if err != nil {
@@ -52,7 +215,7 @@ func (a *Agent) StartPorterContainer(opts PorterStartOpts) (string, error) {
 // if spec has changed, remove and recreate container
 // if container does not exist, create the container
 // otherwise, return stopped container
-func (a *Agent) upsertPorterContainer(opts PorterStartOpts) (id string, err error) {
+func (a *Agent) upsertPorterContainer(opts PorterServerStartOpts) (id string, err error) {
 	containers, err := a.getContainersCreatedByStart()
 
 	// remove the matching container
@@ -78,7 +241,7 @@ func (a *Agent) upsertPorterContainer(opts PorterStartOpts) (id string, err erro
 }
 
 // create the container and return its id
-func (a *Agent) pullAndCreatePorterContainer(opts PorterStartOpts) (id string, err error) {
+func (a *Agent) pullAndCreatePorterContainer(opts PorterServerStartOpts) (id string, err error) {
 	a.PullImage(opts.Image)
 
 	// format the port array for binding to host machine
@@ -244,6 +407,33 @@ func (a *Agent) StopPorterContainers() error {
 
 		if err != nil {
 			return a.handleDockerClientErr(err, "Could not stop container "+container.ID)
+		}
+	}
+
+	return nil
+}
+
+// StopPorterContainersWithProcessID finds all containers that were started via the CLI
+// and have a given process id and stops them without removal.
+func (a *Agent) StopPorterContainersWithProcessID(processID string) error {
+	fmt.Println("Stopping containers...")
+
+	containers, err := a.getContainersCreatedByStart()
+
+	if err != nil {
+		return err
+	}
+
+	// remove all Porter containers
+	for _, container := range containers {
+		if strings.Contains(container.Names[0], "_"+processID) {
+			timeout, _ := time.ParseDuration("15s")
+
+			err := a.client.ContainerStop(a.ctx, container.ID, &timeout)
+
+			if err != nil {
+				return a.handleDockerClientErr(err, "Could not stop container "+container.ID)
+			}
 		}
 	}
 

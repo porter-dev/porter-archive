@@ -1,8 +1,28 @@
 package api_test
 
 import (
+	"fmt"
+	"os"
+	"testing"
+
 	"github.com/porter-dev/porter/cli/cmd/docker"
 )
+
+const baseURL string = "http://localhost:10000/api"
+
+func TestMain(m *testing.M) {
+	err := startPorterServerWithDocker("user", 10000, docker.SQLite)
+
+	if err != nil {
+		fmt.Printf("%v\n", err)
+		os.Exit(1)
+	}
+
+	code := m.Run()
+	stopPorterServerWithDocker("user")
+
+	os.Exit(code)
+}
 
 type db int
 
@@ -43,13 +63,14 @@ func stopPorterServerWithDocker(processID string) error {
 		return err
 	}
 
-	err = agent.StopPorterContainersWithProcessID(processID)
+	err = agent.StopPorterContainersWithProcessID(processID, true)
 
 	if err != nil {
 		return err
 	}
 
-	// remove stopped containers and volumes
+	// remove volumes
+	err = agent.RemoveLocalVolume("porter_sqlite_" + processID)
 
 	return nil
 }

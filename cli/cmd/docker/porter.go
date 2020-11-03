@@ -389,8 +389,8 @@ func (a *Agent) startPostgresContainer(id string) error {
 }
 
 // StopPorterContainers finds all containers that were started via the CLI and stops them
-// without removal.
-func (a *Agent) StopPorterContainers() error {
+// -- removes the container if remove is set to true
+func (a *Agent) StopPorterContainers(remove bool) error {
 	fmt.Println("Stopping containers...")
 
 	containers, err := a.getContainersCreatedByStart()
@@ -408,14 +408,23 @@ func (a *Agent) StopPorterContainers() error {
 		if err != nil {
 			return a.handleDockerClientErr(err, "Could not stop container "+container.ID)
 		}
+
+		if remove {
+			err = a.client.ContainerRemove(a.ctx, container.ID, types.ContainerRemoveOptions{})
+
+			if err != nil {
+				return a.handleDockerClientErr(err, "Could not remove container "+container.ID)
+			}
+		}
 	}
 
 	return nil
 }
 
 // StopPorterContainersWithProcessID finds all containers that were started via the CLI
-// and have a given process id and stops them without removal.
-func (a *Agent) StopPorterContainersWithProcessID(processID string) error {
+// and have a given process id and stops them -- removes the container if remove is set
+// to true
+func (a *Agent) StopPorterContainersWithProcessID(processID string, remove bool) error {
 	fmt.Println("Stopping containers...")
 
 	containers, err := a.getContainersCreatedByStart()
@@ -433,6 +442,14 @@ func (a *Agent) StopPorterContainersWithProcessID(processID string) error {
 
 			if err != nil {
 				return a.handleDockerClientErr(err, "Could not stop container "+container.ID)
+			}
+
+			if remove {
+				err = a.client.ContainerRemove(a.ctx, container.ID, types.ContainerRemoveOptions{})
+
+				if err != nil {
+					return a.handleDockerClientErr(err, "Could not remove container "+container.ID)
+				}
 			}
 		}
 	}

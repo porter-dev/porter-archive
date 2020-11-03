@@ -81,10 +81,10 @@ var createProjectTests = []*projTest{
 			"name": "project-test"
 		}`,
 		expStatus: http.StatusCreated,
-		expBody:   ``,
+		expBody:   `{"id":1,"name":"project-test","roles":[{"id":0,"kind":"admin","user_id":1,"project_id":1}]}`,
 		useCookie: true,
 		validators: []func(c *projTest, tester *tester, t *testing.T){
-			projectBasicBodyValidator,
+			projectModelBodyValidator,
 		},
 	},
 }
@@ -230,7 +230,7 @@ var resolveProjectSACandidatesTests = []*projTest{
 		endpoint:  "/api/projects/1/candidates/1/resolve",
 		body:      `[{"name": "upload-oidc-idp-issuer-ca-data", "oidc_idp_issuer_ca_data": "LS0tLS1CRUdJTiBDRVJ="}]`,
 		expStatus: http.StatusCreated,
-		expBody:   `{"id":1,"project_id":1,"kind":"connector","clusters":[{"service_account_id":1,"server":"https://localhost"}],"auth_mechanism":"oidc"}`,
+		expBody:   `{"id":1,"project_id":1,"kind":"connector","clusters":[{"service_account_id":1,"name":"cluster-test","server":"https://localhost"}],"auth_mechanism":"oidc"}`,
 		useCookie: true,
 		validators: []func(c *projTest, tester *tester, t *testing.T){
 			projectSABodyValidator,

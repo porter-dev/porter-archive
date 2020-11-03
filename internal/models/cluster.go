@@ -21,6 +21,7 @@ type Cluster struct {
 // ClusterExternal is the external cluster type to be sent over REST
 type ClusterExternal struct {
 	ServiceAccountID      uint   `json:"service_account_id"`
+	Name                  string `json:"name"`
 	Server                string `json:"server"`
 	TLSServerName         string `json:"tls-server-name,omitempty"`
 	InsecureSkipTLSVerify bool   `json:"insecure-skip-tls-verify,omitempty"`
@@ -31,6 +32,7 @@ type ClusterExternal struct {
 func (c *Cluster) Externalize() *ClusterExternal {
 	return &ClusterExternal{
 		ServiceAccountID:      c.ServiceAccountID,
+		Name:                  c.Name,
 		Server:                c.Server,
 		TLSServerName:         c.TLSServerName,
 		InsecureSkipTLSVerify: c.InsecureSkipTLSVerify,

@@ -52,13 +52,13 @@ type ServiceAccountActionExternal struct {
 type ServiceAccountAllActions struct {
 	Name string `json:"name"`
 
-	ClusterCAData    string `json:"cluster_ca_data" form:"required"`
-	ClientCertData   string `json:"client_cert_data" form:"required"`
-	ClientKeyData    string `json:"client_key_data" form:"required"`
-	OIDCIssuerCAData string `json:"oidc_idp_issuer_ca_data" form:"required"`
-	TokenData        string `json:"token_data" form:"required"`
-	GCPKeyData       string `json:"gcp_key_data" form:"required"`
-	AWSKeyData       string `json:"aws_key_data" form:"required"`
+	ClusterCAData    string `json:"cluster_ca_data,omitempty"`
+	ClientCertData   string `json:"client_cert_data,omitempty"`
+	ClientKeyData    string `json:"client_key_data,omitempty"`
+	OIDCIssuerCAData string `json:"oidc_idp_issuer_ca_data,omitempty"`
+	TokenData        string `json:"token_data,omitempty"`
+	GCPKeyData       string `json:"gcp_key_data,omitempty"`
+	AWSKeyData       string `json:"aws_key_data,omitempty"`
 }
 
 // ServiceAccountActionInfo contains the information for actions to be

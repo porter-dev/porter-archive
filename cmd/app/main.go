@@ -29,7 +29,13 @@ func main() {
 		return
 	}
 
-	repo := gorm.NewRepository(db)
+	var key [32]byte
+
+	for i, b := range []byte(appConf.Db.EncryptionKey) {
+		key[i] = b
+	}
+
+	repo := gorm.NewRepository(db, &key)
 
 	// upsert admin if config requires
 	// if appConf.Db.AdminInit {

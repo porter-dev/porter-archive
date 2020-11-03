@@ -14,8 +14,6 @@ import (
 	"github.com/porter-dev/porter/cli/cmd/credstore"
 
 	"github.com/spf13/cobra"
-
-	"github.com/docker/docker/api/types/mount"
 )
 
 type startOps struct {
@@ -113,7 +111,7 @@ func stop() error {
 		return err
 	}
 
-	err = agent.StopPorterContainers()
+	err = agent.StopPorterContainersWithProcessID("main")
 
 	if err != nil {
 		return err
@@ -134,8 +132,6 @@ func start(
 	var err error
 	home := homedir.HomeDir()
 	outputConfPath := filepath.Join(home, ".porter", "porter.kubeconfig")
-	containerConfPath := "/porter/porter.kubeconfig"
-	port := 8080
 
 	// if not insecure, or username/pw set incorrectly, prompt for new username/pw
 	if username, pw, err = credstore.Get(); !insecure && err != nil {
@@ -169,37 +165,6 @@ func start(
 		}
 	}
 
-	agent, err := docker.NewAgentFromEnv()
-
-	if err != nil {
-		return err
-	}
-
-	// the volume mounts to use
-	mounts := make([]mount.Mount, 0)
-
-	// the volumes passed to the Porter container
-	volumesMap := make(map[string]struct{})
-
-	if !skipKubeconfig {
-		// add a bind mount with the kubeconfig
-		mount := mount.Mount{
-			Type:        mount.TypeBind,
-			Source:      outputConfPath,
-			Target:      containerConfPath,
-			ReadOnly:    true,
-			Consistency: mount.ConsistencyFull,
-		}
-
-		mounts = append(mounts, mount)
-	}
-
-	netID, err := agent.CreateBridgeNetworkIfNotExist("porter_network")
-
-	if err != nil {
-		return err
-	}
-
 	env := make([]string, 0)
 
 	env = append(env, []string{
@@ -208,105 +173,28 @@ func start(
 		"ADMIN_PASSWORD=" + pw,
 	}...)
 
+	var porterDB docker.PorterDB
+
 	switch db {
-	case "sqlite":
-		// check if sqlite volume exists, create it if not
-		vol, err := agent.CreateLocalVolumeIfNotExist("porter_sqlite")
-
-		if err != nil {
-			return err
-		}
-
-		// create mount
-		mount := mount.Mount{
-			Type:        mount.TypeVolume,
-			Source:      vol.Name,
-			Target:      "/sqlite",
-			ReadOnly:    false,
-			Consistency: mount.ConsistencyFull,
-		}
-
-		mounts = append(mounts, mount)
-		volumesMap[vol.Name] = struct{}{}
-
-		env = append(env, []string{
-			"SQL_LITE=true",
-			"SQL_LITE_PATH=/sqlite/porter.db",
-		}...)
 	case "postgres":
-		// check if postgres volume exists, create it if not
-		vol, err := agent.CreateLocalVolumeIfNotExist("porter_postgres")
-
-		if err != nil {
-			return err
-		}
-
-		// pgMount is mount for postgres container
-		pgMount := []mount.Mount{
-			mount.Mount{
-				Type:        mount.TypeVolume,
-				Source:      vol.Name,
-				Target:      "/var/lib/postgresql/data",
-				ReadOnly:    false,
-				Consistency: mount.ConsistencyFull,
-			},
-		}
-
-		// create postgres container with mount
-		startOpts := docker.PostgresOpts{
-			Name:   "porter_postgres",
-			Image:  "postgres:latest",
-			Mounts: pgMount,
-			VolumeMap: map[string]struct{}{
-				"porter_postgres": struct{}{},
-			},
-			NetworkID: netID,
-			Env: []string{
-				"POSTGRES_USER=porter",
-				"POSTGRES_PASSWORD=porter",
-				"POSTGRES_DB=porter",
-			},
-		}
-
-		pgID, err := agent.StartPostgresContainer(startOpts)
-
-		fmt.Println("Waiting for postgres:latest to be healthy...")
-		agent.WaitForContainerHealthy(pgID, 10)
-
-		if err != nil {
-			return err
-		}
-
-		env = append(env, []string{
-			"SQL_LITE=false",
-			"DB_USER=porter",
-			"DB_PASS=porter",
-			"DB_NAME=porter",
-			"DB_HOST=porter_postgres",
-			"DB_PORT=5432",
-		}...)
-
-		defer agent.WaitForContainerStop(pgID)
+		porterDB = docker.Postgres
+	case "sqlite":
+		porterDB = docker.SQLite
 	}
 
-	// create Porter container
-	// TODO -- look for unused port
-	startOpts := docker.PorterStartOpts{
-		Name:          "porter_server",
-		Image:         "porter1/porter:" + imageTag,
-		HostPort:      uint(port),
-		ContainerPort: 8080,
-		Mounts:        mounts,
-		VolumeMap:     volumesMap,
-		NetworkID:     netID,
-		Env:           env,
+	port := 8080
+
+	startOpts := &docker.PorterStartOpts{
+		ProcessID:      "main",
+		ServerImageTag: imageTag,
+		ServerPort:     port,
+		DB:             porterDB,
+		KubeconfigPath: kubeconfigPath,
+		SkipKubeconfig: skipKubeconfig,
+		Env:            env,
 	}
 
-	id, err := agent.StartPorterContainer(startOpts)
-
-	if err != nil {
-		return err
-	}
+	agent, id, err := docker.StartPorter(startOpts)
 
 	fmt.Println("Spinning up the server...")
 	time.Sleep(7 * time.Second)

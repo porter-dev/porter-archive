@@ -74,6 +74,13 @@ func (app *App) HandleCreateProject(w http.ResponseWriter, r *http.Request) {
 	app.logger.Info().Msgf("New project created: %d", projModel.ID)
 
 	w.WriteHeader(http.StatusCreated)
+
+	projExt := projModel.Externalize()
+
+	if err := json.NewEncoder(w).Encode(projExt); err != nil {
+		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
+		return
+	}
 }
 
 // HandleReadProject returns an externalized Project (models.ProjectExternal)

@@ -3,8 +3,6 @@ package gorm_test
 import (
 	"testing"
 
-	"github.com/porter-dev/porter/internal/repository"
-
 	"github.com/go-test/deep"
 	"github.com/porter-dev/porter/internal/models"
 	orm "gorm.io/gorm"
@@ -114,10 +112,6 @@ func TestCreateServiceAccountCandidate(t *testing.T) {
 
 	// reset fields for reflect.DeepEqual
 	copySACandidate.Model = orm.Model{}
-	copySACandidate.Kubeconfig, _ = repository.Decrypt(
-		copySACandidate.Kubeconfig,
-		tester.key,
-	)
 
 	if diff := deep.Equal(copySACandidate, expSACandidate); diff != nil {
 		t.Errorf("incorrect sa candidate")
@@ -177,10 +171,7 @@ func TestCreateServiceAccountCandidateWithAction(t *testing.T) {
 
 	// reset fields for reflect.DeepEqual
 	copySACandidate.Model = orm.Model{}
-	copySACandidate.Kubeconfig, _ = repository.Decrypt(
-		copySACandidate.Kubeconfig,
-		tester.key,
-	)
+
 	copySACandidate.Actions[0].Model = orm.Model{}
 
 	if diff := deep.Equal(copySACandidate, expSACandidate); diff != nil {
@@ -232,10 +223,6 @@ func TestListServiceAccountCandidatesByProjectID(t *testing.T) {
 
 	// reset fields for reflect.DeepEqual
 	copySACandidate.Model = orm.Model{}
-	copySACandidate.Kubeconfig, _ = repository.Decrypt(
-		copySACandidate.Kubeconfig,
-		tester.key,
-	)
 	copySACandidate.Actions[0].Model = orm.Model{}
 
 	if diff := deep.Equal(copySACandidate, expSACandidate); diff != nil {
@@ -292,8 +279,6 @@ func TestCreateServiceAccount(t *testing.T) {
 
 	// reset fields for reflect.DeepEqual
 	copySA.Model = orm.Model{}
-	copySA.ClientCertificateData, _ = repository.Decrypt(copySA.ClientCertificateData, tester.key)
-	copySA.ClientKeyData, _ = repository.Decrypt(copySA.ClientKeyData, tester.key)
 
 	if diff := deep.Equal(copySA, expSA); diff != nil {
 		t.Errorf("incorrect service account")
@@ -353,13 +338,7 @@ func TestCreateServiceAccountWithCluster(t *testing.T) {
 
 	// reset fields for reflect.DeepEqual
 	copySA.Model = orm.Model{}
-	copySA.ClientCertificateData, _ = repository.Decrypt(copySA.ClientCertificateData, tester.key)
-	copySA.ClientKeyData, _ = repository.Decrypt(copySA.ClientKeyData, tester.key)
 	copySA.Clusters[0].Model = orm.Model{}
-	copySA.Clusters[0].CertificateAuthorityData, _ = repository.Decrypt(
-		copySA.Clusters[0].CertificateAuthorityData,
-		tester.key,
-	)
 
 	if diff := deep.Equal(copySA, expSA); diff != nil {
 		t.Errorf("incorrect service account")
@@ -410,13 +389,7 @@ func TestListServiceAccountsByProjectID(t *testing.T) {
 
 	// reset fields for reflect.DeepEqual
 	copySA.Model = orm.Model{}
-	copySA.ClientCertificateData, _ = repository.Decrypt(copySA.ClientCertificateData, tester.key)
-	copySA.ClientKeyData, _ = repository.Decrypt(copySA.ClientKeyData, tester.key)
 	copySA.Clusters[0].Model = orm.Model{}
-	copySA.Clusters[0].CertificateAuthorityData, _ = repository.Decrypt(
-		copySA.Clusters[0].CertificateAuthorityData,
-		tester.key,
-	)
 
 	if diff := deep.Equal(copySA, expSA); diff != nil {
 		t.Errorf("incorrect service account")

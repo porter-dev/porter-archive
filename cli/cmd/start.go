@@ -111,7 +111,7 @@ func stop() error {
 		return err
 	}
 
-	err = agent.StopPorterContainersWithProcessID("main")
+	err = agent.StopPorterContainersWithProcessID("main", false)
 
 	if err != nil {
 		return err

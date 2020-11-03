@@ -58,6 +58,8 @@ func (repo *ServiceAccountRepository) ReadServiceAccountCandidate(
 		return nil, err
 	}
 
+	repo.DecryptServiceAccountCandidateData(saCandidate, repo.key)
+
 	return saCandidate, nil
 }
 
@@ -70,6 +72,10 @@ func (repo *ServiceAccountRepository) ListServiceAccountCandidatesByProjectID(
 
 	if err := repo.db.Preload("Actions").Where("project_id = ?", projectID).Find(&saCandidates).Error; err != nil {
 		return nil, err
+	}
+
+	for _, saCandidate := range saCandidates {
+		repo.DecryptServiceAccountCandidateData(saCandidate, repo.key)
 	}
 
 	return saCandidates, nil
@@ -115,6 +121,8 @@ func (repo *ServiceAccountRepository) ReadServiceAccount(
 		return nil, err
 	}
 
+	repo.DecryptServiceAccountData(sa, repo.key)
+
 	return sa, nil
 }
 
@@ -127,6 +135,10 @@ func (repo *ServiceAccountRepository) ListServiceAccountsByProjectID(
 
 	if err := repo.db.Preload("Clusters").Where("project_id = ?", projectID).Find(&sas).Error; err != nil {
 		return nil, err
+	}
+
+	for _, sa := range sas {
+		repo.DecryptServiceAccountData(sa, repo.key)
 	}
 
 	return sas, nil
@@ -298,6 +310,177 @@ func (repo *ServiceAccountRepository) EncryptServiceAccountCandidateData(
 		}
 
 		saCandidate.Kubeconfig = cipherData
+	}
+
+	return nil
+}
+
+// DecryptServiceAccountData will decrypt the user's service account data before
+// returning it from the DB
+func (repo *ServiceAccountRepository) DecryptServiceAccountData(
+	sa *models.ServiceAccount,
+	key *[32]byte,
+) error {
+	if len(sa.ClientCertificateData) > 0 {
+		plaintext, err := repository.Decrypt(sa.ClientCertificateData, key)
+
+		if err != nil {
+			return err
+		}
+
+		sa.ClientCertificateData = plaintext
+	}
+
+	if len(sa.ClientKeyData) > 0 {
+		plaintext, err := repository.Decrypt(sa.ClientKeyData, key)
+
+		if err != nil {
+			return err
+		}
+
+		sa.ClientKeyData = plaintext
+	}
+
+	if sa.Token != "" {
+		plaintext, err := repository.Decrypt([]byte(sa.Token), key)
+
+		if err != nil {
+			return err
+		}
+
+		sa.Token = string(plaintext)
+	}
+
+	if sa.Username != "" {
+		plaintext, err := repository.Decrypt([]byte(sa.Username), key)
+
+		if err != nil {
+			return err
+		}
+
+		sa.Username = string(plaintext)
+	}
+
+	if sa.Password != "" {
+		plaintext, err := repository.Decrypt([]byte(sa.Password), key)
+
+		if err != nil {
+			return err
+		}
+
+		sa.Password = string(plaintext)
+	}
+
+	if len(sa.KeyData) > 0 {
+		plaintext, err := repository.Decrypt(sa.KeyData, key)
+
+		if err != nil {
+			return err
+		}
+
+		sa.KeyData = plaintext
+	}
+
+	if sa.PrevToken != "" {
+		plaintext, err := repository.Decrypt([]byte(sa.PrevToken), key)
+
+		if err != nil {
+			return err
+		}
+
+		sa.PrevToken = string(plaintext)
+	}
+
+	if sa.OIDCIssuerURL != "" {
+		plaintext, err := repository.Decrypt([]byte(sa.OIDCIssuerURL), key)
+
+		if err != nil {
+			return err
+		}
+
+		sa.OIDCIssuerURL = string(plaintext)
+	}
+
+	if sa.OIDCClientID != "" {
+		plaintext, err := repository.Decrypt([]byte(sa.OIDCClientID), key)
+
+		if err != nil {
+			return err
+		}
+
+		sa.OIDCClientID = string(plaintext)
+	}
+
+	if sa.OIDCClientSecret != "" {
+		plaintext, err := repository.Decrypt([]byte(sa.OIDCClientSecret), key)
+
+		if err != nil {
+			return err
+		}
+
+		sa.OIDCClientSecret = string(plaintext)
+	}
+
+	if sa.OIDCCertificateAuthorityData != "" {
+		plaintext, err := repository.Decrypt([]byte(sa.OIDCCertificateAuthorityData), key)
+
+		if err != nil {
+			return err
+		}
+
+		sa.OIDCCertificateAuthorityData = string(plaintext)
+	}
+
+	if sa.OIDCIDToken != "" {
+		plaintext, err := repository.Decrypt([]byte(sa.OIDCIDToken), key)
+
+		if err != nil {
+			return err
+		}
+
+		sa.OIDCIDToken = string(plaintext)
+	}
+
+	if sa.OIDCRefreshToken != "" {
+		plaintext, err := repository.Decrypt([]byte(sa.OIDCRefreshToken), key)
+
+		if err != nil {
+			return err
+		}
+
+		sa.OIDCRefreshToken = string(plaintext)
+	}
+
+	for i, cluster := range sa.Clusters {
+		if len(cluster.CertificateAuthorityData) > 0 {
+			plaintext, err := repository.Decrypt(cluster.CertificateAuthorityData, key)
+
+			if err != nil {
+				return err
+			}
+
+			cluster.CertificateAuthorityData = plaintext
+			sa.Clusters[i] = cluster
+		}
+	}
+
+	return nil
+}
+
+// DecryptServiceAccountCandidateData will decrypt the service account candidate data before
+// returning it from the DB
+func (repo *ServiceAccountRepository) DecryptServiceAccountCandidateData(
+	saCandidate *models.ServiceAccountCandidate,
+	key *[32]byte,
+) error {
+	if len(saCandidate.Kubeconfig) > 0 {
+		plaintext, err := repository.Decrypt(saCandidate.Kubeconfig, key)
+
+		if err != nil {
+			return err
+		}
+
+		saCandidate.Kubeconfig = plaintext
 	}
 
 	return nil

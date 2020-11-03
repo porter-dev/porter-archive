@@ -68,6 +68,11 @@ func (a *Agent) CreateLocalVolume(name string) (*types.Volume, error) {
 	return &vol, nil
 }
 
+// RemoveLocalVolume removes a volume by name
+func (a *Agent) RemoveLocalVolume(name string) error {
+	return a.client.VolumeRemove(a.ctx, name, true)
+}
+
 // CreateBridgeNetworkIfNotExist creates a volume using driver type "local" with the
 // given name if it does not exist. If the volume does exist but does not contain
 // the required label (a.label), an error is thrown.

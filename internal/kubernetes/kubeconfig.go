@@ -2,6 +2,7 @@ package kubernetes
 
 import (
 	"errors"
+	"fmt"
 	"strings"
 
 	"github.com/porter-dev/porter/internal/models"
@@ -72,6 +73,7 @@ func GetRawConfigFromBytes(kubeconfig []byte) (*api.Config, error) {
 	config, err := clientcmd.NewClientConfigFromBytes(kubeconfig)
 
 	if err != nil {
+		fmt.Println("ERROR IS HERE")
 		return nil, err
 	}
 

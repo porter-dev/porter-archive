@@ -2,31 +2,11 @@ package api_test
 
 import (
 	"context"
-	"fmt"
-	"os"
 	"strings"
 	"testing"
 
-	"github.com/porter-dev/porter/cli/cmd/docker"
-
 	"github.com/porter-dev/porter/cli/cmd/api"
 )
-
-const baseURL string = "http://localhost:10000/api"
-
-func TestMain(m *testing.M) {
-	err := startPorterServerWithDocker("user", 10000, docker.SQLite)
-
-	if err != nil {
-		fmt.Printf("%v\n", err)
-		os.Exit(1)
-	}
-
-	code := m.Run()
-	stopPorterServerWithDocker("user")
-
-	os.Exit(code)
-}
 
 func initUser(email string, client *api.Client, t *testing.T) *api.CreateUserResponse {
 	t.Helper()

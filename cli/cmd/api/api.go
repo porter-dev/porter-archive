@@ -5,7 +5,10 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"path/filepath"
 	"time"
+
+	"k8s.io/client-go/util/homedir"
 )
 
 // Client represents the client for the Porter API
@@ -13,7 +16,7 @@ type Client struct {
 	BaseURL        string
 	HTTPClient     *http.Client
 	Cookie         *http.Cookie
-	CookieFilename string
+	CookieFilePath string
 }
 
 // HTTPError is the Porter error response returned if a request fails
@@ -24,9 +27,12 @@ type HTTPError struct {
 
 // NewClient constructs a new client based on a set of options
 func NewClient(baseURL string, cookieFileName string) *Client {
+	home := homedir.HomeDir()
+	cookieFilePath := filepath.Join(home, ".porter", cookieFileName)
+
 	client := &Client{
 		BaseURL:        baseURL,
-		CookieFilename: cookieFileName,
+		CookieFilePath: cookieFilePath,
 		HTTPClient: &http.Client{
 			Timeout: time.Minute,
 		},
@@ -41,11 +47,11 @@ func NewClient(baseURL string, cookieFileName string) *Client {
 	return client
 }
 
-func (c *Client) sendRequest(req *http.Request, v interface{}) (*HTTPError, error) {
+func (c *Client) sendRequest(req *http.Request, v interface{}, useCookie bool) (*HTTPError, error) {
 	req.Header.Set("Content-Type", "application/json; charset=utf-8")
 	req.Header.Set("Accept", "application/json; charset=utf-8")
 
-	if cookie, _ := c.getCookie(); cookie != nil {
+	if cookie, _ := c.getCookie(); useCookie && cookie != nil {
 		c.Cookie = cookie
 		req.AddCookie(c.Cookie)
 	}
@@ -95,12 +101,12 @@ func (c *Client) saveCookie(cookie *http.Cookie) error {
 		return err
 	}
 
-	return ioutil.WriteFile(c.CookieFilename, data, 0644)
+	return ioutil.WriteFile(c.CookieFilePath, data, 0644)
 }
 
 // retrieves single cookie from file
 func (c *Client) getCookie() (*http.Cookie, error) {
-	data, err := ioutil.ReadFile(c.CookieFilename)
+	data, err := ioutil.ReadFile(c.CookieFilePath)
 
 	if err != nil {
 		return nil, err

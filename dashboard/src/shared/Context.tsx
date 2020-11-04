@@ -25,13 +25,10 @@ const ContextConsumer = Context.Consumer;
 class ContextProvider extends Component {
   state = {
     currentModal: null as string | null,
-    setCurrentModal: (currentModal: string): void => {
-      this.setState({ currentModal });
+    setCurrentModal: (currentModal: string, currentModalData?: any): void => {
+      this.setState({ currentModal, currentModalData });
     },
     currentModalData: null as any,
-    setCurrentModalData: (currentModalData: any): void => {
-      this.setState({ currentModalData });
-    },
     currentError: null as string | null,
     setCurrentError: (currentError: string): void => {
       this.setState({ currentError });

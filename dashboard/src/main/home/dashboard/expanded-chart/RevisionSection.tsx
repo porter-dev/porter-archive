@@ -21,6 +21,7 @@ type StateType = {
   maxVersion: number
 };
 
+// TODO: handle refresh when new revision is generated from an old revision
 export default class RevisionSection extends Component<PropsType, StateType> {
   state = {
     revisions: [] as ChartType[],
@@ -89,13 +90,22 @@ export default class RevisionSection extends Component<PropsType, StateType> {
     });
   }
 
+  handleClickRevision = (revision: ChartType) => {
+    let isCurrent = revision.version === this.state.maxVersion;
+    if (isCurrent) {
+      this.props.setRevisionPreview(null);
+    } else {
+      this.props.setRevisionPreview(revision);
+    }
+  }
+
   renderRevisionList = () => {
     return this.state.revisions.map((revision: ChartType, i: number) => {
       let isCurrent = revision.version === this.state.maxVersion;
       return (
         <Tr
           key={i}
-          onClick={() => this.props.setRevisionPreview(revision)}
+          onClick={() => this.handleClickRevision(revision)}
           selected={this.props.chart.version === revision.version}
         >
           <Td>{revision.version}</Td>
@@ -172,6 +182,7 @@ export default class RevisionSection extends Component<PropsType, StateType> {
       <div>
         <RevisionHeader
           showRevisions={this.props.showRevisions}
+          isCurrent={isCurrent}
           onClick={this.props.toggleShowRevisions}
         >
           {isCurrent ? `Current Revision` : `Previewing Revision (Not Deployed)`} - <Revision>No. {this.props.chart.version}</Revision>
@@ -343,7 +354,7 @@ const Revision = styled.div`
 `;
 
 const RevisionHeader = styled.div`
-  color: #ffffff66;
+  color: ${(props: { showRevisions: boolean, isCurrent: boolean }) => props.isCurrent ? '#ffffff66' : '#f5cb42'};
   display: flex;
   align-items: center;
   height: 40px;
@@ -351,7 +362,7 @@ const RevisionHeader = styled.div`
   width: 100%;
   padding-left: 15px;
   cursor: pointer;
-  background: ${(props: { showRevisions: boolean }) => props.showRevisions ? '#ffffff11' : ''};
+  background: ${(props: { showRevisions: boolean, isCurrent: boolean }) => props.showRevisions ? '#ffffff11' : ''};
   :hover {
     background: #ffffff18;
     > i {
@@ -364,8 +375,8 @@ const RevisionHeader = styled.div`
     font-size: 20px;
     cursor: pointer;
     border-radius: 20px;
-    background: ${(props: { showRevisions: boolean }) => props.showRevisions ? '#ffffff18' : ''};
-    transform: ${(props: { showRevisions: boolean }) => props.showRevisions ? 'rotate(180deg)' : ''};
+    background: ${(props: { showRevisions: boolean, isCurrent: boolean }) => props.showRevisions ? '#ffffff18' : ''};
+    transform: ${(props: { showRevisions: boolean, isCurrent: boolean }) => props.showRevisions ? 'rotate(180deg)' : ''};
   }
 `;
 

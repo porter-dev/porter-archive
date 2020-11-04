@@ -57,9 +57,50 @@ export interface EdgeType {
   target: number
 }
 
-
 export enum StorageType {
   Secret = 'secret',
   ConfigMap = 'configmap',
   Memory = 'memory'
+}
+
+// PorterChart represents a bundled Porter template
+export interface PorterChart {
+	Name: string,
+	Description: string,
+	Icon: string,
+  Form: FormYAML,
+  Markdown?: string,
+}
+
+// FormYAML represents a chart's values.yaml form abstraction
+export interface FormYAML {
+	Name: string,  
+	Icon: string,   
+	Description: string,   
+	Tags: string[],
+  Sections: {
+    Name: string,
+    Contents: FormElement[]
+  }[]
+}
+
+// FormElement represents a form element
+export interface FormElement {
+  Type: string,
+  Label: string,
+  Name: string,
+  Variable: string,
+  Settings: {
+    Default: number
+  }
+}
+
+export interface RepoType {
+  FullName: string,
+  kind: string
+}
+
+export interface FileType {
+  Path: string,
+  Type: string
 }

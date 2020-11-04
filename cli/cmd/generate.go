@@ -4,7 +4,8 @@ import (
 	"fmt"
 	"path/filepath"
 
-	"github.com/porter-dev/porter/internal/kubernetes"
+	"github.com/porter-dev/porter/internal/kubernetes/local"
+
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/util/homedir"
 
@@ -63,7 +64,7 @@ func init() {
 }
 
 func generate(kubeconfigPath string, output string, print bool, contexts []string) error {
-	conf, err := kubernetes.GetConfigFromHostWithCertData(kubeconfigPath, contexts)
+	conf, err := local.GetConfigFromHostWithCertData(kubeconfigPath, contexts)
 
 	if err != nil {
 		return err

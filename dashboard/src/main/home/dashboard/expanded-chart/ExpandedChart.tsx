@@ -12,6 +12,8 @@ import ValuesYaml from './ValuesYaml';
 import GraphSection from './GraphSection';
 import ListSection from './ListSection';
 import LogSection from './LogSection';
+import ValuesForm from '../../../../components/values-form/ValuesForm';
+import SettingsSection from './SettingsSection';
 
 type PropsType = {
   currentChart: ChartType,
@@ -31,21 +33,25 @@ type StateType = {
 const tabOptions = [
   { label: 'Chart Overview', value: 'graph' },
   { label: 'Search Chart', value: 'list' },
-  { label: 'Values Editor', value: 'values' },
-  { label: 'Logs', value: 'logs' },
+  { label: 'Raw Values', value: 'values' },
+  { label: 'Detailed Logs', value: 'detailed-logs' },
+  { label: 'Deploy', value: 'deploy' },
+  { label: 'Settings', value: 'settings' },
 ];
 
 const basicOptions = [
+  { label: 'Values', value: 'values-form' },
   { label: 'Environment', value: 'environment' },
-  { label: 'Update Values', value: 'values-abstracted' },
   { label: 'Logs', value: 'logs' },
+  { label: 'Deploy', value: 'deploy' },
+  { label: 'Settings', value: 'settings' },
 ];
 
 // TODO: consolidate revisionPreview and currentChart (currentChart can just be the initial state)
 export default class ExpandedChart extends Component<PropsType, StateType> {
   state = {
     showRevisions: false,
-    currentTab: 'environment',
+    currentTab: 'values-form',
     components: [] as ResourceType[],
     revisionPreview: null as (ChartType | null),
     devOpsMode: false
@@ -82,22 +88,31 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
     let { currentCluster } = this.context;
     this.setState({ revisionPreview: oldChart });
 
-    api.getChartComponents('<token>', {
-      namespace: oldChart.namespace,
-      context: currentCluster,
-      storage: StorageType.Secret
-    }, { name: oldChart.name, revision: oldChart.version }, (err: any, res: any) => {
-      if (err) {
-        console.log(err)
-      } else {
-        this.setState({ components: res.data });
+    if (oldChart) {
+      api.getChartComponents('<token>', {
+        namespace: oldChart.namespace,
+        context: currentCluster,
+        storage: StorageType.Secret
+      }, { name: oldChart.name, revision: oldChart.version }, (err: any, res: any) => {
+        if (err) {
+          console.log(err)
+        } else {
+          this.setState({ components: res.data });
+        }
+      });
+
+      // Handle preview old chart while logs tab is open
+      if (this.state.currentTab === 'logs') {
+        this.setState({ currentTab: 'values-form' });
+      } else if (this.state.currentTab === 'detailed-logs') {
+        this.setState({ currentTab: 'graph' });
       }
-    });
+    }
   }
 
   toggleDevOpsMode = () => {
     if (this.state.devOpsMode) {
-      this.setState({ devOpsMode: false, currentTab: 'environment' });
+      this.setState({ devOpsMode: false, currentTab: 'values-form' });
     } else {
       this.setState({ devOpsMode: true, currentTab: 'graph' });
     }
@@ -120,13 +135,27 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
     return `${time} on ${date}`;
   }
 
+  // Hide certain tabs when previewing old charts
+  getTabOptions = () => {
+    let options = basicOptions.slice();
+    if (this.state.devOpsMode) {
+      options = tabOptions.slice();
+    }
+
+    if (this.state.revisionPreview) {
+      options.pop();
+      options.pop();
+      options.pop();
+    }
+    return options;
+  }
+
   renderTabContents = () => {
     let { currentChart, refreshChart, setSidebar } = this.props;
     let chart = currentChart;
     if (this.state.revisionPreview) {
       chart = this.state.revisionPreview;
     }
-    console.log(chart)
     
     if (this.state.currentTab === 'graph') {
       return (
@@ -157,6 +186,15 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
       return (
         <LogSection
         />
+      );
+    } else if (this.state.currentTab === 'values-form') {
+      return (
+        <ValuesForm
+        />
+      );
+    } else if (this.state.currentTab === 'settings') {
+      return (
+        <SettingsSection />
       );
     }
 
@@ -194,7 +232,7 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
 
               <TagWrapper>
                 Namespace
-              <NamespaceTag>
+                <NamespaceTag>
                   {chart.namespace}
                 </NamespaceTag>
               </TagWrapper>
@@ -214,7 +252,8 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
 
             <TabSelectorWrapper>
               <TabSelector
-                options={this.state.devOpsMode ? tabOptions : basicOptions}
+                options={this.getTabOptions()}
+                color={this.state.revisionPreview ? '#f5cb42' : null}
                 currentTab={this.state.currentTab}
                 setCurrentTab={(value: string) => this.setState({ currentTab: value })}
                 addendum={

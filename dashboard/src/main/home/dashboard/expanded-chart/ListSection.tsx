@@ -36,7 +36,6 @@ export default class ListSection extends Component<PropsType, StateType> {
   }
 
   renderContents = () => {
-    console.log('rerendered!')
     if (this.props.components && this.props.components.length > 0) {
       return (
         <ResourceList>

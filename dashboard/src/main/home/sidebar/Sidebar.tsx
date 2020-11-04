@@ -14,7 +14,8 @@ type PropsType = {
   logOut: () => void,
   forceSidebar: boolean,
   setWelcome: (x: boolean) => void,
-  setCurrentView: (x: string) => void
+  setCurrentView: (x: string) => void,
+  currentView: string,
 };
 
 type StateType = {
@@ -125,7 +126,10 @@ export default class Sidebar extends Component<PropsType, StateType> {
           </UserSection>
 
           <SidebarLabel>Home</SidebarLabel>
-          <NavButton onClick={() => this.props.setCurrentView('templates')}>
+          <NavButton
+            onClick={() => this.props.setCurrentView('templates')}
+            selected={this.props.currentView === 'templates'}
+          >
             <img src={category} />
             Templates
           </NavButton>
@@ -146,6 +150,7 @@ export default class Sidebar extends Component<PropsType, StateType> {
             releaseDrawer={() => this.setState({ forceCloseDrawer: false })}
             setWelcome={this.props.setWelcome}
             setCurrentView={this.props.setCurrentView}
+            isSelected={this.props.currentView === 'dashboard'}
           />
 
           <BottomSection>
@@ -166,7 +171,6 @@ const NavButton = styled.div`
   position: relative;
   text-decoration: none;
   height: 42px;
-  margin: 3px 0px;
   padding: 10px 35px 12px 53px;
   font-size: 14px;
   font-family: 'Hind Siliguri', sans-serif;
@@ -174,10 +178,11 @@ const NavButton = styled.div`
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
-  cursor: ${(props: { disabled?: boolean }) => props.disabled ? 'not-allowed': 'pointer'};
+  background: ${(props: { disabled?: boolean, selected?: boolean }) => props.selected ? '#ffffff11' : ''};
+  cursor: ${(props: { disabled?: boolean, selected?: boolean }) => props.disabled ? 'not-allowed' : 'pointer'};
 
   :hover {
-    background: #ffffff0f;
+    background: ${(props: { disabled?: boolean, selected?: boolean }) => props.selected ? '' : '#ffffff08'};
   }
 
   > i {
@@ -244,6 +249,7 @@ const SidebarLabel = styled.div`
   padding: 5px 16px;
   margin-bottom: 5px;
   font-size: 14px;
+  z-index: 1;
   font-weight: 500;
 `;
 
@@ -369,7 +375,6 @@ const StyledSidebar = styled.section`
   padding-top: 20px;
   height: 100vh;
   z-index: 2;
-  background-color: #333748;
   animation: ${(props: { showSidebar: boolean }) => (props.showSidebar ? 'showSidebar 0.4s' : 'hideSidebar 0.4s')};
   animation-fill-mode: forwards;
   @keyframes showSidebar {

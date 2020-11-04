@@ -12,7 +12,8 @@ import ValuesYaml from './ValuesYaml';
 import GraphSection from './GraphSection';
 import ListSection from './ListSection';
 import LogSection from './LogSection';
-import ValuesForm from './values-form/ValuesForm';
+import ValuesForm from '../../../../components/values-form/ValuesForm';
+import SettingsSection from './SettingsSection';
 
 type PropsType = {
   currentChart: ChartType,
@@ -190,6 +191,10 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
       return (
         <ValuesForm
         />
+      );
+    } else if (this.state.currentTab === 'settings') {
+      return (
+        <SettingsSection />
       );
     }
 

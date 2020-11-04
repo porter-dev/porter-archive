@@ -64,8 +64,7 @@ export default class Drawer extends Component<PropsType, StateType> {
           {this.renderClusterList()}
 
           <InitializeButton onClick={() => {
-            this.context.setCurrentModal('ClusterConfigModal');
-            this.context.setCurrentModalData({ updateClusters: this.props.updateClusters });
+            this.context.setCurrentModal('ClusterConfigModal', { updateClusters: this.props.updateClusters });
           }}>
             <Plus>+</Plus> Manage Clusters
           </InitializeButton>
@@ -197,12 +196,12 @@ const StyledDrawer = styled.div`
   animation: ${(props: { showDrawer: boolean }) => (props.showDrawer ? 'slideDrawerRight 0.4s' : 'slideDrawerLeft 0.4s')};
   animation-fill-mode: forwards;
   @keyframes slideDrawerRight {
-    from { left: -30px }
-    to { left: 200px }
+    from { left: -30px; opacity: 0; }
+    to { left: 200px; opacity: 1; }
   }
   @keyframes slideDrawerLeft {
-    from { left: 200px }
-    to { left: -30px }
+    from { left: 200px; opacity: 1; }
+    to { left: -30px; opacity: 0; }
   }
 `;
 

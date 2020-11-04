@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import styled from 'styled-components';
 
-import SaveButton from '../../../../../components/SaveButton';
+import SaveButton from '../SaveButton';
 import CheckboxRow from './CheckboxRow';
 import InputRow from './InputRow';
 import SelectRow from './SelectRow';
@@ -101,7 +101,7 @@ export default class ValuesForm extends Component<PropsType, StateType> {
           {this.renderFormContents()}
         </StyledValuesForm>
         <SaveButton
-          text='Save Values'
+          text='Deploy'
           onClick={() => console.log(this.state)}
           status={null}
         />
@@ -136,10 +136,12 @@ const Heading = styled.div`
 
 const StyledValuesForm = styled.div`
   width: 100%;
-  height: calc(100% - 60px);
+  height: 100%;
   background: #ffffff11;
-  padding: 0px 35px 50px;
+  color: #ffffff;
+  padding: 0px 35px;
   position: relative;
   border-radius: 5px;
+  font-size: 13px;
   overflow: auto;
 `;

@@ -15,8 +15,6 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-var baseURL string = "https://porter-dev.github.io/chart-repo/"
-
 // IndexYAML represents a chart repo's index.yaml
 type IndexYAML struct {
 	APIVersion string                    `yaml:"apiVersion"`
@@ -71,6 +69,8 @@ type FormYAML struct {
 // TODO: test and reduce fragility (handle untar/parse error for individual charts)
 // TODO: separate markdown retrieval into its own query if necessary
 func (app *App) HandleListTemplates(w http.ResponseWriter, r *http.Request) {
+	baseURL := "https://porter-dev.github.io/chart-repo/"
+
 	resp, err := http.Get(baseURL + "index.yaml")
 	if err != nil {
 		fmt.Println(err)

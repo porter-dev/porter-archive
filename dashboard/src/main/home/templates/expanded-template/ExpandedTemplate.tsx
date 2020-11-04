@@ -3,11 +3,13 @@ import styled from 'styled-components';
 import launch from '../../../../assets/launch.svg';
 import Markdown from 'markdown-to-jsx';
 
+import { Context } from '../../../../shared/Context';
+
 import { PorterChart } from '../../../../shared/types';
 
 type PropsType = {
-  currentChart: PorterChart,
-  setCurrentChart: (x: PorterChart) => void
+  currentTemplate: PorterChart,
+  setCurrentTemplate: (x: PorterChart) => void
 };
 
 type StateType = {
@@ -28,7 +30,7 @@ export default class ExpandedTemplate extends Component<PropsType, StateType> {
   }
 
   renderTagList = () => {
-    return this.props.currentChart.Form.Tags.map((tag: string, i: number) => {
+    return this.props.currentTemplate.Form.Tags.map((tag: string, i: number) => {
       return (
         <Tag key={i}>{tag}</Tag>
       )
@@ -36,33 +38,34 @@ export default class ExpandedTemplate extends Component<PropsType, StateType> {
   }
 
   renderMarkdown = () => {
-    let { currentChart } = this.props;
-    if (currentChart.Markdown) {
+    let { currentTemplate } = this.props;
+    if (currentTemplate.Markdown) {
       return (
-        <Markdown>{currentChart.Markdown}</Markdown>
+        <Markdown>{currentTemplate.Markdown}</Markdown>
       );
-    } else if (currentChart.Form.Description) {
-      return currentChart.Form.Description;
+    } else if (currentTemplate.Form.Description) {
+      return currentTemplate.Form.Description;
     }
 
-    return currentChart.Description;
+    return currentTemplate.Description;
   }
 
   render() {
-    let { Name, Icon, Description } = this.props.currentChart.Form;
-    let { currentChart } = this.props;
+    let { Name, Icon, Description } = this.props.currentTemplate.Form;
+    let { currentTemplate } = this.props;
+    let name = Name ? Name : currentTemplate.Name;
 
     return (
       <StyledExpandedTemplate>
         <TitleSection>
           <Flex>
-            <i className="material-icons" onClick={() => this.props.setCurrentChart(null)}>
+            <i className="material-icons" onClick={() => this.props.setCurrentTemplate(null)}>
               keyboard_backspace
             </i>
-            {Icon ? this.renderIcon(Icon) : this.renderIcon(currentChart.Icon)}
-            <Title>{Name ? Name : currentChart.Name}</Title>
+            {Icon ? this.renderIcon(Icon) : this.renderIcon(currentTemplate.Icon)}
+            <Title>{name}</Title>
           </Flex>
-          <Button>
+          <Button onClick={() => this.context.setCurrentModal('LaunchTemplateModal', { template: currentTemplate })}>
             <img src={launch} />
             Launch Template
           </Button>
@@ -79,8 +82,10 @@ export default class ExpandedTemplate extends Component<PropsType, StateType> {
   }
 }
 
+ExpandedTemplate.contextType = Context;
+
 const ContentSection = styled.div`
-  margin-top: 40px;
+  margin-top: 50px;
   font-size: 14px;
   line-height: 1.8em;
   padding-bottom: 100px;

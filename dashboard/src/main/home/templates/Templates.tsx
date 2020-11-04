@@ -17,7 +17,7 @@ type PropsType = {
 };
 
 type StateType = {
-  currentChart: PorterChart | null,
+  currentTemplate: PorterChart | null,
   currentTab: string,
   porterCharts: PorterChart[],
   loading: boolean,
@@ -26,23 +26,21 @@ type StateType = {
 
 export default class Templates extends Component<PropsType, StateType> {
   state = {
-    currentChart: null as (PorterChart | null),
+    currentTemplate: null as (PorterChart | null),
     currentTab: 'community',
     porterCharts: [] as PorterChart[],
-    loading: false,
+    loading: true,
     error: false,
   }
 
   componentDidMount() {
 
     // Get templates
-    this.setState({ loading: true });
     api.getTemplates('<token>', {}, {}, (err: any, res: any) => {
       if (err) {
         this.setState({ loading: false, error: true });
       } else {
         this.setState({ porterCharts: res.data, loading: false, error: false });
-        console.log(res.data)
       }
     });
   }
@@ -79,7 +77,7 @@ export default class Templates extends Component<PropsType, StateType> {
     return this.state.porterCharts.map((template: PorterChart, i: number) => {
       let { Name, Icon, Description } = template.Form;
       return (
-        <TemplateBlock key={i} onClick={() => this.setState({ currentChart: template })}>
+        <TemplateBlock key={i} onClick={() => this.setState({ currentTemplate: template })}>
           {Icon ? this.renderIcon(Icon) : this.renderIcon(template.Icon)}
           <TemplateTitle>
             {Name ? Name : template.Name}
@@ -93,11 +91,11 @@ export default class Templates extends Component<PropsType, StateType> {
   }
 
   renderContents = () => {
-    if (this.state.currentChart) {
+    if (this.state.currentTemplate) {
       return (
         <ExpandedTemplate
-          currentChart={this.state.currentChart}
-          setCurrentChart={(currentChart: PorterChart) => this.setState({ currentChart })}
+          currentTemplate={this.state.currentTemplate}
+          setCurrentTemplate={(currentTemplate: PorterChart) => this.setState({ currentTemplate })}
         />
       );
     }

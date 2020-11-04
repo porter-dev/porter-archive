@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import styled from 'styled-components';
 
-import Selector from '../../../../../components/Selector';
+import Selector from '../Selector';
 
 type PropsType = {
   label: string,

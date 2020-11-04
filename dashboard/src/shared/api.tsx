@@ -98,12 +98,27 @@ const upgradeChartValues = baseApi<{
 
 const getTemplates = baseApi('GET', '/api/templates');
 
+const getRepos = baseApi('GET', '/api/repos');
+
+const getBranches = baseApi<{}, { kind: string, repo: string }>('GET', pathParams => {
+  return `/api/repos/${pathParams.kind}/${pathParams.repo}/branches`;
+});
+
+const getBranchContents = baseApi<{ dir: string }, {
+  kind: string,
+  repo: string,
+  branch: string
+}>('GET', pathParams => {
+  return `/api/repos/github/${pathParams.repo}/${pathParams.branch}/contents`;
+});
+
 // Bundle export to allow default api import (api.<method> is more readable)
 export default {
   checkAuth,
   registerUser,
   logInUser,
   logOutUser,
+  getRepos,
   getUser,
   updateUser,
   getContexts,
@@ -114,5 +129,7 @@ export default {
   getRevisions,
   rollbackChart,
   upgradeChartValues,
-  getTemplates
+  getTemplates,
+  getBranches,
+  getBranchContents
 }

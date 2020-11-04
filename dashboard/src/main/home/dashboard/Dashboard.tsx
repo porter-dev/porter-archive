@@ -285,7 +285,7 @@ const TitleSection = styled.div`
 
   > i {
     margin-left: 10px;
-    cursor: pointer;
+    cursor: not-allowed;
     font-size 18px;
     color: #858FAAaa;
     padding: 5px;

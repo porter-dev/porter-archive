@@ -94,3 +94,13 @@ export interface FormElement {
     Default: number
   }
 }
+
+export interface RepoType {
+  FullName: string,
+  kind: string
+}
+
+export interface FileType {
+  Path: string,
+  Type: string
+}

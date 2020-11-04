@@ -12,7 +12,8 @@ type PropsType = {
   forceCloseDrawer: boolean,
   releaseDrawer: () => void,
   setWelcome: (x: boolean) => void,
-  setCurrentView: (x: string) => void
+  setCurrentView: (x: string) => void,
+  isSelected: boolean
 };
 
 type StateType = {
@@ -94,8 +95,7 @@ export default class ClusterSection extends Component<PropsType, StateType> {
   };
 
   showClusterConfigModal = () => {
-    this.context.setCurrentModal('ClusterConfigModal');
-    this.context.setCurrentModalData({ updateClusters: this.updateClusters });
+    this.context.setCurrentModal('ClusterConfigModal', { updateClusters: this.updateClusters });
   }
 
   renderContents = (): JSX.Element => {
@@ -104,7 +104,7 @@ export default class ClusterSection extends Component<PropsType, StateType> {
 
     if (kubeContexts.length > 0) {
       return (
-        <ClusterSelector showDrawer={showDrawer}>
+        <ClusterSelector isSelected={this.props.isSelected}>
           <LinkWrapper onClick={() => this.props.setCurrentView('dashboard')}>
             <ClusterIcon><i className="material-icons">device_hub</i></ClusterIcon>
             <ClusterName>{currentCluster}</ClusterName>
@@ -169,6 +169,7 @@ const BgAccent = styled.img`
   background: #819BFD;
   width: 30px;
   border-top-left-radius: 100px;
+  max-width: 30px;
   border-bottom-left-radius: 100px;
   position: absolute;
   top: 0;
@@ -260,10 +261,10 @@ const ClusterSelector = styled.div`
   font-weight: 500;
   color: white;
   cursor: pointer;
-  background: ${(props: { showDrawer: boolean }) => props.showDrawer ? '#ffffff0f' : ''};
+  background: ${(props: { isSelected: boolean }) => props.isSelected ? '#ffffff11' : ''};
   z-index: 1;
 
   :hover {
-    background: #ffffff0f;
+    background: ${(props: { isSelected: boolean }) => props.isSelected ? '' : '#ffffff08'};
   }
 `;

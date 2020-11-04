@@ -118,12 +118,19 @@ const GlobalStyle = createGlobalStyle`
     box-sizing: border-box;
     font-family: 'Work Sans', sans-serif;
   }
+  
   body {
     background: #202227;
     overscroll-behavior-x: none;
   }
+
   a {
     color: #949eff;
+    text-decoration: none;
+  }
+
+  img {
+    max-width: 100%;
   }
 `;
 

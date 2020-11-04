@@ -25,7 +25,7 @@ export default class NamespaceSelector extends Component<PropsType, StateType> {
   }
 
   updateOptions = () => {
-    let { currentCluster, setCurrentError } = this.context;
+    let { currentCluster } = this.context;
 
     api.getNamespaces('<token>', { context: currentCluster }, {}, (err: any, res: any) => {
       if (err) {

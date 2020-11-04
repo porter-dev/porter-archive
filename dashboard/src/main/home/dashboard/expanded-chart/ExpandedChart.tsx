@@ -154,8 +154,7 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
       );
     } else if (this.state.currentTab === 'logs') {
       return (
-        <LogSection
-        />
+        <LogSection components={this.state.components}/>
       );
     }
 

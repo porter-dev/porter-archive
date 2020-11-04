@@ -62,6 +62,9 @@ export default class NamespaceSelector extends Component<PropsType, StateType> {
           setActiveValue={(namespace) => this.props.setNamespace(namespace)}
           options={this.state.namespaceOptions}
           dropdownLabel='Namespace:'
+          width='150px'
+          dropdownWidth='230px'
+          closeOverlay={true}
         />
       </StyledNamespaceSelector>
     );

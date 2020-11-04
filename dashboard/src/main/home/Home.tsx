@@ -7,6 +7,7 @@ import { Context } from '../../shared/Context';
 import Sidebar from './sidebar/Sidebar';
 import Dashboard from './dashboard/Dashboard';
 import ClusterConfigModal from './modals/ClusterConfigModal';
+import LaunchTemplateModal from './modals/LaunchTemplateModal';
 import Loading from '../../components/Loading';
 import Templates from './templates/Templates';
 
@@ -28,7 +29,7 @@ export default class Home extends Component<PropsType, StateType> {
   }
 
   renderDashboard = () => {
-    let { currentCluster, setCurrentModal, setCurrentModalData } = this.context;
+    let { currentCluster, setCurrentModal } = this.context;
 
     if (currentCluster === '' || this.state.showWelcome) {
       return (
@@ -37,8 +38,7 @@ export default class Home extends Component<PropsType, StateType> {
             <Bold>Porter - Getting Started</Bold><br /><br />
             1. Navigate to <A onClick={() => setCurrentModal('ClusterConfigModal')}>+ Add a Cluster</A> and provide a kubeconfig. *<br /><br />
             2. Choose which contexts you would like to use from the <A onClick={() => {
-              setCurrentModal('ClusterConfigModal');
-              setCurrentModalData({ currentTab: 'select' });
+              setCurrentModal('ClusterConfigModal', { currentTab: 'select' });
             }}>Select Clusters</A> tab.<br /><br />
             3. For additional information, please refer to our <A>docs</A>.<br /><br /><br />
             
@@ -77,11 +77,19 @@ export default class Home extends Component<PropsType, StateType> {
       <StyledHome>
         <ReactModal
           isOpen={this.context.currentModal === 'ClusterConfigModal'}
-          onRequestClose={() => this.context.setCurrentModal(null)}
+          onRequestClose={() => this.context.setCurrentModal(null, null)}
           style={MediumModalStyles}
           ariaHideApp={false}
         >
           <ClusterConfigModal />
+        </ReactModal>
+        <ReactModal
+          isOpen={this.context.currentModal === 'LaunchTemplateModal'}
+          onRequestClose={() => this.context.setCurrentModal(null, null)}
+          style={MediumModalStyles}
+          ariaHideApp={false}
+        >
+          <LaunchTemplateModal />
         </ReactModal>
 
         <Sidebar
@@ -89,6 +97,7 @@ export default class Home extends Component<PropsType, StateType> {
           forceSidebar={this.state.forceSidebar}
           setWelcome={(x: boolean) => this.setState({ showWelcome: x })}
           setCurrentView={(x: string) => this.setState({ currentView: x })}
+          currentView={this.state.currentView}
         />
         
         {this.renderContents()}

@@ -24,7 +24,7 @@ type StateType = {
 const tabOptions = [
   { label: 'Raw Kubeconfig', value: 'kubeconfig' },
   { label: 'Select Clusters', value: 'select' }
-]
+];
 
 export default class ClusterConfigModal extends Component<PropsType, StateType> {
   state = {
@@ -195,8 +195,7 @@ export default class ClusterConfigModal extends Component<PropsType, StateType> 
     return (
       <StyledClusterConfigModal>
         <CloseButton onClick={() => {
-          this.context.setCurrentModal(null);
-          this.context.setCurrentModalData(null);
+          this.context.setCurrentModal(null, null);
         }}>
           <CloseButtonImg src={close} />
         </CloseButton>
@@ -347,6 +346,7 @@ const Plus = styled.span`
 
 const CloseButton = styled.div`
   position: absolute;
+  z-index: 1;
   display: block;
   width: 40px;
   height: 40px;

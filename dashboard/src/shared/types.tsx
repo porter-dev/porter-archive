@@ -68,7 +68,8 @@ export interface PorterChart {
 	Name: string,
 	Description: string,
 	Icon: string,
-	Form: FormYAML
+  Form: FormYAML,
+  Markdown?: string,
 }
 
 // FormYAML represents a chart's values.yaml form abstraction
@@ -92,4 +93,14 @@ export interface FormElement {
   Settings: {
     Default: number
   }
+}
+
+export interface RepoType {
+  FullName: string,
+  kind: string
+}
+
+export interface FileType {
+  Path: string,
+  Type: string
 }

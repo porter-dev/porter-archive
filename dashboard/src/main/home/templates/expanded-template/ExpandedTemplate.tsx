@@ -1,12 +1,15 @@
 import React, { Component } from 'react';
 import styled from 'styled-components';
 import launch from '../../../../assets/launch.svg';
+import Markdown from 'markdown-to-jsx';
+
+import { Context } from '../../../../shared/Context';
 
 import { PorterChart } from '../../../../shared/types';
 
 type PropsType = {
-  currentChart: PorterChart,
-  setCurrentChart: (x: PorterChart) => void
+  currentTemplate: PorterChart,
+  setCurrentTemplate: (x: PorterChart) => void
 };
 
 type StateType = {
@@ -27,28 +30,42 @@ export default class ExpandedTemplate extends Component<PropsType, StateType> {
   }
 
   renderTagList = () => {
-    return this.props.currentChart.Form.Tags.map((tag: string, i: number) => {
+    return this.props.currentTemplate.Form.Tags.map((tag: string, i: number) => {
       return (
         <Tag key={i}>{tag}</Tag>
       )
     });
   }
 
+  renderMarkdown = () => {
+    let { currentTemplate } = this.props;
+    if (currentTemplate.Markdown) {
+      return (
+        <Markdown>{currentTemplate.Markdown}</Markdown>
+      );
+    } else if (currentTemplate.Form.Description) {
+      return currentTemplate.Form.Description;
+    }
+
+    return currentTemplate.Description;
+  }
+
   render() {
-    let { Name, Icon, Description } = this.props.currentChart.Form;
-    let { currentChart } = this.props;
+    let { Name, Icon, Description } = this.props.currentTemplate.Form;
+    let { currentTemplate } = this.props;
+    let name = Name ? Name : currentTemplate.Name;
 
     return (
       <StyledExpandedTemplate>
         <TitleSection>
           <Flex>
-            <i className="material-icons" onClick={() => this.props.setCurrentChart(null)}>
+            <i className="material-icons" onClick={() => this.props.setCurrentTemplate(null)}>
               keyboard_backspace
             </i>
-            {Icon ? this.renderIcon(Icon) : this.renderIcon(currentChart.Icon)}
-            <Title>{Name ? Name : currentChart.Name}</Title>
+            {Icon ? this.renderIcon(Icon) : this.renderIcon(currentTemplate.Icon)}
+            <Title>{name}</Title>
           </Flex>
-          <Button>
+          <Button onClick={() => this.context.setCurrentModal('LaunchTemplateModal', { template: currentTemplate })}>
             <img src={launch} />
             Launch Template
           </Button>
@@ -58,21 +75,20 @@ export default class ExpandedTemplate extends Component<PropsType, StateType> {
           {this.renderTagList()}
         </TagSection>
         <ContentSection>
-          <br />
-          [Add Markdown Support] <br /><br />
-          Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. <br /><br />
-          Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. <br /><br />
-          Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. <br /><br />
+          {this.renderMarkdown()}
         </ContentSection>
       </StyledExpandedTemplate>
     );
   }
 }
 
+ExpandedTemplate.contextType = Context;
+
 const ContentSection = styled.div`
-  margin-top: 20px;
+  margin-top: 50px;
   font-size: 14px;
   line-height: 1.8em;
+  padding-bottom: 100px;
 `;
 
 const Tag = styled.div`
@@ -125,7 +141,7 @@ const Button = styled.div`
   font-size: 13px;
   padding: 10px 15px;
   border-radius: 3px;
-  cursor: not-allowed;
+  cursor: pointer;
   box-shadow: 0 5px 8px 0px #00000010;
   display: flex;
   flex-direction: row;

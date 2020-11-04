@@ -46,6 +46,11 @@ func New(
 		// /api/templates routes
 		r.Method("GET", "/templates", auth.BasicAuthenticate(requestlog.NewHandler(a.HandleListTemplates, l)))
 
+		// /api/repos routes
+		r.Method("GET", "/repos", auth.BasicAuthenticate(requestlog.NewHandler(a.HandleListRepos, l)))
+		r.Method("GET", "/repos/{kind}/{name}/branches", auth.BasicAuthenticate(requestlog.NewHandler(a.HandleGetBranches, l)))
+		r.Method("GET", "/repos/{kind}/{name}/{branch}/contents", auth.BasicAuthenticate(requestlog.NewHandler(a.HandleGetBranchContents, l)))
+
 		// /api/k8s routes
 		r.Method("GET", "/k8s/namespaces", auth.BasicAuthenticate(requestlog.NewHandler(a.HandleListNamespaces, l)))
 	})

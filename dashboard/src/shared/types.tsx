@@ -74,24 +74,29 @@ export interface PorterChart {
 
 // FormYAML represents a chart's values.yaml form abstraction
 export interface FormYAML {
-	Name: string,  
-	Icon: string,   
-	Description: string,   
-	Tags: string[],
-  Sections: {
-    Name: string,
-    Contents: FormElement[]
-  }[]
+	Name?: string,  
+	Icon?: string,   
+	Description?: string,   
+	Tags?: string[],
+  Sections?: Section[]
+}
+
+export interface Section {
+  Name?: string,
+  ShowIf?: string,
+  Contents: FormElement[]
 }
 
 // FormElement represents a form element
 export interface FormElement {
   Type: string,
   Label: string,
-  Name: string,
-  Variable: string,
-  Settings: {
-    Default: number
+  Name?: string,
+  Variable?: string,
+  Settings?: {
+    Default?: number | string | boolean,
+    Options?: any[],
+    Unit?: string
   }
 }
 

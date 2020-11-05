@@ -47,6 +47,98 @@ const basicOptions = [
   { label: 'Settings', value: 'settings' },
 ];
 
+// FormYAML represents a chart's values.yaml form abstraction
+export interface FormYAML {
+	Name?: string,  
+	Icon?: string,   
+	Description?: string,   
+	Tags?: string[],
+  Sections?: Section[]
+}
+
+export interface Section {
+  Name?: string,
+  ShowIf?: string,
+  Contents: FormElement[]
+}
+
+// FormElement represents a form element
+export interface FormElement {
+  Type: string,
+  Label: string,
+  Name?: string,
+  Variable?: string,
+  Settings?: {
+    Default?: number | string | boolean,
+    Options?: any[],
+    Unit?: string
+  }
+}
+
+const dummyForm = {
+  Sections: [
+    {
+      Name: 'main',
+      Contents: [
+        {
+          Type: 'heading',
+          Label: '⚡ Electric feel settings',
+          Settings: {}
+        },
+        {
+          Type: 'subtitle',
+          Label: 'Shock me like an electric eel',
+          Settings: {}
+        },
+        {
+          Type: 'number-input',
+          Name: 'voltage',
+          Variable: 'volts',
+          Label: 'Voltage',
+          Settings: {
+            Default: 200,
+            Unit: 'Volts'
+          }
+        },
+        {
+          Type: 'number-input',
+          Name: 'batteries',
+          Variable: 'batteries',
+          Label: 'Batteries',
+          Settings: {
+            Default: 4,
+            Unit: 'AA'
+          }
+        },
+        {
+          Type: 'checkbox',
+          Name: 'trivia-checkbox',
+          Label: 'Show a fun fact?',
+          Settings: {
+            Default: true
+          }
+        },
+      ]
+    },
+    {
+      Name: 'trivia',
+      ShowIf: 'trivia-checkbox',
+      Contents: [
+        {
+          Type: 'heading',
+          Label: '🌊 Ocean fact No. 11232',
+          Settings: {}
+        },
+        {
+          Type: 'subtitle',
+          Label: 'Electric eels can reach huge proportions, exceeding 8 feet in length and 44 pounds in weight.',
+          Settings: {}
+        }
+      ]
+    }
+  ]
+}
+
 // TODO: consolidate revisionPreview and currentChart (currentChart can just be the initial state)
 export default class ExpandedChart extends Component<PropsType, StateType> {
   state = {
@@ -189,8 +281,9 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
       );
     } else if (this.state.currentTab === 'values-form') {
       return (
-        <ValuesForm
-        />
+        <ValuesFormWrapper>
+          <ValuesForm formData={dummyForm} />
+        </ValuesFormWrapper>
       );
     } else if (this.state.currentTab === 'settings') {
       return (
@@ -275,6 +368,12 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
 }
 
 ExpandedChart.contextType = Context;
+
+const ValuesFormWrapper = styled.div`
+  width: 100%;
+  height: calc(100% - 60px);
+  margin-bottom: 60px;
+`;
 
 const Unimplemented = styled.div`
   width: 100%;

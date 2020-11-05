@@ -8,6 +8,7 @@ import (
 
 	"github.com/porter-dev/porter/internal/providers/gcp"
 	"google.golang.org/api/cloudresourcemanager/v1"
+	gke "google.golang.org/api/container/v1"
 
 	admin "cloud.google.com/go/iam/admin/apiv1"
 
@@ -37,11 +38,14 @@ func NewDefaultAgent() (*gcp.Agent, error) {
 		return nil, err
 	}
 
+	gkeService, err := gke.NewService(ctx)
+
 	return &gcp.Agent{
 		Ctx:                         ctx,
 		ProjectID:                   creds.ProjectID,
 		IAMClient:                   c,
 		CloudResourceManagerService: cloudresourcemanagerService,
+		GKEService:                  gkeService,
 	}, nil
 }
 

@@ -35,8 +35,6 @@ var startCmd = &cobra.Command{
 	Use:   "start",
 	Short: "Starts a Porter instance using the Docker engine.",
 	Run: func(cmd *cobra.Command, args []string) {
-		closeHandler(stop)
-
 		err := start(
 			opts.imageTag,
 			opts.kubeconfigPath,
@@ -194,14 +192,12 @@ func start(
 		Env:            env,
 	}
 
-	agent, id, err := docker.StartPorter(startOpts)
+	_, _, err = docker.StartPorter(startOpts)
 
 	fmt.Println("Spinning up the server...")
 	time.Sleep(7 * time.Second)
 	openBrowser(fmt.Sprintf("http://localhost:%d/login?email=%s", port, username))
 	fmt.Printf("Server ready: listening on localhost:%d\n", port)
-
-	agent.WaitForContainerStop(id)
 
 	return nil
 }

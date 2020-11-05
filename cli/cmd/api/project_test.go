@@ -167,6 +167,10 @@ func TestCreateProjectCandidates(t *testing.T) {
 	if resp[0].Actions[0].Name != models.OIDCIssuerDataAction {
 		t.Errorf("action name incorrect: expected %s, got %s\n", models.OIDCIssuerDataAction, resp[0].Actions[0].Name)
 	}
+
+	if resp[0].Actions[0].Filename != "/fake/path/to/ca.pem" {
+		t.Errorf("action filename incorrect: expected %s, got %s\n", "/fake/path/to/ca.pem", resp[0].Actions[0].Filename)
+	}
 }
 
 func TestGetProjectCandidates(t *testing.T) {
@@ -215,6 +219,10 @@ func TestGetProjectCandidates(t *testing.T) {
 
 	if resp[0].Actions[0].Name != models.OIDCIssuerDataAction {
 		t.Errorf("action name incorrect: expected %s, got %s\n", models.OIDCIssuerDataAction, resp[0].Actions[0].Name)
+	}
+
+	if resp[0].Actions[0].Filename != "/fake/path/to/ca.pem" {
+		t.Errorf("action filename incorrect: expected %s, got %s\n", "/fake/path/to/ca.pem", resp[0].Actions[0].Filename)
 	}
 }
 

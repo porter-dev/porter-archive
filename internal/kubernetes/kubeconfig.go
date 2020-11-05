@@ -1,11 +1,13 @@
 package kubernetes
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"strings"
 
 	"github.com/porter-dev/porter/internal/models"
+	"golang.org/x/oauth2/google"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/tools/clientcmd/api"
 )
@@ -103,6 +105,7 @@ func parseAuthInfoForActions(authInfo *api.AuthInfo) (authMechanism string, acti
 			actions = append(actions, models.ServiceAccountAction{
 				Name:     models.ClientCertDataAction,
 				Resolved: false,
+				Filename: authInfo.ClientCertificate,
 			})
 		}
 
@@ -110,6 +113,7 @@ func parseAuthInfoForActions(authInfo *api.AuthInfo) (authMechanism string, acti
 			actions = append(actions, models.ServiceAccountAction{
 				Name:     models.ClientKeyDataAction,
 				Resolved: false,
+				Filename: authInfo.ClientKey,
 			})
 		}
 
@@ -119,7 +123,7 @@ func parseAuthInfoForActions(authInfo *api.AuthInfo) (authMechanism string, acti
 	if authInfo.AuthProvider != nil {
 		switch authInfo.AuthProvider.Name {
 		case "oidc":
-			_, isFile := authInfo.AuthProvider.Config["idp-certificate-authority"]
+			filename, isFile := authInfo.AuthProvider.Config["idp-certificate-authority"]
 			data, isData := authInfo.AuthProvider.Config["idp-certificate-authority-data"]
 
 			if isFile && (!isData || data == "") {
@@ -127,6 +131,7 @@ func parseAuthInfoForActions(authInfo *api.AuthInfo) (authMechanism string, acti
 					models.ServiceAccountAction{
 						Name:     models.OIDCIssuerDataAction,
 						Resolved: false,
+						Filename: filename,
 					},
 				}
 			}
@@ -159,6 +164,7 @@ func parseAuthInfoForActions(authInfo *api.AuthInfo) (authMechanism string, acti
 				models.ServiceAccountAction{
 					Name:     models.TokenDataAction,
 					Resolved: false,
+					Filename: authInfo.TokenFile,
 				},
 			}
 		}
@@ -183,6 +189,7 @@ func parseClusterForActions(cluster *api.Cluster) (actions []models.ServiceAccou
 			models.ServiceAccountAction{
 				Name:     models.ClusterCADataAction,
 				Resolved: false,
+				Filename: cluster.CertificateAuthority,
 			},
 		}
 	}
@@ -277,9 +284,12 @@ func createRawConfigFromServiceAccount(
 	authInfoMap := make(map[string]*api.AuthInfo)
 
 	authInfoMap[authInfoName] = &api.AuthInfo{
-		LocationOfOrigin:  sa.LocationOfOrigin,
-		Impersonate:       sa.Impersonate,
-		ImpersonateGroups: strings.Split(sa.ImpersonateGroups, ","),
+		LocationOfOrigin: sa.LocationOfOrigin,
+		Impersonate:      sa.Impersonate,
+	}
+
+	if groups := strings.Split(sa.ImpersonateGroups, ","); len(groups) > 0 && groups[0] != "" {
+		authInfoMap[authInfoName].ImpersonateGroups = groups
 	}
 
 	switch sa.AuthMechanism {
@@ -303,10 +313,24 @@ func createRawConfigFromServiceAccount(
 				"refresh-token":                  sa.OIDCRefreshToken,
 			},
 		}
+	// we'll add a bearer token here for now
 	case models.GCP:
-		return nil, errors.New("gcp unimplemented")
+		creds, err := google.CredentialsFromJSON(
+			context.Background(),
+			sa.KeyData,
+			"https://www.googleapis.com/auth/cloud-platform",
+		)
+
+		if err != nil {
+			return nil, err
+		}
+
+		tok, err := creds.TokenSource.Token()
+
+		authInfoMap[authInfoName].Token = tok.AccessToken
 	case models.AWS:
-		return nil, errors.New("gcp unimplemented")
+	default:
+		return nil, errors.New("not a supported auth mechanism")
 	}
 
 	// create a context of the cluster name

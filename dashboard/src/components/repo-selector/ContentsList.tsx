@@ -62,7 +62,6 @@ export default class ContentsList extends Component<PropsType, StateType> {
 
   componentDidUpdate(prevProps: PropsType) {
     if (this.props.subdirectory !== prevProps.subdirectory) {
-      console.log('New subdirectory:', this.props.subdirectory);
       this.updateContents();  
     }
   }

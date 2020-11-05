@@ -85,13 +85,19 @@ export default class LaunchTemplateModal extends Component<PropsType, StateType>
       );
     }
 
-    console.log(this.context.currentModalData.template.Form)
+    let subdir = this.state.subdirectory === '' ? '' : '/' + this.state.subdirectory;
     return (
       <Div>
         <Subtitle>Optionally edit default settings for this template</Subtitle>
         <ValuesFormWrapper>
-          <ValuesForm />
+          <ValuesForm
+            formData={this.context.currentModalData.template.Form}
+          />
         </ValuesFormWrapper>
+        <RepoButton onClick={() => this.setState({ currentView: 'repo' })}>
+          <i className="material-icons">keyboard_backspace</i>
+          {this.state.selectedRepo.FullName + subdir}
+        </RepoButton>
       </Div>
     );
   }
@@ -138,6 +144,34 @@ export default class LaunchTemplateModal extends Component<PropsType, StateType>
 }
 
 LaunchTemplateModal.contextType = Context;
+
+const RepoButton = styled.div`
+  height: 40px;
+  font-size: 13px;
+  padding: 6px 20px 7px 13px;
+  border-radius: 5px;
+  background: #ffffff11;
+  color: #ffffff;
+  border: 1px solid #ffffff55;
+  cursor: pointer;
+  user-select: none;
+  display: flex;
+  align-items: center;
+  position: absolute;
+  bottom: 25px;
+  left: 30px;
+  :hover {
+    background: #ffffff22;
+  }
+
+  > i {
+    font-size: 16px;
+    margin-right: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+`;
 
 const Div = styled.div`
   width: calc(100% + 64px);

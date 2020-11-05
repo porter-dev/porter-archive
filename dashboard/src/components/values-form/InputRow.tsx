@@ -1,10 +1,11 @@
-import React, { Component } from 'react';
+import React, { ChangeEvent, Component } from 'react';
 import styled from 'styled-components';
 
 type PropsType = {
   label: string,
   type: string,
   value: string | number,
+  setValue: (x: string) => void,
   unit?: string
 };
 
@@ -13,12 +14,19 @@ type StateType = {
 
 export default class InputRow extends Component<PropsType, StateType> {
   render() {
+    let { label, value, type, unit } = this.props;
     return (
       <StyledInputRow>
-        <Label>{this.props.label}</Label>
+        <Label>{label}</Label>
         <InputWrapper>
-          <Input type={this.props.type} />
-          <Unit>{this.props.unit}</Unit>
+          <Input
+            type={type}
+            value={value}
+            onChange={(e: ChangeEvent<HTMLInputElement>) =>
+              this.props.setValue(e.target.value)
+            }
+          />
+          <Unit>{unit}</Unit>
         </InputWrapper>
       </StyledInputRow>
     );

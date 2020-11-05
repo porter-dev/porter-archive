@@ -53,6 +53,7 @@ type FormYAML struct {
 	Tags        []string `yaml:"tags"`
 	Sections    []struct {
 		Name     string `yaml:"name"`
+		ShowIf   string `yaml:"show_if"`
 		Contents []struct {
 			Type     string `yaml:"type"`
 			Label    string `yaml:"label"`

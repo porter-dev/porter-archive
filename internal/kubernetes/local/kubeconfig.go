@@ -15,6 +15,58 @@ import (
 	"k8s.io/client-go/util/homedir"
 )
 
+// GetKubeconfigFromHost returns the kubeconfig for a list of contexts using default
+// options set on the host, or an explicit kubeconfig path. It then strips the kubeconfig
+// of contexts not specified in the contexts array, and returns generate kubeconfig.
+func GetKubeconfigFromHost(kubeconfigPath string, contexts []string) ([]byte, error) {
+	envVarName := clientcmd.RecommendedConfigPathEnvVar
+
+	if kubeconfigPath != "" {
+		if _, err := os.Stat(kubeconfigPath); os.IsNotExist(err) {
+			// the specified kubeconfig does not exist so fallback to other options
+			kubeconfigPath = ""
+		}
+	}
+
+	if kubeconfigPath == "" && os.Getenv(envVarName) == "" {
+		if home := homedir.HomeDir(); home != "" {
+			kubeconfigPath = filepath.Join(home, ".kube", "config")
+		}
+	}
+
+	loadingRules := clientcmd.NewDefaultClientConfigLoadingRules()
+	loadingRules.ExplicitPath = kubeconfigPath
+
+	clientConf := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(loadingRules, &clientcmd.ConfigOverrides{})
+	rawConf, err := clientConf.RawConfig()
+
+	if err != nil {
+		return nil, err
+	}
+
+	if len(contexts) == 0 {
+		contexts = []string{rawConf.CurrentContext}
+
+		if contexts[0] == "" {
+			return nil, fmt.Errorf("at least one context must be specified")
+		}
+	}
+
+	conf, err := stripAndValidateClientContexts(&rawConf, contexts[0], contexts)
+
+	if err != nil {
+		return nil, err
+	}
+
+	strippedRawConf, err := conf.RawConfig()
+
+	if err != nil {
+		return nil, err
+	}
+
+	return clientcmd.Write(strippedRawConf)
+}
+
 // GetConfigFromHostWithCertData gets the kubeconfig using default options set on the host:
 // the kubeconfig can either be retrieved from a specified path or an environment variable.
 // This function only outputs a clientcmd that uses the allowedContexts.
@@ -66,8 +118,6 @@ func GetConfigFromHostWithCertData(kubeconfigPath string, allowedContexts []stri
 	return res, nil
 }
 
-// GetRestrictedClientConfigFromBytes returns a clientcmd.ClientConfig from a raw kubeconfig,
-// a context name, and the set of allowed contexts.
 func stripAndValidateClientContexts(
 	rawConf *clientcmdapi.Config,
 	currentContext string,

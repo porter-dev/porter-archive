@@ -64,14 +64,31 @@ type OutOfClusterConfig struct {
 	ClusterID      uint                   `json:"cluster_id" form:"required"`
 }
 
-// ToRESTConfig creates a kubernetes REST client factory -- it simply calls ClientConfig on
-// the result of ToRawKubeConfigLoader
+// ToRESTConfig creates a kubernetes REST client factory -- it calls ClientConfig on
+// the result of ToRawKubeConfigLoader, and also adds a custom http transport layer
+// if necessary (required for GCP auth)
 func (conf *OutOfClusterConfig) ToRESTConfig() (*rest.Config, error) {
 	restConf, err := conf.ToRawKubeConfigLoader().ClientConfig()
 
 	if err != nil {
 		return nil, err
 	}
+
+	// if conf.ServiceAccount.AuthMechanism == models.GCP {
+	// 	creds, err := google.CredentialsFromJSON(
+	// 		context.Background(),
+	// 		conf.ServiceAccount.KeyData,
+	// 		"https://www.googleapis.com/auth/cloud-platform",
+	// 	)
+
+	// 	if err != nil {
+	// 		return nil, err
+	// 	}
+
+	// 	restConf.Transport = &oauth2.Transport{
+	// 		Source: creds.TokenSource,
+	// 	}
+	// }
 
 	rest.SetKubernetesDefaults(restConf)
 	return restConf, nil

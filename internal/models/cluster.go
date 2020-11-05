@@ -20,6 +20,7 @@ type Cluster struct {
 
 // ClusterExternal is the external cluster type to be sent over REST
 type ClusterExternal struct {
+	ID                    uint   `json:"id"`
 	ServiceAccountID      uint   `json:"service_account_id"`
 	Name                  string `json:"name"`
 	Server                string `json:"server"`
@@ -31,6 +32,7 @@ type ClusterExternal struct {
 // Externalize generates an external Cluster to be shared over REST
 func (c *Cluster) Externalize() *ClusterExternal {
 	return &ClusterExternal{
+		ID:                    c.Model.ID,
 		ServiceAccountID:      c.ServiceAccountID,
 		Name:                  c.Name,
 		Server:                c.Server,

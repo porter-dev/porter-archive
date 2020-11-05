@@ -182,6 +182,7 @@ var SACandidatesTests = []saCandidatesTest{
 					models.ServiceAccountAction{
 						Name:     "upload-cluster-ca-data",
 						Resolved: false,
+						Filename: "/fake/path/to/ca.pem",
 					},
 				},
 				Kind:            "connector",
@@ -215,6 +216,7 @@ var SACandidatesTests = []saCandidatesTest{
 					models.ServiceAccountAction{
 						Name:     "upload-client-cert-data",
 						Resolved: false,
+						Filename: "/fake/path/to/cert.pem",
 					},
 				},
 				Kind:            "connector",
@@ -234,6 +236,7 @@ var SACandidatesTests = []saCandidatesTest{
 					models.ServiceAccountAction{
 						Name:     "upload-client-key-data",
 						Resolved: false,
+						Filename: "/fake/path/to/key.pem",
 					},
 				},
 				Kind:            "connector",
@@ -253,10 +256,12 @@ var SACandidatesTests = []saCandidatesTest{
 					models.ServiceAccountAction{
 						Name:     "upload-client-cert-data",
 						Resolved: false,
+						Filename: "/fake/path/to/cert.pem",
 					},
 					models.ServiceAccountAction{
 						Name:     "upload-client-key-data",
 						Resolved: false,
+						Filename: "/fake/path/to/key.pem",
 					},
 				},
 				Kind:            "connector",
@@ -290,6 +295,7 @@ var SACandidatesTests = []saCandidatesTest{
 					models.ServiceAccountAction{
 						Name:     "upload-token-data",
 						Resolved: false,
+						Filename: "/path/to/token/file.txt",
 					},
 				},
 				Kind:            "connector",
@@ -366,6 +372,7 @@ var SACandidatesTests = []saCandidatesTest{
 					models.ServiceAccountAction{
 						Name:     "upload-oidc-idp-issuer-ca-data",
 						Resolved: false,
+						Filename: "/fake/path/to/ca.pem",
 					},
 				},
 				Kind:            "connector",
@@ -453,6 +460,11 @@ func TestGetServiceAccountCandidates(t *testing.T) {
 					if res.Actions[i].Name != action.Name {
 						t.Errorf("%s failed on action names: expected res to contain %s, got %s\n",
 							c.name, action.Name, res.Actions[i].Name)
+					}
+
+					if res.Actions[i].Filename != action.Filename {
+						t.Errorf("%s failed on action file names: expected res to contain %s, got %s\n",
+							c.name, action.Filename, res.Actions[i].Filename)
 					}
 				}
 			}

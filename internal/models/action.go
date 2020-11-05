@@ -23,6 +23,10 @@ type ServiceAccountAction struct {
 	// One of the constant action names
 	Name     string `json:"name"`
 	Resolved bool   `json:"resolved"`
+
+	// Filename is an optional filename, if the action requires
+	// data populated from a local file
+	Filename string `json:"filename,omitempty"`
 }
 
 // Externalize generates an external ServiceAccount to be shared over REST
@@ -32,6 +36,7 @@ func (u *ServiceAccountAction) Externalize() *ServiceAccountActionExternal {
 	return &ServiceAccountActionExternal{
 		Name:     u.Name,
 		Resolved: u.Resolved,
+		Filename: u.Filename,
 		Docs:     info.Docs,
 		Fields:   info.Fields,
 	}
@@ -44,6 +49,7 @@ type ServiceAccountActionExternal struct {
 	Docs     string `json:"docs"`
 	Resolved bool   `json:"resolved"`
 	Fields   string `json:"fields"`
+	Filename string `json:"filename,omitempty"`
 }
 
 // ServiceAccountAllActions is a helper type that contains the fields for

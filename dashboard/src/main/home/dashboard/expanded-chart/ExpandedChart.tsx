@@ -12,7 +12,8 @@ import ValuesYaml from './ValuesYaml';
 import GraphSection from './GraphSection';
 import ListSection from './ListSection';
 import LogSection from './LogSection';
-import ValuesForm from './values-form/ValuesForm';
+import ValuesForm from '../../../../components/values-form/ValuesForm';
+import SettingsSection from './SettingsSection';
 
 type PropsType = {
   currentChart: ChartType,
@@ -33,14 +34,110 @@ const tabOptions = [
   { label: 'Chart Overview', value: 'graph' },
   { label: 'Search Chart', value: 'list' },
   { label: 'Raw Values', value: 'values' },
-  { label: 'Logs', value: 'logs' },
+  { label: 'Detailed Logs', value: 'detailed-logs' },
+  { label: 'Deploy', value: 'deploy' },
+  { label: 'Settings', value: 'settings' },
 ];
 
 const basicOptions = [
-  { label: 'Update Values', value: 'values-form' },
+  { label: 'Values', value: 'values-form' },
   { label: 'Environment', value: 'environment' },
   { label: 'Logs', value: 'logs' },
+  { label: 'Deploy', value: 'deploy' },
+  { label: 'Settings', value: 'settings' },
 ];
+
+// FormYAML represents a chart's values.yaml form abstraction
+export interface FormYAML {
+	Name?: string,  
+	Icon?: string,   
+	Description?: string,   
+	Tags?: string[],
+  Sections?: Section[]
+}
+
+export interface Section {
+  Name?: string,
+  ShowIf?: string,
+  Contents: FormElement[]
+}
+
+// FormElement represents a form element
+export interface FormElement {
+  Type: string,
+  Label: string,
+  Name?: string,
+  Variable?: string,
+  Settings?: {
+    Default?: number | string | boolean,
+    Options?: any[],
+    Unit?: string
+  }
+}
+
+const dummyForm = {
+  Sections: [
+    {
+      Name: 'main',
+      Contents: [
+        {
+          Type: 'heading',
+          Label: '⚡ Electric feel settings',
+          Settings: {}
+        },
+        {
+          Type: 'subtitle',
+          Label: 'Shock me like an electric eel',
+          Settings: {}
+        },
+        {
+          Type: 'number-input',
+          Name: 'voltage',
+          Variable: 'volts',
+          Label: 'Voltage',
+          Settings: {
+            Default: 200,
+            Unit: 'Volts'
+          }
+        },
+        {
+          Type: 'number-input',
+          Name: 'batteries',
+          Variable: 'batteries',
+          Label: 'Batteries',
+          Settings: {
+            Default: 4,
+            Unit: 'AA'
+          }
+        },
+        {
+          Type: 'checkbox',
+          Name: 'trivia-checkbox',
+          Label: 'Show a fun fact?',
+          Settings: {
+            Default: true
+          }
+        },
+      ]
+    },
+    {
+      Name: 'trivia',
+      ShowIf: 'trivia-checkbox',
+      Contents: [
+        {
+          Type: 'heading',
+          Label: '🌊 Ocean fact No. 11232',
+          Settings: {}
+        },
+        {
+          Type: 'subtitle',
+          Label: 'Electric eels can reach huge proportions, exceeding 8 feet in length and 44 pounds in weight.',
+          Settings: {}
+        }
+      ]
+    }
+  ]
+}
 
 // TODO: consolidate revisionPreview and currentChart (currentChart can just be the initial state)
 export default class ExpandedChart extends Component<PropsType, StateType> {
@@ -83,17 +180,26 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
     let { currentCluster } = this.context;
     this.setState({ revisionPreview: oldChart });
 
-    api.getChartComponents('<token>', {
-      namespace: oldChart.namespace,
-      context: currentCluster,
-      storage: StorageType.Secret
-    }, { name: oldChart.name, revision: oldChart.version }, (err: any, res: any) => {
-      if (err) {
-        console.log(err)
-      } else {
-        this.setState({ components: res.data });
+    if (oldChart) {
+      api.getChartComponents('<token>', {
+        namespace: oldChart.namespace,
+        context: currentCluster,
+        storage: StorageType.Secret
+      }, { name: oldChart.name, revision: oldChart.version }, (err: any, res: any) => {
+        if (err) {
+          console.log(err)
+        } else {
+          this.setState({ components: res.data });
+        }
+      });
+
+      // Handle preview old chart while logs tab is open
+      if (this.state.currentTab === 'logs') {
+        this.setState({ currentTab: 'values-form' });
+      } else if (this.state.currentTab === 'detailed-logs') {
+        this.setState({ currentTab: 'graph' });
       }
-    });
+    }
   }
 
   toggleDevOpsMode = () => {
@@ -119,6 +225,21 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
     let date = ts.toLocaleDateString();
     let time = ts.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
     return `${time} on ${date}`;
+  }
+
+  // Hide certain tabs when previewing old charts
+  getTabOptions = () => {
+    let options = basicOptions.slice();
+    if (this.state.devOpsMode) {
+      options = tabOptions.slice();
+    }
+
+    if (this.state.revisionPreview) {
+      options.pop();
+      options.pop();
+      options.pop();
+    }
+    return options;
   }
 
   renderTabContents = () => {
@@ -160,8 +281,13 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
       );
     } else if (this.state.currentTab === 'values-form') {
       return (
-        <ValuesForm
-        />
+        <ValuesFormWrapper>
+          <ValuesForm formData={dummyForm} />
+        </ValuesFormWrapper>
+      );
+    } else if (this.state.currentTab === 'settings') {
+      return (
+        <SettingsSection />
       );
     }
 
@@ -199,7 +325,7 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
 
               <TagWrapper>
                 Namespace
-              <NamespaceTag>
+                <NamespaceTag>
                   {chart.namespace}
                 </NamespaceTag>
               </TagWrapper>
@@ -219,7 +345,8 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
 
             <TabSelectorWrapper>
               <TabSelector
-                options={this.state.devOpsMode ? tabOptions : basicOptions}
+                options={this.getTabOptions()}
+                color={this.state.revisionPreview ? '#f5cb42' : null}
                 currentTab={this.state.currentTab}
                 setCurrentTab={(value: string) => this.setState({ currentTab: value })}
                 addendum={
@@ -241,6 +368,12 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
 }
 
 ExpandedChart.contextType = Context;
+
+const ValuesFormWrapper = styled.div`
+  width: 100%;
+  height: calc(100% - 60px);
+  margin-bottom: 60px;
+`;
 
 const Unimplemented = styled.div`
   width: 100%;

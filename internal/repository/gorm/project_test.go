@@ -1,90 +1,13 @@
 package gorm_test
 
 import (
-	"os"
 	"testing"
 
 	"github.com/go-test/deep"
 	"github.com/porter-dev/porter/internal/models"
 
-	"github.com/porter-dev/porter/internal/adapter"
-	"github.com/porter-dev/porter/internal/config"
-	"github.com/porter-dev/porter/internal/repository"
-	"github.com/porter-dev/porter/internal/repository/gorm"
-
 	orm "gorm.io/gorm"
 )
-
-type tester struct {
-	repo             *repository.Repository
-	key              *[32]byte
-	dbFileName       string
-	initProjects     []*models.Project
-	initSACandidates []*models.ServiceAccountCandidate
-	initSAs          []*models.ServiceAccount
-}
-
-func setupTestEnv(tester *tester, t *testing.T) {
-	t.Helper()
-
-	db, err := adapter.New(&config.DBConf{
-		EncryptionKey: "__random_strong_encryption_key__",
-		SQLLite:       true,
-		SQLLitePath:   tester.dbFileName,
-	})
-
-	if err != nil {
-		t.Fatalf("%v\n", err)
-	}
-
-	err = db.AutoMigrate(
-		&models.Project{},
-		&models.Role{},
-		&models.ServiceAccount{},
-		&models.ServiceAccountAction{},
-		&models.ServiceAccountCandidate{},
-		&models.Cluster{},
-		&models.User{},
-		&models.Session{},
-	)
-
-	if err != nil {
-		t.Fatalf("%v\n", err)
-	}
-
-	var key [32]byte
-
-	for i, b := range []byte("__random_strong_encryption_key__") {
-		key[i] = b
-	}
-
-	tester.key = &key
-
-	tester.repo = gorm.NewRepository(db, &key)
-}
-
-func cleanup(tester *tester, t *testing.T) {
-	t.Helper()
-
-	// remove the created file file
-	os.Remove(tester.dbFileName)
-}
-
-func initProject(tester *tester, t *testing.T) {
-	t.Helper()
-
-	proj := &models.Project{
-		Name: "project-test",
-	}
-
-	proj, err := tester.repo.Project.CreateProject(proj)
-
-	if err != nil {
-		t.Fatalf("%v\n", err)
-	}
-
-	tester.initProjects = append(tester.initProjects, proj)
-}
 
 func TestCreateProject(t *testing.T) {
 	tester := &tester{

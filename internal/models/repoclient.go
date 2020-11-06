@@ -1,8 +1,6 @@
 package models
 
 import (
-	"strings"
-
 	"gorm.io/gorm"
 )
 
@@ -16,11 +14,12 @@ const (
 type RepoClient struct {
 	gorm.Model
 
-	ProjectID uint `json:"project_id"`
+	ProjectID  uint `json:"project_id"`
+	UserID     uint `json:"user_id"`
+	RepoUserID uint `json:"repo_id"`
 
 	// the kind can be one of the predefined repo kinds
-	Kind         string `json:"kind"`
-	Repositories string `json:"repositories"`
+	Kind string `json:"kind"`
 
 	// ------------------------------------------------------------------
 	// All fields below this line are encrypted before storage
@@ -33,18 +32,20 @@ type RepoClient struct {
 // RepoClientExternal is a RepoClient scrubbed of sensitive information to be
 // shared over REST
 type RepoClientExternal struct {
-	ID           uint     `json:"id"`
-	ProjectID    uint     `json:"project_id"`
-	Kind         string   `json:"kind"`
-	Repositories []string `json:"repositories"`
+	ID         uint   `json:"id"`
+	ProjectID  uint   `json:"project_id"`
+	UserID     uint   `json:"user_id"`
+	RepoUserID uint   `json:"repo_id"`
+	Kind       string `json:"kind"`
 }
 
 // Externalize generates an external RepoClient to be shared over REST
 func (r *RepoClient) Externalize() *RepoClientExternal {
 	return &RepoClientExternal{
-		ID:           r.Model.ID,
-		ProjectID:    r.ProjectID,
-		Kind:         r.Kind,
-		Repositories: strings.Split(r.Repositories, ","),
+		ID:         r.Model.ID,
+		ProjectID:  r.ProjectID,
+		UserID:     r.UserID,
+		RepoUserID: r.RepoUserID,
+		Kind:       r.Kind,
 	}
 }

@@ -8,60 +8,6 @@ import (
 	orm "gorm.io/gorm"
 )
 
-func initServiceAccountCandidate(tester *tester, t *testing.T) {
-	t.Helper()
-
-	saCandidate := &models.ServiceAccountCandidate{
-		ProjectID:       1,
-		Kind:            "connector",
-		ClusterName:     "cluster-test",
-		ClusterEndpoint: "https://localhost",
-		AuthMechanism:   models.X509,
-		Kubeconfig:      []byte("current-context: testing\n"),
-		Actions: []models.ServiceAccountAction{
-			models.ServiceAccountAction{
-				Name:     models.TokenDataAction,
-				Resolved: false,
-			},
-		},
-	}
-
-	saCandidate, err := tester.repo.ServiceAccount.CreateServiceAccountCandidate(saCandidate)
-
-	if err != nil {
-		t.Fatalf("%v\n", err)
-	}
-
-	tester.initSACandidates = append(tester.initSACandidates, saCandidate)
-}
-
-func initServiceAccount(tester *tester, t *testing.T) {
-	t.Helper()
-
-	sa := &models.ServiceAccount{
-		ProjectID:             1,
-		Kind:                  "connector",
-		AuthMechanism:         models.X509,
-		ClientCertificateData: []byte("-----BEGIN"),
-		ClientKeyData:         []byte("-----BEGIN"),
-		Clusters: []models.Cluster{
-			models.Cluster{
-				Name:                     "cluster-test",
-				Server:                   "https://localhost",
-				CertificateAuthorityData: []byte("-----BEGIN"),
-			},
-		},
-	}
-
-	sa, err := tester.repo.ServiceAccount.CreateServiceAccount(sa)
-
-	if err != nil {
-		t.Fatalf("%v\n", err)
-	}
-
-	tester.initSAs = append(tester.initSAs, sa)
-}
-
 func TestCreateServiceAccountCandidate(t *testing.T) {
 	tester := &tester{
 		dbFileName: "./porter_create_sa_candidate.db",

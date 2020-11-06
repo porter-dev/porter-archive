@@ -22,7 +22,7 @@ func NewGithubClient(cfg *Config) *oauth2.Config {
 			AuthURL:  "https://github.com/login/oauth/authorize",
 			TokenURL: "https://github.com/login/oauth/access_token",
 		},
-		RedirectURL: cfg.BaseURL + "/api/auth/callback/github",
+		RedirectURL: cfg.BaseURL + "/api/oauth/github/callback",
 		Scopes:      cfg.Scopes,
 	}
 }

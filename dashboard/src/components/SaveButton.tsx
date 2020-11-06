@@ -105,12 +105,12 @@ const Button = styled.button`
   text-align: left;
   border: 0;
   border-radius: 5px;
-  background: ${(props) => (!props.disabled ? '#616FEEcc' : '#bbd')};
+  background: ${(props) => (!props.disabled ? '#616FEEcc' : '#aaaabb')};
   box-shadow: ${(props) => (!props.disabled ? '0 2px 5px 0 #00000030' : 'none')};
   cursor: ${(props) => (!props.disabled ? 'pointer' : 'default')};
   user-select: none;
   :focus { outline: 0 }
   :hover {
-    background: ${(props) => (!props.disabled ? '#616FEEff' : '#bbd')};
+    background: ${(props) => (!props.disabled ? '#616FEEff' : '#aaaabb')};
   }
 `;

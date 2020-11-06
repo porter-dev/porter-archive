@@ -4,6 +4,8 @@ import (
 	"github.com/go-playground/locales/en"
 	ut "github.com/go-playground/universal-translator"
 	"github.com/go-playground/validator/v10"
+	"github.com/porter-dev/porter/internal/oauth"
+	"golang.org/x/oauth2"
 
 	"github.com/gorilla/sessions"
 	"github.com/porter-dev/porter/internal/helm"
@@ -23,14 +25,15 @@ type TestAgents struct {
 // App represents an API instance with handler methods attached, a DB connection
 // and a logger instance
 type App struct {
-	logger     *lr.Logger
-	repo       *repository.Repository
-	validator  *validator.Validate
-	store      sessions.Store
-	translator *ut.Translator
-	cookieName string
-	testing    bool
-	TestAgents *TestAgents
+	logger       *lr.Logger
+	repo         *repository.Repository
+	validator    *validator.Validate
+	store        sessions.Store
+	translator   *ut.Translator
+	cookieName   string
+	testing      bool
+	TestAgents   *TestAgents
+	GithubConfig *oauth2.Config
 }
 
 // New returns a new App instance
@@ -41,6 +44,7 @@ func New(
 	store sessions.Store,
 	cookieName string,
 	testing bool,
+	githubConfig *oauth.Config,
 ) *App {
 	// for now, will just support the english translator from the
 	// validator/translations package
@@ -61,14 +65,15 @@ func New(
 	}
 
 	return &App{
-		logger:     logger,
-		repo:       repo,
-		validator:  validator,
-		store:      store,
-		translator: &trans,
-		cookieName: cookieName,
-		testing:    testing,
-		TestAgents: testAgents,
+		logger:       logger,
+		repo:         repo,
+		validator:    validator,
+		store:        store,
+		translator:   &trans,
+		cookieName:   cookieName,
+		testing:      testing,
+		TestAgents:   testAgents,
+		GithubConfig: oauth.NewGithubClient(githubConfig),
 	}
 }
 

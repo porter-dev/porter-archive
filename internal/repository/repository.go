@@ -6,4 +6,5 @@ type Repository struct {
 	Project        ProjectRepository
 	Session        SessionRepository
 	ServiceAccount ServiceAccountRepository
+	RepoClient     RepoClientRepository
 }

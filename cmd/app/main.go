@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/gorilla/sessions"
+	"github.com/porter-dev/porter/internal/oauth"
 	"github.com/porter-dev/porter/internal/repository/gorm"
 
 	"github.com/porter-dev/porter/server/api"
@@ -52,7 +53,20 @@ func main() {
 
 	validator := vr.New()
 
-	a := api.New(logger, repo, validator, store, appConf.Server.CookieName, false)
+	a := api.New(
+		logger,
+		repo,
+		validator,
+		store,
+		appConf.Server.CookieName,
+		false,
+		&oauth.Config{
+			ClientID:     appConf.Server.GithubClientID,
+			ClientSecret: appConf.Server.GithubClientSecret,
+			Scopes:       []string{"repo", "user", "read:user"},
+			BaseURL:      appConf.Server.ServerURL,
+		},
+	)
 
 	appRouter := router.New(a, store, appConf.Server.CookieName, appConf.Server.StaticFilePath, repo)
 

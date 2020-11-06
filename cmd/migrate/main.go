@@ -31,6 +31,7 @@ func main() {
 		&models.Cluster{},
 		&models.User{},
 		&models.Session{},
+		&models.RepoClient{},
 	)
 
 	if err != nil {

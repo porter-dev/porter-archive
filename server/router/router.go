@@ -180,6 +180,46 @@ func New(
 			),
 		)
 
+		// /api/projects/{project_id}/repos routes
+		r.Method(
+			"GET",
+			"/projects/{project_id}/repos",
+			auth.DoesUserHaveProjectAccess(
+				requestlog.NewHandler(a.HandleListRepos, l),
+				mw.URLParam,
+				mw.WriteAccess,
+			),
+		)
+
+		r.Method(
+			"GET",
+			"/projects/{project_id}/repos/{kind}/{name}/branches",
+			auth.DoesUserHaveProjectAccess(
+				requestlog.NewHandler(a.HandleGetBranches, l),
+				mw.URLParam,
+				mw.WriteAccess,
+			),
+		)
+
+		r.Method(
+			"GET",
+			"/projects/{project_id}/repos/{kind}/{name}/{branch}/contents",
+			auth.DoesUserHaveProjectAccess(
+				requestlog.NewHandler(a.HandleGetBranchContents, l),
+				mw.URLParam,
+				mw.WriteAccess,
+			),
+		)
+
+		// /api/templates routes
+		r.Method(
+			"GET",
+			"/templates",
+			auth.BasicAuthenticate(
+				requestlog.NewHandler(a.HandleListTemplates, l),
+			),
+		)
+
 		// /api/projects/{project_id}/k8s routes
 		r.Method(
 			"GET",

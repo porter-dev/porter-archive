@@ -13,5 +13,6 @@ func NewRepository(db *gorm.DB, key *[32]byte) *repository.Repository {
 		Session:        NewSessionRepository(db),
 		Project:        NewProjectRepository(db),
 		ServiceAccount: NewServiceAccountRepository(db, key),
+		RepoClient:     NewRepoClientRepository(db, key),
 	}
 }

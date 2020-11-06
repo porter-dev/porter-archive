@@ -67,7 +67,7 @@ func New(
 	var oauthGithubConf *oauth2.Config
 
 	if githubConfig != nil {
-		oauth.NewGithubClient(githubConfig)
+		oauthGithubConf = oauth.NewGithubClient(githubConfig)
 	}
 
 	return &App{

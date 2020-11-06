@@ -35,6 +35,23 @@ func New(
 		r.Method("GET", "/auth/check", auth.BasicAuthenticate(requestlog.NewHandler(a.HandleAuthCheck, l)))
 		r.Method("POST", "/logout", auth.BasicAuthenticate(requestlog.NewHandler(a.HandleLogoutUser, l)))
 
+		// /api/oauth routes
+		r.Method(
+			"GET",
+			"/oauth/projects/{project_id}/github",
+			auth.DoesUserHaveProjectAccess(
+				requestlog.NewHandler(a.HandleGithubOAuthStartProject, l),
+				mw.URLParam,
+				mw.WriteAccess,
+			),
+		)
+
+		r.Method(
+			"GET",
+			"/oauth/github/callback",
+			requestlog.NewHandler(a.HandleGithubOAuthCallback, l),
+		)
+
 		// /api/projects routes
 		r.Method(
 			"GET",

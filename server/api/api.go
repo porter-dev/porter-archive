@@ -64,6 +64,12 @@ func New(
 		}
 	}
 
+	var oauthGithubConf *oauth2.Config
+
+	if githubConfig != nil {
+		oauth.NewGithubClient(githubConfig)
+	}
+
 	return &App{
 		logger:       logger,
 		repo:         repo,
@@ -73,7 +79,7 @@ func New(
 		cookieName:   cookieName,
 		testing:      testing,
 		TestAgents:   testAgents,
-		GithubConfig: oauth.NewGithubClient(githubConfig),
+		GithubConfig: oauthGithubConf,
 	}
 }
 

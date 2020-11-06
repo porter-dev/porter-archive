@@ -81,7 +81,7 @@ var createProjectTests = []*projTest{
 			"name": "project-test"
 		}`,
 		expStatus: http.StatusCreated,
-		expBody:   `{"id":1,"name":"project-test","roles":[{"id":0,"kind":"admin","user_id":1,"project_id":1}]}`,
+		expBody:   `{"id":1,"name":"project-test","roles":[{"id":0,"kind":"admin","user_id":1,"project_id":1}],"repo_clients":[]}`,
 		useCookie: true,
 		validators: []func(c *projTest, tester *tester, t *testing.T){
 			projectModelBodyValidator,
@@ -104,7 +104,7 @@ var readProjectTests = []*projTest{
 		endpoint:  "/api/projects/1",
 		body:      ``,
 		expStatus: http.StatusOK,
-		expBody:   `{"id":1,"name":"project-test","roles":[{"id":0,"kind":"admin","user_id":1,"project_id":1}]}`,
+		expBody:   `{"id":1,"name":"project-test","roles":[{"id":0,"kind":"admin","user_id":1,"project_id":1}],"repo_clients":[]}`,
 		useCookie: true,
 		validators: []func(c *projTest, tester *tester, t *testing.T){
 			projectModelBodyValidator,

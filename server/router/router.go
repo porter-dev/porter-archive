@@ -187,7 +187,7 @@ func New(
 			auth.DoesUserHaveProjectAccess(
 				requestlog.NewHandler(a.HandleListRepos, l),
 				mw.URLParam,
-				mw.WriteAccess,
+				mw.ReadAccess,
 			),
 		)
 
@@ -197,7 +197,7 @@ func New(
 			auth.DoesUserHaveProjectAccess(
 				requestlog.NewHandler(a.HandleGetBranches, l),
 				mw.URLParam,
-				mw.WriteAccess,
+				mw.ReadAccess,
 			),
 		)
 
@@ -207,7 +207,7 @@ func New(
 			auth.DoesUserHaveProjectAccess(
 				requestlog.NewHandler(a.HandleGetBranchContents, l),
 				mw.URLParam,
-				mw.WriteAccess,
+				mw.ReadAccess,
 			),
 		)
 

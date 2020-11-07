@@ -28,6 +28,17 @@ func (a *Agent) ListNamespaces() (*v1.NamespaceList, error) {
 	)
 }
 
+// GetPodsByLabel retrieves pods with matching labels
+func (a *Agent) GetPodsByLabel(selector string) (*v1.PodList, error) {
+	// Search in all namespaces for matching pods
+	return a.Clientset.CoreV1().Pods("").List(
+		context.TODO(),
+		metav1.ListOptions{
+			LabelSelector: selector,
+		},
+	)
+}
+
 // GetPodLogs streams real-time logs from a given pod.
 func (a *Agent) GetPodLogs(namespace string, name string, conn *websocket.Conn) error {
 	// follow logs

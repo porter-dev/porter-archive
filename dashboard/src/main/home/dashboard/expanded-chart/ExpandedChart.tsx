@@ -11,7 +11,7 @@ import RevisionSection from './RevisionSection';
 import ValuesYaml from './ValuesYaml';
 import GraphSection from './GraphSection';
 import ListSection from './ListSection';
-import LogSection from './LogSection';
+import LogSection from './log/LogSection';
 
 type PropsType = {
   currentChart: ChartType,
@@ -24,6 +24,7 @@ type StateType = {
   showRevisions: boolean,
   currentTab: string,
   components: ResourceType[],
+  podSelectors: string[]
   revisionPreview: ChartType | null,
   devOpsMode: boolean
 };
@@ -47,6 +48,7 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
     showRevisions: false,
     currentTab: 'environment',
     components: [] as ResourceType[],
+    podSelectors: [] as string[],
     revisionPreview: null as (ChartType | null),
     devOpsMode: false
   }
@@ -63,7 +65,8 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
       if (err) {
         console.log(err)
       } else {
-        this.setState({ components: res.data });
+        console.log(res.data)
+        this.setState({ components: res.data.Objects, podSelectors: res.data.PodSelectors });
       }
     });
   }
@@ -90,7 +93,7 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
       if (err) {
         console.log(err)
       } else {
-        this.setState({ components: res.data });
+        this.setState({ components: res.data, podSelectors: res.data.PodSelectors });
       }
     });
   }
@@ -146,6 +149,7 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
         />
       );
     } else if (this.state.currentTab === 'values') {
+      console.log(chart)
       return (
         <ValuesYaml
           currentChart={chart}
@@ -154,7 +158,9 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
       );
     } else if (this.state.currentTab === 'logs') {
       return (
-        <LogSection components={this.state.components}/>
+        <LogSection 
+          selectors={this.state.podSelectors}
+        />
       );
     }
 

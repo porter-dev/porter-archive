@@ -46,6 +46,7 @@ func New(
 		// /api/k8s routes
 		r.Method("GET", "/k8s/namespaces", auth.BasicAuthenticate(requestlog.NewHandler(a.HandleListNamespaces, l)))
 		r.Method("GET", "/k8s/{namespace}/pod/{name}/logs", auth.BasicAuthenticate(requestlog.NewHandler(a.HandleGetPodLogs, l)))
+		r.Method("GET", "/k8s/pods", auth.BasicAuthenticate(requestlog.NewHandler(a.HandleListPods, l)))
 	})
 
 	fs := http.FileServer(http.Dir(staticFilePath))

@@ -38,15 +38,6 @@ func main() {
 
 	repo := gorm.NewRepository(db, &key)
 
-	// upsert admin if config requires
-	// if appConf.Db.AdminInit {
-	// 	err := upsertAdmin(repo.User, appConf.Db.AdminEmail, appConf.Db.AdminPassword)
-
-	// 	if err != nil {
-	// 		fmt.Println("Error while upserting admin: " + err.Error())
-	// 	}
-	// }
-
 	// declare as Store interface (methods Get, New, Save)
 	var store sessions.Store
 	store, _ = sessionstore.NewStore(repo, appConf.Server)
@@ -55,6 +46,7 @@ func main() {
 
 	a := api.New(
 		logger,
+		nil,
 		repo,
 		validator,
 		store,
@@ -83,7 +75,7 @@ func main() {
 	}
 
 	if err := s.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-		log.Fatal("Server startup failed")
+		log.Fatal("Server startup failed", err)
 	}
 }
 

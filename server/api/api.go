@@ -6,6 +6,7 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/porter-dev/porter/internal/oauth"
 	"golang.org/x/oauth2"
+	"gorm.io/gorm"
 
 	"github.com/gorilla/sessions"
 	"github.com/porter-dev/porter/internal/helm"
@@ -25,6 +26,7 @@ type TestAgents struct {
 // App represents an API instance with handler methods attached, a DB connection
 // and a logger instance
 type App struct {
+	db           *gorm.DB
 	logger       *lr.Logger
 	repo         *repository.Repository
 	validator    *validator.Validate
@@ -39,6 +41,7 @@ type App struct {
 // New returns a new App instance
 func New(
 	logger *lr.Logger,
+	db *gorm.DB,
 	repo *repository.Repository,
 	validator *validator.Validate,
 	store sessions.Store,
@@ -71,6 +74,7 @@ func New(
 	}
 
 	return &App{
+		db:           db,
 		logger:       logger,
 		repo:         repo,
 		validator:    validator,

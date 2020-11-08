@@ -1,74 +1,37 @@
-package cmd
+package connect
 
 import (
 	"context"
 	"encoding/base64"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
+	"strings"
 
+	"github.com/porter-dev/porter/cli/cmd/utils"
 	"github.com/porter-dev/porter/internal/kubernetes/local"
 	gcpLocal "github.com/porter-dev/porter/internal/providers/gcp/local"
-	"github.com/porter-dev/porter/internal/utils"
-
-	"github.com/spf13/viper"
 
 	"github.com/porter-dev/porter/cli/cmd/api"
 	"github.com/porter-dev/porter/internal/models"
-	"github.com/spf13/cobra"
 )
 
-var setConfigCmd = &cobra.Command{
-	Use:   "set-config",
-	Short: "Uses the local kubeconfig to set the configuration for a cluster",
-	Run: func(cmd *cobra.Command, args []string) {
-		err := setConfig()
-
-		if err != nil {
-			fmt.Printf("Error occurred: %v\n", err)
-			os.Exit(1)
-		}
-	},
-}
-
-func init() {
-	rootCmd.AddCommand(setConfigCmd)
-
-	setConfigCmd.PersistentFlags().StringVarP(
-		&kubeconfigPath,
-		"kubeconfig",
-		"k",
-		"",
-		"path to kubeconfig",
-	)
-
-	setConfigCmd.PersistentFlags().StringVar(
-		&host,
-		"host",
-		"http://localhost:10000",
-		"host url of Porter instance",
-	)
-
-	contexts = setConfigCmd.PersistentFlags().StringArray(
-		"contexts",
-		nil,
-		"the list of contexts to use (defaults to the current context)",
-	)
-}
-
-func setConfig() error {
-	// TODO: construct the kubeconfig based on the passed contexts
-
-	// get the current project ID
-	projectID := viper.GetUint("project")
-
+// Kubeconfig creates a service account for a project by parsing the local
+// kubeconfig and resolving actions that must be performed.
+func Kubeconfig(
+	kubeconfigPath string,
+	contexts []string,
+	host string,
+	projectID uint,
+) error {
 	// if project ID is 0, ask the user to set the project ID or create a project
 	if projectID == 0 {
 		return fmt.Errorf("no project set, please run porter project set [id]")
 	}
 
 	// get the kubeconfig
-	rawBytes, err := local.GetKubeconfigFromHost(kubeconfigPath, *contexts)
+	rawBytes, err := local.GetKubeconfigFromHost(kubeconfigPath, contexts)
 
 	if err != nil {
 		return err
@@ -135,7 +98,10 @@ func setConfig() error {
 
 				resolvers = append(resolvers, resolveAction)
 			case models.GCPKeyDataAction:
-				resolveAction, err := resolveGCPKeyAction(saCandidate.ClusterEndpoint)
+				resolveAction, err := resolveGCPKeyAction(
+					saCandidate.ClusterEndpoint,
+					saCandidate.ClusterName,
+				)
 
 				if err != nil {
 					return err
@@ -164,7 +130,7 @@ func setConfig() error {
 			// namespaces, err := client.GetK8sNamespaces(
 			// 	context.Background(),
 			// 	projectID,
-			// 	saCandidate.ID,
+			// 	sa.ID,
 			// 	cluster.ID,
 			// )
 
@@ -262,42 +228,87 @@ func resolveTokenDataAction(
 }
 
 // resolves a gcp key data action
-func resolveGCPKeyAction(endpoint string) (*models.ServiceAccountAllActions, error) {
-	agent, _ := gcpLocal.NewDefaultAgent()
-	projID, err := agent.GetProjectIDForGKECluster(endpoint)
+func resolveGCPKeyAction(endpoint string, clusterName string) (*models.ServiceAccountAllActions, error) {
+	userResp, err := utils.PromptPlaintext(
+		fmt.Sprintf(
+			`Detected GKE cluster in kubeconfig for the endpoint %s (%s). 
+Porter can set up a service account in your GCP project to connect to this cluster automatically.
+Would you like to proceed? [y/n] `,
+			endpoint,
+			clusterName,
+		),
+	)
 
 	if err != nil {
 		return nil, err
 	}
 
-	agent.ProjectID = projID
+	if userResp := strings.ToLower(userResp); userResp == "y" || userResp == "yes" {
+		agent, _ := gcpLocal.NewDefaultAgent()
+		projID, err := agent.GetProjectIDForGKECluster(endpoint)
 
-	name := "porter-dashboard-" + utils.StringWithCharset(6, "abcdefghijklmnopqrstuvwxyz1234567890")
+		if err != nil {
+			return nil, err
+		}
 
-	// create the service account and give it the correct iam permissions
-	resp, err := agent.CreateServiceAccount(name)
+		agent.ProjectID = projID
+
+		name := "porter-dashboard-" + utils.StringWithCharset(6, "abcdefghijklmnopqrstuvwxyz1234567890")
+
+		// create the service account and give it the correct iam permissions
+		resp, err := agent.CreateServiceAccount(name)
+
+		if err != nil {
+			fmt.Println("Automatic creation failed.")
+			return resolveGCPKeyActionManual(endpoint, clusterName)
+		}
+
+		err = agent.SetServiceAccountIAMPolicy(resp)
+
+		if err != nil {
+			return nil, err
+		}
+
+		// get the service account key data to send to the server
+		bytes, err := agent.CreateServiceAccountKey(resp)
+
+		if err != nil {
+			return nil, err
+		}
+
+		return &models.ServiceAccountAllActions{
+			Name:       models.GCPKeyDataAction,
+			GCPKeyData: string(bytes),
+		}, nil
+	}
+
+	return resolveGCPKeyActionManual(endpoint, clusterName)
+}
+
+func resolveGCPKeyActionManual(endpoint string, clusterName string) (*models.ServiceAccountAllActions, error) {
+	keyFileLocation, err := utils.PromptPlaintext(`Please provide the full path to a service account key file.
+Key file location: `)
 
 	if err != nil {
 		return nil, err
 	}
 
-	err = agent.SetServiceAccountIAMPolicy(resp)
+	// attempt to read the key file location
+	if info, err := os.Stat(keyFileLocation); !os.IsNotExist(err) && !info.IsDir() {
+		// read the file
+		bytes, err := ioutil.ReadFile(keyFileLocation)
 
-	if err != nil {
-		return nil, err
+		if err != nil {
+			return nil, err
+		}
+
+		return &models.ServiceAccountAllActions{
+			Name:       models.GCPKeyDataAction,
+			GCPKeyData: string(bytes),
+		}, nil
 	}
 
-	// get the service account key data to send to the server
-	bytes, err := agent.CreateServiceAccountKey(resp)
-
-	if err != nil {
-		return nil, err
-	}
-
-	return &models.ServiceAccountAllActions{
-		Name:       models.GCPKeyDataAction,
-		GCPKeyData: string(bytes),
-	}, nil
+	return nil, errors.New("Key file not found")
 }
 
 // resolves an aws key data action

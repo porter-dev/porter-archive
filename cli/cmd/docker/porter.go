@@ -2,7 +2,6 @@ package docker
 
 import (
 	"fmt"
-	"path/filepath"
 	"strings"
 	"time"
 
@@ -10,7 +9,6 @@ import (
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/mount"
 	"github.com/docker/go-connections/nat"
-	"k8s.io/client-go/util/homedir"
 )
 
 // PorterDB is used for enumerating DB types
@@ -28,18 +26,12 @@ type PorterStartOpts struct {
 	ServerImageTag string
 	ServerPort     int
 	DB             PorterDB
-	KubeconfigPath string
-	SkipKubeconfig bool
 	Env            []string
 }
 
 // StartPorter creates a new Docker agent using the host environment, and creates a
 // new Porter instance
 func StartPorter(opts *PorterStartOpts) (agent *Agent, id string, err error) {
-	home := homedir.HomeDir()
-	outputConfPath := filepath.Join(home, ".porter", "porter.kubeconfig")
-	containerConfPath := "/porter/porter.kubeconfig"
-
 	agent, err = NewAgentFromEnv()
 
 	if err != nil {
@@ -51,19 +43,6 @@ func StartPorter(opts *PorterStartOpts) (agent *Agent, id string, err error) {
 
 	// the volumes passed to the Porter container
 	volumesMap := make(map[string]struct{})
-
-	if !opts.SkipKubeconfig {
-		// add a bind mount with the kubeconfig
-		mount := mount.Mount{
-			Type:        mount.TypeBind,
-			Source:      outputConfPath,
-			Target:      containerConfPath,
-			ReadOnly:    true,
-			Consistency: mount.ConsistencyFull,
-		}
-
-		mounts = append(mounts, mount)
-	}
 
 	netID, err := agent.CreateBridgeNetworkIfNotExist("porter_network_" + opts.ProcessID)
 
@@ -133,8 +112,12 @@ func StartPorter(opts *PorterStartOpts) (agent *Agent, id string, err error) {
 
 		pgID, err := agent.StartPostgresContainer(startOpts)
 
+		if err != nil {
+			return nil, "", err
+		}
+
 		fmt.Println("Waiting for postgres:latest to be healthy...")
-		agent.WaitForContainerHealthy(pgID, 10)
+		err = agent.WaitForContainerHealthy(pgID, 10)
 
 		if err != nil {
 			return nil, "", err
@@ -148,8 +131,6 @@ func StartPorter(opts *PorterStartOpts) (agent *Agent, id string, err error) {
 			"DB_HOST=porter_postgres_" + opts.ProcessID,
 			"DB_PORT=5432",
 		}...)
-
-		defer agent.WaitForContainerStop(pgID)
 	}
 
 	// create Porter container
@@ -165,6 +146,13 @@ func StartPorter(opts *PorterStartOpts) (agent *Agent, id string, err error) {
 	}
 
 	id, err = agent.StartPorterContainer(startOpts)
+
+	if err != nil {
+		return nil, "", err
+	}
+
+	fmt.Println("Waiting for porter to be healthy...")
+	err = agent.WaitForContainerHealthy(id, 10)
 
 	if err != nil {
 		return nil, "", err
@@ -264,6 +252,12 @@ func (a *Agent) pullAndCreatePorterContainer(opts PorterServerStartOpts) (id str
 		Labels:  labels,
 		Volumes: opts.VolumeMap,
 		Env:     opts.Env,
+		Healthcheck: &container.HealthConfig{
+			Test:     []string{"CMD-SHELL", "/porter/ready"},
+			Interval: 10 * time.Second,
+			Timeout:  5 * time.Second,
+			Retries:  3,
+		},
 	}, &container.HostConfig{
 		PortBindings: portBindings,
 		Mounts:       opts.Mounts,

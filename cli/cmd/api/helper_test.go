@@ -42,8 +42,6 @@ func startPorterServerWithDocker(processID string, port int, db docker.PorterDB)
 		ServerImageTag: "testing",
 		ServerPort:     port,
 		DB:             db,
-		KubeconfigPath: "",
-		SkipKubeconfig: true,
 		Env:            env,
 	}
 

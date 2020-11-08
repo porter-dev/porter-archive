@@ -3,6 +3,7 @@ package docker
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"strings"
@@ -203,14 +204,16 @@ func (a *Agent) WaitForContainerHealthy(id string, streak int) error {
 
 		health := cont.State.Health
 
-		if health == nil || health.Status == "healthy" || health.FailingStreak >= streak {
+		if health == nil || health.Status == "healthy" {
+			return nil
+		} else if health.FailingStreak >= streak {
 			break
 		}
 
 		time.Sleep(time.Second)
 	}
 
-	return nil
+	return errors.New("container not healthy")
 }
 
 // ------------------------- AGENT HELPER FUNCTIONS ------------------------- //

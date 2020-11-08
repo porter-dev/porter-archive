@@ -27,6 +27,10 @@ func New(
 	r.Route("/api", func(r chi.Router) {
 		r.Use(mw.ContentTypeJSON)
 
+		// health checks
+		r.Method("GET", "/livez", http.HandlerFunc(a.HandleLive))
+		r.Method("GET", "/readyz", http.HandlerFunc(a.HandleReady))
+
 		// /api/users routes
 		r.Method("GET", "/users/{user_id}", auth.DoesUserIDMatch(requestlog.NewHandler(a.HandleReadUser, l), mw.URLParam))
 		r.Method("POST", "/users", requestlog.NewHandler(a.HandleCreateUser, l))

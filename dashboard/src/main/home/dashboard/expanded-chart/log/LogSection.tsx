@@ -30,9 +30,13 @@ export default class LogSection extends Component<PropsType, StateType> {
   renderPodTabs = () => {
     return this.state.pods.map((pod, i) => {
       return (
-        <Tab key={i} onClick={() => {
+        <Tab 
+          key={i}
+          selected={(this.state.selectedPod == pod)} 
+          onClick={() => {
           this.setState({selectedPod: pod})
-        }}>
+          }
+        }>
           {pod}
         </Tab>
       )
@@ -66,26 +70,31 @@ LogSection.contextType = Context;
 
 const TabWrapper = styled.div`
   display: flex;
-  flexDirection: row;
+  flex-direction: column;
   overflow: hidden;
+  width: 20%;
+  float: left;
 `
 
 const Tab = styled.div`
-  height: 100%;
   align-items: center;
+  color: ${(props: {selected: boolean}) => props.selected ? 'white' : '#ffffff66'};
+  background: ${(props: {selected: boolean}) => props.selected ? '#ffffff18' : '##ffffff11'};
+  height: 100%;
   justify-content: center;
   font-size: 13px;
-  background-color: red;
-  color: white;
-  border-radius: 20px;
+  padding: 15px 13px;
+  margin-right: 10px;
+  border-radius: 5px;
   text-shadow: 0px 0px 8px none;
   cursor: pointer;
   :hover {
-    color: #aaaabb99;
+    color: white;
+    background: #ffffff18;
   }
 `;
 
-const StyledLogSection = styled.div`
+const StyledLogSection = styled.span`
   width: 100%;
   height: 100%;
   position: relative;

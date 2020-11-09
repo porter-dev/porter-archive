@@ -17,7 +17,7 @@ type UserRepository struct {
 	users    []*models.User
 }
 
-// NewUserRepository will return errors
+// NewUserRepository will return errors if canQuery is false
 func NewUserRepository(canQuery bool) repository.UserRepository {
 	return &UserRepository{canQuery, []*models.User{}}
 }

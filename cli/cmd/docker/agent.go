@@ -3,6 +3,7 @@ package docker
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"strings"
@@ -66,6 +67,11 @@ func (a *Agent) CreateLocalVolume(name string) (*types.Volume, error) {
 	}
 
 	return &vol, nil
+}
+
+// RemoveLocalVolume removes a volume by name
+func (a *Agent) RemoveLocalVolume(name string) error {
+	return a.client.VolumeRemove(a.ctx, name, true)
 }
 
 // CreateBridgeNetworkIfNotExist creates a volume using driver type "local" with the
@@ -141,8 +147,6 @@ type PullImageEvent struct {
 
 // PullImage pulls an image specified by the image string
 func (a *Agent) PullImage(image string) error {
-	fmt.Println("Pulling image:", image)
-
 	// pull the specified image
 	out, err := a.client.ImagePull(a.ctx, image, types.ImagePullOptions{})
 
@@ -163,8 +167,6 @@ func (a *Agent) PullImage(image string) error {
 			return err
 		}
 	}
-
-	fmt.Println("Finished pulling image:", image)
 
 	return nil
 }
@@ -198,14 +200,16 @@ func (a *Agent) WaitForContainerHealthy(id string, streak int) error {
 
 		health := cont.State.Health
 
-		if health == nil || health.Status == "healthy" || health.FailingStreak >= streak {
+		if health == nil || health.Status == "healthy" {
+			return nil
+		} else if health.FailingStreak >= streak {
 			break
 		}
 
 		time.Sleep(time.Second)
 	}
 
-	return nil
+	return errors.New("container not healthy")
 }
 
 // ------------------------- AGENT HELPER FUNCTIONS ------------------------- //

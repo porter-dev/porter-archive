@@ -23,8 +23,15 @@ func main() {
 	}
 
 	err = db.AutoMigrate(
+		&models.Project{},
+		&models.Role{},
+		&models.ServiceAccount{},
+		&models.ServiceAccountAction{},
+		&models.ServiceAccountCandidate{},
+		&models.Cluster{},
 		&models.User{},
 		&models.Session{},
+		&models.RepoClient{},
 	)
 
 	if err != nil {

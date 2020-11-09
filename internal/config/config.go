@@ -17,6 +17,7 @@ type Conf struct {
 
 // ServerConf is the server configuration
 type ServerConf struct {
+	ServerURL      string        `env:"SERVER_URL,default=http://localhost:8080"`
 	Port           int           `env:"SERVER_PORT,default=8080"`
 	StaticFilePath string        `env:"STATIC_FILE_PATH,default=/porter/static"`
 	CookieName     string        `env:"COOKIE_NAME,default=porter"`
@@ -24,11 +25,17 @@ type ServerConf struct {
 	TimeoutRead    time.Duration `env:"SERVER_TIMEOUT_READ,default=5s"`
 	TimeoutWrite   time.Duration `env:"SERVER_TIMEOUT_WRITE,default=10s"`
 	TimeoutIdle    time.Duration `env:"SERVER_TIMEOUT_IDLE,default=15s"`
+
+	GithubClientID     string `env:"GITHUB_CLIENT_ID"`
+	GithubClientSecret string `env:"GITHUB_CLIENT_SECRET"`
 }
 
 // DBConf is the database configuration: if generated from environment variables,
 // it assumes the default docker-compose configuration is used
 type DBConf struct {
+	// EncryptionKey is the key to use for sensitive values that are encrypted at rest
+	EncryptionKey string `env:"ENCRYPTION_KEY,default=__random_strong_encryption_key__"`
+
 	Host     string `env:"DB_HOST,default=postgres"`
 	Port     int    `env:"DB_PORT,default=5432"`
 	Username string `env:"DB_USER,default=porter"`

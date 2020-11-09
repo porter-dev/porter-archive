@@ -55,7 +55,7 @@ func (repo *UserRepository) UpdateUser(user *models.User) (*models.User, error) 
 
 // DeleteUser deletes a single user using their unique id
 func (repo *UserRepository) DeleteUser(user *models.User) (*models.User, error) {
-	if err := repo.db.First(&models.User{}, user.ID).Delete(&user).Error; err != nil {
+	if err := repo.db.Delete(&user).Error; err != nil {
 		return nil, err
 	}
 	return user, nil

@@ -169,7 +169,7 @@ const StyledValuesForm = styled.div`
   height: 100%;
   background: #ffffff11;
   color: #ffffff;
-  padding: 0px 35px 30px;
+  padding: 0px 35px 25px;
   position: relative;
   border-radius: 5px;
   font-size: 13px;

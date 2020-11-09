@@ -233,6 +233,7 @@ const LoadingWrapper = styled.div`
   background: #ffffff11;
   display: flex;
   align-items: center;
+  font-size: 13px;
   justify-content: center;
   color: #ffffff44;
 `;

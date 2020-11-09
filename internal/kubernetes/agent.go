@@ -1,11 +1,12 @@
 package kubernetes
 
 import (
-	"bytes"
+	"bufio"
 	"context"
 	"fmt"
 	"io"
 
+	"github.com/gorilla/websocket"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
@@ -27,23 +28,45 @@ func (a *Agent) ListNamespaces() (*v1.NamespaceList, error) {
 	)
 }
 
+// GetPodsByLabel retrieves pods with matching labels
+func (a *Agent) GetPodsByLabel(selector string) (*v1.PodList, error) {
+	// Search in all namespaces for matching pods
+	return a.Clientset.CoreV1().Pods("").List(
+		context.TODO(),
+		metav1.ListOptions{
+			LabelSelector: selector,
+		},
+	)
+}
+
 // GetPodLogs streams real-time logs from a given pod.
-func (a *Agent) GetPodLogs(pod *v1.Pod) (string, error) {
-	podLogOpts := v1.PodLogOptions{}
-	req := a.Clientset.CoreV1().Pods(pod.Namespace).GetLogs(pod.Name, &podLogOpts)
+func (a *Agent) GetPodLogs(namespace string, name string, conn *websocket.Conn) error {
+	// follow logs
+	tails := int64(30)
+	podLogOpts := v1.PodLogOptions{
+		Follow:    true,
+		TailLines: &tails,
+	}
+	req := a.Clientset.CoreV1().Pods(namespace).GetLogs(name, &podLogOpts)
 	podLogs, err := req.Stream(context.TODO())
 	if err != nil {
-		return "Error: Cannot open log stream.", fmt.Errorf("Cannot open log stream for pod %s", pod.Name)
+		return fmt.Errorf("Cannot open log stream for pod %s", name)
 	}
 	defer podLogs.Close()
 
-	buf := new(bytes.Buffer)
-	_, err = io.Copy(buf, podLogs)
+	r := bufio.NewReader(podLogs)
+	for {
+		bytes, err := r.ReadBytes('\n')
 
-	if err != nil {
-		return "Error: Cannot encode Pod logs.", fmt.Errorf("Cannot copy logs from pod %s to buf", pod.Name)
+		if writeErr := conn.WriteMessage(websocket.TextMessage, bytes); writeErr != nil {
+			return writeErr
+		}
+
+		if err != nil {
+			if err != io.EOF {
+				return err
+			}
+			return nil
+		}
 	}
-	str := buf.String()
-
-	return str, nil
 }

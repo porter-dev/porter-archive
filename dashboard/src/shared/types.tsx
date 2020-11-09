@@ -34,7 +34,7 @@ export interface ResourceType {
   ID: number,
   Kind: string,
   Name: string,
-  RawYAML: Object,
+  RawYAML: any,
   Relations: any
 }
 
@@ -42,7 +42,7 @@ export interface NodeType {
   id: number,
   name: string,
   kind: string,
-  RawYAML?: Object,
+  RawYAML?: any,
   x: number,
   y: number,
   w: number,

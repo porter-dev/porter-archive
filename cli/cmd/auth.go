@@ -4,6 +4,9 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"strings"
+
+	"github.com/fatih/color"
 
 	"github.com/porter-dev/porter/cli/cmd/api"
 	"github.com/porter-dev/porter/cli/cmd/utils"
@@ -101,6 +104,20 @@ func login() error {
 	fmt.Println("Successfully logged in!")
 
 	return nil
+}
+
+func check(client *api.Client) (*api.AuthCheckResponse, error) {
+	user, err := client.AuthCheck(context.Background())
+
+	if err != nil {
+		if strings.Contains(err.Error(), "403") {
+			color.Red("You are not logged in. Log in using \"porter auth login\"")
+		}
+
+		return nil, err
+	}
+
+	return user, nil
 }
 
 func register() error {

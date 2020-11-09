@@ -53,7 +53,7 @@ Logs.contextType = Context;
 
 
 const LogStream = styled.div`
-  width: 100%;
+  width: 80%;
   height: 100%;
   background: #202227;
   position: relative;

@@ -1,6 +1,7 @@
 package requestlog
 
 import (
+	"bufio"
 	"errors"
 	"io"
 	"net"
@@ -90,6 +91,13 @@ func (r *responseStats) Write(p []byte) (n int, err error) {
 	n, err = r.w.Write(p)
 	r.wc.Write(p[:n])
 	return
+}
+func (r *responseStats) Hijack() (net.Conn, *bufio.ReadWriter, error) {
+	h, ok := r.w.(http.Hijacker)
+	if !ok {
+		return nil, nil, errors.New("ResponseWriter Interface does not support hijacking")
+	}
+	return h.Hijack()
 }
 func (r *responseStats) size() (hdr, body int64) {
 	if r.code == 0 {

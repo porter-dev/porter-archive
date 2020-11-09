@@ -10,7 +10,7 @@ type Project struct {
 
 	Name        string       `json:"name"`
 	Roles       []Role       `json:"roles"`
-	RepoClients []RepoClient `json:"repo_clients"`
+	RepoClients []RepoClient `json:"repo_clients,omitempty"`
 
 	ServiceAccountCandidates []ServiceAccountCandidate `json:"sa_candidates"`
 	ServiceAccounts          []ServiceAccount          `json:"serviceaccounts"`
@@ -21,7 +21,7 @@ type ProjectExternal struct {
 	ID          uint                 `json:"id"`
 	Name        string               `json:"name"`
 	Roles       []RoleExternal       `json:"roles"`
-	RepoClients []RepoClientExternal `json:"repo_clients"`
+	RepoClients []RepoClientExternal `json:"repo_clients,omitempty"`
 }
 
 // Externalize generates an external Project to be shared over REST

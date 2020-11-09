@@ -106,3 +106,65 @@ func TestCreateProjectRole(t *testing.T) {
 		t.Error(diff)
 	}
 }
+
+func TestListProjectsByUserID(t *testing.T) {
+	tester := &tester{
+		dbFileName: "./list_projects_user_id.db",
+	}
+
+	setupTestEnv(tester, t)
+	initUser(tester, t)
+	// create two projects, same name
+	initProject(tester, t)
+	initProjectRole(tester, t)
+	initProject(tester, t)
+
+	role := &models.Role{
+		Kind:   models.RoleAdmin,
+		UserID: 1,
+	}
+
+	role, err := tester.repo.Project.CreateProjectRole(tester.initProjects[1], role)
+
+	if err != nil {
+		t.Fatalf("%v\n", err)
+	}
+
+	defer cleanup(tester, t)
+
+	projects, err := tester.repo.Project.ListProjectsByUserID(tester.initUsers[0].Model.ID)
+
+	if err != nil {
+		t.Fatalf("%v\n", err)
+	}
+
+	if len(projects) != 2 {
+		t.Fatalf("projects length was not 2\n")
+	}
+
+	for i, project := range projects {
+		// make sure data is correct
+		expProj := &models.Project{
+			Name: "project-test",
+			Roles: []models.Role{
+				models.Role{
+					Kind:      models.RoleAdmin,
+					UserID:    tester.initUsers[0].Model.ID,
+					ProjectID: uint(i + 1),
+				},
+			},
+		}
+
+		copyProj := project
+
+		// reset fields for reflect.DeepEqual
+		copyProj.Model = orm.Model{}
+		copyProj.Roles[0].Model = orm.Model{}
+
+		if diff := deep.Equal(copyProj, expProj); diff != nil {
+			t.Errorf("incorrect project")
+			t.Error(diff)
+		}
+	}
+
+}

@@ -110,6 +110,53 @@ func (app *App) HandleReadProject(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// HandleListProjectClusters returns a list of clusters that have linked ServiceAccounts.
+// If multiple service accounts exist for a cluster, the service account created later
+// will take precedence. This may be changed in a future release to return multiple
+// service accounts.
+func (app *App) HandleListProjectClusters(w http.ResponseWriter, r *http.Request) {
+	id, err := strconv.ParseUint(chi.URLParam(r, "project_id"), 0, 64)
+
+	if err != nil || id == 0 {
+		app.handleErrorFormDecoding(err, ErrUserDecode, w)
+		return
+	}
+
+	sas, err := app.repo.ServiceAccount.ListServiceAccountsByProjectID(uint(id))
+
+	if err != nil {
+		app.handleErrorRead(err, ErrProjectDataRead, w)
+		return
+	}
+
+	clusters := make([]*models.ClusterExternal, 0)
+
+	// clusterMapIndex used for checking if cluster has already been added
+	// maps from the cluster's endpoint to the index in the cluster array
+	clusterMapIndex := make(map[string]int)
+
+	for _, sa := range sas {
+		for _, cluster := range sa.Clusters {
+			if currIndex, ok := clusterMapIndex[cluster.Server]; ok {
+				if clusters[currIndex].ServiceAccountID <= cluster.ServiceAccountID {
+					clusters[currIndex] = cluster.Externalize()
+					continue
+				}
+			}
+
+			clusterMapIndex[cluster.Server] = len(clusters)
+			clusters = append(clusters, cluster.Externalize())
+		}
+	}
+
+	w.WriteHeader(http.StatusOK)
+
+	if err := json.NewEncoder(w).Encode(clusters); err != nil {
+		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
+		return
+	}
+}
+
 // HandleCreateProjectSACandidates handles the creation of ServiceAccountCandidates
 // using a kubeconfig and a project id
 func (app *App) HandleCreateProjectSACandidates(w http.ResponseWriter, r *http.Request) {

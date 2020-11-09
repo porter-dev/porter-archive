@@ -7,6 +7,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/go-test/deep"
 	"github.com/porter-dev/porter/internal/forms"
 	"github.com/porter-dev/porter/internal/models"
 )
@@ -81,7 +82,7 @@ var createProjectTests = []*projTest{
 			"name": "project-test"
 		}`,
 		expStatus: http.StatusCreated,
-		expBody:   `{"id":1,"name":"project-test","roles":[{"id":0,"kind":"admin","user_id":1,"project_id":1}],"repo_clients":[]}`,
+		expBody:   `{"id":1,"name":"project-test","roles":[{"id":0,"kind":"admin","user_id":1,"project_id":1}]}`,
 		useCookie: true,
 		validators: []func(c *projTest, tester *tester, t *testing.T){
 			projectModelBodyValidator,
@@ -104,7 +105,7 @@ var readProjectTests = []*projTest{
 		endpoint:  "/api/projects/1",
 		body:      ``,
 		expStatus: http.StatusOK,
-		expBody:   `{"id":1,"name":"project-test","roles":[{"id":0,"kind":"admin","user_id":1,"project_id":1}],"repo_clients":[]}`,
+		expBody:   `{"id":1,"name":"project-test","roles":[{"id":0,"kind":"admin","user_id":1,"project_id":1}]}`,
 		useCookie: true,
 		validators: []func(c *projTest, tester *tester, t *testing.T){
 			projectModelBodyValidator,
@@ -114,6 +115,30 @@ var readProjectTests = []*projTest{
 
 func TestHandleReadProject(t *testing.T) {
 	testProjRequests(t, readProjectTests, true)
+}
+
+var listProjectClustersTest = []*projTest{
+	&projTest{
+		initializers: []func(t *tester){
+			initUserDefault,
+			initProject,
+			initProjectSADefault,
+		},
+		msg:       "List project clusters",
+		method:    "GET",
+		endpoint:  "/api/projects/1/clusters",
+		body:      ``,
+		expStatus: http.StatusOK,
+		expBody:   `[{"id":1,"service_account_id":1,"name":"cluster-test","server":"https://localhost"}]`,
+		useCookie: true,
+		validators: []func(c *projTest, tester *tester, t *testing.T){
+			projectClustersValidator,
+		},
+	},
+}
+
+func TestHandleListProjectClusters(t *testing.T) {
+	testProjRequests(t, listProjectClustersTest, true)
 }
 
 var createProjectSACandidatesTests = []*projTest{
@@ -342,6 +367,19 @@ func projectSABodyValidator(c *projTest, tester *tester, t *testing.T) {
 	if !reflect.DeepEqual(gotBody, expBody) {
 		t.Errorf("%s, handler returned wrong body: got %v want %v",
 			c.msg, gotBody, expBody)
+	}
+}
+
+func projectClustersValidator(c *projTest, tester *tester, t *testing.T) {
+	gotBody := make([]*models.ClusterExternal, 0)
+	expBody := make([]*models.ClusterExternal, 0)
+
+	json.Unmarshal(tester.rr.Body.Bytes(), &gotBody)
+	json.Unmarshal([]byte(c.expBody), &expBody)
+
+	if diff := deep.Equal(gotBody, expBody); diff != nil {
+		t.Errorf("handler returned wrong body:\n")
+		t.Error(diff)
 	}
 }
 

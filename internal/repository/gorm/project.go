@@ -51,3 +51,16 @@ func (repo *ProjectRepository) ReadProject(id uint) (*models.Project, error) {
 
 	return project, nil
 }
+
+// ListProjectsByUserID lists projects where a user has an associated role
+func (repo *ProjectRepository) ListProjectsByUserID(userID uint) ([]*models.Project, error) {
+	projects := make([]*models.Project, 0)
+
+	subQuery := repo.db.Model(&models.Role{}).Where("user_id = ?", userID).Select("project_id")
+
+	if err := repo.db.Preload("Roles").Model(&models.Project{}).Where("id IN (?)", subQuery).Find(&projects).Error; err != nil {
+		return nil, err
+	}
+
+	return projects, nil
+}

@@ -40,6 +40,38 @@ func (c *Client) GetProject(ctx context.Context, projectID uint) (*GetProjectRes
 	return bodyResp, nil
 }
 
+// ListProjectClustersResponse lists the linked clusters for a project
+type ListProjectClustersResponse []models.ClusterExternal
+
+// ListProjectClusters creates a list of clusters for a given project
+func (c *Client) ListProjectClusters(
+	ctx context.Context,
+	projectID uint,
+) (ListProjectClustersResponse, error) {
+	req, err := http.NewRequest(
+		"GET",
+		fmt.Sprintf("%s/projects/%d/clusters", c.BaseURL, projectID),
+		nil,
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	req = req.WithContext(ctx)
+	bodyResp := ListProjectClustersResponse{}
+
+	if httpErr, err := c.sendRequest(req, &bodyResp, true); httpErr != nil || err != nil {
+		if httpErr != nil {
+			return nil, fmt.Errorf("code %d, errors %v", httpErr.Code, httpErr.Errors)
+		}
+
+		return nil, err
+	}
+
+	return bodyResp, nil
+}
+
 // CreateProjectRequest represents the accepted fields for creating a project
 type CreateProjectRequest struct {
 	Name string `json:"name" form:"required"`

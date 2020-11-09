@@ -165,6 +165,35 @@ func (app *App) HandleReadUser(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
+// HandleListUserProjects lists all projects belonging to a given user
+func (app *App) HandleListUserProjects(w http.ResponseWriter, r *http.Request) {
+	id, err := strconv.ParseUint(chi.URLParam(r, "user_id"), 0, 64)
+
+	if err != nil || id == 0 {
+		app.handleErrorFormDecoding(err, ErrUserDecode, w)
+		return
+	}
+
+	projects, err := app.repo.Project.ListProjectsByUserID(uint(id))
+
+	if err != nil {
+		app.handleErrorRead(err, ErrUserDataRead, w)
+	}
+
+	projectsExt := make([]*models.ProjectExternal, 0)
+
+	for _, project := range projects {
+		projectsExt = append(projectsExt, project.Externalize())
+	}
+
+	w.WriteHeader(http.StatusOK)
+
+	if err := json.NewEncoder(w).Encode(projectsExt); err != nil {
+		app.handleErrorFormDecoding(err, ErrUserDecode, w)
+		return
+	}
+}
+
 // HandleDeleteUser removes a user after checking that the sent password is correct
 func (app *App) HandleDeleteUser(w http.ResponseWriter, r *http.Request) {
 	id, err := strconv.ParseUint(chi.URLParam(r, "user_id"), 0, 64)

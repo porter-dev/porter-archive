@@ -8,6 +8,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/go-test/deep"
 	"github.com/porter-dev/porter/internal/models"
 )
 
@@ -360,6 +361,43 @@ func TestHandleReadUser(t *testing.T) {
 	testUserRequests(t, readUserTests, true)
 }
 
+var listUserProjectsTests = []*userTest{
+	&userTest{
+		initializers: []func(tester *tester){
+			initUserDefault,
+			initProject,
+		},
+		msg:       "List user projects successful",
+		method:    "GET",
+		endpoint:  "/api/users/1/projects",
+		body:      "",
+		expStatus: http.StatusOK,
+		expBody:   `[{"id":1,"name":"project-test","roles":[{"id":0,"kind":"admin","user_id":1,"project_id":1}]}]`,
+		useCookie: true,
+		validators: []func(c *userTest, tester *tester, t *testing.T){
+			userProjectsListValidator,
+		},
+	},
+	&userTest{
+		initializers: []func(tester *tester){
+			initUserDefault,
+		},
+		msg:       "List user projects unauthorized",
+		method:    "GET",
+		endpoint:  "/api/users/2/projects",
+		body:      "",
+		expStatus: http.StatusForbidden,
+		expBody:   http.StatusText(http.StatusForbidden) + "\n",
+		validators: []func(c *userTest, tester *tester, t *testing.T){
+			userBasicBodyValidator,
+		},
+	},
+}
+
+func TestHandleListUserProjects(t *testing.T) {
+	testUserRequests(t, listUserProjectsTests, true)
+}
+
 var deleteUserTests = []*userTest{
 	&userTest{
 		initializers: []func(tester *tester){
@@ -479,5 +517,18 @@ func userContextBodyValidator(c *userTest, tester *tester, t *testing.T) {
 	if !reflect.DeepEqual(gotBody, expBody) {
 		t.Errorf("%s, handler returned wrong body: got %v want %v",
 			c.msg, gotBody, expBody)
+	}
+}
+
+func userProjectsListValidator(c *userTest, tester *tester, t *testing.T) {
+	gotBody := make([]*models.ProjectExternal, 0)
+	expBody := make([]*models.ProjectExternal, 0)
+
+	json.Unmarshal(tester.rr.Body.Bytes(), &gotBody)
+	json.Unmarshal([]byte(c.expBody), &expBody)
+
+	if diff := deep.Equal(gotBody, expBody); diff != nil {
+		t.Errorf("handler returned wrong body:\n")
+		t.Error(diff)
 	}
 }

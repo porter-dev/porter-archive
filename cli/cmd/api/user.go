@@ -184,6 +184,36 @@ func (c *Client) GetUser(ctx context.Context, userID uint) (*GetUserResponse, er
 	return bodyResp, nil
 }
 
+// ListUserProjectsResponse is the list of projects returned
+type ListUserProjectsResponse []*models.ProjectExternal
+
+// ListUserProjects returns a list of projects associated with a user
+func (c *Client) ListUserProjects(ctx context.Context, userID uint) (ListUserProjectsResponse, error) {
+	req, err := http.NewRequest(
+		"GET",
+		fmt.Sprintf("%s/users/%d/projects", c.BaseURL, userID),
+		nil,
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	req = req.WithContext(ctx)
+
+	bodyResp := ListUserProjectsResponse{}
+
+	if httpErr, err := c.sendRequest(req, &bodyResp, true); httpErr != nil || err != nil {
+		if httpErr != nil {
+			return nil, fmt.Errorf("code %d, errors %v", httpErr.Code, httpErr.Errors)
+		}
+
+		return nil, err
+	}
+
+	return bodyResp, nil
+}
+
 // DeleteUserRequest is the password needed to verify a user should be deleted
 type DeleteUserRequest struct {
 	Password string `json:"password"`

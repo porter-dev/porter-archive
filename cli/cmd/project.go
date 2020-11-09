@@ -30,6 +30,19 @@ var createProjectCmd = &cobra.Command{
 	},
 }
 
+var listProjectCmd = &cobra.Command{
+	Use:   "list",
+	Short: "Lists the projects for the logged in user",
+	Run: func(cmd *cobra.Command, args []string) {
+		err := listProjects(getHost())
+
+		if err != nil {
+			fmt.Printf("An error occurred: %v\n", err)
+			os.Exit(1)
+		}
+	},
+}
+
 func init() {
 	rootCmd.AddCommand(projectCmd)
 
@@ -42,7 +55,7 @@ func init() {
 		"host url of Porter instance",
 	)
 
-	projectCmd.AddCommand(setProjectCmd)
+	projectCmd.AddCommand(listProjectCmd)
 }
 
 func createProject(host string, name string) error {
@@ -59,4 +72,26 @@ func createProject(host string, name string) error {
 	fmt.Printf("Created project with name %s and id %d\n", name, resp.ID)
 
 	return setProject(resp.ID)
+}
+
+func listProjects(host string) error {
+	client := api.NewClient(host+"/api", "cookie.json")
+
+	user, err := client.AuthCheck(context.Background())
+
+	if err != nil {
+		return err
+	}
+
+	projects, err := client.ListUserProjects(context.Background(), user.ID)
+
+	if err != nil {
+		return err
+	}
+
+	for _, project := range projects {
+		fmt.Println(project.Name, project.ID)
+	}
+
+	return nil
 }

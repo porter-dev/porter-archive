@@ -64,3 +64,23 @@ func (repo *ProjectRepository) ReadProject(id uint) (*models.Project, error) {
 	index := int(id - 1)
 	return repo.projects[index], nil
 }
+
+// ListProjectsByUserID lists projects where a user has an associated role
+func (repo *ProjectRepository) ListProjectsByUserID(userID uint) ([]*models.Project, error) {
+	if !repo.canQuery {
+		return nil, errors.New("Cannot read from database")
+	}
+
+	resp := make([]*models.Project, 0)
+
+	// find all roles matching
+	for _, project := range repo.projects {
+		for _, role := range project.Roles {
+			if role.UserID == userID {
+				resp = append(resp, project)
+			}
+		}
+	}
+
+	return resp, nil
+}

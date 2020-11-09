@@ -12,4 +12,5 @@ type ProjectRepository interface {
 	CreateProject(project *models.Project) (*models.Project, error)
 	CreateProjectRole(project *models.Project, role *models.Role) (*models.Role, error)
 	ReadProject(id uint) (*models.Project, error)
+	ListProjectsByUserID(userID uint) ([]*models.Project, error)
 }

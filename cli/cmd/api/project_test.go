@@ -46,6 +46,33 @@ func initProjectCandidate(
 	return resp[0]
 }
 
+func initProjectSA(
+	projectID uint,
+	candidateID uint,
+	client *api.Client,
+	t *testing.T,
+) *api.CreateProjectServiceAccountResponse {
+	t.Helper()
+
+	resp, err := client.CreateProjectServiceAccount(
+		context.Background(),
+		projectID,
+		candidateID,
+		api.CreateProjectServiceAccountRequest{
+			&models.ServiceAccountAllActions{
+				Name:             models.OIDCIssuerDataAction,
+				OIDCIssuerCAData: "LS0tLS1CRUdJTiBDRVJ=",
+			},
+		},
+	)
+
+	if err != nil {
+		t.Fatalf("%v\n", err)
+	}
+
+	return resp
+}
+
 func TestCreateProject(t *testing.T) {
 	email := "create_project_test@example.com"
 	client := api.NewClient(baseURL, "cookie_create_project_test.json")
@@ -281,6 +308,45 @@ func TestCreateProjectServiceAccount(t *testing.T) {
 
 	if resp.Clusters[0].Server != "https://localhost" {
 		t.Errorf("cluster's name is incorrect: expected %s, got %s\n", "https://localhost", resp.Clusters[0].Server)
+	}
+}
+
+func TestListProjectClusters(t *testing.T) {
+	email := "list_project_clusters_test@example.com"
+	client := api.NewClient(baseURL, "cookie_list_project_clusters_test.json")
+	user := initUser(email, client, t)
+	client.Login(context.Background(), &api.LoginRequest{
+		Email:    user.Email,
+		Password: "hello1234",
+	})
+	project := initProject("project-test", client, t)
+	saCandidate := initProjectCandidate(project.ID, OIDCAuthWithoutData, client, t)
+	sa := initProjectSA(project.ID, saCandidate.ID, client, t)
+
+	resp, err := client.ListProjectClusters(
+		context.Background(),
+		project.ID,
+	)
+
+	if err != nil {
+		t.Fatalf("%v\n", err)
+	}
+
+	// verify clusters
+	if len(resp) != 1 {
+		t.Fatalf("length of clusters is not 1")
+	}
+
+	if resp[0].ServiceAccountID != sa.ID {
+		t.Errorf("cluster's sa id is incorrect: expected %d, got %d\n", sa.ID, resp[0].ServiceAccountID)
+	}
+
+	if resp[0].Name != "cluster-test" {
+		t.Errorf("cluster's name is incorrect: expected %s, got %s\n", "cluster-test", resp[0].Name)
+	}
+
+	if resp[0].Server != "https://localhost" {
+		t.Errorf("cluster's name is incorrect: expected %s, got %s\n", "https://localhost", resp[0].Server)
 	}
 }
 

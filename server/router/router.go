@@ -33,6 +33,7 @@ func New(
 
 		// /api/users routes
 		r.Method("GET", "/users/{user_id}", auth.DoesUserIDMatch(requestlog.NewHandler(a.HandleReadUser, l), mw.URLParam))
+		r.Method("GET", "/users/{user_id}/projects", auth.DoesUserIDMatch(requestlog.NewHandler(a.HandleListUserProjects, l), mw.URLParam))
 		r.Method("POST", "/users", requestlog.NewHandler(a.HandleCreateUser, l))
 		r.Method("DELETE", "/users/{user_id}", auth.DoesUserIDMatch(requestlog.NewHandler(a.HandleDeleteUser, l), mw.URLParam))
 		r.Method("POST", "/login", requestlog.NewHandler(a.HandleLoginUser, l))
@@ -62,6 +63,16 @@ func New(
 			"/projects/{project_id}",
 			auth.DoesUserHaveProjectAccess(
 				requestlog.NewHandler(a.HandleReadProject, l),
+				mw.URLParam,
+				mw.ReadAccess,
+			),
+		)
+
+		r.Method(
+			"GET",
+			"/projects/{project_id}/clusters",
+			auth.DoesUserHaveProjectAccess(
+				requestlog.NewHandler(a.HandleListProjectClusters, l),
 				mw.URLParam,
 				mw.ReadAccess,
 			),

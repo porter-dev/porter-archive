@@ -1,11 +1,11 @@
 package cmd
 
 import (
-	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 
+	"github.com/fatih/color"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"k8s.io/client-go/util/homedir"
@@ -35,18 +35,18 @@ func Execute() {
 			err := ioutil.WriteFile(filepath.Join(home, ".porter", "porter.yaml"), []byte{}, 0644)
 
 			if err != nil {
-				fmt.Printf("%v\n", err)
+				color.New(color.FgRed).Printf("%v\n", err)
 				os.Exit(1)
 			}
 		} else {
 			// Config file was found but another error was produced
-			fmt.Printf("%v\n", err)
+			color.New(color.FgRed).Printf("%v\n", err)
 			os.Exit(1)
 		}
 	}
 
 	if err := rootCmd.Execute(); err != nil {
-		fmt.Println(err)
+		color.New(color.FgRed).Println(err)
 		os.Exit(1)
 	}
 }

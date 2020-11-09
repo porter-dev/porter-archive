@@ -1,10 +1,10 @@
 package cmd
 
 import (
-	"fmt"
 	"os"
 	"strconv"
 
+	"github.com/fatih/color"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -28,14 +28,14 @@ var setProjectCmd = &cobra.Command{
 		projID, err := strconv.ParseUint(args[0], 10, 64)
 
 		if err != nil {
-			fmt.Printf("An error occurred: %v\n", err)
+			color.New(color.FgRed).Printf("An error occurred: %v\n", err)
 			os.Exit(1)
 		}
 
 		err = setProject(uint(projID))
 
 		if err != nil {
-			fmt.Printf("An error occurred: %v\n", err)
+			color.New(color.FgRed).Printf("An error occurred: %v\n", err)
 			os.Exit(1)
 		}
 	},
@@ -49,7 +49,7 @@ var setHostCmd = &cobra.Command{
 		err := setHost(args[0])
 
 		if err != nil {
-			fmt.Printf("An error occurred: %v\n", err)
+			color.New(color.FgRed).Printf("An error occurred: %v\n", err)
 			os.Exit(1)
 		}
 	},
@@ -64,14 +64,15 @@ func init() {
 
 func setProject(id uint) error {
 	viper.Set("project", id)
-	fmt.Printf("Set the current project id as %d\n", id)
+	color.New(color.FgGreen).Printf("Set the current project id as %d\n", id)
 	return viper.WriteConfig()
 }
 
 func setHost(host string) error {
 	viper.Set("host", host)
-	fmt.Printf("Set the current host as %s\n", host)
-	return viper.WriteConfig()
+	err := viper.WriteConfig()
+	color.New(color.FgGreen).Printf("Set the current host as %s\n", host)
+	return err
 }
 
 func getHost() string {

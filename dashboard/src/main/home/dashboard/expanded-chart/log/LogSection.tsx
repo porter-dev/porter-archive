@@ -72,7 +72,7 @@ const TabWrapper = styled.div`
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  width: 20%;
+  width: 30%;
   float: left;
 `
 

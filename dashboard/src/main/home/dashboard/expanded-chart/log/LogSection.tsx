@@ -29,7 +29,13 @@ export default class LogSection extends Component<PropsType, StateType> {
 
   renderPodTabs = () => {
     return this.state.pods.map((pod, i) => {
-      return <div key={i}>{pod}</div>
+      return (
+        <Tab key={i} onClick={() => {
+          this.setState({selectedPod: pod})
+        }}>
+          {pod}
+        </Tab>
+      )
     })
   }
 
@@ -47,7 +53,9 @@ export default class LogSection extends Component<PropsType, StateType> {
   render() {
     return (
       <StyledLogSection>
-        {this.renderPodTabs()}
+        <TabWrapper>
+          {this.renderPodTabs()}
+        </TabWrapper>
         {this.renderLogs()}
       </StyledLogSection>
     );
@@ -56,6 +64,26 @@ export default class LogSection extends Component<PropsType, StateType> {
 
 LogSection.contextType = Context;
 
+const TabWrapper = styled.div`
+  display: flex;
+  flexDirection: row;
+  overflow: hidden;
+`
+
+const Tab = styled.div`
+  height: 100%;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  background-color: red;
+  color: white;
+  border-radius: 20px;
+  text-shadow: 0px 0px 8px none;
+  cursor: pointer;
+  :hover {
+    color: #aaaabb99;
+  }
+`;
 
 const StyledLogSection = styled.div`
   width: 100%;

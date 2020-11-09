@@ -149,7 +149,6 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
         />
       );
     } else if (this.state.currentTab === 'values') {
-      console.log(chart)
       return (
         <ValuesYaml
           currentChart={chart}

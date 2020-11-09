@@ -23,7 +23,7 @@ var createProjectCmd = &cobra.Command{
 	Args:  cobra.ExactArgs(1),
 	Short: "Creates a project with the authorized user as admin",
 	Run: func(cmd *cobra.Command, args []string) {
-		err := createProject(getHost(), args[0])
+		err := checkLoginAndRun(args, createProject)
 
 		if err != nil {
 			os.Exit(1)
@@ -35,7 +35,7 @@ var listProjectCmd = &cobra.Command{
 	Use:   "list",
 	Short: "Lists the projects for the logged in user",
 	Run: func(cmd *cobra.Command, args []string) {
-		err := listProjects(getHost())
+		err := checkLoginAndRun(args, listProjects)
 
 		if err != nil {
 			os.Exit(1)
@@ -47,7 +47,7 @@ var listProjectClustersCmd = &cobra.Command{
 	Use:   "clusters list",
 	Short: "Lists the linked clusters for a project",
 	Run: func(cmd *cobra.Command, args []string) {
-		err := listProjectClusters(getHost(), getProjectID())
+		err := checkLoginAndRun(args, listProjectClusters)
 
 		if err != nil {
 			os.Exit(1)
@@ -72,31 +72,21 @@ func init() {
 	projectCmd.AddCommand(listProjectClustersCmd)
 }
 
-func createProject(host string, name string) error {
-	client := api.NewClient(host+"/api", "cookie.json")
-
+func createProject(_ *api.AuthCheckResponse, client *api.Client, args []string) error {
 	resp, err := client.CreateProject(context.Background(), &api.CreateProjectRequest{
-		Name: name,
+		Name: args[0],
 	})
 
 	if err != nil {
 		return err
 	}
 
-	fmt.Printf("Created project with name %s and id %d\n", name, resp.ID)
+	color.New(color.FgGreen).Printf("Created project with name %s and id %d\n", args[0], resp.ID)
 
 	return setProject(resp.ID)
 }
 
-func listProjects(host string) error {
-	client := api.NewClient(host+"/api", "cookie.json")
-
-	user, err := check(client)
-
-	if err != nil {
-		return err
-	}
-
+func listProjects(user *api.AuthCheckResponse, client *api.Client, args []string) error {
 	projects, err := client.ListUserProjects(context.Background(), user.ID)
 
 	if err != nil {
@@ -123,16 +113,8 @@ func listProjects(host string) error {
 	return nil
 }
 
-func listProjectClusters(host string, projectID uint) error {
-	client := api.NewClient(host+"/api", "cookie.json")
-
-	_, err := check(client)
-
-	if err != nil {
-		return err
-	}
-
-	clusters, err := client.ListProjectClusters(context.Background(), projectID)
+func listProjectClusters(user *api.AuthCheckResponse, client *api.Client, args []string) error {
+	clusters, err := client.ListProjectClusters(context.Background(), getProjectID())
 
 	if err != nil {
 		return err

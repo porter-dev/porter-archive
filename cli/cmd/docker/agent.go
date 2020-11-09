@@ -147,8 +147,6 @@ type PullImageEvent struct {
 
 // PullImage pulls an image specified by the image string
 func (a *Agent) PullImage(image string) error {
-	fmt.Println("Pulling image:", image)
-
 	// pull the specified image
 	out, err := a.client.ImagePull(a.ctx, image, types.ImagePullOptions{})
 
@@ -169,8 +167,6 @@ func (a *Agent) PullImage(image string) error {
 			return err
 		}
 	}
-
-	fmt.Println("Finished pulling image:", image)
 
 	return nil
 }

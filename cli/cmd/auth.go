@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"strings"
 
 	"github.com/fatih/color"
 
@@ -25,7 +24,7 @@ var loginCmd = &cobra.Command{
 		err := login()
 
 		if err != nil {
-			fmt.Println("Error logging in:", err.Error())
+			color.Red("Error logging in:", err.Error())
 			os.Exit(1)
 		}
 	},
@@ -38,7 +37,7 @@ var registerCmd = &cobra.Command{
 		err := register()
 
 		if err != nil {
-			fmt.Println("Error registering:", err.Error())
+			color.Red("Error registering:", err.Error())
 			os.Exit(1)
 		}
 	},
@@ -48,10 +47,9 @@ var logoutCmd = &cobra.Command{
 	Use:   "logout",
 	Short: "Logs a user out of a given Porter server",
 	Run: func(cmd *cobra.Command, args []string) {
-		err := logout()
+		err := checkLoginAndRun(args, logout)
 
 		if err != nil {
-			fmt.Println("Error logging out:", err.Error())
 			os.Exit(1)
 		}
 	},
@@ -73,7 +71,14 @@ func init() {
 }
 
 func login() error {
-	host := getHost()
+	client := api.NewClient(getHost()+"/api", "cookie.json")
+	user, _ := client.AuthCheck(context.Background())
+
+	if user != nil {
+		color.Yellow("You are already logged in. If you'd like to log out, run \"porter auth logout\".")
+		return nil
+	}
+
 	var username, pw string
 
 	fmt.Println("Please log in with an email and password:")
@@ -90,8 +95,6 @@ func login() error {
 		return err
 	}
 
-	client := api.NewClient(host+"/api", "cookie.json")
-
 	_, err = client.Login(context.Background(), &api.LoginRequest{
 		Email:    username,
 		Password: pw,
@@ -101,23 +104,9 @@ func login() error {
 		return err
 	}
 
-	fmt.Println("Successfully logged in!")
+	color.New(color.FgGreen).Println("Successfully logged in!")
 
 	return nil
-}
-
-func check(client *api.Client) (*api.AuthCheckResponse, error) {
-	user, err := client.AuthCheck(context.Background())
-
-	if err != nil {
-		if strings.Contains(err.Error(), "403") {
-			color.Red("You are not logged in. Log in using \"porter auth login\"")
-		}
-
-		return nil, err
-	}
-
-	return user, nil
 }
 
 func register() error {
@@ -148,23 +137,19 @@ func register() error {
 		return err
 	}
 
-	fmt.Printf("Created user with email %s and id %d\n", username, resp.ID)
+	color.New(color.FgGreen).Printf("Created user with email %s and id %d\n", username, resp.ID)
 
 	return nil
 }
 
-func logout() error {
-	host := getHost()
-
-	client := api.NewClient(host+"/api", "cookie.json")
-
+func logout(user *api.AuthCheckResponse, client *api.Client, args []string) error {
 	err := client.Logout(context.Background())
 
 	if err != nil {
 		return err
 	}
 
-	fmt.Println("Successfully logged out")
+	color.Green("Successfully logged out")
 
 	return nil
 }

@@ -116,7 +116,6 @@ func StartPorter(opts *PorterStartOpts) (agent *Agent, id string, err error) {
 			return nil, "", err
 		}
 
-		fmt.Println("Waiting for postgres:latest to be healthy...")
 		err = agent.WaitForContainerHealthy(pgID, 10)
 
 		if err != nil {
@@ -151,7 +150,6 @@ func StartPorter(opts *PorterStartOpts) (agent *Agent, id string, err error) {
 		return nil, "", err
 	}
 
-	fmt.Println("Waiting for porter to be healthy...")
 	err = agent.WaitForContainerHealthy(id, 10)
 
 	if err != nil {
@@ -385,8 +383,6 @@ func (a *Agent) startPostgresContainer(id string) error {
 // StopPorterContainers finds all containers that were started via the CLI and stops them
 // -- removes the container if remove is set to true
 func (a *Agent) StopPorterContainers(remove bool) error {
-	fmt.Println("Stopping containers...")
-
 	containers, err := a.getContainersCreatedByStart()
 
 	if err != nil {
@@ -419,8 +415,6 @@ func (a *Agent) StopPorterContainers(remove bool) error {
 // and have a given process id and stops them -- removes the container if remove is set
 // to true
 func (a *Agent) StopPorterContainersWithProcessID(processID string, remove bool) error {
-	fmt.Println("Stopping containers...")
-
 	containers, err := a.getContainersCreatedByStart()
 
 	if err != nil {

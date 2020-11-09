@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/fatih/color"
 	"github.com/porter-dev/porter/cli/cmd/docker"
 
 	"github.com/spf13/cobra"
@@ -34,13 +35,14 @@ var startCmd = &cobra.Command{
 		)
 
 		if err != nil {
-			fmt.Println("Error running start:", err.Error())
-			fmt.Println("Shutting down...")
+			red := color.New(color.FgRed)
+			red.Println("Error running start:", err.Error())
+			red.Println("Shutting down...")
 
 			err = stop()
 
 			if err != nil {
-				fmt.Println("Shutdown unsuccessful:", err.Error())
+				red.Println("Shutdown unsuccessful:", err.Error())
 			}
 
 			os.Exit(1)
@@ -53,7 +55,7 @@ var stopCmd = &cobra.Command{
 	Short: "Stops a Porter instance running on the Docker engine",
 	Run: func(cmd *cobra.Command, args []string) {
 		if err := stop(); err != nil {
-			fmt.Println("Shutdown unsuccessful:", err.Error())
+			color.New(color.FgRed).Println("Shutdown unsuccessful:", err.Error())
 			os.Exit(1)
 		}
 	},
@@ -116,10 +118,9 @@ func start(
 		return err
 	}
 
-	// fmt.Println("Spinning up the server...")
-	// time.Sleep(7 * time.Second)
-	// openBrowser(fmt.Sprintf("http://localhost:%d/login?email=%s", port, username))
-	fmt.Printf("Server ready: listening on localhost:%d\n", port)
+	green := color.New(color.FgGreen)
+
+	green.Printf("Server ready: listening on localhost:%d\n", port)
 
 	return setHost(fmt.Sprintf("http://localhost:%d", port))
 }
@@ -136,6 +137,10 @@ func stop() error {
 	if err != nil {
 		return err
 	}
+
+	green := color.New(color.FgGreen)
+
+	green.Println("Successfully stopped the Porter server.")
 
 	return nil
 }

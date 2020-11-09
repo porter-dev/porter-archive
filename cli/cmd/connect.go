@@ -1,9 +1,9 @@
 package cmd
 
 import (
-	"fmt"
 	"os"
 
+	"github.com/porter-dev/porter/cli/cmd/api"
 	"github.com/porter-dev/porter/cli/cmd/connect"
 	"github.com/spf13/cobra"
 )
@@ -23,18 +23,9 @@ var connectKubeconfigCmd = &cobra.Command{
 	Use:   "kubeconfig",
 	Short: "Uses the local kubeconfig to connect to a cluster",
 	Run: func(cmd *cobra.Command, args []string) {
-		host := getHost()
-		projectID := getProjectID()
-
-		err := connect.Kubeconfig(
-			kubeconfigPath,
-			*contexts,
-			host,
-			projectID,
-		)
+		err := checkLoginAndRun(args, runConnect)
 
 		if err != nil {
-			fmt.Printf("Error occurred: %v\n", err)
 			os.Exit(1)
 		}
 	},
@@ -71,5 +62,14 @@ func init() {
 		"contexts",
 		nil,
 		"the list of contexts to connect (defaults to the current context)",
+	)
+}
+
+func runConnect(_ *api.AuthCheckResponse, client *api.Client, _ []string) error {
+	return connect.Kubeconfig(
+		client,
+		kubeconfigPath,
+		*contexts,
+		getProjectID(),
 	)
 }

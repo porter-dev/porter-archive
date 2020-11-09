@@ -1,10 +1,11 @@
 package utils
 
 import (
-	"fmt"
 	"os"
 	"os/signal"
 	"syscall"
+
+	"github.com/fatih/color"
 )
 
 func closeHandler(closer func() error) {
@@ -15,11 +16,11 @@ func closeHandler(closer func() error) {
 		err := closer()
 
 		if err == nil {
-			fmt.Println("shutdown successful")
+			color.New(color.FgRed).Println("shutdown successful")
 			os.Exit(0)
 		}
 
-		fmt.Printf("shutdown unsuccessful: %s\n", err.Error())
+		color.New(color.FgRed).Printf("shutdown unsuccessful: %s\n", err.Error())
 		os.Exit(1)
 	}()
 }

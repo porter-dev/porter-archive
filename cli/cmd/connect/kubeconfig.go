@@ -9,6 +9,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/fatih/color"
 	"github.com/porter-dev/porter/cli/cmd/utils"
 	"github.com/porter-dev/porter/internal/kubernetes/local"
 	gcpLocal "github.com/porter-dev/porter/internal/providers/gcp/local"
@@ -20,9 +21,9 @@ import (
 // Kubeconfig creates a service account for a project by parsing the local
 // kubeconfig and resolving actions that must be performed.
 func Kubeconfig(
+	client *api.Client,
 	kubeconfigPath string,
 	contexts []string,
-	host string,
 	projectID uint,
 ) error {
 	// if project ID is 0, ask the user to set the project ID or create a project
@@ -38,8 +39,6 @@ func Kubeconfig(
 	}
 
 	// send kubeconfig to client
-	client := api.NewClient(host+"/api", "cookie.json")
-
 	saCandidates, err := client.CreateProjectCandidates(
 		context.Background(),
 		projectID,
@@ -124,7 +123,7 @@ func Kubeconfig(
 		}
 
 		for _, cluster := range sa.Clusters {
-			fmt.Printf("created service account for cluster %s with id %d\n", cluster.Name, sa.ID)
+			color.New(color.FgGreen).Printf("created service account for cluster %s with id %d\n", cluster.Name, sa.ID)
 
 			// sanity check to ensure it's working
 			// namespaces, err := client.GetK8sNamespaces(
@@ -233,9 +232,10 @@ func resolveGCPKeyAction(endpoint string, clusterName string) (*models.ServiceAc
 		fmt.Sprintf(
 			`Detected GKE cluster in kubeconfig for the endpoint %s (%s). 
 Porter can set up a service account in your GCP project to connect to this cluster automatically.
-Would you like to proceed? [y/n] `,
-			endpoint,
+Would you like to proceed? %s `,
+			color.New(color.FgCyan).Sprintf("%s", endpoint),
 			clusterName,
+			color.New(color.FgCyan).Sprintf("[y/n]"),
 		),
 	)
 
@@ -259,7 +259,7 @@ Would you like to proceed? [y/n] `,
 		resp, err := agent.CreateServiceAccount(name)
 
 		if err != nil {
-			fmt.Println("Automatic creation failed.")
+			color.New(color.FgRed).Println("Automatic creation failed, manual input required.")
 			return resolveGCPKeyActionManual(endpoint, clusterName)
 		}
 
@@ -286,8 +286,8 @@ Would you like to proceed? [y/n] `,
 }
 
 func resolveGCPKeyActionManual(endpoint string, clusterName string) (*models.ServiceAccountAllActions, error) {
-	keyFileLocation, err := utils.PromptPlaintext(`Please provide the full path to a service account key file.
-Key file location: `)
+	keyFileLocation, err := utils.PromptPlaintext(fmt.Sprintf(`Please provide the full path to a service account key file.
+Key file location: `))
 
 	if err != nil {
 		return nil, err

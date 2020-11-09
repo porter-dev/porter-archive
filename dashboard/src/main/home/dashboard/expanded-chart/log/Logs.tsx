@@ -42,9 +42,9 @@ export default class Logs extends Component<PropsType, StateType> {
 
   render() {
     return (
-      <StyledLogSection ref={this.scrollRef}>
+      <LogStream ref={this.scrollRef}>
         {this.renderLogs()}
-      </StyledLogSection>
+      </LogStream>
     );
   }
 }
@@ -52,11 +52,12 @@ export default class Logs extends Component<PropsType, StateType> {
 Logs.contextType = Context;
 
 
-const StyledLogSection = styled.div`
+const LogStream = styled.div`
   width: 100%;
   height: 100%;
   background: #202227;
   position: relative;
   padding: 0px;
   user-select: text;
+  overflow: auto;
 `;

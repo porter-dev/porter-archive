@@ -25,24 +25,28 @@ const ContextConsumer = Context.Consumer;
 class ContextProvider extends Component {
   state = {
     currentModal: null as string | null,
-    setCurrentModal: (currentModal: string, currentModalData?: any): void => {
+    currentModalData: null as any,
+    setCurrentModal: (currentModal: string, currentModalData?: any) => {
       this.setState({ currentModal, currentModalData });
     },
-    currentModalData: null as any,
     currentError: null as string | null,
-    setCurrentError: (currentError: string): void => {
+    setCurrentError: (currentError: string) => {
       this.setState({ currentError });
     },
     currentCluster: null as string | null,
-    setCurrentCluster: (currentCluster: string): void => {
+    setCurrentCluster: (currentCluster: string) => {
       this.setState({ currentCluster });
     },
+    currentProject: null as string | null,
+    setCurrentProject: (currentProject: string) => {
+      this.setState({ currentProject });
+    },
     user: null as any,
-    setUser: (userId: number, email: string): void => {
+    setUser: (userId: number, email: string) => {
       this.setState({ user: {userId, email} });
     },
     devOpsMode: true,
-    setDevOpsMode: (devOpsMode: boolean): void => {
+    setDevOpsMode: (devOpsMode: boolean) => {
       this.setState({ devOpsMode });
     }
   };

@@ -50,6 +50,24 @@ export default class Dashboard extends Component<PropsType, StateType> {
     });
   }
 
+  renderDashboardIcon = () => {
+    if (false) {
+      let { currentCluster } = this.props;
+      return (
+        <DashboardIcon>
+          <DashboardImage src={gradient} />
+          <Overlay>{currentCluster && currentCluster[0].toUpperCase()}</Overlay>
+        </DashboardIcon>
+      );
+    }
+
+    return (
+      <DashboardIcon>
+        <i className="material-icons">device_hub</i>
+      </DashboardIcon>
+    );
+  }
+
   renderContents = () => {
     let { currentCluster, setSidebar } = this.props;
 
@@ -67,10 +85,7 @@ export default class Dashboard extends Component<PropsType, StateType> {
     return (
       <div>
         <TitleSection>
-          <ProjectIcon>
-            <ProjectImage src={gradient} />
-            <Overlay>{currentCluster && currentCluster[0].toUpperCase()}</Overlay>
-          </ProjectIcon>
+          {this.renderDashboardIcon()}
           <Title>{currentCluster}</Title>
           <i className="material-icons">more_vert</i>
         </TitleSection>
@@ -250,17 +265,26 @@ const Overlay = styled.div`
   color: white;
 `;
 
-const ProjectImage = styled.img`
+const DashboardImage = styled.img`
   height: 45px;
   width: 45px;
   border-radius: 5px;
 `;
 
-const ProjectIcon = styled.div`
+const DashboardIcon = styled.div`
   position: relative;
   height: 45px;
   width: 45px;
   border-radius: 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #676C7C;
+  border: 2px solid #8e94aa;
+
+  > i {
+    font-size: 22px;
+  }
 `;
 
 const Title = styled.div`

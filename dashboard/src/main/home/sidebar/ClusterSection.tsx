@@ -116,14 +116,14 @@ export default class ClusterSection extends Component<PropsType, StateType> {
             </DropdownIcon>
           </DrawerButton>
         </ClusterSelector>
-      )
+      );
     }
 
     return (
       <InitializeButton onClick={this.showClusterConfigModal}>
         <Plus>+</Plus> Add a Cluster
       </InitializeButton>
-    )
+    );
   };
 
   render() {
@@ -198,7 +198,7 @@ const ClusterName = styled.div`
   display: inline-block;
   width: 130px;
   margin-left: 3px;
-  font-weight: 600;
+  font-weight: 400;
 `;
 
 const DropdownIcon = styled.span`

@@ -4,7 +4,9 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"text/tabwriter"
 
+	"github.com/fatih/color"
 	"github.com/porter-dev/porter/cli/cmd/api"
 	"github.com/spf13/cobra"
 )
@@ -24,7 +26,6 @@ var createProjectCmd = &cobra.Command{
 		err := createProject(getHost(), args[0])
 
 		if err != nil {
-			fmt.Printf("An error occurred: %v\n", err)
 			os.Exit(1)
 		}
 	},
@@ -37,7 +38,18 @@ var listProjectCmd = &cobra.Command{
 		err := listProjects(getHost())
 
 		if err != nil {
-			fmt.Printf("An error occurred: %v\n", err)
+			os.Exit(1)
+		}
+	},
+}
+
+var listProjectClustersCmd = &cobra.Command{
+	Use:   "clusters list",
+	Short: "Lists the linked clusters for a project",
+	Run: func(cmd *cobra.Command, args []string) {
+		err := listProjectClusters(getHost(), getProjectID())
+
+		if err != nil {
 			os.Exit(1)
 		}
 	},
@@ -56,6 +68,8 @@ func init() {
 	)
 
 	projectCmd.AddCommand(listProjectCmd)
+
+	projectCmd.AddCommand(listProjectClustersCmd)
 }
 
 func createProject(host string, name string) error {
@@ -77,7 +91,7 @@ func createProject(host string, name string) error {
 func listProjects(host string) error {
 	client := api.NewClient(host+"/api", "cookie.json")
 
-	user, err := client.AuthCheck(context.Background())
+	user, err := check(client)
 
 	if err != nil {
 		return err
@@ -89,9 +103,51 @@ func listProjects(host string) error {
 		return err
 	}
 
+	w := new(tabwriter.Writer)
+	w.Init(os.Stdout, 3, 8, 0, '\t', tabwriter.AlignRight)
+
+	fmt.Fprintf(w, "%s\t%s\n", "ID", "NAME")
+
+	currProjectID := getProjectID()
+
 	for _, project := range projects {
-		fmt.Println(project.Name, project.ID)
+		if currProjectID == project.ID {
+			color.New(color.FgGreen).Fprintf(w, "%d\t%s (current project)\n", project.ID, project.Name)
+		} else {
+			fmt.Fprintf(w, "%d\t%s\n", project.ID, project.Name)
+		}
 	}
+
+	w.Flush()
+
+	return nil
+}
+
+func listProjectClusters(host string, projectID uint) error {
+	client := api.NewClient(host+"/api", "cookie.json")
+
+	_, err := check(client)
+
+	if err != nil {
+		return err
+	}
+
+	clusters, err := client.ListProjectClusters(context.Background(), projectID)
+
+	if err != nil {
+		return err
+	}
+
+	w := new(tabwriter.Writer)
+	w.Init(os.Stdout, 3, 8, 0, '\t', tabwriter.AlignRight)
+
+	fmt.Fprintf(w, "%s\t%s\t%s\n", "ID", "NAME", "SERVER")
+
+	for _, cluster := range clusters {
+		fmt.Fprintf(w, "%d\t%s\t%s\n", cluster.ID, cluster.Name, cluster.Server)
+	}
+
+	w.Flush()
 
 	return nil
 }

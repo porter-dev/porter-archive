@@ -6,9 +6,7 @@
     - [Linux Installation](#linux-installation)
     - [Windows Installation](#windows-installation)
 - [Local Setup](#local-setup)
-    - [Passing `kubeconfig` explicitly](#passing-kubeconfig-explicitly)
-    - [Passing a context list](#passing-a-context-list)
-    - [Skipping initialization steps](#skipping-initialization-steps)
+    - [Connecting to a Cluster](#connecting-to-a-cluster)
 
 ## Prerequisites
 

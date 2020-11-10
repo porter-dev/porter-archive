@@ -141,7 +141,7 @@ export default class Sidebar extends Component<PropsType, StateType> {
     // Render placeholder if no project exists
     return (
       <ProjectPlaceholder>
-        You have no projects.
+        No projects found.
       </ProjectPlaceholder>
     );
   }

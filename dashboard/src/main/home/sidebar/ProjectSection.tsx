@@ -33,37 +33,42 @@ export default class ProjectSection extends Component<PropsType, StateType> {
   };
 
   updateProjects = () => {
-    this.context.setCurrentProject('z');
+    console.log('rip')
+    let { user } = this.context;
+    api.getProjects('<token>', {}, { id: user.userId }, (err: any, res: any) => {
+      if (err) {
+        console.log(err)
+      } else if (res.data) {
+        this.setState({ projects: res.data });
+        this.context.setCurrentProject(res.data[0].name);
+      }
+    });
   }
 
   componentDidMount() {
     this.updateProjects();
   }
-
-  componentDidUpdate(prevProps: PropsType) {
-    if (prevProps !== this.props) {
-    }
-  }
   
   showProjectCreateModal = () => {
-    this.context.setCurrentModal('ClusterConfigModal', { updateClusters: null });
+    this.context.setCurrentModal('CreateProjectModal', {
+      keepOpen: false,
+      updateProjects: this.updateProjects
+    });
   }
-
-  handleOptionClick = (option: { value: string, label: string }) => {
-    this.context.setCurrentProject(option.value);
-  }
-
 
   renderOptionList = () => {
-    return options.map((option: { value: string, label: string }, i: number) => {
+    return this.state.projects.map((project: any, i: number) => {
       return (
         <Option
           key={i}
-          selected={option.value === this.context.currentProject}
-          onClick={() => this.handleOptionClick(option)}
-          lastItem={i === options.length - 1}
+          selected={project.name === this.context.currentProject}
+          onClick={() => this.context.setCurrentProject(project.name)}
         >
-          {option.label}
+          <ProjectIcon>
+            <ProjectImage src={gradient} />
+            <Letter>{project.name[0].toUpperCase()}</Letter>
+          </ProjectIcon>
+          <ProjectLabel>{project.name}</ProjectLabel>
         </Option>
       );
     });
@@ -76,22 +81,23 @@ export default class ProjectSection extends Component<PropsType, StateType> {
           <CloseOverlay onClick={() => this.setState({ expanded: false })} />
           <Dropdown>
             {this.renderOptionList()}
+            <Option
+              selected={false}
+              lastItem={true}
+              onClick={this.showProjectCreateModal}
+            >
+              <ProjectIconAlt>+</ProjectIconAlt>
+              <ProjectLabel>Add a project</ProjectLabel>
+            </Option>
           </Dropdown>
         </div>
-      )
-    }
-  }
-
-  getLabel = (value: string): any => {
-    let tgt = options.find((element: { value: string, label: string }) => element.value === value);
-    if (tgt) {
-      return tgt.label;
+      );
     }
   }
 
   render() {
-    if (this.context.currentProject) {
-      let projectName = this.getLabel(this.context.currentProject);
+    let { currentProject } = this.context;
+    if (currentProject) {
       return (
         <StyledProjectSection>
           <MainSelector
@@ -100,9 +106,9 @@ export default class ProjectSection extends Component<PropsType, StateType> {
           >
             <ProjectIcon>
               <ProjectImage src={gradient} />
-              <Letter>{projectName && projectName[0].toUpperCase()}</Letter>
+              <Letter>{currentProject[0].toUpperCase()}</Letter>
             </ProjectIcon>
-            <ProjectName>{projectName}</ProjectName>
+            <ProjectName>{currentProject}</ProjectName>
             <i className="material-icons">arrow_drop_down</i>
           </MainSelector>
           {this.renderDropdown()}
@@ -119,6 +125,19 @@ export default class ProjectSection extends Component<PropsType, StateType> {
 
 ProjectSection.contextType = Context;
 
+const ProjectLabel = styled.div`
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+`;
+
+const AddButton = styled.div`
+  display: flex;
+  align-items: center;
+  font-size: 13px;
+  padding: 12px 15px;
+`;
+
 const Plus = styled.div`
   margin-right: 10px;
   font-size: 15px;
@@ -129,9 +148,9 @@ const InitializeButton = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
-  width: calc(100% - 30px);
+  width: calc(100% - 10px);
   height: 38px;
-  margin: 20px 15px 0;
+  margin: 8px 5px;
   font-size: 13px;
   font-weight: 500;
   border-radius: 3px;
@@ -148,19 +167,16 @@ const InitializeButton = styled.div`
 const Option = styled.div` 
   width: 100%;
   border-top: 1px solid #00000000;
-  border-bottom: 1px solid ${(props: { selected: boolean, lastItem: boolean }) => props.lastItem ? '#ffffff00' : '#ffffff15'};
-  height: 35px;
-  font-size: 13px;
-  padding-top: 9px;
+  border-bottom: 1px solid ${(props: { selected: boolean, lastItem?: boolean }) => props.lastItem ? '#ffffff00' : '#ffffff15'};
+  height: 45px;
+  display: flex;
   align-items: center;
-  padding-left: 15px;
+  font-size: 13px;
+  align-items: center;
+  padding-left: 10px;
   cursor: pointer;
   padding-right: 10px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  background: ${(props: { selected: boolean, lastItem: boolean }) => props.selected ? '#ffffff11' : ''};
-
+  background: ${(props: { selected: boolean, lastItem?: boolean }) => props.selected ? '#ffffff11' : ''};
   :hover {
     background: #ffffff22;
   }
@@ -181,12 +197,12 @@ const Dropdown = styled.div`
   top: calc(100% + 5px);
   background: #26282f;
   width: 180px;
-  max-height: 300px;
+  max-height: 500px;
   border-radius: 3px;
   z-index: 999;
   overflow-y: auto;
   margin-bottom: 20px;
-  box-shadow: 0 8px 20px 0px #00000088;
+  box-shadow: 0 5px 15px 5px #00000077;
 `;
 
 const ProjectName = styled.div`
@@ -220,8 +236,14 @@ const ProjectIcon = styled.div`
   overflow: hidden;
   position: relative;
   margin-right: 10px;
-  margin-left: 20px;
   font-weight: 400;
+`;
+
+const ProjectIconAlt = styled(ProjectIcon)`
+  border: 1px solid #ffffff44;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 `;
 
 const StyledProjectSection = styled.div`
@@ -237,6 +259,7 @@ const MainSelector = styled.div`
   font-weight: 600;
   cursor: pointer;
   padding: 10px 0;
+  padding-left: 20px;
   :hover {
     > i {
       background: #ffffff11;

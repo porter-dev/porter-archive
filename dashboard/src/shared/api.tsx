@@ -112,6 +112,14 @@ const getBranchContents = baseApi<{ dir: string }, {
   return `/api/repos/github/${pathParams.repo}/${pathParams.branch}/contents`;
 });
 
+const getProjects = baseApi<{}, { id: number }>('GET', pathParams => {
+  return `/api/users/${pathParams.id}/projects`;
+});
+
+const createProject = baseApi<{ name: string }, {}>('POST', pathParams => {
+  return `/api/projects`;
+});
+
 // Bundle export to allow default api import (api.<method> is more readable)
 export default {
   checkAuth,
@@ -131,5 +139,7 @@ export default {
   upgradeChartValues,
   getTemplates,
   getBranches,
-  getBranchContents
+  getBranchContents,
+  getProjects,
+  createProject
 }

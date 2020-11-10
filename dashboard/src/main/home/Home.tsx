@@ -3,13 +3,15 @@ import styled from 'styled-components';
 import ReactModal from 'react-modal';
 
 import { Context } from '../../shared/Context';
+import api from '../../shared/api';
 
 import Sidebar from './sidebar/Sidebar';
 import Dashboard from './dashboard/Dashboard';
-import ClusterConfigModal from './modals/ClusterConfigModal';
-import LaunchTemplateModal from './modals/LaunchTemplateModal';
 import Loading from '../../components/Loading';
 import Templates from './templates/Templates';
+import ClusterConfigModal from './modals/ClusterConfigModal';
+import LaunchTemplateModal from './modals/LaunchTemplateModal';
+import CreateProjectModal from './modals/CreateProjectModal';
 
 type PropsType = {
   logOut: () => void
@@ -26,6 +28,19 @@ export default class Home extends Component<PropsType, StateType> {
     forceSidebar: true,
     showWelcome: false,
     currentView: 'dashboard'
+  }
+
+  componentDidMount() {
+    let { user } = this.context;
+    api.getProjects('<token>', {}, { id: user.userId }, (err: any, res: any) => {
+      if (err) {
+        // console.log(err)
+      } else if (res.data) {
+        if (res.data.length === 0) {
+          this.context.setCurrentModal('CreateProjectModal', { keepOpen: true });
+        }
+      }
+    });
   }
 
   renderDashboard = () => {
@@ -73,23 +88,32 @@ export default class Home extends Component<PropsType, StateType> {
   }
 
   render() {
+    let { currentModal, setCurrentModal, currentProject } = this.context;
     return (
       <StyledHome>
         <ReactModal
-          isOpen={this.context.currentModal === 'ClusterConfigModal'}
-          onRequestClose={() => this.context.setCurrentModal(null, null)}
+          isOpen={currentModal === 'ClusterConfigModal'}
+          onRequestClose={() => setCurrentModal(null, null)}
           style={MediumModalStyles}
           ariaHideApp={false}
         >
           <ClusterConfigModal />
         </ReactModal>
         <ReactModal
-          isOpen={this.context.currentModal === 'LaunchTemplateModal'}
-          onRequestClose={() => this.context.setCurrentModal(null, null)}
+          isOpen={currentModal === 'LaunchTemplateModal'}
+          onRequestClose={() => setCurrentModal(null, null)}
           style={MediumModalStyles}
           ariaHideApp={false}
         >
           <LaunchTemplateModal />
+        </ReactModal>
+        <ReactModal
+          isOpen={currentModal === 'CreateProjectModal'}
+          onRequestClose={() => currentProject ? setCurrentModal(null, null) : null }
+          style={ProjectModalStyles}
+          ariaHideApp={false}
+        >
+          <CreateProjectModal />
         </ReactModal>
 
         <Sidebar
@@ -121,6 +145,25 @@ const MediumModalStyles = {
     margin: '0 auto',
     height: '575px',
     top: 'calc(50% - 289px)',
+    backgroundColor: '#202227',
+    animation: 'floatInModal 0.5s 0s',
+    overflow: 'visible',
+  },
+};
+
+const ProjectModalStyles = {
+  overlay: {
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    zIndex: 2,
+  },
+  content: {
+    borderRadius: '7px',
+    border: 0,
+    width: '565px',
+    maxWidth: '80vw',
+    margin: '0 auto',
+    height: '225px',
+    top: 'calc(50% - 120px)',
     backgroundColor: '#202227',
     animation: 'floatInModal 0.5s 0s',
     overflow: 'visible',

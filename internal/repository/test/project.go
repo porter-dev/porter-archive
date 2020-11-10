@@ -84,3 +84,19 @@ func (repo *ProjectRepository) ListProjectsByUserID(userID uint) ([]*models.Proj
 
 	return resp, nil
 }
+
+// DeleteProject removes a project
+func (repo *ProjectRepository) DeleteProject(project *models.Project) (*models.Project, error) {
+	if !repo.canQuery {
+		return nil, errors.New("Cannot write database")
+	}
+
+	if int(project.ID-1) >= len(repo.projects) || repo.projects[project.ID-1] == nil {
+		return nil, gorm.ErrRecordNotFound
+	}
+
+	index := int(project.ID - 1)
+	repo.projects[index] = nil
+
+	return project, nil
+}

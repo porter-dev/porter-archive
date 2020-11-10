@@ -89,7 +89,7 @@ func (app *App) HandleReadProject(w http.ResponseWriter, r *http.Request) {
 	id, err := strconv.ParseUint(chi.URLParam(r, "project_id"), 0, 64)
 
 	if err != nil || id == 0 {
-		app.handleErrorFormDecoding(err, ErrUserDecode, w)
+		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
 		return
 	}
 
@@ -118,7 +118,7 @@ func (app *App) HandleListProjectClusters(w http.ResponseWriter, r *http.Request
 	id, err := strconv.ParseUint(chi.URLParam(r, "project_id"), 0, 64)
 
 	if err != nil || id == 0 {
-		app.handleErrorFormDecoding(err, ErrUserDecode, w)
+		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
 		return
 	}
 
@@ -385,5 +385,39 @@ func (app *App) HandleResolveSACandidateActions(w http.ResponseWriter, r *http.R
 		}
 	} else {
 		w.WriteHeader(http.StatusNotModified)
+	}
+}
+
+// HandleDeleteProject deletes a project from the db, reading from the project_id
+// in the URL param
+func (app *App) HandleDeleteProject(w http.ResponseWriter, r *http.Request) {
+	id, err := strconv.ParseUint(chi.URLParam(r, "project_id"), 0, 64)
+
+	if err != nil || id == 0 {
+		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
+		return
+	}
+
+	proj, err := app.repo.Project.ReadProject(uint(id))
+
+	if err != nil {
+		app.handleErrorRead(err, ErrProjectDataRead, w)
+		return
+	}
+
+	proj, err = app.repo.Project.DeleteProject(proj)
+
+	if err != nil {
+		app.handleErrorRead(err, ErrProjectDataRead, w)
+		return
+	}
+
+	projExternal := proj.Externalize()
+
+	w.WriteHeader(http.StatusOK)
+
+	if err := json.NewEncoder(w).Encode(projExternal); err != nil {
+		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
+		return
 	}
 }

@@ -6,6 +6,7 @@ import (
 	"github.com/go-test/deep"
 	"github.com/porter-dev/porter/internal/models"
 
+	"gorm.io/gorm"
 	orm "gorm.io/gorm"
 )
 
@@ -167,4 +168,27 @@ func TestListProjectsByUserID(t *testing.T) {
 		}
 	}
 
+}
+
+func TestDeleteProject(t *testing.T) {
+	tester := &tester{
+		dbFileName: "./porter_create_proj_role.db",
+	}
+
+	setupTestEnv(tester, t)
+	initProject(tester, t)
+	defer cleanup(tester, t)
+
+	proj, err := tester.repo.Project.DeleteProject(tester.initProjects[0])
+
+	if err != nil {
+		t.Fatalf("%v\n", err)
+	}
+
+	// attempt to read the project and ensure that the error is gorm.ErrRecordNotFound
+	_, err = tester.repo.Project.ReadProject(proj.Model.ID)
+
+	if err != gorm.ErrRecordNotFound {
+		t.Fatalf("read should have returned record not found: returned %v\n", err)
+	}
 }

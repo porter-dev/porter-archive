@@ -350,10 +350,12 @@ func (app *App) HandleResolveSACandidateActions(w http.ResponseWriter, r *http.R
 			}
 
 			err = form.PopulateServiceAccount(app.repo.ServiceAccount)
-		case models.AWSKeyDataAction:
-			form := &forms.AWSKeyDataAction{
+		case models.AWSDataAction:
+			form := &forms.AWSDataAction{
 				ServiceAccountActionResolver: saResolverBase,
-				AWSKeyData:                   action.AWSKeyData,
+				AWSAccessKeyID:               action.AWSAccessKeyID,
+				AWSSecretAccessKey:           action.AWSSecretAccessKey,
+				AWSClusterID:                 action.AWSClusterID,
 			}
 
 			err = form.PopulateServiceAccount(app.repo.ServiceAccount)

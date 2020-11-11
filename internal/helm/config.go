@@ -18,10 +18,11 @@ import (
 // Form represents the options for connecting to a cluster and
 // creating a Helm agent
 type Form struct {
-	ServiceAccount *models.ServiceAccount `form:"required"`
-	ClusterID      uint                   `json:"cluster_id" form:"required"`
-	Storage        string                 `json:"storage" form:"oneof=secret configmap memory"`
-	Namespace      string                 `json:"namespace"`
+	ServiceAccount   *models.ServiceAccount `form:"required"`
+	ClusterID        uint                   `json:"cluster_id" form:"required"`
+	Storage          string                 `json:"storage" form:"oneof=secret configmap memory"`
+	Namespace        string                 `json:"namespace"`
+	UpdateTokenCache kubernetes.UpdateTokenCacheFunc
 }
 
 // GetAgentOutOfClusterConfig creates a new Agent from outside the cluster using
@@ -29,8 +30,9 @@ type Form struct {
 func GetAgentOutOfClusterConfig(form *Form, l *logger.Logger) (*Agent, error) {
 	// create a kubernetes agent
 	conf := &kubernetes.OutOfClusterConfig{
-		ServiceAccount: form.ServiceAccount,
-		ClusterID:      form.ClusterID,
+		ServiceAccount:   form.ServiceAccount,
+		ClusterID:        form.ClusterID,
+		UpdateTokenCache: form.UpdateTokenCache,
 	}
 
 	k8sAgent, err := kubernetes.GetAgentOutOfClusterConfig(conf)

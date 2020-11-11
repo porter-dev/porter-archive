@@ -152,3 +152,18 @@ func (repo *ServiceAccountRepository) createCluster(
 
 	return cluster, nil
 }
+
+// UpdateServiceAccountTokenCache updates the token cache for a service account
+func (repo *ServiceAccountRepository) UpdateServiceAccountTokenCache(
+	tokenCache *models.TokenCache,
+) (*models.ServiceAccount, error) {
+	if !repo.canQuery {
+		return nil, errors.New("Cannot write database")
+	}
+
+	index := int(tokenCache.ServiceAccountID - 1)
+	repo.serviceAccounts[index].TokenCache.Token = tokenCache.Token
+	repo.serviceAccounts[index].TokenCache.Expiry = tokenCache.Expiry
+
+	return repo.serviceAccounts[index], nil
+}

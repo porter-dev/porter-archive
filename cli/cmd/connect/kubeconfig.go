@@ -107,7 +107,18 @@ func Kubeconfig(
 				}
 
 				resolvers = append(resolvers, resolveAction)
-			case models.AWSKeyDataAction:
+			case models.AWSDataAction:
+				resolveAction, err := resolveAWSAction(
+					saCandidate.ClusterEndpoint,
+					saCandidate.ClusterName,
+					saCandidate.AWSClusterIDGuess,
+				)
+
+				if err != nil {
+					return err
+				}
+
+				resolvers = append(resolvers, resolveAction)
 			}
 		}
 
@@ -126,20 +137,20 @@ func Kubeconfig(
 			color.New(color.FgGreen).Printf("created service account for cluster %s with id %d\n", cluster.Name, sa.ID)
 
 			// sanity check to ensure it's working
-			// namespaces, err := client.GetK8sNamespaces(
-			// 	context.Background(),
-			// 	projectID,
-			// 	sa.ID,
-			// 	cluster.ID,
-			// )
+			namespaces, err := client.GetK8sNamespaces(
+				context.Background(),
+				projectID,
+				sa.ID,
+				cluster.ID,
+			)
 
-			// if err != nil {
-			// 	return err
-			// }
+			if err != nil {
+				return err
+			}
 
-			// for _, ns := range namespaces.Items {
-			// 	fmt.Println(ns.ObjectMeta.GetName())
-			// }
+			for _, ns := range namespaces.Items {
+				fmt.Println(ns.ObjectMeta.GetName())
+			}
 		}
 	}
 
@@ -312,3 +323,63 @@ Key file location: `))
 }
 
 // resolves an aws key data action
+func resolveAWSAction(
+	endpoint string,
+	clusterName string,
+	awsClusterIDGuess string,
+) (*models.ServiceAccountAllActions, error) {
+	// just support manual for now
+	return resolveAWSActionManual(endpoint, clusterName, awsClusterIDGuess)
+}
+
+func resolveAWSActionManual(
+	endpoint string,
+	clusterName string,
+	awsClusterIDGuess string,
+) (*models.ServiceAccountAllActions, error) {
+	// query to see if the AWS cluster ID guess is correct
+	var clusterID string
+
+	userResp, err := utils.PromptPlaintext(
+		fmt.Sprintf(
+			`Detected AWS cluster ID as %s. Is this correct? %s `,
+			color.New(color.FgCyan).Sprintf(awsClusterIDGuess),
+			color.New(color.FgCyan).Sprintf("[y/n]"),
+		),
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	if userResp := strings.ToLower(userResp); userResp == "y" || userResp == "yes" {
+		clusterID = awsClusterIDGuess
+	} else {
+		clusterID, err = utils.PromptPlaintext(fmt.Sprintf(`Cluster ID: `))
+
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	// query for the access key id
+	accessKeyID, err := utils.PromptPlaintext(fmt.Sprintf(`AWS Access Key ID: `))
+
+	if err != nil {
+		return nil, err
+	}
+
+	// query for the secret access key
+	secretKey, err := utils.PromptPlaintext(fmt.Sprintf(`AWS Secret Access Key: `))
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &models.ServiceAccountAllActions{
+		Name:               models.AWSDataAction,
+		AWSAccessKeyID:     accessKeyID,
+		AWSSecretAccessKey: secretKey,
+		AWSClusterID:       clusterID,
+	}, nil
+}

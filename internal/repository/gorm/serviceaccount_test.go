@@ -2,6 +2,7 @@ package gorm_test
 
 import (
 	"testing"
+	"time"
 
 	"github.com/go-test/deep"
 	"github.com/porter-dev/porter/internal/models"
@@ -340,5 +341,78 @@ func TestListServiceAccountsByProjectID(t *testing.T) {
 	if diff := deep.Equal(copySA, expSA); diff != nil {
 		t.Errorf("incorrect service account")
 		t.Error(diff)
+	}
+}
+
+func TestUpdateServiceAccountToken(t *testing.T) {
+	tester := &tester{
+		dbFileName: "./porter_test_update_sa_token.db",
+	}
+
+	setupTestEnv(tester, t)
+	initProject(tester, t)
+	defer cleanup(tester, t)
+
+	sa := &models.ServiceAccount{
+		ProjectID:     1,
+		Kind:          "connector",
+		AuthMechanism: models.GCP,
+		GCPKeyData:    []byte(`{"key":"data"}`),
+		TokenCache: models.TokenCache{
+			Token:  "token-1",
+			Expiry: time.Now().Add(-1 * time.Hour),
+		},
+	}
+
+	sa, err := tester.repo.ServiceAccount.CreateServiceAccount(sa)
+
+	if err != nil {
+		t.Fatalf("%v\n", err)
+	}
+
+	sa, err = tester.repo.ServiceAccount.ReadServiceAccount(sa.Model.ID)
+
+	if err != nil {
+		t.Fatalf("%v\n", err)
+	}
+
+	// make sure service account id of token is 1
+	if sa.TokenCache.ServiceAccountID != 1 {
+		t.Fatalf("incorrect service account ID in token cache: expected %d, got %d\n", 1, sa.TokenCache.ServiceAccountID)
+	}
+
+	// make sure old token is expired
+	if isExpired := sa.TokenCache.IsExpired(); !isExpired {
+		t.Fatalf("token was not expired\n")
+	}
+
+	sa.TokenCache.Token = "token-2"
+	sa.TokenCache.Expiry = time.Now().Add(24 * time.Hour)
+
+	sa, err = tester.repo.ServiceAccount.UpdateServiceAccountTokenCache(&sa.TokenCache)
+	if err != nil {
+		t.Fatalf("%v\n", err)
+	}
+	sa, err = tester.repo.ServiceAccount.ReadServiceAccount(sa.Model.ID)
+	if err != nil {
+		t.Fatalf("%v\n", err)
+	}
+
+	// make sure id is 1
+	if sa.Model.ID != 1 {
+		t.Errorf("incorrect service account ID: expected %d, got %d\n", 1, sa.Model.ID)
+	}
+
+	// make sure new token is correct and not expired
+	if sa.TokenCache.ServiceAccountID != 1 {
+		t.Fatalf("incorrect service account ID in token cache: expected %d, got %d\n", 1, sa.TokenCache.ServiceAccountID)
+	}
+
+	if isExpired := sa.TokenCache.IsExpired(); isExpired {
+		t.Fatalf("token was expired\n")
+	}
+
+	if sa.TokenCache.Token != "token-2" {
+		t.Errorf("incorrect token in cache: expected %s, got %s\n", "token-2", sa.TokenCache.Token)
 	}
 }

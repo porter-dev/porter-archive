@@ -42,6 +42,7 @@ func setupTestEnv(tester *tester, t *testing.T) {
 		&models.ServiceAccountAction{},
 		&models.ServiceAccountCandidate{},
 		&models.Cluster{},
+		&models.TokenCache{},
 		&models.User{},
 		&models.Session{},
 		&models.RepoClient{},

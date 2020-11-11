@@ -13,4 +13,5 @@ type ServiceAccountRepository interface {
 	CreateServiceAccount(sa *models.ServiceAccount) (*models.ServiceAccount, error)
 	ReadServiceAccount(id uint) (*models.ServiceAccount, error)
 	ListServiceAccountsByProjectID(projectID uint) ([]*models.ServiceAccount, error)
+	UpdateServiceAccountTokenCache(tokenCache *models.TokenCache) (*models.ServiceAccount, error)
 }

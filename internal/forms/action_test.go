@@ -382,16 +382,15 @@ func TestPopulateServiceAccountGCPKeyDataAction(t *testing.T) {
 		t.Errorf("service account auth mechanism is not %s\n", models.GCP)
 	}
 
-	if string(sa.KeyData) != string(gcpKeyData) {
+	if string(sa.GCPKeyData) != string(gcpKeyData) {
 		t.Errorf("service account token data is wrong: expected %s, got %s\n",
-			string(sa.KeyData), string(gcpKeyData))
+			string(sa.GCPKeyData), string(gcpKeyData))
 	}
 }
 
 func TestPopulateServiceAccountAWSKeyDataAction(t *testing.T) {
 	// create the in-memory repository
 	repo := test.NewRepository(true)
-	awsKeyData := []byte(`{"key": "data"}`)
 
 	// create a new project
 	repo.Project.CreateProject(&models.Project{
@@ -410,11 +409,13 @@ func TestPopulateServiceAccountAWSKeyDataAction(t *testing.T) {
 	}
 
 	// create a new form
-	form := forms.AWSKeyDataAction{
+	form := forms.AWSDataAction{
 		ServiceAccountActionResolver: &forms.ServiceAccountActionResolver{
 			ServiceAccountCandidateID: 1,
 		},
-		AWSKeyData: string(awsKeyData),
+		AWSAccessKeyID:     "ALSDKJFADSF",
+		AWSSecretAccessKey: "ASDLFKJALSDKFJ",
+		AWSClusterID:       "cluster-test",
 	}
 
 	err = form.PopulateServiceAccount(repo.ServiceAccount)
@@ -437,9 +438,19 @@ func TestPopulateServiceAccountAWSKeyDataAction(t *testing.T) {
 		t.Errorf("service account auth mechanism is not %s\n", models.AWS)
 	}
 
-	if string(sa.KeyData) != string(awsKeyData) {
-		t.Errorf("service account token data is wrong: expected %s, got %s\n",
-			string(sa.KeyData), string(awsKeyData))
+	if sa.AWSAccessKeyID != "ALSDKJFADSF" {
+		t.Errorf("service account aws access key id is wrong: expected %s, got %s\n",
+			"ALSDKJFADSF", sa.AWSAccessKeyID)
+	}
+
+	if sa.AWSSecretAccessKey != "ASDLFKJALSDKFJ" {
+		t.Errorf("service account aws access secret key is wrong: expected %s, got %s\n",
+			"ASDLFKJALSDKFJ", sa.AWSSecretAccessKey)
+	}
+
+	if sa.AWSClusterID != "cluster-test" {
+		t.Errorf("service account aws cluster id is wrong: expected %s, got %s\n",
+			"cluster-test", sa.AWSClusterID)
 	}
 }
 

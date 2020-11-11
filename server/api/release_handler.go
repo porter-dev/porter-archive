@@ -26,7 +26,9 @@ const (
 func (app *App) HandleListReleases(w http.ResponseWriter, r *http.Request) {
 	form := &forms.ListReleaseForm{
 		ReleaseForm: &forms.ReleaseForm{
-			Form: &helm.Form{},
+			Form: &helm.Form{
+				UpdateTokenCache: app.updateTokenCache,
+			},
 		},
 		ListFilter: &helm.ListFilter{},
 	}
@@ -64,7 +66,9 @@ func (app *App) HandleGetRelease(w http.ResponseWriter, r *http.Request) {
 
 	form := &forms.GetReleaseForm{
 		ReleaseForm: &forms.ReleaseForm{
-			Form: &helm.Form{},
+			Form: &helm.Form{
+				UpdateTokenCache: app.updateTokenCache,
+			},
 		},
 		Name:     name,
 		Revision: int(revision),
@@ -106,7 +110,9 @@ func (app *App) HandleGetReleaseComponents(w http.ResponseWriter, r *http.Reques
 
 	form := &forms.GetReleaseForm{
 		ReleaseForm: &forms.ReleaseForm{
-			Form: &helm.Form{},
+			Form: &helm.Form{
+				UpdateTokenCache: app.updateTokenCache,
+			},
 		},
 		Name:     name,
 		Revision: int(revision),
@@ -158,7 +164,9 @@ func (app *App) HandleListReleaseHistory(w http.ResponseWriter, r *http.Request)
 
 	form := &forms.ListReleaseHistoryForm{
 		ReleaseForm: &forms.ReleaseForm{
-			Form: &helm.Form{},
+			Form: &helm.Form{
+				UpdateTokenCache: app.updateTokenCache,
+			},
 		},
 		Name: name,
 	}
@@ -205,7 +213,9 @@ func (app *App) HandleUpgradeRelease(w http.ResponseWriter, r *http.Request) {
 
 	form := &forms.UpgradeReleaseForm{
 		ReleaseForm: &forms.ReleaseForm{
-			Form: &helm.Form{},
+			Form: &helm.Form{
+				UpdateTokenCache: app.updateTokenCache,
+			},
 		},
 		Name: name,
 	}
@@ -258,7 +268,9 @@ func (app *App) HandleRollbackRelease(w http.ResponseWriter, r *http.Request) {
 
 	form := &forms.RollbackReleaseForm{
 		ReleaseForm: &forms.ReleaseForm{
-			Form: &helm.Form{},
+			Form: &helm.Form{
+				UpdateTokenCache: app.updateTokenCache,
+			},
 		},
 		Name: name,
 	}

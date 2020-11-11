@@ -29,6 +29,7 @@ func main() {
 		&models.ServiceAccountAction{},
 		&models.ServiceAccountCandidate{},
 		&models.Cluster{},
+		&models.TokenCache{},
 		&models.User{},
 		&models.Session{},
 		&models.RepoClient{},

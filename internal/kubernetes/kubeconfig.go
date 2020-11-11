@@ -3,13 +3,18 @@ package kubernetes
 import (
 	"context"
 	"errors"
-	"fmt"
 	"strings"
 
 	"github.com/porter-dev/porter/internal/models"
 	"golang.org/x/oauth2/google"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/tools/clientcmd/api"
+
+	"github.com/aws/aws-sdk-go/aws"
+
+	"github.com/aws/aws-sdk-go/aws/credentials"
+	"github.com/aws/aws-sdk-go/aws/session"
+	token "sigs.k8s.io/aws-iam-authenticator/pkg/token"
 )
 
 // GetServiceAccountCandidates parses a kubeconfig for a list of service account
@@ -31,6 +36,7 @@ func GetServiceAccountCandidates(kubeconfig []byte) ([]*models.ServiceAccountCan
 
 	for contextName, context := range rawConf.Contexts {
 		clusterName := context.Cluster
+		awsClusterID := ""
 		authInfoName := context.AuthInfo
 
 		// get the auth mechanism and actions
@@ -42,6 +48,10 @@ func GetServiceAccountCandidates(kubeconfig []byte) ([]*models.ServiceAccountCan
 		// if auth mechanism is unsupported, we'll skip it
 		if authMechanism == models.NotAvailable {
 			continue
+		} else if authMechanism == models.AWS {
+			// if the auth mechanism is AWS, we need to parse more explicitly
+			// for the cluster id
+			awsClusterID = parseAuthInfoForAWSClusterID(rawConf.AuthInfos[authInfoName], clusterName)
 		}
 
 		// construct the raw kubeconfig that's relevant for that context
@@ -56,12 +66,13 @@ func GetServiceAccountCandidates(kubeconfig []byte) ([]*models.ServiceAccountCan
 		if err == nil {
 			// create the candidate service account
 			res = append(res, &models.ServiceAccountCandidate{
-				Actions:         actions,
-				Kind:            "connector",
-				ClusterName:     clusterName,
-				ClusterEndpoint: rawConf.Clusters[clusterName].Server,
-				AuthMechanism:   authMechanism,
-				Kubeconfig:      rawBytes,
+				Actions:           actions,
+				Kind:              "connector",
+				ClusterName:       clusterName,
+				ClusterEndpoint:   rawConf.Clusters[clusterName].Server,
+				AuthMechanism:     authMechanism,
+				AWSClusterIDGuess: awsClusterID,
+				Kubeconfig:        rawBytes,
 			})
 		}
 	}
@@ -75,7 +86,6 @@ func GetRawConfigFromBytes(kubeconfig []byte) (*api.Config, error) {
 	config, err := clientcmd.NewClientConfigFromBytes(kubeconfig)
 
 	if err != nil {
-		fmt.Println("ERROR IS HERE")
 		return nil, err
 	}
 
@@ -151,7 +161,7 @@ func parseAuthInfoForActions(authInfo *api.AuthInfo) (authMechanism string, acti
 		if authInfo.Exec.Command == "aws" || authInfo.Exec.Command == "aws-iam-authenticator" {
 			return models.AWS, []models.ServiceAccountAction{
 				models.ServiceAccountAction{
-					Name:     models.AWSKeyDataAction,
+					Name:     models.AWSDataAction,
 					Resolved: false,
 				},
 			}
@@ -197,6 +207,28 @@ func parseClusterForActions(cluster *api.Cluster) (actions []models.ServiceAccou
 	return actions
 }
 
+func parseAuthInfoForAWSClusterID(authInfo *api.AuthInfo, fallback string) string {
+	if authInfo.Exec != nil {
+		if authInfo.Exec.Command == "aws" {
+			// look for --cluster-name flag
+			for i, arg := range authInfo.Exec.Args {
+				if arg == "--cluster-name" && len(authInfo.Exec.Args) > i+1 {
+					return authInfo.Exec.Args[i+1]
+				}
+			}
+		} else if authInfo.Exec.Command == "aws-iam-authenticator" {
+			// look for -i or --cluster-id flag
+			for i, arg := range authInfo.Exec.Args {
+				if (arg == "-i" || arg == "--cluster-id") && len(authInfo.Exec.Args) > i+1 {
+					return authInfo.Exec.Args[i+1]
+				}
+			}
+		}
+	}
+
+	return fallback
+}
+
 // getKubeconfigForContext returns the raw kubeconfig associated with only a
 // single context of the raw config
 func getConfigForContext(
@@ -237,8 +269,9 @@ func getConfigForContext(
 func GetClientConfigFromServiceAccount(
 	sa *models.ServiceAccount,
 	clusterID uint,
+	updateTokenCache UpdateTokenCacheFunc,
 ) (clientcmd.ClientConfig, error) {
-	apiConfig, err := createRawConfigFromServiceAccount(sa, clusterID)
+	apiConfig, err := createRawConfigFromServiceAccount(sa, clusterID, updateTokenCache)
 
 	if err != nil {
 		return nil, err
@@ -252,6 +285,7 @@ func GetClientConfigFromServiceAccount(
 func createRawConfigFromServiceAccount(
 	sa *models.ServiceAccount,
 	clusterID uint,
+	updateTokenCache UpdateTokenCacheFunc,
 ) (*api.Config, error) {
 	apiConfig := &api.Config{}
 
@@ -313,22 +347,24 @@ func createRawConfigFromServiceAccount(
 				"refresh-token":                  sa.OIDCRefreshToken,
 			},
 		}
-	// we'll add a bearer token here for now
 	case models.GCP:
-		creds, err := google.CredentialsFromJSON(
-			context.Background(),
-			sa.KeyData,
-			"https://www.googleapis.com/auth/cloud-platform",
-		)
+		tok, err := getGCPToken(sa, updateTokenCache)
 
 		if err != nil {
 			return nil, err
 		}
 
-		tok, err := creds.TokenSource.Token()
-
-		authInfoMap[authInfoName].Token = tok.AccessToken
+		// add this as a bearer token
+		authInfoMap[authInfoName].Token = tok
 	case models.AWS:
+		tok, err := getAWSToken(sa, updateTokenCache)
+
+		if err != nil {
+			return nil, err
+		}
+
+		// add this as a bearer token
+		authInfoMap[authInfoName].Token = tok
 	default:
 		return nil, errors.New("not a supported auth mechanism")
 	}
@@ -348,6 +384,81 @@ func createRawConfigFromServiceAccount(
 	apiConfig.CurrentContext = cluster.Name
 
 	return apiConfig, nil
+}
+
+func getGCPToken(
+	sa *models.ServiceAccount,
+	updateTokenCache UpdateTokenCacheFunc,
+) (string, error) {
+	// check the token cache for a non-expired token
+	if tok := sa.TokenCache.Token; !sa.TokenCache.IsExpired() && tok != "" {
+		return tok, nil
+	}
+
+	creds, err := google.CredentialsFromJSON(
+		context.Background(),
+		sa.GCPKeyData,
+		"https://www.googleapis.com/auth/cloud-platform",
+	)
+
+	if err != nil {
+		return "", err
+	}
+
+	tok, err := creds.TokenSource.Token()
+
+	if err != nil {
+		return "", err
+	}
+
+	// update the token cache
+	updateTokenCache(tok.AccessToken, tok.Expiry)
+
+	return tok.AccessToken, nil
+}
+
+func getAWSToken(
+	sa *models.ServiceAccount,
+	updateTokenCache UpdateTokenCacheFunc,
+) (string, error) {
+	// check the token cache for a non-expired token
+	if tok := sa.TokenCache.Token; !sa.TokenCache.IsExpired() && tok != "" {
+		return tok, nil
+	}
+
+	generator, err := token.NewGenerator(false, false)
+
+	if err != nil {
+		return "", err
+	}
+
+	sess, err := session.NewSessionWithOptions(session.Options{
+		SharedConfigState: session.SharedConfigEnable,
+		Config: aws.Config{
+			Credentials: credentials.NewStaticCredentials(
+				sa.AWSAccessKeyID,
+				sa.AWSSecretAccessKey,
+				"",
+			),
+		},
+	})
+
+	if err != nil {
+		return "", err
+	}
+
+	tok, err := generator.GetWithOptions(&token.GetTokenOptions{
+		Session:   sess,
+		ClusterID: sa.AWSClusterID,
+	})
+
+	if err != nil {
+		return "", err
+	}
+
+	updateTokenCache(tok.Token, tok.Expiration)
+
+	return tok.Token, nil
 }
 
 // GetRestrictedClientConfigFromBytes returns a clientcmd.ClientConfig from a raw kubeconfig,

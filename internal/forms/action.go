@@ -296,19 +296,21 @@ func (gkda *GCPKeyDataAction) PopulateServiceAccount(
 		return err
 	}
 
-	gkda.ServiceAccountActionResolver.SA.KeyData = []byte(gkda.GCPKeyData)
+	gkda.ServiceAccountActionResolver.SA.GCPKeyData = []byte(gkda.GCPKeyData)
 
 	return nil
 }
 
-// AWSKeyDataAction contains the AWS key data
-type AWSKeyDataAction struct {
+// AWSDataAction contains the AWS data (access id, key)
+type AWSDataAction struct {
 	*ServiceAccountActionResolver
-	AWSKeyData string `json:"aws_key_data" form:"required"`
+	AWSAccessKeyID     string `json:"aws_access_key_id" form:"required"`
+	AWSSecretAccessKey string `json:"aws_secret_access_key" form:"required"`
+	AWSClusterID       string `json:"aws_cluster_id" form:"required"`
 }
 
 // PopulateServiceAccount will add GCP key data to a ServiceAccount
-func (akda *AWSKeyDataAction) PopulateServiceAccount(
+func (akda *AWSDataAction) PopulateServiceAccount(
 	repo repository.ServiceAccountRepository,
 ) error {
 	err := akda.ServiceAccountActionResolver.PopulateServiceAccount(repo)
@@ -317,7 +319,9 @@ func (akda *AWSKeyDataAction) PopulateServiceAccount(
 		return err
 	}
 
-	akda.ServiceAccountActionResolver.SA.KeyData = []byte(akda.AWSKeyData)
+	akda.ServiceAccountActionResolver.SA.AWSAccessKeyID = akda.AWSAccessKeyID
+	akda.ServiceAccountActionResolver.SA.AWSSecretAccessKey = akda.AWSSecretAccessKey
+	akda.ServiceAccountActionResolver.SA.AWSClusterID = akda.AWSClusterID
 
 	return nil
 }

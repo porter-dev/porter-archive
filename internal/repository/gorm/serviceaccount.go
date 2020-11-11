@@ -107,6 +107,17 @@ func (repo *ServiceAccountRepository) CreateServiceAccount(
 		return nil, err
 	}
 
+	// create a token cache by default
+	assoc = repo.db.Model(sa).Association("TokenCache")
+
+	if assoc.Error != nil {
+		return nil, assoc.Error
+	}
+
+	if err := assoc.Append(&sa.TokenCache); err != nil {
+		return nil, err
+	}
+
 	return sa, nil
 }
 
@@ -117,7 +128,7 @@ func (repo *ServiceAccountRepository) ReadServiceAccount(
 	sa := &models.ServiceAccount{}
 
 	// preload Clusters association
-	if err := repo.db.Preload("Clusters").Where("id = ?", id).First(&sa).Error; err != nil {
+	if err := repo.db.Preload("Clusters").Preload("TokenCache").Where("id = ?", id).First(&sa).Error; err != nil {
 		return nil, err
 	}
 
@@ -142,6 +153,36 @@ func (repo *ServiceAccountRepository) ListServiceAccountsByProjectID(
 	}
 
 	return sas, nil
+}
+
+// UpdateServiceAccountTokenCache updates the token cache for a service account
+func (repo *ServiceAccountRepository) UpdateServiceAccountTokenCache(
+	tokenCache *models.TokenCache,
+) (*models.ServiceAccount, error) {
+	if tok := tokenCache.Token; tok != "" {
+		cipherData, err := repository.Encrypt([]byte(tok), repo.key)
+
+		if err != nil {
+			return nil, err
+		}
+
+		tokenCache.Token = string(cipherData)
+	}
+
+	sa := &models.ServiceAccount{}
+
+	if err := repo.db.Where("id = ?", tokenCache.ServiceAccountID).First(&sa).Error; err != nil {
+		return nil, err
+	}
+
+	sa.TokenCache.Token = tokenCache.Token
+	sa.TokenCache.Expiry = tokenCache.Expiry
+
+	if err := repo.db.Save(sa).Error; err != nil {
+		return nil, err
+	}
+
+	return sa, nil
 }
 
 // EncryptServiceAccountData will encrypt the user's service account data before writing
@@ -200,24 +241,54 @@ func (repo *ServiceAccountRepository) EncryptServiceAccountData(
 		sa.Password = string(cipherData)
 	}
 
-	if len(sa.KeyData) > 0 {
-		cipherData, err := repository.Encrypt(sa.KeyData, key)
+	if len(sa.GCPKeyData) > 0 {
+		cipherData, err := repository.Encrypt(sa.GCPKeyData, key)
 
 		if err != nil {
 			return err
 		}
 
-		sa.KeyData = cipherData
+		sa.GCPKeyData = cipherData
 	}
 
-	if sa.PrevToken != "" {
-		cipherData, err := repository.Encrypt([]byte(sa.PrevToken), key)
+	if tok := sa.TokenCache.Token; tok != "" {
+		cipherData, err := repository.Encrypt([]byte(tok), key)
 
 		if err != nil {
 			return err
 		}
 
-		sa.PrevToken = string(cipherData)
+		sa.TokenCache.Token = string(cipherData)
+	}
+
+	if sa.AWSAccessKeyID != "" {
+		cipherData, err := repository.Encrypt([]byte(sa.AWSAccessKeyID), key)
+
+		if err != nil {
+			return err
+		}
+
+		sa.AWSAccessKeyID = string(cipherData)
+	}
+
+	if sa.AWSSecretAccessKey != "" {
+		cipherData, err := repository.Encrypt([]byte(sa.AWSSecretAccessKey), key)
+
+		if err != nil {
+			return err
+		}
+
+		sa.AWSSecretAccessKey = string(cipherData)
+	}
+
+	if sa.AWSClusterID != "" {
+		cipherData, err := repository.Encrypt([]byte(sa.AWSClusterID), key)
+
+		if err != nil {
+			return err
+		}
+
+		sa.AWSClusterID = string(cipherData)
 	}
 
 	if sa.OIDCIssuerURL != "" {
@@ -371,24 +442,54 @@ func (repo *ServiceAccountRepository) DecryptServiceAccountData(
 		sa.Password = string(plaintext)
 	}
 
-	if len(sa.KeyData) > 0 {
-		plaintext, err := repository.Decrypt(sa.KeyData, key)
+	if len(sa.GCPKeyData) > 0 {
+		plaintext, err := repository.Decrypt(sa.GCPKeyData, key)
 
 		if err != nil {
 			return err
 		}
 
-		sa.KeyData = plaintext
+		sa.GCPKeyData = plaintext
 	}
 
-	if sa.PrevToken != "" {
-		plaintext, err := repository.Decrypt([]byte(sa.PrevToken), key)
+	if tok := sa.TokenCache.Token; tok != "" {
+		plaintext, err := repository.Decrypt([]byte(tok), key)
 
 		if err != nil {
 			return err
 		}
 
-		sa.PrevToken = string(plaintext)
+		sa.TokenCache.Token = string(plaintext)
+	}
+
+	if sa.AWSAccessKeyID != "" {
+		plaintext, err := repository.Decrypt([]byte(sa.AWSAccessKeyID), key)
+
+		if err != nil {
+			return err
+		}
+
+		sa.AWSAccessKeyID = string(plaintext)
+	}
+
+	if sa.AWSSecretAccessKey != "" {
+		plaintext, err := repository.Decrypt([]byte(sa.AWSSecretAccessKey), key)
+
+		if err != nil {
+			return err
+		}
+
+		sa.AWSSecretAccessKey = string(plaintext)
+	}
+
+	if sa.AWSClusterID != "" {
+		plaintext, err := repository.Decrypt([]byte(sa.AWSClusterID), key)
+
+		if err != nil {
+			return err
+		}
+
+		sa.AWSClusterID = string(plaintext)
 	}
 
 	if sa.OIDCIssuerURL != "" {

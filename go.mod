@@ -7,6 +7,7 @@ require (
 	github.com/Azure/go-autorest/autorest v0.11.1 // indirect
 	github.com/DATA-DOG/go-sqlmock v1.5.0
 	github.com/Masterminds/semver v1.5.0 // indirect
+	github.com/aws/aws-sdk-go v1.30.0
 	github.com/containerd/containerd v1.4.1
 	github.com/cosmtrek/air v1.21.2 // indirect
 	github.com/creack/pty v1.1.11 // indirect
@@ -64,5 +65,6 @@ require (
 	k8s.io/helm v2.16.12+incompatible
 	k8s.io/klog/v2 v2.2.0 // indirect
 	k8s.io/utils v0.0.0-20200912215256-4140de9c8800 // indirect
+	sigs.k8s.io/aws-iam-authenticator v0.5.2
 	sigs.k8s.io/structured-merge-diff/v4 v4.0.1 // indirect
 )

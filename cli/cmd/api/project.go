@@ -40,6 +40,40 @@ func (c *Client) GetProject(ctx context.Context, projectID uint) (*GetProjectRes
 	return bodyResp, nil
 }
 
+// GetProjectServiceAccountResponse is the response returned after querying for a
+// given project's service account
+type GetProjectServiceAccountResponse models.ServiceAccountExternal
+
+// GetProjectServiceAccount retrieves a project's service account by id
+func (c *Client) GetProjectServiceAccount(
+	ctx context.Context,
+	projectID uint,
+	saID uint,
+) (*GetProjectServiceAccountResponse, error) {
+	req, err := http.NewRequest(
+		"GET",
+		fmt.Sprintf("%s/projects/%d/serviceAccounts/%d", c.BaseURL, projectID, saID),
+		nil,
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	req = req.WithContext(ctx)
+	bodyResp := &GetProjectServiceAccountResponse{}
+
+	if httpErr, err := c.sendRequest(req, bodyResp, true); httpErr != nil || err != nil {
+		if httpErr != nil {
+			return nil, fmt.Errorf("code %d, errors %v", httpErr.Code, httpErr.Errors)
+		}
+
+		return nil, err
+	}
+
+	return bodyResp, nil
+}
+
 // ListProjectClustersResponse lists the linked clusters for a project
 type ListProjectClustersResponse []models.ClusterExternal
 

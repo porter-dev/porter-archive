@@ -142,6 +142,55 @@ func TestGetProject(t *testing.T) {
 	}
 }
 
+func TestGetProjectServiceAccount(t *testing.T) {
+	email := "get_project_sa_test@example.com"
+	client := api.NewClient(baseURL, "cookie_get_project_sa_test.json")
+	user := initUser(email, client, t)
+	client.Login(context.Background(), &api.LoginRequest{
+		Email:    user.Email,
+		Password: "hello1234",
+	})
+	project := initProject("project-test", client, t)
+	saCandidate := initProjectCandidate(project.ID, OIDCAuthWithoutData, client, t)
+	sa := initProjectSA(project.ID, saCandidate.ID, client, t)
+
+	resp, err := client.GetProjectServiceAccount(context.Background(), project.ID, sa.ID)
+
+	if err != nil {
+		t.Fatalf("%v\n", err)
+	}
+
+	// ensure project id and metadata is correct
+	if resp.ProjectID != project.ID {
+		t.Errorf("project id incorrect: expected %d, got %d\n", project.ID, resp.ProjectID)
+	}
+
+	if resp.Kind != "connector" {
+		t.Errorf("service account kind incorrect: expected %s, got %s\n", "connector", resp.Kind)
+	}
+
+	if resp.AuthMechanism != models.OIDC {
+		t.Errorf("service account auth mechanism incorrect: expected %s, got %s\n", models.OIDC, resp.AuthMechanism)
+	}
+
+	// verify clusters
+	if len(resp.Clusters) != 1 {
+		t.Fatalf("length of clusters is not 1")
+	}
+
+	if resp.Clusters[0].ServiceAccountID != resp.ID {
+		t.Errorf("cluster's sa id is incorrect: expected %d, got %d\n", resp.ID, resp.Clusters[0].ServiceAccountID)
+	}
+
+	if resp.Clusters[0].Name != "cluster-test" {
+		t.Errorf("cluster's name is incorrect: expected %s, got %s\n", "cluster-test", resp.Clusters[0].Name)
+	}
+
+	if resp.Clusters[0].Server != "https://localhost" {
+		t.Errorf("cluster's name is incorrect: expected %s, got %s\n", "https://localhost", resp.Clusters[0].Server)
+	}
+}
+
 func TestCreateProjectCandidates(t *testing.T) {
 	email := "create_project_candidates_test@example.com"
 	client := api.NewClient(baseURL, "cookie_create_project_candidates_test.json")

@@ -70,6 +70,20 @@ func New(
 
 		r.Method(
 			"GET",
+			"/projects/{project_id}/serviceAccounts/{service_account_id}",
+			auth.DoesUserHaveProjectAccess(
+				auth.DoesUserHaveServiceAccountAccess(
+					requestlog.NewHandler(a.HandleReadProjectServiceAccount, l),
+					mw.URLParam,
+					mw.URLParam,
+				),
+				mw.URLParam,
+				mw.ReadAccess,
+			),
+		)
+
+		r.Method(
+			"GET",
 			"/projects/{project_id}/clusters",
 			auth.DoesUserHaveProjectAccess(
 				requestlog.NewHandler(a.HandleListProjectClusters, l),

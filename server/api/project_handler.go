@@ -207,6 +207,14 @@ func (app *App) HandleCreateProjectSACandidates(w http.ResponseWriter, r *http.R
 		// if the SA candidate does not have any actions to perform, create the ServiceAccount
 		// automatically
 		if len(saCandidate.Actions) == 0 {
+			// we query the repo again to get the decrypted version of the SA candidate
+			saCandidate, err = app.repo.ServiceAccount.ReadServiceAccountCandidate(saCandidate.ID)
+
+			if err != nil {
+				app.handleErrorDataRead(err, w)
+				return
+			}
+
 			saForm := &forms.ServiceAccountActionResolver{
 				ServiceAccountCandidateID: saCandidate.ID,
 				SACandidate:               saCandidate,
@@ -220,6 +228,13 @@ func (app *App) HandleCreateProjectSACandidates(w http.ResponseWriter, r *http.R
 			}
 
 			sa, err := app.repo.ServiceAccount.CreateServiceAccount(saForm.SA)
+
+			if err != nil {
+				app.handleErrorDataWrite(err, w)
+				return
+			}
+
+			saCandidate, err = app.repo.ServiceAccount.UpdateServiceAccountCandidateCreatedSAID(saCandidate.ID, sa.ID)
 
 			if err != nil {
 				app.handleErrorDataWrite(err, w)
@@ -376,6 +391,13 @@ func (app *App) HandleResolveSACandidateActions(w http.ResponseWriter, r *http.R
 
 	if sa != nil {
 		app.logger.Info().Msgf("New service account created: %d", sa.ID)
+
+		_, err := app.repo.ServiceAccount.UpdateServiceAccountCandidateCreatedSAID(uint(candID), sa.ID)
+
+		if err != nil {
+			app.handleErrorDataWrite(err, w)
+			return
+		}
 
 		saExternal := sa.Externalize()
 

@@ -152,7 +152,7 @@ var createProjectSACandidatesTests = []*projTest{
 		endpoint:  "/api/projects/1/candidates",
 		body:      `{"kubeconfig":"` + OIDCAuthWithDataForJSON + `"}`,
 		expStatus: http.StatusCreated,
-		expBody:   `[{"id":1,"actions":[],"project_id":1,"kind":"connector","cluster_name":"cluster-test","cluster_endpoint":"https://localhost","auth_mechanism":"oidc"}]`,
+		expBody:   `[{"id":1,"actions":[],"created_sa_id":1,"project_id":1,"kind":"connector","cluster_name":"cluster-test","cluster_endpoint":"https://localhost","auth_mechanism":"oidc"}]`,
 		useCookie: true,
 		validators: []func(c *projTest, tester *tester, t *testing.T){
 			projectSACandidateBodyValidator,

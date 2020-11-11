@@ -3,6 +3,7 @@ package kubernetes
 import (
 	"context"
 	"errors"
+	"fmt"
 	"strings"
 
 	"github.com/porter-dev/porter/internal/models"
@@ -334,6 +335,7 @@ func createRawConfigFromServiceAccount(
 		authInfoMap[authInfoName].Username = sa.Username
 		authInfoMap[authInfoName].Password = sa.Password
 	case models.Bearer:
+		fmt.Println("AUTH MECHANISM IS BEARER WITH TOKEN", sa.Token)
 		authInfoMap[authInfoName].Token = sa.Token
 	case models.OIDC:
 		authInfoMap[authInfoName].AuthProvider = &api.AuthProviderConfig{

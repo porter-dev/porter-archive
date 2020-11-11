@@ -52,104 +52,106 @@ func Kubeconfig(
 	}
 
 	for _, saCandidate := range saCandidates {
-		resolvers := make(api.CreateProjectServiceAccountRequest, 0)
+		if len(saCandidate.Actions) > 0 {
+			resolvers := make(api.CreateProjectServiceAccountRequest, 0)
 
-		for _, action := range saCandidate.Actions {
-			switch action.Name {
-			case models.ClusterCADataAction:
-				resolveAction, err := resolveClusterCAAction(action.Filename)
+			for _, action := range saCandidate.Actions {
+				switch action.Name {
+				case models.ClusterCADataAction:
+					resolveAction, err := resolveClusterCAAction(action.Filename)
 
-				if err != nil {
-					return err
+					if err != nil {
+						return err
+					}
+
+					resolvers = append(resolvers, resolveAction)
+				case models.ClientCertDataAction:
+					resolveAction, err := resolveClientCertAction(action.Filename)
+
+					if err != nil {
+						return err
+					}
+
+					resolvers = append(resolvers, resolveAction)
+				case models.ClientKeyDataAction:
+					resolveAction, err := resolveClientKeyAction(action.Filename)
+
+					if err != nil {
+						return err
+					}
+
+					resolvers = append(resolvers, resolveAction)
+				case models.OIDCIssuerDataAction:
+					resolveAction, err := resolveOIDCIssuerAction(action.Filename)
+
+					if err != nil {
+						return err
+					}
+
+					resolvers = append(resolvers, resolveAction)
+				case models.TokenDataAction:
+					resolveAction, err := resolveTokenDataAction(action.Filename)
+
+					if err != nil {
+						return err
+					}
+
+					resolvers = append(resolvers, resolveAction)
+				case models.GCPKeyDataAction:
+					resolveAction, err := resolveGCPKeyAction(
+						saCandidate.ClusterEndpoint,
+						saCandidate.ClusterName,
+					)
+
+					if err != nil {
+						return err
+					}
+
+					resolvers = append(resolvers, resolveAction)
+				case models.AWSDataAction:
+					resolveAction, err := resolveAWSAction(
+						saCandidate.ClusterEndpoint,
+						saCandidate.ClusterName,
+						saCandidate.AWSClusterIDGuess,
+					)
+
+					if err != nil {
+						return err
+					}
+
+					resolvers = append(resolvers, resolveAction)
 				}
-
-				resolvers = append(resolvers, resolveAction)
-			case models.ClientCertDataAction:
-				resolveAction, err := resolveClientCertAction(action.Filename)
-
-				if err != nil {
-					return err
-				}
-
-				resolvers = append(resolvers, resolveAction)
-			case models.ClientKeyDataAction:
-				resolveAction, err := resolveClientKeyAction(action.Filename)
-
-				if err != nil {
-					return err
-				}
-
-				resolvers = append(resolvers, resolveAction)
-			case models.OIDCIssuerDataAction:
-				resolveAction, err := resolveOIDCIssuerAction(action.Filename)
-
-				if err != nil {
-					return err
-				}
-
-				resolvers = append(resolvers, resolveAction)
-			case models.TokenDataAction:
-				resolveAction, err := resolveTokenDataAction(action.Filename)
-
-				if err != nil {
-					return err
-				}
-
-				resolvers = append(resolvers, resolveAction)
-			case models.GCPKeyDataAction:
-				resolveAction, err := resolveGCPKeyAction(
-					saCandidate.ClusterEndpoint,
-					saCandidate.ClusterName,
-				)
-
-				if err != nil {
-					return err
-				}
-
-				resolvers = append(resolvers, resolveAction)
-			case models.AWSDataAction:
-				resolveAction, err := resolveAWSAction(
-					saCandidate.ClusterEndpoint,
-					saCandidate.ClusterName,
-					saCandidate.AWSClusterIDGuess,
-				)
-
-				if err != nil {
-					return err
-				}
-
-				resolvers = append(resolvers, resolveAction)
 			}
-		}
 
-		sa, err := client.CreateProjectServiceAccount(
-			context.Background(),
-			projectID,
-			saCandidate.ID,
-			resolvers,
-		)
-
-		if err != nil {
-			return err
-		}
-
-		for _, cluster := range sa.Clusters {
-			color.New(color.FgGreen).Printf("created service account for cluster %s with id %d\n", cluster.Name, sa.ID)
-
-			// sanity check to ensure it's working
-			namespaces, err := client.GetK8sNamespaces(
+			sa, err := client.CreateProjectServiceAccount(
 				context.Background(),
 				projectID,
-				sa.ID,
-				cluster.ID,
+				saCandidate.ID,
+				resolvers,
 			)
 
 			if err != nil {
 				return err
 			}
 
-			for _, ns := range namespaces.Items {
-				fmt.Println(ns.ObjectMeta.GetName())
+			for _, cluster := range sa.Clusters {
+				color.New(color.FgGreen).Printf("created service account for cluster %s with id %d\n", cluster.Name, sa.ID)
+
+				// sanity check to ensure it's working
+				namespaces, err := client.GetK8sNamespaces(
+					context.Background(),
+					projectID,
+					sa.ID,
+					cluster.ID,
+				)
+
+				if err != nil {
+					return err
+				}
+
+				for _, ns := range namespaces.Items {
+					fmt.Println(ns.ObjectMeta.GetName())
+				}
 			}
 		}
 	}

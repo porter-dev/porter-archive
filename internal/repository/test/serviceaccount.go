@@ -76,6 +76,22 @@ func (repo *ServiceAccountRepository) ListServiceAccountCandidatesByProjectID(
 	return res, nil
 }
 
+// UpdateServiceAccountCandidateCreatedSAID updates the CreatedServiceAccountID for
+// a candidate, after the candidate has been resolved.
+func (repo *ServiceAccountRepository) UpdateServiceAccountCandidateCreatedSAID(
+	id uint,
+	createdSAID uint,
+) (*models.ServiceAccountCandidate, error) {
+	if !repo.canQuery {
+		return nil, errors.New("Cannot write database")
+	}
+
+	index := int(id - 1)
+	repo.serviceAccountCandidates[index].CreatedServiceAccountID = createdSAID
+
+	return repo.serviceAccountCandidates[index], nil
+}
+
 // CreateServiceAccount creates a new servicea account
 func (repo *ServiceAccountRepository) CreateServiceAccount(
 	sa *models.ServiceAccount,

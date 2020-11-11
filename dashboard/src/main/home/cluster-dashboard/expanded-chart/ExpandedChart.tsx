@@ -11,7 +11,7 @@ import RevisionSection from './RevisionSection';
 import ValuesYaml from './ValuesYaml';
 import GraphSection from './GraphSection';
 import ListSection from './ListSection';
-import LogSection from './LogSection';
+import LogSection from './log/LogSection';
 import ValuesForm from '../../../../components/values-form/ValuesForm';
 import SettingsSection from './SettingsSection';
 
@@ -26,6 +26,7 @@ type StateType = {
   showRevisions: boolean,
   currentTab: string,
   components: ResourceType[],
+  podSelectors: string[]
   revisionPreview: ChartType | null,
   devOpsMode: boolean
 };
@@ -145,6 +146,7 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
     showRevisions: false,
     currentTab: 'values-form',
     components: [] as ResourceType[],
+    podSelectors: [] as string[],
     revisionPreview: null as (ChartType | null),
     devOpsMode: false
   }
@@ -166,7 +168,8 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
       if (err) {
         console.log(err)
       } else {
-        this.setState({ components: res.data });
+        console.log(res.data)
+        this.setState({ components: res.data.Objects, podSelectors: res.data.PodSelectors });
       }
     });
   }
@@ -199,7 +202,7 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
         if (err) {
           console.log(err)
         } else {
-          this.setState({ components: res.data });
+          this.setState({ components: res.data, podSelectors: res.data.PodSelectors });
         }
       });
 
@@ -288,7 +291,8 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
       );
     } else if (this.state.currentTab === 'logs') {
       return (
-        <LogSection
+        <LogSection 
+          selectors={this.state.podSelectors}
         />
       );
     } else if (this.state.currentTab === 'values-form') {

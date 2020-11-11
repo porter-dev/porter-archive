@@ -19,11 +19,27 @@ type HTTPError struct {
 type ErrorCode int64
 
 var (
+	// ErrorUpgradeWebsocket describes an error while upgrading http to a websocket endpoint.
+	ErrorUpgradeWebsocket = HTTPError{
+		Code: 500,
+		Errors: []string{
+			"could not upgrade to websocket",
+		},
+	}
+
 	// ErrorDataWrite describes an error in writing to the database
 	ErrorDataWrite = HTTPError{
 		Code: 500,
 		Errors: []string{
 			"could not write to database",
+		},
+	}
+
+	// ErrorWebsocketWrite describes an error in writing to websocket connection
+	ErrorWebsocketWrite = HTTPError{
+		Code: 500,
+		Errors: []string{
+			"could not write data via websocket",
 		},
 	}
 
@@ -127,6 +143,16 @@ func (app *App) handleErrorRead(err error, code ErrorCode, w http.ResponseWriter
 // error with the database or failure to write that wasn't caught by the validators
 func (app *App) handleErrorDataWrite(err error, w http.ResponseWriter) {
 	app.sendExternalError(err, http.StatusInternalServerError, ErrorDataWrite, w)
+}
+
+// handleErrorWebsocketWrite handles an error from websocket.WriteMessage
+func (app *App) handleErrorWebsocketWrite(err error, w http.ResponseWriter) {
+	app.sendExternalError(err, http.StatusInternalServerError, ErrorWebsocketWrite, w)
+}
+
+// handleErrorUpgradeWebsocket handles error in upgrading a http endpoint to websocket conn
+func (app *App) handleErrorUpgradeWebsocket(err error, w http.ResponseWriter) {
+	app.sendExternalError(err, http.StatusInternalServerError, ErrorUpgradeWebsocket, w)
 }
 
 // handleErrorDataRead handles a database read error due to an internal error, such as

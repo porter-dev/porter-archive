@@ -6,6 +6,7 @@ type PropsType = {
   options: { value: string, label: string }[],
   setActiveValue: (x: string) => void,
   width: string,
+  height?: string,
   dropdownLabel?: string,
   dropdownWidth?: string,
   dropdownMaxHeight?: string,
@@ -41,6 +42,16 @@ export default class Selector extends Component<PropsType, StateType> {
     });
   }
 
+  renderDropdownLabel = () => {
+    if (this.props.dropdownLabel && this.props.dropdownLabel !== '') {
+      return (
+        <DropdownLabel>
+          {this.props.dropdownLabel}
+        </DropdownLabel>
+      );
+    }
+  }
+
   renderDropdown = () => {
     if (this.state.expanded) {
       return (
@@ -50,9 +61,7 @@ export default class Selector extends Component<PropsType, StateType> {
             dropdownWidth={this.props.dropdownWidth ? this.props.dropdownWidth : this.props.width}
             dropdownMaxHeight={this.props.dropdownMaxHeight}
           >
-            <DropdownLabel>
-              {this.props.dropdownLabel}
-            </DropdownLabel>
+            {this.renderDropdownLabel()}
             {this.renderOptionList()}
           </Dropdown>
         </div>
@@ -75,6 +84,7 @@ export default class Selector extends Component<PropsType, StateType> {
           onClick={() => this.setState({ expanded: !this.state.expanded })}
           expanded={this.state.expanded}
           width={this.props.width}
+          height={this.props.height}
         >
           <TextWrap>
             {activeValue === '' ? 'All' : this.getLabel(activeValue)}
@@ -91,6 +101,7 @@ const TextWrap = styled.div`
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  z-index: 999;
 `;
 
 const DropdownLabel = styled.div`
@@ -102,6 +113,7 @@ const DropdownLabel = styled.div`
 
 const Option = styled.div` 
   width: 100%;
+  border-top: 1px solid #00000000;
   border-bottom: 1px solid ${(props: { selected: boolean, lastItem: boolean }) => props.lastItem ? '#ffffff00' : '#ffffff15'};
   height: 35px;
   font-size: 13px;
@@ -136,12 +148,11 @@ const Dropdown = styled.div`
   background: #26282f;
   width: ${(props: { dropdownWidth: string, dropdownMaxHeight: string }) => props.dropdownWidth};
   max-height: ${(props: { dropdownWidth: string, dropdownMaxHeight: string }) => props.dropdownMaxHeight ? props.dropdownMaxHeight : '300px'};
-  padding-bottom: 10px;
   border-radius: 3px;
   z-index: 999;
   overflow-y: auto;
   margin-bottom: 20px;
-  box-shadow: 0 8px 20px 0px #00000055;
+  box-shadow: 0 8px 20px 0px #00000088;
 `;
 
 const StyledSelector = styled.div`
@@ -149,8 +160,8 @@ const StyledSelector = styled.div`
 `;
 
 const MainSelector = styled.div`
-  width: ${(props: { expanded: boolean, width: string }) => props.width};
-  height: 30px;
+  width: ${(props: { expanded: boolean, width: string, height?: string }) => props.width};
+  height: ${(props: { expanded: boolean, width: string, height?: string }) => props.height ? props.height : '30px'};
   border: 1px solid #ffffff55;
   font-size: 13px;
   padding: 5px 10px;
@@ -160,13 +171,13 @@ const MainSelector = styled.div`
   align-items: center;
   justify-content: space-between;
   cursor: pointer;
-  background: ${(props: { expanded: boolean, width: string }) => props.expanded ? '#ffffff33' : '#ffffff11'};
+  background: ${(props: { expanded: boolean, width: string, height?: string }) => props.expanded ? '#ffffff33' : '#ffffff11'};
   :hover {
-    background: ${(props: { expanded: boolean, width: string }) => props.expanded ? '#ffffff33' : '#ffffff22'};
+    background: ${(props: { expanded: boolean, width: string, height?: string }) => props.expanded ? '#ffffff33' : '#ffffff22'};
   }
 
   > i {
     font-size: 20px;
-    transform: ${(props: { expanded: boolean, width: string }) => props.expanded ? 'rotate(180deg)' : ''};
+    transform: ${(props: { expanded: boolean, width: string, height?: string }) => props.expanded ? 'rotate(180deg)' : ''};
   }
 `;

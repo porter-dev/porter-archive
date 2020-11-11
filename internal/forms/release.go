@@ -15,9 +15,34 @@ type ReleaseForm struct {
 
 // PopulateHelmOptionsFromQueryParams populates fields in the ReleaseForm using the passed
 // url.Values (the parsed query params)
-func (rf *ReleaseForm) PopulateHelmOptionsFromQueryParams(vals url.Values) {
-	if context, ok := vals["context"]; ok && len(context) == 1 {
-		rf.Context = context[0]
+func (rf *ReleaseForm) PopulateHelmOptionsFromQueryParams(
+	vals url.Values,
+	repo repository.ServiceAccountRepository,
+) error {
+	if clusterID, ok := vals["cluster_id"]; ok && len(clusterID) == 1 {
+		id, err := strconv.ParseUint(clusterID[0], 10, 64)
+
+		if err != nil {
+			return err
+		}
+
+		rf.ClusterID = uint(id)
+	}
+
+	if serviceAccountID, ok := vals["service_account_id"]; ok && len(serviceAccountID) == 1 {
+		id, err := strconv.ParseUint(serviceAccountID[0], 10, 64)
+
+		if err != nil {
+			return err
+		}
+
+		sa, err := repo.ReadServiceAccount(uint(id))
+
+		if err != nil {
+			return err
+		}
+
+		rf.ServiceAccount = sa
 	}
 
 	if namespace, ok := vals["namespace"]; ok && len(namespace) == 1 {
@@ -27,18 +52,6 @@ func (rf *ReleaseForm) PopulateHelmOptionsFromQueryParams(vals url.Values) {
 	if storage, ok := vals["storage"]; ok && len(storage) == 1 {
 		rf.Storage = storage[0]
 	}
-}
-
-// PopulateHelmOptionsFromUserID uses the passed user ID to populate the HelmOptions object
-func (rf *ReleaseForm) PopulateHelmOptionsFromUserID(userID uint, repo repository.UserRepository) error {
-	user, err := repo.ReadUser(userID)
-
-	if err != nil {
-		return err
-	}
-
-	rf.AllowedContexts = user.ContextToSlice()
-	rf.KubeConfig = user.RawKubeConfig
 
 	return nil
 }
@@ -51,7 +64,10 @@ type ListReleaseForm struct {
 
 // PopulateListFromQueryParams populates fields in the ListReleaseForm using the passed
 // url.Values (the parsed query params)
-func (lrf *ListReleaseForm) PopulateListFromQueryParams(vals url.Values) {
+func (lrf *ListReleaseForm) PopulateListFromQueryParams(
+	vals url.Values,
+	_ repository.ServiceAccountRepository,
+) error {
 	if namespace, ok := vals["namespace"]; ok && len(namespace) == 1 {
 		lrf.ListFilter.Namespace = namespace[0]
 	}
@@ -77,6 +93,8 @@ func (lrf *ListReleaseForm) PopulateListFromQueryParams(vals url.Values) {
 	if statusFilter, ok := vals["statusFilter"]; ok {
 		lrf.ListFilter.StatusFilter = statusFilter
 	}
+
+	return nil
 }
 
 // GetReleaseForm represents the accepted values for getting a single Helm release

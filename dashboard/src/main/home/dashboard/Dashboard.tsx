@@ -6,72 +6,33 @@ import { Context } from '../../../shared/Context';
 import { ChartType, StorageType } from '../../../shared/types';
 import api from '../../../shared/api';
 
-import ChartList from './chart/ChartList';
-import NamespaceSelector from './NamespaceSelector';
-import ExpandedChart from './expanded-chart/ExpandedChart';
-
 type PropsType = {
-  currentCluster: string,
-  setSidebar: (x: boolean) => void
 };
 
 type StateType = {
-  namespace: string,
-  currentChart: ChartType | null
 };
 
 export default class Dashboard extends Component<PropsType, StateType> {
   state = {
-    namespace: '',
-    currentChart: null as (ChartType | null)
   }
 
-  componentDidUpdate(prevProps: PropsType) {
-
-    // Reset namespace filter and close expanded chart on cluster change
-    if (prevProps.currentCluster !== this.props.currentCluster) {
-      this.setState({ namespace: '', currentChart: null });
-    }
-  }
-
-  // Allows rollback to update the top-level chart
-  refreshChart = () => {
-    let { currentCluster } = this.props;
-    api.getChart('<token>', {
-      namespace: this.state.namespace,
-      context: currentCluster,
-      storage: StorageType.Secret
-    }, { name: this.state.currentChart.name, revision: 0 }, (err: any, res: any) => {
-      if (err) {
-        console.log(err);
-      } else {
-        this.setState({ currentChart: res.data });
-      }
-    });
+  renderDashboardIcon = () => {
+    let { currentProject } = this.context;
+    return (
+      <DashboardIcon>
+        <DashboardImage src={gradient} />
+        <Overlay>{currentProject && currentProject.name[0].toUpperCase()}</Overlay>
+      </DashboardIcon>
+    );
   }
 
   renderContents = () => {
-    let { currentCluster, setSidebar } = this.props;
-
-    if (this.state.currentChart) {
-      return (
-        <ExpandedChart
-          currentChart={this.state.currentChart}
-          refreshChart={this.refreshChart}
-          setCurrentChart={(x: ChartType | null) => this.setState({ currentChart: x })}
-          setSidebar={setSidebar}
-        />
-      );
-    }
-
+    let { currentProject } = this.context;
     return (
       <div>
         <TitleSection>
-          <ProjectIcon>
-            <ProjectImage src={gradient} />
-            <Overlay>{currentCluster && currentCluster[0].toUpperCase()}</Overlay>
-          </ProjectIcon>
-          <Title>{currentCluster}</Title>
+          {this.renderDashboardIcon()}
+          <Title>{currentProject && currentProject.name}</Title>
           <i className="material-icons">more_vert</i>
         </TitleSection>
 
@@ -81,27 +42,14 @@ export default class Dashboard extends Component<PropsType, StateType> {
               <i className="material-icons">info</i> Info
             </InfoLabel>
           </TopRow>
-          <Description>Porter dashboard for {currentCluster}.</Description>
+          <Description>Porter dashboard for {currentProject && currentProject.name}.</Description>
         </InfoSection>
 
         <LineBreak />
-        
-        <ControlRow>
-          <Button disabled={true}>
-            <i className="material-icons">add</i> Deploy a Chart
-          </Button>
-          <NamespaceSelector
-            setNamespace={(namespace) => this.setState({ namespace })}
-            namespace={this.state.namespace}
-            currentCluster={currentCluster}
-          />
-        </ControlRow>
 
-        <ChartList
-          currentCluster={currentCluster}
-          namespace={this.state.namespace}
-          setCurrentChart={(x: ChartType) => this.setState({ currentChart: x })}
-        />
+        <Placeholder>
+          🚧 Pipelines under construction.
+        </Placeholder>
       </div>
     );
   }
@@ -117,12 +65,13 @@ export default class Dashboard extends Component<PropsType, StateType> {
 
 Dashboard.contextType = Context;
 
-const ControlRow = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 35px;
-  padding-left: 0px;
+const Placeholder = styled.div`
+  width: 100%;
+  margin-top: 200px;
+  color: #aaaabb;
+  text-align: center;
+  font-size: 13px;
+  font-family: 'Work Sans', sans-serif;
 `;
 
 const TopRow = styled.div`
@@ -198,15 +147,6 @@ const Button = styled.div`
   }
 `;
 
-const ButtonStack = styled(Button)`
-  min-width: 119px;
-  max-width: 119px;
-  background: #616FEEcc;
-  :hover {
-    background: #505edddd;
-  }
-`;
-
 const ButtonAlt = styled(Button)`
   min-width: 150px;
   max-width: 150px;
@@ -217,20 +157,11 @@ const ButtonAlt = styled(Button)`
   }
 `;
 
-const ConfigButtonAlt = styled(ButtonAlt)`
-  min-width: 166px;
-  max-width: 166px;
-`;
-
 const LineBreak = styled.div`
   width: calc(100% - 180px);
   height: 2px;
   background: #ffffff20;
   margin: 10px 80px 35px;
-`;
-
-const ServiceSection = styled.div`
-  padding-bottom: 150px;
 `;
 
 const Overlay = styled.div`
@@ -250,17 +181,24 @@ const Overlay = styled.div`
   color: white;
 `;
 
-const ProjectImage = styled.img`
+const DashboardImage = styled.img`
   height: 45px;
   width: 45px;
   border-radius: 5px;
 `;
 
-const ProjectIcon = styled.div`
+const DashboardIcon = styled.div`
   position: relative;
   height: 45px;
   width: 45px;
   border-radius: 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  > i {
+    font-size: 22px;
+  }
 `;
 
 const Title = styled.div`

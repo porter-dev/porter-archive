@@ -3,6 +3,7 @@ module github.com/porter-dev/porter
 go 1.14
 
 require (
+	cloud.google.com/go v0.65.0
 	github.com/Azure/go-autorest/autorest v0.11.1 // indirect
 	github.com/DATA-DOG/go-sqlmock v1.5.0
 	github.com/Masterminds/semver v1.5.0 // indirect
@@ -15,7 +16,7 @@ require (
 	github.com/docker/go-connections v0.4.0
 	github.com/docopt/docopt-go v0.0.0-20180111231733-ee0de3bc6815 // indirect
 	github.com/evanphx/json-patch v4.9.0+incompatible // indirect
-	github.com/fatih/color v1.9.0 // indirect
+	github.com/fatih/color v1.9.0
 	github.com/go-chi/chi v4.1.2+incompatible
 	github.com/go-chi/cors v1.1.1
 	github.com/go-playground/locales v0.13.0
@@ -23,6 +24,7 @@ require (
 	github.com/go-playground/validator/v10 v10.3.0
 	github.com/go-test/deep v1.0.7
 	github.com/google/go-cmp v0.5.1
+	github.com/google/go-github v17.0.0+incompatible
 	github.com/google/go-github/v32 v32.1.0
 	github.com/gorilla/securecookie v1.1.1
 	github.com/gorilla/sessions v1.2.1
@@ -38,12 +40,14 @@ require (
 	github.com/rs/zerolog v1.20.0
 	github.com/sirupsen/logrus v1.7.0
 	github.com/spf13/cobra v1.0.0
+	github.com/spf13/viper v1.4.0
 	github.com/stretchr/testify v1.6.1
 	golang.org/x/crypto v0.0.0-20200820211705-5c72a883971a
-	golang.org/x/oauth2 v0.0.0-20200902213428-5d25da1a8d43 // indirect
+	golang.org/x/oauth2 v0.0.0-20200902213428-5d25da1a8d43
 	golang.org/x/sys v0.0.0-20200826173525-f9321e4c35a6
 	golang.org/x/time v0.0.0-20200630173020-3af7569d3a1e // indirect
-	google.golang.org/genproto v0.0.0-20201014134559-03b6142f0dc9 // indirect
+	google.golang.org/api v0.30.0
+	google.golang.org/genproto v0.0.0-20201014134559-03b6142f0dc9
 	google.golang.org/grpc v1.33.0 // indirect
 	gopkg.in/check.v1 v1.0.0-20190902080502-41f04d3bba15 // indirect
 	gopkg.in/go-playground/validator.v9 v9.31.0

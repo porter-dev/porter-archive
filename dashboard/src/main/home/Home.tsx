@@ -3,13 +3,16 @@ import styled from 'styled-components';
 import ReactModal from 'react-modal';
 
 import { Context } from '../../shared/Context';
+import api from '../../shared/api';
 
 import Sidebar from './sidebar/Sidebar';
 import Dashboard from './dashboard/Dashboard';
-import ClusterConfigModal from './modals/ClusterConfigModal';
-import LaunchTemplateModal from './modals/LaunchTemplateModal';
+import ClusterDashboard from './cluster-dashboard/ClusterDashboard';
 import Loading from '../../components/Loading';
 import Templates from './templates/Templates';
+import LaunchTemplateModal from './modals/LaunchTemplateModal';
+import CreateProjectModal from './modals/CreateProjectModal';
+import ClusterInstructionsModal from './modals/ClusterInstructionsModal';
 
 type PropsType = {
   logOut: () => void
@@ -25,13 +28,27 @@ export default class Home extends Component<PropsType, StateType> {
   state = {
     forceSidebar: true,
     showWelcome: false,
-    currentView: 'dashboard'
+    currentView: 'cluster-dashboard'
   }
 
+  componentDidMount() {
+    let { user } = this.context;
+    api.getProjects('<token>', {}, { id: user.userId }, (err: any, res: any) => {
+      if (err) {
+        // console.log(err)
+      } else if (res.data) {
+        if (res.data.length === 0) {
+          this.context.setCurrentModal('CreateProjectModal', { keepOpen: true });
+        }
+      }
+    });
+  }
+
+  // TODO: move into ClusterDashboard
   renderDashboard = () => {
     let { currentCluster, setCurrentModal } = this.context;
 
-    if (currentCluster === '' || this.state.showWelcome) {
+    if (currentCluster === {} || this.state.showWelcome) {
       return (
         <DashboardWrapper>
           <Placeholder>
@@ -52,7 +69,7 @@ export default class Home extends Component<PropsType, StateType> {
 
     return (
       <DashboardWrapper>
-        <Dashboard
+        <ClusterDashboard
           currentCluster={currentCluster}
           setSidebar={(x: boolean) => this.setState({ forceSidebar: x })}
         />
@@ -61,36 +78,54 @@ export default class Home extends Component<PropsType, StateType> {
   }
 
   renderContents = () => {
-    if (this.state.currentView === 'dashboard') {
+    if (this.state.currentView === 'cluster-dashboard') {
       return (
         <StyledDashboard>
           {this.renderDashboard()}
         </StyledDashboard>
       );
+    } else if (this.state.currentView === 'dashboard') {
+      return (
+        <StyledDashboard>
+          <DashboardWrapper>
+            <Dashboard />
+          </DashboardWrapper>
+        </StyledDashboard>
+      );
     }
 
-    return <Templates />
+    return <Templates />;
   }
 
   render() {
+    let { currentModal, setCurrentModal, currentProject } = this.context;
     return (
       <StyledHome>
         <ReactModal
-          isOpen={this.context.currentModal === 'ClusterConfigModal'}
-          onRequestClose={() => this.context.setCurrentModal(null, null)}
-          style={MediumModalStyles}
-          ariaHideApp={false}
-        >
-          <ClusterConfigModal />
-        </ReactModal>
-        <ReactModal
-          isOpen={this.context.currentModal === 'LaunchTemplateModal'}
-          onRequestClose={() => this.context.setCurrentModal(null, null)}
+          isOpen={currentModal === 'LaunchTemplateModal'}
+          onRequestClose={() => setCurrentModal(null, null)}
           style={MediumModalStyles}
           ariaHideApp={false}
         >
           <LaunchTemplateModal />
         </ReactModal>
+        <ReactModal
+          isOpen={currentModal === 'CreateProjectModal'}
+          onRequestClose={() => currentProject ? setCurrentModal(null, null) : null }
+          style={ProjectModalStyles}
+          ariaHideApp={false}
+        >
+          <CreateProjectModal />
+        </ReactModal>
+        <ReactModal
+          isOpen={currentModal === 'ClusterInstructionsModal'}
+          onRequestClose={() => setCurrentModal(null, null)}
+          style={TallModalStyles}
+          ariaHideApp={false}
+        >
+          <ClusterInstructionsModal />
+        </ReactModal>
+
 
         <Sidebar
           logOut={this.props.logOut}
@@ -121,6 +156,44 @@ const MediumModalStyles = {
     margin: '0 auto',
     height: '575px',
     top: 'calc(50% - 289px)',
+    backgroundColor: '#202227',
+    animation: 'floatInModal 0.5s 0s',
+    overflow: 'visible',
+  },
+};
+
+const ProjectModalStyles = {
+  overlay: {
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    zIndex: 2,
+  },
+  content: {
+    borderRadius: '7px',
+    border: 0,
+    width: '565px',
+    maxWidth: '80vw',
+    margin: '0 auto',
+    height: '225px',
+    top: 'calc(50% - 120px)',
+    backgroundColor: '#202227',
+    animation: 'floatInModal 0.5s 0s',
+    overflow: 'visible',
+  },
+};
+
+const TallModalStyles = {
+  overlay: {
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    zIndex: 2,
+  },
+  content: {
+    borderRadius: '7px',
+    border: 0,
+    width: '760px',
+    maxWidth: '80vw',
+    margin: '0 auto',
+    height: '650px',
+    top: 'calc(50% - 325px)',
     backgroundColor: '#202227',
     animation: 'floatInModal 0.5s 0s',
     overflow: 'visible',

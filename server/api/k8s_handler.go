@@ -25,13 +25,6 @@ var upgrader = websocket.Upgrader{
 
 // HandleListNamespaces retrieves a list of namespaces
 func (app *App) HandleListNamespaces(w http.ResponseWriter, r *http.Request) {
-	session, err := app.store.Get(r, app.cookieName)
-
-	if err != nil {
-		app.handleErrorFormDecoding(err, ErrReleaseDecode, w)
-		return
-	}
-
 	vals, err := url.ParseQuery(r.URL.RawQuery)
 
 	if err != nil {
@@ -43,11 +36,8 @@ func (app *App) HandleListNamespaces(w http.ResponseWriter, r *http.Request) {
 	form := &forms.K8sForm{
 		OutOfClusterConfig: &kubernetes.OutOfClusterConfig{},
 	}
-	form.PopulateK8sOptionsFromQueryParams(vals)
 
-	if sessID, ok := session.Values["user_id"].(uint); ok {
-		form.PopulateK8sOptionsFromUserID(sessID, app.repo.User)
-	}
+	form.PopulateK8sOptionsFromQueryParams(vals, app.repo.ServiceAccount)
 
 	// validate the form
 	if err := app.validator.Struct(form); err != nil {

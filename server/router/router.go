@@ -259,6 +259,34 @@ func New(
 				mw.ReadAccess,
 			),
 		)
+
+		r.Method(
+			"GET",
+			"/projects/{project_id}/k8s/{namespace}/pod/{name}/logs",
+			auth.DoesUserHaveProjectAccess(
+				auth.DoesUserHaveServiceAccountAccess(
+					requestlog.NewHandler(a.HandleGetPodLogs, l),
+					mw.URLParam,
+					mw.QueryParam,
+				),
+				mw.URLParam,
+				mw.ReadAccess,
+			),
+		)
+
+		r.Method(
+			"GET",
+			"/projects/{project_id}/k8s/pods",
+			auth.DoesUserHaveProjectAccess(
+				auth.DoesUserHaveServiceAccountAccess(
+					requestlog.NewHandler(a.HandleListPods, l),
+					mw.URLParam,
+					mw.QueryParam,
+				),
+				mw.URLParam,
+				mw.ReadAccess,
+			),
+		)
 	})
 
 	fs := http.FileServer(http.Dir(staticFilePath))

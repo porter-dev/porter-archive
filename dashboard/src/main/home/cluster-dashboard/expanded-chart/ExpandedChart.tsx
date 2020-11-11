@@ -11,7 +11,7 @@ import RevisionSection from './RevisionSection';
 import ValuesYaml from './ValuesYaml';
 import GraphSection from './GraphSection';
 import ListSection from './ListSection';
-import LogSection from './LogSection';
+import LogSection from './log/LogSection';
 import ValuesForm from '../../../../components/values-form/ValuesForm';
 import SettingsSection from './SettingsSection';
 
@@ -26,6 +26,7 @@ type StateType = {
   showRevisions: boolean,
   currentTab: string,
   components: ResourceType[],
+  podSelectors: string[]
   revisionPreview: ChartType | null,
   devOpsMode: boolean
 };
@@ -145,23 +146,29 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
     showRevisions: false,
     currentTab: 'values-form',
     components: [] as ResourceType[],
+    podSelectors: [] as string[],
     revisionPreview: null as (ChartType | null),
     devOpsMode: false
   }
 
   updateResources = () => {
-    let { currentCluster } = this.context;
+    let { currentCluster, currentProject } = this.context;
     let { currentChart } = this.props;
 
     api.getChartComponents('<token>', {
       namespace: currentChart.namespace,
-      context: currentCluster,
+      cluster_id: currentCluster.id,
+      service_account_id: currentCluster.service_account_id,
       storage: StorageType.Secret
-    }, { name: currentChart.name, revision: currentChart.version }, (err: any, res: any) => {
+    }, {
+      id: currentProject.id,
+      name: currentChart.name,
+      revision: currentChart.version
+    }, (err: any, res: any) => {
       if (err) {
         console.log(err)
       } else {
-        this.setState({ components: res.data });
+        this.setState({ components: res.data.Objects, podSelectors: res.data.PodSelectors });
       }
     });
   }
@@ -177,19 +184,24 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
   }
 
   setRevisionPreview = (oldChart: ChartType) => {
-    let { currentCluster } = this.context;
+    let { currentCluster, currentProject } = this.context;
     this.setState({ revisionPreview: oldChart });
 
     if (oldChart) {
       api.getChartComponents('<token>', {
         namespace: oldChart.namespace,
-        context: currentCluster,
+        cluster_id: currentCluster.id,
+        service_account_id: currentCluster.service_account_id,
         storage: StorageType.Secret
-      }, { name: oldChart.name, revision: oldChart.version }, (err: any, res: any) => {
+      }, {
+        id: currentProject.id,
+        name: oldChart.name,
+        revision: oldChart.version
+      }, (err: any, res: any) => {
         if (err) {
           console.log(err)
         } else {
-          this.setState({ components: res.data });
+          this.setState({ components: res.data, podSelectors: res.data.PodSelectors });
         }
       });
 
@@ -199,6 +211,8 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
       } else if (this.state.currentTab === 'detailed-logs') {
         this.setState({ currentTab: 'graph' });
       }
+    } else {
+      this.updateResources();
     }
   }
 
@@ -276,7 +290,8 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
       );
     } else if (this.state.currentTab === 'logs') {
       return (
-        <LogSection
+        <LogSection 
+          selectors={this.state.podSelectors}
         />
       );
     } else if (this.state.currentTab === 'values-form') {

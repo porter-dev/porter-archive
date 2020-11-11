@@ -1,9 +1,8 @@
-export interface KubeContextConfig {
-  cluster: string,
+export interface Cluster {
+  id: number,
   name: string,
-  selected?: boolean,
   server: string,
-  user: string
+  service_account_id: number
 }
 
 export interface ChartType {
@@ -34,7 +33,7 @@ export interface ResourceType {
   ID: number,
   Kind: string,
   Name: string,
-  RawYAML: Object,
+  RawYAML: any,
   Relations: any
 }
 
@@ -42,7 +41,7 @@ export interface NodeType {
   id: number,
   name: string,
   kind: string,
-  RawYAML?: Object,
+  RawYAML?: any,
   x: number,
   y: number,
   w: number,
@@ -108,4 +107,15 @@ export interface RepoType {
 export interface FileType {
   Path: string,
   Type: string
+}
+
+export interface ProjectType {
+  id: number,
+  name: string,
+  roles: {
+    id: number,
+    kind: string,
+    user_id: number,
+    project_id: number
+  }[]
 }

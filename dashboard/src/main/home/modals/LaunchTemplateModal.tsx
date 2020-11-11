@@ -4,7 +4,7 @@ import close from '../../../assets/close.png';
 
 import api from '../../../shared/api';
 import { Context } from '../../../shared/Context';
-import { KubeContextConfig, RepoType } from '../../../shared/types';
+import { Cluster, RepoType } from '../../../shared/types';
 
 import SaveButton from '../../../components/SaveButton';
 import Selector from '../../../components/Selector';
@@ -16,7 +16,7 @@ type PropsType = {
 
 type StateType = {
   currentView: string,
-  contextOptions: { label: string, value: string }[],
+  clusterOptions: { label: string, value: string }[],
   selectedCluster: string,
   selectedRepo: RepoType | null,
   selectedBranch: string,
@@ -26,27 +26,24 @@ type StateType = {
 export default class LaunchTemplateModal extends Component<PropsType, StateType> {
   state = {
     currentView: 'repo',
-    contextOptions: [] as { label: string, value: string }[],
-    selectedCluster: this.context.currentCluster,
+    clusterOptions: [] as { label: string, value: string }[],
+    selectedCluster: this.context.currentCluster.name,
     selectedRepo: null as RepoType | null,
     selectedBranch: '',
     subdirectory: '',
   };
   
   componentDidMount() {
-    let { setCurrentError, user } = this.context;
+    let { currentProject } = this.context;
 
     // TODO: query with selected filter once implemented
-    api.getContexts('<token>', {}, { id: user.userId }, (err: any, res: any) => {
+    api.getClusters('<token>', {}, { id: currentProject.id }, (err: any, res: any) => {
       if (err) {
         // console.log(err)
       } else if (res.data) {
-
-        // Filter selected (temporary)
-        let kubeContexts = res.data.filter((x: KubeContextConfig) => x.selected);
-        let contextOptions = kubeContexts.map((x: KubeContextConfig) => { return { label: x.name, value: x.name } });
-        if (kubeContexts.length > 0) {
-          this.setState({ contextOptions });
+        let clusterOptions = res.data.map((x: Cluster) => { return { label: x.name, value: x.name } });
+        if (res.data.length > 0) {
+          this.setState({ clusterOptions });
         }
       }
     });
@@ -129,7 +126,7 @@ export default class LaunchTemplateModal extends Component<PropsType, StateType>
             <Selector
               activeValue={this.state.selectedCluster}
               setActiveValue={(cluster: string) => this.setState({ selectedCluster: cluster })}
-              options={this.state.contextOptions}
+              options={this.state.clusterOptions}
               width='250px'
               dropdownWidth='335px'
               closeOverlay={true}

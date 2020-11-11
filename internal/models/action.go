@@ -10,7 +10,7 @@ const (
 	OIDCIssuerDataAction        = "upload-oidc-idp-issuer-ca-data"
 	TokenDataAction             = "upload-token-data"
 	GCPKeyDataAction            = "upload-gcp-key-data"
-	AWSKeyDataAction            = "upload-aws-key-data"
+	AWSDataAction               = "upload-aws-data"
 )
 
 // ServiceAccountAction is an action that must be resolved to set up
@@ -58,13 +58,15 @@ type ServiceAccountActionExternal struct {
 type ServiceAccountAllActions struct {
 	Name string `json:"name"`
 
-	ClusterCAData    string `json:"cluster_ca_data,omitempty"`
-	ClientCertData   string `json:"client_cert_data,omitempty"`
-	ClientKeyData    string `json:"client_key_data,omitempty"`
-	OIDCIssuerCAData string `json:"oidc_idp_issuer_ca_data,omitempty"`
-	TokenData        string `json:"token_data,omitempty"`
-	GCPKeyData       string `json:"gcp_key_data,omitempty"`
-	AWSKeyData       string `json:"aws_key_data,omitempty"`
+	ClusterCAData      string `json:"cluster_ca_data,omitempty"`
+	ClientCertData     string `json:"client_cert_data,omitempty"`
+	ClientKeyData      string `json:"client_key_data,omitempty"`
+	OIDCIssuerCAData   string `json:"oidc_idp_issuer_ca_data,omitempty"`
+	TokenData          string `json:"token_data,omitempty"`
+	GCPKeyData         string `json:"gcp_key_data,omitempty"`
+	AWSAccessKeyID     string `json:"aws_access_key_id"`
+	AWSSecretAccessKey string `json:"aws_secret_access_key"`
+	AWSClusterID       string `json:"aws_cluster_id"`
 }
 
 // ServiceAccountActionInfo contains the information for actions to be
@@ -110,9 +112,9 @@ var ServiceAccountActionInfos = map[string]ServiceAccountActionInfo{
 		Docs:   "https://github.com/porter-dev/porter",
 		Fields: "gcp_key_data",
 	},
-	"upload-aws-key-data": ServiceAccountActionInfo{
-		Name:   AWSKeyDataAction,
+	"upload-aws-data": ServiceAccountActionInfo{
+		Name:   AWSDataAction,
 		Docs:   "https://github.com/porter-dev/porter",
-		Fields: "aws_key_data",
+		Fields: "aws_access_key_id,aws_secret_access_key,aws_cluster_id",
 	},
 }

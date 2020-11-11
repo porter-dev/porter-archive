@@ -29,6 +29,10 @@ type ServiceAccountCandidate struct {
 	ClusterEndpoint string `json:"cluster_endpoint"`
 	AuthMechanism   string `json:"auth_mechanism"`
 
+	// The best-guess for the AWSClusterID, which is required by aws auth mechanisms
+	// See https://github.com/kubernetes-sigs/aws-iam-authenticator#what-is-a-cluster-id
+	AWSClusterIDGuess string `json:"aws_cluster_id_guess"`
+
 	// ------------------------------------------------------------------
 	// All fields below this line are encrypted before storage
 	// ------------------------------------------------------------------
@@ -39,13 +43,14 @@ type ServiceAccountCandidate struct {
 // ServiceAccountCandidateExternal represents the ServiceAccountCandidate type that is
 // sent over REST
 type ServiceAccountCandidateExternal struct {
-	ID              uint                           `json:"id"`
-	Actions         []ServiceAccountActionExternal `json:"actions"`
-	ProjectID       uint                           `json:"project_id"`
-	Kind            string                         `json:"kind"`
-	ClusterName     string                         `json:"cluster_name"`
-	ClusterEndpoint string                         `json:"cluster_endpoint"`
-	AuthMechanism   string                         `json:"auth_mechanism"`
+	ID                uint                           `json:"id"`
+	Actions           []ServiceAccountActionExternal `json:"actions"`
+	ProjectID         uint                           `json:"project_id"`
+	Kind              string                         `json:"kind"`
+	ClusterName       string                         `json:"cluster_name"`
+	ClusterEndpoint   string                         `json:"cluster_endpoint"`
+	AuthMechanism     string                         `json:"auth_mechanism"`
+	AWSClusterIDGuess string                         `json:"aws_cluster_id_guess"`
 }
 
 // Externalize generates an external ServiceAccountCandidate to be shared over REST
@@ -57,13 +62,14 @@ func (s *ServiceAccountCandidate) Externalize() *ServiceAccountCandidateExternal
 	}
 
 	return &ServiceAccountCandidateExternal{
-		ID:              s.ID,
-		Actions:         actions,
-		ProjectID:       s.ProjectID,
-		Kind:            s.Kind,
-		ClusterName:     s.ClusterName,
-		ClusterEndpoint: s.ClusterEndpoint,
-		AuthMechanism:   s.AuthMechanism,
+		ID:                s.ID,
+		Actions:           actions,
+		ProjectID:         s.ProjectID,
+		Kind:              s.Kind,
+		ClusterName:       s.ClusterName,
+		ClusterEndpoint:   s.ClusterEndpoint,
+		AuthMechanism:     s.AuthMechanism,
+		AWSClusterIDGuess: s.AWSClusterIDGuess,
 	}
 }
 
@@ -104,10 +110,17 @@ type ServiceAccount struct {
 	Username string `json:"username,omitempty"`
 	Password string `json:"password,omitempty"`
 
-	// KeyData for a service account for GCP and AWS connectors, along with
-	// a previous token so a new token isn't generated for each request
-	KeyData   []byte `json:"key_data"`
-	PrevToken string `json:"prev_token"`
+	// TokenCache is a cache for bearer tokens with an expiry time
+	// Used by GCP and AWS mechanisms
+	TokenCache TokenCache `json:"gcp_token_cache"`
+
+	// KeyData for a service account for GCP connectors
+	GCPKeyData []byte `json:"gcp_key_data"`
+
+	// AWS data
+	AWSAccessKeyID     string `json:"aws_access_key_id"`
+	AWSSecretAccessKey string `json:"aws_secret_access_key"`
+	AWSClusterID       string `json:"aws_cluster_id"`
 
 	// OIDC-related fields
 	OIDCIssuerURL                string `json:"idp-issuer-url"`

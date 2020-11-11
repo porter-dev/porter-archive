@@ -332,7 +332,7 @@ var SACandidatesTests = []saCandidatesTest{
 			&models.ServiceAccountCandidate{
 				Actions: []models.ServiceAccountAction{
 					models.ServiceAccountAction{
-						Name:     "upload-aws-key-data",
+						Name:     "upload-aws-data",
 						Resolved: false,
 					},
 				},
@@ -351,7 +351,7 @@ var SACandidatesTests = []saCandidatesTest{
 			&models.ServiceAccountCandidate{
 				Actions: []models.ServiceAccountAction{
 					models.ServiceAccountAction{
-						Name:     "upload-aws-key-data",
+						Name:     "upload-aws-data",
 						Resolved: false,
 					},
 				},
@@ -488,6 +488,36 @@ func TestGetServiceAccountCandidates(t *testing.T) {
 				t.Errorf("%s failed: expected %v, got %v\n", c.name, expRawConf, resRawConf)
 			}
 		}
+	}
+}
+
+func TestAWSClusterIDGuess(t *testing.T) {
+	result, err := kubernetes.GetServiceAccountCandidates([]byte(AWSIamAuthenticatorExec))
+
+	if err != nil {
+		t.Fatalf("error occurred %v\n", err)
+	}
+
+	if len(result) != 1 {
+		t.Fatalf("result length was not 1\n")
+	}
+
+	if result[0].AWSClusterIDGuess != "cluster-test-aws-id-guess" {
+		t.Errorf("Guess AWS cluster id failed: expected %s, got %s\n", "cluster-test-aws-id-guess", result[0].AWSClusterIDGuess)
+	}
+
+	result, err = kubernetes.GetServiceAccountCandidates([]byte(AWSEKSGetTokenExec))
+
+	if err != nil {
+		t.Fatalf("error occurred %v\n", err)
+	}
+
+	if len(result) != 1 {
+		t.Fatalf("result length was not 1\n")
+	}
+
+	if result[0].AWSClusterIDGuess != "cluster-test-aws-id-guess" {
+		t.Errorf("Guess AWS cluster id failed: expected %s, got %s\n", "cluster-test-aws-id-guess", result[0].AWSClusterIDGuess)
 	}
 }
 
@@ -781,7 +811,7 @@ users:
       args:
         - "token"
         - "-i"
-        - "cluster-test"
+        - "cluster-test-aws-id-guess"
 `
 
 const AWSEKSGetTokenExec = `
@@ -809,7 +839,7 @@ users:
         - "eks"
         - "get-token"
         - "--cluster-name"
-        - "cluster-test"
+        - "cluster-test-aws-id-guess"
 `
 
 const OIDCAuthWithoutData = `

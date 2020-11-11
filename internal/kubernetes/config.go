@@ -57,11 +57,16 @@ func GetAgentTesting(objects ...runtime.Object) *Agent {
 	return &Agent{&fakeRESTClientGetter{}, fake.NewSimpleClientset(objects...)}
 }
 
+// UpdateTokenCacheFunc is a function that updates the token cache
+// with a new token and expiry time
+type UpdateTokenCacheFunc func(token string, expiry time.Time) error
+
 // OutOfClusterConfig is the set of parameters required for an out-of-cluster connection.
 // This implements RESTClientGetter
 type OutOfClusterConfig struct {
-	ServiceAccount *models.ServiceAccount `form:"required"`
-	ClusterID      uint                   `json:"cluster_id" form:"required"`
+	ServiceAccount   *models.ServiceAccount `form:"required"`
+	ClusterID        uint                   `json:"cluster_id" form:"required"`
+	UpdateTokenCache UpdateTokenCacheFunc
 }
 
 // ToRESTConfig creates a kubernetes REST client factory -- it calls ClientConfig on
@@ -100,6 +105,7 @@ func (conf *OutOfClusterConfig) ToRawKubeConfigLoader() clientcmd.ClientConfig {
 	cmdConf, _ := GetClientConfigFromServiceAccount(
 		conf.ServiceAccount,
 		conf.ClusterID,
+		conf.UpdateTokenCache,
 	)
 
 	return cmdConf

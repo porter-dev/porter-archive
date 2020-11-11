@@ -4,10 +4,13 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"strconv"
+	"strings"
 	"text/tabwriter"
 
 	"github.com/fatih/color"
 	"github.com/porter-dev/porter/cli/cmd/api"
+	"github.com/porter-dev/porter/cli/cmd/utils"
 	"github.com/spf13/cobra"
 )
 
@@ -24,6 +27,19 @@ var createProjectCmd = &cobra.Command{
 	Short: "Creates a project with the authorized user as admin",
 	Run: func(cmd *cobra.Command, args []string) {
 		err := checkLoginAndRun(args, createProject)
+
+		if err != nil {
+			os.Exit(1)
+		}
+	},
+}
+
+var deleteProjectCmd = &cobra.Command{
+	Use:   "delete [id]",
+	Args:  cobra.ExactArgs(1),
+	Short: "Deletes the project with the given id",
+	Run: func(cmd *cobra.Command, args []string) {
+		err := checkLoginAndRun(args, deleteProject)
 
 		if err != nil {
 			os.Exit(1)
@@ -58,14 +74,16 @@ var listProjectClustersCmd = &cobra.Command{
 func init() {
 	rootCmd.AddCommand(projectCmd)
 
-	projectCmd.AddCommand(createProjectCmd)
-
 	projectCmd.PersistentFlags().StringVar(
 		&host,
 		"host",
 		getHost(),
 		"host url of Porter instance",
 	)
+
+	projectCmd.AddCommand(createProjectCmd)
+
+	projectCmd.AddCommand(deleteProjectCmd)
 
 	projectCmd.AddCommand(listProjectCmd)
 
@@ -109,6 +127,38 @@ func listProjects(user *api.AuthCheckResponse, client *api.Client, args []string
 	}
 
 	w.Flush()
+
+	return nil
+}
+
+func deleteProject(_ *api.AuthCheckResponse, client *api.Client, args []string) error {
+	userResp, err := utils.PromptPlaintext(
+		fmt.Sprintf(
+			`Are you sure you'd like to delete the project with id %s? %s `,
+			args[0],
+			color.New(color.FgCyan).Sprintf("[y/n]"),
+		),
+	)
+
+	if err != nil {
+		return err
+	}
+
+	if userResp := strings.ToLower(userResp); userResp == "y" || userResp == "yes" {
+		id, err := strconv.ParseUint(args[0], 10, 64)
+
+		if err != nil {
+			return err
+		}
+
+		resp, err := client.DeleteProject(context.Background(), uint(id))
+
+		if err != nil {
+			return err
+		}
+
+		color.New(color.FgGreen).Printf("Deleted project with name %s and id %d\n", resp.Name, resp.ID)
+	}
 
 	return nil
 }

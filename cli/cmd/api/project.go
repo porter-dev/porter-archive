@@ -240,3 +240,32 @@ func (c *Client) CreateProjectServiceAccount(
 
 	return bodyResp, nil
 }
+
+// DeleteProjectResponse is the object returned after project deletion
+type DeleteProjectResponse models.ProjectExternal
+
+// DeleteProject deletes a project by id
+func (c *Client) DeleteProject(ctx context.Context, projectID uint) (*DeleteProjectResponse, error) {
+	req, err := http.NewRequest(
+		"DELETE",
+		fmt.Sprintf("%s/projects/%d", c.BaseURL, projectID),
+		nil,
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	req = req.WithContext(ctx)
+	bodyResp := &DeleteProjectResponse{}
+
+	if httpErr, err := c.sendRequest(req, bodyResp, true); httpErr != nil || err != nil {
+		if httpErr != nil {
+			return nil, fmt.Errorf("code %d, errors %v", httpErr.Code, httpErr.Errors)
+		}
+
+		return nil, err
+	}
+
+	return bodyResp, nil
+}

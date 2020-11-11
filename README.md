@@ -12,12 +12,23 @@ Porter is a **dashboard for Helm** with support for the following features:
 To view the dashboard locally, follow the instructions to install the latest CLI release for [Mac](#mac-installation), [Linux](#linux-installation), or [Windows](#windows-installation). While the Docker engine is running, run:
 
 ```sh
-porter start
+porter server start
 ```
 
-When prompted, enter the admin email/password you would like to use. After the server has started, go to `localhost:8080/login` and **log in with the credentials you just set**. 
+Wait for the Porter server to start, and then run the following commands:
 
-To view more detailed setup instructions, please consult the [getting started](docs/GETTING_STARTED.md) docs.
+```sh
+{
+porter auth register
+porter project create porter-test
+porter connect kubeconfig
+porter open
+}
+```
+
+The last command should open up the Porter dashboard in your browser: log in with the credentials you just set. To view more detailed setup instructions, please consult the [getting started](docs/GETTING_STARTED.md) docs.
+
+To shut down the Porter instance, run `porter server stop` (or kill the containers manually using the docker CLI). 
 
 ### Mac Installation
 

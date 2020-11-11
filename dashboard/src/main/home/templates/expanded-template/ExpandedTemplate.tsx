@@ -89,6 +89,7 @@ const ContentSection = styled.div`
   font-size: 14px;
   line-height: 1.8em;
   padding-bottom: 100px;
+  overflow: hidden;
 `;
 
 const Tag = styled.div`

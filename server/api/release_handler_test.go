@@ -93,14 +93,15 @@ var listReleasesTests = []*releaseTest{
 		},
 		msg:    "List releases no namespace",
 		method: "GET",
-		endpoint: "/api/releases?" + url.Values{
-			"namespace":    []string{""},
-			"context":      []string{"context-test"},
-			"storage":      []string{"memory"},
-			"limit":        []string{"20"},
-			"skip":         []string{"0"},
-			"byDate":       []string{"false"},
-			"statusFilter": []string{"deployed"},
+		endpoint: "/api/projects/1/releases?" + url.Values{
+			"namespace":          []string{""},
+			"cluster_id":         []string{"1"},
+			"service_account_id": []string{"1"},
+			"storage":            []string{"memory"},
+			"limit":              []string{"20"},
+			"skip":               []string{"0"},
+			"byDate":             []string{"false"},
+			"statusFilter":       []string{"deployed"},
 		}.Encode(),
 		body:      "",
 		expStatus: http.StatusOK,
@@ -117,14 +118,15 @@ var listReleasesTests = []*releaseTest{
 		msg:       "List releases with namespace",
 		method:    "GET",
 		namespace: "default",
-		endpoint: "/api/releases?" + url.Values{
-			"namespace":    []string{"default"},
-			"context":      []string{"context-test"},
-			"storage":      []string{"memory"},
-			"limit":        []string{"20"},
-			"skip":         []string{"0"},
-			"byDate":       []string{"false"},
-			"statusFilter": []string{"deployed"},
+		endpoint: "/api/projects/1/releases?" + url.Values{
+			"namespace":          []string{"default"},
+			"cluster_id":         []string{"1"},
+			"service_account_id": []string{"1"},
+			"storage":            []string{"memory"},
+			"limit":              []string{"20"},
+			"skip":               []string{"0"},
+			"byDate":             []string{"false"},
+			"statusFilter":       []string{"deployed"},
 		}.Encode(),
 		body:      "",
 		expStatus: http.StatusOK,
@@ -144,13 +146,14 @@ var listReleasesTests = []*releaseTest{
 		msg:       "List releases missing required",
 		method:    "GET",
 		namespace: "default",
-		endpoint: "/api/releases?" + url.Values{
-			"namespace":    []string{"default"},
-			"storage":      []string{"memory"},
-			"limit":        []string{"20"},
-			"skip":         []string{"0"},
-			"byDate":       []string{"false"},
-			"statusFilter": []string{"deployed"},
+		endpoint: "/api/projects/1/releases?" + url.Values{
+			"service_account_id": []string{"1"},
+			"namespace":          []string{"default"},
+			"storage":            []string{"memory"},
+			"limit":              []string{"20"},
+			"skip":               []string{"0"},
+			"byDate":             []string{"false"},
+			"statusFilter":       []string{"deployed"},
 		}.Encode(),
 		body:      "",
 		expStatus: http.StatusUnprocessableEntity,
@@ -174,10 +177,11 @@ var getReleaseTests = []*releaseTest{
 		msg:       "Get releases",
 		method:    "GET",
 		namespace: "default",
-		endpoint: "/api/releases/airwatch/1?" + url.Values{
-			"namespace": []string{""},
-			"context":   []string{"context-test"},
-			"storage":   []string{"memory"},
+		endpoint: "/api/projects/1/releases/airwatch/1?" + url.Values{
+			"namespace":          []string{""},
+			"cluster_id":         []string{"1"},
+			"service_account_id": []string{"1"},
+			"storage":            []string{"memory"},
 		}.Encode(),
 		body:      "",
 		expStatus: http.StatusOK,
@@ -194,10 +198,11 @@ var getReleaseTests = []*releaseTest{
 		msg:       "Release not found",
 		method:    "GET",
 		namespace: "default",
-		endpoint: "/api/releases/airwatch/5?" + url.Values{
-			"namespace": []string{""},
-			"context":   []string{"context-test"},
-			"storage":   []string{"memory"},
+		endpoint: "/api/projects/1/releases/airwatch/5?" + url.Values{
+			"namespace":          []string{""},
+			"cluster_id":         []string{"1"},
+			"service_account_id": []string{"1"},
+			"storage":            []string{"memory"},
 		}.Encode(),
 		body:      "",
 		expStatus: http.StatusNotFound,
@@ -221,10 +226,11 @@ var listReleaseHistoryTests = []*releaseTest{
 		msg:       "List release history",
 		method:    "GET",
 		namespace: "default",
-		endpoint: "/api/releases/wordpress/history?" + url.Values{
-			"namespace": []string{""},
-			"context":   []string{"context-test"},
-			"storage":   []string{"memory"},
+		endpoint: "/api/projects/1/releases/wordpress/history?" + url.Values{
+			"namespace":          []string{""},
+			"cluster_id":         []string{"1"},
+			"service_account_id": []string{"1"},
+			"storage":            []string{"memory"},
 		}.Encode(),
 		body:      "",
 		expStatus: http.StatusOK,
@@ -241,10 +247,11 @@ var listReleaseHistoryTests = []*releaseTest{
 		msg:       "Release not found",
 		method:    "GET",
 		namespace: "default",
-		endpoint: "/api/releases/asldfkja/history?" + url.Values{
-			"namespace": []string{""},
-			"context":   []string{"context-test"},
-			"storage":   []string{"memory"},
+		endpoint: "/api/projects/1/releases/asldfkja/history?" + url.Values{
+			"namespace":          []string{""},
+			"cluster_id":         []string{"1"},
+			"service_account_id": []string{"1"},
+			"storage":            []string{"memory"},
 		}.Encode(),
 		body:      "",
 		expStatus: http.StatusNotFound,
@@ -268,11 +275,13 @@ var upgradeReleaseTests = []*releaseTest{
 		msg:       "Upgrade relase",
 		method:    "POST",
 		namespace: "default",
-		endpoint:  "/api/releases/wordpress/upgrade",
+		endpoint: "/api/projects/1/releases/wordpress/upgrade?" + url.Values{
+			"cluster_id":         []string{"1"},
+			"service_account_id": []string{"1"},
+		}.Encode(),
 		body: `
 			{
 				"namespace": "default",
-				"context": "context-test",
 				"storage": "memory",
 				"values": "\nfoo: bar\n"
 			}
@@ -284,10 +293,11 @@ var upgradeReleaseTests = []*releaseTest{
 			func(c *releaseTest, tester *tester, t *testing.T) {
 				req, err := http.NewRequest(
 					"GET",
-					"/api/releases/wordpress/3?"+url.Values{
-						"namespace": []string{"default"},
-						"context":   []string{"context-test"},
-						"storage":   []string{"memory"},
+					"/api/projects/1/releases/wordpress/3?"+url.Values{
+						"namespace":          []string{"default"},
+						"cluster_id":         []string{"1"},
+						"service_account_id": []string{"1"},
+						"storage":            []string{"memory"},
 					}.Encode(),
 					strings.NewReader(""),
 				)
@@ -345,11 +355,13 @@ var rollbackReleaseTests = []*releaseTest{
 		msg:       "Rollback relase",
 		method:    "POST",
 		namespace: "default",
-		endpoint:  "/api/releases/wordpress/rollback",
+		endpoint: "/api/projects/1/releases/wordpress/rollback?" + url.Values{
+			"cluster_id":         []string{"1"},
+			"service_account_id": []string{"1"},
+		}.Encode(),
 		body: `
 			{
 				"namespace": "default",
-				"context": "context-test",
 				"storage": "memory",
 				"revision": 1
 			}
@@ -361,10 +373,11 @@ var rollbackReleaseTests = []*releaseTest{
 			func(c *releaseTest, tester *tester, t *testing.T) {
 				req, err := http.NewRequest(
 					"GET",
-					"/api/releases/wordpress/3?"+url.Values{
-						"namespace": []string{"default"},
-						"context":   []string{"context-test"},
-						"storage":   []string{"memory"},
+					"/api/projects/1/releases/wordpress/3?"+url.Values{
+						"namespace":          []string{"default"},
+						"cluster_id":         []string{"1"},
+						"service_account_id": []string{"1"},
+						"storage":            []string{"memory"},
 					}.Encode(),
 					strings.NewReader(""),
 				)
@@ -411,6 +424,8 @@ func TestRollbackRelease(t *testing.T) {
 
 func initDefaultReleases(tester *tester) {
 	initUserDefault(tester)
+	initProject(tester)
+	initProjectSADefault(tester)
 
 	agent := tester.app.TestAgents.HelmAgent
 
@@ -423,6 +438,8 @@ func initDefaultReleases(tester *tester) {
 
 func initHistoryReleases(tester *tester) {
 	initUserDefault(tester)
+	initProject(tester)
+	initProjectSADefault(tester)
 
 	agent := tester.app.TestAgents.HelmAgent
 

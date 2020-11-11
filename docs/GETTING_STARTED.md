@@ -6,13 +6,11 @@
     - [Linux Installation](#linux-installation)
     - [Windows Installation](#windows-installation)
 - [Local Setup](#local-setup)
-    - [Passing `kubeconfig` explicitly](#passing-kubeconfig-explicitly)
-    - [Passing a context list](#passing-a-context-list)
-    - [Skipping initialization steps](#skipping-initialization-steps)
+    - [Connecting to a Cluster](#connecting-to-a-cluster)
 
 ## Prerequisites
 
-You must have access to a Kubernetes cluster with Helm charts installed and the Docker engine must be running on your machine. 
+You must have access to a Kubernetes cluster with Helm charts installed and the Docker engine must be running on your machine. To quickly get a local Kubernetes cluster set up, following the instructions for [installing minikube](https://minikube.sigs.k8s.io/docs/start/), and make sure that minikube is set as the current context by ensuring the output of `kubectl config current-context` is `minikube`. 
 
 ## Installing 
 
@@ -67,28 +65,40 @@ Go [here](https://github.com/porter-dev/porter/releases/latest/download/porter_0
 
 > **Note:** the local setup process is tracked in [issue #60](https://github.com/porter-dev/porter/issues/60), while the overall onboarding flow is tracked in [issue #50](https://github.com/porter-dev/porter/issues/50). 
 
-To view Porter locally, you must have access to a Kubernetes cluster with Helm charts installed. The simplest way to run Porter is via `porter start`. This command will read the `current-context` that's set in your default `kubeconfig` (either by reading the `$KUBECONFIG` env variable or reading from `$HOME/.kube/config`). To view all options for `start`, type `porter start --help`. By default, the command performs the following steps:
+To view Porter locally, you must have access to a Kubernetes cluster with Helm charts installed. The simplest way to run Porter is via `porter server start`. After doing this, you can go to `http://localhost:8080` to register an account and create a project manually. Alternatively, you can run the following commands:
 
-1. Requests an admin account is created and writes the result to the local keychain (Mac), wincred (Windows), or pass (Linux). 
-2. Reads the default `kubeconfig` and populates certificates required by the current context. 
-3. Starts Porter as a Docker container with a persistent storage volume attached (by default, the volume will be called `porter_sqlite`).
+```sh
+porter auth register
+porter project create porter-test
+```
 
-### Passing `kubeconfig` explicitly
+### Connecting to a Cluster
+
+In the case of local setup, you will have to connect to a cluster using the CLI command `porter connect kubeconfig`. By default, this command will read the `current-context` that's set in your default `kubeconfig` (either by reading the `$KUBECONFIG` env variable or reading from `$HOME/.kube/config`). You can also pass a path to a kubeconfig file explicitly (see below). 
+
+The Porter CLI will attempt to generate a working kubeconfig for many types of cluster configurations and auth mechanisms, even though the necessary commands and/or certificates will not be present in the Porter container. The CLI will attempt the following resolutions:
+
+1. If a kubeconfig requires cluster CA data via the `certificate-authority` field, the CA data will be automatically populated. 
+2. If a kubeconfig requires client cert data via the `client-certificate` field, the certificate data will be automatically populated. 
+3. If a kubeconfig requires client key data via the `client-key` field, the key data will be automatically populated. 
+4. If a kubeconfig requires a custom `oidc` auth mechanism, and this mechanism requires OIDC issuer CA data via the `idp-certificate-authority` field, the CA data will be automatically populated. 
+5. If a kubeconfig requires a bearer token to be read from a `token-file` field, the token data will be automatically populated. 
+6. If a kubeconfig requires a custom `gcp` auth mechanism (for connecting with GKE clusters), the CLI will require a GCP `service-account` that has permissions to read from the GKE cluster. The CLI will ask the user if it can set this up automatically: if so, it will automatically detect the correct GCP project ID and will create a service account and download a key file. If the user does not wish the CLI to set this up automatically, the user will need to provide a file path to a service account key file that was downloaded from GCloud. 
+
+> **Note:** AWS EKS support coming soon. 
+
+#### Passing `kubeconfig` explicitly
 
 You can pass a path to a `kubeconfig` file explicitly via:
 
 ```sh
-porter start --kubeconfig path/to/kubeconfig
+porter connect kubeconfig --kubeconfig path/to/kubeconfig
 ```
 
-### Passing a context list
+#### Passing a context list
 
-You can initialize Porter with a set of contexts by passing a context list to start. The contexts that Porter will be able to access are the same as `kubectl config get-contexts`. For example, if I had two contexts named `minikube` and `staging`, I would be able to visualize both of them via:
+You can initialize Porter with a set of contexts by passing a context list to start. The contexts that Porter will be able to access are the same as `kubectl config get-contexts`. For example, if there are two contexts named `minikube` and `staging`, you could connect both of them via:
 
 ```sh
-porter start --contexts minikube --contexts staging
+porter connect kubeconfig --contexts minikube --contexts staging
 ```
-
-### Skipping Initialization Steps
-
-To skip setting the admin account and/or the kubeconfig, `porter start` provides the `--insecure` and `--skip-kubeconfig` options.

@@ -1,9 +1,8 @@
-export interface KubeContextConfig {
-  cluster: string,
+export interface Cluster {
+  id: number,
   name: string,
-  selected?: boolean,
   server: string,
-  user: string
+  service_account_id: number
 }
 
 export interface ChartType {
@@ -108,4 +107,15 @@ export interface RepoType {
 export interface FileType {
   Path: string,
   Type: string
+}
+
+export interface ProjectType {
+  id: number,
+  name: string,
+  roles: {
+    id: number,
+    kind: string,
+    user_id: number,
+    project_id: number
+  }[]
 }

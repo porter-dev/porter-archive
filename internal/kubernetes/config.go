@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/porter-dev/porter/internal/models"
 	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
@@ -59,19 +60,35 @@ func GetAgentTesting(objects ...runtime.Object) *Agent {
 // OutOfClusterConfig is the set of parameters required for an out-of-cluster connection.
 // This implements RESTClientGetter
 type OutOfClusterConfig struct {
-	KubeConfig      []byte
-	AllowedContexts []string
-	Context         string `json:"context" form:"required"`
+	ServiceAccount *models.ServiceAccount `form:"required"`
+	ClusterID      uint                   `json:"cluster_id" form:"required"`
 }
 
-// ToRESTConfig creates a kubernetes REST client factory -- it simply calls ClientConfig on
-// the result of ToRawKubeConfigLoader
+// ToRESTConfig creates a kubernetes REST client factory -- it calls ClientConfig on
+// the result of ToRawKubeConfigLoader, and also adds a custom http transport layer
+// if necessary (required for GCP auth)
 func (conf *OutOfClusterConfig) ToRESTConfig() (*rest.Config, error) {
 	restConf, err := conf.ToRawKubeConfigLoader().ClientConfig()
 
 	if err != nil {
 		return nil, err
 	}
+
+	// if conf.ServiceAccount.AuthMechanism == models.GCP {
+	// 	creds, err := google.CredentialsFromJSON(
+	// 		context.Background(),
+	// 		conf.ServiceAccount.KeyData,
+	// 		"https://www.googleapis.com/auth/cloud-platform",
+	// 	)
+
+	// 	if err != nil {
+	// 		return nil, err
+	// 	}
+
+	// 	restConf.Transport = &oauth2.Transport{
+	// 		Source: creds.TokenSource,
+	// 	}
+	// }
 
 	rest.SetKubernetesDefaults(restConf)
 	return restConf, nil
@@ -80,10 +97,9 @@ func (conf *OutOfClusterConfig) ToRESTConfig() (*rest.Config, error) {
 // ToRawKubeConfigLoader creates a clientcmd.ClientConfig from the raw kubeconfig found in
 // the OutOfClusterConfig. It does not implement loading rules or overrides.
 func (conf *OutOfClusterConfig) ToRawKubeConfigLoader() clientcmd.ClientConfig {
-	cmdConf, _ := GetRestrictedClientConfigFromBytes(
-		conf.KubeConfig,
-		conf.Context,
-		conf.AllowedContexts,
+	cmdConf, _ := GetClientConfigFromServiceAccount(
+		conf.ServiceAccount,
+		conf.ClusterID,
 	)
 
 	return cmdConf

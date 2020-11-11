@@ -149,6 +149,7 @@ const BackLabel = styled.div`
   font-size: 16px;
   padding-left: 16px;
   margin-top: -4px;
+  padding-bottom: 4px;
 `;
 
 const Item = styled.div`
@@ -189,6 +190,7 @@ const FileItem = styled(Item)`
 const LoadingWrapper = styled.div`
   padding: 30px 0px;
   background: #ffffff11;
+  font-size: 13px;
   display: flex;
   align-items: center;
   justify-content: center;

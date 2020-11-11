@@ -1,5 +1,7 @@
 import React, { Component } from 'react';
 
+import { ProjectType, Cluster } from '../shared/types';
+
 type PropsType = {
 }
 
@@ -25,24 +27,28 @@ const ContextConsumer = Context.Consumer;
 class ContextProvider extends Component {
   state = {
     currentModal: null as string | null,
-    setCurrentModal: (currentModal: string, currentModalData?: any): void => {
+    currentModalData: null as any,
+    setCurrentModal: (currentModal: string, currentModalData?: any) => {
       this.setState({ currentModal, currentModalData });
     },
-    currentModalData: null as any,
     currentError: null as string | null,
-    setCurrentError: (currentError: string): void => {
+    setCurrentError: (currentError: string) => {
       this.setState({ currentError });
     },
-    currentCluster: null as string | null,
-    setCurrentCluster: (currentCluster: string): void => {
+    currentCluster: null as Cluster | null,
+    setCurrentCluster: (currentCluster: Cluster) => {
       this.setState({ currentCluster });
     },
+    currentProject: null as ProjectType | null,
+    setCurrentProject: (currentProject: ProjectType) => {
+      this.setState({ currentProject });
+    },
     user: null as any,
-    setUser: (userId: number, email: string): void => {
+    setUser: (userId: number, email: string) => {
       this.setState({ user: {userId, email} });
     },
     devOpsMode: true,
-    setDevOpsMode: (devOpsMode: boolean): void => {
+    setDevOpsMode: (devOpsMode: boolean) => {
       this.setState({ devOpsMode });
     }
   };

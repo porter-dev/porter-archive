@@ -110,6 +110,32 @@ func (app *App) HandleReadProject(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// HandleReadProjectServiceAccount reads a service account by id
+func (app *App) HandleReadProjectServiceAccount(w http.ResponseWriter, r *http.Request) {
+	id, err := strconv.ParseUint(chi.URLParam(r, "service_account_id"), 0, 64)
+
+	if err != nil || id == 0 {
+		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
+		return
+	}
+
+	sa, err := app.repo.ServiceAccount.ReadServiceAccount(uint(id))
+
+	if err != nil {
+		app.handleErrorRead(err, ErrProjectDataRead, w)
+		return
+	}
+
+	saExt := sa.Externalize()
+
+	w.WriteHeader(http.StatusOK)
+
+	if err := json.NewEncoder(w).Encode(saExt); err != nil {
+		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
+		return
+	}
+}
+
 // HandleListProjectClusters returns a list of clusters that have linked ServiceAccounts.
 // If multiple service accounts exist for a cluster, the service account created later
 // will take precedence. This may be changed in a future release to return multiple

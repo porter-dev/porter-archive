@@ -52,6 +52,9 @@ func Kubeconfig(
 	}
 
 	for _, saCandidate := range saCandidates {
+		var clusters []models.ClusterExternal
+		var saID uint
+
 		if len(saCandidate.Actions) > 0 {
 			resolvers := make(api.CreateProjectServiceAccountRequest, 0)
 
@@ -134,25 +137,41 @@ func Kubeconfig(
 				return err
 			}
 
-			for _, cluster := range sa.Clusters {
-				color.New(color.FgGreen).Printf("created service account for cluster %s with id %d\n", cluster.Name, sa.ID)
+			clusters = sa.Clusters
+			saID = sa.ID
+		} else {
+			sa, err := client.GetProjectServiceAccount(
+				context.Background(),
+				projectID,
+				saCandidate.CreatedServiceAccountID,
+			)
 
-				// sanity check to ensure it's working
-				namespaces, err := client.GetK8sNamespaces(
-					context.Background(),
-					projectID,
-					sa.ID,
-					cluster.ID,
-				)
-
-				if err != nil {
-					return err
-				}
-
-				for _, ns := range namespaces.Items {
-					fmt.Println(ns.ObjectMeta.GetName())
-				}
+			if err != nil {
+				return err
 			}
+
+			clusters = sa.Clusters
+			saID = sa.ID
+		}
+
+		for _, cluster := range clusters {
+			color.New(color.FgGreen).Printf("created service account for cluster %s with id %d\n", cluster.Name, saID)
+
+			// sanity check to ensure it's working
+			// namespaces, err := client.GetK8sNamespaces(
+			// 	context.Background(),
+			// 	projectID,
+			// 	saID,
+			// 	cluster.ID,
+			// )
+
+			// if err != nil {
+			// 	return err
+			// }
+
+			// for _, ns := range namespaces.Items {
+			// 	fmt.Println(ns.ObjectMeta.GetName())
+			// }
 		}
 	}
 

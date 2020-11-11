@@ -117,6 +117,30 @@ func TestHandleReadProject(t *testing.T) {
 	testProjRequests(t, readProjectTests, true)
 }
 
+var readProjectSATest = []*projTest{
+	&projTest{
+		initializers: []func(t *tester){
+			initUserDefault,
+			initProject,
+			initProjectSADefault,
+		},
+		msg:       "Read project service account",
+		method:    "GET",
+		endpoint:  "/api/projects/1/serviceAccounts/1",
+		body:      ``,
+		expStatus: http.StatusOK,
+		expBody:   `{"id":1,"project_id":1,"kind":"connector","clusters":[{"id":1,"service_account_id":1,"name":"cluster-test","server":"https://localhost"}],"auth_mechanism":"oidc"}`,
+		useCookie: true,
+		validators: []func(c *projTest, tester *tester, t *testing.T){
+			projectSABodyValidator,
+		},
+	},
+}
+
+func TestHandleReadProjectSA(t *testing.T) {
+	testProjRequests(t, readProjectSATest, true)
+}
+
 var listProjectClustersTest = []*projTest{
 	&projTest{
 		initializers: []func(t *tester){

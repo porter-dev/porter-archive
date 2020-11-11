@@ -11,12 +11,12 @@ type StateType = {
 };
 
 export default class Logs extends Component<PropsType, StateType> {
+  
   state = {
     logs: [] as string[],
   }
 
   scrollRef = React.createRef<HTMLDivElement>()
-  ws = new WebSocket(`ws://localhost:8080/api/k8s/default/pod/${this.props.selectedPod}/logs?context=${this.context.currentCluster}`)
 
   scrollToBottom = () => {
     this.scrollRef.current.scrollTop = this.scrollRef.current.scrollHeight
@@ -29,11 +29,14 @@ export default class Logs extends Component<PropsType, StateType> {
   }
 
   componentDidMount() {
-    this.ws.onopen = () => {
+    let { currentCluster, currentProject } = this.context;
+    let ws = new WebSocket(`ws://localhost:8080/api/projects/${currentProject.id}/k8s/default/pod/${this.props.selectedPod}/logs?cluster_id=${currentCluster.id}&service_account_id=${currentCluster.service_account_id}`)
+
+    ws.onopen = () => {
       console.log('connected to websocket')
     }
 
-    this.ws.onmessage = evt => {
+    ws.onmessage = evt => {
       this.setState({ logs: [...this.state.logs, evt.data] }, () => {
         this.scrollToBottom()
       })
@@ -50,7 +53,6 @@ export default class Logs extends Component<PropsType, StateType> {
 }
 
 Logs.contextType = Context;
-
 
 const LogStream = styled.div`
   width: 70%;

@@ -79,9 +79,12 @@ const getNamespaces = baseApi<{
 });
 
 const getMatchingPods = baseApi<{
-  context: string,
+  cluster_id: number,
+  service_account_id: number,
   selectors: string[]
-}>('GET', `/api/k8s/pods`);
+}, { id: number }>('GET', pathParams => {
+  return `/api/projects/${pathParams.id}/k8s/pods`;
+});
 
 const getRevisions = baseApi<{
   namespace: string,

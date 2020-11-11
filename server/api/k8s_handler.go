@@ -129,6 +129,8 @@ func (app *App) HandleGetPodLogs(w http.ResponseWriter, r *http.Request) {
 		agent, err = kubernetes.GetAgentOutOfClusterConfig(form.OutOfClusterConfig)
 	}
 
+	upgrader.CheckOrigin = func(r *http.Request) bool { return true }
+
 	// upgrade to websocket.
 	conn, err := upgrader.Upgrade(w, r, nil)
 

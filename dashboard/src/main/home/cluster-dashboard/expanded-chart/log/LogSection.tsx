@@ -45,11 +45,15 @@ export default class LogSection extends Component<PropsType, StateType> {
 
   componentDidMount() {
     const { selectors } = this.props;
+    let { currentCluster, currentProject } = this.context;
 
     api.getMatchingPods('<token>', { 
-      context: this.context.currentCluster,
+      cluster_id: currentCluster.id,
+      service_account_id: currentCluster.service_account_id,
       selectors,
-    }, {}, (err: any, res: any) => {
+    }, {
+      id: currentProject.id
+    }, (err: any, res: any) => {
       this.setState({pods: res.data, selectedPod: res.data[0]})
     })
   }

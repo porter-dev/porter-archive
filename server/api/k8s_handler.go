@@ -72,7 +72,7 @@ func (app *App) HandleListNamespaces(w http.ResponseWriter, r *http.Request) {
 func (app *App) HandleGetPodLogs(w http.ResponseWriter, r *http.Request) {
 
 	// get session to retrieve correct kubeconfig
-	session, err := app.store.Get(r, app.cookieName)
+	_, err := app.store.Get(r, app.cookieName)
 
 	// get path parameters
 	namespace := chi.URLParam(r, "namespace")
@@ -94,11 +94,11 @@ func (app *App) HandleGetPodLogs(w http.ResponseWriter, r *http.Request) {
 	form := &forms.K8sForm{
 		OutOfClusterConfig: &kubernetes.OutOfClusterConfig{},
 	}
-	form.PopulateK8sOptionsFromQueryParams(vals)
+	form.PopulateK8sOptionsFromQueryParams(vals, app.repo.ServiceAccount)
 
-	if sessID, ok := session.Values["user_id"].(uint); ok {
-		form.PopulateK8sOptionsFromUserID(sessID, app.repo.User)
-	}
+	//	if sessID, ok := session.Values["user_id"].(uint); ok {
+	//		form.PopulateK8sOptionsFromUserID(sessID, app.repo.User)
+	//	}
 
 	// validate the form
 	if err := app.validator.Struct(form); err != nil {
@@ -135,7 +135,7 @@ func (app *App) HandleGetPodLogs(w http.ResponseWriter, r *http.Request) {
 func (app *App) HandleListPods(w http.ResponseWriter, r *http.Request) {
 
 	// get session to retrieve correct kubeconfig
-	session, err := app.store.Get(r, app.cookieName)
+	_, err := app.store.Get(r, app.cookieName)
 
 	if err != nil {
 		app.handleErrorFormDecoding(err, ErrReleaseDecode, w)
@@ -153,11 +153,11 @@ func (app *App) HandleListPods(w http.ResponseWriter, r *http.Request) {
 	form := &forms.K8sForm{
 		OutOfClusterConfig: &kubernetes.OutOfClusterConfig{},
 	}
-	form.PopulateK8sOptionsFromQueryParams(vals)
+	form.PopulateK8sOptionsFromQueryParams(vals, app.repo.ServiceAccount)
 
-	if sessID, ok := session.Values["user_id"].(uint); ok {
-		form.PopulateK8sOptionsFromUserID(sessID, app.repo.User)
-	}
+	//	if sessID, ok := session.Values["user_id"].(uint); ok {
+	//		form.PopulateK8sOptionsFromUserID(sessID, app.repo.User)
+	//	}
 
 	// validate the form
 	if err := app.validator.Struct(form); err != nil {

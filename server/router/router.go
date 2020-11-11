@@ -245,7 +245,6 @@ func New(
 			),
 		)
 
-<<<<<<< HEAD
 		// /api/projects/{project_id}/k8s routes
 		r.Method(
 			"GET",
@@ -260,12 +259,11 @@ func New(
 				mw.ReadAccess,
 			),
 		)
-=======
+
 		// /api/k8s routes
 		r.Method("GET", "/k8s/namespaces", auth.BasicAuthenticate(requestlog.NewHandler(a.HandleListNamespaces, l)))
 		r.Method("GET", "/k8s/{namespace}/pod/{name}/logs", auth.BasicAuthenticate(requestlog.NewHandler(a.HandleGetPodLogs, l)))
 		r.Method("GET", "/k8s/pods", auth.BasicAuthenticate(requestlog.NewHandler(a.HandleListPods, l)))
->>>>>>> 0519a30f56f18a09bbca1d66a50f04058c40056e
 	})
 
 	fs := http.FileServer(http.Dir(staticFilePath))

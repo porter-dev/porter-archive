@@ -102,7 +102,7 @@ export default class ClusterDashboard extends Component<PropsType, StateType> {
               <i className="material-icons">info</i> Info
             </InfoLabel>
           </TopRow>
-          <Description>Porter dashboard for {currentCluster.name}.</Description>
+          <Description>Cluster dashboard for {currentCluster.name}.</Description>
         </InfoSection>
 
         <LineBreak />

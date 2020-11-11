@@ -42,7 +42,7 @@ export default class Dashboard extends Component<PropsType, StateType> {
               <i className="material-icons">info</i> Info
             </InfoLabel>
           </TopRow>
-          <Description>Porter dashboard for {currentProject && currentProject.name}.</Description>
+          <Description>Project overview for {currentProject && currentProject.name}.</Description>
         </InfoSection>
 
         <LineBreak />

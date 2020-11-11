@@ -78,6 +78,11 @@ const getNamespaces = baseApi<{
   return `/api/projects/${pathParams.id}/k8s/namespaces`;
 });
 
+const getMatchingPods = baseApi<{
+  context: string,
+  selectors: string[]
+}>('GET', `/api/k8s/pods`);
+
 const getRevisions = baseApi<{
   namespace: string,
   cluster_id: number,
@@ -155,6 +160,7 @@ export default {
   getChart,
   getChartComponents,
   getNamespaces,
+  getMatchingPods,
   getRevisions,
   rollbackChart,
   upgradeChartValues,

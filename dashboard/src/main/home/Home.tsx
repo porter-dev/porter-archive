@@ -22,17 +22,21 @@ type StateType = {
   forceSidebar: boolean,
   showWelcome: boolean,
   currentView: string,
+
+  // Track last project id for refreshing clusters on project change
+  prevProjectId: number | null
 };
 
 export default class Home extends Component<PropsType, StateType> {
   state = {
     forceSidebar: true,
     showWelcome: false,
-    currentView: 'cluster-dashboard'
+    currentView: 'cluster-dashboard',
+    prevProjectId: null as number | null
   }
 
   componentDidMount() {
-    let { user } = this.context;
+    let { user, currentCluster } = this.context;
     api.getProjects('<token>', {}, { id: user.userId }, (err: any, res: any) => {
       if (err) {
         // console.log(err)
@@ -44,11 +48,21 @@ export default class Home extends Component<PropsType, StateType> {
     });
   }
 
+  componentDidUpdate(prevProps: PropsType) {
+    if (prevProps !== this.props && this.context.currentProject) {
+
+      // Set view to dashboard on project change
+      if (this.state.prevProjectId !== this.context.currentProject.id) {
+        this.setState({ currentView: 'dashboard' });
+      }
+    }
+  }
+
   // TODO: move into ClusterDashboard
   renderDashboard = () => {
     let { currentCluster, setCurrentModal } = this.context;
 
-    if (currentCluster === {} || this.state.showWelcome) {
+    if (currentCluster === {} || this.state.showWelcome || currentCluster && !currentCluster.name) {
       return (
         <DashboardWrapper>
           <Placeholder>

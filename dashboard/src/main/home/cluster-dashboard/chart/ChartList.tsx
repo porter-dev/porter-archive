@@ -37,8 +37,6 @@ export default class ChartList extends Component<PropsType, StateType> {
       }
     }, 3000);
 
-    console.log(currentCluster.id, currentCluster.service_account_id);
-
     api.getCharts('<token>', {
       namespace: this.props.namespace,
       cluster_id: currentCluster.id,

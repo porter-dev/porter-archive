@@ -168,7 +168,6 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
       if (err) {
         console.log(err)
       } else {
-        console.log(res.data)
         this.setState({ components: res.data.Objects, podSelectors: res.data.PodSelectors });
       }
     });

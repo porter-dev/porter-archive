@@ -350,6 +350,47 @@ func TestListProjectClusters(t *testing.T) {
 	}
 }
 
+func TestDeleteProject(t *testing.T) {
+	email := "delete_project_test@example.com"
+	client := api.NewClient(baseURL, "cookie_delete_project_test.json")
+	user := initUser(email, client, t)
+	client.Login(context.Background(), &api.LoginRequest{
+		Email:    user.Email,
+		Password: "hello1234",
+	})
+	project := initProject("project-test", client, t)
+
+	resp, err := client.DeleteProject(context.Background(), project.ID)
+
+	if err != nil {
+		t.Fatalf("%v\n", err)
+	}
+
+	// make sure user is admin and project name is correct
+	if resp.Name != "project-test" {
+		t.Errorf("project name incorrect: expected %s, got %s\n", "project-test", resp.Name)
+	}
+
+	if len(resp.Roles) != 1 {
+		t.Fatalf("project role length is not 1")
+	}
+
+	if resp.Roles[0].Kind != models.RoleAdmin {
+		t.Errorf("project role kind is incorrect: expected %s, got %s\n", models.RoleAdmin, resp.Roles[0].Kind)
+	}
+
+	if resp.Roles[0].UserID != user.ID {
+		t.Errorf("project role user_id is incorrect: expected %d, got %d\n", user.ID, resp.Roles[0].UserID)
+	}
+
+	// make sure that project can no longer be found
+	_, err = client.GetProject(context.Background(), project.ID)
+
+	if err == nil {
+		t.Fatalf("no error returned\n")
+	}
+}
+
 const OIDCAuthWithoutData string = `
 apiVersion: v1
 clusters:

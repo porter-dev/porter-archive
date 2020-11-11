@@ -267,6 +267,29 @@ func TestHandleResolveProjectSACandidate(t *testing.T) {
 	testProjRequests(t, resolveProjectSACandidatesTests, true)
 }
 
+var deleteProjectTests = []*projTest{
+	&projTest{
+		initializers: []func(t *tester){
+			initUserDefault,
+			initProject,
+		},
+		msg:       "Delete project",
+		method:    "DELETE",
+		endpoint:  "/api/projects/1",
+		body:      ``,
+		expStatus: http.StatusOK,
+		expBody:   `{"id":1,"name":"project-test","roles":[{"id":0,"kind":"admin","user_id":1,"project_id":1}]}`,
+		useCookie: true,
+		validators: []func(c *projTest, tester *tester, t *testing.T){
+			projectModelBodyValidator,
+		},
+	},
+}
+
+func TestHandleDeleteProject(t *testing.T) {
+	testProjRequests(t, deleteProjectTests, true)
+}
+
 // ------------------------- INITIALIZERS AND VALIDATORS ------------------------- //
 
 func initProject(tester *tester) {

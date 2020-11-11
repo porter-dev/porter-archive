@@ -13,4 +13,5 @@ type ProjectRepository interface {
 	CreateProjectRole(project *models.Project, role *models.Role) (*models.Role, error)
 	ReadProject(id uint) (*models.Project, error)
 	ListProjectsByUserID(userID uint) ([]*models.Project, error)
+	DeleteProject(project *models.Project) (*models.Project, error)
 }

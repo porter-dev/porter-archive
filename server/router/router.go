@@ -110,6 +110,16 @@ func New(
 			),
 		)
 
+		r.Method(
+			"DELETE",
+			"/projects/{project_id}",
+			auth.DoesUserHaveProjectAccess(
+				requestlog.NewHandler(a.HandleDeleteProject, l),
+				mw.URLParam,
+				mw.WriteAccess,
+			),
+		)
+
 		// /api/projects/{project_id}/releases routes
 		r.Method(
 			"GET",

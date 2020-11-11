@@ -8,7 +8,6 @@ import Selector from '../../../components/Selector';
 
 type PropsType = {
   setNamespace: (x: string) => void,
-  currentCluster: string,
   namespace: string
 };
 
@@ -16,22 +15,25 @@ type StateType = {
   namespaceOptions: { label: string, value: string }[]
 };
 
-
-// TODO: display selected in option dropdown and actually filter!
-
+// TODO: fix update to unmounted component 
 export default class NamespaceSelector extends Component<PropsType, StateType> {
+  _isMounted = false;
+
   state = {
     namespaceOptions: [] as { label: string, value: string }[]
   }
 
   updateOptions = () => {
-    let { currentCluster, setCurrentError } = this.context;
+    let { currentCluster, currentProject } = this.context;
 
-    api.getNamespaces('<token>', { context: currentCluster }, {}, (err: any, res: any) => {
-      if (err) {
+    api.getNamespaces('<token>', {
+      cluster_id: currentCluster.id,
+      service_account_id: currentCluster.service_account_id
+    }, { id: currentProject.id }, (err: any, res: any) => {
+      if (err && this._isMounted) {
         // setCurrentError('Could not read clusters: ' + JSON.stringify(err));
         this.setState({ namespaceOptions: [{ label: 'All', value: '' }] });
-      } else {
+      } else if (this._isMounted) {
         let namespaceOptions: { label: string, value: string }[] = [{ label: 'All', value: '' }];
         res.data.items.forEach((x: { metadata: { name: string }}, i: number) => {
           namespaceOptions.push({ label: x.metadata.name, value: x.metadata.name });
@@ -42,6 +44,7 @@ export default class NamespaceSelector extends Component<PropsType, StateType> {
   }
 
   componentDidMount() {
+    this._isMounted = true;
     this.updateOptions();
   }
 
@@ -49,6 +52,10 @@ export default class NamespaceSelector extends Component<PropsType, StateType> {
     if (prevProps !== this.props) {
       this.updateOptions();
     }
+  }
+
+  componentWillUnmount() {
+    this._isMounted = false;
   }
 
   render() {
@@ -61,7 +68,7 @@ export default class NamespaceSelector extends Component<PropsType, StateType> {
           activeValue={this.props.namespace}
           setActiveValue={(namespace) => this.props.setNamespace(namespace)}
           options={this.state.namespaceOptions}
-          dropdownLabel='Namespace:'
+          dropdownLabel='Namespace'
           width='150px'
           dropdownWidth='230px'
           closeOverlay={true}

@@ -31,7 +31,8 @@ type SpecRel struct {
 
 // ParsedObjs has methods GetControlRel and GetLabelRel that updates its objects array.
 type ParsedObjs struct {
-	Objects []Object
+	Objects      []Object
+	PodSelectors []string
 }
 
 // Relations is embedded into the Object struct and contains arrays of the three types of relationships.
@@ -62,6 +63,7 @@ type MatchExpression struct {
 func (parsed *ParsedObjs) GetControlRel() {
 	// First collect all children (Pods) that are not included in the yaml as top-level object.
 	children := []Object{}
+	selectors := []string{}
 	for i, obj := range parsed.Objects {
 		yaml := obj.RawYAML
 		kind := getField(yaml, "kind")
@@ -75,85 +77,73 @@ func (parsed *ParsedObjs) GetControlRel() {
 		case "Deployment", "StatefulSet", "ReplicaSet", "DaemonSet", "Job":
 			rs := getField(yaml, "spec", "replicas")
 
-			if rs != nil && rs.(int) > 0 {
-				// Add Pods for controller objects
-				template := getField(yaml, "spec", "template")
-				if template == nil {
-					continue
+			// replica defaults to 1 if unspecified
+			if rs == nil {
+				rs = 1
+			}
+
+			// Add Pods for controller objects
+			template := getField(yaml, "spec", "template")
+			if template == nil {
+				continue
+			}
+
+			for j := 0; j < rs.(int); j++ {
+				cid := len(parsed.Objects) + len(children)
+				crel := ControlRel{
+					Relation: Relation{
+						Source: obj.ID,
+						Target: cid,
+					},
+					Replicas: rs.(int),
 				}
 
-				for j := 0; j < rs.(int); j++ {
-					cid := len(parsed.Objects) + len(children)
-					crel := ControlRel{
-						Relation: Relation{
-							Source: obj.ID,
-							Target: cid,
+				pod := Object{
+					ID:        cid,
+					Kind:      "Pod",
+					Name:      obj.Name + "-" + strconv.Itoa(j), // tentative name pre-deploy
+					Namespace: obj.Namespace,
+					RawYAML:   template.(map[string]interface{}),
+					Relations: Relations{
+						ControlRels: []ControlRel{
+							crel,
 						},
-						Replicas: rs.(int),
-					}
+					},
+				}
 
-					pod := Object{
-						ID:        cid,
-						Kind:      "Pod",
-						Name:      obj.Name + "-" + strconv.Itoa(j), // tentative name pre-deploy
-						Namespace: obj.Namespace,
-						RawYAML:   template.(map[string]interface{}),
-						Relations: Relations{
-							ControlRels: []ControlRel{
-								crel,
-							},
-						},
-					}
+				children = append(children, pod)
+				obj.Relations.ControlRels = append(obj.Relations.ControlRels, crel)
+				parsed.Objects[i] = obj
+			}
 
-					children = append(children, pod)
-					obj.Relations.ControlRels = append(obj.Relations.ControlRels, crel)
-					parsed.Objects[i] = obj
+			// Get pod label selectors
+			matchLabels, _ := aggregateLabelSelectors(yaml)
+
+			// stringify selectors
+			selector := ""
+			for i, ml := range matchLabels {
+				selector = selector + ml.key + "=" + ml.value
+				if i != len(matchLabels)-1 {
+					selector = selector + ","
 				}
 			}
+			selectors = append(selectors, selector)
 		}
 	}
 
 	// add children to the objects array at the end.
 	parsed.Objects = append(parsed.Objects, children...)
+	parsed.PodSelectors = selectors
 }
 
 // GetLabelRel is generates relationships between objects connected by selector-label.
 // It supports both Equality-based and Set-based operators with MatchLabels and MatchExpressions, respectively.
 func (parsed *ParsedObjs) GetLabelRel() {
 	for i, o := range parsed.Objects {
+
 		// Skip Pods
 		yaml := o.RawYAML
-		matchLabels := []MatchLabel{}
-		matchExpressions := []MatchExpression{}
-
-		// First check for the outdated syntax (matchLabels were added in recent k8s version)
-		if l := getField(yaml, "spec", "selector"); l != nil {
-			simple := true
-			if ml := getField(yaml, "spec", "selector", "matchLabels"); ml != nil {
-				matchLabels = addMatchLabels(matchLabels, ml.(map[string]interface{}))
-				simple = false
-			}
-
-			if me := getField(yaml, "spec", "selector", "matchExpressions"); me != nil {
-				for _, o := range me.([]interface{}) {
-					ot := o.(map[string]interface{})
-					values := []string{}
-					for _, arg := range ot["values"].([]interface{}) {
-						values = append(values, arg.(string))
-					}
-					matchExpressions = append(matchExpressions, MatchExpression{
-						key:      ot["key"].(string),
-						operator: ot["operator"].(string),
-						values:   values,
-					})
-				}
-				simple = false
-			}
-
-			if simple {
-				matchLabels = addMatchLabels(matchLabels, l.(map[string]interface{}))
-			}
-		}
+		matchLabels, matchExpressions := aggregateLabelSelectors(yaml)
 
 		// Find ID's of targets that match the label selector
 		targetID := parsed.findLabelsBySelector(o.ID, matchLabels, matchExpressions)
@@ -250,6 +240,42 @@ func (parsed *ParsedObjs) GetSpecRel() {
 		parsed.Objects[i].Relations.SpecRels = rels
 
 	}
+}
+
+// LabelRel helpers
+func aggregateLabelSelectors(yaml map[string]interface{}) ([]MatchLabel, []MatchExpression) {
+	matchLabels := []MatchLabel{}
+	matchExpressions := []MatchExpression{}
+
+	// First check for the outdated syntax (matchLabels were added in recent k8s version)
+	if l := getField(yaml, "spec", "selector"); l != nil {
+		simple := true
+		if ml := getField(yaml, "spec", "selector", "matchLabels"); ml != nil {
+			matchLabels = addMatchLabels(matchLabels, ml.(map[string]interface{}))
+			simple = false
+		}
+
+		if me := getField(yaml, "spec", "selector", "matchExpressions"); me != nil {
+			for _, o := range me.([]interface{}) {
+				ot := o.(map[string]interface{})
+				values := []string{}
+				for _, arg := range ot["values"].([]interface{}) {
+					values = append(values, arg.(string))
+				}
+				matchExpressions = append(matchExpressions, MatchExpression{
+					key:      ot["key"].(string),
+					operator: ot["operator"].(string),
+					values:   values,
+				})
+			}
+			simple = false
+		}
+
+		if simple {
+			matchLabels = addMatchLabels(matchLabels, l.(map[string]interface{}))
+		}
+	}
+	return matchLabels, matchExpressions
 }
 
 // SpecRel helpers

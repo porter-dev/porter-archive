@@ -2,11 +2,13 @@ import React, { ChangeEvent, Component } from 'react';
 import styled from 'styled-components';
 
 type PropsType = {
-  label: string,
+  label?: string,
   type: string,
   value: string | number,
   setValue: (x: string) => void,
   unit?: string
+  placeholder?: string
+  width?: string
 };
 
 type StateType = {
@@ -14,12 +16,14 @@ type StateType = {
 
 export default class InputRow extends Component<PropsType, StateType> {
   render() {
-    let { label, value, type, unit } = this.props;
+    let { label, value, type, unit, placeholder, width } = this.props;
     return (
       <StyledInputRow>
         <Label>{label}</Label>
         <InputWrapper>
           <Input
+            placeholder={placeholder}
+            width={width}
             type={type}
             value={value}
             onChange={(e: ChangeEvent<HTMLInputElement>) =>
@@ -49,7 +53,7 @@ const Input = styled.input`
   background: #ffffff11;
   border: 1px solid #ffffff55;
   border-radius: 3px;
-  width: 270px;
+  width: ${(props: { width: string }) => props.width ? props.width : '270px'};
   color: white;
   padding: 5px 8px;
   margin-right: 8px;
@@ -59,6 +63,8 @@ const Input = styled.input`
 const Label = styled.div`
   color: #ffffff;
   margin-bottom: 10px;
+  font-size: 13px;
+  font-family: 'Work Sans', sans-serif;
 `;
 
 const StyledInputRow = styled.div`

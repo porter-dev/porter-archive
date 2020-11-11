@@ -7,11 +7,12 @@ import api from '../../shared/api';
 
 import Sidebar from './sidebar/Sidebar';
 import Dashboard from './dashboard/Dashboard';
+import ClusterDashboard from './cluster-dashboard/ClusterDashboard';
 import Loading from '../../components/Loading';
 import Templates from './templates/Templates';
-import ClusterConfigModal from './modals/ClusterConfigModal';
 import LaunchTemplateModal from './modals/LaunchTemplateModal';
 import CreateProjectModal from './modals/CreateProjectModal';
+import ClusterInstructionsModal from './modals/ClusterInstructionsModal';
 
 type PropsType = {
   logOut: () => void
@@ -27,7 +28,7 @@ export default class Home extends Component<PropsType, StateType> {
   state = {
     forceSidebar: true,
     showWelcome: false,
-    currentView: 'dashboard'
+    currentView: 'cluster-dashboard'
   }
 
   componentDidMount() {
@@ -43,10 +44,11 @@ export default class Home extends Component<PropsType, StateType> {
     });
   }
 
+  // TODO: move into ClusterDashboard
   renderDashboard = () => {
     let { currentCluster, setCurrentModal } = this.context;
 
-    if (currentCluster === '' || this.state.showWelcome) {
+    if (currentCluster === {} || this.state.showWelcome) {
       return (
         <DashboardWrapper>
           <Placeholder>
@@ -67,7 +69,7 @@ export default class Home extends Component<PropsType, StateType> {
 
     return (
       <DashboardWrapper>
-        <Dashboard
+        <ClusterDashboard
           currentCluster={currentCluster}
           setSidebar={(x: boolean) => this.setState({ forceSidebar: x })}
         />
@@ -76,29 +78,29 @@ export default class Home extends Component<PropsType, StateType> {
   }
 
   renderContents = () => {
-    if (this.state.currentView === 'dashboard') {
+    if (this.state.currentView === 'cluster-dashboard') {
       return (
         <StyledDashboard>
           {this.renderDashboard()}
         </StyledDashboard>
       );
+    } else if (this.state.currentView === 'dashboard') {
+      return (
+        <StyledDashboard>
+          <DashboardWrapper>
+            <Dashboard />
+          </DashboardWrapper>
+        </StyledDashboard>
+      );
     }
 
-    return <Templates />
+    return <Templates />;
   }
 
   render() {
     let { currentModal, setCurrentModal, currentProject } = this.context;
     return (
       <StyledHome>
-        <ReactModal
-          isOpen={currentModal === 'ClusterConfigModal'}
-          onRequestClose={() => setCurrentModal(null, null)}
-          style={MediumModalStyles}
-          ariaHideApp={false}
-        >
-          <ClusterConfigModal />
-        </ReactModal>
         <ReactModal
           isOpen={currentModal === 'LaunchTemplateModal'}
           onRequestClose={() => setCurrentModal(null, null)}
@@ -115,6 +117,15 @@ export default class Home extends Component<PropsType, StateType> {
         >
           <CreateProjectModal />
         </ReactModal>
+        <ReactModal
+          isOpen={currentModal === 'ClusterInstructionsModal'}
+          onRequestClose={() => setCurrentModal(null, null)}
+          style={TallModalStyles}
+          ariaHideApp={false}
+        >
+          <ClusterInstructionsModal />
+        </ReactModal>
+
 
         <Sidebar
           logOut={this.props.logOut}
@@ -164,6 +175,25 @@ const ProjectModalStyles = {
     margin: '0 auto',
     height: '225px',
     top: 'calc(50% - 120px)',
+    backgroundColor: '#202227',
+    animation: 'floatInModal 0.5s 0s',
+    overflow: 'visible',
+  },
+};
+
+const TallModalStyles = {
+  overlay: {
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    zIndex: 2,
+  },
+  content: {
+    borderRadius: '7px',
+    border: 0,
+    width: '760px',
+    maxWidth: '80vw',
+    margin: '0 auto',
+    height: '650px',
+    top: 'calc(50% - 325px)',
     backgroundColor: '#202227',
     animation: 'floatInModal 0.5s 0s',
     overflow: 'visible',

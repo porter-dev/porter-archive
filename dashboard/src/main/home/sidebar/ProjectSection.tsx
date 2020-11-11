@@ -4,10 +4,7 @@ import gradient from '../../../assets/gradient.jpg';
 
 import api from '../../../shared/api';
 import { Context } from '../../../shared/Context';
-import { KubeContextConfig } from '../../../shared/types';
-
-import Selector from '../../../components/Selector';
-import Drawer from './Drawer';
+import { ProjectType } from '../../../shared/types';
 
 type PropsType = {
   setWelcome?: (x: boolean) => void,
@@ -15,7 +12,7 @@ type PropsType = {
 };
 
 type StateType = {
-  projects: any[],
+  projects: ProjectType[],
   expanded: boolean
 };
 
@@ -28,19 +25,20 @@ const options = [
 
 export default class ProjectSection extends Component<PropsType, StateType> {
   state = {
-    projects: [] as any[],
+    projects: [] as ProjectType[],
     expanded: false,
   };
 
   updateProjects = () => {
-    console.log('rip')
     let { user } = this.context;
     api.getProjects('<token>', {}, { id: user.userId }, (err: any, res: any) => {
       if (err) {
         console.log(err)
       } else if (res.data) {
         this.setState({ projects: res.data });
-        this.context.setCurrentProject(res.data[0].name);
+        if (res.data.length > 0) {
+          this.context.setCurrentProject(res.data[0]);
+        }
       }
     });
   }
@@ -57,12 +55,12 @@ export default class ProjectSection extends Component<PropsType, StateType> {
   }
 
   renderOptionList = () => {
-    return this.state.projects.map((project: any, i: number) => {
+    return this.state.projects.map((project: ProjectType, i: number) => {
       return (
         <Option
           key={i}
           selected={project.name === this.context.currentProject}
-          onClick={() => this.context.setCurrentProject(project.name)}
+          onClick={() => this.context.setCurrentProject(project)}
         >
           <ProjectIcon>
             <ProjectImage src={gradient} />
@@ -106,9 +104,9 @@ export default class ProjectSection extends Component<PropsType, StateType> {
           >
             <ProjectIcon>
               <ProjectImage src={gradient} />
-              <Letter>{currentProject[0].toUpperCase()}</Letter>
+              <Letter>{currentProject.name[0].toUpperCase()}</Letter>
             </ProjectIcon>
-            <ProjectName>{currentProject}</ProjectName>
+            <ProjectName>{currentProject.name}</ProjectName>
             <i className="material-icons">arrow_drop_down</i>
           </MainSelector>
           {this.renderDropdown()}
@@ -174,11 +172,18 @@ const Option = styled.div`
   font-size: 13px;
   align-items: center;
   padding-left: 10px;
-  cursor: pointer;
+  cursor: ${(props: { selected: boolean, lastItem?: boolean }) => props.selected ? '' : 'pointer'};;
   padding-right: 10px;
   background: ${(props: { selected: boolean, lastItem?: boolean }) => props.selected ? '#ffffff11' : ''};
   :hover {
-    background: #ffffff22;
+    background: ${(props: { selected: boolean, lastItem?: boolean }) => props.selected ? '' : '#ffffff22'};
+  }
+
+  > i {
+    font-size: 18px;
+    margin-right: 12px;
+    margin-left: 5px;
+    color: #ffffff44;
   }
 `;
 
@@ -262,7 +267,7 @@ const MainSelector = styled.div`
   padding-left: 20px;
   :hover {
     > i {
-      background: #ffffff11;
+      background: #ffffff22;
     }
   }
 
@@ -274,6 +279,6 @@ const MainSelector = styled.div`
     align-items: center;
     justify-content: center;
     border-radius: 20px;
-    background: ${(props: { expanded: boolean }) => props.expanded ? '#ffffff11' : ''};
+    background: ${(props: { expanded: boolean }) => props.expanded ? '#ffffff22' : ''};
   }
 `;

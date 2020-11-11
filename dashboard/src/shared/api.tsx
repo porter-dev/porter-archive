@@ -36,69 +36,90 @@ const updateUser = baseApi<{
   return `/api/users/${pathParams.id}`;
 });
 
-const getContexts = baseApi<{}, { id: number }>('GET', pathParams => {
-  return `/api/users/${pathParams.id}/contexts`;
+const getClusters = baseApi<{}, { id: number }>('GET', pathParams => {
+  return `/api/projects/${pathParams.id}/clusters`;
 });
 
 const getCharts = baseApi<{
   namespace: string,
-  context: string,
+  cluster_id: number,
+  service_account_id: number,
   storage: StorageType,
   limit: number,
   skip: number,
   byDate: boolean,
   statusFilter: string[]
-}>('GET', '/api/releases');
+}, { id: number }>('GET', pathParams => {
+  return `/api/projects/${pathParams.id}/releases`;
+});
 
 const getChart = baseApi<{
   namespace: string,
-  context: string,
+  cluster_id: number,
+  service_account_id: number,
   storage: StorageType
-}, { name: string, revision: number }>('GET', pathParams => {
-  return `/api/releases/${pathParams.name}/${pathParams.revision}`;
+}, { id: number, name: string, revision: number }>('GET', pathParams => {
+  return `/api/projects/${pathParams.id}/releases/${pathParams.name}/${pathParams.revision}`;
 });
 
 const getChartComponents = baseApi<{
   namespace: string,
-  context: string,
+  cluster_id: number,
+  service_account_id: number,
   storage: StorageType
-}, { name: string, revision: number }>('GET', pathParams => {
-  return `/api/releases/${pathParams.name}/${pathParams.revision}/components`;
+}, { id: number, name: string, revision: number }>('GET', pathParams => {
+  return `/api/projects/${pathParams.id}/releases/${pathParams.name}/${pathParams.revision}/components`;
 });
 
 const getNamespaces = baseApi<{
-  context: string
-}>('GET', '/api/k8s/namespaces');
+  cluster_id: number,
+  service_account_id: number,
+}, { id: number }>('GET', pathParams => {
+  return `/api/projects/${pathParams.id}/k8s/namespaces`;
+});
 
 const getRevisions = baseApi<{
   namespace: string,
-  context: string,
+  cluster_id: number,
+  service_account_id: number,
   storage: StorageType
-}, { name: string }>('GET', pathParams => {
-  return `/api/releases/${pathParams.name}/history`;
+}, { id: number, name: string }>('GET', pathParams => {
+  return `/api/projects/${pathParams.id}/releases/${pathParams.name}/history`;
 });
 
 const rollbackChart = baseApi<{
   namespace: string,
-  context: string,
   storage: StorageType,
   revision: number
-}, { name: string }>('POST', pathParams => {
-  return `/api/releases/${pathParams.name}/rollback`;
+}, {
+  id: number,
+  name: string,
+  cluster_id: number,
+  service_account_id: number,
+  }>('POST', pathParams => {
+  let { id, name, cluster_id, service_account_id } = pathParams;
+  return `/api/projects/${id}/releases/${name}/rollback?cluster_id=${cluster_id}&service_account_id=${service_account_id}`;
 });
 
 const upgradeChartValues = baseApi<{
   namespace: string,
-  context: string,
   storage: StorageType,
   values: string
-}, { name: string }>('POST', pathParams => {
-  return `/api/releases/${pathParams.name}/upgrade`;
+}, {
+  id: number,
+  name: string,
+  cluster_id: number,
+  service_account_id: number,
+  }>('POST', pathParams => {
+  let { id, name, cluster_id, service_account_id } = pathParams;
+  return `/api/projects/${id}/releases/${name}/upgrade?cluster_id=${cluster_id}&service_account_id=${service_account_id}`;
 });
 
 const getTemplates = baseApi('GET', '/api/templates');
 
-const getRepos = baseApi('GET', '/api/repos');
+const getRepos = baseApi<{}, { id: number }>('GET', pathParams => {
+  return `/api/projects/${pathParams.id}/repos`;
+});
 
 const getBranches = baseApi<{}, { kind: string, repo: string }>('GET', pathParams => {
   return `/api/repos/${pathParams.kind}/${pathParams.repo}/branches`;
@@ -129,7 +150,7 @@ export default {
   getRepos,
   getUser,
   updateUser,
-  getContexts,
+  getClusters,
   getCharts,
   getChart,
   getChartComponents,

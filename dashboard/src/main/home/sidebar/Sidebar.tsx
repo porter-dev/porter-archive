@@ -4,6 +4,7 @@ import gradient from '../../../assets/gradient.jpg';
 import category from '../../../assets/category.svg';
 import pipelines from '../../../assets/pipelines.svg';
 import integrations from '../../../assets/integrations.svg';
+import filter from '../../../assets/filter.svg';
 
 import api from '../../../shared/api';
 import { Context } from '../../../shared/Context';
@@ -109,15 +110,18 @@ export default class Sidebar extends Component<PropsType, StateType> {
         <div>
           <SidebarLabel>Home</SidebarLabel>
           <NavButton
+            onClick={() => this.props.setCurrentView('dashboard')}
+            selected={this.props.currentView === 'dashboard'}
+          >
+            <img src={category} />
+            Dashboard
+          </NavButton>
+          <NavButton
             onClick={() => this.props.setCurrentView('templates')}
             selected={this.props.currentView === 'templates'}
           >
-            <img src={category} />
+            <img src={filter} />
             Templates
-          </NavButton>
-          <NavButton disabled={true}>
-            <img src={pipelines} />
-            Pipelines
           </NavButton>
           <NavButton disabled={true}>
             <img src={integrations} />
@@ -132,7 +136,7 @@ export default class Sidebar extends Component<PropsType, StateType> {
             releaseDrawer={() => this.setState({ forceCloseDrawer: false })}
             setWelcome={this.props.setWelcome}
             setCurrentView={this.props.setCurrentView}
-            isSelected={this.props.currentView === 'dashboard'}
+            isSelected={this.props.currentView === 'cluster-dashboard'}
           />
         </div>
       );

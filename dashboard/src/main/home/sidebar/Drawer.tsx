@@ -3,13 +3,12 @@ import styled from 'styled-components';
 import close from '../../../assets/close.png';
 
 import { Context } from '../../../shared/Context';
-import { KubeContextConfig } from '../../../shared/types';
+import { Cluster } from '../../../shared/types';
 
 type PropsType = {
   toggleDrawer: () => void,
   showDrawer: boolean,
-  kubeContexts: KubeContextConfig[],
-  updateClusters: () => void
+  clusters: Cluster[]
 };
 
 type StateType = {
@@ -18,11 +17,11 @@ type StateType = {
 export default class Drawer extends Component<PropsType, StateType> {
 
   renderClusterList = (): JSX.Element[] | JSX.Element => {
-    let { kubeContexts } = this.props;
+    let { clusters } = this.props;
     let { currentCluster, setCurrentCluster } = this.context;
 
-    if (kubeContexts.length > 0) {
-      return kubeContexts.map((kubeContext: KubeContextConfig, i: number) => {
+    if (clusters.length > 0) {
+      return clusters.map((cluster: Cluster, i: number) => {
         /*
         let active = this.context.activeProject &&
           this.context.activeProject.namespace == val.namespace; 
@@ -31,11 +30,11 @@ export default class Drawer extends Component<PropsType, StateType> {
         return (
           <ClusterOption
             key={i}
-            active={kubeContext.name === currentCluster}
-            onClick={() => setCurrentCluster(kubeContext.name)}
+            active={cluster.name === currentCluster.name}
+            onClick={() => setCurrentCluster(cluster)}
           >
             <ClusterIcon><i className="material-icons">device_hub</i></ClusterIcon>
-            <ClusterName>{kubeContext.name}</ClusterName>
+            <ClusterName>{cluster.name}</ClusterName>
           </ClusterOption>
         );
       });
@@ -64,9 +63,9 @@ export default class Drawer extends Component<PropsType, StateType> {
           {this.renderClusterList()}
 
           <InitializeButton onClick={() => {
-            this.context.setCurrentModal('ClusterConfigModal', { updateClusters: this.props.updateClusters });
+            this.context.setCurrentModal('ClusterInstructionsModal', {});
           }}>
-            <Plus>+</Plus> Manage Clusters
+            <Plus>+</Plus> Add a Cluster
           </InitializeButton>
         </StyledDrawer>
       </div>
@@ -173,11 +172,11 @@ const CloseButtonImg = styled.img`
 
 const ClusterIcon = styled.div`
   > i {
-    font-size: 18px;
+    font-size: 16px;
     display: flex;
     align-items: center;
     margin-bottom: 0px;
-    margin-left: 15px;
+    margin-left: 17px;
     margin-right: 10px;
   }
 `;

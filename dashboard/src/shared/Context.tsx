@@ -1,5 +1,7 @@
 import React, { Component } from 'react';
 
+import { ProjectType, Cluster } from '../shared/types';
+
 type PropsType = {
 }
 
@@ -33,12 +35,12 @@ class ContextProvider extends Component {
     setCurrentError: (currentError: string) => {
       this.setState({ currentError });
     },
-    currentCluster: null as string | null,
-    setCurrentCluster: (currentCluster: string) => {
+    currentCluster: null as Cluster | null,
+    setCurrentCluster: (currentCluster: Cluster) => {
       this.setState({ currentCluster });
     },
-    currentProject: null as string | null,
-    setCurrentProject: (currentProject: string) => {
+    currentProject: null as ProjectType | null,
+    setCurrentProject: (currentProject: ProjectType) => {
       this.setState({ currentProject });
     },
     user: null as any,

@@ -29,6 +29,10 @@ type ServiceAccountCandidate struct {
 	ClusterEndpoint string `json:"cluster_endpoint"`
 	AuthMechanism   string `json:"auth_mechanism"`
 
+	// CreatedServiceAccountID is the ID of the service account that's eventually
+	// created
+	CreatedServiceAccountID uint `json:"create_sa_id"`
+
 	// The best-guess for the AWSClusterID, which is required by aws auth mechanisms
 	// See https://github.com/kubernetes-sigs/aws-iam-authenticator#what-is-a-cluster-id
 	AWSClusterIDGuess string `json:"aws_cluster_id_guess"`
@@ -43,14 +47,15 @@ type ServiceAccountCandidate struct {
 // ServiceAccountCandidateExternal represents the ServiceAccountCandidate type that is
 // sent over REST
 type ServiceAccountCandidateExternal struct {
-	ID                uint                           `json:"id"`
-	Actions           []ServiceAccountActionExternal `json:"actions"`
-	ProjectID         uint                           `json:"project_id"`
-	Kind              string                         `json:"kind"`
-	ClusterName       string                         `json:"cluster_name"`
-	ClusterEndpoint   string                         `json:"cluster_endpoint"`
-	AuthMechanism     string                         `json:"auth_mechanism"`
-	AWSClusterIDGuess string                         `json:"aws_cluster_id_guess"`
+	ID                      uint                           `json:"id"`
+	Actions                 []ServiceAccountActionExternal `json:"actions"`
+	ProjectID               uint                           `json:"project_id"`
+	Kind                    string                         `json:"kind"`
+	ClusterName             string                         `json:"cluster_name"`
+	ClusterEndpoint         string                         `json:"cluster_endpoint"`
+	AuthMechanism           string                         `json:"auth_mechanism"`
+	CreatedServiceAccountID uint                           `json:"created_sa_id"`
+	AWSClusterIDGuess       string                         `json:"aws_cluster_id_guess"`
 }
 
 // Externalize generates an external ServiceAccountCandidate to be shared over REST
@@ -62,14 +67,15 @@ func (s *ServiceAccountCandidate) Externalize() *ServiceAccountCandidateExternal
 	}
 
 	return &ServiceAccountCandidateExternal{
-		ID:                s.ID,
-		Actions:           actions,
-		ProjectID:         s.ProjectID,
-		Kind:              s.Kind,
-		ClusterName:       s.ClusterName,
-		ClusterEndpoint:   s.ClusterEndpoint,
-		AuthMechanism:     s.AuthMechanism,
-		AWSClusterIDGuess: s.AWSClusterIDGuess,
+		ID:                      s.ID,
+		Actions:                 actions,
+		ProjectID:               s.ProjectID,
+		Kind:                    s.Kind,
+		ClusterName:             s.ClusterName,
+		ClusterEndpoint:         s.ClusterEndpoint,
+		AuthMechanism:           s.AuthMechanism,
+		CreatedServiceAccountID: s.CreatedServiceAccountID,
+		AWSClusterIDGuess:       s.AWSClusterIDGuess,
 	}
 }
 
@@ -112,7 +118,7 @@ type ServiceAccount struct {
 
 	// TokenCache is a cache for bearer tokens with an expiry time
 	// Used by GCP and AWS mechanisms
-	TokenCache TokenCache `json:"gcp_token_cache"`
+	TokenCache TokenCache `json:"token_cache"`
 
 	// KeyData for a service account for GCP connectors
 	GCPKeyData []byte `json:"gcp_key_data"`

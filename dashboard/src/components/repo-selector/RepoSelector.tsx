@@ -5,6 +5,7 @@ import info from '../../assets/info.svg';
 
 import api from '../../shared/api';
 import { RepoType } from '../../shared/types';
+import { Context } from '../../shared/Context';
 
 import Loading from '../../components/Loading';
 import BranchList from './BranchList';
@@ -36,9 +37,11 @@ export default class RepoSelector extends Component<PropsType, StateType> {
   }
 
   componentDidMount() {
+    let { currentProject, currentCluster } = this.context;
 
     // Get repos
-    api.getRepos('<token>', {}, {}, (err: any, res: any) => {
+    api.getRepos('<token>', {
+    }, { id: currentProject.id }, (err: any, res: any) => {
       if (err) {
         this.setState({ loading: false, error: true });
       } else {
@@ -171,6 +174,8 @@ export default class RepoSelector extends Component<PropsType, StateType> {
     );
   }
 }
+
+RepoSelector.contextType = Context;
 
 const SelectedBranch = styled.div`
   color: #ffffff55;

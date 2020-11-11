@@ -32,12 +32,13 @@ export default class RevisionSection extends Component<PropsType, StateType> {
 
   refreshHistory = () => {
     let { chart } = this.props;
-
+    let { currentCluster, currentProject } = this.context;
     api.getRevisions('<token>', {
       namespace: chart.namespace,
-      context: this.context.currentCluster,
+      cluster_id: currentCluster.id,
+      service_account_id: currentCluster.service_account_id,
       storage: StorageType.Secret
-    }, { name: chart.name }, (err: any, res: any) => {
+    }, { id: currentProject.id, name: chart.name }, (err: any, res: any) => {
       if (err) {
         console.log(err)
       } else {
@@ -66,26 +67,30 @@ export default class RevisionSection extends Component<PropsType, StateType> {
   }
 
   handleRollback = () => {
-    let { setCurrentError, currentCluster } = this.context;
+    let { setCurrentError, currentCluster, currentProject } = this.context;
 
     let revisionNumber = this.state.rollbackRevision;
     this.setState({ loading: true, rollbackRevision: null });
 
     api.rollbackChart('<token>', {
       namespace: this.props.chart.namespace,
-      context: currentCluster,
       storage: StorageType.Secret,
       revision: revisionNumber
     }, {
-      name: this.props.chart.name
+      id: currentProject.id,
+      name: this.props.chart.name,
+      cluster_id: currentCluster.id,
+      service_account_id: currentCluster.service_account_id,
     }, (err: any, res: any) => {
       if (err) {
-        setCurrentError(err.response.data.errors[0]);
+        console.log(err);
+        setCurrentError(err.response.data);
         this.setState({ loading: false });
       } else {
         this.setState({ loading: false });
         this.props.refreshChart();
         this.refreshHistory();
+        this.props.setRevisionPreview(null);
       }
     });
   }

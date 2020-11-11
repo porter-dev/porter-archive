@@ -3,13 +3,13 @@ import styled from 'styled-components';
 
 import { Context } from '../../../../shared/Context';
 import api from '../../../../shared/api';
-import { ChartType, StorageType } from '../../../../shared/types';
+import { ChartType, StorageType, Cluster } from '../../../../shared/types';
 
 import Chart from './Chart';
 import Loading from '../../../../components/Loading';
 
 type PropsType = {
-  currentCluster: string,
+  currentCluster: Cluster,
   namespace: string,
   setCurrentChart: (c: ChartType) => void
 };
@@ -28,7 +28,7 @@ export default class ChartList extends Component<PropsType, StateType> {
   }
 
   updateCharts = () => {
-    let { currentCluster } = this.context;
+    let { currentCluster, currentProject } = this.context;
 
     this.setState({ loading: true });
     setTimeout(() => {
@@ -37,16 +37,20 @@ export default class ChartList extends Component<PropsType, StateType> {
       }
     }, 3000);
 
+    console.log(currentCluster.id, currentCluster.service_account_id);
+
     api.getCharts('<token>', {
       namespace: this.props.namespace,
-      context: currentCluster,
+      cluster_id: currentCluster.id,
+      service_account_id: currentCluster.service_account_id,
       storage: StorageType.Secret,
       limit: 20,
       skip: 0,
       byDate: false,
       statusFilter: ['deployed']
-    }, {}, (err: any, res: any) => {
-      if (err) {
+    }, { id: currentProject.id }, (err: any, res: any) => {
+        if (err) {
+        console.log(err)
         // setCurrentError(JSON.stringify(err));
         this.setState({ loading: false, error: true });
       } else {

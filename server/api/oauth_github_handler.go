@@ -112,8 +112,11 @@ func (app *App) HandleGithubOAuthCallback(w http.ResponseWriter, r *http.Request
 
 	app.updateProjectFromToken(projID, userID, token)
 
-	// TODO -- custom redirect URI
-	http.Redirect(w, r, "/", 302)
+	if session.Values["query_params"] != "" {
+		http.Redirect(w, r, fmt.Sprintf("/dashboard?%s", session.Values["query_params"]), 302)
+	} else {
+		http.Redirect(w, r, "/dashboard", 302)
+	}
 }
 
 func (app *App) populateOAuthSession(w http.ResponseWriter, r *http.Request, state string, isProject bool) error {
@@ -135,6 +138,7 @@ func (app *App) populateOAuthSession(w http.ResponseWriter, r *http.Request, sta
 		}
 
 		session.Values["project_id"] = projID
+		session.Values["query_params"] = r.URL.RawQuery
 	}
 
 	if err := session.Save(r, w); err != nil {

@@ -156,22 +156,6 @@ func Kubeconfig(
 
 		for _, cluster := range clusters {
 			color.New(color.FgGreen).Printf("created service account for cluster %s with id %d\n", cluster.Name, saID)
-
-			// sanity check to ensure it's working
-			// namespaces, err := client.GetK8sNamespaces(
-			// 	context.Background(),
-			// 	projectID,
-			// 	saID,
-			// 	cluster.ID,
-			// )
-
-			// if err != nil {
-			// 	return err
-			// }
-
-			// for _, ns := range namespaces.Items {
-			// 	fmt.Println(ns.ObjectMeta.GetName())
-			// }
 		}
 	}
 

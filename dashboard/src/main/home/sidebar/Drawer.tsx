@@ -8,7 +8,8 @@ import { Cluster } from '../../../shared/types';
 type PropsType = {
   toggleDrawer: () => void,
   showDrawer: boolean,
-  clusters: Cluster[]
+  clusters: Cluster[],
+  setCurrentView: (x: string) => void
 };
 
 type StateType = {
@@ -17,10 +18,10 @@ type StateType = {
 export default class Drawer extends Component<PropsType, StateType> {
 
   renderClusterList = (): JSX.Element[] | JSX.Element => {
-    let { clusters } = this.props;
+    let { clusters, setCurrentView } = this.props;
     let { currentCluster, setCurrentCluster } = this.context;
 
-    if (clusters.length > 0) {
+    if (clusters.length > 0 && currentCluster) {
       return clusters.map((cluster: Cluster, i: number) => {
         /*
         let active = this.context.activeProject &&
@@ -31,7 +32,7 @@ export default class Drawer extends Component<PropsType, StateType> {
           <ClusterOption
             key={i}
             active={cluster.name === currentCluster.name}
-            onClick={() => setCurrentCluster(cluster)}
+            onClick={() => { setCurrentCluster(cluster); setCurrentView('cluster-dashboard') }}
           >
             <ClusterIcon><i className="material-icons">device_hub</i></ClusterIcon>
             <ClusterName>{cluster.name}</ClusterName>

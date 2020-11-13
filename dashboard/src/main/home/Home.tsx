@@ -41,7 +41,10 @@ export default class Home extends Component<PropsType, StateType> {
 
       // Set view to dashboard on project change
       if (this.state.prevProjectId !== this.context.currentProject.id) {
-        this.setState({ currentView: 'dashboard' });
+        this.setState({
+          prevProjectId: this.context.currentProject.id,
+          currentView: 'dashboard'
+        });
       }
     }
   }
@@ -49,8 +52,7 @@ export default class Home extends Component<PropsType, StateType> {
   // TODO: move into ClusterDashboard
   renderDashboard = () => {
     let { currentCluster, setCurrentModal } = this.context;
-
-    if (currentCluster === {} || this.state.showWelcome || currentCluster && !currentCluster.name) {
+    if (this.state.showWelcome || currentCluster && !currentCluster.name) {
       return (
         <DashboardWrapper>
           <Placeholder>

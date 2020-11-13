@@ -49,6 +49,7 @@ export default class TemplateInfo extends Component<PropsType, StateType> {
   }
 
   render() {
+    let { currentCluster } = this.context;
     let { Name, Icon } = this.props.currentTemplate.Form;
     let { currentTemplate } = this.props;
     let name = Name ? Name : currentTemplate.Name;
@@ -62,7 +63,10 @@ export default class TemplateInfo extends Component<PropsType, StateType> {
             {Icon ? this.renderIcon(Icon) : this.renderIcon(currentTemplate.Icon)}
             <Title>{name}</Title>
           </Flex>
-          <Button onClick={() => this.props.launchTemplate()}>
+          <Button
+            isDisabled={!currentCluster}
+            onClick={!currentCluster ? null : this.props.launchTemplate}
+          >
             <img src={launch} />
             Launch Template
           </Button>
@@ -130,16 +134,16 @@ const Flex = styled.div`
 
 const Button = styled.div`
   height: 100%;
-  background: #616FEEcc;
+  background: ${(props: { isDisabled: boolean }) => (!props.isDisabled ? '#616feecc' : '#aaaabb')};
   :hover {
-    background: #505edddd;
+    background: ${(props: { isDisabled: boolean }) => (!props.isDisabled ? '#505edddd' : '#aaaabb')};
   }
   color: white;
   font-weight: 500;
   font-size: 13px;
   padding: 10px 15px;
   border-radius: 3px;
-  cursor: pointer;
+  cursor: ${(props: { isDisabled: boolean }) => (!props.isDisabled ? 'pointer' : 'default')};;
   box-shadow: 0 5px 8px 0px #00000010;
   display: flex;
   flex-direction: row;

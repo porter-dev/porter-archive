@@ -149,6 +149,10 @@ const createProject = baseApi<{ name: string }, {}>('POST', pathParams => {
   return `/api/projects`;
 });
 
+const deleteProject = baseApi<{}, { id: number }>('DELETE', pathParams => {
+  return `/api/projects/${pathParams.id}`;
+});
+
 // Bundle export to allow default api import (api.<method> is more readable)
 export default {
   checkAuth,
@@ -171,5 +175,6 @@ export default {
   getBranches,
   getBranchContents,
   getProjects,
-  createProject
+  createProject,
+  deleteProject
 }

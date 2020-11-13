@@ -12,6 +12,7 @@ import Loading from '../../components/Loading';
 import Templates from './templates/Templates';
 import LaunchTemplateModal from './modals/LaunchTemplateModal';
 import CreateProjectModal from './modals/CreateProjectModal';
+import UpdateProjectModal from './modals/UpdateProjectModal';
 import ClusterInstructionsModal from './modals/ClusterInstructionsModal';
 
 type PropsType = {
@@ -139,7 +140,14 @@ export default class Home extends Component<PropsType, StateType> {
         >
           <ClusterInstructionsModal />
         </ReactModal>
-
+        <ReactModal
+          isOpen={currentModal === 'UpdateProjectModal'}
+          onRequestClose={() => setCurrentModal(null, null)}
+          style={ProjectModalStyles}
+          ariaHideApp={false}
+        >
+          <UpdateProjectModal />
+        </ReactModal>
 
         <Sidebar
           logOut={this.props.logOut}

@@ -129,7 +129,7 @@ export default class Templates extends Component<PropsType, StateType> {
 Templates.contextType = Context;
 
 const Placeholder = styled.div`
-  padding-top: 100px;
+  padding-top: 200px;
   width: 100%;
   display: flex;
   justify-content: center;
@@ -163,7 +163,7 @@ const Polymer = styled.div`
 
 const TemplateDescription = styled.div`
   margin-bottom: 26px;
-  color: #ffffff55;
+  color: #ffffff66;
   text-align: center;
   font-weight: default;
   padding: 0px 25px;
@@ -187,13 +187,11 @@ const TemplateTitle = styled.div`
 
 const TemplateBlock = styled.div`
   background: none;
-  border: 1px solid #ffffff44;
+  border: 1px solid #ffffff00;
   align-items: center;
   user-select: none;
   border-radius: 5px;
   display: flex;
-  color: #ffffff;
-  ma: 'Work Sans', sans-serif;
   font-size: 13px;
   font-weight: 500;
   padding: 3px 0px 5px;
@@ -204,6 +202,8 @@ const TemplateBlock = styled.div`
   cursor: pointer;
   color: #ffffff;
   position: relative;
+  background: #26282f;
+  box-shadow: 0 5px 8px 0px #00000033;
   :hover {
     background: #ffffff11;
   }
@@ -220,8 +220,8 @@ const TemplateList = styled.div`
   margin-top: 35px;
   padding-bottom: 150px;
   display: grid;
-  grid-column-gap: 15px;
-  grid-row-gap: 15px;
+  grid-column-gap: 25px;
+  grid-row-gap: 25px;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
 `;
 
@@ -254,7 +254,7 @@ const StyledTemplates = styled.div`
 `;
 
 const TemplatesWrapper = styled.div`
-  width: calc(90% - 30px);
+  width: calc(90% - 150px);
   min-width: 300px;
-  padding-top: 20px;
+  padding-top: 30px;
 `;

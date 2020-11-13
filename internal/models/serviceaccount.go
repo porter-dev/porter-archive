@@ -25,6 +25,7 @@ type ServiceAccountCandidate struct {
 
 	Actions []ServiceAccountAction `json:"actions"`
 
+	ContextName     string `json:"context_name"`
 	ClusterName     string `json:"cluster_name"`
 	ClusterEndpoint string `json:"cluster_endpoint"`
 	AuthMechanism   string `json:"auth_mechanism"`
@@ -51,6 +52,7 @@ type ServiceAccountCandidateExternal struct {
 	Actions                 []ServiceAccountActionExternal `json:"actions"`
 	ProjectID               uint                           `json:"project_id"`
 	Kind                    string                         `json:"kind"`
+	ContextName             string                         `json:"context_name"`
 	ClusterName             string                         `json:"cluster_name"`
 	ClusterEndpoint         string                         `json:"cluster_endpoint"`
 	AuthMechanism           string                         `json:"auth_mechanism"`
@@ -71,6 +73,7 @@ func (s *ServiceAccountCandidate) Externalize() *ServiceAccountCandidateExternal
 		Actions:                 actions,
 		ProjectID:               s.ProjectID,
 		Kind:                    s.Kind,
+		ContextName:             s.ContextName,
 		ClusterName:             s.ClusterName,
 		ClusterEndpoint:         s.ClusterEndpoint,
 		AuthMechanism:           s.AuthMechanism,

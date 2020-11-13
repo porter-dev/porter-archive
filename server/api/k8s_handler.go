@@ -61,7 +61,7 @@ func (app *App) HandleListNamespaces(w http.ResponseWriter, r *http.Request) {
 	namespaces, err := agent.ListNamespaces()
 
 	if err != nil {
-		app.handleErrorFormValidation(err, ErrK8sValidate, w)
+		app.handleErrorDataRead(err, w)
 		return
 	}
 

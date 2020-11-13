@@ -27,7 +27,16 @@ export default class UpdateProjectModal extends Component<PropsType, StateType> 
   };
   
   handleDelete = () => {
-    alert('ay lmao');
+    let { currentProject } = this.context;
+    this.setState({ status: 'loading' });
+    api.deleteProject('<token>', {}, { id: currentProject.id }, (err: any, res: any) => {
+      if (err) {
+        this.setState({ status: 'error' });
+        // console.log(err)
+      } else {
+        this.setState({ status: 'successful', showDeleteOverlay: false });
+      }
+    });
   }
 
   render() {

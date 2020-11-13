@@ -54,6 +54,7 @@ export default class LogSection extends Component<PropsType, StateType> {
     }, {
       id: currentProject.id
     }, (err: any, res: any) => {
+      console.log("SELECTORS", selectors)
       this.setState({pods: res.data, selectedPod: res.data[0]})
     })
   }

@@ -7,21 +7,13 @@ import { Context } from '../../../shared/Context';
 import { ProjectType } from '../../../shared/types';
 
 type PropsType = {
-  setWelcome?: (x: boolean) => void,
-  setCurrentView?: (x: string) => void,
+  currentProject: ProjectType
 };
 
 type StateType = {
   projects: ProjectType[],
   expanded: boolean
 };
-
-const options = [
-  { label: 'Thunder', value: 'z' },
-  { label: 'Lightning', value: 'x' },
-  { label: 'Storm', value: 'qq' },
-  { label: 'Backlog', value: 'd' },
-]
 
 export default class ProjectSection extends Component<PropsType, StateType> {
   state = {
@@ -38,6 +30,11 @@ export default class ProjectSection extends Component<PropsType, StateType> {
         this.setState({ projects: res.data });
         if (res.data.length > 0) {
           this.context.setCurrentProject(res.data[0]);
+        } else {
+          this.context.setCurrentModal('CreateProjectModal', {
+            keepOpen: true,
+            updateProjects: this.updateProjects
+          });
         }
       }
     });
@@ -45,6 +42,12 @@ export default class ProjectSection extends Component<PropsType, StateType> {
 
   componentDidMount() {
     this.updateProjects();
+  }
+
+  componentDidUpdate(prevProps: PropsType) {
+    if (!this.props.currentProject && (this.props.currentProject !== prevProps.currentProject)) {
+      this.updateProjects();
+    }
   }
   
   showProjectCreateModal = () => {
@@ -59,7 +62,7 @@ export default class ProjectSection extends Component<PropsType, StateType> {
       return (
         <Option
           key={i}
-          selected={project.name === this.context.currentProject}
+          selected={project.name === this.props.currentProject.name}
           onClick={() => this.context.setCurrentProject(project)}
         >
           <ProjectIcon>
@@ -94,7 +97,7 @@ export default class ProjectSection extends Component<PropsType, StateType> {
   }
 
   render() {
-    let { currentProject } = this.context;
+    let { currentProject } = this.props;
     if (currentProject) {
       return (
         <StyledProjectSection>
@@ -146,9 +149,9 @@ const InitializeButton = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
-  width: calc(100% - 10px);
+  width: calc(100% - 30px);
   height: 38px;
-  margin: 8px 5px;
+  margin: 8px 15px;
   font-size: 13px;
   font-weight: 500;
   border-radius: 3px;

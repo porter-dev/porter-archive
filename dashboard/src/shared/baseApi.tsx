@@ -40,6 +40,14 @@ export const baseApi = <T extends {}, S = {}>(requestType: string, endpoint: ((p
       .catch(err => {
         callback && callback(err, null);
       });
+    } else if (requestType === 'DELETE') {
+      axios.delete(endpointString, params)
+      .then(res => {
+        callback && callback(null, res);
+      })
+      .catch(err => {
+        callback && callback(err, null);
+      })
     } else {
       axios.get(endpointString, {
         params,

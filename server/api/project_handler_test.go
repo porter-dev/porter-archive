@@ -211,11 +211,11 @@ var createProjectSACandidatesTests = []*projTest{
 						string(sa.OIDCCertificateAuthorityData), "LS0tLS1CRUdJTiBDRVJ=")
 				}
 
-				if sa.OIDCClientID != "porter-api" {
+				if string(sa.OIDCClientID) != "porter-api" {
 					t.Errorf("service account oidc client id is not %s\n", "porter-api")
 				}
 
-				if sa.OIDCIDToken != "token" {
+				if string(sa.OIDCIDToken) != "token" {
 					t.Errorf("service account oidc id token is not %s\n", "token")
 				}
 			},

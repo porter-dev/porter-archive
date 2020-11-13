@@ -332,20 +332,20 @@ func createRawConfigFromServiceAccount(
 		authInfoMap[authInfoName].ClientCertificateData = sa.ClientCertificateData
 		authInfoMap[authInfoName].ClientKeyData = sa.ClientKeyData
 	case models.Basic:
-		authInfoMap[authInfoName].Username = sa.Username
-		authInfoMap[authInfoName].Password = sa.Password
+		authInfoMap[authInfoName].Username = string(sa.Username)
+		authInfoMap[authInfoName].Password = string(sa.Password)
 	case models.Bearer:
-		authInfoMap[authInfoName].Token = sa.Token
+		authInfoMap[authInfoName].Token = string(sa.Token)
 	case models.OIDC:
 		authInfoMap[authInfoName].AuthProvider = &api.AuthProviderConfig{
 			Name: "oidc",
 			Config: map[string]string{
-				"idp-issuer-url":                 sa.OIDCIssuerURL,
-				"client-id":                      sa.OIDCClientID,
-				"client-secret":                  sa.OIDCClientSecret,
-				"idp-certificate-authority-data": sa.OIDCCertificateAuthorityData,
-				"id-token":                       sa.OIDCIDToken,
-				"refresh-token":                  sa.OIDCRefreshToken,
+				"idp-issuer-url":                 string(sa.OIDCIssuerURL),
+				"client-id":                      string(sa.OIDCClientID),
+				"client-secret":                  string(sa.OIDCClientSecret),
+				"idp-certificate-authority-data": string(sa.OIDCCertificateAuthorityData),
+				"id-token":                       string(sa.OIDCIDToken),
+				"refresh-token":                  string(sa.OIDCRefreshToken),
 			},
 		}
 	case models.GCP:
@@ -392,8 +392,8 @@ func getGCPToken(
 	updateTokenCache UpdateTokenCacheFunc,
 ) (string, error) {
 	// check the token cache for a non-expired token
-	if tok := sa.TokenCache.Token; !sa.TokenCache.IsExpired() && tok != "" {
-		return tok, nil
+	if tok := sa.TokenCache.Token; !sa.TokenCache.IsExpired() && len(tok) > 0 {
+		return string(tok), nil
 	}
 
 	creds, err := google.CredentialsFromJSON(
@@ -423,8 +423,8 @@ func getAWSToken(
 	updateTokenCache UpdateTokenCacheFunc,
 ) (string, error) {
 	// check the token cache for a non-expired token
-	if tok := sa.TokenCache.Token; !sa.TokenCache.IsExpired() && tok != "" {
-		return tok, nil
+	if tok := sa.TokenCache.Token; !sa.TokenCache.IsExpired() && len(tok) > 0 {
+		return string(tok), nil
 	}
 
 	generator, err := token.NewGenerator(false, false)
@@ -437,8 +437,8 @@ func getAWSToken(
 		SharedConfigState: session.SharedConfigEnable,
 		Config: aws.Config{
 			Credentials: credentials.NewStaticCredentials(
-				sa.AWSAccessKeyID,
-				sa.AWSSecretAccessKey,
+				string(sa.AWSAccessKeyID),
+				string(sa.AWSSecretAccessKey),
 				"",
 			),
 		},
@@ -450,7 +450,7 @@ func getAWSToken(
 
 	tok, err := generator.GetWithOptions(&token.GetTokenOptions{
 		Session:   sess,
-		ClusterID: sa.AWSClusterID,
+		ClusterID: string(sa.AWSClusterID),
 	})
 
 	if err != nil {

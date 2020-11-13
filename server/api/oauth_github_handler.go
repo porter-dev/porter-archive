@@ -168,8 +168,8 @@ func (app *App) updateProjectFromToken(projectID uint, userID uint, tok *oauth2.
 		UserID:       userID,
 		RepoUserID:   uint(user.GetID()),
 		Kind:         models.RepoClientGithub,
-		AccessToken:  tok.AccessToken,
-		RefreshToken: tok.RefreshToken,
+		AccessToken:  []byte(tok.AccessToken),
+		RefreshToken: []byte(tok.RefreshToken),
 	}
 
 	repoClient, err = app.repo.RepoClient.CreateRepoClient(repoClient)

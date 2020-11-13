@@ -105,7 +105,8 @@ type ServiceAccount struct {
 	ImpersonateGroups string `json:"act-as-groups,omitempty"`
 
 	// ------------------------------------------------------------------
-	// All fields below this line are encrypted before storage
+	// All fields below this line are encrypted before storage, so type is
+	// byte.
 	// ------------------------------------------------------------------
 
 	// Certificate data is used by x509 auth mechanisms over TLS
@@ -113,11 +114,11 @@ type ServiceAccount struct {
 	ClientKeyData         []byte `json:"client-key-data,omitempty"`
 
 	// Token is used for bearer-token auth mechanisms
-	Token string `json:"token,omitempty"`
+	Token []byte `json:"token,omitempty"`
 
 	// Username/Password for basic authentication to a cluster
-	Username string `json:"username,omitempty"`
-	Password string `json:"password,omitempty"`
+	Username []byte `json:"username,omitempty"`
+	Password []byte `json:"password,omitempty"`
 
 	// TokenCache is a cache for bearer tokens with an expiry time
 	// Used by GCP and AWS mechanisms
@@ -127,17 +128,17 @@ type ServiceAccount struct {
 	GCPKeyData []byte `json:"gcp_key_data"`
 
 	// AWS data
-	AWSAccessKeyID     string `json:"aws_access_key_id"`
-	AWSSecretAccessKey string `json:"aws_secret_access_key"`
-	AWSClusterID       string `json:"aws_cluster_id"`
+	AWSAccessKeyID     []byte `json:"aws_access_key_id"`
+	AWSSecretAccessKey []byte `json:"aws_secret_access_key"`
+	AWSClusterID       []byte `json:"aws_cluster_id"`
 
 	// OIDC-related fields
-	OIDCIssuerURL                string `json:"idp-issuer-url"`
-	OIDCClientID                 string `json:"client-id"`
-	OIDCClientSecret             string `json:"client-secret"`
-	OIDCCertificateAuthorityData string `json:"idp-certificate-authority-data"`
-	OIDCIDToken                  string `json:"id-token"`
-	OIDCRefreshToken             string `json:"refresh-token"`
+	OIDCIssuerURL                []byte `json:"idp-issuer-url"`
+	OIDCClientID                 []byte `json:"client-id"`
+	OIDCClientSecret             []byte `json:"client-secret"`
+	OIDCCertificateAuthorityData []byte `json:"idp-certificate-authority-data"`
+	OIDCIDToken                  []byte `json:"id-token"`
+	OIDCRefreshToken             []byte `json:"refresh-token"`
 }
 
 // ServiceAccountExternal is an external ServiceAccount to be shared over REST

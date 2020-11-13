@@ -99,44 +99,44 @@ func (sar *ServiceAccountActionResolver) PopulateServiceAccount(
 		sar.SA.ClientKeyData = authInfo.ClientKeyData
 	}
 
-	if authInfo.Token != "" {
-		sar.SA.Token = authInfo.Token
+	if len(authInfo.Token) > 0 {
+		sar.SA.Token = []byte(authInfo.Token)
 	}
 
-	if authInfo.Username != "" {
-		sar.SA.Username = authInfo.Username
+	if len(authInfo.Username) > 0 {
+		sar.SA.Username = []byte(authInfo.Username)
 	}
 
-	if authInfo.Password != "" {
-		sar.SA.Password = authInfo.Password
+	if len(authInfo.Password) > 0 {
+		sar.SA.Password = []byte(authInfo.Password)
 	}
 
 	if authInfo.AuthProvider != nil && authInfo.AuthProvider.Name == "oidc" {
 		if url, ok := authInfo.AuthProvider.Config["idp-issuer-url"]; ok {
-			sar.SA.OIDCIssuerURL = url
+			sar.SA.OIDCIssuerURL = []byte(url)
 		}
 
 		if clientID, ok := authInfo.AuthProvider.Config["client-id"]; ok {
-			sar.SA.OIDCClientID = clientID
+			sar.SA.OIDCClientID = []byte(clientID)
 		}
 
 		if clientSecret, ok := authInfo.AuthProvider.Config["client-secret"]; ok {
-			sar.SA.OIDCClientSecret = clientSecret
+			sar.SA.OIDCClientSecret = []byte(clientSecret)
 		}
 
 		if caData, ok := authInfo.AuthProvider.Config["idp-certificate-authority-data"]; ok {
 			// based on the implementation, the oidc plugin expects the data to be base64 encoded,
 			// which means we will not decode it here
 			// reference: https://github.com/kubernetes/kubernetes/blob/9dfb4c876bfca7a5ae84259fae2bc337ed90c2d7/staging/src/k8s.io/client-go/plugin/pkg/client/auth/oidc/oidc.go#L135
-			sar.SA.OIDCCertificateAuthorityData = caData
+			sar.SA.OIDCCertificateAuthorityData = []byte(caData)
 		}
 
 		if idToken, ok := authInfo.AuthProvider.Config["id-token"]; ok {
-			sar.SA.OIDCIDToken = idToken
+			sar.SA.OIDCIDToken = []byte(idToken)
 		}
 
 		if refreshToken, ok := authInfo.AuthProvider.Config["refresh-token"]; ok {
-			sar.SA.OIDCRefreshToken = refreshToken
+			sar.SA.OIDCRefreshToken = []byte(refreshToken)
 		}
 	}
 
@@ -254,7 +254,7 @@ func (oida *OIDCIssuerDataAction) PopulateServiceAccount(
 	// based on the implementation, the oidc plugin expects the data to be base64 encoded,
 	// which means we will not decode it here
 	// reference: https://github.com/kubernetes/kubernetes/blob/9dfb4c876bfca7a5ae84259fae2bc337ed90c2d7/staging/src/k8s.io/client-go/plugin/pkg/client/auth/oidc/oidc.go#L135
-	oida.ServiceAccountActionResolver.SA.OIDCCertificateAuthorityData = oida.OIDCIssuerCAData
+	oida.ServiceAccountActionResolver.SA.OIDCCertificateAuthorityData = []byte(oida.OIDCIssuerCAData)
 
 	return nil
 }
@@ -275,7 +275,7 @@ func (tda *TokenDataAction) PopulateServiceAccount(
 		return err
 	}
 
-	tda.ServiceAccountActionResolver.SA.Token = tda.TokenData
+	tda.ServiceAccountActionResolver.SA.Token = []byte(tda.TokenData)
 
 	return nil
 }
@@ -319,9 +319,9 @@ func (akda *AWSDataAction) PopulateServiceAccount(
 		return err
 	}
 
-	akda.ServiceAccountActionResolver.SA.AWSAccessKeyID = akda.AWSAccessKeyID
-	akda.ServiceAccountActionResolver.SA.AWSSecretAccessKey = akda.AWSSecretAccessKey
-	akda.ServiceAccountActionResolver.SA.AWSClusterID = akda.AWSClusterID
+	akda.ServiceAccountActionResolver.SA.AWSAccessKeyID = []byte(akda.AWSAccessKeyID)
+	akda.ServiceAccountActionResolver.SA.AWSSecretAccessKey = []byte(akda.AWSSecretAccessKey)
+	akda.ServiceAccountActionResolver.SA.AWSClusterID = []byte(akda.AWSClusterID)
 
 	return nil
 }

@@ -181,8 +181,8 @@ func initRepoClient(tester *tester, t *testing.T) {
 		UserID:       tester.initUsers[0].ID,
 		RepoUserID:   1,
 		Kind:         models.RepoClientGithub,
-		AccessToken:  "accesstoken1234",
-		RefreshToken: "refreshtoken1234",
+		AccessToken:  []byte("accesstoken1234"),
+		RefreshToken: []byte("refreshtoken1234"),
 	}
 
 	rc, err := tester.repo.RepoClient.CreateRepoClient(rc)

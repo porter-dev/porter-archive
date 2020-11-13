@@ -25,8 +25,8 @@ type RepoClient struct {
 	// All fields below this line are encrypted before storage
 	// ------------------------------------------------------------------
 
-	AccessToken  string `json:"access_token"`
-	RefreshToken string `json:"refresh_token"`
+	AccessToken  []byte `json:"access_token"`
+	RefreshToken []byte `json:"refresh_token"`
 }
 
 // RepoClientExternal is a RepoClient scrubbed of sensitive information to be

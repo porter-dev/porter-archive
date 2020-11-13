@@ -180,14 +180,14 @@ func (repo *ServiceAccountRepository) ListServiceAccountsByProjectID(
 func (repo *ServiceAccountRepository) UpdateServiceAccountTokenCache(
 	tokenCache *models.TokenCache,
 ) (*models.ServiceAccount, error) {
-	if tok := tokenCache.Token; tok != "" {
-		cipherData, err := repository.Encrypt([]byte(tok), repo.key)
+	if tok := tokenCache.Token; len(tok) > 0 {
+		cipherData, err := repository.Encrypt(tok, repo.key)
 
 		if err != nil {
 			return nil, err
 		}
 
-		tokenCache.Token = string(cipherData)
+		tokenCache.Token = cipherData
 	}
 
 	sa := &models.ServiceAccount{}
@@ -232,34 +232,34 @@ func (repo *ServiceAccountRepository) EncryptServiceAccountData(
 		sa.ClientKeyData = cipherData
 	}
 
-	if sa.Token != "" {
-		cipherData, err := repository.Encrypt([]byte(sa.Token), key)
+	if len(sa.Token) > 0 {
+		cipherData, err := repository.Encrypt(sa.Token, key)
 
 		if err != nil {
 			return err
 		}
 
-		sa.Token = string(cipherData)
+		sa.Token = cipherData
 	}
 
-	if sa.Username != "" {
-		cipherData, err := repository.Encrypt([]byte(sa.Username), key)
+	if len(sa.Username) > 0 {
+		cipherData, err := repository.Encrypt(sa.Username, key)
 
 		if err != nil {
 			return err
 		}
 
-		sa.Username = string(cipherData)
+		sa.Username = cipherData
 	}
 
-	if sa.Password != "" {
-		cipherData, err := repository.Encrypt([]byte(sa.Password), key)
+	if len(sa.Password) > 0 {
+		cipherData, err := repository.Encrypt(sa.Password, key)
 
 		if err != nil {
 			return err
 		}
 
-		sa.Password = string(cipherData)
+		sa.Password = cipherData
 	}
 
 	if len(sa.GCPKeyData) > 0 {
@@ -272,104 +272,104 @@ func (repo *ServiceAccountRepository) EncryptServiceAccountData(
 		sa.GCPKeyData = cipherData
 	}
 
-	if tok := sa.TokenCache.Token; tok != "" {
-		cipherData, err := repository.Encrypt([]byte(tok), key)
+	if tok := sa.TokenCache.Token; len(tok) > 0 {
+		cipherData, err := repository.Encrypt(tok, key)
 
 		if err != nil {
 			return err
 		}
 
-		sa.TokenCache.Token = string(cipherData)
+		sa.TokenCache.Token = cipherData
 	}
 
-	if sa.AWSAccessKeyID != "" {
-		cipherData, err := repository.Encrypt([]byte(sa.AWSAccessKeyID), key)
+	if len(sa.AWSAccessKeyID) > 0 {
+		cipherData, err := repository.Encrypt(sa.AWSAccessKeyID, key)
 
 		if err != nil {
 			return err
 		}
 
-		sa.AWSAccessKeyID = string(cipherData)
+		sa.AWSAccessKeyID = cipherData
 	}
 
-	if sa.AWSSecretAccessKey != "" {
-		cipherData, err := repository.Encrypt([]byte(sa.AWSSecretAccessKey), key)
+	if len(sa.AWSSecretAccessKey) > 0 {
+		cipherData, err := repository.Encrypt(sa.AWSSecretAccessKey, key)
 
 		if err != nil {
 			return err
 		}
 
-		sa.AWSSecretAccessKey = string(cipherData)
+		sa.AWSSecretAccessKey = cipherData
 	}
 
-	if sa.AWSClusterID != "" {
-		cipherData, err := repository.Encrypt([]byte(sa.AWSClusterID), key)
+	if len(sa.AWSClusterID) > 0 {
+		cipherData, err := repository.Encrypt(sa.AWSClusterID, key)
 
 		if err != nil {
 			return err
 		}
 
-		sa.AWSClusterID = string(cipherData)
+		sa.AWSClusterID = cipherData
 	}
 
-	if sa.OIDCIssuerURL != "" {
-		cipherData, err := repository.Encrypt([]byte(sa.OIDCIssuerURL), key)
+	if len(sa.OIDCIssuerURL) > 0 {
+		cipherData, err := repository.Encrypt(sa.OIDCIssuerURL, key)
 
 		if err != nil {
 			return err
 		}
 
-		sa.OIDCIssuerURL = string(cipherData)
+		sa.OIDCIssuerURL = cipherData
 	}
 
-	if sa.OIDCClientID != "" {
-		cipherData, err := repository.Encrypt([]byte(sa.OIDCClientID), key)
+	if len(sa.OIDCClientID) > 0 {
+		cipherData, err := repository.Encrypt(sa.OIDCClientID, key)
 
 		if err != nil {
 			return err
 		}
 
-		sa.OIDCClientID = string(cipherData)
+		sa.OIDCClientID = cipherData
 	}
 
-	if sa.OIDCClientSecret != "" {
-		cipherData, err := repository.Encrypt([]byte(sa.OIDCClientSecret), key)
+	if len(sa.OIDCClientSecret) > 0 {
+		cipherData, err := repository.Encrypt(sa.OIDCClientSecret, key)
 
 		if err != nil {
 			return err
 		}
 
-		sa.OIDCClientSecret = string(cipherData)
+		sa.OIDCClientSecret = cipherData
 	}
 
-	if sa.OIDCCertificateAuthorityData != "" {
-		cipherData, err := repository.Encrypt([]byte(sa.OIDCCertificateAuthorityData), key)
+	if len(sa.OIDCCertificateAuthorityData) > 0 {
+		cipherData, err := repository.Encrypt(sa.OIDCCertificateAuthorityData, key)
 
 		if err != nil {
 			return err
 		}
 
-		sa.OIDCCertificateAuthorityData = string(cipherData)
+		sa.OIDCCertificateAuthorityData = cipherData
 	}
 
-	if sa.OIDCIDToken != "" {
-		cipherData, err := repository.Encrypt([]byte(sa.OIDCIDToken), key)
+	if len(sa.OIDCIDToken) > 0 {
+		cipherData, err := repository.Encrypt(sa.OIDCIDToken, key)
 
 		if err != nil {
 			return err
 		}
 
-		sa.OIDCIDToken = string(cipherData)
+		sa.OIDCIDToken = cipherData
 	}
 
-	if sa.OIDCRefreshToken != "" {
-		cipherData, err := repository.Encrypt([]byte(sa.OIDCRefreshToken), key)
+	if len(sa.OIDCRefreshToken) > 0 {
+		cipherData, err := repository.Encrypt(sa.OIDCRefreshToken, key)
 
 		if err != nil {
 			return err
 		}
 
-		sa.OIDCRefreshToken = string(cipherData)
+		sa.OIDCRefreshToken = cipherData
 	}
 
 	for i, cluster := range sa.Clusters {
@@ -433,34 +433,34 @@ func (repo *ServiceAccountRepository) DecryptServiceAccountData(
 		sa.ClientKeyData = plaintext
 	}
 
-	if sa.Token != "" {
-		plaintext, err := repository.Decrypt([]byte(sa.Token), key)
+	if len(sa.Token) > 0 {
+		plaintext, err := repository.Decrypt(sa.Token, key)
 
 		if err != nil {
 			return err
 		}
 
-		sa.Token = string(plaintext)
+		sa.Token = plaintext
 	}
 
-	if sa.Username != "" {
-		plaintext, err := repository.Decrypt([]byte(sa.Username), key)
+	if len(sa.Username) > 0 {
+		plaintext, err := repository.Decrypt(sa.Username, key)
 
 		if err != nil {
 			return err
 		}
 
-		sa.Username = string(plaintext)
+		sa.Username = plaintext
 	}
 
-	if sa.Password != "" {
-		plaintext, err := repository.Decrypt([]byte(sa.Password), key)
+	if len(sa.Password) > 0 {
+		plaintext, err := repository.Decrypt(sa.Password, key)
 
 		if err != nil {
 			return err
 		}
 
-		sa.Password = string(plaintext)
+		sa.Password = plaintext
 	}
 
 	if len(sa.GCPKeyData) > 0 {
@@ -473,104 +473,104 @@ func (repo *ServiceAccountRepository) DecryptServiceAccountData(
 		sa.GCPKeyData = plaintext
 	}
 
-	if tok := sa.TokenCache.Token; tok != "" {
-		plaintext, err := repository.Decrypt([]byte(tok), key)
+	if tok := sa.TokenCache.Token; len(tok) > 0 {
+		plaintext, err := repository.Decrypt(tok, key)
 
 		if err != nil {
 			return err
 		}
 
-		sa.TokenCache.Token = string(plaintext)
+		sa.TokenCache.Token = plaintext
 	}
 
-	if sa.AWSAccessKeyID != "" {
-		plaintext, err := repository.Decrypt([]byte(sa.AWSAccessKeyID), key)
+	if len(sa.AWSAccessKeyID) > 0 {
+		plaintext, err := repository.Decrypt(sa.AWSAccessKeyID, key)
 
 		if err != nil {
 			return err
 		}
 
-		sa.AWSAccessKeyID = string(plaintext)
+		sa.AWSAccessKeyID = plaintext
 	}
 
-	if sa.AWSSecretAccessKey != "" {
-		plaintext, err := repository.Decrypt([]byte(sa.AWSSecretAccessKey), key)
+	if len(sa.AWSSecretAccessKey) > 0 {
+		plaintext, err := repository.Decrypt(sa.AWSSecretAccessKey, key)
 
 		if err != nil {
 			return err
 		}
 
-		sa.AWSSecretAccessKey = string(plaintext)
+		sa.AWSSecretAccessKey = plaintext
 	}
 
-	if sa.AWSClusterID != "" {
-		plaintext, err := repository.Decrypt([]byte(sa.AWSClusterID), key)
+	if len(sa.AWSClusterID) > 0 {
+		plaintext, err := repository.Decrypt(sa.AWSClusterID, key)
 
 		if err != nil {
 			return err
 		}
 
-		sa.AWSClusterID = string(plaintext)
+		sa.AWSClusterID = plaintext
 	}
 
-	if sa.OIDCIssuerURL != "" {
-		plaintext, err := repository.Decrypt([]byte(sa.OIDCIssuerURL), key)
+	if len(sa.OIDCIssuerURL) > 0 {
+		plaintext, err := repository.Decrypt(sa.OIDCIssuerURL, key)
 
 		if err != nil {
 			return err
 		}
 
-		sa.OIDCIssuerURL = string(plaintext)
+		sa.OIDCIssuerURL = plaintext
 	}
 
-	if sa.OIDCClientID != "" {
-		plaintext, err := repository.Decrypt([]byte(sa.OIDCClientID), key)
+	if len(sa.OIDCClientID) > 0 {
+		plaintext, err := repository.Decrypt(sa.OIDCClientID, key)
 
 		if err != nil {
 			return err
 		}
 
-		sa.OIDCClientID = string(plaintext)
+		sa.OIDCClientID = plaintext
 	}
 
-	if sa.OIDCClientSecret != "" {
-		plaintext, err := repository.Decrypt([]byte(sa.OIDCClientSecret), key)
+	if len(sa.OIDCClientSecret) > 0 {
+		plaintext, err := repository.Decrypt(sa.OIDCClientSecret, key)
 
 		if err != nil {
 			return err
 		}
 
-		sa.OIDCClientSecret = string(plaintext)
+		sa.OIDCClientSecret = plaintext
 	}
 
-	if sa.OIDCCertificateAuthorityData != "" {
-		plaintext, err := repository.Decrypt([]byte(sa.OIDCCertificateAuthorityData), key)
+	if len(sa.OIDCCertificateAuthorityData) > 0 {
+		plaintext, err := repository.Decrypt(sa.OIDCCertificateAuthorityData, key)
 
 		if err != nil {
 			return err
 		}
 
-		sa.OIDCCertificateAuthorityData = string(plaintext)
+		sa.OIDCCertificateAuthorityData = plaintext
 	}
 
-	if sa.OIDCIDToken != "" {
-		plaintext, err := repository.Decrypt([]byte(sa.OIDCIDToken), key)
+	if len(sa.OIDCIDToken) > 0 {
+		plaintext, err := repository.Decrypt(sa.OIDCIDToken, key)
 
 		if err != nil {
 			return err
 		}
 
-		sa.OIDCIDToken = string(plaintext)
+		sa.OIDCIDToken = plaintext
 	}
 
-	if sa.OIDCRefreshToken != "" {
-		plaintext, err := repository.Decrypt([]byte(sa.OIDCRefreshToken), key)
+	if len(sa.OIDCRefreshToken) > 0 {
+		plaintext, err := repository.Decrypt(sa.OIDCRefreshToken, key)
 
 		if err != nil {
 			return err
 		}
 
-		sa.OIDCRefreshToken = string(plaintext)
+		sa.OIDCRefreshToken = plaintext
 	}
 
 	for i, cluster := range sa.Clusters {

@@ -327,7 +327,7 @@ func TestPopulateServiceAccountTokenDataAction(t *testing.T) {
 		t.Errorf("service account auth mechanism is not %s\n", models.Bearer)
 	}
 
-	if sa.Token != tokenData {
+	if string(sa.Token) != tokenData {
 		t.Errorf("service account token data is wrong: expected %s, got %s\n",
 			tokenData, sa.Token)
 	}
@@ -438,17 +438,17 @@ func TestPopulateServiceAccountAWSKeyDataAction(t *testing.T) {
 		t.Errorf("service account auth mechanism is not %s\n", models.AWS)
 	}
 
-	if sa.AWSAccessKeyID != "ALSDKJFADSF" {
+	if string(sa.AWSAccessKeyID) != "ALSDKJFADSF" {
 		t.Errorf("service account aws access key id is wrong: expected %s, got %s\n",
 			"ALSDKJFADSF", sa.AWSAccessKeyID)
 	}
 
-	if sa.AWSSecretAccessKey != "ASDLFKJALSDKFJ" {
+	if string(sa.AWSSecretAccessKey) != "ASDLFKJALSDKFJ" {
 		t.Errorf("service account aws access secret key is wrong: expected %s, got %s\n",
 			"ASDLFKJALSDKFJ", sa.AWSSecretAccessKey)
 	}
 
-	if sa.AWSClusterID != "cluster-test" {
+	if string(sa.AWSClusterID) != "cluster-test" {
 		t.Errorf("service account aws cluster id is wrong: expected %s, got %s\n",
 			"cluster-test", sa.AWSClusterID)
 	}

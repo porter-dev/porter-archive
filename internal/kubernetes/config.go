@@ -18,6 +18,9 @@ import (
 	"k8s.io/client-go/restmapper"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/util/homedir"
+
+	// add oidc provider here
+	_ "k8s.io/client-go/plugin/pkg/client/auth/oidc"
 )
 
 // GetAgentOutOfClusterConfig creates a new Agent using the OutOfClusterConfig
@@ -78,22 +81,6 @@ func (conf *OutOfClusterConfig) ToRESTConfig() (*rest.Config, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	// if conf.ServiceAccount.AuthMechanism == models.GCP {
-	// 	creds, err := google.CredentialsFromJSON(
-	// 		context.Background(),
-	// 		conf.ServiceAccount.KeyData,
-	// 		"https://www.googleapis.com/auth/cloud-platform",
-	// 	)
-
-	// 	if err != nil {
-	// 		return nil, err
-	// 	}
-
-	// 	restConf.Transport = &oauth2.Transport{
-	// 		Source: creds.TokenSource,
-	// 	}
-	// }
 
 	rest.SetKubernetesDefaults(restConf)
 	return restConf, nil

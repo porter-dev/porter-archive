@@ -55,7 +55,7 @@ export default class ClusterSection extends Component<PropsType, StateType> {
             setCurrentCluster(clusters[0]);
           } else {
             this.setState({ clusters: [] });
-            setCurrentCluster({});
+            setCurrentCluster(null);
           }
         }
       }
@@ -97,6 +97,7 @@ export default class ClusterSection extends Component<PropsType, StateType> {
           toggleDrawer={this.toggleDrawer}
           showDrawer={this.state.showDrawer}
           clusters={this.state.clusters}
+          setCurrentView={this.props.setCurrentView}
         />
       );
     }

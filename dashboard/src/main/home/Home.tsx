@@ -36,25 +36,15 @@ export default class Home extends Component<PropsType, StateType> {
     prevProjectId: null as number | null
   }
 
-  componentDidMount() {
-    let { user, currentCluster } = this.context;
-    api.getProjects('<token>', {}, { id: user.userId }, (err: any, res: any) => {
-      if (err) {
-        // console.log(err)
-      } else if (res.data) {
-        if (res.data.length === 0) {
-          this.context.setCurrentModal('CreateProjectModal', { keepOpen: true });
-        }
-      }
-    });
-  }
-
   componentDidUpdate(prevProps: PropsType) {
     if (prevProps !== this.props && this.context.currentProject) {
 
       // Set view to dashboard on project change
       if (this.state.prevProjectId !== this.context.currentProject.id) {
-        this.setState({ currentView: 'dashboard' });
+        this.setState({
+          prevProjectId: this.context.currentProject.id,
+          currentView: 'dashboard'
+        });
       }
     }
   }
@@ -62,8 +52,7 @@ export default class Home extends Component<PropsType, StateType> {
   // TODO: move into ClusterDashboard
   renderDashboard = () => {
     let { currentCluster, setCurrentModal } = this.context;
-
-    if (currentCluster === {} || this.state.showWelcome || currentCluster && !currentCluster.name) {
+    if (this.state.showWelcome || currentCluster && !currentCluster.name) {
       return (
         <DashboardWrapper>
           <Placeholder>

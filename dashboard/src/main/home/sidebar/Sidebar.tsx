@@ -10,7 +10,7 @@ import api from '../../../shared/api';
 import { Context } from '../../../shared/Context';
 
 import ClusterSection from './ClusterSection';
-import ProjectSection from './ProjectSection';
+import ProjectSectionContainer from './ProjectSectionContainer';
 
 type PropsType = {
   logOut: () => void,
@@ -166,7 +166,7 @@ export default class Sidebar extends Component<PropsType, StateType> {
             <i className="material-icons">double_arrow</i>
           </CollapseButton>
 
-          <ProjectSection />
+          <ProjectSectionContainer />
 
           <br />
 

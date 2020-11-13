@@ -62,7 +62,22 @@ func Kubeconfig(
 			for _, action := range saCandidate.Actions {
 				switch action.Name {
 				case models.ClusterCADataAction:
-					resolveAction, err := resolveClusterCAAction(action.Filename)
+					absKubeconfigPath, err := local.ResolveKubeconfigPath(kubeconfigPath)
+
+					if err != nil {
+						return err
+					}
+
+					filename, err := utils.GetFileReferenceFromKubeconfig(
+						action.Filename,
+						absKubeconfigPath,
+					)
+
+					if err != nil {
+						return err
+					}
+
+					resolveAction, err := resolveClusterCAAction(filename)
 
 					if err != nil {
 						return err
@@ -70,7 +85,22 @@ func Kubeconfig(
 
 					resolvers = append(resolvers, resolveAction)
 				case models.ClientCertDataAction:
-					resolveAction, err := resolveClientCertAction(action.Filename)
+					absKubeconfigPath, err := local.ResolveKubeconfigPath(kubeconfigPath)
+
+					if err != nil {
+						return err
+					}
+
+					filename, err := utils.GetFileReferenceFromKubeconfig(
+						action.Filename,
+						absKubeconfigPath,
+					)
+
+					if err != nil {
+						return err
+					}
+
+					resolveAction, err := resolveClientCertAction(filename)
 
 					if err != nil {
 						return err
@@ -78,7 +108,22 @@ func Kubeconfig(
 
 					resolvers = append(resolvers, resolveAction)
 				case models.ClientKeyDataAction:
-					resolveAction, err := resolveClientKeyAction(action.Filename)
+					absKubeconfigPath, err := local.ResolveKubeconfigPath(kubeconfigPath)
+
+					if err != nil {
+						return err
+					}
+
+					filename, err := utils.GetFileReferenceFromKubeconfig(
+						action.Filename,
+						absKubeconfigPath,
+					)
+
+					if err != nil {
+						return err
+					}
+
+					resolveAction, err := resolveClientKeyAction(filename)
 
 					if err != nil {
 						return err
@@ -86,7 +131,22 @@ func Kubeconfig(
 
 					resolvers = append(resolvers, resolveAction)
 				case models.OIDCIssuerDataAction:
-					resolveAction, err := resolveOIDCIssuerAction(action.Filename)
+					absKubeconfigPath, err := local.ResolveKubeconfigPath(kubeconfigPath)
+
+					if err != nil {
+						return err
+					}
+
+					filename, err := utils.GetFileReferenceFromKubeconfig(
+						action.Filename,
+						absKubeconfigPath,
+					)
+
+					if err != nil {
+						return err
+					}
+
+					resolveAction, err := resolveOIDCIssuerAction(filename)
 
 					if err != nil {
 						return err
@@ -94,7 +154,22 @@ func Kubeconfig(
 
 					resolvers = append(resolvers, resolveAction)
 				case models.TokenDataAction:
-					resolveAction, err := resolveTokenDataAction(action.Filename)
+					absKubeconfigPath, err := local.ResolveKubeconfigPath(kubeconfigPath)
+
+					if err != nil {
+						return err
+					}
+
+					filename, err := utils.GetFileReferenceFromKubeconfig(
+						action.Filename,
+						absKubeconfigPath,
+					)
+
+					if err != nil {
+						return err
+					}
+
+					resolveAction, err := resolveTokenDataAction(filename)
 
 					if err != nil {
 						return err

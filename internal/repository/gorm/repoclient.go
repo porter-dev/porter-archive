@@ -81,24 +81,24 @@ func (repo *RepoClientRepository) EncryptRepoClientData(
 	rc *models.RepoClient,
 	key *[32]byte,
 ) error {
-	if rc.AccessToken != "" {
-		cipherData, err := repository.Encrypt([]byte(rc.AccessToken), key)
+	if len(rc.AccessToken) > 0 {
+		cipherData, err := repository.Encrypt(rc.AccessToken, key)
 
 		if err != nil {
 			return err
 		}
 
-		rc.AccessToken = string(cipherData)
+		rc.AccessToken = cipherData
 	}
 
-	if rc.RefreshToken != "" {
-		cipherData, err := repository.Encrypt([]byte(rc.RefreshToken), key)
+	if len(rc.RefreshToken) > 0 {
+		cipherData, err := repository.Encrypt(rc.RefreshToken, key)
 
 		if err != nil {
 			return err
 		}
 
-		rc.RefreshToken = string(cipherData)
+		rc.RefreshToken = cipherData
 	}
 
 	return nil
@@ -110,24 +110,24 @@ func (repo *RepoClientRepository) DecryptRepoClientData(
 	rc *models.RepoClient,
 	key *[32]byte,
 ) error {
-	if rc.AccessToken != "" {
-		plaintext, err := repository.Decrypt([]byte(rc.AccessToken), key)
+	if len(rc.AccessToken) > 0 {
+		plaintext, err := repository.Decrypt(rc.AccessToken, key)
 
 		if err != nil {
 			return err
 		}
 
-		rc.AccessToken = string(plaintext)
+		rc.AccessToken = plaintext
 	}
 
-	if rc.RefreshToken != "" {
-		plaintext, err := repository.Decrypt([]byte(rc.RefreshToken), key)
+	if len(rc.RefreshToken) > 0 {
+		plaintext, err := repository.Decrypt(rc.RefreshToken, key)
 
 		if err != nil {
 			return err
 		}
 
-		rc.RefreshToken = string(plaintext)
+		rc.RefreshToken = plaintext
 	}
 
 	return nil

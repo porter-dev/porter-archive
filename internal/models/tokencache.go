@@ -19,7 +19,7 @@ type TokenCache struct {
 	// All fields below this line are encrypted before storage
 	// ------------------------------------------------------------------
 
-	Token string `json:"access_token"`
+	Token []byte `json:"access_token"`
 }
 
 // IsExpired returns true if a token is expired, false otherwise

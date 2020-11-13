@@ -23,8 +23,8 @@ func TestCreateRepoClient(t *testing.T) {
 		UserID:       tester.initUsers[0].ID,
 		RepoUserID:   1,
 		Kind:         models.RepoClientGithub,
-		AccessToken:  "accesstoken1234",
-		RefreshToken: "refreshtoken1234",
+		AccessToken:  []byte("accesstoken1234"),
+		RefreshToken: []byte("refreshtoken1234"),
 	}
 
 	repoClient, err := tester.repo.RepoClient.CreateRepoClient(repoClient)
@@ -50,8 +50,8 @@ func TestCreateRepoClient(t *testing.T) {
 		UserID:       tester.initUsers[0].ID,
 		RepoUserID:   1,
 		Kind:         models.RepoClientGithub,
-		AccessToken:  "accesstoken1234",
-		RefreshToken: "refreshtoken1234",
+		AccessToken:  []byte("accesstoken1234"),
+		RefreshToken: []byte("refreshtoken1234"),
 	}
 
 	copyRepoClient := repoClient
@@ -96,8 +96,8 @@ func TestListRepoClientsByProjectID(t *testing.T) {
 		UserID:       tester.initUsers[0].ID,
 		RepoUserID:   1,
 		Kind:         models.RepoClientGithub,
-		AccessToken:  "accesstoken1234",
-		RefreshToken: "refreshtoken1234",
+		AccessToken:  []byte("accesstoken1234"),
+		RefreshToken: []byte("refreshtoken1234"),
 	}
 
 	copyRepoClient := rcs[0]

@@ -164,8 +164,8 @@ func (app *App) githubTokenFromRequest(
 			// TODO -- refresh token is irrelevant at the moment, because the access token
 			// doesn't expire.
 			return &oauth2.Token{
-				AccessToken:  rc.AccessToken,
-				RefreshToken: rc.RefreshToken,
+				AccessToken:  string(rc.AccessToken),
+				RefreshToken: string(rc.RefreshToken),
 				TokenType:    "Bearer",
 			}, nil
 		}

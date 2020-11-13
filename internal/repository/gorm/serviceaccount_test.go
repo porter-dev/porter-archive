@@ -359,7 +359,7 @@ func TestUpdateServiceAccountToken(t *testing.T) {
 		AuthMechanism: models.GCP,
 		GCPKeyData:    []byte(`{"key":"data"}`),
 		TokenCache: models.TokenCache{
-			Token:  "token-1",
+			Token:  []byte("token-1"),
 			Expiry: time.Now().Add(-1 * time.Hour),
 		},
 	}
@@ -386,7 +386,7 @@ func TestUpdateServiceAccountToken(t *testing.T) {
 		t.Fatalf("token was not expired\n")
 	}
 
-	sa.TokenCache.Token = "token-2"
+	sa.TokenCache.Token = []byte("token-2")
 	sa.TokenCache.Expiry = time.Now().Add(24 * time.Hour)
 
 	sa, err = tester.repo.ServiceAccount.UpdateServiceAccountTokenCache(&sa.TokenCache)
@@ -412,7 +412,7 @@ func TestUpdateServiceAccountToken(t *testing.T) {
 		t.Fatalf("token was expired\n")
 	}
 
-	if sa.TokenCache.Token != "token-2" {
+	if string(sa.TokenCache.Token) != "token-2" {
 		t.Errorf("incorrect token in cache: expected %s, got %s\n", "token-2", sa.TokenCache.Token)
 	}
 }

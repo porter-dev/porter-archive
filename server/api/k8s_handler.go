@@ -74,7 +74,7 @@ func (app *App) HandleListNamespaces(w http.ResponseWriter, r *http.Request) {
 func (app *App) updateTokenCache(token string, expiry time.Time) error {
 	_, err := app.repo.ServiceAccount.UpdateServiceAccountTokenCache(
 		&models.TokenCache{
-			Token:  token,
+			Token:  []byte(token),
 			Expiry: expiry,
 		},
 	)

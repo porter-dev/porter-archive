@@ -26,6 +26,7 @@ export default class UpdateProjectModal extends Component<PropsType, StateType> 
     showDeleteOverlay: false,
   };
   
+  // TODO: Handle update to unmounted component
   handleDelete = () => {
     let { currentProject } = this.context;
     this.setState({ status: 'loading' });
@@ -34,6 +35,8 @@ export default class UpdateProjectModal extends Component<PropsType, StateType> 
         this.setState({ status: 'error' });
         // console.log(err)
       } else {
+        this.context.setCurrentModal(null, null);
+        this.context.setCurrentProject(null);
         this.setState({ status: 'successful', showDeleteOverlay: false });
       }
     });

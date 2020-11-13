@@ -36,19 +36,6 @@ export default class Home extends Component<PropsType, StateType> {
     prevProjectId: null as number | null
   }
 
-  componentDidMount() {
-    let { user, currentCluster } = this.context;
-    api.getProjects('<token>', {}, { id: user.userId }, (err: any, res: any) => {
-      if (err) {
-        // console.log(err)
-      } else if (res.data) {
-        if (res.data.length === 0) {
-          this.context.setCurrentModal('CreateProjectModal', { keepOpen: true });
-        }
-      }
-    });
-  }
-
   componentDidUpdate(prevProps: PropsType) {
     if (prevProps !== this.props && this.context.currentProject) {
 

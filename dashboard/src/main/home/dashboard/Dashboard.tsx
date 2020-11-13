@@ -23,34 +23,40 @@ export default class Dashboard extends Component<PropsType, StateType> {
 
   renderContents = () => {
     let { currentProject } = this.context;
-    return (
-      <div>
-        <TitleSection>
-          {this.renderDashboardIcon()}
-          <Title>{currentProject && currentProject.name}</Title>
-          <i
-            className="material-icons"
-            onClick={() => this.context.setCurrentModal('UpdateProjectModal', { currentProject: currentProject })}
-          >
-            more_vert
+    if (currentProject) {
+      return (
+        <div>
+          <TitleSection>
+            {this.renderDashboardIcon()}
+            <Title>{currentProject && currentProject.name}</Title>
+            <i
+              className="material-icons"
+              onClick={() => this.context.setCurrentModal('UpdateProjectModal', { currentProject: currentProject })}
+            >
+              more_vert
           </i>
-        </TitleSection>
+          </TitleSection>
 
-        <InfoSection>
-          <TopRow>
-            <InfoLabel>
-              <i className="material-icons">info</i> Info
+          <InfoSection>
+            <TopRow>
+              <InfoLabel>
+                <i className="material-icons">info</i> Info
             </InfoLabel>
-          </TopRow>
-          <Description>Project overview for {currentProject && currentProject.name}.</Description>
-        </InfoSection>
+            </TopRow>
+            <Description>Project overview for {currentProject && currentProject.name}.</Description>
+          </InfoSection>
 
-        <LineBreak />
+          <LineBreak />
 
-        <Placeholder>
-          🚀 Pipelines coming soon.
+          <Placeholder>
+            🚀 Pipelines coming soon.
         </Placeholder>
-      </div>
+        </div>
+      );
+    }
+
+    return (
+      <div />
     );
   }
 

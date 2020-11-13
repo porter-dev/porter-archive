@@ -176,7 +176,7 @@ var createProjectSACandidatesTests = []*projTest{
 		endpoint:  "/api/projects/1/candidates",
 		body:      `{"kubeconfig":"` + OIDCAuthWithDataForJSON + `"}`,
 		expStatus: http.StatusCreated,
-		expBody:   `[{"id":1,"actions":[],"created_sa_id":1,"project_id":1,"kind":"connector","cluster_name":"cluster-test","cluster_endpoint":"https://localhost","auth_mechanism":"oidc"}]`,
+		expBody:   `[{"id":1,"actions":[],"created_sa_id":1,"project_id":1,"kind":"connector","context_name":"context-test","cluster_name":"cluster-test","cluster_endpoint":"https://localhost","auth_mechanism":"oidc"}]`,
 		useCookie: true,
 		validators: []func(c *projTest, tester *tester, t *testing.T){
 			projectSACandidateBodyValidator,
@@ -231,7 +231,7 @@ var createProjectSACandidatesTests = []*projTest{
 		endpoint:  "/api/projects/1/candidates",
 		body:      `{"kubeconfig":"` + OIDCAuthWithoutDataForJSON + `"}`,
 		expStatus: http.StatusCreated,
-		expBody:   `[{"id":1,"actions":[{"name":"upload-oidc-idp-issuer-ca-data","filename":"/fake/path/to/ca.pem","docs":"https://github.com/porter-dev/porter","resolved":false,"fields":"oidc_idp_issuer_ca_data"}],"project_id":1,"kind":"connector","cluster_name":"cluster-test","cluster_endpoint":"https://localhost","auth_mechanism":"oidc"}]`,
+		expBody:   `[{"id":1,"actions":[{"name":"upload-oidc-idp-issuer-ca-data","filename":"/fake/path/to/ca.pem","docs":"https://github.com/porter-dev/porter","resolved":false,"fields":"oidc_idp_issuer_ca_data"}],"project_id":1,"kind":"connector","context_name":"context-test","cluster_name":"cluster-test","cluster_endpoint":"https://localhost","auth_mechanism":"oidc"}]`,
 		useCookie: true,
 		validators: []func(c *projTest, tester *tester, t *testing.T){
 			projectSACandidateBodyValidator,
@@ -255,7 +255,7 @@ var listProjectSACandidatesTests = []*projTest{
 		endpoint:  "/api/projects/1/candidates",
 		body:      ``,
 		expStatus: http.StatusOK,
-		expBody:   `[{"id":1,"actions":[{"name":"upload-oidc-idp-issuer-ca-data","filename":"/fake/path/to/ca.pem","docs":"https://github.com/porter-dev/porter","resolved":false,"fields":"oidc_idp_issuer_ca_data"}],"project_id":1,"kind":"connector","cluster_name":"cluster-test","cluster_endpoint":"https://localhost","auth_mechanism":"oidc"}]`,
+		expBody:   `[{"id":1,"actions":[{"name":"upload-oidc-idp-issuer-ca-data","filename":"/fake/path/to/ca.pem","docs":"https://github.com/porter-dev/porter","resolved":false,"fields":"oidc_idp_issuer_ca_data"}],"project_id":1,"kind":"connector","context_name":"context-test","cluster_name":"cluster-test","cluster_endpoint":"https://localhost","auth_mechanism":"oidc"}]`,
 		useCookie: true,
 		validators: []func(c *projTest, tester *tester, t *testing.T){
 			projectSACandidateBodyValidator,

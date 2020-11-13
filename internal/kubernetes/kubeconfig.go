@@ -69,6 +69,7 @@ func GetServiceAccountCandidates(kubeconfig []byte) ([]*models.ServiceAccountCan
 			res = append(res, &models.ServiceAccountCandidate{
 				Actions:           actions,
 				Kind:              "connector",
+				ContextName:       contextName,
 				ClusterName:       clusterName,
 				ClusterEndpoint:   rawConf.Clusters[clusterName].Server,
 				AuthMechanism:     authMechanism,

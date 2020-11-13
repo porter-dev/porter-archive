@@ -12,6 +12,7 @@ import (
 	"github.com/fatih/color"
 	"github.com/porter-dev/porter/cli/cmd/utils"
 	"github.com/porter-dev/porter/internal/kubernetes/local"
+	awsLocal "github.com/porter-dev/porter/internal/providers/aws/local"
 	gcpLocal "github.com/porter-dev/porter/internal/providers/gcp/local"
 
 	"github.com/porter-dev/porter/cli/cmd/api"
@@ -116,6 +117,8 @@ func Kubeconfig(
 						saCandidate.ClusterEndpoint,
 						saCandidate.ClusterName,
 						saCandidate.AWSClusterIDGuess,
+						kubeconfigPath,
+						saCandidate.ContextName,
 					)
 
 					if err != nil {
@@ -260,11 +263,18 @@ Would you like to proceed? %s `,
 	}
 
 	if userResp := strings.ToLower(userResp); userResp == "y" || userResp == "yes" {
-		agent, _ := gcpLocal.NewDefaultAgent()
+		agent, err := gcpLocal.NewDefaultAgent()
+
+		if err != nil {
+			color.New(color.FgRed).Printf("Automatic creation failed, manual input required. Error was: %v\n", err)
+			return resolveGCPKeyActionManual(endpoint, clusterName)
+		}
+
 		projID, err := agent.GetProjectIDForGKECluster(endpoint)
 
 		if err != nil {
-			return nil, err
+			color.New(color.FgRed).Printf("Automatic creation failed, manual input required. Error was: %v\n", err)
+			return resolveGCPKeyActionManual(endpoint, clusterName)
 		}
 
 		agent.ProjectID = projID
@@ -275,21 +285,23 @@ Would you like to proceed? %s `,
 		resp, err := agent.CreateServiceAccount(name)
 
 		if err != nil {
-			color.New(color.FgRed).Println("Automatic creation failed, manual input required.")
+			color.New(color.FgRed).Printf("Automatic creation failed, manual input required. Error was: %v\n", err)
 			return resolveGCPKeyActionManual(endpoint, clusterName)
 		}
 
 		err = agent.SetServiceAccountIAMPolicy(resp)
 
 		if err != nil {
-			return nil, err
+			color.New(color.FgRed).Printf("Automatic creation failed, manual input required. Error was: %v\n", err)
+			return resolveGCPKeyActionManual(endpoint, clusterName)
 		}
 
 		// get the service account key data to send to the server
 		bytes, err := agent.CreateServiceAccountKey(resp)
 
 		if err != nil {
-			return nil, err
+			color.New(color.FgRed).Printf("Automatic creation failed, manual input required. Error was: %v\n", err)
+			return resolveGCPKeyActionManual(endpoint, clusterName)
 		}
 
 		return &models.ServiceAccountAllActions{
@@ -332,8 +344,48 @@ func resolveAWSAction(
 	endpoint string,
 	clusterName string,
 	awsClusterIDGuess string,
+	kubeconfigPath string,
+	contextName string,
 ) (*models.ServiceAccountAllActions, error) {
-	// just support manual for now
+	userResp, err := utils.PromptPlaintext(
+		fmt.Sprintf(
+			`Detected AWS cluster in kubeconfig for the endpoint %s (%s). 
+Porter can set up an IAM user in your AWS account to connect to this cluster automatically.
+Would you like to proceed? %s `,
+			color.New(color.FgCyan).Sprintf("%s", endpoint),
+			clusterName,
+			color.New(color.FgCyan).Sprintf("[y/n]"),
+		),
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	if userResp := strings.ToLower(userResp); userResp == "y" || userResp == "yes" {
+		agent, err := awsLocal.NewDefaultAgent(kubeconfigPath, contextName)
+
+		if err != nil {
+			color.New(color.FgRed).Printf("Automatic creation failed, manual input required. Error was: %v\n", err)
+			return resolveAWSActionManual(endpoint, clusterName, awsClusterIDGuess)
+		}
+
+		creds, err := agent.CreateIAMKubernetesMapping(awsClusterIDGuess)
+
+		if err != nil {
+			color.New(color.FgRed).Printf("Automatic creation failed, manual input required. Error was: %v\n", err)
+			return resolveAWSActionManual(endpoint, clusterName, awsClusterIDGuess)
+		}
+
+		return &models.ServiceAccountAllActions{
+			Name:               models.AWSDataAction,
+			AWSAccessKeyID:     creds.AWSAccessKeyID,
+			AWSSecretAccessKey: creds.AWSSecretAccessKey,
+			AWSClusterID:       creds.AWSClusterID,
+		}, nil
+	}
+
+	// fallback to manual
 	return resolveAWSActionManual(endpoint, clusterName, awsClusterIDGuess)
 }
 

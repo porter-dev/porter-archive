@@ -19,19 +19,10 @@ import (
 // options set on the host, or an explicit kubeconfig path. It then strips the kubeconfig
 // of contexts not specified in the contexts array, and returns generate kubeconfig.
 func GetKubeconfigFromHost(kubeconfigPath string, contexts []string) ([]byte, error) {
-	envVarName := clientcmd.RecommendedConfigPathEnvVar
+	kubeconfigPath, err := ResolveKubeconfigPath(kubeconfigPath)
 
-	if kubeconfigPath != "" {
-		if _, err := os.Stat(kubeconfigPath); os.IsNotExist(err) {
-			// the specified kubeconfig does not exist so fallback to other options
-			kubeconfigPath = ""
-		}
-	}
-
-	if kubeconfigPath == "" && os.Getenv(envVarName) == "" {
-		if home := homedir.HomeDir(); home != "" {
-			kubeconfigPath = filepath.Join(home, ".kube", "config")
-		}
+	if err != nil {
+		return nil, err
 	}
 
 	loadingRules := clientcmd.NewDefaultClientConfigLoadingRules()
@@ -65,6 +56,31 @@ func GetKubeconfigFromHost(kubeconfigPath string, contexts []string) ([]byte, er
 	}
 
 	return clientcmd.Write(strippedRawConf)
+}
+
+// ResolveKubeconfigPath finds the path to a kubeconfig, first searching for the
+// passed string, then in the home directory, then as an env variable.
+func ResolveKubeconfigPath(kubeconfigPath string) (string, error) {
+	envVarName := clientcmd.RecommendedConfigPathEnvVar
+
+	if kubeconfigPath != "" {
+		if _, err := os.Stat(kubeconfigPath); os.IsNotExist(err) {
+			// the specified kubeconfig does not exist, throw error
+			return "", fmt.Errorf("kubeconfig not found: %s does not exist", kubeconfigPath)
+		}
+	}
+
+	if kubeconfigPath == "" {
+		if os.Getenv(envVarName) == "" {
+			if home := homedir.HomeDir(); home != "" {
+				kubeconfigPath = filepath.Join(home, ".kube", "config")
+			}
+		} else {
+			kubeconfigPath = os.Getenv(envVarName)
+		}
+	}
+
+	return kubeconfigPath, nil
 }
 
 // GetConfigFromHostWithCertData gets the kubeconfig using default options set on the host:

@@ -6,6 +6,8 @@ import api from '../../../../shared/api';
 import { Context } from '../../../../shared/Context';
 import { ChartType, StorageType } from '../../../../shared/types';
 
+import ConfirmOverlay from '../../../../components/ConfirmOverlay';
+
 type PropsType = {
   showRevisions: boolean,
   toggleShowRevisions: () => void,
@@ -149,28 +151,6 @@ export default class RevisionSection extends Component<PropsType, StateType> {
     }
   }
 
-  renderConfirmOverlay = () => {
-    if (this.state.rollbackRevision) {
-      return (
-        <ConfirmOverlay>
-          {`Are you sure you want to revert to version ${this.state.rollbackRevision}?`}
-          <ButtonRow>
-            <ConfirmButton
-              onClick={() => this.handleRollback()}
-            >
-              Yes
-            </ConfirmButton>
-            <ConfirmButton
-              onClick={() => this.setState({ rollbackRevision: null })}
-            >
-              No
-            </ConfirmButton>
-          </ButtonRow>
-        </ConfirmOverlay>
-      );
-    }
-  }
-
   renderContents = () => {
     if (this.state.loading) {
       return (
@@ -205,7 +185,12 @@ export default class RevisionSection extends Component<PropsType, StateType> {
     return (
       <StyledRevisionSection showRevisions={this.props.showRevisions}>
         {this.renderContents()}
-        {this.renderConfirmOverlay()}
+        <ConfirmOverlay
+          show={this.state.rollbackRevision && true}
+          message={`Are you sure you want to revert to version ${this.state.rollbackRevision}?`}
+          onYes={this.handleRollback}
+          onNo={() => this.setState({ rollbackRevision: null })}
+        />
       </StyledRevisionSection>
     );
   }
@@ -238,67 +223,6 @@ const StatusWrapper = styled.div`
   font-size: 13px;
   color: #ffffff55;
   margin-right: 25px;
-`;
-
-const ConfirmOverlay = styled.div`
-  position: absolute;
-  top: 0px;
-  opacity: 100%;
-  left: 0px;
-  width: 100%;
-  height: 100%;
-  z-index: 999;
-  display: flex;
-  padding-bottom: 30px;
-  align-items: center;
-  justify-content: center;
-  font-family: 'Work Sans', sans-serif;
-  font-size: 18px;
-  font-weight: 500;
-  color: white;
-  flex-direction: column;
-  background: rgb(0,0,0,0.73);
-  opacity: 0;
-  animation: lindEnter 0.2s;
-  animation-fill-mode: forwards;
-
-  @keyframes lindEnter {
-    from { opacity: 0; }
-    to   { opacity: 1; }
-  }
-`;
-
-const ButtonRow = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  width: 180px;
-  margin-top: 30px;
-`;
-
-const ConfirmButton = styled.div`
-  font-size: 18px;
-  padding: 10px 15px;
-  outline: none; 
-  border: 1px solid white;
-  border-radius: 10px; 
-  text-align: center; 
-  width: 80px;
-  cursor: pointer;
-  opacity: 0;
-  font-family: 'Work Sans', sans-serif;
-  font-size: 18px;
-  font-weight: 500;
-  animation: linEnter 0.3s 0.1s;
-  animation-fill-mode: forwards;
-  @keyframes linEnter {
-    from { transform: translateY(20px); opacity: 0; }
-    to   { transform: translateY(0px); opacity: 1; }
-  }
-  :hover {
-    background: white;
-    color: #232323;
-  }
 `;
 
 const RevisionList = styled.div`

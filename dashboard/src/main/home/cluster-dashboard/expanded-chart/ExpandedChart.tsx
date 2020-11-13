@@ -201,7 +201,7 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
         if (err) {
           console.log(err)
         } else {
-          this.setState({ components: res.data, podSelectors: res.data.PodSelectors });
+          this.setState({ components: res.data.Objects, podSelectors: res.data.PodSelectors });
         }
       });
 
@@ -600,6 +600,7 @@ const StyledExpandedChart = styled.div`
   animation-fill-mode: forwards;
   padding: 25px; 
   display: flex;
+  overflow: hidden;
   flex-direction: column;
 
   @keyframes floatIn {

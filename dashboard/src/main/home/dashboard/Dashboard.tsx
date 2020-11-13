@@ -3,8 +3,6 @@ import styled from 'styled-components';
 import gradient from '../../../assets/gradient.jpg';
 
 import { Context } from '../../../shared/Context';
-import { ChartType, StorageType } from '../../../shared/types';
-import api from '../../../shared/api';
 
 type PropsType = {
 };
@@ -13,9 +11,6 @@ type StateType = {
 };
 
 export default class Dashboard extends Component<PropsType, StateType> {
-  state = {
-  }
-
   renderDashboardIcon = () => {
     let { currentProject } = this.context;
     return (
@@ -33,7 +28,12 @@ export default class Dashboard extends Component<PropsType, StateType> {
         <TitleSection>
           {this.renderDashboardIcon()}
           <Title>{currentProject && currentProject.name}</Title>
-          <i className="material-icons">more_vert</i>
+          <i
+            className="material-icons"
+            onClick={() => this.context.setCurrentModal('UpdateProjectModal', { currentProject: currentProject })}
+          >
+            more_vert
+          </i>
         </TitleSection>
 
         <InfoSection>
@@ -48,7 +48,7 @@ export default class Dashboard extends Component<PropsType, StateType> {
         <LineBreak />
 
         <Placeholder>
-          🚧 Pipelines under construction.
+          🚀 Pipelines coming soon.
         </Placeholder>
       </div>
     );
@@ -223,7 +223,7 @@ const TitleSection = styled.div`
 
   > i {
     margin-left: 10px;
-    cursor: not-allowed;
+    cursor: pointer;
     font-size 18px;
     color: #858FAAaa;
     padding: 5px;

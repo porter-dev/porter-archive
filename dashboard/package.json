@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
+    "@fullstory/browser": "^1.4.5",
     "@types/js-yaml": "^3.12.5",
     "@types/markdown-to-jsx": "^6.11.3",
     "@types/qs": "^6.9.5",
@@ -11,6 +12,7 @@
     "dotenv": "^8.2.0",
     "js-yaml": "^3.14.0",
     "markdown-to-jsx": "^7.0.1",
+    "posthog-node": "^1.0.6",
     "qs": "^6.9.4",
     "react": "^16.13.1",
     "react-ace": "^9.1.3",

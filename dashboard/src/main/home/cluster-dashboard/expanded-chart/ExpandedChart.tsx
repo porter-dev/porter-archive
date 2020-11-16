@@ -295,7 +295,7 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
           selectors={this.state.podSelectors}
         />
       );
-    } else if (this.state.currentTab === defaultTab) {
+    } else if (this.state.currentTab === 'values-form') {
       return (
         <ValuesFormWrapper>
           <ValuesForm formData={dummyForm} />

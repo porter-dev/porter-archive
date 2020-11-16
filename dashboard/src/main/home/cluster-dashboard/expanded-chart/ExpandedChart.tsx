@@ -139,11 +139,13 @@ const dummyForm = {
   ]
 }
 
+const defaultTab = 'environment';
+
 // TODO: consolidate revisionPreview and currentChart (currentChart can just be the initial state)
 export default class ExpandedChart extends Component<PropsType, StateType> {
   state = {
     showRevisions: false,
-    currentTab: 'values-form',
+    currentTab: defaultTab,
     components: [] as ResourceType[],
     podSelectors: [] as string[],
     revisionPreview: null as (ChartType | null),
@@ -206,7 +208,7 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
 
       // Handle preview old chart while logs tab is open
       if (this.state.currentTab === 'logs') {
-        this.setState({ currentTab: 'values-form' });
+        this.setState({ currentTab: defaultTab });
       } else if (this.state.currentTab === 'detailed-logs') {
         this.setState({ currentTab: 'graph' });
       }
@@ -217,7 +219,7 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
 
   toggleDevOpsMode = () => {
     if (this.state.devOpsMode) {
-      this.setState({ devOpsMode: false, currentTab: 'values-form' });
+      this.setState({ devOpsMode: false, currentTab: defaultTab });
     } else {
       this.setState({ devOpsMode: true, currentTab: 'graph' });
     }
@@ -293,7 +295,7 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
           selectors={this.state.podSelectors}
         />
       );
-    } else if (this.state.currentTab === 'values-form') {
+    } else if (this.state.currentTab === defaultTab) {
       return (
         <ValuesFormWrapper>
           <ValuesForm formData={dummyForm} />

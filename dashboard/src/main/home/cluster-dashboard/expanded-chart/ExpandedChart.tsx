@@ -41,7 +41,6 @@ const tabOptions = [
 ];
 
 const basicOptions = [
-  { label: 'Values', value: 'values-form' },
   { label: 'Environment', value: 'environment' },
   { label: 'Logs', value: 'logs' },
   { label: 'Deploy', value: 'deploy' },

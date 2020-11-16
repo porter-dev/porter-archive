@@ -59,7 +59,7 @@ const LogStream = styled.div`
   height: 100%;
   background: #202227;
   position: relative;
-  padding: 0px;
+  padding: 25px;
   user-select: text;
   overflow: auto;
 `;

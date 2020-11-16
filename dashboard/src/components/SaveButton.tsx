@@ -6,7 +6,8 @@ type PropsType = {
   text: string,
   onClick: () => void,
   disabled?: boolean,
-  status?: string | null
+  status?: string | null,
+  color?: string,
 };
 
 type StateType = {
@@ -45,6 +46,7 @@ export default class SaveButton extends Component<PropsType, StateType> {
         <Button 
           disabled={this.props.disabled}
           onClick={this.props.onClick}
+          color={this.props.color || '#616FEEcc'}
         >
           {this.props.text}
         </Button>
@@ -105,12 +107,12 @@ const Button = styled.button`
   text-align: left;
   border: 0;
   border-radius: 5px;
-  background: ${(props) => (!props.disabled ? '#616FEEcc' : '#aaaabb')};
+  background: ${(props) => (!props.disabled ? props.color : '#aaaabb')};
   box-shadow: ${(props) => (!props.disabled ? '0 2px 5px 0 #00000030' : 'none')};
   cursor: ${(props) => (!props.disabled ? 'pointer' : 'default')};
   user-select: none;
   :focus { outline: 0 }
   :hover {
-    background: ${(props) => (!props.disabled ? '#616FEEff' : '#aaaabb')};
+    filter: ${(props) => (!props.disabled ? 'brightness(120%)' : '')};
   }
 `;

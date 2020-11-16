@@ -4,7 +4,7 @@ import drawerBg from '../../../assets/drawer-bg.png';
 
 import api from '../../../shared/api';
 import { Context } from '../../../shared/Context';
-import { KubeContextConfig } from '../../../shared/types';
+import { Cluster } from '../../../shared/types';
 
 import Drawer from './Drawer';
 
@@ -19,7 +19,10 @@ type PropsType = {
 type StateType = {
   showDrawer: boolean,
   initializedDrawer: boolean,
-  kubeContexts: KubeContextConfig[]
+  clusters: Cluster[],
+
+  // Track last project id for refreshing clusters on project change
+  prevProjectId: number
 };
 
 export default class ClusterSection extends Component<PropsType, StateType> {
@@ -28,14 +31,15 @@ export default class ClusterSection extends Component<PropsType, StateType> {
   state = {
     showDrawer: false,
     initializedDrawer: false,
-    kubeContexts: [] as KubeContextConfig[]
+    clusters: [] as Cluster[],
+    prevProjectId: this.context.currentProject.id
   };
 
   updateClusters = () => {
-    let { setCurrentError, user, setCurrentCluster } = this.context;
+    let { currentProject, setCurrentCluster } = this.context;
 
     // TODO: query with selected filter once implemented
-    api.getContexts('<token>', {}, { id: user.userId }, (err: any, res: any) => {
+    api.getClusters('<token>', {}, { id: currentProject.id }, (err: any, res: any) => {
       if (err) {
 
         // Assume intializing if no contexts
@@ -45,15 +49,13 @@ export default class ClusterSection extends Component<PropsType, StateType> {
         
         // TODO: handle uninitialized kubeconfig
         if (res.data) {
-
-          // Filter selected (temporary)
-          let kubeContexts = res.data.filter((x: KubeContextConfig) => x.selected);
-          if (kubeContexts.length > 0) {
-            this.setState({ kubeContexts });
-            setCurrentCluster(kubeContexts[0].name);
+          let clusters = res.data;
+          if (clusters.length > 0) {
+            this.setState({ clusters });
+            setCurrentCluster(clusters[0]);
           } else {
-            this.setState({ kubeContexts: [] });
-            setCurrentCluster('');
+            this.setState({ clusters: [] });
+            setCurrentCluster(null);
           }
         }
       }
@@ -67,6 +69,13 @@ export default class ClusterSection extends Component<PropsType, StateType> {
   // Need to override showDrawer when the sidebar is closed
   componentDidUpdate(prevProps: PropsType) {
     if (prevProps !== this.props) {
+
+      // Refresh clusters on project change 
+      if (this.state.prevProjectId !== this.context.currentProject.id) {
+        this.updateClusters();
+        this.setState({ prevProjectId: this.context.currentProject.id });
+      }
+
       if (this.props.forceCloseDrawer && this.state.showDrawer) {
         this.setState({ showDrawer: false });
         this.props.releaseDrawer();
@@ -85,10 +94,10 @@ export default class ClusterSection extends Component<PropsType, StateType> {
     if (this.state.initializedDrawer) {
       return (
         <Drawer
-          updateClusters={this.updateClusters}
           toggleDrawer={this.toggleDrawer}
           showDrawer={this.state.showDrawer}
-          kubeContexts={this.state.kubeContexts}
+          clusters={this.state.clusters}
+          setCurrentView={this.props.setCurrentView}
         />
       );
     }
@@ -99,15 +108,15 @@ export default class ClusterSection extends Component<PropsType, StateType> {
   }
 
   renderContents = (): JSX.Element => {
-    let { kubeContexts, showDrawer } = this.state;
+    let { clusters, showDrawer } = this.state;
     let { currentCluster } = this.context;
 
-    if (kubeContexts.length > 0) {
+    if (clusters.length > 0) {
       return (
         <ClusterSelector isSelected={this.props.isSelected}>
-          <LinkWrapper onClick={() => this.props.setCurrentView('dashboard')}>
+          <LinkWrapper onClick={() => this.props.setCurrentView('cluster-dashboard')}>
             <ClusterIcon><i className="material-icons">device_hub</i></ClusterIcon>
-            <ClusterName>{currentCluster}</ClusterName>
+            <ClusterName>{currentCluster && currentCluster.name}</ClusterName>
           </LinkWrapper>
           <DrawerButton onClick={this.toggleDrawer}>
             <BgAccent src={drawerBg} />
@@ -116,11 +125,19 @@ export default class ClusterSection extends Component<PropsType, StateType> {
             </DropdownIcon>
           </DrawerButton>
         </ClusterSelector>
-      )
+      );
+    } else if (false) {
+      return (
+        <InitializeButton onClick={this.showClusterConfigModal}>
+          <Plus>+</Plus> Add a Cluster
+        </InitializeButton>
+      );
     }
 
     return (
-      <InitializeButton onClick={this.showClusterConfigModal}>
+      <InitializeButton
+        onClick={() => this.context.setCurrentModal('ClusterInstructionsModal', {})}
+      >
         <Plus>+</Plus> Add a Cluster
       </InitializeButton>
     )
@@ -198,7 +215,7 @@ const ClusterName = styled.div`
   display: inline-block;
   width: 130px;
   margin-left: 3px;
-  font-weight: 600;
+  font-weight: 400;
 `;
 
 const DropdownIcon = styled.span`
@@ -233,11 +250,11 @@ const DropdownIcon = styled.span`
 
 const ClusterIcon = styled.div`
   > i {
-    font-size: 18px;
+    font-size: 16px;
     display: flex;
     align-items: center;
     margin-bottom: 0px;
-    margin-left: 15px;
+    margin-left: 17px;
     margin-right: 10px;
   }
 `;

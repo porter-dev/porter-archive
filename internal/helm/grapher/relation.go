@@ -127,7 +127,7 @@ func (parsed *ParsedObjs) GetControlRel() {
 					selector = selector + ","
 				}
 			}
-			selectors = append(selectors, selector)
+			selectors = appendIfNotDuplicate(selectors, selector)
 		}
 	}
 
@@ -240,6 +240,17 @@ func (parsed *ParsedObjs) GetSpecRel() {
 		parsed.Objects[i].Relations.SpecRels = rels
 
 	}
+}
+
+// ControlRel helpers
+func appendIfNotDuplicate(selectors []string, selector string) []string {
+	for _, e := range selectors {
+		if selector == e {
+			return selectors
+		}
+	}
+	selectors = append(selectors, selector)
+	return selectors
 }
 
 // LabelRel helpers

@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/porter-dev/porter/internal/models"
 	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
@@ -17,6 +18,9 @@ import (
 	"k8s.io/client-go/restmapper"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/util/homedir"
+
+	// add oidc provider here
+	_ "k8s.io/client-go/plugin/pkg/client/auth/oidc"
 )
 
 // GetAgentOutOfClusterConfig creates a new Agent using the OutOfClusterConfig
@@ -56,16 +60,21 @@ func GetAgentTesting(objects ...runtime.Object) *Agent {
 	return &Agent{&fakeRESTClientGetter{}, fake.NewSimpleClientset(objects...)}
 }
 
+// UpdateTokenCacheFunc is a function that updates the token cache
+// with a new token and expiry time
+type UpdateTokenCacheFunc func(token string, expiry time.Time) error
+
 // OutOfClusterConfig is the set of parameters required for an out-of-cluster connection.
 // This implements RESTClientGetter
 type OutOfClusterConfig struct {
-	KubeConfig      []byte
-	AllowedContexts []string
-	Context         string `json:"context" form:"required"`
+	ServiceAccount   *models.ServiceAccount `form:"required"`
+	ClusterID        uint                   `json:"cluster_id" form:"required"`
+	UpdateTokenCache UpdateTokenCacheFunc
 }
 
-// ToRESTConfig creates a kubernetes REST client factory -- it simply calls ClientConfig on
-// the result of ToRawKubeConfigLoader
+// ToRESTConfig creates a kubernetes REST client factory -- it calls ClientConfig on
+// the result of ToRawKubeConfigLoader, and also adds a custom http transport layer
+// if necessary (required for GCP auth)
 func (conf *OutOfClusterConfig) ToRESTConfig() (*rest.Config, error) {
 	restConf, err := conf.ToRawKubeConfigLoader().ClientConfig()
 
@@ -80,10 +89,10 @@ func (conf *OutOfClusterConfig) ToRESTConfig() (*rest.Config, error) {
 // ToRawKubeConfigLoader creates a clientcmd.ClientConfig from the raw kubeconfig found in
 // the OutOfClusterConfig. It does not implement loading rules or overrides.
 func (conf *OutOfClusterConfig) ToRawKubeConfigLoader() clientcmd.ClientConfig {
-	cmdConf, _ := GetRestrictedClientConfigFromBytes(
-		conf.KubeConfig,
-		conf.Context,
-		conf.AllowedContexts,
+	cmdConf, _ := GetClientConfigFromServiceAccount(
+		conf.ServiceAccount,
+		conf.ClusterID,
+		conf.UpdateTokenCache,
 	)
 
 	return cmdConf

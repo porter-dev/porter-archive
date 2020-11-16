@@ -94,7 +94,11 @@ func start(
 	db string,
 	port int,
 ) error {
-	env := make([]string, 0)
+	env := []string{
+		"NODE_ENV=production",
+		"FULLSTORY_ORG_ID=VXNSS",
+	}
+
 	var porterDB docker.PorterDB
 
 	switch db {

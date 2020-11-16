@@ -10,6 +10,7 @@ import (
 	"github.com/porter-dev/porter/internal/forms"
 	"github.com/porter-dev/porter/internal/helm"
 	"github.com/porter-dev/porter/internal/helm/grapher"
+	"github.com/porter-dev/porter/internal/repository"
 )
 
 // Enumeration of release API error codes, represented as int64
@@ -25,7 +26,9 @@ const (
 func (app *App) HandleListReleases(w http.ResponseWriter, r *http.Request) {
 	form := &forms.ListReleaseForm{
 		ReleaseForm: &forms.ReleaseForm{
-			Form: &helm.Form{},
+			Form: &helm.Form{
+				UpdateTokenCache: app.updateTokenCache,
+			},
 		},
 		ListFilter: &helm.ListFilter{},
 	}
@@ -63,7 +66,9 @@ func (app *App) HandleGetRelease(w http.ResponseWriter, r *http.Request) {
 
 	form := &forms.GetReleaseForm{
 		ReleaseForm: &forms.ReleaseForm{
-			Form: &helm.Form{},
+			Form: &helm.Form{
+				UpdateTokenCache: app.updateTokenCache,
+			},
 		},
 		Name:     name,
 		Revision: int(revision),
@@ -105,7 +110,9 @@ func (app *App) HandleGetReleaseComponents(w http.ResponseWriter, r *http.Reques
 
 	form := &forms.GetReleaseForm{
 		ReleaseForm: &forms.ReleaseForm{
-			Form: &helm.Form{},
+			Form: &helm.Form{
+				UpdateTokenCache: app.updateTokenCache,
+			},
 		},
 		Name:     name,
 		Revision: int(revision),
@@ -157,7 +164,9 @@ func (app *App) HandleListReleaseHistory(w http.ResponseWriter, r *http.Request)
 
 	form := &forms.ListReleaseHistoryForm{
 		ReleaseForm: &forms.ReleaseForm{
-			Form: &helm.Form{},
+			Form: &helm.Form{
+				UpdateTokenCache: app.updateTokenCache,
+			},
 		},
 		Name: name,
 	}
@@ -195,12 +204,26 @@ func (app *App) HandleListReleaseHistory(w http.ResponseWriter, r *http.Request)
 func (app *App) HandleUpgradeRelease(w http.ResponseWriter, r *http.Request) {
 	name := chi.URLParam(r, "name")
 
+	vals, err := url.ParseQuery(r.URL.RawQuery)
+
+	if err != nil {
+		app.handleErrorFormDecoding(err, ErrReleaseDecode, w)
+		return
+	}
+
 	form := &forms.UpgradeReleaseForm{
 		ReleaseForm: &forms.ReleaseForm{
-			Form: &helm.Form{},
+			Form: &helm.Form{
+				UpdateTokenCache: app.updateTokenCache,
+			},
 		},
 		Name: name,
 	}
+
+	form.ReleaseForm.PopulateHelmOptionsFromQueryParams(
+		vals,
+		app.repo.ServiceAccount,
+	)
 
 	if err := json.NewDecoder(r.Body).Decode(form); err != nil {
 		app.handleErrorFormDecoding(err, ErrUserDecode, w)
@@ -236,12 +259,26 @@ func (app *App) HandleUpgradeRelease(w http.ResponseWriter, r *http.Request) {
 func (app *App) HandleRollbackRelease(w http.ResponseWriter, r *http.Request) {
 	name := chi.URLParam(r, "name")
 
+	vals, err := url.ParseQuery(r.URL.RawQuery)
+
+	if err != nil {
+		app.handleErrorFormDecoding(err, ErrReleaseDecode, w)
+		return
+	}
+
 	form := &forms.RollbackReleaseForm{
 		ReleaseForm: &forms.ReleaseForm{
-			Form: &helm.Form{},
+			Form: &helm.Form{
+				UpdateTokenCache: app.updateTokenCache,
+			},
 		},
 		Name: name,
 	}
+
+	form.ReleaseForm.PopulateHelmOptionsFromQueryParams(
+		vals,
+		app.repo.ServiceAccount,
+	)
 
 	if err := json.NewDecoder(r.Body).Decode(form); err != nil {
 		app.handleErrorFormDecoding(err, ErrUserDecode, w)
@@ -283,7 +320,7 @@ func (app *App) getAgentFromQueryParams(
 	r *http.Request,
 	form *forms.ReleaseForm,
 	// populate uses the query params to populate a form
-	populate ...func(vals url.Values),
+	populate ...func(vals url.Values, repo repository.ServiceAccountRepository) error,
 ) (*helm.Agent, error) {
 	vals, err := url.ParseQuery(r.URL.RawQuery)
 
@@ -293,7 +330,11 @@ func (app *App) getAgentFromQueryParams(
 	}
 
 	for _, f := range populate {
-		f(vals)
+		err := f(vals, app.repo.ServiceAccount)
+
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return app.getAgentFromReleaseForm(w, r, form)
@@ -306,19 +347,7 @@ func (app *App) getAgentFromReleaseForm(
 	r *http.Request,
 	form *forms.ReleaseForm,
 ) (*helm.Agent, error) {
-	// read the session in order to generate the Helm agent
-	session, err := app.store.Get(r, app.cookieName)
-
-	// since we have already authenticated the user, throw a data read error if the session
-	// cannot be found
-	if err != nil {
-		app.handleErrorDataRead(err, w)
-		return nil, err
-	}
-
-	if userID, ok := session.Values["user_id"].(uint); ok {
-		form.PopulateHelmOptionsFromUserID(userID, app.repo.User)
-	}
+	var err error
 
 	// validate the form
 	if err := app.validator.Struct(form); err != nil {

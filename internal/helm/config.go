@@ -6,6 +6,7 @@ import (
 
 	"github.com/porter-dev/porter/internal/kubernetes"
 	"github.com/porter-dev/porter/internal/logger"
+	"github.com/porter-dev/porter/internal/models"
 	"helm.sh/helm/v3/pkg/action"
 	"helm.sh/helm/v3/pkg/chartutil"
 	"helm.sh/helm/v3/pkg/kube"
@@ -17,11 +18,11 @@ import (
 // Form represents the options for connecting to a cluster and
 // creating a Helm agent
 type Form struct {
-	KubeConfig      []byte
-	AllowedContexts []string
-	Context         string `json:"context" form:"required"`
-	Storage         string `json:"storage" form:"oneof=secret configmap memory"`
-	Namespace       string `json:"namespace"`
+	ServiceAccount   *models.ServiceAccount `form:"required"`
+	ClusterID        uint                   `json:"cluster_id" form:"required"`
+	Storage          string                 `json:"storage" form:"oneof=secret configmap memory"`
+	Namespace        string                 `json:"namespace"`
+	UpdateTokenCache kubernetes.UpdateTokenCacheFunc
 }
 
 // GetAgentOutOfClusterConfig creates a new Agent from outside the cluster using
@@ -29,9 +30,9 @@ type Form struct {
 func GetAgentOutOfClusterConfig(form *Form, l *logger.Logger) (*Agent, error) {
 	// create a kubernetes agent
 	conf := &kubernetes.OutOfClusterConfig{
-		KubeConfig:      form.KubeConfig,
-		AllowedContexts: form.AllowedContexts,
-		Context:         form.Context,
+		ServiceAccount:   form.ServiceAccount,
+		ClusterID:        form.ClusterID,
+		UpdateTokenCache: form.UpdateTokenCache,
 	}
 
 	k8sAgent, err := kubernetes.GetAgentOutOfClusterConfig(conf)

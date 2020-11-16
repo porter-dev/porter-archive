@@ -2,6 +2,7 @@ package forms
 
 import (
 	"net/url"
+	"strconv"
 
 	"github.com/porter-dev/porter/internal/kubernetes"
 	"github.com/porter-dev/porter/internal/repository"
@@ -14,22 +15,35 @@ type K8sForm struct {
 
 // PopulateK8sOptionsFromQueryParams populates fields in the ReleaseForm using the passed
 // url.Values (the parsed query params)
-func (kf *K8sForm) PopulateK8sOptionsFromQueryParams(vals url.Values) {
-	if context, ok := vals["context"]; ok && len(context) == 1 {
-		kf.Context = context[0]
+func (kf *K8sForm) PopulateK8sOptionsFromQueryParams(
+	vals url.Values,
+	repo repository.ServiceAccountRepository,
+) error {
+	if clusterID, ok := vals["cluster_id"]; ok && len(clusterID) == 1 {
+		id, err := strconv.ParseUint(clusterID[0], 10, 64)
+
+		if err != nil {
+			return err
+		}
+
+		kf.ClusterID = uint(id)
 	}
-}
 
-// PopulateK8sOptionsFromUserID uses the passed userID to populate the HelmOptions object
-func (kf *K8sForm) PopulateK8sOptionsFromUserID(userID uint, repo repository.UserRepository) error {
-	user, err := repo.ReadUser(userID)
+	if serviceAccountID, ok := vals["service_account_id"]; ok && len(serviceAccountID) == 1 {
+		id, err := strconv.ParseUint(serviceAccountID[0], 10, 64)
 
-	if err != nil {
-		return err
+		if err != nil {
+			return err
+		}
+
+		sa, err := repo.ReadServiceAccount(uint(id))
+
+		if err != nil {
+			return err
+		}
+
+		kf.ServiceAccount = sa
 	}
-
-	kf.AllowedContexts = user.ContextToSlice()
-	kf.KubeConfig = user.RawKubeConfig
 
 	return nil
 }

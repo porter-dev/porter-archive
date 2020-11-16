@@ -4,11 +4,13 @@ import gradient from '../../../assets/gradient.jpg';
 import category from '../../../assets/category.svg';
 import pipelines from '../../../assets/pipelines.svg';
 import integrations from '../../../assets/integrations.svg';
+import filter from '../../../assets/filter.svg';
 
 import api from '../../../shared/api';
 import { Context } from '../../../shared/Context';
 
 import ClusterSection from './ClusterSection';
+import ProjectSectionContainer from './ProjectSectionContainer';
 
 type PropsType = {
   logOut: () => void,
@@ -102,6 +104,52 @@ export default class Sidebar extends Component<PropsType, StateType> {
     }); 
   }
 
+  renderProjectContents = () => {
+    if (this.context.currentProject) {
+      return (
+        <div>
+          <SidebarLabel>Home</SidebarLabel>
+          <NavButton
+            onClick={() => this.props.setCurrentView('dashboard')}
+            selected={this.props.currentView === 'dashboard'}
+          >
+            <img src={category} />
+            Dashboard
+          </NavButton>
+          <NavButton
+            onClick={() => this.props.setCurrentView('templates')}
+            selected={this.props.currentView === 'templates'}
+          >
+            <img src={filter} />
+            Templates
+          </NavButton>
+          <NavButton disabled={true}>
+            <img src={integrations} />
+            Integrations
+          </NavButton>
+
+          <br />
+
+          <SidebarLabel>Current Cluster</SidebarLabel>
+          <ClusterSection 
+            forceCloseDrawer={this.state.forceCloseDrawer} 
+            releaseDrawer={() => this.setState({ forceCloseDrawer: false })}
+            setWelcome={this.props.setWelcome}
+            setCurrentView={this.props.setCurrentView}
+            isSelected={this.props.currentView === 'cluster-dashboard'}
+          />
+        </div>
+      );
+    }
+
+    // Render placeholder if no project exists
+    return (
+      <ProjectPlaceholder>
+        No projects found.
+      </ProjectPlaceholder>
+    );
+  }
+
   // SidebarBg is separate to cover retracted drawer
   render() {
     return (
@@ -118,44 +166,15 @@ export default class Sidebar extends Component<PropsType, StateType> {
             <i className="material-icons">double_arrow</i>
           </CollapseButton>
 
-          <UserSection>
-            <RingWrapper>
-              <UserIcon src={gradient} />
-            </RingWrapper>
-            <UserName>{this.context.user.email}</UserName>
-          </UserSection>
-
-          <SidebarLabel>Home</SidebarLabel>
-          <NavButton
-            onClick={() => this.props.setCurrentView('templates')}
-            selected={this.props.currentView === 'templates'}
-          >
-            <img src={category} />
-            Templates
-          </NavButton>
-          <NavButton disabled={true}>
-            <img src={pipelines} />
-            Pipelines
-          </NavButton>
-          <NavButton disabled={true}>
-            <img src={integrations} />
-            Integrations
-          </NavButton>
+          <ProjectSectionContainer />
 
           <br />
 
-          <SidebarLabel>Current Cluster</SidebarLabel>
-          <ClusterSection 
-            forceCloseDrawer={this.state.forceCloseDrawer} 
-            releaseDrawer={() => this.setState({ forceCloseDrawer: false })}
-            setWelcome={this.props.setWelcome}
-            setCurrentView={this.props.setCurrentView}
-            isSelected={this.props.currentView === 'dashboard'}
-          />
+          {this.renderProjectContents()}
 
           <BottomSection>
             <LogOutButton onClick={this.handleLogout}>
-              Log Out <i className="material-icons">keyboard_return</i>
+            Log Out <i className="material-icons">keyboard_return</i>
             </LogOutButton>
           </BottomSection>
         </StyledSidebar>
@@ -166,14 +185,28 @@ export default class Sidebar extends Component<PropsType, StateType> {
 
 Sidebar.contextType = Context;
 
+const ProjectPlaceholder = styled.div`
+  background: #ffffff11;
+  border-radius: 5px;
+  margin: 0 15px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: calc(100% - 180px);
+  font-size: 13px;
+  font-family: 'Work Sans', sans-serif;
+  color: #ffffff44;
+  margin-top: 20px;
+`;
+
 const NavButton = styled.div`
   display: block;
   position: relative;
   text-decoration: none;
   height: 42px;
-  padding: 10px 35px 12px 53px;
+  padding: 12px 35px 1px 53px;
   font-size: 14px;
-  font-family: 'Hind Siliguri', sans-serif;
+  font-family: 'Work Sans', sans-serif;
   color: #ffffff;
   overflow: hidden;
   white-space: nowrap;
@@ -256,7 +289,7 @@ const SidebarLabel = styled.div`
 const UserSection = styled.div`
   width: 100%;
   height: 40px;
-  margin: 6px 0px 25px;
+  margin: 6px 0px 17px;
   display: flex;
   flex: 1;
   flex-direction: row;
@@ -349,7 +382,7 @@ const CollapseButton = styled.div`
   top: 8px;
   height: 23px;
   width: 23px;
-  background: #525563;
+  background: #525563aa;
   border-top-left-radius: 3px;
   border-bottom-left-radius: 3px;
   cursor: pointer;

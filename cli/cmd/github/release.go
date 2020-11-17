@@ -92,6 +92,8 @@ func DownloadLatestServerRelease(porterDir string) error {
 }
 
 func downloadToFile(url string, filepath string) error {
+	fmt.Println("Downloading:", url)
+
 	// Get the data
 	resp, err := http.Get(url)
 

@@ -129,7 +129,7 @@ var readProjectSATest = []*projTest{
 		endpoint:  "/api/projects/1/serviceAccounts/1",
 		body:      ``,
 		expStatus: http.StatusOK,
-		expBody:   `{"id":1,"project_id":1,"kind":"connector","clusters":[{"id":1,"service_account_id":1,"name":"cluster-test","server":"https://localhost"}],"auth_mechanism":"oidc"}`,
+		expBody:   `{"id":1,"project_id":1,"kind":"connector","clusters":[{"id":1,"service_account_id":1,"name":"cluster-test","server":"https://10.10.10.10"}],"auth_mechanism":"oidc"}`,
 		useCookie: true,
 		validators: []func(c *projTest, tester *tester, t *testing.T){
 			projectSABodyValidator,
@@ -153,7 +153,7 @@ var listProjectClustersTest = []*projTest{
 		endpoint:  "/api/projects/1/clusters",
 		body:      ``,
 		expStatus: http.StatusOK,
-		expBody:   `[{"id":1,"service_account_id":1,"name":"cluster-test","server":"https://localhost"}]`,
+		expBody:   `[{"id":1,"service_account_id":1,"name":"cluster-test","server":"https://10.10.10.10"}]`,
 		useCookie: true,
 		validators: []func(c *projTest, tester *tester, t *testing.T){
 			projectClustersValidator,
@@ -176,7 +176,7 @@ var createProjectSACandidatesTests = []*projTest{
 		endpoint:  "/api/projects/1/candidates",
 		body:      `{"kubeconfig":"` + OIDCAuthWithDataForJSON + `"}`,
 		expStatus: http.StatusCreated,
-		expBody:   `[{"id":1,"actions":[],"created_sa_id":1,"project_id":1,"kind":"connector","context_name":"context-test","cluster_name":"cluster-test","cluster_endpoint":"https://localhost","auth_mechanism":"oidc"}]`,
+		expBody:   `[{"id":1,"actions":[],"created_sa_id":1,"project_id":1,"kind":"connector","context_name":"context-test","cluster_name":"cluster-test","cluster_endpoint":"https://10.10.10.10","auth_mechanism":"oidc"}]`,
 		useCookie: true,
 		validators: []func(c *projTest, tester *tester, t *testing.T){
 			projectSACandidateBodyValidator,
@@ -231,7 +231,7 @@ var createProjectSACandidatesTests = []*projTest{
 		endpoint:  "/api/projects/1/candidates",
 		body:      `{"kubeconfig":"` + OIDCAuthWithoutDataForJSON + `"}`,
 		expStatus: http.StatusCreated,
-		expBody:   `[{"id":1,"actions":[{"name":"upload-oidc-idp-issuer-ca-data","filename":"/fake/path/to/ca.pem","docs":"https://github.com/porter-dev/porter","resolved":false,"fields":"oidc_idp_issuer_ca_data"}],"project_id":1,"kind":"connector","context_name":"context-test","cluster_name":"cluster-test","cluster_endpoint":"https://localhost","auth_mechanism":"oidc"}]`,
+		expBody:   `[{"id":1,"actions":[{"name":"upload-oidc-idp-issuer-ca-data","filename":"/fake/path/to/ca.pem","docs":"https://github.com/porter-dev/porter","resolved":false,"fields":"oidc_idp_issuer_ca_data"}],"project_id":1,"kind":"connector","context_name":"context-test","cluster_name":"cluster-test","cluster_endpoint":"https://10.10.10.10","auth_mechanism":"oidc"}]`,
 		useCookie: true,
 		validators: []func(c *projTest, tester *tester, t *testing.T){
 			projectSACandidateBodyValidator,
@@ -255,7 +255,7 @@ var listProjectSACandidatesTests = []*projTest{
 		endpoint:  "/api/projects/1/candidates",
 		body:      ``,
 		expStatus: http.StatusOK,
-		expBody:   `[{"id":1,"actions":[{"name":"upload-oidc-idp-issuer-ca-data","filename":"/fake/path/to/ca.pem","docs":"https://github.com/porter-dev/porter","resolved":false,"fields":"oidc_idp_issuer_ca_data"}],"project_id":1,"kind":"connector","context_name":"context-test","cluster_name":"cluster-test","cluster_endpoint":"https://localhost","auth_mechanism":"oidc"}]`,
+		expBody:   `[{"id":1,"actions":[{"name":"upload-oidc-idp-issuer-ca-data","filename":"/fake/path/to/ca.pem","docs":"https://github.com/porter-dev/porter","resolved":false,"fields":"oidc_idp_issuer_ca_data"}],"project_id":1,"kind":"connector","context_name":"context-test","cluster_name":"cluster-test","cluster_endpoint":"https://10.10.10.10","auth_mechanism":"oidc"}]`,
 		useCookie: true,
 		validators: []func(c *projTest, tester *tester, t *testing.T){
 			projectSACandidateBodyValidator,
@@ -279,7 +279,7 @@ var resolveProjectSACandidatesTests = []*projTest{
 		endpoint:  "/api/projects/1/candidates/1/resolve",
 		body:      `[{"name": "upload-oidc-idp-issuer-ca-data", "oidc_idp_issuer_ca_data": "LS0tLS1CRUdJTiBDRVJ="}]`,
 		expStatus: http.StatusCreated,
-		expBody:   `{"id":1,"project_id":1,"kind":"connector","clusters":[{"id":1,"service_account_id":1,"name":"cluster-test","server":"https://localhost"}],"auth_mechanism":"oidc"}`,
+		expBody:   `{"id":1,"project_id":1,"kind":"connector","clusters":[{"id":1,"service_account_id":1,"name":"cluster-test","server":"https://10.10.10.10"}],"auth_mechanism":"oidc"}`,
 		useCookie: true,
 		validators: []func(c *projTest, tester *tester, t *testing.T){
 			projectSABodyValidator,
@@ -430,15 +430,15 @@ func projectClustersValidator(c *projTest, tester *tester, t *testing.T) {
 	}
 }
 
-const OIDCAuthWithDataForJSON string = `apiVersion: v1\nclusters:\n- cluster:\n    server: https://localhost\n    certificate-authority-data: LS0tLS1CRUdJTiBDRVJ=\n  name: cluster-test\ncontexts:\n- context:\n    cluster: cluster-test\n    user: test-admin\n  name: context-test\ncurrent-context: context-test\nkind: Config\npreferences: {}\nusers:\n- name: test-admin\n  user:\n    auth-provider:\n      config:\n        client-id: porter-api\n        id-token: token\n        idp-issuer-url: https://localhost\n        idp-certificate-authority-data: LS0tLS1CRUdJTiBDRVJ=\n      name: oidc`
+const OIDCAuthWithDataForJSON string = `apiVersion: v1\nclusters:\n- cluster:\n    server: https://10.10.10.10\n    certificate-authority-data: LS0tLS1CRUdJTiBDRVJ=\n  name: cluster-test\ncontexts:\n- context:\n    cluster: cluster-test\n    user: test-admin\n  name: context-test\ncurrent-context: context-test\nkind: Config\npreferences: {}\nusers:\n- name: test-admin\n  user:\n    auth-provider:\n      config:\n        client-id: porter-api\n        id-token: token\n        idp-issuer-url: https://10.10.10.10\n        idp-certificate-authority-data: LS0tLS1CRUdJTiBDRVJ=\n      name: oidc`
 
-const OIDCAuthWithoutDataForJSON string = `apiVersion: v1\nclusters:\n- cluster:\n    server: https://localhost\n    certificate-authority-data: LS0tLS1CRUdJTiBDRVJ=\n  name: cluster-test\ncontexts:\n- context:\n    cluster: cluster-test\n    user: test-admin\n  name: context-test\ncurrent-context: context-test\nkind: Config\npreferences: {}\nusers:\n- name: test-admin\n  user:\n    auth-provider:\n      config:\n        client-id: porter-api\n        id-token: token\n        idp-issuer-url: https://localhost\n        idp-certificate-authority: /fake/path/to/ca.pem\n      name: oidc`
+const OIDCAuthWithoutDataForJSON string = `apiVersion: v1\nclusters:\n- cluster:\n    server: https://10.10.10.10\n    certificate-authority-data: LS0tLS1CRUdJTiBDRVJ=\n  name: cluster-test\ncontexts:\n- context:\n    cluster: cluster-test\n    user: test-admin\n  name: context-test\ncurrent-context: context-test\nkind: Config\npreferences: {}\nusers:\n- name: test-admin\n  user:\n    auth-provider:\n      config:\n        client-id: porter-api\n        id-token: token\n        idp-issuer-url: https://10.10.10.10\n        idp-certificate-authority: /fake/path/to/ca.pem\n      name: oidc`
 
 const OIDCAuthWithoutData string = `
 apiVersion: v1
 clusters:
 - cluster:
-    server: https://localhost
+    server: https://10.10.10.10
     certificate-authority-data: LS0tLS1CRUdJTiBDRVJ=
   name: cluster-test
 contexts:
@@ -456,7 +456,7 @@ users:
       config:
         client-id: porter-api
         id-token: token
-        idp-issuer-url: https://localhost
+        idp-issuer-url: https://10.10.10.10
         idp-certificate-authority: /fake/path/to/ca.pem
       name: oidc
 `
@@ -465,7 +465,7 @@ const OIDCAuthWithData string = `
 apiVersion: v1
 clusters:
 - cluster:
-    server: https://localhost
+    server: https://10.10.10.10
     certificate-authority-data: LS0tLS1CRUdJTiBDRVJ=
   name: cluster-test
 contexts:
@@ -483,7 +483,7 @@ users:
       config:
         client-id: porter-api
         id-token: token
-        idp-issuer-url: https://localhost
+        idp-issuer-url: https://10.10.10.10
         idp-certificate-authority-data: LS0tLS1CRUdJTiBDRVJ=
       name: oidc
 `

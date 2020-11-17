@@ -3,6 +3,7 @@ package kubernetes
 import (
 	"context"
 	"errors"
+	"net/url"
 	"strings"
 
 	"github.com/porter-dev/porter/internal/models"
@@ -196,12 +197,21 @@ func parseClusterForActions(cluster *api.Cluster) (actions []models.ServiceAccou
 	actions = make([]models.ServiceAccountAction, 0)
 
 	if cluster.CertificateAuthority != "" && len(cluster.CertificateAuthorityData) == 0 {
-		return []models.ServiceAccountAction{
-			models.ServiceAccountAction{
-				Name:     models.ClusterCADataAction,
+		actions = append(actions, models.ServiceAccountAction{
+			Name:     models.ClusterCADataAction,
+			Resolved: false,
+			Filename: cluster.CertificateAuthority,
+		})
+	}
+
+	serverURL, err := url.Parse(cluster.Server)
+
+	if err == nil {
+		if hostname := serverURL.Hostname(); hostname == "127.0.0.1" || hostname == "localhost" {
+			actions = append(actions, models.ServiceAccountAction{
+				Name:     models.ClusterLocalhostAction,
 				Resolved: false,
-				Filename: cluster.CertificateAuthority,
-			},
+			})
 		}
 	}
 

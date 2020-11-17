@@ -356,6 +356,13 @@ func (app *App) HandleResolveSACandidateActions(w http.ResponseWriter, r *http.R
 			}
 
 			err = form.PopulateServiceAccount(app.repo.ServiceAccount)
+		case models.ClusterLocalhostAction:
+			form := &forms.ClusterLocalhostAction{
+				ServiceAccountActionResolver: saResolverBase,
+				ClusterHostname:              action.ClusterHostname,
+			}
+
+			err = form.PopulateServiceAccount(app.repo.ServiceAccount)
 		case models.ClientCertDataAction:
 			form := &forms.ClientCertDataAction{
 				ServiceAccountActionResolver: saResolverBase,

@@ -3,6 +3,9 @@ package cmd
 import (
 	"fmt"
 	"os"
+	"path/filepath"
+
+	"github.com/porter-dev/porter/cli/cmd/github"
 
 	"github.com/fatih/color"
 	"github.com/porter-dev/porter/cli/cmd/docker"
@@ -21,6 +24,21 @@ var opts = &startOps{}
 var serverCmd = &cobra.Command{
 	Use:   "server",
 	Short: "Commands to control a local Porter server",
+}
+
+var testCmd = &cobra.Command{
+	Use:   "test",
+	Short: "Testing",
+	Run: func(cmd *cobra.Command, args []string) {
+		porterDir := filepath.Join(home, ".porter")
+
+		err := github.DownloadLatestServerRelease(porterDir)
+
+		if err != nil {
+			color.New(color.FgRed).Println("Failed:", err.Error())
+			os.Exit(1)
+		}
+	},
 }
 
 // startCmd represents the start command
@@ -62,6 +80,8 @@ var stopCmd = &cobra.Command{
 }
 
 func init() {
+	rootCmd.AddCommand(testCmd)
+
 	rootCmd.AddCommand(serverCmd)
 
 	serverCmd.AddCommand(startCmd)

@@ -186,8 +186,8 @@ func TestGetProjectServiceAccount(t *testing.T) {
 		t.Errorf("cluster's name is incorrect: expected %s, got %s\n", "cluster-test", resp.Clusters[0].Name)
 	}
 
-	if resp.Clusters[0].Server != "https://localhost" {
-		t.Errorf("cluster's name is incorrect: expected %s, got %s\n", "https://localhost", resp.Clusters[0].Server)
+	if resp.Clusters[0].Server != "https://10.10.10.10" {
+		t.Errorf("cluster's name is incorrect: expected %s, got %s\n", "https://10.10.10.10", resp.Clusters[0].Server)
 	}
 }
 
@@ -231,8 +231,8 @@ func TestCreateProjectCandidates(t *testing.T) {
 		t.Errorf("cluster name incorrect: expected %s, got %s\n", "cluster-test", resp[0].ClusterName)
 	}
 
-	if resp[0].ClusterEndpoint != "https://localhost" {
-		t.Errorf("cluster endpoint incorrect: expected %s, got %s\n", "https://localhost", resp[0].ClusterEndpoint)
+	if resp[0].ClusterEndpoint != "https://10.10.10.10" {
+		t.Errorf("cluster endpoint incorrect: expected %s, got %s\n", "https://10.10.10.10", resp[0].ClusterEndpoint)
 	}
 
 	// make sure correct actions need to be performed
@@ -284,8 +284,8 @@ func TestGetProjectCandidates(t *testing.T) {
 		t.Errorf("cluster name incorrect: expected %s, got %s\n", "cluster-test", resp[0].ClusterName)
 	}
 
-	if resp[0].ClusterEndpoint != "https://localhost" {
-		t.Errorf("cluster endpoint incorrect: expected %s, got %s\n", "https://localhost", resp[0].ClusterEndpoint)
+	if resp[0].ClusterEndpoint != "https://10.10.10.10" {
+		t.Errorf("cluster endpoint incorrect: expected %s, got %s\n", "https://10.10.10.10", resp[0].ClusterEndpoint)
 	}
 
 	// make sure correct actions need to be performed
@@ -355,8 +355,8 @@ func TestCreateProjectServiceAccount(t *testing.T) {
 		t.Errorf("cluster's name is incorrect: expected %s, got %s\n", "cluster-test", resp.Clusters[0].Name)
 	}
 
-	if resp.Clusters[0].Server != "https://localhost" {
-		t.Errorf("cluster's name is incorrect: expected %s, got %s\n", "https://localhost", resp.Clusters[0].Server)
+	if resp.Clusters[0].Server != "https://10.10.10.10" {
+		t.Errorf("cluster's name is incorrect: expected %s, got %s\n", "https://10.10.10.10", resp.Clusters[0].Server)
 	}
 }
 
@@ -394,8 +394,8 @@ func TestListProjectClusters(t *testing.T) {
 		t.Errorf("cluster's name is incorrect: expected %s, got %s\n", "cluster-test", resp[0].Name)
 	}
 
-	if resp[0].Server != "https://localhost" {
-		t.Errorf("cluster's name is incorrect: expected %s, got %s\n", "https://localhost", resp[0].Server)
+	if resp[0].Server != "https://10.10.10.10" {
+		t.Errorf("cluster's name is incorrect: expected %s, got %s\n", "https://10.10.10.10", resp[0].Server)
 	}
 }
 
@@ -444,7 +444,7 @@ const OIDCAuthWithoutData string = `
 apiVersion: v1
 clusters:
 - cluster:
-    server: https://localhost
+    server: https://10.10.10.10
     certificate-authority-data: LS0tLS1CRUdJTiBDRVJ=
   name: cluster-test
 contexts:
@@ -462,7 +462,7 @@ users:
       config:
         client-id: porter-api
         id-token: token
-        idp-issuer-url: https://localhost
+        idp-issuer-url: https://10.10.10.10
         idp-certificate-authority: /fake/path/to/ca.pem
       name: oidc
 `

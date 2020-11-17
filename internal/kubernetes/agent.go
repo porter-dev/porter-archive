@@ -55,20 +55,49 @@ func (a *Agent) GetPodLogs(namespace string, name string, conn *websocket.Conn) 
 	if err != nil {
 		return fmt.Errorf("Cannot open log stream for pod %s", name)
 	}
+	defer podLogs.Close()
 
 	r := bufio.NewReader(podLogs)
-	for {
-		bytes, err := r.ReadBytes('\n')
-		fmt.Println(bytes)
-		if writeErr := conn.WriteMessage(websocket.TextMessage, bytes); writeErr != nil {
-			return writeErr
-		}
+	errorchan := make(chan error)
 
-		if err != nil {
-			if err != io.EOF {
-				return err
+	go func() {
+		for {
+			if _, _, err := conn.ReadMessage(); err != nil {
+				conn.Close()
+				errorchan <- nil
+				return
 			}
-			return nil
+		}
+	}()
+
+	go func() {
+		for {
+			select {
+			case <-errorchan:
+				return
+			default:
+			}
+			bytes, err := r.ReadBytes('\n')
+			fmt.Println("BYTES", bytes)
+			if writeErr := conn.WriteMessage(websocket.TextMessage, bytes); writeErr != nil {
+				errorchan <- writeErr
+				return
+			}
+			if err != nil {
+				if err != io.EOF {
+					errorchan <- err
+					return
+				}
+				errorchan <- nil
+				return
+			}
+		}
+	}()
+
+	for {
+		select {
+		case err = <-errorchan:
+			return err
 		}
 	}
 }

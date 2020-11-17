@@ -7,13 +7,15 @@ type PropsType = {
 };
 
 type StateType = {
-  logs: string[]
+  logs: string[],
+  ws: any
 };
 
 export default class Logs extends Component<PropsType, StateType> {
   
   state = {
     logs: [] as string[],
+    ws : null as any
   }
 
   scrollRef = React.createRef<HTMLDivElement>()
@@ -30,17 +32,33 @@ export default class Logs extends Component<PropsType, StateType> {
 
   componentDidMount() {
     let { currentCluster, currentProject } = this.context;
+    if (!this.props.selectedPod) return
+
     let ws = new WebSocket(`ws://localhost:8080/api/projects/${currentProject.id}/k8s/default/pod/${this.props.selectedPod}/logs?cluster_id=${currentCluster.id}&service_account_id=${currentCluster.service_account_id}`)
     // let ws = new WebSocket(`ws://localhost:8080/api/projects/${currentProject.id}/k8s/deployment/status?cluster_id=${currentCluster.id}&service_account_id=${currentCluster.service_account_id}`)
+    this.setState({ ws }, () => {
+      if (!this.state.ws) return;
+  
+      this.state.ws.onopen = () => {
+        console.log('connected to websocket')
+      }
+  
+      this.state.ws.onmessage = (evt: MessageEvent) => {
+        this.setState({ logs: [...this.state.logs, evt.data] }, () => {
+          this.scrollToBottom()
+        })
+      }
+  
+      this.state.ws.onerror = (err: ErrorEvent) => {
+        console.log(err)
+      }
+    })
+  }
 
-    ws.onopen = () => {
-      console.log('connected to websocket')
-    }
-
-    ws.onmessage = evt => {
-      this.setState({ logs: [...this.state.logs, evt.data] }, () => {
-        this.scrollToBottom()
-      })
+  componentWillUnmount() {
+    if (this.state.ws) {
+      console.log('unmounting')
+      this.state.ws.close()
     }
   }
 

@@ -153,6 +153,7 @@ func (c *Client) CreateProject(
 // which can be resolved to create a service account
 type CreateProjectCandidatesRequest struct {
 	Kubeconfig string `json:"kubeconfig"`
+	IsLocal    bool   `json:"is_local"`
 }
 
 // CreateProjectCandidatesResponse is the list of candidates returned after

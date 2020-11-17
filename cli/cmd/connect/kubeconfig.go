@@ -26,6 +26,7 @@ func Kubeconfig(
 	kubeconfigPath string,
 	contexts []string,
 	projectID uint,
+	isLocal bool,
 ) error {
 	// if project ID is 0, ask the user to set the project ID or create a project
 	if projectID == 0 {
@@ -45,6 +46,7 @@ func Kubeconfig(
 		projectID,
 		&api.CreateProjectCandidatesRequest{
 			Kubeconfig: string(rawBytes),
+			IsLocal:    isLocal,
 		},
 	)
 

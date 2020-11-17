@@ -432,9 +432,9 @@ var SACandidatesTests = []saCandidatesTest{
 	},
 }
 
-func TestGetServiceAccountCandidates(t *testing.T) {
+func TestGetServiceAccountCandidatesNonLocal(t *testing.T) {
 	for _, c := range SACandidatesTests {
-		result, err := kubernetes.GetServiceAccountCandidates(c.raw)
+		result, err := kubernetes.GetServiceAccountCandidates(c.raw, false)
 
 		if err != nil {
 			t.Fatalf("error occurred %v\n", err)
@@ -511,7 +511,7 @@ func TestGetServiceAccountCandidates(t *testing.T) {
 }
 
 func TestAWSClusterIDGuess(t *testing.T) {
-	result, err := kubernetes.GetServiceAccountCandidates([]byte(AWSIamAuthenticatorExec))
+	result, err := kubernetes.GetServiceAccountCandidates([]byte(AWSIamAuthenticatorExec), false)
 
 	if err != nil {
 		t.Fatalf("error occurred %v\n", err)
@@ -525,7 +525,7 @@ func TestAWSClusterIDGuess(t *testing.T) {
 		t.Errorf("Guess AWS cluster id failed: expected %s, got %s\n", "cluster-test-aws-id-guess", result[0].AWSClusterIDGuess)
 	}
 
-	result, err = kubernetes.GetServiceAccountCandidates([]byte(AWSEKSGetTokenExec))
+	result, err = kubernetes.GetServiceAccountCandidates([]byte(AWSEKSGetTokenExec), false)
 
 	if err != nil {
 		t.Fatalf("error occurred %v\n", err)

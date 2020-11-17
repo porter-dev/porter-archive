@@ -71,6 +71,7 @@ func main() {
 		store,
 		appConf.Server.CookieName,
 		false,
+		appConf.Server.IsLocal,
 		&oauth.Config{
 			ClientID:     appConf.Server.GithubClientID,
 			ClientSecret: appConf.Server.GithubClientSecret,

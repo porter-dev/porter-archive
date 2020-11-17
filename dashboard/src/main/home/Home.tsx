@@ -10,10 +10,12 @@ import Dashboard from './dashboard/Dashboard';
 import ClusterDashboard from './cluster-dashboard/ClusterDashboard';
 import Loading from '../../components/Loading';
 import Templates from './templates/Templates';
+import Integrations from "./integrations/Integrations";
 import LaunchTemplateModal from './modals/LaunchTemplateModal';
 import CreateProjectModal from './modals/CreateProjectModal';
 import UpdateProjectModal from './modals/UpdateProjectModal';
 import ClusterInstructionsModal from './modals/ClusterInstructionsModal';
+import IntegrationsModal from './modals/IntegrationsModal';
 
 type PropsType = {
   logOut: () => void
@@ -82,20 +84,17 @@ export default class Home extends Component<PropsType, StateType> {
   }
 
   renderContents = () => {
-    if (this.state.currentView === 'cluster-dashboard') {
+    let { currentView } = this.state;
+    if (currentView === 'cluster-dashboard') {
+      return this.renderDashboard();
+    } else if (currentView === 'dashboard') {
       return (
-        <StyledDashboard>
-          {this.renderDashboard()}
-        </StyledDashboard>
+        <DashboardWrapper>
+          <Dashboard />
+        </DashboardWrapper>
       );
-    } else if (this.state.currentView === 'dashboard') {
-      return (
-        <StyledDashboard>
-          <DashboardWrapper>
-            <Dashboard />
-          </DashboardWrapper>
-        </StyledDashboard>
-      );
+    } else if (currentView === 'integrations') {
+      return <Integrations />;
     }
 
     return <Templates />;
@@ -137,6 +136,14 @@ export default class Home extends Component<PropsType, StateType> {
         >
           <UpdateProjectModal />
         </ReactModal>
+        <ReactModal
+          isOpen={currentModal === 'IntegrationsModal'}
+          onRequestClose={() => setCurrentModal(null, null)}
+          style={SmallModalStyles}
+          ariaHideApp={false}
+        >
+          <IntegrationsModal />
+        </ReactModal>
 
         <Sidebar
           logOut={this.props.logOut}
@@ -145,8 +152,10 @@ export default class Home extends Component<PropsType, StateType> {
           setCurrentView={(x: string) => this.setState({ currentView: x })}
           currentView={this.state.currentView}
         />
-        
-        {this.renderContents()}
+
+        <ViewWrapper>
+          {this.renderContents()}
+        </ViewWrapper>
       </StyledHome>
     );
   }
@@ -167,6 +176,25 @@ const MediumModalStyles = {
     margin: '0 auto',
     height: '575px',
     top: 'calc(50% - 289px)',
+    backgroundColor: '#202227',
+    animation: 'floatInModal 0.5s 0s',
+    overflow: 'visible',
+  },
+};
+
+const SmallModalStyles = {
+  overlay: {
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    zIndex: 2,
+  },
+  content: {
+    borderRadius: '7px',
+    border: 0,
+    width: '760px',
+    maxWidth: '80vw',
+    margin: '0 auto',
+    height: '425px',
+    top: 'calc(50% - 214px)',
     backgroundColor: '#202227',
     animation: 'floatInModal 0.5s 0s',
     overflow: 'visible',
@@ -211,10 +239,10 @@ const TallModalStyles = {
   },
 };
 
-const StyledDashboard = styled.div`
+const ViewWrapper = styled.div`
   height: 100%;
   width: 100vw;
-  padding-top: 80px;
+  padding-top: 30px;
   overflow-y: auto;
   display: flex;
   flex: 1;
@@ -225,6 +253,7 @@ const StyledDashboard = styled.div`
 
 const DashboardWrapper = styled.div`
   width: 80%;
+  padding-top: 50px;
   min-width: 300px;
   padding-bottom: 120px;
 `;

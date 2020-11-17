@@ -57,7 +57,7 @@ const Input = styled.input`
   border-radius: 3px;
   width: ${(props: { disabled: boolean, width: string }) => props.width ? props.width : '270px'};
   color: ${(props: { disabled: boolean, width: string }) => props.disabled ? '#ffffff44' : 'white'};
-  padding: 5px 8px;
+  padding: 5px 10px;
   margin-right: 8px;
   height: 30px;
 `;

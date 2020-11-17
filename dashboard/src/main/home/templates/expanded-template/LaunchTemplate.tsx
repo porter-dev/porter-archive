@@ -6,6 +6,7 @@ import api from '../../../../shared/api';
 
 import { PorterChart, RepoType, Cluster } from '../../../../shared/types';
 import Selector from '../../../../components/Selector';
+import ImageSelector from '../../../../components/image-selector/ImageSelector';
 
 type PropsType = {
   currentTemplate: PorterChart,
@@ -16,9 +17,7 @@ type StateType = {
   currentView: string,
   clusterOptions: { label: string, value: string }[],
   selectedCluster: string,
-  selectedRepo: RepoType | null,
-  selectedBranch: string,
-  subdirectory: string,
+  selectedImageUrl: string | null,
 };
 
 export default class LaunchTemplate extends Component<PropsType, StateType> {
@@ -26,9 +25,7 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
     currentView: 'repo',
     clusterOptions: [] as { label: string, value: string }[],
     selectedCluster: this.context.currentCluster.name,
-    selectedRepo: null as RepoType | null,
-    selectedBranch: '',
-    subdirectory: '',
+    selectedImageUrl: null as string | null,
   };
 
   componentDidMount() {
@@ -90,12 +87,34 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
             closeOverlay={true}
           />
         </ClusterSection>
+
+        <Subtitle>Select the container image you would like to connect to this template.</Subtitle>
+        <ImageSelector
+          selectedImageUrl={this.state.selectedImageUrl}
+          setSelectedImageUrl={(x: string) => this.setState({ selectedImageUrl: x })}
+          forceExpanded={true}
+        />
+
+        <br />
+        <Subtitle>Configure additional settings for this template (optional).</Subtitle>
       </StyledLaunchTemplate>
     );
   }
 }
 
 LaunchTemplate.contextType = Context;
+
+const Subtitle = styled.div`
+  padding: 12px 0px 25px;
+  font-family: 'Work Sans', sans-serif;
+  font-size: 13px;
+  color: #aaaabb;
+  margin-top: 3px;
+  margin-bottom: 5px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+`;
 
 const ClusterLabel = styled.div`
   margin-right: 10px;
@@ -137,6 +156,7 @@ const ClusterSection = styled.div`
   font-size: 14px;
   font-weight: 500;
   margin-top: 20px;
+  margin-bottom: 15px;
 
   > i {
     font-size: 25px;

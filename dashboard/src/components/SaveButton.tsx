@@ -8,6 +8,9 @@ type PropsType = {
   disabled?: boolean,
   status?: string | null,
   color?: string,
+
+  // Makes flush with corner if not within a modal
+  makeFlush?: boolean 
 };
 
 type StateType = {
@@ -41,7 +44,7 @@ export default class SaveButton extends Component<PropsType, StateType> {
 
   render() {
     return (
-      <ButtonWrapper>
+      <ButtonWrapper makeFlush={this.props.makeFlush}>
         {this.renderStatus()}
         <Button 
           disabled={this.props.disabled}
@@ -93,8 +96,19 @@ const ButtonWrapper = styled.div`
   display: flex;
   align-items: center;
   position: absolute;
-  bottom: 25px;
-  right: 27px;
+  ${(props: { makeFlush: boolean }) => {
+    if (!props.makeFlush) {
+      return (`
+        bottom: 25px;
+        right: 27px;
+      `);
+    } 
+    return (`
+      bottom: 0;
+      right: 0;
+    `);
+  }}
+
 `;
 
 const Button = styled.button`

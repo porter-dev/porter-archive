@@ -2,20 +2,20 @@ before:
   hooks:
     - go mod download
 builds:
-  - id: "porter-cli"
-    binary: porter
-    env:
-      - CGO_ENABLED=1
-    dir: cli
-    main: ./main.go
-    goos:
-      - darwin
-    goarch:
-      - amd64
-    flags:
-      - -tags=cli
-    hooks:
-      post: gon gon.cli.hcl
+  # - id: "porter-cli"
+  #   binary: porter
+  #   env:
+  #     - CGO_ENABLED=1
+  #   dir: cli
+  #   main: ./main.go
+  #   goos:
+  #     - darwin
+  #   goarch:
+  #     - amd64
+  #   flags:
+  #     - -tags=cli
+  #   hooks:
+  #     post: gon gon.cli.hcl
   - id: "porter-server"
     binary: portersvr
     env:

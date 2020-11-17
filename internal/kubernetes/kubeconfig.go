@@ -20,7 +20,11 @@ import (
 
 // GetServiceAccountCandidates parses a kubeconfig for a list of service account
 // candidates.
-func GetServiceAccountCandidates(kubeconfig []byte) ([]*models.ServiceAccountCandidate, error) {
+//
+// The local boolean represents whether the auth mechanism should be designated as
+// "local": if so, the auth mechanism uses local plugins/mechanisms purely from the
+// kubeconfig.
+func GetServiceAccountCandidates(kubeconfig []byte, local bool) ([]*models.ServiceAccountCandidate, error) {
 	config, err := clientcmd.NewClientConfigFromBytes(kubeconfig)
 
 	if err != nil {
@@ -40,19 +44,25 @@ func GetServiceAccountCandidates(kubeconfig []byte) ([]*models.ServiceAccountCan
 		awsClusterID := ""
 		authInfoName := context.AuthInfo
 
-		// get the auth mechanism and actions
-		authMechanism, authInfoActions := parseAuthInfoForActions(rawConf.AuthInfos[authInfoName])
-		clusterActions := parseClusterForActions(rawConf.Clusters[clusterName])
+		actions := make([]models.ServiceAccountAction, 0)
+		var authMechanism string
 
-		actions := append(authInfoActions, clusterActions...)
+		if local {
+			authMechanism = models.Local
+		} else {
+			// get the auth mechanism and actions
+			authMechanism, actions = parseAuthInfoForActions(rawConf.AuthInfos[authInfoName])
+			clusterActions := parseClusterForActions(rawConf.Clusters[clusterName])
+			actions = append(actions, clusterActions...)
 
-		// if auth mechanism is unsupported, we'll skip it
-		if authMechanism == models.NotAvailable {
-			continue
-		} else if authMechanism == models.AWS {
-			// if the auth mechanism is AWS, we need to parse more explicitly
-			// for the cluster id
-			awsClusterID = parseAuthInfoForAWSClusterID(rawConf.AuthInfos[authInfoName], clusterName)
+			// if auth mechanism is unsupported, we'll skip it
+			if authMechanism == models.NotAvailable {
+				continue
+			} else if authMechanism == models.AWS {
+				// if the auth mechanism is AWS, we need to parse more explicitly
+				// for the cluster id
+				awsClusterID = parseAuthInfoForAWSClusterID(rawConf.AuthInfos[authInfoName], clusterName)
+			}
 		}
 
 		// construct the raw kubeconfig that's relevant for that context
@@ -282,6 +292,10 @@ func GetClientConfigFromServiceAccount(
 	clusterID uint,
 	updateTokenCache UpdateTokenCacheFunc,
 ) (clientcmd.ClientConfig, error) {
+	if sa.AuthMechanism == models.Local {
+		return clientcmd.NewClientConfigFromBytes(sa.Kubeconfig)
+	}
+
 	apiConfig, err := createRawConfigFromServiceAccount(sa, clusterID, updateTokenCache)
 
 	if err != nil {

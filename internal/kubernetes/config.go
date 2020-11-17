@@ -20,7 +20,7 @@ import (
 	"k8s.io/client-go/util/homedir"
 
 	// add oidc provider here
-	_ "k8s.io/client-go/plugin/pkg/client/auth/oidc"
+	_ "k8s.io/client-go/plugin/pkg/client/auth"
 )
 
 // GetAgentOutOfClusterConfig creates a new Agent using the OutOfClusterConfig

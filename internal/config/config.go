@@ -26,6 +26,8 @@ type ServerConf struct {
 	TimeoutWrite   time.Duration `env:"SERVER_TIMEOUT_WRITE,default=10s"`
 	TimeoutIdle    time.Duration `env:"SERVER_TIMEOUT_IDLE,default=15s"`
 
+	IsLocal bool `env:"IS_LOCAL,default=false"`
+
 	GithubClientID     string `env:"GITHUB_CLIENT_ID"`
 	GithubClientSecret string `env:"GITHUB_CLIENT_SECRET"`
 }

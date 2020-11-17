@@ -92,6 +92,13 @@ func (sar *ServiceAccountActionResolver) PopulateServiceAccount(
 		}
 	}
 
+	// if auth mechanism is local, just write the kubeconfig and return: rest of config is
+	// unnecessary
+	if sar.SACandidate.AuthMechanism == models.Local && len(sar.SACandidate.Kubeconfig) > 0 {
+		sar.SA.Kubeconfig = sar.SACandidate.Kubeconfig
+		return nil
+	}
+
 	if len(authInfo.ClientCertificateData) > 0 {
 		sar.SA.ClientCertificateData = authInfo.ClientCertificateData
 	}

@@ -11,6 +11,7 @@ import (
 
 // a set of shared flags
 var (
+	driver    string
 	host      string
 	projectID uint
 	clusterID uint
@@ -83,6 +84,21 @@ func init() {
 	configCmd.AddCommand(setProjectCmd)
 	configCmd.AddCommand(setClusterCmd)
 	configCmd.AddCommand(setHostCmd)
+}
+
+func setDriver(driver string) error {
+	viper.Set("driver", driver)
+	err := viper.WriteConfig()
+	color.New(color.FgGreen).Printf("Set the current driver as %s\n", driver)
+	return err
+}
+
+func getDriver() string {
+	if driver != "" {
+		return driver
+	}
+
+	return viper.GetString("driver")
 }
 
 func setProject(id uint) error {

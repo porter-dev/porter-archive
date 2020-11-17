@@ -20,7 +20,7 @@ func TestPopulateServiceAccountBasic(t *testing.T) {
 	})
 
 	// create a ServiceAccountCandidate from a kubeconfig
-	saCandidates, err := kubernetes.GetServiceAccountCandidates([]byte(ClusterCAWithData))
+	saCandidates, err := kubernetes.GetServiceAccountCandidates([]byte(ClusterCAWithData), false)
 
 	if err != nil {
 		t.Fatalf("%v\n", err)
@@ -82,7 +82,7 @@ func TestPopulateServiceAccountClusterDataAction(t *testing.T) {
 	})
 
 	// create a ServiceAccountCandidate from a kubeconfig
-	saCandidates, err := kubernetes.GetServiceAccountCandidates([]byte(ClusterCAWithoutData))
+	saCandidates, err := kubernetes.GetServiceAccountCandidates([]byte(ClusterCAWithoutData), false)
 
 	if err != nil {
 		t.Fatalf("%v\n", err)
@@ -147,7 +147,7 @@ func TestPopulateServiceAccountClusterLocalhostAction(t *testing.T) {
 	})
 
 	// create a ServiceAccountCandidate from a kubeconfig
-	saCandidates, err := kubernetes.GetServiceAccountCandidates([]byte(ClusterLocalhost))
+	saCandidates, err := kubernetes.GetServiceAccountCandidates([]byte(ClusterLocalhost), false)
 
 	if err != nil {
 		t.Fatalf("%v\n", err)
@@ -212,7 +212,7 @@ func TestPopulateServiceAccountClientCertAction(t *testing.T) {
 	})
 
 	// create a ServiceAccountCandidate from a kubeconfig
-	saCandidates, err := kubernetes.GetServiceAccountCandidates([]byte(ClientWithoutCertData))
+	saCandidates, err := kubernetes.GetServiceAccountCandidates([]byte(ClientWithoutCertData), false)
 
 	if err != nil {
 		t.Fatalf("%v\n", err)
@@ -277,7 +277,7 @@ func TestPopulateServiceAccountClientCertAndKeyActions(t *testing.T) {
 	})
 
 	// create a ServiceAccountCandidate from a kubeconfig
-	saCandidates, err := kubernetes.GetServiceAccountCandidates([]byte(ClientWithoutCertAndKeyData))
+	saCandidates, err := kubernetes.GetServiceAccountCandidates([]byte(ClientWithoutCertAndKeyData), false)
 
 	if err != nil {
 		t.Fatalf("%v\n", err)
@@ -354,7 +354,7 @@ func TestPopulateServiceAccountTokenDataAction(t *testing.T) {
 	})
 
 	// create a ServiceAccountCandidate from a kubeconfig
-	saCandidates, err := kubernetes.GetServiceAccountCandidates([]byte(BearerTokenWithoutData))
+	saCandidates, err := kubernetes.GetServiceAccountCandidates([]byte(BearerTokenWithoutData), false)
 
 	if err != nil {
 		t.Fatalf("%v\n", err)
@@ -409,7 +409,7 @@ func TestPopulateServiceAccountGCPKeyDataAction(t *testing.T) {
 	})
 
 	// create a ServiceAccountCandidate from a kubeconfig
-	saCandidates, err := kubernetes.GetServiceAccountCandidates([]byte(GCPPlugin))
+	saCandidates, err := kubernetes.GetServiceAccountCandidates([]byte(GCPPlugin), false)
 
 	if err != nil {
 		t.Fatalf("%v\n", err)
@@ -463,7 +463,7 @@ func TestPopulateServiceAccountAWSKeyDataAction(t *testing.T) {
 	})
 
 	// create a ServiceAccountCandidate from a kubeconfig
-	saCandidates, err := kubernetes.GetServiceAccountCandidates([]byte(AWSEKSGetTokenExec))
+	saCandidates, err := kubernetes.GetServiceAccountCandidates([]byte(AWSEKSGetTokenExec), false)
 
 	if err != nil {
 		t.Fatalf("%v\n", err)
@@ -529,7 +529,7 @@ func TestPopulateServiceAccountOIDCAction(t *testing.T) {
 	})
 
 	// create a ServiceAccountCandidate from a kubeconfig
-	saCandidates, err := kubernetes.GetServiceAccountCandidates([]byte(OIDCAuthWithoutData))
+	saCandidates, err := kubernetes.GetServiceAccountCandidates([]byte(OIDCAuthWithoutData), false)
 
 	if err != nil {
 		t.Fatalf("%v\n", err)

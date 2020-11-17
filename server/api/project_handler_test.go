@@ -341,7 +341,7 @@ func initProjectSACandidate(tester *tester) {
 	}
 
 	// convert the form to a ServiceAccountCandidate
-	saCandidates, _ := form.ToServiceAccountCandidates()
+	saCandidates, _ := form.ToServiceAccountCandidates(false)
 
 	for _, saCandidate := range saCandidates {
 		tester.repo.ServiceAccount.CreateServiceAccountCandidate(saCandidate)
@@ -357,7 +357,7 @@ func initProjectSADefault(tester *tester) {
 	}
 
 	// convert the form to a ServiceAccountCandidate
-	saCandidates, _ := form.ToServiceAccountCandidates()
+	saCandidates, _ := form.ToServiceAccountCandidates(false)
 
 	for _, saCandidate := range saCandidates {
 		tester.repo.ServiceAccount.CreateServiceAccountCandidate(saCandidate)

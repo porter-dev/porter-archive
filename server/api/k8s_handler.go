@@ -9,6 +9,7 @@ import (
 	"github.com/go-chi/chi"
 	"github.com/porter-dev/porter/internal/kubernetes"
 	"github.com/porter-dev/porter/internal/models"
+	v1 "k8s.io/api/core/v1"
 
 	"github.com/gorilla/websocket"
 	"github.com/porter-dev/porter/internal/forms"
@@ -189,7 +190,7 @@ func (app *App) HandleListPods(w http.ResponseWriter, r *http.Request) {
 		agent, err = kubernetes.GetAgentOutOfClusterConfig(form.OutOfClusterConfig)
 	}
 
-	pods := []string{}
+	pods := []v1.Pod{}
 	for _, selector := range vals["selectors"] {
 		podsList, err := agent.GetPodsByLabel(selector)
 
@@ -199,7 +200,7 @@ func (app *App) HandleListPods(w http.ResponseWriter, r *http.Request) {
 		}
 
 		for _, pod := range podsList.Items {
-			pods = append(pods, pod.ObjectMeta.Name)
+			pods = append(pods, pod)
 		}
 	}
 

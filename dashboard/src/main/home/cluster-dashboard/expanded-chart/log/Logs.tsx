@@ -2,8 +2,13 @@ import React, { Component } from 'react';
 import styled from 'styled-components';
 import { Context } from '../../../../../shared/Context';
 
+interface Pod {
+  namespace?: string;
+  name?: string;
+}
+
 type PropsType = {
-  selectedPod: string,
+  selectedPod: Pod,
 };
 
 type StateType = {
@@ -32,10 +37,11 @@ export default class Logs extends Component<PropsType, StateType> {
 
   componentDidMount() {
     let { currentCluster, currentProject } = this.context;
+    let { selectedPod } = this.props;
     if (!this.props.selectedPod) return
 
-    let ws = new WebSocket(`ws://localhost:8080/api/projects/${currentProject.id}/k8s/default/pod/${this.props.selectedPod}/logs?cluster_id=${currentCluster.id}&service_account_id=${currentCluster.service_account_id}`)
-    // let ws = new WebSocket(`ws://localhost:8080/api/projects/${currentProject.id}/k8s/deployment/status?cluster_id=${currentCluster.id}&service_account_id=${currentCluster.service_account_id}`)
+    let ws = new WebSocket(`ws://localhost:8080/api/projects/${currentProject.id}/k8s/${selectedPod.namespace}/pod/${selectedPod.name}/logs?cluster_id=${currentCluster.id}&service_account_id=${currentCluster.service_account_id}`)
+
     this.setState({ ws }, () => {
       if (!this.state.ws) return;
   
@@ -57,7 +63,6 @@ export default class Logs extends Component<PropsType, StateType> {
 
   componentWillUnmount() {
     if (this.state.ws) {
-      console.log('unmounting')
       this.state.ws.close()
     }
   }

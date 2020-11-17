@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/gorilla/sessions"
+	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/oauth"
 	"github.com/porter-dev/porter/internal/repository/gorm"
 
@@ -24,6 +25,24 @@ func main() {
 
 	logger := lr.NewConsole(appConf.Debug)
 	db, err := adapter.New(&appConf.Db)
+
+	if err != nil {
+		logger.Fatal().Err(err).Msg("")
+		return
+	}
+
+	err = db.AutoMigrate(
+		&models.Project{},
+		&models.Role{},
+		&models.ServiceAccount{},
+		&models.ServiceAccountAction{},
+		&models.ServiceAccountCandidate{},
+		&models.Cluster{},
+		&models.TokenCache{},
+		&models.User{},
+		&models.Session{},
+		&models.RepoClient{},
+	)
 
 	if err != nil {
 		logger.Fatal().Err(err).Msg("")

@@ -137,6 +137,71 @@ func TestPopulateServiceAccountClusterDataAction(t *testing.T) {
 	}
 }
 
+func TestPopulateServiceAccountClusterLocalhostAction(t *testing.T) {
+	// create the in-memory repository
+	repo := test.NewRepository(true)
+
+	// create a new project
+	repo.Project.CreateProject(&models.Project{
+		Name: "test-project",
+	})
+
+	// create a ServiceAccountCandidate from a kubeconfig
+	saCandidates, err := kubernetes.GetServiceAccountCandidates([]byte(ClusterLocalhost))
+
+	if err != nil {
+		t.Fatalf("%v\n", err)
+	}
+
+	for _, saCandidate := range saCandidates {
+		repo.ServiceAccount.CreateServiceAccountCandidate(saCandidate)
+	}
+
+	// create a new form
+	form := forms.ClusterLocalhostAction{
+		ServiceAccountActionResolver: &forms.ServiceAccountActionResolver{
+			ServiceAccountCandidateID: 1,
+		},
+		ClusterHostname: "host.docker.internal",
+	}
+
+	err = form.PopulateServiceAccount(repo.ServiceAccount)
+
+	if err != nil {
+		t.Fatalf("%v\n", err)
+	}
+
+	sa, err := repo.ServiceAccount.CreateServiceAccount(form.ServiceAccountActionResolver.SA)
+	decodedStr, _ := base64.StdEncoding.DecodeString("LS0tLS1CRUdJTiBDRVJ=")
+
+	if len(sa.Clusters) != 1 {
+		t.Fatalf("cluster not written\n")
+	}
+
+	if sa.Clusters[0].ServiceAccountID != 1 {
+		t.Errorf("service account ID of joined cluster is not 1")
+	}
+
+	if sa.Clusters[0].Server != "https://host.docker.internal:30000" {
+		t.Errorf("service account cluster server is incorrect: expected %s, got %s\n",
+			"https://host.docker.internal:30000", sa.Clusters[0].Server)
+	}
+
+	if sa.AuthMechanism != "x509" {
+		t.Errorf("service account auth mechanism is not x509")
+	}
+
+	if string(sa.ClientCertificateData) != string(decodedStr) {
+		t.Errorf("service account cert data and input do not match: expected %s, got %s\n",
+			string(sa.ClientCertificateData), string(decodedStr))
+	}
+
+	if string(sa.ClientKeyData) != string(decodedStr) {
+		t.Errorf("service account key data and input do not match: expected %s, got %s\n",
+			string(sa.ClientKeyData), string(decodedStr))
+	}
+}
+
 func TestPopulateServiceAccountClientCertAction(t *testing.T) {
 	// create the in-memory repository
 	repo := test.NewRepository(true)
@@ -537,6 +602,26 @@ clusters:
   cluster:
     server: https://localhost
     certificate-authority: /fake/path/to/ca.pem
+contexts:
+- context:
+    cluster: cluster-test
+    user: test-admin
+  name: context-test
+users:
+- name: test-admin
+  user:
+    client-certificate-data: LS0tLS1CRUdJTiBDRVJ=
+    client-key-data: LS0tLS1CRUdJTiBDRVJ=
+current-context: context-test
+`
+
+const ClusterLocalhost string = `
+apiVersion: v1
+kind: Config
+clusters:
+- name: cluster-test
+  cluster:
+    server: https://localhost:30000
 contexts:
 - context:
     cluster: cluster-test

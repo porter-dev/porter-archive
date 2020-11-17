@@ -84,6 +84,14 @@ func Kubeconfig(
 					}
 
 					resolvers = append(resolvers, resolveAction)
+				case models.ClusterLocalhostAction:
+					resolveAction, err := resolveLocalhostAction()
+
+					if err != nil {
+						return err
+					}
+
+					resolvers = append(resolvers, resolveAction)
 				case models.ClientCertDataAction:
 					absKubeconfigPath, err := local.ResolveKubeconfigPath(kubeconfigPath)
 
@@ -253,6 +261,13 @@ func resolveClusterCAAction(
 	return &models.ServiceAccountAllActions{
 		Name:          models.ClusterCADataAction,
 		ClusterCAData: base64.StdEncoding.EncodeToString(fileBytes),
+	}, nil
+}
+
+func resolveLocalhostAction() (*models.ServiceAccountAllActions, error) {
+	return &models.ServiceAccountAllActions{
+		Name:            models.ClusterLocalhostAction,
+		ClusterHostname: "host.docker.internal",
 	}, nil
 }
 

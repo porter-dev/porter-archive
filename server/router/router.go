@@ -250,6 +250,14 @@ func New(
 			),
 		)
 
+		// /api/projects/{project_id}/images routes
+		// TODO: add back project access check
+		r.Method(
+			"GET",
+			"/projects/{project_id}/images",
+			auth.BasicAuthenticate(requestlog.NewHandler(a.HandleListImages, l)),
+		)
+
 		// /api/templates routes
 		r.Method(
 			"GET",

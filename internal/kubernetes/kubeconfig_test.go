@@ -79,7 +79,7 @@ var BasicContextAllowedTests = []kubeConfigTest{
 		expected: []models.Context{
 			models.Context{
 				Name:     "context-test",
-				Server:   "https://localhost",
+				Server:   "https://10.10.10.10",
 				Cluster:  "cluster-test",
 				User:     "test-admin",
 				Selected: true,
@@ -112,7 +112,7 @@ var BasicContextAllTests = []kubeConfigTest{
 		expected: []models.Context{
 			models.Context{
 				Name:     "context-test",
-				Server:   "https://localhost",
+				Server:   "https://10.10.10.10",
 				Cluster:  "cluster-test",
 				User:     "test-admin",
 				Selected: false,
@@ -153,7 +153,7 @@ func TestGetRestrictedClientConfig(t *testing.T) {
 		t.Fatalf("Fatal error: %s\n", err.Error())
 	}
 
-	if cluster, clusterFound := rawConf.Clusters["cluster-test"]; !clusterFound || cluster.Server != "https://localhost" {
+	if cluster, clusterFound := rawConf.Clusters["cluster-test"]; !clusterFound || cluster.Server != "https://10.10.10.10" {
 		t.Errorf("invalid cluster returned")
 	}
 
@@ -187,9 +187,28 @@ var SACandidatesTests = []saCandidatesTest{
 				},
 				Kind:            "connector",
 				ClusterName:     "cluster-test",
-				ClusterEndpoint: "https://localhost",
+				ClusterEndpoint: "https://10.10.10.10",
 				AuthMechanism:   models.X509,
 				Kubeconfig:      []byte(ClusterCAWithoutData),
+			},
+		},
+	},
+	saCandidatesTest{
+		name: "test cluster localhost",
+		raw:  []byte(ClusterLocalhost),
+		expected: []*models.ServiceAccountCandidate{
+			&models.ServiceAccountCandidate{
+				Actions: []models.ServiceAccountAction{
+					models.ServiceAccountAction{
+						Name:     "fix-cluster-localhost",
+						Resolved: false,
+					},
+				},
+				Kind:            "connector",
+				ClusterName:     "cluster-test",
+				ClusterEndpoint: "https://localhost",
+				AuthMechanism:   models.X509,
+				Kubeconfig:      []byte(ClusterLocalhost),
 			},
 		},
 	},
@@ -201,7 +220,7 @@ var SACandidatesTests = []saCandidatesTest{
 				Actions:         []models.ServiceAccountAction{},
 				Kind:            "connector",
 				ClusterName:     "cluster-test",
-				ClusterEndpoint: "https://localhost",
+				ClusterEndpoint: "https://10.10.10.10",
 				AuthMechanism:   models.X509,
 				Kubeconfig:      []byte(x509WithData),
 			},
@@ -221,7 +240,7 @@ var SACandidatesTests = []saCandidatesTest{
 				},
 				Kind:            "connector",
 				ClusterName:     "cluster-test",
-				ClusterEndpoint: "https://localhost",
+				ClusterEndpoint: "https://10.10.10.10",
 				AuthMechanism:   models.X509,
 				Kubeconfig:      []byte(x509WithoutCertData),
 			},
@@ -241,7 +260,7 @@ var SACandidatesTests = []saCandidatesTest{
 				},
 				Kind:            "connector",
 				ClusterName:     "cluster-test",
-				ClusterEndpoint: "https://localhost",
+				ClusterEndpoint: "https://10.10.10.10",
 				AuthMechanism:   models.X509,
 				Kubeconfig:      []byte(x509WithoutKeyData),
 			},
@@ -266,7 +285,7 @@ var SACandidatesTests = []saCandidatesTest{
 				},
 				Kind:            "connector",
 				ClusterName:     "cluster-test",
-				ClusterEndpoint: "https://localhost",
+				ClusterEndpoint: "https://10.10.10.10",
 				AuthMechanism:   models.X509,
 				Kubeconfig:      []byte(x509WithoutCertAndKeyData),
 			},
@@ -280,7 +299,7 @@ var SACandidatesTests = []saCandidatesTest{
 				Actions:         []models.ServiceAccountAction{},
 				Kind:            "connector",
 				ClusterName:     "cluster-test",
-				ClusterEndpoint: "https://localhost",
+				ClusterEndpoint: "https://10.10.10.10",
 				AuthMechanism:   models.Bearer,
 				Kubeconfig:      []byte(BearerTokenWithData),
 			},
@@ -300,7 +319,7 @@ var SACandidatesTests = []saCandidatesTest{
 				},
 				Kind:            "connector",
 				ClusterName:     "cluster-test",
-				ClusterEndpoint: "https://localhost",
+				ClusterEndpoint: "https://10.10.10.10",
 				AuthMechanism:   models.Bearer,
 				Kubeconfig:      []byte(BearerTokenWithoutData),
 			},
@@ -319,7 +338,7 @@ var SACandidatesTests = []saCandidatesTest{
 				},
 				Kind:            "connector",
 				ClusterName:     "cluster-test",
-				ClusterEndpoint: "https://localhost",
+				ClusterEndpoint: "https://10.10.10.10",
 				AuthMechanism:   models.GCP,
 				Kubeconfig:      []byte(GCPPlugin),
 			},
@@ -338,7 +357,7 @@ var SACandidatesTests = []saCandidatesTest{
 				},
 				Kind:            "connector",
 				ClusterName:     "cluster-test",
-				ClusterEndpoint: "https://localhost",
+				ClusterEndpoint: "https://10.10.10.10",
 				AuthMechanism:   models.AWS,
 				Kubeconfig:      []byte(AWSIamAuthenticatorExec),
 			},
@@ -357,7 +376,7 @@ var SACandidatesTests = []saCandidatesTest{
 				},
 				Kind:            "connector",
 				ClusterName:     "cluster-test",
-				ClusterEndpoint: "https://localhost",
+				ClusterEndpoint: "https://10.10.10.10",
 				AuthMechanism:   models.AWS,
 				Kubeconfig:      []byte(AWSEKSGetTokenExec),
 			},
@@ -377,7 +396,7 @@ var SACandidatesTests = []saCandidatesTest{
 				},
 				Kind:            "connector",
 				ClusterName:     "cluster-test",
-				ClusterEndpoint: "https://localhost",
+				ClusterEndpoint: "https://10.10.10.10",
 				AuthMechanism:   models.OIDC,
 				Kubeconfig:      []byte(OIDCAuthWithoutData),
 			},
@@ -391,7 +410,7 @@ var SACandidatesTests = []saCandidatesTest{
 				Actions:         []models.ServiceAccountAction{},
 				Kind:            "connector",
 				ClusterName:     "cluster-test",
-				ClusterEndpoint: "https://localhost",
+				ClusterEndpoint: "https://10.10.10.10",
 				AuthMechanism:   models.OIDC,
 				Kubeconfig:      []byte(OIDCAuthWithData),
 			},
@@ -405,7 +424,7 @@ var SACandidatesTests = []saCandidatesTest{
 				Actions:         []models.ServiceAccountAction{},
 				Kind:            "connector",
 				ClusterName:     "cluster-test",
-				ClusterEndpoint: "https://localhost",
+				ClusterEndpoint: "https://10.10.10.10",
 				AuthMechanism:   models.Basic,
 				Kubeconfig:      []byte(BasicAuth),
 			},
@@ -413,9 +432,9 @@ var SACandidatesTests = []saCandidatesTest{
 	},
 }
 
-func TestGetServiceAccountCandidates(t *testing.T) {
+func TestGetServiceAccountCandidatesNonLocal(t *testing.T) {
 	for _, c := range SACandidatesTests {
-		result, err := kubernetes.GetServiceAccountCandidates(c.raw)
+		result, err := kubernetes.GetServiceAccountCandidates(c.raw, false)
 
 		if err != nil {
 			t.Fatalf("error occurred %v\n", err)
@@ -492,7 +511,7 @@ func TestGetServiceAccountCandidates(t *testing.T) {
 }
 
 func TestAWSClusterIDGuess(t *testing.T) {
-	result, err := kubernetes.GetServiceAccountCandidates([]byte(AWSIamAuthenticatorExec))
+	result, err := kubernetes.GetServiceAccountCandidates([]byte(AWSIamAuthenticatorExec), false)
 
 	if err != nil {
 		t.Fatalf("error occurred %v\n", err)
@@ -506,7 +525,7 @@ func TestAWSClusterIDGuess(t *testing.T) {
 		t.Errorf("Guess AWS cluster id failed: expected %s, got %s\n", "cluster-test-aws-id-guess", result[0].AWSClusterIDGuess)
 	}
 
-	result, err = kubernetes.GetServiceAccountCandidates([]byte(AWSEKSGetTokenExec))
+	result, err = kubernetes.GetServiceAccountCandidates([]byte(AWSEKSGetTokenExec), false)
 
 	if err != nil {
 		t.Fatalf("error occurred %v\n", err)
@@ -527,7 +546,7 @@ kind: Config
 preferences: {}
 clusters:
 - cluster:
-    server: https://localhost
+    server: https://10.10.10.10
   name: porter-test-1
 current-context: context-test
 users:
@@ -557,7 +576,7 @@ preferences: {}
 current-context: default
 clusters:
 - cluster:
-    server: https://localhost
+    server: https://10.10.10.10
   name: porter-test-1
 contexts:
 - context:
@@ -573,7 +592,7 @@ preferences: {}
 current-context: default
 clusters:
 - cluster:
-    server: https://localhost
+    server: https://10.10.10.10
   name: porter-test-1
 contexts:
 - context:
@@ -592,7 +611,7 @@ preferences: {}
 current-context: default
 clusters:
 - cluster:
-    server: https://localhost
+    server: https://10.10.10.10
   name: porter-test-1
 contexts:
 - context:
@@ -611,7 +630,7 @@ preferences: {}
 current-context: context-test
 clusters:
 - cluster:
-    server: https://localhost
+    server: https://10.10.10.10
   name: cluster-test
 contexts:
 - context:
@@ -628,8 +647,28 @@ kind: Config
 clusters:
 - name: cluster-test
   cluster:
-    server: https://localhost
+    server: https://10.10.10.10
     certificate-authority: /fake/path/to/ca.pem
+contexts:
+- context:
+    cluster: cluster-test
+    user: test-admin
+  name: context-test
+users:
+- name: test-admin
+  user:
+    client-certificate-data: LS0tLS1CRUdJTiBDRVJ=
+    client-key-data: LS0tLS1CRUdJTiBDRVJ=
+current-context: context-test
+`
+
+const ClusterLocalhost string = `
+apiVersion: v1
+kind: Config
+clusters:
+- name: cluster-test
+  cluster:
+    server: https://localhost
 contexts:
 - context:
     cluster: cluster-test
@@ -650,7 +689,7 @@ preferences: {}
 current-context: context-test
 clusters:
 - cluster:
-    server: https://localhost
+    server: https://10.10.10.10
   name: cluster-test
 contexts:
 - context:
@@ -671,7 +710,7 @@ preferences: {}
 current-context: context-test
 clusters:
 - cluster:
-    server: https://localhost
+    server: https://10.10.10.10
   name: cluster-test
 contexts:
 - context:
@@ -692,7 +731,7 @@ preferences: {}
 current-context: context-test
 clusters:
 - cluster:
-    server: https://localhost
+    server: https://10.10.10.10
   name: cluster-test
 contexts:
 - context:
@@ -713,7 +752,7 @@ preferences: {}
 current-context: context-test
 clusters:
 - cluster:
-    server: https://localhost
+    server: https://10.10.10.10
   name: cluster-test
 contexts:
 - context:
@@ -734,7 +773,7 @@ preferences: {}
 current-context: context-test
 clusters:
 - cluster:
-    server: https://localhost
+    server: https://10.10.10.10
   name: cluster-test
 contexts:
 - context:
@@ -754,7 +793,7 @@ preferences: {}
 current-context: context-test
 clusters:
 - cluster:
-    server: https://localhost
+    server: https://10.10.10.10
   name: cluster-test
 contexts:
 - context:
@@ -772,7 +811,7 @@ kind: Config
 clusters:
 - name: cluster-test
   cluster:
-    server: https://localhost
+    server: https://10.10.10.10
     certificate-authority-data: LS0tLS1CRUdJTiBDRVJ=
 users:
 - name: test-admin
@@ -791,7 +830,7 @@ const AWSIamAuthenticatorExec = `
 apiVersion: v1
 clusters:
 - cluster:
-    server: https://localhost
+    server: https://10.10.10.10
     certificate-authority-data: LS0tLS1CRUdJTiBDRVJ=
   name: cluster-test
 contexts:
@@ -818,7 +857,7 @@ const AWSEKSGetTokenExec = `
 apiVersion: v1
 clusters:
 - cluster:
-    server: https://localhost
+    server: https://10.10.10.10
     certificate-authority-data: LS0tLS1CRUdJTiBDRVJ=
   name: cluster-test
 contexts:
@@ -846,7 +885,7 @@ const OIDCAuthWithoutData = `
 apiVersion: v1
 clusters:
 - cluster:
-    server: https://localhost
+    server: https://10.10.10.10
     certificate-authority-data: LS0tLS1CRUdJTiBDRVJ=
   name: cluster-test
 contexts:
@@ -864,7 +903,7 @@ users:
       config:
         client-id: porter-api
         id-token: token
-        idp-issuer-url: https://localhost
+        idp-issuer-url: https://10.10.10.10
         idp-certificate-authority: /fake/path/to/ca.pem
       name: oidc
 `
@@ -873,7 +912,7 @@ const OIDCAuthWithData = `
 apiVersion: v1
 clusters:
 - cluster:
-    server: https://localhost
+    server: https://10.10.10.10
     certificate-authority-data: LS0tLS1CRUdJTiBDRVJ=
   name: cluster-test
 contexts:
@@ -891,7 +930,7 @@ users:
       config:
         client-id: porter-api
         id-token: token
-        idp-issuer-url: https://localhost
+        idp-issuer-url: https://10.10.10.10
         idp-certificate-authority-data: LS0tLS1CRUdJTiBDRVJ=
       name: oidc
 `
@@ -900,7 +939,7 @@ const BasicAuth = `
 apiVersion: v1
 clusters:
 - cluster:
-    server: https://localhost
+    server: https://10.10.10.10
     certificate-authority-data: LS0tLS1CRUdJTiBDRVJ=
   name: cluster-test
 contexts:

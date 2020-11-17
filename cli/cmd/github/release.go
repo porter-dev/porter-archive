@@ -15,13 +15,13 @@ import (
 	"github.com/google/go-github/github"
 )
 
-func getLatestReleaseDownloadURL() (string, error) {
+func getLatestReleaseDownloadURL() (string, string, error) {
 	client := github.NewClient(nil)
 
 	rel, _, err := client.Repositories.GetLatestRelease(context.Background(), "porter-dev", "porter")
 
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
 
 	var re *regexp.Regexp
@@ -35,23 +35,27 @@ func getLatestReleaseDownloadURL() (string, error) {
 		fmt.Printf("%s.\n", os)
 	}
 
+	staticRE := regexp.MustCompile(`static_.*\.zip`)
+
 	releaseURL := ""
+	staticReleaseURL := ""
 
 	// iterate through the assets
 	for _, asset := range rel.Assets {
 		if downloadURL := asset.GetBrowserDownloadURL(); re.MatchString(downloadURL) {
 			releaseURL = downloadURL
-			break
+		} else if staticRE.MatchString(downloadURL) {
+			staticReleaseURL = downloadURL
 		}
 	}
 
-	return releaseURL, nil
+	return releaseURL, staticReleaseURL, nil
 }
 
 // DownloadLatestServerRelease retrieves the latest Porter server release from Github, unzips
 // it, and adds the binary to the porter directory
 func DownloadLatestServerRelease(porterDir string) error {
-	releaseURL, err := getLatestReleaseDownloadURL()
+	releaseURL, staticReleaseURL, err := getLatestReleaseDownloadURL()
 	fmt.Println(releaseURL)
 
 	if err != nil {
@@ -67,6 +71,22 @@ func DownloadLatestServerRelease(porterDir string) error {
 	}
 
 	err = unzipToDir(zipFile, porterDir)
+
+	if err != nil {
+		return err
+	}
+
+	staticZipFile := filepath.Join(porterDir, "static_latest.zip")
+
+	err = downloadToFile(staticReleaseURL, staticZipFile)
+
+	if err != nil {
+		return err
+	}
+
+	staticDir := filepath.Join(porterDir, "static")
+
+	err = unzipToDir(staticZipFile, staticDir)
 
 	return err
 }

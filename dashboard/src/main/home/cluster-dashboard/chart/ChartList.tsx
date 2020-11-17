@@ -45,7 +45,8 @@ export default class ChartList extends Component<PropsType, StateType> {
       limit: 20,
       skip: 0,
       byDate: false,
-      statusFilter: ['deployed']
+      statusFilter: ['deployed', 'uninstalled', 'pending', 'pending_upgrade',
+        'pending_rollback','superseded','failed']
     }, { id: currentProject.id }, (err: any, res: any) => {
         if (err) {
         console.log(err)

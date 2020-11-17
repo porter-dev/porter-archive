@@ -31,6 +31,7 @@ export default class Logs extends Component<PropsType, StateType> {
   componentDidMount() {
     let { currentCluster, currentProject } = this.context;
     let ws = new WebSocket(`ws://localhost:8080/api/projects/${currentProject.id}/k8s/default/pod/${this.props.selectedPod}/logs?cluster_id=${currentCluster.id}&service_account_id=${currentCluster.service_account_id}`)
+    // let ws = new WebSocket(`ws://localhost:8080/api/projects/${currentProject.id}/k8s/deployment/status?cluster_id=${currentCluster.id}&service_account_id=${currentCluster.service_account_id}`)
 
     ws.onopen = () => {
       console.log('connected to websocket')

@@ -37,6 +37,8 @@ export default class Chart extends Component<PropsType, StateType> {
   render() {
     let { chart, setCurrentChart } = this.props;
 
+    console.log(chart)
+
     return ( 
       <StyledChart
         onMouseEnter={() => this.setState({ expand: true })}

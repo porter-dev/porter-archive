@@ -74,11 +74,11 @@ func (a *Agent) GetPodLogs(namespace string, name string, conn *websocket.Conn) 
 		for {
 			select {
 			case <-errorchan:
+				defer close(errorchan)
 				return
 			default:
 			}
 			bytes, err := r.ReadBytes('\n')
-			fmt.Println("BYTES", bytes)
 			if writeErr := conn.WriteMessage(websocket.TextMessage, bytes); writeErr != nil {
 				errorchan <- writeErr
 				return
@@ -104,7 +104,6 @@ func (a *Agent) GetPodLogs(namespace string, name string, conn *websocket.Conn) 
 
 // StreamDeploymentStatus streams deployment status.
 func (a *Agent) StreamDeploymentStatus(conn *websocket.Conn) error {
-	fmt.Println("===========================streaming dep status============================")
 
 	factory := informers.NewSharedInformerFactory(a.Clientset, 0)
 	informer := factory.Apps().V1().Deployments().Informer()
@@ -131,6 +130,6 @@ func (a *Agent) StreamDeploymentStatus(conn *websocket.Conn) error {
 		},
 	})
 
-	informer.Run(stopper)
+	go informer.Run(stopper)
 	return nil
 }

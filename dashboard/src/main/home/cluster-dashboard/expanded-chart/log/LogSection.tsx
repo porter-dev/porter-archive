@@ -5,26 +5,30 @@ import { ResourceType, ChartType } from '../../../../../shared/types';
 import Logs from './Logs';
 import { Context } from '../../../../../shared/Context';
 
+interface Pod {
+  namespace?: string;
+  name?: string;
+}
+
 type PropsType = {
   selectors: string[],
 };
 
 type StateType = {
   logs: string[]
-  pods: string[],
-  selectedPod: string,
+  pods: Pod[],
+  selectedPod: Pod,
 };
 
 export default class LogSection extends Component<PropsType, StateType> {
   state = {
     logs: [] as string[],
-    pods: [] as string[],
-    selectedPod: null as string,
-    matchingPods: [] as any[]
+    pods: [] as Pod[],
+    selectedPod: {} as Pod,
   }
 
   renderLogs = () => {
-    return <Logs key={this.state.selectedPod} selectedPod={this.state.selectedPod} />
+    return <Logs key={this.state.selectedPod.name} selectedPod={this.state.selectedPod} />
   }
 
   renderPodTabs = () => {
@@ -37,7 +41,7 @@ export default class LogSection extends Component<PropsType, StateType> {
           this.setState({selectedPod: pod})
           }
         }>
-          {pod}
+          {pod.name}
         </Tab>
       )
     })
@@ -54,8 +58,13 @@ export default class LogSection extends Component<PropsType, StateType> {
     }, {
       id: currentProject.id
     }, (err: any, res: any) => {
-      console.log("SELECTORS", selectors)
-      this.setState({pods: res.data, selectedPod: res.data[0]})
+      let pods = res?.data?.map((pod: any) => {
+        return {
+          namespace: pod.metadata.namespace, 
+          name: pod.metadata.name
+        }
+      })
+      this.setState({ pods , selectedPod: pods[0]})
     })
   }
 

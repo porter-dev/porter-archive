@@ -17,7 +17,8 @@ type PropsType = {
 type StateType = {
   charts: ChartType[],
   loading: boolean,
-  error: boolean
+  error: boolean,
+  ws: any,
 };
 
 export default class ChartList extends Component<PropsType, StateType> {
@@ -25,10 +26,11 @@ export default class ChartList extends Component<PropsType, StateType> {
     charts: [] as ChartType[],
     loading: false,
     error: false,
+    ws : null as any
   }
 
   updateCharts = () => {
-    let { currentCluster, currentProject } = this.context;
+    let { currentCluster, currentProject, setCurrentError } = this.context;
 
     this.setState({ loading: true });
     setTimeout(() => {
@@ -50,7 +52,7 @@ export default class ChartList extends Component<PropsType, StateType> {
     }, { id: currentProject.id }, (err: any, res: any) => {
         if (err) {
         console.log(err)
-        // setCurrentError(JSON.stringify(err));
+        setCurrentError(JSON.stringify(err));
         this.setState({ loading: false, error: true });
       } else {
         if (res.data) {
@@ -63,8 +65,37 @@ export default class ChartList extends Component<PropsType, StateType> {
     });
   }
 
+  setupWebsocket = () => {
+    let { currentCluster, currentProject } = this.context;
+    let ws = new WebSocket(`ws://localhost:8080/api/projects/${currentProject.id}/k8s/deployment/status?cluster_id=${currentCluster.id}&service_account_id=${currentCluster.service_account_id}`)
+
+    this.setState({ ws }, () => {
+      if (!this.state.ws) return;
+  
+      this.state.ws.onopen = () => {
+        console.log('connected to websocket')
+      }
+  
+      this.state.ws.onmessage = (evt: MessageEvent) => {
+        console.log(evt.data)
+      }
+  
+      this.state.ws.onerror = (err: ErrorEvent) => {
+        console.log(err)
+      }
+    })
+  }
+
   componentDidMount() {
     this.updateCharts();
+    this.setupWebsocket();
+  }
+
+  componentWillUnmount() {
+    if (this.state.ws) {
+      console.log('closing websocket')
+      this.state.ws.close()
+    }
   }
 
   componentDidUpdate(prevProps: PropsType) {

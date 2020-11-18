@@ -1,7 +1,6 @@
 import React, { Component } from 'react';
 import styled from 'styled-components';
 import api from '../../../../../shared/api';
-import { ResourceType, ChartType } from '../../../../../shared/types';
 import Logs from './Logs';
 import { Context } from '../../../../../shared/Context';
 

@@ -54,4 +54,5 @@ const StyledGraphSection = styled.div`
   width: 100%;
   height: 100%;
   background: #ffffff11;
+  font-size: 13px;
 `;

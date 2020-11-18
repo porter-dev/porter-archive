@@ -103,6 +103,7 @@ const StyledLogSection = styled.span`
   width: 100%;
   height: 100%;
   position: relative;
+  font-size: 13px;
   padding: 0px;
   user-select: text;
 `;

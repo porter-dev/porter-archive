@@ -62,4 +62,5 @@ const LogStream = styled.div`
   padding: 25px;
   user-select: text;
   overflow: auto;
+  border-radius: 5px;
 `;

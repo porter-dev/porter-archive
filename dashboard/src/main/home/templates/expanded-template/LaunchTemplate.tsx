@@ -35,17 +35,24 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
   };
 
   componentDidMount() {
+
+    // Generate settings tabs from the provided form
     let tabOptions = [] as ChoiceType[];
     let tabContents = [] as any;
     this.props.currentTemplate.Form.Tabs.map((tab: any, i: number) => {
       tabOptions.push({ value: tab.Name, label: tab.Label });
-      tabContents.push({ value: tab.Name, component: <ValuesForm sections={tab.Sections} /> });
+      tabContents.push({
+        value: tab.Name, component: (
+          <ValuesFormWrapper>
+            <ValuesForm sections={tab.Sections} />
+          </ValuesFormWrapper>
+        ),
+      });
     });
     this.setState({ tabOptions, tabContents });
 
-    let { currentProject } = this.context;
-
     // TODO: query with selected filter once implemented
+    let { currentProject } = this.context;
     api.getClusters('<token>', {}, { id: currentProject.id }, (err: any, res: any) => {
       if (err) {
         // console.log(err)
@@ -122,6 +129,12 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
 }
 
 LaunchTemplate.contextType = Context;
+
+const ValuesFormWrapper = styled.div`
+  width: 100%;
+  height: calc(100% + 65px);
+  padding-bottom: 65px;
+`;
 
 const Br = styled.div`
   width: 100%;

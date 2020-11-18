@@ -601,7 +601,7 @@ const StyledExpandedChart = styled.div`
   animation-fill-mode: forwards;
   padding: 25px; 
   display: flex;
-  overflow: hidden;
+
   flex-direction: column;
 
   @keyframes floatIn {

@@ -141,8 +141,7 @@ const Input = styled.input`
   outline: 0;
   background: none;
   border: 0;
-  max-width: 800px;
-  min-width: 300px;
+  width: calc(100% - 60px);
   color: white;
 `;
 
@@ -196,6 +195,7 @@ const ExpandedWrapper = styled.div`
 const Label = styled.div`
   display: flex;
   align-items: center;
+  flex: 1;
 
   > img {
     width: 18px;

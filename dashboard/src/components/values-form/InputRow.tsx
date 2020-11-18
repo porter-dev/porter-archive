@@ -27,7 +27,7 @@ export default class InputRow extends Component<PropsType, StateType> {
             placeholder={placeholder}
             width={width}
             type={type}
-            value={value}
+            value={value || ''}
             onChange={(e: ChangeEvent<HTMLInputElement>) =>
               this.props.setValue(e.target.value)
             }

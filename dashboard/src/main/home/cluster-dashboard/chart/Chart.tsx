@@ -1,7 +1,8 @@
 import React, { Component } from 'react';
 import styled from 'styled-components';
+import api from '../../../../shared/api';
 
-import { ChartType } from '../../../../shared/types';
+import { ChartType, StorageType } from '../../../../shared/types';
 import { Context } from '../../../../shared/Context';
 
 type PropsType = {
@@ -10,11 +11,14 @@ type PropsType = {
 };
 
 type StateType = {
+  expand: boolean,
+  controllers: Record<string, boolean>,
 };
 
 export default class Chart extends Component<PropsType, StateType> {
   state = {
     expand: false,
+    controllers: {} as Record<string, boolean>,
   }
 
   renderIcon = () => {
@@ -34,11 +38,58 @@ export default class Chart extends Component<PropsType, StateType> {
     return `${time} on ${date}`;
   }
 
+  determineAvailability = (cs: any[]) => {
+    let controllers = {} as Record<string, boolean>;
+    cs.map((c) => {
+      switch (c.kind) {
+        case "Deployment":
+        case "ReplicaSet":
+          controllers[c.metadata.uid] = (c.status.availableReplicas == c.status.replicas)
+          break
+        case "StatefulSet":
+          controllers[c.metadata.uid] = (c.status.readyReplicas == c.status.replicas)
+          break
+        case "DaemonSet":
+          controllers[c.metadata.uid] = (c.status.numberAvailable == c.status.desiredNumberScheduled)
+          break
+        }
+    })
+    this.setState({ controllers })
+  }
+
+  componentDidMount () {
+    let { currentCluster, currentProject } = this.context;
+    const { chart } = this.props;
+
+    api.getChartControllers('<token>', {
+      namespace: chart.namespace,
+      cluster_id: currentCluster.id,
+      service_account_id: currentCluster.service_account_id,
+      storage: StorageType.Secret
+    }, {
+      id: currentProject.id,
+      name: chart.name,
+      revision: chart.version
+    }, (err: any, res: any) => {
+      this.determineAvailability(res.data)
+    });
+  }
+
+  getChartStatus = (chartStatus: string) => {
+    if (chartStatus === 'deployed') {
+      for (var uid in this.state.controllers) {
+        if (!this.state.controllers[uid]) {
+          return 'updating'
+        }
+      }
+      return 'deployed'
+    }
+    return chartStatus
+  }
+
   render() {
     let { chart, setCurrentChart } = this.props;
-
-    console.log(chart)
-
+    let status = this.getChartStatus(chart.info.status)
     return ( 
       <StyledChart
         onMouseEnter={() => this.setState({ expand: true })}
@@ -56,8 +107,8 @@ export default class Chart extends Component<PropsType, StateType> {
         <BottomWrapper>
           <InfoWrapper>
             <StatusIndicator>
-              <StatusColor status={chart.info.status} />
-              {chart.info.status}
+              <StatusColor status={status} />
+              {status}
             </StatusIndicator>
 
             <LastDeployed>

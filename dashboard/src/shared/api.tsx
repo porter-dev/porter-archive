@@ -71,6 +71,15 @@ const getChartComponents = baseApi<{
   return `/api/projects/${pathParams.id}/releases/${pathParams.name}/${pathParams.revision}/components`;
 });
 
+const getChartControllers = baseApi<{
+  namespace: string,
+  cluster_id: number,
+  service_account_id: number,
+  storage: StorageType
+}, { id: number, name: string, revision: number }>('GET', pathParams => {
+  return `/api/projects/${pathParams.id}/releases/${pathParams.name}/${pathParams.revision}/controllers`;
+});
+
 const getNamespaces = baseApi<{
   cluster_id: number,
   service_account_id: number,
@@ -166,6 +175,7 @@ export default {
   getCharts,
   getChart,
   getChartComponents,
+  getChartControllers,
   getNamespaces,
   getMatchingPods,
   getRevisions,

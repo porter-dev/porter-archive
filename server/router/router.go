@@ -165,6 +165,20 @@ func New(
 
 		r.Method(
 			"GET",
+			"/projects/{project_id}/releases/{name}/{revision}/controllers",
+			auth.DoesUserHaveProjectAccess(
+				auth.DoesUserHaveServiceAccountAccess(
+					requestlog.NewHandler(a.HandleGetReleaseControllers, l),
+					mw.URLParam,
+					mw.QueryParam,
+				),
+				mw.URLParam,
+				mw.ReadAccess,
+			),
+		)
+
+		r.Method(
+			"GET",
 			"/projects/{project_id}/releases/{name}/history",
 			auth.DoesUserHaveProjectAccess(
 				auth.DoesUserHaveServiceAccountAccess(

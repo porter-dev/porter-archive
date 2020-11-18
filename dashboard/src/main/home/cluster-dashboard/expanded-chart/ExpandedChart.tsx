@@ -24,13 +24,13 @@ type PropsType = {
 
 type StateType = {
   showRevisions: boolean,
-  currentTab: string,
   components: ResourceType[],
   podSelectors: string[]
   revisionPreview: ChartType | null,
   devOpsMode: boolean,
   tabOptions: ChoiceType[],
   tabContents: any,
+  checkTabExists: boolean,
 };
 
 const defaultTab = 'logs';
@@ -39,17 +39,27 @@ const dummyFormTabs = [
   { "Name": "values", "Label": "Main Settings", "Sections": [{ "Name": "main", "ShowIf": "", "Contents": [{ "Type": "heading", "Label": "🍺 Hello Porter Settings", "Name": "", "Variable": "", "Settings": { "Default": null } }, { "Type": "subtitle", "Label": "Update ports for Hello Porter with Porter", "Name": "", "Variable": "", "Settings": { "Default": null } }, { "Type": "number-input", "Label": "Service Port", "Name": "service-port", "Variable": "service.port", "Settings": { "Default": 80 } }, { "Type": "number-input", "Label": "Target Port", "Name": "target-port", "Variable": "service.targetPort", "Settings": { "Default": 8005 } }, { "Type": "checkbox", "Label": "Show hidden section", "Name": "show-hidden", "Variable": "", "Settings": { "Default": null } }] }, { "Name": "secondary", "ShowIf": "show-hidden", "Contents": [{ "Type": "heading", "Label": "This is a collapsible section!", "Name": "", "Variable": "", "Settings": { "Default": null } }, { "Type": "subtitle", "Label": "Test section toggling", "Name": "", "Variable": "", "Settings": { "Default": null } }, { "Type": "string-input", "Label": "Service Account Name", "Name": "sa-name", "Variable": "serviceAccount.name", "Settings": { "Default": null } }] }] }, { "Name": "alt", "Label": "Bonus Settings", "Sections": [{ "Name": "main", "ShowIf": "", "Contents": [{ "Type": "heading", "Label": "🚀 Bonus Porter Settings", "Name": "", "Variable": "", "Settings": { "Default": null } }, { "Type": "subtitle", "Label": "Configure more aspects of Hello Porter", "Name": "", "Variable": "", "Settings": { "Default": null } }, { "Type": "checkbox", "Label": "Enable Autoscaling?", "Name": "autoscaling-enabled", "Variable": "autoscaling.enabled", "Settings": { "Default": false } }] }, { "Name": "autoscaling-options", "ShowIf": "autoscaling-enabled", "Contents": [{ "Type": "number-input", "Label": "Minimum Replicas", "Name": "min-replicas", "Variable": "autoscaling.minReplicas", "Settings": { "Default": 0 } }, { "Type": "number-input", "Label": "Maximum Replicas", "Name": "max-replicas", "Variable": "autoscaling.maxReplicas", "Settings": { "Default": 2 } }] }] }, { "Name": "notes", "Label": "Notes", "Sections": [{ "Name": "main", "ShowIf": "", "Contents": [{ "Type": "heading", "Label": "Just some text", "Name": "", "Variable": "", "Settings": { "Default": null } }, { "Type": "subtitle", "Label": "This is just some random text to populate the final tab with.", "Name": "", "Variable": "", "Settings": { "Default": null } }] }] }
 ];
 
-// TODO: consolidate revisionPreview and currentChart (currentChart can just be the initial state)
+// Tabs not display when previewing an old revision
+const excludedTabs = ['logs', 'settings', 'deploy'];
+
+/*
+  TODO: consolidate revisionPreview and currentChart (currentChart can just be the initial state)
+  In general, tab management for ExpandedChart should be refactored. Cases to handle:
+  - Hiding logs, deploy, and settings tabs when previewing old charts
+  - Toggling additional DevOps tabs
+  - Handling the currently selected tab becoming hidden (for both preview and DevOps)
+  As part of consolidating currentChart and revisionPreview, can add an isPreview bool.
+*/
 export default class ExpandedChart extends Component<PropsType, StateType> {
   state = {
     showRevisions: false,
-    currentTab: defaultTab,
     components: [] as ResourceType[],
     podSelectors: [] as string[],
     revisionPreview: null as (ChartType | null),
     devOpsMode: false,
     tabOptions: [] as ChoiceType[],
     tabContents: [] as any,
+    checkTabExists: false,
   }
 
   updateResources = () => {
@@ -169,7 +179,7 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
   setRevisionPreview = (oldChart: ChartType) => {
     console.log('set it..')
     let { currentCluster, currentProject } = this.context;
-    this.setState({ revisionPreview: oldChart });
+    this.setState({ revisionPreview: oldChart, checkTabExists: true });
 
     if (oldChart) {
       api.getChartComponents('<token>', {
@@ -188,14 +198,8 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
           this.setState({ components: res.data.Objects, podSelectors: res.data.PodSelectors }, this.refreshTabs);
         }
       });
-
-      // Handle preview old chart while logs tab is open
-      if (this.state.currentTab === 'logs') {
-        this.setState({ currentTab: defaultTab });
-      } else if (this.state.currentTab === 'detailed-logs') {
-        this.setState({ currentTab: 'graph' });
-      }
     } else {
+      this.setState({ checkTabExists: false });
       this.updateResources();
     }
   }
@@ -207,7 +211,7 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
       tabOptions.pop();
       tabOptions.pop();
       tabOptions.pop();
-      this.setState({ devOpsMode: false, currentTab: defaultTab, tabOptions });
+      this.setState({ devOpsMode: false, checkTabExists: true, tabOptions });
     } else {
       let { tabOptions } = this.state;
       tabOptions.push(
@@ -215,7 +219,7 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
         { label: 'Search Chart', value: 'list' },
         { label: 'Raw Values', value: 'values' }
       );
-      this.setState({ devOpsMode: true, tabOptions });
+      this.setState({ devOpsMode: true, tabOptions, checkTabExists: false });
     }
   }
 
@@ -279,8 +283,12 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
           </HeaderWrapper>
 
           <TabRegion
-            options={this.state.tabOptions}
+            options={this.state.tabOptions.filter((opt: any) => {
+              return !this.state.revisionPreview || !excludedTabs.includes(opt.value);
+            })}
             tabContents={this.state.tabContents}
+            checkTabExists={this.state.checkTabExists}
+            color={this.state.revisionPreview ? '#f5cb42' : null}
             addendum={
               <TabButton onClick={this.toggleDevOpsMode} devOpsMode={this.state.devOpsMode}>
                 <i className="material-icons">offline_bolt</i> DevOps Mode

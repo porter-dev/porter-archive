@@ -9,6 +9,8 @@ type PropsType = {
   tabContents: any,
   defaultTab?: string,
   addendum?: any,
+  checkTabExists?: boolean, // Handles the currently selected tab disappearing
+  color?: string | null,
 };
 
 type StateType = {
@@ -33,7 +35,11 @@ export default class TabRegion extends Component<PropsType, StateType> {
   }
 
   componentDidUpdate(prevProps: PropsType) {
-    if (prevProps.options !== this.props.options && !this.state.currentTab) {
+    let { options, checkTabExists } = this.props;
+    if (prevProps.options !== options && !this.state.currentTab) {
+      this.setDefaultTab();
+    } else if (prevProps.checkTabExists !== checkTabExists
+      && !options.some((e: any) => e.value === this.state.currentTab)) {
       this.setDefaultTab();
     }
   }
@@ -56,6 +62,7 @@ export default class TabRegion extends Component<PropsType, StateType> {
       <Div>
         <TabSelector
           options={this.props.options}
+          color={this.props.color}
           currentTab={this.state.currentTab}
           setCurrentTab={(x: string) => this.setState({ currentTab: x })}
           addendum={this.props.addendum}

@@ -7,6 +7,7 @@ import api from '../../../../shared/api';
 import { PorterChart, RepoType, Cluster } from '../../../../shared/types';
 import Selector from '../../../../components/Selector';
 import ImageSelector from '../../../../components/image-selector/ImageSelector';
+import TabRegion from '../../../../components/TabRegion';
 
 type PropsType = {
   currentTemplate: PorterChart,
@@ -20,15 +21,23 @@ type StateType = {
   selectedImageUrl: string | null,
 };
 
+const tabOptions = [
+  { value: 'a', label: 'Tab A' },
+  { value: 'b', label: 'Tab B' },
+  { value: 'c', label: 'Tab C' },
+  { value: 'd', label: 'Tab D' },
+];
+
 export default class LaunchTemplate extends Component<PropsType, StateType> {
   state = {
     currentView: 'repo',
     clusterOptions: [] as { label: string, value: string }[],
     selectedCluster: this.context.currentCluster.name,
-    selectedImageUrl: null as string | null,
+    selectedImageUrl: '',
   };
 
   componentDidMount() {
+    console.log('current template: ', this.props.currentTemplate);
     let { currentProject } = this.context;
 
     // TODO: query with selected filter once implemented
@@ -97,6 +106,15 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
 
         <br />
         <Subtitle>Configure additional settings for this template (optional).</Subtitle>
+        <TabRegion
+          options={tabOptions}
+          contents={[
+            { value: 'a', component: <h1>test</h1> },
+            { value: 'b', component: <h1>hello</h1> },
+            { value: 'c', component: <h1>world</h1> },
+            { value: 'd', component: <h1>hola</h1> },
+          ]}
+        />
       </StyledLaunchTemplate>
     );
   }

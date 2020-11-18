@@ -51,19 +51,23 @@ type FormYAML struct {
 	Icon        string   `yaml:"icon"`
 	Description string   `yaml:"description"`
 	Tags        []string `yaml:"tags"`
-	Sections    []struct {
+	Tabs        []struct {
 		Name     string `yaml:"name"`
-		ShowIf   string `yaml:"show_if"`
-		Contents []struct {
-			Type     string `yaml:"type"`
-			Label    string `yaml:"label"`
-			Name     string `yaml:"name,omitempty"`
-			Variable string `yaml:"variable,omitempty"`
-			Settings struct {
-				Default interface{}
-			} `yaml:"settings,omitempty"`
-		} `yaml:"contents"`
-	} `yaml:"sections"`
+		Label    string `yaml:"label"`
+		Sections []struct {
+			Name     string `yaml:"name"`
+			ShowIf   string `yaml:"show_if"`
+			Contents []struct {
+				Type     string `yaml:"type"`
+				Label    string `yaml:"label"`
+				Name     string `yaml:"name,omitempty"`
+				Variable string `yaml:"variable,omitempty"`
+				Settings struct {
+					Default interface{}
+				} `yaml:"settings,omitempty"`
+			} `yaml:"contents"`
+		} `yaml:"sections"`
+	} `yaml:"tabs"`
 }
 
 // HandleListTemplates retrieves a list of Porter templates
@@ -71,7 +75,7 @@ type FormYAML struct {
 // TODO: separate markdown retrieval into its own query if necessary
 func (app *App) HandleListTemplates(w http.ResponseWriter, r *http.Request) {
 	baseURL := "https://porter-dev.github.io/chart-repo/"
-
+	fmt.Println("and i oop!")
 	resp, err := http.Get(baseURL + "index.yaml")
 	if err != nil {
 		fmt.Println(err)

@@ -30,17 +30,17 @@ export default class LogSection extends Component<PropsType, StateType> {
   renderPodTabs = () => {
     return this.state.pods.map((pod, i) => {
       return (
-        <Tab 
+        <Tab
           key={i}
-          selected={(this.state.selectedPod == pod)} 
+          selected={(this.state.selectedPod == pod)}
           onClick={() => {
-          this.setState({selectedPod: pod})
-          }
-        }>
+            this.setState({ selectedPod: pod })
+          }}
+        >
           {pod}
         </Tab>
-      )
-    })
+      );
+    });
   }
 
   componentDidMount() {
@@ -54,9 +54,9 @@ export default class LogSection extends Component<PropsType, StateType> {
     }, {
       id: currentProject.id
     }, (err: any, res: any) => {
-      console.log("SELECTORS", selectors)
-      this.setState({pods: res.data, selectedPod: res.data[0]})
-    })
+      // console.log("SELECTORS", selectors)
+      this.setState({ pods: res.data, selectedPod: res.data[0] })
+    });
   }
 
   render() {

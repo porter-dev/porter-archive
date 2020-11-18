@@ -297,9 +297,12 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
       );
     } else if (this.state.currentTab === 'values-form') {
       return (
+        null
+        /*
         <ValuesFormWrapper>
           <ValuesForm formData={dummyForm} />
         </ValuesFormWrapper>
+        */
       );
     } else if (this.state.currentTab === 'settings') {
       return (
@@ -601,7 +604,6 @@ const StyledExpandedChart = styled.div`
   animation-fill-mode: forwards;
   padding: 25px; 
   display: flex;
-
   flex-direction: column;
 
   @keyframes floatIn {

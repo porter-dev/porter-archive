@@ -76,8 +76,12 @@ export interface FormYAML {
 	Name?: string,  
 	Icon?: string,   
 	Description?: string,   
-	Tags?: string[],
-  Sections?: Section[]
+  Tags?: string[],
+  Tabs?: {
+    Name: string,
+    Label: string,
+    Sections?: Section[]
+  }[]
 }
 
 export interface Section {
@@ -118,4 +122,9 @@ export interface ProjectType {
     user_id: number,
     project_id: number
   }[]
+}
+
+export interface ChoiceType {
+  value: string,
+  label: string
 }

@@ -5,7 +5,7 @@ import TabSelector from './TabSelector';
 
 type PropsType = {
   options: { label: string, value: string }[],
-  contents: any,
+  tabContents: any,
   defaultTab?: string
 };
 
@@ -19,14 +19,24 @@ export default class TabRegion extends Component<PropsType, StateType> {
     currentTab: this.props.defaultTab
   }
 
-  componentDidMount() {
-    if (!this.props.defaultTab) {
+  setDefaultTab = () => {
+    if (!this.props.defaultTab && this.props.options[0]) {
       this.setState({ currentTab: this.props.options[0].value });
     }
   }
 
+  componentDidMount() {
+    this.setDefaultTab();
+  }
+
+  componentDidUpdate(prevProps: PropsType) {
+    if (prevProps.options !== this.props.options) {
+      this.setDefaultTab();
+    }
+  }
+
   renderTabContents = () => {
-    let found = this.props.contents.find((el: any) => el.value === this.state.currentTab);
+    let found = this.props.tabContents.find((el: any) => el.value === this.state.currentTab);
     if (found) {
       return found.component;
     }
@@ -40,14 +50,22 @@ export default class TabRegion extends Component<PropsType, StateType> {
           currentTab={this.state.currentTab}
           setCurrentTab={(x: string) => this.setState({ currentTab: x })}
         />
-
+        <Gap />
         {this.renderTabContents()}
       </StyledTabRegion>
     );
   }
 }
 
+const Gap = styled.div`
+  width: 100%;
+  background: none;
+  height: 30px;
+`;
+
 const StyledTabRegion = styled.div`
   width: 100%;
   height: 100%;
+  padding-bottom: 70px;
+  position: relative;
 `;

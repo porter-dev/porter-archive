@@ -4,10 +4,11 @@ import styled from 'styled-components';
 import { Context } from '../../../../shared/Context';
 import api from '../../../../shared/api';
 
-import { PorterChart, RepoType, Cluster } from '../../../../shared/types';
+import { PorterChart, ChoiceType, Cluster } from '../../../../shared/types';
 import Selector from '../../../../components/Selector';
 import ImageSelector from '../../../../components/image-selector/ImageSelector';
 import TabRegion from '../../../../components/TabRegion';
+import ValuesForm from '../../../../components/values-form/ValuesForm';
 
 type PropsType = {
   currentTemplate: PorterChart,
@@ -19,14 +20,9 @@ type StateType = {
   clusterOptions: { label: string, value: string }[],
   selectedCluster: string,
   selectedImageUrl: string | null,
+  tabOptions: ChoiceType[],
+  tabContents: any
 };
-
-const tabOptions = [
-  { value: 'a', label: 'Tab A' },
-  { value: 'b', label: 'Tab B' },
-  { value: 'c', label: 'Tab C' },
-  { value: 'd', label: 'Tab D' },
-];
 
 export default class LaunchTemplate extends Component<PropsType, StateType> {
   state = {
@@ -34,10 +30,19 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
     clusterOptions: [] as { label: string, value: string }[],
     selectedCluster: this.context.currentCluster.name,
     selectedImageUrl: '',
+    tabOptions: [] as ChoiceType[],
+    tabContents: [] as any,
   };
 
   componentDidMount() {
-    console.log('current template: ', this.props.currentTemplate);
+    let tabOptions = [] as ChoiceType[];
+    let tabContents = [] as any;
+    this.props.currentTemplate.Form.Tabs.map((tab: any, i: number) => {
+      tabOptions.push({ value: tab.Name, label: tab.Label });
+      tabContents.push({ value: tab.Name, component: <ValuesForm sections={tab.Sections} /> });
+    });
+    this.setState({ tabOptions, tabContents });
+
     let { currentProject } = this.context;
 
     // TODO: query with selected filter once implemented
@@ -98,6 +103,7 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
         </ClusterSection>
 
         <Subtitle>Select the container image you would like to connect to this template.</Subtitle>
+        <Br />
         <ImageSelector
           selectedImageUrl={this.state.selectedImageUrl}
           setSelectedImageUrl={(x: string) => this.setState({ selectedImageUrl: x })}
@@ -107,13 +113,8 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
         <br />
         <Subtitle>Configure additional settings for this template (optional).</Subtitle>
         <TabRegion
-          options={tabOptions}
-          contents={[
-            { value: 'a', component: <h1>test</h1> },
-            { value: 'b', component: <h1>hello</h1> },
-            { value: 'c', component: <h1>world</h1> },
-            { value: 'd', component: <h1>hola</h1> },
-          ]}
+          options={this.state.tabOptions}
+          tabContents={this.state.tabContents}
         />
       </StyledLaunchTemplate>
     );
@@ -122,13 +123,16 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
 
 LaunchTemplate.contextType = Context;
 
+const Br = styled.div`
+  width: 100%;
+  height: 7px;
+`;
+
 const Subtitle = styled.div`
-  padding: 12px 0px 25px;
+  padding: 11px 0px 20px;
   font-family: 'Work Sans', sans-serif;
   font-size: 13px;
   color: #aaaabb;
-  margin-top: 3px;
-  margin-bottom: 5px;
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
@@ -220,4 +224,5 @@ const TitleSection = styled.div`
 
 const StyledLaunchTemplate = styled.div`
   width: 100%;
+  padding-bottom: 150px;
 `;

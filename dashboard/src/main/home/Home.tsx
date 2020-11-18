@@ -11,7 +11,6 @@ import ClusterDashboard from './cluster-dashboard/ClusterDashboard';
 import Loading from '../../components/Loading';
 import Templates from './templates/Templates';
 import Integrations from "./integrations/Integrations";
-import LaunchTemplateModal from './modals/LaunchTemplateModal';
 import CreateProjectModal from './modals/CreateProjectModal';
 import UpdateProjectModal from './modals/UpdateProjectModal';
 import ClusterInstructionsModal from './modals/ClusterInstructionsModal';
@@ -104,14 +103,6 @@ export default class Home extends Component<PropsType, StateType> {
     let { currentModal, setCurrentModal, currentProject } = this.context;
     return (
       <StyledHome>
-        <ReactModal
-          isOpen={currentModal === 'LaunchTemplateModal'}
-          onRequestClose={() => setCurrentModal(null, null)}
-          style={MediumModalStyles}
-          ariaHideApp={false}
-        >
-          <LaunchTemplateModal />
-        </ReactModal>
         <ReactModal
           isOpen={currentModal === 'CreateProjectModal'}
           onRequestClose={() => currentProject ? setCurrentModal(null, null) : null }

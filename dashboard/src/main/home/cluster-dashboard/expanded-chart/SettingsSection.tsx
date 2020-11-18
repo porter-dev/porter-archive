@@ -40,6 +40,7 @@ export default class SettingsSection extends Component<PropsType, StateType> {
           text='Save Settings'
           onClick={() => console.log(this.state)}
           status={null}
+          makeFlush={true}
         />
       </Wrapper>
     );

@@ -283,6 +283,7 @@ func initClusterCandidate(tester *tester, t *testing.T) {
 	}
 
 	cc := &models.ClusterCandidate{
+		AuthMechanism:     models.AWS,
 		ProjectID:         tester.initProjects[0].ID,
 		CreatedClusterID:  0,
 		Resolvers:         []models.ClusterResolver{},

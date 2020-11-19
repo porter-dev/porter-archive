@@ -129,7 +129,7 @@ var readProjectSATest = []*projTest{
 		endpoint:  "/api/projects/1/serviceAccounts/1",
 		body:      ``,
 		expStatus: http.StatusOK,
-		expBody:   `{"id":1,"project_id":1,"kind":"connector","clusters":[{"id":1,"service_account_id":1,"name":"cluster-test","server":"https://10.10.10.10"}],"auth_mechanism":"oidc"}`,
+		expBody:   `{"id":1,"project_id":1,"kind":"connector","clusters":[{"id":1,"service_account_id":1,"name":"cluster-test","server":"https://10.10.10.10"}],"integration":"oidc"}`,
 		useCookie: true,
 		validators: []func(c *projTest, tester *tester, t *testing.T){
 			projectSABodyValidator,
@@ -176,7 +176,7 @@ var createProjectSACandidatesTests = []*projTest{
 		endpoint:  "/api/projects/1/candidates",
 		body:      `{"kubeconfig":"` + OIDCAuthWithDataForJSON + `"}`,
 		expStatus: http.StatusCreated,
-		expBody:   `[{"id":1,"actions":[],"created_sa_id":1,"project_id":1,"kind":"connector","context_name":"context-test","cluster_name":"cluster-test","cluster_endpoint":"https://10.10.10.10","auth_mechanism":"oidc"}]`,
+		expBody:   `[{"id":1,"actions":[],"created_sa_id":1,"project_id":1,"kind":"connector","context_name":"context-test","cluster_name":"cluster-test","cluster_endpoint":"https://10.10.10.10","integration":"oidc"}]`,
 		useCookie: true,
 		validators: []func(c *projTest, tester *tester, t *testing.T){
 			projectSACandidateBodyValidator,
@@ -202,7 +202,7 @@ var createProjectSACandidatesTests = []*projTest{
 					t.Errorf("service account ID of joined cluster is not 1")
 				}
 
-				if sa.AuthMechanism != models.OIDC {
+				if sa.Integration != models.OIDC {
 					t.Errorf("service account auth mechanism is not %s\n", models.OIDC)
 				}
 
@@ -231,7 +231,7 @@ var createProjectSACandidatesTests = []*projTest{
 		endpoint:  "/api/projects/1/candidates",
 		body:      `{"kubeconfig":"` + OIDCAuthWithoutDataForJSON + `"}`,
 		expStatus: http.StatusCreated,
-		expBody:   `[{"id":1,"actions":[{"name":"upload-oidc-idp-issuer-ca-data","filename":"/fake/path/to/ca.pem","docs":"https://github.com/porter-dev/porter","resolved":false,"fields":"oidc_idp_issuer_ca_data"}],"project_id":1,"kind":"connector","context_name":"context-test","cluster_name":"cluster-test","cluster_endpoint":"https://10.10.10.10","auth_mechanism":"oidc"}]`,
+		expBody:   `[{"id":1,"actions":[{"name":"upload-oidc-idp-issuer-ca-data","filename":"/fake/path/to/ca.pem","docs":"https://github.com/porter-dev/porter","resolved":false,"fields":"oidc_idp_issuer_ca_data"}],"project_id":1,"kind":"connector","context_name":"context-test","cluster_name":"cluster-test","cluster_endpoint":"https://10.10.10.10","integration":"oidc"}]`,
 		useCookie: true,
 		validators: []func(c *projTest, tester *tester, t *testing.T){
 			projectSACandidateBodyValidator,
@@ -255,7 +255,7 @@ var listProjectSACandidatesTests = []*projTest{
 		endpoint:  "/api/projects/1/candidates",
 		body:      ``,
 		expStatus: http.StatusOK,
-		expBody:   `[{"id":1,"actions":[{"name":"upload-oidc-idp-issuer-ca-data","filename":"/fake/path/to/ca.pem","docs":"https://github.com/porter-dev/porter","resolved":false,"fields":"oidc_idp_issuer_ca_data"}],"project_id":1,"kind":"connector","context_name":"context-test","cluster_name":"cluster-test","cluster_endpoint":"https://10.10.10.10","auth_mechanism":"oidc"}]`,
+		expBody:   `[{"id":1,"actions":[{"name":"upload-oidc-idp-issuer-ca-data","filename":"/fake/path/to/ca.pem","docs":"https://github.com/porter-dev/porter","resolved":false,"fields":"oidc_idp_issuer_ca_data"}],"project_id":1,"kind":"connector","context_name":"context-test","cluster_name":"cluster-test","cluster_endpoint":"https://10.10.10.10","integration":"oidc"}]`,
 		useCookie: true,
 		validators: []func(c *projTest, tester *tester, t *testing.T){
 			projectSACandidateBodyValidator,
@@ -279,7 +279,7 @@ var resolveProjectSACandidatesTests = []*projTest{
 		endpoint:  "/api/projects/1/candidates/1/resolve",
 		body:      `[{"name": "upload-oidc-idp-issuer-ca-data", "oidc_idp_issuer_ca_data": "LS0tLS1CRUdJTiBDRVJ="}]`,
 		expStatus: http.StatusCreated,
-		expBody:   `{"id":1,"project_id":1,"kind":"connector","clusters":[{"id":1,"service_account_id":1,"name":"cluster-test","server":"https://10.10.10.10"}],"auth_mechanism":"oidc"}`,
+		expBody:   `{"id":1,"project_id":1,"kind":"connector","clusters":[{"id":1,"service_account_id":1,"name":"cluster-test","server":"https://10.10.10.10"}],"integration":"oidc"}`,
 		useCookie: true,
 		validators: []func(c *projTest, tester *tester, t *testing.T){
 			projectSABodyValidator,

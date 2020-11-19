@@ -8,9 +8,10 @@ import (
 // and accepts a parameter that can trigger read/write errors
 func NewRepository(canQuery bool) *repository.Repository {
 	return &repository.Repository{
-		User:           NewUserRepository(canQuery),
-		Session:        NewSessionRepository(canQuery),
-		Project:        NewProjectRepository(canQuery),
-		ServiceAccount: NewServiceAccountRepository(canQuery),
+		User:    NewUserRepository(canQuery),
+		Session: NewSessionRepository(canQuery),
+		Project: NewProjectRepository(canQuery),
+		Cluster: NewClusterRepository(canQuery),
+		GitRepo: NewGitRepoRepository(canQuery),
 	}
 }

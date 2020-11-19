@@ -57,7 +57,7 @@ func TestPopulateServiceAccountBasic(t *testing.T) {
 			string(sa.Clusters[0].CertificateAuthorityData), string(decodedStr))
 	}
 
-	if sa.AuthMechanism != "x509" {
+	if sa.Integration != "x509" {
 		t.Errorf("service account auth mechanism is not x509")
 	}
 
@@ -122,7 +122,7 @@ func TestPopulateServiceAccountClusterDataAction(t *testing.T) {
 			string(sa.Clusters[0].CertificateAuthorityData), string(decodedStr))
 	}
 
-	if sa.AuthMechanism != "x509" {
+	if sa.Integration != "x509" {
 		t.Errorf("service account auth mechanism is not x509")
 	}
 
@@ -187,7 +187,7 @@ func TestPopulateServiceAccountClusterLocalhostAction(t *testing.T) {
 			"https://host.docker.internal:30000", sa.Clusters[0].Server)
 	}
 
-	if sa.AuthMechanism != "x509" {
+	if sa.Integration != "x509" {
 		t.Errorf("service account auth mechanism is not x509")
 	}
 
@@ -252,7 +252,7 @@ func TestPopulateServiceAccountClientCertAction(t *testing.T) {
 			string(sa.Clusters[0].CertificateAuthorityData), string(decodedStr))
 	}
 
-	if sa.AuthMechanism != "x509" {
+	if sa.Integration != "x509" {
 		t.Errorf("service account auth mechanism is not x509")
 	}
 
@@ -328,7 +328,7 @@ func TestPopulateServiceAccountClientCertAndKeyActions(t *testing.T) {
 			string(sa.Clusters[0].CertificateAuthorityData), string(decodedStr))
 	}
 
-	if sa.AuthMechanism != "x509" {
+	if sa.Integration != "x509" {
 		t.Errorf("service account auth mechanism is not x509")
 	}
 
@@ -388,7 +388,7 @@ func TestPopulateServiceAccountTokenDataAction(t *testing.T) {
 		t.Errorf("service account ID of joined cluster is not 1")
 	}
 
-	if sa.AuthMechanism != models.Bearer {
+	if sa.Integration != models.Bearer {
 		t.Errorf("service account auth mechanism is not %s\n", models.Bearer)
 	}
 
@@ -443,7 +443,7 @@ func TestPopulateServiceAccountGCPKeyDataAction(t *testing.T) {
 		t.Errorf("service account ID of joined cluster is not 1")
 	}
 
-	if sa.AuthMechanism != models.GCP {
+	if sa.Integration != models.GCP {
 		t.Errorf("service account auth mechanism is not %s\n", models.GCP)
 	}
 
@@ -499,7 +499,7 @@ func TestPopulateServiceAccountAWSKeyDataAction(t *testing.T) {
 		t.Errorf("service account ID of joined cluster is not 1")
 	}
 
-	if sa.AuthMechanism != models.AWS {
+	if sa.Integration != models.AWS {
 		t.Errorf("service account auth mechanism is not %s\n", models.AWS)
 	}
 
@@ -563,7 +563,7 @@ func TestPopulateServiceAccountOIDCAction(t *testing.T) {
 		t.Errorf("service account ID of joined cluster is not 1")
 	}
 
-	if sa.AuthMechanism != models.OIDC {
+	if sa.Integration != models.OIDC {
 		t.Errorf("service account auth mechanism is not %s\n", models.OIDC)
 	}
 

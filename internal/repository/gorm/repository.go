@@ -9,10 +9,14 @@ import (
 // gorm.DB for querying the database
 func NewRepository(db *gorm.DB, key *[32]byte) *repository.Repository {
 	return &repository.Repository{
-		User:           NewUserRepository(db),
-		Session:        NewSessionRepository(db),
-		Project:        NewProjectRepository(db),
-		ServiceAccount: NewServiceAccountRepository(db, key),
-		RepoClient:     NewRepoClientRepository(db, key),
+		User:             NewUserRepository(db),
+		Session:          NewSessionRepository(db),
+		Project:          NewProjectRepository(db),
+		GitRepo:          NewGitRepoRepository(db, key),
+		KubeIntegration:  NewKubeIntegrationRepository(db, key),
+		OIDCIntegration:  NewOIDCIntegrationRepository(db, key),
+		OAuthIntegration: NewOAuthIntegrationRepository(db, key),
+		GCPIntegration:   NewGCPIntegrationRepository(db, key),
+		AWSIntegration:   NewAWSIntegrationRepository(db, key),
 	}
 }

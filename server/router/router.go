@@ -258,6 +258,12 @@ func New(
 			auth.BasicAuthenticate(requestlog.NewHandler(a.HandleListImages, l)),
 		)
 
+		r.Method(
+			"POST",
+			"/projects/{project_id}/deploy",
+			auth.BasicAuthenticate(requestlog.NewHandler(a.HandleDeployTemplate, l)),
+		)
+
 		// /api/templates routes
 		r.Method(
 			"GET",

@@ -153,6 +153,10 @@ const deleteProject = baseApi<{}, { id: number }>('DELETE', pathParams => {
   return `/api/projects/${pathParams.id}`;
 });
 
+const deployTemplate = baseApi<{}, { id: number }>('POST', pathParams => {
+  return `/api/projects/${pathParams.id}/deploy`;
+});
+
 // Bundle export to allow default api import (api.<method> is more readable)
 export default {
   checkAuth,
@@ -176,5 +180,6 @@ export default {
   getBranchContents,
   getProjects,
   createProject,
-  deleteProject
+  deleteProject,
+  deployTemplate
 }

@@ -12,7 +12,8 @@ type ClusterRepository interface {
 	ReadClusterCandidate(id uint) (*models.ClusterCandidate, error)
 	ListClusterCandidatesByProjectID(projectID uint) ([]*models.ClusterCandidate, error)
 	UpdateClusterCandidateCreatedClusterID(id uint, createdClusterID uint) (*models.ClusterCandidate, error)
-	CreateCluster(sa *models.Cluster) (*models.Cluster, error)
+
+	CreateCluster(cluster *models.Cluster) (*models.Cluster, error)
 	ReadCluster(id uint) (*models.Cluster, error)
 	ListClustersByProjectID(projectID uint) ([]*models.Cluster, error)
 	UpdateClusterTokenCache(tokenCache *ints.TokenCache) (*models.Cluster, error)

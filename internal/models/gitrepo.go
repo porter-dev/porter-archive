@@ -16,7 +16,7 @@ type GitRepo struct {
 	RepoEntity string `json:"repo_entity"`
 
 	// The various auth mechanisms available to the integration
-	OIntegrationID uint
+	OAuthIntegrationID uint
 }
 
 // GitRepoExternal is a repository to be shared over REST

@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"strings"
 
 	"github.com/gorilla/websocket"
 	"github.com/porter-dev/porter/internal/helm/grapher"
@@ -25,8 +26,13 @@ type Agent struct {
 }
 
 type Message struct {
-	MessageType string
-	Object      interface{}
+	EventType string
+	Object    interface{}
+	Kind      string
+}
+
+type ListOptions struct {
+	FieldSelector string
 }
 
 // ListNamespaces simply lists namespaces
@@ -146,38 +152,44 @@ func (a *Agent) GetPodLogs(namespace string, name string, conn *websocket.Conn) 
 	}
 }
 
-// StreamDeploymentStatus streams deployment status.
-func (a *Agent) StreamDeploymentStatus(conn *websocket.Conn) error {
+// StreamControllerStatus streams controller status. Supports Deployment, StatefulSet, ReplicaSet, and DaemonSet
+// TODO: Support Jobs
+func (a *Agent) StreamControllerStatus(conn *websocket.Conn, namespace string,
+	name string, kind string) error {
+	factory := informers.NewSharedInformerFactoryWithOptions(
+		a.Clientset,
+		10,
+		informers.WithNamespace(namespace),
+	)
+	var informer cache.SharedInformer
 
-	factory := informers.NewSharedInformerFactory(a.Clientset, 0)
-	informer := factory.Apps().V1().Deployments().Informer()
+	// Spins up an informer depending on kind. Convert to lowercase for robustness
+	switch strings.ToLower(kind) {
+	case "deployment":
+		informer = factory.Apps().V1().Deployments().Informer()
+	case "statefulset":
+		informer = factory.Apps().V1().StatefulSets().Informer()
+	case "replicaset":
+		informer = factory.Apps().V1().ReplicaSets().Informer()
+	case "daemonset":
+		informer = factory.Apps().V1().DaemonSets().Informer()
+	}
+
 	stopper := make(chan struct{})
 	errorchan := make(chan error)
 	defer close(errorchan)
 
 	informer.AddEventHandler(cache.ResourceEventHandlerFuncs{
-		AddFunc: func(obj interface{}) {
-			d := obj.(*appsv1.Deployment)
-			fmt.Printf("adding deployment %s\n", d.Name)
-			fmt.Println(d.Status.Replicas == d.Status.AvailableReplicas)
-		},
 		UpdateFunc: func(oldObj, newObj interface{}) {
-			d := newObj.(*appsv1.Deployment)
-			fmt.Printf("updating deployment %s\n", d.Name)
-			fmt.Println(d.Status.Replicas == d.Status.AvailableReplicas)
-			fmt.Println(d.Status.Conditions[0].Message)
-		},
-		DeleteFunc: func(obj interface{}) {
-			d := obj.(*appsv1.Deployment)
 			msg := Message{
-				MessageType: "DELETION",
-				Object:      d,
+				EventType: "UPDATE",
+				Object:    newObj,
+				Kind:      strings.ToLower(kind),
 			}
 			if writeErr := conn.WriteJSON(msg); writeErr != nil {
 				errorchan <- writeErr
 				return
 			}
-			fmt.Printf("deleting deployment %s\n", d.Name)
 		},
 	})
 
@@ -187,7 +199,7 @@ func (a *Agent) StreamDeploymentStatus(conn *websocket.Conn) error {
 			if _, _, err := conn.ReadMessage(); err != nil {
 				defer conn.Close()
 				defer close(stopper)
-				defer fmt.Println("Successfully closed deployment status stream")
+				defer fmt.Println("Successfully closed controller status stream")
 				errorchan <- nil
 				return
 			}

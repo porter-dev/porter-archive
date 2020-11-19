@@ -210,9 +210,9 @@ func (app *App) HandleListPods(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// HandleStreamDeployment test calls
+// HandleStreamControllerStatus test calls
 // TODO: Refactor repeated calls.
-func (app *App) HandleStreamDeployment(w http.ResponseWriter, r *http.Request) {
+func (app *App) HandleStreamControllerStatus(w http.ResponseWriter, r *http.Request) {
 
 	// get session to retrieve correct kubeconfig
 	_, err := app.store.Get(r, app.cookieName)
@@ -262,7 +262,12 @@ func (app *App) HandleStreamDeployment(w http.ResponseWriter, r *http.Request) {
 		app.handleErrorUpgradeWebsocket(err, w)
 	}
 
-	err = agent.StreamDeploymentStatus(conn)
+	// get path parameters
+	namespace := chi.URLParam(r, "namespace")
+	name := chi.URLParam(r, "name")
+	kind := chi.URLParam(r, "kind")
+
+	err = agent.StreamControllerStatus(conn, namespace, name, kind)
 
 	if err != nil {
 		app.handleErrorWebsocketWrite(err, w)

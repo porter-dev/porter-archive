@@ -27,7 +27,7 @@ export default class LogSection extends Component<PropsType, StateType> {
   }
 
   renderLogs = () => {
-    return <Logs key={this.state.selectedPod.name} selectedPod={this.state.selectedPod} />
+    return <Logs key={this.state.selectedPod?.name} selectedPod={this.state.selectedPod} />
   }
 
   renderPodTabs = () => {
@@ -46,9 +46,26 @@ export default class LogSection extends Component<PropsType, StateType> {
     })
   }
 
+  renderLogSection = () => {
+    if (this.state.pods.length > 0) {
+      return (
+        <div>
+          <TabWrapper>
+            {this.renderPodTabs()}
+          </TabWrapper>
+          {this.renderLogs()}
+        </div>
+      )
+    } else {
+      return (
+        <NoPods> <i className="material-icons">category</i> No pods to display. </NoPods>
+      )
+    }
+  }
+
   componentDidMount() {
     const { selectors } = this.props;
-    let { currentCluster, currentProject } = this.context;
+    let { currentCluster, currentProject, setCurrenterror } = this.context;
 
     api.getMatchingPods('<token>', { 
       cluster_id: currentCluster.id,
@@ -57,10 +74,15 @@ export default class LogSection extends Component<PropsType, StateType> {
     }, {
       id: currentProject.id
     }, (err: any, res: any) => {
+      if (err) {
+        console.log(err)
+        setCurrenterror(JSON.stringify(err))
+        return
+      }
       let pods = res?.data?.map((pod: any) => {
         return {
-          namespace: pod.metadata.namespace, 
-          name: pod.metadata.name
+          namespace: pod?.metadata?.namespace, 
+          name: pod?.metadata?.name
         }
       })
       this.setState({ pods , selectedPod: pods[0]})
@@ -70,10 +92,7 @@ export default class LogSection extends Component<PropsType, StateType> {
   render() {
     return (
       <StyledLogSection>
-        <TabWrapper>
-          {this.renderPodTabs()}
-        </TabWrapper>
-        {this.renderLogs()}
+        {this.renderLogSection()}
       </StyledLogSection>
     );
   }
@@ -113,4 +132,20 @@ const StyledLogSection = styled.span`
   position: relative;
   padding: 0px;
   user-select: text;
+`;
+
+const NoPods = styled.div`
+  padding-top: 20%;
+  position: relative;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: #ffffff44;
+  font-size: 14px;
+
+  > i {
+    font-size: 18px;
+    margin-right: 12px;
+  }
 `;

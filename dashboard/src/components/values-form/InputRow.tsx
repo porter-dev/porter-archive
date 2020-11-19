@@ -27,7 +27,7 @@ export default class InputRow extends Component<PropsType, StateType> {
             placeholder={placeholder}
             width={width}
             type={type}
-            value={value}
+            value={value || ''}
             onChange={(e: ChangeEvent<HTMLInputElement>) =>
               this.props.setValue(e.target.value)
             }
@@ -57,7 +57,7 @@ const Input = styled.input`
   border-radius: 3px;
   width: ${(props: { disabled: boolean, width: string }) => props.width ? props.width : '270px'};
   color: ${(props: { disabled: boolean, width: string }) => props.disabled ? '#ffffff44' : 'white'};
-  padding: 5px 8px;
+  padding: 5px 10px;
   margin-right: 8px;
   height: 30px;
 `;

@@ -1,7 +1,9 @@
 import React, { Component } from 'react';
 import styled from 'styled-components';
 
-import { FormYAML, Section, FormElement } from '../../shared/types';
+import { Section, FormElement } from '../../shared/types';
+import { Context } from '../../shared/Context';
+import api from '../../shared/api';
 
 import SaveButton from '../SaveButton';
 import CheckboxRow from './CheckboxRow';
@@ -9,17 +11,16 @@ import InputRow from './InputRow';
 import SelectRow from './SelectRow';
 
 type PropsType = {
-  formData?: FormYAML
+  sections?: Section[]
 };
 
 type StateType = any;
 
 export default class ValuesForm extends Component<PropsType, StateType> {
 
-  // Initialize corresponding state fields for form blocks
-  componentDidMount() {
+  updateFormState() {
     let formState: any = {};
-    this.props.formData.Sections.forEach((section: Section, i: number) => {
+    this.props.sections.forEach((section: Section, i: number) => {
       section.Contents.forEach((item: FormElement, i: number) => {
 
         // If no name is assigned use values.yaml variable as identifier
@@ -34,7 +35,7 @@ export default class ValuesForm extends Component<PropsType, StateType> {
             formState[key] = def ? def : '';
             break;
           case 'number-input':
-            formState[key] = def ? def : '';
+            formState[key] = def.toString() ? def.toString() : '';
             break;
           case 'select':
             formState[key] = def ? def : item.Settings.Options[0].Value;
@@ -43,6 +44,32 @@ export default class ValuesForm extends Component<PropsType, StateType> {
       });
     });
     this.setState(formState);
+  }
+
+  // Initialize corresponding state fields for form blocks
+  componentDidMount() {
+    this.updateFormState();
+  }
+
+  componentDidUpdate(prevProps: PropsType) {
+    if (this.props.sections !== prevProps.sections) {
+      this.updateFormState();
+    }
+  }
+
+  handleDeploy = () => {
+    console.log(this.state);
+    let { currentProject } = this.context;
+
+    api.deployTemplate('<token>', {}, {
+      id: currentProject.id,
+    }, (err: any, res: any) => {
+      if (err) {
+        // console.log(err)
+      } else {
+        // console.log(res.data)
+      }
+    });
   }
 
   renderSection = (section: Section) => {
@@ -68,7 +95,7 @@ export default class ValuesForm extends Component<PropsType, StateType> {
           return (
             <InputRow
               key={i}
-              type={'text'}
+              type='text'
               value={this.state[key]}
               setValue={(x: string) => this.setState({ [key]: x })}
               label={item.Label}
@@ -79,9 +106,9 @@ export default class ValuesForm extends Component<PropsType, StateType> {
           return (
             <InputRow
               key={i}
-              type={'number'}
+              type='number'
               value={this.state[key]}
-              setValue={(x: string) => this.setState({ [key]: parseInt(x) })}
+              setValue={(x: string) => this.setState({ [key]: x })}
               label={item.Label}
               unit={item.Settings ? item.Settings.Unit : null}
             />
@@ -104,7 +131,7 @@ export default class ValuesForm extends Component<PropsType, StateType> {
 
   renderFormContents = () => {
     if (this.state) {
-      return this.props.formData.Sections.map((section: Section, i: number) => {
+      return this.props.sections.map((section: Section, i: number) => {
 
         // Hide collapsible section if deciding field is false
         if (section.ShowIf) {
@@ -131,13 +158,16 @@ export default class ValuesForm extends Component<PropsType, StateType> {
         </StyledValuesForm>
         <SaveButton
           text='Deploy'
-          onClick={() => console.log(this.state)}
+          onClick={this.handleDeploy}
           status={null}
+          makeFlush={true}
         />
       </Wrapper>
     );
   }
 }
+
+ValuesForm.contextType = Context;
 
 const DarkMatter = styled.div`
   margin-top: 0px;

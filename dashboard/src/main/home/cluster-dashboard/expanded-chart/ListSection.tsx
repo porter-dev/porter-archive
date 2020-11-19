@@ -70,4 +70,6 @@ const StyledListSection = styled.div`
   background: #ffffff11;
   display: flex;
   position: relative;
+  border-radius: 5px;
+  font-size: 13px;
 `;

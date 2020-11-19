@@ -16,22 +16,25 @@ type PropsType = {
 
 type StateType = {
   charts: ChartType[],
+  chartLookupTable: Record<string, string>,
+  controllers: Record<string, Record<string, any>>,
   loading: boolean,
   error: boolean,
-  ws: any,
+  websockets: Record<string, any>,
 };
 
 export default class ChartList extends Component<PropsType, StateType> {
   state = {
     charts: [] as ChartType[],
+    chartLookupTable: {} as Record<string, string>,
+    controllers: {} as Record<string, Record<string, any>>,
     loading: false,
     error: false,
-    ws : null as any
+    websockets : {} as Record<string, any>,
   }
 
-  updateCharts = () => {
+  updateCharts = (callback: Function) => {
     let { currentCluster, currentProject, setCurrentError } = this.context;
-
     this.setState({ loading: true });
     setTimeout(() => {
       if (this.state.loading) {
@@ -50,13 +53,14 @@ export default class ChartList extends Component<PropsType, StateType> {
       statusFilter: ['deployed', 'uninstalled', 'pending', 'pending_upgrade',
         'pending_rollback','superseded','failed']
     }, { id: currentProject.id }, (err: any, res: any) => {
-        if (err) {
+      if (err) {
         console.log(err)
         setCurrentError(JSON.stringify(err));
         this.setState({ loading: false, error: true });
       } else {
         if (res.data) {
           this.setState({ charts: res.data });
+          callback(res.data)
         } else {
           this.setState({ charts: [] });
         }
@@ -65,36 +69,113 @@ export default class ChartList extends Component<PropsType, StateType> {
     });
   }
 
-  setupWebsocket = () => {
-    let { currentCluster, currentProject } = this.context;
-    let ws = new WebSocket(`ws://localhost:8080`)
-
-    this.setState({ ws }, () => {
-      if (!this.state.ws) return;
-  
-      this.state.ws.onopen = () => {
+  setupWebsocket = (kind: string) => {
+      let { currentCluster, currentProject } = this.context;
+      let ws = new WebSocket(`ws://localhost:8080/api/projects/${currentProject.id}/k8s/${kind}/status?cluster_id=${currentCluster.id}&service_account_id=${currentCluster.service_account_id}`)
+      ws.onopen = () => {
         console.log('connected to websocket')
       }
   
-      this.state.ws.onmessage = (evt: MessageEvent) => {
-        console.log(evt.data)
+      ws.onmessage = (evt: MessageEvent) => {
+        let event = JSON.parse(evt.data)
+        let object = event.Object
+        let chartKey = this.state.chartLookupTable[object.metadata.uid]
+
+        // ignore if updated object does not belong to any chart in the list.
+        if (!chartKey) {
+          return;
+        }
+
+        let chartControllers = this.state.controllers[chartKey]
+        chartControllers[object.metadata.uid] = object
+
+        this.setState({
+          controllers: {
+            ...this.state.controllers,
+            [chartKey] : chartControllers
+          }
+        })
       }
   
-      this.state.ws.onerror = (err: ErrorEvent) => {
-        console.log(err)
+      ws.onclose = () => {
+        console.log('closing websocket')
       }
+  
+      ws.onerror = (err: ErrorEvent) => {
+        console.log(err)
+        ws.close()
+      }
+
+      return ws
+  }
+
+  setControllerWebsockets = (controllers: any[]) => {
+    let websockets = controllers.map((kind: string) => {
+      return this.setupWebsocket(kind)
+    })
+    this.setState({websockets})
+  }
+
+  getControllers = (charts: any[]) => {
+    let { currentCluster, currentProject, setCurrentError } = this.context;
+
+    charts.forEach(async (chart: any) => {
+      // don't retrieve controllers for chart that failed to even deploy.
+      if (chart.info.status == 'failed') return;
+
+      await new Promise(next => {
+        api.getChartControllers('<token>', {
+          namespace: chart.namespace,
+          cluster_id: currentCluster.id,
+          service_account_id: currentCluster.service_account_id,
+          storage: StorageType.Secret
+        }, {
+          id: currentProject.id,
+          name: chart.name,
+          revision: chart.version
+        }, (err: any, res: any) => {
+          if (err) {
+            setCurrentError(JSON.stringify(err));
+            return
+          }
+          // transform controller array into hash table for easy lookup during updates.
+          let chartControllers = {} as Record<string, Record<string, any>>
+          res.data.forEach((c: any) => {
+            chartControllers[c.metadata.uid] = c
+          })
+
+          res.data.forEach(async (c: any) => {
+            await new Promise(nextController => {
+              this.setState({
+                chartLookupTable: {
+                  ...this.state.chartLookupTable,
+                  [c.metadata.uid] : `${chart.namespace}-${chart.name}`
+                },
+                controllers: {
+                  ...this.state.controllers,
+                  [`${chart.namespace}-${chart.name}`] : chartControllers
+                }
+              }, () => {
+                nextController();
+              })
+            })
+          })
+          next();
+        });
+      })
     })
   }
 
   componentDidMount() {
-    this.updateCharts();
-    // this.setupWebsocket();
+    this.updateCharts(this.getControllers);
+    this.setControllerWebsockets(["deployment", "statefulset", "daemonset", "replicaset"]);
   }
 
-  componentWillUnmount() {
-    if (this.state.ws) {
-      console.log('closing websocket')
-      this.state.ws.close()
+  async componentWillUnmount () {
+    if (this.state.websockets) {
+      this.state.websockets.forEach((ws: WebSocket) => {
+        ws.close()
+      })
     }
   }
 
@@ -103,7 +184,7 @@ export default class ChartList extends Component<PropsType, StateType> {
     // Ret2: Prevents reload when opening ClusterConfigModal
     if (prevProps.currentCluster !== this.props.currentCluster || 
       prevProps.namespace !== this.props.namespace) {
-      this.updateCharts();
+      this.updateCharts(this.getControllers);
     }
   }
 
@@ -126,12 +207,13 @@ export default class ChartList extends Component<PropsType, StateType> {
       );
     }
 
-    return this.state.charts.map((x: ChartType, i: number) => {
+    return this.state.charts.map((chart: ChartType, i: number) => {
       return (
         <Chart
-          key={i}
-          chart={x}
+          key={`${chart.namespace}-${chart.name}`}
+          chart={chart}
           setCurrentChart={this.props.setCurrentChart}
+          controllers={this.state.controllers[`${chart.namespace}-${chart.name}`] || {} as Record<string, any>}
         />
       )
     })

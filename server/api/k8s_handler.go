@@ -263,11 +263,8 @@ func (app *App) HandleStreamControllerStatus(w http.ResponseWriter, r *http.Requ
 	}
 
 	// get path parameters
-	namespace := chi.URLParam(r, "namespace")
-	name := chi.URLParam(r, "name")
 	kind := chi.URLParam(r, "kind")
-
-	err = agent.StreamControllerStatus(conn, namespace, name, kind)
+	err = agent.StreamControllerStatus(conn, kind)
 
 	if err != nil {
 		app.handleErrorWebsocketWrite(err, w)

@@ -304,7 +304,7 @@ func New(
 
 		r.Method(
 			"GET",
-			"/projects/{project_id}/k8s/{namespace}/{kind}/{name}/status",
+			"/projects/{project_id}/k8s/{kind}/status",
 			auth.DoesUserHaveProjectAccess(
 				auth.DoesUserHaveServiceAccountAccess(
 					requestlog.NewHandler(a.HandleStreamControllerStatus, l),

@@ -1,6 +1,5 @@
 import React, { Component } from 'react';
 import styled from 'styled-components';
-import api from '../../../../shared/api';
 
 import { ChartType, StorageType } from '../../../../shared/types';
 import { Context } from '../../../../shared/Context';
@@ -8,19 +7,34 @@ import { Context } from '../../../../shared/Context';
 type PropsType = {
   chart: ChartType,
   setCurrentChart: (c: ChartType) => void
+  controllers: Record<string, any>,
 };
 
 type StateType = {
   expand: boolean,
   controllers: Record<string, boolean>,
-  websockets: Record<string, any>, 
+  update: any[],
+  getAvailability: Function,
 };
 
 export default class Chart extends Component<PropsType, StateType> {
+  getAvailability = (kind: string, c: any) => {
+    switch (kind.toLowerCase()) {
+      case "deployment":
+      case "replicaset":
+        return (c.status.availableReplicas == c.status.replicas)
+      case "statefulset":
+       return (c.status.readyReplicas == c.status.replicas)
+      case "daemonset":
+        return (c.status.numberAvailable == c.status.desiredNumberScheduled)
+      }
+  }
+
   state = {
     expand: false,
     controllers: {} as Record<string, boolean>,
-    websockets : [] as any[],
+    update: [] as any[],
+    getAvailability: this.getAvailability.bind(this)
   }
 
   renderIcon = () => {
@@ -40,31 +54,19 @@ export default class Chart extends Component<PropsType, StateType> {
     return `${time} on ${date}`;
   }
 
-  getAvailability = (kind: string, c: any) => {
-    switch (kind.toLowerCase()) {
-      case "deployment":
-      case "replicaset":
-        return (c.status.availableReplicas == c.status.replicas)
-      case "statefulset":
-       return (c.status.readyReplicas == c.status.replicas)
-      case "daemonset":
-        return (c.status.numberAvailable == c.status.desiredNumberScheduled)
-      }
-  }
-
-  setControllerStatus = (cs: any[]) => {
+  setControllerStatus = (cs: Record<string, any>) => {
     let controllers = {} as Record<string, boolean>;
-    cs.map((c) => {
-      controllers[c.metadata.uid] = this.getAvailability(c.kind, c)
-    })
-    this.setState({ controllers })
+    for (var uid in cs) {
+      let value = cs[uid];
+      controllers[uid] = this.getAvailability(value.kind, value);
+    }
+    this.setState({ controllers });
   }
 
   getChartStatus = (chartStatus: string) => {
     if (chartStatus === 'deployed') {
       for (var uid in this.state.controllers) {
         if (!this.state.controllers[uid]) {
-          console.log(this.props.chart.name, uid)
           return 'updating'
         }
       }
@@ -73,97 +75,23 @@ export default class Chart extends Component<PropsType, StateType> {
     return chartStatus
   }
 
-  setupWebsocket = async (uid: string, namespace: string, name: string, kind: string) => {
-    return new Promise((resolve, reject) => {
-      let { currentCluster, currentProject } = this.context;
-      let ws = new WebSocket(`ws://localhost:8080/api/projects/${currentProject.id}/k8s/${namespace}/${kind}/${name}/status?cluster_id=${currentCluster.id}&service_account_id=${currentCluster.service_account_id}`)
-      ws.onopen = () => {
-        console.log('connected to websocket')
-      }
-  
-      ws.onmessage = (evt: MessageEvent) => {
-        let event = JSON.parse(evt.data)
-        let object = event.Object
-        const { chart } = this.props;
-        if (!this.state.controllers[object.metadata.uid]) {
-          return;
-        }
-        this.setState({
-          controllers: {
-            ...this.state.controllers,
-            [object.metadata.uid]: this.getAvailability(event.Kind, object) 
-          }
-        })
-      }
-  
-      ws.onclose = () => {
-        console.log('closing websocket')
-      }
-  
-      ws.onerror = (err: ErrorEvent) => {
-        console.log(err)
-        ws.close()
-      }
-  
-      if (!this.state.websockets) {
-        reject("Cannot establish websocket connection for controllers.")
-      };
-  
-      this.setState({
-        websockets: {
-          ...this.state.websockets,
-          [uid]: ws
-        }
-      }, () => {
-        resolve()
-      })
-    })
-  }
+  static getDerivedStateFromProps(nextProps: any, prevState: any) {
+    let controllers = {} as Record<string, boolean>;
+    
+    for (var uid in nextProps.controllers) {
+      let controller = nextProps.controllers[uid]
+      controllers[uid] = prevState.getAvailability(controller.kind, controller)
+    }
 
-  setControllerWebsockets = (controllers: any[]) => {
-    let { setCurrentError } = this.context;
-    controllers.forEach(async (c: any) => {
-      this.setupWebsocket(c.metadata.uid, c.metadata.namespace || "default", 
-        c.metadata.name, c.kind)
-      .catch(setCurrentError)
-    })
+    return {
+      controllers,
+    };
   }
 
   componentDidMount () {
-    let { currentCluster, currentProject, setCurrentError } = this.context;
-    const { chart } = this.props;
-
-    if (chart.info.status == 'failed') return; 
-
-    api.getChartControllers('<token>', {
-      namespace: chart.namespace,
-      cluster_id: currentCluster.id,
-      service_account_id: currentCluster.service_account_id,
-      storage: StorageType.Secret
-    }, {
-      id: currentProject.id,
-      name: chart.name,
-      revision: chart.version
-    }, (err: any, res: any) => {
-      if (err) {
-        setCurrentError(JSON.stringify(err));
-        return
-      }
-      console.log(res.data)
-      this.setControllerStatus(res.data)
-      this.setControllerWebsockets(res.data)
-    });
-  }
-
-  async componentWillUnmount () {
-    if (this.state.websockets) {
-      for (var uid in this.state.websockets) {
-        await new Promise(next => {
-          this.state.websockets[uid].close()
-          next()
-        })
-      }
-    }
+    const { chart, controllers } = this.props;
+    if (chart.info.status == 'failed') return;
+    this.setControllerStatus(controllers)
   }
 
   render() {

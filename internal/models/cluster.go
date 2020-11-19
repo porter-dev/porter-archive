@@ -7,10 +7,27 @@ import (
 	"gorm.io/gorm"
 )
 
+// ClusterAuth is an auth mechanism that a cluster candidate can resolve
+type ClusterAuth string
+
+// The support cluster candidate auth mechanisms
+const (
+	X509   ClusterAuth = "x509"
+	Basic              = "basic"
+	Bearer             = "bearerToken"
+	OIDC               = "oidc"
+	GCP                = "gcp-sa"
+	AWS                = "aws-sa"
+	Local              = "local"
+)
+
 // Cluster is an integration that can connect to a Kubernetes cluster via
 // a specific auth mechanism
 type Cluster struct {
 	gorm.Model
+
+	// The auth mechanism that this cluster will use
+	AuthMechanism ClusterAuth `json:"auth_mechanism"`
 
 	// The project that this integration belongs to
 	ProjectID uint `json:"project_id"`
@@ -75,6 +92,9 @@ func (c *Cluster) Externalize() *ClusterExternal {
 // from the user to set up.
 type ClusterCandidate struct {
 	gorm.Model
+
+	// The auth mechanism that this candidate will parse for
+	AuthMechanism ClusterAuth `json:"auth_mechanism"`
 
 	// The project that this integration belongs to
 	ProjectID uint `json:"project_id"`
@@ -184,36 +204,36 @@ type ClusterResolverInfo struct {
 
 // ClusterResolverInfos is a map of the information for actions to be
 // performed in order to initialize a cluster
-var ClusterResolverInfos = map[string]ClusterResolverInfo{
-	"upload-cluster-ca-data": ClusterResolverInfo{
+var ClusterResolverInfos = map[ClusterResolverName]ClusterResolverInfo{
+	ClusterCAData: ClusterResolverInfo{
 		Docs:   "https://github.com/porter-dev/porter",
 		Fields: "cluster_ca_data",
 	},
-	"rewrite-cluster-localhost": ClusterResolverInfo{
+	ClusterLocalhost: ClusterResolverInfo{
 		Docs:   "https://github.com/porter-dev/porter",
 		Fields: "cluster_hostname",
 	},
-	"upload-client-cert-data": ClusterResolverInfo{
+	ClientCertData: ClusterResolverInfo{
 		Docs:   "https://github.com/porter-dev/porter",
 		Fields: "client_cert_data",
 	},
-	"upload-client-key-data": ClusterResolverInfo{
+	ClientKeyData: ClusterResolverInfo{
 		Docs:   "https://github.com/porter-dev/porter",
 		Fields: "client_key_data",
 	},
-	"upload-oidc-idp-issuer-ca-data": ClusterResolverInfo{
+	OIDCIssuerData: ClusterResolverInfo{
 		Docs:   "https://github.com/porter-dev/porter",
 		Fields: "oidc_idp_issuer_ca_data",
 	},
-	"upload-token-data": ClusterResolverInfo{
+	TokenData: ClusterResolverInfo{
 		Docs:   "https://github.com/porter-dev/porter",
 		Fields: "token_data",
 	},
-	"upload-gcp-key-data": ClusterResolverInfo{
+	GCPKeyData: ClusterResolverInfo{
 		Docs:   "https://github.com/porter-dev/porter",
 		Fields: "gcp_key_data",
 	},
-	"upload-aws-data": ClusterResolverInfo{
+	AWSData: ClusterResolverInfo{
 		Docs:   "https://github.com/porter-dev/porter",
 		Fields: "aws_access_key_id,aws_secret_access_key,aws_cluster_id",
 	},
@@ -246,16 +266,10 @@ type ClusterResolver struct {
 	ClusterCandidateID uint `json:"cluster_candidate_id"`
 
 	// One of the ClusterResolverNames
-	Name string `json:"name"`
+	Name ClusterResolverName `json:"name"`
 
 	// Resolved is true if this has been resolved, false otherwise
 	Resolved bool `json:"resolved"`
-
-	// Docs is a link to documentation that helps resolve this manually
-	Docs string `json:"docs"`
-
-	// Fields is a list of fields that must be sent with the resolving request
-	Fields string `json:"fields"`
 
 	// Data is additional data for resolving the action, for example a file name,
 	// context name, etc
@@ -274,7 +288,7 @@ type ClusterResolverExternal struct {
 	ClusterCandidateID uint `json:"cluster_candidate_id"`
 
 	// One of the ClusterResolverNames
-	Name string `json:"name"`
+	Name ClusterResolverName `json:"name"`
 
 	// Resolved is true if this has been resolved, false otherwise
 	Resolved bool `json:"resolved"`

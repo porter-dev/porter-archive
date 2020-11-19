@@ -20,6 +20,7 @@ func TestCreateClusterCandidate(t *testing.T) {
 	defer cleanup(tester, t)
 
 	cc := &models.ClusterCandidate{
+		AuthMechanism:     models.AWS,
 		ProjectID:         tester.initProjects[0].ID,
 		CreatedClusterID:  0,
 		Resolvers:         []models.ClusterResolver{},
@@ -68,14 +69,13 @@ func TestCreateClusterCandidateWithResolvers(t *testing.T) {
 	defer cleanup(tester, t)
 
 	cc := &models.ClusterCandidate{
+		AuthMechanism:    models.AWS,
 		ProjectID:        tester.initProjects[0].ID,
 		CreatedClusterID: 0,
 		Resolvers: []models.ClusterResolver{
 			models.ClusterResolver{
 				Name:     models.ClusterLocalhost,
 				Resolved: false,
-				Docs:     models.ClusterResolverInfos[models.ClusterLocalhost].Docs,
-				Fields:   models.ClusterResolverInfos[models.ClusterLocalhost].Fields,
 			},
 		},
 		Name:              "cluster-test",
@@ -150,6 +150,7 @@ func TestListClusterCandidatesByProjectID(t *testing.T) {
 
 	// make sure data is correct
 	expCC := models.ClusterCandidate{
+		AuthMechanism:     models.AWS,
 		ProjectID:         tester.initProjects[0].ID,
 		CreatedClusterID:  0,
 		Resolvers:         []models.ClusterResolver{},
@@ -191,6 +192,7 @@ func TestUpdateClusterCandidateCreatedClusterID(t *testing.T) {
 	}
 
 	expCC := models.ClusterCandidate{
+		AuthMechanism:     models.AWS,
 		ProjectID:         tester.initProjects[0].ID,
 		CreatedClusterID:  tester.initClusters[0].ID,
 		Name:              "cluster-test",

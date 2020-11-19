@@ -153,7 +153,12 @@ const deleteProject = baseApi<{}, { id: number }>('DELETE', pathParams => {
   return `/api/projects/${pathParams.id}`;
 });
 
-const deployTemplate = baseApi<{}, { id: number }>('POST', pathParams => {
+const deployTemplate = baseApi<{
+  templateName: string,
+  clusterID: number,
+  imageURL: string,
+  formValues: any
+}, { id: number }>('POST', pathParams => {
   return `/api/projects/${pathParams.id}/deploy`;
 });
 

@@ -11,7 +11,8 @@ import InputRow from './InputRow';
 import SelectRow from './SelectRow';
 
 type PropsType = {
-  sections?: Section[]
+  sections?: Section[],
+  onSubmit: (formValues: any) => void,
 };
 
 type StateType = any;
@@ -35,7 +36,7 @@ export default class ValuesForm extends Component<PropsType, StateType> {
             formState[key] = def ? def : '';
             break;
           case 'number-input':
-            formState[key] = def.toString() ? def.toString() : '';
+            formState[key] = def.toString() ? def : '';
             break;
           case 'select':
             formState[key] = def ? def : item.Settings.Options[0].Value;
@@ -55,21 +56,6 @@ export default class ValuesForm extends Component<PropsType, StateType> {
     if (this.props.sections !== prevProps.sections) {
       this.updateFormState();
     }
-  }
-
-  handleDeploy = () => {
-    console.log(this.state);
-    let { currentProject } = this.context;
-
-    api.deployTemplate('<token>', {}, {
-      id: currentProject.id,
-    }, (err: any, res: any) => {
-      if (err) {
-        // console.log(err)
-      } else {
-        // console.log(res.data)
-      }
-    });
   }
 
   renderSection = (section: Section) => {
@@ -108,7 +94,7 @@ export default class ValuesForm extends Component<PropsType, StateType> {
               key={i}
               type='number'
               value={this.state[key]}
-              setValue={(x: string) => this.setState({ [key]: x })}
+              setValue={(x: number) => this.setState({ [key]: x })}
               label={item.Label}
               unit={item.Settings ? item.Settings.Unit : null}
             />
@@ -158,7 +144,7 @@ export default class ValuesForm extends Component<PropsType, StateType> {
         </StyledValuesForm>
         <SaveButton
           text='Deploy'
-          onClick={this.handleDeploy}
+          onClick={() => this.props.onSubmit(this.state)}
           status={null}
           makeFlush={true}
         />

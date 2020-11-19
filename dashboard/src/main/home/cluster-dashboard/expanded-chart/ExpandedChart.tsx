@@ -95,7 +95,10 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
         value: '@' + tab.Name,
         component: (
           <ValuesFormWrapper>
-            <ValuesForm sections={tab.Sections} />
+            <ValuesForm 
+              sections={tab.Sections} 
+              onSubmit={(x: any) => console.log(x)}
+            />
           </ValuesFormWrapper>
         ),
       });

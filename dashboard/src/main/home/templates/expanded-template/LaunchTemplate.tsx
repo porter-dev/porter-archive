@@ -34,6 +34,27 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
     tabContents: [] as any,
   };
 
+  onSubmit = (formValues: any) => {
+    console.log(formValues);
+
+    let { currentCluster, currentProject } = this.context;
+    console.log(formValues);
+    api.deployTemplate('<token>', {
+      templateName: this.props.currentTemplate.Name,
+      clusterID: currentCluster.id,
+      imageURL: this.state.selectedImageUrl,
+      formValues,
+    }, {
+      id: currentProject.id,
+    }, (err: any, res: any) => {
+      if (err) {
+        // console.log(err)
+      } else {
+        // console.log(res.data)
+      }
+    });
+  }
+
   componentDidMount() {
 
     // Generate settings tabs from the provided form
@@ -44,7 +65,10 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
       tabContents.push({
         value: tab.Name, component: (
           <ValuesFormWrapper>
-            <ValuesForm sections={tab.Sections} />
+            <ValuesForm 
+              sections={tab.Sections} 
+              onSubmit={this.onSubmit}
+            />
           </ValuesFormWrapper>
         ),
       });

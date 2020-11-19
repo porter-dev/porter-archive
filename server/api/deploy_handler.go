@@ -4,7 +4,6 @@ import (
 	"archive/tar"
 	"bytes"
 	"compress/gzip"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -13,14 +12,13 @@ import (
 	"strings"
 
 	"github.com/porter-dev/porter/internal/models"
-
 	"gopkg.in/yaml.v2"
 )
 
-// HandleListTemplates retrieves a list of Porter templates
-// TODO: test and reduce fragility (handle untar/parse error for individual charts)
-// TODO: separate markdown retrieval into its own query if necessary
-func (app *App) HandleListTemplates(w http.ResponseWriter, r *http.Request) {
+// HandleDeployTemplate triggers a chart deployment from a template
+func (app *App) HandleDeployTemplate(w http.ResponseWriter, r *http.Request) {
+	tgt := "hello-porter"
+
 	baseURL := "https://porter-dev.github.io/chart-repo/"
 	resp, err := http.Get(baseURL + "index.yaml")
 	if err != nil {
@@ -38,40 +36,40 @@ func (app *App) HandleListTemplates(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Loop over charts in index.yaml
-	porterCharts := []models.PorterChart{}
 	for k := range form.Entries {
 		indexChart := form.Entries[k][0]
 		tarURL := indexChart.Urls[0]
-		if !strings.Contains(tarURL, "http://") {
-			tarURL = baseURL + tarURL
+		splits := strings.Split(tarURL, "-")
+
+		strAcc := splits[0]
+		for i := 1; i < len(splits)-1; i++ {
+			strAcc += "-" + splits[i]
 		}
 
-		formData, markdown, err := processTarball(tarURL)
-		if err != nil {
-			fmt.Println(err)
-			return
-		}
+		// Unpack the target chart and retrieve values.yaml
+		if strAcc == tgt {
+			tgtURL := baseURL + tarURL
+			values, err := processValues(tgtURL)
+			if err != nil {
+				fmt.Println(err)
+				return
+			}
 
-		porterChart := models.PorterChart{}
-		porterChart.Name = indexChart.Name
-		porterChart.Description = indexChart.Description
-		porterChart.Icon = indexChart.Icon
-		porterChart.Form = *formData
-		if markdown != "" {
-			porterChart.Markdown = markdown
+			defaultValues := *values
+			defaultValues["replicaCount"] = 87
+			fmt.Println(defaultValues["replicaCount"])
+			for k := range *values {
+				fmt.Println(k)
+			}
 		}
-
-		porterCharts = append(porterCharts, porterChart)
 	}
-
-	json.NewEncoder(w).Encode(porterCharts)
 }
 
-func processTarball(tarURL string) (*models.FormYAML, string, error) {
-	resp, err := http.Get(tarURL)
+func processValues(tgtURL string) (*map[string]interface{}, error) {
+	resp, err := http.Get(tgtURL)
 	if err != nil {
 		fmt.Println(err)
-		return nil, "", err
+		return nil, err
 	}
 
 	defer resp.Body.Close()
@@ -81,19 +79,18 @@ func processTarball(tarURL string) (*models.FormYAML, string, error) {
 	gzf, err := gzip.NewReader(buf)
 	if err != nil {
 		fmt.Println(err)
-		return nil, "", err
+		return nil, err
 	}
 
 	// Process tarball to generate FormYAML and retrieve markdown
 	tarReader := tar.NewReader(gzf)
-	markdown := ""
 	for {
 		header, err := tarReader.Next()
 		if err == io.EOF {
 			break
 		} else if err != nil {
 			fmt.Println(err)
-			return nil, "", err
+			return nil, err
 		}
 
 		name := header.Name
@@ -102,36 +99,23 @@ func processTarball(tarURL string) (*models.FormYAML, string, error) {
 			continue
 		case tar.TypeReg:
 
-			// Handle info.md if found
-			if strings.Contains(name, "README.md") {
-				bufMd := new(bytes.Buffer)
-
-				_, err := io.Copy(bufMd, tarReader)
-				if err != nil {
-					fmt.Println(err)
-					return nil, "", err
-				}
-
-				markdown = string(bufMd.Bytes())
-			}
-
-			// Handle form.yaml located in archive
-			if strings.Contains(name, "form.yaml") {
+			// Handle values.yaml located in archive
+			if strings.Contains(name, "values.yaml") {
 				bufForm := new(bytes.Buffer)
 
 				_, err := io.Copy(bufForm, tarReader)
 				if err != nil {
 					fmt.Println(err)
-					return nil, "", err
+					return nil, err
 				}
 
 				// Unmarshal yaml byte buffer
-				form := models.FormYAML{}
+				form := make(map[string]interface{})
 				if err := yaml.Unmarshal(bufForm.Bytes(), &form); err != nil {
 					fmt.Println(err)
-					return nil, "", err
+					return nil, err
 				}
-				return &form, markdown, nil
+				return &form, nil
 			}
 		default:
 			fmt.Printf("%s : %c %s %s\n",
@@ -142,5 +126,5 @@ func processTarball(tarURL string) (*models.FormYAML, string, error) {
 			)
 		}
 	}
-	return nil, "", errors.New("no form.yaml found")
+	return nil, errors.New("no values.yaml found")
 }

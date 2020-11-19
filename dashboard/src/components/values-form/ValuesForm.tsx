@@ -2,6 +2,8 @@ import React, { Component } from 'react';
 import styled from 'styled-components';
 
 import { Section, FormElement } from '../../shared/types';
+import { Context } from '../../shared/Context';
+import api from '../../shared/api';
 
 import SaveButton from '../SaveButton';
 import CheckboxRow from './CheckboxRow';
@@ -53,6 +55,21 @@ export default class ValuesForm extends Component<PropsType, StateType> {
     if (this.props.sections !== prevProps.sections) {
       this.updateFormState();
     }
+  }
+
+  handleDeploy = () => {
+    console.log(this.state);
+    let { currentProject } = this.context;
+
+    api.deployTemplate('<token>', {}, {
+      id: currentProject.id,
+    }, (err: any, res: any) => {
+      if (err) {
+        // console.log(err)
+      } else {
+        // console.log(res.data)
+      }
+    });
   }
 
   renderSection = (section: Section) => {
@@ -141,7 +158,7 @@ export default class ValuesForm extends Component<PropsType, StateType> {
         </StyledValuesForm>
         <SaveButton
           text='Deploy'
-          onClick={() => console.log(this.state)}
+          onClick={this.handleDeploy}
           status={null}
           makeFlush={true}
         />
@@ -149,6 +166,8 @@ export default class ValuesForm extends Component<PropsType, StateType> {
     );
   }
 }
+
+ValuesForm.contextType = Context;
 
 const DarkMatter = styled.div`
   margin-top: 0px;

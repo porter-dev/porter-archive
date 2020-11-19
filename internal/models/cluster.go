@@ -21,9 +21,6 @@ type Cluster struct {
 	// Server endpoint for the cluster
 	Server string `json:"server"`
 
-	// CertificateAuthorityData for the cluster, encrypted at rest
-	CertificateAuthorityData []byte `json:"certificate-authority-data,omitempty"`
-
 	// Additional fields optionally used by the kube client
 	ClusterLocationOfOrigin string `json:"location_of_origin,omitempty"`
 	TLSServerName           string `json:"tls-server-name,omitempty"`
@@ -33,6 +30,10 @@ type Cluster struct {
 	UserImpersonate         string `json:"act-as,omitempty"`
 	UserImpersonateGroups   string `json:"act-as-groups,omitempty"`
 
+	// ------------------------------------------------------------------
+	// All fields below this line are encrypted before storage
+	// ------------------------------------------------------------------
+
 	// The various auth mechanisms available to the integration
 	KubeIntegrationID uint
 	OIDCIntegrationID uint
@@ -41,6 +42,9 @@ type Cluster struct {
 
 	// A token cache that can be used by an auth mechanism, if desired
 	TokenCache integrations.TokenCache `json:"token_cache"`
+
+	// CertificateAuthorityData for the cluster, encrypted at rest
+	CertificateAuthorityData []byte `json:"certificate-authority-data,omitempty"`
 }
 
 // ClusterExternal is an external Cluster to be shared over REST

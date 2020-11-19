@@ -13,6 +13,7 @@ func NewRepository(db *gorm.DB, key *[32]byte) *repository.Repository {
 		Session:          NewSessionRepository(db),
 		Project:          NewProjectRepository(db),
 		GitRepo:          NewGitRepoRepository(db, key),
+		Cluster:          NewClusterRepository(db, key),
 		KubeIntegration:  NewKubeIntegrationRepository(db, key),
 		OIDCIntegration:  NewOIDCIntegrationRepository(db, key),
 		OAuthIntegration: NewOAuthIntegrationRepository(db, key),

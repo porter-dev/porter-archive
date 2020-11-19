@@ -1,104 +1,93 @@
 package gorm_test
 
-// func TestCreateGitRepo(t *testing.T) {
-// 	tester := &tester{
-// 		dbFileName: "./porter_create_gr.db",
-// 	}
+import (
+	"testing"
 
-// 	setupTestEnv(tester, t)
-// 	initUser(tester, t)
-// 	initProject(tester, t)
-// 	defer cleanup(tester, t)
+	"github.com/go-test/deep"
+	"github.com/porter-dev/porter/internal/models"
+	orm "gorm.io/gorm"
+)
 
-// 	repoClient := &models.GitRepo{
-// 		ProjectID:    tester.initProjects[0].ID,
-// 		UserID:       tester.initUsers[0].ID,
-// 		RepoUserID:   1,
-// 		Kind:         models.GitRepoGithub,
-// 		AccessToken:  []byte("accesstoken1234"),
-// 		RefreshToken: []byte("refreshtoken1234"),
-// 	}
+func TestCreateGitRepo(t *testing.T) {
+	tester := &tester{
+		dbFileName: "./porter_create_gr.db",
+	}
 
-// 	repoClient, err := tester.repo.GitRepo.CreateGitRepo(repoClient)
+	setupTestEnv(tester, t)
+	initUser(tester, t)
+	initProject(tester, t)
+	initOAuthIntegration(tester, t)
+	defer cleanup(tester, t)
 
-// 	if err != nil {
-// 		t.Fatalf("%v\n", err)
-// 	}
+	gr := &models.GitRepo{
+		ProjectID:          tester.initProjects[0].ID,
+		RepoEntity:         "porter-dev",
+		OAuthIntegrationID: tester.initOAuths[0].ID,
+	}
 
-// 	repoClient, err = tester.repo.GitRepo.ReadGitRepo(repoClient.Model.ID)
+	expGR := *gr
 
-// 	if err != nil {
-// 		t.Fatalf("%v\n", err)
-// 	}
+	gr, err := tester.repo.GitRepo.CreateGitRepo(gr)
 
-// 	// make sure id is 1
-// 	if repoClient.Model.ID != 1 {
-// 		t.Errorf("incorrect repo client ID: expected %d, got %d\n", 1, repoClient.Model.ID)
-// 	}
+	if err != nil {
+		t.Fatalf("%v\n", err)
+	}
 
-// 	// make sure data is correct
-// 	expGitRepo := &models.GitRepo{
-// 		ProjectID:    tester.initProjects[0].ID,
-// 		UserID:       tester.initUsers[0].ID,
-// 		RepoUserID:   1,
-// 		Kind:         models.GitRepoGithub,
-// 		AccessToken:  []byte("accesstoken1234"),
-// 		RefreshToken: []byte("refreshtoken1234"),
-// 	}
+	gr, err = tester.repo.GitRepo.ReadGitRepo(gr.Model.ID)
 
-// 	copyGitRepo := repoClient
+	if err != nil {
+		t.Fatalf("%v\n", err)
+	}
 
-// 	// reset fields for reflect.DeepEqual
-// 	copyGitRepo.Model = orm.Model{}
+	// make sure id is 1
+	if gr.Model.ID != 1 {
+		t.Errorf("incorrect git repo ID: expected %d, got %d\n", 1, gr.Model.ID)
+	}
 
-// 	if diff := deep.Equal(copyGitRepo, expGitRepo); diff != nil {
-// 		t.Errorf("incorrect repo client")
-// 		t.Error(diff)
-// 	}
-// }
+	// reset fields for reflect.DeepEqual
+	gr.Model = orm.Model{}
 
-// func TestListGitReposByProjectID(t *testing.T) {
-// 	tester := &tester{
-// 		dbFileName: "./porter_list_grs.db",
-// 	}
+	if diff := deep.Equal(expGR, *gr); diff != nil {
+		t.Errorf("incorrect git repo")
+		t.Error(diff)
+	}
+}
 
-// 	setupTestEnv(tester, t)
-// 	initUser(tester, t)
-// 	initProject(tester, t)
-// 	initServiceAccount(tester, t)
-// 	initGitRepo(tester, t)
-// 	defer cleanup(tester, t)
+func TestListGitReposByProjectID(t *testing.T) {
+	tester := &tester{
+		dbFileName: "./porter_list_grs.db",
+	}
 
-// 	grs, err := tester.repo.GitRepo.ListGitReposByProjectID(
-// 		tester.initProjects[0].Model.ID,
-// 	)
+	setupTestEnv(tester, t)
+	initGitRepo(tester, t)
+	defer cleanup(tester, t)
 
-// 	if err != nil {
-// 		t.Fatalf("%v\n", err)
-// 	}
+	grs, err := tester.repo.GitRepo.ListGitReposByProjectID(
+		tester.initProjects[0].Model.ID,
+	)
 
-// 	if len(grs) != 1 {
-// 		t.Fatalf("length of grs incorrect: expected %d, got %d\n", 1, len(grs))
-// 	}
+	if err != nil {
+		t.Fatalf("%v\n", err)
+	}
 
-// 	// make sure data is correct
-// 	// make sure data is correct
-// 	expGitRepo := &models.GitRepo{
-// 		ProjectID:    tester.initProjects[0].ID,
-// 		UserID:       tester.initUsers[0].ID,
-// 		RepoUserID:   1,
-// 		Kind:         models.GitRepoGithub,
-// 		AccessToken:  []byte("accesstoken1234"),
-// 		RefreshToken: []byte("refreshtoken1234"),
-// 	}
+	if len(grs) != 1 {
+		t.Fatalf("length of oidc integrations incorrect: expected %d, got %d\n", 1, len(grs))
+	}
 
-// 	copyGitRepo := grs[0]
+	// make sure data is correct
+	expGR := models.GitRepo{
+		ProjectID:          tester.initProjects[0].ID,
+		RepoEntity:         "porter-dev",
+		OAuthIntegrationID: tester.initOAuths[0].ID,
+	}
 
-// 	// reset fields for reflect.DeepEqual
-// 	copyGitRepo.Model = orm.Model{}
+	gr := grs[0]
 
-// 	if diff := deep.Equal(copyGitRepo, expGitRepo); diff != nil {
-// 		t.Errorf("incorrect repo client")
-// 		t.Error(diff)
-// 	}
-// }
+	// reset fields for reflect.DeepEqual
+	gr.Model = orm.Model{}
+
+	if diff := deep.Equal(expGR, *gr); diff != nil {
+		t.Errorf("incorrect git repo")
+		t.Error(diff)
+	}
+}

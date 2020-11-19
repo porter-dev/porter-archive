@@ -14,7 +14,7 @@ type Project struct {
 	Roles []Role `json:"roles"`
 
 	// linked repos
-	Repos []GitRepo `json:"git_repos,omitempty"`
+	GitRepos []GitRepo `json:"git_repos,omitempty"`
 
 	// linked clusters
 	Clusters          []Cluster          `json:"clusters"`
@@ -30,10 +30,10 @@ type Project struct {
 
 // ProjectExternal represents the Project type that is sent over REST
 type ProjectExternal struct {
-	ID          uint              `json:"id"`
-	Name        string            `json:"name"`
-	Roles       []RoleExternal    `json:"roles"`
-	RepoClients []GitRepoExternal `json:"git_repos,omitempty"`
+	ID       uint              `json:"id"`
+	Name     string            `json:"name"`
+	Roles    []RoleExternal    `json:"roles"`
+	GitRepos []GitRepoExternal `json:"git_repos,omitempty"`
 }
 
 // Externalize generates an external Project to be shared over REST
@@ -46,14 +46,14 @@ func (p *Project) Externalize() *ProjectExternal {
 
 	repos := make([]GitRepoExternal, 0)
 
-	for _, repo := range p.Repos {
+	for _, repo := range p.GitRepos {
 		repos = append(repos, *repo.Externalize())
 	}
 
 	return &ProjectExternal{
-		ID:          p.ID,
-		Name:        p.Name,
-		Roles:       roles,
-		RepoClients: repos,
+		ID:       p.ID,
+		Name:     p.Name,
+		Roles:    roles,
+		GitRepos: repos,
 	}
 }

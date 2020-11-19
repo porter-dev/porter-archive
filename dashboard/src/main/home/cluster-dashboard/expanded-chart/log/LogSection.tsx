@@ -33,17 +33,17 @@ export default class LogSection extends Component<PropsType, StateType> {
   renderPodTabs = () => {
     return this.state.pods.map((pod, i) => {
       return (
-        <Tab 
+        <Tab
           key={i}
-          selected={(this.state.selectedPod == pod)} 
+          selected={(this.state.selectedPod == pod)}
           onClick={() => {
           this.setState({selectedPod: pod})
           }
         }>
           {pod.name}
         </Tab>
-      )
-    })
+      );
+    });
   }
 
   renderLogSection = () => {
@@ -130,6 +130,7 @@ const StyledLogSection = styled.span`
   width: 100%;
   height: 100%;
   position: relative;
+  font-size: 13px;
   padding: 0px;
   user-select: text;
 `;

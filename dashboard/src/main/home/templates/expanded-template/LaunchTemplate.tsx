@@ -4,8 +4,11 @@ import styled from 'styled-components';
 import { Context } from '../../../../shared/Context';
 import api from '../../../../shared/api';
 
-import { PorterChart, RepoType, Cluster } from '../../../../shared/types';
+import { PorterChart, ChoiceType, Cluster } from '../../../../shared/types';
 import Selector from '../../../../components/Selector';
+import ImageSelector from '../../../../components/image-selector/ImageSelector';
+import TabRegion from '../../../../components/TabRegion';
+import ValuesForm from '../../../../components/values-form/ValuesForm';
 
 type PropsType = {
   currentTemplate: PorterChart,
@@ -16,9 +19,9 @@ type StateType = {
   currentView: string,
   clusterOptions: { label: string, value: string }[],
   selectedCluster: string,
-  selectedRepo: RepoType | null,
-  selectedBranch: string,
-  subdirectory: string,
+  selectedImageUrl: string | null,
+  tabOptions: ChoiceType[],
+  tabContents: any
 };
 
 export default class LaunchTemplate extends Component<PropsType, StateType> {
@@ -26,15 +29,30 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
     currentView: 'repo',
     clusterOptions: [] as { label: string, value: string }[],
     selectedCluster: this.context.currentCluster.name,
-    selectedRepo: null as RepoType | null,
-    selectedBranch: '',
-    subdirectory: '',
+    selectedImageUrl: '',
+    tabOptions: [] as ChoiceType[],
+    tabContents: [] as any,
   };
 
   componentDidMount() {
-    let { currentProject } = this.context;
+
+    // Generate settings tabs from the provided form
+    let tabOptions = [] as ChoiceType[];
+    let tabContents = [] as any;
+    this.props.currentTemplate.Form.Tabs.map((tab: any, i: number) => {
+      tabOptions.push({ value: tab.Name, label: tab.Label });
+      tabContents.push({
+        value: tab.Name, component: (
+          <ValuesFormWrapper>
+            <ValuesForm sections={tab.Sections} />
+          </ValuesFormWrapper>
+        ),
+      });
+    });
+    this.setState({ tabOptions, tabContents });
 
     // TODO: query with selected filter once implemented
+    let { currentProject } = this.context;
     api.getClusters('<token>', {}, { id: currentProject.id }, (err: any, res: any) => {
       if (err) {
         // console.log(err)
@@ -90,12 +108,48 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
             closeOverlay={true}
           />
         </ClusterSection>
+
+        <Subtitle>Select the container image you would like to connect to this template.</Subtitle>
+        <Br />
+        <ImageSelector
+          selectedImageUrl={this.state.selectedImageUrl}
+          setSelectedImageUrl={(x: string) => this.setState({ selectedImageUrl: x })}
+          forceExpanded={true}
+        />
+
+        <br />
+        <Subtitle>Configure additional settings for this template (optional).</Subtitle>
+        <TabRegion
+          options={this.state.tabOptions}
+          tabContents={this.state.tabContents}
+        />
       </StyledLaunchTemplate>
     );
   }
 }
 
 LaunchTemplate.contextType = Context;
+
+const ValuesFormWrapper = styled.div`
+  width: 100%;
+  height: calc(100% + 65px);
+  padding-bottom: 65px;
+`;
+
+const Br = styled.div`
+  width: 100%;
+  height: 7px;
+`;
+
+const Subtitle = styled.div`
+  padding: 11px 0px 20px;
+  font-family: 'Work Sans', sans-serif;
+  font-size: 13px;
+  color: #aaaabb;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+`;
 
 const ClusterLabel = styled.div`
   margin-right: 10px;
@@ -137,6 +191,7 @@ const ClusterSection = styled.div`
   font-size: 14px;
   font-weight: 500;
   margin-top: 20px;
+  margin-bottom: 15px;
 
   > i {
     font-size: 25px;
@@ -182,4 +237,5 @@ const TitleSection = styled.div`
 
 const StyledLaunchTemplate = styled.div`
   width: 100%;
+  padding-bottom: 150px;
 `;

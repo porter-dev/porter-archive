@@ -48,6 +48,17 @@ export default class TemplateInfo extends Component<PropsType, StateType> {
     return currentTemplate.Description;
   }
 
+  renderTagSection = () => {
+    if (this.props.currentTemplate.Form.Tags) {
+      return (
+        <TagSection>
+          <i className="material-icons">local_offer</i>
+          {this.renderTagList()}
+        </TagSection>
+      );
+    }
+  }
+
   render() {
     let { currentCluster } = this.context;
     let { Name, Icon } = this.props.currentTemplate.Form;
@@ -71,10 +82,7 @@ export default class TemplateInfo extends Component<PropsType, StateType> {
             Launch Template
           </Button>
         </TitleSection>
-        <TagSection>
-          <i className="material-icons">local_offer</i>
-          {this.renderTagList()}
-        </TagSection>
+        {this.renderTagSection()}
         <ContentSection>
           {this.renderMarkdown()}
         </ContentSection>
@@ -143,7 +151,7 @@ const Button = styled.div`
   font-size: 13px;
   padding: 10px 15px;
   border-radius: 3px;
-  cursor: ${(props: { isDisabled: boolean }) => (!props.isDisabled ? 'pointer' : 'default')};;
+  cursor: ${(props: { isDisabled: boolean }) => (!props.isDisabled ? 'pointer' : 'default')};
   box-shadow: 0 5px 8px 0px #00000010;
   display: flex;
   flex-direction: row;

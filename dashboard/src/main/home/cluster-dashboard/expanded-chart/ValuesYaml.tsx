@@ -81,6 +81,7 @@ export default class ValuesYaml extends Component<PropsType, StateType> {
           text='Update Values'
           onClick={this.handleSaveValues}
           status={this.state.saveValuesStatus}
+          makeFlush={true}
         />
       </StyledValuesYaml>
     );

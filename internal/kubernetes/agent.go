@@ -154,12 +154,10 @@ func (a *Agent) GetPodLogs(namespace string, name string, conn *websocket.Conn) 
 
 // StreamControllerStatus streams controller status. Supports Deployment, StatefulSet, ReplicaSet, and DaemonSet
 // TODO: Support Jobs
-func (a *Agent) StreamControllerStatus(conn *websocket.Conn, namespace string,
-	name string, kind string) error {
-	factory := informers.NewSharedInformerFactoryWithOptions(
+func (a *Agent) StreamControllerStatus(conn *websocket.Conn, kind string) error {
+	factory := informers.NewSharedInformerFactory(
 		a.Clientset,
 		10,
-		informers.WithNamespace(namespace),
 	)
 	var informer cache.SharedInformer
 

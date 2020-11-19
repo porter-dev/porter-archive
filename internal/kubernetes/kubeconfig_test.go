@@ -188,7 +188,7 @@ var SACandidatesTests = []saCandidatesTest{
 				Kind:            "connector",
 				ClusterName:     "cluster-test",
 				ClusterEndpoint: "https://10.10.10.10",
-				AuthMechanism:   models.X509,
+				Integration:   models.X509,
 				Kubeconfig:      []byte(ClusterCAWithoutData),
 			},
 		},
@@ -207,7 +207,7 @@ var SACandidatesTests = []saCandidatesTest{
 				Kind:            "connector",
 				ClusterName:     "cluster-test",
 				ClusterEndpoint: "https://localhost",
-				AuthMechanism:   models.X509,
+				Integration:   models.X509,
 				Kubeconfig:      []byte(ClusterLocalhost),
 			},
 		},
@@ -221,7 +221,7 @@ var SACandidatesTests = []saCandidatesTest{
 				Kind:            "connector",
 				ClusterName:     "cluster-test",
 				ClusterEndpoint: "https://10.10.10.10",
-				AuthMechanism:   models.X509,
+				Integration:   models.X509,
 				Kubeconfig:      []byte(x509WithData),
 			},
 		},
@@ -241,7 +241,7 @@ var SACandidatesTests = []saCandidatesTest{
 				Kind:            "connector",
 				ClusterName:     "cluster-test",
 				ClusterEndpoint: "https://10.10.10.10",
-				AuthMechanism:   models.X509,
+				Integration:   models.X509,
 				Kubeconfig:      []byte(x509WithoutCertData),
 			},
 		},
@@ -261,7 +261,7 @@ var SACandidatesTests = []saCandidatesTest{
 				Kind:            "connector",
 				ClusterName:     "cluster-test",
 				ClusterEndpoint: "https://10.10.10.10",
-				AuthMechanism:   models.X509,
+				Integration:   models.X509,
 				Kubeconfig:      []byte(x509WithoutKeyData),
 			},
 		},
@@ -286,7 +286,7 @@ var SACandidatesTests = []saCandidatesTest{
 				Kind:            "connector",
 				ClusterName:     "cluster-test",
 				ClusterEndpoint: "https://10.10.10.10",
-				AuthMechanism:   models.X509,
+				Integration:   models.X509,
 				Kubeconfig:      []byte(x509WithoutCertAndKeyData),
 			},
 		},
@@ -300,7 +300,7 @@ var SACandidatesTests = []saCandidatesTest{
 				Kind:            "connector",
 				ClusterName:     "cluster-test",
 				ClusterEndpoint: "https://10.10.10.10",
-				AuthMechanism:   models.Bearer,
+				Integration:   models.Bearer,
 				Kubeconfig:      []byte(BearerTokenWithData),
 			},
 		},
@@ -320,7 +320,7 @@ var SACandidatesTests = []saCandidatesTest{
 				Kind:            "connector",
 				ClusterName:     "cluster-test",
 				ClusterEndpoint: "https://10.10.10.10",
-				AuthMechanism:   models.Bearer,
+				Integration:   models.Bearer,
 				Kubeconfig:      []byte(BearerTokenWithoutData),
 			},
 		},
@@ -339,7 +339,7 @@ var SACandidatesTests = []saCandidatesTest{
 				Kind:            "connector",
 				ClusterName:     "cluster-test",
 				ClusterEndpoint: "https://10.10.10.10",
-				AuthMechanism:   models.GCP,
+				Integration:   models.GCP,
 				Kubeconfig:      []byte(GCPPlugin),
 			},
 		},
@@ -358,7 +358,7 @@ var SACandidatesTests = []saCandidatesTest{
 				Kind:            "connector",
 				ClusterName:     "cluster-test",
 				ClusterEndpoint: "https://10.10.10.10",
-				AuthMechanism:   models.AWS,
+				Integration:   models.AWS,
 				Kubeconfig:      []byte(AWSIamAuthenticatorExec),
 			},
 		},
@@ -377,7 +377,7 @@ var SACandidatesTests = []saCandidatesTest{
 				Kind:            "connector",
 				ClusterName:     "cluster-test",
 				ClusterEndpoint: "https://10.10.10.10",
-				AuthMechanism:   models.AWS,
+				Integration:   models.AWS,
 				Kubeconfig:      []byte(AWSEKSGetTokenExec),
 			},
 		},
@@ -397,7 +397,7 @@ var SACandidatesTests = []saCandidatesTest{
 				Kind:            "connector",
 				ClusterName:     "cluster-test",
 				ClusterEndpoint: "https://10.10.10.10",
-				AuthMechanism:   models.OIDC,
+				Integration:   models.OIDC,
 				Kubeconfig:      []byte(OIDCAuthWithoutData),
 			},
 		},
@@ -411,7 +411,7 @@ var SACandidatesTests = []saCandidatesTest{
 				Kind:            "connector",
 				ClusterName:     "cluster-test",
 				ClusterEndpoint: "https://10.10.10.10",
-				AuthMechanism:   models.OIDC,
+				Integration:   models.OIDC,
 				Kubeconfig:      []byte(OIDCAuthWithData),
 			},
 		},
@@ -425,7 +425,7 @@ var SACandidatesTests = []saCandidatesTest{
 				Kind:            "connector",
 				ClusterName:     "cluster-test",
 				ClusterEndpoint: "https://10.10.10.10",
-				AuthMechanism:   models.Basic,
+				Integration:   models.Basic,
 				Kubeconfig:      []byte(BasicAuth),
 			},
 		},
@@ -444,21 +444,21 @@ func TestGetServiceAccountCandidatesNonLocal(t *testing.T) {
 		resMap := make(map[string]*models.ServiceAccountCandidate)
 
 		for _, res := range result {
-			resMap[res.Kind+"-"+res.ClusterEndpoint+"-"+res.AuthMechanism] = res
+			resMap[res.Kind+"-"+res.ClusterEndpoint+"-"+res.Integration] = res
 		}
 
 		for _, exp := range c.expected {
-			res, ok := resMap[exp.Kind+"-"+exp.ClusterEndpoint+"-"+exp.AuthMechanism]
+			res, ok := resMap[exp.Kind+"-"+exp.ClusterEndpoint+"-"+exp.Integration]
 
 			if !ok {
 				t.Fatalf("%s failed: no matching result for %s\n", c.name,
-					exp.Kind+"-"+exp.ClusterEndpoint+"-"+exp.AuthMechanism)
+					exp.Kind+"-"+exp.ClusterEndpoint+"-"+exp.Integration)
 			}
 
 			// compare basic string fields
-			if exp.AuthMechanism != res.AuthMechanism {
+			if exp.Integration != res.Integration {
 				t.Errorf("%s failed on auth mechanism: expected %s, got %s\n",
-					c.name, exp.AuthMechanism, res.AuthMechanism)
+					c.name, exp.Integration, res.Integration)
 			}
 
 			if exp.ClusterName != res.ClusterName {

@@ -169,8 +169,8 @@ func TestGetProjectServiceAccount(t *testing.T) {
 		t.Errorf("service account kind incorrect: expected %s, got %s\n", "connector", resp.Kind)
 	}
 
-	if resp.AuthMechanism != models.OIDC {
-		t.Errorf("service account auth mechanism incorrect: expected %s, got %s\n", models.OIDC, resp.AuthMechanism)
+	if resp.Integration != models.OIDC {
+		t.Errorf("service account auth mechanism incorrect: expected %s, got %s\n", models.OIDC, resp.Integration)
 	}
 
 	// verify clusters
@@ -219,8 +219,8 @@ func TestCreateProjectCandidates(t *testing.T) {
 	}
 
 	// make sure auth mechanism is OIDC, project id is correct, and cluster info is correct
-	if resp[0].AuthMechanism != models.OIDC {
-		t.Errorf("oidc auth mechanism incorrect: expected %s, got %s\n", models.OIDC, resp[0].AuthMechanism)
+	if resp[0].Integration != models.OIDC {
+		t.Errorf("oidc auth mechanism incorrect: expected %s, got %s\n", models.OIDC, resp[0].Integration)
 	}
 
 	if resp[0].ProjectID != project.ID {
@@ -272,8 +272,8 @@ func TestGetProjectCandidates(t *testing.T) {
 	}
 
 	// make sure auth mechanism is OIDC, project id is correct, and cluster info is correct
-	if resp[0].AuthMechanism != models.OIDC {
-		t.Errorf("oidc auth mechanism incorrect: expected %s, got %s\n", models.OIDC, resp[0].AuthMechanism)
+	if resp[0].Integration != models.OIDC {
+		t.Errorf("oidc auth mechanism incorrect: expected %s, got %s\n", models.OIDC, resp[0].Integration)
 	}
 
 	if resp[0].ProjectID != project.ID {
@@ -338,8 +338,8 @@ func TestCreateProjectServiceAccount(t *testing.T) {
 		t.Errorf("service account kind incorrect: expected %s, got %s\n", "connector", resp.Kind)
 	}
 
-	if resp.AuthMechanism != models.OIDC {
-		t.Errorf("service account auth mechanism incorrect: expected %s, got %s\n", models.OIDC, resp.AuthMechanism)
+	if resp.Integration != models.OIDC {
+		t.Errorf("service account auth mechanism incorrect: expected %s, got %s\n", models.OIDC, resp.Integration)
 	}
 
 	// verify clusters

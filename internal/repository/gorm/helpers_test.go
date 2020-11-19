@@ -7,19 +7,23 @@ import (
 	"github.com/porter-dev/porter/internal/adapter"
 	"github.com/porter-dev/porter/internal/config"
 	"github.com/porter-dev/porter/internal/models"
+	ints "github.com/porter-dev/porter/internal/models/integrations"
 	"github.com/porter-dev/porter/internal/repository"
 	"github.com/porter-dev/porter/internal/repository/gorm"
 )
 
 type tester struct {
-	repo             *repository.Repository
-	key              *[32]byte
-	dbFileName       string
-	initUsers        []*models.User
-	initProjects     []*models.Project
-	initSACandidates []*models.ServiceAccountCandidate
-	initSAs          []*models.ServiceAccount
-	initRCs          []*models.RepoClient
+	repo         *repository.Repository
+	key          *[32]byte
+	dbFileName   string
+	initUsers    []*models.User
+	initProjects []*models.Project
+	initGRs      []*models.GitRepo
+	initKIs      []*ints.KubeIntegration
+	initOIDCs    []*ints.OIDCIntegration
+	initOAuths   []*ints.OAuthIntegration
+	initGCPs     []*ints.GCPIntegration
+	initAWSs     []*ints.AWSIntegration
 }
 
 func setupTestEnv(tester *tester, t *testing.T) {
@@ -38,14 +42,14 @@ func setupTestEnv(tester *tester, t *testing.T) {
 	err = db.AutoMigrate(
 		&models.Project{},
 		&models.Role{},
-		&models.ServiceAccount{},
-		&models.ServiceAccountAction{},
-		&models.ServiceAccountCandidate{},
-		&models.Cluster{},
-		&models.TokenCache{},
 		&models.User{},
 		&models.Session{},
-		&models.RepoClient{},
+		&models.GitRepo{},
+		&ints.KubeIntegration{},
+		&ints.OIDCIntegration{},
+		&ints.OAuthIntegration{},
+		&ints.GCPIntegration{},
+		&ints.AWSIntegration{},
 	)
 
 	if err != nil {
@@ -119,77 +123,223 @@ func initProjectRole(tester *tester, t *testing.T) {
 	}
 }
 
-func initServiceAccountCandidate(tester *tester, t *testing.T) {
+func initKubeIntegration(tester *tester, t *testing.T) {
 	t.Helper()
 
-	saCandidate := &models.ServiceAccountCandidate{
-		ProjectID:       1,
-		Kind:            "connector",
-		ClusterName:     "cluster-test",
-		ClusterEndpoint: "https://localhost",
-		AuthMechanism:   models.X509,
-		Kubeconfig:      []byte("current-context: testing\n"),
-		Actions: []models.ServiceAccountAction{
-			models.ServiceAccountAction{
-				Name:     models.TokenDataAction,
-				Resolved: false,
-			},
-		},
+	if len(tester.initProjects) == 0 {
+		initProject(tester, t)
 	}
 
-	saCandidate, err := tester.repo.ServiceAccount.CreateServiceAccountCandidate(saCandidate)
+	if len(tester.initUsers) == 0 {
+		initUser(tester, t)
+	}
+
+	ki := &ints.KubeIntegration{
+		Mechanism:  ints.KubeLocal,
+		ProjectID:  tester.initProjects[0].ID,
+		UserID:     tester.initUsers[0].ID,
+		Kubeconfig: []byte("current-context: testing\n"),
+	}
+
+	ki, err := tester.repo.KubeIntegration.CreateKubeIntegration(ki)
 
 	if err != nil {
 		t.Fatalf("%v\n", err)
 	}
 
-	tester.initSACandidates = append(tester.initSACandidates, saCandidate)
+	tester.initKIs = append(tester.initKIs, ki)
 }
 
-func initServiceAccount(tester *tester, t *testing.T) {
+func initOIDCIntegration(tester *tester, t *testing.T) {
 	t.Helper()
 
-	sa := &models.ServiceAccount{
-		ProjectID:             1,
-		Kind:                  "connector",
-		AuthMechanism:         models.X509,
-		ClientCertificateData: []byte("-----BEGIN"),
-		ClientKeyData:         []byte("-----BEGIN"),
-		Clusters: []models.Cluster{
-			models.Cluster{
-				Name:                     "cluster-test",
-				Server:                   "https://localhost",
-				CertificateAuthorityData: []byte("-----BEGIN"),
-			},
-		},
+	if len(tester.initProjects) == 0 {
+		initProject(tester, t)
 	}
 
-	sa, err := tester.repo.ServiceAccount.CreateServiceAccount(sa)
-
-	if err != nil {
-		t.Fatalf("%v\n", err)
+	if len(tester.initUsers) == 0 {
+		initUser(tester, t)
 	}
 
-	tester.initSAs = append(tester.initSAs, sa)
-}
-
-func initRepoClient(tester *tester, t *testing.T) {
-	t.Helper()
-
-	rc := &models.RepoClient{
+	oidc := &ints.OIDCIntegration{
+		Client:       ints.OIDCKube,
 		ProjectID:    tester.initProjects[0].ID,
 		UserID:       tester.initUsers[0].ID,
-		RepoUserID:   1,
-		Kind:         models.RepoClientGithub,
-		AccessToken:  []byte("accesstoken1234"),
-		RefreshToken: []byte("refreshtoken1234"),
+		IssuerURL:    []byte("https://oidc.example.com"),
+		ClientID:     []byte("exampleclientid"),
+		ClientSecret: []byte("exampleclientsecret"),
+		IDToken:      []byte("idtoken"),
+		RefreshToken: []byte("refreshtoken"),
 	}
 
-	rc, err := tester.repo.RepoClient.CreateRepoClient(rc)
+	oidc, err := tester.repo.OIDCIntegration.CreateOIDCIntegration(oidc)
 
 	if err != nil {
 		t.Fatalf("%v\n", err)
 	}
 
-	tester.initRCs = append(tester.initRCs, rc)
+	tester.initOIDCs = append(tester.initOIDCs, oidc)
+}
+
+func initOAuthIntegration(tester *tester, t *testing.T) {
+	t.Helper()
+
+	if len(tester.initProjects) == 0 {
+		initProject(tester, t)
+	}
+
+	if len(tester.initUsers) == 0 {
+		initUser(tester, t)
+	}
+
+	oauth := &ints.OAuthIntegration{
+		Client:       ints.OAuthGithub,
+		ProjectID:    tester.initProjects[0].ID,
+		UserID:       tester.initUsers[0].ID,
+		ClientID:     []byte("exampleclientid"),
+		AccessToken:  []byte("idtoken"),
+		RefreshToken: []byte("refreshtoken"),
+	}
+
+	oauth, err := tester.repo.OAuthIntegration.CreateOAuthIntegration(oauth)
+
+	if err != nil {
+		t.Fatalf("%v\n", err)
+	}
+
+	tester.initOAuths = append(tester.initOAuths, oauth)
+}
+
+func initGCPIntegration(tester *tester, t *testing.T) {
+	t.Helper()
+
+	if len(tester.initProjects) == 0 {
+		initProject(tester, t)
+	}
+
+	if len(tester.initUsers) == 0 {
+		initUser(tester, t)
+	}
+
+	gcp := &ints.GCPIntegration{
+		ProjectID:    tester.initProjects[0].ID,
+		UserID:       tester.initUsers[0].ID,
+		GCPProjectID: "test-proj-123456",
+		GCPUserEmail: "test@test.it",
+		GCPKeyData:   []byte("{\"test\":\"key\"}"),
+	}
+
+	gcp, err := tester.repo.GCPIntegration.CreateGCPIntegration(gcp)
+
+	if err != nil {
+		t.Fatalf("%v\n", err)
+	}
+
+	tester.initGCPs = append(tester.initGCPs, gcp)
+}
+
+func initAWSIntegration(tester *tester, t *testing.T) {
+	t.Helper()
+
+	if len(tester.initProjects) == 0 {
+		initProject(tester, t)
+	}
+
+	if len(tester.initUsers) == 0 {
+		initUser(tester, t)
+	}
+
+	aws := &ints.AWSIntegration{
+		ProjectID:          tester.initProjects[0].ID,
+		UserID:             tester.initUsers[0].ID,
+		AWSEntityID:        "entity",
+		AWSCallerID:        "caller",
+		AWSClusterID:       []byte("example-cluster-0"),
+		AWSAccessKeyID:     []byte("accesskey"),
+		AWSSecretAccessKey: []byte("secret"),
+		AWSSessionToken:    []byte("optional"),
+	}
+
+	aws, err := tester.repo.AWSIntegration.CreateAWSIntegration(aws)
+
+	if err != nil {
+		t.Fatalf("%v\n", err)
+	}
+
+	tester.initAWSs = append(tester.initAWSs, aws)
+}
+
+// func initServiceAccountCandidate(tester *tester, t *testing.T) {
+// 	t.Helper()
+
+// 	saCandidate := &models.ServiceAccountCandidate{
+// 		ProjectID:       1,
+// 		Kind:            "connector",
+// 		ClusterName:     "cluster-test",
+// 		ClusterEndpoint: "https://localhost",
+// 		Integration:   models.X509,
+// 		Kubeconfig:      []byte("current-context: testing\n"),
+// 		Actions: []models.ServiceAccountAction{
+// 			models.ServiceAccountAction{
+// 				Name:     models.TokenDataAction,
+// 				Resolved: false,
+// 			},
+// 		},
+// 	}
+
+// 	saCandidate, err := tester.repo.ServiceAccount.CreateServiceAccountCandidate(saCandidate)
+
+// 	if err != nil {
+// 		t.Fatalf("%v\n", err)
+// 	}
+
+// 	tester.initSACandidates = append(tester.initSACandidates, saCandidate)
+// }
+
+// func initServiceAccount(tester *tester, t *testing.T) {
+// 	t.Helper()
+
+// 	sa := &models.ServiceAccount{
+// 		ProjectID:             1,
+// 		Kind:                  "connector",
+// 		Integration:         models.X509,
+// 		ClientCertificateData: []byte("-----BEGIN"),
+// 		ClientKeyData:         []byte("-----BEGIN"),
+// 		Clusters: []models.Cluster{
+// 			models.Cluster{
+// 				Name:                     "cluster-test",
+// 				Server:                   "https://localhost",
+// 				CertificateAuthorityData: []byte("-----BEGIN"),
+// 			},
+// 		},
+// 	}
+
+// 	sa, err := tester.repo.ServiceAccount.CreateServiceAccount(sa)
+
+// 	if err != nil {
+// 		t.Fatalf("%v\n", err)
+// 	}
+
+// 	tester.initSAs = append(tester.initSAs, sa)
+// }
+
+func initGitRepo(tester *tester, t *testing.T) {
+	t.Helper()
+
+	// rc := &models.GitRepo{
+	// 	ProjectID:    tester.initProjects[0].ID,
+	// 	UserID:       tester.initUsers[0].ID,
+	// 	RepoUserID:   1,
+	// 	Kind:         models.RepoClientGithub,
+	// 	AccessToken:  []byte("accesstoken1234"),
+	// 	RefreshToken: []byte("refreshtoken1234"),
+	// }
+
+	// rc, err := tester.repo.RepoClient.CreateRepoClient(rc)
+
+	// if err != nil {
+	// 	t.Fatalf("%v\n", err)
+	// }
+
+	// tester.initRCs = append(tester.initRCs, rc)
 }

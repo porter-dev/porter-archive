@@ -45,20 +45,20 @@ func GetServiceAccountCandidates(kubeconfig []byte, local bool) ([]*models.Servi
 		authInfoName := context.AuthInfo
 
 		actions := make([]models.ServiceAccountAction, 0)
-		var authMechanism string
+		var integration string
 
 		if local {
-			authMechanism = models.Local
+			integration = models.Local
 		} else {
 			// get the auth mechanism and actions
-			authMechanism, actions = parseAuthInfoForActions(rawConf.AuthInfos[authInfoName])
+			integration, actions = parseAuthInfoForActions(rawConf.AuthInfos[authInfoName])
 			clusterActions := parseClusterForActions(rawConf.Clusters[clusterName])
 			actions = append(actions, clusterActions...)
 
 			// if auth mechanism is unsupported, we'll skip it
-			if authMechanism == models.NotAvailable {
+			if integration == models.NotAvailable {
 				continue
-			} else if authMechanism == models.AWS {
+			} else if integration == models.AWS {
 				// if the auth mechanism is AWS, we need to parse more explicitly
 				// for the cluster id
 				awsClusterID = parseAuthInfoForAWSClusterID(rawConf.AuthInfos[authInfoName], clusterName)
@@ -82,7 +82,7 @@ func GetServiceAccountCandidates(kubeconfig []byte, local bool) ([]*models.Servi
 				ContextName:       contextName,
 				ClusterName:       clusterName,
 				ClusterEndpoint:   rawConf.Clusters[clusterName].Server,
-				AuthMechanism:     authMechanism,
+				Integration:     integration,
 				AWSClusterIDGuess: awsClusterID,
 				Kubeconfig:        rawBytes,
 			})
@@ -118,7 +118,7 @@ func GetRawConfigFromBytes(kubeconfig []byte) (*api.Config, error) {
 // (4) If a username/password exist, uses basic auth mechanism
 // (5) Otherwise, the config gets skipped
 //
-func parseAuthInfoForActions(authInfo *api.AuthInfo) (authMechanism string, actions []models.ServiceAccountAction) {
+func parseAuthInfoForActions(authInfo *api.AuthInfo) (integration string, actions []models.ServiceAccountAction) {
 	actions = make([]models.ServiceAccountAction, 0)
 
 	if (authInfo.ClientCertificate != "" || len(authInfo.ClientCertificateData) != 0) &&
@@ -292,7 +292,7 @@ func GetClientConfigFromServiceAccount(
 	clusterID uint,
 	updateTokenCache UpdateTokenCacheFunc,
 ) (clientcmd.ClientConfig, error) {
-	if sa.AuthMechanism == models.Local {
+	if sa.Integration == models.Local {
 		return clientcmd.NewClientConfigFromBytes(sa.Kubeconfig)
 	}
 
@@ -338,7 +338,7 @@ func createRawConfigFromServiceAccount(
 	}
 
 	// construct the auth infos
-	authInfoName := cluster.Name + "-" + sa.AuthMechanism
+	authInfoName := cluster.Name + "-" + sa.Integration
 
 	authInfoMap := make(map[string]*api.AuthInfo)
 
@@ -351,7 +351,7 @@ func createRawConfigFromServiceAccount(
 		authInfoMap[authInfoName].ImpersonateGroups = groups
 	}
 
-	switch sa.AuthMechanism {
+	switch sa.Integration {
 	case models.X509:
 		authInfoMap[authInfoName].ClientCertificateData = sa.ClientCertificateData
 		authInfoMap[authInfoName].ClientKeyData = sa.ClientKeyData

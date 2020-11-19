@@ -73,7 +73,7 @@ func (sar *ServiceAccountActionResolver) PopulateServiceAccount(
 			ProjectID:         sar.SACandidate.ProjectID,
 			Kind:              sar.SACandidate.Kind,
 			Clusters:          []models.Cluster{modelCluster},
-			AuthMechanism:     sar.SACandidate.AuthMechanism,
+			Integration:     sar.SACandidate.Integration,
 			LocationOfOrigin:  authInfo.LocationOfOrigin,
 			Impersonate:       authInfo.Impersonate,
 			ImpersonateGroups: strings.Join(authInfo.ImpersonateGroups, ","),
@@ -94,7 +94,7 @@ func (sar *ServiceAccountActionResolver) PopulateServiceAccount(
 
 	// if auth mechanism is local, just write the kubeconfig and return: rest of config is
 	// unnecessary
-	if sar.SACandidate.AuthMechanism == models.Local && len(sar.SACandidate.Kubeconfig) > 0 {
+	if sar.SACandidate.Integration == models.Local && len(sar.SACandidate.Kubeconfig) > 0 {
 		sar.SA.Kubeconfig = sar.SACandidate.Kubeconfig
 		return nil
 	}

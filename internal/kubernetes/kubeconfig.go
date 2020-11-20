@@ -381,3 +381,14 @@ func getConfigForContext(
 
 	return copyConf, nil
 }
+
+// CreateAllowedContextMap creates a dummy map from context name to context name
+func CreateAllowedContextMap(contexts []string) map[string]string {
+	aContextMap := make(map[string]string)
+
+	for _, context := range contexts {
+		aContextMap[context] = context
+	}
+
+	return aContextMap
+}

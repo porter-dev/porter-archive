@@ -17,7 +17,7 @@ type ReleaseForm struct {
 // url.Values (the parsed query params)
 func (rf *ReleaseForm) PopulateHelmOptionsFromQueryParams(
 	vals url.Values,
-	repo repository.ServiceAccountRepository,
+	repo repository.ClusterRepository,
 ) error {
 	if clusterID, ok := vals["cluster_id"]; ok && len(clusterID) == 1 {
 		id, err := strconv.ParseUint(clusterID[0], 10, 64)
@@ -26,23 +26,13 @@ func (rf *ReleaseForm) PopulateHelmOptionsFromQueryParams(
 			return err
 		}
 
-		rf.ClusterID = uint(id)
-	}
-
-	if serviceAccountID, ok := vals["service_account_id"]; ok && len(serviceAccountID) == 1 {
-		id, err := strconv.ParseUint(serviceAccountID[0], 10, 64)
+		cluster, err := repo.ReadCluster(uint(id))
 
 		if err != nil {
 			return err
 		}
 
-		sa, err := repo.ReadServiceAccount(uint(id))
-
-		if err != nil {
-			return err
-		}
-
-		rf.ServiceAccount = sa
+		rf.Cluster = cluster
 	}
 
 	if namespace, ok := vals["namespace"]; ok && len(namespace) == 1 {
@@ -66,7 +56,7 @@ type ListReleaseForm struct {
 // url.Values (the parsed query params)
 func (lrf *ListReleaseForm) PopulateListFromQueryParams(
 	vals url.Values,
-	_ repository.ServiceAccountRepository,
+	_ repository.ClusterRepository,
 ) error {
 	if namespace, ok := vals["namespace"]; ok && len(namespace) == 1 {
 		lrf.ListFilter.Namespace = namespace[0]

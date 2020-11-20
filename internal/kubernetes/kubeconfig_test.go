@@ -5,6 +5,7 @@ import (
 
 	"github.com/go-test/deep"
 	"github.com/porter-dev/porter/internal/kubernetes"
+	"github.com/porter-dev/porter/internal/kubernetes/fixtures"
 	"github.com/porter-dev/porter/internal/models"
 	"k8s.io/client-go/tools/clientcmd"
 )
@@ -18,7 +19,7 @@ type ccsTest struct {
 var ClusterCandidatesTests = []ccsTest{
 	ccsTest{
 		name: "test without cluster ca data",
-		raw:  []byte(ClusterCAWithoutData),
+		raw:  []byte(fixtures.ClusterCAWithoutData),
 		expected: []*models.ClusterCandidate{
 			&models.ClusterCandidate{
 				AuthMechanism: models.X509,
@@ -33,14 +34,14 @@ var ClusterCandidatesTests = []ccsTest{
 				Name:              "cluster-test",
 				Server:            "https://10.10.10.10",
 				ContextName:       "context-test",
-				Kubeconfig:        []byte(ClusterCAWithoutData),
+				Kubeconfig:        []byte(fixtures.ClusterCAWithoutData),
 				AWSClusterIDGuess: []byte{},
 			},
 		},
 	},
 	ccsTest{
 		name: "test cluster localhost",
-		raw:  []byte(ClusterLocalhost),
+		raw:  []byte(fixtures.ClusterLocalhost),
 		expected: []*models.ClusterCandidate{
 			&models.ClusterCandidate{
 				AuthMechanism: models.X509,
@@ -52,16 +53,16 @@ var ClusterCandidatesTests = []ccsTest{
 					},
 				},
 				Name:              "cluster-test",
-				Server:            "https://localhost",
+				Server:            "https://localhost:30000",
 				ContextName:       "context-test",
-				Kubeconfig:        []byte(ClusterLocalhost),
+				Kubeconfig:        []byte(fixtures.ClusterLocalhost),
 				AWSClusterIDGuess: []byte{},
 			},
 		},
 	},
 	ccsTest{
 		name: "x509 test with cert and key data",
-		raw:  []byte(x509WithData),
+		raw:  []byte(fixtures.X509WithData),
 		expected: []*models.ClusterCandidate{
 			&models.ClusterCandidate{
 				AuthMechanism:     models.X509,
@@ -70,14 +71,14 @@ var ClusterCandidatesTests = []ccsTest{
 				Name:              "cluster-test",
 				Server:            "https://10.10.10.10",
 				ContextName:       "context-test",
-				Kubeconfig:        []byte(x509WithData),
+				Kubeconfig:        []byte(fixtures.X509WithData),
 				AWSClusterIDGuess: []byte{},
 			},
 		},
 	},
 	ccsTest{
 		name: "x509 test without cert data",
-		raw:  []byte(x509WithoutCertData),
+		raw:  []byte(fixtures.X509WithoutCertData),
 		expected: []*models.ClusterCandidate{
 			&models.ClusterCandidate{
 				AuthMechanism: models.X509,
@@ -92,14 +93,14 @@ var ClusterCandidatesTests = []ccsTest{
 				Name:              "cluster-test",
 				Server:            "https://10.10.10.10",
 				ContextName:       "context-test",
-				Kubeconfig:        []byte(x509WithoutCertData),
+				Kubeconfig:        []byte(fixtures.X509WithoutCertData),
 				AWSClusterIDGuess: []byte{},
 			},
 		},
 	},
 	ccsTest{
 		name: "x509 test without key data",
-		raw:  []byte(x509WithoutKeyData),
+		raw:  []byte(fixtures.X509WithoutKeyData),
 		expected: []*models.ClusterCandidate{
 			&models.ClusterCandidate{
 				AuthMechanism: models.X509,
@@ -114,14 +115,14 @@ var ClusterCandidatesTests = []ccsTest{
 				Name:              "cluster-test",
 				Server:            "https://10.10.10.10",
 				ContextName:       "context-test",
-				Kubeconfig:        []byte(x509WithoutKeyData),
+				Kubeconfig:        []byte(fixtures.X509WithoutKeyData),
 				AWSClusterIDGuess: []byte{},
 			},
 		},
 	},
 	ccsTest{
 		name: "x509 test without cert and key data",
-		raw:  []byte(x509WithoutCertAndKeyData),
+		raw:  []byte(fixtures.X509WithoutCertAndKeyData),
 		expected: []*models.ClusterCandidate{
 			&models.ClusterCandidate{
 				AuthMechanism: models.X509,
@@ -141,14 +142,14 @@ var ClusterCandidatesTests = []ccsTest{
 				Name:              "cluster-test",
 				Server:            "https://10.10.10.10",
 				ContextName:       "context-test",
-				Kubeconfig:        []byte(x509WithoutCertAndKeyData),
+				Kubeconfig:        []byte(fixtures.X509WithoutCertAndKeyData),
 				AWSClusterIDGuess: []byte{},
 			},
 		},
 	},
 	ccsTest{
 		name: "bearer token test with data",
-		raw:  []byte(BearerTokenWithData),
+		raw:  []byte(fixtures.BearerTokenWithData),
 		expected: []*models.ClusterCandidate{
 			&models.ClusterCandidate{
 				AuthMechanism:     models.Bearer,
@@ -157,14 +158,14 @@ var ClusterCandidatesTests = []ccsTest{
 				Name:              "cluster-test",
 				Server:            "https://10.10.10.10",
 				ContextName:       "context-test",
-				Kubeconfig:        []byte(BearerTokenWithData),
+				Kubeconfig:        []byte(fixtures.BearerTokenWithData),
 				AWSClusterIDGuess: []byte{},
 			},
 		},
 	},
 	ccsTest{
 		name: "bearer token test without data",
-		raw:  []byte(BearerTokenWithoutData),
+		raw:  []byte(fixtures.BearerTokenWithoutData),
 		expected: []*models.ClusterCandidate{
 			&models.ClusterCandidate{
 				AuthMechanism: models.Bearer,
@@ -179,14 +180,14 @@ var ClusterCandidatesTests = []ccsTest{
 				Name:              "cluster-test",
 				Server:            "https://10.10.10.10",
 				ContextName:       "context-test",
-				Kubeconfig:        []byte(BearerTokenWithoutData),
+				Kubeconfig:        []byte(fixtures.BearerTokenWithoutData),
 				AWSClusterIDGuess: []byte{},
 			},
 		},
 	},
 	ccsTest{
 		name: "gcp test",
-		raw:  []byte(GCPPlugin),
+		raw:  []byte(fixtures.GCPPlugin),
 		expected: []*models.ClusterCandidate{
 			&models.ClusterCandidate{
 				AuthMechanism: models.GCP,
@@ -200,14 +201,14 @@ var ClusterCandidatesTests = []ccsTest{
 				Name:              "cluster-test",
 				Server:            "https://10.10.10.10",
 				ContextName:       "context-test",
-				Kubeconfig:        []byte(GCPPlugin),
+				Kubeconfig:        []byte(fixtures.GCPPlugin),
 				AWSClusterIDGuess: []byte{},
 			},
 		},
 	},
 	ccsTest{
 		name: "aws iam authenticator test",
-		raw:  []byte(AWSIamAuthenticatorExec),
+		raw:  []byte(fixtures.AWSIamAuthenticatorExec),
 		expected: []*models.ClusterCandidate{
 			&models.ClusterCandidate{
 				AuthMechanism: models.AWS,
@@ -221,14 +222,14 @@ var ClusterCandidatesTests = []ccsTest{
 				Name:              "cluster-test",
 				Server:            "https://10.10.10.10",
 				ContextName:       "context-test",
-				Kubeconfig:        []byte(AWSIamAuthenticatorExec),
+				Kubeconfig:        []byte(fixtures.AWSIamAuthenticatorExec),
 				AWSClusterIDGuess: []byte("cluster-test-aws-id-guess"),
 			},
 		},
 	},
 	ccsTest{
 		name: "aws eks get-token test",
-		raw:  []byte(AWSEKSGetTokenExec),
+		raw:  []byte(fixtures.AWSEKSGetTokenExec),
 		expected: []*models.ClusterCandidate{
 			&models.ClusterCandidate{
 				AuthMechanism: models.AWS,
@@ -242,14 +243,14 @@ var ClusterCandidatesTests = []ccsTest{
 				Name:              "cluster-test",
 				Server:            "https://10.10.10.10",
 				ContextName:       "context-test",
-				Kubeconfig:        []byte(AWSEKSGetTokenExec),
+				Kubeconfig:        []byte(fixtures.AWSEKSGetTokenExec),
 				AWSClusterIDGuess: []byte("cluster-test-aws-id-guess"),
 			},
 		},
 	},
 	ccsTest{
 		name: "oidc without ca data",
-		raw:  []byte(OIDCAuthWithoutData),
+		raw:  []byte(fixtures.OIDCAuthWithoutData),
 		expected: []*models.ClusterCandidate{
 			&models.ClusterCandidate{
 				AuthMechanism: models.OIDC,
@@ -264,14 +265,14 @@ var ClusterCandidatesTests = []ccsTest{
 				Name:              "cluster-test",
 				Server:            "https://10.10.10.10",
 				ContextName:       "context-test",
-				Kubeconfig:        []byte(OIDCAuthWithoutData),
+				Kubeconfig:        []byte(fixtures.OIDCAuthWithoutData),
 				AWSClusterIDGuess: []byte{},
 			},
 		},
 	},
 	ccsTest{
 		name: "oidc with ca data",
-		raw:  []byte(OIDCAuthWithData),
+		raw:  []byte(fixtures.OIDCAuthWithData),
 		expected: []*models.ClusterCandidate{
 			&models.ClusterCandidate{
 				AuthMechanism:     models.OIDC,
@@ -280,14 +281,14 @@ var ClusterCandidatesTests = []ccsTest{
 				Name:              "cluster-test",
 				Server:            "https://10.10.10.10",
 				ContextName:       "context-test",
-				Kubeconfig:        []byte(OIDCAuthWithData),
+				Kubeconfig:        []byte(fixtures.OIDCAuthWithData),
 				AWSClusterIDGuess: []byte{},
 			},
 		},
 	},
 	ccsTest{
 		name: "basic auth test",
-		raw:  []byte(BasicAuth),
+		raw:  []byte(fixtures.BasicAuth),
 		expected: []*models.ClusterCandidate{
 			&models.ClusterCandidate{
 				AuthMechanism:     models.Basic,
@@ -296,7 +297,7 @@ var ClusterCandidatesTests = []ccsTest{
 				Name:              "cluster-test",
 				Server:            "https://10.10.10.10",
 				ContextName:       "context-test",
-				Kubeconfig:        []byte(BasicAuth),
+				Kubeconfig:        []byte(fixtures.BasicAuth),
 				AWSClusterIDGuess: []byte{},
 			},
 		},
@@ -357,319 +358,3 @@ func TestGetClusterCandidatesNonLocal(t *testing.T) {
 		}
 	}
 }
-
-const ClusterCAWithoutData string = `
-apiVersion: v1
-kind: Config
-clusters:
-- name: cluster-test
-  cluster:
-    server: https://10.10.10.10
-    certificate-authority: /fake/path/to/ca.pem
-contexts:
-- context:
-    cluster: cluster-test
-    user: test-admin
-  name: context-test
-users:
-- name: test-admin
-  user:
-    client-certificate-data: LS0tLS1CRUdJTiBDRVJ=
-    client-key-data: LS0tLS1CRUdJTiBDRVJ=
-current-context: context-test
-`
-
-const ClusterLocalhost string = `
-apiVersion: v1
-kind: Config
-clusters:
-- name: cluster-test
-  cluster:
-    server: https://localhost
-contexts:
-- context:
-    cluster: cluster-test
-    user: test-admin
-  name: context-test
-users:
-- name: test-admin
-  user:
-    client-certificate-data: LS0tLS1CRUdJTiBDRVJ=
-    client-key-data: LS0tLS1CRUdJTiBDRVJ=
-current-context: context-test
-`
-
-const x509WithData string = `
-apiVersion: v1
-kind: Config
-preferences: {}
-current-context: context-test
-clusters:
-- cluster:
-    server: https://10.10.10.10
-  name: cluster-test
-contexts:
-- context:
-    cluster: cluster-test
-    user: test-admin
-  name: context-test
-users:
-- name: test-admin
-  user:
-    client-certificate-data: LS0tLS1CRUdJTiBDRVJ=
-    client-key-data: LS0tLS1CRUdJTiBDRVJ=
-`
-
-const x509WithoutCertData string = `
-apiVersion: v1
-kind: Config
-preferences: {}
-current-context: context-test
-clusters:
-- cluster:
-    server: https://10.10.10.10
-  name: cluster-test
-contexts:
-- context:
-    cluster: cluster-test
-    user: test-admin
-  name: context-test
-users:
-- name: test-admin
-  user:
-    client-certificate: /fake/path/to/cert.pem
-    client-key-data: LS0tLS1CRUdJTiBDRVJ=
-`
-
-const x509WithoutKeyData string = `
-apiVersion: v1
-kind: Config
-preferences: {}
-current-context: context-test
-clusters:
-- cluster:
-    server: https://10.10.10.10
-  name: cluster-test
-contexts:
-- context:
-    cluster: cluster-test
-    user: test-admin
-  name: context-test
-users:
-- name: test-admin
-  user:
-    client-certificate-data: LS0tLS1CRUdJTiBDRVJ=
-    client-key: /fake/path/to/key.pem
-`
-
-const x509WithoutCertAndKeyData string = `
-apiVersion: v1
-kind: Config
-preferences: {}
-current-context: context-test
-clusters:
-- cluster:
-    server: https://10.10.10.10
-  name: cluster-test
-contexts:
-- context:
-    cluster: cluster-test
-    user: test-admin
-  name: context-test
-users:
-- name: test-admin
-  user:
-    client-certificate: /fake/path/to/cert.pem
-    client-key: /fake/path/to/key.pem
-`
-
-const BearerTokenWithData string = `
-apiVersion: v1
-kind: Config
-preferences: {}
-current-context: context-test
-clusters:
-- cluster:
-    server: https://10.10.10.10
-  name: cluster-test
-contexts:
-- context:
-    cluster: cluster-test
-    user: test-admin
-  name: context-test
-users:
-- name: test-admin
-  user:
-    token: LS0tLS1CRUdJTiBDRVJ=
-`
-
-const BearerTokenWithoutData string = `
-apiVersion: v1
-kind: Config
-preferences: {}
-current-context: context-test
-clusters:
-- cluster:
-    server: https://10.10.10.10
-  name: cluster-test
-contexts:
-- context:
-    cluster: cluster-test
-    user: test-admin
-  name: context-test
-users:
-- name: test-admin
-  user:
-    tokenFile: /path/to/token/file.txt
-`
-const GCPPlugin string = `
-apiVersion: v1
-kind: Config
-clusters:
-- name: cluster-test
-  cluster:
-    server: https://10.10.10.10
-    certificate-authority-data: LS0tLS1CRUdJTiBDRVJ=
-users:
-- name: test-admin
-  user:
-    auth-provider:
-      name: gcp
-contexts:
-- context:
-    cluster: cluster-test
-    user: test-admin
-  name: context-test
-current-context: context-test
-`
-
-const AWSIamAuthenticatorExec = `
-apiVersion: v1
-clusters:
-- cluster:
-    server: https://10.10.10.10
-    certificate-authority-data: LS0tLS1CRUdJTiBDRVJ=
-  name: cluster-test
-contexts:
-- context:
-    cluster: cluster-test
-    user: test-admin
-  name: context-test
-current-context: context-test
-kind: Config
-preferences: {}
-users:
-- name: test-admin
-  user:
-    exec:
-      apiVersion: client.authentication.k8s.io/v1alpha1
-      command: aws-iam-authenticator
-      args:
-        - "token"
-        - "-i"
-        - "cluster-test-aws-id-guess"
-`
-
-const AWSEKSGetTokenExec = `
-apiVersion: v1
-clusters:
-- cluster:
-    server: https://10.10.10.10
-    certificate-authority-data: LS0tLS1CRUdJTiBDRVJ=
-  name: cluster-test
-contexts:
-- context:
-    cluster: cluster-test
-    user: test-admin
-  name: context-test
-current-context: context-test
-kind: Config
-preferences: {}
-users:
-- name: test-admin
-  user:
-    exec:
-      apiVersion: client.authentication.k8s.io/v1alpha1
-      command: aws
-      args:
-        - "eks"
-        - "get-token"
-        - "--cluster-name"
-        - "cluster-test-aws-id-guess"
-`
-
-const OIDCAuthWithoutData = `
-apiVersion: v1
-clusters:
-- cluster:
-    server: https://10.10.10.10
-    certificate-authority-data: LS0tLS1CRUdJTiBDRVJ=
-  name: cluster-test
-contexts:
-- context:
-    cluster: cluster-test
-    user: test-admin
-  name: context-test
-current-context: context-test
-kind: Config
-preferences: {}
-users:
-- name: test-admin
-  user:
-    auth-provider:
-      config:
-        client-id: porter-api
-        id-token: token
-        idp-issuer-url: https://10.10.10.10
-        idp-certificate-authority: /fake/path/to/ca.pem
-      name: oidc
-`
-
-const OIDCAuthWithData = `
-apiVersion: v1
-clusters:
-- cluster:
-    server: https://10.10.10.10
-    certificate-authority-data: LS0tLS1CRUdJTiBDRVJ=
-  name: cluster-test
-contexts:
-- context:
-    cluster: cluster-test
-    user: test-admin
-  name: context-test
-current-context: context-test
-kind: Config
-preferences: {}
-users:
-- name: test-admin
-  user:
-    auth-provider:
-      config:
-        client-id: porter-api
-        id-token: token
-        idp-issuer-url: https://10.10.10.10
-        idp-certificate-authority-data: LS0tLS1CRUdJTiBDRVJ=
-      name: oidc
-`
-
-const BasicAuth = `
-apiVersion: v1
-clusters:
-- cluster:
-    server: https://10.10.10.10
-    certificate-authority-data: LS0tLS1CRUdJTiBDRVJ=
-  name: cluster-test
-contexts:
-- context:
-    cluster: cluster-test
-    user: test-admin
-  name: context-test
-current-context: context-test
-kind: Config
-preferences: {}
-users:
-- name: test-admin
-  user:
-    username: admin
-    password: changeme
-`

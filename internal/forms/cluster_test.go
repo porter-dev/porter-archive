@@ -5,15 +5,383 @@ import (
 
 	"github.com/go-test/deep"
 	"github.com/porter-dev/porter/internal/forms"
+	"github.com/porter-dev/porter/internal/kubernetes/fixtures"
 	"github.com/porter-dev/porter/internal/models"
 	"gorm.io/gorm"
+	"k8s.io/client-go/tools/clientcmd"
 
 	ints "github.com/porter-dev/porter/internal/models/integrations"
 )
 
-func TestClusterLocal(t *testing.T) {
+type clusterTest struct {
+	name    string
+	raw     string
+	isLocal bool
+
+	resolver       *models.ClusterResolverAll
+	expIntegration interface{}
+	expCluster     *models.Cluster
+}
+
+var ClusterTests = []clusterTest{
+	clusterTest{
+		name:     "local test should preserve kubeconfig",
+		raw:      fixtures.ClusterCAWithData,
+		isLocal:  true,
+		resolver: &models.ClusterResolverAll{},
+		expIntegration: &ints.KubeIntegration{
+			Mechanism:  ints.KubeLocal,
+			UserID:     1,
+			ProjectID:  1,
+			Kubeconfig: []byte(fixtures.ClusterCAWithData),
+		},
+		expCluster: &models.Cluster{
+			AuthMechanism:            models.Local,
+			ProjectID:                1,
+			Name:                     "cluster-test",
+			Server:                   "https://10.10.10.10",
+			KubeIntegrationID:        1,
+			CertificateAuthorityData: []byte("-----BEGIN CER"),
+		},
+	},
+	clusterTest{
+		name:     "cluster with data",
+		raw:      fixtures.ClusterCAWithData,
+		isLocal:  false,
+		resolver: &models.ClusterResolverAll{},
+		expIntegration: &ints.KubeIntegration{
+			Mechanism:             ints.KubeX509,
+			UserID:                1,
+			ProjectID:             1,
+			ClientCertificateData: []byte("-----BEGIN CER"),
+			ClientKeyData:         []byte("-----BEGIN CER"),
+		},
+		expCluster: &models.Cluster{
+			AuthMechanism:            models.X509,
+			ProjectID:                1,
+			Name:                     "cluster-test",
+			Server:                   "https://10.10.10.10",
+			KubeIntegrationID:        2,
+			CertificateAuthorityData: []byte("-----BEGIN CER"),
+		},
+	},
+	clusterTest{
+		name:    "cluster without data",
+		raw:     fixtures.ClusterCAWithoutData,
+		isLocal: false,
+		resolver: &models.ClusterResolverAll{
+			ClusterCAData: "LS0tLS1CRUdJTiBDRVJ=",
+		},
+		expIntegration: &ints.KubeIntegration{
+			Mechanism:             ints.KubeX509,
+			UserID:                1,
+			ProjectID:             1,
+			ClientCertificateData: []byte("-----BEGIN CER"),
+			ClientKeyData:         []byte("-----BEGIN CER"),
+		},
+		expCluster: &models.Cluster{
+			AuthMechanism:            models.X509,
+			ProjectID:                1,
+			Name:                     "cluster-test",
+			Server:                   "https://10.10.10.10",
+			KubeIntegrationID:        3,
+			CertificateAuthorityData: []byte("-----BEGIN CER"),
+		},
+	},
+	clusterTest{
+		name:    "cluster localhost",
+		raw:     fixtures.ClusterLocalhost,
+		isLocal: false,
+		resolver: &models.ClusterResolverAll{
+			ClusterHostname: "example.com",
+		},
+		expIntegration: &ints.KubeIntegration{
+			Mechanism:             ints.KubeX509,
+			UserID:                1,
+			ProjectID:             1,
+			ClientCertificateData: []byte("-----BEGIN CER"),
+			ClientKeyData:         []byte("-----BEGIN CER"),
+		},
+		expCluster: &models.Cluster{
+			AuthMechanism:     models.X509,
+			ProjectID:         1,
+			Name:              "cluster-test",
+			Server:            "https://example.com:30000",
+			KubeIntegrationID: 4,
+		},
+	},
+	clusterTest{
+		name:     "x509 cert and key data",
+		raw:      fixtures.X509WithData,
+		isLocal:  false,
+		resolver: &models.ClusterResolverAll{},
+		expIntegration: &ints.KubeIntegration{
+			Mechanism:             ints.KubeX509,
+			UserID:                1,
+			ProjectID:             1,
+			ClientCertificateData: []byte("-----BEGIN CER"),
+			ClientKeyData:         []byte("-----BEGIN CER"),
+		},
+		expCluster: &models.Cluster{
+			AuthMechanism:     models.X509,
+			ProjectID:         1,
+			Name:              "cluster-test",
+			Server:            "https://10.10.10.10",
+			KubeIntegrationID: 5,
+		},
+	},
+	clusterTest{
+		name:    "x509 no cert data",
+		raw:     fixtures.X509WithoutCertData,
+		isLocal: false,
+		resolver: &models.ClusterResolverAll{
+			ClientCertData: "LS0tLS1CRUdJTiBDRVJ=",
+		},
+		expIntegration: &ints.KubeIntegration{
+			Mechanism:             ints.KubeX509,
+			UserID:                1,
+			ProjectID:             1,
+			ClientCertificateData: []byte("-----BEGIN CER"),
+			ClientKeyData:         []byte("-----BEGIN CER"),
+		},
+		expCluster: &models.Cluster{
+			AuthMechanism:     models.X509,
+			ProjectID:         1,
+			Name:              "cluster-test",
+			Server:            "https://10.10.10.10",
+			KubeIntegrationID: 6,
+		},
+	},
+	clusterTest{
+		name:    "x509 no key data",
+		raw:     fixtures.X509WithoutKeyData,
+		isLocal: false,
+		resolver: &models.ClusterResolverAll{
+			ClientKeyData: "LS0tLS1CRUdJTiBDRVJ=",
+		},
+		expIntegration: &ints.KubeIntegration{
+			Mechanism:             ints.KubeX509,
+			UserID:                1,
+			ProjectID:             1,
+			ClientCertificateData: []byte("-----BEGIN CER"),
+			ClientKeyData:         []byte("-----BEGIN CER"),
+		},
+		expCluster: &models.Cluster{
+			AuthMechanism:     models.X509,
+			ProjectID:         1,
+			Name:              "cluster-test",
+			Server:            "https://10.10.10.10",
+			KubeIntegrationID: 7,
+		},
+	},
+	clusterTest{
+		name:    "x509 no cert and key data",
+		raw:     fixtures.X509WithoutCertAndKeyData,
+		isLocal: false,
+		resolver: &models.ClusterResolverAll{
+			ClientCertData: "LS0tLS1CRUdJTiBDRVJ=",
+			ClientKeyData:  "LS0tLS1CRUdJTiBDRVJ=",
+		},
+		expIntegration: &ints.KubeIntegration{
+			Mechanism:             ints.KubeX509,
+			UserID:                1,
+			ProjectID:             1,
+			ClientCertificateData: []byte("-----BEGIN CER"),
+			ClientKeyData:         []byte("-----BEGIN CER"),
+		},
+		expCluster: &models.Cluster{
+			AuthMechanism:     models.X509,
+			ProjectID:         1,
+			Name:              "cluster-test",
+			Server:            "https://10.10.10.10",
+			KubeIntegrationID: 8,
+		},
+	},
+	clusterTest{
+		name:     "bearer token with data",
+		raw:      fixtures.BearerTokenWithData,
+		isLocal:  false,
+		resolver: &models.ClusterResolverAll{},
+		expIntegration: &ints.KubeIntegration{
+			Mechanism: ints.KubeBearer,
+			UserID:    1,
+			ProjectID: 1,
+			Token:     []byte("LS0tLS1CRUdJTiBDRVJ="),
+		},
+		expCluster: &models.Cluster{
+			AuthMechanism:     models.Bearer,
+			ProjectID:         1,
+			Name:              "cluster-test",
+			Server:            "https://10.10.10.10",
+			KubeIntegrationID: 9,
+		},
+	},
+	clusterTest{
+		name:    "bearer token without data",
+		raw:     fixtures.BearerTokenWithoutData,
+		isLocal: false,
+		resolver: &models.ClusterResolverAll{
+			TokenData: "tokentoken",
+		},
+		expIntegration: &ints.KubeIntegration{
+			Mechanism: ints.KubeBearer,
+			UserID:    1,
+			ProjectID: 1,
+			Token:     []byte("tokentoken"),
+		},
+		expCluster: &models.Cluster{
+			AuthMechanism:     models.Bearer,
+			ProjectID:         1,
+			Name:              "cluster-test",
+			Server:            "https://10.10.10.10",
+			KubeIntegrationID: 10,
+		},
+	},
+	clusterTest{
+		name:     "basic auth",
+		raw:      fixtures.BasicAuth,
+		isLocal:  false,
+		resolver: &models.ClusterResolverAll{},
+		expIntegration: &ints.KubeIntegration{
+			Mechanism: ints.KubeBasic,
+			UserID:    1,
+			ProjectID: 1,
+			Username:  []byte("admin"),
+			Password:  []byte("changeme"),
+		},
+		expCluster: &models.Cluster{
+			AuthMechanism:            models.Basic,
+			ProjectID:                1,
+			Name:                     "cluster-test",
+			Server:                   "https://10.10.10.10",
+			KubeIntegrationID:        11,
+			CertificateAuthorityData: []byte("-----BEGIN CER"),
+		},
+	},
+	clusterTest{
+		name:    "gcp plugin",
+		raw:     fixtures.GCPPlugin,
+		isLocal: false,
+		resolver: &models.ClusterResolverAll{
+			GCPKeyData: `{"key":"data"}`,
+		},
+		expIntegration: &ints.GCPIntegration{
+			UserID:     1,
+			ProjectID:  1,
+			GCPKeyData: []byte(`{"key":"data"}`),
+		},
+		expCluster: &models.Cluster{
+			AuthMechanism:            models.GCP,
+			ProjectID:                1,
+			Name:                     "cluster-test",
+			Server:                   "https://10.10.10.10",
+			GCPIntegrationID:         1,
+			CertificateAuthorityData: []byte("-----BEGIN CER"),
+		},
+	},
+	clusterTest{
+		name:    "aws iam authenticator",
+		raw:     fixtures.AWSIamAuthenticatorExec,
+		isLocal: false,
+		resolver: &models.ClusterResolverAll{
+			AWSAccessKeyID:     "accesskey",
+			AWSClusterID:       "cluster-test-aws-id-guess",
+			AWSSecretAccessKey: "secret",
+		},
+		expIntegration: &ints.AWSIntegration{
+			UserID:             1,
+			ProjectID:          1,
+			AWSAccessKeyID:     []byte("accesskey"),
+			AWSClusterID:       []byte("cluster-test-aws-id-guess"),
+			AWSSecretAccessKey: []byte("secret"),
+		},
+		expCluster: &models.Cluster{
+			AuthMechanism:            models.AWS,
+			ProjectID:                1,
+			Name:                     "cluster-test",
+			Server:                   "https://10.10.10.10",
+			AWSIntegrationID:         1,
+			CertificateAuthorityData: []byte("-----BEGIN CER"),
+		},
+	},
+	clusterTest{
+		name:    "aws eks get token",
+		raw:     fixtures.AWSEKSGetTokenExec,
+		isLocal: false,
+		resolver: &models.ClusterResolverAll{
+			AWSAccessKeyID:     "accesskey",
+			AWSClusterID:       "cluster-test-aws-id-guess",
+			AWSSecretAccessKey: "secret",
+		},
+		expIntegration: &ints.AWSIntegration{
+			UserID:             1,
+			ProjectID:          1,
+			AWSAccessKeyID:     []byte("accesskey"),
+			AWSClusterID:       []byte("cluster-test-aws-id-guess"),
+			AWSSecretAccessKey: []byte("secret"),
+		},
+		expCluster: &models.Cluster{
+			AuthMechanism:            models.AWS,
+			ProjectID:                1,
+			Name:                     "cluster-test",
+			Server:                   "https://10.10.10.10",
+			AWSIntegrationID:         2,
+			CertificateAuthorityData: []byte("-----BEGIN CER"),
+		},
+	},
+	clusterTest{
+		name:    "oidc without idp issuer data",
+		raw:     fixtures.OIDCAuthWithoutData,
+		isLocal: false,
+		resolver: &models.ClusterResolverAll{
+			OIDCIssuerCAData: "LS0tLS1CRUdJTiBDRVJ=",
+		},
+		expIntegration: &ints.OIDCIntegration{
+			Client:                   ints.OIDCKube,
+			UserID:                   1,
+			ProjectID:                1,
+			IssuerURL:                []byte("https://10.10.10.10"),
+			ClientID:                 []byte("porter-api"),
+			CertificateAuthorityData: []byte("LS0tLS1CRUdJTiBDRVJ="),
+			IDToken:                  []byte("token"),
+		},
+		expCluster: &models.Cluster{
+			AuthMechanism:            models.OIDC,
+			ProjectID:                1,
+			Name:                     "cluster-test",
+			Server:                   "https://10.10.10.10",
+			OIDCIntegrationID:        1,
+			CertificateAuthorityData: []byte("-----BEGIN CER"),
+		},
+	},
+	clusterTest{
+		name:     "oidc with idp issuer data",
+		raw:      fixtures.OIDCAuthWithData,
+		isLocal:  false,
+		resolver: &models.ClusterResolverAll{},
+		expIntegration: &ints.OIDCIntegration{
+			Client:                   ints.OIDCKube,
+			UserID:                   1,
+			ProjectID:                1,
+			IssuerURL:                []byte("https://10.10.10.10"),
+			ClientID:                 []byte("porter-api"),
+			CertificateAuthorityData: []byte("LS0tLS1CRUdJTiBDRVJ="),
+			IDToken:                  []byte("token"),
+		},
+		expCluster: &models.Cluster{
+			AuthMechanism:            models.OIDC,
+			ProjectID:                1,
+			Name:                     "cluster-test",
+			Server:                   "https://10.10.10.10",
+			OIDCIntegrationID:        2,
+			CertificateAuthorityData: []byte("-----BEGIN CER"),
+		},
+	},
+}
+
+func TestClusters(t *testing.T) {
 	tester := &tester{
-		dbFileName: "./cluster_local.db",
+		dbFileName: "./cluster_test.db",
 	}
 
 	setupTestEnv(tester, t)
@@ -21,156 +389,167 @@ func TestClusterLocal(t *testing.T) {
 	initProject(tester, t)
 	defer cleanup(tester, t)
 
-	// create cluster candidate
-	ccForm := &forms.CreateClusterCandidatesForm{
-		ProjectID:  tester.initProjects[0].ID,
-		Kubeconfig: ClusterCAWithData,
-		IsLocal:    true,
-	}
+	for _, c := range ClusterTests {
+		// create cluster candidate
+		ccForm := &forms.CreateClusterCandidatesForm{
+			ProjectID:  tester.initProjects[0].ID,
+			Kubeconfig: c.raw,
+			IsLocal:    c.isLocal,
+		}
 
-	ccs, err := ccForm.ToClusterCandidates(true)
-
-	if err != nil {
-		t.Fatalf("%v\n", err)
-	}
-
-	var cc *models.ClusterCandidate
-
-	for _, _cc := range ccs {
-		cc, err = tester.repo.Cluster.CreateClusterCandidate(_cc)
+		ccs, err := ccForm.ToClusterCandidates(c.isLocal)
 
 		if err != nil {
 			t.Fatalf("%v\n", err)
 		}
 
-		cc, err = tester.repo.Cluster.ReadClusterCandidate(cc.ID)
+		var cc *models.ClusterCandidate
+
+		for _, _cc := range ccs {
+			cc, err = tester.repo.Cluster.CreateClusterCandidate(_cc)
+
+			if err != nil {
+				t.Fatalf("%v\n", err)
+			}
+
+			cc, err = tester.repo.Cluster.ReadClusterCandidate(cc.ID)
+
+			if err != nil {
+				t.Fatalf("%v\n", err)
+			}
+		}
+
+		form := &forms.ResolveClusterForm{
+			Resolver:           c.resolver,
+			ClusterCandidateID: cc.ID,
+			ProjectID:          tester.initProjects[0].ID,
+			UserID:             tester.initUsers[0].ID,
+		}
+
+		// resolve integration (should be kube with local)
+		err = form.ResolveIntegration(*tester.repo)
 
 		if err != nil {
 			t.Fatalf("%v\n", err)
 		}
-	}
 
-	form := &forms.ResolveClusterForm{
-		Resolver:           &models.ClusterResolverAll{},
-		ClusterCandidateID: cc.ID,
-		ProjectID:          tester.initProjects[0].ID,
-		UserID:             tester.initUsers[0].ID,
-	}
+		switch c.expIntegration.(type) {
+		case *ints.KubeIntegration:
+			// make sure integration is equal, read integration from DB
+			gotIntegration, err := tester.repo.KubeIntegration.ReadKubeIntegration(form.IntegrationID)
 
-	// resolve integration (should be kube with local)
-	err = form.ResolveIntegration(*tester.repo)
+			if err != nil {
+				t.Fatalf("%v\n", err)
+			}
 
-	if err != nil {
-		t.Fatalf("%v\n", err)
-	}
+			// reset got integration model
+			gotIntegration.Model = gorm.Model{}
 
-	expIntegration := &ints.KubeIntegration{
-		Mechanism:  ints.KubeLocal,
-		UserID:     tester.initUsers[0].ID,
-		ProjectID:  tester.initProjects[0].ID,
-		Kubeconfig: cc.Kubeconfig,
-	}
+			ki, _ := c.expIntegration.(*ints.KubeIntegration)
 
-	// make sure integration is equal, read integration from DB
-	gotIntegration, err := tester.repo.KubeIntegration.ReadKubeIntegration(form.IntegrationID)
+			// if kubeconfig, compare
+			if len(ki.Kubeconfig) > 0 {
+				compareKubeconfig(t, gotIntegration.Kubeconfig, ki.Kubeconfig)
 
-	if err != nil {
-		t.Fatalf("%v\n", err)
-	}
+				// reset kubeconfig fields for deep.Equal
+				gotIntegration.Kubeconfig = []byte{}
+				ki.Kubeconfig = []byte{}
+			}
 
-	// reset got integration model
-	gotIntegration.Model = gorm.Model{}
+			if diff := deep.Equal(ki, gotIntegration); diff != nil {
+				t.Errorf("incorrect kube integration")
+				t.Error(diff)
+			}
+		case *ints.OIDCIntegration:
+			// make sure integration is equal, read integration from DB
+			gotIntegration, err := tester.repo.OIDCIntegration.ReadOIDCIntegration(form.IntegrationID)
 
-	if diff := deep.Equal(expIntegration, gotIntegration); diff != nil {
-		t.Errorf("incorrect integration")
-		t.Error(diff)
-	}
+			if err != nil {
+				t.Fatalf("%v\n", err)
+			}
 
-	// resolve cluster
-	gotCluster, err := form.ResolveCluster(*tester.repo)
+			// reset got integration model
+			gotIntegration.Model = gorm.Model{}
 
-	if err != nil {
-		t.Fatalf("%v\n", err)
-	}
+			oidc, _ := c.expIntegration.(*ints.OIDCIntegration)
 
-	expCluster := &models.Cluster{
-		AuthMechanism:            models.Local,
-		ProjectID:                1,
-		Name:                     "cluster-test",
-		Server:                   "https://localhost",
-		KubeIntegrationID:        1,
-		CertificateAuthorityData: []byte("-----BEGIN CER"),
-	}
+			if diff := deep.Equal(oidc, gotIntegration); diff != nil {
+				t.Errorf("incorrect oidc integration")
+				t.Error(diff)
+			}
+		case *ints.GCPIntegration:
+			// make sure integration is equal, read integration from DB
+			gotIntegration, err := tester.repo.GCPIntegration.ReadGCPIntegration(form.IntegrationID)
 
-	gotCluster.Model = gorm.Model{}
+			if err != nil {
+				t.Fatalf("%v\n", err)
+			}
 
-	if diff := deep.Equal(expCluster, gotCluster); diff != nil {
-		t.Errorf("incorrect cluster")
-		t.Error(diff)
+			// reset got integration model
+			gotIntegration.Model = gorm.Model{}
+
+			gcp, _ := c.expIntegration.(*ints.GCPIntegration)
+
+			if diff := deep.Equal(gcp, gotIntegration); diff != nil {
+				t.Errorf("incorrect gcp integration")
+				t.Error(diff)
+			}
+		case *ints.AWSIntegration:
+			// make sure integration is equal, read integration from DB
+			gotIntegration, err := tester.repo.AWSIntegration.ReadAWSIntegration(form.IntegrationID)
+
+			if err != nil {
+				t.Fatalf("%v\n", err)
+			}
+
+			// reset got integration model
+			gotIntegration.Model = gorm.Model{}
+
+			aws, _ := c.expIntegration.(*ints.AWSIntegration)
+
+			if diff := deep.Equal(aws, gotIntegration); diff != nil {
+				t.Errorf("incorrect aws integration")
+				t.Error(diff)
+			}
+		}
+
+		// resolve cluster
+		gotCluster, err := form.ResolveCluster(*tester.repo)
+
+		if err != nil {
+			t.Fatalf("%v\n", err)
+		}
+
+		gotCluster.Model = gorm.Model{}
+
+		if diff := deep.Equal(c.expCluster, gotCluster); diff != nil {
+			t.Errorf("incorrect cluster")
+			t.Error(diff)
+		}
 	}
 }
 
-// func TestPopulateServiceAccountBasic(t *testing.T) {
-// 	// create the in-memory repository
-// 	repo := test.NewRepository(true)
+func compareKubeconfig(t *testing.T, resKube []byte, expKube []byte) {
+	// compare kubeconfig by transforming into a client config
+	resConfig, _ := clientcmd.NewClientConfigFromBytes(resKube)
+	expConfig, err := clientcmd.NewClientConfigFromBytes(expKube)
 
-// 	// create a new project
-// 	repo.Project.CreateProject(&models.Project{
-// 		Name: "test-project",
-// 	})
+	if err != nil {
+		t.Fatalf("config from bytes, error occurred %v\n", err)
+	}
 
-// 	// create a ServiceAccountCandidate from a kubeconfig
-// 	saCandidates, err := kubernetes.GetServiceAccountCandidates([]byte(ClusterCAWithData), false)
+	resRawConf, _ := resConfig.RawConfig()
+	expRawConf, err := expConfig.RawConfig()
 
-// 	if err != nil {
-// 		t.Fatalf("%v\n", err)
-// 	}
+	if err != nil {
+		t.Fatalf("raw config conversion, error occurred %v\n", err)
+	}
 
-// 	for _, saCandidate := range saCandidates {
-// 		repo.ServiceAccount.CreateServiceAccountCandidate(saCandidate)
-// 	}
-
-// 	// create a new form
-// 	form := forms.ServiceAccountActionResolver{
-// 		ServiceAccountCandidateID: 1,
-// 	}
-
-// 	err = form.PopulateServiceAccount(repo.ServiceAccount)
-
-// 	if err != nil {
-// 		t.Fatalf("%v\n", err)
-// 	}
-
-// 	sa, err := repo.ServiceAccount.CreateServiceAccount(form.SA)
-// 	decodedStr, _ := base64.StdEncoding.DecodeString("LS0tLS1CRUdJTiBDRVJ=")
-
-// 	if len(sa.Clusters) != 1 {
-// 		t.Fatalf("cluster not written\n")
-// 	}
-
-// 	if sa.Clusters[0].ServiceAccountID != 1 {
-// 		t.Errorf("service account ID of joined cluster is not 1")
-// 	}
-
-// 	if string(sa.Clusters[0].CertificateAuthorityData) != string(decodedStr) {
-// 		t.Errorf("cluster ca data and input do not match: expected %s, got %s\n",
-// 			string(sa.Clusters[0].CertificateAuthorityData), string(decodedStr))
-// 	}
-
-// 	if sa.Integration != "x509" {
-// 		t.Errorf("service account auth mechanism is not x509")
-// 	}
-
-// 	if string(sa.ClientCertificateData) != string(decodedStr) {
-// 		t.Errorf("service account cert data and input do not match: expected %s, got %s\n",
-// 			string(sa.ClientCertificateData), string(decodedStr))
-// 	}
-
-// 	if string(sa.ClientKeyData) != string(decodedStr) {
-// 		t.Errorf("service account key data and input do not match: expected %s, got %s\n",
-// 			string(sa.ClientKeyData), string(decodedStr))
-// 	}
-// }
+	if diff := deep.Equal(expRawConf, resRawConf); diff != nil {
+		t.Errorf("incorrect kubeconfigs")
+		t.Error(diff)
+	}
+}
 
 // func TestPopulateServiceAccountClusterDataAction(t *testing.T) {
 // 	// create the in-memory repository
@@ -672,202 +1051,3 @@ func TestClusterLocal(t *testing.T) {
 // 			string(sa.OIDCCertificateAuthorityData), "LS0tLS1CRUdJTiBDRVJ=")
 // 	}
 // }
-
-const ClusterCAWithData string = `
-apiVersion: v1
-kind: Config
-clusters:
-- name: cluster-test
-  cluster:
-    server: https://localhost
-    certificate-authority-data: LS0tLS1CRUdJTiBDRVJ=
-contexts:
-- context:
-    cluster: cluster-test
-    user: test-admin
-  name: context-test
-users:
-- name: test-admin
-  user:
-    client-certificate-data: LS0tLS1CRUdJTiBDRVJ=
-    client-key-data: LS0tLS1CRUdJTiBDRVJ=
-current-context: context-test
-`
-
-const ClusterCAWithoutData string = `
-apiVersion: v1
-kind: Config
-clusters:
-- name: cluster-test
-  cluster:
-    server: https://localhost
-    certificate-authority: /fake/path/to/ca.pem
-contexts:
-- context:
-    cluster: cluster-test
-    user: test-admin
-  name: context-test
-users:
-- name: test-admin
-  user:
-    client-certificate-data: LS0tLS1CRUdJTiBDRVJ=
-    client-key-data: LS0tLS1CRUdJTiBDRVJ=
-current-context: context-test
-`
-
-const ClusterLocalhost string = `
-apiVersion: v1
-kind: Config
-clusters:
-- name: cluster-test
-  cluster:
-    server: https://localhost:30000
-contexts:
-- context:
-    cluster: cluster-test
-    user: test-admin
-  name: context-test
-users:
-- name: test-admin
-  user:
-    client-certificate-data: LS0tLS1CRUdJTiBDRVJ=
-    client-key-data: LS0tLS1CRUdJTiBDRVJ=
-current-context: context-test
-`
-
-const ClientWithoutCertData string = `
-apiVersion: v1
-kind: Config
-clusters:
-- name: cluster-test
-  cluster:
-    server: https://localhost
-    certificate-authority-data: LS0tLS1CRUdJTiBDRVJ=
-contexts:
-- context:
-    cluster: cluster-test
-    user: test-admin
-  name: context-test
-users:
-- name: test-admin
-  user:
-    client-certificate: /fake/path/to/ca.pem
-    client-key-data: LS0tLS1CRUdJTiBDRVJ=
-current-context: context-test
-`
-
-const ClientWithoutCertAndKeyData string = `
-apiVersion: v1
-kind: Config
-clusters:
-- name: cluster-test
-  cluster:
-    server: https://localhost
-    certificate-authority-data: LS0tLS1CRUdJTiBDRVJ=
-contexts:
-- context:
-    cluster: cluster-test
-    user: test-admin
-  name: context-test
-users:
-- name: test-admin
-  user:
-    client-certificate: /fake/path/to/ca.pem
-    client-key: /fake/path/to/ca.pem
-current-context: context-test
-`
-
-const BearerTokenWithoutData string = `
-apiVersion: v1
-kind: Config
-preferences: {}
-current-context: context-test
-clusters:
-- cluster:
-    server: https://localhost
-  name: cluster-test
-contexts:
-- context:
-    cluster: cluster-test
-    user: test-admin
-  name: context-test
-users:
-- name: test-admin
-  user:
-    tokenFile: /path/to/token/file.txt
-`
-const GCPPlugin string = `
-apiVersion: v1
-kind: Config
-clusters:
-- name: cluster-test
-  cluster:
-    server: https://localhost
-    certificate-authority-data: LS0tLS1CRUdJTiBDRVJ=
-users:
-- name: test-admin
-  user:
-    auth-provider:
-      name: gcp
-contexts:
-- context:
-    cluster: cluster-test
-    user: test-admin
-  name: context-test
-current-context: context-test
-`
-
-const AWSEKSGetTokenExec string = `
-apiVersion: v1
-clusters:
-- cluster:
-    server: https://localhost
-    certificate-authority-data: LS0tLS1CRUdJTiBDRVJ=
-  name: cluster-test
-contexts:
-- context:
-    cluster: cluster-test
-    user: test-admin
-  name: context-test
-current-context: context-test
-kind: Config
-preferences: {}
-users:
-- name: test-admin
-  user:
-    exec:
-      apiVersion: client.authentication.k8s.io/v1alpha1
-      command: aws
-      args:
-        - "eks"
-        - "get-token"
-        - "--cluster-name"
-        - "cluster-test"
-`
-
-const OIDCAuthWithoutData string = `
-apiVersion: v1
-clusters:
-- cluster:
-    server: https://localhost
-    certificate-authority-data: LS0tLS1CRUdJTiBDRVJ=
-  name: cluster-test
-contexts:
-- context:
-    cluster: cluster-test
-    user: test-admin
-  name: context-test
-current-context: context-test
-kind: Config
-preferences: {}
-users:
-- name: test-admin
-  user:
-    auth-provider:
-      config:
-        client-id: porter-api
-        id-token: token
-        idp-issuer-url: https://localhost
-        idp-certificate-authority: /fake/path/to/ca.pem
-      name: oidc
-`

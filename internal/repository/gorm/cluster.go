@@ -47,6 +47,13 @@ func (repo *ClusterRepository) CreateClusterCandidate(
 		return nil, err
 	}
 
+	// decrypt at the end to return
+	err = repo.DecryptClusterCandidateData(cc, repo.key)
+
+	if err != nil {
+		return nil, err
+	}
+
 	return cc, nil
 }
 
@@ -143,6 +150,12 @@ func (repo *ClusterRepository) CreateCluster(
 		return nil, err
 	}
 
+	err = repo.DecryptClusterData(cluster, repo.key)
+
+	if err != nil {
+		return nil, err
+	}
+
 	return cluster, nil
 }
 
@@ -224,6 +237,16 @@ func (repo *ClusterRepository) EncryptClusterData(
 		}
 
 		cluster.CertificateAuthorityData = cipherData
+	}
+
+	if tok := cluster.TokenCache.Token; len(tok) > 0 {
+		cipherData, err := repository.Encrypt(tok, key)
+
+		if err != nil {
+			return err
+		}
+
+		cluster.TokenCache.Token = cipherData
 	}
 
 	return nil

@@ -5,9 +5,9 @@ import (
 	"github.com/porter-dev/porter/internal/models"
 )
 
-// CreateServiceAccountCandidatesForm represents the accepted values for
-// creating a list of ServiceAccountCandidates from a kubeconfig
-type CreateServiceAccountCandidatesForm struct {
+// CreateClusterCandidatesForm represents the accepted values for
+// creating a list of ClusterCandidates from a kubeconfig
+type CreateClusterCandidatesForm struct {
 	ProjectID  uint   `json:"project_id"`
 	Kubeconfig string `json:"kubeconfig"`
 
@@ -17,20 +17,24 @@ type CreateServiceAccountCandidatesForm struct {
 	IsLocal bool `json:"is_local"`
 }
 
-// ToServiceAccountCandidates creates a ServiceAccountCandidate from the kubeconfig and
+// ToClusterCandidates creates a ClusterCandidate from the kubeconfig and
 // project id
-func (csa *CreateServiceAccountCandidatesForm) ToServiceAccountCandidates(
+func (csa *CreateClusterCandidatesForm) ToClusterCandidates(
 	isServerLocal bool,
-) ([]*models.ServiceAccountCandidate, error) {
-	// can only use "local" auth mechanism if the server is running locally
-	candidates, err := kubernetes.GetServiceAccountCandidates([]byte(csa.Kubeconfig), isServerLocal && csa.IsLocal)
+) ([]*models.ClusterCandidate, error) {
+	candidates, err := kubernetes.GetClusterCandidatesFromKubeconfig(
+		[]byte(csa.Kubeconfig),
+		csa.ProjectID,
+		// can only use "local" auth mechanism if the server is running locally
+		isServerLocal && csa.IsLocal,
+	)
 
 	if err != nil {
 		return nil, err
 	}
 
-	for _, saCandidate := range candidates {
-		saCandidate.ProjectID = csa.ProjectID
+	for _, cc := range candidates {
+		cc.ProjectID = csa.ProjectID
 	}
 
 	return candidates, nil

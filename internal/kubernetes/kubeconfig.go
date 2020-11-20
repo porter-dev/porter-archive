@@ -16,7 +16,11 @@ import (
 // The local boolean represents whether the auth mechanism should be designated as
 // "local": if so, the auth mechanism uses local plugins/mechanisms purely from the
 // kubeconfig.
-func GetClusterCandidatesFromKubeconfig(kubeconfig []byte, projectID uint) ([]*models.ClusterCandidate, error) {
+func GetClusterCandidatesFromKubeconfig(
+	kubeconfig []byte,
+	projectID uint,
+	local bool,
+) ([]*models.ClusterCandidate, error) {
 	config, err := clientcmd.NewClientConfigFromBytes(kubeconfig)
 
 	if err != nil {
@@ -36,15 +40,22 @@ func GetClusterCandidatesFromKubeconfig(kubeconfig []byte, projectID uint) ([]*m
 		awsClusterID := ""
 		authInfoName := context.AuthInfo
 
-		// get the resolvers, if needed
-		authMechanism, resolvers := parseAuthInfoForResolvers(rawConf.AuthInfos[authInfoName])
-		clusterResolvers := parseClusterForResolvers(rawConf.Clusters[clusterName])
-		resolvers = append(resolvers, clusterResolvers...)
+		resolvers := make([]models.ClusterResolver, 0)
+		var authMechanism models.ClusterAuth
 
-		if authMechanism == models.AWS {
-			// if the auth mechanism is AWS, we need to parse more explicitly
-			// for the cluster id
-			awsClusterID = parseAuthInfoForAWSClusterID(rawConf.AuthInfos[authInfoName], clusterName)
+		if local {
+			authMechanism = models.Local
+		} else {
+			// get the resolvers, if needed
+			authMechanism, resolvers = parseAuthInfoForResolvers(rawConf.AuthInfos[authInfoName])
+			clusterResolvers := parseClusterForResolvers(rawConf.Clusters[clusterName])
+			resolvers = append(resolvers, clusterResolvers...)
+
+			if authMechanism == models.AWS {
+				// if the auth mechanism is AWS, we need to parse more explicitly
+				// for the cluster id
+				awsClusterID = parseAuthInfoForAWSClusterID(rawConf.AuthInfos[authInfoName], clusterName)
+			}
 		}
 
 		// construct the raw kubeconfig that's relevant for that context

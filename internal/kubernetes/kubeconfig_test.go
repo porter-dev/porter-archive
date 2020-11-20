@@ -305,7 +305,7 @@ var ClusterCandidatesTests = []ccsTest{
 
 func TestGetClusterCandidatesNonLocal(t *testing.T) {
 	for _, c := range ClusterCandidatesTests {
-		result, err := kubernetes.GetClusterCandidatesFromKubeconfig(c.raw, 1)
+		result, err := kubernetes.GetClusterCandidatesFromKubeconfig(c.raw, 1, false)
 
 		if err != nil {
 			t.Fatalf("error occurred %v\n", err)

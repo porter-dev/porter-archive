@@ -137,24 +137,24 @@ func (repo *OIDCIntegrationRepository) ListOIDCIntegrationsByProjectID(
 	return res, nil
 }
 
-// OIntegrationRepository implements repository.OIntegrationRepository
-type OIntegrationRepository struct {
+// OAuthIntegrationRepository implements repository.OAuthIntegrationRepository
+type OAuthIntegrationRepository struct {
 	canQuery      bool
-	oIntegrations []*ints.OIntegration
+	oIntegrations []*ints.OAuthIntegration
 }
 
-// NewOIntegrationRepository will return errors if canQuery is false
-func NewOIntegrationRepository(canQuery bool) repository.OIntegrationRepository {
-	return &OIntegrationRepository{
+// NewOAuthIntegrationRepository will return errors if canQuery is false
+func NewOAuthIntegrationRepository(canQuery bool) repository.OAuthIntegrationRepository {
+	return &OAuthIntegrationRepository{
 		canQuery,
-		[]*ints.OIntegration{},
+		[]*ints.OAuthIntegration{},
 	}
 }
 
-// CreateOIntegration creates a new o auth mechanism
-func (repo *OIntegrationRepository) CreateOIntegration(
-	am *ints.OIntegration,
-) (*ints.OIntegration, error) {
+// CreateOAuthIntegration creates a new o auth mechanism
+func (repo *OAuthIntegrationRepository) CreateOAuthIntegration(
+	am *ints.OAuthIntegration,
+) (*ints.OAuthIntegration, error) {
 	if !repo.canQuery {
 		return nil, errors.New("Cannot write database")
 	}
@@ -165,10 +165,10 @@ func (repo *OIntegrationRepository) CreateOIntegration(
 	return am, nil
 }
 
-// ReadOIntegration finds a o auth mechanism by id
-func (repo *OIntegrationRepository) ReadOIntegration(
+// ReadOAuthIntegration finds a o auth mechanism by id
+func (repo *OAuthIntegrationRepository) ReadOAuthIntegration(
 	id uint,
-) (*ints.OIntegration, error) {
+) (*ints.OAuthIntegration, error) {
 	if !repo.canQuery {
 		return nil, errors.New("Cannot read from database")
 	}
@@ -181,16 +181,16 @@ func (repo *OIntegrationRepository) ReadOIntegration(
 	return repo.oIntegrations[index], nil
 }
 
-// ListOIntegrationsByProjectID finds all o auth mechanisms
+// ListOAuthIntegrationsByProjectID finds all o auth mechanisms
 // for a given project id
-func (repo *OIntegrationRepository) ListOIntegrationsByProjectID(
+func (repo *OAuthIntegrationRepository) ListOAuthIntegrationsByProjectID(
 	projectID uint,
-) ([]*ints.OIntegration, error) {
+) ([]*ints.OAuthIntegration, error) {
 	if !repo.canQuery {
 		return nil, errors.New("Cannot read from database")
 	}
 
-	res := make([]*ints.OIntegration, 0)
+	res := make([]*ints.OAuthIntegration, 0)
 
 	for _, oAM := range repo.oIntegrations {
 		if oAM.ProjectID == projectID {

@@ -30,6 +30,10 @@ export default class Logs extends Component<PropsType, StateType> {
   }
 
   renderLogs = () => {
+    let { selectedPod } = this.props;
+    if (!selectedPod.name) {
+      return <div>no bueno, select pod pl0x</div>
+    }
     return this.state.logs.map((log, i) => {
         return <div key={i}>{log}</div>
     })
@@ -38,7 +42,7 @@ export default class Logs extends Component<PropsType, StateType> {
   componentDidMount() {
     let { currentCluster, currentProject } = this.context;
     let { selectedPod } = this.props;
-    if (!this.props.selectedPod) return
+    if (!selectedPod.name) return
 
     let ws = new WebSocket(`ws://localhost:8080/api/projects/${currentProject.id}/k8s/${selectedPod.namespace}/pod/${selectedPod.name}/logs?cluster_id=${currentCluster.id}&service_account_id=${currentCluster.service_account_id}`)
 
@@ -79,10 +83,11 @@ export default class Logs extends Component<PropsType, StateType> {
 Logs.contextType = Context;
 
 const LogStream = styled.div`
-  width: 70%;
+  overflow: auto;
+  width: 65%;
+  float: right;
   height: 100%;
   background: #202227;
-  position: relative;
   padding: 25px;
   user-select: text;
   overflow: auto;

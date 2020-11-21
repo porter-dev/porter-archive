@@ -6,11 +6,6 @@ import ControllerTab from './ControllerTab';
 import { Context } from '../../../../../shared/Context';
 import { ChartType, StorageType } from '../../../../../shared/types';
 
-interface Pod {
-  namespace?: string;
-  name?: string;
-}
-
 type PropsType = {
   selectors: string[],
   currentChart: ChartType,
@@ -18,30 +13,29 @@ type PropsType = {
 
 type StateType = {
   logs: string[]
-  pods: Pod[],
-  selectedPod: Pod,
+  pods: any[],
+  selectedPod: any,
   controllers: any[],
 };
 
 export default class StatusSection extends Component<PropsType, StateType> {
   state = {
     logs: [] as string[],
-    pods: [] as Pod[],
-    selectedPod: {} as Pod,
+    pods: [] as any[],
+    selectedPod: {} as any,
     controllers: [] as any[],
   }
 
   renderLogs = () => {
-    return <Logs key={this.state.selectedPod?.name} selectedPod={this.state.selectedPod} />
+    return <Logs 
+      key={this.state.selectedPod?.metadata?.name} 
+      selectedPod={this.state.selectedPod} 
+    />
   }
 
-  selectPod = (pod: Pod) => {
-    let select = { 
-      namespace: pod.namespace, 
-      name: pod.name,
-    }
+  selectPod = (pod: any) => {
     this.setState({
-      selectedPod: select
+      selectedPod: pod
     })
   }
 
@@ -81,6 +75,7 @@ export default class StatusSection extends Component<PropsType, StateType> {
   componentDidMount() {
     const { selectors, currentChart } = this.props;
     let { currentCluster, currentProject, setCurrentError } = this.context;
+
     api.getChartControllers('<token>', {
       namespace: currentChart.namespace,
       cluster_id: currentCluster.id,

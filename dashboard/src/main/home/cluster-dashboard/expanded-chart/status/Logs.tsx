@@ -2,13 +2,8 @@ import React, { Component } from 'react';
 import styled from 'styled-components';
 import { Context } from '../../../../../shared/Context';
 
-interface Pod {
-  namespace?: string;
-  name?: string;
-}
-
 type PropsType = {
-  selectedPod: Pod,
+  selectedPod: any,
 };
 
 type StateType = {
@@ -31,8 +26,11 @@ export default class Logs extends Component<PropsType, StateType> {
 
   renderLogs = () => {
     let { selectedPod } = this.props;
-    if (!selectedPod.name) {
-      return <div>no bueno, select pod pl0x</div>
+    if (!selectedPod?.metadata?.name) {
+      return <Message>Please select a pod to view its logs.</Message>
+    }
+    if (this.state.logs.length == 0) {
+      return <Message>No logs to display from this pod.</Message>
     }
     return this.state.logs.map((log, i) => {
         return <div key={i}>{log}</div>
@@ -42,9 +40,9 @@ export default class Logs extends Component<PropsType, StateType> {
   componentDidMount() {
     let { currentCluster, currentProject } = this.context;
     let { selectedPod } = this.props;
-    if (!selectedPod.name) return
+    if (!selectedPod.metadata?.name) return
 
-    let ws = new WebSocket(`ws://localhost:8080/api/projects/${currentProject.id}/k8s/${selectedPod.namespace}/pod/${selectedPod.name}/logs?cluster_id=${currentCluster.id}&service_account_id=${currentCluster.service_account_id}`)
+    let ws = new WebSocket(`ws://localhost:8080/api/projects/${currentProject.id}/k8s/${selectedPod?.metadata?.namespace}/pod/${selectedPod?.metadata?.name}/logs?cluster_id=${currentCluster.id}&service_account_id=${currentCluster.service_account_id}`)
 
     this.setState({ ws }, () => {
       if (!this.state.ws) return;
@@ -93,3 +91,13 @@ const LogStream = styled.div`
   overflow: auto;
   border-radius: 5px;
 `;
+
+const Message = styled.div`
+  display: flex;
+  height: 100%;
+  width: 100%;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff44;
+  font-size: 14px;
+`

@@ -19,7 +19,7 @@ type StateType = {
 
 export default class Chart extends Component<PropsType, StateType> {
   getAvailability = (kind: string, c: any) => {
-    switch (kind.toLowerCase()) {
+    switch (kind?.toLowerCase()) {
       case "deployment":
       case "replicaset":
         return (c.status.availableReplicas == c.status.replicas)
@@ -67,7 +67,7 @@ export default class Chart extends Component<PropsType, StateType> {
     if (chartStatus === 'deployed') {
       for (var uid in this.state.controllers) {
         if (!this.state.controllers[uid]) {
-          return 'updating'
+          return 'not ready'
         }
       }
       return 'deployed'

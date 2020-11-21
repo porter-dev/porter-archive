@@ -11,7 +11,7 @@ import RevisionSection from './RevisionSection';
 import ValuesYaml from './ValuesYaml';
 import GraphSection from './GraphSection';
 import ListSection from './ListSection';
-import LogSection from './log/LogSection';
+import StatusSection from './status/StatusSection';
 import ValuesForm from '../../../../components/values-form/ValuesForm';
 import SettingsSection from './SettingsSection';
 
@@ -33,14 +33,12 @@ type StateType = {
   checkTabExists: boolean,
 };
 
-const defaultTab = 'logs';
-
 const dummyFormTabs = [
   { "Name": "values", "Label": "Main Settings", "Sections": [{ "Name": "main", "ShowIf": "", "Contents": [{ "Type": "heading", "Label": "🍺 Hello Porter Settings", "Name": "", "Variable": "", "Settings": { "Default": null } }, { "Type": "subtitle", "Label": "Update ports for Hello Porter with Porter", "Name": "", "Variable": "", "Settings": { "Default": null } }, { "Type": "number-input", "Label": "Service Port", "Name": "service-port", "Variable": "service.port", "Settings": { "Default": 80 } }, { "Type": "number-input", "Label": "Target Port", "Name": "target-port", "Variable": "service.targetPort", "Settings": { "Default": 8005 } }, { "Type": "checkbox", "Label": "Show hidden section", "Name": "show-hidden", "Variable": "", "Settings": { "Default": null } }] }, { "Name": "secondary", "ShowIf": "show-hidden", "Contents": [{ "Type": "heading", "Label": "This is a collapsible section!", "Name": "", "Variable": "", "Settings": { "Default": null } }, { "Type": "subtitle", "Label": "Test section toggling", "Name": "", "Variable": "", "Settings": { "Default": null } }, { "Type": "string-input", "Label": "Service Account Name", "Name": "sa-name", "Variable": "serviceAccount.name", "Settings": { "Default": null } }] }] }, { "Name": "alt", "Label": "Bonus Settings", "Sections": [{ "Name": "main", "ShowIf": "", "Contents": [{ "Type": "heading", "Label": "🚀 Bonus Porter Settings", "Name": "", "Variable": "", "Settings": { "Default": null } }, { "Type": "subtitle", "Label": "Configure more aspects of Hello Porter", "Name": "", "Variable": "", "Settings": { "Default": null } }, { "Type": "checkbox", "Label": "Enable Autoscaling?", "Name": "autoscaling-enabled", "Variable": "autoscaling.enabled", "Settings": { "Default": false } }] }, { "Name": "autoscaling-options", "ShowIf": "autoscaling-enabled", "Contents": [{ "Type": "number-input", "Label": "Minimum Replicas", "Name": "min-replicas", "Variable": "autoscaling.minReplicas", "Settings": { "Default": 0 } }, { "Type": "number-input", "Label": "Maximum Replicas", "Name": "max-replicas", "Variable": "autoscaling.maxReplicas", "Settings": { "Default": 2 } }] }] }, { "Name": "notes", "Label": "Notes", "Sections": [{ "Name": "main", "ShowIf": "", "Contents": [{ "Type": "heading", "Label": "Just some text", "Name": "", "Variable": "", "Settings": { "Default": null } }, { "Type": "subtitle", "Label": "This is just some random text to populate the final tab with.", "Name": "", "Variable": "", "Settings": { "Default": null } }] }] }
 ];
 
 // Tabs not display when previewing an old revision
-const excludedTabs = ['logs', 'settings', 'deploy'];
+const excludedTabs = ['status', 'settings', 'deploy'];
 
 /*
   TODO: consolidate revisionPreview and currentChart (currentChart can just be the initial state)
@@ -77,7 +75,7 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
       revision: currentChart.version
     }, (err: any, res: any) => {
       if (err) {
-        // console.log(err)
+        console.log(err)
       } else {
         this.setState({ components: res.data.Objects, podSelectors: res.data.PodSelectors }, this.refreshTabs);
       }
@@ -85,7 +83,6 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
   }
 
   refreshTabs = () => {
-    
     // Generate settings tabs from the provided form
     let tabOptions = [] as ChoiceType[];
     let tabContents = [] as any;
@@ -103,7 +100,7 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
 
     // Append universal tabs
     tabOptions.push(
-      { label: 'Logs', value: 'logs' },
+      { label: 'Status', value: 'status' },
       { label: 'Deploy', value: 'deploy' },
       { label: 'Settings', value: 'settings' },
     );
@@ -120,8 +117,8 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
     let chart = this.state.revisionPreview || currentChart;
     tabContents.push(
       {
-        value: 'logs', component: (
-          <LogSection selectors={this.state.podSelectors} />
+        value: 'status', component: (
+          <StatusSection currentChart={chart} selectors={this.state.podSelectors} />
         ),
       },
       {
@@ -177,7 +174,6 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
   }
 
   setRevisionPreview = (oldChart: ChartType) => {
-    console.log('set it..')
     let { currentCluster, currentProject } = this.context;
     this.setState({ revisionPreview: oldChart, checkTabExists: true });
 
@@ -259,8 +255,8 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
                   <StatusColor status={chart.info.status} />{chart.info.status}
                 </StatusIndicator>
                 <LastDeployed>
-                  <Dot>•</Dot>Last deployed
-                  {this.readableDate(chart.info.last_deployed)}
+                  <Dot>•</Dot>Last deployed 
+                  {' ' + this.readableDate(chart.info.last_deployed)}
                 </LastDeployed>
               </InfoWrapper>
 

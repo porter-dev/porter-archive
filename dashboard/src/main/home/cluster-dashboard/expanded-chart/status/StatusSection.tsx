@@ -5,6 +5,7 @@ import Logs from './Logs';
 import ControllerTab from './ControllerTab';
 import { Context } from '../../../../../shared/Context';
 import { ChartType, StorageType } from '../../../../../shared/types';
+import Loading from '../../../../../components/Loading';
 
 type PropsType = {
   selectors: string[],
@@ -16,6 +17,7 @@ type StateType = {
   pods: any[],
   selectedPod: any,
   controllers: any[],
+  loading: boolean,
 };
 
 export default class StatusSection extends Component<PropsType, StateType> {
@@ -24,6 +26,7 @@ export default class StatusSection extends Component<PropsType, StateType> {
     pods: [] as any[],
     selectedPod: {} as any,
     controllers: [] as any[],
+    loading: true,
   }
 
   renderLogs = () => {
@@ -53,6 +56,13 @@ export default class StatusSection extends Component<PropsType, StateType> {
   }
 
   renderStatusSection = () => {
+    if (this.state.loading) {
+      return (
+        <NoControllers> 
+          <Loading />
+        </NoControllers>
+      )
+    }
     if (this.state.controllers.length > 0) {
       return (
         <Wrapper>
@@ -90,7 +100,7 @@ export default class StatusSection extends Component<PropsType, StateType> {
         setCurrentError(JSON.stringify(err));
         return
       }
-      this.setState({ controllers: res.data })
+      this.setState({ controllers: res.data, loading: false })
     });
   }
 

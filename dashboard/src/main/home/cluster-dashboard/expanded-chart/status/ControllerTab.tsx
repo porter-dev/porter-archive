@@ -4,36 +4,40 @@ import { kindToIcon } from '../../../../../shared/rosettaStone';
 import api from '../../../../../shared/api';
 import { Context } from '../../../../../shared/Context';
 
-interface Pod {
-  namespace?: string;
-  name?: string;
-
-}
-
 type PropsType = {
   controller: any,
-  selectedPod: Pod,
+  selectedPod: any,
   selectPod: Function,
 };
 
 type StateType = {
   expanded: boolean,
-  pods: Pod[],
+  pods: any[],
+  raw: any[],
 };
 
 // Controller tab in log section that displays list of pods on click.
 export default class ControllerTab extends Component<PropsType, StateType> {
   state = {
     expanded: false,
-    pods: [] as Pod[],
+    pods: [] as any[],
+    raw: [] as any[],
   }
 
-  // Handle previewing old revisions
-//   componentDidUpdate(prevProps: PropsType) {
-//     if (prevProps.resource.RawYAML !== this.props.resource.RawYAML) {
-    //   this.setState({ RawYAML: yaml.dump(this.props.resource.RawYAML) });
-//     }
-//   }
+  getAvailability = (kind: string, c: any) => {
+    switch (kind?.toLowerCase()) {
+      case "deployment":
+      case "replicaset":
+        return [
+          c.status?.availableReplicas || c.status?.replicas - c.status?.unavailableReplicas, 
+          c.status?.replicas
+        ]
+      case "statefulset":
+       return [c.status?.readyReplicas, c.status?.replicas]
+      case "daemonset":
+        return [c.status?.numberAvailable, c.status?.desiredNumberScheduled]
+      }
+  }
 
   renderIcon = (kind: string) => {
 
@@ -49,19 +53,48 @@ export default class ControllerTab extends Component<PropsType, StateType> {
     );
   }
 
+  getPodStatus = (status: any) => {
+    if (status?.phase == 'Pending') {
+      return 'waiting'
+    }
+
+    if (status?.phase == 'Failed') {
+      return 'failed'
+    }
+
+    if (status?.phase == 'Running') {
+      let collatedStatus = 'running';
+
+      status.containerStatuses.forEach((s: any) => {
+        if (s.state?.waiting) {
+          collatedStatus = 'waiting'
+        } else if (s.state?.terminated) {
+          collatedStatus = 'failed'
+          throw {};
+        }
+      })
+      return collatedStatus;
+    }
+  }
+
   renderExpanded = () => {
     if (this.state.expanded) {
       return (
         <ExpandWrapper>
             {
-              this.state.pods.map((pod) => {
+              this.state.raw.map((pod) => {
+                let status = this.getPodStatus(pod.status)
                 return (
                   <Tab 
-                    key={pod.name}
-                    selected={(this.props.selectedPod.name === pod.name)}
+                    key={pod.metadata?.name}
+                    selected={(this.props.selectedPod?.metadata?.name === pod?.metadata?.name)}
                     onClick={() => {this.props.selectPod(pod)}}
                   > 
-                    {pod.name} 
+                    {pod.metadata?.name}
+                    <Status>
+                      <StatusColor status={status} />
+                      {status}
+                    </Status>
                   </Tab>)
               })
             }
@@ -102,18 +135,19 @@ export default class ControllerTab extends Component<PropsType, StateType> {
       let pods = res?.data?.map((pod: any) => {
         return {
           namespace: pod?.metadata?.namespace, 
-          name: pod?.metadata?.name
+          name: pod?.metadata?.name,
+          phase: pod?.status?.phase,
         }
       })
       console.log(res.data)
-      this.setState({ pods })
+      this.setState({ pods, raw: res.data })
     })
   }
 
   render() {
     let { controller } = this.props;
-    console.log(controller)
-    let status = 'running'
+    let [available, total] = this.getAvailability(controller.kind, controller);
+    let status = (available == total) ? 'running' : 'waiting'
     return (
       <StyledResourceItem>
         <ResourceHeader
@@ -135,7 +169,7 @@ export default class ControllerTab extends Component<PropsType, StateType> {
           </Metadata>
           <Status>
             <StatusColor status={status} />
-            3/{controller.status.replicas}
+            {available}/{total}
           </Status>
           </Info>
         </ResourceHeader>
@@ -214,13 +248,15 @@ const StatusColor = styled.div`
 `;
 
 const Tab = styled.div`
+  width: 100%;
+  height: 100%;
+  display: flex;
   align-items: center;
+  justify-content: space-between;
   color: ${(props: {selected: boolean}) => props.selected ? 'white' : '#ffffff66'};
   background: ${(props: {selected: boolean}) => props.selected ? '#ffffff18' : '##ffffff11'};
-  height: 100%;
-  justify-content: center;
   font-size: 13px;
-  padding: 25px 13px;
+  padding: 20px 12px 20px 45px;
   text-shadow: 0px 0px 8px none;
   cursor: pointer;
   :hover {

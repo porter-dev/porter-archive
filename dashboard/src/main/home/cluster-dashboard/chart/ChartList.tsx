@@ -36,11 +36,6 @@ export default class ChartList extends Component<PropsType, StateType> {
   updateCharts = (callback: Function) => {
     let { currentCluster, currentProject, setCurrentError } = this.context;
     this.setState({ loading: true });
-    setTimeout(() => {
-      if (this.state.loading) {
-        this.setState({ loading: false, error: true });
-      }
-    }, 3000);
 
     api.getCharts('<token>', {
       namespace: this.props.namespace,
@@ -58,13 +53,11 @@ export default class ChartList extends Component<PropsType, StateType> {
         setCurrentError(JSON.stringify(err));
         this.setState({ loading: false, error: true });
       } else {
-        if (res.data) {
-          this.setState({ charts: res.data });
-          callback(res.data)
-        } else {
-          this.setState({ charts: [] });
-        }
-        this.setState({ loading: false, error: false });
+        let charts = res.data || [];
+        this.setState({ charts }, () => {
+          this.setState({ loading: false, error: false });
+        });
+        callback(charts)
       }
     });
   }

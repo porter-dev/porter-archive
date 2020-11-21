@@ -6,7 +6,7 @@ import { Context } from '../../../../shared/Context';
 
 type PropsType = {
   chart: ChartType,
-  setCurrentChart: (c: ChartType) => void
+  setCurrentChart: (c: ChartType) => void,
   controllers: Record<string, any>,
 };
 
@@ -34,7 +34,7 @@ export default class Chart extends Component<PropsType, StateType> {
     expand: false,
     controllers: {} as Record<string, boolean>,
     update: [] as any[],
-    getAvailability: this.getAvailability.bind(this)
+    getAvailability: this.getAvailability.bind(this),
   }
 
   renderIcon = () => {

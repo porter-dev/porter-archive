@@ -60,6 +60,20 @@ func (g *GCPIntegration) Externalize() *GCPIntegrationExternal {
 	}
 }
 
+// ToProjectIntegration converts a gcp integration to a project integration
+func (g *GCPIntegration) ToProjectIntegration(
+	category string,
+	service IntegrationService,
+) *ProjectIntegration {
+	return &ProjectIntegration{
+		ID:            g.ID,
+		ProjectID:     g.ProjectID,
+		AuthMechanism: "gcp",
+		Category:      category,
+		Service:       service,
+	}
+}
+
 // GetBearerToken retrieves a bearer token for a GCP account
 func (g *GCPIntegration) GetBearerToken(
 	getTokenCache GetTokenCacheFunc,

@@ -4,11 +4,9 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/url"
-	"time"
 
 	"github.com/go-chi/chi"
 	"github.com/porter-dev/porter/internal/kubernetes"
-	"github.com/porter-dev/porter/internal/models"
 
 	"github.com/gorilla/websocket"
 	"github.com/porter-dev/porter/internal/forms"
@@ -37,11 +35,11 @@ func (app *App) HandleListNamespaces(w http.ResponseWriter, r *http.Request) {
 	// get the filter options
 	form := &forms.K8sForm{
 		OutOfClusterConfig: &kubernetes.OutOfClusterConfig{
-			UpdateTokenCache: app.updateTokenCache,
+			Repo: app.repo,
 		},
 	}
 
-	form.PopulateK8sOptionsFromQueryParams(vals, app.repo.ServiceAccount)
+	form.PopulateK8sOptionsFromQueryParams(vals, app.repo.Cluster)
 
 	// validate the form
 	if err := app.validator.Struct(form); err != nil {
@@ -71,17 +69,6 @@ func (app *App) HandleListNamespaces(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (app *App) updateTokenCache(token string, expiry time.Time) error {
-	_, err := app.repo.ServiceAccount.UpdateServiceAccountTokenCache(
-		&models.TokenCache{
-			Token:  []byte(token),
-			Expiry: expiry,
-		},
-	)
-
-	return err
-}
-
 // HandleGetPodLogs returns real-time logs of the pod via websockets
 // TODO: Refactor repeated calls.
 func (app *App) HandleGetPodLogs(w http.ResponseWriter, r *http.Request) {
@@ -108,11 +95,11 @@ func (app *App) HandleGetPodLogs(w http.ResponseWriter, r *http.Request) {
 	// get the filter options
 	form := &forms.K8sForm{
 		OutOfClusterConfig: &kubernetes.OutOfClusterConfig{
-			UpdateTokenCache: app.updateTokenCache,
+			Repo: app.repo,
 		},
 	}
 
-	form.PopulateK8sOptionsFromQueryParams(vals, app.repo.ServiceAccount)
+	form.PopulateK8sOptionsFromQueryParams(vals, app.repo.Cluster)
 
 	// validate the form
 	if err := app.validator.Struct(form); err != nil {
@@ -168,11 +155,11 @@ func (app *App) HandleListPods(w http.ResponseWriter, r *http.Request) {
 	// get the filter options
 	form := &forms.K8sForm{
 		OutOfClusterConfig: &kubernetes.OutOfClusterConfig{
-			UpdateTokenCache: app.updateTokenCache,
+			Repo: app.repo,
 		},
 	}
 
-	form.PopulateK8sOptionsFromQueryParams(vals, app.repo.ServiceAccount)
+	form.PopulateK8sOptionsFromQueryParams(vals, app.repo.Cluster)
 
 	// validate the form
 	if err := app.validator.Struct(form); err != nil {

@@ -67,27 +67,27 @@ func testTemplatesRequests(t *testing.T, tests []*templatesTest, canQuery bool) 
 
 // ------------------------- TEST FIXTURES AND FUNCTIONS  ------------------------- //
 
-var listTemplatesTests = []*templatesTest{
-	&templatesTest{
-		initializers: []func(tester *tester){
-			initDefaultTemplates,
-		},
-		msg:       "List templates",
-		method:    "GET",
-		endpoint:  "/api/templates",
-		body:      "",
-		expStatus: http.StatusOK,
-		expBody:   "unimplemented",
-		useCookie: true,
-		validators: []func(c *templatesTest, tester *tester, t *testing.T){
-			templatesListValidator,
-		},
-	},
-}
+// var listTemplatesTests = []*templatesTest{
+// 	&templatesTest{
+// 		initializers: []func(tester *tester){
+// 			initDefaultTemplates,
+// 		},
+// 		msg:       "List templates",
+// 		method:    "GET",
+// 		endpoint:  "/api/templates",
+// 		body:      "",
+// 		expStatus: http.StatusOK,
+// 		expBody:   "unimplemented",
+// 		useCookie: true,
+// 		validators: []func(c *templatesTest, tester *tester, t *testing.T){
+// 			templatesListValidator,
+// 		},
+// 	},
+// }
 
-func TestHandleListTemplates(t *testing.T) {
-	testTemplatesRequests(t, listTemplatesTests, true)
-}
+// func TestHandleListTemplates(t *testing.T) {
+// 	testTemplatesRequests(t, listTemplatesTests, true)
+// }
 
 // ------------------------- INITIALIZERS AND VALIDATORS ------------------------- //
 

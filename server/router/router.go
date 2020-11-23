@@ -41,21 +41,21 @@ func New(
 		r.Method("POST", "/logout", auth.BasicAuthenticate(requestlog.NewHandler(a.HandleLogoutUser, l)))
 
 		// /api/oauth routes
-		r.Method(
-			"GET",
-			"/oauth/projects/{project_id}/github",
-			auth.DoesUserHaveProjectAccess(
-				requestlog.NewHandler(a.HandleGithubOAuthStartProject, l),
-				mw.URLParam,
-				mw.WriteAccess,
-			),
-		)
+		// r.Method(
+		// 	"GET",
+		// 	"/oauth/projects/{project_id}/github",
+		// 	auth.DoesUserHaveProjectAccess(
+		// 		requestlog.NewHandler(a.HandleGithubOAuthStartProject, l),
+		// 		mw.URLParam,
+		// 		mw.WriteAccess,
+		// 	),
+		// )
 
-		r.Method(
-			"GET",
-			"/oauth/github/callback",
-			requestlog.NewHandler(a.HandleGithubOAuthCallback, l),
-		)
+		// r.Method(
+		// 	"GET",
+		// 	"/oauth/github/callback",
+		// 	requestlog.NewHandler(a.HandleGithubOAuthCallback, l),
+		// )
 
 		// /api/projects routes
 		r.Method(
@@ -70,10 +70,10 @@ func New(
 
 		r.Method(
 			"GET",
-			"/projects/{project_id}/serviceAccounts/{service_account_id}",
+			"/projects/{project_id}/clusters/{cluster_id}",
 			auth.DoesUserHaveProjectAccess(
-				auth.DoesUserHaveServiceAccountAccess(
-					requestlog.NewHandler(a.HandleReadProjectServiceAccount, l),
+				auth.DoesUserHaveClusterAccess(
+					requestlog.NewHandler(a.HandleReadProjectCluster, l),
 					mw.URLParam,
 					mw.URLParam,
 				),
@@ -96,9 +96,9 @@ func New(
 
 		r.Method(
 			"POST",
-			"/projects/{project_id}/candidates",
+			"/projects/{project_id}/clusters/candidates",
 			auth.DoesUserHaveProjectAccess(
-				requestlog.NewHandler(a.HandleCreateProjectSACandidates, l),
+				requestlog.NewHandler(a.HandleCreateProjectClusterCandidates, l),
 				mw.URLParam,
 				mw.WriteAccess,
 			),
@@ -106,9 +106,9 @@ func New(
 
 		r.Method(
 			"GET",
-			"/projects/{project_id}/candidates",
+			"/projects/{project_id}/clusters/candidates",
 			auth.DoesUserHaveProjectAccess(
-				requestlog.NewHandler(a.HandleListProjectSACandidates, l),
+				requestlog.NewHandler(a.HandleListProjectClusterCandidates, l),
 				mw.URLParam,
 				mw.WriteAccess,
 			),
@@ -116,9 +116,9 @@ func New(
 
 		r.Method(
 			"POST",
-			"/projects/{project_id}/candidates/{candidate_id}/resolve",
+			"/projects/{project_id}/clusters/candidates/{candidate_id}/resolve",
 			auth.DoesUserHaveProjectAccess(
-				requestlog.NewHandler(a.HandleResolveSACandidateActions, l),
+				requestlog.NewHandler(a.HandleResolveClusterCandidate, l),
 				mw.URLParam,
 				mw.WriteAccess,
 			),
@@ -139,7 +139,7 @@ func New(
 			"GET",
 			"/projects/{project_id}/releases",
 			auth.DoesUserHaveProjectAccess(
-				auth.DoesUserHaveServiceAccountAccess(
+				auth.DoesUserHaveClusterAccess(
 					requestlog.NewHandler(a.HandleListReleases, l),
 					mw.URLParam,
 					mw.QueryParam,
@@ -153,7 +153,7 @@ func New(
 			"GET",
 			"/projects/{project_id}/releases/{name}/{revision}/components",
 			auth.DoesUserHaveProjectAccess(
-				auth.DoesUserHaveServiceAccountAccess(
+				auth.DoesUserHaveClusterAccess(
 					requestlog.NewHandler(a.HandleGetReleaseComponents, l),
 					mw.URLParam,
 					mw.QueryParam,
@@ -167,7 +167,7 @@ func New(
 			"GET",
 			"/projects/{project_id}/releases/{name}/history",
 			auth.DoesUserHaveProjectAccess(
-				auth.DoesUserHaveServiceAccountAccess(
+				auth.DoesUserHaveClusterAccess(
 					requestlog.NewHandler(a.HandleListReleaseHistory, l),
 					mw.URLParam,
 					mw.QueryParam,
@@ -181,7 +181,7 @@ func New(
 			"POST",
 			"/projects/{project_id}/releases/{name}/upgrade",
 			auth.DoesUserHaveProjectAccess(
-				auth.DoesUserHaveServiceAccountAccess(
+				auth.DoesUserHaveClusterAccess(
 					requestlog.NewHandler(a.HandleUpgradeRelease, l),
 					mw.URLParam,
 					mw.QueryParam,
@@ -195,7 +195,7 @@ func New(
 			"GET",
 			"/projects/{project_id}/releases/{name}/{revision}",
 			auth.DoesUserHaveProjectAccess(
-				auth.DoesUserHaveServiceAccountAccess(
+				auth.DoesUserHaveClusterAccess(
 					requestlog.NewHandler(a.HandleGetRelease, l),
 					mw.URLParam,
 					mw.QueryParam,
@@ -209,7 +209,7 @@ func New(
 			"POST",
 			"/projects/{project_id}/releases/{name}/rollback",
 			auth.DoesUserHaveProjectAccess(
-				auth.DoesUserHaveServiceAccountAccess(
+				auth.DoesUserHaveClusterAccess(
 					requestlog.NewHandler(a.HandleRollbackRelease, l),
 					mw.URLParam,
 					mw.QueryParam,
@@ -220,35 +220,35 @@ func New(
 		)
 
 		// /api/projects/{project_id}/repos routes
-		r.Method(
-			"GET",
-			"/projects/{project_id}/repos",
-			auth.DoesUserHaveProjectAccess(
-				requestlog.NewHandler(a.HandleListRepos, l),
-				mw.URLParam,
-				mw.ReadAccess,
-			),
-		)
+		// r.Method(
+		// 	"GET",
+		// 	"/projects/{project_id}/repos",
+		// 	auth.DoesUserHaveProjectAccess(
+		// 		requestlog.NewHandler(a.HandleListRepos, l),
+		// 		mw.URLParam,
+		// 		mw.ReadAccess,
+		// 	),
+		// )
 
-		r.Method(
-			"GET",
-			"/projects/{project_id}/repos/{kind}/{name}/branches",
-			auth.DoesUserHaveProjectAccess(
-				requestlog.NewHandler(a.HandleGetBranches, l),
-				mw.URLParam,
-				mw.ReadAccess,
-			),
-		)
+		// r.Method(
+		// 	"GET",
+		// 	"/projects/{project_id}/repos/{kind}/{name}/branches",
+		// 	auth.DoesUserHaveProjectAccess(
+		// 		requestlog.NewHandler(a.HandleGetBranches, l),
+		// 		mw.URLParam,
+		// 		mw.ReadAccess,
+		// 	),
+		// )
 
-		r.Method(
-			"GET",
-			"/projects/{project_id}/repos/{kind}/{name}/{branch}/contents",
-			auth.DoesUserHaveProjectAccess(
-				requestlog.NewHandler(a.HandleGetBranchContents, l),
-				mw.URLParam,
-				mw.ReadAccess,
-			),
-		)
+		// r.Method(
+		// 	"GET",
+		// 	"/projects/{project_id}/repos/{kind}/{name}/{branch}/contents",
+		// 	auth.DoesUserHaveProjectAccess(
+		// 		requestlog.NewHandler(a.HandleGetBranchContents, l),
+		// 		mw.URLParam,
+		// 		mw.ReadAccess,
+		// 	),
+		// )
 
 		// /api/templates routes
 		r.Method(
@@ -264,7 +264,7 @@ func New(
 			"GET",
 			"/projects/{project_id}/k8s/namespaces",
 			auth.DoesUserHaveProjectAccess(
-				auth.DoesUserHaveServiceAccountAccess(
+				auth.DoesUserHaveClusterAccess(
 					requestlog.NewHandler(a.HandleListNamespaces, l),
 					mw.URLParam,
 					mw.QueryParam,
@@ -278,7 +278,7 @@ func New(
 			"GET",
 			"/projects/{project_id}/k8s/{namespace}/pod/{name}/logs",
 			auth.DoesUserHaveProjectAccess(
-				auth.DoesUserHaveServiceAccountAccess(
+				auth.DoesUserHaveClusterAccess(
 					requestlog.NewHandler(a.HandleGetPodLogs, l),
 					mw.URLParam,
 					mw.QueryParam,
@@ -292,7 +292,7 @@ func New(
 			"GET",
 			"/projects/{project_id}/k8s/pods",
 			auth.DoesUserHaveProjectAccess(
-				auth.DoesUserHaveServiceAccountAccess(
+				auth.DoesUserHaveClusterAccess(
 					requestlog.NewHandler(a.HandleListPods, l),
 					mw.URLParam,
 					mw.QueryParam,

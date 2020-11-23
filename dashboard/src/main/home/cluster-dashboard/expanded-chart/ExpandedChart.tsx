@@ -1,5 +1,7 @@
 import React, { Component } from 'react';
 import styled from 'styled-components';
+import yaml from 'js-yaml';
+import { Base64 } from 'js-base64';
 import close from '../../../../assets/close.png';
 
 import { ResourceType, ChartType, StorageType, ChoiceType } from '../../../../shared/types';
@@ -82,21 +84,39 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
     });
   }
 
+  getFormData = (): any => {
+    let { files } = this.props.currentChart.chart;
+    for (const file of files) { 
+      if (file.name === 'form.yaml') {
+        let formData = yaml.load(Base64.decode(file.data));
+        return formData;
+      }
+    };
+    return null;
+  }
+
   refreshTabs = () => {
-    // Generate settings tabs from the provided form
+    let formData = this.getFormData();
     let tabOptions = [] as ChoiceType[];
     let tabContents = [] as any;
-    dummyFormTabs.map((tab: any, i: number) => {
-      tabOptions.push({ value: '@' + tab.Name, label: tab.Label });
-      tabContents.push({
-        value: '@' + tab.Name,
-        component: (
-          <ValuesFormWrapper>
-            <ValuesForm sections={tab.Sections} />
-          </ValuesFormWrapper>
-        ),
+
+    // Generate form tabs if form.yaml exists
+    if (formData && formData.tabs) {
+      formData.tabs.map((tab: any, i: number) => {
+        tabOptions.push({ value: '@' + tab.name, label: tab.label });
+        tabContents.push({
+          value: '@' + tab.name,
+          component: (
+            <ValuesFormWrapper>
+              <ValuesForm 
+                sections={tab.sections} 
+                onSubmit={(x: any) => console.log(x)}
+              />
+            </ValuesFormWrapper>
+          ),
+        });
       });
-    });
+    }
 
     // Append universal tabs
     tabOptions.push(

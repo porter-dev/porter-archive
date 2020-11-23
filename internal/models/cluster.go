@@ -154,7 +154,7 @@ type ClusterCandidateExternal struct {
 
 	// The best-guess for the AWSClusterID, which is required by aws auth mechanisms
 	// See https://github.com/kubernetes-sigs/aws-iam-authenticator#what-is-a-cluster-id
-	AWSClusterIDGuess []byte `json:"aws_cluster_id_guess"`
+	AWSClusterIDGuess string `json:"aws_cluster_id_guess"`
 }
 
 // Externalize generates an external ClusterCandidateExternal to be shared over REST
@@ -173,7 +173,7 @@ func (cc *ClusterCandidate) Externalize() *ClusterCandidateExternal {
 		Server:            cc.Server,
 		ContextName:       cc.ContextName,
 		Resolvers:         resolvers,
-		AWSClusterIDGuess: cc.AWSClusterIDGuess,
+		AWSClusterIDGuess: string(cc.AWSClusterIDGuess),
 	}
 }
 
@@ -243,8 +243,6 @@ var ClusterResolverInfos = map[ClusterResolverName]ClusterResolverInfo{
 // all possible resolvers, so that raw bytes can be unmarshaled in a single
 // read
 type ClusterResolverAll struct {
-	Name string `json:"name"`
-
 	ClusterCAData      string `json:"cluster_ca_data,omitempty"`
 	ClusterHostname    string `json:"cluster_hostname,omitempty"`
 	ClientCertData     string `json:"client_cert_data,omitempty"`

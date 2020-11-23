@@ -80,8 +80,7 @@ var listNamespacesTests = []*k8sTest{
 		msg:    "List namespaces",
 		method: "GET",
 		endpoint: "/api/projects/1/k8s/namespaces?" + url.Values{
-			"service_account_id": []string{"1"},
-			"cluster_id":         []string{"1"},
+			"cluster_id": []string{"1"},
 		}.Encode(),
 		body:      "",
 		expStatus: http.StatusOK,
@@ -115,7 +114,7 @@ var defaultObjects = []runtime.Object{
 func initDefaultK8s(tester *tester) {
 	initUserDefault(tester)
 	initProject(tester)
-	initProjectSADefault(tester)
+	initProjectClusterDefault(tester)
 
 	agent := kubernetes.GetAgentTesting(defaultObjects...)
 

@@ -40,6 +40,31 @@ func New(
 		r.Method("GET", "/auth/check", auth.BasicAuthenticate(requestlog.NewHandler(a.HandleAuthCheck, l)))
 		r.Method("POST", "/logout", auth.BasicAuthenticate(requestlog.NewHandler(a.HandleLogoutUser, l)))
 
+		// /integrations routes
+		r.Method(
+			"GET",
+			"/integrations/cluster",
+			auth.BasicAuthenticate(
+				requestlog.NewHandler(a.HandleListClusterIntegrations, l),
+			),
+		)
+
+		r.Method(
+			"GET",
+			"/integrations/registry",
+			auth.BasicAuthenticate(
+				requestlog.NewHandler(a.HandleListRegistryIntegrations, l),
+			),
+		)
+
+		r.Method(
+			"GET",
+			"/integrations/repo",
+			auth.BasicAuthenticate(
+				requestlog.NewHandler(a.HandleListRepoIntegrations, l),
+			),
+		)
+
 		// /api/oauth routes
 		// r.Method(
 		// 	"GET",

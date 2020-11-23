@@ -73,6 +73,20 @@ func (a *AWSIntegration) Externalize() *AWSIntegrationExternal {
 	}
 }
 
+// ToProjectIntegration converts an aws integration to a project integration
+func (a *AWSIntegration) ToProjectIntegration(
+	category string,
+	service IntegrationService,
+) *ProjectIntegration {
+	return &ProjectIntegration{
+		ID:            a.ID,
+		ProjectID:     a.ProjectID,
+		AuthMechanism: "aws",
+		Category:      category,
+		Service:       service,
+	}
+}
+
 // GetBearerToken retrieves a bearer token for an AWS account
 func (a *AWSIntegration) GetBearerToken(
 	getTokenCache GetTokenCacheFunc,

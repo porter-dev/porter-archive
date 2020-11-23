@@ -11,8 +11,9 @@ import InputRow from './InputRow';
 import SelectRow from './SelectRow';
 
 type PropsType = {
-  sections?: Section[],
   onSubmit: (formValues: any) => void,
+  sections?: Section[],
+  disabled?: boolean,
 };
 
 type StateType = any;
@@ -22,13 +23,13 @@ export default class ValuesForm extends Component<PropsType, StateType> {
   updateFormState() {
     let formState: any = {};
     this.props.sections.forEach((section: Section, i: number) => {
-      section.Contents.forEach((item: FormElement, i: number) => {
+      section.contents.forEach((item: FormElement, i: number) => {
 
         // If no name is assigned use values.yaml variable as identifier
-        let key = item.Name || item.Variable;
+        let key = item.name || item.variable;
         
-        let def = item.Settings.Default;
-        switch (item.Type) {
+        let def = item.settings && item.settings.default;
+        switch (item.type) {
           case 'checkbox':
             formState[key] = def ? def : false;
             break;
@@ -39,7 +40,7 @@ export default class ValuesForm extends Component<PropsType, StateType> {
             formState[key] = def.toString() ? def : '';
             break;
           case 'select':
-            formState[key] = def ? def : item.Settings.Options[0].Value;
+            formState[key] = def ? def : item.settings.options[0].value;
           default:
         }
       });
@@ -59,22 +60,22 @@ export default class ValuesForm extends Component<PropsType, StateType> {
   }
 
   renderSection = (section: Section) => {
-    return section.Contents.map((item: FormElement, i: number) => {
+    return section.contents.map((item: FormElement, i: number) => {
 
       // If no name is assigned use values.yaml variable as identifier
-      let key = item.Name || item.Variable;
-      switch (item.Type) {
+      let key = item.name || item.variable;
+      switch (item.type) {
         case 'heading':
-          return <Heading key={i}>{item.Label}</Heading>
+          return <Heading key={i}>{item.label}</Heading>
         case 'subtitle':
-          return <Helper key={i}>{item.Label}</Helper>
+          return <Helper key={i}>{item.label}</Helper>
         case 'checkbox':
           return (
             <CheckboxRow
               key={i}
               checked={this.state[key]}
               toggle={() => this.setState({ [key]: !this.state[key] })}
-              label={item.Label}
+              label={item.label}
             />
           );
         case 'string-input':
@@ -84,8 +85,8 @@ export default class ValuesForm extends Component<PropsType, StateType> {
               type='text'
               value={this.state[key]}
               setValue={(x: string) => this.setState({ [key]: x })}
-              label={item.Label}
-              unit={item.Settings ? item.Settings.Unit : null}
+              label={item.label}
+              unit={item.settings ? item.settings.unit : null}
             />
           );
         case 'number-input':
@@ -95,8 +96,8 @@ export default class ValuesForm extends Component<PropsType, StateType> {
               type='number'
               value={this.state[key]}
               setValue={(x: number) => this.setState({ [key]: x })}
-              label={item.Label}
-              unit={item.Settings ? item.Settings.Unit : null}
+              label={item.label}
+              unit={item.settings ? item.settings.unit : null}
             />
           );
         case 'select':
@@ -105,9 +106,9 @@ export default class ValuesForm extends Component<PropsType, StateType> {
               key={i}
               value={this.state[key]}
               setActiveValue={(val) => this.setState({ [key]: val })}
-              options={item.Settings.Options}
+              options={item.settings.options}
               dropdownLabel=''
-              label={item.Label}
+              label={item.label}
             />
           );
         default:
@@ -120,8 +121,8 @@ export default class ValuesForm extends Component<PropsType, StateType> {
       return this.props.sections.map((section: Section, i: number) => {
 
         // Hide collapsible section if deciding field is false
-        if (section.ShowIf) {
-          if (!this.state[section.ShowIf]) {
+        if (section.show_if) {
+          if (!this.state[section.show_if]) {
             return null;
           }
         }
@@ -143,6 +144,7 @@ export default class ValuesForm extends Component<PropsType, StateType> {
           {this.renderFormContents()}
         </StyledValuesForm>
         <SaveButton
+          disabled={this.props.disabled}
           text='Deploy'
           onClick={() => this.props.onSubmit(this.state)}
           status={null}

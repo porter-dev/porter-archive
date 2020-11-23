@@ -98,6 +98,10 @@ func getDriver() string {
 		return driver
 	}
 
+	if opts.driver != "" {
+		return opts.driver
+	}
+
 	return viper.GetString("driver")
 }
 

@@ -2,8 +2,8 @@ package local
 
 import (
 	"github.com/aws/aws-sdk-go/service/iam"
+	"github.com/porter-dev/porter/cli/cmd/providers/aws"
 	"github.com/porter-dev/porter/internal/kubernetes/local"
-	"github.com/porter-dev/porter/internal/providers/aws"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
 

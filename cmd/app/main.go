@@ -18,6 +18,8 @@ import (
 	lr "github.com/porter-dev/porter/internal/logger"
 	vr "github.com/porter-dev/porter/internal/validator"
 	"github.com/porter-dev/porter/server/router"
+
+	ints "github.com/porter-dev/porter/internal/models/integrations"
 )
 
 func main() {
@@ -34,14 +36,18 @@ func main() {
 	err = db.AutoMigrate(
 		&models.Project{},
 		&models.Role{},
-		&models.ServiceAccount{},
-		&models.ServiceAccountAction{},
-		&models.ServiceAccountCandidate{},
-		&models.Cluster{},
-		&models.TokenCache{},
 		&models.User{},
 		&models.Session{},
-		&models.RepoClient{},
+		&models.GitRepo{},
+		&models.Cluster{},
+		&models.ClusterCandidate{},
+		&models.ClusterResolver{},
+		&ints.KubeIntegration{},
+		&ints.OIDCIntegration{},
+		&ints.OAuthIntegration{},
+		&ints.GCPIntegration{},
+		&ints.AWSIntegration{},
+		&ints.TokenCache{},
 	)
 
 	if err != nil {

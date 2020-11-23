@@ -6,7 +6,7 @@ import (
 	"os/exec"
 	"time"
 
-	"github.com/porter-dev/porter/internal/providers/gcp"
+	"github.com/porter-dev/porter/cli/cmd/providers/gcp"
 	"google.golang.org/api/cloudresourcemanager/v1"
 	gke "google.golang.org/api/container/v1"
 

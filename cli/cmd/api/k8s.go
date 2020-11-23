@@ -17,17 +17,14 @@ type GetK8sNamespacesResponse v1.NamespaceList
 func (c *Client) GetK8sNamespaces(
 	ctx context.Context,
 	projectID uint,
-	serviceAccountID uint,
 	clusterID uint,
 ) (*GetK8sNamespacesResponse, error) {
-	sa := fmt.Sprintf("%d", serviceAccountID)
 	cl := fmt.Sprintf("%d", clusterID)
 
 	req, err := http.NewRequest(
 		"GET",
 		fmt.Sprintf("%s/projects/%d/k8s/namespaces?"+url.Values{
-			"service_account_id": []string{sa},
-			"cluster_id":         []string{cl},
+			"cluster_id": []string{cl},
 		}.Encode(), c.BaseURL, projectID),
 		nil,
 	)

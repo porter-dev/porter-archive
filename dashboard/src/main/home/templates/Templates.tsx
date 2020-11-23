@@ -75,15 +75,15 @@ export default class Templates extends Component<PropsType, StateType> {
     }
 
     return this.state.porterCharts.map((template: PorterChart, i: number) => {
-      let { Name, Icon, Description } = template.Form;
+      let { name, icon, description } = template.form;
       return (
         <TemplateBlock key={i} onClick={() => this.setState({ currentTemplate: template })}>
-          {Icon ? this.renderIcon(Icon) : this.renderIcon(template.Icon)}
+          {icon ? this.renderIcon(icon) : this.renderIcon(template.icon)}
           <TemplateTitle>
-            {Name ? Name : template.Name}
+            {name ? name : template.name}
           </TemplateTitle>
           <TemplateDescription>
-            {Description ? Description : template.Description}
+            {description ? description : template.description}
           </TemplateDescription>
         </TemplateBlock>
       )

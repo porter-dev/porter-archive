@@ -49,6 +49,9 @@ func (app *App) HandleDeployTemplate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Set image URL
+	(*defaultValues)["image"].(map[interface{}]interface{})["repository"] = params.ImageURL
+
 	// Loop through form params to override
 	for k := range params.FormValues {
 		switch v := interface{}(k).(type) {

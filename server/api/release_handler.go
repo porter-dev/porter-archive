@@ -159,7 +159,8 @@ func (app *App) HandleGetReleaseComponents(w http.ResponseWriter, r *http.Reques
 	}
 }
 
-// HandleGetReleaseControllers retrieves a single release based on a name and revision
+// HandleGetReleaseControllers retrieves controllers that belong to a release.
+// Used to display status of charts.
 func (app *App) HandleGetReleaseControllers(w http.ResponseWriter, r *http.Request) {
 	name := chi.URLParam(r, "name")
 	revision, err := strconv.ParseUint(chi.URLParam(r, "revision"), 0, 64)

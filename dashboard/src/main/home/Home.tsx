@@ -77,6 +77,7 @@ export default class Home extends Component<PropsType, StateType> {
         <ClusterDashboard
           currentCluster={currentCluster}
           setSidebar={(x: boolean) => this.setState({ forceSidebar: x })}
+          setCurrentView={(x: string) => this.setState({ currentView: x })}
         />
       </DashboardWrapper>
     );

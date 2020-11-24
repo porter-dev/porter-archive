@@ -3,50 +3,38 @@ import styled from 'styled-components';
 import close from '../../../assets/close.png';
 
 import { Context } from '../../../shared/Context';
-import { getRegistryIcon } from '../../../shared/common';
+import { getIntegrationIcon } from '../../../shared/common';
 
 type PropsType = {
 };
 
 type StateType = {
-  integrations: any[]
 };
-
-const dummyIntegrations = [
-  {
-    name: 'docker-hub',
-    label: 'Docker Hub',
-  },
-  {
-    name: 'gcr',
-    label: 'Google Container Registry (GCR)',
-  },
-  {
-    name: 'ecr',
-    label: 'Amazon Elastic Container Registry (ECR)',
-  },
-];
 
 export default class IntegrationsModal extends Component<PropsType, StateType> {
   state = {
-    currentTab: 'mac',
-    integrations: [] as any[]
-  }
-
-  componentDidMount() {
-    this.setState({ integrations: dummyIntegrations });
   }
 
   renderIntegrationsCatalog = () => {
-    return this.state.integrations.map((integration: any, i: number) => {
-      let icon = getRegistryIcon(integration.name);
-      return (
-        <IntegrationOption key={i}>
-          <Icon src={icon && icon} />
-          <Label>{integration.label}</Label>
-        </IntegrationOption>
-      );
-    });
+    if (this.context.currentModalData) {
+      let { integrations, setCurrentIntegration } = this.context.currentModalData;
+      
+      return integrations.map((integration: any, i: number) => {
+        let icon = getIntegrationIcon(integration.value);
+        return (
+          <IntegrationOption 
+            key={i}
+            onClick={() => {
+              setCurrentIntegration(integration);
+              this.context.setCurrentModal(null, null);
+            }}
+          >
+            <Icon src={icon && icon} />
+            <Label>{integration.label}</Label>
+          </IntegrationOption>
+        );
+      });
+    }
   }
  
   render() {
@@ -84,6 +72,7 @@ const Icon = styled.img`
 
 const IntegrationOption = styled.div`
   height: 60px;
+  user-select: none;
   width: 100%;
   border-bottom: 1px solid #ffffff44;
   display: flex;

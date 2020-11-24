@@ -9,6 +9,8 @@ import SaveButton from '../SaveButton';
 import CheckboxRow from './CheckboxRow';
 import InputRow from './InputRow';
 import SelectRow from './SelectRow';
+import Helper from './Helper';
+import Heading from './Heading';
 
 type PropsType = {
   onSubmit: (formValues: any) => void,
@@ -164,22 +166,6 @@ const DarkMatter = styled.div`
 const Wrapper = styled.div`
   width: 100%;
   height: 100%;
-`;
-
-const Helper = styled.div`
-  color: #aaaabb;
-  line-height: 1.6em;
-  font-size: 13px;
-  margin-bottom: 15px;
-  margin-top: 20px;
-`;
-
-const Heading = styled.div`
-  color: white;
-  font-weight: 500;
-  font-size: 16px;
-  margin-top: 30px;
-  margin-bottom: 5px;
 `;
 
 const StyledValuesForm = styled.div`

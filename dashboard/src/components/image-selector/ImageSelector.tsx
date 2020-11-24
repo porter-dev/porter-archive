@@ -3,7 +3,7 @@ import styled from 'styled-components';
 import info from '../../assets/info.svg';
 
 import api from '../../shared/api';
-import { getRegistryIcon } from '../../shared/common';
+import { getIntegrationIcon } from '../../shared/common';
 import { Context } from '../../shared/Context';
 
 import Loading from '../Loading';
@@ -73,7 +73,7 @@ export default class ImageSelector extends Component<PropsType, StateType> {
     }
 
     return images.map((image: any, i: number) => {
-      let icon = getRegistryIcon(image.kind);
+      let icon = getIntegrationIcon(image.kind);
       return (
         <ImageItem
           key={i}

@@ -162,8 +162,14 @@ const deleteProject = baseApi<{}, { id: number }>('DELETE', pathParams => {
   return `/api/projects/${pathParams.id}`;
 });
 
-const deployTemplate = baseApi<{}, { id: number }>('POST', pathParams => {
-  return `/api/projects/${pathParams.id}/deploy`;
+const deployTemplate = baseApi<{
+  templateName: string,
+  imageURL: string,
+  formValues: any,
+  storage: StorageType,
+}, { id: number, cluster_id: number, service_account_id: number }>('POST', pathParams => {
+  let {id, cluster_id, service_account_id} = pathParams;
+  return `/api/projects/${id}/deploy?cluster_id=${cluster_id}&service_account_id=${service_account_id}`;
 });
 
 // Bundle export to allow default api import (api.<method> is more readable)

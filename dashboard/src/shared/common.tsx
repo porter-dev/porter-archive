@@ -10,3 +10,9 @@ export const getRegistryIcon = (kind: string) => {
       return null
   }
 }
+
+export const getIgnoreCase = (object: any, key: string) => {
+  return object[Object.keys(object)
+    .find(k => k.toLowerCase() === key.toLowerCase())
+  ];
+}

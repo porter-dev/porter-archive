@@ -23,34 +23,35 @@ type ChartYAML []struct {
 
 // PorterChart represents a bundled Porter template
 type PorterChart struct {
-	Name        string
-	Description string
-	Icon        string
-	Form        FormYAML
-	Markdown    string
+	Name        string   `json:"name"`
+	Description string   `json:"description"`
+	Icon        string   `json:"icon"`
+	Form        FormYAML `json:"form"`
+	Markdown    string   `json:"markdown"`
 }
 
 // FormYAML represents a chart's values.yaml form abstraction
 type FormYAML struct {
-	Name        string   `yaml:"name"`
-	Icon        string   `yaml:"icon"`
-	Description string   `yaml:"description"`
-	Tags        []string `yaml:"tags"`
+	Name        string   `yaml:"name" json:"name"`
+	Icon        string   `yaml:"icon" json:"icon"`
+	Description string   `yaml:"description" json:"description"`
+	Tags        []string `yaml:"tags" json:"tags"`
 	Tabs        []struct {
-		Name     string `yaml:"name"`
-		Label    string `yaml:"label"`
+		Name     string `yaml:"name" json:"name"`
+		Label    string `yaml:"label" json:"label"`
 		Sections []struct {
-			Name     string `yaml:"name"`
-			ShowIf   string `yaml:"show_if"`
+			Name     string `yaml:"name" json:"name"`
+			ShowIf   string `yaml:"show_if" json:"show_if"`
 			Contents []struct {
-				Type     string `yaml:"type"`
-				Label    string `yaml:"label"`
-				Name     string `yaml:"name,omitempty"`
-				Variable string `yaml:"variable,omitempty"`
+				Type     string `yaml:"type" json:"type"`
+				Label    string `yaml:"label" json:"label"`
+				Name     string `yaml:"name,omitempty" json:"name,omitempty"`
+				Variable string `yaml:"variable,omitempty" json:"variable,omitempty"`
 				Settings struct {
-					Default interface{}
-				} `yaml:"settings,omitempty"`
-			} `yaml:"contents"`
-		} `yaml:"sections"`
-	} `yaml:"tabs"`
+					Default interface{} `yaml:"default,omitempty" json:"default,omitempty"`
+					Unit    interface{} `yaml:"unit,omitempty" json:"unit,omitempty"`
+				} `yaml:"settings,omitempty" json:"settings,omitempty"`
+			} `yaml:"contents" json:"contents,omitempty"`
+		} `yaml:"sections" json:"sections,omitempty"`
+	} `yaml:"tabs" json:"tabs,omitempty"`
 }

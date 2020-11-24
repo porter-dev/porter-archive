@@ -28,7 +28,7 @@ export default class TemplateInfo extends Component<PropsType, StateType> {
   }
 
   renderTagList = () => {
-    return this.props.currentTemplate.Form.Tags.map((tag: string, i: number) => {
+    return this.props.currentTemplate.form.tags.map((tag: string, i: number) => {
       return (
         <Tag key={i}>{tag}</Tag>
       )
@@ -37,19 +37,19 @@ export default class TemplateInfo extends Component<PropsType, StateType> {
 
   renderMarkdown = () => {
     let { currentTemplate } = this.props;
-    if (currentTemplate.Markdown) {
+    if (currentTemplate.markdown) {
       return (
-        <Markdown>{currentTemplate.Markdown}</Markdown>
+        <Markdown>{currentTemplate.markdown}</Markdown>
       );
-    } else if (currentTemplate.Form.Description) {
-      return currentTemplate.Form.Description;
+    } else if (currentTemplate.form.description) {
+      return currentTemplate.form.description;
     }
 
-    return currentTemplate.Description;
+    return currentTemplate.description;
   }
 
   renderTagSection = () => {
-    if (this.props.currentTemplate.Form.Tags) {
+    if (this.props.currentTemplate.form.tags) {
       return (
         <TagSection>
           <i className="material-icons">local_offer</i>
@@ -61,9 +61,9 @@ export default class TemplateInfo extends Component<PropsType, StateType> {
 
   render() {
     let { currentCluster } = this.context;
-    let { Name, Icon } = this.props.currentTemplate.Form;
+    let { name, icon } = this.props.currentTemplate.form;
     let { currentTemplate } = this.props;
-    let name = Name ? Name : currentTemplate.Name;
+    name = name ? name : currentTemplate.name;
     return (
       <StyledExpandedTemplate>
         <TitleSection>
@@ -71,7 +71,7 @@ export default class TemplateInfo extends Component<PropsType, StateType> {
             <i className="material-icons" onClick={() => this.props.setCurrentTemplate(null)}>
               keyboard_backspace
             </i>
-            {Icon ? this.renderIcon(Icon) : this.renderIcon(currentTemplate.Icon)}
+            {icon ? this.renderIcon(icon) : this.renderIcon(currentTemplate.icon)}
             <Title>{name}</Title>
           </Flex>
           <Button

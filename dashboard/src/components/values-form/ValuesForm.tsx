@@ -120,7 +120,6 @@ export default class ValuesForm extends Component<PropsType, StateType> {
   renderFormContents = () => {
     if (this.state) {
       return this.props.sections.map((section: Section, i: number) => {
-
         // Hide collapsible section if deciding field is false
         if (section.show_if) {
           if (!this.state[section.show_if]) {

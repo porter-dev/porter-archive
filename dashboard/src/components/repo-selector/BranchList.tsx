@@ -1,10 +1,8 @@
-import { stringify } from 'querystring';
 import React, { Component } from 'react';
 import styled from 'styled-components';
 import branch_icon from '../../assets/branch.png';
 
 import api from '../../shared/api';
-import { RepoType } from '../../shared/types';
 
 import Loading from '../Loading';
 
@@ -22,7 +20,6 @@ type StateType = {
 
 export default class BranchList extends Component<PropsType, StateType> {
   state = {
-    selectedBranch: '',
     loading: true,
     error: false,
     branches: [] as string[]

@@ -61,7 +61,7 @@ export default class EKSForm extends Component<PropsType, StateType> {
           />
 
           <Heading>AWS Settings</Heading>
-          <Helper>Service account credentials for GCP permissions.</Helper>
+          <Helper>AWS access credentials.</Helper>
           <InputRow
             type='text'
             value={this.state.awsAccessId}

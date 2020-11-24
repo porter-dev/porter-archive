@@ -1,12 +1,15 @@
 import React, { Component } from 'react';
 import styled from 'styled-components';
 import info from '../../assets/info.svg';
+import edit from '../../assets/edit.svg';
 
 import api from '../../shared/api';
 import { getIntegrationIcon } from '../../shared/common';
 import { Context } from '../../shared/Context';
+import { ImageType } from '../../shared/types';
 
 import Loading from '../Loading';
+import TagList from './TagList';
 
 type PropsType = {
   forceExpanded?: boolean,
@@ -18,14 +21,14 @@ type StateType = {
   isExpanded: boolean,
   loading: boolean,
   error: boolean,
-  images: any[],
-  clickedImage: any | null,
+  images: ImageType[],
+  clickedImage: ImageType | null,
 };
 
 const dummyImages = [
   {
     kind: 'docker-hub',
-    source: 'https://index.docker.io/jusrhee/image1',
+    source: 'index.docker.io/jusrhee/image1',
   },
   {
     kind: 'docker-hub',
@@ -58,8 +61,8 @@ export default class ImageSelector extends Component<PropsType, StateType> {
     isExpanded: this.props.forceExpanded,
     loading: false,
     error: false,
-    images: [] as any[],
-    clickedImage: null as any | null,
+    images: [] as ImageType[],
+    clickedImage: null as ImageType | null,
   }
 
   componentDidMount() {
@@ -74,7 +77,7 @@ export default class ImageSelector extends Component<PropsType, StateType> {
       return <LoadingWrapper>Error loading repos</LoadingWrapper>
     }
 
-    return images.map((image: any, i: number) => {
+    return images.map((image: ImageType, i: number) => {
       let icon = getIntegrationIcon(image.kind);
       return (
         <ImageItem
@@ -111,19 +114,39 @@ export default class ImageSelector extends Component<PropsType, StateType> {
   }
 
   renderExpanded = () => {
-    return (
-      <div>
-        <ExpandedWrapper>
-          {this.renderImageList()}
-        </ExpandedWrapper>
-        {this.renderBackButton()}
-      </div>
-    );
+    let { selectedImageUrl, setSelectedImageUrl } = this.props;
+    if (!this.state.clickedImage) {
+      return (
+        <div>
+          <ExpandedWrapper>
+            {this.renderImageList()}
+          </ExpandedWrapper>
+          {this.renderBackButton()}
+        </div>
+      );
+    } else {
+      return (
+        <div>
+          <ExpandedWrapper>
+            <TagList
+              selectedImageUrl={selectedImageUrl}
+              setSelectedImageUrl={setSelectedImageUrl}
+            />
+          </ExpandedWrapper>
+          {this.renderBackButton()}
+        </div>
+      );
+    }
   }
 
   renderSelected = () => {
     let { selectedImageUrl, setSelectedImageUrl } = this.props;
     let icon = info;
+    if (this.state.clickedImage) {
+      icon = getIntegrationIcon(this.state.clickedImage.kind);
+    } else if (selectedImageUrl && selectedImageUrl !== '') {
+      icon = edit;
+    }
     return (
       <Label>
         <img src={icon} />
@@ -131,7 +154,7 @@ export default class ImageSelector extends Component<PropsType, StateType> {
           onClick={(e: any) => e.stopPropagation()}
           value={selectedImageUrl}
           onChange={(e: any) => { 
-            setSelectedImageUrl(e.value); 
+            setSelectedImageUrl(e.target.value); 
             this.setState({ clickedImage: null });
           }}
           placeholder='Enter or select your container image URL'

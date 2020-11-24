@@ -14,18 +14,39 @@ type PropsType = {
 };
 
 type StateType = {
+  credentialsName: string,
+  serviceAccountKey: string,
 };
 
 export default class GCRForm extends Component<PropsType, StateType> {
   state = {
+    credentialsName: '',
+    serviceAccountKey: '',
   }
 
   render() {
     return ( 
       <StyledForm>
         <CredentialWrapper>
-          <Heading>Coming Soon</Heading>
-          <Helper>Under construction.</Helper>
+          <Heading>Porter Settings</Heading>
+          <Helper>Give a name to this set of registry credentials (just for Porter).</Helper>
+          <InputRow
+            type='text'
+            value={this.state.credentialsName}
+            setValue={(x: string) => this.setState({ credentialsName: x })}
+            label='🏷️ Registry Name'
+            placeholder='ex: paper-straw'
+            width='100%'
+          />
+          <Heading>GCP Settings</Heading>
+          <Helper>Service account credentials for GCP permissions.</Helper>
+          <TextArea
+            value={this.state.serviceAccountKey}
+            setValue={(x: string) => this.setState({ serviceAccountKey: x })}
+            label='🔑 Service Account Key (JSON)'
+            placeholder='(Paste your JSON service account key here)'
+            width='100%'
+          />
         </CredentialWrapper>
         <SaveButton
           text='Save Settings'

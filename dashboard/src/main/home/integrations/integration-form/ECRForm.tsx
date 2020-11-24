@@ -14,18 +14,50 @@ type PropsType = {
 };
 
 type StateType = {
+  credentialsName: string,
+  awsAccessId: string,
+  awsSecretKey: string,
 };
 
 export default class ECRForm extends Component<PropsType, StateType> {
   state = {
+    credentialsName: '',
+    awsAccessId: '',
+    awsSecretKey: '',
   }
 
   render() {
     return ( 
       <StyledForm>
         <CredentialWrapper>
-          <Heading>Coming Soon</Heading>
-          <Helper>Under construction.</Helper>
+          <Heading>Porter Settings</Heading>
+          <Helper>Give a name to this set of registry credentials (just for Porter).</Helper>
+          <InputRow
+            type='text'
+            value={this.state.credentialsName}
+            setValue={(x: string) => this.setState({ credentialsName: x })}
+            label='🏷️ Registry Name'
+            placeholder='ex: paper-straw'
+            width='100%'
+          />
+          <Heading>AWS Settings</Heading>
+          <Helper>AWS access credentials.</Helper>
+          <InputRow
+            type='text'
+            value={this.state.awsAccessId}
+            setValue={(x: string) => this.setState({ awsAccessId: x })}
+            label='👤 AWS Access ID'
+            placeholder='ex: AKIAIOSFODNN7EXAMPLE'
+            width='100%'
+          />
+          <InputRow
+            type='password'
+            value={this.state.awsSecretKey}
+            setValue={(x: string) => this.setState({ awsSecretKey: x })}
+            label='🔒 AWS Secret Key'
+            placeholder='○ ○ ○ ○ ○ ○ ○ ○ ○'
+            width='100%'
+          />
         </CredentialWrapper>
         <SaveButton
           text='Save Settings'

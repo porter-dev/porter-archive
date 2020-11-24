@@ -10,63 +10,76 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
+	"net/url"
 	"strings"
 
+	"github.com/porter-dev/porter/internal/forms"
+	"github.com/porter-dev/porter/internal/helm"
 	"github.com/porter-dev/porter/internal/models"
 	"gopkg.in/yaml.v2"
 )
 
-// DeployTemplateForm describes the parameters of a deploy template request
-type DeployTemplateForm struct {
-	TemplateName string
-	ClusterID    int
-	ImageURL     string
-	FormValues   map[string]interface{}
-}
-
 // HandleDeployTemplate triggers a chart deployment from a template
 func (app *App) HandleDeployTemplate(w http.ResponseWriter, r *http.Request) {
-
-	// TODO: use create form
-	requestForm := make(map[string]interface{})
-
-	// decode from JSON to form value
-	if err := json.NewDecoder(r.Body).Decode(&requestForm); err != nil {
-		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
+	vals, err := url.ParseQuery(r.URL.RawQuery)
+	if err != nil {
+		app.handleErrorFormDecoding(err, ErrReleaseDecode, w)
 		return
 	}
 
-	// TODO: use create form
-	params := DeployTemplateForm{}
-	params.TemplateName = requestForm["templateName"].(string)
-	params.ClusterID = int(requestForm["clusterID"].(float64))
-	params.ImageURL = requestForm["imageURL"].(string)
-	params.FormValues = requestForm["formValues"].(map[string]interface{})
+	form := &forms.InstallChartTemplateForm{
+		ReleaseForm: &forms.ReleaseForm{
+			Form: &helm.Form{
+				UpdateTokenCache: app.updateTokenCache,
+			},
+		},
+		ChartTemplateForm: &forms.ChartTemplateForm{},
+	}
+
+	form.ReleaseForm.PopulateHelmOptionsFromQueryParams(
+		vals,
+		app.repo.ServiceAccount,
+	)
+
+	if err := json.NewDecoder(r.Body).Decode(form); err != nil {
+		app.handleErrorFormDecoding(err, ErrUserDecode, w)
+		return
+	}
+
+	agent, err := app.getAgentFromReleaseForm(
+		w,
+		r,
+		form.ReleaseForm,
+	)
+
+	if err != nil {
+		return
+	}
 
 	baseURL := "https://porter-dev.github.io/chart-repo/"
-	defaultValues, err := getDefaultValues(params.TemplateName, baseURL)
+	values, err := getDefaultValues(form.ChartTemplateForm.TemplateName, baseURL)
 	if err != nil {
 		return
 	}
 
 	// Set image URL
-	(*defaultValues)["image"].(map[interface{}]interface{})["repository"] = params.ImageURL
+	(*values)["image"].(map[interface{}]interface{})["repository"] = form.ChartTemplateForm.ImageURL
 
 	// Loop through form params to override
-	for k := range params.FormValues {
+	for k := range form.ChartTemplateForm.FormValues {
 		switch v := interface{}(k).(type) {
 		case string:
 			splits := strings.Split(v, ".")
 
 			// Validate that the field to override exists
-			currentLoc := *defaultValues
+			currentLoc := *values
 			for s := range splits {
 				key := splits[s]
 				val := currentLoc[key]
 				if val == nil {
 					fmt.Printf("No such field: %v\n", key)
 				} else if s == len(splits)-1 {
-					newValue := params.FormValues[v]
+					newValue := form.ChartTemplateForm.FormValues[v]
 					fmt.Printf("Overriding default %v with %v\n", val, newValue)
 					currentLoc[key] = newValue
 				} else {
@@ -79,14 +92,28 @@ func (app *App) HandleDeployTemplate(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	d, err := yaml.Marshal(defaultValues)
+	v, err := yaml.Marshal(values)
+
 	if err != nil {
 		return
 	}
 
 	// Output values.yaml string
-	fmt.Println(string(d))
+	_, err = agent.InstallChart(baseURL+"react-0.1.5.tgz", v)
+
+	if err != nil {
+		app.sendExternalError(err, http.StatusInternalServerError, HTTPError{
+			Code:   ErrReleaseDeploy,
+			Errors: []string{"error installing a new chart" + err.Error()},
+		}, w)
+
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
 }
+
+// ------------------------ Deploy handler helper functions ------------------------ //
 
 func getDefaultValues(templateName string, baseURL string) (*map[interface{}]interface{}, error) {
 	resp, err := http.Get(baseURL + "index.yaml")

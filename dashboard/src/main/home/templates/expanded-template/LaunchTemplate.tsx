@@ -4,7 +4,7 @@ import styled from 'styled-components';
 import { Context } from '../../../../shared/Context';
 import api from '../../../../shared/api';
 
-import { PorterChart, ChoiceType, Cluster } from '../../../../shared/types';
+import { PorterChart, ChoiceType, Cluster, StorageType } from '../../../../shared/types';
 import Selector from '../../../../components/Selector';
 import ImageSelector from '../../../../components/image-selector/ImageSelector';
 import TabRegion from '../../../../components/TabRegion';
@@ -35,22 +35,21 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
   };
 
   onSubmit = (formValues: any) => {
-    console.log(formValues);
-
     let { currentCluster, currentProject } = this.context;
-    console.log(formValues);
     api.deployTemplate('<token>', {
       templateName: this.props.currentTemplate.name,
-      clusterID: currentCluster.id,
       imageURL: "index.docker.io/bitnami/redis",
+      storage: StorageType.Secret,
       formValues,
     }, {
       id: currentProject.id,
+      cluster_id: currentCluster.id,
+      service_account_id: currentCluster.service_account_id,
     }, (err: any, res: any) => {
       if (err) {
-        // console.log(err)
+        console.log(err)
       } else {
-        // console.log(res.data)
+        console.log(res.data)
       }
     });
   }

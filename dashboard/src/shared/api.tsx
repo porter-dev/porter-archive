@@ -71,6 +71,15 @@ const getChartComponents = baseApi<{
   return `/api/projects/${pathParams.id}/releases/${pathParams.name}/${pathParams.revision}/components`;
 });
 
+const getChartControllers = baseApi<{
+  namespace: string,
+  cluster_id: number,
+  service_account_id: number,
+  storage: StorageType
+}, { id: number, name: string, revision: number }>('GET', pathParams => {
+  return `/api/projects/${pathParams.id}/releases/${pathParams.name}/${pathParams.revision}/controllers`;
+});
+
 const getNamespaces = baseApi<{
   cluster_id: number,
   service_account_id: number,
@@ -155,11 +164,12 @@ const deleteProject = baseApi<{}, { id: number }>('DELETE', pathParams => {
 
 const deployTemplate = baseApi<{
   templateName: string,
-  clusterID: number,
   imageURL: string,
-  formValues: any
-}, { id: number }>('POST', pathParams => {
-  return `/api/projects/${pathParams.id}/deploy`;
+  formValues: any,
+  storage: StorageType,
+}, { id: number, cluster_id: number, service_account_id: number }>('POST', pathParams => {
+  let {id, cluster_id, service_account_id} = pathParams;
+  return `/api/projects/${id}/deploy?cluster_id=${cluster_id}&service_account_id=${service_account_id}`;
 });
 
 // Bundle export to allow default api import (api.<method> is more readable)
@@ -175,6 +185,7 @@ export default {
   getCharts,
   getChart,
   getChartComponents,
+  getChartControllers,
   getNamespaces,
   getMatchingPods,
   getRevisions,

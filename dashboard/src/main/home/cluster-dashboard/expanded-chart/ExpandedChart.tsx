@@ -13,7 +13,7 @@ import RevisionSection from './RevisionSection';
 import ValuesYaml from './ValuesYaml';
 import GraphSection from './GraphSection';
 import ListSection from './ListSection';
-import LogSection from './log/LogSection';
+import StatusSection from './status/StatusSection';
 import ValuesForm from '../../../../components/values-form/ValuesForm';
 import SettingsSection from './SettingsSection';
 
@@ -33,10 +33,11 @@ type StateType = {
   tabOptions: ChoiceType[],
   tabContents: any,
   checkTabExists: boolean,
+  saveValuesStatus: string | null,
 };
 
 // Tabs not display when previewing an old revision
-const excludedTabs = ['logs', 'settings', 'deploy'];
+const excludedTabs = ['status', 'settings', 'deploy'];
 
 /*
   TODO: consolidate revisionPreview and currentChart (currentChart can just be the initial state)
@@ -56,6 +57,7 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
     tabOptions: [] as ChoiceType[],
     tabContents: [] as any,
     checkTabExists: false,
+    saveValuesStatus: null as (string | null),
   }
 
   updateResources = () => {
@@ -73,7 +75,7 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
       revision: currentChart.version
     }, (err: any, res: any) => {
       if (err) {
-        // console.log(err)
+        console.log(err)
       } else {
         this.setState({ components: res.data.Objects, podSelectors: res.data.PodSelectors }, this.refreshTabs);
       }
@@ -85,10 +87,36 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
     for (const file of files) { 
       if (file.name === 'form.yaml') {
         let formData = yaml.load(Base64.decode(file.data));
+        if (this.props.currentChart.config) {
+          console.log(formData)
+        }
         return formData;
       }
     };
     return null;
+  }
+
+  upgradeValues = (values: any) => {
+    let { currentProject, currentCluster, setCurrentError } = this.context;
+    values = yaml.dump(values);
+    api.upgradeChartValues('<token>', {
+      namespace: this.props.currentChart.namespace,
+      storage: StorageType.Secret,
+      values,
+    }, {
+      id: currentProject.id, 
+      name: this.props.currentChart.name,
+      cluster_id: currentCluster.id,
+      service_account_id: currentCluster.service_account_id,
+    }, (err: any, res: any) => {
+      if (err) {
+        setCurrentError(err);
+        this.setState({ saveValuesStatus: 'error' });
+      } else {
+        this.setState({ saveValuesStatus: 'successful' });
+        this.props.refreshChart();
+      }
+    });
   }
 
   refreshTabs = () => {
@@ -106,7 +134,8 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
             <ValuesFormWrapper>
               <ValuesForm 
                 sections={tab.sections} 
-                onSubmit={(x: any) => console.log(x)}
+                onSubmit={this.upgradeValues}
+                saveValuesStatus={this.state.saveValuesStatus}
               />
             </ValuesFormWrapper>
           ),
@@ -116,7 +145,7 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
 
     // Append universal tabs
     tabOptions.push(
-      { label: 'Logs', value: 'logs' },
+      { label: 'Status', value: 'status' },
       { label: 'Deploy', value: 'deploy' },
       { label: 'Settings', value: 'settings' },
     );
@@ -133,8 +162,8 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
     let chart = this.state.revisionPreview || currentChart;
     tabContents.push(
       {
-        value: 'logs', component: (
-          <LogSection selectors={this.state.podSelectors} />
+        value: 'status', component: (
+          <StatusSection currentChart={chart} selectors={this.state.podSelectors} />
         ),
       },
       {
@@ -271,8 +300,8 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
                   <StatusColor status={chart.info.status} />{chart.info.status}
                 </StatusIndicator>
                 <LastDeployed>
-                  <Dot>•</Dot>Last deployed
-                  {this.readableDate(chart.info.last_deployed)}
+                  <Dot>•</Dot>Last deployed 
+                  {' ' + this.readableDate(chart.info.last_deployed)}
                 </LastDeployed>
               </InfoWrapper>
 

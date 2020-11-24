@@ -275,7 +275,15 @@ func New(
 		r.Method(
 			"POST",
 			"/projects/{project_id}/deploy",
-			auth.BasicAuthenticate(requestlog.NewHandler(a.HandleDeployTemplate, l)),
+			auth.DoesUserHaveProjectAccess(
+				auth.DoesUserHaveServiceAccountAccess(
+					requestlog.NewHandler(a.HandleDeployTemplate, l),
+					mw.URLParam,
+					mw.QueryParam,
+				),
+				mw.URLParam,
+				mw.ReadAccess,
+			),
 		)
 
 		// /api/templates routes

@@ -116,7 +116,7 @@ export default class ChartList extends Component<PropsType, StateType> {
       // don't retrieve controllers for chart that failed to even deploy.
       if (chart.info.status == 'failed') return;
 
-      await new Promise(next => {
+      await new Promise((next: (res?: any) => void) => {
         api.getChartControllers('<token>', {
           namespace: chart.namespace,
           cluster_id: currentCluster.id,
@@ -138,7 +138,7 @@ export default class ChartList extends Component<PropsType, StateType> {
           })
 
           res.data.forEach(async (c: any) => {
-            await new Promise(nextController => {
+            await new Promise((nextController: (res?: any) => void) => {
               this.setState({
                 chartLookupTable: {
                   ...this.state.chartLookupTable,

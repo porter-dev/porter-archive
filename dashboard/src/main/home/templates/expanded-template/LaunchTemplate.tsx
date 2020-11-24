@@ -4,7 +4,7 @@ import styled from 'styled-components';
 import { Context } from '../../../../shared/Context';
 import api from '../../../../shared/api';
 
-import { PorterChart, ChoiceType, Cluster } from '../../../../shared/types';
+import { PorterChart, ChoiceType, Cluster, StorageType } from '../../../../shared/types';
 import Selector from '../../../../components/Selector';
 import ImageSelector from '../../../../components/image-selector/ImageSelector';
 import TabRegion from '../../../../components/TabRegion';
@@ -34,17 +34,41 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
     tabContents: [] as any,
   };
 
-  componentDidMount() {
+  onSubmit = (formValues: any) => {
+    let { currentCluster, currentProject } = this.context;
+    api.deployTemplate('<token>', {
+      templateName: this.props.currentTemplate.name,
+      imageURL: "index.docker.io/bitnami/redis",
+      storage: StorageType.Secret,
+      formValues,
+    }, {
+      id: currentProject.id,
+      cluster_id: currentCluster.id,
+      service_account_id: currentCluster.service_account_id,
+    }, (err: any, res: any) => {
+      if (err) {
+        console.log(err)
+      } else {
+        console.log(res.data)
+      }
+    });
+  }
 
+  componentDidMount() {
     // Generate settings tabs from the provided form
     let tabOptions = [] as ChoiceType[];
     let tabContents = [] as any;
-    this.props.currentTemplate.Form.Tabs.map((tab: any, i: number) => {
-      tabOptions.push({ value: tab.Name, label: tab.Label });
+    this.props.currentTemplate.form.tabs.map((tab: any, i: number) => {
+      tabOptions.push({ value: tab.name, label: tab.label });
       tabContents.push({
-        value: tab.Name, component: (
+        value: tab.name, component: (
           <ValuesFormWrapper>
-            <ValuesForm sections={tab.Sections} />
+            <ValuesForm 
+              sections={tab.sections} 
+              onSubmit={this.onSubmit}
+              // disabled={this.state.selectedImageUrl === ''}
+              disabled={false}
+            />
           </ValuesFormWrapper>
         ),
       });
@@ -76,9 +100,9 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
   }
 
   render() {
-    let { Name, Icon, Description } = this.props.currentTemplate.Form;
+    let { name, icon, description } = this.props.currentTemplate.form;
     let { currentTemplate } = this.props;
-    let name = Name ? Name : currentTemplate.Name;
+    name = name ? name : currentTemplate.name;
 
     return (
       <StyledLaunchTemplate>
@@ -92,7 +116,7 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
         </TitleSection>
         <ClusterSection>
           <Template>
-            {Icon ? this.renderIcon(Icon) : this.renderIcon(currentTemplate.Icon)}
+            {icon ? this.renderIcon(icon) : this.renderIcon(currentTemplate.icon)}
             {name}
           </Template>
           <i className="material-icons">arrow_right_alt</i>

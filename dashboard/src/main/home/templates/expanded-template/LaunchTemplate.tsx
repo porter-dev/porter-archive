@@ -29,7 +29,7 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
     currentView: 'repo',
     clusterOptions: [] as { label: string, value: string }[],
     selectedCluster: this.context.currentCluster.name,
-    selectedImageUrl: '',
+    selectedImageUrl: '' as string | null,
     tabOptions: [] as ChoiceType[],
     tabContents: [] as any,
   };
@@ -94,7 +94,7 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
   }
 
   componentDidUpdate(prevProps: PropsType, prevState: StateType) {
-    if (this.state.selectedImageUrl !== prevState.selectedImageUrl) {
+    if (this.state.selectedImageUrl != prevState.selectedImageUrl) {
       this.refreshTabs();
     }
   }

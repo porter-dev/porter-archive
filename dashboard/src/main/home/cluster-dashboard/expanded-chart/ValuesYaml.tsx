@@ -69,6 +69,7 @@ export default class ValuesYaml extends Component<PropsType, StateType> {
   }
 
   render() {
+    console.log('values', this.state.values)
     return (
       <StyledValuesYaml>
         <Wrapper>

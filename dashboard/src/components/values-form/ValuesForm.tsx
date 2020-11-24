@@ -14,6 +14,7 @@ type PropsType = {
   onSubmit: (formValues: any) => void,
   sections?: Section[],
   disabled?: boolean,
+  saveValuesStatus?: string | null,
 };
 
 type StateType = any;
@@ -147,7 +148,7 @@ export default class ValuesForm extends Component<PropsType, StateType> {
           disabled={this.props.disabled}
           text='Deploy'
           onClick={() => this.props.onSubmit(this.state)}
-          status={null}
+          status={this.props.saveValuesStatus}
           makeFlush={true}
         />
       </Wrapper>

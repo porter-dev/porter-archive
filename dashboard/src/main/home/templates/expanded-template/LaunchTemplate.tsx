@@ -66,8 +66,7 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
             <ValuesForm 
               sections={tab.sections} 
               onSubmit={this.onSubmit}
-              // disabled={this.state.selectedImageUrl === ''}
-              disabled={false}
+              disabled={this.state.selectedImageUrl === ''}
             />
           </ValuesFormWrapper>
         ),

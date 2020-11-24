@@ -34,11 +34,13 @@ type App struct {
 	translator   *ut.Translator
 	cookieName   string
 	testing      bool
+	isLocal      bool
 	TestAgents   *TestAgents
 	GithubConfig *oauth2.Config
 }
 
 // New returns a new App instance
+// TODO -- this should accept an app/server config
 func New(
 	logger *lr.Logger,
 	db *gorm.DB,
@@ -47,6 +49,7 @@ func New(
 	store sessions.Store,
 	cookieName string,
 	testing bool,
+	isLocal bool,
 	githubConfig *oauth.Config,
 ) *App {
 	// for now, will just support the english translator from the
@@ -82,6 +85,7 @@ func New(
 		translator:   &trans,
 		cookieName:   cookieName,
 		testing:      testing,
+		isLocal:      isLocal,
 		TestAgents:   testAgents,
 		GithubConfig: oauthGithubConf,
 	}

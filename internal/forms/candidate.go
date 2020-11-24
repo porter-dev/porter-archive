@@ -10,12 +10,20 @@ import (
 type CreateServiceAccountCandidatesForm struct {
 	ProjectID  uint   `json:"project_id"`
 	Kubeconfig string `json:"kubeconfig"`
+
+	// Represents whether the auth mechanism should be designated as
+	// "local": if so, the auth mechanism uses local plugins/mechanisms purely from the
+	// kubeconfig.
+	IsLocal bool `json:"is_local"`
 }
 
 // ToServiceAccountCandidates creates a ServiceAccountCandidate from the kubeconfig and
 // project id
-func (csa *CreateServiceAccountCandidatesForm) ToServiceAccountCandidates() ([]*models.ServiceAccountCandidate, error) {
-	candidates, err := kubernetes.GetServiceAccountCandidates([]byte(csa.Kubeconfig))
+func (csa *CreateServiceAccountCandidatesForm) ToServiceAccountCandidates(
+	isServerLocal bool,
+) ([]*models.ServiceAccountCandidate, error) {
+	// can only use "local" auth mechanism if the server is running locally
+	candidates, err := kubernetes.GetServiceAccountCandidates([]byte(csa.Kubeconfig), isServerLocal && csa.IsLocal)
 
 	if err != nil {
 		return nil, err

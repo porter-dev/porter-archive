@@ -2,6 +2,7 @@ package forms
 
 import (
 	"encoding/base64"
+	"net/url"
 	"strings"
 
 	"github.com/porter-dev/porter/internal/kubernetes"
@@ -91,6 +92,13 @@ func (sar *ServiceAccountActionResolver) PopulateServiceAccount(
 		}
 	}
 
+	// if auth mechanism is local, just write the kubeconfig and return: rest of config is
+	// unnecessary
+	if sar.SACandidate.AuthMechanism == models.Local && len(sar.SACandidate.Kubeconfig) > 0 {
+		sar.SA.Kubeconfig = sar.SACandidate.Kubeconfig
+		return nil
+	}
+
 	if len(authInfo.ClientCertificateData) > 0 {
 		sar.SA.ClientCertificateData = authInfo.ClientCertificateData
 	}
@@ -173,6 +181,47 @@ func (cda *ClusterCADataAction) PopulateServiceAccount(
 
 			(&cluster).CertificateAuthorityData = decoded
 			cda.ServiceAccountActionResolver.SA.Clusters[i] = cluster
+		}
+	}
+
+	return nil
+}
+
+// ClusterLocalhostAction contains the non-localhost server
+type ClusterLocalhostAction struct {
+	*ServiceAccountActionResolver
+	ClusterHostname string `json:"cluster_hostname" form:"required"`
+}
+
+// PopulateServiceAccount will add cluster ca data to a cluster in the ServiceAccount's
+// list of clusters
+func (cla *ClusterLocalhostAction) PopulateServiceAccount(
+	repo repository.ServiceAccountRepository,
+) error {
+	err := cla.ServiceAccountActionResolver.PopulateServiceAccount(repo)
+
+	if err != nil {
+		return err
+	}
+
+	saCandidate := cla.ServiceAccountActionResolver.SACandidate
+
+	for i, cluster := range cla.ServiceAccountActionResolver.SA.Clusters {
+		if cluster.Name == saCandidate.ClusterName && cluster.Server == saCandidate.ClusterEndpoint {
+			serverURL, err := url.Parse(cluster.Server)
+
+			if err != nil {
+				continue
+			}
+
+			if serverURL.Port() == "" {
+				serverURL.Host = cla.ClusterHostname
+			} else {
+				serverURL.Host = cla.ClusterHostname + ":" + serverURL.Port()
+			}
+
+			(&cluster).Server = serverURL.String()
+			cla.ServiceAccountActionResolver.SA.Clusters[i] = cluster
 		}
 	}
 

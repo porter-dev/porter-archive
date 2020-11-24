@@ -66,10 +66,17 @@ func init() {
 }
 
 func runConnect(_ *api.AuthCheckResponse, client *api.Client, _ []string) error {
+	isLocal := false
+
+	if getDriver() == "local" {
+		isLocal = true
+	}
+
 	return connect.Kubeconfig(
 		client,
 		kubeconfigPath,
 		*contexts,
 		getProjectID(),
+		isLocal,
 	)
 }

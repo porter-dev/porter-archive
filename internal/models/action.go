@@ -4,13 +4,14 @@ import "gorm.io/gorm"
 
 // Action names
 const (
-	ClusterCADataAction  string = "upload-cluster-ca-data"
-	ClientCertDataAction        = "upload-client-cert-data"
-	ClientKeyDataAction         = "upload-client-key-data"
-	OIDCIssuerDataAction        = "upload-oidc-idp-issuer-ca-data"
-	TokenDataAction             = "upload-token-data"
-	GCPKeyDataAction            = "upload-gcp-key-data"
-	AWSDataAction               = "upload-aws-data"
+	ClusterCADataAction    string = "upload-cluster-ca-data"
+	ClusterLocalhostAction        = "fix-cluster-localhost"
+	ClientCertDataAction          = "upload-client-cert-data"
+	ClientKeyDataAction           = "upload-client-key-data"
+	OIDCIssuerDataAction          = "upload-oidc-idp-issuer-ca-data"
+	TokenDataAction               = "upload-token-data"
+	GCPKeyDataAction              = "upload-gcp-key-data"
+	AWSDataAction                 = "upload-aws-data"
 )
 
 // ServiceAccountAction is an action that must be resolved to set up
@@ -59,6 +60,7 @@ type ServiceAccountAllActions struct {
 	Name string `json:"name"`
 
 	ClusterCAData      string `json:"cluster_ca_data,omitempty"`
+	ClusterHostname    string `json:"cluster_hostname,omitempty"`
 	ClientCertData     string `json:"client_cert_data,omitempty"`
 	ClientKeyData      string `json:"client_key_data,omitempty"`
 	OIDCIssuerCAData   string `json:"oidc_idp_issuer_ca_data,omitempty"`
@@ -86,6 +88,11 @@ var ServiceAccountActionInfos = map[string]ServiceAccountActionInfo{
 		Name:   ClusterCADataAction,
 		Docs:   "https://github.com/porter-dev/porter",
 		Fields: "cluster_ca_data",
+	},
+	"fix-cluster-localhost": ServiceAccountActionInfo{
+		Name:   ClusterLocalhostAction,
+		Docs:   "https://github.com/porter-dev/porter",
+		Fields: "cluster_hostname",
 	},
 	"upload-client-cert-data": ServiceAccountActionInfo{
 		Name:   ClientCertDataAction,

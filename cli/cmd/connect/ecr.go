@@ -80,20 +80,5 @@ func ECR(
 
 	color.New(color.FgGreen).Printf("created registry with id %d and name %s\n", reg.ID, reg.Name)
 
-	// test by listing repositories
-	repos, err := client.ListRegistryRepositories(
-		context.Background(),
-		projectID,
-		reg.ID,
-	)
-
-	if err != nil {
-		return err
-	}
-
-	for _, repo := range repos {
-		fmt.Println("REPO IS", repo.Name)
-	}
-
 	return nil
 }

@@ -13,6 +13,7 @@ import ExpandedChart from './expanded-chart/ExpandedChart';
 type PropsType = {
   currentCluster: Cluster,
   setSidebar: (x: boolean) => void
+  setCurrentView: (x: string) => void,
 };
 
 type StateType = {
@@ -108,8 +109,10 @@ export default class ClusterDashboard extends Component<PropsType, StateType> {
         <LineBreak />
         
         <ControlRow>
-          <Button disabled={true}>
-            <i className="material-icons">add</i> Deploy a Chart
+          <Button
+            onClick={() => this.props.setCurrentView('templates')}
+          >
+            <i className="material-icons">add</i> Deploy Template
           </Button>
           <NamespaceSelector
             setNamespace={(namespace) => this.setState({ namespace })}
@@ -198,11 +201,11 @@ const Button = styled.div`
   white-space: nowrap;
   text-overflow: ellipsis;
   box-shadow: 0 5px 8px 0px #00000010;
-  cursor: not-allowed;
+  cursor: ${(props: { disabled?: boolean }) => props.disabled ? 'not-allowed' : 'pointer'};
 
-  background: ${(props: { disabled: boolean }) => props.disabled ? '#aaaabbee' :'#616FEEcc'};
+  background: ${(props: { disabled?: boolean }) => props.disabled ? '#aaaabbee' : '#616FEEcc'};
   :hover {
-    background: ${(props: { disabled: boolean }) => props.disabled ? '' : '#505edddd'};
+    background: ${(props: { disabled?: boolean }) => props.disabled ? '' : '#505edddd'};
   }
 
   > i {

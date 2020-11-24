@@ -159,6 +159,62 @@ func New(
 			),
 		)
 
+		// /api/projects/{project_id}/integrations routes
+		r.Method(
+			"POST",
+			"/projects/{project_id}/integrations/gcp",
+			auth.DoesUserHaveProjectAccess(
+				requestlog.NewHandler(a.HandleCreateGCPIntegration, l),
+				mw.URLParam,
+				mw.WriteAccess,
+			),
+		)
+
+		r.Method(
+			"POST",
+			"/projects/{project_id}/integrations/aws",
+			auth.DoesUserHaveProjectAccess(
+				requestlog.NewHandler(a.HandleCreateAWSIntegration, l),
+				mw.URLParam,
+				mw.WriteAccess,
+			),
+		)
+
+		// /api/projects/{project_id}/registries routes
+		r.Method(
+			"POST",
+			"/projects/{project_id}/registries",
+			auth.DoesUserHaveProjectAccess(
+				requestlog.NewHandler(a.HandleCreateRegistry, l),
+				mw.URLParam,
+				mw.WriteAccess,
+			),
+		)
+
+		r.Method(
+			"GET",
+			"/projects/{project_id}/registries",
+			auth.DoesUserHaveProjectAccess(
+				requestlog.NewHandler(a.HandleListProjectRegistries, l),
+				mw.URLParam,
+				mw.WriteAccess,
+			),
+		)
+
+		r.Method(
+			"GET",
+			"/projects/{project_id}/registries/{registry_id}/repositories",
+			auth.DoesUserHaveProjectAccess(
+				auth.DoesUserHaveRegistryAccess(
+					requestlog.NewHandler(a.HandleListRepositories, l),
+					mw.URLParam,
+					mw.URLParam,
+				),
+				mw.URLParam,
+				mw.WriteAccess,
+			),
+		)
+
 		// /api/projects/{project_id}/releases routes
 		r.Method(
 			"GET",

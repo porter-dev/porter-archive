@@ -30,6 +30,7 @@ func main() {
 		&models.User{},
 		&models.Session{},
 		&models.GitRepo{},
+		&models.Registry{},
 		&models.Cluster{},
 		&models.ClusterCandidate{},
 		&models.ClusterResolver{},

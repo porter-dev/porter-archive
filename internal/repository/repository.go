@@ -7,6 +7,7 @@ type Repository struct {
 	Session          SessionRepository
 	GitRepo          GitRepoRepository
 	Cluster          ClusterRepository
+	Registry         RegistryRepository
 	KubeIntegration  KubeIntegrationRepository
 	OIDCIntegration  OIDCIntegrationRepository
 	OAuthIntegration OAuthIntegrationRepository

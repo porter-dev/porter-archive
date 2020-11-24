@@ -27,6 +27,9 @@ type AWSIntegration struct {
 	// The AWS caller identity (ARN) which linked this service
 	AWSCallerID string `json:"aws-caller-id"`
 
+	// The optional AWS region (required by some session configurations)
+	AWSRegion string `json:"aws_region"`
+
 	// ------------------------------------------------------------------
 	// All fields encrypted before storage.
 	// ------------------------------------------------------------------
@@ -87,6 +90,27 @@ func (a *AWSIntegration) ToProjectIntegration(
 	}
 }
 
+// GetSession retrieves an AWS session to use based on the access key and secret
+// access key
+func (a *AWSIntegration) GetSession() (*session.Session, error) {
+	awsConf := &aws.Config{
+		Credentials: credentials.NewStaticCredentials(
+			string(a.AWSAccessKeyID),
+			string(a.AWSSecretAccessKey),
+			string(a.AWSSessionToken),
+		),
+	}
+
+	if a.AWSRegion != "" {
+		awsConf.Region = &a.AWSRegion
+	}
+
+	return session.NewSessionWithOptions(session.Options{
+		SharedConfigState: session.SharedConfigEnable,
+		Config:            *awsConf,
+	})
+}
+
 // GetBearerToken retrieves a bearer token for an AWS account
 func (a *AWSIntegration) GetBearerToken(
 	getTokenCache GetTokenCacheFunc,
@@ -105,16 +129,7 @@ func (a *AWSIntegration) GetBearerToken(
 		return "", err
 	}
 
-	sess, err := session.NewSessionWithOptions(session.Options{
-		SharedConfigState: session.SharedConfigEnable,
-		Config: aws.Config{
-			Credentials: credentials.NewStaticCredentials(
-				string(a.AWSAccessKeyID),
-				string(a.AWSSecretAccessKey),
-				string(a.AWSSessionToken),
-			),
-		},
-	})
+	sess, err := a.GetSession()
 
 	if err != nil {
 		return "", err

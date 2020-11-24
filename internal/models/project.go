@@ -16,6 +16,9 @@ type Project struct {
 	// linked repos
 	GitRepos []GitRepo `json:"git_repos,omitempty"`
 
+	// linked registries
+	Registries []Registry `json:"registries,omitempty"`
+
 	// linked clusters
 	Clusters          []Cluster          `json:"clusters"`
 	ClusterCandidates []ClusterCandidate `json:"cluster_candidates"`

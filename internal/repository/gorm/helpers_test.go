@@ -19,6 +19,7 @@ type tester struct {
 	initUsers    []*models.User
 	initProjects []*models.Project
 	initGRs      []*models.GitRepo
+	initRegs     []*models.Registry
 	initClusters []*models.Cluster
 	initCCs      []*models.ClusterCandidate
 	initKIs      []*ints.KubeIntegration
@@ -47,6 +48,7 @@ func setupTestEnv(tester *tester, t *testing.T) {
 		&models.User{},
 		&models.Session{},
 		&models.GitRepo{},
+		&models.Registry{},
 		&models.Cluster{},
 		&models.ClusterCandidate{},
 		&models.ClusterResolver{},
@@ -355,4 +357,25 @@ func initGitRepo(tester *tester, t *testing.T) {
 	}
 
 	tester.initGRs = append(tester.initGRs, gr)
+}
+
+func initRegistry(tester *tester, t *testing.T) {
+	t.Helper()
+
+	if len(tester.initProjects) == 0 {
+		initProject(tester, t)
+	}
+
+	reg := &models.Registry{
+		ProjectID: tester.initProjects[0].ID,
+		Name:      "registry-test",
+	}
+
+	reg, err := tester.repo.Registry.CreateRegistry(reg)
+
+	if err != nil {
+		t.Fatalf("%v\n", err)
+	}
+
+	tester.initRegs = append(tester.initRegs, reg)
 }

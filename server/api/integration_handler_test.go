@@ -134,11 +134,89 @@ func TestHandleListRepoIntegrations(t *testing.T) {
 	testPublicIntegrationRequests(t, listRepoIntegrationsTests, true)
 }
 
+var createGCPIntegrationTests = []*publicIntTest{
+	&publicIntTest{
+		initializers: []func(t *tester){
+			initUserDefault,
+			initProject,
+		},
+		msg:      "Create GCP Integration",
+		method:   "POST",
+		endpoint: "/api/projects/1/integrations/gcp",
+		body: `{
+			"gcp_key_data": "yoooo"
+		}`,
+		expStatus: http.StatusCreated,
+		expBody:   `{"id":1,"user_id":1,"project_id":1,"gcp-project-id":"","gcp-user-email":""}`,
+		useCookie: true,
+		validators: []func(c *publicIntTest, tester *tester, t *testing.T){
+			gcpIntBodyValidator,
+		},
+	},
+}
+
+func TestHandleCreateGCPIntegration(t *testing.T) {
+	testPublicIntegrationRequests(t, createGCPIntegrationTests, true)
+}
+
+var createAWSIntegrationTests = []*publicIntTest{
+	&publicIntTest{
+		initializers: []func(t *tester){
+			initUserDefault,
+			initProject,
+		},
+		msg:      "Create AWS Integration",
+		method:   "POST",
+		endpoint: "/api/projects/1/integrations/aws",
+		body: `{
+			"aws_cluster_id": "cluster-id-0",
+			"aws_access_key_id": "accesskey",
+			"aws_secret_access_key": "secretkey"
+		}`,
+		expStatus: http.StatusCreated,
+		expBody:   `{"id":1,"user_id":1,"project_id":1,"aws-entity-id":"","aws-caller-id":""}`,
+		useCookie: true,
+		validators: []func(c *publicIntTest, tester *tester, t *testing.T){
+			awsIntBodyValidator,
+		},
+	},
+}
+
+func TestHandleCreateAWSIntegration(t *testing.T) {
+	testPublicIntegrationRequests(t, createGCPIntegrationTests, true)
+}
+
 // ------------------------- INITIALIZERS AND VALIDATORS ------------------------- //
 
 func publicIntBodyValidator(c *publicIntTest, tester *tester, t *testing.T) {
 	gotBody := make([]*ints.PorterIntegration, 0)
 	expBody := make([]*ints.PorterIntegration, 0)
+
+	json.Unmarshal(tester.rr.Body.Bytes(), &gotBody)
+	json.Unmarshal([]byte(c.expBody), &expBody)
+
+	if diff := deep.Equal(gotBody, expBody); diff != nil {
+		t.Errorf("handler returned wrong body:\n")
+		t.Error(diff)
+	}
+}
+
+func gcpIntBodyValidator(c *publicIntTest, tester *tester, t *testing.T) {
+	gotBody := &ints.GCPIntegration{}
+	expBody := &ints.GCPIntegration{}
+
+	json.Unmarshal(tester.rr.Body.Bytes(), &gotBody)
+	json.Unmarshal([]byte(c.expBody), &expBody)
+
+	if diff := deep.Equal(gotBody, expBody); diff != nil {
+		t.Errorf("handler returned wrong body:\n")
+		t.Error(diff)
+	}
+}
+
+func awsIntBodyValidator(c *publicIntTest, tester *tester, t *testing.T) {
+	gotBody := &ints.AWSIntegration{}
+	expBody := &ints.AWSIntegration{}
 
 	json.Unmarshal(tester.rr.Body.Bytes(), &gotBody)
 	json.Unmarshal([]byte(c.expBody), &expBody)

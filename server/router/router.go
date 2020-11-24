@@ -165,6 +165,20 @@ func New(
 
 		r.Method(
 			"GET",
+			"/projects/{project_id}/releases/{name}/{revision}/controllers",
+			auth.DoesUserHaveProjectAccess(
+				auth.DoesUserHaveServiceAccountAccess(
+					requestlog.NewHandler(a.HandleGetReleaseControllers, l),
+					mw.URLParam,
+					mw.QueryParam,
+				),
+				mw.URLParam,
+				mw.ReadAccess,
+			),
+		)
+
+		r.Method(
+			"GET",
 			"/projects/{project_id}/releases/{name}/history",
 			auth.DoesUserHaveProjectAccess(
 				auth.DoesUserHaveServiceAccountAccess(
@@ -261,7 +275,15 @@ func New(
 		r.Method(
 			"POST",
 			"/projects/{project_id}/deploy",
-			auth.BasicAuthenticate(requestlog.NewHandler(a.HandleDeployTemplate, l)),
+			auth.DoesUserHaveProjectAccess(
+				auth.DoesUserHaveServiceAccountAccess(
+					requestlog.NewHandler(a.HandleDeployTemplate, l),
+					mw.URLParam,
+					mw.QueryParam,
+				),
+				mw.URLParam,
+				mw.ReadAccess,
+			),
 		)
 
 		// /api/templates routes
@@ -294,6 +316,20 @@ func New(
 			auth.DoesUserHaveProjectAccess(
 				auth.DoesUserHaveServiceAccountAccess(
 					requestlog.NewHandler(a.HandleGetPodLogs, l),
+					mw.URLParam,
+					mw.QueryParam,
+				),
+				mw.URLParam,
+				mw.ReadAccess,
+			),
+		)
+
+		r.Method(
+			"GET",
+			"/projects/{project_id}/k8s/{kind}/status",
+			auth.DoesUserHaveProjectAccess(
+				auth.DoesUserHaveServiceAccountAccess(
+					requestlog.NewHandler(a.HandleStreamControllerStatus, l),
 					mw.URLParam,
 					mw.QueryParam,
 				),

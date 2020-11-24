@@ -10,6 +10,7 @@ import (
 	"github.com/porter-dev/porter/internal/forms"
 	"github.com/porter-dev/porter/internal/helm"
 	"github.com/porter-dev/porter/internal/helm/grapher"
+	"github.com/porter-dev/porter/internal/kubernetes"
 	"github.com/porter-dev/porter/internal/repository"
 )
 
@@ -103,7 +104,7 @@ func (app *App) HandleGetRelease(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// HandleGetReleaseComponents retrieves a single release based on a name and revision
+// HandleGetReleaseComponents retrieves kubernetes objects listed in a release identified by name and revision
 func (app *App) HandleGetReleaseComponents(w http.ResponseWriter, r *http.Request) {
 	name := chi.URLParam(r, "name")
 	revision, err := strconv.ParseUint(chi.URLParam(r, "revision"), 0, 64)
@@ -153,6 +154,133 @@ func (app *App) HandleGetReleaseComponents(w http.ResponseWriter, r *http.Reques
 	parsed.GetSpecRel()
 
 	if err := json.NewEncoder(w).Encode(parsed); err != nil {
+		app.handleErrorFormDecoding(err, ErrReleaseDecode, w)
+		return
+	}
+}
+
+// HandleGetReleaseControllers retrieves controllers that belong to a release.
+// Used to display status of charts.
+func (app *App) HandleGetReleaseControllers(w http.ResponseWriter, r *http.Request) {
+	name := chi.URLParam(r, "name")
+	revision, err := strconv.ParseUint(chi.URLParam(r, "revision"), 0, 64)
+
+	form := &forms.GetReleaseForm{
+		ReleaseForm: &forms.ReleaseForm{
+			Form: &helm.Form{
+				UpdateTokenCache: app.updateTokenCache,
+			},
+		},
+		Name:     name,
+		Revision: int(revision),
+	}
+
+	agent, err := app.getAgentFromQueryParams(
+		w,
+		r,
+		form.ReleaseForm,
+		form.ReleaseForm.PopulateHelmOptionsFromQueryParams,
+	)
+
+	// errors are handled in app.getAgentFromQueryParams
+	if err != nil {
+		return
+	}
+
+	release, err := agent.GetRelease(form.Name, form.Revision)
+
+	if err != nil {
+		app.sendExternalError(err, http.StatusNotFound, HTTPError{
+			Code:   ErrReleaseReadData,
+			Errors: []string{"release not found"},
+		}, w)
+
+		return
+	}
+
+	vals, err := url.ParseQuery(r.URL.RawQuery)
+
+	if err != nil {
+		app.handleErrorFormDecoding(err, ErrReleaseDecode, w)
+		return
+	}
+
+	// get the filter options
+	k8sForm := &forms.K8sForm{
+		OutOfClusterConfig: &kubernetes.OutOfClusterConfig{
+			UpdateTokenCache: app.updateTokenCache,
+		},
+	}
+
+	k8sForm.PopulateK8sOptionsFromQueryParams(vals, app.repo.ServiceAccount)
+
+	// validate the form
+	if err := app.validator.Struct(k8sForm); err != nil {
+		app.handleErrorFormValidation(err, ErrK8sValidate, w)
+		return
+	}
+
+	// create a new kubernetes agent
+	var k8sAgent *kubernetes.Agent
+
+	if app.testing {
+		k8sAgent = app.TestAgents.K8sAgent
+	} else {
+		k8sAgent, err = kubernetes.GetAgentOutOfClusterConfig(k8sForm.OutOfClusterConfig)
+	}
+
+	yamlArr := grapher.ImportMultiDocYAML([]byte(release.Manifest))
+	controllers := grapher.ParseControllers(yamlArr)
+	retrievedControllers := []interface{}{}
+
+	// get current status of each controller
+	// TODO: refactor with type assertion
+	for _, c := range controllers {
+		switch c.Kind {
+		case "Deployment":
+			rc, err := k8sAgent.GetDeployment(c)
+
+			if err != nil {
+				app.handleErrorDataRead(err, w)
+				return
+			}
+
+			rc.Kind = c.Kind
+			retrievedControllers = append(retrievedControllers, rc)
+		case "StatefulSet":
+			rc, err := k8sAgent.GetStatefulSet(c)
+
+			if err != nil {
+				app.handleErrorDataRead(err, w)
+				return
+			}
+
+			rc.Kind = c.Kind
+			retrievedControllers = append(retrievedControllers, rc)
+		case "DaemonSet":
+			rc, err := k8sAgent.GetDaemonSet(c)
+
+			if err != nil {
+				app.handleErrorDataRead(err, w)
+				return
+			}
+
+			rc.Kind = c.Kind
+			retrievedControllers = append(retrievedControllers, rc)
+		case "ReplicaSet":
+			rc, err := k8sAgent.GetReplicaSet(c)
+
+			if err != nil {
+				app.handleErrorDataRead(err, w)
+				return
+			}
+
+			rc.Kind = c.Kind
+			retrievedControllers = append(retrievedControllers, rc)
+		}
+	}
+
+	if err := json.NewEncoder(w).Encode(retrievedControllers); err != nil {
 		app.handleErrorFormDecoding(err, ErrReleaseDecode, w)
 		return
 	}

@@ -1,9 +1,8 @@
 import React, { Component } from 'react';
 import styled from 'styled-components';
-import api from '../../../../shared/api';
 
 import { Context } from '../../../../shared/Context';
-import { ResourceType, StorageType, ChartType } from '../../../../shared/types';
+import { ResourceType, ChartType } from '../../../../shared/types';
 
 import ResourceItem from './ResourceItem';
 import Loading from '../../../../components/Loading';

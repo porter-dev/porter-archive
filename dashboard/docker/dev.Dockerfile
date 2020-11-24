@@ -5,7 +5,7 @@ WORKDIR /webpack
 
 COPY package*.json ./
 
-RUN npm i
+RUN npm install
 
 ENV NODE_ENV=development
 

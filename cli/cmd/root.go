@@ -23,9 +23,19 @@ var home = homedir.HomeDir()
 // Execute adds all child commands to the root command and sets flags appropriately.
 // This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute() {
+	// check that the .porter folder exists; create if not
+	porterDir := filepath.Join(home, ".porter")
+
+	if _, err := os.Stat(porterDir); os.IsNotExist(err) {
+		os.Mkdir(porterDir, 0700)
+	} else if err != nil {
+		color.New(color.FgRed).Printf("%v\n", err)
+		os.Exit(1)
+	}
+
 	viper.SetConfigName("porter")
 	viper.SetConfigType("yaml")
-	viper.AddConfigPath(filepath.Join(home, ".porter"))
+	viper.AddConfigPath(porterDir)
 
 	err := viper.ReadInConfig()
 

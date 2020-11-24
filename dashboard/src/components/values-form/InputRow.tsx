@@ -13,9 +13,14 @@ type PropsType = {
 };
 
 type StateType = {
+  readOnly: boolean
 };
 
 export default class InputRow extends Component<PropsType, StateType> {
+  state = {
+    readOnly: true
+  }
+
   handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     if (this.props.type === 'number') {
       this.props.setValue(parseInt(e.target.value));
@@ -23,7 +28,7 @@ export default class InputRow extends Component<PropsType, StateType> {
       this.props.setValue(e.target.value);
     }
   }
-
+  
   render() {
     let { label, value, type, unit, placeholder, width } = this.props;
     return (
@@ -31,6 +36,7 @@ export default class InputRow extends Component<PropsType, StateType> {
         <Label>{label}</Label>
         <InputWrapper>
           <Input
+            readOnly={this.state.readOnly} onFocus={() => this.setState({ readOnly: false })}
             disabled={this.props.disabled}
             placeholder={placeholder}
             width={width}

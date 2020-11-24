@@ -27,7 +27,7 @@ export default class DockerHubForm extends Component<PropsType, StateType> {
 
   render() {
     return ( 
-      <StyledDockerHubForm>
+      <StyledForm>
         <CredentialWrapper>
           <InputRow
             type='text'
@@ -63,11 +63,11 @@ export default class DockerHubForm extends Component<PropsType, StateType> {
           />
         </CredentialWrapper>
         <SaveButton
-          text='Save Changes'
+          text='Save Settings'
           makeFlush={true}
           onClick={() => console.log('unimplemented')}
         />
-      </StyledDockerHubForm>
+      </StyledForm>
     );
   }
 }
@@ -78,7 +78,7 @@ const CredentialWrapper = styled.div`
   border-radius: 5px;
 `;
 
-const StyledDockerHubForm = styled.div`
+const StyledForm = styled.div`
   position: relative;
   padding-bottom: 75px;
 `;

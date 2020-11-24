@@ -12,6 +12,7 @@ const (
 	OIDC                = "oidc"
 	GCP                 = "gcp-sa"
 	AWS                 = "aws-sa"
+	Local               = "local"
 	NotAvailable        = "n/a"
 )
 
@@ -139,6 +140,9 @@ type ServiceAccount struct {
 	OIDCCertificateAuthorityData []byte `json:"idp-certificate-authority-data"`
 	OIDCIDToken                  []byte `json:"id-token"`
 	OIDCRefreshToken             []byte `json:"refresh-token"`
+
+	// The raw kubeconfig, used by local auth mechanisms
+	Kubeconfig []byte `json:"kubeconfig"`
 }
 
 // ServiceAccountExternal is an external ServiceAccount to be shared over REST

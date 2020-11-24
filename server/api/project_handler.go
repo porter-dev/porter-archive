@@ -210,7 +210,7 @@ func (app *App) HandleCreateProjectSACandidates(w http.ResponseWriter, r *http.R
 	}
 
 	// convert the form to a ServiceAccountCandidate
-	saCandidates, err := form.ToServiceAccountCandidates()
+	saCandidates, err := form.ToServiceAccountCandidates(app.isLocal)
 
 	if err != nil {
 		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
@@ -353,6 +353,13 @@ func (app *App) HandleResolveSACandidateActions(w http.ResponseWriter, r *http.R
 			form := &forms.ClusterCADataAction{
 				ServiceAccountActionResolver: saResolverBase,
 				ClusterCAData:                action.ClusterCAData,
+			}
+
+			err = form.PopulateServiceAccount(app.repo.ServiceAccount)
+		case models.ClusterLocalhostAction:
+			form := &forms.ClusterLocalhostAction{
+				ServiceAccountActionResolver: saResolverBase,
+				ClusterHostname:              action.ClusterHostname,
 			}
 
 			err = form.PopulateServiceAccount(app.repo.ServiceAccount)

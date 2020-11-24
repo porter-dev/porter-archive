@@ -18,7 +18,8 @@ type StateType = {
   isExpanded: boolean,
   loading: boolean,
   error: boolean,
-  images: any[]
+  images: any[],
+  clickedImage: any | null,
 };
 
 const dummyImages = [
@@ -57,7 +58,8 @@ export default class ImageSelector extends Component<PropsType, StateType> {
     isExpanded: this.props.forceExpanded,
     loading: false,
     error: false,
-    images: [] as any[]
+    images: [] as any[],
+    clickedImage: null as any | null,
   }
 
   componentDidMount() {
@@ -79,7 +81,10 @@ export default class ImageSelector extends Component<PropsType, StateType> {
           key={i}
           isSelected={image.source === this.props.selectedImageUrl}
           lastItem={i === images.length - 1}
-          onClick={() => this.props.setSelectedImageUrl(image.source)}
+          onClick={() => { 
+            this.props.setSelectedImageUrl(image.source);
+            this.setState({ clickedImage: image });
+          }}
         >
           <img src={icon && icon} />{image.source}
         </ImageItem>
@@ -87,11 +92,32 @@ export default class ImageSelector extends Component<PropsType, StateType> {
     });
   }
 
+  renderBackButton = () => {
+    let { setSelectedImageUrl } = this.props;
+    if (this.state.clickedImage) {
+      return (
+        <BackButton
+          width='175px'
+          onClick={() => {
+            setSelectedImageUrl('');
+            this.setState({ clickedImage: null });
+          }}
+        >
+          <i className="material-icons">keyboard_backspace</i>
+          Select Image Repo
+        </BackButton>
+      );
+    }
+  }
+
   renderExpanded = () => {
     return (
-      <ExpandedWrapper>
-        {this.renderImageList()}
-      </ExpandedWrapper>
+      <div>
+        <ExpandedWrapper>
+          {this.renderImageList()}
+        </ExpandedWrapper>
+        {this.renderBackButton()}
+      </div>
     );
   }
 
@@ -104,7 +130,10 @@ export default class ImageSelector extends Component<PropsType, StateType> {
         <Input
           onClick={(e: any) => e.stopPropagation()}
           value={selectedImageUrl}
-          onChange={(e: any) => setSelectedImageUrl(e.value)}
+          onChange={(e: any) => { 
+            setSelectedImageUrl(e.value); 
+            this.setState({ clickedImage: null });
+          }}
           placeholder='Enter or select your container image URL'
         />
       </Label>
@@ -136,6 +165,31 @@ export default class ImageSelector extends Component<PropsType, StateType> {
 }
 
 ImageSelector.contextType = Context;
+
+const BackButton = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 10px;
+  cursor: pointer;
+  font-size: 13px;
+  padding: 5px 13px;
+  border: 1px solid #ffffff55;
+  border-radius: 3px;
+  width: ${(props: { width: string }) => props.width};
+  color: white;
+  background: #ffffff11;
+
+  :hover {
+    background: #ffffff22;
+  }
+
+  > i {
+    color: white;
+    font-size: 16px;
+    margin-right: 6px;
+  }
+`;
 
 const Input = styled.input`
   outline: 0;

@@ -59,7 +59,7 @@ export default class ValuesYaml extends Component<PropsType, StateType> {
       service_account_id: currentCluster.service_account_id,
     }, (err: any, res: any) => {
       if (err) {
-        setCurrentError(err.response.data);
+        console.log(err)
         this.setState({ saveValuesStatus: 'error' });
       } else {
         this.setState({ saveValuesStatus: 'successful' });
@@ -69,7 +69,6 @@ export default class ValuesYaml extends Component<PropsType, StateType> {
   }
 
   render() {
-    console.log('values', this.state.values)
     return (
       <StyledValuesYaml>
         <Wrapper>

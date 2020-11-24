@@ -87,6 +87,9 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
     for (const file of files) { 
       if (file.name === 'form.yaml') {
         let formData = yaml.load(Base64.decode(file.data));
+        if (this.props.currentChart.config) {
+          console.log(formData)
+        }
         return formData;
       }
     };
@@ -107,7 +110,7 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
       service_account_id: currentCluster.service_account_id,
     }, (err: any, res: any) => {
       if (err) {
-        setCurrentError(err.response.data);
+        setCurrentError(err);
         this.setState({ saveValuesStatus: 'error' });
       } else {
         this.setState({ saveValuesStatus: 'successful' });

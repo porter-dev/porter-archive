@@ -33,11 +33,8 @@ type StateType = {
   tabOptions: ChoiceType[],
   tabContents: any,
   checkTabExists: boolean,
+  saveValuesStatus: string | null,
 };
-
-const dummyFormTabs = [
-  { "Name": "values", "Label": "Main Settings", "Sections": [{ "Name": "main", "ShowIf": "", "Contents": [{ "Type": "heading", "Label": "🍺 Hello Porter Settings", "Name": "", "Variable": "", "Settings": { "Default": null } }, { "Type": "subtitle", "Label": "Update ports for Hello Porter with Porter", "Name": "", "Variable": "", "Settings": { "Default": null } }, { "Type": "number-input", "Label": "Service Port", "Name": "service-port", "Variable": "service.port", "Settings": { "Default": 80 } }, { "Type": "number-input", "Label": "Target Port", "Name": "target-port", "Variable": "service.targetPort", "Settings": { "Default": 8005 } }, { "Type": "checkbox", "Label": "Show hidden section", "Name": "show-hidden", "Variable": "", "Settings": { "Default": null } }] }, { "Name": "secondary", "ShowIf": "show-hidden", "Contents": [{ "Type": "heading", "Label": "This is a collapsible section!", "Name": "", "Variable": "", "Settings": { "Default": null } }, { "Type": "subtitle", "Label": "Test section toggling", "Name": "", "Variable": "", "Settings": { "Default": null } }, { "Type": "string-input", "Label": "Service Account Name", "Name": "sa-name", "Variable": "serviceAccount.name", "Settings": { "Default": null } }] }] }, { "Name": "alt", "Label": "Bonus Settings", "Sections": [{ "Name": "main", "ShowIf": "", "Contents": [{ "Type": "heading", "Label": "🚀 Bonus Porter Settings", "Name": "", "Variable": "", "Settings": { "Default": null } }, { "Type": "subtitle", "Label": "Configure more aspects of Hello Porter", "Name": "", "Variable": "", "Settings": { "Default": null } }, { "Type": "checkbox", "Label": "Enable Autoscaling?", "Name": "autoscaling-enabled", "Variable": "autoscaling.enabled", "Settings": { "Default": false } }] }, { "Name": "autoscaling-options", "ShowIf": "autoscaling-enabled", "Contents": [{ "Type": "number-input", "Label": "Minimum Replicas", "Name": "min-replicas", "Variable": "autoscaling.minReplicas", "Settings": { "Default": 0 } }, { "Type": "number-input", "Label": "Maximum Replicas", "Name": "max-replicas", "Variable": "autoscaling.maxReplicas", "Settings": { "Default": 2 } }] }] }, { "Name": "notes", "Label": "Notes", "Sections": [{ "Name": "main", "ShowIf": "", "Contents": [{ "Type": "heading", "Label": "Just some text", "Name": "", "Variable": "", "Settings": { "Default": null } }, { "Type": "subtitle", "Label": "This is just some random text to populate the final tab with.", "Name": "", "Variable": "", "Settings": { "Default": null } }] }] }
-];
 
 // Tabs not display when previewing an old revision
 const excludedTabs = ['status', 'settings', 'deploy'];
@@ -60,6 +57,7 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
     tabOptions: [] as ChoiceType[],
     tabContents: [] as any,
     checkTabExists: false,
+    saveValuesStatus: null as (string | null),
   }
 
   updateResources = () => {
@@ -95,6 +93,29 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
     return null;
   }
 
+  upgradeValues = (values: any) => {
+    let { currentProject, currentCluster, setCurrentError } = this.context;
+    values = yaml.dump(values);
+    api.upgradeChartValues('<token>', {
+      namespace: this.props.currentChart.namespace,
+      storage: StorageType.Secret,
+      values,
+    }, {
+      id: currentProject.id, 
+      name: this.props.currentChart.name,
+      cluster_id: currentCluster.id,
+      service_account_id: currentCluster.service_account_id,
+    }, (err: any, res: any) => {
+      if (err) {
+        setCurrentError(err.response.data);
+        this.setState({ saveValuesStatus: 'error' });
+      } else {
+        this.setState({ saveValuesStatus: 'successful' });
+        this.props.refreshChart();
+      }
+    });
+  }
+
   refreshTabs = () => {
     let formData = this.getFormData();
     let tabOptions = [] as ChoiceType[];
@@ -110,7 +131,8 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
             <ValuesFormWrapper>
               <ValuesForm 
                 sections={tab.sections} 
-                onSubmit={(x: any) => console.log(x)}
+                onSubmit={this.upgradeValues}
+                saveValuesStatus={this.state.saveValuesStatus}
               />
             </ValuesFormWrapper>
           ),

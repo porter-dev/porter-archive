@@ -165,6 +165,20 @@ func New(
 
 		r.Method(
 			"GET",
+			"/projects/{project_id}/releases/{name}/{revision}/controllers",
+			auth.DoesUserHaveProjectAccess(
+				auth.DoesUserHaveServiceAccountAccess(
+					requestlog.NewHandler(a.HandleGetReleaseControllers, l),
+					mw.URLParam,
+					mw.QueryParam,
+				),
+				mw.URLParam,
+				mw.ReadAccess,
+			),
+		)
+
+		r.Method(
+			"GET",
 			"/projects/{project_id}/releases/{name}/history",
 			auth.DoesUserHaveProjectAccess(
 				auth.DoesUserHaveServiceAccountAccess(
@@ -250,6 +264,20 @@ func New(
 			),
 		)
 
+		// /api/projects/{project_id}/images routes
+		// TODO: add back project access check
+		r.Method(
+			"GET",
+			"/projects/{project_id}/images",
+			auth.BasicAuthenticate(requestlog.NewHandler(a.HandleListImages, l)),
+		)
+
+		r.Method(
+			"POST",
+			"/projects/{project_id}/deploy",
+			auth.BasicAuthenticate(requestlog.NewHandler(a.HandleDeployTemplate, l)),
+		)
+
 		// /api/templates routes
 		r.Method(
 			"GET",
@@ -290,10 +318,10 @@ func New(
 
 		r.Method(
 			"GET",
-			"/projects/{project_id}/k8s/deployment/status",
+			"/projects/{project_id}/k8s/{kind}/status",
 			auth.DoesUserHaveProjectAccess(
 				auth.DoesUserHaveServiceAccountAccess(
-					requestlog.NewHandler(a.HandleStreamDeployment, l),
+					requestlog.NewHandler(a.HandleStreamControllerStatus, l),
 					mw.URLParam,
 					mw.QueryParam,
 				),

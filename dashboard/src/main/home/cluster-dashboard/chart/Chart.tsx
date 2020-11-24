@@ -1,20 +1,40 @@
 import React, { Component } from 'react';
 import styled from 'styled-components';
 
-import { ChartType } from '../../../../shared/types';
+import { ChartType, StorageType } from '../../../../shared/types';
 import { Context } from '../../../../shared/Context';
 
 type PropsType = {
   chart: ChartType,
-  setCurrentChart: (c: ChartType) => void
+  setCurrentChart: (c: ChartType) => void,
+  controllers: Record<string, any>,
 };
 
 type StateType = {
+  expand: boolean,
+  controllers: Record<string, boolean>,
+  update: any[],
+  getAvailability: Function,
 };
 
 export default class Chart extends Component<PropsType, StateType> {
+  getAvailability = (kind: string, c: any) => {
+    switch (kind?.toLowerCase()) {
+      case "deployment":
+      case "replicaset":
+        return (c.status.availableReplicas == c.status.replicas)
+      case "statefulset":
+       return (c.status.readyReplicas == c.status.replicas)
+      case "daemonset":
+        return (c.status.numberAvailable == c.status.desiredNumberScheduled)
+      }
+  }
+
   state = {
     expand: false,
+    controllers: {} as Record<string, boolean>,
+    update: [] as any[],
+    getAvailability: this.getAvailability.bind(this),
   }
 
   renderIcon = () => {
@@ -34,11 +54,49 @@ export default class Chart extends Component<PropsType, StateType> {
     return `${time} on ${date}`;
   }
 
+  setControllerStatus = (cs: Record<string, any>) => {
+    let controllers = {} as Record<string, boolean>;
+    for (var uid in cs) {
+      let value = cs[uid];
+      controllers[uid] = this.getAvailability(value.kind, value);
+    }
+    this.setState({ controllers });
+  }
+
+  getChartStatus = (chartStatus: string) => {
+    if (chartStatus === 'deployed') {
+      for (var uid in this.state.controllers) {
+        if (!this.state.controllers[uid]) {
+          return 'not ready'
+        }
+      }
+      return 'deployed'
+    }
+    return chartStatus
+  }
+
+  static getDerivedStateFromProps(nextProps: any, prevState: any) {
+    let controllers = {} as Record<string, boolean>;
+    
+    for (var uid in nextProps.controllers) {
+      let controller = nextProps.controllers[uid]
+      controllers[uid] = prevState.getAvailability(controller.kind, controller)
+    }
+
+    return {
+      controllers,
+    };
+  }
+
+  componentDidMount () {
+    const { chart, controllers } = this.props;
+    if (chart.info.status == 'failed') return;
+    this.setControllerStatus(controllers)
+  }
+
   render() {
     let { chart, setCurrentChart } = this.props;
-
-    console.log(chart)
-
+    let status = this.getChartStatus(chart.info.status)
     return ( 
       <StyledChart
         onMouseEnter={() => this.setState({ expand: true })}
@@ -56,8 +114,8 @@ export default class Chart extends Component<PropsType, StateType> {
         <BottomWrapper>
           <InfoWrapper>
             <StatusIndicator>
-              <StatusColor status={chart.info.status} />
-              {chart.info.status}
+              <StatusColor status={status} />
+              {status}
             </StatusIndicator>
 
             <LastDeployed>

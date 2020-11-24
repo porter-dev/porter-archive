@@ -1,9 +1,8 @@
 import React, { Component } from 'react';
 import styled from 'styled-components';
-import api from '../../../../shared/api';
 
 import { Context } from '../../../../shared/Context';
-import { ResourceType, StorageType, ChartType } from '../../../../shared/types';
+import { ResourceType, ChartType } from '../../../../shared/types';
 
 import ResourceItem from './ResourceItem';
 import Loading from '../../../../components/Loading';
@@ -70,4 +69,6 @@ const StyledListSection = styled.div`
   background: #ffffff11;
   display: flex;
   position: relative;
+  border-radius: 5px;
+  font-size: 13px;
 `;

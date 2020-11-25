@@ -1,32 +1,38 @@
 import React, { Component } from 'react';
 import styled from 'styled-components';
 
-import { FormYAML, Section, FormElement } from '../../shared/types';
+import { Section, FormElement } from '../../shared/types';
+import { Context } from '../../shared/Context';
+import api from '../../shared/api';
 
 import SaveButton from '../SaveButton';
 import CheckboxRow from './CheckboxRow';
 import InputRow from './InputRow';
 import SelectRow from './SelectRow';
+import Helper from './Helper';
+import Heading from './Heading';
 
 type PropsType = {
-  formData?: FormYAML
+  onSubmit: (formValues: any) => void,
+  sections?: Section[],
+  disabled?: boolean,
+  saveValuesStatus?: string | null,
 };
 
 type StateType = any;
 
 export default class ValuesForm extends Component<PropsType, StateType> {
 
-  // Initialize corresponding state fields for form blocks
-  componentDidMount() {
+  updateFormState() {
     let formState: any = {};
-    this.props.formData.Sections.forEach((section: Section, i: number) => {
-      section.Contents.forEach((item: FormElement, i: number) => {
+    this.props.sections.forEach((section: Section, i: number) => {
+      section.contents.forEach((item: FormElement, i: number) => {
 
         // If no name is assigned use values.yaml variable as identifier
-        let key = item.Name || item.Variable;
+        let key = item.name || item.variable;
         
-        let def = item.Settings.Default;
-        switch (item.Type) {
+        let def = item.settings && item.settings.default;
+        switch (item.type) {
           case 'checkbox':
             formState[key] = def ? def : false;
             break;
@@ -34,10 +40,10 @@ export default class ValuesForm extends Component<PropsType, StateType> {
             formState[key] = def ? def : '';
             break;
           case 'number-input':
-            formState[key] = def ? def : '';
+            formState[key] = def.toString() ? def : '';
             break;
           case 'select':
-            formState[key] = def ? def : item.Settings.Options[0].Value;
+            formState[key] = def ? def : item.settings.options[0].value;
           default:
         }
       });
@@ -45,45 +51,56 @@ export default class ValuesForm extends Component<PropsType, StateType> {
     this.setState(formState);
   }
 
+  // Initialize corresponding state fields for form blocks
+  componentDidMount() {
+    this.updateFormState();
+  }
+
+  componentDidUpdate(prevProps: PropsType) {
+    if (this.props.sections !== prevProps.sections) {
+      this.updateFormState();
+    }
+  }
+
   renderSection = (section: Section) => {
-    return section.Contents.map((item: FormElement, i: number) => {
+    return section.contents.map((item: FormElement, i: number) => {
 
       // If no name is assigned use values.yaml variable as identifier
-      let key = item.Name || item.Variable;
-      switch (item.Type) {
+      let key = item.name || item.variable;
+      switch (item.type) {
         case 'heading':
-          return <Heading key={i}>{item.Label}</Heading>
+          return <Heading key={i}>{item.label}</Heading>
         case 'subtitle':
-          return <Helper key={i}>{item.Label}</Helper>
+          return <Helper key={i}>{item.label}</Helper>
         case 'checkbox':
           return (
             <CheckboxRow
               key={i}
               checked={this.state[key]}
               toggle={() => this.setState({ [key]: !this.state[key] })}
-              label={item.Label}
+              label={item.label}
             />
           );
         case 'string-input':
           return (
             <InputRow
               key={i}
-              type={'text'}
+              type='text'
               value={this.state[key]}
               setValue={(x: string) => this.setState({ [key]: x })}
-              label={item.Label}
-              unit={item.Settings ? item.Settings.Unit : null}
+              label={item.label}
+              unit={item.settings ? item.settings.unit : null}
             />
           );
         case 'number-input':
           return (
             <InputRow
               key={i}
-              type={'number'}
+              type='number'
               value={this.state[key]}
-              setValue={(x: string) => this.setState({ [key]: parseInt(x) })}
-              label={item.Label}
-              unit={item.Settings ? item.Settings.Unit : null}
+              setValue={(x: number) => this.setState({ [key]: x })}
+              label={item.label}
+              unit={item.settings ? item.settings.unit : null}
             />
           );
         case 'select':
@@ -92,9 +109,9 @@ export default class ValuesForm extends Component<PropsType, StateType> {
               key={i}
               value={this.state[key]}
               setActiveValue={(val) => this.setState({ [key]: val })}
-              options={item.Settings.Options}
+              options={item.settings.options}
               dropdownLabel=''
-              label={item.Label}
+              label={item.label}
             />
           );
         default:
@@ -104,11 +121,10 @@ export default class ValuesForm extends Component<PropsType, StateType> {
 
   renderFormContents = () => {
     if (this.state) {
-      return this.props.formData.Sections.map((section: Section, i: number) => {
-
+      return this.props.sections.map((section: Section, i: number) => {
         // Hide collapsible section if deciding field is false
-        if (section.ShowIf) {
-          if (!this.state[section.ShowIf]) {
+        if (section.show_if) {
+          if (!this.state[section.show_if]) {
             return null;
           }
         }
@@ -130,14 +146,18 @@ export default class ValuesForm extends Component<PropsType, StateType> {
           {this.renderFormContents()}
         </StyledValuesForm>
         <SaveButton
+          disabled={this.props.disabled}
           text='Deploy'
-          onClick={() => console.log(this.state)}
-          status={null}
+          onClick={() => this.props.onSubmit(this.state)}
+          status={this.props.saveValuesStatus}
+          makeFlush={true}
         />
       </Wrapper>
     );
   }
 }
+
+ValuesForm.contextType = Context;
 
 const DarkMatter = styled.div`
   margin-top: 0px;
@@ -146,22 +166,6 @@ const DarkMatter = styled.div`
 const Wrapper = styled.div`
   width: 100%;
   height: 100%;
-`;
-
-const Helper = styled.div`
-  color: #aaaabb;
-  line-height: 1.6em;
-  font-size: 13px;
-  margin-bottom: 15px;
-  margin-top: 20px;
-`;
-
-const Heading = styled.div`
-  color: white;
-  font-weight: 500;
-  font-size: 16px;
-  margin-top: 30px;
-  margin-bottom: 5px;
 `;
 
 const StyledValuesForm = styled.div`

@@ -75,15 +75,15 @@ export default class Templates extends Component<PropsType, StateType> {
     }
 
     return this.state.porterCharts.map((template: PorterChart, i: number) => {
-      let { Name, Icon, Description } = template.Form;
+      let { name, icon, description } = template.form;
       return (
         <TemplateBlock key={i} onClick={() => this.setState({ currentTemplate: template })}>
-          {Icon ? this.renderIcon(Icon) : this.renderIcon(template.Icon)}
+          {icon ? this.renderIcon(icon) : this.renderIcon(template.icon)}
           <TemplateTitle>
-            {Name ? Name : template.Name}
+            {name ? name : template.name}
           </TemplateTitle>
           <TemplateDescription>
-            {Description ? Description : template.Description}
+            {description ? description : template.description}
           </TemplateDescription>
         </TemplateBlock>
       )
@@ -118,11 +118,7 @@ export default class Templates extends Component<PropsType, StateType> {
   }
   
   render() {
-    return ( 
-      <StyledTemplates>
-        {this.renderContents()}
-      </StyledTemplates>
-    );
+    return this.renderContents();
   }
 }
 
@@ -186,7 +182,6 @@ const TemplateTitle = styled.div`
 `;
 
 const TemplateBlock = styled.div`
-  background: none;
   border: 1px solid #ffffff00;
   align-items: center;
   user-select: none;
@@ -242,19 +237,8 @@ const TitleSection = styled.div`
   align-items: center;
 `;
 
-const StyledTemplates = styled.div`
-  height: 100%;
-  width: 100vw;
-  padding-top: 45px;
-  overflow-y: auto;
-  display: flex;
-  flex: 1;
-  justify-content: center;
-  position: relative;
-`;
-
 const TemplatesWrapper = styled.div`
   width: calc(90% - 150px);
   min-width: 300px;
-  padding-top: 30px;
+  padding-top: 50px;
 `;

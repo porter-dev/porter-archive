@@ -3,23 +3,19 @@ import styled from 'styled-components';
 
 import { RepoType } from '../../../../shared/types';
 
-import RepoSelector from '../../../../components/repo-selector/RepoSelector';
+import ImageSelector from '../../../../components/image-selector/ImageSelector';
 import SaveButton from '../../../../components/SaveButton';
 
 type PropsType = {
 };
 
 type StateType = {
-  selectedRepo: RepoType | null,
-  selectedBranch: string,
-  subdirectory: string,
+  selectedImageUrl: string | null,
 };
 
 export default class SettingsSection extends Component<PropsType, StateType> {
   state = {
-    selectedRepo: null as RepoType | null,
-    selectedBranch: '',
-    subdirectory: '',
+    selectedImageUrl: '',
   }
 
   render() {
@@ -27,19 +23,17 @@ export default class SettingsSection extends Component<PropsType, StateType> {
       <Wrapper>
         <StyledSettingsSection>
           <Subtitle>Connected source</Subtitle>
-          <RepoSelector
-            selectedRepo={this.state.selectedRepo}
-            selectedBranch={this.state.selectedBranch}
-            subdirectory={this.state.subdirectory}
-            setSelectedRepo={(selectedRepo: RepoType) => this.setState({ selectedRepo })}
-            setSelectedBranch={(selectedBranch: string) => this.setState({ selectedBranch })}
-            setSubdirectory={(subdirectory: string) => this.setState({ subdirectory })}
+          <ImageSelector
+            selectedImageUrl={this.state.selectedImageUrl}
+            setSelectedImageUrl={(x: string) => this.setState({ selectedImageUrl: x })}
+            forceExpanded={true}
           />
         </StyledSettingsSection>
         <SaveButton
           text='Save Settings'
           onClick={() => console.log(this.state)}
           status={null}
+          makeFlush={true}
         />
       </Wrapper>
     );

@@ -28,7 +28,7 @@ export default class TemplateInfo extends Component<PropsType, StateType> {
   }
 
   renderTagList = () => {
-    return this.props.currentTemplate.Form.Tags.map((tag: string, i: number) => {
+    return this.props.currentTemplate.form.tags.map((tag: string, i: number) => {
       return (
         <Tag key={i}>{tag}</Tag>
       )
@@ -37,22 +37,33 @@ export default class TemplateInfo extends Component<PropsType, StateType> {
 
   renderMarkdown = () => {
     let { currentTemplate } = this.props;
-    if (currentTemplate.Markdown) {
+    if (currentTemplate.markdown) {
       return (
-        <Markdown>{currentTemplate.Markdown}</Markdown>
+        <Markdown>{currentTemplate.markdown}</Markdown>
       );
-    } else if (currentTemplate.Form.Description) {
-      return currentTemplate.Form.Description;
+    } else if (currentTemplate.form.description) {
+      return currentTemplate.form.description;
     }
 
-    return currentTemplate.Description;
+    return currentTemplate.description;
+  }
+
+  renderTagSection = () => {
+    if (this.props.currentTemplate.form.tags) {
+      return (
+        <TagSection>
+          <i className="material-icons">local_offer</i>
+          {this.renderTagList()}
+        </TagSection>
+      );
+    }
   }
 
   render() {
     let { currentCluster } = this.context;
-    let { Name, Icon } = this.props.currentTemplate.Form;
+    let { name, icon } = this.props.currentTemplate.form;
     let { currentTemplate } = this.props;
-    let name = Name ? Name : currentTemplate.Name;
+    name = name ? name : currentTemplate.name;
     return (
       <StyledExpandedTemplate>
         <TitleSection>
@@ -60,7 +71,7 @@ export default class TemplateInfo extends Component<PropsType, StateType> {
             <i className="material-icons" onClick={() => this.props.setCurrentTemplate(null)}>
               keyboard_backspace
             </i>
-            {Icon ? this.renderIcon(Icon) : this.renderIcon(currentTemplate.Icon)}
+            {icon ? this.renderIcon(icon) : this.renderIcon(currentTemplate.icon)}
             <Title>{name}</Title>
           </Flex>
           <Button
@@ -71,10 +82,7 @@ export default class TemplateInfo extends Component<PropsType, StateType> {
             Launch Template
           </Button>
         </TitleSection>
-        <TagSection>
-          <i className="material-icons">local_offer</i>
-          {this.renderTagList()}
-        </TagSection>
+        {this.renderTagSection()}
         <ContentSection>
           {this.renderMarkdown()}
         </ContentSection>
@@ -143,7 +151,7 @@ const Button = styled.div`
   font-size: 13px;
   padding: 10px 15px;
   border-radius: 3px;
-  cursor: ${(props: { isDisabled: boolean }) => (!props.isDisabled ? 'pointer' : 'default')};;
+  cursor: ${(props: { isDisabled: boolean }) => (!props.isDisabled ? 'pointer' : 'default')};
   box-shadow: 0 5px 8px 0px #00000010;
   display: flex;
   flex-direction: row;

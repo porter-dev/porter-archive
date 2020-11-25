@@ -51,5 +51,5 @@ export default class ExpandedTemplate extends Component<PropsType, StateType> {
 const StyledExpandedTemplate = styled.div`
   width: calc(90% - 150px);
   min-width: 300px;
-  padding-top: 30px;
+  padding-top: 50px;
 `;

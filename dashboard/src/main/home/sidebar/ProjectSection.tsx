@@ -175,7 +175,7 @@ const Option = styled.div`
   font-size: 13px;
   align-items: center;
   padding-left: 10px;
-  cursor: ${(props: { selected: boolean, lastItem?: boolean }) => props.selected ? '' : 'pointer'};;
+  cursor: ${(props: { selected: boolean, lastItem?: boolean }) => props.selected ? '' : 'pointer'};
   padding-right: 10px;
   background: ${(props: { selected: boolean, lastItem?: boolean }) => props.selected ? '#ffffff11' : ''};
   :hover {

@@ -153,7 +153,7 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
     if (this.state.devOpsMode) {
       tabOptions.push(
         { label: 'Chart Overview', value: 'graph' },
-        { label: 'Search Chart', value: 'list' },
+        { label: 'Manifests', value: 'list' },
         { label: 'Raw Values', value: 'values' }
       );
     }
@@ -193,6 +193,9 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
           <ListSection
             currentChart={chart}
             components={this.state.components}
+
+            // Handle resize YAML wrapper
+            showRevisions={this.state.showRevisions}
           />
         ),
       },
@@ -257,7 +260,7 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
       let { tabOptions } = this.state;
       tabOptions.push(
         { label: 'Chart Overview', value: 'graph' },
-        { label: 'Search Chart', value: 'list' },
+        { label: 'Manifests', value: 'list' },
         { label: 'Raw Values', value: 'values' }
       );
       this.setState({ devOpsMode: true, tabOptions, checkTabExists: false });
@@ -367,6 +370,8 @@ const TabButton = styled.div`
   position: absolute;
   right: 0px;
   height: 30px;
+  background: linear-gradient(to right, #26282f00, #26282f 20%);
+  padding-left: 30px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -535,7 +540,7 @@ const StyledExpandedChart = styled.div`
   z-index: 0;
   position: absolute;
   top: 25px;
-  left: 25px;;
+  left: 25px;
   border-radius: 10px;
   background: #26282f;
   box-shadow: 0 5px 12px 4px #00000033;

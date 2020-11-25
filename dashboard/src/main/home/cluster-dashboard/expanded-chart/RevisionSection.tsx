@@ -287,7 +287,7 @@ const RevisionHeader = styled.div`
   display: flex;
   align-items: center;
   height: 40px;
-  font-size: 14px;
+  font-size: 13px;
   width: 100%;
   padding-left: 15px;
   cursor: pointer;

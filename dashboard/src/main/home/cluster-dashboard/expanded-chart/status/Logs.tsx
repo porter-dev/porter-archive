@@ -72,7 +72,9 @@ export default class Logs extends Component<PropsType, StateType> {
   render() {
     return (
       <LogStream ref={this.scrollRef}>
-        {this.renderLogs()}
+        <Wrapper>
+          {this.renderLogs()}
+        </Wrapper>
       </LogStream>
     );
   }
@@ -80,16 +82,21 @@ export default class Logs extends Component<PropsType, StateType> {
 
 Logs.contextType = Context;
 
+const Wrapper = styled.div`
+  width: 100%;
+  height: 100%;
+`;
+
 const LogStream = styled.div`
   overflow: auto;
-  width: 65%;
+  display: flex;
+  flex: 1;
   float: right;
   height: 100%;
   background: #202227;
-  padding: 25px;
+  padding: 25px 30px;
   user-select: text;
   overflow: auto;
-  border-radius: 5px;
 `;
 
 const Message = styled.div`
@@ -100,4 +107,4 @@ const Message = styled.div`
   justify-content: center;
   color: #ffffff44;
   font-size: 14px;
-`
+`;

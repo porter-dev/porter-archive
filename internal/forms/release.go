@@ -113,3 +113,16 @@ type UpgradeReleaseForm struct {
 	Name   string `json:"name" form:"required"`
 	Values string `json:"values" form:"required"`
 }
+
+// ChartTemplateForm represents the accepted values for installing a new chart from a template.
+type ChartTemplateForm struct {
+	TemplateName string                 `json:"templateName" form:"required"`
+	ImageURL     string                 `json:"imageURL" form:"required"`
+	FormValues   map[string]interface{} `json:"formValues"`
+}
+
+// InstallChartTemplateForm represents the accepted values for installing a new chart from a template.
+type InstallChartTemplateForm struct {
+	*ReleaseForm
+	*ChartTemplateForm
+}

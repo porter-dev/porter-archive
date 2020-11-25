@@ -23,6 +23,10 @@ export interface ChartType {
       icon: string,
       apiVersion: string
     },
+    files?: {
+      data: string,
+      name: string,
+    }[],
   },
   config: string,
   version: number,
@@ -64,38 +68,42 @@ export enum StorageType {
 
 // PorterChart represents a bundled Porter template
 export interface PorterChart {
-	Name: string,
-	Description: string,
-	Icon: string,
-  Form: FormYAML,
-  Markdown?: string,
+	name: string,
+	description: string,
+	icon: string,
+  form: FormYAML,
+  markdown?: string,
 }
 
 // FormYAML represents a chart's values.yaml form abstraction
 export interface FormYAML {
-	Name?: string,  
-	Icon?: string,   
-	Description?: string,   
-	Tags?: string[],
-  Sections?: Section[]
+	name?: string,  
+	icon?: string,   
+	description?: string,   
+  tags?: string[],
+  tabs?: {
+    name: string,
+    label: string,
+    sections?: Section[]
+  }[]
 }
 
 export interface Section {
-  Name?: string,
-  ShowIf?: string,
-  Contents: FormElement[]
+  name?: string,
+  show_if?: string,
+  contents: FormElement[]
 }
 
 // FormElement represents a form element
 export interface FormElement {
-  Type: string,
-  Label: string,
-  Name?: string,
-  Variable?: string,
-  Settings?: {
-    Default?: number | string | boolean,
-    Options?: any[],
-    Unit?: string
+  type: string,
+  label: string,
+  name?: string,
+  variable?: string,
+  settings?: {
+    default?: number | string | boolean,
+    options?: any[],
+    unit?: string
   }
 }
 
@@ -118,4 +126,14 @@ export interface ProjectType {
     user_id: number,
     project_id: number
   }[]
+}
+
+export interface ChoiceType {
+  value: string,
+  label: string
+}
+
+export interface ImageType {
+  kind: string,
+  source: string,
 }

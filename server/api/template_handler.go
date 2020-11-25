@@ -12,66 +12,16 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/porter-dev/porter/internal/models"
+
 	"gopkg.in/yaml.v2"
 )
-
-// IndexYAML represents a chart repo's index.yaml
-type IndexYAML struct {
-	APIVersion string                    `yaml:"apiVersion"`
-	Generated  string                    `yaml:"generated"`
-	Entries    map[interface{}]ChartYAML `yaml:"entries"`
-}
-
-// ChartYAML represents the data for chart in index.yaml
-type ChartYAML []struct {
-	APIVersion  string   `yaml:"apiVersion"`
-	AppVersion  string   `yaml:"appVersion"`
-	Created     string   `yaml:"created"`
-	Description string   `yaml:"description"`
-	Digest      string   `yaml:"digest"`
-	Icon        string   `yaml:"icon"`
-	Name        string   `yaml:"name"`
-	Type        string   `yaml:"type"`
-	Urls        []string `yaml:"urls"`
-	Version     string   `yaml:"version"`
-}
-
-// PorterChart represents a bundled Porter template
-type PorterChart struct {
-	Name        string
-	Description string
-	Icon        string
-	Form        FormYAML
-	Markdown    string
-}
-
-// FormYAML represents a chart's values.yaml form abstraction
-type FormYAML struct {
-	Name        string   `yaml:"name"`
-	Icon        string   `yaml:"icon"`
-	Description string   `yaml:"description"`
-	Tags        []string `yaml:"tags"`
-	Sections    []struct {
-		Name     string `yaml:"name"`
-		ShowIf   string `yaml:"show_if"`
-		Contents []struct {
-			Type     string `yaml:"type"`
-			Label    string `yaml:"label"`
-			Name     string `yaml:"name,omitempty"`
-			Variable string `yaml:"variable,omitempty"`
-			Settings struct {
-				Default interface{}
-			} `yaml:"settings,omitempty"`
-		} `yaml:"contents"`
-	} `yaml:"sections"`
-}
 
 // HandleListTemplates retrieves a list of Porter templates
 // TODO: test and reduce fragility (handle untar/parse error for individual charts)
 // TODO: separate markdown retrieval into its own query if necessary
 func (app *App) HandleListTemplates(w http.ResponseWriter, r *http.Request) {
 	baseURL := "https://porter-dev.github.io/chart-repo/"
-
 	resp, err := http.Get(baseURL + "index.yaml")
 	if err != nil {
 		fmt.Println(err)
@@ -81,14 +31,14 @@ func (app *App) HandleListTemplates(w http.ResponseWriter, r *http.Request) {
 	defer resp.Body.Close()
 	body, _ := ioutil.ReadAll(resp.Body)
 
-	form := IndexYAML{}
+	form := models.IndexYAML{}
 	if err := yaml.Unmarshal([]byte(body), &form); err != nil {
 		fmt.Println(err)
 		return
 	}
 
 	// Loop over charts in index.yaml
-	porterCharts := []PorterChart{}
+	porterCharts := []models.PorterChart{}
 	for k := range form.Entries {
 		indexChart := form.Entries[k][0]
 		tarURL := indexChart.Urls[0]
@@ -102,7 +52,7 @@ func (app *App) HandleListTemplates(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		porterChart := PorterChart{}
+		porterChart := models.PorterChart{}
 		porterChart.Name = indexChart.Name
 		porterChart.Description = indexChart.Description
 		porterChart.Icon = indexChart.Icon
@@ -117,7 +67,7 @@ func (app *App) HandleListTemplates(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(porterCharts)
 }
 
-func processTarball(tarURL string) (*FormYAML, string, error) {
+func processTarball(tarURL string) (*models.FormYAML, string, error) {
 	resp, err := http.Get(tarURL)
 	if err != nil {
 		fmt.Println(err)
@@ -176,7 +126,7 @@ func processTarball(tarURL string) (*FormYAML, string, error) {
 				}
 
 				// Unmarshal yaml byte buffer
-				form := FormYAML{}
+				form := models.FormYAML{}
 				if err := yaml.Unmarshal(bufForm.Bytes(), &form); err != nil {
 					fmt.Println(err)
 					return nil, "", err

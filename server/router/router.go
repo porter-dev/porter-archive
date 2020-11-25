@@ -246,6 +246,20 @@ func New(
 
 		r.Method(
 			"GET",
+			"/projects/{project_id}/releases/{name}/{revision}/controllers",
+			auth.DoesUserHaveProjectAccess(
+				auth.DoesUserHaveClusterAccess(
+					requestlog.NewHandler(a.HandleGetReleaseControllers, l),
+					mw.URLParam,
+					mw.QueryParam,
+				),
+				mw.URLParam,
+				mw.ReadAccess,
+			),
+		)
+
+		r.Method(
+			"GET",
 			"/projects/{project_id}/releases/{name}/history",
 			auth.DoesUserHaveProjectAccess(
 				auth.DoesUserHaveClusterAccess(
@@ -331,6 +345,28 @@ func New(
 		// 	),
 		// )
 
+		// /api/projects/{project_id}/images routes
+		// TODO: add back project access check
+		r.Method(
+			"GET",
+			"/projects/{project_id}/images",
+			auth.BasicAuthenticate(requestlog.NewHandler(a.HandleListImages, l)),
+		)
+
+		r.Method(
+			"POST",
+			"/projects/{project_id}/deploy",
+			auth.DoesUserHaveProjectAccess(
+				auth.DoesUserHaveClusterAccess(
+					requestlog.NewHandler(a.HandleDeployTemplate, l),
+					mw.URLParam,
+					mw.QueryParam,
+				),
+				mw.URLParam,
+				mw.ReadAccess,
+			),
+		)
+
 		// /api/templates routes
 		r.Method(
 			"GET",
@@ -361,6 +397,20 @@ func New(
 			auth.DoesUserHaveProjectAccess(
 				auth.DoesUserHaveClusterAccess(
 					requestlog.NewHandler(a.HandleGetPodLogs, l),
+					mw.URLParam,
+					mw.QueryParam,
+				),
+				mw.URLParam,
+				mw.ReadAccess,
+			),
+		)
+
+		r.Method(
+			"GET",
+			"/projects/{project_id}/k8s/{kind}/status",
+			auth.DoesUserHaveProjectAccess(
+				auth.DoesUserHaveClusterAccess(
+					requestlog.NewHandler(a.HandleStreamControllerStatus, l),
 					mw.URLParam,
 					mw.QueryParam,
 				),

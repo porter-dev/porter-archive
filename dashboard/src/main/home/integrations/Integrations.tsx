@@ -3,7 +3,7 @@ import styled from 'styled-components';
 
 import { Context } from '../../../shared/Context';
 import api from '../../../shared/api';
-import { getIntegrationIcon } from '../../../shared/common';
+import { integrationList } from '../../../shared/common';
 import { ChoiceType } from '../../../shared/types';
 
 import IntegrationList from './IntegrationList';
@@ -14,7 +14,7 @@ type PropsType = {
 
 type StateType = {
   currentCategory: ChoiceType | null,
-  currentIntegration: any | null,
+  currentIntegration: string | null,
   currentOptions: any[],
 };
 
@@ -39,23 +39,34 @@ const categories = [
 export default class Integrations extends Component<PropsType, StateType> {
   state = {
     currentCategory: null as any | null,
-    currentIntegration: null as any | null,
+    currentIntegration: null as string | null,
     currentOptions: [] as any[],
   }
 
+  // TODO: implement once backend is restructured
   getIntegrations = (categoryType: string): any[] => {
+    return [];
+    /*
+    let { currentProject } = this.context;
     switch (categoryType) {
       case 'kubernetes':
-        return [
-          {
-            value: 'gke',
-            label: 'Google Kubernetes Engine (GKE)',
-          },
-          {
-            value: 'eks',
-            label: 'Amazon Elastic Kubernetes Service (EKS)',
-          },
-        ];
+        api.getProjectClusterIntegrations('<token>', {}, { id: currentProject.id }, (err: any, res: any) => {
+          if (err) {
+            console.log(err);
+          } else {
+            console.log(res.data)
+            return [
+              {
+                value: 'gke',
+                label: 'Google Kubernetes Engine (GKE)',
+              },
+              {
+                value: 'eks',
+                label: 'Amazon Elastic Kubernetes Service (EKS)',
+              },
+            ];
+          }
+        });
       case 'registry':
         return [
           {
@@ -67,13 +78,14 @@ export default class Integrations extends Component<PropsType, StateType> {
             label: 'Elastic Container Registry (ECR)',
           },
           {
-            value: 'docker-hub',
+            value: 'docker',
             label: 'Docker Hub',
           },
         ];
       default:
         return [];
     }
+    */
   }
 
   componentDidUpdate(prevProps: PropsType, prevState: StateType) {
@@ -86,7 +98,7 @@ export default class Integrations extends Component<PropsType, StateType> {
     let { currentCategory, currentIntegration } = this.state;
 
     if (currentIntegration) {
-      let icon = getIntegrationIcon(currentIntegration.value);
+      let icon = integrationList[currentIntegration] && integrationList[currentIntegration].icon;
       return (
         <div>
           <TitleSectionAlt>
@@ -95,16 +107,16 @@ export default class Integrations extends Component<PropsType, StateType> {
                 keyboard_backspace
               </i>
               <Icon src={icon && icon} />
-              <Title>{currentIntegration.label}</Title>
+              <Title>{integrationList[currentIntegration].label}</Title>
             </Flex>
           </TitleSectionAlt>
 
-          <IntegrationForm integrationName={currentIntegration.value} />
+          <IntegrationForm integrationName={currentIntegration} />
           <Br />
         </div>
       );
     } else if (currentCategory) {
-      let icon = getIntegrationIcon(currentCategory.value);
+      let icon = integrationList[currentCategory.value] && integrationList[currentCategory.value].icon;
       return (
         <div>
           <TitleSectionAlt>
@@ -118,7 +130,7 @@ export default class Integrations extends Component<PropsType, StateType> {
 
             <Button 
               onClick={() => this.context.setCurrentModal('IntegrationsModal', { 
-                integrations: this.state.currentOptions,
+                category: this.state.currentCategory.value,
                 setCurrentIntegration: (x: any) => this.setState({ currentIntegration: x })
               })}
             >

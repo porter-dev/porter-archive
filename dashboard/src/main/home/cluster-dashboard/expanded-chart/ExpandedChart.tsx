@@ -67,7 +67,6 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
     api.getChartComponents('<token>', {
       namespace: currentChart.namespace,
       cluster_id: currentCluster.id,
-      service_account_id: currentCluster.service_account_id,
       storage: StorageType.Secret
     }, {
       id: currentProject.id,
@@ -229,7 +228,6 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
       api.getChartComponents('<token>', {
         namespace: oldChart.namespace,
         cluster_id: currentCluster.id,
-        service_account_id: currentCluster.service_account_id,
         storage: StorageType.Secret
       }, {
         id: currentProject.id,

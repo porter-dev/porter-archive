@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import styled from 'styled-components';
 
 import { Context } from '../../../shared/Context';
-import { getIntegrationIcon } from '../../../shared/common';
+import { integrationList } from '../../../shared/common';
 import api from '../../../shared/api';
 
 type PropsType = {
@@ -17,9 +17,9 @@ type StateType = {
 export default class IntegrationList extends Component<PropsType, StateType> {
   renderContents = () => {
     let { integrations, setCurrent, isCategory } = this.props;
-    if (integrations) {
+    if (integrations && integrations.length > 0) {
       return integrations.map((integration: any, i: number) => {
-        let icon = getIntegrationIcon(integration.value);
+        let icon = integrationList[integration.value] && integrationList[integration.value].icon;
         let disabled = integration.value === 'repo';
         return (
           <Integration
@@ -39,7 +39,7 @@ export default class IntegrationList extends Component<PropsType, StateType> {
     }
     return (
       <Placeholder>
-        You haven't set up any integrations yet.
+        No integrations set up yet.
       </Placeholder>
     );
   }

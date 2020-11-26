@@ -28,7 +28,6 @@ export default class NamespaceSelector extends Component<PropsType, StateType> {
 
     api.getNamespaces('<token>', {
       cluster_id: currentCluster.id,
-      service_account_id: currentCluster.service_account_id
     }, { id: currentProject.id }, (err: any, res: any) => {
       if (err && this._isMounted) {
         // setCurrentError('Could not read clusters: ' + JSON.stringify(err));

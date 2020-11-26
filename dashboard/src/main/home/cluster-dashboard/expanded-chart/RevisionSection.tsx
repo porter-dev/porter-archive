@@ -38,7 +38,6 @@ export default class RevisionSection extends Component<PropsType, StateType> {
     api.getRevisions('<token>', {
       namespace: chart.namespace,
       cluster_id: currentCluster.id,
-      service_account_id: currentCluster.service_account_id,
       storage: StorageType.Secret
     }, { id: currentProject.id, name: chart.name }, (err: any, res: any) => {
       if (err) {

@@ -42,7 +42,6 @@ export default class ClusterDashboard extends Component<PropsType, StateType> {
     api.getChart('<token>', {
       namespace: this.state.namespace,
       cluster_id: currentCluster.id,
-      service_account_id: currentCluster.service_account_id,
       storage: StorageType.Secret
     }, {
       name: this.state.currentChart.name,

@@ -3,34 +3,70 @@ import styled from 'styled-components';
 import close from '../../../assets/close.png';
 
 import { Context } from '../../../shared/Context';
-import { getIntegrationIcon } from '../../../shared/common';
+import api from '../../../shared/api';
+import { integrationList } from '../../../shared/common';
 
 type PropsType = {
 };
 
 type StateType = {
+  integrations: any[],
 };
 
 export default class IntegrationsModal extends Component<PropsType, StateType> {
   state = {
+    integrations: [] as any[],
+  }
+
+  componentDidMount() {
+    let { category } = this.context.currentModalData;
+    if (category === 'kubernetes') {
+      api.getClusterIntegrations('<token>', {}, {}, (err: any, res: any) => {
+        if (err) {
+          console.log(err);
+        } else {
+          this.setState({ integrations: res.data });
+        }
+      });
+    } else if (category === 'registry') {
+      api.getRegistryIntegrations('<token>', {}, {}, (err: any, res: any) => {
+        if (err) {
+          console.log(err);
+        } else {
+          console.log(res.data)
+          this.setState({ integrations: res.data });
+        }
+      });
+    } else {
+      api.getRepoIntegrations('<token>', {}, {}, (err: any, res: any) => {
+        if (err) {
+          console.log(err);
+        } else {
+          this.setState({ integrations: res.data });
+        }
+      });
+    }
   }
 
   renderIntegrationsCatalog = () => {
     if (this.context.currentModalData) {
-      let { integrations, setCurrentIntegration } = this.context.currentModalData;
-      
-      return integrations.map((integration: any, i: number) => {
-        let icon = getIntegrationIcon(integration.value);
+      let { setCurrentIntegration } = this.context.currentModalData;
+      return this.state.integrations.map((integration: any, i: number) => {
+        let icon = integrationList[integration.service] && integrationList[integration.service].icon;
+        let disabled = integration.service === 'kube' || integration.service === 'docker';
         return (
           <IntegrationOption 
             key={i}
+            disabled={disabled}
             onClick={() => {
-              setCurrentIntegration(integration);
-              this.context.setCurrentModal(null, null);
+              if (!disabled) {
+                setCurrentIntegration(integration.service);
+                this.context.setCurrentModal(null, null);
+              }
             }}
           >
             <Icon src={icon && icon} />
-            <Label>{integration.label}</Label>
+            <Label>{integrationList[integration.service].label}</Label>
           </IntegrationOption>
         );
       });
@@ -78,9 +114,9 @@ const IntegrationOption = styled.div`
   display: flex;
   align-items: center;
   padding: 20px;
-  cursor: pointer;
+  cursor: ${(props: { disabled: boolean }) => props.disabled ? 'not-allowed' : 'pointer'};
   :hover {
-    background: #ffffff22;
+    background: ${(props: { disabled: boolean }) => props.disabled ? '' : '#ffffff22'};
   }
 `;
 

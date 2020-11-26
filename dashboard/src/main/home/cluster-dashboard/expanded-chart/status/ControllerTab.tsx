@@ -43,7 +43,6 @@ export default class ControllerTab extends Component<PropsType, StateType> {
     
     api.getMatchingPods('<token>', { 
       cluster_id: currentCluster.id,
-      service_account_id: currentCluster.service_account_id,
       selectors,
     }, {
       id: currentProject.id

@@ -1,7 +1,7 @@
 import axios from 'axios';
 import qs from 'qs';
 
-axios.defaults.timeout = 8000;
+axios.defaults.timeout = 10000;
 
 // Partial function that accepts a generic params type and returns an api method
 export const baseApi = <T extends {}, S = {}>(requestType: string, endpoint: ((pathParams: S) => string) | string) => {

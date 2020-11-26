@@ -40,7 +40,6 @@ export default class ChartList extends Component<PropsType, StateType> {
     api.getCharts('<token>', {
       namespace: this.props.namespace,
       cluster_id: currentCluster.id,
-      service_account_id: currentCluster.service_account_id,
       storage: StorageType.Secret,
       limit: 20,
       skip: 0,
@@ -120,7 +119,6 @@ export default class ChartList extends Component<PropsType, StateType> {
         api.getChartControllers('<token>', {
           namespace: chart.namespace,
           cluster_id: currentCluster.id,
-          service_account_id: currentCluster.service_account_id,
           storage: StorageType.Secret
         }, {
           id: currentProject.id,
@@ -244,5 +242,5 @@ const LoadingWrapper = styled.div`
 `;
 
 const StyledChartList = styled.div`
-  padding-bottom: 100px;
+  padding-bottom: 85px;
 `;

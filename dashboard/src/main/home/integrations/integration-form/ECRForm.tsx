@@ -26,6 +26,10 @@ export default class ECRForm extends Component<PropsType, StateType> {
     awsSecretKey: '',
   }
 
+  handleSubmit = () => {
+    // TODO: implement once api is restructured
+  }
+
   render() {
     return ( 
       <StyledForm>
@@ -62,7 +66,7 @@ export default class ECRForm extends Component<PropsType, StateType> {
         <SaveButton
           text='Save Settings'
           makeFlush={true}
-          onClick={() => console.log('unimplemented')}
+          onClick={this.handleSubmit}
         />
       </StyledForm>
     );
@@ -70,7 +74,7 @@ export default class ECRForm extends Component<PropsType, StateType> {
 }
 
 const CredentialWrapper = styled.div`
-  padding: 10px 40px 25px;
+  padding: 5px 40px 25px;
   background: #ffffff11;
   border-radius: 5px;
 `;

@@ -90,7 +90,6 @@ export default class StatusSection extends Component<PropsType, StateType> {
     api.getChartControllers('<token>', {
       namespace: currentChart.namespace,
       cluster_id: currentCluster.id,
-      service_account_id: currentCluster.service_account_id,
       storage: StorageType.Secret
     }, {
       id: currentProject.id,

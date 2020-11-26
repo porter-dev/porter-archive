@@ -4,7 +4,7 @@ import info from '../../assets/info.svg';
 import edit from '../../assets/edit.svg';
 
 import api from '../../shared/api';
-import { getIntegrationIcon } from '../../shared/common';
+import { integrationList } from '../../shared/common';
 import { Context } from '../../shared/Context';
 import { ImageType } from '../../shared/types';
 
@@ -78,7 +78,7 @@ export default class ImageSelector extends Component<PropsType, StateType> {
     }
 
     return images.map((image: ImageType, i: number) => {
-      let icon = getIntegrationIcon(image.kind);
+      let icon = image.kind;
       return (
         <ImageItem
           key={i}
@@ -143,7 +143,7 @@ export default class ImageSelector extends Component<PropsType, StateType> {
     let { selectedImageUrl, setSelectedImageUrl } = this.props;
     let icon = info;
     if (this.state.clickedImage) {
-      icon = getIntegrationIcon(this.state.clickedImage.kind);
+      icon = this.state.clickedImage.kind;
     } else if (selectedImageUrl && selectedImageUrl !== '') {
       icon = edit;
     }

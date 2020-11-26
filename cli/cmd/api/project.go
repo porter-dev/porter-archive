@@ -40,19 +40,19 @@ func (c *Client) GetProject(ctx context.Context, projectID uint) (*GetProjectRes
 	return bodyResp, nil
 }
 
-// GetProjectServiceAccountResponse is the response returned after querying for a
-// given project's service account
-type GetProjectServiceAccountResponse models.ServiceAccountExternal
+// GetProjectClusterResponse is the response returned after querying for a
+// given project's cluster
+type GetProjectClusterResponse models.ClusterExternal
 
-// GetProjectServiceAccount retrieves a project's service account by id
-func (c *Client) GetProjectServiceAccount(
+// GetProjectCluster retrieves a project's cluster by id
+func (c *Client) GetProjectCluster(
 	ctx context.Context,
 	projectID uint,
-	saID uint,
-) (*GetProjectServiceAccountResponse, error) {
+	clusterID uint,
+) (*GetProjectClusterResponse, error) {
 	req, err := http.NewRequest(
 		"GET",
-		fmt.Sprintf("%s/projects/%d/serviceAccounts/%d", c.BaseURL, projectID, saID),
+		fmt.Sprintf("%s/projects/%d/clusters/%d", c.BaseURL, projectID, clusterID),
 		nil,
 	)
 
@@ -61,7 +61,7 @@ func (c *Client) GetProjectServiceAccount(
 	}
 
 	req = req.WithContext(ctx)
-	bodyResp := &GetProjectServiceAccountResponse{}
+	bodyResp := &GetProjectClusterResponse{}
 
 	if httpErr, err := c.sendRequest(req, bodyResp, true); httpErr != nil || err != nil {
 		if httpErr != nil {
@@ -158,7 +158,7 @@ type CreateProjectCandidatesRequest struct {
 
 // CreateProjectCandidatesResponse is the list of candidates returned after
 // creating the candidates
-type CreateProjectCandidatesResponse []*models.ServiceAccountCandidateExternal
+type CreateProjectCandidatesResponse []*models.ClusterCandidateExternal
 
 // CreateProjectCandidates creates a service account candidate for a given project,
 // accepting a kubeconfig that gets parsed into a candidate
@@ -175,7 +175,7 @@ func (c *Client) CreateProjectCandidates(
 
 	req, err := http.NewRequest(
 		"POST",
-		fmt.Sprintf("%s/projects/%d/candidates", c.BaseURL, projectID),
+		fmt.Sprintf("%s/projects/%d/clusters/candidates", c.BaseURL, projectID),
 		strings.NewReader(string(data)),
 	)
 
@@ -198,7 +198,7 @@ func (c *Client) CreateProjectCandidates(
 }
 
 // GetProjectCandidatesResponse is the list of service account candidates
-type GetProjectCandidatesResponse []*models.ServiceAccountCandidateExternal
+type GetProjectCandidatesResponse []*models.ClusterCandidateExternal
 
 // GetProjectCandidates returns the service account candidates for a given
 // project id
@@ -208,7 +208,7 @@ func (c *Client) GetProjectCandidates(
 ) (GetProjectCandidatesResponse, error) {
 	req, err := http.NewRequest(
 		"GET",
-		fmt.Sprintf("%s/projects/%d/candidates", c.BaseURL, projectID),
+		fmt.Sprintf("%s/projects/%d/clusters/candidates", c.BaseURL, projectID),
 		nil,
 	)
 
@@ -230,23 +230,19 @@ func (c *Client) GetProjectCandidates(
 	return bodyResp, nil
 }
 
-// CreateProjectServiceAccountRequest is a list of service account actions,
-// which resolve a given service account
-type CreateProjectServiceAccountRequest []*models.ServiceAccountAllActions
+// CreateProjectClusterResponse is the cluster that gets
+// returned after the candidate has been resolved
+type CreateProjectClusterResponse models.ClusterExternal
 
-// CreateProjectServiceAccountResponse is the service account that gets
-// returned after the actions have been resolved
-type CreateProjectServiceAccountResponse models.ServiceAccountExternal
-
-// CreateProjectServiceAccount creates a service account given a project id
+// CreateProjectCluster creates a cluster given a project id
 // and a candidate id, which gets resolved using the list of actions
-func (c *Client) CreateProjectServiceAccount(
+func (c *Client) CreateProjectCluster(
 	ctx context.Context,
 	projectID uint,
 	candidateID uint,
-	createSARequest CreateProjectServiceAccountRequest,
-) (*CreateProjectServiceAccountResponse, error) {
-	data, err := json.Marshal(&createSARequest)
+	createReq *models.ClusterResolverAll,
+) (*CreateProjectClusterResponse, error) {
+	data, err := json.Marshal(&createReq)
 
 	if err != nil {
 		return nil, err
@@ -254,7 +250,7 @@ func (c *Client) CreateProjectServiceAccount(
 
 	req, err := http.NewRequest(
 		"POST",
-		fmt.Sprintf("%s/projects/%d/candidates/%d/resolve", c.BaseURL, projectID, candidateID),
+		fmt.Sprintf("%s/projects/%d/clusters/candidates/%d/resolve", c.BaseURL, projectID, candidateID),
 		strings.NewReader(string(data)),
 	)
 
@@ -263,7 +259,7 @@ func (c *Client) CreateProjectServiceAccount(
 	}
 
 	req = req.WithContext(ctx)
-	bodyResp := &CreateProjectServiceAccountResponse{}
+	bodyResp := &CreateProjectClusterResponse{}
 
 	if httpErr, err := c.sendRequest(req, bodyResp, true); httpErr != nil || err != nil {
 		if httpErr != nil {

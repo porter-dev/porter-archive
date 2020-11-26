@@ -11,10 +11,11 @@ import (
 
 // a set of shared flags
 var (
-	driver    string
-	host      string
-	projectID uint
-	clusterID uint
+	driver     string
+	host       string
+	projectID  uint
+	registryID uint
+	clusterID  uint
 )
 
 var configCmd = &cobra.Command{
@@ -64,6 +65,27 @@ var setClusterCmd = &cobra.Command{
 	},
 }
 
+var setRegistryCmd = &cobra.Command{
+	Use:   "set-registry [id]",
+	Args:  cobra.ExactArgs(1),
+	Short: "Saves the registry id in the default configuration",
+	Run: func(cmd *cobra.Command, args []string) {
+		registryID, err := strconv.ParseUint(args[0], 10, 64)
+
+		if err != nil {
+			color.New(color.FgRed).Printf("An error occurred: %v\n", err)
+			os.Exit(1)
+		}
+
+		err = setRegistry(uint(registryID))
+
+		if err != nil {
+			color.New(color.FgRed).Printf("An error occurred: %v\n", err)
+			os.Exit(1)
+		}
+	},
+}
+
 var setHostCmd = &cobra.Command{
 	Use:   "set-host [host]",
 	Args:  cobra.ExactArgs(1),
@@ -84,6 +106,7 @@ func init() {
 	configCmd.AddCommand(setProjectCmd)
 	configCmd.AddCommand(setClusterCmd)
 	configCmd.AddCommand(setHostCmd)
+	configCmd.AddCommand(setRegistryCmd)
 }
 
 func setDriver(driver string) error {
@@ -98,6 +121,10 @@ func getDriver() string {
 		return driver
 	}
 
+	if opts.driver != "" {
+		return opts.driver
+	}
+
 	return viper.GetString("driver")
 }
 
@@ -110,6 +137,12 @@ func setProject(id uint) error {
 func setCluster(id uint) error {
 	viper.Set("cluster", id)
 	color.New(color.FgGreen).Printf("Set the current cluster id as %d\n", id)
+	return viper.WriteConfig()
+}
+
+func setRegistry(id uint) error {
+	viper.Set("registry", id)
+	color.New(color.FgGreen).Printf("Set the current registry id as %d\n", id)
 	return viper.WriteConfig()
 }
 
@@ -134,6 +167,14 @@ func getClusterID() uint {
 	}
 
 	return viper.GetUint("cluster")
+}
+
+func getRegistryID() uint {
+	if registryID != 0 {
+		return registryID
+	}
+
+	return viper.GetUint("registry")
 }
 
 func getProjectID() uint {

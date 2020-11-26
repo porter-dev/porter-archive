@@ -30,7 +30,7 @@ func (app *App) HandleDeployTemplate(w http.ResponseWriter, r *http.Request) {
 	form := &forms.InstallChartTemplateForm{
 		ReleaseForm: &forms.ReleaseForm{
 			Form: &helm.Form{
-				UpdateTokenCache: app.updateTokenCache,
+				Repo: app.repo,
 			},
 		},
 		ChartTemplateForm: &forms.ChartTemplateForm{},
@@ -38,7 +38,7 @@ func (app *App) HandleDeployTemplate(w http.ResponseWriter, r *http.Request) {
 
 	form.ReleaseForm.PopulateHelmOptionsFromQueryParams(
 		vals,
-		app.repo.ServiceAccount,
+		app.repo.Cluster,
 	)
 
 	if err := json.NewDecoder(r.Body).Decode(form); err != nil {

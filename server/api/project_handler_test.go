@@ -3,9 +3,12 @@ package api_test
 import (
 	"encoding/json"
 	"net/http"
-	"reflect"
 	"strings"
 	"testing"
+
+	"github.com/porter-dev/porter/internal/kubernetes/fixtures"
+	"github.com/porter-dev/porter/internal/models/integrations"
+	"gorm.io/gorm"
 
 	"github.com/go-test/deep"
 	"github.com/porter-dev/porter/internal/forms"
@@ -117,28 +120,28 @@ func TestHandleReadProject(t *testing.T) {
 	testProjRequests(t, readProjectTests, true)
 }
 
-var readProjectSATest = []*projTest{
+var readProjectClusterTest = []*projTest{
 	&projTest{
 		initializers: []func(t *tester){
 			initUserDefault,
 			initProject,
-			initProjectSADefault,
+			initProjectClusterDefault,
 		},
-		msg:       "Read project service account",
+		msg:       "Read project cluster",
 		method:    "GET",
-		endpoint:  "/api/projects/1/serviceAccounts/1",
+		endpoint:  "/api/projects/1/clusters/1",
 		body:      ``,
 		expStatus: http.StatusOK,
-		expBody:   `{"id":1,"project_id":1,"kind":"connector","clusters":[{"id":1,"service_account_id":1,"name":"cluster-test","server":"https://10.10.10.10"}],"auth_mechanism":"oidc"}`,
+		expBody:   `{"id":1,"project_id":1,"name":"cluster-test","server":"https://10.10.10.10"}`,
 		useCookie: true,
 		validators: []func(c *projTest, tester *tester, t *testing.T){
-			projectSABodyValidator,
+			projectClusterBodyValidator,
 		},
 	},
 }
 
 func TestHandleReadProjectSA(t *testing.T) {
-	testProjRequests(t, readProjectSATest, true)
+	testProjRequests(t, readProjectClusterTest, true)
 }
 
 var listProjectClustersTest = []*projTest{
@@ -146,17 +149,17 @@ var listProjectClustersTest = []*projTest{
 		initializers: []func(t *tester){
 			initUserDefault,
 			initProject,
-			initProjectSADefault,
+			initProjectClusterDefault,
 		},
 		msg:       "List project clusters",
 		method:    "GET",
 		endpoint:  "/api/projects/1/clusters",
 		body:      ``,
 		expStatus: http.StatusOK,
-		expBody:   `[{"id":1,"service_account_id":1,"name":"cluster-test","server":"https://10.10.10.10"}]`,
+		expBody:   `[{"id":1,"project_id":1,"name":"cluster-test","server":"https://10.10.10.10"}]`,
 		useCookie: true,
 		validators: []func(c *projTest, tester *tester, t *testing.T){
-			projectClustersValidator,
+			projectClustersBodyValidator,
 		},
 	},
 }
@@ -165,58 +168,49 @@ func TestHandleListProjectClusters(t *testing.T) {
 	testProjRequests(t, listProjectClustersTest, true)
 }
 
-var createProjectSACandidatesTests = []*projTest{
+var createProjectClusterCandidatesTests = []*projTest{
 	&projTest{
 		initializers: []func(t *tester){
 			initUserDefault,
 			initProject,
 		},
-		msg:       "Create project SA candidate w/ no actions -- should create SA by default",
+		msg:       "Create project cluster candidate w/ no actions -- should create SA by default",
 		method:    "POST",
-		endpoint:  "/api/projects/1/candidates",
+		endpoint:  "/api/projects/1/clusters/candidates",
 		body:      `{"kubeconfig":"` + OIDCAuthWithDataForJSON + `"}`,
 		expStatus: http.StatusCreated,
-		expBody:   `[{"id":1,"actions":[],"created_sa_id":1,"project_id":1,"kind":"connector","context_name":"context-test","cluster_name":"cluster-test","cluster_endpoint":"https://10.10.10.10","auth_mechanism":"oidc"}]`,
+		expBody:   `[{"id":1,"resolvers":[],"created_cluster_id":1,"project_id":1,"context_name":"context-test","name":"cluster-test","server":"https://10.10.10.10"}]`,
 		useCookie: true,
 		validators: []func(c *projTest, tester *tester, t *testing.T){
-			projectSACandidateBodyValidator,
-			// check that ServiceAccount was created by default
+			projectClusterCandidateBodyValidator,
+			// check that Cluster was created by default
 			func(c *projTest, tester *tester, t *testing.T) {
-				serviceAccounts, err := tester.repo.ServiceAccount.ListServiceAccountsByProjectID(1)
+				clusters, err := tester.repo.Cluster.ListClustersByProjectID(1)
 
 				if err != nil {
 					t.Fatalf("%v\n", err)
 				}
 
-				if len(serviceAccounts) != 1 {
-					t.Fatal("Expected service account to be created by default, but does not exist\n")
+				if len(clusters) != 1 {
+					t.Fatal("Expected cluster to be created by default, but does not exist\n")
 				}
 
-				sa := serviceAccounts[0]
+				gotCluster := clusters[0]
+				gotCluster.Model = gorm.Model{}
 
-				if len(sa.Clusters) != 1 {
-					t.Fatalf("cluster not written\n")
+				expCluster := &models.Cluster{
+					AuthMechanism:            models.OIDC,
+					ProjectID:                1,
+					Name:                     "cluster-test",
+					Server:                   "https://10.10.10.10",
+					OIDCIntegrationID:        1,
+					TokenCache:               integrations.TokenCache{},
+					CertificateAuthorityData: []byte("-----BEGIN CER"),
 				}
 
-				if sa.Clusters[0].ServiceAccountID != 1 {
-					t.Errorf("service account ID of joined cluster is not 1")
-				}
-
-				if sa.AuthMechanism != models.OIDC {
-					t.Errorf("service account auth mechanism is not %s\n", models.OIDC)
-				}
-
-				if string(sa.OIDCCertificateAuthorityData) != "LS0tLS1CRUdJTiBDRVJ=" {
-					t.Errorf("service account key data and input do not match: expected %s, got %s\n",
-						string(sa.OIDCCertificateAuthorityData), "LS0tLS1CRUdJTiBDRVJ=")
-				}
-
-				if string(sa.OIDCClientID) != "porter-api" {
-					t.Errorf("service account oidc client id is not %s\n", "porter-api")
-				}
-
-				if string(sa.OIDCIDToken) != "token" {
-					t.Errorf("service account oidc id token is not %s\n", "token")
+				if diff := deep.Equal(gotCluster, expCluster); diff != nil {
+					t.Errorf("handler returned wrong body:\n")
+					t.Error(diff)
 				}
 			},
 		},
@@ -228,67 +222,67 @@ var createProjectSACandidatesTests = []*projTest{
 		},
 		msg:       "Create project SA candidate",
 		method:    "POST",
-		endpoint:  "/api/projects/1/candidates",
+		endpoint:  "/api/projects/1/clusters/candidates",
 		body:      `{"kubeconfig":"` + OIDCAuthWithoutDataForJSON + `"}`,
 		expStatus: http.StatusCreated,
-		expBody:   `[{"id":1,"actions":[{"name":"upload-oidc-idp-issuer-ca-data","filename":"/fake/path/to/ca.pem","docs":"https://github.com/porter-dev/porter","resolved":false,"fields":"oidc_idp_issuer_ca_data"}],"project_id":1,"kind":"connector","context_name":"context-test","cluster_name":"cluster-test","cluster_endpoint":"https://10.10.10.10","auth_mechanism":"oidc"}]`,
+		expBody:   `[{"id":1,"resolvers":[{"name":"upload-oidc-idp-issuer-ca-data","data":{"filename":"/fake/path/to/ca.pem"},"docs":"https://github.com/porter-dev/porter","resolved":false,"fields":"oidc_idp_issuer_ca_data"}],"created_cluster_id":0,"project_id":1,"context_name":"context-test","name":"cluster-test","server":"https://10.10.10.10"}]`,
 		useCookie: true,
 		validators: []func(c *projTest, tester *tester, t *testing.T){
-			projectSACandidateBodyValidator,
+			projectClusterCandidateBodyValidator,
 		},
 	},
 }
 
-func TestHandleCreateProjectSACandidate(t *testing.T) {
-	testProjRequests(t, createProjectSACandidatesTests, true)
+func TestHandleCreateProjectClusterCandidate(t *testing.T) {
+	testProjRequests(t, createProjectClusterCandidatesTests, true)
 }
 
-var listProjectSACandidatesTests = []*projTest{
+var listProjectClusterCandidatesTests = []*projTest{
 	&projTest{
 		initializers: []func(t *tester){
 			initUserDefault,
 			initProject,
-			initProjectSACandidate,
+			initProjectClusterCandidate,
 		},
-		msg:       "List project SA candidates",
+		msg:       "List project cluster candidates",
 		method:    "GET",
-		endpoint:  "/api/projects/1/candidates",
+		endpoint:  "/api/projects/1/clusters/candidates",
 		body:      ``,
 		expStatus: http.StatusOK,
-		expBody:   `[{"id":1,"actions":[{"name":"upload-oidc-idp-issuer-ca-data","filename":"/fake/path/to/ca.pem","docs":"https://github.com/porter-dev/porter","resolved":false,"fields":"oidc_idp_issuer_ca_data"}],"project_id":1,"kind":"connector","context_name":"context-test","cluster_name":"cluster-test","cluster_endpoint":"https://10.10.10.10","auth_mechanism":"oidc"}]`,
+		expBody:   `[{"id":1,"resolvers":[{"name":"upload-oidc-idp-issuer-ca-data","data":{"filename":"/fake/path/to/ca.pem"},"docs":"https://github.com/porter-dev/porter","resolved":false,"fields":"oidc_idp_issuer_ca_data"}],"created_cluster_id":0,"project_id":1,"context_name":"context-test","name":"cluster-test","server":"https://10.10.10.10"}]`,
 		useCookie: true,
 		validators: []func(c *projTest, tester *tester, t *testing.T){
-			projectSACandidateBodyValidator,
+			projectClusterCandidateBodyValidator,
 		},
 	},
 }
 
-func TestHandleListProjectSACandidates(t *testing.T) {
-	testProjRequests(t, listProjectSACandidatesTests, true)
+func TestHandleListProjectClusterCandidates(t *testing.T) {
+	testProjRequests(t, listProjectClusterCandidatesTests, true)
 }
 
-var resolveProjectSACandidatesTests = []*projTest{
+var resolveProjectClusterCandidatesTests = []*projTest{
 	&projTest{
 		initializers: []func(t *tester){
 			initUserDefault,
 			initProject,
-			initProjectSACandidate,
+			initProjectClusterCandidate,
 		},
-		msg:       "Resolve project SA candidate",
+		msg:       "Resolve project cluster candidate",
 		method:    "POST",
-		endpoint:  "/api/projects/1/candidates/1/resolve",
-		body:      `[{"name": "upload-oidc-idp-issuer-ca-data", "oidc_idp_issuer_ca_data": "LS0tLS1CRUdJTiBDRVJ="}]`,
+		endpoint:  "/api/projects/1/clusters/candidates/1/resolve",
+		body:      `{"oidc_idp_issuer_ca_data": "LS0tLS1CRUdJTiBDRVJ="}`,
 		expStatus: http.StatusCreated,
-		expBody:   `{"id":1,"project_id":1,"kind":"connector","clusters":[{"id":1,"service_account_id":1,"name":"cluster-test","server":"https://10.10.10.10"}],"auth_mechanism":"oidc"}`,
+		expBody:   `{"id":1,"project_id":1,"name":"cluster-test","server":"https://10.10.10.10"}`,
 		useCookie: true,
 		validators: []func(c *projTest, tester *tester, t *testing.T){
-			projectSABodyValidator,
+			projectClusterBodyValidator,
 		},
 	},
 }
 
-func TestHandleResolveProjectSACandidate(t *testing.T) {
-	testProjRequests(t, resolveProjectSACandidatesTests, true)
+func TestHandleResolveProjectClusterCandidate(t *testing.T) {
+	testProjRequests(t, resolveProjectClusterCandidatesTests, true)
 }
 
 var deleteProjectTests = []*projTest{
@@ -332,43 +326,46 @@ func initProject(tester *tester) {
 	})
 }
 
-func initProjectSACandidate(tester *tester) {
+func initProjectClusterCandidate(tester *tester) {
 	proj, _ := tester.repo.Project.ReadProject(1)
 
-	form := &forms.CreateServiceAccountCandidatesForm{
-		ProjectID:  uint(proj.ID),
-		Kubeconfig: OIDCAuthWithoutData,
+	form := &forms.CreateClusterCandidatesForm{
+		ProjectID:  proj.ID,
+		Kubeconfig: fixtures.OIDCAuthWithoutData,
 	}
 
 	// convert the form to a ServiceAccountCandidate
-	saCandidates, _ := form.ToServiceAccountCandidates(false)
+	ccs, _ := form.ToClusterCandidates(false)
 
-	for _, saCandidate := range saCandidates {
-		tester.repo.ServiceAccount.CreateServiceAccountCandidate(saCandidate)
+	for _, cc := range ccs {
+		tester.repo.Cluster.CreateClusterCandidate(cc)
 	}
 }
 
-func initProjectSADefault(tester *tester) {
+func initProjectClusterDefault(tester *tester) {
 	proj, _ := tester.repo.Project.ReadProject(1)
 
-	form := &forms.CreateServiceAccountCandidatesForm{
-		ProjectID:  uint(proj.ID),
-		Kubeconfig: OIDCAuthWithData,
+	form := &forms.CreateClusterCandidatesForm{
+		ProjectID:  proj.ID,
+		Kubeconfig: fixtures.OIDCAuthWithData,
 	}
 
 	// convert the form to a ServiceAccountCandidate
-	saCandidates, _ := form.ToServiceAccountCandidates(false)
+	ccs, _ := form.ToClusterCandidates(false)
 
-	for _, saCandidate := range saCandidates {
-		tester.repo.ServiceAccount.CreateServiceAccountCandidate(saCandidate)
+	for _, cc := range ccs {
+		tester.repo.Cluster.CreateClusterCandidate(cc)
 	}
 
-	saForm := forms.ServiceAccountActionResolver{
-		ServiceAccountCandidateID: 1,
+	clusterForm := forms.ResolveClusterForm{
+		Resolver:           &models.ClusterResolverAll{},
+		ClusterCandidateID: 1,
+		ProjectID:          1,
+		UserID:             1,
 	}
 
-	saForm.PopulateServiceAccount(tester.repo.ServiceAccount)
-	tester.repo.ServiceAccount.CreateServiceAccount(saForm.SA)
+	clusterForm.ResolveIntegration(*tester.repo)
+	clusterForm.ResolveCluster(*tester.repo)
 }
 
 func projectBasicBodyValidator(c *projTest, tester *tester, t *testing.T) {
@@ -385,39 +382,39 @@ func projectModelBodyValidator(c *projTest, tester *tester, t *testing.T) {
 	json.Unmarshal(tester.rr.Body.Bytes(), gotBody)
 	json.Unmarshal([]byte(c.expBody), expBody)
 
-	if !reflect.DeepEqual(gotBody, expBody) {
-		t.Errorf("%s, handler returned wrong body: got %v want %v",
-			c.msg, gotBody, expBody)
+	if diff := deep.Equal(gotBody, expBody); diff != nil {
+		t.Errorf("handler returned wrong body:\n")
+		t.Error(diff)
 	}
 }
 
-func projectSACandidateBodyValidator(c *projTest, tester *tester, t *testing.T) {
-	gotBody := make([]*models.ServiceAccountCandidateExternal, 0)
-	expBody := make([]*models.ServiceAccountCandidateExternal, 0)
+func projectClusterCandidateBodyValidator(c *projTest, tester *tester, t *testing.T) {
+	gotBody := make([]*models.ClusterCandidateExternal, 0)
+	expBody := make([]*models.ClusterCandidateExternal, 0)
 
 	json.Unmarshal(tester.rr.Body.Bytes(), &gotBody)
 	json.Unmarshal([]byte(c.expBody), &expBody)
 
-	if !reflect.DeepEqual(gotBody, expBody) {
-		t.Errorf("%s, handler returned wrong body: got %v want %v",
-			c.msg, gotBody, expBody)
+	if diff := deep.Equal(gotBody, expBody); diff != nil {
+		t.Errorf("handler returned wrong body:\n")
+		t.Error(diff)
 	}
 }
 
-func projectSABodyValidator(c *projTest, tester *tester, t *testing.T) {
-	gotBody := &models.ServiceAccountExternal{}
-	expBody := &models.ServiceAccountExternal{}
+func projectClusterBodyValidator(c *projTest, tester *tester, t *testing.T) {
+	gotBody := &models.ClusterExternal{}
+	expBody := &models.ClusterExternal{}
 
 	json.Unmarshal(tester.rr.Body.Bytes(), gotBody)
 	json.Unmarshal([]byte(c.expBody), expBody)
 
-	if !reflect.DeepEqual(gotBody, expBody) {
-		t.Errorf("%s, handler returned wrong body: got %v want %v",
-			c.msg, gotBody, expBody)
+	if diff := deep.Equal(gotBody, expBody); diff != nil {
+		t.Errorf("handler returned wrong body:\n")
+		t.Error(diff)
 	}
 }
 
-func projectClustersValidator(c *projTest, tester *tester, t *testing.T) {
+func projectClustersBodyValidator(c *projTest, tester *tester, t *testing.T) {
 	gotBody := make([]*models.ClusterExternal, 0)
 	expBody := make([]*models.ClusterExternal, 0)
 

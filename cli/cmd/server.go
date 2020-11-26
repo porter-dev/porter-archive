@@ -8,6 +8,7 @@ import (
 
 	"github.com/fatih/color"
 	"github.com/porter-dev/porter/cli/cmd/docker"
+	"github.com/porter-dev/porter/cli/cmd/github"
 
 	"github.com/spf13/cobra"
 )
@@ -26,53 +27,14 @@ var serverCmd = &cobra.Command{
 	Short: "Commands to control a local Porter server",
 }
 
-var testCmd = &cobra.Command{
-	Use:   "test",
-	Short: "Testing",
-	Run: func(cmd *cobra.Command, args []string) {
-		setDriver("local")
-
-		// TODO -- DOWNLOAD THE LATEST RELEASE, IF NOT EXIST
-		// porterDir := filepath.Join(home, ".porter")
-
-		// err := github.DownloadLatestServerRelease(porterDir)
-
-		// if err != nil {
-		// 	color.New(color.FgRed).Println("Failed:", err.Error())
-		// 	os.Exit(1)
-		// }
-
-		cmdPath := filepath.Join(home, ".porter", "portersvr")
-		sqlLitePath := filepath.Join(home, ".porter", "porter.db")
-		staticFilePath := filepath.Join(home, ".porter", "static")
-
-		cmdPorter := exec.Command(cmdPath)
-		cmdPorter.Env = os.Environ()
-		cmdPorter.Env = append(cmdPorter.Env, []string{
-			"IS_LOCAL=true",
-			"SQL_LITE=true",
-			"SQL_LITE_PATH=" + sqlLitePath,
-			"STATIC_FILE_PATH=" + staticFilePath,
-		}...)
-
-		cmdPorter.Stdout = os.Stdout
-		cmdPorter.Stderr = os.Stderr
-
-		err := cmdPorter.Run()
-
-		if err != nil {
-			color.New(color.FgRed).Println("Failed:", err.Error())
-			os.Exit(1)
-		}
-	},
-}
-
 // startCmd represents the start command
 var startCmd = &cobra.Command{
 	Use:   "start",
 	Short: "Starts a Porter instance using the Docker engine",
 	Run: func(cmd *cobra.Command, args []string) {
 		if getDriver() == "docker" {
+			setDriver("docker")
+
 			err := startDocker(
 				opts.imageTag,
 				opts.db,
@@ -90,6 +52,18 @@ var startCmd = &cobra.Command{
 					red.Println("Shutdown unsuccessful:", err.Error())
 				}
 
+				os.Exit(1)
+			}
+		} else {
+			setDriver("local")
+			err := startLocal(
+				opts.db,
+				*opts.port,
+			)
+
+			if err != nil {
+				red := color.New(color.FgRed)
+				red.Println("Error running start:", err.Error())
 				os.Exit(1)
 			}
 		}
@@ -110,8 +84,6 @@ var stopCmd = &cobra.Command{
 }
 
 func init() {
-	rootCmd.AddCommand(testCmd)
-
 	rootCmd.AddCommand(serverCmd)
 
 	serverCmd.AddCommand(startCmd)
@@ -184,6 +156,52 @@ func startDocker(
 	green.Printf("Server ready: listening on localhost:%d\n", port)
 
 	return setHost(fmt.Sprintf("http://localhost:%d", port))
+}
+
+func startLocal(
+	db string,
+	port int,
+) error {
+	if db == "postgres" {
+		return fmt.Errorf("postgres not available for local driver, run \"porter server start --db postgres --driver docker\"")
+	}
+
+	setHost(fmt.Sprintf("http://localhost:%d", port))
+
+	porterDir := filepath.Join(home, ".porter")
+	cmdPath := filepath.Join(home, ".porter", "portersvr")
+	sqlLitePath := filepath.Join(home, ".porter", "porter.db")
+	staticFilePath := filepath.Join(home, ".porter", "static")
+
+	if _, err := os.Stat(cmdPath); os.IsNotExist(err) {
+		err := github.DownloadLatestServerRelease(porterDir)
+
+		if err != nil {
+			color.New(color.FgRed).Println("Failed:", err.Error())
+			os.Exit(1)
+		}
+	}
+
+	cmdPorter := exec.Command(cmdPath)
+	cmdPorter.Env = os.Environ()
+	cmdPorter.Env = append(cmdPorter.Env, []string{
+		"IS_LOCAL=true",
+		"SQL_LITE=true",
+		"SQL_LITE_PATH=" + sqlLitePath,
+		"STATIC_FILE_PATH=" + staticFilePath,
+	}...)
+
+	cmdPorter.Stdout = os.Stdout
+	cmdPorter.Stderr = os.Stderr
+
+	err := cmdPorter.Run()
+
+	if err != nil {
+		color.New(color.FgRed).Println("Failed:", err.Error())
+		os.Exit(1)
+	}
+
+	return nil
 }
 
 func stopDocker() error {

@@ -6,10 +6,24 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/go-test/deep"
 	"github.com/porter-dev/porter/internal/kubernetes"
+	"github.com/porter-dev/porter/internal/models"
 )
 
 // ------------------------- TEST TYPES AND MAIN LOOP ------------------------- //
+
+type regTest struct {
+	initializers []func(t *tester)
+	msg          string
+	method       string
+	endpoint     string
+	body         string
+	expStatus    int
+	expBody      string
+	useCookie    bool
+	validators   []func(c *regTest, tester *tester, t *testing.T)
+}
 
 type imagesTest struct {
 	initializers []func(tester *tester)
@@ -21,6 +35,48 @@ type imagesTest struct {
 	expBody      string
 	useCookie    bool
 	validators   []func(c *imagesTest, tester *tester, t *testing.T)
+}
+
+func testRegistryRequests(t *testing.T, tests []*regTest, canQuery bool) {
+	for _, c := range tests {
+		// create a new tester
+		tester := newTester(canQuery)
+
+		// if there's an initializer, call it
+		for _, init := range c.initializers {
+			init(tester)
+		}
+
+		req, err := http.NewRequest(
+			c.method,
+			c.endpoint,
+			strings.NewReader(c.body),
+		)
+
+		tester.req = req
+
+		if c.useCookie {
+			req.AddCookie(tester.cookie)
+		}
+
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		tester.execute()
+		rr := tester.rr
+
+		// first, check that the status matches
+		if status := rr.Code; status != c.expStatus {
+			t.Errorf("%s, handler returned wrong status code: got %v want %v",
+				c.msg, status, c.expStatus)
+		}
+
+		// if there's a validator, call it
+		for _, validate := range c.validators {
+			validate(c, tester, t)
+		}
+	}
 }
 
 func testImagesRequests(t *testing.T, tests []*imagesTest, canQuery bool) {
@@ -67,6 +123,49 @@ func testImagesRequests(t *testing.T, tests []*imagesTest, canQuery bool) {
 
 // ------------------------- TEST FIXTURES AND FUNCTIONS  ------------------------- //
 
+var createRegistryTests = []*regTest{
+	&regTest{
+		initializers: []func(t *tester){
+			initUserDefault,
+			initProject,
+		},
+		msg:       "Create registry",
+		method:    "POST",
+		endpoint:  "/api/projects/1/registries",
+		body:      `{"name":"registry-test","aws_integration_id":1}`,
+		expStatus: http.StatusCreated,
+		expBody:   `{"id":1,"name":"registry-test","project_id":1}`,
+		useCookie: true,
+		validators: []func(c *regTest, tester *tester, t *testing.T){
+			regBodyValidator,
+		},
+	},
+}
+
+func TestHandleCreateRegistry(t *testing.T) {
+	testRegistryRequests(t, createRegistryTests, true)
+}
+
+var listRegistryTests = []*regTest{
+	&regTest{
+		initializers: []func(t *tester){
+			initUserDefault,
+			initProject,
+			initRegistry,
+		},
+		msg:       "List registries",
+		method:    "GET",
+		endpoint:  "/api/projects/1/registries",
+		body:      ``,
+		expStatus: http.StatusOK,
+		expBody:   `[{"id":1,"name":"registry-test","project_id":1}]`,
+		useCookie: true,
+		validators: []func(c *regTest, tester *tester, t *testing.T){
+			regsBodyValidator,
+		},
+	},
+}
+
 var listImagesTests = []*imagesTest{
 	&imagesTest{
 		initializers: []func(tester *tester){
@@ -85,11 +184,50 @@ var listImagesTests = []*imagesTest{
 	},
 }
 
+func TestHandleListRegistries(t *testing.T) {
+	testRegistryRequests(t, listRegistryTests, true)
+}
+
 func TestHandleListImages(t *testing.T) {
 	testImagesRequests(t, listImagesTests, true)
 }
 
 // ------------------------- INITIALIZERS AND VALIDATORS ------------------------- //
+
+func initRegistry(tester *tester) {
+	proj, _ := tester.repo.Project.ReadProject(1)
+
+	reg := &models.Registry{
+		Name:             "registry-test",
+		ProjectID:        proj.Model.ID,
+		AWSIntegrationID: 1,
+	}
+
+	tester.repo.Registry.CreateRegistry(reg)
+}
+
+func regBodyValidator(c *regTest, tester *tester, t *testing.T) {
+	gotBody := &models.Registry{}
+	expBody := &models.Registry{}
+
+	json.Unmarshal(tester.rr.Body.Bytes(), &gotBody)
+	json.Unmarshal([]byte(c.expBody), &expBody)
+
+	if diff := deep.Equal(gotBody, expBody); diff != nil {
+		t.Errorf("handler returned wrong body:\n")
+		t.Error(diff)
+	}
+}
+
+func regsBodyValidator(c *regTest, tester *tester, t *testing.T) {
+	gotBody := make([]*models.Registry, 0)
+	expBody := make([]*models.Registry, 0)
+
+	if diff := deep.Equal(gotBody, expBody); diff != nil {
+		t.Errorf("handler returned wrong body:\n")
+		t.Error(diff)
+	}
+}
 
 func initDefaultImages(tester *tester) {
 	initUserDefault(tester)
@@ -107,7 +245,8 @@ func imagesListValidator(c *imagesTest, tester *tester, t *testing.T) {
 	json.Unmarshal(tester.rr.Body.Bytes(), &gotBody)
 	json.Unmarshal([]byte(c.expBody), &expBody)
 
-	if string(tester.rr.Body.Bytes()) != c.expBody {
-		t.Errorf("Mismatch")
+	if diff := deep.Equal(gotBody, expBody); diff != nil {
+		t.Errorf("handler returned wrong body:\n")
+		t.Error(diff)
 	}
 }

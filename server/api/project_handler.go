@@ -110,82 +110,34 @@ func (app *App) HandleReadProject(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// HandleReadProjectServiceAccount reads a service account by id
-func (app *App) HandleReadProjectServiceAccount(w http.ResponseWriter, r *http.Request) {
-	id, err := strconv.ParseUint(chi.URLParam(r, "service_account_id"), 0, 64)
+// HandleReadProjectCluster reads a cluster by id
+func (app *App) HandleReadProjectCluster(w http.ResponseWriter, r *http.Request) {
+	id, err := strconv.ParseUint(chi.URLParam(r, "cluster_id"), 0, 64)
 
 	if err != nil || id == 0 {
 		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
 		return
 	}
 
-	sa, err := app.repo.ServiceAccount.ReadServiceAccount(uint(id))
+	cluster, err := app.repo.Cluster.ReadCluster(uint(id))
 
 	if err != nil {
 		app.handleErrorRead(err, ErrProjectDataRead, w)
 		return
 	}
 
-	saExt := sa.Externalize()
+	clusterExt := cluster.Externalize()
 
 	w.WriteHeader(http.StatusOK)
 
-	if err := json.NewEncoder(w).Encode(saExt); err != nil {
+	if err := json.NewEncoder(w).Encode(clusterExt); err != nil {
 		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
 		return
 	}
 }
 
-// HandleListProjectClusters returns a list of clusters that have linked ServiceAccounts.
-// If multiple service accounts exist for a cluster, the service account created later
-// will take precedence. This may be changed in a future release to return multiple
-// service accounts.
+// HandleListProjectClusters returns a list of clusters that have linked Integrations.
 func (app *App) HandleListProjectClusters(w http.ResponseWriter, r *http.Request) {
-	id, err := strconv.ParseUint(chi.URLParam(r, "project_id"), 0, 64)
-
-	if err != nil || id == 0 {
-		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
-		return
-	}
-
-	sas, err := app.repo.ServiceAccount.ListServiceAccountsByProjectID(uint(id))
-
-	if err != nil {
-		app.handleErrorRead(err, ErrProjectDataRead, w)
-		return
-	}
-
-	clusters := make([]*models.ClusterExternal, 0)
-
-	// clusterMapIndex used for checking if cluster has already been added
-	// maps from the cluster's endpoint to the index in the cluster array
-	clusterMapIndex := make(map[string]int)
-
-	for _, sa := range sas {
-		for _, cluster := range sa.Clusters {
-			if currIndex, ok := clusterMapIndex[cluster.Server]; ok {
-				if clusters[currIndex].ServiceAccountID <= cluster.ServiceAccountID {
-					clusters[currIndex] = cluster.Externalize()
-					continue
-				}
-			}
-
-			clusterMapIndex[cluster.Server] = len(clusters)
-			clusters = append(clusters, cluster.Externalize())
-		}
-	}
-
-	w.WriteHeader(http.StatusOK)
-
-	if err := json.NewEncoder(w).Encode(clusters); err != nil {
-		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
-		return
-	}
-}
-
-// HandleCreateProjectSACandidates handles the creation of ServiceAccountCandidates
-// using a kubeconfig and a project id
-func (app *App) HandleCreateProjectSACandidates(w http.ResponseWriter, r *http.Request) {
 	projID, err := strconv.ParseUint(chi.URLParam(r, "project_id"), 0, 64)
 
 	if err != nil || projID == 0 {
@@ -193,7 +145,38 @@ func (app *App) HandleCreateProjectSACandidates(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	form := &forms.CreateServiceAccountCandidatesForm{
+	clusters, err := app.repo.Cluster.ListClustersByProjectID(uint(projID))
+
+	if err != nil {
+		app.handleErrorRead(err, ErrProjectDataRead, w)
+		return
+	}
+
+	extClusters := make([]*models.ClusterExternal, 0)
+
+	for _, cluster := range clusters {
+		extClusters = append(extClusters, cluster.Externalize())
+	}
+
+	w.WriteHeader(http.StatusOK)
+
+	if err := json.NewEncoder(w).Encode(extClusters); err != nil {
+		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
+		return
+	}
+}
+
+// HandleCreateProjectClusterCandidates handles the creation of ClusterCandidates using
+// a kubeconfig and a project id
+func (app *App) HandleCreateProjectClusterCandidates(w http.ResponseWriter, r *http.Request) {
+	projID, err := strconv.ParseUint(chi.URLParam(r, "project_id"), 0, 64)
+
+	if err != nil || projID == 0 {
+		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
+		return
+	}
+
+	form := &forms.CreateClusterCandidatesForm{
 		ProjectID: uint(projID),
 	}
 
@@ -209,81 +192,92 @@ func (app *App) HandleCreateProjectSACandidates(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	// convert the form to a ServiceAccountCandidate
-	saCandidates, err := form.ToServiceAccountCandidates(app.isLocal)
+	// convert the form to a ClusterCandidate
+	ccs, err := form.ToClusterCandidates(app.isLocal)
 
 	if err != nil {
 		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
 		return
 	}
 
-	extSACandidates := make([]*models.ServiceAccountCandidateExternal, 0)
+	extClusters := make([]*models.ClusterCandidateExternal, 0)
 
-	for _, saCandidate := range saCandidates {
+	session, err := app.store.Get(r, app.cookieName)
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	userID, _ := session.Values["user_id"].(uint)
+
+	for _, cc := range ccs {
 		// handle write to the database
-		saCandidate, err = app.repo.ServiceAccount.CreateServiceAccountCandidate(saCandidate)
+		cc, err = app.repo.Cluster.CreateClusterCandidate(cc)
 
 		if err != nil {
 			app.handleErrorDataWrite(err, w)
 			return
 		}
 
-		app.logger.Info().Msgf("New service account candidate created: %d", saCandidate.ID)
+		app.logger.Info().Msgf("New cluster candidate created: %d", cc.ID)
 
-		// if the SA candidate does not have any actions to perform, create the ServiceAccount
+		// if the ClusterCandidate does not have any actions to perform, create the Cluster
 		// automatically
-		if len(saCandidate.Actions) == 0 {
-			// we query the repo again to get the decrypted version of the SA candidate
-			saCandidate, err = app.repo.ServiceAccount.ReadServiceAccountCandidate(saCandidate.ID)
+		if len(cc.Resolvers) == 0 {
+			// we query the repo again to get the decrypted version of the cluster candidate
+			cc, err = app.repo.Cluster.ReadClusterCandidate(cc.ID)
 
 			if err != nil {
 				app.handleErrorDataRead(err, w)
 				return
 			}
 
-			saForm := &forms.ServiceAccountActionResolver{
-				ServiceAccountCandidateID: saCandidate.ID,
-				SACandidate:               saCandidate,
+			clusterForm := &forms.ResolveClusterForm{
+				Resolver:           &models.ClusterResolverAll{},
+				ClusterCandidateID: cc.ID,
+				ProjectID:          uint(projID),
+				UserID:             userID,
 			}
 
-			err := saForm.PopulateServiceAccount(app.repo.ServiceAccount)
+			err := clusterForm.ResolveIntegration(*app.repo)
 
 			if err != nil {
 				app.handleErrorDataWrite(err, w)
 				return
 			}
 
-			sa, err := app.repo.ServiceAccount.CreateServiceAccount(saForm.SA)
+			cluster, err := clusterForm.ResolveCluster(*app.repo)
 
 			if err != nil {
 				app.handleErrorDataWrite(err, w)
 				return
 			}
 
-			saCandidate, err = app.repo.ServiceAccount.UpdateServiceAccountCandidateCreatedSAID(saCandidate.ID, sa.ID)
+			cc, err = app.repo.Cluster.UpdateClusterCandidateCreatedClusterID(cc.ID, cluster.ID)
 
 			if err != nil {
 				app.handleErrorDataWrite(err, w)
 				return
 			}
 
-			app.logger.Info().Msgf("New service account created: %d", sa.ID)
+			app.logger.Info().Msgf("New cluster created: %d", cluster.ID)
 		}
 
-		extSACandidates = append(extSACandidates, saCandidate.Externalize())
+		extClusters = append(extClusters, cc.Externalize())
 	}
 
 	w.WriteHeader(http.StatusCreated)
 
-	if err := json.NewEncoder(w).Encode(extSACandidates); err != nil {
+	if err := json.NewEncoder(w).Encode(extClusters); err != nil {
 		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
 		return
 	}
 }
 
-// HandleListProjectSACandidates returns a list of externalized ServiceAccountCandidate
-// ([]models.ServiceAccountCandidateExternal) based on a project ID
-func (app *App) HandleListProjectSACandidates(w http.ResponseWriter, r *http.Request) {
+// HandleListProjectClusterCandidates returns a list of externalized ClusterCandidates
+// ([]models.ClusterCandidateExternal) based on a project ID
+func (app *App) HandleListProjectClusterCandidates(w http.ResponseWriter, r *http.Request) {
 	projID, err := strconv.ParseUint(chi.URLParam(r, "project_id"), 0, 64)
 
 	if err != nil || projID == 0 {
@@ -291,31 +285,31 @@ func (app *App) HandleListProjectSACandidates(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	saCandidates, err := app.repo.ServiceAccount.ListServiceAccountCandidatesByProjectID(uint(projID))
+	ccs, err := app.repo.Cluster.ListClusterCandidatesByProjectID(uint(projID))
 
 	if err != nil {
 		app.handleErrorRead(err, ErrProjectDataRead, w)
 		return
 	}
 
-	extSACandidates := make([]*models.ServiceAccountCandidateExternal, 0)
+	extCCs := make([]*models.ClusterCandidateExternal, 0)
 
-	for _, saCandidate := range saCandidates {
-		extSACandidates = append(extSACandidates, saCandidate.Externalize())
+	for _, cc := range ccs {
+		extCCs = append(extCCs, cc.Externalize())
 	}
 
 	w.WriteHeader(http.StatusOK)
 
-	if err := json.NewEncoder(w).Encode(extSACandidates); err != nil {
+	if err := json.NewEncoder(w).Encode(extCCs); err != nil {
 		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
 		return
 	}
 }
 
-// HandleResolveSACandidateActions accepts a list of action configurations for a
-// given ServiceAccountCandidate, which "resolves" that ServiceAccountCandidate
-// and creates a ServiceAccount for a specific project
-func (app *App) HandleResolveSACandidateActions(w http.ResponseWriter, r *http.Request) {
+// HandleResolveClusterCandidate accepts a list of resolving objects (ClusterResolver)
+// for a given ClusterCandidate, which "resolves" that ClusterCandidate and creates a
+// Cluster for a specific project
+func (app *App) HandleResolveClusterCandidate(w http.ResponseWriter, r *http.Request) {
 	projID, err := strconv.ParseUint(chi.URLParam(r, "project_id"), 0, 64)
 
 	if err != nil || projID == 0 {
@@ -330,118 +324,60 @@ func (app *App) HandleResolveSACandidateActions(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	// decode actions from request
-	actions := make([]*models.ServiceAccountAllActions, 0)
+	session, err := app.store.Get(r, app.cookieName)
 
-	if err := json.NewDecoder(r.Body).Decode(&actions); err != nil {
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	userID, _ := session.Values["user_id"].(uint)
+
+	// decode actions from request
+	resolver := &models.ClusterResolverAll{}
+
+	if err := json.NewDecoder(r.Body).Decode(resolver); err != nil {
 		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
 		return
 	}
 
-	var saResolverBase *forms.ServiceAccountActionResolver = &forms.ServiceAccountActionResolver{
-		ServiceAccountCandidateID: uint(candID),
-		SA:                        nil,
-		SACandidate:               nil,
+	clusterResolver := &forms.ResolveClusterForm{
+		Resolver:           resolver,
+		ClusterCandidateID: uint(candID),
+		ProjectID:          uint(projID),
+		UserID:             userID,
 	}
 
-	// for each action, create the relevant form and populate the service account
-	// we'll chain the .PopulateServiceAccount functions
-	for _, action := range actions {
-		var err error
-		switch action.Name {
-		case models.ClusterCADataAction:
-			form := &forms.ClusterCADataAction{
-				ServiceAccountActionResolver: saResolverBase,
-				ClusterCAData:                action.ClusterCAData,
-			}
-
-			err = form.PopulateServiceAccount(app.repo.ServiceAccount)
-		case models.ClusterLocalhostAction:
-			form := &forms.ClusterLocalhostAction{
-				ServiceAccountActionResolver: saResolverBase,
-				ClusterHostname:              action.ClusterHostname,
-			}
-
-			err = form.PopulateServiceAccount(app.repo.ServiceAccount)
-		case models.ClientCertDataAction:
-			form := &forms.ClientCertDataAction{
-				ServiceAccountActionResolver: saResolverBase,
-				ClientCertData:               action.ClientCertData,
-			}
-
-			err = form.PopulateServiceAccount(app.repo.ServiceAccount)
-		case models.ClientKeyDataAction:
-			form := &forms.ClientKeyDataAction{
-				ServiceAccountActionResolver: saResolverBase,
-				ClientKeyData:                action.ClientKeyData,
-			}
-
-			err = form.PopulateServiceAccount(app.repo.ServiceAccount)
-		case models.OIDCIssuerDataAction:
-			form := &forms.OIDCIssuerDataAction{
-				ServiceAccountActionResolver: saResolverBase,
-				OIDCIssuerCAData:             action.OIDCIssuerCAData,
-			}
-
-			err = form.PopulateServiceAccount(app.repo.ServiceAccount)
-		case models.TokenDataAction:
-			form := &forms.TokenDataAction{
-				ServiceAccountActionResolver: saResolverBase,
-				TokenData:                    action.TokenData,
-			}
-
-			err = form.PopulateServiceAccount(app.repo.ServiceAccount)
-		case models.GCPKeyDataAction:
-			form := &forms.GCPKeyDataAction{
-				ServiceAccountActionResolver: saResolverBase,
-				GCPKeyData:                   action.GCPKeyData,
-			}
-
-			err = form.PopulateServiceAccount(app.repo.ServiceAccount)
-		case models.AWSDataAction:
-			form := &forms.AWSDataAction{
-				ServiceAccountActionResolver: saResolverBase,
-				AWSAccessKeyID:               action.AWSAccessKeyID,
-				AWSSecretAccessKey:           action.AWSSecretAccessKey,
-				AWSClusterID:                 action.AWSClusterID,
-			}
-
-			err = form.PopulateServiceAccount(app.repo.ServiceAccount)
-		}
-
-		if err != nil {
-			app.handleErrorFormDecoding(err, ErrProjectDecode, w)
-			return
-		}
-	}
-
-	sa, err := app.repo.ServiceAccount.CreateServiceAccount(saResolverBase.SA)
+	err = clusterResolver.ResolveIntegration(*app.repo)
 
 	if err != nil {
 		app.handleErrorDataWrite(err, w)
 		return
 	}
 
-	if sa != nil {
-		app.logger.Info().Msgf("New service account created: %d", sa.ID)
+	cluster, err := clusterResolver.ResolveCluster(*app.repo)
 
-		_, err := app.repo.ServiceAccount.UpdateServiceAccountCandidateCreatedSAID(uint(candID), sa.ID)
+	if err != nil {
+		app.handleErrorDataWrite(err, w)
+		return
+	}
 
-		if err != nil {
-			app.handleErrorDataWrite(err, w)
-			return
-		}
+	_, err = app.repo.Cluster.UpdateClusterCandidateCreatedClusterID(uint(candID), cluster.ID)
 
-		saExternal := sa.Externalize()
+	if err != nil {
+		app.handleErrorDataWrite(err, w)
+		return
+	}
 
-		w.WriteHeader(http.StatusCreated)
+	app.logger.Info().Msgf("New cluster created: %d", cluster.ID)
 
-		if err := json.NewEncoder(w).Encode(saExternal); err != nil {
-			app.handleErrorFormDecoding(err, ErrProjectDecode, w)
-			return
-		}
-	} else {
-		w.WriteHeader(http.StatusNotModified)
+	clusterExt := cluster.Externalize()
+
+	w.WriteHeader(http.StatusCreated)
+
+	if err := json.NewEncoder(w).Encode(clusterExt); err != nil {
+		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
+		return
 	}
 }
 

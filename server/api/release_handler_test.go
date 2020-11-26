@@ -94,14 +94,13 @@ var listReleasesTests = []*releaseTest{
 		msg:    "List releases no namespace",
 		method: "GET",
 		endpoint: "/api/projects/1/releases?" + url.Values{
-			"namespace":          []string{""},
-			"cluster_id":         []string{"1"},
-			"service_account_id": []string{"1"},
-			"storage":            []string{"memory"},
-			"limit":              []string{"20"},
-			"skip":               []string{"0"},
-			"byDate":             []string{"false"},
-			"statusFilter":       []string{"deployed"},
+			"namespace":    []string{""},
+			"cluster_id":   []string{"1"},
+			"storage":      []string{"memory"},
+			"limit":        []string{"20"},
+			"skip":         []string{"0"},
+			"byDate":       []string{"false"},
+			"statusFilter": []string{"deployed"},
 		}.Encode(),
 		body:      "",
 		expStatus: http.StatusOK,
@@ -119,14 +118,13 @@ var listReleasesTests = []*releaseTest{
 		method:    "GET",
 		namespace: "default",
 		endpoint: "/api/projects/1/releases?" + url.Values{
-			"namespace":          []string{"default"},
-			"cluster_id":         []string{"1"},
-			"service_account_id": []string{"1"},
-			"storage":            []string{"memory"},
-			"limit":              []string{"20"},
-			"skip":               []string{"0"},
-			"byDate":             []string{"false"},
-			"statusFilter":       []string{"deployed"},
+			"namespace":    []string{"default"},
+			"cluster_id":   []string{"1"},
+			"storage":      []string{"memory"},
+			"limit":        []string{"20"},
+			"skip":         []string{"0"},
+			"byDate":       []string{"false"},
+			"statusFilter": []string{"deployed"},
 		}.Encode(),
 		body:      "",
 		expStatus: http.StatusOK,
@@ -137,30 +135,6 @@ var listReleasesTests = []*releaseTest{
 		useCookie: true,
 		validators: []func(c *releaseTest, tester *tester, t *testing.T){
 			releaseReleaseArrBodyValidator,
-		},
-	},
-	&releaseTest{
-		initializers: []func(tester *tester){
-			initDefaultReleases,
-		},
-		msg:       "List releases missing required",
-		method:    "GET",
-		namespace: "default",
-		endpoint: "/api/projects/1/releases?" + url.Values{
-			"service_account_id": []string{"1"},
-			"namespace":          []string{"default"},
-			"storage":            []string{"memory"},
-			"limit":              []string{"20"},
-			"skip":               []string{"0"},
-			"byDate":             []string{"false"},
-			"statusFilter":       []string{"deployed"},
-		}.Encode(),
-		body:      "",
-		expStatus: http.StatusUnprocessableEntity,
-		expBody:   `{"code":601,"errors":["required validation failed"]}`,
-		useCookie: true,
-		validators: []func(c *releaseTest, tester *tester, t *testing.T){
-			releaseBasicBodyValidator,
 		},
 	},
 }
@@ -178,10 +152,9 @@ var getReleaseTests = []*releaseTest{
 		method:    "GET",
 		namespace: "default",
 		endpoint: "/api/projects/1/releases/airwatch/1?" + url.Values{
-			"namespace":          []string{""},
-			"cluster_id":         []string{"1"},
-			"service_account_id": []string{"1"},
-			"storage":            []string{"memory"},
+			"namespace":  []string{""},
+			"cluster_id": []string{"1"},
+			"storage":    []string{"memory"},
 		}.Encode(),
 		body:      "",
 		expStatus: http.StatusOK,
@@ -199,10 +172,9 @@ var getReleaseTests = []*releaseTest{
 		method:    "GET",
 		namespace: "default",
 		endpoint: "/api/projects/1/releases/airwatch/5?" + url.Values{
-			"namespace":          []string{""},
-			"cluster_id":         []string{"1"},
-			"service_account_id": []string{"1"},
-			"storage":            []string{"memory"},
+			"namespace":  []string{""},
+			"cluster_id": []string{"1"},
+			"storage":    []string{"memory"},
 		}.Encode(),
 		body:      "",
 		expStatus: http.StatusNotFound,
@@ -227,10 +199,9 @@ var listReleaseHistoryTests = []*releaseTest{
 		method:    "GET",
 		namespace: "default",
 		endpoint: "/api/projects/1/releases/wordpress/history?" + url.Values{
-			"namespace":          []string{""},
-			"cluster_id":         []string{"1"},
-			"service_account_id": []string{"1"},
-			"storage":            []string{"memory"},
+			"namespace":  []string{""},
+			"cluster_id": []string{"1"},
+			"storage":    []string{"memory"},
 		}.Encode(),
 		body:      "",
 		expStatus: http.StatusOK,
@@ -248,10 +219,9 @@ var listReleaseHistoryTests = []*releaseTest{
 		method:    "GET",
 		namespace: "default",
 		endpoint: "/api/projects/1/releases/asldfkja/history?" + url.Values{
-			"namespace":          []string{""},
-			"cluster_id":         []string{"1"},
-			"service_account_id": []string{"1"},
-			"storage":            []string{"memory"},
+			"namespace":  []string{""},
+			"cluster_id": []string{"1"},
+			"storage":    []string{"memory"},
 		}.Encode(),
 		body:      "",
 		expStatus: http.StatusNotFound,
@@ -276,8 +246,7 @@ var upgradeReleaseTests = []*releaseTest{
 		method:    "POST",
 		namespace: "default",
 		endpoint: "/api/projects/1/releases/wordpress/upgrade?" + url.Values{
-			"cluster_id":         []string{"1"},
-			"service_account_id": []string{"1"},
+			"cluster_id": []string{"1"},
 		}.Encode(),
 		body: `
 			{
@@ -294,10 +263,9 @@ var upgradeReleaseTests = []*releaseTest{
 				req, err := http.NewRequest(
 					"GET",
 					"/api/projects/1/releases/wordpress/3?"+url.Values{
-						"namespace":          []string{"default"},
-						"cluster_id":         []string{"1"},
-						"service_account_id": []string{"1"},
-						"storage":            []string{"memory"},
+						"namespace":  []string{"default"},
+						"cluster_id": []string{"1"},
+						"storage":    []string{"memory"},
 					}.Encode(),
 					strings.NewReader(""),
 				)
@@ -356,8 +324,7 @@ var rollbackReleaseTests = []*releaseTest{
 		method:    "POST",
 		namespace: "default",
 		endpoint: "/api/projects/1/releases/wordpress/rollback?" + url.Values{
-			"cluster_id":         []string{"1"},
-			"service_account_id": []string{"1"},
+			"cluster_id": []string{"1"},
 		}.Encode(),
 		body: `
 			{
@@ -374,10 +341,9 @@ var rollbackReleaseTests = []*releaseTest{
 				req, err := http.NewRequest(
 					"GET",
 					"/api/projects/1/releases/wordpress/3?"+url.Values{
-						"namespace":          []string{"default"},
-						"cluster_id":         []string{"1"},
-						"service_account_id": []string{"1"},
-						"storage":            []string{"memory"},
+						"namespace":  []string{"default"},
+						"cluster_id": []string{"1"},
+						"storage":    []string{"memory"},
 					}.Encode(),
 					strings.NewReader(""),
 				)
@@ -425,7 +391,7 @@ func TestRollbackRelease(t *testing.T) {
 func initDefaultReleases(tester *tester) {
 	initUserDefault(tester)
 	initProject(tester)
-	initProjectSADefault(tester)
+	initProjectClusterDefault(tester)
 
 	agent := tester.app.TestAgents.HelmAgent
 
@@ -439,7 +405,7 @@ func initDefaultReleases(tester *tester) {
 func initHistoryReleases(tester *tester) {
 	initUserDefault(tester)
 	initProject(tester)
-	initProjectSADefault(tester)
+	initProjectClusterDefault(tester)
 
 	agent := tester.app.TestAgents.HelmAgent
 

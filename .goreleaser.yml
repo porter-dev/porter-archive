@@ -4,8 +4,6 @@ before:
 builds:
   - id: "porter-cli"
     binary: porter
-    env:
-      - CGO_ENABLED=1
     dir: cli
     main: ./main.go
     goos:
@@ -15,17 +13,15 @@ builds:
       - amd64
     flags:
       - -tags=cli
-  - id: "porter-server"
-    binary: portersvr
-    env:
-      - CGO_ENABLED=1
-    dir: cmd/app
-    main: ./main.go
-    goos:
-      - linux
-      - windows
-    goarch:
-      - amd64
+  # - id: "porter-server"
+  #   binary: portersvr
+  #   dir: cmd/app
+  #   main: ./main.go
+  #   goos:
+  #     - linux
+  #     - windows
+  #   goarch:
+  #     - amd64
 archives:
   - format: zip
     replacements:

@@ -86,9 +86,11 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
     for (const file of files) { 
       if (file.name === 'form.yaml') {
         let formData = yaml.load(Base64.decode(file.data));
+        /*
         if (this.props.currentChart.config) {
           console.log(formData)
         }
+        */
         return formData;
       }
     };

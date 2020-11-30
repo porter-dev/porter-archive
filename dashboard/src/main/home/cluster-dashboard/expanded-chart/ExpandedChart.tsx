@@ -173,7 +173,10 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
       },
       {
         value: 'settings', component: (
-          <SettingsSection /> 
+          <SettingsSection
+            currentChart={chart}
+            refreshChart={refreshChart}
+          /> 
         ),
       },
       {

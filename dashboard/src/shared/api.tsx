@@ -14,7 +14,7 @@ import { StorageType } from './types';
 const checkAuth = baseApi('GET', '/api/auth/check');
 
 const registerUser = baseApi<{ 
-  email: string, 
+  email: string,
   password: string
 }>('POST', '/api/users');
 

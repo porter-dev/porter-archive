@@ -1,21 +1,62 @@
 import React, { Component } from 'react';
 import styled from 'styled-components';
+import api from '../../../../shared/api';
+import yaml from 'js-yaml';
 
-import { RepoType } from '../../../../shared/types';
+import { ChartType, RepoType, StorageType } from '../../../../shared/types';
+import { Context } from '../../../../shared/Context';
 
 import ImageSelector from '../../../../components/image-selector/ImageSelector';
 import SaveButton from '../../../../components/SaveButton';
 
 type PropsType = {
+  currentChart: ChartType
+  refreshChart: () => void
 };
 
 type StateType = {
   selectedImageUrl: string | null,
+  selectedTag: string | null,
+  saveValuesStatus: string | null,
+  values: string,
 };
 
 export default class SettingsSection extends Component<PropsType, StateType> {
   state = {
     selectedImageUrl: '',
+    selectedTag: '',
+    values: '',
+    saveValuesStatus: null as (string | null),
+  }
+
+  redeployWithNewImage = (img: string, tag: string) => {
+    let { currentCluster, currentProject } = this.context;
+    console.log(img, tag)
+    let image = {
+      image: {
+        repository: img,
+        tag: tag,
+      }
+    }
+
+    let values = yaml.dump(image);
+    api.upgradeChartValues('<token>', {
+      namespace: this.props.currentChart.namespace,
+      storage: StorageType.Secret,
+      values,
+    }, {
+      id: currentProject.id, 
+      name: this.props.currentChart.name,
+      cluster_id: currentCluster.id,
+    }, (err: any, res: any) => {
+      if (err) {
+        console.log(err)
+        this.setState({ saveValuesStatus: 'error' });
+      } else {
+        this.setState({ saveValuesStatus: 'successful' });
+        this.props.refreshChart();
+      }
+    });
   }
 
   render() {
@@ -25,20 +66,24 @@ export default class SettingsSection extends Component<PropsType, StateType> {
           <Subtitle>Connected source</Subtitle>
           <ImageSelector
             selectedImageUrl={this.state.selectedImageUrl}
+            selectedTag={this.state.selectedTag}
             setSelectedImageUrl={(x: string) => this.setState({ selectedImageUrl: x })}
+            setSelectedTag={(x: string) => this.setState({ selectedTag: x })}
             forceExpanded={true}
           />
         </StyledSettingsSection>
         <SaveButton
           text='Save Settings'
-          onClick={() => console.log(this.state)}
-          status={null}
+          onClick={() => this.redeployWithNewImage(this.state.selectedImageUrl, this.state.selectedTag)}
+          status={this.state.saveValuesStatus}
           makeFlush={true}
         />
       </Wrapper>
     );
   }
 }
+
+SettingsSection.contextType = Context;
 
 const Subtitle = styled.div`
   color: #aaaabb;

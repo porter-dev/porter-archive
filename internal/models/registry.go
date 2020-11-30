@@ -22,6 +22,12 @@ type Registry struct {
 
 	GCPIntegrationID uint
 	AWSIntegrationID uint
+
+	// A token cache that can be used by an auth mechanism (integration), if desired
+	IntTokenCache integrations.TokenCache
+
+	// A token cache that can be used by a Docker registry for JWT tokens, if necessary
+	DockerTokenCache integrations.RegTokenCache
 }
 
 // RegistryExternal is an external Registry to be shared over REST

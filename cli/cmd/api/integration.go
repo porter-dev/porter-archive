@@ -56,3 +56,48 @@ func (c *Client) CreateAWSIntegration(
 
 	return bodyResp, nil
 }
+
+// CreateGCPIntegrationRequest represents the accepted fields for creating
+// a gcp integration
+type CreateGCPIntegrationRequest struct {
+	GCPKeyData string `json:"gcp_key_data"`
+}
+
+// CreateGCPIntegrationResponse is the resulting integration after creation
+type CreateGCPIntegrationResponse ints.GCPIntegrationExternal
+
+// CreateGCPIntegration creates a GCP integration with the given request options
+func (c *Client) CreateGCPIntegration(
+	ctx context.Context,
+	projectID uint,
+	createGCP *CreateGCPIntegrationRequest,
+) (*CreateGCPIntegrationResponse, error) {
+	data, err := json.Marshal(createGCP)
+
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(
+		"POST",
+		fmt.Sprintf("%s/projects/%d/integrations/gcp", c.BaseURL, projectID),
+		strings.NewReader(string(data)),
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	req = req.WithContext(ctx)
+	bodyResp := &CreateGCPIntegrationResponse{}
+
+	if httpErr, err := c.sendRequest(req, bodyResp, true); httpErr != nil || err != nil {
+		if httpErr != nil {
+			return nil, fmt.Errorf("code %d, errors %v", httpErr.Code, httpErr.Errors)
+		}
+
+		return nil, err
+	}
+
+	return bodyResp, nil
+}

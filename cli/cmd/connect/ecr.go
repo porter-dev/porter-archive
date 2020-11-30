@@ -13,31 +13,31 @@ import (
 func ECR(
 	client *api.Client,
 	projectID uint,
-) error {
+) (uint, error) {
 	// if project ID is 0, ask the user to set the project ID or create a project
 	if projectID == 0 {
-		return fmt.Errorf("no project set, please run porter project set [id]")
+		return 0, fmt.Errorf("no project set, please run porter project set [id]")
 	}
 
 	// query for the access key id
 	accessKeyID, err := utils.PromptPlaintext(fmt.Sprintf(`AWS Access Key ID: `))
 
 	if err != nil {
-		return err
+		return 0, err
 	}
 
 	// query for the secret access key
 	secretKey, err := utils.PromptPlaintext(fmt.Sprintf(`AWS Secret Access Key: `))
 
 	if err != nil {
-		return err
+		return 0, err
 	}
 
 	// query for the region
 	region, err := utils.PromptPlaintext(fmt.Sprintf(`AWS Region: `))
 
 	if err != nil {
-		return err
+		return 0, err
 	}
 
 	// create the aws integration
@@ -52,7 +52,7 @@ func ECR(
 	)
 
 	if err != nil {
-		return err
+		return 0, err
 	}
 
 	color.New(color.FgGreen).Printf("created aws integration with id %d\n", integration.ID)
@@ -62,7 +62,7 @@ func ECR(
 	regName, err := utils.PromptPlaintext(fmt.Sprintf(`Give this registry a name: `))
 
 	if err != nil {
-		return err
+		return 0, err
 	}
 
 	reg, err := client.CreateECR(
@@ -75,10 +75,10 @@ func ECR(
 	)
 
 	if err != nil {
-		return err
+		return 0, err
 	}
 
 	color.New(color.FgGreen).Printf("created registry with id %d and name %s\n", reg.ID, reg.Name)
 
-	return nil
+	return reg.ID, nil
 }

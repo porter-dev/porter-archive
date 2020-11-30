@@ -29,6 +29,14 @@ export default class ECRForm extends Component<PropsType, StateType> {
     awsSecretKey: '',
   }
 
+  isDisabled = (): boolean => {
+    let { awsRegion, awsAccessId, awsSecretKey, credentialsName } = this.state;
+    if (awsRegion === '' || awsAccessId === '' || awsSecretKey === '' || credentialsName === '') {
+      return true;
+    }
+    return false;
+  }
+
   handleSubmit = () => {
     let { awsRegion, awsAccessId, awsSecretKey, credentialsName } = this.state;
     let { currentProject } = this.context;
@@ -98,7 +106,8 @@ export default class ECRForm extends Component<PropsType, StateType> {
         <SaveButton
           text='Save Settings'
           makeFlush={true}
-          onClick={this.handleSubmit}
+          disabled={this.isDisabled()}
+          onClick={this.isDisabled() ? null : this.handleSubmit}
         />
       </StyledForm>
     );

@@ -215,15 +215,19 @@ func (r *Registry) listECRRepositories(repo repository.Repository) ([]*Repositor
 }
 
 func (r *Registry) getTokenCache() (tok *ints.TokenCache, err error) {
-	return &r.IntTokenCache, nil
+	return &ints.TokenCache{
+		RegistryID: r.TokenCache.RegistryID,
+		Token:      r.TokenCache.Token,
+		Expiry:     r.TokenCache.Expiry,
+	}, nil
 }
 
 func (r *Registry) setTokenCacheFunc(
 	repo repository.Repository,
 ) ints.SetTokenCacheFunc {
 	return func(token string, expiry time.Time) error {
-		_, err := repo.Registry.UpdateRegistryIntTokenCache(
-			&ints.TokenCache{
+		_, err := repo.Registry.UpdateRegistryTokenCache(
+			&ints.RegTokenCache{
 				RegistryID: r.ID,
 				Token:      []byte(token),
 				Expiry:     expiry,

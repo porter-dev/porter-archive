@@ -170,28 +170,6 @@ func TestHandleListRegistries(t *testing.T) {
 	testRegistryRequests(t, listRegistryTests, true)
 }
 
-var listImagesTests = []*imagesTest{
-	&imagesTest{
-		initializers: []func(tester *tester){
-			initDefaultImages,
-		},
-		msg:       "List images",
-		method:    "GET",
-		endpoint:  "/api/projects/1/images",
-		body:      "",
-		expStatus: http.StatusOK,
-		expBody:   "unimplemented",
-		useCookie: true,
-		validators: []func(c *imagesTest, tester *tester, t *testing.T){
-			imagesListValidator,
-		},
-	},
-}
-
-func TestHandleListImages(t *testing.T) {
-	testImagesRequests(t, listImagesTests, true)
-}
-
 // ------------------------- INITIALIZERS AND VALIDATORS ------------------------- //
 
 func initRegistry(tester *tester) {

@@ -10,6 +10,5 @@ type RegistryRepository interface {
 	CreateRegistry(reg *models.Registry) (*models.Registry, error)
 	ReadRegistry(id uint) (*models.Registry, error)
 	ListRegistriesByProjectID(projectID uint) ([]*models.Registry, error)
-	UpdateRegistryIntTokenCache(tokenCache *ints.TokenCache) (*models.Registry, error)
-	UpdateRegistryDockerTokenCache(tokenCache *ints.RegTokenCache) (*models.Registry, error)
+	UpdateRegistryTokenCache(tokenCache *ints.RegTokenCache) (*models.Registry, error)
 }

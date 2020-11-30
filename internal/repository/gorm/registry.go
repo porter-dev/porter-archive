@@ -44,23 +44,13 @@ func (repo *RegistryRepository) CreateRegistry(reg *models.Registry) (*models.Re
 	}
 
 	// create a token cache by default
-	assoc = repo.db.Model(reg).Association("IntTokenCache")
+	assoc = repo.db.Model(reg).Association("TokenCache")
 
 	if assoc.Error != nil {
 		return nil, assoc.Error
 	}
 
-	if err := assoc.Append(&reg.IntTokenCache); err != nil {
-		return nil, err
-	}
-
-	assoc = repo.db.Model(reg).Association("DockerTokenCache")
-
-	if assoc.Error != nil {
-		return nil, assoc.Error
-	}
-
-	if err := assoc.Append(&reg.DockerTokenCache); err != nil {
+	if err := assoc.Append(&reg.TokenCache); err != nil {
 		return nil, err
 	}
 
@@ -77,7 +67,7 @@ func (repo *RegistryRepository) CreateRegistry(reg *models.Registry) (*models.Re
 func (repo *RegistryRepository) ReadRegistry(id uint) (*models.Registry, error) {
 	reg := &models.Registry{}
 
-	if err := repo.db.Preload("IntTokenCache").Preload("DockerTokenCache").Where("id = ?", id).First(&reg).Error; err != nil {
+	if err := repo.db.Preload("TokenCache").Where("id = ?", id).First(&reg).Error; err != nil {
 		return nil, err
 	}
 
@@ -93,7 +83,7 @@ func (repo *RegistryRepository) ListRegistriesByProjectID(
 ) ([]*models.Registry, error) {
 	regs := []*models.Registry{}
 
-	if err := repo.db.Preload("IntTokenCache").Preload("DockerTokenCache").Where("project_id = ?", projectID).Find(&regs).Error; err != nil {
+	if err := repo.db.Preload("TokenCache").Where("project_id = ?", projectID).Find(&regs).Error; err != nil {
 		return nil, err
 	}
 
@@ -104,38 +94,8 @@ func (repo *RegistryRepository) ListRegistriesByProjectID(
 	return regs, nil
 }
 
-// UpdateRegistryIntTokenCache updates the token cache for a registry
-func (repo *RegistryRepository) UpdateRegistryIntTokenCache(
-	tokenCache *ints.TokenCache,
-) (*models.Registry, error) {
-	if tok := tokenCache.Token; len(tok) > 0 {
-		cipherData, err := repository.Encrypt(tok, repo.key)
-
-		if err != nil {
-			return nil, err
-		}
-
-		tokenCache.Token = cipherData
-	}
-
-	registry := &models.Registry{}
-
-	if err := repo.db.Where("id = ?", tokenCache.RegistryID).First(&registry).Error; err != nil {
-		return nil, err
-	}
-
-	registry.IntTokenCache.Token = tokenCache.Token
-	registry.IntTokenCache.Expiry = tokenCache.Expiry
-
-	if err := repo.db.Save(registry).Error; err != nil {
-		return nil, err
-	}
-
-	return registry, nil
-}
-
-// UpdateRegistryDockerTokenCache updates the token cache for a registry
-func (repo *RegistryRepository) UpdateRegistryDockerTokenCache(
+// UpdateRegistryTokenCache updates the token cache for a registry
+func (repo *RegistryRepository) UpdateRegistryTokenCache(
 	tokenCache *ints.RegTokenCache,
 ) (*models.Registry, error) {
 	if tok := tokenCache.Token; len(tok) > 0 {
@@ -154,8 +114,8 @@ func (repo *RegistryRepository) UpdateRegistryDockerTokenCache(
 		return nil, err
 	}
 
-	registry.DockerTokenCache.Token = tokenCache.Token
-	registry.DockerTokenCache.Expiry = tokenCache.Expiry
+	registry.TokenCache.Token = tokenCache.Token
+	registry.TokenCache.Expiry = tokenCache.Expiry
 
 	if err := repo.db.Save(registry).Error; err != nil {
 		return nil, err
@@ -170,24 +130,14 @@ func (repo *RegistryRepository) EncryptRegistryData(
 	registry *models.Registry,
 	key *[32]byte,
 ) error {
-	if tok := registry.IntTokenCache.Token; len(tok) > 0 {
+	if tok := registry.TokenCache.Token; len(tok) > 0 {
 		cipherData, err := repository.Encrypt(tok, key)
 
 		if err != nil {
 			return err
 		}
 
-		registry.IntTokenCache.Token = cipherData
-	}
-
-	if tok := registry.DockerTokenCache.Token; len(tok) > 0 {
-		cipherData, err := repository.Encrypt(tok, key)
-
-		if err != nil {
-			return err
-		}
-
-		registry.DockerTokenCache.Token = cipherData
+		registry.TokenCache.Token = cipherData
 	}
 
 	return nil
@@ -199,24 +149,14 @@ func (repo *RegistryRepository) DecryptRegistryData(
 	registry *models.Registry,
 	key *[32]byte,
 ) error {
-	if tok := registry.IntTokenCache.Token; len(tok) > 0 {
+	if tok := registry.TokenCache.Token; len(tok) > 0 {
 		plaintext, err := repository.Decrypt(tok, key)
 
 		if err != nil {
 			return err
 		}
 
-		registry.IntTokenCache.Token = plaintext
-	}
-
-	if tok := registry.DockerTokenCache.Token; len(tok) > 0 {
-		plaintext, err := repository.Decrypt(tok, key)
-
-		if err != nil {
-			return err
-		}
-
-		registry.DockerTokenCache.Token = plaintext
+		registry.TokenCache.Token = plaintext
 	}
 
 	return nil

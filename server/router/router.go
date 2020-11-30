@@ -217,7 +217,10 @@ func New(
 
 		r.Method(
 			"GET",
-			"/projects/{project_id}/registries/{registry_id}/repositories/{repo_name}",
+			// * is the repo name, which can itself be nested
+			// for example, for GCR this is project-id/repo
+			// need to use wildcard, see https://github.com/go-chi/chi/issues/243
+			"/projects/{project_id}/registries/{registry_id}/repositories/*",
 			auth.DoesUserHaveProjectAccess(
 				auth.DoesUserHaveRegistryAccess(
 					requestlog.NewHandler(a.HandleListImages, l),

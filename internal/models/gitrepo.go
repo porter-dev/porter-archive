@@ -1,6 +1,7 @@
 package models
 
 import (
+	"github.com/porter-dev/porter/internal/models/integrations"
 	"gorm.io/gorm"
 )
 
@@ -28,6 +29,9 @@ type GitRepoExternal struct {
 
 	// The username/organization that this repo integration is linked to
 	RepoEntity string `json:"repo_entity"`
+
+	// The integration service for this git repo
+	Service integrations.IntegrationService `json:"service"`
 }
 
 // Externalize generates an external Repo to be shared over REST
@@ -36,5 +40,6 @@ func (r *GitRepo) Externalize() *GitRepoExternal {
 		ID:         r.Model.ID,
 		ProjectID:  r.ProjectID,
 		RepoEntity: r.RepoEntity,
+		Service:    integrations.Github,
 	}
 }

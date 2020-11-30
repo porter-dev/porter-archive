@@ -76,15 +76,27 @@ type ClusterExternal struct {
 
 	// Server endpoint for the cluster
 	Server string `json:"server"`
+
+	// The integration service for this cluster
+	Service integrations.IntegrationService `json:"service"`
 }
 
 // Externalize generates an external Cluster to be shared over REST
 func (c *Cluster) Externalize() *ClusterExternal {
+	serv := integrations.Kube
+
+	if c.AWSIntegrationID != 0 {
+		serv = integrations.EKS
+	} else if c.GCPIntegrationID != 0 {
+		serv = integrations.GKE
+	}
+
 	return &ClusterExternal{
 		ID:        c.ID,
 		ProjectID: c.ProjectID,
 		Name:      c.Name,
 		Server:    c.Server,
+		Service:   serv,
 	}
 }
 

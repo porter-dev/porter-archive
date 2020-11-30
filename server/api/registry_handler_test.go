@@ -134,7 +134,7 @@ var createRegistryTests = []*regTest{
 		endpoint:  "/api/projects/1/registries",
 		body:      `{"name":"registry-test","aws_integration_id":1}`,
 		expStatus: http.StatusCreated,
-		expBody:   `{"id":1,"name":"registry-test","project_id":1}`,
+		expBody:   `{"id":1,"name":"registry-test","project_id":1,"service":"ecr"}`,
 		useCookie: true,
 		validators: []func(c *regTest, tester *tester, t *testing.T){
 			regBodyValidator,
@@ -158,12 +158,16 @@ var listRegistryTests = []*regTest{
 		endpoint:  "/api/projects/1/registries",
 		body:      ``,
 		expStatus: http.StatusOK,
-		expBody:   `[{"id":1,"name":"registry-test","project_id":1}]`,
+		expBody:   `[{"id":1,"name":"registry-test","project_id":1,"service":"ecr"}]`,
 		useCookie: true,
 		validators: []func(c *regTest, tester *tester, t *testing.T){
 			regsBodyValidator,
 		},
 	},
+}
+
+func TestHandleListRegistries(t *testing.T) {
+	testRegistryRequests(t, listRegistryTests, true)
 }
 
 var listImagesTests = []*imagesTest{
@@ -182,10 +186,6 @@ var listImagesTests = []*imagesTest{
 			imagesListValidator,
 		},
 	},
-}
-
-func TestHandleListRegistries(t *testing.T) {
-	testRegistryRequests(t, listRegistryTests, true)
 }
 
 func TestHandleListImages(t *testing.T) {
@@ -207,8 +207,8 @@ func initRegistry(tester *tester) {
 }
 
 func regBodyValidator(c *regTest, tester *tester, t *testing.T) {
-	gotBody := &models.Registry{}
-	expBody := &models.Registry{}
+	gotBody := &models.RegistryExternal{}
+	expBody := &models.RegistryExternal{}
 
 	json.Unmarshal(tester.rr.Body.Bytes(), &gotBody)
 	json.Unmarshal([]byte(c.expBody), &expBody)
@@ -220,8 +220,11 @@ func regBodyValidator(c *regTest, tester *tester, t *testing.T) {
 }
 
 func regsBodyValidator(c *regTest, tester *tester, t *testing.T) {
-	gotBody := make([]*models.Registry, 0)
-	expBody := make([]*models.Registry, 0)
+	gotBody := make([]*models.RegistryExternal, 0)
+	expBody := make([]*models.RegistryExternal, 0)
+
+	json.Unmarshal(tester.rr.Body.Bytes(), &gotBody)
+	json.Unmarshal([]byte(c.expBody), &expBody)
 
 	if diff := deep.Equal(gotBody, expBody); diff != nil {
 		t.Errorf("handler returned wrong body:\n")

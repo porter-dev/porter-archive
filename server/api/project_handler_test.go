@@ -132,7 +132,7 @@ var readProjectClusterTest = []*projTest{
 		endpoint:  "/api/projects/1/clusters/1",
 		body:      ``,
 		expStatus: http.StatusOK,
-		expBody:   `{"id":1,"project_id":1,"name":"cluster-test","server":"https://10.10.10.10"}`,
+		expBody:   `{"id":1,"project_id":1,"name":"cluster-test","server":"https://10.10.10.10","service":"kube"}`,
 		useCookie: true,
 		validators: []func(c *projTest, tester *tester, t *testing.T){
 			projectClusterBodyValidator,
@@ -156,7 +156,7 @@ var listProjectClustersTest = []*projTest{
 		endpoint:  "/api/projects/1/clusters",
 		body:      ``,
 		expStatus: http.StatusOK,
-		expBody:   `[{"id":1,"project_id":1,"name":"cluster-test","server":"https://10.10.10.10"}]`,
+		expBody:   `[{"id":1,"project_id":1,"name":"cluster-test","server":"https://10.10.10.10","service":"kube"}]`,
 		useCookie: true,
 		validators: []func(c *projTest, tester *tester, t *testing.T){
 			projectClustersBodyValidator,
@@ -273,7 +273,7 @@ var resolveProjectClusterCandidatesTests = []*projTest{
 		endpoint:  "/api/projects/1/clusters/candidates/1/resolve",
 		body:      `{"oidc_idp_issuer_ca_data": "LS0tLS1CRUdJTiBDRVJ="}`,
 		expStatus: http.StatusCreated,
-		expBody:   `{"id":1,"project_id":1,"name":"cluster-test","server":"https://10.10.10.10"}`,
+		expBody:   `{"id":1,"project_id":1,"name":"cluster-test","server":"https://10.10.10.10","service":"kube"}`,
 		useCookie: true,
 		validators: []func(c *projTest, tester *tester, t *testing.T){
 			projectClusterBodyValidator,

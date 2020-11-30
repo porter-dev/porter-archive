@@ -66,7 +66,33 @@ export default class ImageSelector extends Component<PropsType, StateType> {
   }
 
   componentDidMount() {
-    this.setState({ images: dummyImages });
+    const { currentProject } = this.context;
+    api.getProjectRegistries('<token>', {}, { id: currentProject.id }, (err: any, res: any) => {
+      if (err) {
+        console.log(err);
+      } else {
+        res.data.forEach((registry: any, i: number) => {
+          console.log(registry)
+          api.listRepositories('<token>', {}, 
+            { 
+              project_id: currentProject.id,
+              registry_id: registry.id,
+            }, (err: any, res: any) => {
+            if (err) {
+              this.setState({ loading: false, error: true });
+            } else {
+              let images = res.data.map((img: any) => {
+                return {
+                  kind: registry.service, 
+                  source: img.name
+                }
+              })
+              this.setState({ images, loading: false, error: false });
+            }
+          });    
+        });
+      }
+    });
   }
 
   renderImageList = () => {

@@ -28,7 +28,7 @@ type StateType = {
 export default class ImageSelector extends Component<PropsType, StateType> {
   state = {
     isExpanded: this.props.forceExpanded,
-    loading: false,
+    loading: true,
     error: false,
     images: [] as ImageType[],
     clickedImage: null as ImageType | null,
@@ -57,14 +57,17 @@ export default class ImageSelector extends Component<PropsType, StateType> {
                     source: img.name
                   }
                 })
-                this.setState({images: [...images, ...newImg]}, () => {
+                this.setState({
+                  images: [...images, ...newImg],
+                  loading: false,
+                  error: false,
+                }, () => {
                   nextController()
                 })
               }
             });    
           })
         });
-        this.setState({loading: false, error: false });
       }
     });
   }

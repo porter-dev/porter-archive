@@ -50,7 +50,7 @@ export default class Dashboard extends Component<PropsType, StateType> {
 
           <Placeholder>
             🚀 Pipelines coming soon.
-        </Placeholder>
+          </Placeholder>
         </div>
       );
     }

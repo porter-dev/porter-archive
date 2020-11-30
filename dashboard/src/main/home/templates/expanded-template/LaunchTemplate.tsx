@@ -20,6 +20,7 @@ type StateType = {
   clusterOptions: { label: string, value: string }[],
   selectedCluster: string,
   selectedImageUrl: string | null,
+  selectedTag: string | null,
   tabOptions: ChoiceType[],
   tabContents: any
 };
@@ -30,6 +31,7 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
     clusterOptions: [] as { label: string, value: string }[],
     selectedCluster: this.context.currentCluster.name,
     selectedImageUrl: '' as string | null,
+    selectedTag: '' as string | null,
     tabOptions: [] as ChoiceType[],
     tabContents: [] as any,
   };
@@ -144,8 +146,10 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
         <Subtitle>Select the container image you would like to connect to this template.</Subtitle>
         <Br />
         <ImageSelector
+          selectedTag={this.state.selectedTag}
           selectedImageUrl={this.state.selectedImageUrl}
           setSelectedImageUrl={(x: string) => this.setState({ selectedImageUrl: x })}
+          setSelectedTag={(x: string) => this.setState({ selectedTag: x })}
           forceExpanded={true}
         />
 

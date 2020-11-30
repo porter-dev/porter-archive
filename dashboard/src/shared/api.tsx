@@ -159,7 +159,7 @@ const deployTemplate = baseApi<{
   formValues: any,
   storage: StorageType,
 }, { id: number, cluster_id: number }>('POST', pathParams => {
-  let { cluster_id } = pathParams;
+  let { cluster_id, id } = pathParams;
   return `/api/projects/${id}/deploy?cluster_id=${cluster_id}`;
 });
 

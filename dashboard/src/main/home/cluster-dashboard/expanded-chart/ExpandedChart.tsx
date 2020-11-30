@@ -53,7 +53,7 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
     components: [] as ResourceType[],
     podSelectors: [] as string[],
     revisionPreview: null as (ChartType | null),
-    devOpsMode: false,
+    devOpsMode: localStorage.getItem('devOpsMode') === 'true',
     tabOptions: [] as ChoiceType[],
     tabContents: [] as any,
     checkTabExists: false,
@@ -86,9 +86,11 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
     for (const file of files) { 
       if (file.name === 'form.yaml') {
         let formData = yaml.load(Base64.decode(file.data));
+        /*
         if (this.props.currentChart.config) {
           console.log(formData)
         }
+        */
         return formData;
       }
     };
@@ -144,7 +146,7 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
     // Append universal tabs
     tabOptions.push(
       { label: 'Status', value: 'status' },
-      { label: 'Deploy', value: 'deploy' },
+      //{ label: 'Deploy', value: 'deploy' },
       { label: 'Settings', value: 'settings' },
     );
 
@@ -252,7 +254,9 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
       tabOptions.pop();
       tabOptions.pop();
       tabOptions.pop();
-      this.setState({ devOpsMode: false, checkTabExists: true, tabOptions });
+      this.setState({ devOpsMode: false, checkTabExists: true, tabOptions }, () => {
+        localStorage.setItem('devOpsMode', 'false')
+      });
     } else {
       let { tabOptions } = this.state;
       tabOptions.push(
@@ -260,7 +264,9 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
         { label: 'Manifests', value: 'list' },
         { label: 'Raw Values', value: 'values' }
       );
-      this.setState({ devOpsMode: true, tabOptions, checkTabExists: false });
+      this.setState({ devOpsMode: true, tabOptions, checkTabExists: false }, () => {
+        localStorage.setItem('devOpsMode', 'true');
+      });
     }
   }
 

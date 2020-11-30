@@ -169,17 +169,48 @@ const getRegistryIntegrations = baseApi('GET', '/api/integrations/registry');
 
 const getRepoIntegrations = baseApi('GET', '/api/integrations/repo');
 
-const getProjectClusterIntegrations = baseApi<{}, { id: number }>('GET', pathParams => {
-  return `/api/projects/${pathParams.id}/integrations/cluster`;
+const getProjectClusters = baseApi<{}, { id: number }>('GET', pathParams => {
+  return `/api/projects/${pathParams.id}/clusters`;
 });
 
-const getProjectRegistryIntegrations = baseApi<{}, { id: number }>('GET', pathParams => {
-  return `/api/projects/${pathParams.id}/integrations/registry`;
+const getProjectRegistries = baseApi<{}, { id: number }>('GET', pathParams => {
+  return `/api/projects/${pathParams.id}/registries`;
 });
 
-const getProjectRepoIntegrations = baseApi<{}, { id: number }>('GET', pathParams => {
-  return `/api/projects/${pathParams.id}/integrations/repo`;
+const getProjectRepos = baseApi<{}, { id: number }>('GET', pathParams => {
+  return `/api/projects/${pathParams.id}/repos`;
 });
+
+const createAWSIntegration = baseApi<{
+  aws_region: string,
+  aws_access_key_id: string,
+  aws_secret_access_key: string,
+}, { id: number }>('POST', pathParams => {
+  return `/api/projects/${pathParams.id}/integrations/aws`;
+});
+
+const createECR = baseApi<{
+  name: string,
+  aws_integration_id: string,
+}, { id: number }>('POST', pathParams => {
+  return `/api/projects/${pathParams.id}/registries`;
+});
+
+const getImageRepos = baseApi<{}, {   
+  project_id: number,
+  registry_id: number,
+ }>('GET', pathParams => {
+  return `/api/projects/${pathParams.project_id}/registries/${pathParams.registry_id}/repositories`;
+});
+
+const getImageTags = baseApi<{}, {   
+  project_id: number,
+  registry_id: number,
+  repo_name: string,
+ }>('GET', pathParams => {
+  return `/api/projects/${pathParams.project_id}/registries/${pathParams.registry_id}/repositories/${pathParams.repo_name}`;
+});
+
 
 // Bundle export to allow default api import (api.<method> is more readable)
 export default {
@@ -210,7 +241,11 @@ export default {
   getClusterIntegrations,
   getRegistryIntegrations,
   getRepoIntegrations,
-  getProjectClusterIntegrations,
-  getProjectRegistryIntegrations,
-  getProjectRepoIntegrations,
+  getProjectClusters,
+  getProjectRegistries,
+  getProjectRepos,
+  createAWSIntegration,
+  createECR,
+  getImageRepos,
+  getImageTags,
 }

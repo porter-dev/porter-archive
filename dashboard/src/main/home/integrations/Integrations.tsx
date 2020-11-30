@@ -13,90 +13,93 @@ type PropsType = {
 };
 
 type StateType = {
-  currentCategory: ChoiceType | null,
+  currentCategory: string | null,
   currentIntegration: string | null,
   currentOptions: any[],
+  currentIntegrationData: any[],
 };
-
-const categories = [
-  {
-    value: 'kubernetes',
-    label: 'Kubernetes',
-    buttonText: 'Add a Cluster',
-  },
-  {
-    value: 'registry',
-    label: 'Docker Registry',
-    buttonText: 'Add a Registry',
-  },
-  {
-    value: 'repo',
-    label: 'Git Repository',
-    buttonText: 'Add a Repository',
-  },
-];
 
 export default class Integrations extends Component<PropsType, StateType> {
   state = {
-    currentCategory: null as any | null,
+    currentCategory: null as string | null,
     currentIntegration: null as string | null,
     currentOptions: [] as any[],
+    currentIntegrationData: [] as any[],
   }
 
   // TODO: implement once backend is restructured
-  getIntegrations = (categoryType: string): any[] => {
-    return [];
-    /*
+  getIntegrations = (categoryType: string) => {
     let { currentProject } = this.context;
     switch (categoryType) {
       case 'kubernetes':
-        api.getProjectClusterIntegrations('<token>', {}, { id: currentProject.id }, (err: any, res: any) => {
+        api.getProjectClusters('<token>', {}, { id: currentProject.id }, (err: any, res: any) => {
           if (err) {
             console.log(err);
           } else {
             console.log(res.data)
-            return [
-              {
-                value: 'gke',
-                label: 'Google Kubernetes Engine (GKE)',
-              },
-              {
-                value: 'eks',
-                label: 'Amazon Elastic Kubernetes Service (EKS)',
-              },
-            ];
           }
         });
+        break;
       case 'registry':
-        return [
-          {
-            value: 'gcr',
-            label: 'Google Container Registry (GCR)',
-          },
-          {
-            value: 'ecr',
-            label: 'Elastic Container Registry (ECR)',
-          },
-          {
-            value: 'docker',
-            label: 'Docker Hub',
-          },
-        ];
+        api.getProjectRegistries('<token>', {}, { id: currentProject.id }, (err: any, res: any) => {
+          if (err) {
+            console.log(err);
+          } else {
+            let currentOptions = [] as string[];
+            res.data.forEach((integration: any, i: number) => {
+              currentOptions.includes(integration.service) ? null : currentOptions.push(integration.service);
+            });
+            this.setState({ currentOptions, currentIntegrationData: res.data });
+          }
+        });
+        break;
+      case 'repo':
+        api.getProjectRepos('<token>', {}, { id: currentProject.id }, (err: any, res: any) => {
+          if (err) {
+            console.log(err);
+          } else {
+            console.log(res.data);
+          }
+        });
+        break;
       default:
-        return [];
+        console.log('Unknown integration category.');
     }
-    */
   }
 
   componentDidUpdate(prevProps: PropsType, prevState: StateType) {
     if (this.state.currentCategory && this.state.currentCategory !== prevState.currentCategory) {
-      this.setState({ currentOptions: this.getIntegrations(this.state.currentCategory.value) });
+      this.getIntegrations(this.state.currentCategory);
+    }
+  }
+
+  renderIntegrationContents = () => {
+    if (this.state.currentIntegrationData) {
+      let items = this.state.currentIntegrationData.filter(item => item.service === this.state.currentIntegration);
+      if (items.length > 0) {
+        return (
+          <div>
+            <Label>Existing Credentials</Label>
+            {
+              items.map((item: any, i: number) => {
+                return (
+                  <Credential>
+                    <i className="material-icons">admin_panel_settings</i> {item.name}
+                  </Credential>
+                );
+              })
+            }
+            <br />
+          </div>
+        );
+      }
     }
   }
 
   renderContents = () => {
     let { currentCategory, currentIntegration } = this.state;
 
+    // TODO: Split integration page into separate component
     if (currentIntegration) {
       let icon = integrationList[currentIntegration] && integrationList[currentIntegration].icon;
       return (
@@ -110,13 +113,21 @@ export default class Integrations extends Component<PropsType, StateType> {
               <Title>{integrationList[currentIntegration].label}</Title>
             </Flex>
           </TitleSectionAlt>
-
-          <IntegrationForm integrationName={currentIntegration} />
+          {this.renderIntegrationContents()}
+          <IntegrationForm 
+            integrationName={currentIntegration}
+            closeForm={() => {
+              this.setState({ currentIntegration: null });
+              this.getIntegrations(this.state.currentCategory);
+            }}
+          />
           <Br />
         </div>
       );
     } else if (currentCategory) {
-      let icon = integrationList[currentCategory.value] && integrationList[currentCategory.value].icon;
+      let icon = integrationList[currentCategory] && integrationList[currentCategory].icon;
+      let label = integrationList[currentCategory] && integrationList[currentCategory].label;
+      let buttonText = integrationList[currentCategory] && integrationList[currentCategory].buttonText;
       return (
         <div>
           <TitleSectionAlt>
@@ -125,23 +136,23 @@ export default class Integrations extends Component<PropsType, StateType> {
                 keyboard_backspace
               </i>
               <Icon src={icon && icon} />
-              <Title>{currentCategory.label}</Title>
+              <Title>{label}</Title>
             </Flex>
 
             <Button 
               onClick={() => this.context.setCurrentModal('IntegrationsModal', { 
-                category: this.state.currentCategory.value,
-                setCurrentIntegration: (x: any) => this.setState({ currentIntegration: x })
+                category: currentCategory,
+                setCurrentIntegration: (x: string) => this.setState({ currentIntegration: x })
               })}
             >
               <i className="material-icons">add</i>
-              {currentCategory.buttonText}
+              {buttonText}
             </Button>
           </TitleSectionAlt>
 
           <IntegrationList
             integrations={this.state.currentOptions}
-            setCurrent={(x: any) => this.setState({ currentIntegration: x })}
+            setCurrent={(x: string) => this.setState({ currentIntegration: x })}
           />
         </div>
       );
@@ -153,7 +164,7 @@ export default class Integrations extends Component<PropsType, StateType> {
         </TitleSection>
 
         <IntegrationList
-          integrations={categories}
+          integrations={['kubernetes', 'registry', 'repo']}
           setCurrent={(x: any) => this.setState({ currentCategory: x })}
           isCategory={true}
         />
@@ -171,6 +182,32 @@ export default class Integrations extends Component<PropsType, StateType> {
 }
 
 Integrations.contextType = Context;
+
+const Label = styled.div`
+  font-size: 14px;
+  font-weight: 500;
+  margin-bottom: 20px;
+`;
+
+const Credential = styled.div`
+  width: 100%;
+  height: 30px;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  padding: 20px;
+  padding-left: 13px;
+  width: 100%;
+  border-radius: 5px;
+  background: #ffffff11;
+  margin-bottom: 5px;
+  
+  > i {
+    font-size: 22px;
+    color: #ffffff44;
+    margin-right: 10px;
+  }
+`;
 
 const Br = styled.div`
   width: 100%;

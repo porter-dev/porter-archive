@@ -85,18 +85,17 @@ Logs.contextType = Context;
 const Wrapper = styled.div`
   width: 100%;
   height: 100%;
+  overflow: auto;
+  padding: 25px 30px;
 `;
 
 const LogStream = styled.div`
-  overflow: auto;
   display: flex;
   flex: 1;
   float: right;
   height: 100%;
   background: #202227;
-  padding: 25px 30px;
   user-select: text;
-  overflow: auto;
 `;
 
 const Message = styled.div`

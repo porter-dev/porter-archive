@@ -23,50 +23,56 @@ type StateType = {
   error: boolean,
   images: ImageType[],
   clickedImage: ImageType | null,
+  registryId: number | null, // For passing registry ID to tag list
 };
-
-const dummyImages = [
-  {
-    kind: 'docker-hub',
-    source: 'index.docker.io/jusrhee/image1',
-  },
-  {
-    kind: 'docker-hub',
-    source: 'https://index.docker.io/jusrhee/image2',
-  },
-  {
-    kind: 'docker-hub',
-    source: 'https://index.docker.io/jusrhee/image3',
-  },
-  {
-    kind: 'gcr',
-    source: 'https://gcr.io/some-registry/image1',
-  },
-  {
-    kind: 'gcr',
-    source: 'https://gcr.io/some-registry/image2',
-  },
-  {
-    kind: 'ecr',
-    source: 'https://aws_account_id.dkr.ecr.region.amazonaws.com/smth/1',
-  },
-  {
-    kind: 'ecr',
-    source: 'https://aws_account_id.dkr.ecr.region.amazonaws.com/smth/2',
-  },
-];
 
 export default class ImageSelector extends Component<PropsType, StateType> {
   state = {
     isExpanded: this.props.forceExpanded,
-    loading: false,
+    loading: true,
     error: false,
     images: [] as ImageType[],
     clickedImage: null as ImageType | null,
+    registryId: null as number | null,
   }
 
   componentDidMount() {
-    this.setState({ images: dummyImages });
+    const { currentProject, setCurrentError } = this.context;
+    let images = [] as ImageType[]
+    api.getProjectRegistries('<token>', {}, { id: currentProject.id }, async (err: any, res: any) => {
+      if (err) {
+        console.log(err);
+      } else {
+        res.data.forEach(async (registry: any, i: number) => {
+          await new Promise((nextController: (res?: any) => void) => {           
+            api.getImageRepos('<token>', {}, 
+              { 
+                project_id: currentProject.id,
+                registry_id: registry.id,
+              }, (err: any, res: any) => {
+              if (err && this.state.loading) {
+                this.setState({ error: true });
+              } else {
+                let newImg = res.data.map((img: any) => {
+                  return {
+                    kind: registry.service, 
+                    source: img.name
+                  }
+                })
+                this.setState({
+                  images: [...images, ...newImg],
+                  registryId: registry.id,
+                  loading: false,
+                  error: false,
+                }, () => {
+                  nextController()
+                })
+              }
+            });    
+          })
+        });
+      }
+    });
   }
 
   renderImageList = () => {
@@ -78,7 +84,10 @@ export default class ImageSelector extends Component<PropsType, StateType> {
     }
 
     return images.map((image: ImageType, i: number) => {
-      let icon = image.kind;
+      let icon = integrationList[image.kind] && integrationList[image.kind].icon;
+      if (!icon) {
+        icon = integrationList['docker'].icon;
+      }
       return (
         <ImageItem
           key={i}
@@ -131,6 +140,7 @@ export default class ImageSelector extends Component<PropsType, StateType> {
             <TagList
               selectedImageUrl={selectedImageUrl}
               setSelectedImageUrl={setSelectedImageUrl}
+              registryId={this.state.registryId}
             />
           </ExpandedWrapper>
           {this.renderBackButton()}
@@ -141,9 +151,14 @@ export default class ImageSelector extends Component<PropsType, StateType> {
 
   renderSelected = () => {
     let { selectedImageUrl, setSelectedImageUrl } = this.props;
+    let { clickedImage } = this.state;
     let icon = info;
-    if (this.state.clickedImage) {
-      icon = this.state.clickedImage.kind;
+    if (clickedImage) {
+      icon = clickedImage.kind;
+      icon = integrationList[clickedImage.kind] && integrationList[clickedImage.kind].icon;
+      if (!icon) {
+        icon = integrationList['docker'].icon;
+      }
     } else if (selectedImageUrl && selectedImageUrl !== '') {
       icon = edit;
     }

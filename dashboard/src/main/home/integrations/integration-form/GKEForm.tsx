@@ -11,6 +11,7 @@ import Heading from '../../../../components/values-form/Heading';
 import Helper from '../../../../components/values-form/Helper';
 
 type PropsType = {
+  closeForm: () => void,
 };
 
 type StateType = {

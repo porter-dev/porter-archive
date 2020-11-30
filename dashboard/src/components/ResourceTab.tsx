@@ -130,6 +130,7 @@ const Tooltip = styled.div`
   position: absolute;
   right: 0px;
   top: 25px;
+  white-space: nowrap;
   height: 18px;
   padding: 2px 5px;
   background: #383842dd;

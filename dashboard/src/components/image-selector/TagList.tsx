@@ -4,12 +4,14 @@ import tag_icon from '../../assets/tag.png';
 import info from '../../assets/info.svg';
 
 import api from '../../shared/api';
+import { Context } from '../../shared/Context';
 
 import Loading from '../Loading';
 
 type PropsType = {
   setSelectedImageUrl: (x: string) => void,
-  selectedImageUrl: string
+  selectedImageUrl: string,
+  registryId: number,
 };
 
 type StateType = {
@@ -28,19 +30,22 @@ export default class TagList extends Component<PropsType, StateType> {
   }
 
   componentDidMount() {
-    this.setState({ tags: ['123', '456', '889', '5521', '5212'], loading: false });
-
-    /* Get branches
-    api.getTags('<token>', {}, {
-
-    }, (err: any, res: any) => {
+    const { currentProject } = this.context;
+    api.getImageTags('<token>', {}, 
+      { 
+        project_id: currentProject.id,
+        registry_id: this.props.registryId,
+        repo_name: this.props.selectedImageUrl,
+      }, (err: any, res: any) => {
       if (err) {
         this.setState({ loading: false, error: true });
       } else {
-        this.setState({ tags: res.data, loading: false, error: false });
+        let tags = res.data.map((tag: any, i: number) => {
+          return tag.tag;
+        });
+        this.setState({ tags, loading: false });
       }
     });
-    */
   }
 
   setTag = (tag: string) => {
@@ -92,6 +97,8 @@ export default class TagList extends Component<PropsType, StateType> {
     );
   }
 }
+
+TagList.contextType = Context;
 
 const TagName = styled.div`
   display: flex;

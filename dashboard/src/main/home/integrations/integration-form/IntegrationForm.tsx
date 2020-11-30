@@ -8,7 +8,8 @@ import GCRForm from './GCRForm';
 import ECRForm from './ECRForm';
 
 type PropsType = {
-  integrationName: string
+  integrationName: string,
+  closeForm: () => void,
 };
 
 type StateType = {
@@ -19,17 +20,18 @@ export default class IntegrationForm extends Component<PropsType, StateType> {
   }
 
   render() {
+    let { closeForm } = this.props;
     switch (this.props.integrationName) {
       case 'docker-hub':
-        return <DockerHubForm />;
+        return <DockerHubForm closeForm={closeForm} />;
       case 'gke':
-        return <GKEForm />;
+        return <GKEForm closeForm={closeForm} />;
       case 'eks':
-        return <EKSForm />;
+        return <EKSForm closeForm={closeForm} />;
       case 'ecr':
-        return <ECRForm />;
+        return <ECRForm closeForm={closeForm} />;
       case 'gcr':
-        return <GCRForm />;
+        return <GCRForm closeForm={closeForm} />;
       default:
         return null;
     }

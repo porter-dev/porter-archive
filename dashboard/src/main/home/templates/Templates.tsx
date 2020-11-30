@@ -104,6 +104,9 @@ export default class Templates extends Component<PropsType, StateType> {
       <TemplatesWrapper>
         <TitleSection>
           <Title>Template Explorer</Title>
+          <a href='https://docs.getporter.dev/docs/porter-templates' target='_blank'>
+            <i className="material-icons">help_outline</i>
+          </a>
         </TitleSection>
         <TabSelector
           options={tabOptions}
@@ -235,6 +238,21 @@ const TitleSection = styled.div`
   display: flex;
   flex-direction: row;
   align-items: center;
+
+  > a {
+    > i {
+      display: flex;
+      align-items: center;
+      margin-bottom: -2px;
+      font-size: 18px;
+      margin-left: 18px;
+      color: #858FAAaa;
+      cursor: pointer;
+      :hover {
+        color: #aaaabb;
+      }
+    }
+  }
 `;
 
 const TemplatesWrapper = styled.div`

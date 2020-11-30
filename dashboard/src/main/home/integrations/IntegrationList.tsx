@@ -7,7 +7,7 @@ import api from '../../../shared/api';
 
 type PropsType = {
   setCurrent: (x: any) => void,
-  integrations: any,
+  integrations: string[],
   isCategory?: boolean
 };
 
@@ -18,9 +18,10 @@ export default class IntegrationList extends Component<PropsType, StateType> {
   renderContents = () => {
     let { integrations, setCurrent, isCategory } = this.props;
     if (integrations && integrations.length > 0) {
-      return integrations.map((integration: any, i: number) => {
-        let icon = integrationList[integration.value] && integrationList[integration.value].icon;
-        let disabled = integration.value === 'repo';
+      return integrations.map((integration: string, i: number) => {
+        let icon = integrationList[integration] && integrationList[integration].icon;
+        let label = integrationList[integration] && integrationList[integration].label;
+        let disabled = integration === 'repo' || integration === 'kubernetes';
         return (
           <Integration
             key={i}
@@ -30,7 +31,7 @@ export default class IntegrationList extends Component<PropsType, StateType> {
           >
             <Flex>
               <Icon src={icon && icon} />
-              <Label>{integration.label}</Label>
+              <Label>{label}</Label>
             </Flex>
             <i className="material-icons">{isCategory ? 'launch' : 'more_vert'}</i>
           </Integration>

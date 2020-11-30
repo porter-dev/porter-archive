@@ -8,6 +8,7 @@ import InputRow from '../../../../components/values-form/InputRow';
 import SaveButton from '../../../../components/SaveButton';
 
 type PropsType = {
+  closeForm: () => void,
 };
 
 type StateType = {

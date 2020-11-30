@@ -25,37 +25,6 @@ type StateType = {
   clickedImage: ImageType | null,
 };
 
-const dummyImages = [
-  {
-    kind: 'asdfker',
-    source: 'index.docker.io/jusrhee/image1',
-  },
-  {
-    kind: 'docker',
-    source: 'https://index.docker.io/jusrhee/image2',
-  },
-  {
-    kind: 'docker',
-    source: 'https://index.docker.io/jusrhee/image3',
-  },
-  {
-    kind: 'gcr',
-    source: 'https://gcr.io/some-registry/image1',
-  },
-  {
-    kind: 'gcr',
-    source: 'https://gcr.io/some-registry/image2',
-  },
-  {
-    kind: 'easdf',
-    source: 'https://aws_account_id.dkr.ecr.region.amazonaws.com/smth/1',
-  },
-  {
-    kind: 'asdfcr',
-    source: 'https://aws_account_id.dkr.ecr.region.amazonaws.com/smth/2',
-  },
-];
-
 export default class ImageSelector extends Component<PropsType, StateType> {
   state = {
     isExpanded: this.props.forceExpanded,
@@ -67,30 +36,35 @@ export default class ImageSelector extends Component<PropsType, StateType> {
 
   componentDidMount() {
     const { currentProject } = this.context;
-    api.getProjectRegistries('<token>', {}, { id: currentProject.id }, (err: any, res: any) => {
+    let images = [] as ImageType[]
+    api.getProjectRegistries('<token>', {}, { id: currentProject.id }, async (err: any, res: any) => {
       if (err) {
         console.log(err);
       } else {
-        res.data.forEach((registry: any, i: number) => {
-          console.log(registry)
-          api.listRepositories('<token>', {}, 
-            { 
-              project_id: currentProject.id,
-              registry_id: registry.id,
-            }, (err: any, res: any) => {
-            if (err) {
-              this.setState({ loading: false, error: true });
-            } else {
-              let images = res.data.map((img: any) => {
-                return {
-                  kind: registry.service, 
-                  source: img.name
-                }
-              })
-              this.setState({ images, loading: false, error: false });
-            }
-          });    
+        res.data.forEach(async (registry: any, i: number) => {
+          await new Promise((nextController: (res?: any) => void) => {           
+            api.listRepositories('<token>', {}, 
+              { 
+                project_id: currentProject.id,
+                registry_id: registry.id,
+              }, (err: any, res: any) => {
+              if (err) {
+                this.setState({ loading: false, error: true });
+              } else {
+                let newImg = res.data.map((img: any) => {
+                  return {
+                    kind: registry.service, 
+                    source: img.name
+                  }
+                })
+                this.setState({images: [...images, ...newImg]}, () => {
+                  nextController()
+                })
+              }
+            });    
+          })
         });
+        this.setState({loading: false, error: false });
       }
     });
   }

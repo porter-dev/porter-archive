@@ -162,7 +162,7 @@ export default class ChartList extends Component<PropsType, StateType> {
     this.setControllerWebsockets(["deployment", "statefulset", "daemonset", "replicaset"]);
   }
 
-  async componentWillUnmount () {
+  componentWillUnmount() {
     if (this.state.websockets) {
       this.state.websockets.forEach((ws: WebSocket) => {
         ws.close()

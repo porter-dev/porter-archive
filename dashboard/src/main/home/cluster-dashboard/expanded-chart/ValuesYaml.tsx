@@ -56,7 +56,6 @@ export default class ValuesYaml extends Component<PropsType, StateType> {
       id: currentProject.id, 
       name: this.props.currentChart.name,
       cluster_id: currentCluster.id,
-      service_account_id: currentCluster.service_account_id,
     }, (err: any, res: any) => {
       if (err) {
         console.log(err)

@@ -11,10 +11,12 @@ import Heading from '../../../../components/values-form/Heading';
 import Helper from '../../../../components/values-form/Helper';
 
 type PropsType = {
+  closeForm: () => void,
 };
 
 type StateType = {
   credentialsName: string,
+  awsRegion: string,
   awsAccessId: string,
   awsSecretKey: string,
 };
@@ -22,12 +24,34 @@ type StateType = {
 export default class ECRForm extends Component<PropsType, StateType> {
   state = {
     credentialsName: '',
+    awsRegion: '',
     awsAccessId: '',
     awsSecretKey: '',
   }
 
   handleSubmit = () => {
-    // TODO: implement once api is restructured
+    let { awsRegion, awsAccessId, awsSecretKey, credentialsName } = this.state;
+    let { currentProject } = this.context;
+    api.createAWSIntegration('<token>', {
+      aws_region: awsRegion,
+      aws_access_key_id: awsAccessId,
+      aws_secret_access_key: awsSecretKey,
+    }, { id: currentProject.id }, (err: any, res: any) => {
+      if (err) {
+        console.log(err);
+      } else {
+        api.createECR('<token>', {
+          name: credentialsName,
+          aws_integration_id: res.data.id,
+        }, { id: currentProject.id }, (err: any, res: any) => {
+          if (err) {
+            console.log(err);
+          } else {
+            this.props.closeForm();
+          }
+        });
+      }
+    });
   }
 
   render() {
@@ -46,6 +70,14 @@ export default class ECRForm extends Component<PropsType, StateType> {
           />
           <Heading>AWS Settings</Heading>
           <Helper>AWS access credentials.</Helper>
+          <InputRow
+            type='text'
+            value={this.state.awsRegion}
+            setValue={(x: string) => this.setState({ awsRegion: x })}
+            label='📍 AWS Region'
+            placeholder='ex: mars-north-12'
+            width='100%'
+          />
           <InputRow
             type='text'
             value={this.state.awsAccessId}
@@ -72,6 +104,8 @@ export default class ECRForm extends Component<PropsType, StateType> {
     );
   }
 }
+
+ECRForm.contextType = Context;
 
 const CredentialWrapper = styled.div`
   padding: 5px 40px 25px;

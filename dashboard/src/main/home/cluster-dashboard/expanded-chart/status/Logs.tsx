@@ -106,5 +106,5 @@ const Message = styled.div`
   align-items: center;
   justify-content: center;
   color: #ffffff44;
-  font-size: 14px;
+  font-size: 13px;
 `;

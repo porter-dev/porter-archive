@@ -58,6 +58,7 @@ func setupTestEnv(tester *tester, t *testing.T) {
 		&ints.GCPIntegration{},
 		&ints.AWSIntegration{},
 		&ints.TokenCache{},
+		&ints.RegTokenCache{},
 	)
 
 	if err != nil {

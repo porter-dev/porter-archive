@@ -215,6 +215,20 @@ func New(
 			),
 		)
 
+		r.Method(
+			"GET",
+			"/projects/{project_id}/registries/{registry_id}/repositories/{repo_name}",
+			auth.DoesUserHaveProjectAccess(
+				auth.DoesUserHaveRegistryAccess(
+					requestlog.NewHandler(a.HandleListImages, l),
+					mw.URLParam,
+					mw.URLParam,
+				),
+				mw.URLParam,
+				mw.WriteAccess,
+			),
+		)
+
 		// /api/projects/{project_id}/releases routes
 		r.Method(
 			"GET",
@@ -346,13 +360,6 @@ func New(
 		// )
 
 		// /api/projects/{project_id}/images routes
-		// TODO: add back project access check
-		r.Method(
-			"GET",
-			"/projects/{project_id}/images",
-			auth.BasicAuthenticate(requestlog.NewHandler(a.HandleListImages, l)),
-		)
-
 		r.Method(
 			"POST",
 			"/projects/{project_id}/deploy",

@@ -29,6 +29,18 @@ var registryCmdListRepos = &cobra.Command{
 	},
 }
 
+var registryCmdListImages = &cobra.Command{
+	Use:   "images list [REPO_NAME]",
+	Short: "Lists the images in an image repository",
+	Run: func(cmd *cobra.Command, args []string) {
+		err := checkLoginAndRun(args, listImages)
+
+		if err != nil {
+			os.Exit(1)
+		}
+	},
+}
+
 func init() {
 	rootCmd.AddCommand(registryCmd)
 
@@ -40,6 +52,8 @@ func init() {
 	)
 
 	registryCmd.AddCommand(registryCmdListRepos)
+
+	registryCmd.AddCommand(registryCmdListImages)
 }
 
 func listRepos(user *api.AuthCheckResponse, client *api.Client, args []string) error {
@@ -64,6 +78,37 @@ func listRepos(user *api.AuthCheckResponse, client *api.Client, args []string) e
 
 	for _, repo := range repos {
 		fmt.Fprintf(w, "%s\t%s\n", repo.Name, repo.CreatedAt.String())
+	}
+
+	w.Flush()
+
+	return nil
+}
+
+func listImages(user *api.AuthCheckResponse, client *api.Client, args []string) error {
+	pID := getProjectID()
+	rID := getRegistryID()
+	repoName := args[1]
+
+	// get the list of namespaces
+	imgs, err := client.ListImages(
+		context.Background(),
+		pID,
+		rID,
+		repoName,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	w := new(tabwriter.Writer)
+	w.Init(os.Stdout, 3, 8, 0, '\t', tabwriter.AlignRight)
+
+	fmt.Fprintf(w, "%s\t%s\n", "IMAGE", "DIGEST")
+
+	for _, img := range imgs {
+		fmt.Fprintf(w, "%s\t%s\n", repoName+":"+img.Tag, img.Digest)
 	}
 
 	w.Flush()

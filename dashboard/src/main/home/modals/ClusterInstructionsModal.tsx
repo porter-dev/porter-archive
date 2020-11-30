@@ -39,7 +39,7 @@ export default class ClusterInstructionsModal extends Component<PropsType, State
         />
 
         <Placeholder>
-          1. Run the following command to retrieve the latest binary:
+          1. To install the Porter CLI, first retrieve the latest binary:
           <Code>
             &#123;<br />
             name=$(curl -s https://api.github.com/repos/porter-dev/porter/releases/latest | grep "browser_download_url.*_Darwin_x86_64\.zip" | cut -d ":" -f 2,3 | tr -d \")<br />

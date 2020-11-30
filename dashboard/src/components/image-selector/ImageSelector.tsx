@@ -27,15 +27,15 @@ type StateType = {
 
 const dummyImages = [
   {
-    kind: 'docker-hub',
+    kind: 'asdfker',
     source: 'index.docker.io/jusrhee/image1',
   },
   {
-    kind: 'docker-hub',
+    kind: 'docker',
     source: 'https://index.docker.io/jusrhee/image2',
   },
   {
-    kind: 'docker-hub',
+    kind: 'docker',
     source: 'https://index.docker.io/jusrhee/image3',
   },
   {
@@ -47,11 +47,11 @@ const dummyImages = [
     source: 'https://gcr.io/some-registry/image2',
   },
   {
-    kind: 'ecr',
+    kind: 'easdf',
     source: 'https://aws_account_id.dkr.ecr.region.amazonaws.com/smth/1',
   },
   {
-    kind: 'ecr',
+    kind: 'asdfcr',
     source: 'https://aws_account_id.dkr.ecr.region.amazonaws.com/smth/2',
   },
 ];
@@ -78,7 +78,10 @@ export default class ImageSelector extends Component<PropsType, StateType> {
     }
 
     return images.map((image: ImageType, i: number) => {
-      let icon = image.kind;
+      let icon = integrationList[image.kind] && integrationList[image.kind].icon;
+      if (!icon) {
+        icon = integrationList['docker'].icon;
+      }
       return (
         <ImageItem
           key={i}
@@ -141,9 +144,14 @@ export default class ImageSelector extends Component<PropsType, StateType> {
 
   renderSelected = () => {
     let { selectedImageUrl, setSelectedImageUrl } = this.props;
+    let { clickedImage } = this.state;
     let icon = info;
-    if (this.state.clickedImage) {
-      icon = this.state.clickedImage.kind;
+    if (clickedImage) {
+      icon = clickedImage.kind;
+      icon = integrationList[clickedImage.kind] && integrationList[clickedImage.kind].icon;
+      if (!icon) {
+        icon = integrationList['docker'].icon;
+      }
     } else if (selectedImageUrl && selectedImageUrl !== '') {
       icon = edit;
     }

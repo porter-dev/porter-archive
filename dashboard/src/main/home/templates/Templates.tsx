@@ -246,8 +246,11 @@ const TitleSection = styled.div`
       margin-bottom: -2px;
       font-size: 18px;
       margin-left: 18px;
-      color: #8B949F;
+      color: #858FAAaa;
       cursor: pointer;
+      :hover {
+        color: #aaaabb;
+      }
     }
   }
 `;

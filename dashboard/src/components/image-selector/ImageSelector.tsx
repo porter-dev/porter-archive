@@ -14,7 +14,9 @@ import TagList from './TagList';
 type PropsType = {
   forceExpanded?: boolean,
   selectedImageUrl: string | null,
+  selectedTag: string | null,
   setSelectedImageUrl: (x: string) => void
+  setSelectedTag: (x: string) => void
 };
 
 type StateType = {
@@ -43,7 +45,8 @@ export default class ImageSelector extends Component<PropsType, StateType> {
       if (err) {
         console.log(err);
       } else {
-        res.data.forEach(async (registry: any, i: number) => {
+        let registries = res.data;
+        registries.forEach(async (registry: any, i: number) => {
           await new Promise((nextController: (res?: any) => void) => {           
             api.getImageRepos('<token>', {}, 
               { 
@@ -59,14 +62,16 @@ export default class ImageSelector extends Component<PropsType, StateType> {
                     source: img.name
                   }
                 })
-                this.setState({
-                  images: [...images, ...newImg],
-                  registryId: registry.id,
-                  loading: false,
-                  error: false,
-                }, () => {
-                  nextController()
-                })
+                images.push(...newImg)
+                if (i == registries.length - 1) {
+                  this.setState({
+                    images,
+                    registryId: registry.id,
+                    loading: false,
+                    error: false,
+                  })
+                }
+                nextController()
               }
             });    
           })
@@ -123,7 +128,7 @@ export default class ImageSelector extends Component<PropsType, StateType> {
   }
 
   renderExpanded = () => {
-    let { selectedImageUrl, setSelectedImageUrl } = this.props;
+    let { selectedTag, selectedImageUrl, setSelectedTag } = this.props;
     if (!this.state.clickedImage) {
       return (
         <div>
@@ -138,8 +143,9 @@ export default class ImageSelector extends Component<PropsType, StateType> {
         <div>
           <ExpandedWrapper>
             <TagList
+              selectedTag={selectedTag}
               selectedImageUrl={selectedImageUrl}
-              setSelectedImageUrl={setSelectedImageUrl}
+              setSelectedTag={setSelectedTag}
               registryId={this.state.registryId}
             />
           </ExpandedWrapper>

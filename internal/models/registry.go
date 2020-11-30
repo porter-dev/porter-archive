@@ -1,6 +1,7 @@
 package models
 
 import (
+	"github.com/porter-dev/porter/internal/models/integrations"
 	"gorm.io/gorm"
 )
 
@@ -32,13 +33,25 @@ type RegistryExternal struct {
 
 	// Name of the registry
 	Name string `json:"name"`
+
+	// The integration service for this registry
+	Service integrations.IntegrationService `json:"service"`
 }
 
 // Externalize generates an external Registry to be shared over REST
 func (r *Registry) Externalize() *RegistryExternal {
+	var serv integrations.IntegrationService
+
+	if r.AWSIntegrationID != 0 {
+		serv = integrations.ECR
+	} else if r.GCPIntegrationID != 0 {
+		serv = integrations.GCR
+	}
+
 	return &RegistryExternal{
 		ID:        r.ID,
 		ProjectID: r.ProjectID,
 		Name:      r.Name,
+		Service:   serv,
 	}
 }

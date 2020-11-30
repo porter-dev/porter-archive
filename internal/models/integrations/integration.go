@@ -6,12 +6,12 @@ type IntegrationService string
 // The list of supported third-party services
 const (
 	GKE    IntegrationService = "gke"
-	EKS                       = "eks"
-	Kube                      = "kube"
-	GCR                       = "gcr"
-	ECR                       = "ecr"
-	Github                    = "github"
-	Docker                    = "docker"
+	EKS    IntegrationService = "eks"
+	Kube   IntegrationService = "kube"
+	GCR    IntegrationService = "gcr"
+	ECR    IntegrationService = "ecr"
+	Github IntegrationService = "github"
+	Docker IntegrationService = "docker"
 )
 
 // PorterIntegration is a supported integration service, specifying an auth

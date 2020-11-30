@@ -196,12 +196,21 @@ const createECR = baseApi<{
   return `/api/projects/${pathParams.id}/registries`;
 });
 
-const listRepositories = baseApi<{}, {   
+const getImageRepos = baseApi<{}, {   
   project_id: number,
   registry_id: number,
  }>('GET', pathParams => {
   return `/api/projects/${pathParams.project_id}/registries/${pathParams.registry_id}/repositories`;
 });
+
+const getImageTags = baseApi<{}, {   
+  project_id: number,
+  registry_id: number,
+  repo_name: string,
+ }>('GET', pathParams => {
+  return `/api/projects/${pathParams.project_id}/registries/${pathParams.registry_id}/repositories/${pathParams.repo_name}`;
+});
+
 
 // Bundle export to allow default api import (api.<method> is more readable)
 export default {
@@ -237,5 +246,6 @@ export default {
   getProjectRepos,
   createAWSIntegration,
   createECR,
-  listRepositories,
+  getImageRepos,
+  getImageTags,
 }

@@ -23,6 +23,7 @@ type StateType = {
   error: boolean,
   images: ImageType[],
   clickedImage: ImageType | null,
+  registryId: number | null, // For passing registry ID to tag list
 };
 
 export default class ImageSelector extends Component<PropsType, StateType> {
@@ -32,10 +33,11 @@ export default class ImageSelector extends Component<PropsType, StateType> {
     error: false,
     images: [] as ImageType[],
     clickedImage: null as ImageType | null,
+    registryId: null as number | null,
   }
 
   componentDidMount() {
-    const { currentProject } = this.context;
+    const { currentProject, setCurrentError } = this.context;
     let images = [] as ImageType[]
     api.getProjectRegistries('<token>', {}, { id: currentProject.id }, async (err: any, res: any) => {
       if (err) {
@@ -43,13 +45,13 @@ export default class ImageSelector extends Component<PropsType, StateType> {
       } else {
         res.data.forEach(async (registry: any, i: number) => {
           await new Promise((nextController: (res?: any) => void) => {           
-            api.listRepositories('<token>', {}, 
+            api.getImageRepos('<token>', {}, 
               { 
                 project_id: currentProject.id,
                 registry_id: registry.id,
               }, (err: any, res: any) => {
-              if (err) {
-                this.setState({ loading: false, error: true });
+              if (err && this.state.loading) {
+                this.setState({ error: true });
               } else {
                 let newImg = res.data.map((img: any) => {
                   return {
@@ -59,6 +61,7 @@ export default class ImageSelector extends Component<PropsType, StateType> {
                 })
                 this.setState({
                   images: [...images, ...newImg],
+                  registryId: registry.id,
                   loading: false,
                   error: false,
                 }, () => {
@@ -137,6 +140,7 @@ export default class ImageSelector extends Component<PropsType, StateType> {
             <TagList
               selectedImageUrl={selectedImageUrl}
               setSelectedImageUrl={setSelectedImageUrl}
+              registryId={this.state.registryId}
             />
           </ExpandedWrapper>
           {this.renderBackButton()}

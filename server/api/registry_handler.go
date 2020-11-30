@@ -139,7 +139,7 @@ func (app *App) HandleListImages(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	repoName := chi.URLParam(r, "repo_name")
+	repoName := chi.URLParam(r, "*")
 
 	reg, err := app.repo.Registry.ReadRegistry(uint(regID))
 

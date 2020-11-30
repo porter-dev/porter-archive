@@ -4,6 +4,7 @@ import (
 	"errors"
 
 	"github.com/porter-dev/porter/internal/models"
+	ints "github.com/porter-dev/porter/internal/models/integrations"
 	"github.com/porter-dev/porter/internal/repository"
 	"gorm.io/gorm"
 )
@@ -70,4 +71,19 @@ func (repo *RegistryRepository) ListRegistriesByProjectID(
 	}
 
 	return res, nil
+}
+
+// UpdateRegistryTokenCache updates the token cache for a registry
+func (repo *RegistryRepository) UpdateRegistryTokenCache(
+	tokenCache *ints.TokenCache,
+) (*models.Registry, error) {
+	if !repo.canQuery {
+		return nil, errors.New("Cannot write database")
+	}
+
+	index := int(tokenCache.RegistryID - 1)
+	repo.registries[index].TokenCache.Token = tokenCache.Token
+	repo.registries[index].TokenCache.Expiry = tokenCache.Expiry
+
+	return repo.registries[index], nil
 }

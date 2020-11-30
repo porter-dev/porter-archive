@@ -43,6 +43,18 @@ var connectECRCmd = &cobra.Command{
 	},
 }
 
+var connectGCRCmd = &cobra.Command{
+	Use:   "gcr",
+	Short: "Connects a GCR instance to a project",
+	Run: func(cmd *cobra.Command, args []string) {
+		err := checkLoginAndRun(args, runConnectGCR)
+
+		if err != nil {
+			os.Exit(1)
+		}
+	},
+}
+
 func init() {
 	rootCmd.AddCommand(connectCmd)
 
@@ -77,6 +89,7 @@ func init() {
 	)
 
 	connectCmd.AddCommand(connectECRCmd)
+	connectCmd.AddCommand(connectGCRCmd)
 }
 
 func runConnectKubeconfig(_ *api.AuthCheckResponse, client *api.Client, _ []string) error {
@@ -96,8 +109,27 @@ func runConnectKubeconfig(_ *api.AuthCheckResponse, client *api.Client, _ []stri
 }
 
 func runConnectECR(_ *api.AuthCheckResponse, client *api.Client, _ []string) error {
-	return connect.ECR(
+	regID, err := connect.ECR(
 		client,
 		getProjectID(),
 	)
+
+	if err != nil {
+		return err
+	}
+
+	return setRegistry(regID)
+}
+
+func runConnectGCR(_ *api.AuthCheckResponse, client *api.Client, _ []string) error {
+	regID, err := connect.GCR(
+		client,
+		getProjectID(),
+	)
+
+	if err != nil {
+		return err
+	}
+
+	return setRegistry(regID)
 }

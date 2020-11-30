@@ -303,8 +303,9 @@ func (conf *OutOfClusterConfig) getTokenCache() (tok *ints.TokenCache, err error
 func (conf *OutOfClusterConfig) setTokenCache(token string, expiry time.Time) error {
 	_, err := conf.Repo.Cluster.UpdateClusterTokenCache(
 		&ints.TokenCache{
-			Token:  []byte(token),
-			Expiry: expiry,
+			ClusterID: conf.Cluster.ID,
+			Token:     []byte(token),
+			Expiry:    expiry,
 		},
 	)
 

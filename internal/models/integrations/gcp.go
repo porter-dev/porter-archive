@@ -82,8 +82,10 @@ func (g *GCPIntegration) GetBearerToken(
 	cache, err := getTokenCache()
 
 	// check the token cache for a non-expired token
-	if tok := cache.Token; err == nil && !cache.IsExpired() && len(tok) > 0 {
-		return string(tok), nil
+	if cache != nil {
+		if tok := cache.Token; err == nil && !cache.IsExpired() && len(tok) > 0 {
+			return string(tok), nil
+		}
 	}
 
 	creds, err := google.CredentialsFromJSON(

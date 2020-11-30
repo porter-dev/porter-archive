@@ -22,6 +22,9 @@ type Registry struct {
 
 	GCPIntegrationID uint
 	AWSIntegrationID uint
+
+	// A token cache that can be used by an auth mechanism, if desired
+	TokenCache integrations.TokenCache `json:"token_cache"`
 }
 
 // RegistryExternal is an external Registry to be shared over REST

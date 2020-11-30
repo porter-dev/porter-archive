@@ -20,8 +20,10 @@ type SetTokenCacheFunc func(token string, expiry time.Time) error
 type TokenCache struct {
 	gorm.Model
 
-	ClusterID uint      `json:"cluster_id"`
-	Expiry    time.Time `json:"expiry,omitempty"`
+	ClusterID  uint `json:"cluster_id"`
+	RegistryID uint `json:"registry_id"`
+
+	Expiry time.Time `json:"expiry,omitempty"`
 
 	// ------------------------------------------------------------------
 	// All fields below this line are encrypted before storage

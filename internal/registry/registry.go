@@ -1,12 +1,16 @@
 package registry
 
 import (
+	"encoding/json"
 	"fmt"
+	"net/http"
 	"time"
 
 	"github.com/aws/aws-sdk-go/service/ecr"
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/repository"
+
+	ints "github.com/porter-dev/porter/internal/models/integrations"
 )
 
 // Registry wraps the gorm Registry model
@@ -40,7 +44,11 @@ type Image struct {
 func (r *Registry) ListRepositories(repo repository.Repository) ([]*Repository, error) {
 	// switch on the auth mechanism to get a token
 	if r.AWSIntegrationID != 0 {
-		return r.listECRRepositories(repo.AWSIntegration)
+		return r.listECRRepositories(repo)
+	}
+
+	if r.GCPIntegrationID != 0 {
+		return r.listGCPRepositories(repo)
 	}
 
 	return nil, fmt.Errorf("error listing repositories")
@@ -54,8 +62,91 @@ func (r *Registry) ListImages(
 	return nil, nil
 }
 
-func (r *Registry) listECRRepositories(repo repository.AWSIntegrationRepository) ([]*Repository, error) {
-	aws, err := repo.ReadAWSIntegration(
+type gcrJWT struct {
+	AccessToken  string `json:"token"`
+	ExpiresInSec int    `json:"expires_in"`
+}
+
+type gcrRepositoryResp struct {
+	Repositories []string `json:"repositories"`
+}
+
+// TODO -- use a token cache for the JWT token as well
+func (r *Registry) listGCPRepositories(
+	repo repository.Repository,
+) ([]*Repository, error) {
+	gcp, err := repo.GCPIntegration.ReadGCPIntegration(
+		r.GCPIntegrationID,
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	// get oauth2 access token
+	oauthTok, err := gcp.GetBearerToken(r.getTokenCache, r.setTokenCacheFunc(repo))
+
+	if err != nil {
+		return nil, err
+	}
+
+	// get jwt token
+	client := &http.Client{}
+
+	req, err := http.NewRequest(
+		"GET",
+		"https://gcr.io/v2/token?service=gcr.io&scope=registry:catalog:*",
+		nil,
+	)
+
+	req.SetBasicAuth("_token", oauthTok)
+
+	resp, err := client.Do(req)
+
+	if err != nil {
+		return nil, err
+	}
+
+	jwtSource := gcrJWT{}
+
+	if err := json.NewDecoder(resp.Body).Decode(&jwtSource); err != nil {
+		return nil, fmt.Errorf("Invalid token JSON from metadata: %v", err)
+	}
+
+	// use JWT token to request catalog
+	req, err = http.NewRequest(
+		"GET",
+		"https://gcr.io/v2/_catalog",
+		nil,
+	)
+
+	req.Header.Add("Authorization", "Bearer "+jwtSource.AccessToken)
+
+	resp, err = client.Do(req)
+
+	if err != nil {
+		return nil, err
+	}
+
+	gcrResp := gcrRepositoryResp{}
+
+	if err := json.NewDecoder(resp.Body).Decode(&gcrResp); err != nil {
+		return nil, fmt.Errorf("Could not read GCR repositories: %v", err)
+	}
+
+	res := make([]*Repository, 0)
+
+	for _, repo := range gcrResp.Repositories {
+		res = append(res, &Repository{
+			Name: repo,
+		})
+	}
+
+	return res, nil
+}
+
+func (r *Registry) listECRRepositories(repo repository.Repository) ([]*Repository, error) {
+	aws, err := repo.AWSIntegration.ReadAWSIntegration(
 		r.AWSIntegrationID,
 	)
 
@@ -87,4 +178,24 @@ func (r *Registry) listECRRepositories(repo repository.AWSIntegrationRepository)
 	}
 
 	return res, nil
+}
+
+func (r *Registry) getTokenCache() (tok *ints.TokenCache, err error) {
+	return &r.TokenCache, nil
+}
+
+func (r *Registry) setTokenCacheFunc(
+	repo repository.Repository,
+) ints.SetTokenCacheFunc {
+	return func(token string, expiry time.Time) error {
+		_, err := repo.Registry.UpdateRegistryTokenCache(
+			&ints.TokenCache{
+				RegistryID: r.ID,
+				Token:      []byte(token),
+				Expiry:     expiry,
+			},
+		)
+
+		return err
+	}
 }

@@ -40,6 +40,7 @@ func main() {
 		&ints.GCPIntegration{},
 		&ints.AWSIntegration{},
 		&ints.TokenCache{},
+		&ints.RegTokenCache{},
 	)
 
 	if err != nil {

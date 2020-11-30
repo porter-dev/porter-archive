@@ -136,3 +136,37 @@ func (c *Client) ListRegistryRepositories(
 
 	return *bodyResp, nil
 }
+
+// ListImagesResponse is the list of images in a repository
+type ListImagesResponse []registry.Image
+
+// ListImages lists the images (repository+tag) in a repository
+func (c *Client) ListImages(
+	ctx context.Context,
+	projectID uint,
+	registryID uint,
+	repoName string,
+) (ListImagesResponse, error) {
+	req, err := http.NewRequest(
+		"GET",
+		fmt.Sprintf("%s/projects/%d/registries/%d/repositories/%s", c.BaseURL, projectID, registryID, repoName),
+		nil,
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	req = req.WithContext(ctx)
+	bodyResp := &ListImagesResponse{}
+
+	if httpErr, err := c.sendRequest(req, bodyResp, true); httpErr != nil || err != nil {
+		if httpErr != nil {
+			return nil, fmt.Errorf("code %d, errors %v", httpErr.Code, httpErr.Errors)
+		}
+
+		return nil, err
+	}
+
+	return *bodyResp, nil
+}

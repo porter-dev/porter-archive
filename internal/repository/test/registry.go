@@ -73,8 +73,8 @@ func (repo *RegistryRepository) ListRegistriesByProjectID(
 	return res, nil
 }
 
-// UpdateRegistryTokenCache updates the token cache for a registry
-func (repo *RegistryRepository) UpdateRegistryTokenCache(
+// UpdateRegistryIntTokenCache updates the token cache for a registry
+func (repo *RegistryRepository) UpdateRegistryIntTokenCache(
 	tokenCache *ints.TokenCache,
 ) (*models.Registry, error) {
 	if !repo.canQuery {
@@ -82,8 +82,23 @@ func (repo *RegistryRepository) UpdateRegistryTokenCache(
 	}
 
 	index := int(tokenCache.RegistryID - 1)
-	repo.registries[index].TokenCache.Token = tokenCache.Token
-	repo.registries[index].TokenCache.Expiry = tokenCache.Expiry
+	repo.registries[index].IntTokenCache.Token = tokenCache.Token
+	repo.registries[index].IntTokenCache.Expiry = tokenCache.Expiry
+
+	return repo.registries[index], nil
+}
+
+// UpdateRegistryDockerTokenCache updates the token cache for a registry
+func (repo *RegistryRepository) UpdateRegistryDockerTokenCache(
+	tokenCache *ints.RegTokenCache,
+) (*models.Registry, error) {
+	if !repo.canQuery {
+		return nil, errors.New("Cannot write database")
+	}
+
+	index := int(tokenCache.RegistryID - 1)
+	repo.registries[index].DockerTokenCache.Token = tokenCache.Token
+	repo.registries[index].DockerTokenCache.Expiry = tokenCache.Expiry
 
 	return repo.registries[index], nil
 }

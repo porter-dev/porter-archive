@@ -48,18 +48,10 @@ func (r *Registry) ListRepositories(repo repository.Repository) ([]*Repository, 
 	}
 
 	if r.GCPIntegrationID != 0 {
-		return r.listGCPRepositories(repo)
+		return r.listGCRRepositories(repo)
 	}
 
 	return nil, fmt.Errorf("error listing repositories")
-}
-
-// ListImages lists the images for an image repository
-func (r *Registry) ListImages(
-	repo repository.Repository,
-	regName string,
-) ([]*Image, error) {
-	return nil, nil
 }
 
 type gcrJWT struct {
@@ -71,58 +63,83 @@ type gcrRepositoryResp struct {
 	Repositories []string `json:"repositories"`
 }
 
-// TODO -- use a token cache for the JWT token as well
-func (r *Registry) listGCPRepositories(
+func (r *Registry) listGCRRepositories(
 	repo repository.Repository,
 ) ([]*Repository, error) {
-	gcp, err := repo.GCPIntegration.ReadGCPIntegration(
-		r.GCPIntegrationID,
-	)
+	jwtTok := string(r.DockerTokenCache.Token)
 
-	if err != nil {
-		return nil, err
-	}
+	// if a jwt token does not exist or is expired, refresh it
+	if r.DockerTokenCache.IsExpired() || len(jwtTok) == 0 {
+		gcp, err := repo.GCPIntegration.ReadGCPIntegration(
+			r.GCPIntegrationID,
+		)
 
-	// get oauth2 access token
-	oauthTok, err := gcp.GetBearerToken(r.getTokenCache, r.setTokenCacheFunc(repo))
+		if err != nil {
+			return nil, err
+		}
 
-	if err != nil {
-		return nil, err
-	}
+		// get oauth2 access token
+		oauthTok, err := gcp.GetBearerToken(r.getTokenCache, r.setTokenCacheFunc(repo))
 
-	// get jwt token
-	client := &http.Client{}
+		if err != nil {
+			return nil, err
+		}
 
-	req, err := http.NewRequest(
-		"GET",
-		"https://gcr.io/v2/token?service=gcr.io&scope=registry:catalog:*",
-		nil,
-	)
+		// get jwt token
+		client := &http.Client{}
 
-	req.SetBasicAuth("_token", oauthTok)
+		req, err := http.NewRequest(
+			"GET",
+			"https://gcr.io/v2/token?service=gcr.io&scope=registry:catalog:*",
+			nil,
+		)
 
-	resp, err := client.Do(req)
+		req.SetBasicAuth("_token", oauthTok)
 
-	if err != nil {
-		return nil, err
-	}
+		resp, err := client.Do(req)
 
-	jwtSource := gcrJWT{}
+		if err != nil {
+			return nil, err
+		}
 
-	if err := json.NewDecoder(resp.Body).Decode(&jwtSource); err != nil {
-		return nil, fmt.Errorf("Invalid token JSON from metadata: %v", err)
+		jwtSource := gcrJWT{}
+
+		if err := json.NewDecoder(resp.Body).Decode(&jwtSource); err != nil {
+			return nil, fmt.Errorf("Invalid token JSON from metadata: %v", err)
+		}
+
+		_, err = repo.Registry.UpdateRegistryDockerTokenCache(
+			&ints.RegTokenCache{
+				RegistryID: r.ID,
+				Token:      []byte(jwtSource.AccessToken),
+				// subtract some time from expiry for buffer
+				Expiry: time.Now().Add(time.Second*time.Duration(jwtSource.ExpiresInSec) - 5*time.Second),
+			},
+		)
+
+		if err != nil {
+			return nil, err
+		}
+
+		jwtTok = jwtSource.AccessToken
 	}
 
 	// use JWT token to request catalog
-	req, err = http.NewRequest(
+	client := &http.Client{}
+
+	req, err := http.NewRequest(
 		"GET",
 		"https://gcr.io/v2/_catalog",
 		nil,
 	)
 
-	req.Header.Add("Authorization", "Bearer "+jwtSource.AccessToken)
+	if err != nil {
+		return nil, err
+	}
 
-	resp, err = client.Do(req)
+	req.Header.Add("Authorization", "Bearer "+jwtTok)
+
+	resp, err := client.Do(req)
 
 	if err != nil {
 		return nil, err
@@ -181,14 +198,14 @@ func (r *Registry) listECRRepositories(repo repository.Repository) ([]*Repositor
 }
 
 func (r *Registry) getTokenCache() (tok *ints.TokenCache, err error) {
-	return &r.TokenCache, nil
+	return &r.IntTokenCache, nil
 }
 
 func (r *Registry) setTokenCacheFunc(
 	repo repository.Repository,
 ) ints.SetTokenCacheFunc {
 	return func(token string, expiry time.Time) error {
-		_, err := repo.Registry.UpdateRegistryTokenCache(
+		_, err := repo.Registry.UpdateRegistryIntTokenCache(
 			&ints.TokenCache{
 				RegistryID: r.ID,
 				Token:      []byte(token),
@@ -198,4 +215,55 @@ func (r *Registry) setTokenCacheFunc(
 
 		return err
 	}
+}
+
+// ListImages lists the images for an image repository
+func (r *Registry) ListImages(
+	repoName string,
+	repo repository.Repository,
+) ([]*Image, error) {
+	// switch on the auth mechanism to get a token
+	if r.AWSIntegrationID != 0 {
+		return r.listECRImages(repoName, repo)
+	}
+
+	return nil, fmt.Errorf("error listing images")
+}
+
+func (r *Registry) listECRImages(repoName string, repo repository.Repository) ([]*Image, error) {
+	aws, err := repo.AWSIntegration.ReadAWSIntegration(
+		r.AWSIntegrationID,
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	sess, err := aws.GetSession()
+
+	if err != nil {
+		return nil, err
+	}
+
+	svc := ecr.New(sess)
+
+	resp, err := svc.ListImages(&ecr.ListImagesInput{
+		RepositoryName: &repoName,
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	res := make([]*Image, 0)
+
+	for _, img := range resp.ImageIds {
+		res = append(res, &Image{
+			Digest:         *img.ImageDigest,
+			Tag:            *img.ImageTag,
+			RepositoryName: repoName,
+		})
+	}
+
+	return res, nil
 }

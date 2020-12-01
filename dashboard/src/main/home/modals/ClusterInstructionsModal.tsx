@@ -45,12 +45,12 @@ export default class ClusterInstructionsModal extends Component<PropsType, State
             </Code>
             3. Log in to the Porter CLI:
             <Code>
+              porter config set-host {location.protocol + '//' + location.host}<br/>
               porter auth login
             </Code>
             4. Configure the Porter CLI and link your current context:
             <Code>
               porter config set-project {this.context.currentProject.id}<br/>
-              porter config set-host {location.protocol + '//' + location.host}<br/>
               porter connect kubeconfig
             </Code>
           </Placeholder>

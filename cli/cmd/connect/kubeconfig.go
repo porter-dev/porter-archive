@@ -448,7 +448,7 @@ Would you like to proceed? %s `,
 	}
 
 	if userResp := strings.ToLower(userResp); userResp == "y" || userResp == "yes" {
-		agent, err := awsLocal.NewDefaultAgent(kubeconfigPath, contextName)
+		agent, err := awsLocal.NewDefaultKubernetesAgent(kubeconfigPath, contextName)
 
 		if err != nil {
 			color.New(color.FgRed).Printf("Automatic creation failed, manual input required. Error was: %v\n", err)

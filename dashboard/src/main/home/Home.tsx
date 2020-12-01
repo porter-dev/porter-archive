@@ -97,7 +97,11 @@ export default class Home extends Component<PropsType, StateType> {
       return <Integrations />;
     }
 
-    return <Templates />;
+    return (
+      <Templates 
+        setCurrentView={(x: string) => this.setState({ currentView: x })} 
+      />
+    );
   }
 
   render() {

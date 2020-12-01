@@ -26,6 +26,14 @@ export default class DockerHubForm extends Component<PropsType, StateType> {
     dockerPassword: ''
   }
 
+  isDisabled = (): boolean => {
+    let { registryURL, dockerEmail, dockerUsername, dockerPassword } = this.state;
+    if (registryURL === '' || dockerEmail === '' || dockerUsername === '' || dockerPassword === '') {
+      return true;
+    }
+    return false;
+  }
+
   handleSubmit = () => {
     // TODO: implement once api is restructured
   }
@@ -70,7 +78,8 @@ export default class DockerHubForm extends Component<PropsType, StateType> {
         <SaveButton
           text='Save Settings'
           makeFlush={true}
-          onClick={this.handleSubmit}
+          disabled={this.isDisabled()}
+          onClick={this.isDisabled() ? null : this.handleSubmit}
         />
       </StyledForm>
     );

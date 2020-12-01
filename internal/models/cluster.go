@@ -13,12 +13,12 @@ type ClusterAuth string
 // The support cluster candidate auth mechanisms
 const (
 	X509   ClusterAuth = "x509"
-	Basic              = "basic"
-	Bearer             = "bearerToken"
-	OIDC               = "oidc"
-	GCP                = "gcp-sa"
-	AWS                = "aws-sa"
-	Local              = "local"
+	Basic  ClusterAuth = "basic"
+	Bearer ClusterAuth = "bearerToken"
+	OIDC   ClusterAuth = "oidc"
+	GCP    ClusterAuth = "gcp-sa"
+	AWS    ClusterAuth = "aws-sa"
+	Local  ClusterAuth = "local"
 )
 
 // Cluster is an integration that can connect to a Kubernetes cluster via

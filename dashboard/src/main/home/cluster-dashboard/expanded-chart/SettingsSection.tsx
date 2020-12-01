@@ -79,6 +79,7 @@ export default class SettingsSection extends Component<PropsType, StateType> {
           onClick={() => this.redeployWithNewImage(this.state.selectedImageUrl, this.state.selectedTag)}
           status={this.state.saveValuesStatus}
           makeFlush={true}
+          disabled={this.state.selectedImageUrl && this.state.selectedTag ? false : true}
         />
       </Wrapper>
     );

@@ -63,7 +63,7 @@ export default class ChartList extends Component<PropsType, StateType> {
 
   setupWebsocket = (kind: string) => {
       let { currentCluster, currentProject } = this.context;
-      let ws = new WebSocket(`ws://localhost:8080/api/projects/${currentProject.id}/k8s/${kind}/status?cluster_id=${currentCluster.id}&service_account_id=${currentCluster.service_account_id}`)
+      let ws = new WebSocket(`ws://${process.env.API_SERVER}/api/projects/${currentProject.id}/k8s/${kind}/status?cluster_id=${currentCluster.id}&service_account_id=${currentCluster.service_account_id}`)
       ws.onopen = () => {
         console.log('connected to websocket')
       }

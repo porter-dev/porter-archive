@@ -94,6 +94,17 @@ func (repo *RegistryRepository) ListRegistriesByProjectID(
 	return regs, nil
 }
 
+// UpdateRegistry modifies an existing Registry in the database
+func (repo *RegistryRepository) UpdateRegistry(
+	reg *models.Registry,
+) (*models.Registry, error) {
+	if err := repo.db.Save(reg).Error; err != nil {
+		return nil, err
+	}
+
+	return reg, nil
+}
+
 // UpdateRegistryTokenCache updates the token cache for a registry
 func (repo *RegistryRepository) UpdateRegistryTokenCache(
 	tokenCache *ints.RegTokenCache,

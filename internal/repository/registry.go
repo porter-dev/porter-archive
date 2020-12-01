@@ -10,6 +10,7 @@ type RegistryRepository interface {
 	CreateRegistry(reg *models.Registry) (*models.Registry, error)
 	ReadRegistry(id uint) (*models.Registry, error)
 	ListRegistriesByProjectID(projectID uint) ([]*models.Registry, error)
+	UpdateRegistry(reg *models.Registry) (*models.Registry, error)
 	UpdateRegistryTokenCache(tokenCache *ints.RegTokenCache) (*models.Registry, error)
 	DeleteRegistry(reg *models.Registry) error
 }

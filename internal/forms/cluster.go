@@ -3,7 +3,9 @@ package forms
 import (
 	"encoding/base64"
 	"errors"
+	"fmt"
 	"net/url"
+	"regexp"
 	"strings"
 
 	"github.com/porter-dev/porter/internal/kubernetes"
@@ -13,6 +15,59 @@ import (
 
 	ints "github.com/porter-dev/porter/internal/models/integrations"
 )
+
+// CreateClusterForm represents the accepted values for creating a
+// cluster through manual configuration (not through a kubeconfig)
+type CreateClusterForm struct {
+	Name      string `json:"name" form:"required"`
+	ProjectID uint   `json:"project_id" form:"required"`
+	Server    string `json:"server" form:"required"`
+
+	GCPIntegrationID uint `json:"gcp_integration_id"`
+	AWSIntegrationID uint `json:"aws_integration_id"`
+
+	CertificateAuthorityData string `json:"certificate_authority_data,omitempty"`
+}
+
+// ToCluster converts the form to a cluster
+func (ccf *CreateClusterForm) ToCluster() (*models.Cluster, error) {
+	var authMechanism models.ClusterAuth
+
+	if ccf.GCPIntegrationID != 0 {
+		authMechanism = models.GCP
+	} else if ccf.AWSIntegrationID != 0 {
+		authMechanism = models.AWS
+	} else {
+		return nil, fmt.Errorf("must include aws or gcp integration id")
+	}
+
+	cert := make([]byte, 0)
+
+	if ccf.CertificateAuthorityData != "" {
+		// determine if data is base64 decoded using regex
+		re := regexp.MustCompile(`^([A-Za-z0-9+/]{4})*([A-Za-z0-9+/]{3}=|[A-Za-z0-9+/]{2}==)?$`)
+
+		// if it matches the base64 regex, decode it
+		if re.MatchString(ccf.CertificateAuthorityData) {
+			decoded, err := base64.StdEncoding.DecodeString(ccf.CertificateAuthorityData)
+
+			if err != nil {
+				return nil, err
+			}
+
+			cert = []byte(decoded)
+		}
+	}
+
+	return &models.Cluster{
+		AuthMechanism:            authMechanism,
+		Name:                     ccf.Name,
+		Server:                   ccf.Server,
+		GCPIntegrationID:         ccf.GCPIntegrationID,
+		AWSIntegrationID:         ccf.AWSIntegrationID,
+		CertificateAuthorityData: cert,
+	}, nil
+}
 
 // ResolveClusterForm will resolve a cluster candidate and create a new cluster
 type ResolveClusterForm struct {

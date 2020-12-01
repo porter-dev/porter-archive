@@ -32,15 +32,62 @@ func New(
 		r.Method("GET", "/readyz", http.HandlerFunc(a.HandleReady))
 
 		// /api/users routes
-		r.Method("GET", "/users/{user_id}", auth.DoesUserIDMatch(requestlog.NewHandler(a.HandleReadUser, l), mw.URLParam))
-		r.Method("GET", "/users/{user_id}/projects", auth.DoesUserIDMatch(requestlog.NewHandler(a.HandleListUserProjects, l), mw.URLParam))
-		r.Method("POST", "/users", requestlog.NewHandler(a.HandleCreateUser, l))
-		r.Method("DELETE", "/users/{user_id}", auth.DoesUserIDMatch(requestlog.NewHandler(a.HandleDeleteUser, l), mw.URLParam))
-		r.Method("POST", "/login", requestlog.NewHandler(a.HandleLoginUser, l))
-		r.Method("GET", "/auth/check", auth.BasicAuthenticate(requestlog.NewHandler(a.HandleAuthCheck, l)))
-		r.Method("POST", "/logout", auth.BasicAuthenticate(requestlog.NewHandler(a.HandleLogoutUser, l)))
+		r.Method(
+			"GET",
+			"/users/{user_id}",
+			auth.DoesUserIDMatch(
+				requestlog.NewHandler(a.HandleReadUser, l),
+				mw.URLParam,
+			),
+		)
 
-		// /integrations routes
+		r.Method(
+			"GET",
+			"/users/{user_id}/projects",
+			auth.DoesUserIDMatch(
+				requestlog.NewHandler(a.HandleListUserProjects, l),
+				mw.URLParam,
+			),
+		)
+
+		r.Method(
+			"POST",
+			"/users",
+			requestlog.NewHandler(a.HandleCreateUser, l),
+		)
+
+		r.Method(
+			"DELETE",
+			"/users/{user_id}",
+			auth.DoesUserIDMatch(
+				requestlog.NewHandler(a.HandleDeleteUser, l),
+				mw.URLParam,
+			),
+		)
+
+		r.Method(
+			"POST",
+			"/login",
+			requestlog.NewHandler(a.HandleLoginUser, l),
+		)
+
+		r.Method(
+			"GET",
+			"/auth/check",
+			auth.BasicAuthenticate(
+				requestlog.NewHandler(a.HandleAuthCheck, l),
+			),
+		)
+
+		r.Method(
+			"POST",
+			"/logout",
+			auth.BasicAuthenticate(
+				requestlog.NewHandler(a.HandleLogoutUser, l),
+			),
+		)
+
+		// /api/integrations routes
 		r.Method(
 			"GET",
 			"/integrations/cluster",
@@ -62,6 +109,15 @@ func New(
 			"/integrations/repo",
 			auth.BasicAuthenticate(
 				requestlog.NewHandler(a.HandleListRepoIntegrations, l),
+			),
+		)
+
+		// /api/templates routes
+		r.Method(
+			"GET",
+			"/templates",
+			auth.BasicAuthenticate(
+				requestlog.NewHandler(a.HandleListTemplates, l),
 			),
 		)
 
@@ -94,6 +150,45 @@ func New(
 		)
 
 		r.Method(
+			"POST",
+			"/projects",
+			auth.BasicAuthenticate(
+				requestlog.NewHandler(a.HandleCreateProject, l),
+			),
+		)
+
+		r.Method(
+			"DELETE",
+			"/projects/{project_id}",
+			auth.DoesUserHaveProjectAccess(
+				requestlog.NewHandler(a.HandleDeleteProject, l),
+				mw.URLParam,
+				mw.WriteAccess,
+			),
+		)
+
+		// /api/projects/{project_id}/clusters routes
+		r.Method(
+			"GET",
+			"/projects/{project_id}/clusters",
+			auth.DoesUserHaveProjectAccess(
+				requestlog.NewHandler(a.HandleListProjectClusters, l),
+				mw.URLParam,
+				mw.ReadAccess,
+			),
+		)
+
+		r.Method(
+			"POST",
+			"/projects/{project_id}/clusters",
+			auth.DoesUserHaveProjectAccess(
+				requestlog.NewHandler(a.HandleCreateProjectCluster, l),
+				mw.URLParam,
+				mw.ReadAccess,
+			),
+		)
+
+		r.Method(
 			"GET",
 			"/projects/{project_id}/clusters/{cluster_id}",
 			auth.DoesUserHaveProjectAccess(
@@ -107,18 +202,7 @@ func New(
 			),
 		)
 
-		r.Method(
-			"GET",
-			"/projects/{project_id}/clusters",
-			auth.DoesUserHaveProjectAccess(
-				requestlog.NewHandler(a.HandleListProjectClusters, l),
-				mw.URLParam,
-				mw.ReadAccess,
-			),
-		)
-
-		r.Method("POST", "/projects", auth.BasicAuthenticate(requestlog.NewHandler(a.HandleCreateProject, l)))
-
+		// /api/projects/{project_id}/clusters/candidates routes
 		r.Method(
 			"POST",
 			"/projects/{project_id}/clusters/candidates",
@@ -144,16 +228,6 @@ func New(
 			"/projects/{project_id}/clusters/candidates/{candidate_id}/resolve",
 			auth.DoesUserHaveProjectAccess(
 				requestlog.NewHandler(a.HandleResolveClusterCandidate, l),
-				mw.URLParam,
-				mw.WriteAccess,
-			),
-		)
-
-		r.Method(
-			"DELETE",
-			"/projects/{project_id}",
-			auth.DoesUserHaveProjectAccess(
-				requestlog.NewHandler(a.HandleDeleteProject, l),
 				mw.URLParam,
 				mw.WriteAccess,
 			),
@@ -201,6 +275,7 @@ func New(
 			),
 		)
 
+		// /api/projects/{project_id}/registries/{registry_id}/repositories routes
 		r.Method(
 			"GET",
 			"/projects/{project_id}/registries/{registry_id}/repositories",
@@ -362,7 +437,7 @@ func New(
 		// 	),
 		// )
 
-		// /api/projects/{project_id}/images routes
+		// /api/projects/{project_id}/deploy route
 		r.Method(
 			"POST",
 			"/projects/{project_id}/deploy",
@@ -374,15 +449,6 @@ func New(
 				),
 				mw.URLParam,
 				mw.ReadAccess,
-			),
-		)
-
-		// /api/templates routes
-		r.Method(
-			"GET",
-			"/templates",
-			auth.BasicAuthenticate(
-				requestlog.NewHandler(a.HandleListTemplates, l),
 			),
 		)
 

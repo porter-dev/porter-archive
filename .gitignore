@@ -6,3 +6,4 @@ app
 test.yaml
 dist
 gon*.hcl
+*prod.Dockerfile

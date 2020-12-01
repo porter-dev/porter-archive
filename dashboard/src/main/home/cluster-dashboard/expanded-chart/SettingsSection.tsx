@@ -32,7 +32,6 @@ export default class SettingsSection extends Component<PropsType, StateType> {
 
   redeployWithNewImage = (img: string, tag: string) => {
     let { currentCluster, currentProject } = this.context;
-    console.log(img, tag)
     let image = {
       image: {
         repository: img,

@@ -135,9 +135,9 @@ func (repo *ClusterRepository) ListClustersByProjectID(
 
 	res := make([]*models.Cluster, 0)
 
-	for _, sa := range repo.clusters {
-		if sa.ProjectID == projectID {
-			res = append(res, sa)
+	for _, cluster := range repo.clusters {
+		if cluster != nil && cluster.ProjectID == projectID {
+			res = append(res, cluster)
 		}
 	}
 
@@ -157,4 +157,22 @@ func (repo *ClusterRepository) UpdateClusterTokenCache(
 	repo.clusters[index].TokenCache.Expiry = tokenCache.Expiry
 
 	return repo.clusters[index], nil
+}
+
+// DeleteCluster removes a cluster from the array by setting it to nil
+func (repo *ClusterRepository) DeleteCluster(
+	cluster *models.Cluster,
+) error {
+	if !repo.canQuery {
+		return errors.New("Cannot write database")
+	}
+
+	if int(cluster.ID-1) >= len(repo.clusters) || repo.clusters[cluster.ID-1] == nil {
+		return gorm.ErrRecordNotFound
+	}
+
+	index := int(cluster.ID - 1)
+	repo.clusters[index] = nil
+
+	return nil
 }

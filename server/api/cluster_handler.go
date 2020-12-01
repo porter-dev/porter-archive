@@ -119,6 +119,32 @@ func (app *App) HandleListProjectClusters(w http.ResponseWriter, r *http.Request
 	}
 }
 
+// HandleDeleteProjectCluster handles the deletion of a Cluster via the cluster ID
+func (app *App) HandleDeleteProjectCluster(w http.ResponseWriter, r *http.Request) {
+	id, err := strconv.ParseUint(chi.URLParam(r, "cluster_id"), 0, 64)
+
+	if err != nil || id == 0 {
+		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
+		return
+	}
+
+	cluster, err := app.repo.Cluster.ReadCluster(uint(id))
+
+	if err != nil {
+		app.handleErrorRead(err, ErrProjectDataRead, w)
+		return
+	}
+
+	err = app.repo.Cluster.DeleteCluster(cluster)
+
+	if err != nil {
+		app.handleErrorRead(err, ErrProjectDataRead, w)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+}
+
 // HandleCreateProjectClusterCandidates handles the creation of ClusterCandidates using
 // a kubeconfig and a project id
 func (app *App) HandleCreateProjectClusterCandidates(w http.ResponseWriter, r *http.Request) {

@@ -17,4 +17,5 @@ type ClusterRepository interface {
 	ReadCluster(id uint) (*models.Cluster, error)
 	ListClustersByProjectID(projectID uint) ([]*models.Cluster, error)
 	UpdateClusterTokenCache(tokenCache *ints.TokenCache) (*models.Cluster, error)
+	DeleteCluster(cluster *models.Cluster) error
 }

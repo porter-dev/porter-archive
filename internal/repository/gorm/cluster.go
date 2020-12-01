@@ -223,6 +223,28 @@ func (repo *ClusterRepository) UpdateClusterTokenCache(
 	return cluster, nil
 }
 
+// DeleteCluster removes a cluster from the db
+func (repo *ClusterRepository) DeleteCluster(
+	cluster *models.Cluster,
+) error {
+	// clear TokenCache association
+	assoc := repo.db.Model(cluster).Association("TokenCache")
+
+	if assoc.Error != nil {
+		return assoc.Error
+	}
+
+	if err := assoc.Clear(); err != nil {
+		return err
+	}
+
+	if err := repo.db.Where("id = ?", cluster.ID).Delete(&models.Cluster{}).Error; err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // EncryptClusterData will encrypt the user's service account data before writing
 // to the DB
 func (repo *ClusterRepository) EncryptClusterData(

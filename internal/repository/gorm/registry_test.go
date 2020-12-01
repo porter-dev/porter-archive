@@ -8,6 +8,7 @@ import (
 	"github.com/porter-dev/porter/internal/models"
 	ints "github.com/porter-dev/porter/internal/models/integrations"
 	"gorm.io/gorm"
+	orm "gorm.io/gorm"
 )
 
 func TestCreateRegistry(t *testing.T) {
@@ -157,5 +158,44 @@ func TestUpdateRegistryToken(t *testing.T) {
 
 	if string(reg.TokenCache.Token) != "token-2" {
 		t.Errorf("incorrect token in cache: expected %s, got %s\n", "token-2", reg.TokenCache.Token)
+	}
+}
+
+func TestDeleteRegistry(t *testing.T) {
+	tester := &tester{
+		dbFileName: "./porter_delete_registry.db",
+	}
+
+	setupTestEnv(tester, t)
+	initProject(tester, t)
+	initRegistry(tester, t)
+	defer cleanup(tester, t)
+
+	reg, err := tester.repo.Registry.ReadRegistry(tester.initRegs[0].Model.ID)
+
+	if err != nil {
+		t.Fatalf("%v\n", err)
+	}
+
+	err = tester.repo.Registry.DeleteRegistry(reg)
+
+	if err != nil {
+		t.Fatalf("%v\n", err)
+	}
+
+	_, err = tester.repo.Registry.ReadRegistry(tester.initRegs[0].Model.ID)
+
+	if err != orm.ErrRecordNotFound {
+		t.Fatalf("incorrect error: expected %v, got %v\n", orm.ErrRecordNotFound, err)
+	}
+
+	regs, err := tester.repo.Registry.ListRegistriesByProjectID(tester.initProjects[0].Model.ID)
+
+	if err != nil {
+		t.Fatalf("%v\n", err)
+	}
+
+	if len(regs) != 0 {
+		t.Fatalf("length of clusters was not 0")
 	}
 }

@@ -3,6 +3,7 @@ package api_test
 import (
 	"encoding/json"
 	"net/http"
+	"net/http/httptest"
 	"strings"
 	"testing"
 
@@ -168,6 +169,61 @@ var listRegistryTests = []*regTest{
 
 func TestHandleListRegistries(t *testing.T) {
 	testRegistryRequests(t, listRegistryTests, true)
+}
+
+var deleteRegTests = []*regTest{
+	&regTest{
+		initializers: []func(t *tester){
+			initUserDefault,
+			initProject,
+			initRegistry,
+		},
+		msg:       "Delete registry",
+		method:    "DELETE",
+		endpoint:  "/api/projects/1/registries/1",
+		body:      ``,
+		expStatus: http.StatusOK,
+		expBody:   ``,
+		useCookie: true,
+		validators: []func(c *regTest, tester *tester, t *testing.T){
+			func(c *regTest, tester *tester, t *testing.T) {
+				req, err := http.NewRequest(
+					"GET",
+					"/api/projects/1/registries",
+					strings.NewReader(""),
+				)
+
+				req.AddCookie(tester.cookie)
+
+				if err != nil {
+					t.Fatal(err)
+				}
+
+				rr2 := httptest.NewRecorder()
+
+				tester.router.ServeHTTP(rr2, req)
+
+				if status := rr2.Code; status != 200 {
+					t.Errorf("DELETE registry validation, handler returned wrong status code: got %v want %v",
+						status, 200)
+				}
+
+				gotBody := make([]*models.RegistryExternal, 0)
+				expBody := make([]*models.RegistryExternal, 0)
+
+				json.Unmarshal(rr2.Body.Bytes(), &gotBody)
+
+				if diff := deep.Equal(gotBody, expBody); diff != nil {
+					t.Errorf("handler returned wrong body:\n")
+					t.Error(diff)
+				}
+			},
+		},
+	},
+}
+
+func TestHandleDeleteRegistry(t *testing.T) {
+	testRegistryRequests(t, deleteRegTests, true)
 }
 
 // ------------------------- INITIALIZERS AND VALIDATORS ------------------------- //

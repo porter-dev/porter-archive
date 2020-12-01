@@ -95,6 +95,32 @@ func (app *App) HandleListProjectRegistries(w http.ResponseWriter, r *http.Reque
 	}
 }
 
+// HandleDeleteProjectRegistry handles the deletion of a Registry via the registry ID
+func (app *App) HandleDeleteProjectRegistry(w http.ResponseWriter, r *http.Request) {
+	id, err := strconv.ParseUint(chi.URLParam(r, "registry_id"), 0, 64)
+
+	if err != nil || id == 0 {
+		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
+		return
+	}
+
+	reg, err := app.repo.Registry.ReadRegistry(uint(id))
+
+	if err != nil {
+		app.handleErrorRead(err, ErrProjectDataRead, w)
+		return
+	}
+
+	err = app.repo.Registry.DeleteRegistry(reg)
+
+	if err != nil {
+		app.handleErrorRead(err, ErrProjectDataRead, w)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+}
+
 // HandleListRepositories returns a list of repositories for a given registry
 func (app *App) HandleListRepositories(w http.ResponseWriter, r *http.Request) {
 	regID, err := strconv.ParseUint(chi.URLParam(r, "registry_id"), 0, 64)

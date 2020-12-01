@@ -65,7 +65,7 @@ func (repo *RegistryRepository) ListRegistriesByProjectID(
 	res := make([]*models.Registry, 0)
 
 	for _, reg := range repo.registries {
-		if reg.ProjectID == projectID {
+		if reg != nil && reg.ProjectID == projectID {
 			res = append(res, reg)
 		}
 	}
@@ -86,4 +86,22 @@ func (repo *RegistryRepository) UpdateRegistryTokenCache(
 	repo.registries[index].TokenCache.Expiry = tokenCache.Expiry
 
 	return repo.registries[index], nil
+}
+
+// DeleteRegistry removes a registry from the array by setting it to nil
+func (repo *RegistryRepository) DeleteRegistry(
+	reg *models.Registry,
+) error {
+	if !repo.canQuery {
+		return errors.New("Cannot write database")
+	}
+
+	if int(reg.ID-1) >= len(repo.registries) || repo.registries[reg.ID-1] == nil {
+		return gorm.ErrRecordNotFound
+	}
+
+	index := int(reg.ID - 1)
+	repo.registries[index] = nil
+
+	return nil
 }

@@ -64,14 +64,14 @@ export default class ImageSelector extends Component<PropsType, StateType> {
                   }
                 })
                 images.push(...newImg)
-                if (i == registries.length - 1) {
-                  this.setState({
-                    images,
-                    registryId: registry.id,
-                    loading: false,
-                    error: false,
-                  });
-                }
+
+                // Gracefully fail if one of the integration connections is invalid
+                this.setState({
+                  images,
+                  registryId: registry.id,
+                  loading: false,
+                  error: false,
+                });
                 nextController()
               }
             });    

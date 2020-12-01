@@ -1,8 +1,6 @@
 package aws
 
 import (
-	"regexp"
-
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/iam"
 	"github.com/porter-dev/porter/cli/cmd/utils"
@@ -166,19 +164,19 @@ func (a *Agent) CreateIAMECRUser(region string) (*PorterAWSCredentials, error) {
 }
 
 func (a *Agent) getIAMUserIfExists() (*iam.User, error) {
-	resp, err := a.IAMService.ListUsers(&iam.ListUsersInput{})
+	// resp, err := a.IAMService.ListUsers(&iam.ListUsersInput{})
 
-	if err != nil {
-		return nil, err
-	}
+	// if err != nil {
+	// 	return nil, err
+	// }
 
-	re := regexp.MustCompile(`porter-dashboard-[a-z1-9]{6}`)
+	// re := regexp.MustCompile(`porter-dashboard-[a-z1-9]{6}`)
 
-	for _, user := range resp.Users {
-		if re.MatchString(*user.UserName) {
-			return user, nil
-		}
-	}
+	// for _, user := range resp.Users {
+	// 	if re.MatchString(*user.UserName) {
+	// 		return user, nil
+	// 	}
+	// }
 
 	return nil, nil
 }

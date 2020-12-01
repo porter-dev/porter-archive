@@ -69,6 +69,27 @@ func (ccf *CreateClusterForm) ToCluster() (*models.Cluster, error) {
 	}, nil
 }
 
+// UpdateClusterForm represents the accepted values for updating a
+// cluster (only name for now)
+type UpdateClusterForm struct {
+	ID uint
+
+	Name string `json:"name" form:"required"`
+}
+
+// ToCluster converts the form to a cluster
+func (ucf *UpdateClusterForm) ToCluster(repo repository.ClusterRepository) (*models.Cluster, error) {
+	cluster, err := repo.ReadCluster(ucf.ID)
+
+	if err != nil {
+		return nil, err
+	}
+
+	cluster.Name = ucf.Name
+
+	return cluster, nil
+}
+
 // ResolveClusterForm will resolve a cluster candidate and create a new cluster
 type ResolveClusterForm struct {
 	Resolver *models.ClusterResolverAll `form:"required"`

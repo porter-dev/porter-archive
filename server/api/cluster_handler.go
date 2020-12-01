@@ -119,6 +119,64 @@ func (app *App) HandleListProjectClusters(w http.ResponseWriter, r *http.Request
 	}
 }
 
+// HandleUpdateProjectCluster updates a project's cluster
+func (app *App) HandleUpdateProjectCluster(w http.ResponseWriter, r *http.Request) {
+	projID, err := strconv.ParseUint(chi.URLParam(r, "project_id"), 0, 64)
+
+	if err != nil || projID == 0 {
+		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
+		return
+	}
+
+	clusterID, err := strconv.ParseUint(chi.URLParam(r, "cluster_id"), 0, 64)
+
+	if err != nil || clusterID == 0 {
+		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
+		return
+	}
+
+	form := &forms.UpdateClusterForm{
+		ID: uint(clusterID),
+	}
+
+	// decode from JSON to form value
+	if err := json.NewDecoder(r.Body).Decode(form); err != nil {
+		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
+		return
+	}
+
+	// validate the form
+	if err := app.validator.Struct(form); err != nil {
+		app.handleErrorFormValidation(err, ErrProjectValidateFields, w)
+		return
+	}
+
+	// convert the form to a registry
+	cluster, err := form.ToCluster(app.repo.Cluster)
+
+	if err != nil {
+		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
+		return
+	}
+
+	// handle write to the database
+	cluster, err = app.repo.Cluster.UpdateCluster(cluster)
+
+	if err != nil {
+		app.handleErrorDataWrite(err, w)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+
+	clusterExt := cluster.Externalize()
+
+	if err := json.NewEncoder(w).Encode(clusterExt); err != nil {
+		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
+		return
+	}
+}
+
 // HandleDeleteProjectCluster handles the deletion of a Cluster via the cluster ID
 func (app *App) HandleDeleteProjectCluster(w http.ResponseWriter, r *http.Request) {
 	id, err := strconv.ParseUint(chi.URLParam(r, "cluster_id"), 0, 64)

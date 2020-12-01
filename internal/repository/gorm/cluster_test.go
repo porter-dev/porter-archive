@@ -373,3 +373,42 @@ func TestUpdateClusterToken(t *testing.T) {
 		t.Errorf("incorrect token in cache: expected %s, got %s\n", "token-2", cluster.TokenCache.Token)
 	}
 }
+
+func TestDeleteCluster(t *testing.T) {
+	tester := &tester{
+		dbFileName: "./porter_delete_cluster.db",
+	}
+
+	setupTestEnv(tester, t)
+	initProject(tester, t)
+	initCluster(tester, t)
+	defer cleanup(tester, t)
+
+	cluster, err := tester.repo.Cluster.ReadCluster(tester.initClusters[0].Model.ID)
+
+	if err != nil {
+		t.Fatalf("%v\n", err)
+	}
+
+	err = tester.repo.Cluster.DeleteCluster(cluster)
+
+	if err != nil {
+		t.Fatalf("%v\n", err)
+	}
+
+	_, err = tester.repo.Cluster.ReadCluster(tester.initClusters[0].Model.ID)
+
+	if err != orm.ErrRecordNotFound {
+		t.Fatalf("incorrect error: expected %v, got %v\n", orm.ErrRecordNotFound, err)
+	}
+
+	clusters, err := tester.repo.Cluster.ListClustersByProjectID(tester.initProjects[0].Model.ID)
+
+	if err != nil {
+		t.Fatalf("%v\n", err)
+	}
+
+	if len(clusters) != 0 {
+		t.Fatalf("length of clusters was not 0")
+	}
+}

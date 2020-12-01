@@ -58,7 +58,7 @@ func (repo *GitRepoRepository) ListGitReposByProjectID(projectID uint) ([]*model
 	res := make([]*models.GitRepo, 0)
 
 	for _, gr := range repo.gitRepos {
-		if gr.ProjectID == projectID {
+		if gr != nil && gr.ProjectID == projectID {
 			res = append(res, gr)
 		}
 	}

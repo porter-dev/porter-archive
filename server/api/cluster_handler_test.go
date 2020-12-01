@@ -3,6 +3,7 @@ package api_test
 import (
 	"encoding/json"
 	"net/http"
+	"net/http/httptest"
 	"strings"
 	"testing"
 
@@ -116,7 +117,7 @@ var readProjectClusterTest = []*clusterTest{
 	},
 }
 
-func TestHandleReadProjectSA(t *testing.T) {
+func TestHandleReadProjectCluster(t *testing.T) {
 	testClusterRequests(t, readProjectClusterTest, true)
 }
 
@@ -142,6 +143,51 @@ var listProjectClustersTest = []*clusterTest{
 
 func TestHandleListProjectClusters(t *testing.T) {
 	testClusterRequests(t, listProjectClustersTest, true)
+}
+
+var deleteClusterTests = []*clusterTest{
+	&clusterTest{
+		initializers: []func(t *tester){
+			initUserDefault,
+			initProject,
+			initProjectClusterDefault,
+		},
+		msg:       "Delete cluster",
+		method:    "DELETE",
+		endpoint:  "/api/projects/1/clusters/1",
+		body:      ``,
+		expStatus: http.StatusOK,
+		expBody:   ``,
+		useCookie: true,
+		validators: []func(c *clusterTest, tester *tester, t *testing.T){
+			func(c *clusterTest, tester *tester, t *testing.T) {
+				req, err := http.NewRequest(
+					"GET",
+					"/api/projects/1/clusters/1",
+					strings.NewReader(""),
+				)
+
+				req.AddCookie(tester.cookie)
+
+				if err != nil {
+					t.Fatal(err)
+				}
+
+				rr2 := httptest.NewRecorder()
+
+				tester.router.ServeHTTP(rr2, req)
+
+				if status := rr2.Code; status != 403 {
+					t.Errorf("DELETE cluster validation, handler returned wrong status code: got %v want %v",
+						status, 403)
+				}
+			},
+		},
+	},
+}
+
+func TestHandleDeleteCluster(t *testing.T) {
+	testClusterRequests(t, deleteClusterTests, true)
 }
 
 var createProjectClusterCandidatesTests = []*clusterTest{

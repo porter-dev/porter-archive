@@ -15,8 +15,9 @@ type PropsType = {
   forceExpanded?: boolean,
   selectedImageUrl: string | null,
   selectedTag: string | null,
-  setSelectedImageUrl: (x: string) => void
-  setSelectedTag: (x: string) => void
+  setSelectedImageUrl: (x: string) => void,
+  setSelectedTag: (x: string) => void,
+  setCurrentView: (x: string) => void,
 };
 
 type StateType = {
@@ -54,7 +55,7 @@ export default class ImageSelector extends Component<PropsType, StateType> {
                 registry_id: registry.id,
               }, (err: any, res: any) => {
               if (err && this.state.loading) {
-                this.setState({ error: true });
+                this.setState({ error: true, loading: false });
               } else {
                 let newImg = res.data.map((img: any) => {
                   return {
@@ -63,14 +64,12 @@ export default class ImageSelector extends Component<PropsType, StateType> {
                   }
                 })
                 images.push(...newImg)
-                if (i == registries.length - 1) {
-                  this.setState({
-                    images,
-                    registryId: registry.id,
-                    loading: false,
-                    error: false,
-                  })
-                }
+                this.setState({
+                  images: [],
+                  registryId: registry.id,
+                  loading: false,
+                  error: false,
+                });
                 nextController()
               }
             });    
@@ -86,6 +85,15 @@ export default class ImageSelector extends Component<PropsType, StateType> {
       return <LoadingWrapper><Loading /></LoadingWrapper>
     } else if (error || !images) {
       return <LoadingWrapper>Error loading repos</LoadingWrapper>
+    } else if (images.length === 0) {
+      return (
+        <LoadingWrapper>
+          No registries found. 
+          <Highlight onClick={() => this.props.setCurrentView('integrations')}>
+            Link your registry.
+          </Highlight>
+        </LoadingWrapper>
+      );
     }
 
     return images.map((image: ImageType, i: number) => {
@@ -210,6 +218,14 @@ export default class ImageSelector extends Component<PropsType, StateType> {
 
 ImageSelector.contextType = Context;
 
+const Highlight = styled.div`
+  text-decoration: underline;
+  margin-left: 10px;
+  color: #949eff;
+  cursor: pointer;
+  padding: 3px 0;
+`;
+
 const BackButton = styled.div`
   display: flex;
   align-items: center;
@@ -239,6 +255,7 @@ const Input = styled.input`
   outline: 0;
   background: none;
   border: 0;
+  font-size: 13px;
   width: calc(100% - 60px);
   color: white;
 `;

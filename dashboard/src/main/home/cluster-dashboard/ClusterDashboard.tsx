@@ -75,7 +75,7 @@ export default class ClusterDashboard extends Component<PropsType, StateType> {
   }
 
   renderContents = () => {
-    let { currentCluster, setSidebar } = this.props;
+    let { currentCluster, setSidebar, setCurrentView } = this.props;
 
     if (this.state.currentChart) {
       return (
@@ -84,6 +84,7 @@ export default class ClusterDashboard extends Component<PropsType, StateType> {
           refreshChart={this.refreshChart}
           setCurrentChart={(x: ChartType | null) => this.setState({ currentChart: x })}
           setSidebar={setSidebar}
+          setCurrentView={setCurrentView} // Link to integrations from chart settings
         />
       );
     }

@@ -65,7 +65,7 @@ export default class ImageSelector extends Component<PropsType, StateType> {
                 })
                 images.push(...newImg)
                 this.setState({
-                  images: [],
+                  images,
                   registryId: registry.id,
                   loading: false,
                   error: false,

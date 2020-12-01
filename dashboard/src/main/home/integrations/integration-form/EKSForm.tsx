@@ -31,6 +31,15 @@ export default class EKSForm extends Component<PropsType, StateType> {
     awsSecretKey: '',
   }
 
+  isDisabled = (): boolean => {
+    let { clusterName, clusterEndpoint, clusterCA, awsAccessId, awsSecretKey } = this.state;
+    if (clusterName === '' || clusterEndpoint === '' || clusterCA === '' 
+      || awsAccessId === '' || awsSecretKey === '') {
+      return true;
+    }
+    return false;
+  }
+
   handleSubmit = () => {
     // TODO: implement once api is restructured
   }
@@ -87,7 +96,8 @@ export default class EKSForm extends Component<PropsType, StateType> {
         <SaveButton
           text='Save Settings'
           makeFlush={true}
-          onClick={this.handleSubmit}
+          disabled={this.isDisabled()}
+          onClick={this.isDisabled() ? null : this.handleSubmit}
         />
       </StyledForm>
     );

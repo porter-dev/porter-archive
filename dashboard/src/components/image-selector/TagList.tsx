@@ -9,7 +9,8 @@ import { Context } from '../../shared/Context';
 import Loading from '../Loading';
 
 type PropsType = {
-  setSelectedImageUrl: (x: string) => void,
+  setSelectedTag: (x: string) => void,
+  selectedTag: string,
   selectedImageUrl: string,
   registryId: number,
 };
@@ -38,6 +39,7 @@ export default class TagList extends Component<PropsType, StateType> {
         repo_name: this.props.selectedImageUrl,
       }, (err: any, res: any) => {
       if (err) {
+        console.log(err)
         this.setState({ loading: false, error: true });
       } else {
         let tags = res.data.map((tag: any, i: number) => {
@@ -49,18 +51,8 @@ export default class TagList extends Component<PropsType, StateType> {
   }
 
   setTag = (tag: string) => {
-    let { selectedImageUrl, setSelectedImageUrl} = this.props;
-    let splits = selectedImageUrl.split(':');
-    if (splits[splits.length - 1] === this.state.currentTag) {
-      selectedImageUrl = splits.reduce((acc: string, curr: string) => {
-        if (curr !== this.state.currentTag) {
-          return acc + ':' + curr;
-        } else {
-          return acc;
-        }
-      });
-    }
-    setSelectedImageUrl(selectedImageUrl + ':' + tag);
+    let { selectedTag, setSelectedTag } = this.props;
+    setSelectedTag(tag);
     this.setState({ currentTag: tag });
   }
 

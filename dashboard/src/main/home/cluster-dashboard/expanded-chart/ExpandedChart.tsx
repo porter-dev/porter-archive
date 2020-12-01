@@ -21,7 +21,8 @@ type PropsType = {
   currentChart: ChartType,
   setCurrentChart: (x: ChartType | null) => void,
   refreshChart: () => void,
-  setSidebar: (x: boolean) => void
+  setSidebar: (x: boolean) => void,
+  setCurrentView: (x: string) => void,
 };
 
 type StateType = {
@@ -147,18 +148,18 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
     tabOptions.push(
       { label: 'Status', value: 'status' },
       //{ label: 'Deploy', value: 'deploy' },
+      { label: 'Chart Overview', value: 'graph' },
       { label: 'Settings', value: 'settings' },
     );
 
     if (this.state.devOpsMode) {
       tabOptions.push(
-        { label: 'Chart Overview', value: 'graph' },
         { label: 'Manifests', value: 'list' },
         { label: 'Raw Values', value: 'values' }
       );
     }
 
-    let { currentChart, refreshChart, setSidebar } = this.props;
+    let { currentChart, refreshChart, setSidebar, setCurrentView } = this.props;
     let chart = this.state.revisionPreview || currentChart;
     tabContents.push(
       {
@@ -173,7 +174,11 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
       },
       {
         value: 'settings', component: (
-          <SettingsSection /> 
+          <SettingsSection
+            currentChart={chart}
+            refreshChart={refreshChart}
+            setCurrentView={setCurrentView}
+          /> 
         ),
       },
       {
@@ -253,14 +258,12 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
       let { tabOptions } = this.state;
       tabOptions.pop();
       tabOptions.pop();
-      tabOptions.pop();
       this.setState({ devOpsMode: false, checkTabExists: true, tabOptions }, () => {
         localStorage.setItem('devOpsMode', 'false')
       });
     } else {
       let { tabOptions } = this.state;
       tabOptions.push(
-        { label: 'Chart Overview', value: 'graph' },
         { label: 'Manifests', value: 'list' },
         { label: 'Raw Values', value: 'values' }
       );

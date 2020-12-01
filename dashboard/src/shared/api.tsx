@@ -14,7 +14,7 @@ import { StorageType } from './types';
 const checkAuth = baseApi('GET', '/api/auth/check');
 
 const registerUser = baseApi<{ 
-  email: string, 
+  email: string,
   password: string
 }>('POST', '/api/users');
 
@@ -105,7 +105,7 @@ const rollbackChart = baseApi<{
   id: number,
   name: string,
   cluster_id: number,
-  }>('POST', pathParams => {
+}>('POST', pathParams => {
   let { id, name, cluster_id } = pathParams;
   return `/api/projects/${id}/releases/${name}/rollback?cluster_id=${cluster_id}`;
 });
@@ -118,7 +118,7 @@ const upgradeChartValues = baseApi<{
   id: number,
   name: string,
   cluster_id: number,
-  }>('POST', pathParams => {
+}>('POST', pathParams => {
   let { id, name, cluster_id } = pathParams;
   return `/api/projects/${id}/releases/${name}/upgrade?cluster_id=${cluster_id}`;
 });
@@ -199,7 +199,7 @@ const createECR = baseApi<{
 const getImageRepos = baseApi<{}, {   
   project_id: number,
   registry_id: number,
- }>('GET', pathParams => {
+}>('GET', pathParams => {
   return `/api/projects/${pathParams.project_id}/registries/${pathParams.registry_id}/repositories`;
 });
 

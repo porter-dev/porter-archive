@@ -25,6 +25,14 @@ export default class GCRForm extends Component<PropsType, StateType> {
     serviceAccountKey: '',
   }
 
+  isDisabled = (): boolean => {
+    let { credentialsName, serviceAccountKey } = this.state;
+    if (credentialsName === '' || serviceAccountKey === '') {
+      return true;
+    }
+    return false;
+  }
+  
   handleSubmit = () => {
     // TODO: implement once api is restructured
   }
@@ -56,7 +64,8 @@ export default class GCRForm extends Component<PropsType, StateType> {
         <SaveButton
           text='Save Settings'
           makeFlush={true}
-          onClick={this.handleSubmit}
+          disabled={this.isDisabled()}
+          onClick={this.isDisabled() ? null : this.handleSubmit}
         />
       </StyledForm>
     );

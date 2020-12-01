@@ -13,6 +13,7 @@ import ValuesForm from '../../../../components/values-form/ValuesForm';
 type PropsType = {
   currentTemplate: PorterChart,
   hideLaunch: () => void,
+  setCurrentView: (x: string) => void,
 };
 
 type StateType = {
@@ -151,6 +152,7 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
           setSelectedImageUrl={(x: string) => this.setState({ selectedImageUrl: x })}
           setSelectedTag={(x: string) => this.setState({ selectedTag: x })}
           forceExpanded={true}
+          setCurrentView={this.props.setCurrentView}
         />
 
         <br />

@@ -10,8 +10,9 @@ import ImageSelector from '../../../../components/image-selector/ImageSelector';
 import SaveButton from '../../../../components/SaveButton';
 
 type PropsType = {
-  currentChart: ChartType
-  refreshChart: () => void
+  currentChart: ChartType,
+  refreshChart: () => void,
+  setCurrentView: (x: string) => void,
 };
 
 type StateType = {
@@ -70,6 +71,7 @@ export default class SettingsSection extends Component<PropsType, StateType> {
             setSelectedImageUrl={(x: string) => this.setState({ selectedImageUrl: x })}
             setSelectedTag={(x: string) => this.setState({ selectedTag: x })}
             forceExpanded={true}
+            setCurrentView={this.props.setCurrentView}
           />
         </StyledSettingsSection>
         <SaveButton

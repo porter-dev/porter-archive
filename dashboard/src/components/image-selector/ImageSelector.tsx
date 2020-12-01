@@ -48,6 +48,9 @@ export default class ImageSelector extends Component<PropsType, StateType> {
         console.log(err);
       } else {
         let registries = res.data;
+        if (registries.length === 0) {
+          this.setState({ loading: false });
+        }
         registries.forEach(async (registry: any, i: number) => {
           await new Promise((nextController: (res?: any) => void) => {           
             api.getImageRepos('<token>', {}, 

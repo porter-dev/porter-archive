@@ -47,6 +47,9 @@ export default class ImageSelector extends Component<PropsType, StateType> {
         console.log(err);
       } else {
         let registries = res.data;
+        if (registries.length === 0) {
+          this.setState({ loading: false });
+        }
         registries.forEach(async (registry: any, i: number) => {
           await new Promise((nextController: (res?: any) => void) => {           
             api.getImageRepos('<token>', {}, 
@@ -64,14 +67,14 @@ export default class ImageSelector extends Component<PropsType, StateType> {
                   }
                 })
                 images.push(...newImg)
-
-                // Gracefully fail if one of the integration connections is invalid
-                this.setState({
-                  images,
-                  registryId: registry.id,
-                  loading: false,
-                  error: false,
-                });
+                if (i == registries.length - 1) {
+                  this.setState({
+                    images,
+                    registryId: registry.id,
+                    loading: false,
+                    error: false,
+                  });
+                }
                 nextController()
               }
             });    

@@ -29,6 +29,14 @@ export default class GKEForm extends Component<PropsType, StateType> {
     serviceAccountKey: ''
   }
 
+  isDisabled = (): boolean => {
+    let { clusterName, clusterEndpoint, clusterCA, serviceAccountKey } = this.state;
+    if (clusterName === '' || clusterEndpoint === '' || clusterCA === '' || serviceAccountKey === '') {
+      return true;
+    }
+    return false;
+  }
+
   handleSubmit = () => {
     // TODO: implement once api is restructured
   }
@@ -76,7 +84,8 @@ export default class GKEForm extends Component<PropsType, StateType> {
         <SaveButton
           text='Save Settings'
           makeFlush={true}
-          onClick={this.handleSubmit}
+          disabled={this.isDisabled()}
+          onClick={this.isDisabled() ? null : this.handleSubmit}
         />
       </StyledForm>
     );

@@ -14,6 +14,7 @@ const tabOptions = [
 ];
 
 type PropsType = {
+  setCurrentView: (x: string) => void, // Link to add integration from source selector
 };
 
 type StateType = {
@@ -96,6 +97,7 @@ export default class Templates extends Component<PropsType, StateType> {
         <ExpandedTemplate
           currentTemplate={this.state.currentTemplate}
           setCurrentTemplate={(currentTemplate: PorterChart) => this.setState({ currentTemplate })}
+          setCurrentView={this.props.setCurrentView}
         />
       );
     }

@@ -26,7 +26,6 @@ type StateType = {
   error: boolean,
   images: ImageType[],
   clickedImage: ImageType | null,
-  registryId: number | null, // For passing registry ID to tag list
 };
 
 export default class ImageSelector extends Component<PropsType, StateType> {
@@ -36,7 +35,6 @@ export default class ImageSelector extends Component<PropsType, StateType> {
     error: false,
     images: [] as ImageType[],
     clickedImage: null as ImageType | null,
-    registryId: null as number | null,
   }
 
   componentDidMount() {
@@ -46,6 +44,7 @@ export default class ImageSelector extends Component<PropsType, StateType> {
     api.getProjectRegistries('<token>', {}, { id: currentProject.id }, async (err: any, res: any) => {
       if (err) {
         console.log(err);
+        this.setState({ error: true });
       } else {
         let registries = res.data;
         if (registries.length === 0) {
@@ -64,7 +63,8 @@ export default class ImageSelector extends Component<PropsType, StateType> {
                 let newImg = res.data.map((img: any) => {
                   return {
                     kind: registry.service, 
-                    source: img.name
+                    source: img.name,
+                    registryId: registry.id,
                   }
                 })
                 images.push(...newImg)
@@ -75,10 +75,9 @@ export default class ImageSelector extends Component<PropsType, StateType> {
                 let error = errors.reduce((a, b) => {
                   return a + b;
                 }) == registries.length ? true : false; 
-                
+
                 this.setState({
                   images,
-                  registryId: registry.id,
                   loading: false,
                   error,
                 });
@@ -167,7 +166,7 @@ export default class ImageSelector extends Component<PropsType, StateType> {
               selectedTag={selectedTag}
               selectedImageUrl={selectedImageUrl}
               setSelectedTag={setSelectedTag}
-              registryId={this.state.registryId}
+              registryId={this.state.clickedImage.registryId}
             />
           </ExpandedWrapper>
           {this.renderBackButton()}

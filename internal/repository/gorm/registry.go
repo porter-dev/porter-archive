@@ -124,6 +124,28 @@ func (repo *RegistryRepository) UpdateRegistryTokenCache(
 	return registry, nil
 }
 
+// DeleteRegistry removes a registry from the db
+func (repo *RegistryRepository) DeleteRegistry(
+	reg *models.Registry,
+) error {
+	// clear TokenCache association
+	assoc := repo.db.Model(reg).Association("TokenCache")
+
+	if assoc.Error != nil {
+		return assoc.Error
+	}
+
+	if err := assoc.Clear(); err != nil {
+		return err
+	}
+
+	if err := repo.db.Where("id = ?", reg.ID).Delete(&models.Registry{}).Error; err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // EncryptRegistryData will encrypt the user's registry data before writing
 // to the DB
 func (repo *RegistryRepository) EncryptRegistryData(

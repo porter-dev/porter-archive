@@ -31,6 +31,7 @@ export default class SettingsSection extends Component<PropsType, StateType> {
   }
 
   redeployWithNewImage = (img: string, tag: string) => {
+    this.setState({saveValuesStatus: 'loading'})
     let { currentCluster, currentProject } = this.context;
     let image = {
       image: {

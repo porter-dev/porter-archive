@@ -136,4 +136,5 @@ export interface ChoiceType {
 export interface ImageType {
   kind: string,
   source: string,
+  registryId: number,
 }

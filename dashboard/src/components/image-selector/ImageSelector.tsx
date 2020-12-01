@@ -14,7 +14,10 @@ import TagList from './TagList';
 type PropsType = {
   forceExpanded?: boolean,
   selectedImageUrl: string | null,
-  setSelectedImageUrl: (x: string) => void
+  selectedTag: string | null,
+  setSelectedImageUrl: (x: string) => void,
+  setSelectedTag: (x: string) => void,
+  setCurrentView: (x: string) => void,
 };
 
 type StateType = {
@@ -43,7 +46,8 @@ export default class ImageSelector extends Component<PropsType, StateType> {
       if (err) {
         console.log(err);
       } else {
-        res.data.forEach(async (registry: any, i: number) => {
+        let registries = res.data;
+        registries.forEach(async (registry: any, i: number) => {
           await new Promise((nextController: (res?: any) => void) => {           
             api.getImageRepos('<token>', {}, 
               { 
@@ -51,7 +55,7 @@ export default class ImageSelector extends Component<PropsType, StateType> {
                 registry_id: registry.id,
               }, (err: any, res: any) => {
               if (err && this.state.loading) {
-                this.setState({ error: true });
+                this.setState({ error: true, loading: false });
               } else {
                 let newImg = res.data.map((img: any) => {
                   return {
@@ -59,14 +63,16 @@ export default class ImageSelector extends Component<PropsType, StateType> {
                     source: img.name
                   }
                 })
-                this.setState({
-                  images: [...images, ...newImg],
-                  registryId: registry.id,
-                  loading: false,
-                  error: false,
-                }, () => {
-                  nextController()
-                })
+                images.push(...newImg)
+                if (i == registries.length - 1) {
+                  this.setState({
+                    images,
+                    registryId: registry.id,
+                    loading: false,
+                    error: false,
+                  });
+                }
+                nextController()
               }
             });    
           })
@@ -81,6 +87,15 @@ export default class ImageSelector extends Component<PropsType, StateType> {
       return <LoadingWrapper><Loading /></LoadingWrapper>
     } else if (error || !images) {
       return <LoadingWrapper>Error loading repos</LoadingWrapper>
+    } else if (images.length === 0) {
+      return (
+        <LoadingWrapper>
+          No registries found. 
+          <Highlight onClick={() => this.props.setCurrentView('integrations')}>
+            Link your registry.
+          </Highlight>
+        </LoadingWrapper>
+      );
     }
 
     return images.map((image: ImageType, i: number) => {
@@ -123,7 +138,7 @@ export default class ImageSelector extends Component<PropsType, StateType> {
   }
 
   renderExpanded = () => {
-    let { selectedImageUrl, setSelectedImageUrl } = this.props;
+    let { selectedTag, selectedImageUrl, setSelectedTag } = this.props;
     if (!this.state.clickedImage) {
       return (
         <div>
@@ -138,8 +153,9 @@ export default class ImageSelector extends Component<PropsType, StateType> {
         <div>
           <ExpandedWrapper>
             <TagList
+              selectedTag={selectedTag}
               selectedImageUrl={selectedImageUrl}
-              setSelectedImageUrl={setSelectedImageUrl}
+              setSelectedTag={setSelectedTag}
               registryId={this.state.registryId}
             />
           </ExpandedWrapper>
@@ -204,6 +220,14 @@ export default class ImageSelector extends Component<PropsType, StateType> {
 
 ImageSelector.contextType = Context;
 
+const Highlight = styled.div`
+  text-decoration: underline;
+  margin-left: 10px;
+  color: #949eff;
+  cursor: pointer;
+  padding: 3px 0;
+`;
+
 const BackButton = styled.div`
   display: flex;
   align-items: center;
@@ -233,6 +257,7 @@ const Input = styled.input`
   outline: 0;
   background: none;
   border: 0;
+  font-size: 13px;
   width: calc(100% - 60px);
   color: white;
 `;

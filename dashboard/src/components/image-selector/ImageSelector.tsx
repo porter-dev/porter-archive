@@ -101,9 +101,9 @@ export default class ImageSelector extends Component<PropsType, StateType> {
       return (
         <LoadingWrapper>
           No registries found. 
-          <Highlight onClick={() => this.props.setCurrentView('integrations')}>
+          {/* <Highlight onClick={() => this.props.setCurrentView('integrations')}>
             Link your registry.
-          </Highlight>
+          </Highlight> */}
         </LoadingWrapper>
       );
     }

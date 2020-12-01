@@ -144,6 +144,24 @@ func (repo *ClusterRepository) ListClustersByProjectID(
 	return res, nil
 }
 
+// UpdateCluster modifies an existing Cluster in the database
+func (repo *ClusterRepository) UpdateCluster(
+	cluster *models.Cluster,
+) (*models.Cluster, error) {
+	if !repo.canQuery {
+		return nil, errors.New("Cannot write database")
+	}
+
+	if int(cluster.ID-1) >= len(repo.clusters) || repo.clusters[cluster.ID-1] == nil {
+		return nil, gorm.ErrRecordNotFound
+	}
+
+	index := int(cluster.ID - 1)
+	repo.clusters[index] = cluster
+
+	return cluster, nil
+}
+
 // UpdateClusterTokenCache updates the token cache for a cluster
 func (repo *ClusterRepository) UpdateClusterTokenCache(
 	tokenCache *ints.TokenCache,

@@ -42,6 +42,7 @@ export default class ImageSelector extends Component<PropsType, StateType> {
   componentDidMount() {
     const { currentProject, setCurrentError } = this.context;
     let images = [] as ImageType[]
+    let errors = [] as number[]
     api.getProjectRegistries('<token>', {}, { id: currentProject.id }, async (err: any, res: any) => {
       if (err) {
         console.log(err);
@@ -54,8 +55,8 @@ export default class ImageSelector extends Component<PropsType, StateType> {
                 project_id: currentProject.id,
                 registry_id: registry.id,
               }, (err: any, res: any) => {
-              if (err && this.state.loading) {
-                this.setState({ error: true, loading: false });
+              if (err) {
+                errors.push(1);
               } else {
                 let newImg = res.data.map((img: any) => {
                   return {
@@ -64,16 +65,23 @@ export default class ImageSelector extends Component<PropsType, StateType> {
                   }
                 })
                 images.push(...newImg)
-                if (i == registries.length - 1) {
-                  this.setState({
-                    images,
-                    registryId: registry.id,
-                    loading: false,
-                    error: false,
-                  });
-                }
-                nextController()
+                errors.push(0);
               }
+              
+              if (i == registries.length - 1) {
+                let error = errors.reduce((a, b) => {
+                  return a + b;
+                }) == registries.length ? true : false; 
+                
+                this.setState({
+                  images,
+                  registryId: registry.id,
+                  loading: false,
+                  error,
+                });
+              }
+
+              nextController()
             });    
           })
         });

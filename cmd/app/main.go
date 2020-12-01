@@ -102,7 +102,13 @@ func main() {
 		IdleTimeout:  appConf.Server.TimeoutIdle,
 	}
 
-	if err := s.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-		log.Fatal("Server startup failed", err)
+	if appConf.Server.Production {
+		if err := s.ListenAndServeTLS("/etc/wss/tls.crt", "/etc/wss/tls.key"); err != nil && err != http.ErrServerClosed {
+			log.Fatal("Server startup failed", err)
+		}
+	} else {
+		if err := s.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			log.Fatal("Server startup failed", err)
+		}
 	}
 }

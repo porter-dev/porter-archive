@@ -6,3 +6,5 @@ app
 test.yaml
 dist
 gon.hcl
+internal/local_templates
+docker/prod.Dockerfile

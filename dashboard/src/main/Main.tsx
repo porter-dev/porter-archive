@@ -26,7 +26,7 @@ export default class Main extends Component<PropsType, StateType> {
   state = {
     loading: true,
     isLoggedIn : false,
-    initialized: (localStorage.getItem("init") == 'true')
+    initialized: localStorage.getItem("init") === 'true'
   }
 
   componentDidMount() {

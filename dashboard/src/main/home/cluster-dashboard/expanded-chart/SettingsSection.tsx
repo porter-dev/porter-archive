@@ -1,25 +1,63 @@
 import React, { Component } from 'react';
 import styled from 'styled-components';
+import api from '../../../../shared/api';
+import yaml from 'js-yaml';
 
-import { RepoType } from '../../../../shared/types';
+import { ChartType, RepoType, StorageType } from '../../../../shared/types';
+import { Context } from '../../../../shared/Context';
 
-import RepoSelector from '../../../../components/repo-selector/RepoSelector';
+import ImageSelector from '../../../../components/image-selector/ImageSelector';
 import SaveButton from '../../../../components/SaveButton';
 
 type PropsType = {
+  currentChart: ChartType,
+  refreshChart: () => void,
+  setCurrentView: (x: string) => void,
 };
 
 type StateType = {
-  selectedRepo: RepoType | null,
-  selectedBranch: string,
-  subdirectory: string,
+  selectedImageUrl: string | null,
+  selectedTag: string | null,
+  saveValuesStatus: string | null,
+  values: string,
 };
 
 export default class SettingsSection extends Component<PropsType, StateType> {
   state = {
-    selectedRepo: null as RepoType | null,
-    selectedBranch: '',
-    subdirectory: '',
+    selectedImageUrl: '',
+    selectedTag: '',
+    values: '',
+    saveValuesStatus: null as (string | null),
+  }
+
+  redeployWithNewImage = (img: string, tag: string) => {
+    this.setState({saveValuesStatus: 'loading'})
+    let { currentCluster, currentProject } = this.context;
+    let image = {
+      image: {
+        repository: img,
+        tag: tag,
+      }
+    }
+
+    let values = yaml.dump(image);
+    api.upgradeChartValues('<token>', {
+      namespace: this.props.currentChart.namespace,
+      storage: StorageType.Secret,
+      values,
+    }, {
+      id: currentProject.id, 
+      name: this.props.currentChart.name,
+      cluster_id: currentCluster.id,
+    }, (err: any, res: any) => {
+      if (err) {
+        console.log(err)
+        this.setState({ saveValuesStatus: 'error' });
+      } else {
+        this.setState({ saveValuesStatus: 'successful' });
+        this.props.refreshChart();
+      }
+    });
   }
 
   render() {
@@ -27,25 +65,28 @@ export default class SettingsSection extends Component<PropsType, StateType> {
       <Wrapper>
         <StyledSettingsSection>
           <Subtitle>Connected source</Subtitle>
-          <RepoSelector
-            selectedRepo={this.state.selectedRepo}
-            selectedBranch={this.state.selectedBranch}
-            subdirectory={this.state.subdirectory}
-            setSelectedRepo={(selectedRepo: RepoType) => this.setState({ selectedRepo })}
-            setSelectedBranch={(selectedBranch: string) => this.setState({ selectedBranch })}
-            setSubdirectory={(subdirectory: string) => this.setState({ subdirectory })}
+          <ImageSelector
+            selectedImageUrl={this.state.selectedImageUrl}
+            selectedTag={this.state.selectedTag}
+            setSelectedImageUrl={(x: string) => this.setState({ selectedImageUrl: x })}
+            setSelectedTag={(x: string) => this.setState({ selectedTag: x })}
+            forceExpanded={true}
+            setCurrentView={this.props.setCurrentView}
           />
         </StyledSettingsSection>
         <SaveButton
           text='Save Settings'
-          onClick={() => console.log(this.state)}
-          status={null}
+          onClick={() => this.redeployWithNewImage(this.state.selectedImageUrl, this.state.selectedTag)}
+          status={this.state.saveValuesStatus}
           makeFlush={true}
+          disabled={this.state.selectedImageUrl && this.state.selectedTag ? false : true}
         />
       </Wrapper>
     );
   }
 }
+
+SettingsSection.contextType = Context;
 
 const Subtitle = styled.div`
   color: #aaaabb;

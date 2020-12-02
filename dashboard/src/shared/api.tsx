@@ -14,7 +14,7 @@ import { StorageType } from './types';
 const checkAuth = baseApi('GET', '/api/auth/check');
 
 const registerUser = baseApi<{ 
-  email: string, 
+  email: string,
   password: string
 }>('POST', '/api/users');
 
@@ -43,7 +43,6 @@ const getClusters = baseApi<{}, { id: number }>('GET', pathParams => {
 const getCharts = baseApi<{
   namespace: string,
   cluster_id: number,
-  service_account_id: number,
   storage: StorageType,
   limit: number,
   skip: number,
@@ -56,7 +55,6 @@ const getCharts = baseApi<{
 const getChart = baseApi<{
   namespace: string,
   cluster_id: number,
-  service_account_id: number,
   storage: StorageType
 }, { id: number, name: string, revision: number }>('GET', pathParams => {
   return `/api/projects/${pathParams.id}/releases/${pathParams.name}/${pathParams.revision}`;
@@ -65,7 +63,6 @@ const getChart = baseApi<{
 const getChartComponents = baseApi<{
   namespace: string,
   cluster_id: number,
-  service_account_id: number,
   storage: StorageType
 }, { id: number, name: string, revision: number }>('GET', pathParams => {
   return `/api/projects/${pathParams.id}/releases/${pathParams.name}/${pathParams.revision}/components`;
@@ -74,7 +71,6 @@ const getChartComponents = baseApi<{
 const getChartControllers = baseApi<{
   namespace: string,
   cluster_id: number,
-  service_account_id: number,
   storage: StorageType
 }, { id: number, name: string, revision: number }>('GET', pathParams => {
   return `/api/projects/${pathParams.id}/releases/${pathParams.name}/${pathParams.revision}/controllers`;
@@ -82,14 +78,12 @@ const getChartControllers = baseApi<{
 
 const getNamespaces = baseApi<{
   cluster_id: number,
-  service_account_id: number,
 }, { id: number }>('GET', pathParams => {
   return `/api/projects/${pathParams.id}/k8s/namespaces`;
 });
 
 const getMatchingPods = baseApi<{
   cluster_id: number,
-  service_account_id: number,
   selectors: string[]
 }, { id: number }>('GET', pathParams => {
   return `/api/projects/${pathParams.id}/k8s/pods`;
@@ -98,7 +92,6 @@ const getMatchingPods = baseApi<{
 const getRevisions = baseApi<{
   namespace: string,
   cluster_id: number,
-  service_account_id: number,
   storage: StorageType
 }, { id: number, name: string }>('GET', pathParams => {
   return `/api/projects/${pathParams.id}/releases/${pathParams.name}/history`;
@@ -112,10 +105,9 @@ const rollbackChart = baseApi<{
   id: number,
   name: string,
   cluster_id: number,
-  service_account_id: number,
-  }>('POST', pathParams => {
-  let { id, name, cluster_id, service_account_id } = pathParams;
-  return `/api/projects/${id}/releases/${name}/rollback?cluster_id=${cluster_id}&service_account_id=${service_account_id}`;
+}>('POST', pathParams => {
+  let { id, name, cluster_id } = pathParams;
+  return `/api/projects/${id}/releases/${name}/rollback?cluster_id=${cluster_id}`;
 });
 
 const upgradeChartValues = baseApi<{
@@ -126,10 +118,9 @@ const upgradeChartValues = baseApi<{
   id: number,
   name: string,
   cluster_id: number,
-  service_account_id: number,
-  }>('POST', pathParams => {
-  let { id, name, cluster_id, service_account_id } = pathParams;
-  return `/api/projects/${id}/releases/${name}/upgrade?cluster_id=${cluster_id}&service_account_id=${service_account_id}`;
+}>('POST', pathParams => {
+  let { id, name, cluster_id } = pathParams;
+  return `/api/projects/${id}/releases/${name}/upgrade?cluster_id=${cluster_id}`;
 });
 
 const getTemplates = baseApi('GET', '/api/templates');
@@ -167,10 +158,59 @@ const deployTemplate = baseApi<{
   imageURL: string,
   formValues: any,
   storage: StorageType,
-}, { id: number, cluster_id: number, service_account_id: number }>('POST', pathParams => {
-  let {id, cluster_id, service_account_id} = pathParams;
-  return `/api/projects/${id}/deploy?cluster_id=${cluster_id}&service_account_id=${service_account_id}`;
+}, { id: number, cluster_id: number }>('POST', pathParams => {
+  let { cluster_id, id } = pathParams;
+  return `/api/projects/${id}/deploy?cluster_id=${cluster_id}`;
 });
+
+const getClusterIntegrations = baseApi('GET', '/api/integrations/cluster');
+
+const getRegistryIntegrations = baseApi('GET', '/api/integrations/registry');
+
+const getRepoIntegrations = baseApi('GET', '/api/integrations/repo');
+
+const getProjectClusters = baseApi<{}, { id: number }>('GET', pathParams => {
+  return `/api/projects/${pathParams.id}/clusters`;
+});
+
+const getProjectRegistries = baseApi<{}, { id: number }>('GET', pathParams => {
+  return `/api/projects/${pathParams.id}/registries`;
+});
+
+const getProjectRepos = baseApi<{}, { id: number }>('GET', pathParams => {
+  return `/api/projects/${pathParams.id}/repos`;
+});
+
+const createAWSIntegration = baseApi<{
+  aws_region: string,
+  aws_access_key_id: string,
+  aws_secret_access_key: string,
+}, { id: number }>('POST', pathParams => {
+  return `/api/projects/${pathParams.id}/integrations/aws`;
+});
+
+const createECR = baseApi<{
+  name: string,
+  aws_integration_id: string,
+}, { id: number }>('POST', pathParams => {
+  return `/api/projects/${pathParams.id}/registries`;
+});
+
+const getImageRepos = baseApi<{}, {   
+  project_id: number,
+  registry_id: number,
+}>('GET', pathParams => {
+  return `/api/projects/${pathParams.project_id}/registries/${pathParams.registry_id}/repositories`;
+});
+
+const getImageTags = baseApi<{}, {   
+  project_id: number,
+  registry_id: number,
+  repo_name: string,
+ }>('GET', pathParams => {
+  return `/api/projects/${pathParams.project_id}/registries/${pathParams.registry_id}/repositories/${pathParams.repo_name}`;
+});
+
 
 // Bundle export to allow default api import (api.<method> is more readable)
 export default {
@@ -197,5 +237,15 @@ export default {
   getProjects,
   createProject,
   deleteProject,
-  deployTemplate
+  deployTemplate,
+  getClusterIntegrations,
+  getRegistryIntegrations,
+  getRepoIntegrations,
+  getProjectClusters,
+  getProjectRegistries,
+  getProjectRepos,
+  createAWSIntegration,
+  createECR,
+  getImageRepos,
+  getImageTags,
 }

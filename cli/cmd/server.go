@@ -3,9 +3,12 @@ package cmd
 import (
 	"fmt"
 	"os"
+	"os/exec"
+	"path/filepath"
 
 	"github.com/fatih/color"
 	"github.com/porter-dev/porter/cli/cmd/docker"
+	"github.com/porter-dev/porter/cli/cmd/github"
 
 	"github.com/spf13/cobra"
 )
@@ -13,6 +16,7 @@ import (
 type startOps struct {
 	imageTag string `form:"required"`
 	db       string `form:"oneof=sqlite postgres"`
+	driver   string `form:"required"`
 	port     *int   `form:"required"`
 }
 
@@ -28,24 +32,40 @@ var startCmd = &cobra.Command{
 	Use:   "start",
 	Short: "Starts a Porter instance using the Docker engine",
 	Run: func(cmd *cobra.Command, args []string) {
-		err := start(
-			opts.imageTag,
-			opts.db,
-			*opts.port,
-		)
+		if getDriver() == "docker" {
+			setDriver("docker")
 
-		if err != nil {
-			red := color.New(color.FgRed)
-			red.Println("Error running start:", err.Error())
-			red.Println("Shutting down...")
-
-			err = stop()
+			err := startDocker(
+				opts.imageTag,
+				opts.db,
+				*opts.port,
+			)
 
 			if err != nil {
-				red.Println("Shutdown unsuccessful:", err.Error())
-			}
+				red := color.New(color.FgRed)
+				red.Println("Error running start:", err.Error())
+				red.Println("Shutting down...")
 
-			os.Exit(1)
+				err = stopDocker()
+
+				if err != nil {
+					red.Println("Shutdown unsuccessful:", err.Error())
+				}
+
+				os.Exit(1)
+			}
+		} else {
+			setDriver("local")
+			err := startLocal(
+				opts.db,
+				*opts.port,
+			)
+
+			if err != nil {
+				red := color.New(color.FgRed)
+				red.Println("Error running start:", err.Error())
+				os.Exit(1)
+			}
 		}
 	},
 }
@@ -54,9 +74,11 @@ var stopCmd = &cobra.Command{
 	Use:   "stop",
 	Short: "Stops a Porter instance running on the Docker engine",
 	Run: func(cmd *cobra.Command, args []string) {
-		if err := stop(); err != nil {
-			color.New(color.FgRed).Println("Shutdown unsuccessful:", err.Error())
-			os.Exit(1)
+		if getDriver() == "docker" {
+			if err := stopDocker(); err != nil {
+				color.New(color.FgRed).Println("Shutdown unsuccessful:", err.Error())
+				os.Exit(1)
+			}
 		}
 	},
 }
@@ -75,6 +97,13 @@ func init() {
 	)
 
 	startCmd.PersistentFlags().StringVar(
+		&opts.driver,
+		"driver",
+		"local",
+		"the db to use, one of local or docker",
+	)
+
+	startCmd.PersistentFlags().StringVar(
 		&opts.imageTag,
 		"image-tag",
 		"latest",
@@ -89,7 +118,7 @@ func init() {
 	)
 }
 
-func start(
+func startDocker(
 	imageTag string,
 	db string,
 	port int,
@@ -129,7 +158,53 @@ func start(
 	return setHost(fmt.Sprintf("http://localhost:%d", port))
 }
 
-func stop() error {
+func startLocal(
+	db string,
+	port int,
+) error {
+	if db == "postgres" {
+		return fmt.Errorf("postgres not available for local driver, run \"porter server start --db postgres --driver docker\"")
+	}
+
+	setHost(fmt.Sprintf("http://localhost:%d", port))
+
+	porterDir := filepath.Join(home, ".porter")
+	cmdPath := filepath.Join(home, ".porter", "portersvr")
+	sqlLitePath := filepath.Join(home, ".porter", "porter.db")
+	staticFilePath := filepath.Join(home, ".porter", "static")
+
+	if _, err := os.Stat(cmdPath); os.IsNotExist(err) {
+		err := github.DownloadLatestServerRelease(porterDir)
+
+		if err != nil {
+			color.New(color.FgRed).Println("Failed:", err.Error())
+			os.Exit(1)
+		}
+	}
+
+	cmdPorter := exec.Command(cmdPath)
+	cmdPorter.Env = os.Environ()
+	cmdPorter.Env = append(cmdPorter.Env, []string{
+		"IS_LOCAL=true",
+		"SQL_LITE=true",
+		"SQL_LITE_PATH=" + sqlLitePath,
+		"STATIC_FILE_PATH=" + staticFilePath,
+	}...)
+
+	cmdPorter.Stdout = os.Stdout
+	cmdPorter.Stderr = os.Stderr
+
+	err := cmdPorter.Run()
+
+	if err != nil {
+		color.New(color.FgRed).Println("Failed:", err.Error())
+		os.Exit(1)
+	}
+
+	return nil
+}
+
+func stopDocker() error {
 	agent, err := docker.NewAgentFromEnv()
 
 	if err != nil {

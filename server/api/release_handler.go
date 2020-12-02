@@ -28,7 +28,7 @@ func (app *App) HandleListReleases(w http.ResponseWriter, r *http.Request) {
 	form := &forms.ListReleaseForm{
 		ReleaseForm: &forms.ReleaseForm{
 			Form: &helm.Form{
-				UpdateTokenCache: app.updateTokenCache,
+				Repo: app.repo,
 			},
 		},
 		ListFilter: &helm.ListFilter{},
@@ -68,7 +68,7 @@ func (app *App) HandleGetRelease(w http.ResponseWriter, r *http.Request) {
 	form := &forms.GetReleaseForm{
 		ReleaseForm: &forms.ReleaseForm{
 			Form: &helm.Form{
-				UpdateTokenCache: app.updateTokenCache,
+				Repo: app.repo,
 			},
 		},
 		Name:     name,
@@ -112,7 +112,7 @@ func (app *App) HandleGetReleaseComponents(w http.ResponseWriter, r *http.Reques
 	form := &forms.GetReleaseForm{
 		ReleaseForm: &forms.ReleaseForm{
 			Form: &helm.Form{
-				UpdateTokenCache: app.updateTokenCache,
+				Repo: app.repo,
 			},
 		},
 		Name:     name,
@@ -168,7 +168,7 @@ func (app *App) HandleGetReleaseControllers(w http.ResponseWriter, r *http.Reque
 	form := &forms.GetReleaseForm{
 		ReleaseForm: &forms.ReleaseForm{
 			Form: &helm.Form{
-				UpdateTokenCache: app.updateTokenCache,
+				Repo: app.repo,
 			},
 		},
 		Name:     name,
@@ -208,11 +208,11 @@ func (app *App) HandleGetReleaseControllers(w http.ResponseWriter, r *http.Reque
 	// get the filter options
 	k8sForm := &forms.K8sForm{
 		OutOfClusterConfig: &kubernetes.OutOfClusterConfig{
-			UpdateTokenCache: app.updateTokenCache,
+			Repo: app.repo,
 		},
 	}
 
-	k8sForm.PopulateK8sOptionsFromQueryParams(vals, app.repo.ServiceAccount)
+	k8sForm.PopulateK8sOptionsFromQueryParams(vals, app.repo.Cluster)
 
 	// validate the form
 	if err := app.validator.Struct(k8sForm); err != nil {
@@ -293,7 +293,7 @@ func (app *App) HandleListReleaseHistory(w http.ResponseWriter, r *http.Request)
 	form := &forms.ListReleaseHistoryForm{
 		ReleaseForm: &forms.ReleaseForm{
 			Form: &helm.Form{
-				UpdateTokenCache: app.updateTokenCache,
+				Repo: app.repo,
 			},
 		},
 		Name: name,
@@ -342,7 +342,7 @@ func (app *App) HandleUpgradeRelease(w http.ResponseWriter, r *http.Request) {
 	form := &forms.UpgradeReleaseForm{
 		ReleaseForm: &forms.ReleaseForm{
 			Form: &helm.Form{
-				UpdateTokenCache: app.updateTokenCache,
+				Repo: app.repo,
 			},
 		},
 		Name: name,
@@ -350,7 +350,7 @@ func (app *App) HandleUpgradeRelease(w http.ResponseWriter, r *http.Request) {
 
 	form.ReleaseForm.PopulateHelmOptionsFromQueryParams(
 		vals,
-		app.repo.ServiceAccount,
+		app.repo.Cluster,
 	)
 
 	if err := json.NewDecoder(r.Body).Decode(form); err != nil {
@@ -397,7 +397,7 @@ func (app *App) HandleRollbackRelease(w http.ResponseWriter, r *http.Request) {
 	form := &forms.RollbackReleaseForm{
 		ReleaseForm: &forms.ReleaseForm{
 			Form: &helm.Form{
-				UpdateTokenCache: app.updateTokenCache,
+				Repo: app.repo,
 			},
 		},
 		Name: name,
@@ -405,7 +405,7 @@ func (app *App) HandleRollbackRelease(w http.ResponseWriter, r *http.Request) {
 
 	form.ReleaseForm.PopulateHelmOptionsFromQueryParams(
 		vals,
-		app.repo.ServiceAccount,
+		app.repo.Cluster,
 	)
 
 	if err := json.NewDecoder(r.Body).Decode(form); err != nil {
@@ -448,7 +448,7 @@ func (app *App) getAgentFromQueryParams(
 	r *http.Request,
 	form *forms.ReleaseForm,
 	// populate uses the query params to populate a form
-	populate ...func(vals url.Values, repo repository.ServiceAccountRepository) error,
+	populate ...func(vals url.Values, repo repository.ClusterRepository) error,
 ) (*helm.Agent, error) {
 	vals, err := url.ParseQuery(r.URL.RawQuery)
 
@@ -458,7 +458,7 @@ func (app *App) getAgentFromQueryParams(
 	}
 
 	for _, f := range populate {
-		err := f(vals, app.repo.ServiceAccount)
+		err := f(vals, app.repo.Cluster)
 
 		if err != nil {
 			return nil, err

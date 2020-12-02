@@ -507,19 +507,6 @@ func userModelBodyValidator(c *userTest, tester *tester, t *testing.T) {
 	}
 }
 
-func userContextBodyValidator(c *userTest, tester *tester, t *testing.T) {
-	gotBody := &[]models.Context{}
-	expBody := &[]models.Context{}
-
-	json.Unmarshal(tester.rr.Body.Bytes(), gotBody)
-	json.Unmarshal([]byte(c.expBody), expBody)
-
-	if !reflect.DeepEqual(gotBody, expBody) {
-		t.Errorf("%s, handler returned wrong body: got %v want %v",
-			c.msg, gotBody, expBody)
-	}
-}
-
 func userProjectsListValidator(c *userTest, tester *tester, t *testing.T) {
 	gotBody := make([]*models.ProjectExternal, 0)
 	expBody := make([]*models.ProjectExternal, 0)

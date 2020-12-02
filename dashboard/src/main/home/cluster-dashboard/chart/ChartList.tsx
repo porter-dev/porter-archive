@@ -40,7 +40,6 @@ export default class ChartList extends Component<PropsType, StateType> {
     api.getCharts('<token>', {
       namespace: this.props.namespace,
       cluster_id: currentCluster.id,
-      service_account_id: currentCluster.service_account_id,
       storage: StorageType.Secret,
       limit: 20,
       skip: 0,
@@ -64,49 +63,50 @@ export default class ChartList extends Component<PropsType, StateType> {
 
   setupWebsocket = (kind: string) => {
       let { currentCluster, currentProject } = this.context;
-      let ws = new WebSocket(`ws://localhost:8080/api/projects/${currentProject.id}/k8s/${kind}/status?cluster_id=${currentCluster.id}&service_account_id=${currentCluster.service_account_id}`)
+      let protocol = process.env.NODE_ENV == 'production' ? 'wss' : 'ws';
+      let ws = new WebSocket(`${protocol}://${process.env.API_SERVER}/api/projects/${currentProject.id}/k8s/${kind}/status?cluster_id=${currentCluster.id}`);
       ws.onopen = () => {
-        console.log('connected to websocket')
+        console.log('connected to websocket');
       }
   
       ws.onmessage = (evt: MessageEvent) => {
-        let event = JSON.parse(evt.data)
-        let object = event.Object
-        let chartKey = this.state.chartLookupTable[object.metadata.uid]
+        let event = JSON.parse(evt.data);
+        let object = event.Object;
+        let chartKey = this.state.chartLookupTable[object.metadata.uid];
 
         // ignore if updated object does not belong to any chart in the list.
         if (!chartKey) {
           return;
         }
 
-        let chartControllers = this.state.controllers[chartKey]
-        chartControllers[object.metadata.uid] = object
+        let chartControllers = this.state.controllers[chartKey];
+        chartControllers[object.metadata.uid] = object;
 
         this.setState({
           controllers: {
             ...this.state.controllers,
             [chartKey] : chartControllers
           }
-        })
+        });
       }
   
       ws.onclose = () => {
-        console.log('closing websocket')
+        console.log('closing websocket');
       }
   
       ws.onerror = (err: ErrorEvent) => {
-        console.log(err)
-        ws.close()
+        console.log(err);
+        ws.close();
       }
 
-      return ws
+      return ws;
   }
 
   setControllerWebsockets = (controllers: any[]) => {
     let websockets = controllers.map((kind: string) => {
-      return this.setupWebsocket(kind)
+      return this.setupWebsocket(kind);
     })
-    this.setState({websockets})
+    this.setState({ websockets });
   }
 
   getControllers = (charts: any[]) => {
@@ -120,7 +120,6 @@ export default class ChartList extends Component<PropsType, StateType> {
         api.getChartControllers('<token>', {
           namespace: chart.namespace,
           cluster_id: currentCluster.id,
-          service_account_id: currentCluster.service_account_id,
           storage: StorageType.Secret
         }, {
           id: currentProject.id,
@@ -164,7 +163,7 @@ export default class ChartList extends Component<PropsType, StateType> {
     this.setControllerWebsockets(["deployment", "statefulset", "daemonset", "replicaset"]);
   }
 
-  async componentWillUnmount () {
+  componentWillUnmount() {
     if (this.state.websockets) {
       this.state.websockets.forEach((ws: WebSocket) => {
         ws.close()
@@ -244,5 +243,5 @@ const LoadingWrapper = styled.div`
 `;
 
 const StyledChartList = styled.div`
-  padding-bottom: 100px;
+  padding-bottom: 85px;
 `;

@@ -15,7 +15,19 @@ builds:
     flags:
       - -tags=cli
     hooks:
-      post: gon gon.hcl
+      post: gon gon.cli.hcl
+  # - id: "porter-server"
+  #   binary: portersvr
+  #   env:
+  #     - CGO_ENABLED=1
+  #   dir: cmd/app
+  #   main: ./main.go
+  #   goos:
+  #     - darwin
+  #   goarch:
+  #     - amd64
+  #   hooks:
+  #     post: gon gon.server.hcl
 archives:
   - format: binary
     replacements:

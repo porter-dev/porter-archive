@@ -3,7 +3,6 @@ package api_test
 import (
 	"encoding/json"
 	"net/http"
-	"net/url"
 	"strings"
 	"testing"
 
@@ -68,27 +67,27 @@ func testReposRequests(t *testing.T, tests []*reposTest, canQuery bool) {
 
 // ------------------------- TEST FIXTURES AND FUNCTIONS  ------------------------- //
 
-var listReposTests = []*reposTest{
-	&reposTest{
-		initializers: []func(tester *tester){
-			initDefaultRepos,
-		},
-		msg:       "List repos",
-		method:    "GET",
-		endpoint:  "/api/repos/github/porter/master/contents?dir=" + url.QueryEscape("./"),
-		body:      "",
-		expStatus: http.StatusOK,
-		expBody:   "unimplemented",
-		useCookie: true,
-		validators: []func(c *reposTest, tester *tester, t *testing.T){
-			reposListValidator,
-		},
-	},
-}
+// var listReposTests = []*reposTest{
+// 	&reposTest{
+// 		initializers: []func(tester *tester){
+// 			initDefaultRepos,
+// 		},
+// 		msg:       "List repos",
+// 		method:    "GET",
+// 		endpoint:  "/api/repos/github/porter/master/contents?dir=" + url.QueryEscape("./"),
+// 		body:      "",
+// 		expStatus: http.StatusOK,
+// 		expBody:   "unimplemented",
+// 		useCookie: true,
+// 		validators: []func(c *reposTest, tester *tester, t *testing.T){
+// 			reposListValidator,
+// 		},
+// 	},
+// }
 
-func TestHandleListRepos(t *testing.T) {
-	testReposRequests(t, listReposTests, true)
-}
+// func TestHandleListRepos(t *testing.T) {
+// 	testReposRequests(t, listReposTests, true)
+// }
 
 // ------------------------- INITIALIZERS AND VALIDATORS ------------------------- //
 

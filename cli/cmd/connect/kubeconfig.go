@@ -10,10 +10,10 @@ import (
 	"strings"
 
 	"github.com/fatih/color"
+	awsLocal "github.com/porter-dev/porter/cli/cmd/providers/aws/local"
+	gcpLocal "github.com/porter-dev/porter/cli/cmd/providers/gcp/local"
 	"github.com/porter-dev/porter/cli/cmd/utils"
 	"github.com/porter-dev/porter/internal/kubernetes/local"
-	awsLocal "github.com/porter-dev/porter/internal/providers/aws/local"
-	gcpLocal "github.com/porter-dev/porter/internal/providers/gcp/local"
 
 	"github.com/porter-dev/porter/cli/cmd/api"
 	"github.com/porter-dev/porter/internal/models"
@@ -26,6 +26,7 @@ func Kubeconfig(
 	kubeconfigPath string,
 	contexts []string,
 	projectID uint,
+	isLocal bool,
 ) error {
 	// if project ID is 0, ask the user to set the project ID or create a project
 	if projectID == 0 {
@@ -40,11 +41,12 @@ func Kubeconfig(
 	}
 
 	// send kubeconfig to client
-	saCandidates, err := client.CreateProjectCandidates(
+	ccs, err := client.CreateProjectCandidates(
 		context.Background(),
 		projectID,
 		&api.CreateProjectCandidatesRequest{
 			Kubeconfig: string(rawBytes),
+			IsLocal:    isLocal,
 		},
 	)
 
@@ -52,16 +54,15 @@ func Kubeconfig(
 		return err
 	}
 
-	for _, saCandidate := range saCandidates {
-		var clusters []models.ClusterExternal
-		var saID uint
+	for _, cc := range ccs {
+		var cluster *models.ClusterExternal
 
-		if len(saCandidate.Actions) > 0 {
-			resolvers := make(api.CreateProjectServiceAccountRequest, 0)
+		if len(cc.Resolvers) > 0 {
+			allResolver := &models.ClusterResolverAll{}
 
-			for _, action := range saCandidate.Actions {
-				switch action.Name {
-				case models.ClusterCADataAction:
+			for _, resolver := range cc.Resolvers {
+				switch resolver.Name {
+				case models.ClusterCAData:
 					absKubeconfigPath, err := local.ResolveKubeconfigPath(kubeconfigPath)
 
 					if err != nil {
@@ -69,7 +70,7 @@ func Kubeconfig(
 					}
 
 					filename, err := utils.GetFileReferenceFromKubeconfig(
-						action.Filename,
+						resolver.Data["filename"],
 						absKubeconfigPath,
 					)
 
@@ -77,14 +78,18 @@ func Kubeconfig(
 						return err
 					}
 
-					resolveAction, err := resolveClusterCAAction(filename)
+					err = resolveClusterCAAction(filename, allResolver)
 
 					if err != nil {
 						return err
 					}
+				case models.ClusterLocalhost:
+					err := resolveLocalhostAction(allResolver)
 
-					resolvers = append(resolvers, resolveAction)
-				case models.ClientCertDataAction:
+					if err != nil {
+						return err
+					}
+				case models.ClientCertData:
 					absKubeconfigPath, err := local.ResolveKubeconfigPath(kubeconfigPath)
 
 					if err != nil {
@@ -92,7 +97,7 @@ func Kubeconfig(
 					}
 
 					filename, err := utils.GetFileReferenceFromKubeconfig(
-						action.Filename,
+						resolver.Data["filename"],
 						absKubeconfigPath,
 					)
 
@@ -100,14 +105,12 @@ func Kubeconfig(
 						return err
 					}
 
-					resolveAction, err := resolveClientCertAction(filename)
+					err = resolveClientCertAction(filename, allResolver)
 
 					if err != nil {
 						return err
 					}
-
-					resolvers = append(resolvers, resolveAction)
-				case models.ClientKeyDataAction:
+				case models.ClientKeyData:
 					absKubeconfigPath, err := local.ResolveKubeconfigPath(kubeconfigPath)
 
 					if err != nil {
@@ -115,7 +118,7 @@ func Kubeconfig(
 					}
 
 					filename, err := utils.GetFileReferenceFromKubeconfig(
-						action.Filename,
+						resolver.Data["filename"],
 						absKubeconfigPath,
 					)
 
@@ -123,14 +126,12 @@ func Kubeconfig(
 						return err
 					}
 
-					resolveAction, err := resolveClientKeyAction(filename)
+					err = resolveClientKeyAction(filename, allResolver)
 
 					if err != nil {
 						return err
 					}
-
-					resolvers = append(resolvers, resolveAction)
-				case models.OIDCIssuerDataAction:
+				case models.OIDCIssuerData:
 					absKubeconfigPath, err := local.ResolveKubeconfigPath(kubeconfigPath)
 
 					if err != nil {
@@ -138,7 +139,7 @@ func Kubeconfig(
 					}
 
 					filename, err := utils.GetFileReferenceFromKubeconfig(
-						action.Filename,
+						resolver.Data["filename"],
 						absKubeconfigPath,
 					)
 
@@ -146,14 +147,12 @@ func Kubeconfig(
 						return err
 					}
 
-					resolveAction, err := resolveOIDCIssuerAction(filename)
+					err = resolveOIDCIssuerAction(filename, allResolver)
 
 					if err != nil {
 						return err
 					}
-
-					resolvers = append(resolvers, resolveAction)
-				case models.TokenDataAction:
+				case models.TokenData:
 					absKubeconfigPath, err := local.ResolveKubeconfigPath(kubeconfigPath)
 
 					if err != nil {
@@ -161,7 +160,7 @@ func Kubeconfig(
 					}
 
 					filename, err := utils.GetFileReferenceFromKubeconfig(
-						action.Filename,
+						resolver.Data["filename"],
 						absKubeconfigPath,
 					)
 
@@ -169,72 +168,68 @@ func Kubeconfig(
 						return err
 					}
 
-					resolveAction, err := resolveTokenDataAction(filename)
+					err = resolveTokenDataAction(filename, allResolver)
 
 					if err != nil {
 						return err
 					}
-
-					resolvers = append(resolvers, resolveAction)
-				case models.GCPKeyDataAction:
-					resolveAction, err := resolveGCPKeyAction(
-						saCandidate.ClusterEndpoint,
-						saCandidate.ClusterName,
+				case models.GCPKeyData:
+					err := resolveGCPKeyAction(
+						cc.Server,
+						cc.Name,
+						allResolver,
 					)
 
 					if err != nil {
 						return err
 					}
-
-					resolvers = append(resolvers, resolveAction)
-				case models.AWSDataAction:
-					resolveAction, err := resolveAWSAction(
-						saCandidate.ClusterEndpoint,
-						saCandidate.ClusterName,
-						saCandidate.AWSClusterIDGuess,
+				case models.AWSData:
+					err := resolveAWSAction(
+						cc.Server,
+						cc.Name,
+						cc.AWSClusterIDGuess,
 						kubeconfigPath,
-						saCandidate.ContextName,
+						cc.ContextName,
+						allResolver,
 					)
 
 					if err != nil {
 						return err
 					}
-
-					resolvers = append(resolvers, resolveAction)
 				}
 			}
 
-			sa, err := client.CreateProjectServiceAccount(
+			resp, err := client.CreateProjectCluster(
 				context.Background(),
 				projectID,
-				saCandidate.ID,
-				resolvers,
+				cc.ID,
+				allResolver,
 			)
 
 			if err != nil {
 				return err
 			}
 
-			clusters = sa.Clusters
-			saID = sa.ID
+			clExt := models.ClusterExternal(*resp)
+
+			cluster = &clExt
 		} else {
-			sa, err := client.GetProjectServiceAccount(
+			resp, err := client.GetProjectCluster(
 				context.Background(),
 				projectID,
-				saCandidate.CreatedServiceAccountID,
+				cc.CreatedClusterID,
 			)
 
 			if err != nil {
 				return err
 			}
 
-			clusters = sa.Clusters
-			saID = sa.ID
+			clExt := models.ClusterExternal(*resp)
+
+			cluster = &clExt
 		}
 
-		for _, cluster := range clusters {
-			color.New(color.FgGreen).Printf("created service account for cluster %s with id %d\n", cluster.Name, saID)
-		}
+		color.New(color.FgGreen).Printf("created cluster %s with id %d\n", cluster.Name, cluster.ID)
 	}
 
 	return nil
@@ -243,85 +238,97 @@ func Kubeconfig(
 // resolves a cluster ca data action
 func resolveClusterCAAction(
 	filename string,
-) (*models.ServiceAccountAllActions, error) {
+	resolver *models.ClusterResolverAll,
+) error {
 	fileBytes, err := ioutil.ReadFile(filename)
 
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	return &models.ServiceAccountAllActions{
-		Name:          models.ClusterCADataAction,
-		ClusterCAData: base64.StdEncoding.EncodeToString(fileBytes),
-	}, nil
+	resolver.ClusterCAData = base64.StdEncoding.EncodeToString(fileBytes)
+
+	return nil
+}
+
+func resolveLocalhostAction(
+	resolver *models.ClusterResolverAll,
+) error {
+	resolver.ClusterHostname = "host.docker.internal"
+
+	return nil
 }
 
 // resolves a client cert data action
 func resolveClientCertAction(
 	filename string,
-) (*models.ServiceAccountAllActions, error) {
+	resolver *models.ClusterResolverAll,
+) error {
 	fileBytes, err := ioutil.ReadFile(filename)
 
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	return &models.ServiceAccountAllActions{
-		Name:           models.ClientCertDataAction,
-		ClientCertData: base64.StdEncoding.EncodeToString(fileBytes),
-	}, nil
+	resolver.ClientCertData = base64.StdEncoding.EncodeToString(fileBytes)
+
+	return nil
 }
 
 // resolves a client key data action
 func resolveClientKeyAction(
 	filename string,
-) (*models.ServiceAccountAllActions, error) {
+	resolver *models.ClusterResolverAll,
+) error {
 	fileBytes, err := ioutil.ReadFile(filename)
 
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	return &models.ServiceAccountAllActions{
-		Name:          models.ClientKeyDataAction,
-		ClientKeyData: base64.StdEncoding.EncodeToString(fileBytes),
-	}, nil
+	resolver.ClientKeyData = base64.StdEncoding.EncodeToString(fileBytes)
+
+	return nil
 }
 
 // resolves an oidc issuer data action
 func resolveOIDCIssuerAction(
 	filename string,
-) (*models.ServiceAccountAllActions, error) {
+	resolver *models.ClusterResolverAll,
+) error {
 	fileBytes, err := ioutil.ReadFile(filename)
 
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	return &models.ServiceAccountAllActions{
-		Name:             models.OIDCIssuerDataAction,
-		OIDCIssuerCAData: base64.StdEncoding.EncodeToString(fileBytes),
-	}, nil
+	resolver.OIDCIssuerCAData = base64.StdEncoding.EncodeToString(fileBytes)
+
+	return nil
 }
 
 // resolves a token data action
 func resolveTokenDataAction(
 	filename string,
-) (*models.ServiceAccountAllActions, error) {
+	resolver *models.ClusterResolverAll,
+) error {
 	fileBytes, err := ioutil.ReadFile(filename)
 
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	return &models.ServiceAccountAllActions{
-		Name:      models.TokenDataAction,
-		TokenData: string(fileBytes),
-	}, nil
+	resolver.TokenData = string(fileBytes)
+
+	return nil
 }
 
 // resolves a gcp key data action
-func resolveGCPKeyAction(endpoint string, clusterName string) (*models.ServiceAccountAllActions, error) {
+func resolveGCPKeyAction(
+	endpoint string,
+	clusterName string,
+	resolver *models.ClusterResolverAll,
+) error {
 	userResp, err := utils.PromptPlaintext(
 		fmt.Sprintf(
 			`Detected GKE cluster in kubeconfig for the endpoint %s (%s). 
@@ -334,7 +341,7 @@ Would you like to proceed? %s `,
 	)
 
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	if userResp := strings.ToLower(userResp); userResp == "y" || userResp == "yes" {
@@ -342,14 +349,14 @@ Would you like to proceed? %s `,
 
 		if err != nil {
 			color.New(color.FgRed).Printf("Automatic creation failed, manual input required. Error was: %v\n", err)
-			return resolveGCPKeyActionManual(endpoint, clusterName)
+			return resolveGCPKeyActionManual(endpoint, clusterName, resolver)
 		}
 
 		projID, err := agent.GetProjectIDForGKECluster(endpoint)
 
 		if err != nil {
 			color.New(color.FgRed).Printf("Automatic creation failed, manual input required. Error was: %v\n", err)
-			return resolveGCPKeyActionManual(endpoint, clusterName)
+			return resolveGCPKeyActionManual(endpoint, clusterName, resolver)
 		}
 
 		agent.ProjectID = projID
@@ -361,14 +368,14 @@ Would you like to proceed? %s `,
 
 		if err != nil {
 			color.New(color.FgRed).Printf("Automatic creation failed, manual input required. Error was: %v\n", err)
-			return resolveGCPKeyActionManual(endpoint, clusterName)
+			return resolveGCPKeyActionManual(endpoint, clusterName, resolver)
 		}
 
 		err = agent.SetServiceAccountIAMPolicy(resp)
 
 		if err != nil {
 			color.New(color.FgRed).Printf("Automatic creation failed, manual input required. Error was: %v\n", err)
-			return resolveGCPKeyActionManual(endpoint, clusterName)
+			return resolveGCPKeyActionManual(endpoint, clusterName, resolver)
 		}
 
 		// get the service account key data to send to the server
@@ -376,24 +383,27 @@ Would you like to proceed? %s `,
 
 		if err != nil {
 			color.New(color.FgRed).Printf("Automatic creation failed, manual input required. Error was: %v\n", err)
-			return resolveGCPKeyActionManual(endpoint, clusterName)
+			return resolveGCPKeyActionManual(endpoint, clusterName, resolver)
 		}
 
-		return &models.ServiceAccountAllActions{
-			Name:       models.GCPKeyDataAction,
-			GCPKeyData: string(bytes),
-		}, nil
+		resolver.GCPKeyData = string(bytes)
+
+		return nil
 	}
 
-	return resolveGCPKeyActionManual(endpoint, clusterName)
+	return resolveGCPKeyActionManual(endpoint, clusterName, resolver)
 }
 
-func resolveGCPKeyActionManual(endpoint string, clusterName string) (*models.ServiceAccountAllActions, error) {
+func resolveGCPKeyActionManual(
+	endpoint string,
+	clusterName string,
+	resolver *models.ClusterResolverAll,
+) error {
 	keyFileLocation, err := utils.PromptPlaintext(fmt.Sprintf(`Please provide the full path to a service account key file.
 Key file location: `))
 
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	// attempt to read the key file location
@@ -402,16 +412,15 @@ Key file location: `))
 		bytes, err := ioutil.ReadFile(keyFileLocation)
 
 		if err != nil {
-			return nil, err
+			return err
 		}
 
-		return &models.ServiceAccountAllActions{
-			Name:       models.GCPKeyDataAction,
-			GCPKeyData: string(bytes),
-		}, nil
+		resolver.GCPKeyData = string(bytes)
+
+		return nil
 	}
 
-	return nil, errors.New("Key file not found")
+	return errors.New("Key file not found")
 }
 
 // resolves an aws key data action
@@ -421,7 +430,8 @@ func resolveAWSAction(
 	awsClusterIDGuess string,
 	kubeconfigPath string,
 	contextName string,
-) (*models.ServiceAccountAllActions, error) {
+	resolver *models.ClusterResolverAll,
+) error {
 	userResp, err := utils.PromptPlaintext(
 		fmt.Sprintf(
 			`Detected AWS cluster in kubeconfig for the endpoint %s (%s). 
@@ -434,41 +444,41 @@ Would you like to proceed? %s `,
 	)
 
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	if userResp := strings.ToLower(userResp); userResp == "y" || userResp == "yes" {
-		agent, err := awsLocal.NewDefaultAgent(kubeconfigPath, contextName)
+		agent, err := awsLocal.NewDefaultKubernetesAgent(kubeconfigPath, contextName)
 
 		if err != nil {
 			color.New(color.FgRed).Printf("Automatic creation failed, manual input required. Error was: %v\n", err)
-			return resolveAWSActionManual(endpoint, clusterName, awsClusterIDGuess)
+			return resolveAWSActionManual(endpoint, clusterName, awsClusterIDGuess, resolver)
 		}
 
 		creds, err := agent.CreateIAMKubernetesMapping(awsClusterIDGuess)
 
 		if err != nil {
 			color.New(color.FgRed).Printf("Automatic creation failed, manual input required. Error was: %v\n", err)
-			return resolveAWSActionManual(endpoint, clusterName, awsClusterIDGuess)
+			return resolveAWSActionManual(endpoint, clusterName, awsClusterIDGuess, resolver)
 		}
 
-		return &models.ServiceAccountAllActions{
-			Name:               models.AWSDataAction,
-			AWSAccessKeyID:     creds.AWSAccessKeyID,
-			AWSSecretAccessKey: creds.AWSSecretAccessKey,
-			AWSClusterID:       creds.AWSClusterID,
-		}, nil
+		resolver.AWSAccessKeyID = creds.AWSAccessKeyID
+		resolver.AWSSecretAccessKey = creds.AWSSecretAccessKey
+		resolver.AWSClusterID = creds.AWSClusterID
+
+		return nil
 	}
 
 	// fallback to manual
-	return resolveAWSActionManual(endpoint, clusterName, awsClusterIDGuess)
+	return resolveAWSActionManual(endpoint, clusterName, awsClusterIDGuess, resolver)
 }
 
 func resolveAWSActionManual(
 	endpoint string,
 	clusterName string,
 	awsClusterIDGuess string,
-) (*models.ServiceAccountAllActions, error) {
+	resolver *models.ClusterResolverAll,
+) error {
 	// query to see if the AWS cluster ID guess is correct
 	var clusterID string
 
@@ -481,7 +491,7 @@ func resolveAWSActionManual(
 	)
 
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	if userResp := strings.ToLower(userResp); userResp == "y" || userResp == "yes" {
@@ -490,7 +500,7 @@ func resolveAWSActionManual(
 		clusterID, err = utils.PromptPlaintext(fmt.Sprintf(`Cluster ID: `))
 
 		if err != nil {
-			return nil, err
+			return err
 		}
 	}
 
@@ -498,20 +508,19 @@ func resolveAWSActionManual(
 	accessKeyID, err := utils.PromptPlaintext(fmt.Sprintf(`AWS Access Key ID: `))
 
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	// query for the secret access key
 	secretKey, err := utils.PromptPlaintext(fmt.Sprintf(`AWS Secret Access Key: `))
 
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	return &models.ServiceAccountAllActions{
-		Name:               models.AWSDataAction,
-		AWSAccessKeyID:     accessKeyID,
-		AWSSecretAccessKey: secretKey,
-		AWSClusterID:       clusterID,
-	}, nil
+	resolver.AWSAccessKeyID = accessKeyID
+	resolver.AWSSecretAccessKey = secretKey
+	resolver.AWSClusterID = clusterID
+
+	return nil
 }

@@ -7,6 +7,8 @@ import (
 	"github.com/porter-dev/porter/internal/config"
 	lr "github.com/porter-dev/porter/internal/logger"
 	"github.com/porter-dev/porter/internal/models"
+
+	ints "github.com/porter-dev/porter/internal/models/integrations"
 )
 
 func main() {
@@ -25,14 +27,20 @@ func main() {
 	err = db.AutoMigrate(
 		&models.Project{},
 		&models.Role{},
-		&models.ServiceAccount{},
-		&models.ServiceAccountAction{},
-		&models.ServiceAccountCandidate{},
-		&models.Cluster{},
-		&models.TokenCache{},
 		&models.User{},
 		&models.Session{},
-		&models.RepoClient{},
+		&models.GitRepo{},
+		&models.Registry{},
+		&models.Cluster{},
+		&models.ClusterCandidate{},
+		&models.ClusterResolver{},
+		&ints.KubeIntegration{},
+		&ints.OIDCIntegration{},
+		&ints.OAuthIntegration{},
+		&ints.GCPIntegration{},
+		&ints.AWSIntegration{},
+		&ints.TokenCache{},
+		&ints.RegTokenCache{},
 	)
 
 	if err != nil {

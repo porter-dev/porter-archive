@@ -38,7 +38,6 @@ export default class RevisionSection extends Component<PropsType, StateType> {
     api.getRevisions('<token>', {
       namespace: chart.namespace,
       cluster_id: currentCluster.id,
-      service_account_id: currentCluster.service_account_id,
       storage: StorageType.Secret
     }, { id: currentProject.id, name: chart.name }, (err: any, res: any) => {
       if (err) {
@@ -82,7 +81,6 @@ export default class RevisionSection extends Component<PropsType, StateType> {
       id: currentProject.id,
       name: this.props.chart.name,
       cluster_id: currentCluster.id,
-      service_account_id: currentCluster.service_account_id,
     }, (err: any, res: any) => {
       if (err) {
         console.log(err);
@@ -287,7 +285,7 @@ const RevisionHeader = styled.div`
   display: flex;
   align-items: center;
   height: 40px;
-  font-size: 14px;
+  font-size: 13px;
   width: 100%;
   padding-left: 15px;
   cursor: pointer;

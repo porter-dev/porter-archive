@@ -13,6 +13,7 @@ import ValuesForm from '../../../../components/values-form/ValuesForm';
 type PropsType = {
   currentTemplate: PorterChart,
   hideLaunch: () => void,
+  setCurrentView: (x: string) => void,
 };
 
 type StateType = {
@@ -20,6 +21,7 @@ type StateType = {
   clusterOptions: { label: string, value: string }[],
   selectedCluster: string,
   selectedImageUrl: string | null,
+  selectedTag: string | null,
   tabOptions: ChoiceType[],
   tabContents: any
 };
@@ -29,7 +31,8 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
     currentView: 'repo',
     clusterOptions: [] as { label: string, value: string }[],
     selectedCluster: this.context.currentCluster.name,
-    selectedImageUrl: '',
+    selectedImageUrl: '' as string | null,
+    selectedTag: '' as string | null,
     tabOptions: [] as ChoiceType[],
     tabContents: [] as any,
   };
@@ -44,7 +47,6 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
     }, {
       id: currentProject.id,
       cluster_id: currentCluster.id,
-      service_account_id: currentCluster.service_account_id,
     }, (err: any, res: any) => {
       if (err) {
         console.log(err)
@@ -54,7 +56,7 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
     });
   }
 
-  componentDidMount() {
+  refreshTabs = () => {
     // Generate settings tabs from the provided form
     let tabOptions = [] as ChoiceType[];
     let tabContents = [] as any;
@@ -66,14 +68,17 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
             <ValuesForm 
               sections={tab.sections} 
               onSubmit={this.onSubmit}
-              // disabled={this.state.selectedImageUrl === ''}
-              disabled={false}
+              disabled={!this.state.selectedImageUrl || this.state.selectedImageUrl === ''}
             />
           </ValuesFormWrapper>
         ),
       });
     });
     this.setState({ tabOptions, tabContents });
+  }
+
+  componentDidMount() {
+    this.refreshTabs();
 
     // TODO: query with selected filter once implemented
     let { currentProject } = this.context;
@@ -87,6 +92,12 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
         }
       }
     });
+  }
+
+  componentDidUpdate(prevProps: PropsType, prevState: StateType) {
+    if (this.state.selectedImageUrl != prevState.selectedImageUrl) {
+      this.refreshTabs();
+    }
   }
 
   renderIcon = (icon: string) => {
@@ -136,9 +147,12 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
         <Subtitle>Select the container image you would like to connect to this template.</Subtitle>
         <Br />
         <ImageSelector
+          selectedTag={this.state.selectedTag}
           selectedImageUrl={this.state.selectedImageUrl}
           setSelectedImageUrl={(x: string) => this.setState({ selectedImageUrl: x })}
+          setSelectedTag={(x: string) => this.setState({ selectedTag: x })}
           forceExpanded={true}
+          setCurrentView={this.props.setCurrentView}
         />
 
         <br />

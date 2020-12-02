@@ -8,7 +8,8 @@ import LaunchTemplate from './LaunchTemplate';
 
 type PropsType = {
   currentTemplate: PorterChart,
-  setCurrentTemplate: (x: PorterChart) => void
+  setCurrentTemplate: (x: PorterChart) => void,
+  setCurrentView: (x: string) => void,
 };
 
 type StateType = {
@@ -26,6 +27,7 @@ export default class ExpandedTemplate extends Component<PropsType, StateType> {
         <LaunchTemplate
           currentTemplate={this.props.currentTemplate}
           hideLaunch={() => this.setState({ showLaunchTemplate: false })}
+          setCurrentView={this.props.setCurrentView}
         />
       );
     }

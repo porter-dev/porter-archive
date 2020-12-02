@@ -14,6 +14,7 @@ const tabOptions = [
 ];
 
 type PropsType = {
+  setCurrentView: (x: string) => void, // Link to add integration from source selector
 };
 
 type StateType = {
@@ -40,6 +41,7 @@ export default class Templates extends Component<PropsType, StateType> {
       if (err) {
         this.setState({ loading: false, error: true });
       } else {
+        console.log(res.data)
         this.setState({ porterCharts: res.data, loading: false, error: false });
       }
     });
@@ -96,6 +98,7 @@ export default class Templates extends Component<PropsType, StateType> {
         <ExpandedTemplate
           currentTemplate={this.state.currentTemplate}
           setCurrentTemplate={(currentTemplate: PorterChart) => this.setState({ currentTemplate })}
+          setCurrentView={this.props.setCurrentView}
         />
       );
     }
@@ -104,6 +107,9 @@ export default class Templates extends Component<PropsType, StateType> {
       <TemplatesWrapper>
         <TitleSection>
           <Title>Template Explorer</Title>
+          <a href='https://docs.getporter.dev/docs/porter-templates' target='_blank'>
+            <i className="material-icons">help_outline</i>
+          </a>
         </TitleSection>
         <TabSelector
           options={tabOptions}
@@ -235,6 +241,21 @@ const TitleSection = styled.div`
   display: flex;
   flex-direction: row;
   align-items: center;
+
+  > a {
+    > i {
+      display: flex;
+      align-items: center;
+      margin-bottom: -2px;
+      font-size: 18px;
+      margin-left: 18px;
+      color: #858FAAaa;
+      cursor: pointer;
+      :hover {
+        color: #aaaabb;
+      }
+    }
+  }
 `;
 
 const TemplatesWrapper = styled.div`

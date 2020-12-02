@@ -66,8 +66,12 @@ type bodyProjectID struct {
 	ProjectID uint64 `json:"project_id"`
 }
 
-type bodyServiceAccountID struct {
-	ServiceAccountID uint64 `json:"service_account_id"`
+type bodyClusterID struct {
+	ClusterID uint64 `json:"cluster_id"`
+}
+
+type bodyRegistryID struct {
+	RegistryID uint64 `json:"registry_id"`
 }
 
 // DoesUserIDMatch checks the id URL parameter and verifies that it matches
@@ -156,16 +160,16 @@ func (auth *Auth) DoesUserHaveProjectAccess(
 	})
 }
 
-// DoesUserHaveServiceAccountAccess looks for a project_id parameter and a
-// service_account_id parameter, and verifies that the service account belongs
+// DoesUserHaveClusterAccess looks for a project_id parameter and a
+// cluster_id parameter, and verifies that the cluster belongs
 // to the project
-func (auth *Auth) DoesUserHaveServiceAccountAccess(
+func (auth *Auth) DoesUserHaveClusterAccess(
 	next http.Handler,
 	projLoc IDLocation,
-	saLoc IDLocation,
+	clusterLoc IDLocation,
 ) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		serviceAccountID, err := findServiceAccountIDInRequest(r, saLoc)
+		clusterID, err := findClusterIDInRequest(r, clusterLoc)
 
 		if err != nil {
 			http.Error(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)
@@ -180,7 +184,7 @@ func (auth *Auth) DoesUserHaveServiceAccountAccess(
 		}
 
 		// get the service accounts belonging to the project
-		serviceAccounts, err := auth.repo.ServiceAccount.ListServiceAccountsByProjectID(uint(projID))
+		clusters, err := auth.repo.Cluster.ListClustersByProjectID(uint(projID))
 
 		if err != nil {
 			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
@@ -189,8 +193,58 @@ func (auth *Auth) DoesUserHaveServiceAccountAccess(
 
 		doesExist := false
 
-		for _, sa := range serviceAccounts {
-			if sa.ID == uint(serviceAccountID) {
+		for _, cluster := range clusters {
+			if cluster.ID == uint(clusterID) {
+				doesExist = true
+				break
+			}
+		}
+
+		if doesExist {
+			next.ServeHTTP(w, r)
+			return
+		}
+
+		http.Error(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)
+		return
+	})
+}
+
+// DoesUserHaveRegistryAccess looks for a project_id parameter and a
+// registry_id parameter, and verifies that the registry belongs
+// to the project
+func (auth *Auth) DoesUserHaveRegistryAccess(
+	next http.Handler,
+	projLoc IDLocation,
+	registryLoc IDLocation,
+) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		regID, err := findRegistryIDInRequest(r, registryLoc)
+
+		if err != nil {
+			http.Error(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)
+			return
+		}
+
+		projID, err := findProjIDInRequest(r, projLoc)
+
+		if err != nil {
+			http.Error(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)
+			return
+		}
+
+		// get the service accounts belonging to the project
+		regs, err := auth.repo.Registry.ListRegistriesByProjectID(uint(projID))
+
+		if err != nil {
+			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+			return
+		}
+
+		doesExist := false
+
+		for _, reg := range regs {
+			if reg.ID == uint(regID) {
 				doesExist = true
 				break
 			}
@@ -323,18 +377,18 @@ func findProjIDInRequest(r *http.Request, projLoc IDLocation) (uint64, error) {
 	return projID, nil
 }
 
-func findServiceAccountIDInRequest(r *http.Request, saLoc IDLocation) (uint64, error) {
-	var saID uint64
+func findClusterIDInRequest(r *http.Request, clusterLoc IDLocation) (uint64, error) {
+	var clusterID uint64
 	var err error
 
-	if saLoc == URLParam {
-		saID, err = strconv.ParseUint(chi.URLParam(r, "service_account_id"), 0, 64)
+	if clusterLoc == URLParam {
+		clusterID, err = strconv.ParseUint(chi.URLParam(r, "cluster_id"), 0, 64)
 
 		if err != nil {
 			return 0, err
 		}
-	} else if saLoc == BodyParam {
-		form := &bodyServiceAccountID{}
+	} else if clusterLoc == BodyParam {
+		form := &bodyClusterID{}
 		body, err := ioutil.ReadAll(r.Body)
 
 		if err != nil {
@@ -347,7 +401,7 @@ func findServiceAccountIDInRequest(r *http.Request, saLoc IDLocation) (uint64, e
 			return 0, err
 		}
 
-		saID = form.ServiceAccountID
+		clusterID = form.ClusterID
 
 		// need to create a new stream for the body
 		r.Body = ioutil.NopCloser(bytes.NewReader(body))
@@ -358,12 +412,57 @@ func findServiceAccountIDInRequest(r *http.Request, saLoc IDLocation) (uint64, e
 			return 0, err
 		}
 
-		if saStrArr, ok := vals["service_account_id"]; ok && len(saStrArr) == 1 {
-			saID, err = strconv.ParseUint(saStrArr[0], 10, 64)
+		if clStrArr, ok := vals["cluster_id"]; ok && len(clStrArr) == 1 {
+			clusterID, err = strconv.ParseUint(clStrArr[0], 10, 64)
 		} else {
-			return 0, errors.New("service account id not found")
+			return 0, errors.New("cluster id not found")
 		}
 	}
 
-	return saID, nil
+	return clusterID, nil
+}
+
+func findRegistryIDInRequest(r *http.Request, registryLoc IDLocation) (uint64, error) {
+	var regID uint64
+	var err error
+
+	if registryLoc == URLParam {
+		regID, err = strconv.ParseUint(chi.URLParam(r, "registry_id"), 0, 64)
+
+		if err != nil {
+			return 0, err
+		}
+	} else if registryLoc == BodyParam {
+		form := &bodyRegistryID{}
+		body, err := ioutil.ReadAll(r.Body)
+
+		if err != nil {
+			return 0, err
+		}
+
+		err = json.Unmarshal(body, form)
+
+		if err != nil {
+			return 0, err
+		}
+
+		regID = form.RegistryID
+
+		// need to create a new stream for the body
+		r.Body = ioutil.NopCloser(bytes.NewReader(body))
+	} else {
+		vals, err := url.ParseQuery(r.URL.RawQuery)
+
+		if err != nil {
+			return 0, err
+		}
+
+		if regStrArr, ok := vals["registry_id"]; ok && len(regStrArr) == 1 {
+			regID, err = strconv.ParseUint(regStrArr[0], 10, 64)
+		} else {
+			return 0, errors.New("registry id not found")
+		}
+	}
+
+	return regID, nil
 }

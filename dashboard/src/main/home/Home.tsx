@@ -15,6 +15,7 @@ import CreateProjectModal from './modals/CreateProjectModal';
 import UpdateProjectModal from './modals/UpdateProjectModal';
 import ClusterInstructionsModal from './modals/ClusterInstructionsModal';
 import IntegrationsModal from './modals/IntegrationsModal';
+import IntegrationsInstructionsModal from './modals/IntegrationsInstructionsModal';
 
 type PropsType = {
   logOut: () => void
@@ -77,6 +78,7 @@ export default class Home extends Component<PropsType, StateType> {
         <ClusterDashboard
           currentCluster={currentCluster}
           setSidebar={(x: boolean) => this.setState({ forceSidebar: x })}
+          setCurrentView={(x: string) => this.setState({ currentView: x })}
         />
       </DashboardWrapper>
     );
@@ -96,7 +98,11 @@ export default class Home extends Component<PropsType, StateType> {
       return <Integrations />;
     }
 
-    return <Templates />;
+    return (
+      <Templates 
+        setCurrentView={(x: string) => this.setState({ currentView: x })} 
+      />
+    );
   }
 
   render() {
@@ -134,6 +140,14 @@ export default class Home extends Component<PropsType, StateType> {
           ariaHideApp={false}
         >
           <IntegrationsModal />
+        </ReactModal>
+        <ReactModal
+          isOpen={currentModal === 'IntegrationsInstructionsModal'}
+          onRequestClose={() => setCurrentModal(null, null)}
+          style={TallModalStyles}
+          ariaHideApp={false}
+        >
+          <IntegrationsInstructionsModal />
         </ReactModal>
 
         <Sidebar

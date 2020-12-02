@@ -44,31 +44,14 @@ func init() {
 
 func listNamespaces(user *api.AuthCheckResponse, client *api.Client, args []string) error {
 	pID := getProjectID()
-	clusters, err := client.ListProjectClusters(context.Background(), pID)
-
-	if err != nil {
-		return err
-	}
 
 	// get the service account based on the cluster id
 	cID := getClusterID()
-	var saID uint = 0
-
-	for _, cluster := range clusters {
-		if cluster.ID == cID {
-			saID = cluster.ServiceAccountID
-		}
-	}
-
-	if saID == 0 {
-		return fmt.Errorf("could not find cluster with id %d", cID)
-	}
 
 	// get the list of namespaces
 	namespaces, err := client.GetK8sNamespaces(
 		context.Background(),
 		pID,
-		saID,
 		cID,
 	)
 

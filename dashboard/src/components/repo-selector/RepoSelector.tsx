@@ -279,7 +279,7 @@ const StyledRepoSelector = styled.div`
   display: flex;
   align-items: center;
   justify-content: space-between;
-  cursor: ${(props: { isExpanded: boolean, forceExpanded: boolean }) => props.forceExpanded ? '' : 'pointer'};;
+  cursor: ${(props: { isExpanded: boolean, forceExpanded: boolean }) => props.forceExpanded ? '' : 'pointer'};
   :hover {
     background: #ffffff11;
 

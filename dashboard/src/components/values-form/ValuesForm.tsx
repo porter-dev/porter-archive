@@ -9,11 +9,15 @@ import SaveButton from '../SaveButton';
 import CheckboxRow from './CheckboxRow';
 import InputRow from './InputRow';
 import SelectRow from './SelectRow';
+import Helper from './Helper';
+import Heading from './Heading';
 
 type PropsType = {
   onSubmit: (formValues: any) => void,
   sections?: Section[],
   disabled?: boolean,
+  saveValuesStatus?: string | null,
+  config?: any, // Chart config object containing existing values
 };
 
 type StateType = any;
@@ -29,6 +33,12 @@ export default class ValuesForm extends Component<PropsType, StateType> {
         let key = item.name || item.variable;
         
         let def = item.settings && item.settings.default;
+
+        // Set default value from chart config if available
+        if (this.props.config) {
+          this.props.config[key] ? def = this.props.config[key] : null;
+        }
+
         switch (item.type) {
           case 'checkbox':
             formState[key] = def ? def : false;
@@ -119,7 +129,6 @@ export default class ValuesForm extends Component<PropsType, StateType> {
   renderFormContents = () => {
     if (this.state) {
       return this.props.sections.map((section: Section, i: number) => {
-
         // Hide collapsible section if deciding field is false
         if (section.show_if) {
           if (!this.state[section.show_if]) {
@@ -147,7 +156,7 @@ export default class ValuesForm extends Component<PropsType, StateType> {
           disabled={this.props.disabled}
           text='Deploy'
           onClick={() => this.props.onSubmit(this.state)}
-          status={null}
+          status={this.props.saveValuesStatus}
           makeFlush={true}
         />
       </Wrapper>
@@ -164,22 +173,6 @@ const DarkMatter = styled.div`
 const Wrapper = styled.div`
   width: 100%;
   height: 100%;
-`;
-
-const Helper = styled.div`
-  color: #aaaabb;
-  line-height: 1.6em;
-  font-size: 13px;
-  margin-bottom: 15px;
-  margin-top: 20px;
-`;
-
-const Heading = styled.div`
-  color: white;
-  font-weight: 500;
-  font-size: 16px;
-  margin-top: 30px;
-  margin-bottom: 5px;
 `;
 
 const StyledValuesForm = styled.div`

@@ -1,12 +1,14 @@
 package kubernetes
 
 import (
+	"errors"
 	"path/filepath"
 	"regexp"
 	"strings"
 	"time"
 
 	"github.com/porter-dev/porter/internal/models"
+	"github.com/porter-dev/porter/internal/repository"
 	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
@@ -17,10 +19,13 @@ import (
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/restmapper"
 	"k8s.io/client-go/tools/clientcmd"
+	"k8s.io/client-go/tools/clientcmd/api"
 	"k8s.io/client-go/util/homedir"
 
-	// add oidc provider here
-	_ "k8s.io/client-go/plugin/pkg/client/auth/oidc"
+	ints "github.com/porter-dev/porter/internal/models/integrations"
+
+	// this line will register plugins
+	_ "k8s.io/client-go/plugin/pkg/client/auth"
 )
 
 // GetAgentOutOfClusterConfig creates a new Agent using the OutOfClusterConfig
@@ -60,16 +65,11 @@ func GetAgentTesting(objects ...runtime.Object) *Agent {
 	return &Agent{&fakeRESTClientGetter{}, fake.NewSimpleClientset(objects...)}
 }
 
-// UpdateTokenCacheFunc is a function that updates the token cache
-// with a new token and expiry time
-type UpdateTokenCacheFunc func(token string, expiry time.Time) error
-
 // OutOfClusterConfig is the set of parameters required for an out-of-cluster connection.
 // This implements RESTClientGetter
 type OutOfClusterConfig struct {
-	ServiceAccount   *models.ServiceAccount `form:"required"`
-	ClusterID        uint                   `json:"cluster_id" form:"required"`
-	UpdateTokenCache UpdateTokenCacheFunc
+	Cluster *models.Cluster
+	Repo    *repository.Repository
 }
 
 // ToRESTConfig creates a kubernetes REST client factory -- it calls ClientConfig on
@@ -89,11 +89,7 @@ func (conf *OutOfClusterConfig) ToRESTConfig() (*rest.Config, error) {
 // ToRawKubeConfigLoader creates a clientcmd.ClientConfig from the raw kubeconfig found in
 // the OutOfClusterConfig. It does not implement loading rules or overrides.
 func (conf *OutOfClusterConfig) ToRawKubeConfigLoader() clientcmd.ClientConfig {
-	cmdConf, _ := GetClientConfigFromServiceAccount(
-		conf.ServiceAccount,
-		conf.ClusterID,
-		conf.UpdateTokenCache,
-	)
+	cmdConf, _ := conf.GetClientConfigFromCluster()
 
 	return cmdConf
 }
@@ -133,6 +129,187 @@ func (conf *OutOfClusterConfig) ToRESTMapper() (meta.RESTMapper, error) {
 	mapper := restmapper.NewDeferredDiscoveryRESTMapper(discoveryClient)
 	expander := restmapper.NewShortcutExpander(mapper, discoveryClient)
 	return expander, nil
+}
+
+// GetClientConfigFromCluster will construct new clientcmd.ClientConfig using
+// the configuration saved within a Cluster model
+func (conf *OutOfClusterConfig) GetClientConfigFromCluster() (clientcmd.ClientConfig, error) {
+	cluster := conf.Cluster
+
+	if cluster.AuthMechanism == models.Local {
+		kubeAuth, err := conf.Repo.KubeIntegration.ReadKubeIntegration(
+			cluster.KubeIntegrationID,
+		)
+
+		if err != nil {
+			return nil, err
+		}
+
+		return clientcmd.NewClientConfigFromBytes(kubeAuth.Kubeconfig)
+	}
+
+	apiConfig, err := conf.createRawConfigFromCluster()
+
+	if err != nil {
+		return nil, err
+	}
+
+	config := clientcmd.NewDefaultClientConfig(*apiConfig, &clientcmd.ConfigOverrides{})
+
+	return config, nil
+}
+
+func (conf *OutOfClusterConfig) createRawConfigFromCluster() (*api.Config, error) {
+	cluster := conf.Cluster
+
+	apiConfig := &api.Config{}
+
+	clusterMap := make(map[string]*api.Cluster)
+
+	clusterMap[cluster.Name] = &api.Cluster{
+		Server:                   cluster.Server,
+		LocationOfOrigin:         cluster.ClusterLocationOfOrigin,
+		TLSServerName:            cluster.TLSServerName,
+		InsecureSkipTLSVerify:    cluster.InsecureSkipTLSVerify,
+		CertificateAuthorityData: cluster.CertificateAuthorityData,
+	}
+
+	// construct the auth infos
+	authInfoName := cluster.Name + "-" + string(cluster.AuthMechanism)
+
+	authInfoMap := make(map[string]*api.AuthInfo)
+
+	authInfoMap[authInfoName] = &api.AuthInfo{
+		LocationOfOrigin: cluster.UserLocationOfOrigin,
+		Impersonate:      cluster.UserImpersonate,
+	}
+
+	if groups := strings.Split(cluster.UserImpersonateGroups, ","); len(groups) > 0 && groups[0] != "" {
+		authInfoMap[authInfoName].ImpersonateGroups = groups
+	}
+
+	switch cluster.AuthMechanism {
+	case models.X509:
+		kubeAuth, err := conf.Repo.KubeIntegration.ReadKubeIntegration(
+			cluster.KubeIntegrationID,
+		)
+
+		if err != nil {
+			return nil, err
+		}
+
+		authInfoMap[authInfoName].ClientCertificateData = kubeAuth.ClientCertificateData
+		authInfoMap[authInfoName].ClientKeyData = kubeAuth.ClientKeyData
+	case models.Basic:
+		kubeAuth, err := conf.Repo.KubeIntegration.ReadKubeIntegration(
+			cluster.KubeIntegrationID,
+		)
+
+		if err != nil {
+			return nil, err
+		}
+
+		authInfoMap[authInfoName].Username = string(kubeAuth.Username)
+		authInfoMap[authInfoName].Password = string(kubeAuth.Password)
+	case models.Bearer:
+		kubeAuth, err := conf.Repo.KubeIntegration.ReadKubeIntegration(
+			cluster.KubeIntegrationID,
+		)
+
+		if err != nil {
+			return nil, err
+		}
+
+		authInfoMap[authInfoName].Token = string(kubeAuth.Token)
+	case models.OIDC:
+		oidcAuth, err := conf.Repo.OIDCIntegration.ReadOIDCIntegration(
+			cluster.OIDCIntegrationID,
+		)
+
+		if err != nil {
+			return nil, err
+		}
+
+		authInfoMap[authInfoName].AuthProvider = &api.AuthProviderConfig{
+			Name: "oidc",
+			Config: map[string]string{
+				"idp-issuer-url":                 string(oidcAuth.IssuerURL),
+				"client-id":                      string(oidcAuth.ClientID),
+				"client-secret":                  string(oidcAuth.ClientSecret),
+				"idp-certificate-authority-data": string(oidcAuth.CertificateAuthorityData),
+				"id-token":                       string(oidcAuth.IDToken),
+				"refresh-token":                  string(oidcAuth.RefreshToken),
+			},
+		}
+	case models.GCP:
+		gcpAuth, err := conf.Repo.GCPIntegration.ReadGCPIntegration(
+			cluster.GCPIntegrationID,
+		)
+
+		if err != nil {
+			return nil, err
+		}
+
+		tok, err := gcpAuth.GetBearerToken(conf.getTokenCache, conf.setTokenCache)
+
+		if err != nil {
+			return nil, err
+		}
+
+		// add this as a bearer token
+		authInfoMap[authInfoName].Token = tok
+	case models.AWS:
+		awsAuth, err := conf.Repo.AWSIntegration.ReadAWSIntegration(
+			cluster.AWSIntegrationID,
+		)
+
+		if err != nil {
+			return nil, err
+		}
+
+		tok, err := awsAuth.GetBearerToken(conf.getTokenCache, conf.setTokenCache)
+
+		if err != nil {
+			return nil, err
+		}
+
+		// add this as a bearer token
+		authInfoMap[authInfoName].Token = tok
+	default:
+		return nil, errors.New("not a supported auth mechanism")
+	}
+
+	// create a context of the cluster name
+	contextMap := make(map[string]*api.Context)
+
+	contextMap[cluster.Name] = &api.Context{
+		LocationOfOrigin: cluster.ClusterLocationOfOrigin,
+		Cluster:          cluster.Name,
+		AuthInfo:         authInfoName,
+	}
+
+	apiConfig.Clusters = clusterMap
+	apiConfig.AuthInfos = authInfoMap
+	apiConfig.Contexts = contextMap
+	apiConfig.CurrentContext = cluster.Name
+
+	return apiConfig, nil
+}
+
+func (conf *OutOfClusterConfig) getTokenCache() (tok *ints.TokenCache, err error) {
+	return &conf.Cluster.TokenCache, nil
+}
+
+func (conf *OutOfClusterConfig) setTokenCache(token string, expiry time.Time) error {
+	_, err := conf.Repo.Cluster.UpdateClusterTokenCache(
+		&ints.TokenCache{
+			ClusterID: conf.Cluster.ID,
+			Token:     []byte(token),
+			Expiry:    expiry,
+		},
+	)
+
+	return err
 }
 
 // newRESTClientGetterFromInClusterConfig returns a RESTClientGetter using

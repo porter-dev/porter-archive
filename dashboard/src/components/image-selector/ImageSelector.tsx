@@ -91,6 +91,11 @@ export default class ImageSelector extends Component<PropsType, StateType> {
     });
   }
 
+  /*
+  <Highlight onClick={() => this.props.setCurrentView('integrations')}>
+    Link your registry.
+  </Highlight>
+  */
   renderImageList = () => {
     let { images, loading, error } = this.state;
     if (loading) {
@@ -101,9 +106,6 @@ export default class ImageSelector extends Component<PropsType, StateType> {
       return (
         <LoadingWrapper>
           No registries found. 
-          <Highlight onClick={() => this.props.setCurrentView('integrations')}>
-            Link your registry.
-          </Highlight>
         </LoadingWrapper>
       );
     }

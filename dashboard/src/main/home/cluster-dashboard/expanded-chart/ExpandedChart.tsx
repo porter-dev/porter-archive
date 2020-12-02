@@ -35,7 +35,6 @@ type StateType = {
   tabContents: any,
   checkTabExists: boolean,
   saveValuesStatus: string | null,
-  config: any | null, // Chart config for form defaults
 };
 
 // Tabs not display when previewing an old revision
@@ -60,7 +59,6 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
     tabContents: [] as any,
     checkTabExists: false,
     saveValuesStatus: null as (string | null),
-    config: null as any | null,
   }
 
   updateResources = () => {
@@ -102,7 +100,10 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
 
   upgradeValues = (values: any) => {
     let { currentProject, currentCluster, setCurrentError } = this.context;
-    values = yaml.dump(values);
+
+    // Weave in pre-existing values and convert to yaml
+    values = yaml.dump({ ...(this.props.currentChart.config as Object), ...values });
+    
     this.setState({ saveValuesStatus: 'loading' });
     this.props.refreshChart();
     api.upgradeChartValues('<token>', {

@@ -124,9 +124,9 @@ export default class Sidebar extends Component<PropsType, StateType> {
             Templates
           </NavButton>
           <NavButton
-            onClick={() => false ? this.props.setCurrentView('integrations') : null}
-            selected={this.props.currentView === 'integrations'}
-            disabled={true}
+            // onClick={() => this.props.setCurrentView('integrations')}
+            // selected={this.props.currentView === 'integrations'}
+            onClick={() => this.context.setCurrentModal('IntegrationsInstructionsModal', {})}
           >
             <img src={integrations} />
             Integrations

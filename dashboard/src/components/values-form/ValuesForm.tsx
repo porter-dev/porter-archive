@@ -17,6 +17,7 @@ type PropsType = {
   sections?: Section[],
   disabled?: boolean,
   saveValuesStatus?: string | null,
+  config?: any, // Chart config object containing existing values
 };
 
 type StateType = any;

@@ -117,15 +117,17 @@ export default class Sidebar extends Component<PropsType, StateType> {
             Dashboard
           </NavButton>
           <NavButton
-            onClick={() => this.props.setCurrentView('templates')}
+            onClick={() => false ? this.props.setCurrentView('templates') : null}
             selected={this.props.currentView === 'templates'}
+            disabled={true}
           >
             <img src={filter} />
             Templates
           </NavButton>
           <NavButton
-            onClick={() => this.props.setCurrentView('integrations')}
+            onClick={() => false ? this.props.setCurrentView('integrations') : null}
             selected={this.props.currentView === 'integrations'}
+            disabled={true}
           >
             <img src={integrations} />
             Integrations

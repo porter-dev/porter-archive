@@ -99,7 +99,7 @@ func (app *App) HandleDeployTemplate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Output values.yaml string
-	_, err = agent.InstallChart(baseURL+"react-0.1.5.tgz", v)
+	_, err = agent.InstallChart("./internal/local_templates/react-0.1.5.tgz", v)
 
 	if err != nil {
 		app.sendExternalError(err, http.StatusInternalServerError, HTTPError{

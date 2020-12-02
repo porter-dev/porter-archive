@@ -41,6 +41,7 @@ export default class Templates extends Component<PropsType, StateType> {
       if (err) {
         this.setState({ loading: false, error: true });
       } else {
+        console.log(res.data)
         this.setState({ porterCharts: res.data, loading: false, error: false });
       }
     });

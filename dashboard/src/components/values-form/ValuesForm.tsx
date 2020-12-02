@@ -33,6 +33,12 @@ export default class ValuesForm extends Component<PropsType, StateType> {
         let key = item.name || item.variable;
         
         let def = item.settings && item.settings.default;
+
+        // Set default value from chart config if available
+        if (this.props.config) {
+          this.props.config[key] ? def = this.props.config[key] : null;
+        }
+
         switch (item.type) {
           case 'checkbox':
             formState[key] = def ? def : false;

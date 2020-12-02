@@ -50,7 +50,7 @@ export default class Dashboard extends Component<PropsType, StateType> {
 
           <Placeholder>
             🚀 Pipelines coming soon.
-        </Placeholder>
+          </Placeholder>
         </div>
       );
     }
@@ -73,10 +73,17 @@ Dashboard.contextType = Context;
 
 const Placeholder = styled.div`
   width: 100%;
-  margin-top: 200px;
+  height: calc(100vh - 380px);
+  margin-top: 30px;
+  display: flex;
+  padding-bottom: 20px;
+  align-items: center;
+  justify-content: center;
   color: #aaaabb;
+  border-radius: 5px;
   text-align: center;
   font-size: 13px;
+  background: #ffffff08;
   font-family: 'Work Sans', sans-serif;
 `;
 

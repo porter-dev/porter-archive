@@ -56,10 +56,9 @@ export default class ValuesYaml extends Component<PropsType, StateType> {
       id: currentProject.id, 
       name: this.props.currentChart.name,
       cluster_id: currentCluster.id,
-      service_account_id: currentCluster.service_account_id,
     }, (err: any, res: any) => {
       if (err) {
-        setCurrentError(err.response.data);
+        console.log(err)
         this.setState({ saveValuesStatus: 'error' });
       } else {
         this.setState({ saveValuesStatus: 'successful' });

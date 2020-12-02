@@ -40,15 +40,40 @@ export default class TabSelector extends Component<PropsType, StateType> {
     );
   }
 
+  renderAddendumBuffer = () => {
+
+  }
+
   render() {
     return (
       <StyledTabSelector>
-        {this.renderTabList()}
+        <TabWrapper>
+          {this.renderTabList()}
+          <Tab
+            lastItem={true}
+            highlight={null}
+          >
+            <Buffer />
+          </Tab>
+        </TabWrapper>
         {this.props.addendum}
       </StyledTabSelector>
     );
   }
 }
+
+const Buffer = styled.div`
+  width: 138px;
+  height: 10px;
+`;
+
+// Keeps the scrollbar beneath all tabs on overflow
+const TabWrapper = styled.div`
+  display: flex;
+  overflow-x: auto;
+  padding-bottom: 15px;
+  margin-bottom: -15px;
+`;
 
 const Tab = styled.div`
   height: 30px;

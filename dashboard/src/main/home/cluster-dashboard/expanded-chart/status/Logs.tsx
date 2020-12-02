@@ -41,8 +41,8 @@ export default class Logs extends Component<PropsType, StateType> {
     let { currentCluster, currentProject } = this.context;
     let { selectedPod } = this.props;
     if (!selectedPod.metadata?.name) return
-
-    let ws = new WebSocket(`ws://localhost:8080/api/projects/${currentProject.id}/k8s/${selectedPod?.metadata?.namespace}/pod/${selectedPod?.metadata?.name}/logs?cluster_id=${currentCluster.id}&service_account_id=${currentCluster.service_account_id}`)
+    let protocol = process.env.NODE_ENV == 'production' ? 'wss' : 'ws'
+    let ws = new WebSocket(`${protocol}://${process.env.API_SERVER}/api/projects/${currentProject.id}/k8s/${selectedPod?.metadata?.namespace}/pod/${selectedPod?.metadata?.name}/logs?cluster_id=${currentCluster.id}&service_account_id=${currentCluster.service_account_id}`)
 
     this.setState({ ws }, () => {
       if (!this.state.ws) return;
@@ -72,7 +72,9 @@ export default class Logs extends Component<PropsType, StateType> {
   render() {
     return (
       <LogStream ref={this.scrollRef}>
-        {this.renderLogs()}
+        <Wrapper>
+          {this.renderLogs()}
+        </Wrapper>
       </LogStream>
     );
   }
@@ -80,16 +82,20 @@ export default class Logs extends Component<PropsType, StateType> {
 
 Logs.contextType = Context;
 
-const LogStream = styled.div`
+const Wrapper = styled.div`
+  width: 100%;
+  height: 100%;
   overflow: auto;
-  width: 65%;
+  padding: 25px 30px;
+`;
+
+const LogStream = styled.div`
+  display: flex;
+  flex: 1;
   float: right;
   height: 100%;
   background: #202227;
-  padding: 25px;
   user-select: text;
-  overflow: auto;
-  border-radius: 5px;
 `;
 
 const Message = styled.div`
@@ -99,5 +105,5 @@ const Message = styled.div`
   align-items: center;
   justify-content: center;
   color: #ffffff44;
-  font-size: 14px;
-`
+  font-size: 13px;
+`;

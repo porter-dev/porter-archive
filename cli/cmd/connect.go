@@ -23,7 +23,31 @@ var connectKubeconfigCmd = &cobra.Command{
 	Use:   "kubeconfig",
 	Short: "Uses the local kubeconfig to connect to a cluster",
 	Run: func(cmd *cobra.Command, args []string) {
-		err := checkLoginAndRun(args, runConnect)
+		err := checkLoginAndRun(args, runConnectKubeconfig)
+
+		if err != nil {
+			os.Exit(1)
+		}
+	},
+}
+
+var connectECRCmd = &cobra.Command{
+	Use:   "ecr",
+	Short: "Connects an ECR instance to a project",
+	Run: func(cmd *cobra.Command, args []string) {
+		err := checkLoginAndRun(args, runConnectECR)
+
+		if err != nil {
+			os.Exit(1)
+		}
+	},
+}
+
+var connectGCRCmd = &cobra.Command{
+	Use:   "gcr",
+	Short: "Connects a GCR instance to a project",
+	Run: func(cmd *cobra.Command, args []string) {
+		err := checkLoginAndRun(args, runConnectGCR)
 
 		if err != nil {
 			os.Exit(1)
@@ -63,13 +87,49 @@ func init() {
 		nil,
 		"the list of contexts to connect (defaults to the current context)",
 	)
+
+	connectCmd.AddCommand(connectECRCmd)
+	connectCmd.AddCommand(connectGCRCmd)
 }
 
-func runConnect(_ *api.AuthCheckResponse, client *api.Client, _ []string) error {
+func runConnectKubeconfig(_ *api.AuthCheckResponse, client *api.Client, _ []string) error {
+	isLocal := false
+
+	if getDriver() == "local" {
+		isLocal = true
+	}
+
 	return connect.Kubeconfig(
 		client,
 		kubeconfigPath,
 		*contexts,
 		getProjectID(),
+		isLocal,
 	)
+}
+
+func runConnectECR(_ *api.AuthCheckResponse, client *api.Client, _ []string) error {
+	regID, err := connect.ECR(
+		client,
+		getProjectID(),
+	)
+
+	if err != nil {
+		return err
+	}
+
+	return setRegistry(regID)
+}
+
+func runConnectGCR(_ *api.AuthCheckResponse, client *api.Client, _ []string) error {
+	regID, err := connect.GCR(
+		client,
+		getProjectID(),
+	)
+
+	if err != nil {
+		return err
+	}
+
+	return setRegistry(regID)
 }

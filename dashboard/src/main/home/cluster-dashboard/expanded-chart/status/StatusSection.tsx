@@ -43,13 +43,14 @@ export default class StatusSection extends Component<PropsType, StateType> {
   }
 
   renderTabs = () => {
-    return this.state.controllers.map((c) => {
+    return this.state.controllers.map((c, i) => {
       return (
         <ControllerTab 
           key={c.metadata.uid} 
           selectedPod={this.state.selectedPod} 
           selectPod={this.selectPod.bind(this)}
           controller={c}
+          isLast={i === this.state.controllers.length - 1}
         />
       )
     })
@@ -89,7 +90,6 @@ export default class StatusSection extends Component<PropsType, StateType> {
     api.getChartControllers('<token>', {
       namespace: currentChart.namespace,
       cluster_id: currentCluster.id,
-      service_account_id: currentCluster.service_account_id,
       storage: StorageType.Secret
     }, {
       id: currentProject.id,
@@ -116,14 +116,11 @@ export default class StatusSection extends Component<PropsType, StateType> {
 StatusSection.contextType = Context;
 
 const TabWrapper = styled.div`
-  display: flex;
-  flex-direction: column;
-  overflow: auto;
   width: 35%;
-  float: left;
-  max-height: 100%;
-  background: #ffffff11;
-`
+  min-width: 250px;
+  height: 100%;
+  overflow-y: auto;
+`;
 
 const StyledStatusSection = styled.div`
   width: 100%;
@@ -132,11 +129,14 @@ const StyledStatusSection = styled.div`
   font-size: 13px;
   padding: 0px;
   user-select: text;
+  border-radius: 5px;
+  overflow: hidden;
 `;
 
 const Wrapper = styled.div`
   width: 100%;
   height: 100%;
+  display: flex;
 `;
 
 const NoControllers = styled.div`

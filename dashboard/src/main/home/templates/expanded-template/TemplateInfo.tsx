@@ -118,7 +118,7 @@ const TagSection = styled.div`
   align-items: center;
 
   > i {
-    font-size: 20px;
+    font-size: 18px;
     margin-right: 10px;
     color: #aaaabb;
   }

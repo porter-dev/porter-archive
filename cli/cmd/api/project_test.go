@@ -28,7 +28,7 @@ func initProjectCandidate(
 	kubeconfig string,
 	client *api.Client,
 	t *testing.T,
-) *models.ServiceAccountCandidateExternal {
+) *models.ClusterCandidateExternal {
 	t.Helper()
 
 	resp, err := client.CreateProjectCandidates(
@@ -46,23 +46,20 @@ func initProjectCandidate(
 	return resp[0]
 }
 
-func initProjectSA(
+func initProjectCluster(
 	projectID uint,
 	candidateID uint,
 	client *api.Client,
 	t *testing.T,
-) *api.CreateProjectServiceAccountResponse {
+) *api.CreateProjectClusterResponse {
 	t.Helper()
 
-	resp, err := client.CreateProjectServiceAccount(
+	resp, err := client.CreateProjectCluster(
 		context.Background(),
 		projectID,
 		candidateID,
-		api.CreateProjectServiceAccountRequest{
-			&models.ServiceAccountAllActions{
-				Name:             models.OIDCIssuerDataAction,
-				OIDCIssuerCAData: "LS0tLS1CRUdJTiBDRVJ=",
-			},
+		&models.ClusterResolverAll{
+			OIDCIssuerCAData: "LS0tLS1CRUdJTiBDRVJ=",
 		},
 	)
 
@@ -151,10 +148,10 @@ func TestGetProjectServiceAccount(t *testing.T) {
 		Password: "hello1234",
 	})
 	project := initProject("project-test", client, t)
-	saCandidate := initProjectCandidate(project.ID, OIDCAuthWithoutData, client, t)
-	sa := initProjectSA(project.ID, saCandidate.ID, client, t)
+	cc := initProjectCandidate(project.ID, OIDCAuthWithoutData, client, t)
+	cluster := initProjectCluster(project.ID, cc.ID, client, t)
 
-	resp, err := client.GetProjectServiceAccount(context.Background(), project.ID, sa.ID)
+	resp, err := client.GetProjectCluster(context.Background(), project.ID, cluster.ID)
 
 	if err != nil {
 		t.Fatalf("%v\n", err)
@@ -165,29 +162,13 @@ func TestGetProjectServiceAccount(t *testing.T) {
 		t.Errorf("project id incorrect: expected %d, got %d\n", project.ID, resp.ProjectID)
 	}
 
-	if resp.Kind != "connector" {
-		t.Errorf("service account kind incorrect: expected %s, got %s\n", "connector", resp.Kind)
-	}
-
-	if resp.AuthMechanism != models.OIDC {
-		t.Errorf("service account auth mechanism incorrect: expected %s, got %s\n", models.OIDC, resp.AuthMechanism)
-	}
-
 	// verify clusters
-	if len(resp.Clusters) != 1 {
-		t.Fatalf("length of clusters is not 1")
+	if resp.Name != "cluster-test" {
+		t.Errorf("cluster's name is incorrect: expected %s, got %s\n", "cluster-test", resp.Name)
 	}
 
-	if resp.Clusters[0].ServiceAccountID != resp.ID {
-		t.Errorf("cluster's sa id is incorrect: expected %d, got %d\n", resp.ID, resp.Clusters[0].ServiceAccountID)
-	}
-
-	if resp.Clusters[0].Name != "cluster-test" {
-		t.Errorf("cluster's name is incorrect: expected %s, got %s\n", "cluster-test", resp.Clusters[0].Name)
-	}
-
-	if resp.Clusters[0].Server != "https://localhost" {
-		t.Errorf("cluster's name is incorrect: expected %s, got %s\n", "https://localhost", resp.Clusters[0].Server)
+	if resp.Server != "https://10.10.10.10" {
+		t.Errorf("cluster's server is incorrect: expected %s, got %s\n", "https://10.10.10.10", resp.Server)
 	}
 }
 
@@ -219,33 +200,21 @@ func TestCreateProjectCandidates(t *testing.T) {
 	}
 
 	// make sure auth mechanism is OIDC, project id is correct, and cluster info is correct
-	if resp[0].AuthMechanism != models.OIDC {
-		t.Errorf("oidc auth mechanism incorrect: expected %s, got %s\n", models.OIDC, resp[0].AuthMechanism)
-	}
-
 	if resp[0].ProjectID != project.ID {
 		t.Errorf("project id incorrect: expected %d, got %d\n", project.ID, resp[0].ProjectID)
 	}
 
-	if resp[0].ClusterName != "cluster-test" {
-		t.Errorf("cluster name incorrect: expected %s, got %s\n", "cluster-test", resp[0].ClusterName)
+	if resp[0].Name != "cluster-test" {
+		t.Errorf("cluster name incorrect: expected %s, got %s\n", "cluster-test", resp[0].Name)
 	}
 
-	if resp[0].ClusterEndpoint != "https://localhost" {
-		t.Errorf("cluster endpoint incorrect: expected %s, got %s\n", "https://localhost", resp[0].ClusterEndpoint)
+	if resp[0].Server != "https://10.10.10.10" {
+		t.Errorf("cluster endpoint incorrect: expected %s, got %s\n", "https://10.10.10.10", resp[0].Server)
 	}
 
-	// make sure correct actions need to be performed
-	if len(resp[0].Actions) != 1 {
+	// make sure correct resolvers need to be performed
+	if len(resp[0].Resolvers) != 1 {
 		t.Fatalf("actions length is not 1\n")
-	}
-
-	if resp[0].Actions[0].Name != models.OIDCIssuerDataAction {
-		t.Errorf("action name incorrect: expected %s, got %s\n", models.OIDCIssuerDataAction, resp[0].Actions[0].Name)
-	}
-
-	if resp[0].Actions[0].Filename != "/fake/path/to/ca.pem" {
-		t.Errorf("action filename incorrect: expected %s, got %s\n", "/fake/path/to/ca.pem", resp[0].Actions[0].Filename)
 	}
 }
 
@@ -272,34 +241,34 @@ func TestGetProjectCandidates(t *testing.T) {
 	}
 
 	// make sure auth mechanism is OIDC, project id is correct, and cluster info is correct
-	if resp[0].AuthMechanism != models.OIDC {
-		t.Errorf("oidc auth mechanism incorrect: expected %s, got %s\n", models.OIDC, resp[0].AuthMechanism)
-	}
+	// if resp[0].Integration != models.OIDC {
+	// 	t.Errorf("oidc auth mechanism incorrect: expected %s, got %s\n", models.OIDC, resp[0].Integration)
+	// }
 
-	if resp[0].ProjectID != project.ID {
-		t.Errorf("project id incorrect: expected %d, got %d\n", project.ID, resp[0].ProjectID)
-	}
+	// if resp[0].ProjectID != project.ID {
+	// 	t.Errorf("project id incorrect: expected %d, got %d\n", project.ID, resp[0].ProjectID)
+	// }
 
-	if resp[0].ClusterName != "cluster-test" {
-		t.Errorf("cluster name incorrect: expected %s, got %s\n", "cluster-test", resp[0].ClusterName)
-	}
+	// if resp[0].ClusterName != "cluster-test" {
+	// 	t.Errorf("cluster name incorrect: expected %s, got %s\n", "cluster-test", resp[0].ClusterName)
+	// }
 
-	if resp[0].ClusterEndpoint != "https://localhost" {
-		t.Errorf("cluster endpoint incorrect: expected %s, got %s\n", "https://localhost", resp[0].ClusterEndpoint)
-	}
+	// if resp[0].ClusterEndpoint != "https://10.10.10.10" {
+	// 	t.Errorf("cluster endpoint incorrect: expected %s, got %s\n", "https://10.10.10.10", resp[0].ClusterEndpoint)
+	// }
 
-	// make sure correct actions need to be performed
-	if len(resp[0].Actions) != 1 {
-		t.Fatalf("actions length is not 1\n")
-	}
+	// // make sure correct actions need to be performed
+	// if len(resp[0].Actions) != 1 {
+	// 	t.Fatalf("actions length is not 1\n")
+	// }
 
-	if resp[0].Actions[0].Name != models.OIDCIssuerDataAction {
-		t.Errorf("action name incorrect: expected %s, got %s\n", models.OIDCIssuerDataAction, resp[0].Actions[0].Name)
-	}
+	// if resp[0].Actions[0].Name != models.OIDCIssuerDataAction {
+	// 	t.Errorf("action name incorrect: expected %s, got %s\n", models.OIDCIssuerDataAction, resp[0].Actions[0].Name)
+	// }
 
-	if resp[0].Actions[0].Filename != "/fake/path/to/ca.pem" {
-		t.Errorf("action filename incorrect: expected %s, got %s\n", "/fake/path/to/ca.pem", resp[0].Actions[0].Filename)
-	}
+	// if resp[0].Actions[0].Filename != "/fake/path/to/ca.pem" {
+	// 	t.Errorf("action filename incorrect: expected %s, got %s\n", "/fake/path/to/ca.pem", resp[0].Actions[0].Filename)
+	// }
 }
 
 func TestCreateProjectServiceAccount(t *testing.T) {
@@ -313,15 +282,12 @@ func TestCreateProjectServiceAccount(t *testing.T) {
 	project := initProject("project-test", client, t)
 	saCandidate := initProjectCandidate(project.ID, OIDCAuthWithoutData, client, t)
 
-	resp, err := client.CreateProjectServiceAccount(
+	resp, err := client.CreateProjectCluster(
 		context.Background(),
 		project.ID,
 		saCandidate.ID,
-		api.CreateProjectServiceAccountRequest{
-			&models.ServiceAccountAllActions{
-				Name:             models.OIDCIssuerDataAction,
-				OIDCIssuerCAData: "LS0tLS1CRUdJTiBDRVJ=",
-			},
+		&models.ClusterResolverAll{
+			OIDCIssuerCAData: "LS0tLS1CRUdJTiBDRVJ=",
 		},
 	)
 
@@ -334,30 +300,30 @@ func TestCreateProjectServiceAccount(t *testing.T) {
 		t.Errorf("project id incorrect: expected %d, got %d\n", project.ID, resp.ProjectID)
 	}
 
-	if resp.Kind != "connector" {
-		t.Errorf("service account kind incorrect: expected %s, got %s\n", "connector", resp.Kind)
-	}
+	// if resp.Kind != "connector" {
+	// 	t.Errorf("service account kind incorrect: expected %s, got %s\n", "connector", resp.Kind)
+	// }
 
-	if resp.AuthMechanism != models.OIDC {
-		t.Errorf("service account auth mechanism incorrect: expected %s, got %s\n", models.OIDC, resp.AuthMechanism)
-	}
+	// if resp.Integration != models.OIDC {
+	// 	t.Errorf("service account auth mechanism incorrect: expected %s, got %s\n", models.OIDC, resp.Integration)
+	// }
 
-	// verify clusters
-	if len(resp.Clusters) != 1 {
-		t.Fatalf("length of clusters is not 1")
-	}
+	// // verify clusters
+	// if len(resp.Clusters) != 1 {
+	// 	t.Fatalf("length of clusters is not 1")
+	// }
 
-	if resp.Clusters[0].ServiceAccountID != resp.ID {
-		t.Errorf("cluster's sa id is incorrect: expected %d, got %d\n", resp.ID, resp.Clusters[0].ServiceAccountID)
-	}
+	// if resp.Clusters[0].ServiceAccountID != resp.ID {
+	// 	t.Errorf("cluster's sa id is incorrect: expected %d, got %d\n", resp.ID, resp.Clusters[0].ServiceAccountID)
+	// }
 
-	if resp.Clusters[0].Name != "cluster-test" {
-		t.Errorf("cluster's name is incorrect: expected %s, got %s\n", "cluster-test", resp.Clusters[0].Name)
-	}
+	// if resp.Clusters[0].Name != "cluster-test" {
+	// 	t.Errorf("cluster's name is incorrect: expected %s, got %s\n", "cluster-test", resp.Clusters[0].Name)
+	// }
 
-	if resp.Clusters[0].Server != "https://localhost" {
-		t.Errorf("cluster's name is incorrect: expected %s, got %s\n", "https://localhost", resp.Clusters[0].Server)
-	}
+	// if resp.Clusters[0].Server != "https://10.10.10.10" {
+	// 	t.Errorf("cluster's name is incorrect: expected %s, got %s\n", "https://10.10.10.10", resp.Clusters[0].Server)
+	// }
 }
 
 func TestListProjectClusters(t *testing.T) {
@@ -369,8 +335,8 @@ func TestListProjectClusters(t *testing.T) {
 		Password: "hello1234",
 	})
 	project := initProject("project-test", client, t)
-	saCandidate := initProjectCandidate(project.ID, OIDCAuthWithoutData, client, t)
-	sa := initProjectSA(project.ID, saCandidate.ID, client, t)
+	cc := initProjectCandidate(project.ID, OIDCAuthWithoutData, client, t)
+	initProjectCluster(project.ID, cc.ID, client, t)
 
 	resp, err := client.ListProjectClusters(
 		context.Background(),
@@ -386,16 +352,12 @@ func TestListProjectClusters(t *testing.T) {
 		t.Fatalf("length of clusters is not 1")
 	}
 
-	if resp[0].ServiceAccountID != sa.ID {
-		t.Errorf("cluster's sa id is incorrect: expected %d, got %d\n", sa.ID, resp[0].ServiceAccountID)
-	}
-
 	if resp[0].Name != "cluster-test" {
 		t.Errorf("cluster's name is incorrect: expected %s, got %s\n", "cluster-test", resp[0].Name)
 	}
 
-	if resp[0].Server != "https://localhost" {
-		t.Errorf("cluster's name is incorrect: expected %s, got %s\n", "https://localhost", resp[0].Server)
+	if resp[0].Server != "https://10.10.10.10" {
+		t.Errorf("cluster's name is incorrect: expected %s, got %s\n", "https://10.10.10.10", resp[0].Server)
 	}
 }
 
@@ -444,7 +406,7 @@ const OIDCAuthWithoutData string = `
 apiVersion: v1
 clusters:
 - cluster:
-    server: https://localhost
+    server: https://10.10.10.10
     certificate-authority-data: LS0tLS1CRUdJTiBDRVJ=
   name: cluster-test
 contexts:
@@ -462,7 +424,7 @@ users:
       config:
         client-id: porter-api
         id-token: token
-        idp-issuer-url: https://localhost
+        idp-issuer-url: https://10.10.10.10
         idp-certificate-authority: /fake/path/to/ca.pem
       name: oidc
 `

@@ -21,7 +21,8 @@ type PropsType = {
   currentChart: ChartType,
   setCurrentChart: (x: ChartType | null) => void,
   refreshChart: () => void,
-  setSidebar: (x: boolean) => void
+  setSidebar: (x: boolean) => void,
+  setCurrentView: (x: string) => void,
 };
 
 type StateType = {
@@ -33,11 +34,8 @@ type StateType = {
   tabOptions: ChoiceType[],
   tabContents: any,
   checkTabExists: boolean,
+  saveValuesStatus: string | null,
 };
-
-const dummyFormTabs = [
-  { "Name": "values", "Label": "Main Settings", "Sections": [{ "Name": "main", "ShowIf": "", "Contents": [{ "Type": "heading", "Label": "🍺 Hello Porter Settings", "Name": "", "Variable": "", "Settings": { "Default": null } }, { "Type": "subtitle", "Label": "Update ports for Hello Porter with Porter", "Name": "", "Variable": "", "Settings": { "Default": null } }, { "Type": "number-input", "Label": "Service Port", "Name": "service-port", "Variable": "service.port", "Settings": { "Default": 80 } }, { "Type": "number-input", "Label": "Target Port", "Name": "target-port", "Variable": "service.targetPort", "Settings": { "Default": 8005 } }, { "Type": "checkbox", "Label": "Show hidden section", "Name": "show-hidden", "Variable": "", "Settings": { "Default": null } }] }, { "Name": "secondary", "ShowIf": "show-hidden", "Contents": [{ "Type": "heading", "Label": "This is a collapsible section!", "Name": "", "Variable": "", "Settings": { "Default": null } }, { "Type": "subtitle", "Label": "Test section toggling", "Name": "", "Variable": "", "Settings": { "Default": null } }, { "Type": "string-input", "Label": "Service Account Name", "Name": "sa-name", "Variable": "serviceAccount.name", "Settings": { "Default": null } }] }] }, { "Name": "alt", "Label": "Bonus Settings", "Sections": [{ "Name": "main", "ShowIf": "", "Contents": [{ "Type": "heading", "Label": "🚀 Bonus Porter Settings", "Name": "", "Variable": "", "Settings": { "Default": null } }, { "Type": "subtitle", "Label": "Configure more aspects of Hello Porter", "Name": "", "Variable": "", "Settings": { "Default": null } }, { "Type": "checkbox", "Label": "Enable Autoscaling?", "Name": "autoscaling-enabled", "Variable": "autoscaling.enabled", "Settings": { "Default": false } }] }, { "Name": "autoscaling-options", "ShowIf": "autoscaling-enabled", "Contents": [{ "Type": "number-input", "Label": "Minimum Replicas", "Name": "min-replicas", "Variable": "autoscaling.minReplicas", "Settings": { "Default": 0 } }, { "Type": "number-input", "Label": "Maximum Replicas", "Name": "max-replicas", "Variable": "autoscaling.maxReplicas", "Settings": { "Default": 2 } }] }] }, { "Name": "notes", "Label": "Notes", "Sections": [{ "Name": "main", "ShowIf": "", "Contents": [{ "Type": "heading", "Label": "Just some text", "Name": "", "Variable": "", "Settings": { "Default": null } }, { "Type": "subtitle", "Label": "This is just some random text to populate the final tab with.", "Name": "", "Variable": "", "Settings": { "Default": null } }] }] }
-];
 
 // Tabs not display when previewing an old revision
 const excludedTabs = ['status', 'settings', 'deploy'];
@@ -56,10 +54,11 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
     components: [] as ResourceType[],
     podSelectors: [] as string[],
     revisionPreview: null as (ChartType | null),
-    devOpsMode: false,
+    devOpsMode: localStorage.getItem('devOpsMode') === 'true',
     tabOptions: [] as ChoiceType[],
     tabContents: [] as any,
     checkTabExists: false,
+    saveValuesStatus: null as (string | null),
   }
 
   updateResources = () => {
@@ -69,7 +68,6 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
     api.getChartComponents('<token>', {
       namespace: currentChart.namespace,
       cluster_id: currentCluster.id,
-      service_account_id: currentCluster.service_account_id,
       storage: StorageType.Secret
     }, {
       id: currentProject.id,
@@ -89,10 +87,42 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
     for (const file of files) { 
       if (file.name === 'form.yaml') {
         let formData = yaml.load(Base64.decode(file.data));
+        /*
+        if (this.props.currentChart.config) {
+          console.log(formData)
+        }
+        */
         return formData;
       }
     };
     return null;
+  }
+
+  upgradeValues = (values: any) => {
+    let { currentProject, currentCluster, setCurrentError } = this.context;
+
+    // Weave in pre-existing values and convert to yaml
+    values = yaml.dump({ ...(this.props.currentChart.config as Object), ...values });
+    
+    this.setState({ saveValuesStatus: 'loading' });
+    this.props.refreshChart();
+    api.upgradeChartValues('<token>', {
+      namespace: this.props.currentChart.namespace,
+      storage: StorageType.Secret,
+      values,
+    }, {
+      id: currentProject.id, 
+      name: this.props.currentChart.name,
+      cluster_id: currentCluster.id,
+    }, (err: any, res: any) => {
+      if (err) {
+        setCurrentError(err);
+        this.setState({ saveValuesStatus: 'error' });
+      } else {
+        this.setState({ saveValuesStatus: 'successful' });
+        this.props.refreshChart();
+      }
+    });
   }
 
   refreshTabs = () => {
@@ -110,7 +140,9 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
             <ValuesFormWrapper>
               <ValuesForm 
                 sections={tab.sections} 
-                onSubmit={(x: any) => console.log(x)}
+                onSubmit={this.upgradeValues}
+                saveValuesStatus={this.state.saveValuesStatus}
+                config={this.props.currentChart.config}
               />
             </ValuesFormWrapper>
           ),
@@ -121,19 +153,19 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
     // Append universal tabs
     tabOptions.push(
       { label: 'Status', value: 'status' },
-      { label: 'Deploy', value: 'deploy' },
+      //{ label: 'Deploy', value: 'deploy' },
+      { label: 'Chart Overview', value: 'graph' },
       { label: 'Settings', value: 'settings' },
     );
 
     if (this.state.devOpsMode) {
       tabOptions.push(
-        { label: 'Chart Overview', value: 'graph' },
-        { label: 'Search Chart', value: 'list' },
+        { label: 'Manifests', value: 'list' },
         { label: 'Raw Values', value: 'values' }
       );
     }
 
-    let { currentChart, refreshChart, setSidebar } = this.props;
+    let { currentChart, refreshChart, setSidebar, setCurrentView } = this.props;
     let chart = this.state.revisionPreview || currentChart;
     tabContents.push(
       {
@@ -148,7 +180,11 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
       },
       {
         value: 'settings', component: (
-          <SettingsSection /> 
+          <SettingsSection
+            currentChart={chart}
+            refreshChart={refreshChart}
+            setCurrentView={setCurrentView}
+          /> 
         ),
       },
       {
@@ -168,6 +204,9 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
           <ListSection
             currentChart={chart}
             components={this.state.components}
+
+            // Handle resize YAML wrapper
+            showRevisions={this.state.showRevisions}
           />
         ),
       },
@@ -201,7 +240,6 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
       api.getChartComponents('<token>', {
         namespace: oldChart.namespace,
         cluster_id: currentCluster.id,
-        service_account_id: currentCluster.service_account_id,
         storage: StorageType.Secret
       }, {
         id: currentProject.id,
@@ -226,16 +264,18 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
       let { tabOptions } = this.state;
       tabOptions.pop();
       tabOptions.pop();
-      tabOptions.pop();
-      this.setState({ devOpsMode: false, checkTabExists: true, tabOptions });
+      this.setState({ devOpsMode: false, checkTabExists: true, tabOptions }, () => {
+        localStorage.setItem('devOpsMode', 'false')
+      });
     } else {
       let { tabOptions } = this.state;
       tabOptions.push(
-        { label: 'Chart Overview', value: 'graph' },
-        { label: 'Search Chart', value: 'list' },
+        { label: 'Manifests', value: 'list' },
         { label: 'Raw Values', value: 'values' }
       );
-      this.setState({ devOpsMode: true, tabOptions, checkTabExists: false });
+      this.setState({ devOpsMode: true, tabOptions, checkTabExists: false }, () => {
+        localStorage.setItem('devOpsMode', 'true');
+      });
     }
   }
 
@@ -342,6 +382,8 @@ const TabButton = styled.div`
   position: absolute;
   right: 0px;
   height: 30px;
+  background: linear-gradient(to right, #26282f00, #26282f 20%);
+  padding-left: 30px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -510,7 +552,7 @@ const StyledExpandedChart = styled.div`
   z-index: 0;
   position: absolute;
   top: 25px;
-  left: 25px;;
+  left: 25px;
   border-radius: 10px;
   background: #26282f;
   box-shadow: 0 5px 12px 4px #00000033;

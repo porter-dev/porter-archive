@@ -10,6 +10,7 @@ type PropsType = {
 
 type StateType = {
   currentTab: string,
+  currentPage: number,
 };
 
 const tabOptions = [
@@ -18,10 +19,64 @@ const tabOptions = [
 
 export default class ClusterInstructionsModal extends Component<PropsType, StateType> {
   state = {
-    currentTab: 'mac'
+    currentTab: 'mac',
+    currentPage: 0,
+  }
+
+  renderPage = () => {
+    switch (this.state.currentPage) {
+      case 0:
+        return (
+          <Placeholder>
+            1. To install the Porter CLI, first retrieve the latest binary:
+            <Code>
+              &#123;<br />
+              name=$(curl -s https://api.github.com/repos/porter-dev/porter/releases/latest | grep "browser_download_url.*porter_.*_Darwin_x86_64\.zip" | cut -d ":" -f 2,3 | tr -d \")<br />
+              name=$(basename $name)<br />
+              curl -L https://github.com/porter-dev/porter/releases/latest/download/$name --output $name<br />
+              unzip -a $name<br />
+              rm $name<br />
+              &#125;
+            </Code>
+            2. Move the file into your bin:
+            <Code>
+              chmod +x ./porter<br />
+              sudo mv ./porter /usr/local/bin/porter
+            </Code>
+            3. Log in to the Porter CLI:
+            <Code>
+              porter config set-host {location.protocol + '//' + location.host}<br/>
+              porter auth login
+            </Code>
+            4. Configure the Porter CLI and link your current context:
+            <Code>
+              porter config set-project {this.context.currentProject.id}<br/>
+              porter connect kubeconfig
+            </Code>
+          </Placeholder>
+        );
+      case 1:
+        return (
+          <Placeholder>
+            <Bold>Passing a kubeconfig explicitly</Bold>
+            You can pass a path to a kubeconfig file explicitly via:
+            <Code>
+              porter connect kubeconfig --kubeconfig path/to/kubeconfig
+            </Code>
+            <Bold>Passing a context list</Bold>
+            You can initialize Porter with a set of contexts by passing a context list to start. The contexts that Porter will be able to access are the same as kubectl config get-contexts. For example, if there are two contexts named minikube and staging, you could connect both of them via:
+            <Code>
+              porter connect kubeconfig --contexts minikube --contexts staging
+            </Code>
+          </Placeholder>
+        );
+      default:
+        return
+    }
   }
  
   render() {
+    let { currentPage, currentTab } = this.state;
     return (
       <StyledClusterInstructionsModal>
         <CloseButton onClick={() => {
@@ -34,44 +89,61 @@ export default class ClusterInstructionsModal extends Component<PropsType, State
 
         <TabSelector
           options={tabOptions}
-          currentTab={this.state.currentTab}
+          currentTab={currentTab}
           setCurrentTab={(value: string) => this.setState({ currentTab: value })}
         />
 
-        <Placeholder>
-          1. Run the following command to retrieve the latest binary:
-          <Code>
-            &#123;<br />
-            name=$(curl -s https://api.github.com/repos/porter-dev/porter/releases/latest | grep "browser_download_url.*_Darwin_x86_64\.zip" | cut -d ":" -f 2,3 | tr -d \")<br />
-            name=$(basename $name)<br />
-            curl -L https://github.com/porter-dev/porter/releases/latest/download/$name --output $name<br />
-            unzip -a $name<br />
-            rm $name<br />
-            &#125;
-          </Code>
-          2. Move the file into your bin:
-          <Code>
-            chmod +x ./porter<br />
-            sudo mv ./porter /usr/local/bin/porter
-          </Code>
-          3. Log in to the Porter CLI:
-          <Code>
-            porter auth login
-          </Code>
-          4. Configure the Porter CLI and link your current context:
-          <Code>
-            porter config set-project {this.context.currentProject.id}<br/>
-            porter config set-host {location.protocol + '//' + location.host}<br/>
-            porter connect kubeconfig
-          </Code>
-        </Placeholder>
-        
+        {this.renderPage()}
+        <PageSection>
+          <PageCount>{currentPage + 1}/2</PageCount>
+          <i 
+            className="material-icons"
+            onClick={() => currentPage > 0 ? this.setState({ currentPage: currentPage - 1 }) : null}
+          >
+            arrow_back
+          </i>
+          <i 
+            className="material-icons"
+            onClick={() => currentPage < 1 ? this.setState({ currentPage: currentPage + 1 }) : null}
+          >
+            arrow_forward
+          </i>
+        </PageSection>
       </StyledClusterInstructionsModal>
     );
   }
 }
 
 ClusterInstructionsModal.contextType = Context;
+
+const PageCount = styled.div`
+  margin-right: 9px;
+  user-select: none;
+  letter-spacing: 2px;
+`;
+
+const PageSection = styled.div`
+  position: absolute;
+  bottom: 22px;
+  right: 20px;
+  display: flex;
+  align-items: center;
+  font-size: 13px;
+  color: #ffffff;
+  justify-content: flex-end;
+  user-select: none;
+  
+  > i {
+    font-size: 18px;
+    margin-left: 2px;
+    cursor: pointer;
+    border-radius: 20px;
+    padding: 5px;
+    :hover {
+      background: #ffffff11;
+    }
+  }
+`;
 
 const Code = styled.div`
   background: #181B21;
@@ -82,6 +154,7 @@ const Code = styled.div`
   color: #ffffff;
   font-size: 13px;
   user-select: text;
+  line-height: 1em;
   font-family: monospace;
 `;
 
@@ -96,12 +169,13 @@ const Placeholder = styled.div`
   font-size: 13px;
   margin-left: 0px;
   margin-top: 25px;
+  line-height: 1.5em;
   user-select: none;
 `;
 
 const Bold = styled.div`
-  font-weight: bold;
-  font-size: 20px;
+  font-weight: 600;
+  margin-bottom: 7px;
 `;
 
 const Subtitle = styled.div`

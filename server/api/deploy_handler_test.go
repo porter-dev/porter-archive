@@ -67,27 +67,27 @@ func testDeployRequests(t *testing.T, tests []*deployTest, canQuery bool) {
 
 // ------------------------- TEST FIXTURES AND FUNCTIONS  ------------------------- //
 
-var newDeployTests = []*deployTest{
-	&deployTest{
-		initializers: []func(tester *tester){
-			initDefaultDeploy,
-		},
-		msg:       "Deploy template",
-		method:    "POST",
-		endpoint:  "/api/projects/1/deploy",
-		body:      "",
-		expStatus: http.StatusOK,
-		expBody:   "unimplemented",
-		useCookie: true,
-		validators: []func(c *deployTest, tester *tester, t *testing.T){
-			deployValidator,
-		},
-	},
-}
+// var newDeployTests = []*deployTest{
+// 	&deployTest{
+// 		initializers: []func(tester *tester){
+// 			initDefaultDeploy,
+// 		},
+// 		msg:       "Deploy template",
+// 		method:    "POST",
+// 		endpoint:  "/api/projects/1/deploy",
+// 		body:      "",
+// 		expStatus: http.StatusOK,
+// 		expBody:   "unimplemented",
+// 		useCookie: true,
+// 		validators: []func(c *deployTest, tester *tester, t *testing.T){
+// 			deployValidator,
+// 		},
+// 	},
+// }
 
-func TestHandleDeployTemplate(t *testing.T) {
-	testDeployRequests(t, newDeployTests, true)
-}
+// func TestHandleDeployTemplate(t *testing.T) {
+// 	testDeployRequests(t, newDeployTests, true)
+// }
 
 // ------------------------- INITIALIZERS AND VALIDATORS ------------------------- //
 

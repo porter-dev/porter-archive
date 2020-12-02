@@ -3,50 +3,74 @@ import styled from 'styled-components';
 import close from '../../../assets/close.png';
 
 import { Context } from '../../../shared/Context';
-import { getRegistryIcon } from '../../../shared/common';
+import api from '../../../shared/api';
+import { integrationList } from '../../../shared/common';
 
 type PropsType = {
 };
 
 type StateType = {
-  integrations: any[]
+  integrations: any[],
 };
-
-const dummyIntegrations = [
-  {
-    name: 'docker-hub',
-    label: 'Docker Hub',
-  },
-  {
-    name: 'gcr',
-    label: 'Google Container Registry (GCR)',
-  },
-  {
-    name: 'ecr',
-    label: 'Amazon Elastic Container Registry (ECR)',
-  },
-];
 
 export default class IntegrationsModal extends Component<PropsType, StateType> {
   state = {
-    currentTab: 'mac',
-    integrations: [] as any[]
+    integrations: [] as any[],
   }
 
   componentDidMount() {
-    this.setState({ integrations: dummyIntegrations });
+    let { category } = this.context.currentModalData;
+    if (category === 'kubernetes') {
+      api.getClusterIntegrations('<token>', {}, {}, (err: any, res: any) => {
+        if (err) {
+          console.log(err);
+        } else {
+          this.setState({ integrations: res.data });
+        }
+      });
+    } else if (category === 'registry') {
+      api.getRegistryIntegrations('<token>', {}, {}, (err: any, res: any) => {
+        if (err) {
+          console.log(err);
+        } else {
+          // console.log(res.data)
+          this.setState({ integrations: res.data });
+        }
+      });
+    } else {
+      api.getRepoIntegrations('<token>', {}, {}, (err: any, res: any) => {
+        if (err) {
+          console.log(err);
+        } else {
+          this.setState({ integrations: res.data });
+        }
+      });
+    }
   }
 
   renderIntegrationsCatalog = () => {
-    return this.state.integrations.map((integration: any, i: number) => {
-      let icon = getRegistryIcon(integration.name);
-      return (
-        <IntegrationOption key={i}>
-          <Icon src={icon && icon} />
-          <Label>{integration.label}</Label>
-        </IntegrationOption>
-      );
-    });
+    if (this.context.currentModalData) {
+      let { setCurrentIntegration } = this.context.currentModalData;
+      return this.state.integrations.map((integration: any, i: number) => {
+        let icon = integrationList[integration.service] && integrationList[integration.service].icon;
+        let disabled = integration.service === 'kube' || integration.service === 'docker' || integration.service === 'gcr';
+        return (
+          <IntegrationOption 
+            key={i}
+            disabled={disabled}
+            onClick={() => {
+              if (!disabled) {
+                setCurrentIntegration(integration.service);
+                this.context.setCurrentModal(null, null);
+              }
+            }}
+          >
+            <Icon src={icon && icon} />
+            <Label>{integrationList[integration.service].label}</Label>
+          </IntegrationOption>
+        );
+      });
+    }
   }
  
   render() {
@@ -84,14 +108,15 @@ const Icon = styled.img`
 
 const IntegrationOption = styled.div`
   height: 60px;
+  user-select: none;
   width: 100%;
   border-bottom: 1px solid #ffffff44;
   display: flex;
   align-items: center;
   padding: 20px;
-  cursor: pointer;
+  cursor: ${(props: { disabled: boolean }) => props.disabled ? 'not-allowed' : 'pointer'};
   :hover {
-    background: #ffffff22;
+    background: ${(props: { disabled: boolean }) => props.disabled ? '' : '#ffffff22'};
   }
 `;
 

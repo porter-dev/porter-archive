@@ -13,6 +13,7 @@ import ExpandedChart from './expanded-chart/ExpandedChart';
 type PropsType = {
   currentCluster: Cluster,
   setSidebar: (x: boolean) => void
+  setCurrentView: (x: string) => void,
 };
 
 type StateType = {
@@ -41,7 +42,6 @@ export default class ClusterDashboard extends Component<PropsType, StateType> {
     api.getChart('<token>', {
       namespace: this.state.namespace,
       cluster_id: currentCluster.id,
-      service_account_id: currentCluster.service_account_id,
       storage: StorageType.Secret
     }, {
       name: this.state.currentChart.name,
@@ -75,7 +75,7 @@ export default class ClusterDashboard extends Component<PropsType, StateType> {
   }
 
   renderContents = () => {
-    let { currentCluster, setSidebar } = this.props;
+    let { currentCluster, setSidebar, setCurrentView } = this.props;
 
     if (this.state.currentChart) {
       return (
@@ -84,6 +84,7 @@ export default class ClusterDashboard extends Component<PropsType, StateType> {
           refreshChart={this.refreshChart}
           setCurrentChart={(x: ChartType | null) => this.setState({ currentChart: x })}
           setSidebar={setSidebar}
+          setCurrentView={setCurrentView} // Link to integrations from chart settings
         />
       );
     }
@@ -108,8 +109,10 @@ export default class ClusterDashboard extends Component<PropsType, StateType> {
         <LineBreak />
         
         <ControlRow>
-          <Button disabled={true}>
-            <i className="material-icons">add</i> Deploy a Chart
+          <Button
+            onClick={() => this.props.setCurrentView('templates')}
+          >
+            <i className="material-icons">add</i> Deploy Template
           </Button>
           <NamespaceSelector
             setNamespace={(namespace) => this.setState({ namespace })}
@@ -198,11 +201,11 @@ const Button = styled.div`
   white-space: nowrap;
   text-overflow: ellipsis;
   box-shadow: 0 5px 8px 0px #00000010;
-  cursor: not-allowed;
+  cursor: ${(props: { disabled?: boolean }) => props.disabled ? 'not-allowed' : 'pointer'};
 
-  background: ${(props: { disabled: boolean }) => props.disabled ? '#aaaabbee' :'#616FEEcc'};
+  background: ${(props: { disabled?: boolean }) => props.disabled ? '#aaaabbee' : '#616FEEcc'};
   :hover {
-    background: ${(props: { disabled: boolean }) => props.disabled ? '' : '#505edddd'};
+    background: ${(props: { disabled?: boolean }) => props.disabled ? '' : '#505edddd'};
   }
 
   > i {

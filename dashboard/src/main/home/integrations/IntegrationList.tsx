@@ -2,62 +2,45 @@ import React, { Component } from 'react';
 import styled from 'styled-components';
 
 import { Context } from '../../../shared/Context';
-import { getRegistryIcon } from '../../../shared/common';
+import { integrationList } from '../../../shared/common';
 import api from '../../../shared/api';
 
 type PropsType = {
-  setCurrentIntegration: (x: any) => void
+  setCurrent: (x: any) => void,
+  integrations: string[],
+  isCategory?: boolean
 };
 
 type StateType = {
-  integrations: any[]
 };
 
-const dummyIntegrations = [
-  {
-    name: 'docker-hub',
-    label: 'Docker Hub',
-  },
-  {
-    name: 'gcr',
-    label: 'Google Container Registry (GCR)',
-  },
-  {
-    name: 'ecr',
-    label: 'Amazon Elastic Container Registry (ECR)',
-  },
-];
-
 export default class IntegrationList extends Component<PropsType, StateType> {
-  state = {
-    integrations: [] as any[]
-  }
-
-  componentDidMount() {
-    this.setState({ integrations: dummyIntegrations });
-  }
-
   renderContents = () => {
-    if (this.state.integrations) {
-      return this.state.integrations.map((integration: any, i: number) => {
-        let icon = getRegistryIcon(integration.name);
+    let { integrations, setCurrent, isCategory } = this.props;
+    if (integrations && integrations.length > 0) {
+      return integrations.map((integration: string, i: number) => {
+        let icon = integrationList[integration] && integrationList[integration].icon;
+        let label = integrationList[integration] && integrationList[integration].label;
+        let disabled = integration === 'repo' || integration === 'kubernetes';
         return (
           <Integration
             key={i}
-            onClick={() => this.props.setCurrentIntegration(integration)}
+            onClick={() => disabled ? null : setCurrent(integration)}
+            isCategory={isCategory}
+            disabled={disabled}
           >
             <Flex>
               <Icon src={icon && icon} />
-              <Label>{integration.label}</Label>
+              <Label>{label}</Label>
             </Flex>
-            <i className="material-icons">launch</i>
+            <i className="material-icons">{isCategory ? 'launch' : 'more_vert'}</i>
           </Integration>
         );
       });
     }
     return (
       <Placeholder>
-        You haven't set up any integrations yet.
+        No integrations set up yet.
       </Placeholder>
     );
   }
@@ -85,19 +68,25 @@ const Integration = styled.div`
   align-items: center;
   justify-content: space-between;
   padding: 25px;
-  cursor: pointer;
   background: #26282f;
-  cursor: pointer;
+  cursor: ${(props: { isCategory: boolean, disabled: boolean }) => props.disabled ? 'not-allowed' : 'pointer'};
   margin-bottom: 15px;
   border-radius: 5px;
   box-shadow: 0 5px 8px 0px #00000033;
   :hover {
-    background: #ffffff11;
+    background: ${(props: { isCategory: boolean, disabled: boolean }) => props.disabled ? '' : '#ffffff11'};
+
+    > i {
+      background: ${(props: { isCategory: boolean, disabled: boolean }) => props.disabled ? '' : '#ffffff11'};
+    }
   }
 
   > i {
+    border-radius: 20px;
     font-size: 18px;
-    color: #616feecc;
+    padding: 5px;
+    color: ${(props: { isCategory: boolean, disabled: boolean }) => props.isCategory ? '#616feecc' : '#ffffff44'};
+    margin-right: -7px;
   }
 `;
 
@@ -109,7 +98,7 @@ const Label = styled.div`
 
 const Icon = styled.img`
   width: 30px;
-  margin-right: 15px;
+  margin-right: 18px;
 `;
 
 const Placeholder = styled.div`

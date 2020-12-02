@@ -132,3 +132,9 @@ export interface ChoiceType {
   value: string,
   label: string
 }
+
+export interface ImageType {
+  kind: string,
+  source: string,
+  registryId: number,
+}

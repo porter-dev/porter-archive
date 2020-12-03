@@ -88,8 +88,17 @@ func (a *Agent) UpgradeRelease(
 func (a *Agent) InstallChart(
 	cp string,
 	values []byte,
+	name string,
+	namespace string,
 ) (*release.Release, error) {
-	cmd := action.NewInstall(a.ActionConfig)
+	client := action.NewInstall(a.ActionConfig)
+
+	if client.Version == "" && client.Devel {
+		client.Version = ">0.0.0-0"
+	}
+
+	client.ReleaseName = name
+	client.Namespace = namespace
 	valuesYaml, err := chartutil.ReadValues(values)
 
 	if err != nil {
@@ -99,6 +108,7 @@ func (a *Agent) InstallChart(
 	// Only supports filepaths for now, URL option WIP.
 	// Check chart dependencies to make sure all are present in /charts
 	chartRequested, err := loader.Load(cp)
+
 	if err != nil {
 		return nil, err
 	}
@@ -118,7 +128,7 @@ func (a *Agent) InstallChart(
 		}
 	}
 
-	return cmd.Run(chartRequested, valuesYaml)
+	return client.Run(chartRequested, valuesYaml)
 }
 
 // RollbackRelease rolls a release back to a specified revision/version

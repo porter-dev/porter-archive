@@ -117,9 +117,9 @@ func (a *Agent) InstallChart(
 		return nil, err
 	}
 
-	if chartRequested.Metadata.Deprecated {
-		return nil, fmt.Errorf("This chart is deprecated")
-	}
+	// if chartRequested.Metadata.Deprecated {
+	// 	return nil, fmt.Errorf("This chart is deprecated")
+	// }
 
 	if req := chartRequested.Metadata.Dependencies; req != nil {
 		if err := action.CheckDependencies(chartRequested, req); err != nil {

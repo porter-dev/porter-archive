@@ -64,7 +64,9 @@ func (app *App) HandleDeployTemplate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Set image URL
-	(*values)["image"].(map[interface{}]interface{})["repository"] = form.ChartTemplateForm.ImageURL
+	if form.ChartTemplateForm.ImageURL != "" {
+		(*values)["image"].(map[interface{}]interface{})["repository"] = form.ChartTemplateForm.ImageURL
+	}
 
 	// Loop through form params to override
 	for k := range form.ChartTemplateForm.FormValues {
@@ -101,10 +103,8 @@ func (app *App) HandleDeployTemplate(w http.ResponseWriter, r *http.Request) {
 
 	var tgz string
 	switch form.ChartTemplateForm.TemplateName {
-	case "react":
-		tgz = "react-0.1.5.tgz"
-	case "docker":
-		tgz = "docker-0.0.1.tgz"
+	case "redis":
+		tgz = "redis-0.0.1.tgz"
 	}
 
 	// Output values.yaml string

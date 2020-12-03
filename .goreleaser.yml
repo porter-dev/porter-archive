@@ -3,6 +3,8 @@ before:
     - go mod download
 builds:
   - id: "porter-cli"
+    ldflags:
+    - -X 'github.com/porter-dev/porter/cli/cmd.Version={{.Version}}'
     binary: porter
     dir: cli
     main: ./main.go

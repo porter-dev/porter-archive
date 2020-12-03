@@ -83,9 +83,9 @@ func init() {
 	)
 
 	contexts = connectKubeconfigCmd.PersistentFlags().StringArray(
-		"contexts",
+		"context",
 		nil,
-		"the list of contexts to connect (defaults to the current context)",
+		"the context to connect (defaults to the current context)",
 	)
 
 	connectCmd.AddCommand(connectECRCmd)

@@ -16,6 +16,7 @@ import ListSection from './ListSection';
 import StatusSection from './status/StatusSection';
 import ValuesForm from '../../../../components/values-form/ValuesForm';
 import SettingsSection from './SettingsSection';
+import { NavLink } from 'react-router-dom';
 
 type PropsType = {
   currentChart: ChartType,
@@ -31,14 +32,11 @@ type StateType = {
   podSelectors: string[]
   revisionPreview: ChartType | null,
   devOpsMode: boolean,
-  tabOptions: ChoiceType[],
+  tabOptions: any[],
   tabContents: any,
-  checkTabExists: boolean,
+  currentTab: string | null,
   saveValuesStatus: string | null,
 };
-
-// Tabs not display when previewing an old revision
-const excludedTabs = ['status', 'settings', 'deploy'];
 
 /*
   TODO: consolidate revisionPreview and currentChart (currentChart can just be the initial state)
@@ -55,9 +53,9 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
     podSelectors: [] as string[],
     revisionPreview: null as (ChartType | null),
     devOpsMode: localStorage.getItem('devOpsMode') === 'true',
-    tabOptions: [] as ChoiceType[],
+    tabOptions: [] as any[],
     tabContents: [] as any,
-    checkTabExists: false,
+    currentTab: null as string | null,
     saveValuesStatus: null as (string | null),
   }
 
@@ -77,9 +75,20 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
       if (err) {
         console.log(err)
       } else {
-        this.setState({ components: res.data.Objects, podSelectors: res.data.PodSelectors }, this.refreshTabs);
+        this.setState({ components: res.data.Objects, podSelectors: res.data.PodSelectors });
       }
     });
+  }
+
+  componentDidMount() {
+    this.updateTabs();
+    this.updateResources();
+  }
+
+  componentDidUpdate(prevProps: PropsType) {
+    if (this.props.currentChart !== prevProps.currentChart) {
+      this.updateResources();
+    }
   }
 
   getFormData = (): any => {
@@ -87,11 +96,6 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
     for (const file of files) { 
       if (file.name === 'form.yaml') {
         let formData = yaml.load(Base64.decode(file.data));
-        /*
-        if (this.props.currentChart.config) {
-          console.log(formData)
-        }
-        */
         return formData;
       }
     };
@@ -124,29 +128,96 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
       }
     });
   }
+  
+  renderTabContents = () => {
+    let { 
+      currentTab, 
+      podSelectors, 
+      components, 
+      showRevisions,
+      saveValuesStatus,
+      tabOptions,
+      revisionPreview,
+    } = this.state;
+    let { currentChart, refreshChart, setSidebar, setCurrentView } = this.props;
+    let chart = revisionPreview || currentChart;
 
-  refreshTabs = () => {
+    switch (currentTab) {
+      case 'status': 
+        return (
+          <StatusSection currentChart={chart} selectors={podSelectors} />
+        );
+      case 'deploy': 
+        return (
+          <Unimplemented>Coming soon.</Unimplemented> 
+        );
+      case 'settings': 
+        return (
+          <SettingsSection
+            currentChart={chart}
+            refreshChart={refreshChart}
+            setCurrentView={setCurrentView}
+          /> 
+        );
+      case 'graph': 
+        return (
+          <GraphSection
+            components={components}
+            currentChart={chart}
+            setSidebar={setSidebar}
+
+            // Handle resize YAML wrapper
+            showRevisions={showRevisions}
+          />
+        );
+      case 'list': 
+        return (
+          <ListSection
+            currentChart={chart}
+            components={components}
+
+            // Handle resize YAML wrapper
+            showRevisions={showRevisions}
+          />
+        );
+      case 'values': 
+        return (
+          <ValuesYaml
+            currentChart={chart}
+            refreshChart={refreshChart}
+          />
+        );
+      default:
+        if (currentTab && currentTab.includes('@')) {
+          return tabOptions.map((tab: any, i: number) => {
+
+            // If tab is current, render
+            if (tab.value === currentTab) {
+              
+              return (
+                <ValuesFormWrapper>
+                  <ValuesForm 
+                    sections={tab.sections} 
+                    onSubmit={this.upgradeValues}
+                    saveValuesStatus={saveValuesStatus}
+                    config={currentChart.config}
+                  />
+                </ValuesFormWrapper>
+              );
+            }
+          });
+        }
+    }
+  }
+
+  updateTabs = () => {
     let formData = this.getFormData();
-    let tabOptions = [] as ChoiceType[];
-    let tabContents = [] as any;
+    let tabOptions = [] as any[];
 
     // Generate form tabs if form.yaml exists
     if (formData && formData.tabs) {
       formData.tabs.map((tab: any, i: number) => {
-        tabOptions.push({ value: '@' + tab.name, label: tab.label });
-        tabContents.push({
-          value: '@' + tab.name,
-          component: (
-            <ValuesFormWrapper>
-              <ValuesForm 
-                sections={tab.sections} 
-                onSubmit={this.upgradeValues}
-                saveValuesStatus={this.state.saveValuesStatus}
-                config={this.props.currentChart.config}
-              />
-            </ValuesFormWrapper>
-          ),
-        });
+        tabOptions.push({ value: '@' + tab.name, label: tab.label, sections: tab.sections });
       });
     }
 
@@ -165,76 +236,18 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
       );
     }
 
-    let { currentChart, refreshChart, setSidebar, setCurrentView } = this.props;
-    let chart = this.state.revisionPreview || currentChart;
-    tabContents.push(
-      {
-        value: 'status', component: (
-          <StatusSection currentChart={chart} selectors={this.state.podSelectors} />
-        ),
-      },
-      {
-        value: 'deploy', component: (
-          <Unimplemented>Coming soon.</Unimplemented> 
-        ),
-      },
-      {
-        value: 'settings', component: (
-          <SettingsSection
-            currentChart={chart}
-            refreshChart={refreshChart}
-            setCurrentView={setCurrentView}
-          /> 
-        ),
-      },
-      {
-        value: 'graph', component: (
-          <GraphSection
-            components={this.state.components}
-            currentChart={chart}
-            setSidebar={setSidebar}
-
-            // Handle resize YAML wrapper
-            showRevisions={this.state.showRevisions}
-          />
-        ),
-      },
-      {
-        value: 'list', component: (
-          <ListSection
-            currentChart={chart}
-            components={this.state.components}
-
-            // Handle resize YAML wrapper
-            showRevisions={this.state.showRevisions}
-          />
-        ),
-      },
-      {
-        value: 'values', component: (
-          <ValuesYaml
-            currentChart={chart}
-            refreshChart={refreshChart}
-          />
-        ),
-      },
-    );
-    this.setState({ tabOptions, tabContents });
-  }
-
-  componentDidMount() {
-    this.updateResources();
-  }
-
-  componentDidUpdate(prevProps: PropsType) {
-    if (this.props.currentChart !== prevProps.currentChart) {
-      this.updateResources();
+    // Filter tabs if previewing an old revision
+    if (this.state.revisionPreview) {
+      let liveTabs = ['status', 'settings', 'deploy'];
+      tabOptions = tabOptions.filter((tab: any) => !liveTabs.includes(tab.value));
     }
+    
+    this.setState({ tabOptions });
   }
 
   setRevisionPreview = (oldChart: ChartType) => {
     let { currentCluster, currentProject } = this.context;
-    this.setState({ revisionPreview: oldChart, checkTabExists: true });
+    this.setState({ revisionPreview: oldChart }, () => this.updateTabs());
 
     if (oldChart) {
       api.getChartComponents('<token>', {
@@ -249,11 +262,10 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
         if (err) {
           console.log(err)
         } else {
-          this.setState({ components: res.data.Objects, podSelectors: res.data.PodSelectors }, this.refreshTabs);
+          this.setState({ components: res.data.Objects, podSelectors: res.data.PodSelectors });
         }
       });
     } else {
-      this.setState({ checkTabExists: false });
       this.updateResources();
     }
   }
@@ -261,19 +273,13 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
   // TODO: consolidate with pop + push in refreshTabs
   toggleDevOpsMode = () => {
     if (this.state.devOpsMode) {
-      let { tabOptions } = this.state;
-      tabOptions.pop();
-      tabOptions.pop();
-      this.setState({ devOpsMode: false, checkTabExists: true, tabOptions }, () => {
-        localStorage.setItem('devOpsMode', 'false')
+      this.setState({ devOpsMode: false }, () => {
+        this.updateTabs();
+        localStorage.setItem('devOpsMode', 'false');
       });
     } else {
-      let { tabOptions } = this.state;
-      tabOptions.push(
-        { label: 'Manifests', value: 'list' },
-        { label: 'Raw Values', value: 'values' }
-      );
-      this.setState({ devOpsMode: true, tabOptions, checkTabExists: false }, () => {
+      this.setState({ devOpsMode: true }, () => {
+        this.updateTabs();
         localStorage.setItem('devOpsMode', 'true');
       });
     }
@@ -339,18 +345,18 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
           </HeaderWrapper>
 
           <TabRegion
-            options={this.state.tabOptions.filter((opt: any) => {
-              return !this.state.revisionPreview || !excludedTabs.includes(opt.value);
-            })}
-            tabContents={this.state.tabContents}
-            checkTabExists={this.state.checkTabExists}
+            currentTab={this.state.currentTab}
+            setCurrentTab={(x: string) => this.setState({ currentTab: x })}
+            options={this.state.tabOptions}
             color={this.state.revisionPreview ? '#f5cb42' : null}
             addendum={
               <TabButton onClick={this.toggleDevOpsMode} devOpsMode={this.state.devOpsMode}>
                 <i className="material-icons">offline_bolt</i> DevOps Mode
               </TabButton>
             }
-          />
+          >
+            {this.renderTabContents()}
+          </TabRegion>
         </StyledExpandedChart>
       </div>
     );

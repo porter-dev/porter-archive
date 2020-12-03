@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import styled from 'styled-components';
-
+import randomWords from 'random-words';
 import { Context } from '../../../../shared/Context';
 import api from '../../../../shared/api';
 
@@ -19,39 +19,52 @@ type PropsType = {
 type StateType = {
   currentView: string,
   clusterOptions: { label: string, value: string }[],
+  saveValuesStatus: string | null
+  selectedNamespace: string,
   selectedCluster: string,
   selectedImageUrl: string | null,
   selectedTag: string | null,
   tabOptions: ChoiceType[],
   currentTab: string | null,
+  tabContents: any
+  namespaceOptions: { label: string, value: string }[],
 };
 
 export default class LaunchTemplate extends Component<PropsType, StateType> {
   state = {
     currentView: 'repo',
     clusterOptions: [] as { label: string, value: string }[],
+    saveValuesStatus: null as (string | null),
     selectedCluster: this.context.currentCluster.name,
+    selectedNamespace: "default",
     selectedImageUrl: '' as string | null,
     selectedTag: '' as string | null,
     tabOptions: [] as ChoiceType[],
     currentTab: null as string | null,
+    tabContents: [] as any,
+    namespaceOptions: [] as { label: string, value: string }[],
   };
 
   onSubmit = (formValues: any) => {
     let { currentCluster, currentProject } = this.context;
+    let name = randomWords({ exactly: 3, join: '-' })
+    this.setState({ saveValuesStatus: 'loading' });
+
     api.deployTemplate('<token>', {
       templateName: this.props.currentTemplate.name,
-      imageURL: "index.docker.io/bitnami/redis",
+      imageURL: "",
       storage: StorageType.Secret,
       formValues,
+      namespace: this.state.selectedNamespace,
+      name,
     }, {
       id: currentProject.id,
       cluster_id: currentCluster.id,
     }, (err: any, res: any) => {
       if (err) {
-        console.log(err)
+        this.setState({ saveValuesStatus: 'error' });
       } else {
-        console.log(res.data)
+        this.setState({ saveValuesStatus: 'successful' });
       }
     });
   }
@@ -64,8 +77,11 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
         return (
           <ValuesFormWrapper>
             <ValuesForm 
+              key={tab.name}
               sections={tab.sections} 
               onSubmit={this.onSubmit}
+              disabled={!this.state.selectedImageUrl || this.state.selectedImageUrl === ''}
+              saveValuesStatus={this.state.saveValuesStatus}
             />
           </ValuesFormWrapper>
         );
@@ -83,18 +99,41 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
     this.setState({ tabOptions });
 
     // TODO: query with selected filter once implemented
-    let { currentProject } = this.context;
+    let { currentProject, currentCluster } = this.context;
     api.getClusters('<token>', {}, { id: currentProject.id }, (err: any, res: any) => {
       if (err) {
         // console.log(err)
       } else if (res.data) {
+        console.log(res.data)
         let clusterOptions = res.data.map((x: Cluster) => { return { label: x.name, value: x.name } });
         if (res.data.length > 0) {
           this.setState({ clusterOptions });
         }
       }
     });
+
+    api.getNamespaces('<token>', {
+      cluster_id: currentCluster.id,
+    }, { id: currentProject.id }, (err: any, res: any) => {
+      if (err) {
+        console.log(err)
+      } else if (res.data) {
+        let namespaceOptions = res.data.items.map((x: { metadata: {name: string}}) => { 
+          return { label: x.metadata.name, value: x.metadata.name } 
+        });
+        if (res.data.items.length > 0) {
+          this.setState({ namespaceOptions });
+        }
+      }
+    });
   }
+
+  // componentDidUpdate(prevProps: PropsType, prevState: StateType) {
+  //   if (this.state.selectedImageUrl != prevState.selectedImageUrl
+  //       || this.state.saveValuesStatus != prevState.saveValuesStatus) {
+  //     this.refreshTabs();
+  //   }
+  // }
 
   renderIcon = (icon: string) => {
     if (icon) {
@@ -134,6 +173,18 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
             activeValue={this.state.selectedCluster}
             setActiveValue={(cluster: string) => this.setState({ selectedCluster: cluster })}
             options={this.state.clusterOptions}
+            width='250px'
+            dropdownWidth='335px'
+            closeOverlay={true}
+          />
+          <NamespaceLabel>
+            <i className="material-icons">view_list</i>Namespace
+          </NamespaceLabel>
+          <Selector
+            key={'namespace'}
+            activeValue={this.state.selectedNamespace}
+            setActiveValue={(namespace: string) => this.setState({ selectedNamespace: namespace })}
+            options={this.state.namespaceOptions}
             width='250px'
             dropdownWidth='335px'
             closeOverlay={true}
@@ -189,6 +240,17 @@ const Subtitle = styled.div`
 `;
 
 const ClusterLabel = styled.div`
+  margin-right: 10px;
+  display: flex;
+  align-items: center;
+  > i {
+    font-size: 16px;
+    margin-right: 6px;
+  }
+`;
+
+const NamespaceLabel = styled.div`
+  margin-left: 15px;
   margin-right: 10px;
   display: flex;
   align-items: center;

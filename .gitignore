@@ -5,6 +5,7 @@ app
 *.db
 test.yaml
 dist
+gon.hcl
+internal/local_templates
 gon*.hcl
 *prod.Dockerfile
-internal/local_templates/

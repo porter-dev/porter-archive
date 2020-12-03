@@ -200,7 +200,7 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
                     sections={tab.sections} 
                     onSubmit={this.upgradeValues}
                     saveValuesStatus={saveValuesStatus}
-                    config={currentChart.config}
+                    config={chart.config}
                   />
                 </ValuesFormWrapper>
               );

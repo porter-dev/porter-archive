@@ -66,7 +66,6 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
             <ValuesForm 
               sections={tab.sections} 
               onSubmit={this.onSubmit}
-              disabled={!this.state.selectedImageUrl || this.state.selectedImageUrl === ''}
             />
           </ValuesFormWrapper>
         );
@@ -141,7 +140,7 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
           />
         </ClusterSection>
 
-        <Subtitle>Select the container image you would like to connect to this template.</Subtitle>
+        <Subtitle>Select the container image you would like to connect to this template (optional).</Subtitle>
         <Br />
         <ImageSelector
           selectedTag={this.state.selectedTag}

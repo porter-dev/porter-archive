@@ -29,9 +29,11 @@ export default class TabRegion extends Component<PropsType, StateType> {
   }
 
   componentDidUpdate(prevProps: PropsType) {
-    let { options } = this.props;
+    let { options, currentTab } = this.props;
     if (prevProps.options !== options) {
-      this.setDefaultTab();
+      if (options.filter(x => x.value === currentTab).length === 0) {
+        this.setDefaultTab();
+      }
     }
   }
 

@@ -45,6 +45,7 @@ export default class ListSection extends Component<PropsType, StateType> {
       let rawYaml = yaml.dump(resource.RawYAML);
       return (
         <ResourceTab
+          key={i}
           handleClick={() => this.setState({ yaml: rawYaml })}
           selected={this.state.yaml === rawYaml}
           kind={resource.Kind}

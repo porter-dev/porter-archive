@@ -171,6 +171,30 @@ func TestHandleListRegistries(t *testing.T) {
 	testRegistryRequests(t, listRegistryTests, true)
 }
 
+var updateRegistryTests = []*regTest{
+	&regTest{
+		initializers: []func(t *tester){
+			initUserDefault,
+			initProject,
+			initRegistry,
+		},
+		msg:       "Update registry name",
+		method:    "POST",
+		endpoint:  "/api/projects/1/registries/1",
+		body:      `{"name":"registry-new-name"}`,
+		expStatus: http.StatusOK,
+		expBody:   `{"id":1,"name":"registry-new-name","project_id":1,"service":"ecr"}`,
+		useCookie: true,
+		validators: []func(c *regTest, tester *tester, t *testing.T){
+			regBodyValidator,
+		},
+	},
+}
+
+func TestHandleUpdateRegistry(t *testing.T) {
+	testRegistryRequests(t, updateRegistryTests, true)
+}
+
 var deleteRegTests = []*regTest{
 	&regTest{
 		initializers: []func(t *tester){

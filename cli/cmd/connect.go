@@ -21,7 +21,7 @@ var connectCmd = &cobra.Command{
 
 var connectKubeconfigCmd = &cobra.Command{
 	Use:   "kubeconfig",
-	Short: "Uses the local kubeconfig to connect to a cluster",
+	Short: "Uses the local kubeconfig to add a cluster",
 	Run: func(cmd *cobra.Command, args []string) {
 		err := checkLoginAndRun(args, runConnectKubeconfig)
 
@@ -33,7 +33,7 @@ var connectKubeconfigCmd = &cobra.Command{
 
 var connectECRCmd = &cobra.Command{
 	Use:   "ecr",
-	Short: "Connects an ECR instance to a project",
+	Short: "Adds an ECR instance to a project",
 	Run: func(cmd *cobra.Command, args []string) {
 		err := checkLoginAndRun(args, runConnectECR)
 
@@ -45,7 +45,7 @@ var connectECRCmd = &cobra.Command{
 
 var connectGCRCmd = &cobra.Command{
 	Use:   "gcr",
-	Short: "Connects a GCR instance to a project",
+	Short: "Adds a GCR instance to a project",
 	Run: func(cmd *cobra.Command, args []string) {
 		err := checkLoginAndRun(args, runConnectGCR)
 
@@ -83,9 +83,9 @@ func init() {
 	)
 
 	contexts = connectKubeconfigCmd.PersistentFlags().StringArray(
-		"contexts",
+		"context",
 		nil,
-		"the list of contexts to connect (defaults to the current context)",
+		"the context to connect (defaults to the current context)",
 	)
 
 	connectCmd.AddCommand(connectECRCmd)
@@ -99,13 +99,19 @@ func runConnectKubeconfig(_ *api.AuthCheckResponse, client *api.Client, _ []stri
 		isLocal = true
 	}
 
-	return connect.Kubeconfig(
+	id, err := connect.Kubeconfig(
 		client,
 		kubeconfigPath,
 		*contexts,
 		getProjectID(),
 		isLocal,
 	)
+
+	if err != nil {
+		return err
+	}
+
+	return setCluster(id)
 }
 
 func runConnectECR(_ *api.AuthCheckResponse, client *api.Client, _ []string) error {

@@ -27,17 +27,17 @@ func Kubeconfig(
 	contexts []string,
 	projectID uint,
 	isLocal bool,
-) error {
+) (uint, error) {
 	// if project ID is 0, ask the user to set the project ID or create a project
 	if projectID == 0 {
-		return fmt.Errorf("no project set, please run porter project set [id]")
+		return 0, fmt.Errorf("no project set, please run porter project set [id]")
 	}
 
 	// get the kubeconfig
 	rawBytes, err := local.GetKubeconfigFromHost(kubeconfigPath, contexts)
 
 	if err != nil {
-		return err
+		return 0, err
 	}
 
 	// send kubeconfig to client
@@ -51,8 +51,10 @@ func Kubeconfig(
 	)
 
 	if err != nil {
-		return err
+		return 0, err
 	}
+
+	var lastClusterID uint
 
 	for _, cc := range ccs {
 		var cluster *models.ClusterExternal
@@ -66,7 +68,7 @@ func Kubeconfig(
 					absKubeconfigPath, err := local.ResolveKubeconfigPath(kubeconfigPath)
 
 					if err != nil {
-						return err
+						return 0, err
 					}
 
 					filename, err := utils.GetFileReferenceFromKubeconfig(
@@ -75,25 +77,25 @@ func Kubeconfig(
 					)
 
 					if err != nil {
-						return err
+						return 0, err
 					}
 
 					err = resolveClusterCAAction(filename, allResolver)
 
 					if err != nil {
-						return err
+						return 0, err
 					}
 				case models.ClusterLocalhost:
 					err := resolveLocalhostAction(allResolver)
 
 					if err != nil {
-						return err
+						return 0, err
 					}
 				case models.ClientCertData:
 					absKubeconfigPath, err := local.ResolveKubeconfigPath(kubeconfigPath)
 
 					if err != nil {
-						return err
+						return 0, err
 					}
 
 					filename, err := utils.GetFileReferenceFromKubeconfig(
@@ -102,19 +104,19 @@ func Kubeconfig(
 					)
 
 					if err != nil {
-						return err
+						return 0, err
 					}
 
 					err = resolveClientCertAction(filename, allResolver)
 
 					if err != nil {
-						return err
+						return 0, err
 					}
 				case models.ClientKeyData:
 					absKubeconfigPath, err := local.ResolveKubeconfigPath(kubeconfigPath)
 
 					if err != nil {
-						return err
+						return 0, err
 					}
 
 					filename, err := utils.GetFileReferenceFromKubeconfig(
@@ -123,19 +125,19 @@ func Kubeconfig(
 					)
 
 					if err != nil {
-						return err
+						return 0, err
 					}
 
 					err = resolveClientKeyAction(filename, allResolver)
 
 					if err != nil {
-						return err
+						return 0, err
 					}
 				case models.OIDCIssuerData:
 					absKubeconfigPath, err := local.ResolveKubeconfigPath(kubeconfigPath)
 
 					if err != nil {
-						return err
+						return 0, err
 					}
 
 					filename, err := utils.GetFileReferenceFromKubeconfig(
@@ -144,19 +146,19 @@ func Kubeconfig(
 					)
 
 					if err != nil {
-						return err
+						return 0, err
 					}
 
 					err = resolveOIDCIssuerAction(filename, allResolver)
 
 					if err != nil {
-						return err
+						return 0, err
 					}
 				case models.TokenData:
 					absKubeconfigPath, err := local.ResolveKubeconfigPath(kubeconfigPath)
 
 					if err != nil {
-						return err
+						return 0, err
 					}
 
 					filename, err := utils.GetFileReferenceFromKubeconfig(
@@ -165,13 +167,13 @@ func Kubeconfig(
 					)
 
 					if err != nil {
-						return err
+						return 0, err
 					}
 
 					err = resolveTokenDataAction(filename, allResolver)
 
 					if err != nil {
-						return err
+						return 0, err
 					}
 				case models.GCPKeyData:
 					err := resolveGCPKeyAction(
@@ -181,7 +183,7 @@ func Kubeconfig(
 					)
 
 					if err != nil {
-						return err
+						return 0, err
 					}
 				case models.AWSData:
 					err := resolveAWSAction(
@@ -194,7 +196,7 @@ func Kubeconfig(
 					)
 
 					if err != nil {
-						return err
+						return 0, err
 					}
 				}
 			}
@@ -207,7 +209,7 @@ func Kubeconfig(
 			)
 
 			if err != nil {
-				return err
+				return 0, err
 			}
 
 			clExt := models.ClusterExternal(*resp)
@@ -221,7 +223,7 @@ func Kubeconfig(
 			)
 
 			if err != nil {
-				return err
+				return 0, err
 			}
 
 			clExt := models.ClusterExternal(*resp)
@@ -230,9 +232,10 @@ func Kubeconfig(
 		}
 
 		color.New(color.FgGreen).Printf("created cluster %s with id %d\n", cluster.Name, cluster.ID)
+		lastClusterID = cluster.ID
 	}
 
-	return nil
+	return lastClusterID, nil
 }
 
 // resolves a cluster ca data action

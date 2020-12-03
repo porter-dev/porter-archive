@@ -95,6 +95,64 @@ func (app *App) HandleListProjectRegistries(w http.ResponseWriter, r *http.Reque
 	}
 }
 
+// HandleUpdateProjectRegistry updates a registry
+func (app *App) HandleUpdateProjectRegistry(w http.ResponseWriter, r *http.Request) {
+	projID, err := strconv.ParseUint(chi.URLParam(r, "project_id"), 0, 64)
+
+	if err != nil || projID == 0 {
+		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
+		return
+	}
+
+	registryID, err := strconv.ParseUint(chi.URLParam(r, "registry_id"), 0, 64)
+
+	if err != nil || registryID == 0 {
+		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
+		return
+	}
+
+	form := &forms.UpdateRegistryForm{
+		ID: uint(registryID),
+	}
+
+	// decode from JSON to form value
+	if err := json.NewDecoder(r.Body).Decode(form); err != nil {
+		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
+		return
+	}
+
+	// validate the form
+	if err := app.validator.Struct(form); err != nil {
+		app.handleErrorFormValidation(err, ErrProjectValidateFields, w)
+		return
+	}
+
+	// convert the form to a registry
+	registry, err := form.ToRegistry(app.repo.Registry)
+
+	if err != nil {
+		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
+		return
+	}
+
+	// handle write to the database
+	registry, err = app.repo.Registry.UpdateRegistry(registry)
+
+	if err != nil {
+		app.handleErrorDataWrite(err, w)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+
+	regExt := registry.Externalize()
+
+	if err := json.NewEncoder(w).Encode(regExt); err != nil {
+		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
+		return
+	}
+}
+
 // HandleDeleteProjectRegistry handles the deletion of a Registry via the registry ID
 func (app *App) HandleDeleteProjectRegistry(w http.ResponseWriter, r *http.Request) {
 	id, err := strconv.ParseUint(chi.URLParam(r, "registry_id"), 0, 64)

@@ -19,11 +19,13 @@ type PropsType = {
 type StateType = {
   currentView: string,
   clusterOptions: { label: string, value: string }[],
+  selectedNamespace: string,
   selectedCluster: string,
   selectedImageUrl: string | null,
   selectedTag: string | null,
   tabOptions: ChoiceType[],
   tabContents: any
+  namespaceOptions: { label: string, value: string }[],
 };
 
 export default class LaunchTemplate extends Component<PropsType, StateType> {
@@ -31,10 +33,12 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
     currentView: 'repo',
     clusterOptions: [] as { label: string, value: string }[],
     selectedCluster: this.context.currentCluster.name,
+    selectedNamespace: "default",
     selectedImageUrl: '' as string | null,
     selectedTag: '' as string | null,
     tabOptions: [] as ChoiceType[],
     tabContents: [] as any,
+    namespaceOptions: [] as { label: string, value: string }[],
   };
 
   onSubmit = (formValues: any) => {
@@ -44,6 +48,8 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
       imageURL: "index.docker.io/bitnami/redis",
       storage: StorageType.Secret,
       formValues,
+      namespace: this.state.selectedNamespace,
+      name: "random",
     }, {
       id: currentProject.id,
       cluster_id: currentCluster.id,
@@ -81,14 +87,30 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
     this.refreshTabs();
 
     // TODO: query with selected filter once implemented
-    let { currentProject } = this.context;
+    let { currentProject, currentCluster } = this.context;
     api.getClusters('<token>', {}, { id: currentProject.id }, (err: any, res: any) => {
       if (err) {
         // console.log(err)
       } else if (res.data) {
+        console.log(res.data)
         let clusterOptions = res.data.map((x: Cluster) => { return { label: x.name, value: x.name } });
         if (res.data.length > 0) {
           this.setState({ clusterOptions });
+        }
+      }
+    });
+
+    api.getNamespaces('<token>', {
+      cluster_id: currentCluster.id,
+    }, { id: currentProject.id }, (err: any, res: any) => {
+      if (err) {
+        console.log(err)
+      } else if (res.data) {
+        let namespaceOptions = res.data.items.map((x: { metadata: {name: string}}) => { 
+          return { label: x.metadata.name, value: x.metadata.name } 
+        });
+        if (res.data.items.length > 0) {
+          this.setState({ namespaceOptions });
         }
       }
     });
@@ -142,6 +164,18 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
             dropdownWidth='335px'
             closeOverlay={true}
           />
+          <NamespaceLabel>
+            <i className="material-icons">view_list</i>Namespace
+          </NamespaceLabel>
+          <Selector
+            key={'namespace'}
+            activeValue={this.state.selectedNamespace}
+            setActiveValue={(namespace: string) => this.setState({ selectedNamespace: namespace })}
+            options={this.state.namespaceOptions}
+            width='250px'
+            dropdownWidth='335px'
+            closeOverlay={true}
+          />
         </ClusterSection>
 
         <Subtitle>Select the container image you would like to connect to this template.</Subtitle>
@@ -190,6 +224,17 @@ const Subtitle = styled.div`
 `;
 
 const ClusterLabel = styled.div`
+  margin-right: 10px;
+  display: flex;
+  align-items: center;
+  > i {
+    font-size: 16px;
+    margin-right: 6px;
+  }
+`;
+
+const NamespaceLabel = styled.div`
+  margin-left: 15px;
   margin-right: 10px;
   display: flex;
   align-items: center;

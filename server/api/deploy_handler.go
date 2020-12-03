@@ -22,6 +22,7 @@ import (
 // HandleDeployTemplate triggers a chart deployment from a template
 func (app *App) HandleDeployTemplate(w http.ResponseWriter, r *http.Request) {
 	vals, err := url.ParseQuery(r.URL.RawQuery)
+
 	if err != nil {
 		app.handleErrorFormDecoding(err, ErrReleaseDecode, w)
 		return
@@ -98,13 +99,26 @@ func (app *App) HandleDeployTemplate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	var tgz string
+	switch form.ChartTemplateForm.TemplateName {
+	case "react":
+		tgz = "react-0.1.5.tgz"
+	case "docker":
+		tgz = "docker-0.0.1.tgz"
+	}
+
 	// Output values.yaml string
-	_, err = agent.InstallChart("./internal/local_templates/react-0.1.5.tgz", v)
+	_, err = agent.InstallChart(
+		"./internal/local_templates/"+tgz,
+		v,
+		form.ChartTemplateForm.Name,
+		form.ReleaseForm.Form.Namespace,
+	)
 
 	if err != nil {
 		app.sendExternalError(err, http.StatusInternalServerError, HTTPError{
 			Code:   ErrReleaseDeploy,
-			Errors: []string{"error installing a new chart" + err.Error()},
+			Errors: []string{"error installing a new chart: " + err.Error()},
 		}, w)
 
 		return

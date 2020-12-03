@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import styled from 'styled-components';
-
+import randomWords from 'random-words';
 import { Context } from '../../../../shared/Context';
 import api from '../../../../shared/api';
 
@@ -43,13 +43,14 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
 
   onSubmit = (formValues: any) => {
     let { currentCluster, currentProject } = this.context;
+    let name = randomWords({ exactly: 3, join: '-' })
     api.deployTemplate('<token>', {
       templateName: this.props.currentTemplate.name,
-      imageURL: "index.docker.io/bitnami/redis",
+      imageURL: "",
       storage: StorageType.Secret,
       formValues,
       namespace: this.state.selectedNamespace,
-      name: "random",
+      name,
     }, {
       id: currentProject.id,
       cluster_id: currentCluster.id,

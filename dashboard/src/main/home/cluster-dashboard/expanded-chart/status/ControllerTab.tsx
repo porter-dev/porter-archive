@@ -69,13 +69,13 @@ export default class ControllerTab extends Component<PropsType, StateType> {
       case "deployment":
       case "replicaset":
         return [
-          c.status?.availableReplicas || c.status?.replicas - c.status?.unavailableReplicas, 
-          c.status?.replicas
+          c.status?.availableReplicas || c.status?.replicas - c.status?.unavailableReplicas || 0, 
+          c.status?.replicas || 0
         ]
       case "statefulset":
-       return [c.status?.readyReplicas, c.status?.replicas]
+       return [c.status?.readyReplicas || 0, c.status?.replicas || 0]
       case "daemonset":
-        return [c.status?.numberAvailable, c.status?.desiredNumberScheduled]
+        return [c.status?.numberAvailable || 0, c.status?.desiredNumberScheduled || 0]
       }
   }
 

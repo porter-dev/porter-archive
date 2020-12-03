@@ -17,8 +17,9 @@ import (
 // projectCmd represents the "porter project" base command when called
 // without any subcommands
 var projectCmd = &cobra.Command{
-	Use:   "project",
-	Short: "Commands that control Porter project settings",
+	Use:     "project",
+	Aliases: []string{"projects"},
+	Short:   "Commands that control Porter project settings",
 }
 
 var createProjectCmd = &cobra.Command{
@@ -59,18 +60,6 @@ var listProjectCmd = &cobra.Command{
 	},
 }
 
-var listProjectClustersCmd = &cobra.Command{
-	Use:   "clusters list",
-	Short: "Lists the linked clusters for a project",
-	Run: func(cmd *cobra.Command, args []string) {
-		err := checkLoginAndRun(args, listProjectClusters)
-
-		if err != nil {
-			os.Exit(1)
-		}
-	},
-}
-
 func init() {
 	rootCmd.AddCommand(projectCmd)
 
@@ -86,8 +75,6 @@ func init() {
 	projectCmd.AddCommand(deleteProjectCmd)
 
 	projectCmd.AddCommand(listProjectCmd)
-
-	projectCmd.AddCommand(listProjectClustersCmd)
 }
 
 func createProject(_ *api.AuthCheckResponse, client *api.Client, args []string) error {
@@ -159,27 +146,6 @@ func deleteProject(_ *api.AuthCheckResponse, client *api.Client, args []string) 
 
 		color.New(color.FgGreen).Printf("Deleted project with name %s and id %d\n", resp.Name, resp.ID)
 	}
-
-	return nil
-}
-
-func listProjectClusters(user *api.AuthCheckResponse, client *api.Client, args []string) error {
-	clusters, err := client.ListProjectClusters(context.Background(), getProjectID())
-
-	if err != nil {
-		return err
-	}
-
-	w := new(tabwriter.Writer)
-	w.Init(os.Stdout, 3, 8, 0, '\t', tabwriter.AlignRight)
-
-	fmt.Fprintf(w, "%s\t%s\t%s\n", "ID", "NAME", "SERVER")
-
-	for _, cluster := range clusters {
-		fmt.Fprintf(w, "%d\t%s\t%s\n", cluster.ID, cluster.Name, cluster.Server)
-	}
-
-	w.Flush()
 
 	return nil
 }

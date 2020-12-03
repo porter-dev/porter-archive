@@ -4,6 +4,8 @@ before:
 builds:
   - id: "porter-cli"
     binary: porter
+    ldflags:
+    - -X 'github.com/porter-dev/porter/cli/cmd.Version={{.Version}}'
     env:
       - CGO_ENABLED=1
     dir: cli

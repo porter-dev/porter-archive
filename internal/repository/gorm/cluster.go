@@ -193,6 +193,17 @@ func (repo *ClusterRepository) ListClustersByProjectID(
 	return clusters, nil
 }
 
+// UpdateCluster modifies an existing Cluster in the database
+func (repo *ClusterRepository) UpdateCluster(
+	cluster *models.Cluster,
+) (*models.Cluster, error) {
+	if err := repo.db.Save(cluster).Error; err != nil {
+		return nil, err
+	}
+
+	return cluster, nil
+}
+
 // UpdateClusterTokenCache updates the token cache for a cluster
 func (repo *ClusterRepository) UpdateClusterTokenCache(
 	tokenCache *ints.TokenCache,

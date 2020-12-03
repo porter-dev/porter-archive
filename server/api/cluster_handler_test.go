@@ -145,6 +145,30 @@ func TestHandleListProjectClusters(t *testing.T) {
 	testClusterRequests(t, listProjectClustersTest, true)
 }
 
+var updateClusterTests = []*clusterTest{
+	&clusterTest{
+		initializers: []func(t *tester){
+			initUserDefault,
+			initProject,
+			initProjectClusterDefault,
+		},
+		msg:       "Update cluster name",
+		method:    "POST",
+		endpoint:  "/api/projects/1/clusters/1",
+		body:      `{"name":"cluster-new-name"}`,
+		expStatus: http.StatusOK,
+		expBody:   `{"id":1,"project_id":1,"name":"cluster-new-name","server":"https://10.10.10.10","service":"kube"}`,
+		useCookie: true,
+		validators: []func(c *clusterTest, tester *tester, t *testing.T){
+			projectClusterBodyValidator,
+		},
+	},
+}
+
+func TestHandleUpdateCluster(t *testing.T) {
+	testClusterRequests(t, updateClusterTests, true)
+}
+
 var deleteClusterTests = []*clusterTest{
 	&clusterTest{
 		initializers: []func(t *tester){

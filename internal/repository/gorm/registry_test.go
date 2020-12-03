@@ -86,6 +86,45 @@ func TestListRegistriesByProjectID(t *testing.T) {
 	}
 }
 
+func TestUpdateRegistry(t *testing.T) {
+	tester := &tester{
+		dbFileName: "./porter_update_registry.db",
+	}
+
+	setupTestEnv(tester, t)
+	initProject(tester, t)
+	initRegistry(tester, t)
+	defer cleanup(tester, t)
+
+	reg := tester.initRegs[0]
+
+	reg.Name = "registry-new-name"
+
+	reg, err := tester.repo.Registry.UpdateRegistry(
+		reg,
+	)
+
+	if err != nil {
+		t.Fatalf("%v\n", err)
+	}
+
+	reg, err = tester.repo.Registry.ReadRegistry(tester.initRegs[0].ID)
+
+	// make sure data is correct
+	expRegistry := models.Registry{
+		ProjectID: tester.initProjects[0].ID,
+		Name:      "registry-new-name",
+	}
+
+	// reset fields for reflect.DeepEqual
+	reg.Model = orm.Model{}
+
+	if diff := deep.Equal(expRegistry, *reg); diff != nil {
+		t.Errorf("incorrect registry")
+		t.Error(diff)
+	}
+}
+
 func TestUpdateRegistryToken(t *testing.T) {
 	tester := &tester{
 		dbFileName: "./porter_test_update_registry_token.db",

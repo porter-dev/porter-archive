@@ -2,6 +2,7 @@ package forms
 
 import (
 	"github.com/porter-dev/porter/internal/models"
+	"github.com/porter-dev/porter/internal/repository"
 )
 
 // CreateRegistry represents the accepted values for creating a
@@ -21,4 +22,25 @@ func (cr *CreateRegistry) ToRegistry() (*models.Registry, error) {
 		GCPIntegrationID: cr.GCPIntegrationID,
 		AWSIntegrationID: cr.AWSIntegrationID,
 	}, nil
+}
+
+// UpdateRegistryForm represents the accepted values for updating a
+// registry (only name for now)
+type UpdateRegistryForm struct {
+	ID uint
+
+	Name string `json:"name" form:"required"`
+}
+
+// ToRegistry converts the form to a cluster
+func (urf *UpdateRegistryForm) ToRegistry(repo repository.RegistryRepository) (*models.Registry, error) {
+	registry, err := repo.ReadRegistry(urf.ID)
+
+	if err != nil {
+		return nil, err
+	}
+
+	registry.Name = urf.Name
+
+	return registry, nil
 }

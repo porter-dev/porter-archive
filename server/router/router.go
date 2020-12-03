@@ -203,6 +203,20 @@ func New(
 		)
 
 		r.Method(
+			"POST",
+			"/projects/{project_id}/clusters/{cluster_id}",
+			auth.DoesUserHaveProjectAccess(
+				auth.DoesUserHaveClusterAccess(
+					requestlog.NewHandler(a.HandleUpdateProjectCluster, l),
+					mw.URLParam,
+					mw.URLParam,
+				),
+				mw.URLParam,
+				mw.WriteAccess,
+			),
+		)
+
+		r.Method(
 			"DELETE",
 			"/projects/{project_id}/clusters/{cluster_id}",
 			auth.DoesUserHaveProjectAccess(
@@ -284,6 +298,20 @@ func New(
 			"/projects/{project_id}/registries",
 			auth.DoesUserHaveProjectAccess(
 				requestlog.NewHandler(a.HandleListProjectRegistries, l),
+				mw.URLParam,
+				mw.WriteAccess,
+			),
+		)
+
+		r.Method(
+			"POST",
+			"/projects/{project_id}/registries/{registry_id}",
+			auth.DoesUserHaveProjectAccess(
+				auth.DoesUserHaveRegistryAccess(
+					requestlog.NewHandler(a.HandleUpdateProjectRegistry, l),
+					mw.URLParam,
+					mw.URLParam,
+				),
 				mw.URLParam,
 				mw.WriteAccess,
 			),

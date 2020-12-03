@@ -299,6 +299,48 @@ func TestListClustersByProjectID(t *testing.T) {
 	}
 }
 
+func TestUpdateCluster(t *testing.T) {
+	tester := &tester{
+		dbFileName: "./porter_update_cluster.db",
+	}
+
+	setupTestEnv(tester, t)
+	initProject(tester, t)
+	initCluster(tester, t)
+	defer cleanup(tester, t)
+
+	cluster := tester.initClusters[0]
+
+	cluster.Name = "cluster-new-name"
+
+	cluster, err := tester.repo.Cluster.UpdateCluster(
+		cluster,
+	)
+
+	if err != nil {
+		t.Fatalf("%v\n", err)
+	}
+
+	cluster, err = tester.repo.Cluster.ReadCluster(tester.initClusters[0].ID)
+
+	// make sure data is correct
+	expCluster := models.Cluster{
+		ProjectID:                tester.initProjects[0].ID,
+		Name:                     "cluster-new-name",
+		Server:                   "https://localhost",
+		KubeIntegrationID:        tester.initKIs[0].ID,
+		CertificateAuthorityData: []byte("-----BEGIN"),
+	}
+
+	// reset fields for reflect.DeepEqual
+	cluster.Model = orm.Model{}
+
+	if diff := deep.Equal(expCluster, *cluster); diff != nil {
+		t.Errorf("incorrect cluster")
+		t.Error(diff)
+	}
+}
+
 func TestUpdateClusterToken(t *testing.T) {
 	tester := &tester{
 		dbFileName: "./porter_test_update_cluster_token.db",

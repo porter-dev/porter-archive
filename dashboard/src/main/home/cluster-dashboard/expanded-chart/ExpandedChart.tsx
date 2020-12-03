@@ -3,6 +3,7 @@ import styled from 'styled-components';
 import yaml from 'js-yaml';
 import { Base64 } from 'js-base64';
 import close from '../../../../assets/close.png';
+import _ from 'lodash';
 
 import { ResourceType, ChartType, StorageType, ChoiceType } from '../../../../shared/types';
 import { Context } from '../../../../shared/Context';
@@ -102,18 +103,24 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
     return null;
   }
 
-  upgradeValues = (values: any) => {
+  upgradeValues = (rawValues: any) => {
     let { currentProject, currentCluster, setCurrentError } = this.context;
 
-    // Weave in pre-existing values and convert to yaml
-    values = yaml.dump({ ...(this.props.currentChart.config as Object), ...values });
+    // Convert dotted keys to nested objects
+    let values = {};
+    for (let key in rawValues) {
+      _.set(values, key, rawValues[key]);
+    }
+
+    // Weave in preexisting values and convert to yaml
+    let valuesYaml = yaml.dump({ ...(this.props.currentChart.config as Object), ...values });
     
     this.setState({ saveValuesStatus: 'loading' });
     this.props.refreshChart();
     api.upgradeChartValues('<token>', {
       namespace: this.props.currentChart.namespace,
       storage: StorageType.Secret,
-      values,
+      values: valuesYaml,
     }, {
       id: currentProject.id, 
       name: this.props.currentChart.name,

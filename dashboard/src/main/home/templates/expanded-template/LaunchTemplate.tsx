@@ -19,6 +19,7 @@ type PropsType = {
 type StateType = {
   currentView: string,
   clusterOptions: { label: string, value: string }[],
+  saveValuesStatus: string | null
   selectedNamespace: string,
   selectedCluster: string,
   selectedImageUrl: string | null,
@@ -32,6 +33,7 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
   state = {
     currentView: 'repo',
     clusterOptions: [] as { label: string, value: string }[],
+    saveValuesStatus: null as (string | null),
     selectedCluster: this.context.currentCluster.name,
     selectedNamespace: "default",
     selectedImageUrl: '' as string | null,
@@ -44,6 +46,8 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
   onSubmit = (formValues: any) => {
     let { currentCluster, currentProject } = this.context;
     let name = randomWords({ exactly: 3, join: '-' })
+    this.setState({ saveValuesStatus: 'loading' });
+
     api.deployTemplate('<token>', {
       templateName: this.props.currentTemplate.name,
       imageURL: "",
@@ -56,9 +60,9 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
       cluster_id: currentCluster.id,
     }, (err: any, res: any) => {
       if (err) {
-        console.log(err)
+        this.setState({ saveValuesStatus: 'error' });
       } else {
-        console.log(res.data)
+        this.setState({ saveValuesStatus: 'successful' });
       }
     });
   }
@@ -73,9 +77,11 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
         value: tab.name, component: (
           <ValuesFormWrapper>
             <ValuesForm 
+              key={tab.name}
               sections={tab.sections} 
               onSubmit={this.onSubmit}
               disabled={!this.state.selectedImageUrl || this.state.selectedImageUrl === ''}
+              saveValuesStatus={this.state.saveValuesStatus}
             />
           </ValuesFormWrapper>
         ),
@@ -118,7 +124,8 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
   }
 
   componentDidUpdate(prevProps: PropsType, prevState: StateType) {
-    if (this.state.selectedImageUrl != prevState.selectedImageUrl) {
+    if (this.state.selectedImageUrl != prevState.selectedImageUrl
+        || this.state.saveValuesStatus != prevState.saveValuesStatus) {
       this.refreshTabs();
     }
   }

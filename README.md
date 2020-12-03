@@ -4,7 +4,7 @@ Porter is a **dashboard for Helm** with support for the following features:
 - In-depth view of releases, including revision histories and component graphs
 - Rollback/update of existing releases, including editing of `values.yaml`
 
-![Graph View](https://user-images.githubusercontent.com/65516095/96605367-221abe00-12c4-11eb-8915-25e70fe7929a.png)
+![Graph View](https://user-images.githubusercontent.com/22849518/101072979-ca32d080-356c-11eb-80f9-67a8d1018393.png)
 **What's next for Porter?** View our [roadmap](https://github.com/porter-dev/porter/projects/1), or read our [mission statement](#mission-statement). 
 
 ## Quick Start

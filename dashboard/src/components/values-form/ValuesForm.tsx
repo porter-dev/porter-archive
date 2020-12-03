@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
 import styled from 'styled-components';
+import _ from 'lodash';
 
 import { Section, FormElement } from '../../shared/types';
 import { Context } from '../../shared/Context';
@@ -33,11 +34,11 @@ export default class ValuesForm extends Component<PropsType, StateType> {
         let key = item.name || item.variable;
         
         let def = item.settings && item.settings.default;
-        console.log(key, def)
 
         // Set default value from chart config if available
         if (this.props.config) {
-          this.props.config[key] ? def = this.props.config[key] : null;
+          let retrievedValue = _.get(this.props.config, key)
+          retrievedValue ? def = retrievedValue : null;
         }
 
         switch (item.type) {

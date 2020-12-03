@@ -146,6 +146,7 @@ export default class ValuesForm extends Component<PropsType, StateType> {
   }
 
   render() {
+    console.log('save values status', this.props.saveValuesStatus)
     return (
       <Wrapper>
         <StyledValuesForm>

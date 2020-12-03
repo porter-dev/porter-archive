@@ -128,13 +128,6 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
     });
   }
 
-  // componentDidUpdate(prevProps: PropsType, prevState: StateType) {
-  //   if (this.state.selectedImageUrl != prevState.selectedImageUrl
-  //       || this.state.saveValuesStatus != prevState.saveValuesStatus) {
-  //     this.refreshTabs();
-  //   }
-  // }
-
   renderIcon = (icon: string) => {
     if (icon) {
       return <Icon src={icon} />

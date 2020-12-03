@@ -119,6 +119,7 @@ type ChartTemplateForm struct {
 	TemplateName string                 `json:"templateName" form:"required"`
 	ImageURL     string                 `json:"imageURL" form:"required"`
 	FormValues   map[string]interface{} `json:"formValues"`
+	Name         string                 `json:"name"`
 }
 
 // InstallChartTemplateForm represents the accepted values for installing a new chart from a template.

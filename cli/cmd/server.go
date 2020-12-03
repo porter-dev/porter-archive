@@ -23,14 +23,15 @@ type startOps struct {
 var opts = &startOps{}
 
 var serverCmd = &cobra.Command{
-	Use:   "server",
-	Short: "Commands to control a local Porter server",
+	Use:     "server",
+	Aliases: []string{"svr"},
+	Short:   "Commands to control a local Porter server",
 }
 
 // startCmd represents the start command
 var startCmd = &cobra.Command{
 	Use:   "start",
-	Short: "Starts a Porter instance using the Docker engine",
+	Short: "Starts a Porter server instance on the host",
 	Run: func(cmd *cobra.Command, args []string) {
 		if getDriver() == "docker" {
 			setDriver("docker")
@@ -100,14 +101,14 @@ func init() {
 		&opts.driver,
 		"driver",
 		"local",
-		"the db to use, one of local or docker",
+		"the driver to use, one of \"local\" or \"docker\"",
 	)
 
 	startCmd.PersistentFlags().StringVar(
 		&opts.imageTag,
 		"image-tag",
 		"latest",
-		"the Porter image tag to use",
+		"the Porter image tag to use (if using docker driver)",
 	)
 
 	opts.port = startCmd.PersistentFlags().IntP(

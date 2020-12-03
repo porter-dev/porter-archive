@@ -1,7 +1,10 @@
 package cmd
 
 import (
+	"fmt"
+	"io/ioutil"
 	"os"
+	"path/filepath"
 	"strconv"
 
 	"github.com/fatih/color"
@@ -21,6 +24,12 @@ var (
 var configCmd = &cobra.Command{
 	Use:   "config",
 	Short: "Commands that control local configuration settings",
+	Run: func(cmd *cobra.Command, args []string) {
+		if err := printConfig(); err != nil {
+			color.New(color.FgRed).Printf("An error occurred: %v\n", err)
+			os.Exit(1)
+		}
+	},
 }
 
 var setProjectCmd = &cobra.Command{
@@ -126,6 +135,18 @@ func getDriver() string {
 	}
 
 	return viper.GetString("driver")
+}
+
+func printConfig() error {
+	config, err := ioutil.ReadFile(filepath.Join(home, ".porter", "porter.yaml"))
+
+	if err != nil {
+		return err
+	}
+
+	fmt.Printf(string(config))
+
+	return nil
 }
 
 func setProject(id uint) error {

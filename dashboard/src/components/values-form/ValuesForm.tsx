@@ -33,6 +33,7 @@ export default class ValuesForm extends Component<PropsType, StateType> {
         let key = item.name || item.variable;
         
         let def = item.settings && item.settings.default;
+        console.log(key, def)
 
         // Set default value from chart config if available
         if (this.props.config) {
@@ -60,6 +61,7 @@ export default class ValuesForm extends Component<PropsType, StateType> {
 
   // Initialize corresponding state fields for form blocks
   componentDidMount() {
+    console.log(this.props.sections)
     this.updateFormState();
   }
 

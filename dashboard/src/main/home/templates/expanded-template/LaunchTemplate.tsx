@@ -23,7 +23,7 @@ type StateType = {
   selectedImageUrl: string | null,
   selectedTag: string | null,
   tabOptions: ChoiceType[],
-  tabContents: any
+  currentTab: string | null,
 };
 
 export default class LaunchTemplate extends Component<PropsType, StateType> {
@@ -34,7 +34,7 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
     selectedImageUrl: '' as string | null,
     selectedTag: '' as string | null,
     tabOptions: [] as ChoiceType[],
-    tabContents: [] as any,
+    currentTab: null as string | null,
   };
 
   onSubmit = (formValues: any) => {
@@ -56,29 +56,31 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
     });
   }
 
-  refreshTabs = () => {
-    // Generate settings tabs from the provided form
-    let tabOptions = [] as ChoiceType[];
-    let tabContents = [] as any;
-    this.props.currentTemplate.form.tabs.map((tab: any, i: number) => {
-      tabOptions.push({ value: tab.name, label: tab.label });
-      tabContents.push({
-        value: tab.name, component: (
+  renderTabContents = () => {
+    return this.props.currentTemplate.form.tabs.map((tab: any, i: number) => {
+
+      // If tab is current, render
+      if (tab.name === this.state.currentTab) {
+        return (
           <ValuesFormWrapper>
             <ValuesForm 
               sections={tab.sections} 
               onSubmit={this.onSubmit}
-              disabled={!this.state.selectedImageUrl || this.state.selectedImageUrl === ''}
             />
           </ValuesFormWrapper>
-        ),
-      });
+        );
+      }
     });
-    this.setState({ tabOptions, tabContents });
   }
 
   componentDidMount() {
-    this.refreshTabs();
+
+    // Retrieve tab options
+    let tabOptions = [] as ChoiceType[];
+    this.props.currentTemplate.form.tabs.map((tab: any, i: number) => {
+      tabOptions.push({ value: tab.name, label: tab.label });
+    });
+    this.setState({ tabOptions });
 
     // TODO: query with selected filter once implemented
     let { currentProject } = this.context;
@@ -92,12 +94,6 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
         }
       }
     });
-  }
-
-  componentDidUpdate(prevProps: PropsType, prevState: StateType) {
-    if (this.state.selectedImageUrl != prevState.selectedImageUrl) {
-      this.refreshTabs();
-    }
   }
 
   renderIcon = (icon: string) => {
@@ -144,7 +140,7 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
           />
         </ClusterSection>
 
-        <Subtitle>Select the container image you would like to connect to this template.</Subtitle>
+        <Subtitle>Select the container image you would like to connect to this template (optional).</Subtitle>
         <Br />
         <ImageSelector
           selectedTag={this.state.selectedTag}
@@ -159,8 +155,11 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
         <Subtitle>Configure additional settings for this template (optional).</Subtitle>
         <TabRegion
           options={this.state.tabOptions}
-          tabContents={this.state.tabContents}
-        />
+          currentTab={this.state.currentTab}
+          setCurrentTab={(x: string) => this.setState({ currentTab: x })}
+        >
+          {this.renderTabContents()}
+        </TabRegion>
       </StyledLaunchTemplate>
     );
   }

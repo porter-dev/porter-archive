@@ -55,6 +55,20 @@ func (a *Agent) UpgradeRelease(
 	name string,
 	values string,
 ) (*release.Release, error) {
+	valuesYaml, err := chartutil.ReadValues([]byte(values))
+
+	if err != nil {
+		return nil, fmt.Errorf("Values could not be parsed: %v", err)
+	}
+
+	return a.UpgradeReleaseByValues(name, valuesYaml)
+}
+
+// UpgradeReleaseByValues upgrades a release by unmarshaled yaml values
+func (a *Agent) UpgradeReleaseByValues(
+	name string,
+	values map[string]interface{},
+) (*release.Release, error) {
 	// grab the latest release
 	rel, err := a.GetRelease(name, 0)
 
@@ -65,13 +79,7 @@ func (a *Agent) UpgradeRelease(
 	ch := rel.Chart
 
 	cmd := action.NewUpgrade(a.ActionConfig)
-	valuesYaml, err := chartutil.ReadValues([]byte(values))
-
-	if err != nil {
-		return nil, fmt.Errorf("Values could not be parsed: %v", err)
-	}
-
-	res, err := cmd.Run(name, ch, valuesYaml)
+	res, err := cmd.Run(name, ch, values)
 
 	if err != nil {
 		return nil, fmt.Errorf("Upgrade failed: %v", err)
@@ -80,21 +88,32 @@ func (a *Agent) UpgradeRelease(
 	return res, nil
 }
 
-// InstallChart installs a new chart by URL, absolute or relative filepaths.
-// Equivalent to `helm install [CHART_NAME] [cp]` where cp is one of the following:
-//  1) Absolute URL: https://example.com/charts/nginx-1.2.3.tgz
-//  2) path to packaged chart ./nginx-1.2.3.tgz
-//  3) path to unpacked chart ./nginx
+// InstallChart reads the raw values and calls Agent.InstallChartByValues
 func (a *Agent) InstallChart(
 	cp string,
 	values []byte,
 ) (*release.Release, error) {
-	cmd := action.NewInstall(a.ActionConfig)
 	valuesYaml, err := chartutil.ReadValues(values)
 
 	if err != nil {
 		return nil, fmt.Errorf("Values could not be parsed: %v", err)
 	}
+
+	return a.InstallChartByValues(cp, valuesYaml)
+}
+
+// InstallChartByValues installs a new chart by unmarshalled values via
+// URL, absolute or relative filepaths.
+//
+// Equivalent to `helm install [CHART_NAME] [cp]` where cp is one of the following:
+//  1) Absolute URL: https://example.com/charts/nginx-1.2.3.tgz
+//  2) path to packaged chart ./nginx-1.2.3.tgz
+//  3) path to unpacked chart ./nginx
+func (a *Agent) InstallChartByValues(
+	cp string,
+	values map[string]interface{},
+) (*release.Release, error) {
+	cmd := action.NewInstall(a.ActionConfig)
 
 	// Only supports filepaths for now, URL option WIP.
 	// Check chart dependencies to make sure all are present in /charts
@@ -118,7 +137,7 @@ func (a *Agent) InstallChart(
 		}
 	}
 
-	return cmd.Run(chartRequested, valuesYaml)
+	return cmd.Run(chartRequested, values)
 }
 
 // RollbackRelease rolls a release back to a specified revision/version

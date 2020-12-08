@@ -121,6 +121,14 @@ func New(
 			),
 		)
 
+		r.Method(
+			"GET",
+			"/templates/{name}/{version}",
+			auth.BasicAuthenticate(
+				requestlog.NewHandler(a.HandleReadTemplate, l),
+			),
+		)
+
 		// /api/oauth routes
 		// r.Method(
 		// 	"GET",

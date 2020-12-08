@@ -4,9 +4,9 @@ import (
 	"context"
 	"time"
 
-	"github.com/porter-dev/porter/cli/cmd/templater/utils"
+	"github.com/porter-dev/porter/internal/templater/utils"
 
-	"github.com/porter-dev/porter/cli/cmd/templater"
+	"github.com/porter-dev/porter/internal/templater"
 	"k8s.io/client-go/dynamic"
 	di "k8s.io/client-go/dynamic/dynamicinformer"
 	"k8s.io/client-go/tools/cache"

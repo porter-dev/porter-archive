@@ -14,6 +14,7 @@ import (
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 	"k8s.io/client-go/discovery"
 	diskcached "k8s.io/client-go/discovery/cached/disk"
+	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/kubernetes/fake"
 	"k8s.io/client-go/rest"
@@ -27,6 +28,23 @@ import (
 	// this line will register plugins
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 )
+
+// GetDynamicClientOutOfClusterConfig creates a new dynamic client using the OutOfClusterConfig
+func GetDynamicClientOutOfClusterConfig(conf *OutOfClusterConfig) (dynamic.Interface, error) {
+	restConf, err := conf.ToRESTConfig()
+
+	if err != nil {
+		return nil, err
+	}
+
+	client, err := dynamic.NewForConfig(restConf)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return client, nil
+}
 
 // GetAgentOutOfClusterConfig creates a new Agent using the OutOfClusterConfig
 func GetAgentOutOfClusterConfig(conf *OutOfClusterConfig) (*Agent, error) {

@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
 import styled from 'styled-components';
+import _ from 'lodash';
 
 import { Section, FormElement } from '../../shared/types';
 import { Context } from '../../shared/Context';
@@ -17,6 +18,7 @@ type PropsType = {
   sections?: Section[],
   disabled?: boolean,
   saveValuesStatus?: string | null,
+  config?: any, // Chart config object containing existing values
 };
 
 type StateType = any;
@@ -32,6 +34,13 @@ export default class ValuesForm extends Component<PropsType, StateType> {
         let key = item.name || item.variable;
         
         let def = item.settings && item.settings.default;
+
+        // Set default value from chart config if available
+        if (this.props.config) {
+          let retrievedValue = _.get(this.props.config, key)
+          retrievedValue ? def = retrievedValue : null;
+        }
+
         switch (item.type) {
           case 'checkbox':
             formState[key] = def ? def : false;
@@ -53,6 +62,7 @@ export default class ValuesForm extends Component<PropsType, StateType> {
 
   // Initialize corresponding state fields for form blocks
   componentDidMount() {
+    console.log(this.props.sections)
     this.updateFormState();
   }
 
@@ -139,6 +149,7 @@ export default class ValuesForm extends Component<PropsType, StateType> {
   }
 
   render() {
+    console.log('save values status', this.props.saveValuesStatus)
     return (
       <Wrapper>
         <StyledValuesForm>

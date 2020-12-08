@@ -272,6 +272,35 @@ func (c *Client) CreateProjectCluster(
 	return bodyResp, nil
 }
 
+// DeleteProjectCluster deletes a cluster given a project id and cluster id
+func (c *Client) DeleteProjectCluster(
+	ctx context.Context,
+	projectID uint,
+	clusterID uint,
+) error {
+	req, err := http.NewRequest(
+		"DELETE",
+		fmt.Sprintf("%s/projects/%d/clusters/%d", c.BaseURL, projectID, clusterID),
+		nil,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	req = req.WithContext(ctx)
+
+	if httpErr, err := c.sendRequest(req, nil, true); httpErr != nil || err != nil {
+		if httpErr != nil {
+			return fmt.Errorf("code %d, errors %v", httpErr.Code, httpErr.Errors)
+		}
+
+		return err
+	}
+
+	return nil
+}
+
 // DeleteProjectResponse is the object returned after project deletion
 type DeleteProjectResponse models.ProjectExternal
 

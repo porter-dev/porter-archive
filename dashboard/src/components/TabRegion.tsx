@@ -6,27 +6,21 @@ import Loading from './Loading';
 
 type PropsType = {
   options: { label: string, value: string }[],
-  tabContents: any,
+  currentTab: string,
+  setCurrentTab: (x: string) => void,
   defaultTab?: string,
   addendum?: any,
-  checkTabExists?: boolean, // Handles the currently selected tab disappearing
   color?: string | null,
 };
 
 type StateType = {
-  currentTab: string
 };
 
 // Manages a tab selector and renders the associated view
-// TODO: consider rearchitecturing to support standard re-render
 export default class TabRegion extends Component<PropsType, StateType> {
-  state = {
-    currentTab: this.props.defaultTab
-  }
-
   setDefaultTab = () => {
     if (!this.props.defaultTab && this.props.options[0]) {
-      this.setState({ currentTab: this.props.options[0].value });
+      this.props.setCurrentTab(this.props.options[0].value);
     }
   }
 
@@ -35,24 +29,16 @@ export default class TabRegion extends Component<PropsType, StateType> {
   }
 
   componentDidUpdate(prevProps: PropsType) {
-    let { options, checkTabExists } = this.props;
-    if (prevProps.options !== options && !this.state.currentTab) {
-      this.setDefaultTab();
-    } else if (prevProps.checkTabExists !== checkTabExists
-      && !options.some((e: any) => e.value === this.state.currentTab)) {
-      this.setDefaultTab();
-    }
-  }
-
-  renderTabContents = () => {
-    let found = this.props.tabContents.find((el: any) => el.value === this.state.currentTab);
-    if (found) {
-      return found.component;
+    let { options, currentTab } = this.props;
+    if (prevProps.options !== options) {
+      if (options.filter(x => x.value === currentTab).length === 0) {
+        this.setDefaultTab();
+      }
     }
   }
 
   renderContents = () => {
-    if (!this.state.currentTab) {
+    if (!this.props.currentTab) {
       return (
         <Loading />
       );
@@ -63,13 +49,13 @@ export default class TabRegion extends Component<PropsType, StateType> {
         <TabSelector
           options={this.props.options}
           color={this.props.color}
-          currentTab={this.state.currentTab}
-          setCurrentTab={(x: string) => this.setState({ currentTab: x })}
+          currentTab={this.props.currentTab}
+          setCurrentTab={(x: string) => this.props.setCurrentTab(x)}
           addendum={this.props.addendum}
         />
         <Gap />
         <TabContents>
-          {this.renderTabContents()}
+          {this.props.children}
         </TabContents>
       </Div>
     );

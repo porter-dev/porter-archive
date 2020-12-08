@@ -162,6 +162,7 @@ const ResourceHeader = styled.div`
   display: flex;
   align-items: center;
   color: #ffffff66;
+  user-select: none;
   padding: 8px 18px;
   padding-left: ${(props: { expanded: boolean, hasChildren: boolean }) => props.hasChildren ? '10px' : '22px'};
   text-transform: capitalize;

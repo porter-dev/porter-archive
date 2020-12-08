@@ -1,5 +1,7 @@
 package models
 
+import "helm.sh/helm/v3/pkg/chart"
+
 // IndexYAML represents a chart repo's index.yaml
 type IndexYAML struct {
 	APIVersion string                    `yaml:"apiVersion"`
@@ -21,12 +23,20 @@ type ChartYAML []struct {
 	Version     string   `yaml:"version"`
 }
 
-// PorterChart represents a bundled Porter template
-type PorterChart struct {
+// PorterChartList is how a chart gets displayed when listed
+type PorterChartList struct {
 	Name        string `json:"name"`
+	Version     string `json:"version"`
 	Description string `json:"description"`
 	Icon        string `json:"icon"`
-	Markdown    string `json:"markdown"`
+}
+
+// PorterChartRead is a chart with detailed information and a form for reading
+type PorterChartRead struct {
+	Markdown string                 `json:"markdown"`
+	Metadata *chart.Metadata        `json:"metadata"`
+	Values   map[string]interface{} `json:"values"`
+	Form     *FormYAML              `json:"form"`
 }
 
 // FormContext is the target context

@@ -10,7 +10,6 @@ import (
 	"github.com/porter-dev/porter/internal/forms"
 	"github.com/porter-dev/porter/internal/helm/loader"
 	"github.com/porter-dev/porter/internal/templater/parser"
-	"helm.sh/helm/v3/pkg/chart"
 
 	"github.com/porter-dev/porter/internal/models"
 )
@@ -27,12 +26,12 @@ func (app *App) HandleListTemplates(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Loop over charts in index.yaml
-	porterCharts := []models.PorterChart{}
+	porterCharts := []models.PorterChartList{}
 
 	for _, entry := range repoIndex.Entries {
 		indexChart := entry[0]
 
-		porterChart := models.PorterChart{}
+		porterChart := models.PorterChartList{}
 		porterChart.Name = indexChart.Name
 		porterChart.Description = indexChart.Description
 		porterChart.Icon = indexChart.Icon
@@ -41,12 +40,6 @@ func (app *App) HandleListTemplates(w http.ResponseWriter, r *http.Request) {
 	}
 
 	json.NewEncoder(w).Encode(porterCharts)
-}
-
-// ChartWithForm is a base helm chart with the form yaml appended
-type ChartWithForm struct {
-	*chart.Chart
-	Form *models.FormYAML `json:"form"`
 }
 
 // HandleReadTemplate reads a given template with name and version field
@@ -86,7 +79,9 @@ func (app *App) HandleReadTemplate(w http.ResponseWriter, r *http.Request) {
 		HelmChart: chart,
 	}
 
-	res := &ChartWithForm{chart, nil}
+	res := &models.PorterChartRead{}
+	res.Metadata = chart.Metadata
+	res.Values = chart.Values
 
 	for _, file := range chart.Files {
 		if strings.Contains(file.Name, "form.yaml") {
@@ -97,6 +92,10 @@ func (app *App) HandleReadTemplate(w http.ResponseWriter, r *http.Request) {
 			}
 
 			res.Form = formYAML
+		} else if strings.Contains(file.Name, "README.md") {
+			res.Markdown = string(file.Data)
 		}
 	}
+
+	json.NewEncoder(w).Encode(res)
 }

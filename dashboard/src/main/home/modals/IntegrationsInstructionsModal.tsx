@@ -28,45 +28,18 @@ export default class ClusterInstructionsModal extends Component<PropsType, State
       case 0:
         return (
           <Placeholder>
-            1. To install the Porter CLI, first retrieve the latest binary:
+            <Bold>Elastic Container Registry (ECR):</Bold>
+            1. Run the following command on the Porter CLI.
             <Code>
-              &#123;<br />
-              name=$(curl -s https://api.github.com/repos/porter-dev/porter/releases/latest | grep "browser_download_url.*porter_.*_Darwin_x86_64\.zip" | cut -d ":" -f 2,3 | tr -d \")<br />
-              name=$(basename $name)<br />
-              curl -L https://github.com/porter-dev/porter/releases/latest/download/$name --output $name<br />
-              unzip -a $name<br />
-              rm $name<br />
-              &#125;
+              porter connect ecr
             </Code>
-            2. Move the file into your bin:
+            2. Enter the region your ECR instance belongs to. For example:
             <Code>
-              chmod +x ./porter<br />
-              sudo mv ./porter /usr/local/bin/porter
+              AWS Region: us-west-2
             </Code>
-            3. Log in to the Porter CLI:
+            3. Porter will automatically set up an IAM user in your AWS account to grant ECR access. Once this is done, it will prompt you to enter a name for the registry. Here you may enter any name you'd like.
             <Code>
-              porter config set-host {location.protocol + '//' + location.host}<br/>
-              porter auth login
-            </Code>
-            4. Configure the Porter CLI and link your current context:
-            <Code>
-              porter config set-project {this.context.currentProject.id}<br/>
-              porter connect kubeconfig
-            </Code>
-          </Placeholder>
-        );
-      case 1:
-        return (
-          <Placeholder>
-            <Bold>Passing a kubeconfig explicitly</Bold>
-            You can pass a path to a kubeconfig file explicitly via:
-            <Code>
-              porter connect kubeconfig --kubeconfig path/to/kubeconfig
-            </Code>
-            <Bold>Passing a context list</Bold>
-            You can initialize Porter with a set of contexts by passing a context list to start. The contexts that Porter will be able to access are the same as kubectl config get-contexts. For example, if there are two contexts named minikube and staging, you could connect both of them via:
-            <Code>
-              porter connect kubeconfig --contexts minikube --contexts staging
+              Give this registry a name: my-awesome-registry
             </Code>
           </Placeholder>
         );
@@ -85,7 +58,7 @@ export default class ClusterInstructionsModal extends Component<PropsType, State
           <CloseButtonImg src={close} />
         </CloseButton>
 
-        <ModalTitle>Connecting to an Existing Cluster</ModalTitle>
+        <ModalTitle>Connecting to an Image Registry</ModalTitle>
 
         <TabSelector
           options={tabOptions}
@@ -94,21 +67,6 @@ export default class ClusterInstructionsModal extends Component<PropsType, State
         />
 
         {this.renderPage()}
-        <PageSection>
-          <PageCount>{currentPage + 1}/2</PageCount>
-          <i 
-            className="material-icons"
-            onClick={() => currentPage > 0 ? this.setState({ currentPage: currentPage - 1 }) : null}
-          >
-            arrow_back
-          </i>
-          <i 
-            className="material-icons"
-            onClick={() => currentPage < 1 ? this.setState({ currentPage: currentPage + 1 }) : null}
-          >
-            arrow_forward
-          </i>
-        </PageSection>
       </StyledClusterInstructionsModal>
     );
   }
@@ -179,7 +137,7 @@ const Bold = styled.div`
 `;
 
 const Subtitle = styled.div`
-  padding: 17px 0px 25px;
+  padding: 10px 0px 20px;
   font-family: 'Work Sans', sans-serif;
   font-size: 13px;
   color: #aaaabb;

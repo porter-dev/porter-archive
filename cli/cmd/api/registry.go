@@ -104,6 +104,67 @@ func (c *Client) CreateGCR(
 	return bodyResp, nil
 }
 
+// ListRegistryResponse is the list of registries for a project
+type ListRegistryResponse []models.RegistryExternal
+
+// ListRegistries returns a list of registries for a project
+func (c *Client) ListRegistries(
+	ctx context.Context,
+	projectID uint,
+) (ListRegistryResponse, error) {
+	req, err := http.NewRequest(
+		"GET",
+		fmt.Sprintf("%s/projects/%d/registries", c.BaseURL, projectID),
+		nil,
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	req = req.WithContext(ctx)
+	bodyResp := &ListRegistryResponse{}
+
+	if httpErr, err := c.sendRequest(req, bodyResp, true); httpErr != nil || err != nil {
+		if httpErr != nil {
+			return nil, fmt.Errorf("code %d, errors %v", httpErr.Code, httpErr.Errors)
+		}
+
+		return nil, err
+	}
+
+	return *bodyResp, nil
+}
+
+// DeleteProjectRegistry deletes a registry given a project id and registry id
+func (c *Client) DeleteProjectRegistry(
+	ctx context.Context,
+	projectID uint,
+	registryID uint,
+) error {
+	req, err := http.NewRequest(
+		"DELETE",
+		fmt.Sprintf("%s/projects/%d/registries/%d", c.BaseURL, projectID, registryID),
+		nil,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	req = req.WithContext(ctx)
+
+	if httpErr, err := c.sendRequest(req, nil, true); httpErr != nil || err != nil {
+		if httpErr != nil {
+			return fmt.Errorf("code %d, errors %v", httpErr.Code, httpErr.Errors)
+		}
+
+		return err
+	}
+
+	return nil
+}
+
 // ListRegistryRepositoryResponse is the list of repositories in a registry
 type ListRegistryRepositoryResponse []registry.Repository
 

@@ -6,7 +6,6 @@ import (
 	"github.com/pkg/errors"
 	"helm.sh/helm/v3/pkg/action"
 	"helm.sh/helm/v3/pkg/chart"
-	"helm.sh/helm/v3/pkg/chart/loader"
 	"helm.sh/helm/v3/pkg/release"
 	"k8s.io/helm/pkg/chartutil"
 )
@@ -88,9 +87,17 @@ func (a *Agent) UpgradeReleaseByValues(
 	return res, nil
 }
 
-// InstallChart reads the raw values and calls Agent.InstallChartByValues
-func (a *Agent) InstallChart(
-	cp string,
+// InstallChartConfig is the config required to install a chart
+type InstallChartConfig struct {
+	Chart     *chart.Chart
+	Name      string
+	Namespace string
+	Values    map[string]interface{}
+}
+
+// InstallChartFromValuesBytes reads the raw values and calls Agent.InstallChart
+func (a *Agent) InstallChartFromValuesBytes(
+	conf *InstallChartConfig,
 	values []byte,
 ) (*release.Release, error) {
 	valuesYaml, err := chartutil.ReadValues(values)
@@ -99,45 +106,40 @@ func (a *Agent) InstallChart(
 		return nil, fmt.Errorf("Values could not be parsed: %v", err)
 	}
 
-	return a.InstallChartByValues(cp, valuesYaml)
+	conf.Values = valuesYaml
+
+	return a.InstallChart(conf)
 }
 
-// InstallChartByValues installs a new chart by unmarshalled values via
-// URL, absolute or relative filepaths.
-//
-// Equivalent to `helm install [CHART_NAME] [cp]` where cp is one of the following:
-//  1) Absolute URL: https://example.com/charts/nginx-1.2.3.tgz
-//  2) path to packaged chart ./nginx-1.2.3.tgz
-//  3) path to unpacked chart ./nginx
-func (a *Agent) InstallChartByValues(
-	cp string,
-	values map[string]interface{},
+// InstallChart installs a new chart
+func (a *Agent) InstallChart(
+	conf *InstallChartConfig,
 ) (*release.Release, error) {
 	cmd := action.NewInstall(a.ActionConfig)
 
-	// Only supports filepaths for now, URL option WIP.
-	// Check chart dependencies to make sure all are present in /charts
-	chartRequested, err := loader.Load(cp)
-	if err != nil {
+	if cmd.Version == "" && cmd.Devel {
+		cmd.Version = ">0.0.0-0"
+	}
+
+	cmd.ReleaseName = conf.Name
+	cmd.Namespace = conf.Namespace
+
+	if err := checkIfInstallable(conf.Chart); err != nil {
 		return nil, err
 	}
 
-	if err := checkIfInstallable(chartRequested); err != nil {
-		return nil, err
-	}
+	// if chartRequested.Metadata.Deprecated {
+	// 	return nil, fmt.Errorf("This chart is deprecated")
+	// }
 
-	if chartRequested.Metadata.Deprecated {
-		return nil, fmt.Errorf("This chart is deprecated")
-	}
-
-	if req := chartRequested.Metadata.Dependencies; req != nil {
-		if err := action.CheckDependencies(chartRequested, req); err != nil {
+	if req := conf.Chart.Metadata.Dependencies; req != nil {
+		if err := action.CheckDependencies(conf.Chart, req); err != nil {
 			// TODO: Handle dependency updates.
 			return nil, err
 		}
 	}
 
-	return cmd.Run(chartRequested, values)
+	return cmd.Run(conf.Chart, conf.Values)
 }
 
 // RollbackRelease rolls a release back to a specified revision/version

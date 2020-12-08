@@ -65,6 +65,7 @@ func (app *App) HandleListReleases(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// PorterRelease is a helm release with a form attached
 type PorterRelease struct {
 	*release.Release
 	Form *models.FormYAML `json:"form"`

@@ -21,7 +21,6 @@ import (
 
 type ClientConfigDefault struct {
 	DynamicClient dynamic.Interface
-	DynamicObject *td.Object
 
 	HelmAgent   *helm.Agent
 	HelmRelease *release.Release
@@ -127,18 +126,33 @@ func formToLookupTable(def *ClientConfigDefault, form *models.FormYAML) map[*mod
 					lookup[content.Context] = formContextToContextConfig(def, content.Context)
 				}
 
-				// TODO -- case on whether value is proper query string, if not resolve it to a
-				// proper query string
-				query, err := utils.NewQuery(
-					fmt.Sprintf("tabs[%d].sections[%d].contents[%d]", i, j, k),
-					fmt.Sprintf("%v", content.Value),
-				)
+				if content.Value != "" {
+					// TODO -- case on whether value is proper query string, if not resolve it to a
+					// proper query string
+					query, err := utils.NewQuery(
+						fmt.Sprintf("tabs[%d].sections[%d].contents[%d]", i, j, k),
+						fmt.Sprintf("%v", content.Value),
+					)
 
-				if err != nil {
-					continue
+					if err != nil {
+						continue
+					}
+
+					lookup[content.Context].TemplateReader.RegisterQuery(query)
+				} else if content.Variable != "" {
+					// if variable field set without value field set, make variable field into jsonpath
+					// query
+					query, err := utils.NewQuery(
+						fmt.Sprintf("tabs[%d].sections[%d].contents[%d]", i, j, k),
+						fmt.Sprintf("{ .%v }", content.Variable),
+					)
+
+					if err != nil {
+						continue
+					}
+
+					lookup[content.Context].TemplateReader.RegisterQuery(query)
 				}
-
-				lookup[content.Context].TemplateReader.RegisterQuery(query)
 			}
 		}
 	}
@@ -187,7 +201,16 @@ func formContextToContextConfig(def *ClientConfigDefault, context *models.FormCo
 
 		res.Capabilities = []string{"read"}
 
-		res.TemplateReader = td.NewDynamicTemplateReader(def.DynamicClient, def.DynamicObject)
+		// identify object based on passed config
+		obj := &td.Object{
+			Group:     context.Config["Group"],
+			Version:   context.Config["Version"],
+			Resource:  context.Config["Resource"],
+			Namespace: context.Config["Namespace"],
+			Name:      context.Config["Name"],
+		}
+
+		res.TemplateReader = td.NewDynamicTemplateReader(def.DynamicClient, obj)
 	default:
 		return nil
 	}

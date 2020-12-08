@@ -6,12 +6,13 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/porter-dev/porter/internal/kubernetes"
+	"github.com/go-test/deep"
+	"github.com/porter-dev/porter/internal/models"
 )
 
 // ------------------------- TEST TYPES AND MAIN LOOP ------------------------- //
 
-type templatesTest struct {
+type templateTest struct {
 	initializers []func(tester *tester)
 	msg          string
 	method       string
@@ -20,10 +21,10 @@ type templatesTest struct {
 	expStatus    int
 	expBody      string
 	useCookie    bool
-	validators   []func(c *templatesTest, tester *tester, t *testing.T)
+	validators   []func(c *templateTest, tester *tester, t *testing.T)
 }
 
-func testTemplatesRequests(t *testing.T, tests []*templatesTest, canQuery bool) {
+func testTemplatesRequests(t *testing.T, tests []*templateTest, canQuery bool) {
 	for _, c := range tests {
 		// create a new tester
 		tester := newTester(canQuery)
@@ -67,47 +68,56 @@ func testTemplatesRequests(t *testing.T, tests []*templatesTest, canQuery bool) 
 
 // ------------------------- TEST FIXTURES AND FUNCTIONS  ------------------------- //
 
-// var listTemplatesTests = []*templatesTest{
-// 	&templatesTest{
-// 		initializers: []func(tester *tester){
-// 			initDefaultTemplates,
-// 		},
-// 		msg:       "List templates",
-// 		method:    "GET",
-// 		endpoint:  "/api/templates",
-// 		body:      "",
-// 		expStatus: http.StatusOK,
-// 		expBody:   "unimplemented",
-// 		useCookie: true,
-// 		validators: []func(c *templatesTest, tester *tester, t *testing.T){
-// 			templatesListValidator,
-// 		},
-// 	},
-// }
+var listTemplatesTests = []*templateTest{
+	&templateTest{
+		initializers: []func(tester *tester){
+			initUserDefault,
+		},
+		msg:       "List templates",
+		method:    "GET",
+		endpoint:  "/api/templates",
+		body:      "",
+		expStatus: http.StatusOK,
+		expBody:   `[{"name":"Docker","description":"Template to deploy any Docker container on Porter.","icon":"https://cdn4.iconfinder.com/data/icons/logos-and-brands/512/97_Docker_logo_logos-512.png"},{"name":"redis","description":"DEPRECATED Open source, advanced key-value store. It is often referred to as a data structure server since keys can contain strings, hashes, lists, sets and sorted sets.","icon":"https://bitnami.com/assets/stacks/redis/img/redis-stack-220x234.png"}]`,
+		useCookie: true,
+		validators: []func(c *templateTest, tester *tester, t *testing.T){
+			templatesListValidator,
+		},
+	},
+}
 
-// func TestHandleListTemplates(t *testing.T) {
-// 	testTemplatesRequests(t, listTemplatesTests, true)
-// }
+func TestHandleListTemplates(t *testing.T) {
+	testTemplatesRequests(t, listTemplatesTests, true)
+}
 
 // ------------------------- INITIALIZERS AND VALIDATORS ------------------------- //
 
-func initDefaultTemplates(tester *tester) {
-	initUserDefault(tester)
-
-	agent := kubernetes.GetAgentTesting(defaultObjects...)
-
-	// overwrite the test agent with new resources
-	tester.app.TestAgents.K8sAgent = agent
-}
-
-func templatesListValidator(c *templatesTest, tester *tester, t *testing.T) {
-	var gotBody map[string]interface{}
-	var expBody map[string]interface{}
+func templatesListValidator(c *templateTest, tester *tester, t *testing.T) {
+	gotBody := make([]*models.PorterChartList, 0)
+	expBody := make([]*models.PorterChartList, 0)
 
 	json.Unmarshal(tester.rr.Body.Bytes(), &gotBody)
 	json.Unmarshal([]byte(c.expBody), &expBody)
 
-	if string(tester.rr.Body.Bytes()) != c.expBody {
-		t.Errorf("Mismatch")
+	if diff := deep.Equal(gotBody, expBody); diff != nil {
+		t.Errorf("handler returned wrong body:\n")
+		t.Error(diff)
+	}
+}
+
+func templateBodyValidator(c *templateTest, tester *tester, t *testing.T) {
+	gotBody := models.PorterChartRead{}
+	expBody := models.PorterChartRead{}
+
+	bytes := tester.rr.Body.Bytes()
+
+	t.Errorf(string(bytes))
+
+	json.Unmarshal(bytes, &gotBody)
+	json.Unmarshal([]byte(c.expBody), &expBody)
+
+	if diff := deep.Equal(gotBody, expBody); diff != nil {
+		t.Errorf("handler returned wrong body:\n")
+		t.Error(diff)
 	}
 }

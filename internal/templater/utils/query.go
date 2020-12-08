@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"reflect"
 
-	"github.com/porter-dev/porter/cli/cmd/templater"
+	"github.com/porter-dev/porter/internal/templater"
 	"k8s.io/client-go/util/jsonpath"
 )
 

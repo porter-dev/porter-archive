@@ -46,6 +46,7 @@ type FormContent struct {
 	Type     string       `yaml:"type" json:"type"`
 	Label    string       `yaml:"label" json:"label"`
 	Name     string       `yaml:"name,omitempty" json:"name,omitempty"`
+	Variable string       `yaml:"variable,omitempty" json:"variable,omitempty"`
 	Value    interface{}  `yaml:"value,omitempty" json:"value,omitempty"`
 	Settings struct {
 		Default interface{} `yaml:"default,omitempty" json:"default,omitempty"`

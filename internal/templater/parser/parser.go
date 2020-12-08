@@ -26,9 +26,6 @@ type ClientConfigDefault struct {
 	HelmAgent   *helm.Agent
 	HelmRelease *release.Release
 	HelmChart   *chart.Chart
-
-	// for installing a new chart
-	HelmChartPath string
 }
 
 func FormYAMLFromBytes(def *ClientConfigDefault, bytes []byte) (*models.FormYAML, error) {
@@ -174,7 +171,7 @@ func formContextToContextConfig(def *ClientConfigDefault, context *models.FormCo
 
 		res.TemplateWriter = &th.ValuesTemplateWriter{
 			Agent:       def.HelmAgent,
-			ChartPath:   def.HelmChartPath,
+			Chart:       def.HelmChart,
 			ReleaseName: relName,
 		}
 	case "helm/manifests":

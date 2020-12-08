@@ -2,27 +2,6 @@ package models
 
 import "helm.sh/helm/v3/pkg/chart"
 
-// IndexYAML represents a chart repo's index.yaml
-type IndexYAML struct {
-	APIVersion string                    `yaml:"apiVersion"`
-	Generated  string                    `yaml:"generated"`
-	Entries    map[interface{}]ChartYAML `yaml:"entries"`
-}
-
-// ChartYAML represents the data for chart in index.yaml
-type ChartYAML []struct {
-	APIVersion  string   `yaml:"apiVersion"`
-	AppVersion  string   `yaml:"appVersion"`
-	Created     string   `yaml:"created"`
-	Description string   `yaml:"description"`
-	Digest      string   `yaml:"digest"`
-	Icon        string   `yaml:"icon"`
-	Name        string   `yaml:"name"`
-	Type        string   `yaml:"type"`
-	Urls        []string `yaml:"urls"`
-	Version     string   `yaml:"version"`
-}
-
 // PorterChartList is how a chart gets displayed when listed
 type PorterChartList struct {
 	Name        string `json:"name"`

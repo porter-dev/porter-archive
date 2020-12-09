@@ -52,7 +52,7 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
 
     api.deployTemplate('<token>', {
       templateName: this.props.currentTemplate.name,
-      imageURL: "",
+      imageURL: this.state.selectedImageUrl,
       storage: StorageType.Secret,
       formValues,
       namespace: this.state.selectedNamespace,
@@ -80,8 +80,8 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
               key={tab.name}
               sections={tab.sections} 
               onSubmit={this.onSubmit}
-              // disabled={!this.state.selectedImageUrl || this.state.selectedImageUrl === ''}
               disabled={false}
+              // disabled={!this.state.selectedImageUrl || this.state.selectedImageUrl === ''}
               saveValuesStatus={this.state.saveValuesStatus}
             />
           </ValuesFormWrapper>
@@ -185,7 +185,7 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
           />
         </ClusterSection>
 
-        {/* <Subtitle>Select the container image you would like to connect to this template (optional).</Subtitle>
+        <Subtitle>Select the container image you would like to connect to this template (optional).</Subtitle>
         <Br />
         <ImageSelector
           selectedTag={this.state.selectedTag}
@@ -196,7 +196,7 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
           setCurrentView={this.props.setCurrentView}
         />
 
-        <br /> */}
+        <br />
         <Subtitle>Configure additional settings for this template (optional).</Subtitle>
         <TabRegion
           options={this.state.tabOptions}

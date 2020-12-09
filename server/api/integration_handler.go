@@ -37,6 +37,19 @@ func (app *App) HandleListRegistryIntegrations(w http.ResponseWriter, r *http.Re
 	}
 }
 
+// HandleListHelmRepoIntegrations lists the Helm repo integrations available to the
+// instance
+func (app *App) HandleListHelmRepoIntegrations(w http.ResponseWriter, r *http.Request) {
+	hrs := ints.PorterHelmRepoIntegrations
+
+	w.WriteHeader(http.StatusOK)
+
+	if err := json.NewEncoder(w).Encode(&hrs); err != nil {
+		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
+		return
+	}
+}
+
 // HandleListRepoIntegrations lists the repo integrations available to the
 // instance
 func (app *App) HandleListRepoIntegrations(w http.ResponseWriter, r *http.Request) {
@@ -171,6 +184,69 @@ func (app *App) HandleCreateAWSIntegration(w http.ResponseWriter, r *http.Reques
 	awsExt := aws.Externalize()
 
 	if err := json.NewEncoder(w).Encode(awsExt); err != nil {
+		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
+		return
+	}
+}
+
+// HandleCreateBasicAuthIntegration creates a new basic auth integration in the DB
+func (app *App) HandleCreateBasicAuthIntegration(w http.ResponseWriter, r *http.Request) {
+	session, err := app.store.Get(r, app.cookieName)
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	userID, _ := session.Values["user_id"].(uint)
+
+	projID, err := strconv.ParseUint(chi.URLParam(r, "project_id"), 0, 64)
+
+	if err != nil || projID == 0 {
+		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
+		return
+	}
+
+	form := &forms.CreateBasicAuthIntegrationForm{
+		UserID:    userID,
+		ProjectID: uint(projID),
+	}
+
+	// decode from JSON to form value
+	if err := json.NewDecoder(r.Body).Decode(form); err != nil {
+		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
+		return
+	}
+
+	// validate the form
+	if err := app.validator.Struct(form); err != nil {
+		app.handleErrorFormValidation(err, ErrProjectValidateFields, w)
+		return
+	}
+
+	// convert the form to a gcp integration
+	basic, err := form.ToBasicIntegration()
+
+	if err != nil {
+		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
+		return
+	}
+
+	// handle write to the database
+	basic, err = app.repo.BasicIntegration.CreateBasicIntegration(basic)
+
+	if err != nil {
+		app.handleErrorDataWrite(err, w)
+		return
+	}
+
+	app.logger.Info().Msgf("New basic integration created: %d", basic.ID)
+
+	w.WriteHeader(http.StatusCreated)
+
+	basicExt := basic.Externalize()
+
+	if err := json.NewEncoder(w).Encode(basicExt); err != nil {
 		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
 		return
 	}

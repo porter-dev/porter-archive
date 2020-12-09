@@ -106,6 +106,14 @@ func New(
 
 		r.Method(
 			"GET",
+			"/integrations/helm",
+			auth.BasicAuthenticate(
+				requestlog.NewHandler(a.HandleListHelmRepoIntegrations, l),
+			),
+		)
+
+		r.Method(
+			"GET",
 			"/integrations/repo",
 			auth.BasicAuthenticate(
 				requestlog.NewHandler(a.HandleListRepoIntegrations, l),
@@ -285,6 +293,16 @@ func New(
 			"/projects/{project_id}/integrations/aws",
 			auth.DoesUserHaveProjectAccess(
 				requestlog.NewHandler(a.HandleCreateAWSIntegration, l),
+				mw.URLParam,
+				mw.WriteAccess,
+			),
+		)
+
+		r.Method(
+			"POST",
+			"/projects/{project_id}/integrations/basic",
+			auth.DoesUserHaveProjectAccess(
+				requestlog.NewHandler(a.HandleCreateBasicAuthIntegration, l),
 				mw.URLParam,
 				mw.WriteAccess,
 			),

@@ -250,7 +250,7 @@ var createProjectClusterCandidatesTests = []*clusterTest{
 					Name:                     "cluster-test",
 					Server:                   "https://10.10.10.10",
 					OIDCIntegrationID:        1,
-					TokenCache:               integrations.TokenCache{},
+					TokenCache:               integrations.ClusterTokenCache{},
 					CertificateAuthorityData: []byte("-----BEGIN CER"),
 				}
 

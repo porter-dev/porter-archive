@@ -125,6 +125,10 @@ const upgradeChartValues = baseApi<{
 
 const getTemplates = baseApi('GET', '/api/templates');
 
+const getTemplateInfo = baseApi<{}, { name: string, version: string }>('GET', pathParams => {
+  return `/api/templates/${pathParams.name}/${pathParams.version}`;
+});
+
 const getRepos = baseApi<{}, { id: number }>('GET', pathParams => {
   return `/api/projects/${pathParams.id}/repos`;
 });
@@ -160,9 +164,14 @@ const deployTemplate = baseApi<{
   storage: StorageType,
   namespace: string,
   name: string,
-}, { id: number, cluster_id: number }>('POST', pathParams => {
-  let { cluster_id, id } = pathParams;
-  return `/api/projects/${id}/deploy?cluster_id=${cluster_id}`;
+}, { 
+  id: number,
+  cluster_id: number, 
+  name: string, 
+  version: string 
+}>('POST', pathParams => {
+  let { cluster_id, id, name, version } = pathParams;
+  return `/api/projects/${id}/deploy/${name}/${version}?cluster_id=${cluster_id}`;
 });
 
 const getClusterIntegrations = baseApi('GET', '/api/integrations/cluster');
@@ -234,6 +243,7 @@ export default {
   rollbackChart,
   upgradeChartValues,
   getTemplates,
+  getTemplateInfo,
   getBranches,
   getBranchContents,
   getProjects,

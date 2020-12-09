@@ -121,6 +121,14 @@ func New(
 			),
 		)
 
+		r.Method(
+			"GET",
+			"/templates/{name}/{version}",
+			auth.BasicAuthenticate(
+				requestlog.NewHandler(a.HandleReadTemplate, l),
+			),
+		)
+
 		// /api/oauth routes
 		// r.Method(
 		// 	"GET",
@@ -493,10 +501,10 @@ func New(
 		// 	),
 		// )
 
-		// /api/projects/{project_id}/deploy route
+		// /api/projects/{project_id}/deploy routes
 		r.Method(
 			"POST",
-			"/projects/{project_id}/deploy",
+			"/projects/{project_id}/deploy/{name}/{version}",
 			auth.DoesUserHaveProjectAccess(
 				auth.DoesUserHaveClusterAccess(
 					requestlog.NewHandler(a.HandleDeployTemplate, l),

@@ -1,65 +1,40 @@
 package api
 
 import (
-	"archive/tar"
-	"bytes"
-	"compress/gzip"
 	"encoding/json"
-	"errors"
-	"fmt"
-	"io"
-	"io/ioutil"
 	"net/http"
+	"net/url"
 	"strings"
 
-	"github.com/porter-dev/porter/internal/models"
+	"github.com/go-chi/chi"
+	"github.com/porter-dev/porter/internal/forms"
+	"github.com/porter-dev/porter/internal/helm/loader"
+	"github.com/porter-dev/porter/internal/templater/parser"
 
-	"gopkg.in/yaml.v2"
+	"github.com/porter-dev/porter/internal/models"
 )
 
 // HandleListTemplates retrieves a list of Porter templates
 // TODO: test and reduce fragility (handle untar/parse error for individual charts)
 // TODO: separate markdown retrieval into its own query if necessary
 func (app *App) HandleListTemplates(w http.ResponseWriter, r *http.Request) {
-	baseURL := "https://porter-dev.github.io/chart-repo/"
-	resp, err := http.Get(baseURL + "index.yaml")
+	repoIndex, err := loader.LoadRepoIndex("https://porter-dev.github.io/chart-repo/index.yaml")
+
 	if err != nil {
-		fmt.Println(err)
-		return
-	}
-
-	defer resp.Body.Close()
-	body, _ := ioutil.ReadAll(resp.Body)
-
-	form := models.IndexYAML{}
-	if err := yaml.Unmarshal([]byte(body), &form); err != nil {
-		fmt.Println(err)
+		app.handleErrorFormDecoding(err, ErrReleaseDecode, w)
 		return
 	}
 
 	// Loop over charts in index.yaml
-	porterCharts := []models.PorterChart{}
-	for k := range form.Entries {
-		indexChart := form.Entries[k][0]
-		tarURL := indexChart.Urls[0]
-		if !strings.Contains(tarURL, "http://") {
-			tarURL = baseURL + tarURL
-		}
+	porterCharts := []models.PorterChartList{}
 
-		formData, markdown, err := processTarball(tarURL)
-		if err != nil {
-			fmt.Println(err)
-			return
-		}
+	for _, entry := range repoIndex.Entries {
+		indexChart := entry[0]
 
-		porterChart := models.PorterChart{}
+		porterChart := models.PorterChartList{}
 		porterChart.Name = indexChart.Name
 		porterChart.Description = indexChart.Description
 		porterChart.Icon = indexChart.Icon
-		porterChart.Form = *formData
-		if markdown != "" {
-			porterChart.Markdown = markdown
-		}
 
 		porterCharts = append(porterCharts, porterChart)
 	}
@@ -67,80 +42,60 @@ func (app *App) HandleListTemplates(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(porterCharts)
 }
 
-func processTarball(tarURL string) (*models.FormYAML, string, error) {
-	resp, err := http.Get(tarURL)
-	if err != nil {
-		fmt.Println(err)
-		return nil, "", err
+// HandleReadTemplate reads a given template with name and version field
+func (app *App) HandleReadTemplate(w http.ResponseWriter, r *http.Request) {
+	name := chi.URLParam(r, "name")
+	version := chi.URLParam(r, "version")
+
+	// if version passed as latest, pass empty string to loader to get latest
+	if version == "latest" {
+		version = ""
 	}
 
-	defer resp.Body.Close()
-	body, _ := ioutil.ReadAll(resp.Body)
-	buf := bytes.NewBuffer(body)
-
-	gzf, err := gzip.NewReader(buf)
-	if err != nil {
-		fmt.Println(err)
-		return nil, "", err
+	form := &forms.ChartForm{
+		Name:    name,
+		Version: version,
+		RepoURL: "https://porter-dev.github.io/chart-repo/",
 	}
 
-	// Process tarball to generate FormYAML and retrieve markdown
-	tarReader := tar.NewReader(gzf)
-	markdown := ""
-	for {
-		header, err := tarReader.Next()
-		if err == io.EOF {
-			break
-		} else if err != nil {
-			fmt.Println(err)
-			return nil, "", err
-		}
+	// if a repo_url is passed as query param, it will be populated
+	vals, err := url.ParseQuery(r.URL.RawQuery)
 
-		name := header.Name
-		switch header.Typeflag {
-		case tar.TypeDir:
-			continue
-		case tar.TypeReg:
+	if err != nil {
+		app.handleErrorFormDecoding(err, ErrReleaseDecode, w)
+		return
+	}
 
-			// Handle info.md if found
-			if strings.Contains(name, "README.md") {
-				bufMd := new(bytes.Buffer)
+	form.PopulateRepoURLFromQueryParams(vals)
 
-				_, err := io.Copy(bufMd, tarReader)
-				if err != nil {
-					fmt.Println(err)
-					return nil, "", err
-				}
+	chart, err := loader.LoadChart(form.RepoURL, form.Name, form.Version)
 
-				markdown = string(bufMd.Bytes())
+	if err != nil {
+		app.handleErrorFormDecoding(err, ErrReleaseDecode, w)
+		return
+	}
+
+	parserDef := &parser.ClientConfigDefault{
+		HelmChart: chart,
+	}
+
+	res := &models.PorterChartRead{}
+	res.Metadata = chart.Metadata
+	res.Values = chart.Values
+
+	for _, file := range chart.Files {
+		if strings.Contains(file.Name, "form.yaml") {
+			formYAML, err := parser.FormYAMLFromBytes(parserDef, file.Data)
+
+			if err != nil {
+				break
 			}
 
-			// Handle form.yaml located in archive
-			if strings.Contains(name, "form.yaml") {
-				bufForm := new(bytes.Buffer)
-
-				_, err := io.Copy(bufForm, tarReader)
-				if err != nil {
-					fmt.Println(err)
-					return nil, "", err
-				}
-
-				// Unmarshal yaml byte buffer
-				form := models.FormYAML{}
-				if err := yaml.Unmarshal(bufForm.Bytes(), &form); err != nil {
-					fmt.Println(err)
-					return nil, "", err
-				}
-				return &form, markdown, nil
-			}
-		default:
-			fmt.Printf("%s : %c %s %s\n",
-				"Unknown type",
-				header.Typeflag,
-				"in file",
-				name,
-			)
+			res.Form = formYAML
+		} else if strings.Contains(file.Name, "README.md") {
+			res.Markdown = string(file.Data)
 		}
 	}
-	return nil, "", errors.New("no form.yaml found")
+
+	json.NewEncoder(w).Encode(res)
 }

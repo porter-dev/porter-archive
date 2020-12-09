@@ -1,7 +1,6 @@
 import React, { Component } from 'react';
 import styled from 'styled-components';
 import yaml from 'js-yaml';
-import { Base64 } from 'js-base64';
 import close from '../../../../assets/close.png';
 import _ from 'lodash';
 
@@ -37,6 +36,7 @@ type StateType = {
   tabContents: any,
   currentTab: string | null,
   saveValuesStatus: string | null,
+  forceRefreshRevisions: boolean, // Update revisions after upgrading values
 };
 
 /*
@@ -58,6 +58,7 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
     tabContents: [] as any,
     currentTab: null as string | null,
     saveValuesStatus: null as (string | null),
+    forceRefreshRevisions: false,
   }
 
   updateResources = () => {
@@ -93,14 +94,26 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
   }
 
   getFormData = (): any => {
-    let { files } = this.props.currentChart.chart;
-    for (const file of files) { 
-      if (file.name === 'form.yaml') {
-        let formData = yaml.load(Base64.decode(file.data));
-        return formData;
-      }
-    };
-    return null;
+    return new Promise(resolve => {
+      let { files } = this.props.currentChart.chart;
+      for (let file of files) { 
+        if (file.name === 'form.yaml') {
+          let chartName = this.props.currentChart.chart.metadata.name;
+          api.getTemplateInfo('<token>', {}, {
+            name: chartName.toLowerCase().trim(),
+            version: 'latest',
+          }, (err: any, res: any) => {
+            if (err) {
+              console.log(err);
+              resolve(null);
+            } else {
+              let { form } = res.data;
+              resolve(form);
+            }
+          });
+        }
+      };
+    });
   }
 
   upgradeValues = (rawValues: any) => {
@@ -130,8 +143,10 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
         setCurrentError(err);
         this.setState({ saveValuesStatus: 'error' });
       } else {
-        this.setState({ saveValuesStatus: 'successful' });
-        this.props.refreshChart();
+        this.setState({ 
+          saveValuesStatus: 'successful',
+          forceRefreshRevisions: true, 
+        });
       }
     });
   }
@@ -202,7 +217,7 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
             if (tab.value === currentTab) {
               
               return (
-                <ValuesFormWrapper>
+                <ValuesFormWrapper key={i}>
                   <ValuesForm 
                     sections={tab.sections} 
                     onSubmit={this.upgradeValues}
@@ -217,8 +232,9 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
     }
   }
 
-  updateTabs = () => {
-    let formData = this.getFormData();
+  async updateTabs() {
+    let formData = await this.getFormData();
+    console.log(formData);
     let tabOptions = [] as any[];
 
     // Generate form tabs if form.yaml exists
@@ -348,6 +364,8 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
               chart={chart}
               refreshChart={refreshChart}
               setRevisionPreview={this.setRevisionPreview}
+              forceRefreshRevisions={this.state.forceRefreshRevisions}
+              refreshRevisionsOff={() => this.setState({ forceRefreshRevisions: false })}
             />
           </HeaderWrapper>
 

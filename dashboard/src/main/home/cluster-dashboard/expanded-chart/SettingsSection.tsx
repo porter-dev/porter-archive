@@ -30,6 +30,13 @@ export default class SettingsSection extends Component<PropsType, StateType> {
     saveValuesStatus: null as (string | null),
   }
 
+  componentDidMount() {
+    let image = this.props.currentChart.config.image;
+    if (image.repository) {
+      this.setState({ selectedImageUrl: image.repository });
+    }
+  }
+
   redeployWithNewImage = (img: string, tag: string) => {
     this.setState({saveValuesStatus: 'loading'})
     let { currentCluster, currentProject } = this.context;

@@ -40,7 +40,7 @@ func (app *App) HandleListRegistryIntegrations(w http.ResponseWriter, r *http.Re
 // HandleListRepoIntegrations lists the repo integrations available to the
 // instance
 func (app *App) HandleListRepoIntegrations(w http.ResponseWriter, r *http.Request) {
-	repos := ints.PorterRepoIntegrations
+	repos := ints.PorterGitRepoIntegrations
 
 	w.WriteHeader(http.StatusOK)
 

@@ -138,8 +138,10 @@ func TestUpdateRegistryToken(t *testing.T) {
 		Name:      "registry-test",
 		ProjectID: tester.initProjects[0].Model.ID,
 		TokenCache: ints.RegTokenCache{
-			Token:  []byte("token-1"),
-			Expiry: time.Now().Add(-1 * time.Hour),
+			TokenCache: ints.TokenCache{
+				Token:  []byte("token-1"),
+				Expiry: time.Now().Add(-1 * time.Hour),
+			},
 		},
 	}
 

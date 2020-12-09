@@ -5,13 +5,16 @@ type IntegrationService string
 
 // The list of supported third-party services
 const (
-	GKE    IntegrationService = "gke"
-	EKS    IntegrationService = "eks"
-	Kube   IntegrationService = "kube"
-	GCR    IntegrationService = "gcr"
-	ECR    IntegrationService = "ecr"
-	Github IntegrationService = "github"
-	Docker IntegrationService = "docker"
+	GKE      IntegrationService = "gke"
+	GCS      IntegrationService = "gcs"
+	S3       IntegrationService = "s3"
+	HelmRepo IntegrationService = "helm"
+	EKS      IntegrationService = "eks"
+	Kube     IntegrationService = "kube"
+	GCR      IntegrationService = "gcr"
+	ECR      IntegrationService = "ecr"
+	Github   IntegrationService = "github"
+	Docker   IntegrationService = "docker"
 )
 
 // PorterIntegration is a supported integration service, specifying an auth
@@ -74,8 +77,27 @@ var PorterRegistryIntegrations = []PorterIntegration{
 	},
 }
 
-// PorterRepoIntegrations are the supported repo integrations
-var PorterRepoIntegrations = []PorterIntegration{
+// PorterHelmRepoIntegrations are the supported helm repo integrations
+var PorterHelmRepoIntegrations = []PorterIntegration{
+	PorterIntegration{
+		AuthMechanism: "basic",
+		Category:      "helm",
+		Service:       HelmRepo,
+	},
+	PorterIntegration{
+		AuthMechanism: "gcp",
+		Category:      "helm",
+		Service:       GCS,
+	},
+	PorterIntegration{
+		AuthMechanism: "aws",
+		Category:      "helm",
+		Service:       S3,
+	},
+}
+
+// PorterGitRepoIntegrations are the supported git repo integrations
+var PorterGitRepoIntegrations = []PorterIntegration{
 	PorterIntegration{
 		AuthMechanism: "oauth",
 		Category:      "repo",

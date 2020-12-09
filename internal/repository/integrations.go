@@ -12,6 +12,14 @@ type KubeIntegrationRepository interface {
 	ListKubeIntegrationsByProjectID(projectID uint) ([]*ints.KubeIntegration, error)
 }
 
+// BasicIntegrationRepository represents the set of queries on the "basic" auth
+// mechanism
+type BasicIntegrationRepository interface {
+	CreateBasicIntegration(am *ints.BasicIntegration) (*ints.BasicIntegration, error)
+	ReadBasicIntegration(id uint) (*ints.BasicIntegration, error)
+	ListBasicIntegrationsByProjectID(projectID uint) ([]*ints.BasicIntegration, error)
+}
+
 // OIDCIntegrationRepository represents the set of queries on the OIDC auth
 // mechanism
 type OIDCIntegrationRepository interface {

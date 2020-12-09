@@ -19,7 +19,7 @@ type HelmRepo struct {
 	// RepoURL is the URL to the helm repo. This varies based on the integration
 	// type. For example, for AWS S3 this may be prefixed with s3://, or for
 	// GCS it may be gs://
-	RepoURL string `json:"repo_name"`
+	RepoURL string `json:"repo_url"`
 
 	// ------------------------------------------------------------------
 	// All fields below this line are encrypted before storage

@@ -308,6 +308,37 @@ func New(
 			),
 		)
 
+		// /api/projects/{project_id}/helmrepos routes
+		r.Method(
+			"POST",
+			"/projects/{project_id}/helmrepos",
+			auth.DoesUserHaveProjectAccess(
+				requestlog.NewHandler(a.HandleCreateHelmRepo, l),
+				mw.URLParam,
+				mw.WriteAccess,
+			),
+		)
+
+		r.Method(
+			"GET",
+			"/projects/{project_id}/helmrepos",
+			auth.DoesUserHaveProjectAccess(
+				requestlog.NewHandler(a.HandleListProjectHelmRepos, l),
+				mw.URLParam,
+				mw.WriteAccess,
+			),
+		)
+
+		r.Method(
+			"GET",
+			"/projects/{project_id}/helmrepos/{helm_id}/charts",
+			auth.DoesUserHaveProjectAccess(
+				requestlog.NewHandler(a.HandleListHelmRepoCharts, l),
+				mw.URLParam,
+				mw.WriteAccess,
+			),
+		)
+
 		// /api/projects/{project_id}/registries routes
 		r.Method(
 			"POST",

@@ -24,6 +24,7 @@ func RepoIndexToPorterChartList(index *repo.IndexFile) []*models.PorterChartList
 
 		porterChart := &models.PorterChartList{
 			Name:        indexChart.Name,
+			Version:     indexChart.Version,
 			Description: indexChart.Description,
 			Icon:        indexChart.Icon,
 		}

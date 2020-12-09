@@ -51,7 +51,9 @@ func main() {
 		&ints.GCPIntegration{},
 		&ints.AWSIntegration{},
 		&ints.TokenCache{},
+		&ints.ClusterTokenCache{},
 		&ints.RegTokenCache{},
+		&ints.HelmRepoTokenCache{},
 	)
 
 	if err != nil {

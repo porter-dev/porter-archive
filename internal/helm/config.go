@@ -40,6 +40,11 @@ func GetAgentOutOfClusterConfig(form *Form, l *logger.Logger) (*Agent, error) {
 		return nil, err
 	}
 
+	return GetAgentFromK8sAgent(form.Storage, form.Namespace, l, k8sAgent)
+}
+
+// GetAgentFromK8sAgent creates a new Agent
+func GetAgentFromK8sAgent(stg string, ns string, l *logger.Logger, k8sAgent *kubernetes.Agent) (*Agent, error) {
 	clientset, ok := k8sAgent.Clientset.(*k8s.Clientset)
 
 	if !ok {
@@ -50,7 +55,7 @@ func GetAgentOutOfClusterConfig(form *Form, l *logger.Logger) (*Agent, error) {
 	return &Agent{&action.Configuration{
 		RESTClientGetter: k8sAgent.RESTClientGetter,
 		KubeClient:       kube.New(k8sAgent.RESTClientGetter),
-		Releases:         StorageMap[form.Storage](l, clientset.CoreV1(), form.Namespace),
+		Releases:         StorageMap[stg](l, clientset.CoreV1(), ns),
 		Log:              l.Printf,
 	}}, nil
 }

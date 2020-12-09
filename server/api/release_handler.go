@@ -5,6 +5,11 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
+	"strings"
+
+	"github.com/porter-dev/porter/internal/models"
+	"github.com/porter-dev/porter/internal/templater/parser"
+	"helm.sh/helm/v3/pkg/release"
 
 	"github.com/go-chi/chi"
 	"github.com/porter-dev/porter/internal/forms"
@@ -60,6 +65,12 @@ func (app *App) HandleListReleases(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// PorterRelease is a helm release with a form attached
+type PorterRelease struct {
+	*release.Release
+	Form *models.FormYAML `json:"form"`
+}
+
 // HandleGetRelease retrieves a single release based on a name and revision
 func (app *App) HandleGetRelease(w http.ResponseWriter, r *http.Request) {
 	name := chi.URLParam(r, "name")
@@ -96,6 +107,56 @@ func (app *App) HandleGetRelease(w http.ResponseWriter, r *http.Request) {
 		}, w)
 
 		return
+	}
+
+	// get the filter options
+	k8sForm := &forms.K8sForm{
+		OutOfClusterConfig: &kubernetes.OutOfClusterConfig{
+			Repo: app.repo,
+		},
+	}
+
+	vals, err := url.ParseQuery(r.URL.RawQuery)
+
+	if err != nil {
+		app.handleErrorFormDecoding(err, ErrReleaseDecode, w)
+		return
+	}
+
+	k8sForm.PopulateK8sOptionsFromQueryParams(vals, app.repo.Cluster)
+
+	// validate the form
+	if err := app.validator.Struct(k8sForm); err != nil {
+		app.handleErrorFormValidation(err, ErrK8sValidate, w)
+		return
+	}
+
+	// create a new dynamic client
+	dynClient, err := kubernetes.GetDynamicClientOutOfClusterConfig(k8sForm.OutOfClusterConfig)
+
+	if err != nil {
+		app.handleErrorFormDecoding(err, ErrReleaseDecode, w)
+		return
+	}
+
+	parserDef := &parser.ClientConfigDefault{
+		DynamicClient: dynClient,
+		HelmChart:     release.Chart,
+		HelmRelease:   release,
+	}
+
+	res := &PorterRelease{release, nil}
+
+	for _, file := range release.Chart.Files {
+		if strings.Contains(file.Name, "form.yaml") {
+			formYAML, _ := parser.FormYAMLFromBytes(parserDef, file.Data)
+			if err != nil {
+				break
+			}
+
+			res.Form = formYAML
+			break
+		}
 	}
 
 	if err := json.NewEncoder(w).Encode(release); err != nil {

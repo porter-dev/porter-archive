@@ -4,13 +4,17 @@ import launch from '../../../../assets/launch.svg';
 import Markdown from 'markdown-to-jsx';
 
 import { Context } from '../../../../shared/Context';
+import api from '../../../../shared/api';
+import Loading from '../../../../components/Loading';
 
-import { PorterChart } from '../../../../shared/types';
+import { PorterTemplate } from '../../../../shared/types';
 
 type PropsType = {
-  currentTemplate: PorterChart,
-  setCurrentTemplate: (x: PorterChart) => void,
-  launchTemplate: () => void
+  currentTemplate: any,
+  setCurrentTemplate: (x: PorterTemplate) => void,
+  launchTemplate: () => void,
+  markdown: string | null,
+  keywords: string[],
 };
 
 type StateType = {
@@ -28,7 +32,7 @@ export default class TemplateInfo extends Component<PropsType, StateType> {
   }
 
   renderTagList = () => {
-    return this.props.currentTemplate.form.tags.map((tag: string, i: number) => {
+    return this.props.keywords.map((tag: string, i: number) => {
       return (
         <Tag key={i}>{tag}</Tag>
       )
@@ -36,20 +40,17 @@ export default class TemplateInfo extends Component<PropsType, StateType> {
   }
 
   renderMarkdown = () => {
-    let { currentTemplate } = this.props;
-    if (currentTemplate.markdown) {
+    let { currentTemplate, markdown } = this.props;
+    if (markdown) {
       return (
-        <Markdown>{currentTemplate.markdown}</Markdown>
+        <Markdown>{markdown}</Markdown>
       );
-    } else if (currentTemplate.form.description) {
-      return currentTemplate.form.description;
     }
-
     return currentTemplate.description;
   }
 
   renderTagSection = () => {
-    if (this.props.currentTemplate.form.tags) {
+    if (this.props.keywords.length > 0) {
       return (
         <TagSection>
           <i className="material-icons">local_offer</i>
@@ -61,7 +62,7 @@ export default class TemplateInfo extends Component<PropsType, StateType> {
 
   render() {
     let { currentCluster } = this.context;
-    let { name, icon } = this.props.currentTemplate.form;
+    let { name, icon } = this.props.currentTemplate;
     let { currentTemplate } = this.props;
     name = name ? name : currentTemplate.name;
     return (

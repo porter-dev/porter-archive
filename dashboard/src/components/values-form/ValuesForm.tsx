@@ -62,7 +62,6 @@ export default class ValuesForm extends Component<PropsType, StateType> {
 
   // Initialize corresponding state fields for form blocks
   componentDidMount() {
-    console.log(this.props.sections)
     this.updateFormState();
   }
 
@@ -149,7 +148,6 @@ export default class ValuesForm extends Component<PropsType, StateType> {
   }
 
   render() {
-    console.log('save values status', this.props.saveValuesStatus)
     return (
       <Wrapper>
         <StyledValuesForm>

@@ -221,15 +221,6 @@ const Button = styled.div`
   }
 `;
 
-const ButtonStack = styled(Button)`
-  min-width: 119px;
-  max-width: 119px;
-  background: #616FEEcc;
-  :hover {
-    background: #505edddd;
-  }
-`;
-
 const ButtonAlt = styled(Button)`
   min-width: 150px;
   max-width: 150px;
@@ -240,20 +231,11 @@ const ButtonAlt = styled(Button)`
   }
 `;
 
-const ConfigButtonAlt = styled(ButtonAlt)`
-  min-width: 166px;
-  max-width: 166px;
-`;
-
 const LineBreak = styled.div`
   width: calc(100% - 180px);
   height: 2px;
   background: #ffffff20;
   margin: 10px 80px 35px;
-`;
-
-const ServiceSection = styled.div`
-  padding-bottom: 150px;
 `;
 
 const Overlay = styled.div`
@@ -282,6 +264,7 @@ const DashboardImage = styled.img`
 const DashboardIcon = styled.div`
   position: relative;
   height: 45px;
+  min-width: 45px;
   width: 45px;
   border-radius: 5px;
   display: flex;

@@ -26,8 +26,8 @@ func (cgf *CreateGCPIntegrationForm) ToGCPIntegration() (*ints.GCPIntegration, e
 type CreateBasicAuthIntegrationForm struct {
 	UserID    uint   `json:"user_id" form:"required"`
 	ProjectID uint   `json:"project_id" form:"required"`
-	Username  string `json:"username" form:"required"`
-	Password  string `json:"password" form:"required"`
+	Username  string `json:"username"`
+	Password  string `json:"password"`
 }
 
 // ToBasicIntegration converts the project to a gorm project model

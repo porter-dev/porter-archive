@@ -1,19 +1,22 @@
 import React, { Component } from 'react';
 import styled from 'styled-components';
 import randomWords from 'random-words';
+import _ from 'lodash';
 import { Context } from '../../../../shared/Context';
 import api from '../../../../shared/api';
 
-import { PorterChart, ChoiceType, Cluster, StorageType } from '../../../../shared/types';
+import { PorterTemplate, ChoiceType, Cluster, StorageType } from '../../../../shared/types';
 import Selector from '../../../../components/Selector';
 import ImageSelector from '../../../../components/image-selector/ImageSelector';
 import TabRegion from '../../../../components/TabRegion';
 import ValuesForm from '../../../../components/values-form/ValuesForm';
 
 type PropsType = {
-  currentTemplate: PorterChart,
+  currentTemplate: any,
   hideLaunch: () => void,
   setCurrentView: (x: string) => void,
+  values: any,
+  form: any,
 };
 
 type StateType = {
@@ -45,21 +48,29 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
     namespaceOptions: [] as { label: string, value: string }[],
   };
 
-  onSubmit = (formValues: any) => {
+  onSubmit = (rawValues: any) => {
     let { currentCluster, currentProject } = this.context;
-    let name = randomWords({ exactly: 3, join: '-' })
+    let name = randomWords({ exactly: 3, join: '-' });
     this.setState({ saveValuesStatus: 'loading' });
+
+    // Convert dotted keys to nested objects
+    let values = {};
+    for (let key in rawValues) {
+      _.set(values, key, rawValues[key]);
+    }
 
     api.deployTemplate('<token>', {
       templateName: this.props.currentTemplate.name,
       imageURL: "",
       storage: StorageType.Secret,
-      formValues,
+      formValues: values,
       namespace: this.state.selectedNamespace,
       name,
     }, {
       id: currentProject.id,
       cluster_id: currentCluster.id,
+      name: this.props.currentTemplate.name.toLowerCase().trim(),
+      version: 'latest',
     }, (err: any, res: any) => {
       if (err) {
         this.setState({ saveValuesStatus: 'error' });
@@ -70,12 +81,12 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
   }
 
   renderTabContents = () => {
-    return this.props.currentTemplate.form.tabs.map((tab: any, i: number) => {
+    return this.props.form.tabs.map((tab: any, i: number) => {
 
       // If tab is current, render
       if (tab.name === this.state.currentTab) {
         return (
-          <ValuesFormWrapper>
+          <ValuesFormWrapper key={i}>
             <ValuesForm 
               key={tab.name}
               sections={tab.sections} 
@@ -94,7 +105,7 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
 
     // Retrieve tab options
     let tabOptions = [] as ChoiceType[];
-    this.props.currentTemplate.form.tabs.map((tab: any, i: number) => {
+    this.props.form.tabs.map((tab: any, i: number) => {
       tabOptions.push({ value: tab.name, label: tab.label });
     });
     this.setState({ tabOptions });
@@ -105,7 +116,6 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
       if (err) {
         // console.log(err)
       } else if (res.data) {
-        console.log(res.data)
         let clusterOptions = res.data.map((x: Cluster) => { return { label: x.name, value: x.name } });
         if (res.data.length > 0) {
           this.setState({ clusterOptions });
@@ -140,7 +150,7 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
   }
 
   render() {
-    let { name, icon, description } = this.props.currentTemplate.form;
+    let { name, icon, description } = this.props.form;
     let { currentTemplate } = this.props;
     name = name ? name : currentTemplate.name;
 

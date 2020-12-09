@@ -3,7 +3,7 @@ import styled from 'styled-components';
 
 import { Context } from '../../../shared/Context';
 import api from '../../../shared/api';
-import { PorterChart } from '../../../shared/types';
+import { PorterTemplate } from '../../../shared/types';
 
 import TabSelector from '../../../components/TabSelector';
 import ExpandedTemplate from './expanded-template/ExpandedTemplate';
@@ -18,31 +18,28 @@ type PropsType = {
 };
 
 type StateType = {
-  currentTemplate: PorterChart | null,
+  currentTemplate: PorterTemplate | null,
   currentTab: string,
-  porterCharts: PorterChart[],
+  PorterTemplates: PorterTemplate[],
   loading: boolean,
   error: boolean
 };
 
 export default class Templates extends Component<PropsType, StateType> {
   state = {
-    currentTemplate: null as (PorterChart | null),
+    currentTemplate: null as (PorterTemplate | null),
     currentTab: 'community',
-    porterCharts: [] as PorterChart[],
+    PorterTemplates: [] as PorterTemplate[],
     loading: true,
     error: false,
   }
 
   componentDidMount() {
-
-    // Get templates
     api.getTemplates('<token>', {}, {}, (err: any, res: any) => {
       if (err) {
         this.setState({ loading: false, error: true });
       } else {
-        console.log(res.data)
-        this.setState({ porterCharts: res.data, loading: false, error: false });
+        this.setState({ PorterTemplates: res.data, loading: false, error: false });
       }
     });
   }
@@ -58,7 +55,7 @@ export default class Templates extends Component<PropsType, StateType> {
   }
 
   renderTemplateList = () => {
-    let { loading, error, porterCharts } = this.state;
+    let { loading, error, PorterTemplates } = this.state;
 
     if (loading) {
       return <LoadingWrapper><Loading /></LoadingWrapper>
@@ -68,7 +65,7 @@ export default class Templates extends Component<PropsType, StateType> {
           <i className="material-icons">error</i> Error retrieving templates.
         </Placeholder>
       );
-    } else if (porterCharts.length === 0) {
+    } else if (PorterTemplates.length === 0) {
       return (
         <Placeholder>
           <i className="material-icons">category</i> No templates found.
@@ -76,8 +73,8 @@ export default class Templates extends Component<PropsType, StateType> {
       );
     }
 
-    return this.state.porterCharts.map((template: PorterChart, i: number) => {
-      let { name, icon, description } = template.form;
+    return this.state.PorterTemplates.map((template: PorterTemplate, i: number) => {
+      let { name, icon, description } = template;
       return (
         <TemplateBlock key={i} onClick={() => this.setState({ currentTemplate: template })}>
           {icon ? this.renderIcon(icon) : this.renderIcon(template.icon)}
@@ -97,7 +94,7 @@ export default class Templates extends Component<PropsType, StateType> {
       return (
         <ExpandedTemplate
           currentTemplate={this.state.currentTemplate}
-          setCurrentTemplate={(currentTemplate: PorterChart) => this.setState({ currentTemplate })}
+          setCurrentTemplate={(currentTemplate: PorterTemplate) => this.setState({ currentTemplate })}
           setCurrentView={this.props.setCurrentView}
         />
       );

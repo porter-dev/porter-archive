@@ -66,13 +66,12 @@ export enum StorageType {
   Memory = 'memory'
 }
 
-// PorterChart represents a bundled Porter template
-export interface PorterChart {
-	name: string,
-	description: string,
-	icon: string,
-  form: FormYAML,
-  markdown?: string,
+// PorterTemplate represents a bundled Porter template
+export interface PorterTemplate {
+  name: string,
+  version: string,
+  description: string,
+  icon: string,
 }
 
 // FormYAML represents a chart's values.yaml form abstraction

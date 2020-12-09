@@ -14,6 +14,8 @@ type PropsType = {
   chart: ChartType,
   refreshChart: () => void,
   setRevisionPreview: (preview: ChartType) => void
+  forceRefreshRevisions: boolean,
+  refreshRevisionsOff: () => void,
 };
 
 type StateType = {
@@ -55,7 +57,11 @@ export default class RevisionSection extends Component<PropsType, StateType> {
 
   // Handle update of values.yaml
   componentDidUpdate(prevProps: PropsType) {
-    if (this.props.chart !== prevProps.chart) {
+    if (this.props.forceRefreshRevisions) {
+      this.props.refreshRevisionsOff();
+      this.props.refreshChart();
+      this.refreshHistory();
+    } else if (this.props.chart !== prevProps.chart) {
       this.refreshHistory();
     }
   }

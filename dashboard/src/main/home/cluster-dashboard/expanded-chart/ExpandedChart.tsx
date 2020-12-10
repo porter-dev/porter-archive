@@ -107,6 +107,7 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
               console.log(err);
               resolve(null);
             } else {
+              console.log(res.data)
               let { form } = res.data;
               resolve(form);
             }
@@ -234,7 +235,6 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
 
   async updateTabs() {
     let formData = await this.getFormData();
-    console.log(formData);
     let tabOptions = [] as any[];
 
     // Generate form tabs if form.yaml exists

@@ -100,5 +100,9 @@ func (app *App) HandleReadTemplate(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	bytesRes, _ := json.Marshal(res)
+
+	fmt.Println("RAW RESPONSE:", string(bytesRes), res)
+
 	json.NewEncoder(w).Encode(res)
 }

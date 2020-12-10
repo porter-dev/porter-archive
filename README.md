@@ -1,5 +1,5 @@
 # Porter
-Porter is a **dashboard for Helm** with support for the following features:
+Porter is a **Kubernetes powered PaaS** with support for the following features:
 - User-generated [form overlays](https://docs.getporter.dev/docs/porter-templates) for managing `values.yaml`
 - Visualization of all Helm releases with filtering by namespace
 - In-depth view of releases, including revision histories and component graphs

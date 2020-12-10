@@ -28,7 +28,7 @@ export interface ChartType {
       name: string,
     }[],
   },
-  config: string,
+  config: any,
   version: number,
   namespace: string
 }

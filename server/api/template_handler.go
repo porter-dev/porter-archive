@@ -2,6 +2,7 @@ package api
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/url"
 	"strings"
@@ -86,6 +87,8 @@ func (app *App) HandleReadTemplate(w http.ResponseWriter, r *http.Request) {
 	for _, file := range chart.Files {
 		if strings.Contains(file.Name, "form.yaml") {
 			formYAML, err := parser.FormYAMLFromBytes(parserDef, file.Data)
+
+			fmt.Println("FORM RESULT:", formYAML, err.Error())
 
 			if err != nil {
 				break

@@ -151,8 +151,9 @@ func (app *App) HandleGetRelease(w http.ResponseWriter, r *http.Request) {
 	for _, file := range release.Chart.Files {
 		if strings.Contains(file.Name, "form.yaml") {
 			formYAML, err := parser.FormYAMLFromBytes(parserDef, file.Data)
+			fmt.Println("FORM RESULT:", formYAML, err.Error())
+
 			if err != nil {
-				fmt.Println("FORM ERROR:", err.Error())
 				break
 			}
 

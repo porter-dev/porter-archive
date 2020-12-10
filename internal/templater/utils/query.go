@@ -2,7 +2,6 @@ package utils
 
 import (
 	"fmt"
-	"reflect"
 
 	"github.com/porter-dev/porter/internal/templater"
 	"k8s.io/client-go/util/jsonpath"
@@ -44,11 +43,11 @@ func QueryValues(
 			continue
 		}
 
-		queryRes := make([]reflect.Value, 0)
+		queryRes := make([]interface{}, 0)
 
 		for ix := range fullResults {
 			for _, result := range fullResults[ix] {
-				queryRes = append(queryRes, reflect.ValueOf(result.Interface()))
+				queryRes = append(queryRes, result.Interface())
 			}
 		}
 

@@ -62,6 +62,7 @@ export default class ValuesForm extends Component<PropsType, StateType> {
 
   // Initialize corresponding state fields for form blocks
   componentDidMount() {
+    console.log(this.props.sections)
     this.updateFormState();
   }
 

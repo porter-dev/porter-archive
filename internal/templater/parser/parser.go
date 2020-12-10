@@ -130,7 +130,7 @@ func formToLookupTable(def *ClientConfigDefault, form *models.FormYAML) map[*mod
 
 				fmt.Printf("PARSER: content value %v, variable %s\n", content.Value, content.Variable)
 
-				if fmt.Sprintf("%v", content.Value) != "" {
+				if content.Value != nil && fmt.Sprintf("%v", content.Value) != "" {
 					// TODO -- case on whether value is proper query string, if not resolve it to a
 					// proper query string
 					query, err := utils.NewQuery(

@@ -162,7 +162,7 @@ func (app *App) HandleGetRelease(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	if err := json.NewEncoder(w).Encode(release); err != nil {
+	if err := json.NewEncoder(w).Encode(res); err != nil {
 		app.handleErrorFormDecoding(err, ErrReleaseDecode, w)
 		return
 	}

@@ -141,8 +141,8 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
       cluster_id: currentCluster.id,
     }, (err: any, res: any) => {
       if (err) {
-        setCurrentError(err);
         this.setState({ saveValuesStatus: 'error' });
+        console.log(err)
       } else {
         this.setState({ 
           saveValuesStatus: 'successful',

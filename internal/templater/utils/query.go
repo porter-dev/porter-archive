@@ -2,7 +2,6 @@ package utils
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/porter-dev/porter/internal/templater"
 	"k8s.io/client-go/util/jsonpath"
@@ -44,15 +43,15 @@ func QueryValues(
 			continue
 		}
 
-		queryRes := make([]string, 0)
+		queryRes := make([]interface{}, 0)
 
 		for ix := range fullResults {
 			for _, result := range fullResults[ix] {
-				queryRes = append(queryRes, fmt.Sprintf("%v", result.Interface()))
+				queryRes = append(queryRes, result.Interface())
 			}
 		}
 
-		res[query.Key] = strings.Join(queryRes, ",")
+		res[query.Key] = queryRes
 	}
 
 	return res, nil

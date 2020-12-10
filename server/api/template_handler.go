@@ -2,6 +2,7 @@ package api
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/url"
 	"strings"
@@ -87,6 +88,8 @@ func (app *App) HandleReadTemplate(w http.ResponseWriter, r *http.Request) {
 		if strings.Contains(file.Name, "form.yaml") {
 			formYAML, err := parser.FormYAMLFromBytes(parserDef, file.Data)
 
+			fmt.Println("FORM RESULT:", formYAML, err)
+
 			if err != nil {
 				break
 			}
@@ -96,6 +99,10 @@ func (app *App) HandleReadTemplate(w http.ResponseWriter, r *http.Request) {
 			res.Markdown = string(file.Data)
 		}
 	}
+
+	bytesRes, _ := json.Marshal(res)
+
+	fmt.Println("RAW RESPONSE:", string(bytesRes), res)
 
 	json.NewEncoder(w).Encode(res)
 }

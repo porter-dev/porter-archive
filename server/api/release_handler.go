@@ -2,6 +2,7 @@ package api
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -149,8 +150,9 @@ func (app *App) HandleGetRelease(w http.ResponseWriter, r *http.Request) {
 
 	for _, file := range release.Chart.Files {
 		if strings.Contains(file.Name, "form.yaml") {
-			formYAML, _ := parser.FormYAMLFromBytes(parserDef, file.Data)
+			formYAML, err := parser.FormYAMLFromBytes(parserDef, file.Data)
 			if err != nil {
+				fmt.Println("FORM ERROR:", err.Error())
 				break
 			}
 

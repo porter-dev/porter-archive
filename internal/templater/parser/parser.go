@@ -47,6 +47,8 @@ func FormYAMLFromBytes(def *ClientConfigDefault, bytes []byte) (*models.FormYAML
 		}
 
 		for queryResKey, queryResVal := range queryRes {
+			fmt.Printf("PARSER: found value %s, %v\n", queryResKey, queryResVal)
+
 			data[queryResKey] = queryResVal
 		}
 	}
@@ -126,10 +128,18 @@ func formToLookupTable(def *ClientConfigDefault, form *models.FormYAML) map[*mod
 					lookup[content.Context] = formContextToContextConfig(def, content.Context)
 				}
 
+				fmt.Printf("PARSER: content value %v, variable %s\n", content.Value, content.Variable)
+
 				if fmt.Sprintf("%v", content.Value) != "" {
 					// TODO -- case on whether value is proper query string, if not resolve it to a
 					// proper query string
 					query, err := utils.NewQuery(
+						fmt.Sprintf("tabs[%d].sections[%d].contents[%d]", i, j, k),
+						fmt.Sprintf("%v", content.Value),
+					)
+
+					fmt.Printf(
+						"PARSER: added query %s, %s\n",
 						fmt.Sprintf("tabs[%d].sections[%d].contents[%d]", i, j, k),
 						fmt.Sprintf("%v", content.Value),
 					)
@@ -143,6 +153,12 @@ func formToLookupTable(def *ClientConfigDefault, form *models.FormYAML) map[*mod
 					// if variable field set without value field set, make variable field into jsonpath
 					// query
 					query, err := utils.NewQuery(
+						fmt.Sprintf("tabs[%d].sections[%d].contents[%d]", i, j, k),
+						fmt.Sprintf("{ .%v }", content.Variable),
+					)
+
+					fmt.Printf(
+						"PARSER: added query %s, %s\n",
 						fmt.Sprintf("tabs[%d].sections[%d].contents[%d]", i, j, k),
 						fmt.Sprintf("{ .%v }", content.Variable),
 					)
@@ -203,11 +219,11 @@ func formContextToContextConfig(def *ClientConfigDefault, context *models.FormCo
 
 		// identify object based on passed config
 		obj := &td.Object{
-			Group:     context.Config["Group"],
-			Version:   context.Config["Version"],
-			Resource:  context.Config["Resource"],
-			Namespace: context.Config["Namespace"],
-			Name:      context.Config["Name"],
+			Group:     context.Config["group"],
+			Version:   context.Config["version"],
+			Resource:  context.Config["resource"],
+			Namespace: context.Config["namespace"],
+			Name:      context.Config["name"],
 		}
 
 		res.TemplateReader = td.NewDynamicTemplateReader(def.DynamicClient, obj)

@@ -126,7 +126,7 @@ func formToLookupTable(def *ClientConfigDefault, form *models.FormYAML) map[*mod
 					lookup[content.Context] = formContextToContextConfig(def, content.Context)
 				}
 
-				if content.Value != "" {
+				if fmt.Sprintf("%v", content.Value) != "" {
 					// TODO -- case on whether value is proper query string, if not resolve it to a
 					// proper query string
 					query, err := utils.NewQuery(

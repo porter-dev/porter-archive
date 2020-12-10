@@ -4,7 +4,7 @@ import yaml from 'js-yaml';
 import close from '../../../../assets/close.png';
 import _ from 'lodash';
 
-import { ResourceType, ChartType, StorageType, ChoiceType } from '../../../../shared/types';
+import { ResourceType, ChartType, StorageType, Cluster } from '../../../../shared/types';
 import { Context } from '../../../../shared/Context';
 import api from '../../../../shared/api';
 
@@ -19,9 +19,10 @@ import SettingsSection from './SettingsSection';
 import { NavLink } from 'react-router-dom';
 
 type PropsType = {
+  namespace: string,
   currentChart: ChartType,
+  currentCluster: Cluster,
   setCurrentChart: (x: ChartType | null) => void,
-  refreshChart: () => void,
   setSidebar: (x: boolean) => void,
   setCurrentView: (x: string) => void,
 };
@@ -61,6 +62,27 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
     forceRefreshRevisions: false,
   }
 
+  refreshChart = () => {
+    let { currentProject } = this.context;
+    let { currentCluster, setCurrentChart } = this.props;
+    api.getChart('<token>', {
+      namespace: this.props.namespace,
+      cluster_id: currentCluster.id,
+      storage: StorageType.Secret
+    }, {
+      name: this.props.currentChart.name,
+      revision: 0,
+      id: currentProject.id
+    }, (err: any, res: any) => {
+      if (err) {
+        console.log(err);
+      } else {
+        console.log('from chart')
+        setCurrentChart(res.data);
+      }
+    });
+  }
+  
   updateResources = () => {
     let { currentCluster, currentProject } = this.context;
     let { currentChart } = this.props;
@@ -83,12 +105,15 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
   }
 
   componentDidMount() {
+    this.refreshChart();
     this.updateTabs();
     this.updateResources();
   }
 
   componentDidUpdate(prevProps: PropsType) {
     if (this.props.currentChart !== prevProps.currentChart) {
+      console.log('postcard');
+      console.log(this.props.currentChart);
       this.updateResources();
     }
   }
@@ -107,6 +132,7 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
               console.log(err);
               resolve(null);
             } else {
+              console.log('from form');
               console.log(res.data)
               let { form } = res.data;
               resolve(form);
@@ -130,7 +156,7 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
     let valuesYaml = yaml.dump({ ...(this.props.currentChart.config as Object), ...values });
     
     this.setState({ saveValuesStatus: 'loading' });
-    this.props.refreshChart();
+    this.refreshChart();
     api.upgradeChartValues('<token>', {
       namespace: this.props.currentChart.namespace,
       storage: StorageType.Secret,
@@ -162,7 +188,7 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
       tabOptions,
       revisionPreview,
     } = this.state;
-    let { currentChart, refreshChart, setSidebar, setCurrentView } = this.props;
+    let { currentChart, setSidebar, setCurrentView } = this.props;
     let chart = revisionPreview || currentChart;
 
     switch (currentTab) {
@@ -178,7 +204,7 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
         return (
           <SettingsSection
             currentChart={chart}
-            refreshChart={refreshChart}
+            refreshChart={this.refreshChart}
             setCurrentView={setCurrentView}
           /> 
         );
@@ -207,7 +233,7 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
         return (
           <ValuesYaml
             currentChart={chart}
-            refreshChart={refreshChart}
+            refreshChart={this.refreshChart}
           />
         );
       default:
@@ -326,7 +352,7 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
   }
 
   render() {
-    let { currentChart, setCurrentChart, refreshChart } = this.props;
+    let { currentChart, setCurrentChart } = this.props;
     let chart = this.state.revisionPreview || currentChart;
 
     return ( 
@@ -362,7 +388,7 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
               showRevisions={this.state.showRevisions}
               toggleShowRevisions={() => this.setState({ showRevisions: !this.state.showRevisions })}
               chart={chart}
-              refreshChart={refreshChart}
+              refreshChart={this.refreshChart}
               setRevisionPreview={this.setRevisionPreview}
               forceRefreshRevisions={this.state.forceRefreshRevisions}
               refreshRevisionsOff={() => this.setState({ forceRefreshRevisions: false })}

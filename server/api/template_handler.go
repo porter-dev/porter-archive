@@ -88,7 +88,7 @@ func (app *App) HandleReadTemplate(w http.ResponseWriter, r *http.Request) {
 		if strings.Contains(file.Name, "form.yaml") {
 			formYAML, err := parser.FormYAMLFromBytes(parserDef, file.Data)
 
-			fmt.Println("FORM RESULT:", formYAML, err.Error())
+			fmt.Println("FORM RESULT:", formYAML, err)
 
 			if err != nil {
 				break

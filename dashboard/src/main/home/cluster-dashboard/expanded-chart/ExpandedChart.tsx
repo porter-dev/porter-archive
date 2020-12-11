@@ -41,14 +41,6 @@ type StateType = {
   forceRefreshRevisions: boolean, // Update revisions after upgrading values
 };
 
-/*
-  TODO: consolidate revisionPreview and currentChart (currentChart can just be the initial state)
-  In general, tab management for ExpandedChart should be refactored. Cases to handle:
-  - Hiding logs, deploy, and settings tabs when previewing old charts
-  - Toggling additional DevOps tabs
-  - Handling the currently selected tab becoming hidden (for both preview and DevOps)
-  As part of consolidating currentChart and revisionPreview, can add an isPreview bool.
-*/
 export default class ExpandedChart extends Component<PropsType, StateType> {
   state = {
     loading: true,
@@ -229,7 +221,7 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
               return (
                 <ValuesFormWrapper key={i}>
                   <ValuesForm 
-                    sections={tab.sections} 
+                    sections={tab.sections}
                     onSubmit={this.onSubmit}
                     saveValuesStatus={saveValuesStatus}
                   />
@@ -251,7 +243,7 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
         tabOptions.push({ value: '@' + tab.name, label: tab.label, sections: tab.sections });
       });
     }
-    console.log('1', tabOptions)
+
     // Append universal tabs
     tabOptions.push(
       { label: 'Status', value: 'status' },
@@ -259,7 +251,6 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
       { label: 'Chart Overview', value: 'graph' },
       { label: 'Settings', value: 'settings' },
     );
-    console.log('2', tabOptions)
 
     if (this.state.devOpsMode) {
       tabOptions.push(
@@ -268,14 +259,11 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
       );
     }
 
-    console.log('3', tabOptions)
-
     // Filter tabs if previewing an old revision
     if (this.state.isPreview) {
       let liveTabs = ['status', 'settings', 'deploy'];
       tabOptions = tabOptions.filter((tab: any) => !liveTabs.includes(tab.value));
     }
-    console.log('4', tabOptions)
 
     this.setState({ tabOptions });
   }

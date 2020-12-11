@@ -66,6 +66,15 @@ export default class ValuesForm extends Component<PropsType, StateType> {
     }
   }
 
+  getInputValue = (item: FormElement) => {
+    let key = item.name || item.variable;
+    let value = this.state[key];
+    if (item.settings && item.settings.unit) {
+      value = value.split(item.settings.unit)[0]
+    }
+    return value;
+  }
+
   renderSection = (section: Section) => {
     return section.contents.map((item: FormElement, i: number) => {
 
@@ -106,8 +115,13 @@ export default class ValuesForm extends Component<PropsType, StateType> {
             <InputRow
               key={i}
               type='text'
-              value={this.state[key]}
-              setValue={(x: string) => this.setState({ [key]: x })}
+              value={this.getInputValue(item)}
+              setValue={(x: string) => {
+                if (item.settings && item.settings.unit) {
+                  x = x + item.settings.unit;
+                }
+                this.setState({ [key]: x });
+              }}
               label={item.label}
               unit={item.settings ? item.settings.unit : null}
             />
@@ -117,8 +131,14 @@ export default class ValuesForm extends Component<PropsType, StateType> {
             <InputRow
               key={i}
               type='number'
-              value={this.state[key]}
-              setValue={(x: number) => this.setState({ [key]: x })}
+              value={this.getInputValue(item)}
+              setValue={(x: number) => {
+                let val = x.toString();
+                if (item.settings && item.settings.unit) {
+                  val = val + item.settings.unit;
+                }
+                this.setState({ [key]: val });
+              }}
               label={item.label}
               unit={item.settings ? item.settings.unit : null}
             />
@@ -168,7 +188,7 @@ export default class ValuesForm extends Component<PropsType, StateType> {
         <SaveButton
           disabled={this.props.disabled}
           text='Deploy'
-          onClick={() => this.props.onSubmit(this.state)}
+          onClick={() => console.log(this.state)}
           status={this.props.saveValuesStatus}
           makeFlush={true}
         />

@@ -32,11 +32,13 @@ export default class TemplateInfo extends Component<PropsType, StateType> {
   }
 
   renderTagList = () => {
-    return this.props.keywords.map((tag: string, i: number) => {
-      return (
-        <Tag key={i}>{tag}</Tag>
-      )
-    });
+    if (this.props.keywords) {
+      return this.props.keywords.map((tag: string, i: number) => {
+        return (
+          <Tag key={i}>{tag}</Tag>
+        )
+      });
+    }
   }
 
   renderMarkdown = () => {
@@ -50,7 +52,7 @@ export default class TemplateInfo extends Component<PropsType, StateType> {
   }
 
   renderTagSection = () => {
-    if (this.props.keywords.length > 0) {
+    if (this.props.keywords && this.props.keywords.length > 0) {
       return (
         <TagSection>
           <i className="material-icons">local_offer</i>

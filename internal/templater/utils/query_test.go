@@ -14,14 +14,44 @@ type testType struct {
 
 func TestQueryValues(t *testing.T) {
 	vals := map[string]interface{}{
-		"testing": map[string]interface{}{
-			"hello": "there",
+		"items": []interface{}{
+			map[string]interface{}{
+				"metadata": map[string]interface{}{
+					"name":      "a",
+					"namespace": "velero",
+				},
+				"array": []interface{}{
+					"1",
+					"2",
+				},
+			},
+			map[string]interface{}{
+				"metadata": map[string]interface{}{
+					"name":      "b",
+					"namespace": "velero",
+				},
+				"array": []interface{}{
+					"3",
+					"4",
+				},
+			},
 		},
 	}
 
 	queries := make([]*templater.TemplateReaderQuery, 0)
 
-	query, _ := utils.NewQuery("test", `{ .testing }`)
+	// should get turned into type []map[string]interface{} that can be converted to JSON
+	// query, err := utils.NewQuery("test",
+	// 	`
+	// .items[].metadata |
+	// { name: .name, namespace: .namespace }
+	// `)
+
+	query, err := utils.NewQuery("test", `.items`)
+
+	if err != nil {
+		t.Fatalf("%v\n", err)
+	}
 
 	queries = append(queries, query)
 

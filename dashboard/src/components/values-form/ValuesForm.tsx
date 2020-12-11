@@ -18,7 +18,6 @@ type PropsType = {
   sections?: Section[],
   disabled?: boolean,
   saveValuesStatus?: string | null,
-  config?: any, // Chart config object containing existing values
 };
 
 type StateType = any;
@@ -28,18 +27,20 @@ export default class ValuesForm extends Component<PropsType, StateType> {
   updateFormState() {
     let formState: any = {};
     this.props.sections.forEach((section: Section, i: number) => {
+      console.log(section);
       section.contents.forEach((item: FormElement, i: number) => {
 
         // If no name is assigned use values.yaml variable as identifier
         let key = item.name || item.variable;
         
-        let def = item.settings && item.settings.default;
+        let def = (item.settings && item.settings.default) || (item.variable && item.variable[0]);
 
-        // Set default value from chart config if available
+        /* Set default value from chart config if available
         if (this.props.config) {
           let retrievedValue = _.get(this.props.config, key)
           retrievedValue ? def = retrievedValue : null;
         }
+        */
 
         switch (item.type) {
           case 'checkbox':

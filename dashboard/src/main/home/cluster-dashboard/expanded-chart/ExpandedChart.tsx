@@ -28,6 +28,7 @@ type PropsType = {
 };
 
 type StateType = {
+  loading: boolean,
   showRevisions: boolean,
   components: ResourceType[],
   podSelectors: string[]
@@ -50,6 +51,7 @@ type StateType = {
 */
 export default class ExpandedChart extends Component<PropsType, StateType> {
   state = {
+    loading: true,
     showRevisions: false,
     components: [] as ResourceType[],
     podSelectors: [] as string[],
@@ -62,7 +64,7 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
     forceRefreshRevisions: false,
   }
 
-  refreshChart = () => {
+  refreshChart = (callback?: () => void) => {
     let { currentProject } = this.context;
     let { currentCluster, setCurrentChart } = this.props;
     api.getChart('<token>', {
@@ -76,9 +78,11 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
     }, (err: any, res: any) => {
       if (err) {
         console.log(err);
+        callback();
       } else {
-        console.log('from chart')
         setCurrentChart(res.data);
+        this.setState({ loading: false });
+        callback();
       }
     });
   }
@@ -105,42 +109,14 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
   }
 
   componentDidMount() {
-    this.refreshChart();
-    this.updateTabs();
+    this.refreshChart(() => this.updateTabs());
     this.updateResources();
   }
 
   componentDidUpdate(prevProps: PropsType) {
     if (this.props.currentChart !== prevProps.currentChart) {
-      console.log('postcard');
-      console.log(this.props.currentChart);
       this.updateResources();
     }
-  }
-
-  getFormData = (): any => {
-    return new Promise(resolve => {
-      let { files } = this.props.currentChart.chart;
-      for (let file of files) { 
-        if (file.name === 'form.yaml') {
-          let chartName = this.props.currentChart.chart.metadata.name;
-          api.getTemplateInfo('<token>', {}, {
-            name: chartName.toLowerCase().trim(),
-            version: 'latest',
-          }, (err: any, res: any) => {
-            if (err) {
-              console.log(err);
-              resolve(null);
-            } else {
-              console.log('from form');
-              console.log(res.data)
-              let { form } = res.data;
-              resolve(form);
-            }
-          });
-        }
-      };
-    });
   }
 
   upgradeValues = (rawValues: any) => {
@@ -249,7 +225,6 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
                     sections={tab.sections} 
                     onSubmit={this.upgradeValues}
                     saveValuesStatus={saveValuesStatus}
-                    config={chart.config}
                   />
                 </ValuesFormWrapper>
               );
@@ -259,12 +234,12 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
     }
   }
 
-  async updateTabs() {
-    let formData = await this.getFormData();
+  updateTabs() {
+    let formData = this.props.currentChart.form;
     let tabOptions = [] as any[];
 
     // Generate form tabs if form.yaml exists
-    if (formData && formData.tabs) {
+    if (formData) {
       formData.tabs.map((tab: any, i: number) => {
         tabOptions.push({ value: '@' + tab.name, label: tab.label, sections: tab.sections });
       });

@@ -72,6 +72,7 @@ func (app *App) HandleReadTemplate(w http.ResponseWriter, r *http.Request) {
 	chart, err := loader.LoadChart(form.RepoURL, form.Name, form.Version)
 
 	if err != nil {
+		fmt.Println("ERROR LOADING CHART", form.RepoURL, form.Name, form.Version, err)
 		app.handleErrorFormDecoding(err, ErrReleaseDecode, w)
 		return
 	}

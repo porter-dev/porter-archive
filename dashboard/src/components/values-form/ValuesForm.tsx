@@ -12,13 +12,13 @@ import InputRow from './InputRow';
 import SelectRow from './SelectRow';
 import Helper from './Helper';
 import Heading from './Heading';
+import ResourceTab from '../ResourceTab';
 
 type PropsType = {
   onSubmit: (formValues: any) => void,
   sections?: Section[],
   disabled?: boolean,
   saveValuesStatus?: string | null,
-  config?: any, // Chart config object containing existing values
 };
 
 type StateType = any;
@@ -33,13 +33,7 @@ export default class ValuesForm extends Component<PropsType, StateType> {
         // If no name is assigned use values.yaml variable as identifier
         let key = item.name || item.variable;
         
-        let def = item.settings && item.settings.default;
-
-        // Set default value from chart config if available
-        if (this.props.config) {
-          let retrievedValue = _.get(this.props.config, key)
-          retrievedValue ? def = retrievedValue : null;
-        }
+        let def = (item.value && item.value[0]) || (item.settings && item.settings.default);
 
         switch (item.type) {
           case 'checkbox':
@@ -53,6 +47,7 @@ export default class ValuesForm extends Component<PropsType, StateType> {
             break;
           case 'select':
             formState[key] = def ? def : item.settings.options[0].value;
+            break;
           default:
         }
       });
@@ -62,7 +57,6 @@ export default class ValuesForm extends Component<PropsType, StateType> {
 
   // Initialize corresponding state fields for form blocks
   componentDidMount() {
-    console.log(this.props.sections)
     this.updateFormState();
   }
 
@@ -79,9 +73,25 @@ export default class ValuesForm extends Component<PropsType, StateType> {
       let key = item.name || item.variable;
       switch (item.type) {
         case 'heading':
-          return <Heading key={i}>{item.label}</Heading>
+          return <Heading key={i}>{item.label}</Heading>;
         case 'subtitle':
-          return <Helper key={i}>{item.label}</Helper>
+          return <Helper key={i}>{item.label}</Helper>;
+        case 'resource-list':
+          return (
+            <ResourceList>
+              {
+                item.value.map((resource: any, i: number) => {
+                  return (
+                    <ResourceTab
+                      label={resource.label}
+                      name={resource.name}
+                      status={{ label: resource.status }}
+                    />
+                  );
+                })
+              }
+            </ResourceList>
+          );
         case 'checkbox':
           return (
             <CheckboxRow
@@ -168,6 +178,11 @@ export default class ValuesForm extends Component<PropsType, StateType> {
 }
 
 ValuesForm.contextType = Context;
+
+const ResourceList = styled.div`
+  margin-bottom: 15px;
+  margin-top: 20px;
+`;
 
 const DarkMatter = styled.div`
   margin-top: 0px;

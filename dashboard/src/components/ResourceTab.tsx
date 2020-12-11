@@ -4,15 +4,15 @@ import styled from 'styled-components';
 import { kindToIcon } from '../shared/rosettaStone';
 
 type PropsType = {
-  kind: string,
+  label: string,
   name: string,
   handleClick?: () => void,
   selected?: boolean,
   isLast?: boolean,
   status?: {
     label: string,
-    available: number,
-    total: number,
+    available?: number,
+    total?: number,
   } | null
 };
 
@@ -58,13 +58,23 @@ export default class ResourceTab extends Component<PropsType, StateType> {
     }
   }
 
+  getStatusText = () => {
+    let { status } = this.props;
+    if (status.available && status.total) {
+      return `${status.available}/${status.total}`;
+    } else if (status.label) {
+      return status.label;
+    }
+  }
+
   renderStatus = () => {
     let { status } = this.props;
     if (status) {
       return (
         <Status>
+          {this.getStatusText()}
+
           <StatusColor status={status.label} />
-          {status.available}/{status.total}
         </Status>
       );
     }
@@ -81,11 +91,11 @@ export default class ResourceTab extends Component<PropsType, StateType> {
   }
 
   render() {
-    let { kind, name, children, isLast } = this.props;
+    let { label, name, children, isLast, handleClick } = this.props;
     return (
       <StyledResourceTab 
         isLast={isLast}
-        onClick={() => this.props.handleClick && this.props.handleClick()}
+        onClick={() => handleClick && handleClick()}
       >
         <ResourceHeader
           hasChildren={this.props.children && true}
@@ -96,11 +106,11 @@ export default class ResourceTab extends Component<PropsType, StateType> {
             }
           }}
         >
-          {this.renderDropdownIcon()}
           <Info>
+            {this.renderDropdownIcon()}
             <Metadata>
-              {this.renderIcon(kind)}
-              {kind}
+              {this.renderIcon(label)}
+              {label}
               <ResourceName
                 showKindLabels={true}
                 onMouseOver={() => { this.setState({ showTooltip: true }) }}
@@ -110,8 +120,8 @@ export default class ResourceTab extends Component<PropsType, StateType> {
               </ResourceName>
               {this.renderTooltip(name)}
             </Metadata>
-            {this.renderStatus()}
           </Info>
+          {this.renderStatus()}
         </ResourceHeader>
         {this.renderExpanded()}
       </StyledResourceTab>
@@ -161,18 +171,18 @@ const ResourceHeader = styled.div`
   height: 50px;
   display: flex;
   align-items: center;
+  justify-content: space-between;
   color: #ffffff66;
   user-select: none;
   padding: 8px 18px;
   padding-left: ${(props: { expanded: boolean, hasChildren: boolean }) => props.hasChildren ? '10px' : '22px'};
-  text-transform: capitalize;
-  cursor: pointer;
+  cursor: ${(props: { expanded: boolean, hasChildren: boolean }) => props.hasChildren ? 'pointer' : ''};
   background: ${(props: { expanded: boolean, hasChildren: boolean }) => props.expanded ? '#ffffff11' : ''};
   :hover {
-    background: #ffffff18;
+    background: ${(props: { expanded: boolean, hasChildren: boolean }) => props.hasChildren ? '#ffffff18' : ''};
 
     > i {
-      background: #ffffff22;
+      background: ${(props: { expanded: boolean, hasChildren: boolean }) => props.hasChildren ? '#ffffff22' : ''};
     }
   }
 `;
@@ -180,9 +190,8 @@ const ResourceHeader = styled.div`
 const Info = styled.div`
   display: flex;
   flex-direction: row;
-  justify-content: space-between;
   align-items: center;
-  width: calc(100% - 30px);
+  width: calc(100% - 50px);
   height: 100%;
 `;
 
@@ -195,7 +204,6 @@ const Metadata = styled.div`
 
 const Status = styled.div`
   display: flex;
-  width: 50px;
   font-size: 12px;
   text-transform: capitalize;
   justify-content: flex-end;
@@ -210,11 +218,11 @@ const Status = styled.div`
 `;
 
 const StatusColor = styled.div`
-  margin-right: 7px;
-  width: 7px;
-  min-width: 7px;
-  height: 7px;
-  background: ${(props: { status: string }) => (props.status === 'running' ? '#4797ff' : props.status === 'failed' ? "#ed5f85" : "#f5cb42")};
+  margin-left: 12px;
+  width: 8px;
+  min-width: 8px;
+  height: 8px;
+  background: ${(props: { status: string }) => (props.status === 'running' || props.status === 'Ready' ? '#4797ff' : props.status === 'failed' ? "#ed5f85" : "#f5cb42")};
   border-radius: 20px;
 `;
 

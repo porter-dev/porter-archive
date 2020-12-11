@@ -32,7 +32,7 @@ export default class SettingsSection extends Component<PropsType, StateType> {
 
   componentDidMount() {
     let image = this.props.currentChart.config.image;
-    if (image.repository) {
+    if (image?.repository) {
       this.setState({ selectedImageUrl: image.repository });
     }
   }

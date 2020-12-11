@@ -300,6 +300,7 @@ func (app *App) HandleGetReleaseControllers(w http.ResponseWriter, r *http.Reque
 	// get current status of each controller
 	// TODO: refactor with type assertion
 	for _, c := range controllers {
+		c.Namespace = form.ReleaseForm.Form.Namespace
 		switch c.Kind {
 		case "Deployment":
 			rc, err := k8sAgent.GetDeployment(c)

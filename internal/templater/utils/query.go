@@ -1,19 +1,14 @@
 package utils
 
 import (
-	"fmt"
-
+	"github.com/itchyny/gojq"
 	"github.com/porter-dev/porter/internal/templater"
-	"k8s.io/client-go/util/jsonpath"
 )
 
 // NewQuery constructs a templater.TemplateReaderQuery by parsing the jsonpath
 // query string
 func NewQuery(key, query string) (*templater.TemplateReaderQuery, error) {
-	j := jsonpath.New(key)
-	j.AllowMissingKeys(true)
-
-	err := j.Parse(query)
+	jquery, err := gojq.Parse(query)
 
 	if err != nil {
 		return nil, err
@@ -22,7 +17,7 @@ func NewQuery(key, query string) (*templater.TemplateReaderQuery, error) {
 	return &templater.TemplateReaderQuery{
 		Key:         key,
 		QueryString: query,
-		Template:    j,
+		Template:    jquery,
 	}, nil
 }
 
@@ -36,19 +31,22 @@ func QueryValues(
 
 	// iterate through all registered queries, add to resulting map
 	for _, query := range queries {
-		fullResults, err := query.Template.FindResults(values)
-
-		if err != nil {
-			fmt.Printf("query error %s", err)
-			continue
-		}
+		iter := query.Template.Run(values)
 
 		queryRes := make([]interface{}, 0)
 
-		for ix := range fullResults {
-			for _, result := range fullResults[ix] {
-				queryRes = append(queryRes, result.Interface())
+		for {
+			v, ok := iter.Next()
+
+			if !ok {
+				break
 			}
+
+			if err, ok := v.(error); ok {
+				return nil, err
+			}
+
+			queryRes = append(queryRes, v)
 		}
 
 		res[query.Key] = queryRes

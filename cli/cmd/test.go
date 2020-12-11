@@ -34,34 +34,39 @@ var testCmd = &cobra.Command{
 
 		form := &models.FormYAML{
 			Tabs: []*models.FormTab{
-				&models.FormTab{
-					Context: &models.FormContext{
-						Type: "helm/values",
-					},
-					Name:  "main",
-					Label: "Main Settings",
-					Sections: []*models.FormSection{
-						&models.FormSection{
-							Name: "section_one",
-							Contents: []*models.FormContent{
-								&models.FormContent{
-									Type:  "number-input",
-									Value: "service.targetPort",
-									Label: "Target Port",
-									Settings: struct {
-										Default interface{} `yaml:"default,omitempty" json:"default,omitempty"`
-										Unit    interface{} `yaml:"unit,omitempty" json:"unit,omitempty"`
-									}{
-										Default: 8000,
-									},
-								},
-							},
-						},
-					},
-				},
+				// &models.FormTab{
+				// 	Context: &models.FormContext{
+				// 		Type: "helm/values",
+				// 	},
+				// 	Name:  "main",
+				// 	Label: "Main Settings",
+				// 	Sections: []*models.FormSection{
+				// 		&models.FormSection{
+				// 			Name: "section_one",
+				// 			Contents: []*models.FormContent{
+				// 				&models.FormContent{
+				// 					Type:  "number-input",
+				// 					Value: "service.targetPort",
+				// 					Label: "Target Port",
+				// 					Settings: struct {
+				// 						Default interface{} `yaml:"default,omitempty" json:"default,omitempty"`
+				// 						Unit    interface{} `yaml:"unit,omitempty" json:"unit,omitempty"`
+				// 					}{
+				// 						Default: 8000,
+				// 					},
+				// 				},
+				// 			},
+				// 		},
+				// 	},
+				// },
 				&models.FormTab{
 					Context: &models.FormContext{
 						Type: "cluster",
+						Config: map[string]string{
+							"group":    "apps",
+							"version":  "v1",
+							"resource": "deployments",
+						},
 					},
 					Name:  "crd",
 					Label: "CRDs",
@@ -71,7 +76,7 @@ var testCmd = &cobra.Command{
 							Contents: []*models.FormContent{
 								&models.FormContent{
 									Type:  "resourcelist",
-									Value: `[{"name": "resource_1"}]`,
+									Value: `[{"name": "certificate_1","namespace": "default","status": "Ready" },{"name": "certificate_2","namespace": "default","status": "Issuing" }]`,
 								},
 							},
 						},

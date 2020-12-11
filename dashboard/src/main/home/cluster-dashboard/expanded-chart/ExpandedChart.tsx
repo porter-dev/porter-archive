@@ -173,7 +173,7 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
     } = this.state;
     let { currentChart, setSidebar, setCurrentView } = this.props;
     let chart = currentChart;
-
+    
     switch (currentTab) {
       case 'status': 
         return (
@@ -251,7 +251,7 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
         tabOptions.push({ value: '@' + tab.name, label: tab.label, sections: tab.sections });
       });
     }
-
+    console.log('1', tabOptions)
     // Append universal tabs
     tabOptions.push(
       { label: 'Status', value: 'status' },
@@ -259,6 +259,7 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
       { label: 'Chart Overview', value: 'graph' },
       { label: 'Settings', value: 'settings' },
     );
+    console.log('2', tabOptions)
 
     if (this.state.devOpsMode) {
       tabOptions.push(
@@ -267,12 +268,15 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
       );
     }
 
+    console.log('3', tabOptions)
+
     // Filter tabs if previewing an old revision
     if (this.state.isPreview) {
       let liveTabs = ['status', 'settings', 'deploy'];
       tabOptions = tabOptions.filter((tab: any) => !liveTabs.includes(tab.value));
     }
-    
+    console.log('4', tabOptions)
+
     this.setState({ tabOptions });
   }
 

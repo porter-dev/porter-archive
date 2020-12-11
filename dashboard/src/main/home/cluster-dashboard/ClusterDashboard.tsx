@@ -23,7 +23,7 @@ type StateType = {
 
 export default class ClusterDashboard extends Component<PropsType, StateType> {
   state = {
-    namespace: '',
+    namespace: 'default',
     currentChart: null as (ChartType | null)
   }
 

@@ -27,13 +27,12 @@ export default class ValuesForm extends Component<PropsType, StateType> {
   updateFormState() {
     let formState: any = {};
     this.props.sections.forEach((section: Section, i: number) => {
-      console.log(section);
       section.contents.forEach((item: FormElement, i: number) => {
 
         // If no name is assigned use values.yaml variable as identifier
         let key = item.name || item.variable;
         
-        let def = (item.settings && item.settings.default) || (item.variable && item.variable[0]);
+        let def = (item.value && item.value[0]) || (item.settings && item.settings.default);
 
         /* Set default value from chart config if available
         if (this.props.config) {
@@ -63,7 +62,6 @@ export default class ValuesForm extends Component<PropsType, StateType> {
 
   // Initialize corresponding state fields for form blocks
   componentDidMount() {
-    console.log(this.props.sections)
     this.updateFormState();
   }
 

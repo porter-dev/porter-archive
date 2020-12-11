@@ -100,7 +100,7 @@ export interface FormElement {
   label: string,
   name?: string,
   variable?: string,
-  values?: any,
+  value?: any,
   settings?: {
     default?: number | string | boolean,
     options?: any[],

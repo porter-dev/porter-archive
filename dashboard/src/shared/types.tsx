@@ -28,6 +28,7 @@ export interface ChartType {
       name: string,
     }[],
   },
+  form?: FormYAML,
   config: any,
   version: number,
   namespace: string
@@ -84,7 +85,7 @@ export interface FormYAML {
     name: string,
     label: string,
     sections?: Section[]
-  }[]
+  }[],
 }
 
 export interface Section {
@@ -99,6 +100,7 @@ export interface FormElement {
   label: string,
   name?: string,
   variable?: string,
+  value?: any,
   settings?: {
     default?: number | string | boolean,
     options?: any[],

@@ -81,6 +81,7 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
   }
 
   renderTabContents = () => {
+    console.log('gg')
     return this.props.form.tabs.map((tab: any, i: number) => {
 
       // If tab is current, render

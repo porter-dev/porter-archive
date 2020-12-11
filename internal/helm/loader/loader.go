@@ -79,8 +79,6 @@ func LoadChart(repoURL, chartName, chartVersion string) (*chart.Chart, error) {
 
 	data, err := ioutil.ReadAll(resp.Body)
 
-	// fmt.Println("DATA IS", string(data))
-
 	if err != nil {
 		return nil, err
 	}

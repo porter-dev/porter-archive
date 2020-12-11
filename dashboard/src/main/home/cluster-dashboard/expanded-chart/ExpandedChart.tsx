@@ -4,7 +4,7 @@ import yaml from 'js-yaml';
 import close from '../../../../assets/close.png';
 import _ from 'lodash';
 
-import { ResourceType, ChartType, StorageType, ChoiceType } from '../../../../shared/types';
+import { ResourceType, ChartType, StorageType, Cluster } from '../../../../shared/types';
 import { Context } from '../../../../shared/Context';
 import api from '../../../../shared/api';
 
@@ -19,18 +19,20 @@ import SettingsSection from './SettingsSection';
 import { NavLink } from 'react-router-dom';
 
 type PropsType = {
+  namespace: string,
   currentChart: ChartType,
+  currentCluster: Cluster,
   setCurrentChart: (x: ChartType | null) => void,
-  refreshChart: () => void,
   setSidebar: (x: boolean) => void,
   setCurrentView: (x: string) => void,
 };
 
 type StateType = {
+  loading: boolean,
   showRevisions: boolean,
   components: ResourceType[],
   podSelectors: string[]
-  revisionPreview: ChartType | null,
+  isPreview: boolean,
   devOpsMode: boolean,
   tabOptions: any[],
   tabContents: any,
@@ -49,10 +51,11 @@ type StateType = {
 */
 export default class ExpandedChart extends Component<PropsType, StateType> {
   state = {
+    loading: true,
     showRevisions: false,
     components: [] as ResourceType[],
     podSelectors: [] as string[],
-    revisionPreview: null as (ChartType | null),
+    isPreview: false,
     devOpsMode: localStorage.getItem('devOpsMode') === 'true',
     tabOptions: [] as any[],
     tabContents: [] as any,
@@ -61,6 +64,33 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
     forceRefreshRevisions: false,
   }
 
+  // Retrieve full chart data (includes form and values)
+  getChartData = (chart: ChartType) => {
+    let { currentProject } = this.context;
+    let { currentCluster, setCurrentChart } = this.props;
+    this.setState({ loading: true })
+    api.getChart('<token>', {
+      namespace: this.props.namespace,
+      cluster_id: currentCluster.id,
+      storage: StorageType.Secret
+    }, {
+      name: chart.name,
+      revision: chart.version,
+      id: currentProject.id
+    }, (err: any, res: any) => {
+      if (err) {
+        console.log(err);
+      } else {
+        setCurrentChart(res.data);
+        this.setState({ loading: false });
+
+        // After retrieving full chart data, update tabs and resources
+        this.updateTabs();
+        this.updateResources();
+      }
+    });
+  }
+  
   updateResources = () => {
     let { currentCluster, currentProject } = this.context;
     let { currentChart } = this.props;
@@ -82,46 +112,21 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
     });
   }
 
+  refreshChart = () => this.getChartData(this.props.currentChart);
+
   componentDidMount() {
-    this.updateTabs();
-    this.updateResources();
+    this.getChartData(this.props.currentChart);
   }
 
   componentDidUpdate(prevProps: PropsType) {
+    /*
     if (this.props.currentChart !== prevProps.currentChart) {
       this.updateResources();
     }
+    */
   }
 
-  getFormData = (): any => {
-    return new Promise(resolve => {
-      let { files } = this.props.currentChart.chart;
-      for (let file of files) { 
-        if (file.name === 'form.yaml') {
-          let chartName = this.props.currentChart.chart.metadata.name;
-          api.getTemplateInfo('<token>', {}, {
-            name: chartName.toLowerCase().trim(),
-            version: 'latest',
-          }, (err: any, res: any) => {
-            if (err) {
-              console.log(err);
-              resolve(null);
-            } else {
-              console.log(res.data)
-              let { form } = res.data;
-              console.log(form)
-              resolve(form);
-            }
-          });
-        }
-      };
-
-      // resolve with empty data if there is no form.yaml in the files
-      resolve(null)
-    });
-  }
-
-  upgradeValues = (rawValues: any) => {
+  onSubmit = (rawValues: any) => {
     let { currentProject, currentCluster, setCurrentError } = this.context;
 
     // Convert dotted keys to nested objects
@@ -134,7 +139,7 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
     let valuesYaml = yaml.dump({ ...(this.props.currentChart.config as Object), ...values });
     
     this.setState({ saveValuesStatus: 'loading' });
-    this.props.refreshChart();
+    this.refreshChart();
     api.upgradeChartValues('<token>', {
       namespace: this.props.currentChart.namespace,
       storage: StorageType.Secret,
@@ -164,10 +169,11 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
       showRevisions,
       saveValuesStatus,
       tabOptions,
-      revisionPreview,
+      isPreview,
     } = this.state;
-    let { currentChart, refreshChart, setSidebar, setCurrentView } = this.props;
-    let chart = revisionPreview || currentChart;
+    let { currentChart, setSidebar, setCurrentView } = this.props;
+    let chart = currentChart;
+    
     switch (currentTab) {
       case 'status': 
         return (
@@ -181,7 +187,7 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
         return (
           <SettingsSection
             currentChart={chart}
-            refreshChart={refreshChart}
+            refreshChart={this.refreshChart}
             setCurrentView={setCurrentView}
           /> 
         );
@@ -210,7 +216,7 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
         return (
           <ValuesYaml
             currentChart={chart}
-            refreshChart={refreshChart}
+            refreshChart={this.refreshChart}
           />
         );
       default:
@@ -224,9 +230,8 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
                 <ValuesFormWrapper key={i}>
                   <ValuesForm 
                     sections={tab.sections} 
-                    onSubmit={this.upgradeValues}
+                    onSubmit={this.onSubmit}
                     saveValuesStatus={saveValuesStatus}
-                    config={chart.config}
                   />
                 </ValuesFormWrapper>
               );
@@ -236,12 +241,12 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
     }
   }
 
-  async updateTabs() {
-    let formData = await this.getFormData();
+  updateTabs() {
+    let formData = this.props.currentChart.form;
     let tabOptions = [] as any[];
 
     // Generate form tabs if form.yaml exists
-    if (formData && formData.tabs) {
+    if (formData) {
       formData.tabs.map((tab: any, i: number) => {
         tabOptions.push({ value: '@' + tab.name, label: tab.label, sections: tab.sections });
       });
@@ -266,7 +271,7 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
     console.log('3', tabOptions)
 
     // Filter tabs if previewing an old revision
-    if (this.state.revisionPreview) {
+    if (this.state.isPreview) {
       let liveTabs = ['status', 'settings', 'deploy'];
       tabOptions = tabOptions.filter((tab: any) => !liveTabs.includes(tab.value));
     }
@@ -275,29 +280,9 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
     this.setState({ tabOptions });
   }
 
-  setRevisionPreview = (oldChart: ChartType) => {
-    let { currentCluster, currentProject } = this.context;
-    this.setState({ revisionPreview: oldChart }, () => this.updateTabs());
-
-    if (oldChart) {
-      api.getChartComponents('<token>', {
-        namespace: oldChart.namespace,
-        cluster_id: currentCluster.id,
-        storage: StorageType.Secret
-      }, {
-        id: currentProject.id,
-        name: oldChart.name,
-        revision: oldChart.version
-      }, (err: any, res: any) => {
-        if (err) {
-          console.log(err)
-        } else {
-          this.setState({ components: res.data.Objects, podSelectors: res.data.PodSelectors });
-        }
-      });
-    } else {
-      this.updateResources();
-    }
+  setRevision = (chart: ChartType, isCurrent?: boolean) => {
+    this.setState({ isPreview: !isCurrent });
+    this.getChartData(chart);
   }
 
   // TODO: consolidate with pop + push in refreshTabs
@@ -333,8 +318,8 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
   }
 
   render() {
-    let { currentChart, setCurrentChart, refreshChart } = this.props;
-    let chart = this.state.revisionPreview || currentChart;
+    let { currentChart, setCurrentChart } = this.props;
+    let chart = currentChart;
 
     return ( 
       <div>
@@ -369,8 +354,8 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
               showRevisions={this.state.showRevisions}
               toggleShowRevisions={() => this.setState({ showRevisions: !this.state.showRevisions })}
               chart={chart}
-              refreshChart={refreshChart}
-              setRevisionPreview={this.setRevisionPreview}
+              refreshChart={this.refreshChart}
+              setRevision={this.setRevision}
               forceRefreshRevisions={this.state.forceRefreshRevisions}
               refreshRevisionsOff={() => this.setState({ forceRefreshRevisions: false })}
             />
@@ -380,7 +365,7 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
             currentTab={this.state.currentTab}
             setCurrentTab={(x: string) => this.setState({ currentTab: x })}
             options={this.state.tabOptions}
-            color={this.state.revisionPreview ? '#f5cb42' : null}
+            color={this.state.isPreview ? '#f5cb42' : null}
             addendum={
               <TabButton onClick={this.toggleDevOpsMode} devOpsMode={this.state.devOpsMode}>
                 <i className="material-icons">offline_bolt</i> DevOps Mode

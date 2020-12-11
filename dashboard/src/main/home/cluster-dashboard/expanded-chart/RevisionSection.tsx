@@ -13,7 +13,7 @@ type PropsType = {
   toggleShowRevisions: () => void,
   chart: ChartType,
   refreshChart: () => void,
-  setRevisionPreview: (preview: ChartType) => void
+  setRevision: (x: ChartType, isCurrent?: boolean) => void
   forceRefreshRevisions: boolean,
   refreshRevisionsOff: () => void,
 };
@@ -34,7 +34,7 @@ export default class RevisionSection extends Component<PropsType, StateType> {
     maxVersion: 0, // Track most recent version even when previewing old revisions
   }
 
-  refreshHistory = () => {
+  refreshHistory = (callback?: () => void) => {
     let { chart } = this.props;
     let { currentCluster, currentProject } = this.context;
     api.getRevisions('<token>', {
@@ -47,6 +47,7 @@ export default class RevisionSection extends Component<PropsType, StateType> {
       } else {
         res.data.sort((a: ChartType, b: ChartType) => { return -(a.version - b.version) });
         this.setState({ revisions: res.data, maxVersion: res.data[0].version });
+        callback && callback();
       }
     });
   }
@@ -59,8 +60,11 @@ export default class RevisionSection extends Component<PropsType, StateType> {
   componentDidUpdate(prevProps: PropsType) {
     if (this.props.forceRefreshRevisions) {
       this.props.refreshRevisionsOff();
-      this.props.refreshChart();
-      this.refreshHistory();
+
+      // Force refresh occurs on submit -> set current to newest
+      this.refreshHistory(() => {
+        this.props.setRevision(this.state.revisions[0], true);
+      });
     } else if (this.props.chart !== prevProps.chart) {
       this.refreshHistory();
     }
@@ -94,9 +98,9 @@ export default class RevisionSection extends Component<PropsType, StateType> {
         this.setState({ loading: false });
       } else {
         this.setState({ loading: false });
-        this.props.refreshChart();
-        this.refreshHistory();
-        this.props.setRevisionPreview(null);
+        this.refreshHistory(() => {
+          this.props.setRevision(this.state.revisions[0], true);
+        });
       }
     });
   }
@@ -104,9 +108,9 @@ export default class RevisionSection extends Component<PropsType, StateType> {
   handleClickRevision = (revision: ChartType) => {
     let isCurrent = revision.version === this.state.maxVersion;
     if (isCurrent) {
-      this.props.setRevisionPreview(null);
+      this.props.setRevision(revision, true);
     } else {
-      this.props.setRevisionPreview(revision);
+      this.props.setRevision(revision);
     }
   }
 

@@ -23,7 +23,7 @@ type StateType = {
 
 export default class ClusterDashboard extends Component<PropsType, StateType> {
   state = {
-    namespace: '',
+    namespace: 'default',
     currentChart: null as (ChartType | null)
   }
 
@@ -33,27 +33,6 @@ export default class ClusterDashboard extends Component<PropsType, StateType> {
     if (prevProps.currentCluster !== this.props.currentCluster) {
       this.setState({ namespace: '', currentChart: null });
     }
-  }
-
-  // Allows rollback to update the top-level chart
-  refreshChart = () => {
-    let { currentProject } = this.context;
-    let { currentCluster } = this.props;
-    api.getChart('<token>', {
-      namespace: this.state.namespace,
-      cluster_id: currentCluster.id,
-      storage: StorageType.Secret
-    }, {
-      name: this.state.currentChart.name,
-      revision: 0,
-      id: currentProject.id
-    }, (err: any, res: any) => {
-      if (err) {
-        console.log(err);
-      } else {
-        this.setState({ currentChart: res.data });
-      }
-    });
   }
 
   renderDashboardIcon = () => {
@@ -80,8 +59,9 @@ export default class ClusterDashboard extends Component<PropsType, StateType> {
     if (this.state.currentChart) {
       return (
         <ExpandedChart
+          namespace={this.state.namespace}
+          currentCluster={this.props.currentCluster}
           currentChart={this.state.currentChart}
-          refreshChart={this.refreshChart}
           setCurrentChart={(x: ChartType | null) => this.setState({ currentChart: x })}
           setSidebar={setSidebar}
           setCurrentView={setCurrentView} // Link to integrations from chart settings
@@ -123,7 +103,7 @@ export default class ClusterDashboard extends Component<PropsType, StateType> {
         <ChartList
           currentCluster={currentCluster}
           namespace={this.state.namespace}
-          setCurrentChart={(x: ChartType) => this.setState({ currentChart: x })}
+          setCurrentChart={(x: ChartType | null) => this.setState({ currentChart: x })}
         />
       </div>
     );

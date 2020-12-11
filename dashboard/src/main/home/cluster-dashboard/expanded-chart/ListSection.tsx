@@ -48,7 +48,7 @@ export default class ListSection extends Component<PropsType, StateType> {
           key={i}
           handleClick={() => this.setState({ yaml: rawYaml })}
           selected={this.state.yaml === rawYaml}
-          kind={resource.Kind}
+          label={resource.Kind}
           name={resource.Name}
           isLast={i === this.props.components.length - 1}
         />

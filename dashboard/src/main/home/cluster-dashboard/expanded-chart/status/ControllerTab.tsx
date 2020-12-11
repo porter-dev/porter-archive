@@ -109,7 +109,7 @@ export default class ControllerTab extends Component<PropsType, StateType> {
     let status = (available == total) ? 'running' : 'waiting'
     return (
       <ResourceTab
-        kind={controller.kind}
+        label={controller.kind}
         name={controller.metadata.name}
         status={{ label: status, available, total }}
         isLast={isLast}

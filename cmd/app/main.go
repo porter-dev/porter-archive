@@ -40,16 +40,20 @@ func main() {
 		&models.Session{},
 		&models.GitRepo{},
 		&models.Registry{},
+		&models.HelmRepo{},
 		&models.Cluster{},
 		&models.ClusterCandidate{},
 		&models.ClusterResolver{},
 		&ints.KubeIntegration{},
+		&ints.BasicIntegration{},
 		&ints.OIDCIntegration{},
 		&ints.OAuthIntegration{},
 		&ints.GCPIntegration{},
 		&ints.AWSIntegration{},
 		&ints.TokenCache{},
+		&ints.ClusterTokenCache{},
 		&ints.RegTokenCache{},
+		&ints.HelmRepoTokenCache{},
 	)
 
 	if err != nil {

@@ -7,8 +7,10 @@ type Repository struct {
 	Session          SessionRepository
 	GitRepo          GitRepoRepository
 	Cluster          ClusterRepository
+	HelmRepo         HelmRepoRepository
 	Registry         RegistryRepository
 	KubeIntegration  KubeIntegrationRepository
+	BasicIntegration BasicIntegrationRepository
 	OIDCIntegration  OIDCIntegrationRepository
 	OAuthIntegration OAuthIntegrationRepository
 	GCPIntegration   GCPIntegrationRepository

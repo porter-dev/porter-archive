@@ -19,6 +19,7 @@ var (
 	projectID  uint
 	registryID uint
 	clusterID  uint
+	helmRepoID uint
 )
 
 var configCmd = &cobra.Command{
@@ -95,6 +96,27 @@ var setRegistryCmd = &cobra.Command{
 	},
 }
 
+var setHelmRepoCmd = &cobra.Command{
+	Use:   "set-helmrepo [id]",
+	Args:  cobra.ExactArgs(1),
+	Short: "Saves the helm repo id in the default configuration",
+	Run: func(cmd *cobra.Command, args []string) {
+		hrID, err := strconv.ParseUint(args[0], 10, 64)
+
+		if err != nil {
+			color.New(color.FgRed).Printf("An error occurred: %v\n", err)
+			os.Exit(1)
+		}
+
+		err = setHelmRepo(uint(hrID))
+
+		if err != nil {
+			color.New(color.FgRed).Printf("An error occurred: %v\n", err)
+			os.Exit(1)
+		}
+	},
+}
+
 var setHostCmd = &cobra.Command{
 	Use:   "set-host [host]",
 	Args:  cobra.ExactArgs(1),
@@ -116,6 +138,7 @@ func init() {
 	configCmd.AddCommand(setClusterCmd)
 	configCmd.AddCommand(setHostCmd)
 	configCmd.AddCommand(setRegistryCmd)
+	configCmd.AddCommand(setHelmRepoCmd)
 }
 
 func setDriver(driver string) error {
@@ -167,6 +190,12 @@ func setRegistry(id uint) error {
 	return viper.WriteConfig()
 }
 
+func setHelmRepo(id uint) error {
+	viper.Set("helm_repo", id)
+	color.New(color.FgGreen).Printf("Set the current helm repo id as %d\n", id)
+	return viper.WriteConfig()
+}
+
 func setHost(host string) error {
 	viper.Set("host", host)
 	err := viper.WriteConfig()
@@ -196,6 +225,14 @@ func getRegistryID() uint {
 	}
 
 	return viper.GetUint("registry")
+}
+
+func getHelmRepoID() uint {
+	if helmRepoID != 0 {
+		return helmRepoID
+	}
+
+	return viper.GetUint("helm_repo")
 }
 
 func getProjectID() uint {

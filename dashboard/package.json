@@ -8,6 +8,7 @@
     "@types/lodash": "^4.14.165",
     "@types/markdown-to-jsx": "^6.11.3",
     "@types/qs": "^6.9.5",
+    "@types/random-words": "^1.1.0",
     "ace-builds": "^1.4.12",
     "axios": "^0.20.0",
     "dotenv": "^8.2.0",

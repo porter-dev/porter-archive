@@ -6,7 +6,6 @@ import { Section, FormElement } from '../../shared/types';
 import { Context } from '../../shared/Context';
 import api from '../../shared/api';
 
-import SaveButton from '../SaveButton';
 import CheckboxRow from './CheckboxRow';
 import InputRow from './InputRow';
 import SelectRow from './SelectRow';
@@ -15,61 +14,18 @@ import Heading from './Heading';
 import ResourceTab from '../ResourceTab';
 
 type PropsType = {
-  onSubmit: (formValues: any) => void,
   sections?: Section[],
-  disabled?: boolean,
-  saveValuesStatus?: string | null,
+  metaState?: any,
+  setMetaState?: any,
 };
 
 type StateType = any;
 
 export default class ValuesForm extends Component<PropsType, StateType> {
-
-  updateFormState() {
-    let formState: any = {};
-    this.props.sections.forEach((section: Section, i: number) => {
-      section.contents.forEach((item: FormElement, i: number) => {
-
-        // If no name is assigned use values.yaml variable as identifier
-        let key = item.name || item.variable;
-        
-        let def = (item.value && item.value[0]) || (item.settings && item.settings.default);
-
-        switch (item.type) {
-          case 'checkbox':
-            formState[key] = def ? def : false;
-            break;
-          case 'string-input':
-            formState[key] = def ? def : '';
-            break;
-          case 'number-input':
-            formState[key] = def.toString() ? def : '';
-            break;
-          case 'select':
-            formState[key] = def ? def : item.settings.options[0].value;
-            break;
-          default:
-        }
-      });
-    });
-    this.setState(formState);
-  }
-
-  // Initialize corresponding state fields for form blocks
-  componentDidMount() {
-    this.updateFormState();
-  }
-
-  componentDidUpdate(prevProps: PropsType) {
-    if (this.props.sections !== prevProps.sections) {
-      this.updateFormState();
-    }
-  }
-
   getInputValue = (item: FormElement) => {
     let key = item.name || item.variable;
-    let value = this.state[key];
-    if (item.settings && item.settings.unit) {
+    let value = this.props.metaState[key];
+    if (item.settings && item.settings.unit && value) {
       value = value.split(item.settings.unit)[0]
     }
     return value;
@@ -105,8 +61,8 @@ export default class ValuesForm extends Component<PropsType, StateType> {
           return (
             <CheckboxRow
               key={i}
-              checked={this.state[key]}
-              toggle={() => this.setState({ [key]: !this.state[key] })}
+              checked={this.props.metaState[key]}
+              toggle={() => this.props.setMetaState({ [key]: !this.props.metaState[key] })}
               label={item.label}
             />
           );
@@ -114,13 +70,14 @@ export default class ValuesForm extends Component<PropsType, StateType> {
           return (
             <InputRow
               key={i}
+              isRequired={item.required || true}
               type='text'
               value={this.getInputValue(item)}
               setValue={(x: string) => {
-                if (item.settings && item.settings.unit) {
+                if (item.settings && item.settings.unit && x !== '') {
                   x = x + item.settings.unit;
                 }
-                this.setState({ [key]: x });
+                this.props.setMetaState({ [key]: x });
               }}
               label={item.label}
               unit={item.settings ? item.settings.unit : null}
@@ -130,14 +87,17 @@ export default class ValuesForm extends Component<PropsType, StateType> {
           return (
             <InputRow
               key={i}
+              isRequired={item.required || true}
               type='number'
               value={this.getInputValue(item)}
               setValue={(x: number) => {
                 let val = x.toString();
-                if (item.settings && item.settings.unit) {
+                if (Number.isNaN(x)) {
+                  val = '';
+                } else if (item.settings && item.settings.unit) {
                   val = val + item.settings.unit;
                 }
-                this.setState({ [key]: val });
+                this.props.setMetaState({ [key]: val });
               }}
               label={item.label}
               unit={item.settings ? item.settings.unit : null}
@@ -147,8 +107,8 @@ export default class ValuesForm extends Component<PropsType, StateType> {
           return (
             <SelectRow
               key={i}
-              value={this.state[key]}
-              setActiveValue={(val) => this.setState({ [key]: val })}
+              value={this.props.metaState[key]}
+              setActiveValue={(val) => this.props.setMetaState({ [key]: val })}
               options={item.settings.options}
               dropdownLabel=''
               label={item.label}
@@ -160,11 +120,11 @@ export default class ValuesForm extends Component<PropsType, StateType> {
   }
 
   renderFormContents = () => {
-    if (this.state) {
+    if (this.props.metaState) {
       return this.props.sections.map((section: Section, i: number) => {
         // Hide collapsible section if deciding field is false
         if (section.show_if) {
-          if (!this.state[section.show_if]) {
+          if (!this.props.metaState[section.show_if]) {
             return null;
           }
         }
@@ -180,19 +140,10 @@ export default class ValuesForm extends Component<PropsType, StateType> {
 
   render() {
     return (
-      <Wrapper>
-        <StyledValuesForm>
-          <DarkMatter />
-          {this.renderFormContents()}
-        </StyledValuesForm>
-        <SaveButton
-          disabled={this.props.disabled}
-          text='Deploy'
-          onClick={() => console.log(this.state)}
-          status={this.props.saveValuesStatus}
-          makeFlush={true}
-        />
-      </Wrapper>
+      <StyledValuesForm>
+        <DarkMatter />
+        {this.renderFormContents()}
+      </StyledValuesForm>
     );
   }
 }
@@ -206,11 +157,6 @@ const ResourceList = styled.div`
 
 const DarkMatter = styled.div`
   margin-top: 0px;
-`;
-
-const Wrapper = styled.div`
-  width: 100%;
-  height: 100%;
 `;
 
 const StyledValuesForm = styled.div`

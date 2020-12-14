@@ -24,7 +24,7 @@ func (app *App) HandleDeployTemplate(w http.ResponseWriter, r *http.Request) {
 	getChartForm := &forms.ChartForm{
 		Name:    name,
 		Version: version,
-		RepoURL: app.ServerConf.HelmRepoURL,
+		RepoURL: app.ServerConf.DefaultHelmRepoURL,
 	}
 
 	// if a repo_url is passed as query param, it will be populated
@@ -47,7 +47,7 @@ func (app *App) HandleDeployTemplate(w http.ResponseWriter, r *http.Request) {
 	form := &forms.InstallChartTemplateForm{
 		ReleaseForm: &forms.ReleaseForm{
 			Form: &helm.Form{
-				Repo: app.repo,
+				Repo: app.Repo,
 			},
 		},
 		ChartTemplateForm: &forms.ChartTemplateForm{},
@@ -55,7 +55,7 @@ func (app *App) HandleDeployTemplate(w http.ResponseWriter, r *http.Request) {
 
 	form.ReleaseForm.PopulateHelmOptionsFromQueryParams(
 		vals,
-		app.repo.Cluster,
+		app.Repo.Cluster,
 	)
 
 	if err := json.NewDecoder(r.Body).Decode(form); err != nil {

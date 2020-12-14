@@ -27,7 +27,7 @@ const (
 // HandleCreateUser validates a user form entry, converts the user to a gorm
 // model, and saves the user to the database
 func (app *App) HandleCreateUser(w http.ResponseWriter, r *http.Request) {
-	session, err := app.store.Get(r, app.cookieName)
+	session, err := app.Store.Get(r, app.ServerConf.CookieName)
 
 	if err != nil {
 		app.handleErrorDataRead(err, w)
@@ -37,14 +37,14 @@ func (app *App) HandleCreateUser(w http.ResponseWriter, r *http.Request) {
 
 	user, err := app.writeUser(
 		form,
-		app.repo.User.CreateUser,
+		app.Repo.User.CreateUser,
 		w,
 		r,
 		doesUserExist,
 	)
 
 	if err == nil {
-		app.logger.Info().Msgf("New user created: %d", user.ID)
+		app.Logger.Info().Msgf("New user created: %d", user.ID)
 		session.Values["authenticated"] = true
 		session.Values["user_id"] = user.ID
 		session.Values["email"] = user.Email
@@ -61,7 +61,7 @@ func (app *App) HandleCreateUser(w http.ResponseWriter, r *http.Request) {
 
 // HandleAuthCheck checks whether current session is authenticated and returns user ID if so.
 func (app *App) HandleAuthCheck(w http.ResponseWriter, r *http.Request) {
-	session, err := app.store.Get(r, app.cookieName)
+	session, err := app.Store.Get(r, app.ServerConf.CookieName)
 
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -80,7 +80,7 @@ func (app *App) HandleAuthCheck(w http.ResponseWriter, r *http.Request) {
 
 // HandleLoginUser checks the request header for cookie and validates the user.
 func (app *App) HandleLoginUser(w http.ResponseWriter, r *http.Request) {
-	session, err := app.store.Get(r, app.cookieName)
+	session, err := app.Store.Get(r, app.ServerConf.CookieName)
 
 	if err != nil {
 		app.handleErrorDataRead(err, w)
@@ -94,7 +94,7 @@ func (app *App) HandleLoginUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	storedUser, readErr := app.repo.User.ReadUserByEmail(form.Email)
+	storedUser, readErr := app.Repo.User.ReadUserByEmail(form.Email)
 
 	if readErr != nil {
 		app.sendExternalError(readErr, http.StatusUnauthorized, HTTPError{
@@ -119,7 +119,7 @@ func (app *App) HandleLoginUser(w http.ResponseWriter, r *http.Request) {
 	session.Values["user_id"] = storedUser.ID
 	session.Values["email"] = storedUser.Email
 	if err := session.Save(r, w); err != nil {
-		app.logger.Warn().Err(err)
+		app.Logger.Warn().Err(err)
 	}
 
 	w.WriteHeader(http.StatusOK)
@@ -132,7 +132,7 @@ func (app *App) HandleLoginUser(w http.ResponseWriter, r *http.Request) {
 
 // HandleLogoutUser detaches the user from the session
 func (app *App) HandleLogoutUser(w http.ResponseWriter, r *http.Request) {
-	session, err := app.store.Get(r, app.cookieName)
+	session, err := app.Store.Get(r, app.ServerConf.CookieName)
 
 	if err != nil {
 		app.handleErrorDataRead(err, w)
@@ -174,7 +174,7 @@ func (app *App) HandleListUserProjects(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	projects, err := app.repo.Project.ListProjectsByUserID(uint(id))
+	projects, err := app.Repo.Project.ListProjectsByUserID(uint(id))
 
 	if err != nil {
 		app.handleErrorRead(err, ErrUserDataRead, w)
@@ -208,10 +208,10 @@ func (app *App) HandleDeleteUser(w http.ResponseWriter, r *http.Request) {
 		ID: uint(id),
 	}
 
-	user, err := app.writeUser(form, app.repo.User.DeleteUser, w, r)
+	user, err := app.writeUser(form, app.Repo.User.DeleteUser, w, r)
 
 	if err == nil {
-		app.logger.Info().Msgf("User deleted: %d", user.ID)
+		app.Logger.Info().Msgf("User deleted: %d", user.ID)
 		w.WriteHeader(http.StatusNoContent)
 	}
 }
@@ -241,7 +241,7 @@ func (app *App) writeUser(
 	}
 
 	// convert the form to a user model -- WriteUserForm must implement ToUser
-	userModel, err := form.ToUser(app.repo.User)
+	userModel, err := form.ToUser(app.Repo.User)
 
 	if err != nil {
 		app.handleErrorFormDecoding(err, ErrUserDecode, w)
@@ -253,7 +253,7 @@ func (app *App) writeUser(
 	// with http.StatusUnprocessableEntity (422), unless this is
 	// an internal server error
 	for _, validator := range validators {
-		err := validator(app.repo, userModel)
+		err := validator(app.Repo, userModel)
 
 		if err != nil {
 			goErr := errors.New(strings.Join(err.Errors, ", "))
@@ -296,7 +296,7 @@ func (app *App) readUser(w http.ResponseWriter, r *http.Request) (*models.User, 
 		return nil, err
 	}
 
-	user, err := app.repo.User.ReadUser(uint(id))
+	user, err := app.Repo.User.ReadUser(uint(id))
 
 	if err != nil {
 		app.handleErrorRead(err, ErrUserDataRead, w)

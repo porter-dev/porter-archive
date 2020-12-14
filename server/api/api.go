@@ -1,9 +1,12 @@
 package api
 
 import (
+	"fmt"
+
 	"github.com/go-playground/locales/en"
 	ut "github.com/go-playground/universal-translator"
-	"github.com/go-playground/validator/v10"
+	vr "github.com/go-playground/validator/v10"
+	sessionstore "github.com/porter-dev/porter/internal/auth"
 	"github.com/porter-dev/porter/internal/oauth"
 	"golang.org/x/oauth2"
 	"gorm.io/gorm"
@@ -13,6 +16,8 @@ import (
 	"github.com/porter-dev/porter/internal/kubernetes"
 	lr "github.com/porter-dev/porter/internal/logger"
 	"github.com/porter-dev/porter/internal/repository"
+	memory "github.com/porter-dev/porter/internal/repository/memory"
+	"github.com/porter-dev/porter/internal/validator"
 	"helm.sh/helm/v3/pkg/storage"
 
 	"github.com/porter-dev/porter/internal/config"
@@ -25,78 +30,148 @@ type TestAgents struct {
 	K8sAgent              *kubernetes.Agent
 }
 
+// AppConfig is the configuration required for creating a new App
+type AppConfig struct {
+	DB         *gorm.DB
+	Logger     *lr.Logger
+	Repository *repository.Repository
+	ServerConf config.ServerConf
+
+	// TestAgents if API is in testing mode
+	TestAgents *TestAgents
+}
+
 // App represents an API instance with handler methods attached, a DB connection
 // and a logger instance
 type App struct {
-	db           *gorm.DB
-	logger       *lr.Logger
-	repo         *repository.Repository
-	validator    *validator.Validate
-	store        sessions.Store
-	translator   *ut.Translator
-	cookieName   string
-	testing      bool
-	isLocal      bool
-	ServerConf   config.ServerConf
-	TestAgents   *TestAgents
-	GithubConfig *oauth2.Config
+	// Server configuration
+	ServerConf config.ServerConf
+
+	// Logger for logging
+	Logger *lr.Logger
+
+	// Repo implements a query repository
+	Repo *repository.Repository
+
+	// session store for cookie-based sessions
+	Store sessions.Store
+
+	// agents exposed for testing
+	TestAgents *TestAgents
+
+	// oauth-specific clients
+	GithubConf *oauth2.Config
+
+	db         *gorm.DB
+	validator  *vr.Validate
+	translator *ut.Translator
 }
 
 // New returns a new App instance
-// TODO -- this should accept an app/server config
-func New(
-	logger *lr.Logger,
-	db *gorm.DB,
-	repo *repository.Repository,
-	validator *validator.Validate,
-	store sessions.Store,
-	cookieName string,
-	testing bool,
-	isLocal bool,
-	githubConfig *oauth.Config,
-	serverConf config.ServerConf,
-) *App {
-	// for now, will just support the english translator from the
-	// validator/translations package
+func New(conf *AppConfig) (*App, error) {
+	// create a new validator and translator
+	validator := validator.New()
+
 	en := en.New()
 	uni := ut.New(en, en)
-	trans, _ := uni.GetTranslator("en")
+	translator, found := uni.GetTranslator("en")
 
-	var testAgents *TestAgents = nil
-
-	if testing {
-		memStorage := helm.StorageMap["memory"](nil, nil, "")
-
-		testAgents = &TestAgents{
-			HelmAgent:             helm.GetAgentTesting(&helm.Form{}, nil, logger),
-			HelmTestStorageDriver: memStorage,
-			K8sAgent:              kubernetes.GetAgentTesting(),
-		}
+	if !found {
+		return nil, fmt.Errorf("could not find \"en\" translator")
 	}
 
-	var oauthGithubConf *oauth2.Config
-
-	if githubConfig != nil {
-		oauthGithubConf = oauth.NewGithubClient(githubConfig)
+	app := &App{
+		Logger:     conf.Logger,
+		Repo:       conf.Repository,
+		ServerConf: conf.ServerConf,
+		TestAgents: conf.TestAgents,
+		db:         conf.DB,
+		validator:  validator,
+		translator: &translator,
 	}
 
-	return &App{
-		db:           db,
-		logger:       logger,
-		repo:         repo,
-		validator:    validator,
-		store:        store,
-		translator:   &trans,
-		cookieName:   cookieName,
-		testing:      testing,
-		isLocal:      isLocal,
-		TestAgents:   testAgents,
-		GithubConfig: oauthGithubConf,
-		ServerConf:   serverConf,
+	// if repository not specified, default to in-memory
+	if app.Repo == nil {
+		app.Repo = memory.NewRepository(true)
 	}
+
+	// create the session store
+	store, err := sessionstore.NewStore(app.Repo, app.ServerConf)
+
+	if err != nil {
+		return nil, err
+	}
+
+	app.Store = store
+
+	// if server config contains OAuth client info, create clients
+	if sc := conf.ServerConf; sc.GithubClientID != "" && sc.GithubClientSecret != "" {
+		app.GithubConf = oauth.NewGithubClient(&oauth.Config{
+			ClientID:     sc.GithubClientID,
+			ClientSecret: sc.GithubClientSecret,
+			Scopes:       []string{"repo", "user", "read:user"},
+			BaseURL:      sc.ServerURL,
+		})
+	}
+
+	return app, nil
 }
 
-// Logger returns the logger instance in use by App
-func (app *App) Logger() *lr.Logger {
-	return app.logger
-}
+// // New returns a new App instance
+// // TODO -- this should accept an app/server config
+// func New(
+// 	logger *lr.Logger,
+// 	db *gorm.DB,
+// 	repo *repository.Repository,
+// 	validator *validator.Validate,
+// 	store sessions.Store,
+// 	cookieName string,
+// 	testing bool,
+// 	isLocal bool,
+// 	githubConfig *oauth.Config,
+// 	serverConf config.ServerConf,
+// ) *App {
+// 	// for now, will just support the english translator from the
+// 	// validator/translations package
+// 	en := en.New()
+// 	uni := ut.New(en, en)
+// 	trans, _ := uni.GetTranslator("en")
+
+// 	var testAgents *TestAgents = nil
+
+// 	if testing {
+// 		memStorage := helm.StorageMap["memory"](nil, nil, "")
+
+// 		testAgents = &TestAgents{
+// 			HelmAgent:             helm.GetAgentTesting(&helm.Form{}, nil, logger),
+// 			HelmTestStorageDriver: memStorage,
+// 			K8sAgent:              kubernetes.GetAgentTesting(),
+// 		}
+// 	}
+
+// 	var oauthGithubConf *oauth2.Config
+
+// 	if githubConfig != nil {
+// 		oauthGithubConf = oauth.NewGithubClient(githubConfig)
+// 	}
+
+// 	return &App{
+// 		db:           db,
+// 		logger:       logger,
+// 		repo:         repo,
+// 		validator:    validator,
+// 		store:        store,
+// 		translator:   &trans,
+// 		cookieName:   cookieName,
+// 		testing:      testing,
+// 		isLocal:      isLocal,
+// 		TestAgents:   testAgents,
+// 		GithubConfig: oauthGithubConf,
+// 		ServerConf:   serverConf,
+// 	}
+// }
+
+// // Logger returns the logger instance in use by App
+// func (app *App) Logger() *lr.Logger {
+// 	return app.logger
+// }

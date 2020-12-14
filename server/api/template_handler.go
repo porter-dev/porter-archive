@@ -2,7 +2,6 @@ package api
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"net/url"
 	"strings"
@@ -19,7 +18,7 @@ import (
 // TODO: test and reduce fragility (handle untar/parse error for individual charts)
 // TODO: separate markdown retrieval into its own query if necessary
 func (app *App) HandleListTemplates(w http.ResponseWriter, r *http.Request) {
-	repoIndex, err := loader.LoadRepoIndexPublic(app.ServerConf.HelmRepoURL)
+	repoIndex, err := loader.LoadRepoIndexPublic(app.ServerConf.DefaultHelmRepoURL)
 
 	if err != nil {
 		app.handleErrorFormDecoding(err, ErrReleaseDecode, w)
@@ -44,7 +43,7 @@ func (app *App) HandleReadTemplate(w http.ResponseWriter, r *http.Request) {
 	form := &forms.ChartForm{
 		Name:    name,
 		Version: version,
-		RepoURL: app.ServerConf.HelmRepoURL,
+		RepoURL: app.ServerConf.DefaultHelmRepoURL,
 	}
 
 	// if a repo_url is passed as query param, it will be populated
@@ -60,7 +59,6 @@ func (app *App) HandleReadTemplate(w http.ResponseWriter, r *http.Request) {
 	chart, err := loader.LoadChartPublic(form.RepoURL, form.Name, form.Version)
 
 	if err != nil {
-		fmt.Println("ERROR LOADING CHART", form.RepoURL, form.Name, form.Version, err)
 		app.handleErrorFormDecoding(err, ErrReleaseDecode, w)
 		return
 	}
@@ -77,8 +75,6 @@ func (app *App) HandleReadTemplate(w http.ResponseWriter, r *http.Request) {
 		if strings.Contains(file.Name, "form.yaml") {
 			formYAML, err := parser.FormYAMLFromBytes(parserDef, file.Data, "declared")
 
-			fmt.Println("FORM RESULT:", formYAML, err)
-
 			if err != nil {
 				break
 			}
@@ -88,10 +84,6 @@ func (app *App) HandleReadTemplate(w http.ResponseWriter, r *http.Request) {
 			res.Markdown = string(file.Data)
 		}
 	}
-
-	bytesRes, _ := json.Marshal(res)
-
-	fmt.Println("RAW RESPONSE:", string(bytesRes), res)
 
 	json.NewEncoder(w).Encode(res)
 }

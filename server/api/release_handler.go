@@ -33,7 +33,7 @@ func (app *App) HandleListReleases(w http.ResponseWriter, r *http.Request) {
 	form := &forms.ListReleaseForm{
 		ReleaseForm: &forms.ReleaseForm{
 			Form: &helm.Form{
-				Repo: app.repo,
+				Repo: app.Repo,
 			},
 		},
 		ListFilter: &helm.ListFilter{},
@@ -79,7 +79,7 @@ func (app *App) HandleGetRelease(w http.ResponseWriter, r *http.Request) {
 	form := &forms.GetReleaseForm{
 		ReleaseForm: &forms.ReleaseForm{
 			Form: &helm.Form{
-				Repo: app.repo,
+				Repo: app.Repo,
 			},
 		},
 		Name:     name,
@@ -112,7 +112,7 @@ func (app *App) HandleGetRelease(w http.ResponseWriter, r *http.Request) {
 	// get the filter options
 	k8sForm := &forms.K8sForm{
 		OutOfClusterConfig: &kubernetes.OutOfClusterConfig{
-			Repo: app.repo,
+			Repo: app.Repo,
 		},
 	}
 
@@ -123,7 +123,7 @@ func (app *App) HandleGetRelease(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	k8sForm.PopulateK8sOptionsFromQueryParams(vals, app.repo.Cluster)
+	k8sForm.PopulateK8sOptionsFromQueryParams(vals, app.Repo.Cluster)
 
 	// validate the form
 	if err := app.validator.Struct(k8sForm); err != nil {
@@ -174,7 +174,7 @@ func (app *App) HandleGetReleaseComponents(w http.ResponseWriter, r *http.Reques
 	form := &forms.GetReleaseForm{
 		ReleaseForm: &forms.ReleaseForm{
 			Form: &helm.Form{
-				Repo: app.repo,
+				Repo: app.Repo,
 			},
 		},
 		Name:     name,
@@ -230,7 +230,7 @@ func (app *App) HandleGetReleaseControllers(w http.ResponseWriter, r *http.Reque
 	form := &forms.GetReleaseForm{
 		ReleaseForm: &forms.ReleaseForm{
 			Form: &helm.Form{
-				Repo: app.repo,
+				Repo: app.Repo,
 			},
 		},
 		Name:     name,
@@ -270,11 +270,11 @@ func (app *App) HandleGetReleaseControllers(w http.ResponseWriter, r *http.Reque
 	// get the filter options
 	k8sForm := &forms.K8sForm{
 		OutOfClusterConfig: &kubernetes.OutOfClusterConfig{
-			Repo: app.repo,
+			Repo: app.Repo,
 		},
 	}
 
-	k8sForm.PopulateK8sOptionsFromQueryParams(vals, app.repo.Cluster)
+	k8sForm.PopulateK8sOptionsFromQueryParams(vals, app.Repo.Cluster)
 
 	// validate the form
 	if err := app.validator.Struct(k8sForm); err != nil {
@@ -285,7 +285,7 @@ func (app *App) HandleGetReleaseControllers(w http.ResponseWriter, r *http.Reque
 	// create a new kubernetes agent
 	var k8sAgent *kubernetes.Agent
 
-	if app.testing {
+	if app.ServerConf.IsTesting {
 		k8sAgent = app.TestAgents.K8sAgent
 	} else {
 		k8sAgent, err = kubernetes.GetAgentOutOfClusterConfig(k8sForm.OutOfClusterConfig)
@@ -356,7 +356,7 @@ func (app *App) HandleListReleaseHistory(w http.ResponseWriter, r *http.Request)
 	form := &forms.ListReleaseHistoryForm{
 		ReleaseForm: &forms.ReleaseForm{
 			Form: &helm.Form{
-				Repo: app.repo,
+				Repo: app.Repo,
 			},
 		},
 		Name: name,
@@ -405,7 +405,7 @@ func (app *App) HandleUpgradeRelease(w http.ResponseWriter, r *http.Request) {
 	form := &forms.UpgradeReleaseForm{
 		ReleaseForm: &forms.ReleaseForm{
 			Form: &helm.Form{
-				Repo: app.repo,
+				Repo: app.Repo,
 			},
 		},
 		Name: name,
@@ -413,7 +413,7 @@ func (app *App) HandleUpgradeRelease(w http.ResponseWriter, r *http.Request) {
 
 	form.ReleaseForm.PopulateHelmOptionsFromQueryParams(
 		vals,
-		app.repo.Cluster,
+		app.Repo.Cluster,
 	)
 
 	if err := json.NewDecoder(r.Body).Decode(form); err != nil {
@@ -460,7 +460,7 @@ func (app *App) HandleRollbackRelease(w http.ResponseWriter, r *http.Request) {
 	form := &forms.RollbackReleaseForm{
 		ReleaseForm: &forms.ReleaseForm{
 			Form: &helm.Form{
-				Repo: app.repo,
+				Repo: app.Repo,
 			},
 		},
 		Name: name,
@@ -468,7 +468,7 @@ func (app *App) HandleRollbackRelease(w http.ResponseWriter, r *http.Request) {
 
 	form.ReleaseForm.PopulateHelmOptionsFromQueryParams(
 		vals,
-		app.repo.Cluster,
+		app.Repo.Cluster,
 	)
 
 	if err := json.NewDecoder(r.Body).Decode(form); err != nil {
@@ -521,7 +521,7 @@ func (app *App) getAgentFromQueryParams(
 	}
 
 	for _, f := range populate {
-		err := f(vals, app.repo.Cluster)
+		err := f(vals, app.Repo.Cluster)
 
 		if err != nil {
 			return nil, err
@@ -549,10 +549,10 @@ func (app *App) getAgentFromReleaseForm(
 	// create a new agent
 	var agent *helm.Agent
 
-	if app.testing {
+	if app.ServerConf.IsTesting {
 		agent = app.TestAgents.HelmAgent
 	} else {
-		agent, err = helm.GetAgentOutOfClusterConfig(form.Form, app.logger)
+		agent, err = helm.GetAgentOutOfClusterConfig(form.Form, app.Logger)
 	}
 
 	return agent, err

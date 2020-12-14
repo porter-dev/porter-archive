@@ -76,7 +76,7 @@ func (app *App) sendExternalError(
 	respBytes, _ := json.Marshal(errExt)
 	respBody := string(respBytes)
 
-	app.logger.Warn().Err(err).
+	app.Logger.Warn().Err(err).
 		Str("errExt", respBody).
 		Msg("")
 

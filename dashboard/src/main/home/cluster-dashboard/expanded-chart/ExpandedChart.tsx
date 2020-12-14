@@ -222,8 +222,6 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
                 <ValuesFormWrapper key={i}>
                   <ValuesForm 
                     sections={tab.sections}
-                    onSubmit={this.onSubmit}
-                    saveValuesStatus={saveValuesStatus}
                   />
                 </ValuesFormWrapper>
               );

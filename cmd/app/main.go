@@ -86,6 +86,7 @@ func main() {
 			Scopes:       []string{"repo", "user", "read:user"},
 			BaseURL:      appConf.Server.ServerURL,
 		},
+		appConf.Server,
 	)
 
 	appRouter := router.New(a, store, appConf.Server.CookieName, appConf.Server.StaticFilePath, repo)

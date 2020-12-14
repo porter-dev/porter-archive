@@ -758,8 +758,11 @@ github.com/influxdata/influxdb1-client v0.0.0-20191209144304-8bf82d3c094d/go.mod
 github.com/instrumenta/kubeval v0.0.0-20190918223246-8d013ec9fc56/go.mod h1:bpiMYvNpVxWjdJsS0hDRu9TrobT5GfWCZwJseGUstxE=
 github.com/itchyny/astgen-go v0.0.0-20200815150004-12a293722290/go.mod h1:296z3W7Xsrp2mlIY88ruDKscuvrkL6zXCNRtaYVshzw=
 github.com/itchyny/go-flags v1.5.0/go.mod h1:lenkYuCobuxLBAd/HGFE4LRoW8D3B6iXRQfWYJ+MNbA=
+github.com/itchyny/gojq v0.11.1 h1:k54XkzWCGDfRJSZFRW4rXowTVzPlSjU2xUErkaFjfdo=
+github.com/itchyny/gojq v0.11.1/go.mod h1:8MKtgvJwkmRduSuzN25byPdNHfvv6y+/hmOVXei9e7k=
 github.com/itchyny/gojq v0.11.2 h1:lKhMKfH7fTKMWj2Zr8az/9TliCn0TTXVc/BXfQ8Jhfc=
 github.com/itchyny/gojq v0.11.2/go.mod h1:XtmtF1PxeDpwLC1jyz/xAmV78ANlP0S9LVEPsKweK0A=
+github.com/itchyny/timefmt-go v0.1.0/go.mod h1:0osSSCQSASBJMsIZnhAaF1C2fCBTJZXrnj37mG8/c+A=
 github.com/itchyny/timefmt-go v0.1.1 h1:rLpnm9xxb39PEEVzO0n4IRp0q6/RmBc7Dy/rE4HrA0U=
 github.com/itchyny/timefmt-go v0.1.1/go.mod h1:0osSSCQSASBJMsIZnhAaF1C2fCBTJZXrnj37mG8/c+A=
 github.com/jackc/chunkreader v1.0.0 h1:4s39bBR8ByfqH+DKm8rQA3E1LHZWB9XWcrz8fqaZbe0=
@@ -960,6 +963,7 @@ github.com/mattn/go-oci8 v0.0.7/go.mod h1:wjDx6Xm9q7dFtHJvIlrI99JytznLw5wQ4R+9mN
 github.com/mattn/go-runewidth v0.0.2/go.mod h1:LwmH8dsx7+W8Uxz3IHJYH5QSwggIsqBzpuz5H//U1FU=
 github.com/mattn/go-runewidth v0.0.4 h1:2BvfKmzob6Bmd4YsL0zygOqfdFnK7GR4QL06Do4/p7Y=
 github.com/mattn/go-runewidth v0.0.4/go.mod h1:LwmH8dsx7+W8Uxz3IHJYH5QSwggIsqBzpuz5H//U1FU=
+github.com/mattn/go-runewidth v0.0.9 h1:Lm995f3rfxdpd6TSmuVCHVb/QhupuXlYr8sCI/QdE+0=
 github.com/mattn/go-runewidth v0.0.9/go.mod h1:H031xJmbD/WCDINGzjvQ9THkh0rPKHF+m2gUSrubnMI=
 github.com/mattn/go-shellwords v1.0.5/go.mod h1:3xCvwCdWdlDJUrvuMn7Wuy9eWs4pE8vqg+NOMyg4B2o=
 github.com/mattn/go-shellwords v1.0.10/go.mod h1:EZzvwXDESEeg03EKmM+RmDnNOPKG4lLtQsUlTZDWQ8Y=
@@ -1633,6 +1637,7 @@ golang.org/x/sys v0.0.0-20200515095857-1151b9dac4a9/go.mod h1:h1NjWce9XRLGQEsW7w
 golang.org/x/sys v0.0.0-20200519105757-fe76b779f299/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
 golang.org/x/sys v0.0.0-20200523222454-059865788121/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
 golang.org/x/sys v0.0.0-20200803210538-64077c9b5642/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
+golang.org/x/sys v0.0.0-20200821140526-fda516888d29/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
 golang.org/x/sys v0.0.0-20200826173525-f9321e4c35a6 h1:DvY3Zkh7KabQE/kfzMvYvKirSiguP9Q/veMtkYyf0o8=
 golang.org/x/sys v0.0.0-20200826173525-f9321e4c35a6/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
 golang.org/x/sys v0.0.0-20200930185726-fdedc70b468f h1:+Nyd8tzPX9R7BWHguqsrbFdRx3WQ/1ib8I44HXV5yTA=
@@ -1925,6 +1930,7 @@ k8s.io/apimachinery v0.16.8/go.mod h1:Xk2vD2TRRpuWYLQNM6lT9R7DSFZUYG03SarNkbGrnK
 k8s.io/apimachinery v0.18.8 h1:jimPrycCqgx2QPearX3to1JePz7wSbVLq+7PdBTTwQ0=
 k8s.io/apimachinery v0.18.8/go.mod h1:6sQd+iHEqmOtALqOFjSWp2KZ9F0wlU/nWm0ZgsYWMig=
 k8s.io/apimachinery v0.19.4 h1:+ZoddM7nbzrDCp0T3SWnyxqf8cbWPT2fkZImoyvHUG0=
+k8s.io/apimachinery v0.20.0 h1:jjzbTJRXk0unNS71L7h3lxGDH/2HPxMPaQY+MjECKL8=
 k8s.io/apiserver v0.18.8/go.mod h1:12u5FuGql8Cc497ORNj79rhPdiXQC4bf53X/skR/1YM=
 k8s.io/cli-runtime v0.18.8 h1:ycmbN3hs7CfkJIYxJAOB10iW7BVPmXGXkfEyiV9NJ+k=
 k8s.io/cli-runtime v0.18.8/go.mod h1:7EzWiDbS9PFd0hamHHVoCY4GrokSTPSL32MA4rzIu0M=

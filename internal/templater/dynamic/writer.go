@@ -14,7 +14,9 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-type DynamicTemplateWriter struct {
+// TemplateWriter satisfies the templater.TemplateWriter interface
+// by creating/updating dynamic k8s resources
+type TemplateWriter struct {
 	// The object to read from, identified by its group-version-kind
 	Object *Object
 
@@ -30,12 +32,13 @@ type DynamicTemplateWriter struct {
 	base map[string]interface{}
 }
 
+// NewDynamicTemplateWriter returns a dynamic TemplateWriter
 func NewDynamicTemplateWriter(
 	client dynamic.Interface,
 	obj *Object,
 	base map[string]interface{},
 ) templater.TemplateWriter {
-	w := &DynamicTemplateWriter{
+	w := &TemplateWriter{
 		Object: obj,
 		Client: client,
 		base:   base,
@@ -52,17 +55,15 @@ func NewDynamicTemplateWriter(
 	return w
 }
 
-func (w *DynamicTemplateWriter) Transform() error {
+// Transform merges base configuration with vals
+func (w *TemplateWriter) Transform() error {
 	w.vals = utils.CoalesceValues(w.base, w.vals)
 
 	return nil
 }
 
-func (w *DynamicTemplateWriter) Write() (map[string]interface{}, error) {
-	return nil, nil
-}
-
-func (w *DynamicTemplateWriter) Create(vals map[string]interface{}) (map[string]interface{}, error) {
+// Create creates a new dynamic resource, this must be registered with the API server
+func (w *TemplateWriter) Create(vals map[string]interface{}) (map[string]interface{}, error) {
 	w.vals = vals
 	err := w.Transform()
 
@@ -81,7 +82,9 @@ func (w *DynamicTemplateWriter) Create(vals map[string]interface{}) (map[string]
 	return create.Object, nil
 }
 
-func (w *DynamicTemplateWriter) Update(vals map[string]interface{}) (map[string]interface{}, error) {
+// Update performs an update operation on a k8s resource. The resource must be
+// registered with the API server.
+func (w *TemplateWriter) Update(vals map[string]interface{}) (map[string]interface{}, error) {
 	w.vals = vals
 	err := w.Transform()
 

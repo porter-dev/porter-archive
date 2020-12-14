@@ -33,7 +33,8 @@ require (
 	github.com/gorilla/websocket v1.4.2
 	github.com/hashicorp/consul/api v1.3.0
 	github.com/imdario/mergo v0.3.11 // indirect
-	github.com/itchyny/gojq v0.11.2
+	github.com/itchyny/gojq v0.11.1
+	github.com/itchyny/timefmt-go v0.1.1 // indirect
 	github.com/jinzhu/gorm v1.9.16
 	github.com/joeshaw/envdecode v0.0.0-20200121155833-099f1fc765bd
 	github.com/json-iterator/go v1.1.10 // indirect
@@ -50,7 +51,7 @@ require (
 	github.com/stretchr/testify v1.6.1
 	golang.org/x/crypto v0.0.0-20201002170205-7f63de1d35b0
 	golang.org/x/oauth2 v0.0.0-20200902213428-5d25da1a8d43
-	golang.org/x/sys v0.0.0-20200930185726-fdedc70b468f
+	golang.org/x/sys v0.0.0-20200826173525-f9321e4c35a6
 	golang.org/x/time v0.0.0-20200630173020-3af7569d3a1e // indirect
 	google.golang.org/api v0.30.0
 	google.golang.org/genproto v0.0.0-20201014134559-03b6142f0dc9

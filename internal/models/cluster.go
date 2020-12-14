@@ -58,7 +58,7 @@ type Cluster struct {
 	AWSIntegrationID  uint
 
 	// A token cache that can be used by an auth mechanism, if desired
-	TokenCache integrations.TokenCache `json:"token_cache"`
+	TokenCache integrations.ClusterTokenCache `json:"token_cache"`
 
 	// CertificateAuthorityData for the cluster, encrypted at rest
 	CertificateAuthorityData []byte `json:"certificate-authority-data,omitempty"`

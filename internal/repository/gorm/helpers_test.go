@@ -21,8 +21,10 @@ type tester struct {
 	initGRs      []*models.GitRepo
 	initRegs     []*models.Registry
 	initClusters []*models.Cluster
+	initHRs      []*models.HelmRepo
 	initCCs      []*models.ClusterCandidate
 	initKIs      []*ints.KubeIntegration
+	initBasics   []*ints.BasicIntegration
 	initOIDCs    []*ints.OIDCIntegration
 	initOAuths   []*ints.OAuthIntegration
 	initGCPs     []*ints.GCPIntegration
@@ -49,16 +51,19 @@ func setupTestEnv(tester *tester, t *testing.T) {
 		&models.Session{},
 		&models.GitRepo{},
 		&models.Registry{},
+		&models.HelmRepo{},
 		&models.Cluster{},
 		&models.ClusterCandidate{},
 		&models.ClusterResolver{},
 		&ints.KubeIntegration{},
+		&ints.BasicIntegration{},
 		&ints.OIDCIntegration{},
 		&ints.OAuthIntegration{},
 		&ints.GCPIntegration{},
 		&ints.AWSIntegration{},
-		&ints.TokenCache{},
+		&ints.ClusterTokenCache{},
 		&ints.RegTokenCache{},
+		&ints.HelmRepoTokenCache{},
 	)
 
 	if err != nil {
@@ -157,6 +162,33 @@ func initKubeIntegration(tester *tester, t *testing.T) {
 	}
 
 	tester.initKIs = append(tester.initKIs, ki)
+}
+
+func initBasicIntegration(tester *tester, t *testing.T) {
+	t.Helper()
+
+	if len(tester.initProjects) == 0 {
+		initProject(tester, t)
+	}
+
+	if len(tester.initUsers) == 0 {
+		initUser(tester, t)
+	}
+
+	basic := &ints.BasicIntegration{
+		ProjectID: tester.initProjects[0].ID,
+		UserID:    tester.initUsers[0].ID,
+		Username:  []byte("username"),
+		Password:  []byte("password"),
+	}
+
+	basic, err := tester.repo.BasicIntegration.CreateBasicIntegration(basic)
+
+	if err != nil {
+		t.Fatalf("%v\n", err)
+	}
+
+	tester.initBasics = append(tester.initBasics, basic)
 }
 
 func initOIDCIntegration(tester *tester, t *testing.T) {
@@ -379,4 +411,26 @@ func initRegistry(tester *tester, t *testing.T) {
 	}
 
 	tester.initRegs = append(tester.initRegs, reg)
+}
+
+func initHelmRepo(tester *tester, t *testing.T) {
+	t.Helper()
+
+	if len(tester.initProjects) == 0 {
+		initProject(tester, t)
+	}
+
+	hr := &models.HelmRepo{
+		Name:      "helm-repo-test",
+		RepoURL:   "https://example-repo.com",
+		ProjectID: tester.initProjects[0].Model.ID,
+	}
+
+	hr, err := tester.repo.HelmRepo.CreateHelmRepo(hr)
+
+	if err != nil {
+		t.Fatalf("%v\n", err)
+	}
+
+	tester.initHRs = append(tester.initHRs, hr)
 }

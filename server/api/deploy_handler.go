@@ -37,7 +37,7 @@ func (app *App) HandleDeployTemplate(w http.ResponseWriter, r *http.Request) {
 
 	getChartForm.PopulateRepoURLFromQueryParams(vals)
 
-	chart, err := loader.LoadChart(getChartForm.RepoURL, getChartForm.Name, getChartForm.Version)
+	chart, err := loader.LoadChartPublic(getChartForm.RepoURL, getChartForm.Name, getChartForm.Version)
 
 	if err != nil {
 		app.handleErrorFormDecoding(err, ErrReleaseDecode, w)

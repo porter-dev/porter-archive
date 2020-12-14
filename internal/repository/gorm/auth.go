@@ -228,6 +228,146 @@ func (repo *KubeIntegrationRepository) DecryptKubeIntegrationData(
 	return nil
 }
 
+// BasicIntegrationRepository uses gorm.DB for querying the database
+type BasicIntegrationRepository struct {
+	db  *gorm.DB
+	key *[32]byte
+}
+
+// NewBasicIntegrationRepository returns a BasicIntegrationRepository which uses
+// gorm.DB for querying the database. It accepts an encryption key to encrypt
+// sensitive data
+func NewBasicIntegrationRepository(
+	db *gorm.DB,
+	key *[32]byte,
+) repository.BasicIntegrationRepository {
+	return &BasicIntegrationRepository{db, key}
+}
+
+// CreateBasicIntegration creates a new basic auth mechanism
+func (repo *BasicIntegrationRepository) CreateBasicIntegration(
+	am *ints.BasicIntegration,
+) (*ints.BasicIntegration, error) {
+	err := repo.EncryptBasicIntegrationData(am, repo.key)
+
+	if err != nil {
+		return nil, err
+	}
+
+	project := &models.Project{}
+
+	if err := repo.db.Where("id = ?", am.ProjectID).First(&project).Error; err != nil {
+		return nil, err
+	}
+
+	assoc := repo.db.Model(&project).Association("BasicIntegrations")
+
+	if assoc.Error != nil {
+		return nil, assoc.Error
+	}
+
+	if err := assoc.Append(am); err != nil {
+		return nil, err
+	}
+
+	return am, nil
+}
+
+// ReadBasicIntegration finds a basic auth mechanism by id
+func (repo *BasicIntegrationRepository) ReadBasicIntegration(
+	id uint,
+) (*ints.BasicIntegration, error) {
+	basic := &ints.BasicIntegration{}
+
+	if err := repo.db.Where("id = ?", id).First(&basic).Error; err != nil {
+		return nil, err
+	}
+
+	err := repo.DecryptBasicIntegrationData(basic, repo.key)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return basic, nil
+}
+
+// ListBasicIntegrationsByProjectID finds all basic auth mechanisms
+// for a given project id
+func (repo *BasicIntegrationRepository) ListBasicIntegrationsByProjectID(
+	projectID uint,
+) ([]*ints.BasicIntegration, error) {
+	basics := []*ints.BasicIntegration{}
+
+	if err := repo.db.Where("project_id = ?", projectID).Find(&basics).Error; err != nil {
+		return nil, err
+	}
+
+	for _, basic := range basics {
+		repo.DecryptBasicIntegrationData(basic, repo.key)
+	}
+
+	return basics, nil
+}
+
+// EncryptBasicIntegrationData will encrypt the basic integration data before
+// writing to the DB
+func (repo *BasicIntegrationRepository) EncryptBasicIntegrationData(
+	basic *ints.BasicIntegration,
+	key *[32]byte,
+) error {
+	if len(basic.Username) > 0 {
+		cipherData, err := repository.Encrypt(basic.Username, key)
+
+		if err != nil {
+			return err
+		}
+
+		basic.Username = cipherData
+	}
+
+	if len(basic.Password) > 0 {
+		cipherData, err := repository.Encrypt(basic.Password, key)
+
+		if err != nil {
+			return err
+		}
+
+		basic.Password = cipherData
+	}
+
+	return nil
+}
+
+// DecryptBasicIntegrationData will decrypt the basic integration data before
+// returning it from the DB
+func (repo *BasicIntegrationRepository) DecryptBasicIntegrationData(
+	basic *ints.BasicIntegration,
+	key *[32]byte,
+) error {
+	if len(basic.Username) > 0 {
+		plaintext, err := repository.Decrypt(basic.Username, key)
+
+		if err != nil {
+			return err
+		}
+
+		basic.Username = plaintext
+	}
+
+	if len(basic.Password) > 0 {
+		plaintext, err := repository.Decrypt(basic.Password, key)
+
+		if err != nil {
+			return err
+		}
+
+		basic.Password = plaintext
+	}
+
+	return nil
+}
+
 // OIDCIntegrationRepository uses gorm.DB for querying the database
 type OIDCIntegrationRepository struct {
 	db  *gorm.DB

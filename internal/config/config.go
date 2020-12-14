@@ -26,8 +26,9 @@ type ServerConf struct {
 	TimeoutWrite   time.Duration `env:"SERVER_TIMEOUT_WRITE,default=10s"`
 	TimeoutIdle    time.Duration `env:"SERVER_TIMEOUT_IDLE,default=15s"`
 	IsLocal        bool          `env:"IS_LOCAL,default=false"`
+	IsTesting      bool          `env:"IS_TESTING,default=false"`
 
-	HelmRepoURL string `env:"HELM_REPO_URL,default=https://porter-dev.github.io/chart-repo/"`
+	DefaultHelmRepoURL string `env:"HELM_REPO_URL,default=https://porter-dev.github.io/chart-repo/"`
 
 	GithubClientID     string `env:"GITHUB_CLIENT_ID"`
 	GithubClientSecret string `env:"GITHUB_CLIENT_SECRET"`

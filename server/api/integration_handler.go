@@ -65,7 +65,7 @@ func (app *App) HandleListRepoIntegrations(w http.ResponseWriter, r *http.Reques
 
 // HandleCreateGCPIntegration creates a new GCP integration in the DB
 func (app *App) HandleCreateGCPIntegration(w http.ResponseWriter, r *http.Request) {
-	session, err := app.store.Get(r, app.cookieName)
+	session, err := app.Store.Get(r, app.ServerConf.CookieName)
 
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -107,14 +107,14 @@ func (app *App) HandleCreateGCPIntegration(w http.ResponseWriter, r *http.Reques
 	}
 
 	// handle write to the database
-	gcp, err = app.repo.GCPIntegration.CreateGCPIntegration(gcp)
+	gcp, err = app.Repo.GCPIntegration.CreateGCPIntegration(gcp)
 
 	if err != nil {
 		app.handleErrorDataWrite(err, w)
 		return
 	}
 
-	app.logger.Info().Msgf("New gcp integration created: %d", gcp.ID)
+	app.Logger.Info().Msgf("New gcp integration created: %d", gcp.ID)
 
 	w.WriteHeader(http.StatusCreated)
 
@@ -128,7 +128,7 @@ func (app *App) HandleCreateGCPIntegration(w http.ResponseWriter, r *http.Reques
 
 // HandleCreateAWSIntegration creates a new AWS integration in the DB
 func (app *App) HandleCreateAWSIntegration(w http.ResponseWriter, r *http.Request) {
-	session, err := app.store.Get(r, app.cookieName)
+	session, err := app.Store.Get(r, app.ServerConf.CookieName)
 
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -170,14 +170,14 @@ func (app *App) HandleCreateAWSIntegration(w http.ResponseWriter, r *http.Reques
 	}
 
 	// handle write to the database
-	aws, err = app.repo.AWSIntegration.CreateAWSIntegration(aws)
+	aws, err = app.Repo.AWSIntegration.CreateAWSIntegration(aws)
 
 	if err != nil {
 		app.handleErrorDataWrite(err, w)
 		return
 	}
 
-	app.logger.Info().Msgf("New aws integration created: %d", aws.ID)
+	app.Logger.Info().Msgf("New aws integration created: %d", aws.ID)
 
 	w.WriteHeader(http.StatusCreated)
 
@@ -191,7 +191,7 @@ func (app *App) HandleCreateAWSIntegration(w http.ResponseWriter, r *http.Reques
 
 // HandleCreateBasicAuthIntegration creates a new basic auth integration in the DB
 func (app *App) HandleCreateBasicAuthIntegration(w http.ResponseWriter, r *http.Request) {
-	session, err := app.store.Get(r, app.cookieName)
+	session, err := app.Store.Get(r, app.ServerConf.CookieName)
 
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -233,14 +233,14 @@ func (app *App) HandleCreateBasicAuthIntegration(w http.ResponseWriter, r *http.
 	}
 
 	// handle write to the database
-	basic, err = app.repo.BasicIntegration.CreateBasicIntegration(basic)
+	basic, err = app.Repo.BasicIntegration.CreateBasicIntegration(basic)
 
 	if err != nil {
 		app.handleErrorDataWrite(err, w)
 		return
 	}
 
-	app.logger.Info().Msgf("New basic integration created: %d", basic.ID)
+	app.Logger.Info().Msgf("New basic integration created: %d", basic.ID)
 
 	w.WriteHeader(http.StatusCreated)
 

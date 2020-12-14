@@ -19,7 +19,8 @@ import (
 // TODO: test and reduce fragility (handle untar/parse error for individual charts)
 // TODO: separate markdown retrieval into its own query if necessary
 func (app *App) HandleListTemplates(w http.ResponseWriter, r *http.Request) {
-	repoIndex, err := loader.LoadRepoIndex("https://porter-dev.github.io/chart-repo/index.yaml")
+	// repoIndex, err := loader.LoadRepoIndex("https://porter-dev.github.io/chart-repo/index.yaml")
+	repoIndex, err := loader.LoadRepoIndex("http://chartmuseum:8080/index.yaml")
 
 	if err != nil {
 		app.handleErrorFormDecoding(err, ErrReleaseDecode, w)
@@ -56,7 +57,7 @@ func (app *App) HandleReadTemplate(w http.ResponseWriter, r *http.Request) {
 	form := &forms.ChartForm{
 		Name:    name,
 		Version: version,
-		RepoURL: "https://porter-dev.github.io/chart-repo/",
+		RepoURL: RepoURL: app.ServerConf.HelmRepoURL,
 	}
 
 	// if a repo_url is passed as query param, it will be populated
@@ -87,7 +88,7 @@ func (app *App) HandleReadTemplate(w http.ResponseWriter, r *http.Request) {
 
 	for _, file := range chart.Files {
 		if strings.Contains(file.Name, "form.yaml") {
-			formYAML, err := parser.FormYAMLFromBytes(parserDef, file.Data)
+			formYAML, err := parser.FormYAMLFromBytes(parserDef, file.Data, "declared")
 
 			fmt.Println("FORM RESULT:", formYAML, err)
 

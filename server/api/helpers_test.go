@@ -79,7 +79,7 @@ func newTester(canQuery bool) *tester {
 	repo := test.NewRepository(canQuery)
 
 	store, _ := sessionstore.NewStore(repo, appConf.Server)
-	app := api.New(logger, nil, repo, validator, store, appConf.Server.CookieName, true, false, nil)
+	app := api.New(logger, nil, repo, validator, store, appConf.Server.CookieName, true, false, nil, appConf.Server)
 	r := router.New(app, store, appConf.Server.CookieName, appConf.Server.StaticFilePath, repo)
 
 	return &tester{

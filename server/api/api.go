@@ -14,6 +14,8 @@ import (
 	lr "github.com/porter-dev/porter/internal/logger"
 	"github.com/porter-dev/porter/internal/repository"
 	"helm.sh/helm/v3/pkg/storage"
+
+	"github.com/porter-dev/porter/internal/config"
 )
 
 // TestAgents are the k8s agents used for testing
@@ -35,6 +37,7 @@ type App struct {
 	cookieName   string
 	testing      bool
 	isLocal      bool
+	ServerConf   config.ServerConf
 	TestAgents   *TestAgents
 	GithubConfig *oauth2.Config
 }
@@ -51,6 +54,7 @@ func New(
 	testing bool,
 	isLocal bool,
 	githubConfig *oauth.Config,
+	serverConf config.ServerConf,
 ) *App {
 	// for now, will just support the english translator from the
 	// validator/translations package
@@ -88,6 +92,7 @@ func New(
 		isLocal:      isLocal,
 		TestAgents:   testAgents,
 		GithubConfig: oauthGithubConf,
+		ServerConf:   serverConf,
 	}
 }
 

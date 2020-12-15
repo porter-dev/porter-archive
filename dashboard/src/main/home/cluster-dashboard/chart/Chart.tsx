@@ -12,7 +12,6 @@ type PropsType = {
 
 type StateType = {
   expand: boolean,
-  controllers: Record<string, boolean>,
   update: any[],
   getAvailability: Function,
 };
@@ -54,19 +53,14 @@ export default class Chart extends Component<PropsType, StateType> {
     return `${time} on ${date}`;
   }
 
-  setControllerStatus = (cs: Record<string, any>) => {
-    let controllers = {} as Record<string, boolean>;
-    for (var uid in cs) {
-      let value = cs[uid];
-      controllers[uid] = this.getAvailability(value.kind, value);
-    }
-    this.setState({ controllers });
-  }
-
   getChartStatus = (chartStatus: string) => {
     if (chartStatus === 'deployed') {
-      for (var uid in this.state.controllers) {
-        if (!this.state.controllers[uid]) {
+
+      console.log(this.props.controllers)
+      for (var uid in this.props.controllers) {
+        let value = this.props.controllers[uid]
+        let status = this.getAvailability(value.metadata.kind, value)
+        if (!status) {
           return 'not ready'
         }
       }
@@ -75,28 +69,10 @@ export default class Chart extends Component<PropsType, StateType> {
     return chartStatus
   }
 
-  static getDerivedStateFromProps(nextProps: any, prevState: any) {
-    let controllers = {} as Record<string, boolean>;
-    
-    for (var uid in nextProps.controllers) {
-      let controller = nextProps.controllers[uid]
-      controllers[uid] = prevState.getAvailability(controller.kind, controller)
-    }
-
-    return {
-      controllers,
-    };
-  }
-
-  componentDidMount () {
-    const { chart, controllers } = this.props;
-    if (chart.info.status == 'failed') return;
-    this.setControllerStatus(controllers)
-  }
-
   render() {
     let { chart, setCurrentChart } = this.props;
     let status = this.getChartStatus(chart.info.status)
+    console.log(chart)
     return ( 
       <StyledChart
         onMouseEnter={() => this.setState({ expand: true })}

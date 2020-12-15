@@ -161,7 +161,6 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
       showRevisions,
       saveValuesStatus,
       tabOptions,
-      isPreview,
     } = this.state;
     let { currentChart, setSidebar, setCurrentView } = this.props;
     let chart = currentChart;
@@ -170,10 +169,6 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
       case 'status': 
         return (
           <StatusSection currentChart={chart} selectors={podSelectors} />
-        );
-      case 'deploy': 
-        return (
-          <Unimplemented>Coming soon.</Unimplemented> 
         );
       case 'settings': 
         return (
@@ -247,7 +242,6 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
     // Append universal tabs
     tabOptions.push(
       { label: 'Status', value: 'status' },
-      //{ label: 'Deploy', value: 'deploy' },
       { label: 'Chart Overview', value: 'graph' },
       { label: 'Settings', value: 'settings' },
     );

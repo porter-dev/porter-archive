@@ -98,6 +98,7 @@ export interface Section {
 export interface FormElement {
   type: string,
   label: string,
+  required: boolean,
   name?: string,
   variable?: string,
   value?: any,

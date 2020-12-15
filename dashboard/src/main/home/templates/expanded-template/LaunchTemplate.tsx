@@ -9,6 +9,7 @@ import { PorterTemplate, ChoiceType, Cluster, StorageType } from '../../../../sh
 import Selector from '../../../../components/Selector';
 import ImageSelector from '../../../../components/image-selector/ImageSelector';
 import TabRegion from '../../../../components/TabRegion';
+import ValuesWrapper from '../../../../components/values-form/ValuesWrapper';
 import ValuesForm from '../../../../components/values-form/ValuesForm';
 
 type PropsType = {
@@ -37,7 +38,7 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
   state = {
     currentView: 'repo',
     clusterOptions: [] as { label: string, value: string }[],
-    saveValuesStatus: null as (string | null),
+    saveValuesStatus: 'No container image specified' as (string | null),
     selectedCluster: this.context.currentCluster.name,
     selectedNamespace: "default",
     selectedImageUrl: '' as string | null,
@@ -81,24 +82,33 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
   }
 
   renderTabContents = () => {
-    return this.props.form.tabs.map((tab: any, i: number) => {
+    return (
+      <ValuesWrapper
+        formTabs={this.props.form.tabs}
+        onSubmit={this.onSubmit}
+        saveValuesStatus={this.state.saveValuesStatus}
+        disabled={!this.state.selectedImageUrl}
+      >
+        {
+          (metaState: any, setMetaState: any) => {
+            return this.props.form.tabs.map((tab: any, i: number) => {
 
-      // If tab is current, render
-      if (tab.name === this.state.currentTab) {
-        return (
-          <ValuesFormWrapper key={i}>
-            <ValuesForm 
-              key={tab.name}
-              sections={tab.sections} 
-              onSubmit={this.onSubmit}
-              disabled={false}
-              // disabled={!this.state.selectedImageUrl || this.state.selectedImageUrl === ''}
-              saveValuesStatus={this.state.saveValuesStatus}
-            />
-          </ValuesFormWrapper>
-        );
-      }
-    });
+              // If tab is current, render
+              if (tab.name === this.state.currentTab) {
+                return (
+                  <ValuesForm 
+                    metaState={metaState}
+                    setMetaState={setMetaState}
+                    key={tab.name}
+                    sections={tab.sections} 
+                  />
+                );
+              }
+            });
+          }
+        }
+      </ValuesWrapper>
+    );
   }
 
   componentDidMount() {
@@ -137,6 +147,15 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
         }
       }
     });
+  }
+
+  setSelectedImageUrl = (x: string) => {
+    if (x === '') {
+      this.setState({ saveValuesStatus: 'No container image specified' });
+    } else {
+      this.setState({ saveValuesStatus: '' });
+    }
+    this.setState({ selectedImageUrl: x });
   }
 
   renderIcon = (icon: string) => {
@@ -195,12 +214,12 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
           />
         </ClusterSection>
 
-        <Subtitle>Select the container image you would like to connect to this template (optional).</Subtitle>
+        <Subtitle>Select the container image you would like to connect to this template.</Subtitle>
         <Br />
         <ImageSelector
           selectedTag={this.state.selectedTag}
           selectedImageUrl={this.state.selectedImageUrl}
-          setSelectedImageUrl={(x: string) => this.setState({ selectedImageUrl: x })}
+          setSelectedImageUrl={this.setSelectedImageUrl}
           setSelectedTag={(x: string) => this.setState({ selectedTag: x })}
           forceExpanded={true}
           setCurrentView={this.props.setCurrentView}
@@ -221,12 +240,6 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
 }
 
 LaunchTemplate.contextType = Context;
-
-const ValuesFormWrapper = styled.div`
-  width: 100%;
-  height: calc(100% + 65px);
-  padding-bottom: 65px;
-`;
 
 const Br = styled.div`
   width: 100%;

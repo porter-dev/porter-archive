@@ -45,6 +45,7 @@ type FormContent struct {
 	Context  *FormContext `yaml:"context" json:"context"`
 	Type     string       `yaml:"type" json:"type"`
 	Label    string       `yaml:"label" json:"label"`
+	Required bool         `json:"required"`
 	Name     string       `yaml:"name,omitempty" json:"name,omitempty"`
 	Variable string       `yaml:"variable,omitempty" json:"variable,omitempty"`
 	Value    interface{}  `yaml:"value,omitempty" json:"value,omitempty"`

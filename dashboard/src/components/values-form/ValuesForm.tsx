@@ -22,6 +22,9 @@ type PropsType = {
 type StateType = any;
 
 export default class ValuesForm extends Component<PropsType, StateType> {
+  componentDidMount() {
+    console.log('hola senorita')
+  }
   getInputValue = (item: FormElement) => {
     let key = item.name || item.variable;
     let value = this.props.metaState[key];
@@ -70,7 +73,7 @@ export default class ValuesForm extends Component<PropsType, StateType> {
           return (
             <InputRow
               key={i}
-              isRequired={item.required || true}
+              isRequired={item.required}
               type='text'
               value={this.getInputValue(item)}
               setValue={(x: string) => {
@@ -87,7 +90,7 @@ export default class ValuesForm extends Component<PropsType, StateType> {
           return (
             <InputRow
               key={i}
-              isRequired={item.required || true}
+              isRequired={item.required}
               type='number'
               value={this.getInputValue(item)}
               setValue={(x: number) => {

@@ -11,6 +11,7 @@ type PropsType = {
   disabled?: boolean,
   saveValuesStatus?: string | null,
   isInModal?: boolean,
+  currentTab?: string, // For resetting state when flipping b/w tabs in ExpandedChart
 };
 
 type StateType = any;
@@ -22,8 +23,6 @@ export default class ValuesWrapper extends Component<PropsType, StateType> {
   requiredFields: string[] = [];
 
   updateFormState() {
-    console.log('here')
-    console.log(this.props.formTabs)
     let metaState: any = {};
     this.props.formTabs.forEach((tab: any, i: number) => {
 
@@ -69,7 +68,9 @@ export default class ValuesWrapper extends Component<PropsType, StateType> {
   }
 
   componentDidUpdate(prevProps: PropsType) {
-    if (this.props.formTabs !== prevProps.formTabs) {
+    if (this.props.formTabs !== prevProps.formTabs || 
+      this.props.currentTab !== prevProps.currentTab
+    ) {
       this.updateFormState();
     }
   }

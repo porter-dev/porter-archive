@@ -39,6 +39,7 @@ type StateType = {
   currentTab: string | null,
   saveValuesStatus: string | null,
   forceRefreshRevisions: boolean, // Update revisions after upgrading values
+  controllers: Record<string, Record<string, any>>,
 };
 
 export default class ExpandedChart extends Component<PropsType, StateType> {
@@ -54,6 +55,7 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
     currentTab: null as string | null,
     saveValuesStatus: null as (string | null),
     forceRefreshRevisions: false,
+    controllers: {} as Record<string, Record<string, any>>,
   }
 
   // Retrieve full chart data (includes form and values)
@@ -82,6 +84,45 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
       }
     });
   }
+
+  getControllers = async (chart: ChartType) => {
+    let { currentCluster, currentProject, setCurrentError } = this.context;
+
+    // don't retrieve controllers for chart that failed to even deploy.
+    if (chart.info.status == 'failed') return;
+
+    await new Promise((next: (res?: any) => void) => {
+      api.getChartControllers('<token>', {
+        namespace: chart.namespace,
+        cluster_id: currentCluster.id,
+        storage: StorageType.Secret
+      }, {
+        id: currentProject.id,
+        name: chart.name,
+        revision: chart.version
+      }, (err: any, res: any) => {
+        if (err) {
+          setCurrentError(JSON.stringify(err));
+          return
+        }
+
+        res.data.forEach(async (c: any) => {
+          await new Promise((nextController: (res?: any) => void) => {
+            c.metadata.kind = c.kind
+            this.setState({
+              controllers: {
+                ...this.state.controllers,
+                [c.metadata.uid] : c
+              }
+            }, () => {
+              nextController();
+            })
+          })
+        })
+        next();
+      });
+    })
+  }
   
   updateResources = () => {
     let { currentCluster, currentProject } = this.context;
@@ -108,6 +149,7 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
 
   componentDidMount() {
     this.getChartData(this.props.currentChart);
+    this.getControllers(this.props.currentChart)
   }
 
   componentDidUpdate(prevProps: PropsType) {
@@ -299,9 +341,37 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
     return `${time} on ${date}`;
   }
 
+  getChartStatus = (chartStatus: string) => {
+    if (chartStatus === 'deployed') {
+
+      for (var uid in this.state.controllers) {
+        let value = this.state.controllers[uid]
+        let status = this.getAvailability(value.metadata.kind, value)
+        if (!status) {
+          return 'not ready'
+        }
+      }
+      return 'deployed'
+    }
+    return chartStatus
+  }
+
+  getAvailability = (kind: string, c: any) => {
+    switch (kind?.toLowerCase()) {
+      case "deployment":
+      case "replicaset":
+        return (c.status.availableReplicas == c.status.replicas)
+      case "statefulset":
+       return (c.status.readyReplicas == c.status.replicas)
+      case "daemonset":
+        return (c.status.numberAvailable == c.status.desiredNumberScheduled)
+      }
+  }
+
   render() {
     let { currentChart, setCurrentChart } = this.props;
     let chart = currentChart;
+    let status = this.getChartStatus(chart.info.status)
 
     return ( 
       <div>
@@ -315,7 +385,7 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
 
               <InfoWrapper>
                 <StatusIndicator>
-                  <StatusColor status={chart.info.status} />{chart.info.status}
+                  <StatusColor status={status} />{status}
                 </StatusIndicator>
                 <LastDeployed>
                   <Dot>•</Dot>Last deployed 

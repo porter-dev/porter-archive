@@ -9,6 +9,7 @@ type PropsType = {
   handleClick?: () => void,
   selected?: boolean,
   isLast?: boolean,
+  roundAllCorners?: boolean,
   status?: {
     label: string,
     available?: number,
@@ -91,11 +92,12 @@ export default class ResourceTab extends Component<PropsType, StateType> {
   }
 
   render() {
-    let { label, name, children, isLast, handleClick } = this.props;
+    let { label, name, children, isLast, handleClick, roundAllCorners } = this.props;
     return (
       <StyledResourceTab 
         isLast={isLast}
         onClick={() => handleClick && handleClick()}
+        roundAllCorners={roundAllCorners}
       >
         <ResourceHeader
           hasChildren={this.props.children && true}
@@ -133,7 +135,8 @@ const StyledResourceTab = styled.div`
   width: 100%;
   margin-bottom: 2px;
   background: #ffffff11;
-  border-bottom-left-radius: ${(props: { isLast: boolean }) => props.isLast ? '5px' : ''};
+  border-bottom-left-radius: ${(props: { isLast: boolean, roundAllCorners: boolean }) => props.isLast ? '5px' : ''};
+  border-bottom-right-radius: ${(props: { isLast: boolean, roundAllCorners: boolean }) => props.roundAllCorners && props.isLast ? '5px' : ''};
 `;
 
 const Tooltip = styled.div`
@@ -170,6 +173,7 @@ const ResourceHeader = styled.div`
   width: 100%;
   height: 50px;
   display: flex;
+  font-size: 13px;
   align-items: center;
   justify-content: space-between;
   color: #ffffff66;

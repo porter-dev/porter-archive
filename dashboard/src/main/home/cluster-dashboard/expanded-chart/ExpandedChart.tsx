@@ -17,7 +17,6 @@ import StatusSection from './status/StatusSection';
 import ValuesWrapper from '../../../../components/values-form/ValuesWrapper';
 import ValuesForm from '../../../../components/values-form/ValuesForm';
 import SettingsSection from './SettingsSection';
-import { NavLink } from 'react-router-dom';
 
 type PropsType = {
   namespace: string,
@@ -220,6 +219,7 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
               onSubmit={this.onSubmit}
               saveValuesStatus={this.state.saveValuesStatus}
               isInModal={true}
+              currentTab={currentTab}
             >
               {
                 (metaState: any, setMetaState: any) => {
@@ -228,11 +228,10 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
                     // If tab is current, render
                     if (tab.value === currentTab) {
                       return (
-                        <ValuesFormWrapper>
+                        <ValuesFormWrapper key={i}>
                           <ValuesForm
                             metaState={metaState}
                             setMetaState={setMetaState}
-                            key={i}
                             sections={tab.sections} 
                           />
                         </ValuesFormWrapper>

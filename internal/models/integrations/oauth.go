@@ -62,7 +62,7 @@ func (o *OAuthIntegration) Externalize() *OAuthIntegrationExternal {
 	}
 }
 
-// ToProjectIntegration converts a gcp integration to a project integration
+// ToProjectIntegration converts an oauth integration to a project integration
 func (o *OAuthIntegration) ToProjectIntegration(
 	category string,
 	service IntegrationService,

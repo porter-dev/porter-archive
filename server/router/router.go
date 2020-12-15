@@ -5,24 +5,18 @@ import (
 	"os"
 
 	"github.com/go-chi/chi"
-	"github.com/gorilla/sessions"
-	"github.com/porter-dev/porter/internal/repository"
 	"github.com/porter-dev/porter/server/api"
 	"github.com/porter-dev/porter/server/requestlog"
 	mw "github.com/porter-dev/porter/server/router/middleware"
 )
 
-// New creates a new Chi router instance
-func New(
-	a *api.App,
-	store sessions.Store,
-	cookieName string,
-	staticFilePath string,
-	repo *repository.Repository,
-) *chi.Mux {
-	l := a.Logger()
+// New creates a new Chi router instance and registers all routes supported by the
+// API
+func New(a *api.App) *chi.Mux {
+	l := a.Logger
 	r := chi.NewRouter()
-	auth := mw.NewAuth(store, cookieName, repo)
+
+	auth := mw.NewAuth(a.Store, a.ServerConf.CookieName, a.Repo)
 
 	r.Route("/api", func(r chi.Router) {
 		r.Use(mw.ContentTypeJSON)
@@ -101,6 +95,14 @@ func New(
 			"/integrations/registry",
 			auth.BasicAuthenticate(
 				requestlog.NewHandler(a.HandleListRegistryIntegrations, l),
+			),
+		)
+
+		r.Method(
+			"GET",
+			"/integrations/helm",
+			auth.BasicAuthenticate(
+				requestlog.NewHandler(a.HandleListHelmRepoIntegrations, l),
 			),
 		)
 
@@ -285,6 +287,47 @@ func New(
 			"/projects/{project_id}/integrations/aws",
 			auth.DoesUserHaveProjectAccess(
 				requestlog.NewHandler(a.HandleCreateAWSIntegration, l),
+				mw.URLParam,
+				mw.WriteAccess,
+			),
+		)
+
+		r.Method(
+			"POST",
+			"/projects/{project_id}/integrations/basic",
+			auth.DoesUserHaveProjectAccess(
+				requestlog.NewHandler(a.HandleCreateBasicAuthIntegration, l),
+				mw.URLParam,
+				mw.WriteAccess,
+			),
+		)
+
+		// /api/projects/{project_id}/helmrepos routes
+		r.Method(
+			"POST",
+			"/projects/{project_id}/helmrepos",
+			auth.DoesUserHaveProjectAccess(
+				requestlog.NewHandler(a.HandleCreateHelmRepo, l),
+				mw.URLParam,
+				mw.WriteAccess,
+			),
+		)
+
+		r.Method(
+			"GET",
+			"/projects/{project_id}/helmrepos",
+			auth.DoesUserHaveProjectAccess(
+				requestlog.NewHandler(a.HandleListProjectHelmRepos, l),
+				mw.URLParam,
+				mw.WriteAccess,
+			),
+		)
+
+		r.Method(
+			"GET",
+			"/projects/{project_id}/helmrepos/{helm_id}/charts",
+			auth.DoesUserHaveProjectAccess(
+				requestlog.NewHandler(a.HandleListHelmRepoCharts, l),
 				mw.URLParam,
 				mw.WriteAccess,
 			),
@@ -573,6 +616,8 @@ func New(
 			),
 		)
 	})
+
+	staticFilePath := a.ServerConf.StaticFilePath
 
 	fs := http.FileServer(http.Dir(staticFilePath))
 

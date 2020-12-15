@@ -206,7 +206,7 @@ func (repo *ClusterRepository) UpdateCluster(
 
 // UpdateClusterTokenCache updates the token cache for a cluster
 func (repo *ClusterRepository) UpdateClusterTokenCache(
-	tokenCache *ints.TokenCache,
+	tokenCache *ints.ClusterTokenCache,
 ) (*models.Cluster, error) {
 	if tok := tokenCache.Token; len(tok) > 0 {
 		cipherData, err := repository.Encrypt(tok, repo.key)

@@ -164,7 +164,7 @@ func (repo *ClusterRepository) UpdateCluster(
 
 // UpdateClusterTokenCache updates the token cache for a cluster
 func (repo *ClusterRepository) UpdateClusterTokenCache(
-	tokenCache *ints.TokenCache,
+	tokenCache *ints.ClusterTokenCache,
 ) (*models.Cluster, error) {
 	if !repo.canQuery {
 		return nil, errors.New("Cannot write database")

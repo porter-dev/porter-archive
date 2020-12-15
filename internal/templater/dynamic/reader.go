@@ -30,8 +30,8 @@ type Object struct {
 	Name string
 }
 
-// DynamicTemplateReader reads any resource registered with the k8s apiserver
-type DynamicTemplateReader struct {
+// TemplateReader reads any resource registered with the k8s apiserver
+type TemplateReader struct {
 	// The object to read from, identified by its group-version-kind
 	Object *Object
 
@@ -47,7 +47,7 @@ type DynamicTemplateReader struct {
 
 // NewDynamicTemplateReader creates a new DynamicTemplateReader
 func NewDynamicTemplateReader(client dynamic.Interface, obj *Object) templater.TemplateReader {
-	r := &DynamicTemplateReader{
+	r := &TemplateReader{
 		Object: obj,
 		Client: client,
 	}
@@ -66,7 +66,7 @@ func NewDynamicTemplateReader(client dynamic.Interface, obj *Object) templater.T
 }
 
 // ValuesFromTarget retrieves cluster values from the k8s apiserver
-func (r *DynamicTemplateReader) ValuesFromTarget() (map[string]interface{}, error) {
+func (r *TemplateReader) ValuesFromTarget() (map[string]interface{}, error) {
 	// if name is not empty, this is a get operation
 	if r.Object.Name != "" {
 		return r.valuesFromGet()
@@ -76,14 +76,14 @@ func (r *DynamicTemplateReader) ValuesFromTarget() (map[string]interface{}, erro
 }
 
 // RegisterQuery adds a query to the list of queries to execute
-func (r *DynamicTemplateReader) RegisterQuery(query *templater.TemplateReaderQuery) error {
+func (r *TemplateReader) RegisterQuery(query *templater.TemplateReaderQuery) error {
 	r.Queries = append(r.Queries, query)
 
 	return nil
 }
 
 // Read returns the resulting queried data
-func (r *DynamicTemplateReader) Read() (map[string]interface{}, error) {
+func (r *TemplateReader) Read() (map[string]interface{}, error) {
 	values, err := r.ValuesFromTarget()
 
 	if err != nil {
@@ -95,7 +95,7 @@ func (r *DynamicTemplateReader) Read() (map[string]interface{}, error) {
 
 // ReadStream listens for CRUD 	operations on resources and returns resulting
 // queried data
-func (r *DynamicTemplateReader) ReadStream(
+func (r *TemplateReader) ReadStream(
 	on templater.OnDataStream,
 	stopCh <-chan struct{},
 ) error {
@@ -159,7 +159,7 @@ func (r *DynamicTemplateReader) ReadStream(
 	return nil
 }
 
-func (r *DynamicTemplateReader) valuesFromList() (map[string]interface{}, error) {
+func (r *TemplateReader) valuesFromList() (map[string]interface{}, error) {
 	list, err := r.resource.List(context.TODO(), metav1.ListOptions{})
 
 	if err != nil {
@@ -169,7 +169,7 @@ func (r *DynamicTemplateReader) valuesFromList() (map[string]interface{}, error)
 	return list.UnstructuredContent(), nil
 }
 
-func (r *DynamicTemplateReader) valuesFromGet() (map[string]interface{}, error) {
+func (r *TemplateReader) valuesFromGet() (map[string]interface{}, error) {
 	get, err := r.resource.Get(context.TODO(), r.Object.Name, metav1.GetOptions{})
 
 	if err != nil {

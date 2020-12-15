@@ -94,6 +94,92 @@ func TestListKubeIntegrationsByProjectID(t *testing.T) {
 	}
 }
 
+func TestCreateBasicIntegration(t *testing.T) {
+	tester := &tester{
+		dbFileName: "./porter_create_basic.db",
+	}
+
+	setupTestEnv(tester, t)
+	initUser(tester, t)
+	initProject(tester, t)
+	defer cleanup(tester, t)
+
+	basic := &ints.BasicIntegration{
+		ProjectID: tester.initProjects[0].ID,
+		UserID:    tester.initUsers[0].ID,
+		Username:  []byte("username"),
+		Password:  []byte("password"),
+	}
+
+	expBasic := *basic
+
+	basic, err := tester.repo.BasicIntegration.CreateBasicIntegration(basic)
+
+	if err != nil {
+		t.Fatalf("%v\n", err)
+	}
+
+	basic, err = tester.repo.BasicIntegration.ReadBasicIntegration(basic.Model.ID)
+
+	if err != nil {
+		t.Fatalf("%v\n", err)
+	}
+
+	// make sure id is 1
+	if basic.Model.ID != 1 {
+		t.Errorf("incorrect basic integration ID: expected %d, got %d\n", 1, basic.Model.ID)
+	}
+
+	// reset fields for deep.Equal
+	basic.Model = orm.Model{}
+
+	if diff := deep.Equal(expBasic, *basic); diff != nil {
+		t.Errorf("incorrect basic integration")
+		t.Error(diff)
+	}
+}
+
+func TestListBasicIntegrationsByProjectID(t *testing.T) {
+	tester := &tester{
+		dbFileName: "./porter_list_basics.db",
+	}
+
+	setupTestEnv(tester, t)
+	initProject(tester, t)
+	initBasicIntegration(tester, t)
+	defer cleanup(tester, t)
+
+	basics, err := tester.repo.BasicIntegration.ListBasicIntegrationsByProjectID(
+		tester.initProjects[0].Model.ID,
+	)
+
+	if err != nil {
+		t.Fatalf("%v\n", err)
+	}
+
+	if len(basics) != 1 {
+		t.Fatalf("length of basic integrations incorrect: expected %d, got %d\n", 1, len(basics))
+	}
+
+	// make sure data is correct
+	expBasic := ints.BasicIntegration{
+		ProjectID: tester.initProjects[0].ID,
+		UserID:    tester.initUsers[0].ID,
+		Username:  []byte("username"),
+		Password:  []byte("password"),
+	}
+
+	basic := basics[0]
+
+	// reset fields for reflect.DeepEqual
+	basic.Model = orm.Model{}
+
+	if diff := deep.Equal(expBasic, *basic); diff != nil {
+		t.Errorf("incorrect basic integration")
+		t.Error(diff)
+	}
+}
+
 func TestCreateOIDCIntegration(t *testing.T) {
 	tester := &tester{
 		dbFileName: "./porter_create_oidc.db",

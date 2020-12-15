@@ -55,8 +55,6 @@ export default class Chart extends Component<PropsType, StateType> {
 
   getChartStatus = (chartStatus: string) => {
     if (chartStatus === 'deployed') {
-
-      console.log(this.props.controllers)
       for (var uid in this.props.controllers) {
         let value = this.props.controllers[uid]
         let status = this.getAvailability(value.metadata.kind, value)
@@ -72,7 +70,7 @@ export default class Chart extends Component<PropsType, StateType> {
   render() {
     let { chart, setCurrentChart } = this.props;
     let status = this.getChartStatus(chart.info.status)
-    console.log(chart)
+
     return ( 
       <StyledChart
         onMouseEnter={() => this.setState({ expand: true })}

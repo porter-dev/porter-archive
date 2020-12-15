@@ -90,8 +90,8 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
         disabled={!this.state.selectedImageUrl}
       >
         {
-          (metaState: any, setMetaState: any) => 
-            this.props.form.tabs.map((tab: any, i: number) => {
+          (metaState: any, setMetaState: any) => {
+            return this.props.form.tabs.map((tab: any, i: number) => {
 
               // If tab is current, render
               if (tab.name === this.state.currentTab) {
@@ -104,7 +104,8 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
                   />
                 );
               }
-            })
+            });
+          }
         }
       </ValuesWrapper>
     );

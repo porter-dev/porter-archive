@@ -14,6 +14,7 @@ import ValuesYaml from './ValuesYaml';
 import GraphSection from './GraphSection';
 import ListSection from './ListSection';
 import StatusSection from './status/StatusSection';
+import ValuesWrapper from '../../../../components/values-form/ValuesWrapper';
 import ValuesForm from '../../../../components/values-form/ValuesForm';
 import SettingsSection from './SettingsSection';
 import { NavLink } from 'react-router-dom';
@@ -212,21 +213,36 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
           />
         );
       default:
-        if (currentTab && currentTab.includes('@')) {
-          return tabOptions.map((tab: any, i: number) => {
+        if (tabOptions && currentTab && currentTab.includes('@')) {
+          return (
+            <ValuesWrapper
+              formTabs={tabOptions}
+              onSubmit={this.onSubmit}
+              saveValuesStatus={this.state.saveValuesStatus}
+              isInModal={true}
+            >
+              {
+                (metaState: any, setMetaState: any) => {
+                  return tabOptions.map((tab: any, i: number) => {
 
-            // If tab is current, render
-            if (tab.value === currentTab) {
-              
-              return (
-                <ValuesFormWrapper key={i}>
-                  <ValuesForm 
-                    sections={tab.sections}
-                  />
-                </ValuesFormWrapper>
-              );
-            }
-          });
+                    // If tab is current, render
+                    if (tab.value === currentTab) {
+                      return (
+                        <ValuesFormWrapper>
+                          <ValuesForm
+                            metaState={metaState}
+                            setMetaState={setMetaState}
+                            key={i}
+                            sections={tab.sections} 
+                          />
+                        </ValuesFormWrapper>
+                      );
+                    }
+                  });
+                }
+              }
+            </ValuesWrapper>
+          );
         }
     }
   }

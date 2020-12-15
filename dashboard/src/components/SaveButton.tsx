@@ -32,13 +32,19 @@ export default class SaveButton extends Component<PropsType, StateType> {
             <LoadingGif src={loading} /> Updating . . .
           </StatusWrapper>
         );
+      } else if (this.props.status === 'error') {
+        return (
+          <StatusWrapper successful={false}>
+            <i className="material-icons">error_outline</i> Could not update
+          </StatusWrapper>
+        );
+      } else {
+        return (
+          <StatusWrapper successful={false}>
+            <i className="material-icons">error_outline</i> {this.props.status}
+          </StatusWrapper>
+        );
       }
-
-      return (
-        <StatusWrapper successful={false}>
-          <i className="material-icons">error_outline</i> Could not update
-        </StatusWrapper>
-      );
     }
   }
 

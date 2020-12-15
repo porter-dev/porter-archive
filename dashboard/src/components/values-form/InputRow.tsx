@@ -6,10 +6,11 @@ type PropsType = {
   type: string,
   value: string | number,
   setValue: (x: string | number) => void,
-  unit?: string
-  placeholder?: string
-  width?: string
-  disabled?: boolean
+  unit?: string,
+  placeholder?: string,
+  width?: string,
+  disabled?: boolean,
+  isRequired?: boolean,
 };
 
 type StateType = {
@@ -28,12 +29,22 @@ export default class InputRow extends Component<PropsType, StateType> {
       this.props.setValue(e.target.value);
     }
   }
+
+  renderRequiredWarning = () => {
+    if (this.props.isRequired && this.props.value === '') {
+      return (
+        <Warning>
+          <i className="material-icons">error_outline</i>
+        </Warning>
+      );
+    }
+  }
   
   render() {
     let { label, value, type, unit, placeholder, width } = this.props;
     return (
       <StyledInputRow>
-        <Label>{label}</Label>
+        <Label>{label} {this.props.isRequired ? ' *' : null}</Label>
         <InputWrapper>
           <Input
             readOnly={this.state.readOnly} onFocus={() => this.setState({ readOnly: false })}
@@ -41,10 +52,11 @@ export default class InputRow extends Component<PropsType, StateType> {
             placeholder={placeholder}
             width={width}
             type={type}
-            value={value || ''}
+            value={value}
             onChange={this.handleChange}
           />
-          <Unit>{unit}</Unit>
+          {unit ? <Unit>{unit}</Unit> : null}
+          {this.renderRequiredWarning()}
         </InputWrapper>
       </StyledInputRow>
     );
@@ -52,7 +64,15 @@ export default class InputRow extends Component<PropsType, StateType> {
 }
 
 const Unit = styled.div`
+  margin-right: 8px;
+`;
 
+const Warning = styled.div`
+  margin-bottom: -3px;
+  > i {
+    font-size: 18px;
+    color: #fcba03;
+  }
 `;
 
 const InputWrapper = styled.div`

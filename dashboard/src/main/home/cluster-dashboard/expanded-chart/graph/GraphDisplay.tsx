@@ -98,6 +98,7 @@ export default class GraphDisplay extends Component<PropsType, StateType> {
     let nodes = [] as NodeType[];
     let edges = [] as EdgeType[];
     if (!graph) {
+      console.log('nada')
       nodes = this.createNodes(components);
       edges = this.createEdges(components);
       this.setState({ nodes, edges });
@@ -136,6 +137,7 @@ export default class GraphDisplay extends Component<PropsType, StateType> {
   // Live update on rollback/upgrade
   componentDidUpdate(prevProps: PropsType) {
     if (prevProps.components !== this.props.components) {
+      this.storeChartGraph();
       this.getChartGraph();
     }
   }

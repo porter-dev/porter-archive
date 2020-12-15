@@ -16,13 +16,14 @@ type PropsType = {
   setRevision: (x: ChartType, isCurrent?: boolean) => void
   forceRefreshRevisions: boolean,
   refreshRevisionsOff: () => void,
+  status: string,
 };
 
 type StateType = {
   revisions: ChartType[],
   rollbackRevision: number | null,
   loading: boolean,
-  maxVersion: number
+  maxVersion: number,
 };
 
 // TODO: handle refresh when new revision is generated from an old revision
@@ -114,6 +115,20 @@ export default class RevisionSection extends Component<PropsType, StateType> {
     }
   }
 
+  renderStatus = (revision: ChartType) => {
+    if (this.props.chart.version === revision.version && this.props.status == 'loading') {
+      return (
+        <div>
+          {this.props.status}
+          <LoadingGif src={loading} revision={true}/>
+        </div>
+      )
+    } else if (this.props.chart.version === revision.version) {
+      return this.props.status        
+    }
+    return revision.info.status    
+  }
+
   renderRevisionList = () => {
     return this.state.revisions.map((revision: ChartType, i: number) => {
       let isCurrent = revision.version === this.state.maxVersion;
@@ -125,7 +140,7 @@ export default class RevisionSection extends Component<PropsType, StateType> {
         >
           <Td>{revision.version}</Td>
           <Td>{this.readableDate(revision.info.last_deployed)}</Td>
-          <Td>{revision.info.status}</Td>
+          <Td>{this.renderStatus(revision)}</Td>
           <Td>
             <RollbackButton
               disabled={isCurrent}
@@ -164,7 +179,7 @@ export default class RevisionSection extends Component<PropsType, StateType> {
       return (
         <LoadingPlaceholder>
           <StatusWrapper>
-            <LoadingGif src={loading} /> Updating . . .
+            <LoadingGif src={loading} revision={false}/> Updating . . .
           </StatusWrapper>
         </LoadingPlaceholder>
       )
@@ -220,8 +235,9 @@ const LoadingPlaceholder = styled.div`
 const LoadingGif = styled.img`
   width: 15px;
   height: 15px;
-  margin-right: 9px;
-  margin-bottom: 0px;
+  margin-right: ${(props: {revision: boolean}) => props.revision ? '0px' : '9px'};
+  margin-left: ${(props: {revision: boolean}) => props.revision ? '10px' : '0px'};
+  margin-bottom: ${(props: {revision: boolean }) => props.revision ? '-2px' : '0px'};
 `;
 
 const StatusWrapper = styled.div`

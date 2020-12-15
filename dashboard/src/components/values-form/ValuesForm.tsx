@@ -11,7 +11,7 @@ import InputRow from './InputRow';
 import SelectRow from './SelectRow';
 import Helper from './Helper';
 import Heading from './Heading';
-import ResourceTab from '../ResourceTab';
+import ExpandableResource from '../ExpandableResource';
 
 type PropsType = {
   sections?: Section[],
@@ -22,9 +22,6 @@ type PropsType = {
 type StateType = any;
 
 export default class ValuesForm extends Component<PropsType, StateType> {
-  componentDidMount() {
-    console.log('hola senorita')
-  }
   getInputValue = (item: FormElement) => {
     let key = item.name || item.variable;
     let value = this.props.metaState[key];
@@ -50,10 +47,11 @@ export default class ValuesForm extends Component<PropsType, StateType> {
               {
                 item.value.map((resource: any, i: number) => {
                   return (
-                    <ResourceTab
-                      label={resource.label}
-                      name={resource.name}
-                      status={{ label: resource.status }}
+                    <ExpandableResource
+                      key={i}
+                      resource={resource}
+                      isLast={i === item.value.length - 1}
+                      roundAllCorners={true}
                     />
                   );
                 })
@@ -156,6 +154,8 @@ ValuesForm.contextType = Context;
 const ResourceList = styled.div`
   margin-bottom: 15px;
   margin-top: 20px;
+  border-radius: 5px;
+  overflow: hidden;
 `;
 
 const DarkMatter = styled.div`

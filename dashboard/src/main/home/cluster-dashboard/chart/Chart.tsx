@@ -61,7 +61,7 @@ export default class Chart extends Component<PropsType, StateType> {
             <StatusIndicator
               controllers={this.props.controllers} 
               status={chart.info.status}
-              margin_left={'20px'}
+              margin_left={'17px'}
             />
             <LastDeployed>
               <Dot>•</Dot> Last deployed {this.readableDate(chart.info.last_deployed)}

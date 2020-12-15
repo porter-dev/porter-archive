@@ -101,3 +101,49 @@ func (c *Client) CreateGCPIntegration(
 
 	return bodyResp, nil
 }
+
+// CreateBasicAuthIntegrationRequest represents the accepted fields for creating
+// a "basic auth" integration
+type CreateBasicAuthIntegrationRequest struct {
+	Username string `json:"username"`
+	Password string `json:"password"`
+}
+
+// CreateBasicAuthIntegrationResponse is the resulting integration after creation
+type CreateBasicAuthIntegrationResponse ints.BasicIntegrationExternal
+
+// CreateBasicAuthIntegration creates a "basic auth" integration
+func (c *Client) CreateBasicAuthIntegration(
+	ctx context.Context,
+	projectID uint,
+	createBasic *CreateBasicAuthIntegrationRequest,
+) (*CreateBasicAuthIntegrationResponse, error) {
+	data, err := json.Marshal(createBasic)
+
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(
+		"POST",
+		fmt.Sprintf("%s/projects/%d/integrations/basic", c.BaseURL, projectID),
+		strings.NewReader(string(data)),
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	req = req.WithContext(ctx)
+	bodyResp := &CreateBasicAuthIntegrationResponse{}
+
+	if httpErr, err := c.sendRequest(req, bodyResp, true); httpErr != nil || err != nil {
+		if httpErr != nil {
+			return nil, fmt.Errorf("code %d, errors %v", httpErr.Code, httpErr.Errors)
+		}
+
+		return nil, err
+	}
+
+	return bodyResp, nil
+}

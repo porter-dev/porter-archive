@@ -5,18 +5,14 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/gorilla/sessions"
 	"github.com/porter-dev/porter/internal/models"
-	"github.com/porter-dev/porter/internal/oauth"
 	"github.com/porter-dev/porter/internal/repository/gorm"
 
 	"github.com/porter-dev/porter/server/api"
 
 	"github.com/porter-dev/porter/internal/adapter"
-	sessionstore "github.com/porter-dev/porter/internal/auth"
 	"github.com/porter-dev/porter/internal/config"
 	lr "github.com/porter-dev/porter/internal/logger"
-	vr "github.com/porter-dev/porter/internal/validator"
 	"github.com/porter-dev/porter/server/router"
 
 	ints "github.com/porter-dev/porter/internal/models/integrations"
@@ -40,16 +36,20 @@ func main() {
 		&models.Session{},
 		&models.GitRepo{},
 		&models.Registry{},
+		&models.HelmRepo{},
 		&models.Cluster{},
 		&models.ClusterCandidate{},
 		&models.ClusterResolver{},
 		&ints.KubeIntegration{},
+		&ints.BasicIntegration{},
 		&ints.OIDCIntegration{},
 		&ints.OAuthIntegration{},
 		&ints.GCPIntegration{},
 		&ints.AWSIntegration{},
 		&ints.TokenCache{},
+		&ints.ClusterTokenCache{},
 		&ints.RegTokenCache{},
+		&ints.HelmRepoTokenCache{},
 	)
 
 	if err != nil {
@@ -65,30 +65,13 @@ func main() {
 
 	repo := gorm.NewRepository(db, &key)
 
-	// declare as Store interface (methods Get, New, Save)
-	var store sessions.Store
-	store, _ = sessionstore.NewStore(repo, appConf.Server)
+	a, _ := api.New(&api.AppConfig{
+		Logger:     logger,
+		Repository: repo,
+		ServerConf: appConf.Server,
+	})
 
-	validator := vr.New()
-
-	a := api.New(
-		logger,
-		nil,
-		repo,
-		validator,
-		store,
-		appConf.Server.CookieName,
-		false,
-		appConf.Server.IsLocal,
-		&oauth.Config{
-			ClientID:     appConf.Server.GithubClientID,
-			ClientSecret: appConf.Server.GithubClientSecret,
-			Scopes:       []string{"repo", "user", "read:user"},
-			BaseURL:      appConf.Server.ServerURL,
-		},
-	)
-
-	appRouter := router.New(a, store, appConf.Server.CookieName, appConf.Server.StaticFilePath, repo)
+	appRouter := router.New(a)
 
 	address := fmt.Sprintf(":%d", appConf.Server.Port)
 

@@ -21,6 +21,25 @@ func (cgf *CreateGCPIntegrationForm) ToGCPIntegration() (*ints.GCPIntegration, e
 	}, nil
 }
 
+// CreateBasicAuthIntegrationForm represents the accepted values for creating a
+// basic auth integration
+type CreateBasicAuthIntegrationForm struct {
+	UserID    uint   `json:"user_id" form:"required"`
+	ProjectID uint   `json:"project_id" form:"required"`
+	Username  string `json:"username"`
+	Password  string `json:"password"`
+}
+
+// ToBasicIntegration converts the project to a gorm project model
+func (cbf *CreateBasicAuthIntegrationForm) ToBasicIntegration() (*ints.BasicIntegration, error) {
+	return &ints.BasicIntegration{
+		UserID:    cbf.UserID,
+		ProjectID: cbf.ProjectID,
+		Username:  []byte(cbf.Username),
+		Password:  []byte(cbf.Password),
+	}, nil
+}
+
 // CreateAWSIntegrationForm represents the accepted values for creating an
 // AWS Integration
 type CreateAWSIntegrationForm struct {

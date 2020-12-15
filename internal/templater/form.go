@@ -1,7 +1,8 @@
 package templater
 
 import (
-	"k8s.io/client-go/util/jsonpath"
+	// "k8s.io/client-go/util/jsonpath"
+	"github.com/itchyny/gojq"
 )
 
 // OnDataStream is a function that gets called when new data should be
@@ -12,7 +13,7 @@ type TemplateReaderQuery struct {
 	Key         string
 	QueryString string
 
-	Template *jsonpath.JSONPath
+	Template *gojq.Query
 }
 
 // TemplateReader retrieves data from a target data source, registers a set of

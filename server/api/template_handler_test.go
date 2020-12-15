@@ -68,27 +68,27 @@ func testTemplatesRequests(t *testing.T, tests []*templateTest, canQuery bool) {
 
 // ------------------------- TEST FIXTURES AND FUNCTIONS  ------------------------- //
 
-var listTemplatesTests = []*templateTest{
-	&templateTest{
-		initializers: []func(tester *tester){
-			initUserDefault,
-		},
-		msg:       "List templates",
-		method:    "GET",
-		endpoint:  "/api/templates",
-		body:      "",
-		expStatus: http.StatusOK,
-		expBody:   `[{"name":"Docker","description":"Template to deploy any Docker container on Porter.","icon":"https://cdn4.iconfinder.com/data/icons/logos-and-brands/512/97_Docker_logo_logos-512.png"},{"name":"redis","description":"DEPRECATED Open source, advanced key-value store. It is often referred to as a data structure server since keys can contain strings, hashes, lists, sets and sorted sets.","icon":"https://bitnami.com/assets/stacks/redis/img/redis-stack-220x234.png"}]`,
-		useCookie: true,
-		validators: []func(c *templateTest, tester *tester, t *testing.T){
-			templatesListValidator,
-		},
-	},
-}
+// var listTemplatesTests = []*templateTest{
+// 	&templateTest{
+// 		initializers: []func(tester *tester){
+// 			initUserDefault,
+// 		},
+// 		msg:       "List templates",
+// 		method:    "GET",
+// 		endpoint:  "/api/templates",
+// 		body:      "",
+// 		expStatus: http.StatusOK,
+// 		expBody:   `[{"name":"Docker","description":"Template to deploy any Docker container on Porter.","icon":"https://cdn4.iconfinder.com/data/icons/logos-and-brands/512/97_Docker_logo_logos-512.png"},{"name":"redis","description":"DEPRECATED Open source, advanced key-value store. It is often referred to as a data structure server since keys can contain strings, hashes, lists, sets and sorted sets.","icon":"https://bitnami.com/assets/stacks/redis/img/redis-stack-220x234.png"}]`,
+// 		useCookie: true,
+// 		validators: []func(c *templateTest, tester *tester, t *testing.T){
+// 			templatesListValidator,
+// 		},
+// 	},
+// }
 
-func TestHandleListTemplates(t *testing.T) {
-	testTemplatesRequests(t, listTemplatesTests, true)
-}
+// func TestHandleListTemplates(t *testing.T) {
+// 	testTemplatesRequests(t, listTemplatesTests, true)
+// }
 
 // ------------------------- INITIALIZERS AND VALIDATORS ------------------------- //
 

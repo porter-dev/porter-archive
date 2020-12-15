@@ -2,7 +2,6 @@ package api
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"net/url"
 	"strings"
@@ -19,26 +18,14 @@ import (
 // TODO: test and reduce fragility (handle untar/parse error for individual charts)
 // TODO: separate markdown retrieval into its own query if necessary
 func (app *App) HandleListTemplates(w http.ResponseWriter, r *http.Request) {
-	repoIndex, err := loader.LoadRepoIndex("https://porter-dev.github.io/chart-repo/index.yaml")
+	repoIndex, err := loader.LoadRepoIndexPublic(app.ServerConf.DefaultHelmRepoURL)
 
 	if err != nil {
 		app.handleErrorFormDecoding(err, ErrReleaseDecode, w)
 		return
 	}
 
-	// Loop over charts in index.yaml
-	porterCharts := []models.PorterChartList{}
-
-	for _, entry := range repoIndex.Entries {
-		indexChart := entry[0]
-
-		porterChart := models.PorterChartList{}
-		porterChart.Name = indexChart.Name
-		porterChart.Description = indexChart.Description
-		porterChart.Icon = indexChart.Icon
-
-		porterCharts = append(porterCharts, porterChart)
-	}
+	porterCharts := loader.RepoIndexToPorterChartList(repoIndex)
 
 	json.NewEncoder(w).Encode(porterCharts)
 }
@@ -56,7 +43,7 @@ func (app *App) HandleReadTemplate(w http.ResponseWriter, r *http.Request) {
 	form := &forms.ChartForm{
 		Name:    name,
 		Version: version,
-		RepoURL: "https://porter-dev.github.io/chart-repo/",
+		RepoURL: app.ServerConf.DefaultHelmRepoURL,
 	}
 
 	// if a repo_url is passed as query param, it will be populated
@@ -69,10 +56,9 @@ func (app *App) HandleReadTemplate(w http.ResponseWriter, r *http.Request) {
 
 	form.PopulateRepoURLFromQueryParams(vals)
 
-	chart, err := loader.LoadChart(form.RepoURL, form.Name, form.Version)
+	chart, err := loader.LoadChartPublic(form.RepoURL, form.Name, form.Version)
 
 	if err != nil {
-		fmt.Println("ERROR LOADING CHART", form.RepoURL, form.Name, form.Version, err)
 		app.handleErrorFormDecoding(err, ErrReleaseDecode, w)
 		return
 	}
@@ -87,9 +73,7 @@ func (app *App) HandleReadTemplate(w http.ResponseWriter, r *http.Request) {
 
 	for _, file := range chart.Files {
 		if strings.Contains(file.Name, "form.yaml") {
-			formYAML, err := parser.FormYAMLFromBytes(parserDef, file.Data)
-
-			fmt.Println("FORM RESULT:", formYAML, err)
+			formYAML, err := parser.FormYAMLFromBytes(parserDef, file.Data, "declared")
 
 			if err != nil {
 				break
@@ -100,10 +84,6 @@ func (app *App) HandleReadTemplate(w http.ResponseWriter, r *http.Request) {
 			res.Markdown = string(file.Data)
 		}
 	}
-
-	bytesRes, _ := json.Marshal(res)
-
-	fmt.Println("RAW RESPONSE:", string(bytesRes), res)
 
 	json.NewEncoder(w).Encode(res)
 }

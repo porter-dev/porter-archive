@@ -23,8 +23,12 @@ type Project struct {
 	Clusters          []Cluster          `json:"clusters"`
 	ClusterCandidates []ClusterCandidate `json:"cluster_candidates"`
 
+	// linked helm repos
+	HelmRepos []HelmRepo `json:"helm_repos"`
+
 	// auth mechanisms
 	KubeIntegrations  []ints.KubeIntegration  `json:"kube_integrations"`
+	BasicIntegrations []ints.BasicIntegration `json:"basic_integrations"`
 	OIDCIntegrations  []ints.OIDCIntegration  `json:"oidc_integrations"`
 	OAuthIntegrations []ints.OAuthIntegration `json:"oauth_integrations"`
 	AWSIntegrations   []ints.AWSIntegration   `json:"aws_integrations"`

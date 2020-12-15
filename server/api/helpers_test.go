@@ -8,14 +8,15 @@ import (
 
 	"github.com/go-chi/chi"
 	"github.com/porter-dev/porter/internal/config"
+	"github.com/porter-dev/porter/internal/helm"
+	"github.com/porter-dev/porter/internal/kubernetes"
 	lr "github.com/porter-dev/porter/internal/logger"
 	"github.com/porter-dev/porter/internal/repository"
-	"github.com/porter-dev/porter/internal/repository/test"
+	memory "github.com/porter-dev/porter/internal/repository/memory"
 	"github.com/porter-dev/porter/server/api"
 	"github.com/porter-dev/porter/server/router"
 
 	sessionstore "github.com/porter-dev/porter/internal/auth"
-	vr "github.com/porter-dev/porter/internal/validator"
 )
 
 type tester struct {
@@ -64,6 +65,7 @@ func newTester(canQuery bool) *tester {
 			TimeoutRead:  time.Second * 5,
 			TimeoutWrite: time.Second * 10,
 			TimeoutIdle:  time.Second * 15,
+			IsTesting:    true,
 		},
 		// unimportant here
 		Db: config.DBConf{},
@@ -74,13 +76,21 @@ func newTester(canQuery bool) *tester {
 	}
 
 	logger := lr.NewConsole(appConf.Debug)
-	validator := vr.New()
-
-	repo := test.NewRepository(canQuery)
-
+	repo := memory.NewRepository(canQuery)
 	store, _ := sessionstore.NewStore(repo, appConf.Server)
-	app := api.New(logger, nil, repo, validator, store, appConf.Server.CookieName, true, false, nil)
-	r := router.New(app, store, appConf.Server.CookieName, appConf.Server.StaticFilePath, repo)
+
+	app, _ := api.New(&api.AppConfig{
+		Logger:     logger,
+		Repository: repo,
+		ServerConf: appConf.Server,
+		TestAgents: &api.TestAgents{
+			HelmAgent:             helm.GetAgentTesting(&helm.Form{}, nil, logger),
+			HelmTestStorageDriver: helm.StorageMap["memory"](nil, nil, ""),
+			K8sAgent:              kubernetes.GetAgentTesting(),
+		},
+	})
+
+	r := router.New(app)
 
 	return &tester{
 		app:    app,

@@ -2,6 +2,7 @@ import React, { Component } from 'react';
 import styled from 'styled-components';
 import yaml from 'js-yaml';
 import close from '../../../../assets/close.png';
+import loading from '../../../../assets/loading.gif';
 import _ from 'lodash';
 
 import { ResourceType, ChartType, StorageType, Cluster } from '../../../../shared/types';
@@ -9,6 +10,7 @@ import { Context } from '../../../../shared/Context';
 import api from '../../../../shared/api';
 
 import TabRegion from '../../../../components/TabRegion';
+import StatusIndicator from '../../../../components/StatusIndicator';
 import RevisionSection from './RevisionSection';
 import ValuesYaml from './ValuesYaml';
 import GraphSection from './GraphSection';
@@ -40,12 +42,13 @@ type StateType = {
   saveValuesStatus: string | null,
   forceRefreshRevisions: boolean, // Update revisions after upgrading values
   controllers: Record<string, Record<string, any>>,
+  websockets: Record<string, any>,
 };
 
 export default class ExpandedChart extends Component<PropsType, StateType> {
   state = {
     loading: true,
-    showRevisions: false,
+    showRevisions: true,
     components: [] as ResourceType[],
     podSelectors: [] as string[],
     isPreview: false,
@@ -56,6 +59,7 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
     saveValuesStatus: null as (string | null),
     forceRefreshRevisions: false,
     controllers: {} as Record<string, Record<string, any>>,
+    websockets : {} as Record<string, any>,
   }
 
   // Retrieve full chart data (includes form and values)
@@ -124,6 +128,48 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
     })
   }
   
+  setupWebsocket = (kind: string, chart: ChartType) => {
+    let { currentCluster, currentProject } = this.context;
+    let protocol = process.env.NODE_ENV == 'production' ? 'wss' : 'ws';
+    let ws = new WebSocket(`${protocol}://${process.env.API_SERVER}/api/projects/${currentProject.id}/k8s/${kind}/status?cluster_id=${currentCluster.id}`);
+    ws.onopen = () => {
+      console.log('connected to websocket');
+    }
+
+    ws.onmessage = (evt: MessageEvent) => {
+      let event = JSON.parse(evt.data);
+      let object = event.Object;
+      object.metadata.kind = event.Kind
+      
+      if (!this.state.controllers[object.metadata.uid]) return;
+
+      this.setState({
+        controllers: {
+          ...this.state.controllers,
+          [object.metadata.uid]: object
+        }
+      })
+    }
+
+    ws.onclose = () => {
+      console.log('closing websocket');
+    }
+
+    ws.onerror = (err: ErrorEvent) => {
+      console.log(err);
+      ws.close();
+    }
+
+    return ws;
+  }
+
+  setControllerWebsockets = (controller_types: any[], chart: ChartType) => {
+    let websockets = controller_types.map((kind: string) => {
+      return this.setupWebsocket(kind, chart);
+    })
+    this.setState({ websockets });
+  }
+
   updateResources = () => {
     let { currentCluster, currentProject } = this.context;
     let { currentChart } = this.props;
@@ -146,19 +192,6 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
   }
 
   refreshChart = () => this.getChartData(this.props.currentChart);
-
-  componentDidMount() {
-    this.getChartData(this.props.currentChart);
-    this.getControllers(this.props.currentChart)
-  }
-
-  componentDidUpdate(prevProps: PropsType) {
-    /*
-    if (this.props.currentChart !== prevProps.currentChart) {
-      this.updateResources();
-    }
-    */
-  }
 
   onSubmit = (rawValues: any) => {
     let { currentProject, currentCluster, setCurrentError } = this.context;
@@ -341,37 +374,34 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
     return `${time} on ${date}`;
   }
 
-  getChartStatus = (chartStatus: string) => {
-    if (chartStatus === 'deployed') {
-
-      for (var uid in this.state.controllers) {
-        let value = this.state.controllers[uid]
-        let status = this.getAvailability(value.metadata.kind, value)
-        if (!status) {
-          return 'not ready'
-        }
-      }
-      return 'deployed'
-    }
-    return chartStatus
+  componentDidMount() {
+    this.getChartData(this.props.currentChart);
+    this.getControllers(this.props.currentChart)
+    this.setControllerWebsockets(
+      ["deployment", "statefulset", "daemonset", "replicaset"],
+      this.props.currentChart 
+    );
   }
 
-  getAvailability = (kind: string, c: any) => {
-    switch (kind?.toLowerCase()) {
-      case "deployment":
-      case "replicaset":
-        return (c.status.availableReplicas == c.status.replicas)
-      case "statefulset":
-       return (c.status.readyReplicas == c.status.replicas)
-      case "daemonset":
-        return (c.status.numberAvailable == c.status.desiredNumberScheduled)
-      }
+  componentDidUpdate(prevProps: PropsType) {
+    /*
+    if (this.props.currentChart !== prevProps.currentChart) {
+      this.updateResources();
+    }
+    */
+  }
+
+  componentWillUnmount() {
+    if (this.state.websockets) {
+      this.state.websockets.forEach((ws: WebSocket) => {
+        ws.close()
+      })
+    }
   }
 
   render() {
     let { currentChart, setCurrentChart } = this.props;
     let chart = currentChart;
-    let status = this.getChartStatus(chart.info.status)
 
     return ( 
       <div>
@@ -384,9 +414,11 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
               </Title>
 
               <InfoWrapper>
-                <StatusIndicator>
-                  <StatusColor status={status} />{status}
-                </StatusIndicator>
+                <StatusIndicator 
+                  controllers={this.state.controllers}
+                  status={chart.info.status}
+                  margin_left={'0px'}
+                />
                 <LastDeployed>
                   <Dot>•</Dot>Last deployed 
                   {' ' + this.readableDate(chart.info.last_deployed)}
@@ -406,6 +438,7 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
               showRevisions={this.state.showRevisions}
               toggleShowRevisions={() => this.setState({ showRevisions: !this.state.showRevisions })}
               chart={chart}
+              status={status}
               refreshChart={this.refreshChart}
               setRevision={this.setRevision}
               forceRefreshRevisions={this.state.forceRefreshRevisions}
@@ -489,15 +522,6 @@ const CloseOverlay = styled.div`
 const HeaderWrapper = styled.div`
 `;
 
-const StatusColor = styled.div`
-  margin-bottom: 1px;
-  width: 8px;
-  height: 8px;
-  background: ${(props: { status: string }) => (props.status === 'deployed' ? '#4797ff' : props.status === 'failed' ? "#ed5f85" : "#f5cb42")};
-  border-radius: 20px;
-  margin-right: 16px;
-`;
-
 const Dot = styled.div`
   margin-right: 9px;
 `;
@@ -548,23 +572,6 @@ const NamespaceTag = styled.div`
   padding-left: 7px;
   border-top-left-radius: 0px;
   border-bottom-left-radius: 0px;
-`;
-
-const StatusIndicator = styled.div`
-  display: flex;
-  height: 20px;
-  font-size: 13px;
-  flex-direction: row;
-  text-transform: capitalize;
-  align-items: center;
-  font-family: 'Hind Siliguri', sans-serif;
-  color: #aaaabb;
-  animation: fadeIn 0.5s;
-
-  @keyframes fadeIn {
-    from { opacity: 0 }
-    to { opacity: 1 }
-  }
 `;
 
 const Icon = styled.img`

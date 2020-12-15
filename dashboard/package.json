@@ -23,7 +23,8 @@
     "react-dom": "^16.13.1",
     "react-modal": "^3.11.2",
     "react-router-dom": "^5.2.0",
-    "styled-components": "^5.2.0"
+    "styled-components": "^5.2.0",
+    "ini": ">=1.3.6"
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",

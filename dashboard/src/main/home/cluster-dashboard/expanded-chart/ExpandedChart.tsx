@@ -374,6 +374,32 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
     return `${time} on ${date}`;
   }
 
+  getChartStatus = (chartStatus: string) => {
+    if (chartStatus === 'deployed') {
+      for (var uid in this.state.controllers) {
+        let value = this.state.controllers[uid]
+        let status = this.getAvailability(value.metadata.kind, value)
+        if (!status) {
+          return 'loading'
+        }
+      }
+      return 'deployed'
+    }
+    return chartStatus
+  }
+
+  getAvailability = (kind: string, c: any) => {
+    switch (kind?.toLowerCase()) {
+      case "deployment":
+      case "replicaset":
+        return (c.status.availableReplicas == c.status.replicas)
+      case "statefulset":
+       return (c.status.readyReplicas == c.status.replicas)
+      case "daemonset":
+        return (c.status.numberAvailable == c.status.desiredNumberScheduled)
+      }
+  }
+
   componentDidMount() {
     this.getChartData(this.props.currentChart);
     this.getControllers(this.props.currentChart)
@@ -402,6 +428,7 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
   render() {
     let { currentChart, setCurrentChart } = this.props;
     let chart = currentChart;
+    let status = this.getChartStatus(chart.info.status);
 
     return ( 
       <div>
@@ -438,11 +465,11 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
               showRevisions={this.state.showRevisions}
               toggleShowRevisions={() => this.setState({ showRevisions: !this.state.showRevisions })}
               chart={chart}
-              status={status}
               refreshChart={this.refreshChart}
               setRevision={this.setRevision}
               forceRefreshRevisions={this.state.forceRefreshRevisions}
               refreshRevisionsOff={() => this.setState({ forceRefreshRevisions: false })}
+              status={status}
             />
           </HeaderWrapper>
 

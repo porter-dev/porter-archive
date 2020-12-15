@@ -73,7 +73,6 @@ export default class ChartList extends Component<PropsType, StateType> {
         let event = JSON.parse(evt.data);
         let object = event.Object;
         object.metadata.kind = event.Kind
-        console.log(object)
         let chartKey = this.state.chartLookupTable[object.metadata.uid];
 
         // ignore if updated object does not belong to any chart in the list.
@@ -175,7 +174,6 @@ export default class ChartList extends Component<PropsType, StateType> {
   }
 
   componentDidUpdate(prevProps: PropsType) {
-
     // Ret2: Prevents reload when opening ClusterConfigModal
     if (prevProps.currentCluster !== this.props.currentCluster || 
       prevProps.namespace !== this.props.namespace) {

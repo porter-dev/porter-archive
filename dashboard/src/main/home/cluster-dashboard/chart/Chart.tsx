@@ -3,6 +3,7 @@ import styled from 'styled-components';
 
 import { ChartType, StorageType } from '../../../../shared/types';
 import { Context } from '../../../../shared/Context';
+import StatusIndicator from '../../../../components/StatusIndicator';
 
 type PropsType = {
   chart: ChartType,
@@ -13,27 +14,12 @@ type PropsType = {
 type StateType = {
   expand: boolean,
   update: any[],
-  getAvailability: Function,
 };
 
 export default class Chart extends Component<PropsType, StateType> {
-  getAvailability = (kind: string, c: any) => {
-    switch (kind?.toLowerCase()) {
-      case "deployment":
-      case "replicaset":
-        return (c.status.availableReplicas == c.status.replicas)
-      case "statefulset":
-       return (c.status.readyReplicas == c.status.replicas)
-      case "daemonset":
-        return (c.status.numberAvailable == c.status.desiredNumberScheduled)
-      }
-  }
-
   state = {
     expand: false,
-    controllers: {} as Record<string, boolean>,
     update: [] as any[],
-    getAvailability: this.getAvailability.bind(this),
   }
 
   renderIcon = () => {
@@ -53,23 +39,8 @@ export default class Chart extends Component<PropsType, StateType> {
     return `${time} on ${date}`;
   }
 
-  getChartStatus = (chartStatus: string) => {
-    if (chartStatus === 'deployed') {
-      for (var uid in this.props.controllers) {
-        let value = this.props.controllers[uid]
-        let status = this.getAvailability(value.metadata.kind, value)
-        if (!status) {
-          return 'not ready'
-        }
-      }
-      return 'deployed'
-    }
-    return chartStatus
-  }
-
   render() {
     let { chart, setCurrentChart } = this.props;
-    let status = this.getChartStatus(chart.info.status)
 
     return ( 
       <StyledChart
@@ -87,11 +58,11 @@ export default class Chart extends Component<PropsType, StateType> {
 
         <BottomWrapper>
           <InfoWrapper>
-            <StatusIndicator>
-              <StatusColor status={status} />
-              {status}
-            </StatusIndicator>
-
+            <StatusIndicator
+              controllers={this.props.controllers} 
+              status={chart.info.status}
+              margin_left={'20px'}
+            />
             <LastDeployed>
               <Dot>•</Dot> Last deployed {this.readableDate(chart.info.last_deployed)}
             </LastDeployed>
@@ -204,33 +175,6 @@ const IconWrapper = styled.div`
     font-size: 17px;
     margin-top: -1px;
   }
-`;
-
-const StatusIndicator = styled.div`
-  display: flex;
-  height: 20px;
-  font-size: 13px;
-  flex-direction: row;
-  text-transform: capitalize;
-  align-items: center;
-  font-family: 'Hind Siliguri', sans-serif;
-  margin-left: 20px;
-  color: #aaaabb;
-  animation: fadeIn 0.5s;
-
-  @keyframes fadeIn {
-    from { opacity: 0 }
-    to { opacity: 1 }
-  }
-`;
-
-const StatusColor = styled.div`
-  margin-bottom: 1px;
-  width: 8px;
-  height: 8px;
-  background: ${(props: { status: string }) => (props.status === 'deployed' ? '#4797ff' : props.status === 'failed' ? "#ed5f85" : "#f5cb42")};
-  border-radius: 20px;
-  margin-right: 16px;
 `;
 
 const Title = styled.div`

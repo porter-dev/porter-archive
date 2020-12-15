@@ -226,7 +226,7 @@ const StatusColor = styled.div`
   width: 8px;
   min-width: 8px;
   height: 8px;
-  background: ${(props: { status: string }) => (props.status === 'running' || props.status === 'Ready' || props.status === 'Completed' ? '#4797ff' : props.status === 'failed' ? "#ed5f85" : "#f5cb42")};
+  background: ${(props: { status: string }) => (props.status === 'running' || props.status === 'Ready' || props.status === 'Completed' ? '#4797ff' : props.status === 'failed' || props.status === 'FailedValidation' ? "#ed5f85" : "#f5cb42")};
   border-radius: 20px;
 `;
 

@@ -157,7 +157,7 @@ func (a *Agent) GetPodLogs(namespace string, name string, conn *websocket.Conn) 
 func (a *Agent) StreamControllerStatus(conn *websocket.Conn, kind string) error {
 	factory := informers.NewSharedInformerFactory(
 		a.Clientset,
-		10,
+		0,
 	)
 	var informer cache.SharedInformer
 

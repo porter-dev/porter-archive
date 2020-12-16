@@ -29,8 +29,6 @@ porter open
 
 The last command should open up the Porter dashboard in your browser: log in with the credentials you just set. To view more detailed setup instructions, please consult the [getting started](docs/GETTING_STARTED.md) docs.
 
-To shut down the Porter instance, run `porter server stop` (or kill the containers manually using the docker CLI). 
-
 ### Mac Installation
 
 Run the following command to grab the latest binary:
@@ -77,13 +75,6 @@ sudo mv ./porter /usr/local/bin/porter
 
 Go [here](https://github.com/porter-dev/porter/releases/latest/download/porter_0.1.0-beta.1_Windows_x86_64.zip
 ) to download the Windows executable and add the binary to your `PATH`. 
-
-## Differences from Kubeapps
-
-As a disclaimer, we're big fans of [Kubeapps](https://github.com/kubeapps/kubeapps), and many of the initial features that we build out will be very similar. Currently, Porter's graph-based chart visualization is the only fundamental difference, and it should be assumed that most Kubeapps features will be supported on Porter in the near future. However, on the feature side, Porter will eventually support:
-- IDE-like tooling for chart creation, templating, and packaging
-- Deep integration with GitOps workflows and CI/CD tools
-- Visualization of lifecycle hooks and robust error tracing for deployments
 
 ## Mission Statement
 

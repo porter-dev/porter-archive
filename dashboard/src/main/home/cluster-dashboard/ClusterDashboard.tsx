@@ -31,7 +31,7 @@ export default class ClusterDashboard extends Component<PropsType, StateType> {
 
     // Reset namespace filter and close expanded chart on cluster change
     if (prevProps.currentCluster !== this.props.currentCluster) {
-      this.setState({ namespace: '', currentChart: null });
+      this.setState({ namespace: 'default', currentChart: null });
     }
   }
 
@@ -55,7 +55,7 @@ export default class ClusterDashboard extends Component<PropsType, StateType> {
 
   renderContents = () => {
     let { currentCluster, setSidebar, setCurrentView } = this.props;
-
+    
     if (this.state.currentChart) {
       return (
         <ExpandedChart

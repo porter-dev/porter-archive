@@ -65,10 +65,11 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
   // Retrieve full chart data (includes form and values)
   getChartData = (chart: ChartType) => {
     let { currentProject } = this.context;
-    let { currentCluster, setCurrentChart } = this.props;
+    let { currentCluster, currentChart, setCurrentChart } = this.props;
+    
     this.setState({ loading: true })
     api.getChart('<token>', {
-      namespace: this.props.namespace,
+      namespace: currentChart.namespace,
       cluster_id: currentCluster.id,
       storage: StorageType.Secret
     }, {

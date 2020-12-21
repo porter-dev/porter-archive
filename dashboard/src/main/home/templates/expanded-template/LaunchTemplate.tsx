@@ -92,6 +92,7 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
         {
           (metaState: any, setMetaState: any) => {
             return this.props.form.tabs.map((tab: any, i: number) => {
+              console.log(tab)
 
               // If tab is current, render
               if (tab.name === this.state.currentTab) {
@@ -116,7 +117,9 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
     // Retrieve tab options
     let tabOptions = [] as ChoiceType[];
     this.props.form.tabs.map((tab: any, i: number) => {
-      tabOptions.push({ value: tab.name, label: tab.label });
+      if (tab.context.type === 'helm/values') {
+        tabOptions.push({ value: tab.name, label: tab.label });
+      }
     });
     this.setState({ tabOptions });
 

@@ -29,6 +29,7 @@ type PropsType = {
 
 type StateType = {
   loading: boolean,
+  error: string | null,
   showRevisions: boolean,
   components: ResourceType[],
   podSelectors: string[]
@@ -44,6 +45,7 @@ type StateType = {
 export default class ExpandedChart extends Component<PropsType, StateType> {
   state = {
     loading: true,
+    error: null as string | null,
     showRevisions: false,
     components: [] as ResourceType[],
     podSelectors: [] as string[],
@@ -60,7 +62,8 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
   getChartData = (chart: ChartType) => {
     let { currentProject } = this.context;
     let { currentCluster, setCurrentChart } = this.props;
-    this.setState({ loading: true })
+    this.setState({ loading: true });
+    console.log('tried my best')
     api.getChart('<token>', {
       namespace: this.props.namespace,
       cluster_id: currentCluster.id,
@@ -71,8 +74,10 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
       id: currentProject.id
     }, (err: any, res: any) => {
       if (err) {
-        console.log(err);
+        console.log('big oof')
+        this.setState({ error: 'Could not load chart data.'})
       } else {
+        console.log('did succeed!')
         setCurrentChart(res.data);
         this.setState({ loading: false });
 
@@ -228,13 +233,12 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
                     // If tab is current, render
                     if (tab.value === currentTab) {
                       return (
-                        <ValuesFormWrapper key={i}>
-                          <ValuesForm
-                            metaState={metaState}
-                            setMetaState={setMetaState}
-                            sections={tab.sections} 
-                          />
-                        </ValuesFormWrapper>
+                        <ValuesForm
+                          key={i}
+                          metaState={metaState}
+                          setMetaState={setMetaState}
+                          sections={tab.sections} 
+                        />
                       );
                     }
                   });
@@ -253,7 +257,12 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
     // Generate form tabs if form.yaml exists
     if (formData) {
       formData.tabs.map((tab: any, i: number) => {
-        tabOptions.push({ value: '@' + tab.name, label: tab.label, sections: tab.sections });
+        tabOptions.push({ 
+          value: '@' + tab.name,
+          label: tab.label,
+          sections: tab.sections,
+          context: tab.context,
+        });
       });
     }
 
@@ -382,12 +391,6 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
 }
 
 ExpandedChart.contextType = Context;
-
-const ValuesFormWrapper = styled.div`
-  width: 100%;
-  height: 100%;
-  padding-bottom: 60px;
-`;
 
 const Unimplemented = styled.div`
   width: 100%;

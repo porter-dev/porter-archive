@@ -84,11 +84,11 @@ export default class ValuesWrapper extends Component<PropsType, StateType> {
     return valueIndicators.includes(false) || valueIndicators.includes('')
   }
 
-  render() {
-    let renderFunc: any = this.props.children;
-    return (
-      <StyledValuesWrapper isInModal={this.props.isInModal}>
-        {renderFunc(this.state, (x: any) => this.setState(x))}
+  renderButton = () => {
+    let { formTabs, currentTab } = this.props;
+    let tab = formTabs.find((t: any) => t.name === currentTab || t.value === currentTab);
+    if (tab && tab.context && tab.context.type === 'helm/values') {
+      return (
         <SaveButton
           disabled={this.isDisabled() || this.props.disabled}
           text='Deploy'
@@ -96,6 +96,16 @@ export default class ValuesWrapper extends Component<PropsType, StateType> {
           status={this.isDisabled() ? 'Missing required fields' : this.props.saveValuesStatus}
           makeFlush={true}
         />
+      );
+    }
+  }
+
+  render() {
+    let renderFunc: any = this.props.children;
+    return (
+      <StyledValuesWrapper>
+        {renderFunc(this.state, (x: any) => this.setState(x))}
+        {this.renderButton()}
       </StyledValuesWrapper>
     );
   }
@@ -103,6 +113,6 @@ export default class ValuesWrapper extends Component<PropsType, StateType> {
 
 const StyledValuesWrapper = styled.div`
   width: 100%;
-  height: ${(props: { isInModal: boolean }) => props.isInModal ? '100%' : 'calc(100% + 65px)'};
-  padding-bottom: ${(props: { isInModal: boolean }) => props.isInModal ? '' : '65px'};
+  padding: 0;
+  height: calc(100% - 65px);
 `;

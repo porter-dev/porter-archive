@@ -12,6 +12,28 @@ import SelectRow from './SelectRow';
 import Helper from './Helper';
 import Heading from './Heading';
 import ExpandableResource from '../ExpandableResource';
+import VeleroForm from '../forms/VeleroForm';
+
+ let dummySections = [
+   {
+    "name":"section_one",
+    "show_if":"",
+    "contents":[
+      {
+        "type":"heading",
+        "label":"Polyphia",
+      },
+      {
+        "type":"subtitle",
+        "label":"Tim Hendrix",
+      },
+      {
+        "type":"velero-create-backup",
+        "label":"Tim Hendrix",
+      },
+    ]
+  }
+];
 
 type PropsType = {
   sections?: Section[],
@@ -115,6 +137,11 @@ export default class ValuesForm extends Component<PropsType, StateType> {
               label={item.label}
             />
           );
+        case 'velero-create-backup':
+          return (
+            <VeleroForm
+            />
+          );
         default:
       }
     });
@@ -122,7 +149,7 @@ export default class ValuesForm extends Component<PropsType, StateType> {
 
   renderFormContents = () => {
     if (this.props.metaState) {
-      return this.props.sections.map((section: Section, i: number) => {
+      return dummySections.map((section: Section, i: number) => {
         // Hide collapsible section if deciding field is false
         if (section.show_if) {
           if (!this.props.metaState[section.show_if]) {

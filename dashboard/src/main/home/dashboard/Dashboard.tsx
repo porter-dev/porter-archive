@@ -49,16 +49,12 @@ export default class Dashboard extends Component<PropsType, StateType> {
 
           <LineBreak />
 
-          <PipelinesSection />
+          <Placeholder>
+            🚀 Pipelines coming soon.
+          </Placeholder>
         </div>
       );
     }
-
-    /*
-      <Placeholder>
-        🚀 Pipelines coming soon.
-      </Placeholder>
-    */
   }
 
   render() {

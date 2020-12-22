@@ -48,7 +48,7 @@ type StateType = {
 export default class ExpandedChart extends Component<PropsType, StateType> {
   state = {
     loading: true,
-    showRevisions: true,
+    showRevisions: false,
     components: [] as ResourceType[],
     podSelectors: [] as string[],
     isPreview: false,
@@ -78,9 +78,8 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
       id: currentProject.id
     }, (err: any, res: any) => {
       if (err) {
-        console.log('big oof')
+        console.log(err)
       } else {
-        console.log('did succeed!')
         setCurrentChart(res.data);
         this.setState({ loading: false });
 
@@ -676,7 +675,7 @@ const StyledExpandedChart = styled.div`
   top: 25px;
   left: 25px;
   border-radius: 10px;
-  background: #26282f;
+  background: #26272F;
   box-shadow: 0 5px 12px 4px #00000033;
   animation: floatIn 0.3s;
   animation-timing-function: ease-out;

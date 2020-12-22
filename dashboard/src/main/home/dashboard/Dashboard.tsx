@@ -3,6 +3,7 @@ import styled from 'styled-components';
 import gradient from '../../../assets/gradient.jpg';
 
 import { Context } from '../../../shared/Context';
+import PipelinesSection from './PipelinesSection';
 
 type PropsType = {
 };
@@ -54,10 +55,6 @@ export default class Dashboard extends Component<PropsType, StateType> {
         </div>
       );
     }
-
-    return (
-      <div />
-    );
   }
 
   render() {

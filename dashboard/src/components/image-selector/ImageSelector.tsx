@@ -50,6 +50,8 @@ export default class ImageSelector extends Component<PropsType, StateType> {
         if (registries.length === 0) {
           this.setState({ loading: false });
         }
+
+        // Loop over connected image registries
         registries.forEach(async (registry: any, i: number) => {
           await new Promise((nextController: (res?: any) => void) => {           
             api.getImageRepos('<token>', {}, 
@@ -60,10 +62,23 @@ export default class ImageSelector extends Component<PropsType, StateType> {
               if (err) {
                 errors.push(1);
               } else {
+
+                // Loop over found image repositories
                 let newImg = res.data.map((img: any) => {
+                  if (this.props.selectedImageUrl === img.uri) {
+                    this.setState({ 
+                      clickedImage: {
+                        kind: registry.service,
+                        source: img.uri,
+                        name: img.name,
+                        registryId: registry.id,
+                      }
+                    });
+                  }
                   return {
                     kind: registry.service, 
-                    source: img.name,
+                    source: img.uri,
+                    name: img.name,
                     registryId: registry.id,
                   }
                 })

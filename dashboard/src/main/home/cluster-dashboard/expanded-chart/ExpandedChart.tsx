@@ -49,7 +49,7 @@ type StateType = {
 export default class ExpandedChart extends Component<PropsType, StateType> {
   state = {
     loading: true,
-    showRevisions: true,
+    showRevisions: false,
     components: [] as ResourceType[],
     podSelectors: [] as string[],
     isPreview: false,
@@ -79,7 +79,7 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
       id: currentProject.id
     }, (err: any, res: any) => {
       if (err) {
-        console.log(err);
+        console.log(err)
       } else {
         setCurrentChart(res.data);
         this.setState({ loading: false });
@@ -300,13 +300,12 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
                     // If tab is current, render
                     if (tab.value === currentTab) {
                       return (
-                        <ValuesFormWrapper key={i}>
-                          <ValuesForm
-                            metaState={metaState}
-                            setMetaState={setMetaState}
-                            sections={tab.sections} 
-                          />
-                        </ValuesFormWrapper>
+                        <ValuesForm
+                          key={i}
+                          metaState={metaState}
+                          setMetaState={setMetaState}
+                          sections={tab.sections} 
+                        />
                       );
                     }
                   });
@@ -325,7 +324,12 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
     // Generate form tabs if form.yaml exists
     if (formData) {
       formData.tabs.map((tab: any, i: number) => {
-        tabOptions.push({ value: '@' + tab.name, label: tab.label, sections: tab.sections });
+        tabOptions.push({ 
+          value: '@' + tab.name,
+          label: tab.label,
+          sections: tab.sections,
+          context: tab.context,
+        });
       });
     }
 
@@ -509,12 +513,6 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
 
 ExpandedChart.contextType = Context;
 
-const ValuesFormWrapper = styled.div`
-  width: 100%;
-  height: 100%;
-  padding-bottom: 60px;
-`;
-
 const Unimplemented = styled.div`
   width: 100%;
   height: 100%;
@@ -678,7 +676,7 @@ const StyledExpandedChart = styled.div`
   top: 25px;
   left: 25px;
   border-radius: 10px;
-  background: #26282f;
+  background: #26272F;
   box-shadow: 0 5px 12px 4px #00000033;
   animation: floatIn 0.3s;
   animation-timing-function: ease-out;

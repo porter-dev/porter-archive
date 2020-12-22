@@ -114,12 +114,17 @@ export default class ValuesForm extends Component<PropsType, StateType> {
               type='number'
               value={this.getInputValue(item)}
               setValue={(x: number) => {
-                let val = x.toString();
+                let val: string | number = x;
                 if (Number.isNaN(x)) {
-                  val = '';
-                } else if (item.settings && item.settings.unit) {
+                  val = ''
+                }
+
+                // Convert to string if unit is set
+                if (item.settings && item.settings.unit) {
+                  val = x.toString();
                   val = val + item.settings.unit;
                 }
+                
                 this.props.setMetaState({ [key]: val });
               }}
               label={item.label}

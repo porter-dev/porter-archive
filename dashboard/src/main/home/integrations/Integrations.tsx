@@ -58,7 +58,7 @@ export default class Integrations extends Component<PropsType, StateType> {
           if (err) {
             console.log(err);
           } else {
-            console.log(res.data);
+            // console.log(res.data);
           }
         });
         break;

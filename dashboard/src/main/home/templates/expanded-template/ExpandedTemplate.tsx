@@ -44,7 +44,6 @@ export default class ExpandedTemplate extends Component<PropsType, StateType> {
       if (err) {
         this.setState({ loading: false, error: true });
       } else {
-        console.log(res.data)
         let { form, values, markdown, metadata } = res.data;
         let keywords = metadata.keywords;
         this.setState({ form, values, markdown, keywords, loading: false, error: false });

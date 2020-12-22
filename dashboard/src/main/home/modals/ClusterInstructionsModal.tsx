@@ -169,7 +169,7 @@ const Placeholder = styled.div`
   font-size: 13px;
   margin-left: 0px;
   margin-top: 25px;
-  line-height: 1.5em;
+  line-height: 1.6em;
   user-select: none;
 `;
 

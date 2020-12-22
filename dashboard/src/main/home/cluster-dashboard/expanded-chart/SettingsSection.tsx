@@ -30,18 +30,23 @@ export default class SettingsSection extends Component<PropsType, StateType> {
     saveValuesStatus: null as (string | null),
   }
 
+  // TODO: read in set image from form context instead of config
   componentDidMount() {
-    let image = this.props.currentChart.config.image;
-    if (image?.repository) {
-      this.setState({ selectedImageUrl: image.repository });
+    let image = this.props.currentChart.config?.image;
+    if (image?.repository && image.tag) {
+      this.setState({ 
+        selectedImageUrl: image.repository, 
+        selectedTag: image.tag 
+      });
     }
   }
 
   redeployWithNewImage = (img: string, tag: string) => {
-    this.setState({saveValuesStatus: 'loading'})
+    this.setState({ saveValuesStatus: 'loading' });
     let { currentCluster, currentProject } = this.context;
     let image = {
       image: {
+        // TODO: prepend registry
         repository: img,
         tag: tag,
       }

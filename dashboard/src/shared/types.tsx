@@ -139,4 +139,5 @@ export interface ImageType {
   kind: string,
   source: string,
   registryId: number,
+  name: string,
 }

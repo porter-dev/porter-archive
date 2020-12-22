@@ -23,6 +23,9 @@ type Repository struct {
 
 	// When the repository was created
 	CreatedAt time.Time `json:"created_at,omitempty"`
+
+	// The URI of the repository
+	URI string `json:"uri"`
 }
 
 // Image is a Docker image type
@@ -208,6 +211,7 @@ func (r *Registry) listECRRepositories(repo repository.Repository) ([]*Repositor
 		res = append(res, &Repository{
 			Name:      *repo.RepositoryName,
 			CreatedAt: *repo.CreatedAt,
+			URI:       *repo.RepositoryUri,
 		})
 	}
 

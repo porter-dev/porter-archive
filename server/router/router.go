@@ -513,6 +513,12 @@ func New(a *api.App) *chi.Mux {
 			),
 		)
 
+		r.Method(
+			"POST",
+			"/projects/{project_id}/releases/{name}/upgrade/hook",
+			requestlog.NewHandler(a.HandleReleaseDeployHook, l),
+		)
+
 		// /api/projects/{project_id}/repos routes
 		// r.Method(
 		// 	"GET",

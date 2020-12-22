@@ -102,11 +102,21 @@ export default class ValuesWrapper extends Component<PropsType, StateType> {
 
   render() {
     let renderFunc: any = this.props.children;
+    if (this.props.isInModal) {
+      return (
+        <StyledValuesWrapper>
+          {renderFunc(this.state, (x: any) => this.setState(x))}
+          {this.renderButton()}
+        </StyledValuesWrapper>
+      );
+    }
     return (
-      <StyledValuesWrapper>
-        {renderFunc(this.state, (x: any) => this.setState(x))}
-        {this.renderButton()}
-      </StyledValuesWrapper>
+      <PaddedWrapper>
+        <StyledValuesWrapper>
+          {renderFunc(this.state, (x: any) => this.setState(x))}
+          {this.renderButton()}
+        </StyledValuesWrapper>
+      </PaddedWrapper>
     );
   }
 }
@@ -115,4 +125,9 @@ const StyledValuesWrapper = styled.div`
   width: 100%;
   padding: 0;
   height: calc(100% - 65px);
+`;
+
+const PaddedWrapper = styled.div`
+  padding-bottom: 65px;
+  position: relative;
 `;

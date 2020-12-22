@@ -37,10 +37,23 @@ func (app *App) HandleListRegistryIntegrations(w http.ResponseWriter, r *http.Re
 	}
 }
 
+// HandleListHelmRepoIntegrations lists the Helm repo integrations available to the
+// instance
+func (app *App) HandleListHelmRepoIntegrations(w http.ResponseWriter, r *http.Request) {
+	hrs := ints.PorterHelmRepoIntegrations
+
+	w.WriteHeader(http.StatusOK)
+
+	if err := json.NewEncoder(w).Encode(&hrs); err != nil {
+		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
+		return
+	}
+}
+
 // HandleListRepoIntegrations lists the repo integrations available to the
 // instance
 func (app *App) HandleListRepoIntegrations(w http.ResponseWriter, r *http.Request) {
-	repos := ints.PorterRepoIntegrations
+	repos := ints.PorterGitRepoIntegrations
 
 	w.WriteHeader(http.StatusOK)
 
@@ -52,7 +65,7 @@ func (app *App) HandleListRepoIntegrations(w http.ResponseWriter, r *http.Reques
 
 // HandleCreateGCPIntegration creates a new GCP integration in the DB
 func (app *App) HandleCreateGCPIntegration(w http.ResponseWriter, r *http.Request) {
-	session, err := app.store.Get(r, app.cookieName)
+	session, err := app.Store.Get(r, app.ServerConf.CookieName)
 
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -94,14 +107,14 @@ func (app *App) HandleCreateGCPIntegration(w http.ResponseWriter, r *http.Reques
 	}
 
 	// handle write to the database
-	gcp, err = app.repo.GCPIntegration.CreateGCPIntegration(gcp)
+	gcp, err = app.Repo.GCPIntegration.CreateGCPIntegration(gcp)
 
 	if err != nil {
 		app.handleErrorDataWrite(err, w)
 		return
 	}
 
-	app.logger.Info().Msgf("New gcp integration created: %d", gcp.ID)
+	app.Logger.Info().Msgf("New gcp integration created: %d", gcp.ID)
 
 	w.WriteHeader(http.StatusCreated)
 
@@ -115,7 +128,7 @@ func (app *App) HandleCreateGCPIntegration(w http.ResponseWriter, r *http.Reques
 
 // HandleCreateAWSIntegration creates a new AWS integration in the DB
 func (app *App) HandleCreateAWSIntegration(w http.ResponseWriter, r *http.Request) {
-	session, err := app.store.Get(r, app.cookieName)
+	session, err := app.Store.Get(r, app.ServerConf.CookieName)
 
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -157,20 +170,83 @@ func (app *App) HandleCreateAWSIntegration(w http.ResponseWriter, r *http.Reques
 	}
 
 	// handle write to the database
-	aws, err = app.repo.AWSIntegration.CreateAWSIntegration(aws)
+	aws, err = app.Repo.AWSIntegration.CreateAWSIntegration(aws)
 
 	if err != nil {
 		app.handleErrorDataWrite(err, w)
 		return
 	}
 
-	app.logger.Info().Msgf("New aws integration created: %d", aws.ID)
+	app.Logger.Info().Msgf("New aws integration created: %d", aws.ID)
 
 	w.WriteHeader(http.StatusCreated)
 
 	awsExt := aws.Externalize()
 
 	if err := json.NewEncoder(w).Encode(awsExt); err != nil {
+		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
+		return
+	}
+}
+
+// HandleCreateBasicAuthIntegration creates a new basic auth integration in the DB
+func (app *App) HandleCreateBasicAuthIntegration(w http.ResponseWriter, r *http.Request) {
+	session, err := app.Store.Get(r, app.ServerConf.CookieName)
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	userID, _ := session.Values["user_id"].(uint)
+
+	projID, err := strconv.ParseUint(chi.URLParam(r, "project_id"), 0, 64)
+
+	if err != nil || projID == 0 {
+		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
+		return
+	}
+
+	form := &forms.CreateBasicAuthIntegrationForm{
+		UserID:    userID,
+		ProjectID: uint(projID),
+	}
+
+	// decode from JSON to form value
+	if err := json.NewDecoder(r.Body).Decode(form); err != nil {
+		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
+		return
+	}
+
+	// validate the form
+	if err := app.validator.Struct(form); err != nil {
+		app.handleErrorFormValidation(err, ErrProjectValidateFields, w)
+		return
+	}
+
+	// convert the form to a gcp integration
+	basic, err := form.ToBasicIntegration()
+
+	if err != nil {
+		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
+		return
+	}
+
+	// handle write to the database
+	basic, err = app.Repo.BasicIntegration.CreateBasicIntegration(basic)
+
+	if err != nil {
+		app.handleErrorDataWrite(err, w)
+		return
+	}
+
+	app.Logger.Info().Msgf("New basic integration created: %d", basic.ID)
+
+	w.WriteHeader(http.StatusCreated)
+
+	basicExt := basic.Externalize()
+
+	if err := json.NewEncoder(w).Encode(basicExt); err != nil {
 		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
 		return
 	}

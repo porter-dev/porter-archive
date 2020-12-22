@@ -38,6 +38,11 @@ export default class TabRegion extends Component<PropsType, StateType> {
   }
 
   renderContents = () => {
+    if (!this.props.currentTab) {
+      return (
+        <Loading />
+      );
+    }
 
     return (
       <Div>

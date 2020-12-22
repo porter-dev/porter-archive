@@ -315,15 +315,17 @@ func (conf *OutOfClusterConfig) createRawConfigFromCluster() (*api.Config, error
 }
 
 func (conf *OutOfClusterConfig) getTokenCache() (tok *ints.TokenCache, err error) {
-	return &conf.Cluster.TokenCache, nil
+	return &conf.Cluster.TokenCache.TokenCache, nil
 }
 
 func (conf *OutOfClusterConfig) setTokenCache(token string, expiry time.Time) error {
 	_, err := conf.Repo.Cluster.UpdateClusterTokenCache(
-		&ints.TokenCache{
+		&ints.ClusterTokenCache{
 			ClusterID: conf.Cluster.ID,
-			Token:     []byte(token),
-			Expiry:    expiry,
+			TokenCache: ints.TokenCache{
+				Token:  []byte(token),
+				Expiry: expiry,
+			},
 		},
 	)
 

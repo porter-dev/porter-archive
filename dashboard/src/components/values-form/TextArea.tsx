@@ -48,7 +48,7 @@ const InputArea = styled.textarea`
   padding: 5px 10px;
   margin-right: 8px;
   height: 8em;
-  line-height: 1.5em;
+  line-height: 1.6em;
 `;
 
 const Label = styled.div`

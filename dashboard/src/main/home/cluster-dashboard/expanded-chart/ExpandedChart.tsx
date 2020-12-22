@@ -19,6 +19,7 @@ import StatusSection from './status/StatusSection';
 import ValuesWrapper from '../../../../components/values-form/ValuesWrapper';
 import ValuesForm from '../../../../components/values-form/ValuesForm';
 import SettingsSection from './SettingsSection';
+import { format } from 'util';
 
 type PropsType = {
   namespace: string,

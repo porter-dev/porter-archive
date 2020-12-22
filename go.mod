@@ -33,6 +33,8 @@ require (
 	github.com/gorilla/websocket v1.4.2
 	github.com/hashicorp/consul/api v1.3.0
 	github.com/imdario/mergo v0.3.11 // indirect
+	github.com/itchyny/gojq v0.11.1
+	github.com/itchyny/timefmt-go v0.1.1 // indirect
 	github.com/jinzhu/gorm v1.9.16
 	github.com/joeshaw/envdecode v0.0.0-20200121155833-099f1fc765bd
 	github.com/json-iterator/go v1.1.10 // indirect

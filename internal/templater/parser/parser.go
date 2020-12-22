@@ -13,12 +13,12 @@ import (
 	"sigs.k8s.io/yaml"
 
 	td "github.com/porter-dev/porter/internal/templater/dynamic"
-	th "github.com/porter-dev/porter/internal/templater/helm"
+	tm "github.com/porter-dev/porter/internal/templater/helm/manifests"
+	tv "github.com/porter-dev/porter/internal/templater/helm/values"
 )
 
-// TODO -- handle all continue statements, errors should at least be logged if not
-// thrown
-
+// ClientConfigDefault is a set of default clients to be used if a context in
+// form.yaml does not declare otherwise.
 type ClientConfigDefault struct {
 	DynamicClient dynamic.Interface
 
@@ -27,29 +27,43 @@ type ClientConfigDefault struct {
 	HelmChart   *chart.Chart
 }
 
-func FormYAMLFromBytes(def *ClientConfigDefault, bytes []byte) (*models.FormYAML, error) {
+// ContextConfig can read/write from a specified context (data source)
+type ContextConfig struct {
+	FromType       string   // "live" or "declared"
+	Capabilities   []string // "read", "write"
+	TemplateReader templater.TemplateReader
+	TemplateWriter templater.TemplateWriter
+}
+
+// FormYAMLFromBytes generates a usable form yaml from raw form config and a
+// set of default clients.
+//
+// stateType refers to the types of state that should be read. The two state types
+// are "live" and "declared" -- if stateType is "", this will read both live and
+// declared states.
+func FormYAMLFromBytes(def *ClientConfigDefault, bytes []byte, stateType string) (*models.FormYAML, error) {
 	form, err := unqueriedFormYAMLFromBytes(bytes)
 
 	if err != nil {
 		return nil, err
 	}
 
-	lookup := formToLookupTable(def, form)
+	lookup := formToLookupTable(def, form, stateType)
 
 	// merge data from lookup
 	data := make(map[string]interface{})
 
 	for _, lookupVal := range lookup {
-		queryRes, err := lookupVal.TemplateReader.Read()
+		if lookupVal != nil {
+			queryRes, err := lookupVal.TemplateReader.Read()
 
-		if err != nil {
-			continue
-		}
+			if err != nil {
+				continue
+			}
 
-		for queryResKey, queryResVal := range queryRes {
-			fmt.Printf("PARSER: found value %s, %v\n", queryResKey, queryResVal)
-
-			data[queryResKey] = queryResVal
+			for queryResKey, queryResVal := range queryRes {
+				data[queryResKey] = queryResVal
+			}
 		}
 	}
 
@@ -105,16 +119,9 @@ func unqueriedFormYAMLFromBytes(bytes []byte) (*models.FormYAML, error) {
 	return form, nil
 }
 
-type ContextConfig struct {
-	FromType       string   // "live" or "declared"
-	Capabilities   []string // "read", "write"
-	TemplateReader templater.TemplateReader
-	TemplateWriter templater.TemplateWriter
-}
-
 // create map[*FormContext]*ContextConfig
 // assumes all contexts populated
-func formToLookupTable(def *ClientConfigDefault, form *models.FormYAML) map[*models.FormContext]*ContextConfig {
+func formToLookupTable(def *ClientConfigDefault, form *models.FormYAML, stateType string) map[*models.FormContext]*ContextConfig {
 	lookup := make(map[*models.FormContext]*ContextConfig)
 
 	for i, tab := range form.Tabs {
@@ -125,10 +132,12 @@ func formToLookupTable(def *ClientConfigDefault, form *models.FormYAML) map[*mod
 				}
 
 				if _, ok := lookup[content.Context]; !ok {
-					lookup[content.Context] = formContextToContextConfig(def, content.Context)
+					lookup[content.Context] = formContextToContextConfig(def, content.Context, stateType)
 				}
 
-				fmt.Printf("PARSER: content value %v, variable %s\n", content.Value, content.Variable)
+				if lookup[content.Context] == nil {
+					continue
+				}
 
 				if content.Value != nil && fmt.Sprintf("%v", content.Value) != "" {
 					// TODO -- case on whether value is proper query string, if not resolve it to a
@@ -138,36 +147,28 @@ func formToLookupTable(def *ClientConfigDefault, form *models.FormYAML) map[*mod
 						fmt.Sprintf("%v", content.Value),
 					)
 
-					fmt.Printf(
-						"PARSER: added query %s, %s\n",
-						fmt.Sprintf("tabs[%d].sections[%d].contents[%d]", i, j, k),
-						fmt.Sprintf("%v", content.Value),
-					)
-
 					if err != nil {
 						continue
 					}
 
-					lookup[content.Context].TemplateReader.RegisterQuery(query)
+					if stateType == "" || stateType == lookup[content.Context].FromType {
+						lookup[content.Context].TemplateReader.RegisterQuery(query)
+					}
 				} else if content.Variable != "" {
 					// if variable field set without value field set, make variable field into jsonpath
 					// query
 					query, err := utils.NewQuery(
 						fmt.Sprintf("tabs[%d].sections[%d].contents[%d]", i, j, k),
-						fmt.Sprintf("{ .%v }", content.Variable),
-					)
-
-					fmt.Printf(
-						"PARSER: added query %s, %s\n",
-						fmt.Sprintf("tabs[%d].sections[%d].contents[%d]", i, j, k),
-						fmt.Sprintf("{ .%v }", content.Variable),
+						fmt.Sprintf(".%v", content.Variable),
 					)
 
 					if err != nil {
 						continue
 					}
 
-					lookup[content.Context].TemplateReader.RegisterQuery(query)
+					if stateType == "" || stateType == lookup[content.Context].FromType {
+						lookup[content.Context].TemplateReader.RegisterQuery(query)
+					}
 				}
 			}
 		}
@@ -179,16 +180,15 @@ func formToLookupTable(def *ClientConfigDefault, form *models.FormYAML) map[*mod
 // TODO -- this needs to be able to construct new context configs based on
 // configuration for each context, but right now just uses the default config
 // for everything
-func formContextToContextConfig(def *ClientConfigDefault, context *models.FormContext) *ContextConfig {
+func formContextToContextConfig(def *ClientConfigDefault, context *models.FormContext, stateType string) *ContextConfig {
 	res := &ContextConfig{}
 
-	switch context.Type {
-	case "helm/values":
+	if context.Type == "helm/values" && (stateType == "" || stateType == "declared") {
 		res.FromType = "declared"
 
 		res.Capabilities = []string{"read", "write"}
 
-		res.TemplateReader = &th.ValuesTemplateReader{
+		res.TemplateReader = &tv.TemplateReader{
 			Release: def.HelmRelease,
 			Chart:   def.HelmChart,
 		}
@@ -199,20 +199,20 @@ func formContextToContextConfig(def *ClientConfigDefault, context *models.FormCo
 			relName = def.HelmRelease.Name
 		}
 
-		res.TemplateWriter = &th.ValuesTemplateWriter{
+		res.TemplateWriter = &tv.TemplateWriter{
 			Agent:       def.HelmAgent,
 			Chart:       def.HelmChart,
 			ReleaseName: relName,
 		}
-	case "helm/manifests":
+	} else if context.Type == "helm/manifests" && (stateType == "" || stateType == "live") {
 		res.FromType = "live"
 
 		res.Capabilities = []string{"read"}
 
-		res.TemplateReader = &th.ManifestsTemplateReader{
+		res.TemplateReader = &tm.TemplateReader{
 			Release: def.HelmRelease,
 		}
-	case "cluster":
+	} else if context.Type == "cluster" && (stateType == "" || stateType == "live") {
 		res.FromType = "live"
 
 		res.Capabilities = []string{"read"}
@@ -227,7 +227,7 @@ func formContextToContextConfig(def *ClientConfigDefault, context *models.FormCo
 		}
 
 		res.TemplateReader = td.NewDynamicTemplateReader(def.DynamicClient, obj)
-	default:
+	} else {
 		return nil
 	}
 

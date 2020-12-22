@@ -7,8 +7,8 @@ import (
 	"helm.sh/helm/v3/pkg/chart"
 )
 
-// ValuesTemplateWriter upgrades and installs charts by setting Helm values
-type ValuesTemplateWriter struct {
+// TemplateWriter upgrades and installs charts by setting Helm values
+type TemplateWriter struct {
 	// The object to read from, identified by its group-version-kind
 	Agent *helm.Agent
 
@@ -23,12 +23,12 @@ type ValuesTemplateWriter struct {
 }
 
 // Transform does nothing, since Helm handles the transforms internally
-func (w *ValuesTemplateWriter) Transform() error {
+func (w *TemplateWriter) Transform() error {
 	return nil
 }
 
 // Create installs a new chart, ChartPath must be set
-func (w *ValuesTemplateWriter) Create(
+func (w *TemplateWriter) Create(
 	vals map[string]interface{},
 ) (map[string]interface{}, error) {
 	if w.Chart == nil {
@@ -52,7 +52,7 @@ func (w *ValuesTemplateWriter) Create(
 }
 
 // Update upgrades a chart, ReleaseName must be set
-func (w *ValuesTemplateWriter) Update(
+func (w *TemplateWriter) Update(
 	vals map[string]interface{},
 ) (map[string]interface{}, error) {
 	if w.ReleaseName != "" {

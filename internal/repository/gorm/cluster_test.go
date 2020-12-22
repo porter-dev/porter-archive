@@ -357,9 +357,11 @@ func TestUpdateClusterToken(t *testing.T) {
 		Server:                   "https://localhost",
 		KubeIntegrationID:        tester.initKIs[0].ID,
 		CertificateAuthorityData: []byte("-----BEGIN"),
-		TokenCache: ints.TokenCache{
-			Token:  []byte("token-1"),
-			Expiry: time.Now().Add(-1 * time.Hour),
+		TokenCache: ints.ClusterTokenCache{
+			TokenCache: ints.TokenCache{
+				Token:  []byte("token-1"),
+				Expiry: time.Now().Add(-1 * time.Hour),
+			},
 		},
 	}
 

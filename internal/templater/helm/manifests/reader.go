@@ -10,11 +10,11 @@ import (
 	"sigs.k8s.io/yaml"
 )
 
-// ManifestsTemplateReader implements the TemplateReader for reading from
+// TemplateReader implements the templater.TemplateReader for reading from
 // the Helm manifests of a given release.
 //
 // Note: ReadStream does nothing at the moment.
-type ManifestsTemplateReader struct {
+type TemplateReader struct {
 	Queries []*templater.TemplateReaderQuery
 
 	Release *release.Release
@@ -22,7 +22,7 @@ type ManifestsTemplateReader struct {
 
 // ValuesFromTarget returns a set of values by reading from the Helm release's manifest,
 // unmarshaling from the bytes
-func (r *ManifestsTemplateReader) ValuesFromTarget() (map[string]interface{}, error) {
+func (r *TemplateReader) ValuesFromTarget() (map[string]interface{}, error) {
 	if r.Release == nil {
 		return nil, fmt.Errorf("must set release to read manifest")
 	}
@@ -51,14 +51,14 @@ func (r *ManifestsTemplateReader) ValuesFromTarget() (map[string]interface{}, er
 }
 
 // RegisterQuery adds a new query to be executed against the values
-func (r *ManifestsTemplateReader) RegisterQuery(query *templater.TemplateReaderQuery) error {
+func (r *TemplateReader) RegisterQuery(query *templater.TemplateReaderQuery) error {
 	r.Queries = append(r.Queries, query)
 
 	return nil
 }
 
 // Read executes a set of queries against the helm values in the release/chart
-func (r *ManifestsTemplateReader) Read() (map[string]interface{}, error) {
+func (r *TemplateReader) Read() (map[string]interface{}, error) {
 	values, err := r.ValuesFromTarget()
 
 	if err != nil {
@@ -69,7 +69,7 @@ func (r *ManifestsTemplateReader) Read() (map[string]interface{}, error) {
 }
 
 // ReadStream is unimplemented: stub just to implement TemplateReader
-func (r *ManifestsTemplateReader) ReadStream(
+func (r *TemplateReader) ReadStream(
 	on templater.OnDataStream,
 	stopCh <-chan struct{},
 ) error {

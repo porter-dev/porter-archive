@@ -10,11 +10,11 @@ import (
 	"helm.sh/helm/v3/pkg/release"
 )
 
-// ValuesTemplateReader implements the TemplateReader for reading from
+// TemplateReader implements the templater.TemplateReader for reading from
 // the Helm values.
 //
 // Note: ReadStream does nothing at the moment.
-type ValuesTemplateReader struct {
+type TemplateReader struct {
 	Queries []*templater.TemplateReaderQuery
 
 	Release *release.Release
@@ -23,7 +23,7 @@ type ValuesTemplateReader struct {
 
 // ValuesFromTarget returns a set of values by reading from a Helm release if set, otherwise
 // a helm chart.
-func (r *ValuesTemplateReader) ValuesFromTarget() (map[string]interface{}, error) {
+func (r *TemplateReader) ValuesFromTarget() (map[string]interface{}, error) {
 	// if release exists, read values from release
 	if r.Release != nil {
 		// merge config values with overriding values
@@ -37,14 +37,14 @@ func (r *ValuesTemplateReader) ValuesFromTarget() (map[string]interface{}, error
 }
 
 // RegisterQuery adds a new query to be executed against the values
-func (r *ValuesTemplateReader) RegisterQuery(query *templater.TemplateReaderQuery) error {
+func (r *TemplateReader) RegisterQuery(query *templater.TemplateReaderQuery) error {
 	r.Queries = append(r.Queries, query)
 
 	return nil
 }
 
 // Read executes a set of queries against the helm values in the release/chart
-func (r *ValuesTemplateReader) Read() (map[string]interface{}, error) {
+func (r *TemplateReader) Read() (map[string]interface{}, error) {
 	values, err := r.ValuesFromTarget()
 
 	if err != nil {
@@ -55,7 +55,7 @@ func (r *ValuesTemplateReader) Read() (map[string]interface{}, error) {
 }
 
 // ReadStream is unimplemented: stub just to implement TemplateReader
-func (r *ValuesTemplateReader) ReadStream(
+func (r *TemplateReader) ReadStream(
 	on templater.OnDataStream,
 	stopCh <-chan struct{},
 ) error {

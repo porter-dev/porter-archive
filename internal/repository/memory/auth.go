@@ -73,6 +73,70 @@ func (repo *KubeIntegrationRepository) ListKubeIntegrationsByProjectID(
 	return res, nil
 }
 
+// BasicIntegrationRepository implements repository.BasicIntegrationRepository
+type BasicIntegrationRepository struct {
+	canQuery          bool
+	basicIntegrations []*ints.BasicIntegration
+}
+
+// NewBasicIntegrationRepository will return errors if canQuery is false
+func NewBasicIntegrationRepository(canQuery bool) repository.BasicIntegrationRepository {
+	return &BasicIntegrationRepository{
+		canQuery,
+		[]*ints.BasicIntegration{},
+	}
+}
+
+// CreateBasicIntegration creates a new basic auth mechanism
+func (repo *BasicIntegrationRepository) CreateBasicIntegration(
+	am *ints.BasicIntegration,
+) (*ints.BasicIntegration, error) {
+	if !repo.canQuery {
+		return nil, errors.New("Cannot write database")
+	}
+
+	repo.basicIntegrations = append(repo.basicIntegrations, am)
+	am.ID = uint(len(repo.basicIntegrations))
+
+	return am, nil
+}
+
+// ReadBasicIntegration finds a basic auth mechanism by id
+func (repo *BasicIntegrationRepository) ReadBasicIntegration(
+	id uint,
+) (*ints.BasicIntegration, error) {
+	if !repo.canQuery {
+		return nil, errors.New("Cannot read from database")
+	}
+
+	if int(id-1) >= len(repo.basicIntegrations) || repo.basicIntegrations[id-1] == nil {
+		return nil, gorm.ErrRecordNotFound
+	}
+
+	index := int(id - 1)
+	return repo.basicIntegrations[index], nil
+}
+
+// ListBasicIntegrationsByProjectID finds all basic auth mechanisms
+// for a given project id
+func (repo *BasicIntegrationRepository) ListBasicIntegrationsByProjectID(
+	projectID uint,
+) ([]*ints.BasicIntegration, error) {
+	if !repo.canQuery {
+		return nil, errors.New("Cannot read from database")
+	}
+
+	res := make([]*ints.BasicIntegration, 0)
+
+	for _, basicAM := range repo.basicIntegrations {
+		if basicAM.ProjectID == projectID {
+			res = append(res, basicAM)
+		}
+	}
+
+	return res, nil
+}
+
 // OIDCIntegrationRepository implements repository.OIDCIntegrationRepository
 type OIDCIntegrationRepository struct {
 	canQuery         bool

@@ -55,6 +55,19 @@ var connectGCRCmd = &cobra.Command{
 	},
 }
 
+var connectHRCmd = &cobra.Command{
+	Use:     "helmrepo",
+	Aliases: []string{"helm", "helmrepos"},
+	Short:   "Adds a Helm repository to a project",
+	Run: func(cmd *cobra.Command, args []string) {
+		err := checkLoginAndRun(args, runConnectHelmRepoBasic)
+
+		if err != nil {
+			os.Exit(1)
+		}
+	},
+}
+
 func init() {
 	rootCmd.AddCommand(connectCmd)
 
@@ -90,6 +103,7 @@ func init() {
 
 	connectCmd.AddCommand(connectECRCmd)
 	connectCmd.AddCommand(connectGCRCmd)
+	connectCmd.AddCommand(connectHRCmd)
 }
 
 func runConnectKubeconfig(_ *api.AuthCheckResponse, client *api.Client, _ []string) error {
@@ -138,4 +152,17 @@ func runConnectGCR(_ *api.AuthCheckResponse, client *api.Client, _ []string) err
 	}
 
 	return setRegistry(regID)
+}
+
+func runConnectHelmRepoBasic(_ *api.AuthCheckResponse, client *api.Client, _ []string) error {
+	hrID, err := connect.Helm(
+		client,
+		getProjectID(),
+	)
+
+	if err != nil {
+		return err
+	}
+
+	return setHelmRepo(hrID)
 }

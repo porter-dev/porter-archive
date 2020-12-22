@@ -2,6 +2,7 @@ package api_test
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strings"
 	"testing"
@@ -112,6 +113,28 @@ func TestHandleListRegistryIntegrations(t *testing.T) {
 	testPublicIntegrationRequests(t, listRegistryIntegrationsTests, true)
 }
 
+var listHelmRepoIntegrationsTest = []*publicIntTest{
+	&publicIntTest{
+		initializers: []func(t *tester){
+			initUserDefault,
+		},
+		msg:       "List Helm repo integrations",
+		method:    "GET",
+		endpoint:  "/api/integrations/helm",
+		body:      ``,
+		expStatus: http.StatusOK,
+		expBody:   `[{"auth_mechanism":"basic","category":"helm","service":"helm"},{"auth_mechanism":"gcp","category":"helm","service":"gcs"},{"auth_mechanism":"aws","category":"helm","service":"s3"}]`,
+		useCookie: true,
+		validators: []func(c *publicIntTest, tester *tester, t *testing.T){
+			publicIntBodyValidator,
+		},
+	},
+}
+
+func TestHandleListHelmRepoIntegrations(t *testing.T) {
+	testPublicIntegrationRequests(t, listHelmRepoIntegrationsTest, true)
+}
+
 var listRepoIntegrationsTests = []*publicIntTest{
 	&publicIntTest{
 		initializers: []func(t *tester){
@@ -186,13 +209,43 @@ func TestHandleCreateAWSIntegration(t *testing.T) {
 	testPublicIntegrationRequests(t, createGCPIntegrationTests, true)
 }
 
+var createBasicIntegrationTests = []*publicIntTest{
+	&publicIntTest{
+		initializers: []func(t *tester){
+			initUserDefault,
+			initProject,
+		},
+		msg:      "Create basic integration",
+		method:   "POST",
+		endpoint: "/api/projects/1/integrations/basic",
+		body: `{
+			"username": "username",
+			"password": "password"
+		}`,
+		expStatus: http.StatusCreated,
+		expBody:   `{"id":1,"user_id":1,"project_id":1}`,
+		useCookie: true,
+		validators: []func(c *publicIntTest, tester *tester, t *testing.T){
+			basicIntBodyValidator,
+		},
+	},
+}
+
+func TestHandleCreateBasicIntegration(t *testing.T) {
+	testPublicIntegrationRequests(t, createBasicIntegrationTests, true)
+}
+
 // ------------------------- INITIALIZERS AND VALIDATORS ------------------------- //
 
 func publicIntBodyValidator(c *publicIntTest, tester *tester, t *testing.T) {
 	gotBody := make([]*ints.PorterIntegration, 0)
 	expBody := make([]*ints.PorterIntegration, 0)
 
-	json.Unmarshal(tester.rr.Body.Bytes(), &gotBody)
+	bytes := tester.rr.Body.Bytes()
+
+	fmt.Println(string(bytes))
+
+	json.Unmarshal(bytes, &gotBody)
 	json.Unmarshal([]byte(c.expBody), &expBody)
 
 	if diff := deep.Equal(gotBody, expBody); diff != nil {
@@ -219,6 +272,23 @@ func awsIntBodyValidator(c *publicIntTest, tester *tester, t *testing.T) {
 	expBody := &ints.AWSIntegration{}
 
 	json.Unmarshal(tester.rr.Body.Bytes(), &gotBody)
+	json.Unmarshal([]byte(c.expBody), &expBody)
+
+	if diff := deep.Equal(gotBody, expBody); diff != nil {
+		t.Errorf("handler returned wrong body:\n")
+		t.Error(diff)
+	}
+}
+
+func basicIntBodyValidator(c *publicIntTest, tester *tester, t *testing.T) {
+	gotBody := &ints.BasicIntegration{}
+	expBody := &ints.BasicIntegration{}
+
+	bytes := tester.rr.Body.Bytes()
+
+	fmt.Println(string(bytes))
+
+	json.Unmarshal(bytes, &gotBody)
 	json.Unmarshal([]byte(c.expBody), &expBody)
 
 	if diff := deep.Equal(gotBody, expBody); diff != nil {

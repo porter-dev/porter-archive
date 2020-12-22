@@ -116,7 +116,9 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
     // Retrieve tab options
     let tabOptions = [] as ChoiceType[];
     this.props.form.tabs.map((tab: any, i: number) => {
-      tabOptions.push({ value: tab.name, label: tab.label });
+      if (tab.context.type === 'helm/values') {
+        tabOptions.push({ value: tab.name, label: tab.label });
+      }
     });
     this.setState({ tabOptions });
 
@@ -251,9 +253,7 @@ const Subtitle = styled.div`
   font-family: 'Work Sans', sans-serif;
   font-size: 13px;
   color: #aaaabb;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
+  line-height: 1.6em;
 `;
 
 const ClusterLabel = styled.div`

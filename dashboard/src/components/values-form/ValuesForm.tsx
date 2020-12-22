@@ -12,6 +12,28 @@ import SelectRow from './SelectRow';
 import Helper from './Helper';
 import Heading from './Heading';
 import ExpandableResource from '../ExpandableResource';
+import VeleroForm from '../forms/VeleroForm';
+
+ let dummySections = [
+   {
+    "name":"section_one",
+    "show_if":"",
+    "contents":[
+      {
+        "type":"heading",
+        "label":"Polyphia",
+      },
+      {
+        "type":"subtitle",
+        "label":"Tim Hendrix",
+      },
+      {
+        "type":"velero-create-backup",
+        "label":"Tim Hendrix",
+      },
+    ]
+  }
+];
 
 type PropsType = {
   sections?: Section[],
@@ -92,12 +114,17 @@ export default class ValuesForm extends Component<PropsType, StateType> {
               type='number'
               value={this.getInputValue(item)}
               setValue={(x: number) => {
-                let val = x.toString();
+                let val: string | number = x;
                 if (Number.isNaN(x)) {
-                  val = '';
-                } else if (item.settings && item.settings.unit) {
+                  val = ''
+                }
+
+                // Convert to string if unit is set
+                if (item.settings && item.settings.unit) {
+                  val = x.toString();
                   val = val + item.settings.unit;
                 }
+                
                 this.props.setMetaState({ [key]: val });
               }}
               label={item.label}
@@ -113,6 +140,11 @@ export default class ValuesForm extends Component<PropsType, StateType> {
               options={item.settings.options}
               dropdownLabel=''
               label={item.label}
+            />
+          );
+        case 'velero-create-backup':
+          return (
+            <VeleroForm
             />
           );
         default:

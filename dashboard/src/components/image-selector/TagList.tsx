@@ -27,16 +27,18 @@ export default class TagList extends Component<PropsType, StateType> {
     loading: true,
     error: false,
     tags: [] as string[],
-    currentTag: null as string | null,
+    currentTag: this.props.selectedTag,
   }
 
   componentDidMount() {
     const { currentProject } = this.context;
+    let splits = this.props.selectedImageUrl.split('/');
+    let repoName = splits[splits.length - 1];
     api.getImageTags('<token>', {}, 
       { 
         project_id: currentProject.id,
         registry_id: this.props.registryId,
-        repo_name: this.props.selectedImageUrl,
+        repo_name: repoName,
       }, (err: any, res: any) => {
       if (err) {
         console.log(err)

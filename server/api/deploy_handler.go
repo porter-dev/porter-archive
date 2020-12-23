@@ -92,5 +92,11 @@ func (app *App) HandleDeployTemplate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// write webhook token to db
+	// form.ReleaseForm.Form.Cluster.ID
+	// form.ReleaseForm.Form.Cluster.ProjectID
+	// form.ReleaseForm.Form.Namespace
+	// form.ChartTemplateForm.Name
+
 	w.WriteHeader(http.StatusOK)
 }

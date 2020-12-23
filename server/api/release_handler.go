@@ -2,7 +2,6 @@ package api
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -475,7 +474,6 @@ func (app *App) HandleReleaseDeployHook(w http.ResponseWriter, r *http.Request) 
 	)
 
 	if err := json.NewDecoder(r.Body).Decode(form); err != nil {
-		fmt.Println("ERROR HERE", r.Body)
 		app.handleErrorFormDecoding(err, ErrUserDecode, w)
 		return
 	}

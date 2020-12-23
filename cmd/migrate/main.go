@@ -28,6 +28,7 @@ func main() {
 		&models.Project{},
 		&models.Role{},
 		&models.User{},
+		&models.Release{},
 		&models.Session{},
 		&models.GitRepo{},
 		&models.Registry{},

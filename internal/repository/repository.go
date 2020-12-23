@@ -4,6 +4,7 @@ package repository
 type Repository struct {
 	User             UserRepository
 	Project          ProjectRepository
+	Release          ReleaseRepository
 	Session          SessionRepository
 	GitRepo          GitRepoRepository
 	Cluster          ClusterRepository

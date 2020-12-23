@@ -44,6 +44,7 @@ func setupTestEnv(tester *tester, t *testing.T) {
 	err = db.AutoMigrate(
 		&models.Project{},
 		&models.Role{},
+		&models.Release{},
 		&models.User{},
 		&models.Session{},
 		&models.GitRepo{},

@@ -44,11 +44,19 @@ export default class SettingsSection extends Component<PropsType, StateType> {
   redeployWithNewImage = (img: string, tag: string) => {
     this.setState({ saveValuesStatus: 'loading' });
     let { currentCluster, currentProject } = this.context;
+
+    // If tag is explicitly declared, parse tag
+    let imgSplits = img.split(':');
+    let parsedTag = null;
+    if (imgSplits.length > 1) {
+      img = imgSplits[0];
+      parsedTag = imgSplits[1];
+    }
+
     let image = {
       image: {
-        // TODO: prepend registry
         repository: img,
-        tag: tag,
+        tag: parsedTag || tag,
       }
     }
 

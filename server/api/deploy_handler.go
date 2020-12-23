@@ -9,6 +9,7 @@ import (
 	"github.com/porter-dev/porter/internal/forms"
 	"github.com/porter-dev/porter/internal/helm"
 	"github.com/porter-dev/porter/internal/helm/loader"
+	"github.com/porter-dev/porter/internal/models"
 )
 
 // HandleDeployTemplate triggers a chart deployment from a template
@@ -92,11 +93,23 @@ func (app *App) HandleDeployTemplate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// write webhook token to db
-	// form.ReleaseForm.Form.Cluster.ID
-	// form.ReleaseForm.Form.Cluster.ProjectID
-	// form.ReleaseForm.Form.Namespace
-	// form.ChartTemplateForm.Name
+	// create release with webhook token in db
+	release := &models.Release{
+		ClusterID:    form.ReleaseForm.Form.Cluster.ID,
+		ProjectID:    form.ReleaseForm.Form.Cluster.ProjectID,
+		Namespace:    form.ReleaseForm.Form.Namespace,
+		Name:         form.ChartTemplateForm.Name,
+		WebhookToken: "abcdef",
+	}
+
+	_, err = app.Repo.Release.CreateRelease(release)
+
+	if err != nil {
+		app.sendExternalError(err, http.StatusInternalServerError, HTTPError{
+			Code:   ErrReleaseDeploy,
+			Errors: []string{"error creating a webhook: " + err.Error()},
+		}, w)
+	}
 
 	w.WriteHeader(http.StatusOK)
 }

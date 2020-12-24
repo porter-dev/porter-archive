@@ -394,7 +394,6 @@ func (app *App) HandleListReleaseHistory(w http.ResponseWriter, r *http.Request)
 
 // HandleGetReleaseToken retrieves the webhook token of a specific release.
 func (app *App) HandleGetReleaseToken(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("GETTING RELEASE TOKEN")
 	name := chi.URLParam(r, "name")
 
 	vals, err := url.ParseQuery(r.URL.RawQuery)
@@ -496,6 +495,88 @@ func (app *App) HandleReleaseDeployHook(w http.ResponseWriter, r *http.Request) 
 
 	form.ReleaseForm.PopulateHelmOptionsFromQueryParams(
 		vals,
+		app.Repo.Cluster,
+	)
+
+	if err := json.NewDecoder(r.Body).Decode(form); err != nil {
+		app.handleErrorFormDecoding(err, ErrUserDecode, w)
+		return
+	}
+
+	agent, err := app.getAgentFromReleaseForm(
+		w,
+		r,
+		form.ReleaseForm,
+	)
+
+	// errors are handled in app.getAgentFromBodyParams
+	if err != nil {
+		return
+	}
+
+	image := map[string]interface{}{}
+	image["repository"] = repository
+	image["tag"] = commit
+
+	newval := map[string]interface{}{}
+	newval["image"] = image
+
+	_, err = agent.UpgradeReleaseByValues(form.Name, newval)
+
+	if err != nil {
+		app.sendExternalError(err, http.StatusInternalServerError, HTTPError{
+			Code:   ErrReleaseDeploy,
+			Errors: []string{"error upgrading release " + err.Error()},
+		}, w)
+
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+}
+
+// HandleReleaseDeployWebhook upgrades a release when a chart specific webhook is called.
+func (app *App) HandleReleaseDeployWebhook(w http.ResponseWriter, r *http.Request) {
+	token := chi.URLParam(r, "token")
+
+	// retrieve release by token
+	release, err := app.Repo.Release.ReadReleaseByWebhookToken(token)
+
+	if err != nil {
+		app.sendExternalError(err, http.StatusInternalServerError, HTTPError{
+			Code:   ErrReleaseReadData,
+			Errors: []string{"release not found with given webhook"},
+		}, w)
+
+		return
+	}
+
+	params := map[string][]string{}
+	params["cluster_id"] = []string{fmt.Sprint(release.ClusterID)}
+	params["storage"] = []string{"secret"}
+	params["namespace"] = []string{release.Namespace}
+
+	vals, err := url.ParseQuery(r.URL.RawQuery)
+
+	commit := vals["commit"][0]
+	repository := vals["repository"][0]
+
+	if err != nil {
+		app.handleErrorFormDecoding(err, ErrReleaseDecode, w)
+		return
+	}
+
+	form := &forms.UpgradeReleaseForm{
+		ReleaseForm: &forms.ReleaseForm{
+			Form: &helm.Form{
+				Repo: app.Repo,
+			},
+		},
+		Name: release.Name,
+	}
+
+	form.ReleaseForm.PopulateHelmOptionsFromQueryParams(
+		params,
 		app.Repo.Cluster,
 	)
 

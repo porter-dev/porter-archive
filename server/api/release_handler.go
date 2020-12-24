@@ -2,6 +2,7 @@ package api
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -386,6 +387,31 @@ func (app *App) HandleListReleaseHistory(w http.ResponseWriter, r *http.Request)
 	}
 
 	if err := json.NewEncoder(w).Encode(release); err != nil {
+		app.handleErrorFormDecoding(err, ErrReleaseDecode, w)
+		return
+	}
+}
+
+// HandleGetReleaseToken retrieves the webhook token of a specific release.
+func (app *App) HandleGetReleaseToken(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("GETTING RELEASE TOKEN")
+	name := chi.URLParam(r, "name")
+
+	vals, err := url.ParseQuery(r.URL.RawQuery)
+	namespace := vals["namespace"][0]
+
+	release, err := app.Repo.Release.ReadRelease(name, namespace)
+
+	if err != nil {
+		app.sendExternalError(err, http.StatusInternalServerError, HTTPError{
+			Code:   ErrReleaseReadData,
+			Errors: []string{"release not found"},
+		}, w)
+	}
+
+	releaseExt := release.Externalize()
+
+	if err := json.NewEncoder(w).Encode(releaseExt); err != nil {
 		app.handleErrorFormDecoding(err, ErrReleaseDecode, w)
 		return
 	}

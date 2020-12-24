@@ -2,6 +2,7 @@ package api
 
 import (
 	"encoding/json"
+	"math/rand"
 	"net/http"
 	"net/url"
 
@@ -93,13 +94,20 @@ func (app *App) HandleDeployTemplate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// generate 8 characters long webhook token.
+	const letters = "abcdefghijklmnopqrstuvwxyz"
+	token := make([]byte, 8)
+	for i := range token {
+		token[i] = letters[rand.Intn(len(letters))]
+	}
+
 	// create release with webhook token in db
 	release := &models.Release{
 		ClusterID:    form.ReleaseForm.Form.Cluster.ID,
 		ProjectID:    form.ReleaseForm.Form.Cluster.ProjectID,
 		Namespace:    form.ReleaseForm.Form.Namespace,
 		Name:         form.ChartTemplateForm.Name,
-		WebhookToken: "abcdef",
+		WebhookToken: string(token),
 	}
 
 	_, err = app.Repo.Release.CreateRelease(release)

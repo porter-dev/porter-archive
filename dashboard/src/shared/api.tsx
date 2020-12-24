@@ -149,6 +149,14 @@ const getProjects = baseApi<{}, { id: number }>('GET', pathParams => {
   return `/api/users/${pathParams.id}/projects`;
 });
 
+const getReleaseToken = baseApi<{ 
+  namespace: string,
+  cluster_id: number,
+  storage: StorageType,
+}, { name: string, id: number }>('GET', pathParams => {
+  return `/api/projects/${pathParams.id}/releases/${pathParams.name}/webhook_token`;
+});
+
 const createProject = baseApi<{ name: string }, {}>('POST', pathParams => {
   return `/api/projects`;
 });
@@ -247,6 +255,7 @@ export default {
   getBranches,
   getBranchContents,
   getProjects,
+  getReleaseToken,
   createProject,
   deleteProject,
   deployTemplate,

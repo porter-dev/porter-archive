@@ -536,7 +536,7 @@ func New(a *api.App) *chi.Mux {
 		r.Method(
 			"POST",
 			"/webhooks/deploy/{token}",
-			requestlog.NewHandler(a.HandleReleaseDeployHook, l),
+			requestlog.NewHandler(a.HandleReleaseDeployWebhook, l),
 		)
 
 		// /api/projects/{project_id}/repos routes

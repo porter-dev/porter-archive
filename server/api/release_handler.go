@@ -580,11 +580,6 @@ func (app *App) HandleReleaseDeployWebhook(w http.ResponseWriter, r *http.Reques
 		app.Repo.Cluster,
 	)
 
-	if err := json.NewDecoder(r.Body).Decode(form); err != nil {
-		app.handleErrorFormDecoding(err, ErrUserDecode, w)
-		return
-	}
-
 	agent, err := app.getAgentFromReleaseForm(
 		w,
 		r,

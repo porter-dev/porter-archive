@@ -136,7 +136,8 @@ export default class GraphDisplay extends Component<PropsType, StateType> {
   // Live update on rollback/upgrade
   componentDidUpdate(prevProps: PropsType) {
     if (prevProps.components !== this.props.components) {
-      this.storeChartGraph();
+      console.log(this.props.components);
+      this.storeChartGraph(prevProps);
       this.getChartGraph();
     }
   }
@@ -186,8 +187,9 @@ export default class GraphDisplay extends Component<PropsType, StateType> {
     return edges;
   }
 
-  storeChartGraph = () => {
-    let { currentChart } = this.props;
+  storeChartGraph = (props?: PropsType) => {
+    let useProps = props || this.props;
+    let { currentChart } = useProps;
     let graph = JSON.parse(JSON.stringify(this.state));
 
     // Flush non-persistent data

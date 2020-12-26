@@ -19,6 +19,7 @@ type StateType = {
   showKindLabels: boolean,
   yaml: string | null,
   wrapperHeight: number,
+  selectedResource: { kind: string, name: string } | null,
 };
 
 export default class ListSection extends Component<PropsType, StateType> {
@@ -26,6 +27,7 @@ export default class ListSection extends Component<PropsType, StateType> {
     showKindLabels: true,
     yaml: '# Select a resource to view its manifest' as string | null,
     wrapperHeight: 0,
+    selectedResource: null as { kind: string, name: string } | null,
   }
 
   wrapperRef: any = React.createRef();
@@ -35,8 +37,24 @@ export default class ListSection extends Component<PropsType, StateType> {
   }
 
   componentDidUpdate(prevProps: PropsType) {
+
+    // Adjust yaml wrapper height on revision toggle
     if ((prevProps.showRevisions !== this.props.showRevisions) && this.wrapperRef) {
       this.setState({ wrapperHeight: this.wrapperRef.offsetHeight });
+    }
+
+    if (prevProps.components !== this.props.components && this.state.selectedResource) {
+      let matchingResourceFound = false;
+      this.props.components.forEach((resource: ResourceType) => {
+        if (resource.Kind === this.state.selectedResource.kind && resource.Name === this.state.selectedResource.name) {
+          let rawYaml = yaml.dump(resource.RawYAML);
+          this.setState({ yaml: rawYaml });
+          matchingResourceFound = true;
+        }
+      });
+      if (!matchingResourceFound) {
+        this.setState({ yaml: '# Select a resource to view its manifest' });
+      }
     }
   }
 
@@ -46,7 +64,10 @@ export default class ListSection extends Component<PropsType, StateType> {
       return (
         <ResourceTab
           key={i}
-          handleClick={() => this.setState({ yaml: rawYaml })}
+          handleClick={() => this.setState({ 
+            yaml: rawYaml,
+            selectedResource: { kind: resource.Kind, name: resource.Name }
+          })}
           selected={this.state.yaml === rawYaml}
           label={resource.Kind}
           name={resource.Name}

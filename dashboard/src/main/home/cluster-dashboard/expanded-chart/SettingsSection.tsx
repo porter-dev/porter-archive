@@ -44,6 +44,8 @@ export default class SettingsSection extends Component<PropsType, StateType> {
 
   // TODO: read in set image from form context instead of config
   componentDidMount() {
+    let { currentCluster, currentProject } = this.context;
+
     let image = this.props.currentChart.config?.image;
     if (image?.repository && image.tag) {
       this.setState({ 
@@ -51,6 +53,18 @@ export default class SettingsSection extends Component<PropsType, StateType> {
         selectedTag: image.tag 
       });
     }
+
+    api.getReleaseToken('<token>', {
+      namespace: this.props.currentChart.namespace,
+      cluster_id: currentCluster.id,
+      storage: StorageType.Secret
+    }, { id: currentProject.id, name: this.props.currentChart.name }, (err: any, res: any) => {
+      if (err) {
+        console.log(err)
+      } else {
+        console.log(res.data.webhook_token)
+      }
+    });
   }
 
   redeployWithNewImage = (img: string, tag: string) => {

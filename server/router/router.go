@@ -472,6 +472,20 @@ func New(a *api.App) *chi.Mux {
 		)
 
 		r.Method(
+			"GET",
+			"/projects/{project_id}/releases/{name}/webhook_token",
+			auth.DoesUserHaveProjectAccess(
+				auth.DoesUserHaveClusterAccess(
+					requestlog.NewHandler(a.HandleGetReleaseToken, l),
+					mw.URLParam,
+					mw.QueryParam,
+				),
+				mw.URLParam,
+				mw.ReadAccess,
+			),
+		)
+
+		r.Method(
 			"POST",
 			"/projects/{project_id}/releases/{name}/upgrade",
 			auth.DoesUserHaveProjectAccess(
@@ -511,6 +525,18 @@ func New(a *api.App) *chi.Mux {
 				mw.URLParam,
 				mw.ReadAccess,
 			),
+		)
+
+		// r.Method(
+		// 	"POST",
+		// 	"/projects/{project_id}/releases/{name}/upgrade/hook",
+		// 	requestlog.NewHandler(a.HandleReleaseDeployHook, l),
+		// )
+
+		r.Method(
+			"POST",
+			"/webhooks/deploy/{token}",
+			requestlog.NewHandler(a.HandleReleaseDeployWebhook, l),
 		)
 
 		// /api/projects/{project_id}/repos routes

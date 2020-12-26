@@ -21,7 +21,7 @@ import (
 type Form struct {
 	Cluster   *models.Cluster `form:"required"`
 	Repo      *repository.Repository
-	Storage   string `json:"storage" form:"oneof=secret configmap memory"`
+	Storage   string `json:"storage" form:"oneof=secret configmap memory" default:"secret"`
 	Namespace string `json:"namespace"`
 }
 

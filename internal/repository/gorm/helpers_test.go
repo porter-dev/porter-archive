@@ -51,6 +51,7 @@ func setupTestEnv(tester *tester, t *testing.T) {
 		&models.Session{},
 		&models.GitRepo{},
 		&models.Registry{},
+		&models.Release{},
 		&models.HelmRepo{},
 		&models.Cluster{},
 		&models.ClusterCandidate{},

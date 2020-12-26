@@ -120,7 +120,7 @@ const upgradeChartValues = baseApi<{
   cluster_id: number,
 }>('POST', pathParams => {
   let { id, name, cluster_id } = pathParams;
-  return `/api/projects/${id}/releases/${name}/upgrade?cluster_id=${cluster_id}`;
+  return `/api/projects/${id}/releases/${name}/upgrade/hook?cluster_id=${cluster_id}&repository=fake&commit=hash`;
 });
 
 const getTemplates = baseApi('GET', '/api/templates');
@@ -147,6 +147,14 @@ const getBranchContents = baseApi<{ dir: string }, {
 
 const getProjects = baseApi<{}, { id: number }>('GET', pathParams => {
   return `/api/users/${pathParams.id}/projects`;
+});
+
+const getReleaseToken = baseApi<{ 
+  namespace: string,
+  cluster_id: number,
+  storage: StorageType,
+}, { name: string, id: number }>('GET', pathParams => {
+  return `/api/projects/${pathParams.id}/releases/${pathParams.name}/webhook_token`;
 });
 
 const createProject = baseApi<{ name: string }, {}>('POST', pathParams => {
@@ -247,6 +255,7 @@ export default {
   getBranches,
   getBranchContents,
   getProjects,
+  getReleaseToken,
   createProject,
   deleteProject,
   deployTemplate,

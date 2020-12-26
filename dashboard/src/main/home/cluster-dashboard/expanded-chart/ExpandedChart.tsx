@@ -2,7 +2,6 @@ import React, { Component } from 'react';
 import styled from 'styled-components';
 import yaml from 'js-yaml';
 import close from '../../../../assets/close.png';
-import loading from '../../../../assets/loading.gif';
 import _ from 'lodash';
 
 import { ResourceType, ChartType, StorageType, Cluster } from '../../../../shared/types';
@@ -82,10 +81,6 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
       } else {
         setCurrentChart(res.data);
         this.setState({ loading: false });
-
-        // After retrieving full chart data, update tabs and resources
-        this.updateTabs();
-        this.updateResources();
       }
     });
   }
@@ -335,7 +330,7 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
     // Append universal tabs
     tabOptions.push(
       { label: 'Status', value: 'status' },
-      { label: 'Settings', value: 'settings' },
+      { label: 'Deploy', value: 'settings' },
       { label: 'Chart Overview', value: 'graph' },
     );
 
@@ -428,11 +423,10 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
   }
 
   componentDidUpdate(prevProps: PropsType) {
-    /*
     if (this.props.currentChart !== prevProps.currentChart) {
+      this.updateTabs();
       this.updateResources();
     }
-    */
   }
 
   componentWillUnmount() {

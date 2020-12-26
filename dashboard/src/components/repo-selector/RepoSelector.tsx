@@ -159,7 +159,7 @@ export default class RepoSelector extends Component<PropsType, StateType> {
 
   render() {
     return (
-      <div>
+      <>
         <StyledRepoSelector
           onClick={this.handleClick}
           isExpanded={this.state.isExpanded}
@@ -170,7 +170,7 @@ export default class RepoSelector extends Component<PropsType, StateType> {
         </StyledRepoSelector>
 
         {this.state.isExpanded ? this.renderExpanded() : null}
-      </div>
+      </>
     );
   }
 }
@@ -269,6 +269,7 @@ const RepoLabel = styled.div`
 
 const StyledRepoSelector = styled.div`
   width: 100%;
+  margin-top: 22px;
   border: 1px solid #ffffff55;
   background: ${(props: { isExpanded: boolean, forceExpanded: boolean }) => props.isExpanded ? '#ffffff11' : ''};
   border-radius: 3px;

@@ -217,7 +217,7 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
         </ClusterSection>
 
         <Subtitle>Select the container image you would like to connect to this template.</Subtitle>
-        <Br />
+        <DarkMatter />
         <ImageSelector
           selectedTag={this.state.selectedTag}
           selectedImageUrl={this.state.selectedImageUrl}
@@ -243,9 +243,9 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
 
 LaunchTemplate.contextType = Context;
 
-const Br = styled.div`
+const DarkMatter = styled.div`
   width: 100%;
-  height: 7px;
+  margin-top: -15px;
 `;
 
 const Subtitle = styled.div`

@@ -28,6 +28,7 @@ type StateType = {
   selectedRepo: RepoType | null,
   selectedBranch: string,
   subdirectory: string,
+  webhookToken: string,
 };
 
 export default class SettingsSection extends Component<PropsType, StateType> {
@@ -40,6 +41,7 @@ export default class SettingsSection extends Component<PropsType, StateType> {
     selectedRepo: null as RepoType | null,
     selectedBranch: '',
     subdirectory: '',
+    webhookToken: '',
   }
 
   // TODO: read in set image from form context instead of config
@@ -62,7 +64,7 @@ export default class SettingsSection extends Component<PropsType, StateType> {
       if (err) {
         console.log(err)
       } else {
-        console.log(res.data.webhook_token)
+        this.setState({ webhookToken: res.data.webhook_token })
       }
     });
   }
@@ -157,7 +159,7 @@ export default class SettingsSection extends Component<PropsType, StateType> {
           <Heading>Redeploy Webhook</Heading>
           <Helper>Programmatically deploy by calling this secret webhook.</Helper>
           <Webhook>
-            <div>https://api.getporter.dev/deploy/sdkdkalasdkfjdslk?commit=???</div>
+            <div>curl -X POST 'https://dashboard.getporter.dev/api/webhooks/deploy/{this.state.webhookToken}?commit=???&repository=???'</div>
             <i className="material-icons">content_copy</i>
           </Webhook>
         </StyledSettingsSection>

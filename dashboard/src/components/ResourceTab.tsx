@@ -204,7 +204,7 @@ const Info = styled.div`
   display: flex;
   flex-direction: row;
   align-items: center;
-  width: 100%;
+  width: 80%;
   height: 100%;
 `;
 
@@ -217,6 +217,7 @@ const Metadata = styled.div`
 
 const Status = styled.div`
   display: flex;
+  width; 20%;
   font-size: 12px;
   text-transform: capitalize;
   justify-content: flex-end;

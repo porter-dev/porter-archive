@@ -19,7 +19,7 @@ func NewGitRepoRepository(db *gorm.DB, key *[32]byte) repository.GitRepoReposito
 	return &GitRepoRepository{db, key}
 }
 
-// CreateGitRepo creates a new repo client and appends it to the in-memory list
+// CreateGitRepo creates a new git repo
 func (repo *GitRepoRepository) CreateGitRepo(gr *models.GitRepo) (*models.GitRepo, error) {
 	project := &models.Project{}
 
@@ -40,11 +40,10 @@ func (repo *GitRepoRepository) CreateGitRepo(gr *models.GitRepo) (*models.GitRep
 	return gr, nil
 }
 
-// ReadGitRepo returns a repo client by id
+// ReadGitRepo gets a git repo specified by a unique id
 func (repo *GitRepoRepository) ReadGitRepo(id uint) (*models.GitRepo, error) {
 	gr := &models.GitRepo{}
 
-	// preload Clusters association
 	if err := repo.db.Where("id = ?", id).First(&gr).Error; err != nil {
 		return nil, err
 	}
@@ -52,8 +51,11 @@ func (repo *GitRepoRepository) ReadGitRepo(id uint) (*models.GitRepo, error) {
 	return gr, nil
 }
 
-// ListGitReposByProjectID returns a list of repo clients that match a project id
-func (repo *GitRepoRepository) ListGitReposByProjectID(projectID uint) ([]*models.GitRepo, error) {
+// ListGitReposByProjectID finds all git repos
+// for a given project id
+func (repo *GitRepoRepository) ListGitReposByProjectID(
+	projectID uint,
+) ([]*models.GitRepo, error) {
 	grs := []*models.GitRepo{}
 
 	if err := repo.db.Where("project_id = ?", projectID).Find(&grs).Error; err != nil {
@@ -61,4 +63,26 @@ func (repo *GitRepoRepository) ListGitReposByProjectID(projectID uint) ([]*model
 	}
 
 	return grs, nil
+}
+
+// UpdateGitRepo modifies an existing GitRepo in the database
+func (repo *GitRepoRepository) UpdateGitRepo(
+	gr *models.GitRepo,
+) (*models.GitRepo, error) {
+	if err := repo.db.Save(gr).Error; err != nil {
+		return nil, err
+	}
+
+	return gr, nil
+}
+
+// DeleteGitRepo removes a git repo from the db
+func (repo *GitRepoRepository) DeleteGitRepo(
+	gr *models.GitRepo,
+) error {
+	if err := repo.db.Where("id = ?", gr.ID).Delete(&models.GitRepo{}).Error; err != nil {
+		return err
+	}
+
+	return nil
 }

@@ -74,6 +74,10 @@ type bodyRegistryID struct {
 	RegistryID uint64 `json:"registry_id"`
 }
 
+type bodyGitRepoID struct {
+	GitRepoID uint64 `json:"git_repo_id"`
+}
+
 // DoesUserIDMatch checks the id URL parameter and verifies that it matches
 // the one stored in the session
 func (auth *Auth) DoesUserIDMatch(next http.Handler, loc IDLocation) http.Handler {
@@ -245,6 +249,56 @@ func (auth *Auth) DoesUserHaveRegistryAccess(
 
 		for _, reg := range regs {
 			if reg.ID == uint(regID) {
+				doesExist = true
+				break
+			}
+		}
+
+		if doesExist {
+			next.ServeHTTP(w, r)
+			return
+		}
+
+		http.Error(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)
+		return
+	})
+}
+
+// DoesUserHaveGitRepoAccess looks for a project_id parameter and a
+// git_repo_id parameter, and verifies that the git repo belongs
+// to the project
+func (auth *Auth) DoesUserHaveGitRepoAccess(
+	next http.Handler,
+	projLoc IDLocation,
+	gitRepoLoc IDLocation,
+) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		grID, err := findGitRepoIDInRequest(r, gitRepoLoc)
+
+		if err != nil {
+			http.Error(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)
+			return
+		}
+
+		projID, err := findProjIDInRequest(r, projLoc)
+
+		if err != nil {
+			http.Error(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)
+			return
+		}
+
+		// get the service accounts belonging to the project
+		grs, err := auth.repo.GitRepo.ListGitReposByProjectID(uint(projID))
+
+		if err != nil {
+			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+			return
+		}
+
+		doesExist := false
+
+		for _, gr := range grs {
+			if gr.ID == uint(grID) {
 				doesExist = true
 				break
 			}
@@ -465,4 +519,49 @@ func findRegistryIDInRequest(r *http.Request, registryLoc IDLocation) (uint64, e
 	}
 
 	return regID, nil
+}
+
+func findGitRepoIDInRequest(r *http.Request, gitRepoLoc IDLocation) (uint64, error) {
+	var grID uint64
+	var err error
+
+	if gitRepoLoc == URLParam {
+		grID, err = strconv.ParseUint(chi.URLParam(r, "git_repo_id"), 0, 64)
+
+		if err != nil {
+			return 0, err
+		}
+	} else if gitRepoLoc == BodyParam {
+		form := &bodyGitRepoID{}
+		body, err := ioutil.ReadAll(r.Body)
+
+		if err != nil {
+			return 0, err
+		}
+
+		err = json.Unmarshal(body, form)
+
+		if err != nil {
+			return 0, err
+		}
+
+		grID = form.GitRepoID
+
+		// need to create a new stream for the body
+		r.Body = ioutil.NopCloser(bytes.NewReader(body))
+	} else {
+		vals, err := url.ParseQuery(r.URL.RawQuery)
+
+		if err != nil {
+			return 0, err
+		}
+
+		if regStrArr, ok := vals["git_repo_id"]; ok && len(regStrArr) == 1 {
+			grID, err = strconv.ParseUint(regStrArr[0], 10, 64)
+		} else {
+			return 0, errors.New("git repo id not found")
+		}
+	}
+
+	return grID, nil
 }

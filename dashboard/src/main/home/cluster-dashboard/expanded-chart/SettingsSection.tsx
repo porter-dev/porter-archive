@@ -29,6 +29,7 @@ type StateType = {
   selectedBranch: string,
   subdirectory: string,
   webhookToken: string,
+  highlightCopyButton: boolean,
 };
 
 export default class SettingsSection extends Component<PropsType, StateType> {
@@ -42,6 +43,7 @@ export default class SettingsSection extends Component<PropsType, StateType> {
     selectedBranch: '',
     subdirectory: '',
     webhookToken: '',
+    highlightCopyButton: false,
   }
 
   // TODO: read in set image from form context instead of config
@@ -129,10 +131,15 @@ export default class SettingsSection extends Component<PropsType, StateType> {
         </>
       );
     }
+
+    let { currentProject } = this.context;
     return (
       <>
         <Helper>
-          Select a repo to connect to. Log in with or
+          Select a repo to connect to. You can 
+          <A padRight={true} href={`/api/oauth/projects/${currentProject.id}/github?redirected=true`}>
+            log in with GitHub
+          </A> or
           <Highlight onClick={() => this.setState({ sourceType: 'registry' })}>
             link an image registry
           </Highlight>.
@@ -150,18 +157,38 @@ export default class SettingsSection extends Component<PropsType, StateType> {
     );
   }
 
+  renderWebhookSection = () => {
+    if (this.state.webhookToken) {
+      let webhookText = `curl -X POST 'https://dashboard.getporter.dev/api/webhooks/deploy/${this.state.webhookToken}?commit=???&repository=???'`;
+      return (
+        <>
+          <Heading>Redeploy Webhook</Heading>
+          <Helper>Programmatically deploy by calling this secret webhook.</Helper>
+          <Webhook copiedToClipboard={this.state.highlightCopyButton}>
+            <div>{webhookText}</div>
+            <i 
+              className="material-icons"
+              onClick={() => { 
+                navigator.clipboard.writeText(webhookText);
+                this.setState({ highlightCopyButton: true });
+              }}
+              onMouseLeave={() => this.setState({ highlightCopyButton: false })}
+            >
+              content_copy
+            </i>
+          </Webhook>
+        </>
+      );
+    }
+  }
+
   render() {
     return (
       <Wrapper>
         <StyledSettingsSection>
           <Heading>Connected source</Heading>
           {this.renderSourceSection()}
-          <Heading>Redeploy Webhook</Heading>
-          <Helper>Programmatically deploy by calling this secret webhook.</Helper>
-          <Webhook>
-            <div>curl -X POST 'https://dashboard.getporter.dev/api/webhooks/deploy/{this.state.webhookToken}?commit=???&repository=???'</div>
-            <i className="material-icons">content_copy</i>
-          </Webhook>
+          {this.renderWebhookSection()}
         </StyledSettingsSection>
         <SaveButton
           text='Save Settings'
@@ -197,24 +224,34 @@ const Webhook = styled.div`
   
   > i {
     padding: 5px;
-    background: #ffffff22;
+    background: ${(props: { copiedToClipboard: boolean }) => props.copiedToClipboard ? '#616FEEcc' : '#ffffff22'};
     border-radius: 5px;
     position: absolute;
     right: 10px;
     font-size: 14px;
     cursor: pointer;
+    color: #ffffff;
 
     :hover {
-      background: #ffffff44;
+      background: ${(props: { copiedToClipboard: boolean }) => props.copiedToClipboard ? '' : '#ffffff44'};;
     }
   }
 `;
 
 const Highlight = styled.div`
-  color: #949effff;
+  color: #949eff;
   text-decoration: underline;
   margin-left: 5px;
   cursor: pointer;
+  padding-right: ${(props: { padRight?: boolean }) => props.padRight ? '5px' : ''};
+`;
+
+const A = styled.a`
+  color: #949eff;
+  text-decoration: underline;
+  margin-left: 5px;
+  cursor: pointer;
+  padding-right: ${(props: { padRight?: boolean }) => props.padRight ? '5px' : ''};
 `;
 
 const Wrapper = styled.div`

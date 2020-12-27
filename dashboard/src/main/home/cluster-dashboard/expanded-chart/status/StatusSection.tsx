@@ -98,6 +98,7 @@ export default class StatusSection extends Component<PropsType, StateType> {
     }, (err: any, res: any) => {
       if (err) {
         setCurrentError(JSON.stringify(err));
+        this.setState({controllers: [], loading: false})
         return
       }
       this.setState({ controllers: res.data, loading: false })

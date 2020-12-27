@@ -42,7 +42,7 @@ export default class Home extends Component<PropsType, StateType> {
     if (prevProps !== this.props && this.context.currentProject) {
 
       // Set view to dashboard on project change
-      if (this.state.prevProjectId !== this.context.currentProject.id) {
+      if (this.state.prevProjectId && this.state.prevProjectId !== this.context.currentProject.id) {
         this.setState({
           prevProjectId: this.context.currentProject.id,
           currentView: 'dashboard'

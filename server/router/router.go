@@ -132,21 +132,21 @@ func New(a *api.App) *chi.Mux {
 		)
 
 		// /api/oauth routes
-		// r.Method(
-		// 	"GET",
-		// 	"/oauth/projects/{project_id}/github",
-		// 	auth.DoesUserHaveProjectAccess(
-		// 		requestlog.NewHandler(a.HandleGithubOAuthStartProject, l),
-		// 		mw.URLParam,
-		// 		mw.WriteAccess,
-		// 	),
-		// )
+		r.Method(
+			"GET",
+			"/oauth/projects/{project_id}/github",
+			auth.DoesUserHaveProjectAccess(
+				requestlog.NewHandler(a.HandleGithubOAuthStartProject, l),
+				mw.URLParam,
+				mw.WriteAccess,
+			),
+		)
 
-		// r.Method(
-		// 	"GET",
-		// 	"/oauth/github/callback",
-		// 	requestlog.NewHandler(a.HandleGithubOAuthCallback, l),
-		// )
+		r.Method(
+			"GET",
+			"/oauth/github/callback",
+			requestlog.NewHandler(a.HandleGithubOAuthCallback, l),
+		)
 
 		// /api/projects routes
 		r.Method(
@@ -539,36 +539,58 @@ func New(a *api.App) *chi.Mux {
 			requestlog.NewHandler(a.HandleReleaseDeployWebhook, l),
 		)
 
-		// /api/projects/{project_id}/repos routes
-		// r.Method(
-		// 	"GET",
-		// 	"/projects/{project_id}/repos",
-		// 	auth.DoesUserHaveProjectAccess(
-		// 		requestlog.NewHandler(a.HandleListRepos, l),
-		// 		mw.URLParam,
-		// 		mw.ReadAccess,
-		// 	),
-		// )
+		// /api/projects/{project_id}/gitrepos routes
+		r.Method(
+			"GET",
+			"/projects/{project_id}/gitrepos",
+			auth.DoesUserHaveProjectAccess(
+				requestlog.NewHandler(a.HandleListProjectGitRepos, l),
+				mw.URLParam,
+				mw.ReadAccess,
+			),
+		)
 
-		// r.Method(
-		// 	"GET",
-		// 	"/projects/{project_id}/repos/{kind}/{name}/branches",
-		// 	auth.DoesUserHaveProjectAccess(
-		// 		requestlog.NewHandler(a.HandleGetBranches, l),
-		// 		mw.URLParam,
-		// 		mw.ReadAccess,
-		// 	),
-		// )
+		r.Method(
+			"GET",
+			"/projects/{project_id}/gitrepos/{git_repo_id}/repos",
+			auth.DoesUserHaveProjectAccess(
+				auth.DoesUserHaveGitRepoAccess(
+					requestlog.NewHandler(a.HandleListRepos, l),
+					mw.URLParam,
+					mw.QueryParam,
+				),
+				mw.URLParam,
+				mw.ReadAccess,
+			),
+		)
 
-		// r.Method(
-		// 	"GET",
-		// 	"/projects/{project_id}/repos/{kind}/{name}/{branch}/contents",
-		// 	auth.DoesUserHaveProjectAccess(
-		// 		requestlog.NewHandler(a.HandleGetBranchContents, l),
-		// 		mw.URLParam,
-		// 		mw.ReadAccess,
-		// 	),
-		// )
+		r.Method(
+			"GET",
+			"/projects/{project_id}/gitrepos/{git_repo_id}/repos/{kind}/{name}/branches",
+			auth.DoesUserHaveProjectAccess(
+				auth.DoesUserHaveGitRepoAccess(
+					requestlog.NewHandler(a.HandleGetBranches, l),
+					mw.URLParam,
+					mw.QueryParam,
+				),
+				mw.URLParam,
+				mw.ReadAccess,
+			),
+		)
+
+		r.Method(
+			"GET",
+			"/projects/{project_id}/gitrepos/{git_repo_id}/repos/{kind}/{name}/{branch}/contents",
+			auth.DoesUserHaveProjectAccess(
+				auth.DoesUserHaveGitRepoAccess(
+					requestlog.NewHandler(a.HandleGetBranchContents, l),
+					mw.URLParam,
+					mw.QueryParam,
+				),
+				mw.URLParam,
+				mw.ReadAccess,
+			),
+		)
 
 		// /api/projects/{project_id}/deploy routes
 		r.Method(

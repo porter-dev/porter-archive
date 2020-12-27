@@ -71,7 +71,7 @@ export default class ContentsList extends Component<PropsType, StateType> {
     if (loading) {
       return <LoadingWrapper><Loading /></LoadingWrapper>
     } else if (error || !contents) {
-      return <LoadingWrapper>Error loading repo contents</LoadingWrapper>
+      return <LoadingWrapper>Error loading repo contents.</LoadingWrapper>
     }
 
     return contents.map((item: FileType, i: number) => {

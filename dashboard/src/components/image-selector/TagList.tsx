@@ -82,17 +82,25 @@ export default class TagList extends Component<PropsType, StateType> {
 
   render() {
     return (
-      <div>
+<>
         <TagNameAlt>
           <img src={info} /> Select Image Tag
         </TagNameAlt>
+              <StyledTagList>
         {this.renderTagList()}
-      </div>
+      </StyledTagList>
+      </>
     );
   }
 }
 
 TagList.contextType = Context;
+
+const StyledTagList = styled.div`
+  max-height: 175px;
+  position: relative;
+  overflow: auto;
+`;
 
 const TagName = styled.div`
   display: flex;

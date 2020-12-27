@@ -91,3 +91,43 @@ func TestListGitReposByProjectID(t *testing.T) {
 		t.Error(diff)
 	}
 }
+
+func TestUpdateGitRepo(t *testing.T) {
+	tester := &tester{
+		dbFileName: "./porter_update_gr.db",
+	}
+
+	setupTestEnv(tester, t)
+	initProject(tester, t)
+	initGitRepo(tester, t)
+	defer cleanup(tester, t)
+
+	gr := tester.initGRs[0]
+
+	gr.RepoEntity = "porter-dev-new-name"
+
+	gr, err := tester.repo.GitRepo.UpdateGitRepo(
+		gr,
+	)
+
+	if err != nil {
+		t.Fatalf("%v\n", err)
+	}
+
+	gr, err = tester.repo.GitRepo.ReadGitRepo(tester.initGRs[0].ID)
+
+	// make sure data is correct
+	expGR := models.GitRepo{
+		RepoEntity:         "porter-dev-new-name",
+		ProjectID:          tester.initProjects[0].Model.ID,
+		OAuthIntegrationID: tester.initOAuths[0].ID,
+	}
+
+	// reset fields for reflect.DeepEqual
+	gr.Model = orm.Model{}
+
+	if diff := deep.Equal(expGR, *gr); diff != nil {
+		t.Errorf("incorrect git repo")
+		t.Error(diff)
+	}
+}

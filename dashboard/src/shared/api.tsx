@@ -120,7 +120,7 @@ const upgradeChartValues = baseApi<{
   cluster_id: number,
 }>('POST', pathParams => {
   let { id, name, cluster_id } = pathParams;
-  return `/api/projects/${id}/releases/${name}/upgrade/hook?cluster_id=${cluster_id}&repository=fake&commit=hash`;
+  return `/api/projects/${id}/releases/${name}/upgrade?cluster_id=${cluster_id}`;
 });
 
 const getTemplates = baseApi('GET', '/api/templates');

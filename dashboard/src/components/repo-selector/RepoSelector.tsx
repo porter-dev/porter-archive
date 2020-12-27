@@ -40,8 +40,8 @@ export default class RepoSelector extends Component<PropsType, StateType> {
     let { currentProject, currentCluster } = this.context;
 
     // Get repos
-    api.getRepos('<token>', {
-    }, { id: currentProject.id }, (err: any, res: any) => {
+    api.getGitRepos('<token>', {
+    }, { project_id: currentProject.id }, (err: any, res: any) => {
       if (err) {
         this.setState({ loading: false, error: true });
       } else {
@@ -56,6 +56,8 @@ export default class RepoSelector extends Component<PropsType, StateType> {
       return <LoadingWrapper><Loading /></LoadingWrapper>
     } else if (error || !repos) {
       return <LoadingWrapper>Error loading repos</LoadingWrapper>
+    } else if (repos.length == 0) {
+      return <LoadingWrapper>Hola Senorita</LoadingWrapper>
     }
 
     return repos.map((repo: RepoType, i: number) => {

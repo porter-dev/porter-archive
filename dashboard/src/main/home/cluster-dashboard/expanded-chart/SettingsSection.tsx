@@ -111,9 +111,9 @@ export default class SettingsSection extends Component<PropsType, StateType> {
       return (
         <>
           <Helper>
-            Specify a container image and tag
+            Specify a container image and tag or
             <Highlight onClick={() => this.setState({ sourceType: 'repo' })}>
-              or link a repo
+              link a repo
             </Highlight>.
           </Helper>
           <ImageSelector
@@ -130,9 +130,9 @@ export default class SettingsSection extends Component<PropsType, StateType> {
     return (
       <>
         <Helper>
-          Select a repo to conenct to
+          Select a repo to connect to. Log in with or
           <Highlight onClick={() => this.setState({ sourceType: 'registry' })}>
-            or link a container registry
+            link an image registry
           </Highlight>.
         </Helper>
         <RepoSelector

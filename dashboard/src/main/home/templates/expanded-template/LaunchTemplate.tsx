@@ -11,6 +11,7 @@ import ImageSelector from '../../../../components/image-selector/ImageSelector';
 import TabRegion from '../../../../components/TabRegion';
 import ValuesWrapper from '../../../../components/values-form/ValuesWrapper';
 import ValuesForm from '../../../../components/values-form/ValuesForm';
+import { safeDump } from 'js-yaml';
 
 type PropsType = {
   currentTemplate: any,
@@ -59,6 +60,9 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
     for (let key in rawValues) {
       _.set(values, key, rawValues[key]);
     }
+
+    _.set(values, "image.repository", this.state.selectedImageUrl)
+    _.set(values, "image.tag", this.state.selectedTag)
 
     api.deployTemplate('<token>', {
       templateName: this.props.currentTemplate.name,
@@ -112,7 +116,6 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
   }
 
   componentDidMount() {
-
     // Retrieve tab options
     let tabOptions = [] as ChoiceType[];
     this.props.form.tabs.map((tab: any, i: number) => {

@@ -391,8 +391,10 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
   getChartStatus = (chartStatus: string) => {
     if (chartStatus === 'deployed') {
       for (var uid in this.state.controllers) {
+        console.log(this.state.controllers)
         let value = this.state.controllers[uid]
         let status = this.getAvailability(value.metadata.kind, value)
+        console.log(status)
         if (!status) {
           return 'loading'
         }
@@ -456,7 +458,7 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
               <InfoWrapper>
                 <StatusIndicator 
                   controllers={this.state.controllers}
-                  status={chart.info.status}
+                  status={status}
                   margin_left={'0px'}
                 />
                 <LastDeployed>

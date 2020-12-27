@@ -65,3 +65,39 @@ func (repo *GitRepoRepository) ListGitReposByProjectID(projectID uint) ([]*model
 
 	return res, nil
 }
+
+// UpdateGitRepo modifies an existing GitRepo in the database
+func (repo *GitRepoRepository) UpdateGitRepo(
+	gr *models.GitRepo,
+) (*models.GitRepo, error) {
+	if !repo.canQuery {
+		return nil, errors.New("Cannot write database")
+	}
+
+	if int(gr.ID-1) >= len(repo.gitRepos) || repo.gitRepos[gr.ID-1] == nil {
+		return nil, gorm.ErrRecordNotFound
+	}
+
+	index := int(gr.ID - 1)
+	repo.gitRepos[index] = gr
+
+	return gr, nil
+}
+
+// DeleteGitRepo removes a repoistry from the array by setting it to nil
+func (repo *GitRepoRepository) DeleteGitRepo(
+	gr *models.GitRepo,
+) error {
+	if !repo.canQuery {
+		return errors.New("Cannot write database")
+	}
+
+	if int(gr.ID-1) >= len(repo.gitRepos) || repo.gitRepos[gr.ID-1] == nil {
+		return gorm.ErrRecordNotFound
+	}
+
+	index := int(gr.ID - 1)
+	repo.gitRepos[index] = nil
+
+	return nil
+}

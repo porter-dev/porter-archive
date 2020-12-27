@@ -1,182 +1,193 @@
 package api
 
-// import (
-// 	"context"
-// 	"fmt"
-// 	"net/http"
-// 	"strconv"
+import (
+	"context"
+	"fmt"
+	"net/http"
+	"strconv"
 
-// 	"github.com/porter-dev/porter/internal/models"
+	"github.com/porter-dev/porter/internal/models"
 
-// 	"github.com/go-chi/chi"
-// 	"github.com/google/go-github/github"
-// 	"github.com/porter-dev/porter/internal/oauth"
-// 	"golang.org/x/oauth2"
-// )
+	"github.com/go-chi/chi"
+	"github.com/google/go-github/github"
+	"github.com/porter-dev/porter/internal/oauth"
+	"golang.org/x/oauth2"
 
-// // HandleGithubOAuthStartUser starts the oauth2 flow for a user login request.
-// func (app *App) HandleGithubOAuthStartUser(w http.ResponseWriter, r *http.Request) {
-// 	state := oauth.CreateRandomState()
+	"github.com/porter-dev/porter/internal/models/integrations"
+)
 
-// 	err := app.populateOAuthSession(w, r, state, false)
+// HandleGithubOAuthStartUser starts the oauth2 flow for a user login request.
+func (app *App) HandleGithubOAuthStartUser(w http.ResponseWriter, r *http.Request) {
+	state := oauth.CreateRandomState()
 
-// 	if err != nil {
-// 		app.handleErrorDataRead(err, w)
-// 		return
-// 	}
+	err := app.populateOAuthSession(w, r, state, false)
 
-// 	// specify access type offline to get a refresh token
-// 	url := app.GithubConfig.AuthCodeURL(state, oauth2.AccessTypeOnline)
+	if err != nil {
+		app.handleErrorDataRead(err, w)
+		return
+	}
 
-// 	http.Redirect(w, r, url, 302)
-// }
+	// specify access type offline to get a refresh token
+	url := app.GithubConf.AuthCodeURL(state, oauth2.AccessTypeOnline)
 
-// // HandleGithubOAuthStartProject starts the oauth2 flow for a project repo request.
-// // In this handler, the project id gets written to the session (along with the oauth
-// // state param), so that the correct project id can be identified in the callback.
-// func (app *App) HandleGithubOAuthStartProject(w http.ResponseWriter, r *http.Request) {
-// 	state := oauth.CreateRandomState()
+	http.Redirect(w, r, url, 302)
+}
 
-// 	err := app.populateOAuthSession(w, r, state, true)
+// HandleGithubOAuthStartProject starts the oauth2 flow for a project repo request.
+// In this handler, the project id gets written to the session (along with the oauth
+// state param), so that the correct project id can be identified in the callback.
+func (app *App) HandleGithubOAuthStartProject(w http.ResponseWriter, r *http.Request) {
+	state := oauth.CreateRandomState()
 
-// 	if err != nil {
-// 		app.handleErrorDataRead(err, w)
-// 		return
-// 	}
+	err := app.populateOAuthSession(w, r, state, true)
 
-// 	// specify access type offline to get a refresh token
-// 	url := app.GithubConfig.AuthCodeURL(state, oauth2.AccessTypeOffline)
+	if err != nil {
+		app.handleErrorDataRead(err, w)
+		return
+	}
 
-// 	http.Redirect(w, r, url, 302)
-// }
+	// specify access type offline to get a refresh token
+	url := app.GithubConf.AuthCodeURL(state, oauth2.AccessTypeOffline)
 
-// // HandleGithubOAuthCallback verifies the callback request by checking that the
-// // state parameter has not been modified, and validates the token.
-// // There is a difference between the oauth flow when logging a user in, and when
-// // linking a repository.
-// //
-// // When logging a user in, the access token gets stored in the session, and no refresh
-// // token is requested. We store the access token in the session because a user can be
-// // logged in multiple times with a single access token.
-// //
-// // NOTE: this user flow will likely be augmented with Dex, or entirely replaced with Dex.
-// //
-// // However, when linking a repository, the access token and refresh token are requested when
-// // the flow has started. A project also gets linked to the session. After callback, a new
-// // github config gets stored for the project, and the user will then get redirected to
-// // a URL that allows them to select their repositories they'd like to link. We require a refresh
-// // token because we need permanent access to the linked repository.
-// func (app *App) HandleGithubOAuthCallback(w http.ResponseWriter, r *http.Request) {
-// 	session, err := app.store.Get(r, app.cookieName)
+	http.Redirect(w, r, url, 302)
+}
 
-// 	if err != nil {
-// 		app.handleErrorDataRead(err, w)
-// 		return
-// 	}
+// HandleGithubOAuthCallback verifies the callback request by checking that the
+// state parameter has not been modified, and validates the token.
+// There is a difference between the oauth flow when logging a user in, and when
+// linking a repository.
+//
+// When logging a user in, the access token gets stored in the session, and no refresh
+// token is requested. We store the access token in the session because a user can be
+// logged in multiple times with a single access token.
+//
+// NOTE: this user flow will likely be augmented with Dex, or entirely replaced with Dex.
+//
+// However, when linking a repository, the access token and refresh token are requested when
+// the flow has started. A project also gets linked to the session. After callback, a new
+// github config gets stored for the project, and the user will then get redirected to
+// a URL that allows them to select their repositories they'd like to link. We require a refresh
+// token because we need permanent access to the linked repository.
+func (app *App) HandleGithubOAuthCallback(w http.ResponseWriter, r *http.Request) {
+	session, err := app.Store.Get(r, app.ServerConf.CookieName)
 
-// 	if _, ok := session.Values["state"]; !ok {
-// 		app.sendExternalError(
-// 			err,
-// 			http.StatusForbidden,
-// 			HTTPError{
-// 				Code: http.StatusForbidden,
-// 				Errors: []string{
-// 					"Could not read cookie: are cookies enabled?",
-// 				},
-// 			},
-// 			w,
-// 		)
+	if err != nil {
+		app.handleErrorDataRead(err, w)
+		return
+	}
 
-// 		return
-// 	}
+	if _, ok := session.Values["state"]; !ok {
+		app.sendExternalError(
+			err,
+			http.StatusForbidden,
+			HTTPError{
+				Code: http.StatusForbidden,
+				Errors: []string{
+					"Could not read cookie: are cookies enabled?",
+				},
+			},
+			w,
+		)
 
-// 	if r.URL.Query().Get("state") != session.Values["state"] {
-// 		http.Error(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)
-// 		return
-// 	}
+		return
+	}
 
-// 	token, err := app.GithubConfig.Exchange(oauth2.NoContext, r.URL.Query().Get("code"))
+	if r.URL.Query().Get("state") != session.Values["state"] {
+		http.Error(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)
+		return
+	}
 
-// 	if err != nil {
-// 		http.Error(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)
-// 		return
-// 	}
+	token, err := app.GithubConf.Exchange(oauth2.NoContext, r.URL.Query().Get("code"))
 
-// 	if !token.Valid() {
-// 		http.Error(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)
-// 		return
-// 	}
+	if err != nil {
+		http.Error(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)
+		return
+	}
 
-// 	userID, _ := session.Values["user_id"].(uint)
-// 	projID, _ := session.Values["project_id"].(uint)
+	if !token.Valid() {
+		http.Error(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)
+		return
+	}
 
-// 	app.updateProjectFromToken(projID, userID, token)
+	userID, _ := session.Values["user_id"].(uint)
+	projID, _ := session.Values["project_id"].(uint)
 
-// 	if session.Values["query_params"] != "" {
-// 		http.Redirect(w, r, fmt.Sprintf("/dashboard?%s", session.Values["query_params"]), 302)
-// 	} else {
-// 		http.Redirect(w, r, "/dashboard", 302)
-// 	}
-// }
+	app.updateProjectFromToken(projID, userID, token)
 
-// func (app *App) populateOAuthSession(w http.ResponseWriter, r *http.Request, state string, isProject bool) error {
-// 	session, err := app.store.Get(r, app.cookieName)
+	if session.Values["query_params"] != "" {
+		http.Redirect(w, r, fmt.Sprintf("/dashboard?%s", session.Values["query_params"]), 302)
+	} else {
+		http.Redirect(w, r, "/dashboard", 302)
+	}
+}
 
-// 	if err != nil {
-// 		return err
-// 	}
+func (app *App) populateOAuthSession(w http.ResponseWriter, r *http.Request, state string, isProject bool) error {
+	session, err := app.Store.Get(r, app.ServerConf.CookieName)
 
-// 	// need state parameter to validate when redirected
-// 	session.Values["state"] = state
+	if err != nil {
+		return err
+	}
 
-// 	if isProject {
-// 		// read the project id and add it to the session
-// 		projID, err := strconv.ParseUint(chi.URLParam(r, "project_id"), 0, 64)
+	// need state parameter to validate when redirected
+	session.Values["state"] = state
 
-// 		if err != nil || projID == 0 {
-// 			return fmt.Errorf("could not read project id")
-// 		}
+	if isProject {
+		// read the project id and add it to the session
+		projID, err := strconv.ParseUint(chi.URLParam(r, "project_id"), 0, 64)
 
-// 		session.Values["project_id"] = projID
-// 		session.Values["query_params"] = r.URL.RawQuery
-// 	}
+		if err != nil || projID == 0 {
+			return fmt.Errorf("could not read project id")
+		}
 
-// 	if err := session.Save(r, w); err != nil {
-// 		app.logger.Warn().Err(err)
-// 	}
+		session.Values["project_id"] = projID
+		session.Values["query_params"] = r.URL.RawQuery
+	}
 
-// 	return nil
-// }
+	if err := session.Save(r, w); err != nil {
+		app.Logger.Warn().Err(err)
+	}
 
-// func (app *App) upsertUserFromToken() error {
-// 	return fmt.Errorf("UNIMPLEMENTED")
-// }
+	return nil
+}
 
-// // updates a project's repository clients with the token information.
-// func (app *App) updateProjectFromToken(projectID uint, userID uint, tok *oauth2.Token) error {
-// 	// get the list of repositories that this token has access to
-// 	client := github.NewClient(app.GithubConfig.Client(oauth2.NoContext, tok))
+func (app *App) upsertUserFromToken() error {
+	return fmt.Errorf("UNIMPLEMENTED")
+}
 
-// 	user, _, err := client.Users.Get(context.Background(), "")
+// updates a project's repository clients with the token information.
+func (app *App) updateProjectFromToken(projectID uint, userID uint, tok *oauth2.Token) error {
+	// get the list of repositories that this token has access to
+	client := github.NewClient(app.GithubConf.Client(oauth2.NoContext, tok))
 
-// 	if err != nil {
-// 		return err
-// 	}
+	user, _, err := client.Users.Get(context.Background(), "")
 
-// 	repoClient := &models.RepoClient{
-// 		ProjectID:    projectID,
-// 		UserID:       userID,
-// 		RepoUserID:   uint(user.GetID()),
-// 		Kind:         models.RepoClientGithub,
-// 		AccessToken:  []byte(tok.AccessToken),
-// 		RefreshToken: []byte(tok.RefreshToken),
-// 	}
+	if err != nil {
+		return err
+	}
 
-// 	repoClient, err = app.repo.RepoClient.CreateRepoClient(repoClient)
+	oauthInt := &integrations.OAuthIntegration{
+		Client:       integrations.OAuthGithub,
+		UserID:       userID,
+		ProjectID:    projectID,
+		AccessToken:  []byte(tok.AccessToken),
+		RefreshToken: []byte(tok.RefreshToken),
+	}
 
-// 	if err != nil {
-// 		return err
-// 	}
+	// create the oauth integration first
+	oauthInt, err = app.Repo.OAuthIntegration.CreateOAuthIntegration(oauthInt)
 
-// 	return nil
-// }
+	if err != nil {
+		return err
+	}
+
+	// create the git repo
+	gr := &models.GitRepo{
+		ProjectID:          projectID,
+		RepoEntity:         *user.Name,
+		OAuthIntegrationID: oauthInt.ID,
+	}
+
+	gr, err = app.Repo.GitRepo.CreateGitRepo(gr)
+
+	return err
+}

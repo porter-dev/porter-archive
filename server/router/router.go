@@ -177,6 +177,15 @@ func New(a *api.App) *chi.Mux {
 			),
 		)
 
+		// /api/projects/{project_id}/provision routes
+
+		// TODO -- restrict this endpoint
+		r.Method(
+			"GET",
+			"/projects/{project_id}/provision/test",
+			requestlog.NewHandler(a.HandleProvisionTest, l),
+		)
+
 		// /api/projects/{project_id}/clusters routes
 		r.Method(
 			"GET",

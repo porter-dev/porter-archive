@@ -2,7 +2,6 @@ import React, { Component } from 'react';
 import styled from 'styled-components';
 import yaml from 'js-yaml';
 import close from '../../../../assets/close.png';
-import loading from '../../../../assets/loading.gif';
 import _ from 'lodash';
 
 import { ResourceType, ChartType, StorageType, Cluster } from '../../../../shared/types';
@@ -83,10 +82,6 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
       } else {
         setCurrentChart(res.data);
         this.setState({ loading: false });
-
-        // After retrieving full chart data, update tabs and resources
-        this.updateTabs();
-        this.updateResources();
       }
     });
   }
@@ -336,8 +331,8 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
     // Append universal tabs
     tabOptions.push(
       { label: 'Status', value: 'status' },
+      { label: 'Deploy', value: 'settings' },
       { label: 'Chart Overview', value: 'graph' },
-      { label: 'Settings', value: 'settings' },
     );
 
     if (this.state.devOpsMode) {
@@ -395,11 +390,23 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
 
   getChartStatus = (chartStatus: string) => {
     if (chartStatus === 'deployed') {
+
       for (var uid in this.state.controllers) {
         let value = this.state.controllers[uid]
-        let status = this.getAvailability(value.metadata.kind, value)
-        if (!status) {
+        let available = this.getAvailability(value.metadata.kind, value)
+        let progressing = true
+
+        this.state.controllers[uid]?.status?.conditions?.forEach((condition: any) => {
+          if (condition.type == "Progressing" && condition.status == "False" 
+              && condition.reason == "ProgressDeadlineExceeded") {
+            progressing = false
+          }
+        })
+        
+        if (!available && progressing) {
           return 'loading'
+        } else if (!available && !progressing) {
+          return 'failed'
         }
       }
       return 'deployed'
@@ -429,11 +436,10 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
   }
 
   componentDidUpdate(prevProps: PropsType) {
-    /*
     if (this.props.currentChart !== prevProps.currentChart) {
+      this.updateTabs();
       this.updateResources();
     }
-    */
   }
 
   componentWillUnmount() {

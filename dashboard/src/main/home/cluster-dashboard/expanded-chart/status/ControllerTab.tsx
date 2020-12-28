@@ -81,7 +81,8 @@ export default class ControllerTab extends Component<PropsType, StateType> {
 
   getPodStatus = (status: any) => {
     if (status?.phase == 'Pending') {
-      return 'waiting'
+      return status?.containerStatuses[0].state.waiting.reason
+      // return 'waiting'
     }
 
     if (status?.phase == 'Failed') {
@@ -116,6 +117,7 @@ export default class ControllerTab extends Component<PropsType, StateType> {
       >
         {
           this.state.raw.map((pod, i) => {
+            console.log('pod', pod)
             let status = this.getPodStatus(pod.status)
             return (
               <Tab 
@@ -128,7 +130,9 @@ export default class ControllerTab extends Component<PropsType, StateType> {
                   <Circle />
                   <Rail lastTab={i === this.state.raw.length - 1} />
                 </Gutter>
-                {pod.metadata?.name}
+                <Name>
+                  {pod.metadata?.name}
+                </Name>
                 <Status>
                   <StatusColor status={status} />
                   {status}
@@ -195,8 +199,14 @@ const StatusColor = styled.div`
   border-radius: 20px;
 `;
 
+const Name = styled.div`
+  width: 50%;
+  overflow: hidden;
+`
+
 const Tab = styled.div`
   width: 100%;
+  overflow: hidden;
   height: 50px;
   position: relative;
   display: flex;

@@ -299,7 +299,7 @@ const ImageItem = styled.div`
   align-items: center;
   padding: 10px 0px;
   cursor: pointer;
-  background: ${(props: { isSelected: boolean, lastItem: boolean }) => props.isSelected ? '#ffffff22' : '#ffffff11'};
+  background: ${(props: { isSelected: boolean, lastItem: boolean }) => props.isSelected ? '#ffffff11' : ''};
   :hover {
     background: #ffffff22;
 
@@ -319,7 +319,6 @@ const ImageItem = styled.div`
 
 const LoadingWrapper = styled.div`
   padding: 30px 0px;
-  background: #ffffff11;
   display: flex;
   align-items: center;
   font-size: 13px;
@@ -333,6 +332,7 @@ const ExpandedWrapper = styled.div`
   border-radius: 3px;
   border: 1px solid #ffffff44;
   max-height: 275px;
+  background: #ffffff11;
   overflow-y: auto;
 `;
 
@@ -351,6 +351,7 @@ const Label = styled.div`
 
 const StyledImageSelector = styled.div`
   width: 100%;
+  margin-top: 22px;
   border: 1px solid #ffffff55;
   background: ${(props: { isExpanded: boolean, forceExpanded: boolean }) => props.isExpanded ? '#ffffff11' : ''};
   border-radius: 3px;

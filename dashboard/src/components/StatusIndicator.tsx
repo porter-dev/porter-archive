@@ -32,9 +32,20 @@ export default class StatusIndicator extends Component<PropsType, StateType> {
     if (chartStatus === 'deployed') {
       for (var uid in this.props.controllers) {
         let value = this.props.controllers[uid]
-        let status = this.getAvailability(value.metadata.kind, value)
-        if (!status) {
+        let available = this.getAvailability(value.metadata.kind, value)
+        let progressing = true
+
+        this.props.controllers[uid]?.status?.conditions?.forEach((condition: any) => {
+          if (condition.type == "Progressing" && condition.status == "False"
+              && condition.reason == "ProgressDeadlineExceeded") {
+            progressing = false
+          }
+        })
+
+        if (!available && progressing) {
           return 'loading'
+        } else if (!available && !progressing) {
+          return 'failed'
         }
       }
       return 'deployed'

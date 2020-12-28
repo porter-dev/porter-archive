@@ -40,11 +40,12 @@ export default class RepoSelector extends Component<PropsType, StateType> {
     let { currentProject, currentCluster } = this.context;
 
     // Get repos
-    api.getRepos('<token>', {
-    }, { id: currentProject.id }, (err: any, res: any) => {
+    api.getGitRepos('<token>', {
+    }, { project_id: currentProject.id }, (err: any, res: any) => {
       if (err) {
         this.setState({ loading: false, error: true });
       } else {
+        console.log(res.data);
         this.setState({ repos: res.data, loading: false, error: false });
       }
     });
@@ -55,7 +56,9 @@ export default class RepoSelector extends Component<PropsType, StateType> {
     if (loading) {
       return <LoadingWrapper><Loading /></LoadingWrapper>
     } else if (error || !repos) {
-      return <LoadingWrapper>Error loading repos</LoadingWrapper>
+      return <LoadingWrapper>Error loading repos.</LoadingWrapper>
+    } else if (repos.length == 0) {
+      return <LoadingWrapper>No connected repos found.</LoadingWrapper>
     }
 
     return repos.map((repo: RepoType, i: number) => {
@@ -159,7 +162,7 @@ export default class RepoSelector extends Component<PropsType, StateType> {
 
   render() {
     return (
-      <div>
+      <>
         <StyledRepoSelector
           onClick={this.handleClick}
           isExpanded={this.state.isExpanded}
@@ -170,7 +173,7 @@ export default class RepoSelector extends Component<PropsType, StateType> {
         </StyledRepoSelector>
 
         {this.state.isExpanded ? this.renderExpanded() : null}
-      </div>
+      </>
     );
   }
 }
@@ -269,6 +272,7 @@ const RepoLabel = styled.div`
 
 const StyledRepoSelector = styled.div`
   width: 100%;
+  margin-top: 22px;
   border: 1px solid #ffffff55;
   background: ${(props: { isExpanded: boolean, forceExpanded: boolean }) => props.isExpanded ? '#ffffff11' : ''};
   border-radius: 3px;

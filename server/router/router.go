@@ -132,21 +132,21 @@ func New(a *api.App) *chi.Mux {
 		)
 
 		// /api/oauth routes
-		// r.Method(
-		// 	"GET",
-		// 	"/oauth/projects/{project_id}/github",
-		// 	auth.DoesUserHaveProjectAccess(
-		// 		requestlog.NewHandler(a.HandleGithubOAuthStartProject, l),
-		// 		mw.URLParam,
-		// 		mw.WriteAccess,
-		// 	),
-		// )
+		r.Method(
+			"GET",
+			"/oauth/projects/{project_id}/github",
+			auth.DoesUserHaveProjectAccess(
+				requestlog.NewHandler(a.HandleGithubOAuthStartProject, l),
+				mw.URLParam,
+				mw.WriteAccess,
+			),
+		)
 
-		// r.Method(
-		// 	"GET",
-		// 	"/oauth/github/callback",
-		// 	requestlog.NewHandler(a.HandleGithubOAuthCallback, l),
-		// )
+		r.Method(
+			"GET",
+			"/oauth/github/callback",
+			requestlog.NewHandler(a.HandleGithubOAuthCallback, l),
+		)
 
 		// /api/projects routes
 		r.Method(

@@ -120,7 +120,7 @@ const upgradeChartValues = baseApi<{
   cluster_id: number,
 }>('POST', pathParams => {
   let { id, name, cluster_id } = pathParams;
-  return `/api/projects/${id}/releases/${name}/upgrade/hook?cluster_id=${cluster_id}&repository=fake&commit=hash`;
+  return `/api/projects/${id}/releases/${name}/upgrade?cluster_id=${cluster_id}`;
 });
 
 const getTemplates = baseApi('GET', '/api/templates');
@@ -137,7 +137,9 @@ const getBranches = baseApi<{}, { kind: string, repo: string }>('GET', pathParam
   return `/api/repos/${pathParams.kind}/${pathParams.repo}/branches`;
 });
 
-const getBranchContents = baseApi<{ dir: string }, {
+const getBranchContents = baseApi<{ 
+  dir: string 
+}, {
   kind: string,
   repo: string,
   branch: string
@@ -215,24 +217,41 @@ const createECR = baseApi<{
   return `/api/projects/${pathParams.id}/registries`;
 });
 
-const getImageRepos = baseApi<{}, {   
-  project_id: number,
-  registry_id: number,
+const getImageRepos = baseApi<{
+}, {
+  project_id: number, 
+  registry_id: number 
 }>('GET', pathParams => {
   return `/api/projects/${pathParams.project_id}/registries/${pathParams.registry_id}/repositories`;
 });
 
-const getImageTags = baseApi<{}, {   
+const getImageTags = baseApi<{
+}, {   
   project_id: number,
   registry_id: number,
   repo_name: string,
- }>('GET', pathParams => {
+}>('GET', pathParams => {
   return `/api/projects/${pathParams.project_id}/registries/${pathParams.registry_id}/repositories/${pathParams.repo_name}`;
 });
 
+const linkGithubProject = baseApi<{
+}, {
+  project_id: number,
+}>('GET', pathParams => {
+  return `/api/oauth/projects/${pathParams.project_id}/github`;
+});
+
+const getGitRepos = baseApi<{  
+}, {
+  project_id: number,
+}>('GET', pathParams => {
+  return `/api/projects/${pathParams.project_id}/gitrepos`;
+});
 
 // Bundle export to allow default api import (api.<method> is more readable)
 export default {
+  linkGithubProject,
+  getGitRepos,
   checkAuth,
   registerUser,
   logInUser,

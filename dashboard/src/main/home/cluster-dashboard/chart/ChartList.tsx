@@ -53,7 +53,6 @@ export default class ChartList extends Component<PropsType, StateType> {
         this.setState({ loading: false, error: true });
       } else {
         let charts = res.data || [];
-        console.log(charts)
         this.setState({ charts }, () => {
           this.setState({ loading: false, error: false });
         });

@@ -92,7 +92,16 @@ export default class ResourceTab extends Component<PropsType, StateType> {
   }
 
   render() {
-    let { label, name, children, isLast, handleClick, roundAllCorners } = this.props;
+    let { 
+      label,
+      name,
+      children,
+      isLast,
+      handleClick,
+      selected,
+      status,
+      roundAllCorners,
+    } = this.props;
     return (
       <StyledResourceTab 
         isLast={isLast}
@@ -100,8 +109,8 @@ export default class ResourceTab extends Component<PropsType, StateType> {
         roundAllCorners={roundAllCorners}
       >
         <ResourceHeader
-          hasChildren={this.props.children && true}
-          expanded={this.state.expanded || this.props.selected}
+          hasChildren={children && true}
+          expanded={this.state.expanded || selected}
           onClick={() => {
             if (children) {
               this.setState({ expanded: !this.state.expanded });
@@ -110,7 +119,7 @@ export default class ResourceTab extends Component<PropsType, StateType> {
         >
           <Info>
             {this.renderDropdownIcon()}
-            <Metadata>
+            <Metadata hasStatus={status && true}>
               {this.renderIcon(label)}
               {label}
               <ResourceName
@@ -180,13 +189,13 @@ const ResourceHeader = styled.div`
   user-select: none;
   padding: 8px 18px;
   padding-left: ${(props: { expanded: boolean, hasChildren: boolean }) => props.hasChildren ? '10px' : '22px'};
-  cursor: ${(props: { expanded: boolean, hasChildren: boolean }) => props.hasChildren ? 'pointer' : ''};
+  cursor: pointer;
   background: ${(props: { expanded: boolean, hasChildren: boolean }) => props.expanded ? '#ffffff11' : ''};
   :hover {
-    background: ${(props: { expanded: boolean, hasChildren: boolean }) => props.hasChildren ? '#ffffff18' : ''};
+    background: #ffffff18;
 
     > i {
-      background: ${(props: { expanded: boolean, hasChildren: boolean }) => props.hasChildren ? '#ffffff22' : ''};
+      background: #ffffff22;
     }
   }
 `;
@@ -195,19 +204,20 @@ const Info = styled.div`
   display: flex;
   flex-direction: row;
   align-items: center;
-  width: calc(100% - 50px);
+  width: 80%;
   height: 100%;
 `;
 
 const Metadata = styled.div`
   display: flex;
-  max-width: calc(100% - 50px);
   align-items: center;
   position: relative;
+  max-width: ${(props: { hasStatus: boolean }) => props.hasStatus ? 'calc(100% - 50px)' : '100%'};
 `;
 
 const Status = styled.div`
   display: flex;
+  width; 20%;
   font-size: 12px;
   text-transform: capitalize;
   justify-content: flex-end;

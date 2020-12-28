@@ -23,7 +23,7 @@ export default class TabSelector extends Component<PropsType, StateType> {
   }
 
   renderTabList = () => {
-    let color = this.props.color || '#949effcc';
+    let color = this.props.color || '#949effff';
     return (
       this.props.options.map((option: selectOption, i: number) => {
         return (

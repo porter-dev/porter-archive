@@ -82,17 +82,25 @@ export default class TagList extends Component<PropsType, StateType> {
 
   render() {
     return (
-      <div>
+<>
         <TagNameAlt>
           <img src={info} /> Select Image Tag
         </TagNameAlt>
+              <StyledTagList>
         {this.renderTagList()}
-      </div>
+      </StyledTagList>
+      </>
     );
   }
 }
 
 TagList.contextType = Context;
+
+const StyledTagList = styled.div`
+  max-height: 175px;
+  position: relative;
+  overflow: auto;
+`;
 
 const TagName = styled.div`
   display: flex;
@@ -104,7 +112,7 @@ const TagName = styled.div`
   align-items: center;
   padding: 10px 0px;
   cursor: pointer;
-  background: ${(props: { isSelected?: boolean, lastItem?: boolean }) => props.isSelected ? '#ffffff22' : '#ffffff11'};
+  background: ${(props: { isSelected?: boolean, lastItem?: boolean }) => props.isSelected ? '#ffffff11' : ''};
   :hover {
     background: #ffffff22;
 
@@ -134,7 +142,6 @@ const TagNameAlt = styled(TagName)`
 
 const LoadingWrapper = styled.div`
   padding: 30px 0px;
-  background: #ffffff11;
   display: flex;
   align-items: center;
   justify-content: center;

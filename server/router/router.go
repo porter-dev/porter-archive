@@ -186,6 +186,16 @@ func New(a *api.App) *chi.Mux {
 			requestlog.NewHandler(a.HandleProvisionTest, l),
 		)
 
+		r.Method(
+			"GET",
+			"/projects/{project_id}/provision/ecr",
+			auth.DoesUserHaveProjectAccess(
+				requestlog.NewHandler(a.HandleProvisionAWSECRInfra, l),
+				mw.URLParam,
+				mw.ReadAccess,
+			),
+		)
+
 		// /api/projects/{project_id}/clusters routes
 		r.Method(
 			"GET",

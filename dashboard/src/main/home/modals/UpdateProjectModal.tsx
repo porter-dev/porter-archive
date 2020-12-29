@@ -44,7 +44,7 @@ export default class UpdateProjectModal extends Component<PropsType, StateType> 
 
   render() {
     return (
-      <StyledCreateProjectModal>
+      <StyledUpdateProjectModal>
         <CloseButton onClick={() => {
           this.context.setCurrentModal(null, null);
         }}>
@@ -84,7 +84,7 @@ export default class UpdateProjectModal extends Component<PropsType, StateType> 
           onYes={this.handleDelete}
           onNo={() => this.setState({ showDeleteOverlay: false })}
         />
-      </StyledCreateProjectModal>
+      </StyledUpdateProjectModal>
       );
   }
 }
@@ -174,7 +174,7 @@ const CloseButtonImg = styled.img`
   margin: 0 auto;
 `;
 
-const StyledCreateProjectModal= styled.div`
+const StyledUpdateProjectModal= styled.div`
   width: 100%;
   position: absolute;
   left: 0;

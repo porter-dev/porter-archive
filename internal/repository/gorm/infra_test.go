@@ -18,7 +18,7 @@ func TestCreateAWSInfra(t *testing.T) {
 	defer cleanup(tester, t)
 
 	infra := &models.AWSInfra{
-		Kind:      "ecr",
+		Kind:      models.AWSInfraECR,
 		ProjectID: tester.initProjects[0].Model.ID,
 		Status:    models.StatusCreated,
 	}
@@ -40,8 +40,8 @@ func TestCreateAWSInfra(t *testing.T) {
 		t.Errorf("incorrect registry ID: expected %d, got %d\n", 1, infra.Model.ID)
 	}
 
-	if infra.Kind != "ecr" {
-		t.Errorf("incorrect aws infra kind: expected %s, got %s\n", "ecr", infra.Kind)
+	if infra.Kind != models.AWSInfraECR {
+		t.Errorf("incorrect aws infra kind: expected %s, got %s\n", models.AWSInfraECR, infra.Kind)
 	}
 
 	if infra.Status != models.StatusCreated {

@@ -29,13 +29,10 @@ export default class ProjectSection extends Component<PropsType, StateType> {
         console.log(err)
       } else if (res.data) {
         this.setState({ projects: res.data });
-        if (res.data.length > 0) {
+        if (res.data.length > 0 && !this.props.currentProject) {
           this.context.setCurrentProject(res.data[0]);
-        } else {
-          this.context.setCurrentModal('CreateProjectModal', {
-            keepOpen: true,
-            updateProjects: this.updateProjects
-          });
+        } else if (res.data.length === 0) {
+          this.props.setCurrentView('new-project');
         }
       }
     });
@@ -57,7 +54,10 @@ export default class ProjectSection extends Component<PropsType, StateType> {
         <Option
           key={i}
           selected={project.name === this.props.currentProject.name}
-          onClick={() => this.context.setCurrentProject(project)}
+          onClick={() => {
+            this.context.setCurrentProject(project);
+            this.props.setCurrentView('dashboard');
+          }}
         >
           <ProjectIcon>
             <ProjectImage src={gradient} />
@@ -90,13 +90,18 @@ export default class ProjectSection extends Component<PropsType, StateType> {
     }
   }
 
+  handleExpand = () => {
+    this.updateProjects();
+    this.setState({ expanded: !this.state.expanded });
+  }
+
   render() {
     let { currentProject } = this.props;
     if (currentProject) {
       return (
         <StyledProjectSection>
           <MainSelector
-            onClick={() => this.setState({ expanded: !this.state.expanded })}
+            onClick={this.handleExpand}
             expanded={this.state.expanded}
           >
             <ProjectIcon>

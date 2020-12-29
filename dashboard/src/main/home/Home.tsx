@@ -35,8 +35,8 @@ export default class Home extends Component<PropsType, StateType> {
   state = {
     forceSidebar: true,
     showWelcome: false,
-    currentView: 'cluster-dashboard',
-    prevProjectId: null as number | null
+    currentView: 'dashboard',
+    prevProjectId: null as number | null,
   }
 
   componentDidUpdate(prevProps: PropsType) {
@@ -98,7 +98,9 @@ export default class Home extends Component<PropsType, StateType> {
     } else if (currentView === 'integrations') {
       return <Integrations />;
     } else if (currentView === 'new-project') {
-      return <NewProject />;
+      return (
+        <NewProject setCurrentView={(x: string) => this.setState({ currentView: x })} />
+      );
     }
 
     return (

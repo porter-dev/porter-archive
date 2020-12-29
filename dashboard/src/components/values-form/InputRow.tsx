@@ -29,24 +29,12 @@ export default class InputRow extends Component<PropsType, StateType> {
       this.props.setValue(e.target.value);
     }
   }
-
-  renderRequiredWarning = () => {
-    if (this.props.isRequired && this.props.value === '') {
-      return (
-        <Warning>
-          <i className="material-icons">error_outline</i>
-        </Warning>
-      );
-    }
-  }
   
   render() {
     let { label, value, type, unit, placeholder, width } = this.props;
     return (
       <StyledInputRow>
-        <Label>
-          {label} <Required>{this.props.isRequired ? ' *' : null}</Required>
-        </Label>
+        <Label>{label} <Required>{this.props.isRequired ? ' *' : null}</Required></Label>
         <InputWrapper>
           <Input
             readOnly={this.state.readOnly} onFocus={() => this.setState({ readOnly: false })}
@@ -64,8 +52,8 @@ export default class InputRow extends Component<PropsType, StateType> {
   }
 }
 
-const Required = styled.span`
-  margin-left: 5px;
+const Required = styled.div`
+  margin-left: 8px;
   color: #fc4976;
 `;
 
@@ -73,16 +61,9 @@ const Unit = styled.div`
   margin-right: 8px;
 `;
 
-const Warning = styled.div`
-  margin-bottom: -3px;
-  > i {
-    font-size: 18px;
-    color: #fcba03;
-  }
-`;
-
 const InputWrapper = styled.div`
   display: flex;
+  margin-bottom: -1px;
   align-items: center;
 `;
 

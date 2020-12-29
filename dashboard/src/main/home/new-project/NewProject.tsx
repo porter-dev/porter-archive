@@ -4,6 +4,7 @@ import gradient from '../../../assets/gradient.jpg';
 import awsWhite from '../../../assets/aws-white.png';
 import close from '../../../assets/close.png';
 
+import { Context } from '../../../shared/Context';
 import { integrationList } from '../../../shared/common';
 import InputRow from '../../../components/values-form/InputRow';
 import Helper from '../../../components/values-form/Helper';
@@ -15,6 +16,7 @@ import SaveButton from '../../../components/SaveButton';
 const providers = ['aws', 'gcp', 'do',];
 
 type PropsType = {
+  setCurrentView: (x: string) => void,
 };
 
 type StateType = {
@@ -22,6 +24,7 @@ type StateType = {
   selectedProvider: string | null,
   awsAccessId: string | null,
   awsSecretKey: string | null,
+  status: string | null,
 };
 
 export default class NewProject extends Component<PropsType, StateType> {
@@ -30,6 +33,7 @@ export default class NewProject extends Component<PropsType, StateType> {
     selectedProvider: null as string | null,
     awsAccessId: '' as string | null,
     awsSecretKey: '' as string | null,
+    status: null as string | null,
   }
 
   isAlphanumeric = (x: string) => {
@@ -171,6 +175,29 @@ export default class NewProject extends Component<PropsType, StateType> {
     }
     return false;
   }
+
+  createProject = () => {
+    this.setState({ status: 'loading' });
+    api.createProject('<token>', {
+      name: this.state.projectName
+    }, {}, (err: any, res: any) => {
+      if (err) {
+        console.log(err);
+      } else {
+        let { user } = this.context;
+        api.getProjects('<token>', {}, { id: user.userId }, (err: any, res: any) => {
+          if (err) {
+            console.log(err)
+          } else if (res.data) {
+            if (res.data.length > 0) {
+              this.context.setCurrentProject(res.data[0]);
+              this.props.setCurrentView('dashboard');
+            } 
+          }
+        });
+      }
+    });
+  }
   
   render() {
     return (
@@ -205,14 +232,17 @@ export default class NewProject extends Component<PropsType, StateType> {
         <SaveButton
           text='Create Project'
           disabled={!this.validateForm()}
-          onClick={() => console.log('unimplemented.')}
+          onClick={this.createProject}
           makeFlush={true}
           helper='Note: Provisioning can take up to 15 minutes'
+          status={this.state.status}
         />
       </StyledNewProject>
     );
   }
 }
+
+NewProject.contextType = Context;
 
 const Flex = styled.div`
   display: flex;
@@ -328,13 +358,13 @@ const ProjectIcon = styled.div`
   position: relative;
   margin-right: 15px;
   font-weight: 400;
-  margin-top: 30px;
+  margin-top: 17px;
 `;
 
 const InputWrapper = styled.div`
   display: flex;
   align-items: center;
-  margin-top: -25px;
+  margin-top: -15px;
 `;
 
 const Warning = styled.span`

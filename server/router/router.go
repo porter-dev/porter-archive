@@ -183,7 +183,11 @@ func New(a *api.App) *chi.Mux {
 		r.Method(
 			"GET",
 			"/projects/{project_id}/provision/test",
-			requestlog.NewHandler(a.HandleProvisionTest, l),
+			auth.DoesUserHaveProjectAccess(
+				requestlog.NewHandler(a.HandleProvisionTest, l),
+				mw.URLParam,
+				mw.ReadAccess,
+			),
 		)
 
 		r.Method(

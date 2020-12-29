@@ -429,12 +429,32 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
   }
 
   componentDidMount() {
+    let { currentCluster, currentProject } = this.context;
+
     this.getChartData(this.props.currentChart);
     this.getControllers(this.props.currentChart)
     this.setControllerWebsockets(
       ["deployment", "statefulset", "daemonset", "replicaset"],
       this.props.currentChart 
     );
+
+    console.log(this.props.currentChart.name)
+
+    api.getIngress('<token>', { 
+      cluster_id: currentCluster.id,
+    }, {
+      id: currentProject.id,
+      name: `${this.props.currentChart.name}-docker`,
+      namespace: `${this.props.currentChart.namespace}`
+    }, (err: any, res: any) => {
+      if (err) {
+        console.log(err);
+        return
+      }
+      if (res.data) {
+        this.setState({url: `http://${res.data?.status?.loadBalancer?.ingress[0]?.hostname}` })
+      }
+    })
   }
 
   componentDidUpdate(prevProps: PropsType) {

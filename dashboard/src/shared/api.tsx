@@ -89,6 +89,12 @@ const getMatchingPods = baseApi<{
   return `/api/projects/${pathParams.id}/k8s/pods`;
 });
 
+const getIngress = baseApi<{
+  cluster_id: number,
+}, { name: string, namespace: string, id: number }>('GET', pathParams => {
+  return `/api/projects/${pathParams.id}/k8s/${pathParams.namespace}/ingress/${pathParams.name}`;
+});
+
 const getRevisions = baseApi<{
   namespace: string,
   cluster_id: number,
@@ -266,6 +272,7 @@ export default {
   getChartControllers,
   getNamespaces,
   getMatchingPods,
+  getIngress,
   getRevisions,
   rollbackChart,
   upgradeChartValues,

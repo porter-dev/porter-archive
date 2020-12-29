@@ -59,7 +59,7 @@ export default class ControllerTab extends Component<PropsType, StateType> {
           phase: pod?.status?.phase,
         }
       });
-      // console.log(res.data);
+      
       this.setState({ pods, raw: res.data });
     })
   }

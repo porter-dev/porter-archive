@@ -446,7 +446,7 @@ func initAWSInfra(tester *tester, t *testing.T) {
 	}
 
 	infra := &models.AWSInfra{
-		Kind:      "ecr",
+		Kind:      models.AWSInfraECR,
 		ProjectID: tester.initProjects[0].Model.ID,
 		Status:    models.StatusCreated,
 	}

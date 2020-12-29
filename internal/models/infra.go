@@ -16,13 +16,22 @@ const (
 	StatusUpdating InfraStatus = "updating"
 )
 
+// AWSInfraKind is the kind that aws infra can be
+type AWSInfraKind string
+
+// The supported AWS infra kinds
+const (
+	AWSInfraECR AWSInfraKind = "ecr"
+	AWSInfraEKS AWSInfraKind = "eks"
+)
+
 // AWSInfra represents the metadata for an infrastructure type provisioned on
 // AWS
 type AWSInfra struct {
 	gorm.Model
 
 	// The type of infra that was provisioned
-	Kind string `json:"kind"`
+	Kind AWSInfraKind `json:"kind"`
 
 	// The project that this infra belongs to
 	ProjectID uint `json:"project_id"`
@@ -42,7 +51,7 @@ type AWSInfraExternal struct {
 	ProjectID uint `json:"project_id"`
 
 	// The type of infra that was provisioned
-	Kind string `json:"kind"`
+	Kind AWSInfraKind `json:"kind"`
 
 	// Status is the status of the infra
 	Status InfraStatus `json:"status"`

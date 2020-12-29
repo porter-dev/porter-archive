@@ -43,6 +43,7 @@ type StateType = {
   forceRefreshRevisions: boolean, // Update revisions after upgrading values
   controllers: Record<string, Record<string, any>>,
   websockets: Record<string, any>,
+  url: string | null,
 };
 
 export default class ExpandedChart extends Component<PropsType, StateType> {
@@ -60,6 +61,7 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
     forceRefreshRevisions: false,
     controllers: {} as Record<string, Record<string, any>>,
     websockets : {} as Record<string, any>,
+    url: null as string | null,
   }
 
   // Retrieve full chart data (includes form and values)
@@ -450,6 +452,12 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
     }
   }
 
+  renderUrl = () => {
+    if (this.state.url) {
+      return <Url href={this.state.url} target='_blank'>{this.state.url}</Url>;
+    }
+  }
+
   render() {
     let { currentChart, setCurrentChart } = this.props;
     let chart = currentChart;
@@ -464,7 +472,7 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
               <Title>
                 <IconWrapper>{this.renderIcon()}</IconWrapper>{chart.name}
               </Title>
-
+              {this.renderUrl()}
               <InfoWrapper>
                 <StatusIndicator 
                   controllers={this.state.controllers}
@@ -519,17 +527,12 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
 
 ExpandedChart.contextType = Context;
 
-const Unimplemented = styled.div`
-  width: 100%;
-  height: 100%;
-  background: #ffffff11;
-  padding-bottom: 20px;
+const Url = styled.a`
+  display: block;
+  margin-left: 1px;
   font-size: 13px;
-  font-family: 'Work Sans', sans-serif;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 5px;
+  margin-top: 15px;
+  margin-bottom: -5px;
 `;
 
 const TabButton = styled.div`

@@ -4,6 +4,7 @@ import (
 	"gorm.io/gorm"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/service/sts"
 
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -21,11 +22,8 @@ type AWSIntegration struct {
 	// The project that this integration belongs to
 	ProjectID uint `json:"project_id"`
 
-	// The AWS entity this is linked to (individual or organization)
-	AWSEntityID string `json:"aws-entity-id"`
-
-	// The AWS caller identity (ARN) which linked this service
-	AWSCallerID string `json:"aws-caller-id"`
+	// The AWS arn this is integration is linked to
+	AWSArn string `json:"aws_arn"`
 
 	// The optional AWS region (required by some session configurations)
 	AWSRegion string `json:"aws_region"`
@@ -58,21 +56,17 @@ type AWSIntegrationExternal struct {
 	// The project that this integration belongs to
 	ProjectID uint `json:"project_id"`
 
-	// The AWS entity this is linked to (individual or organization)
-	AWSEntityID string `json:"aws-entity-id"`
-
-	// The AWS caller identity (ARN) which linked this service
-	AWSCallerID string `json:"aws-caller-id"`
+	// The AWS arn this is integration is linked to
+	AWSArn string `json:"aws_arn"`
 }
 
 // Externalize generates an external KubeIntegration to be shared over REST
 func (a *AWSIntegration) Externalize() *AWSIntegrationExternal {
 	return &AWSIntegrationExternal{
-		ID:          a.ID,
-		UserID:      a.UserID,
-		ProjectID:   a.ProjectID,
-		AWSEntityID: a.AWSEntityID,
-		AWSCallerID: a.AWSCallerID,
+		ID:        a.ID,
+		UserID:    a.UserID,
+		ProjectID: a.ProjectID,
+		AWSArn:    a.AWSArn,
 	}
 }
 
@@ -109,6 +103,28 @@ func (a *AWSIntegration) GetSession() (*session.Session, error) {
 		SharedConfigState: session.SharedConfigEnable,
 		Config:            *awsConf,
 	})
+}
+
+// PopulateAWSArn uses the access key/secret to get the caller identity, and
+// attaches it to the AWS integration
+func (a *AWSIntegration) PopulateAWSArn() error {
+	sess, err := a.GetSession()
+
+	if err != nil {
+		return err
+	}
+
+	svc := sts.New(sess)
+
+	result, err := svc.GetCallerIdentity(&sts.GetCallerIdentityInput{})
+
+	if err != nil {
+		return err
+	}
+
+	a.AWSArn = *result.Arn
+
+	return nil
 }
 
 // GetBearerToken retrieves a bearer token for an AWS account

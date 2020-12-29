@@ -638,6 +638,20 @@ func New(a *api.App) *chi.Mux {
 
 		r.Method(
 			"GET",
+			"/projects/{project_id}/k8s/{namespace}/ingress/{name}",
+			auth.DoesUserHaveProjectAccess(
+				auth.DoesUserHaveClusterAccess(
+					requestlog.NewHandler(a.HandleGetIngress, l),
+					mw.URLParam,
+					mw.QueryParam,
+				),
+				mw.URLParam,
+				mw.ReadAccess,
+			),
+		)
+
+		r.Method(
+			"GET",
 			"/projects/{project_id}/k8s/{kind}/status",
 			auth.DoesUserHaveProjectAccess(
 				auth.DoesUserHaveClusterAccess(

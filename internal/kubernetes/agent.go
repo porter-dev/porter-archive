@@ -11,6 +11,7 @@ import (
 	"github.com/porter-dev/porter/internal/helm/grapher"
 	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
+	v1beta1 "k8s.io/api/extensions/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 	"k8s.io/client-go/informers"
@@ -43,7 +44,16 @@ func (a *Agent) ListNamespaces() (*v1.NamespaceList, error) {
 	)
 }
 
-// GetDeployment gets the depployment given the name and namespace
+// GetIngress gets ingress given the name and namespace
+func (a *Agent) GetIngress(namespace string, name string) (*v1beta1.Ingress, error) {
+	return a.Clientset.ExtensionsV1beta1().Ingresses(namespace).Get(
+		context.TODO(),
+		name,
+		metav1.GetOptions{},
+	)
+}
+
+// GetDeployment gets the deployment given the name and namespace
 func (a *Agent) GetDeployment(c grapher.Object) (*appsv1.Deployment, error) {
 	return a.Clientset.AppsV1().Deployments(c.Namespace).Get(
 		context.TODO(),

@@ -7,7 +7,8 @@ import { Context } from '../../../shared/Context';
 import { ProjectType } from '../../../shared/types';
 
 type PropsType = {
-  currentProject: ProjectType
+  currentProject: ProjectType,
+  setCurrentView: (x: string) => void,
 };
 
 type StateType = {
@@ -49,13 +50,6 @@ export default class ProjectSection extends Component<PropsType, StateType> {
       this.updateProjects();
     }
   }
-  
-  showProjectCreateModal = () => {
-    this.context.setCurrentModal('CreateProjectModal', {
-      keepOpen: false,
-      updateProjects: this.updateProjects
-    });
-  }
 
   renderOptionList = () => {
     return this.state.projects.map((project: ProjectType, i: number) => {
@@ -85,7 +79,7 @@ export default class ProjectSection extends Component<PropsType, StateType> {
             <Option
               selected={false}
               lastItem={true}
-              onClick={this.showProjectCreateModal}
+              onClick={() => this.props.setCurrentView('new-project')}
             >
               <ProjectIconAlt>+</ProjectIconAlt>
               <ProjectLabel>Add a project</ProjectLabel>
@@ -117,7 +111,7 @@ export default class ProjectSection extends Component<PropsType, StateType> {
       );
     }
     return (
-      <InitializeButton onClick={this.showProjectCreateModal}>
+      <InitializeButton onClick={() => this.props.setCurrentView('new-project')}>
         <Plus>+</Plus> Create a Project
       </InitializeButton>
     );

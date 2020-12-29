@@ -44,7 +44,9 @@ export default class InputRow extends Component<PropsType, StateType> {
     let { label, value, type, unit, placeholder, width } = this.props;
     return (
       <StyledInputRow>
-        <Label>{label} {this.props.isRequired ? ' *' : null}</Label>
+        <Label>
+          {label} <Required>{this.props.isRequired ? ' *' : null}</Required>
+        </Label>
         <InputWrapper>
           <Input
             readOnly={this.state.readOnly} onFocus={() => this.setState({ readOnly: false })}
@@ -56,12 +58,16 @@ export default class InputRow extends Component<PropsType, StateType> {
             onChange={this.handleChange}
           />
           {unit ? <Unit>{unit}</Unit> : null}
-          {this.renderRequiredWarning()}
         </InputWrapper>
       </StyledInputRow>
     );
   }
 }
+
+const Required = styled.span`
+  margin-left: 5px;
+  color: #fc4976;
+`;
 
 const Unit = styled.div`
   margin-right: 8px;

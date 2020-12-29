@@ -124,9 +124,9 @@ export default class Sidebar extends Component<PropsType, StateType> {
             Templates
           </NavButton>
           <NavButton
-            // onClick={() => this.props.setCurrentView('integrations')}
-            // selected={this.props.currentView === 'integrations'}
-            onClick={() => this.context.setCurrentModal('IntegrationsInstructionsModal', {})}
+            onClick={() => this.props.setCurrentView('integrations')}
+            selected={this.props.currentView === 'integrations'}
+            // onClick={() => this.context.setCurrentModal('IntegrationsInstructionsModal', {})}
           >
             <img src={integrations} />
             Integrations
@@ -170,7 +170,9 @@ export default class Sidebar extends Component<PropsType, StateType> {
             <i className="material-icons">double_arrow</i>
           </CollapseButton>
 
-          <ProjectSectionContainer />
+          <ProjectSectionContainer 
+            setCurrentView={this.props.setCurrentView}
+          />
 
           <br />
 

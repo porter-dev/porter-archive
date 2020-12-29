@@ -16,6 +16,7 @@ import UpdateProjectModal from './modals/UpdateProjectModal';
 import ClusterInstructionsModal from './modals/ClusterInstructionsModal';
 import IntegrationsModal from './modals/IntegrationsModal';
 import IntegrationsInstructionsModal from './modals/IntegrationsInstructionsModal';
+import NewProject from './new-project/NewProject';
 
 type PropsType = {
   logOut: () => void
@@ -96,6 +97,8 @@ export default class Home extends Component<PropsType, StateType> {
       );
     } else if (currentView === 'integrations') {
       return <Integrations />;
+    } else if (currentView === 'new-project') {
+      return <NewProject />;
     }
 
     return (

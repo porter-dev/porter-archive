@@ -1,3 +1,7 @@
+import aws from '../assets/aws.png';
+import digitalOcean from '../assets/do.png';
+import gcp from '../assets/gcp.png';
+
 export const integrationList: any = {
   'kubernetes': {
     icon: 'https://uxwing.com/wp-content/themes/uxwing/download/10-brands-and-social-media/kubernetes.png',
@@ -38,6 +42,18 @@ export const integrationList: any = {
     icon: 'https://avatars2.githubusercontent.com/u/52505464?s=400&u=da920f994c67665c7ad6c606a5286557d4f8555f&v=4',
     label: 'Elastic Container Registry (ECR)',
   },
+  'aws': {
+    icon: aws,
+    label: 'AWS',
+  },
+  'gcp': {
+    icon: gcp,
+    label: 'GCP',
+  },
+  'do': {
+    icon: digitalOcean,
+    label: 'DigitalOcean',
+  }
 };
 
 export const getIgnoreCase = (object: any, key: string) => {

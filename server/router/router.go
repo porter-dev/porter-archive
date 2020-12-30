@@ -200,6 +200,16 @@ func New(a *api.App) *chi.Mux {
 			),
 		)
 
+		r.Method(
+			"GET",
+			"/projects/{project_id}/provision/{kind}/{infra_id}/logs",
+			auth.DoesUserHaveProjectAccess(
+				requestlog.NewHandler(a.HandleGetProvisioningLogs, l),
+				mw.URLParam,
+				mw.ReadAccess,
+			),
+		)
+
 		// /api/projects/{project_id}/clusters routes
 		r.Method(
 			"GET",

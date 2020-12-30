@@ -200,6 +200,16 @@ func New(a *api.App) *chi.Mux {
 			),
 		)
 
+		r.Method(
+			"GET",
+			"/projects/{project_id}/provision/{kind}/{infra_id}/logs",
+			auth.DoesUserHaveProjectAccess(
+				requestlog.NewHandler(a.HandleGetProvisioningLogs, l),
+				mw.URLParam,
+				mw.ReadAccess,
+			),
+		)
+
 		// /api/projects/{project_id}/clusters routes
 		r.Method(
 			"GET",
@@ -607,20 +617,6 @@ func New(a *api.App) *chi.Mux {
 			auth.DoesUserHaveProjectAccess(
 				auth.DoesUserHaveGitRepoAccess(
 					requestlog.NewHandler(a.HandleGetBranchContents, l),
-					mw.URLParam,
-					mw.QueryParam,
-				),
-				mw.URLParam,
-				mw.ReadAccess,
-			),
-		)
-
-		r.Method(
-			"GET",
-			"/projects/{project_id}/provisioning/{kind}/{infra_id}/logs",
-			auth.DoesUserHaveProjectAccess(
-				auth.DoesUserHaveClusterAccess(
-					requestlog.NewHandler(a.HandleGetProvisioningLogs, l),
 					mw.URLParam,
 					mw.QueryParam,
 				),

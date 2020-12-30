@@ -76,7 +76,13 @@ export default class NewProject extends Component<PropsType, StateType> {
             <CloseButtonImg src={close} />
           </CloseButton>
           <DarkMatter />
-          <Heading>AWS Credentials</Heading>
+          <Heading>
+            AWS Credentials
+            <GuideButton href='https://docs.getporter.dev/docs/getting-started-with-porter-on-aws' target='_blank'>
+              <i className="material-icons-outlined">help</i> 
+              Guide
+            </GuideButton>
+          </Heading>
           <InputRow
             type='text'
             value={this.state.awsRegion}
@@ -115,7 +121,7 @@ export default class NewProject extends Component<PropsType, StateType> {
             <CloseButtonImg src={close} />
           </CloseButton>
           <Flex>
-            GCP support is in closed beta. If you would like to run Porter in your own Google Cloud account, contact <Highlight>contact@getporter.dev</Highlight>.
+            GCP support is in closed beta. If you would like to run Porter in your own Google Cloud account, email <Highlight>contact@getporter.dev</Highlight>.
           </Flex>
         </FormSection>
       );
@@ -128,7 +134,7 @@ export default class NewProject extends Component<PropsType, StateType> {
             <CloseButtonImg src={close} />
           </CloseButton>
           <Flex>
-            DigitalOcean support is in closed beta. If you would like to run Porter in your own DO account, contact <Highlight>contact@getporter.dev</Highlight>.
+            DigitalOcean support is in closed beta. If you would like to run Porter in your own DO account, email <Highlight>contact@getporter.dev</Highlight>.
           </Flex>
         </FormSection>
       );
@@ -261,6 +267,35 @@ export default class NewProject extends Component<PropsType, StateType> {
 }
 
 NewProject.contextType = Context;
+
+const GuideButton = styled.a`
+  display: flex;
+  align-items: center;
+  margin-left: 20px;
+  color: #aaaabb;
+  font-size: 13px;
+  margin-bottom: -1px;
+  border: 1px solid #aaaabb;
+  padding: 5px 10px;
+  padding-left: 6px;
+  border-radius: 5px;
+  cursor: pointer;
+  :hover {
+    background: #ffffff11;
+    color: #ffffff;
+    border: 1px solid #ffffff;
+
+    > i {
+      color: #ffffff;
+    }
+  }
+
+  > i {
+    color: #aaaabb;
+    font-size: 16px;
+    margin-right: 6px;
+  }
+`;
 
 const Flex = styled.div`
   display: flex;

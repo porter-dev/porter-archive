@@ -6,11 +6,10 @@ import (
 	"net/url"
 
 	"github.com/go-chi/chi"
-	"github.com/porter-dev/porter/internal/kubernetes"
-	v1 "k8s.io/api/core/v1"
-
 	"github.com/gorilla/websocket"
 	"github.com/porter-dev/porter/internal/forms"
+	"github.com/porter-dev/porter/internal/kubernetes"
+	v1 "k8s.io/api/core/v1"
 )
 
 // Enumeration of k8s API error codes, represented as int64
@@ -130,6 +129,65 @@ func (app *App) HandleGetPodLogs(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		app.handleErrorWebsocketWrite(err, w)
+		return
+	}
+}
+
+// HandleGetIngress returns the ingress object given the name and namespace.
+func (app *App) HandleGetIngress(w http.ResponseWriter, r *http.Request) {
+
+	// get session to retrieve correct kubeconfig
+	_, err := app.Store.Get(r, app.ServerConf.CookieName)
+
+	// get path parameters
+	namespace := chi.URLParam(r, "namespace")
+	name := chi.URLParam(r, "name")
+
+	if err != nil {
+		app.handleErrorFormDecoding(err, ErrReleaseDecode, w)
+		return
+	}
+
+	vals, err := url.ParseQuery(r.URL.RawQuery)
+
+	if err != nil {
+		app.handleErrorFormDecoding(err, ErrReleaseDecode, w)
+		return
+	}
+
+	// get the filter options
+	form := &forms.K8sForm{
+		OutOfClusterConfig: &kubernetes.OutOfClusterConfig{
+			Repo: app.Repo,
+		},
+	}
+
+	form.PopulateK8sOptionsFromQueryParams(vals, app.Repo.Cluster)
+
+	// validate the form
+	if err := app.validator.Struct(form); err != nil {
+		app.handleErrorFormValidation(err, ErrK8sValidate, w)
+		return
+	}
+
+	// create a new agent
+	var agent *kubernetes.Agent
+
+	if app.ServerConf.IsTesting {
+		agent = app.TestAgents.K8sAgent
+	} else {
+		agent, err = kubernetes.GetAgentOutOfClusterConfig(form.OutOfClusterConfig)
+	}
+
+	ingress, err := agent.GetIngress(namespace, name)
+
+	if err != nil {
+		app.handleErrorFormDecoding(err, ErrReleaseDecode, w)
+		return
+	}
+
+	if err := json.NewEncoder(w).Encode(ingress); err != nil {
+		app.handleErrorFormDecoding(err, ErrK8sDecode, w)
 		return
 	}
 }

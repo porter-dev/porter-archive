@@ -237,7 +237,7 @@ const Webhook = styled.div`
 `;
 
 const Highlight = styled.div`
-  color: #949eff;
+  color: #8590ff;
   text-decoration: underline;
   margin-left: 5px;
   cursor: pointer;
@@ -245,7 +245,7 @@ const Highlight = styled.div`
 `;
 
 const A = styled.a`
-  color: #949eff;
+  color: #8590ff;
   text-decoration: underline;
   margin-left: 5px;
   cursor: pointer;

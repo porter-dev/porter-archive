@@ -7,63 +7,30 @@ import { Context } from '../../../shared/Context';
 import { ProjectType } from '../../../shared/types';
 
 type PropsType = {
-  currentProject: ProjectType
+  currentProject: ProjectType,
+  setCurrentView: (x: string) => void,
+  projects: ProjectType[],
 };
 
 type StateType = {
-  projects: ProjectType[],
   expanded: boolean
 };
 
 export default class ProjectSection extends Component<PropsType, StateType> {
   state = {
-    projects: [] as ProjectType[],
     expanded: false,
   };
 
-  updateProjects = () => {
-    let { user } = this.context;
-    api.getProjects('<token>', {}, { id: user.userId }, (err: any, res: any) => {
-      if (err) {
-        console.log(err)
-      } else if (res.data) {
-        this.setState({ projects: res.data });
-        if (res.data.length > 0) {
-          this.context.setCurrentProject(res.data[0]);
-        } else {
-          this.context.setCurrentModal('CreateProjectModal', {
-            keepOpen: true,
-            updateProjects: this.updateProjects
-          });
-        }
-      }
-    });
-  }
-
-  componentDidMount() {
-    this.updateProjects();
-  }
-
-  componentDidUpdate(prevProps: PropsType) {
-    if (!this.props.currentProject && (this.props.currentProject !== prevProps.currentProject)) {
-      this.updateProjects();
-    }
-  }
-  
-  showProjectCreateModal = () => {
-    this.context.setCurrentModal('CreateProjectModal', {
-      keepOpen: false,
-      updateProjects: this.updateProjects
-    });
-  }
-
   renderOptionList = () => {
-    return this.state.projects.map((project: ProjectType, i: number) => {
+    return this.props.projects.map((project: ProjectType, i: number) => {
       return (
         <Option
           key={i}
           selected={project.name === this.props.currentProject.name}
-          onClick={() => this.context.setCurrentProject(project)}
+          onClick={() => {
+            this.context.setCurrentProject(project);
+            this.props.setCurrentView('dashboard');
+          }}
         >
           <ProjectIcon>
             <ProjectImage src={gradient} />
@@ -85,7 +52,7 @@ export default class ProjectSection extends Component<PropsType, StateType> {
             <Option
               selected={false}
               lastItem={true}
-              onClick={this.showProjectCreateModal}
+              onClick={() => this.props.setCurrentView('new-project')}
             >
               <ProjectIconAlt>+</ProjectIconAlt>
               <ProjectLabel>Add a project</ProjectLabel>
@@ -96,13 +63,17 @@ export default class ProjectSection extends Component<PropsType, StateType> {
     }
   }
 
+  handleExpand = () => {
+    this.setState({ expanded: !this.state.expanded });
+  }
+
   render() {
     let { currentProject } = this.props;
     if (currentProject) {
       return (
         <StyledProjectSection>
           <MainSelector
-            onClick={() => this.setState({ expanded: !this.state.expanded })}
+            onClick={this.handleExpand}
             expanded={this.state.expanded}
           >
             <ProjectIcon>
@@ -117,7 +88,7 @@ export default class ProjectSection extends Component<PropsType, StateType> {
       );
     }
     return (
-      <InitializeButton onClick={this.showProjectCreateModal}>
+      <InitializeButton onClick={() => this.props.setCurrentView('new-project')}>
         <Plus>+</Plus> Create a Project
       </InitializeButton>
     );

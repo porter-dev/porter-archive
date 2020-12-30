@@ -29,22 +29,12 @@ export default class InputRow extends Component<PropsType, StateType> {
       this.props.setValue(e.target.value);
     }
   }
-
-  renderRequiredWarning = () => {
-    if (this.props.isRequired && this.props.value === '') {
-      return (
-        <Warning>
-          <i className="material-icons">error_outline</i>
-        </Warning>
-      );
-    }
-  }
   
   render() {
     let { label, value, type, unit, placeholder, width } = this.props;
     return (
       <StyledInputRow>
-        <Label>{label} {this.props.isRequired ? ' *' : null}</Label>
+        <Label>{label} <Required>{this.props.isRequired ? ' *' : null}</Required></Label>
         <InputWrapper>
           <Input
             readOnly={this.state.readOnly} onFocus={() => this.setState({ readOnly: false })}
@@ -56,27 +46,24 @@ export default class InputRow extends Component<PropsType, StateType> {
             onChange={this.handleChange}
           />
           {unit ? <Unit>{unit}</Unit> : null}
-          {this.renderRequiredWarning()}
         </InputWrapper>
       </StyledInputRow>
     );
   }
 }
 
+const Required = styled.div`
+  margin-left: 8px;
+  color: #fc4976;
+`;
+
 const Unit = styled.div`
   margin-right: 8px;
 `;
 
-const Warning = styled.div`
-  margin-bottom: -3px;
-  > i {
-    font-size: 18px;
-    color: #fcba03;
-  }
-`;
-
 const InputWrapper = styled.div`
   display: flex;
+  margin-bottom: -1px;
   align-items: center;
 `;
 
@@ -97,6 +84,8 @@ const Input = styled.input`
 const Label = styled.div`
   color: #ffffff;
   margin-bottom: 10px;
+  display: flex;
+  align-items: center;
   font-size: 13px;
   font-family: 'Work Sans', sans-serif;
 `;

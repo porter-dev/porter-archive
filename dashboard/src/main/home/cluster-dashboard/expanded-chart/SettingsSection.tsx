@@ -51,12 +51,10 @@ export default class SettingsSection extends Component<PropsType, StateType> {
     let { currentCluster, currentProject } = this.context;
 
     let image = this.props.currentChart.config?.image;
-    if (image?.repository && image.tag) {
-      this.setState({ 
-        selectedImageUrl: image.repository, 
-        selectedTag: image.tag 
-      });
-    }
+    this.setState({ 
+      selectedImageUrl: image?.repository, 
+      selectedTag: image?.tag 
+    });
 
     api.getReleaseToken('<token>', {
       namespace: this.props.currentChart.namespace,
@@ -239,7 +237,7 @@ const Webhook = styled.div`
 `;
 
 const Highlight = styled.div`
-  color: #949eff;
+  color: #8590ff;
   text-decoration: underline;
   margin-left: 5px;
   cursor: pointer;
@@ -247,7 +245,7 @@ const Highlight = styled.div`
 `;
 
 const A = styled.a`
-  color: #949eff;
+  color: #8590ff;
   text-decoration: underline;
   margin-left: 5px;
   cursor: pointer;

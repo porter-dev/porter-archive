@@ -586,6 +586,14 @@ const CloseOverlay = styled.div`
   left: 0;
   width: 100%;
   height: 100%;
+  background: #202227;
+  animation: fadeIn 0.2s 0s;
+  opacity: 0;
+  animation-fill-mode: forwards;
+  @keyframes fadeIn {
+    from { opacity: 0 }
+    to { opacity: 1 }
+  }
 `;
 
 const HeaderWrapper = styled.div`

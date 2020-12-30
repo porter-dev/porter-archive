@@ -23,15 +23,15 @@ export default class Provisioner extends Component<PropsType, StateType> {
   }
 
   componentDidMount() {
-    this.setState({ logs: ['test-1', 'test-2'] })
+    this.setState({ logs: ['test-1', 'test-2'] });
   }
 
   scrollRef = React.createRef<HTMLDivElement>();
 
   renderLogs = () => {
     return this.state.logs.map((log, i) => {
-        return <div key={i}>{log}</div>
-    })
+      return <div key={i}>{log}</div>
+    });
   }
   
   render() {
@@ -56,7 +56,7 @@ export default class Provisioner extends Component<PropsType, StateType> {
         </LogStream>
 
         <Helper>
-          (Provisioning usually takes around 15 minutes. Brew some tea?)
+          (Provisioning usually takes around 15 minutes)
         </Helper>
       </StyledProvisioner>
     );

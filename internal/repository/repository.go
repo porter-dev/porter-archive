@@ -10,6 +10,7 @@ type Repository struct {
 	Cluster          ClusterRepository
 	HelmRepo         HelmRepoRepository
 	Registry         RegistryRepository
+	AWSInfra         AWSInfraRepository
 	KubeIntegration  KubeIntegrationRepository
 	BasicIntegration BasicIntegrationRepository
 	OIDCIntegration  OIDCIntegrationRepository

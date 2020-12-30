@@ -296,8 +296,6 @@ func initAWSIntegration(tester *tester, t *testing.T) {
 	aws := &ints.AWSIntegration{
 		ProjectID:          tester.initProjects[0].ID,
 		UserID:             tester.initUsers[0].ID,
-		AWSEntityID:        "entity",
-		AWSCallerID:        "caller",
 		AWSClusterID:       []byte("example-cluster-0"),
 		AWSAccessKeyID:     []byte("accesskey"),
 		AWSSecretAccessKey: []byte("secret"),

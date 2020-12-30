@@ -118,7 +118,7 @@ func (a *Agent) GetPodLogs(namespace string, name string, conn *websocket.Conn) 
 		// listens for websocket closing handshake
 		for {
 			if _, _, err := conn.ReadMessage(); err != nil {
-				conn.Close()
+				defer conn.Close()
 				errorchan <- nil
 				fmt.Println("Successfully closed log stream")
 				return

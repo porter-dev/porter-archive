@@ -9,47 +9,20 @@ import { ProjectType } from '../../../shared/types';
 type PropsType = {
   currentProject: ProjectType,
   setCurrentView: (x: string) => void,
+  projects: ProjectType[],
 };
 
 type StateType = {
-  projects: ProjectType[],
   expanded: boolean
 };
 
 export default class ProjectSection extends Component<PropsType, StateType> {
   state = {
-    projects: [] as ProjectType[],
     expanded: false,
   };
 
-  updateProjects = () => {
-    let { user } = this.context;
-    api.getProjects('<token>', {}, { id: user.userId }, (err: any, res: any) => {
-      if (err) {
-        console.log(err)
-      } else if (res.data) {
-        this.setState({ projects: res.data });
-        if (res.data.length > 0 && !this.props.currentProject) {
-          this.context.setCurrentProject(res.data[0]);
-        } else if (res.data.length === 0) {
-          this.props.setCurrentView('new-project');
-        }
-      }
-    });
-  }
-
-  componentDidMount() {
-    this.updateProjects();
-  }
-
-  componentDidUpdate(prevProps: PropsType) {
-    if (!this.props.currentProject && (this.props.currentProject !== prevProps.currentProject)) {
-      this.updateProjects();
-    }
-  }
-
   renderOptionList = () => {
-    return this.state.projects.map((project: ProjectType, i: number) => {
+    return this.props.projects.map((project: ProjectType, i: number) => {
       return (
         <Option
           key={i}
@@ -91,7 +64,6 @@ export default class ProjectSection extends Component<PropsType, StateType> {
   }
 
   handleExpand = () => {
-    this.updateProjects();
     this.setState({ expanded: !this.state.expanded });
   }
 

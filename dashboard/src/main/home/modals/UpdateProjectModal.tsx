@@ -25,6 +25,24 @@ export default class UpdateProjectModal extends Component<PropsType, StateType> 
     status: null as string | null,
     showDeleteOverlay: false,
   };
+
+  // Possibly consolidate into context (w/ ProjectSection + NewProject)
+  getProjects = () => {
+    let { user, currentProject, projects, setProjects } = this.context;
+    api.getProjects('<token>', {}, { id: user.userId }, (err: any, res: any) => {
+      if (err) {
+        console.log(err)
+      } else if (res.data) {
+        setProjects(res.data);
+        if (res.data.length > 0) {
+          this.context.setCurrentProject(res.data[0]);
+        } else {
+          this.context.currentModalData.setCurrentView('new-project');
+        }
+        this.context.setCurrentModal(null, null);
+      }
+    });
+  }
   
   // TODO: Handle update to unmounted component
   handleDelete = () => {
@@ -35,8 +53,7 @@ export default class UpdateProjectModal extends Component<PropsType, StateType> 
         this.setState({ status: 'error' });
         // console.log(err)
       } else {
-        this.context.setCurrentModal(null, null);
-        this.context.setCurrentProject(null);
+        this.getProjects();
         this.setState({ status: 'successful', showDeleteOverlay: false });
       }
     });

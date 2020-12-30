@@ -20,6 +20,7 @@ export default class ProjectSectionContainer extends Component<PropsType, StateT
     return (
       <ProjectSection
         currentProject={this.context.currentProject}
+        projects={this.context.projects}
         setCurrentView={this.props.setCurrentView}
       />
     );

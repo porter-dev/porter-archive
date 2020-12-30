@@ -1,19 +1,16 @@
 import React, { Component } from 'react';
 import styled from 'styled-components';
-import gradient from '../../../assets/gradient.jpg';
 import category from '../../../assets/category.svg';
-import pipelines from '../../../assets/pipelines.svg';
 import integrations from '../../../assets/integrations.svg';
 import filter from '../../../assets/filter.svg';
 
-import api from '../../../shared/api';
 import { Context } from '../../../shared/Context';
 
 import ClusterSection from './ClusterSection';
 import ProjectSectionContainer from './ProjectSectionContainer';
+import loading from '../../../assets/loading.gif';
 
 type PropsType = {
-  logOut: () => void,
   forceSidebar: boolean,
   setWelcome: (x: boolean) => void,
   setCurrentView: (x: string) => void,
@@ -92,22 +89,16 @@ export default class Sidebar extends Component<PropsType, StateType> {
     }
   };
 
-  handleLogout = (): void => {
-    let { logOut } = this.props;
-    let { setCurrentError } = this.context;
-
-    // Attempt user logout
-    api.logOutUser('<token>', {}, {}, (err: any, res: any) => {
-      // TODO: case and set logout error
-      
-      err ? setCurrentError(err.response.data.errors[0]) : logOut();
-    }); 
-  }
-
   renderProjectContents = () => {
-    if (this.context.currentProject) {
+    if (this.props.currentView === 'provisioner') {
       return (
-        <div>
+        <ProjectPlaceholder>
+          <img src={loading} /> Creating . . .
+        </ProjectPlaceholder>
+      )
+    } else if (this.context.currentProject) {
+      return (
+        <>
           <SidebarLabel>Home</SidebarLabel>
           <NavButton
             onClick={() => this.props.setCurrentView('dashboard')}
@@ -142,7 +133,7 @@ export default class Sidebar extends Component<PropsType, StateType> {
             setCurrentView={this.props.setCurrentView}
             isSelected={this.props.currentView === 'cluster-dashboard'}
           />
-        </div>
+        </>
       );
     }
 
@@ -177,12 +168,6 @@ export default class Sidebar extends Component<PropsType, StateType> {
           <br />
 
           {this.renderProjectContents()}
-
-          <BottomSection>
-            <LogOutButton onClick={this.handleLogout}>
-            Log Out <i className="material-icons">keyboard_return</i>
-            </LogOutButton>
-          </BottomSection>
         </StyledSidebar>
       </div>
     );
@@ -198,11 +183,16 @@ const ProjectPlaceholder = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
-  height: calc(100% - 180px);
+  height: calc(100% - 100px);
   font-size: 13px;
   font-family: 'Work Sans', sans-serif;
-  color: #ffffff44;
-  margin-top: 20px;
+  color: #aaaabb;
+  padding-bottom: 80px;
+
+  > img {
+    width: 17px;
+    margin-right: 10px;
+  }
 `;
 
 const NavButton = styled.div`

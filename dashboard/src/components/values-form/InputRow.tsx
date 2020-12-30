@@ -84,6 +84,8 @@ const Input = styled.input`
 const Label = styled.div`
   color: #ffffff;
   margin-bottom: 10px;
+  display: flex;
+  align-items: center;
   font-size: 13px;
   font-family: 'Work Sans', sans-serif;
 `;

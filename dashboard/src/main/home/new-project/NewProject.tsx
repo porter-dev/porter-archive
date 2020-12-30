@@ -1,16 +1,16 @@
 import React, { Component } from 'react';
 import styled from 'styled-components';
 import gradient from '../../../assets/gradient.jpg';
-import awsWhite from '../../../assets/aws-white.png';
 import close from '../../../assets/close.png';
 
+import api from '../../../shared/api';
 import { Context } from '../../../shared/Context';
 import { integrationList } from '../../../shared/common';
+import { ProjectType } from '../../../shared/types';
+
 import InputRow from '../../../components/values-form/InputRow';
 import Helper from '../../../components/values-form/Helper';
 import Heading from '../../../components/values-form/Heading';
-import api from '../../../shared/api';
-import Loading from '../../../components/Loading';
 import SaveButton from '../../../components/SaveButton';
 
 const providers = ['aws', 'gcp', 'do',];
@@ -22,6 +22,7 @@ type PropsType = {
 type StateType = {
   projectName: string,
   selectedProvider: string | null,
+  awsRegion: string | null,
   awsAccessId: string | null,
   awsSecretKey: string | null,
   status: string | null,
@@ -31,6 +32,7 @@ export default class NewProject extends Component<PropsType, StateType> {
   state = {
     projectName: '',
     selectedProvider: null as string | null,
+    awsRegion: '' as string | null,
     awsAccessId: '' as string | null,
     awsSecretKey: '' as string | null,
     status: null as string | null,
@@ -75,6 +77,15 @@ export default class NewProject extends Component<PropsType, StateType> {
           </CloseButton>
           <DarkMatter />
           <Heading>AWS Credentials</Heading>
+          <InputRow
+            type='text'
+            value={this.state.awsRegion}
+            setValue={(x: string) => this.setState({ awsRegion: x })}
+            label='📍 AWS Region'
+            placeholder='ex: mars-north-12'
+            width='100%'
+            isRequired={true}
+          />
           <InputRow
             type='text'
             value={this.state.awsAccessId}
@@ -165,11 +176,11 @@ export default class NewProject extends Component<PropsType, StateType> {
   }
 
   validateForm = () => {
-    let { projectName, selectedProvider, awsAccessId, awsSecretKey } = this.state;
+    let { projectName, selectedProvider, awsAccessId, awsSecretKey, awsRegion } = this.state;
     if (!this.isAlphanumeric(projectName) || projectName === '') {
       return false;
     } else if (selectedProvider === 'aws') {
-      return awsAccessId !== '' && awsSecretKey !== '';
+      return awsAccessId !== '' && awsSecretKey !== '' && awsRegion !== '';
     }  else if (selectedProvider === 'skipped') {
       return true;
     }
@@ -189,9 +200,16 @@ export default class NewProject extends Component<PropsType, StateType> {
           if (err) {
             console.log(err)
           } else if (res.data) {
+            this.context.setProjects(res.data);
             if (res.data.length > 0) {
-              this.context.setCurrentProject(res.data[0]);
-              this.props.setCurrentView('dashboard');
+              let proj = res.data.find((el: ProjectType) => el.name === this.state.projectName);
+              this.context.setCurrentProject(proj);
+
+              if (this.state.selectedProvider === 'aws') {
+                this.props.setCurrentView('provisioner');
+              } else {
+                this.props.setCurrentView('dashboard');
+              }
             } 
           }
         });
@@ -201,7 +219,7 @@ export default class NewProject extends Component<PropsType, StateType> {
   
   render() {
     return (
-      <StyledNewProject>
+      <StyledNewProject height={this.state.selectedProvider === 'aws' ? '700px' : '600px'}>
         <TitleSection>
           <Title>New Project</Title>
         </TitleSection>
@@ -485,8 +503,8 @@ const TitleSection = styled.div`
 const StyledNewProject = styled.div`
   width: calc(90% - 150px);
   min-width: 300px;
-  height: 600px;
+  height: ${(props: { height: string }) => props.height};
   position: relative;
   padding-top: 50px;
-  margin-top: calc(50vh - 350px);
+  margin-top: ${(props: { height: string }) => props.height === '600px' ? 'calc(50vh - 350px)' : 'calc(50vh - 400px)'};
 `;

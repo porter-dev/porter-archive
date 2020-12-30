@@ -45,9 +45,7 @@ export default class Selector extends Component<PropsType, StateType> {
   renderDropdownLabel = () => {
     if (this.props.dropdownLabel && this.props.dropdownLabel !== '') {
       return (
-        <DropdownLabel>
-          {this.props.dropdownLabel}
-        </DropdownLabel>
+        <DropdownLabel>{this.props.dropdownLabel}</DropdownLabel>
       );
     }
   }

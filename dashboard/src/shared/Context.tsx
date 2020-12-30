@@ -43,6 +43,10 @@ class ContextProvider extends Component {
     setCurrentProject: (currentProject: ProjectType) => {
       this.setState({ currentProject });
     },
+    projects: [] as ProjectType[],
+    setProjects: (projects: ProjectType[]) => {
+      this.setState({ projects });
+    },
     user: null as any,
     setUser: (userId: number, email: string) => {
       this.setState({ user: {userId, email} });
@@ -50,6 +54,18 @@ class ContextProvider extends Component {
     devOpsMode: true,
     setDevOpsMode: (devOpsMode: boolean) => {
       this.setState({ devOpsMode });
+    },
+    clearContext: () => {
+      this.setState({
+        currentModal: null,
+        currentModalData: null,
+        currentError: null,
+        currentCluster: null,
+        currentProject: null,
+        projects: [],
+        user: null,
+        devOpsMode: true,
+      });
     }
   };
   

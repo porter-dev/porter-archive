@@ -6,6 +6,7 @@ import (
 	"github.com/go-playground/locales/en"
 	ut "github.com/go-playground/universal-translator"
 	vr "github.com/go-playground/validator/v10"
+	"github.com/go-redis/redis/v8"
 	sessionstore "github.com/porter-dev/porter/internal/auth"
 	"github.com/porter-dev/porter/internal/oauth"
 	"golang.org/x/oauth2"
@@ -32,10 +33,11 @@ type TestAgents struct {
 
 // AppConfig is the configuration required for creating a new App
 type AppConfig struct {
-	DB         *gorm.DB
-	Logger     *lr.Logger
-	Repository *repository.Repository
-	ServerConf config.ServerConf
+	DB          *gorm.DB
+	Logger      *lr.Logger
+	Repository  *repository.Repository
+	ServerConf  config.ServerConf
+	RedisClient *redis.Client
 
 	// TestAgents if API is in testing mode
 	TestAgents *TestAgents
@@ -59,6 +61,9 @@ type App struct {
 	// agents exposed for testing
 	TestAgents *TestAgents
 
+	// redis conf for redis connection
+	RedisClient *redis.Client
+
 	// oauth-specific clients
 	GithubConf *oauth2.Config
 
@@ -81,13 +86,14 @@ func New(conf *AppConfig) (*App, error) {
 	}
 
 	app := &App{
-		Logger:     conf.Logger,
-		Repo:       conf.Repository,
-		ServerConf: conf.ServerConf,
-		TestAgents: conf.TestAgents,
-		db:         conf.DB,
-		validator:  validator,
-		translator: &translator,
+		Logger:      conf.Logger,
+		Repo:        conf.Repository,
+		ServerConf:  conf.ServerConf,
+		RedisClient: conf.RedisClient,
+		TestAgents:  conf.TestAgents,
+		db:          conf.DB,
+		validator:   validator,
+		translator:  &translator,
 	}
 
 	// if repository not specified, default to in-memory
@@ -116,62 +122,3 @@ func New(conf *AppConfig) (*App, error) {
 
 	return app, nil
 }
-
-// // New returns a new App instance
-// // TODO -- this should accept an app/server config
-// func New(
-// 	logger *lr.Logger,
-// 	db *gorm.DB,
-// 	repo *repository.Repository,
-// 	validator *validator.Validate,
-// 	store sessions.Store,
-// 	cookieName string,
-// 	testing bool,
-// 	isLocal bool,
-// 	githubConfig *oauth.Config,
-// 	serverConf config.ServerConf,
-// ) *App {
-// 	// for now, will just support the english translator from the
-// 	// validator/translations package
-// 	en := en.New()
-// 	uni := ut.New(en, en)
-// 	trans, _ := uni.GetTranslator("en")
-
-// 	var testAgents *TestAgents = nil
-
-// 	if testing {
-// 		memStorage := helm.StorageMap["memory"](nil, nil, "")
-
-// 		testAgents = &TestAgents{
-// 			HelmAgent:             helm.GetAgentTesting(&helm.Form{}, nil, logger),
-// 			HelmTestStorageDriver: memStorage,
-// 			K8sAgent:              kubernetes.GetAgentTesting(),
-// 		}
-// 	}
-
-// 	var oauthGithubConf *oauth2.Config
-
-// 	if githubConfig != nil {
-// 		oauthGithubConf = oauth.NewGithubClient(githubConfig)
-// 	}
-
-// 	return &App{
-// 		db:           db,
-// 		logger:       logger,
-// 		repo:         repo,
-// 		validator:    validator,
-// 		store:        store,
-// 		translator:   &trans,
-// 		cookieName:   cookieName,
-// 		testing:      testing,
-// 		isLocal:      isLocal,
-// 		TestAgents:   testAgents,
-// 		GithubConfig: oauthGithubConf,
-// 		ServerConf:   serverConf,
-// 	}
-// }
-
-// // Logger returns the logger instance in use by App
-// func (app *App) Logger() *lr.Logger {
-// 	return app.logger
-// }

@@ -89,6 +89,12 @@ const getMatchingPods = baseApi<{
   return `/api/projects/${pathParams.id}/k8s/pods`;
 });
 
+const getIngress = baseApi<{
+  cluster_id: number,
+}, { name: string, namespace: string, id: number }>('GET', pathParams => {
+  return `/api/projects/${pathParams.id}/k8s/${pathParams.namespace}/ingress/${pathParams.name}`;
+});
+
 const getRevisions = baseApi<{
   namespace: string,
   cluster_id: number,
@@ -120,7 +126,7 @@ const upgradeChartValues = baseApi<{
   cluster_id: number,
 }>('POST', pathParams => {
   let { id, name, cluster_id } = pathParams;
-  return `/api/projects/${id}/releases/${name}/upgrade/hook?cluster_id=${cluster_id}&repository=fake&commit=hash`;
+  return `/api/projects/${id}/releases/${name}/upgrade?cluster_id=${cluster_id}`;
 });
 
 const getTemplates = baseApi('GET', '/api/templates');
@@ -266,6 +272,7 @@ export default {
   getChartControllers,
   getNamespaces,
   getMatchingPods,
+  getIngress,
   getRevisions,
   rollbackChart,
   upgradeChartValues,

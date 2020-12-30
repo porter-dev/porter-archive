@@ -43,7 +43,7 @@ export default class Logs extends Component<PropsType, StateType> {
     if (!selectedPod.metadata?.name) return
     let protocol = process.env.NODE_ENV == 'production' ? 'wss' : 'ws'
     let ws = new WebSocket(`${protocol}://${process.env.API_SERVER}/api/projects/${currentProject.id}/k8s/${selectedPod?.metadata?.namespace}/pod/${selectedPod?.metadata?.name}/logs?cluster_id=${currentCluster.id}&service_account_id=${currentCluster.service_account_id}`)
-
+    // let ws = new WebSocket(`${protocol}://${process.env.API_SERVER}/api/projects/${currentProject.id}/provisioning/ecr/abcdef/logs?cluster_id=${currentCluster.id}`)
     this.setState({ ws }, () => {
       if (!this.state.ws) return;
   

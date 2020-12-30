@@ -51,12 +51,10 @@ export default class SettingsSection extends Component<PropsType, StateType> {
     let { currentCluster, currentProject } = this.context;
 
     let image = this.props.currentChart.config?.image;
-    if (image?.repository && image.tag) {
-      this.setState({ 
-        selectedImageUrl: image.repository, 
-        selectedTag: image.tag 
-      });
-    }
+    this.setState({ 
+      selectedImageUrl: image?.repository, 
+      selectedTag: image?.tag 
+    });
 
     api.getReleaseToken('<token>', {
       namespace: this.props.currentChart.namespace,

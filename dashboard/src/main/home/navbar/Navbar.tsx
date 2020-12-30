@@ -9,12 +9,16 @@ type PropsType = {
 };
 
 type StateType = {
-  showDropdown: boolean
+  showDropdown: boolean,
+  showFeedbackDropdown: boolean,
+  feedbackSent: boolean,
 };
 
 export default class Navbar extends Component<PropsType, StateType> {
   state = {
     showDropdown: false,
+    showFeedbackDropdown: false,
+    feedbackSent: false,
   }
 
   handleLogout = (): void => {
@@ -43,17 +47,55 @@ export default class Navbar extends Component<PropsType, StateType> {
     }
   }
 
+  renderConfirmation = () => {
+    if (this.state.feedbackSent) {
+      return (
+        <DropdownAlt dropdownWidth='300px' dropdownMaxHeight='200px'>
+          <ConfirmationMessage>
+            <i className="material-icons-outlined">emoji_food_beverage</i>
+            Thanks for improving Porter.
+          </ConfirmationMessage>
+        </DropdownAlt>
+      );
+    }
+  }
+
+  renderFeedbackDropdown = () => {
+    if (this.state.showFeedbackDropdown) {
+      return (
+        <>
+          <CloseOverlay onClick={() => this.setState({ showFeedbackDropdown: false, feedbackSent: false })} />
+          <Dropdown feedbackSent={this.state.feedbackSent} dropdownWidth='300px' dropdownMaxHeight='200px'>
+            <FeedbackInput placeholder='Help us improve this page.' />
+            <SendButton onClick={() => this.setState({ feedbackSent: true })}>
+              <i className="material-icons">send</i> Send
+            </SendButton>
+          </Dropdown>
+          {this.renderConfirmation()}
+        </>
+      );
+    }
+  }
+
   render() {
     return (
       <StyledNavbar>
-        <NavButton href='https://docs.getporter.dev/docs' target='_blank'>
-          <i className="material-icons">help_outline</i>
-        </NavButton>
+        <FeedbackButton>
+          <Flex onClick={() => this.setState({ showFeedbackDropdown: !this.state.showFeedbackDropdown })}>
+            <i className="material-icons-outlined">
+              campaign
+            </i>
+            Feedback?
+          </Flex>
+          {this.renderFeedbackDropdown()}
+        </FeedbackButton>
         <NavButton selected={this.state.showDropdown}>
           <i 
             className="material-icons-outlined" 
             onClick={() => this.setState({ showDropdown: !this.state.showDropdown })}
-          >account_circle</i>
+          >
+            account_circle
+          </i>
           {this.renderSettingsDropdown()}
         </NavButton>
       </StyledNavbar>
@@ -62,6 +104,72 @@ export default class Navbar extends Component<PropsType, StateType> {
 }
 
 Navbar.contextType = Context;
+
+const ConfirmationMessage = styled.div`
+  width: 100%;
+  height: 100px;
+  display: flex;
+  font-size: 13px;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff55;
+
+  > i {
+    display: flex;
+    font-size: 16px;
+    margin-right: 10px;
+    align-items: center;
+    justify-content: center;
+    color: #ffffff55;
+  }
+`;
+
+const SendButton = styled.div`
+  display: flex;
+  align-items: center;
+  height: 40px;
+  cursor: pointer;
+  justify-content: center;
+  margin-top: -3px;
+  font-size: 13px;
+  font-weight: 500;
+  font-family: 'Work Sans', sans-serif;
+  :hover {
+    background: #ffffff11;
+  }
+
+  > i {
+    background: none;
+    border-radius: 3px;
+    display: flex;
+    font-size: 14px;
+    top: 11px;
+    margin-right: 10px;
+    padding: 1px;
+    align-items: center;
+    justify-content: center;
+    color: #ffffffaa;
+  }
+`;
+
+const FeedbackInput = styled.textarea`
+  resize: none;
+  width: 100%;
+  height: 80px;
+  outline: 0;
+  padding: 14px;
+  color: white;
+  border: 0;
+  font-size: 13px;
+  font-family: 'Work Sans', sans-serif;
+  background: #aaaabb11;
+`;
+
+const Flex = styled.div`
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+`;
 
 const CloseOverlay = styled.div`
   position: fixed;
@@ -127,13 +235,33 @@ const Dropdown = styled.div`
   right: 0;
   top: calc(100% + 5px);
   background: #26282f;
-  width: ${(props: { dropdownWidth: string, dropdownMaxHeight: string }) => props.dropdownWidth};
-  max-height: ${(props: { dropdownWidth: string, dropdownMaxHeight: string }) => props.dropdownMaxHeight ? props.dropdownMaxHeight : '300px'};
+  width: ${(props: { dropdownWidth: string, dropdownMaxHeight: string, feedbackSent?: boolean }) => props.dropdownWidth};
+  max-height: ${(props: { dropdownWidth: string, dropdownMaxHeight: string, feedbackSent?: boolean }) => props.dropdownMaxHeight ? props.dropdownMaxHeight : '300px'};
   border-radius: 3px;
   z-index: 999;
   overflow-y: auto;
   margin-bottom: 20px;
   box-shadow: 0 8px 20px 0px #00000088;
+  animation: ${(props: { dropdownWidth: string, dropdownMaxHeight: string, feedbackSent?: boolean }) => props.feedbackSent ? 'flyOff 0.3s 0.05s' : ''};
+  animation-fill-mode: forwards;
+  @keyframes flyOff {
+    from {
+      opacity: 1; transform: translateX(0px);
+    }
+    to {
+      opacity: 0; transform: translateX(100px);
+    }
+  }
+`;
+
+const DropdownAlt = styled(Dropdown)`
+  animation: fadeIn 0.3s 0.5s;
+  opacity: 0;
+  animation-fill-mode: forwards;
+  @keyframes fadeIn {
+    from { opacity: 0 }
+    to { opacity: 1 }
+  }
 `;
 
 const StyledNavbar = styled.div`
@@ -154,7 +282,6 @@ const NavButton = styled.a`
   align-items: center;
   justify-content: center;
   margin-right: 15px;
-  cursor: pointer;
   :hover {
     > i {
       color: #ffffff;
@@ -162,7 +289,31 @@ const NavButton = styled.a`
   }
   
   > i {
+    cursor: pointer;
     color: ${(props: { selected?: boolean }) => props.selected ? '#ffffff' : '#ffffff88'};
     font-size: 24px;
+  }
+`;
+
+const FeedbackButton = styled(NavButton)`
+  color: ${(props: { selected?: boolean }) => props.selected ? '#ffffff' : '#ffffff88'};
+  font-family: 'Work Sans', sans-serif;
+  font-size: 14px;
+  margin-right: 20px;
+  :hover {
+    color: #ffffff;
+    > div {
+      > i {
+        color: #ffffff;
+      }
+    }
+  }
+
+  > div {
+    > i {
+      color: ${(props: { selected?: boolean }) => props.selected ? '#ffffff' : '#ffffff88'};
+      font-size: 26px;
+      margin-right: 6px;
+    }
   }
 `;

@@ -62,3 +62,14 @@ func (repo *AWSInfraRepository) ListAWSInfrasByProjectID(
 
 	return infras, nil
 }
+
+// UpdateAWSInfra modifies an existing AWSInfra in the database
+func (repo *AWSInfraRepository) UpdateAWSInfra(
+	ai *models.AWSInfra,
+) (*models.AWSInfra, error) {
+	if err := repo.db.Save(ai).Error; err != nil {
+		return nil, err
+	}
+
+	return ai, nil
+}

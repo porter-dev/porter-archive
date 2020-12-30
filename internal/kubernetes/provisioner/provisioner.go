@@ -8,6 +8,8 @@ import (
 	"github.com/porter-dev/porter/internal/kubernetes/provisioner/aws"
 	"github.com/porter-dev/porter/internal/kubernetes/provisioner/aws/ecr"
 	"github.com/porter-dev/porter/internal/kubernetes/provisioner/aws/eks"
+
+	"github.com/porter-dev/porter/internal/config"
 )
 
 // InfraOption is a type of infrastructure that can be provisioned
@@ -26,19 +28,13 @@ type Conf struct {
 	Name      string
 	Namespace string
 	ID        string
-	Redis     *RedisConf
+	Redis     *config.RedisConf
 	Postgres  *PostgresConf
 
 	// provider-specific configurations
 	AWS *aws.Conf
 	ECR *ecr.Conf
 	EKS *eks.Conf
-}
-
-// RedisConf is the redis config required for the provisioner container
-type RedisConf struct {
-	Host string
-	Port string
 }
 
 // PostgresConf is the postgres config for the provisioner container

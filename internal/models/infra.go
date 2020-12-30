@@ -2,6 +2,8 @@ package models
 
 import (
 	"fmt"
+	"strconv"
+	"strings"
 
 	"gorm.io/gorm"
 )
@@ -13,7 +15,6 @@ type InfraStatus string
 const (
 	StatusCreating InfraStatus = "creating"
 	StatusCreated  InfraStatus = "created"
-	StatusUpdating InfraStatus = "updating"
 )
 
 // AWSInfraKind is the kind that aws infra can be
@@ -70,4 +71,21 @@ func (ai *AWSInfra) Externalize() *AWSInfraExternal {
 // GetWorkspaceID returns the unique workspace id for this infra
 func (ai *AWSInfra) GetWorkspaceID() string {
 	return fmt.Sprintf("%s-%d-%d", ai.Kind, ai.ProjectID, ai.ID)
+}
+
+// GetInfraIDFromWorkspaceID returns the infra id given a workspace id
+func GetInfraIDFromWorkspaceID(workspaceID string) (uint, error) {
+	strArr := strings.Split(workspaceID, "-")
+
+	if len(strArr) != 3 {
+		return 0, fmt.Errorf("workspace id improperly formatted")
+	}
+
+	u, err := strconv.ParseUint(strArr[2], 10, 64)
+
+	if err != nil {
+		return 0, err
+	}
+
+	return uint(u), nil
 }

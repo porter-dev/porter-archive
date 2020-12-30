@@ -15,6 +15,7 @@ import (
 	lr "github.com/porter-dev/porter/internal/logger"
 	"github.com/porter-dev/porter/server/router"
 
+	prov "github.com/porter-dev/porter/internal/kubernetes/provisioner"
 	ints "github.com/porter-dev/porter/internal/models/integrations"
 )
 
@@ -23,6 +24,14 @@ func main() {
 
 	logger := lr.NewConsole(appConf.Debug)
 	db, err := adapter.New(&appConf.Db)
+
+	if err != nil {
+		logger.Fatal().Err(err).Msg("")
+		return
+	}
+
+	redis, err := adapter.NewRedisClient(&appConf.Redis)
+	prov.InitGlobalStream(redis)
 
 	if err != nil {
 		logger.Fatal().Err(err).Msg("")
@@ -67,9 +76,10 @@ func main() {
 	repo := gorm.NewRepository(db, &key)
 
 	a, _ := api.New(&api.AppConfig{
-		Logger:     logger,
-		Repository: repo,
-		ServerConf: appConf.Server,
+		Logger:      logger,
+		Repository:  repo,
+		ServerConf:  appConf.Server,
+		RedisClient: redis,
 	})
 
 	appRouter := router.New(a)
@@ -86,7 +96,12 @@ func main() {
 		IdleTimeout:  appConf.Server.TimeoutIdle,
 	}
 
+	errorChan := make(chan error)
+
+	go prov.GlobalStreamListener(redis, repo.AWSInfra, errorChan)
+
 	if err := s.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 		log.Fatal("Server startup failed", err)
 	}
+
 }

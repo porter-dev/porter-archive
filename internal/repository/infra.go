@@ -9,4 +9,5 @@ type AWSInfraRepository interface {
 	CreateAWSInfra(repo *models.AWSInfra) (*models.AWSInfra, error)
 	ReadAWSInfra(id uint) (*models.AWSInfra, error)
 	ListAWSInfrasByProjectID(projectID uint) ([]*models.AWSInfra, error)
+	UpdateAWSInfra(repo *models.AWSInfra) (*models.AWSInfra, error)
 }

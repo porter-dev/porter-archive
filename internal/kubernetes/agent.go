@@ -7,6 +7,7 @@ import (
 	"io"
 	"strings"
 
+	"github.com/porter-dev/porter/internal/config"
 	"github.com/porter-dev/porter/internal/kubernetes/provisioner"
 	"github.com/porter-dev/porter/internal/kubernetes/provisioner/aws"
 	"github.com/porter-dev/porter/internal/kubernetes/provisioner/aws/ecr"
@@ -261,7 +262,7 @@ func (a *Agent) provision(
 ) (*batchv1.Job, error) {
 	prov.Namespace = "default"
 
-	prov.Redis = &provisioner.RedisConf{
+	prov.Redis = &config.RedisConf{
 		Host: "redis-master.default.svc.cluster.local",
 		Port: "6379",
 	}

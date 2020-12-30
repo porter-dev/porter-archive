@@ -71,3 +71,21 @@ func (repo *AWSInfraRepository) ListAWSInfrasByProjectID(
 
 	return res, nil
 }
+
+// UpdateAWSInfra modifies an existing AWSInfra in the database
+func (repo *AWSInfraRepository) UpdateAWSInfra(
+	ai *models.AWSInfra,
+) (*models.AWSInfra, error) {
+	if !repo.canQuery {
+		return nil, errors.New("Cannot write database")
+	}
+
+	if int(ai.ID-1) >= len(repo.awsInfras) || repo.awsInfras[ai.ID-1] == nil {
+		return nil, gorm.ErrRecordNotFound
+	}
+
+	index := int(ai.ID - 1)
+	repo.awsInfras[index] = ai
+
+	return ai, nil
+}

@@ -13,6 +13,7 @@ type Conf struct {
 	Server ServerConf
 	Db     DBConf
 	K8s    K8sConf
+	Redis  RedisConf
 }
 
 // ServerConf is the server configuration

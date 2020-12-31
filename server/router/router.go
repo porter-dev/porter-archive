@@ -178,10 +178,8 @@ func New(a *api.App) *chi.Mux {
 		)
 
 		// /api/projects/{project_id}/provision routes
-
-		// TODO -- restrict this endpoint
 		r.Method(
-			"GET",
+			"POST",
 			"/projects/{project_id}/provision/test",
 			auth.DoesUserHaveProjectAccess(
 				requestlog.NewHandler(a.HandleProvisionTest, l),
@@ -191,7 +189,7 @@ func New(a *api.App) *chi.Mux {
 		)
 
 		r.Method(
-			"GET",
+			"POST",
 			"/projects/{project_id}/provision/ecr",
 			auth.DoesUserHaveProjectAccess(
 				requestlog.NewHandler(a.HandleProvisionAWSECRInfra, l),

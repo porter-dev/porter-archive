@@ -11,6 +11,7 @@ import (
 	"github.com/porter-dev/porter/internal/kubernetes/provisioner"
 	"github.com/porter-dev/porter/internal/kubernetes/provisioner/aws"
 	"github.com/porter-dev/porter/internal/kubernetes/provisioner/aws/ecr"
+	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/models/integrations"
 
 	"github.com/gorilla/websocket"
@@ -236,10 +237,12 @@ func (a *Agent) ProvisionECR(
 	projectID uint,
 	awsConf *integrations.AWSIntegration,
 	ecrName string,
+	awsInfra *models.AWSInfra,
 ) (*batchv1.Job, error) {
+	id := awsInfra.GetID()
 	prov := &provisioner.Conf{
-		ID:   fmt.Sprintf("%s-%d", ecrName, projectID),
-		Name: fmt.Sprintf("prov-%s-%d", ecrName, projectID),
+		ID:   id,
+		Name: fmt.Sprintf("prov-%s", id),
 		Kind: provisioner.ECR,
 		AWS: &aws.Conf{
 			AWSRegion:          awsConf.AWSRegion,

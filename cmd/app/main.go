@@ -76,10 +76,10 @@ func main() {
 	repo := gorm.NewRepository(db, &key)
 
 	a, _ := api.New(&api.AppConfig{
-		Logger:      logger,
-		Repository:  repo,
-		ServerConf:  appConf.Server,
-		RedisClient: redis,
+		Logger:     logger,
+		Repository: repo,
+		ServerConf: appConf.Server,
+		RedisConf:  &appConf.Redis,
 	})
 
 	appRouter := router.New(a)
@@ -103,5 +103,4 @@ func main() {
 	if err := s.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 		log.Fatal("Server startup failed", err)
 	}
-
 }

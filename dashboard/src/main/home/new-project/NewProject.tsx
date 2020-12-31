@@ -236,8 +236,6 @@ export default class NewProject extends Component<PropsType, StateType> {
                   }
                 });
 
-                this.props.setCurrentView('provisioner', {infra_id: 1, kind: "ecr"});
-
               } else {
                 this.props.setCurrentView('dashboard', null);
               }

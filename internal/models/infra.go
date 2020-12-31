@@ -68,8 +68,8 @@ func (ai *AWSInfra) Externalize() *AWSInfraExternal {
 	}
 }
 
-// GetWorkspaceID returns the unique workspace id for this infra
-func (ai *AWSInfra) GetWorkspaceID() string {
+// GetID returns the unique id for this infra
+func (ai *AWSInfra) GetID() string {
 	return fmt.Sprintf("%s-%d-%d", ai.Kind, ai.ProjectID, ai.ID)
 }
 

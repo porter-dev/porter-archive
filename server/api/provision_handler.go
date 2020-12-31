@@ -8,11 +8,11 @@ import (
 
 	"github.com/go-chi/chi"
 
-	"github.com/porter-dev/porter/internal/adapter"
-	"github.com/porter-dev/porter/internal/config"
 	"github.com/porter-dev/porter/internal/forms"
 	"github.com/porter-dev/porter/internal/kubernetes"
 	"github.com/porter-dev/porter/internal/kubernetes/provisioner"
+
+	"github.com/porter-dev/porter/internal/adapter"
 )
 
 // HandleProvisionTest will create a test resource by deploying a provisioner
@@ -103,6 +103,7 @@ func (app *App) HandleProvisionAWSECRInfra(w http.ResponseWriter, r *http.Reques
 		uint(projID),
 		awsInt,
 		form.ECRName,
+		infra,
 	)
 
 	if err != nil {
@@ -140,12 +141,7 @@ func (app *App) HandleGetProvisioningLogs(w http.ResponseWriter, r *http.Request
 		app.handleErrorUpgradeWebsocket(err, w)
 	}
 
-	conf := &config.RedisConf{
-		Host: "redis",
-		Port: "6379",
-	}
-
-	client, err := adapter.NewRedisClient(conf)
+	client, err := adapter.NewRedisClient(app.RedisConf)
 
 	if err != nil {
 		app.handleErrorInternal(err, w)

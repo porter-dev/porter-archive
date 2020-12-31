@@ -39,13 +39,14 @@ func ResourceStream(client *redis.Client, streamName string, conn *websocket.Con
 			).Result()
 
 			if err != nil {
+				fmt.Println("ERROR XREAD", err)
 				return
 			}
 
 			messages := xstream[0].Messages
 			lastID = messages[len(messages)-1].ID
 
-			if writeErr := conn.WriteMessage(websocket.TextMessage, []byte(fmt.Sprint(messages[0].Values["data"]))); writeErr != nil {
+			if writeErr := conn.WriteMessage(websocket.TextMessage, []byte(fmt.Sprint(messages))); writeErr != nil {
 				errorchan <- writeErr
 				return
 			}

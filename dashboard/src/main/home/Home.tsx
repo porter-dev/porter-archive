@@ -28,6 +28,7 @@ type StateType = {
   forceSidebar: boolean,
   showWelcome: boolean,
   currentView: string,
+  viewData: any,
 
   // Track last project id for refreshing clusters on project change
   prevProjectId: number | null,
@@ -39,6 +40,7 @@ export default class Home extends Component<PropsType, StateType> {
     showWelcome: false,
     currentView: 'dashboard',
     prevProjectId: null as number | null,
+    viewData: null as any
   }
 
   // Possibly consolidate into context (w/ ProjectSection + NewProject)
@@ -122,10 +124,10 @@ export default class Home extends Component<PropsType, StateType> {
       return <Integrations />;
     } else if (currentView === 'new-project') {
       return (
-        <NewProject setCurrentView={(x: string) => this.setState({ currentView: x })} />
+        <NewProject setCurrentView={(x: string, data: any ) => this.setState({ currentView: x, viewData: data })} />
       );
     } else if (currentView === 'provisioner') {
-      return <Provisioner />
+      return <Provisioner viewData={this.state.viewData}/>
     }
 
     return (

@@ -16,7 +16,7 @@ import SaveButton from '../../../components/SaveButton';
 const providers = ['aws', 'gcp', 'do',];
 
 type PropsType = {
-  setCurrentView: (x: string) => void,
+  setCurrentView: (x: string, data: any) => void,
 };
 
 type StateType = {
@@ -195,6 +195,8 @@ export default class NewProject extends Component<PropsType, StateType> {
 
   createProject = () => {
     this.setState({ status: 'loading' });
+    let { awsAccessId, awsSecretKey, awsRegion } = this.state;
+
     api.createProject('<token>', {
       name: this.state.projectName
     }, {}, (err: any, res: any) => {
@@ -212,9 +214,30 @@ export default class NewProject extends Component<PropsType, StateType> {
               this.context.setCurrentProject(proj);
 
               if (this.state.selectedProvider === 'aws') {
-                this.props.setCurrentView('provisioner');
+
+                api.createAWSIntegration('<token>', {
+                  aws_region: awsRegion,
+                  aws_access_key_id: awsAccessId,
+                  aws_secret_access_key: awsSecretKey,
+                }, { id: proj.id }, (err2: any, res2: any) => {
+                  if (err2) {
+                    console.log(err2);
+                  } else {
+                    api.provisionECR('<token>', {
+                      aws_integration_id: res2.data.id,
+                      ecr_name: `${proj.name}-registry`
+                    }, {id: proj.id}, (err3: any, res3:any) => {
+                      if (err3) {
+                        console.log(err3)
+                      } else {
+                        this.props.setCurrentView('provisioner', {infra_id: res3.data.id, kind: res3.data.kind});
+                      }
+                    })
+                  }
+                });
+
               } else {
-                this.props.setCurrentView('dashboard');
+                this.props.setCurrentView('dashboard', null);
               }
             } 
           }

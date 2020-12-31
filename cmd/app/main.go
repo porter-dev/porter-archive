@@ -98,7 +98,7 @@ func main() {
 
 	errorChan := make(chan error)
 
-	go prov.GlobalStreamListener(redis, repo.AWSInfra, errorChan)
+	go prov.GlobalStreamListener(redis, *repo, errorChan)
 
 	if err := s.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 		log.Fatal("Server startup failed", err)

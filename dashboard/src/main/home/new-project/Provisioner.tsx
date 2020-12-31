@@ -32,8 +32,8 @@ export default class Provisioner extends Component<PropsType, StateType> {
   componentDidMount() {
     let { currentProject } = this.context;
     let protocol = process.env.NODE_ENV == 'production' ? 'wss' : 'ws'
-    let ws = new WebSocket(`${protocol}://${process.env.API_SERVER}/api/projects/${currentProject.id}/provisioning/${this.props.viewData.kind}/${this.props.viewData.infra_id}/logs`)
-    
+    let ws = new WebSocket(`${protocol}://${process.env.API_SERVER}/api/projects/${currentProject.id}/provision/${this.props.viewData.kind}/${this.props.viewData.infra_id}/logs`)
+
     this.setState({ ws }, () => {
       if (!this.state.ws) return;
   
@@ -42,6 +42,7 @@ export default class Provisioner extends Component<PropsType, StateType> {
       }
   
       this.state.ws.onmessage = (evt: MessageEvent) => {
+        console.log(evt.data)
         this.setState({ logs: [...this.state.logs, evt.data] }, () => {
           this.scrollToBottom()
         })

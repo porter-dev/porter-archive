@@ -235,7 +235,6 @@ export default class NewProject extends Component<PropsType, StateType> {
                     })
                   }
                 });
-
               } else {
                 this.props.setCurrentView('dashboard', null);
               }

@@ -8,6 +8,8 @@ import (
 
 	"github.com/go-chi/chi"
 
+	"github.com/porter-dev/porter/internal/adapter"
+	"github.com/porter-dev/porter/internal/config"
 	"github.com/porter-dev/porter/internal/forms"
 	"github.com/porter-dev/porter/internal/kubernetes"
 	"github.com/porter-dev/porter/internal/kubernetes/provisioner"
@@ -138,7 +140,19 @@ func (app *App) HandleGetProvisioningLogs(w http.ResponseWriter, r *http.Request
 		app.handleErrorUpgradeWebsocket(err, w)
 	}
 
-	err = provisioner.ResourceStream(app.RedisClient, streamName, conn)
+	conf := &config.RedisConf{
+		Host: "redis",
+		Port: "6379",
+	}
+
+	client, err := adapter.NewRedisClient(conf)
+
+	if err != nil {
+		app.handleErrorInternal(err, w)
+		return
+	}
+
+	err = provisioner.ResourceStream(client, streamName, conn)
 
 	if err != nil {
 		app.handleErrorWebsocketWrite(err, w)

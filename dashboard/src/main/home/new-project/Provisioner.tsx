@@ -42,8 +42,9 @@ export default class Provisioner extends Component<PropsType, StateType> {
       }
   
       this.state.ws.onmessage = (evt: MessageEvent) => {
-        console.log(evt.data)
-        this.setState({ logs: [...this.state.logs, evt.data] }, () => {
+        let event = JSON.parse(evt.data)
+        let data = event.map((msg: any) => { return msg["Values"]["data"]})
+        this.setState({ logs: [...this.state.logs, ...data] }, () => {
           this.scrollToBottom()
         })
       }
@@ -58,6 +59,7 @@ export default class Provisioner extends Component<PropsType, StateType> {
 
   componentWillUnmount() {
     if (this.state.ws) {
+      console.log('closing websocket')
       this.state.ws.close()
     }
   }

@@ -216,6 +216,14 @@ const createAWSIntegration = baseApi<{
   return `/api/projects/${pathParams.id}/integrations/aws`;
 });
 
+const provisionECR = baseApi<{
+  ecr_name: string,
+  aws_integration_id: string,
+}, { id: number }>('POST', pathParams => {
+  return `/api/projects/${pathParams.id}/provision/ecr`;
+});
+
+
 const createECR = baseApi<{
   name: string,
   aws_integration_id: string,
@@ -292,6 +300,7 @@ export default {
   getProjectRegistries,
   getProjectRepos,
   createAWSIntegration,
+  provisionECR,
   createECR,
   getImageRepos,
   getImageTags,

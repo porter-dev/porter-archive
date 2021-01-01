@@ -199,6 +199,16 @@ func New(a *api.App) *chi.Mux {
 		)
 
 		r.Method(
+			"POST",
+			"/projects/{project_id}/provision/eks",
+			auth.DoesUserHaveProjectAccess(
+				requestlog.NewHandler(a.HandleProvisionAWSEKSInfra, l),
+				mw.URLParam,
+				mw.ReadAccess,
+			),
+		)
+
+		r.Method(
 			"GET",
 			"/projects/{project_id}/provision/{kind}/{infra_id}/logs",
 			auth.DoesUserHaveProjectAccess(

@@ -214,18 +214,20 @@ export default class NewProject extends Component<PropsType, StateType> {
               this.context.setCurrentProject(proj);
 
               if (this.state.selectedProvider === 'aws') {
+                let clusterName = `${proj.name}-cluster`
 
                 api.createAWSIntegration('<token>', {
                   aws_region: awsRegion,
+                  aws_cluster_id: clusterName,
                   aws_access_key_id: awsAccessId,
                   aws_secret_access_key: awsSecretKey,
                 }, { id: proj.id }, (err2: any, res2: any) => {
                   if (err2) {
                     console.log(err2);
                   } else {
-                    api.provisionECR('<token>', {
+                    api.provisionEKS('<token>', {
                       aws_integration_id: res2.data.id,
-                      ecr_name: `${proj.name}-registry`
+                      eks_name: clusterName,
                     }, {id: proj.id}, (err3: any, res3:any) => {
                       if (err3) {
                         console.log(err3)

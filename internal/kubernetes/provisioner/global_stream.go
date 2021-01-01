@@ -2,6 +2,7 @@ package provisioner
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 
 	"github.com/porter-dev/porter/internal/repository"
@@ -134,11 +135,10 @@ func GlobalStreamListener(
 					}
 
 					// parse raw data into ECR type
-					dataMap, ok := msg.Values["data"].(map[string]interface{})
+					dataString, ok := msg.Values["data"].(string)
 
 					if ok {
-						name, _ := dataMap["name"].(string)
-						reg.Name = name
+						json.Unmarshal([]byte(dataString), reg)
 					}
 
 					reg, err := repo.Registry.CreateRegistry(reg)

@@ -123,6 +123,86 @@ func (app *App) HandleProvisionAWSECRInfra(w http.ResponseWriter, r *http.Reques
 	}
 }
 
+// HandleProvisionAWSEKSInfra provisions a new aws EKS instance for a project
+func (app *App) HandleProvisionAWSEKSInfra(w http.ResponseWriter, r *http.Request) {
+	projID, err := strconv.ParseUint(chi.URLParam(r, "project_id"), 0, 64)
+
+	if err != nil || projID == 0 {
+		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
+		return
+	}
+
+	form := &forms.CreateEKSInfra{
+		ProjectID: uint(projID),
+	}
+
+	// decode from JSON to form value
+	if err := json.NewDecoder(r.Body).Decode(form); err != nil {
+		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
+		return
+	}
+
+	// validate the form
+	if err := app.validator.Struct(form); err != nil {
+		app.handleErrorFormValidation(err, ErrProjectValidateFields, w)
+		return
+	}
+
+	// convert the form to an aws infra instance
+	infra, err := form.ToAWSInfra()
+
+	if err != nil {
+		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
+		return
+	}
+
+	// handle write to the database
+	infra, err = app.Repo.AWSInfra.CreateAWSInfra(infra)
+
+	if err != nil {
+		app.handleErrorDataWrite(err, w)
+		return
+	}
+
+	awsInt, err := app.Repo.AWSIntegration.ReadAWSIntegration(infra.AWSIntegrationID)
+
+	if err != nil {
+		app.handleErrorDataRead(err, w)
+		return
+	}
+
+	// launch provisioning pod
+	agent, err := kubernetes.GetAgentInClusterConfig()
+
+	if err != nil {
+		app.handleErrorDataRead(err, w)
+		return
+	}
+
+	_, err = agent.ProvisionEKS(
+		uint(projID),
+		awsInt,
+		form.EKSName,
+		infra,
+	)
+
+	if err != nil {
+		app.handleErrorInternal(err, w)
+		return
+	}
+
+	app.Logger.Info().Msgf("New aws eks infra created: %d", infra.ID)
+
+	w.WriteHeader(http.StatusCreated)
+
+	infraExt := infra.Externalize()
+
+	if err := json.NewEncoder(w).Encode(infraExt); err != nil {
+		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
+		return
+	}
+}
+
 // HandleGetProvisioningLogs returns real-time logs of the provisioning process via websockets
 func (app *App) HandleGetProvisioningLogs(w http.ResponseWriter, r *http.Request) {
 	// get path parameters

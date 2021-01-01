@@ -210,6 +210,7 @@ const getProjectRepos = baseApi<{}, { id: number }>('GET', pathParams => {
 
 const createAWSIntegration = baseApi<{
   aws_region: string,
+  aws_cluster_id: string,
   aws_access_key_id: string,
   aws_secret_access_key: string,
 }, { id: number }>('POST', pathParams => {
@@ -223,6 +224,12 @@ const provisionECR = baseApi<{
   return `/api/projects/${pathParams.id}/provision/ecr`;
 });
 
+const provisionEKS = baseApi<{
+  eks_name: string,
+  aws_integration_id: string,
+}, { id: number }>('POST', pathParams => {
+  return `/api/projects/${pathParams.id}/provision/eks`;
+});
 
 const createECR = baseApi<{
   name: string,
@@ -301,6 +308,7 @@ export default {
   getProjectRepos,
   createAWSIntegration,
   provisionECR,
+  provisionEKS,
   createECR,
   getImageRepos,
   getImageTags,

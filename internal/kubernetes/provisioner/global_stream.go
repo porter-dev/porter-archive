@@ -2,8 +2,10 @@ package provisioner
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"regexp"
 
 	"github.com/porter-dev/porter/internal/repository"
 
@@ -142,6 +144,39 @@ func GlobalStreamListener(
 					}
 
 					reg, err := repo.Registry.CreateRegistry(reg)
+
+					if err != nil {
+						continue
+					}
+				} else if kind == string(models.AWSInfraEKS) {
+					cluster := &models.Cluster{
+						AuthMechanism:    models.AWS,
+						ProjectID:        projID,
+						AWSIntegrationID: infra.AWSIntegrationID,
+					}
+
+					// parse raw data into ECR type
+					dataString, ok := msg.Values["data"].(string)
+
+					if ok {
+						json.Unmarshal([]byte(dataString), cluster)
+					}
+
+					re := regexp.MustCompile(`^([A-Za-z0-9+/]{4})*([A-Za-z0-9+/]{3}=|[A-Za-z0-9+/]{2}==)?$`)
+
+					// if it matches the base64 regex, decode it
+					caData := string(cluster.CertificateAuthorityData)
+					if re.MatchString(caData) {
+						decoded, err := base64.StdEncoding.DecodeString(caData)
+
+						if err != nil {
+							continue
+						}
+
+						cluster.CertificateAuthorityData = []byte(decoded)
+					}
+
+					cluster, err := repo.Cluster.CreateCluster(cluster)
 
 					if err != nil {
 						continue

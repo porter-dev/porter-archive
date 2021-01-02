@@ -210,7 +210,7 @@ const getProjectRepos = baseApi<{}, { id: number }>('GET', pathParams => {
 
 const createAWSIntegration = baseApi<{
   aws_region: string,
-  aws_cluster_id: string,
+  aws_cluster_id?: string,
   aws_access_key_id: string,
   aws_secret_access_key: string,
 }, { id: number }>('POST', pathParams => {

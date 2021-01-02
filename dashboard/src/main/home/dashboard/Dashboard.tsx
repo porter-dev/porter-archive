@@ -6,6 +6,7 @@ import { Context } from '../../../shared/Context';
 import PipelinesSection from './PipelinesSection';
 
 type PropsType = {
+  setCurrentView: (x: string) => void,
 };
 
 type StateType = {
@@ -32,7 +33,10 @@ export default class Dashboard extends Component<PropsType, StateType> {
             <Title>{currentProject && currentProject.name}</Title>
             <i
               className="material-icons"
-              onClick={() => this.context.setCurrentModal('UpdateProjectModal', { currentProject: currentProject })}
+              onClick={() => this.context.setCurrentModal('UpdateProjectModal', { 
+                currentProject: currentProject,
+                setCurrentView: this.props.setCurrentView,
+              })}
             >
               more_vert
           </i>

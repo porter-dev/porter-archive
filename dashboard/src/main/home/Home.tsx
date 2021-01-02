@@ -4,6 +4,7 @@ import ReactModal from 'react-modal';
 
 import { Context } from '../../shared/Context';
 import api from '../../shared/api';
+import { ProjectType } from '../../shared/types';
 
 import Sidebar from './sidebar/Sidebar';
 import Dashboard from './dashboard/Dashboard';
@@ -11,11 +12,13 @@ import ClusterDashboard from './cluster-dashboard/ClusterDashboard';
 import Loading from '../../components/Loading';
 import Templates from './templates/Templates';
 import Integrations from "./integrations/Integrations";
-import CreateProjectModal from './modals/CreateProjectModal';
 import UpdateProjectModal from './modals/UpdateProjectModal';
 import ClusterInstructionsModal from './modals/ClusterInstructionsModal';
 import IntegrationsModal from './modals/IntegrationsModal';
 import IntegrationsInstructionsModal from './modals/IntegrationsInstructionsModal';
+import NewProject from './new-project/NewProject';
+import Navbar from './navbar/Navbar';
+import Provisioner from './new-project/Provisioner';
 
 type PropsType = {
   logOut: () => void
@@ -27,15 +30,36 @@ type StateType = {
   currentView: string,
 
   // Track last project id for refreshing clusters on project change
-  prevProjectId: number | null
+  prevProjectId: number | null,
 };
 
 export default class Home extends Component<PropsType, StateType> {
   state = {
     forceSidebar: true,
     showWelcome: false,
-    currentView: 'cluster-dashboard',
-    prevProjectId: null as number | null
+    currentView: 'dashboard',
+    prevProjectId: null as number | null,
+  }
+
+  // Possibly consolidate into context (w/ ProjectSection + NewProject)
+  getProjects = () => {
+    let { user, currentProject, projects, setProjects } = this.context;
+    api.getProjects('<token>', {}, { id: user.userId }, (err: any, res: any) => {
+      if (err) {
+        console.log(err)
+      } else if (res.data) {
+        setProjects(res.data);
+        if (res.data.length > 0 && !currentProject) {
+          this.context.setCurrentProject(res.data[0]);
+        } else if (res.data.length === 0) {
+          this.setState({ currentView: 'new-project' });
+        }
+      }
+    });
+  }
+
+  componentDidMount() {
+    this.getProjects();
   }
 
   componentDidUpdate(prevProps: PropsType) {
@@ -91,11 +115,17 @@ export default class Home extends Component<PropsType, StateType> {
     } else if (currentView === 'dashboard') {
       return (
         <DashboardWrapper>
-          <Dashboard />
+          <Dashboard setCurrentView={(x: string) => this.setState({ currentView: x })} />
         </DashboardWrapper>
       );
     } else if (currentView === 'integrations') {
       return <Integrations />;
+    } else if (currentView === 'new-project') {
+      return (
+        <NewProject setCurrentView={(x: string) => this.setState({ currentView: x })} />
+      );
+    } else if (currentView === 'provisioner') {
+      return <Provisioner />
     }
 
     return (
@@ -105,18 +135,29 @@ export default class Home extends Component<PropsType, StateType> {
     );
   }
 
+  renderSidebar = () => {
+    if (this.context.projects.length > 0) {
+
+      // Force sidebar closed on first provision 
+      if (this.state.currentView === 'provisioner' && this.state.forceSidebar) {
+        this.setState({ forceSidebar: false });
+      }
+      
+      return (
+        <Sidebar
+          forceSidebar={this.state.forceSidebar}
+          setWelcome={(x: boolean) => this.setState({ showWelcome: x })}
+          setCurrentView={(x: string) => this.setState({ currentView: x })}
+          currentView={this.state.currentView}
+        />
+      );
+    }
+  }
+
   render() {
     let { currentModal, setCurrentModal, currentProject } = this.context;
     return (
       <StyledHome>
-        <ReactModal
-          isOpen={currentModal === 'CreateProjectModal'}
-          onRequestClose={() => currentProject ? setCurrentModal(null, null) : null }
-          style={ProjectModalStyles}
-          ariaHideApp={false}
-        >
-          <CreateProjectModal />
-        </ReactModal>
         <ReactModal
           isOpen={currentModal === 'ClusterInstructionsModal'}
           onRequestClose={() => setCurrentModal(null, null)}
@@ -150,15 +191,13 @@ export default class Home extends Component<PropsType, StateType> {
           <IntegrationsInstructionsModal />
         </ReactModal>
 
-        <Sidebar
-          logOut={this.props.logOut}
-          forceSidebar={this.state.forceSidebar}
-          setWelcome={(x: boolean) => this.setState({ showWelcome: x })}
-          setCurrentView={(x: string) => this.setState({ currentView: x })}
-          currentView={this.state.currentView}
-        />
+        {this.renderSidebar()}
 
         <ViewWrapper>
+          <Navbar 
+            logOut={this.props.logOut} 
+            currentView={this.state.currentView} // For form feedback
+          />
           {this.renderContents()}
         </ViewWrapper>
       </StyledHome>
@@ -167,25 +206,6 @@ export default class Home extends Component<PropsType, StateType> {
 }
 
 Home.contextType = Context;
-
-const MediumModalStyles = {
-  overlay: {
-    backgroundColor: 'rgba(0,0,0,0.6)',
-    zIndex: 2,
-  },
-  content: {
-    borderRadius: '7px',
-    border: 0,
-    width: '760px',
-    maxWidth: '80vw',
-    margin: '0 auto',
-    height: '575px',
-    top: 'calc(50% - 289px)',
-    backgroundColor: '#202227',
-    animation: 'floatInModal 0.5s 0s',
-    overflow: 'visible',
-  },
-};
 
 const SmallModalStyles = {
   overlay: {

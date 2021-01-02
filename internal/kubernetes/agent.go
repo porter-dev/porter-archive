@@ -7,9 +7,16 @@ import (
 	"io"
 	"strings"
 
+	"github.com/porter-dev/porter/internal/config"
+	"github.com/porter-dev/porter/internal/kubernetes/provisioner"
+	"github.com/porter-dev/porter/internal/kubernetes/provisioner/aws"
+	"github.com/porter-dev/porter/internal/kubernetes/provisioner/aws/ecr"
+	"github.com/porter-dev/porter/internal/models/integrations"
+
 	"github.com/gorilla/websocket"
 	"github.com/porter-dev/porter/internal/helm/grapher"
 	appsv1 "k8s.io/api/apps/v1"
+	batchv1 "k8s.io/api/batch/v1"
 	v1 "k8s.io/api/core/v1"
 	v1beta1 "k8s.io/api/extensions/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -122,7 +129,7 @@ func (a *Agent) GetPodLogs(namespace string, name string, conn *websocket.Conn) 
 		// listens for websocket closing handshake
 		for {
 			if _, _, err := conn.ReadMessage(); err != nil {
-				conn.Close()
+				defer conn.Close()
 				errorchan <- nil
 				fmt.Println("Successfully closed log stream")
 				return
@@ -222,4 +229,68 @@ func (a *Agent) StreamControllerStatus(conn *websocket.Conn, kind string) error 
 			return err
 		}
 	}
+}
+
+// ProvisionECR spawns a new provisioning pod that creates an ECR instance
+func (a *Agent) ProvisionECR(
+	projectID uint,
+	awsConf *integrations.AWSIntegration,
+	ecrName string,
+) (*batchv1.Job, error) {
+	prov := &provisioner.Conf{
+		ID:   fmt.Sprintf("%s-%d", ecrName, projectID),
+		Name: fmt.Sprintf("prov-%s-%d", ecrName, projectID),
+		Kind: provisioner.ECR,
+		AWS: &aws.Conf{
+			AWSRegion:          awsConf.AWSRegion,
+			AWSAccessKeyID:     string(awsConf.AWSAccessKeyID),
+			AWSSecretAccessKey: string(awsConf.AWSSecretAccessKey),
+		},
+		ECR: &ecr.Conf{
+			ECRName: ecrName,
+		},
+	}
+
+	return a.provision(prov)
+}
+
+// ProvisionTest spawns a new provisioning pod that tests provisioning
+func (a *Agent) ProvisionTest(
+	projectID uint,
+) (*batchv1.Job, error) {
+	prov := &provisioner.Conf{
+		ID:   fmt.Sprintf("%s-%d", "testing", projectID),
+		Name: fmt.Sprintf("prov-%s-%d", "testing", projectID),
+		Kind: provisioner.Test,
+	}
+
+	return a.provision(prov)
+}
+
+func (a *Agent) provision(
+	prov *provisioner.Conf,
+) (*batchv1.Job, error) {
+	prov.Namespace = "default"
+
+	prov.Redis = &config.RedisConf{
+		Host: "redis-master.default.svc.cluster.local",
+		Port: "6379",
+	}
+
+	prov.Postgres = &provisioner.PostgresConf{
+		Host: "postgres-postgresql.default.svc.cluster.local",
+		Port: "5432",
+	}
+
+	job, err := prov.GetProvisionerJobTemplate()
+
+	if err != nil {
+		return nil, err
+	}
+
+	return a.Clientset.BatchV1().Jobs(prov.Namespace).Create(
+		context.TODO(),
+		job,
+		metav1.CreateOptions{},
+	)
 }

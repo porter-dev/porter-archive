@@ -5,6 +5,7 @@ import { Context } from '../../../shared/Context';
 import ProjectSection from './ProjectSection';
 
 type PropsType = {
+  setCurrentView: (x: string) => void,
 };
 
 type StateType = {
@@ -19,6 +20,8 @@ export default class ProjectSectionContainer extends Component<PropsType, StateT
     return (
       <ProjectSection
         currentProject={this.context.currentProject}
+        projects={this.context.projects}
+        setCurrentView={this.props.setCurrentView}
       />
     );
   }

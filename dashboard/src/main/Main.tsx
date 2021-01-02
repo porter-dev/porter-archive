@@ -54,6 +54,11 @@ export default class Main extends Component<PropsType, StateType> {
     this.setState({ isLoggedIn: true, initialized: true });
   }
 
+  handleLogOut = () => {
+    this.context.clearContext();
+    this.setState({ isLoggedIn: false, initialized: true });
+  }
+
   renderMain = () => {
     if (this.state.loading) {
       return <Loading />
@@ -79,7 +84,7 @@ export default class Main extends Component<PropsType, StateType> {
 
         <Route path='/dashboard' render={() => {
           if (this.state.isLoggedIn && this.state.initialized) {
-            return <Home logOut={() => this.setState({ isLoggedIn: false, initialized: true })} />
+            return <Home logOut={this.handleLogOut} />
           } else {
             return <Redirect to='/' />
           }

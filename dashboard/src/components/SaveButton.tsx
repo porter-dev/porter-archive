@@ -8,6 +8,7 @@ type PropsType = {
   disabled?: boolean,
   status?: string | null,
   color?: string,
+  helper?: string | null,
 
   // Makes flush with corner if not within a modal
   makeFlush?: boolean 
@@ -45,6 +46,10 @@ export default class SaveButton extends Component<PropsType, StateType> {
           </StatusWrapper>
         );
       }
+    } else if (this.props.helper) {
+      return (
+        <StatusWrapper successful={true}>{this.props.helper}</StatusWrapper>
+      );
     }
   }
 

@@ -177,6 +177,39 @@ func New(a *api.App) *chi.Mux {
 			),
 		)
 
+		// /api/projects/{project_id}/provision routes
+
+		// TODO -- restrict this endpoint
+		r.Method(
+			"GET",
+			"/projects/{project_id}/provision/test",
+			auth.DoesUserHaveProjectAccess(
+				requestlog.NewHandler(a.HandleProvisionTest, l),
+				mw.URLParam,
+				mw.ReadAccess,
+			),
+		)
+
+		r.Method(
+			"GET",
+			"/projects/{project_id}/provision/ecr",
+			auth.DoesUserHaveProjectAccess(
+				requestlog.NewHandler(a.HandleProvisionAWSECRInfra, l),
+				mw.URLParam,
+				mw.ReadAccess,
+			),
+		)
+
+		r.Method(
+			"GET",
+			"/projects/{project_id}/provision/{kind}/{infra_id}/logs",
+			auth.DoesUserHaveProjectAccess(
+				requestlog.NewHandler(a.HandleGetProvisioningLogs, l),
+				mw.URLParam,
+				mw.ReadAccess,
+			),
+		)
+
 		// /api/projects/{project_id}/clusters routes
 		r.Method(
 			"GET",

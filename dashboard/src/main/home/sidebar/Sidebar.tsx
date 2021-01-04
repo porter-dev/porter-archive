@@ -13,7 +13,7 @@ import loading from '../../../assets/loading.gif';
 type PropsType = {
   forceSidebar: boolean,
   setWelcome: (x: boolean) => void,
-  setCurrentView: (x: string) => void,
+  setCurrentView: (x: string, viewData?: any) => void,
   currentView: string,
 };
 

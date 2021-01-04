@@ -165,6 +165,41 @@ func (c *Client) DeleteProjectRegistry(
 	return nil
 }
 
+// GetECRTokenResponse blah
+type GetECRTokenResponse struct {
+	Token string `json:"token"`
+}
+
+// GetECRAuthorizationToken gets an ECR authorization token
+func (c *Client) GetECRAuthorizationToken(
+	ctx context.Context,
+	projectID uint,
+	registryID uint,
+) error {
+	req, err := http.NewRequest(
+		"GET",
+		fmt.Sprintf("%s/projects/%d/registries/%d/ecr/token", c.BaseURL, projectID, registryID),
+		nil,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	bodyResp := &GetECRTokenResponse{}
+	req = req.WithContext(ctx)
+
+	if httpErr, err := c.sendRequest(req, bodyResp, true); httpErr != nil || err != nil {
+		if httpErr != nil {
+			return fmt.Errorf("code %d, errors %v", httpErr.Code, httpErr.Errors)
+		}
+
+		return err
+	}
+
+	return nil
+}
+
 // ListRegistryRepositoryResponse is the list of repositories in a registry
 type ListRegistryRepositoryResponse []registry.Repository
 

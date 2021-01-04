@@ -7,6 +7,7 @@ import { integrationList } from '../../../shared/common';
 import loading from '../../../assets/loading.gif';
 
 import Helper from '../../../components/values-form/Helper';
+import { eventNames } from 'process';
 
 type PropsType = {
   viewData: any,
@@ -45,6 +46,16 @@ export default class Provisioner extends Component<PropsType, StateType> {
       ws.onmessage = (evt: MessageEvent) => {
         let event = JSON.parse(evt.data)
         let data = event.map((msg: any) => { return `${infra.kind}: ${msg["Values"]["data"]}` })
+        let err = null
+
+        // check for error
+        event.forEach((e: any) => {
+          err = e["Values"]["kind"] == "error" ? e["Values"]["data"] : null
+        })
+
+        if (err) {
+          this.setState({ logs: [err] })
+        }
         
         if (!this.state.maxStep[infra.kind]) {
           this.setState({

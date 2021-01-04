@@ -76,10 +76,10 @@ func main() {
 	repo := gorm.NewRepository(db, &key)
 
 	a, _ := api.New(&api.AppConfig{
-		Logger:      logger,
-		Repository:  repo,
-		ServerConf:  appConf.Server,
-		RedisClient: redis,
+		Logger:     logger,
+		Repository: repo,
+		ServerConf: appConf.Server,
+		RedisConf:  &appConf.Redis,
 	})
 
 	appRouter := router.New(a)
@@ -98,10 +98,9 @@ func main() {
 
 	errorChan := make(chan error)
 
-	go prov.GlobalStreamListener(redis, repo.AWSInfra, errorChan)
+	go prov.GlobalStreamListener(redis, *repo, errorChan)
 
 	if err := s.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 		log.Fatal("Server startup failed", err)
 	}
-
 }

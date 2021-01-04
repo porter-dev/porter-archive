@@ -15,6 +15,7 @@ type InfraStatus string
 const (
 	StatusCreating InfraStatus = "creating"
 	StatusCreated  InfraStatus = "created"
+	StatusError    InfraStatus = "error"
 )
 
 // AWSInfraKind is the kind that aws infra can be
@@ -68,24 +69,30 @@ func (ai *AWSInfra) Externalize() *AWSInfraExternal {
 	}
 }
 
-// GetWorkspaceID returns the unique workspace id for this infra
-func (ai *AWSInfra) GetWorkspaceID() string {
+// GetID returns the unique id for this infra
+func (ai *AWSInfra) GetID() string {
 	return fmt.Sprintf("%s-%d-%d", ai.Kind, ai.ProjectID, ai.ID)
 }
 
-// GetInfraIDFromWorkspaceID returns the infra id given a workspace id
-func GetInfraIDFromWorkspaceID(workspaceID string) (uint, error) {
+// ParseWorkspaceID returns the (kind, projectID, infraID)
+func ParseWorkspaceID(workspaceID string) (string, uint, uint, error) {
 	strArr := strings.Split(workspaceID, "-")
 
 	if len(strArr) != 3 {
-		return 0, fmt.Errorf("workspace id improperly formatted")
+		return "", 0, 0, fmt.Errorf("workspace id improperly formatted")
 	}
 
-	u, err := strconv.ParseUint(strArr[2], 10, 64)
+	projID, err := strconv.ParseUint(strArr[1], 10, 64)
 
 	if err != nil {
-		return 0, err
+		return "", 0, 0, err
 	}
 
-	return uint(u), nil
+	infraID, err := strconv.ParseUint(strArr[2], 10, 64)
+
+	if err != nil {
+		return "", 0, 0, err
+	}
+
+	return strArr[0], uint(projID), uint(infraID), nil
 }

@@ -9,10 +9,12 @@ import loading from '../../../assets/loading.gif';
 import Helper from '../../../components/values-form/Helper';
 
 type PropsType = {
+  viewData: any,
 };
 
 type StateType = {
   logs: string[],
+  ws: any
 };
 
 const loadMax = 40;
@@ -20,10 +22,46 @@ const loadMax = 40;
 export default class Provisioner extends Component<PropsType, StateType> {
   state = {
     logs: [] as string[],
+    ws : null as any
+  }
+
+  scrollToBottom = () => {
+    this.scrollRef.current.scrollTop = this.scrollRef.current.scrollHeight
   }
 
   componentDidMount() {
-    this.setState({ logs: ['test-1', 'test-2'] });
+    let { currentProject } = this.context;
+    let protocol = process.env.NODE_ENV == 'production' ? 'wss' : 'ws'
+    let ws = new WebSocket(`${protocol}://${process.env.API_SERVER}/api/projects/${currentProject.id}/provision/${this.props.viewData.kind}/${this.props.viewData.infra_id}/logs`)
+
+    this.setState({ ws }, () => {
+      if (!this.state.ws) return;
+  
+      this.state.ws.onopen = () => {
+        console.log('connected to websocket')
+      }
+  
+      this.state.ws.onmessage = (evt: MessageEvent) => {
+        let event = JSON.parse(evt.data)
+        let data = event.map((msg: any) => { return msg["Values"]["data"]})
+        this.setState({ logs: [...this.state.logs, ...data] }, () => {
+          this.scrollToBottom()
+        })
+      }
+  
+      this.state.ws.onerror = (err: ErrorEvent) => {
+        console.log(err)
+      }
+    })
+
+    this.setState({ logs: [] });
+  }
+
+  componentWillUnmount() {
+    if (this.state.ws) {
+      console.log('closing websocket')
+      this.state.ws.close()
+    }
   }
 
   scrollRef = React.createRef<HTMLDivElement>();

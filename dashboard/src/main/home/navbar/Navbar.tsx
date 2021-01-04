@@ -4,21 +4,20 @@ import styled from 'styled-components';
 import api from '../../../shared/api';
 import { Context } from '../../../shared/Context';
 
+import Feedback from './Feedback';
+
 type PropsType = {
   logOut: () => void,
+  currentView: string,
 };
 
 type StateType = {
   showDropdown: boolean,
-  showFeedbackDropdown: boolean,
-  feedbackSent: boolean,
 };
 
 export default class Navbar extends Component<PropsType, StateType> {
   state = {
     showDropdown: false,
-    showFeedbackDropdown: false,
-    feedbackSent: false,
   }
 
   handleLogout = (): void => {
@@ -47,48 +46,10 @@ export default class Navbar extends Component<PropsType, StateType> {
     }
   }
 
-  renderConfirmation = () => {
-    if (this.state.feedbackSent) {
-      return (
-        <DropdownAlt dropdownWidth='300px' dropdownMaxHeight='200px'>
-          <ConfirmationMessage>
-            <i className="material-icons-outlined">emoji_food_beverage</i>
-            Thanks for improving Porter.
-          </ConfirmationMessage>
-        </DropdownAlt>
-      );
-    }
-  }
-
-  renderFeedbackDropdown = () => {
-    if (this.state.showFeedbackDropdown) {
-      return (
-        <>
-          <CloseOverlay onClick={() => this.setState({ showFeedbackDropdown: false, feedbackSent: false })} />
-          <Dropdown feedbackSent={this.state.feedbackSent} dropdownWidth='300px' dropdownMaxHeight='200px'>
-            <FeedbackInput placeholder='Help us improve this page.' />
-            <SendButton onClick={() => this.setState({ feedbackSent: true })}>
-              <i className="material-icons">send</i> Send
-            </SendButton>
-          </Dropdown>
-          {this.renderConfirmation()}
-        </>
-      );
-    }
-  }
-
   render() {
     return (
       <StyledNavbar>
-        <FeedbackButton>
-          <Flex onClick={() => this.setState({ showFeedbackDropdown: !this.state.showFeedbackDropdown })}>
-            <i className="material-icons-outlined">
-              campaign
-            </i>
-            Feedback?
-          </Flex>
-          {this.renderFeedbackDropdown()}
-        </FeedbackButton>
+        <Feedback currentView={this.props.currentView} />
         <NavButton selected={this.state.showDropdown}>
           <i 
             className="material-icons-outlined" 
@@ -104,72 +65,6 @@ export default class Navbar extends Component<PropsType, StateType> {
 }
 
 Navbar.contextType = Context;
-
-const ConfirmationMessage = styled.div`
-  width: 100%;
-  height: 100px;
-  display: flex;
-  font-size: 13px;
-  align-items: center;
-  justify-content: center;
-  color: #ffffff55;
-
-  > i {
-    display: flex;
-    font-size: 16px;
-    margin-right: 10px;
-    align-items: center;
-    justify-content: center;
-    color: #ffffff55;
-  }
-`;
-
-const SendButton = styled.div`
-  display: flex;
-  align-items: center;
-  height: 40px;
-  cursor: pointer;
-  justify-content: center;
-  margin-top: -3px;
-  font-size: 13px;
-  font-weight: 500;
-  font-family: 'Work Sans', sans-serif;
-  :hover {
-    background: #ffffff11;
-  }
-
-  > i {
-    background: none;
-    border-radius: 3px;
-    display: flex;
-    font-size: 14px;
-    top: 11px;
-    margin-right: 10px;
-    padding: 1px;
-    align-items: center;
-    justify-content: center;
-    color: #ffffffaa;
-  }
-`;
-
-const FeedbackInput = styled.textarea`
-  resize: none;
-  width: 100%;
-  height: 80px;
-  outline: 0;
-  padding: 14px;
-  color: white;
-  border: 0;
-  font-size: 13px;
-  font-family: 'Work Sans', sans-serif;
-  background: #aaaabb11;
-`;
-
-const Flex = styled.div`
-  display: flex;
-  align-items: center;
-  cursor: pointer;
-`;
 
 const CloseOverlay = styled.div`
   position: fixed;

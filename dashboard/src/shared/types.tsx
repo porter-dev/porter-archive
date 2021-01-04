@@ -141,3 +141,10 @@ export interface ImageType {
   registryId: number,
   name: string,
 }
+
+export interface InfraType {
+  id: number,
+  project_d: number,
+  kind: string,
+  status: string,
+}

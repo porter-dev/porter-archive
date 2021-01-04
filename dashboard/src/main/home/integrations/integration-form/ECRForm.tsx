@@ -40,6 +40,7 @@ export default class ECRForm extends Component<PropsType, StateType> {
   handleSubmit = () => {
     let { awsRegion, awsAccessId, awsSecretKey, credentialsName } = this.state;
     let { currentProject } = this.context;
+
     api.createAWSIntegration('<token>', {
       aws_region: awsRegion,
       aws_access_key_id: awsAccessId,

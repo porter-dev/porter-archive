@@ -210,10 +210,25 @@ const getProjectRepos = baseApi<{}, { id: number }>('GET', pathParams => {
 
 const createAWSIntegration = baseApi<{
   aws_region: string,
+  aws_cluster_id?: string,
   aws_access_key_id: string,
   aws_secret_access_key: string,
 }, { id: number }>('POST', pathParams => {
   return `/api/projects/${pathParams.id}/integrations/aws`;
+});
+
+const provisionECR = baseApi<{
+  ecr_name: string,
+  aws_integration_id: string,
+}, { id: number }>('POST', pathParams => {
+  return `/api/projects/${pathParams.id}/provision/ecr`;
+});
+
+const provisionEKS = baseApi<{
+  eks_name: string,
+  aws_integration_id: string,
+}, { id: number }>('POST', pathParams => {
+  return `/api/projects/${pathParams.id}/provision/eks`;
 });
 
 const createECR = baseApi<{
@@ -254,8 +269,16 @@ const getGitRepos = baseApi<{
   return `/api/projects/${pathParams.project_id}/gitrepos`;
 });
 
+const getInfra = baseApi<{
+}, {
+  project_id: number,
+}>('GET', pathParams => {
+  return `/api/projects/${pathParams.project_id}/infra`;
+});
+
 // Bundle export to allow default api import (api.<method> is more readable)
 export default {
+  getInfra,
   linkGithubProject,
   getGitRepos,
   checkAuth,
@@ -292,6 +315,8 @@ export default {
   getProjectRegistries,
   getProjectRepos,
   createAWSIntegration,
+  provisionECR,
+  provisionEKS,
   createECR,
   getImageRepos,
   getImageTags,

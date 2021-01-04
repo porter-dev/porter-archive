@@ -177,6 +177,17 @@ func New(a *api.App) *chi.Mux {
 			),
 		)
 
+		// /api/projects/{project_id}/infra routes
+		r.Method(
+			"GET",
+			"/projects/{project_id}/infra",
+			auth.DoesUserHaveProjectAccess(
+				requestlog.NewHandler(a.HandleListProjectInfra, l),
+				mw.URLParam,
+				mw.ReadAccess,
+			),
+		)
+
 		// /api/projects/{project_id}/provision routes
 		r.Method(
 			"POST",

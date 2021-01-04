@@ -15,6 +15,7 @@ type InfraStatus string
 const (
 	StatusCreating InfraStatus = "creating"
 	StatusCreated  InfraStatus = "created"
+	StatusError    InfraStatus = "error"
 )
 
 // AWSInfraKind is the kind that aws infra can be

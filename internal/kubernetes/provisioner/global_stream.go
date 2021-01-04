@@ -109,8 +109,6 @@ func GlobalStreamListener(
 
 		// parse messages from the global stream
 		for _, msg := range xstreams[0].Messages {
-			fmt.Println(msg.Values)
-
 			// parse the id to identify the infra
 			kind, projID, infraID, err := models.ParseWorkspaceID(fmt.Sprintf("%v", msg.Values["id"]))
 
@@ -181,6 +179,20 @@ func GlobalStreamListener(
 					if err != nil {
 						continue
 					}
+				}
+			} else if fmt.Sprintf("%v", msg.Values["status"]) == "error" {
+				infra, err := repo.AWSInfra.ReadAWSInfra(infraID)
+
+				if err != nil {
+					continue
+				}
+
+				infra.Status = models.StatusError
+
+				infra, err = repo.AWSInfra.UpdateAWSInfra(infra)
+
+				if err != nil {
+					continue
 				}
 			}
 

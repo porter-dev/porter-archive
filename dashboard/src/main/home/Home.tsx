@@ -196,7 +196,10 @@ export default class Home extends Component<PropsType, StateType> {
         {this.renderSidebar()}
 
         <ViewWrapper>
-          <Navbar logOut={this.props.logOut} />
+          <Navbar 
+            logOut={this.props.logOut} 
+            currentView={this.state.currentView} // For form feedback
+          />
           {this.renderContents()}
         </ViewWrapper>
       </StyledHome>

@@ -10,6 +10,8 @@ import (
 	"github.com/go-chi/chi"
 	"github.com/porter-dev/porter/internal/forms"
 	"github.com/porter-dev/porter/internal/models"
+
+	"github.com/aws/aws-sdk-go/service/ecr"
 )
 
 // HandleCreateRegistry creates a new registry
@@ -90,6 +92,71 @@ func (app *App) HandleListProjectRegistries(w http.ResponseWriter, r *http.Reque
 	w.WriteHeader(http.StatusOK)
 
 	if err := json.NewEncoder(w).Encode(extRegs); err != nil {
+		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
+		return
+	}
+}
+
+// temp -- token response
+type ECRTokenResponse struct {
+	Token string `json:"token"`
+}
+
+// HandleGetProjectRegistryECRToken gets an ECR token for a registry
+func (app *App) HandleGetProjectRegistryECRToken(w http.ResponseWriter, r *http.Request) {
+	projID, err := strconv.ParseUint(chi.URLParam(r, "project_id"), 0, 64)
+
+	if err != nil || projID == 0 {
+		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
+		return
+	}
+
+	registryID, err := strconv.ParseUint(chi.URLParam(r, "registry_id"), 0, 64)
+
+	if err != nil || registryID == 0 {
+		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
+		return
+	}
+
+	// handle write to the database
+	reg, err := app.Repo.Registry.ReadRegistry(uint(registryID))
+
+	if err != nil {
+		app.handleErrorDataRead(err, w)
+		return
+	}
+
+	// get the aws integration and session
+	awsInt, err := app.Repo.AWSIntegration.ReadAWSIntegration(reg.AWSIntegrationID)
+
+	if err != nil {
+		app.handleErrorDataRead(err, w)
+		return
+	}
+
+	sess, err := awsInt.GetSession()
+
+	if err != nil {
+		app.handleErrorDataRead(err, w)
+		return
+	}
+
+	ecrSvc := ecr.New(sess)
+
+	output, err := ecrSvc.GetAuthorizationToken(&ecr.GetAuthorizationTokenInput{})
+
+	if err != nil {
+		app.handleErrorDataRead(err, w)
+		return
+	}
+
+	resp := &ECRTokenResponse{
+		Token: *output.AuthorizationData[0].AuthorizationToken,
+	}
+
+	w.WriteHeader(http.StatusOK)
+
+	if err := json.NewEncoder(w).Encode(resp); err != nil {
 		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
 		return
 	}

@@ -213,6 +213,7 @@ export default class NewProject extends Component<PropsType, StateType> {
               let proj = res.data.find((el: ProjectType) => el.name === this.state.projectName);
               this.context.setCurrentProject(proj);
 
+              // Handle provisioning logic
               if (this.state.selectedProvider === 'aws') {
                 let clusterName = `${proj.name}-cluster`
 

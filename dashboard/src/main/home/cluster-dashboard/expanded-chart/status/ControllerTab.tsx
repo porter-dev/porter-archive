@@ -117,13 +117,12 @@ export default class ControllerTab extends Component<PropsType, StateType> {
       >
         {
           this.state.raw.map((pod, i) => {
-            console.log('pod', pod)
-            let status = this.getPodStatus(pod.status)
+            let status = this.getPodStatus(pod.status);
             return (
               <Tab 
                 key={pod.metadata?.name}
                 selected={selectedPod?.metadata?.name === pod?.metadata?.name}
-                onClick={() => {selectPod(pod)}}
+                onClick={() => { selectPod(pod)} }
               > 
                 <Gutter>
                   <Rail />

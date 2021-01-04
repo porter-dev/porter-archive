@@ -438,8 +438,6 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
       this.props.currentChart 
     );
 
-    console.log(this.props.currentChart.name)
-
     api.getIngress('<token>', { 
       cluster_id: currentCluster.id,
     }, {

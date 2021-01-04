@@ -155,6 +155,14 @@ export default class Home extends Component<PropsType, StateType> {
     );
   }
 
+  setCurrentView = (x: string, viewData?: any) => {
+    if (!viewData) {
+      this.setState({ currentView: x });
+    } else {
+      this.setState({ currentView: x, viewData });
+    }
+  }
+
   renderSidebar = () => {
     if (this.context.projects.length > 0) {
 
@@ -167,7 +175,7 @@ export default class Home extends Component<PropsType, StateType> {
         <Sidebar
           forceSidebar={this.state.forceSidebar}
           setWelcome={(x: boolean) => this.setState({ showWelcome: x })}
-          setCurrentView={(x: string) => this.setState({ currentView: x })}
+          setCurrentView={this.setCurrentView}
           currentView={this.state.currentView}
         />
       );

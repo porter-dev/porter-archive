@@ -4,11 +4,11 @@ import gradient from '../../../assets/gradient.jpg';
 
 import api from '../../../shared/api';
 import { Context } from '../../../shared/Context';
-import { ProjectType } from '../../../shared/types';
+import { ProjectType, InfraType } from '../../../shared/types';
 
 type PropsType = {
   currentProject: ProjectType,
-  setCurrentView: (x: string) => void,
+  setCurrentView: (x: string, viewData?: any) => void,
   projects: ProjectType[],
 };
 
@@ -21,16 +21,37 @@ export default class ProjectSection extends Component<PropsType, StateType> {
     expanded: false,
   };
 
+  handleSelectProject = (project: ProjectType) => {
+    this.context.setCurrentProject(project);
+    
+    api.getInfra('<token>', {}, { project_id: project.id }, (err: any, res: any) => {
+      if (err) {
+        console.log(err);
+      } else if (res.data) {
+        let anyProvisioning = false;
+        res.data.forEach((el: InfraType) => {
+          if (el.status === 'creating') {
+            anyProvisioning = true;
+            this.props.setCurrentView('provisioner', {
+              infra_id: el.id,
+              kind: el.kind,
+            });
+          }
+        });
+        if (!anyProvisioning) {
+          this.props.setCurrentView('dashboard');
+        }
+      }
+    });
+  }
+
   renderOptionList = () => {
     return this.props.projects.map((project: ProjectType, i: number) => {
       return (
         <Option
           key={i}
           selected={project.name === this.props.currentProject.name}
-          onClick={() => {
-            this.context.setCurrentProject(project);
-            this.props.setCurrentView('dashboard');
-          }}
+          onClick={() => this.handleSelectProject(project)}
         >
           <ProjectIcon>
             <ProjectImage src={gradient} />

@@ -193,9 +193,66 @@ export default class NewProject extends Component<PropsType, StateType> {
     return false;
   }
 
+  provisionECR = (proj: ProjectType, callback: (proj: ProjectType, ecr: any) => void) => {
+    let { awsAccessId, awsSecretKey, awsRegion } = this.state;
+
+    api.createAWSIntegration('<token>', {
+      aws_region: awsRegion,
+      aws_access_key_id: awsAccessId,
+      aws_secret_access_key: awsSecretKey,
+    }, { id: proj.id }, (err: any, res: any) => {
+      if (err) {
+        console.log(err);
+        return;
+      }
+
+      api.provisionECR('<token>', {
+        aws_integration_id: res.data.id,
+        ecr_name: `${proj.name}-registry`
+      }, {id: proj.id}, (err: any, ecr:any) => {
+        if (err) {
+          console.log(err)
+          return;
+        }
+
+        callback(proj, ecr);
+      })
+      
+    });
+  }
+
+  provisionEKS = (proj: ProjectType, ecr: any) => {
+    let { awsAccessId, awsSecretKey, awsRegion } = this.state;
+
+    api.createAWSIntegration('<token>', {
+      aws_region: awsRegion,
+      aws_access_key_id: awsAccessId,
+      aws_secret_access_key: awsSecretKey,
+    }, { id: proj.id }, (err: any, res: any) => {
+      if (err) {
+        console.log(err)
+        return;
+      }
+
+      api.provisionEKS('<token>', {
+        aws_integration_id: res.data.id,
+        eks_name: `${proj.name}-cluster`,
+      }, { id: proj.id}, (err: any, eks: any) => {
+        if (err) {
+          console.log(err)
+          return;
+        }
+
+        this.props.setCurrentView('provisioner', [
+          {infra_id: ecr?.data?.id, kind: ecr?.data?.kind},
+          {infra_id: eks?.data?.id, kind: eks?.data?.kind},
+        ]);
+      })
+    })
+  }
+
   createProject = () => {
     this.setState({ status: 'loading' });
-    let { awsAccessId, awsSecretKey, awsRegion } = this.state;
 
     api.createProject('<token>', {
       name: this.state.projectName
@@ -212,32 +269,9 @@ export default class NewProject extends Component<PropsType, StateType> {
             if (res.data.length > 0) {
               let proj = res.data.find((el: ProjectType) => el.name === this.state.projectName);
               this.context.setCurrentProject(proj);
-
+              
               if (this.state.selectedProvider === 'aws') {
-                let clusterName = `${proj.name}-cluster`
-
-                api.createAWSIntegration('<token>', {
-                  aws_region: awsRegion,
-                  aws_cluster_id: clusterName,
-                  aws_access_key_id: awsAccessId,
-                  aws_secret_access_key: awsSecretKey,
-                }, { id: proj.id }, (err2: any, res2: any) => {
-                  if (err2) {
-                    console.log(err2);
-                  } else {
-                    api.provisionEKS('<token>', {
-                      aws_integration_id: res2.data.id,
-                      eks_name: clusterName,
-                    }, {id: proj.id}, (err3: any, res3:any) => {
-                      if (err3) {
-                        console.log(err3)
-                      } else {
-                        this.props.setCurrentView('provisioner', {infra_id: res3.data.id, kind: res3.data.kind});
-                      }
-                    })
-                  }
-                });
-
+                this.provisionECR(proj, this.provisionEKS)
               } else {
                 this.props.setCurrentView('dashboard', null);
               }

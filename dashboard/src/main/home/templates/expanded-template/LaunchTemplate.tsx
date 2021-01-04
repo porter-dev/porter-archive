@@ -61,8 +61,17 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
       _.set(values, key, rawValues[key]);
     }
 
-    _.set(values, "image.repository", this.state.selectedImageUrl)
-    _.set(values, "image.tag", this.state.selectedTag)
+    let imageUrl = this.state.selectedImageUrl;
+    let tag = this.state.selectedTag;
+
+    if (this.state.selectedImageUrl.includes(':')) {
+      let splits = this.state.selectedImageUrl.split(':');
+      imageUrl = splits[0];
+      tag = splits[1];
+    }
+
+    _.set(values, "image.repository", imageUrl)
+    _.set(values, "image.tag", tag)
 
     api.deployTemplate('<token>', {
       templateName: this.props.currentTemplate.name,

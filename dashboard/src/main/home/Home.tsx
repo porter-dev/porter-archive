@@ -4,7 +4,7 @@ import ReactModal from 'react-modal';
 
 import { Context } from '../../shared/Context';
 import api from '../../shared/api';
-import { ProjectType } from '../../shared/types';
+import { InfraType } from '../../shared/types';
 
 import Sidebar from './sidebar/Sidebar';
 import Dashboard from './dashboard/Dashboard';
@@ -48,11 +48,29 @@ export default class Home extends Component<PropsType, StateType> {
     let { user, currentProject, projects, setProjects } = this.context;
     api.getProjects('<token>', {}, { id: user.userId }, (err: any, res: any) => {
       if (err) {
-        console.log(err)
+        console.log(err);
       } else if (res.data) {
         setProjects(res.data);
         if (res.data.length > 0 && !currentProject) {
           this.context.setCurrentProject(res.data[0]);
+
+          // Check if current project is provisioning
+          api.getInfra('<token>', {}, { project_id: res.data[0].id }, (err: any, res: any) => {
+            if (err) {
+              console.log(err);
+            } else if (res.data) {
+              
+              // TODO: separately handle non meta-provisioning case
+              res.data.forEach((el: InfraType) => {
+                if (el.status === 'creating') {
+                  this.setState({ currentView: 'provisioner', viewData: {
+                    infra_id: el.id,
+                    kind: el.kind,
+                  }});
+                }
+              });
+            }
+          });
         } else if (res.data.length === 0) {
           this.setState({ currentView: 'new-project' });
         }
@@ -196,7 +214,10 @@ export default class Home extends Component<PropsType, StateType> {
         {this.renderSidebar()}
 
         <ViewWrapper>
-          <Navbar logOut={this.props.logOut} />
+          <Navbar 
+            logOut={this.props.logOut} 
+            currentView={this.state.currentView} // For form feedback
+          />
           {this.renderContents()}
         </ViewWrapper>
       </StyledHome>

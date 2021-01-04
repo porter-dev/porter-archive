@@ -269,8 +269,16 @@ const getGitRepos = baseApi<{
   return `/api/projects/${pathParams.project_id}/gitrepos`;
 });
 
+const getInfra = baseApi<{
+}, {
+  project_id: number,
+}>('GET', pathParams => {
+  return `/api/projects/${pathParams.project_id}/infra`;
+});
+
 // Bundle export to allow default api import (api.<method> is more readable)
 export default {
+  getInfra,
   linkGithubProject,
   getGitRepos,
   checkAuth,

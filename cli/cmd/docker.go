@@ -1,12 +1,15 @@
 package cmd
 
 import (
+	"context"
 	"encoding/json"
 	"io/ioutil"
+	"net/url"
 	"os"
 	"path/filepath"
 
-	"github.com/fatih/color"
+	"github.com/porter-dev/porter/cli/cmd/api"
+	"github.com/porter-dev/porter/cli/cmd/github"
 	"github.com/spf13/cobra"
 
 	"github.com/docker/cli/cli/config/configfile"
@@ -21,8 +24,9 @@ var configureCmd = &cobra.Command{
 	Use:   "configure",
 	Short: "Configures the host's Docker instance",
 	Run: func(cmd *cobra.Command, args []string) {
-		if err := dockerConfig(); err != nil {
-			color.New(color.FgRed).Println("Configuring Docker unsuccessful:", err.Error())
+		err := checkLoginAndRun(args, dockerConfig)
+
+		if err != nil {
 			os.Exit(1)
 		}
 	},
@@ -34,7 +38,35 @@ func init() {
 	dockerCmd.AddCommand(configureCmd)
 }
 
-func dockerConfig() error {
+func dockerConfig(user *api.AuthCheckResponse, client *api.Client, args []string) error {
+	pID := getProjectID()
+
+	// get all registries that should be added
+	regToAdd := make([]string, 0)
+
+	// get the list of namespaces
+	registries, err := client.ListRegistries(
+		context.Background(),
+		pID,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	for _, registry := range registries {
+		if registry.URL != "" {
+			// strip the protocol
+			regURL, err := url.Parse(registry.URL)
+
+			if err != nil {
+				continue
+			}
+
+			regToAdd = append(regToAdd, regURL.Host)
+		}
+	}
+
 	dockerConfigFile := filepath.Join(home, ".docker", "config.json")
 
 	// check that a compatible version of docker is installed
@@ -50,6 +82,23 @@ func dockerConfig() error {
 		return err
 	}
 
+	// download the porter cred helper
+	z := &github.ZIPReleaseGetter{
+		AssetName:           "docker-credential-porter",
+		AssetFolderDest:     "/usr/local/bin",
+		ZipFolderDest:       filepath.Join(home, ".porter"),
+		ZipName:             "docker-credential-porter_latest.zip",
+		EntityID:            "porter-dev",
+		RepoName:            "porter",
+		IsPlatformDependent: true,
+	}
+
+	err = z.GetLatestRelease()
+
+	if err != nil {
+		return err
+	}
+
 	config := &configfile.ConfigFile{
 		Filename: dockerConfigFile,
 	}
@@ -60,31 +109,9 @@ func dockerConfig() error {
 		return err
 	}
 
-	config.CredentialHelpers["393629051022.dkr.ecr.us-east-2.amazonaws.com"] = "porter"
-
-	err = config.Save()
-
-	if err != nil {
-		return err
+	for _, regURL := range regToAdd {
+		config.CredentialHelpers[regURL] = "porter"
 	}
 
-	return nil
-
-	// z := &github.ZIPReleaseGetter{
-	// 	AssetName:           "docker-credential-porter",
-	// 	AssetFolderDest:     "/usr/local/bin",
-	// 	ZipFolderDest:       filepath.Join(home, ".porter"),
-	// 	ZipName:             "docker-credential-porter_latest.zip",
-	// 	EntityID:            "porter-dev",
-	// 	RepoName:            "porter",
-	// 	IsPlatformDependent: true,
-	// }
-
-	// err = z.GetLatestRelease()
-
-	// if err != nil {
-	// 	return err
-	// }
-
-	// return nil
+	return config.Save()
 }

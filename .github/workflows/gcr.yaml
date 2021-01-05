@@ -21,12 +21,11 @@ jobs:
       run: |
         cat >./dashboard/.env <<EOL
         NODE_ENV=production
-        API_SERVER=dashboard.getporter.dev
+        API_SERVER=localhost:8080
         FULLSTORY_ORG_ID=${{secrets.FULLSTORY_ORG_ID}}
         DISCORD_KEY=${{secrets.DISCORD_KEY}}
         DISCORD_CID=${{secrets.DISCORD_CID}}
         FEEDBACK_ENDPOINT=${{secrets.FEEDBACK_ENDPOINT}}
-        ... 
         EOL
 
         cat ./dashboard/.env

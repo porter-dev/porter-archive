@@ -28,6 +28,8 @@ jobs:
         FEEDBACK_ENDPOINT=${{secrets.FEEDBACK_ENDPOINT}}
         ... 
         EOL
+
+        echo ./dashboard/.env
     - name: Build
       run: |
         DOCKER_BUILDKIT=1 docker build . -t gcr.io/porter-dev-273614/porter-prov:latest -f ./docker/Dockerfile

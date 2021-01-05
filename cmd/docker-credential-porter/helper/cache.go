@@ -11,7 +11,6 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws/credentials"
-	"github.com/sirupsen/logrus"
 	"k8s.io/client-go/util/homedir"
 )
 
@@ -162,7 +161,6 @@ func (f *fileCredentialCache) save(registryCache *RegistryCache) error {
 func (f *fileCredentialCache) init() *RegistryCache {
 	registryCache, err := f.load()
 	if err != nil {
-		logrus.WithError(err).Info("Could not load existing cache")
 		f.Clear()
 		registryCache = newRegistryCache()
 	}

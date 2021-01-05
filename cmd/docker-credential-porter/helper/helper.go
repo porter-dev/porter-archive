@@ -20,7 +20,11 @@ import (
 
 // PorterHelper implements credentials.Helper: it acts as a credentials
 // helper for Docker that allows authentication with different registries.
-type PorterHelper struct{}
+type PorterHelper struct {
+	Debug bool
+
+	credCache CredentialsCache
+}
 
 // Add appends credentials to the store.
 func (p *PorterHelper) Add(cr *credentials.Credentials) error {
@@ -39,18 +43,25 @@ var ecrPattern = regexp.MustCompile(`(^[a-zA-Z0-9][a-zA-Z0-9-_]*)\.dkr\.ecr(\-fi
 // Get retrieves credentials from the store.
 // It returns username and secret as strings.
 func (p *PorterHelper) Get(serverURL string) (user string, secret string, err error) {
-	cmd.Setup()
-	var home = homedir.HomeDir()
-	file, _ := os.OpenFile(filepath.Join(home, ".porter", "logs.txt"), os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0666)
-	log.SetOutput(file)
-
 	// parse the server url for region
 	matches := ecrPattern.FindStringSubmatch(serverURL)
 
 	if len(matches) == 0 {
-		return "", "", fmt.Errorf("docker-credential-porter can only be used with Amazon Elastic Container Registry.")
+		err := fmt.Errorf("only ECR registry URLs are supported")
+
+		if p.Debug {
+			log.Printf("Error: %s\n", err.Error())
+		}
+
+		return "", "", err
 	} else if len(matches) < 3 {
-		return "", "", fmt.Errorf(serverURL + "is not a valid repository URI for Amazon Elastic Container Registry.")
+		err := fmt.Errorf("%s is not a valid ECR repository URI", serverURL)
+
+		if p.Debug {
+			log.Printf("Error: %s\n", err.Error())
+		}
+
+		return "", "", err
 	}
 
 	region := matches[3]
@@ -81,11 +92,35 @@ func (p *PorterHelper) Get(serverURL string) (user string, secret string, err er
 		credCache.Set(serverURL, &AuthEntry{
 			AuthorizationToken: token,
 			RequestedAt:        time.Now(),
-			ExpiresAt:          time.Now().Add(12 * time.Hour),
+			ExpiresAt:          *tokenResp.ExpiresAt,
 			ProxyEndpoint:      serverURL,
 		})
 	}
 
+	return p.getAuth(token)
+}
+
+// List returns the stored serverURLs and their associated usernames.
+func (p *PorterHelper) List() (map[string]string, error) {
+	credCache := BuildCredentialsCache("")
+	entries := credCache.List()
+
+	res := make(map[string]string)
+
+	for _, entry := range entries {
+		user, _, err := p.getAuth(entry.AuthorizationToken)
+
+		if err != nil {
+			continue
+		}
+
+		res[entry.ProxyEndpoint] = user
+	}
+
+	return res, nil
+}
+
+func (p *PorterHelper) getAuth(token string) (string, string, error) {
 	decodedToken, err := base64.StdEncoding.DecodeString(token)
 
 	if err != nil {
@@ -101,28 +136,15 @@ func (p *PorterHelper) Get(serverURL string) (user string, secret string, err er
 	return parts[0], parts[1], nil
 }
 
-// List returns the stored serverURLs and their associated usernames.
-func (p *PorterHelper) List() (map[string]string, error) {
-	credCache := BuildCredentialsCache("")
-	entries := credCache.List()
+func (p *PorterHelper) init() {
+	cmd.Setup()
 
-	res := make(map[string]string)
+	if p.Debug {
+		var home = homedir.HomeDir()
+		file, err := os.OpenFile(filepath.Join(home, ".porter", "logs.txt"), os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0666)
 
-	for _, entry := range entries {
-		decodedToken, err := base64.StdEncoding.DecodeString(entry.AuthorizationToken)
-
-		if err != nil {
-			continue
+		if err == nil {
+			log.SetOutput(file)
 		}
-
-		parts := strings.SplitN(string(decodedToken), ":", 2)
-
-		if len(parts) < 2 {
-			continue
-		}
-
-		res[entry.ProxyEndpoint] = parts[0]
 	}
-
-	return res, nil
 }

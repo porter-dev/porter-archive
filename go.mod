@@ -12,6 +12,7 @@ require (
 	github.com/awslabs/amazon-ecr-credential-helper/ecr-login v0.0.0-20201113001948-d77edb6d2e47
 	github.com/containerd/containerd v1.4.1 // indirect
 	github.com/coreos/rkt v1.30.0
+	github.com/docker/cli v0.0.0-20200130152716-5d0cf8839492
 	github.com/docker/docker v1.4.2-0.20200203170920-46ec8731fbce
 	github.com/docker/docker-credential-helpers v0.6.3
 	github.com/docker/go-connections v0.4.0

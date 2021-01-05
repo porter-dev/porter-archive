@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
 import styled from 'styled-components';
+import AnsiParser from 'ansi-parser';
 
 import api from '../../../shared/api';
 import { Context } from '../../../shared/Context';
@@ -35,8 +36,9 @@ export default class Provisioner extends Component<PropsType, StateType> {
   componentDidMount() {
     let { currentProject } = this.context;
     let protocol = process.env.NODE_ENV == 'production' ? 'wss' : 'ws'
+    let viewData = this.props.viewData || []
 
-    let websockets = this.props.viewData?.forEach((infra: any) => {
+    let websockets = viewData.forEach((infra: any) => {
       let ws = new WebSocket(`${protocol}://${process.env.API_SERVER}/api/projects/${currentProject.id}/provision/${infra.kind}/${infra.infra_id}/logs`)
       
       ws.onopen = () => {
@@ -45,8 +47,7 @@ export default class Provisioner extends Component<PropsType, StateType> {
 
       ws.onmessage = (evt: MessageEvent) => {
         let event = JSON.parse(evt.data)
-        console.log(event)
-        let data = event.map((msg: any) => { return `${infra.kind}: ${msg["Values"]["data"]}` })
+        let data = event.map((msg: any) => { return AnsiParser.removeAnsi(msg["Values"]["data"]["log"]) })
         let err = null
 
         // check for error
@@ -62,7 +63,7 @@ export default class Provisioner extends Component<PropsType, StateType> {
           this.setState({
             maxStep: {
               ...this.state.maxStep,
-              [infra.kind] : event[event.length - 1]["Values"]["created_resources"]
+              [infra.kind] : event[event.length - 1]["Values"]["data"]["total_resources"]
             }
           })
         }
@@ -71,7 +72,7 @@ export default class Provisioner extends Component<PropsType, StateType> {
           logs: [...this.state.logs, ...data], 
           currentStep: {
             ...this.state.currentStep,
-            [infra.kind] : event[event.length - 1]["Values"]["created_resources"]
+            [infra.kind] : event[event.length - 1]["Values"]["data"]["created_resources"]
           },
         }, () => {
           this.scrollToBottom()
@@ -93,7 +94,9 @@ export default class Provisioner extends Component<PropsType, StateType> {
   }
 
   componentWillUnmount() {
-    this.state.websockets?.forEach((ws) => {
+    if (!this.state.websockets) { return; }
+
+    this.state.websockets.forEach((ws) => {
       ws.close()
     })
   }

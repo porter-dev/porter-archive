@@ -111,47 +111,51 @@ func (app *App) HandleGetProjectRegistryECRToken(w http.ResponseWriter, r *http.
 		return
 	}
 
-	registryID, err := strconv.ParseUint(chi.URLParam(r, "registry_id"), 0, 64)
+	region := chi.URLParam(r, "region")
 
-	if err != nil || registryID == 0 {
+	if region == "" {
 		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
 		return
 	}
 
-	// handle write to the database
-	reg, err := app.Repo.Registry.ReadRegistry(uint(registryID))
+	// list registries and find one that matches the region
+	regs, err := app.Repo.Registry.ListRegistriesByProjectID(uint(projID))
+	var token string
 
-	if err != nil {
-		app.handleErrorDataRead(err, w)
-		return
-	}
+	for _, reg := range regs {
+		if reg.AWSIntegrationID != 0 {
+			awsInt, err := app.Repo.AWSIntegration.ReadAWSIntegration(reg.AWSIntegrationID)
 
-	// get the aws integration and session
-	awsInt, err := app.Repo.AWSIntegration.ReadAWSIntegration(reg.AWSIntegrationID)
+			if err != nil {
+				app.handleErrorDataRead(err, w)
+				return
+			}
 
-	if err != nil {
-		app.handleErrorDataRead(err, w)
-		return
-	}
+			if awsInt.AWSRegion == region {
+				// get the aws integration and session
+				sess, err := awsInt.GetSession()
 
-	sess, err := awsInt.GetSession()
+				if err != nil {
+					app.handleErrorDataRead(err, w)
+					return
+				}
 
-	if err != nil {
-		app.handleErrorDataRead(err, w)
-		return
-	}
+				ecrSvc := ecr.New(sess)
 
-	ecrSvc := ecr.New(sess)
+				output, err := ecrSvc.GetAuthorizationToken(&ecr.GetAuthorizationTokenInput{})
 
-	output, err := ecrSvc.GetAuthorizationToken(&ecr.GetAuthorizationTokenInput{})
+				if err != nil {
+					app.handleErrorDataRead(err, w)
+					return
+				}
 
-	if err != nil {
-		app.handleErrorDataRead(err, w)
-		return
+				token = *output.AuthorizationData[0].AuthorizationToken
+			}
+		}
 	}
 
 	resp := &ECRTokenResponse{
-		Token: *output.AuthorizationData[0].AuthorizationToken,
+		Token: token,
 	}
 
 	w.WriteHeader(http.StatusOK)

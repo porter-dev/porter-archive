@@ -174,16 +174,16 @@ type GetECRTokenResponse struct {
 func (c *Client) GetECRAuthorizationToken(
 	ctx context.Context,
 	projectID uint,
-	registryID uint,
-) error {
+	region string,
+) (*GetECRTokenResponse, error) {
 	req, err := http.NewRequest(
 		"GET",
-		fmt.Sprintf("%s/projects/%d/registries/%d/ecr/token", c.BaseURL, projectID, registryID),
+		fmt.Sprintf("%s/projects/%d/registries/ecr/%s/token", c.BaseURL, projectID, region),
 		nil,
 	)
 
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	bodyResp := &GetECRTokenResponse{}
@@ -191,13 +191,13 @@ func (c *Client) GetECRAuthorizationToken(
 
 	if httpErr, err := c.sendRequest(req, bodyResp, true); httpErr != nil || err != nil {
 		if httpErr != nil {
-			return fmt.Errorf("code %d, errors %v", httpErr.Code, httpErr.Errors)
+			return nil, fmt.Errorf("code %d, errors %v", httpErr.Code, httpErr.Errors)
 		}
 
-		return err
+		return nil, err
 	}
 
-	return nil
+	return bodyResp, nil
 }
 
 // ListRegistryRepositoryResponse is the list of repositories in a registry

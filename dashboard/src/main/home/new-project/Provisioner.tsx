@@ -46,13 +46,16 @@ export default class Provisioner extends Component<PropsType, StateType> {
 
       ws.onmessage = (evt: MessageEvent) => {
         let event = JSON.parse(evt.data)
-        console.log(event)
-        let data = event.map((msg: any) => { return msg["Values"]["data"].log })
+        
+        let data = event.map((msg: any) => { 
+          return JSON.parse(msg["Values"]["data"])["log"]
+        })
         let err = null
 
         // check for error
         event.forEach((e: any) => {
-          err = e["Values"]["kind"] == "error" ? e["Values"]["data"] : null
+          let d = JSON.parse(e["Values"]["data"])
+          err = d["kind"] == "error" ? d : null
         })
 
         if (err) {
@@ -63,7 +66,7 @@ export default class Provisioner extends Component<PropsType, StateType> {
           this.setState({
             maxStep: {
               ...this.state.maxStep,
-              [infra.kind] : event[event.length - 1]["Values"]["data"].total_resources
+              [infra.kind] : JSON.parse(event[event.length - 1]["Values"]["data"])["total_resources"]
             }
           })
         }
@@ -72,7 +75,7 @@ export default class Provisioner extends Component<PropsType, StateType> {
           logs: [...this.state.logs, ...data], 
           currentStep: {
             ...this.state.currentStep,
-            [infra.kind] : event[event.length - 1]["Values"]["data"].created_resources
+            [infra.kind] : JSON.parse(event[event.length - 1]["Values"]["data"])["created_resources"]
           },
         }, () => {
           this.scrollToBottom()

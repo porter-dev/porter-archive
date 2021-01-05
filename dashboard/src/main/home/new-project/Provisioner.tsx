@@ -7,6 +7,7 @@ import { integrationList } from '../../../shared/common';
 import loading from '../../../assets/loading.gif';
 
 import Helper from '../../../components/values-form/Helper';
+import { eventNames } from 'process';
 
 type PropsType = {
   viewData: any,
@@ -14,15 +15,17 @@ type PropsType = {
 
 type StateType = {
   logs: string[],
-  ws: any
+  websockets: any[],
+  maxStep : Record<string, number>,
+  currentStep: Record<string, number>,
 };
-
-const loadMax = 40;
 
 export default class Provisioner extends Component<PropsType, StateType> {
   state = {
     logs: [] as string[],
-    ws : null as any
+    websockets : [] as any[],
+    maxStep: {} as Record<string, any>,
+    currentStep: {} as Record<string, number>,
   }
 
   scrollToBottom = () => {
@@ -32,36 +35,66 @@ export default class Provisioner extends Component<PropsType, StateType> {
   componentDidMount() {
     let { currentProject } = this.context;
     let protocol = process.env.NODE_ENV == 'production' ? 'wss' : 'ws'
-    let ws = new WebSocket(`${protocol}://${process.env.API_SERVER}/api/projects/${currentProject.id}/provision/${this.props.viewData.kind}/${this.props.viewData.infra_id}/logs`)
 
-    this.setState({ ws }, () => {
-      if (!this.state.ws) return;
-  
-      this.state.ws.onopen = () => {
+    let websockets = this.props.viewData.forEach((infra: any) => {
+      let ws = new WebSocket(`${protocol}://${process.env.API_SERVER}/api/projects/${currentProject.id}/provision/${infra.kind}/${infra.infra_id}/logs`)
+      
+      ws.onopen = () => {
         console.log('connected to websocket')
       }
-  
-      this.state.ws.onmessage = (evt: MessageEvent) => {
+
+      ws.onmessage = (evt: MessageEvent) => {
         let event = JSON.parse(evt.data)
-        let data = event.map((msg: any) => { return msg["Values"]["data"]})
-        this.setState({ logs: [...this.state.logs, ...data] }, () => {
+        let data = event.map((msg: any) => { return `${infra.kind}: ${msg["Values"]["data"]}` })
+        let err = null
+
+        // check for error
+        event.forEach((e: any) => {
+          err = e["Values"]["kind"] == "error" ? e["Values"]["data"] : null
+        })
+
+        if (err) {
+          this.setState({ logs: [err] })
+        }
+        
+        if (!this.state.maxStep[infra.kind]) {
+          this.setState({
+            maxStep: {
+              ...this.state.maxStep,
+              [infra.kind] : event[event.length]["Values"]["created_resources"]
+            }
+          })
+        }
+
+        this.setState({ 
+          logs: [...this.state.logs, ...data], 
+          currentStep: {
+            ...this.state.currentStep,
+            [infra.kind] : event[event.length]["Values"]["created_resources"]
+          },
+        }, () => {
           this.scrollToBottom()
         })
       }
-  
-      this.state.ws.onerror = (err: ErrorEvent) => {
+
+      ws.onerror = (err: ErrorEvent) => {
         console.log(err)
       }
-    })
 
-    this.setState({ logs: [] });
+      ws.onclose = () => {
+        console.log('closing provisioner websocket')
+      }
+
+      return ws
+    });
+
+    this.setState({ websockets, logs: [] });
   }
 
   componentWillUnmount() {
-    if (this.state.ws) {
-      console.log('closing websocket')
-      this.state.ws.close()
-    }
+    this.state.websockets?.forEach((ws) => {
+      ws.close()
+    })
   }
 
   scrollRef = React.createRef<HTMLDivElement>();
@@ -73,6 +106,17 @@ export default class Provisioner extends Component<PropsType, StateType> {
   }
   
   render() {
+    let maxStep = 0;
+    let currentStep = 0;
+
+    for (let key in this.state.maxStep) {
+      maxStep += this.state.maxStep[key]
+    }
+
+    for (let key in this.state.currentStep) {
+      currentStep += this.state.currentStep[key]
+    }
+
     return (
       <StyledProvisioner>
         <TitleSection>
@@ -84,7 +128,7 @@ export default class Provisioner extends Component<PropsType, StateType> {
         </Helper>
 
         <LoadingBar>
-          <Loaded progress={((7 / loadMax) * 100).toString() + '%'} />
+          <Loaded progress={((currentStep / maxStep) * 100).toString() + '%'} />
         </LoadingBar>
 
         <LogStream ref={this.scrollRef}>

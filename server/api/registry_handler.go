@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/porter-dev/porter/internal/registry"
 
@@ -99,7 +100,8 @@ func (app *App) HandleListProjectRegistries(w http.ResponseWriter, r *http.Reque
 
 // temp -- token response
 type ECRTokenResponse struct {
-	Token string `json:"token"`
+	Token     string     `json:"token"`
+	ExpiresAt *time.Time `json:"expires_at"`
 }
 
 // HandleGetProjectRegistryECRToken gets an ECR token for a registry
@@ -121,6 +123,7 @@ func (app *App) HandleGetProjectRegistryECRToken(w http.ResponseWriter, r *http.
 	// list registries and find one that matches the region
 	regs, err := app.Repo.Registry.ListRegistriesByProjectID(uint(projID))
 	var token string
+	var expiresAt *time.Time
 
 	for _, reg := range regs {
 		if reg.AWSIntegrationID != 0 {
@@ -150,12 +153,14 @@ func (app *App) HandleGetProjectRegistryECRToken(w http.ResponseWriter, r *http.
 				}
 
 				token = *output.AuthorizationData[0].AuthorizationToken
+				expiresAt = output.AuthorizationData[0].ExpiresAt
 			}
 		}
 	}
 
 	resp := &ECRTokenResponse{
-		Token: token,
+		Token:     token,
+		ExpiresAt: expiresAt,
 	}
 
 	w.WriteHeader(http.StatusOK)

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/porter-dev/porter/internal/registry"
 
@@ -167,7 +168,8 @@ func (c *Client) DeleteProjectRegistry(
 
 // GetECRTokenResponse blah
 type GetECRTokenResponse struct {
-	Token string `json:"token"`
+	Token     string     `json:"token"`
+	ExpiresAt *time.Time `json:"expires_at"`
 }
 
 // GetECRAuthorizationToken gets an ECR authorization token

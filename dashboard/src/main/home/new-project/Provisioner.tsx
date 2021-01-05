@@ -1,6 +1,5 @@
 import React, { Component } from 'react';
 import styled from 'styled-components';
-import AnsiParser from 'ansi-parser';
 
 import api from '../../../shared/api';
 import { Context } from '../../../shared/Context';
@@ -47,7 +46,7 @@ export default class Provisioner extends Component<PropsType, StateType> {
 
       ws.onmessage = (evt: MessageEvent) => {
         let event = JSON.parse(evt.data)
-        let data = event.map((msg: any) => { return AnsiParser.removeAnsi(msg["Values"]["data"]["log"]) })
+        let data = event.map((msg: any) => { return msg["Values"]["data"]["log"] })
         let err = null
 
         // check for error

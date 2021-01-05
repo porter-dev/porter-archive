@@ -26,7 +26,6 @@ jobs:
         DISCORD_KEY=${{secrets.DISCORD_KEY}}
         DISCORD_CID=${{secrets.DISCORD_CID}}
         FEEDBACK_ENDPOINT=${{secrets.FEEDBACK_ENDPOINT}}
-        ...
         EOL
 
         cat ./dashboard/.env

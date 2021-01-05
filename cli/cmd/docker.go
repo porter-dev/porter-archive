@@ -69,13 +69,17 @@ func dockerConfig(user *api.AuthCheckResponse, client *api.Client, args []string
 
 	dockerConfigFile := filepath.Join(home, ".docker", "config.json")
 
-	// check that a compatible version of docker is installed
-
 	// determine if configfile exists
+	if info, err := os.Stat(dockerConfigFile); info.IsDir() || os.IsNotExist(err) {
+		// if it does not exist, create it
+		err := ioutil.WriteFile(dockerConfigFile, []byte("{}"), 0700)
 
-	// if it does not exist, create it
+		if err != nil {
+			return err
+		}
+	}
 
-	// if it does exist, read it
+	// read the file bytes
 	configBytes, err := ioutil.ReadFile(dockerConfigFile)
 
 	if err != nil {

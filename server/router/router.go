@@ -422,13 +422,9 @@ func New(a *api.App) *chi.Mux {
 
 		r.Method(
 			"GET",
-			"/projects/{project_id}/registries/{registry_id}/ecr/token",
+			"/projects/{project_id}/registries/ecr/{region}/token",
 			auth.DoesUserHaveProjectAccess(
-				auth.DoesUserHaveRegistryAccess(
-					requestlog.NewHandler(a.HandleGetProjectRegistryECRToken, l),
-					mw.URLParam,
-					mw.URLParam,
-				),
+				requestlog.NewHandler(a.HandleGetProjectRegistryECRToken, l),
 				mw.URLParam,
 				mw.WriteAccess,
 			),

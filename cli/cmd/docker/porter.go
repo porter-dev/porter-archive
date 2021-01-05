@@ -132,6 +132,8 @@ func StartPorter(opts *PorterStartOpts) (agent *Agent, id string, err error) {
 		}...)
 	}
 
+	opts.Env = append(opts.Env, "REDIS_ENABLED=false")
+
 	// create Porter container
 	startOpts := PorterServerStartOpts{
 		Name:          "porter_server_" + opts.ProcessID,

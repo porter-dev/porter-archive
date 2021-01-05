@@ -31,7 +31,7 @@ jobs:
         cat ./dashboard/.env
     - name: Build
       run: |
-        DOCKER_BUILDKIT=1 docker build . -t gcr.io/porter-dev-273614/porter-prov:latest -f ./docker/Dockerfile
+        DOCKER_BUILDKIT=1 docker build . -t gcr.io/porter-dev-273614/porter-prov:latest -f ./docker/dev.Dockerfile
     - name: Push
       run: |
         docker push gcr.io/porter-dev-273614/porter-prov:latest

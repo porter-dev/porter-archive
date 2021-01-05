@@ -48,6 +48,34 @@ func (app *App) HandleCreateRegistry(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// if the registry is ECR and URL is not set, get the registry url
+	if registry.URL == "" && registry.AWSIntegrationID != 0 {
+		awsInt, err := app.Repo.AWSIntegration.ReadAWSIntegration(registry.AWSIntegrationID)
+
+		if err != nil {
+			app.handleErrorDataRead(err, w)
+			return
+		}
+
+		sess, err := awsInt.GetSession()
+
+		if err != nil {
+			app.handleErrorDataRead(err, w)
+			return
+		}
+
+		ecrSvc := ecr.New(sess)
+
+		output, err := ecrSvc.GetAuthorizationToken(&ecr.GetAuthorizationTokenInput{})
+
+		if err != nil {
+			app.handleErrorDataRead(err, w)
+			return
+		}
+
+		registry.URL = *output.AuthorizationData[0].ProxyEndpoint
+	}
+
 	// handle write to the database
 	registry, err = app.Repo.Registry.CreateRegistry(registry)
 

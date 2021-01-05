@@ -120,15 +120,15 @@ func listRegistries(user *api.AuthCheckResponse, client *api.Client, args []stri
 	w := new(tabwriter.Writer)
 	w.Init(os.Stdout, 3, 8, 0, '\t', tabwriter.AlignRight)
 
-	fmt.Fprintf(w, "%s\t%s\t%s\n", "ID", "NAME", "SERVICE")
+	fmt.Fprintf(w, "%s\t%s\t%s\n", "ID", "URL", "SERVICE")
 
 	currRegistryID := getRegistryID()
 
 	for _, registry := range registries {
 		if currRegistryID == registry.ID {
-			color.New(color.FgGreen).Fprintf(w, "%d\t%s\t%s (current registry)\n", registry.ID, registry.Name, registry.Service)
+			color.New(color.FgGreen).Fprintf(w, "%d\t%s\t%s (current registry)\n", registry.ID, registry.URL, registry.Service)
 		} else {
-			fmt.Fprintf(w, "%d\t%s\t%s\n", registry.ID, registry.Name, registry.Service)
+			fmt.Fprintf(w, "%d\t%s\t%s\n", registry.ID, registry.URL, registry.Service)
 		}
 	}
 

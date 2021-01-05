@@ -13,6 +13,9 @@ type Registry struct {
 	// Name of the registry
 	Name string `json:"name"`
 
+	// URL of the registry
+	URL string `json:"url"`
+
 	// The project that this integration belongs to
 	ProjectID uint `json:"project_id"`
 
@@ -37,6 +40,9 @@ type RegistryExternal struct {
 	// Name of the registry
 	Name string `json:"name"`
 
+	// URL of the registry
+	URL string `json:"url"`
+
 	// The integration service for this registry
 	Service integrations.IntegrationService `json:"service"`
 }
@@ -55,6 +61,7 @@ func (r *Registry) Externalize() *RegistryExternal {
 		ID:        r.ID,
 		ProjectID: r.ProjectID,
 		Name:      r.Name,
+		URL:       r.URL,
 		Service:   serv,
 	}
 }

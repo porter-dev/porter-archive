@@ -36,7 +36,7 @@ export default class Provisioner extends Component<PropsType, StateType> {
     let { currentProject } = this.context;
     let protocol = process.env.NODE_ENV == 'production' ? 'wss' : 'ws'
 
-    let websockets = this.props.viewData.forEach((infra: any) => {
+    let websockets = this.props.viewData?.forEach((infra: any) => {
       let ws = new WebSocket(`${protocol}://${process.env.API_SERVER}/api/projects/${currentProject.id}/provision/${infra.kind}/${infra.infra_id}/logs`)
       
       ws.onopen = () => {

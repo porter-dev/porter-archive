@@ -32,6 +32,15 @@ export default class Provisioner extends Component<PropsType, StateType> {
     this.scrollRef.current.scrollTop = this.scrollRef.current.scrollHeight
   }
 
+  isJSON = (str: string) => {
+    try {
+        JSON.parse(str);
+    } catch (e) {
+        return false;
+    }
+    return true;
+  }
+
   componentDidMount() {
     let { currentProject } = this.context;
     let protocol = process.env.NODE_ENV == 'production' ? 'wss' : 'ws'
@@ -46,39 +55,47 @@ export default class Provisioner extends Component<PropsType, StateType> {
 
       ws.onmessage = (evt: MessageEvent) => {
         let event = JSON.parse(evt.data)
-        let data = [] as any[]
+        let validEvents = [] as any[]
         let err = null
 
         event.forEach((msg: any) => { 
-          if (msg["Values"] && msg["Values"]["data"] && JSON.parse(msg["Values"]["data"])["log"]) { 
+          if (msg["Values"] && msg["Values"]["data"] && this.isJSON(msg["Values"]["data"])) { 
             let d = JSON.parse(msg["Values"]["data"])
             if (d["kind"] == "error") {
               err = d
               return;
             }
 
-            data.push(d)
+            // add only valid events
+            if (d["logs"] && d["created_resources"] && d["total_resources"]) {
+              validEvents.push(d)
+            }
           }
         })
 
         if (err) {
           this.setState({ logs: [err] })
+          return;
         }
         
         if (!this.state.maxStep[infra.kind] || !this.state.maxStep[infra.kind]["total_resources"]) {
           this.setState({
             maxStep: {
               ...this.state.maxStep,
-              [infra.kind] : JSON.parse(event[event.length - 1]["Values"]["data"])["total_resources"]
+              [infra.kind] : JSON.parse(validEvents[validEvents.length - 1]["Values"]["data"])["total_resources"]
             }
           })
         }
 
+        let logs = validEvents.map((e: any) => {
+          return e["log"]
+        })
+
         this.setState({ 
-          logs: [...this.state.logs, ...data], 
+          logs: [...this.state.logs, ...logs], 
           currentStep: {
             ...this.state.currentStep,
-            [infra.kind] : JSON.parse(event[event.length - 1]["Values"]["data"])["created_resources"]
+            [infra.kind] : JSON.parse(validEvents[validEvents.length - 1]["Values"]["data"])["created_resources"]
           },
         }, () => {
           this.scrollToBottom()

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/porter-dev/porter/internal/registry"
 
@@ -163,6 +164,42 @@ func (c *Client) DeleteProjectRegistry(
 	}
 
 	return nil
+}
+
+// GetECRTokenResponse blah
+type GetECRTokenResponse struct {
+	Token     string     `json:"token"`
+	ExpiresAt *time.Time `json:"expires_at"`
+}
+
+// GetECRAuthorizationToken gets an ECR authorization token
+func (c *Client) GetECRAuthorizationToken(
+	ctx context.Context,
+	projectID uint,
+	region string,
+) (*GetECRTokenResponse, error) {
+	req, err := http.NewRequest(
+		"GET",
+		fmt.Sprintf("%s/projects/%d/registries/ecr/%s/token", c.BaseURL, projectID, region),
+		nil,
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	bodyResp := &GetECRTokenResponse{}
+	req = req.WithContext(ctx)
+
+	if httpErr, err := c.sendRequest(req, bodyResp, true); httpErr != nil || err != nil {
+		if httpErr != nil {
+			return nil, fmt.Errorf("code %d, errors %v", httpErr.Code, httpErr.Errors)
+		}
+
+		return nil, err
+	}
+
+	return bodyResp, nil
 }
 
 // ListRegistryRepositoryResponse is the list of repositories in a registry

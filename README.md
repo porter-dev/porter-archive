@@ -1,27 +1,28 @@
 # Porter 
 [![MIT License](https://img.shields.io/apm/l/atomic-design-ui.svg?)](https://github.com/tterb/atomic-design-ui/blob/master/LICENSEs) [![Go Report Card](https://goreportcard.com/badge/gojp/goreportcard)](https://goreportcard.com/report/gojp/goreportcard)
 
-**Porter is a Kubernetes-powered PaaS that runs in your own cloud provider.** It brings the Heroku experience to Kubernetes without compromising its flexibility. Get started on Porter without the overhead of DevOps and fully customize your infra later when you need to.
-
-![porter](https://user-images.githubusercontent.com/65516095/103712859-def9ee00-4f88-11eb-804c-4b775d697ec4.jpeg)
+**Porter is a Kubernetes-powered PaaS that runs in your own cloud provider.** Porter brings the Heroku experience to Kubernetes without compromising its flexibility. Get started on Porter without the overhead of DevOps and fully customize your infra later when you need to.
 
 ## Why Porter?
 ### A PaaS that grows with your applications
 
-Traditional PaaS's like Heroku are great at minimizing unnecessary DevOps overhead but don't offer enough flexibility as your applications scale. Custom network rules, resource constraints, and cost are common reasons developers move their application off Heroku beyond a certain point. 
+Traditional PaaS's like Heroku are great at minimizing unnecessary DevOps work but don't offer enough flexibility as your applications scale. Custom network rules, resource constraints, and cost are common reasons developers move their application off Heroku beyond a certain scale. 
 
-Porter brings the simplicity of traditional PaaS's to your own cloud provider while giving you the full configurability that comes with Kubernetes. It's built on top of a popular Kubernetes framework called Helm and is compatible with standard Kubernetes management tools like `kubectl`, preparing your infra for mature DevOps work from day 1.
+Porter brings the simplicity of traditional PaaS's to your own cloud provider while preserving the full configurability of Kubernetes. It's built on top of a popular Kubernetes framework called Helm and is compatible with standard Kubernetes management tools like `kubectl`, preparing your infra for mature DevOps work from day 1.
 
 ![image](https://user-images.githubusercontent.com/65516095/103713478-71e75800-4f8a-11eb-915f-adee9d4f5bf7.png)
 
 ## Features
 ### Basics
-- One-click provisioning of a Kubernetes cluster in your own cloud console (AWS ✅, GCP 🚧, Digital Ocean 🚧)
+- One-click provisioning of a Kubernetes cluster in your own cloud console
+  - ✅ AWS
+  - 🚧 GCP
+  - 🚧 Digital Ocean
 - Simple deploy of any Docker image (public or private)
 - Heroku-like GUI to monitor application status, logs, and history
 - Marketplace for 1-click add-on's (e.g. MongoDB, Redis, PostgreSQL)
-- Application rollback to previous release versions
-- Native CI/CD with buildpacks (Coming Soon 🚧)
+- Application rollback to previous deploy versions
+- Native CI/CD with buildpacks (Coming Soon)
 
 ![Provisioning View](https://user-images.githubusercontent.com/65516095/103712142-09e34280-4f87-11eb-9272-a35805544fd0.png)
 
@@ -68,3 +69,6 @@ For Linux and Windows installation, see our [Docs](https://docs.getporter.dev/do
 4. [Build and push your Docker image to the provisioned registry with the CLI](https://docs.getporter.dev/docs/cli-documentation#porter-docker-configure).
 
 5. From the Templates tab on the Dashboard, select the Docker template. Click on the image you have just pushed, configure the port, then hit deploy.
+
+![porter](https://user-images.githubusercontent.com/65516095/103712859-def9ee00-4f88-11eb-804c-4b775d697ec4.jpeg)
+

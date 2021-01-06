@@ -46,7 +46,7 @@ export default class Provisioner extends Component<PropsType, StateType> {
 
       ws.onmessage = (evt: MessageEvent) => {
         let event = JSON.parse(evt.data)
-        
+
         let data = event.map((msg: any) => { 
           return JSON.parse(msg["Values"]["data"])["log"]
         })
@@ -62,7 +62,7 @@ export default class Provisioner extends Component<PropsType, StateType> {
           this.setState({ logs: [err] })
         }
         
-        if (!this.state.maxStep[infra.kind]) {
+        if (!this.state.maxStep[infra.kind] && !this.state.maxStep[infra.kind]["total_resources"]) {
           this.setState({
             maxStep: {
               ...this.state.maxStep,

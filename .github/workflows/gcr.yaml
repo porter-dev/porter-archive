@@ -29,6 +29,10 @@ jobs:
         EOL
 
         cat ./dashboard/.env
+    - name: Set up QEMU
+      uses: docker/setup-qemu-action@v1
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v1
     - name: Build
       run: |
         DOCKER_BUILDKIT=1 docker build . -t gcr.io/porter-dev-273614/porter-prov:latest -f ./docker/dev.Dockerfile

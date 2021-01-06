@@ -175,7 +175,7 @@ func startLocal(
 	staticFilePath := filepath.Join(home, ".porter", "static")
 
 	if _, err := os.Stat(cmdPath); os.IsNotExist(err) {
-		err := github.DownloadLatestServerRelease(porterDir)
+		err := downloadLatestReleases(porterDir)
 
 		if err != nil {
 			color.New(color.FgRed).Println("Failed:", err.Error())
@@ -223,4 +223,34 @@ func stopDocker() error {
 	green.Println("Successfully stopped the Porter server.")
 
 	return nil
+}
+
+func downloadLatestReleases(porterDir string) error {
+	z := &github.ZIPReleaseGetter{
+		AssetName:           "portersvr",
+		AssetFolderDest:     porterDir,
+		ZipFolderDest:       porterDir,
+		ZipName:             "portersvr_latest.zip",
+		EntityID:            "porter-dev",
+		RepoName:            "porter",
+		IsPlatformDependent: true,
+	}
+
+	err := z.GetLatestRelease()
+
+	if err != nil {
+		return err
+	}
+
+	zStatic := &github.ZIPReleaseGetter{
+		AssetName:           "static",
+		AssetFolderDest:     filepath.Join(porterDir, "static"),
+		ZipFolderDest:       porterDir,
+		ZipName:             "static_latest.zip",
+		EntityID:            "porter-dev",
+		RepoName:            "porter",
+		IsPlatformDependent: false,
+	}
+
+	return zStatic.GetLatestRelease()
 }

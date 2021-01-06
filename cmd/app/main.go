@@ -30,14 +30,6 @@ func main() {
 		return
 	}
 
-	redis, err := adapter.NewRedisClient(&appConf.Redis)
-	prov.InitGlobalStream(redis)
-
-	if err != nil {
-		logger.Fatal().Err(err).Msg("")
-		return
-	}
-
 	err = db.AutoMigrate(
 		&models.Project{},
 		&models.Role{},
@@ -75,11 +67,26 @@ func main() {
 
 	repo := gorm.NewRepository(db, &key)
 
+	if appConf.Redis.Enabled {
+		redis, err := adapter.NewRedisClient(&appConf.Redis)
+
+		if err != nil {
+			logger.Fatal().Err(err).Msg("")
+			return
+		}
+
+		prov.InitGlobalStream(redis)
+
+		errorChan := make(chan error)
+
+		go prov.GlobalStreamListener(redis, *repo, errorChan)
+	}
+
 	a, _ := api.New(&api.AppConfig{
-		Logger:      logger,
-		Repository:  repo,
-		ServerConf:  appConf.Server,
-		RedisClient: redis,
+		Logger:     logger,
+		Repository: repo,
+		ServerConf: appConf.Server,
+		RedisConf:  &appConf.Redis,
 	})
 
 	appRouter := router.New(a)
@@ -96,12 +103,7 @@ func main() {
 		IdleTimeout:  appConf.Server.TimeoutIdle,
 	}
 
-	errorChan := make(chan error)
-
-	go prov.GlobalStreamListener(redis, repo.AWSInfra, errorChan)
-
 	if err := s.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 		log.Fatal("Server startup failed", err)
 	}
-
 }

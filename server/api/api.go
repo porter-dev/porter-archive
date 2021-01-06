@@ -6,7 +6,6 @@ import (
 	"github.com/go-playground/locales/en"
 	ut "github.com/go-playground/universal-translator"
 	vr "github.com/go-playground/validator/v10"
-	"github.com/go-redis/redis/v8"
 	sessionstore "github.com/porter-dev/porter/internal/auth"
 	"github.com/porter-dev/porter/internal/oauth"
 	"golang.org/x/oauth2"
@@ -33,11 +32,11 @@ type TestAgents struct {
 
 // AppConfig is the configuration required for creating a new App
 type AppConfig struct {
-	DB          *gorm.DB
-	Logger      *lr.Logger
-	Repository  *repository.Repository
-	ServerConf  config.ServerConf
-	RedisClient *redis.Client
+	DB         *gorm.DB
+	Logger     *lr.Logger
+	Repository *repository.Repository
+	ServerConf config.ServerConf
+	RedisConf  *config.RedisConf
 
 	// TestAgents if API is in testing mode
 	TestAgents *TestAgents
@@ -61,8 +60,8 @@ type App struct {
 	// agents exposed for testing
 	TestAgents *TestAgents
 
-	// redis conf for redis connection
-	RedisClient *redis.Client
+	// redis client for redis connection
+	RedisConf *config.RedisConf
 
 	// oauth-specific clients
 	GithubConf *oauth2.Config
@@ -86,14 +85,14 @@ func New(conf *AppConfig) (*App, error) {
 	}
 
 	app := &App{
-		Logger:      conf.Logger,
-		Repo:        conf.Repository,
-		ServerConf:  conf.ServerConf,
-		RedisClient: conf.RedisClient,
-		TestAgents:  conf.TestAgents,
-		db:          conf.DB,
-		validator:   validator,
-		translator:  &translator,
+		Logger:     conf.Logger,
+		Repo:       conf.Repository,
+		ServerConf: conf.ServerConf,
+		RedisConf:  conf.RedisConf,
+		TestAgents: conf.TestAgents,
+		db:         conf.DB,
+		validator:  validator,
+		translator: &translator,
 	}
 
 	// if repository not specified, default to in-memory

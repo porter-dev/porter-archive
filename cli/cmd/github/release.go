@@ -15,85 +15,183 @@ import (
 	"github.com/google/go-github/github"
 )
 
-func getLatestReleaseDownloadURL() (string, string, error) {
-	client := github.NewClient(nil)
+// ZIPReleaseGetter retrieves a release from Github in ZIP format and downloads it
+// to a directory on host
+type ZIPReleaseGetter struct {
+	// The name of the asset, i.e. "porter", "portersvr", "static"
+	AssetName string
 
-	rel, _, err := client.Repositories.GetLatestRelease(context.Background(), "porter-dev", "porter")
+	// The host folder destination of the asset
+	AssetFolderDest string
+
+	// The host folder destination for the .zip file
+	ZipFolderDest string
+
+	// The name of the .zip file to download to
+	ZipName string
+
+	// The name of the Github entity whose repo is queried: i.e. "porter-dev"
+	EntityID string
+
+	// The name of the Github repo to get releases from
+	RepoName string
+
+	// If the asset is platform dependent
+	IsPlatformDependent bool
+}
+
+// GetLatestRelease downloads the latest .zip release from a given Github repository
+func (z *ZIPReleaseGetter) GetLatestRelease() error {
+	releaseURL, err := z.getLatestReleaseDownloadURL()
 
 	if err != nil {
-		return "", "", err
+		return err
 	}
 
-	var re *regexp.Regexp
+	return z.getReleaseFromURL(releaseURL)
+}
 
-	switch os := runtime.GOOS; os {
-	case "darwin":
-		re = regexp.MustCompile(`portersvr_.*_Darwin_x86_64\.zip`)
-	case "linux":
-		re = regexp.MustCompile(`portersvr_.*_Linux_x86_64\.zip`)
-	default:
-		fmt.Printf("%s.\n", os)
+// GetRelease downloads a specific .zip release from a given Github repository
+func (z *ZIPReleaseGetter) GetRelease(releaseTag string) error {
+	releaseURL, err := z.getReleaseDownloadURL(releaseTag)
+
+	fmt.Printf("getting release %s\n", releaseURL)
+
+	if err != nil {
+		return err
 	}
 
-	staticRE := regexp.MustCompile(`static_.*\.zip`)
+	return z.getReleaseFromURL(releaseURL)
+}
+
+func (z *ZIPReleaseGetter) getReleaseFromURL(releaseURL string) error {
+	fmt.Printf("getting release %s\n", releaseURL)
+
+	err := z.downloadToFile(releaseURL)
+
+	fmt.Printf("downloaded release %s to file %s\n", z.AssetName, filepath.Join(z.ZipFolderDest, z.ZipName))
+
+	if err != nil {
+		return err
+	}
+
+	fmt.Printf("unzipping %s to %s\n", z.AssetName, z.AssetFolderDest)
+
+	err = z.unzipToDir()
+
+	return err
+}
+
+// retrieves the download url for the latest release of an asset
+func (z *ZIPReleaseGetter) getLatestReleaseDownloadURL() (string, error) {
+	client := github.NewClient(nil)
+
+	rel, _, err := client.Repositories.GetLatestRelease(context.Background(), z.EntityID, z.RepoName)
+
+	if err != nil {
+		return "", err
+	}
+
+	re, err := z.getDownloadRegexp()
+
+	if err != nil {
+		return "", err
+	}
 
 	releaseURL := ""
-	staticReleaseURL := ""
 
 	// iterate through the assets
 	for _, asset := range rel.Assets {
 		if downloadURL := asset.GetBrowserDownloadURL(); re.MatchString(downloadURL) {
 			releaseURL = downloadURL
-		} else if staticRE.MatchString(downloadURL) {
-			staticReleaseURL = downloadURL
 		}
 	}
 
-	return releaseURL, staticReleaseURL, nil
+	return releaseURL, nil
 }
 
-// DownloadLatestServerRelease retrieves the latest Porter server release from Github, unzips
-// it, and adds the binary to the porter directory
-func DownloadLatestServerRelease(porterDir string) error {
-	releaseURL, staticReleaseURL, err := getLatestReleaseDownloadURL()
-	fmt.Println(releaseURL)
+func (z *ZIPReleaseGetter) getReleaseDownloadURL(releaseTag string) (string, error) {
+	client := github.NewClient(nil)
+
+	rel, _, err := client.Repositories.GetReleaseByTag(context.Background(), z.EntityID, z.RepoName, releaseTag)
 
 	if err != nil {
-		return err
+		return "", fmt.Errorf("release %s does not exist", releaseTag)
 	}
 
-	zipFile := filepath.Join(porterDir, "portersrv_latest.zip")
-
-	err = downloadToFile(releaseURL, zipFile)
+	re, err := z.getDownloadRegexp()
 
 	if err != nil {
-		return err
+		return "", err
 	}
 
-	err = unzipToDir(zipFile, porterDir)
+	releaseURL := ""
 
-	if err != nil {
-		return err
+	// iterate through the assets
+	for _, asset := range rel.Assets {
+		if downloadURL := asset.GetBrowserDownloadURL(); re.MatchString(downloadURL) {
+			releaseURL = downloadURL
+		}
 	}
 
-	staticZipFile := filepath.Join(porterDir, "static_latest.zip")
-
-	err = downloadToFile(staticReleaseURL, staticZipFile)
-
-	if err != nil {
-		return err
-	}
-
-	staticDir := filepath.Join(porterDir, "static")
-
-	err = unzipToDir(staticZipFile, staticDir)
-
-	return err
+	return releaseURL, nil
 }
 
-func downloadToFile(url string, filepath string) error {
-	fmt.Println("Downloading:", url)
+func (z *ZIPReleaseGetter) getDownloadRegexp() (*regexp.Regexp, error) {
+	if z.IsPlatformDependent {
+		switch os := runtime.GOOS; os {
+		case "darwin":
+			return regexp.MustCompile(fmt.Sprintf(`(?i)%s_.*_Darwin_x86_64\.zip`, z.AssetName)), nil
+		case "linux":
+			return regexp.MustCompile(fmt.Sprintf(`(?i)%s_.*_Linux_x86_64\.zip`, z.AssetName)), nil
+		default:
+			return nil, fmt.Errorf("%s is not a supported platform for Porter binaries", os)
+		}
+	}
 
+	return regexp.MustCompile(fmt.Sprintf(`(?i)%s_.*\.zip`, z.AssetName)), nil
+}
+
+// // DownloadLatestServerRelease retrieves the latest Porter server release from Github, unzips
+// // it, and adds the binary to the porter directory
+// func DownloadLatestServerRelease(porterDir string) error {
+// 	releaseURL, staticReleaseURL, err := getLatestReleaseDownloadURL()
+// 	fmt.Println(releaseURL)
+
+// 	if err != nil {
+// 		return err
+// 	}
+
+// 	zipFile := filepath.Join(porterDir, "portersrv_latest.zip")
+
+// 	err = downloadToFile(releaseURL, zipFile)
+
+// 	if err != nil {
+// 		return err
+// 	}
+
+// 	err = unzipToDir(zipFile, porterDir)
+
+// 	if err != nil {
+// 		return err
+// 	}
+
+// 	staticZipFile := filepath.Join(porterDir, "static_latest.zip")
+
+// 	err = downloadToFile(staticReleaseURL, staticZipFile)
+
+// 	if err != nil {
+// 		return err
+// 	}
+
+// 	staticDir := filepath.Join(porterDir, "static")
+
+// 	err = unzipToDir(staticZipFile, staticDir)
+
+// 	return err
+// }
+
+func (z *ZIPReleaseGetter) downloadToFile(url string) error {
 	// Get the data
 	resp, err := http.Get(url)
 
@@ -104,7 +202,7 @@ func downloadToFile(url string, filepath string) error {
 	defer resp.Body.Close()
 
 	// Create the file
-	out, err := os.Create(filepath)
+	out, err := os.Create(filepath.Join(z.ZipFolderDest, z.ZipName))
 
 	if err != nil {
 		return err
@@ -118,8 +216,8 @@ func downloadToFile(url string, filepath string) error {
 	return err
 }
 
-func unzipToDir(zipfile string, dir string) error {
-	r, err := zip.OpenReader(zipfile)
+func (z *ZIPReleaseGetter) unzipToDir() error {
+	r, err := zip.OpenReader(filepath.Join(z.ZipFolderDest, z.ZipName))
 
 	if err != nil {
 		return err
@@ -129,10 +227,10 @@ func unzipToDir(zipfile string, dir string) error {
 
 	for _, f := range r.File {
 		// Store filename/path for returning and using later on
-		fpath := filepath.Join(dir, f.Name)
+		fpath := filepath.Join(z.AssetFolderDest, f.Name)
 
 		// Check for ZipSlip. More Info: http://bit.ly/2MsjAWE
-		if !strings.HasPrefix(fpath, filepath.Clean(dir)+string(os.PathSeparator)) {
+		if !strings.HasPrefix(fpath, filepath.Clean(z.AssetFolderDest)+string(os.PathSeparator)) {
 			return fmt.Errorf("%s: illegal file path", fpath)
 		}
 

@@ -3,12 +3,12 @@ import styled from 'styled-components';
 import close from '../../../assets/close.png';
 
 import { Context } from '../../../shared/Context';
-import { Cluster } from '../../../shared/types';
+import { ClusterType } from '../../../shared/types';
 
 type PropsType = {
   toggleDrawer: () => void,
   showDrawer: boolean,
-  clusters: Cluster[],
+  clusters: ClusterType[],
   setCurrentView: (x: string) => void
 };
 
@@ -22,7 +22,7 @@ export default class Drawer extends Component<PropsType, StateType> {
     let { currentCluster, setCurrentCluster } = this.context;
 
     if (clusters.length > 0 && currentCluster) {
-      return clusters.map((cluster: Cluster, i: number) => {
+      return clusters.map((cluster: ClusterType, i: number) => {
         /*
         let active = this.context.activeProject &&
           this.context.activeProject.namespace == val.namespace; 

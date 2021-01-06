@@ -1,8 +1,8 @@
 import React, { Component } from 'react';
 import styled from 'styled-components';
 
-import axios from 'axios';
 import { Context } from '../../../shared/Context';
+import { handleSubmitFeedback } from '../../../shared/feedback';
 
 type PropsType = {
   currentView: string,
@@ -37,22 +37,9 @@ export default class Feedback extends Component<PropsType, StateType> {
   handleSubmitFeedback = () => {
     let { user } = this.context;
     let msg = '👤 ' + user.email + ' 📍 ' + this.props.currentView + ': ' + this.state.feedbackText;
-    axios.post('http://35.190.59.124/feedback', {
-      key: 'uzNP7MVYqDC7hs9Q8YP7ehvsBO4yRO02ZGYQ5rKJ2YngEqgYVBITRsvDww8CfV3q',
-      cid: '794372152769642507',
-      message: msg,
-    }, {
-      headers: {
-        Authorization: `Bearer <>`
-      }
+    handleSubmitFeedback(msg, () => {
+      this.setState({ feedbackSent: true, feedbackText: '' });
     })
-    .then(res => {
-      console.log('feedback sent');
-    })
-    .catch(err => {
-      console.log(err);
-    });
-    this.setState({ feedbackSent: true, feedbackText: '' });
   }
 
   renderFeedbackDropdown = () => {

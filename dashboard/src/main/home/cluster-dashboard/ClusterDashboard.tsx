@@ -3,7 +3,7 @@ import styled from 'styled-components';
 import gradient from '../../../assets/gradient.jpg';
 
 import { Context } from '../../../shared/Context';
-import { ChartType, StorageType, Cluster } from '../../../shared/types';
+import { ChartType, StorageType, ClusterType } from '../../../shared/types';
 import api from '../../../shared/api';
 
 import ChartList from './chart/ChartList';
@@ -11,7 +11,7 @@ import NamespaceSelector from './NamespaceSelector';
 import ExpandedChart from './expanded-chart/ExpandedChart';
 
 type PropsType = {
-  currentCluster: Cluster,
+  currentCluster: ClusterType,
   setSidebar: (x: boolean) => void
   setCurrentView: (x: string) => void,
 };
@@ -212,10 +212,10 @@ const ButtonAlt = styled(Button)`
 `;
 
 const LineBreak = styled.div`
-  width: calc(100% - 180px);
+  width: calc(100% - 0px);
   height: 2px;
   background: #ffffff20;
-  margin: 10px 80px 35px;
+  margin: 10px 0px 35px;
 `;
 
 const Overlay = styled.div`

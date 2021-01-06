@@ -1,4 +1,4 @@
-export interface Cluster {
+export interface ClusterType {
   id: number,
   name: string,
   server: string,
@@ -140,4 +140,11 @@ export interface ImageType {
   source: string,
   registryId: number,
   name: string,
+}
+
+export interface InfraType {
+  id: number,
+  project_d: number,
+  kind: string,
+  status: string,
 }

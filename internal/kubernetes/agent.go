@@ -11,6 +11,8 @@ import (
 	"github.com/porter-dev/porter/internal/kubernetes/provisioner"
 	"github.com/porter-dev/porter/internal/kubernetes/provisioner/aws"
 	"github.com/porter-dev/porter/internal/kubernetes/provisioner/aws/ecr"
+	"github.com/porter-dev/porter/internal/kubernetes/provisioner/aws/eks"
+	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/models/integrations"
 
 	"github.com/gorilla/websocket"
@@ -236,10 +238,12 @@ func (a *Agent) ProvisionECR(
 	projectID uint,
 	awsConf *integrations.AWSIntegration,
 	ecrName string,
+	awsInfra *models.AWSInfra,
 ) (*batchv1.Job, error) {
+	id := awsInfra.GetID()
 	prov := &provisioner.Conf{
-		ID:   fmt.Sprintf("%s-%d", ecrName, projectID),
-		Name: fmt.Sprintf("prov-%s-%d", ecrName, projectID),
+		ID:   id,
+		Name: fmt.Sprintf("prov-%s", id),
 		Kind: provisioner.ECR,
 		AWS: &aws.Conf{
 			AWSRegion:          awsConf.AWSRegion,
@@ -248,6 +252,31 @@ func (a *Agent) ProvisionECR(
 		},
 		ECR: &ecr.Conf{
 			ECRName: ecrName,
+		},
+	}
+
+	return a.provision(prov)
+}
+
+// ProvisionEKS spawns a new provisioning pod that creates an EKS instance
+func (a *Agent) ProvisionEKS(
+	projectID uint,
+	awsConf *integrations.AWSIntegration,
+	eksName string,
+	awsInfra *models.AWSInfra,
+) (*batchv1.Job, error) {
+	id := awsInfra.GetID()
+	prov := &provisioner.Conf{
+		ID:   id,
+		Name: fmt.Sprintf("prov-%s", id),
+		Kind: provisioner.EKS,
+		AWS: &aws.Conf{
+			AWSRegion:          awsConf.AWSRegion,
+			AWSAccessKeyID:     string(awsConf.AWSAccessKeyID),
+			AWSSecretAccessKey: string(awsConf.AWSSecretAccessKey),
+		},
+		EKS: &eks.Conf{
+			ClusterName: eksName,
 		},
 	}
 

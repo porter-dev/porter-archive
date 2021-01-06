@@ -21,3 +21,21 @@ func (ce *CreateECRInfra) ToAWSInfra() (*models.AWSInfra, error) {
 		AWSIntegrationID: ce.AWSIntegrationID,
 	}, nil
 }
+
+// CreateEKSInfra represents the accepted values for creating an
+// EKS infra via the provisioning container
+type CreateEKSInfra struct {
+	EKSName          string `json:"eks_name" form:"required"`
+	ProjectID        uint   `json:"project_id" form:"required"`
+	AWSIntegrationID uint   `json:"aws_integration_id" form:"required"`
+}
+
+// ToAWSInfra converts the form to a gorm aws infra model
+func (ce *CreateEKSInfra) ToAWSInfra() (*models.AWSInfra, error) {
+	return &models.AWSInfra{
+		Kind:             models.AWSInfraEKS,
+		ProjectID:        ce.ProjectID,
+		Status:           models.StatusCreating,
+		AWSIntegrationID: ce.AWSIntegrationID,
+	}, nil
+}

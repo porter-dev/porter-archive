@@ -4,7 +4,7 @@ import ReactModal from 'react-modal';
 
 import { Context } from '../../shared/Context';
 import api from '../../shared/api';
-import { ProjectType } from '../../shared/types';
+import { InfraType } from '../../shared/types';
 
 import Sidebar from './sidebar/Sidebar';
 import Dashboard from './dashboard/Dashboard';
@@ -28,6 +28,7 @@ type StateType = {
   forceSidebar: boolean,
   showWelcome: boolean,
   currentView: string,
+  viewData: any,
 
   // Track last project id for refreshing clusters on project change
   prevProjectId: number | null,
@@ -39,6 +40,7 @@ export default class Home extends Component<PropsType, StateType> {
     showWelcome: false,
     currentView: 'dashboard',
     prevProjectId: null as number | null,
+    viewData: null as any
   }
 
   // Possibly consolidate into context (w/ ProjectSection + NewProject)
@@ -46,11 +48,29 @@ export default class Home extends Component<PropsType, StateType> {
     let { user, currentProject, projects, setProjects } = this.context;
     api.getProjects('<token>', {}, { id: user.userId }, (err: any, res: any) => {
       if (err) {
-        console.log(err)
+        console.log(err);
       } else if (res.data) {
         setProjects(res.data);
         if (res.data.length > 0 && !currentProject) {
           this.context.setCurrentProject(res.data[0]);
+
+          // Check if current project is provisioning
+          api.getInfra('<token>', {}, { project_id: res.data[0].id }, (err: any, res: any) => {
+            if (err) {
+              console.log(err);
+            } else if (res.data) {
+              
+              // TODO: separately handle non meta-provisioning case
+              res.data.forEach((el: InfraType) => {
+                if (el.status === 'creating') {
+                  this.setState({ currentView: 'provisioner', viewData: {
+                    infra_id: el.id,
+                    kind: el.kind,
+                  }});
+                }
+              });
+            }
+          });
         } else if (res.data.length === 0) {
           this.setState({ currentView: 'new-project' });
         }
@@ -122,10 +142,15 @@ export default class Home extends Component<PropsType, StateType> {
       return <Integrations />;
     } else if (currentView === 'new-project') {
       return (
-        <NewProject setCurrentView={(x: string) => this.setState({ currentView: x })} />
+        <NewProject setCurrentView={(x: string, data: any ) => this.setState({ currentView: x, viewData: data })} />
       );
     } else if (currentView === 'provisioner') {
-      return <Provisioner />
+      return (
+        <Provisioner 
+          setCurrentView={(x: string) => this.setState({ currentView: x })}
+          viewData={this.state.viewData}
+        />
+      );
     }
 
     return (
@@ -133,6 +158,14 @@ export default class Home extends Component<PropsType, StateType> {
         setCurrentView={(x: string) => this.setState({ currentView: x })} 
       />
     );
+  }
+
+  setCurrentView = (x: string, viewData?: any) => {
+    if (!viewData) {
+      this.setState({ currentView: x });
+    } else {
+      this.setState({ currentView: x, viewData });
+    }
   }
 
   renderSidebar = () => {
@@ -147,7 +180,7 @@ export default class Home extends Component<PropsType, StateType> {
         <Sidebar
           forceSidebar={this.state.forceSidebar}
           setWelcome={(x: boolean) => this.setState({ showWelcome: x })}
-          setCurrentView={(x: string) => this.setState({ currentView: x })}
+          setCurrentView={this.setCurrentView}
           currentView={this.state.currentView}
         />
       );

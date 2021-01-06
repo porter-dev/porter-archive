@@ -10,6 +10,7 @@ import (
 type CreateRegistry struct {
 	Name             string `json:"name" form:"required"`
 	ProjectID        uint   `json:"project_id" form:"required"`
+	URL              string `json:"url"`
 	GCPIntegrationID uint   `json:"gcp_integration_id"`
 	AWSIntegrationID uint   `json:"aws_integration_id"`
 }

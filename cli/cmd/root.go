@@ -23,6 +23,15 @@ var home = homedir.HomeDir()
 // Execute adds all child commands to the root command and sets flags appropriately.
 // This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute() {
+	Setup()
+
+	if err := rootCmd.Execute(); err != nil {
+		color.New(color.FgRed).Println(err)
+		os.Exit(1)
+	}
+}
+
+func Setup() {
 	// check that the .porter folder exists; create if not
 	porterDir := filepath.Join(home, ".porter")
 
@@ -53,10 +62,5 @@ func Execute() {
 			color.New(color.FgRed).Printf("%v\n", err)
 			os.Exit(1)
 		}
-	}
-
-	if err := rootCmd.Execute(); err != nil {
-		color.New(color.FgRed).Println(err)
-		os.Exit(1)
 	}
 }

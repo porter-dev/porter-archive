@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import styled from 'styled-components';
-import launch from '../../../../assets/launch.svg';
+import rocket from '../../../../assets/rocket.png';
 import Markdown from 'markdown-to-jsx';
 
 import { Context } from '../../../../shared/Context';
@@ -81,11 +81,12 @@ export default class TemplateInfo extends Component<PropsType, StateType> {
             isDisabled={!currentCluster}
             onClick={!currentCluster ? null : this.props.launchTemplate}
           >
-            <img src={launch} />
+            <img src={rocket} />
             Launch Template
           </Button>
         </TitleSection>
         {this.renderTagSection()}
+        <LineBreak />
         <ContentSection>
           {this.renderMarkdown()}
         </ContentSection>
@@ -96,12 +97,19 @@ export default class TemplateInfo extends Component<PropsType, StateType> {
 
 TemplateInfo.contextType = Context;
 
+const LineBreak = styled.div`
+  width: calc(100% - 0px);
+  height: 2px;
+  background: #ffffff20;
+  margin: 30px 0px 13px;
+`;
+
 const ContentSection = styled.div`
-  margin-top: 50px;
   font-size: 14px;
   line-height: 1.8em;
   padding-bottom: 100px;
   overflow: hidden;
+  user-select: text;
 `;
 
 const Tag = styled.div`

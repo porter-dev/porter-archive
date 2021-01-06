@@ -5,7 +5,7 @@ import _ from 'lodash';
 import { Context } from '../../../../shared/Context';
 import api from '../../../../shared/api';
 
-import { PorterTemplate, ChoiceType, Cluster, StorageType } from '../../../../shared/types';
+import { PorterTemplate, ChoiceType, ClusterType, StorageType } from '../../../../shared/types';
 import Selector from '../../../../components/Selector';
 import ImageSelector from '../../../../components/image-selector/ImageSelector';
 import TabRegion from '../../../../components/TabRegion';
@@ -140,7 +140,7 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
       if (err) {
         // console.log(err)
       } else if (res.data) {
-        let clusterOptions = res.data.map((x: Cluster) => { return { label: x.name, value: x.name } });
+        let clusterOptions = res.data.map((x: ClusterType) => { return { label: x.name, value: x.name } });
         if (res.data.length > 0) {
           this.setState({ clusterOptions });
         }

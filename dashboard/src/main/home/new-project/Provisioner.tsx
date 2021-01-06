@@ -2,12 +2,15 @@ import React, { Component } from 'react';
 import styled from 'styled-components';
 
 import api from '../../../shared/api';
+import { ProvisioningDataType } from '../../../shared/types'
 import { Context } from '../../../shared/Context';
+import ansiparse from '../../../shared/ansiparser'
 import { integrationList } from '../../../shared/common';
 import loading from '../../../assets/loading.gif';
 
 import Helper from '../../../components/values-form/Helper';
 import { eventNames } from 'process';
+import { inflateRaw, inflateRawSync } from 'zlib';
 
 type PropsType = {
   viewData: any,
@@ -55,28 +58,31 @@ export default class Provisioner extends Component<PropsType, StateType> {
 
       ws.onmessage = (evt: MessageEvent) => {
         let event = JSON.parse(evt.data)
-        console.log("event:", event)
         let validEvents = [] as any[]
         let err = null
-
+  
         event.forEach((msg: any) => { 
           if (msg["Values"] && msg["Values"]["data"] && this.isJSON(msg["Values"]["data"])) { 
             let d = JSON.parse(msg["Values"]["data"])
+  
             if (d["kind"] == "error") {
               err = d
               return;
             }
-
+  
             // add only valid events
-            if (d["logs"] && d["created_resources"] && d["total_resources"]) {
+            if (d["log"] != null && d["created_resources"] != null && d["total_resources"] != null) {
               validEvents.push(d)
             }
           }
         })
-
-        console.log("validEvents: ", validEvents)
+  
         if (err) {
           this.setState({ logs: [err] })
+          return;
+        }
+  
+        if (validEvents.length == 0) {
           return;
         }
         
@@ -88,11 +94,16 @@ export default class Provisioner extends Component<PropsType, StateType> {
             }
           })
         }
-
-        let logs = validEvents.map((e: any) => {
-          return e["log"]
+        
+        let logs = [] as any[]
+        validEvents.forEach((e: any) => {
+          logs.push(...ansiparse(e["log"]))
         })
 
+        logs = logs.map((log: any) => {
+          return log.text
+        })
+  
         this.setState({ 
           logs: [...this.state.logs, ...logs], 
           currentStep: {
@@ -139,6 +150,7 @@ export default class Provisioner extends Component<PropsType, StateType> {
     let currentStep = 0;
 
     for (let key in this.state.maxStep) {
+      console.log(key)
       maxStep += this.state.maxStep[key]
     }
 
@@ -157,7 +169,7 @@ export default class Provisioner extends Component<PropsType, StateType> {
         </Helper>
 
         <LoadingBar>
-          <Loaded progress={((currentStep / maxStep) * 100).toString() + '%'} />
+          <Loaded progress={((currentStep / (maxStep == 0 ? 1 : maxStep)) * 100).toString() + '%'} />
         </LoadingBar>
 
         <LogStream ref={this.scrollRef}>

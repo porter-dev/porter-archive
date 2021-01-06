@@ -1,36 +1,42 @@
-# Porter
-Porter is a **Kubernetes powered PaaS** with support for the following features:
+# Porter 
+[![MIT License](https://img.shields.io/apm/l/atomic-design-ui.svg?)](https://github.com/tterb/atomic-design-ui/blob/master/LICENSEs) [![Go Report Card](https://goreportcard.com/badge/gojp/goreportcard)](https://goreportcard.com/report/gojp/goreportcard)
+
+**Porter is a Kubernetes-powered PaaS that runs in your own cloud provider.** It brings the Heroku experience to Kubernetes without compromising its flexibility. Get started on Porter without the overhead of DevOps and fully customize your infra later when you need to.
+
+![porter](https://user-images.githubusercontent.com/65516095/103712859-def9ee00-4f88-11eb-804c-4b775d697ec4.jpeg)
+
+## Why Porter?
+### A PaaS that grows with your applications
+
+Traditional PaaS's like Heroku are great at minimizing unnecessary DevOps overhead but don't offer enough flexibility as your applications scale. Custom network rules, resource constraints, and cost are common reasons developers move their application off Heroku beyond a certain point. 
+
+Porter brings the simplicity of traditional PaaS's to your own cloud provider while giving you the full configurability that comes with Kubernetes. It's built on top of a popular Kubernetes framework called Helm and is compatible with standard Kubernetes management tools like `kubectl`, preparing your infra for mature DevOps work from day 1.
+
+![image](https://user-images.githubusercontent.com/65516095/103713478-71e75800-4f8a-11eb-915f-adee9d4f5bf7.png)
+
+## Features
+### Basics
+- One-click provisioning of a Kubernetes cluster in your own cloud console (AWS ✅, GCP 🚧, Digital Ocean 🚧)
+- Simple deploy of any Docker image (public or private)
+- Heroku-like GUI to monitor application status, logs, and history
+- Marketplace for 1-click add-on's (e.g. MongoDB, Redis, PostgreSQL)
+- Application rollback to previous release versions
+- Native CI/CD with buildpacks (Coming Soon 🚧)
+
+![Provisioning View](https://user-images.githubusercontent.com/65516095/103712142-09e34280-4f87-11eb-9272-a35805544fd0.png)
+
+### DevOps Mode
+For those who are familiar with Kubernetes and Helm:
+- Visualize, deploy and configure Helm charts via the GUI
 - User-generated [form overlays](https://docs.getporter.dev/docs/porter-templates) for managing `values.yaml`
-- Visualization of all Helm releases with filtering by namespace
 - In-depth view of releases, including revision histories and component graphs
 - Rollback/update of existing releases, including editing of raw `values.yaml`
+- Connect to and manage existing Kubernetes clusters that are not provisioned by Porter
 
 ![Graph View](https://user-images.githubusercontent.com/22849518/101073320-43322800-356d-11eb-9b69-a68bd951992e.png)
-**What's next for Porter?** View our [roadmap](https://github.com/porter-dev/porter/projects/1), or read our [mission statement](#mission-statement). 
 
-## Quick Start
-
-To view the dashboard locally, follow the instructions to install the latest CLI release for [Mac](#mac-installation), [Linux](#linux-installation), or [Windows](#windows-installation). While the Docker engine is running, run:
-
-```sh
-porter server start
-```
-
-Wait for the Porter server to start, and then run the following commands:
-
-```sh
-{
-porter auth register
-porter project create porter-test
-porter connect kubeconfig
-porter open
-}
-```
-
-The last command should open up the Porter dashboard in your browser: log in with the credentials you just set. To view more detailed setup instructions, please consult the [getting started](docs/GETTING_STARTED.md) docs.
-
-### Mac Installation
-
+## CLI Installation
+### Mac 
 Run the following command to grab the latest binary:
 
 ```sh
@@ -50,42 +56,15 @@ chmod +x ./porter
 sudo mv ./porter /usr/local/bin/porter
 ```
 
-### Linux Installation
+For Linux and Windows installation, see our [Docs](https://docs.getporter.dev/docs/cli-documentation#linux). 
 
-Run the following command to grab the latest binary:
+## Getting Started
+1. Sign up and log into [Porter Dashboard](https://dashboard.getporter.dev).
 
-```sh
-{
-name=$(curl -s https://api.github.com/repos/porter-dev/porter/releases/latest | grep "browser_download_url.*porter_.*_Linux_x86_64\.zip" | cut -d ":" -f 2,3 | tr -d \")
-name=$(basename $name)
-curl -L https://github.com/porter-dev/porter/releases/latest/download/$name --output $name
-unzip -a $name
-rm $name
-}
-```
+2. Create a Project and select a cloud provider you want to run a Kubernetes cluster in.
 
-Then move the file into your bin:
+3. Put in your credentials, then Porter will automatically provision a cluster and an image registry in your own cloud account.
 
-```sh
-chmod +x ./porter
-sudo mv ./porter /usr/local/bin/porter
-```
+4. [Build and push your Docker image to the provisioned registry with the CLI](https://docs.getporter.dev/docs/cli-documentation#porter-docker-configure).
 
-### Windows Installation
-
-Go [here](https://github.com/porter-dev/porter/releases/latest/download/porter_0.1.0-beta.1_Windows_x86_64.zip
-) to download the Windows executable and add the binary to your `PATH`. 
-
-## Mission Statement
-
-**`kubectl` for your fundamental operations. Porter for everything else.**
-
-Our mission is to be the go-to tool for interacting with complex Kubernetes deployments as both a beginner and an expert. While our initial focus is on visualizing Helm components, we believe this visualization and editing can be extended to a number of other tools and concepts, including alternative templating tools (kustomize, Terraform), other deployment tools (CI/CD tools, Terraform), Kubernetes package repositories (ChartMuseum, JFrog Artifactory), and even popular Kubernetes packages (nginx-ingress, cert-manager, prometheus, velero). 
-
-More specifically, we have the following long-term goals:
-- **Design a visual interface for complex deployments and operations**
-- **Make deployments and operations editable by and accessible for non-Kubernetes experts**
-- **Improve the development experience for packaging and releasing Kubernetes applications**
-- **Increase interoperability of Kubernetes tooling without compromising usability**
-
-Why did we begin with Helm? Helm is the most popular auxiliary Kubernetes tool, and can function in nearly all parts of deployment lifecycle. We think of the various features of Helm in the following manner, adapted from [Brian Grant's Helm Summit talk](https://www.youtube.com/watch?v=F-TlC8nIz8s) (slides [here](https://docs.google.com/presentation/d/10dp4hKciccincnH6pAFf7t31s82iNvtt_mwhlUbeCDw/edit#slide=id.g32690131a8_0_5)): package management, dependency management, application metadata, parameterization, templating, deployment/config revision management, lifecycle management hooks, and application probes. Along with these fundamental features, an expanding number of [command plugins](https://helm.sh/docs/community/related/#helm-plugins) for more specific use-cases have started to become popular in the Helm ecosystem. If we can build a better workflow for both application developers and application operators by improving the user experience for most of these Helm features, we can generalize and expand this workflow to support alternative tooling that exists in the [Kubernetes application management ecosystem](https://docs.google.com/spreadsheets/d/1FCgqz1Ci7_VCz_wdh8vBitZ3giBtac_H8SBw4uxnrsE/edit#gid=0). 
+5. From the Templates tab on the Dashboard, select the Docker template. Click on the image you have just pushed, configure the port, then hit deploy.

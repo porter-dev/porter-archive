@@ -2,7 +2,6 @@ import React, { Component } from 'react';
 import styled from 'styled-components';
 
 import api from '../../../shared/api';
-import { ProvisioningDataType } from '../../../shared/types'
 import { Context } from '../../../shared/Context';
 import ansiparse from '../../../shared/ansiparser'
 import { integrationList } from '../../../shared/common';
@@ -13,7 +12,7 @@ import { eventNames } from 'process';
 import { inflateRaw, inflateRawSync } from 'zlib';
 
 type PropsType = {
-  viewData: any,
+  viewData: any[]
 };
 
 type StateType = {
@@ -49,7 +48,9 @@ export default class Provisioner extends Component<PropsType, StateType> {
     let protocol = process.env.NODE_ENV == 'production' ? 'wss' : 'ws'
     let viewData = this.props.viewData || []
 
-    let websockets = viewData.forEach((infra: any) => {
+    console.log("viewData", viewData)
+
+    let websockets = viewData.map((infra: any) => {
       let ws = new WebSocket(`${protocol}://${process.env.API_SERVER}/api/projects/${currentProject.id}/provision/${infra.kind}/${infra.infra_id}/logs`)
       
       ws.onopen = () => {

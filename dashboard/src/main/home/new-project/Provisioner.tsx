@@ -55,6 +55,7 @@ export default class Provisioner extends Component<PropsType, StateType> {
 
       ws.onmessage = (evt: MessageEvent) => {
         let event = JSON.parse(evt.data)
+        console.log("event:", event)
         let validEvents = [] as any[]
         let err = null
 
@@ -73,6 +74,7 @@ export default class Provisioner extends Component<PropsType, StateType> {
           }
         })
 
+        console.log("validEvents: ", validEvents)
         if (err) {
           this.setState({ logs: [err] })
           return;

@@ -82,7 +82,7 @@ export default class Provisioner extends Component<PropsType, StateType> {
           this.setState({
             maxStep: {
               ...this.state.maxStep,
-              [infra.kind] : JSON.parse(validEvents[validEvents.length - 1]["Values"]["data"])["total_resources"]
+              [infra.kind] : validEvents[validEvents.length - 1]["total_resources"]
             }
           })
         }
@@ -95,7 +95,7 @@ export default class Provisioner extends Component<PropsType, StateType> {
           logs: [...this.state.logs, ...logs], 
           currentStep: {
             ...this.state.currentStep,
-            [infra.kind] : JSON.parse(validEvents[validEvents.length - 1]["Values"]["data"])["created_resources"]
+            [infra.kind] : validEvents[validEvents.length - 1]["created_resources"]
           },
         }, () => {
           this.scrollToBottom()

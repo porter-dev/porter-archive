@@ -28,7 +28,7 @@ type StateType = {
   forceSidebar: boolean,
   showWelcome: boolean,
   currentView: string,
-  viewData: any,
+  viewData: any[],
 
   // Track last project id for refreshing clusters on project change
   prevProjectId: number | null,
@@ -71,9 +71,9 @@ export default class Home extends Component<PropsType, StateType> {
                 }
               });
 
-              // if (viewData.length > 0) {
-              this.setState({ currentView: 'provisioner', viewData});
-              // }
+              if (viewData.length > 0) {
+                this.setState({ currentView: 'provisioner', viewData});
+              }
 
             }
           });

@@ -148,10 +148,3 @@ export interface InfraType {
   kind: string,
   status: string,
 }
-
-export interface ProvisioningDataType {
-  log: string,
-  created_resources: number,
-  total_resources: number,
-  kind: string,
-}

@@ -3,6 +3,9 @@
 
 **Porter is a Kubernetes-powered PaaS that runs in your own cloud provider.** Porter brings the Heroku experience to Kubernetes without compromising its flexibility. Get started on Porter without the overhead of DevOps and fully customize your infra later when you need to.
 
+![Provisioning View](https://user-images.githubusercontent.com/65516095/103712142-09e34280-4f87-11eb-9272-a35805544fd0.png)
+
+
 ## Why Porter?
 ### A PaaS that grows with your applications
 
@@ -19,8 +22,6 @@ Porter brings the simplicity of traditional PaaS's to your own cloud provider wh
   - 🚧 GCP
   - 🚧 Digital Ocean
   
-![Provisioning View](https://user-images.githubusercontent.com/65516095/103712142-09e34280-4f87-11eb-9272-a35805544fd0.png)
-
 - Simple deploy of any public or private Docker image
 
 - Heroku-like GUI to monitor application status, logs, and history
@@ -74,4 +75,6 @@ For Linux and Windows installation, see our [Docs](https://docs.getporter.dev/do
 
 5. From the Templates tab on the Dashboard, select the Docker template. Click on the image you have just pushed, configure the port, then hit deploy.
 
+## Want to Help?
+We welcome all contributions. Submit an issue or a pull request to help us improve Porter!
 ![porter](https://user-images.githubusercontent.com/65516095/103712859-def9ee00-4f88-11eb-804c-4b775d697ec4.jpeg)

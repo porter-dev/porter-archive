@@ -145,7 +145,12 @@ export default class Home extends Component<PropsType, StateType> {
         <NewProject setCurrentView={(x: string, data: any ) => this.setState({ currentView: x, viewData: data })} />
       );
     } else if (currentView === 'provisioner') {
-      return <Provisioner viewData={this.state.viewData}/>
+      return (
+        <Provisioner 
+          setCurrentView={(x: string) => this.setState({ currentView: x })}
+          viewData={this.state.viewData}
+        />
+      );
     }
 
     return (

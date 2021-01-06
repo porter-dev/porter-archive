@@ -4,7 +4,7 @@ import yaml from 'js-yaml';
 import close from '../../../../assets/close.png';
 import _ from 'lodash';
 
-import { ResourceType, ChartType, StorageType, Cluster } from '../../../../shared/types';
+import { ResourceType, ChartType, StorageType, ClusterType } from '../../../../shared/types';
 import { Context } from '../../../../shared/Context';
 import api from '../../../../shared/api';
 
@@ -23,7 +23,7 @@ import { format } from 'util';
 type PropsType = {
   namespace: string,
   currentChart: ChartType,
-  currentCluster: Cluster,
+  currentCluster: ClusterType,
   setCurrentChart: (x: ChartType | null) => void,
   setSidebar: (x: boolean) => void,
   setCurrentView: (x: string) => void,

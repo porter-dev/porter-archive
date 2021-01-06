@@ -3,13 +3,13 @@ import styled from 'styled-components';
 
 import { Context } from '../../../../shared/Context';
 import api from '../../../../shared/api';
-import { ChartType, StorageType, Cluster } from '../../../../shared/types';
+import { ChartType, StorageType, ClusterType } from '../../../../shared/types';
 
 import Chart from './Chart';
 import Loading from '../../../../components/Loading';
 
 type PropsType = {
-  currentCluster: Cluster,
+  currentCluster: ClusterType,
   namespace: string,
   setCurrentChart: (c: ChartType) => void
 };

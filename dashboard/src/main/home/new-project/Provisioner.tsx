@@ -46,23 +46,26 @@ export default class Provisioner extends Component<PropsType, StateType> {
 
       ws.onmessage = (evt: MessageEvent) => {
         let event = JSON.parse(evt.data)
-
-        let data = event.map((msg: any) => { 
-          return JSON.parse(msg["Values"]["data"])["log"]
-        })
+        let data = [] as any[]
         let err = null
 
-        // check for error
-        event.forEach((e: any) => {
-          let d = JSON.parse(e["Values"]["data"])
-          err = d["kind"] == "error" ? d : null
+        event.forEach((msg: any) => { 
+          if (msg["Values"] && msg["Values"]["data"] && JSON.parse(msg["Values"]["data"])["log"]) { 
+            let d = JSON.parse(msg["Values"]["data"])
+            if (d["kind"] == "error") {
+              err = d
+              return;
+            }
+
+            data.push(d)
+          }
         })
 
         if (err) {
           this.setState({ logs: [err] })
         }
         
-        if (!this.state.maxStep[infra.kind] && !this.state.maxStep[infra.kind]["total_resources"]) {
+        if (!this.state.maxStep[infra.kind] || !this.state.maxStep[infra.kind]["total_resources"]) {
           this.setState({
             maxStep: {
               ...this.state.maxStep,

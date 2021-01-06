@@ -4,12 +4,15 @@ import (
 	"encoding/json"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/porter-dev/porter/internal/registry"
 
 	"github.com/go-chi/chi"
 	"github.com/porter-dev/porter/internal/forms"
 	"github.com/porter-dev/porter/internal/models"
+
+	"github.com/aws/aws-sdk-go/service/ecr"
 )
 
 // HandleCreateRegistry creates a new registry
@@ -43,6 +46,34 @@ func (app *App) HandleCreateRegistry(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
 		return
+	}
+
+	// if the registry is ECR and URL is not set, get the registry url
+	if registry.URL == "" && registry.AWSIntegrationID != 0 {
+		awsInt, err := app.Repo.AWSIntegration.ReadAWSIntegration(registry.AWSIntegrationID)
+
+		if err != nil {
+			app.handleErrorDataRead(err, w)
+			return
+		}
+
+		sess, err := awsInt.GetSession()
+
+		if err != nil {
+			app.handleErrorDataRead(err, w)
+			return
+		}
+
+		ecrSvc := ecr.New(sess)
+
+		output, err := ecrSvc.GetAuthorizationToken(&ecr.GetAuthorizationTokenInput{})
+
+		if err != nil {
+			app.handleErrorDataRead(err, w)
+			return
+		}
+
+		registry.URL = *output.AuthorizationData[0].ProxyEndpoint
 	}
 
 	// handle write to the database
@@ -90,6 +121,79 @@ func (app *App) HandleListProjectRegistries(w http.ResponseWriter, r *http.Reque
 	w.WriteHeader(http.StatusOK)
 
 	if err := json.NewEncoder(w).Encode(extRegs); err != nil {
+		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
+		return
+	}
+}
+
+// temp -- token response
+type ECRTokenResponse struct {
+	Token     string     `json:"token"`
+	ExpiresAt *time.Time `json:"expires_at"`
+}
+
+// HandleGetProjectRegistryECRToken gets an ECR token for a registry
+func (app *App) HandleGetProjectRegistryECRToken(w http.ResponseWriter, r *http.Request) {
+	projID, err := strconv.ParseUint(chi.URLParam(r, "project_id"), 0, 64)
+
+	if err != nil || projID == 0 {
+		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
+		return
+	}
+
+	region := chi.URLParam(r, "region")
+
+	if region == "" {
+		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
+		return
+	}
+
+	// list registries and find one that matches the region
+	regs, err := app.Repo.Registry.ListRegistriesByProjectID(uint(projID))
+	var token string
+	var expiresAt *time.Time
+
+	for _, reg := range regs {
+		if reg.AWSIntegrationID != 0 {
+			awsInt, err := app.Repo.AWSIntegration.ReadAWSIntegration(reg.AWSIntegrationID)
+
+			if err != nil {
+				app.handleErrorDataRead(err, w)
+				return
+			}
+
+			if awsInt.AWSRegion == region {
+				// get the aws integration and session
+				sess, err := awsInt.GetSession()
+
+				if err != nil {
+					app.handleErrorDataRead(err, w)
+					return
+				}
+
+				ecrSvc := ecr.New(sess)
+
+				output, err := ecrSvc.GetAuthorizationToken(&ecr.GetAuthorizationTokenInput{})
+
+				if err != nil {
+					app.handleErrorDataRead(err, w)
+					return
+				}
+
+				token = *output.AuthorizationData[0].AuthorizationToken
+				expiresAt = output.AuthorizationData[0].ExpiresAt
+			}
+		}
+	}
+
+	resp := &ECRTokenResponse{
+		Token:     token,
+		ExpiresAt: expiresAt,
+	}
+
+	w.WriteHeader(http.StatusOK)
+
+	if err := json.NewEncoder(w).Encode(resp); err != nil {
 		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
 		return
 	}

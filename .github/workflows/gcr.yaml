@@ -19,7 +19,7 @@ jobs:
     - name: Write Dashboard Environment Variables
       run: |
         cat >./dashboard/.env <<EOL
-        NODE_ENV=production
+        NODE_ENV=development
         API_SERVER=localhost:8080
         FULLSTORY_ORG_ID=${{secrets.FULLSTORY_ORG_ID}}
         DISCORD_KEY=${{secrets.DISCORD_KEY}}

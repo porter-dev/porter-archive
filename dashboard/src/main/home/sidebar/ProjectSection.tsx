@@ -76,7 +76,7 @@ export default class ProjectSection extends Component<PropsType, StateType> {
               onClick={() => this.props.setCurrentView('new-project')}
             >
               <ProjectIconAlt>+</ProjectIconAlt>
-              <ProjectLabel>Add a project</ProjectLabel>
+              <ProjectLabel>Create a Project</ProjectLabel>
             </Option>
           </Dropdown>
         </div>

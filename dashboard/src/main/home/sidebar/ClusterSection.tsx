@@ -4,7 +4,7 @@ import drawerBg from '../../../assets/drawer-bg.png';
 
 import api from '../../../shared/api';
 import { Context } from '../../../shared/Context';
-import { Cluster } from '../../../shared/types';
+import { ClusterType } from '../../../shared/types';
 
 import Drawer from './Drawer';
 
@@ -19,7 +19,7 @@ type PropsType = {
 type StateType = {
   showDrawer: boolean,
   initializedDrawer: boolean,
-  clusters: Cluster[],
+  clusters: ClusterType[],
 
   // Track last project id for refreshing clusters on project change
   prevProjectId: number
@@ -31,7 +31,7 @@ export default class ClusterSection extends Component<PropsType, StateType> {
   state = {
     showDrawer: false,
     initializedDrawer: false,
-    clusters: [] as Cluster[],
+    clusters: [] as ClusterType[],
     prevProjectId: this.context.currentProject.id
   };
 

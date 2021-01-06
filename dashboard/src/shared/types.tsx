@@ -1,4 +1,4 @@
-export interface Cluster {
+export interface ClusterType {
   id: number,
   name: string,
   server: string,

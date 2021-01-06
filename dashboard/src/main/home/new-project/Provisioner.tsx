@@ -11,6 +11,7 @@ import { eventNames } from 'process';
 
 type PropsType = {
   viewData: any,
+  setCurrentView: (x: string) => void,
 };
 
 type StateType = {
@@ -115,6 +116,10 @@ export default class Provisioner extends Component<PropsType, StateType> {
 
     for (let key in this.state.currentStep) {
       currentStep += this.state.currentStep[key]
+    }
+
+    if (currentStep === maxStep) {
+      this.props.setCurrentView('dashboard');
     }
 
     return (

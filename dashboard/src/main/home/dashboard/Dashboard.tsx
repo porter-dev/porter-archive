@@ -3,7 +3,7 @@ import styled from 'styled-components';
 import gradient from '../../../assets/gradient.jpg';
 
 import { Context } from '../../../shared/Context';
-import PipelinesSection from './PipelinesSection';
+import StatusPlaceholderContainer from './StatusPlaceholderContainer';
 
 type PropsType = {
   setCurrentView: (x: string) => void,
@@ -53,9 +53,7 @@ export default class Dashboard extends Component<PropsType, StateType> {
 
           <LineBreak />
 
-          <Placeholder>
-            🚀 Pipelines coming soon.
-          </Placeholder>
+          <StatusPlaceholderContainer setCurrentView={this.props.setCurrentView} />
         </div>
       );
     }
@@ -63,9 +61,9 @@ export default class Dashboard extends Component<PropsType, StateType> {
 
   render() {
     return (
-      <div>
+      <>
         {this.renderContents()}
-      </div>
+      </>
     );
   }
 }
@@ -172,10 +170,10 @@ const ButtonAlt = styled(Button)`
 `;
 
 const LineBreak = styled.div`
-  width: calc(100% - 180px);
+  width: calc(100% - 0px);
   height: 2px;
   background: #ffffff20;
-  margin: 10px 80px 35px;
+  margin: 10px 0px 35px;
 `;
 
 const Overlay = styled.div`

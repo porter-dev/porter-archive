@@ -64,22 +64,24 @@ export default class ValuesForm extends Component<PropsType, StateType> {
         case 'subtitle':
           return <Helper key={i}>{item.label}</Helper>;
         case 'resource-list':
-          return (
-            <ResourceList>
-              {
-                item.value.map((resource: any, i: number) => {
-                  return (
-                    <ExpandableResource
-                      key={i}
-                      resource={resource}
-                      isLast={i === item.value.length - 1}
-                      roundAllCorners={true}
-                    />
-                  );
-                })
-              }
-            </ResourceList>
-          );
+          if (Array.isArray(item.value)) {
+            return (
+              <ResourceList>
+                {
+                  item.value.map((resource: any, i: number) => {
+                    return (
+                      <ExpandableResource
+                        key={i}
+                        resource={resource}
+                        isLast={i === item.value.length - 1}
+                        roundAllCorners={true}
+                      />
+                    );
+                  })
+                }
+              </ResourceList>
+            );
+          }
         case 'checkbox':
           return (
             <CheckboxRow

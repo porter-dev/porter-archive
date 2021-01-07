@@ -59,6 +59,7 @@ export default class Provisioner extends Component<PropsType, StateType> {
 
       ws.onmessage = (evt: MessageEvent) => {
         let event = JSON.parse(evt.data)
+        console.log(event)
         let validEvents = [] as any[]
         let err = null
   

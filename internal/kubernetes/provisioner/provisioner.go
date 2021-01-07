@@ -62,11 +62,11 @@ func (conf *Conf) GetProvisionerJobTemplate() (*batchv1.Job, error) {
 	if conf.Kind == Test {
 		args = []string{"test", "hello"}
 	} else if conf.Kind == ECR {
-		args = []string{"ecr"}
+		args = []string{"apply", "ecr"}
 		env = conf.AWS.AttachAWSEnv(env)
 		env = conf.ECR.AttachECREnv(env)
 	} else if conf.Kind == EKS {
-		args = []string{"eks"}
+		args = []string{"apply", "eks"}
 		env = conf.AWS.AttachAWSEnv(env)
 		env = conf.EKS.AttachEKSEnv(env)
 	}

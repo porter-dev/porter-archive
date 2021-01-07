@@ -3,11 +3,13 @@ import styled from 'styled-components';
 
 import api from '../../../shared/api';
 import { Context } from '../../../shared/Context';
+import ansiparse from '../../../shared/ansiparser'
 import { integrationList } from '../../../shared/common';
 import loading from '../../../assets/loading.gif';
 
 import Helper from '../../../components/values-form/Helper';
 import { eventNames } from 'process';
+import { inflateRaw, inflateRawSync } from 'zlib';
 
 type PropsType = {
   viewData: any,
@@ -33,11 +35,23 @@ export default class Provisioner extends Component<PropsType, StateType> {
     this.scrollRef.current.scrollTop = this.scrollRef.current.scrollHeight
   }
 
+  isJSON = (str: string) => {
+    try {
+        JSON.parse(str);
+    } catch (e) {
+        return false;
+    }
+    return true;
+  }
+
   componentDidMount() {
     let { currentProject } = this.context;
     let protocol = process.env.NODE_ENV == 'production' ? 'wss' : 'ws'
+    let viewData = this.props.viewData || []
 
-    let websockets = this.props.viewData.forEach((infra: any) => {
+    console.log("viewData", viewData)
+
+    let websockets = viewData.map((infra: any) => {
       let ws = new WebSocket(`${protocol}://${process.env.API_SERVER}/api/projects/${currentProject.id}/provision/${infra.kind}/${infra.infra_id}/logs`)
       
       ws.onopen = () => {
@@ -46,32 +60,63 @@ export default class Provisioner extends Component<PropsType, StateType> {
 
       ws.onmessage = (evt: MessageEvent) => {
         let event = JSON.parse(evt.data)
-        let data = event.map((msg: any) => { return `${infra.kind}: ${msg["Values"]["data"]}` })
+        console.log(event)
+        let validEvents = [] as any[]
         let err = null
-
-        // check for error
-        event.forEach((e: any) => {
-          err = e["Values"]["kind"] == "error" ? e["Values"]["data"] : null
-        })
-
+        
+        for (var i = 0; i < event.length; i++) {
+          let msg = event[i]
+          if (msg["Values"] && msg["Values"]["data"] && this.isJSON(msg["Values"]["data"])) { 
+            let d = JSON.parse(msg["Values"]["data"])
+  
+            if (d["kind"] == "error") {
+              err = d["log"]
+              break;
+            }
+  
+            // add only valid events
+            if (d["log"] != null && d["created_resources"] != null && d["total_resources"] != null) {
+              validEvents.push(d)
+            }
+          }
+        }
+  
         if (err) {
-          this.setState({ logs: [err] })
+          let e = ansiparse(err).map((el: any) => {
+            return el.text
+          })
+          console.log("error", e)
+          this.setState({ logs: e })
+          return;
+        }
+  
+        if (validEvents.length == 0) {
+          return;
         }
         
-        if (!this.state.maxStep[infra.kind]) {
+        if (!this.state.maxStep[infra.kind] || !this.state.maxStep[infra.kind]["total_resources"]) {
           this.setState({
             maxStep: {
               ...this.state.maxStep,
-              [infra.kind] : event[event.length]["Values"]["created_resources"]
+              [infra.kind] : validEvents[validEvents.length - 1]["total_resources"]
             }
           })
         }
+        
+        let logs = [] as any[]
+        validEvents.forEach((e: any) => {
+          logs.push(...ansiparse(e["log"]))
+        })
 
+        logs = logs.map((log: any) => {
+          return log.text
+        })
+  
         this.setState({ 
-          logs: [...this.state.logs, ...data], 
+          logs: [...this.state.logs, ...logs], 
           currentStep: {
             ...this.state.currentStep,
-            [infra.kind] : event[event.length]["Values"]["created_resources"]
+            [infra.kind] : validEvents[validEvents.length - 1]["created_resources"]
           },
         }, () => {
           this.scrollToBottom()
@@ -93,7 +138,9 @@ export default class Provisioner extends Component<PropsType, StateType> {
   }
 
   componentWillUnmount() {
-    this.state.websockets?.forEach((ws) => {
+    if (!this.state.websockets) { return; }
+
+    this.state.websockets.forEach((ws) => {
       ws.close()
     })
   }
@@ -111,6 +158,7 @@ export default class Provisioner extends Component<PropsType, StateType> {
     let currentStep = 0;
 
     for (let key in this.state.maxStep) {
+      console.log(key)
       maxStep += this.state.maxStep[key]
     }
 
@@ -133,7 +181,7 @@ export default class Provisioner extends Component<PropsType, StateType> {
         </Helper>
 
         <LoadingBar>
-          <Loaded progress={((currentStep / maxStep) * 100).toString() + '%'} />
+          <Loaded progress={((currentStep / (maxStep == 0 ? 1 : maxStep)) * 100).toString() + '%'} />
         </LoadingBar>
 
         <LogStream ref={this.scrollRef}>

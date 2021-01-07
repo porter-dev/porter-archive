@@ -28,7 +28,7 @@ type StateType = {
   forceSidebar: boolean,
   showWelcome: boolean,
   currentView: string,
-  viewData: any,
+  viewData: any[],
 
   // Track last project id for refreshing clusters on project change
   prevProjectId: number | null,
@@ -59,16 +59,22 @@ export default class Home extends Component<PropsType, StateType> {
             if (err) {
               console.log(err);
             } else if (res.data) {
-              
+
+              let viewData = [] as any[]
               // TODO: separately handle non meta-provisioning case
               res.data.forEach((el: InfraType) => {
                 if (el.status === 'creating') {
-                  this.setState({ currentView: 'provisioner', viewData: {
+                  viewData.push({
                     infra_id: el.id,
                     kind: el.kind,
-                  }});
+                  })
                 }
               });
+
+              if (viewData.length > 0) {
+                this.setState({ currentView: 'provisioner', viewData});
+              }
+
             }
           });
         } else if (res.data.length === 0) {
@@ -108,7 +114,7 @@ export default class Home extends Component<PropsType, StateType> {
               setCurrentModal('ClusterConfigModal', { currentTab: 'select' });
             }}>Select Clusters</A> tab.<br /><br />
             3. For additional information, please refer to our <A>docs</A>.<br /><br /><br />
-            
+
             * Make sure all fields are explicitly declared (e.g., certs and keys).
           </Placeholder>
         </DashboardWrapper>
@@ -154,8 +160,8 @@ export default class Home extends Component<PropsType, StateType> {
     }
 
     return (
-      <Templates 
-        setCurrentView={(x: string) => this.setState({ currentView: x })} 
+      <Templates
+        setCurrentView={(x: string) => this.setState({ currentView: x })}
       />
     );
   }
@@ -171,11 +177,11 @@ export default class Home extends Component<PropsType, StateType> {
   renderSidebar = () => {
     if (this.context.projects.length > 0) {
 
-      // Force sidebar closed on first provision 
+      // Force sidebar closed on first provision
       if (this.state.currentView === 'provisioner' && this.state.forceSidebar) {
         this.setState({ forceSidebar: false });
       }
-      
+
       return (
         <Sidebar
           forceSidebar={this.state.forceSidebar}
@@ -227,8 +233,8 @@ export default class Home extends Component<PropsType, StateType> {
         {this.renderSidebar()}
 
         <ViewWrapper>
-          <Navbar 
-            logOut={this.props.logOut} 
+          <Navbar
+            logOut={this.props.logOut}
             currentView={this.state.currentView} // For form feedback
           />
           {this.renderContents()}

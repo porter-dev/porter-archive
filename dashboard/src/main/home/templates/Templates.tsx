@@ -75,7 +75,6 @@ export default class Templates extends Component<PropsType, StateType> {
 
     return this.state.PorterTemplates.map((template: PorterTemplate, i: number) => {
       let { name, icon, description } = template;
-      console.log(template)
       return (
         <TemplateBlock key={i} onClick={() => this.setState({ currentTemplate: template })}>
           {icon ? this.renderIcon(icon) : this.renderIcon(template.icon)}

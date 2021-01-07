@@ -161,6 +161,18 @@ func (app *App) HandleGetRelease(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	// if form not populated, detect common charts
+	if res.Form == nil {
+		// for now just case by name
+		if res.Release.Chart.Name() == "velero" {
+			formYAML, err := parser.FormYAMLFromBytes(parserDef, []byte(veleroForm), "")
+
+			if err == nil {
+				res.Form = formYAML
+			}
+		}
+	}
+
 	if err := json.NewEncoder(w).Encode(res); err != nil {
 		app.handleErrorFormDecoding(err, ErrReleaseDecode, w)
 		return
@@ -723,3 +735,38 @@ func (app *App) getAgentFromReleaseForm(
 
 	return agent, err
 }
+
+const veleroForm string = `tags:
+- hello
+tabs:
+- name: main
+  context:
+    type: cluster
+    config:
+      group: velero.io
+      version: v1
+      resource: backups
+  label: Backups
+  sections:
+  - name: section_one
+    contents: 
+    - type: heading
+      label: 💾 Velero Backups
+    - type: resource-list
+      value: |
+        .items[] | { 
+          name: .metadata.name, 
+          label: .metadata.namespace,
+          status: .status.phase,
+          timestamp: .status.completionTimestamp,
+          message: [
+            (if .status.volumeSnapshotsAttempted then "\(.status.volumeSnapshotsAttempted) volume snapshots attempted, \(.status.volumeSnapshotsCompleted) completed." else null end),
+            "Finished \(.status.completionTimestamp).",
+            "Backup expires on \(.status.expiration)."
+          ]|join(" "),
+          data: {
+            "Included Namespaces": (if .spec.includedNamespaces then .spec.includedNamespaces|join(",") else "* (all)" end),
+            "Included Resources": (if .spec.includedResources then .spec.includedResources|join(",") else "* (all)" end),
+            "Storage Location": .spec.storageLocation
+          }
+        }`

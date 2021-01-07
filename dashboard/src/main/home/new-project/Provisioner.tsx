@@ -62,14 +62,15 @@ export default class Provisioner extends Component<PropsType, StateType> {
         console.log(event)
         let validEvents = [] as any[]
         let err = null
-  
-        event.forEach((msg: any) => { 
+        
+        for (var i = 0; i < event.length; i++) {
+          let msg = event[i]
           if (msg["Values"] && msg["Values"]["data"] && this.isJSON(msg["Values"]["data"])) { 
             let d = JSON.parse(msg["Values"]["data"])
   
             if (d["kind"] == "error") {
-              err = d
-              return;
+              err = d["log"]
+              break;
             }
   
             // add only valid events
@@ -77,10 +78,13 @@ export default class Provisioner extends Component<PropsType, StateType> {
               validEvents.push(d)
             }
           }
-        })
+        }
   
         if (err) {
-          this.setState({ logs: [err] })
+          let e = ansiparse(err).map((el: any) => {
+            return el.text
+          })
+          this.setState({ logs: e })
           return;
         }
   

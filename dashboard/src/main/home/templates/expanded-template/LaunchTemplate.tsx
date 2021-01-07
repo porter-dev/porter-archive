@@ -125,6 +125,7 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
   }
 
   componentDidMount() {
+    console.log(this.context.currentCluster.name);
     // Retrieve tab options
     let tabOptions = [] as ChoiceType[];
     this.props.form.tabs.map((tab: any, i: number) => {

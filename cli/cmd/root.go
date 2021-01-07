@@ -63,4 +63,10 @@ func Setup() {
 			os.Exit(1)
 		}
 	}
+
+	// create defaults if configs are not set
+	if viper.GetString("host") == "" {
+		viper.Set("host", "https://dashboard.getporter.dev")
+		viper.WriteConfig()
+	}
 }

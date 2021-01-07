@@ -95,7 +95,7 @@ func login() error {
 		return err
 	}
 
-	_, err = client.Login(context.Background(), &api.LoginRequest{
+	_user, err := client.Login(context.Background(), &api.LoginRequest{
 		Email:    username,
 		Password: pw,
 	})
@@ -105,6 +105,13 @@ func login() error {
 	}
 
 	color.New(color.FgGreen).Println("Successfully logged in!")
+
+	// get a list of projects, and set the current project
+	projects, err := client.ListUserProjects(context.Background(), _user.ID)
+
+	if len(projects) > 0 {
+		setProject(projects[0].ID)
+	}
 
 	return nil
 }

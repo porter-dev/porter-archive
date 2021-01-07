@@ -84,6 +84,7 @@ export default class Provisioner extends Component<PropsType, StateType> {
           let e = ansiparse(err).map((el: any) => {
             return el.text
           })
+          console.log("error", e)
           this.setState({ logs: e })
           return;
         }

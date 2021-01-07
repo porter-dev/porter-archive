@@ -97,14 +97,14 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
   renderTabContents = () => {
     return (
       <ValuesWrapper
-        formTabs={this.props.form.tabs}
+        formTabs={this.props.form?.tabs}
         onSubmit={this.onSubmit}
         saveValuesStatus={this.state.saveValuesStatus}
         disabled={!this.state.selectedImageUrl}
       >
         {
           (metaState: any, setMetaState: any) => {
-            return this.props.form.tabs.map((tab: any, i: number) => {
+            return this.props.form?.tabs.map((tab: any, i: number) => {
 
               // If tab is current, render
               if (tab.name === this.state.currentTab) {
@@ -127,7 +127,7 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
   componentDidMount() {
     // Retrieve tab options
     let tabOptions = [] as ChoiceType[];
-    this.props.form.tabs.map((tab: any, i: number) => {
+    this.props.form?.tabs.map((tab: any, i: number) => {
       if (tab.context.type === 'helm/values') {
         tabOptions.push({ value: tab.name, label: tab.label });
       }
@@ -183,9 +183,8 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
   }
 
   render() {
-    let { name, icon, description } = this.props.form;
+    let { name, icon } = this.props.currentTemplate;
     let { currentTemplate } = this.props;
-    name = name ? name : currentTemplate.name;
 
     return (
       <StyledLaunchTemplate>

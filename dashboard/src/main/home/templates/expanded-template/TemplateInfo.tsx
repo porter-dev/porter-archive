@@ -8,6 +8,7 @@ import api from '../../../../shared/api';
 import Loading from '../../../../components/Loading';
 
 import { PorterTemplate } from '../../../../shared/types';
+import { timeStamp } from 'console';
 
 type PropsType = {
   currentTemplate: any,
@@ -62,11 +63,41 @@ export default class TemplateInfo extends Component<PropsType, StateType> {
     }
   }
 
+  renderBanner = () => {
+    let { currentCluster } = this.context;
+    if (!currentCluster) {
+      return (
+        <>
+          <Br />
+          <Banner>
+            <i className="material-icons">error_outline</i>
+            This project requires at least one cluster to launch a template.
+          </Banner>
+        </>
+      );
+    } else if (this.props.currentTemplate.name.toLowerCase() === 'docker') {
+      return (
+        <>
+          <Br />
+          <Banner>
+            <i className="material-icons-outlined">info</i>
+            For instructions on connecting to your registry 
+            <Link 
+              target="_blank"
+              href="https://docs.getporter.dev/docs/cli-documentation#pushing-docker-images-to-your-porter-image-registry"
+            >
+              refer to our docs
+            </Link>.
+          </Banner>
+        </>
+      );
+    }
+  }
+
   render() {
     let { currentCluster } = this.context;
     let { name, icon } = this.props.currentTemplate;
     let { currentTemplate } = this.props;
-    name = name ? name : currentTemplate.name;
     return (
       <StyledExpandedTemplate>
         <TitleSection>
@@ -87,6 +118,7 @@ export default class TemplateInfo extends Component<PropsType, StateType> {
         </TitleSection>
         {this.renderTagSection()}
         <LineBreak />
+        {this.renderBanner()}
         <ContentSection>
           {this.renderMarkdown()}
         </ContentSection>
@@ -96,6 +128,34 @@ export default class TemplateInfo extends Component<PropsType, StateType> {
 }
 
 TemplateInfo.contextType = Context;
+
+const Link = styled.a`
+  text-decoration: underline;
+  color: white;
+  cursor: pointer;
+  margin-left: 5px;
+`;
+
+const Br = styled.div`
+  height: 5px;
+  width: 100%;
+`;
+
+const Banner = styled.div`
+  height: 40px;
+  width: 100%;
+  margin: 15px 0;
+  font-size: 13px;
+  display: flex;
+  border-radius: 5px;
+  padding-left: 15px;
+  align-items: center;
+  background: #616FEEcc;
+  > i {
+    margin-right: 10px;
+    font-size: 18px;
+  }
+`;
 
 const LineBreak = styled.div`
   width: calc(100% - 0px);

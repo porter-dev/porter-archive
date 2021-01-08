@@ -13,7 +13,9 @@ type PropsType = {
   releaseDrawer: () => void,
   setWelcome: (x: boolean) => void,
   setCurrentView: (x: string) => void,
-  isSelected: boolean
+  isSelected: boolean,
+  forceRefreshClusters: boolean,
+  setRefreshClusters: (x: boolean) => void,
 };
 
 type StateType = {
@@ -56,6 +58,7 @@ export default class ClusterSection extends Component<PropsType, StateType> {
           } else {
             this.setState({ clusters: [] });
             setCurrentCluster(null);
+            this.props.setCurrentView('dashboard');
           }
         }
       }
@@ -74,6 +77,9 @@ export default class ClusterSection extends Component<PropsType, StateType> {
       if (this.state.prevProjectId !== this.context.currentProject.id) {
         this.updateClusters();
         this.setState({ prevProjectId: this.context.currentProject.id });
+      } else if (this.props.forceRefreshClusters === true) {
+        this.updateClusters();
+        this.props.setRefreshClusters(false);
       }
 
       if (this.props.forceCloseDrawer && this.state.showDrawer) {

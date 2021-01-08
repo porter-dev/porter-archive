@@ -5,6 +5,7 @@ import gradient from '../../../assets/gradient.jpg';
 
 import api from '../../../shared/api';
 import { Context } from '../../../shared/Context';
+import { ClusterType } from '../../../shared/types';
 
 import SaveButton from '../../../components/SaveButton';
 import InputRow from '../../../components/values-form/InputRow';
@@ -55,6 +56,32 @@ export default class UpdateProjectModal extends Component<PropsType, StateType> 
       } else {
         this.getProjects();
         this.setState({ status: 'successful', showDeleteOverlay: false });
+      }
+    });
+
+    // Loop through and delete infra of all clusters we've provisioned
+    api.getClusters('<token>', {}, { id: currentProject.id }, (err: any, res: any) => {
+      if (err) {
+        console.log(err);
+      } else {
+        res.data.forEach((cluster: ClusterType) => {
+
+          // Handle destroying infra we've provisioned
+          if (cluster.infra_id) {
+            console.log('destroying provisioned infra...', cluster.infra_id);
+            api.destroyCluster('<token>', {}, { 
+              project_id: currentProject.id,
+              infra_id: cluster.infra_id,
+            }, (err: any, res: any) => {
+              if (err) {
+                this.setState({ status: 'error' });
+                console.log(err)
+              } else {
+                console.log('destroyed provisioned infra:', cluster.infra_id);
+              }
+            });
+          }
+        });
       }
     });
   }

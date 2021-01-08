@@ -74,7 +74,14 @@ export default class ClusterDashboard extends Component<PropsType, StateType> {
         <TitleSection>
           {this.renderDashboardIcon()}
           <Title>{currentCluster.name}</Title>
-          <i className="material-icons">more_vert</i>
+          <i 
+            className="material-icons"
+            onClick={() => this.context.setCurrentModal('UpdateClusterModal', { 
+              setCurrentView: this.props.setCurrentView,
+            })}
+          >
+            more_vert
+          </i>
         </TitleSection>
 
         <InfoSection>
@@ -280,7 +287,7 @@ const TitleSection = styled.div`
 
   > i {
     margin-left: 10px;
-    cursor: not-allowed;
+    cursor: pointer;
     font-size 18px;
     color: #858FAAaa;
     padding: 5px;

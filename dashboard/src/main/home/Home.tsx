@@ -30,6 +30,7 @@ type StateType = {
   showWelcome: boolean,
   currentView: string,
   viewData: any[],
+  forceRefreshClusters: boolean, // For updating ClusterSection from modal on deletion
 
   // Track last project id for refreshing clusters on project change
   prevProjectId: number | null,
@@ -39,9 +40,10 @@ export default class Home extends Component<PropsType, StateType> {
   state = {
     forceSidebar: true,
     showWelcome: false,
-    currentView: 'provisioner',
+    currentView: 'dashboard',
     prevProjectId: null as number | null,
-    viewData: [] as any
+    viewData: null as any,
+    forceRefreshClusters: false,
   }
 
   // Possibly consolidate into context (w/ ProjectSection + NewProject)
@@ -189,6 +191,8 @@ export default class Home extends Component<PropsType, StateType> {
           setWelcome={(x: boolean) => this.setState({ showWelcome: x })}
           setCurrentView={this.setCurrentView}
           currentView={this.state.currentView}
+          forceRefreshClusters={this.state.forceRefreshClusters}
+          setRefreshClusters={(x: boolean) => this.setState({ forceRefreshClusters: x })}
         />
       );
     }
@@ -213,6 +217,16 @@ export default class Home extends Component<PropsType, StateType> {
           ariaHideApp={false}
         >
           <UpdateProjectModal />
+        </ReactModal>
+        <ReactModal
+          isOpen={currentModal === 'UpdateClusterModal'}
+          onRequestClose={() => setCurrentModal(null, null)}
+          style={ProjectModalStyles}
+          ariaHideApp={false}
+        >
+          <UpdateClusterModal 
+            setRefreshClusters={(x: boolean) => this.setState({ forceRefreshClusters: x })} 
+          />
         </ReactModal>
         <ReactModal
           isOpen={currentModal === 'IntegrationsModal'}

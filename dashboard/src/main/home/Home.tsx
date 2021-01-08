@@ -13,6 +13,7 @@ import Loading from '../../components/Loading';
 import Templates from './templates/Templates';
 import Integrations from "./integrations/Integrations";
 import UpdateProjectModal from './modals/UpdateProjectModal';
+import UpdateClusterModal from './modals/UpdateClusterModal';
 import ClusterInstructionsModal from './modals/ClusterInstructionsModal';
 import IntegrationsModal from './modals/IntegrationsModal';
 import IntegrationsInstructionsModal from './modals/IntegrationsInstructionsModal';
@@ -28,7 +29,8 @@ type StateType = {
   forceSidebar: boolean,
   showWelcome: boolean,
   currentView: string,
-  viewData: any,
+  viewData: any[],
+  forceRefreshClusters: boolean, // For updating ClusterSection from modal on deletion
 
   // Track last project id for refreshing clusters on project change
   prevProjectId: number | null,
@@ -40,7 +42,8 @@ export default class Home extends Component<PropsType, StateType> {
     showWelcome: false,
     currentView: 'dashboard',
     prevProjectId: null as number | null,
-    viewData: null as any
+    viewData: null as any,
+    forceRefreshClusters: false,
   }
 
   // Possibly consolidate into context (w/ ProjectSection + NewProject)
@@ -59,16 +62,22 @@ export default class Home extends Component<PropsType, StateType> {
             if (err) {
               console.log(err);
             } else if (res.data) {
-              
+
+              let viewData = [] as any[]
               // TODO: separately handle non meta-provisioning case
               res.data.forEach((el: InfraType) => {
                 if (el.status === 'creating') {
-                  this.setState({ currentView: 'provisioner', viewData: {
+                  viewData.push({
                     infra_id: el.id,
                     kind: el.kind,
-                  }});
+                  });
                 }
               });
+
+              if (viewData.length > 0) {
+                this.setState({ currentView: 'provisioner', viewData});
+              }
+
             }
           });
         } else if (res.data.length === 0) {
@@ -108,7 +117,7 @@ export default class Home extends Component<PropsType, StateType> {
               setCurrentModal('ClusterConfigModal', { currentTab: 'select' });
             }}>Select Clusters</A> tab.<br /><br />
             3. For additional information, please refer to our <A>docs</A>.<br /><br /><br />
-            
+
             * Make sure all fields are explicitly declared (e.g., certs and keys).
           </Placeholder>
         </DashboardWrapper>
@@ -154,8 +163,8 @@ export default class Home extends Component<PropsType, StateType> {
     }
 
     return (
-      <Templates 
-        setCurrentView={(x: string) => this.setState({ currentView: x })} 
+      <Templates
+        setCurrentView={(x: string) => this.setState({ currentView: x })}
       />
     );
   }
@@ -171,17 +180,19 @@ export default class Home extends Component<PropsType, StateType> {
   renderSidebar = () => {
     if (this.context.projects.length > 0) {
 
-      // Force sidebar closed on first provision 
+      // Force sidebar closed on first provision
       if (this.state.currentView === 'provisioner' && this.state.forceSidebar) {
         this.setState({ forceSidebar: false });
       }
-      
+
       return (
         <Sidebar
           forceSidebar={this.state.forceSidebar}
           setWelcome={(x: boolean) => this.setState({ showWelcome: x })}
           setCurrentView={this.setCurrentView}
           currentView={this.state.currentView}
+          forceRefreshClusters={this.state.forceRefreshClusters}
+          setRefreshClusters={(x: boolean) => this.setState({ forceRefreshClusters: x })}
         />
       );
     }
@@ -208,6 +219,16 @@ export default class Home extends Component<PropsType, StateType> {
           <UpdateProjectModal />
         </ReactModal>
         <ReactModal
+          isOpen={currentModal === 'UpdateClusterModal'}
+          onRequestClose={() => setCurrentModal(null, null)}
+          style={ProjectModalStyles}
+          ariaHideApp={false}
+        >
+          <UpdateClusterModal 
+            setRefreshClusters={(x: boolean) => this.setState({ forceRefreshClusters: x })} 
+          />
+        </ReactModal>
+        <ReactModal
           isOpen={currentModal === 'IntegrationsModal'}
           onRequestClose={() => setCurrentModal(null, null)}
           style={SmallModalStyles}
@@ -227,8 +248,8 @@ export default class Home extends Component<PropsType, StateType> {
         {this.renderSidebar()}
 
         <ViewWrapper>
-          <Navbar 
-            logOut={this.props.logOut} 
+          <Navbar
+            logOut={this.props.logOut}
             currentView={this.state.currentView} // For form feedback
           />
           {this.renderContents()}

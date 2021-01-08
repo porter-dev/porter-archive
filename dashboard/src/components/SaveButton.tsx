@@ -86,7 +86,7 @@ const StatusWrapper = styled.div`
 
   > i {
     font-size: 18px;
-    margin-right: 5px;
+    margin-right: 10px;
     color: ${(props: { successful: boolean }) => props.successful ? '#4797ff' : '#fcba03'};
   }
 

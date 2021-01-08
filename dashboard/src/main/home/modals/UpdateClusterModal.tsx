@@ -5,83 +5,60 @@ import gradient from '../../../assets/gradient.jpg';
 
 import api from '../../../shared/api';
 import { Context } from '../../../shared/Context';
-import { ClusterType } from '../../../shared/types';
 
 import SaveButton from '../../../components/SaveButton';
 import InputRow from '../../../components/values-form/InputRow';
 import ConfirmOverlay from '../../../components/ConfirmOverlay';
 
 type PropsType = {
+  setRefreshClusters: (x: boolean) => void,
 };
 
 type StateType = {
-  projectName: string,
+  clusterName: string,
   status: string | null,
   showDeleteOverlay: boolean
 };
 
-export default class UpdateProjectModal extends Component<PropsType, StateType> {
+export default class UpdateClusterModal extends Component<PropsType, StateType> {
   state = {
-    projectName: this.context.currentModalData.currentProject.name,
+    clusterName: this.context.currentCluster.name,
     status: null as string | null,
     showDeleteOverlay: false,
   };
 
-  // Possibly consolidate into context (w/ ProjectSection + NewProject)
-  getProjects = () => {
-    let { user, currentProject, projects, setProjects } = this.context;
-    api.getProjects('<token>', {}, { id: user.userId }, (err: any, res: any) => {
-      if (err) {
-        console.log(err)
-      } else if (res.data) {
-        setProjects(res.data);
-        if (res.data.length > 0) {
-          this.context.setCurrentProject(res.data[0]);
-        } else {
-          this.context.currentModalData.setCurrentView('new-project');
-        }
-        this.context.setCurrentModal(null, null);
-      }
-    });
-  }
-  
-  // TODO: Handle update to unmounted component
   handleDelete = () => {
-    let { currentProject } = this.context;
+    let { currentProject, currentCluster } = this.context;
     this.setState({ status: 'loading' });
-    api.deleteProject('<token>', {}, { id: currentProject.id }, (err: any, res: any) => {
+
+    api.deleteCluster('<token>', {}, { 
+      project_id: currentProject.id,
+      cluster_id: currentCluster.id,
+    }, (err: any, res: any) => {
       if (err) {
         this.setState({ status: 'error' });
-        // console.log(err)
+        console.log(err)
       } else {
-        this.getProjects();
+
+        // Handle destroying infra we've provisioned
+        if (currentCluster.infra_id) {
+          console.log('destroying provisioned infra...');
+          api.destroyCluster('<token>', {}, { 
+            project_id: currentProject.id,
+            infra_id: currentCluster.infra_id,
+          }, (err: any, res: any) => {
+            if (err) {
+              this.setState({ status: 'error' });
+              console.log(err)
+            } else {
+              console.log('destroyed provisioned infra.');
+            }
+          });
+        }
+
+        this.props.setRefreshClusters(true);
         this.setState({ status: 'successful', showDeleteOverlay: false });
-      }
-    });
-
-    // Loop through and delete infra of all clusters we've provisioned
-    api.getClusters('<token>', {}, { id: currentProject.id }, (err: any, res: any) => {
-      if (err) {
-        console.log(err);
-      } else {
-        res.data.forEach((cluster: ClusterType) => {
-
-          // Handle destroying infra we've provisioned
-          if (cluster.infra_id) {
-            console.log('destroying provisioned infra...', cluster.infra_id);
-            api.destroyCluster('<token>', {}, { 
-              project_id: currentProject.id,
-              infra_id: cluster.infra_id,
-            }, (err: any, res: any) => {
-              if (err) {
-                this.setState({ status: 'error' });
-                console.log(err)
-              } else {
-                console.log('destroyed provisioned infra:', cluster.infra_id);
-              }
-            });
-          }
-        });
+        this.context.setCurrentModal(null, null);
       }
     });
   }
@@ -95,28 +72,27 @@ export default class UpdateProjectModal extends Component<PropsType, StateType> 
           <CloseButtonImg src={close} />
         </CloseButton>
 
-        <ModalTitle>Project Settings</ModalTitle>
+        <ModalTitle>Cluster Settings</ModalTitle>
         <Subtitle>
-          Project name
+          Cluster name
         </Subtitle>
 
         <InputWrapper>
-          <ProjectIcon>
-            <ProjectImage src={gradient} />
-            <Letter>{this.state.projectName ? this.state.projectName[0].toUpperCase() : '-'}</Letter>
-          </ProjectIcon>
+          <DashboardIcon>
+            <i className="material-icons">device_hub</i>
+          </DashboardIcon>
           <InputRow
             disabled={true}
             type='string'
-            value={this.state.projectName}
-            setValue={(x: string) => this.setState({ projectName: x })}
+            value={this.state.clusterName}
+            setValue={(x: string) => this.setState({ clusterName: x })}
             placeholder='ex: perspective-vortex'
             width='470px'
           />
         </InputWrapper>
 
         <SaveButton
-          text='Delete Project'
+          text='Delete Cluster'
           color='#b91133'
           onClick={() => this.setState({ showDeleteOverlay: true })}
           status={this.state.status}
@@ -124,7 +100,7 @@ export default class UpdateProjectModal extends Component<PropsType, StateType> 
 
         <ConfirmOverlay
           show={this.state.showDeleteOverlay}
-          message={`Are you sure you want to delete ${this.state.projectName}?`}
+          message={`Are you sure you want to delete this cluster?`}
           onYes={this.handleDelete}
           onNo={() => this.setState({ showDeleteOverlay: false })}
         />
@@ -133,27 +109,9 @@ export default class UpdateProjectModal extends Component<PropsType, StateType> 
   }
 }
 
-UpdateProjectModal.contextType = Context;
+UpdateClusterModal.contextType = Context;
 
-const Letter = styled.div`
-  height: 100%;
-  width: 100%;
-  position: absolute;
-  background: #00000028;
-  top: 0;
-  left: 0;
-  display: flex;
-  color: white;
-  align-items: center;
-  justify-content: center;
-`;
-
-const ProjectImage = styled.img`
-  width: 100%;
-  height: 100%;
-`;
-
-const ProjectIcon = styled.div`
+const DashboardIcon = styled.div`
   width: 25px;
   min-width: 25px;
   height: 25px;
@@ -163,6 +121,16 @@ const ProjectIcon = styled.div`
   margin-right: 10px;
   font-weight: 400;
   margin-top: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #676C7C;
+  border: 2px solid #8e94aa;
+  color: white;
+
+  > i {
+    font-size: 13px;
+  }
 `;
 
 const InputWrapper = styled.div`

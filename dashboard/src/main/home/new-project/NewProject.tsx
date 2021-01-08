@@ -16,10 +16,11 @@ import SaveButton from '../../../components/SaveButton';
 const providers = ['aws', 'gcp', 'do',];
 
 type PropsType = {
-  setCurrentView: (x: string, data: any) => void,
+  setCurrentView: (x: string, data?: any) => void,
 };
 
 type StateType = {
+  projectExists: boolean,
   projectName: string,
   selectedProvider: string | null,
   awsRegion: string | null,
@@ -30,6 +31,7 @@ type StateType = {
 
 export default class NewProject extends Component<PropsType, StateType> {
   state = {
+    projectExists: false,
     projectName: '',
     selectedProvider: null as string | null,
     awsRegion: '' as string | null,
@@ -66,6 +68,7 @@ export default class NewProject extends Component<PropsType, StateType> {
     });
   }
 
+  // TODO: split this out into a separate component
   renderProvisioners = () => {
     if (this.state.selectedProvider === 'aws') {
       return (
@@ -173,7 +176,13 @@ export default class NewProject extends Component<PropsType, StateType> {
         {this.renderProvisioners()}
         <Helper>
           Already have a Kubernetes cluster? 
-          <Highlight onClick={() => this.setState({ selectedProvider: 'skipped' })}>
+          <Highlight onClick={() => {
+            if (this.state.projectExists) {
+              this.props.setCurrentView('dashboard');
+            } else {
+              this.setState({ selectedProvider: 'skipped' });
+            }
+          }}>
             Skip
           </Highlight>
         </Helper>
@@ -211,7 +220,10 @@ export default class NewProject extends Component<PropsType, StateType> {
         ecr_name: `${proj.name}-registry`
       }, {id: proj.id}, (err: any, ecr:any) => {
         if (err) {
-          console.log(err)
+          this.setState({ 
+            projectExists: true,
+            status: 'Please provide valid credentials.',
+          });
           return;
         }
 
@@ -223,23 +235,28 @@ export default class NewProject extends Component<PropsType, StateType> {
 
   provisionEKS = (proj: ProjectType, ecr: any) => {
     let { awsAccessId, awsSecretKey, awsRegion } = this.state;
+    let clusterName = `${proj.name}-cluster`
 
     api.createAWSIntegration('<token>', {
       aws_region: awsRegion,
       aws_access_key_id: awsAccessId,
       aws_secret_access_key: awsSecretKey,
+      aws_cluster_id: clusterName,
     }, { id: proj.id }, (err: any, res: any) => {
       if (err) {
-        console.log(err)
+        console.log(err);
         return;
       }
 
       api.provisionEKS('<token>', {
         aws_integration_id: res.data.id,
-        eks_name: `${proj.name}-cluster`,
+        eks_name: clusterName,
       }, { id: proj.id}, (err: any, eks: any) => {
         if (err) {
-          console.log(err)
+          this.setState({ 
+            projectExists: true,
+            status: 'Please provide valid credentials.',
+          });
           return;
         }
 
@@ -281,14 +298,60 @@ export default class NewProject extends Component<PropsType, StateType> {
       }
     });
   }
-  
-  render() {
+
+  createInfra = () => {
+    this.setState({ status: 'loading' });
+    let { user } = this.context;
+    api.getProjects('<token>', {}, { id: user.userId }, (err: any, res: any) => {
+      if (err) {
+        console.log(err)
+      } else if (res.data) {
+        this.context.setProjects(res.data);
+        if (res.data.length > 0) {
+          let proj = res.data.find((el: ProjectType) => el.name === this.state.projectName);
+          this.context.setCurrentProject(proj);
+          
+          if (this.state.selectedProvider === 'aws') {
+            this.provisionECR(proj, this.provisionEKS)
+          } else {
+            this.props.setCurrentView('dashboard', null);
+          }
+        } 
+      }
+    });
+  }
+
+  renderHeaderSection = () => {
+    if (this.state.projectExists) {
+      return (
+        <>
+          <TitleSection>
+            <Title>Configure Hosting</Title>
+          </TitleSection>
+          <Helper>     
+            <Warning highlight={true} makeFlush={true}>
+              There was an issue configuring your cloud provider.
+            </Warning>
+          </Helper>
+          <Helper>     
+            You can refer to our docs for instructions on 
+            <Link 
+              href="https://docs.getporter.dev/docs/getting-started-with-porter-on-aws"
+              target="_blank"
+            >
+              creating AWS credentials for Porter
+            </Link>.
+          </Helper>
+          <br />
+        </>
+      );
+    }
+
     return (
-      <StyledNewProject height={this.state.selectedProvider === 'aws' ? '700px' : '600px'}>
+      <>
         <TitleSection>
           <Title>New Project</Title>
         </TitleSection>
-
         <Helper>
           Project name
           <Warning highlight={!this.isAlphanumeric(this.state.projectName) && this.state.projectName !== ''}>
@@ -309,23 +372,53 @@ export default class NewProject extends Component<PropsType, StateType> {
             width='470px'
           />
         </InputWrapper>
+      </>
+    );
+  }
 
-        {this.renderHostingSection()}
-
+  renderButton = () => {
+    if (this.state.projectExists) {
+      return (
         <SaveButton
-          text='Create Project'
+          text='Submit'
           disabled={!this.validateForm()}
-          onClick={this.createProject}
+          onClick={this.createInfra}
           makeFlush={true}
           helper='Note: Provisioning can take up to 15 minutes'
           status={this.state.status}
         />
+      );
+    }
+
+    return (
+      <SaveButton
+        text='Create Project'
+        disabled={!this.validateForm()}
+        onClick={this.createProject}
+        makeFlush={true}
+        helper='Note: Provisioning can take up to 15 minutes'
+        status={this.state.status}
+      />
+    );
+  }
+  
+  render() {
+    return (
+      <StyledNewProject height={this.state.selectedProvider === 'aws' ? '700px' : '600px'}>
+        {this.renderHeaderSection()}
+        {this.renderHostingSection()}
+        {this.renderButton()}
       </StyledNewProject>
     );
   }
 }
 
 NewProject.contextType = Context;
+
+const Link = styled.a`
+  cursor: pointer;
+  margin-left: 5px;
+`;
 
 const GuideButton = styled.a`
   display: flex;
@@ -480,8 +573,8 @@ const InputWrapper = styled.div`
 `;
 
 const Warning = styled.span`
-  color: ${(props: { highlight: boolean }) => props.highlight ? '#f5cb42' : ''};
-  margin-left: 5px;
+  color: ${(props: { highlight: boolean, makeFlush?: boolean }) => props.highlight ? '#f5cb42' : ''};
+  margin-left: ${(props: { highlight: boolean, makeFlush?: boolean }) => props.makeFlush ? '' : '5px'};
 `;
 
 const Icon = styled.img`

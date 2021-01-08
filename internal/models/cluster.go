@@ -47,6 +47,8 @@ type Cluster struct {
 	UserImpersonate         string `json:"act-as,omitempty"`
 	UserImpersonateGroups   string `json:"act-as-groups,omitempty"`
 
+	InfraID uint `json:"infra_id"`
+
 	// ------------------------------------------------------------------
 	// All fields below this line are encrypted before storage
 	// ------------------------------------------------------------------
@@ -79,6 +81,9 @@ type ClusterExternal struct {
 
 	// The integration service for this cluster
 	Service integrations.IntegrationService `json:"service"`
+
+	// The infra id, if cluster was provisioned with Porter
+	InfraID uint `json:"infra_id"`
 }
 
 // Externalize generates an external Cluster to be shared over REST
@@ -97,6 +102,7 @@ func (c *Cluster) Externalize() *ClusterExternal {
 		Name:      c.Name,
 		Server:    c.Server,
 		Service:   serv,
+		InfraID:   c.InfraID,
 	}
 }
 

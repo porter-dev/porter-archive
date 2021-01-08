@@ -211,7 +211,12 @@ export default class NewProject extends Component<PropsType, StateType> {
         ecr_name: `${proj.name}-registry`
       }, {id: proj.id}, (err: any, ecr:any) => {
         if (err) {
-          console.log(err)
+          this.setState({ 
+            status: 'Please provide valid AWS credentials.',
+            awsRegion: '',
+            awsAccessId: '',
+            awsSecretKey: '', 
+          });
           return;
         }
 
@@ -232,7 +237,7 @@ export default class NewProject extends Component<PropsType, StateType> {
       aws_cluster_id: clusterName,
     }, { id: proj.id }, (err: any, res: any) => {
       if (err) {
-        console.log(err)
+        console.log(err);
         return;
       }
 
@@ -241,7 +246,12 @@ export default class NewProject extends Component<PropsType, StateType> {
         eks_name: clusterName,
       }, { id: proj.id}, (err: any, eks: any) => {
         if (err) {
-          console.log(err)
+          this.setState({ 
+            status: 'Please provide valid AWS credentials.',
+            awsRegion: '',
+            awsAccessId: '',
+            awsSecretKey: '', 
+          });
           return;
         }
 

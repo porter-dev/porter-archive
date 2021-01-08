@@ -13,6 +13,7 @@ import Loading from '../../components/Loading';
 import Templates from './templates/Templates';
 import Integrations from "./integrations/Integrations";
 import UpdateProjectModal from './modals/UpdateProjectModal';
+import UpdateClusterModal from './modals/UpdateClusterModal';
 import ClusterInstructionsModal from './modals/ClusterInstructionsModal';
 import IntegrationsModal from './modals/IntegrationsModal';
 import IntegrationsInstructionsModal from './modals/IntegrationsInstructionsModal';
@@ -67,7 +68,7 @@ export default class Home extends Component<PropsType, StateType> {
                   viewData.push({
                     infra_id: el.id,
                     kind: el.kind,
-                  })
+                  });
                 }
               });
 

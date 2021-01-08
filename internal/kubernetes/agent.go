@@ -239,12 +239,14 @@ func (a *Agent) ProvisionECR(
 	awsConf *integrations.AWSIntegration,
 	ecrName string,
 	awsInfra *models.AWSInfra,
+	operation provisioner.ProvisionerOperation,
 ) (*batchv1.Job, error) {
 	id := awsInfra.GetID()
 	prov := &provisioner.Conf{
-		ID:   id,
-		Name: fmt.Sprintf("prov-%s", id),
-		Kind: provisioner.ECR,
+		ID:        id,
+		Name:      fmt.Sprintf("prov-%s-%s", id, string(operation)),
+		Kind:      provisioner.ECR,
+		Operation: operation,
 		AWS: &aws.Conf{
 			AWSRegion:          awsConf.AWSRegion,
 			AWSAccessKeyID:     string(awsConf.AWSAccessKeyID),
@@ -264,12 +266,14 @@ func (a *Agent) ProvisionEKS(
 	awsConf *integrations.AWSIntegration,
 	eksName string,
 	awsInfra *models.AWSInfra,
+	operation provisioner.ProvisionerOperation,
 ) (*batchv1.Job, error) {
 	id := awsInfra.GetID()
 	prov := &provisioner.Conf{
-		ID:   id,
-		Name: fmt.Sprintf("prov-%s", id),
-		Kind: provisioner.EKS,
+		ID:        id,
+		Name:      fmt.Sprintf("prov-%s-%s", id, string(operation)),
+		Kind:      provisioner.EKS,
+		Operation: provisioner.Apply,
 		AWS: &aws.Conf{
 			AWSRegion:          awsConf.AWSRegion,
 			AWSAccessKeyID:     string(awsConf.AWSAccessKeyID),
@@ -286,11 +290,13 @@ func (a *Agent) ProvisionEKS(
 // ProvisionTest spawns a new provisioning pod that tests provisioning
 func (a *Agent) ProvisionTest(
 	projectID uint,
+	operation provisioner.ProvisionerOperation,
 ) (*batchv1.Job, error) {
 	prov := &provisioner.Conf{
-		ID:   fmt.Sprintf("%s-%d", "testing", projectID),
-		Name: fmt.Sprintf("prov-%s-%d", "testing", projectID),
-		Kind: provisioner.Test,
+		ID:        fmt.Sprintf("%s-%d", "testing", projectID),
+		Name:      fmt.Sprintf("prov-%s-%d-%s", "testing", projectID, string(operation)),
+		Operation: provisioner.Apply,
+		Kind:      provisioner.Test,
 	}
 
 	return a.provision(prov)

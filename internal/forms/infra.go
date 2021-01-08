@@ -44,3 +44,15 @@ func (ce *CreateEKSInfra) ToAWSInfra() (*models.AWSInfra, error) {
 		AWSIntegrationID: ce.AWSIntegrationID,
 	}, nil
 }
+
+// DestroyECRInfra represents the accepted values for destroying an
+// ECR infra via the provisioning container
+type DestroyECRInfra struct {
+	ECRName string `json:"ecr_name" form:"required"`
+}
+
+// DestroyEKSInfra represents the accepted values for destroying an
+// EKS infra via the provisioning container
+type DestroyEKSInfra struct {
+	EKSName string `json:"eks_name" form:"required"`
+}

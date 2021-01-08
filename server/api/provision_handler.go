@@ -87,6 +87,9 @@ func (app *App) HandleProvisionAWSECRInfra(w http.ResponseWriter, r *http.Reques
 	awsInt, err := app.Repo.AWSIntegration.ReadAWSIntegration(infra.AWSIntegrationID)
 
 	if err != nil {
+		infra.Status = models.StatusError
+		infra, _ = app.Repo.AWSInfra.UpdateAWSInfra(infra)
+
 		app.handleErrorDataRead(err, w)
 		return
 	}
@@ -95,6 +98,9 @@ func (app *App) HandleProvisionAWSECRInfra(w http.ResponseWriter, r *http.Reques
 	agent, err := kubernetes.GetAgentInClusterConfig()
 
 	if err != nil {
+		infra.Status = models.StatusError
+		infra, _ = app.Repo.AWSInfra.UpdateAWSInfra(infra)
+
 		app.handleErrorDataRead(err, w)
 		return
 	}
@@ -108,6 +114,9 @@ func (app *App) HandleProvisionAWSECRInfra(w http.ResponseWriter, r *http.Reques
 	)
 
 	if err != nil {
+		infra.Status = models.StatusError
+		infra, _ = app.Repo.AWSInfra.UpdateAWSInfra(infra)
+
 		app.handleErrorInternal(err, w)
 		return
 	}
@@ -148,12 +157,18 @@ func (app *App) HandleDestroyAWSECRInfra(w http.ResponseWriter, r *http.Request)
 
 	// decode from JSON to form value
 	if err := json.NewDecoder(r.Body).Decode(form); err != nil {
+		infra.Status = models.StatusError
+		infra, _ = app.Repo.AWSInfra.UpdateAWSInfra(infra)
+
 		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
 		return
 	}
 
 	// validate the form
 	if err := app.validator.Struct(form); err != nil {
+		infra.Status = models.StatusError
+		infra, _ = app.Repo.AWSInfra.UpdateAWSInfra(infra)
+
 		app.handleErrorFormValidation(err, ErrProjectValidateFields, w)
 		return
 	}
@@ -162,6 +177,9 @@ func (app *App) HandleDestroyAWSECRInfra(w http.ResponseWriter, r *http.Request)
 	agent, err := kubernetes.GetAgentInClusterConfig()
 
 	if err != nil {
+		infra.Status = models.StatusError
+		infra, _ = app.Repo.AWSInfra.UpdateAWSInfra(infra)
+
 		app.handleErrorDataRead(err, w)
 		return
 	}
@@ -237,6 +255,9 @@ func (app *App) HandleProvisionAWSEKSInfra(w http.ResponseWriter, r *http.Reques
 	awsInt, err := app.Repo.AWSIntegration.ReadAWSIntegration(infra.AWSIntegrationID)
 
 	if err != nil {
+		infra.Status = models.StatusError
+		infra, _ = app.Repo.AWSInfra.UpdateAWSInfra(infra)
+
 		app.handleErrorDataRead(err, w)
 		return
 	}
@@ -245,6 +266,9 @@ func (app *App) HandleProvisionAWSEKSInfra(w http.ResponseWriter, r *http.Reques
 	agent, err := kubernetes.GetAgentInClusterConfig()
 
 	if err != nil {
+		infra.Status = models.StatusError
+		infra, _ = app.Repo.AWSInfra.UpdateAWSInfra(infra)
+
 		app.handleErrorDataRead(err, w)
 		return
 	}
@@ -258,6 +282,9 @@ func (app *App) HandleProvisionAWSEKSInfra(w http.ResponseWriter, r *http.Reques
 	)
 
 	if err != nil {
+		infra.Status = models.StatusError
+		infra, _ = app.Repo.AWSInfra.UpdateAWSInfra(infra)
+
 		app.handleErrorInternal(err, w)
 		return
 	}
@@ -298,12 +325,18 @@ func (app *App) HandleDestroyAWSEKSInfra(w http.ResponseWriter, r *http.Request)
 
 	// decode from JSON to form value
 	if err := json.NewDecoder(r.Body).Decode(form); err != nil {
+		infra.Status = models.StatusError
+		infra, _ = app.Repo.AWSInfra.UpdateAWSInfra(infra)
+
 		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
 		return
 	}
 
 	// validate the form
 	if err := app.validator.Struct(form); err != nil {
+		infra.Status = models.StatusError
+		infra, _ = app.Repo.AWSInfra.UpdateAWSInfra(infra)
+
 		app.handleErrorFormValidation(err, ErrProjectValidateFields, w)
 		return
 	}
@@ -312,6 +345,9 @@ func (app *App) HandleDestroyAWSEKSInfra(w http.ResponseWriter, r *http.Request)
 	agent, err := kubernetes.GetAgentInClusterConfig()
 
 	if err != nil {
+		infra.Status = models.StatusError
+		infra, _ = app.Repo.AWSInfra.UpdateAWSInfra(infra)
+
 		app.handleErrorDataRead(err, w)
 		return
 	}

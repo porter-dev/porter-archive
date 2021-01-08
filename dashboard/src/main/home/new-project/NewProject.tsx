@@ -223,11 +223,13 @@ export default class NewProject extends Component<PropsType, StateType> {
 
   provisionEKS = (proj: ProjectType, ecr: any) => {
     let { awsAccessId, awsSecretKey, awsRegion } = this.state;
+    let clusterName = `${proj.name}-cluster`
 
     api.createAWSIntegration('<token>', {
       aws_region: awsRegion,
       aws_access_key_id: awsAccessId,
       aws_secret_access_key: awsSecretKey,
+      aws_cluster_id: clusterName,
     }, { id: proj.id }, (err: any, res: any) => {
       if (err) {
         console.log(err)
@@ -236,7 +238,7 @@ export default class NewProject extends Component<PropsType, StateType> {
 
       api.provisionEKS('<token>', {
         aws_integration_id: res.data.id,
-        eks_name: `${proj.name}-cluster`,
+        eks_name: clusterName,
       }, { id: proj.id}, (err: any, eks: any) => {
         if (err) {
           console.log(err)

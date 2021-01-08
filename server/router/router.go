@@ -223,7 +223,53 @@ func New(a *api.App) *chi.Mux {
 			"GET",
 			"/projects/{project_id}/provision/{kind}/{infra_id}/logs",
 			auth.DoesUserHaveProjectAccess(
-				requestlog.NewHandler(a.HandleGetProvisioningLogs, l),
+				auth.DoesUserHaveInfraAccess(
+					requestlog.NewHandler(a.HandleGetProvisioningLogs, l),
+					mw.URLParam,
+					mw.URLParam,
+				),
+				mw.URLParam,
+				mw.ReadAccess,
+			),
+		)
+
+		r.Method(
+			"POST",
+			"/projects/{project_id}/provision/{kind}/{infra_id}/logs",
+			auth.DoesUserHaveProjectAccess(
+				auth.DoesUserHaveInfraAccess(
+					requestlog.NewHandler(a.HandleGetProvisioningLogs, l),
+					mw.URLParam,
+					mw.URLParam,
+				),
+				mw.URLParam,
+				mw.ReadAccess,
+			),
+		)
+
+		r.Method(
+			"POST",
+			"/projects/{project_id}/infra/{infra_id}/ecr/destroy",
+			auth.DoesUserHaveProjectAccess(
+				auth.DoesUserHaveInfraAccess(
+					requestlog.NewHandler(a.HandleDestroyAWSECRInfra, l),
+					mw.URLParam,
+					mw.URLParam,
+				),
+				mw.URLParam,
+				mw.ReadAccess,
+			),
+		)
+
+		r.Method(
+			"POST",
+			"/projects/{project_id}/infra/{infra_id}/eks/destroy",
+			auth.DoesUserHaveProjectAccess(
+				auth.DoesUserHaveInfraAccess(
+					requestlog.NewHandler(a.HandleDestroyAWSEKSInfra, l),
+					mw.URLParam,
+					mw.URLParam,
+				),
 				mw.URLParam,
 				mw.ReadAccess,
 			),

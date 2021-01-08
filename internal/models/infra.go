@@ -13,9 +13,11 @@ type InfraStatus string
 
 // The allowed statuses
 const (
-	StatusCreating InfraStatus = "creating"
-	StatusCreated  InfraStatus = "created"
-	StatusError    InfraStatus = "error"
+	StatusCreating   InfraStatus = "creating"
+	StatusCreated    InfraStatus = "created"
+	StatusError      InfraStatus = "error"
+	StatusDestroying InfraStatus = "destroying"
+	StatusDestroyed  InfraStatus = "destroyed"
 )
 
 // AWSInfraKind is the kind that aws infra can be
@@ -34,6 +36,9 @@ type AWSInfra struct {
 
 	// The type of infra that was provisioned
 	Kind AWSInfraKind `json:"kind"`
+
+	// A random 6-byte suffix to ensure workspace/stream ids are unique
+	Suffix string
 
 	// The project that this infra belongs to
 	ProjectID uint `json:"project_id"`
@@ -71,7 +76,7 @@ func (ai *AWSInfra) Externalize() *AWSInfraExternal {
 
 // GetID returns the unique id for this infra
 func (ai *AWSInfra) GetID() string {
-	return fmt.Sprintf("%s-%d-%d", ai.Kind, ai.ProjectID, ai.ID)
+	return fmt.Sprintf("%s-%d-%d-%s", ai.Kind, ai.ProjectID, ai.ID, ai.Suffix)
 }
 
 // ParseWorkspaceID returns the (kind, projectID, infraID)

@@ -2,7 +2,6 @@ package api
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"strconv"
 
@@ -11,6 +10,7 @@ import (
 	"github.com/porter-dev/porter/internal/forms"
 	"github.com/porter-dev/porter/internal/kubernetes"
 	"github.com/porter-dev/porter/internal/kubernetes/provisioner"
+	"github.com/porter-dev/porter/internal/models"
 
 	"github.com/porter-dev/porter/internal/adapter"
 )
@@ -33,7 +33,7 @@ func (app *App) HandleProvisionTest(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = agent.ProvisionTest(uint(projID))
+	_, err = agent.ProvisionTest(uint(projID), provisioner.Apply)
 
 	if err != nil {
 		app.handleErrorInternal(err, w)
@@ -104,6 +104,7 @@ func (app *App) HandleProvisionAWSECRInfra(w http.ResponseWriter, r *http.Reques
 		awsInt,
 		form.ECRName,
 		infra,
+		provisioner.Apply,
 	)
 
 	if err != nil {
@@ -121,6 +122,75 @@ func (app *App) HandleProvisionAWSECRInfra(w http.ResponseWriter, r *http.Reques
 		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
 		return
 	}
+}
+
+// HandleDestroyAWSECRInfra destroys ecr infra
+func (app *App) HandleDestroyAWSECRInfra(w http.ResponseWriter, r *http.Request) {
+	// get path parameters
+	infraID, err := strconv.ParseUint(chi.URLParam(r, "infra_id"), 10, 64)
+
+	if err != nil {
+		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
+		return
+	}
+
+	// read infra to get id
+	infra, err := app.Repo.AWSInfra.ReadAWSInfra(uint(infraID))
+
+	if err != nil {
+		app.handleErrorDataRead(err, w)
+		return
+	}
+
+	awsInt, err := app.Repo.AWSIntegration.ReadAWSIntegration(infra.AWSIntegrationID)
+
+	form := &forms.DestroyECRInfra{}
+
+	// decode from JSON to form value
+	if err := json.NewDecoder(r.Body).Decode(form); err != nil {
+		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
+		return
+	}
+
+	// validate the form
+	if err := app.validator.Struct(form); err != nil {
+		app.handleErrorFormValidation(err, ErrProjectValidateFields, w)
+		return
+	}
+
+	// launch provisioning destruction pod
+	agent, err := kubernetes.GetAgentInClusterConfig()
+
+	if err != nil {
+		app.handleErrorDataRead(err, w)
+		return
+	}
+
+	// mark infra for deletion
+	infra.Status = models.StatusDestroying
+	infra, err = app.Repo.AWSInfra.UpdateAWSInfra(infra)
+
+	if err != nil {
+		app.handleErrorDataWrite(err, w)
+		return
+	}
+
+	_, err = agent.ProvisionECR(
+		infra.ProjectID,
+		awsInt,
+		form.ECRName,
+		infra,
+		provisioner.Destroy,
+	)
+
+	if err != nil {
+		app.handleErrorInternal(err, w)
+		return
+	}
+
+	app.Logger.Info().Msgf("AWS ECR infra marked for destruction: %d", infra.ID)
+
+	w.WriteHeader(http.StatusOK)
 }
 
 // HandleProvisionAWSEKSInfra provisions a new aws EKS instance for a project
@@ -184,6 +254,7 @@ func (app *App) HandleProvisionAWSEKSInfra(w http.ResponseWriter, r *http.Reques
 		awsInt,
 		form.EKSName,
 		infra,
+		provisioner.Apply,
 	)
 
 	if err != nil {
@@ -203,14 +274,94 @@ func (app *App) HandleProvisionAWSEKSInfra(w http.ResponseWriter, r *http.Reques
 	}
 }
 
+// HandleDestroyAWSEKSInfra destroys eks infra
+func (app *App) HandleDestroyAWSEKSInfra(w http.ResponseWriter, r *http.Request) {
+	// get path parameters
+	infraID, err := strconv.ParseUint(chi.URLParam(r, "infra_id"), 10, 64)
+
+	if err != nil {
+		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
+		return
+	}
+
+	// read infra to get id
+	infra, err := app.Repo.AWSInfra.ReadAWSInfra(uint(infraID))
+
+	if err != nil {
+		app.handleErrorDataRead(err, w)
+		return
+	}
+
+	awsInt, err := app.Repo.AWSIntegration.ReadAWSIntegration(infra.AWSIntegrationID)
+
+	form := &forms.DestroyEKSInfra{}
+
+	// decode from JSON to form value
+	if err := json.NewDecoder(r.Body).Decode(form); err != nil {
+		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
+		return
+	}
+
+	// validate the form
+	if err := app.validator.Struct(form); err != nil {
+		app.handleErrorFormValidation(err, ErrProjectValidateFields, w)
+		return
+	}
+
+	// launch provisioning destruction pod
+	agent, err := kubernetes.GetAgentInClusterConfig()
+
+	if err != nil {
+		app.handleErrorDataRead(err, w)
+		return
+	}
+
+	// mark infra for deletion
+	infra.Status = models.StatusDestroying
+	infra, err = app.Repo.AWSInfra.UpdateAWSInfra(infra)
+
+	if err != nil {
+		app.handleErrorDataWrite(err, w)
+		return
+	}
+
+	_, err = agent.ProvisionEKS(
+		infra.ProjectID,
+		awsInt,
+		form.EKSName,
+		infra,
+		provisioner.Destroy,
+	)
+
+	if err != nil {
+		app.handleErrorInternal(err, w)
+		return
+	}
+
+	app.Logger.Info().Msgf("AWS EKS infra marked for destruction: %d", infra.ID)
+
+	w.WriteHeader(http.StatusOK)
+}
+
 // HandleGetProvisioningLogs returns real-time logs of the provisioning process via websockets
 func (app *App) HandleGetProvisioningLogs(w http.ResponseWriter, r *http.Request) {
 	// get path parameters
-	kind := chi.URLParam(r, "kind")
-	projectID := chi.URLParam(r, "project_id")
-	infraID := chi.URLParam(r, "infra_id")
+	infraID, err := strconv.ParseUint(chi.URLParam(r, "infra_id"), 10, 64)
 
-	streamName := fmt.Sprintf("%s-%s-%s", kind, projectID, infraID)
+	if err != nil {
+		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
+		return
+	}
+
+	// read infra to get id
+	infra, err := app.Repo.AWSInfra.ReadAWSInfra(uint(infraID))
+
+	if err != nil {
+		app.handleErrorDataRead(err, w)
+		return
+	}
+
+	streamName := infra.GetID()
 
 	upgrader.CheckOrigin = func(r *http.Request) bool { return true }
 

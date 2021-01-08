@@ -78,6 +78,10 @@ type bodyGitRepoID struct {
 	GitRepoID uint64 `json:"git_repo_id"`
 }
 
+type bodyInfraID struct {
+	InfraID uint64 `json:"infra_id"`
+}
+
 // DoesUserIDMatch checks the id URL parameter and verifies that it matches
 // the one stored in the session
 func (auth *Auth) DoesUserIDMatch(next http.Handler, loc IDLocation) http.Handler {
@@ -299,6 +303,55 @@ func (auth *Auth) DoesUserHaveGitRepoAccess(
 
 		for _, gr := range grs {
 			if gr.ID == uint(grID) {
+				doesExist = true
+				break
+			}
+		}
+
+		if doesExist {
+			next.ServeHTTP(w, r)
+			return
+		}
+
+		http.Error(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)
+		return
+	})
+}
+
+// DoesUserHaveInfraAccess looks for a project_id parameter and an
+// infra_id parameter, and verifies that the infra belongs
+// to the project
+func (auth *Auth) DoesUserHaveInfraAccess(
+	next http.Handler,
+	projLoc IDLocation,
+	infraLoc IDLocation,
+) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		infraID, err := findGitRepoIDInRequest(r, infraLoc)
+
+		if err != nil {
+			http.Error(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)
+			return
+		}
+
+		projID, err := findProjIDInRequest(r, projLoc)
+
+		if err != nil {
+			http.Error(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)
+			return
+		}
+
+		infras, err := auth.repo.AWSInfra.ListAWSInfrasByProjectID(uint(projID))
+
+		if err != nil {
+			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+			return
+		}
+
+		doesExist := false
+
+		for _, infra := range infras {
+			if infra.ID == uint(infraID) {
 				doesExist = true
 				break
 			}
@@ -564,4 +617,49 @@ func findGitRepoIDInRequest(r *http.Request, gitRepoLoc IDLocation) (uint64, err
 	}
 
 	return grID, nil
+}
+
+func findInfraIDInRequest(r *http.Request, infraLoc IDLocation) (uint64, error) {
+	var infraID uint64
+	var err error
+
+	if infraLoc == URLParam {
+		infraID, err = strconv.ParseUint(chi.URLParam(r, "infra_id"), 0, 64)
+
+		if err != nil {
+			return 0, err
+		}
+	} else if infraLoc == BodyParam {
+		form := &bodyInfraID{}
+		body, err := ioutil.ReadAll(r.Body)
+
+		if err != nil {
+			return 0, err
+		}
+
+		err = json.Unmarshal(body, form)
+
+		if err != nil {
+			return 0, err
+		}
+
+		infraID = form.InfraID
+
+		// need to create a new stream for the body
+		r.Body = ioutil.NopCloser(bytes.NewReader(body))
+	} else {
+		vals, err := url.ParseQuery(r.URL.RawQuery)
+
+		if err != nil {
+			return 0, err
+		}
+
+		if regStrArr, ok := vals["infra_id"]; ok && len(regStrArr) == 1 {
+			infraID, err = strconv.ParseUint(regStrArr[0], 10, 64)
+		} else {
+			return 0, errors.New("infra id not found")
+		}
+	}
+
+	return infraID, nil
 }

@@ -66,67 +66,35 @@ type gcrRepositoryResp struct {
 	Repositories []string `json:"repositories"`
 }
 
+func (r *Registry) GetGCRToken(repo repository.Repository) (*ints.TokenCache, error) {
+	gcp, err := repo.GCPIntegration.ReadGCPIntegration(
+		r.GCPIntegrationID,
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	// get oauth2 access token
+	_, err = gcp.GetBearerToken(r.getTokenCache, r.setTokenCacheFunc(repo))
+
+	if err != nil {
+		return nil, err
+	}
+
+	// it's now written to the token cache, so return
+	cache, err := r.getTokenCache()
+
+	if err != nil {
+		return nil, err
+	}
+
+	return cache, nil
+}
+
 func (r *Registry) listGCRRepositories(
 	repo repository.Repository,
 ) ([]*Repository, error) {
-	// jwtTok := string(r.DockerTokenCache.Token)
-
-	// // if a jwt token does not exist or is expired, refresh it
-	// if r.DockerTokenCache.IsExpired() || len(jwtTok) == 0 {
-	// 	gcp, err := repo.GCPIntegration.ReadGCPIntegration(
-	// 		r.GCPIntegrationID,
-	// 	)
-
-	// 	if err != nil {
-	// 		return nil, err
-	// 	}
-
-	// 	// get oauth2 access token
-	// 	oauthTok, err := gcp.GetBearerToken(r.getTokenCache, r.setTokenCacheFunc(repo))
-
-	// 	if err != nil {
-	// 		return nil, err
-	// 	}
-
-	// 	// get jwt token
-	// 	client := &http.Client{}
-
-	// 	req, err := http.NewRequest(
-	// 		"GET",
-	// 		"https://gcr.io/v2/token?service=gcr.io&scope=registry:catalog:*",
-	// 		nil,
-	// 	)
-
-	// 	req.SetBasicAuth("_token", oauthTok)
-
-	// 	resp, err := client.Do(req)
-
-	// 	if err != nil {
-	// 		return nil, err
-	// 	}
-
-	// 	jwtSource := gcrJWT{}
-
-	// 	if err := json.NewDecoder(resp.Body).Decode(&jwtSource); err != nil {
-	// 		return nil, fmt.Errorf("Invalid token JSON from metadata: %v", err)
-	// 	}
-
-	// 	_, err = repo.Registry.UpdateRegistryDockerTokenCache(
-	// 		&ints.RegTokenCache{
-	// 			RegistryID: r.ID,
-	// 			Token:      []byte(jwtSource.AccessToken),
-	// 			// subtract some time from expiry for buffer
-	// 			Expiry: time.Now().Add(time.Second*time.Duration(jwtSource.ExpiresInSec) - 5*time.Second),
-	// 		},
-	// 	)
-
-	// 	if err != nil {
-	// 		return nil, err
-	// 	}
-
-	// 	jwtTok = jwtSource.AccessToken
-	// }
-
 	gcp, err := repo.GCPIntegration.ReadGCPIntegration(
 		r.GCPIntegrationID,
 	)

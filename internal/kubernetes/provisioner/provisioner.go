@@ -30,6 +30,7 @@ type Conf struct {
 	ID        string
 	Redis     *config.RedisConf
 	Postgres  *PostgresConf
+	Operation ProvisionerOperation
 
 	// provider-specific configurations
 	AWS *aws.Conf
@@ -43,9 +44,22 @@ type PostgresConf struct {
 	Port string
 }
 
+type ProvisionerOperation string
+
+const (
+	Apply   ProvisionerOperation = "apply"
+	Destroy ProvisionerOperation = "destroy"
+)
+
 // GetProvisionerJobTemplate returns the manifest that should be applied to
 // create a provisioning job
 func (conf *Conf) GetProvisionerJobTemplate() (*batchv1.Job, error) {
+	operation := string(conf.Operation)
+
+	if conf.Operation == "" {
+		operation = string(Apply)
+	}
+
 	env := make([]v1.EnvVar, 0)
 
 	env = conf.attachDefaultEnv(env)
@@ -60,13 +74,13 @@ func (conf *Conf) GetProvisionerJobTemplate() (*batchv1.Job, error) {
 	args := make([]string, 0)
 
 	if conf.Kind == Test {
-		args = []string{"test", "hello"}
+		args = []string{operation, "test", "hello"}
 	} else if conf.Kind == ECR {
-		args = []string{"apply", "ecr"}
+		args = []string{operation, "ecr"}
 		env = conf.AWS.AttachAWSEnv(env)
 		env = conf.ECR.AttachECREnv(env)
 	} else if conf.Kind == EKS {
-		args = []string{"apply", "eks"}
+		args = []string{operation, "eks"}
 		env = conf.AWS.AttachAWSEnv(env)
 		env = conf.EKS.AttachEKSEnv(env)
 	}

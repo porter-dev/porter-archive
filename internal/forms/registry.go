@@ -1,6 +1,7 @@
 package forms
 
 import (
+	"github.com/aws/aws-sdk-go/service/ecr"
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/repository"
 )
@@ -16,13 +17,40 @@ type CreateRegistry struct {
 }
 
 // ToRegistry converts the form to a gorm registry model
-func (cr *CreateRegistry) ToRegistry() (*models.Registry, error) {
-	return &models.Registry{
+func (cr *CreateRegistry) ToRegistry(repo repository.Repository) (*models.Registry, error) {
+	registry := &models.Registry{
 		Name:             cr.Name,
 		ProjectID:        cr.ProjectID,
+		URL:              cr.URL,
 		GCPIntegrationID: cr.GCPIntegrationID,
 		AWSIntegrationID: cr.AWSIntegrationID,
-	}, nil
+	}
+
+	if registry.URL == "" && registry.AWSIntegrationID != 0 {
+		awsInt, err := repo.AWSIntegration.ReadAWSIntegration(registry.AWSIntegrationID)
+
+		if err != nil {
+			return nil, err
+		}
+
+		sess, err := awsInt.GetSession()
+
+		if err != nil {
+			return nil, err
+		}
+
+		ecrSvc := ecr.New(sess)
+
+		output, err := ecrSvc.GetAuthorizationToken(&ecr.GetAuthorizationTokenInput{})
+
+		if err != nil {
+			return nil, err
+		}
+
+		registry.URL = *output.AuthorizationData[0].ProxyEndpoint
+	}
+
+	return registry, nil
 }
 
 // UpdateRegistryForm represents the accepted values for updating a

@@ -30,6 +30,7 @@ export default class UpdateClusterModal extends Component<PropsType, StateType> 
   handleDelete = () => {
     let { currentProject, currentCluster } = this.context;
     this.setState({ status: 'loading' });
+
     api.deleteCluster('<token>', {}, { 
       project_id: currentProject.id,
       cluster_id: currentCluster.id,
@@ -38,6 +39,23 @@ export default class UpdateClusterModal extends Component<PropsType, StateType> 
         this.setState({ status: 'error' });
         console.log(err)
       } else {
+
+        // Handle destroying infra we've provisioned
+        if (currentCluster.infra_id) {
+          console.log('destroying provisioned infra...');
+          api.destroyCluster('<token>', {}, { 
+            project_id: currentProject.id,
+            infra_id: currentCluster.infra_id,
+          }, (err: any, res: any) => {
+            if (err) {
+              this.setState({ status: 'error' });
+              console.log(err)
+            } else {
+              console.log('destroyed provisioned infra.');
+            }
+          });
+        }
+
         this.props.setRefreshClusters(true);
         this.setState({ status: 'successful', showDeleteOverlay: false });
         this.context.setCurrentModal(null, null);

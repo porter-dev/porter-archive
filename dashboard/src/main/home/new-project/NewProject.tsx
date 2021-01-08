@@ -31,7 +31,7 @@ type StateType = {
 
 export default class NewProject extends Component<PropsType, StateType> {
   state = {
-    projectExists: true,
+    projectExists: false,
     projectName: '',
     selectedProvider: null as string | null,
     awsRegion: '' as string | null,

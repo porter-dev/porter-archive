@@ -27,7 +27,7 @@ type StateType = {
 
 export default class Provisioner extends Component<PropsType, StateType> {
   state = {
-    error: true,
+    error: false,
     logs: [] as string[],
     websockets : [] as any[],
     maxStep: {} as Record<string, any>,
@@ -60,34 +60,32 @@ export default class Provisioner extends Component<PropsType, StateType> {
       }
 
       ws.onmessage = (evt: MessageEvent) => {
-        let event = JSON.parse(evt.data)
-        console.log(event)
-        let validEvents = [] as any[]
-        let err = null
+        let event = JSON.parse(evt.data);
+        let validEvents = [] as any[];
+        let err = null;
         
         for (var i = 0; i < event.length; i++) {
-          let msg = event[i]
+          let msg = event[i];
           if (msg["Values"] && msg["Values"]["data"] && this.isJSON(msg["Values"]["data"])) { 
-            let d = JSON.parse(msg["Values"]["data"])
+            let d = JSON.parse(msg["Values"]["data"]);
   
             if (d["kind"] == "error") {
-              err = d["log"]
+              err = d["log"];
               break;
             }
   
             // add only valid events
             if (d["log"] != null && d["created_resources"] != null && d["total_resources"] != null) {
-              validEvents.push(d)
+              validEvents.push(d);
             }
           }
         }
   
         if (err) {
           let e = ansiparse(err).map((el: any) => {
-            return el.text
+            return el.text;
           })
-          console.log("error", e)
-          this.setState({ logs: e })
+          this.setState({ logs: e, error: true });
           return;
         }
   

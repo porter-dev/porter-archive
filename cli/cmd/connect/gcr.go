@@ -52,6 +52,13 @@ Key file location: `))
 
 		color.New(color.FgGreen).Printf("created gcp integration with id %d\n", integration.ID)
 
+		regURL, err := utils.PromptPlaintext(fmt.Sprintf(`Please provide the registry URL, in the form [GCP_DOMAIN]/[GCP_PROJECT_ID]. For example, gcr.io/my-project-123456.
+Registry URL: `))
+
+		if err != nil {
+			return 0, err
+		}
+
 		// create the registry
 		// query for registry name
 		regName, err := utils.PromptPlaintext(fmt.Sprintf(`Give this registry a name: `))
@@ -66,6 +73,7 @@ Key file location: `))
 			&api.CreateGCRRequest{
 				Name:             regName,
 				GCPIntegrationID: integration.ID,
+				URL:              regURL,
 			},
 		)
 

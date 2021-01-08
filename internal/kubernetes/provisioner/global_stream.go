@@ -217,6 +217,20 @@ func GlobalStreamListener(
 				if err != nil {
 					continue
 				}
+			} else if fmt.Sprintf("%v", msg.Values["status"]) == "destroyed" {
+				infra, err := repo.AWSInfra.ReadAWSInfra(infraID)
+
+				if err != nil {
+					continue
+				}
+
+				infra.Status = models.StatusDestroyed
+
+				infra, err = repo.AWSInfra.UpdateAWSInfra(infra)
+
+				if err != nil {
+					continue
+				}
 			}
 
 			// acknowledge the message as read

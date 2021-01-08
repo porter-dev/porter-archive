@@ -15,6 +15,8 @@ type PropsType = {
   setWelcome: (x: boolean) => void,
   setCurrentView: (x: string, viewData?: any) => void,
   currentView: string,
+  forceRefreshClusters: boolean,
+  setRefreshClusters: (x: boolean) => void,
 };
 
 type StateType = {
@@ -132,6 +134,8 @@ export default class Sidebar extends Component<PropsType, StateType> {
             setWelcome={this.props.setWelcome}
             setCurrentView={this.props.setCurrentView}
             isSelected={this.props.currentView === 'cluster-dashboard'}
+            forceRefreshClusters={this.props.forceRefreshClusters}
+            setRefreshClusters={this.props.setRefreshClusters}
           />
         </>
       );

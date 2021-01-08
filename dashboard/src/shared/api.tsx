@@ -281,7 +281,7 @@ const destroyCluster = baseApi<{
   project_id: number,
   infra_id: number,
 }>('POST', pathParams => {
-  return `/projects/${pathParams.project_id}/infra/${pathParams.infra_id}/eks/destroy`;
+  return `/api/projects/${pathParams.project_id}/infra/${pathParams.infra_id}/eks/destroy`;
 });
 
 const deleteCluster = baseApi<{
@@ -289,7 +289,7 @@ const deleteCluster = baseApi<{
   project_id: number,
   cluster_id: number,
 }>('DELETE', pathParams => {
-  return `/projects/${pathParams.project_id}/clusters/${pathParams.cluster_id}`;
+  return `/api/projects/${pathParams.project_id}/clusters/${pathParams.cluster_id}`;
 })
 
 // Bundle export to allow default api import (api.<method> is more readable)

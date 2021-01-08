@@ -1,10 +1,10 @@
 name: Build, Push to GCR.
 on:
   push:
-    branches:
+    branches: 
     - staging
 jobs:
-  build-push-test:
+  login-build-push:
     runs-on: ubuntu-latest
     steps:
     - name: Set up Cloud SDK
@@ -17,7 +17,21 @@ jobs:
       run: gcloud auth configure-docker
     - name: Checkout
       uses: actions/checkout@v2.3.4
+    - name: Write Dashboard Environment Variables
+      run: |
+        cat >./dashboard/.env <<EOL
+        NODE_ENV=development
+        API_SERVER=localhost:8080
+        FULLSTORY_ORG_ID=${{secrets.FULLSTORY_ORG_ID}}
+        DISCORD_KEY=${{secrets.DISCORD_KEY}}
+        DISCORD_CID=${{secrets.DISCORD_CID}}
+        FEEDBACK_ENDPOINT=${{secrets.FEEDBACK_ENDPOINT}}
+        EOL
+
+        cat ./dashboard/.env
     - name: Build
       run: |
-        docker build . -t gcr.io/porter-dev-273614/porter-prov:latest -f ./docker/Dockerfile
+        DOCKER_BUILDKIT=1 docker build . -t gcr.io/porter-dev-273614/porter-prov:latest -f ./docker/Dockerfile
+    - name: Push
+      run: |
         docker push gcr.io/porter-dev-273614/porter-prov:latest

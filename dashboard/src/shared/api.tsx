@@ -276,8 +276,26 @@ const getInfra = baseApi<{
   return `/api/projects/${pathParams.project_id}/infra`;
 });
 
+const destroyCluster = baseApi<{
+}, {
+  project_id: number,
+  infra_id: number,
+}>('POST', pathParams => {
+  return `/api/projects/${pathParams.project_id}/infra/${pathParams.infra_id}/eks/destroy`;
+});
+
+const deleteCluster = baseApi<{
+}, {
+  project_id: number,
+  cluster_id: number,
+}>('DELETE', pathParams => {
+  return `/api/projects/${pathParams.project_id}/clusters/${pathParams.cluster_id}`;
+})
+
 // Bundle export to allow default api import (api.<method> is more readable)
 export default {
+  deleteCluster,
+  destroyCluster,
   getInfra,
   linkGithubProject,
   getGitRepos,

@@ -3,11 +3,14 @@ import styled from 'styled-components';
 
 import api from '../../../shared/api';
 import { Context } from '../../../shared/Context';
+import ansiparse from '../../../shared/ansiparser'
 import { integrationList } from '../../../shared/common';
 import loading from '../../../assets/loading.gif';
+import warning from '../../../assets/warning.png';
 
 import Helper from '../../../components/values-form/Helper';
 import { eventNames } from 'process';
+import { inflateRaw, inflateRawSync } from 'zlib';
 
 type PropsType = {
   viewData: any,
@@ -15,6 +18,7 @@ type PropsType = {
 };
 
 type StateType = {
+  error: boolean,
   logs: string[],
   websockets: any[],
   maxStep : Record<string, number>,
@@ -23,6 +27,7 @@ type StateType = {
 
 export default class Provisioner extends Component<PropsType, StateType> {
   state = {
+    error: false,
     logs: [] as string[],
     websockets : [] as any[],
     maxStep: {} as Record<string, any>,
@@ -33,11 +38,21 @@ export default class Provisioner extends Component<PropsType, StateType> {
     this.scrollRef.current.scrollTop = this.scrollRef.current.scrollHeight
   }
 
+  isJSON = (str: string) => {
+    try {
+      JSON.parse(str);
+    } catch (e) {
+      return false;
+    }
+    return true;
+  }
+
   componentDidMount() {
     let { currentProject } = this.context;
     let protocol = process.env.NODE_ENV == 'production' ? 'wss' : 'ws'
+    let viewData = this.props.viewData || []
 
-    let websockets = this.props.viewData.forEach((infra: any) => {
+    let websockets = viewData.map((infra: any) => {
       let ws = new WebSocket(`${protocol}://${process.env.API_SERVER}/api/projects/${currentProject.id}/provision/${infra.kind}/${infra.infra_id}/logs`)
       
       ws.onopen = () => {
@@ -45,33 +60,62 @@ export default class Provisioner extends Component<PropsType, StateType> {
       }
 
       ws.onmessage = (evt: MessageEvent) => {
-        let event = JSON.parse(evt.data)
-        let data = event.map((msg: any) => { return `${infra.kind}: ${msg["Values"]["data"]}` })
-        let err = null
-
-        // check for error
-        event.forEach((e: any) => {
-          err = e["Values"]["kind"] == "error" ? e["Values"]["data"] : null
-        })
-
+        let event = JSON.parse(evt.data);
+        let validEvents = [] as any[];
+        let err = null;
+        
+        for (var i = 0; i < event.length; i++) {
+          let msg = event[i];
+          if (msg["Values"] && msg["Values"]["data"] && this.isJSON(msg["Values"]["data"])) { 
+            let d = JSON.parse(msg["Values"]["data"]);
+  
+            if (d["kind"] == "error") {
+              err = d["log"];
+              break;
+            }
+  
+            // add only valid events
+            if (d["log"] != null && d["created_resources"] != null && d["total_resources"] != null) {
+              validEvents.push(d);
+            }
+          }
+        }
+  
         if (err) {
-          this.setState({ logs: [err] })
+          let e = ansiparse(err).map((el: any) => {
+            return el.text;
+          })
+          this.setState({ logs: e, error: true });
+          return;
+        }
+  
+        if (validEvents.length == 0) {
+          return;
         }
         
-        if (!this.state.maxStep[infra.kind]) {
+        if (!this.state.maxStep[infra.kind] || !this.state.maxStep[infra.kind]["total_resources"]) {
           this.setState({
             maxStep: {
               ...this.state.maxStep,
-              [infra.kind] : event[event.length]["Values"]["created_resources"]
+              [infra.kind] : validEvents[validEvents.length - 1]["total_resources"]
             }
           })
         }
+        
+        let logs = [] as any[]
+        validEvents.forEach((e: any) => {
+          logs.push(...ansiparse(e["log"]))
+        })
 
+        logs = logs.map((log: any) => {
+          return log.text
+        })
+  
         this.setState({ 
-          logs: [...this.state.logs, ...data], 
+          logs: [...this.state.logs, ...logs], 
           currentStep: {
             ...this.state.currentStep,
-            [infra.kind] : event[event.length]["Values"]["created_resources"]
+            [infra.kind] : validEvents[validEvents.length - 1]["created_resources"]
           },
         }, () => {
           this.scrollToBottom()
@@ -93,7 +137,9 @@ export default class Provisioner extends Component<PropsType, StateType> {
   }
 
   componentWillUnmount() {
-    this.state.websockets?.forEach((ws) => {
+    if (!this.state.websockets) { return; }
+
+    this.state.websockets.forEach((ws) => {
       ws.close()
     })
   }
@@ -105,25 +151,28 @@ export default class Provisioner extends Component<PropsType, StateType> {
       return <div key={i}>{log}</div>
     });
   }
-  
-  render() {
-    let maxStep = 0;
-    let currentStep = 0;
 
-    for (let key in this.state.maxStep) {
-      maxStep += this.state.maxStep[key]
-    }
+  renderHeadingSection = () => {
+    if (this.state.error) {
+      return (
+        <>
+          <TitleSection>
+            <Title><img src={warning} /> Provisioning Error</Title>
+          </TitleSection>
 
-    for (let key in this.state.currentStep) {
-      currentStep += this.state.currentStep[key]
-    }
-
-    if (currentStep === maxStep) {
-      this.props.setCurrentView('dashboard');
+          <Helper>
+            Porter encountered an error while provisioning.
+            <Link onClick={() => this.props.setCurrentView('dashboard')}>
+              Exit to dashboard
+            </Link> 
+            to try again with new credentials.
+          </Helper>
+        </>
+      );
     }
 
     return (
-      <StyledProvisioner>
+      <>
         <TitleSection>
           <Title><img src={loading} /> Setting Up Porter</Title>
         </TitleSection>
@@ -131,9 +180,34 @@ export default class Provisioner extends Component<PropsType, StateType> {
         <Helper>
           Porter is currently being provisioned to your AWS account:
         </Helper>
+      </>
+    )
+  }
+  
+  render() {
+    let maxStep = 0;
+    let currentStep = 0;
+
+    for (let key in this.state.maxStep) {
+      console.log(key)
+      maxStep += this.state.maxStep[key]
+    }
+
+    for (let key in this.state.currentStep) {
+      currentStep += this.state.currentStep[key]
+    }
+
+    if (maxStep !== 0 && currentStep === maxStep) {
+      console.log('Provisioning complete.')
+      this.props.setCurrentView('dashboard');
+    }
+
+    return (
+      <StyledProvisioner>
+        {this.renderHeadingSection()}
 
         <LoadingBar>
-          <Loaded progress={((currentStep / maxStep) * 100).toString() + '%'} />
+          <Loaded progress={((currentStep / (maxStep == 0 ? 1 : maxStep)) * 100).toString() + '%'} />
         </LoadingBar>
 
         <LogStream ref={this.scrollRef}>
@@ -151,6 +225,18 @@ export default class Provisioner extends Component<PropsType, StateType> {
 }
 
 Provisioner.contextType = Context;
+
+const Link = styled.a`
+  cursor: pointer;
+  margin-left: 5px;
+  margin-right: 5px;
+`;
+
+const Warning = styled.span`
+  color: ${(props: { highlight: boolean, makeFlush?: boolean }) => props.highlight ? '#f5cb42' : ''};
+  margin-left: ${(props: { highlight: boolean, makeFlush?: boolean }) => props.makeFlush ? '' : '5px'};
+  margin-right: 5px;
+`;
 
 const Wrapper = styled.div`
   width: 100%;

@@ -37,9 +37,9 @@ export default class Provisioner extends Component<PropsType, StateType> {
 
   isJSON = (str: string) => {
     try {
-        JSON.parse(str);
+      JSON.parse(str);
     } catch (e) {
-        return false;
+      return false;
     }
     return true;
   }
@@ -48,8 +48,6 @@ export default class Provisioner extends Component<PropsType, StateType> {
     let { currentProject } = this.context;
     let protocol = process.env.NODE_ENV == 'production' ? 'wss' : 'ws'
     let viewData = this.props.viewData || []
-
-    console.log("viewData", viewData)
 
     let websockets = viewData.map((infra: any) => {
       let ws = new WebSocket(`${protocol}://${process.env.API_SERVER}/api/projects/${currentProject.id}/provision/${infra.kind}/${infra.infra_id}/logs`)
@@ -166,7 +164,8 @@ export default class Provisioner extends Component<PropsType, StateType> {
       currentStep += this.state.currentStep[key]
     }
 
-    if (currentStep === maxStep) {
+    if (maxStep !== 0 && currentStep === maxStep) {
+      console.log('Provisioning complete.')
       this.props.setCurrentView('dashboard');
     }
 

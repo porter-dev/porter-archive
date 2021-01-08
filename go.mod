@@ -1,6 +1,6 @@
 module github.com/porter-dev/porter
 
-go 1.14
+go 1.15
 
 require (
 	cloud.google.com/go v0.65.0
@@ -12,6 +12,7 @@ require (
 	github.com/awslabs/amazon-ecr-credential-helper/ecr-login v0.0.0-20201113001948-d77edb6d2e47
 	github.com/containerd/containerd v1.4.1 // indirect
 	github.com/coreos/rkt v1.30.0
+	github.com/creack/pty v1.1.11 // indirect
 	github.com/docker/cli v0.0.0-20200130152716-5d0cf8839492
 	github.com/docker/docker v1.4.2-0.20200203170920-46ec8731fbce
 	github.com/docker/docker-credential-helpers v0.6.3
@@ -57,7 +58,7 @@ require (
 	golang.org/x/crypto v0.0.0-20201002170205-7f63de1d35b0
 	golang.org/x/exp v0.0.0-20200908183739-ae8ad444f925 // indirect
 	golang.org/x/oauth2 v0.0.0-20200902213428-5d25da1a8d43
-	golang.org/x/sys v0.0.0-20200826173525-f9321e4c35a6 // indirect
+	golang.org/x/sys v0.0.0-20210108172913-0df2131ae363 // indirect
 	golang.org/x/time v0.0.0-20200630173020-3af7569d3a1e // indirect
 	google.golang.org/api v0.30.0
 	google.golang.org/genproto v0.0.0-20201014134559-03b6142f0dc9

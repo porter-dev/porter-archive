@@ -2,7 +2,6 @@ package api
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"strconv"
 
@@ -206,11 +205,22 @@ func (app *App) HandleProvisionAWSEKSInfra(w http.ResponseWriter, r *http.Reques
 // HandleGetProvisioningLogs returns real-time logs of the provisioning process via websockets
 func (app *App) HandleGetProvisioningLogs(w http.ResponseWriter, r *http.Request) {
 	// get path parameters
-	kind := chi.URLParam(r, "kind")
-	projectID := chi.URLParam(r, "project_id")
-	infraID := chi.URLParam(r, "infra_id")
+	infraID, err := strconv.ParseUint(chi.URLParam(r, "infra_id"), 10, 64)
 
-	streamName := fmt.Sprintf("%s-%s-%s", kind, projectID, infraID)
+	if err != nil {
+		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
+		return
+	}
+
+	// read infra to get id
+	infra, err := app.Repo.AWSInfra.ReadAWSInfra(uint(infraID))
+
+	if err != nil {
+		app.handleErrorDataRead(err, w)
+		return
+	}
+
+	streamName := infra.GetID()
 
 	upgrader.CheckOrigin = func(r *http.Request) bool { return true }
 

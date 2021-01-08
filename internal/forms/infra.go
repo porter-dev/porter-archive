@@ -1,8 +1,11 @@
 package forms
 
 import (
+	cmdutils "github.com/porter-dev/porter/cli/cmd/utils"
 	"github.com/porter-dev/porter/internal/models"
 )
+
+const randCharset string = "abcdefghijklmnopqrstuvwxyz1234567890"
 
 // CreateECRInfra represents the accepted values for creating an
 // ECR infra via the provisioning container
@@ -17,6 +20,7 @@ func (ce *CreateECRInfra) ToAWSInfra() (*models.AWSInfra, error) {
 	return &models.AWSInfra{
 		Kind:             models.AWSInfraECR,
 		ProjectID:        ce.ProjectID,
+		Suffix:           cmdutils.StringWithCharset(6, randCharset),
 		Status:           models.StatusCreating,
 		AWSIntegrationID: ce.AWSIntegrationID,
 	}, nil
@@ -35,6 +39,7 @@ func (ce *CreateEKSInfra) ToAWSInfra() (*models.AWSInfra, error) {
 	return &models.AWSInfra{
 		Kind:             models.AWSInfraEKS,
 		ProjectID:        ce.ProjectID,
+		Suffix:           cmdutils.StringWithCharset(6, randCharset),
 		Status:           models.StatusCreating,
 		AWSIntegrationID: ce.AWSIntegrationID,
 	}, nil

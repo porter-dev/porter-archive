@@ -28,17 +28,20 @@ export default class ProjectSection extends Component<PropsType, StateType> {
       if (err) {
         console.log(err);
       } else if (res.data) {
-        let anyProvisioning = false;
+
+        let viewData = [] as any[]
         res.data.forEach((el: InfraType) => {
           if (el.status === 'creating') {
-            anyProvisioning = true;
-            this.props.setCurrentView('provisioner', {
+            viewData.push({
               infra_id: el.id,
               kind: el.kind,
             });
           }
         });
-        if (!anyProvisioning) {
+
+        if (viewData.length > 0) {
+          this.props.setCurrentView('provisioner', viewData);
+        } else {
           this.props.setCurrentView('dashboard');
         }
       }

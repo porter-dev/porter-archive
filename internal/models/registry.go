@@ -19,6 +19,9 @@ type Registry struct {
 	// The project that this integration belongs to
 	ProjectID uint `json:"project_id"`
 
+	// The infra id, if registry was provisioned with Porter
+	InfraID uint `json:"infra_id"`
+
 	// ------------------------------------------------------------------
 	// All fields below this line are encrypted before storage
 	// ------------------------------------------------------------------
@@ -45,6 +48,9 @@ type RegistryExternal struct {
 
 	// The integration service for this registry
 	Service integrations.IntegrationService `json:"service"`
+
+	// The infra id, if registry was provisioned with Porter
+	InfraID uint `json:"infra_id"`
 }
 
 // Externalize generates an external Registry to be shared over REST
@@ -63,5 +69,6 @@ func (r *Registry) Externalize() *RegistryExternal {
 		Name:      r.Name,
 		URL:       r.URL,
 		Service:   serv,
+		InfraID:   r.InfraID,
 	}
 }

@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"regexp"
 
+	"github.com/aws/aws-sdk-go/service/ecr"
 	"github.com/porter-dev/porter/internal/repository"
 
 	redis "github.com/go-redis/redis/v8"
@@ -141,7 +142,29 @@ func GlobalStreamListener(
 						json.Unmarshal([]byte(dataString), reg)
 					}
 
-					reg, err := repo.Registry.CreateRegistry(reg)
+					awsInt, err := repo.AWSIntegration.ReadAWSIntegration(reg.AWSIntegrationID)
+
+					if err != nil {
+						continue
+					}
+
+					sess, err := awsInt.GetSession()
+
+					if err != nil {
+						continue
+					}
+
+					ecrSvc := ecr.New(sess)
+
+					output, err := ecrSvc.GetAuthorizationToken(&ecr.GetAuthorizationTokenInput{})
+
+					if err != nil {
+						continue
+					}
+
+					reg.URL = *output.AuthorizationData[0].ProxyEndpoint
+
+					reg, err = repo.Registry.CreateRegistry(reg)
 
 					if err != nil {
 						continue

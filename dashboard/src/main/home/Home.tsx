@@ -41,7 +41,7 @@ export default class Home extends Component<PropsType, StateType> {
   state = {
     forceSidebar: true,
     showWelcome: false,
-    currentView: 'provisioner',
+    currentView: 'dashboard',
     prevProjectId: null as number | null,
     viewData: null as any,
     forceRefreshClusters: false,

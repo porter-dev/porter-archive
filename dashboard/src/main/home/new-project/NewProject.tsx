@@ -323,6 +323,7 @@ export default class NewProject extends Component<PropsType, StateType> {
 
           if (this.state.selectedProvider === 'aws') {
             this.provisionECR(proj, this.provisionEKS)
+
           } else {
             this.props.setCurrentView('dashboard', null);
           }

@@ -75,7 +75,7 @@ export default class Home extends Component<PropsType, StateType> {
               });
               
               console.log('infras viewdata: ', viewData);
-              if (true || viewData.length > 0) {
+              if (viewData.length > 0) {
                 console.log('setting to provisioner...');
                 this.setState({ currentView: 'provisioner', viewData});
               }

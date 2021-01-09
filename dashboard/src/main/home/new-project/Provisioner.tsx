@@ -219,7 +219,8 @@ export default class Provisioner extends Component<PropsType, StateType> {
     }
 
     if (maxStep !== 0 && currentStep === maxStep) {
-      console.log('Provisioning complete.')
+      console.log('Thinks provisioning complete.')
+      console.log(currentStep, maxStep);
       this.props.setCurrentView('dashboard');
     }
 

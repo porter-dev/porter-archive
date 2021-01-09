@@ -132,6 +132,7 @@ export default class Sidebar extends Component<PropsType, StateType> {
             forceCloseDrawer={this.state.forceCloseDrawer} 
             releaseDrawer={() => this.setState({ forceCloseDrawer: false })}
             setWelcome={this.props.setWelcome}
+            currentView={this.props.currentView}
             setCurrentView={this.props.setCurrentView}
             isSelected={this.props.currentView === 'cluster-dashboard'}
             forceRefreshClusters={this.props.forceRefreshClusters}

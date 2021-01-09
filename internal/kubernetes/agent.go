@@ -7,7 +7,6 @@ import (
 	"io"
 	"strings"
 
-	"github.com/porter-dev/porter/internal/config"
 	"github.com/porter-dev/porter/internal/kubernetes/provisioner"
 	"github.com/porter-dev/porter/internal/kubernetes/provisioner/aws"
 	"github.com/porter-dev/porter/internal/kubernetes/provisioner/aws/ecr"
@@ -26,6 +25,8 @@ import (
 	"k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/cache"
+
+	"github.com/porter-dev/porter/internal/config"
 )
 
 // Agent is a Kubernetes agent for performing operations that interact with the
@@ -240,6 +241,8 @@ func (a *Agent) ProvisionECR(
 	ecrName string,
 	awsInfra *models.AWSInfra,
 	operation provisioner.ProvisionerOperation,
+	pgConf *provisioner.PostgresConf,
+	redisConf *config.RedisConf,
 ) (*batchv1.Job, error) {
 	id := awsInfra.GetID()
 	prov := &provisioner.Conf{
@@ -247,6 +250,8 @@ func (a *Agent) ProvisionECR(
 		Name:      fmt.Sprintf("prov-%s-%s", id, string(operation)),
 		Kind:      provisioner.ECR,
 		Operation: operation,
+		Redis:     redisConf,
+		Postgres:  pgConf,
 		AWS: &aws.Conf{
 			AWSRegion:          awsConf.AWSRegion,
 			AWSAccessKeyID:     string(awsConf.AWSAccessKeyID),
@@ -267,6 +272,8 @@ func (a *Agent) ProvisionEKS(
 	eksName string,
 	awsInfra *models.AWSInfra,
 	operation provisioner.ProvisionerOperation,
+	pgConf *provisioner.PostgresConf,
+	redisConf *config.RedisConf,
 ) (*batchv1.Job, error) {
 	id := awsInfra.GetID()
 	prov := &provisioner.Conf{
@@ -274,6 +281,8 @@ func (a *Agent) ProvisionEKS(
 		Name:      fmt.Sprintf("prov-%s-%s", id, string(operation)),
 		Kind:      provisioner.EKS,
 		Operation: provisioner.Apply,
+		Redis:     redisConf,
+		Postgres:  pgConf,
 		AWS: &aws.Conf{
 			AWSRegion:          awsConf.AWSRegion,
 			AWSAccessKeyID:     string(awsConf.AWSAccessKeyID),
@@ -291,12 +300,16 @@ func (a *Agent) ProvisionEKS(
 func (a *Agent) ProvisionTest(
 	projectID uint,
 	operation provisioner.ProvisionerOperation,
+	pgConf *provisioner.PostgresConf,
+	redisConf *config.RedisConf,
 ) (*batchv1.Job, error) {
 	prov := &provisioner.Conf{
 		ID:        fmt.Sprintf("%s-%d", "testing", projectID),
 		Name:      fmt.Sprintf("prov-%s-%d-%s", "testing", projectID, string(operation)),
 		Operation: provisioner.Apply,
 		Kind:      provisioner.Test,
+		Redis:     redisConf,
+		Postgres:  pgConf,
 	}
 
 	return a.provision(prov)
@@ -306,16 +319,6 @@ func (a *Agent) provision(
 	prov *provisioner.Conf,
 ) (*batchv1.Job, error) {
 	prov.Namespace = "default"
-
-	prov.Redis = &config.RedisConf{
-		Host: "redis-master.default.svc.cluster.local",
-		Port: "6379",
-	}
-
-	prov.Postgres = &provisioner.PostgresConf{
-		Host: "postgres-postgresql.default.svc.cluster.local",
-		Port: "5432",
-	}
 
 	job, err := prov.GetProvisionerJobTemplate()
 

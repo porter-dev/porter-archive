@@ -56,7 +56,7 @@ export default class ClusterSection extends Component<PropsType, StateType> {
           if (clusters.length > 0) {
             this.setState({ clusters });
             setCurrentCluster(clusters[0]);
-          } else {
+          } else if (this.props.currentView !== 'provisioner') {
             this.setState({ clusters: [] });
             setCurrentCluster(null);
             this.props.setCurrentView('dashboard');
@@ -75,12 +75,10 @@ export default class ClusterSection extends Component<PropsType, StateType> {
     if (prevProps !== this.props) {
 
       // Refresh clusters on project change 
-      if (this.state.prevProjectId !== this.context.currentProject.id && this.props.currentView !== 'provisioner') {
-        console.log("HERE")
+      if (this.state.prevProjectId !== this.context.currentProject.id) {
         this.updateClusters();
         this.setState({ prevProjectId: this.context.currentProject.id });
       } else if (this.props.forceRefreshClusters === true) {
-        console.log("HERE2")
         this.updateClusters();
         this.props.setRefreshClusters(false);
       }

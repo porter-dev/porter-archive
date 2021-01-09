@@ -77,7 +77,6 @@ export default class Home extends Component<PropsType, StateType> {
               if (viewData.length > 0) {
                 this.setState({ currentView: 'provisioner', viewData});
               }
-
             }
           });
         } else if (res.data.length === 0) {

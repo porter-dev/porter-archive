@@ -47,6 +47,86 @@ export default class Provisioner extends Component<PropsType, StateType> {
     return true;
   }
 
+  setupWebsocket = (ws: WebSocket, infra: any) => {
+    ws.onopen = () => {
+      console.log('connected to websocket')
+    }
+
+    ws.onmessage = (evt: MessageEvent) => {
+      let event = JSON.parse(evt.data);
+      let validEvents = [] as any[];
+      let err = null;
+      
+      for (var i = 0; i < event.length; i++) {
+        let msg = event[i];
+        if (msg["Values"] && msg["Values"]["data"] && this.isJSON(msg["Values"]["data"])) { 
+          let d = JSON.parse(msg["Values"]["data"]);
+
+          if (d["kind"] == "error") {
+            err = d["log"];
+            break;
+          }
+
+          // add only valid events
+          if (d["log"] != null && d["created_resources"] != null && d["total_resources"] != null) {
+            validEvents.push(d);
+          }
+        }
+      }
+
+      if (err) {
+        let e = ansiparse(err).map((el: any) => {
+          return el.text;
+        })
+        this.setState({ logs: e, error: true });
+        return;
+      }
+
+      if (validEvents.length == 0) {
+        return;
+      }
+      
+      if (!this.state.maxStep[infra.kind] || !this.state.maxStep[infra.kind]["total_resources"]) {
+        console.log('setting max step for ', infra.kind)
+        this.setState({
+          maxStep: {
+            ...this.state.maxStep,
+            [infra.kind] : validEvents[validEvents.length - 1]["total_resources"]
+          }
+        })
+      }
+      
+      let logs = [] as any[]
+      validEvents.forEach((e: any) => {
+        logs.push(...ansiparse(e["log"]))
+      })
+
+      logs = logs.map((log: any) => {
+        return log.text
+      })
+
+      this.setState({ 
+        logs: [...this.state.logs, ...logs], 
+        currentStep: {
+          ...this.state.currentStep,
+          [infra.kind] : validEvents[validEvents.length - 1]["created_resources"]
+        },
+      }, () => {
+        this.scrollToBottom()
+      })
+    }
+
+    ws.onerror = (err: ErrorEvent) => {
+      console.log(err)
+    }
+
+    ws.onclose = () => {
+      console.log('closing provisioner websocket')
+    }
+
+    return ws
+  }
+
   componentDidMount() {
     let { currentProject } = this.context;
     let protocol = process.env.NODE_ENV == 'production' ? 'wss' : 'ws'
@@ -54,92 +134,32 @@ export default class Provisioner extends Component<PropsType, StateType> {
 
     let websockets = viewData.map((infra: any) => {
       let ws = new WebSocket(`${protocol}://${process.env.API_SERVER}/api/projects/${currentProject.id}/provision/${infra.kind}/${infra.infra_id}/logs`)
-      
-      ws.onopen = () => {
-        console.log('connected to websocket')
-      }
+      return this.setupWebsocket(ws, infra)
+    });
 
-      ws.onmessage = (evt: MessageEvent) => {
-        let event = JSON.parse(evt.data);
-        let validEvents = [] as any[];
-        let err = null;
-        
-        for (var i = 0; i < event.length; i++) {
-          let msg = event[i];
-          if (msg["Values"] && msg["Values"]["data"] && this.isJSON(msg["Values"]["data"])) { 
-            let d = JSON.parse(msg["Values"]["data"]);
-  
-            if (d["kind"] == "error") {
-              err = d["log"];
-              break;
-            }
-  
-            // add only valid events
-            if (d["log"] != null && d["created_resources"] != null && d["total_resources"] != null) {
-              validEvents.push(d);
-            }
-          }
-        }
-  
-        if (err) {
-          let e = ansiparse(err).map((el: any) => {
-            return el.text;
-          })
-          this.setState({ logs: e, error: true });
-          return;
-        }
-  
-        if (validEvents.length == 0) {
-          return;
-        }
-        
+    viewData.forEach(async (infra: any) => {
+      await new Promise((next: (res?: any) => void) => {
         if (!this.state.maxStep[infra.kind] || !this.state.maxStep[infra.kind]["total_resources"]) {
           this.setState({
             maxStep: {
               ...this.state.maxStep,
-              [infra.kind] : validEvents[validEvents.length - 1]["total_resources"]
+              [infra.kind] : 10
             }
+          }, () => {
+            next()
           })
         }
-        
-        let logs = [] as any[]
-        validEvents.forEach((e: any) => {
-          logs.push(...ansiparse(e["log"]))
-        })
-
-        logs = logs.map((log: any) => {
-          return log.text
-        })
-  
-        this.setState({ 
-          logs: [...this.state.logs, ...logs], 
-          currentStep: {
-            ...this.state.currentStep,
-            [infra.kind] : validEvents[validEvents.length - 1]["created_resources"]
-          },
-        }, () => {
-          this.scrollToBottom()
-        })
-      }
-
-      ws.onerror = (err: ErrorEvent) => {
-        console.log(err)
-      }
-
-      ws.onclose = () => {
-        console.log('closing provisioner websocket')
-      }
-
-      return ws
-    });
+      })
+    })
 
     this.setState({ websockets, logs: [] });
   }
 
   componentWillUnmount() {
+    console.log('component will unmount', this.state.websockets)
     if (!this.state.websockets) { return; }
 
-    this.state.websockets.forEach((ws) => {
+    this.state.websockets.forEach((ws: any) => {
       ws.close()
     })
   }
@@ -185,6 +205,7 @@ export default class Provisioner extends Component<PropsType, StateType> {
   }
   
   render() {
+    console.log("maxStep", this.state.maxStep)
     let maxStep = 0;
     let currentStep = 0;
 

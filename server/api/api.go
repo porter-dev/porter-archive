@@ -37,6 +37,7 @@ type AppConfig struct {
 	Repository *repository.Repository
 	ServerConf config.ServerConf
 	RedisConf  *config.RedisConf
+	DBConf     config.DBConf
 
 	// TestAgents if API is in testing mode
 	TestAgents *TestAgents
@@ -62,6 +63,9 @@ type App struct {
 
 	// redis client for redis connection
 	RedisConf *config.RedisConf
+
+	// config for db
+	DBConf config.DBConf
 
 	// oauth-specific clients
 	GithubConf *oauth2.Config
@@ -89,6 +93,7 @@ func New(conf *AppConfig) (*App, error) {
 		Repo:       conf.Repository,
 		ServerConf: conf.ServerConf,
 		RedisConf:  conf.RedisConf,
+		DBConf:     conf.DBConf,
 		TestAgents: conf.TestAgents,
 		db:         conf.DB,
 		validator:  validator,

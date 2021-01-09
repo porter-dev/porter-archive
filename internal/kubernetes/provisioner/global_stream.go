@@ -133,6 +133,7 @@ func GlobalStreamListener(
 					reg := &models.Registry{
 						ProjectID:        projID,
 						AWSIntegrationID: infra.AWSIntegrationID,
+						InfraID:          infra.ID,
 					}
 
 					// parse raw data into ECR type
@@ -174,6 +175,7 @@ func GlobalStreamListener(
 						AuthMechanism:    models.AWS,
 						ProjectID:        projID,
 						AWSIntegrationID: infra.AWSIntegrationID,
+						InfraID:          infra.ID,
 					}
 
 					// parse raw data into ECR type

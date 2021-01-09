@@ -83,7 +83,7 @@ func (ai *AWSInfra) GetID() string {
 func ParseWorkspaceID(workspaceID string) (string, uint, uint, error) {
 	strArr := strings.Split(workspaceID, "-")
 
-	if len(strArr) != 3 {
+	if len(strArr) < 3 {
 		return "", 0, 0, fmt.Errorf("workspace id improperly formatted")
 	}
 

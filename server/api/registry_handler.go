@@ -99,7 +99,7 @@ func (app *App) HandleListProjectRegistries(w http.ResponseWriter, r *http.Reque
 }
 
 // temp -- token response
-type ECRTokenResponse struct {
+type RegTokenResponse struct {
 	Token     string     `json:"token"`
 	ExpiresAt *time.Time `json:"expires_at"`
 }
@@ -158,7 +158,62 @@ func (app *App) HandleGetProjectRegistryECRToken(w http.ResponseWriter, r *http.
 		}
 	}
 
-	resp := &ECRTokenResponse{
+	resp := &RegTokenResponse{
+		Token:     token,
+		ExpiresAt: expiresAt,
+	}
+
+	w.WriteHeader(http.StatusOK)
+
+	if err := json.NewEncoder(w).Encode(resp); err != nil {
+		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
+		return
+	}
+}
+
+type GCRTokenRequestBody struct {
+	ServerURL string `json:"server_url"`
+}
+
+// HandleGetProjectRegistryGCRToken gets a GCR token for a registry
+func (app *App) HandleGetProjectRegistryGCRToken(w http.ResponseWriter, r *http.Request) {
+	projID, err := strconv.ParseUint(chi.URLParam(r, "project_id"), 0, 64)
+
+	if err != nil || projID == 0 {
+		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
+		return
+	}
+
+	reqBody := &GCRTokenRequestBody{}
+
+	// decode from JSON to form value
+	if err := json.NewDecoder(r.Body).Decode(reqBody); err != nil {
+		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
+		return
+	}
+
+	// list registries and find one that matches the region
+	regs, err := app.Repo.Registry.ListRegistriesByProjectID(uint(projID))
+	var token string
+	var expiresAt *time.Time
+
+	for _, reg := range regs {
+		if reg.GCPIntegrationID != 0 && reg.URL == reqBody.ServerURL {
+			_reg := registry.Registry(*reg)
+
+			tokenCache, err := _reg.GetGCRToken(*app.Repo)
+
+			if err != nil {
+				app.handleErrorDataRead(err, w)
+				return
+			}
+
+			token = string(tokenCache.Token)
+			expiresAt = &tokenCache.Expiry
+		}
+	}
+
+	resp := &RegTokenResponse{
 		Token:     token,
 		ExpiresAt: expiresAt,
 	}

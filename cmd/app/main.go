@@ -87,6 +87,7 @@ func main() {
 		Repository: repo,
 		ServerConf: appConf.Server,
 		RedisConf:  &appConf.Redis,
+		DBConf:     appConf.Db,
 	})
 
 	appRouter := router.New(a)

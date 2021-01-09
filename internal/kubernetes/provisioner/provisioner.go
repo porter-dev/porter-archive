@@ -1,6 +1,8 @@
 package provisioner
 
 import (
+	"fmt"
+
 	batchv1 "k8s.io/api/batch/v1"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -41,7 +43,7 @@ type Conf struct {
 // PostgresConf is the postgres config for the provisioner container
 type PostgresConf struct {
 	Host string
-	Port string
+	Port int
 }
 
 type ProvisionerOperation string
@@ -202,7 +204,7 @@ func (conf *Conf) addPostgresEnv(env []v1.EnvVar) []v1.EnvVar {
 
 	env = append(env, v1.EnvVar{
 		Name:  "PG_PORT",
-		Value: conf.Postgres.Port,
+		Value: fmt.Sprintf("%d", conf.Postgres.Port),
 	})
 
 	env = append(env, v1.EnvVar{

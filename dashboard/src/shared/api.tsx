@@ -277,6 +277,7 @@ const getInfra = baseApi<{
 });
 
 const destroyCluster = baseApi<{
+  eks_name: string,
 }, {
   project_id: number,
   infra_id: number,

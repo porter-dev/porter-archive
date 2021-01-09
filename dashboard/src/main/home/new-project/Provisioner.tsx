@@ -15,7 +15,8 @@ import { inflateRaw, inflateRawSync } from 'zlib';
 type PropsType = {
   viewData: any,
   setCurrentView: (x: string) => void,
-};
+  setRefreshClusters: (x: boolean) => void,
+}
 
 type StateType = {
   error: boolean,
@@ -151,7 +152,7 @@ export default class Provisioner extends Component<PropsType, StateType> {
 
   renderLogs = () => {
     return this.state.logs.map((log, i) => {
-      return <div key={i}>{log}</div>
+      return <Log key={i}>{log}</Log>
     });
   }
 
@@ -204,6 +205,7 @@ export default class Provisioner extends Component<PropsType, StateType> {
     }
 
     if (maxStep !== 0 && currentStep === maxStep) {
+      this.props.setRefreshClusters(true);
       this.props.setCurrentView('dashboard');
     }
 
@@ -248,6 +250,10 @@ const Wrapper = styled.div`
   height: 100%;
   overflow: auto;
   padding: 20px 25px;
+`;
+
+const Log = styled.div`
+  font-family: monospace;
 `;
 
 const LogStream = styled.div`

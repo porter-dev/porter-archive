@@ -280,7 +280,7 @@ func (a *Agent) ProvisionEKS(
 		ID:        id,
 		Name:      fmt.Sprintf("prov-%s-%s", id, string(operation)),
 		Kind:      provisioner.EKS,
-		Operation: provisioner.Apply,
+		Operation: operation,
 		Redis:     redisConf,
 		Postgres:  pgConf,
 		AWS: &aws.Conf{
@@ -306,7 +306,7 @@ func (a *Agent) ProvisionTest(
 	prov := &provisioner.Conf{
 		ID:        fmt.Sprintf("%s-%d", "testing", projectID),
 		Name:      fmt.Sprintf("prov-%s-%d-%s", "testing", projectID, string(operation)),
-		Operation: provisioner.Apply,
+		Operation: operation,
 		Kind:      provisioner.Test,
 		Redis:     redisConf,
 		Postgres:  pgConf,

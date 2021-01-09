@@ -69,7 +69,7 @@ export default class UpdateProjectModal extends Component<PropsType, StateType> 
           // Handle destroying infra we've provisioned
           if (cluster.infra_id) {
             console.log('destroying provisioned infra...', cluster.infra_id);
-            api.destroyCluster('<token>', {}, { 
+            api.destroyCluster('<token>', { eks_name: cluster.name }, { 
               project_id: currentProject.id,
               infra_id: cluster.infra_id,
             }, (err: any, res: any) => {

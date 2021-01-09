@@ -40,7 +40,7 @@ jobs:
         DOCKER_BUILDKIT=1 docker build . -t gcr.io/porter-dev-273614/porter-prov:${{steps.tag_name.outputs.tag}} -f ./docker/Dockerfile
     - name: Push
       run: |
-        docker push gcr.io/porter-dev-273614/porter-prov:${{steps.tag_name.outputs.tag}}
+        docker push porter1/porter:${{steps.tag_name.outputs.tag}}
   build:
     name: Build binaries
     runs-on: ubuntu-latest

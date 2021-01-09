@@ -59,6 +59,7 @@ export default class ClusterSection extends Component<PropsType, StateType> {
           } else if (this.props.currentView !== 'provisioner') {
             this.setState({ clusters: [] });
             setCurrentCluster(null);
+            console.log('set to dashboard from clustersection');
             this.props.setCurrentView('dashboard');
           }
         }

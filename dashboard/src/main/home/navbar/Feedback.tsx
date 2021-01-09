@@ -34,12 +34,12 @@ export default class Feedback extends Component<PropsType, StateType> {
     }
   }
 
-  handleSubmitFeedback = () => {
+  onSubmitFeedback = () => {
     let { user } = this.context;
     let msg = '👤 ' + user.email + ' 📍 ' + this.props.currentView + ': ' + this.state.feedbackText;
     handleSubmitFeedback(msg, () => {
       this.setState({ feedbackSent: true, feedbackText: '' });
-    })
+    });
   }
 
   renderFeedbackDropdown = () => {
@@ -61,7 +61,7 @@ export default class Feedback extends Component<PropsType, StateType> {
             />
             <SendButton 
               disabled={disabled} 
-              onClick={() => !disabled && this.handleSubmitFeedback()}
+              onClick={() => !disabled && this.onSubmitFeedback()}
             >
               <i className="material-icons">send</i> Send
             </SendButton>

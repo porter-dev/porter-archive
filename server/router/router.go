@@ -477,6 +477,16 @@ func New(a *api.App) *chi.Mux {
 		)
 
 		r.Method(
+			"GET",
+			"/projects/{project_id}/registries/gcr/token",
+			auth.DoesUserHaveProjectAccess(
+				requestlog.NewHandler(a.HandleGetProjectRegistryGCRToken, l),
+				mw.URLParam,
+				mw.WriteAccess,
+			),
+		)
+
+		r.Method(
 			"DELETE",
 			"/projects/{project_id}/registries/{registry_id}",
 			auth.DoesUserHaveProjectAccess(

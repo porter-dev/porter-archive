@@ -327,7 +327,7 @@ func (auth *Auth) DoesUserHaveInfraAccess(
 	infraLoc IDLocation,
 ) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		infraID, err := findGitRepoIDInRequest(r, infraLoc)
+		infraID, err := findInfraIDInRequest(r, infraLoc)
 
 		if err != nil {
 			http.Error(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)

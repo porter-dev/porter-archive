@@ -38,7 +38,15 @@ export default class TabRegion extends Component<PropsType, StateType> {
   }
 
   renderContents = () => {
-    if (!this.props.currentTab) {
+    if (this.props.options.length === 0) {
+      return (
+        <Div>
+          <TabContents>
+            <Placeholder>No additional settings found.</Placeholder>
+          </TabContents>
+        </Div>
+      );
+    } else if (!this.props.currentTab) {
       return (
         <Loading />
       );
@@ -69,6 +77,18 @@ export default class TabRegion extends Component<PropsType, StateType> {
     );
   }
 }
+
+const Placeholder = styled.div`
+  width: 100%;
+  height: 200px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #ffffff11;
+  border-radius: 5px;
+  color: #ffffff44;
+  font-size: 13px;
+`;
 
 const Div = styled.div`
   width: 100%;

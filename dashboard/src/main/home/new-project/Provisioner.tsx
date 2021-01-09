@@ -24,6 +24,7 @@ type StateType = {
   websockets: any[],
   maxStep : Record<string, number>,
   currentStep: Record<string, number>,
+  triggerEnd: boolean,
 };
 
 export default class Provisioner extends Component<PropsType, StateType> {
@@ -33,6 +34,7 @@ export default class Provisioner extends Component<PropsType, StateType> {
     websockets : [] as any[],
     maxStep: {} as Record<string, any>,
     currentStep: {} as Record<string, number>,
+    triggerEnd: false,
   }
 
   scrollToBottom = () => {
@@ -184,6 +186,24 @@ export default class Provisioner extends Component<PropsType, StateType> {
       </>
     )
   }
+
+  onEnd = () => {
+    let myInterval = setInterval(() => {
+      console.log('interval')
+      api.getClusters('<token>', {}, { id: this.context.currentProject.id }, (err: any, res: any) => {
+        if (err) {
+          console.log(err);
+        } else if (res.data) {
+          let clusters = res.data;
+          console.log('found clusters:', res.data);
+          if (clusters.length > 0) {
+            this.props.setCurrentView('dashboard');
+            clearInterval(myInterval);
+          }
+        }
+      });
+    }, 1000);
+  }
   
   render() {
     let maxStep = 0;
@@ -198,11 +218,9 @@ export default class Provisioner extends Component<PropsType, StateType> {
       currentStep += this.state.currentStep[key]
     }
 
-    if (maxStep !== 0 && currentStep === maxStep) {
-      console.log('Thinks provisioning complete.')
-      console.log(currentStep, maxStep);
-      this.props.setRefreshClusters(true);
-      this.props.setCurrentView('dashboard');
+    if (true && !this.state.triggerEnd) {
+      this.onEnd()
+      this.setState({ triggerEnd: true });
     }
 
     return (

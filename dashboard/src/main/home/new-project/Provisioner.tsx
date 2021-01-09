@@ -54,7 +54,6 @@ export default class Provisioner extends Component<PropsType, StateType> {
 
     ws.onmessage = (evt: MessageEvent) => {
       let event = JSON.parse(evt.data);
-      console.log(event)
       let validEvents = [] as any[];
       let err = null;
       
@@ -88,7 +87,6 @@ export default class Provisioner extends Component<PropsType, StateType> {
       }
       
       if (!this.state.maxStep[infra.kind] || !this.state.maxStep[infra.kind]["total_resources"]) {
-        console.log('setting max step for ', infra.kind)
         this.setState({
           maxStep: {
             ...this.state.maxStep,
@@ -142,7 +140,6 @@ export default class Provisioner extends Component<PropsType, StateType> {
   }
 
   componentWillUnmount() {
-    console.log('component will unmount', this.state.websockets)
     if (!this.state.websockets) { return; }
 
     this.state.websockets.forEach((ws: any) => {
@@ -191,7 +188,6 @@ export default class Provisioner extends Component<PropsType, StateType> {
   }
   
   render() {
-    console.log("maxStep", this.state.maxStep)
     let maxStep = 0;
     let currentStep = 0;
 
@@ -208,8 +204,6 @@ export default class Provisioner extends Component<PropsType, StateType> {
     }
 
     if (maxStep !== 0 && currentStep === maxStep) {
-      console.log('Thinks provisioning complete.')
-      console.log(currentStep, maxStep);
       this.props.setCurrentView('dashboard');
     }
 

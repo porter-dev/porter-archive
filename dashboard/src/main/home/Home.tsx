@@ -41,7 +41,7 @@ export default class Home extends Component<PropsType, StateType> {
   state = {
     forceSidebar: true,
     showWelcome: false,
-    currentView: 'dashboard',
+    currentView: 'provisioner',
     prevProjectId: null as number | null,
     viewData: null as any,
     forceRefreshClusters: false,
@@ -164,7 +164,6 @@ export default class Home extends Component<PropsType, StateType> {
         <Provisioner 
           setCurrentView={(x: string) => this.setState({ currentView: x })}
           viewData={this.state.viewData}
-          setRefreshClusters={(x: boolean) => this.setState({ forceRefreshClusters: x })}
         />
       );
     }

@@ -164,6 +164,7 @@ export default class Home extends Component<PropsType, StateType> {
         <Provisioner 
           setCurrentView={(x: string) => this.setState({ currentView: x })}
           viewData={this.state.viewData}
+          setRefreshClusters={(x: boolean) => this.setState({ forceRefreshClusters: x })}
         />
       );
     }

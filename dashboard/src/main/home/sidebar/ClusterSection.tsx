@@ -53,6 +53,7 @@ export default class ClusterSection extends Component<PropsType, StateType> {
         // TODO: handle uninitialized kubeconfig
         if (res.data) {
           let clusters = res.data;
+          console.log('found clusters:', res.data);
           if (clusters.length > 0) {
             this.setState({ clusters });
             setCurrentCluster(clusters[0]);
@@ -69,6 +70,7 @@ export default class ClusterSection extends Component<PropsType, StateType> {
 
   componentDidMount() {
     this.updateClusters();
+    console.log('mounted clustersection');
   }
 
   // Need to override showDrawer when the sidebar is closed
@@ -82,6 +84,7 @@ export default class ClusterSection extends Component<PropsType, StateType> {
       } else if (this.props.forceRefreshClusters === true) {
         this.updateClusters();
         this.props.setRefreshClusters(false);
+        console.log('hard refereshed clusters');
       }
 
       if (this.props.forceCloseDrawer && this.state.showDrawer) {

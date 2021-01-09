@@ -182,6 +182,20 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
     );
   }
 
+  renderTabRegion = () => {
+    if (this.state.tabOptions.length > 0) {
+      return (
+        <TabRegion
+          options={this.state.tabOptions}
+          currentTab={this.state.currentTab}
+          setCurrentTab={(x: string) => this.setState({ currentTab: x })}
+        >
+          {this.renderTabContents()}
+        </TabRegion>
+      );
+    }
+  }
+
   render() {
     let { name, icon } = this.props.currentTemplate;
     let { currentTemplate } = this.props;
@@ -240,13 +254,7 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
 
         <br />
         <Subtitle>Configure additional settings for this template (optional).</Subtitle>
-        <TabRegion
-          options={this.state.tabOptions}
-          currentTab={this.state.currentTab}
-          setCurrentTab={(x: string) => this.setState({ currentTab: x })}
-        >
-          {this.renderTabContents()}
-        </TabRegion>
+        {this.renderTabRegion()}
       </StyledLaunchTemplate>
     );
   }

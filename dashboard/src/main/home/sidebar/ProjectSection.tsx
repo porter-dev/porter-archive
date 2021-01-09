@@ -42,6 +42,7 @@ export default class ProjectSection extends Component<PropsType, StateType> {
         if (viewData.length > 0) {
           this.props.setCurrentView('provisioner', viewData);
         } else {
+          console.log('set to dashboard from projectsection');
           this.props.setCurrentView('dashboard');
         }
       }

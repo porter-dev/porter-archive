@@ -13,6 +13,7 @@ type PropsType = {
   releaseDrawer: () => void,
   setWelcome: (x: boolean) => void,
   setCurrentView: (x: string) => void,
+  currentView: string,
   isSelected: boolean,
   forceRefreshClusters: boolean,
   setRefreshClusters: (x: boolean) => void,
@@ -55,9 +56,10 @@ export default class ClusterSection extends Component<PropsType, StateType> {
           if (clusters.length > 0) {
             this.setState({ clusters });
             setCurrentCluster(clusters[0]);
-          } else {
+          } else if (this.props.currentView !== 'provisioner') {
             this.setState({ clusters: [] });
             setCurrentCluster(null);
+            console.log('set to dashboard from clustersection');
             this.props.setCurrentView('dashboard');
           }
         }

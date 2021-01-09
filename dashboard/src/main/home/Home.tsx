@@ -34,6 +34,7 @@ type StateType = {
 
   // Track last project id for refreshing clusters on project change
   prevProjectId: number | null,
+  sidebarReady: boolean, // Fixes error where ~1/3 times reloading to provisioner fails
 };
 
 export default class Home extends Component<PropsType, StateType> {
@@ -44,6 +45,7 @@ export default class Home extends Component<PropsType, StateType> {
     prevProjectId: null as number | null,
     viewData: null as any,
     forceRefreshClusters: false,
+    sidebarReady: false,
   }
 
   // Possibly consolidate into context (w/ ProjectSection + NewProject)
@@ -73,15 +75,18 @@ export default class Home extends Component<PropsType, StateType> {
                   });
                 }
               });
-
+              
+              console.log('infras viewdata: ', viewData);
               if (viewData.length > 0) {
-                this.setState({ currentView: 'provisioner', viewData});
+                console.log('setting to provisioner...');
+                this.setState({ currentView: 'provisioner', viewData, sidebarReady: true, });
+              } else {
+                this.setState({ sidebarReady: true });
               }
-
             }
           });
         } else if (res.data.length === 0) {
-          this.setState({ currentView: 'new-project' });
+          this.setState({ currentView: 'new-project', sidebarReady: true, });
         }
       }
     });
@@ -100,6 +105,7 @@ export default class Home extends Component<PropsType, StateType> {
           prevProjectId: this.context.currentProject.id,
           currentView: 'dashboard'
         });
+        console.log('setting view to dashboard from Home');
       }
     }
   }
@@ -183,18 +189,18 @@ export default class Home extends Component<PropsType, StateType> {
       // Force sidebar closed on first provision
       if (this.state.currentView === 'provisioner' && this.state.forceSidebar) {
         this.setState({ forceSidebar: false });
+      } else if (this.state.sidebarReady) {
+        return (
+          <Sidebar
+            forceSidebar={this.state.forceSidebar}
+            setWelcome={(x: boolean) => this.setState({ showWelcome: x })}
+            setCurrentView={this.setCurrentView}
+            currentView={this.state.currentView}
+            forceRefreshClusters={this.state.forceRefreshClusters}
+            setRefreshClusters={(x: boolean) => this.setState({ forceRefreshClusters: x })}
+          />
+        );
       }
-
-      return (
-        <Sidebar
-          forceSidebar={this.state.forceSidebar}
-          setWelcome={(x: boolean) => this.setState({ showWelcome: x })}
-          setCurrentView={this.setCurrentView}
-          currentView={this.state.currentView}
-          forceRefreshClusters={this.state.forceRefreshClusters}
-          setRefreshClusters={(x: boolean) => this.setState({ forceRefreshClusters: x })}
-        />
-      );
     }
   }
 

@@ -70,6 +70,18 @@ export default class TabRegion extends Component<PropsType, StateType> {
   }
 }
 
+const Placeholder = styled.div`
+  width: 100%;
+  height: 200px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #ffffff11;
+  border-radius: 5px;
+  color: #ffffff44;
+  font-size: 13px;
+`;
+
 const Div = styled.div`
   width: 100%;
   height: 100%;

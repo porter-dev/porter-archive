@@ -64,6 +64,7 @@ func (c *Client) CreateECR(
 type CreateGCRRequest struct {
 	Name             string `json:"name"`
 	GCPIntegrationID uint   `json:"gcp_integration_id"`
+	URL              string `json:"url"`
 }
 
 // CreateGCRResponse is the resulting registry after creation
@@ -166,8 +167,8 @@ func (c *Client) DeleteProjectRegistry(
 	return nil
 }
 
-// GetECRTokenResponse blah
-type GetECRTokenResponse struct {
+// GetTokenResponse blah
+type GetTokenResponse struct {
 	Token     string     `json:"token"`
 	ExpiresAt *time.Time `json:"expires_at"`
 }
@@ -177,7 +178,7 @@ func (c *Client) GetECRAuthorizationToken(
 	ctx context.Context,
 	projectID uint,
 	region string,
-) (*GetECRTokenResponse, error) {
+) (*GetTokenResponse, error) {
 	req, err := http.NewRequest(
 		"GET",
 		fmt.Sprintf("%s/projects/%d/registries/ecr/%s/token", c.BaseURL, projectID, region),
@@ -188,7 +189,47 @@ func (c *Client) GetECRAuthorizationToken(
 		return nil, err
 	}
 
-	bodyResp := &GetECRTokenResponse{}
+	bodyResp := &GetTokenResponse{}
+	req = req.WithContext(ctx)
+
+	if httpErr, err := c.sendRequest(req, bodyResp, true); httpErr != nil || err != nil {
+		if httpErr != nil {
+			return nil, fmt.Errorf("code %d, errors %v", httpErr.Code, httpErr.Errors)
+		}
+
+		return nil, err
+	}
+
+	return bodyResp, nil
+}
+
+type GetGCRTokenRequest struct {
+	ServerURL string `json:"server_url"`
+}
+
+// GetGCRAuthorizationToken gets a GCR authorization token
+func (c *Client) GetGCRAuthorizationToken(
+	ctx context.Context,
+	projectID uint,
+	gcrRequest *GetGCRTokenRequest,
+) (*GetTokenResponse, error) {
+	data, err := json.Marshal(gcrRequest)
+
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(
+		"GET",
+		fmt.Sprintf("%s/projects/%d/registries/gcr/token", c.BaseURL, projectID),
+		strings.NewReader(string(data)),
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	bodyResp := &GetTokenResponse{}
 	req = req.WithContext(ctx)
 
 	if httpErr, err := c.sendRequest(req, bodyResp, true); httpErr != nil || err != nil {

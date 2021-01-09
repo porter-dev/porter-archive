@@ -7,17 +7,19 @@ import (
 // CreateGCPIntegrationForm represents the accepted values for creating a
 // GCP Integration
 type CreateGCPIntegrationForm struct {
-	UserID     uint   `json:"user_id" form:"required"`
-	ProjectID  uint   `json:"project_id" form:"required"`
-	GCPKeyData string `json:"gcp_key_data" form:"required"`
+	UserID       uint   `json:"user_id" form:"required"`
+	ProjectID    uint   `json:"project_id" form:"required"`
+	GCPKeyData   string `json:"gcp_key_data" form:"required"`
+	GCPProjectID string `json:"gcp_project_id"`
 }
 
 // ToGCPIntegration converts the project to a gorm project model
 func (cgf *CreateGCPIntegrationForm) ToGCPIntegration() (*ints.GCPIntegration, error) {
 	return &ints.GCPIntegration{
-		UserID:     cgf.UserID,
-		ProjectID:  cgf.ProjectID,
-		GCPKeyData: []byte(cgf.GCPKeyData),
+		UserID:       cgf.UserID,
+		ProjectID:    cgf.ProjectID,
+		GCPKeyData:   []byte(cgf.GCPKeyData),
+		GCPProjectID: cgf.GCPProjectID,
 	}, nil
 }
 

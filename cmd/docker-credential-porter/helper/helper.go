@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	"log"
+	"net/url"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -43,6 +44,57 @@ var ecrPattern = regexp.MustCompile(`(^[a-zA-Z0-9][a-zA-Z0-9-_]*)\.dkr\.ecr(\-fi
 // Get retrieves credentials from the store.
 // It returns username and secret as strings.
 func (p *PorterHelper) Get(serverURL string) (user string, secret string, err error) {
+	if strings.Contains(serverURL, "gcr.io") {
+		return p.getGCR(serverURL)
+	}
+
+	return p.getECR(serverURL)
+}
+
+func (p *PorterHelper) getGCR(serverURL string) (user string, secret string, err error) {
+	urlP, err := url.Parse(serverURL)
+
+	if err != nil {
+		return "", "", err
+	}
+
+	credCache := BuildCredentialsCache(urlP.Host)
+	cachedEntry := credCache.Get(serverURL)
+
+	var token string
+
+	if cachedEntry != nil && cachedEntry.IsValid(time.Now()) {
+		token = cachedEntry.AuthorizationToken
+	} else {
+		host := viper.GetString("host")
+		projID := viper.GetUint("project")
+
+		client := api.NewClient(host+"/api", "cookie.json")
+
+		// get a token from the server
+		tokenResp, err := client.GetGCRAuthorizationToken(context.Background(), projID, &api.GetGCRTokenRequest{
+			ServerURL: serverURL,
+		})
+
+		if err != nil {
+			return "", "", err
+		}
+
+		token = tokenResp.Token
+
+		// set the token in cache
+		credCache.Set(serverURL, &AuthEntry{
+			AuthorizationToken: token,
+			RequestedAt:        time.Now(),
+			ExpiresAt:          *tokenResp.ExpiresAt,
+			ProxyEndpoint:      serverURL,
+		})
+	}
+
+	return "oauth2accesstoken", token, nil
+}
+
+func (p *PorterHelper) getECR(serverURL string) (user string, secret string, err error) {
 	// parse the server url for region
 	matches := ecrPattern.FindStringSubmatch(serverURL)
 

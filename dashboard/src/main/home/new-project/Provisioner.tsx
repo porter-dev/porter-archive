@@ -15,7 +15,6 @@ import { inflateRaw, inflateRawSync } from 'zlib';
 type PropsType = {
   viewData: any,
   setCurrentView: (x: string) => void,
-  setRefreshClusters: (x: boolean) => void,
 }
 
 type StateType = {

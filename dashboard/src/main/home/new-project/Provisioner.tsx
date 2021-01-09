@@ -54,6 +54,7 @@ export default class Provisioner extends Component<PropsType, StateType> {
 
     ws.onmessage = (evt: MessageEvent) => {
       let event = JSON.parse(evt.data);
+      console.log(event)
       let validEvents = [] as any[];
       let err = null;
       
@@ -137,22 +138,7 @@ export default class Provisioner extends Component<PropsType, StateType> {
       return this.setupWebsocket(ws, infra)
     });
 
-    viewData.forEach(async (infra: any) => {
-      await new Promise((next: (res?: any) => void) => {
-        if (!this.state.maxStep[infra.kind] || !this.state.maxStep[infra.kind]["total_resources"]) {
-          this.setState({
-            maxStep: {
-              ...this.state.maxStep,
-              [infra.kind] : 10
-            }
-          }, () => {
-            next()
-          })
-        }
-      })
-    })
-
-    this.setState({ websockets, logs: [] });
+    this.setState({ websockets, logs: ["Provisioning EKS cluster and ECR registry..."] });
   }
 
   componentWillUnmount() {
@@ -210,12 +196,15 @@ export default class Provisioner extends Component<PropsType, StateType> {
     let currentStep = 0;
 
     for (let key in this.state.maxStep) {
-      console.log(key)
-      maxStep += this.state.maxStep[key]
+      if (key == 'eks') {
+        maxStep += this.state.maxStep[key]
+      }
     }
 
     for (let key in this.state.currentStep) {
-      currentStep += this.state.currentStep[key]
+      if (key == 'eks') {
+        currentStep += this.state.currentStep[key]
+      }
     }
 
     if (maxStep !== 0 && currentStep === maxStep) {

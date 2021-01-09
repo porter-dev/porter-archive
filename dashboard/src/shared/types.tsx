@@ -3,6 +3,7 @@ export interface ClusterType {
   name: string,
   server: string,
   service_account_id: number
+  infra_id?: number
 }
 
 export interface ChartType {

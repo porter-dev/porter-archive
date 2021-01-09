@@ -33,7 +33,7 @@ export default class Logs extends Component<PropsType, StateType> {
       return <Message>No logs to display from this pod.</Message>
     }
     return this.state.logs.map((log, i) => {
-        return <div key={i}>{log}</div>
+        return <Log key={i}>{log}</Log>
     })
   }
 
@@ -106,4 +106,8 @@ const Message = styled.div`
   justify-content: center;
   color: #ffffff44;
   font-size: 13px;
+`;
+
+const Log = styled.div`
+  font-family: monospace;
 `;

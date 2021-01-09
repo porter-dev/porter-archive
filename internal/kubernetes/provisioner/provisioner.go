@@ -1,6 +1,8 @@
 package provisioner
 
 import (
+	"fmt"
+
 	batchv1 "k8s.io/api/batch/v1"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -29,19 +31,13 @@ type Conf struct {
 	Namespace string
 	ID        string
 	Redis     *config.RedisConf
-	Postgres  *PostgresConf
+	Postgres  *config.DBConf
 	Operation ProvisionerOperation
 
 	// provider-specific configurations
 	AWS *aws.Conf
 	ECR *ecr.Conf
 	EKS *eks.Conf
-}
-
-// PostgresConf is the postgres config for the provisioner container
-type PostgresConf struct {
-	Host string
-	Port string
 }
 
 type ProvisionerOperation string
@@ -170,19 +166,20 @@ func (conf *Conf) addRedisEnv(env []v1.EnvVar) []v1.EnvVar {
 
 	env = append(env, v1.EnvVar{
 		Name:  "REDIS_USER",
-		Value: "default",
+		Value: conf.Redis.Username,
 	})
 
 	env = append(env, v1.EnvVar{
-		Name: "REDIS_PASS",
-		ValueFrom: &v1.EnvVarSource{
-			SecretKeyRef: &v1.SecretKeySelector{
-				LocalObjectReference: v1.LocalObjectReference{
-					Name: "redis",
-				},
-				Key: "redis-password",
-			},
-		},
+		Name:  "REDIS_PASS",
+		Value: conf.Redis.Password,
+		// ValueFrom: &v1.EnvVarSource{
+		// 	SecretKeyRef: &v1.SecretKeySelector{
+		// 		LocalObjectReference: v1.LocalObjectReference{
+		// 			Name: "redis",
+		// 		},
+		// 		Key: "redis-password",
+		// 	},
+		// },
 	})
 
 	env = append(env, v1.EnvVar{
@@ -202,24 +199,17 @@ func (conf *Conf) addPostgresEnv(env []v1.EnvVar) []v1.EnvVar {
 
 	env = append(env, v1.EnvVar{
 		Name:  "PG_PORT",
-		Value: conf.Postgres.Port,
+		Value: fmt.Sprintf("%d", conf.Postgres.Port),
 	})
 
 	env = append(env, v1.EnvVar{
 		Name:  "PG_USER",
-		Value: "postgres",
+		Value: conf.Postgres.Username,
 	})
 
 	env = append(env, v1.EnvVar{
-		Name: "PG_PASS",
-		ValueFrom: &v1.EnvVarSource{
-			SecretKeyRef: &v1.SecretKeySelector{
-				LocalObjectReference: v1.LocalObjectReference{
-					Name: "postgres-postgresql",
-				},
-				Key: "postgresql-password",
-			},
-		},
+		Name:  "PG_PASS",
+		Value: conf.Postgres.Password,
 	})
 
 	return env

@@ -76,9 +76,11 @@ export default class ClusterSection extends Component<PropsType, StateType> {
 
       // Refresh clusters on project change 
       if (this.state.prevProjectId !== this.context.currentProject.id && this.props.currentView !== 'provisioner') {
+        console.log("HERE")
         this.updateClusters();
         this.setState({ prevProjectId: this.context.currentProject.id });
       } else if (this.props.forceRefreshClusters === true) {
+        console.log("HERE2")
         this.updateClusters();
         this.props.setRefreshClusters(false);
       }

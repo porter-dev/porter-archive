@@ -52,7 +52,7 @@ const (
 func (conf *Conf) GetProvisionerJobTemplate() (*batchv1.Job, error) {
 	operation := string(conf.Operation)
 
-	if conf.Operation == "" {
+	if operation == "" {
 		operation = string(Apply)
 	}
 

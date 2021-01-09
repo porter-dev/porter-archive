@@ -13,6 +13,7 @@ type PropsType = {
   releaseDrawer: () => void,
   setWelcome: (x: boolean) => void,
   setCurrentView: (x: string) => void,
+  currentView: string,
   isSelected: boolean,
   forceRefreshClusters: boolean,
   setRefreshClusters: (x: boolean) => void,
@@ -74,7 +75,7 @@ export default class ClusterSection extends Component<PropsType, StateType> {
     if (prevProps !== this.props) {
 
       // Refresh clusters on project change 
-      if (this.state.prevProjectId !== this.context.currentProject.id) {
+      if (this.state.prevProjectId !== this.context.currentProject.id && this.props.currentView !== 'provisioner') {
         this.updateClusters();
         this.setState({ prevProjectId: this.context.currentProject.id });
       } else if (this.props.forceRefreshClusters === true) {

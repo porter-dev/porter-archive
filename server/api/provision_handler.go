@@ -36,10 +36,7 @@ func (app *App) HandleProvisionTest(w http.ResponseWriter, r *http.Request) {
 	_, err = agent.ProvisionTest(
 		uint(projID),
 		provisioner.Apply,
-		&provisioner.PostgresConf{
-			Host: app.DBConf.Host,
-			Port: app.DBConf.Port,
-		},
+		&app.DBConf,
 		app.RedisConf,
 	)
 
@@ -119,10 +116,7 @@ func (app *App) HandleProvisionAWSECRInfra(w http.ResponseWriter, r *http.Reques
 		form.ECRName,
 		infra,
 		provisioner.Apply,
-		&provisioner.PostgresConf{
-			Host: app.DBConf.Host,
-			Port: app.DBConf.Port,
-		},
+		&app.DBConf,
 		app.RedisConf,
 	)
 
@@ -212,10 +206,7 @@ func (app *App) HandleDestroyAWSECRInfra(w http.ResponseWriter, r *http.Request)
 		form.ECRName,
 		infra,
 		provisioner.Destroy,
-		&provisioner.PostgresConf{
-			Host: app.DBConf.Host,
-			Port: app.DBConf.Port,
-		},
+		&app.DBConf,
 		app.RedisConf,
 	)
 
@@ -297,10 +288,7 @@ func (app *App) HandleProvisionAWSEKSInfra(w http.ResponseWriter, r *http.Reques
 		form.EKSName,
 		infra,
 		provisioner.Apply,
-		&provisioner.PostgresConf{
-			Host: app.DBConf.Host,
-			Port: app.DBConf.Port,
-		},
+		&app.DBConf,
 		app.RedisConf,
 	)
 
@@ -390,10 +378,7 @@ func (app *App) HandleDestroyAWSEKSInfra(w http.ResponseWriter, r *http.Request)
 		form.EKSName,
 		infra,
 		provisioner.Destroy,
-		&provisioner.PostgresConf{
-			Host: app.DBConf.Host,
-			Port: app.DBConf.Port,
-		},
+		&app.DBConf,
 		app.RedisConf,
 	)
 

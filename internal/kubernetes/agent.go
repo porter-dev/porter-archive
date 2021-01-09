@@ -241,7 +241,7 @@ func (a *Agent) ProvisionECR(
 	ecrName string,
 	awsInfra *models.AWSInfra,
 	operation provisioner.ProvisionerOperation,
-	pgConf *provisioner.PostgresConf,
+	pgConf *config.DBConf,
 	redisConf *config.RedisConf,
 ) (*batchv1.Job, error) {
 	id := awsInfra.GetID()
@@ -272,7 +272,7 @@ func (a *Agent) ProvisionEKS(
 	eksName string,
 	awsInfra *models.AWSInfra,
 	operation provisioner.ProvisionerOperation,
-	pgConf *provisioner.PostgresConf,
+	pgConf *config.DBConf,
 	redisConf *config.RedisConf,
 ) (*batchv1.Job, error) {
 	id := awsInfra.GetID()
@@ -300,7 +300,7 @@ func (a *Agent) ProvisionEKS(
 func (a *Agent) ProvisionTest(
 	projectID uint,
 	operation provisioner.ProvisionerOperation,
-	pgConf *provisioner.PostgresConf,
+	pgConf *config.DBConf,
 	redisConf *config.RedisConf,
 ) (*batchv1.Job, error) {
 	prov := &provisioner.Conf{

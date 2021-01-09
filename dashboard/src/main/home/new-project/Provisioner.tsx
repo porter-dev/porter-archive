@@ -15,7 +15,7 @@ import { inflateRaw, inflateRawSync } from 'zlib';
 type PropsType = {
   viewData: any,
   setCurrentView: (x: string) => void,
-};
+}
 
 type StateType = {
   error: boolean,
@@ -23,6 +23,7 @@ type StateType = {
   websockets: any[],
   maxStep : Record<string, number>,
   currentStep: Record<string, number>,
+  triggerEnd: boolean,
 };
 
 export default class Provisioner extends Component<PropsType, StateType> {
@@ -32,6 +33,7 @@ export default class Provisioner extends Component<PropsType, StateType> {
     websockets : [] as any[],
     maxStep: {} as Record<string, any>,
     currentStep: {} as Record<string, number>,
+    triggerEnd: false,
   }
 
   scrollToBottom = () => {
@@ -47,6 +49,85 @@ export default class Provisioner extends Component<PropsType, StateType> {
     return true;
   }
 
+  setupWebsocket = (ws: WebSocket, infra: any) => {
+    ws.onopen = () => {
+      console.log('connected to websocket')
+    }
+
+    ws.onmessage = (evt: MessageEvent) => {
+      let event = JSON.parse(evt.data);
+      let validEvents = [] as any[];
+      let err = null;
+      
+      for (var i = 0; i < event.length; i++) {
+        let msg = event[i];
+        if (msg["Values"] && msg["Values"]["data"] && this.isJSON(msg["Values"]["data"])) { 
+          let d = JSON.parse(msg["Values"]["data"]);
+
+          if (d["kind"] == "error") {
+            err = d["log"];
+            break;
+          }
+
+          // add only valid events
+          if (d["log"] != null && d["created_resources"] != null && d["total_resources"] != null) {
+            validEvents.push(d);
+          }
+        }
+      }
+
+      if (err) {
+        let e = ansiparse(err).map((el: any) => {
+          return el.text;
+        })
+        this.setState({ logs: e, error: true });
+        return;
+      }
+
+      if (validEvents.length == 0) {
+        return;
+      }
+      
+      if (!this.state.maxStep[infra.kind] || !this.state.maxStep[infra.kind]["total_resources"]) {
+        this.setState({
+          maxStep: {
+            ...this.state.maxStep,
+            [infra.kind] : validEvents[validEvents.length - 1]["total_resources"]
+          }
+        })
+      }
+      
+      let logs = [] as any[]
+      validEvents.forEach((e: any) => {
+        logs.push(...ansiparse(e["log"]))
+      })
+
+      logs = logs.map((log: any) => {
+        return log.text
+      })
+
+      this.setState({ 
+        logs: [...this.state.logs, ...logs], 
+        currentStep: {
+          ...this.state.currentStep,
+          [infra.kind] : validEvents[validEvents.length - 1]["created_resources"]
+        },
+      }, () => {
+        this.scrollToBottom()
+      })
+    }
+
+    ws.onerror = (err: ErrorEvent) => {
+      console.log(err)
+    }
+
+    ws.onclose = () => {
+      console.log('closing provisioner websocket')
+    }
+
+    return ws
+  }
+
   componentDidMount() {
     let { currentProject } = this.context;
     let protocol = process.env.NODE_ENV == 'production' ? 'wss' : 'ws'
@@ -54,92 +135,16 @@ export default class Provisioner extends Component<PropsType, StateType> {
 
     let websockets = viewData.map((infra: any) => {
       let ws = new WebSocket(`${protocol}://${process.env.API_SERVER}/api/projects/${currentProject.id}/provision/${infra.kind}/${infra.infra_id}/logs`)
-      
-      ws.onopen = () => {
-        console.log('connected to websocket')
-      }
-
-      ws.onmessage = (evt: MessageEvent) => {
-        let event = JSON.parse(evt.data);
-        let validEvents = [] as any[];
-        let err = null;
-        
-        for (var i = 0; i < event.length; i++) {
-          let msg = event[i];
-          if (msg["Values"] && msg["Values"]["data"] && this.isJSON(msg["Values"]["data"])) { 
-            let d = JSON.parse(msg["Values"]["data"]);
-  
-            if (d["kind"] == "error") {
-              err = d["log"];
-              break;
-            }
-  
-            // add only valid events
-            if (d["log"] != null && d["created_resources"] != null && d["total_resources"] != null) {
-              validEvents.push(d);
-            }
-          }
-        }
-  
-        if (err) {
-          let e = ansiparse(err).map((el: any) => {
-            return el.text;
-          })
-          this.setState({ logs: e, error: true });
-          return;
-        }
-  
-        if (validEvents.length == 0) {
-          return;
-        }
-        
-        if (!this.state.maxStep[infra.kind] || !this.state.maxStep[infra.kind]["total_resources"]) {
-          this.setState({
-            maxStep: {
-              ...this.state.maxStep,
-              [infra.kind] : validEvents[validEvents.length - 1]["total_resources"]
-            }
-          })
-        }
-        
-        let logs = [] as any[]
-        validEvents.forEach((e: any) => {
-          logs.push(...ansiparse(e["log"]))
-        })
-
-        logs = logs.map((log: any) => {
-          return log.text
-        })
-  
-        this.setState({ 
-          logs: [...this.state.logs, ...logs], 
-          currentStep: {
-            ...this.state.currentStep,
-            [infra.kind] : validEvents[validEvents.length - 1]["created_resources"]
-          },
-        }, () => {
-          this.scrollToBottom()
-        })
-      }
-
-      ws.onerror = (err: ErrorEvent) => {
-        console.log(err)
-      }
-
-      ws.onclose = () => {
-        console.log('closing provisioner websocket')
-      }
-
-      return ws
+      return this.setupWebsocket(ws, infra)
     });
 
-    this.setState({ websockets, logs: [] });
+    this.setState({ websockets, logs: ["Provisioning EKS cluster and ECR registry..."] });
   }
 
   componentWillUnmount() {
     if (!this.state.websockets) { return; }
 
-    this.state.websockets.forEach((ws) => {
+    this.state.websockets.forEach((ws: any) => {
       ws.close()
     })
   }
@@ -148,7 +153,7 @@ export default class Provisioner extends Component<PropsType, StateType> {
 
   renderLogs = () => {
     return this.state.logs.map((log, i) => {
-      return <div key={i}>{log}</div>
+      return <Log key={i}>{log}</Log>
     });
   }
 
@@ -183,24 +188,44 @@ export default class Provisioner extends Component<PropsType, StateType> {
       </>
     )
   }
+
+  onEnd = () => {
+    let myInterval = setInterval(() => {
+      console.log('interval')
+      api.getClusters('<token>', {}, { id: this.context.currentProject.id }, (err: any, res: any) => {
+        if (err) {
+          console.log(err);
+        } else if (res.data) {
+          let clusters = res.data;
+          console.log('found clusters:', res.data);
+          if (clusters.length > 0) {
+            this.props.setCurrentView('dashboard');
+            clearInterval(myInterval);
+          }
+        }
+      });
+    }, 1000);
+  }
   
   render() {
     let maxStep = 0;
     let currentStep = 0;
 
     for (let key in this.state.maxStep) {
-      console.log(key)
-      maxStep += this.state.maxStep[key]
+      if (key == 'eks') {
+        maxStep += this.state.maxStep[key]
+      }
     }
 
     for (let key in this.state.currentStep) {
-      currentStep += this.state.currentStep[key]
+      if (key == 'eks') {
+        currentStep += this.state.currentStep[key]
+      }
     }
 
-    if (maxStep !== 0 && currentStep === maxStep) {
-      console.log('Thinks provisioning complete.')
-      console.log(currentStep, maxStep);
-      this.props.setCurrentView('dashboard');
+    if (maxStep !== 0 && currentStep === maxStep && !this.state.triggerEnd) {
+      this.onEnd()
+      this.setState({ triggerEnd: true });
     }
 
     return (
@@ -244,6 +269,10 @@ const Wrapper = styled.div`
   height: 100%;
   overflow: auto;
   padding: 20px 25px;
+`;
+
+const Log = styled.div`
+  font-family: monospace;
 `;
 
 const LogStream = styled.div`

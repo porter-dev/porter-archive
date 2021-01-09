@@ -93,6 +93,7 @@ func New(conf *AppConfig) (*App, error) {
 		Repo:       conf.Repository,
 		ServerConf: conf.ServerConf,
 		RedisConf:  conf.RedisConf,
+		DBConf:     conf.DBConf,
 		TestAgents: conf.TestAgents,
 		db:         conf.DB,
 		validator:  validator,

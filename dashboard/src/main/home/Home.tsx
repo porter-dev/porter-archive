@@ -79,7 +79,6 @@ export default class Home extends Component<PropsType, StateType> {
                 console.log('setting to provisioner...');
                 this.setState({ currentView: 'provisioner', viewData});
               }
-
             }
           });
         } else if (res.data.length === 0) {
@@ -102,6 +101,7 @@ export default class Home extends Component<PropsType, StateType> {
           prevProjectId: this.context.currentProject.id,
           currentView: 'dashboard'
         });
+        console.log('setting view to dashboard from Home');
       }
     }
   }

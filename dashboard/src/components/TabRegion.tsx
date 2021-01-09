@@ -38,15 +38,7 @@ export default class TabRegion extends Component<PropsType, StateType> {
   }
 
   renderContents = () => {
-    if (this.props.options.length === 0) {
-      return (
-        <Div>
-          <TabContents>
-            <Placeholder>No additional settings found.</Placeholder>
-          </TabContents>
-        </Div>
-      );
-    } else if (!this.props.currentTab) {
+    if (!this.props.currentTab) {
       return (
         <Loading />
       );

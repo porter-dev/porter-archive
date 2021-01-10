@@ -9,6 +9,7 @@ import { PorterTemplate, ChoiceType, ClusterType, StorageType } from '../../../.
 import Selector from '../../../../components/Selector';
 import ImageSelector from '../../../../components/image-selector/ImageSelector';
 import TabRegion from '../../../../components/TabRegion';
+import SaveButton from '../../../../components/SaveButton';
 import ValuesWrapper from '../../../../components/values-form/ValuesWrapper';
 import ValuesForm from '../../../../components/values-form/ValuesForm';
 import { safeDump } from 'js-yaml';
@@ -49,6 +50,28 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
     tabContents: [] as any,
     namespaceOptions: [] as { label: string, value: string }[],
   };
+
+  onSubmitAddon = () => {
+    let { currentCluster, currentProject } = this.context;
+    let name = randomWords({ exactly: 3, join: '-' });
+    api.deployTemplate('<token>', {
+      templateName: this.props.currentTemplate.name,
+      storage: StorageType.Secret,
+      namespace: this.state.selectedNamespace,
+      name,
+    }, {
+      id: currentProject.id,
+      cluster_id: currentCluster.id,
+      name: this.props.currentTemplate.name.toLowerCase().trim(),
+      version: 'latest',
+    }, (err: any, res: any) => {
+      if (err) {
+        this.setState({ saveValuesStatus: 'error' });
+      } else {
+        this.setState({ saveValuesStatus: 'successful' });
+      }
+    });
+  }
 
   onSubmit = (rawValues: any) => {
     let { currentCluster, currentProject } = this.context;
@@ -125,6 +148,10 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
   }
 
   componentDidMount() {
+    if (this.props.currentTemplate.name !== 'docker') {
+      this.setState({ saveValuesStatus: '' });
+    }
+
     // Retrieve tab options
     let tabOptions = [] as ChoiceType[];
     this.props.form?.tabs.map((tab: any, i: number) => {
@@ -192,6 +219,20 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
         >
           {this.renderTabContents()}
         </TabRegion>
+      );
+    } else {
+      return (
+        <Wrapper>
+          <Placeholder>
+            No additional settings found.
+          </Placeholder>
+          <SaveButton
+            text='Deploy'
+            onClick={() => this.onSubmitAddon()}
+            status={this.state.saveValuesStatus}
+            makeFlush={true}
+          />
+        </Wrapper>
       );
     }
   }
@@ -261,6 +302,25 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
 }
 
 LaunchTemplate.contextType = Context;
+
+const Wrapper = styled.div`
+  width: 100%;
+  position: relative;
+  padding-bottom: 70px;
+`;
+
+const Placeholder = styled.div`
+  width: 100%;
+  height: 200px;
+  background: #ffffff11;
+  border: 1px solid #ffffff44;
+  border-radius: 5px;
+  color: #ffffff44;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+`;
 
 const DarkMatter = styled.div`
   width: 100%;

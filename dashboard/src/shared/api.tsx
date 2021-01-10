@@ -175,8 +175,8 @@ const deleteProject = baseApi<{}, { id: number }>('DELETE', pathParams => {
 
 const deployTemplate = baseApi<{
   templateName: string,
-  imageURL: string,
-  formValues: any,
+  imageURL?: string,
+  formValues?: any,
   storage: StorageType,
   namespace: string,
   name: string,

@@ -5,6 +5,7 @@ import logo from '../assets/logo.png';
 import api from '../shared/api';
 import { emailRegex } from '../shared/regex';
 import { Context } from '../shared/Context';
+import { handleSubmitFeedback } from '../shared/feedback'; 
 
 type PropsType = {
   authenticate: () => void
@@ -60,6 +61,8 @@ export default class Register extends Component<PropsType, StateType> {
         email: email,
         password: password
       }, {}, (err: any, res: any) => {
+        let msg = '📡 ' + email + ' registered for Porter.';
+        handleSubmitFeedback(msg);
         setUser(res?.data?.id, res?.data?.email)
         err ? setCurrentError(err.response.data.errors[0]) : authenticate();
       });

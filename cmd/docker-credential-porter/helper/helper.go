@@ -44,6 +44,8 @@ var ecrPattern = regexp.MustCompile(`(^[a-zA-Z0-9][a-zA-Z0-9-_]*)\.dkr\.ecr(\-fi
 // Get retrieves credentials from the store.
 // It returns username and secret as strings.
 func (p *PorterHelper) Get(serverURL string) (user string, secret string, err error) {
+	p.init()
+
 	if strings.Contains(serverURL, "gcr.io") {
 		return p.getGCR(serverURL)
 	}
@@ -154,6 +156,8 @@ func (p *PorterHelper) getECR(serverURL string) (user string, secret string, err
 
 // List returns the stored serverURLs and their associated usernames.
 func (p *PorterHelper) List() (map[string]string, error) {
+	p.init()
+
 	credCache := BuildCredentialsCache("")
 	entries := credCache.List()
 

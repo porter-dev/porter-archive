@@ -61,7 +61,7 @@ func (conf *Conf) GetProvisionerJobTemplate() (*batchv1.Job, error) {
 	env = conf.attachDefaultEnv(env)
 
 	ttl := int32(3600)
-	backoffLimit := int32(3)
+	backoffLimit := int32(5)
 
 	labels := map[string]string{
 		"app": "provisioner",

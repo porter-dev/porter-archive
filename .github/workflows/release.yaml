@@ -58,6 +58,16 @@ jobs:
         uses: actions/setup-go@v2
         with:
           go-version: 1.15
+      - name: Write Dashboard Environment Variables
+        run: |
+          cat >./dashboard/.env <<EOL
+          NODE_ENV=production
+          API_SERVER=dashboard.getporter.dev
+          FULLSTORY_ORG_ID=${{secrets.FULLSTORY_ORG_ID}}
+          DISCORD_KEY=${{secrets.DISCORD_KEY}}
+          DISCORD_CID=${{secrets.DISCORD_CID}}
+          FEEDBACK_ENDPOINT=${{secrets.FEEDBACK_ENDPOINT}}
+          EOL
       - name: Build and zip static folder
         run: |
           mkdir -p ./release/static

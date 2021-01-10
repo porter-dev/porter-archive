@@ -69,7 +69,7 @@ For Linux and Windows installation, see our [Docs](https://docs.getporter.dev/do
 
 2. Create a Project and select a cloud provider you want to provision a Kubernetes cluster in.
 
-3. Put in your credentials, then Porter will automatically provision a cluster and an image registry in your own cloud account.
+3. [Put in your credentials](https://docs.getporter.dev/docs/getting-started-with-porter-on-aws), then Porter will automatically provision a cluster and an image registry in your own cloud account.
 
 4. [Build and push your Docker image to the provisioned registry with the CLI](https://docs.getporter.dev/docs/cli-documentation#porter-docker-configure).
 

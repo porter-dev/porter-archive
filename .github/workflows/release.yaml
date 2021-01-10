@@ -58,6 +58,21 @@ jobs:
         uses: actions/setup-go@v2
         with:
           go-version: 1.15
+      - name: Build and zip static folder
+        run: |
+          mkdir -p ./release/static
+          cd dashboard
+          npm i --production=false
+          npm run build
+          cd ..
+          zip --junk-paths ./release/static/static_${{steps.tag_name.outputs.tag}}.zip ./dashboard/build/*
+        env:
+          NODE_ENV: production
+          API_SERVER: ${{ secrets.API_SERVER }}
+          FULLSTORY_ORG_ID: ${{ secrets.FULLSTORY_ORG_ID }}
+          DISCORD_KEY: ${{ secrets.DISCORD_KEY }}
+          DISCORD_CID: ${{ secrets.DISCORD_CID }}
+          FEEDBACK_ENDPOINT: ${{ secrets.FEEDBACK_ENDPOINT }}
       - name: Build Linux binaries
         run: |
           go build -ldflags="-w -s -X 'github.com/porter-dev/porter/cli/cmd.Version=${{steps.tag_name.outputs.tag}}'" -a -tags cli -o ./porter ./cli &
@@ -108,22 +123,6 @@ jobs:
           zip --junk-paths ./release/windows/porter_${{steps.tag_name.outputs.tag}}_Windows_x86_64.zip ./porter.exe
           zip --junk-paths ./release/windows/portersvr_${{steps.tag_name.outputs.tag}}_Windows_x86_64.zip ./portersvr.exe
           zip --junk-paths ./release/windows/docker-credential-porter_${{steps.tag_name.outputs.tag}}_Windows_x86_64.zip ./docker-credential-porter.exe
-      - name: Build and zip static folder
-        run: |
-          mkdir -p ./release/static
-          cd dashboard
-          npm i
-          npm i html-webpack-plugin --save-dev
-          npm run build
-          cd ..
-          zip --junk-paths ./release/static/static_${{steps.tag_name.outputs.tag}}.zip ./dashboard/build/*
-        env:
-          NODE_ENV: production
-          API_SERVER: ${{ secrets.API_SERVER }}
-          FULLSTORY_ORG_ID: ${{ secrets.FULLSTORY_ORG_ID }}
-          DISCORD_KEY: ${{ secrets.DISCORD_KEY }}
-          DISCORD_CID: ${{ secrets.DISCORD_CID }}
-          FEEDBACK_ENDPOINT: ${{ secrets.FEEDBACK_ENDPOINT }}
       - name: Upload binaries
         uses: actions/upload-artifact@v2
         with:

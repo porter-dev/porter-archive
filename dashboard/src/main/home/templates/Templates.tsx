@@ -13,6 +13,12 @@ const tabOptions = [
   { label: 'Community Templates', value: 'community' }
 ];
 
+// TODO: read in from metadata
+const hardcodedNames: any = {
+  'postgresql': 'PostgreSQL',
+  'docker': 'Docker',
+};
+
 type PropsType = {
   setCurrentView: (x: string) => void, // Link to add integration from source selector
 };
@@ -20,7 +26,7 @@ type PropsType = {
 type StateType = {
   currentTemplate: PorterTemplate | null,
   currentTab: string,
-  PorterTemplates: PorterTemplate[],
+  porterTemplates: PorterTemplate[],
   loading: boolean,
   error: boolean
 };
@@ -29,7 +35,7 @@ export default class Templates extends Component<PropsType, StateType> {
   state = {
     currentTemplate: null as (PorterTemplate | null),
     currentTab: 'community',
-    PorterTemplates: [] as PorterTemplate[],
+    porterTemplates: [] as PorterTemplate[],
     loading: true,
     error: false,
   }
@@ -39,7 +45,8 @@ export default class Templates extends Component<PropsType, StateType> {
       if (err) {
         this.setState({ loading: false, error: true });
       } else {
-        this.setState({ PorterTemplates: res.data, loading: false, error: false });
+        this.setState({ porterTemplates: res.data, loading: false, error: false });
+        console.log(res.data)
       }
     });
   }
@@ -55,7 +62,7 @@ export default class Templates extends Component<PropsType, StateType> {
   }
 
   renderTemplateList = () => {
-    let { loading, error, PorterTemplates } = this.state;
+    let { loading, error, porterTemplates } = this.state;
 
     if (loading) {
       return <LoadingWrapper><Loading /></LoadingWrapper>
@@ -65,7 +72,7 @@ export default class Templates extends Component<PropsType, StateType> {
           <i className="material-icons">error</i> Error retrieving templates.
         </Placeholder>
       );
-    } else if (PorterTemplates.length === 0) {
+    } else if (porterTemplates.length === 0) {
       return (
         <Placeholder>
           <i className="material-icons">category</i> No templates found.
@@ -73,17 +80,16 @@ export default class Templates extends Component<PropsType, StateType> {
       );
     }
 
-    return this.state.PorterTemplates.map((template: PorterTemplate, i: number) => {
+    return this.state.porterTemplates.map((template: PorterTemplate, i: number) => {
       let { name, icon, description } = template;
+      if (hardcodedNames[name]) {
+        name = hardcodedNames[name];
+      }
       return (
         <TemplateBlock key={i} onClick={() => this.setState({ currentTemplate: template })}>
-          {icon ? this.renderIcon(icon) : this.renderIcon(template.icon)}
-          <TemplateTitle>
-            {name ? name : template.name}
-          </TemplateTitle>
-          <TemplateDescription>
-            {description ? description : template.description}
-          </TemplateDescription>
+          {this.renderIcon(icon)}
+          <TemplateTitle>{name}</TemplateTitle>
+          <TemplateDescription>{description}</TemplateDescription>
         </TemplateBlock>
       )
     });

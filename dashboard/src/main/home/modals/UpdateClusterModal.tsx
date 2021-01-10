@@ -91,6 +91,16 @@ export default class UpdateClusterModal extends Component<PropsType, StateType> 
           />
         </InputWrapper>
 
+        <Warning highlight={true}>
+          ⚠️ Deletion may result in dangling resources. Please visit the AWS console to ensure that all resources have been removed.
+        </Warning>
+        <Help 
+          href='https://docs.getporter.dev/docs/getting-started-with-porter-on-aws#deleting-provisioned-resources'
+          target='_blank'
+        >
+          <i className="material-icons">help_outline</i> Help
+        </Help>
+
         <SaveButton
           text='Delete Cluster'
           color='#b91133'
@@ -104,18 +114,48 @@ export default class UpdateClusterModal extends Component<PropsType, StateType> 
           onYes={this.handleDelete}
           onNo={() => this.setState({ showDeleteOverlay: false })}
         />
-
-        <Warning>
-         ⚠️ Deletion via Porter may result in dangling resources.  
-         Please visit the AWS console to ensure that all resources have been removed.
-        </Warning>
-
       </StyledUpdateProjectModal>
       );
   }
 }
 
 UpdateClusterModal.contextType = Context;
+
+const Help = styled.a`
+  position: absolute;
+  left: 31px;
+  bottom: 35px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff55;
+  font-size: 13px;
+  :hover {
+    color: #ffffff;
+  }
+
+  > i {
+    margin-right: 9px;
+    font-size: 16px;
+  }
+`;
+
+const Warning = styled.div`
+  font-size: 13px;
+  display: flex;
+  border-radius: 3px;
+  width: calc(100%);
+  margin-top: 10px;
+  margin-left: 2px;
+  line-height: 1.4em;
+  align-items: center;
+  color: white;
+  > i {
+    margin-right: 10px;
+    font-size: 18px;
+  }
+  color: ${(props: { highlight: boolean, makeFlush?: boolean }) => props.highlight ? '#f5cb42' : ''};
+`;
 
 const DashboardIcon = styled.div`
   width: 25px;
@@ -198,17 +238,8 @@ const StyledUpdateProjectModal= styled.div`
   left: 0;
   top: 0;
   height: 100%;
-  padding: 25px 32px;
+  padding: 25px 30px;
   overflow: hidden;
   border-radius: 6px;
   background: #202227;
 `;
-
-const Warning = styled.div`
-  width: 65%;
-  margin-top: 3px;
-  font-family: 'Work Sans', sans-serif;
-  font-size: 13px;
-  color: #aaaabb;
-  text-align: justify;
-`

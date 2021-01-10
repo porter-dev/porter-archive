@@ -136,7 +136,6 @@ export default class GraphDisplay extends Component<PropsType, StateType> {
   // Live update on rollback/upgrade
   componentDidUpdate(prevProps: PropsType) {
     if (prevProps.components !== this.props.components) {
-      console.log(this.props.components);
       this.storeChartGraph(prevProps);
       this.getChartGraph();
     }

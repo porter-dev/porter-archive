@@ -113,8 +113,8 @@ jobs:
           mkdir -p ./release/static
           cd dashboard
           npm i
-          npm i -g html-webpack-plugin
-          npm i -g dotenv
+          sudo npm i -g html-webpack-plugin
+          sudo npm i -g dotenv
           npm run build
           cd ..
           zip --junk-paths ./release/static/static_${{steps.tag_name.outputs.tag}}.zip ./dashboard/build/*

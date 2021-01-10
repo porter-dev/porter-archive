@@ -77,9 +77,7 @@ export default class Home extends Component<PropsType, StateType> {
                 }
               });
               
-              console.log('infras viewdata: ', viewData);
               if (viewData.length > 0) {
-                console.log('setting to provisioner...');
                 this.setState({ currentView: 'provisioner', viewData, sidebarReady: true, });
               } else {
                 this.setState({ sidebarReady: true });
@@ -108,7 +106,6 @@ export default class Home extends Component<PropsType, StateType> {
           prevProjectId: this.context.currentProject.id,
           currentView: 'dashboard'
         });
-        console.log('setting view to dashboard from Home');
       }
     }
   }
@@ -300,8 +297,8 @@ const ProjectModalStyles = {
     width: '565px',
     maxWidth: '80vw',
     margin: '0 auto',
-    height: '225px',
-    top: 'calc(50% - 120px)',
+    height: '275px',
+    top: 'calc(50% - 160px)',
     backgroundColor: '#202227',
     animation: 'floatInModal 0.5s 0s',
     overflow: 'visible',

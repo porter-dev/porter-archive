@@ -430,6 +430,7 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
 
   componentDidMount() {
     let { currentCluster, currentProject } = this.context;
+    let { currentChart } = this.props;
 
     this.getChartData(this.props.currentChart);
     this.getControllers(this.props.currentChart)
@@ -437,6 +438,23 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
       ["deployment", "statefulset", "daemonset", "replicaset"],
       this.props.currentChart 
     );
+
+    api.getChartComponents('<token>', {
+      namespace: currentChart.namespace,
+      cluster_id: currentCluster.id,
+      storage: StorageType.Secret
+    }, {
+      id: currentProject.id,
+      name: currentChart.name,
+      revision: currentChart.version
+    }, (err: any, res: any) => {
+      if (err) {
+        console.log(err)
+      } else {
+        this.setState({ components: res.data.Objects });
+        console.log(res.data.Objects)
+      }
+    });
 
     api.getIngress('<token>', { 
       cluster_id: currentCluster.id,
@@ -449,9 +467,8 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
         console.log(err);
         return
       }
-      if (res.data) {
-        this.setState({url: `http://${res.data?.status?.loadBalancer?.ingress[0]?.hostname}` })
-      }
+      console.log(res.data)
+      this.setState({url: `http://${res.data?.status?.loadBalancer?.ingress[0]?.hostname}` })
     })
   }
 
@@ -472,7 +489,19 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
 
   renderUrl = () => {
     if (this.state.url) {
-      return <Url href={this.state.url} target='_blank'>{this.state.url}</Url>;
+      return <Url href={this.state.url} target='_blank'> <i className="material-icons">link</i> {this.state.url}</Url>;
+    } else {
+      let serviceName = null as string
+      let serviceNamespace = null as string
+
+      this.state.components.forEach((c: any) => {
+        if (c.Kind == "Service") {
+          serviceName = c.Name
+          serviceNamespace = c.Namespace
+        }
+      })
+
+      return <Url><i className="material-icons">link</i>{`${serviceName}.${serviceNamespace}.namespace.svc.cluster.local`}</Url>
     }
   }
 
@@ -551,6 +580,14 @@ const Url = styled.a`
   font-size: 13px;
   margin-top: 15px;
   margin-bottom: -5px;
+  user-select: text;
+  display: flex;
+  align-items: center;
+
+  > i {
+    font-size: 15px;
+    margin-right: 10px;
+  }
 `;
 
 const TabButton = styled.div`

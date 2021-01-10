@@ -6,6 +6,7 @@ import close from '../../../assets/close.png';
 import api from '../../../shared/api';
 import { Context } from '../../../shared/Context';
 import { integrationList } from '../../../shared/common';
+import { handleSubmitFeedback } from '../../../shared/feedback';
 import { ProjectType } from '../../../shared/types';
 
 import InputRow from '../../../components/values-form/InputRow';
@@ -48,13 +49,19 @@ export default class NewProject extends Component<PropsType, StateType> {
     return true;
   }
 
+  handleSelectProvider = (provider: string) => {
+    let msg = '🤔 ' + this.context.user.email + ' selected ' + provider + '.';
+    handleSubmitFeedback(msg);
+    this.setState({ selectedProvider: provider });
+  }
+
   renderTemplateList = () => {
     return providers.map((provider: string, i: number) => {
       let providerInfo = integrationList[provider];
       return (
         <Block 
           key={i} 
-          onClick={() => this.setState({ selectedProvider: provider })}
+          onClick={() => this.handleSelectProvider(provider)}
         >
           <Icon src={providerInfo.icon} />
           <BlockTitle>
@@ -311,6 +318,9 @@ export default class NewProject extends Component<PropsType, StateType> {
           let proj = res.data.find((el: ProjectType) => el.name === this.state.projectName);
           this.context.setCurrentProject(proj);
           
+          let msg = '🏗️ ' + this.context.user.email + ' began provisioning.';
+          handleSubmitFeedback(msg);
+
           if (this.state.selectedProvider === 'aws') {
             this.provisionECR(proj, this.provisionEKS)
 

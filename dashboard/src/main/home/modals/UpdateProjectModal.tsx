@@ -128,6 +128,10 @@ export default class UpdateProjectModal extends Component<PropsType, StateType> 
           onYes={this.handleDelete}
           onNo={() => this.setState({ showDeleteOverlay: false })}
         />
+        <Warning>
+         ⚠️ Deletion via Porter may result in dangling resources.  
+         Please visit the AWS console to ensure that all resources have been removed.
+        </Warning>
       </StyledUpdateProjectModal>
       );
   }
@@ -229,3 +233,12 @@ const StyledUpdateProjectModal= styled.div`
   border-radius: 6px;
   background: #202227;
 `;
+
+const Warning = styled.div`
+  width: 65%;
+  margin-top: 3px;
+  font-family: 'Work Sans', sans-serif;
+  font-size: 13px;
+  color: #aaaabb;
+  text-align: justify;
+`

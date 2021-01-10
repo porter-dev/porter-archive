@@ -59,6 +59,7 @@ type FormContent struct {
 type FormYAML struct {
 	Name        string     `yaml:"name" json:"name"`
 	Icon        string     `yaml:"icon" json:"icon"`
+	HasSource   string     `yaml:"hasSource" json:"hasSource"`
 	Description string     `yaml:"description" json:"description"`
 	Tags        []string   `yaml:"tags" json:"tags"`
 	Tabs        []*FormTab `yaml:"tabs" json:"tabs,omitempty"`

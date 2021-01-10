@@ -181,7 +181,6 @@ export default class Provisioner extends Component<PropsType, StateType> {
         <TitleSection>
           <Title><img src={loading} /> Setting Up Porter</Title>
         </TitleSection>
-
         <Helper>
           Porter is currently being provisioned to your AWS account:
         </Helper>
@@ -193,13 +192,11 @@ export default class Provisioner extends Component<PropsType, StateType> {
     let msg = '🛠️ ' + this.context.user.email + ' completed provisioning.';
     handleSubmitFeedback(msg);
     let myInterval = setInterval(() => {
-      console.log('interval')
       api.getClusters('<token>', {}, { id: this.context.currentProject.id }, (err: any, res: any) => {
         if (err) {
           console.log(err);
         } else if (res.data) {
           let clusters = res.data;
-          console.log('found clusters:', res.data);
           if (clusters.length > 0) {
             this.props.setCurrentView('dashboard');
             clearInterval(myInterval);

@@ -7,6 +7,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/porter-dev/porter/cli/cmd/api"
 	"github.com/porter-dev/porter/cli/cmd/github"
@@ -56,8 +57,14 @@ func dockerConfig(user *api.AuthCheckResponse, client *api.Client, args []string
 
 	for _, registry := range registries {
 		if registry.URL != "" {
+			rURL := registry.URL
+
+			if !strings.Contains(rURL, "http") {
+				rURL = "http://" + rURL
+			}
+
 			// strip the protocol
-			regURL, err := url.Parse(registry.URL)
+			regURL, err := url.Parse(rURL)
 
 			if err != nil {
 				continue

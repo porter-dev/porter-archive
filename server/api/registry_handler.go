@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/porter-dev/porter/internal/registry"
@@ -198,7 +199,7 @@ func (app *App) HandleGetProjectRegistryGCRToken(w http.ResponseWriter, r *http.
 	var expiresAt *time.Time
 
 	for _, reg := range regs {
-		if reg.GCPIntegrationID != 0 && reg.URL == reqBody.ServerURL {
+		if reg.GCPIntegrationID != 0 && strings.Contains(reg.URL, reqBody.ServerURL) {
 			_reg := registry.Registry(*reg)
 
 			tokenCache, err := _reg.GetGCRToken(*app.Repo)

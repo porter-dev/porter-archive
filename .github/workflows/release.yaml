@@ -37,10 +37,10 @@ jobs:
         cat ./dashboard/.env
     - name: Build
       run: |
-        DOCKER_BUILDKIT=1 docker build . -t gcr.io/porter-dev-273614/porter-prov:${{steps.tag_name.outputs.tag}} -f ./docker/Dockerfile
+        DOCKER_BUILDKIT=1 docker build . -t porter1/porter:${{steps.tag_name.outputs.tag}} -f ./docker/Dockerfile
     - name: Push
       run: |
-        docker push gcr.io/porter-dev-273614/porter-prov:${{steps.tag_name.outputs.tag}}
+        docker push porter1/porter:${{steps.tag_name.outputs.tag}}
   build:
     name: Build binaries
     runs-on: ubuntu-latest
@@ -113,6 +113,7 @@ jobs:
           mkdir -p ./release/static
           cd dashboard
           npm i
+          npm i html-webpack-plugin --save-dev
           npm run build
           cd ..
           zip --junk-paths ./release/static/static_${{steps.tag_name.outputs.tag}}.zip ./dashboard/build/*

@@ -97,7 +97,6 @@ export default class ControllerTab extends Component<PropsType, StateType> {
           collatedStatus = 'waiting'
         } else if (s.state?.terminated) {
           collatedStatus = 'failed'
-          throw {};
         }
       })
       return collatedStatus;
@@ -106,8 +105,10 @@ export default class ControllerTab extends Component<PropsType, StateType> {
 
   render() {
     let { controller, selectedPod, isLast, selectPod } = this.props;
+    console.log(controller)
     let [available, total] = this.getAvailability(controller.kind, controller);
     let status = (available == total) ? 'running' : 'waiting'
+    console.log('state', this.state)
     return (
       <ResourceTab
         label={controller.kind}

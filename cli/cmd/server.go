@@ -175,10 +175,26 @@ func startLocal(
 	staticFilePath := filepath.Join(home, ".porter", "static")
 
 	if _, err := os.Stat(cmdPath); os.IsNotExist(err) {
-		err := downloadLatestReleases(porterDir)
+		err := downloadMatchingRelease(porterDir)
 
 		if err != nil {
-			color.New(color.FgRed).Println("Failed:", err.Error())
+			color.New(color.FgRed).Println("Failed to download server binary:", err.Error())
+			os.Exit(1)
+		}
+	}
+
+	// otherwise, check the version flag of the binary
+	cmdVersionPorter := exec.Command(cmdPath)
+	writer := &versionWriter{}
+	cmdVersionPorter.Stdout = writer
+
+	err := cmdVersionPorter.Run()
+
+	if err != nil || writer.Version != Version {
+		err := downloadMatchingRelease(porterDir)
+
+		if err != nil {
+			color.New(color.FgRed).Println("Failed to download server binary:", err.Error())
 			os.Exit(1)
 		}
 	}
@@ -190,12 +206,13 @@ func startLocal(
 		"SQL_LITE=true",
 		"SQL_LITE_PATH=" + sqlLitePath,
 		"STATIC_FILE_PATH=" + staticFilePath,
+		"REDIS_ENABLED=false",
 	}...)
 
 	cmdPorter.Stdout = os.Stdout
 	cmdPorter.Stderr = os.Stderr
 
-	err := cmdPorter.Run()
+	err = cmdPorter.Run()
 
 	if err != nil {
 		color.New(color.FgRed).Println("Failed:", err.Error())
@@ -225,7 +242,7 @@ func stopDocker() error {
 	return nil
 }
 
-func downloadLatestReleases(porterDir string) error {
+func downloadMatchingRelease(porterDir string) error {
 	z := &github.ZIPReleaseGetter{
 		AssetName:           "portersvr",
 		AssetFolderDest:     porterDir,
@@ -236,7 +253,7 @@ func downloadLatestReleases(porterDir string) error {
 		IsPlatformDependent: true,
 	}
 
-	err := z.GetLatestRelease()
+	err := z.GetRelease(Version)
 
 	if err != nil {
 		return err
@@ -253,4 +270,14 @@ func downloadLatestReleases(porterDir string) error {
 	}
 
 	return zStatic.GetLatestRelease()
+}
+
+type versionWriter struct {
+	Version string
+}
+
+func (v *versionWriter) Write(p []byte) (n int, err error) {
+	v.Version = string(p)
+
+	return len(p), nil
 }

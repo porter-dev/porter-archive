@@ -1,9 +1,11 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/repository/gorm"
@@ -19,7 +21,20 @@ import (
 	ints "github.com/porter-dev/porter/internal/models/integrations"
 )
 
+// Version will be linked by an ldflag during build
+var Version string = "dev"
+
 func main() {
+	var versionFlag bool
+	flag.BoolVar(&versionFlag, "version", false, "print version and exit")
+	flag.Parse()
+
+	// Exit safely when version is used
+	if versionFlag {
+		fmt.Println(Version)
+		os.Exit(0)
+	}
+
 	appConf := config.FromEnv()
 
 	logger := lr.NewConsole(appConf.Debug)

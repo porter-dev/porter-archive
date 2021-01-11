@@ -240,6 +240,9 @@ func (z *ZIPReleaseGetter) unzipToDir() error {
 			continue
 		}
 
+		// delete file if exists
+		os.Remove(fpath)
+
 		// Make File
 		if err = os.MkdirAll(filepath.Dir(fpath), os.ModePerm); err != nil {
 			return err

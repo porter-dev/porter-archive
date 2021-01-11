@@ -277,6 +277,8 @@ export default class NewProject extends Component<PropsType, StateType> {
 
   createProject = () => {
     this.setState({ status: 'loading' });
+    let msg = '🏗️ ' + this.context.user.email + ' began provisioning.';
+    handleSubmitFeedback(msg);
 
     api.createProject('<token>', {
       name: this.state.projectName
@@ -317,10 +319,6 @@ export default class NewProject extends Component<PropsType, StateType> {
         if (res.data.length > 0) {
           let proj = res.data.find((el: ProjectType) => el.name === this.state.projectName);
           this.context.setCurrentProject(proj);
-          
-          let msg = '🏗️ ' + this.context.user.email + ' began provisioning.';
-          handleSubmitFeedback(msg);
-
           if (this.state.selectedProvider === 'aws') {
             this.provisionECR(proj, this.provisionEKS)
 

@@ -5,7 +5,6 @@ import ReactModal from 'react-modal';
 import { Context } from '../../shared/Context';
 import api from '../../shared/api';
 import { InfraType } from '../../shared/types';
-import { handleSubmitFeedback } from '../../shared/feedback';
 
 import Sidebar from './sidebar/Sidebar';
 import Dashboard from './dashboard/Dashboard';
@@ -92,8 +91,6 @@ export default class Home extends Component<PropsType, StateType> {
   }
 
   componentDidMount() {
-    let msg = '👋 ' + this.context.user.email + ' logged in.';
-    handleSubmitFeedback(msg);
     this.getProjects();
   }
 

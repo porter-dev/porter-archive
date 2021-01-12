@@ -58,6 +58,7 @@ export default class Selector extends Component<PropsType, StateType> {
           <Dropdown
             dropdownWidth={this.props.dropdownWidth ? this.props.dropdownWidth : this.props.width}
             dropdownMaxHeight={this.props.dropdownMaxHeight}
+            onClick={() => this.setState({ expanded: false })}
           >
             {this.renderDropdownLabel()}
             {this.renderOptionList()}

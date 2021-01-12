@@ -69,7 +69,12 @@ func (conf *Conf) GetProvisionerJobTemplate() (*batchv1.Job, error) {
 	env = conf.attachDefaultEnv(env)
 
 	ttl := int32(3600)
+
 	backoffLimit := int32(5)
+
+	if operation == string(Apply) {
+		backoffLimit = int32(1)
+	}
 
 	labels := map[string]string{
 		"app": "provisioner",
@@ -103,7 +108,7 @@ func (conf *Conf) GetProvisionerJobTemplate() (*batchv1.Job, error) {
 					Labels: labels,
 				},
 				Spec: v1.PodSpec{
-					RestartPolicy: v1.RestartPolicyOnFailure,
+					RestartPolicy: v1.RestartPolicyNever,
 					Containers: []v1.Container{
 						{
 							Name:  "provisioner",

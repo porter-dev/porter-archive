@@ -79,6 +79,7 @@ var createClusterTests = []*clusterTest{
 		initializers: []func(t *tester){
 			initUserDefault,
 			initProject,
+			initAWSIntegration,
 		},
 		msg:       "Create cluster",
 		method:    "POST",
@@ -94,7 +95,7 @@ var createClusterTests = []*clusterTest{
 }
 
 func TestHandleCreateCluster(t *testing.T) {
-	testRegistryRequests(t, createRegistryTests, true)
+	testClusterRequests(t, createClusterTests, true)
 }
 
 var readProjectClusterTest = []*clusterTest{

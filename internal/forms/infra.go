@@ -47,6 +47,24 @@ func (ce *CreateEKSInfra) ToAWSInfra() (*models.AWSInfra, error) {
 	}, nil
 }
 
+// CreateGCRInfra represents the accepted values for creating an
+// GCR infra via the provisioning container
+type CreateGCRInfra struct {
+	ProjectID        uint `json:"project_id" form:"required"`
+	GCPIntegrationID uint `json:"gcp_integration_id" form:"required"`
+}
+
+// ToAWSInfra converts the form to a gorm aws infra model
+func (ce *CreateGCRInfra) ToAWSInfra() (*models.AWSInfra, error) {
+	return &models.AWSInfra{
+		Kind:             models.AWSInfraGCR,
+		ProjectID:        ce.ProjectID,
+		Suffix:           stringWithCharset(6, randCharset),
+		Status:           models.StatusCreating,
+		GCPIntegrationID: ce.GCPIntegrationID,
+	}, nil
+}
+
 // DestroyECRInfra represents the accepted values for destroying an
 // ECR infra via the provisioning container
 type DestroyECRInfra struct {

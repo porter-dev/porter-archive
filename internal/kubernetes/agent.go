@@ -11,6 +11,7 @@ import (
 	"github.com/porter-dev/porter/internal/kubernetes/provisioner/aws"
 	"github.com/porter-dev/porter/internal/kubernetes/provisioner/aws/ecr"
 	"github.com/porter-dev/porter/internal/kubernetes/provisioner/aws/eks"
+	"github.com/porter-dev/porter/internal/kubernetes/provisioner/gcp"
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/models/integrations"
 
@@ -290,6 +291,33 @@ func (a *Agent) ProvisionEKS(
 		},
 		EKS: &eks.Conf{
 			ClusterName: eksName,
+		},
+	}
+
+	return a.provision(prov)
+}
+
+// ProvisionGCR spawns a new provisioning pod that creates a GCR instance
+func (a *Agent) ProvisionGCR(
+	projectID uint,
+	gcpConf *integrations.GCPIntegration,
+	awsInfra *models.AWSInfra,
+	operation provisioner.ProvisionerOperation,
+	pgConf *config.DBConf,
+	redisConf *config.RedisConf,
+) (*batchv1.Job, error) {
+	id := awsInfra.GetID()
+	prov := &provisioner.Conf{
+		ID:        id,
+		Name:      fmt.Sprintf("prov-%s-%s", id, string(operation)),
+		Kind:      provisioner.GCR,
+		Operation: operation,
+		Redis:     redisConf,
+		Postgres:  pgConf,
+		GCP: &gcp.Conf{
+			GCPRegion:    gcpConf.GCPRegion,
+			GCPProjectID: gcpConf.GCPProjectID,
+			GCPKeyData:   string(gcpConf.GCPKeyData),
 		},
 	}
 

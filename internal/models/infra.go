@@ -28,6 +28,7 @@ const (
 	InfraECR InfraKind = "ecr"
 	InfraEKS InfraKind = "eks"
 	InfraGCR InfraKind = "gcr"
+	InfraGKE InfraKind = "gke"
 )
 
 // Infra represents the metadata for an infrastructure type provisioned on

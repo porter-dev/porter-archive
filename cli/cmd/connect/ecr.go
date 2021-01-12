@@ -6,10 +6,14 @@ import (
 	"strings"
 	"time"
 
+	"github.com/aws/aws-sdk-go/service/ecr"
 	"github.com/fatih/color"
 	"github.com/porter-dev/porter/cli/cmd/api"
-	awsLocal "github.com/porter-dev/porter/cli/cmd/providers/aws/local"
 	"github.com/porter-dev/porter/cli/cmd/utils"
+	"github.com/porter-dev/porter/internal/models/integrations"
+
+	"github.com/porter-dev/porter/cli/cmd/providers/aws"
+	awsLocal "github.com/porter-dev/porter/cli/cmd/providers/aws/local"
 )
 
 // ECR creates an ECR integration
@@ -51,8 +55,7 @@ Would you like to proceed? %s `,
 			return ecrManual(client, projectID, region)
 		}
 
-		// sleep for a few seconds to allow aws to reconfigure
-		time.Sleep(3 * time.Second)
+		waitForAuthorizationToken(region, creds)
 
 		integration, err := client.CreateAWSIntegration(
 			context.Background(),
@@ -145,4 +148,32 @@ func linkRegistry(client *api.Client, projectID uint, intID uint) (uint, error) 
 	color.New(color.FgGreen).Printf("created registry with id %d and name %s\n", reg.ID, reg.Name)
 
 	return reg.ID, nil
+}
+
+func waitForAuthorizationToken(region string, creds *aws.PorterAWSCredentials) error {
+	awsInt := &integrations.AWSIntegration{
+		AWSRegion:          region,
+		AWSAccessKeyID:     []byte(creds.AWSAccessKeyID),
+		AWSSecretAccessKey: []byte(creds.AWSSecretAccessKey),
+	}
+
+	sess, err := awsInt.GetSession()
+
+	if err != nil {
+		return err
+	}
+
+	ecrSvc := ecr.New(sess)
+
+	for i := 0; i < 30; i++ {
+		_, err := ecrSvc.GetAuthorizationToken(&ecr.GetAuthorizationTokenInput{})
+
+		if err == nil {
+			return nil
+		}
+
+		time.Sleep(2 * time.Second)
+	}
+
+	return fmt.Errorf("could not get ECR authorization token, please check credentials")
 }

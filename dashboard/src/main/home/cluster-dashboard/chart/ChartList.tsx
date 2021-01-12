@@ -54,8 +54,6 @@ export default class ChartList extends Component<PropsType, StateType> {
         this.setState({ loading: false, error: true });
       } else {
         let charts = res.data || [];
-        console.log(Date.parse(charts[0].info.last_deployed));
-        console.log(charts[0].name);
         if (this.props.sortType == "chronological") {
           charts.sort((a: any, b: any) => (Date.parse(a.info.last_deployed) > Date.parse(b.info.last_deployed)) ? -1 : 1);
         } else if (this.props.sortType == "alphabetical") {

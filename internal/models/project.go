@@ -27,7 +27,7 @@ type Project struct {
 	HelmRepos []HelmRepo `json:"helm_repos"`
 
 	// provisioned aws infra
-	AWSInfras []AWSInfra `json:"aws_infras"`
+	Infras []Infra `json:"infras"`
 
 	// auth mechanisms
 	KubeIntegrations  []ints.KubeIntegration  `json:"kube_integrations"`

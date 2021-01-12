@@ -240,12 +240,12 @@ func (a *Agent) ProvisionECR(
 	projectID uint,
 	awsConf *integrations.AWSIntegration,
 	ecrName string,
-	awsInfra *models.AWSInfra,
+	infra *models.Infra,
 	operation provisioner.ProvisionerOperation,
 	pgConf *config.DBConf,
 	redisConf *config.RedisConf,
 ) (*batchv1.Job, error) {
-	id := awsInfra.GetID()
+	id := infra.GetID()
 	prov := &provisioner.Conf{
 		ID:        id,
 		Name:      fmt.Sprintf("prov-%s-%s", id, string(operation)),
@@ -271,12 +271,12 @@ func (a *Agent) ProvisionEKS(
 	projectID uint,
 	awsConf *integrations.AWSIntegration,
 	eksName string,
-	awsInfra *models.AWSInfra,
+	infra *models.Infra,
 	operation provisioner.ProvisionerOperation,
 	pgConf *config.DBConf,
 	redisConf *config.RedisConf,
 ) (*batchv1.Job, error) {
-	id := awsInfra.GetID()
+	id := infra.GetID()
 	prov := &provisioner.Conf{
 		ID:        id,
 		Name:      fmt.Sprintf("prov-%s-%s", id, string(operation)),
@@ -301,12 +301,12 @@ func (a *Agent) ProvisionEKS(
 func (a *Agent) ProvisionGCR(
 	projectID uint,
 	gcpConf *integrations.GCPIntegration,
-	awsInfra *models.AWSInfra,
+	infra *models.Infra,
 	operation provisioner.ProvisionerOperation,
 	pgConf *config.DBConf,
 	redisConf *config.RedisConf,
 ) (*batchv1.Job, error) {
-	id := awsInfra.GetID()
+	id := infra.GetID()
 	prov := &provisioner.Conf{
 		ID:        id,
 		Name:      fmt.Sprintf("prov-%s-%s", id, string(operation)),

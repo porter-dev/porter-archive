@@ -114,7 +114,7 @@ func GlobalStreamListener(
 			kind, projID, infraID, err := models.ParseWorkspaceID(fmt.Sprintf("%v", msg.Values["id"]))
 
 			if fmt.Sprintf("%v", msg.Values["status"]) == "created" {
-				infra, err := repo.AWSInfra.ReadAWSInfra(infraID)
+				infra, err := repo.Infra.ReadInfra(infraID)
 
 				if err != nil {
 					continue
@@ -122,14 +122,14 @@ func GlobalStreamListener(
 
 				infra.Status = models.StatusCreated
 
-				infra, err = repo.AWSInfra.UpdateAWSInfra(infra)
+				infra, err = repo.Infra.UpdateInfra(infra)
 
 				if err != nil {
 					continue
 				}
 
 				// create ECR/EKS
-				if kind == string(models.AWSInfraECR) {
+				if kind == string(models.InfraECR) {
 					reg := &models.Registry{
 						ProjectID:        projID,
 						AWSIntegrationID: infra.AWSIntegrationID,
@@ -170,7 +170,7 @@ func GlobalStreamListener(
 					if err != nil {
 						continue
 					}
-				} else if kind == string(models.AWSInfraEKS) {
+				} else if kind == string(models.InfraEKS) {
 					cluster := &models.Cluster{
 						AuthMechanism:    models.AWS,
 						ProjectID:        projID,
@@ -204,7 +204,7 @@ func GlobalStreamListener(
 					if err != nil {
 						continue
 					}
-				} else if kind == string(models.AWSInfraGCR) {
+				} else if kind == string(models.InfraGCR) {
 					reg := &models.Registry{
 						ProjectID:        projID,
 						GCPIntegrationID: infra.GCPIntegrationID,
@@ -226,7 +226,7 @@ func GlobalStreamListener(
 					}
 				}
 			} else if fmt.Sprintf("%v", msg.Values["status"]) == "error" {
-				infra, err := repo.AWSInfra.ReadAWSInfra(infraID)
+				infra, err := repo.Infra.ReadInfra(infraID)
 
 				if err != nil {
 					continue
@@ -234,13 +234,13 @@ func GlobalStreamListener(
 
 				infra.Status = models.StatusError
 
-				infra, err = repo.AWSInfra.UpdateAWSInfra(infra)
+				infra, err = repo.Infra.UpdateInfra(infra)
 
 				if err != nil {
 					continue
 				}
 			} else if fmt.Sprintf("%v", msg.Values["status"]) == "destroyed" {
-				infra, err := repo.AWSInfra.ReadAWSInfra(infraID)
+				infra, err := repo.Infra.ReadInfra(infraID)
 
 				if err != nil {
 					continue
@@ -248,7 +248,7 @@ func GlobalStreamListener(
 
 				infra.Status = models.StatusDestroyed
 
-				infra, err = repo.AWSInfra.UpdateAWSInfra(infra)
+				infra, err = repo.Infra.UpdateInfra(infra)
 
 				if err != nil {
 					continue

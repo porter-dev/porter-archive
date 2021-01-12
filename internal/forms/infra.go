@@ -17,10 +17,10 @@ type CreateECRInfra struct {
 	AWSIntegrationID uint   `json:"aws_integration_id" form:"required"`
 }
 
-// ToAWSInfra converts the form to a gorm aws infra model
-func (ce *CreateECRInfra) ToAWSInfra() (*models.AWSInfra, error) {
-	return &models.AWSInfra{
-		Kind:             models.AWSInfraECR,
+// ToInfra converts the form to a gorm aws infra model
+func (ce *CreateECRInfra) ToInfra() (*models.Infra, error) {
+	return &models.Infra{
+		Kind:             models.InfraECR,
 		ProjectID:        ce.ProjectID,
 		Suffix:           stringWithCharset(6, randCharset),
 		Status:           models.StatusCreating,
@@ -36,10 +36,10 @@ type CreateEKSInfra struct {
 	AWSIntegrationID uint   `json:"aws_integration_id" form:"required"`
 }
 
-// ToAWSInfra converts the form to a gorm aws infra model
-func (ce *CreateEKSInfra) ToAWSInfra() (*models.AWSInfra, error) {
-	return &models.AWSInfra{
-		Kind:             models.AWSInfraEKS,
+// ToInfra converts the form to a gorm aws infra model
+func (ce *CreateEKSInfra) ToInfra() (*models.Infra, error) {
+	return &models.Infra{
+		Kind:             models.InfraEKS,
 		ProjectID:        ce.ProjectID,
 		Suffix:           stringWithCharset(6, randCharset),
 		Status:           models.StatusCreating,
@@ -54,10 +54,10 @@ type CreateGCRInfra struct {
 	GCPIntegrationID uint `json:"gcp_integration_id" form:"required"`
 }
 
-// ToAWSInfra converts the form to a gorm aws infra model
-func (ce *CreateGCRInfra) ToAWSInfra() (*models.AWSInfra, error) {
-	return &models.AWSInfra{
-		Kind:             models.AWSInfraGCR,
+// ToInfra converts the form to a gorm aws infra model
+func (ce *CreateGCRInfra) ToInfra() (*models.Infra, error) {
+	return &models.Infra{
+		Kind:             models.InfraGCR,
 		ProjectID:        ce.ProjectID,
 		Suffix:           stringWithCharset(6, randCharset),
 		Status:           models.StatusCreating,

@@ -315,6 +315,20 @@ func New(a *api.App) *chi.Mux {
 			),
 		)
 
+		r.Method(
+			"POST",
+			"/projects/{project_id}/infra/{infra_id}/gke/destroy",
+			auth.DoesUserHaveProjectAccess(
+				auth.DoesUserHaveInfraAccess(
+					requestlog.NewHandler(a.HandleDestroyGCPGKEInfra, l),
+					mw.URLParam,
+					mw.URLParam,
+				),
+				mw.URLParam,
+				mw.ReadAccess,
+			),
+		)
+
 		// /api/projects/{project_id}/clusters routes
 		r.Method(
 			"GET",

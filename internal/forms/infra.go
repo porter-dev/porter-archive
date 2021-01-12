@@ -96,6 +96,12 @@ type DestroyEKSInfra struct {
 	EKSName string `json:"eks_name" form:"required"`
 }
 
+// DestroyGKEInfra represents the accepted values for destroying an
+// GKE infra via the provisioning container
+type DestroyGKEInfra struct {
+	GKEName string `json:"gke_name" form:"required"`
+}
+
 // helpers for random string
 var seededRand *rand.Rand = rand.New(
 	rand.NewSource(time.Now().UnixNano()))

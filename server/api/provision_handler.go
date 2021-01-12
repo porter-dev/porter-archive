@@ -575,6 +575,86 @@ func (app *App) HandleProvisionGCPGKEInfra(w http.ResponseWriter, r *http.Reques
 	}
 }
 
+// HandleDestroyGCPGKEInfra destroys gke infra
+func (app *App) HandleDestroyGCPGKEInfra(w http.ResponseWriter, r *http.Request) {
+	// get path parameters
+	infraID, err := strconv.ParseUint(chi.URLParam(r, "infra_id"), 10, 64)
+
+	if err != nil {
+		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
+		return
+	}
+
+	// read infra to get id
+	infra, err := app.Repo.Infra.ReadInfra(uint(infraID))
+
+	if err != nil {
+		app.handleErrorDataRead(err, w)
+		return
+	}
+
+	gcpInt, err := app.Repo.GCPIntegration.ReadGCPIntegration(infra.GCPIntegrationID)
+
+	form := &forms.DestroyGKEInfra{}
+
+	// decode from JSON to form value
+	if err := json.NewDecoder(r.Body).Decode(form); err != nil {
+		infra.Status = models.StatusError
+		infra, _ = app.Repo.Infra.UpdateInfra(infra)
+
+		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
+		return
+	}
+
+	// validate the form
+	if err := app.validator.Struct(form); err != nil {
+		infra.Status = models.StatusError
+		infra, _ = app.Repo.Infra.UpdateInfra(infra)
+
+		app.handleErrorFormValidation(err, ErrProjectValidateFields, w)
+		return
+	}
+
+	// launch provisioning destruction pod
+	agent, err := kubernetes.GetAgentInClusterConfig()
+
+	if err != nil {
+		infra.Status = models.StatusError
+		infra, _ = app.Repo.Infra.UpdateInfra(infra)
+
+		app.handleErrorDataRead(err, w)
+		return
+	}
+
+	// mark infra for deletion
+	infra.Status = models.StatusDestroying
+	infra, err = app.Repo.Infra.UpdateInfra(infra)
+
+	if err != nil {
+		app.handleErrorDataWrite(err, w)
+		return
+	}
+
+	_, err = agent.ProvisionGKE(
+		infra.ProjectID,
+		gcpInt,
+		form.GKEName,
+		infra,
+		provisioner.Destroy,
+		&app.DBConf,
+		app.RedisConf,
+	)
+
+	if err != nil {
+		app.handleErrorInternal(err, w)
+		return
+	}
+
+	app.Logger.Info().Msgf("GCP GKE infra marked for destruction: %d", infra.ID)
+
+	w.WriteHeader(http.StatusOK)
+}
+
 // HandleGetProvisioningLogs returns real-time logs of the provisioning process via websockets
 func (app *App) HandleGetProvisioningLogs(w http.ResponseWriter, r *http.Request) {
 	// get path parameters

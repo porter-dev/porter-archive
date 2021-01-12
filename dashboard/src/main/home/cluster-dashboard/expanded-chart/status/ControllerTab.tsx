@@ -80,8 +80,8 @@ export default class ControllerTab extends Component<PropsType, StateType> {
   }
 
   getPodStatus = (status: any) => {
-    if (status?.phase == 'Pending') {
-      return status?.containerStatuses[0].state.waiting.reason
+    if (status?.phase == 'Pending' && status?.containerStatuses) {
+      return status.containerStatuses[0].state.waiting.reason
       // return 'waiting'
     }
 
@@ -92,7 +92,7 @@ export default class ControllerTab extends Component<PropsType, StateType> {
     if (status?.phase == 'Running') {
       let collatedStatus = 'running';
 
-      status.containerStatuses.forEach((s: any) => {
+      status?.containerStatuses?.forEach((s: any) => {
         if (s.state?.waiting) {
           collatedStatus = 'waiting'
         } else if (s.state?.terminated) {

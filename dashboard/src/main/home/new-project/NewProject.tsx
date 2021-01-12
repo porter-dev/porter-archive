@@ -6,7 +6,6 @@ import close from '../../../assets/close.png';
 import api from '../../../shared/api';
 import { Context } from '../../../shared/Context';
 import { integrationList } from '../../../shared/common';
-import { handleSubmitFeedback } from '../../../shared/feedback';
 import { ProjectType } from '../../../shared/types';
 
 import InputRow from '../../../components/values-form/InputRow';
@@ -50,8 +49,6 @@ export default class NewProject extends Component<PropsType, StateType> {
   }
 
   handleSelectProvider = (provider: string) => {
-    let msg = '🤔 ' + this.context.user.email + ' selected ' + provider + '.';
-    handleSubmitFeedback(msg);
     this.setState({ selectedProvider: provider });
   }
 
@@ -277,9 +274,6 @@ export default class NewProject extends Component<PropsType, StateType> {
 
   createProject = () => {
     this.setState({ status: 'loading' });
-    let msg = '🏗️ ' + this.context.user.email + ' began provisioning.';
-    handleSubmitFeedback(msg);
-
     api.createProject('<token>', {
       name: this.state.projectName
     }, {}, (err: any, res: any) => {

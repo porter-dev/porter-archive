@@ -4,7 +4,6 @@ import styled from 'styled-components';
 import api from '../../../shared/api';
 import { Context } from '../../../shared/Context';
 import ansiparse from '../../../shared/ansiparser'
-import { handleSubmitFeedback } from '../../../shared/feedback';
 import loading from '../../../assets/loading.gif';
 import warning from '../../../assets/warning.png';
 
@@ -189,8 +188,6 @@ export default class Provisioner extends Component<PropsType, StateType> {
   }
 
   onEnd = () => {
-    let msg = '🛠️ ' + this.context.user.email + ' completed provisioning.';
-    handleSubmitFeedback(msg);
     let myInterval = setInterval(() => {
       api.getClusters('<token>', {}, { id: this.context.currentProject.id }, (err: any, res: any) => {
         if (err) {

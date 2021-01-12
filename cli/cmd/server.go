@@ -5,6 +5,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 
 	"github.com/fatih/color"
 	"github.com/porter-dev/porter/cli/cmd/docker"
@@ -184,7 +185,7 @@ func startLocal(
 	}
 
 	// otherwise, check the version flag of the binary
-	cmdVersionPorter := exec.Command(cmdPath)
+	cmdVersionPorter := exec.Command(cmdPath, "--version")
 	writer := &versionWriter{}
 	cmdVersionPorter.Stdout = writer
 
@@ -277,7 +278,7 @@ type versionWriter struct {
 }
 
 func (v *versionWriter) Write(p []byte) (n int, err error) {
-	v.Version = string(p)
+	v.Version = strings.TrimSpace(string(p))
 
 	return len(p), nil
 }

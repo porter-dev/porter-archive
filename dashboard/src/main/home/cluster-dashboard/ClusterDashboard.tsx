@@ -8,6 +8,7 @@ import api from '../../../shared/api';
 
 import ChartList from './chart/ChartList';
 import NamespaceSelector from './NamespaceSelector';
+import SortSelector from './SortSelector';
 import ExpandedChart from './expanded-chart/ExpandedChart';
 
 type PropsType = {
@@ -18,12 +19,14 @@ type PropsType = {
 
 type StateType = {
   namespace: string,
+  sortType: string,
   currentChart: ChartType | null
 };
 
 export default class ClusterDashboard extends Component<PropsType, StateType> {
   state = {
     namespace: 'default',
+    sortType: 'chronological',
     currentChart: null as (ChartType | null)
   }
 
@@ -31,7 +34,7 @@ export default class ClusterDashboard extends Component<PropsType, StateType> {
 
     // Reset namespace filter and close expanded chart on cluster change
     if (prevProps.currentCluster !== this.props.currentCluster) {
-      this.setState({ namespace: 'default', currentChart: null });
+      this.setState({ namespace: 'default', sortType: 'chronological', currentChart: null });
     }
   }
 
@@ -101,15 +104,22 @@ export default class ClusterDashboard extends Component<PropsType, StateType> {
           >
             <i className="material-icons">add</i> Deploy Template
           </Button>
-          <NamespaceSelector
-            setNamespace={(namespace) => this.setState({ namespace })}
-            namespace={this.state.namespace}
-          />
+          <SortFilterWrapper>
+            <SortSelector
+              setSortType={(sortType) => this.setState({ sortType })}
+              sortType={this.state.sortType}
+            />
+            <NamespaceSelector
+              setNamespace={(namespace) => this.setState({ namespace })}
+              namespace={this.state.namespace}
+            />
+          </SortFilterWrapper>
         </ControlRow>
 
         <ChartList
           currentCluster={currentCluster}
           namespace={this.state.namespace}
+          sortType={this.state.sortType}
           setCurrentChart={(x: ChartType | null) => this.setState({ currentChart: x })}
         />
       </div>
@@ -297,4 +307,10 @@ const TitleSection = styled.div`
     }
     margin-bottom: -3px;
   }
+`;
+
+const SortFilterWrapper = styled.div`
+  width: 468px;
+  display: flex;
+  justify-content: space-between;
 `;

@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/go-test/deep"
+	"github.com/porter-dev/porter/internal/forms"
 	ints "github.com/porter-dev/porter/internal/models/integrations"
 )
 
@@ -236,6 +237,31 @@ func TestHandleCreateBasicIntegration(t *testing.T) {
 }
 
 // ------------------------- INITIALIZERS AND VALIDATORS ------------------------- //
+
+func initAWSIntegration(tester *tester) {
+	proj, _ := tester.repo.Project.ReadProject(1)
+
+	form := &forms.CreateAWSIntegrationForm{
+		ProjectID: proj.ID,
+		UserID:    1,
+	}
+
+	// convert the form to a ServiceAccountCandidate
+	awsInt, _ := form.ToAWSIntegration()
+
+	tester.repo.AWSIntegration.CreateAWSIntegration(awsInt)
+}
+
+func initBasicIntegration(tester *tester) {
+	proj, _ := tester.repo.Project.ReadProject(1)
+
+	basicInt := &ints.BasicIntegration{
+		ProjectID: proj.ID,
+		UserID:    1,
+	}
+
+	tester.repo.BasicIntegration.CreateBasicIntegration(basicInt)
+}
 
 func publicIntBodyValidator(c *publicIntTest, tester *tester, t *testing.T) {
 	gotBody := make([]*ints.PorterIntegration, 0)

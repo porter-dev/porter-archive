@@ -203,7 +203,12 @@ func New(a *api.App) *chi.Mux {
 			"POST",
 			"/projects/{project_id}/provision/ecr",
 			auth.DoesUserHaveProjectAccess(
-				requestlog.NewHandler(a.HandleProvisionAWSECRInfra, l),
+				auth.DoesUserHaveAWSIntegrationAccess(
+					requestlog.NewHandler(a.HandleProvisionAWSECRInfra, l),
+					mw.URLParam,
+					mw.BodyParam,
+					true,
+				),
 				mw.URLParam,
 				mw.ReadAccess,
 			),
@@ -213,7 +218,12 @@ func New(a *api.App) *chi.Mux {
 			"POST",
 			"/projects/{project_id}/provision/eks",
 			auth.DoesUserHaveProjectAccess(
-				requestlog.NewHandler(a.HandleProvisionAWSEKSInfra, l),
+				auth.DoesUserHaveAWSIntegrationAccess(
+					requestlog.NewHandler(a.HandleProvisionAWSEKSInfra, l),
+					mw.URLParam,
+					mw.BodyParam,
+					true,
+				),
 				mw.URLParam,
 				mw.ReadAccess,
 			),
@@ -290,9 +300,19 @@ func New(a *api.App) *chi.Mux {
 			"POST",
 			"/projects/{project_id}/clusters",
 			auth.DoesUserHaveProjectAccess(
-				requestlog.NewHandler(a.HandleCreateProjectCluster, l),
+				auth.DoesUserHaveAWSIntegrationAccess(
+					auth.DoesUserHaveGCPIntegrationAccess(
+						requestlog.NewHandler(a.HandleCreateProjectCluster, l),
+						mw.URLParam,
+						mw.BodyParam,
+						true,
+					),
+					mw.URLParam,
+					mw.BodyParam,
+					true,
+				),
 				mw.URLParam,
-				mw.ReadAccess,
+				mw.WriteAccess,
 			),
 		)
 
@@ -405,7 +425,17 @@ func New(a *api.App) *chi.Mux {
 			"POST",
 			"/projects/{project_id}/helmrepos",
 			auth.DoesUserHaveProjectAccess(
-				requestlog.NewHandler(a.HandleCreateHelmRepo, l),
+				auth.DoesUserHaveAWSIntegrationAccess(
+					auth.DoesUserHaveGCPIntegrationAccess(
+						requestlog.NewHandler(a.HandleCreateHelmRepo, l),
+						mw.URLParam,
+						mw.BodyParam,
+						true,
+					),
+					mw.URLParam,
+					mw.BodyParam,
+					true,
+				),
 				mw.URLParam,
 				mw.WriteAccess,
 			),
@@ -436,7 +466,17 @@ func New(a *api.App) *chi.Mux {
 			"POST",
 			"/projects/{project_id}/registries",
 			auth.DoesUserHaveProjectAccess(
-				requestlog.NewHandler(a.HandleCreateRegistry, l),
+				auth.DoesUserHaveAWSIntegrationAccess(
+					auth.DoesUserHaveGCPIntegrationAccess(
+						requestlog.NewHandler(a.HandleCreateRegistry, l),
+						mw.URLParam,
+						mw.BodyParam,
+						true,
+					),
+					mw.URLParam,
+					mw.BodyParam,
+					true,
+				),
 				mw.URLParam,
 				mw.WriteAccess,
 			),

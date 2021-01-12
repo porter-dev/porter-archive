@@ -60,6 +60,7 @@ func (ccf *CreateClusterForm) ToCluster() (*models.Cluster, error) {
 	}
 
 	return &models.Cluster{
+		ProjectID:                ccf.ProjectID,
 		AuthMechanism:            authMechanism,
 		Name:                     ccf.Name,
 		Server:                   ccf.Server,

@@ -19,10 +19,13 @@ type GCPIntegration struct {
 	ProjectID uint `json:"project_id"`
 
 	// The GCP project id where the service account for this auth mechanism persists
-	GCPProjectID string `json:"gcp-project-id"`
+	GCPProjectID string `json:"gcp_project_id"`
 
 	// The GCP user email that linked this service account
 	GCPUserEmail string `json:"gcp-user-email"`
+
+	// The GCP region, which may or may not be used by the integration
+	GCPRegion string `json:"gcp_region"`
 
 	// ------------------------------------------------------------------
 	// All fields encrypted before storage.

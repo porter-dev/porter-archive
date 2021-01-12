@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/fatih/color"
 	"github.com/porter-dev/porter/cli/cmd/api"
@@ -49,6 +50,9 @@ Would you like to proceed? %s `,
 			color.New(color.FgRed).Printf("Automatic creation failed, manual input required. Error was: %v\n", err)
 			return ecrManual(client, projectID, region)
 		}
+
+		// sleep for a few seconds to allow aws to reconfigure
+		time.Sleep(3 * time.Second)
 
 		integration, err := client.CreateAWSIntegration(
 			context.Background(),

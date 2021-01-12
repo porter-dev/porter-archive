@@ -65,6 +65,25 @@ func (ce *CreateGCRInfra) ToInfra() (*models.Infra, error) {
 	}, nil
 }
 
+// CreateGKEInfra represents the accepted values for creating a
+// GKE infra via the provisioning container
+type CreateGKEInfra struct {
+	GKEName          string `json:"gke_name" form:"required"`
+	ProjectID        uint   `json:"project_id" form:"required"`
+	GCPIntegrationID uint   `json:"gcp_integration_id" form:"required"`
+}
+
+// ToInfra converts the form to a gorm aws infra model
+func (ce *CreateGKEInfra) ToInfra() (*models.Infra, error) {
+	return &models.Infra{
+		Kind:             models.InfraGKE,
+		ProjectID:        ce.ProjectID,
+		Suffix:           stringWithCharset(6, randCharset),
+		Status:           models.StatusCreating,
+		GCPIntegrationID: ce.GCPIntegrationID,
+	}, nil
+}
+
 // DestroyECRInfra represents the accepted values for destroying an
 // ECR infra via the provisioning container
 type DestroyECRInfra struct {

@@ -245,6 +245,21 @@ func New(a *api.App) *chi.Mux {
 		)
 
 		r.Method(
+			"POST",
+			"/projects/{project_id}/provision/gke",
+			auth.DoesUserHaveProjectAccess(
+				auth.DoesUserHaveGCPIntegrationAccess(
+					requestlog.NewHandler(a.HandleProvisionGCPGKEInfra, l),
+					mw.URLParam,
+					mw.BodyParam,
+					true,
+				),
+				mw.URLParam,
+				mw.ReadAccess,
+			),
+		)
+
+		r.Method(
 			"GET",
 			"/projects/{project_id}/provision/{kind}/{infra_id}/logs",
 			auth.DoesUserHaveProjectAccess(

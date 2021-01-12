@@ -483,6 +483,98 @@ func (app *App) HandleProvisionGCPGCRInfra(w http.ResponseWriter, r *http.Reques
 	}
 }
 
+// HandleProvisionGCPGKEInfra provisions a new GKE instance for a project
+func (app *App) HandleProvisionGCPGKEInfra(w http.ResponseWriter, r *http.Request) {
+	projID, err := strconv.ParseUint(chi.URLParam(r, "project_id"), 0, 64)
+
+	if err != nil || projID == 0 {
+		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
+		return
+	}
+
+	form := &forms.CreateGKEInfra{
+		ProjectID: uint(projID),
+	}
+
+	// decode from JSON to form value
+	if err := json.NewDecoder(r.Body).Decode(form); err != nil {
+		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
+		return
+	}
+
+	// validate the form
+	if err := app.validator.Struct(form); err != nil {
+		app.handleErrorFormValidation(err, ErrProjectValidateFields, w)
+		return
+	}
+
+	// convert the form to an aws infra instance
+	infra, err := form.ToInfra()
+
+	if err != nil {
+		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
+		return
+	}
+
+	// handle write to the database
+	infra, err = app.Repo.Infra.CreateInfra(infra)
+
+	if err != nil {
+		app.handleErrorDataWrite(err, w)
+		return
+	}
+
+	gcpInt, err := app.Repo.GCPIntegration.ReadGCPIntegration(infra.GCPIntegrationID)
+
+	if err != nil {
+		infra.Status = models.StatusError
+		infra, _ = app.Repo.Infra.UpdateInfra(infra)
+
+		app.handleErrorDataRead(err, w)
+		return
+	}
+
+	// launch provisioning pod
+	agent, err := kubernetes.GetAgentInClusterConfig()
+
+	if err != nil {
+		infra.Status = models.StatusError
+		infra, _ = app.Repo.Infra.UpdateInfra(infra)
+
+		app.handleErrorDataRead(err, w)
+		return
+	}
+
+	_, err = agent.ProvisionGKE(
+		uint(projID),
+		gcpInt,
+		form.GKEName,
+		infra,
+		provisioner.Apply,
+		&app.DBConf,
+		app.RedisConf,
+	)
+
+	if err != nil {
+		infra.Status = models.StatusError
+		infra, _ = app.Repo.Infra.UpdateInfra(infra)
+
+		app.handleErrorInternal(err, w)
+		return
+	}
+
+	app.Logger.Info().Msgf("New gcp gke infra created: %d", infra.ID)
+
+	w.WriteHeader(http.StatusCreated)
+
+	infraExt := infra.Externalize()
+
+	if err := json.NewEncoder(w).Encode(infraExt); err != nil {
+		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
+		return
+	}
+}
+
 // HandleGetProvisioningLogs returns real-time logs of the provisioning process via websockets
 func (app *App) HandleGetProvisioningLogs(w http.ResponseWriter, r *http.Request) {
 	// get path parameters

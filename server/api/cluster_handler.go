@@ -2,6 +2,7 @@ package api
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -56,6 +57,8 @@ func (app *App) HandleCreateProjectCluster(w http.ResponseWriter, r *http.Reques
 	w.WriteHeader(http.StatusCreated)
 
 	clusterExt := cluster.Externalize()
+
+	fmt.Println("CLUSTER EXTERNAL PROJECT ID", clusterExt.ProjectID, cluster.ProjectID)
 
 	if err := json.NewEncoder(w).Encode(clusterExt); err != nil {
 		app.handleErrorFormDecoding(err, ErrProjectDecode, w)

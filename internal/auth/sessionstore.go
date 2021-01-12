@@ -3,7 +3,6 @@
 package sessionstore
 
 import (
-	"database/sql"
 	"encoding/base32"
 	"net/http"
 	"strings"
@@ -13,10 +12,11 @@ import (
 
 	"github.com/gorilla/securecookie"
 	"github.com/gorilla/sessions"
-	"github.com/pkg/errors"
 
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/repository"
+
+	"gorm.io/gorm"
 )
 
 // structs
@@ -158,10 +158,16 @@ func (store *PGStore) New(r *http.Request, name string) (*sessions.Session, erro
 		err = securecookie.DecodeMulti(name, c.Value, &session.ID, store.Codecs...)
 		if err == nil {
 			err = store.load(session)
-			if err == nil {
+
+			if err != nil {
+				if err == gorm.ErrRecordNotFound {
+					err = nil
+				} else if strings.Contains(err.Error(), "expired timestamp") {
+					err = nil
+					session.IsNew = false
+				}
+			} else {
 				session.IsNew = false
-			} else if errors.Cause(err) == sql.ErrNoRows {
-				err = nil
 			}
 		}
 	}

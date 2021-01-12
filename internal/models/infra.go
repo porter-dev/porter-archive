@@ -27,6 +27,7 @@ type AWSInfraKind string
 const (
 	AWSInfraECR AWSInfraKind = "ecr"
 	AWSInfraEKS AWSInfraKind = "eks"
+	AWSInfraGCR AWSInfraKind = "gcr"
 )
 
 // AWSInfra represents the metadata for an infrastructure type provisioned on
@@ -48,6 +49,9 @@ type AWSInfra struct {
 
 	// The AWS integration that was used to create the infra
 	AWSIntegrationID uint
+
+	// The GCP integration that was used to create the infra
+	GCPIntegrationID uint
 }
 
 // AWSInfraExternal is an external AWSInfra to be shared over REST

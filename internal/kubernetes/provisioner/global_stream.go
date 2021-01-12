@@ -204,6 +204,26 @@ func GlobalStreamListener(
 					if err != nil {
 						continue
 					}
+				} else if kind == string(models.AWSInfraGCR) {
+					reg := &models.Registry{
+						ProjectID:        projID,
+						GCPIntegrationID: infra.GCPIntegrationID,
+						InfraID:          infra.ID,
+						Name:             "gcr-registry",
+					}
+
+					// parse raw data into ECR type
+					dataString, ok := msg.Values["data"].(string)
+
+					if ok {
+						json.Unmarshal([]byte(dataString), reg)
+					}
+
+					reg, err = repo.Registry.CreateRegistry(reg)
+
+					if err != nil {
+						continue
+					}
 				}
 			} else if fmt.Sprintf("%v", msg.Values["status"]) == "error" {
 				infra, err := repo.AWSInfra.ReadAWSInfra(infraID)

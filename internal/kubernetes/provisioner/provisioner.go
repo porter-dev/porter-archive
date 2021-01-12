@@ -87,6 +87,9 @@ func (conf *Conf) GetProvisionerJobTemplate() (*batchv1.Job, error) {
 		args = []string{operation, "eks"}
 		env = conf.AWS.AttachAWSEnv(env)
 		env = conf.EKS.AttachEKSEnv(env)
+	} else if conf.Kind == GCR {
+		args = []string{operation, "gcr"}
+		env = conf.GCP.AttachGCPEnv(env)
 	}
 
 	return &batchv1.Job{

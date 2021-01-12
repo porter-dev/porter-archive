@@ -20,23 +20,23 @@ const (
 	StatusDestroyed  InfraStatus = "destroyed"
 )
 
-// AWSInfraKind is the kind that aws infra can be
-type AWSInfraKind string
+// InfraKind is the kind that infra can be
+type InfraKind string
 
-// The supported AWS infra kinds
+// The supported infra kinds
 const (
-	AWSInfraECR AWSInfraKind = "ecr"
-	AWSInfraEKS AWSInfraKind = "eks"
-	AWSInfraGCR AWSInfraKind = "gcr"
+	InfraECR InfraKind = "ecr"
+	InfraEKS InfraKind = "eks"
+	InfraGCR InfraKind = "gcr"
 )
 
-// AWSInfra represents the metadata for an infrastructure type provisioned on
-// AWS
-type AWSInfra struct {
+// Infra represents the metadata for an infrastructure type provisioned on
+// Porter
+type Infra struct {
 	gorm.Model
 
 	// The type of infra that was provisioned
-	Kind AWSInfraKind `json:"kind"`
+	Kind InfraKind `json:"kind"`
 
 	// A random 6-byte suffix to ensure workspace/stream ids are unique
 	Suffix string
@@ -54,33 +54,33 @@ type AWSInfra struct {
 	GCPIntegrationID uint
 }
 
-// AWSInfraExternal is an external AWSInfra to be shared over REST
-type AWSInfraExternal struct {
+// InfraExternal is an external Infra to be shared over REST
+type InfraExternal struct {
 	ID uint `json:"id"`
 
 	// The project that this integration belongs to
 	ProjectID uint `json:"project_id"`
 
 	// The type of infra that was provisioned
-	Kind AWSInfraKind `json:"kind"`
+	Kind InfraKind `json:"kind"`
 
 	// Status is the status of the infra
 	Status InfraStatus `json:"status"`
 }
 
-// Externalize generates an external AWSInfra to be shared over REST
-func (ai *AWSInfra) Externalize() *AWSInfraExternal {
-	return &AWSInfraExternal{
-		ID:        ai.ID,
-		ProjectID: ai.ProjectID,
-		Kind:      ai.Kind,
-		Status:    ai.Status,
+// Externalize generates an external Infra to be shared over REST
+func (i *Infra) Externalize() *InfraExternal {
+	return &InfraExternal{
+		ID:        i.ID,
+		ProjectID: i.ProjectID,
+		Kind:      i.Kind,
+		Status:    i.Status,
 	}
 }
 
 // GetID returns the unique id for this infra
-func (ai *AWSInfra) GetID() string {
-	return fmt.Sprintf("%s-%d-%d-%s", ai.Kind, ai.ProjectID, ai.ID, ai.Suffix)
+func (i *Infra) GetID() string {
+	return fmt.Sprintf("%s-%d-%d-%s", i.Kind, i.ProjectID, i.ID, i.Suffix)
 }
 
 // ParseWorkspaceID returns the (kind, projectID, infraID)

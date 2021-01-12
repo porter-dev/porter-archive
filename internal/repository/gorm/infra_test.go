@@ -8,7 +8,7 @@ import (
 	"gorm.io/gorm"
 )
 
-func TestCreateAWSInfra(t *testing.T) {
+func TestCreateInfra(t *testing.T) {
 	tester := &tester{
 		dbFileName: "./porter_create_aws_infra.db",
 	}
@@ -17,19 +17,19 @@ func TestCreateAWSInfra(t *testing.T) {
 	initProject(tester, t)
 	defer cleanup(tester, t)
 
-	infra := &models.AWSInfra{
-		Kind:      models.AWSInfraECR,
+	infra := &models.Infra{
+		Kind:      models.InfraECR,
 		ProjectID: tester.initProjects[0].Model.ID,
 		Status:    models.StatusCreated,
 	}
 
-	infra, err := tester.repo.AWSInfra.CreateAWSInfra(infra)
+	infra, err := tester.repo.Infra.CreateInfra(infra)
 
 	if err != nil {
 		t.Fatalf("%v\n", err)
 	}
 
-	infra, err = tester.repo.AWSInfra.ReadAWSInfra(infra.Model.ID)
+	infra, err = tester.repo.Infra.ReadInfra(infra.Model.ID)
 
 	if err != nil {
 		t.Fatalf("%v\n", err)
@@ -40,8 +40,8 @@ func TestCreateAWSInfra(t *testing.T) {
 		t.Errorf("incorrect registry ID: expected %d, got %d\n", 1, infra.Model.ID)
 	}
 
-	if infra.Kind != models.AWSInfraECR {
-		t.Errorf("incorrect aws infra kind: expected %s, got %s\n", models.AWSInfraECR, infra.Kind)
+	if infra.Kind != models.InfraECR {
+		t.Errorf("incorrect aws infra kind: expected %s, got %s\n", models.InfraECR, infra.Kind)
 	}
 
 	if infra.Status != models.StatusCreated {
@@ -49,17 +49,17 @@ func TestCreateAWSInfra(t *testing.T) {
 	}
 }
 
-func TestListAWSInfrasByProjectID(t *testing.T) {
+func TestListInfrasByProjectID(t *testing.T) {
 	tester := &tester{
 		dbFileName: "./porter_list_aws_infras.db",
 	}
 
 	setupTestEnv(tester, t)
 	initProject(tester, t)
-	initAWSInfra(tester, t)
+	initInfra(tester, t)
 	defer cleanup(tester, t)
 
-	infras, err := tester.repo.AWSInfra.ListAWSInfrasByProjectID(
+	infras, err := tester.repo.Infra.ListInfrasByProjectID(
 		tester.initProjects[0].Model.ID,
 	)
 
@@ -72,7 +72,7 @@ func TestListAWSInfrasByProjectID(t *testing.T) {
 	}
 
 	// make sure data is correct
-	expAWSInfra := models.AWSInfra{
+	expInfra := models.Infra{
 		Kind:      "ecr",
 		ProjectID: tester.initProjects[0].Model.ID,
 		Status:    models.StatusCreated,
@@ -83,7 +83,7 @@ func TestListAWSInfrasByProjectID(t *testing.T) {
 	// reset fields for reflect.DeepEqual
 	infra.Model = gorm.Model{}
 
-	if diff := deep.Equal(expAWSInfra, *infra); diff != nil {
+	if diff := deep.Equal(expInfra, *infra); diff != nil {
 		t.Errorf("incorrect aws infra")
 		t.Error(diff)
 	}

@@ -74,7 +74,7 @@ func (app *App) HandleProvisionAWSECRInfra(w http.ResponseWriter, r *http.Reques
 	}
 
 	// convert the form to an aws infra instance
-	infra, err := form.ToAWSInfra()
+	infra, err := form.ToInfra()
 
 	if err != nil {
 		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
@@ -82,7 +82,7 @@ func (app *App) HandleProvisionAWSECRInfra(w http.ResponseWriter, r *http.Reques
 	}
 
 	// handle write to the database
-	infra, err = app.Repo.AWSInfra.CreateAWSInfra(infra)
+	infra, err = app.Repo.Infra.CreateInfra(infra)
 
 	if err != nil {
 		app.handleErrorDataWrite(err, w)
@@ -93,7 +93,7 @@ func (app *App) HandleProvisionAWSECRInfra(w http.ResponseWriter, r *http.Reques
 
 	if err != nil {
 		infra.Status = models.StatusError
-		infra, _ = app.Repo.AWSInfra.UpdateAWSInfra(infra)
+		infra, _ = app.Repo.Infra.UpdateInfra(infra)
 
 		app.handleErrorDataRead(err, w)
 		return
@@ -104,7 +104,7 @@ func (app *App) HandleProvisionAWSECRInfra(w http.ResponseWriter, r *http.Reques
 
 	if err != nil {
 		infra.Status = models.StatusError
-		infra, _ = app.Repo.AWSInfra.UpdateAWSInfra(infra)
+		infra, _ = app.Repo.Infra.UpdateInfra(infra)
 
 		app.handleErrorDataRead(err, w)
 		return
@@ -122,7 +122,7 @@ func (app *App) HandleProvisionAWSECRInfra(w http.ResponseWriter, r *http.Reques
 
 	if err != nil {
 		infra.Status = models.StatusError
-		infra, _ = app.Repo.AWSInfra.UpdateAWSInfra(infra)
+		infra, _ = app.Repo.Infra.UpdateInfra(infra)
 
 		app.handleErrorInternal(err, w)
 		return
@@ -151,7 +151,7 @@ func (app *App) HandleDestroyAWSECRInfra(w http.ResponseWriter, r *http.Request)
 	}
 
 	// read infra to get id
-	infra, err := app.Repo.AWSInfra.ReadAWSInfra(uint(infraID))
+	infra, err := app.Repo.Infra.ReadInfra(uint(infraID))
 
 	if err != nil {
 		app.handleErrorDataRead(err, w)
@@ -165,7 +165,7 @@ func (app *App) HandleDestroyAWSECRInfra(w http.ResponseWriter, r *http.Request)
 	// decode from JSON to form value
 	if err := json.NewDecoder(r.Body).Decode(form); err != nil {
 		infra.Status = models.StatusError
-		infra, _ = app.Repo.AWSInfra.UpdateAWSInfra(infra)
+		infra, _ = app.Repo.Infra.UpdateInfra(infra)
 
 		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
 		return
@@ -174,7 +174,7 @@ func (app *App) HandleDestroyAWSECRInfra(w http.ResponseWriter, r *http.Request)
 	// validate the form
 	if err := app.validator.Struct(form); err != nil {
 		infra.Status = models.StatusError
-		infra, _ = app.Repo.AWSInfra.UpdateAWSInfra(infra)
+		infra, _ = app.Repo.Infra.UpdateInfra(infra)
 
 		app.handleErrorFormValidation(err, ErrProjectValidateFields, w)
 		return
@@ -185,7 +185,7 @@ func (app *App) HandleDestroyAWSECRInfra(w http.ResponseWriter, r *http.Request)
 
 	if err != nil {
 		infra.Status = models.StatusError
-		infra, _ = app.Repo.AWSInfra.UpdateAWSInfra(infra)
+		infra, _ = app.Repo.Infra.UpdateInfra(infra)
 
 		app.handleErrorDataRead(err, w)
 		return
@@ -193,7 +193,7 @@ func (app *App) HandleDestroyAWSECRInfra(w http.ResponseWriter, r *http.Request)
 
 	// mark infra for deletion
 	infra.Status = models.StatusDestroying
-	infra, err = app.Repo.AWSInfra.UpdateAWSInfra(infra)
+	infra, err = app.Repo.Infra.UpdateInfra(infra)
 
 	if err != nil {
 		app.handleErrorDataWrite(err, w)
@@ -246,7 +246,7 @@ func (app *App) HandleProvisionAWSEKSInfra(w http.ResponseWriter, r *http.Reques
 	}
 
 	// convert the form to an aws infra instance
-	infra, err := form.ToAWSInfra()
+	infra, err := form.ToInfra()
 
 	if err != nil {
 		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
@@ -254,7 +254,7 @@ func (app *App) HandleProvisionAWSEKSInfra(w http.ResponseWriter, r *http.Reques
 	}
 
 	// handle write to the database
-	infra, err = app.Repo.AWSInfra.CreateAWSInfra(infra)
+	infra, err = app.Repo.Infra.CreateInfra(infra)
 
 	if err != nil {
 		app.handleErrorDataWrite(err, w)
@@ -265,7 +265,7 @@ func (app *App) HandleProvisionAWSEKSInfra(w http.ResponseWriter, r *http.Reques
 
 	if err != nil {
 		infra.Status = models.StatusError
-		infra, _ = app.Repo.AWSInfra.UpdateAWSInfra(infra)
+		infra, _ = app.Repo.Infra.UpdateInfra(infra)
 
 		app.handleErrorDataRead(err, w)
 		return
@@ -276,7 +276,7 @@ func (app *App) HandleProvisionAWSEKSInfra(w http.ResponseWriter, r *http.Reques
 
 	if err != nil {
 		infra.Status = models.StatusError
-		infra, _ = app.Repo.AWSInfra.UpdateAWSInfra(infra)
+		infra, _ = app.Repo.Infra.UpdateInfra(infra)
 
 		app.handleErrorDataRead(err, w)
 		return
@@ -294,7 +294,7 @@ func (app *App) HandleProvisionAWSEKSInfra(w http.ResponseWriter, r *http.Reques
 
 	if err != nil {
 		infra.Status = models.StatusError
-		infra, _ = app.Repo.AWSInfra.UpdateAWSInfra(infra)
+		infra, _ = app.Repo.Infra.UpdateInfra(infra)
 
 		app.handleErrorInternal(err, w)
 		return
@@ -323,7 +323,7 @@ func (app *App) HandleDestroyAWSEKSInfra(w http.ResponseWriter, r *http.Request)
 	}
 
 	// read infra to get id
-	infra, err := app.Repo.AWSInfra.ReadAWSInfra(uint(infraID))
+	infra, err := app.Repo.Infra.ReadInfra(uint(infraID))
 
 	if err != nil {
 		app.handleErrorDataRead(err, w)
@@ -337,7 +337,7 @@ func (app *App) HandleDestroyAWSEKSInfra(w http.ResponseWriter, r *http.Request)
 	// decode from JSON to form value
 	if err := json.NewDecoder(r.Body).Decode(form); err != nil {
 		infra.Status = models.StatusError
-		infra, _ = app.Repo.AWSInfra.UpdateAWSInfra(infra)
+		infra, _ = app.Repo.Infra.UpdateInfra(infra)
 
 		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
 		return
@@ -346,7 +346,7 @@ func (app *App) HandleDestroyAWSEKSInfra(w http.ResponseWriter, r *http.Request)
 	// validate the form
 	if err := app.validator.Struct(form); err != nil {
 		infra.Status = models.StatusError
-		infra, _ = app.Repo.AWSInfra.UpdateAWSInfra(infra)
+		infra, _ = app.Repo.Infra.UpdateInfra(infra)
 
 		app.handleErrorFormValidation(err, ErrProjectValidateFields, w)
 		return
@@ -357,7 +357,7 @@ func (app *App) HandleDestroyAWSEKSInfra(w http.ResponseWriter, r *http.Request)
 
 	if err != nil {
 		infra.Status = models.StatusError
-		infra, _ = app.Repo.AWSInfra.UpdateAWSInfra(infra)
+		infra, _ = app.Repo.Infra.UpdateInfra(infra)
 
 		app.handleErrorDataRead(err, w)
 		return
@@ -365,7 +365,7 @@ func (app *App) HandleDestroyAWSEKSInfra(w http.ResponseWriter, r *http.Request)
 
 	// mark infra for deletion
 	infra.Status = models.StatusDestroying
-	infra, err = app.Repo.AWSInfra.UpdateAWSInfra(infra)
+	infra, err = app.Repo.Infra.UpdateInfra(infra)
 
 	if err != nil {
 		app.handleErrorDataWrite(err, w)
@@ -418,7 +418,7 @@ func (app *App) HandleProvisionGCPGCRInfra(w http.ResponseWriter, r *http.Reques
 	}
 
 	// convert the form to an aws infra instance
-	infra, err := form.ToAWSInfra()
+	infra, err := form.ToInfra()
 
 	if err != nil {
 		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
@@ -426,7 +426,7 @@ func (app *App) HandleProvisionGCPGCRInfra(w http.ResponseWriter, r *http.Reques
 	}
 
 	// handle write to the database
-	infra, err = app.Repo.AWSInfra.CreateAWSInfra(infra)
+	infra, err = app.Repo.Infra.CreateInfra(infra)
 
 	if err != nil {
 		app.handleErrorDataWrite(err, w)
@@ -437,7 +437,7 @@ func (app *App) HandleProvisionGCPGCRInfra(w http.ResponseWriter, r *http.Reques
 
 	if err != nil {
 		infra.Status = models.StatusError
-		infra, _ = app.Repo.AWSInfra.UpdateAWSInfra(infra)
+		infra, _ = app.Repo.Infra.UpdateInfra(infra)
 
 		app.handleErrorDataRead(err, w)
 		return
@@ -448,7 +448,7 @@ func (app *App) HandleProvisionGCPGCRInfra(w http.ResponseWriter, r *http.Reques
 
 	if err != nil {
 		infra.Status = models.StatusError
-		infra, _ = app.Repo.AWSInfra.UpdateAWSInfra(infra)
+		infra, _ = app.Repo.Infra.UpdateInfra(infra)
 
 		app.handleErrorDataRead(err, w)
 		return
@@ -465,7 +465,7 @@ func (app *App) HandleProvisionGCPGCRInfra(w http.ResponseWriter, r *http.Reques
 
 	if err != nil {
 		infra.Status = models.StatusError
-		infra, _ = app.Repo.AWSInfra.UpdateAWSInfra(infra)
+		infra, _ = app.Repo.Infra.UpdateInfra(infra)
 
 		app.handleErrorInternal(err, w)
 		return
@@ -494,7 +494,7 @@ func (app *App) HandleGetProvisioningLogs(w http.ResponseWriter, r *http.Request
 	}
 
 	// read infra to get id
-	infra, err := app.Repo.AWSInfra.ReadAWSInfra(uint(infraID))
+	infra, err := app.Repo.Infra.ReadInfra(uint(infraID))
 
 	if err != nil {
 		app.handleErrorDataRead(err, w)

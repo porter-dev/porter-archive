@@ -18,8 +18,9 @@ type StateType = {
 export default class SortSelector extends Component<PropsType, StateType> {
   state = {
     sortOptions: [
-      { label: 'chronological', value: 'chronological' },
-      { label: 'alphabetical', value: 'alphabetical' }
+      { label: 'Newest', value: 'Newest' },
+      { label: 'Oldest', value: 'Oldest' },
+      { label: 'Alphabetical', value: 'Alphabetical' }
     ] as {label: string, value: string}[]
   }
 

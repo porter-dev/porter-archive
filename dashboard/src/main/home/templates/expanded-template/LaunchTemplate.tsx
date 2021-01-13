@@ -51,9 +51,10 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
     namespaceOptions: [] as { label: string, value: string }[],
   };
 
-  onSubmitAddon = () => {
+  onSubmitAddon = (wildcard?: any) => {
     let { currentCluster, currentProject } = this.context;
     let name = randomWords({ exactly: 3, join: '-' });
+    this.setState({ saveValuesStatus: 'loading' });
     api.deployTemplate('<token>', {
       templateName: this.props.currentTemplate.name,
       storage: StorageType.Secret,
@@ -121,9 +122,9 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
     return (
       <ValuesWrapper
         formTabs={this.props.form?.tabs}
-        onSubmit={this.onSubmit}
+        onSubmit={this.props.currentTemplate.name === 'docker' ? this.onSubmit : this.onSubmitAddon}
         saveValuesStatus={this.state.saveValuesStatus}
-        disabled={!this.state.selectedImageUrl}
+        disabled={this.props.form?.hasSource ? !this.state.selectedImageUrl : false}
       >
         {(metaState: any, setMetaState: any) => {
           return this.props.form?.tabs.map((tab: any, i: number) => {

@@ -201,7 +201,7 @@ func listRepos(user *api.AuthCheckResponse, client *api.Client, args []string) e
 func listImages(user *api.AuthCheckResponse, client *api.Client, args []string) error {
 	pID := getProjectID()
 	rID := getRegistryID()
-	repoName := args[1]
+	repoName := args[0]
 
 	// get the list of namespaces
 	imgs, err := client.ListImages(

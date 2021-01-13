@@ -80,7 +80,7 @@ export default class ControllerTab extends Component<PropsType, StateType> {
   }
 
   getPodStatus = (status: any) => {
-    if (status?.phase == 'Pending') {
+    if (status?.phase == 'Pending' && status?.containerStatuses?.length > 0) {
       return status?.containerStatuses[0].state.waiting.reason
       // return 'waiting'
     }

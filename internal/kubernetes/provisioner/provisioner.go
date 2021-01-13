@@ -11,6 +11,8 @@ import (
 	"github.com/porter-dev/porter/internal/kubernetes/provisioner/aws/ecr"
 	"github.com/porter-dev/porter/internal/kubernetes/provisioner/aws/eks"
 
+	"github.com/porter-dev/porter/internal/kubernetes/provisioner/gcp"
+
 	"github.com/porter-dev/porter/internal/config"
 )
 
@@ -22,6 +24,7 @@ const (
 	Test InfraOption = "test"
 	ECR  InfraOption = "ecr"
 	EKS  InfraOption = "eks"
+	GCR  InfraOption = "gcr"
 )
 
 // Conf is the config required to start a provisioner container
@@ -35,9 +38,14 @@ type Conf struct {
 	Operation ProvisionerOperation
 
 	// provider-specific configurations
+
+	// AWS
 	AWS *aws.Conf
 	ECR *ecr.Conf
 	EKS *eks.Conf
+
+	// GKE
+	GCP *gcp.Conf
 }
 
 type ProvisionerOperation string

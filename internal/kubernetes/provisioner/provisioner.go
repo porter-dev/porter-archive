@@ -29,13 +29,14 @@ const (
 
 // Conf is the config required to start a provisioner container
 type Conf struct {
-	Kind      InfraOption
-	Name      string
-	Namespace string
-	ID        string
-	Redis     *config.RedisConf
-	Postgres  *config.DBConf
-	Operation ProvisionerOperation
+	Kind                InfraOption
+	Name                string
+	Namespace           string
+	ID                  string
+	Redis               *config.RedisConf
+	Postgres            *config.DBConf
+	Operation           ProvisionerOperation
+	ProvisionerImageTag string
 
 	// provider-specific configurations
 
@@ -112,7 +113,7 @@ func (conf *Conf) GetProvisionerJobTemplate() (*batchv1.Job, error) {
 					Containers: []v1.Container{
 						{
 							Name:  "provisioner",
-							Image: "gcr.io/porter-dev-273614/provisioner:latest",
+							Image: "gcr.io/porter-dev-273614/provisioner:" + conf.ProvisionerImageTag,
 							Args:  args,
 							Env:   env,
 							VolumeMounts: []v1.VolumeMount{

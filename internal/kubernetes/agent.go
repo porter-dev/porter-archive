@@ -243,15 +243,17 @@ func (a *Agent) ProvisionECR(
 	operation provisioner.ProvisionerOperation,
 	pgConf *config.DBConf,
 	redisConf *config.RedisConf,
+	provImageTag string,
 ) (*batchv1.Job, error) {
 	id := awsInfra.GetID()
 	prov := &provisioner.Conf{
-		ID:        id,
-		Name:      fmt.Sprintf("prov-%s-%s", id, string(operation)),
-		Kind:      provisioner.ECR,
-		Operation: operation,
-		Redis:     redisConf,
-		Postgres:  pgConf,
+		ID:                  id,
+		Name:                fmt.Sprintf("prov-%s-%s", id, string(operation)),
+		Kind:                provisioner.ECR,
+		Operation:           operation,
+		Redis:               redisConf,
+		Postgres:            pgConf,
+		ProvisionerImageTag: provImageTag,
 		AWS: &aws.Conf{
 			AWSRegion:          awsConf.AWSRegion,
 			AWSAccessKeyID:     string(awsConf.AWSAccessKeyID),
@@ -274,15 +276,17 @@ func (a *Agent) ProvisionEKS(
 	operation provisioner.ProvisionerOperation,
 	pgConf *config.DBConf,
 	redisConf *config.RedisConf,
+	provImageTag string,
 ) (*batchv1.Job, error) {
 	id := awsInfra.GetID()
 	prov := &provisioner.Conf{
-		ID:        id,
-		Name:      fmt.Sprintf("prov-%s-%s", id, string(operation)),
-		Kind:      provisioner.EKS,
-		Operation: operation,
-		Redis:     redisConf,
-		Postgres:  pgConf,
+		ID:                  id,
+		Name:                fmt.Sprintf("prov-%s-%s", id, string(operation)),
+		Kind:                provisioner.EKS,
+		Operation:           operation,
+		Redis:               redisConf,
+		Postgres:            pgConf,
+		ProvisionerImageTag: provImageTag,
 		AWS: &aws.Conf{
 			AWSRegion:          awsConf.AWSRegion,
 			AWSAccessKeyID:     string(awsConf.AWSAccessKeyID),
@@ -302,14 +306,16 @@ func (a *Agent) ProvisionTest(
 	operation provisioner.ProvisionerOperation,
 	pgConf *config.DBConf,
 	redisConf *config.RedisConf,
+	provImageTag string,
 ) (*batchv1.Job, error) {
 	prov := &provisioner.Conf{
-		ID:        fmt.Sprintf("%s-%d", "testing", projectID),
-		Name:      fmt.Sprintf("prov-%s-%d-%s", "testing", projectID, string(operation)),
-		Operation: operation,
-		Kind:      provisioner.Test,
-		Redis:     redisConf,
-		Postgres:  pgConf,
+		ID:                  fmt.Sprintf("%s-%d", "testing", projectID),
+		Name:                fmt.Sprintf("prov-%s-%d-%s", "testing", projectID, string(operation)),
+		Operation:           operation,
+		Kind:                provisioner.Test,
+		Redis:               redisConf,
+		Postgres:            pgConf,
+		ProvisionerImageTag: provImageTag,
 	}
 
 	return a.provision(prov)

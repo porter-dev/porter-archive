@@ -11,6 +11,8 @@ import (
 	"github.com/porter-dev/porter/internal/kubernetes/provisioner/aws"
 	"github.com/porter-dev/porter/internal/kubernetes/provisioner/aws/ecr"
 	"github.com/porter-dev/porter/internal/kubernetes/provisioner/aws/eks"
+	"github.com/porter-dev/porter/internal/kubernetes/provisioner/gcp"
+	"github.com/porter-dev/porter/internal/kubernetes/provisioner/gcp/gke"
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/models/integrations"
 
@@ -239,19 +241,21 @@ func (a *Agent) ProvisionECR(
 	projectID uint,
 	awsConf *integrations.AWSIntegration,
 	ecrName string,
-	awsInfra *models.AWSInfra,
+	infra *models.Infra,
 	operation provisioner.ProvisionerOperation,
 	pgConf *config.DBConf,
 	redisConf *config.RedisConf,
+	provImageTag string,
 ) (*batchv1.Job, error) {
-	id := awsInfra.GetID()
+	id := infra.GetID()
 	prov := &provisioner.Conf{
-		ID:        id,
-		Name:      fmt.Sprintf("prov-%s-%s", id, string(operation)),
-		Kind:      provisioner.ECR,
-		Operation: operation,
-		Redis:     redisConf,
-		Postgres:  pgConf,
+		ID:                  id,
+		Name:                fmt.Sprintf("prov-%s-%s", id, string(operation)),
+		Kind:                provisioner.ECR,
+		Operation:           operation,
+		Redis:               redisConf,
+		Postgres:            pgConf,
+		ProvisionerImageTag: provImageTag,
 		AWS: &aws.Conf{
 			AWSRegion:          awsConf.AWSRegion,
 			AWSAccessKeyID:     string(awsConf.AWSAccessKeyID),
@@ -270,19 +274,21 @@ func (a *Agent) ProvisionEKS(
 	projectID uint,
 	awsConf *integrations.AWSIntegration,
 	eksName string,
-	awsInfra *models.AWSInfra,
+	infra *models.Infra,
 	operation provisioner.ProvisionerOperation,
 	pgConf *config.DBConf,
 	redisConf *config.RedisConf,
+	provImageTag string,
 ) (*batchv1.Job, error) {
-	id := awsInfra.GetID()
+	id := infra.GetID()
 	prov := &provisioner.Conf{
-		ID:        id,
-		Name:      fmt.Sprintf("prov-%s-%s", id, string(operation)),
-		Kind:      provisioner.EKS,
-		Operation: operation,
-		Redis:     redisConf,
-		Postgres:  pgConf,
+		ID:                  id,
+		Name:                fmt.Sprintf("prov-%s-%s", id, string(operation)),
+		Kind:                provisioner.EKS,
+		Operation:           operation,
+		Redis:               redisConf,
+		Postgres:            pgConf,
+		ProvisionerImageTag: provImageTag,
 		AWS: &aws.Conf{
 			AWSRegion:          awsConf.AWSRegion,
 			AWSAccessKeyID:     string(awsConf.AWSAccessKeyID),
@@ -296,20 +302,80 @@ func (a *Agent) ProvisionEKS(
 	return a.provision(prov)
 }
 
+// ProvisionGCR spawns a new provisioning pod that creates a GCR instance
+func (a *Agent) ProvisionGCR(
+	projectID uint,
+	gcpConf *integrations.GCPIntegration,
+	infra *models.Infra,
+	operation provisioner.ProvisionerOperation,
+	pgConf *config.DBConf,
+	redisConf *config.RedisConf,
+) (*batchv1.Job, error) {
+	id := infra.GetID()
+	prov := &provisioner.Conf{
+		ID:        id,
+		Name:      fmt.Sprintf("prov-%s-%s", id, string(operation)),
+		Kind:      provisioner.GCR,
+		Operation: operation,
+		Redis:     redisConf,
+		Postgres:  pgConf,
+		GCP: &gcp.Conf{
+			GCPRegion:    gcpConf.GCPRegion,
+			GCPProjectID: gcpConf.GCPProjectID,
+			GCPKeyData:   string(gcpConf.GCPKeyData),
+		},
+	}
+
+	return a.provision(prov)
+}
+
+// ProvisionGKE spawns a new provisioning pod that creates a GKE instance
+func (a *Agent) ProvisionGKE(
+	projectID uint,
+	gcpConf *integrations.GCPIntegration,
+	gkeName string,
+	infra *models.Infra,
+	operation provisioner.ProvisionerOperation,
+	pgConf *config.DBConf,
+	redisConf *config.RedisConf,
+) (*batchv1.Job, error) {
+	id := infra.GetID()
+	prov := &provisioner.Conf{
+		ID:        id,
+		Name:      fmt.Sprintf("prov-%s-%s", id, string(operation)),
+		Kind:      provisioner.GKE,
+		Operation: operation,
+		Redis:     redisConf,
+		Postgres:  pgConf,
+		GCP: &gcp.Conf{
+			GCPRegion:    gcpConf.GCPRegion,
+			GCPProjectID: gcpConf.GCPProjectID,
+			GCPKeyData:   string(gcpConf.GCPKeyData),
+		},
+		GKE: &gke.Conf{
+			ClusterName: gkeName,
+		},
+	}
+
+	return a.provision(prov)
+}
+
 // ProvisionTest spawns a new provisioning pod that tests provisioning
 func (a *Agent) ProvisionTest(
 	projectID uint,
 	operation provisioner.ProvisionerOperation,
 	pgConf *config.DBConf,
 	redisConf *config.RedisConf,
+	provImageTag string,
 ) (*batchv1.Job, error) {
 	prov := &provisioner.Conf{
-		ID:        fmt.Sprintf("%s-%d", "testing", projectID),
-		Name:      fmt.Sprintf("prov-%s-%d-%s", "testing", projectID, string(operation)),
-		Operation: operation,
-		Kind:      provisioner.Test,
-		Redis:     redisConf,
-		Postgres:  pgConf,
+		ID:                  fmt.Sprintf("%s-%d", "testing", projectID),
+		Name:                fmt.Sprintf("prov-%s-%d-%s", "testing", projectID, string(operation)),
+		Operation:           operation,
+		Kind:                provisioner.Test,
+		Redis:               redisConf,
+		Postgres:            pgConf,
+		ProvisionerImageTag: provImageTag,
 	}
 
 	return a.provision(prov)

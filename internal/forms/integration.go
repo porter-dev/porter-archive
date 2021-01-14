@@ -11,6 +11,7 @@ type CreateGCPIntegrationForm struct {
 	ProjectID    uint   `json:"project_id" form:"required"`
 	GCPKeyData   string `json:"gcp_key_data" form:"required"`
 	GCPProjectID string `json:"gcp_project_id"`
+	GCPRegion    string `json:"gcp_region"`
 }
 
 // ToGCPIntegration converts the project to a gorm project model
@@ -20,6 +21,7 @@ func (cgf *CreateGCPIntegrationForm) ToGCPIntegration() (*ints.GCPIntegration, e
 		ProjectID:    cgf.ProjectID,
 		GCPKeyData:   []byte(cgf.GCPKeyData),
 		GCPProjectID: cgf.GCPProjectID,
+		GCPRegion:    cgf.GCPRegion,
 	}, nil
 }
 

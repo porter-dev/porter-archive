@@ -134,7 +134,7 @@ func (a *Agent) CreateIAMECRUser(region string) (*PorterAWSCredentials, error) {
 		name = *user.UserName
 	}
 
-	policyArn := "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"
+	policyArn := "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryFullAccess"
 
 	_, err = a.IAMService.AttachUserPolicy(&iam.AttachUserPolicyInput{
 		PolicyArn: &policyArn,

@@ -468,7 +468,10 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
         return
       }
       console.log(res.data)
-      this.setState({url: `http://${res.data?.status?.loadBalancer?.ingress[0]?.hostname}` })
+      
+      if (res.data?.status?.loadBalancer?.ingress) {
+        this.setState({url: `http://${res.data?.status?.loadBalancer?.ingress[0]?.hostname}` })
+      }
     })
   }
 
@@ -489,7 +492,12 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
 
   renderUrl = () => {
     if (this.state.url) {
-      return <Url href={this.state.url} target='_blank'> <i className="material-icons">link</i> {this.state.url}</Url>;
+      return (
+        <Url href={this.state.url} target='_blank'>
+          <i className="material-icons">link</i>
+          {this.state.url}
+        </Url>
+      );
     } else {
       let serviceName = null as string
       let serviceNamespace = null as string
@@ -501,7 +509,12 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
         }
       })
 
-      return <Url><i className="material-icons">link</i>{`${serviceName}.${serviceNamespace}.namespace.svc.cluster.local`}</Url>
+      return (
+        <Url>
+          <Bolded>Internal URI:</Bolded>
+          {`${serviceName}.${serviceNamespace}.namespace.svc.cluster.local`}
+        </Url>
+      );
     }
   }
 
@@ -574,11 +587,18 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
 
 ExpandedChart.contextType = Context;
 
+const Bolded = styled.div`
+  font-weight: 500;
+  color: #ffffff44;
+  margin-right: 6px;
+`;
+
 const Url = styled.a`
   display: block;
-  margin-left: 1px;
+  margin-left: 2px;
   font-size: 13px;
-  margin-top: 15px;
+  margin-top: 16px;
+  user-select: all;
   margin-bottom: -5px;
   user-select: text;
   display: flex;

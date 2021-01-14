@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/url"
 	"time"
 
 	"github.com/aws/aws-sdk-go/service/ecr"
@@ -133,10 +134,16 @@ func (r *Registry) listGCRRepositories(
 
 	res := make([]*Repository, 0)
 
+	parsedURL, err := url.Parse("https://" + r.URL)
+
+	if err != nil {
+		return nil, err
+	}
+
 	for _, repo := range gcrResp.Repositories {
 		res = append(res, &Repository{
 			Name: repo,
-			URI:  r.URL + "/" + repo,
+			URI:  parsedURL.Host + "/" + repo,
 		})
 	}
 

@@ -136,6 +136,7 @@ func (r *Registry) listGCRRepositories(
 	for _, repo := range gcrResp.Repositories {
 		res = append(res, &Repository{
 			Name: repo,
+			URI:  r.URL + "/" + repo,
 		})
 	}
 

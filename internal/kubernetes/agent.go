@@ -16,6 +16,7 @@ import (
 	"github.com/porter-dev/porter/internal/models/integrations"
 	"github.com/porter-dev/porter/internal/registry"
 	"github.com/porter-dev/porter/internal/repository"
+	"golang.org/x/oauth2"
 
 	"github.com/gorilla/websocket"
 	"github.com/porter-dev/porter/internal/helm/grapher"
@@ -343,13 +344,14 @@ func (a *Agent) CreateImagePullSecrets(
 	repo repository.Repository,
 	namespace string,
 	linkedRegs map[string]*models.Registry,
+	doAuth *oauth2.Config,
 ) (map[string]string, error) {
 	res := make(map[string]string)
 
 	for key, val := range linkedRegs {
 		_reg := registry.Registry(*val)
 
-		data, err := _reg.GetDockerConfigJSON(repo)
+		data, err := _reg.GetDockerConfigJSON(repo, doAuth)
 
 		if err != nil {
 			return nil, err

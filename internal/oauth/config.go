@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/rand"
 	"encoding/base64"
+	"time"
 
 	"github.com/porter-dev/porter/internal/models/integrations"
 	"github.com/porter-dev/porter/internal/repository"
@@ -58,7 +59,7 @@ func GetAccessToken(
 	o *integrations.OAuthIntegration,
 	conf *oauth2.Config,
 	repo repository.Repository,
-) (string, error) {
+) (string, *time.Time, error) {
 	tokSource := conf.TokenSource(context.TODO(), &oauth2.Token{
 		AccessToken:  string(o.AccessToken),
 		RefreshToken: string(o.RefreshToken),
@@ -68,7 +69,7 @@ func GetAccessToken(
 	token, err := tokSource.Token()
 
 	if err != nil {
-		return "", err
+		return "", nil, err
 	}
 
 	if token.AccessToken != string(o.AccessToken) {
@@ -78,9 +79,9 @@ func GetAccessToken(
 		o, err = repo.OAuthIntegration.UpdateOAuthIntegration(o)
 
 		if err != nil {
-			return "", err
+			return "", nil, err
 		}
 	}
 
-	return token.AccessToken, nil
+	return token.AccessToken, &token.Expiry, nil
 }

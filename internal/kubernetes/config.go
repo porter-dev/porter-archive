@@ -307,7 +307,7 @@ func (conf *OutOfClusterConfig) createRawConfigFromCluster() (*api.Config, error
 			return nil, err
 		}
 
-		tok, err := oauth.GetAccessToken(oauthInt, conf.DigitalOceanOAuth, *conf.Repo)
+		tok, _, err := oauth.GetAccessToken(oauthInt, conf.DigitalOceanOAuth, *conf.Repo)
 
 		if err != nil {
 			return nil, err

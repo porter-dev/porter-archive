@@ -7,6 +7,7 @@ import (
 	"github.com/porter-dev/porter/internal/kubernetes"
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/repository"
+	"golang.org/x/oauth2"
 	"helm.sh/helm/v3/pkg/action"
 	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/release"
@@ -65,6 +66,7 @@ type UpgradeReleaseConfig struct {
 func (a *Agent) UpgradeRelease(
 	conf *UpgradeReleaseConfig,
 	values string,
+	doAuth *oauth2.Config,
 ) (*release.Release, error) {
 	valuesYaml, err := chartutil.ReadValues([]byte(values))
 
@@ -74,12 +76,13 @@ func (a *Agent) UpgradeRelease(
 
 	conf.Values = valuesYaml
 
-	return a.UpgradeReleaseByValues(conf)
+	return a.UpgradeReleaseByValues(conf, doAuth)
 }
 
 // UpgradeReleaseByValues upgrades a release by unmarshaled yaml values
 func (a *Agent) UpgradeReleaseByValues(
 	conf *UpgradeReleaseConfig,
+	doAuth *oauth2.Config,
 ) (*release.Release, error) {
 	// grab the latest release
 	rel, err := a.GetRelease(conf.Name, 0)
@@ -99,6 +102,7 @@ func (a *Agent) UpgradeReleaseByValues(
 			a.K8sAgent,
 			rel.Namespace,
 			conf.Registries,
+			doAuth,
 		)
 
 		if err != nil {
@@ -130,6 +134,7 @@ type InstallChartConfig struct {
 func (a *Agent) InstallChartFromValuesBytes(
 	conf *InstallChartConfig,
 	values []byte,
+	doAuth *oauth2.Config,
 ) (*release.Release, error) {
 	valuesYaml, err := chartutil.ReadValues(values)
 
@@ -139,12 +144,13 @@ func (a *Agent) InstallChartFromValuesBytes(
 
 	conf.Values = valuesYaml
 
-	return a.InstallChart(conf)
+	return a.InstallChart(conf, doAuth)
 }
 
 // InstallChart installs a new chart
 func (a *Agent) InstallChart(
 	conf *InstallChartConfig,
+	doAuth *oauth2.Config,
 ) (*release.Release, error) {
 	cmd := action.NewInstall(a.ActionConfig)
 
@@ -169,6 +175,7 @@ func (a *Agent) InstallChart(
 			a.K8sAgent,
 			conf.Namespace,
 			conf.Registries,
+			doAuth,
 		)
 
 		if err != nil {

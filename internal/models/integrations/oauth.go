@@ -7,7 +7,8 @@ type OAuthIntegrationClient string
 
 // The supported oauth mechanism clients
 const (
-	OAuthGithub OAuthIntegrationClient = "github"
+	OAuthGithub       OAuthIntegrationClient = "github"
+	OAuthDigitalOcean OAuthIntegrationClient = "do"
 )
 
 // OAuthIntegration is an auth mechanism that uses oauth

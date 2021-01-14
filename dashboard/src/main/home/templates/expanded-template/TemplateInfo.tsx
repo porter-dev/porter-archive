@@ -4,11 +4,16 @@ import rocket from '../../../../assets/rocket.png';
 import Markdown from 'markdown-to-jsx';
 
 import { Context } from '../../../../shared/Context';
-import api from '../../../../shared/api';
 import Loading from '../../../../components/Loading';
 
 import { PorterTemplate } from '../../../../shared/types';
-import { timeStamp } from 'console';
+import Helper from '../../../../components/values-form/Helper';
+
+// TODO: read in from metadata
+const hardcodedNames: any = {
+  'postgresql': 'PostgreSQL',
+  'docker': 'Docker',
+};
 
 type PropsType = {
   currentTemplate: any,
@@ -52,8 +57,11 @@ export default class TemplateInfo extends Component<PropsType, StateType> {
     return currentTemplate.description;
   }
 
+
   renderTagSection = () => {
-    if (this.props.keywords && this.props.keywords.length > 0) {
+
+    // Rendering doesn't make sense until search + clicking on tags is supported
+    if (false && this.props.keywords && this.props.keywords.length > 0) {
       return (
         <TagSection>
           <i className="material-icons">local_offer</i>
@@ -96,8 +104,13 @@ export default class TemplateInfo extends Component<PropsType, StateType> {
 
   render() {
     let { currentCluster } = this.context;
-    let { name, icon } = this.props.currentTemplate;
+    let { name, icon, description } = this.props.currentTemplate;
     let { currentTemplate } = this.props;
+
+    if (hardcodedNames[name]) {
+      name = hardcodedNames[name];
+    }
+
     return (
       <StyledExpandedTemplate>
         <TitleSection>
@@ -116,6 +129,7 @@ export default class TemplateInfo extends Component<PropsType, StateType> {
             Launch Template
           </Button>
         </TitleSection>
+        <Helper>{description}</Helper>
         {this.renderTagSection()}
         <LineBreak />
         {this.renderBanner()}
@@ -182,7 +196,7 @@ const Tag = styled.div`
 `;
 
 const TagSection = styled.div`
-  margin-top: 20px;
+  margin-top: 25px;
   display: flex;
   font-size: 13px;
   font-family: 'Work Sans', sans-serif;

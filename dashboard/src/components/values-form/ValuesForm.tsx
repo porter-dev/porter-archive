@@ -8,6 +8,7 @@ import api from '../../shared/api';
 
 import CheckboxRow from './CheckboxRow';
 import InputRow from './InputRow';
+import Base64InputRow from './Base64InputRow';
 import SelectRow from './SelectRow';
 import Helper from './Helper';
 import Heading from './Heading';
@@ -147,6 +148,40 @@ export default class ValuesForm extends Component<PropsType, StateType> {
         case 'velero-create-backup':
           return (
             <VeleroForm
+            />
+          );
+        case 'base-64':
+          return (
+            <Base64InputRow
+              key={i}
+              isRequired={item.required}
+              type='b64'
+              value={this.getInputValue(item)}
+              setValue={(x: string) => {
+                if (item.settings && item.settings.unit && x !== '') {
+                  x = x + item.settings.unit;
+                }
+                this.props.setMetaState({ [key]: btoa(x) });
+              }}
+              label={item.label}
+              unit={item.settings ? item.settings.unit : null}
+            />
+          );
+        case 'base-64-password':
+          return (
+            <Base64InputRow
+              key={i}
+              isRequired={item.required}
+              type='b64-pass'
+              value={this.getInputValue(item)}
+              setValue={(x: string) => {
+                if (item.settings && item.settings.unit && x !== '') {
+                  x = x + item.settings.unit;
+                }
+                this.props.setMetaState({ [key]: btoa(x) });
+              }}
+              label={item.label}
+              unit={item.settings ? item.settings.unit : null}
             />
           );
         default:

@@ -67,6 +67,8 @@ jobs:
           DISCORD_KEY=${{secrets.DISCORD_KEY}}
           DISCORD_CID=${{secrets.DISCORD_CID}}
           FEEDBACK_ENDPOINT=${{secrets.FEEDBACK_ENDPOINT}}
+          POSTHOG_API_KEY=${{secrets.POSTHOG_API_KEY}}
+          POSTHOG_HOST=${{secrets.POSTHOG_HOST}}
           EOL
       - name: Build and zip static folder
         run: |
@@ -78,11 +80,6 @@ jobs:
           zip --junk-paths ./release/static/static_${{steps.tag_name.outputs.tag}}.zip ./dashboard/build/*
         env:
           NODE_ENV: production
-          API_SERVER: ${{ secrets.API_SERVER }}
-          FULLSTORY_ORG_ID: ${{ secrets.FULLSTORY_ORG_ID }}
-          DISCORD_KEY: ${{ secrets.DISCORD_KEY }}
-          DISCORD_CID: ${{ secrets.DISCORD_CID }}
-          FEEDBACK_ENDPOINT: ${{ secrets.FEEDBACK_ENDPOINT }}
       - name: Build Linux binaries
         run: |
           go build -ldflags="-w -s -X 'github.com/porter-dev/porter/cli/cmd.Version=${{steps.tag_name.outputs.tag}}'" -a -tags cli -o ./porter ./cli &
@@ -92,6 +89,7 @@ jobs:
         env:
           GOOS: linux
           GOARCH: amd64
+          CGO_ENABLED: 1
       # Note: we have to zip all binaries before uploading them as artifacts --
       # without this step, the binaries will be uploaded but the file metadata will
       # be listed as plaintext after downloading the artifact in a later step
@@ -103,36 +101,18 @@ jobs:
           zip --junk-paths ./release/linux/porter_${{steps.tag_name.outputs.tag}}_Linux_x86_64.zip ./porter
           zip --junk-paths ./release/linux/portersvr_${{steps.tag_name.outputs.tag}}_Linux_x86_64.zip ./portersvr
           zip --junk-paths ./release/linux/docker-credential-porter_${{steps.tag_name.outputs.tag}}_Linux_x86_64.zip ./docker-credential-porter
-      - name: Build Darwin binaries
+      - name: Build and zip Darwin binaries
         run: |
-          go build -ldflags="-w -s -X 'github.com/porter-dev/porter/cli/cmd.Version=${{steps.tag_name.outputs.tag}}'" -a -tags cli -o ./porter ./cli &
-          go build -ldflags="-w -s -X 'main.Version=${{steps.tag_name.outputs.tag}}'" -a -o ./docker-credential-porter ./cmd/docker-credential-porter/ &
-          go build -ldflags="-w -s" -a -o ./portersvr ./cmd/app/ &
-          wait
-        env:
-          GOOS: darwin
-          GOARCH: amd64
-      - name: Zip Darwin binaries
+          docker build . --file ./build/Dockerfile.osx -t osx
+          docker run \
+          --mount type=bind,source="$(pwd)"/release,target=/release \
+          osx:latest ${{steps.tag_name.outputs.tag}}
+      - name: Build and zip Windows binaries
         run: |
-          mkdir -p ./release/darwin
-          zip --junk-paths ./release/darwin/UNSIGNED_porter_${{steps.tag_name.outputs.tag}}_Darwin_x86_64.zip ./porter
-          zip --junk-paths ./release/darwin/UNSIGNED_portersvr_${{steps.tag_name.outputs.tag}}_Darwin_x86_64.zip ./portersvr
-          zip --junk-paths ./release/darwin/UNSIGNED_docker-credential-porter_${{steps.tag_name.outputs.tag}}_Darwin_x86_64.zip ./docker-credential-porter
-      - name: Build Windows binaries
-        run: |
-          go build -ldflags="-w -s -X 'github.com/porter-dev/porter/cli/cmd.Version=${{steps.tag_name.outputs.tag}}'" -a -tags cli -o ./porter.exe ./cli &
-          go build -ldflags="-w -s -X 'main.Version=${{steps.tag_name.outputs.tag}}'" -a -o ./docker-credential-porter.exe ./cmd/docker-credential-porter/ &
-          go build -ldflags="-w -s" -a -o ./portersvr.exe ./cmd/app/ &
-          wait
-        env:
-          GOOS: windows
-          GOARCH: amd64
-      - name: Zip Windows binaries
-        run: |
-          mkdir -p ./release/windows
-          zip --junk-paths ./release/windows/porter_${{steps.tag_name.outputs.tag}}_Windows_x86_64.zip ./porter.exe
-          zip --junk-paths ./release/windows/portersvr_${{steps.tag_name.outputs.tag}}_Windows_x86_64.zip ./portersvr.exe
-          zip --junk-paths ./release/windows/docker-credential-porter_${{steps.tag_name.outputs.tag}}_Windows_x86_64.zip ./docker-credential-porter.exe
+          docker build . --file ./build/Dockerfile.win -t win
+          docker run \
+          --mount type=bind,source="$(pwd)"/release,target=/release \
+          win:latest ${{steps.tag_name.outputs.tag}}
       - name: Upload binaries
         uses: actions/upload-artifact@v2
         with:

@@ -103,14 +103,8 @@ func (r *Registry) listGCRRepositories(
 		return nil, err
 	}
 
-	// get oauth2 access token
-	oauthTok, err := gcp.GetBearerToken(r.getTokenCache, r.setTokenCacheFunc(repo))
-
-	if err != nil {
-		return nil, err
-	}
-
-	// use JWT token to request catalog
+	// Just use service account key to authenticate, since scopes may not be in place
+	// for oauth. This also prevents us from making more requests.
 	client := &http.Client{}
 
 	req, err := http.NewRequest(
@@ -123,9 +117,7 @@ func (r *Registry) listGCRRepositories(
 		return nil, err
 	}
 
-	req.SetBasicAuth("oauth2accesstoken", oauthTok)
-
-	// req.Header.Add("Authorization", "Bearer "+jwtTok)
+	req.SetBasicAuth("_json_key", string(gcp.GCPKeyData))
 
 	resp, err := client.Do(req)
 
@@ -279,13 +271,6 @@ func (r *Registry) listGCRImages(repoName string, repo repository.Repository) ([
 		return nil, err
 	}
 
-	// get oauth2 access token
-	oauthTok, err := gcp.GetBearerToken(r.getTokenCache, r.setTokenCacheFunc(repo))
-
-	if err != nil {
-		return nil, err
-	}
-
 	// use JWT token to request catalog
 	client := &http.Client{}
 
@@ -299,7 +284,7 @@ func (r *Registry) listGCRImages(repoName string, repo repository.Repository) ([
 		return nil, err
 	}
 
-	req.SetBasicAuth("oauth2accesstoken", oauthTok)
+	req.SetBasicAuth("_json_key", string(gcp.GCPKeyData))
 
 	resp, err := client.Do(req)
 

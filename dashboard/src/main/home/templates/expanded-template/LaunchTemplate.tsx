@@ -51,9 +51,10 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
     namespaceOptions: [] as { label: string, value: string }[],
   };
 
-  onSubmitAddon = () => {
+  onSubmitAddon = (wildcard?: any) => {
     let { currentCluster, currentProject } = this.context;
     let name = randomWords({ exactly: 3, join: '-' });
+    this.setState({ saveValuesStatus: 'loading' });
     api.deployTemplate('<token>', {
       templateName: this.props.currentTemplate.name,
       storage: StorageType.Secret,
@@ -121,28 +122,26 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
     return (
       <ValuesWrapper
         formTabs={this.props.form?.tabs}
-        onSubmit={this.onSubmit}
+        onSubmit={this.props.currentTemplate.name === 'docker' ? this.onSubmit : this.onSubmitAddon}
         saveValuesStatus={this.state.saveValuesStatus}
-        disabled={!this.state.selectedImageUrl}
+        disabled={this.props.form?.hasSource ? !this.state.selectedImageUrl : false}
       >
-        {
-          (metaState: any, setMetaState: any) => {
-            return this.props.form?.tabs.map((tab: any, i: number) => {
+        {(metaState: any, setMetaState: any) => {
+          return this.props.form?.tabs.map((tab: any, i: number) => {
 
-              // If tab is current, render
-              if (tab.name === this.state.currentTab) {
-                return (
-                  <ValuesForm 
-                    metaState={metaState}
-                    setMetaState={setMetaState}
-                    key={tab.name}
-                    sections={tab.sections} 
-                  />
-                );
-              }
-            });
-          }
-        }
+            // If tab is current, render
+            if (tab.name === this.state.currentTab) {
+              return (
+                <ValuesForm 
+                  metaState={metaState}
+                  setMetaState={setMetaState}
+                  key={tab.name}
+                  sections={tab.sections} 
+                />
+              );
+            }
+          });
+        }}
       </ValuesWrapper>
     );
   }
@@ -212,19 +211,28 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
   renderTabRegion = () => {
     if (this.state.tabOptions.length > 0) {
       return (
-        <TabRegion
-          options={this.state.tabOptions}
-          currentTab={this.state.currentTab}
-          setCurrentTab={(x: string) => this.setState({ currentTab: x })}
-        >
-          {this.renderTabContents()}
-        </TabRegion>
+        <>
+          <Subtitle>Configure additional settings for this template (optional).</Subtitle>
+          <TabRegion
+            options={this.state.tabOptions}
+            currentTab={this.state.currentTab}
+            setCurrentTab={(x: string) => this.setState({ currentTab: x })}
+          >
+            {this.renderTabContents()}
+          </TabRegion>
+        </>
       );
     } else {
       return (
         <Wrapper>
           <Placeholder>
-            No additional settings found.
+            To configure this chart through Porter, 
+            <Link 
+              target='_blank'
+              href='https://docs.getporter.dev/docs/porter-templates'
+            >
+              refer to our docs
+            </Link>.
           </Placeholder>
           <SaveButton
             text='Deploy'
@@ -233,6 +241,27 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
             makeFlush={true}
           />
         </Wrapper>
+      );
+    }
+  }
+
+  // Display if current template uses source (image or repo)
+  renderSourceSelector = () => {
+    if (this.props.form?.hasSource) {
+      return (
+        <>
+          <Subtitle>Select the container image you would like to connect to this template.</Subtitle>
+          <DarkMatter />
+          <ImageSelector
+            selectedTag={this.state.selectedTag}
+            selectedImageUrl={this.state.selectedImageUrl}
+            setSelectedImageUrl={this.setSelectedImageUrl}
+            setSelectedTag={(x: string) => this.setState({ selectedTag: x })}
+            forceExpanded={true}
+            setCurrentView={this.props.setCurrentView}
+          />
+          <br />
+        </>
       );
     }
   }
@@ -281,20 +310,7 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
             closeOverlay={true}
           />
         </ClusterSection>
-
-        <Subtitle>Select the container image you would like to connect to this template.</Subtitle>
-        <DarkMatter />
-        <ImageSelector
-          selectedTag={this.state.selectedTag}
-          selectedImageUrl={this.state.selectedImageUrl}
-          setSelectedImageUrl={this.setSelectedImageUrl}
-          setSelectedTag={(x: string) => this.setState({ selectedTag: x })}
-          forceExpanded={true}
-          setCurrentView={this.props.setCurrentView}
-        />
-
-        <br />
-        <Subtitle>Configure additional settings for this template (optional).</Subtitle>
+        {this.renderSourceSelector()}
         {this.renderTabRegion()}
       </StyledLaunchTemplate>
     );
@@ -303,9 +319,21 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
 
 LaunchTemplate.contextType = Context;
 
+const Link = styled.a`
+  margin-left: 5px;
+`;
+
+const LineBreak = styled.div`
+  width: calc(100% - 0px);
+  height: 2px;
+  background: #ffffff20;
+  margin: 35px 0px 35px;
+`;
+
 const Wrapper = styled.div`
   width: 100%;
   position: relative;
+  padding-top: 20px;
   padding-bottom: 70px;
 `;
 
@@ -315,7 +343,7 @@ const Placeholder = styled.div`
   background: #ffffff11;
   border: 1px solid #ffffff44;
   border-radius: 5px;
-  color: #ffffff44;
+  color: #aaaabb;
   font-size: 13px;
   display: flex;
   align-items: center;

@@ -52,12 +52,15 @@ func GetAgentFromK8sAgent(stg string, ns string, l *logger.Logger, k8sAgent *kub
 	}
 
 	// use k8s agent to create Helm agent
-	return &Agent{&action.Configuration{
-		RESTClientGetter: k8sAgent.RESTClientGetter,
-		KubeClient:       kube.New(k8sAgent.RESTClientGetter),
-		Releases:         StorageMap[stg](l, clientset.CoreV1(), ns),
-		Log:              l.Printf,
-	}}, nil
+	return &Agent{
+		ActionConfig: &action.Configuration{
+			RESTClientGetter: k8sAgent.RESTClientGetter,
+			KubeClient:       kube.New(k8sAgent.RESTClientGetter),
+			Releases:         StorageMap[stg](l, clientset.CoreV1(), ns),
+			Log:              l.Printf,
+		},
+		K8sAgent: k8sAgent,
+	}, nil
 }
 
 // GetAgentInClusterConfig creates a new Agent from inside the cluster using
@@ -77,12 +80,15 @@ func GetAgentInClusterConfig(form *Form, l *logger.Logger) (*Agent, error) {
 	}
 
 	// use k8s agent to create Helm agent
-	return &Agent{&action.Configuration{
-		RESTClientGetter: k8sAgent.RESTClientGetter,
-		KubeClient:       kube.New(k8sAgent.RESTClientGetter),
-		Releases:         StorageMap[form.Storage](l, clientset.CoreV1(), form.Namespace),
-		Log:              l.Printf,
-	}}, nil
+	return &Agent{
+		ActionConfig: &action.Configuration{
+			RESTClientGetter: k8sAgent.RESTClientGetter,
+			KubeClient:       kube.New(k8sAgent.RESTClientGetter),
+			Releases:         StorageMap[form.Storage](l, clientset.CoreV1(), form.Namespace),
+			Log:              l.Printf,
+		},
+		K8sAgent: k8sAgent,
+	}, nil
 }
 
 // GetAgentTesting creates a new Agent using an optional existing storage class
@@ -93,14 +99,16 @@ func GetAgentTesting(form *Form, storage *storage.Storage, l *logger.Logger) *Ag
 		testStorage = StorageMap["memory"](nil, nil, "")
 	}
 
-	return &Agent{&action.Configuration{
-		Releases: testStorage,
-		KubeClient: &kubefake.FailingKubeClient{
-			PrintingKubeClient: kubefake.PrintingKubeClient{
-				Out: ioutil.Discard,
+	return &Agent{
+		ActionConfig: &action.Configuration{
+			Releases: testStorage,
+			KubeClient: &kubefake.FailingKubeClient{
+				PrintingKubeClient: kubefake.PrintingKubeClient{
+					Out: ioutil.Discard,
+				},
 			},
+			Capabilities: chartutil.DefaultCapabilities,
+			Log:          l.Printf,
 		},
-		Capabilities: chartutil.DefaultCapabilities,
-		Log:          l.Printf,
-	}}
+	}
 }

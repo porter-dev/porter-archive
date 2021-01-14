@@ -4,6 +4,9 @@ import (
 	"fmt"
 
 	"github.com/pkg/errors"
+	"github.com/porter-dev/porter/internal/kubernetes"
+	"github.com/porter-dev/porter/internal/models"
+	"github.com/porter-dev/porter/internal/repository"
 	"helm.sh/helm/v3/pkg/action"
 	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/release"
@@ -13,6 +16,7 @@ import (
 // Agent is a Helm agent for performing helm operations
 type Agent struct {
 	ActionConfig *action.Configuration
+	K8sAgent     *kubernetes.Agent
 }
 
 // ListReleases lists releases based on a ListFilter
@@ -49,9 +53,17 @@ func (a *Agent) GetReleaseHistory(
 	return cmd.Run(name)
 }
 
+type UpgradeReleaseConfig struct {
+	Name       string
+	Values     map[string]interface{}
+	Cluster    *models.Cluster
+	Repo       repository.Repository
+	Registries []*models.Registry
+}
+
 // UpgradeRelease upgrades a specific release with new values.yaml
 func (a *Agent) UpgradeRelease(
-	name string,
+	conf *UpgradeReleaseConfig,
 	values string,
 ) (*release.Release, error) {
 	valuesYaml, err := chartutil.ReadValues([]byte(values))
@@ -60,16 +72,17 @@ func (a *Agent) UpgradeRelease(
 		return nil, fmt.Errorf("Values could not be parsed: %v", err)
 	}
 
-	return a.UpgradeReleaseByValues(name, valuesYaml)
+	conf.Values = valuesYaml
+
+	return a.UpgradeReleaseByValues(conf)
 }
 
 // UpgradeReleaseByValues upgrades a release by unmarshaled yaml values
 func (a *Agent) UpgradeReleaseByValues(
-	name string,
-	values map[string]interface{},
+	conf *UpgradeReleaseConfig,
 ) (*release.Release, error) {
 	// grab the latest release
-	rel, err := a.GetRelease(name, 0)
+	rel, err := a.GetRelease(conf.Name, 0)
 
 	if err != nil {
 		return nil, fmt.Errorf("Could not get release to be upgraded: %v", err)
@@ -78,7 +91,22 @@ func (a *Agent) UpgradeReleaseByValues(
 	ch := rel.Chart
 
 	cmd := action.NewUpgrade(a.ActionConfig)
-	res, err := cmd.Run(name, ch, values)
+
+	if conf.Cluster != nil && a.K8sAgent != nil && conf.Registries != nil && len(conf.Registries) > 0 {
+		cmd.PostRenderer, err = NewDockerSecretsPostRenderer(
+			conf.Cluster,
+			conf.Repo,
+			a.K8sAgent,
+			rel.Namespace,
+			conf.Registries,
+		)
+
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	res, err := cmd.Run(conf.Name, ch, conf.Values)
 
 	if err != nil {
 		return nil, fmt.Errorf("Upgrade failed: %v", err)
@@ -89,10 +117,13 @@ func (a *Agent) UpgradeReleaseByValues(
 
 // InstallChartConfig is the config required to install a chart
 type InstallChartConfig struct {
-	Chart     *chart.Chart
-	Name      string
-	Namespace string
-	Values    map[string]interface{}
+	Chart      *chart.Chart
+	Name       string
+	Namespace  string
+	Values     map[string]interface{}
+	Cluster    *models.Cluster
+	Repo       repository.Repository
+	Registries []*models.Registry
 }
 
 // InstallChartFromValuesBytes reads the raw values and calls Agent.InstallChart
@@ -128,9 +159,22 @@ func (a *Agent) InstallChart(
 		return nil, err
 	}
 
-	// if chartRequested.Metadata.Deprecated {
-	// 	return nil, fmt.Errorf("This chart is deprecated")
-	// }
+	var err error
+
+	// only add the postrenderer if required fields exist
+	if conf.Cluster != nil && a.K8sAgent != nil && conf.Registries != nil && len(conf.Registries) > 0 {
+		cmd.PostRenderer, err = NewDockerSecretsPostRenderer(
+			conf.Cluster,
+			conf.Repo,
+			a.K8sAgent,
+			conf.Namespace,
+			conf.Registries,
+		)
+
+		if err != nil {
+			return nil, err
+		}
+	}
 
 	if req := conf.Chart.Metadata.Dependencies; req != nil {
 		if err := action.CheckDependencies(conf.Chart, req); err != nil {

@@ -430,6 +430,13 @@ func (app *App) HandleGetReleaseToken(w http.ResponseWriter, r *http.Request) {
 
 // HandleUpgradeRelease upgrades a release with new values.yaml
 func (app *App) HandleUpgradeRelease(w http.ResponseWriter, r *http.Request) {
+	projID, err := strconv.ParseUint(chi.URLParam(r, "project_id"), 0, 64)
+
+	if err != nil || projID == 0 {
+		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
+		return
+	}
+
 	name := chi.URLParam(r, "name")
 
 	vals, err := url.ParseQuery(r.URL.RawQuery)
@@ -469,7 +476,21 @@ func (app *App) HandleUpgradeRelease(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = agent.UpgradeRelease(form.Name, form.Values)
+	registries, err := app.Repo.Registry.ListRegistriesByProjectID(uint(projID))
+
+	if err != nil {
+		app.handleErrorDataRead(err, w)
+		return
+	}
+
+	conf := &helm.UpgradeReleaseConfig{
+		Name:       form.Name,
+		Cluster:    form.ReleaseForm.Cluster,
+		Repo:       *app.Repo,
+		Registries: registries,
+	}
+
+	_, err = agent.UpgradeRelease(conf, form.Values)
 
 	if err != nil {
 		app.sendExternalError(err, http.StatusInternalServerError, HTTPError{
@@ -533,7 +554,22 @@ func (app *App) HandleReleaseDeployHook(w http.ResponseWriter, r *http.Request) 
 	newval := map[string]interface{}{}
 	newval["image"] = image
 
-	_, err = agent.UpgradeReleaseByValues(form.Name, newval)
+	registries, err := app.Repo.Registry.ListRegistriesByProjectID(uint(form.ReleaseForm.Cluster.ProjectID))
+
+	if err != nil {
+		app.handleErrorDataRead(err, w)
+		return
+	}
+
+	conf := &helm.UpgradeReleaseConfig{
+		Name:       form.Name,
+		Cluster:    form.ReleaseForm.Cluster,
+		Repo:       *app.Repo,
+		Registries: registries,
+		Values:     newval,
+	}
+
+	_, err = agent.UpgradeReleaseByValues(conf)
 
 	if err != nil {
 		app.sendExternalError(err, http.StatusInternalServerError, HTTPError{
@@ -610,7 +646,22 @@ func (app *App) HandleReleaseDeployWebhook(w http.ResponseWriter, r *http.Reques
 	newval := map[string]interface{}{}
 	newval["image"] = image
 
-	_, err = agent.UpgradeReleaseByValues(form.Name, newval)
+	registries, err := app.Repo.Registry.ListRegistriesByProjectID(uint(form.ReleaseForm.Cluster.ProjectID))
+
+	if err != nil {
+		app.handleErrorDataRead(err, w)
+		return
+	}
+
+	conf := &helm.UpgradeReleaseConfig{
+		Name:       form.Name,
+		Cluster:    form.ReleaseForm.Cluster,
+		Repo:       *app.Repo,
+		Registries: registries,
+		Values:     newval,
+	}
+
+	_, err = agent.UpgradeReleaseByValues(conf)
 
 	if err != nil {
 		app.sendExternalError(err, http.StatusInternalServerError, HTTPError{

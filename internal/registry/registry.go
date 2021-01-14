@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"strings"
 	"time"
 
 	"github.com/aws/aws-sdk-go/service/ecr"
@@ -282,9 +283,17 @@ func (r *Registry) listGCRImages(repoName string, repo repository.Repository) ([
 	// use JWT token to request catalog
 	client := &http.Client{}
 
+	parsedURL, err := url.Parse(r.URL)
+
+	if err != nil {
+		return nil, err
+	}
+
+	trimmedPath := strings.Trim(parsedURL.Path, "/")
+
 	req, err := http.NewRequest(
 		"GET",
-		fmt.Sprintf("https://gcr.io/v2/%s/tags/list", repoName),
+		fmt.Sprintf("https://gcr.io/v2/%s/%s/tags/list", trimmedPath, repoName),
 		nil,
 	)
 

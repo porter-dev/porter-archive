@@ -102,7 +102,7 @@ func (app *App) HandleDeployTemplate(w http.ResponseWriter, r *http.Request) {
 		Registries: registries,
 	}
 
-	_, err = agent.InstallChart(conf)
+	_, err = agent.InstallChart(conf, app.DOConf)
 
 	if err != nil {
 		app.sendExternalError(err, http.StatusInternalServerError, HTTPError{

@@ -2,7 +2,6 @@ package helm
 
 import (
 	"bytes"
-	"fmt"
 	"io"
 	"net/url"
 	"regexp"
@@ -13,6 +12,7 @@ import (
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/models/integrations"
 	"github.com/porter-dev/porter/internal/repository"
+	"golang.org/x/oauth2"
 	"gopkg.in/yaml.v2"
 	"helm.sh/helm/v3/pkg/postrender"
 
@@ -31,6 +31,7 @@ type DockerSecretsPostRenderer struct {
 	Repo      repository.Repository
 	Agent     *kubernetes.Agent
 	Namespace string
+	DOAuth    *oauth2.Config
 
 	registries map[string]*models.Registry
 
@@ -48,6 +49,7 @@ func NewDockerSecretsPostRenderer(
 	agent *kubernetes.Agent,
 	namespace string,
 	regs []*models.Registry,
+	doAuth *oauth2.Config,
 ) (postrender.PostRenderer, error) {
 	// Registries is a map of registry URLs to registry ids
 	registries := make(map[string]*models.Registry)
@@ -72,8 +74,6 @@ func NewDockerSecretsPostRenderer(
 		}
 
 		registries[addReg] = reg
-
-		fmt.Println("ADDED REGISTRIES", addReg)
 	}
 
 	return &DockerSecretsPostRenderer{
@@ -81,6 +81,7 @@ func NewDockerSecretsPostRenderer(
 		Repo:       repo,
 		Agent:      agent,
 		Namespace:  namespace,
+		DOAuth:     doAuth,
 		registries: registries,
 		podSpecs:   make([]resource, 0),
 		resources:  make([]resource, 0),
@@ -105,6 +106,7 @@ func (d *DockerSecretsPostRenderer) Run(
 		d.Repo,
 		d.Namespace,
 		linkedRegs,
+		d.DOAuth,
 	)
 
 	if err != nil {
@@ -252,8 +254,6 @@ func (d *DockerSecretsPostRenderer) getPodSpecs(resources []resource) {
 
 func (d *DockerSecretsPostRenderer) updatePodSpecs(secrets map[string]string) {
 	for _, podSpec := range d.podSpecs {
-		fmt.Println("PARSING POD SPEC", podSpec)
-
 		containersVal, hasContainers := podSpec["containers"]
 
 		if !hasContainers {

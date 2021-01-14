@@ -498,7 +498,7 @@ func (app *App) HandleUpgradeRelease(w http.ResponseWriter, r *http.Request) {
 		Registries: registries,
 	}
 
-	_, err = agent.UpgradeRelease(conf, form.Values)
+	_, err = agent.UpgradeRelease(conf, form.Values, app.DOConf)
 
 	if err != nil {
 		app.sendExternalError(err, http.StatusInternalServerError, HTTPError{
@@ -578,7 +578,7 @@ func (app *App) HandleReleaseDeployHook(w http.ResponseWriter, r *http.Request) 
 		Values:     newval,
 	}
 
-	_, err = agent.UpgradeReleaseByValues(conf)
+	_, err = agent.UpgradeReleaseByValues(conf, app.DOConf)
 
 	if err != nil {
 		app.sendExternalError(err, http.StatusInternalServerError, HTTPError{
@@ -671,7 +671,7 @@ func (app *App) HandleReleaseDeployWebhook(w http.ResponseWriter, r *http.Reques
 		Values:     newval,
 	}
 
-	_, err = agent.UpgradeReleaseByValues(conf)
+	_, err = agent.UpgradeReleaseByValues(conf, app.DOConf)
 
 	if err != nil {
 		app.sendExternalError(err, http.StatusInternalServerError, HTTPError{

@@ -48,6 +48,8 @@ func (p *PorterHelper) Get(serverURL string) (user string, secret string, err er
 
 	if strings.Contains(serverURL, "gcr.io") {
 		return p.getGCR(serverURL)
+	} else if strings.Contains(serverURL, "registry.digitalocean.com") {
+		return p.getDOCR(serverURL)
 	}
 
 	return p.getECR(serverURL)
@@ -94,6 +96,49 @@ func (p *PorterHelper) getGCR(serverURL string) (user string, secret string, err
 	}
 
 	return "oauth2accesstoken", token, nil
+}
+
+func (p *PorterHelper) getDOCR(serverURL string) (user string, secret string, err error) {
+	urlP, err := url.Parse(serverURL)
+
+	if err != nil {
+		return "", "", err
+	}
+
+	credCache := BuildCredentialsCache(urlP.Host)
+	cachedEntry := credCache.Get(serverURL)
+
+	var token string
+
+	if cachedEntry != nil && cachedEntry.IsValid(time.Now()) {
+		token = cachedEntry.AuthorizationToken
+	} else {
+		host := viper.GetString("host")
+		projID := viper.GetUint("project")
+
+		client := api.NewClient(host+"/api", "cookie.json")
+
+		// get a token from the server
+		tokenResp, err := client.GetDOCRAuthorizationToken(context.Background(), projID, &api.GetDOCRTokenRequest{
+			ServerURL: serverURL,
+		})
+
+		if err != nil {
+			return "", "", err
+		}
+
+		token = tokenResp.Token
+
+		// set the token in cache
+		credCache.Set(serverURL, &AuthEntry{
+			AuthorizationToken: token,
+			RequestedAt:        time.Now(),
+			ExpiresAt:          *tokenResp.ExpiresAt,
+			ProxyEndpoint:      serverURL,
+		})
+	}
+
+	return token, token, nil
 }
 
 func (p *PorterHelper) getECR(serverURL string) (user string, secret string, err error) {

@@ -1,6 +1,8 @@
 package integrations
 
-import "gorm.io/gorm"
+import (
+	"gorm.io/gorm"
+)
 
 // OAuthIntegrationClient is the name of an OAuth mechanism client
 type OAuthIntegrationClient string

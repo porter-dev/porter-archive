@@ -57,7 +57,8 @@ func (app *App) HandleDeployTemplate(w http.ResponseWriter, r *http.Request) {
 	form := &forms.InstallChartTemplateForm{
 		ReleaseForm: &forms.ReleaseForm{
 			Form: &helm.Form{
-				Repo: app.Repo,
+				Repo:              app.Repo,
+				DigitalOceanOAuth: app.DOConf,
 			},
 		},
 		ChartTemplateForm: &forms.ChartTemplateForm{},

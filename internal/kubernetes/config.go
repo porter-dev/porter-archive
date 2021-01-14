@@ -8,7 +8,9 @@ import (
 	"time"
 
 	"github.com/porter-dev/porter/internal/models"
+	"github.com/porter-dev/porter/internal/oauth"
 	"github.com/porter-dev/porter/internal/repository"
+	"golang.org/x/oauth2"
 	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
@@ -88,6 +90,9 @@ func GetAgentTesting(objects ...runtime.Object) *Agent {
 type OutOfClusterConfig struct {
 	Cluster *models.Cluster
 	Repo    *repository.Repository
+
+	// Only required if using DigitalOcean OAuth as an auth mechanism
+	DigitalOceanOAuth *oauth2.Config
 }
 
 // ToRESTConfig creates a kubernetes REST client factory -- it calls ClientConfig on
@@ -286,6 +291,23 @@ func (conf *OutOfClusterConfig) createRawConfigFromCluster() (*api.Config, error
 		}
 
 		tok, err := awsAuth.GetBearerToken(conf.getTokenCache, conf.setTokenCache)
+
+		if err != nil {
+			return nil, err
+		}
+
+		// add this as a bearer token
+		authInfoMap[authInfoName].Token = tok
+	case models.DO:
+		oauthInt, err := conf.Repo.OAuthIntegration.ReadOAuthIntegration(
+			cluster.DOIntegrationID,
+		)
+
+		if err != nil {
+			return nil, err
+		}
+
+		tok, err := oauth.GetAccessToken(oauthInt, conf.DigitalOceanOAuth, *conf.Repo)
 
 		if err != nil {
 			return nil, err

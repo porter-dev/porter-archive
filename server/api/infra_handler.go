@@ -18,14 +18,14 @@ func (app *App) HandleListProjectInfra(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	infras, err := app.Repo.AWSInfra.ListAWSInfrasByProjectID(uint(projID))
+	infras, err := app.Repo.Infra.ListInfrasByProjectID(uint(projID))
 
 	if err != nil {
 		app.handleErrorRead(err, ErrProjectDataRead, w)
 		return
 	}
 
-	extInfras := make([]*models.AWSInfraExternal, 0)
+	extInfras := make([]*models.InfraExternal, 0)
 
 	for _, infra := range infras {
 		extInfras = append(extInfras, infra.Externalize())

@@ -1,0 +1,323 @@
+package helm
+
+import (
+	"bytes"
+	"fmt"
+	"io"
+	"regexp"
+	"strings"
+
+	"github.com/aws/aws-sdk-go/aws/arn"
+	"github.com/porter-dev/porter/internal/kubernetes"
+	"github.com/porter-dev/porter/internal/models"
+	"github.com/porter-dev/porter/internal/models/integrations"
+	"github.com/porter-dev/porter/internal/repository"
+	"gopkg.in/yaml.v2"
+	"helm.sh/helm/v3/pkg/postrender"
+
+	"github.com/docker/distribution/reference"
+)
+
+// DockerSecretsPostRenderer is a Helm post-renderer that adds image pull secrets to
+// pod specs that would otherwise be unable to pull an image.
+//
+// The post-renderer currently looks for two types of registries: GCR and ECR (TODO: DOCR
+// and Dockerhub). It also detects if the image pull secret is necessary: if GCR image pulls
+// occur in a GKE cluster in the same project, or if ECR image pulls exist in an EKS cluster
+// in the same organization + region, an image pull is not necessary.
+type DockerSecretsPostRenderer struct {
+	Cluster   *models.Cluster
+	Repo      repository.Repository
+	Agent     *kubernetes.Agent
+	Namespace string
+
+	registries map[string]*models.Registry
+
+	podSpecs []resource
+}
+
+// while manifests are map[string]interface{} at the top level,
+// nested keys will be of type map[interface{}]interface{}
+type resource map[interface{}]interface{}
+
+func NewDockerSecretsPostRenderer() (postrender.PostRenderer, error) {
+	// Registries is a map of registry URLs to registry ids. Input
+	// registries should be parsed of protocol, trailing slashes, and
+	// whitespace -- TODO
+
+	return &DockerSecretsPostRenderer{
+		podSpecs: make([]resource, 0),
+	}, nil
+}
+
+func (d *DockerSecretsPostRenderer) Run(
+	renderedManifests *bytes.Buffer,
+) (modifiedManifests *bytes.Buffer, err error) {
+	bufCopy := bytes.NewBuffer(renderedManifests.Bytes())
+
+	linkedRegs, err := d.getRegistriesToLink(bufCopy)
+
+	// if we encountered an error here, we'll render the manifests anyway
+	// without modification
+	if err != nil {
+		return renderedManifests, nil
+	}
+
+	// create the necessary secrets
+	secrets, err := d.Agent.CreateImagePullSecrets(
+		d.Repo,
+		d.Namespace,
+		linkedRegs,
+	)
+
+	fmt.Println(secrets, err)
+
+	return renderedManifests, nil
+}
+
+func (d *DockerSecretsPostRenderer) getRegistriesToLink(renderedManifests *bytes.Buffer) (map[string]*models.Registry, error) {
+	// create a map of registry names to registries: these are the registries
+	// that a secret will be generated for, if it does not exist
+	linkedRegs := make(map[string]*models.Registry)
+
+	resources, err := d.decodeRenderedManifests(renderedManifests)
+
+	if err != nil {
+		return linkedRegs, err
+	}
+
+	// read the pod specs into the post-renderer object
+	d.getPodSpecs(resources)
+
+	for _, podSpec := range d.podSpecs {
+		// get all images
+		images := d.getImageList(podSpec)
+
+		// read the image url
+		for _, image := range images {
+			named, err := reference.ParseNormalizedNamed(image)
+
+			if err != nil {
+				continue
+			}
+
+			domain := reference.Domain(named)
+			path := reference.Path(named)
+
+			regName := domain
+
+			if pathArr := strings.Split(path, "/"); len(pathArr) > 1 {
+				regName += "/" + strings.Join(pathArr[:len(pathArr)-1], "/")
+			}
+
+			// check if the integration is native to the cluster/registry combination
+			isNative := d.isRegistryNative(regName)
+
+			if isNative {
+				continue
+			}
+
+			reg, exists := d.registries[regName]
+
+			if !exists {
+				continue
+			}
+
+			// if the registry exists, add it to the map
+			linkedRegs[regName] = reg
+		}
+	}
+
+	return linkedRegs, nil
+}
+
+func (d *DockerSecretsPostRenderer) decodeRenderedManifests(
+	renderedManifests *bytes.Buffer,
+) ([]resource, error) {
+	// use the yaml decoder to parse the multi-document yaml.
+	decoder := yaml.NewDecoder(renderedManifests)
+
+	resources := make([]resource, 0)
+
+	for {
+		res := make(resource)
+		err := decoder.Decode(&res)
+		if err == io.EOF {
+			break
+		}
+
+		if err != nil {
+			return nil, err
+		}
+
+		resources = append(resources, res)
+	}
+
+	return resources, nil
+}
+
+func (d *DockerSecretsPostRenderer) getPodSpecs(resources []resource) {
+	for _, res := range resources {
+		kindVal, hasKind := res["kind"]
+		if !hasKind {
+			continue
+		}
+
+		kind, ok := kindVal.(string)
+		if !ok {
+			continue
+		}
+
+		// manifests of list type will have an items field, items should
+		// be recursively parsed
+		if itemsVal, isList := res["items"]; isList {
+			if items, ok := itemsVal.([]interface{}); ok {
+				// convert items to resource
+				resArr := make([]resource, 0)
+				for _, item := range items {
+					if arrVal, ok := item.(resource); ok {
+						resArr = append(resArr, arrVal)
+					}
+				}
+
+				d.getPodSpecs(resArr)
+			}
+
+			continue
+		}
+
+		// otherwise, get the pod spec based on the type of resource
+		podSpec := getPodSpecFromResource(kind, res)
+
+		if podSpec == nil {
+			continue
+		}
+
+		d.podSpecs = append(d.podSpecs, podSpec)
+	}
+
+	return
+}
+
+func (d *DockerSecretsPostRenderer) getImageList(podSpec resource) []string {
+	images := make([]string, 0)
+
+	containersVal, hasContainers := podSpec["containers"]
+
+	if !hasContainers {
+		return images
+	}
+
+	containers, ok := containersVal.([]interface{})
+
+	if !ok {
+		return images
+	}
+
+	for _, container := range containers {
+		_container, ok := container.(resource)
+
+		if !ok {
+			continue
+		}
+
+		image, ok := _container["image"].(string)
+
+		if !ok {
+			continue
+		}
+
+		images = append(images, image)
+	}
+
+	return images
+}
+
+var ecrPattern = regexp.MustCompile(`(^[a-zA-Z0-9][a-zA-Z0-9-_]*)\.dkr\.ecr(\-fips)?\.([a-zA-Z0-9][a-zA-Z0-9-_]*)\.amazonaws\.com(\.cn)?`)
+
+func (d *DockerSecretsPostRenderer) isRegistryNative(regName string) bool {
+	isNative := false
+
+	if strings.Contains(regName, "gcr") && d.Cluster.AuthMechanism == models.GCP {
+		// get the project id of the cluster
+		gcpInt, err := d.Repo.GCPIntegration.ReadGCPIntegration(d.Cluster.GCPIntegrationID)
+
+		if err != nil {
+			return false
+		}
+
+		gkeProjectID, err := integrations.GCPProjectIDFromJSON(gcpInt.GCPKeyData)
+
+		if err != nil {
+			return false
+		}
+
+		// parse the project id of the gcr url
+		if regNameArr := strings.Split(regName, "/"); len(regNameArr) >= 2 {
+			gcrProjectID := regNameArr[1]
+
+			isNative = gcrProjectID == gkeProjectID
+		}
+	} else if strings.Contains(regName, "ecr") && d.Cluster.AuthMechanism == models.AWS {
+		matches := ecrPattern.FindStringSubmatch(regName)
+
+		if len(matches) < 3 {
+			return false
+		}
+
+		eksAccountID := matches[1]
+		eksRegion := matches[3]
+
+		awsInt, err := d.Repo.AWSIntegration.ReadAWSIntegration(d.Cluster.AWSIntegrationID)
+
+		if err != nil {
+			return false
+		}
+
+		err = awsInt.PopulateAWSArn()
+
+		if err != nil {
+			return false
+		}
+
+		parsedARN, err := arn.Parse(awsInt.AWSArn)
+
+		if err != nil {
+			return false
+		}
+
+		isNative = parsedARN.AccountID == eksAccountID && parsedARN.Region == eksRegion
+	}
+
+	return isNative
+}
+
+func getPodSpecFromResource(kind string, res resource) resource {
+	switch kind {
+	case "Pod":
+		return getNestedResource(res, "spec")
+	case "DaemonSet", "Deployment", "Job", "ReplicaSet", "ReplicationController", "StatefulSet":
+		return getNestedResource(res, "spec", "template", "spec")
+	case "PodTemplate":
+		return getNestedResource(res, "template", "spec")
+	case "CronJob":
+		return getNestedResource(res, "spec", "jobTemplate", "spec", "template", "spec")
+	}
+
+	return nil
+}
+
+func getNestedResource(res resource, keys ...string) resource {
+	curr := res
+	var ok bool
+
+	for _, key := range keys {
+		curr, ok = curr[key].(resource)
+
+		if !ok {
+			return nil
+		}
+	}
+
+	return curr
+}

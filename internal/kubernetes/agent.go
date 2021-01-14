@@ -310,15 +310,17 @@ func (a *Agent) ProvisionGCR(
 	operation provisioner.ProvisionerOperation,
 	pgConf *config.DBConf,
 	redisConf *config.RedisConf,
+	provImageTag string,
 ) (*batchv1.Job, error) {
 	id := infra.GetID()
 	prov := &provisioner.Conf{
-		ID:        id,
-		Name:      fmt.Sprintf("prov-%s-%s", id, string(operation)),
-		Kind:      provisioner.GCR,
-		Operation: operation,
-		Redis:     redisConf,
-		Postgres:  pgConf,
+		ID:                  id,
+		Name:                fmt.Sprintf("prov-%s-%s", id, string(operation)),
+		Kind:                provisioner.GCR,
+		Operation:           operation,
+		Redis:               redisConf,
+		Postgres:            pgConf,
+		ProvisionerImageTag: provImageTag,
 		GCP: &gcp.Conf{
 			GCPRegion:    gcpConf.GCPRegion,
 			GCPProjectID: gcpConf.GCPProjectID,
@@ -338,15 +340,17 @@ func (a *Agent) ProvisionGKE(
 	operation provisioner.ProvisionerOperation,
 	pgConf *config.DBConf,
 	redisConf *config.RedisConf,
+	provImageTag string,
 ) (*batchv1.Job, error) {
 	id := infra.GetID()
 	prov := &provisioner.Conf{
-		ID:        id,
-		Name:      fmt.Sprintf("prov-%s-%s", id, string(operation)),
-		Kind:      provisioner.GKE,
-		Operation: operation,
-		Redis:     redisConf,
-		Postgres:  pgConf,
+		ID:                  id,
+		Name:                fmt.Sprintf("prov-%s-%s", id, string(operation)),
+		Kind:                provisioner.GKE,
+		Operation:           operation,
+		Redis:               redisConf,
+		Postgres:            pgConf,
+		ProvisionerImageTag: provImageTag,
 		GCP: &gcp.Conf{
 			GCPRegion:    gcpConf.GCPRegion,
 			GCPProjectID: gcpConf.GCPProjectID,

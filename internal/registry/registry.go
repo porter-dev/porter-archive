@@ -1,9 +1,11 @@
 package registry
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/aws/aws-sdk-go/service/ecr"
@@ -11,6 +13,9 @@ import (
 	"github.com/porter-dev/porter/internal/repository"
 
 	ints "github.com/porter-dev/porter/internal/models/integrations"
+
+	"github.com/docker/cli/cli/config/configfile"
+	"github.com/docker/cli/cli/config/types"
 )
 
 // Registry wraps the gorm Registry model
@@ -308,4 +313,108 @@ func (r *Registry) listGCRImages(repoName string, repo repository.Repository) ([
 	}
 
 	return res, nil
+}
+
+// GetDockerConfigJSON returns a dockerconfigjson file contents with "auths"
+// populated.
+func (r *Registry) GetDockerConfigJSON(repo repository.Repository) ([]byte, error) {
+	var conf *configfile.ConfigFile
+	var err error
+
+	// switch on the auth mechanism to get a token
+	if r.AWSIntegrationID != 0 {
+		conf, err = r.getECRDockerConfigFile(repo)
+	}
+
+	if r.GCPIntegrationID != 0 {
+		conf, err = r.getGCRDockerConfigFile(repo)
+	}
+
+	if err != nil {
+		return nil, err
+	}
+
+	return json.Marshal(conf)
+}
+
+func (r *Registry) getECRDockerConfigFile(
+	repo repository.Repository,
+) (*configfile.ConfigFile, error) {
+	aws, err := repo.AWSIntegration.ReadAWSIntegration(
+		r.AWSIntegrationID,
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	sess, err := aws.GetSession()
+
+	if err != nil {
+		return nil, err
+	}
+
+	ecrSvc := ecr.New(sess)
+
+	output, err := ecrSvc.GetAuthorizationToken(&ecr.GetAuthorizationTokenInput{})
+
+	if err != nil {
+		return nil, err
+	}
+
+	token := *output.AuthorizationData[0].AuthorizationToken
+
+	decodedToken, err := base64.StdEncoding.DecodeString(token)
+
+	if err != nil {
+		return nil, err
+	}
+
+	parts := strings.SplitN(string(decodedToken), ":", 2)
+
+	if len(parts) < 2 {
+		return nil, err
+	}
+
+	key := r.URL
+
+	if !strings.Contains(key, "http") {
+		key = "https://" + key
+	}
+
+	return &configfile.ConfigFile{
+		AuthConfigs: map[string]types.AuthConfig{
+			key: types.AuthConfig{
+				Username: parts[0],
+				Password: parts[1],
+				Auth:     token,
+			},
+		},
+	}, nil
+}
+
+func (r *Registry) getGCRDockerConfigFile(
+	repo repository.Repository,
+) (*configfile.ConfigFile, error) {
+	token, err := r.GetGCRToken(repo)
+
+	if err != nil {
+		return nil, err
+	}
+
+	key := r.URL
+
+	if !strings.Contains(key, "http") {
+		key = "https://" + key
+	}
+
+	return &configfile.ConfigFile{
+		AuthConfigs: map[string]types.AuthConfig{
+			key: types.AuthConfig{
+				Username: "oauth2accesstoken",
+				Password: string(token.Token),
+				Auth:     string(token.Token),
+			},
+		},
+	}, nil
 }

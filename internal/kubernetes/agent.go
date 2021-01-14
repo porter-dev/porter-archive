@@ -2,6 +2,7 @@ package kubernetes
 
 import (
 	"bufio"
+	"bytes"
 	"context"
 	"fmt"
 	"io"
@@ -13,6 +14,8 @@ import (
 	"github.com/porter-dev/porter/internal/kubernetes/provisioner/aws/eks"
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/models/integrations"
+	"github.com/porter-dev/porter/internal/registry"
+	"github.com/porter-dev/porter/internal/repository"
 
 	"github.com/gorilla/websocket"
 	"github.com/porter-dev/porter/internal/helm/grapher"
@@ -20,6 +23,7 @@ import (
 	batchv1 "k8s.io/api/batch/v1"
 	v1 "k8s.io/api/core/v1"
 	v1beta1 "k8s.io/api/extensions/v1beta1"
+	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 	"k8s.io/client-go/informers"
@@ -331,4 +335,80 @@ func (a *Agent) provision(
 		job,
 		metav1.CreateOptions{},
 	)
+}
+
+// CreateImagePullSecrets will create the required image pull secrets and
+// return a map from the registry name to the name of the secret.
+func (a *Agent) CreateImagePullSecrets(
+	repo repository.Repository,
+	namespace string,
+	linkedRegs map[string]*models.Registry,
+) (map[string]string, error) {
+	res := make(map[string]string)
+
+	for key, val := range linkedRegs {
+		_reg := registry.Registry(*val)
+
+		data, err := _reg.GetDockerConfigJSON(repo)
+
+		if err != nil {
+			return nil, err
+		}
+
+		secretName := fmt.Sprintf("porter-%s-%d", val.Externalize().Service, val.ID)
+
+		secret, err := a.Clientset.CoreV1().Secrets(namespace).Get(
+			context.TODO(),
+			secretName,
+			metav1.GetOptions{},
+		)
+
+		// if not found, create the secret
+		if err != nil && errors.IsNotFound(err) {
+			_, err = a.Clientset.CoreV1().Secrets(namespace).Create(
+				context.TODO(),
+				&v1.Secret{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: secretName,
+					},
+					Data: map[string][]byte{
+						string(v1.DockerConfigJsonKey): data,
+					},
+					Type: v1.SecretTypeDockerConfigJson,
+				},
+				metav1.CreateOptions{},
+			)
+
+			if err != nil {
+				return nil, err
+			}
+
+			continue
+		} else if err != nil {
+			return nil, err
+		}
+
+		// otherwise, check that the secret contains the correct data: if
+		// if doesn't, update it
+		if !bytes.Equal(secret.Data[v1.DockerConfigJsonKey], data) {
+			_, err := a.Clientset.CoreV1().Secrets(namespace).Update(
+				context.TODO(),
+				&v1.Secret{
+					Data: map[string][]byte{
+						string(v1.DockerConfigJsonKey): data,
+					},
+				},
+				metav1.UpdateOptions{},
+			)
+
+			if err != nil {
+				return nil, err
+			}
+		}
+
+		// add secret name to the map
+		res[key] = secretName
+	}
+
+	return res, nil
 }

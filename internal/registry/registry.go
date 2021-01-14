@@ -283,7 +283,7 @@ func (r *Registry) listGCRImages(repoName string, repo repository.Repository) ([
 	// use JWT token to request catalog
 	client := &http.Client{}
 
-	parsedURL, err := url.Parse(r.URL)
+	parsedURL, err := url.Parse("https://" + r.URL)
 
 	if err != nil {
 		return nil, err
@@ -293,7 +293,7 @@ func (r *Registry) listGCRImages(repoName string, repo repository.Repository) ([
 
 	req, err := http.NewRequest(
 		"GET",
-		fmt.Sprintf("https://gcr.io/v2/%s/%s/tags/list", trimmedPath, repoName),
+		fmt.Sprintf("https://%s/v2/%s/%s/tags/list", parsedURL.Host, trimmedPath, repoName),
 		nil,
 	)
 

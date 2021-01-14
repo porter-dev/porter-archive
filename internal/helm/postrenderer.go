@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"net/url"
 	"regexp"
 	"strings"
 
@@ -33,20 +34,56 @@ type DockerSecretsPostRenderer struct {
 
 	registries map[string]*models.Registry
 
-	podSpecs []resource
+	podSpecs  []resource
+	resources []resource
 }
 
 // while manifests are map[string]interface{} at the top level,
 // nested keys will be of type map[interface{}]interface{}
 type resource map[interface{}]interface{}
 
-func NewDockerSecretsPostRenderer() (postrender.PostRenderer, error) {
-	// Registries is a map of registry URLs to registry ids. Input
-	// registries should be parsed of protocol, trailing slashes, and
-	// whitespace -- TODO
+func NewDockerSecretsPostRenderer(
+	cluster *models.Cluster,
+	repo repository.Repository,
+	agent *kubernetes.Agent,
+	namespace string,
+	regs []*models.Registry,
+) (postrender.PostRenderer, error) {
+	// Registries is a map of registry URLs to registry ids
+	registries := make(map[string]*models.Registry)
+
+	for _, reg := range regs {
+		regURL := reg.URL
+
+		if !strings.Contains(regURL, "http") {
+			regURL = "https://" + regURL
+		}
+
+		parsedRegURL, err := url.Parse(regURL)
+
+		if err != nil {
+			continue
+		}
+
+		addReg := parsedRegURL.Host
+
+		if parsedRegURL.Path != "" {
+			addReg += "/" + parsedRegURL.Path
+		}
+
+		registries[addReg] = reg
+
+		fmt.Println("ADDED REGISTRIES", addReg)
+	}
 
 	return &DockerSecretsPostRenderer{
-		podSpecs: make([]resource, 0),
+		Cluster:    cluster,
+		Repo:       repo,
+		Agent:      agent,
+		Namespace:  namespace,
+		registries: registries,
+		podSpecs:   make([]resource, 0),
+		resources:  make([]resource, 0),
 	}, nil
 }
 
@@ -70,9 +107,25 @@ func (d *DockerSecretsPostRenderer) Run(
 		linkedRegs,
 	)
 
-	fmt.Println(secrets, err)
+	if err != nil {
+		return renderedManifests, nil
+	}
 
-	return renderedManifests, nil
+	d.updatePodSpecs(secrets)
+
+	modifiedManifests = bytes.NewBuffer([]byte{})
+	encoder := yaml.NewEncoder(modifiedManifests)
+	defer encoder.Close()
+
+	for _, resource := range d.resources {
+		err = encoder.Encode(resource)
+
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return modifiedManifests, nil
 }
 
 func (d *DockerSecretsPostRenderer) getRegistriesToLink(renderedManifests *bytes.Buffer) (map[string]*models.Registry, error) {
@@ -80,14 +133,14 @@ func (d *DockerSecretsPostRenderer) getRegistriesToLink(renderedManifests *bytes
 	// that a secret will be generated for, if it does not exist
 	linkedRegs := make(map[string]*models.Registry)
 
-	resources, err := d.decodeRenderedManifests(renderedManifests)
+	err := d.decodeRenderedManifests(renderedManifests)
 
 	if err != nil {
 		return linkedRegs, err
 	}
 
 	// read the pod specs into the post-renderer object
-	d.getPodSpecs(resources)
+	d.getPodSpecs(d.resources)
 
 	for _, podSpec := range d.podSpecs {
 		// get all images
@@ -133,11 +186,9 @@ func (d *DockerSecretsPostRenderer) getRegistriesToLink(renderedManifests *bytes
 
 func (d *DockerSecretsPostRenderer) decodeRenderedManifests(
 	renderedManifests *bytes.Buffer,
-) ([]resource, error) {
+) error {
 	// use the yaml decoder to parse the multi-document yaml.
 	decoder := yaml.NewDecoder(renderedManifests)
-
-	resources := make([]resource, 0)
 
 	for {
 		res := make(resource)
@@ -147,13 +198,13 @@ func (d *DockerSecretsPostRenderer) decodeRenderedManifests(
 		}
 
 		if err != nil {
-			return nil, err
+			return err
 		}
 
-		resources = append(resources, res)
+		d.resources = append(d.resources, res)
 	}
 
-	return resources, nil
+	return nil
 }
 
 func (d *DockerSecretsPostRenderer) getPodSpecs(resources []resource) {
@@ -197,6 +248,75 @@ func (d *DockerSecretsPostRenderer) getPodSpecs(resources []resource) {
 	}
 
 	return
+}
+
+func (d *DockerSecretsPostRenderer) updatePodSpecs(secrets map[string]string) {
+	for _, podSpec := range d.podSpecs {
+		fmt.Println("PARSING POD SPEC", podSpec)
+
+		containersVal, hasContainers := podSpec["containers"]
+
+		if !hasContainers {
+			continue
+		}
+
+		containers, ok := containersVal.([]interface{})
+
+		if !ok {
+			continue
+		}
+
+		var imagePullSecrets []map[string]interface{}
+		existingNames := map[string]bool{}
+		if existingPullSecrets, ok := podSpec["imagePullSecrets"]; ok {
+			imagePullSecrets = existingPullSecrets.([]map[string]interface{})
+			for _, s := range imagePullSecrets {
+				if name, ok := s["name"]; ok {
+					if n, ok := name.(string); ok {
+						existingNames[n] = true
+					}
+				}
+			}
+		}
+
+		for _, container := range containers {
+			_container, ok := container.(resource)
+
+			if !ok {
+				continue
+			}
+
+			image, ok := _container["image"].(string)
+
+			if !ok {
+				continue
+			}
+
+			named, err := reference.ParseNormalizedNamed(image)
+
+			if err != nil {
+				continue
+			}
+
+			domain := reference.Domain(named)
+			path := reference.Path(named)
+
+			regName := domain
+
+			if pathArr := strings.Split(path, "/"); len(pathArr) > 1 {
+				regName += "/" + strings.Join(pathArr[:len(pathArr)-1], "/")
+			}
+
+			imagePullSecrets = append(imagePullSecrets, map[string]interface{}{
+				"name": secrets[regName],
+			})
+		}
+
+		if len(imagePullSecrets) > 0 {
+			podSpec["imagePullSecrets"] = imagePullSecrets
+		}
+
+	}
 }
 
 func (d *DockerSecretsPostRenderer) getImageList(podSpec resource) []string {

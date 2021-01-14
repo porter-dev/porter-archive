@@ -394,9 +394,13 @@ func (a *Agent) CreateImagePullSecrets(
 			_, err := a.Clientset.CoreV1().Secrets(namespace).Update(
 				context.TODO(),
 				&v1.Secret{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: secretName,
+					},
 					Data: map[string][]byte{
 						string(v1.DockerConfigJsonKey): data,
 					},
+					Type: v1.SecretTypeDockerConfigJson,
 				},
 				metav1.UpdateOptions{},
 			)

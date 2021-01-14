@@ -59,7 +59,12 @@ func (w *TemplateWriter) Update(
 		return nil, fmt.Errorf("release not set")
 	}
 
-	_, err := w.Agent.UpgradeReleaseByValues(w.ReleaseName, vals)
+	conf := &helm.UpgradeReleaseConfig{
+		Name:   w.ReleaseName,
+		Values: vals,
+	}
+
+	_, err := w.Agent.UpgradeReleaseByValues(conf)
 
 	if err != nil {
 		return nil, err

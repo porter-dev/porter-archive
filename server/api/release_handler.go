@@ -34,7 +34,8 @@ func (app *App) HandleListReleases(w http.ResponseWriter, r *http.Request) {
 	form := &forms.ListReleaseForm{
 		ReleaseForm: &forms.ReleaseForm{
 			Form: &helm.Form{
-				Repo: app.Repo,
+				Repo:              app.Repo,
+				DigitalOceanOAuth: app.DOConf,
 			},
 		},
 		ListFilter: &helm.ListFilter{},
@@ -80,7 +81,8 @@ func (app *App) HandleGetRelease(w http.ResponseWriter, r *http.Request) {
 	form := &forms.GetReleaseForm{
 		ReleaseForm: &forms.ReleaseForm{
 			Form: &helm.Form{
-				Repo: app.Repo,
+				Repo:              app.Repo,
+				DigitalOceanOAuth: app.DOConf,
 			},
 		},
 		Name:     name,
@@ -113,7 +115,8 @@ func (app *App) HandleGetRelease(w http.ResponseWriter, r *http.Request) {
 	// get the filter options
 	k8sForm := &forms.K8sForm{
 		OutOfClusterConfig: &kubernetes.OutOfClusterConfig{
-			Repo: app.Repo,
+			Repo:              app.Repo,
+			DigitalOceanOAuth: app.DOConf,
 		},
 	}
 
@@ -187,7 +190,8 @@ func (app *App) HandleGetReleaseComponents(w http.ResponseWriter, r *http.Reques
 	form := &forms.GetReleaseForm{
 		ReleaseForm: &forms.ReleaseForm{
 			Form: &helm.Form{
-				Repo: app.Repo,
+				Repo:              app.Repo,
+				DigitalOceanOAuth: app.DOConf,
 			},
 		},
 		Name:     name,
@@ -243,7 +247,8 @@ func (app *App) HandleGetReleaseControllers(w http.ResponseWriter, r *http.Reque
 	form := &forms.GetReleaseForm{
 		ReleaseForm: &forms.ReleaseForm{
 			Form: &helm.Form{
-				Repo: app.Repo,
+				Repo:              app.Repo,
+				DigitalOceanOAuth: app.DOConf,
 			},
 		},
 		Name:     name,
@@ -283,7 +288,8 @@ func (app *App) HandleGetReleaseControllers(w http.ResponseWriter, r *http.Reque
 	// get the filter options
 	k8sForm := &forms.K8sForm{
 		OutOfClusterConfig: &kubernetes.OutOfClusterConfig{
-			Repo: app.Repo,
+			Repo:              app.Repo,
+			DigitalOceanOAuth: app.DOConf,
 		},
 	}
 
@@ -369,7 +375,8 @@ func (app *App) HandleListReleaseHistory(w http.ResponseWriter, r *http.Request)
 	form := &forms.ListReleaseHistoryForm{
 		ReleaseForm: &forms.ReleaseForm{
 			Form: &helm.Form{
-				Repo: app.Repo,
+				Repo:              app.Repo,
+				DigitalOceanOAuth: app.DOConf,
 			},
 		},
 		Name: name,
@@ -449,7 +456,8 @@ func (app *App) HandleUpgradeRelease(w http.ResponseWriter, r *http.Request) {
 	form := &forms.UpgradeReleaseForm{
 		ReleaseForm: &forms.ReleaseForm{
 			Form: &helm.Form{
-				Repo: app.Repo,
+				Repo:              app.Repo,
+				DigitalOceanOAuth: app.DOConf,
 			},
 		},
 		Name: name,
@@ -520,7 +528,8 @@ func (app *App) HandleReleaseDeployHook(w http.ResponseWriter, r *http.Request) 
 	form := &forms.UpgradeReleaseForm{
 		ReleaseForm: &forms.ReleaseForm{
 			Form: &helm.Form{
-				Repo: app.Repo,
+				Repo:              app.Repo,
+				DigitalOceanOAuth: app.DOConf,
 			},
 		},
 		Name: name,
@@ -617,7 +626,8 @@ func (app *App) HandleReleaseDeployWebhook(w http.ResponseWriter, r *http.Reques
 	form := &forms.UpgradeReleaseForm{
 		ReleaseForm: &forms.ReleaseForm{
 			Form: &helm.Form{
-				Repo: app.Repo,
+				Repo:              app.Repo,
+				DigitalOceanOAuth: app.DOConf,
 			},
 		},
 		Name: release.Name,
@@ -689,7 +699,8 @@ func (app *App) HandleRollbackRelease(w http.ResponseWriter, r *http.Request) {
 	form := &forms.RollbackReleaseForm{
 		ReleaseForm: &forms.ReleaseForm{
 			Form: &helm.Form{
-				Repo: app.Repo,
+				Repo:              app.Repo,
+				DigitalOceanOAuth: app.DOConf,
 			},
 		},
 		Name: name,

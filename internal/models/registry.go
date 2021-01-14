@@ -28,6 +28,7 @@ type Registry struct {
 
 	GCPIntegrationID uint
 	AWSIntegrationID uint
+	DOIntegrationID  uint
 
 	// A token cache that can be used by an auth mechanism (integration), if desired
 	TokenCache integrations.RegTokenCache

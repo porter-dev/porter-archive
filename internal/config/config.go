@@ -33,6 +33,9 @@ type ServerConf struct {
 
 	GithubClientID     string `env:"GITHUB_CLIENT_ID"`
 	GithubClientSecret string `env:"GITHUB_CLIENT_SECRET"`
+
+	DOClientID     string `env:"DO_CLIENT_ID"`
+	DOClientSecret string `env:"DO_CLIENT_SECRET"`
 }
 
 // DBConf is the database configuration: if generated from environment variables,

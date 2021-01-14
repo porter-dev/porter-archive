@@ -122,10 +122,11 @@ func (conf *Conf) GetProvisionerJobTemplate() (*batchv1.Job, error) {
 					RestartPolicy: v1.RestartPolicyNever,
 					Containers: []v1.Container{
 						{
-							Name:  "provisioner",
-							Image: "gcr.io/porter-dev-273614/provisioner:" + conf.ProvisionerImageTag,
-							Args:  args,
-							Env:   env,
+							Name:            "provisioner",
+							Image:           "gcr.io/porter-dev-273614/provisioner:" + conf.ProvisionerImageTag,
+							ImagePullPolicy: v1.PullAlways,
+							Args:            args,
+							Env:             env,
 							VolumeMounts: []v1.VolumeMount{
 								v1.VolumeMount{
 									MountPath: "/.terraform/plugin-cache",

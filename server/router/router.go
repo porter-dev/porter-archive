@@ -148,6 +148,22 @@ func New(a *api.App) *chi.Mux {
 			requestlog.NewHandler(a.HandleGithubOAuthCallback, l),
 		)
 
+		r.Method(
+			"GET",
+			"/oauth/projects/{project_id}/digitalocean",
+			auth.DoesUserHaveProjectAccess(
+				requestlog.NewHandler(a.HandleDOOAuthStartProject, l),
+				mw.URLParam,
+				mw.WriteAccess,
+			),
+		)
+
+		r.Method(
+			"GET",
+			"/oauth/digitalocean/callback",
+			requestlog.NewHandler(a.HandleDOOAuthCallback, l),
+		)
+
 		// /api/projects routes
 		r.Method(
 			"GET",

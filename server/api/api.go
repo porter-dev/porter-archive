@@ -126,7 +126,7 @@ func New(conf *AppConfig) (*App, error) {
 	}
 
 	if sc := conf.ServerConf; sc.DOClientID != "" && sc.DOClientSecret != "" {
-		app.DOConf = oauth.NewGithubClient(&oauth.Config{
+		app.DOConf = oauth.NewDigitalOceanClient(&oauth.Config{
 			ClientID:     sc.DOClientID,
 			ClientSecret: sc.DOClientSecret,
 			Scopes:       []string{"read", "write"},

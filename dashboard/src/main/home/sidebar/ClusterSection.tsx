@@ -53,9 +53,12 @@ export default class ClusterSection extends Component<PropsType, StateType> {
         // TODO: handle uninitialized kubeconfig
         if (res.data) {
           let clusters = res.data;
+          clusters.sort((a, b) => a - b);
           if (clusters.length > 0) {
             this.setState({ clusters });
-            setCurrentCluster(clusters[0]);
+            setCurrentCluster(clusters[(
+              localStorage.getItem('currentCluster') ? localStorage.getItem('currentCluster') : 0
+            )]);
           } else if (this.props.currentView !== 'provisioner') {
             this.setState({ clusters: [] });
             setCurrentCluster(null);
@@ -76,6 +79,7 @@ export default class ClusterSection extends Component<PropsType, StateType> {
 
       // Refresh clusters on project change 
       if (this.state.prevProjectId !== this.context.currentProject.id) {
+        localStorage.setItem('currentCluster', this.context.currentProject.id);
         this.updateClusters();
         this.setState({ prevProjectId: this.context.currentProject.id });
       } else if (this.props.forceRefreshClusters === true) {

@@ -59,7 +59,7 @@ export default class ChartList extends Component<PropsType, StateType> {
         } else if (this.props.sortType == "Oldest") {
           charts.sort((a: any, b: any) => (Date.parse(a.info.last_deployed) > Date.parse(b.info.last_deployed)) ? 1 : -1);
         } else if (this.props.sortType == "Alphabetical") {
-          charts.sort((a: any, b: any) => (a.name > b.name) ? 1: -1);
+          charts.sort((a: any, b: any) => (a.name > b.name) ? 1 : -1);
         }
         this.setState({ charts }, () => {
           this.setState({ loading: false, error: false });

@@ -28,14 +28,6 @@ export default class InputRow extends Component<PropsType, StateType> {
   
   render() {
     let { label, value, type, unit, placeholder, width } = this.props;
-    if (type === 'b64') {
-      type = 'string-input';
-    } else if (type === 'b64-pass') {
-      type = 'password';
-    }
-    if (value === undefined) {
-        value = '';
-    }
     value = value.toString();
     value = atob(value);
     return (

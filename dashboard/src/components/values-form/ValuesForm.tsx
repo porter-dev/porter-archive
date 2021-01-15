@@ -155,7 +155,7 @@ export default class ValuesForm extends Component<PropsType, StateType> {
             <Base64InputRow
               key={i}
               isRequired={item.required}
-              type='b64'
+              type='text'
               value={this.getInputValue(item)}
               setValue={(x: string) => {
                 if (item.settings && item.settings.unit && x !== '') {
@@ -172,7 +172,7 @@ export default class ValuesForm extends Component<PropsType, StateType> {
             <Base64InputRow
               key={i}
               isRequired={item.required}
-              type='b64-pass'
+              type='password'
               value={this.getInputValue(item)}
               setValue={(x: string) => {
                 if (item.settings && item.settings.unit && x !== '') {

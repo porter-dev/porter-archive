@@ -234,16 +234,22 @@ export default class ChartList extends Component<PropsType, StateType> {
 ChartList.contextType = Context;
 
 const Placeholder = styled.div`
-  padding-top: 100px;
   width: 100%;
   display: flex;
   justify-content: center;
   align-items: center;
   color: #ffffff44;
-  font-size: 14px;
+  background: #26282f;
+  border-radius: 5px;
+  height: 320px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff44;
+  font-size: 13px;
 
   > i {
-    font-size: 18px;
+    font-size: 16px;
     margin-right: 12px;
   }
 `;

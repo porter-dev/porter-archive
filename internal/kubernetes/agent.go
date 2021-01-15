@@ -124,10 +124,8 @@ func (a *Agent) GetPodsByLabel(selector string) (*v1.PodList, error) {
 // GetPodLogs streams real-time logs from a given pod.
 func (a *Agent) GetPodLogs(namespace string, name string, conn *websocket.Conn) error {
 	// follow logs
-	tails := int64(30)
 	podLogOpts := v1.PodLogOptions{
-		Follow:    true,
-		TailLines: &tails,
+		Follow: true,
 	}
 	req := a.Clientset.CoreV1().Pods(namespace).GetLogs(name, &podLogOpts)
 	podLogs, err := req.Stream(context.TODO())

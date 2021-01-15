@@ -56,9 +56,7 @@ export default class ClusterSection extends Component<PropsType, StateType> {
           clusters.sort((a, b) => a.id - b.id);
           if (clusters.length > 0) {
             this.setState({ clusters });
-            setCurrentCluster(clusters[(
-              localStorage.getItem('currentCluster') ? localStorage.getItem('currentCluster') : 0
-            )]);
+            setCurrentCluster(clusters[0]);
           } else if (this.props.currentView !== 'provisioner') {
             this.setState({ clusters: [] });
             setCurrentCluster(null);
@@ -79,7 +77,6 @@ export default class ClusterSection extends Component<PropsType, StateType> {
 
       // Refresh clusters on project change 
       if (this.state.prevProjectId !== this.context.currentProject.id) {
-        localStorage.setItem('currentCluster', this.context.currentProject.id);
         this.updateClusters();
         this.setState({ prevProjectId: this.context.currentProject.id });
       } else if (this.props.forceRefreshClusters === true) {

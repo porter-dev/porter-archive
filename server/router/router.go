@@ -223,7 +223,7 @@ func New(a *api.App) *chi.Mux {
 					requestlog.NewHandler(a.HandleProvisionAWSECRInfra, l),
 					mw.URLParam,
 					mw.BodyParam,
-					true,
+					false,
 				),
 				mw.URLParam,
 				mw.ReadAccess,
@@ -238,7 +238,7 @@ func New(a *api.App) *chi.Mux {
 					requestlog.NewHandler(a.HandleProvisionAWSEKSInfra, l),
 					mw.URLParam,
 					mw.BodyParam,
-					true,
+					false,
 				),
 				mw.URLParam,
 				mw.ReadAccess,
@@ -253,7 +253,7 @@ func New(a *api.App) *chi.Mux {
 					requestlog.NewHandler(a.HandleProvisionGCPGCRInfra, l),
 					mw.URLParam,
 					mw.BodyParam,
-					true,
+					false,
 				),
 				mw.URLParam,
 				mw.ReadAccess,
@@ -268,7 +268,37 @@ func New(a *api.App) *chi.Mux {
 					requestlog.NewHandler(a.HandleProvisionGCPGKEInfra, l),
 					mw.URLParam,
 					mw.BodyParam,
-					true,
+					false,
+				),
+				mw.URLParam,
+				mw.ReadAccess,
+			),
+		)
+
+		r.Method(
+			"POST",
+			"/projects/{project_id}/provision/docr",
+			auth.DoesUserHaveProjectAccess(
+				auth.DoesUserHaveDOIntegrationAccess(
+					requestlog.NewHandler(a.HandleProvisionDODOCRInfra, l),
+					mw.URLParam,
+					mw.BodyParam,
+					false,
+				),
+				mw.URLParam,
+				mw.ReadAccess,
+			),
+		)
+
+		r.Method(
+			"POST",
+			"/projects/{project_id}/provision/doks",
+			auth.DoesUserHaveProjectAccess(
+				auth.DoesUserHaveDOIntegrationAccess(
+					requestlog.NewHandler(a.HandleProvisionDODOKSInfra, l),
+					mw.URLParam,
+					mw.BodyParam,
+					false,
 				),
 				mw.URLParam,
 				mw.ReadAccess,
@@ -337,6 +367,34 @@ func New(a *api.App) *chi.Mux {
 			auth.DoesUserHaveProjectAccess(
 				auth.DoesUserHaveInfraAccess(
 					requestlog.NewHandler(a.HandleDestroyGCPGKEInfra, l),
+					mw.URLParam,
+					mw.URLParam,
+				),
+				mw.URLParam,
+				mw.ReadAccess,
+			),
+		)
+
+		r.Method(
+			"POST",
+			"/projects/{project_id}/infra/{infra_id}/docr/destroy",
+			auth.DoesUserHaveProjectAccess(
+				auth.DoesUserHaveInfraAccess(
+					requestlog.NewHandler(a.HandleDestroyDODOCRInfra, l),
+					mw.URLParam,
+					mw.URLParam,
+				),
+				mw.URLParam,
+				mw.ReadAccess,
+			),
+		)
+
+		r.Method(
+			"POST",
+			"/projects/{project_id}/infra/{infra_id}/doks/destroy",
+			auth.DoesUserHaveProjectAccess(
+				auth.DoesUserHaveInfraAccess(
+					requestlog.NewHandler(a.HandleDestroyDODOKSInfra, l),
 					mw.URLParam,
 					mw.URLParam,
 				),

@@ -12,10 +12,14 @@ import (
 	"github.com/porter-dev/porter/internal/kubernetes/provisioner/aws"
 	"github.com/porter-dev/porter/internal/kubernetes/provisioner/aws/ecr"
 	"github.com/porter-dev/porter/internal/kubernetes/provisioner/aws/eks"
+	"github.com/porter-dev/porter/internal/kubernetes/provisioner/do"
+	"github.com/porter-dev/porter/internal/kubernetes/provisioner/do/docr"
+	"github.com/porter-dev/porter/internal/kubernetes/provisioner/do/doks"
 	"github.com/porter-dev/porter/internal/kubernetes/provisioner/gcp"
 	"github.com/porter-dev/porter/internal/kubernetes/provisioner/gcp/gke"
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/models/integrations"
+	"github.com/porter-dev/porter/internal/oauth"
 	"github.com/porter-dev/porter/internal/registry"
 	"github.com/porter-dev/porter/internal/repository"
 	"golang.org/x/oauth2"
@@ -355,6 +359,100 @@ func (a *Agent) ProvisionGKE(
 		},
 		GKE: &gke.Conf{
 			ClusterName: gkeName,
+		},
+	}
+
+	return a.provision(prov)
+}
+
+// ProvisionDOCR spawns a new provisioning pod that creates a DOCR instance
+func (a *Agent) ProvisionDOCR(
+	projectID uint,
+	doConf *integrations.OAuthIntegration,
+	doAuth *oauth2.Config,
+	repo repository.Repository,
+	docrName, docrSubscriptionTier string,
+	infra *models.Infra,
+	operation provisioner.ProvisionerOperation,
+	pgConf *config.DBConf,
+	redisConf *config.RedisConf,
+) (*batchv1.Job, error) {
+	// get the token
+	oauthInt, err := repo.OAuthIntegration.ReadOAuthIntegration(
+		infra.DOIntegrationID,
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	tok, _, err := oauth.GetAccessToken(oauthInt, doAuth, repo)
+
+	if err != nil {
+		return nil, err
+	}
+
+	id := infra.GetID()
+	prov := &provisioner.Conf{
+		ID:        id,
+		Name:      fmt.Sprintf("prov-%s-%s", id, string(operation)),
+		Kind:      provisioner.DOCR,
+		Operation: operation,
+		Redis:     redisConf,
+		Postgres:  pgConf,
+		DO: &do.Conf{
+			DOToken: tok,
+		},
+		DOCR: &docr.Conf{
+			DOCRName:             docrName,
+			DOCRSubscriptionTier: docrSubscriptionTier,
+		},
+	}
+
+	return a.provision(prov)
+}
+
+// ProvisionDOKS spawns a new provisioning pod that creates a DOKS instance
+func (a *Agent) ProvisionDOKS(
+	projectID uint,
+	doConf *integrations.OAuthIntegration,
+	doAuth *oauth2.Config,
+	repo repository.Repository,
+	doRegion, doksClusterName string,
+	infra *models.Infra,
+	operation provisioner.ProvisionerOperation,
+	pgConf *config.DBConf,
+	redisConf *config.RedisConf,
+) (*batchv1.Job, error) {
+	// get the token
+	oauthInt, err := repo.OAuthIntegration.ReadOAuthIntegration(
+		infra.DOIntegrationID,
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	tok, _, err := oauth.GetAccessToken(oauthInt, doAuth, repo)
+
+	if err != nil {
+		return nil, err
+	}
+
+	id := infra.GetID()
+	prov := &provisioner.Conf{
+		ID:        id,
+		Name:      fmt.Sprintf("prov-%s-%s", id, string(operation)),
+		Kind:      provisioner.DOKS,
+		Operation: operation,
+		Redis:     redisConf,
+		Postgres:  pgConf,
+		DO: &do.Conf{
+			DOToken: tok,
+		},
+		DOKS: &doks.Conf{
+			DORegion:        doRegion,
+			DOKSClusterName: doksClusterName,
 		},
 	}
 

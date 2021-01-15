@@ -1,16 +1,26 @@
 package registry
 
 import (
+	"context"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/url"
+	"strings"
 	"time"
 
 	"github.com/aws/aws-sdk-go/service/ecr"
 	"github.com/porter-dev/porter/internal/models"
+	"github.com/porter-dev/porter/internal/oauth"
 	"github.com/porter-dev/porter/internal/repository"
+	"golang.org/x/oauth2"
 
 	ints "github.com/porter-dev/porter/internal/models/integrations"
+
+	"github.com/digitalocean/godo"
+	"github.com/docker/cli/cli/config/configfile"
+	"github.com/docker/cli/cli/config/types"
 )
 
 // Registry wraps the gorm Registry model
@@ -44,7 +54,10 @@ type Image struct {
 }
 
 // ListRepositories lists the repositories for a registry
-func (r *Registry) ListRepositories(repo repository.Repository) ([]*Repository, error) {
+func (r *Registry) ListRepositories(
+	repo repository.Repository,
+	doAuth *oauth2.Config, // only required if using DOCR
+) ([]*Repository, error) {
 	// switch on the auth mechanism to get a token
 	if r.AWSIntegrationID != 0 {
 		return r.listECRRepositories(repo)
@@ -52,6 +65,10 @@ func (r *Registry) ListRepositories(repo repository.Repository) ([]*Repository, 
 
 	if r.GCPIntegrationID != 0 {
 		return r.listGCRRepositories(repo)
+	}
+
+	if r.DOIntegrationID != 0 {
+		return r.listDOCRRepositories(repo, doAuth)
 	}
 
 	return nil, fmt.Errorf("error listing repositories")
@@ -76,7 +93,11 @@ func (r *Registry) GetGCRToken(repo repository.Repository) (*ints.TokenCache, er
 	}
 
 	// get oauth2 access token
-	_, err = gcp.GetBearerToken(r.getTokenCache, r.setTokenCacheFunc(repo))
+	_, err = gcp.GetBearerToken(
+		r.getTokenCache,
+		r.setTokenCacheFunc(repo),
+		"https://www.googleapis.com/auth/devstorage.read_write",
+	)
 
 	if err != nil {
 		return nil, err
@@ -103,14 +124,8 @@ func (r *Registry) listGCRRepositories(
 		return nil, err
 	}
 
-	// get oauth2 access token
-	oauthTok, err := gcp.GetBearerToken(r.getTokenCache, r.setTokenCacheFunc(repo))
-
-	if err != nil {
-		return nil, err
-	}
-
-	// use JWT token to request catalog
+	// Just use service account key to authenticate, since scopes may not be in place
+	// for oauth. This also prevents us from making more requests.
 	client := &http.Client{}
 
 	req, err := http.NewRequest(
@@ -123,9 +138,7 @@ func (r *Registry) listGCRRepositories(
 		return nil, err
 	}
 
-	req.SetBasicAuth("oauth2accesstoken", oauthTok)
-
-	// req.Header.Add("Authorization", "Bearer "+jwtTok)
+	req.SetBasicAuth("_json_key", string(gcp.GCPKeyData))
 
 	resp, err := client.Do(req)
 
@@ -141,9 +154,16 @@ func (r *Registry) listGCRRepositories(
 
 	res := make([]*Repository, 0)
 
+	parsedURL, err := url.Parse("https://" + r.URL)
+
+	if err != nil {
+		return nil, err
+	}
+
 	for _, repo := range gcrResp.Repositories {
 		res = append(res, &Repository{
 			Name: repo,
+			URI:  parsedURL.Host + "/" + repo,
 		})
 	}
 
@@ -186,6 +206,52 @@ func (r *Registry) listECRRepositories(repo repository.Repository) ([]*Repositor
 	return res, nil
 }
 
+func (r *Registry) listDOCRRepositories(
+	repo repository.Repository,
+	doAuth *oauth2.Config,
+) ([]*Repository, error) {
+	oauthInt, err := repo.OAuthIntegration.ReadOAuthIntegration(
+		r.DOIntegrationID,
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	tok, _, err := oauth.GetAccessToken(oauthInt, doAuth, repo)
+
+	if err != nil {
+		return nil, err
+	}
+
+	client := godo.NewFromToken(tok)
+
+	urlArr := strings.Split(r.URL, "/")
+
+	if len(urlArr) != 2 {
+		return nil, fmt.Errorf("invalid digital ocean registry url")
+	}
+
+	name := urlArr[1]
+
+	repos, _, err := client.Registry.ListRepositories(context.TODO(), name, &godo.ListOptions{})
+
+	if err != nil {
+		return nil, err
+	}
+
+	res := make([]*Repository, 0)
+
+	for _, repo := range repos {
+		res = append(res, &Repository{
+			Name: repo.Name,
+			URI:  r.URL + "/" + repo.Name,
+		})
+	}
+
+	return res, nil
+}
+
 func (r *Registry) getTokenCache() (tok *ints.TokenCache, err error) {
 	return &ints.TokenCache{
 		Token:  r.TokenCache.Token,
@@ -215,6 +281,7 @@ func (r *Registry) setTokenCacheFunc(
 func (r *Registry) ListImages(
 	repoName string,
 	repo repository.Repository,
+	doAuth *oauth2.Config, // only required if using DOCR
 ) ([]*Image, error) {
 	// switch on the auth mechanism to get a token
 	if r.AWSIntegrationID != 0 {
@@ -223,6 +290,10 @@ func (r *Registry) ListImages(
 
 	if r.GCPIntegrationID != 0 {
 		return r.listGCRImages(repoName, repo)
+	}
+
+	if r.DOIntegrationID != 0 {
+		return r.listDOCRImages(repoName, repo, doAuth)
 	}
 
 	return nil, fmt.Errorf("error listing images")
@@ -279,19 +350,20 @@ func (r *Registry) listGCRImages(repoName string, repo repository.Repository) ([
 		return nil, err
 	}
 
-	// get oauth2 access token
-	oauthTok, err := gcp.GetBearerToken(r.getTokenCache, r.setTokenCacheFunc(repo))
+	// use JWT token to request catalog
+	client := &http.Client{}
+
+	parsedURL, err := url.Parse("https://" + r.URL)
 
 	if err != nil {
 		return nil, err
 	}
 
-	// use JWT token to request catalog
-	client := &http.Client{}
+	trimmedPath := strings.Trim(parsedURL.Path, "/")
 
 	req, err := http.NewRequest(
 		"GET",
-		fmt.Sprintf("https://gcr.io/v2/%s/tags/list", repoName),
+		fmt.Sprintf("https://%s/v2/%s/%s/tags/list", parsedURL.Host, trimmedPath, repoName),
 		nil,
 	)
 
@@ -299,7 +371,7 @@ func (r *Registry) listGCRImages(repoName string, repo repository.Repository) ([
 		return nil, err
 	}
 
-	req.SetBasicAuth("oauth2accesstoken", oauthTok)
+	req.SetBasicAuth("_json_key", string(gcp.GCPKeyData))
 
 	resp, err := client.Do(req)
 
@@ -323,4 +395,207 @@ func (r *Registry) listGCRImages(repoName string, repo repository.Repository) ([
 	}
 
 	return res, nil
+}
+
+func (r *Registry) listDOCRImages(
+	repoName string,
+	repo repository.Repository,
+	doAuth *oauth2.Config,
+) ([]*Image, error) {
+	oauthInt, err := repo.OAuthIntegration.ReadOAuthIntegration(
+		r.DOIntegrationID,
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	tok, _, err := oauth.GetAccessToken(oauthInt, doAuth, repo)
+
+	if err != nil {
+		return nil, err
+	}
+
+	client := godo.NewFromToken(tok)
+
+	urlArr := strings.Split(r.URL, "/")
+
+	if len(urlArr) != 2 {
+		return nil, fmt.Errorf("invalid digital ocean registry url")
+	}
+
+	name := urlArr[1]
+
+	tags, _, err := client.Registry.ListRepositoryTags(context.TODO(), name, repoName, &godo.ListOptions{})
+
+	if err != nil {
+		return nil, err
+	}
+
+	res := make([]*Image, 0)
+
+	for _, tag := range tags {
+		res = append(res, &Image{
+			RepositoryName: repoName,
+			Tag:            tag.Tag,
+		})
+	}
+
+	return res, nil
+}
+
+// GetDockerConfigJSON returns a dockerconfigjson file contents with "auths"
+// populated.
+func (r *Registry) GetDockerConfigJSON(
+	repo repository.Repository,
+	doAuth *oauth2.Config, // only required if using DOCR
+) ([]byte, error) {
+	var conf *configfile.ConfigFile
+	var err error
+
+	// switch on the auth mechanism to get a token
+	if r.AWSIntegrationID != 0 {
+		conf, err = r.getECRDockerConfigFile(repo)
+	}
+
+	if r.GCPIntegrationID != 0 {
+		conf, err = r.getGCRDockerConfigFile(repo)
+	}
+
+	if r.DOIntegrationID != 0 {
+		conf, err = r.getDOCRDockerConfigFile(repo, doAuth)
+	}
+
+	if err != nil {
+		return nil, err
+	}
+
+	return json.Marshal(conf)
+}
+
+func (r *Registry) getECRDockerConfigFile(
+	repo repository.Repository,
+) (*configfile.ConfigFile, error) {
+	aws, err := repo.AWSIntegration.ReadAWSIntegration(
+		r.AWSIntegrationID,
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	sess, err := aws.GetSession()
+
+	if err != nil {
+		return nil, err
+	}
+
+	ecrSvc := ecr.New(sess)
+
+	output, err := ecrSvc.GetAuthorizationToken(&ecr.GetAuthorizationTokenInput{})
+
+	if err != nil {
+		return nil, err
+	}
+
+	token := *output.AuthorizationData[0].AuthorizationToken
+
+	decodedToken, err := base64.StdEncoding.DecodeString(token)
+
+	if err != nil {
+		return nil, err
+	}
+
+	parts := strings.SplitN(string(decodedToken), ":", 2)
+
+	if len(parts) < 2 {
+		return nil, err
+	}
+
+	key := r.URL
+
+	if !strings.Contains(key, "http") {
+		key = "https://" + key
+	}
+
+	return &configfile.ConfigFile{
+		AuthConfigs: map[string]types.AuthConfig{
+			key: types.AuthConfig{
+				Username: parts[0],
+				Password: parts[1],
+				Auth:     token,
+			},
+		},
+	}, nil
+}
+
+func (r *Registry) getGCRDockerConfigFile(
+	repo repository.Repository,
+) (*configfile.ConfigFile, error) {
+	gcp, err := repo.GCPIntegration.ReadGCPIntegration(
+		r.GCPIntegrationID,
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	key := r.URL
+
+	if !strings.Contains(key, "http") {
+		key = "https://" + key
+	}
+
+	parsedURL, _ := url.Parse(key)
+
+	return &configfile.ConfigFile{
+		AuthConfigs: map[string]types.AuthConfig{
+			parsedURL.Host: types.AuthConfig{
+				Username: "_json_key",
+				Password: string(gcp.GCPKeyData),
+				Auth:     generateAuthToken("_json_key", string(gcp.GCPKeyData)),
+			},
+		},
+	}, nil
+}
+
+func (r *Registry) getDOCRDockerConfigFile(
+	repo repository.Repository,
+	doAuth *oauth2.Config,
+) (*configfile.ConfigFile, error) {
+	oauthInt, err := repo.OAuthIntegration.ReadOAuthIntegration(
+		r.DOIntegrationID,
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	tok, _, err := oauth.GetAccessToken(oauthInt, doAuth, repo)
+
+	if err != nil {
+		return nil, err
+	}
+
+	key := r.URL
+
+	if !strings.Contains(key, "http") {
+		key = "https://" + key
+	}
+
+	parsedURL, _ := url.Parse(key)
+
+	return &configfile.ConfigFile{
+		AuthConfigs: map[string]types.AuthConfig{
+			parsedURL.Host: types.AuthConfig{
+				Username: tok,
+				Password: tok,
+				Auth:     generateAuthToken(tok, tok),
+			},
+		},
+	}, nil
+}
+
+func generateAuthToken(username, password string) string {
+	return base64.StdEncoding.EncodeToString([]byte(username + ":" + password))
 }

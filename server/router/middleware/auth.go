@@ -90,6 +90,10 @@ type bodyGCPIntegrationID struct {
 	GCPIntegrationID uint64 `json:"gcp_integration_id"`
 }
 
+type bodyDOIntegrationID struct {
+	DOIntegrationID uint64 `json:"do_integration_id"`
+}
+
 // DoesUserIDMatch checks the id URL parameter and verifies that it matches
 // the one stored in the session
 func (auth *Auth) DoesUserIDMatch(next http.Handler, loc IDLocation) http.Handler {
@@ -349,7 +353,7 @@ func (auth *Auth) DoesUserHaveInfraAccess(
 			return
 		}
 
-		infras, err := auth.repo.AWSInfra.ListAWSInfrasByProjectID(uint(projID))
+		infras, err := auth.repo.Infra.ListInfrasByProjectID(uint(projID))
 
 		if err != nil {
 			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
@@ -470,6 +474,61 @@ func (auth *Auth) DoesUserHaveGCPIntegrationAccess(
 
 		for _, awsInt := range gcpInts {
 			if awsInt.ID == uint(gcpID) {
+				doesExist = true
+				break
+			}
+		}
+
+		if doesExist {
+			next.ServeHTTP(w, r)
+			return
+		}
+
+		http.Error(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)
+		return
+	})
+}
+
+// DoesUserHaveDOIntegrationAccess looks for a project_id parameter and an
+// do_integration_id parameter, and verifies that the infra belongs
+// to the project
+func (auth *Auth) DoesUserHaveDOIntegrationAccess(
+	next http.Handler,
+	projLoc IDLocation,
+	doLoc IDLocation,
+	optional bool,
+) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		doID, err := findDOIntegrationIDInRequest(r, doLoc)
+
+		if doID == 0 && optional {
+			next.ServeHTTP(w, r)
+			return
+		}
+
+		if doID == 0 || err != nil {
+			http.Error(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)
+			return
+		}
+
+		projID, err := findProjIDInRequest(r, projLoc)
+
+		if err != nil {
+			http.Error(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)
+			return
+		}
+
+		oauthInts, err := auth.repo.OAuthIntegration.ListOAuthIntegrationsByProjectID(uint(projID))
+
+		if err != nil {
+			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+			return
+		}
+
+		doesExist := false
+
+		for _, oauthInt := range oauthInts {
+			if oauthInt.ID == uint(doID) {
 				doesExist = true
 				break
 			}
@@ -870,4 +929,49 @@ func findGCPIntegrationIDInRequest(r *http.Request, gcpLoc IDLocation) (uint64, 
 	}
 
 	return gcpID, nil
+}
+
+func findDOIntegrationIDInRequest(r *http.Request, doLoc IDLocation) (uint64, error) {
+	var doID uint64
+	var err error
+
+	if doLoc == URLParam {
+		doID, err = strconv.ParseUint(chi.URLParam(r, "do_integration_id"), 0, 64)
+
+		if err != nil {
+			return 0, err
+		}
+	} else if doLoc == BodyParam {
+		form := &bodyDOIntegrationID{}
+		body, err := ioutil.ReadAll(r.Body)
+
+		if err != nil {
+			return 0, err
+		}
+
+		err = json.Unmarshal(body, form)
+
+		if err != nil {
+			return 0, err
+		}
+
+		doID = form.DOIntegrationID
+
+		// need to create a new stream for the body
+		r.Body = ioutil.NopCloser(bytes.NewReader(body))
+	} else {
+		vals, err := url.ParseQuery(r.URL.RawQuery)
+
+		if err != nil {
+			return 0, err
+		}
+
+		if regStrArr, ok := vals["do_integration_id"]; ok && len(regStrArr) == 1 {
+			doID, err = strconv.ParseUint(regStrArr[0], 10, 64)
+		} else {
+			return 0, errors.New("do integration id not found")
+		}
+	}
+
+	return doID, nil
 }

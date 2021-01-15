@@ -82,6 +82,7 @@ func (g *GCPIntegration) ToProjectIntegration(
 func (g *GCPIntegration) GetBearerToken(
 	getTokenCache GetTokenCacheFunc,
 	setTokenCache SetTokenCacheFunc,
+	scopes ...string,
 ) (string, error) {
 	cache, err := getTokenCache()
 
@@ -95,7 +96,7 @@ func (g *GCPIntegration) GetBearerToken(
 	creds, err := google.CredentialsFromJSON(
 		context.Background(),
 		g.GCPKeyData,
-		"https://www.googleapis.com/auth/cloud-platform",
+		scopes...,
 	)
 
 	if err != nil {

@@ -8,62 +8,62 @@ import (
 	"gorm.io/gorm"
 )
 
-// AWSInfraRepository implements repository.AWSInfraRepository
-type AWSInfraRepository struct {
+// InfraRepository implements repository.InfraRepository
+type InfraRepository struct {
 	canQuery  bool
-	awsInfras []*models.AWSInfra
+	infras []*models.Infra
 }
 
-// NewAWSInfraRepository will return errors if canQuery is false
-func NewAWSInfraRepository(canQuery bool) repository.AWSInfraRepository {
-	return &AWSInfraRepository{
+// NewInfraRepository will return errors if canQuery is false
+func NewInfraRepository(canQuery bool) repository.InfraRepository {
+	return &InfraRepository{
 		canQuery,
-		[]*models.AWSInfra{},
+		[]*models.Infra{},
 	}
 }
 
-// CreateAWSInfra creates a new aws infra
-func (repo *AWSInfraRepository) CreateAWSInfra(
-	infra *models.AWSInfra,
-) (*models.AWSInfra, error) {
+// CreateInfra creates a new aws infra
+func (repo *InfraRepository) CreateInfra(
+	infra *models.Infra,
+) (*models.Infra, error) {
 	if !repo.canQuery {
 		return nil, errors.New("Cannot write database")
 	}
 
-	repo.awsInfras = append(repo.awsInfras, infra)
-	infra.ID = uint(len(repo.awsInfras))
+	repo.infras = append(repo.infras, infra)
+	infra.ID = uint(len(repo.infras))
 
 	return infra, nil
 }
 
-// ReadAWSInfra finds a aws infra by id
-func (repo *AWSInfraRepository) ReadAWSInfra(
+// ReadInfra finds a aws infra by id
+func (repo *InfraRepository) ReadInfra(
 	id uint,
-) (*models.AWSInfra, error) {
+) (*models.Infra, error) {
 	if !repo.canQuery {
 		return nil, errors.New("Cannot read from database")
 	}
 
-	if int(id-1) >= len(repo.awsInfras) || repo.awsInfras[id-1] == nil {
+	if int(id-1) >= len(repo.infras) || repo.infras[id-1] == nil {
 		return nil, gorm.ErrRecordNotFound
 	}
 
 	index := int(id - 1)
-	return repo.awsInfras[index], nil
+	return repo.infras[index], nil
 }
 
-// ListAWSInfrasByProjectID finds all aws infras
+// ListInfrasByProjectID finds all aws infras
 // for a given project id
-func (repo *AWSInfraRepository) ListAWSInfrasByProjectID(
+func (repo *InfraRepository) ListInfrasByProjectID(
 	projectID uint,
-) ([]*models.AWSInfra, error) {
+) ([]*models.Infra, error) {
 	if !repo.canQuery {
 		return nil, errors.New("Cannot read from database")
 	}
 
-	res := make([]*models.AWSInfra, 0)
+	res := make([]*models.Infra, 0)
 
-	for _, infra := range repo.awsInfras {
+	for _, infra := range repo.infras {
 		if infra != nil && infra.ProjectID == projectID {
 			res = append(res, infra)
 		}
@@ -72,20 +72,20 @@ func (repo *AWSInfraRepository) ListAWSInfrasByProjectID(
 	return res, nil
 }
 
-// UpdateAWSInfra modifies an existing AWSInfra in the database
-func (repo *AWSInfraRepository) UpdateAWSInfra(
-	ai *models.AWSInfra,
-) (*models.AWSInfra, error) {
+// UpdateInfra modifies an existing Infra in the database
+func (repo *InfraRepository) UpdateInfra(
+	ai *models.Infra,
+) (*models.Infra, error) {
 	if !repo.canQuery {
 		return nil, errors.New("Cannot write database")
 	}
 
-	if int(ai.ID-1) >= len(repo.awsInfras) || repo.awsInfras[ai.ID-1] == nil {
+	if int(ai.ID-1) >= len(repo.infras) || repo.infras[ai.ID-1] == nil {
 		return nil, gorm.ErrRecordNotFound
 	}
 
 	index := int(ai.ID - 1)
-	repo.awsInfras[index] = ai
+	repo.infras[index] = ai
 
 	return ai, nil
 }

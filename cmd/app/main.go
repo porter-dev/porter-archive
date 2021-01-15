@@ -56,7 +56,7 @@ func main() {
 		&models.Cluster{},
 		&models.ClusterCandidate{},
 		&models.ClusterResolver{},
-		&models.AWSInfra{},
+		&models.Infra{},
 		&ints.KubeIntegration{},
 		&ints.BasicIntegration{},
 		&ints.OIDCIntegration{},

@@ -148,6 +148,22 @@ func New(a *api.App) *chi.Mux {
 			requestlog.NewHandler(a.HandleGithubOAuthCallback, l),
 		)
 
+		r.Method(
+			"GET",
+			"/oauth/projects/{project_id}/digitalocean",
+			auth.DoesUserHaveProjectAccess(
+				requestlog.NewHandler(a.HandleDOOAuthStartProject, l),
+				mw.URLParam,
+				mw.WriteAccess,
+			),
+		)
+
+		r.Method(
+			"GET",
+			"/oauth/digitalocean/callback",
+			requestlog.NewHandler(a.HandleDOOAuthCallback, l),
+		)
+
 		// /api/projects routes
 		r.Method(
 			"GET",
@@ -207,7 +223,7 @@ func New(a *api.App) *chi.Mux {
 					requestlog.NewHandler(a.HandleProvisionAWSECRInfra, l),
 					mw.URLParam,
 					mw.BodyParam,
-					true,
+					false,
 				),
 				mw.URLParam,
 				mw.ReadAccess,
@@ -222,7 +238,67 @@ func New(a *api.App) *chi.Mux {
 					requestlog.NewHandler(a.HandleProvisionAWSEKSInfra, l),
 					mw.URLParam,
 					mw.BodyParam,
-					true,
+					false,
+				),
+				mw.URLParam,
+				mw.ReadAccess,
+			),
+		)
+
+		r.Method(
+			"POST",
+			"/projects/{project_id}/provision/gcr",
+			auth.DoesUserHaveProjectAccess(
+				auth.DoesUserHaveGCPIntegrationAccess(
+					requestlog.NewHandler(a.HandleProvisionGCPGCRInfra, l),
+					mw.URLParam,
+					mw.BodyParam,
+					false,
+				),
+				mw.URLParam,
+				mw.ReadAccess,
+			),
+		)
+
+		r.Method(
+			"POST",
+			"/projects/{project_id}/provision/gke",
+			auth.DoesUserHaveProjectAccess(
+				auth.DoesUserHaveGCPIntegrationAccess(
+					requestlog.NewHandler(a.HandleProvisionGCPGKEInfra, l),
+					mw.URLParam,
+					mw.BodyParam,
+					false,
+				),
+				mw.URLParam,
+				mw.ReadAccess,
+			),
+		)
+
+		r.Method(
+			"POST",
+			"/projects/{project_id}/provision/docr",
+			auth.DoesUserHaveProjectAccess(
+				auth.DoesUserHaveDOIntegrationAccess(
+					requestlog.NewHandler(a.HandleProvisionDODOCRInfra, l),
+					mw.URLParam,
+					mw.BodyParam,
+					false,
+				),
+				mw.URLParam,
+				mw.ReadAccess,
+			),
+		)
+
+		r.Method(
+			"POST",
+			"/projects/{project_id}/provision/doks",
+			auth.DoesUserHaveProjectAccess(
+				auth.DoesUserHaveDOIntegrationAccess(
+					requestlog.NewHandler(a.HandleProvisionDODOKSInfra, l),
+					mw.URLParam,
+					mw.BodyParam,
+					false,
 				),
 				mw.URLParam,
 				mw.ReadAccess,
@@ -277,6 +353,48 @@ func New(a *api.App) *chi.Mux {
 			auth.DoesUserHaveProjectAccess(
 				auth.DoesUserHaveInfraAccess(
 					requestlog.NewHandler(a.HandleDestroyAWSEKSInfra, l),
+					mw.URLParam,
+					mw.URLParam,
+				),
+				mw.URLParam,
+				mw.ReadAccess,
+			),
+		)
+
+		r.Method(
+			"POST",
+			"/projects/{project_id}/infra/{infra_id}/gke/destroy",
+			auth.DoesUserHaveProjectAccess(
+				auth.DoesUserHaveInfraAccess(
+					requestlog.NewHandler(a.HandleDestroyGCPGKEInfra, l),
+					mw.URLParam,
+					mw.URLParam,
+				),
+				mw.URLParam,
+				mw.ReadAccess,
+			),
+		)
+
+		r.Method(
+			"POST",
+			"/projects/{project_id}/infra/{infra_id}/docr/destroy",
+			auth.DoesUserHaveProjectAccess(
+				auth.DoesUserHaveInfraAccess(
+					requestlog.NewHandler(a.HandleDestroyDODOCRInfra, l),
+					mw.URLParam,
+					mw.URLParam,
+				),
+				mw.URLParam,
+				mw.ReadAccess,
+			),
+		)
+
+		r.Method(
+			"POST",
+			"/projects/{project_id}/infra/{infra_id}/doks/destroy",
+			auth.DoesUserHaveProjectAccess(
+				auth.DoesUserHaveInfraAccess(
+					requestlog.NewHandler(a.HandleDestroyDODOKSInfra, l),
 					mw.URLParam,
 					mw.URLParam,
 				),
@@ -420,6 +538,16 @@ func New(a *api.App) *chi.Mux {
 			),
 		)
 
+		r.Method(
+			"GET",
+			"/projects/{project_id}/integrations/oauth",
+			auth.DoesUserHaveProjectAccess(
+				requestlog.NewHandler(a.HandleListProjectOAuthIntegrations, l),
+				mw.URLParam,
+				mw.WriteAccess,
+			),
+		)
+
 		// /api/projects/{project_id}/helmrepos routes
 		r.Method(
 			"POST",
@@ -468,7 +596,12 @@ func New(a *api.App) *chi.Mux {
 			auth.DoesUserHaveProjectAccess(
 				auth.DoesUserHaveAWSIntegrationAccess(
 					auth.DoesUserHaveGCPIntegrationAccess(
-						requestlog.NewHandler(a.HandleCreateRegistry, l),
+						auth.DoesUserHaveDOIntegrationAccess(
+							requestlog.NewHandler(a.HandleCreateRegistry, l),
+							mw.URLParam,
+							mw.BodyParam,
+							true,
+						),
 						mw.URLParam,
 						mw.BodyParam,
 						true,
@@ -521,6 +654,16 @@ func New(a *api.App) *chi.Mux {
 			"/projects/{project_id}/registries/gcr/token",
 			auth.DoesUserHaveProjectAccess(
 				requestlog.NewHandler(a.HandleGetProjectRegistryGCRToken, l),
+				mw.URLParam,
+				mw.WriteAccess,
+			),
+		)
+
+		r.Method(
+			"GET",
+			"/projects/{project_id}/registries/docr/token",
+			auth.DoesUserHaveProjectAccess(
+				requestlog.NewHandler(a.HandleGetProjectRegistryDOCRToken, l),
 				mw.URLParam,
 				mw.WriteAccess,
 			),

@@ -114,7 +114,7 @@ func GlobalStreamListener(
 			kind, projID, infraID, err := models.ParseWorkspaceID(fmt.Sprintf("%v", msg.Values["id"]))
 
 			if fmt.Sprintf("%v", msg.Values["status"]) == "created" {
-				infra, err := repo.AWSInfra.ReadAWSInfra(infraID)
+				infra, err := repo.Infra.ReadInfra(infraID)
 
 				if err != nil {
 					continue
@@ -122,14 +122,14 @@ func GlobalStreamListener(
 
 				infra.Status = models.StatusCreated
 
-				infra, err = repo.AWSInfra.UpdateAWSInfra(infra)
+				infra, err = repo.Infra.UpdateInfra(infra)
 
 				if err != nil {
 					continue
 				}
 
 				// create ECR/EKS
-				if kind == string(models.AWSInfraECR) {
+				if kind == string(models.InfraECR) {
 					reg := &models.Registry{
 						ProjectID:        projID,
 						AWSIntegrationID: infra.AWSIntegrationID,
@@ -170,7 +170,7 @@ func GlobalStreamListener(
 					if err != nil {
 						continue
 					}
-				} else if kind == string(models.AWSInfraEKS) {
+				} else if kind == string(models.InfraEKS) {
 					cluster := &models.Cluster{
 						AuthMechanism:    models.AWS,
 						ProjectID:        projID,
@@ -204,9 +204,116 @@ func GlobalStreamListener(
 					if err != nil {
 						continue
 					}
+				} else if kind == string(models.InfraGCR) {
+					reg := &models.Registry{
+						ProjectID:        projID,
+						GCPIntegrationID: infra.GCPIntegrationID,
+						InfraID:          infra.ID,
+						Name:             "gcr-registry",
+					}
+
+					// parse raw data into ECR type
+					dataString, ok := msg.Values["data"].(string)
+
+					if ok {
+						json.Unmarshal([]byte(dataString), reg)
+					}
+
+					reg, err = repo.Registry.CreateRegistry(reg)
+
+					if err != nil {
+						continue
+					}
+				} else if kind == string(models.InfraGKE) {
+					cluster := &models.Cluster{
+						AuthMechanism:    models.GCP,
+						ProjectID:        projID,
+						GCPIntegrationID: infra.GCPIntegrationID,
+						InfraID:          infra.ID,
+					}
+
+					// parse raw data into GKE type
+					dataString, ok := msg.Values["data"].(string)
+
+					if ok {
+						json.Unmarshal([]byte(dataString), cluster)
+					}
+
+					re := regexp.MustCompile(`^([A-Za-z0-9+/]{4})*([A-Za-z0-9+/]{3}=|[A-Za-z0-9+/]{2}==)?$`)
+
+					// if it matches the base64 regex, decode it
+					caData := string(cluster.CertificateAuthorityData)
+					if re.MatchString(caData) {
+						decoded, err := base64.StdEncoding.DecodeString(caData)
+
+						if err != nil {
+							continue
+						}
+
+						cluster.CertificateAuthorityData = []byte(decoded)
+					}
+
+					cluster, err := repo.Cluster.CreateCluster(cluster)
+
+					if err != nil {
+						continue
+					}
+				} else if kind == string(models.InfraDOCR) {
+					reg := &models.Registry{
+						ProjectID:       projID,
+						DOIntegrationID: infra.DOIntegrationID,
+						InfraID:         infra.ID,
+					}
+
+					// parse raw data into DOCR type
+					dataString, ok := msg.Values["data"].(string)
+
+					if ok {
+						json.Unmarshal([]byte(dataString), reg)
+					}
+
+					reg, err = repo.Registry.CreateRegistry(reg)
+
+					if err != nil {
+						continue
+					}
+				} else if kind == string(models.InfraDOKS) {
+					cluster := &models.Cluster{
+						AuthMechanism:   models.DO,
+						ProjectID:       projID,
+						DOIntegrationID: infra.DOIntegrationID,
+						InfraID:         infra.ID,
+					}
+
+					// parse raw data into GKE type
+					dataString, ok := msg.Values["data"].(string)
+
+					if ok {
+						json.Unmarshal([]byte(dataString), cluster)
+					}
+
+					re := regexp.MustCompile(`^([A-Za-z0-9+/]{4})*([A-Za-z0-9+/]{3}=|[A-Za-z0-9+/]{2}==)?$`)
+
+					// if it matches the base64 regex, decode it
+					caData := string(cluster.CertificateAuthorityData)
+					if re.MatchString(caData) {
+						decoded, err := base64.StdEncoding.DecodeString(caData)
+
+						if err != nil {
+							continue
+						}
+
+						cluster.CertificateAuthorityData = []byte(decoded)
+					}
+
+					cluster, err := repo.Cluster.CreateCluster(cluster)
+
+					if err != nil {
+						continue
+					}
 				}
 			} else if fmt.Sprintf("%v", msg.Values["status"]) == "error" {
-				infra, err := repo.AWSInfra.ReadAWSInfra(infraID)
+				infra, err := repo.Infra.ReadInfra(infraID)
 
 				if err != nil {
 					continue
@@ -214,13 +321,13 @@ func GlobalStreamListener(
 
 				infra.Status = models.StatusError
 
-				infra, err = repo.AWSInfra.UpdateAWSInfra(infra)
+				infra, err = repo.Infra.UpdateInfra(infra)
 
 				if err != nil {
 					continue
 				}
 			} else if fmt.Sprintf("%v", msg.Values["status"]) == "destroyed" {
-				infra, err := repo.AWSInfra.ReadAWSInfra(infraID)
+				infra, err := repo.Infra.ReadInfra(infraID)
 
 				if err != nil {
 					continue
@@ -228,7 +335,7 @@ func GlobalStreamListener(
 
 				infra.Status = models.StatusDestroyed
 
-				infra, err = repo.AWSInfra.UpdateAWSInfra(infra)
+				infra, err = repo.Infra.UpdateInfra(infra)
 
 				if err != nil {
 					continue

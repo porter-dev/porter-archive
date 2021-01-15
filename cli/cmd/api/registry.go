@@ -106,6 +106,53 @@ func (c *Client) CreateGCR(
 	return bodyResp, nil
 }
 
+// CreateDOCRRequest represents the accepted fields for creating
+// a DOCR registry
+type CreateDOCRRequest struct {
+	Name            string `json:"name"`
+	DOIntegrationID uint   `json:"do_integration_id"`
+	URL             string `json:"url"`
+}
+
+// CreateDOCRResponse is the resulting registry after creation
+type CreateDOCRResponse models.RegistryExternal
+
+// CreateDOCR creates an Digital Ocean Container Registry integration
+func (c *Client) CreateDOCR(
+	ctx context.Context,
+	projectID uint,
+	createDOCR *CreateDOCRRequest,
+) (*CreateDOCRResponse, error) {
+	data, err := json.Marshal(createDOCR)
+
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(
+		"POST",
+		fmt.Sprintf("%s/projects/%d/registries", c.BaseURL, projectID),
+		strings.NewReader(string(data)),
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	req = req.WithContext(ctx)
+	bodyResp := &CreateDOCRResponse{}
+
+	if httpErr, err := c.sendRequest(req, bodyResp, true); httpErr != nil || err != nil {
+		if httpErr != nil {
+			return nil, fmt.Errorf("code %d, errors %v", httpErr.Code, httpErr.Errors)
+		}
+
+		return nil, err
+	}
+
+	return bodyResp, nil
+}
+
 // ListRegistryResponse is the list of registries for a project
 type ListRegistryResponse []models.RegistryExternal
 
@@ -222,6 +269,46 @@ func (c *Client) GetGCRAuthorizationToken(
 	req, err := http.NewRequest(
 		"GET",
 		fmt.Sprintf("%s/projects/%d/registries/gcr/token", c.BaseURL, projectID),
+		strings.NewReader(string(data)),
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	bodyResp := &GetTokenResponse{}
+	req = req.WithContext(ctx)
+
+	if httpErr, err := c.sendRequest(req, bodyResp, true); httpErr != nil || err != nil {
+		if httpErr != nil {
+			return nil, fmt.Errorf("code %d, errors %v", httpErr.Code, httpErr.Errors)
+		}
+
+		return nil, err
+	}
+
+	return bodyResp, nil
+}
+
+type GetDOCRTokenRequest struct {
+	ServerURL string `json:"server_url"`
+}
+
+// GetDOCRAuthorizationToken gets a DOCR authorization token
+func (c *Client) GetDOCRAuthorizationToken(
+	ctx context.Context,
+	projectID uint,
+	docrRequest *GetDOCRTokenRequest,
+) (*GetTokenResponse, error) {
+	data, err := json.Marshal(docrRequest)
+
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(
+		"GET",
+		fmt.Sprintf("%s/projects/%d/registries/docr/token", c.BaseURL, projectID),
 		strings.NewReader(string(data)),
 	)
 

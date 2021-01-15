@@ -62,6 +62,8 @@ func (r *Registry) Externalize() *RegistryExternal {
 		serv = integrations.ECR
 	} else if r.GCPIntegrationID != 0 {
 		serv = integrations.GCR
+	} else if r.DOIntegrationID != 0 {
+		serv = integrations.DOCR
 	}
 
 	return &RegistryExternal{

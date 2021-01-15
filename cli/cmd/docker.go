@@ -6,9 +6,11 @@ import (
 	"io/ioutil"
 	"net/url"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 
+	"github.com/fatih/color"
 	"github.com/porter-dev/porter/cli/cmd/api"
 	"github.com/porter-dev/porter/cli/cmd/github"
 	"github.com/spf13/cobra"
@@ -93,21 +95,30 @@ func dockerConfig(user *api.AuthCheckResponse, client *api.Client, args []string
 		return err
 	}
 
-	// download the porter cred helper
-	z := &github.ZIPReleaseGetter{
-		AssetName:           "docker-credential-porter",
-		AssetFolderDest:     "/usr/local/bin",
-		ZipFolderDest:       filepath.Join(home, ".porter"),
-		ZipName:             "docker-credential-porter_latest.zip",
-		EntityID:            "porter-dev",
-		RepoName:            "porter",
-		IsPlatformDependent: true,
+	// check if the docker credential helper exists
+	if !commandExists("docker-credential-porter") {
+		err := downloadCredMatchingRelease()
+
+		if err != nil {
+			color.New(color.FgRed).Println("Failed to download credential helper binary:", err.Error())
+			os.Exit(1)
+		}
 	}
 
-	err = z.GetLatestRelease()
+	// otherwise, check the version flag of the binary
+	cmdVersionCred := exec.Command("docker-credential-porter", "--version")
+	writer := &versionWriter{}
+	cmdVersionCred.Stdout = writer
 
-	if err != nil {
-		return err
+	err = cmdVersionCred.Run()
+
+	if err != nil || writer.Version != Version {
+		err := downloadCredMatchingRelease()
+
+		if err != nil {
+			color.New(color.FgRed).Println("Failed to download credential helper binary:", err.Error())
+			os.Exit(1)
+		}
 	}
 
 	config := &configfile.ConfigFile{
@@ -125,4 +136,24 @@ func dockerConfig(user *api.AuthCheckResponse, client *api.Client, args []string
 	}
 
 	return config.Save()
+}
+
+func downloadCredMatchingRelease() error {
+	// download the porter cred helper
+	z := &github.ZIPReleaseGetter{
+		AssetName:           "docker-credential-porter",
+		AssetFolderDest:     "/usr/local/bin",
+		ZipFolderDest:       filepath.Join(home, ".porter"),
+		ZipName:             "docker-credential-porter_latest.zip",
+		EntityID:            "porter-dev",
+		RepoName:            "porter",
+		IsPlatformDependent: true,
+	}
+
+	return z.GetRelease(Version)
+}
+
+func commandExists(cmd string) bool {
+	_, err := exec.LookPath(cmd)
+	return err == nil
 }

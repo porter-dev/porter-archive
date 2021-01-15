@@ -102,6 +102,10 @@ func (p *PorterHelper) getDOCR(serverURL string) (user string, secret string, er
 	urlP, err := url.Parse(serverURL)
 
 	if err != nil {
+		if p.Debug {
+			log.Printf("Error: %s\n", err.Error())
+		}
+
 		return "", "", err
 	}
 
@@ -110,13 +114,25 @@ func (p *PorterHelper) getDOCR(serverURL string) (user string, secret string, er
 
 	var token string
 
+	if p.Debug {
+		log.Printf("GETTING FROM DOCR", urlP)
+	}
+
 	if cachedEntry != nil && cachedEntry.IsValid(time.Now()) {
 		token = cachedEntry.AuthorizationToken
+
+		if p.Debug {
+			log.Printf("USING CACHED TOKEN", token)
+		}
 	} else {
 		host := viper.GetString("host")
 		projID := viper.GetUint("project")
 
 		client := api.NewClient(host+"/api", "cookie.json")
+
+		if p.Debug {
+			log.Printf("MAKING REQUEST", host, projID)
+		}
 
 		// get a token from the server
 		tokenResp, err := client.GetDOCRAuthorizationToken(context.Background(), projID, &api.GetDOCRTokenRequest{
@@ -124,6 +140,10 @@ func (p *PorterHelper) getDOCR(serverURL string) (user string, secret string, er
 		})
 
 		if err != nil {
+			if p.Debug {
+				log.Printf("Error: %s\n", err.Error())
+			}
+
 			return "", "", err
 		}
 

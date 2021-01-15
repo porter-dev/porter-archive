@@ -596,7 +596,12 @@ func New(a *api.App) *chi.Mux {
 			auth.DoesUserHaveProjectAccess(
 				auth.DoesUserHaveAWSIntegrationAccess(
 					auth.DoesUserHaveGCPIntegrationAccess(
-						requestlog.NewHandler(a.HandleCreateRegistry, l),
+						auth.DoesUserHaveDOIntegrationAccess(
+							requestlog.NewHandler(a.HandleCreateRegistry, l),
+							mw.URLParam,
+							mw.BodyParam,
+							true,
+						),
 						mw.URLParam,
 						mw.BodyParam,
 						true,
@@ -649,6 +654,16 @@ func New(a *api.App) *chi.Mux {
 			"/projects/{project_id}/registries/gcr/token",
 			auth.DoesUserHaveProjectAccess(
 				requestlog.NewHandler(a.HandleGetProjectRegistryGCRToken, l),
+				mw.URLParam,
+				mw.WriteAccess,
+			),
+		)
+
+		r.Method(
+			"GET",
+			"/projects/{project_id}/registries/docr/token",
+			auth.DoesUserHaveProjectAccess(
+				requestlog.NewHandler(a.HandleGetProjectRegistryDOCRToken, l),
 				mw.URLParam,
 				mw.WriteAccess,
 			),

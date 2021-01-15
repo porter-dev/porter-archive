@@ -22,6 +22,7 @@ export default class Drawer extends Component<PropsType, StateType> {
     let { currentCluster, setCurrentCluster } = this.context;
 
     if (clusters.length > 0 && currentCluster) {
+      clusters.sort((a, b) => a.id - b.id);
       return clusters.map((cluster: ClusterType, i: number) => {
         /*
         let active = this.context.activeProject &&
@@ -32,7 +33,11 @@ export default class Drawer extends Component<PropsType, StateType> {
           <ClusterOption
             key={i}
             active={cluster.name === currentCluster.name}
-            onClick={() => { setCurrentCluster(cluster); setCurrentView('cluster-dashboard') }}
+            onClick={() => {
+              localStorage.setItem('currentCluster', cluster.id);
+              setCurrentCluster(cluster);
+              setCurrentView('cluster-dashboard');
+            }}
           >
             <ClusterIcon><i className="material-icons">device_hub</i></ClusterIcon>
             <ClusterName>{cluster.name}</ClusterName>

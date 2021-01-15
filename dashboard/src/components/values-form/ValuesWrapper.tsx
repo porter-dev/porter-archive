@@ -96,7 +96,7 @@ export default class ValuesWrapper extends Component<PropsType, StateType> {
         <SaveButton
           disabled={this.isDisabled() || this.props.disabled}
           text='Deploy'
-          onClick={() => {console.log(this.state); this.props.onSubmit(this.state)}}
+          onClick={() => this.props.onSubmit(this.state)}
           status={this.isDisabled() ? 'Missing required fields' : this.props.saveValuesStatus}
           makeFlush={true}
         />

@@ -132,8 +132,7 @@ func (app *App) HandleUninstallTemplate(w http.ResponseWriter, r *http.Request) 
 				Repo: app.Repo,
 			},
 		},
-		Name:     name,
-		Revision: 0,
+		Name: name,
 	}
 
 	agent, err := app.getAgentFromQueryParams(

@@ -460,7 +460,6 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
         console.log(err)
       } else {
         this.setState({ components: res.data.Objects });
-        console.log(res.data.Objects)
       }
     });
 
@@ -475,12 +474,13 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
         console.log(err);
         return
       }
-      console.log(res.data)
       
       if (res.data?.status?.loadBalancer?.ingress) {
         this.setState({url: `http://${res.data?.status?.loadBalancer?.ingress[0]?.hostname}` })
       }
-    })
+    });
+
+    this.updateTabs();
   }
 
   componentDidUpdate(prevProps: PropsType) {
@@ -493,8 +493,8 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
   componentWillUnmount() {
     if (this.state.websockets) {
       this.state.websockets.forEach((ws: WebSocket) => {
-        ws.close()
-      })
+        ws.close();
+      });
     }
   }
 

@@ -193,6 +193,14 @@ func (a *Agent) InstallChart(
 	return cmd.Run(conf.Chart, conf.Values)
 }
 
+// UninstallChart uninstalls a chart
+func (a *Agent) UninstallChart(
+	name string,
+) (*release.UninstallReleaseResponse, error) {
+	cmd := action.NewUninstall(a.ActionConfig)
+	return cmd.Run(name)
+}
+
 // RollbackRelease rolls a release back to a specified revision/version
 func (a *Agent) RollbackRelease(
 	name string,

@@ -53,11 +53,11 @@ export default class ClusterSection extends Component<PropsType, StateType> {
         // TODO: handle uninitialized kubeconfig
         if (res.data) {
           let clusters = res.data;
-          clusters.sort((a, b) => a.id - b.id);
+          clusters.sort((a: any, b: any) => a.id - b.id);
           if (clusters.length > 0) {
             this.setState({ clusters });
             setCurrentCluster(clusters[(
-              (localStorage.getItem('currentCluster')) ? localStorage.getItem('currentCluster') : 0
+              (localStorage.getItem('currentCluster')) ? parseInt(localStorage.getItem('currentCluster')) : 0
             )]);
           } else if (this.props.currentView !== 'provisioner') {
             this.setState({ clusters: [] });

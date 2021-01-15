@@ -36,13 +36,14 @@ const (
 
 // Conf is the config required to start a provisioner container
 type Conf struct {
-	Kind      InfraOption
-	Name      string
-	Namespace string
-	ID        string
-	Redis     *config.RedisConf
-	Postgres  *config.DBConf
-	Operation ProvisionerOperation
+	Kind                InfraOption
+	Name                string
+	Namespace           string
+	ID                  string
+	Redis               *config.RedisConf
+	Postgres            *config.DBConf
+	Operation           ProvisionerOperation
+	ProvisionerImageTag string
 
 	// provider-specific configurations
 
@@ -139,10 +140,11 @@ func (conf *Conf) GetProvisionerJobTemplate() (*batchv1.Job, error) {
 					RestartPolicy: v1.RestartPolicyNever,
 					Containers: []v1.Container{
 						{
-							Name:  "provisioner",
-							Image: "gcr.io/porter-dev-273614/provisioner:latest",
-							Args:  args,
-							Env:   env,
+							Name:            "provisioner",
+							Image:           "gcr.io/porter-dev-273614/provisioner:" + conf.ProvisionerImageTag,
+							ImagePullPolicy: v1.PullAlways,
+							Args:            args,
+							Env:             env,
 							VolumeMounts: []v1.VolumeMount{
 								v1.VolumeMount{
 									MountPath: "/.terraform/plugin-cache",

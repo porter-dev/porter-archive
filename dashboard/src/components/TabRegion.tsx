@@ -25,7 +25,6 @@ export default class TabRegion extends Component<PropsType, StateType> {
   }
 
   componentDidMount() {
-    console.log(this.props.options)
     this.setDefaultTab();
   }
 

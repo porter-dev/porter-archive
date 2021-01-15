@@ -123,7 +123,7 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
         formTabs={this.props.form?.tabs}
         onSubmit={this.onSubmit}
         saveValuesStatus={this.state.saveValuesStatus}
-        disabled={!this.state.selectedImageUrl}
+        disabled={!this.state.selectedImageUrl && this.props.form?.hasSource}
       >
         {(metaState: any, setMetaState: any) => {
           return this.props.form?.tabs.map((tab: any, i: number) => {

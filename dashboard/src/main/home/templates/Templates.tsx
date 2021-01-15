@@ -17,6 +17,7 @@ const tabOptions = [
 const hardcodedNames: any = {
   'postgresql': 'PostgreSQL',
   'docker': 'Docker',
+  'https-issuer': 'HTTPS Issuer'
 };
 
 type PropsType = {
@@ -46,7 +47,6 @@ export default class Templates extends Component<PropsType, StateType> {
         this.setState({ loading: false, error: true });
       } else {
         this.setState({ porterTemplates: res.data, loading: false, error: false });
-        console.log(res.data)
       }
     });
   }

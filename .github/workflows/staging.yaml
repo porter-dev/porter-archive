@@ -26,9 +26,9 @@ jobs:
         DISCORD_KEY=${{secrets.DISCORD_KEY}}
         DISCORD_CID=${{secrets.DISCORD_CID}}
         FEEDBACK_ENDPOINT=${{secrets.FEEDBACK_ENDPOINT}}
+        POSTHOG_API_KEY=${{secrets.POSTHOG_API_KEY}}
+        POSTHOG_HOST=${{secrets.POSTHOG_HOST}}
         EOL
-
-        cat ./dashboard/.env
     - name: Build
       run: |
         DOCKER_BUILDKIT=1 docker build . -t gcr.io/porter-dev-273614/porter-prov:latest -f ./docker/Dockerfile

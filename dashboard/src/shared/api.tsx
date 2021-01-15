@@ -291,10 +291,40 @@ const deleteCluster = baseApi<{
   cluster_id: number,
 }>('DELETE', pathParams => {
   return `/api/projects/${pathParams.project_id}/clusters/${pathParams.cluster_id}`;
-})
+});
+
+const createGCPIntegration = baseApi<{
+  gcp_region: string,
+  gcp_key_data: string,
+  gcp_project_id: string,
+}, {
+  project_id: number,
+}>('POST', pathParams => {
+  return `/api/projects/${pathParams.project_id}/integrations/gcp`;
+});
+
+const createGCR = baseApi<{
+  gcp_integration_id: number,
+}, {
+  project_id: number,
+}>('POST', pathParams => {
+  return `/api/projects/${pathParams.project_id}/provision/gcr`;
+});
+
+const createGKE = baseApi<{
+  gcp_integration_id: number,
+  gke_name: string,
+}, {
+  project_id: number,
+}>('POST', pathParams => {
+  return `/api/projects/${pathParams.project_id}/provision/gke`;
+});
 
 // Bundle export to allow default api import (api.<method> is more readable)
 export default {
+  createGCR,
+  createGKE,
+  createGCPIntegration,
   deleteCluster,
   destroyCluster,
   getInfra,

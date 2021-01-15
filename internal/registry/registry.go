@@ -93,7 +93,11 @@ func (r *Registry) GetGCRToken(repo repository.Repository) (*ints.TokenCache, er
 	}
 
 	// get oauth2 access token
-	_, err = gcp.GetBearerToken(r.getTokenCache, r.setTokenCacheFunc(repo))
+	_, err = gcp.GetBearerToken(
+		r.getTokenCache,
+		r.setTokenCacheFunc(repo),
+		"https://www.googleapis.com/auth/devstorage.read_write",
+	)
 
 	if err != nil {
 		return nil, err

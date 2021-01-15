@@ -56,7 +56,7 @@ func (p *PorterHelper) Get(serverURL string) (user string, secret string, err er
 }
 
 func (p *PorterHelper) getGCR(serverURL string) (user string, secret string, err error) {
-	urlP, err := url.Parse(serverURL)
+	urlP, err := url.Parse("https://" + serverURL)
 
 	if err != nil {
 		return "", "", err
@@ -99,7 +99,7 @@ func (p *PorterHelper) getGCR(serverURL string) (user string, secret string, err
 }
 
 func (p *PorterHelper) getDOCR(serverURL string) (user string, secret string, err error) {
-	urlP, err := url.Parse(serverURL)
+	urlP, err := url.Parse("https://" + serverURL)
 
 	if err != nil {
 		if p.Debug {
@@ -149,13 +149,16 @@ func (p *PorterHelper) getDOCR(serverURL string) (user string, secret string, er
 
 		token = tokenResp.Token
 
-		// set the token in cache
-		credCache.Set(serverURL, &AuthEntry{
-			AuthorizationToken: token,
-			RequestedAt:        time.Now(),
-			ExpiresAt:          *tokenResp.ExpiresAt,
-			ProxyEndpoint:      serverURL,
-		})
+		if t := *tokenResp.ExpiresAt; len(token) > 0 && !t.IsZero() {
+			// set the token in cache
+			credCache.Set(serverURL, &AuthEntry{
+				AuthorizationToken: token,
+				RequestedAt:        time.Now(),
+				ExpiresAt:          t,
+				ProxyEndpoint:      serverURL,
+			})
+		}
+
 	}
 
 	return token, token, nil

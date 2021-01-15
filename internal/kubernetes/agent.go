@@ -553,6 +553,9 @@ func (a *Agent) CreateImagePullSecrets(
 				return nil, err
 			}
 
+			// add secret name to the map
+			res[key] = secretName
+
 			continue
 		} else if err != nil {
 			return nil, err

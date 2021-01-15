@@ -273,7 +273,11 @@ func (conf *OutOfClusterConfig) createRawConfigFromCluster() (*api.Config, error
 			return nil, err
 		}
 
-		tok, err := gcpAuth.GetBearerToken(conf.getTokenCache, conf.setTokenCache)
+		tok, err := gcpAuth.GetBearerToken(
+			conf.getTokenCache,
+			conf.setTokenCache,
+			"https://www.googleapis.com/auth/cloud-platform",
+		)
 
 		if err != nil {
 			return nil, err

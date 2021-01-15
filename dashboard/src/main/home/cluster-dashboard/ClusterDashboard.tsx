@@ -26,14 +26,8 @@ type StateType = {
 export default class ClusterDashboard extends Component<PropsType, StateType> {
   state = {
     namespace: 'default',
-    sortType: 'Newest',
+    sortType: (localStorage.getItem("SortType") ? localStorage.getItem('SortType') : 'Newest'),
     currentChart: null as (ChartType | null)
-  }
-
-  componentDidMount() {
-    if (localStorage.getItem("SortType")) {
-      this.setState({ sortType: localStorage.getItem("SortType") });
-    }
   }
 
   componentDidUpdate(prevProps: PropsType) {

@@ -1,6 +1,7 @@
 package forms
 
 import (
+	"fmt"
 	"net/url"
 	"strconv"
 
@@ -19,6 +20,7 @@ func (rf *ReleaseForm) PopulateHelmOptionsFromQueryParams(
 	vals url.Values,
 	repo repository.ClusterRepository,
 ) error {
+	fmt.Println(vals)
 	if clusterID, ok := vals["cluster_id"]; ok && len(clusterID) == 1 {
 		id, err := strconv.ParseUint(clusterID[0], 10, 64)
 
@@ -31,15 +33,17 @@ func (rf *ReleaseForm) PopulateHelmOptionsFromQueryParams(
 		if err != nil {
 			return err
 		}
-
+		fmt.Println("setting cluster")
 		rf.Cluster = cluster
 	}
 
 	if namespace, ok := vals["namespace"]; ok && len(namespace) == 1 {
+		fmt.Println("setting namespace")
 		rf.Namespace = namespace[0]
 	}
 
 	if storage, ok := vals["storage"]; ok && len(storage) == 1 {
+		fmt.Println("setting storage")
 		rf.Storage = storage[0]
 	}
 

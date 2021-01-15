@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/porter-dev/porter/cli/cmd/api"
 	"github.com/porter-dev/porter/cli/cmd/utils"
@@ -41,7 +42,7 @@ func DOCR(
 	}
 
 	if !linkedDO {
-		doAuth, err = triggerDigitalOceanOAuth(projectID)
+		doAuth, err = triggerDigitalOceanOAuth(client, projectID)
 
 		if err != nil {
 			return 0, err
@@ -76,6 +77,38 @@ Registry URL: `))
 	return reg.ID, nil
 }
 
-func triggerDigitalOceanOAuth(projectID uint) (ints.OAuthIntegrationExternal, error) {
-	return ints.OAuthIntegrationExternal{}, nil
+func triggerDigitalOceanOAuth(client *api.Client, projectID uint) (ints.OAuthIntegrationExternal, error) {
+	var doAuth ints.OAuthIntegrationExternal
+
+	oauthURL := fmt.Sprintf("%s/oauth/projects/%d/digitalocean", client.BaseURL, projectID)
+
+	fmt.Printf("Please visit %s in your browser to connect to Digital Ocean (it should open automatically).", oauthURL)
+	utils.OpenBrowser(oauthURL)
+
+	for {
+		oauthInts, err := client.ListOAuthIntegrations(context.TODO(), projectID)
+
+		if err != nil {
+			return doAuth, err
+		}
+
+		linkedDO := false
+
+		// iterate through oauth integrations to find do
+		for _, oauthInt := range oauthInts {
+			if oauthInt.Client == ints.OAuthDigitalOcean {
+				linkedDO = true
+				doAuth = oauthInt
+				break
+			}
+		}
+
+		if linkedDO {
+			break
+		}
+
+		time.Sleep(2 * time.Second)
+	}
+
+	return doAuth, nil
 }

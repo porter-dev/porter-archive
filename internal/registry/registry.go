@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/url"
 	"strings"
 	"time"
 
@@ -149,9 +150,16 @@ func (r *Registry) listGCRRepositories(
 
 	res := make([]*Repository, 0)
 
+	parsedURL, err := url.Parse("https://" + r.URL)
+
+	if err != nil {
+		return nil, err
+	}
+
 	for _, repo := range gcrResp.Repositories {
 		res = append(res, &Repository{
 			Name: repo,
+			URI:  parsedURL.Host + "/" + repo,
 		})
 	}
 
@@ -341,9 +349,17 @@ func (r *Registry) listGCRImages(repoName string, repo repository.Repository) ([
 	// use JWT token to request catalog
 	client := &http.Client{}
 
+	parsedURL, err := url.Parse("https://" + r.URL)
+
+	if err != nil {
+		return nil, err
+	}
+
+	trimmedPath := strings.Trim(parsedURL.Path, "/")
+
 	req, err := http.NewRequest(
 		"GET",
-		fmt.Sprintf("https://gcr.io/v2/%s/tags/list", repoName),
+		fmt.Sprintf("https://%s/v2/%s/%s/tags/list", parsedURL.Host, trimmedPath, repoName),
 		nil,
 	)
 

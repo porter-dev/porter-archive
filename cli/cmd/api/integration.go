@@ -147,3 +147,35 @@ func (c *Client) CreateBasicAuthIntegration(
 
 	return bodyResp, nil
 }
+
+// ListOAuthIntegrationResponse is the list of oauth integrations in a project
+type ListOAuthIntegrationResponse []ints.OAuthIntegrationExternal
+
+// ListOAuthIntegrations lists the oauth integrations in a project
+func (c *Client) ListOAuthIntegrations(
+	ctx context.Context,
+	projectID uint,
+) (ListOAuthIntegrationResponse, error) {
+	req, err := http.NewRequest(
+		"GET",
+		fmt.Sprintf("%s/projects/%d/integrations/oauth", c.BaseURL, projectID),
+		nil,
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	req = req.WithContext(ctx)
+	bodyResp := &ListOAuthIntegrationResponse{}
+
+	if httpErr, err := c.sendRequest(req, bodyResp, true); httpErr != nil || err != nil {
+		if httpErr != nil {
+			return nil, fmt.Errorf("code %d, errors %v", httpErr.Code, httpErr.Errors)
+		}
+
+		return nil, err
+	}
+
+	return *bodyResp, nil
+}

@@ -38,6 +38,7 @@ func (app *App) HandleProvisionTest(w http.ResponseWriter, r *http.Request) {
 		provisioner.Apply,
 		&app.DBConf,
 		app.RedisConf,
+		app.ServerConf.ProvisionerImageTag,
 	)
 
 	if err != nil {
@@ -118,6 +119,7 @@ func (app *App) HandleProvisionAWSECRInfra(w http.ResponseWriter, r *http.Reques
 		provisioner.Apply,
 		&app.DBConf,
 		app.RedisConf,
+		app.ServerConf.ProvisionerImageTag,
 	)
 
 	if err != nil {
@@ -208,6 +210,7 @@ func (app *App) HandleDestroyAWSECRInfra(w http.ResponseWriter, r *http.Request)
 		provisioner.Destroy,
 		&app.DBConf,
 		app.RedisConf,
+		app.ServerConf.ProvisionerImageTag,
 	)
 
 	if err != nil {
@@ -290,6 +293,7 @@ func (app *App) HandleProvisionAWSEKSInfra(w http.ResponseWriter, r *http.Reques
 		provisioner.Apply,
 		&app.DBConf,
 		app.RedisConf,
+		app.ServerConf.ProvisionerImageTag,
 	)
 
 	if err != nil {
@@ -380,6 +384,7 @@ func (app *App) HandleDestroyAWSEKSInfra(w http.ResponseWriter, r *http.Request)
 		provisioner.Destroy,
 		&app.DBConf,
 		app.RedisConf,
+		app.ServerConf.ProvisionerImageTag,
 	)
 
 	if err != nil {
@@ -461,6 +466,7 @@ func (app *App) HandleProvisionGCPGCRInfra(w http.ResponseWriter, r *http.Reques
 		provisioner.Apply,
 		&app.DBConf,
 		app.RedisConf,
+		app.ServerConf.ProvisionerImageTag,
 	)
 
 	if err != nil {
@@ -553,6 +559,7 @@ func (app *App) HandleProvisionGCPGKEInfra(w http.ResponseWriter, r *http.Reques
 		provisioner.Apply,
 		&app.DBConf,
 		app.RedisConf,
+		app.ServerConf.ProvisionerImageTag,
 	)
 
 	if err != nil {
@@ -643,6 +650,7 @@ func (app *App) HandleDestroyGCPGKEInfra(w http.ResponseWriter, r *http.Request)
 		provisioner.Destroy,
 		&app.DBConf,
 		app.RedisConf,
+		app.ServerConf.ProvisionerImageTag,
 	)
 
 	if err != nil {

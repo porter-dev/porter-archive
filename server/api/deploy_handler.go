@@ -2,6 +2,7 @@ package api
 
 import (
 	"encoding/json"
+	"fmt"
 	"math/rand"
 	"net/http"
 	"net/url"
@@ -120,4 +121,41 @@ func (app *App) HandleDeployTemplate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusOK)
+}
+
+// HandleUninstallTemplate triggers a chart deployment from a template
+func (app *App) HandleUninstallTemplate(w http.ResponseWriter, r *http.Request) {
+	name := chi.URLParam(r, "name")
+	fmt.Println(name)
+
+	form := &forms.GetReleaseForm{
+		ReleaseForm: &forms.ReleaseForm{
+			Form: &helm.Form{
+				Repo: app.Repo,
+			},
+		},
+		Name:     name,
+		Revision: int(0),
+	}
+
+	agent, err := app.getAgentFromQueryParams(
+		w,
+		r,
+		form.ReleaseForm,
+		form.ReleaseForm.PopulateHelmOptionsFromQueryParams,
+	)
+
+	// errors are handled in app.getAgentFromQueryParams
+	if err != nil {
+		fmt.Println("asdf")
+		return
+	}
+
+	_, err = agent.UninstallChart(name)
+	if err != nil {
+		fmt.Println("gg")
+	}
+
+	w.WriteHeader(http.StatusOK)
+	return
 }

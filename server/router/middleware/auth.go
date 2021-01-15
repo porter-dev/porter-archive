@@ -349,7 +349,7 @@ func (auth *Auth) DoesUserHaveInfraAccess(
 			return
 		}
 
-		infras, err := auth.repo.AWSInfra.ListAWSInfrasByProjectID(uint(projID))
+		infras, err := auth.repo.Infra.ListInfrasByProjectID(uint(projID))
 
 		if err != nil {
 			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)

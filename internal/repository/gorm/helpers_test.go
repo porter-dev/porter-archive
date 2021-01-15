@@ -13,23 +13,23 @@ import (
 )
 
 type tester struct {
-	repo          *repository.Repository
-	key           *[32]byte
-	dbFileName    string
-	initUsers     []*models.User
-	initProjects  []*models.Project
-	initGRs       []*models.GitRepo
-	initRegs      []*models.Registry
-	initClusters  []*models.Cluster
-	initHRs       []*models.HelmRepo
-	initAWSInfras []*models.AWSInfra
-	initCCs       []*models.ClusterCandidate
-	initKIs       []*ints.KubeIntegration
-	initBasics    []*ints.BasicIntegration
-	initOIDCs     []*ints.OIDCIntegration
-	initOAuths    []*ints.OAuthIntegration
-	initGCPs      []*ints.GCPIntegration
-	initAWSs      []*ints.AWSIntegration
+	repo         *repository.Repository
+	key          *[32]byte
+	dbFileName   string
+	initUsers    []*models.User
+	initProjects []*models.Project
+	initGRs      []*models.GitRepo
+	initRegs     []*models.Registry
+	initClusters []*models.Cluster
+	initHRs      []*models.HelmRepo
+	initInfras   []*models.Infra
+	initCCs      []*models.ClusterCandidate
+	initKIs      []*ints.KubeIntegration
+	initBasics   []*ints.BasicIntegration
+	initOIDCs    []*ints.OIDCIntegration
+	initOAuths   []*ints.OAuthIntegration
+	initGCPs     []*ints.GCPIntegration
+	initAWSs     []*ints.AWSIntegration
 }
 
 func setupTestEnv(tester *tester, t *testing.T) {
@@ -57,7 +57,7 @@ func setupTestEnv(tester *tester, t *testing.T) {
 		&models.Cluster{},
 		&models.ClusterCandidate{},
 		&models.ClusterResolver{},
-		&models.AWSInfra{},
+		&models.Infra{},
 		&ints.KubeIntegration{},
 		&ints.BasicIntegration{},
 		&ints.OIDCIntegration{},
@@ -436,24 +436,24 @@ func initHelmRepo(tester *tester, t *testing.T) {
 	tester.initHRs = append(tester.initHRs, hr)
 }
 
-func initAWSInfra(tester *tester, t *testing.T) {
+func initInfra(tester *tester, t *testing.T) {
 	t.Helper()
 
 	if len(tester.initProjects) == 0 {
 		initProject(tester, t)
 	}
 
-	infra := &models.AWSInfra{
-		Kind:      models.AWSInfraECR,
+	infra := &models.Infra{
+		Kind:      models.InfraECR,
 		ProjectID: tester.initProjects[0].Model.ID,
 		Status:    models.StatusCreated,
 	}
 
-	infra, err := tester.repo.AWSInfra.CreateAWSInfra(infra)
+	infra, err := tester.repo.Infra.CreateInfra(infra)
 
 	if err != nil {
 		t.Fatalf("%v\n", err)
 	}
 
-	tester.initAWSInfras = append(tester.initAWSInfras, infra)
+	tester.initInfras = append(tester.initInfras, infra)
 }

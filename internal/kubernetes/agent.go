@@ -12,6 +12,8 @@ import (
 	"github.com/porter-dev/porter/internal/kubernetes/provisioner/aws"
 	"github.com/porter-dev/porter/internal/kubernetes/provisioner/aws/ecr"
 	"github.com/porter-dev/porter/internal/kubernetes/provisioner/aws/eks"
+	"github.com/porter-dev/porter/internal/kubernetes/provisioner/gcp"
+	"github.com/porter-dev/porter/internal/kubernetes/provisioner/gcp/gke"
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/models/integrations"
 	"github.com/porter-dev/porter/internal/registry"
@@ -244,12 +246,12 @@ func (a *Agent) ProvisionECR(
 	projectID uint,
 	awsConf *integrations.AWSIntegration,
 	ecrName string,
-	awsInfra *models.AWSInfra,
+	infra *models.Infra,
 	operation provisioner.ProvisionerOperation,
 	pgConf *config.DBConf,
 	redisConf *config.RedisConf,
 ) (*batchv1.Job, error) {
-	id := awsInfra.GetID()
+	id := infra.GetID()
 	prov := &provisioner.Conf{
 		ID:        id,
 		Name:      fmt.Sprintf("prov-%s-%s", id, string(operation)),
@@ -275,12 +277,12 @@ func (a *Agent) ProvisionEKS(
 	projectID uint,
 	awsConf *integrations.AWSIntegration,
 	eksName string,
-	awsInfra *models.AWSInfra,
+	infra *models.Infra,
 	operation provisioner.ProvisionerOperation,
 	pgConf *config.DBConf,
 	redisConf *config.RedisConf,
 ) (*batchv1.Job, error) {
-	id := awsInfra.GetID()
+	id := infra.GetID()
 	prov := &provisioner.Conf{
 		ID:        id,
 		Name:      fmt.Sprintf("prov-%s-%s", id, string(operation)),
@@ -295,6 +297,64 @@ func (a *Agent) ProvisionEKS(
 		},
 		EKS: &eks.Conf{
 			ClusterName: eksName,
+		},
+	}
+
+	return a.provision(prov)
+}
+
+// ProvisionGCR spawns a new provisioning pod that creates a GCR instance
+func (a *Agent) ProvisionGCR(
+	projectID uint,
+	gcpConf *integrations.GCPIntegration,
+	infra *models.Infra,
+	operation provisioner.ProvisionerOperation,
+	pgConf *config.DBConf,
+	redisConf *config.RedisConf,
+) (*batchv1.Job, error) {
+	id := infra.GetID()
+	prov := &provisioner.Conf{
+		ID:        id,
+		Name:      fmt.Sprintf("prov-%s-%s", id, string(operation)),
+		Kind:      provisioner.GCR,
+		Operation: operation,
+		Redis:     redisConf,
+		Postgres:  pgConf,
+		GCP: &gcp.Conf{
+			GCPRegion:    gcpConf.GCPRegion,
+			GCPProjectID: gcpConf.GCPProjectID,
+			GCPKeyData:   string(gcpConf.GCPKeyData),
+		},
+	}
+
+	return a.provision(prov)
+}
+
+// ProvisionGKE spawns a new provisioning pod that creates a GKE instance
+func (a *Agent) ProvisionGKE(
+	projectID uint,
+	gcpConf *integrations.GCPIntegration,
+	gkeName string,
+	infra *models.Infra,
+	operation provisioner.ProvisionerOperation,
+	pgConf *config.DBConf,
+	redisConf *config.RedisConf,
+) (*batchv1.Job, error) {
+	id := infra.GetID()
+	prov := &provisioner.Conf{
+		ID:        id,
+		Name:      fmt.Sprintf("prov-%s-%s", id, string(operation)),
+		Kind:      provisioner.GKE,
+		Operation: operation,
+		Redis:     redisConf,
+		Postgres:  pgConf,
+		GCP: &gcp.Conf{
+			GCPRegion:    gcpConf.GCPRegion,
+			GCPProjectID: gcpConf.GCPProjectID,
+			GCPKeyData:   string(gcpConf.GCPKeyData),
+		},
+		GKE: &gke.Conf{
+			ClusterName: gkeName,
 		},
 	}
 

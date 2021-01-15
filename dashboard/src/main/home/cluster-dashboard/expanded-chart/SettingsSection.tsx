@@ -17,6 +17,7 @@ type PropsType = {
   currentChart: ChartType,
   refreshChart: () => void,
   setCurrentView: (x: string) => void,
+  setShowDeleteOverlay: (x: boolean) => void,
 };
 
 type StateType = {
@@ -156,7 +157,7 @@ export default class SettingsSection extends Component<PropsType, StateType> {
   }
 
   renderWebhookSection = () => {
-    if (this.state.webhookToken) {
+    if (true || this.state.webhookToken) {
       let webhookText = `curl -X POST 'https://dashboard.getporter.dev/api/webhooks/deploy/${this.state.webhookToken}?commit=???&repository=???'`;
       return (
         <>
@@ -184,9 +185,13 @@ export default class SettingsSection extends Component<PropsType, StateType> {
     return (
       <Wrapper>
         <StyledSettingsSection>
-          <Heading>Connected source</Heading>
+          <Heading>Connected Source</Heading>
           {this.renderSourceSection()}
           {this.renderWebhookSection()}
+          <Heading>Additional Settings</Heading>
+          <Button color='#b91133' onClick={() => this.props.setShowDeleteOverlay(true)}>
+            Delete {this.props.currentChart.name}
+          </Button>
         </StyledSettingsSection>
         <SaveButton
           text='Save Settings'
@@ -201,6 +206,27 @@ export default class SettingsSection extends Component<PropsType, StateType> {
 }
 
 SettingsSection.contextType = Context;
+
+const Button = styled.button`
+  height: 40px;
+  font-size: 13px;
+  margin-top: 20px;
+  font-weight: 500;
+  font-family: 'Work Sans', sans-serif;
+  color: white;
+  padding: 6px 20px 7px 20px;
+  text-align: left;
+  border: 0;
+  border-radius: 5px;
+  background: ${(props) => (!props.disabled ? props.color : '#aaaabb')};
+  box-shadow: ${(props) => (!props.disabled ? '0 2px 5px 0 #00000030' : 'none')};
+  cursor: ${(props) => (!props.disabled ? 'pointer' : 'default')};
+  user-select: none;
+  :focus { outline: 0 }
+  :hover {
+    filter: ${(props) => (!props.disabled ? 'brightness(120%)' : '')};
+  }
+`;
 
 const Webhook = styled.div`
   width: 100%;
@@ -262,6 +288,7 @@ const StyledSettingsSection = styled.div`
   height: calc(100% - 60px);
   background: #ffffff11;
   padding: 0 35px;
+  padding-bottom: 50px;
   position: relative;
   border-radius: 5px;
   overflow: auto;

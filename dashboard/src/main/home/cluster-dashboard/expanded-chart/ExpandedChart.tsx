@@ -18,7 +18,7 @@ import StatusSection from './status/StatusSection';
 import ValuesWrapper from '../../../../components/values-form/ValuesWrapper';
 import ValuesForm from '../../../../components/values-form/ValuesForm';
 import SettingsSection from './SettingsSection';
-import { format } from 'util';
+import ConfirmOverlay from '../../../../components/ConfirmOverlay';
 
 type PropsType = {
   namespace: string,
@@ -44,6 +44,7 @@ type StateType = {
   controllers: Record<string, Record<string, any>>,
   websockets: Record<string, any>,
   url: string | null,
+  showDeleteOverlay: boolean,
 };
 
 export default class ExpandedChart extends Component<PropsType, StateType> {
@@ -62,6 +63,7 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
     controllers: {} as Record<string, Record<string, any>>,
     websockets : {} as Record<string, any>,
     url: null as string | null,
+    showDeleteOverlay: false,
   }
 
   // Retrieve full chart data (includes form and values)
@@ -250,6 +252,7 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
             currentChart={chart}
             refreshChart={this.refreshChart}
             setCurrentView={setCurrentView}
+            setShowDeleteOverlay={(x: boolean) => this.setState({ showDeleteOverlay: x })}
           /> 
         );
       case 'graph': 
@@ -333,7 +336,6 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
     // Append universal tabs
     tabOptions.push(
       { label: 'Status', value: 'status' },
-      { label: 'Deploy', value: 'settings' },
       { label: 'Chart Overview', value: 'graph' },
     );
 
@@ -343,6 +345,9 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
         { label: 'Raw Values', value: 'values' }
       );
     }
+
+    // Settings tab is always last
+    tabOptions.push({ label: 'Settings', value: 'settings' });
 
     // Filter tabs if previewing an old revision
     if (this.state.isPreview) {
@@ -518,15 +523,42 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
     }
   }
 
+  handleUninstallChart = () => {
+    let { currentProject, currentCluster } = this.context;
+    let { currentChart } = this.props;
+    console.log('here', currentChart.namespace, StorageType.Secret)
+    api.uninstallTemplate('<token>', {
+      namespace: currentChart.namespace,
+      cluster_id: currentCluster.id,
+      storage: StorageType.Secret,
+    }, {
+      name: currentChart.name,
+      id: currentProject.id,
+      cluster_id: currentCluster.id,
+    }, (err: any, res: any) => {
+      if (err) {
+        console.log(err)
+      } else {
+        console.log('worked i guess');
+      }
+    });
+  }
+
   render() {
     let { currentChart, setCurrentChart } = this.props;
     let chart = currentChart;
     let status = this.getChartStatus(chart.info.status);
 
     return ( 
-      <div>
-        <CloseOverlay onClick={() => setCurrentChart(null)}/>
+      <>
+        <CloseOverlay onClick={() => setCurrentChart(null)} />
         <StyledExpandedChart>
+          <ConfirmOverlay
+            show={this.state.showDeleteOverlay}
+            message={`Are you sure you want to delete ${currentChart.name}?`}
+            onYes={this.handleUninstallChart}
+            onNo={() => this.setState({ showDeleteOverlay: false })}
+          />
           <HeaderWrapper>
             <TitleSection>
               <Title>
@@ -580,7 +612,7 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
             {this.renderTabContents()}
           </TabRegion>
         </StyledExpandedChart>
-      </div>
+      </>
     );
   }
 }

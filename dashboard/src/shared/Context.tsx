@@ -37,7 +37,6 @@ class ContextProvider extends Component {
     },
     currentCluster: null as ClusterType | null,
     setCurrentCluster: (currentCluster: ClusterType) => {
-      localStorage.setItem('currentCluster', currentCluster.toString());
       this.setState({ currentCluster });
     },
     currentProject: null as ProjectType | null,

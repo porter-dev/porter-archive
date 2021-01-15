@@ -53,7 +53,7 @@ export default class ClusterSection extends Component<PropsType, StateType> {
         // TODO: handle uninitialized kubeconfig
         if (res.data) {
           let clusters = res.data;
-          clusters.sort((a, b) => a - b);
+          clusters.sort((a, b) => a.id - b.id);
           if (clusters.length > 0) {
             this.setState({ clusters });
             setCurrentCluster(clusters[(

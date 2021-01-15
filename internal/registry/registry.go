@@ -528,7 +528,9 @@ func (r *Registry) getECRDockerConfigFile(
 func (r *Registry) getGCRDockerConfigFile(
 	repo repository.Repository,
 ) (*configfile.ConfigFile, error) {
-	token, err := r.GetGCRToken(repo)
+	gcp, err := repo.GCPIntegration.ReadGCPIntegration(
+		r.GCPIntegrationID,
+	)
 
 	if err != nil {
 		return nil, err
@@ -540,12 +542,14 @@ func (r *Registry) getGCRDockerConfigFile(
 		key = "https://" + key
 	}
 
+	parsedURL, _ := url.Parse(key)
+
 	return &configfile.ConfigFile{
 		AuthConfigs: map[string]types.AuthConfig{
-			key: types.AuthConfig{
-				Username: "oauth2accesstoken",
-				Password: string(token.Token),
-				Auth:     string(token.Token),
+			parsedURL.Host: types.AuthConfig{
+				Username: "_json_key",
+				Password: string(gcp.GCPKeyData),
+				Auth:     generateAuthToken("_json_key", string(gcp.GCPKeyData)),
 			},
 		},
 	}, nil
@@ -575,13 +579,19 @@ func (r *Registry) getDOCRDockerConfigFile(
 		key = "https://" + key
 	}
 
+	parsedURL, _ := url.Parse(key)
+
 	return &configfile.ConfigFile{
 		AuthConfigs: map[string]types.AuthConfig{
-			key: types.AuthConfig{
+			parsedURL.Host: types.AuthConfig{
 				Username: tok,
 				Password: tok,
-				Auth:     tok,
+				Auth:     generateAuthToken(tok, tok),
 			},
 		},
 	}, nil
+}
+
+func generateAuthToken(username, password string) string {
+	return base64.StdEncoding.EncodeToString([]byte(username + ":" + password))
 }

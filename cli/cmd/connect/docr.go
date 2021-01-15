@@ -3,8 +3,12 @@ package connect
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/porter-dev/porter/cli/cmd/api"
+	"github.com/porter-dev/porter/cli/cmd/utils"
+
+	ints "github.com/porter-dev/porter/internal/models/integrations"
 )
 
 // DOCR creates a DOCR integration
@@ -24,51 +28,54 @@ func DOCR(
 		return 0, err
 	}
 
-	fmt.Println(oauthInts)
+	linkedDO := false
+	var doAuth ints.OAuthIntegrationExternal
 
-	// 	userResp, err := utils.PromptPlaintext(
-	// 		fmt.Sprintf(`Porter can set up an IAM user in your AWS account to connect to this ECR instance automatically.
-	// Would you like to proceed? %s `,
-	// 			color.New(color.FgCyan).Sprintf("[y/n]"),
-	// 		),
-	// 	)
+	// iterate through oauth integrations to find do
+	for _, oauthInt := range oauthInts {
+		if oauthInt.Client == ints.OAuthDigitalOcean {
+			linkedDO = true
+			doAuth = oauthInt
+			break
+		}
+	}
 
-	// 	if err != nil {
-	// 		return 0, err
-	// 	}
+	if !linkedDO {
+		doAuth, err = triggerDigitalOceanOAuth(projectID)
 
-	// 	if userResp := strings.ToLower(userResp); userResp == "y" || userResp == "yes" {
-	// 		agent := awsLocal.NewDefaultAgent()
+		if err != nil {
+			return 0, err
+		}
+	}
 
-	// 		creds, err := agent.CreateIAMECRUser(region)
+	// use the digital ocean oauth to create a registry
+	regURL, err := utils.PromptPlaintext(fmt.Sprintf(`Please provide the registry URL, in the form registry.digitalocean.com/[REGISTRY_NAME]. For example, registry.digitalocean.com/porter-test. 
+Registry URL: `))
 
-	// 		if err != nil {
-	// 			color.New(color.FgRed).Printf("Automatic creation failed, manual input required. Error was: %v\n", err)
-	// 			return ecrManual(client, projectID, region)
-	// 		}
+	if err != nil {
+		return 0, err
+	}
 
-	// 		waitForAuthorizationToken(region, creds)
+	urlArr := strings.Split(regURL, "/")
+	regName := urlArr[len(urlArr)-1]
 
-	// 		integration, err := client.CreateAWSIntegration(
-	// 			context.Background(),
-	// 			projectID,
-	// 			&api.CreateAWSIntegrationRequest{
-	// 				AWSAccessKeyID:     creds.AWSAccessKeyID,
-	// 				AWSSecretAccessKey: creds.AWSSecretAccessKey,
-	// 				AWSRegion:          region,
-	// 			},
-	// 		)
+	if err != nil {
+		return 0, err
+	}
 
-	// 		if err != nil {
-	// 			return 0, err
-	// 		}
+	reg, err := client.CreateDOCR(
+		context.Background(),
+		projectID,
+		&api.CreateDOCRRequest{
+			Name:            regName,
+			DOIntegrationID: doAuth.ID,
+			URL:             regURL,
+		},
+	)
 
-	// 		color.New(color.FgGreen).Printf("created aws integration with id %d\n", integration.ID)
+	return reg.ID, nil
+}
 
-	// 		return linkRegistry(client, projectID, integration.ID)
-	// 	}
-
-	// 	return ecrManual(client, projectID, region)
-
-	return 0, nil
+func triggerDigitalOceanOAuth(projectID uint) (ints.OAuthIntegrationExternal, error) {
+	return ints.OAuthIntegrationExternal{}, nil
 }

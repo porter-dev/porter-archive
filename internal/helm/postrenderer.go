@@ -70,7 +70,7 @@ func NewDockerSecretsPostRenderer(
 		addReg := parsedRegURL.Host
 
 		if parsedRegURL.Path != "" {
-			addReg += "/" + parsedRegURL.Path
+			addReg += "/" + strings.Trim(parsedRegURL.Path, "/")
 		}
 
 		registries[addReg] = reg

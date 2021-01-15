@@ -190,6 +190,18 @@ const deployTemplate = baseApi<{
   return `/api/projects/${id}/deploy/${name}/${version}?cluster_id=${cluster_id}`;
 });
 
+const uninstallTemplate = baseApi<{
+}, {
+  id: number,
+  name: string, 
+  cluster_id: number,
+  namespace: string,
+  storage: StorageType,
+}>('POST', pathParams => {
+  let { id, name, cluster_id, storage, namespace } = pathParams;
+  return `/api/projects/${id}/deploy/${name}?cluster_id=${cluster_id}&namespace=${namespace}&storage=${storage}`;
+});
+
 const getClusterIntegrations = baseApi('GET', '/api/integrations/cluster');
 
 const getRegistryIntegrations = baseApi('GET', '/api/integrations/registry');
@@ -322,6 +334,7 @@ const createGKE = baseApi<{
 
 // Bundle export to allow default api import (api.<method> is more readable)
 export default {
+  uninstallTemplate,
   createGCR,
   createGKE,
   createGCPIntegration,

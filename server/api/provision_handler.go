@@ -706,3 +706,359 @@ func (app *App) HandleGetProvisioningLogs(w http.ResponseWriter, r *http.Request
 		return
 	}
 }
+
+// HandleProvisionDODOCRInfra provisions a new digitalocean DOCR instance for a project
+func (app *App) HandleProvisionDODOCRInfra(w http.ResponseWriter, r *http.Request) {
+	projID, err := strconv.ParseUint(chi.URLParam(r, "project_id"), 0, 64)
+
+	if err != nil || projID == 0 {
+		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
+		return
+	}
+
+	form := &forms.CreateDOCRInfra{
+		ProjectID: uint(projID),
+	}
+
+	// decode from JSON to form value
+	if err := json.NewDecoder(r.Body).Decode(form); err != nil {
+		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
+		return
+	}
+
+	// validate the form
+	if err := app.validator.Struct(form); err != nil {
+		app.handleErrorFormValidation(err, ErrProjectValidateFields, w)
+		return
+	}
+
+	// convert the form to an aws infra instance
+	infra, err := form.ToInfra()
+
+	if err != nil {
+		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
+		return
+	}
+
+	// handle write to the database
+	infra, err = app.Repo.Infra.CreateInfra(infra)
+
+	if err != nil {
+		app.handleErrorDataWrite(err, w)
+		return
+	}
+
+	oauthInt, err := app.Repo.OAuthIntegration.ReadOAuthIntegration(infra.DOIntegrationID)
+
+	if err != nil {
+		infra.Status = models.StatusError
+		infra, _ = app.Repo.Infra.UpdateInfra(infra)
+
+		app.handleErrorDataRead(err, w)
+		return
+	}
+
+	// launch provisioning pod
+	agent, err := kubernetes.GetAgentInClusterConfig()
+
+	if err != nil {
+		infra.Status = models.StatusError
+		infra, _ = app.Repo.Infra.UpdateInfra(infra)
+
+		app.handleErrorDataRead(err, w)
+		return
+	}
+
+	_, err = agent.ProvisionDOCR(
+		uint(projID),
+		oauthInt,
+		app.DOConf,
+		*app.Repo,
+		form.DOCRName,
+		form.DOCRSubscriptionTier,
+		infra,
+		provisioner.Apply,
+		&app.DBConf,
+		app.RedisConf,
+	)
+
+	if err != nil {
+		infra.Status = models.StatusError
+		infra, _ = app.Repo.Infra.UpdateInfra(infra)
+
+		app.handleErrorInternal(err, w)
+		return
+	}
+
+	app.Logger.Info().Msgf("New do docr infra created: %d", infra.ID)
+
+	w.WriteHeader(http.StatusCreated)
+
+	infraExt := infra.Externalize()
+
+	if err := json.NewEncoder(w).Encode(infraExt); err != nil {
+		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
+		return
+	}
+}
+
+// HandleDestroyAWSDOCRInfra destroys docr infra
+func (app *App) HandleDestroyDODOCRInfra(w http.ResponseWriter, r *http.Request) {
+	// get path parameters
+	infraID, err := strconv.ParseUint(chi.URLParam(r, "infra_id"), 10, 64)
+
+	if err != nil {
+		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
+		return
+	}
+
+	// read infra to get id
+	infra, err := app.Repo.Infra.ReadInfra(uint(infraID))
+
+	if err != nil {
+		app.handleErrorDataRead(err, w)
+		return
+	}
+
+	oauthInt, err := app.Repo.OAuthIntegration.ReadOAuthIntegration(infra.DOIntegrationID)
+
+	form := &forms.DestroyDOCRInfra{}
+
+	// decode from JSON to form value
+	if err := json.NewDecoder(r.Body).Decode(form); err != nil {
+		infra.Status = models.StatusError
+		infra, _ = app.Repo.Infra.UpdateInfra(infra)
+
+		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
+		return
+	}
+
+	// validate the form
+	if err := app.validator.Struct(form); err != nil {
+		infra.Status = models.StatusError
+		infra, _ = app.Repo.Infra.UpdateInfra(infra)
+
+		app.handleErrorFormValidation(err, ErrProjectValidateFields, w)
+		return
+	}
+
+	// launch provisioning destruction pod
+	agent, err := kubernetes.GetAgentInClusterConfig()
+
+	if err != nil {
+		infra.Status = models.StatusError
+		infra, _ = app.Repo.Infra.UpdateInfra(infra)
+
+		app.handleErrorDataRead(err, w)
+		return
+	}
+
+	// mark infra for deletion
+	infra.Status = models.StatusDestroying
+	infra, err = app.Repo.Infra.UpdateInfra(infra)
+
+	if err != nil {
+		app.handleErrorDataWrite(err, w)
+		return
+	}
+
+	_, err = agent.ProvisionDOCR(
+		infra.ProjectID,
+		oauthInt,
+		app.DOConf,
+		*app.Repo,
+		form.DOCRName,
+		"basic", // this doesn't matter for destroy
+		infra,
+		provisioner.Destroy,
+		&app.DBConf,
+		app.RedisConf,
+	)
+
+	if err != nil {
+		app.handleErrorInternal(err, w)
+		return
+	}
+
+	app.Logger.Info().Msgf("DO DOCR infra marked for destruction: %d", infra.ID)
+
+	w.WriteHeader(http.StatusOK)
+}
+
+// HandleProvisionDODOKSInfra provisions a new DO DOKS instance for a project
+func (app *App) HandleProvisionDODOKSInfra(w http.ResponseWriter, r *http.Request) {
+	projID, err := strconv.ParseUint(chi.URLParam(r, "project_id"), 0, 64)
+
+	if err != nil || projID == 0 {
+		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
+		return
+	}
+
+	form := &forms.CreateDOKSInfra{
+		ProjectID: uint(projID),
+	}
+
+	// decode from JSON to form value
+	if err := json.NewDecoder(r.Body).Decode(form); err != nil {
+		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
+		return
+	}
+
+	// validate the form
+	if err := app.validator.Struct(form); err != nil {
+		app.handleErrorFormValidation(err, ErrProjectValidateFields, w)
+		return
+	}
+
+	// convert the form to an aws infra instance
+	infra, err := form.ToInfra()
+
+	if err != nil {
+		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
+		return
+	}
+
+	// handle write to the database
+	infra, err = app.Repo.Infra.CreateInfra(infra)
+
+	if err != nil {
+		app.handleErrorDataWrite(err, w)
+		return
+	}
+
+	oauthInt, err := app.Repo.OAuthIntegration.ReadOAuthIntegration(infra.DOIntegrationID)
+
+	if err != nil {
+		infra.Status = models.StatusError
+		infra, _ = app.Repo.Infra.UpdateInfra(infra)
+
+		app.handleErrorDataRead(err, w)
+		return
+	}
+
+	// launch provisioning pod
+	agent, err := kubernetes.GetAgentInClusterConfig()
+
+	if err != nil {
+		infra.Status = models.StatusError
+		infra, _ = app.Repo.Infra.UpdateInfra(infra)
+
+		app.handleErrorDataRead(err, w)
+		return
+	}
+
+	_, err = agent.ProvisionDOKS(
+		uint(projID),
+		oauthInt,
+		app.DOConf,
+		*app.Repo,
+		form.DORegion,
+		form.DOKSName,
+		infra,
+		provisioner.Apply,
+		&app.DBConf,
+		app.RedisConf,
+	)
+
+	if err != nil {
+		infra.Status = models.StatusError
+		infra, _ = app.Repo.Infra.UpdateInfra(infra)
+
+		app.handleErrorInternal(err, w)
+		return
+	}
+
+	app.Logger.Info().Msgf("New do doks infra created: %d", infra.ID)
+
+	w.WriteHeader(http.StatusCreated)
+
+	infraExt := infra.Externalize()
+
+	if err := json.NewEncoder(w).Encode(infraExt); err != nil {
+		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
+		return
+	}
+}
+
+// HandleDestroyDODOKSInfra destroys DOKS infra
+func (app *App) HandleDestroyDODOKSInfra(w http.ResponseWriter, r *http.Request) {
+	// get path parameters
+	infraID, err := strconv.ParseUint(chi.URLParam(r, "infra_id"), 10, 64)
+
+	if err != nil {
+		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
+		return
+	}
+
+	// read infra to get id
+	infra, err := app.Repo.Infra.ReadInfra(uint(infraID))
+
+	if err != nil {
+		app.handleErrorDataRead(err, w)
+		return
+	}
+
+	oauthInt, err := app.Repo.OAuthIntegration.ReadOAuthIntegration(infra.DOIntegrationID)
+
+	form := &forms.DestroyDOKSInfra{}
+
+	// decode from JSON to form value
+	if err := json.NewDecoder(r.Body).Decode(form); err != nil {
+		infra.Status = models.StatusError
+		infra, _ = app.Repo.Infra.UpdateInfra(infra)
+
+		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
+		return
+	}
+
+	// validate the form
+	if err := app.validator.Struct(form); err != nil {
+		infra.Status = models.StatusError
+		infra, _ = app.Repo.Infra.UpdateInfra(infra)
+
+		app.handleErrorFormValidation(err, ErrProjectValidateFields, w)
+		return
+	}
+
+	// launch provisioning destruction pod
+	agent, err := kubernetes.GetAgentInClusterConfig()
+
+	if err != nil {
+		infra.Status = models.StatusError
+		infra, _ = app.Repo.Infra.UpdateInfra(infra)
+
+		app.handleErrorDataRead(err, w)
+		return
+	}
+
+	// mark infra for deletion
+	infra.Status = models.StatusDestroying
+	infra, err = app.Repo.Infra.UpdateInfra(infra)
+
+	if err != nil {
+		app.handleErrorDataWrite(err, w)
+		return
+	}
+
+	_, err = agent.ProvisionDOKS(
+		infra.ProjectID,
+		oauthInt,
+		app.DOConf,
+		*app.Repo,
+		"nyc1",
+		form.DOKSName,
+		infra,
+		provisioner.Destroy,
+		&app.DBConf,
+		app.RedisConf,
+	)
+
+	if err != nil {
+		app.handleErrorInternal(err, w)
+		return
+	}
+
+	app.Logger.Info().Msgf("DO DOKS infra marked for destruction: %d", infra.ID)
+
+	w.WriteHeader(http.StatusOK)
+}

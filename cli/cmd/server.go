@@ -270,7 +270,7 @@ func downloadMatchingRelease(porterDir string) error {
 		IsPlatformDependent: false,
 	}
 
-	return zStatic.GetLatestRelease()
+	return zStatic.GetRelease(Version)
 }
 
 type versionWriter struct {

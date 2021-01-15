@@ -99,6 +99,8 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
       let splits = this.state.selectedImageUrl.split(':');
       imageUrl = splits[0];
       tag = splits[1];
+    } else if (!tag) {
+      tag = 'latest';
     }
 
     _.set(values, "image.repository", imageUrl)

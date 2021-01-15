@@ -55,6 +55,18 @@ var connectGCRCmd = &cobra.Command{
 	},
 }
 
+var connectDOCRCmd = &cobra.Command{
+	Use:   "docr",
+	Short: "Adds a DOCR instance to a project",
+	Run: func(cmd *cobra.Command, args []string) {
+		err := checkLoginAndRun(args, runConnectDOCR)
+
+		if err != nil {
+			os.Exit(1)
+		}
+	},
+}
+
 var connectHRCmd = &cobra.Command{
 	Use:     "helmrepo",
 	Aliases: []string{"helm", "helmrepos"},
@@ -103,6 +115,7 @@ func init() {
 
 	connectCmd.AddCommand(connectECRCmd)
 	connectCmd.AddCommand(connectGCRCmd)
+	connectCmd.AddCommand(connectDOCRCmd)
 	connectCmd.AddCommand(connectHRCmd)
 }
 
@@ -143,6 +156,19 @@ func runConnectECR(_ *api.AuthCheckResponse, client *api.Client, _ []string) err
 
 func runConnectGCR(_ *api.AuthCheckResponse, client *api.Client, _ []string) error {
 	regID, err := connect.GCR(
+		client,
+		getProjectID(),
+	)
+
+	if err != nil {
+		return err
+	}
+
+	return setRegistry(regID)
+}
+
+func runConnectDOCR(_ *api.AuthCheckResponse, client *api.Client, _ []string) error {
+	regID, err := connect.DOCR(
 		client,
 		getProjectID(),
 	)

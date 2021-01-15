@@ -10,6 +10,9 @@ import (
 	"github.com/porter-dev/porter/internal/kubernetes/provisioner/aws"
 	"github.com/porter-dev/porter/internal/kubernetes/provisioner/aws/ecr"
 	"github.com/porter-dev/porter/internal/kubernetes/provisioner/aws/eks"
+	"github.com/porter-dev/porter/internal/kubernetes/provisioner/do"
+	"github.com/porter-dev/porter/internal/kubernetes/provisioner/do/docr"
+	"github.com/porter-dev/porter/internal/kubernetes/provisioner/do/doks"
 
 	"github.com/porter-dev/porter/internal/kubernetes/provisioner/gcp"
 	"github.com/porter-dev/porter/internal/kubernetes/provisioner/gcp/gke"
@@ -27,6 +30,8 @@ const (
 	EKS  InfraOption = "eks"
 	GCR  InfraOption = "gcr"
 	GKE  InfraOption = "gke"
+	DOCR InfraOption = "docr"
+	DOKS InfraOption = "doks"
 )
 
 // Conf is the config required to start a provisioner container
@@ -50,6 +55,11 @@ type Conf struct {
 	// GKE
 	GCP *gcp.Conf
 	GKE *gke.Conf
+
+	// DO
+	DO   *do.Conf
+	DOCR *docr.Conf
+	DOKS *doks.Conf
 }
 
 type ProvisionerOperation string
@@ -103,6 +113,14 @@ func (conf *Conf) GetProvisionerJobTemplate() (*batchv1.Job, error) {
 		args = []string{operation, "gke"}
 		env = conf.GCP.AttachGCPEnv(env)
 		env = conf.GKE.AttachGKEEnv(env)
+	} else if conf.Kind == DOCR {
+		args = []string{operation, "docr"}
+		env = conf.DO.AttachDOEnv(env)
+		env = conf.DOCR.AttachDOCREnv(env)
+	} else if conf.Kind == GKE {
+		args = []string{operation, "doks"}
+		env = conf.DO.AttachDOEnv(env)
+		env = conf.DOKS.AttachDOKSEnv(env)
 	}
 
 	return &batchv1.Job{

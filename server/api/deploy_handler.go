@@ -5,6 +5,7 @@ import (
 	"math/rand"
 	"net/http"
 	"net/url"
+	"strconv"
 
 	"github.com/go-chi/chi"
 	"github.com/porter-dev/porter/internal/forms"
@@ -15,6 +16,13 @@ import (
 
 // HandleDeployTemplate triggers a chart deployment from a template
 func (app *App) HandleDeployTemplate(w http.ResponseWriter, r *http.Request) {
+	projID, err := strconv.ParseUint(chi.URLParam(r, "project_id"), 0, 64)
+
+	if err != nil || projID == 0 {
+		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
+		return
+	}
+
 	name := chi.URLParam(r, "name")
 	version := chi.URLParam(r, "version")
 
@@ -49,7 +57,8 @@ func (app *App) HandleDeployTemplate(w http.ResponseWriter, r *http.Request) {
 	form := &forms.InstallChartTemplateForm{
 		ReleaseForm: &forms.ReleaseForm{
 			Form: &helm.Form{
-				Repo: app.Repo,
+				Repo:              app.Repo,
+				DigitalOceanOAuth: app.DOConf,
 			},
 		},
 		ChartTemplateForm: &forms.ChartTemplateForm{},
@@ -76,14 +85,24 @@ func (app *App) HandleDeployTemplate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	conf := &helm.InstallChartConfig{
-		Chart:     chart,
-		Name:      form.ChartTemplateForm.Name,
-		Namespace: form.ReleaseForm.Form.Namespace,
-		Values:    form.ChartTemplateForm.FormValues,
+	registries, err := app.Repo.Registry.ListRegistriesByProjectID(uint(projID))
+
+	if err != nil {
+		app.handleErrorDataRead(err, w)
+		return
 	}
 
-	_, err = agent.InstallChart(conf)
+	conf := &helm.InstallChartConfig{
+		Chart:      chart,
+		Name:       form.ChartTemplateForm.Name,
+		Namespace:  form.ReleaseForm.Form.Namespace,
+		Values:     form.ChartTemplateForm.FormValues,
+		Cluster:    form.ReleaseForm.Cluster,
+		Repo:       *app.Repo,
+		Registries: registries,
+	}
+
+	_, err = agent.InstallChart(conf, app.DOConf)
 
 	if err != nil {
 		app.sendExternalError(err, http.StatusInternalServerError, HTTPError{

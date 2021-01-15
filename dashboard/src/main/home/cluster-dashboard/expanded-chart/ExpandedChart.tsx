@@ -475,8 +475,8 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
         return
       }
       
-      if (res.data?.status?.loadBalancer?.ingress) {
-        this.setState({url: `http://${res.data?.status?.loadBalancer?.ingress[0]?.hostname}` })
+      if (res.data?.spec?.rules) {
+        this.setState({url: `https://${res.data?.spec?.rules[0]?.host}` })
       }
     });
 

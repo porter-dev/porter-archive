@@ -139,7 +139,7 @@ func (app *App) populateOAuthSession(w http.ResponseWriter, r *http.Request, sta
 			return fmt.Errorf("could not read project id")
 		}
 
-		session.Values["project_id"] = projID
+		session.Values["project_id"] = uint(projID)
 		session.Values["query_params"] = r.URL.RawQuery
 	}
 

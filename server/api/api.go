@@ -69,6 +69,7 @@ type App struct {
 
 	// oauth-specific clients
 	GithubConf *oauth2.Config
+	DOConf     *oauth2.Config
 
 	db         *gorm.DB
 	validator  *vr.Validate
@@ -120,6 +121,15 @@ func New(conf *AppConfig) (*App, error) {
 			ClientID:     sc.GithubClientID,
 			ClientSecret: sc.GithubClientSecret,
 			Scopes:       []string{"repo", "user", "read:user"},
+			BaseURL:      sc.ServerURL,
+		})
+	}
+
+	if sc := conf.ServerConf; sc.DOClientID != "" && sc.DOClientSecret != "" {
+		app.DOConf = oauth.NewDigitalOceanClient(&oauth.Config{
+			ClientID:     sc.DOClientID,
+			ClientSecret: sc.DOClientSecret,
+			Scopes:       []string{"read", "write"},
 			BaseURL:      sc.ServerURL,
 		})
 	}

@@ -11,6 +11,7 @@ import Loading from '../../../../components/Loading';
 type PropsType = {
   currentCluster: ClusterType,
   namespace: string,
+  sortType: string,
   setCurrentChart: (c: ChartType) => void
 };
 
@@ -53,6 +54,13 @@ export default class ChartList extends Component<PropsType, StateType> {
         this.setState({ loading: false, error: true });
       } else {
         let charts = res.data || [];
+        if (this.props.sortType == "Newest") {
+          charts.sort((a: any, b: any) => (Date.parse(a.info.last_deployed) > Date.parse(b.info.last_deployed)) ? -1 : 1);
+        } else if (this.props.sortType == "Oldest") {
+          charts.sort((a: any, b: any) => (Date.parse(a.info.last_deployed) > Date.parse(b.info.last_deployed)) ? 1 : -1);
+        } else if (this.props.sortType == "Alphabetical") {
+          charts.sort((a: any, b: any) => (a.name > b.name) ? 1: -1);
+        }
         this.setState({ charts }, () => {
           this.setState({ loading: false, error: false });
         });
@@ -176,7 +184,8 @@ export default class ChartList extends Component<PropsType, StateType> {
   componentDidUpdate(prevProps: PropsType) {
     // Ret2: Prevents reload when opening ClusterConfigModal
     if (prevProps.currentCluster !== this.props.currentCluster || 
-      prevProps.namespace !== this.props.namespace) {
+      prevProps.namespace !== this.props.namespace ||
+      prevProps.sortType !== this.props.sortType) {
       this.updateCharts(this.getControllers);
     }
   }
@@ -225,16 +234,22 @@ export default class ChartList extends Component<PropsType, StateType> {
 ChartList.contextType = Context;
 
 const Placeholder = styled.div`
-  padding-top: 100px;
   width: 100%;
   display: flex;
   justify-content: center;
   align-items: center;
   color: #ffffff44;
-  font-size: 14px;
+  background: #26282f;
+  border-radius: 5px;
+  height: 320px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff44;
+  font-size: 13px;
 
   > i {
-    font-size: 18px;
+    font-size: 16px;
     margin-right: 12px;
   }
 `;

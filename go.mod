@@ -13,7 +13,9 @@ require (
 	github.com/containerd/containerd v1.4.1 // indirect
 	github.com/coreos/rkt v1.30.0
 	github.com/creack/pty v1.1.11 // indirect
+	github.com/digitalocean/godo v1.56.0
 	github.com/docker/cli v0.0.0-20200130152716-5d0cf8839492
+	github.com/docker/distribution v2.7.1+incompatible
 	github.com/docker/docker v1.4.2-0.20200203170920-46ec8731fbce
 	github.com/docker/docker-credential-helpers v0.6.3
 	github.com/docker/go-connections v0.4.0
@@ -27,6 +29,7 @@ require (
 	github.com/go-redis/redis/v7 v7.4.0
 	github.com/go-redis/redis/v8 v8.3.1
 	github.com/go-test/deep v1.0.7
+	github.com/google/go-cmp v0.5.2
 	github.com/google/go-github v17.0.0+incompatible
 	github.com/google/go-querystring v1.0.0 // indirect
 	github.com/googleapis/gnostic v0.2.2 // indirect

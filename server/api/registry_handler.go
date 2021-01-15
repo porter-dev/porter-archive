@@ -7,6 +7,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/porter-dev/porter/internal/oauth"
+
 	"github.com/porter-dev/porter/internal/registry"
 
 	"github.com/go-chi/chi"
@@ -211,6 +213,64 @@ func (app *App) HandleGetProjectRegistryGCRToken(w http.ResponseWriter, r *http.
 
 			token = string(tokenCache.Token)
 			expiresAt = &tokenCache.Expiry
+			break
+		}
+	}
+
+	resp := &RegTokenResponse{
+		Token:     token,
+		ExpiresAt: expiresAt,
+	}
+
+	w.WriteHeader(http.StatusOK)
+
+	if err := json.NewEncoder(w).Encode(resp); err != nil {
+		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
+		return
+	}
+}
+
+// HandleGetProjectRegistryDOCRToken gets a DOCR token for a registry
+func (app *App) HandleGetProjectRegistryDOCRToken(w http.ResponseWriter, r *http.Request) {
+	projID, err := strconv.ParseUint(chi.URLParam(r, "project_id"), 0, 64)
+
+	if err != nil || projID == 0 {
+		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
+		return
+	}
+
+	reqBody := &GCRTokenRequestBody{}
+
+	// decode from JSON to form value
+	if err := json.NewDecoder(r.Body).Decode(reqBody); err != nil {
+		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
+		return
+	}
+
+	// list registries and find one that matches the region
+	regs, err := app.Repo.Registry.ListRegistriesByProjectID(uint(projID))
+	var token string
+	var expiresAt *time.Time
+
+	for _, reg := range regs {
+		if reg.DOIntegrationID != 0 && strings.Contains(reg.URL, reqBody.ServerURL) {
+			oauthInt, err := app.Repo.OAuthIntegration.ReadOAuthIntegration(reg.DOIntegrationID)
+
+			if err != nil {
+				app.handleErrorDataRead(err, w)
+				return
+			}
+
+			tok, expiry, err := oauth.GetAccessToken(oauthInt, app.DOConf, *app.Repo)
+
+			if err != nil {
+				app.handleErrorDataRead(err, w)
+				return
+			}
+
+			token = tok
+			expiresAt = expiry
+			break
 		}
 	}
 
@@ -331,7 +391,7 @@ func (app *App) HandleListRepositories(w http.ResponseWriter, r *http.Request) {
 	_reg := registry.Registry(*reg)
 	regAPI := &_reg
 
-	repos, err := regAPI.ListRepositories(*app.Repo)
+	repos, err := regAPI.ListRepositories(*app.Repo, app.DOConf)
 
 	if err != nil {
 		app.handleErrorRead(err, ErrProjectDataRead, w)
@@ -368,7 +428,7 @@ func (app *App) HandleListImages(w http.ResponseWriter, r *http.Request) {
 	_reg := registry.Registry(*reg)
 	regAPI := &_reg
 
-	imgs, err := regAPI.ListImages(repoName, *app.Repo)
+	imgs, err := regAPI.ListImages(repoName, *app.Repo, app.DOConf)
 
 	if err != nil {
 		app.handleErrorRead(err, ErrProjectDataRead, w)

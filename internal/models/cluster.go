@@ -18,6 +18,7 @@ const (
 	OIDC   ClusterAuth = "oidc"
 	GCP    ClusterAuth = "gcp-sa"
 	AWS    ClusterAuth = "aws-sa"
+	DO     ClusterAuth = "do-oauth"
 	Local  ClusterAuth = "local"
 )
 
@@ -58,6 +59,7 @@ type Cluster struct {
 	OIDCIntegrationID uint
 	GCPIntegrationID  uint
 	AWSIntegrationID  uint
+	DOIntegrationID   uint
 
 	// A token cache that can be used by an auth mechanism, if desired
 	TokenCache integrations.ClusterTokenCache `json:"token_cache"`

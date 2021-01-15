@@ -53,6 +53,10 @@ export default class ValuesWrapper extends Component<PropsType, StateType> {
               case 'select':
                 metaState[key] = def ? def : item.settings.options[0].value;
                 break;
+              case 'base-64':
+                metaState[key] = def ? def : '';
+              case 'base-64-password':
+                metaState[key] = def ? def : '';
               default:
             }
           });
@@ -92,7 +96,7 @@ export default class ValuesWrapper extends Component<PropsType, StateType> {
         <SaveButton
           disabled={this.isDisabled() || this.props.disabled}
           text='Deploy'
-          onClick={() => this.props.onSubmit(this.state)}
+          onClick={() => {console.log(this.state); this.props.onSubmit(this.state)}}
           status={this.isDisabled() ? 'Missing required fields' : this.props.saveValuesStatus}
           makeFlush={true}
         />

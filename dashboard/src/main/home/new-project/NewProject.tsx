@@ -75,6 +75,7 @@ export default class NewProject extends Component<PropsType, StateType> {
   // TODO: split this out into a separate component
   renderProvisioners = () => {
     if (this.state.selectedProvider === 'aws') {
+
       return (
         <FormSection>
           <CloseButton onClick={() => {

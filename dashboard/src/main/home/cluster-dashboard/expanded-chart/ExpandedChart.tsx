@@ -19,6 +19,7 @@ import ValuesWrapper from '../../../../components/values-form/ValuesWrapper';
 import ValuesForm from '../../../../components/values-form/ValuesForm';
 import SettingsSection from './SettingsSection';
 import ConfirmOverlay from '../../../../components/ConfirmOverlay';
+import Loading from '../../../../components/Loading';
 
 type PropsType = {
   namespace: string,
@@ -45,6 +46,7 @@ type StateType = {
   websockets: Record<string, any>,
   url: string | null,
   showDeleteOverlay: boolean,
+  deleting: boolean,
 };
 
 export default class ExpandedChart extends Component<PropsType, StateType> {
@@ -64,6 +66,7 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
     websockets : {} as Record<string, any>,
     url: null as string | null,
     showDeleteOverlay: false,
+    deleting: false,
   }
 
   // Retrieve full chart data (includes form and values)
@@ -526,12 +529,11 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
   handleUninstallChart = () => {
     let { currentProject, currentCluster } = this.context;
     let { currentChart } = this.props;
-    console.log('here', currentChart.namespace, StorageType.Secret)
+    this.setState({ deleting: true });
     api.uninstallTemplate('<token>', {
-      namespace: currentChart.namespace,
-      cluster_id: currentCluster.id,
-      storage: StorageType.Secret,
     }, {
+      namespace: currentChart.namespace,
+      storage: StorageType.Secret,
       name: currentChart.name,
       id: currentProject.id,
       cluster_id: currentCluster.id,
@@ -539,9 +541,16 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
       if (err) {
         console.log(err)
       } else {
-        console.log('worked i guess');
+        this.setState({ showDeleteOverlay: false });
+        this.props.setCurrentChart(null);
       }
     });
+  }
+
+  renderDeleteOverlay = () => {
+    if (this.state.deleting) {
+      return <DeleteOverlay><Loading /></DeleteOverlay>;
+    }
   }
 
   render() {
@@ -559,6 +568,8 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
             onYes={this.handleUninstallChart}
             onNo={() => this.setState({ showDeleteOverlay: false })}
           />
+          {this.renderDeleteOverlay()}
+          
           <HeaderWrapper>
             <TitleSection>
               <Title>
@@ -618,6 +629,34 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
 }
 
 ExpandedChart.contextType = Context;
+
+const DeleteOverlay = styled.div`
+  position: absolute;
+  top: 0px;
+  opacity: 100%;
+  left: 0px;
+  width: 100%;
+  height: 100%;
+  z-index: 999;
+  display: flex;
+  padding-bottom: 30px;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Work Sans', sans-serif;
+  font-size: 18px;
+  font-weight: 500;
+  color: white;
+  flex-direction: column;
+  background: rgb(0,0,0,0.73);
+  opacity: 0;
+  animation: lindEnter 0.2s;
+  animation-fill-mode: forwards;
+
+  @keyframes lindEnter {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+  }
+`;
 
 const Bolded = styled.div`
   font-weight: 500;

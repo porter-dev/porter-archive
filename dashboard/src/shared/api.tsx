@@ -191,15 +191,15 @@ const deployTemplate = baseApi<{
 });
 
 const uninstallTemplate = baseApi<{
-  namespace: string,
-  cluster_id: number,
-  storage: StorageType,
 }, {
   id: number,
   name: string, 
   cluster_id: number,
+  namespace: string,
+  storage: StorageType,
 }>('POST', pathParams => {
-  return `/api/projects/${pathParams.id}/deploy/${pathParams.name}?cluster_id=${pathParams.cluster_id}`;
+  let { id, name, cluster_id, storage, namespace } = pathParams;
+  return `/api/projects/${id}/deploy/${name}?cluster_id=${cluster_id}&namespace=${namespace}&storage=${storage}`;
 });
 
 const getClusterIntegrations = baseApi('GET', '/api/integrations/cluster');

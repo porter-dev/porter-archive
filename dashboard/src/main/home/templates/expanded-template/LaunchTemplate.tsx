@@ -55,9 +55,16 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
     let { currentCluster, currentProject } = this.context;
     let name = randomWords({ exactly: 3, join: '-' });
     this.setState({ saveValuesStatus: 'loading' });
+
+    let values = {};
+    for (let key in wildcard) {
+      _.set(values, key, wildcard[key]);
+    }
+
     api.deployTemplate('<token>', {
       templateName: this.props.currentTemplate.name,
       storage: StorageType.Secret,
+      formValues: values,
       namespace: this.state.selectedNamespace,
       name,
     }, {

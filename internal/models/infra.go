@@ -25,10 +25,12 @@ type InfraKind string
 
 // The supported infra kinds
 const (
-	InfraECR InfraKind = "ecr"
-	InfraEKS InfraKind = "eks"
-	InfraGCR InfraKind = "gcr"
-	InfraGKE InfraKind = "gke"
+	InfraECR  InfraKind = "ecr"
+	InfraEKS  InfraKind = "eks"
+	InfraGCR  InfraKind = "gcr"
+	InfraGKE  InfraKind = "gke"
+	InfraDOCR InfraKind = "docr"
+	InfraDOKS InfraKind = "doks"
 )
 
 // Infra represents the metadata for an infrastructure type provisioned on
@@ -53,6 +55,10 @@ type Infra struct {
 
 	// The GCP integration that was used to create the infra
 	GCPIntegrationID uint
+
+	// The DO integration that was used to create the infra:
+	// this points to an OAuthIntegrationID
+	DOIntegrationID uint
 }
 
 // InfraExternal is an external Infra to be shared over REST

@@ -35,7 +35,8 @@ func (app *App) HandleListNamespaces(w http.ResponseWriter, r *http.Request) {
 	// get the filter options
 	form := &forms.K8sForm{
 		OutOfClusterConfig: &kubernetes.OutOfClusterConfig{
-			Repo: app.Repo,
+			Repo:              app.Repo,
+			DigitalOceanOAuth: app.DOConf,
 		},
 	}
 
@@ -95,7 +96,8 @@ func (app *App) HandleGetPodLogs(w http.ResponseWriter, r *http.Request) {
 	// get the filter options
 	form := &forms.K8sForm{
 		OutOfClusterConfig: &kubernetes.OutOfClusterConfig{
-			Repo: app.Repo,
+			Repo:              app.Repo,
+			DigitalOceanOAuth: app.DOConf,
 		},
 	}
 
@@ -158,7 +160,8 @@ func (app *App) HandleGetIngress(w http.ResponseWriter, r *http.Request) {
 	// get the filter options
 	form := &forms.K8sForm{
 		OutOfClusterConfig: &kubernetes.OutOfClusterConfig{
-			Repo: app.Repo,
+			Repo:              app.Repo,
+			DigitalOceanOAuth: app.DOConf,
 		},
 	}
 
@@ -214,7 +217,8 @@ func (app *App) HandleListPods(w http.ResponseWriter, r *http.Request) {
 	// get the filter options
 	form := &forms.K8sForm{
 		OutOfClusterConfig: &kubernetes.OutOfClusterConfig{
-			Repo: app.Repo,
+			Repo:              app.Repo,
+			DigitalOceanOAuth: app.DOConf,
 		},
 	}
 
@@ -277,7 +281,8 @@ func (app *App) HandleStreamControllerStatus(w http.ResponseWriter, r *http.Requ
 	// get the filter options
 	form := &forms.K8sForm{
 		OutOfClusterConfig: &kubernetes.OutOfClusterConfig{
-			Repo: app.Repo,
+			Repo:              app.Repo,
+			DigitalOceanOAuth: app.DOConf,
 		},
 	}
 

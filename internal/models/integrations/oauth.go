@@ -1,13 +1,16 @@
 package integrations
 
-import "gorm.io/gorm"
+import (
+	"gorm.io/gorm"
+)
 
 // OAuthIntegrationClient is the name of an OAuth mechanism client
 type OAuthIntegrationClient string
 
 // The supported oauth mechanism clients
 const (
-	OAuthGithub OAuthIntegrationClient = "github"
+	OAuthGithub       OAuthIntegrationClient = "github"
+	OAuthDigitalOcean OAuthIntegrationClient = "do"
 )
 
 // OAuthIntegration is an auth mechanism that uses oauth

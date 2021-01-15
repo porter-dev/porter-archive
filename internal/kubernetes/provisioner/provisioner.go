@@ -10,8 +10,12 @@ import (
 	"github.com/porter-dev/porter/internal/kubernetes/provisioner/aws"
 	"github.com/porter-dev/porter/internal/kubernetes/provisioner/aws/ecr"
 	"github.com/porter-dev/porter/internal/kubernetes/provisioner/aws/eks"
+	"github.com/porter-dev/porter/internal/kubernetes/provisioner/do"
+	"github.com/porter-dev/porter/internal/kubernetes/provisioner/do/docr"
+	"github.com/porter-dev/porter/internal/kubernetes/provisioner/do/doks"
 
 	"github.com/porter-dev/porter/internal/kubernetes/provisioner/gcp"
+	"github.com/porter-dev/porter/internal/kubernetes/provisioner/gcp/gke"
 
 	"github.com/porter-dev/porter/internal/config"
 )
@@ -25,17 +29,21 @@ const (
 	ECR  InfraOption = "ecr"
 	EKS  InfraOption = "eks"
 	GCR  InfraOption = "gcr"
+	GKE  InfraOption = "gke"
+	DOCR InfraOption = "docr"
+	DOKS InfraOption = "doks"
 )
 
 // Conf is the config required to start a provisioner container
 type Conf struct {
-	Kind      InfraOption
-	Name      string
-	Namespace string
-	ID        string
-	Redis     *config.RedisConf
-	Postgres  *config.DBConf
-	Operation ProvisionerOperation
+	Kind                InfraOption
+	Name                string
+	Namespace           string
+	ID                  string
+	Redis               *config.RedisConf
+	Postgres            *config.DBConf
+	Operation           ProvisionerOperation
+	ProvisionerImageTag string
 
 	// provider-specific configurations
 
@@ -46,6 +54,12 @@ type Conf struct {
 
 	// GKE
 	GCP *gcp.Conf
+	GKE *gke.Conf
+
+	// DO
+	DO   *do.Conf
+	DOCR *docr.Conf
+	DOKS *doks.Conf
 }
 
 type ProvisionerOperation string
@@ -92,6 +106,21 @@ func (conf *Conf) GetProvisionerJobTemplate() (*batchv1.Job, error) {
 		args = []string{operation, "eks"}
 		env = conf.AWS.AttachAWSEnv(env)
 		env = conf.EKS.AttachEKSEnv(env)
+	} else if conf.Kind == GCR {
+		args = []string{operation, "gcr"}
+		env = conf.GCP.AttachGCPEnv(env)
+	} else if conf.Kind == GKE {
+		args = []string{operation, "gke"}
+		env = conf.GCP.AttachGCPEnv(env)
+		env = conf.GKE.AttachGKEEnv(env)
+	} else if conf.Kind == DOCR {
+		args = []string{operation, "docr"}
+		env = conf.DO.AttachDOEnv(env)
+		env = conf.DOCR.AttachDOCREnv(env)
+	} else if conf.Kind == GKE {
+		args = []string{operation, "doks"}
+		env = conf.DO.AttachDOEnv(env)
+		env = conf.DOKS.AttachDOKSEnv(env)
 	}
 
 	return &batchv1.Job{
@@ -111,10 +140,11 @@ func (conf *Conf) GetProvisionerJobTemplate() (*batchv1.Job, error) {
 					RestartPolicy: v1.RestartPolicyNever,
 					Containers: []v1.Container{
 						{
-							Name:  "provisioner",
-							Image: "gcr.io/porter-dev-273614/provisioner:latest",
-							Args:  args,
-							Env:   env,
+							Name:            "provisioner",
+							Image:           "gcr.io/porter-dev-273614/provisioner:" + conf.ProvisionerImageTag,
+							ImagePullPolicy: v1.PullAlways,
+							Args:            args,
+							Env:             env,
 							VolumeMounts: []v1.VolumeMount{
 								v1.VolumeMount{
 									MountPath: "/.terraform/plugin-cache",

@@ -265,6 +265,24 @@ func (repo *OAuthIntegrationRepository) ListOAuthIntegrationsByProjectID(
 	return res, nil
 }
 
+// UpdateOAuthIntegration updates an oauth integration in the DB
+func (repo *OAuthIntegrationRepository) UpdateOAuthIntegration(
+	am *ints.OAuthIntegration,
+) (*ints.OAuthIntegration, error) {
+	if !repo.canQuery {
+		return nil, errors.New("Cannot write database")
+	}
+
+	if int(am.ID-1) >= len(repo.oIntegrations) || repo.oIntegrations[am.ID-1] == nil {
+		return nil, gorm.ErrRecordNotFound
+	}
+
+	index := int(am.ID - 1)
+	repo.oIntegrations[index] = am
+
+	return am, nil
+}
+
 // AWSIntegrationRepository implements repository.AWSIntegrationRepository
 type AWSIntegrationRepository struct {
 	canQuery        bool

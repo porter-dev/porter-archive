@@ -17,10 +17,10 @@ type CreateECRInfra struct {
 	AWSIntegrationID uint   `json:"aws_integration_id" form:"required"`
 }
 
-// ToAWSInfra converts the form to a gorm aws infra model
-func (ce *CreateECRInfra) ToAWSInfra() (*models.AWSInfra, error) {
-	return &models.AWSInfra{
-		Kind:             models.AWSInfraECR,
+// ToInfra converts the form to a gorm aws infra model
+func (ce *CreateECRInfra) ToInfra() (*models.Infra, error) {
+	return &models.Infra{
+		Kind:             models.InfraECR,
 		ProjectID:        ce.ProjectID,
 		Suffix:           stringWithCharset(6, randCharset),
 		Status:           models.StatusCreating,
@@ -36,14 +36,91 @@ type CreateEKSInfra struct {
 	AWSIntegrationID uint   `json:"aws_integration_id" form:"required"`
 }
 
-// ToAWSInfra converts the form to a gorm aws infra model
-func (ce *CreateEKSInfra) ToAWSInfra() (*models.AWSInfra, error) {
-	return &models.AWSInfra{
-		Kind:             models.AWSInfraEKS,
+// ToInfra converts the form to a gorm aws infra model
+func (ce *CreateEKSInfra) ToInfra() (*models.Infra, error) {
+	return &models.Infra{
+		Kind:             models.InfraEKS,
 		ProjectID:        ce.ProjectID,
 		Suffix:           stringWithCharset(6, randCharset),
 		Status:           models.StatusCreating,
 		AWSIntegrationID: ce.AWSIntegrationID,
+	}, nil
+}
+
+// CreateGCRInfra represents the accepted values for creating an
+// GCR infra via the provisioning container
+type CreateGCRInfra struct {
+	ProjectID        uint `json:"project_id" form:"required"`
+	GCPIntegrationID uint `json:"gcp_integration_id" form:"required"`
+}
+
+// ToInfra converts the form to a gorm aws infra model
+func (ce *CreateGCRInfra) ToInfra() (*models.Infra, error) {
+	return &models.Infra{
+		Kind:             models.InfraGCR,
+		ProjectID:        ce.ProjectID,
+		Suffix:           stringWithCharset(6, randCharset),
+		Status:           models.StatusCreating,
+		GCPIntegrationID: ce.GCPIntegrationID,
+	}, nil
+}
+
+// CreateGKEInfra represents the accepted values for creating a
+// GKE infra via the provisioning container
+type CreateGKEInfra struct {
+	GKEName          string `json:"gke_name" form:"required"`
+	ProjectID        uint   `json:"project_id" form:"required"`
+	GCPIntegrationID uint   `json:"gcp_integration_id" form:"required"`
+}
+
+// ToInfra converts the form to a gorm aws infra model
+func (ce *CreateGKEInfra) ToInfra() (*models.Infra, error) {
+	return &models.Infra{
+		Kind:             models.InfraGKE,
+		ProjectID:        ce.ProjectID,
+		Suffix:           stringWithCharset(6, randCharset),
+		Status:           models.StatusCreating,
+		GCPIntegrationID: ce.GCPIntegrationID,
+	}, nil
+}
+
+// CreateDOCRInfra represents the accepted values for creating an
+// DOCR infra via the provisioning container
+type CreateDOCRInfra struct {
+	DOCRName             string `json:"docr_name" form:"required"`
+	DOCRSubscriptionTier string `json:"docr_subscription_tier" form:"required"`
+	ProjectID            uint   `json:"project_id" form:"required"`
+	DOIntegrationID      uint   `json:"do_integration_id" form:"required"`
+}
+
+// ToInfra converts the form to a gorm infra model
+func (de *CreateDOCRInfra) ToInfra() (*models.Infra, error) {
+	return &models.Infra{
+		Kind:            models.InfraDOCR,
+		ProjectID:       de.ProjectID,
+		Suffix:          stringWithCharset(6, randCharset),
+		Status:          models.StatusCreating,
+		DOIntegrationID: de.DOIntegrationID,
+	}, nil
+}
+
+// CreateDOKSInfra represents the accepted values for creating a
+// DOKS infra via the provisioning container
+type CreateDOKSInfra struct {
+	DORegion        string `json:"do_region" form:"required"`
+	DOKSName        string `json:"doks_name" form:"required"`
+	ProjectID       uint   `json:"project_id" form:"required"`
+	DOIntegrationID uint   `json:"do_integration_id" form:"required"`
+}
+
+// ToInfra converts the form to a gorm infra model
+func (de *CreateDOKSInfra) ToInfra() (*models.Infra, error) {
+	return &models.Infra{
+		Kind:            models.InfraDOKS,
+		ProjectID:       de.ProjectID,
+		Suffix:          stringWithCharset(6, randCharset),
+		Status:          models.StatusCreating,
+		DOIntegrationID: de.DOIntegrationID,
 	}, nil
 }
 
@@ -57,6 +134,24 @@ type DestroyECRInfra struct {
 // EKS infra via the provisioning container
 type DestroyEKSInfra struct {
 	EKSName string `json:"eks_name" form:"required"`
+}
+
+// DestroyGKEInfra represents the accepted values for destroying an
+// GKE infra via the provisioning container
+type DestroyGKEInfra struct {
+	GKEName string `json:"gke_name" form:"required"`
+}
+
+// DestroyDOCRInfra represents the accepted values for destroying an
+// DOCR infra via the provisioning container
+type DestroyDOCRInfra struct {
+	DOCRName string `json:"docr_name" form:"required"`
+}
+
+// DestroyDOKSInfra represents the accepted values for destroying an
+// DOKS infra via the provisioning container
+type DestroyDOKSInfra struct {
+	DOKSName string `json:"doks_name" form:"required"`
 }
 
 // helpers for random string

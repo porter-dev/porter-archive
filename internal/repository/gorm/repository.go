@@ -17,7 +17,7 @@ func NewRepository(db *gorm.DB, key *[32]byte) *repository.Repository {
 		Cluster:          NewClusterRepository(db, key),
 		HelmRepo:         NewHelmRepoRepository(db, key),
 		Registry:         NewRegistryRepository(db, key),
-		AWSInfra:         NewAWSInfraRepository(db),
+		Infra:         NewInfraRepository(db),
 		KubeIntegration:  NewKubeIntegrationRepository(db, key),
 		BasicIntegration: NewBasicIntegrationRepository(db, key),
 		OIDCIntegration:  NewOIDCIntegrationRepository(db, key),

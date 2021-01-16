@@ -60,7 +60,7 @@ export default class ClusterSection extends Component<PropsType, StateType> {
               setCurrentCluster((localStorage.getItem('currentCluster')) ? 
                 JSON.parse(localStorage.getItem('currentCluster')) : clusters[0]
               );
-            } catch {
+            } catch(err) {
               setCurrentCluster(clusters[0]);
             }
           } else if (this.props.currentView !== 'provisioner') {

@@ -55,6 +55,9 @@ export default class Main extends Component<PropsType, StateType> {
   }
 
   handleLogOut = () => {
+    // Clears local storage for proper rendering of clusters
+    localStorage.clear();
+
     this.context.clearContext();
     this.setState({ isLoggedIn: false, initialized: true });
   }

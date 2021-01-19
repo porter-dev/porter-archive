@@ -3,6 +3,7 @@ import styled from 'styled-components';
 import category from '../../../assets/category.svg';
 import integrations from '../../../assets/integrations.svg';
 import filter from '../../../assets/filter.svg';
+import settings from '../../../assets/settings.svg';
 
 import { Context } from '../../../shared/Context';
 
@@ -123,6 +124,13 @@ export default class Sidebar extends Component<PropsType, StateType> {
           >
             <img src={integrations} />
             Integrations
+          </NavButton>
+          <NavButton
+            onClick={() => this.props.setCurrentView('project-settings')}
+            selected={this.props.currentView === 'project-settings'}
+          >
+            <img src={settings} />
+            Settings
           </NavButton>
 
           <br />

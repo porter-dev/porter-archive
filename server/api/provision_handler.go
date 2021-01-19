@@ -15,40 +15,6 @@ import (
 	"github.com/porter-dev/porter/internal/adapter"
 )
 
-// HandleProvisionTest will create a test resource by deploying a provisioner
-// container pod
-func (app *App) HandleProvisionTest(w http.ResponseWriter, r *http.Request) {
-	projID, err := strconv.ParseUint(chi.URLParam(r, "project_id"), 0, 64)
-
-	if err != nil || projID == 0 {
-		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
-		return
-	}
-
-	// create a new agent
-	agent, err := kubernetes.GetAgentInClusterConfig()
-
-	if err != nil {
-		app.handleErrorDataRead(err, w)
-		return
-	}
-
-	_, err = agent.ProvisionTest(
-		uint(projID),
-		provisioner.Apply,
-		&app.DBConf,
-		app.RedisConf,
-		app.ServerConf.ProvisionerImageTag,
-	)
-
-	if err != nil {
-		app.handleErrorInternal(err, w)
-		return
-	}
-
-	w.WriteHeader(http.StatusOK)
-}
-
 // HandleProvisionAWSECRInfra provisions a new aws ECR instance for a project
 func (app *App) HandleProvisionAWSECRInfra(w http.ResponseWriter, r *http.Request) {
 	projID, err := strconv.ParseUint(chi.URLParam(r, "project_id"), 0, 64)
@@ -115,6 +81,7 @@ func (app *App) HandleProvisionAWSECRInfra(w http.ResponseWriter, r *http.Reques
 		uint(projID),
 		awsInt,
 		form.ECRName,
+		*app.Repo,
 		infra,
 		provisioner.Apply,
 		&app.DBConf,
@@ -206,6 +173,7 @@ func (app *App) HandleDestroyAWSECRInfra(w http.ResponseWriter, r *http.Request)
 		infra.ProjectID,
 		awsInt,
 		form.ECRName,
+		*app.Repo,
 		infra,
 		provisioner.Destroy,
 		&app.DBConf,
@@ -289,6 +257,7 @@ func (app *App) HandleProvisionAWSEKSInfra(w http.ResponseWriter, r *http.Reques
 		uint(projID),
 		awsInt,
 		form.EKSName,
+		*app.Repo,
 		infra,
 		provisioner.Apply,
 		&app.DBConf,
@@ -380,6 +349,7 @@ func (app *App) HandleDestroyAWSEKSInfra(w http.ResponseWriter, r *http.Request)
 		infra.ProjectID,
 		awsInt,
 		form.EKSName,
+		*app.Repo,
 		infra,
 		provisioner.Destroy,
 		&app.DBConf,
@@ -462,6 +432,7 @@ func (app *App) HandleProvisionGCPGCRInfra(w http.ResponseWriter, r *http.Reques
 	_, err = agent.ProvisionGCR(
 		uint(projID),
 		gcpInt,
+		*app.Repo,
 		infra,
 		provisioner.Apply,
 		&app.DBConf,
@@ -555,6 +526,7 @@ func (app *App) HandleProvisionGCPGKEInfra(w http.ResponseWriter, r *http.Reques
 		uint(projID),
 		gcpInt,
 		form.GKEName,
+		*app.Repo,
 		infra,
 		provisioner.Apply,
 		&app.DBConf,
@@ -646,6 +618,7 @@ func (app *App) HandleDestroyGCPGKEInfra(w http.ResponseWriter, r *http.Request)
 		infra.ProjectID,
 		gcpInt,
 		form.GKEName,
+		*app.Repo,
 		infra,
 		provisioner.Destroy,
 		&app.DBConf,
@@ -681,7 +654,7 @@ func (app *App) HandleGetProvisioningLogs(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	streamName := infra.GetID()
+	streamName := infra.GetUniqueName()
 
 	upgrader.CheckOrigin = func(r *http.Request) bool { return true }
 

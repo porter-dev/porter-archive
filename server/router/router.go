@@ -217,7 +217,7 @@ func New(a *api.App) *chi.Mux {
 		r.Method(
 			"GET",
 			"/projects/{project_id}/invites/{token}",
-			auth.BasicAuthenticate(
+			auth.BasicAuthenticateWithRedirect(
 				requestlog.NewHandler(a.HandleAcceptInvite, l),
 			),
 		)

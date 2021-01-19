@@ -193,6 +193,49 @@ func New(a *api.App) *chi.Mux {
 			),
 		)
 
+		// /api/projects/{project_id}/invites routes
+		r.Method(
+			"POST",
+			"/projects/{project_id}/invites",
+			auth.DoesUserHaveProjectAccess(
+				requestlog.NewHandler(a.HandleCreateInvite, l),
+				mw.URLParam,
+				mw.WriteAccess,
+			),
+		)
+
+		r.Method(
+			"GET",
+			"/projects/{project_id}/invites",
+			auth.DoesUserHaveProjectAccess(
+				requestlog.NewHandler(a.HandleListProjectInvites, l),
+				mw.URLParam,
+				mw.ReadAccess,
+			),
+		)
+
+		r.Method(
+			"GET",
+			"/projects/{project_id}/invites/{token}",
+			auth.BasicAuthenticate(
+				requestlog.NewHandler(a.HandleAcceptInvite, l),
+			),
+		)
+
+		r.Method(
+			"DELETE",
+			"/projects/{project_id}/invites/{invite_id}",
+			auth.DoesUserHaveProjectAccess(
+				auth.DoesUserHaveInviteAccess(
+					requestlog.NewHandler(a.HandleDeleteProjectInvite, l),
+					mw.URLParam,
+					mw.URLParam,
+				),
+				mw.URLParam,
+				mw.WriteAccess,
+			),
+		)
+
 		// /api/projects/{project_id}/infra routes
 		r.Method(
 			"GET",

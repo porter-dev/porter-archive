@@ -487,6 +487,10 @@ func initUserDefault(tester *tester) {
 	tester.createUserSession("belanger@getporter.dev", "hello")
 }
 
+func initUserAlt(tester *tester) {
+	tester.createUserSession("test@test.it", "hello")
+}
+
 func userBasicBodyValidator(c *userTest, tester *tester, t *testing.T) {
 	if body := tester.rr.Body.String(); strings.TrimSpace(body) != strings.TrimSpace(c.expBody) {
 		t.Errorf("%s, handler returned wrong body: got %v want %v",

@@ -6,6 +6,7 @@ import { ResourceType, NodeType, EdgeType, ChartType } from '../../../../../shar
 import Node from './Node';
 import Edge from './Edge';
 import InfoPanel from './InfoPanel';
+import ZoomPanel from './ZoomPanel';
 import SelectRegion from './SelectRegion';
 
 const zoomConstant = 0.01;
@@ -41,6 +42,7 @@ type StateType = {
   preventBgDrag: boolean, // Prevent bg drag when moving selected with mouse down
   relocateAllowed: boolean, // Suppress movement of selected when drawing select region
   scale: number,
+  btnZooming: boolean,
   showKindLabels: boolean,
   isExpanded: boolean,
   currentNode: NodeType | null,
@@ -73,6 +75,7 @@ export default class GraphDisplay extends Component<PropsType, StateType> {
     preventBgDrag: false,
     relocateAllowed: false,
     scale: 0.5,
+    btnZooming: false,
     showKindLabels: true,
     isExpanded: false,
     currentNode: null as (NodeType | null),
@@ -344,6 +347,7 @@ export default class GraphDisplay extends Component<PropsType, StateType> {
 
   // Handle pan XOR zoom (two-finger gestures count as onWheel)
   handleWheel = (e: any) => {
+    this.setState({ btnZooming: false });
 
     // Prevent nav gestures if mouse is over InfoPanel or ButtonSection
     if (!this.state.suppressDisplay) {
@@ -362,6 +366,14 @@ export default class GraphDisplay extends Component<PropsType, StateType> {
       }
     }
   };
+
+  btnZoomIn = () => {
+    this.setState({ scale: 1.24, btnZooming: true});
+  }
+
+  btnZoomOut = () => {
+    this.setState({ scale: 0.76, btnZooming: true });
+  }
 
   toggleExpanded = () => {
     this.setState({ isExpanded: !this.state.isExpanded }, () => {
@@ -385,8 +397,21 @@ export default class GraphDisplay extends Component<PropsType, StateType> {
   renderNodes = () => {
     let { activeIds, originX, originY, cursorX, cursorY, scale, panX, panY, anchorX, anchorY, relocateAllowed } = this.state;
 
-    return this.state.nodes.map((node: NodeType, i: number) => {
+    let minX = 0;
+    let maxX = 0;
+    let minY = 0;
+    let maxY = 0;
+    this.state.nodes.map((node: NodeType, i: number) => { 
+      if (node.x < minX) 
+      minX = (node.x < minX) ? node.x : minX;
+      maxX = (node.x > maxX) ? node.x : maxX;
+      minY = (node.y < minY) ? node.y : minY;
+      maxY = (node.y > maxY) ? node.y : maxY;
+    });
+    let midX = (minX + maxX)/2;
+    let midY = (minY + maxY)/2;
 
+    return this.state.nodes.map((node: NodeType, i: number) => {
       // Update position if not highlighting and active
       if (activeIds.includes(node.id) && relocateAllowed && !anchorX && !anchorY) {
         node.x = cursorX + node.toCursorX;
@@ -401,8 +426,14 @@ export default class GraphDisplay extends Component<PropsType, StateType> {
 
       // Apply cursor-centered zoom
       if (this.state.scale !== 1) {
-        node.x = cursorX + scale * (node.x - cursorX);
-        node.y = cursorY + scale * (node.y - cursorY);
+        if (!this.state.btnZooming) {
+          node.x = cursorX + scale * (node.x - cursorX);
+          node.y = cursorY + scale * (node.y - cursorY);
+        } else {
+          console.log('hi')
+          node.x = midX + scale * (node.x - midX);
+          node.y = midY + scale * (node.y - midY);
+        }
       }
 
       // Apply pan 
@@ -509,6 +540,10 @@ export default class GraphDisplay extends Component<PropsType, StateType> {
           // For YAML wrapper to trigger resize
           isExpanded={this.state.isExpanded}
           showRevisions={this.props.showRevisions}
+        />
+        <ZoomPanel
+          btnZoomIn={this.btnZoomIn}
+          btnZoomOut={this.btnZoomOut}
         />
       </StyledGraphDisplay>
     );

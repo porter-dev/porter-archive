@@ -183,7 +183,7 @@ func (app *App) updateProjectFromToken(projectID uint, userID uint, tok *oauth2.
 	// create the git repo
 	gr := &models.GitRepo{
 		ProjectID:          projectID,
-		RepoEntity:         *user.Name,
+		RepoEntity:         *user.Login,
 		OAuthIntegrationID: oauthInt.ID,
 	}
 

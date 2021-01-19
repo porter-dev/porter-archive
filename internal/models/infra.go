@@ -59,6 +59,13 @@ type Infra struct {
 	// The DO integration that was used to create the infra:
 	// this points to an OAuthIntegrationID
 	DOIntegrationID uint
+
+	// ------------------------------------------------------------------
+	// All fields below this line are encrypted before storage
+	// ------------------------------------------------------------------
+
+	// The last-applied input variables to the provisioner
+	LastApplied []byte
 }
 
 // InfraExternal is an external Infra to be shared over REST
@@ -86,12 +93,12 @@ func (i *Infra) Externalize() *InfraExternal {
 }
 
 // GetID returns the unique id for this infra
-func (i *Infra) GetID() string {
+func (i *Infra) GetUniqueName() string {
 	return fmt.Sprintf("%s-%d-%d-%s", i.Kind, i.ProjectID, i.ID, i.Suffix)
 }
 
-// ParseWorkspaceID returns the (kind, projectID, infraID)
-func ParseWorkspaceID(workspaceID string) (string, uint, uint, error) {
+// ParseUniqueName returns the (kind, projectID, infraID, suffix)
+func ParseUniqueName(workspaceID string) (string, uint, uint, error) {
 	strArr := strings.Split(workspaceID, "-")
 
 	if len(strArr) < 3 {

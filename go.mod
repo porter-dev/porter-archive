@@ -31,6 +31,7 @@ require (
 	github.com/go-test/deep v1.0.7
 	github.com/google/go-cmp v0.5.2
 	github.com/google/go-github v17.0.0+incompatible
+	github.com/google/go-github/v33 v33.0.0
 	github.com/google/go-querystring v1.0.0 // indirect
 	github.com/googleapis/gnostic v0.2.2 // indirect
 	github.com/gorilla/securecookie v1.1.1

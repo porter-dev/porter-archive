@@ -474,9 +474,15 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
         console.log(err);
         return
       }
-      
+
+      if (res.data?.spec?.rules && res.data?.spec?.rules[0]?.host) {
+        this.setState({url: `https://${res.data?.spec?.rules[0]?.host}` })
+        return;
+      }
+
       if (res.data?.status?.loadBalancer?.ingress) {
-        this.setState({url: `http://${res.data?.status?.loadBalancer?.ingress[0]?.hostname}` })
+        this.setState({ url: `http://${res.data?.status?.loadBalancer?.ingress[0]?.hostname}` })
+        return;
       }
     });
 
@@ -520,7 +526,7 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
       return (
         <Url>
           <Bolded>Internal URI:</Bolded>
-          {`${serviceName}.${serviceNamespace}.namespace.svc.cluster.local`}
+          {`${serviceName}.${serviceNamespace}.svc.cluster.local`}
         </Url>
       );
     }

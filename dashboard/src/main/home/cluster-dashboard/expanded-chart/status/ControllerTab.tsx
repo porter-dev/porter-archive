@@ -80,7 +80,7 @@ export default class ControllerTab extends Component<PropsType, StateType> {
   }
 
   getPodStatus = (status: any) => {
-    if (status?.phase == 'Pending' && status?.containerStatuses) {
+    if (status?.phase == 'Pending' && status?.containerStatuses !== undefined) {
       return status.containerStatuses[0].state.waiting.reason
       // return 'waiting'
     }
@@ -105,10 +105,8 @@ export default class ControllerTab extends Component<PropsType, StateType> {
 
   render() {
     let { controller, selectedPod, isLast, selectPod } = this.props;
-    console.log(controller)
     let [available, total] = this.getAvailability(controller.kind, controller);
     let status = (available == total) ? 'running' : 'waiting'
-    console.log('state', this.state)
     return (
       <ResourceTab
         label={controller.kind}

@@ -65,6 +65,7 @@ export default class Logs extends Component<PropsType, StateType> {
 
   componentWillUnmount() {
     if (this.state.ws) {
+      console.log('closing websockets')
       this.state.ws.close()
     }
   }

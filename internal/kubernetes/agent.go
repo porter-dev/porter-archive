@@ -251,13 +251,14 @@ func (a *Agent) ProvisionECR(
 	projectID uint,
 	awsConf *integrations.AWSIntegration,
 	ecrName string,
+	repo repository.Repository,
 	infra *models.Infra,
 	operation provisioner.ProvisionerOperation,
 	pgConf *config.DBConf,
 	redisConf *config.RedisConf,
 	provImageTag string,
 ) (*batchv1.Job, error) {
-	id := infra.GetID()
+	id := infra.GetUniqueName()
 	prov := &provisioner.Conf{
 		ID:                  id,
 		Name:                fmt.Sprintf("prov-%s-%s", id, string(operation)),
@@ -266,6 +267,7 @@ func (a *Agent) ProvisionECR(
 		Redis:               redisConf,
 		Postgres:            pgConf,
 		ProvisionerImageTag: provImageTag,
+		LastApplied:         infra.LastApplied,
 		AWS: &aws.Conf{
 			AWSRegion:          awsConf.AWSRegion,
 			AWSAccessKeyID:     string(awsConf.AWSAccessKeyID),
@@ -276,7 +278,7 @@ func (a *Agent) ProvisionECR(
 		},
 	}
 
-	return a.provision(prov)
+	return a.provision(prov, infra, repo)
 }
 
 // ProvisionEKS spawns a new provisioning pod that creates an EKS instance
@@ -284,13 +286,14 @@ func (a *Agent) ProvisionEKS(
 	projectID uint,
 	awsConf *integrations.AWSIntegration,
 	eksName string,
+	repo repository.Repository,
 	infra *models.Infra,
 	operation provisioner.ProvisionerOperation,
 	pgConf *config.DBConf,
 	redisConf *config.RedisConf,
 	provImageTag string,
 ) (*batchv1.Job, error) {
-	id := infra.GetID()
+	id := infra.GetUniqueName()
 	prov := &provisioner.Conf{
 		ID:                  id,
 		Name:                fmt.Sprintf("prov-%s-%s", id, string(operation)),
@@ -299,6 +302,7 @@ func (a *Agent) ProvisionEKS(
 		Redis:               redisConf,
 		Postgres:            pgConf,
 		ProvisionerImageTag: provImageTag,
+		LastApplied:         infra.LastApplied,
 		AWS: &aws.Conf{
 			AWSRegion:          awsConf.AWSRegion,
 			AWSAccessKeyID:     string(awsConf.AWSAccessKeyID),
@@ -309,20 +313,21 @@ func (a *Agent) ProvisionEKS(
 		},
 	}
 
-	return a.provision(prov)
+	return a.provision(prov, infra, repo)
 }
 
 // ProvisionGCR spawns a new provisioning pod that creates a GCR instance
 func (a *Agent) ProvisionGCR(
 	projectID uint,
 	gcpConf *integrations.GCPIntegration,
+	repo repository.Repository,
 	infra *models.Infra,
 	operation provisioner.ProvisionerOperation,
 	pgConf *config.DBConf,
 	redisConf *config.RedisConf,
 	provImageTag string,
 ) (*batchv1.Job, error) {
-	id := infra.GetID()
+	id := infra.GetUniqueName()
 	prov := &provisioner.Conf{
 		ID:                  id,
 		Name:                fmt.Sprintf("prov-%s-%s", id, string(operation)),
@@ -331,6 +336,7 @@ func (a *Agent) ProvisionGCR(
 		Redis:               redisConf,
 		Postgres:            pgConf,
 		ProvisionerImageTag: provImageTag,
+		LastApplied:         infra.LastApplied,
 		GCP: &gcp.Conf{
 			GCPRegion:    gcpConf.GCPRegion,
 			GCPProjectID: gcpConf.GCPProjectID,
@@ -338,7 +344,7 @@ func (a *Agent) ProvisionGCR(
 		},
 	}
 
-	return a.provision(prov)
+	return a.provision(prov, infra, repo)
 }
 
 // ProvisionGKE spawns a new provisioning pod that creates a GKE instance
@@ -346,13 +352,14 @@ func (a *Agent) ProvisionGKE(
 	projectID uint,
 	gcpConf *integrations.GCPIntegration,
 	gkeName string,
+	repo repository.Repository,
 	infra *models.Infra,
 	operation provisioner.ProvisionerOperation,
 	pgConf *config.DBConf,
 	redisConf *config.RedisConf,
 	provImageTag string,
 ) (*batchv1.Job, error) {
-	id := infra.GetID()
+	id := infra.GetUniqueName()
 	prov := &provisioner.Conf{
 		ID:                  id,
 		Name:                fmt.Sprintf("prov-%s-%s", id, string(operation)),
@@ -361,6 +368,7 @@ func (a *Agent) ProvisionGKE(
 		Redis:               redisConf,
 		Postgres:            pgConf,
 		ProvisionerImageTag: provImageTag,
+		LastApplied:         infra.LastApplied,
 		GCP: &gcp.Conf{
 			GCPRegion:    gcpConf.GCPRegion,
 			GCPProjectID: gcpConf.GCPProjectID,
@@ -371,7 +379,7 @@ func (a *Agent) ProvisionGKE(
 		},
 	}
 
-	return a.provision(prov)
+	return a.provision(prov, infra, repo)
 }
 
 // ProvisionDOCR spawns a new provisioning pod that creates a DOCR instance
@@ -401,14 +409,15 @@ func (a *Agent) ProvisionDOCR(
 		return nil, err
 	}
 
-	id := infra.GetID()
+	id := infra.GetUniqueName()
 	prov := &provisioner.Conf{
-		ID:        id,
-		Name:      fmt.Sprintf("prov-%s-%s", id, string(operation)),
-		Kind:      provisioner.DOCR,
-		Operation: operation,
-		Redis:     redisConf,
-		Postgres:  pgConf,
+		ID:          id,
+		Name:        fmt.Sprintf("prov-%s-%s", id, string(operation)),
+		Kind:        provisioner.DOCR,
+		Operation:   operation,
+		Redis:       redisConf,
+		Postgres:    pgConf,
+		LastApplied: infra.LastApplied,
 		DO: &do.Conf{
 			DOToken: tok,
 		},
@@ -418,7 +427,7 @@ func (a *Agent) ProvisionDOCR(
 		},
 	}
 
-	return a.provision(prov)
+	return a.provision(prov, infra, repo)
 }
 
 // ProvisionDOKS spawns a new provisioning pod that creates a DOKS instance
@@ -448,14 +457,15 @@ func (a *Agent) ProvisionDOKS(
 		return nil, err
 	}
 
-	id := infra.GetID()
+	id := infra.GetUniqueName()
 	prov := &provisioner.Conf{
-		ID:        id,
-		Name:      fmt.Sprintf("prov-%s-%s", id, string(operation)),
-		Kind:      provisioner.DOKS,
-		Operation: operation,
-		Redis:     redisConf,
-		Postgres:  pgConf,
+		ID:          id,
+		Name:        fmt.Sprintf("prov-%s-%s", id, string(operation)),
+		Kind:        provisioner.DOKS,
+		Operation:   operation,
+		Redis:       redisConf,
+		Postgres:    pgConf,
+		LastApplied: infra.LastApplied,
 		DO: &do.Conf{
 			DOToken: tok,
 		},
@@ -465,32 +475,13 @@ func (a *Agent) ProvisionDOKS(
 		},
 	}
 
-	return a.provision(prov)
-}
-
-// ProvisionTest spawns a new provisioning pod that tests provisioning
-func (a *Agent) ProvisionTest(
-	projectID uint,
-	operation provisioner.ProvisionerOperation,
-	pgConf *config.DBConf,
-	redisConf *config.RedisConf,
-	provImageTag string,
-) (*batchv1.Job, error) {
-	prov := &provisioner.Conf{
-		ID:                  fmt.Sprintf("%s-%d", "testing", projectID),
-		Name:                fmt.Sprintf("prov-%s-%d-%s", "testing", projectID, string(operation)),
-		Operation:           operation,
-		Kind:                provisioner.Test,
-		Redis:               redisConf,
-		Postgres:            pgConf,
-		ProvisionerImageTag: provImageTag,
-	}
-
-	return a.provision(prov)
+	return a.provision(prov, infra, repo)
 }
 
 func (a *Agent) provision(
 	prov *provisioner.Conf,
+	infra *models.Infra,
+	repo repository.Repository,
 ) (*batchv1.Job, error) {
 	prov.Namespace = "default"
 
@@ -500,11 +491,24 @@ func (a *Agent) provision(
 		return nil, err
 	}
 
-	return a.Clientset.BatchV1().Jobs(prov.Namespace).Create(
+	job, err = a.Clientset.BatchV1().Jobs(prov.Namespace).Create(
 		context.TODO(),
 		job,
 		metav1.CreateOptions{},
 	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	infra.LastApplied = prov.LastApplied
+	infra, err = repo.Infra.UpdateInfra(infra)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return job, nil
 }
 
 // CreateImagePullSecrets will create the required image pull secrets and

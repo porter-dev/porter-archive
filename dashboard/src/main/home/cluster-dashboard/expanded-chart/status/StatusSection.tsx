@@ -51,6 +51,7 @@ export default class StatusSection extends Component<PropsType, StateType> {
           selectPod={this.selectPod.bind(this)}
           controller={c}
           isLast={i === this.state.controllers.length - 1}
+          isFirst={i === 0}
         />
       )
     })

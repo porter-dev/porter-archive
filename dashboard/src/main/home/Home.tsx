@@ -21,6 +21,7 @@ import NewProject from './new-project/NewProject';
 import Navbar from './navbar/Navbar';
 import Provisioner from './new-project/Provisioner';
 import ProjectSettings from './project-settings/ProjectSettings';
+import posthog from 'posthog-js';
 
 type PropsType = {
   logOut: () => void
@@ -92,6 +93,12 @@ export default class Home extends Component<PropsType, StateType> {
   }
 
   componentDidMount() {
+    let { user } = this.context;
+    window.location.href.indexOf('127.0.0.1') === -1 && posthog.init(process.env.POSTHOG_API_KEY, {
+      api_host: process.env.POSTHOG_HOST,
+      loaded: function(posthog) { posthog.identify(user.email) }
+    })
+
     this.getProjects();
   }
 

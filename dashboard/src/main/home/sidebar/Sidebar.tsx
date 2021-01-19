@@ -9,6 +9,7 @@ import { Context } from '../../../shared/Context';
 import ClusterSection from './ClusterSection';
 import ProjectSectionContainer from './ProjectSectionContainer';
 import loading from '../../../assets/loading.gif';
+import posthog from 'posthog-js';
 
 type PropsType = {
   forceSidebar: boolean,
@@ -117,9 +118,10 @@ export default class Sidebar extends Component<PropsType, StateType> {
             Templates
           </NavButton>
           <NavButton
-            // onClick={() => this.props.setCurrentView('integrations')}
             selected={this.props.currentView === 'integrations'}
-            onClick={() => this.context.setCurrentModal('IntegrationsInstructionsModal', {})}
+            onClick={() => {
+              this.context.setCurrentModal('IntegrationsInstructionsModal', {})
+            }}
           >
             <img src={integrations} />
             Integrations

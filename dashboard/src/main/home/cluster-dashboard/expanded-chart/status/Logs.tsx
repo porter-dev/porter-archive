@@ -103,7 +103,13 @@ export default class Logs extends Component<PropsType, StateType> {
           <div ref={this.scrollRef} />
         </Wrapper>
         <Options>
-          <Scroll onClick={()=> {this.setState({scroll: !this.state.scroll}); this.scrollToBottom(true)}}>
+          <Scroll onClick={()=> {
+            this.setState({scroll: !this.state.scroll}, () => {
+              if (this.state.scroll) {
+                this.scrollToBottom(true)
+              }
+            }); 
+          }}>
             <input type="checkbox" checked={this.state.scroll} onChange={() => {}}/>
             Scroll to Bottom
           </Scroll>

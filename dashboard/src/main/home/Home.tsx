@@ -20,6 +20,7 @@ import IntegrationsInstructionsModal from './modals/IntegrationsInstructionsModa
 import NewProject from './new-project/NewProject';
 import Navbar from './navbar/Navbar';
 import Provisioner from './new-project/Provisioner';
+import ProjectSettings from './project-settings/ProjectSettings';
 
 type PropsType = {
   logOut: () => void
@@ -163,6 +164,10 @@ export default class Home extends Component<PropsType, StateType> {
           viewData={this.state.viewData}
         />
       );
+    } else if (currentView === 'project-settings') {
+      return (
+        <ProjectSettings  setCurrentView={(x: string) => this.setState({ currentView: x })} />
+      )
     }
 
     return (

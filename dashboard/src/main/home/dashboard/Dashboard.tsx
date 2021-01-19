@@ -39,7 +39,7 @@ export default class Dashboard extends Component<PropsType, StateType> {
               })}
             >
               more_vert
-          </i>
+            </i>
           </TitleSection>
 
           <InfoSection>

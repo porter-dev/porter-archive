@@ -173,7 +173,17 @@ var acceptInviteTests = []*inviteTest{
 
 				projects, err := tester.repo.Project.ListProjectsByUserID(user.ID)
 
-				t.Errorf("%v\n", projects)
+				if len(projects) != 1 {
+					t.Fatalf("length of projects not 1\n")
+				}
+
+				if projects[0].ID != 1 {
+					t.Fatalf("project id was not 1\n")
+				}
+
+				if projects[0].Name != "project-test" {
+					t.Fatalf("project was not project-test\n")
+				}
 			},
 		},
 	},

@@ -46,6 +46,31 @@ func (auth *Auth) BasicAuthenticate(next http.Handler) http.Handler {
 	})
 }
 
+// BasicAuthenticateWithRedirect checks that a user is logged in, and if they're not, the
+// user is redirected to the login page with the redirect path stored in the session
+func (auth *Auth) BasicAuthenticateWithRedirect(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if auth.isLoggedIn(w, r) {
+			next.ServeHTTP(w, r)
+		} else {
+			session, err := auth.store.Get(r, auth.cookieName)
+
+			if err != nil {
+				http.Redirect(w, r, "/dashboard", 302)
+			}
+
+			// need state parameter to validate when redirected
+			session.Values["redirect"] = r.URL.Path
+			session.Save(r, w)
+
+			http.Redirect(w, r, "/dashboard", 302)
+			return
+		}
+
+		return
+	})
+}
+
 // IDLocation represents the location of the ID to use for authentication
 type IDLocation uint
 

@@ -13,6 +13,7 @@ import (
 	"github.com/porter-dev/porter/internal/kubernetes/provisioner/do"
 	"github.com/porter-dev/porter/internal/kubernetes/provisioner/do/docr"
 	"github.com/porter-dev/porter/internal/kubernetes/provisioner/do/doks"
+	"github.com/porter-dev/porter/internal/kubernetes/provisioner/input"
 
 	"github.com/porter-dev/porter/internal/kubernetes/provisioner/gcp"
 	"github.com/porter-dev/porter/internal/kubernetes/provisioner/gcp/gke"
@@ -25,7 +26,6 @@ type InfraOption string
 
 // The list of infra options
 const (
-	Test InfraOption = "test"
 	ECR  InfraOption = "ecr"
 	EKS  InfraOption = "eks"
 	GCR  InfraOption = "gcr"
@@ -44,6 +44,7 @@ type Conf struct {
 	Postgres            *config.DBConf
 	Operation           ProvisionerOperation
 	ProvisionerImageTag string
+	LastApplied         []byte
 
 	// provider-specific configurations
 
@@ -84,11 +85,7 @@ func (conf *Conf) GetProvisionerJobTemplate() (*batchv1.Job, error) {
 
 	ttl := int32(3600)
 
-	backoffLimit := int32(5)
-
-	if operation == string(Apply) {
-		backoffLimit = int32(1)
-	}
+	backoffLimit := int32(1)
 
 	labels := map[string]string{
 		"app": "provisioner",
@@ -96,29 +93,196 @@ func (conf *Conf) GetProvisionerJobTemplate() (*batchv1.Job, error) {
 
 	args := make([]string, 0)
 
-	if conf.Kind == Test {
-		args = []string{operation, "test", "hello"}
-	} else if conf.Kind == ECR {
+	switch conf.Kind {
+	case ECR:
 		args = []string{operation, "ecr"}
+
+		if len(conf.LastApplied) > 0 {
+			inputConf, err := input.GetECRInput(conf.LastApplied)
+
+			if err != nil {
+				return nil, err
+			}
+
+			conf.AWS.AWSAccessKeyID = inputConf.AWSAccessKey
+			conf.AWS.AWSSecretAccessKey = inputConf.AWSSecretKey
+			conf.AWS.AWSRegion = inputConf.AWSRegion
+			conf.ECR.ECRName = inputConf.ECRName
+		} else {
+			inputConf := &input.ECR{
+				AWSRegion:    conf.AWS.AWSRegion,
+				AWSAccessKey: conf.AWS.AWSAccessKeyID,
+				AWSSecretKey: conf.AWS.AWSSecretAccessKey,
+				ECRName:      conf.ECR.ECRName,
+			}
+
+			lastApplied, err := inputConf.GetInput()
+
+			if err != nil {
+				return nil, err
+			}
+
+			conf.LastApplied = lastApplied
+		}
+
 		env = conf.AWS.AttachAWSEnv(env)
 		env = conf.ECR.AttachECREnv(env)
-	} else if conf.Kind == EKS {
+	case EKS:
 		args = []string{operation, "eks"}
+
+		if len(conf.LastApplied) > 0 {
+			inputConf, err := input.GetEKSInput(conf.LastApplied)
+
+			if err != nil {
+				return nil, err
+			}
+
+			conf.AWS.AWSAccessKeyID = inputConf.AWSAccessKey
+			conf.AWS.AWSSecretAccessKey = inputConf.AWSSecretKey
+			conf.AWS.AWSRegion = inputConf.AWSRegion
+			conf.EKS.ClusterName = inputConf.ClusterName
+		} else {
+			inputConf := &input.EKS{
+				AWSRegion:    conf.AWS.AWSRegion,
+				AWSAccessKey: conf.AWS.AWSAccessKeyID,
+				AWSSecretKey: conf.AWS.AWSSecretAccessKey,
+				ClusterName:  conf.EKS.ClusterName,
+			}
+
+			lastApplied, err := inputConf.GetInput()
+
+			if err != nil {
+				return nil, err
+			}
+
+			conf.LastApplied = lastApplied
+		}
+
 		env = conf.AWS.AttachAWSEnv(env)
 		env = conf.EKS.AttachEKSEnv(env)
-	} else if conf.Kind == GCR {
+	case GCR:
 		args = []string{operation, "gcr"}
+
+		if len(conf.LastApplied) > 0 {
+			inputConf, err := input.GetGCRInput(conf.LastApplied)
+
+			if err != nil {
+				return nil, err
+			}
+
+			conf.GCP.GCPKeyData = inputConf.GCPCredentials
+			conf.GCP.GCPRegion = inputConf.GCPRegion
+			conf.GCP.GCPProjectID = inputConf.GCPProjectID
+		} else {
+			inputConf := &input.GCR{
+				GCPCredentials: conf.GCP.GCPKeyData,
+				GCPRegion:      conf.GCP.GCPRegion,
+				GCPProjectID:   conf.GCP.GCPProjectID,
+			}
+
+			lastApplied, err := inputConf.GetInput()
+
+			if err != nil {
+				return nil, err
+			}
+
+			conf.LastApplied = lastApplied
+		}
+
 		env = conf.GCP.AttachGCPEnv(env)
-	} else if conf.Kind == GKE {
+	case GKE:
 		args = []string{operation, "gke"}
+
+		if len(conf.LastApplied) > 0 {
+			inputConf, err := input.GetGKEInput(conf.LastApplied)
+
+			if err != nil {
+				return nil, err
+			}
+
+			conf.GCP.GCPKeyData = inputConf.GCPCredentials
+			conf.GCP.GCPRegion = inputConf.GCPRegion
+			conf.GCP.GCPProjectID = inputConf.GCPProjectID
+			conf.GKE.ClusterName = inputConf.ClusterName
+		} else {
+			inputConf := &input.GKE{
+				GCPCredentials: conf.GCP.GCPKeyData,
+				GCPRegion:      conf.GCP.GCPRegion,
+				GCPProjectID:   conf.GCP.GCPProjectID,
+				ClusterName:    conf.GKE.ClusterName,
+			}
+
+			lastApplied, err := inputConf.GetInput()
+
+			if err != nil {
+				return nil, err
+			}
+
+			conf.LastApplied = lastApplied
+		}
+
 		env = conf.GCP.AttachGCPEnv(env)
 		env = conf.GKE.AttachGKEEnv(env)
-	} else if conf.Kind == DOCR {
+	case DOCR:
 		args = []string{operation, "docr"}
+
+		if len(conf.LastApplied) > 0 {
+			inputConf, err := input.GetDOCRInput(conf.LastApplied)
+
+			if err != nil {
+				return nil, err
+			}
+
+			conf.DO.DOToken = inputConf.DOToken
+			conf.DOCR.DOCRSubscriptionTier = inputConf.DOCRSubscriptionTier
+			conf.DOCR.DOCRName = inputConf.DOCRName
+		} else {
+			inputConf := &input.DOCR{
+				DOToken:              conf.DO.DOToken,
+				DOCRSubscriptionTier: conf.DOCR.DOCRSubscriptionTier,
+				DOCRName:             conf.DOCR.DOCRName,
+			}
+
+			lastApplied, err := inputConf.GetInput()
+
+			if err != nil {
+				return nil, err
+			}
+
+			conf.LastApplied = lastApplied
+		}
+
 		env = conf.DO.AttachDOEnv(env)
 		env = conf.DOCR.AttachDOCREnv(env)
-	} else if conf.Kind == GKE {
+	case DOKS:
 		args = []string{operation, "doks"}
+
+		if len(conf.LastApplied) > 0 {
+			inputConf, err := input.GetDOKSInput(conf.LastApplied)
+
+			if err != nil {
+				return nil, err
+			}
+
+			conf.DO.DOToken = inputConf.DOToken
+			conf.DOKS.DORegion = inputConf.DORegion
+			conf.DOKS.DOKSClusterName = inputConf.ClusterName
+		} else {
+			inputConf := &input.DOKS{
+				DOToken:     conf.DO.DOToken,
+				DORegion:    conf.DOKS.DORegion,
+				ClusterName: conf.DOKS.DOKSClusterName,
+			}
+
+			lastApplied, err := inputConf.GetInput()
+
+			if err != nil {
+				return nil, err
+			}
+
+			conf.LastApplied = lastApplied
+		}
+
 		env = conf.DO.AttachDOEnv(env)
 		env = conf.DOKS.AttachDOKSEnv(env)
 	}

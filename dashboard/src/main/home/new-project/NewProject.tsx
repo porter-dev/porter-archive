@@ -1,465 +1,40 @@
 import React, { Component } from 'react';
 import styled from 'styled-components';
-import gradient from '../../../assets/gradient.jpg';
-import close from '../../../assets/close.png';
 
-import api from '../../../shared/api';
+import gradient from '../../../assets/gradient.jpg';
 import { Context } from '../../../shared/Context';
-import { integrationList } from '../../../shared/common';
-import { ProjectType } from '../../../shared/types';
+import { isAlphanumeric } from '../../../shared/common';
 
 import InputRow from '../../../components/values-form/InputRow';
 import Helper from '../../../components/values-form/Helper';
-import Heading from '../../../components/values-form/Heading';
-import SaveButton from '../../../components/SaveButton';
-
-const providers = ['aws', 'gcp', 'do',];
+import ProvisionerSettings from '../provisioner/ProvisionerSettings';
 
 type PropsType = {
   setCurrentView: (x: string, data?: any) => void,
 };
 
 type StateType = {
-  projectExists: boolean,
   projectName: string,
   selectedProvider: string | null,
-  awsRegion: string | null,
-  awsAccessId: string | null,
-  awsSecretKey: string | null,
-  gcpRegion: string | null,
-  gcpProjectId: string | null,
-  gcpKeyData: string | null,
-  status: string | null,
 };
 
 export default class NewProject extends Component<PropsType, StateType> {
   state = {
-    projectExists: false,
     projectName: '',
     selectedProvider: null as string | null,
-    awsRegion: '' as string | null,
-    awsAccessId: '' as string | null,
-    awsSecretKey: '' as string | null,
-    gcpRegion: '' as string | null,
-    gcpProjectId: '' as string | null,
-    gcpKeyData: '' as string | null,
-    status: null as string | null,
   }
 
-  isAlphanumeric = (x: string) => {
-    let re = /^[a-z0-9-]+$/;
-    if (x.length == 0 || x.search(re) === -1) {
-      return false;
-    }
-    return true;
-  }
-
-  handleSelectProvider = (provider: string) => {
-    this.setState({ selectedProvider: provider });
-  }
-
-  renderProviderList = () => {
-    return providers.map((provider: string, i: number) => {
-      let providerInfo = integrationList[provider];
-      return (
-        <Block
-          key={i} 
-          onClick={() => this.handleSelectProvider(provider)}
-        >
-          <Icon src={providerInfo.icon} />
-          <BlockTitle>
-            {providerInfo.label}
-          </BlockTitle>
-          <BlockDescription>
-            Hosted in your own cloud.
-          </BlockDescription>
-        </Block>
-      )
-    });
-  }
-
-  // TODO: split this out into a separate component
-  renderProvisioners = () => {
-    if (this.state.selectedProvider === 'aws') {
-      return (
-        <FormSection>
-          <CloseButton onClick={() => {
-            this.setState({ selectedProvider: null });
-          }}>
-            <CloseButtonImg src={close} />
-          </CloseButton>
-          <DarkMatter />
-          <Heading>
-            AWS Credentials
-            <GuideButton href='https://docs.getporter.dev/docs/getting-started-with-porter-on-aws' target='_blank'>
-              <i className="material-icons-outlined">help</i> 
-              Guide
-            </GuideButton>
-          </Heading>
-          <InputRow
-            type='text'
-            value={this.state.awsRegion}
-            setValue={(x: string) => this.setState({ awsRegion: x })}
-            label='📍 AWS Region'
-            placeholder='ex: mars-north-12'
-            width='100%'
-            isRequired={true}
-          />
-          <InputRow
-            type='text'
-            value={this.state.awsAccessId}
-            setValue={(x: string) => this.setState({ awsAccessId: x })}
-            label='👤 AWS Access ID'
-            placeholder='ex: AKIAIOSFODNN7EXAMPLE'
-            width='100%'
-            isRequired={true}
-          />
-          <InputRow
-            type='password'
-            value={this.state.awsSecretKey}
-            setValue={(x: string) => this.setState({ awsSecretKey: x })}
-            label='🔒 AWS Secret Key'
-            placeholder='○ ○ ○ ○ ○ ○ ○ ○ ○'
-            width='100%'
-            isRequired={true}
-          />
-        </FormSection>
-      );
-    } else if (this.state.selectedProvider === 'gcp') {
-      return (
-        <FormSection>
-          <CloseButton onClick={() => {
-            this.setState({ selectedProvider: null });
-          }}>
-            <CloseButtonImg src={close} />
-          </CloseButton>
-          <DarkMatter />
-          <Heading>
-            GCP Credentials
-            <GuideButton href='https://docs.getporter.dev/docs/getting-started-with-porter-on-gcp' target='_blank'>
-              <i className="material-icons-outlined">help</i> 
-              Guide
-            </GuideButton>
-          </Heading>
-          <InputRow
-            type='text'
-            value={this.state.gcpRegion}
-            setValue={(x: string) => this.setState({ gcpRegion: x })}
-            label='📍 GCP Region'
-            placeholder='ex: us-central1-a'
-            width='100%'
-            isRequired={true}
-          />
-          <InputRow
-            type='text'
-            value={this.state.gcpProjectId}
-            setValue={(x: string) => this.setState({ gcpProjectId: x })}
-            label='🏷️ GCP Project ID'
-            placeholder='ex: pale-moon-24601'
-            width='100%'
-            isRequired={true}
-          />
-          <InputRow
-            type='password'
-            value={this.state.gcpKeyData}
-            setValue={(x: string) => this.setState({ gcpKeyData: x })}
-            label='🔒 GCP Key Data'
-            placeholder='○ ○ ○ ○ ○ ○ ○ ○ ○'
-            width='100%'
-            isRequired={true}
-          />
-        </FormSection>
-      );
-    } else if (this.state.selectedProvider === 'do') {
-      return (
-        <FormSection>
-          <CloseButton onClick={() => {
-            this.setState({ selectedProvider: null });
-          }}>
-            <CloseButtonImg src={close} />
-          </CloseButton>
-          <Flex>
-            DigitalOcean support is in closed beta. If you would like to run Porter in your own DO account, email <Highlight>contact@getporter.dev</Highlight>.
-          </Flex>
-        </FormSection>
-      );
-    }
-
+  render() {
+    let { setCurrentView } = this.props;
+    let { projectName } = this.state;
     return (
-      <BlockList>
-        {this.renderProviderList()}
-      </BlockList>
-    );
-  }
-
-  renderHostingSection = () => {
-    if (this.state.selectedProvider === 'skipped') {
-      return (
-        <>
-          <Helper>Select your hosting backend:</Helper>
-          <Placeholder>
-            You can manually link to an existing cluster once this project has been created.
-          </Placeholder>
-          <Helper>
-            Don't have a Kubernetes cluster?
-            <Highlight onClick={() => this.setState({ selectedProvider: null })}>
-              Provision through Porter
-            </Highlight>
-          </Helper>
-        </>
-      )
-    }
-
-    return (
-      <>
-        <Helper>
-          Select your hosting backend: <Required>*</Required>
-        </Helper>
-        {this.renderProvisioners()}
-        <Helper>
-          Already have a Kubernetes cluster? 
-          <Highlight onClick={() => {
-            if (this.state.projectExists) {
-              this.props.setCurrentView('dashboard');
-            } else {
-              this.setState({ selectedProvider: 'skipped' });
-            }
-          }}>
-            Skip
-          </Highlight>
-        </Helper>
-      </>
-    )
-  }
-
-  validateForm = () => {
-    let { 
-      projectName,
-      selectedProvider, 
-      awsAccessId, 
-      awsSecretKey, 
-      awsRegion,
-      gcpRegion,
-      gcpKeyData,
-      gcpProjectId,
-    } = this.state;
-    if (!this.isAlphanumeric(projectName) || projectName === '') {
-      return false;
-    } else if (selectedProvider === 'aws') {
-      return awsAccessId !== '' && awsSecretKey !== '' && awsRegion !== '';
-    } else if (selectedProvider === 'gcp') {
-      return gcpRegion !== '' && gcpKeyData !== '' && gcpProjectId !== '';
-    } else if (selectedProvider === 'skipped') {
-      return true;
-    }
-    return false;
-  }
-
-  provisionECR = (proj: ProjectType, callback: (proj: ProjectType, ecr: any) => void) => {
-    let { awsAccessId, awsSecretKey, awsRegion } = this.state;
-
-    api.createAWSIntegration('<token>', {
-      aws_region: awsRegion,
-      aws_access_key_id: awsAccessId,
-      aws_secret_access_key: awsSecretKey,
-    }, { id: proj.id }, (err: any, res: any) => {
-      if (err) {
-        console.log(err);
-        return;
-      }
-
-      api.provisionECR('<token>', {
-        aws_integration_id: res.data.id,
-        ecr_name: `${proj.name}-registry`
-      }, {id: proj.id}, (err: any, ecr:any) => {
-        if (err) {
-          this.setState({ 
-            projectExists: true,
-            status: 'Please provide valid credentials.',
-          });
-          return;
-        }
-
-        callback(proj, ecr);
-      })
-      
-    });
-  }
-
-  provisionEKS = (proj: ProjectType, ecr: any) => {
-    let { awsAccessId, awsSecretKey, awsRegion } = this.state;
-    let clusterName = `${proj.name}-cluster`
-
-    api.createAWSIntegration('<token>', {
-      aws_region: awsRegion,
-      aws_access_key_id: awsAccessId,
-      aws_secret_access_key: awsSecretKey,
-      aws_cluster_id: clusterName,
-    }, { id: proj.id }, (err: any, res: any) => {
-      if (err) {
-        console.log(err);
-        return;
-      }
-
-      api.provisionEKS('<token>', {
-        aws_integration_id: res.data.id,
-        eks_name: clusterName,
-      }, { id: proj.id}, (err: any, eks: any) => {
-        if (err) {
-          this.setState({ 
-            projectExists: true,
-            status: 'Please provide valid credentials.',
-          });
-          return;
-        }
-
-        this.props.setCurrentView('provisioner', [
-          { infra_id: ecr?.data?.id, kind: ecr?.data?.kind },
-          { infra_id: eks?.data?.id, kind: eks?.data?.kind },
-        ]);
-      })
-    })
-  }
-
-  provisionGKE = (proj: ProjectType, id: number) => {
-    let clusterName = `${proj.name}-cluster`
-    console.log('provisioning gke...');
-    api.createGKE('<token>', {
-      gke_name: clusterName,
-      gcp_integration_id: id,
-    }, { project_id: proj.id }, (err: any, res: any) => {
-      if (err) {
-        console.log(err);
-      } else if (res?.data) {
-        
-        // TODO: set to provisioner
-        alert('success');
-      }
-    });
-  }
-
-  provisionGCR = (proj: ProjectType, id: number) => {
-    console.log('provisioning gcr...');
-    api.createGCR('<token>', {
-      gcp_integration_id: id,
-    }, { project_id: proj.id }, (err: any, res: any) => {
-      if (err) {
-        console.log(err);
-      } else if (res?.data) {
-        console.log('gcr provisioned with response: ', res.data);
-        this.provisionGKE(proj, id);
-      }
-    });
-  }
-
-  provisionGCP = (proj: ProjectType) => {
-    this.setState({ status: 'loading' });
-
-    let { gcpRegion, gcpKeyData, gcpProjectId } = this.state;
-    console.log('provisioning gcp...');
-    api.createGCPIntegration('<token>', {
-      gcp_region: gcpRegion,
-      gcp_key_data: gcpKeyData,
-      gcp_project_id: gcpProjectId,
-    }, { project_id: proj.id }, (err: any, res: any) => {
-      if (err) {
-        console.log(err);
-      } else if (res?.data) {
-        console.log('gcp provisioned with response: ', res.data);
-        let { id } = res.data;
-        this.provisionGCR(proj, id);
-      }
-    });
-  }
-
-  createProject = () => {
-    this.setState({ status: 'loading' });
-    api.createProject('<token>', {
-      name: this.state.projectName
-    }, {}, (err: any, res: any) => {
-      if (err) {
-        console.log(err);
-      } else {
-        let { user } = this.context;
-        api.getProjects('<token>', {}, { id: user.userId }, (err: any, res: any) => {
-          if (err) {
-            console.log(err)
-          } else if (res.data) {
-            this.context.setProjects(res.data);
-            if (res.data.length > 0) {
-              let proj = res.data.find((el: ProjectType) => el.name === this.state.projectName);
-              this.context.setCurrentProject(proj);
-              
-              if (this.state.selectedProvider === 'aws') {
-                this.provisionECR(proj, this.provisionEKS);
-              } else if (this.state.selectedProvider === 'gcp') { 
-                this.provisionGCP(proj);
-              } else {
-                this.props.setCurrentView('dashboard', null);
-              }
-            } 
-          }
-        });
-      }
-    });
-  }
-
-  createInfra = () => {
-    this.setState({ status: 'loading' });
-    let { user } = this.context;
-    api.getProjects('<token>', {}, { id: user.userId }, (err: any, res: any) => {
-      if (err) {
-        console.log(err)
-      } else if (res.data) {
-        this.context.setProjects(res.data);
-        if (res.data.length > 0) {
-          let proj = res.data.find((el: ProjectType) => el.name === this.state.projectName);
-          this.context.setCurrentProject(proj);
-          if (this.state.selectedProvider === 'aws') {
-            this.provisionECR(proj, this.provisionEKS)
-
-          } else {
-            this.props.setCurrentView('dashboard', null);
-          }
-        } 
-      }
-    });
-  }
-
-  renderHeaderSection = () => {
-    if (this.state.projectExists) {
-      return (
-        <>
-          <TitleSection>
-            <Title>Configure Hosting</Title>
-          </TitleSection>
-          <Helper>     
-            <Warning highlight={true} makeFlush={true}>
-              There was an issue configuring your cloud provider.
-            </Warning>
-          </Helper>
-          <Helper>     
-            You can refer to our docs for instructions on 
-            <Link 
-              href="https://docs.getporter.dev/docs/getting-started-with-porter-on-aws"
-              target="_blank"
-            >
-              creating AWS credentials for Porter
-            </Link>.
-          </Helper>
-          <br />
-        </>
-      );
-    }
-
-    return (
-      <>
+      <StyledNewProject>
         <TitleSection>
           <Title>New Project</Title>
         </TitleSection>
         <Helper>
           Project name
-          <Warning highlight={!this.isAlphanumeric(this.state.projectName) && this.state.projectName !== ''}>
+          <Warning highlight={!isAlphanumeric(this.state.projectName) && this.state.projectName !== ''}>
             (lowercase letters, numbers, and "-" only)
           </Warning>
           <Required>*</Required>
@@ -477,49 +52,23 @@ export default class NewProject extends Component<PropsType, StateType> {
             width='470px'
           />
         </InputWrapper>
-      </>
-    );
-  }
-
-  renderButton = () => {
-    if (this.state.projectExists) {
-      return (
-        <SaveButton
-          text='Submit'
-          disabled={!this.validateForm()}
-          onClick={this.createInfra}
-          makeFlush={true}
-          helper='Note: Provisioning can take up to 15 minutes'
-          status={this.state.status}
+        <ProvisionerSettings 
+          isInNewProject={true}
+          setCurrentView={setCurrentView} 
+          projectName={projectName}
         />
-      );
-    }
-
-    return (
-      <SaveButton
-        text='Create Project'
-        disabled={!this.validateForm()}
-        onClick={this.createProject}
-        makeFlush={true}
-        helper='Note: Provisioning can take up to 15 minutes'
-        status={this.state.status}
-      />
-    );
-  }
-  
-  render() {
-    let { selectedProvider } = this.state;
-    return (
-      <StyledNewProject height={selectedProvider === 'aws' || selectedProvider === 'gcp' ? '700px' : '600px'}>
-        {this.renderHeaderSection()}
-        {this.renderHostingSection()}
-        {this.renderButton()}
+        <Br />
       </StyledNewProject>
     );
   }
 }
 
 NewProject.contextType = Context;
+
+const Br = styled.div`
+  width: 100%;
+  height: 100px;
+`;
 
 const Link = styled.a`
   cursor: pointer;
@@ -796,8 +345,7 @@ const TitleSection = styled.div`
 const StyledNewProject = styled.div`
   width: calc(90% - 150px);
   min-width: 300px;
-  height: ${(props: { height: string }) => props.height};
   position: relative;
   padding-top: 50px;
-  margin-top: ${(props: { height: string }) => props.height === '600px' ? 'calc(50vh - 350px)' : 'calc(50vh - 400px)'};
+  margin-top: calc(50vh - 340px);
 `;

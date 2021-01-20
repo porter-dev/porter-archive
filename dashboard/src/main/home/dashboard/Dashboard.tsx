@@ -1,42 +1,46 @@
-import React, { Component } from 'react';
+import React, { useContext } from 'react';
 import styled from 'styled-components';
-import gradient from '../../../assets/gradient.jpg';
 
+import gradient from '../../../assets/gradient.jpg';
 import { Context } from '../../../shared/Context';
-import StatusPlaceholderContainer from './StatusPlaceholderContainer';
+
+import ProvisionerSettings from '../provisioner/ProvisionerSettings';
 
 type PropsType = {
   setCurrentView: (x: string) => void,
 };
 
-type StateType = {
-};
+const Dashboard = ({ setCurrentView }: PropsType) => {
 
-export default class Dashboard extends Component<PropsType, StateType> {
-  renderDashboardIcon = () => {
-    let { currentProject } = this.context;
-    return (
-      <DashboardIcon>
-        <DashboardImage src={gradient} />
-        <Overlay>{currentProject && currentProject.name[0].toUpperCase()}</Overlay>
-      </DashboardIcon>
-    );
+  // TODO: Use ContextType
+  let { 
+    currentProject,
+    currentCluster, 
+    setCurrentModal 
+  } = useContext(Context) as any;
+
+  let onShowProjectSettings = () => {
+    setCurrentModal('UpdateProjectModal', { 
+      currentProject: currentProject,
+      setCurrentView: setCurrentView,
+    });
   }
 
-  renderContents = () => {
-    let { currentProject } = this.context;
-    if (currentProject) {
-      return (
-        <div>
+  return (
+    <>
+      {currentProject && (
+        <DashboardWrapper>
           <TitleSection>
-            {this.renderDashboardIcon()}
+          <DashboardIcon>
+            <DashboardImage src={gradient} />
+            <Overlay>
+              {currentProject && currentProject.name[0].toUpperCase()}
+            </Overlay>
+          </DashboardIcon>
             <Title>{currentProject && currentProject.name}</Title>
             <i
               className="material-icons"
-              onClick={() => this.context.setCurrentModal('UpdateProjectModal', { 
-                currentProject: currentProject,
-                setCurrentView: this.props.setCurrentView,
-              })}
+              onClick={onShowProjectSettings}
             >
               more_vert
           </i>
@@ -48,42 +52,49 @@ export default class Dashboard extends Component<PropsType, StateType> {
                 <i className="material-icons">info</i> Info
             </InfoLabel>
             </TopRow>
-            <Description>Project overview for {currentProject && currentProject.name}.</Description>
+            <Description>
+              Project overview for {currentProject && currentProject.name}.
+            </Description>
           </InfoSection>
 
           <LineBreak />
 
-          <StatusPlaceholderContainer setCurrentView={this.props.setCurrentView} />
-        </div>
-      );
-    }
-  }
-
-  render() {
-    return (
-      <>
-        {this.renderContents()}
-      </>
-    );
-  }
+          {(true || !currentCluster) && (
+            <>
+              <Banner>
+                <i className="material-icons">error_outline</i>
+                This project currently has no clusters connected.
+              </Banner>
+              <ProvisionerSettings 
+                setCurrentView={setCurrentView} 
+              />
+            </>
+          )}
+        </DashboardWrapper>
+      )}
+    </>
+  );
 }
+export default Dashboard;
 
-Dashboard.contextType = Context;
+const DashboardWrapper = styled.div`
+  padding-bottom: 100px;
+`;
 
-const Placeholder = styled.div`
+const Banner = styled.div`
+  height: 40px;
   width: 100%;
-  height: calc(100vh - 380px);
-  margin-top: 30px;
-  display: flex;
-  padding-bottom: 20px;
-  align-items: center;
-  justify-content: center;
-  color: #aaaabb;
-  border-radius: 5px;
-  text-align: center;
+  margin: 10px 0 30px;
   font-size: 13px;
-  background: #ffffff08;
-  font-family: 'Work Sans', sans-serif;
+  display: flex;
+  border-radius: 5px;
+  padding-left: 15px;
+  align-items: center;
+  background: #616FEEcc;
+  > i {
+    margin-right: 10px;
+    font-size: 18px;
+  }
 `;
 
 const TopRow = styled.div`
@@ -117,56 +128,6 @@ const InfoSection = styled.div`
   font-family: 'Work Sans', sans-serif;
   margin-left: 0px;
   margin-bottom: 35px;
-`;
-
-const Button = styled.div`
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: space-between;
-  font-size: 13px;
-  cursor: pointer;
-  font-family: 'Work Sans', sans-serif;
-  border-radius: 20px;
-  color: white;
-  height: 30px;
-  padding: 0px 8px;
-  padding-bottom: 1px;
-  margin-right: 10px;
-  font-weight: 500;
-  padding-right: 15px;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-  box-shadow: 0 5px 8px 0px #00000010;
-  cursor: not-allowed;
-
-  background: ${(props: { disabled: boolean }) => props.disabled ? '#aaaabbee' :'#616FEEcc'};
-  :hover {
-    background: ${(props: { disabled: boolean }) => props.disabled ? '' : '#505edddd'};
-  }
-
-  > i {
-    color: white;
-    width: 18px;
-    height: 18px;
-    font-size: 12px;
-    border-radius: 20px;
-    display: flex;
-    align-items: center;
-    margin-right: 5px;
-    justify-content: center;
-  }
-`;
-
-const ButtonAlt = styled(Button)`
-  min-width: 150px;
-  max-width: 150px;
-  background: #7A838Fdd;
-
-  :hover {
-    background: #69727eee;
-  }
 `;
 
 const LineBreak = styled.div`

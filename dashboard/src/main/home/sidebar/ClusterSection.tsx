@@ -56,11 +56,8 @@ export default class ClusterSection extends Component<PropsType, StateType> {
           clusters.sort((a: any, b: any) => a.id - b.id);
           if (clusters.length > 0) {
             this.setState({ clusters });
-            try {
-              setCurrentCluster((localStorage.getItem('currentCluster')) ? 
-                JSON.parse(localStorage.getItem('currentCluster')) : clusters[0]
-              );
-            } catch(err) {
+            setCurrentCluster(JSON.parse(localStorage.getItem('currentCluster')));
+            if (localStorage.getItem('currentCluster') === 'null') {
               setCurrentCluster(clusters[0]);
             }
           } else if (this.props.currentView !== 'provisioner') {

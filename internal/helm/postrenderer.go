@@ -312,8 +312,12 @@ func (d *DockerSecretsPostRenderer) updatePodSpecs(secrets map[string]string) {
 				"name": secrets[regName],
 			})
 		}
+		if len(imagePullSecrets) > 0 {
+			podSpec["imagePullSecrets"] = imagePullSecrets
+		} else {
+			podSpec["imagePullSecrets"] = nil
+		}
 
-		podSpec["imagePullSecrets"] = imagePullSecrets
 	}
 }
 

@@ -2,7 +2,6 @@ import React, { Component } from 'react';
 import styled from 'styled-components';
 import gradient from '../../../assets/gradient.jpg';
 
-import api from '../../../shared/api';
 import { Context } from '../../../shared/Context';
 import { ProjectType, InfraType } from '../../../shared/types';
 
@@ -21,40 +20,15 @@ export default class ProjectSection extends Component<PropsType, StateType> {
     expanded: false,
   };
 
-  handleSelectProject = (project: ProjectType) => {
-    this.context.setCurrentProject(project);
-    
-    api.getInfra('<token>', {}, { project_id: project.id }, (err: any, res: any) => {
-      if (err) {
-        console.log(err);
-      } else if (res.data) {
-
-        let viewData = [] as any[]
-        res.data.forEach((el: InfraType) => {
-          if (el.status === 'creating') {
-            viewData.push({
-              infra_id: el.id,
-              kind: el.kind,
-            });
-          }
-        });
-
-        if (viewData.length > 0) {
-          this.props.setCurrentView('provisioner', viewData);
-        } else {
-          this.props.setCurrentView('dashboard');
-        }
-      }
-    });
-  }
-
   renderOptionList = () => {
+    let { setCurrentProject } = this.context;
+
     return this.props.projects.map((project: ProjectType, i: number) => {
       return (
         <Option
           key={i}
           selected={project.name === this.props.currentProject.name}
-          onClick={() => this.handleSelectProject(project)}
+          onClick={() => setCurrentProject(project)}
         >
           <ProjectIcon>
             <ProjectImage src={gradient} />

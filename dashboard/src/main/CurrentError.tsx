@@ -5,6 +5,7 @@ import close from '../assets/close.png';
 import { Context } from '../shared/Context';
 
 type PropsType = {
+  currentError: string,
 };
 
 type StateType = {
@@ -12,15 +13,24 @@ type StateType = {
 
 export default class CurrentError extends Component<PropsType, StateType> {
   state = {
-    expanded: false
+    expanded: false,
+  }
+
+  componentDidUpdate(prevProps: PropsType) {
+    if (
+      prevProps.currentError !== this.props.currentError
+      && this.props.currentError === 'Provisioning failed. Check your credentials and try again.'
+    ) {
+      this.setState({ expanded: true });
+    }
   }
   
   render() {
-    if (this.context.currentError) {
+    if (this.props.currentError) {
       if (!this.state.expanded) {
         return (
           <StyledCurrentError onClick={() => this.setState({ expanded: true })}>
-            <ErrorText>Error: {this.context.currentError}</ErrorText>
+            <ErrorText>Error: {this.props.currentError}</ErrorText>
             <CloseButton onClick={(e) => {
               this.context.setCurrentError(null);
               e.stopPropagation();
@@ -33,7 +43,7 @@ export default class CurrentError extends Component<PropsType, StateType> {
 
       return (
         <ExpandedError onClick={() => this.setState({ expanded: false })}>
-          Error: {this.context.currentError}
+          Error: {this.props.currentError}
           <CloseButtonAlt onClick={() => this.context.setCurrentError(null)}>
             <CloseButtonImg src={close} />
           </CloseButtonAlt>
@@ -80,9 +90,9 @@ const ErrorText = styled.div`
 
 const StyledCurrentError = styled.div`
   position: fixed;
-  bottom: 20px;
+  bottom: 22px;
   width: 300px;
-  left: 17px;
+  left: 100px;
   padding: 15px;
   padding-right: 0px;
   font-family: 'Work Sans', sans-serif;

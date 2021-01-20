@@ -63,7 +63,7 @@ export default class ClusterSection extends Component<PropsType, StateType> {
                 if (
                   clusters[i].id = saved.id &&
                   clusters[i].project_id === saved.project_id && 
-                  clusters[i].name === saved.name &&
+                  clusters[i].name === saved.name
                 ) {
                   setCurrentCluster(clusters[i]);
                   break;

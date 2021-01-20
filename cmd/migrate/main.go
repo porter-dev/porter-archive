@@ -37,6 +37,7 @@ func main() {
 		&models.ClusterCandidate{},
 		&models.ClusterResolver{},
 		&models.Infra{},
+		&models.Invite{},
 		&ints.KubeIntegration{},
 		&ints.BasicIntegration{},
 		&ints.OIDCIntegration{},

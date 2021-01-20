@@ -16,6 +16,8 @@ type PropsType = {
 
 type StateType = {
   projectName: string,
+  textValue: string,
+  valid: boolean,
   status: string | null,
   showDeleteOverlay: boolean
 };
@@ -23,6 +25,8 @@ type StateType = {
 export default class UpdateProjectModal extends Component<PropsType, StateType> {
   state = {
     projectName: this.context.currentModalData.currentProject.name,
+    textValue: '',
+    valid: false,
     status: null as string | null,
     showDeleteOverlay: false,
   };
@@ -95,9 +99,9 @@ export default class UpdateProjectModal extends Component<PropsType, StateType> 
           <CloseButtonImg src={close} />
         </CloseButton>
 
-        <ModalTitle>Project Settings</ModalTitle>
+        <ModalTitle>Delete Project</ModalTitle>
         <Subtitle>
-          Project name
+          Type {this.state.projectName} to delete.
         </Subtitle>
 
         <InputWrapper>
@@ -106,11 +110,17 @@ export default class UpdateProjectModal extends Component<PropsType, StateType> 
             <Letter>{this.state.projectName ? this.state.projectName[0].toUpperCase() : '-'}</Letter>
           </ProjectIcon>
           <InputRow
-            disabled={true}
+            disabled={false}
             type='string'
-            value={this.state.projectName}
-            setValue={(x: string) => this.setState({ projectName: x })}
-            placeholder='ex: perspective-vortex'
+            value={this.state.textValue}
+            setValue={(x: string) => this.setState({ textValue: x }, () => {
+              if (this.state.textValue === this.state.projectName) {
+                this.setState({ valid: true });
+              } else {
+                this.setState({ valid: false });
+              }
+            })}
+            placeholder={this.state.projectName}
             width='470px'
           />
         </InputWrapper>
@@ -128,7 +138,7 @@ export default class UpdateProjectModal extends Component<PropsType, StateType> 
         <SaveButton
           text='Delete Project'
           color='#b91133'
-          onClick={() => this.setState({ showDeleteOverlay: true })}
+          onClick={() => {if (this.state.valid) {this.setState({ showDeleteOverlay: true })}}}
           status={this.state.status}
         />
 

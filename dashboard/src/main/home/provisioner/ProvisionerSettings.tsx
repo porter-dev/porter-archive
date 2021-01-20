@@ -27,6 +27,13 @@ export default class NewProject extends Component<PropsType, StateType> {
     selectedProvider: null as string | null,
   }
 
+  // Handle any submission (pre-status) error
+  handleError = () => {
+    let { setCurrentView } = this.props;
+    setCurrentView('dashboard');
+    this.setState({ selectedProvider: null });
+  }
+
   renderSelectedProvider = () => {
     let { selectedProvider } = this.state;
     let { projectName, setCurrentView } = this.props;
@@ -67,10 +74,12 @@ export default class NewProject extends Component<PropsType, StateType> {
       case 'aws':
         return (
           <AWSFormSection 
+            handleError={this.handleError}
+            projectName={projectName}
+            setCurrentView={setCurrentView}
             setSelectedProvisioner={(x: string | null) => {
               this.setState({ selectedProvider: x });
             }}
-            projectName={projectName}
           >
             {renderSkipHelper()}
           </AWSFormSection>
@@ -103,7 +112,7 @@ export default class NewProject extends Component<PropsType, StateType> {
     return (
       <StyledProvisionerSettings>
         <Helper>
-          Don't have a cluster? Provision through Porter: 
+          Need a cluster? Provision through Porter: 
           {isInNewProject && <Required>*</Required>}
         </Helper>
         {!selectedProvider ? (

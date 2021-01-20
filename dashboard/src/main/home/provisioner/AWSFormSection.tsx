@@ -4,6 +4,7 @@ import styled from 'styled-components';
 import close from '../../../assets/close.png';
 import { isAlphanumeric } from '../../../shared/common';
 import api from '../../../shared/api';
+import { Context } from '../../../shared/Context';
 import { ProjectType } from '../../../shared/types';
 
 import InputRow from '../../../components/values-form/InputRow';
@@ -14,7 +15,9 @@ import CheckboxList from '../../../components/values-form/CheckboxList';
 
 type PropsType = {
   setSelectedProvisioner: (x: string | null) => void,
+  handleError: () => void,
   projectName: string,
+  setCurrentView: (x: string | null, data?: any) => void,
 };
 
 type StateType = {
@@ -45,17 +48,157 @@ export default class AWSFormSection extends Component<PropsType, StateType> {
       awsRegion,
       awsAccessId, 
       awsSecretKey, 
+      selectedInfras,
     } = this.state;
     let { projectName } = this.props;
     if (projectName || projectName === '') {
       return (
         !isAlphanumeric(projectName) 
           || !(awsAccessId !== '' && awsSecretKey !== '' && awsRegion !== '')
+          || selectedInfras.length === 0
       );
     } else {
       return (
         !(awsAccessId !== '' && awsSecretKey !== '' && awsRegion !== '')
+          || selectedInfras.length === 0
       );
+    }
+  }
+
+  // Step 1: Create a project
+  createProject = (callback?: any) => {
+    console.log('Creating project');
+    let { projectName, handleError } = this.props;
+    let { 
+      user, 
+      setProjects, 
+      setCurrentProject, 
+      currentProject 
+    } = this.context;
+
+    api.createProject('<token>', { name: projectName }, {
+    }, (err: any, res: any) => {
+      if (err) {
+        console.log(err);
+        handleError();
+        return;
+      } else {
+        api.getProjects('<token>', {}, { 
+          id: user.userId 
+        }, (err: any, res: any) => {
+          if (err) {
+            console.log(err);
+            handleError();
+            return;
+          }
+          setProjects(res.data);
+          if (res.data.length > 0) {
+            let tgtProject = res.data.find((el: ProjectType) => {
+              return el.name === projectName;
+            });
+            setCurrentProject(tgtProject);
+            callback && callback();
+          } 
+        });
+      }
+    });
+  }
+
+  provisionECR = (callback?: any) => {
+    console.log('Provisioning ECR')
+    let { awsAccessId, awsSecretKey, awsRegion } = this.state;
+    let { currentProject } = this.context;
+    let { handleError } = this.props;
+
+    api.createAWSIntegration('<token>', {
+      aws_region: awsRegion,
+      aws_access_key_id: awsAccessId,
+      aws_secret_access_key: awsSecretKey,
+    }, { id: currentProject.id }, (err: any, res: any) => {
+      if (err) {
+        console.log(err);
+        handleError();
+        return;
+      }
+
+      api.provisionECR('<token>', {
+        aws_integration_id: res.data.id,
+        ecr_name: `${currentProject.name}-registry`
+      }, {id: currentProject.id}, (err: any, res: any) => {
+        if (err) {
+          console.log(err);
+          handleError();
+          return;
+        }
+        callback && callback();
+      })
+      
+    });
+  }
+
+  provisionEKS = () => {
+    console.log('Provisioning EKS');
+    let { setCurrentView, handleError } = this.props;
+    let { awsAccessId, awsSecretKey, awsRegion } = this.state;
+    let { currentProject } = this.context;
+
+    let clusterName = `${currentProject.name}-cluster`
+    api.createAWSIntegration('<token>', {
+      aws_region: awsRegion,
+      aws_access_key_id: awsAccessId,
+      aws_secret_access_key: awsSecretKey,
+      aws_cluster_id: clusterName,
+    }, { id: currentProject.id }, (err: any, res: any) => {
+      if (err) {
+        console.log(err);
+        handleError();
+        return;
+      }
+      api.provisionEKS('<token>', {
+        aws_integration_id: res.data.id,
+        eks_name: clusterName,
+      }, { id: currentProject.id}, (err: any, eks: any) => {
+        if (err) {
+          console.log(err);
+          handleError();
+          return;
+        }
+        setCurrentView('provisioner');
+      })
+    })
+  }
+
+  // TODO: handle generically (with > 2 steps)
+  onCreateAWS = () => {
+    let { projectName, setCurrentView } = this.props;
+    let { selectedInfras } = this.state;
+
+    console.log(selectedInfras);
+    if (!projectName) {
+      console.log(selectedInfras)
+      if (selectedInfras.length === 2) {
+        // Case: project exists, provision ECR + EKS
+        this.provisionECR(this.provisionEKS);
+      } else if (selectedInfras[0].value === 'ecr') {
+        // Case: project exists, only provision ECR
+        this.provisionECR(() => setCurrentView('provisioner'));
+      } else {
+        // Case: project exists, only provision EKS
+        this.provisionEKS();
+      }
+    } else {
+      if (selectedInfras.length === 2) {
+        // Case: project DNE, provision ECR + EKS 
+        this.createProject(() => this.provisionECR(this.provisionEKS));
+      } else if (selectedInfras[0].value === 'ecr') {
+        // Case: project DNE, only provision ECR
+        this.createProject(() => this.provisionECR(() => {
+          setCurrentView('provisioner');
+        }));
+      } else {
+        // Case: project DNE, only provision EKS
+        this.createProject(this.provisionEKS);
+      }
     }
   }
 
@@ -126,7 +269,7 @@ export default class AWSFormSection extends Component<PropsType, StateType> {
         <SaveButton
           text='Submit'
           disabled={this.checkFormDisabled()}
-          onClick={() => console.log('oop')}
+          onClick={this.onCreateAWS}
           makeFlush={true}
           helper='Note: Provisioning can take up to 15 minutes'
         />
@@ -134,6 +277,8 @@ export default class AWSFormSection extends Component<PropsType, StateType> {
     );
   }
 }
+
+AWSFormSection.contextType = Context;
 
 const Padding = styled.div`
   height: 15px;

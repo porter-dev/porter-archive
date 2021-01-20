@@ -17,27 +17,17 @@ type StateType = {
 };
 
 export default class Dashboard extends Component<PropsType, StateType> {
-  refreshInfras = () => {
-    api.getInfra('<token>', {}, { 
-      project_id: this.props.projectId,
-    }, (err: any, res: any) => {
-      if (err) {
-        console.log(err);
-        return;
-      } 
-      console.log(res.data);
-    });
-  }
-  
-  componentDidMount() {
-    console.log('mounty')
-    this.refreshInfras();
-  }
-
   componentDidUpdate(prevProps: PropsType) {
-    console.log('washy')
     if (this.props.projectId && prevProps.projectId !== this.props.projectId) {
-      this.refreshInfras();
+      api.getInfra('<token>', {}, { 
+        project_id: this.props.projectId,
+      }, (err: any, res: any) => {
+        if (err) {
+          console.log(err);
+          return;
+        } 
+        console.log(res.data);
+      });
     }
   }
 

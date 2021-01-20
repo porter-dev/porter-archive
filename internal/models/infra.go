@@ -25,6 +25,7 @@ type InfraKind string
 
 // The supported infra kinds
 const (
+	InfraTest InfraKind = "test"
 	InfraECR  InfraKind = "ecr"
 	InfraEKS  InfraKind = "eks"
 	InfraGCR  InfraKind = "gcr"

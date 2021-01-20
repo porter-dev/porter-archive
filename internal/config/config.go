@@ -36,7 +36,7 @@ type ServerConf struct {
 
 	DOClientID          string `env:"DO_CLIENT_ID"`
 	DOClientSecret      string `env:"DO_CLIENT_SECRET"`
-	ProvisionerImageTag string `env:"PROV_IMAGE_TAG,default-latest"`
+	ProvisionerImageTag string `env:"PROV_IMAGE_TAG,default=latest"`
 }
 
 // DBConf is the database configuration: if generated from environment variables,

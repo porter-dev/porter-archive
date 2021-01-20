@@ -26,6 +26,7 @@ type InfraOption string
 
 // The list of infra options
 const (
+	Test InfraOption = "test"
 	ECR  InfraOption = "ecr"
 	EKS  InfraOption = "eks"
 	GCR  InfraOption = "gcr"
@@ -94,6 +95,8 @@ func (conf *Conf) GetProvisionerJobTemplate() (*batchv1.Job, error) {
 	args := make([]string, 0)
 
 	switch conf.Kind {
+	case Test:
+		args = []string{operation, "test", "hello"}
 	case ECR:
 		args = []string{operation, "ecr"}
 

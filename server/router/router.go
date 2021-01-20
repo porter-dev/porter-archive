@@ -250,6 +250,16 @@ func New(a *api.App) *chi.Mux {
 		// /api/projects/{project_id}/provision routes
 		r.Method(
 			"POST",
+			"/projects/{project_id}/provision/test",
+			auth.DoesUserHaveProjectAccess(
+				requestlog.NewHandler(a.HandleProvisionTestInfra, l),
+				mw.URLParam,
+				mw.ReadAccess,
+			),
+		)
+
+		r.Method(
+			"POST",
 			"/projects/{project_id}/provision/ecr",
 			auth.DoesUserHaveProjectAccess(
 				auth.DoesUserHaveAWSIntegrationAccess(
@@ -372,6 +382,20 @@ func New(a *api.App) *chi.Mux {
 			auth.DoesUserHaveProjectAccess(
 				auth.DoesUserHaveInfraAccess(
 					requestlog.NewHandler(a.HandleDestroyAWSECRInfra, l),
+					mw.URLParam,
+					mw.URLParam,
+				),
+				mw.URLParam,
+				mw.ReadAccess,
+			),
+		)
+
+		r.Method(
+			"POST",
+			"/projects/{project_id}/infra/{infra_id}/test/destroy",
+			auth.DoesUserHaveProjectAccess(
+				auth.DoesUserHaveInfraAccess(
+					requestlog.NewHandler(a.HandleDestroyTestInfra, l),
 					mw.URLParam,
 					mw.URLParam,
 				),

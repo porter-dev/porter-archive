@@ -56,6 +56,14 @@ export const integrationList: any = {
   }
 };
 
+export const isAlphanumeric = (x: string | null) => {
+  let re = /^[a-z0-9-]+$/;
+  if (!x || x.length == 0 || x.search(re) === -1) {
+    return false;
+  }
+  return true;
+}
+
 export const getIgnoreCase = (object: any, key: string) => {
   return object[Object.keys(object)
     .find(k => k.toLowerCase() === key.toLowerCase())

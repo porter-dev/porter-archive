@@ -1,6 +1,7 @@
 import aws from '../assets/aws.png';
 import digitalOcean from '../assets/do.png';
 import gcp from '../assets/gcp.png';
+import { InfraType } from '../shared/types';
 
 export const integrationList: any = {
   'kubernetes': {
@@ -68,4 +69,37 @@ export const getIgnoreCase = (object: any, key: string) => {
   return object[Object.keys(object)
     .find(k => k.toLowerCase() === key.toLowerCase())
   ];
+}
+
+export const includesCompletedInfraSet = (infras: InfraType[]): boolean => {
+  if (infras.length === 0) {
+    return true;
+  }
+  
+  let infraSets = [
+    ['ecr', 'eks'],
+    ['gcr', 'gke'],
+    ['docr', 'doks']
+  ];
+
+  let completed = [] as string[];
+  infras.forEach((infra: InfraType, i: number) => {
+    if (infra.status === 'created') {
+      completed.push(infra.kind);
+    }
+  });
+
+  completed.forEach((kind: string, i: number) => {
+    infraSets.forEach((infraSet: string[], i: number) => {
+      infraSet.includes(kind) && infraSet.splice(infraSet.indexOf(kind), 1);
+    });
+  });
+
+  let anyCompleted = false;
+  infraSets.forEach((infraSet: string[], i: number) => {
+    if (infraSet.length === 0) {
+      anyCompleted = true;
+    }
+  })
+  return anyCompleted;
 }

@@ -4,6 +4,7 @@ import styled from 'styled-components';
 
 import gradient from '../../../assets/gradient.jpg';
 import { Context } from '../../../shared/Context';
+import { InfraType } from '../../../shared/types';
 import api from '../../../shared/api';
 
 import ProvisionerSettings from '../provisioner/ProvisionerSettings';
@@ -14,28 +15,33 @@ type PropsType = {
 };
 
 type StateType = {
+  infras: InfraType[],
 };
 
 export default class Dashboard extends Component<PropsType, StateType> {
+  state = {
+    infras: [] as InfraType[],
+  }
+
   refreshInfras = () => {
-    api.getInfra('<token>', {}, { 
-      project_id: this.props.projectId,
-    }, (err: any, res: any) => {
-      if (err) {
-        console.log(err);
-        return;
-      } 
-      console.log(res.data);
-    });
+    if (this.props.projectId) {
+      api.getInfra('<token>', {}, { 
+        project_id: this.props.projectId,
+      }, (err: any, res: any) => {
+        if (err) {
+          console.log(err);
+          return;
+        } 
+        this.setState({ infras: res.data });
+      });
+    }
   }
   
   componentDidMount() {
-    console.log('mounty')
     this.refreshInfras();
   }
 
   componentDidUpdate(prevProps: PropsType) {
-    console.log('washy')
     if (this.props.projectId && prevProps.projectId !== this.props.projectId) {
       this.refreshInfras();
     }
@@ -53,6 +59,7 @@ export default class Dashboard extends Component<PropsType, StateType> {
   render() {
     let { currentProject, currentCluster } = this.context;
     let { setCurrentView } = this.props;
+    let { infras } = this.state;
     let { onShowProjectSettings } = this;
     return (
       <>
@@ -95,6 +102,7 @@ export default class Dashboard extends Component<PropsType, StateType> {
             )}
             <ProvisionerSettings 
               setCurrentView={setCurrentView} 
+              infras={infras}
             />
           </DashboardWrapper>
         )}

@@ -6,13 +6,11 @@ import { Context } from '../../../shared/Context';
 import ansiparse from '../../../shared/ansiparser'
 import loading from '../../../assets/loading.gif';
 import warning from '../../../assets/warning.png';
+import { InfraType } from '../../../shared/types';
 
 import Helper from '../../../components/values-form/Helper';
-import { eventNames } from 'process';
-import { inflateRaw, inflateRawSync } from 'zlib';
 
 type PropsType = {
-  viewData: any,
   setCurrentView: (x: string) => void,
 }
 
@@ -130,7 +128,18 @@ export default class Provisioner extends Component<PropsType, StateType> {
   componentDidMount() {
     let { currentProject } = this.context;
     let protocol = process.env.NODE_ENV == 'production' ? 'wss' : 'ws'
-    let viewData = this.props.viewData || []
+
+    // Check if current project is provisioning
+    api.getInfra('<token>', {}, { project_id: currentProject.id }, (err: any, res: any) => {
+      if (err) {
+        console.log(err);
+      } else if (res.data) {
+
+        let viewData = [] as any[]
+        console.log('do stuff')
+      }
+    });
+    let viewData = [] as InfraType[];
 
     let websockets = viewData.map((infra: any) => {
       let ws = new WebSocket(`${protocol}://${process.env.API_SERVER}/api/projects/${currentProject.id}/provision/${infra.kind}/${infra.infra_id}/logs`)

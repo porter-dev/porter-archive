@@ -71,7 +71,10 @@ export default class ClusterSection extends Component<PropsType, StateType> {
             } else {
               setCurrentCluster(clusters[0]);
             }
-          } else if (this.props.currentView !== 'provisioner') {
+          } else if (
+            this.props.currentView !== 'provisioner'
+            && this.props.currentView !== 'new-project'
+          ) {
             this.setState({ clusters: [] });
             setCurrentCluster(null);
             this.props.setCurrentView('dashboard');

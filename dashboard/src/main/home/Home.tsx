@@ -1,10 +1,12 @@
 import React, { Component } from 'react';
+import posthog from 'posthog-js';
 import styled from 'styled-components';
 import ReactModal from 'react-modal';
 
 import { Context } from '../../shared/Context';
 import api from '../../shared/api';
-import { InfraType } from '../../shared/types';
+import { ProjectType } from '../../shared/types';
+import { includesCompletedInfraSet } from '../../shared/common';
 
 import Sidebar from './sidebar/Sidebar';
 import Dashboard from './dashboard/Dashboard';
@@ -19,12 +21,12 @@ import IntegrationsModal from './modals/IntegrationsModal';
 import IntegrationsInstructionsModal from './modals/IntegrationsInstructionsModal';
 import NewProject from './new-project/NewProject';
 import Navbar from './navbar/Navbar';
-import Provisioner from './new-project/Provisioner';
+import ProvisionerStatus from './provisioner/ProvisionerStatus';
 import ProjectSettings from './project-settings/ProjectSettings';
-import posthog from 'posthog-js';
 
 type PropsType = {
-  logOut: () => void
+  logOut: () => void,
+  currentProject: ProjectType,
 };
 
 type StateType = {
@@ -39,6 +41,7 @@ type StateType = {
   sidebarReady: boolean, // Fixes error where ~1/3 times reloading to provisioner fails
 };
 
+// TODO: Handle cluster connected but with some failed infras (no successful set)
 export default class Home extends Component<PropsType, StateType> {
   state = {
     forceSidebar: true,
@@ -50,43 +53,37 @@ export default class Home extends Component<PropsType, StateType> {
     sidebarReady: false,
   }
 
-  // Possibly consolidate into context (w/ ProjectSection + NewProject)
+  initializeView = () => {
+    let { currentCluster } = this.context;
+    let { currentProject } = this.props;
+    // Check if current project is provisioning
+    api.getInfra('<token>', {}, { project_id: currentProject.id }, (err: any, res: any) => {
+      if (err) {
+        console.log(err);
+        return;
+      }
+      if (!currentCluster && !includesCompletedInfraSet(res.data)) {
+        this.setState({ currentView: 'provisioner', sidebarReady: true, });
+      } else {
+        this.setState({ currentView: 'dashboard', sidebarReady: true });
+      }
+    });
+  }
+
   getProjects = () => {
-    let { user, currentProject, projects, setProjects } = this.context;
+    let { user, setProjects } = this.context;
+    let { currentProject } = this.props;
     api.getProjects('<token>', {}, { id: user.userId }, (err: any, res: any) => {
       if (err) {
         console.log(err);
       } else if (res.data) {
-        setProjects(res.data);
-        if (res.data.length > 0 && !currentProject) {
+        if (res.data.length === 0) {
+          this.setState({ currentView: 'new-project', sidebarReady: true, });
+        } else if (res.data.length > 0 && !currentProject) {
+          setProjects(res.data);
           this.context.setCurrentProject(res.data[0]);
 
-          // Check if current project is provisioning
-          api.getInfra('<token>', {}, { project_id: res.data[0].id }, (err: any, res: any) => {
-            if (err) {
-              console.log(err);
-            } else if (res.data) {
-
-              let viewData = [] as any[]
-              // TODO: separately handle non meta-provisioning case
-              res.data.forEach((el: InfraType) => {
-                if (el.status === 'creating') {
-                  viewData.push({
-                    infra_id: el.id,
-                    kind: el.kind,
-                  });
-                }
-              });
-              
-              if (viewData.length > 0) {
-                this.setState({ currentView: 'provisioner', viewData, sidebarReady: true, });
-              } else {
-                this.setState({ sidebarReady: true });
-              }
-            }
-          });
-        } else if (res.data.length === 0) {
-          this.setState({ currentView: 'new-project', sidebarReady: true, });
+          this.initializeView();
         }
       }
     });
@@ -103,15 +100,8 @@ export default class Home extends Component<PropsType, StateType> {
   }
 
   componentDidUpdate(prevProps: PropsType) {
-    if (prevProps !== this.props && this.context.currentProject) {
-
-      // Set view to dashboard on project change
-      if (this.state.prevProjectId && this.state.prevProjectId !== this.context.currentProject.id) {
-        this.setState({
-          prevProjectId: this.context.currentProject.id,
-          currentView: 'dashboard'
-        });
-      }
+    if (prevProps.currentProject !== this.props.currentProject) {
+      this.initializeView();
     }
   }
 
@@ -169,9 +159,8 @@ export default class Home extends Component<PropsType, StateType> {
       );
     } else if (currentView === 'provisioner') {
       return (
-        <Provisioner 
+        <ProvisionerStatus
           setCurrentView={(x: string) => this.setState({ currentView: x })}
-          viewData={this.state.viewData}
         />
       );
     } else if (currentView === 'project-settings') {
@@ -201,7 +190,7 @@ export default class Home extends Component<PropsType, StateType> {
       // Force sidebar closed on first provision
       if (this.state.currentView === 'provisioner' && this.state.forceSidebar) {
         this.setState({ forceSidebar: false });
-      } else if (this.state.sidebarReady) {
+      } else {
         return (
           <Sidebar
             forceSidebar={this.state.forceSidebar}

@@ -3,6 +3,7 @@ import styled from 'styled-components';
 
 import { Context } from '../../../shared/Context';
 import { integrationList } from '../../../shared/common';
+import { InfraType } from '../../../shared/types';
 
 import Helper from '../../../components/values-form/Helper';
 import AWSFormSection from './AWSFormSection';
@@ -14,10 +15,12 @@ type PropsType = {
   setCurrentView: (x: string, data?: any) => void,
   isInNewProject?: boolean,
   projectName?: string,
+  infras?: InfraType[],
 };
 
 type StateType = {
   selectedProvider: string | null,
+  infras: InfraType[],
 };
 
 const providers = ['aws', 'gcp', 'do',];
@@ -25,18 +28,21 @@ const providers = ['aws', 'gcp', 'do',];
 export default class NewProject extends Component<PropsType, StateType> {
   state = {
     selectedProvider: null as string | null,
+    infras: [] as InfraType[],
   }
 
   // Handle any submission (pre-status) error
   handleError = () => {
     let { setCurrentView } = this.props;
+    let { setCurrentError } = this.context;
     setCurrentView('dashboard');
     this.setState({ selectedProvider: null });
+    setCurrentError('Provisioning failed. Check your credentials and try again.');
   }
 
   renderSelectedProvider = () => {
     let { selectedProvider } = this.state;
-    let { projectName, setCurrentView } = this.props;
+    let { projectName, setCurrentView, infras } = this.props;
 
     let renderSkipHelper = () => {
       return (
@@ -76,6 +82,7 @@ export default class NewProject extends Component<PropsType, StateType> {
           <AWSFormSection 
             handleError={this.handleError}
             projectName={projectName}
+            infras={infras}
             setCurrentView={setCurrentView}
             setSelectedProvisioner={(x: string | null) => {
               this.setState({ selectedProvider: x });

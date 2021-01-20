@@ -5,7 +5,7 @@ import close from '../../../assets/close.png';
 import { isAlphanumeric } from '../../../shared/common';
 import api from '../../../shared/api';
 import { Context } from '../../../shared/Context';
-import { ProjectType } from '../../../shared/types';
+import { ProjectType, InfraType } from '../../../shared/types';
 
 import InputRow from '../../../components/values-form/InputRow';
 import Helper from '../../../components/values-form/Helper';
@@ -18,6 +18,7 @@ type PropsType = {
   handleError: () => void,
   projectName: string,
   setCurrentView: (x: string | null, data?: any) => void,
+  infras: InfraType[],
 };
 
 type StateType = {
@@ -41,6 +42,38 @@ export default class AWSFormSection extends Component<PropsType, StateType> {
     awsSecretKey: '',
     selectedInfras: [...provisionOptions],
     buttonStatus: '',
+  }
+
+  componentDidMount = () => {
+    let { infras } = this.props;
+    let { selectedInfras } = this.state;
+
+    if (infras) {
+      
+      // From the dashboard, only uncheck if "creating" or "created"
+      let filtered = selectedInfras;
+      infras.forEach(
+        (infra: InfraType, i: number) => {
+          let { kind, status } = infra;
+          if (
+            kind === 'ecr'
+            && (status === 'creating' || status === 'created')
+          ) {
+            filtered = filtered.filter((item: any) => {
+              return item.value !== 'ecr';
+            });
+          } else if (
+            kind === 'eks'
+            && (status === 'creating' || status === 'created')
+          ) {
+            filtered = filtered.filter((item: any) => {
+              return item.value !== 'eks';
+            });
+          }
+        }
+      );
+      this.setState({ selectedInfras: filtered });
+    }
   }
 
   checkFormDisabled = () => {

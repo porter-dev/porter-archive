@@ -1,6 +1,8 @@
 package gorm
 
 import (
+	"fmt"
+
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/repository"
 	"gorm.io/gorm"
@@ -8,17 +10,24 @@ import (
 
 // InfraRepository uses gorm.DB for querying the database
 type InfraRepository struct {
-	db *gorm.DB
+	db  *gorm.DB
+	key *[32]byte
 }
 
 // NewInfraRepository returns a InfraRepository which uses
 // gorm.DB for querying the database
-func NewInfraRepository(db *gorm.DB) repository.InfraRepository {
-	return &InfraRepository{db}
+func NewInfraRepository(db *gorm.DB, key *[32]byte) repository.InfraRepository {
+	return &InfraRepository{db, key}
 }
 
 // CreateInfra creates a new aws infra
 func (repo *InfraRepository) CreateInfra(infra *models.Infra) (*models.Infra, error) {
+	err := repo.EncryptInfraData(infra, repo.key)
+
+	if err != nil {
+		return nil, err
+	}
+
 	project := &models.Project{}
 
 	if err := repo.db.Where("id = ?", infra.ProjectID).First(&project).Error; err != nil {
@@ -35,6 +44,12 @@ func (repo *InfraRepository) CreateInfra(infra *models.Infra) (*models.Infra, er
 		return nil, err
 	}
 
+	err = repo.DecryptInfraData(infra, repo.key)
+
+	if err != nil {
+		return nil, err
+	}
+
 	return infra, nil
 }
 
@@ -43,6 +58,14 @@ func (repo *InfraRepository) ReadInfra(id uint) (*models.Infra, error) {
 	infra := &models.Infra{}
 
 	if err := repo.db.Where("id = ?", id).First(&infra).Error; err != nil {
+		return nil, err
+	}
+
+	fmt.Println("INNFRA LAST APPLIED", string(infra.LastApplied))
+
+	err := repo.DecryptInfraData(infra, repo.key)
+
+	if err != nil {
 		return nil, err
 	}
 
@@ -60,6 +83,10 @@ func (repo *InfraRepository) ListInfrasByProjectID(
 		return nil, err
 	}
 
+	for _, infra := range infras {
+		repo.DecryptInfraData(infra, repo.key)
+	}
+
 	return infras, nil
 }
 
@@ -67,9 +94,59 @@ func (repo *InfraRepository) ListInfrasByProjectID(
 func (repo *InfraRepository) UpdateInfra(
 	ai *models.Infra,
 ) (*models.Infra, error) {
+	err := repo.EncryptInfraData(ai, repo.key)
+
+	if err != nil {
+		return nil, err
+	}
+
 	if err := repo.db.Save(ai).Error; err != nil {
 		return nil, err
 	}
 
+	err = repo.DecryptInfraData(ai, repo.key)
+
+	if err != nil {
+		return nil, err
+	}
+
 	return ai, nil
+}
+
+// EncryptInfraData will encrypt the infra data before
+// writing to the DB
+func (repo *InfraRepository) EncryptInfraData(
+	infra *models.Infra,
+	key *[32]byte,
+) error {
+	if len(infra.LastApplied) > 0 {
+		cipherData, err := repository.Encrypt(infra.LastApplied, key)
+
+		if err != nil {
+			return err
+		}
+
+		infra.LastApplied = cipherData
+	}
+
+	return nil
+}
+
+// DecryptInfraData will decrypt the user's infra data before
+// returning it from the DB
+func (repo *InfraRepository) DecryptInfraData(
+	infra *models.Infra,
+	key *[32]byte,
+) error {
+	if len(infra.LastApplied) > 0 {
+		plaintext, err := repository.Decrypt(infra.LastApplied, key)
+
+		if err != nil {
+			return err
+		}
+
+		infra.LastApplied = plaintext
+	}
+
+	return nil
 }

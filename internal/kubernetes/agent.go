@@ -393,6 +393,7 @@ func (a *Agent) ProvisionDOCR(
 	operation provisioner.ProvisionerOperation,
 	pgConf *config.DBConf,
 	redisConf *config.RedisConf,
+	provImageTag string,
 ) (*batchv1.Job, error) {
 	// get the token
 	oauthInt, err := repo.OAuthIntegration.ReadOAuthIntegration(
@@ -411,13 +412,14 @@ func (a *Agent) ProvisionDOCR(
 
 	id := infra.GetUniqueName()
 	prov := &provisioner.Conf{
-		ID:          id,
-		Name:        fmt.Sprintf("prov-%s-%s", id, string(operation)),
-		Kind:        provisioner.DOCR,
-		Operation:   operation,
-		Redis:       redisConf,
-		Postgres:    pgConf,
-		LastApplied: infra.LastApplied,
+		ID:                  id,
+		Name:                fmt.Sprintf("prov-%s-%s", id, string(operation)),
+		Kind:                provisioner.DOCR,
+		Operation:           operation,
+		Redis:               redisConf,
+		Postgres:            pgConf,
+		ProvisionerImageTag: provImageTag,
+		LastApplied:         infra.LastApplied,
 		DO: &do.Conf{
 			DOToken: tok,
 		},
@@ -441,6 +443,7 @@ func (a *Agent) ProvisionDOKS(
 	operation provisioner.ProvisionerOperation,
 	pgConf *config.DBConf,
 	redisConf *config.RedisConf,
+	provImageTag string,
 ) (*batchv1.Job, error) {
 	// get the token
 	oauthInt, err := repo.OAuthIntegration.ReadOAuthIntegration(
@@ -459,13 +462,14 @@ func (a *Agent) ProvisionDOKS(
 
 	id := infra.GetUniqueName()
 	prov := &provisioner.Conf{
-		ID:          id,
-		Name:        fmt.Sprintf("prov-%s-%s", id, string(operation)),
-		Kind:        provisioner.DOKS,
-		Operation:   operation,
-		Redis:       redisConf,
-		Postgres:    pgConf,
-		LastApplied: infra.LastApplied,
+		ID:                  id,
+		Name:                fmt.Sprintf("prov-%s-%s", id, string(operation)),
+		Kind:                provisioner.DOKS,
+		Operation:           operation,
+		Redis:               redisConf,
+		Postgres:            pgConf,
+		LastApplied:         infra.LastApplied,
+		ProvisionerImageTag: provImageTag,
 		DO: &do.Conf{
 			DOToken: tok,
 		},
@@ -486,16 +490,18 @@ func (a *Agent) ProvisionTest(
 	operation provisioner.ProvisionerOperation,
 	pgConf *config.DBConf,
 	redisConf *config.RedisConf,
+	provImageTag string,
 ) (*batchv1.Job, error) {
 	id := infra.GetUniqueName()
 
 	prov := &provisioner.Conf{
-		ID:        id,
-		Name:      fmt.Sprintf("prov-%s-%s", id, string(operation)),
-		Operation: operation,
-		Kind:      provisioner.Test,
-		Redis:     redisConf,
-		Postgres:  pgConf,
+		ID:                  id,
+		Name:                fmt.Sprintf("prov-%s-%s", id, string(operation)),
+		Operation:           operation,
+		Kind:                provisioner.Test,
+		Redis:               redisConf,
+		Postgres:            pgConf,
+		ProvisionerImageTag: provImageTag,
 	}
 
 	return a.provision(prov, infra, repo)

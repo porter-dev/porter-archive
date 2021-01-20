@@ -66,6 +66,7 @@ func (app *App) HandleProvisionTestInfra(w http.ResponseWriter, r *http.Request)
 		provisioner.Apply,
 		&app.DBConf,
 		app.RedisConf,
+		app.ServerConf.ProvisionerImageTag,
 	)
 
 	if err != nil {
@@ -133,6 +134,7 @@ func (app *App) HandleDestroyTestInfra(w http.ResponseWriter, r *http.Request) {
 		provisioner.Destroy,
 		&app.DBConf,
 		app.RedisConf,
+		app.ServerConf.ProvisionerImageTag,
 	)
 
 	if err != nil {
@@ -883,6 +885,7 @@ func (app *App) HandleProvisionDODOCRInfra(w http.ResponseWriter, r *http.Reques
 		provisioner.Apply,
 		&app.DBConf,
 		app.RedisConf,
+		app.ServerConf.ProvisionerImageTag,
 	)
 
 	if err != nil {
@@ -976,6 +979,7 @@ func (app *App) HandleDestroyDODOCRInfra(w http.ResponseWriter, r *http.Request)
 		provisioner.Destroy,
 		&app.DBConf,
 		app.RedisConf,
+		app.ServerConf.ProvisionerImageTag,
 	)
 
 	if err != nil {
@@ -1061,6 +1065,7 @@ func (app *App) HandleProvisionDODOKSInfra(w http.ResponseWriter, r *http.Reques
 		provisioner.Apply,
 		&app.DBConf,
 		app.RedisConf,
+		app.ServerConf.ProvisionerImageTag,
 	)
 
 	if err != nil {
@@ -1154,6 +1159,7 @@ func (app *App) HandleDestroyDODOKSInfra(w http.ResponseWriter, r *http.Request)
 		provisioner.Destroy,
 		&app.DBConf,
 		app.RedisConf,
+		app.ServerConf.ProvisionerImageTag,
 	)
 
 	if err != nil {

@@ -50,12 +50,18 @@ func (app *App) HandleCreateUser(w http.ResponseWriter, r *http.Request) {
 		session.Values["email"] = user.Email
 		session.Save(r, w)
 
-		w.WriteHeader(http.StatusCreated)
-
-		if err := app.sendUser(w, user.ID, user.Email); err != nil {
-			app.handleErrorFormDecoding(err, ErrUserDecode, w)
-			return
+		if val, ok := session.Values["redirect"].(string); ok && val != "" {
+			http.Redirect(w, r, val, 302)
+		} else {
+			http.Redirect(w, r, "/dashboard", 302)
 		}
+
+		// w.WriteHeader(http.StatusCreated)
+
+		// if err := app.sendUser(w, user.ID, user.Email); err != nil {
+		// 	app.handleErrorFormDecoding(err, ErrUserDecode, w)
+		// 	return
+		// }
 	}
 }
 
@@ -122,12 +128,18 @@ func (app *App) HandleLoginUser(w http.ResponseWriter, r *http.Request) {
 		app.Logger.Warn().Err(err)
 	}
 
-	w.WriteHeader(http.StatusOK)
-
-	if err := app.sendUser(w, storedUser.ID, storedUser.Email); err != nil {
-		app.handleErrorFormDecoding(err, ErrUserDecode, w)
-		return
+	if val, ok := session.Values["redirect"].(string); ok && val != "" {
+		http.Redirect(w, r, val, 302)
+	} else {
+		http.Redirect(w, r, "/dashboard", 302)
 	}
+
+	// w.WriteHeader(http.StatusOK)
+
+	// if err := app.sendUser(w, storedUser.ID, storedUser.Email); err != nil {
+	// 	app.handleErrorFormDecoding(err, ErrUserDecode, w)
+	// 	return
+	// }
 }
 
 // HandleLogoutUser detaches the user from the session

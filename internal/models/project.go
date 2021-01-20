@@ -26,6 +26,9 @@ type Project struct {
 	// linked helm repos
 	HelmRepos []HelmRepo `json:"helm_repos"`
 
+	// invitations to the project
+	Invites []Invite `json:"invites"`
+
 	// provisioned aws infra
 	Infras []Infra `json:"infras"`
 

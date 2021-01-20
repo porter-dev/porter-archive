@@ -9,6 +9,22 @@ import (
 
 const randCharset string = "abcdefghijklmnopqrstuvwxyz1234567890"
 
+// CreateTestInfra represents the accepted values for creating test
+// infra via the provisioning container
+type CreateTestInfra struct {
+	ProjectID uint `json:"project_id" form:"required"`
+}
+
+// ToInfra converts the form to a gorm aws infra model
+func (ce *CreateTestInfra) ToInfra() (*models.Infra, error) {
+	return &models.Infra{
+		Kind:      models.InfraTest,
+		ProjectID: ce.ProjectID,
+		Suffix:    stringWithCharset(6, randCharset),
+		Status:    models.StatusCreating,
+	}, nil
+}
+
 // CreateECRInfra represents the accepted values for creating an
 // ECR infra via the provisioning container
 type CreateECRInfra struct {

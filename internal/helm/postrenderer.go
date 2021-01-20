@@ -266,7 +266,8 @@ func (d *DockerSecretsPostRenderer) updatePodSpecs(secrets map[string]string) {
 			continue
 		}
 
-		var imagePullSecrets []map[string]interface{}
+		imagePullSecrets := make([]map[string]interface{}, 0)
+
 		existingNames := map[string]bool{}
 		if existingPullSecrets, ok := podSpec["imagePullSecrets"]; ok {
 			imagePullSecrets = existingPullSecrets.([]map[string]interface{})
@@ -312,10 +313,7 @@ func (d *DockerSecretsPostRenderer) updatePodSpecs(secrets map[string]string) {
 			})
 		}
 
-		if len(imagePullSecrets) > 0 {
-			podSpec["imagePullSecrets"] = imagePullSecrets
-		}
-
+		podSpec["imagePullSecrets"] = imagePullSecrets
 	}
 }
 

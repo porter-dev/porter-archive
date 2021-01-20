@@ -29,6 +29,7 @@ const CheckboxList = ({
           <CheckboxOption 
             isLast={i === options.length - 1}
             onClick={() => onSelectOption(option)}
+            key={i}
           >
             <Checkbox checked={selected.includes(option)}>
               <i className="material-icons">done</i>

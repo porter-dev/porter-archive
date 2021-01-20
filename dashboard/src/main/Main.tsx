@@ -31,8 +31,9 @@ export default class Main extends Component<PropsType, StateType> {
 
   componentDidMount() {
     let { setUser } = this.context;
-    api.checkAuth('', {}, {}, (err: any, res: any) => {      
-      if (err && err.response.status == 403) {
+    api.checkAuth('', {}, {}, (err: any, res: any) => {    
+      console.log(err)  
+      if (err && err.response?.status == 403) {
         this.setState({ isLoggedIn: false, loading: false })
       }
 

@@ -17,6 +17,7 @@ const tabOptions = [
 const hardcodedNames: any = {
   'postgresql': 'PostgreSQL',
   'docker': 'Docker',
+  'https-issuer': 'HTTPS Issuer'
 };
 
 type PropsType = {

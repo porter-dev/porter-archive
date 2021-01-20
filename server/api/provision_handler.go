@@ -15,6 +15,136 @@ import (
 	"github.com/porter-dev/porter/internal/adapter"
 )
 
+// HandleProvisionTestInfra will create a test resource by deploying a provisioner
+// container pod
+func (app *App) HandleProvisionTestInfra(w http.ResponseWriter, r *http.Request) {
+	projID, err := strconv.ParseUint(chi.URLParam(r, "project_id"), 0, 64)
+
+	if err != nil || projID == 0 {
+		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
+		return
+	}
+
+	// create a new agent
+	agent, err := kubernetes.GetAgentInClusterConfig()
+
+	if err != nil {
+		app.handleErrorDataRead(err, w)
+		return
+	}
+
+	form := &forms.CreateTestInfra{
+		ProjectID: uint(projID),
+	}
+
+	// decode from JSON to form value
+	if err := json.NewDecoder(r.Body).Decode(form); err != nil {
+		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
+		return
+	}
+
+	// convert the form to an aws infra instance
+	infra, err := form.ToInfra()
+
+	if err != nil {
+		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
+		return
+	}
+
+	// handle write to the database
+	infra, err = app.Repo.Infra.CreateInfra(infra)
+
+	if err != nil {
+		app.handleErrorDataWrite(err, w)
+		return
+	}
+
+	_, err = agent.ProvisionTest(
+		uint(projID),
+		infra,
+		*app.Repo,
+		provisioner.Apply,
+		&app.DBConf,
+		app.RedisConf,
+	)
+
+	if err != nil {
+		infra.Status = models.StatusError
+		infra, _ = app.Repo.Infra.UpdateInfra(infra)
+
+		app.handleErrorInternal(err, w)
+		return
+	}
+
+	app.Logger.Info().Msgf("New test infra created: %d", infra.ID)
+
+	w.WriteHeader(http.StatusCreated)
+
+	infraExt := infra.Externalize()
+
+	if err := json.NewEncoder(w).Encode(infraExt); err != nil {
+		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
+		return
+	}
+}
+
+// HandleDestroyTestInfra destroys test infra
+func (app *App) HandleDestroyTestInfra(w http.ResponseWriter, r *http.Request) {
+	// get path parameters
+	infraID, err := strconv.ParseUint(chi.URLParam(r, "infra_id"), 10, 64)
+
+	if err != nil {
+		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
+		return
+	}
+
+	// read infra to get id
+	infra, err := app.Repo.Infra.ReadInfra(uint(infraID))
+
+	if err != nil {
+		app.handleErrorDataRead(err, w)
+		return
+	}
+
+	// launch provisioning destruction pod
+	agent, err := kubernetes.GetAgentInClusterConfig()
+
+	if err != nil {
+		infra.Status = models.StatusError
+		infra, _ = app.Repo.Infra.UpdateInfra(infra)
+
+		app.handleErrorDataRead(err, w)
+		return
+	}
+
+	// mark infra for deletion
+	infra.Status = models.StatusDestroying
+	infra, err = app.Repo.Infra.UpdateInfra(infra)
+
+	if err != nil {
+		app.handleErrorDataWrite(err, w)
+		return
+	}
+
+	_, err = agent.ProvisionTest(
+		infra.ProjectID,
+		infra,
+		*app.Repo,
+		provisioner.Destroy,
+		&app.DBConf,
+		app.RedisConf,
+	)
+
+	if err != nil {
+		app.handleErrorInternal(err, w)
+		return
+	}
+
+	app.Logger.Info().Msgf("Test infra marked for destruction: %d", infra.ID)
+
+	w.WriteHeader(http.StatusOK)
+}
+
 // HandleProvisionAWSECRInfra provisions a new aws ECR instance for a project
 func (app *App) HandleProvisionAWSECRInfra(w http.ResponseWriter, r *http.Request) {
 	projID, err := strconv.ParseUint(chi.URLParam(r, "project_id"), 0, 64)

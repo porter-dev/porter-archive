@@ -478,6 +478,29 @@ func (a *Agent) ProvisionDOKS(
 	return a.provision(prov, infra, repo)
 }
 
+// ProvisionTest spawns a new provisioning pod that tests provisioning
+func (a *Agent) ProvisionTest(
+	projectID uint,
+	infra *models.Infra,
+	repo repository.Repository,
+	operation provisioner.ProvisionerOperation,
+	pgConf *config.DBConf,
+	redisConf *config.RedisConf,
+) (*batchv1.Job, error) {
+	id := infra.GetUniqueName()
+
+	prov := &provisioner.Conf{
+		ID:        id,
+		Name:      fmt.Sprintf("prov-%s-%s", id, string(operation)),
+		Operation: operation,
+		Kind:      provisioner.Test,
+		Redis:     redisConf,
+		Postgres:  pgConf,
+	}
+
+	return a.provision(prov, infra, repo)
+}
+
 func (a *Agent) provision(
 	prov *provisioner.Conf,
 	infra *models.Infra,

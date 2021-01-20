@@ -123,7 +123,7 @@ func (a *Agent) GetPodsByLabel(selector string) (*v1.PodList, error) {
 
 // GetPodLogs streams real-time logs from a given pod.
 func (a *Agent) GetPodLogs(namespace string, name string, conn *websocket.Conn) error {
-	tails := int64(300)
+	tails := int64(400)
 
 	// follow logs
 	podLogOpts := v1.PodLogOptions{
@@ -160,6 +160,7 @@ func (a *Agent) GetPodLogs(namespace string, name string, conn *websocket.Conn) 
 				return
 			default:
 			}
+
 			bytes, err := r.ReadBytes('\n')
 			if writeErr := conn.WriteMessage(websocket.TextMessage, bytes); writeErr != nil {
 				errorchan <- writeErr

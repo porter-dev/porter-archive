@@ -49,7 +49,6 @@ export default class Logs extends Component<PropsType, StateType> {
     let { currentCluster, currentProject } = this.context;
     let { selectedPod } = this.props;
     if (!selectedPod.metadata?.name) return
-
     let protocol = process.env.NODE_ENV == 'production' ? 'wss' : 'ws'
     this.ws = new WebSocket(`${protocol}://${process.env.API_SERVER}/api/projects/${currentProject.id}/k8s/${selectedPod?.metadata?.namespace}/pod/${selectedPod?.metadata?.name}/logs?cluster_id=${currentCluster.id}&service_account_id=${currentCluster.service_account_id}`)
 
@@ -103,7 +102,13 @@ export default class Logs extends Component<PropsType, StateType> {
           <div ref={this.scrollRef} />
         </Wrapper>
         <Options>
-          <Scroll onClick={()=> {this.setState({scroll: !this.state.scroll}); this.scrollToBottom(true)}}>
+          <Scroll onClick={()=> {
+            this.setState({scroll: !this.state.scroll}, () => {
+              if (this.state.scroll) {
+                this.scrollToBottom(true)
+              }
+            }); 
+          }}>
             <input type="checkbox" checked={this.state.scroll} onChange={() => {}}/>
             Scroll to Bottom
           </Scroll>

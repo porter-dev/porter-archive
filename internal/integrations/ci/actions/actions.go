@@ -2,7 +2,6 @@ package actions
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/google/go-github/v33/github"
 	"github.com/porter-dev/porter/internal/models"
@@ -39,6 +38,29 @@ func (g *GithubActions) Setup() error {
 	}
 
 	return nil
+}
+
+type GithubActionYAML struct {
+	On struct {
+		Push struct {
+			Branches []string `yaml:"branches"`
+		} `yaml:"push"`
+	} `yaml:"on"`
+
+	Name string `yaml:"name"`
+
+	Jobs map[string]struct {
+		RunsOn string `yaml:"runs-on"`
+		Steps  []struct {
+			Name string `yaml:"name"`
+			ID   string `yaml:"id"`
+			// TODO -- OTHER RELEVANT STUFF
+		} `yaml:"steps"`
+	} `yaml:"jobs"`
+}
+
+func (g *GithubActions) GetGithubActionYAML() (*github.Client, error) {
+	return nil, nil
 }
 
 func (g *GithubActions) getClient() (*github.Client, error) {
@@ -82,8 +104,6 @@ func (g *GithubActions) createGithubWebhookSecret(client *github.Client) error {
 	if err != nil {
 		return err
 	}
-
-	fmt.Println("OUT IS", out)
 
 	encryptedSecret := &github.EncryptedSecret{
 		Name:           secretName,

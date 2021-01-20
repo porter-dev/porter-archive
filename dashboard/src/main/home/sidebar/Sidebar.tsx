@@ -9,7 +9,6 @@ import { Context } from '../../../shared/Context';
 import ClusterSection from './ClusterSection';
 import ProjectSectionContainer from './ProjectSectionContainer';
 import loading from '../../../assets/loading.gif';
-import posthog from 'posthog-js';
 
 type PropsType = {
   forceSidebar: boolean,

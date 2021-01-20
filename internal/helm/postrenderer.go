@@ -268,13 +268,13 @@ func (d *DockerSecretsPostRenderer) updatePodSpecs(secrets map[string]string) {
 
 		imagePullSecrets := make([]map[string]interface{}, 0)
 
-		existingNames := map[string]bool{}
 		if existingPullSecrets, ok := podSpec["imagePullSecrets"]; ok {
-			imagePullSecrets = existingPullSecrets.([]map[string]interface{})
-			for _, s := range imagePullSecrets {
+			existing := existingPullSecrets.([]map[string]interface{})
+
+			for _, s := range existing {
 				if name, ok := s["name"]; ok {
-					if n, ok := name.(string); ok {
-						existingNames[n] = true
+					if n, ok := name.(string); ok && n != "" {
+						imagePullSecrets = append(imagePullSecrets, s)
 					}
 				}
 			}
@@ -312,8 +312,12 @@ func (d *DockerSecretsPostRenderer) updatePodSpecs(secrets map[string]string) {
 				"name": secrets[regName],
 			})
 		}
+		if len(imagePullSecrets) > 0 {
+			podSpec["imagePullSecrets"] = imagePullSecrets
+		} else {
+			podSpec["imagePullSecrets"] = nil
+		}
 
-		podSpec["imagePullSecrets"] = imagePullSecrets
 	}
 }
 

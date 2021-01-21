@@ -320,7 +320,7 @@ var rollbackReleaseTests = []*releaseTest{
 		initializers: []func(tester *tester){
 			initHistoryReleases,
 		},
-		msg:       "Rollback relase",
+		msg:       "Rollback release",
 		method:    "POST",
 		namespace: "default",
 		endpoint: "/api/projects/1/releases/wordpress/rollback?" + url.Values{

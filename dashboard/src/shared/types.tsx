@@ -149,3 +149,11 @@ export interface InfraType {
   kind: string,
   status: string,
 }
+
+export interface InviteType {
+  token: string,
+  expired: boolean,
+  email: string,
+  accepted: boolean,
+  id: number,
+}

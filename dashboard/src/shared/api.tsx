@@ -95,6 +95,10 @@ const getIngress = baseApi<{
   return `/api/projects/${pathParams.id}/k8s/${pathParams.namespace}/ingress/${pathParams.name}`;
 });
 
+const getInvites = baseApi<{}, { id: number }>('GET', pathParams => {
+  return `/api/projects/${pathParams.id}/invites`;
+});
+
 const getRevisions = baseApi<{
   namespace: string,
   cluster_id: number,
@@ -171,6 +175,10 @@ const createProject = baseApi<{ name: string }, {}>('POST', pathParams => {
 
 const deleteProject = baseApi<{}, { id: number }>('DELETE', pathParams => {
   return `/api/projects/${pathParams.id}`;
+});
+
+const deleteInvite = baseApi<{}, { id: number, invId: number }>('DELETE', pathParams => {
+  return `/api/projects/${pathParams.id}/invites/${pathParams.invId}`;
 });
 
 const deployTemplate = baseApi<{
@@ -332,54 +340,65 @@ const createGKE = baseApi<{
   return `/api/projects/${pathParams.project_id}/provision/gke`;
 });
 
+const createInvite = baseApi<{
+  email: string
+}, {
+  id: number
+}>('POST', pathParams => {
+  return `/api/projects/${pathParams.id}/invites`;
+})
+
 // Bundle export to allow default api import (api.<method> is more readable)
 export default {
-  uninstallTemplate,
+  checkAuth,
+  createAWSIntegration,
+  createECR,
+  createGCPIntegration,
   createGCR,
   createGKE,
-  createGCPIntegration,
-  deleteCluster,
-  destroyCluster,
-  getInfra,
-  linkGithubProject,
-  getGitRepos,
-  checkAuth,
-  registerUser,
-  logInUser,
-  logOutUser,
-  getRepos,
-  getUser,
-  updateUser,
-  getClusters,
-  getCharts,
-  getChart,
-  getChartComponents,
-  getChartControllers,
-  getNamespaces,
-  getMatchingPods,
-  getIngress,
-  getRevisions,
-  rollbackChart,
-  upgradeChartValues,
-  getTemplates,
-  getTemplateInfo,
-  getBranches,
-  getBranchContents,
-  getProjects,
-  getReleaseToken,
+  createInvite,
   createProject,
+  deleteCluster,
+  deleteInvite,
   deleteProject,
   deployTemplate,
+  destroyCluster,
+  getBranchContents,
+  getBranches,
+  getChart,
+  getCharts,
+  getChartComponents,
+  getChartControllers,
   getClusterIntegrations,
-  getRegistryIntegrations,
-  getRepoIntegrations,
+  getClusters,
+  getGitRepos,
+  getImageRepos,
+  getImageTags,
+  getInfra,
+  getIngress,
+  getInvites,
+  getMatchingPods,
+  getNamespaces,
   getProjectClusters,
   getProjectRegistries,
   getProjectRepos,
-  createAWSIntegration,
+  getProjects,
+  getRegistryIntegrations,
+  getReleaseToken,
+  getRepoIntegrations,
+  getRepos,
+  getRevisions,
+  getTemplateInfo,
+  getTemplates,
+  getUser,
+  linkGithubProject,
+  logInUser,
+  logOutUser,
   provisionECR,
   provisionEKS,
-  createECR,
-  getImageRepos,
-  getImageTags,
+  registerUser,
+  rollbackChart,
+  uninstallTemplate,
+  updateUser,
+  upgradeChartValues,
 }

@@ -14,7 +14,6 @@ import ClusterDashboard from './cluster-dashboard/ClusterDashboard';
 import Loading from '../../components/Loading';
 import Templates from './templates/Templates';
 import Integrations from "./integrations/Integrations";
-import UpdateProjectModal from './modals/UpdateProjectModal';
 import UpdateClusterModal from './modals/UpdateClusterModal';
 import ClusterInstructionsModal from './modals/ClusterInstructionsModal';
 import IntegrationsModal from './modals/IntegrationsModal';
@@ -23,6 +22,7 @@ import NewProject from './new-project/NewProject';
 import Navbar from './navbar/Navbar';
 import ProvisionerStatus from './provisioner/ProvisionerStatus';
 import ProjectSettings from './project-settings/ProjectSettings';
+import ConfirmOverlay from '../../components/ConfirmOverlay';
 
 type PropsType = {
   logOut: () => void,
@@ -208,6 +208,61 @@ export default class Home extends Component<PropsType, StateType> {
     }
   }
 
+  projectOverlayCall = () => {
+    let { user, setProjects } = this.context;
+    api.getProjects('<token>', {}, { id: user.userId }, (err: any, res: any) => {
+      if (err) {
+        console.log(err)
+      } else if (res.data) {
+        setProjects(res.data);
+        if (res.data.length > 0) {
+          this.context.setCurrentProject(res.data[0]);
+        } else {
+          this.context.currentModalData.setCurrentView('new-project');
+        }
+        this.context.setCurrentModal(null, null);
+      }
+    });
+  }
+
+  handleDelete = () => {
+    let { setCurrentModal, currentProject } = this.context;
+    api.deleteProject('<token>', {}, { id: currentProject.id }, (err: any, res: any) => {
+      if (err) {
+        // console.log(err)
+      } else {
+        this.projectOverlayCall();
+      }
+    });
+
+    // Loop through and delete infra of all clusters we've provisioned
+    api.getClusters('<token>', {}, { id: currentProject.id }, (err: any, res: any) => {
+      if (err) {
+        console.log(err);
+      } else {
+        res.data.forEach((cluster: ClusterType) => {
+
+          // Handle destroying infra we've provisioned
+          if (cluster.infra_id) {
+            console.log('destroying provisioned infra...', cluster.infra_id);
+            api.destroyCluster('<token>', { eks_name: cluster.name }, { 
+              project_id: currentProject.id,
+              infra_id: cluster.infra_id,
+            }, (err: any, res: any) => {
+              if (err) {
+                console.log(err)
+              } else {
+                console.log('destroyed provisioned infra:', cluster.infra_id);
+              }
+            });
+          }
+        });
+      }
+    });
+    setCurrentModal(null, null)
+    this.setState({ currentView: 'dashboard' });
+  }
+
   render() {
     let { currentModal, setCurrentModal, currentProject } = this.context;
     return (
@@ -219,14 +274,6 @@ export default class Home extends Component<PropsType, StateType> {
           ariaHideApp={false}
         >
           <ClusterInstructionsModal />
-        </ReactModal>
-        <ReactModal
-          isOpen={currentModal === 'UpdateProjectModal'}
-          onRequestClose={() => setCurrentModal(null, null)}
-          style={ProjectModalStyles}
-          ariaHideApp={false}
-        >
-          <UpdateProjectModal />
         </ReactModal>
         <ReactModal
           isOpen={currentModal === 'UpdateClusterModal'}
@@ -264,6 +311,13 @@ export default class Home extends Component<PropsType, StateType> {
           />
           {this.renderContents()}
         </ViewWrapper>
+
+        <ConfirmOverlay
+          show={currentModal === 'UpdateProjectModal'}
+          message={(currentProject) ? `Are you sure you want to delete ${currentProject.name}?` : ''}
+          onYes={this.handleDelete}
+          onNo={() => setCurrentModal(null, null)}
+        />
       </StyledHome>
     );
   }

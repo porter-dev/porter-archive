@@ -49,7 +49,6 @@ export default class ClusterSection extends Component<PropsType, StateType> {
         this.props.setWelcome(true);
       } else {
         this.props.setWelcome(false);
-        
         // TODO: handle uninitialized kubeconfig
         if (res.data) {
           let clusters = res.data;

@@ -437,6 +437,7 @@ func (app *App) HandleGetReleaseToken(w http.ResponseWriter, r *http.Request) {
 
 // HandleUpgradeRelease upgrades a release with new values.yaml
 func (app *App) HandleUpgradeRelease(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("=========================================UPGRADE RELEASE============================================")
 	projID, err := strconv.ParseUint(chi.URLParam(r, "project_id"), 0, 64)
 
 	if err != nil || projID == 0 {

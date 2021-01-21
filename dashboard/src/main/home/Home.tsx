@@ -111,7 +111,7 @@ export default class Home extends Component<PropsType, StateType> {
   // TODO: move into ClusterDashboard
   renderDashboard = () => {
     let { currentCluster, setCurrentModal } = this.context;
-    if (this.state.showWelcome || currentCluster && !currentCluster.name) {
+    if (currentCluster && !currentCluster.name) {
       return (
         <DashboardWrapper>
           <Placeholder>

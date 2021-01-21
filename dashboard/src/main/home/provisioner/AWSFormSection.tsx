@@ -55,19 +55,9 @@ export default class AWSFormSection extends Component<PropsType, StateType> {
       infras.forEach(
         (infra: InfraType, i: number) => {
           let { kind, status } = infra;
-          if (
-            kind === 'ecr'
-            && (status === 'creating' || status === 'created')
-          ) {
+          if (status === 'creating' || status === 'created') {
             filtered = filtered.filter((item: any) => {
-              return item.value !== 'ecr';
-            });
-          } else if (
-            kind === 'eks'
-            && (status === 'creating' || status === 'created')
-          ) {
-            filtered = filtered.filter((item: any) => {
-              return item.value !== 'eks';
+              return item.value !== kind;
             });
           }
         }
@@ -116,6 +106,10 @@ export default class AWSFormSection extends Component<PropsType, StateType> {
         handleError();
         return;
       } else {
+        let proj = res.data;
+
+        // Need to set project list for dropdown
+        // TODO: consolidate into ProjectSection (case on exists in list on set)
         api.getProjects('<token>', {}, { 
           id: user.userId 
         }, (err: any, res: any) => {
@@ -125,13 +119,8 @@ export default class AWSFormSection extends Component<PropsType, StateType> {
             return;
           }
           setProjects(res.data);
-          if (res.data.length > 0) {
-            let tgtProject = res.data.find((el: ProjectType) => {
-              return el.name === projectName;
-            });
-            setCurrentProject(tgtProject);
-            callback && callback();
-          } 
+          setCurrentProject(proj);
+          callback && callback();
         });
       }
     });
@@ -288,8 +277,8 @@ export default class AWSFormSection extends Component<PropsType, StateType> {
             isRequired={true}
           />
           <Br />
-          <Heading>Resources</Heading>
-          <Helper>Porter will provision the following resources</Helper>
+          <Heading>AWS Resources</Heading>
+          <Helper>Porter will provision the following AWS resources</Helper>
           <CheckboxList
             options={provisionOptions}
             selected={selectedInfras}

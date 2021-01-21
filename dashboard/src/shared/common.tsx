@@ -3,6 +3,15 @@ import digitalOcean from '../assets/do.png';
 import gcp from '../assets/gcp.png';
 import { InfraType } from '../shared/types';
 
+export const infraNames: any = {
+  'ecr': 'Elastic Container Registry (ECR)',
+  'eks': 'Elastic Kubernetes Service (EKS)',
+  'gcr': 'Google Container Registry (GCR)',
+  'gke': 'Google Kubernetes Engine (GKE)',
+  'docr': 'Digital Ocean Container Registry',
+  'doks': 'Digital Ocean Kubernetes Service'
+};
+
 export const integrationList: any = {
   'kubernetes': {
     icon: 'https://uxwing.com/wp-content/themes/uxwing/download/10-brands-and-social-media/kubernetes.png',
@@ -75,7 +84,7 @@ export const includesCompletedInfraSet = (infras: InfraType[]): boolean => {
   if (infras.length === 0) {
     return true;
   }
-  
+
   let infraSets = [
     ['ecr', 'eks'],
     ['gcr', 'gke'],
@@ -102,4 +111,19 @@ export const includesCompletedInfraSet = (infras: InfraType[]): boolean => {
     }
   })
   return anyCompleted;
+}
+
+export const filterOldInfras = (infras: InfraType[]): InfraType[] => {
+  let newestInstances = {} as any;
+  infras.forEach((infra: InfraType, i: number) => {
+    if (!newestInstances[infra.kind]) {
+      newestInstances[infra.kind] = infra;
+    } else {
+      let existingId = newestInstances[infra.kind].id;
+      if (infra.id > existingId) {
+        newestInstances[infra.kind] = infra;
+      }
+    }
+  });
+  return Object.values(newestInstances);
 }

@@ -3,7 +3,7 @@ import styled from 'styled-components';
 
 type PropsType = {
   label?: string,
-  options: { value: string, label: string }[],
+  options: { disabled?: boolean, value: string, label: string }[],
   selected: { value: string, label: string }[],
   setSelected: (x: { value: string, label: string }[]) => void,
 };

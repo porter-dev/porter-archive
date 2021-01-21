@@ -89,7 +89,8 @@ export default class Main extends Component<PropsType, StateType> {
           if (this.state.isLoggedIn && this.state.initialized) {
             return (
               <Home 
-                currentProject={this.context.currentProject} 
+                currentProject={this.context.currentProject}
+                currentCluster={this.context.currentCluster} 
                 logOut={this.handleLogOut} 
               />
             );

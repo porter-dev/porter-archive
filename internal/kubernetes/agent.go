@@ -160,6 +160,7 @@ func (a *Agent) GetPodLogs(namespace string, name string, conn *websocket.Conn) 
 				return
 			default:
 			}
+
 			bytes, err := r.ReadBytes('\n')
 			if writeErr := conn.WriteMessage(websocket.TextMessage, bytes); writeErr != nil {
 				errorchan <- writeErr

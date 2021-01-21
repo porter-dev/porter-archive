@@ -49,7 +49,7 @@ class ContextProvider extends Component {
     },
     user: null as any,
     setUser: (userId: number, email: string) => {
-      this.setState({ user: {userId, email} });
+      this.setState({ user: { userId, email } });
     },
     devOpsMode: true,
     setDevOpsMode: (devOpsMode: boolean) => {

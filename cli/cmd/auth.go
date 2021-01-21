@@ -55,6 +55,8 @@ var logoutCmd = &cobra.Command{
 	},
 }
 
+var token string = ""
+
 func init() {
 	rootCmd.AddCommand(authCmd)
 
@@ -68,10 +70,31 @@ func init() {
 		getHost(),
 		"host url of Porter instance",
 	)
+
+	loginCmd.PersistentFlags().StringVar(
+		&token,
+		"token",
+		"",
+		"bearer token for authentication",
+	)
 }
 
 func login() error {
-	client := api.NewClient(getHost()+"/api", "cookie.json")
+	var client *api.Client
+
+	if token != "" {
+		// set the token in config
+		err := setToken(token)
+
+		if err != nil {
+			return err
+		}
+
+		client = api.NewClientWithToken(getHost()+"/api", token)
+	} else {
+		client = api.NewClient(getHost()+"/api", "cookie.json")
+	}
+
 	user, _ := client.AuthCheck(context.Background())
 
 	if user != nil {
@@ -117,8 +140,6 @@ func login() error {
 }
 
 func register() error {
-	host := getHost()
-
 	fmt.Println("Please register your admin account with an email and password:")
 
 	username, err := utils.PromptPlaintext("Email: ")
@@ -133,7 +154,7 @@ func register() error {
 		return err
 	}
 
-	client := api.NewClient(host+"/api", "cookie.json")
+	client := GetAPIClient()
 
 	resp, err := client.CreateUser(context.Background(), &api.CreateUserRequest{
 		Email:    username,

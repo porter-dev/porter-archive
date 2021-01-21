@@ -17,6 +17,7 @@ type Client struct {
 	HTTPClient     *http.Client
 	Cookie         *http.Cookie
 	CookieFilePath string
+	Token          string
 }
 
 // HTTPError is the Porter error response returned if a request fails
@@ -47,11 +48,25 @@ func NewClient(baseURL string, cookieFileName string) *Client {
 	return client
 }
 
+func NewClientWithToken(baseURL, token string) *Client {
+	client := &Client{
+		BaseURL: baseURL,
+		Token:   token,
+		HTTPClient: &http.Client{
+			Timeout: time.Minute,
+		},
+	}
+
+	return client
+}
+
 func (c *Client) sendRequest(req *http.Request, v interface{}, useCookie bool) (*HTTPError, error) {
 	req.Header.Set("Content-Type", "application/json; charset=utf-8")
 	req.Header.Set("Accept", "application/json; charset=utf-8")
 
-	if cookie, _ := c.getCookie(); useCookie && cookie != nil {
+	if c.Token != "" {
+		req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", c.Token))
+	} else if cookie, _ := c.getCookie(); useCookie && cookie != nil {
 		c.Cookie = cookie
 		req.AddCookie(c.Cookie)
 	}

@@ -15,6 +15,7 @@ func NewRepository(canQuery bool) *repository.Repository {
 		HelmRepo:         NewHelmRepoRepository(canQuery),
 		Registry:         NewRegistryRepository(canQuery),
 		GitRepo:          NewGitRepoRepository(canQuery),
+		Invite:           NewInviteRepository(canQuery),
 		KubeIntegration:  NewKubeIntegrationRepository(canQuery),
 		BasicIntegration: NewBasicIntegrationRepository(canQuery),
 		OIDCIntegration:  NewOIDCIntegrationRepository(canQuery),

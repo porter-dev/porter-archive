@@ -27,7 +27,7 @@ type Token struct {
 	IAt       *time.Time
 }
 
-func (t *Token) GetTokenForUser(userID, projID uint) (*Token, error) {
+func GetTokenForUser(userID, projID uint) (*Token, error) {
 	if userID == 0 || projID == 0 {
 		return nil, fmt.Errorf("id cannot be 0")
 	}
@@ -43,7 +43,7 @@ func (t *Token) GetTokenForUser(userID, projID uint) (*Token, error) {
 	}, nil
 }
 
-func (t *Token) GetTokenForAPI(userID, projID uint) (*Token, error) {
+func GetTokenForAPI(userID, projID uint) (*Token, error) {
 	if userID == 0 || projID == 0 {
 		return nil, fmt.Errorf("id cannot be 0")
 	}
@@ -64,12 +64,12 @@ func (t *Token) EncodeToken(conf *TokenGeneratorConf) (string, error) {
 		"sub_kind":   t.SubKind,
 		"sub":        t.Sub,
 		"iby":        t.IBy,
-		"iat":        t.IAt.Unix(),
+		"iat":        fmt.Sprintf("%d", t.IAt.Unix()),
 		"project_id": t.ProjectID,
 	})
 
 	// Sign and get the complete encoded token as a string using the secret
-	return token.SignedString(conf.TokenSecret)
+	return token.SignedString([]byte(conf.TokenSecret))
 }
 
 func GetTokenFromEncoded(tokenString string, conf *TokenGeneratorConf) (*Token, error) {
@@ -78,30 +78,30 @@ func GetTokenFromEncoded(tokenString string, conf *TokenGeneratorConf) (*Token, 
 			return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
 		}
 
-		return conf.TokenSecret, nil
+		return []byte(conf.TokenSecret), nil
 	})
 
 	if err != nil {
-		return nil, fmt.Errorf("could not parse token")
+		return nil, fmt.Errorf("could not parse token: %v", err)
 	}
 
 	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
 		iby, err := strconv.ParseUint(fmt.Sprintf("%v", claims["iby"]), 10, 64)
 
 		if err != nil {
-			return nil, fmt.Errorf("invalid iby claim")
+			return nil, fmt.Errorf("invalid iby claim: %v", err)
 		}
 
 		projID, err := strconv.ParseUint(fmt.Sprintf("%v", claims["project_id"]), 10, 64)
 
 		if err != nil {
-			return nil, fmt.Errorf("invalid iby claim")
+			return nil, fmt.Errorf("invalid project_id claim: %v", err)
 		}
 
 		iatUnix, err := strconv.ParseInt(fmt.Sprintf("%v", claims["iat"]), 10, 64)
 
 		if err != nil {
-			return nil, fmt.Errorf("invalid iby claim")
+			return nil, fmt.Errorf("invalid iat claim: %v", err)
 		}
 
 		iat := time.Unix(iatUnix, 0)

@@ -1,10 +1,13 @@
 import React, { Component } from 'react';
+import posthog from 'posthog-js';
 import styled from 'styled-components';
 import ReactModal from 'react-modal';
+import * as FullStory from '@fullstory/browser';
 
 import { Context } from '../../shared/Context';
 import api from '../../shared/api';
-import { InfraType } from '../../shared/types';
+import { ClusterType, ProjectType } from '../../shared/types';
+import { includesCompletedInfraSet } from '../../shared/common';
 
 import Sidebar from './sidebar/Sidebar';
 import Dashboard from './dashboard/Dashboard';
@@ -12,26 +15,26 @@ import ClusterDashboard from './cluster-dashboard/ClusterDashboard';
 import Loading from '../../components/Loading';
 import Templates from './templates/Templates';
 import Integrations from "./integrations/Integrations";
-import UpdateProjectModal from './modals/UpdateProjectModal';
 import UpdateClusterModal from './modals/UpdateClusterModal';
 import ClusterInstructionsModal from './modals/ClusterInstructionsModal';
 import IntegrationsModal from './modals/IntegrationsModal';
 import IntegrationsInstructionsModal from './modals/IntegrationsInstructionsModal';
 import NewProject from './new-project/NewProject';
 import Navbar from './navbar/Navbar';
-import Provisioner from './new-project/Provisioner';
-import posthog from 'posthog-js';
-import * as FullStory from '@fullstory/browser';
+import ProvisionerStatus from './provisioner/ProvisionerStatus';
+import ProjectSettings from './project-settings/ProjectSettings';
+import ConfirmOverlay from '../../components/ConfirmOverlay';
 
 type PropsType = {
-  logOut: () => void
+  logOut: () => void,
+  currentProject: ProjectType,
+  currentCluster: ClusterType,
 };
 
 type StateType = {
   forceSidebar: boolean,
   showWelcome: boolean,
   currentView: string,
-  viewData: any[],
   forceRefreshClusters: boolean, // For updating ClusterSection from modal on deletion
 
   // Track last project id for refreshing clusters on project change
@@ -39,54 +42,49 @@ type StateType = {
   sidebarReady: boolean, // Fixes error where ~1/3 times reloading to provisioner fails
 };
 
+// TODO: Handle cluster connected but with some failed infras (no successful set)
 export default class Home extends Component<PropsType, StateType> {
   state = {
     forceSidebar: true,
     showWelcome: false,
     currentView: 'dashboard',
     prevProjectId: null as number | null,
-    viewData: null as any,
     forceRefreshClusters: false,
     sidebarReady: false,
   }
 
-  // Possibly consolidate into context (w/ ProjectSection + NewProject)
+  initializeView = () => {
+    let { currentCluster } = this.context;
+    let { currentProject } = this.props;
+    // Check if current project is provisioning
+    api.getInfra('<token>', {}, { project_id: currentProject.id }, (err: any, res: any) => {
+      if (err) {
+        console.log(err);
+        return;
+      }
+      console.log(currentCluster);
+      if (!currentCluster && !includesCompletedInfraSet(res.data)) {
+        this.setState({ currentView: 'provisioner', sidebarReady: true, });
+      } else {
+        this.setState({ currentView: 'dashboard', sidebarReady: true });
+      }
+    });
+  }
+
   getProjects = () => {
-    let { user, currentProject, projects, setProjects } = this.context;
+    let { user, setProjects } = this.context;
+    let { currentProject } = this.props;
     api.getProjects('<token>', {}, { id: user.userId }, (err: any, res: any) => {
       if (err) {
         console.log(err);
       } else if (res.data) {
-        setProjects(res.data);
-        if (res.data.length > 0 && !currentProject) {
+        if (res.data.length === 0) {
+          this.setState({ currentView: 'new-project', sidebarReady: true, });
+        } else if (res.data.length > 0 && !currentProject) {
+          setProjects(res.data);
           this.context.setCurrentProject(res.data[0]);
 
-          // Check if current project is provisioning
-          api.getInfra('<token>', {}, { project_id: res.data[0].id }, (err: any, res: any) => {
-            if (err) {
-              console.log(err);
-            } else if (res.data) {
-
-              let viewData = [] as any[]
-              // TODO: separately handle non meta-provisioning case
-              res.data.forEach((el: InfraType) => {
-                if (el.status === 'creating') {
-                  viewData.push({
-                    infra_id: el.id,
-                    kind: el.kind,
-                  });
-                }
-              });
-              
-              if (viewData.length > 0) {
-                this.setState({ currentView: 'provisioner', viewData, sidebarReady: true, });
-              } else {
-                this.setState({ sidebarReady: true });
-              }
-            }
-          });
-        } else if (res.data.length === 0) {
-          this.setState({ currentView: 'new-project', sidebarReady: true, });
+          this.initializeView();
         }
       }
     });
@@ -101,20 +99,15 @@ export default class Home extends Component<PropsType, StateType> {
     })
 
     FullStory.identify(user.email)
-
     this.getProjects();
   }
 
   componentDidUpdate(prevProps: PropsType) {
-    if (prevProps !== this.props && this.context.currentProject) {
-
-      // Set view to dashboard on project change
-      if (this.state.prevProjectId && this.state.prevProjectId !== this.context.currentProject.id) {
-        this.setState({
-          prevProjectId: this.context.currentProject.id,
-          currentView: 'dashboard'
-        });
-      }
+    if (
+      prevProps.currentProject !== this.props.currentProject
+      || prevProps.currentCluster !== this.props.currentCluster
+    ) {
+      this.initializeView();
     }
   }
 
@@ -158,22 +151,28 @@ export default class Home extends Component<PropsType, StateType> {
     } else if (currentView === 'dashboard') {
       return (
         <DashboardWrapper>
-          <Dashboard setCurrentView={(x: string) => this.setState({ currentView: x })} />
+          <Dashboard 
+            setCurrentView={(x: string) => this.setState({ currentView: x })}
+            projectId={this.context.currentProject?.id}
+          />
         </DashboardWrapper>
       );
     } else if (currentView === 'integrations') {
       return <Integrations />;
     } else if (currentView === 'new-project') {
       return (
-        <NewProject setCurrentView={(x: string, data: any ) => this.setState({ currentView: x, viewData: data })} />
+        <NewProject setCurrentView={(x: string, data: any ) => this.setState({ currentView: x })} />
       );
     } else if (currentView === 'provisioner') {
       return (
-        <Provisioner 
+        <ProvisionerStatus
           setCurrentView={(x: string) => this.setState({ currentView: x })}
-          viewData={this.state.viewData}
         />
       );
+    } else if (currentView === 'project-settings') {
+      return (
+        <ProjectSettings  setCurrentView={(x: string) => this.setState({ currentView: x })} />
+      )
     }
 
     return (
@@ -183,11 +182,11 @@ export default class Home extends Component<PropsType, StateType> {
     );
   }
 
-  setCurrentView = (x: string, viewData?: any) => {
-    if (!viewData) {
-      this.setState({ currentView: x });
+  setCurrentView = (x: string) => {
+    if (x === 'dashboard') {
+      this.initializeView();
     } else {
-      this.setState({ currentView: x, viewData });
+      this.setState({ currentView: x });
     }
   }
 
@@ -197,7 +196,7 @@ export default class Home extends Component<PropsType, StateType> {
       // Force sidebar closed on first provision
       if (this.state.currentView === 'provisioner' && this.state.forceSidebar) {
         this.setState({ forceSidebar: false });
-      } else if (this.state.sidebarReady) {
+      } else {
         return (
           <Sidebar
             forceSidebar={this.state.forceSidebar}
@@ -212,6 +211,61 @@ export default class Home extends Component<PropsType, StateType> {
     }
   }
 
+  projectOverlayCall = () => {
+    let { user, setProjects } = this.context;
+    api.getProjects('<token>', {}, { id: user.userId }, (err: any, res: any) => {
+      if (err) {
+        console.log(err)
+      } else if (res.data) {
+        setProjects(res.data);
+        if (res.data.length > 0) {
+          this.context.setCurrentProject(res.data[0]);
+        } else {
+          this.context.currentModalData.setCurrentView('new-project');
+        }
+        this.context.setCurrentModal(null, null);
+      }
+    });
+  }
+
+  handleDelete = () => {
+    let { setCurrentModal, currentProject } = this.context;
+    api.deleteProject('<token>', {}, { id: currentProject.id }, (err: any, res: any) => {
+      if (err) {
+        // console.log(err)
+      } else {
+        this.projectOverlayCall();
+      }
+    });
+
+    // Loop through and delete infra of all clusters we've provisioned
+    api.getClusters('<token>', {}, { id: currentProject.id }, (err: any, res: any) => {
+      if (err) {
+        console.log(err);
+      } else {
+        res.data.forEach((cluster: ClusterType) => {
+
+          // Handle destroying infra we've provisioned
+          if (cluster.infra_id) {
+            console.log('destroying provisioned infra...', cluster.infra_id);
+            api.destroyCluster('<token>', { eks_name: cluster.name }, { 
+              project_id: currentProject.id,
+              infra_id: cluster.infra_id,
+            }, (err: any, res: any) => {
+              if (err) {
+                console.log(err)
+              } else {
+                console.log('destroyed provisioned infra:', cluster.infra_id);
+              }
+            });
+          }
+        });
+      }
+    });
+    setCurrentModal(null, null)
+    this.setState({ currentView: 'dashboard' });
+  }
+
   render() {
     let { currentModal, setCurrentModal, currentProject } = this.context;
     return (
@@ -223,14 +277,6 @@ export default class Home extends Component<PropsType, StateType> {
           ariaHideApp={false}
         >
           <ClusterInstructionsModal />
-        </ReactModal>
-        <ReactModal
-          isOpen={currentModal === 'UpdateProjectModal'}
-          onRequestClose={() => setCurrentModal(null, null)}
-          style={ProjectModalStyles}
-          ariaHideApp={false}
-        >
-          <UpdateProjectModal />
         </ReactModal>
         <ReactModal
           isOpen={currentModal === 'UpdateClusterModal'}
@@ -268,6 +314,13 @@ export default class Home extends Component<PropsType, StateType> {
           />
           {this.renderContents()}
         </ViewWrapper>
+
+        <ConfirmOverlay
+          show={currentModal === 'UpdateProjectModal'}
+          message={(currentProject) ? `Are you sure you want to delete ${currentProject.name}?` : ''}
+          onYes={this.handleDelete}
+          onNo={() => setCurrentModal(null, null)}
+        />
       </StyledHome>
     );
   }

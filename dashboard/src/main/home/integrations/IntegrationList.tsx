@@ -8,6 +8,7 @@ import api from '../../../shared/api';
 type PropsType = {
   setCurrent: (x: any) => void,
   integrations: string[],
+  titles?: string[],
   isCategory?: boolean
 };
 
@@ -16,8 +17,32 @@ type StateType = {
 
 export default class IntegrationList extends Component<PropsType, StateType> {
   renderContents = () => {
-    let { integrations, setCurrent, isCategory } = this.props;
-    if (integrations && integrations.length > 0) {
+    let { integrations, titles, setCurrent, isCategory } = this.props;
+    if (titles && titles.length > 0) {
+      return integrations.map((integration: string, i: number) => {
+        let icon = integrationList[integration] && integrationList[integration].icon;
+        let subtitle = integrationList[integration] && integrationList[integration].label;
+        let label = titles[i];
+        let disabled = integration === 'repo' || integration === 'kubernetes';
+        return (
+          <Integration
+            key={i}
+            onClick={() => disabled ? null : setCurrent(integration)}
+            isCategory={isCategory}
+            disabled={disabled}
+          >
+            <Flex>
+              <Icon src={icon && icon} />
+              <Description>
+                <Label>{label}</Label>
+                <Subtitle>{subtitle}</Subtitle>
+              </Description>
+            </Flex>
+            <i className="material-icons">{isCategory ? 'launch' : 'more_vert'}</i>
+          </Integration>
+        );
+      });
+    } else if (integrations && integrations.length > 0) {
       return integrations.map((integration: string, i: number) => {
         let icon = integrationList[integration] && integrationList[integration].icon;
         let label = integrationList[integration] && integrationList[integration].label;
@@ -90,10 +115,25 @@ const Integration = styled.div`
   }
 `;
 
+const Description = styled.div`
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+`;
+
 const Label = styled.div`
   color: #ffffff;
   font-size: 14px;
   font-weight: 500;
+`;
+
+const Subtitle = styled.div`
+  color: #aaaabb;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  padding-top: 5px;
 `;
 
 const Icon = styled.img`

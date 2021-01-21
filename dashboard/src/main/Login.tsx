@@ -43,7 +43,7 @@ export default class Login extends Component<PropsType, StateType> {
   handleLogin = (): void => {
     let { email, password } = this.state;
     let { authenticate } = this.props;
-    let { setCurrentError, setUser } = this.context;
+    let { setUser } = this.context;
 
     // Check for valid input
     if (!emailRegex.test(email)) {
@@ -55,8 +55,9 @@ export default class Login extends Component<PropsType, StateType> {
         password: password
       }, {}, (err: any, res: any) => {
         // TODO: case and set credential error
+        console.log(res.data);
         setUser(res?.data?.id, res?.data?.email)
-        err ? setCurrentError(err.response.data.errors[0]) : authenticate();
+        err ? console.log(err) : authenticate();
       });
     }
   }

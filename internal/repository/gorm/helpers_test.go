@@ -3,6 +3,7 @@ package gorm_test
 import (
 	"os"
 	"testing"
+	"time"
 
 	"github.com/porter-dev/porter/internal/adapter"
 	"github.com/porter-dev/porter/internal/config"
@@ -23,6 +24,7 @@ type tester struct {
 	initClusters []*models.Cluster
 	initHRs      []*models.HelmRepo
 	initInfras   []*models.Infra
+	initInvites  []*models.Invite
 	initCCs      []*models.ClusterCandidate
 	initKIs      []*ints.KubeIntegration
 	initBasics   []*ints.BasicIntegration
@@ -58,6 +60,7 @@ func setupTestEnv(tester *tester, t *testing.T) {
 		&models.ClusterCandidate{},
 		&models.ClusterResolver{},
 		&models.Infra{},
+		&models.Invite{},
 		&ints.KubeIntegration{},
 		&ints.BasicIntegration{},
 		&ints.OIDCIntegration{},
@@ -456,4 +459,29 @@ func initInfra(tester *tester, t *testing.T) {
 	}
 
 	tester.initInfras = append(tester.initInfras, infra)
+}
+
+func initInvite(tester *tester, t *testing.T) {
+	t.Helper()
+
+	if len(tester.initProjects) == 0 {
+		initProject(tester, t)
+	}
+
+	expiry := time.Now().Add(24 * time.Hour)
+
+	invite := &models.Invite{
+		Token:     "abcd",
+		Expiry:    &expiry,
+		Email:     "testing@test.it",
+		ProjectID: 1,
+	}
+
+	invite, err := tester.repo.Invite.CreateInvite(invite)
+
+	if err != nil {
+		t.Fatalf("%v\n", err)
+	}
+
+	tester.initInvites = append(tester.initInvites, invite)
 }

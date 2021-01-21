@@ -3,17 +3,19 @@ import styled from 'styled-components';
 import category from '../../../assets/category.svg';
 import integrations from '../../../assets/integrations.svg';
 import filter from '../../../assets/filter.svg';
+import settings from '../../../assets/settings.svg';
 
 import { Context } from '../../../shared/Context';
 
 import ClusterSection from './ClusterSection';
 import ProjectSectionContainer from './ProjectSectionContainer';
 import loading from '../../../assets/loading.gif';
+import posthog from 'posthog-js';
 
 type PropsType = {
   forceSidebar: boolean,
   setWelcome: (x: boolean) => void,
-  setCurrentView: (x: string, viewData?: any) => void,
+  setCurrentView: (x: string) => void,
   currentView: string,
   forceRefreshClusters: boolean,
   setRefreshClusters: (x: boolean) => void,
@@ -92,39 +94,46 @@ export default class Sidebar extends Component<PropsType, StateType> {
   };
 
   renderProjectContents = () => {
-    if (this.props.currentView === 'provisioner') {
-      return (
-        <ProjectPlaceholder>
-          <img src={loading} /> Creating . . .
-        </ProjectPlaceholder>
-      )
-    } else if (this.context.currentProject) {
+    let { currentView, setCurrentView } = this.props;
+    let { currentProject, setCurrentModal } = this.context;
+    if (currentProject) {
       return (
         <>
           <SidebarLabel>Home</SidebarLabel>
           <NavButton
-            onClick={() => this.props.setCurrentView('dashboard')}
-            selected={this.props.currentView === 'dashboard'}
+            onClick={() => (currentView !== 'provisioner') && setCurrentView('dashboard')}
+            selected={currentView === 'dashboard' || currentView === 'provisioner'}
           >
-            <img src={category} />
+            <Img src={category} />
             Dashboard
           </NavButton>
           <NavButton
-            onClick={() => this.props.setCurrentView('templates')}
-            selected={this.props.currentView === 'templates'}
+            onClick={() => setCurrentView('templates')}
+            selected={currentView === 'templates'}
           >
-            <img src={filter} />
+            <Img src={filter} />
             Templates
           </NavButton>
           <NavButton
-            selected={this.props.currentView === 'integrations'}
+            selected={currentView === 'integrations'}
             onClick={() => {
-              this.context.setCurrentModal('IntegrationsInstructionsModal', {})
+              setCurrentModal('IntegrationsInstructionsModal', {})
             }}
           >
-            <img src={integrations} />
+            <Img src={integrations} />
             Integrations
           </NavButton>
+          {this.context.currentProject.roles.filter((obj: any) => {
+            return obj.user_id === this.context.user.userId;
+          })[0].kind === 'admin' &&
+            <NavButton
+              onClick={() => this.props.setCurrentView('project-settings')}
+              selected={this.props.currentView === 'project-settings'}
+            >
+              <Img enlarge={true} src={settings} />
+              Settings
+            </NavButton>
+          }
 
           <br />
 
@@ -133,9 +142,9 @@ export default class Sidebar extends Component<PropsType, StateType> {
             forceCloseDrawer={this.state.forceCloseDrawer} 
             releaseDrawer={() => this.setState({ forceCloseDrawer: false })}
             setWelcome={this.props.setWelcome}
-            currentView={this.props.currentView}
-            setCurrentView={this.props.setCurrentView}
-            isSelected={this.props.currentView === 'cluster-dashboard'}
+            currentView={currentView}
+            setCurrentView={setCurrentView}
+            isSelected={currentView === 'cluster-dashboard'}
             forceRefreshClusters={this.props.forceRefreshClusters}
             setRefreshClusters={this.props.setRefreshClusters}
           />
@@ -154,7 +163,7 @@ export default class Sidebar extends Component<PropsType, StateType> {
   // SidebarBg is separate to cover retracted drawer
   render() {
     return (
-      <div>
+      <>
         {this.renderPullTab()}
         <StyledSidebar showSidebar={this.state.showSidebar}>
           <SidebarBg />
@@ -175,7 +184,7 @@ export default class Sidebar extends Component<PropsType, StateType> {
 
           {this.renderProjectContents()}
         </StyledSidebar>
-      </div>
+      </>
     );
   }
 }
@@ -231,16 +240,16 @@ const NavButton = styled.div`
     left: 19px;
     top: 8px;
   }
+`;
 
-  > img {
-    padding: 4px 4px;
-    height: 23px;
-    width: 23px;
-    border-radius: 3px;
-    position: absolute;
-    left: 20px;
-    top: 9px;
-  }
+const Img = styled.img<{ enlarge?: boolean }>`
+  padding: 4px 4px;
+  height: ${props => props.enlarge ? '27px' : '23px'};
+  width: ${props => props.enlarge ? '27px' : '23px'};
+  border-radius: 3px;
+  position: absolute;
+  left: ${props => props.enlarge ? '19px' : '20px'};
+  top: 9px;
 `;
 
 const BottomSection = styled.div`

@@ -8,6 +8,7 @@ import { InfraType } from '../../../shared/types';
 import Helper from '../../../components/values-form/Helper';
 import AWSFormSection from './AWSFormSection';
 import GCPFormSection from './GCPFormSection';
+import DOFormSection from './DOFormSection';
 import SaveButton from '../../../components/SaveButton';
 import ExistingClusterSection from './ExistingClusterSection';
 
@@ -100,7 +101,16 @@ export default class NewProject extends Component<PropsType, StateType> {
           />
         );
       case 'do':
-        return <h1>most</h1>;
+        return (
+          <DOFormSection 
+            handleError={this.handleError}
+            projectName={projectName}
+            infras={infras}
+            setSelectedProvisioner={(x: string | null) => {
+              this.setState({ selectedProvider: x });
+            }}
+          />
+        )
       default:
         return (
           <ExistingClusterSection 
@@ -119,8 +129,10 @@ export default class NewProject extends Component<PropsType, StateType> {
     return (
       <StyledProvisionerSettings>
         <Helper>
-          Need a cluster? Provision through Porter: 
-          {isInNewProject && <Required>*</Required>}
+          {isInNewProject 
+            ? <>Select your hosting backend:<Required>*</Required></>
+            : 'Need a cluster? Provision through Porter:'
+          }
         </Helper>
         {!selectedProvider ? (
           <BlockList>

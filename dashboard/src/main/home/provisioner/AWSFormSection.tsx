@@ -50,7 +50,7 @@ export default class AWSFormSection extends Component<PropsType, StateType> {
 
     if (infras) {
       
-      // From the dashboard, only uncheck if "creating" or "created"
+      // From the dashboard, only uncheck and disable if "creating" or "created"
       let filtered = selectedInfras;
       infras.forEach(
         (infra: InfraType, i: number) => {

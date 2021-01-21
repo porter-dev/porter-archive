@@ -7,8 +7,10 @@ import ansiparse from '../../../shared/ansiparser'
 import loading from '../../../assets/loading.gif';
 import warning from '../../../assets/warning.png';
 import { InfraType } from '../../../shared/types';
+import { filterOldInfras } from '../../../shared/common';
 
 import Helper from '../../../components/values-form/Helper';
+import InfraStatuses from './InfraStatuses';
 
 type PropsType = {
   setCurrentView: (x: string) => void,
@@ -21,7 +23,16 @@ type StateType = {
   maxStep : Record<string, number>,
   currentStep: Record<string, number>,
   triggerEnd: boolean,
+  infras: InfraType[],
 };
+
+const dummyInfras = [
+  { kind: 'ecr', status: 'creating', id: 5, project_id: 1 }, 
+  { kind: 'eks', status: 'error', id: 3, project_id: 1 },
+  { kind: 'eks', status: 'error', id: 1, project_id: 1 },
+  { kind: 'eks', status: 'error', id: 4, project_id: 1 },
+  { kind: 'ecr', status: 'created', id: 2, project_id: 1 },
+];
 
 export default class Provisioner extends Component<PropsType, StateType> {
   state = {
@@ -31,6 +42,44 @@ export default class Provisioner extends Component<PropsType, StateType> {
     maxStep: {} as Record<string, any>,
     currentStep: {} as Record<string, number>,
     triggerEnd: false,
+    infras: [] as InfraType[],
+  }
+
+  componentDidMount() {
+    let { currentProject } = this.context;
+    let protocol = process.env.NODE_ENV == 'production' ? 'wss' : 'ws'
+
+    // Check if current project is provisioning
+    api.getInfra('<token>', {}, { 
+      project_id: currentProject.id 
+    }, (err: any, res: any) => {
+      if (err) {
+        console.log(err);
+      } 
+      let infras = filterOldInfras(res.data);
+      let error = false;
+      infras.forEach((infra: InfraType, i: number) => {
+        if (infra.status === 'error') {
+          error = true;
+        }
+      });
+
+      // Filter historical infras list for most current instances of each
+      let websockets = infras.map((infra: any) => {
+        let ws = new WebSocket(`${protocol}://${process.env.API_SERVER}/api/projects/${currentProject.id}/provision/${infra.kind}/${infra.infra_id}/logs`)
+        return this.setupWebsocket(ws, infra)
+      });
+  
+      this.setState({ error, infras, websockets, logs: ["Provisioning resources..."] });
+    });
+  }
+
+  componentWillUnmount() {
+    if (!this.state.websockets) { return; }
+
+    this.state.websockets.forEach((ws: any) => {
+      ws.close()
+    })
   }
 
   scrollToBottom = () => {
@@ -125,80 +174,19 @@ export default class Provisioner extends Component<PropsType, StateType> {
     return ws
   }
 
-  componentDidMount() {
-    let { currentProject } = this.context;
-    let protocol = process.env.NODE_ENV == 'production' ? 'wss' : 'ws'
-
-    // Check if current project is provisioning
-    api.getInfra('<token>', {}, { project_id: currentProject.id }, (err: any, res: any) => {
-      if (err) {
-        console.log(err);
-      } else if (res.data) {
-
-        let viewData = [] as any[]
-        console.log('do stuff')
-      }
-    });
-    let viewData = [] as InfraType[];
-
-    let websockets = viewData.map((infra: any) => {
-      let ws = new WebSocket(`${protocol}://${process.env.API_SERVER}/api/projects/${currentProject.id}/provision/${infra.kind}/${infra.infra_id}/logs`)
-      return this.setupWebsocket(ws, infra)
-    });
-
-    this.setState({ websockets, logs: ["Provisioning EKS cluster and ECR registry..."] });
-  }
-
-  componentWillUnmount() {
-    if (!this.state.websockets) { return; }
-
-    this.state.websockets.forEach((ws: any) => {
-      ws.close()
-    })
-  }
-
   scrollRef = React.createRef<HTMLDivElement>();
 
   renderLogs = () => {
     return this.state.logs.map((log, i) => {
-      return <Log key={i}>{log}</Log>
+      return <Log key={i}>{log}</Log>;
     });
-  }
-
-  renderHeadingSection = () => {
-    if (this.state.error) {
-      return (
-        <>
-          <TitleSection>
-            <Title><img src={warning} /> Provisioning Error</Title>
-          </TitleSection>
-
-          <Helper>
-            Porter encountered an error while provisioning.
-            <Link onClick={() => this.props.setCurrentView('dashboard')}>
-              Exit to dashboard
-            </Link> 
-            to try again with new credentials.
-          </Helper>
-        </>
-      );
-    }
-
-    return (
-      <>
-        <TitleSection>
-          <Title><img src={loading} /> Setting Up Porter</Title>
-        </TitleSection>
-        <Helper>
-          Porter is currently being provisioned to your AWS account:
-        </Helper>
-      </>
-    )
   }
 
   onEnd = () => {
     let myInterval = setInterval(() => {
-      api.getClusters('<token>', {}, { id: this.context.currentProject.id }, (err: any, res: any) => {
+      api.getClusters('<token>', {}, { 
+        id: this.context.currentProject.id 
+      }, (err: any, res: any) => {
         if (err) {
           console.log(err);
         } else if (res.data) {
@@ -213,6 +201,9 @@ export default class Provisioner extends Component<PropsType, StateType> {
   }
   
   render() {
+    let { error, triggerEnd, infras } = this.state;
+    let { setCurrentView } = this.props;
+    
     let maxStep = 0;
     let currentStep = 0;
 
@@ -228,23 +219,55 @@ export default class Provisioner extends Component<PropsType, StateType> {
       }
     }
 
-    if (maxStep !== 0 && currentStep === maxStep && !this.state.triggerEnd) {
+    if (maxStep !== 0 && currentStep === maxStep && !triggerEnd) {
       this.onEnd()
       this.setState({ triggerEnd: true });
     }
 
     return (
       <StyledProvisioner>
-        {this.renderHeadingSection()}
-
+        {error 
+          ? (
+            <>
+              <TitleSection>
+                <Title><img src={warning} /> Provisioning Error</Title>
+              </TitleSection>
+    
+              <Helper>
+                Porter encountered an error while provisioning.
+                <Link onClick={() => setCurrentView('dashboard')}>
+                  Exit to dashboard
+                </Link> 
+                to try again with new credentials.
+              </Helper>
+            </>
+          ) : (
+            <>
+              <TitleSection>
+                <Title><img src={loading} /> Setting Up Porter</Title>
+              </TitleSection>
+              <Helper>
+                Porter is currently provisioning resources in your cloud provider:
+              </Helper>
+            </>
+          )
+        }
+      
         <LoadingBar>
-          <Loaded progress={((currentStep / (maxStep == 0 ? 1 : maxStep)) * 100).toString() + '%'} />
+          <Loaded 
+            progress={
+              error ? (
+                '0%'
+              ) : (
+                (((currentStep / (maxStep == 0 ? 1 : maxStep)) * 100).toString() + '%')
+              )
+            }
+          />
         </LoadingBar>
+        <InfraStatuses infras={infras} />
 
         <LogStream ref={this.scrollRef}>
-          <Wrapper>
-            {this.renderLogs()}
-          </Wrapper>
+          <Wrapper>{this.renderLogs()}</Wrapper>
         </LogStream>
 
         <Helper>
@@ -282,7 +305,7 @@ const Log = styled.div`
 
 const LogStream = styled.div`
   height: 300px;
-  margin-top: 30px;
+  margin-top: 20px;
   font-size: 13px;
   border: 2px solid #ffffff55;
   border-radius: 10px;
@@ -301,8 +324,8 @@ const Message = styled.div`
   font-size: 13px;
 `;
 
-const Loaded = styled.div`
-  width: ${(props: { progress: string }) => props.progress};
+const Loaded = styled.div<{ progress: string }>`
+  width: ${props => props.progress};
   height: 100%;
   background: linear-gradient(to right, #4f8aff, #8e7dff, #4f8aff);
   background-size: 400% 400%;

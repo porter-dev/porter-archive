@@ -7,7 +7,7 @@ import { ProjectType, InfraType } from '../../../shared/types';
 
 type PropsType = {
   currentProject: ProjectType,
-  setCurrentView: (x: string, viewData?: any) => void,
+  setCurrentView: (x: string) => void,
   projects: ProjectType[],
 };
 

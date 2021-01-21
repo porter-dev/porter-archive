@@ -5,7 +5,7 @@ import ReactModal from 'react-modal';
 
 import { Context } from '../../shared/Context';
 import api from '../../shared/api';
-import { ProjectType } from '../../shared/types';
+import { ClusterType, ProjectType } from '../../shared/types';
 import { includesCompletedInfraSet } from '../../shared/common';
 
 import Sidebar from './sidebar/Sidebar';
@@ -27,13 +27,13 @@ import ProjectSettings from './project-settings/ProjectSettings';
 type PropsType = {
   logOut: () => void,
   currentProject: ProjectType,
+  currentCluster: ClusterType,
 };
 
 type StateType = {
   forceSidebar: boolean,
   showWelcome: boolean,
   currentView: string,
-  viewData: any[],
   forceRefreshClusters: boolean, // For updating ClusterSection from modal on deletion
 
   // Track last project id for refreshing clusters on project change
@@ -48,7 +48,6 @@ export default class Home extends Component<PropsType, StateType> {
     showWelcome: false,
     currentView: 'dashboard',
     prevProjectId: null as number | null,
-    viewData: null as any,
     forceRefreshClusters: false,
     sidebarReady: false,
   }
@@ -62,6 +61,7 @@ export default class Home extends Component<PropsType, StateType> {
         console.log(err);
         return;
       }
+      console.log(currentCluster);
       if (!currentCluster && !includesCompletedInfraSet(res.data)) {
         this.setState({ currentView: 'provisioner', sidebarReady: true, });
       } else {
@@ -100,7 +100,10 @@ export default class Home extends Component<PropsType, StateType> {
   }
 
   componentDidUpdate(prevProps: PropsType) {
-    if (prevProps.currentProject !== this.props.currentProject) {
+    if (
+      prevProps.currentProject !== this.props.currentProject
+      || prevProps.currentCluster !== this.props.currentCluster
+    ) {
       this.initializeView();
     }
   }
@@ -155,7 +158,7 @@ export default class Home extends Component<PropsType, StateType> {
       return <Integrations />;
     } else if (currentView === 'new-project') {
       return (
-        <NewProject setCurrentView={(x: string, data: any ) => this.setState({ currentView: x, viewData: data })} />
+        <NewProject setCurrentView={(x: string, data: any ) => this.setState({ currentView: x })} />
       );
     } else if (currentView === 'provisioner') {
       return (
@@ -176,11 +179,11 @@ export default class Home extends Component<PropsType, StateType> {
     );
   }
 
-  setCurrentView = (x: string, viewData?: any) => {
-    if (!viewData) {
-      this.setState({ currentView: x });
+  setCurrentView = (x: string) => {
+    if (x === 'dashboard') {
+      this.initializeView();
     } else {
-      this.setState({ currentView: x, viewData });
+      this.setState({ currentView: x });
     }
   }
 

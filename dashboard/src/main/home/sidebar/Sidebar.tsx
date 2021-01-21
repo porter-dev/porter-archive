@@ -15,7 +15,7 @@ import posthog from 'posthog-js';
 type PropsType = {
   forceSidebar: boolean,
   setWelcome: (x: boolean) => void,
-  setCurrentView: (x: string, viewData?: any) => void,
+  setCurrentView: (x: string) => void,
   currentView: string,
   forceRefreshClusters: boolean,
   setRefreshClusters: (x: boolean) => void,
@@ -101,7 +101,7 @@ export default class Sidebar extends Component<PropsType, StateType> {
         <>
           <SidebarLabel>Home</SidebarLabel>
           <NavButton
-            onClick={() => setCurrentView('dashboard')}
+            onClick={() => (currentView !== 'provisioner') && setCurrentView('dashboard')}
             selected={currentView === 'dashboard' || currentView === 'provisioner'}
           >
             <Img src={category} />

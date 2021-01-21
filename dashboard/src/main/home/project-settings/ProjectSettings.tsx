@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import styled from 'styled-components';
 
-import gradient from '../../../assets/gradient.jpg';
+import InviteList from './InviteList';
 
 import { Context } from '../../../shared/Context';
 
@@ -10,12 +10,17 @@ type PropsType = {
 }
 
 type StateType = {
-  inviteLink: string,
+  projectName: string,
 }
 
 export default class ProjectSettings extends Component<PropsType, StateType> {
   state = {
-    inviteLink: 'https://asdjfijawioejfialawe.awef.awejiofawjefkajweilfjioawjfli/ajfwieofjaiowejfklajwle/fjawieofaw',
+    projectName: '',
+  }
+
+  componentDidMount() {
+    let { currentProject, user } = this.context;
+    this.setState({ projectName: currentProject.name });
   }
 
   renderTitle = () => {
@@ -24,44 +29,12 @@ export default class ProjectSettings extends Component<PropsType, StateType> {
       return (
         <>
           <TitleSection>
-            <DashboardIcon>
-              <DashboardImage src={gradient} />
-              <Overlay>{currentProject.name[0].toUpperCase()}</Overlay>
-            </DashboardIcon>
-            <Title>{currentProject.name} Settings</Title>
+            <Title>Project Settings</Title>
           </TitleSection>
           <LineBreak />
         </>
       );
     }
-  }
-
-  copyToClip = () => {
-    navigator.clipboard.writeText(this.state.inviteLink).then(function() {
-    }, function() {
-      console.log("couldn't copy link to clipboard");
-    })
-  }
-
-  renderCollab = () => {
-    return (
-      <>
-        <Subtitle>Manage Access</Subtitle>
-        <Rower>
-          <ShareLink
-            disabled={true}
-            type='string'
-            value={this.state.inviteLink}
-            placeholder='no link available'
-          />
-          <CopyButton
-            onClick={() => this.copyToClip()}
-          >
-            Copy Link:
-          </CopyButton>
-        </Rower>
-      </>
-    )
   }
 
   renderDelete = () => {
@@ -91,7 +64,7 @@ export default class ProjectSettings extends Component<PropsType, StateType> {
   renderContents = () => {
     return (
       <ContentHolder>
-          {this.renderCollab()}
+          <InviteList />
           {this.renderDelete()}
       </ContentHolder>
     )
@@ -109,43 +82,6 @@ export default class ProjectSettings extends Component<PropsType, StateType> {
 
 ProjectSettings.contextType = Context;
 
-const Overlay = styled.div`
-  height: 100%;
-  width: 100%;
-  position: absolute;
-  background: #00000028;
-  top: 0;
-  left: 0;
-  border-radius: 5px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 24px;
-  font-weight: 500;
-  font-family: 'Work Sans', sans-serif;
-  color: white;
-`;
-
-const DashboardImage = styled.img`
-  height: 45px;
-  width: 45px;
-  border-radius: 5px;
-`;
-
-const DashboardIcon = styled.div`
-  position: relative;
-  height: 45px;
-  width: 45px;
-  border-radius: 5px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  > i {
-    font-size: 22px;
-  }
-`;
-
 const Title = styled.div`
   font-size: 24px;
   font-weight: 600;
@@ -154,7 +90,6 @@ const Title = styled.div`
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  margin-left: 20px;
 `;
 
 const TitleSection = styled.div`
@@ -232,25 +167,11 @@ const DeleteButton = styled(CopyButton)`
 const ContentHolder = styled.div`
   min-width: 420px;
   width: 100%;
+  margin-bottom: 55px;
 `;
 
 const Rower = styled.div`
   display: flex;
   flex-direction: row;
   align-items: center;
-`;
-
-const ShareLink = styled.input`
-  outline: none;
-  border: none;
-  font-size: 13px;
-  background: #ffffff11;
-  border: 1px solid #ffffff55;
-  border-radius: 3px;
-  width: 100%;
-  color: #74a5f7;
-  padding: 5px 10px;
-  margin-right: 8px;
-  height: 30px;
-  text-overflow: ellipsis;
 `;

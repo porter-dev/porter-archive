@@ -127,13 +127,17 @@ export default class Sidebar extends Component<PropsType, StateType> {
             <img src={integrations} />
             Integrations
           </NavButton>
-          <NavButton
-            onClick={() => this.props.setCurrentView('project-settings')}
-            selected={this.props.currentView === 'project-settings'}
-          >
-            <img src={settings} />
-            Settings
-          </NavButton>
+          {this.context.currentProject.roles.filter((obj: any) => {
+            return obj.user_id === this.context.user.userId;
+          })[0].kind === 'admin' &&
+            <NavButton
+              onClick={() => this.props.setCurrentView('project-settings')}
+              selected={this.props.currentView === 'project-settings'}
+            >
+              <img src={settings} />
+              Settings
+            </NavButton>
+          }
 
           <br />
 

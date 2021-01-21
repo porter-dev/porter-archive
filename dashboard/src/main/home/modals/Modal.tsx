@@ -11,11 +11,28 @@ type StateType = {
 }
 
 export default class Modal extends Component<PropsType, StateType> {
+  wrapperRef: any = React.createRef();
+
+  componentDidMount() {
+    document.addEventListener('mousedown', this.handleClickOutside.bind(this));
+  }
+
+  componentWillUnmount() {
+    document.removeEventListener('mousedown', this.handleClickOutside.bind(this));
+  }
+
+  handleClickOutside = (event: any) => {
+    if (this.wrapperRef && !this.wrapperRef.current.contains(event.target)) {
+      this.props.onRequestClose();
+    }
+  }
+
   render() {
     let { width, height } = this.props;
     return (
       <Overlay>
         <StyledModal
+          ref={this.wrapperRef}
           width={width}
           height={height}
         >
@@ -52,4 +69,13 @@ const StyledModal = styled.div`
   background-color: #202227;
   overflow: visible;
   padding: 25px 32px;
+  animation: floatInModal 0.5s 0s;
+  @keyframes floatInModal {
+    from {
+      opacity: 0; transform: translateY(30px);
+    }
+    to {
+      opacity: 1; transform: translateY(0px);
+    }
+  }
 `;

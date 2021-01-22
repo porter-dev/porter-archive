@@ -7,7 +7,7 @@ import api from '../../../shared/api';
 import { Context } from '../../../shared/Context';
 import { ProjectType, InfraType } from '../../../shared/types';
 
-import InputRow from '../../../components/values-form/InputRow';
+import SelectRow from '../../../components/values-form/SelectRow';
 import Helper from '../../../components/values-form/Helper';
 import Heading from '../../../components/values-form/Heading';
 import SaveButton from '../../../components/SaveButton';
@@ -22,6 +22,8 @@ type PropsType = {
 
 type StateType = {
   selectedInfras: { value: string, label: string }[],
+  subscriptionTier: string,
+  doRegion: string,
 };
 
 const provisionOptions = [
@@ -29,10 +31,31 @@ const provisionOptions = [
   { value: 'doks', label: 'Digital Ocean Kubernetes Service' },
 ];
 
+const tierOptions = [
+  { value: 'basic', label: 'Basic' },
+  { value: 'starter', label: 'Starter' },
+  { value: 'professional', label: 'Professional' },
+];
+
+const regionOptions = [
+  { value: 'ams3', label: 'Amsterdam 3' },
+  { value: 'blr1', label: 'Bangalore 1' },
+  { value: 'fra1', label: 'Frankfurt 1' },
+  { value: 'lon1', label: 'London 1' },
+  { value: 'nyc1', label: 'New York 1' },
+  { value: 'nyc3', label: 'New York 3' },
+  { value: 'sfo2', label: 'San Francisco 2' },
+  { value: 'sfo3', label: 'San Francisco 3' },
+  { value: 'sgp1', label: 'Singapore 1' },
+  { value: 'tor1', label: 'Toronto 1' },
+];
+
 // TODO: Consolidate across forms w/ HOC
 export default class DOFormSection extends Component<PropsType, StateType> {
   state = {
     selectedInfras: [...provisionOptions],
+    subscriptionTier: 'starter',
+    doRegion: 'nyc1',
   }
 
   componentDidMount = () => {
@@ -100,10 +123,20 @@ export default class DOFormSection extends Component<PropsType, StateType> {
           }
           setProjects(res.data);
           setCurrentProject(proj);
-          callback && callback();
+          callback && callback(proj.id);
         });
       }
     });
+  }
+
+  doRedirect = (projectId: number) => {
+    let { subscriptionTier, doRegion, selectedInfras } = this.state;
+    let redirectUrl = `/api/oauth/projects/${projectId}/digitalocean?project_id=${projectId}&provision=do`;
+    redirectUrl += `&tier=${subscriptionTier}&region=${doRegion}`;
+    selectedInfras.forEach((option: { value: string, label: string }) => {
+      redirectUrl += `&infras=${option.value}`;
+    });
+    window.location.href = redirectUrl;
   }
 
   // TODO: handle generically (with > 2 steps)
@@ -113,19 +146,15 @@ export default class DOFormSection extends Component<PropsType, StateType> {
     let { currentProject } = this.context;
 
     if (!projectName) {
-      window.location.href = `/api/oauth/projects/${currentProject.id}/digitalocean`;
+      this.doRedirect(currentProject.id);
     } else {
-      this.createProject(() => {
-        window.location.href = `/api/oauth/projects/${currentProject.id}/digitalocean`;
-      });
+      this.createProject((projectId: number) => this.doRedirect(projectId));
     }
   }
 
   render() {
     let { setSelectedProvisioner } = this.props;
-    let {
-      selectedInfras,
-    } = this.state;
+    let { selectedInfras, subscriptionTier, doRegion } = this.state;
 
     return (
       <StyledAWSFormSection>
@@ -133,7 +162,24 @@ export default class DOFormSection extends Component<PropsType, StateType> {
           <CloseButton onClick={() => setSelectedProvisioner(null)}>
             <CloseButtonImg src={close} />
           </CloseButton>
-          <Heading isAtTop={true}>DigitalOcean Resources</Heading>
+          <Heading isAtTop={true}>DigitalOcean Settings</Heading>
+          <SelectRow
+            options={tierOptions}
+            width='100%'
+            value={subscriptionTier}
+            setActiveValue={(x: string) => this.setState({ subscriptionTier: x })}
+            label='💰 Subscription Tier'
+          />
+          <SelectRow
+            options={regionOptions}
+            width='100%'
+            dropdownMaxHeight='240px'
+            value={doRegion}
+            setActiveValue={(x: string) => this.setState({ doRegion: x })}
+            label='📍 DigitalOcean Region'
+          />
+          <Br />
+          <Heading>DigitalOcean Resources</Heading>
           <Helper>Porter will provision the following DigitalOcean resources</Helper>
           <CheckboxList
             options={provisionOptions}

@@ -2,7 +2,6 @@ import React, { Component } from 'react';
 import posthog from 'posthog-js';
 import styled from 'styled-components';
 import ReactModal from 'react-modal';
-import * as FullStory from '@fullstory/browser';
 
 import { Context } from '../../shared/Context';
 import api from '../../shared/api';
@@ -91,22 +90,17 @@ export default class Home extends Component<PropsType, StateType> {
   }
 
   componentDidMount() {
-    console.log('newest release')
     let { user } = this.context;
     window.location.href.indexOf('127.0.0.1') === -1 && posthog.init(process.env.POSTHOG_API_KEY, {
       api_host: process.env.POSTHOG_HOST,
-      loaded: function(posthog) { posthog.identify(user.email) }
+      loaded: function(posthog: any) { posthog.identify(user.email) }
     })
 
-    FullStory.identify(user.email)
     this.getProjects();
   }
 
   componentDidUpdate(prevProps: PropsType) {
-    if (
-      prevProps.currentProject !== this.props.currentProject
-      || prevProps.currentCluster !== this.props.currentCluster
-    ) {
+    if (prevProps.currentProject !== this.props.currentProject) {
       this.initializeView();
     }
   }

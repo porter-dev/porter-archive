@@ -56,6 +56,8 @@ export const baseApi = <T extends {}, S = {}>(requestType: string, endpoint: ((p
         }
       })
       .then(res => {
+        console.log('from axio')
+        console.log(res.data);
         callback && callback(null, res);
       })
       .catch(err => {

@@ -45,7 +45,11 @@ func (app *App) HandleCreateUser(w http.ResponseWriter, r *http.Request) {
 
 	if err == nil {
 		app.Logger.Info().Msgf("New user created: %d", user.ID)
-		redirect := session.Values["redirect"]
+		var redirect string
+
+		if valR := session.Values["redirect"]; valR != nil {
+			redirect = session.Values["redirect"].(string)
+		}
 
 		session.Values["authenticated"] = true
 		session.Values["user_id"] = user.ID
@@ -53,14 +57,9 @@ func (app *App) HandleCreateUser(w http.ResponseWriter, r *http.Request) {
 		session.Values["redirect"] = ""
 		session.Save(r, w)
 
-		if val, ok := redirect.(string); ok && val != "" {
-			http.Redirect(w, r, val, 302)
-			return
-		}
-
 		w.WriteHeader(http.StatusCreated)
 
-		if err := app.sendUser(w, user.ID, user.Email); err != nil {
+		if err := app.sendUser(w, user.ID, user.Email, redirect); err != nil {
 			app.handleErrorFormDecoding(err, ErrUserDecode, w)
 			return
 		}
@@ -80,7 +79,7 @@ func (app *App) HandleAuthCheck(w http.ResponseWriter, r *http.Request) {
 	email, _ := session.Values["email"].(string)
 	w.WriteHeader(http.StatusOK)
 
-	if err := app.sendUser(w, userID, email); err != nil {
+	if err := app.sendUser(w, userID, email, ""); err != nil {
 		app.handleErrorFormDecoding(err, ErrUserDecode, w)
 		return
 	}
@@ -122,7 +121,11 @@ func (app *App) HandleLoginUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	redirect := session.Values["redirect"]
+	var redirect string
+
+	if valR := session.Values["redirect"]; valR != nil {
+		redirect = session.Values["redirect"].(string)
+	}
 
 	// Set user as authenticated
 	session.Values["authenticated"] = true
@@ -134,14 +137,9 @@ func (app *App) HandleLoginUser(w http.ResponseWriter, r *http.Request) {
 		app.Logger.Warn().Err(err)
 	}
 
-	if val, ok := redirect.(string); ok && val != "" {
-		http.Redirect(w, r, val, 302)
-		return
-	}
+	w.WriteHeader(http.StatusOK)
 
-	w.WriteHeader(http.StatusCreated)
-
-	if err := app.sendUser(w, storedUser.ID, storedUser.Email); err != nil {
+	if err := app.sendUser(w, storedUser.ID, storedUser.Email, redirect); err != nil {
 		app.handleErrorFormDecoding(err, ErrUserDecode, w)
 		return
 	}
@@ -342,11 +340,19 @@ func doesUserExist(repo *repository.Repository, user *models.User) *HTTPError {
 	return nil
 }
 
-func (app *App) sendUser(w http.ResponseWriter, userID uint, email string) error {
-	resUser := &models.UserExternal{
-		ID:    userID,
-		Email: email,
+type SendUserExt struct {
+	ID       uint   `json:"id"`
+	Email    string `json:"email"`
+	Redirect string `json:"redirect,omitempty"`
+}
+
+func (app *App) sendUser(w http.ResponseWriter, userID uint, email, redirect string) error {
+	resUser := &SendUserExt{
+		ID:       userID,
+		Email:    email,
+		Redirect: redirect,
 	}
+
 	if err := json.NewEncoder(w).Encode(resUser); err != nil {
 		return err
 	}

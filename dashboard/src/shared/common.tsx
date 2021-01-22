@@ -1,6 +1,16 @@
 import aws from '../assets/aws.png';
 import digitalOcean from '../assets/do.png';
 import gcp from '../assets/gcp.png';
+import { InfraType } from '../shared/types';
+
+export const infraNames: any = {
+  'ecr': 'Elastic Container Registry (ECR)',
+  'eks': 'Elastic Kubernetes Service (EKS)',
+  'gcr': 'Google Container Registry (GCR)',
+  'gke': 'Google Kubernetes Engine (GKE)',
+  'docr': 'Digital Ocean Container Registry',
+  'doks': 'Digital Ocean Kubernetes Service'
+};
 
 export const integrationList: any = {
   'kubernetes': {
@@ -56,8 +66,64 @@ export const integrationList: any = {
   }
 };
 
+export const isAlphanumeric = (x: string | null) => {
+  let re = /^[a-z0-9-]+$/;
+  if (!x || x.length == 0 || x.search(re) === -1) {
+    return false;
+  }
+  return true;
+}
+
 export const getIgnoreCase = (object: any, key: string) => {
   return object[Object.keys(object)
     .find(k => k.toLowerCase() === key.toLowerCase())
   ];
+}
+
+export const includesCompletedInfraSet = (infras: InfraType[]): boolean => {
+  if (infras.length === 0) {
+    return false;
+  }
+
+  let infraSets = [
+    ['ecr', 'eks'],
+    ['gcr', 'gke'],
+    ['docr', 'doks']
+  ];
+
+  let completed = [] as string[];
+  infras.forEach((infra: InfraType, i: number) => {
+    if (infra.status === 'created') {
+      completed.push(infra.kind);
+    }
+  });
+
+  completed.forEach((kind: string, i: number) => {
+    infraSets.forEach((infraSet: string[], i: number) => {
+      infraSet.includes(kind) && infraSet.splice(infraSet.indexOf(kind), 1);
+    });
+  });
+
+  let anyCompleted = false;
+  infraSets.forEach((infraSet: string[], i: number) => {
+    if (infraSet.length === 0) {
+      anyCompleted = true;
+    }
+  })
+  return anyCompleted;
+}
+
+export const filterOldInfras = (infras: InfraType[]): InfraType[] => {
+  let newestInstances = {} as any;
+  infras.forEach((infra: InfraType, i: number) => {
+    if (!newestInstances[infra.kind]) {
+      newestInstances[infra.kind] = infra;
+    } else {
+      let existingId = newestInstances[infra.kind].id;
+      if (infra.id > existingId) {
+        newestInstances[infra.kind] = infra;
+      }
+    }
+  });
+  return Object.values(newestInstances);
 }

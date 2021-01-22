@@ -197,7 +197,19 @@ func (repo *ClusterRepository) ListClustersByProjectID(
 func (repo *ClusterRepository) UpdateCluster(
 	cluster *models.Cluster,
 ) (*models.Cluster, error) {
+	err := repo.EncryptClusterData(cluster, repo.key)
+
+	if err != nil {
+		return nil, err
+	}
+
 	if err := repo.db.Save(cluster).Error; err != nil {
+		return nil, err
+	}
+
+	err = repo.DecryptClusterData(cluster, repo.key)
+
+	if err != nil {
 		return nil, err
 	}
 

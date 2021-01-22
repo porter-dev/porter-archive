@@ -28,6 +28,7 @@ type Registry struct {
 
 	GCPIntegrationID uint
 	AWSIntegrationID uint
+	DOIntegrationID  uint
 
 	// A token cache that can be used by an auth mechanism (integration), if desired
 	TokenCache integrations.RegTokenCache
@@ -61,6 +62,8 @@ func (r *Registry) Externalize() *RegistryExternal {
 		serv = integrations.ECR
 	} else if r.GCPIntegrationID != 0 {
 		serv = integrations.GCR
+	} else if r.DOIntegrationID != 0 {
+		serv = integrations.DOCR
 	}
 
 	return &RegistryExternal{

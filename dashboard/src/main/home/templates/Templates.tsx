@@ -17,6 +17,7 @@ const tabOptions = [
 const hardcodedNames: any = {
   'postgresql': 'PostgreSQL',
   'docker': 'Docker',
+  'https-issuer': 'HTTPS Issuer'
 };
 
 type PropsType = {
@@ -45,7 +46,11 @@ export default class Templates extends Component<PropsType, StateType> {
       if (err) {
         this.setState({ loading: false, error: true });
       } else {
-        this.setState({ porterTemplates: res.data, loading: false, error: false });
+        this.setState({ porterTemplates: res.data, error: false }, () => {
+          this.state.porterTemplates.sort((a, b) => (a.name > b.name) ? 1 : -1);
+          this.state.porterTemplates.sort((a,b) => (a.name === 'docker') ? -1 : (b.name === 'docker') ? 1 : 0);
+          this.setState({ loading: false });
+        });
       }
     });
   }

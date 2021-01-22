@@ -8,6 +8,7 @@ import (
 	"github.com/go-chi/chi"
 	"github.com/porter-dev/porter/internal/forms"
 
+	"github.com/porter-dev/porter/internal/models/integrations"
 	ints "github.com/porter-dev/porter/internal/models/integrations"
 )
 
@@ -247,6 +248,36 @@ func (app *App) HandleCreateBasicAuthIntegration(w http.ResponseWriter, r *http.
 	basicExt := basic.Externalize()
 
 	if err := json.NewEncoder(w).Encode(basicExt); err != nil {
+		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
+		return
+	}
+}
+
+// HandleListProjectOAuthIntegrations lists the oauth integrations for the project
+func (app *App) HandleListProjectOAuthIntegrations(w http.ResponseWriter, r *http.Request) {
+	projID, err := strconv.ParseUint(chi.URLParam(r, "project_id"), 0, 64)
+
+	if err != nil || projID == 0 {
+		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
+		return
+	}
+
+	oauthInts, err := app.Repo.OAuthIntegration.ListOAuthIntegrationsByProjectID(uint(projID))
+
+	if err != nil {
+		app.handleErrorDataRead(err, w)
+		return
+	}
+
+	res := make([]*integrations.OAuthIntegrationExternal, 0)
+
+	for _, oauthInt := range oauthInts {
+		res = append(res, oauthInt.Externalize())
+	}
+
+	w.WriteHeader(http.StatusOK)
+
+	if err := json.NewEncoder(w).Encode(res); err != nil {
 		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
 		return
 	}

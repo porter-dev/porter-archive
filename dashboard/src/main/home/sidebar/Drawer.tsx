@@ -22,6 +22,8 @@ export default class Drawer extends Component<PropsType, StateType> {
     let { currentCluster, setCurrentCluster } = this.context;
 
     if (clusters.length > 0 && currentCluster) {
+      clusters.sort((a, b) => a.id - b.id);
+      
       return clusters.map((cluster: ClusterType, i: number) => {
         /*
         let active = this.context.activeProject &&

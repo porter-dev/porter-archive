@@ -34,7 +34,8 @@ func (app *App) HandleListReleases(w http.ResponseWriter, r *http.Request) {
 	form := &forms.ListReleaseForm{
 		ReleaseForm: &forms.ReleaseForm{
 			Form: &helm.Form{
-				Repo: app.Repo,
+				Repo:              app.Repo,
+				DigitalOceanOAuth: app.DOConf,
 			},
 		},
 		ListFilter: &helm.ListFilter{},
@@ -80,7 +81,8 @@ func (app *App) HandleGetRelease(w http.ResponseWriter, r *http.Request) {
 	form := &forms.GetReleaseForm{
 		ReleaseForm: &forms.ReleaseForm{
 			Form: &helm.Form{
-				Repo: app.Repo,
+				Repo:              app.Repo,
+				DigitalOceanOAuth: app.DOConf,
 			},
 		},
 		Name:     name,
@@ -113,7 +115,8 @@ func (app *App) HandleGetRelease(w http.ResponseWriter, r *http.Request) {
 	// get the filter options
 	k8sForm := &forms.K8sForm{
 		OutOfClusterConfig: &kubernetes.OutOfClusterConfig{
-			Repo: app.Repo,
+			Repo:              app.Repo,
+			DigitalOceanOAuth: app.DOConf,
 		},
 	}
 
@@ -187,7 +190,8 @@ func (app *App) HandleGetReleaseComponents(w http.ResponseWriter, r *http.Reques
 	form := &forms.GetReleaseForm{
 		ReleaseForm: &forms.ReleaseForm{
 			Form: &helm.Form{
-				Repo: app.Repo,
+				Repo:              app.Repo,
+				DigitalOceanOAuth: app.DOConf,
 			},
 		},
 		Name:     name,
@@ -243,7 +247,8 @@ func (app *App) HandleGetReleaseControllers(w http.ResponseWriter, r *http.Reque
 	form := &forms.GetReleaseForm{
 		ReleaseForm: &forms.ReleaseForm{
 			Form: &helm.Form{
-				Repo: app.Repo,
+				Repo:              app.Repo,
+				DigitalOceanOAuth: app.DOConf,
 			},
 		},
 		Name:     name,
@@ -283,7 +288,8 @@ func (app *App) HandleGetReleaseControllers(w http.ResponseWriter, r *http.Reque
 	// get the filter options
 	k8sForm := &forms.K8sForm{
 		OutOfClusterConfig: &kubernetes.OutOfClusterConfig{
-			Repo: app.Repo,
+			Repo:              app.Repo,
+			DigitalOceanOAuth: app.DOConf,
 		},
 	}
 
@@ -369,7 +375,8 @@ func (app *App) HandleListReleaseHistory(w http.ResponseWriter, r *http.Request)
 	form := &forms.ListReleaseHistoryForm{
 		ReleaseForm: &forms.ReleaseForm{
 			Form: &helm.Form{
-				Repo: app.Repo,
+				Repo:              app.Repo,
+				DigitalOceanOAuth: app.DOConf,
 			},
 		},
 		Name: name,
@@ -430,6 +437,14 @@ func (app *App) HandleGetReleaseToken(w http.ResponseWriter, r *http.Request) {
 
 // HandleUpgradeRelease upgrades a release with new values.yaml
 func (app *App) HandleUpgradeRelease(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("=========================================UPGRADE RELEASE============================================")
+	projID, err := strconv.ParseUint(chi.URLParam(r, "project_id"), 0, 64)
+
+	if err != nil || projID == 0 {
+		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
+		return
+	}
+
 	name := chi.URLParam(r, "name")
 
 	vals, err := url.ParseQuery(r.URL.RawQuery)
@@ -442,7 +457,8 @@ func (app *App) HandleUpgradeRelease(w http.ResponseWriter, r *http.Request) {
 	form := &forms.UpgradeReleaseForm{
 		ReleaseForm: &forms.ReleaseForm{
 			Form: &helm.Form{
-				Repo: app.Repo,
+				Repo:              app.Repo,
+				DigitalOceanOAuth: app.DOConf,
 			},
 		},
 		Name: name,
@@ -469,7 +485,21 @@ func (app *App) HandleUpgradeRelease(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = agent.UpgradeRelease(form.Name, form.Values)
+	registries, err := app.Repo.Registry.ListRegistriesByProjectID(uint(projID))
+
+	if err != nil {
+		app.handleErrorDataRead(err, w)
+		return
+	}
+
+	conf := &helm.UpgradeReleaseConfig{
+		Name:       form.Name,
+		Cluster:    form.ReleaseForm.Cluster,
+		Repo:       *app.Repo,
+		Registries: registries,
+	}
+
+	_, err = agent.UpgradeRelease(conf, form.Values, app.DOConf)
 
 	if err != nil {
 		app.sendExternalError(err, http.StatusInternalServerError, HTTPError{
@@ -499,7 +529,8 @@ func (app *App) HandleReleaseDeployHook(w http.ResponseWriter, r *http.Request) 
 	form := &forms.UpgradeReleaseForm{
 		ReleaseForm: &forms.ReleaseForm{
 			Form: &helm.Form{
-				Repo: app.Repo,
+				Repo:              app.Repo,
+				DigitalOceanOAuth: app.DOConf,
 			},
 		},
 		Name: name,
@@ -533,7 +564,22 @@ func (app *App) HandleReleaseDeployHook(w http.ResponseWriter, r *http.Request) 
 	newval := map[string]interface{}{}
 	newval["image"] = image
 
-	_, err = agent.UpgradeReleaseByValues(form.Name, newval)
+	registries, err := app.Repo.Registry.ListRegistriesByProjectID(uint(form.ReleaseForm.Cluster.ProjectID))
+
+	if err != nil {
+		app.handleErrorDataRead(err, w)
+		return
+	}
+
+	conf := &helm.UpgradeReleaseConfig{
+		Name:       form.Name,
+		Cluster:    form.ReleaseForm.Cluster,
+		Repo:       *app.Repo,
+		Registries: registries,
+		Values:     newval,
+	}
+
+	_, err = agent.UpgradeReleaseByValues(conf, app.DOConf)
 
 	if err != nil {
 		app.sendExternalError(err, http.StatusInternalServerError, HTTPError{
@@ -581,7 +627,8 @@ func (app *App) HandleReleaseDeployWebhook(w http.ResponseWriter, r *http.Reques
 	form := &forms.UpgradeReleaseForm{
 		ReleaseForm: &forms.ReleaseForm{
 			Form: &helm.Form{
-				Repo: app.Repo,
+				Repo:              app.Repo,
+				DigitalOceanOAuth: app.DOConf,
 			},
 		},
 		Name: release.Name,
@@ -610,7 +657,22 @@ func (app *App) HandleReleaseDeployWebhook(w http.ResponseWriter, r *http.Reques
 	newval := map[string]interface{}{}
 	newval["image"] = image
 
-	_, err = agent.UpgradeReleaseByValues(form.Name, newval)
+	registries, err := app.Repo.Registry.ListRegistriesByProjectID(uint(form.ReleaseForm.Cluster.ProjectID))
+
+	if err != nil {
+		app.handleErrorDataRead(err, w)
+		return
+	}
+
+	conf := &helm.UpgradeReleaseConfig{
+		Name:       form.Name,
+		Cluster:    form.ReleaseForm.Cluster,
+		Repo:       *app.Repo,
+		Registries: registries,
+		Values:     newval,
+	}
+
+	_, err = agent.UpgradeReleaseByValues(conf, app.DOConf)
 
 	if err != nil {
 		app.sendExternalError(err, http.StatusInternalServerError, HTTPError{
@@ -638,7 +700,8 @@ func (app *App) HandleRollbackRelease(w http.ResponseWriter, r *http.Request) {
 	form := &forms.RollbackReleaseForm{
 		ReleaseForm: &forms.ReleaseForm{
 			Form: &helm.Form{
-				Repo: app.Repo,
+				Repo:              app.Repo,
+				DigitalOceanOAuth: app.DOConf,
 			},
 		},
 		Name: name,

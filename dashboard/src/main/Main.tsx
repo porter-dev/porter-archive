@@ -31,8 +31,8 @@ export default class Main extends Component<PropsType, StateType> {
 
   componentDidMount() {
     let { setUser } = this.context;
-    api.checkAuth('', {}, {}, (err: any, res: any) => {      
-      if (err && err.response.status == 403) {
+    api.checkAuth('', {}, {}, (err: any, res: any) => {    
+      if (err && err.response?.status == 403) {
         this.setState({ isLoggedIn: false, loading: false })
       }
 
@@ -55,6 +55,9 @@ export default class Main extends Component<PropsType, StateType> {
   }
 
   handleLogOut = () => {
+    // Clears local storage for proper rendering of clusters
+    localStorage.clear();
+
     this.context.clearContext();
     this.setState({ isLoggedIn: false, initialized: true });
   }
@@ -84,7 +87,13 @@ export default class Main extends Component<PropsType, StateType> {
 
         <Route path='/dashboard' render={() => {
           if (this.state.isLoggedIn && this.state.initialized) {
-            return <Home logOut={this.handleLogOut} />
+            return (
+              <Home 
+                currentProject={this.context.currentProject}
+                currentCluster={this.context.currentCluster} 
+                logOut={this.handleLogOut} 
+              />
+            );
           } else {
             return <Redirect to='/' />
           }
@@ -110,7 +119,7 @@ export default class Main extends Component<PropsType, StateType> {
         <BrowserRouter>
           {this.renderMain()}
         </BrowserRouter>
-        <CurrentError />
+        <CurrentError currentError={this.context.currentError} />
       </StyledMain>
     );
   }

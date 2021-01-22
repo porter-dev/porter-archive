@@ -13,6 +13,7 @@ const (
 	Kube     IntegrationService = "kube"
 	GCR      IntegrationService = "gcr"
 	ECR      IntegrationService = "ecr"
+	DOCR     IntegrationService = "docr"
 	Github   IntegrationService = "github"
 	Docker   IntegrationService = "docker"
 )

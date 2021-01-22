@@ -5,7 +5,7 @@ import { Context } from '../../../shared/Context';
 import ProjectSection from './ProjectSection';
 
 type PropsType = {
-  setCurrentView: (x: string, viewData?: any) => void,
+  setCurrentView: (x: string) => void,
 };
 
 type StateType = {

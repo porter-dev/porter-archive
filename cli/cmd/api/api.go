@@ -1,11 +1,13 @@
 package api
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"k8s.io/client-go/util/homedir"
@@ -136,4 +138,34 @@ func (c *Client) getCookie() (*http.Cookie, error) {
 	}
 
 	return cookie.Cookie, nil
+}
+
+type TokenProjectID struct {
+	ProjectID uint `json:"project_id"`
+}
+
+func GetProjectIDFromToken(token string) (uint, error) {
+	var encoded string
+
+	if tokenSplit := strings.Split(token, "."); len(tokenSplit) != 3 {
+		return 0, fmt.Errorf("invalid jwt token format")
+	} else {
+		encoded = tokenSplit[1]
+	}
+
+	decodedBytes, err := base64.RawStdEncoding.DecodeString(encoded)
+
+	if err != nil {
+		return 0, fmt.Errorf("could not decode jwt token from base64: %v", err)
+	}
+
+	res := &TokenProjectID{}
+
+	err = json.Unmarshal(decodedBytes, res)
+
+	if err != nil {
+		return 0, fmt.Errorf("could not get token project id: %v", err)
+	}
+
+	return res.ProjectID, nil
 }

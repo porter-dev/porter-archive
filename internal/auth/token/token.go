@@ -20,11 +20,11 @@ type TokenGeneratorConf struct {
 }
 
 type Token struct {
-	SubKind   Subject
-	Sub       string
-	ProjectID uint
-	IBy       uint
-	IAt       *time.Time
+	SubKind   Subject    `json:"sub_kind"`
+	Sub       string     `json:"sub"`
+	ProjectID uint       `json:"project_id"`
+	IBy       uint       `json:"iby"`
+	IAt       *time.Time `json:"iat"`
 }
 
 func GetTokenForUser(userID, projID uint) (*Token, error) {

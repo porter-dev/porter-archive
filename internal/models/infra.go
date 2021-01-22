@@ -25,10 +25,13 @@ type InfraKind string
 
 // The supported infra kinds
 const (
-	InfraECR InfraKind = "ecr"
-	InfraEKS InfraKind = "eks"
-	InfraGCR InfraKind = "gcr"
-	InfraGKE InfraKind = "gke"
+	InfraTest InfraKind = "test"
+	InfraECR  InfraKind = "ecr"
+	InfraEKS  InfraKind = "eks"
+	InfraGCR  InfraKind = "gcr"
+	InfraGKE  InfraKind = "gke"
+	InfraDOCR InfraKind = "docr"
+	InfraDOKS InfraKind = "doks"
 )
 
 // Infra represents the metadata for an infrastructure type provisioned on
@@ -53,6 +56,17 @@ type Infra struct {
 
 	// The GCP integration that was used to create the infra
 	GCPIntegrationID uint
+
+	// The DO integration that was used to create the infra:
+	// this points to an OAuthIntegrationID
+	DOIntegrationID uint
+
+	// ------------------------------------------------------------------
+	// All fields below this line are encrypted before storage
+	// ------------------------------------------------------------------
+
+	// The last-applied input variables to the provisioner
+	LastApplied []byte
 }
 
 // InfraExternal is an external Infra to be shared over REST
@@ -80,12 +94,12 @@ func (i *Infra) Externalize() *InfraExternal {
 }
 
 // GetID returns the unique id for this infra
-func (i *Infra) GetID() string {
+func (i *Infra) GetUniqueName() string {
 	return fmt.Sprintf("%s-%d-%d-%s", i.Kind, i.ProjectID, i.ID, i.Suffix)
 }
 
-// ParseWorkspaceID returns the (kind, projectID, infraID)
-func ParseWorkspaceID(workspaceID string) (string, uint, uint, error) {
+// ParseUniqueName returns the (kind, projectID, infraID, suffix)
+func ParseUniqueName(workspaceID string) (string, uint, uint, error) {
 	strArr := strings.Split(workspaceID, "-")
 
 	if len(strArr) < 3 {

@@ -15,6 +15,7 @@ type PropsType = {
     available?: number,
     total?: number,
   } | null
+  expanded?: boolean,
 };
 
 type StateType = {
@@ -24,7 +25,7 @@ type StateType = {
 
 export default class ResourceTab extends Component<PropsType, StateType> {
   state = {
-    expanded: false,
+    expanded: this.props.expanded || false,
     showTooltip: false,
   }
 

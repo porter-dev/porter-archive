@@ -29,12 +29,14 @@ type ServerConf struct {
 	IsLocal        bool          `env:"IS_LOCAL,default=false"`
 	IsTesting      bool          `env:"IS_TESTING,default=false"`
 
-	DefaultHelmRepoURL string `env:"HELM_REPO_URL,default=https://s2011r2593.github.io/test-porter-chart-repo/"`
+	DefaultHelmRepoURL string `env:"HELM_REPO_URL,default=https://porter-dev.github.io/chart-repo/"`
 
 	GithubClientID     string `env:"GITHUB_CLIENT_ID"`
 	GithubClientSecret string `env:"GITHUB_CLIENT_SECRET"`
 
-	ProvisionerImageTag string `env:"PROV_IMAGE_TAG,default-latest"`
+	DOClientID          string `env:"DO_CLIENT_ID"`
+	DOClientSecret      string `env:"DO_CLIENT_SECRET"`
+	ProvisionerImageTag string `env:"PROV_IMAGE_TAG,default=latest"`
 }
 
 // DBConf is the database configuration: if generated from environment variables,

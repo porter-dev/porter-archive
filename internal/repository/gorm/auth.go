@@ -670,6 +670,29 @@ func (repo *OAuthIntegrationRepository) ListOAuthIntegrationsByProjectID(
 	return oauths, nil
 }
 
+// UpdateOAuthIntegration modifies an existing oauth integration in the database
+func (repo *OAuthIntegrationRepository) UpdateOAuthIntegration(
+	am *ints.OAuthIntegration,
+) (*ints.OAuthIntegration, error) {
+	err := repo.EncryptOAuthIntegrationData(am, repo.key)
+
+	if err != nil {
+		return nil, err
+	}
+
+	if err := repo.db.Save(am).Error; err != nil {
+		return nil, err
+	}
+
+	err = repo.DecryptOAuthIntegrationData(am, repo.key)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return am, nil
+}
+
 // EncryptOAuthIntegrationData will encrypt the oauth integration data before
 // writing to the DB
 func (repo *OAuthIntegrationRepository) EncryptOAuthIntegrationData(

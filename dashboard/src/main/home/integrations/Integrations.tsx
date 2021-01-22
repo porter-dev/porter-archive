@@ -16,6 +16,7 @@ type StateType = {
   currentCategory: string | null,
   currentIntegration: string | null,
   currentOptions: any[],
+  currentTitles: any[],
   currentIntegrationData: any[],
 };
 
@@ -24,6 +25,7 @@ export default class Integrations extends Component<PropsType, StateType> {
     currentCategory: null as string | null,
     currentIntegration: null as string | null,
     currentOptions: [] as any[],
+    currentTitles: [] as any[],
     currentIntegrationData: [] as any[],
   }
 
@@ -45,11 +47,25 @@ export default class Integrations extends Component<PropsType, StateType> {
           if (err) {
             console.log(err);
           } else {
-            let currentOptions = [] as string[];
-            res.data.forEach((integration: any, i: number) => {
-              currentOptions.includes(integration.service) ? null : currentOptions.push(integration.service);
+            // Sort res.data into service type and sort each service's registry alphabetically
+            let grouped: any = {}
+            let final: any = [];
+            for (let i = 0; i < res.data.length; i++) {
+              let p = res.data[i].service;
+              if (!grouped[p]) { grouped[p] = []; }
+              grouped[p].push(res.data[i]);
+            }
+            Object.values(grouped).forEach((val: any) => {
+              final = final.concat(val.sort((a: any, b: any) => (a.name > b.name) ? 1 : -1));
             });
-            this.setState({ currentOptions, currentIntegrationData: res.data });
+
+            let currentOptions = [] as string[];
+            let currentTitles = [] as string[];
+            final.forEach((integration: any, i: number) => {
+              currentOptions.push(integration.service);
+              currentTitles.push(integration.name);
+            });
+            this.setState({ currentOptions, currentTitles, currentIntegrationData: res.data });
           }
         });
         break;
@@ -150,8 +166,11 @@ export default class Integrations extends Component<PropsType, StateType> {
             </Button>
           </TitleSectionAlt>
 
+          <LineBreak />
+
           <IntegrationList
             integrations={this.state.currentOptions}
+            titles={this.state.currentTitles}
             setCurrent={(x: string) => this.setState({ currentIntegration: x })}
           />
         </div>
@@ -293,4 +312,11 @@ const StyledIntegrations = styled.div`
   width: calc(90% - 150px);
   min-width: 300px;
   padding-top: 45px;
+`;
+
+const LineBreak = styled.div`
+  width: calc(100% - 0px);
+  height: 2px;
+  background: #ffffff20;
+  margin: 32px 0px 24px;
 `;

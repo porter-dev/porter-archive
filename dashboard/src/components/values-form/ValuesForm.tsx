@@ -92,6 +92,20 @@ export default class ValuesForm extends Component<PropsType, StateType> {
               label={item.label}
             />
           );
+        case 'array-input':
+          return (
+            <InputRow
+              key={i}
+              isRequired={item.required}
+              type='text'
+              value={this.getInputValue(item)}
+              setValue={(x: string) => {
+                this.props.setMetaState({ [key]: [x] });
+              }}
+              label={item.label}
+              unit={item.settings ? item.settings.unit : null}
+            />
+          );
         case 'string-input':
           return (
             <InputRow
@@ -155,7 +169,7 @@ export default class ValuesForm extends Component<PropsType, StateType> {
             <Base64InputRow
               key={i}
               isRequired={item.required}
-              type='b64'
+              type='text'
               value={this.getInputValue(item)}
               setValue={(x: string) => {
                 if (item.settings && item.settings.unit && x !== '') {
@@ -172,7 +186,7 @@ export default class ValuesForm extends Component<PropsType, StateType> {
             <Base64InputRow
               key={i}
               isRequired={item.required}
-              type='b64-pass'
+              type='password'
               value={this.getInputValue(item)}
               setValue={(x: string) => {
                 if (item.settings && item.settings.unit && x !== '') {

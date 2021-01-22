@@ -10,6 +10,7 @@ type PropsType = {
   selectedPod: any,
   selectPod: Function,
   isLast?: boolean,
+  isFirst?: boolean,
 };
 
 type StateType = {
@@ -26,7 +27,7 @@ export default class ControllerTab extends Component<PropsType, StateType> {
 
   componentDidMount() {
     let { currentCluster, currentProject, setCurrentError } = this.context;
-    let { controller } = this.props;
+    let { controller, selectPod, isFirst } = this.props;
 
     let selectors = [] as string[];
     let ml = controller?.spec?.selector?.matchLabels || controller?.spec?.selector;
@@ -61,6 +62,10 @@ export default class ControllerTab extends Component<PropsType, StateType> {
       });
       
       this.setState({ pods, raw: res.data });
+      
+      if (isFirst) {
+        selectPod(res.data[0])
+      }
     })
   }
 
@@ -80,7 +85,7 @@ export default class ControllerTab extends Component<PropsType, StateType> {
   }
 
   getPodStatus = (status: any) => {
-    if (status?.phase == 'Pending' && status?.containerStatuses) {
+    if (status?.phase == 'Pending' && status?.containerStatuses !== undefined) {
       return status.containerStatuses[0].state.waiting.reason
       // return 'waiting'
     }
@@ -104,17 +109,16 @@ export default class ControllerTab extends Component<PropsType, StateType> {
   }
 
   render() {
-    let { controller, selectedPod, isLast, selectPod } = this.props;
-    console.log(controller)
+    let { controller, selectedPod, isLast, selectPod, isFirst } = this.props;
     let [available, total] = this.getAvailability(controller.kind, controller);
     let status = (available == total) ? 'running' : 'waiting'
-    console.log('state', this.state)
     return (
       <ResourceTab
         label={controller.kind}
         name={controller.metadata.name}
         status={{ label: status, available, total }}
         isLast={isLast}
+        expanded={isFirst}
       >
         {
           this.state.raw.map((pod, i) => {

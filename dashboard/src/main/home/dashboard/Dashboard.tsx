@@ -48,12 +48,8 @@ export default class Dashboard extends Component<PropsType, StateType> {
   }
 
   onShowProjectSettings = () => {
-    let { currentProject, setCurrentModal } = this.context;
     let { setCurrentView } = this.props;
-    setCurrentModal('UpdateProjectModal', { 
-      currentProject: currentProject,
-      setCurrentView: setCurrentView,
-    });
+    setCurrentView('project-settings');
   }
 
   render() {
@@ -73,12 +69,16 @@ export default class Dashboard extends Component<PropsType, StateType> {
               </Overlay>
             </DashboardIcon>
               <Title>{currentProject && currentProject.name}</Title>
-              <i
-                className="material-icons"
-                onClick={onShowProjectSettings}
-              >
-                more_vert
-              </i>
+              {this.context.currentProject.roles.filter((obj: any) => {
+                return obj.user_id === this.context.user.userId;
+              })[0].kind === 'admin' &&
+                <i
+                  className="material-icons"
+                  onClick={onShowProjectSettings}
+                >
+                  more_vert
+                </i>
+              }
             </TitleSection>
 
             <InfoSection>

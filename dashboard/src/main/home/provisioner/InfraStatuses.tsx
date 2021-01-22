@@ -31,7 +31,7 @@ export default class InfraStatuses extends Component<PropsType, StateType> {
       <StyledInfraStatuses>
         {this.props.infras.map((infra: InfraType, i: number) => {
           return (
-            <InfraRow>
+            <InfraRow key={infra.id}>
               {this.renderStatusIcon(infra.status)}
               {infraNames[infra.kind]}
             </InfraRow>

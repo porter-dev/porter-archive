@@ -45,6 +45,16 @@ export default class Provisioner extends Component<PropsType, StateType> {
     infras: [] as InfraType[],
   }
 
+  parentRef = React.createRef<HTMLDivElement>()
+
+  scrollToBottom = (smooth: boolean) => {
+    if (smooth) {
+      this.parentRef.current.lastElementChild.scrollIntoView({ behavior: "smooth" })
+    } else {
+      this.parentRef.current.lastElementChild.scrollIntoView({ behavior: "auto" })
+    }
+  }
+
   componentDidMount() {
     let { currentProject } = this.context;
     let protocol = process.env.NODE_ENV == 'production' ? 'wss' : 'ws'
@@ -58,32 +68,34 @@ export default class Provisioner extends Component<PropsType, StateType> {
       } 
       let infras = filterOldInfras(res.data);
       let error = false;
+
+      let maxStep = {} as Record<string, number>
+
       infras.forEach((infra: InfraType, i: number) => {
+        maxStep[infra.kind] = null;
         if (infra.status === 'error') {
           error = true;
         }
       });
 
+      console.log(infras)
+
       // Filter historical infras list for most current instances of each
       let websockets = infras.map((infra: any) => {
-        let ws = new WebSocket(`${protocol}://${process.env.API_SERVER}/api/projects/${currentProject.id}/provision/${infra.kind}/${infra.infra_id}/logs`)
+        let ws = new WebSocket(`${protocol}://${process.env.API_SERVER}/api/projects/${currentProject.id}/provision/${infra.kind}/${infra.id}/logs`)
         return this.setupWebsocket(ws, infra)
       });
   
-      this.setState({ error, infras, websockets, logs: ["Provisioning resources..."] });
+      this.setState({ error, infras, websockets, maxStep, logs: ["Provisioning resources..."] });
     });
   }
 
   componentWillUnmount() {
-    if (!this.state.websockets) { return; }
+    if (this.state.websockets.length == 0) { return; }
 
     this.state.websockets.forEach((ws: any) => {
       ws.close()
     })
-  }
-
-  scrollToBottom = () => {
-    this.scrollRef.current.scrollTop = this.scrollRef.current.scrollHeight
   }
 
   isJSON = (str: string) => {
@@ -104,6 +116,7 @@ export default class Provisioner extends Component<PropsType, StateType> {
       let event = JSON.parse(evt.data);
       let validEvents = [] as any[];
       let err = null;
+
       
       for (var i = 0; i < event.length; i++) {
         let msg = event[i];
@@ -111,6 +124,7 @@ export default class Provisioner extends Component<PropsType, StateType> {
           let d = JSON.parse(msg["Values"]["data"]);
 
           if (d["kind"] == "error") {
+            console.log(d)
             err = d["log"];
             break;
           }
@@ -123,17 +137,25 @@ export default class Provisioner extends Component<PropsType, StateType> {
       }
 
       if (err) {
+        console.log(err)
         let e = ansiparse(err).map((el: any) => {
           return el.text;
         })
-        this.setState({ logs: e, error: true });
+
+        console.log(e)
+
+        let index = this.state.infras.findIndex(el => el.kind === infra.kind)
+        infra.status = "error"
+        let infras = this.state.infras
+        infras[index] = infra
+        this.setState({ logs: e, error: true, infras });
         return;
       }
 
       if (validEvents.length == 0) {
         return;
       }
-      
+
       if (!this.state.maxStep[infra.kind] || !this.state.maxStep[infra.kind]["total_resources"]) {
         this.setState({
           maxStep: {
@@ -159,12 +181,12 @@ export default class Provisioner extends Component<PropsType, StateType> {
           [infra.kind] : validEvents[validEvents.length - 1]["created_resources"]
         },
       }, () => {
-        this.scrollToBottom()
+        this.scrollToBottom(false)
       })
     }
 
     ws.onerror = (err: ErrorEvent) => {
-      console.log(err)
+      console.log('websocket err', err)
     }
 
     ws.onclose = () => {
@@ -173,8 +195,6 @@ export default class Provisioner extends Component<PropsType, StateType> {
 
     return ws
   }
-
-  scrollRef = React.createRef<HTMLDivElement>();
 
   renderLogs = () => {
     return this.state.logs.map((log, i) => {
@@ -199,6 +219,29 @@ export default class Provisioner extends Component<PropsType, StateType> {
       });
     }, 1000);
   }
+
+  refreshLogs = () => {
+    if (this.state.websockets.length == 0) { return; }
+    let { currentProject } = this.context;
+    let protocol = process.env.NODE_ENV == 'production' ? 'wss' : 'ws'
+
+    this.state.websockets.forEach((ws: any) => {
+      ws.close()
+    })
+
+    this.setState({ 
+      websockets: [],
+      logs: []
+    })
+
+    let websockets = this.state.infras.map((infra: any) => {
+      let ws = new WebSocket(`${protocol}://${process.env.API_SERVER}/api/projects/${currentProject.id}/provision/${infra.kind}/${infra.infra_id}/logs`)
+      return this.setupWebsocket(ws, infra)
+    });
+
+    this.setState({ websockets, logs: ["Provisioning resources..."] });
+    
+  }
   
   render() {
     let { error, triggerEnd, infras } = this.state;
@@ -206,17 +249,19 @@ export default class Provisioner extends Component<PropsType, StateType> {
     
     let maxStep = 0;
     let currentStep = 0;
-
-    for (let key in this.state.maxStep) {
-      if (key == 'eks') {
-        maxStep += this.state.maxStep[key]
+    let skip = false;
+    
+    for (let i = 0; i < infras.length; i++) {
+      if (!this.state.maxStep[infras[i].kind]) {
+        skip = true;
       }
     }
 
-    for (let key in this.state.currentStep) {
-      if (key == 'eks') {
+    if (!skip) {
+      for (let key in this.state.maxStep) {
+        maxStep += this.state.maxStep[key]
         currentStep += this.state.currentStep[key]
-      }
+      }  
     }
 
     if (maxStep !== 0 && currentStep === maxStep && !triggerEnd) {
@@ -266,8 +311,8 @@ export default class Provisioner extends Component<PropsType, StateType> {
         </LoadingBar>
         <InfraStatuses infras={infras} />
 
-        <LogStream ref={this.scrollRef}>
-          <Wrapper>{this.renderLogs()}</Wrapper>
+        <LogStream>
+          <Wrapper ref={this.parentRef}>{this.renderLogs()}</Wrapper>
         </LogStream>
 
         <Helper>
@@ -279,6 +324,35 @@ export default class Provisioner extends Component<PropsType, StateType> {
 }
 
 Provisioner.contextType = Context;
+
+const Options = styled.div`
+  width: 100%;
+  height: 25px;
+  background: #397ae3;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+`
+
+const Refresh = styled.div`
+  display: flex;
+  align-items: center;
+  width: 87px;
+  user-select: none;
+  cursor: pointer;
+  height: 100%;
+
+  > i {
+    margin-left: 6px;
+    font-size: 17px;
+    margin-right: 6px;
+  }
+
+  :hover {
+    background: #2468d6;
+  }
+`
 
 const Link = styled.a`
   cursor: pointer;

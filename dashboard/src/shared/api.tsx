@@ -328,7 +328,7 @@ const createGCR = baseApi<{
 }, {
   project_id: number,
 }>('POST', pathParams => {
-  return `/api/projects/${pathParams.project_id}/provision/gcr`;
+  return `/api/projects/${pathParams.project_id}/provision/test`;
 });
 
 const createGKE = baseApi<{
@@ -337,7 +337,7 @@ const createGKE = baseApi<{
 }, {
   project_id: number,
 }>('POST', pathParams => {
-  return `/api/projects/${pathParams.project_id}/provision/gke`;
+  return `/api/projects/${pathParams.project_id}/provision/test`;
 });
 
 const createInvite = baseApi<{

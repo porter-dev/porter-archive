@@ -418,7 +418,16 @@ func (app *App) HandleGetReleaseToken(w http.ResponseWriter, r *http.Request) {
 	vals, err := url.ParseQuery(r.URL.RawQuery)
 	namespace := vals["namespace"][0]
 
-	release, err := app.Repo.Release.ReadRelease(name, namespace)
+	clusterID, err := strconv.ParseUint(vals["cluster_id"][0], 10, 64)
+
+	if err != nil {
+		app.sendExternalError(err, http.StatusInternalServerError, HTTPError{
+			Code:   ErrReleaseReadData,
+			Errors: []string{"release not found"},
+		}, w)
+	}
+
+	release, err := app.Repo.Release.ReadRelease(uint(clusterID), name, namespace)
 
 	if err != nil {
 		app.sendExternalError(err, http.StatusInternalServerError, HTTPError{

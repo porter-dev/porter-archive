@@ -4,10 +4,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/url"
 	"strconv"
 	"strings"
 
 	"github.com/go-chi/chi"
+	"github.com/porter-dev/porter/internal/auth/token"
 	"github.com/porter-dev/porter/internal/forms"
 	"github.com/porter-dev/porter/internal/integrations/ci/actions"
 )
@@ -22,7 +24,32 @@ func (app *App) HandleCreateGitAction(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	form := &forms.CreateGitAction{}
+	name := chi.URLParam(r, "name")
+
+	vals, err := url.ParseQuery(r.URL.RawQuery)
+	namespace := vals["namespace"][0]
+
+	clusterID, err := strconv.ParseUint(vals["cluster_id"][0], 10, 64)
+
+	if err != nil {
+		app.sendExternalError(err, http.StatusInternalServerError, HTTPError{
+			Code:   ErrReleaseReadData,
+			Errors: []string{"release not found"},
+		}, w)
+	}
+
+	release, err := app.Repo.Release.ReadRelease(uint(clusterID), name, namespace)
+
+	if err != nil {
+		app.sendExternalError(err, http.StatusInternalServerError, HTTPError{
+			Code:   ErrReleaseReadData,
+			Errors: []string{"release not found"},
+		}, w)
+	}
+
+	form := &forms.CreateGitAction{
+		ReleaseID: release.Model.ID,
+	}
 
 	// decode from JSON to form value
 	if err := json.NewDecoder(r.Body).Decode(form); err != nil {
@@ -59,45 +86,65 @@ func (app *App) HandleCreateGitAction(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// get webhook token from release
+	session, err := app.Store.Get(r, app.ServerConf.CookieName)
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	userID, _ := session.Values["user_id"].(uint)
 
 	// generate porter jwt token
+	jwt, _ := token.GetTokenForAPI(userID, uint(projID))
+
+	encoded, err := jwt.EncodeToken(&token.TokenGeneratorConf{
+		TokenSecret: app.ServerConf.TokenGeneratorSecret,
+	})
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 
 	// create the commit in the git repo
-	_ = &actions.GithubActions{
+	gaRunner := &actions.GithubActions{
 		GitIntegration: gr,
 		GitRepoName:    repoSplit[1],
 		GitRepoOwner:   repoSplit[0],
 		Repo:           *app.Repo,
 		GithubConf:     app.GithubConf,
+		WebhookToken:   release.WebhookToken,
+		ProjectID:      uint(projID),
+		ReleaseName:    name,
+		DockerFilePath: gitAction.DockerfilePath,
+		ImageRepoURL:   gitAction.ImageRepoURI,
+		PorterToken:    encoded,
+	}
 
-		// WebhookToken string
-		// PorterToken  string
-		// ProjectID    uint
-		// ReleaseName  string
+	_, err = gaRunner.Setup()
 
-		// DockerFilePath string
-		// ImageRepoURL   string
-
-		// defaultBranch string
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
 	}
 
 	// handle write to the database
-	// hr, err = app.Repo.HelmRepo.CreateHelmRepo(hr)
+	ga, err := app.Repo.GitActionConfig.CreateGitActionConfig(gitAction)
 
-	// if err != nil {
-	// 	app.handleErrorDataWrite(err, w)
-	// 	return
-	// }
+	if err != nil {
+		app.handleErrorDataWrite(err, w)
+		return
+	}
 
-	// app.Logger.Info().Msgf("New helm repo created: %d", hr.ID)
+	app.Logger.Info().Msgf("New git action created: %d", ga.ID)
 
-	// w.WriteHeader(http.StatusCreated)
+	w.WriteHeader(http.StatusCreated)
 
-	// hrExt := hr.Externalize()
+	gaExt := ga.Externalize()
 
-	// if err := json.NewEncoder(w).Encode(hrExt); err != nil {
-	// 	app.handleErrorFormDecoding(err, ErrProjectDecode, w)
-	// 	return
-	// }
+	if err := json.NewEncoder(w).Encode(gaExt); err != nil {
+		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
+		return
+	}
 }

@@ -12,13 +12,15 @@ import (
 	"golang.org/x/oauth2"
 
 	"strings"
+
+	"gopkg.in/yaml.v2"
 )
 
 type GithubActions struct {
-	GitRepo      *models.GitRepo
-	GitRepoName  string
-	GitRepoOwner string
-	Repo         repository.Repository
+	GitIntegration *models.GitRepo
+	GitRepoName    string
+	GitRepoOwner   string
+	Repo           repository.Repository
 
 	GithubConf *oauth2.Config
 
@@ -26,58 +28,112 @@ type GithubActions struct {
 	PorterToken  string
 	ProjectID    uint
 	ReleaseName  string
+
+	DockerFilePath string
+	ImageRepoURL   string
+
+	defaultBranch string
 }
 
-func (g *GithubActions) Setup() error {
+func (g *GithubActions) Setup() (string, error) {
 	client, err := g.getClient()
 
 	if err != nil {
-		return err
+		return "", err
 	}
+
+	// get the repository to find the default branch
+	repo, _, err := client.Repositories.Get(
+		context.TODO(),
+		g.GitRepoOwner,
+		g.GitRepoName,
+	)
+
+	if err != nil {
+		return "", err
+	}
+
+	g.defaultBranch = repo.GetDefaultBranch()
 
 	// create a new secret with a webhook token
 	err = g.createGithubSecret(client, g.getWebhookSecretName(), g.WebhookToken)
 
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	// create a new secret with a porter token
 	err = g.createGithubSecret(client, g.getPorterTokenSecretName(), g.PorterToken)
 
 	if err != nil {
-		return err
+		return "", err
 	}
 
-	return nil
+	fileBytes, err := g.GetGithubActionYAML()
+
+	if err != nil {
+		return "", err
+	}
+
+	return g.commitGithubFile(client, fileBytes)
+}
+
+type GithubActionYAMLStep struct {
+	Name string `yaml:"name"`
+	ID   string `yaml:"id"`
+	Run  string `yaml:"run"`
+}
+
+type GithubActionYAMLOnPushBranches struct {
+	Branches []string `yaml:"branches"`
+}
+
+type GithubActionYAMLOnPush struct {
+	Push GithubActionYAMLOnPushBranches `yaml:"push"`
+}
+
+type GithubActionYAMLJob struct {
+	RunsOn string                 `yaml:"runs-on"`
+	Steps  []GithubActionYAMLStep `yaml:"steps"`
 }
 
 type GithubActionYAML struct {
-	On struct {
-		Push struct {
-			Branches []string `yaml:"branches"`
-		} `yaml:"push"`
-	} `yaml:"on"`
+	On GithubActionYAMLOnPush `yaml:"on"`
 
 	Name string `yaml:"name"`
 
-	Jobs map[string]struct {
-		RunsOn string `yaml:"runs-on"`
-		Steps  []struct {
-			Name string `yaml:"name"`
-			ID   string `yaml:"id"`
-			// TODO -- OTHER RELEVANT STUFF
-		} `yaml:"steps"`
-	} `yaml:"jobs"`
+	Jobs map[string]GithubActionYAMLJob `yaml:"jobs"`
 }
 
-func (g *GithubActions) GetGithubActionYAML() (*github.Client, error) {
-	return nil, nil
+func (g *GithubActions) GetGithubActionYAML() ([]byte, error) {
+	actionYAML := &GithubActionYAML{
+		On: GithubActionYAMLOnPush{
+			Push: GithubActionYAMLOnPushBranches{
+				Branches: []string{
+					g.defaultBranch,
+				},
+			},
+		},
+		Name: "Deploy to Porter",
+		Jobs: map[string]GithubActionYAMLJob{
+			"porter-deploy": GithubActionYAMLJob{
+				RunsOn: "ubuntu-latest",
+				Steps: []GithubActionYAMLStep{
+					getDownloadPorterStep(),
+					getConfigurePorterStep(g.getPorterTokenSecretName()),
+					getDockerBuildPushStep(g.DockerFilePath, g.ImageRepoURL),
+					deployPorterWebhookStep(g.getWebhookSecretName(), g.ImageRepoURL),
+				},
+			},
+		},
+	}
+
+	return yaml.Marshal(actionYAML)
 }
 
 func (g *GithubActions) getClient() (*github.Client, error) {
 	// get the oauth integration
-	oauthInt, err := g.Repo.OAuthIntegration.ReadOAuthIntegration(g.GitRepo.OAuthIntegrationID)
+	oauthInt, err := g.Repo.OAuthIntegration.ReadOAuthIntegration(g.GitIntegration.OAuthIntegrationID)
 
 	if err != nil {
 		return nil, err
@@ -145,4 +201,33 @@ func (g *GithubActions) getWebhookSecretName() string {
 
 func (g *GithubActions) getPorterTokenSecretName() string {
 	return fmt.Sprintf("PORTER_TOKEN_%d", g.ProjectID)
+}
+
+func (g *GithubActions) commitGithubFile(
+	client *github.Client,
+	contents []byte,
+) (string, error) {
+	opts := &github.RepositoryContentFileOptions{
+		Message: github.String("Create porter.yml file"),
+		Content: contents,
+		Branch:  github.String(g.defaultBranch),
+		Committer: &github.CommitAuthor{
+			Name:  github.String("Porter Bot"),
+			Email: github.String("contact@getporter.dev"),
+		},
+	}
+
+	resp, _, err := client.Repositories.CreateFile(
+		context.TODO(),
+		g.GitRepoOwner,
+		g.GitRepoName,
+		".github/workflows/porter.yml",
+		opts,
+	)
+
+	if err != nil {
+		return "", err
+	}
+
+	return *resp.Commit.SHA, nil
 }

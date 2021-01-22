@@ -129,11 +129,26 @@ func login() error {
 
 	color.New(color.FgGreen).Println("Successfully logged in!")
 
-	// get a list of projects, and set the current project
-	projects, err := client.ListUserProjects(context.Background(), _user.ID)
+	// if the login was token-based, decode the claims to get the token
+	if token != "" {
+		projID, err := api.GetProjectIDFromToken(token)
 
-	if len(projects) > 0 {
-		setProject(projects[0].ID)
+		if err != nil {
+			return err
+		}
+
+		setProject(projID)
+	} else {
+		// get a list of projects, and set the current project
+		projects, err := client.ListUserProjects(context.Background(), _user.ID)
+
+		if err != nil {
+			return err
+		}
+
+		if len(projects) > 0 {
+			setProject(projects[0].ID)
+		}
 	}
 
 	return nil

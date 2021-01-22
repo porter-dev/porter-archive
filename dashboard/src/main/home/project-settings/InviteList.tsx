@@ -140,7 +140,7 @@ export default class InviteList extends Component<PropsType, StateType> {
               </MailTd>
               <LinkTd isTop={i === 0}>
               </LinkTd>
-              <Td isTop={i === 0}>
+              <Td isTop={i === 0} invis={true}>
                 <CopyButton
                   onClick={() => this.deleteInvite(i)}
                 >
@@ -341,10 +341,6 @@ const ShareLink = styled.input`
   }
 `;
 
-const Spacer = styled.div`
-  height: 24px;
-`;
-
 const Table = styled.table`
   width: 100%;
   border-spacing: 0px;
@@ -353,9 +349,10 @@ const Table = styled.table`
 `;
 
 const Td = styled.td`
+  visibility: ${(props: { isTop: boolean, invis?: boolean }) => props.invis ? 'hidden' : 'visible'};
   white-space: nowrap;
   padding: 20px 0px;
-  border-top: ${(props: {isTop: boolean}) => (props.isTop ? 'none' : '1px solid #ffffff55')};
+  border-top: ${(props: { isTop: boolean, invis?: boolean }) => (props.isTop ? 'none' : '1px solid #ffffff55')};
   &:last-child {
     padding-right: 16px;
   }

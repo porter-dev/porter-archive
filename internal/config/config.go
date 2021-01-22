@@ -18,16 +18,17 @@ type Conf struct {
 
 // ServerConf is the server configuration
 type ServerConf struct {
-	ServerURL      string        `env:"SERVER_URL,default=http://localhost:8080"`
-	Port           int           `env:"SERVER_PORT,default=8080"`
-	StaticFilePath string        `env:"STATIC_FILE_PATH,default=/porter/static"`
-	CookieName     string        `env:"COOKIE_NAME,default=porter"`
-	CookieSecret   []byte        `env:"COOKIE_SECRET,default=secret"`
-	TimeoutRead    time.Duration `env:"SERVER_TIMEOUT_READ,default=5s"`
-	TimeoutWrite   time.Duration `env:"SERVER_TIMEOUT_WRITE,default=10s"`
-	TimeoutIdle    time.Duration `env:"SERVER_TIMEOUT_IDLE,default=15s"`
-	IsLocal        bool          `env:"IS_LOCAL,default=false"`
-	IsTesting      bool          `env:"IS_TESTING,default=false"`
+	ServerURL            string        `env:"SERVER_URL,default=http://localhost:8080"`
+	Port                 int           `env:"SERVER_PORT,default=8080"`
+	StaticFilePath       string        `env:"STATIC_FILE_PATH,default=/porter/static"`
+	CookieName           string        `env:"COOKIE_NAME,default=porter"`
+	CookieSecret         []byte        `env:"COOKIE_SECRET,default=secret"`
+	TokenGeneratorSecret string        `env:"TOKEN_GENERATOR_SECRET,default=secret"`
+	TimeoutRead          time.Duration `env:"SERVER_TIMEOUT_READ,default=5s"`
+	TimeoutWrite         time.Duration `env:"SERVER_TIMEOUT_WRITE,default=10s"`
+	TimeoutIdle          time.Duration `env:"SERVER_TIMEOUT_IDLE,default=15s"`
+	IsLocal              bool          `env:"IS_LOCAL,default=false"`
+	IsTesting            bool          `env:"IS_TESTING,default=false"`
 
 	DefaultHelmRepoURL string `env:"HELM_REPO_URL,default=https://porter-dev.github.io/chart-repo/"`
 

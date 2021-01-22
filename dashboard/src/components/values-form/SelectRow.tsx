@@ -18,7 +18,6 @@ type StateType = {
 
 export default class SelectRow extends Component<PropsType, StateType> {
   render() {
-    console.log(this.props.width)
     return (
       <StyledSelectRow>
         <Label>{this.props.label}</Label>

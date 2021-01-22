@@ -45,12 +45,15 @@ func (app *App) HandleCreateUser(w http.ResponseWriter, r *http.Request) {
 
 	if err == nil {
 		app.Logger.Info().Msgf("New user created: %d", user.ID)
+		redirect := session.Values["redirect"]
+
 		session.Values["authenticated"] = true
 		session.Values["user_id"] = user.ID
 		session.Values["email"] = user.Email
+		session.Values["redirect"] = ""
 		session.Save(r, w)
 
-		if val, ok := session.Values["redirect"].(string); ok && val != "" {
+		if val, ok := redirect.(string); ok && val != "" {
 			http.Redirect(w, r, val, 302)
 			return
 		}
@@ -119,15 +122,19 @@ func (app *App) HandleLoginUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	redirect := session.Values["redirect"]
+
 	// Set user as authenticated
 	session.Values["authenticated"] = true
 	session.Values["user_id"] = storedUser.ID
 	session.Values["email"] = storedUser.Email
+	session.Values["redirect"] = ""
+
 	if err := session.Save(r, w); err != nil {
 		app.Logger.Warn().Err(err)
 	}
 
-	if val, ok := session.Values["redirect"].(string); ok && val != "" {
+	if val, ok := redirect.(string); ok && val != "" {
 		http.Redirect(w, r, val, 302)
 		return
 	}

@@ -34,7 +34,7 @@ const dummyInfras = [
   { kind: 'ecr', status: 'created', id: 2, project_id: 1 },
 ];
 
-export default class Provisioner extends Component<PropsType, StateType> {
+export default class ProvisionerStatus extends Component<PropsType, StateType> {
   state = {
     error: false,
     logs: [] as string[],
@@ -323,7 +323,7 @@ export default class Provisioner extends Component<PropsType, StateType> {
   }
 }
 
-Provisioner.contextType = Context;
+ProvisionerStatus.contextType = Context;
 
 const Options = styled.div`
   width: 100%;

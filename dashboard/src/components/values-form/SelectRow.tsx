@@ -8,7 +8,9 @@ type PropsType = {
   value: string,
   setActiveValue: (x: string) => void,
   options: { value: string, label: string }[],
-  dropdownLabel?: string
+  dropdownLabel?: string,
+  width?: string,
+  dropdownMaxHeight?: string,
 };
 
 type StateType = {
@@ -25,8 +27,9 @@ export default class SelectRow extends Component<PropsType, StateType> {
             setActiveValue={this.props.setActiveValue}
             options={this.props.options}
             dropdownLabel={this.props.dropdownLabel}
-            width='270px'
-            dropdownMaxHeight={'210px'}
+            width={this.props.width || '270px'}
+            dropdownWidth={this.props.width}
+            dropdownMaxHeight={this.props.dropdownMaxHeight}
           />
         </SelectWrapper>
       </StyledSelectRow>
@@ -35,7 +38,6 @@ export default class SelectRow extends Component<PropsType, StateType> {
 }
 
 const SelectWrapper = styled.div`
-  display: flex;
 `;
 
 const Label = styled.div`

@@ -2,7 +2,9 @@ package api
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
+	"net/url"
 	"strconv"
 
 	"github.com/go-chi/chi"
@@ -69,7 +71,7 @@ func (app *App) HandleAcceptInvite(w http.ResponseWriter, r *http.Request) {
 	session, err := app.Store.Get(r, app.ServerConf.CookieName)
 
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		acceptInviteError(w, r)
 		return
 	}
 
@@ -78,72 +80,48 @@ func (app *App) HandleAcceptInvite(w http.ResponseWriter, r *http.Request) {
 	user, err := app.Repo.User.ReadUser(userID)
 
 	if err != nil {
-		app.handleErrorDataRead(err, w)
+		acceptInviteError(w, r)
 		return
 	}
 
 	token := chi.URLParam(r, "token")
 
 	if token == "" {
-		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
+		acceptInviteError(w, r)
 		return
 	}
 
 	projID, err := strconv.ParseUint(chi.URLParam(r, "project_id"), 0, 64)
 
 	if err != nil || projID == 0 {
-		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
+		acceptInviteError(w, r)
 		return
 	}
 
 	invite, err := app.Repo.Invite.ReadInviteByToken(token)
 
 	if err != nil || invite.ProjectID != uint(projID) {
-		app.sendExternalError(
-			err,
-			http.StatusForbidden,
-			HTTPError{
-				Code: http.StatusForbidden,
-				Errors: []string{
-					"Invalid invite token",
-				},
-			},
-			w,
-		)
+		vals := url.Values{}
+		vals.Add("error", "Invalid invite token")
+		http.Redirect(w, r, fmt.Sprintf("/dashboard?%s", vals.Encode()), 302)
 
 		return
 	}
 
 	// check that the invite has not expired and has not been accepted
 	if invite.IsExpired() || invite.IsAccepted() {
-		app.sendExternalError(
-			err,
-			http.StatusForbidden,
-			HTTPError{
-				Code: http.StatusForbidden,
-				Errors: []string{
-					"Invite has expired",
-				},
-			},
-			w,
-		)
+		vals := url.Values{}
+		vals.Add("error", "Invite has expired")
+		http.Redirect(w, r, fmt.Sprintf("/dashboard?%s", vals.Encode()), 302)
 
 		return
 	}
 
 	// check that the invite email matches the user's email
 	if user.Email != invite.Email {
-		app.sendExternalError(
-			err,
-			http.StatusForbidden,
-			HTTPError{
-				Code: http.StatusForbidden,
-				Errors: []string{
-					"Cannot accept this invite",
-				},
-			},
-			w,
-		)
+		vals := url.Values{}
+		vals.Add("error", "Wrong email for invite")
+		http.Redirect(w, r, fmt.Sprintf("/dashboard?%s", vals.Encode()), 302)
 
 		return
 	}
@@ -152,7 +130,7 @@ func (app *App) HandleAcceptInvite(w http.ResponseWriter, r *http.Request) {
 	projModel, err := app.Repo.Project.ReadProject(uint(projID))
 
 	if err != nil {
-		app.handleErrorDataWrite(err, w)
+		acceptInviteError(w, r)
 		return
 	}
 
@@ -164,7 +142,7 @@ func (app *App) HandleAcceptInvite(w http.ResponseWriter, r *http.Request) {
 	})
 
 	if err != nil {
-		app.handleErrorDataWrite(err, w)
+		acceptInviteError(w, r)
 		return
 	}
 
@@ -174,11 +152,18 @@ func (app *App) HandleAcceptInvite(w http.ResponseWriter, r *http.Request) {
 	_, err = app.Repo.Invite.UpdateInvite(invite)
 
 	if err != nil {
-		app.handleErrorDataWrite(err, w)
+		acceptInviteError(w, r)
 		return
 	}
 
 	http.Redirect(w, r, "/dashboard", 302)
+	return
+}
+
+func acceptInviteError(w http.ResponseWriter, r *http.Request) {
+	vals := url.Values{}
+	vals.Add("error", "could not accept invite")
+	http.Redirect(w, r, fmt.Sprintf("/dashboard?%s", vals.Encode()), 302)
 	return
 }
 

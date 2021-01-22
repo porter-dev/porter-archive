@@ -346,10 +346,40 @@ const createInvite = baseApi<{
   id: number
 }>('POST', pathParams => {
   return `/api/projects/${pathParams.id}/invites`;
-})
+});
+
+const getOAuthIds = baseApi<{
+}, {
+  project_id: number,
+}>('GET', pathParams => {
+  return `/api/projects/${pathParams.project_id}/integrations/oauth`;
+});
+
+const createDOCR = baseApi<{
+  do_integration_id: number,
+  docr_name: string,
+  docr_subscription_tier: string,
+}, {
+  project_id: number,
+}>('POST', pathParams => {
+  return `/api/projects/${pathParams.project_id}/provision/docr`;
+});
+
+const createDOKS = baseApi<{
+  do_integration_id: number,
+  doks_name: string,
+  do_region: string,
+}, {
+  project_id: number,
+}>('POST', pathParams => {
+  return `/api/projects/${pathParams.project_id}/provision/doks`;
+});
 
 // Bundle export to allow default api import (api.<method> is more readable)
 export default {
+  createDOKS,
+  createDOCR,
+  getOAuthIds,
   checkAuth,
   createAWSIntegration,
   createECR,

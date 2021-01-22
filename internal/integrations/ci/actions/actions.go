@@ -23,6 +23,8 @@ type GithubActions struct {
 	GithubConf *oauth2.Config
 
 	WebhookToken string
+	PorterToken  string
+	ProjectID    uint
 	ReleaseName  string
 }
 
@@ -35,6 +37,13 @@ func (g *GithubActions) Setup() error {
 
 	// create a new secret with a webhook token
 	err = g.createGithubSecret(client, g.getWebhookSecretName(), g.WebhookToken)
+
+	if err != nil {
+		return err
+	}
+
+	// create a new secret with a porter token
+	err = g.createGithubSecret(client, g.getPorterTokenSecretName(), g.PorterToken)
 
 	if err != nil {
 		return err
@@ -132,4 +141,8 @@ func (g *GithubActions) getWebhookSecretName() string {
 	return fmt.Sprintf("WEBHOOK_%s", strings.Replace(
 		strings.ToUpper(g.ReleaseName), "-", "_", -1),
 	)
+}
+
+func (g *GithubActions) getPorterTokenSecretName() string {
+	return fmt.Sprintf("PORTER_TOKEN_%d", g.ProjectID)
 }

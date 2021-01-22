@@ -1,9 +1,11 @@
 import React, { Component } from 'react';
+import posthog from 'posthog-js';
 import styled from 'styled-components';
 
 import { Context } from '../../shared/Context';
 import api from '../../shared/api';
-import { InfraType, ClusterType } from '../../shared/types';
+import { ClusterType, ProjectType } from '../../shared/types';
+import { includesCompletedInfraSet } from '../../shared/common';
 
 import Sidebar from './sidebar/Sidebar';
 import Dashboard from './dashboard/Dashboard';
@@ -17,21 +19,22 @@ import IntegrationsModal from './modals/IntegrationsModal';
 import IntegrationsInstructionsModal from './modals/IntegrationsInstructionsModal';
 import NewProject from './new-project/NewProject';
 import Navbar from './navbar/Navbar';
-import Provisioner from './new-project/Provisioner';
+import ProvisionerStatus from './provisioner/ProvisionerStatus';
 import ProjectSettings from './project-settings/ProjectSettings';
-import posthog from 'posthog-js';
 import ConfirmOverlay from '../../components/ConfirmOverlay';
 import Modal from './modals/Modal';
 
 type PropsType = {
-  logOut: () => void
+  logOut: () => void,
+  currentProject: ProjectType,
+  currentCluster: ClusterType,
 };
 
 type StateType = {
   forceSidebar: boolean,
   showWelcome: boolean,
   currentView: string,
-  viewData: any[],
+  handleDO: boolean, // Trigger DO infra calls after oauth flow if needed
   forceRefreshClusters: boolean, // For updating ClusterSection from modal on deletion
 
   // Track last project id for refreshing clusters on project change
@@ -39,78 +42,177 @@ type StateType = {
   sidebarReady: boolean, // Fixes error where ~1/3 times reloading to provisioner fails
 };
 
+// TODO: Handle cluster connected but with some failed infras (no successful set)
 export default class Home extends Component<PropsType, StateType> {
   state = {
     forceSidebar: true,
     showWelcome: false,
     currentView: 'dashboard',
     prevProjectId: null as number | null,
-    viewData: null as any,
     forceRefreshClusters: false,
     sidebarReady: false,
+    handleDO: false,
   }
 
-  // Possibly consolidate into context (w/ ProjectSection + NewProject)
-  getProjects = () => {
-    let { user, currentProject, projects, setProjects } = this.context;
+  // TODO: Refactor and prevent flash + multiple reload
+  initializeView = () => {
+    let { currentProject } = this.props;
+    if (currentProject) {
+      let { currentCluster } = this.context;
+      
+      // Check if current project is provisioning
+      api.getInfra('<token>', {}, { project_id: currentProject.id }, (err: any, res: any) => {
+        if (err) {
+          console.log(err);
+          return;
+        }
+        if (res.data.length > 0 && !(currentCluster || includesCompletedInfraSet(res.data))) {
+          this.setState({ currentView: 'provisioner', sidebarReady: true, });
+        } else {
+          this.setState({ currentView: 'dashboard', sidebarReady: true });
+        }
+      });
+    }
+  }
+
+  getProjects = (id?: number) => {
+    let { user, setProjects } = this.context;
+    let { currentProject } = this.props;
     api.getProjects('<token>', {}, { id: user.userId }, (err: any, res: any) => {
       if (err) {
         console.log(err);
       } else if (res.data) {
-        setProjects(res.data);
-        if (res.data.length > 0 && !currentProject) {
-          this.context.setCurrentProject(res.data[0]);
-
-          // Check if current project is provisioning
-          api.getInfra('<token>', {}, { project_id: res.data[0].id }, (err: any, res: any) => {
-            if (err) {
-              console.log(err);
-            } else if (res.data) {
-
-              let viewData = [] as any[]
-              // TODO: separately handle non meta-provisioning case
-              res.data.forEach((el: InfraType) => {
-                if (el.status === 'creating') {
-                  viewData.push({
-                    infra_id: el.id,
-                    kind: el.kind,
-                  });
-                }
-              });
-              
-              if (viewData.length > 0) {
-                this.setState({ currentView: 'provisioner', viewData, sidebarReady: true, });
-              } else {
-                this.setState({ sidebarReady: true });
-              }
-            }
-          });
-        } else if (res.data.length === 0) {
+        if (res.data.length === 0) {
           this.setState({ currentView: 'new-project', sidebarReady: true, });
+        } else if (res.data.length > 0 && !currentProject) {
+          setProjects(res.data);
+          if (!id) {
+            this.context.setCurrentProject(res.data[0]);
+            this.initializeView();
+          } else {
+            let foundProject = null;
+            res.data.forEach((project: ProjectType, i: number) => {
+              if (project.id === id) {
+                foundProject = project;
+              } 
+            });
+            this.context.setCurrentProject(foundProject);
+            this.setState({ currentView: 'provisioner' });
+          }
         }
       }
     });
   }
 
+  provisionDOCR = (integrationId: number, tier: string, callback?: any) => {
+    console.log('Provisioning DOCR...');
+    api.createDOCR('<token>', {
+      do_integration_id: integrationId,
+      docr_name: this.props.currentProject.name,
+      docr_subscription_tier: tier,
+    }, { 
+      project_id: this.props.currentProject.id
+    }, (err: any, res: any) => {
+      if (err) {
+        console.log(err);
+        return;
+      }
+      callback && callback();
+    });
+  }
+
+  provisionDOKS = (integrationId: number, region: string) => {
+    console.log('Provisioning DOKS...');
+    api.createDOKS('<token>', {
+      do_integration_id: integrationId,
+      doks_name: this.props.currentProject.name,
+      do_region: region,
+    }, { 
+      project_id: this.props.currentProject.id
+    }, (err: any, res: any) => {
+      if (err) {
+        console.log(err);
+        return;
+      }
+      this.setState({ currentView: 'provisioner' });
+    });
+  }
+
+  checkDO = () => {
+    let { currentProject } = this.props;
+    if (this.state.handleDO && currentProject?.id) {
+      api.getOAuthIds('<token>', {}, { 
+        project_id: currentProject.id
+      }, (err: any, res: any) => {
+        if (err) {
+          console.log(err);
+          return;
+        }
+        let tgtIntegration = res.data.find((integration: any) => {
+          return integration.client === 'do'
+        });
+        let queryString = window.location.search;
+        let urlParams = new URLSearchParams(queryString);
+        let tier = urlParams.get('tier');
+        let region = urlParams.get('region');
+        let infras = urlParams.getAll('infras');
+        if (infras.length === 2) {
+          this.provisionDOCR(tgtIntegration.id, tier, () => {
+            this.provisionDOKS(tgtIntegration.id, region);
+          });
+        } else if (infras[0] === 'docr') {
+          this.provisionDOCR(tgtIntegration.id, tier, () => {
+            this.setState({ currentView: 'provisioner' });
+          });
+        } else {
+          this.provisionDOKS(tgtIntegration.id, region);
+        }
+      });
+      this.setState({ handleDO: false });
+    }
+  }
+
   componentDidMount() {
+
+    // Handle redirect from DO
+    let queryString = window.location.search;
+    let urlParams = new URLSearchParams(queryString);
+
+    let err = urlParams.get('error');
+    if (err) {
+      this.context.setCurrentError(err);
+    }
+
+    let provision = urlParams.get('provision');
+    let defaultProjectId = null;
+    if (provision === 'do') {
+      defaultProjectId = parseInt(urlParams.get('projectId'));
+      this.setState({ handleDO: true });
+      this.checkDO();
+    }
+    
     let { user } = this.context;
     window.location.href.indexOf('127.0.0.1') === -1 && posthog.init(process.env.POSTHOG_API_KEY, {
       api_host: process.env.POSTHOG_HOST,
-      loaded: function(posthog) { posthog.identify(user.email) }
+      loaded: function(posthog: any) { posthog.identify(user.email) }
     })
 
-    this.getProjects();
+    this.getProjects(defaultProjectId);
   }
 
+  // TODO: Need to handle the following cases. Do a deep rearchitecture (Prov -> Dashboard?) if need be:
+  // 1. Make sure clicking cluster in course drawer shows cluster-dashboard
+  // 2. Make sure switching projects shows appropriate initial view (dashboard || provisioner)
+  // 3. Make sure initializing from URL (DO oauth) displays the appropriate initial view
   componentDidUpdate(prevProps: PropsType) {
-    if (prevProps !== this.props && this.context.currentProject) {
-
-      // Set view to dashboard on project change
-      if (this.state.prevProjectId && this.state.prevProjectId !== this.context.currentProject.id) {
-        this.setState({
-          prevProjectId: this.context.currentProject.id,
-          currentView: 'dashboard'
-        });
+    if (
+      prevProps.currentProject !== this.props.currentProject
+      || (!prevProps.currentCluster && this.props.currentCluster)
+    ) {
+      if (this.state.handleDO) {
+        this.checkDO();
+      } else {
+        this.initializeView();
       }
     }
   }
@@ -118,7 +220,7 @@ export default class Home extends Component<PropsType, StateType> {
   // TODO: move into ClusterDashboard
   renderDashboard = () => {
     let { currentCluster, setCurrentModal } = this.context;
-    if (this.state.showWelcome || currentCluster && !currentCluster.name) {
+    if (currentCluster && !currentCluster.name) {
       return (
         <DashboardWrapper>
           <Placeholder>
@@ -149,46 +251,54 @@ export default class Home extends Component<PropsType, StateType> {
   }
 
   renderContents = () => {
-    let { currentView } = this.state;
-    if (currentView === 'cluster-dashboard') {
-      return this.renderDashboard();
-    } else if (currentView === 'dashboard') {
+    let { currentView, handleDO } = this.state;
+    if (this.context.currentProject) {
+      if (currentView === 'cluster-dashboard') {
+        return this.renderDashboard();
+      } else if (currentView === 'dashboard') {
+        return (
+          <DashboardWrapper>
+            <Dashboard 
+              setCurrentView={(x: string) => this.setState({ currentView: x })}
+              projectId={this.context.currentProject?.id}
+            />
+          </DashboardWrapper>
+        );
+      } else if (currentView === 'integrations') {
+        return <Integrations />;
+      } else if (currentView === 'new-project') {
+        return (
+          <NewProject 
+            setCurrentView={(x: string, data: any ) => this.setState({ currentView: x })} 
+          />
+        );
+      } else if (currentView === 'provisioner') {
+        return (
+          <ProvisionerStatus
+            setCurrentView={(x: string) => this.setState({ currentView: x })} 
+          />
+        );
+      } else if (currentView === 'project-settings') {
+        return (
+          <ProjectSettings  setCurrentView={(x: string) => this.setState({ currentView: x })} />
+        )
+      }
+
       return (
-        <DashboardWrapper>
-          <Dashboard setCurrentView={(x: string) => this.setState({ currentView: x })} />
-        </DashboardWrapper>
-      );
-    } else if (currentView === 'integrations') {
-      return <Integrations />;
-    } else if (currentView === 'new-project') {
-      return (
-        <NewProject setCurrentView={(x: string, data: any ) => this.setState({ currentView: x, viewData: data })} />
-      );
-    } else if (currentView === 'provisioner') {
-      return (
-        <Provisioner 
+        <Templates
           setCurrentView={(x: string) => this.setState({ currentView: x })}
-          viewData={this.state.viewData}
         />
       );
-    } else if (currentView === 'project-settings') {
-      return (
-        <ProjectSettings  setCurrentView={(x: string) => this.setState({ currentView: x })} />
-      )
-    }
+    } else {
 
-    return (
-      <Templates
-        setCurrentView={(x: string) => this.setState({ currentView: x })}
-      />
-    );
+    }
   }
 
-  setCurrentView = (x: string, viewData?: any) => {
-    if (!viewData) {
-      this.setState({ currentView: x });
+  setCurrentView = (x: string) => {
+    if (x === 'dashboard') {
+      this.initializeView();
     } else {
-      this.setState({ currentView: x, viewData });
+      this.setState({ currentView: x });
     }
   }
 
@@ -198,7 +308,7 @@ export default class Home extends Component<PropsType, StateType> {
       // Force sidebar closed on first provision
       if (this.state.currentView === 'provisioner' && this.state.forceSidebar) {
         this.setState({ forceSidebar: false });
-      } else if (this.state.sidebarReady) {
+      } else {
         return (
           <Sidebar
             forceSidebar={this.state.forceSidebar}

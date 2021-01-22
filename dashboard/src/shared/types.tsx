@@ -145,7 +145,7 @@ export interface ImageType {
 
 export interface InfraType {
   id: number,
-  project_d: number,
+  project_id: number,
   kind: string,
   status: string,
 }

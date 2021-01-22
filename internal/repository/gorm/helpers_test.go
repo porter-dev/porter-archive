@@ -23,6 +23,7 @@ type tester struct {
 	initClusters []*models.Cluster
 	initHRs      []*models.HelmRepo
 	initInfras   []*models.Infra
+	initReleases []*models.Release
 	initCCs      []*models.ClusterCandidate
 	initKIs      []*ints.KubeIntegration
 	initBasics   []*ints.BasicIntegration
@@ -58,6 +59,7 @@ func setupTestEnv(tester *tester, t *testing.T) {
 		&models.ClusterCandidate{},
 		&models.ClusterResolver{},
 		&models.Infra{},
+		&models.GitActionConfig{},
 		&ints.KubeIntegration{},
 		&ints.BasicIntegration{},
 		&ints.OIDCIntegration{},
@@ -456,4 +458,28 @@ func initInfra(tester *tester, t *testing.T) {
 	}
 
 	tester.initInfras = append(tester.initInfras, infra)
+}
+
+func initRelease(tester *tester, t *testing.T) {
+	t.Helper()
+
+	if len(tester.initProjects) == 0 {
+		initProject(tester, t)
+	}
+
+	release := &models.Release{
+		Name:         "denver-meister-dakota",
+		Namespace:    "default",
+		ProjectID:    1,
+		ClusterID:    1,
+		WebhookToken: "abcdefgh",
+	}
+
+	release, err := tester.repo.Release.CreateRelease(release)
+
+	if err != nil {
+		t.Fatalf("%v\n", err)
+	}
+
+	tester.initReleases = append(tester.initReleases, release)
 }

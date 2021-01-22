@@ -29,7 +29,7 @@ func TestCreateRelease(t *testing.T) {
 		t.Fatalf("%v\n", err)
 	}
 
-	release, err = tester.repo.Release.ReadRelease(release.Name, release.Namespace)
+	release, err = tester.repo.Release.ReadRelease(1, release.Name, release.Namespace)
 
 	if err != nil {
 		t.Fatalf("%v\n", err)
@@ -77,7 +77,7 @@ func TestDeleteRelease(t *testing.T) {
 		t.Fatalf("%v\n", err)
 	}
 
-	release, err = tester.repo.Release.ReadRelease(release.Name, release.Namespace)
+	release, err = tester.repo.Release.ReadRelease(1, release.Name, release.Namespace)
 
 	if err != nil {
 		t.Fatalf("%v\n", err)
@@ -89,7 +89,7 @@ func TestDeleteRelease(t *testing.T) {
 		t.Fatalf("%v\n", err)
 	}
 
-	_, err = tester.repo.Release.ReadRelease(release.Name, release.Namespace)
+	_, err = tester.repo.Release.ReadRelease(1, release.Name, release.Namespace)
 
 	if err != orm.ErrRecordNotFound {
 		t.Fatalf("incorrect error: expected %v, got %v\n", orm.ErrRecordNotFound, err)

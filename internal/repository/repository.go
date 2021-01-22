@@ -10,7 +10,8 @@ type Repository struct {
 	Cluster          ClusterRepository
 	HelmRepo         HelmRepoRepository
 	Registry         RegistryRepository
-	Infra         InfraRepository
+	Infra            InfraRepository
+	GitActionConfig  GitActionConfigRepository
 	KubeIntegration  KubeIntegrationRepository
 	BasicIntegration BasicIntegrationRepository
 	OIDCIntegration  OIDCIntegrationRepository

@@ -60,8 +60,12 @@ export default class Register extends Component<PropsType, StateType> {
         email: email,
         password: password
       }, {}, (err: any, res: any) => {
-        setUser(res?.data?.id, res?.data?.email)
-        err ? setCurrentError(err.response.data.errors[0]) : authenticate();
+        if (res?.data?.redirect) {
+          window.location.href = res.data.redirect;
+        } else {
+          setUser(res?.data?.id, res?.data?.email)
+          err ? setCurrentError(err.response.data.errors[0]) : authenticate();
+        }
       });
     } 
   };

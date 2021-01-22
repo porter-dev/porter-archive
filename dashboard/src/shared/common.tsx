@@ -82,7 +82,7 @@ export const getIgnoreCase = (object: any, key: string) => {
 
 export const includesCompletedInfraSet = (infras: InfraType[]): boolean => {
   if (infras.length === 0) {
-    return true;
+    return false;
   }
 
   let infraSets = [

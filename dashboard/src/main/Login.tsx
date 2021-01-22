@@ -56,10 +56,10 @@ export default class Login extends Component<PropsType, StateType> {
       }, {}, (err: any, res: any) => {
         // TODO: case and set credential error
         if (err) {
-          this.context.setCurrentError('Incorrect email or password.')
+          this.context.setCurrentError(err.response.data.errors[0])
         }
         setUser(res?.data?.id, res?.data?.email)
-        err ? console.log(err) : authenticate();
+        err ? console.log(err.response.data) : authenticate();
       });
     }
   }

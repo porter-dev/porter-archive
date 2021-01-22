@@ -66,6 +66,7 @@ export default class Home extends Component<PropsType, StateType> {
           console.log(err);
           return;
         }
+        
         if (res.data.length > 0 && !(currentCluster || includesCompletedInfraSet(res.data))) {
           this.setState({ currentView: 'provisioner', sidebarReady: true, });
         } else {

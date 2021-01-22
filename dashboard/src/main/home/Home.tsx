@@ -53,21 +53,24 @@ export default class Home extends Component<PropsType, StateType> {
   }
 
   initializeView = () => {
-    let { currentCluster } = this.context;
     let { currentProject } = this.props;
-    // Check if current project is provisioning
-    api.getInfra('<token>', {}, { project_id: currentProject.id }, (err: any, res: any) => {
-      if (err) {
-        console.log(err);
-        return;
-      }
-      console.log(currentCluster);
-      if (!currentCluster && !includesCompletedInfraSet(res.data)) {
-        this.setState({ currentView: 'provisioner', sidebarReady: true, });
-      } else {
-        this.setState({ currentView: 'dashboard', sidebarReady: true });
-      }
-    });
+    
+    if (currentProject) {
+      let { currentCluster } = this.context;
+      // Check if current project is provisioning
+      api.getInfra('<token>', {}, { project_id: currentProject.id }, (err: any, res: any) => {
+        if (err) {
+          console.log(err);
+          return;
+        }
+        console.log(currentCluster);
+        if (!currentCluster && !includesCompletedInfraSet(res.data)) {
+          this.setState({ currentView: 'provisioner', sidebarReady: true, });
+        } else {
+          this.setState({ currentView: 'dashboard', sidebarReady: true });
+        }
+      });
+    }
   }
 
   getProjects = () => {

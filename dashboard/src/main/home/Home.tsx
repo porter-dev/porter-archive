@@ -270,12 +270,6 @@ export default class Home extends Component<PropsType, StateType> {
         );
       } else if (currentView === 'integrations') {
         return <Integrations />;
-      } else if (currentView === 'new-project') {
-        return (
-          <NewProject 
-            setCurrentView={(x: string, data: any ) => this.setState({ currentView: x })} 
-          />
-        );
       } else if (currentView === 'provisioner') {
         return (
           <ProvisionerStatus
@@ -293,8 +287,12 @@ export default class Home extends Component<PropsType, StateType> {
           setCurrentView={(x: string) => this.setState({ currentView: x })}
         />
       );
-    } else {
-
+    } else if (currentView === 'new-project') {
+      return (
+        <NewProject 
+          setCurrentView={(x: string, data: any ) => this.setState({ currentView: x })} 
+        />
+      );
     }
   }
 
@@ -337,7 +335,8 @@ export default class Home extends Component<PropsType, StateType> {
         if (res.data.length > 0) {
           this.context.setCurrentProject(res.data[0]);
         } else {
-          this.context.currentModalData.setCurrentView('new-project');
+          this.context.setCurrentProject(null);
+          this.setState({ currentView: 'new-project' });
         }
         this.context.setCurrentModal(null, null);
       }

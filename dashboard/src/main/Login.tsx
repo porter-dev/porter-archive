@@ -58,6 +58,7 @@ export default class Login extends Component<PropsType, StateType> {
         if (err) {
           this.context.setCurrentError(err.response.data.errors[0])
         }
+        console.log(res)
         setUser(res?.data?.id, res?.data?.email)
         err ? console.log(err.response.data) : authenticate();
       });

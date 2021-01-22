@@ -20,7 +20,7 @@ import IntegrationsModal from './modals/IntegrationsModal';
 import IntegrationsInstructionsModal from './modals/IntegrationsInstructionsModal';
 import NewProject from './new-project/NewProject';
 import Navbar from './navbar/Navbar';
-import ProvisionerContainer from './provisioner/ProvisionerContainer';
+import ProvisionerStatus from './provisioner/ProvisionerStatus';
 import ProjectSettings from './project-settings/ProjectSettings';
 import ConfirmOverlay from '../../components/ConfirmOverlay';
 
@@ -104,14 +104,91 @@ export default class Home extends Component<PropsType, StateType> {
     });
   }
 
+  provisionDOCR = (integrationId: number, tier: string, callback?: any) => {
+    console.log('Provisioning DOCR...');
+    api.createDOCR('<token>', {
+      do_integration_id: integrationId,
+      docr_name: this.props.currentProject.name,
+      docr_subscription_tier: tier,
+    }, { 
+      project_id: this.props.currentProject.id
+    }, (err: any, res: any) => {
+      if (err) {
+        console.log(err);
+        return;
+      }
+      callback && callback();
+    });
+  }
+
+  provisionDOKS = (integrationId: number, region: string) => {
+    console.log('Provisioning DOKS...');
+    api.createDOKS('<token>', {
+      do_integration_id: integrationId,
+      doks_name: this.props.currentProject.name,
+      do_region: region,
+    }, { 
+      project_id: this.props.currentProject.id
+    }, (err: any, res: any) => {
+      if (err) {
+        console.log(err);
+        return;
+      }
+      this.setState({ currentView: 'provisioner' });
+    });
+  }
+
+  checkDO = () => {
+    let { currentProject } = this.props;
+    if (this.state.handleDO && currentProject?.id) {
+      api.getOAuthIds('<token>', {}, { 
+        project_id: currentProject.id
+      }, (err: any, res: any) => {
+        if (err) {
+          console.log(err);
+          return;
+        }
+        let tgtIntegration = res.data.find((integration: any) => {
+          return integration.client === 'do'
+        });
+        let queryString = window.location.search;
+        let urlParams = new URLSearchParams(queryString);
+        let tier = urlParams.get('tier');
+        let region = urlParams.get('region');
+        let infras = urlParams.getAll('infras');
+        if (infras.length === 2) {
+          this.provisionDOCR(tgtIntegration.id, tier, () => {
+            this.provisionDOKS(tgtIntegration.id, region);
+          });
+        } else if (infras[0] === 'docr') {
+          this.provisionDOCR(tgtIntegration.id, tier, () => {
+            this.setState({ currentView: 'provisioner' });
+          });
+        } else {
+          this.provisionDOKS(tgtIntegration.id, region);
+        }
+      });
+      this.setState({ handleDO: false });
+    }
+  }
+
   componentDidMount() {
 
     // Handle redirect from DO
-    let splits = window.location.href.split("?");
+    let queryString = window.location.search;
+    let urlParams = new URLSearchParams(queryString);
+
+    let err = urlParams.get('error');
+    if (err) {
+      this.context.setCurrentError(err);
+    }
+
+    let provision = urlParams.get('provision');
     let defaultProjectId = null;
-    if (splits.length > 1 && splits[1].includes('provision')) {
-      defaultProjectId = parseInt(splits[1].split('=')[1].split('&')[0]);
+    if (provision === 'do') {
+      defaultProjectId = parseInt(urlParams.get('projectId'));
       this.setState({ handleDO: true });
+      this.checkDO();
     }
     
     let { user } = this.context;
@@ -132,7 +209,11 @@ export default class Home extends Component<PropsType, StateType> {
       prevProps.currentProject !== this.props.currentProject
       || (!prevProps.currentCluster && this.props.currentCluster)
     ) {
-      this.initializeView();
+      if (this.state.handleDO) {
+        this.checkDO();
+      } else {
+        this.initializeView();
+      }
     }
   }
 
@@ -171,45 +252,46 @@ export default class Home extends Component<PropsType, StateType> {
 
   renderContents = () => {
     let { currentView, handleDO } = this.state;
-    if (currentView === 'cluster-dashboard') {
-      return this.renderDashboard();
-    } else if (currentView === 'dashboard') {
-      return (
-        <DashboardWrapper>
-          <Dashboard 
-            setCurrentView={(x: string) => this.setState({ currentView: x })}
-            projectId={this.context.currentProject?.id}
+    if (this.context.currentProject) {
+      if (currentView === 'cluster-dashboard') {
+        return this.renderDashboard();
+      } else if (currentView === 'dashboard') {
+        return (
+          <DashboardWrapper>
+            <Dashboard 
+              setCurrentView={(x: string) => this.setState({ currentView: x })}
+              projectId={this.context.currentProject?.id}
+            />
+          </DashboardWrapper>
+        );
+      } else if (currentView === 'integrations') {
+        return <Integrations />;
+      } else if (currentView === 'new-project') {
+        return (
+          <NewProject 
+            setCurrentView={(x: string, data: any ) => this.setState({ currentView: x })} 
           />
-        </DashboardWrapper>
-      );
-    } else if (currentView === 'integrations') {
-      return <Integrations />;
-    } else if (currentView === 'new-project') {
-      return (
-        <NewProject 
-          setCurrentView={(x: string, data: any ) => this.setState({ currentView: x })} 
-        />
-      );
-    } else if (currentView === 'provisioner') {
-      return (
-        <ProvisionerContainer
-          currentProject={this.context.currentProject}
-          handleDO={handleDO}
-          setHandleDO={(x: boolean) => this.setState({ handleDO: x })}
-          setCurrentView={(x: string) => this.setState({ currentView: x })} 
-        />
-      );
-    } else if (currentView === 'project-settings') {
-      return (
-        <ProjectSettings  setCurrentView={(x: string) => this.setState({ currentView: x })} />
-      )
-    }
+        );
+      } else if (currentView === 'provisioner') {
+        return (
+          <ProvisionerStatus
+            setCurrentView={(x: string) => this.setState({ currentView: x })} 
+          />
+        );
+      } else if (currentView === 'project-settings') {
+        return (
+          <ProjectSettings  setCurrentView={(x: string) => this.setState({ currentView: x })} />
+        )
+      }
 
-    return (
-      <Templates
-        setCurrentView={(x: string) => this.setState({ currentView: x })}
-      />
-    );
+      return (
+        <Templates
+          setCurrentView={(x: string) => this.setState({ currentView: x })}
+        />
+      );
+    } else {
+
+    }
   }
 
   setCurrentView = (x: string) => {

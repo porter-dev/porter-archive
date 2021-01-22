@@ -116,7 +116,6 @@ export default class DOFormSection extends Component<PropsType, StateType> {
       window.location.href = `/api/oauth/projects/${currentProject.id}/digitalocean`;
     } else {
       this.createProject(() => {
-        console.log('redirecting...')
         window.location.href = `/api/oauth/projects/${currentProject.id}/digitalocean`;
       });
     }

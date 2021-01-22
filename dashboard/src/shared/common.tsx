@@ -80,16 +80,16 @@ export const getIgnoreCase = (object: any, key: string) => {
   ];
 }
 
+const infraSets = [
+  ['ecr', 'eks'],
+  ['gcr', 'gke'],
+  ['docr', 'doks']
+];
+
 export const includesCompletedInfraSet = (infras: InfraType[]): boolean => {
   if (infras.length === 0) {
     return false;
   }
-
-  let infraSets = [
-    ['ecr', 'eks'],
-    ['gcr', 'gke'],
-    ['docr', 'doks']
-  ];
 
   let completed = [] as string[];
   infras.forEach((infra: InfraType, i: number) => {
@@ -115,7 +115,18 @@ export const includesCompletedInfraSet = (infras: InfraType[]): boolean => {
 
 export const filterOldInfras = (infras: InfraType[]): InfraType[] => {
   let newestInstances = {} as any;
+  let newestId = -1;
+  let whitelistedInfras = [] as string[];
   infras.forEach((infra: InfraType, i: number) => {
+
+    // Determine the most recent set for which provisioning was attempted
+    if (infra.id > newestId) {
+      newestId = infra.id;
+      infraSets.forEach((infraSet: string[]) => {
+        infraSet.includes(infra.kind) ? whitelistedInfras = infraSet : null;
+      });
+    }
+
     if (!newestInstances[infra.kind]) {
       newestInstances[infra.kind] = infra;
     } else {
@@ -125,5 +136,10 @@ export const filterOldInfras = (infras: InfraType[]): InfraType[] => {
       }
     }
   });
-  return Object.values(newestInstances);
+
+  let newestInfras = Object.values(newestInstances) as InfraType[];
+  let result = newestInfras.filter((x: InfraType) => {
+    return whitelistedInfras.includes(x.kind)
+  });
+  return result;
 }

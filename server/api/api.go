@@ -120,7 +120,7 @@ func New(conf *AppConfig) (*App, error) {
 		app.GithubConf = oauth.NewGithubClient(&oauth.Config{
 			ClientID:     sc.GithubClientID,
 			ClientSecret: sc.GithubClientSecret,
-			Scopes:       []string{"repo", "user", "read:user"},
+			Scopes:       []string{"repo", "read:user", "workflow"},
 			BaseURL:      sc.ServerURL,
 		})
 	}

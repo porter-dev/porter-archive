@@ -27,7 +27,7 @@ porter docker configure
 
 func getConfigurePorterStep(porterTokenSecretName string) GithubActionYAMLStep {
 	return GithubActionYAMLStep{
-		Name: "Download Porter",
+		Name: "Configure Porter",
 		ID:   "configure_porter",
 		Run:  fmt.Sprintf(configure, porterTokenSecretName),
 	}
@@ -52,8 +52,8 @@ curl -X POST 'https://dashboard.getporter.dev/api/webhooks/deploy/${{secrets.%s}
 
 func deployPorterWebhookStep(webhookTokenSecretName, repoURL string) GithubActionYAMLStep {
 	return GithubActionYAMLStep{
-		Name: "Docker build, push",
-		ID:   "docker_build_push",
+		Name: "Deploy on Porter",
+		ID:   "deploy_porter",
 		Run:  fmt.Sprintf(deployPorter, webhookTokenSecretName, repoURL),
 	}
 }

@@ -31,17 +31,6 @@ export default class ProjectSettings extends Component<PropsType, StateType> {
     this.setState({ projectName: currentProject.name });
   }
 
-  renderTitle = () => {
-    let { currentProject } = this.context;
-    if (currentProject) {
-      return (
-        <>
-
-        </>
-      );
-    }
-  }
-
   renderTabContents = () => {
     if (this.state.currentTab === 'manage-access') {
       return <InviteList />;

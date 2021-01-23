@@ -24,9 +24,8 @@ func (app *App) HandleCreateGitAction(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	name := chi.URLParam(r, "name")
-
 	vals, err := url.ParseQuery(r.URL.RawQuery)
+	name := vals["name"][0]
 	namespace := vals["namespace"][0]
 
 	clusterID, err := strconv.ParseUint(vals["cluster_id"][0], 10, 64)
@@ -103,6 +102,7 @@ func (app *App) HandleCreateGitAction(w http.ResponseWriter, r *http.Request) {
 	})
 
 	if err != nil {
+		fmt.Println("ERROR GENERATING TOKEN", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -125,6 +125,7 @@ func (app *App) HandleCreateGitAction(w http.ResponseWriter, r *http.Request) {
 	_, err = gaRunner.Setup()
 
 	if err != nil {
+		fmt.Println("ERROR RUNNING SETUP", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}

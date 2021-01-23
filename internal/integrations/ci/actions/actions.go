@@ -207,6 +207,8 @@ func (g *GithubActions) commitGithubFile(
 	client *github.Client,
 	contents []byte,
 ) (string, error) {
+	fmt.Println("GITHUB ACTION CONTENTS ARE", string(contents))
+
 	opts := &github.RepositoryContentFileOptions{
 		Message: github.String("Create porter.yml file"),
 		Content: contents,

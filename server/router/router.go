@@ -196,6 +196,21 @@ func New(a *api.App) *chi.Mux {
 			),
 		)
 
+		// /api/projects/{project_id}/ci routes
+		r.Method(
+			"POST",
+			"/projects/{project_id}/ci/actions",
+			auth.DoesUserHaveProjectAccess(
+				auth.DoesUserHaveClusterAccess(
+					requestlog.NewHandler(a.HandleCreateGitAction, l),
+					mw.URLParam,
+					mw.QueryParam,
+				),
+				mw.URLParam,
+				mw.ReadAccess,
+			),
+		)
+
 		// /api/projects/{project_id}/infra routes
 		r.Method(
 			"GET",

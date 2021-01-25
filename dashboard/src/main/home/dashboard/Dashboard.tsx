@@ -126,7 +126,7 @@ const Banner = styled.div`
   border-radius: 5px;
   padding-left: 15px;
   align-items: center;
-  background: #616FEEcc;
+  background: #ffffff11;
   > i {
     margin-right: 10px;
     font-size: 18px;

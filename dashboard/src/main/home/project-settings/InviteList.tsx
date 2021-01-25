@@ -2,11 +2,13 @@ import React, { Component } from 'react';
 import styled from 'styled-components';
 
 import { InviteType } from '../../../shared/types';
-import Loading from '../../../components/Loading';
 import api from '../../../shared/api';
-import InputRow from '../../../components/values-form/InputRow';
-
 import { Context } from '../../../shared/Context';
+
+import Loading from '../../../components/Loading';
+import InputRow from '../../../components/values-form/InputRow';
+import Helper from '../../../components/values-form/Helper';
+import Heading from '../../../components/values-form/Heading';
 
 type PropsType = {
 }
@@ -225,20 +227,20 @@ export default class InviteList extends Component<PropsType, StateType> {
   render() {
     return (
       <>
-        <Subtitle>Manage Access</Subtitle>
+        <Heading isAtTop={true}>Share Project</Heading>
+        <Helper>Generate a project invite for another admin user:</Helper>
         <CreateInvite>
           <InputRow
-            label='Invite Collaborators'
             value={this.state.email}
             type='text'
             setValue={(x: string) => this.setState({ email: x })}
-            width='324px'
-            placeholder='ex. mrp@getporter.dev'
+            width='calc(100%)'
+            placeholder='ex: mrp@getporter.dev'
           />
           <InviteButton
             onClick={() => this.validateEmail()}
           >
-            Invite!
+            Create Invite
           </InviteButton>
         </CreateInvite>
         {this.state.invalidEmail &&
@@ -315,11 +317,9 @@ const Rower = styled.div`
 `;
 
 const CreateInvite = styled.div`
-  display: flex;
   flex-direction: row;
-  align-items: flex-end;
-  margin-top: -20px;
-  margin-bottom: 14px;
+  align-items: center;
+  margin-top: -10px;
 `;
 
 const ShareLink = styled.input`

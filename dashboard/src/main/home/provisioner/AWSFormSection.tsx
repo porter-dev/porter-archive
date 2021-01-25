@@ -219,9 +219,7 @@ export default class AWSFormSection extends Component<PropsType, StateType> {
     let { projectName, setCurrentView } = this.props;
     let { selectedInfras } = this.state;
 
-    console.log(selectedInfras);
     if (!projectName) {
-      console.log(selectedInfras)
       if (selectedInfras.length === 2) {
         // Case: project exists, provision ECR + EKS
         this.provisionECR(this.provisionEKS);

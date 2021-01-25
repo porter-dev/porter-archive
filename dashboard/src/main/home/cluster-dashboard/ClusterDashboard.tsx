@@ -190,7 +190,7 @@ const Button = styled.div`
   font-family: 'Work Sans', sans-serif;
   border-radius: 20px;
   color: white;
-  height: 30px;
+  height: 35px;
   padding: 0px 8px;
   padding-bottom: 1px;
   margin-right: 10px;
@@ -211,6 +211,7 @@ const Button = styled.div`
     color: white;
     width: 18px;
     height: 18px;
+    font-weight: 600;
     font-size: 12px;
     border-radius: 20px;
     display: flex;

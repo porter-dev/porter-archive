@@ -77,7 +77,6 @@ const LoadingWrapper = styled.div`
 const Highlight = styled.div`
   color: #8590ff;
   cursor: pointer;
-  text-decoration: underline;
   margin-left: 10px;
   margin-right: 10px;
 `;
@@ -91,7 +90,7 @@ const Banner = styled.div`
   border-radius: 5px;
   padding-left: 15px;
   align-items: center;
-  background: #616FEEcc;
+  background: #ffffff11;
   > i {
     margin-right: 10px;
     font-size: 18px;

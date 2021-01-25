@@ -430,7 +430,6 @@ export default class GraphDisplay extends Component<PropsType, StateType> {
           node.x = cursorX + scale * (node.x - cursorX);
           node.y = cursorY + scale * (node.y - cursorY);
         } else {
-          console.log('hi')
           node.x = midX + scale * (node.x - midX);
           node.y = midY + scale * (node.y - midY);
         }

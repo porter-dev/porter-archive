@@ -16,6 +16,7 @@ type PropsType = {
 type StateType = {
   pods: any[],
   raw: any[],
+  showTooltip: boolean,
 };
 
 // Controller tab in log section that displays list of pods on click.
@@ -23,6 +24,7 @@ export default class ControllerTab extends Component<PropsType, StateType> {
   state = {
     pods: [] as any[],
     raw: [] as any[],
+    showTooltip: false,
   }
 
   componentDidMount() {
@@ -108,6 +110,12 @@ export default class ControllerTab extends Component<PropsType, StateType> {
     }
   }
 
+  renderTooltip = (x: string): JSX.Element | undefined => {
+    if (this.state.showTooltip) {
+      return <Tooltip>{x}</Tooltip>;
+    }
+  }
+
   render() {
     let { controller, selectedPod, isLast, selectPod, isFirst } = this.props;
     let [available, total] = this.getAvailability(controller.kind, controller);
@@ -134,9 +142,13 @@ export default class ControllerTab extends Component<PropsType, StateType> {
                   <Circle />
                   <Rail lastTab={i === this.state.raw.length - 1} />
                 </Gutter>
-                <Name>
+                <Name
+                  onMouseOver={() => { this.setState({ showTooltip: true }) }}
+                  onMouseOut={() => { this.setState({ showTooltip: false }) }}
+                >
                   {pod.metadata?.name}
                 </Name>
+                {this.renderTooltip(pod.metadata?.name)}
                 <Status>
                   <StatusColor status={status} />
                   {status}
@@ -204,13 +216,40 @@ const StatusColor = styled.div`
 `;
 
 const Name = styled.div`
-  width: 50%;
+  max-width: calc(100% - 75px);
   overflow: hidden;
-`
+  white-space: nowrap;
+  text-overflow: ellipsis;
+`;
+
+const Tooltip = styled.div`
+  position: absolute;
+  left: 35px;
+  top: 38px;
+  white-space: nowrap;
+  height: 18px;
+  padding: 2px 5px;
+  background: #383842dd;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  color: white;
+  text-transform: none;
+  font-size: 12px;
+  font-family: "Work Sans", sans-serif;
+  outline: 1px solid #ffffff55;
+  opacity: 0;
+  animation: faded-in 0.2s 0.15s;
+  animation-fill-mode: forwards;
+  @keyframes faded-in {
+    from { opacity: 0 }
+    to { opacity: 1 }
+  }
+`;
 
 const Tab = styled.div`
   width: 100%;
-  overflow: hidden;
   height: 50px;
   position: relative;
   display: flex;
@@ -221,6 +260,7 @@ const Tab = styled.div`
   font-size: 13px;
   padding: 20px 19px 20px 42px;
   text-shadow: 0px 0px 8px none;
+  overflow: visible;
   cursor: pointer;
   :hover {
     color: white;

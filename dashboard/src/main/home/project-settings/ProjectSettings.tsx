@@ -1,10 +1,12 @@
 import React, { Component } from 'react';
 import styled from 'styled-components';
 
+import { Context } from '../../../shared/Context';
+
 import InviteList from './InviteList';
 import TabRegion from '../../../components/TabRegion';
-
-import { Context } from '../../../shared/Context';
+import Heading from '../../../components/values-form/Heading';
+import Helper from '../../../components/values-form/Helper';
 
 type PropsType = {
   setCurrentView: (x: string) => void,
@@ -37,24 +39,20 @@ export default class ProjectSettings extends Component<PropsType, StateType> {
     } else {
       return (
         <>
-          <Subtitle>Other Settings</Subtitle>
-          <Rower>
-            <BodyText>
-              Delete this project: 
-            </BodyText>
-            <DeleteButton
-              onClick={() => {
-                this.context.setCurrentModal('UpdateProjectModal', {
-                  currentProject: this.context.currentProject,
-                  setCurrentView: this.props.setCurrentView,
-                });
-              }}
-            >
-              Delete
-            </DeleteButton>
-          </Rower>
+          <Heading isAtTop={true}>Delete Project</Heading>
+          <Helper>Permanently delete this project. <Warning highlight={true}>This action cannot be undone.</Warning></Helper>
+          <DeleteButton
+            onClick={() => {
+              this.context.setCurrentModal('UpdateProjectModal', {
+                currentProject: this.context.currentProject,
+                setCurrentView: this.props.setCurrentView,
+              });
+            }}
+          >
+            Delete Project
+          </DeleteButton>
         </>
-      )
+      );
     }
   }
 
@@ -77,6 +75,11 @@ export default class ProjectSettings extends Component<PropsType, StateType> {
 }
 
 ProjectSettings.contextType = Context;
+
+const Warning = styled.span`
+  color: ${(props: { highlight: boolean, makeFlush?: boolean }) => props.highlight ? '#f5cb42' : ''};
+  margin-left: 5px;
+`;
 
 const Title = styled.div`
   font-size: 24px;
@@ -148,15 +151,33 @@ const CopyButton = styled.div`
   }
 `;
 
-const DeleteButton = styled(CopyButton)`
-  background-color: #b91133;
-  border: none;
-  width: 88px;
-  margin-left: 20px;
+const DeleteButton = styled.div`
+  height: 35px;
+  font-size: 13px;
+  font-weight: 500;
+  font-family: 'Work Sans', sans-serif;
+  color: white;
+  display: flex;
+  align-items: center;
+  padding: 0 15px;
+  margin-top: 10px;
+  text-align: left;
+  background: red;
+  float: left;
+  margin-left: 0;
+  justify-content: center;
+  border-radius: 5px;
+  box-shadow: 0 2px 5px 0 #00000030;
+  cursor: pointer;
+  user-select: none;
+  :focus { outline: 0 }
   :hover {
-    background-color: #b91133;
     filter: brightness(120%);
-    border: none;
+  }
+  background: #b91133;
+  border: none;
+  :hover {
+    filter: brightness(120%);
   }
 `;
 
@@ -164,10 +185,4 @@ const ContentHolder = styled.div`
   min-width: 420px;
   width: 100%;
   margin-bottom: 55px;
-`;
-
-const Rower = styled.div`
-  display: flex;
-  flex-direction: row;
-  align-items: center;
 `;

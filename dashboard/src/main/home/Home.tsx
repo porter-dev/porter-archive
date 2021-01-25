@@ -67,9 +67,10 @@ export default class Home extends Component<PropsType, StateType> {
           return;
         }
         
-        if (res.data.length > 0 && !(currentCluster || includesCompletedInfraSet(res.data))) {
+        if (res.data.length > 0 && (!currentCluster || !includesCompletedInfraSet(res.data))) {
           this.setState({ currentView: 'provisioner', sidebarReady: true, });
         } else {
+          // console.log('getting here', currentCluster)
           this.setState({ currentView: 'dashboard', sidebarReady: true });
         }
       });
@@ -256,7 +257,7 @@ export default class Home extends Component<PropsType, StateType> {
 
   renderContents = () => {
     let { currentView, handleDO } = this.state;
-    if (this.context.currentProject) {
+    if (this.context.currentProject && currentView !== 'new-project') {
       if (currentView === 'cluster-dashboard') {
         return this.renderDashboard();
       } else if (currentView === 'dashboard') {

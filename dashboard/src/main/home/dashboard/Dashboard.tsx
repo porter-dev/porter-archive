@@ -97,7 +97,7 @@ export default class Dashboard extends Component<PropsType, StateType> {
             {!currentCluster && (
               <Banner>
                 <i className="material-icons">error_outline</i>
-                This project currently has no clusters connected.
+                This project currently has no clusters conncted.
               </Banner>
             )}
             <ProvisionerSettings 

@@ -36,12 +36,16 @@ class ContextProvider extends Component {
       this.setState({ currentError });
     },
     currentCluster: null as ClusterType | null,
-    setCurrentCluster: (currentCluster: ClusterType) => {
-      this.setState({ currentCluster });
+    setCurrentCluster: (currentCluster: ClusterType, callback?: any) => {
+      this.setState({ currentCluster }, () => {
+        callback && callback();
+      });
     },
     currentProject: null as ProjectType | null,
-    setCurrentProject: (currentProject: ProjectType) => {
-      this.setState({ currentProject });
+    setCurrentProject: (currentProject: ProjectType, callback?: any) => {
+      this.setState({ currentProject }, () => {
+        callback && callback();
+      });
     },
     projects: [] as ProjectType[],
     setProjects: (projects: ProjectType[]) => {

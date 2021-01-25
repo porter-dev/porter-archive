@@ -57,6 +57,7 @@ export default class ProvisionerStatus extends Component<PropsType, StateType> {
 
   componentDidMount() {
     let { currentProject } = this.context;
+    // console.log(currentProject)
     let protocol = process.env.NODE_ENV == 'production' ? 'wss' : 'ws'
 
     // Check if current project is provisioning
@@ -66,8 +67,9 @@ export default class ProvisionerStatus extends Component<PropsType, StateType> {
       if (err) {
         console.log(err);
       } 
+      
       let infras = filterOldInfras(res.data);
-      console.log('filtered infras: ', infras);
+      // console.log('filtered infras: ', infras);
       let error = false;
 
       let maxStep = {} as Record<string, number>
@@ -78,8 +80,6 @@ export default class ProvisionerStatus extends Component<PropsType, StateType> {
           error = true;
         }
       });
-
-      console.log(infras)
 
       // Filter historical infras list for most current instances of each
       let websockets = infras.map((infra: any) => {
@@ -125,7 +125,6 @@ export default class ProvisionerStatus extends Component<PropsType, StateType> {
           let d = JSON.parse(msg["Values"]["data"]);
 
           if (d["kind"] == "error") {
-            console.log(d)
             err = d["log"];
             break;
           }
@@ -138,18 +137,15 @@ export default class ProvisionerStatus extends Component<PropsType, StateType> {
       }
 
       if (err) {
-        console.log(err)
         let e = ansiparse(err).map((el: any) => {
           return el.text;
         })
-
-        console.log(e)
 
         let index = this.state.infras.findIndex(el => el.kind === infra.kind)
         infra.status = "error"
         let infras = this.state.infras
         infras[index] = infra
-        this.setState({ logs: e, error: true, infras });
+        this.setState({ logs: [...this.state.logs, ...e], error: true, infras });
         return;
       }
 
@@ -213,8 +209,17 @@ export default class ProvisionerStatus extends Component<PropsType, StateType> {
         } else if (res.data) {
           let clusters = res.data;
           if (clusters.length > 0) {
+            // console.log('response :', res.data);
             this.props.setCurrentView('dashboard');
+            alert('setting to dashboard');
+            // console.log('provision end project: ', this.context.currentProject);
+            // console.log('provision end cluster: ', this.context.currentCluster);
             clearInterval(myInterval);
+          } else {
+            // console.log('looped!')
+            // console.log('response :', res.data);
+            // console.log('provision end project: ', this.context.currentProject);
+            // console.log('provision end cluster: ', this.context.currentCluster);
           }
         }
       });

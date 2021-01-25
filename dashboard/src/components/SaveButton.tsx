@@ -123,7 +123,7 @@ const ButtonWrapper = styled.div`
 `;
 
 const Button = styled.button`
-  height: 40px;
+  height: 35px;
   font-size: 13px;
   font-weight: 500;
   font-family: 'Work Sans', sans-serif;

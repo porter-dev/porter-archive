@@ -2,6 +2,7 @@ import React, { Component } from 'react';
 import styled from 'styled-components';
 
 import InviteList from './InviteList';
+import TabRegion from '../../../components/TabRegion';
 
 import { Context } from '../../../shared/Context';
 
@@ -11,11 +12,18 @@ type PropsType = {
 
 type StateType = {
   projectName: string,
+  currentTab: string,
 }
+
+const tabOptions = [
+  { value: 'manage-access', label: 'Manage Access' },
+  { value: 'additional-settings', label: 'Additional Settings' }
+];
 
 export default class ProjectSettings extends Component<PropsType, StateType> {
   state = {
     projectName: '',
+    currentTab: 'manage-access',
   }
 
   componentDidMount() {
@@ -28,18 +36,16 @@ export default class ProjectSettings extends Component<PropsType, StateType> {
     if (currentProject) {
       return (
         <>
-          <TitleSection>
-            <Title>Project Settings</Title>
-          </TitleSection>
-          <LineBreak />
+
         </>
       );
     }
   }
 
-  renderDelete = () => {
-    let { currentProject } = this.context;
-    if (currentProject) {
+  renderTabContents = () => {
+    if (this.state.currentTab === 'manage-access') {
+      return <InviteList />;
+    } else {
       return (
         <>
           <Subtitle>Other Settings</Subtitle>
@@ -48,10 +54,12 @@ export default class ProjectSettings extends Component<PropsType, StateType> {
               Delete this project: 
             </BodyText>
             <DeleteButton
-              onClick={() => this.context.setCurrentModal('UpdateProjectModal', { 
-                currentProject: currentProject,
-                setCurrentView: this.props.setCurrentView,
-              })}
+              onClick={() => {
+                this.context.setCurrentModal('UpdateProjectModal', {
+                  currentProject: this.context.currentProject,
+                  setCurrentView: this.props.setCurrentView,
+                });
+              }}
             >
               Delete
             </DeleteButton>
@@ -61,20 +69,19 @@ export default class ProjectSettings extends Component<PropsType, StateType> {
     }
   }
 
-  renderContents = () => {
-    return (
-      <ContentHolder>
-          <InviteList />
-          {this.renderDelete()}
-      </ContentHolder>
-    )
-  }
-
   render () {
     return (
       <StyledProjectSettings>
-        {this.renderTitle()}
-        {this.renderContents()}
+        <TitleSection>
+          <Title>Project Settings</Title>
+        </TitleSection>
+        <TabRegion
+          currentTab={this.state.currentTab}
+          setCurrentTab={(x: string) => this.setState({ currentTab: x })}
+          options={tabOptions}
+        >
+          {this.renderTabContents()}
+        </TabRegion>
       </StyledProjectSettings>
     );
   }
@@ -93,7 +100,7 @@ const Title = styled.div`
 `;
 
 const TitleSection = styled.div`
-  margin-bottom: 20px;
+  margin-bottom: 13px;
   display: flex;
   flex-direction: row;
   align-items: center;

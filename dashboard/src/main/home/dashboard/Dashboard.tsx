@@ -97,7 +97,7 @@ export default class Dashboard extends Component<PropsType, StateType> {
             {!currentCluster && (
               <Banner>
                 <i className="material-icons">error_outline</i>
-                This project currently has no clusters connected.
+                This project currently has no clusters conncted.
               </Banner>
             )}
             <ProvisionerSettings 
@@ -126,7 +126,7 @@ const Banner = styled.div`
   border-radius: 5px;
   padding-left: 15px;
   align-items: center;
-  background: #616FEEcc;
+  background: #ffffff11;
   > i {
     margin-right: 10px;
     font-size: 18px;

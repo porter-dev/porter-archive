@@ -64,7 +64,7 @@ const regionOptions = [
 
 export default class GCPFormSection extends Component<PropsType, StateType> {
   state = {
-    gcpRegion: 'us-east-1',
+    gcpRegion: 'us-east1',
     gcpProjectId: '',
     gcpKeyData: '',
     selectedInfras: [...provisionOptions],
@@ -246,7 +246,7 @@ export default class GCPFormSection extends Component<PropsType, StateType> {
           <Heading isAtTop={true}>
             GCP Credentials
             <GuideButton 
-              href='https://docs.getporter.dev/docs/getting-started-with-porter-on-aws' 
+              href='https://docs.getporter.dev/docs/getting-started-on-gcp'
               target='_blank'
             >
               <i className="material-icons-outlined">help</i> 
@@ -266,7 +266,7 @@ export default class GCPFormSection extends Component<PropsType, StateType> {
             value={gcpProjectId}
             setValue={(x: string) => this.setState({ gcpProjectId: x })}
             label='🏷️ GCP Project ID'
-            placeholder='ex: AKIAIOSFODNN7EXAMPLE'
+            placeholder='ex: blindfold-ceiling-24601'
             width='100%'
             isRequired={true}
           />
@@ -274,7 +274,7 @@ export default class GCPFormSection extends Component<PropsType, StateType> {
             type='password'
             value={gcpKeyData}
             setValue={(x: string) => this.setState({ gcpKeyData: x })}
-            label='🔒 GCP Key Data'
+            label='🔒 GCP Key Data (JSON)'
             placeholder='○ ○ ○ ○ ○ ○ ○ ○ ○'
             width='100%'
             isRequired={true}

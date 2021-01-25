@@ -17,7 +17,7 @@ type StateType = {
   loading: boolean,
 };
 
-export default class StatusPlaceholder extends Component<PropsType, StateType> {
+export default class ClusterPlaceholder extends Component<PropsType, StateType> {
   state = {
     loading: true,
   }
@@ -65,7 +65,7 @@ export default class StatusPlaceholder extends Component<PropsType, StateType> {
   }
 }
 
-StatusPlaceholder.contextType = Context;
+ClusterPlaceholder.contextType = Context;
 
 const LoadingWrapper = styled.div`
   height: calc(100vh - 450px);

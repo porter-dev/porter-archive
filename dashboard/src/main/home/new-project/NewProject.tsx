@@ -343,7 +343,7 @@ const TitleSection = styled.div`
 `;
 
 const StyledNewProject = styled.div`
-  width: calc(90% - 150px);
+  width: calc(90% - 130px);
   min-width: 300px;
   position: relative;
   padding-top: 50px;

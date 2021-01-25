@@ -9,6 +9,7 @@ import { PorterTemplate, ChoiceType, ClusterType, StorageType } from '../../../.
 import Selector from '../../../../components/Selector';
 import ImageSelector from '../../../../components/image-selector/ImageSelector';
 import TabRegion from '../../../../components/TabRegion';
+import Heading from '../../../../components/values-form/Heading';
 import SaveButton from '../../../../components/SaveButton';
 import ValuesWrapper from '../../../../components/values-form/ValuesWrapper';
 import ValuesForm from '../../../../components/values-form/ValuesForm';
@@ -319,6 +320,7 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
             closeOverlay={true}
           />
         </ClusterSection>
+        <Subtitle>Name</Subtitle>
         {this.renderSourceSelector()}
         {this.renderTabRegion()}
       </StyledLaunchTemplate>

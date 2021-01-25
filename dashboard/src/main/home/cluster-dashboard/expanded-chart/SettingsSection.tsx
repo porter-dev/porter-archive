@@ -211,6 +211,7 @@ const Button = styled.button`
   height: 40px;
   font-size: 13px;
   margin-top: 20px;
+  margin-bottom: 30px;
   font-weight: 500;
   font-family: 'Work Sans', sans-serif;
   color: white;

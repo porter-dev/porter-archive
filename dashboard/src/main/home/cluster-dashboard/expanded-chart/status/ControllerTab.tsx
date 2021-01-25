@@ -134,7 +134,8 @@ export default class ControllerTab extends Component<PropsType, StateType> {
                   <Circle />
                   <Rail lastTab={i === this.state.raw.length - 1} />
                 </Gutter>
-                <Name>
+                <Name
+                >
                   {pod.metadata?.name}
                 </Name>
                 <Status>
@@ -206,6 +207,13 @@ const StatusColor = styled.div`
 const Name = styled.div`
   width: 50%;
   overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 16px;
+  word-wrap: break-word;
+  max-height: 32px;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
 `
 
 const Tab = styled.div`

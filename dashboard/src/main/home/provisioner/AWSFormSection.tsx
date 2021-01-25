@@ -143,15 +143,16 @@ export default class AWSFormSection extends Component<PropsType, StateType> {
             return;
           }
           setProjects(res.data);
-          setCurrentProject(proj);
-          callback && callback();
+          setCurrentProject(proj, () => {
+            callback && callback()
+          });
         });
       }
     });
   }
 
   provisionECR = (callback?: any) => {
-    console.log('Provisioning ECR')
+    console.log('Provisioning ECR');
     let { awsAccessId, awsSecretKey, awsRegion } = this.state;
     let { currentProject } = this.context;
     let { handleError } = this.props;

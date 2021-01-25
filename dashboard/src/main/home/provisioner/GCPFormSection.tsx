@@ -36,32 +36,35 @@ const provisionOptions = [
 ];
 
 const regionOptions = [
-  { value: 'us-east-1', label: 'US East (N. Virginia) us-east-1' },
-  { value: 'us-east-2', label: 'US East (Ohio) us-east-2' },
-  { value: 'us-west-1', label: 'US West (N. California) us-west-1' },
-  { value: 'us-west-2', label: 'US West (Oregon) us-west-2' },
-  { value: 'af-south-1', label: 'Africa (Cape Town) af-south-1' },
-  { value: 'ap-east-1', label: 'Asia Pacific (Hong Kong)ap-east-1' },
-  { value: 'ap-south-1', label: 'Asia Pacific (Mumbai) ap-south-1' },
-  { value: 'ap-northeast-2', label: 'Asia Pacific (Seoul) ap-northeast-2' },
-  { value: 'ap-southeast-1', label: 'Asia Pacific (Singapore) ap-southeast-1' },
-  { value: 'ap-southeast-2', label: 'Asia Pacific (Sydney) ap-southeast-2' },
-  { value: 'ap-northeast-1', label: 'Asia Pacific (Tokyo) ap-northeast-1' },
-  { value: 'ca-central-1', label: 'Canada (Central) ca-central-1' },
-  { value: 'eu-central-1', label: 'Europe (Frankfurt) eu-central-1' },
-  { value: 'eu-west-1', label: 'Europe (Ireland) eu-west-1' },
-  { value: 'eu-west-2', label: 'Europe (London) eu-west-2' },
-  { value: 'eu-south-1', label: 'Europe (Milan) eu-south-1' },
-  { value: 'eu-west-3', label: 'Europe (Paris) eu-west-3' },
-  { value: 'eu-north-1', label: 'Europe (Stockholm) eu-north-1' },
-  { value: 'me-south-1', label: 'Middle East (Bahrain) me-south-1' },
-  { value: 'sa-east-1', label: 'South America (São Paulo) sa-east-1' },
-];
+  { value: 'asia-east1', label: 'asia-east1' },
+  { value: 'asia-east2', label: 'asia-east2' },
+  { value: 'asia-northeast1', label: 'asia-northeast1' },
+  { value: 'asia-northeast2', label: 'asia-northeast2' },
+  { value: 'asia-northeast3', label: 'asia-northeast3' },
+  { value: 'asia-south1', label: 'asia-south1' },
+  { value: 'asia-southeast1', label: 'asia-southeast1' },
+  { value: 'asia-southeast2', label: 'asia-southeast2' },
+  { value: 'australia-southeast1', label: 'australia-southeast1' },
+  { value: 'europe-north1', label: 'europe-north1' },
+  { value: 'europe-west1', label: 'europe-west1' },
+  { value: 'europe-west2', label: 'europe-west2' },
+  { value: 'europe-west3', label: 'europe-west3' },
+  { value: 'europe-west4', label: 'europe-west4' },
+  { value: 'europe-west6', label: 'europe-west6' },
+  { value: 'northamerica-northeast1', label: 'northamerica-northeast1' },
+  { value: 'southamerica-east1', label: 'southamerica-east1' },
+  { value: 'us-central1', label: 'us-central1' },
+  { value: 'us-east1', label: 'us-east1' },
+  { value: 'us-east4', label: 'us-east4' },
+  { value: 'us-west1', label: 'us-west1' },
+  { value: 'us-west2', label: 'us-west2' },
+  { value: 'us-west3', label: 'us-west3' },
+  { value: 'us-west4', label: 'us-west4' },
+]
 
-// TODO: Consolidate across forms w/ HOC
 export default class GCPFormSection extends Component<PropsType, StateType> {
   state = {
-    gcpRegion: 'us-east-1',
+    gcpRegion: 'us-east1',
     gcpProjectId: '',
     gcpKeyData: '',
     selectedInfras: [...provisionOptions],
@@ -243,7 +246,7 @@ export default class GCPFormSection extends Component<PropsType, StateType> {
           <Heading isAtTop={true}>
             GCP Credentials
             <GuideButton 
-              href='https://docs.getporter.dev/docs/getting-started-with-porter-on-aws' 
+              href='https://docs.getporter.dev/docs/getting-started-on-gcp'
               target='_blank'
             >
               <i className="material-icons-outlined">help</i> 
@@ -263,7 +266,7 @@ export default class GCPFormSection extends Component<PropsType, StateType> {
             value={gcpProjectId}
             setValue={(x: string) => this.setState({ gcpProjectId: x })}
             label='🏷️ GCP Project ID'
-            placeholder='ex: AKIAIOSFODNN7EXAMPLE'
+            placeholder='ex: blindfold-ceiling-24601'
             width='100%'
             isRequired={true}
           />
@@ -271,7 +274,7 @@ export default class GCPFormSection extends Component<PropsType, StateType> {
             type='password'
             value={gcpKeyData}
             setValue={(x: string) => this.setState({ gcpKeyData: x })}
-            label='🔒 GCP Key Data'
+            label='🔒 GCP Key Data (JSON)'
             placeholder='○ ○ ○ ○ ○ ○ ○ ○ ○'
             width='100%'
             isRequired={true}

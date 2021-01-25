@@ -176,7 +176,6 @@ const Tooltip = styled.div`
 `;
 
 const ExpandWrapper = styled.div`
-  overflow: hidden;
 `;
 
 const ResourceHeader = styled.div`
@@ -213,7 +212,7 @@ const Metadata = styled.div`
   display: flex;
   align-items: center;
   position: relative;
-  max-width: ${(props: { hasStatus: boolean }) => props.hasStatus ? 'calc(100% - 50px)' : '100%'};
+  max-width: ${(props: { hasStatus: boolean }) => props.hasStatus ? 'calc(100% - 20px)' : '100%'};
 `;
 
 const Status = styled.div`

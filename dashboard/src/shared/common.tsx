@@ -141,5 +141,6 @@ export const filterOldInfras = (infras: InfraType[]): InfraType[] => {
   let result = newestInfras.filter((x: InfraType) => {
     return whitelistedInfras.includes(x.kind)
   });
+  console.log('filtered infras (helper internal): ', result);
   return result;
 }

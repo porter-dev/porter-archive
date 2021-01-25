@@ -114,7 +114,7 @@ const Option = styled.div`
   width: 100%;
   border-top: 1px solid #00000000;
   border-bottom: 1px solid ${(props: { selected: boolean, lastItem: boolean }) => props.lastItem ? '#ffffff00' : '#ffffff15'};
-  height: 35px;
+  height: 37px;
   font-size: 13px;
   padding-top: 9px;
   align-items: center;
@@ -161,11 +161,12 @@ const StyledSelector = styled.div<{ width: string }>`
 
 const MainSelector = styled.div`
   width: ${(props: { expanded: boolean, width: string, height?: string }) => props.width};
-  height: ${(props: { expanded: boolean, width: string, height?: string }) => props.height ? props.height : '30px'};
+  height: ${(props: { expanded: boolean, width: string, height?: string }) => props.height ? props.height : '35px'};
   border: 1px solid #ffffff55;
   font-size: 13px;
   padding: 5px 10px;
   padding-left: 12px;
+  border-radius: 3px;
   display: flex;
   align-items: center;
   justify-content: space-between;

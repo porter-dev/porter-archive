@@ -138,18 +138,15 @@ export default class ProvisionerStatus extends Component<PropsType, StateType> {
       }
 
       if (err) {
-        console.log(err)
         let e = ansiparse(err).map((el: any) => {
           return el.text;
         })
-
-        console.log(e)
 
         let index = this.state.infras.findIndex(el => el.kind === infra.kind)
         infra.status = "error"
         let infras = this.state.infras
         infras[index] = infra
-        this.setState({ logs: e, error: true, infras });
+        this.setState({ logs: [...this.state.logs, ...e], error: true, infras });
         return;
       }
 

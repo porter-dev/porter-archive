@@ -44,21 +44,7 @@ export default class InviteList extends Component<PropsType, StateType> {
       if (err) {
         console.log(err);
       } else {
-        this.setState({ invites: res.data, loading: false }, () => {
-          for (let i = this.state.invites.length - 1; i >= 0; i--) {
-            if (this.state.invites[i].expired && !this.state.invites[i].accepted) {
-              api.deleteInvite('<token>', {}, {
-                id: currentProject.id, invId: this.state.invites[i].id
-              }, (err: any, res: any) => {
-                if (err) {
-                  console.log(`Error deleting invite: ${err}`);
-                } else {
-                  this.state.invites.splice(i, 1);
-                }
-              })
-            }
-          }
-        });
+        this.setState({ invites: res.data, loading: false });
       }
     });
   }
@@ -133,18 +119,22 @@ export default class InviteList extends Component<PropsType, StateType> {
       return <Loading />;
     } else {
       var invContent: any[] = [];
+      var collabList: any[] = [];
+      this.state.invites.sort((a: any, b: any) => (a.email > b.email) ? 1 : -1);
+      this.state.invites.sort((a: any, b: any) => (a.accepted > b.accepted) ? 1 : -1);
+      console.log(this.state.invites);
       for (let i = 0; i < this.state.invites.length; i++) {
         if (this.state.invites[i].accepted) {
-          invContent.push(
+          collabList.push(
             <Tr key={i}>
               <MailTd isTop={i === 0}>
                 {this.state.invites[i].email}
               </MailTd>
               <LinkTd isTop={i === 0}>
               </LinkTd>
-              <Td isTop={i === 0} invis={true}>
+              <Td isTop={i === 0}>
                 <CopyButton
-                  onClick={() => this.deleteInvite(i)}
+                  invis={true}
                 >
                   Remove
                 </CopyButton>
@@ -159,16 +149,12 @@ export default class InviteList extends Component<PropsType, StateType> {
               </MailTd>
               <LinkTd isTop={i === 0}>
                 <Rower>
-                  <ShareLink
-                    disabled={true}
-                    type='string'
-                    placeholder='Link expired'
-                  />
-                  <CopyButton
+                  Link Expired.
+                  <NewLinkButton
                     onClick={() => this.replaceInvite(i)}
                   >
-                    Get New Link
-                  </CopyButton>
+                    <u>Generate a new link</u>
+                  </NewLinkButton>
                 </Rower>
               </LinkTd>
               <Td isTop={i === 0}>
@@ -212,12 +198,13 @@ export default class InviteList extends Component<PropsType, StateType> {
           )
         }
       }
+
       return (
         <>
           <Heading>Invites & Collaborators</Heading>
           <Helper>Manage pending invites and view collaborators.</Helper>
-          {invContent.length > 0
-            ? <Table><tbody>{invContent}</tbody></Table>
+          {((invContent.length > 0) || (collabList.length > 0))
+            ? <Table><tbody>{invContent}{collabList}</tbody></Table>
             : <Placeholder>This project currently has no invites or collaborators.</Placeholder>
           }
         </>
@@ -282,35 +269,8 @@ const DarkMatter = styled.div`
   margin-top: -10px;
 `;
 
-const Subtitle = styled.div`
-  font-size: 18px;
-  font-weight: 700;
-  font-family: 'Work Sans', sans-serif;
-  color: #ffffff;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  margin-bottom: 24px;
-  margin-top: 32px;
-`;
-
-const Subsubtitle = styled.div`
-  font-size: 13px;
-  font-family: 'Work Sans', sans-serif;
-  color: #ffffff;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  margin-bottom: 12px;
-`;
-
-const BodyText = styled.div`
-  color: #ffffff66;
-  font-weight: 400;
-  font-size: 13px;
-`;
-
 const CopyButton = styled.div`
+  visibility: ${(props: { invis?: boolean }) => props.invis ? 'hidden' : 'visible'};
   color: #ffffff;
   font-weight: 400;
   font-size: 13px;
@@ -329,6 +289,16 @@ const CopyButton = styled.div`
   :hover {
     border: 1px solid #ffffff66;
     background-color: #ffffff20;
+  }
+`;
+
+const NewLinkButton = styled(CopyButton)`
+  border: none;
+  width: auto;
+  background-color: transparent;
+  :hover {
+    border: none;
+    background-color: transparent;
   }
 `;
 
@@ -364,11 +334,6 @@ const Rower = styled.div`
   display: flex;
   flex-direction: row;
   align-items: center;
-  justify-content: center;
-`;
-
-const CreateInvite = styled.div`
-  margin-top: -10px;
 `;
 
 const ShareLink = styled.input`
@@ -378,7 +343,7 @@ const ShareLink = styled.input`
   background: none;
   width: 60%;
   color: #74a5f7;
-  margin-left: -30px;
+  margin-left: -10px;
   padding: 5px 10px;
   height: 30px;
   text-overflow: ellipsis;
@@ -397,13 +362,15 @@ const Table = styled.table`
   margin-top: 22px;
   border-radius: 5px;
   background: #ffffff11;
+  color: #ffffff;
+  font-weight: 400;
+  font-size: 13px;
 `;
 
 const Td = styled.td`
-  visibility: ${(props: { isTop: boolean, invis?: boolean }) => props.invis ? 'hidden' : 'visible'};
   white-space: nowrap;
   padding: 6px 0px;
-  border-top: ${(props: { isTop: boolean, invis?: boolean }) => (props.isTop ? 'none' : '1px solid #ffffff55')};
+  border-top: ${(props: { isTop: boolean }) => (props.isTop ? 'none' : '1px solid #ffffff55')};
   &:last-child {
     padding-right: 16px;
   }
@@ -414,17 +381,15 @@ const Tr = styled.tr`
 
 const MailTd = styled(Td)`
   padding: 0 12px;
-  max-width: 300px;
-  min-width: 300px;
+  max-width: 186px;
+  min-width: 186px;
   overflow: hidden;
   text-overflow: ellipsis;
-  color: #ffffff;
-  font-weight: 400;
-  font-size: 13px;
 `;
 
 const LinkTd = styled(Td)`
-  width: 100%;
+  width: calc(100% - 40px);
+  padding-left: 40px;
 `;
 
 const Invalid = styled.div`

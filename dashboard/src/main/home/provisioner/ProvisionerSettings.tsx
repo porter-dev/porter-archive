@@ -95,10 +95,16 @@ export default class NewProject extends Component<PropsType, StateType> {
       case 'gcp':
         return (
           <GCPFormSection 
+            handleError={this.handleError}
+            projectName={projectName}
+            infras={infras}
+            setCurrentView={setCurrentView}
             setSelectedProvisioner={(x: string | null) => {
               this.setState({ selectedProvider: x });
             }}
-          />
+          >
+            {renderSkipHelper()}
+          </GCPFormSection>
         );
       case 'do':
         return (

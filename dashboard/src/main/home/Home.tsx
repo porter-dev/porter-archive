@@ -1,7 +1,6 @@
 import React, { Component } from 'react';
 import posthog from 'posthog-js';
 import styled from 'styled-components';
-import ReactModal from 'react-modal';
 
 import { Context } from '../../shared/Context';
 import api from '../../shared/api';
@@ -23,6 +22,7 @@ import Navbar from './navbar/Navbar';
 import ProvisionerStatus from './provisioner/ProvisionerStatus';
 import ProjectSettings from './project-settings/ProjectSettings';
 import ConfirmOverlay from '../../components/ConfirmOverlay';
+import Modal from './modals/Modal';
 
 type PropsType = {
   logOut: () => void,
@@ -270,12 +270,6 @@ export default class Home extends Component<PropsType, StateType> {
         );
       } else if (currentView === 'integrations') {
         return <Integrations />;
-      } else if (currentView === 'new-project') {
-        return (
-          <NewProject 
-            setCurrentView={(x: string, data: any ) => this.setState({ currentView: x })} 
-          />
-        );
       } else if (currentView === 'provisioner') {
         return (
           <ProvisionerStatus
@@ -293,8 +287,12 @@ export default class Home extends Component<PropsType, StateType> {
           setCurrentView={(x: string) => this.setState({ currentView: x })}
         />
       );
-    } else {
-
+    } else if (currentView === 'new-project') {
+      return (
+        <NewProject 
+          setCurrentView={(x: string, data: any ) => this.setState({ currentView: x })} 
+        />
+      );
     }
   }
 
@@ -337,7 +335,8 @@ export default class Home extends Component<PropsType, StateType> {
         if (res.data.length > 0) {
           this.context.setCurrentProject(res.data[0]);
         } else {
-          this.context.currentModalData.setCurrentView('new-project');
+          this.context.setCurrentProject(null);
+          this.setState({ currentView: 'new-project' });
         }
         this.context.setCurrentModal(null, null);
       }
@@ -386,40 +385,44 @@ export default class Home extends Component<PropsType, StateType> {
     let { currentModal, setCurrentModal, currentProject } = this.context;
     return (
       <StyledHome>
-        <ReactModal
-          isOpen={currentModal === 'ClusterInstructionsModal'}
-          onRequestClose={() => setCurrentModal(null, null)}
-          style={TallModalStyles}
-          ariaHideApp={false}
-        >
-          <ClusterInstructionsModal />
-        </ReactModal>
-        <ReactModal
-          isOpen={currentModal === 'UpdateClusterModal'}
-          onRequestClose={() => setCurrentModal(null, null)}
-          style={ProjectModalStyles}
-          ariaHideApp={false}
-        >
-          <UpdateClusterModal 
-            setRefreshClusters={(x: boolean) => this.setState({ forceRefreshClusters: x })} 
-          />
-        </ReactModal>
-        <ReactModal
-          isOpen={currentModal === 'IntegrationsModal'}
-          onRequestClose={() => setCurrentModal(null, null)}
-          style={SmallModalStyles}
-          ariaHideApp={false}
-        >
-          <IntegrationsModal />
-        </ReactModal>
-        <ReactModal
-          isOpen={currentModal === 'IntegrationsInstructionsModal'}
-          onRequestClose={() => setCurrentModal(null, null)}
-          style={TallModalStyles}
-          ariaHideApp={false}
-        >
-          <IntegrationsInstructionsModal />
-        </ReactModal>
+        {currentModal === 'ClusterInstructionsModal' &&
+          <Modal
+            onRequestClose={() => setCurrentModal(null, null)}
+            width='760px'
+            height='650px'
+          >
+            <ClusterInstructionsModal />
+          </Modal>
+        }
+        {currentModal === 'UpdateClusterModal' &&
+          <Modal
+            onRequestClose={() => setCurrentModal(null, null)}
+            width='565px'
+            height='275px'
+          >
+            <UpdateClusterModal 
+              setRefreshClusters={(x: boolean) => this.setState({ forceRefreshClusters: x })} 
+            />
+          </Modal>
+        }
+        {currentModal === 'IntegrationsModal' &&
+          <Modal
+            onRequestClose={() => setCurrentModal(null, null)}
+            width='760px'
+            height='725px'
+          >
+            <IntegrationsModal />
+          </Modal>
+        }
+        {currentModal === 'IntegrationsInstructionsModal' &&
+          <Modal
+            onRequestClose={() => setCurrentModal(null, null)}
+            width='760px'
+            height='650px'
+          >
+            <IntegrationsInstructionsModal />
+          </Modal>
+        }
 
         {this.renderSidebar()}
 
@@ -443,63 +446,6 @@ export default class Home extends Component<PropsType, StateType> {
 }
 
 Home.contextType = Context;
-
-const SmallModalStyles = {
-  overlay: {
-    backgroundColor: 'rgba(0,0,0,0.6)',
-    zIndex: 2,
-  },
-  content: {
-    borderRadius: '7px',
-    border: 0,
-    width: '760px',
-    maxWidth: '80vw',
-    margin: '0 auto',
-    height: '425px',
-    top: 'calc(50% - 214px)',
-    backgroundColor: '#202227',
-    animation: 'floatInModal 0.5s 0s',
-    overflow: 'visible',
-  },
-};
-
-const ProjectModalStyles = {
-  overlay: {
-    backgroundColor: 'rgba(0,0,0,0.6)',
-    zIndex: 2,
-  },
-  content: {
-    borderRadius: '7px',
-    border: 0,
-    width: '565px',
-    maxWidth: '80vw',
-    margin: '0 auto',
-    height: '275px',
-    top: 'calc(50% - 160px)',
-    backgroundColor: '#202227',
-    animation: 'floatInModal 0.5s 0s',
-    overflow: 'visible',
-  },
-};
-
-const TallModalStyles = {
-  overlay: {
-    backgroundColor: 'rgba(0,0,0,0.6)',
-    zIndex: 2,
-  },
-  content: {
-    borderRadius: '7px',
-    border: 0,
-    width: '760px',
-    maxWidth: '80vw',
-    margin: '0 auto',
-    height: '650px',
-    top: 'calc(50% - 325px)',
-    backgroundColor: '#202227',
-    animation: 'floatInModal 0.5s 0s',
-    overflow: 'visible',
-  },
-};
 
 const ViewWrapper = styled.div`
   height: 100%;

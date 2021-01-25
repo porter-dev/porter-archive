@@ -143,11 +143,8 @@ export default class ControllerTab extends Component<PropsType, StateType> {
                   <Rail lastTab={i === this.state.raw.length - 1} />
                 </Gutter>
                 <Name
-<<<<<<< HEAD
-=======
                   onMouseOver={() => { this.setState({ showTooltip: true }) }}
                   onMouseOut={() => { this.setState({ showTooltip: false }) }}
->>>>>>> origin/beta.3.integration-frontend
                 >
                   {pod.metadata?.name}
                 </Name>
@@ -221,7 +218,6 @@ const StatusColor = styled.div`
 const Name = styled.div`
   max-width: calc(100% - 75px);
   overflow: hidden;
-<<<<<<< HEAD
   text-overflow: ellipsis;
   line-height: 16px;
   word-wrap: break-word;
@@ -229,10 +225,6 @@ const Name = styled.div`
   display: -webkit-box;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
-`
-=======
-  white-space: nowrap;
-  text-overflow: ellipsis;
 `;
 
 const Tooltip = styled.div`
@@ -260,7 +252,6 @@ const Tooltip = styled.div`
     to { opacity: 1 }
   }
 `;
->>>>>>> origin/beta.3.integration-frontend
 
 const Tab = styled.div`
   width: 100%;

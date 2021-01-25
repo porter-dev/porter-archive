@@ -2,6 +2,10 @@ import React, { Component } from 'react';
 import styled from 'styled-components';
 
 import close from '../../../assets/close.png';
+import { isAlphanumeric } from '../../../shared/common';
+import api from '../../../shared/api';
+import { Context } from '../../../shared/Context';
+import { ProjectType, InfraType } from '../../../shared/types';
 
 import SelectRow from '../../../components/values-form/SelectRow';
 import InputRow from '../../../components/values-form/InputRow';
@@ -12,6 +16,10 @@ import CheckboxList from '../../../components/values-form/CheckboxList';
 
 type PropsType = {
   setSelectedProvisioner: (x: string | null) => void,
+  handleError: () => void,
+  projectName: string,
+  setCurrentView: (x: string | null, data?: any) => void,
+  infras: InfraType[],
 };
 
 type StateType = {
@@ -19,9 +27,10 @@ type StateType = {
   gcpProjectId: string,
   gcpKeyData: string,
   selectedInfras: { value: string, label: string }[],
+  buttonStatus: string,
 };
 
-const dummyOptions = [
+const provisionOptions = [
   { value: 'gcr', label: 'Google Container Registry (GCR)' },
   { value: 'gke', label: 'Googke Kubernetes Engine (GKE)' },
 ];
@@ -55,10 +64,168 @@ const regionOptions = [
 
 export default class GCPFormSection extends Component<PropsType, StateType> {
   state = {
-    gcpRegion: '',
+    gcpRegion: 'us-east-1',
     gcpProjectId: '',
     gcpKeyData: '',
-    selectedInfras: [] as { value: string, label: string }[],
+    selectedInfras: [...provisionOptions],
+    buttonStatus: '',
+  }
+
+  componentDidMount = () => {
+    let { infras } = this.props;
+    let { selectedInfras } = this.state;
+
+    if (infras) {
+      
+      // From the dashboard, only uncheck and disable if "creating" or "created"
+      let filtered = selectedInfras;
+      infras.forEach(
+        (infra: InfraType, i: number) => {
+          let { kind, status } = infra;
+          if (status === 'creating' || status === 'created') {
+            filtered = filtered.filter((item: any) => {
+              return item.value !== kind;
+            });
+          }
+        }
+      );
+      this.setState({ selectedInfras: filtered });
+    }
+  }
+
+  checkFormDisabled = () => {
+    let { 
+      gcpRegion,
+      gcpProjectId, 
+      gcpKeyData, 
+      selectedInfras,
+    } = this.state;
+    let { projectName } = this.props;
+    if (projectName || projectName === '') {
+      return (
+        !isAlphanumeric(projectName) 
+          || !(gcpProjectId !== '' && gcpKeyData !== '' && gcpRegion !== '')
+          || selectedInfras.length === 0
+      );
+    } else {
+      return (
+        !(gcpProjectId !== '' && gcpKeyData !== '' && gcpRegion !== '')
+          || selectedInfras.length === 0
+      );
+    }
+  }
+
+  // Step 1: Create a project
+  createProject = (callback?: any) => {
+    console.log('Creating project');
+    let { projectName, handleError } = this.props;
+    let { 
+      user, 
+      setProjects, 
+      setCurrentProject, 
+    } = this.context;
+
+    api.createProject('<token>', { name: projectName }, {
+    }, (err: any, res: any) => {
+      if (err) {
+        console.log(err);
+        handleError();
+        return;
+      } else {
+        let proj = res.data;
+
+        // Need to set project list for dropdown
+        // TODO: consolidate into ProjectSection (case on exists in list on set)
+        api.getProjects('<token>', {}, { 
+          id: user.userId 
+        }, (err: any, res: any) => {
+          if (err) {
+            console.log(err);
+            handleError();
+            return;
+          }
+          setProjects(res.data);
+          setCurrentProject(proj);
+          callback && callback();
+        });
+      }
+    });
+  }
+
+  provisionGCR = (id: number, callback?: any) => {
+    console.log('Provisioning GCR')
+    let { currentProject } = this.context;
+    let { handleError } = this.props;
+
+    api.createGCR('<token>', {
+      gcp_integration_id: id,
+    }, { project_id: currentProject.id }, (err: any, res: any) => {
+      if (err) {
+        console.log(err);
+        handleError();
+        return;
+      }
+      callback && callback();
+    });
+  }
+
+  provisionGKE = (id: number) => {
+    console.log('Provisioning GKE');
+    let { setCurrentView, handleError } = this.props;
+    let { currentProject } = this.context;
+
+    let clusterName = `${currentProject.name}-cluster`
+    api.createGKE('<token>', {
+      gke_name: clusterName,
+      gcp_integration_id: id,
+    }, { project_id: currentProject.id }, (err: any, res: any) => {
+      if (err) {
+        console.log(err);
+        handleError();
+        return;
+      }
+      setCurrentView('provisioner');
+    })
+  }
+
+  handleCreateFlow = () => {
+    let { setCurrentView } = this.props;
+    let { selectedInfras, gcpKeyData, gcpProjectId, gcpRegion } = this.state;
+    let { currentProject } = this.context;
+    api.createGCPIntegration('<token>', {
+      gcp_region: gcpRegion,
+      gcp_key_data: gcpKeyData,
+      gcp_project_id: gcpProjectId,
+    }, { project_id: currentProject.id }, (err: any, res: any) => {
+      if (err) {
+        console.log(err);
+      } else if (res?.data) {
+        console.log('gcp provisioned with response: ', res.data);
+        let { id } = res.data;
+
+        if (selectedInfras.length === 2) {
+          // Case: project exists, provision GCR + GKE
+          this.provisionGCR(id, () => this.provisionGKE(id));
+        } else if (selectedInfras[0].value === 'gcr') {
+          // Case: project exists, only provision GCR
+          this.provisionGCR(id, () => setCurrentView('provisioner'));
+        } else {
+          // Case: project exists, only provision GKE
+          this.provisionGKE(id);
+        }
+      }
+    });
+  }
+
+  // TODO: handle generically (with > 2 steps)
+  onCreateGCP = () => {
+    let { projectName } = this.props;
+
+    if (!projectName) {
+      this.handleCreateFlow();
+    } else {
+      this.createProject(this.handleCreateFlow);
+    }
   }
 
   render() {
@@ -79,7 +246,7 @@ export default class GCPFormSection extends Component<PropsType, StateType> {
           <Heading isAtTop={true}>
             GCP Credentials
             <GuideButton 
-              href='https://docs.getporter.dev/docs/getting-started-with-porter-on-gcp' 
+              href='https://docs.getporter.dev/docs/getting-started-with-porter-on-aws' 
               target='_blank'
             >
               <i className="material-icons-outlined">help</i> 
@@ -99,7 +266,7 @@ export default class GCPFormSection extends Component<PropsType, StateType> {
             value={gcpProjectId}
             setValue={(x: string) => this.setState({ gcpProjectId: x })}
             label='🏷️ GCP Project ID'
-            placeholder='ex: pale-moon-24601'
+            placeholder='ex: AKIAIOSFODNN7EXAMPLE'
             width='100%'
             isRequired={true}
           />
@@ -113,20 +280,21 @@ export default class GCPFormSection extends Component<PropsType, StateType> {
             isRequired={true}
           />
           <Br />
-          <Heading>Resources</Heading>
-          <Helper>Porter will provision the following resources</Helper>
+          <Heading>GCP Resources</Heading>
+          <Helper>Porter will provision the following GCP resources</Helper>
           <CheckboxList
-            options={dummyOptions}
+            options={provisionOptions}
             selected={selectedInfras}
             setSelected={(x: { value: string, label: string }[]) => {
               this.setState({ selectedInfras: x });
             }}
           />
         </FormSection>
+        {this.props.children ? this.props.children : <Padding />}
         <SaveButton
           text='Submit'
-          disabled={true}
-          onClick={() => console.log('oolala')}
+          disabled={this.checkFormDisabled()}
+          onClick={this.onCreateGCP}
           makeFlush={true}
           helper='Note: Provisioning can take up to 15 minutes'
         />
@@ -135,6 +303,12 @@ export default class GCPFormSection extends Component<PropsType, StateType> {
   }
 }
 
+GCPFormSection.contextType = Context;
+
+const Padding = styled.div`
+  height: 15px;
+`;
+
 const Br = styled.div`
   width: 100%;
   height: 2px;
@@ -142,7 +316,7 @@ const Br = styled.div`
 
 const StyledGCPFormSection = styled.div`
   position: relative;
-  padding-bottom: 70px;
+  padding-bottom: 35px;
 `;
 
 const FormSection = styled.div`
@@ -150,6 +324,7 @@ const FormSection = styled.div`
   margin-top: 25px;
   background: #26282f;
   border-radius: 5px;
+  margin-bottom: 25px;
   padding: 25px;
   padding-bottom: 16px;
   font-size: 13px;

@@ -66,6 +66,7 @@ export default class Home extends Component<PropsType, StateType> {
           console.log(err);
           return;
         }
+        
         if (res.data.length > 0 && !(currentCluster || includesCompletedInfraSet(res.data))) {
           this.setState({ currentView: 'provisioner', sidebarReady: true, });
         } else {
@@ -86,11 +87,9 @@ export default class Home extends Component<PropsType, StateType> {
           this.setState({ currentView: 'new-project', sidebarReady: true, });
         } else if (res.data.length > 0 && !currentProject) {
           setProjects(res.data);
-          if (!id) {
-            this.context.setCurrentProject(res.data[0]);
-            this.initializeView();
-          } else {
-            let foundProject = null;
+
+          let foundProject = null;
+          if (id) {
             res.data.forEach((project: ProjectType, i: number) => {
               if (project.id === id) {
                 foundProject = project;
@@ -98,6 +97,11 @@ export default class Home extends Component<PropsType, StateType> {
             });
             this.context.setCurrentProject(foundProject);
             this.setState({ currentView: 'provisioner' });
+          }
+
+          if (!foundProject) {
+            this.context.setCurrentProject(res.data[0]);
+            this.initializeView();
           }
         }
       }
@@ -186,7 +190,7 @@ export default class Home extends Component<PropsType, StateType> {
     let provision = urlParams.get('provision');
     let defaultProjectId = null;
     if (provision === 'do') {
-      defaultProjectId = parseInt(urlParams.get('projectId'));
+      defaultProjectId = parseInt(urlParams.get('project_id'));
       this.setState({ handleDO: true });
       this.checkDO();
     }
@@ -266,12 +270,6 @@ export default class Home extends Component<PropsType, StateType> {
         );
       } else if (currentView === 'integrations') {
         return <Integrations />;
-      } else if (currentView === 'new-project') {
-        return (
-          <NewProject 
-            setCurrentView={(x: string, data: any ) => this.setState({ currentView: x })} 
-          />
-        );
       } else if (currentView === 'provisioner') {
         return (
           <ProvisionerStatus
@@ -289,8 +287,12 @@ export default class Home extends Component<PropsType, StateType> {
           setCurrentView={(x: string) => this.setState({ currentView: x })}
         />
       );
-    } else {
-
+    } else if (currentView === 'new-project') {
+      return (
+        <NewProject 
+          setCurrentView={(x: string, data: any ) => this.setState({ currentView: x })} 
+        />
+      );
     }
   }
 
@@ -333,7 +335,8 @@ export default class Home extends Component<PropsType, StateType> {
         if (res.data.length > 0) {
           this.context.setCurrentProject(res.data[0]);
         } else {
-          this.context.currentModalData.setCurrentView('new-project');
+          this.context.setCurrentProject(null);
+          this.setState({ currentView: 'new-project' });
         }
         this.context.setCurrentModal(null, null);
       }

@@ -80,13 +80,13 @@ export const getIgnoreCase = (object: any, key: string) => {
   ];
 }
 
-const infraSets = [
-  ['ecr', 'eks'],
-  ['gcr', 'gke'],
-  ['docr', 'doks']
-];
-
 export const includesCompletedInfraSet = (infras: InfraType[]): boolean => {
+  // TODO: declare globally while avoidiing changes to the array on helper call
+  let infraSets = [
+    ['ecr', 'eks'],
+    ['gcr', 'gke'],
+    ['docr', 'doks']
+  ];
   if (infras.length === 0) {
     return false;
   }
@@ -114,6 +114,11 @@ export const includesCompletedInfraSet = (infras: InfraType[]): boolean => {
 }
 
 export const filterOldInfras = (infras: InfraType[]): InfraType[] => {
+  let infraSets = [
+    ['ecr', 'eks'],
+    ['gcr', 'gke'],
+    ['docr', 'doks']
+  ];
   let newestInstances = {} as any;
   let newestId = -1;
   let whitelistedInfras = [] as string[];
@@ -141,6 +146,5 @@ export const filterOldInfras = (infras: InfraType[]): InfraType[] => {
   let result = newestInfras.filter((x: InfraType) => {
     return whitelistedInfras.includes(x.kind)
   });
-  console.log('filtered infras (helper internal): ', result);
   return result;
 }

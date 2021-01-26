@@ -186,6 +186,7 @@ const LogStream = styled.div`
   background: #202227;
   user-select: text;
   max-width: 65%;
+  overflow-y: auto;
   overflow-wrap: break-word; 
 `;
 

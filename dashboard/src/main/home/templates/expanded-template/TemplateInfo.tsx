@@ -9,11 +9,7 @@ import Loading from '../../../../components/Loading';
 import { PorterTemplate } from '../../../../shared/types';
 import Helper from '../../../../components/values-form/Helper';
 
-// TODO: read in from metadata
-const hardcodedNames: any = {
-  'postgresql': 'PostgreSQL',
-  'docker': 'Docker',
-};
+import hardcodedNames from '../hardcodedNameDict';
 
 type PropsType = {
   currentTemplate: any,

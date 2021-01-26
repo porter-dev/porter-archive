@@ -11,7 +11,6 @@ type PropsType = {
   defaultTab?: string,
   addendum?: any,
   color?: string | null,
-  overflowY?: string,
 };
 
 type StateType = {
@@ -64,7 +63,7 @@ export default class TabRegion extends Component<PropsType, StateType> {
 
   render() {
     return (
-      <StyledTabRegion overflowY={this.props.overflowY}>
+      <StyledTabRegion>
         {this.renderContents()}
       </StyledTabRegion>
     );
@@ -99,9 +98,9 @@ const Gap = styled.div`
   height: 30px;
 `;
 
-const StyledTabRegion = styled.div<{ overflowY: string }>`
+const StyledTabRegion = styled.div`
   width: 100%;
   height: 100%;
   position: relative;
-  overflow-y: ${props => props.overflowY};
+  overflow-y: auto;
 `;

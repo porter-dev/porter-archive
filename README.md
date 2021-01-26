@@ -19,8 +19,8 @@ Porter brings the simplicity of a traditional PaaS to your own cloud provider wh
 ### Basics
 - One-click provisioning of a Kubernetes cluster in your own cloud console
   - ✅ AWS
-  - 🚧 GCP
-  - 🚧 Digital Ocean
+  - ✅ GCP
+  - ✅ Digital Ocean
   
 - Simple deploy of any public or private Docker image
 

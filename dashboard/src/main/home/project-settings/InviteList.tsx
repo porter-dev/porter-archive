@@ -18,6 +18,7 @@ type StateType = {
   invites: InviteType[],
   email: string,
   invalidEmail: boolean,
+  isHTTPS: boolean,
 }
 
 const dummyInvites = [];
@@ -28,6 +29,7 @@ export default class InviteList extends Component<PropsType, StateType> {
     invites: [] as InviteType[],
     email: '',
     invalidEmail: false,
+    isHTTPS: (process.env.API_SERVER === 'dashboard.getporter.dev'),
   }
 
   componentDidMount() {
@@ -106,7 +108,7 @@ export default class InviteList extends Component<PropsType, StateType> {
   copyToClip = (index: number) => {
     let { currentProject } = this.context;
     navigator.clipboard.writeText(
-      `${process.env.API_SERVER}/api/projects/${currentProject.id}/invites/${this.state.invites[index].token}`
+      `${this.state.isHTTPS ? 'https://' : ''}${process.env.API_SERVER}/api/projects/${currentProject.id}/invites/${this.state.invites[index].token}`
     ).then(function() {
     }, function() {
       console.log("couldn't copy link to clipboard");
@@ -176,7 +178,7 @@ export default class InviteList extends Component<PropsType, StateType> {
                   <ShareLink
                     disabled={true}
                     type='string'
-                    value={`${process.env.API_SERVER}/api/projects/${currentProject.id}/invites/${this.state.invites[i].token}`}
+                    value={`${this.state.isHTTPS ? 'https://' : ''}${process.env.API_SERVER}/api/projects/${currentProject.id}/invites/${this.state.invites[i].token}`}
                     placeholder='Unable to retrieve link'
                   />
                   <CopyButton

@@ -196,6 +196,7 @@ func New(a *api.App) *chi.Mux {
 			),
 		)
 
+<<<<<<< HEAD
 		// /api/projects/{project_id}/ci routes
 		r.Method(
 			"POST",
@@ -208,6 +209,48 @@ func New(a *api.App) *chi.Mux {
 				),
 				mw.URLParam,
 				mw.ReadAccess,
+=======
+		// /api/projects/{project_id}/invites routes
+		r.Method(
+			"POST",
+			"/projects/{project_id}/invites",
+			auth.DoesUserHaveProjectAccess(
+				requestlog.NewHandler(a.HandleCreateInvite, l),
+				mw.URLParam,
+				mw.WriteAccess,
+			),
+		)
+
+		r.Method(
+			"GET",
+			"/projects/{project_id}/invites",
+			auth.DoesUserHaveProjectAccess(
+				requestlog.NewHandler(a.HandleListProjectInvites, l),
+				mw.URLParam,
+				mw.ReadAccess,
+			),
+		)
+
+		r.Method(
+			"GET",
+			"/projects/{project_id}/invites/{token}",
+			auth.BasicAuthenticateWithRedirect(
+				requestlog.NewHandler(a.HandleAcceptInvite, l),
+			),
+		)
+
+		r.Method(
+			"DELETE",
+			"/projects/{project_id}/invites/{invite_id}",
+			auth.DoesUserHaveProjectAccess(
+				auth.DoesUserHaveInviteAccess(
+					requestlog.NewHandler(a.HandleDeleteProjectInvite, l),
+					mw.URLParam,
+					mw.URLParam,
+				),
+				mw.URLParam,
+				mw.WriteAccess,
+>>>>>>> master
 			),
 		)
 
@@ -223,6 +266,16 @@ func New(a *api.App) *chi.Mux {
 		)
 
 		// /api/projects/{project_id}/provision routes
+		r.Method(
+			"POST",
+			"/projects/{project_id}/provision/test",
+			auth.DoesUserHaveProjectAccess(
+				requestlog.NewHandler(a.HandleProvisionTestInfra, l),
+				mw.URLParam,
+				mw.ReadAccess,
+			),
+		)
+
 		r.Method(
 			"POST",
 			"/projects/{project_id}/provision/ecr",
@@ -347,6 +400,20 @@ func New(a *api.App) *chi.Mux {
 			auth.DoesUserHaveProjectAccess(
 				auth.DoesUserHaveInfraAccess(
 					requestlog.NewHandler(a.HandleDestroyAWSECRInfra, l),
+					mw.URLParam,
+					mw.URLParam,
+				),
+				mw.URLParam,
+				mw.ReadAccess,
+			),
+		)
+
+		r.Method(
+			"POST",
+			"/projects/{project_id}/infra/{infra_id}/test/destroy",
+			auth.DoesUserHaveProjectAccess(
+				auth.DoesUserHaveInfraAccess(
+					requestlog.NewHandler(a.HandleDestroyTestInfra, l),
 					mw.URLParam,
 					mw.URLParam,
 				),

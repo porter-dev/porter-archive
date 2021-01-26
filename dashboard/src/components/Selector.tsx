@@ -21,6 +21,26 @@ export default class Selector extends Component<PropsType, StateType> {
     expanded: false
   }
 
+  wrapperRef: any = React.createRef();
+  parentRef: any = React.createRef();
+
+  componentDidMount() {
+    document.addEventListener('mousedown', this.handleClickOutside.bind(this));
+  }
+
+  componentWillUnmount() {
+    document.removeEventListener('mousedown', this.handleClickOutside.bind(this));
+  }
+
+  handleClickOutside = (event: any) => {
+    if (
+      (this.wrapperRef && this.wrapperRef.current && !this.wrapperRef.current.contains(event.target)) &&
+      (this.parentRef && this.parentRef.current && !this.parentRef.current.contains(event.target))
+    ) {
+      this.setState({ expanded: false })
+    }
+  }
+
   handleOptionClick = (option: { value: string, label: string }) => {
     this.props.setActiveValue(option.value);
     this.props.closeOverlay ? null : this.setState({ expanded: false });
@@ -53,17 +73,15 @@ export default class Selector extends Component<PropsType, StateType> {
   renderDropdown = () => {
     if (this.state.expanded) {
       return (
-        <div>
-          {this.props.closeOverlay ? <CloseOverlay onClick={() => this.setState({ expanded: false })} /> : null}
-          <Dropdown
-            dropdownWidth={this.props.dropdownWidth ? this.props.dropdownWidth : this.props.width}
-            dropdownMaxHeight={this.props.dropdownMaxHeight}
-            onClick={() => this.setState({ expanded: false })}
-          >
-            {this.renderDropdownLabel()}
-            {this.renderOptionList()}
-          </Dropdown>
-        </div>
+        <Dropdown
+          ref={this.wrapperRef}
+          dropdownWidth={this.props.dropdownWidth ? this.props.dropdownWidth : this.props.width}
+          dropdownMaxHeight={this.props.dropdownMaxHeight}
+          onClick={() => this.setState({ expanded: false })}
+        >
+          {this.renderDropdownLabel()}
+          {this.renderOptionList()}
+        </Dropdown>
       )
     }
   }
@@ -80,6 +98,7 @@ export default class Selector extends Component<PropsType, StateType> {
     return (
       <StyledSelector width={this.props.width}>
         <MainSelector
+          ref={this.parentRef}
           onClick={() => this.setState({ expanded: !this.state.expanded })}
           expanded={this.state.expanded}
           width={this.props.width}

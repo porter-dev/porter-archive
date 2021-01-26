@@ -55,22 +55,7 @@ export default class ClusterSection extends Component<PropsType, StateType> {
           clusters.sort((a: any, b: any) => a.id - b.id);
           if (clusters.length > 0) {
             this.setState({ clusters });
-            let saved = JSON.parse(localStorage.getItem('currentCluster'));
-            if (localStorage.getItem('currentCluster') !== 'null') {
-              setCurrentCluster(clusters[0]);
-              for (let i = 0; i < clusters.length; i++) {
-                if (
-                  clusters[i].id = saved.id &&
-                  clusters[i].project_id === saved.project_id && 
-                  clusters[i].name === saved.name
-                ) {
-                  setCurrentCluster(clusters[i]);
-                  break;
-                }
-              }
-            } else {
-              setCurrentCluster(clusters[0]);
-            }
+            setCurrentCluster(clusters[0]);
           } else if (
             this.props.currentView !== 'provisioner'
             && this.props.currentView !== 'new-project'

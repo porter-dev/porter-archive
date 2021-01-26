@@ -230,13 +230,13 @@ const Name = styled.div`
 const Tooltip = styled.div`
   position: absolute;
   left: 35px;
+  word-wrap: break-word;
   top: 38px;
-  white-space: nowrap;
-  height: 18px;
+  min-height: 18px;
+  max-width: calc(100% - 75px);
   padding: 2px 5px;
   background: #383842dd;
   display: flex;
-  align-items: center;
   justify-content: center;
   flex: 1;
   color: white;

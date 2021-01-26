@@ -37,6 +37,7 @@ class ContextProvider extends Component {
     },
     currentCluster: null as ClusterType | null,
     setCurrentCluster: (currentCluster: ClusterType, callback?: any) => {
+      localStorage.setItem('currentCluster', JSON.stringify(currentCluster));
       this.setState({ currentCluster }, () => {
         callback && callback();
       });
@@ -49,6 +50,7 @@ class ContextProvider extends Component {
     },
     projects: [] as ProjectType[],
     setProjects: (projects: ProjectType[]) => {
+      projects.sort((a: any, b: any) => (a.name > b.name) ? 1 : -1);
       this.setState({ projects });
     },
     user: null as any,

@@ -122,7 +122,6 @@ export default class InviteList extends Component<PropsType, StateType> {
       var collabList: any[] = [];
       this.state.invites.sort((a: any, b: any) => (a.email > b.email) ? 1 : -1);
       this.state.invites.sort((a: any, b: any) => (a.accepted > b.accepted) ? 1 : -1);
-      console.log(this.state.invites);
       for (let i = 0; i < this.state.invites.length; i++) {
         if (this.state.invites[i].accepted) {
           collabList.push(

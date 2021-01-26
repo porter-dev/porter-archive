@@ -8,6 +8,7 @@ import { InfraType } from '../../../shared/types';
 import api from '../../../shared/api';
 
 import ProvisionerSettings from '../provisioner/ProvisionerSettings';
+import ClusterPlaceholderContainer from './ClusterPlaceholderContainer';
 
 type PropsType = {
   setCurrentView: (x: string) => void,
@@ -94,16 +95,24 @@ export default class Dashboard extends Component<PropsType, StateType> {
 
             <LineBreak />
 
-            {!currentCluster && (
-              <Banner>
-                <i className="material-icons">error_outline</i>
-                This project currently has no clusters conncted.
-              </Banner>
-            )}
-            <ProvisionerSettings 
-              setCurrentView={setCurrentView} 
-              infras={infras}
-            />
+            {!currentCluster 
+              ? (
+                <>
+                  <Banner>
+                    <i className="material-icons">error_outline</i>
+                    This project currently has no clusters conncted.
+                    </Banner>
+                  <ProvisionerSettings 
+                    setCurrentView={setCurrentView} 
+                    infras={infras}
+                  />
+                </>
+              ) : (
+                <ClusterPlaceholderContainer
+                  setCurrentView={this.props.setCurrentView} 
+                />
+              )
+            }
           </DashboardWrapper>
         )}
       </>

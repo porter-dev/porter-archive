@@ -63,6 +63,7 @@ export default class ProjectSettings extends Component<PropsType, StateType> {
           <Title>Project Settings</Title>
         </TitleSection>
         <TabRegion
+          overflowY='visible'
           currentTab={this.state.currentTab}
           setCurrentTab={(x: string) => this.setState({ currentTab: x })}
           options={tabOptions}
@@ -100,9 +101,9 @@ const TitleSection = styled.div`
 `;
 
 const StyledProjectSettings = styled.div`
-  width: calc(90% - 150px);
+  width: calc(90% - 130px);
   min-width: 300px;
-  padding-top: 45px;
+  padding-top: 70px;
 `;
 
 const LineBreak = styled.div`
@@ -179,10 +180,4 @@ const DeleteButton = styled.div`
   :hover {
     filter: brightness(120%);
   }
-`;
-
-const ContentHolder = styled.div`
-  min-width: 420px;
-  width: 100%;
-  margin-bottom: 55px;
 `;

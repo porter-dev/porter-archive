@@ -37,12 +37,14 @@ class ContextProvider extends Component {
     },
     currentCluster: null as ClusterType | null,
     setCurrentCluster: (currentCluster: ClusterType, callback?: any) => {
+      localStorage.setItem(this.state.currentProject.id + '-cluster', JSON.stringify(currentCluster));
       this.setState({ currentCluster }, () => {
         callback && callback();
       });
     },
     currentProject: null as ProjectType | null,
     setCurrentProject: (currentProject: ProjectType, callback?: any) => {
+      localStorage.setItem('currentProject', currentProject.id.toString());
       this.setState({ currentProject }, () => {
         callback && callback();
       });

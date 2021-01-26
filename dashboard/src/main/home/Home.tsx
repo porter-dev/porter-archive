@@ -101,7 +101,12 @@ export default class Home extends Component<PropsType, StateType> {
           }
 
           if (!foundProject) {
-            this.context.setCurrentProject(res.data[0]);
+            res.data.forEach((project: ProjectType, i: number) => {
+              if (project.id.toString() === localStorage.getItem('currentProject')) {
+                foundProject = project;
+              }
+            })
+            this.context.setCurrentProject(foundProject ? foundProject : res.data[0]);
             this.initializeView();
           }
         }
@@ -346,6 +351,7 @@ export default class Home extends Component<PropsType, StateType> {
 
   handleDelete = () => {
     let { setCurrentModal, currentProject } = this.context;
+    localStorage.removeItem(currentProject.id + '-cluster');
     api.deleteProject('<token>', {}, { id: currentProject.id }, (err: any, res: any) => {
       if (err) {
         // console.log(err)

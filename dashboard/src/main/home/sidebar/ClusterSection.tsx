@@ -59,9 +59,10 @@ export default class ClusterSection extends Component<PropsType, StateType> {
             if (localStorage.getItem('currentCluster') !== 'null') {
               setCurrentCluster(clusters[0]);
               for (let i = 0; i < clusters.length; i++) {
-                if (clusters[i].id = saved.id 
-                  && clusters[i].project_id === saved.project_id 
-                  && clusters[i].name === saved.name
+                if (
+                  clusters[i].id = saved.id &&
+                  clusters[i].project_id === saved.project_id && 
+                  clusters[i].name === saved.name
                 ) {
                   setCurrentCluster(clusters[i]);
                   break;

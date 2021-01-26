@@ -266,7 +266,7 @@ const TitleSection = styled.div`
 `;
 
 const TemplatesWrapper = styled.div`
-  width: calc(90% - 150px);
+  width: calc(90% - 130px);
   min-width: 300px;
-  padding-top: 50px;
+  padding-top: 75px;
 `;

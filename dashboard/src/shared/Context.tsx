@@ -37,7 +37,6 @@ class ContextProvider extends Component {
     },
     currentCluster: null as ClusterType | null,
     setCurrentCluster: (currentCluster: ClusterType, callback?: any) => {
-      localStorage.setItem('currentCluster', JSON.stringify(currentCluster));
       this.setState({ currentCluster }, () => {
         callback && callback();
       });

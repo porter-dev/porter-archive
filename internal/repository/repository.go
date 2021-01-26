@@ -12,6 +12,7 @@ type Repository struct {
 	Registry         RegistryRepository
 	Infra            InfraRepository
 	GitActionConfig  GitActionConfigRepository
+	Invite           InviteRepository
 	KubeIntegration  KubeIntegrationRepository
 	BasicIntegration BasicIntegrationRepository
 	OIDCIntegration  OIDCIntegrationRepository

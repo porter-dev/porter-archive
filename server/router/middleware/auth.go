@@ -50,6 +50,31 @@ func (auth *Auth) BasicAuthenticate(next http.Handler) http.Handler {
 	})
 }
 
+// BasicAuthenticateWithRedirect checks that a user is logged in, and if they're not, the
+// user is redirected to the login page with the redirect path stored in the session
+func (auth *Auth) BasicAuthenticateWithRedirect(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if auth.isLoggedIn(w, r) {
+			next.ServeHTTP(w, r)
+		} else {
+			session, err := auth.store.Get(r, auth.cookieName)
+
+			if err != nil {
+				http.Redirect(w, r, "/dashboard", 302)
+			}
+
+			// need state parameter to validate when redirected
+			session.Values["redirect"] = r.URL.Path
+			session.Save(r, w)
+
+			http.Redirect(w, r, "/dashboard", 302)
+			return
+		}
+
+		return
+	})
+}
+
 // IDLocation represents the location of the ID to use for authentication
 type IDLocation uint
 
@@ -84,6 +109,10 @@ type bodyGitRepoID struct {
 
 type bodyInfraID struct {
 	InfraID uint64 `json:"infra_id"`
+}
+
+type bodyInviteID struct {
+	InviteID uint64 `json:"invite_id"`
 }
 
 type bodyAWSIntegrationID struct {
@@ -235,6 +264,56 @@ func (auth *Auth) DoesUserHaveClusterAccess(
 
 		for _, cluster := range clusters {
 			if cluster.ID == uint(clusterID) {
+				doesExist = true
+				break
+			}
+		}
+
+		if doesExist {
+			next.ServeHTTP(w, r)
+			return
+		}
+
+		http.Error(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)
+		return
+	})
+}
+
+// DoesUserHaveInviteAccess looks for a project_id parameter and a
+// invite_id parameter, and verifies that the invite belongs
+// to the project
+func (auth *Auth) DoesUserHaveInviteAccess(
+	next http.Handler,
+	projLoc IDLocation,
+	inviteLoc IDLocation,
+) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		inviteID, err := findInviteIDInRequest(r, inviteLoc)
+
+		if err != nil {
+			http.Error(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)
+			return
+		}
+
+		projID, err := findProjIDInRequest(r, projLoc)
+
+		if err != nil {
+			http.Error(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)
+			return
+		}
+
+		// get the service accounts belonging to the project
+		invites, err := auth.repo.Invite.ListInvitesByProjectID(uint(projID))
+
+		if err != nil {
+			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+			return
+		}
+
+		doesExist := false
+
+		for _, invite := range invites {
+			if invite.ID == uint(inviteID) {
 				doesExist = true
 				break
 			}
@@ -742,6 +821,51 @@ func findClusterIDInRequest(r *http.Request, clusterLoc IDLocation) (uint64, err
 	}
 
 	return clusterID, nil
+}
+
+func findInviteIDInRequest(r *http.Request, inviteLoc IDLocation) (uint64, error) {
+	var inviteID uint64
+	var err error
+
+	if inviteLoc == URLParam {
+		inviteID, err = strconv.ParseUint(chi.URLParam(r, "invite_id"), 0, 64)
+
+		if err != nil {
+			return 0, err
+		}
+	} else if inviteLoc == BodyParam {
+		form := &bodyInviteID{}
+		body, err := ioutil.ReadAll(r.Body)
+
+		if err != nil {
+			return 0, err
+		}
+
+		err = json.Unmarshal(body, form)
+
+		if err != nil {
+			return 0, err
+		}
+
+		inviteID = form.InviteID
+
+		// need to create a new stream for the body
+		r.Body = ioutil.NopCloser(bytes.NewReader(body))
+	} else {
+		vals, err := url.ParseQuery(r.URL.RawQuery)
+
+		if err != nil {
+			return 0, err
+		}
+
+		if invStrArr, ok := vals["invite_id"]; ok && len(invStrArr) == 1 {
+			inviteID, err = strconv.ParseUint(invStrArr[0], 10, 64)
+		} else {
+			return 0, errors.New("invite id not found")
+		}
+	}
+
+	return inviteID, nil
 }
 
 func findRegistryIDInRequest(r *http.Request, registryLoc IDLocation) (uint64, error) {

@@ -38,6 +38,7 @@ func main() {
 		&models.ClusterResolver{},
 		&models.Infra{},
 		&models.GitActionConfig{},
+		&models.Invite{},
 		&ints.KubeIntegration{},
 		&ints.BasicIntegration{},
 		&ints.OIDCIntegration{},

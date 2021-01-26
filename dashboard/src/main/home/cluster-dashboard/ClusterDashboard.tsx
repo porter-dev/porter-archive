@@ -34,7 +34,9 @@ export default class ClusterDashboard extends Component<PropsType, StateType> {
     localStorage.setItem("SortType", this.state.sortType);
     // Reset namespace filter and close expanded chart on cluster change
     if (prevProps.currentCluster !== this.props.currentCluster) {
-      this.setState({ namespace: 'default', sortType: 'Newest', currentChart: null });
+      this.setState({ namespace: 'default', sortType: (
+        localStorage.getItem("SortType") ? localStorage.getItem('SortType') : 'Newest'
+      ), currentChart: null });
     }
   }
 

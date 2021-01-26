@@ -50,6 +50,11 @@ func (app *App) HandleCreateUser(w http.ResponseWriter, r *http.Request) {
 		session.Values["email"] = user.Email
 		session.Save(r, w)
 
+		if val, ok := session.Values["redirect"].(string); ok && val != "" {
+			http.Redirect(w, r, val, 302)
+			return
+		}
+
 		w.WriteHeader(http.StatusCreated)
 
 		if err := app.sendUser(w, user.ID, user.Email); err != nil {
@@ -122,7 +127,12 @@ func (app *App) HandleLoginUser(w http.ResponseWriter, r *http.Request) {
 		app.Logger.Warn().Err(err)
 	}
 
-	w.WriteHeader(http.StatusOK)
+	if val, ok := session.Values["redirect"].(string); ok && val != "" {
+		http.Redirect(w, r, val, 302)
+		return
+	}
+
+	w.WriteHeader(http.StatusCreated)
 
 	if err := app.sendUser(w, storedUser.ID, storedUser.Email); err != nil {
 		app.handleErrorFormDecoding(err, ErrUserDecode, w)

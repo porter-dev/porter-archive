@@ -49,14 +49,31 @@ export default class ClusterSection extends Component<PropsType, StateType> {
         this.props.setWelcome(true);
       } else {
         this.props.setWelcome(false);
-        
         // TODO: handle uninitialized kubeconfig
         if (res.data) {
           let clusters = res.data;
+          clusters.sort((a: any, b: any) => a.id - b.id);
           if (clusters.length > 0) {
             this.setState({ clusters });
-            setCurrentCluster(clusters[0]);
-          } else if (this.props.currentView !== 'provisioner') {
+            let saved = JSON.parse(localStorage.getItem('currentCluster'));
+            if (localStorage.getItem('currentCluster') !== 'null') {
+              setCurrentCluster(clusters[0]);
+              for (let i = 0; i < clusters.length; i++) {
+                if (clusters[i].id = saved.id 
+                  && clusters[i].project_id === saved.project_id 
+                  && clusters[i].name === saved.name
+                ) {
+                  setCurrentCluster(clusters[i]);
+                  break;
+                }
+              }
+            } else {
+              setCurrentCluster(clusters[0]);
+            }
+          } else if (
+            this.props.currentView !== 'provisioner'
+            && this.props.currentView !== 'new-project'
+          ) {
             this.setState({ clusters: [] });
             setCurrentCluster(null);
             this.props.setCurrentView('dashboard');

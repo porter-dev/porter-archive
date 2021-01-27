@@ -16,7 +16,7 @@ type PropsType = {
 type StateType = {
   pods: any[],
   raw: any[],
-  showTooltip: boolean,
+  showTooltip: boolean[],
 };
 
 // Controller tab in log section that displays list of pods on click.
@@ -24,7 +24,7 @@ export default class ControllerTab extends Component<PropsType, StateType> {
   state = {
     pods: [] as any[],
     raw: [] as any[],
-    showTooltip: false,
+    showTooltip: [] as boolean[],
   }
 
   componentDidMount() {
@@ -62,8 +62,12 @@ export default class ControllerTab extends Component<PropsType, StateType> {
           phase: pod?.status?.phase,
         }
       });
+      let showTooltip = new Array(pods.length);
+      for (let j = 0; j < pods.length; j ++) {
+        showTooltip[j] = false;
+      }
       
-      this.setState({ pods, raw: res.data });
+      this.setState({ pods, raw: res.data, showTooltip });
       
       if (isFirst) {
         selectPod(res.data[0])
@@ -110,8 +114,8 @@ export default class ControllerTab extends Component<PropsType, StateType> {
     }
   }
 
-  renderTooltip = (x: string): JSX.Element | undefined => {
-    if (this.state.showTooltip) {
+  renderTooltip = (x: string, ind: number): JSX.Element | undefined => {
+    if (this.state.showTooltip[ind]) {
       return <Tooltip>{x}</Tooltip>;
     }
   }
@@ -143,12 +147,20 @@ export default class ControllerTab extends Component<PropsType, StateType> {
                   <Rail lastTab={i === this.state.raw.length - 1} />
                 </Gutter>
                 <Name
-                  onMouseOver={() => { this.setState({ showTooltip: true }) }}
-                  onMouseOut={() => { this.setState({ showTooltip: false }) }}
+                  onMouseOver={() => {
+                    let showTooltip = this.state.showTooltip;
+                    showTooltip[i] = true;
+                    this.setState({ showTooltip });
+                  }}
+                  onMouseOut={() => {
+                    let showTooltip = this.state.showTooltip;
+                    showTooltip[i] = false;
+                    this.setState({ showTooltip });
+                  }}
                 >
                   {pod.metadata?.name}
                 </Name>
-                {this.renderTooltip(pod.metadata?.name)}
+                {this.renderTooltip(pod.metadata?.name, i)}
                 <Status>
                   <StatusColor status={status} />
                   {status}

@@ -382,6 +382,11 @@ func TestUpdateClusterToken(t *testing.T) {
 		t.Fatalf("incorrect cluster id in token cache: expected %d, got %d\n", 1, cluster.TokenCache.ClusterID)
 	}
 
+	// make sure old token is token-1
+	if string(cluster.TokenCache.Token) != "token-1" {
+		t.Errorf("incorrect token in cache: expected %s, got %s\n", "token-1", cluster.TokenCache.Token)
+	}
+
 	// make sure old token is expired
 	if isExpired := cluster.TokenCache.IsExpired(); !isExpired {
 		t.Fatalf("token was not expired\n")

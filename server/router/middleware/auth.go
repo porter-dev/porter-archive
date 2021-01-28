@@ -9,9 +9,11 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
+	"strings"
 
 	"github.com/go-chi/chi"
 	"github.com/gorilla/sessions"
+	"github.com/porter-dev/porter/internal/auth/token"
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/repository"
 )
@@ -20,6 +22,7 @@ import (
 type Auth struct {
 	store      sessions.Store
 	cookieName string
+	tokenConf  *token.TokenGeneratorConf
 	repo       *repository.Repository
 }
 
@@ -27,9 +30,10 @@ type Auth struct {
 func NewAuth(
 	store sessions.Store,
 	cookieName string,
+	tokenConf *token.TokenGeneratorConf,
 	repo *repository.Repository,
 ) *Auth {
-	return &Auth{store, cookieName, repo}
+	return &Auth{store, cookieName, tokenConf, repo}
 }
 
 // BasicAuthenticate just checks that a user is logged in
@@ -127,6 +131,14 @@ type bodyDOIntegrationID struct {
 // the one stored in the session
 func (auth *Auth) DoesUserIDMatch(next http.Handler, loc IDLocation) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// first check for token
+		tok := auth.getTokenFromRequest(r)
+
+		if tok != nil && tok.SubKind == token.User && auth.doesSessionMatchID(r, tok.IBy) {
+			next.ServeHTTP(w, r)
+			return
+		}
+
 		var err error
 		id, err := findUserIDInRequest(r, loc)
 
@@ -163,6 +175,14 @@ func (auth *Auth) DoesUserHaveProjectAccess(
 
 		if err != nil {
 			http.Error(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)
+			return
+		}
+
+		// first check for token
+		tok := auth.getTokenFromRequest(r)
+
+		if tok != nil && tok.ProjectID == uint(projID) {
+			next.ServeHTTP(w, r)
 			return
 		}
 
@@ -635,6 +655,8 @@ func (auth *Auth) doesSessionMatchID(r *http.Request, id uint) bool {
 }
 
 func (auth *Auth) isLoggedIn(w http.ResponseWriter, r *http.Request) bool {
+	// first check for Bearer token
+
 	session, err := auth.store.Get(r, auth.cookieName)
 	if err != nil {
 		session.Values["authenticated"] = false
@@ -648,6 +670,22 @@ func (auth *Auth) isLoggedIn(w http.ResponseWriter, r *http.Request) bool {
 		return false
 	}
 	return true
+}
+
+func (auth *Auth) getTokenFromRequest(r *http.Request) *token.Token {
+	reqToken := r.Header.Get("Authorization")
+
+	splitToken := strings.Split(reqToken, "Bearer")
+
+	if len(splitToken) != 2 {
+		return nil
+	}
+
+	reqToken = strings.TrimSpace(splitToken[1])
+
+	tok, _ := token.GetTokenFromEncoded(reqToken, auth.tokenConf)
+
+	return tok
 }
 
 func findUserIDInRequest(r *http.Request, userLoc IDLocation) (uint64, error) {

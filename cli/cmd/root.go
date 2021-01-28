@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 
 	"github.com/fatih/color"
+	"github.com/porter-dev/porter/cli/cmd/api"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"k8s.io/client-go/util/homedir"
@@ -69,4 +70,12 @@ func Setup() {
 		viper.Set("host", "https://dashboard.getporter.dev")
 		viper.WriteConfig()
 	}
+}
+
+func GetAPIClient() *api.Client {
+	if token := viper.GetString("token"); token != "" {
+		return api.NewClientWithToken(getHost()+"/api", token)
+	}
+
+	return api.NewClient(getHost()+"/api", "cookie.json")
 }

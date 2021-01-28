@@ -54,7 +54,7 @@ func TestCreateGitActionConfig(t *testing.T) {
 	}
 
 	// read the release and make sure GitActionConfig is expected
-	release, err := tester.repo.Release.ReadReleaseByWebhookToken("abcdefgh")
+	release, err := tester.repo.Release.ReadRelease(1, "denver-meister-dakota", "default")
 
 	if err != nil {
 		t.Fatalf("%v\n", err)

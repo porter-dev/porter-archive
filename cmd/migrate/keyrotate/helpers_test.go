@@ -3,6 +3,7 @@ package keyrotate_test
 import (
 	"os"
 	"testing"
+	"time"
 
 	"github.com/porter-dev/porter/internal/adapter"
 	"github.com/porter-dev/porter/internal/config"
@@ -365,6 +366,12 @@ func initCluster(tester *tester, t *testing.T) {
 		Server:                   "https://localhost",
 		KubeIntegrationID:        tester.initKIs[0].ID,
 		CertificateAuthorityData: []byte("-----BEGIN"),
+		TokenCache: ints.ClusterTokenCache{
+			TokenCache: ints.TokenCache{
+				Token:  []byte("token-1"),
+				Expiry: time.Now().Add(-1 * time.Hour),
+			},
+		},
 	}
 
 	cluster, err := tester.repo.Cluster.CreateCluster(cluster)

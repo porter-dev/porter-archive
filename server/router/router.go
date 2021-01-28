@@ -927,7 +927,7 @@ func New(a *api.App) *chi.Mux {
 				auth.DoesUserHaveGitRepoAccess(
 					requestlog.NewHandler(a.HandleListRepos, l),
 					mw.URLParam,
-					mw.QueryParam,
+					mw.URLParam,
 				),
 				mw.URLParam,
 				mw.ReadAccess,
@@ -941,7 +941,7 @@ func New(a *api.App) *chi.Mux {
 				auth.DoesUserHaveGitRepoAccess(
 					requestlog.NewHandler(a.HandleGetBranches, l),
 					mw.URLParam,
-					mw.QueryParam,
+					mw.URLParam,
 				),
 				mw.URLParam,
 				mw.ReadAccess,
@@ -955,7 +955,7 @@ func New(a *api.App) *chi.Mux {
 				auth.DoesUserHaveGitRepoAccess(
 					requestlog.NewHandler(a.HandleGetBranchContents, l),
 					mw.URLParam,
-					mw.QueryParam,
+					mw.URLParam,
 				),
 				mw.URLParam,
 				mw.ReadAccess,

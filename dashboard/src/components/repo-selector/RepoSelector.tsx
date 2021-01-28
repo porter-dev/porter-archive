@@ -45,6 +45,7 @@ export default class RepoSelector extends Component<PropsType, StateType> {
       if (err) {
         this.setState({ loading: false, error: true });
       } else {
+        console.log(res.data);
         this.setState({ repos: res.data, loading: false, error: false });
       }
     });

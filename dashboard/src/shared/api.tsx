@@ -186,6 +186,16 @@ const getClusters = baseApi<{}, { id: number }>('GET', pathParams => {
   return `/api/projects/${pathParams.id}/clusters`;
 });
 
+const getGitRepoInfo = baseApi('GET', '/api/repos/github/');
+
+const getGitRepoList = baseApi<{
+}, {
+  project_id: number,
+  git_repo_id: number,
+}>('GET', pathParams => {
+  return `/api/projects/${pathParams.project_id}/gitrepos/${pathParams.git_repo_id}/repos`;
+});
+
 const getGitRepos = baseApi<{
 }, {
   project_id: number,
@@ -400,6 +410,8 @@ export default {
   getChartControllers,
   getClusterIntegrations,
   getClusters,
+  getGitRepoInfo,
+  getGitRepoList,
   getGitRepos,
   getImageRepos,
   getImageTags,

@@ -18,12 +18,14 @@ type StateType = {
 export default class IntegrationList extends Component<PropsType, StateType> {
   renderContents = () => {
     let { integrations, titles, setCurrent, isCategory } = this.props;
+    console.log(`titles: ${titles}`);
+    console.log(`integrations: ${integrations}`);
     if (titles && titles.length > 0) {
       return integrations.map((integration: string, i: number) => {
         let icon = integrationList[integration] && integrationList[integration].icon;
         let subtitle = integrationList[integration] && integrationList[integration].label;
         let label = titles[i];
-        let disabled = integration === 'repo' || integration === 'kubernetes';
+        let disabled = integration === 'kubernetes';
         return (
           <Integration
             key={i}
@@ -46,7 +48,7 @@ export default class IntegrationList extends Component<PropsType, StateType> {
       return integrations.map((integration: string, i: number) => {
         let icon = integrationList[integration] && integrationList[integration].icon;
         let label = integrationList[integration] && integrationList[integration].label;
-        let disabled = integration === 'repo' || integration === 'kubernetes';
+        let disabled = integration === 'kubernetes';
         return (
           <Integration
             key={i}

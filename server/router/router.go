@@ -942,7 +942,7 @@ func New(a *api.App) *chi.Mux {
 
 		r.Method(
 			"GET",
-			"/projects/{project_id}/gitrepos/{git_repo_id}/repos/{kind}/{name}/branches",
+			"/projects/{project_id}/gitrepos/{git_repo_id}/repos/{kind}/{owner}/{name}/branches",
 			auth.DoesUserHaveProjectAccess(
 				auth.DoesUserHaveGitRepoAccess(
 					requestlog.NewHandler(a.HandleGetBranches, l),
@@ -956,7 +956,7 @@ func New(a *api.App) *chi.Mux {
 
 		r.Method(
 			"GET",
-			"/projects/{project_id}/gitrepos/{git_repo_id}/repos/{kind}/{name}/{branch}/contents",
+			"/projects/{project_id}/gitrepos/{git_repo_id}/repos/{kind}/{owner}/{name}/{branch}/contents",
 			auth.DoesUserHaveProjectAccess(
 				auth.DoesUserHaveGitRepoAccess(
 					requestlog.NewHandler(a.HandleGetBranchContents, l),

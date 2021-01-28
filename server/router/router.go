@@ -196,7 +196,6 @@ func New(a *api.App) *chi.Mux {
 			),
 		)
 
-<<<<<<< HEAD
 		// /api/projects/{project_id}/ci routes
 		r.Method(
 			"POST",
@@ -209,7 +208,9 @@ func New(a *api.App) *chi.Mux {
 				),
 				mw.URLParam,
 				mw.ReadAccess,
-=======
+			),
+		)
+
 		// /api/projects/{project_id}/invites routes
 		r.Method(
 			"POST",
@@ -250,7 +251,6 @@ func New(a *api.App) *chi.Mux {
 				),
 				mw.URLParam,
 				mw.WriteAccess,
->>>>>>> master
 			),
 		)
 

@@ -170,7 +170,11 @@ func (repo *ClusterRepository) ReadCluster(
 		return nil, err
 	}
 
-	repo.DecryptClusterData(cluster, repo.key)
+	err := repo.DecryptClusterData(cluster, repo.key)
+
+	if err != nil {
+		return nil, err
+	}
 
 	return cluster, nil
 }
@@ -220,16 +224,6 @@ func (repo *ClusterRepository) UpdateCluster(
 func (repo *ClusterRepository) UpdateClusterTokenCache(
 	tokenCache *ints.ClusterTokenCache,
 ) (*models.Cluster, error) {
-	if tok := tokenCache.Token; len(tok) > 0 {
-		cipherData, err := repository.Encrypt(tok, repo.key)
-
-		if err != nil {
-			return nil, err
-		}
-
-		tokenCache.Token = cipherData
-	}
-
 	cluster := &models.Cluster{}
 
 	if err := repo.db.Where("id = ?", tokenCache.ClusterID).First(&cluster).Error; err != nil {
@@ -239,11 +233,7 @@ func (repo *ClusterRepository) UpdateClusterTokenCache(
 	cluster.TokenCache.Token = tokenCache.Token
 	cluster.TokenCache.Expiry = tokenCache.Expiry
 
-	if err := repo.db.Save(cluster).Error; err != nil {
-		return nil, err
-	}
-
-	return cluster, nil
+	return repo.UpdateCluster(cluster)
 }
 
 // DeleteCluster removes a cluster from the db
@@ -343,6 +333,7 @@ func (repo *ClusterRepository) DecryptClusterData(
 	}
 
 	if tok := cluster.TokenCache.Token; len(tok) > 0 {
+
 		plaintext, err := repository.Decrypt(tok, key)
 
 		if err != nil {

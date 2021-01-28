@@ -233,12 +233,12 @@ export default class InviteList extends Component<PropsType, StateType> {
           >
             Create Invite
           </InviteButton>
+          {this.state.invalidEmail &&
+            <Invalid>
+              Invalid email address. Please try again.
+            </Invalid>
+          }
         </ButtonWrapper>
-        {this.state.invalidEmail &&
-          <Invalid>
-            Invalid Email Address. Try Again.
-          </Invalid>
-        }
         {this.renderInvitations()}
       </>
     )
@@ -394,9 +394,8 @@ const LinkTd = styled(Td)`
 `;
 
 const Invalid = styled.div`
-  margin-top: -26px;
-  margin-bottom: 26px;
-  color: #fa0a26;
+  color: #f5cb42;
+  margin-left: 15px;
   font-size: 13px;
   font-family: 'Work Sans', sans-serif;
 `;

@@ -77,6 +77,7 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
       if (err) {
         this.setState({ saveValuesStatus: 'error' });
       } else {
+        // this.props.setCurrentView('cluster-dashboard');
         this.setState({ saveValuesStatus: 'successful' });
       }
     });
@@ -123,6 +124,7 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
       if (err) {
         this.setState({ saveValuesStatus: 'error' });
       } else {
+        // this.props.setCurrentView('cluster-dashboard');
         this.setState({ saveValuesStatus: 'successful' });
       }
     });
@@ -320,7 +322,6 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
             closeOverlay={true}
           />
         </ClusterSection>
-        <Subtitle>Name</Subtitle>
         {this.renderSourceSelector()}
         {this.renderTabRegion()}
       </StyledLaunchTemplate>

@@ -35,18 +35,26 @@ func rotateClusterModel(db *_gorm.DB, oldKey, newKey *[32]byte) error {
 	for i := 0; i < (int(count)/stepSize)+1; i++ {
 		clusters := []*models.Cluster{}
 
-		if err := db.Offset(i * stepSize).Limit(stepSize).Find(&clusters).Error; err != nil {
+		if err := db.Offset(i * stepSize).Limit(stepSize).Preload("TokenCache").Find(&clusters).Error; err != nil {
 			return err
 		}
 
 		// decrypt with the old key
 		for _, cluster := range clusters {
-			repo.DecryptClusterData(cluster, oldKey)
+			err := repo.DecryptClusterData(cluster, oldKey)
+
+			if err != nil {
+				return err
+			}
 		}
 
 		// encrypt with the new key and re-insert
 		for _, cluster := range clusters {
-			repo.EncryptClusterData(cluster, newKey)
+			err := repo.EncryptClusterData(cluster, newKey)
+
+			if err != nil {
+				return err
+			}
 
 			if err := db.Save(cluster).Error; err != nil {
 				return err

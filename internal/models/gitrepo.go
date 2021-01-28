@@ -67,8 +67,6 @@ type GitActionConfig struct {
 
 // GitActionConfigExternal is an external GitActionConfig to be shared over REST
 type GitActionConfigExternal struct {
-	gorm.Model
-
 	// The git repo in ${owner}/${repo} form
 	GitRepo string `json:"git_repo"`
 

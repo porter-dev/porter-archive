@@ -211,7 +211,6 @@ export default class ProvisionerStatus extends Component<PropsType, StateType> {
           if (clusters.length > 0) {
             // console.log('response :', res.data);
             this.props.setCurrentView('dashboard');
-            alert('setting to dashboard');
             // console.log('provision end project: ', this.context.currentProject);
             // console.log('provision end cluster: ', this.context.currentCluster);
             clearInterval(myInterval);

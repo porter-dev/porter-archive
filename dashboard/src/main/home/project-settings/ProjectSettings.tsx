@@ -63,7 +63,6 @@ export default class ProjectSettings extends Component<PropsType, StateType> {
           <Title>Project Settings</Title>
         </TitleSection>
         <TabRegion
-          overflowY='visible'
           currentTab={this.state.currentTab}
           setCurrentTab={(x: string) => this.setState({ currentTab: x })}
           options={tabOptions}

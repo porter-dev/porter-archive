@@ -1,9 +1,8 @@
-package gorm_test
+package keyrotate_test
 
 import (
 	"os"
 	"testing"
-	"time"
 
 	"github.com/porter-dev/porter/internal/adapter"
 	"github.com/porter-dev/porter/internal/config"
@@ -11,12 +10,17 @@ import (
 	ints "github.com/porter-dev/porter/internal/models/integrations"
 	"github.com/porter-dev/porter/internal/repository"
 	"github.com/porter-dev/porter/internal/repository/gorm"
+
+	_gorm "gorm.io/gorm"
 )
 
 type tester struct {
+	Key *[32]byte
+	DB  *_gorm.DB
+
 	repo         *repository.Repository
-	key          *[32]byte
 	dbFileName   string
+	key          *[32]byte
 	initUsers    []*models.User
 	initProjects []*models.Project
 	initGRs      []*models.GitRepo
@@ -25,7 +29,6 @@ type tester struct {
 	initHRs      []*models.HelmRepo
 	initInfras   []*models.Infra
 	initReleases []*models.Release
-	initInvites  []*models.Invite
 	initCCs      []*models.ClusterCandidate
 	initKIs      []*ints.KubeIntegration
 	initBasics   []*ints.BasicIntegration
@@ -62,7 +65,6 @@ func setupTestEnv(tester *tester, t *testing.T) {
 		&models.ClusterResolver{},
 		&models.Infra{},
 		&models.GitActionConfig{},
-		&models.Invite{},
 		&ints.KubeIntegration{},
 		&ints.BasicIntegration{},
 		&ints.OIDCIntegration{},
@@ -85,6 +87,8 @@ func setupTestEnv(tester *tester, t *testing.T) {
 	}
 
 	tester.key = &key
+	tester.Key = &key
+	tester.DB = db
 
 	tester.repo = gorm.NewRepository(db, &key)
 }
@@ -461,31 +465,6 @@ func initInfra(tester *tester, t *testing.T) {
 	}
 
 	tester.initInfras = append(tester.initInfras, infra)
-}
-
-func initInvite(tester *tester, t *testing.T) {
-	t.Helper()
-
-	if len(tester.initProjects) == 0 {
-		initProject(tester, t)
-	}
-
-	expiry := time.Now().Add(24 * time.Hour)
-
-	invite := &models.Invite{
-		Token:     "abcd",
-		Expiry:    &expiry,
-		Email:     "testing@test.it",
-		ProjectID: 1,
-	}
-
-	invite, err := tester.repo.Invite.CreateInvite(invite)
-
-	if err != nil {
-		t.Fatalf("%v\n", err)
-	}
-
-	tester.initInvites = append(tester.initInvites, invite)
 }
 
 func initRelease(tester *tester, t *testing.T) {

@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/go-chi/chi"
+	"github.com/porter-dev/porter/internal/auth/token"
 	"github.com/porter-dev/porter/server/api"
 	"github.com/porter-dev/porter/server/requestlog"
 	mw "github.com/porter-dev/porter/server/router/middleware"
@@ -16,7 +17,9 @@ func New(a *api.App) *chi.Mux {
 	l := a.Logger
 	r := chi.NewRouter()
 
-	auth := mw.NewAuth(a.Store, a.ServerConf.CookieName, a.Repo)
+	auth := mw.NewAuth(a.Store, a.ServerConf.CookieName, &token.TokenGeneratorConf{
+		TokenSecret: a.ServerConf.TokenGeneratorSecret,
+	}, a.Repo)
 
 	r.Route("/api", func(r chi.Router) {
 		r.Use(mw.ContentTypeJSON)
@@ -193,6 +196,20 @@ func New(a *api.App) *chi.Mux {
 			),
 		)
 
+<<<<<<< HEAD
+		// /api/projects/{project_id}/ci routes
+		r.Method(
+			"POST",
+			"/projects/{project_id}/ci/actions",
+			auth.DoesUserHaveProjectAccess(
+				auth.DoesUserHaveClusterAccess(
+					requestlog.NewHandler(a.HandleCreateGitAction, l),
+					mw.URLParam,
+					mw.QueryParam,
+				),
+				mw.URLParam,
+				mw.ReadAccess,
+=======
 		// /api/projects/{project_id}/invites routes
 		r.Method(
 			"POST",
@@ -233,6 +250,7 @@ func New(a *api.App) *chi.Mux {
 				),
 				mw.URLParam,
 				mw.WriteAccess,
+>>>>>>> master
 			),
 		)
 

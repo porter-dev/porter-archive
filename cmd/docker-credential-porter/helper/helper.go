@@ -73,7 +73,7 @@ func (p *PorterHelper) getGCR(serverURL string) (user string, secret string, err
 		host := viper.GetString("host")
 		projID := viper.GetUint("project")
 
-		client := api.NewClient(host+"/api", "cookie.json")
+		client := cmd.GetAPIClient()
 
 		// get a token from the server
 		tokenResp, err := client.GetGCRAuthorizationToken(context.Background(), projID, &api.GetGCRTokenRequest{
@@ -128,7 +128,7 @@ func (p *PorterHelper) getDOCR(serverURL string) (user string, secret string, er
 		host := viper.GetString("host")
 		projID := viper.GetUint("project")
 
-		client := api.NewClient(host+"/api", "cookie.json")
+		client := cmd.GetAPIClient()
 
 		if p.Debug {
 			log.Printf("MAKING REQUEST", host, projID)
@@ -199,7 +199,7 @@ func (p *PorterHelper) getECR(serverURL string) (user string, secret string, err
 		host := viper.GetString("host")
 		projID := viper.GetUint("project")
 
-		client := api.NewClient(host+"/api", "cookie.json")
+		client := cmd.GetAPIClient()
 
 		// get a token from the server
 		tokenResp, err := client.GetECRAuthorizationToken(context.Background(), projID, matches[3])

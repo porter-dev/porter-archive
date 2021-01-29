@@ -152,7 +152,7 @@ export default class ContentsList extends Component<PropsType, StateType> {
         lastItem={false}
       >
         <img src={info} />
-        Select subfolder (optional)
+        Select subfolder (Optional)
       </FileItem>
     );
   }

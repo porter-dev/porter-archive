@@ -14,6 +14,7 @@ import InputRow from '../../../../components/values-form/InputRow';
 import SaveButton from '../../../../components/SaveButton';
 import ValuesWrapper from '../../../../components/values-form/ValuesWrapper';
 import ValuesForm from '../../../../components/values-form/ValuesForm';
+import { isAlphanumeric } from '../../../../shared/common';
 import { safeDump } from 'js-yaml';
 
 type PropsType = {
@@ -161,7 +162,10 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
         formTabs={this.props.form?.tabs}
         onSubmit={this.props.currentTemplate.name === 'docker' ? this.onSubmit : this.onSubmitAddon}
         saveValuesStatus={this.state.saveValuesStatus}
-        disabled={this.props.form?.hasSource ? !this.state.selectedImageUrl : false}
+        disabled={
+          (this.state.templateName.length > 0 && !isAlphanumeric(this.state.templateName))
+          || (this.props.form?.hasSource ? !this.state.selectedImageUrl : false)
+        }
       >
         {(metaState: any, setMetaState: any) => {
           return this.props.form?.tabs.map((tab: any, i: number) => {
@@ -249,7 +253,7 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
     if (this.state.tabOptions.length > 0) {
       return (
         <>
-          <Subtitle>Configure additional settings for this template (optional).</Subtitle>
+          <Subtitle>Configure additional settings for this template. (Optional)</Subtitle>
           <TabRegion
             options={this.state.tabOptions}
             currentTab={this.state.currentTab}
@@ -350,7 +354,10 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
             closeOverlay={true}
           />
         </ClusterSection>
-        <Subtitle>Give a unique name to this template (optional).</Subtitle>
+        <Subtitle>Template name
+          <Warning highlight={!isAlphanumeric(this.state.templateName) && this.state.templateName !== ''}>
+            (lowercase letters, numbers, and "-" only)
+          </Warning>. (Optional)</Subtitle>
         <DarkMatter antiHeight='-27px' />
         <InputRow
           type='text'
@@ -367,6 +374,11 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
 }
 
 LaunchTemplate.contextType = Context;
+
+const Warning = styled.span<{ highlight: boolean, makeFlush?: boolean }>`
+  color: ${props => props.highlight ? '#f5cb42' : ''};
+  margin-left: ${props => props.makeFlush ? '' : '5px'};
+`;
 
 const Required = styled.div`
   margin-left: 8px;

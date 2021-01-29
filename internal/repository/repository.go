@@ -11,6 +11,7 @@ type Repository struct {
 	HelmRepo         HelmRepoRepository
 	Registry         RegistryRepository
 	Infra            InfraRepository
+	GitActionConfig  GitActionConfigRepository
 	Invite           InviteRepository
 	KubeIntegration  KubeIntegrationRepository
 	BasicIntegration BasicIntegrationRepository

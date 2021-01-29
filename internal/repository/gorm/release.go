@@ -26,9 +26,9 @@ func (repo *ReleaseRepository) CreateRelease(release *models.Release) (*models.R
 }
 
 // ReadRelease finds a single release based on their unique name and namespace pair.
-func (repo *ReleaseRepository) ReadRelease(name string, namespace string) (*models.Release, error) {
+func (repo *ReleaseRepository) ReadRelease(clusterID uint, name, namespace string) (*models.Release, error) {
 	release := &models.Release{}
-	if err := repo.db.Where("name = ?", name).Where("namespace = ?", namespace).First(&release).Error; err != nil {
+	if err := repo.db.Preload("GitActionConfig").Where("cluster_id = ?", clusterID).Where("name = ?", name).Where("namespace = ?", namespace).First(&release).Error; err != nil {
 		return nil, err
 	}
 	return release, nil
@@ -37,7 +37,7 @@ func (repo *ReleaseRepository) ReadRelease(name string, namespace string) (*mode
 // ReadReleaseByWebhookToken finds a single release based on their unique webhook token.
 func (repo *ReleaseRepository) ReadReleaseByWebhookToken(token string) (*models.Release, error) {
 	release := &models.Release{}
-	if err := repo.db.Where("webhook_token = ?", token).First(&release).Error; err != nil {
+	if err := repo.db.Preload("GitActionConfig").Where("webhook_token = ?", token).First(&release).Error; err != nil {
 		return nil, err
 	}
 	return release, nil

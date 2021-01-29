@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/porter-dev/porter/cli/cmd/api"
 	"github.com/porter-dev/porter/cli/cmd/utils"
 
 	"github.com/spf13/cobra"
@@ -14,7 +13,7 @@ var openCmd = &cobra.Command{
 	Use:   "open",
 	Short: "Opens the browser at the currently set Porter instance",
 	Run: func(cmd *cobra.Command, args []string) {
-		client := api.NewClient(getHost()+"/api", "cookie.json")
+		client := GetAPIClient()
 
 		user, err := client.AuthCheck(context.Background())
 

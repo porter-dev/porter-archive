@@ -103,52 +103,7 @@ const StyledProjectSettings = styled.div`
   width: calc(90% - 130px);
   min-width: 300px;
   padding-top: 70px;
-`;
-
-const LineBreak = styled.div`
-  width: calc(100% - 0px);
-  height: 2px;
-  background: #ffffff20;
-  margin: 10px 0px -20px;
-`;
-
-const Subtitle = styled.div`
-  font-size: 18px;
-  font-weight: 700;
-  font-family: 'Work Sans', sans-serif;
-  color: #ffffff;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  margin-bottom: 24px;
-  margin-top: 32px;
-`;
-
-const BodyText = styled.div`
-  color: #ffffff;
-  font-weight: 400;
-  font-size: 13px;
-`;
-
-const CopyButton = styled.div`
-  color: #ffffff;
-  font-weight: 400;
-  font-size: 13px;
-  margin-left: 12px;
-  float: right;
-  width: 128px;
-  padding-top: 8px;
-  padding-bottom: 8px;
-  border-radius: 5px;
-  border: 1px solid #ffffff20;
-  background-color: #ffffff10;
-  text-align: center;
-  overflow: hidden;
-  transition: all 0.1s ease-out;
-  :hover {
-    border: 1px solid #ffffff66;
-    background-color: #ffffff20;
-  }
+  height: 100vh;
 `;
 
 const DeleteButton = styled.div`

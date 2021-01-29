@@ -203,12 +203,22 @@ func setHost(host string) error {
 	return err
 }
 
+func setToken(token string) error {
+	viper.Set("token", token)
+	err := viper.WriteConfig()
+	return err
+}
+
 func getHost() string {
 	if host != "" {
 		return host
 	}
 
 	return viper.GetString("host")
+}
+
+func getToken() string {
+	return viper.GetString("token")
 }
 
 func getClusterID() uint {

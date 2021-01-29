@@ -52,7 +52,7 @@ export default class ClusterPlaceholder extends Component<PropsType, StateType> 
             <Highlight onClick={() => {
               this.context.setCurrentModal('ClusterInstructionsModal', {});
             }}>
-              + Add a Cluster
+              + Connect a Cluster
             </Highlight>
           </StyledStatusPlaceholder>
         </>

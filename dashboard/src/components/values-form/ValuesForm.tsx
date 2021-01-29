@@ -138,6 +138,21 @@ export default class ValuesForm extends Component<PropsType, StateType> {
               label={item.label}
             />
           );
+        case 'provider-select':
+          return (
+            <SelectRow
+              key={i}
+              value={this.props.metaState[key]}
+              setActiveValue={(val) => this.props.setMetaState({ [key]: val })}
+              options={[
+                { value: 'gcp', label: 'Google Cloud Platform (GCP)' },
+                { value: 'aws', label: 'Amazon Web Services (AWS)' },
+                { value: 'do', label: 'DigitalOcean' },
+              ]}
+              dropdownLabel=''
+              label={item.label}
+            />
+          );
         case 'velero-create-backup':
           return (
             <VeleroForm

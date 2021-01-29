@@ -2,6 +2,7 @@ import React, { Component } from 'react';
 import styled from 'styled-components';
 
 import { Section, FormElement } from '../../shared/types';
+import { Context } from '../../shared/Context';
 
 import SaveButton from '../SaveButton';
 
@@ -15,6 +16,12 @@ type PropsType = {
 };
 
 type StateType = any;
+
+const providerMap: any = {
+  'gke': 'gcp',
+  'eks': 'aws',
+  'doks': 'do',
+};
 
 // Manages the consolidated state of all form tabs ("metastate")
 export default class ValuesWrapper extends Component<PropsType, StateType> {
@@ -55,6 +62,10 @@ export default class ValuesWrapper extends Component<PropsType, StateType> {
                 break;
               case 'select':
                 metaState[key] = def ? def : item.settings.options[0].value;
+                break;
+              case 'provider-select':
+                def = providerMap[this.context.currentCluster.service];
+                metaState[key] = def ? def : 'aws';
                 break;
               case 'base-64':
                 metaState[key] = def ? def : '';
@@ -127,6 +138,8 @@ export default class ValuesWrapper extends Component<PropsType, StateType> {
     );
   }
 }
+
+ValuesWrapper.contextType = Context;
 
 const StyledValuesWrapper = styled.div`
   width: 100%;

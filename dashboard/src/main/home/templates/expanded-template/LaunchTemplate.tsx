@@ -77,9 +77,20 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
     }, (err: any, res: any) => {
       if (err) {
         this.setState({ saveValuesStatus: 'error' });
+        posthog.capture('Failed to deploy template', {
+          name: this.props.currentTemplate.name,
+          namespace: this.state.selectedNamespace,
+          values: values,
+          error: err
+        })
       } else {
         // this.props.setCurrentView('cluster-dashboard');
         this.setState({ saveValuesStatus: 'successful' });
+        posthog.capture('Deployed template', {
+          name: this.props.currentTemplate.name,
+          namespace: this.state.selectedNamespace,
+          values: values,
+        })
       }
     });
   }

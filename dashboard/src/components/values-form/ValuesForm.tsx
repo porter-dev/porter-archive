@@ -15,27 +15,6 @@ import Heading from './Heading';
 import ExpandableResource from '../ExpandableResource';
 import VeleroForm from '../forms/VeleroForm';
 
- let dummySections = [
-   {
-    "name":"section_one",
-    "show_if":"",
-    "contents":[
-      {
-        "type":"heading",
-        "label":"Polyphia",
-      },
-      {
-        "type":"subtitle",
-        "label":"Tim Hendrix",
-      },
-      {
-        "type":"velero-create-backup",
-        "label":"Tim Hendrix",
-      },
-    ]
-  }
-];
-
 type PropsType = {
   sections?: Section[],
   metaState?: any,

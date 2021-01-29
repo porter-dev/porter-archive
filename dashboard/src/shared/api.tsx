@@ -306,6 +306,33 @@ const getReleaseToken = baseApi<{
   return `/api/projects/${pathParams.id}/releases/${pathParams.name}/webhook_token`;
 });
 
+const destroyEKS = baseApi<{
+  eks_name: string,
+}, {
+  project_id: number,
+  infra_id: number,
+}>('POST', pathParams => {
+  return `/api/projects/${pathParams.project_id}/infra/${pathParams.infra_id}/eks/destroy`;
+});
+
+const destroyGKE = baseApi<{
+  gke_name: string,
+}, {
+  project_id: number,
+  infra_id: number,
+}>('POST', pathParams => {
+  return `/api/projects/${pathParams.project_id}/infra/${pathParams.infra_id}/gke/destroy`;
+});
+
+const destroyDOKS = baseApi<{
+  doks_name: string,
+}, {
+  project_id: number,
+  infra_id: number,
+}>('POST', pathParams => {
+  return `/api/projects/${pathParams.project_id}/infra/${pathParams.infra_id}/doks/destroy`;
+});
+
 const getRepoIntegrations = baseApi('GET', '/api/integrations/repo');
 
 const getRepos = baseApi<{}, { id: number }>('GET', pathParams => {
@@ -425,7 +452,9 @@ export default {
   deleteInvite,
   deleteProject,
   deployTemplate,
-  destroyCluster,
+  destroyEKS,
+  destroyGKE,
+  destroyDOKS,
   getBranchContents,
   getBranches,
   getChart,

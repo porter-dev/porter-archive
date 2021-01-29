@@ -19,9 +19,9 @@ Porter brings the simplicity of a traditional PaaS to your own cloud provider wh
 ## Features
 ### Basics
 - One-click provisioning of a Kubernetes cluster in your own cloud console
-  - ✅ AWS
-  - ✅ GCP
-  - ✅ Digital Ocean
+  - AWS ✅
+  - GCP ✅
+  - Digital Ocean ✅
   
 - Simple deploy of any public or private Docker image
 
@@ -74,6 +74,10 @@ For Linux and Windows installation, see our [Docs](https://docs.getporter.dev/do
 4. [Build and push your Docker image to the provisioned registry with the CLI](https://docs.getporter.dev/docs/cli-documentation#porter-docker-configure).
 
 5. From the Templates tab on the Dashboard, select the Docker template. Click on the image you have just pushed, configure the port, then hit deploy.
+
+## Keep Updated
+We are iterating fast and will be regularly announcing new releases in this repository. If you'd like to follow our progress, please watch the repo for releases (**Watch > Custom > Releases**) and leave us a star!
+
 ## Want Help?
 We are always hanging out in our [Discord community](https://discord.gg/MhYNuWwqum). Join us there if you need help or have any questions!
 

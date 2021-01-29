@@ -9,6 +9,7 @@ gon.hcl
 internal/local_templates
 gon*.hcl
 *prod.Dockerfile
+staging.sh
 
 # Local .terraform directories
 **/.terraform/*

@@ -70,7 +70,6 @@ export default class ProvisionerStatus extends Component<PropsType, StateType> {
       } 
       
       let infras = filterOldInfras(res.data);
-      console.log('infras: ', res.data);
       let error = false;
 
       let maxStep = {} as Record<string, number>

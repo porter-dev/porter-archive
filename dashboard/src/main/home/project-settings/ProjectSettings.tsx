@@ -29,7 +29,7 @@ export default class ProjectSettings extends Component<PropsType, StateType> {
   }
 
   componentDidMount() {
-    let { currentProject, user } = this.context;
+    let { currentProject } = this.context;
     this.setState({ projectName: currentProject.name });
   }
 
@@ -40,7 +40,13 @@ export default class ProjectSettings extends Component<PropsType, StateType> {
       return (
         <>
           <Heading isAtTop={true}>Delete Project</Heading>
-          <Helper>Permanently delete this project. <Warning highlight={true}>This action cannot be undone.</Warning></Helper>
+          <Helper>
+            Permanently delete this project. This will destroy all clusters tied to this project that have been provisioned by Porter. Note that this will not delete the image registries provisioned by Porter. To delete the registries, please do so manually in your cloud console.
+          </Helper>
+
+          <Warning highlight={true}>This action cannot be undone.</Warning>
+
+
           <DeleteButton
             onClick={() => {
               this.context.setCurrentModal('UpdateProjectModal', {
@@ -76,9 +82,10 @@ export default class ProjectSettings extends Component<PropsType, StateType> {
 
 ProjectSettings.contextType = Context;
 
-const Warning = styled.span`
+const Warning = styled.div`
+  font-size: 13px;
   color: ${(props: { highlight: boolean, makeFlush?: boolean }) => props.highlight ? '#f5cb42' : ''};
-  margin-left: 5px;
+  margin-bottom: 20px;
 `;
 
 const Title = styled.div`

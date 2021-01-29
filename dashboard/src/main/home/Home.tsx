@@ -70,13 +70,14 @@ export default class Home extends Component<PropsType, StateType> {
       }
 
       if (res.data.length > 0 && (!currentCluster && !includesCompletedInfraSet(res.data))) {
-        // force refresh if currentView is already set to provisioner.
+        // force refresh if currentView is identical set to provisioner. Tentative solution before refactoring.
         this.setState({ currentView: 'dashboard'}, () => {
           this.setState({ currentView: 'provisioner', sidebarReady: true, });
         });
       } else {
-        // console.log('getting here', currentCluster)
-        this.setState({ currentView: 'dashboard', sidebarReady: true });
+        this.setState({ currentView: 'provisioner'}, () => {
+          this.setState({ currentView: 'dashboard', sidebarReady: true });
+        })
       }
     });
   }
@@ -357,7 +358,7 @@ export default class Home extends Component<PropsType, StateType> {
     let { setCurrentModal, currentProject } = this.context;
     api.deleteProject('<token>', {}, { id: currentProject.id }, (err: any, res: any) => {
       if (err) {
-        // console.log(err)
+        console.log(err)
       } else {
         this.projectOverlayCall();
       }
@@ -365,15 +366,21 @@ export default class Home extends Component<PropsType, StateType> {
 
     // Loop through and delete infra of all clusters we've provisioned
     api.getClusters('<token>', {}, { id: currentProject.id }, (err: any, res: any) => {
-      if (err) {
-        console.log(err);
-      } else {
-        res.data.forEach((cluster: ClusterType) => {
 
-          // Handle destroying infra we've provisioned
-          if (cluster.infra_id) {
-            console.log('destroying provisioned infra...', cluster.infra_id);
-            api.destroyCluster('<token>', { eks_name: cluster.name }, { 
+      if (err) { 
+        console.log(err); 
+        return; 
+      }
+      
+      for (var i = 0; i < res.data.length; i++) {
+        let cluster = res.data[i];
+        if (!cluster.infra_id) continue;
+
+        // Handle destroying infra we've provisioned
+        switch (cluster.service) {
+
+          case "eks":
+            api.destroyEKS('<token>', { eks_name: cluster.name }, { 
               project_id: currentProject.id,
               infra_id: cluster.infra_id,
             }, (err: any, res: any) => {
@@ -383,8 +390,34 @@ export default class Home extends Component<PropsType, StateType> {
                 console.log('destroyed provisioned infra:', cluster.infra_id);
               }
             });
-          }
-        });
+            break;
+
+          case 'gke':
+            api.destroyGKE('<token>', { gke_name: cluster.name }, { 
+              project_id: currentProject.id,
+              infra_id: cluster.infra_id,
+            }, (err: any, res: any) => {
+              if (err) {
+                console.log(err)
+              } else {
+                console.log('destroyed provisioned infra.');
+              }
+            });
+            break;
+
+          case 'doks':
+            api.destroyDOKS('<token>', { doks_name: cluster.name }, { 
+              project_id: currentProject.id,
+              infra_id: cluster.infra_id,
+            }, (err: any, res: any) => {
+              if (err) {
+                console.log(err)
+              } else {
+                console.log('destroyed provisioned infra.');
+              }
+            });
+            break;
+        }
       }
     });
     setCurrentModal(null, null)
@@ -393,6 +426,7 @@ export default class Home extends Component<PropsType, StateType> {
 
   render() {
     let { currentModal, setCurrentModal, currentProject } = this.context;
+
     return (
       <StyledHome>
         {currentModal === 'ClusterInstructionsModal' &&

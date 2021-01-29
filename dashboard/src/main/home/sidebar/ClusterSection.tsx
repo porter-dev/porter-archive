@@ -151,19 +151,13 @@ export default class ClusterSection extends Component<PropsType, StateType> {
           </DrawerButton>
         </ClusterSelector>
       );
-    } else if (false) {
-      return (
-        <InitializeButton onClick={this.showClusterConfigModal}>
-          <Plus>+</Plus> Add a Cluster
-        </InitializeButton>
-      );
     }
 
     return (
       <InitializeButton
         onClick={() => this.context.setCurrentModal('ClusterInstructionsModal', {})}
       >
-        <Plus>+</Plus> Add a Cluster
+        <Plus>+</Plus> Connect a Cluster
       </InitializeButton>
     )
   };

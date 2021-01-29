@@ -32,7 +32,7 @@ type StateType = {
 
 const provisionOptions = [
   { value: 'gcr', label: 'Google Container Registry (GCR)' },
-  { value: 'gke', label: 'Googke Kubernetes Engine (GKE)' },
+  { value: 'gke', label: 'Google Kubernetes Engine (GKE)' },
 ];
 
 const regionOptions = [

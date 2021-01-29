@@ -116,16 +116,21 @@ export default class SettingsSection extends Component<PropsType, StateType> {
     });
   }
 
+  /*
+    <Helper>
+      Specify a container image and tag or
+      <Highlight onClick={() => this.setState({ sourceType: 'repo' })}>
+        link a repo
+      </Highlight>.
+    </Helper>
+  */
   renderSourceSection = () => {
     if (this.state.sourceType === 'registry') {
       return (
         <>
           <Heading>Connected Source</Heading>
           <Helper>
-            Specify a container image and tag or
-            <Highlight onClick={() => this.setState({ sourceType: 'repo' })}>
-              link a repo
-            </Highlight>.
+            Specify a container image and tag.
           </Helper>
           <ImageSelector
             selectedImageUrl={this.state.selectedImageUrl}
@@ -252,7 +257,7 @@ export default class SettingsSection extends Component<PropsType, StateType> {
 SettingsSection.contextType = Context;
 
 const Button = styled.button`
-  height: 40px;
+  height: 35px;
   font-size: 13px;
   margin-top: 20px;
   margin-bottom: 30px;

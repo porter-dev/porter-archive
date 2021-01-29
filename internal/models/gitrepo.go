@@ -43,3 +43,49 @@ func (r *GitRepo) Externalize() *GitRepoExternal {
 		Service:    integrations.Github,
 	}
 }
+
+// GitActionConfig is a configuration for release's CI integration via
+// Github Actions
+type GitActionConfig struct {
+	gorm.Model
+
+	// The ID of the release that this is linked to
+	ReleaseID uint `json:"release_id"`
+
+	// The git repo in ${owner}/${repo} form
+	GitRepo string `json:"git_repo"`
+
+	// The complete image repository uri to pull from
+	ImageRepoURI string `json:"image_repo_uri"`
+
+	// The git integration id
+	GitRepoID uint `json:"git_repo_id"`
+
+	// The path to the dockerfile in the git repo
+	DockerfilePath string `json:"dockerfile_path" form:"required"`
+}
+
+// GitActionConfigExternal is an external GitActionConfig to be shared over REST
+type GitActionConfigExternal struct {
+	// The git repo in ${owner}/${repo} form
+	GitRepo string `json:"git_repo"`
+
+	// The complete image repository uri to pull from
+	ImageRepoURI string `json:"image_repo_uri"`
+
+	// The git integration id
+	GitRepoID uint `json:"git_repo_id"`
+
+	// The path to the dockerfile in the git repo
+	DockerfilePath string `json:"dockerfile_path" form:"required"`
+}
+
+// Externalize generates an external GitActionConfig to be shared over REST
+func (r *GitActionConfig) Externalize() *GitActionConfigExternal {
+	return &GitActionConfigExternal{
+		GitRepo:        r.GitRepo,
+		ImageRepoURI:   r.ImageRepoURI,
+		GitRepoID:      r.GitRepoID,
+		DockerfilePath: r.DockerfilePath,
+	}
+}

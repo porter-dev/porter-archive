@@ -98,12 +98,13 @@ func (app *App) HandleGetBranches(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	owner := chi.URLParam(r, "owner")
 	name := chi.URLParam(r, "name")
 
 	client := github.NewClient(app.GithubConf.Client(oauth2.NoContext, tok))
 
 	// List all branches for a specified repo
-	branches, _, err := client.Repositories.ListBranches(context.Background(), "", name, nil)
+	branches, _, err := client.Repositories.ListBranches(context.Background(), owner, name, nil)
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -134,12 +135,13 @@ func (app *App) HandleGetBranchContents(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
+	owner := chi.URLParam(r, "owner")
 	name := chi.URLParam(r, "name")
 	branch := chi.URLParam(r, "branch")
 
 	repoContentOptions := github.RepositoryContentGetOptions{}
 	repoContentOptions.Ref = branch
-	_, directoryContents, _, err := client.Repositories.GetContents(context.Background(), "", name, queryParams["dir"][0], &repoContentOptions)
+	_, directoryContents, _, err := client.Repositories.GetContents(context.Background(), owner, name, queryParams["dir"][0], &repoContentOptions)
 	if err != nil {
 		app.handleErrorInternal(err, w)
 		return

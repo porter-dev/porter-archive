@@ -3,11 +3,14 @@ import styled from 'styled-components';
 import branch_icon from '../../assets/branch.png';
 
 import api from '../../shared/api';
+import { Context } from '../../shared/Context';
 
 import Loading from '../Loading';
 
 type PropsType = {
+  grid: number,
   repoName: string,
+  owner: string,
   setSelectedBranch: (x: string) => void,
   selectedBranch: string
 };
@@ -26,13 +29,18 @@ export default class BranchList extends Component<PropsType, StateType> {
   }
 
   componentDidMount() {
+    let { currentProject } = this.context;
 
     // Get branches
     api.getBranches('<token>', {}, {
+      project_id: currentProject.id,
+      git_repo_id: this.props.grid,
       kind: 'github',
-      repo: this.props.repoName
+      owner: this.props.owner,
+      name: this.props.repoName,
     }, (err: any, res: any) => {
       if (err) {
+        console.log(err);
         this.setState({ loading: false, error: true });
       } else {
         this.setState({ branches: res.data, loading: false, error: false });
@@ -70,6 +78,8 @@ export default class BranchList extends Component<PropsType, StateType> {
     );
   }
 }
+
+BranchList.contextType = Context;
 
 const BranchName = styled.div`
   display: flex;

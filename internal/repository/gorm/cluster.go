@@ -170,7 +170,11 @@ func (repo *ClusterRepository) ReadCluster(
 		return nil, err
 	}
 
-	repo.DecryptClusterData(cluster, repo.key)
+	err := repo.DecryptClusterData(cluster, repo.key)
+
+	if err != nil {
+		return nil, err
+	}
 
 	return cluster, nil
 }
@@ -343,6 +347,7 @@ func (repo *ClusterRepository) DecryptClusterData(
 	}
 
 	if tok := cluster.TokenCache.Token; len(tok) > 0 {
+
 		plaintext, err := repository.Decrypt(tok, key)
 
 		if err != nil {

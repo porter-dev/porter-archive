@@ -17,6 +17,7 @@ func New(conf *config.DBConf) (*gorm.DB, error) {
 		// not support foreign key constraints
 		return gorm.Open(sqlite.Open(conf.SQLLitePath), &gorm.Config{
 			DisableForeignKeyConstraintWhenMigrating: true,
+			FullSaveAssociations:                     true,
 		})
 	}
 
@@ -28,7 +29,9 @@ func New(conf *config.DBConf) (*gorm.DB, error) {
 		conf.Host,
 	)
 
-	res, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
+	res, err := gorm.Open(postgres.Open(dsn), &gorm.Config{
+		FullSaveAssociations: true,
+	})
 
 	// retry the connection 3 times
 	retryCount := 0

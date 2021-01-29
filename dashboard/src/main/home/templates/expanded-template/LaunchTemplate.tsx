@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import styled from 'styled-components';
 import randomWords from 'random-words';
+import posthog from 'posthog-js';
 import _ from 'lodash';
 import { Context } from '../../../../shared/Context';
 import api from '../../../../shared/api';
@@ -125,9 +126,20 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
     }, (err: any, res: any) => {
       if (err) {
         this.setState({ saveValuesStatus: 'error' });
+        posthog.capture('Failed to deploy template', {
+          name: this.props.currentTemplate.name,
+          namespace: this.state.selectedNamespace,
+          values: values,
+          error: err
+        })
       } else {
         // this.props.setCurrentView('cluster-dashboard');
         this.setState({ saveValuesStatus: 'successful' });
+        posthog.capture('Deployed template', {
+          name: this.props.currentTemplate.name,
+          namespace: this.state.selectedNamespace,
+          values: values,
+        })
       }
     });
   }

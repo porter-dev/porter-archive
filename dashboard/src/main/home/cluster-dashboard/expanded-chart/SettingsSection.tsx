@@ -3,7 +3,7 @@ import styled from 'styled-components';
 import api from '../../../../shared/api';
 import yaml from 'js-yaml';
 
-import { ChartType, RepoType, StorageType } from '../../../../shared/types';
+import { ChartType, RepoType, StorageType, ActionConfigType } from '../../../../shared/types';
 import { Context } from '../../../../shared/Context';
 
 import ImageSelector from '../../../../components/image-selector/ImageSelector';
@@ -31,6 +31,7 @@ type StateType = {
   subdirectory: string,
   webhookToken: string,
   highlightCopyButton: boolean,
+  action: ActionConfigType;
 };
 
 export default class SettingsSection extends Component<PropsType, StateType> {
@@ -45,6 +46,12 @@ export default class SettingsSection extends Component<PropsType, StateType> {
     subdirectory: '',
     webhookToken: '',
     highlightCopyButton: false,
+    action: {
+      git_repo: '',
+      image_repo_uri: '',
+      git_repo_id: 0,
+      dockerfile_path: '',
+    } as ActionConfigType,
   }
 
   // TODO: read in set image from form context instead of config
@@ -65,7 +72,7 @@ export default class SettingsSection extends Component<PropsType, StateType> {
       if (err) {
         console.log(err)
       } else {
-        this.setState({ webhookToken: res.data.webhook_token })
+        this.setState({ action: res.data.git_action_config, webhookToken: res.data.webhook_token });
       }
     });
   }
@@ -109,15 +116,21 @@ export default class SettingsSection extends Component<PropsType, StateType> {
     });
   }
 
+  /*
+    <Helper>
+      Specify a container image and tag or
+      <Highlight onClick={() => this.setState({ sourceType: 'repo' })}>
+        link a repo
+      </Highlight>.
+    </Helper>
+  */
   renderSourceSection = () => {
     if (this.state.sourceType === 'registry') {
       return (
         <>
+          <Heading>Connected Source</Heading>
           <Helper>
-            Specify a container image and tag or
-            <Highlight onClick={() => this.setState({ sourceType: 'repo' })}>
-              link a repo
-            </Highlight>.
+            Specify a container image and tag.
           </Helper>
           <ImageSelector
             selectedImageUrl={this.state.selectedImageUrl}
@@ -134,24 +147,61 @@ export default class SettingsSection extends Component<PropsType, StateType> {
     let { currentProject } = this.context;
     return (
       <>
-        <Helper>
-          Select a repo to connect to. You can 
-          <A padRight={true} href={`/api/oauth/projects/${currentProject.id}/github?redirected=true`}>
-            log in with GitHub
-          </A> or
-          <Highlight onClick={() => this.setState({ sourceType: 'registry' })}>
-            link an image registry
-          </Highlight>.
-        </Helper>
-        <RepoSelector
-          forceExpanded={true}
-          selectedRepo={this.state.selectedRepo}
-          selectedBranch={this.state.selectedBranch}
-          subdirectory={this.state.subdirectory}
-          setSelectedRepo={(x: RepoType) => this.setState({ selectedRepo: x })}
-          setSelectedBranch={(x: string) => this.setState({ selectedBranch: x })}
-          setSubdirectory={(x: string) => this.setState({ subdirectory: x })}
-        />
+        {this.state.action.git_repo.length > 0
+          ?
+          <>
+            <Heading>Connected Source</Heading>
+            <Holder>
+              <InputRow
+                disabled={true}
+                label='Git Repository'
+                type='text'
+                width='100%'
+                value={this.state.action.git_repo}
+                setValue={(x: string) => console.log(x)}
+              />
+              <InputRow
+                disabled={true}
+                label='Dockerfile Path'
+                type='text'
+                width='100%'
+                value={this.state.action.dockerfile_path}
+                setValue={(x: string) => console.log(x)}
+              />
+              <InputRow
+                disabled={true}
+                label='Docker Image Repository'
+                type='text'
+                width='100%'
+                value={this.state.action.image_repo_uri}
+                setValue={(x: string) => console.log(x)}
+              />
+            </Holder>
+          </>
+          :
+          <>
+            <Heading>Connect a Source</Heading>
+            <Helper>
+              Select a repo to connect to. You can 
+              <A padRight={true} href={`/api/oauth/projects/${currentProject.id}/github?redirected=true`}>
+                log in with GitHub
+              </A> or
+              <Highlight onClick={() => this.setState({ sourceType: 'registry' })}>
+                link an image registry
+              </Highlight>.
+            </Helper>
+            <RepoSelector
+              chart={this.props.currentChart}
+              forceExpanded={true}
+              selectedRepo={this.state.selectedRepo}
+              selectedBranch={this.state.selectedBranch}
+              subdirectory={this.state.subdirectory}
+              setSelectedRepo={(x: RepoType) => this.setState({ selectedRepo: x })}
+              setSelectedBranch={(x: string) => this.setState({ selectedBranch: x })}
+              setSubdirectory={(x: string) => this.setState({ subdirectory: x })}
+            />
+          </>
+        }
       </>
     );
   }
@@ -185,7 +235,6 @@ export default class SettingsSection extends Component<PropsType, StateType> {
     return (
       <Wrapper>
         <StyledSettingsSection>
-          <Heading>Connected Source</Heading>
           {this.renderSourceSection()}
           {this.renderWebhookSection()}
           <Heading>Additional Settings</Heading>
@@ -208,9 +257,10 @@ export default class SettingsSection extends Component<PropsType, StateType> {
 SettingsSection.contextType = Context;
 
 const Button = styled.button`
-  height: 40px;
+  height: 35px;
   font-size: 13px;
   margin-top: 20px;
+  margin-bottom: 30px;
   font-weight: 500;
   font-family: 'Work Sans', sans-serif;
   color: white;
@@ -292,4 +342,8 @@ const StyledSettingsSection = styled.div`
   position: relative;
   border-radius: 5px;
   overflow: auto;
+`;
+
+const Holder = styled.div`
+  padding: 0px 12px;
 `;

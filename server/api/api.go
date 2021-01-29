@@ -6,7 +6,7 @@ import (
 	"github.com/go-playground/locales/en"
 	ut "github.com/go-playground/universal-translator"
 	vr "github.com/go-playground/validator/v10"
-	sessionstore "github.com/porter-dev/porter/internal/auth"
+	"github.com/porter-dev/porter/internal/auth/sessionstore"
 	"github.com/porter-dev/porter/internal/oauth"
 	"golang.org/x/oauth2"
 	"gorm.io/gorm"
@@ -120,7 +120,7 @@ func New(conf *AppConfig) (*App, error) {
 		app.GithubConf = oauth.NewGithubClient(&oauth.Config{
 			ClientID:     sc.GithubClientID,
 			ClientSecret: sc.GithubClientSecret,
-			Scopes:       []string{"repo", "user", "read:user"},
+			Scopes:       []string{"repo", "read:user", "workflow"},
 			BaseURL:      sc.ServerURL,
 		})
 	}

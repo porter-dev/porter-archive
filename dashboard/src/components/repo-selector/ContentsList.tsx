@@ -6,15 +6,19 @@ import folder from '../../assets/folder.svg';
 import info from '../../assets/info.svg';
 
 import api from '../../shared/api';
+import { Context } from '../../shared/Context';
 import { FileType } from '../../shared/types';
 
 import Loading from '../Loading';
 
 type PropsType = {
+  grid: number,
   repoName: string,
+  owner: string,
   selectedBranch: string,
   subdirectory: string,
   setSubdirectory: (x: string) => void,
+  setDockerfile: () => void,
 };
 
 type StateType = {
@@ -31,10 +35,15 @@ export default class ContentsList extends Component<PropsType, StateType> {
   }
 
   updateContents = () => {
+    let { currentProject } = this.context;
+
     // Get branch contents
     api.getBranchContents('<token>', { dir: this.props.subdirectory }, {
+      project_id: currentProject.id,
+      git_repo_id: this.props.grid,
       kind: 'github',
-      repo: this.props.repoName,
+      owner: this.props.owner,
+      name: this.props.repoName,
       branch: this.props.selectedBranch
     }, (err: any, res: any) => {
       if (err) {
@@ -91,6 +100,19 @@ export default class ContentsList extends Component<PropsType, StateType> {
         );
       }
 
+      if (fileName === 'Dockerfile') {
+        return (
+          <FileItem
+            key={i}
+            lastItem={i === contents.length - 1}
+            isADocker
+            onClick={() => this.props.setDockerfile()}
+          >
+            <img src={file} />
+            {fileName}
+          </FileItem>
+        );
+      }
       return (
         <FileItem
           key={i}
@@ -145,6 +167,8 @@ export default class ContentsList extends Component<PropsType, StateType> {
   }
 }
 
+ContentsList.contextType = Context;
+
 const BackLabel = styled.div`
   font-size: 16px;
   padding-left: 16px;
@@ -180,10 +204,10 @@ const Item = styled.div`
 `;
 
 const FileItem = styled(Item)`
-  cursor: default;
-  color: #ffffff55;
+  cursor: ${(props: {isADocker?: boolean}) => props.isADocker ? 'pointer' : 'default'};
+  color: ${(props: {isADocker?: boolean}) => props.isADocker ? '#fff' : '#ffffff55'};
   :hover {
-    background: #ffffff11;
+    background: ${(props: {isADocker?: boolean}) => props.isADocker ? '#ffffff22' : '#ffffff11'};
   }
 `;
 

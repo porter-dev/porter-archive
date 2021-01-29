@@ -10,7 +10,7 @@ import { PorterTemplate, ChoiceType, ClusterType, StorageType } from '../../../.
 import Selector from '../../../../components/Selector';
 import ImageSelector from '../../../../components/image-selector/ImageSelector';
 import TabRegion from '../../../../components/TabRegion';
-import Heading from '../../../../components/values-form/Heading';
+import InputRow from '../../../../components/values-form/InputRow';
 import SaveButton from '../../../../components/SaveButton';
 import ValuesWrapper from '../../../../components/values-form/ValuesWrapper';
 import ValuesForm from '../../../../components/values-form/ValuesForm';
@@ -32,6 +32,7 @@ type StateType = {
   selectedCluster: string,
   selectedImageUrl: string | null,
   selectedTag: string | null,
+  templateName: string,
   tabOptions: ChoiceType[],
   currentTab: string | null,
   tabContents: any
@@ -46,6 +47,7 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
     selectedCluster: this.context.currentCluster.name,
     selectedNamespace: "default",
     selectedImageUrl: '' as string | null,
+    templateName: '',
     selectedTag: '' as string | null,
     tabOptions: [] as ChoiceType[],
     currentTab: null as string | null,
@@ -55,7 +57,7 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
 
   onSubmitAddon = (wildcard?: any) => {
     let { currentCluster, currentProject } = this.context;
-    let name = randomWords({ exactly: 3, join: '-' });
+    let name = this.state.templateName || randomWords({ exactly: 3, join: '-' });
     this.setState({ saveValuesStatus: 'loading' });
 
     let values = {};
@@ -97,7 +99,7 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
 
   onSubmit = (rawValues: any) => {
     let { currentCluster, currentProject } = this.context;
-    let name = randomWords({ exactly: 3, join: '-' });
+    let name = this.state.templateName || randomWords({ exactly: 3, join: '-' });
     this.setState({ saveValuesStatus: 'loading' });
 
     // Convert dotted keys to nested objects
@@ -285,7 +287,10 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
     if (this.props.form?.hasSource) {
       return (
         <>
-          <Subtitle>Select the container image you would like to connect to this template.</Subtitle>
+          <Subtitle>
+            Select the container image you would like to connect to this template.
+            <Required>*</Required>
+          </Subtitle>
           <DarkMatter />
           <ImageSelector
             selectedTag={this.state.selectedTag}
@@ -345,6 +350,15 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
             closeOverlay={true}
           />
         </ClusterSection>
+        <Subtitle>Give a unique name to this template (optional).</Subtitle>
+        <DarkMatter antiHeight='-27px' />
+        <InputRow
+          type='text'
+          value={this.state.templateName}
+          setValue={(x: string) => this.setState({ templateName: x })}
+          placeholder='ex: doctor-scientist'
+          width='100%'
+        />
         {this.renderSourceSelector()}
         {this.renderTabRegion()}
       </StyledLaunchTemplate>
@@ -353,6 +367,11 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
 }
 
 LaunchTemplate.contextType = Context;
+
+const Required = styled.div`
+  margin-left: 8px;
+  color: #fc4976;
+`;
 
 const Link = styled.a`
   margin-left: 5px;
@@ -385,9 +404,9 @@ const Placeholder = styled.div`
   justify-content: center;
 `;
 
-const DarkMatter = styled.div`
+const DarkMatter = styled.div<{ antiHeight?: string }>`
   width: 100%;
-  margin-top: -15px;
+  margin-top: ${props => props.antiHeight || '-15px'};
 `;
 
 const Subtitle = styled.div`
@@ -396,6 +415,8 @@ const Subtitle = styled.div`
   font-size: 13px;
   color: #aaaabb;
   line-height: 1.6em;
+  display: flex;
+  align-items: center;
 `;
 
 const ClusterLabel = styled.div`

@@ -9,7 +9,7 @@ import (
 )
 
 func checkLoginAndRun(args []string, runner func(user *api.AuthCheckResponse, client *api.Client, args []string) error) error {
-	client := api.NewClient(getHost()+"/api", "cookie.json")
+	client := GetAPIClient()
 
 	user, err := client.AuthCheck(context.Background())
 

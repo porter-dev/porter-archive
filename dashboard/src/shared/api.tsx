@@ -13,172 +13,110 @@ import { StorageType } from './types';
 
 const checkAuth = baseApi('GET', '/api/auth/check');
 
-const registerUser = baseApi<{ 
-  email: string,
-  password: string
-}>('POST', '/api/users');
-
-const logInUser = baseApi<{
-  email: string,
-  password: string
-}>('POST', '/api/login');
-
-const logOutUser = baseApi('POST', '/api/logout');
-
-const getUser = baseApi<{}, { id: number }>('GET', pathParams => {
-  return `/api/users/${pathParams.id}`;
+const createAWSIntegration = baseApi<{
+  aws_region: string,
+  aws_cluster_id?: string,
+  aws_access_key_id: string,
+  aws_secret_access_key: string,
+}, { id: number }>('POST', pathParams => {
+  return `/api/projects/${pathParams.id}/integrations/aws`;
 });
 
-const updateUser = baseApi<{
-  rawKubeConfig?: string,
-  allowedContexts?: string[]
-}, { id: number }>('PUT', pathParams => {
-  return `/api/users/${pathParams.id}`;
+const createDOCR = baseApi<{
+  do_integration_id: number,
+  docr_name: string,
+  docr_subscription_tier: string,
+}, {
+  project_id: number,
+}>('POST', pathParams => {
+  return `/api/projects/${pathParams.project_id}/provision/docr`;
 });
 
-const getClusters = baseApi<{}, { id: number }>('GET', pathParams => {
-  return `/api/projects/${pathParams.id}/clusters`;
+const createDOKS = baseApi<{
+  do_integration_id: number,
+  doks_name: string,
+  do_region: string,
+}, {
+  project_id: number,
+}>('POST', pathParams => {
+  return `/api/projects/${pathParams.project_id}/provision/doks`;
 });
 
-const getCharts = baseApi<{
-  namespace: string,
-  cluster_id: number,
-  storage: StorageType,
-  limit: number,
-  skip: number,
-  byDate: boolean,
-  statusFilter: string[]
-}, { id: number }>('GET', pathParams => {
-  return `/api/projects/${pathParams.id}/releases`;
+const createECR = baseApi<{
+  name: string,
+  aws_integration_id: string,
+}, { id: number }>('POST', pathParams => {
+  return `/api/projects/${pathParams.id}/registries`;
 });
 
-const getChart = baseApi<{
-  namespace: string,
-  cluster_id: number,
-  storage: StorageType
-}, { id: number, name: string, revision: number }>('GET', pathParams => {
-  return `/api/projects/${pathParams.id}/releases/${pathParams.name}/${pathParams.revision}`;
+const createGCPIntegration = baseApi<{
+  gcp_region: string,
+  gcp_key_data: string,
+  gcp_project_id: string,
+}, {
+  project_id: number,
+}>('POST', pathParams => {
+  return `/api/projects/${pathParams.project_id}/integrations/gcp`;
 });
 
-const getChartComponents = baseApi<{
-  namespace: string,
-  cluster_id: number,
-  storage: StorageType
-}, { id: number, name: string, revision: number }>('GET', pathParams => {
-  return `/api/projects/${pathParams.id}/releases/${pathParams.name}/${pathParams.revision}/components`;
+const createGCR = baseApi<{
+  gcp_integration_id: number,
+}, {
+  project_id: number,
+}>('POST', pathParams => {
+  return `/api/projects/${pathParams.project_id}/provision/gcr`;
 });
 
-const getChartControllers = baseApi<{
-  namespace: string,
-  cluster_id: number,
-  storage: StorageType
-}, { id: number, name: string, revision: number }>('GET', pathParams => {
-  return `/api/projects/${pathParams.id}/releases/${pathParams.name}/${pathParams.revision}/controllers`;
+const createGHAction = baseApi<{
+  git_repo: string,
+  image_repo_uri: string,
+  dockerfile_path: string,
+  git_repo_id: number,
+}, {
+  project_id: number,
+  CLUSTER_ID: number,
+  RELEASE_NAME: string,
+  RELEASE_NAMESPACE: string,
+}>('POST', pathParams => {
+  let { project_id, CLUSTER_ID, RELEASE_NAME, RELEASE_NAMESPACE } = pathParams;
+  return `/api/projects/${project_id}/ci/actions?cluster_id=${CLUSTER_ID}&name=${RELEASE_NAME}&namespace=${RELEASE_NAMESPACE}`;
+})
+
+const createGKE = baseApi<{
+  gcp_integration_id: number,
+  gke_name: string,
+}, {
+  project_id: number,
+}>('POST', pathParams => {
+  return `/api/projects/${pathParams.project_id}/provision/gke`;
 });
 
-const getNamespaces = baseApi<{
-  cluster_id: number,
-}, { id: number }>('GET', pathParams => {
-  return `/api/projects/${pathParams.id}/k8s/namespaces`;
-});
-
-const getMatchingPods = baseApi<{
-  cluster_id: number,
-  selectors: string[]
-}, { id: number }>('GET', pathParams => {
-  return `/api/projects/${pathParams.id}/k8s/pods`;
-});
-
-const getIngress = baseApi<{
-  cluster_id: number,
-}, { name: string, namespace: string, id: number }>('GET', pathParams => {
-  return `/api/projects/${pathParams.id}/k8s/${pathParams.namespace}/ingress/${pathParams.name}`;
-});
-
-const getInvites = baseApi<{}, { id: number }>('GET', pathParams => {
+const createInvite = baseApi<{
+  email: string
+}, {
+  id: number
+}>('POST', pathParams => {
   return `/api/projects/${pathParams.id}/invites`;
-});
-
-const getRevisions = baseApi<{
-  namespace: string,
-  cluster_id: number,
-  storage: StorageType
-}, { id: number, name: string }>('GET', pathParams => {
-  return `/api/projects/${pathParams.id}/releases/${pathParams.name}/history`;
-});
-
-const rollbackChart = baseApi<{
-  namespace: string,
-  storage: StorageType,
-  revision: number
-}, {
-  id: number,
-  name: string,
-  cluster_id: number,
-}>('POST', pathParams => {
-  let { id, name, cluster_id } = pathParams;
-  return `/api/projects/${id}/releases/${name}/rollback?cluster_id=${cluster_id}`;
-});
-
-const upgradeChartValues = baseApi<{
-  namespace: string,
-  storage: StorageType,
-  values: string
-}, {
-  id: number,
-  name: string,
-  cluster_id: number,
-}>('POST', pathParams => {
-  let { id, name, cluster_id } = pathParams;
-  return `/api/projects/${id}/releases/${name}/upgrade?cluster_id=${cluster_id}`;
-});
-
-const getTemplates = baseApi('GET', '/api/templates');
-
-const getTemplateInfo = baseApi<{}, { name: string, version: string }>('GET', pathParams => {
-  return `/api/templates/${pathParams.name}/${pathParams.version}`;
-});
-
-const getRepos = baseApi<{}, { id: number }>('GET', pathParams => {
-  return `/api/projects/${pathParams.id}/repos`;
-});
-
-const getBranches = baseApi<{}, { kind: string, repo: string }>('GET', pathParams => {
-  return `/api/repos/${pathParams.kind}/${pathParams.repo}/branches`;
-});
-
-const getBranchContents = baseApi<{ 
-  dir: string 
-}, {
-  kind: string,
-  repo: string,
-  branch: string
-}>('GET', pathParams => {
-  return `/api/repos/github/${pathParams.repo}/${pathParams.branch}/contents`;
-});
-
-const getProjects = baseApi<{}, { id: number }>('GET', pathParams => {
-  return `/api/users/${pathParams.id}/projects`;
-});
-
-const getReleaseToken = baseApi<{ 
-  namespace: string,
-  cluster_id: number,
-  storage: StorageType,
-}, { name: string, id: number }>('GET', pathParams => {
-  return `/api/projects/${pathParams.id}/releases/${pathParams.name}/webhook_token`;
 });
 
 const createProject = baseApi<{ name: string }, {}>('POST', pathParams => {
   return `/api/projects`;
 });
 
-const deleteProject = baseApi<{}, { id: number }>('DELETE', pathParams => {
-  return `/api/projects/${pathParams.id}`;
+const deleteCluster = baseApi<{
+}, {
+  project_id: number,
+  cluster_id: number,
+}>('DELETE', pathParams => {
+  return `/api/projects/${pathParams.project_id}/clusters/${pathParams.cluster_id}`;
 });
 
 const deleteInvite = baseApi<{}, { id: number, invId: number }>('DELETE', pathParams => {
   return `/api/projects/${pathParams.id}/invites/${pathParams.invId}`;
+});
+
+const deleteProject = baseApi<{}, { id: number }>('DELETE', pathParams => {
+  return `/api/projects/${pathParams.id}`;
 });
 
 const deployTemplate = baseApi<{
@@ -198,64 +136,94 @@ const deployTemplate = baseApi<{
   return `/api/projects/${id}/deploy/${name}/${version}?cluster_id=${cluster_id}`;
 });
 
-const uninstallTemplate = baseApi<{
+const destroyCluster = baseApi<{
+  eks_name: string,
 }, {
-  id: number,
-  name: string, 
-  cluster_id: number,
-  namespace: string,
-  storage: StorageType,
+  project_id: number,
+  infra_id: number,
 }>('POST', pathParams => {
-  let { id, name, cluster_id, storage, namespace } = pathParams;
-  return `/api/projects/${id}/deploy/${name}?cluster_id=${cluster_id}&namespace=${namespace}&storage=${storage}`;
+  return `/api/projects/${pathParams.project_id}/infra/${pathParams.infra_id}/eks/destroy`;
+});
+
+const getBranchContents = baseApi<{ 
+  dir: string 
+}, {
+  project_id: number,
+  git_repo_id: number
+  kind: string,
+  owner: string,
+  name: string,
+  branch: string
+}>('GET', pathParams => {
+  return `/api/projects/${pathParams.project_id}/gitrepos/${pathParams.git_repo_id}/repos/${pathParams.kind}/${pathParams.owner}/${pathParams.name}/${pathParams.branch}/contents`;
+});
+
+const getBranches = baseApi<{
+}, {
+  project_id: number,
+  git_repo_id: number,
+  kind: string,
+  owner: string,
+  name: string
+}>('GET', pathParams => {
+  return `/api/projects/${pathParams.project_id}/gitrepos/${pathParams.git_repo_id}/repos/${pathParams.kind}/${pathParams.owner}/${pathParams.name}/branches`;
+});
+
+const getChart = baseApi<{
+  namespace: string,
+  cluster_id: number,
+  storage: StorageType
+}, { id: number, name: string, revision: number }>('GET', pathParams => {
+  return `/api/projects/${pathParams.id}/releases/${pathParams.name}/${pathParams.revision}`;
+});
+
+const getCharts = baseApi<{
+  namespace: string,
+  cluster_id: number,
+  storage: StorageType,
+  limit: number,
+  skip: number,
+  byDate: boolean,
+  statusFilter: string[]
+}, { id: number }>('GET', pathParams => {
+  return `/api/projects/${pathParams.id}/releases`;
+});
+
+const getChartComponents = baseApi<{
+  namespace: string,
+  cluster_id: number,
+  storage: StorageType
+}, { id: number, name: string, revision: number }>('GET', pathParams => {
+  return `/api/projects/${pathParams.id}/releases/${pathParams.name}/${pathParams.revision}/components`;
+});
+
+const getChartControllers = baseApi<{
+  namespace: string,
+  cluster_id: number,
+  storage: StorageType
+}, { id: number, name: string, revision: number }>('GET', pathParams => {
+  return `/api/projects/${pathParams.id}/releases/${pathParams.name}/${pathParams.revision}/controllers`;
 });
 
 const getClusterIntegrations = baseApi('GET', '/api/integrations/cluster');
 
-const getRegistryIntegrations = baseApi('GET', '/api/integrations/registry');
-
-const getRepoIntegrations = baseApi('GET', '/api/integrations/repo');
-
-const getProjectClusters = baseApi<{}, { id: number }>('GET', pathParams => {
+const getClusters = baseApi<{}, { id: number }>('GET', pathParams => {
   return `/api/projects/${pathParams.id}/clusters`;
 });
 
-const getProjectRegistries = baseApi<{}, { id: number }>('GET', pathParams => {
-  return `/api/projects/${pathParams.id}/registries`;
+const getGitRepoList = baseApi<{
+}, {
+  project_id: number,
+  git_repo_id: number,
+}>('GET', pathParams => {
+  return `/api/projects/${pathParams.project_id}/gitrepos/${pathParams.git_repo_id}/repos`;
 });
 
-const getProjectRepos = baseApi<{}, { id: number }>('GET', pathParams => {
-  return `/api/projects/${pathParams.id}/repos`;
-});
-
-const createAWSIntegration = baseApi<{
-  aws_region: string,
-  aws_cluster_id?: string,
-  aws_access_key_id: string,
-  aws_secret_access_key: string,
-}, { id: number }>('POST', pathParams => {
-  return `/api/projects/${pathParams.id}/integrations/aws`;
-});
-
-const provisionECR = baseApi<{
-  ecr_name: string,
-  aws_integration_id: string,
-}, { id: number }>('POST', pathParams => {
-  return `/api/projects/${pathParams.id}/provision/ecr`;
-});
-
-const provisionEKS = baseApi<{
-  eks_name: string,
-  aws_integration_id: string,
-}, { id: number }>('POST', pathParams => {
-  return `/api/projects/${pathParams.id}/provision/eks`;
-});
-
-const createECR = baseApi<{
-  name: string,
-  aws_integration_id: string,
-}, { id: number }>('POST', pathParams => {
-  return `/api/projects/${pathParams.id}/registries`;
+const getGitRepos = baseApi<{
+}, {
+  project_id: number,
+}>('GET', pathParams => {
+  return `/api/projects/${pathParams.project_id}/gitrepos`;
 });
 
 const getImageRepos = baseApi<{
@@ -275,25 +243,67 @@ const getImageTags = baseApi<{
   return `/api/projects/${pathParams.project_id}/registries/${pathParams.registry_id}/repositories/${pathParams.repo_name}`;
 });
 
-const linkGithubProject = baseApi<{
-}, {
-  project_id: number,
-}>('GET', pathParams => {
-  return `/api/oauth/projects/${pathParams.project_id}/github`;
-});
-
-const getGitRepos = baseApi<{  
-}, {
-  project_id: number,
-}>('GET', pathParams => {
-  return `/api/projects/${pathParams.project_id}/gitrepos`;
-});
-
 const getInfra = baseApi<{
 }, {
   project_id: number,
 }>('GET', pathParams => {
   return `/api/projects/${pathParams.project_id}/infra`;
+});
+
+const getIngress = baseApi<{
+  cluster_id: number,
+}, { name: string, namespace: string, id: number }>('GET', pathParams => {
+  return `/api/projects/${pathParams.id}/k8s/${pathParams.namespace}/ingress/${pathParams.name}`;
+});
+
+const getInvites = baseApi<{}, { id: number }>('GET', pathParams => {
+  return `/api/projects/${pathParams.id}/invites`;
+});
+
+const getMatchingPods = baseApi<{
+  cluster_id: number,
+  selectors: string[]
+}, { id: number }>('GET', pathParams => {
+  return `/api/projects/${pathParams.id}/k8s/pods`;
+});
+
+const getNamespaces = baseApi<{
+  cluster_id: number,
+}, { id: number }>('GET', pathParams => {
+  return `/api/projects/${pathParams.id}/k8s/namespaces`;
+});
+
+const getOAuthIds = baseApi<{
+}, {
+  project_id: number,
+}>('GET', pathParams => {
+  return `/api/projects/${pathParams.project_id}/integrations/oauth`;
+});
+
+const getProjectClusters = baseApi<{}, { id: number }>('GET', pathParams => {
+  return `/api/projects/${pathParams.id}/clusters`;
+});
+
+const getProjectRegistries = baseApi<{}, { id: number }>('GET', pathParams => {
+  return `/api/projects/${pathParams.id}/registries`;
+});
+
+const getProjectRepos = baseApi<{}, { id: number }>('GET', pathParams => {
+  return `/api/projects/${pathParams.id}/repos`;
+});
+
+const getProjects = baseApi<{}, { id: number }>('GET', pathParams => {
+  return `/api/users/${pathParams.id}/projects`;
+});
+
+const getRegistryIntegrations = baseApi('GET', '/api/integrations/registry');
+
+const getReleaseToken = baseApi<{ 
+  namespace: string,
+  cluster_id: number,
+  storage: StorageType,
+}, { name: string, id: number }>('GET', pathParams => {
+  return `/api/projects/${pathParams.id}/releases/${pathParams.name}/webhook_token`;
 });
 
 const destroyEKS = baseApi<{
@@ -323,86 +333,118 @@ const destroyDOKS = baseApi<{
   return `/api/projects/${pathParams.project_id}/infra/${pathParams.infra_id}/doks/destroy`;
 });
 
-const deleteCluster = baseApi<{
-}, {
-  project_id: number,
+const getRepoIntegrations = baseApi('GET', '/api/integrations/repo');
+
+const getRepos = baseApi<{}, { id: number }>('GET', pathParams => {
+  return `/api/projects/${pathParams.id}/repos`;
+});
+
+const getRevisions = baseApi<{
+  namespace: string,
   cluster_id: number,
-}>('DELETE', pathParams => {
-  return `/api/projects/${pathParams.project_id}/clusters/${pathParams.cluster_id}`;
+  storage: StorageType
+}, { id: number, name: string }>('GET', pathParams => {
+  return `/api/projects/${pathParams.id}/releases/${pathParams.name}/history`;
 });
 
-const createGCPIntegration = baseApi<{
-  gcp_region: string,
-  gcp_key_data: string,
-  gcp_project_id: string,
-}, {
-  project_id: number,
-}>('POST', pathParams => {
-  return `/api/projects/${pathParams.project_id}/integrations/gcp`;
+const getTemplateInfo = baseApi<{}, { name: string, version: string }>('GET', pathParams => {
+  return `/api/templates/${pathParams.name}/${pathParams.version}`;
 });
 
-const createGCR = baseApi<{
-  gcp_integration_id: number,
-}, {
-  project_id: number,
-}>('POST', pathParams => {
-  return `/api/projects/${pathParams.project_id}/provision/gcr`;
+const getTemplates = baseApi('GET', '/api/templates');
+
+const getUser = baseApi<{}, { id: number }>('GET', pathParams => {
+  return `/api/users/${pathParams.id}`;
 });
 
-const createGKE = baseApi<{
-  gcp_integration_id: number,
-  gke_name: string,
-}, {
-  project_id: number,
-}>('POST', pathParams => {
-  return `/api/projects/${pathParams.project_id}/provision/gke`;
-});
-
-const createInvite = baseApi<{
-  email: string
-}, {
-  id: number
-}>('POST', pathParams => {
-  return `/api/projects/${pathParams.id}/invites`;
-});
-
-const getOAuthIds = baseApi<{
+const linkGithubProject = baseApi<{
 }, {
   project_id: number,
 }>('GET', pathParams => {
-  return `/api/projects/${pathParams.project_id}/integrations/oauth`;
+  return `/api/oauth/projects/${pathParams.project_id}/github`;
 });
 
-const createDOCR = baseApi<{
-  do_integration_id: number,
-  docr_name: string,
-  docr_subscription_tier: string,
-}, {
-  project_id: number,
-}>('POST', pathParams => {
-  return `/api/projects/${pathParams.project_id}/provision/docr`;
+const logInUser = baseApi<{
+  email: string,
+  password: string
+}>('POST', '/api/login');
+
+const logOutUser = baseApi('POST', '/api/logout');
+
+const provisionECR = baseApi<{
+  ecr_name: string,
+  aws_integration_id: string,
+}, { id: number }>('POST', pathParams => {
+  return `/api/projects/${pathParams.id}/provision/ecr`;
 });
 
-const createDOKS = baseApi<{
-  do_integration_id: number,
-  doks_name: string,
-  do_region: string,
+const provisionEKS = baseApi<{
+  eks_name: string,
+  aws_integration_id: string,
+}, { id: number }>('POST', pathParams => {
+  return `/api/projects/${pathParams.id}/provision/eks`;
+});
+
+const registerUser = baseApi<{ 
+  email: string,
+  password: string
+}>('POST', '/api/users');
+
+const rollbackChart = baseApi<{
+  namespace: string,
+  storage: StorageType,
+  revision: number
 }, {
-  project_id: number,
+  id: number,
+  name: string,
+  cluster_id: number,
 }>('POST', pathParams => {
-  return `/api/projects/${pathParams.project_id}/provision/doks`;
+  let { id, name, cluster_id } = pathParams;
+  return `/api/projects/${id}/releases/${name}/rollback?cluster_id=${cluster_id}`;
+});
+
+const uninstallTemplate = baseApi<{
+}, {
+  id: number,
+  name: string, 
+  cluster_id: number,
+  namespace: string,
+  storage: StorageType,
+}>('POST', pathParams => {
+  let { id, name, cluster_id, storage, namespace } = pathParams;
+  return `/api/projects/${id}/deploy/${name}?cluster_id=${cluster_id}&namespace=${namespace}&storage=${storage}`;
+});
+
+const updateUser = baseApi<{
+  rawKubeConfig?: string,
+  allowedContexts?: string[]
+}, { id: number }>('PUT', pathParams => {
+  return `/api/users/${pathParams.id}`;
+});
+
+const upgradeChartValues = baseApi<{
+  namespace: string,
+  storage: StorageType,
+  values: string
+}, {
+  id: number,
+  name: string,
+  cluster_id: number,
+}>('POST', pathParams => {
+  let { id, name, cluster_id } = pathParams;
+  return `/api/projects/${id}/releases/${name}/upgrade?cluster_id=${cluster_id}`;
 });
 
 // Bundle export to allow default api import (api.<method> is more readable)
 export default {
-  createDOKS,
-  createDOCR,
-  getOAuthIds,
   checkAuth,
   createAWSIntegration,
+  createDOCR,
+  createDOKS,
   createECR,
   createGCPIntegration,
   createGCR,
+  createGHAction,
   createGKE,
   createInvite,
   createProject,
@@ -421,6 +463,7 @@ export default {
   getChartControllers,
   getClusterIntegrations,
   getClusters,
+  getGitRepoList,
   getGitRepos,
   getImageRepos,
   getImageTags,
@@ -429,6 +472,7 @@ export default {
   getInvites,
   getMatchingPods,
   getNamespaces,
+  getOAuthIds,
   getProjectClusters,
   getProjectRegistries,
   getProjectRepos,

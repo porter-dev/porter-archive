@@ -1,11 +1,13 @@
 package api
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"k8s.io/client-go/util/homedir"
@@ -17,6 +19,7 @@ type Client struct {
 	HTTPClient     *http.Client
 	Cookie         *http.Cookie
 	CookieFilePath string
+	Token          string
 }
 
 // HTTPError is the Porter error response returned if a request fails
@@ -47,11 +50,25 @@ func NewClient(baseURL string, cookieFileName string) *Client {
 	return client
 }
 
+func NewClientWithToken(baseURL, token string) *Client {
+	client := &Client{
+		BaseURL: baseURL,
+		Token:   token,
+		HTTPClient: &http.Client{
+			Timeout: time.Minute,
+		},
+	}
+
+	return client
+}
+
 func (c *Client) sendRequest(req *http.Request, v interface{}, useCookie bool) (*HTTPError, error) {
 	req.Header.Set("Content-Type", "application/json; charset=utf-8")
 	req.Header.Set("Accept", "application/json; charset=utf-8")
 
-	if cookie, _ := c.getCookie(); useCookie && cookie != nil {
+	if c.Token != "" {
+		req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", c.Token))
+	} else if cookie, _ := c.getCookie(); useCookie && cookie != nil {
 		c.Cookie = cookie
 		req.AddCookie(c.Cookie)
 	}
@@ -121,4 +138,34 @@ func (c *Client) getCookie() (*http.Cookie, error) {
 	}
 
 	return cookie.Cookie, nil
+}
+
+type TokenProjectID struct {
+	ProjectID uint `json:"project_id"`
+}
+
+func GetProjectIDFromToken(token string) (uint, error) {
+	var encoded string
+
+	if tokenSplit := strings.Split(token, "."); len(tokenSplit) != 3 {
+		return 0, fmt.Errorf("invalid jwt token format")
+	} else {
+		encoded = tokenSplit[1]
+	}
+
+	decodedBytes, err := base64.RawStdEncoding.DecodeString(encoded)
+
+	if err != nil {
+		return 0, fmt.Errorf("could not decode jwt token from base64: %v", err)
+	}
+
+	res := &TokenProjectID{}
+
+	err = json.Unmarshal(decodedBytes, res)
+
+	if err != nil {
+		return 0, fmt.Errorf("could not get token project id: %v", err)
+	}
+
+	return res.ProjectID, nil
 }

@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/go-chi/chi"
+	"github.com/porter-dev/porter/internal/auth/token"
 	"github.com/porter-dev/porter/server/api"
 	"github.com/porter-dev/porter/server/requestlog"
 	mw "github.com/porter-dev/porter/server/router/middleware"
@@ -16,7 +17,9 @@ func New(a *api.App) *chi.Mux {
 	l := a.Logger
 	r := chi.NewRouter()
 
-	auth := mw.NewAuth(a.Store, a.ServerConf.CookieName, a.Repo)
+	auth := mw.NewAuth(a.Store, a.ServerConf.CookieName, &token.TokenGeneratorConf{
+		TokenSecret: a.ServerConf.TokenGeneratorSecret,
+	}, a.Repo)
 
 	r.Route("/api", func(r chi.Router) {
 		r.Use(mw.ContentTypeJSON)
@@ -190,6 +193,21 @@ func New(a *api.App) *chi.Mux {
 				requestlog.NewHandler(a.HandleDeleteProject, l),
 				mw.URLParam,
 				mw.WriteAccess,
+			),
+		)
+
+		// /api/projects/{project_id}/ci routes
+		r.Method(
+			"POST",
+			"/projects/{project_id}/ci/actions",
+			auth.DoesUserHaveProjectAccess(
+				auth.DoesUserHaveClusterAccess(
+					requestlog.NewHandler(a.HandleCreateGitAction, l),
+					mw.URLParam,
+					mw.QueryParam,
+				),
+				mw.URLParam,
+				mw.ReadAccess,
 			),
 		)
 
@@ -909,7 +927,7 @@ func New(a *api.App) *chi.Mux {
 				auth.DoesUserHaveGitRepoAccess(
 					requestlog.NewHandler(a.HandleListRepos, l),
 					mw.URLParam,
-					mw.QueryParam,
+					mw.URLParam,
 				),
 				mw.URLParam,
 				mw.ReadAccess,
@@ -918,12 +936,12 @@ func New(a *api.App) *chi.Mux {
 
 		r.Method(
 			"GET",
-			"/projects/{project_id}/gitrepos/{git_repo_id}/repos/{kind}/{name}/branches",
+			"/projects/{project_id}/gitrepos/{git_repo_id}/repos/{kind}/{owner}/{name}/branches",
 			auth.DoesUserHaveProjectAccess(
 				auth.DoesUserHaveGitRepoAccess(
 					requestlog.NewHandler(a.HandleGetBranches, l),
 					mw.URLParam,
-					mw.QueryParam,
+					mw.URLParam,
 				),
 				mw.URLParam,
 				mw.ReadAccess,
@@ -932,12 +950,12 @@ func New(a *api.App) *chi.Mux {
 
 		r.Method(
 			"GET",
-			"/projects/{project_id}/gitrepos/{git_repo_id}/repos/{kind}/{name}/{branch}/contents",
+			"/projects/{project_id}/gitrepos/{git_repo_id}/repos/{kind}/{owner}/{name}/{branch}/contents",
 			auth.DoesUserHaveProjectAccess(
 				auth.DoesUserHaveGitRepoAccess(
 					requestlog.NewHandler(a.HandleGetBranchContents, l),
 					mw.URLParam,
-					mw.QueryParam,
+					mw.URLParam,
 				),
 				mw.URLParam,
 				mw.ReadAccess,

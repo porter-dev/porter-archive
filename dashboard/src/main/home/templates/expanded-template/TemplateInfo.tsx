@@ -9,11 +9,7 @@ import Loading from '../../../../components/Loading';
 import { PorterTemplate } from '../../../../shared/types';
 import Helper from '../../../../components/values-form/Helper';
 
-// TODO: read in from metadata
-const hardcodedNames: any = {
-  'postgresql': 'PostgreSQL',
-  'docker': 'Docker',
-};
+import hardcodedNames from '../hardcodedNameDict';
 
 type PropsType = {
   currentTemplate: any,
@@ -99,6 +95,22 @@ export default class TemplateInfo extends Component<PropsType, StateType> {
           </Banner>
         </>
       );
+    } else if (this.props.currentTemplate.name.toLowerCase() === 'https-issuer') {
+      return (
+        <>
+          <Br />
+          <Banner>
+            <i className="material-icons-outlined">info</i>
+            To use this template you must first follow
+            <Link 
+              target="_blank"
+              href="https://docs.getporter.dev/docs/https-and-custom-domains"
+            >
+              Porter's HTTPS setup guide
+            </Link> (5 minutes).
+          </Banner>
+        </>
+      );
     }
   }
 
@@ -145,6 +157,7 @@ TemplateInfo.contextType = Context;
 
 const Link = styled.a`
   color: #8590ff;
+  margin-right: 5px;
   cursor: pointer;
   margin-left: 5px;
 `;

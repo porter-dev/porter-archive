@@ -36,6 +36,7 @@ type StateType = {
   showWelcome: boolean,
   currentView: string,
   handleDO: boolean, // Trigger DO infra calls after oauth flow if needed
+  ghRedirect: boolean,
   forceRefreshClusters: boolean, // For updating ClusterSection from modal on deletion
 
   // Track last project id for refreshing clusters on project change
@@ -53,6 +54,7 @@ export default class Home extends Component<PropsType, StateType> {
     forceRefreshClusters: false,
     sidebarReady: false,
     handleDO: false,
+    ghRedirect: false,
   }
 
   // TODO: Refactor and prevent flash + multiple reload
@@ -74,6 +76,8 @@ export default class Home extends Component<PropsType, StateType> {
         this.setState({ currentView: 'dashboard'}, () => {
           this.setState({ currentView: 'provisioner', sidebarReady: true, });
         });
+      } else if (this.state.ghRedirect) {
+        this.setState({ currentView: 'integrations', sidebarReady: true, ghRedirect: false });
       } else {
         this.setState({ currentView: 'provisioner'}, () => {
           this.setState({ currentView: 'dashboard', sidebarReady: true });
@@ -106,7 +110,12 @@ export default class Home extends Component<PropsType, StateType> {
           }
 
           if (!foundProject) {
-            this.context.setCurrentProject(res.data[0]);
+            res.data.forEach((project: ProjectType, i: number) => {
+              if (project.id.toString() === localStorage.getItem('currentProject')) {
+                foundProject = project;
+              }
+            })
+            this.context.setCurrentProject(foundProject ? foundProject : res.data[0]);
             this.initializeView();
           }
         }
@@ -204,6 +213,9 @@ export default class Home extends Component<PropsType, StateType> {
     }
 
     // initialize posthog on non-localhosts. Gracefully fail when env vars are not set.
+    this.setState({ ghRedirect: urlParams.get('gh_oauth') !== null });
+    urlParams.delete('gh_oauth');
+    
     window.location.href.indexOf('127.0.0.1') === -1 && posthog.init(process.env.POSTHOG_API_KEY || 'placeholder', {
       api_host: process.env.POSTHOG_HOST || 'placeholder',
       loaded: function(posthog: any) { 
@@ -356,6 +368,7 @@ export default class Home extends Component<PropsType, StateType> {
 
   handleDelete = () => {
     let { setCurrentModal, currentProject } = this.context;
+    localStorage.removeItem(currentProject.id + '-cluster');
     api.deleteProject('<token>', {}, { id: currentProject.id }, (err: any, res: any) => {
       if (err) {
         console.log(err)

@@ -10,7 +10,7 @@ type WriteRelease func(release *models.Release) (*models.Release, error)
 // ReleaseRepository represents the set of queries on the Release model
 type ReleaseRepository interface {
 	CreateRelease(release *models.Release) (*models.Release, error)
-	ReadRelease(name string, namespace string) (*models.Release, error)
+	ReadRelease(clusterID uint, name, namespace string) (*models.Release, error)
 	ReadReleaseByWebhookToken(token string) (*models.Release, error)
 	UpdateRelease(release *models.Release) (*models.Release, error)
 	DeleteRelease(release *models.Release) (*models.Release, error)

@@ -22,7 +22,7 @@ export default class Modal extends Component<PropsType, StateType> {
   }
 
   handleClickOutside = (event: any) => {
-    if (this.wrapperRef && !this.wrapperRef.current.contains(event.target)) {
+    if (this.wrapperRef && this.wrapperRef.current && !this.wrapperRef.current.contains(event.target)) {
       this.props.onRequestClose();
     }
   }

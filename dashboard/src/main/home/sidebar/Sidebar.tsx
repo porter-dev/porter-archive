@@ -117,7 +117,7 @@ export default class Sidebar extends Component<PropsType, StateType> {
           <NavButton
             selected={currentView === 'integrations'}
             onClick={() => {
-              setCurrentModal('IntegrationsInstructionsModal', {})
+              setCurrentView('integrations')
             }}
           >
             <Img src={integrations} />

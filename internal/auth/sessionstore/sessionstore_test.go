@@ -11,7 +11,7 @@ import (
 	"github.com/gorilla/sessions"
 	test "github.com/porter-dev/porter/internal/repository/memory"
 
-	sessionstore "github.com/porter-dev/porter/internal/auth"
+	"github.com/porter-dev/porter/internal/auth/sessionstore"
 )
 
 type headerOnlyResponseWriter http.Header

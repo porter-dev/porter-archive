@@ -9,16 +9,11 @@ import TabSelector from '../../../components/TabSelector';
 import ExpandedTemplate from './expanded-template/ExpandedTemplate';
 import Loading from '../../../components/Loading';
 
+import hardcodedNames from './hardcodedNameDict';
+
 const tabOptions = [
   { label: 'Community Templates', value: 'community' }
 ];
-
-// TODO: read in from metadata
-const hardcodedNames: any = {
-  'postgresql': 'PostgreSQL',
-  'docker': 'Docker',
-  'https-issuer': 'HTTPS Issuer'
-};
 
 type PropsType = {
   setCurrentView: (x: string) => void, // Link to add integration from source selector

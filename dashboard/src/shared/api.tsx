@@ -67,6 +67,21 @@ const createGCR = baseApi<{
   return `/api/projects/${pathParams.project_id}/provision/gcr`;
 });
 
+const createGHAction = baseApi<{
+  git_repo: string,
+  image_repo_uri: string,
+  dockerfile_path: string,
+  git_repo_id: number,
+}, {
+  project_id: number,
+  CLUSTER_ID: number,
+  RELEASE_NAME: string,
+  RELEASE_NAMESPACE: string,
+}>('POST', pathParams => {
+  let { project_id, CLUSTER_ID, RELEASE_NAME, RELEASE_NAMESPACE } = pathParams;
+  return `/api/projects/${project_id}/ci/actions?cluster_id=${CLUSTER_ID}&name=${RELEASE_NAME}&namespace=${RELEASE_NAMESPACE}`;
+})
+
 const createGKE = baseApi<{
   gcp_integration_id: number,
   gke_name: string,
@@ -133,15 +148,25 @@ const destroyCluster = baseApi<{
 const getBranchContents = baseApi<{ 
   dir: string 
 }, {
+  project_id: number,
+  git_repo_id: number
   kind: string,
-  repo: string,
+  owner: string,
+  name: string,
   branch: string
 }>('GET', pathParams => {
-  return `/api/repos/github/${pathParams.repo}/${pathParams.branch}/contents`;
+  return `/api/projects/${pathParams.project_id}/gitrepos/${pathParams.git_repo_id}/repos/${pathParams.kind}/${pathParams.owner}/${pathParams.name}/${pathParams.branch}/contents`;
 });
 
-const getBranches = baseApi<{}, { kind: string, repo: string }>('GET', pathParams => {
-  return `/api/repos/${pathParams.kind}/${pathParams.repo}/branches`;
+const getBranches = baseApi<{
+}, {
+  project_id: number,
+  git_repo_id: number,
+  kind: string,
+  owner: string,
+  name: string
+}>('GET', pathParams => {
+  return `/api/projects/${pathParams.project_id}/gitrepos/${pathParams.git_repo_id}/repos/${pathParams.kind}/${pathParams.owner}/${pathParams.name}/branches`;
 });
 
 const getChart = baseApi<{
@@ -185,8 +210,6 @@ const getClusterIntegrations = baseApi('GET', '/api/integrations/cluster');
 const getClusters = baseApi<{}, { id: number }>('GET', pathParams => {
   return `/api/projects/${pathParams.id}/clusters`;
 });
-
-const getGitRepoInfo = baseApi('GET', '/api/repos/github/');
 
 const getGitRepoList = baseApi<{
 }, {
@@ -394,6 +417,7 @@ export default {
   createECR,
   createGCPIntegration,
   createGCR,
+  createGHAction,
   createGKE,
   createInvite,
   createProject,
@@ -410,7 +434,6 @@ export default {
   getChartControllers,
   getClusterIntegrations,
   getClusters,
-  getGitRepoInfo,
   getGitRepoList,
   getGitRepos,
   getImageRepos,

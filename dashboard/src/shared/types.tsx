@@ -112,7 +112,8 @@ export interface FormElement {
 
 export interface RepoType {
   FullName: string,
-  kind: string
+  kind: string,
+  GHRepoID: number,
 }
 
 export interface FileType {
@@ -156,4 +157,11 @@ export interface InviteType {
   email: string,
   accepted: boolean,
   id: number,
+}
+
+export interface ActionConfigType {
+  git_repo: string,
+  image_repo_uri: string,
+  git_repo_id: number,
+  dockerfile_path: string,
 }

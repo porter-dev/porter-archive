@@ -46,7 +46,12 @@ export default class SettingsSection extends Component<PropsType, StateType> {
     subdirectory: '',
     webhookToken: '',
     highlightCopyButton: false,
-    action: null as ActionConfigType,
+    action: {
+      git_repo: '',
+      image_repo_uri: '',
+      git_repo_id: 0,
+      dockerfile_path: '',
+    } as ActionConfigType,
   }
 
   // TODO: read in set image from form context instead of config

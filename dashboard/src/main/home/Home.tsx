@@ -23,6 +23,7 @@ import ProvisionerStatus from './provisioner/ProvisionerStatus';
 import ProjectSettings from './project-settings/ProjectSettings';
 import ConfirmOverlay from '../../components/ConfirmOverlay';
 import Modal from './modals/Modal';
+import * as FullStory from '@fullstory/browser';
 
 type PropsType = {
   logOut: () => void,
@@ -57,24 +58,27 @@ export default class Home extends Component<PropsType, StateType> {
   // TODO: Refactor and prevent flash + multiple reload
   initializeView = () => {
     let { currentProject } = this.props;
-    if (currentProject) {
-      let { currentCluster } = this.context;
-      
-      // Check if current project is provisioning
-      api.getInfra('<token>', {}, { project_id: currentProject.id }, (err: any, res: any) => {
-        if (err) {
-          console.log(err);
-          return;
-        }
-        
-        if (res.data.length > 0 && (!currentCluster || !includesCompletedInfraSet(res.data))) {
+    let { currentCluster } = this.context;
+    
+    if (!currentProject) return;
+
+    // Check if current project is provisioning
+    api.getInfra('<token>', {}, { project_id: currentProject.id }, (err: any, res: any) => {
+      if (err) {
+        console.log(err);
+        return;
+      }
+
+      if (res.data.length > 0 && (!currentCluster && !includesCompletedInfraSet(res.data))) {
+        // force refresh if currentView is already set to provisioner.
+        this.setState({ currentView: 'dashboard'}, () => {
           this.setState({ currentView: 'provisioner', sidebarReady: true, });
-        } else {
-          // console.log('getting here', currentCluster)
-          this.setState({ currentView: 'dashboard', sidebarReady: true });
-        }
-      });
-    }
+        });
+      } else {
+        // console.log('getting here', currentCluster)
+        this.setState({ currentView: 'dashboard', sidebarReady: true });
+      }
+    });
   }
 
   getProjects = (id?: number) => {
@@ -178,6 +182,8 @@ export default class Home extends Component<PropsType, StateType> {
   }
 
   componentDidMount() {
+    let { user } = this.context;
+    FullStory.identify(user.email)
 
     // Handle redirect from DO
     let queryString = window.location.search;
@@ -195,11 +201,14 @@ export default class Home extends Component<PropsType, StateType> {
       this.setState({ handleDO: true });
       this.checkDO();
     }
-    
-    let { user } = this.context;
-    window.location.href.indexOf('127.0.0.1') === -1 && posthog.init(process.env.POSTHOG_API_KEY, {
-      api_host: process.env.POSTHOG_HOST,
-      loaded: function(posthog: any) { posthog.identify(user.email) }
+
+    // initialize posthog on non-localhosts. Gracefully fail when env vars are not set.
+    window.location.href.indexOf('127.0.0.1') === -1 && posthog.init(process.env.POSTHOG_API_KEY || 'placeholder', {
+      api_host: process.env.POSTHOG_HOST || 'placeholder',
+      loaded: function(posthog: any) { 
+        posthog.identify(user.userId) 
+        posthog.people.set({ email: user.email })
+      }
     })
 
     this.getProjects(defaultProjectId);

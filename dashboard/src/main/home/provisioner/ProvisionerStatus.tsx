@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
 import styled from 'styled-components';
+import posthog from 'posthog-js';
 
 import api from '../../../shared/api';
 import { Context } from '../../../shared/Context';
@@ -56,8 +57,8 @@ export default class ProvisionerStatus extends Component<PropsType, StateType> {
   }
 
   componentDidMount() {
+    console.log('mounting provisioner')
     let { currentProject } = this.context;
-    // console.log(currentProject)
     let protocol = process.env.NODE_ENV == 'production' ? 'wss' : 'ws'
 
     // Check if current project is provisioning
@@ -69,7 +70,7 @@ export default class ProvisionerStatus extends Component<PropsType, StateType> {
       } 
       
       let infras = filterOldInfras(res.data);
-      // console.log('filtered infras: ', infras);
+      console.log('infras: ', res.data);
       let error = false;
 
       let maxStep = {} as Record<string, number>
@@ -117,7 +118,6 @@ export default class ProvisionerStatus extends Component<PropsType, StateType> {
       let event = JSON.parse(evt.data);
       let validEvents = [] as any[];
       let err = null;
-
       
       for (var i = 0; i < event.length; i++) {
         let msg = event[i];
@@ -137,6 +137,8 @@ export default class ProvisionerStatus extends Component<PropsType, StateType> {
       }
 
       if (err) {
+        posthog.capture('Provisioning Error', {error: err});
+
         let e = ansiparse(err).map((el: any) => {
           return el.text;
         })
@@ -211,7 +213,6 @@ export default class ProvisionerStatus extends Component<PropsType, StateType> {
           if (clusters.length > 0) {
             // console.log('response :', res.data);
             this.props.setCurrentView('dashboard');
-            alert('setting to dashboard');
             // console.log('provision end project: ', this.context.currentProject);
             // console.log('provision end cluster: ', this.context.currentCluster);
             clearInterval(myInterval);
@@ -271,6 +272,7 @@ export default class ProvisionerStatus extends Component<PropsType, StateType> {
     }
 
     if (maxStep !== 0 && currentStep === maxStep && !triggerEnd) {
+      posthog.capture('Provisioning complete!')
       this.onEnd()
       this.setState({ triggerEnd: true });
     }

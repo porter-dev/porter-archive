@@ -224,6 +224,16 @@ func (repo *ClusterRepository) UpdateCluster(
 func (repo *ClusterRepository) UpdateClusterTokenCache(
 	tokenCache *ints.ClusterTokenCache,
 ) (*models.Cluster, error) {
+	if tok := tokenCache.Token; len(tok) > 0 {
+		cipherData, err := repository.Encrypt(tok, repo.key)
+
+		if err != nil {
+			return nil, err
+		}
+
+		tokenCache.Token = cipherData
+	}
+
 	cluster := &models.Cluster{}
 
 	if err := repo.db.Where("id = ?", tokenCache.ClusterID).First(&cluster).Error; err != nil {
@@ -233,7 +243,11 @@ func (repo *ClusterRepository) UpdateClusterTokenCache(
 	cluster.TokenCache.Token = tokenCache.Token
 	cluster.TokenCache.Expiry = tokenCache.Expiry
 
-	return repo.UpdateCluster(cluster)
+	if err := repo.db.Save(cluster).Error; err != nil {
+		return nil, err
+	}
+
+	return cluster, nil
 }
 
 // DeleteCluster removes a cluster from the db

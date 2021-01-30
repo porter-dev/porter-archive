@@ -30,8 +30,8 @@ export default class GCRForm extends Component<PropsType, StateType> {
   }
 
   isDisabled = (): boolean => {
-    let { credentialsName, serviceAccountKey } = this.state;
-    if (credentialsName === '' || serviceAccountKey === '') {
+    let { gcpRegion, gcpProjectID, serviceAccountKey } = this.state;
+    if (gcpRegion  === '' || serviceAccountKey === '' || gcpProjectID === '') {
       return true;
     }
     return false;
@@ -50,7 +50,17 @@ export default class GCRForm extends Component<PropsType, StateType> {
       if (err) {
         console.log(err);
       } else {
-        console.log(res.data);
+        api.createGCR('<token>', {
+          gcp_integration_id: res.data.id,
+        }, {
+          project_id: currentProject.id,
+        }, (err: any, res: any) => {
+          if (err) {
+            console.log(err);
+          } else {
+            this.props.closeForm();
+          }
+        })
       }
     })
   }
@@ -59,16 +69,6 @@ export default class GCRForm extends Component<PropsType, StateType> {
     return ( 
       <StyledForm>
         <CredentialWrapper>
-          <Heading>Porter Settings</Heading>
-          <Helper>Give a name to this set of registry credentials (just for Porter).</Helper>
-          <InputRow
-            type='text'
-            value={this.state.credentialsName}
-            setValue={(x: string) => this.setState({ credentialsName: x })}
-            label='🏷️ Registry Name'
-            placeholder='ex: paper-straw'
-            width='100%'
-          />
           <Heading>GCP Settings</Heading>
           <Helper>Service account credentials for GCP permissions.</Helper>
           <InputRow
@@ -90,8 +90,8 @@ export default class GCRForm extends Component<PropsType, StateType> {
             type='text'
             value={this.state.gcpProjectID}
             setValue={(x: string) => this.setState({ gcpProjectID: x })}
-            label='GCP Project ID'
-            placeholder='ex: porter-dev-273614'
+            label='📝 GCP Project ID'
+            placeholder='ex: skynet-dev-172969'
             width='100%'
           />
         </CredentialWrapper>

@@ -36,7 +36,6 @@ type StateType = {
   showWelcome: boolean,
   currentView: string,
   handleDO: boolean, // Trigger DO infra calls after oauth flow if needed
-  ghRedirect: boolean,
   forceRefreshClusters: boolean, // For updating ClusterSection from modal on deletion
 
   // Track last project id for refreshing clusters on project change
@@ -54,7 +53,6 @@ export default class Home extends Component<PropsType, StateType> {
     forceRefreshClusters: false,
     sidebarReady: false,
     handleDO: false,
-    ghRedirect: false,
   }
 
   // TODO: Refactor and prevent flash + multiple reload
@@ -76,8 +74,6 @@ export default class Home extends Component<PropsType, StateType> {
         this.setState({ currentView: 'dashboard'}, () => {
           this.setState({ currentView: 'provisioner', sidebarReady: true, });
         });
-      } else if (this.state.ghRedirect) {
-        this.setState({ currentView: 'integrations', sidebarReady: true, ghRedirect: false });
       } else {
         this.setState({ currentView: 'provisioner'}, () => {
           this.setState({ currentView: 'dashboard', sidebarReady: true });
@@ -212,10 +208,7 @@ export default class Home extends Component<PropsType, StateType> {
       this.checkDO();
     }
 
-    // initialize posthog on non-localhosts. Gracefully fail when env vars are not set.
-    this.setState({ ghRedirect: urlParams.get('gh_oauth') !== null });
-    urlParams.delete('gh_oauth');
-    
+    // initialize posthog on non-localhosts. Gracefully fail when env vars are not set.    
     window.location.href.indexOf('127.0.0.1') === -1 && posthog.init(process.env.POSTHOG_API_KEY || 'placeholder', {
       api_host: process.env.POSTHOG_HOST || 'placeholder',
       loaded: function(posthog: any) { 
@@ -357,6 +350,7 @@ export default class Home extends Component<PropsType, StateType> {
         setProjects(res.data);
         if (res.data.length > 0) {
           this.context.setCurrentProject(res.data[0]);
+          this.setState({ currentView: 'dashboard' });
         } else {
           this.context.setCurrentProject(null);
           this.setState({ currentView: 'new-project' });
@@ -434,7 +428,6 @@ export default class Home extends Component<PropsType, StateType> {
       }
     });
     setCurrentModal(null, null)
-    this.setState({ currentView: 'dashboard' });
   }
 
   render() {

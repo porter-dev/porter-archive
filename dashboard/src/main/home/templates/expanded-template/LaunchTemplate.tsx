@@ -98,6 +98,10 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
     let name = this.state.templateName || randomWords({ exactly: 3, join: '-' });
     this.setState({ saveValuesStatus: 'loading' });
 
+    if (this.state.sourceType !== 'registry') {
+      this.createGHAction(name, this.state.selectedNamespace);
+    }
+
     let values = {};
     for (let key in wildcard) {
       _.set(values, key, wildcard[key]);
@@ -125,11 +129,7 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
         })
       } else {
         // this.props.setCurrentView('cluster-dashboard');
-        this.setState({ saveValuesStatus: 'successful' }, () => {
-          if (this.state.sourceType !== 'registry') {
-            this.createGHAction(name, this.state.selectedNamespace);
-          }
-        });
+        this.setState({ saveValuesStatus: 'successful' });
         posthog.capture('Deployed template', {
           name: this.props.currentTemplate.name,
           namespace: this.state.selectedNamespace,
@@ -143,6 +143,10 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
     let { currentCluster, currentProject } = this.context;
     let name = this.state.templateName || randomWords({ exactly: 3, join: '-' });
     this.setState({ saveValuesStatus: 'loading' });
+
+    if (this.state.sourceType !== 'registry') {
+      this.createGHAction(name, this.state.selectedNamespace);
+    }
 
     // Convert dotted keys to nested objects
     let values = {};
@@ -187,11 +191,7 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
         })
       } else {
         // this.props.setCurrentView('cluster-dashboard');
-        this.setState({ saveValuesStatus: 'successful' }, () => {
-          if (this.state.sourceType !== 'registry') {
-            this.createGHAction(name, this.state.selectedNamespace);
-          }
-        });
+        this.setState({ saveValuesStatus: 'successful' });
         posthog.capture('Deployed template', {
           name: this.props.currentTemplate.name,
           namespace: this.state.selectedNamespace,
@@ -337,10 +337,16 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
         return (
           <>
             <Subtitle>
-              Select the container image you would like to connect to this template or
-              <Highlight onClick={() => this.setState({ sourceType: 'repo' })}>
-                link a git repository
-              </Highlight>.
+              Select the container image you would like to connect to this template
+              {false &&
+                <>
+                  or
+                  <Highlight onClick={() => this.setState({ sourceType: 'repo' })}>
+                    link a git repository
+                  </Highlight>
+                </>
+              } 
+              .
               <Required>*</Required>
             </Subtitle>
             <DarkMatter />

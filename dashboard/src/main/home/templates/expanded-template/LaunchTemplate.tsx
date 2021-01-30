@@ -6,9 +6,10 @@ import _ from 'lodash';
 import { Context } from '../../../../shared/Context';
 import api from '../../../../shared/api';
 
-import { PorterTemplate, ChoiceType, ClusterType, StorageType } from '../../../../shared/types';
+import { PorterTemplate, ChoiceType, ClusterType, StorageType, ActionConfigType } from '../../../../shared/types';
 import Selector from '../../../../components/Selector';
 import ImageSelector from '../../../../components/image-selector/ImageSelector';
+import ActionConfEditor from '../../../../components/repo-selector/ActionConfEditor';
 import TabRegion from '../../../../components/TabRegion';
 import InputRow from '../../../../components/values-form/InputRow';
 import SaveButton from '../../../../components/SaveButton';
@@ -31,12 +32,16 @@ type StateType = {
   selectedNamespace: string,
   selectedCluster: string,
   selectedImageUrl: string | null,
+  sourceType: string,
   selectedTag: string | null,
   templateName: string,
   tabOptions: ChoiceType[],
   currentTab: string | null,
   tabContents: any
   namespaceOptions: { label: string, value: string }[],
+  actionConfig: ActionConfigType,
+  branch: string,
+  pathIsSet: boolean,
 };
 
 export default class LaunchTemplate extends Component<PropsType, StateType> {
@@ -47,13 +52,46 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
     selectedCluster: this.context.currentCluster.name,
     selectedNamespace: "default",
     selectedImageUrl: '' as string | null,
+    sourceType: 'registry',
     templateName: '',
     selectedTag: '' as string | null,
     tabOptions: [] as ChoiceType[],
     currentTab: null as string | null,
     tabContents: [] as any,
     namespaceOptions: [] as { label: string, value: string }[],
+    actionConfig: {
+      git_repo: '',
+      image_repo_uri: '',
+      git_repo_id: 0,
+      dockerfile_path: '',
+    } as ActionConfigType,
+    branch: '',
+    pathIsSet: false,
   };
+
+  createGHAction = (chartName: string, chartNamespace: string) => {
+    let { currentProject, currentCluster } = this.context;
+    let { actionConfig } = this.state;
+
+    api.createGHAction('<token>', {
+      git_repo: actionConfig.git_repo,
+      image_repo_uri: actionConfig.image_repo_uri,
+      dockerfile_path: actionConfig.dockerfile_path,
+      git_repo_id: actionConfig.git_repo_id,
+    }, {
+      project_id: currentProject.id,
+      CLUSTER_ID: currentCluster.id,
+      RELEASE_NAME: chartName,
+      RELEASE_NAMESPACE: chartNamespace,
+    }, (err: any, res: any) => {
+      if (err) {
+        console.log(err);
+      } else {
+        // Exit to initial settings tab
+        console.log(res.data);
+      }
+    });
+  }
 
   onSubmitAddon = (wildcard?: any) => {
     let { currentCluster, currentProject } = this.context;
@@ -87,7 +125,11 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
         })
       } else {
         // this.props.setCurrentView('cluster-dashboard');
-        this.setState({ saveValuesStatus: 'successful' });
+        this.setState({ saveValuesStatus: 'successful' }, () => {
+          if (this.state.sourceType !== 'registry') {
+            this.createGHAction(name, this.state.selectedNamespace);
+          }
+        });
         posthog.capture('Deployed template', {
           name: this.props.currentTemplate.name,
           namespace: this.state.selectedNamespace,
@@ -145,7 +187,11 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
         })
       } else {
         // this.props.setCurrentView('cluster-dashboard');
-        this.setState({ saveValuesStatus: 'successful' });
+        this.setState({ saveValuesStatus: 'successful' }, () => {
+          if (this.state.sourceType !== 'registry') {
+            this.createGHAction(name, this.state.selectedNamespace);
+          }
+        });
         posthog.capture('Deployed template', {
           name: this.props.currentTemplate.name,
           namespace: this.state.selectedNamespace,
@@ -284,25 +330,68 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
 
   // Display if current template uses source (image or repo)
   renderSourceSelector = () => {
+    let { currentProject } = this.context;
+
     if (this.props.form?.hasSource) {
-      return (
-        <>
-          <Subtitle>
-            Select the container image you would like to connect to this template.
-            <Required>*</Required>
-          </Subtitle>
-          <DarkMatter />
-          <ImageSelector
-            selectedTag={this.state.selectedTag}
-            selectedImageUrl={this.state.selectedImageUrl}
-            setSelectedImageUrl={this.setSelectedImageUrl}
-            setSelectedTag={(x: string) => this.setState({ selectedTag: x })}
-            forceExpanded={true}
-            setCurrentView={this.props.setCurrentView}
-          />
-          <br />
-        </>
-      );
+      if (this.state.sourceType === 'registry') {
+        return (
+          <>
+            <Subtitle>
+              Select the container image you would like to connect to this template or
+              <Highlight onClick={() => this.setState({ sourceType: 'repo' })}>
+                link a git repository
+              </Highlight>.
+              <Required>*</Required>
+            </Subtitle>
+            <DarkMatter />
+            <ImageSelector
+              selectedTag={this.state.selectedTag}
+              selectedImageUrl={this.state.selectedImageUrl}
+              setSelectedImageUrl={this.setSelectedImageUrl}
+              setSelectedTag={(x: string) => this.setState({ selectedTag: x })}
+              forceExpanded={true}
+              setCurrentView={this.props.setCurrentView}
+            />
+            <br />
+          </>
+        )
+      } else {
+        return (
+          <>
+            <Subtitle>
+              Select a repo to connect to. You can 
+              <A padRight={true} href={`/api/oauth/projects/${currentProject.id}/github?redirected=true`}>
+                log in with GitHub
+              </A> or
+              <Highlight
+                onClick={() => this.setState({
+                  sourceType: 'registry',
+                  actionConfig: {
+                    git_repo: '',
+                    image_repo_uri: '',
+                    git_repo_id: 0,
+                    dockerfile_path: '',
+                  } as ActionConfigType
+                })}
+              >
+                link an image registry
+              </Highlight>.
+              <Required>*</Required>
+            </Subtitle>
+            <ActionConfEditor
+              actionConfig={this.state.actionConfig}
+              branch={this.state.branch}
+              pathIsSet={this.state.pathIsSet}
+              setActionConfig={(actionConfig: ActionConfigType) => this.setState({ actionConfig }, () => {
+                this.setSelectedImageUrl(this.state.actionConfig.image_repo_uri);
+              })}
+              setBranch={(branch: string) => this.setState({ branch })}
+              setPath={(pathIsSet: boolean) => this.setState({ pathIsSet })}
+            />
+            <br />
+          </>
+        )
+      }
     }
   }
 
@@ -517,4 +606,20 @@ const TitleSection = styled.div`
 const StyledLaunchTemplate = styled.div`
   width: 100%;
   padding-bottom: 150px;
+`;
+
+const Highlight = styled.div`
+  color: #8590ff;
+  text-decoration: underline;
+  margin-left: 5px;
+  cursor: pointer;
+  padding-right: ${(props: { padRight?: boolean }) => props.padRight ? '5px' : ''};
+`;
+
+const A = styled.a`
+  color: #8590ff;
+  text-decoration: underline;
+  margin-left: 5px;
+  cursor: pointer;
+  padding-right: ${(props: { padRight?: boolean }) => props.padRight ? '5px' : ''};
 `;

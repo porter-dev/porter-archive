@@ -7,18 +7,15 @@ import info from '../../assets/info.svg';
 
 import api from '../../shared/api';
 import { Context } from '../../shared/Context';
-import { FileType } from '../../shared/types';
+import { FileType, ActionConfigType } from '../../shared/types';
 
 import Loading from '../Loading';
 
 type PropsType = {
-  grid: number,
-  repoName: string,
-  owner: string,
-  selectedBranch: string,
-  subdirectory: string,
-  setSubdirectory: (x: string) => void,
-  setDockerfile: () => void,
+  actionConfig: ActionConfigType | null,
+  branch: string,
+  setActionConfig: (x: ActionConfigType) => void,
+  setPath: () => void,
 };
 
 type StateType = {
@@ -34,17 +31,26 @@ export default class ContentsList extends Component<PropsType, StateType> {
     contents: [] as FileType[]
   }
 
+  setSubdirectory = (x: string) => {
+    let { actionConfig, setActionConfig } = this.props;
+    let updatedConfig = actionConfig;
+    updatedConfig.dockerfile_path = x;
+    setActionConfig(updatedConfig);
+    this.updateContents();
+  }
+
   updateContents = () => {
+    let { actionConfig, branch } = this.props;
     let { currentProject } = this.context;
 
     // Get branch contents
-    api.getBranchContents('<token>', { dir: this.props.subdirectory }, {
+    api.getBranchContents('<token>', { dir: actionConfig.dockerfile_path }, {
       project_id: currentProject.id,
-      git_repo_id: this.props.grid,
+      git_repo_id: actionConfig.git_repo_id,
       kind: 'github',
-      owner: this.props.owner,
-      name: this.props.repoName,
-      branch: this.props.selectedBranch
+      owner: actionConfig.git_repo.split('/')[0],
+      name: actionConfig.git_repo.split('/')[1],
+      branch: branch,
     }, (err: any, res: any) => {
       if (err) {
         console.log(err);
@@ -69,12 +75,6 @@ export default class ContentsList extends Component<PropsType, StateType> {
     this.updateContents();
   }
 
-  componentDidUpdate(prevProps: PropsType) {
-    if (this.props.subdirectory !== prevProps.subdirectory) {
-      this.updateContents();  
-    }
-  }
-
   renderContentList = () => {
     let { contents, loading, error } = this.state;
     if (loading) {
@@ -90,9 +90,9 @@ export default class ContentsList extends Component<PropsType, StateType> {
         return (
           <Item
             key={i}
-            isSelected={item.Path === this.props.subdirectory}
+            isSelected={item.Path === this.props.actionConfig.dockerfile_path}
             lastItem={i === contents.length - 1}
-            onClick={() => this.props.setSubdirectory(item.Path)}
+            onClick={() => this.setSubdirectory(item.Path)}
           >
             <img src={folder} />
             {fileName}
@@ -106,7 +106,7 @@ export default class ContentsList extends Component<PropsType, StateType> {
             key={i}
             lastItem={i === contents.length - 1}
             isADocker
-            onClick={() => this.props.setDockerfile()}
+            onClick={() => this.props.setPath()}
           >
             <img src={file} />
             {fileName}
@@ -126,12 +126,12 @@ export default class ContentsList extends Component<PropsType, StateType> {
   }
 
   renderJumpToParent = () => {
-    let { subdirectory, setSubdirectory } = this.props;
-    if (subdirectory !== '') {
-      let splits = subdirectory.split('/');
+    let { actionConfig } = this.props;
+    if (actionConfig.dockerfile_path !== '') {
+      let splits = actionConfig.dockerfile_path.split('/');
       let subdir = '';
       if (splits.length !== 1) {
-        subdir = subdirectory.replace(splits[splits.length - 1], '');
+        subdir = actionConfig.dockerfile_path.replace(splits[splits.length - 1], '');
         if (subdir.charAt(subdir.length - 1) === '/') {
           subdir = subdir.slice(0, subdir.length - 1);
         }
@@ -140,7 +140,7 @@ export default class ContentsList extends Component<PropsType, StateType> {
       return (
         <Item
           lastItem={false}
-          onClick={() => setSubdirectory(subdir)}
+          onClick={() => this.setSubdirectory(subdir)}
         >
           <BackLabel>..</BackLabel>
         </Item>

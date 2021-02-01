@@ -98,10 +98,6 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
     let name = this.state.templateName || randomWords({ exactly: 3, join: '-' });
     this.setState({ saveValuesStatus: 'loading' });
 
-    if (this.state.sourceType !== 'registry') {
-      this.createGHAction(name, this.state.selectedNamespace);
-    }
-
     let values = {};
     for (let key in wildcard) {
       _.set(values, key, wildcard[key]);
@@ -135,6 +131,10 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
           namespace: this.state.selectedNamespace,
           values: values,
         })
+
+        if (this.state.sourceType === 'repo') {
+          this.createGHAction(name, this.state.selectedNamespace);
+        }
       }
     });
   }
@@ -143,10 +143,6 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
     let { currentCluster, currentProject } = this.context;
     let name = this.state.templateName || randomWords({ exactly: 3, join: '-' });
     this.setState({ saveValuesStatus: 'loading' });
-
-    if (this.state.sourceType !== 'registry') {
-      this.createGHAction(name, this.state.selectedNamespace);
-    }
 
     // Convert dotted keys to nested objects
     let values = {};
@@ -165,8 +161,15 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
       tag = 'latest';
     }
 
+    
+    if (this.state.sourceType === 'repo') {
+      imageUrl = 'hello-world';
+      tag = 'latest';
+    }
+
     _.set(values, "image.repository", imageUrl)
     _.set(values, "image.tag", tag)
+    console.log(values);
 
     api.deployTemplate('<token>', {
       templateName: this.props.currentTemplate.name,
@@ -197,6 +200,10 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
           namespace: this.state.selectedNamespace,
           values: values,
         })
+
+        if (this.state.sourceType === 'repo') {
+          this.createGHAction(name, this.state.selectedNamespace);
+        }
       }
     });
   }
@@ -337,16 +344,10 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
         return (
           <>
             <Subtitle>
-              Select the container image you would like to connect to this template
-              {false &&
-                <>
-                  or
-                  <Highlight onClick={() => this.setState({ sourceType: 'repo' })}>
-                    link a git repository
-                  </Highlight>
-                </>
-              } 
-              .
+              Select the container image you would like to connect to this template or
+              <Highlight onClick={() => this.setState({ sourceType: 'repo' })}>
+                link a git repository
+              </Highlight>.
               <Required>*</Required>
             </Subtitle>
             <DarkMatter />

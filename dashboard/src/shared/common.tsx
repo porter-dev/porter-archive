@@ -21,7 +21,7 @@ export const integrationList: any = {
   'repo': {
     icon: 'https://3.bp.blogspot.com/-xhNpNJJyQhk/XIe4GY78RQI/AAAAAAAAItc/ouueFUj2Hqo5dntmnKqEaBJR4KQ4Q2K3ACK4BGAYYCw/s1600/logo%2Bgit%2Bicon.png',
     label: 'Git Repository',
-    buttonText: 'Add a Repository',
+    buttonText: 'Link a Github Account',
   },
   'registry': {
     icon: 'https://cdn4.iconfinder.com/data/icons/logos-and-brands/512/97_Docker_logo_logos-512.png',

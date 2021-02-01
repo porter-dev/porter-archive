@@ -71,8 +71,9 @@ export default class SettingsSection extends Component<PropsType, StateType> {
       storage: StorageType.Secret
     }, { id: currentProject.id, name: this.props.currentChart.name }, (err: any, res: any) => {
       if (err) {
-        console.log(err)
+        console.log(err);
       } else {
+        console.log(res.data);
         this.setState({ action: res.data.git_action_config, webhookToken: res.data.webhook_token });
       }
     });

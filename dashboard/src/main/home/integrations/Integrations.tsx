@@ -4,10 +4,13 @@ import styled from 'styled-components';
 import { Context } from '../../../shared/Context';
 import api from '../../../shared/api';
 import { integrationList } from '../../../shared/common';
-import { ChoiceType } from '../../../shared/types';
+import { ActionConfigType } from '../../../shared/types';
 
 import IntegrationList from './IntegrationList';
 import IntegrationForm from './integration-form/IntegrationForm';
+import RepoList from '../../../components/repo-selector/RepoList';
+
+import GHIcon from '../../../assets/GithubIcon';
 
 type PropsType = {
 };
@@ -114,6 +117,7 @@ export default class Integrations extends Component<PropsType, StateType> {
   }
 
   renderContents = () => {
+    let { currentProject } = this.context;
     let { currentCategory, currentIntegration } = this.state;
 
     // TODO: Split integration page into separate component
@@ -145,37 +149,72 @@ export default class Integrations extends Component<PropsType, StateType> {
       let icon = integrationList[currentCategory] && integrationList[currentCategory].icon;
       let label = integrationList[currentCategory] && integrationList[currentCategory].label;
       let buttonText = integrationList[currentCategory] && integrationList[currentCategory].buttonText;
-      return (
-        <div>
-          <TitleSectionAlt>
-            <Flex>
-              <i className="material-icons" onClick={() => this.setState({ currentCategory: null })}>
-                keyboard_backspace
-              </i>
-              <Icon src={icon && icon} />
-              <Title>{label}</Title>
-            </Flex>
-
-            <Button 
-              onClick={() => this.context.setCurrentModal('IntegrationsModal', { 
-                category: currentCategory,
-                setCurrentIntegration: (x: string) => this.setState({ currentIntegration: x })
-              })}
-            >
-              <i className="material-icons">add</i>
-              {buttonText}
-            </Button>
-          </TitleSectionAlt>
-
-          <LineBreak />
-
-          <IntegrationList
-            integrations={this.state.currentOptions}
-            titles={this.state.currentTitles}
-            setCurrent={(x: string) => this.setState({ currentIntegration: x })}
-          />
-        </div>
-      );
+      if (currentCategory !== 'repo') {
+        return (
+          <div>
+            <TitleSectionAlt>
+              <Flex>
+                <i className="material-icons" onClick={() => this.setState({ currentCategory: null })}>
+                  keyboard_backspace
+                </i>
+                <Icon src={icon && icon} />
+                <Title>{label}</Title>
+              </Flex>
+              <Button 
+                onClick={() => this.context.setCurrentModal('IntegrationsModal', { 
+                  category: currentCategory,
+                  setCurrentIntegration: (x: string) => this.setState({ currentIntegration: x })
+                })}
+              >
+                <i className="material-icons">add</i>
+                {buttonText}
+              </Button>
+            </TitleSectionAlt>
+  
+            <LineBreak />
+  
+            <IntegrationList
+              integrations={this.state.currentOptions}
+              titles={this.state.currentTitles}
+              setCurrent={(x: string) => this.setState({ currentIntegration: x })}
+            />
+          </div>
+        );
+      } else {
+        return (
+          <div>
+            <TitleSectionAlt>
+              <Flex>
+                <i className="material-icons" onClick={() => this.setState({ currentCategory: null })}>
+                  keyboard_backspace
+                </i>
+                <Icon src={icon && icon} />
+                <Title>{label}</Title>
+              </Flex>
+              <Button 
+                onClick={() => window.open(`/api/oauth/projects/${currentProject.id}/github`)}
+              >
+                <GHIcon />
+                {buttonText}
+              </Button>
+            </TitleSectionAlt>
+  
+            <LineBreak />
+  
+            <RepoList
+              actionConfig={{
+                git_repo: '',
+                image_repo_uri: '',
+                git_repo_id: 0,
+                dockerfile_path: '',
+              } as ActionConfigType}
+              setActionConfig={(x: ActionConfigType) => {}}
+              readOnly={true}
+            />
+          </div>
+        );
+      }
+      
     }
     return (
       <div>

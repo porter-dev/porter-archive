@@ -46,7 +46,7 @@ export default class IntegrationList extends Component<PropsType, StateType> {
       return integrations.map((integration: string, i: number) => {
         let icon = integrationList[integration] && integrationList[integration].icon;
         let label = integrationList[integration] && integrationList[integration].label;
-        let disabled = integration === 'kubernetes' || integration === 'repo';
+        let disabled = integration === 'kubernetes';
         return (
           <Integration
             key={i}
@@ -63,6 +63,7 @@ export default class IntegrationList extends Component<PropsType, StateType> {
         );
       });
     }
+    console.log(integrations);
     return (
       <Placeholder>
         No integrations set up yet.

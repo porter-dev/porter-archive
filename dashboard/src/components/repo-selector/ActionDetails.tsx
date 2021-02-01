@@ -65,7 +65,7 @@ export default class ActionDetails extends Component<PropsType, StateType> {
         />
         <InputRow
           label='Docker Image Repository'
-          placeholder='Image Repo URL (ex. gcr.io/porter/mr-p)'
+          placeholder='Image Repo URI (ex. my-repo/image)'
           type='text'
           width='100%'
           value={actionConfig.image_repo_uri}

@@ -1,7 +1,6 @@
 import React, { Component } from 'react';
 import styled from 'styled-components';
 import github from '../../assets/github.png';
-import info from '../../assets/info.svg';
 
 import api from '../../shared/api';
 import { RepoType, ActionConfigType } from '../../shared/types';
@@ -58,6 +57,9 @@ export default class ActionConfEditor extends Component<PropsType, StateType> {
               this.setState({ repos: allRepos, loading: false, error: false });
             }
           })
+        }
+        if (res.data.length < 1) {
+          this.setState({ loading: false, error: false });
         }
       }
     });

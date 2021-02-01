@@ -53,7 +53,7 @@ export default class IntegrationsModal extends Component<PropsType, StateType> {
       let { setCurrentIntegration } = this.context.currentModalData;
       return this.state.integrations.map((integration: any, i: number) => {
         let icon = integrationList[integration.service] && integrationList[integration.service].icon;
-        let disabled = integration.service === 'kube' || integration.service === 'docker' || integration.service === 'gcr';
+        let disabled = integration.service === 'kube' || integration.service === 'docker';
         return (
           <IntegrationOption 
             key={i}

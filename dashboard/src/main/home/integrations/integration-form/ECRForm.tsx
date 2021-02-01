@@ -49,7 +49,7 @@ export default class ECRForm extends Component<PropsType, StateType> {
       if (err) {
         console.log(err);
       } else {
-        api.createECR('<token>', {
+        api.connectECRRegistry('<token>', {
           name: credentialsName,
           aws_integration_id: res.data.id,
         }, { id: currentProject.id }, (err: any, res: any) => {

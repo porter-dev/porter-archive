@@ -162,10 +162,15 @@ func initKubeIntegration(tester *tester, t *testing.T) {
 	}
 
 	ki := &ints.KubeIntegration{
-		Mechanism:  ints.KubeLocal,
-		ProjectID:  tester.initProjects[0].ID,
-		UserID:     tester.initUsers[0].ID,
-		Kubeconfig: []byte("current-context: testing\n"),
+		Mechanism:             ints.KubeLocal,
+		ProjectID:             tester.initProjects[0].ID,
+		UserID:                tester.initUsers[0].ID,
+		Kubeconfig:            []byte("current-context: testing\n"),
+		ClientCertificateData: []byte("clientcertdata"),
+		ClientKeyData:         []byte("clientkeydata"),
+		Token:                 []byte("token"),
+		Username:              []byte("username"),
+		Password:              []byte("password"),
 	}
 
 	ki, err := tester.repo.KubeIntegration.CreateKubeIntegration(ki)
@@ -216,14 +221,15 @@ func initOIDCIntegration(tester *tester, t *testing.T) {
 	}
 
 	oidc := &ints.OIDCIntegration{
-		Client:       ints.OIDCKube,
-		ProjectID:    tester.initProjects[0].ID,
-		UserID:       tester.initUsers[0].ID,
-		IssuerURL:    []byte("https://oidc.example.com"),
-		ClientID:     []byte("exampleclientid"),
-		ClientSecret: []byte("exampleclientsecret"),
-		IDToken:      []byte("idtoken"),
-		RefreshToken: []byte("refreshtoken"),
+		Client:                   ints.OIDCKube,
+		ProjectID:                tester.initProjects[0].ID,
+		UserID:                   tester.initUsers[0].ID,
+		IssuerURL:                []byte("https://oidc.example.com"),
+		ClientID:                 []byte("exampleclientid"),
+		ClientSecret:             []byte("exampleclientsecret"),
+		CertificateAuthorityData: []byte("cadata"),
+		IDToken:                  []byte("idtoken"),
+		RefreshToken:             []byte("refreshtoken"),
 	}
 
 	oidc, err := tester.repo.OIDCIntegration.CreateOIDCIntegration(oidc)
@@ -419,6 +425,12 @@ func initRegistry(tester *tester, t *testing.T) {
 	reg := &models.Registry{
 		ProjectID: tester.initProjects[0].ID,
 		Name:      "registry-test",
+		TokenCache: ints.RegTokenCache{
+			TokenCache: ints.TokenCache{
+				Token:  []byte("token-1"),
+				Expiry: time.Now().Add(-1 * time.Hour),
+			},
+		},
 	}
 
 	reg, err := tester.repo.Registry.CreateRegistry(reg)
@@ -441,6 +453,12 @@ func initHelmRepo(tester *tester, t *testing.T) {
 		Name:      "helm-repo-test",
 		RepoURL:   "https://example-repo.com",
 		ProjectID: tester.initProjects[0].Model.ID,
+		TokenCache: ints.HelmRepoTokenCache{
+			TokenCache: ints.TokenCache{
+				Token:  []byte("token-1"),
+				Expiry: time.Now().Add(-1 * time.Hour),
+			},
+		},
 	}
 
 	hr, err := tester.repo.HelmRepo.CreateHelmRepo(hr)
@@ -460,9 +478,10 @@ func initInfra(tester *tester, t *testing.T) {
 	}
 
 	infra := &models.Infra{
-		Kind:      models.InfraECR,
-		ProjectID: tester.initProjects[0].Model.ID,
-		Status:    models.StatusCreated,
+		Kind:        models.InfraECR,
+		ProjectID:   tester.initProjects[0].Model.ID,
+		Status:      models.StatusCreated,
+		LastApplied: []byte("testing"),
 	}
 
 	infra, err := tester.repo.Infra.CreateInfra(infra)

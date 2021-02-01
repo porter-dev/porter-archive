@@ -82,6 +82,8 @@ func main() {
 		key[i] = b
 	}
 
+	fmt.Println("ENCRYPTION KEY IS", appConf.Db.EncryptionKey)
+
 	repo := gorm.NewRepository(db, &key)
 
 	if appConf.Redis.Enabled {

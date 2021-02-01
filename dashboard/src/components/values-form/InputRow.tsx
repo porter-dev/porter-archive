@@ -58,7 +58,7 @@ const Required = styled.div`
 `;
 
 const Unit = styled.div`
-  margin-right: 8px;
+  margin-left: 8px;
 `;
 
 const InputWrapper = styled.div`
@@ -77,8 +77,7 @@ const Input = styled.input`
   width: ${(props: { disabled: boolean, width: string }) => props.width ? props.width : '270px'};
   color: ${(props: { disabled: boolean, width: string }) => props.disabled ? '#ffffff44' : 'white'};
   padding: 5px 10px;
-  margin-right: 8px;
-  height: 30px;
+  height: 35px;
 `;
 
 const Label = styled.div`

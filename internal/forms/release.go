@@ -20,7 +20,6 @@ func (rf *ReleaseForm) PopulateHelmOptionsFromQueryParams(
 	vals url.Values,
 	repo repository.ClusterRepository,
 ) error {
-	fmt.Println(vals)
 	if clusterID, ok := vals["cluster_id"]; ok && len(clusterID) == 1 {
 		id, err := strconv.ParseUint(clusterID[0], 10, 64)
 

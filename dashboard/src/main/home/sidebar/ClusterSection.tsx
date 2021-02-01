@@ -55,13 +55,14 @@ export default class ClusterSection extends Component<PropsType, StateType> {
           clusters.sort((a: any, b: any) => a.id - b.id);
           if (clusters.length > 0) {
             this.setState({ clusters });
-            let saved = JSON.parse(localStorage.getItem('currentCluster'));
-            if (localStorage.getItem('currentCluster') !== 'null') {
+            let saved = JSON.parse(localStorage.getItem(currentProject.id + '-cluster'));
+            if (saved !== 'null') {
               setCurrentCluster(clusters[0]);
               for (let i = 0; i < clusters.length; i++) {
-                if (clusters[i].id = saved.id 
-                  && clusters[i].project_id === saved.project_id 
-                  && clusters[i].name === saved.name
+                if (
+                  clusters[i].id === saved.id &&
+                  clusters[i].project_id === saved.project_id && 
+                  clusters[i].name === saved.name
                 ) {
                   setCurrentCluster(clusters[i]);
                   break;
@@ -150,19 +151,13 @@ export default class ClusterSection extends Component<PropsType, StateType> {
           </DrawerButton>
         </ClusterSelector>
       );
-    } else if (false) {
-      return (
-        <InitializeButton onClick={this.showClusterConfigModal}>
-          <Plus>+</Plus> Add a Cluster
-        </InitializeButton>
-      );
     }
 
     return (
       <InitializeButton
         onClick={() => this.context.setCurrentModal('ClusterInstructionsModal', {})}
       >
-        <Plus>+</Plus> Add a Cluster
+        <Plus>+</Plus> Connect a Cluster
       </InitializeButton>
     )
   };

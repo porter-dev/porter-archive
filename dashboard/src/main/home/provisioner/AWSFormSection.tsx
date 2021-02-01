@@ -7,6 +7,7 @@ import api from '../../../shared/api';
 import { Context } from '../../../shared/Context';
 import { ProjectType, InfraType } from '../../../shared/types';
 
+import SelectRow from '../../../components/values-form/SelectRow';
 import InputRow from '../../../components/values-form/InputRow';
 import Helper from '../../../components/values-form/Helper';
 import Heading from '../../../components/values-form/Heading';
@@ -34,10 +35,33 @@ const provisionOptions = [
   { value: 'eks', label: 'Elastic Kubernetes Service (EKS)' },
 ];
 
+const regionOptions = [
+  { value: 'us-east-1', label: 'US East (N. Virginia) us-east-1' },
+  { value: 'us-east-2', label: 'US East (Ohio) us-east-2' },
+  { value: 'us-west-1', label: 'US West (N. California) us-west-1' },
+  { value: 'us-west-2', label: 'US West (Oregon) us-west-2' },
+  { value: 'af-south-1', label: 'Africa (Cape Town) af-south-1' },
+  { value: 'ap-east-1', label: 'Asia Pacific (Hong Kong)ap-east-1' },
+  { value: 'ap-south-1', label: 'Asia Pacific (Mumbai) ap-south-1' },
+  { value: 'ap-northeast-2', label: 'Asia Pacific (Seoul) ap-northeast-2' },
+  { value: 'ap-southeast-1', label: 'Asia Pacific (Singapore) ap-southeast-1' },
+  { value: 'ap-southeast-2', label: 'Asia Pacific (Sydney) ap-southeast-2' },
+  { value: 'ap-northeast-1', label: 'Asia Pacific (Tokyo) ap-northeast-1' },
+  { value: 'ca-central-1', label: 'Canada (Central) ca-central-1' },
+  { value: 'eu-central-1', label: 'Europe (Frankfurt) eu-central-1' },
+  { value: 'eu-west-1', label: 'Europe (Ireland) eu-west-1' },
+  { value: 'eu-west-2', label: 'Europe (London) eu-west-2' },
+  { value: 'eu-south-1', label: 'Europe (Milan) eu-south-1' },
+  { value: 'eu-west-3', label: 'Europe (Paris) eu-west-3' },
+  { value: 'eu-north-1', label: 'Europe (Stockholm) eu-north-1' },
+  { value: 'me-south-1', label: 'Middle East (Bahrain) me-south-1' },
+  { value: 'sa-east-1', label: 'South America (São Paulo) sa-east-1' },
+];
+
 // TODO: Consolidate across forms w/ HOC
 export default class AWSFormSection extends Component<PropsType, StateType> {
   state = {
-    awsRegion: '',
+    awsRegion: 'us-east-1',
     awsAccessId: '',
     awsSecretKey: '',
     selectedInfras: [...provisionOptions],
@@ -55,19 +79,9 @@ export default class AWSFormSection extends Component<PropsType, StateType> {
       infras.forEach(
         (infra: InfraType, i: number) => {
           let { kind, status } = infra;
-          if (
-            kind === 'ecr'
-            && (status === 'creating' || status === 'created')
-          ) {
+          if (status === 'creating' || status === 'created') {
             filtered = filtered.filter((item: any) => {
-              return item.value !== 'ecr';
-            });
-          } else if (
-            kind === 'eks'
-            && (status === 'creating' || status === 'created')
-          ) {
-            filtered = filtered.filter((item: any) => {
-              return item.value !== 'eks';
+              return item.value !== kind;
             });
           }
         }
@@ -116,6 +130,10 @@ export default class AWSFormSection extends Component<PropsType, StateType> {
         handleError();
         return;
       } else {
+        let proj = res.data;
+
+        // Need to set project list for dropdown
+        // TODO: consolidate into ProjectSection (case on exists in list on set)
         api.getProjects('<token>', {}, { 
           id: user.userId 
         }, (err: any, res: any) => {
@@ -125,20 +143,16 @@ export default class AWSFormSection extends Component<PropsType, StateType> {
             return;
           }
           setProjects(res.data);
-          if (res.data.length > 0) {
-            let tgtProject = res.data.find((el: ProjectType) => {
-              return el.name === projectName;
-            });
-            setCurrentProject(tgtProject);
-            callback && callback();
-          } 
+          setCurrentProject(proj, () => {
+            callback && callback()
+          });
         });
       }
     });
   }
 
   provisionECR = (callback?: any) => {
-    console.log('Provisioning ECR')
+    console.log('Provisioning ECR');
     let { awsAccessId, awsSecretKey, awsRegion } = this.state;
     let { currentProject } = this.context;
     let { handleError } = this.props;
@@ -206,9 +220,7 @@ export default class AWSFormSection extends Component<PropsType, StateType> {
     let { projectName, setCurrentView } = this.props;
     let { selectedInfras } = this.state;
 
-    console.log(selectedInfras);
     if (!projectName) {
-      console.log(selectedInfras)
       if (selectedInfras.length === 2) {
         // Case: project exists, provision ECR + EKS
         this.provisionECR(this.provisionEKS);
@@ -260,14 +272,13 @@ export default class AWSFormSection extends Component<PropsType, StateType> {
               Guide
             </GuideButton>
           </Heading>
-          <InputRow
-            type='text'
-            value={awsRegion}
-            setValue={(x: string) => this.setState({ awsRegion: x })}
-            label='📍 AWS Region'
-            placeholder='ex: us-east-2'
+          <SelectRow
+            options={regionOptions}
             width='100%'
-            isRequired={true}
+            value={awsRegion}
+            dropdownMaxHeight='240px'
+            setActiveValue={(x: string) => this.setState({ awsRegion: x })}
+            label='📍 AWS Region'
           />
           <InputRow
             type='text'
@@ -288,8 +299,8 @@ export default class AWSFormSection extends Component<PropsType, StateType> {
             isRequired={true}
           />
           <Br />
-          <Heading>Resources</Heading>
-          <Helper>Porter will provision the following resources</Helper>
+          <Heading>AWS Resources</Heading>
+          <Helper>Porter will provision the following AWS resources</Helper>
           <CheckboxList
             options={provisionOptions}
             selected={selectedInfras}

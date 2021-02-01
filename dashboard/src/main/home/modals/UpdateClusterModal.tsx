@@ -35,15 +35,19 @@ export default class UpdateClusterModal extends Component<PropsType, StateType> 
       project_id: currentProject.id,
       cluster_id: currentCluster.id,
     }, (err: any, res: any) => {
+
       if (err) {
         this.setState({ status: 'error' });
         console.log(err)
-      } else {
+        return;
+      }
 
-        // Handle destroying infra we've provisioned
-        if (currentCluster.infra_id) {
-          console.log('destroying provisioned infra...');
-          api.destroyCluster('<token>', { eks_name: currentCluster.name }, { 
+      if (!currentCluster?.infra_id) return;
+
+      // Handle destroying infra we've provisioned
+      switch (currentCluster.service) {
+        case 'eks':
+          api.destroyEKS('<token>', { eks_name: currentCluster.name }, { 
             project_id: currentProject.id,
             infra_id: currentCluster.infra_id,
           }, (err: any, res: any) => {
@@ -54,13 +58,58 @@ export default class UpdateClusterModal extends Component<PropsType, StateType> 
               console.log('destroyed provisioned infra.');
             }
           });
-        }
+          break;
 
-        this.props.setRefreshClusters(true);
-        this.setState({ status: 'successful', showDeleteOverlay: false });
-        this.context.setCurrentModal(null, null);
+        case 'gke':
+          api.destroyGKE('<token>', { gke_name: currentCluster.name }, { 
+            project_id: currentProject.id,
+            infra_id: currentCluster.infra_id,
+          }, (err: any, res: any) => {
+            if (err) {
+              this.setState({ status: 'error' });
+              console.log(err)
+            } else {
+              console.log('destroyed provisioned infra.');
+            }
+          });
+          break;
+
+        case 'doks':
+          api.destroyDOKS('<token>', { doks_name : currentCluster.name }, { 
+            project_id: currentProject.id,
+            infra_id: currentCluster.infra_id,
+          }, (err: any, res: any) => {
+            if (err) {
+              this.setState({ status: 'error' });
+              console.log(err)
+            } else {
+              console.log('destroyed provisioned infra.');
+            }
+          });
+          break;
       }
+        
+      this.props.setRefreshClusters(true);
+      this.setState({ status: 'successful', showDeleteOverlay: false });
+      this.context.setCurrentModal(null, null);
     });
+  }
+
+  renderWarning = () => {
+    let { currentCluster } = this.context;
+    if (!currentCluster?.infra_id || !currentCluster.service) {
+      return(
+        <Warning highlight={true}>
+          ⚠️ Since this cluster was not provisioned by Porter, deleting the cluster will only detach this cluster from your project. To delete the cluster itself, you must do so manually.
+        </Warning>
+      )    
+    }
+
+    return(
+      <Warning highlight={true}>
+        ⚠️ Deletion may result in dangling resources. Please visit your cloud provider's console to ensure that all resources have been removed. Note that deleting the cluster does not delete your registries.
+      </Warning>
+    )    
   }
 
   render() {
@@ -91,9 +140,8 @@ export default class UpdateClusterModal extends Component<PropsType, StateType> 
           />
         </InputWrapper>
 
-        <Warning highlight={true}>
-          ⚠️ Deletion may result in dangling resources. Please visit the AWS console to ensure that all resources have been removed.
-        </Warning>
+        {this.renderWarning()}
+
         <Help 
           href='https://docs.getporter.dev/docs/getting-started-with-porter-on-aws#deleting-provisioned-resources'
           target='_blank'

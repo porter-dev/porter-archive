@@ -21,7 +21,6 @@ export default class Logs extends Component<PropsType, StateType> {
   }
 
   ws = null as any;
-  scrollRef = React.createRef<HTMLDivElement>()
   parentRef = React.createRef<HTMLDivElement>()
 
   scrollToBottom = (smooth: boolean) => {
@@ -58,7 +57,7 @@ export default class Logs extends Component<PropsType, StateType> {
 
     this.ws.onmessage = (evt: MessageEvent) => {
       this.setState({ logs: [...this.state.logs, evt.data] }, () => {
-        if (this.state.scroll && this.state.logs.length >50) {
+        if (this.state.scroll) {
           this.scrollToBottom(false)
         }
       })
@@ -99,7 +98,6 @@ export default class Logs extends Component<PropsType, StateType> {
       <LogStream>
         <Wrapper ref={this.parentRef}>
           {this.renderLogs()}
-          <div ref={this.scrollRef} />
         </Wrapper>
         <Options>
           <Scroll onClick={()=> {
@@ -187,6 +185,9 @@ const LogStream = styled.div`
   height: 100%;
   background: #202227;
   user-select: text;
+  max-width: 65%;
+  overflow-y: auto;
+  overflow-wrap: break-word; 
 `;
 
 const Message = styled.div`

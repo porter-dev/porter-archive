@@ -9,16 +9,11 @@ import TabSelector from '../../../components/TabSelector';
 import ExpandedTemplate from './expanded-template/ExpandedTemplate';
 import Loading from '../../../components/Loading';
 
+import hardcodedNames from './hardcodedNameDict';
+
 const tabOptions = [
   { label: 'Community Templates', value: 'community' }
 ];
-
-// TODO: read in from metadata
-const hardcodedNames: any = {
-  'postgresql': 'PostgreSQL',
-  'docker': 'Docker',
-  'https-issuer': 'HTTPS Issuer'
-};
 
 type PropsType = {
   setCurrentView: (x: string) => void, // Link to add integration from source selector
@@ -266,7 +261,7 @@ const TitleSection = styled.div`
 `;
 
 const TemplatesWrapper = styled.div`
-  width: calc(90% - 150px);
+  width: calc(90% - 130px);
   min-width: 300px;
-  padding-top: 50px;
+  padding-top: 75px;
 `;

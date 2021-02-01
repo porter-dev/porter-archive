@@ -32,6 +32,7 @@ export default class Integrations extends Component<PropsType, StateType> {
   // TODO: implement once backend is restructured
   getIntegrations = (categoryType: string) => {
     let { currentProject } = this.context;
+    this.setState({ currentOptions: [], currentTitles: [], currentIntegrationData: [] });
     switch (categoryType) {
       case 'kubernetes':
         api.getProjectClusters('<token>', {}, { id: currentProject.id }, (err: any, res: any) => {
@@ -99,7 +100,7 @@ export default class Integrations extends Component<PropsType, StateType> {
             {
               items.map((item: any, i: number) => {
                 return (
-                  <Credential>
+                  <Credential key={i}>
                     <i className="material-icons">admin_panel_settings</i> {item.name}
                   </Credential>
                 );

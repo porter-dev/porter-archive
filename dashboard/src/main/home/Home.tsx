@@ -1,8 +1,6 @@
 import React, { Component } from 'react';
 import posthog from 'posthog-js';
 import styled from 'styled-components';
-import ReactModal from 'react-modal';
-import * as FullStory from '@fullstory/browser';
 
 import { Context } from '../../shared/Context';
 import api from '../../shared/api';
@@ -24,6 +22,8 @@ import Navbar from './navbar/Navbar';
 import ProvisionerStatus from './provisioner/ProvisionerStatus';
 import ProjectSettings from './project-settings/ProjectSettings';
 import ConfirmOverlay from '../../components/ConfirmOverlay';
+import Modal from './modals/Modal';
+import * as FullStory from '@fullstory/browser';
 
 type PropsType = {
   logOut: () => void,
@@ -35,6 +35,8 @@ type StateType = {
   forceSidebar: boolean,
   showWelcome: boolean,
   currentView: string,
+  handleDO: boolean, // Trigger DO infra calls after oauth flow if needed
+  ghRedirect: boolean,
   forceRefreshClusters: boolean, // For updating ClusterSection from modal on deletion
 
   // Track last project id for refreshing clusters on project change
@@ -51,27 +53,40 @@ export default class Home extends Component<PropsType, StateType> {
     prevProjectId: null as number | null,
     forceRefreshClusters: false,
     sidebarReady: false,
+    handleDO: false,
+    ghRedirect: false,
   }
 
+  // TODO: Refactor and prevent flash + multiple reload
   initializeView = () => {
-    let { currentCluster } = this.context;
     let { currentProject } = this.props;
+    let { currentCluster } = this.context;
+    
+    if (!currentProject) return;
+
     // Check if current project is provisioning
     api.getInfra('<token>', {}, { project_id: currentProject.id }, (err: any, res: any) => {
       if (err) {
         console.log(err);
         return;
       }
-      console.log(currentCluster);
-      if (!currentCluster && !includesCompletedInfraSet(res.data)) {
-        this.setState({ currentView: 'provisioner', sidebarReady: true, });
+
+      if (res.data.length > 0 && (!currentCluster && !includesCompletedInfraSet(res.data))) {
+        // force refresh if currentView is identical set to provisioner. Tentative solution before refactoring.
+        this.setState({ currentView: 'dashboard'}, () => {
+          this.setState({ currentView: 'provisioner', sidebarReady: true, });
+        });
+      } else if (this.state.ghRedirect) {
+        this.setState({ currentView: 'integrations', sidebarReady: true, ghRedirect: false });
       } else {
-        this.setState({ currentView: 'dashboard', sidebarReady: true });
+        this.setState({ currentView: 'provisioner'}, () => {
+          this.setState({ currentView: 'dashboard', sidebarReady: true });
+        })
       }
     });
   }
 
-  getProjects = () => {
+  getProjects = (id?: number) => {
     let { user, setProjects } = this.context;
     let { currentProject } = this.props;
     api.getProjects('<token>', {}, { id: user.userId }, (err: any, res: any) => {
@@ -82,39 +97,157 @@ export default class Home extends Component<PropsType, StateType> {
           this.setState({ currentView: 'new-project', sidebarReady: true, });
         } else if (res.data.length > 0 && !currentProject) {
           setProjects(res.data);
-          this.context.setCurrentProject(res.data[0]);
 
-          this.initializeView();
+          let foundProject = null;
+          if (id) {
+            res.data.forEach((project: ProjectType, i: number) => {
+              if (project.id === id) {
+                foundProject = project;
+              } 
+            });
+            this.context.setCurrentProject(foundProject);
+            this.setState({ currentView: 'provisioner' });
+          }
+
+          if (!foundProject) {
+            res.data.forEach((project: ProjectType, i: number) => {
+              if (project.id.toString() === localStorage.getItem('currentProject')) {
+                foundProject = project;
+              }
+            })
+            this.context.setCurrentProject(foundProject ? foundProject : res.data[0]);
+            this.initializeView();
+          }
         }
       }
     });
   }
 
-  componentDidMount() {
-    console.log('newest release')
-    let { user } = this.context;
-    window.location.href.indexOf('127.0.0.1') === -1 && posthog.init(process.env.POSTHOG_API_KEY, {
-      api_host: process.env.POSTHOG_HOST,
-      loaded: function(posthog) { posthog.identify(user.email) }
-    })
-
-    FullStory.identify(user.email)
-    this.getProjects();
+  provisionDOCR = (integrationId: number, tier: string, callback?: any) => {
+    console.log('Provisioning DOCR...');
+    api.createDOCR('<token>', {
+      do_integration_id: integrationId,
+      docr_name: this.props.currentProject.name,
+      docr_subscription_tier: tier,
+    }, { 
+      project_id: this.props.currentProject.id
+    }, (err: any, res: any) => {
+      if (err) {
+        console.log(err);
+        return;
+      }
+      callback && callback();
+    });
   }
 
+  provisionDOKS = (integrationId: number, region: string) => {
+    console.log('Provisioning DOKS...');
+    api.createDOKS('<token>', {
+      do_integration_id: integrationId,
+      doks_name: this.props.currentProject.name,
+      do_region: region,
+    }, { 
+      project_id: this.props.currentProject.id
+    }, (err: any, res: any) => {
+      if (err) {
+        console.log(err);
+        return;
+      }
+      this.setState({ currentView: 'provisioner' });
+    });
+  }
+
+  checkDO = () => {
+    let { currentProject } = this.props;
+    if (this.state.handleDO && currentProject?.id) {
+      api.getOAuthIds('<token>', {}, { 
+        project_id: currentProject.id
+      }, (err: any, res: any) => {
+        if (err) {
+          console.log(err);
+          return;
+        }
+        let tgtIntegration = res.data.find((integration: any) => {
+          return integration.client === 'do'
+        });
+        let queryString = window.location.search;
+        let urlParams = new URLSearchParams(queryString);
+        let tier = urlParams.get('tier');
+        let region = urlParams.get('region');
+        let infras = urlParams.getAll('infras');
+        if (infras.length === 2) {
+          this.provisionDOCR(tgtIntegration.id, tier, () => {
+            this.provisionDOKS(tgtIntegration.id, region);
+          });
+        } else if (infras[0] === 'docr') {
+          this.provisionDOCR(tgtIntegration.id, tier, () => {
+            this.setState({ currentView: 'provisioner' });
+          });
+        } else {
+          this.provisionDOKS(tgtIntegration.id, region);
+        }
+      });
+      this.setState({ handleDO: false });
+    }
+  }
+
+  componentDidMount() {
+    let { user } = this.context;
+    FullStory.identify(user.email)
+
+    // Handle redirect from DO
+    let queryString = window.location.search;
+    let urlParams = new URLSearchParams(queryString);
+
+    let err = urlParams.get('error');
+    if (err) {
+      this.context.setCurrentError(err);
+    }
+
+    let provision = urlParams.get('provision');
+    let defaultProjectId = null;
+    if (provision === 'do') {
+      defaultProjectId = parseInt(urlParams.get('project_id'));
+      this.setState({ handleDO: true });
+      this.checkDO();
+    }
+
+    // initialize posthog on non-localhosts. Gracefully fail when env vars are not set.
+    this.setState({ ghRedirect: urlParams.get('gh_oauth') !== null });
+    urlParams.delete('gh_oauth');
+    
+    window.location.href.indexOf('127.0.0.1') === -1 && posthog.init(process.env.POSTHOG_API_KEY || 'placeholder', {
+      api_host: process.env.POSTHOG_HOST || 'placeholder',
+      loaded: function(posthog: any) { 
+        posthog.identify(user.userId) 
+        posthog.people.set({ email: user.email })
+      }
+    })
+
+    this.getProjects(defaultProjectId);
+  }
+
+  // TODO: Need to handle the following cases. Do a deep rearchitecture (Prov -> Dashboard?) if need be:
+  // 1. Make sure clicking cluster in course drawer shows cluster-dashboard
+  // 2. Make sure switching projects shows appropriate initial view (dashboard || provisioner)
+  // 3. Make sure initializing from URL (DO oauth) displays the appropriate initial view
   componentDidUpdate(prevProps: PropsType) {
     if (
       prevProps.currentProject !== this.props.currentProject
-      || prevProps.currentCluster !== this.props.currentCluster
+      || (!prevProps.currentCluster && this.props.currentCluster)
     ) {
-      this.initializeView();
+      if (this.state.handleDO) {
+        this.checkDO();
+      } else {
+        this.initializeView();
+      }
     }
   }
 
   // TODO: move into ClusterDashboard
   renderDashboard = () => {
     let { currentCluster, setCurrentModal } = this.context;
-    if (this.state.showWelcome || currentCluster && !currentCluster.name) {
+    if (currentCluster && !currentCluster.name) {
       return (
         <DashboardWrapper>
           <Placeholder>
@@ -145,41 +278,45 @@ export default class Home extends Component<PropsType, StateType> {
   }
 
   renderContents = () => {
-    let { currentView } = this.state;
-    if (currentView === 'cluster-dashboard') {
-      return this.renderDashboard();
-    } else if (currentView === 'dashboard') {
-      return (
-        <DashboardWrapper>
-          <Dashboard 
-            setCurrentView={(x: string) => this.setState({ currentView: x })}
-            projectId={this.context.currentProject?.id}
+    let { currentView, handleDO } = this.state;
+    if (this.context.currentProject && currentView !== 'new-project') {
+      if (currentView === 'cluster-dashboard') {
+        return this.renderDashboard();
+      } else if (currentView === 'dashboard') {
+        return (
+          <DashboardWrapper>
+            <Dashboard 
+              setCurrentView={(x: string) => this.setState({ currentView: x })}
+              projectId={this.context.currentProject?.id}
+            />
+          </DashboardWrapper>
+        );
+      } else if (currentView === 'integrations') {
+        return <Integrations />;
+      } else if (currentView === 'provisioner') {
+        return (
+          <ProvisionerStatus
+            setCurrentView={(x: string) => this.setState({ currentView: x })} 
           />
-        </DashboardWrapper>
-      );
-    } else if (currentView === 'integrations') {
-      return <Integrations />;
-    } else if (currentView === 'new-project') {
+        );
+      } else if (currentView === 'project-settings') {
+        return (
+          <ProjectSettings  setCurrentView={(x: string) => this.setState({ currentView: x })} />
+        )
+      }
+
       return (
-        <NewProject setCurrentView={(x: string, data: any ) => this.setState({ currentView: x })} />
-      );
-    } else if (currentView === 'provisioner') {
-      return (
-        <ProvisionerStatus
+        <Templates
           setCurrentView={(x: string) => this.setState({ currentView: x })}
         />
       );
-    } else if (currentView === 'project-settings') {
+    } else if (currentView === 'new-project') {
       return (
-        <ProjectSettings  setCurrentView={(x: string) => this.setState({ currentView: x })} />
-      )
+        <NewProject 
+          setCurrentView={(x: string, data: any ) => this.setState({ currentView: x })} 
+        />
+      );
     }
-
-    return (
-      <Templates
-        setCurrentView={(x: string) => this.setState({ currentView: x })}
-      />
-    );
   }
 
   setCurrentView = (x: string) => {
@@ -221,7 +358,8 @@ export default class Home extends Component<PropsType, StateType> {
         if (res.data.length > 0) {
           this.context.setCurrentProject(res.data[0]);
         } else {
-          this.context.currentModalData.setCurrentView('new-project');
+          this.context.setCurrentProject(null);
+          this.setState({ currentView: 'new-project' });
         }
         this.context.setCurrentModal(null, null);
       }
@@ -230,9 +368,10 @@ export default class Home extends Component<PropsType, StateType> {
 
   handleDelete = () => {
     let { setCurrentModal, currentProject } = this.context;
+    localStorage.removeItem(currentProject.id + '-cluster');
     api.deleteProject('<token>', {}, { id: currentProject.id }, (err: any, res: any) => {
       if (err) {
-        // console.log(err)
+        console.log(err)
       } else {
         this.projectOverlayCall();
       }
@@ -240,15 +379,21 @@ export default class Home extends Component<PropsType, StateType> {
 
     // Loop through and delete infra of all clusters we've provisioned
     api.getClusters('<token>', {}, { id: currentProject.id }, (err: any, res: any) => {
-      if (err) {
-        console.log(err);
-      } else {
-        res.data.forEach((cluster: ClusterType) => {
 
-          // Handle destroying infra we've provisioned
-          if (cluster.infra_id) {
-            console.log('destroying provisioned infra...', cluster.infra_id);
-            api.destroyCluster('<token>', { eks_name: cluster.name }, { 
+      if (err) { 
+        console.log(err); 
+        return; 
+      }
+      
+      for (var i = 0; i < res.data.length; i++) {
+        let cluster = res.data[i];
+        if (!cluster.infra_id) continue;
+
+        // Handle destroying infra we've provisioned
+        switch (cluster.service) {
+
+          case "eks":
+            api.destroyEKS('<token>', { eks_name: cluster.name }, { 
               project_id: currentProject.id,
               infra_id: cluster.infra_id,
             }, (err: any, res: any) => {
@@ -258,8 +403,34 @@ export default class Home extends Component<PropsType, StateType> {
                 console.log('destroyed provisioned infra:', cluster.infra_id);
               }
             });
-          }
-        });
+            break;
+
+          case 'gke':
+            api.destroyGKE('<token>', { gke_name: cluster.name }, { 
+              project_id: currentProject.id,
+              infra_id: cluster.infra_id,
+            }, (err: any, res: any) => {
+              if (err) {
+                console.log(err)
+              } else {
+                console.log('destroyed provisioned infra.');
+              }
+            });
+            break;
+
+          case 'doks':
+            api.destroyDOKS('<token>', { doks_name: cluster.name }, { 
+              project_id: currentProject.id,
+              infra_id: cluster.infra_id,
+            }, (err: any, res: any) => {
+              if (err) {
+                console.log(err)
+              } else {
+                console.log('destroyed provisioned infra.');
+              }
+            });
+            break;
+        }
       }
     });
     setCurrentModal(null, null)
@@ -268,42 +439,47 @@ export default class Home extends Component<PropsType, StateType> {
 
   render() {
     let { currentModal, setCurrentModal, currentProject } = this.context;
+
     return (
       <StyledHome>
-        <ReactModal
-          isOpen={currentModal === 'ClusterInstructionsModal'}
-          onRequestClose={() => setCurrentModal(null, null)}
-          style={TallModalStyles}
-          ariaHideApp={false}
-        >
-          <ClusterInstructionsModal />
-        </ReactModal>
-        <ReactModal
-          isOpen={currentModal === 'UpdateClusterModal'}
-          onRequestClose={() => setCurrentModal(null, null)}
-          style={ProjectModalStyles}
-          ariaHideApp={false}
-        >
-          <UpdateClusterModal 
-            setRefreshClusters={(x: boolean) => this.setState({ forceRefreshClusters: x })} 
-          />
-        </ReactModal>
-        <ReactModal
-          isOpen={currentModal === 'IntegrationsModal'}
-          onRequestClose={() => setCurrentModal(null, null)}
-          style={SmallModalStyles}
-          ariaHideApp={false}
-        >
-          <IntegrationsModal />
-        </ReactModal>
-        <ReactModal
-          isOpen={currentModal === 'IntegrationsInstructionsModal'}
-          onRequestClose={() => setCurrentModal(null, null)}
-          style={TallModalStyles}
-          ariaHideApp={false}
-        >
-          <IntegrationsInstructionsModal />
-        </ReactModal>
+        {currentModal === 'ClusterInstructionsModal' &&
+          <Modal
+            onRequestClose={() => setCurrentModal(null, null)}
+            width='760px'
+            height='650px'
+          >
+            <ClusterInstructionsModal />
+          </Modal>
+        }
+        {currentModal === 'UpdateClusterModal' &&
+          <Modal
+            onRequestClose={() => setCurrentModal(null, null)}
+            width='565px'
+            height='275px'
+          >
+            <UpdateClusterModal 
+              setRefreshClusters={(x: boolean) => this.setState({ forceRefreshClusters: x })} 
+            />
+          </Modal>
+        }
+        {currentModal === 'IntegrationsModal' &&
+          <Modal
+            onRequestClose={() => setCurrentModal(null, null)}
+            width='760px'
+            height='725px'
+          >
+            <IntegrationsModal />
+          </Modal>
+        }
+        {currentModal === 'IntegrationsInstructionsModal' &&
+          <Modal
+            onRequestClose={() => setCurrentModal(null, null)}
+            width='760px'
+            height='650px'
+          >
+            <IntegrationsInstructionsModal />
+          </Modal>
+        }
 
         {this.renderSidebar()}
 
@@ -327,63 +503,6 @@ export default class Home extends Component<PropsType, StateType> {
 }
 
 Home.contextType = Context;
-
-const SmallModalStyles = {
-  overlay: {
-    backgroundColor: 'rgba(0,0,0,0.6)',
-    zIndex: 2,
-  },
-  content: {
-    borderRadius: '7px',
-    border: 0,
-    width: '760px',
-    maxWidth: '80vw',
-    margin: '0 auto',
-    height: '425px',
-    top: 'calc(50% - 214px)',
-    backgroundColor: '#202227',
-    animation: 'floatInModal 0.5s 0s',
-    overflow: 'visible',
-  },
-};
-
-const ProjectModalStyles = {
-  overlay: {
-    backgroundColor: 'rgba(0,0,0,0.6)',
-    zIndex: 2,
-  },
-  content: {
-    borderRadius: '7px',
-    border: 0,
-    width: '565px',
-    maxWidth: '80vw',
-    margin: '0 auto',
-    height: '275px',
-    top: 'calc(50% - 160px)',
-    backgroundColor: '#202227',
-    animation: 'floatInModal 0.5s 0s',
-    overflow: 'visible',
-  },
-};
-
-const TallModalStyles = {
-  overlay: {
-    backgroundColor: 'rgba(0,0,0,0.6)',
-    zIndex: 2,
-  },
-  content: {
-    borderRadius: '7px',
-    border: 0,
-    width: '760px',
-    maxWidth: '80vw',
-    margin: '0 auto',
-    height: '650px',
-    top: 'calc(50% - 325px)',
-    backgroundColor: '#202227',
-    animation: 'floatInModal 0.5s 0s',
-    overflow: 'visible',
-  },
-};
 
 const ViewWrapper = styled.div`
   height: 100%;

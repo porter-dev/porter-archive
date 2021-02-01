@@ -8,6 +8,7 @@ import { InfraType } from '../../../shared/types';
 import api from '../../../shared/api';
 
 import ProvisionerSettings from '../provisioner/ProvisionerSettings';
+import ClusterPlaceholderContainer from './ClusterPlaceholderContainer';
 
 type PropsType = {
   setCurrentView: (x: string) => void,
@@ -48,12 +49,8 @@ export default class Dashboard extends Component<PropsType, StateType> {
   }
 
   onShowProjectSettings = () => {
-    let { currentProject, setCurrentModal } = this.context;
     let { setCurrentView } = this.props;
-    setCurrentModal('UpdateProjectModal', { 
-      currentProject: currentProject,
-      setCurrentView: setCurrentView,
-    });
+    setCurrentView('project-settings');
   }
 
   render() {
@@ -73,12 +70,16 @@ export default class Dashboard extends Component<PropsType, StateType> {
               </Overlay>
             </DashboardIcon>
               <Title>{currentProject && currentProject.name}</Title>
-              <i
-                className="material-icons"
-                onClick={onShowProjectSettings}
-              >
-                more_vert
-              </i>
+              {this.context.currentProject.roles.filter((obj: any) => {
+                return obj.user_id === this.context.user.userId;
+              })[0].kind === 'admin' &&
+                <i
+                  className="material-icons"
+                  onClick={onShowProjectSettings}
+                >
+                  more_vert
+                </i>
+              }
             </TitleSection>
 
             <InfoSection>
@@ -94,16 +95,24 @@ export default class Dashboard extends Component<PropsType, StateType> {
 
             <LineBreak />
 
-            {!currentCluster && (
-              <Banner>
-                <i className="material-icons">error_outline</i>
-                This project currently has no clusters connected.
-              </Banner>
-            )}
-            <ProvisionerSettings 
-              setCurrentView={setCurrentView} 
-              infras={infras}
-            />
+            {!currentCluster 
+              ? (
+                <>
+                  <Banner>
+                    <i className="material-icons">error_outline</i>
+                    This project currently has no clusters conncted.
+                    </Banner>
+                  <ProvisionerSettings 
+                    setCurrentView={setCurrentView} 
+                    infras={infras}
+                  />
+                </>
+              ) : (
+                <ClusterPlaceholderContainer
+                  setCurrentView={this.props.setCurrentView} 
+                />
+              )
+            }
           </DashboardWrapper>
         )}
       </>
@@ -126,7 +135,7 @@ const Banner = styled.div`
   border-radius: 5px;
   padding-left: 15px;
   align-items: center;
-  background: #616FEEcc;
+  background: #ffffff11;
   > i {
     margin-right: 10px;
     font-size: 18px;

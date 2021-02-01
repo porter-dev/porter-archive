@@ -62,7 +62,7 @@ export default class ImageSelector extends Component<PropsType, StateType> {
               if (err) {
                 errors.push(1);
               } else {
-
+                res.data.sort((a: any, b: any) => (a.name > b.name) ? 1 : -1);
                 // Loop over found image repositories
                 let newImg = res.data.map((img: any) => {
                   if (this.props.selectedImageUrl === img.uri) {

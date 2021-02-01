@@ -17,7 +17,7 @@ type StateType = {
   loading: boolean,
 };
 
-export default class StatusPlaceholder extends Component<PropsType, StateType> {
+export default class ClusterPlaceholder extends Component<PropsType, StateType> {
   state = {
     loading: true,
   }
@@ -52,7 +52,7 @@ export default class StatusPlaceholder extends Component<PropsType, StateType> {
             <Highlight onClick={() => {
               this.context.setCurrentModal('ClusterInstructionsModal', {});
             }}>
-              + Add a Cluster
+              + Connect a Cluster
             </Highlight>
           </StyledStatusPlaceholder>
         </>
@@ -65,7 +65,7 @@ export default class StatusPlaceholder extends Component<PropsType, StateType> {
   }
 }
 
-StatusPlaceholder.contextType = Context;
+ClusterPlaceholder.contextType = Context;
 
 const LoadingWrapper = styled.div`
   height: calc(100vh - 450px);
@@ -77,7 +77,6 @@ const LoadingWrapper = styled.div`
 const Highlight = styled.div`
   color: #8590ff;
   cursor: pointer;
-  text-decoration: underline;
   margin-left: 10px;
   margin-right: 10px;
 `;
@@ -91,7 +90,7 @@ const Banner = styled.div`
   border-radius: 5px;
   padding-left: 15px;
   align-items: center;
-  background: #616FEEcc;
+  background: #ffffff11;
   > i {
     margin-right: 10px;
     font-size: 18px;

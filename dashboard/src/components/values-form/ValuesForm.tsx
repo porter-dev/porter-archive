@@ -15,27 +15,6 @@ import Heading from './Heading';
 import ExpandableResource from '../ExpandableResource';
 import VeleroForm from '../forms/VeleroForm';
 
- let dummySections = [
-   {
-    "name":"section_one",
-    "show_if":"",
-    "contents":[
-      {
-        "type":"heading",
-        "label":"Polyphia",
-      },
-      {
-        "type":"subtitle",
-        "label":"Tim Hendrix",
-      },
-      {
-        "type":"velero-create-backup",
-        "label":"Tim Hendrix",
-      },
-    ]
-  }
-];
-
 type PropsType = {
   sections?: Section[],
   metaState?: any,
@@ -155,6 +134,21 @@ export default class ValuesForm extends Component<PropsType, StateType> {
               value={this.props.metaState[key]}
               setActiveValue={(val) => this.props.setMetaState({ [key]: val })}
               options={item.settings.options}
+              dropdownLabel=''
+              label={item.label}
+            />
+          );
+        case 'provider-select':
+          return (
+            <SelectRow
+              key={i}
+              value={this.props.metaState[key]}
+              setActiveValue={(val) => this.props.setMetaState({ [key]: val })}
+              options={[
+                { value: 'gcp', label: 'Google Cloud Platform (GCP)' },
+                { value: 'aws', label: 'Amazon Web Services (AWS)' },
+                { value: 'do', label: 'DigitalOcean' },
+              ]}
               dropdownLabel=''
               label={item.label}
             />

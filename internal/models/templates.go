@@ -50,8 +50,10 @@ type FormContent struct {
 	Variable string       `yaml:"variable,omitempty" json:"variable,omitempty"`
 	Value    interface{}  `yaml:"value,omitempty" json:"value,omitempty"`
 	Settings struct {
-		Default interface{} `yaml:"default,omitempty" json:"default,omitempty"`
-		Unit    interface{} `yaml:"unit,omitempty" json:"unit,omitempty"`
+		Default     interface{} `yaml:"default,omitempty" json:"default,omitempty"`
+		Unit        interface{} `yaml:"unit,omitempty" json:"unit,omitempty"`
+		Options     interface{} `yaml:"options,omitempty" json:"options,omitempty"`
+		Placeholder string      `yaml:"placeholder,omitempty" json:"placeholder,omitempty"`
 	} `yaml:"settings,omitempty" json:"settings,omitempty"`
 }
 

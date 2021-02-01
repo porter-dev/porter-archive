@@ -30,7 +30,7 @@ type ServerConf struct {
 	IsLocal              bool          `env:"IS_LOCAL,default=false"`
 	IsTesting            bool          `env:"IS_TESTING,default=false"`
 
-	DefaultHelmRepoURL string `env:"HELM_REPO_URL,default=https://porter-dev.github.io/chart-repo/"`
+	DefaultHelmRepoURL string `env:"HELM_REPO_URL,default=https://porter-dev.github.io/chart-repo-dev/"`
 
 	GithubClientID     string `env:"GITHUB_CLIENT_ID"`
 	GithubClientSecret string `env:"GITHUB_CLIENT_SECRET"`

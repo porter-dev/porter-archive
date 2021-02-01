@@ -446,7 +446,6 @@ func (app *App) HandleGetReleaseToken(w http.ResponseWriter, r *http.Request) {
 
 // HandleUpgradeRelease upgrades a release with new values.yaml
 func (app *App) HandleUpgradeRelease(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("=========================================UPGRADE RELEASE============================================")
 	projID, err := strconv.ParseUint(chi.URLParam(r, "project_id"), 0, 64)
 
 	if err != nil || projID == 0 {
@@ -522,86 +521,6 @@ func (app *App) HandleUpgradeRelease(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
-// HandleReleaseDeployHook upgrades a release with new image commit
-func (app *App) HandleReleaseDeployHook(w http.ResponseWriter, r *http.Request) {
-	name := chi.URLParam(r, "name")
-	vals, err := url.ParseQuery(r.URL.RawQuery)
-
-	commit := vals["commit"][0]
-	repository := vals["repository"][0]
-
-	if err != nil {
-		app.handleErrorFormDecoding(err, ErrReleaseDecode, w)
-		return
-	}
-
-	form := &forms.UpgradeReleaseForm{
-		ReleaseForm: &forms.ReleaseForm{
-			Form: &helm.Form{
-				Repo:              app.Repo,
-				DigitalOceanOAuth: app.DOConf,
-			},
-		},
-		Name: name,
-	}
-
-	form.ReleaseForm.PopulateHelmOptionsFromQueryParams(
-		vals,
-		app.Repo.Cluster,
-	)
-
-	if err := json.NewDecoder(r.Body).Decode(form); err != nil {
-		app.handleErrorFormDecoding(err, ErrUserDecode, w)
-		return
-	}
-
-	agent, err := app.getAgentFromReleaseForm(
-		w,
-		r,
-		form.ReleaseForm,
-	)
-
-	// errors are handled in app.getAgentFromBodyParams
-	if err != nil {
-		return
-	}
-
-	image := map[string]interface{}{}
-	image["repository"] = repository
-	image["tag"] = commit
-
-	newval := map[string]interface{}{}
-	newval["image"] = image
-
-	registries, err := app.Repo.Registry.ListRegistriesByProjectID(uint(form.ReleaseForm.Cluster.ProjectID))
-
-	if err != nil {
-		app.handleErrorDataRead(err, w)
-		return
-	}
-
-	conf := &helm.UpgradeReleaseConfig{
-		Name:       form.Name,
-		Cluster:    form.ReleaseForm.Cluster,
-		Repo:       *app.Repo,
-		Registries: registries,
-		Values:     newval,
-	}
-
-	_, err = agent.UpgradeReleaseByValues(conf, app.DOConf)
-
-	if err != nil {
-		app.sendExternalError(err, http.StatusInternalServerError, HTTPError{
-			Code:   ErrReleaseDeploy,
-			Errors: []string{"error upgrading release " + err.Error()},
-		}, w)
-
-		return
-	}
-
-	w.WriteHeader(http.StatusOK)
-}
-
 // HandleReleaseDeployWebhook upgrades a release when a chart specific webhook is called.
 func (app *App) HandleReleaseDeployWebhook(w http.ResponseWriter, r *http.Request) {
 	token := chi.URLParam(r, "token")
@@ -663,8 +582,8 @@ func (app *App) HandleReleaseDeployWebhook(w http.ResponseWriter, r *http.Reques
 	image["repository"] = repository
 	image["tag"] = commit
 
-	newval := map[string]interface{}{}
-	newval["image"] = image
+	rel, err := agent.GetRelease(form.Name, 0)
+	rel.Config["image"] = image
 
 	registries, err := app.Repo.Registry.ListRegistriesByProjectID(uint(form.ReleaseForm.Cluster.ProjectID))
 
@@ -678,7 +597,7 @@ func (app *App) HandleReleaseDeployWebhook(w http.ResponseWriter, r *http.Reques
 		Cluster:    form.ReleaseForm.Cluster,
 		Repo:       *app.Repo,
 		Registries: registries,
-		Values:     newval,
+		Values:     rel.Config,
 	}
 
 	_, err = agent.UpgradeReleaseByValues(conf, app.DOConf)

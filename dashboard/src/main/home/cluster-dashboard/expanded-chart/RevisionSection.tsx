@@ -1,12 +1,12 @@
 import React, { Component } from 'react';
 import styled from 'styled-components';
-import loading from '../../../../assets/loading.gif';
+import loading from 'assets/loading.gif';
 
-import api from '../../../../shared/api';
-import { Context } from '../../../../shared/Context';
-import { ChartType, StorageType } from '../../../../shared/types';
+import api from 'shared/api';
+import { Context } from 'shared/Context';
+import { ChartType, StorageType } from 'shared/types';
 
-import ConfirmOverlay from '../../../../components/ConfirmOverlay';
+import ConfirmOverlay from 'components/ConfirmOverlay';
 
 type PropsType = {
   showRevisions: boolean,

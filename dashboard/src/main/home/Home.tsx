@@ -2,15 +2,15 @@ import React, { Component } from 'react';
 import posthog from 'posthog-js';
 import styled from 'styled-components';
 
-import { Context } from '../../shared/Context';
-import api from '../../shared/api';
-import { ClusterType, ProjectType } from '../../shared/types';
-import { includesCompletedInfraSet } from '../../shared/common';
+import { Context } from 'shared/Context';
+import api from 'shared/api';
+import { ClusterType, ProjectType } from 'shared/types';
+import { includesCompletedInfraSet } from 'shared/common';
 
 import Sidebar from './sidebar/Sidebar';
 import Dashboard from './dashboard/Dashboard';
 import ClusterDashboard from './cluster-dashboard/ClusterDashboard';
-import Loading from '../../components/Loading';
+import Loading from 'components/Loading';
 import Templates from './templates/Templates';
 import Integrations from "./integrations/Integrations";
 import UpdateClusterModal from './modals/UpdateClusterModal';
@@ -21,7 +21,7 @@ import NewProject from './new-project/NewProject';
 import Navbar from './navbar/Navbar';
 import ProvisionerStatus from './provisioner/ProvisionerStatus';
 import ProjectSettings from './project-settings/ProjectSettings';
-import ConfirmOverlay from '../../components/ConfirmOverlay';
+import ConfirmOverlay from 'components/ConfirmOverlay';
 import Modal from './modals/Modal';
 import * as FullStory from '@fullstory/browser';
 

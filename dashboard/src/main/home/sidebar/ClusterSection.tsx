@@ -1,10 +1,10 @@
 import React, { Component } from 'react';
 import styled from 'styled-components';
-import drawerBg from '../../../assets/drawer-bg.png';
+import drawerBg from 'assets/drawer-bg.png';
 
-import api from '../../../shared/api';
-import { Context } from '../../../shared/Context';
-import { ClusterType } from '../../../shared/types';
+import api from 'shared/api';
+import { Context } from 'shared/Context';
+import { ClusterType } from 'shared/types';
 
 import Drawer from './Drawer';
 

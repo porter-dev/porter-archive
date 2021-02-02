@@ -1,12 +1,12 @@
 import React, { Component } from 'react';
 import styled from 'styled-components';
 
-import api from '../../../shared/api';
-import { Context } from '../../../shared/Context';
-import { ClusterType } from '../../../shared/types';
+import api from 'shared/api';
+import { Context } from 'shared/Context';
+import { ClusterType } from 'shared/types';
 
 import ClusterList from './ClusterList';
-import Loading from '../../../components/Loading';
+import Loading from 'components/Loading';
 
 type PropsType = {
   currentCluster: ClusterType,

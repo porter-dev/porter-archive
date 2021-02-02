@@ -1,10 +1,10 @@
 import React, { Component } from 'react';
 import styled from 'styled-components';
-import tag_icon from '../../assets/tag.png';
-import info from '../../assets/info.svg';
+import tag_icon from 'assets/tag.png';
+import info from 'assets/info.svg';
 
-import api from '../../shared/api';
-import { Context } from '../../shared/Context';
+import api from 'shared/api';
+import { Context } from 'shared/Context';
 
 import Loading from '../Loading';
 

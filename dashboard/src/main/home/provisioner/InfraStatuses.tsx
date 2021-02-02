@@ -1,9 +1,9 @@
 import React, { Component } from 'react';
 import styled from 'styled-components';
 
-import loadingDots from '../../../assets/loading-dots.gif';
-import { InfraType } from '../../../shared/types';
-import { infraNames } from '../../../shared/common';
+import loadingDots from 'assets/loading-dots.gif';
+import { InfraType } from 'shared/types';
+import { infraNames } from 'shared/common';
 
 type PropsType = {
   infras: InfraType[],

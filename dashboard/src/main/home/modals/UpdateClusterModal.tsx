@@ -1,14 +1,14 @@
 import React, { Component } from 'react';
 import styled from 'styled-components';
-import close from '../../../assets/close.png';
-import gradient from '../../../assets/gradient.jpg';
+import close from 'assets/close.png';
+import gradient from 'assets/gradient.jpg';
 
-import api from '../../../shared/api';
-import { Context } from '../../../shared/Context';
+import api from 'shared/api';
+import { Context } from 'shared/Context';
 
-import SaveButton from '../../../components/SaveButton';
-import InputRow from '../../../components/values-form/InputRow';
-import ConfirmOverlay from '../../../components/ConfirmOverlay';
+import SaveButton from 'components/SaveButton';
+import InputRow from 'components/values-form/InputRow';
+import ConfirmOverlay from 'components/ConfirmOverlay';
 
 type PropsType = {
   setRefreshClusters: (x: boolean) => void,

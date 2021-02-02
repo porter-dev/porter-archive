@@ -1,13 +1,13 @@
 import React, { Component } from 'react';
 import styled from 'styled-components';
 
-import { Context } from '../../../shared/Context';
-import api from '../../../shared/api';
-import { PorterTemplate } from '../../../shared/types';
+import { Context } from 'shared/Context';
+import api from 'shared/api';
+import { PorterTemplate } from 'shared/types';
 
-import TabSelector from '../../../components/TabSelector';
+import TabSelector from 'components/TabSelector';
 import ExpandedTemplate from './expanded-template/ExpandedTemplate';
-import Loading from '../../../components/Loading';
+import Loading from 'components/Loading';
 
 import hardcodedNames from './hardcodedNameDict';
 

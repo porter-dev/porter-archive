@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import styled from 'styled-components';
-import api from '../shared/api';
-import { Context } from '../shared/Context';
+import api from 'shared/api';
+import { Context } from 'shared/Context';
 
 import ResourceTab from './ResourceTab';
 

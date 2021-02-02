@@ -1,15 +1,15 @@
 import React, { Component } from 'react';
 import styled from 'styled-components';
-import category from '../../../assets/category.svg';
-import integrations from '../../../assets/integrations.svg';
-import filter from '../../../assets/filter.svg';
-import settings from '../../../assets/settings.svg';
+import category from 'assets/category.svg';
+import integrations from 'assets/integrations.svg';
+import filter from 'assets/filter.svg';
+import settings from 'assets/settings.svg';
 
-import { Context } from '../../../shared/Context';
+import { Context } from 'shared/Context';
 
 import ClusterSection from './ClusterSection';
 import ProjectSectionContainer from './ProjectSectionContainer';
-import loading from '../../../assets/loading.gif';
+import loading from 'assets/loading.gif';
 import posthog from 'posthog-js';
 
 type PropsType = {

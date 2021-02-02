@@ -1,12 +1,12 @@
 import React, { Component } from 'react';
 import styled from 'styled-components';
-import info from '../../assets/info.svg';
-import edit from '../../assets/edit.svg';
+import info from 'assets/info.svg';
+import edit from 'assets/edit.svg';
 
-import api from '../../shared/api';
-import { integrationList } from '../../shared/common';
-import { Context } from '../../shared/Context';
-import { ImageType } from '../../shared/types';
+import api from 'shared/api';
+import { integrationList } from 'shared/common';
+import { Context } from 'shared/Context';
+import { ImageType } from 'shared/types';
 
 import Loading from '../Loading';
 import TagList from './TagList';

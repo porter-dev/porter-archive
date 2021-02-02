@@ -1,8 +1,8 @@
 import React, { Component } from 'react';
 import styled from 'styled-components';
 
-import { Context } from '../../../shared/Context';
-import { handleSubmitFeedback } from '../../../shared/feedback';
+import { Context } from 'shared/Context';
+import { handleSubmitFeedback } from 'shared/feedback';
 
 type PropsType = {
   currentView: string,

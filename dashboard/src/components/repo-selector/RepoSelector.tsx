@@ -1,13 +1,13 @@
 import React, { Component } from 'react';
 import styled from 'styled-components';
-import github from '../../assets/github.png';
-import info from '../../assets/info.svg';
+import github from 'assets/github.png';
+import info from 'assets/info.svg';
 
-import api from '../../shared/api';
-import { RepoType, ChartType } from '../../shared/types';
-import { Context } from '../../shared/Context';
+import api from 'shared/api';
+import { RepoType, ChartType } from 'shared/types';
+import { Context } from 'shared/Context';
 
-import Loading from '../../components/Loading';
+import Loading from 'components/Loading';
 import BranchList from './BranchList';
 import ContentsList from './ContentsList';
 import NewGHAction from './NewGHAction';

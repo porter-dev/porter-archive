@@ -28,6 +28,7 @@ type PropsType = {
 type StateType = {
   currentView: string,
   clusterOptions: { label: string, value: string }[],
+  clusterMap: { [clusterId: string]: ClusterType },
   saveValuesStatus: string | null
   selectedNamespace: string,
   selectedCluster: string,
@@ -48,6 +49,7 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
   state = {
     currentView: 'repo',
     clusterOptions: [] as { label: string, value: string }[],
+    clusterMap: {} as { [clusterId: string]: ClusterType },
     saveValuesStatus: 'No container image specified' as (string | null),
     selectedCluster: this.context.currentCluster.name,
     selectedNamespace: "default",
@@ -256,13 +258,26 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
       if (err) {
         // console.log(err)
       } else if (res.data) {
-        let clusterOptions = res.data.map((x: ClusterType) => { return { label: x.name, value: x.name } });
+        let clusterOptions: { label: string, value: string }[] = [];
+        let clusterMap: { [clusterId: string]: ClusterType } = {};
+        res.data.forEach((cluster: ClusterType, i: number) => {
+          clusterOptions.push({ label: cluster.name, value: cluster.name });
+          clusterMap[cluster.name] = cluster;
+        })
         if (res.data.length > 0) {
-          this.setState({ clusterOptions });
+          this.setState({ clusterOptions, clusterMap }, () => {
+            console.log(clusterMap);
+          });
         }
       }
     });
 
+    this.updateNamespaces();
+  }
+
+  updateNamespaces = () => {
+    let { currentCluster, currentProject } = this.context;
+    console.log('hello there');
     api.getNamespaces('<token>', {
       cluster_id: currentCluster.id,
     }, { id: currentProject.id }, (err: any, res: any) => {
@@ -427,7 +442,10 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
           </ClusterLabel>
           <Selector
             activeValue={this.state.selectedCluster}
-            setActiveValue={(cluster: string) => this.setState({ selectedCluster: cluster })}
+            setActiveValue={(cluster: string) => {
+              this.context.setCurrentCluster(this.state.clusterMap[cluster], this.updateNamespaces());
+              this.setState({ selectedCluster: cluster });
+            }}
             options={this.state.clusterOptions}
             width='250px'
             dropdownWidth='335px'

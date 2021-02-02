@@ -2,9 +2,9 @@ import React, { Component } from 'react';
 import styled from 'styled-components';
 import _ from 'lodash';
 
-import { Section, FormElement } from '../../shared/types';
-import { Context } from '../../shared/Context';
-import api from '../../shared/api';
+import { Section, FormElement } from 'shared/types';
+import { Context } from 'shared/Context';
+import api from 'shared/api';
 
 import CheckboxRow from './CheckboxRow';
 import InputRow from './InputRow';

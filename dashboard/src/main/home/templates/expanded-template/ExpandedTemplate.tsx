@@ -1,12 +1,12 @@
 import React, { Component } from 'react';
 import styled from 'styled-components';
 
-import { PorterTemplate } from '../../../../shared/types';
-import api from '../../../../shared/api';
+import { PorterTemplate } from 'shared/types';
+import api from 'shared/api';
 
 import TemplateInfo from './TemplateInfo';
 import LaunchTemplate from './LaunchTemplate';
-import Loading from '../../../../components/Loading';
+import Loading from 'components/Loading';
 
 type PropsType = {
   currentTemplate: PorterTemplate,

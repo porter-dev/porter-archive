@@ -1,25 +1,25 @@
 import React, { Component } from 'react';
 import styled from 'styled-components';
 import yaml from 'js-yaml';
-import close from '../../../../assets/close.png';
+import close from 'assets/close.png';
 import _ from 'lodash';
 
-import { ResourceType, ChartType, StorageType, ClusterType } from '../../../../shared/types';
-import { Context } from '../../../../shared/Context';
-import api from '../../../../shared/api';
+import { ResourceType, ChartType, StorageType, ClusterType } from 'shared/types';
+import { Context } from 'shared/Context';
+import api from 'shared/api';
 
-import TabRegion from '../../../../components/TabRegion';
-import StatusIndicator from '../../../../components/StatusIndicator';
+import ConfirmOverlay from 'components/ConfirmOverlay';
+import Loading from 'components/Loading';
+import StatusIndicator from 'components/StatusIndicator';
+import TabRegion from 'components/TabRegion';
+import ValuesWrapper from 'components/values-form/ValuesWrapper';
+import ValuesForm from 'components/values-form/ValuesForm';
 import RevisionSection from './RevisionSection';
 import ValuesYaml from './ValuesYaml';
 import GraphSection from './GraphSection';
 import ListSection from './ListSection';
 import StatusSection from './status/StatusSection';
-import ValuesWrapper from '../../../../components/values-form/ValuesWrapper';
-import ValuesForm from '../../../../components/values-form/ValuesForm';
 import SettingsSection from './SettingsSection';
-import ConfirmOverlay from '../../../../components/ConfirmOverlay';
-import Loading from '../../../../components/Loading';
 
 type PropsType = {
   namespace: string,

@@ -1,17 +1,17 @@
 import React, { Component } from 'react';
 import styled from 'styled-components';
-import api from '../../../../shared/api';
+import api from 'shared/api';
 import yaml from 'js-yaml';
 
-import { ChartType, RepoType, StorageType, ActionConfigType } from '../../../../shared/types';
-import { Context } from '../../../../shared/Context';
+import { ChartType, RepoType, StorageType, ActionConfigType } from 'shared/types';
+import { Context } from 'shared/Context';
 
-import ImageSelector from '../../../../components/image-selector/ImageSelector';
-import RepoSelector from '../../../../components/repo-selector/RepoSelector';
-import SaveButton from '../../../../components/SaveButton';
-import Heading from '../../../../components/values-form/Heading';
-import Helper from '../../../../components/values-form/Helper';
-import InputRow from '../../../../components/values-form/InputRow';
+import ImageSelector from 'components/image-selector/ImageSelector';
+import RepoSelector from 'components/repo-selector/RepoSelector';
+import SaveButton from 'components/SaveButton';
+import Heading from 'components/values-form/Heading';
+import Helper from 'components/values-form/Helper';
+import InputRow from 'components/values-form/InputRow';
 
 type PropsType = {
   currentChart: ChartType,

@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import styled from 'styled-components';
-import { Context } from '../../../../../shared/Context';
+import { Context } from 'shared/Context';
 
 type PropsType = {
   selectedPod: any,

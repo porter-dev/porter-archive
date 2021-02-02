@@ -1,10 +1,10 @@
 import React, { Component } from 'react';
 import styled from 'styled-components';
-import gradient from '../../../assets/gradient.jpg';
+import gradient from 'assets/gradient.jpg';
 
-import { Context } from '../../../shared/Context';
-import { ChartType, StorageType, ClusterType } from '../../../shared/types';
-import api from '../../../shared/api';
+import { Context } from 'shared/Context';
+import { ChartType, StorageType, ClusterType } from 'shared/types';
+import api from 'shared/api';
 
 import ChartList from './chart/ChartList';
 import NamespaceSelector from './NamespaceSelector';

@@ -1,10 +1,10 @@
 import React, { Component } from 'react';
 import styled from 'styled-components';
 
-import { Context } from '../../../shared/Context';
-import api from '../../../shared/api';
+import { Context } from 'shared/Context';
+import api from 'shared/api';
 
-import Selector from '../../../components/Selector';
+import Selector from 'components/Selector';
 
 type PropsType = {
   setNamespace: (x: string) => void,

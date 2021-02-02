@@ -1,10 +1,10 @@
 import React, { Component } from 'react';
 import styled from 'styled-components';
-import close from '../../../assets/close.png';
+import close from 'assets/close.png';
 
-import { Context } from '../../../shared/Context';
-import api from '../../../shared/api';
-import { integrationList } from '../../../shared/common';
+import { Context } from 'shared/Context';
+import api from 'shared/api';
+import { integrationList } from 'shared/common';
 
 type PropsType = {
 };

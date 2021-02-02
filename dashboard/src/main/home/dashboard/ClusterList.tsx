@@ -1,12 +1,12 @@
 import React, { Component } from 'react';
 import styled from 'styled-components';
 
-import { Context } from '../../../shared/Context';
-import api from '../../../shared/api';
-import { ClusterType } from '../../../shared/types';
-import Helper from '../../../components/values-form/Helper';
+import { Context } from 'shared/Context';
+import api from 'shared/api';
+import { ClusterType } from 'shared/types';
+import Helper from 'components/values-form/Helper';
 
-import Loading from '../../../components/Loading';
+import Loading from 'components/Loading';
 
 type PropsType = {
   setCurrentView: (x: string) => void,

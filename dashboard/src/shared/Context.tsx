@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 
-import { ProjectType, ClusterType } from '../shared/types';
+import { ProjectType, ClusterType } from 'shared/types';
 
 type PropsType = {
 }

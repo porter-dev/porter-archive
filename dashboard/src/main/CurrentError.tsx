@@ -1,8 +1,8 @@
 import React, { Component } from 'react';
 import styled from 'styled-components';
-import close from '../assets/close.png';
+import close from 'assets/close.png';
 
-import { Context } from '../shared/Context';
+import { Context } from 'shared/Context';
 
 type PropsType = {
   currentError: string,

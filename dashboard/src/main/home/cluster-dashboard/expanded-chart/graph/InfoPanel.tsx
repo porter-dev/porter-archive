@@ -2,10 +2,10 @@ import React, { Component } from 'react';
 import styled from 'styled-components';
 import yaml from 'js-yaml';
 
-import { kindToIcon, edgeColors } from '../../../../../shared/rosettaStone';
-import { NodeType, EdgeType } from '../../../../../shared/types';
+import { kindToIcon, edgeColors } from 'shared/rosettaStone';
+import { NodeType, EdgeType } from 'shared/types';
 
-import YamlEditor from '../../../../../components/YamlEditor';
+import YamlEditor from 'components/YamlEditor';
 
 type PropsType = {
   currentNode: NodeType,

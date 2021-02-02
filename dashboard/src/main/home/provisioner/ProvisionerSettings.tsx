@@ -1,15 +1,15 @@
 import React, { Component } from 'react';
 import styled from 'styled-components';
 
-import { Context } from '../../../shared/Context';
-import { integrationList } from '../../../shared/common';
-import { InfraType } from '../../../shared/types';
+import { Context } from 'shared/Context';
+import { integrationList } from 'shared/common';
+import { InfraType } from 'shared/types';
 
-import Helper from '../../../components/values-form/Helper';
+import Helper from 'components/values-form/Helper';
 import AWSFormSection from './AWSFormSection';
 import GCPFormSection from './GCPFormSection';
 import DOFormSection from './DOFormSection';
-import SaveButton from '../../../components/SaveButton';
+import SaveButton from 'components/SaveButton';
 import ExistingClusterSection from './ExistingClusterSection';
 
 type PropsType = {

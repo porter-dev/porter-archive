@@ -2,12 +2,12 @@ import React, { Component } from 'react';
 import styled from 'styled-components';
 import yaml from 'js-yaml';
 
-import { Context } from '../../../../shared/Context';
-import { ResourceType, ChartType } from '../../../../shared/types';
+import { Context } from 'shared/Context';
+import { ResourceType, ChartType } from 'shared/types';
 
-import Loading from '../../../../components/Loading';
-import ResourceTab from '../../../../components/ResourceTab';
-import YamlEditor from '../../../../components/YamlEditor';
+import Loading from 'components/Loading';
+import ResourceTab from 'components/ResourceTab';
+import YamlEditor from 'components/YamlEditor';
 
 type PropsType = {
   currentChart: ChartType,

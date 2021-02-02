@@ -1,9 +1,9 @@
 import React, { Component } from 'react';
 import styled from 'styled-components';
-import branch_icon from '../../assets/branch.png';
+import branch_icon from 'assets/branch.png';
 
-import api from '../../shared/api';
-import { Context } from '../../shared/Context';
+import api from 'shared/api';
+import { Context } from 'shared/Context';
 
 import Loading from '../Loading';
 

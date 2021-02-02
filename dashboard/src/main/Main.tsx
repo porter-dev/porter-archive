@@ -1,16 +1,16 @@
 import React, { Component } from 'react';
 import styled, { createGlobalStyle } from 'styled-components';
 import { BrowserRouter, Route, Redirect, Switch } from 'react-router-dom';
-import close from '../assets/close.png';
+import close from 'assets/close.png';
 
-import api from '../shared/api';
-import { Context } from '../shared/Context';
+import api from 'shared/api';
+import { Context } from 'shared/Context';
 
 import Login from './Login';
 import Register from './Register';
 import CurrentError from './CurrentError';
 import Home from './home/Home';
-import Loading from '../components/Loading';
+import Loading from 'components/Loading';
 
 type PropsType = {
 };

@@ -2,15 +2,15 @@ import React, { Component } from 'react';
 import styled from 'styled-components';
 import posthog from 'posthog-js';
 
-import api from '../../../shared/api';
-import { Context } from '../../../shared/Context';
-import ansiparse from '../../../shared/ansiparser'
-import loading from '../../../assets/loading.gif';
-import warning from '../../../assets/warning.png';
-import { InfraType } from '../../../shared/types';
-import { filterOldInfras } from '../../../shared/common';
+import api from 'shared/api';
+import { Context } from 'shared/Context';
+import ansiparse from 'shared/ansiparser'
+import loading from 'assets/loading.gif';
+import warning from 'assets/warning.png';
+import { InfraType } from 'shared/types';
+import { filterOldInfras } from 'shared/common';
 
-import Helper from '../../../components/values-form/Helper';
+import Helper from 'components/values-form/Helper';
 import InfraStatuses from './InfraStatuses';
 
 type PropsType = {

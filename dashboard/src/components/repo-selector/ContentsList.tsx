@@ -1,13 +1,13 @@
 import { stringify } from 'querystring';
 import React, { Component } from 'react';
 import styled from 'styled-components';
-import file from '../../assets/file.svg';
-import folder from '../../assets/folder.svg';
-import info from '../../assets/info.svg';
+import file from 'assets/file.svg';
+import folder from 'assets/folder.svg';
+import info from 'assets/info.svg';
 
-import api from '../../shared/api';
-import { Context } from '../../shared/Context';
-import { FileType } from '../../shared/types';
+import api from 'shared/api';
+import { Context } from 'shared/Context';
+import { FileType } from 'shared/types';
 
 import Loading from '../Loading';
 
@@ -152,7 +152,7 @@ export default class ContentsList extends Component<PropsType, StateType> {
         lastItem={false}
       >
         <img src={info} />
-        Select subfolder (optional)
+        Select subfolder (Optional)
       </FileItem>
     );
   }

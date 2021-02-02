@@ -1,13 +1,13 @@
 import React, { Component } from 'react';
 import styled from 'styled-components';
 
-import api from '../../../shared/api';
-import { ProjectType } from '../../../shared/types';
-import { isAlphanumeric } from '../../../shared/common';
-import { Context } from '../../../shared/Context';
+import api from 'shared/api';
+import { ProjectType } from 'shared/types';
+import { isAlphanumeric } from 'shared/common';
+import { Context } from 'shared/Context';
 
-import SaveButton from '../../../components/SaveButton';
-import CheckboxList from '../../../components/values-form/CheckboxList';
+import SaveButton from 'components/SaveButton';
+import CheckboxList from 'components/values-form/CheckboxList';
 
 type PropsType = {
   projectName: string,

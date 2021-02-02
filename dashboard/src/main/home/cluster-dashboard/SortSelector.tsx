@@ -1,9 +1,9 @@
 import React, { Component } from 'react';
 import styled from 'styled-components';
 
-import { Context } from '../../../shared/Context';
+import { Context } from 'shared/Context';
 
-import Selector from '../../../components/Selector';
+import Selector from 'components/Selector';
 
 type PropsType = {
   setSortType: (x: string) => void,

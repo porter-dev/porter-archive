@@ -1,13 +1,13 @@
 import React, { Component } from 'react';
 import styled from 'styled-components';
-import rocket from '../../../../assets/rocket.png';
+import rocket from 'assets/rocket.png';
 import Markdown from 'markdown-to-jsx';
 
-import { Context } from '../../../../shared/Context';
-import Loading from '../../../../components/Loading';
+import { Context } from 'shared/Context';
+import Loading from 'components/Loading';
 
-import { PorterTemplate } from '../../../../shared/types';
-import Helper from '../../../../components/values-form/Helper';
+import { PorterTemplate } from 'shared/types';
+import Helper from 'components/values-form/Helper';
 
 import hardcodedNames from '../hardcodedNameDict';
 

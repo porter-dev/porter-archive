@@ -1,11 +1,13 @@
 import React, { Component } from 'react';
 import styled from 'styled-components';
-import api from '../../../../../shared/api';
+
+import api from 'shared/api';
+import { Context } from 'shared/Context';
+import { ChartType, StorageType } from 'shared/types';
+import Loading from 'components/Loading';
+
 import Logs from './Logs';
 import ControllerTab from './ControllerTab';
-import { Context } from '../../../../../shared/Context';
-import { ChartType, StorageType } from '../../../../../shared/types';
-import Loading from '../../../../../components/Loading';
 
 type PropsType = {
   selectors: string[],

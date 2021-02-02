@@ -1,10 +1,11 @@
 import React, { Component } from 'react';
 import styled from 'styled-components';
-import api from '../../../../../shared/api';
+
+import Loading from 'components/Loading';
+import { Context } from 'shared/Context';
+import { ChartType } from 'shared/types';
+
 import EventTab from './EventTab';
-import { Context } from '../../../../../shared/Context';
-import { ChartType } from '../../../../../shared/types';
-import Loading from '../../../../../components/Loading';
 
 type PropsType = {
   currentChart: ChartType,

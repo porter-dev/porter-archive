@@ -1,9 +1,9 @@
 import React, { Component } from 'react';
 import styled from 'styled-components';
 
-import { Context } from '../../../shared/Context';
-import { integrationList } from '../../../shared/common';
-import api from '../../../shared/api';
+import { Context } from 'shared/Context';
+import { integrationList } from 'shared/common';
+import api from 'shared/api';
 
 type PropsType = {
   setCurrent: (x: any) => void,

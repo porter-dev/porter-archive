@@ -1,12 +1,12 @@
 import React, { Component } from 'react';
 import styled from 'styled-components';
 
-import { Context } from '../../../shared/Context';
+import { Context } from 'shared/Context';
 
 import InviteList from './InviteList';
-import TabRegion from '../../../components/TabRegion';
-import Heading from '../../../components/values-form/Heading';
-import Helper from '../../../components/values-form/Helper';
+import TabRegion from 'components/TabRegion';
+import Heading from 'components/values-form/Heading';
+import Helper from 'components/values-form/Helper';
 
 type PropsType = {
   setCurrentView: (x: string) => void,

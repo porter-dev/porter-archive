@@ -3,18 +3,18 @@ import styled from 'styled-components';
 import randomWords from 'random-words';
 import posthog from 'posthog-js';
 import _ from 'lodash';
-import { Context } from '../../../../shared/Context';
-import api from '../../../../shared/api';
+import { Context } from 'shared/Context';
+import api from 'shared/api';
 
-import { PorterTemplate, ChoiceType, ClusterType, StorageType } from '../../../../shared/types';
-import Selector from '../../../../components/Selector';
-import ImageSelector from '../../../../components/image-selector/ImageSelector';
-import TabRegion from '../../../../components/TabRegion';
-import InputRow from '../../../../components/values-form/InputRow';
-import SaveButton from '../../../../components/SaveButton';
-import ValuesWrapper from '../../../../components/values-form/ValuesWrapper';
-import ValuesForm from '../../../../components/values-form/ValuesForm';
-import { isAlphanumeric } from '../../../../shared/common';
+import { PorterTemplate, ChoiceType, ClusterType, StorageType } from 'shared/types';
+import Selector from 'components/Selector';
+import ImageSelector from 'components/image-selector/ImageSelector';
+import TabRegion from 'components/TabRegion';
+import InputRow from 'components/values-form/InputRow';
+import SaveButton from 'components/SaveButton';
+import ValuesWrapper from 'components/values-form/ValuesWrapper';
+import ValuesForm from 'components/values-form/ValuesForm';
+import { isAlphanumeric } from 'shared/common';
 import { safeDump } from 'js-yaml';
 
 type PropsType = {

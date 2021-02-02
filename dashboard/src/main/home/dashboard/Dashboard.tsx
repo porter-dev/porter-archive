@@ -2,10 +2,10 @@ import { render } from '@testing-library/react';
 import React, { Component } from 'react';
 import styled from 'styled-components';
 
-import gradient from '../../../assets/gradient.jpg';
-import { Context } from '../../../shared/Context';
-import { InfraType } from '../../../shared/types';
-import api from '../../../shared/api';
+import gradient from 'assets/gradient.jpg';
+import { Context } from 'shared/Context';
+import { InfraType } from 'shared/types';
+import api from 'shared/api';
 
 import ProvisionerSettings from '../provisioner/ProvisionerSettings';
 import ClusterPlaceholderContainer from './ClusterPlaceholderContainer';

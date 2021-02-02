@@ -1,12 +1,12 @@
 import React, { Component } from 'react';
 import styled from 'styled-components';
 
-import gradient from '../../../assets/gradient.jpg';
-import { Context } from '../../../shared/Context';
-import { isAlphanumeric } from '../../../shared/common';
+import gradient from 'assets/gradient.jpg';
+import { Context } from 'shared/Context';
+import { isAlphanumeric } from 'shared/common';
 
-import InputRow from '../../../components/values-form/InputRow';
-import Helper from '../../../components/values-form/Helper';
+import InputRow from 'components/values-form/InputRow';
+import Helper from 'components/values-form/Helper';
 import ProvisionerSettings from '../provisioner/ProvisionerSettings';
 
 type PropsType = {

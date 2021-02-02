@@ -1,17 +1,17 @@
 import React, { Component } from 'react';
 import styled from 'styled-components';
 
-import close from '../../../assets/close.png';
-import { isAlphanumeric } from '../../../shared/common';
-import api from '../../../shared/api';
-import { Context } from '../../../shared/Context';
-import { ProjectType, InfraType } from '../../../shared/types';
+import close from 'assets/close.png';
+import { isAlphanumeric } from 'shared/common';
+import api from 'shared/api';
+import { Context } from 'shared/Context';
+import { ProjectType, InfraType } from 'shared/types';
 
-import SelectRow from '../../../components/values-form/SelectRow';
-import Helper from '../../../components/values-form/Helper';
-import Heading from '../../../components/values-form/Heading';
-import SaveButton from '../../../components/SaveButton';
-import CheckboxList from '../../../components/values-form/CheckboxList';
+import SelectRow from 'components/values-form/SelectRow';
+import Helper from 'components/values-form/Helper';
+import Heading from 'components/values-form/Heading';
+import SaveButton from 'components/SaveButton';
+import CheckboxList from 'components/values-form/CheckboxList';
 
 type PropsType = {
   setSelectedProvisioner: (x: string | null) => void,

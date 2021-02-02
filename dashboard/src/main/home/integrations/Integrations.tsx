@@ -1,10 +1,10 @@
 import React, { Component } from 'react';
 import styled from 'styled-components';
 
-import { Context } from '../../../shared/Context';
-import api from '../../../shared/api';
-import { integrationList } from '../../../shared/common';
-import { ChoiceType } from '../../../shared/types';
+import { Context } from 'shared/Context';
+import api from 'shared/api';
+import { integrationList } from 'shared/common';
+import { ChoiceType } from 'shared/types';
 
 import IntegrationList from './IntegrationList';
 import IntegrationForm from './integration-form/IntegrationForm';

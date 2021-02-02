@@ -357,7 +357,8 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
         <Subtitle>Template name
           <Warning highlight={!isAlphanumeric(this.state.templateName) && this.state.templateName !== ''}>
             (lowercase letters, numbers, and "-" only)
-          </Warning>. (Optional)</Subtitle>
+          </Warning>. (Optional)
+        </Subtitle>
         <DarkMatter antiHeight='-27px' />
         <InputRow
           type='text'

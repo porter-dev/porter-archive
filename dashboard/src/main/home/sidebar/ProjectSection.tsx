@@ -1,9 +1,9 @@
 import React, { Component } from 'react';
 import styled from 'styled-components';
-import gradient from '../../../assets/gradient.jpg';
+import gradient from 'assets/gradient.jpg';
 
-import { Context } from '../../../shared/Context';
-import { ProjectType, InfraType } from '../../../shared/types';
+import { Context } from 'shared/Context';
+import { ProjectType, InfraType } from 'shared/types';
 
 type PropsType = {
   currentProject: ProjectType,

@@ -1,11 +1,11 @@
 import React, { Component } from 'react';
 import styled from 'styled-components';
 
-import { Context } from '../../../../shared/Context';
-import api from '../../../../shared/api';
+import { Context } from 'shared/Context';
+import api from 'shared/api';
 
-import InputRow from '../../../../components/values-form/InputRow';
-import SaveButton from '../../../../components/SaveButton';
+import InputRow from 'components/values-form/InputRow';
+import SaveButton from 'components/SaveButton';
 
 type PropsType = {
   closeForm: () => void,

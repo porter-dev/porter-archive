@@ -1,14 +1,14 @@
 import React, { Component } from 'react';
 import styled from 'styled-components';
 
-import { InviteType } from '../../../shared/types';
-import api from '../../../shared/api';
-import { Context } from '../../../shared/Context';
+import { InviteType } from 'shared/types';
+import api from 'shared/api';
+import { Context } from 'shared/Context';
 
-import Loading from '../../../components/Loading';
-import InputRow from '../../../components/values-form/InputRow';
-import Helper from '../../../components/values-form/Helper';
-import Heading from '../../../components/values-form/Heading';
+import Loading from 'components/Loading';
+import InputRow from 'components/values-form/InputRow';
+import Helper from 'components/values-form/Helper';
+import Heading from 'components/values-form/Heading';
 
 type PropsType = {
 }

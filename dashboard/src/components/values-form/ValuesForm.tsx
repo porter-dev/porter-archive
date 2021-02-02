@@ -145,8 +145,8 @@ export default class ValuesForm extends Component<PropsType, StateType> {
               value={this.props.metaState[key]}
               setActiveValue={(val) => this.props.setMetaState({ [key]: val })}
               options={[
-                { value: 'gcp', label: 'Google Cloud Platform (GCP)' },
                 { value: 'aws', label: 'Amazon Web Services (AWS)' },
+                { value: 'gcp', label: 'Google Cloud Platform (GCP)' },
                 { value: 'do', label: 'DigitalOcean' },
               ]}
               dropdownLabel=''

@@ -11,9 +11,9 @@ import GCPFormSection from './GCPFormSection';
 import DOFormSection from './DOFormSection';
 import SaveButton from 'components/SaveButton';
 import ExistingClusterSection from './ExistingClusterSection';
+import { Redirect, RouteComponentProps, withRouter } from 'react-router';
 
-type PropsType = {
-  setCurrentView: (x: string, data?: any) => void,
+type PropsType = RouteComponentProps & {
   isInNewProject?: boolean,
   projectName?: string,
   infras?: InfraType[],
@@ -26,7 +26,7 @@ type StateType = {
 
 const providers = ['aws', 'gcp', 'do',];
 
-export default class NewProject extends Component<PropsType, StateType> {
+class NewProject extends Component<PropsType, StateType> {
   state = {
     selectedProvider: null as string | null,
     infras: [] as InfraType[],
@@ -34,16 +34,15 @@ export default class NewProject extends Component<PropsType, StateType> {
 
   // Handle any submission (pre-status) error
   handleError = () => {
-    let { setCurrentView } = this.props;
     let { setCurrentError } = this.context;
-    setCurrentView('dashboard');
     this.setState({ selectedProvider: null });
     setCurrentError('Provisioning failed. Check your credentials and try again.');
+    this.props.history.push("dashboard");
   }
 
   renderSelectedProvider = () => {
     let { selectedProvider } = this.state;
-    let { projectName, setCurrentView, infras } = this.props;
+    let { projectName, infras } = this.props;
 
     let renderSkipHelper = () => {
       return (
@@ -84,7 +83,6 @@ export default class NewProject extends Component<PropsType, StateType> {
             handleError={this.handleError}
             projectName={projectName}
             infras={infras}
-            setCurrentView={setCurrentView}
             setSelectedProvisioner={(x: string | null) => {
               this.setState({ selectedProvider: x });
             }}
@@ -98,7 +96,6 @@ export default class NewProject extends Component<PropsType, StateType> {
             handleError={this.handleError}
             projectName={projectName}
             infras={infras}
-            setCurrentView={setCurrentView}
             setSelectedProvisioner={(x: string | null) => {
               this.setState({ selectedProvider: x });
             }}
@@ -121,7 +118,6 @@ export default class NewProject extends Component<PropsType, StateType> {
         return (
           <ExistingClusterSection 
             projectName={projectName}
-            setCurrentView={setCurrentView}
           >
             {renderSkipHelper()}
           </ExistingClusterSection>
@@ -191,6 +187,8 @@ export default class NewProject extends Component<PropsType, StateType> {
 }
 
 NewProject.contextType = Context;
+
+export default withRouter(NewProject);
 
 const Br = styled.div`
   width: 100%;

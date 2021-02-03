@@ -27,7 +27,6 @@ type PropsType = {
   currentCluster: ClusterType,
   setCurrentChart: (x: ChartType | null) => void,
   setSidebar: (x: boolean) => void,
-  setCurrentView: (x: string) => void,
 };
 
 type StateType = {
@@ -241,7 +240,7 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
       saveValuesStatus,
       tabOptions,
     } = this.state;
-    let { currentChart, setSidebar, setCurrentView } = this.props;
+    let { currentChart, setSidebar } = this.props;
     let chart = currentChart;
     
     switch (currentTab) {
@@ -254,7 +253,6 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
           <SettingsSection
             currentChart={chart}
             refreshChart={this.refreshChart}
-            setCurrentView={setCurrentView}
             setShowDeleteOverlay={(x: boolean) => this.setState({ showDeleteOverlay: x })}
           /> 
         );

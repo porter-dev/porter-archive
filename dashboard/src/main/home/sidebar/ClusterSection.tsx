@@ -7,12 +7,12 @@ import { Context } from 'shared/Context';
 import { ClusterType } from 'shared/types';
 
 import Drawer from './Drawer';
+import { RouteComponentProps, withRouter } from 'react-router';
 
-type PropsType = {
+type PropsType = RouteComponentProps & {
   forceCloseDrawer: boolean,
   releaseDrawer: () => void,
   setWelcome: (x: boolean) => void,
-  setCurrentView: (x: string) => void,
   currentView: string,
   isSelected: boolean,
   forceRefreshClusters: boolean,
@@ -28,7 +28,7 @@ type StateType = {
   prevProjectId: number
 };
 
-export default class ClusterSection extends Component<PropsType, StateType> {
+class ClusterSection extends Component<PropsType, StateType> {
 
   // Need to track initialized for animation mounting
   state = {
@@ -77,7 +77,7 @@ export default class ClusterSection extends Component<PropsType, StateType> {
           ) {
             this.setState({ clusters: [] });
             setCurrentCluster(null);
-            this.props.setCurrentView('dashboard');
+            this.props.history.push('dashboard');
           }
         }
       }
@@ -122,7 +122,6 @@ export default class ClusterSection extends Component<PropsType, StateType> {
           toggleDrawer={this.toggleDrawer}
           showDrawer={this.state.showDrawer}
           clusters={this.state.clusters}
-          setCurrentView={this.props.setCurrentView}
         />
       );
     }
@@ -139,7 +138,7 @@ export default class ClusterSection extends Component<PropsType, StateType> {
     if (clusters.length > 0) {
       return (
         <ClusterSelector isSelected={this.props.isSelected}>
-          <LinkWrapper onClick={() => this.props.setCurrentView('cluster-dashboard')}>
+          <LinkWrapper onClick={() => this.props.history.push('cluster-dashboard')}>
             <ClusterIcon><i className="material-icons">device_hub</i></ClusterIcon>
             <ClusterName>{currentCluster && currentCluster.name}</ClusterName>
           </LinkWrapper>
@@ -173,6 +172,8 @@ export default class ClusterSection extends Component<PropsType, StateType> {
 }
 
 ClusterSection.contextType = Context;
+
+export default withRouter(ClusterSection);
 
 const Plus = styled.div`
   margin-right: 10px;

@@ -11,7 +11,6 @@ import Loading from 'components/Loading';
 type PropsType = {
   currentTemplate: PorterTemplate,
   setCurrentTemplate: (x: PorterTemplate) => void,
-  setCurrentView: (x: string) => void,
 };
 
 type StateType = {
@@ -60,7 +59,6 @@ export default class ExpandedTemplate extends Component<PropsType, StateType> {
         <LaunchTemplate
           currentTemplate={this.props.currentTemplate}
           hideLaunch={() => this.setState({ showLaunchTemplate: false })}
-          setCurrentView={this.props.setCurrentView}
           values={this.state.values}
           form={this.state.form}
         />

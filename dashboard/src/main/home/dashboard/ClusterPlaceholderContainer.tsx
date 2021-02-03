@@ -4,9 +4,7 @@ import styled from 'styled-components';
 import { Context } from 'shared/Context';
 import ClusterPlaceholder from './ClusterPlaceholder';
 
-type PropsType = {
-  setCurrentView: (x: string) => void,
-};
+type PropsType = {};
 
 type StateType = {
 };
@@ -19,7 +17,6 @@ export default class ClusterPlaceholderContainer extends Component<PropsType, St
   render() {
     return (
       <ClusterPlaceholder
-        setCurrentView={this.props.setCurrentView}
         currentCluster={this.context.currentCluster}
       />
     );

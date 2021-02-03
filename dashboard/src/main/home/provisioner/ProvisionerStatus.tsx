@@ -12,10 +12,10 @@ import { filterOldInfras } from 'shared/common';
 
 import Helper from 'components/values-form/Helper';
 import InfraStatuses from './InfraStatuses';
+import { RouteComponentProps, withRouter } from "react-router";
+import { Link } from "react-router-dom";
 
-type PropsType = {
-  setCurrentView: (x: string) => void,
-}
+type PropsType = RouteComponentProps & {};
 
 type StateType = {
   error: boolean,
@@ -35,7 +35,7 @@ const dummyInfras = [
   { kind: 'ecr', status: 'created', id: 2, project_id: 1 },
 ];
 
-export default class ProvisionerStatus extends Component<PropsType, StateType> {
+class ProvisionerStatus extends Component<PropsType, StateType> {
   state = {
     error: false,
     logs: [] as string[],
@@ -210,8 +210,7 @@ export default class ProvisionerStatus extends Component<PropsType, StateType> {
         } else if (res.data) {
           let clusters = res.data;
           if (clusters.length > 0) {
-            // console.log('response :', res.data);
-            this.props.setCurrentView('dashboard');
+            this.props.history.push("dashboard");
             // console.log('provision end project: ', this.context.currentProject);
             // console.log('provision end cluster: ', this.context.currentCluster);
             clearInterval(myInterval);
@@ -251,7 +250,6 @@ export default class ProvisionerStatus extends Component<PropsType, StateType> {
   
   render() {
     let { error, triggerEnd, infras } = this.state;
-    let { setCurrentView } = this.props;
     
     let maxStep = 0;
     let currentStep = 0;
@@ -278,41 +276,42 @@ export default class ProvisionerStatus extends Component<PropsType, StateType> {
 
     return (
       <StyledProvisioner>
-        {error 
-          ? (
-            <>
-              <TitleSection>
-                <Title><img src={warning} /> Provisioning Error</Title>
-              </TitleSection>
-    
-              <Helper>
-                Porter encountered an error while provisioning.
-                <Link onClick={() => setCurrentView('dashboard')}>
-                  Exit to dashboard
-                </Link> 
-                to try again with new credentials.
-              </Helper>
-            </>
-          ) : (
-            <>
-              <TitleSection>
-                <Title><img src={loading} /> Setting Up Porter</Title>
-              </TitleSection>
-              <Helper>
-                Porter is currently provisioning resources in your cloud provider:
-              </Helper>
-            </>
-          )
-        }
-      
+        {error ? (
+          <>
+            <TitleSection>
+              <Title>
+                <img src={warning} /> Provisioning Error
+              </Title>
+            </TitleSection>
+
+            <Helper>
+              Porter encountered an error while provisioning.
+              <Link to="dashboard">Exit to dashboard</Link>
+              to try again with new credentials.
+            </Helper>
+          </>
+        ) : (
+          <>
+            <TitleSection>
+              <Title>
+                <img src={loading} /> Setting Up Porter
+              </Title>
+            </TitleSection>
+            <Helper>
+              Porter is currently provisioning resources in your cloud provider:
+            </Helper>
+          </>
+        )}
+
         <LoadingBar>
-          <Loaded 
+          <Loaded
             progress={
-              error ? (
-                '0%'
-              ) : (
-                (((currentStep / (maxStep == 0 ? 1 : maxStep)) * 100).toString() + '%')
-              )
+              error
+                ? "0%"
+                : (
+                    (currentStep / (maxStep == 0 ? 1 : maxStep)) *
+                    100
+                  ).toString() + "%"
             }
           />
         </LoadingBar>
@@ -322,15 +321,15 @@ export default class ProvisionerStatus extends Component<PropsType, StateType> {
           <Wrapper ref={this.parentRef}>{this.renderLogs()}</Wrapper>
         </LogStream>
 
-        <Helper>
-          (Provisioning usually takes around 15 minutes)
-        </Helper>
+        <Helper>(Provisioning usually takes around 15 minutes)</Helper>
       </StyledProvisioner>
     );
   }
 }
 
 ProvisionerStatus.contextType = Context;
+
+export default withRouter(ProvisionerStatus);
 
 const Options = styled.div`
   width: 100%;
@@ -361,11 +360,11 @@ const Refresh = styled.div`
   }
 `
 
-const Link = styled.a`
-  cursor: pointer;
-  margin-left: 5px;
-  margin-right: 5px;
-`;
+// const Link = styled.a`
+//   cursor: pointer;
+//   margin-left: 5px;
+//   margin-right: 5px;
+// `;
 
 const Warning = styled.span`
   color: ${(props: { highlight: boolean, makeFlush?: boolean }) => props.highlight ? '#f5cb42' : ''};

@@ -4,10 +4,10 @@ import gradient from 'assets/gradient.jpg';
 
 import { Context } from 'shared/Context';
 import { ProjectType, InfraType } from 'shared/types';
+import { RouteComponentProps, withRouter } from 'react-router';
 
-type PropsType = {
+type PropsType = RouteComponentProps & {
   currentProject: ProjectType,
-  setCurrentView: (x: string) => void,
   projects: ProjectType[],
 };
 
@@ -15,7 +15,7 @@ type StateType = {
   expanded: boolean
 };
 
-export default class ProjectSection extends Component<PropsType, StateType> {
+class ProjectSection extends Component<PropsType, StateType> {
   state = {
     expanded: false,
   };
@@ -50,7 +50,7 @@ export default class ProjectSection extends Component<PropsType, StateType> {
             <Option
               selected={false}
               lastItem={true}
-              onClick={() => this.props.setCurrentView('new-project')}
+              onClick={() => this.props.history.push('new-project')}
             >
               <ProjectIconAlt>+</ProjectIconAlt>
               <ProjectLabel>Create a Project</ProjectLabel>
@@ -86,7 +86,7 @@ export default class ProjectSection extends Component<PropsType, StateType> {
       );
     }
     return (
-      <InitializeButton onClick={() => this.props.setCurrentView('new-project')}>
+      <InitializeButton onClick={() => this.props.history.push('new-project')}>
         <Plus>+</Plus> Create a Project
       </InitializeButton>
     );
@@ -94,6 +94,8 @@ export default class ProjectSection extends Component<PropsType, StateType> {
 }
 
 ProjectSection.contextType = Context;
+
+export default withRouter(ProjectSection);
 
 const ProjectLabel = styled.div`
   overflow: hidden;

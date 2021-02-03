@@ -17,7 +17,6 @@ type PropsType = {
   selectedTag: string | null,
   setSelectedImageUrl: (x: string) => void,
   setSelectedTag: (x: string) => void,
-  setCurrentView: (x: string) => void,
 };
 
 type StateType = {

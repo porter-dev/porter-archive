@@ -10,11 +10,11 @@ import ChartList from './chart/ChartList';
 import NamespaceSelector from './NamespaceSelector';
 import SortSelector from './SortSelector';
 import ExpandedChart from './expanded-chart/ExpandedChart';
+import { Redirect, RouteComponentProps, withRouter } from 'react-router';
 
-type PropsType = {
+type PropsType = RouteComponentProps & {
   currentCluster: ClusterType,
-  setSidebar: (x: boolean) => void
-  setCurrentView: (x: string) => void,
+  setSidebar: (x: boolean) => void,
 };
 
 type StateType = {
@@ -23,7 +23,7 @@ type StateType = {
   currentChart: ChartType | null
 };
 
-export default class ClusterDashboard extends Component<PropsType, StateType> {
+class ClusterDashboard extends Component<PropsType, StateType> {
   state = {
     namespace: 'default',
     sortType: (localStorage.getItem("SortType") ? localStorage.getItem('SortType') : 'Newest'),
@@ -59,7 +59,7 @@ export default class ClusterDashboard extends Component<PropsType, StateType> {
   }
 
   renderContents = () => {
-    let { currentCluster, setSidebar, setCurrentView } = this.props;
+    let { currentCluster, setSidebar } = this.props;
     
     if (this.state.currentChart) {
       return (
@@ -69,7 +69,6 @@ export default class ClusterDashboard extends Component<PropsType, StateType> {
           currentChart={this.state.currentChart}
           setCurrentChart={(x: ChartType | null) => this.setState({ currentChart: x })}
           setSidebar={setSidebar}
-          setCurrentView={setCurrentView} // Link to integrations from chart settings
         />
       );
     }
@@ -81,9 +80,7 @@ export default class ClusterDashboard extends Component<PropsType, StateType> {
           <Title>{currentCluster.name}</Title>
           <i 
             className="material-icons"
-            onClick={() => this.context.setCurrentModal('UpdateClusterModal', { 
-              setCurrentView: this.props.setCurrentView,
-            })}
+            onClick={() => this.context.setCurrentModal('UpdateClusterModal')}
           >
             more_vert
           </i>
@@ -102,7 +99,7 @@ export default class ClusterDashboard extends Component<PropsType, StateType> {
         
         <ControlRow>
           <Button
-            onClick={() => this.props.setCurrentView('templates')}
+            onClick={() => this.props.history.push("templates")}
           >
             <i className="material-icons">add</i> Deploy Template
           </Button>
@@ -138,6 +135,8 @@ export default class ClusterDashboard extends Component<PropsType, StateType> {
 }
 
 ClusterDashboard.contextType = Context;
+
+export default withRouter(ClusterDashboard);
 
 const ControlRow = styled.div`
   display: flex;

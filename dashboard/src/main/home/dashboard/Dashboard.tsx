@@ -9,9 +9,9 @@ import api from 'shared/api';
 
 import ProvisionerSettings from '../provisioner/ProvisionerSettings';
 import ClusterPlaceholderContainer from './ClusterPlaceholderContainer';
+import { Redirect, RouteComponentProps, withRouter } from 'react-router';
 
-type PropsType = {
-  setCurrentView: (x: string) => void,
+type PropsType = RouteComponentProps & {
   projectId: number | null,
 };
 
@@ -19,7 +19,7 @@ type StateType = {
   infras: InfraType[],
 };
 
-export default class Dashboard extends Component<PropsType, StateType> {
+class Dashboard extends Component<PropsType, StateType> {
   state = {
     infras: [] as InfraType[],
   }
@@ -49,13 +49,11 @@ export default class Dashboard extends Component<PropsType, StateType> {
   }
 
   onShowProjectSettings = () => {
-    let { setCurrentView } = this.props;
-    setCurrentView('project-settings');
+    this.props.history.push("project-settings");
   }
 
   render() {
     let { currentProject, currentCluster } = this.context;
-    let { setCurrentView } = this.props;
     let { infras } = this.state;
     let { onShowProjectSettings } = this;
     return (
@@ -103,14 +101,11 @@ export default class Dashboard extends Component<PropsType, StateType> {
                     This project currently has no clusters conncted.
                     </Banner>
                   <ProvisionerSettings 
-                    setCurrentView={setCurrentView} 
                     infras={infras}
                   />
                 </>
               ) : (
-                <ClusterPlaceholderContainer
-                  setCurrentView={this.props.setCurrentView} 
-                />
+                <ClusterPlaceholderContainer/>
               )
             }
           </DashboardWrapper>
@@ -121,6 +116,8 @@ export default class Dashboard extends Component<PropsType, StateType> {
 }
 
 Dashboard.contextType = Context;
+
+export default withRouter(Dashboard);
 
 const DashboardWrapper = styled.div`
   padding-bottom: 100px;

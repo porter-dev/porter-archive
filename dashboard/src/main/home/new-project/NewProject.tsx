@@ -9,9 +9,7 @@ import InputRow from 'components/values-form/InputRow';
 import Helper from 'components/values-form/Helper';
 import ProvisionerSettings from '../provisioner/ProvisionerSettings';
 
-type PropsType = {
-  setCurrentView: (x: string, data?: any) => void,
-};
+type PropsType = {};
 
 type StateType = {
   projectName: string,
@@ -25,7 +23,6 @@ export default class NewProject extends Component<PropsType, StateType> {
   }
 
   render() {
-    let { setCurrentView } = this.props;
     let { projectName } = this.state;
     return (
       <StyledNewProject>
@@ -54,7 +51,6 @@ export default class NewProject extends Component<PropsType, StateType> {
         </InputWrapper>
         <ProvisionerSettings 
           isInNewProject={true}
-          setCurrentView={setCurrentView} 
           projectName={projectName}
         />
         <Br />

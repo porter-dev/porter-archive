@@ -10,7 +10,6 @@ import Loading from 'components/Loading';
 
 type PropsType = {
   currentCluster: ClusterType,
-  setCurrentView: (x: string) => void,
 };
 
 type StateType = {
@@ -59,7 +58,7 @@ export default class ClusterPlaceholder extends Component<PropsType, StateType> 
       );
     } else {
       return (
-        <ClusterList setCurrentView={this.props.setCurrentView} />
+        <ClusterList/>
       );
     }
   }

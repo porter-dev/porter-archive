@@ -61,12 +61,12 @@ class Templates extends Component<PropsType, StateType> {
   
   render() {
     return (
-      <>
+      <StyledClusterList>
         <Helper>Clusters connected to this project:</Helper>
         <TemplateList>
           {this.renderClusters()}
         </TemplateList>
-      </>
+      </StyledClusterList>
     );
   }
 }
@@ -74,6 +74,11 @@ class Templates extends Component<PropsType, StateType> {
 Templates.contextType = Context;
 
 export default withRouter(Templates)
+
+const StyledClusterList = styled.div`
+  margin-top: -17px;
+  padding-left: 2px;
+`;
 
 const DashboardIcon = styled.div`
   position: relative;

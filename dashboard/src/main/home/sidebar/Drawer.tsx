@@ -4,21 +4,21 @@ import close from 'assets/close.png';
 
 import { Context } from 'shared/Context';
 import { ClusterType } from 'shared/types';
+import { RouteComponentProps, withRouter } from 'react-router';
 
-type PropsType = {
+type PropsType = RouteComponentProps & {
   toggleDrawer: () => void,
   showDrawer: boolean,
   clusters: ClusterType[],
-  setCurrentView: (x: string) => void
 };
 
 type StateType = {
 };
 
-export default class Drawer extends Component<PropsType, StateType> {
+class Drawer extends Component<PropsType, StateType> {
 
   renderClusterList = (): JSX.Element[] | JSX.Element => {
-    let { clusters, setCurrentView } = this.props;
+    let { clusters } = this.props;
     let { currentCluster, setCurrentCluster } = this.context;
 
     if (clusters.length > 0 && currentCluster) {
@@ -34,7 +34,7 @@ export default class Drawer extends Component<PropsType, StateType> {
           <ClusterOption
             key={i}
             active={cluster.name === currentCluster.name}
-            onClick={() => { setCurrentCluster(cluster); setCurrentView('cluster-dashboard') }}
+            onClick={() => { setCurrentCluster(cluster); this.props.history.push('cluster-dashboard') }}
           >
             <ClusterIcon><i className="material-icons">device_hub</i></ClusterIcon>
             <ClusterName>{cluster.name}</ClusterName>
@@ -77,6 +77,8 @@ export default class Drawer extends Component<PropsType, StateType> {
 }
 
 Drawer.contextType = Context;
+
+export default withRouter(Drawer);
 
 const Plus = styled.div`
   margin-right: 10px;

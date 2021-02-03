@@ -7,10 +7,9 @@ import { ClusterType } from 'shared/types';
 import Helper from 'components/values-form/Helper';
 
 import Loading from 'components/Loading';
+import { RouteComponentProps, withRouter } from 'react-router';
 
-type PropsType = {
-  setCurrentView: (x: string) => void,
-};
+type PropsType = RouteComponentProps;
 
 type StateType = {
   loading: boolean,
@@ -18,7 +17,7 @@ type StateType = {
   clusters: ClusterType[],
 };
 
-export default class Templates extends Component<PropsType, StateType> {
+class Templates extends Component<PropsType, StateType> {
   state = {
     loading: true,
     error: '',
@@ -47,7 +46,7 @@ export default class Templates extends Component<PropsType, StateType> {
         <TemplateBlock 
           onClick={() => { 
             this.context.setCurrentCluster(cluster); 
-            this.props.setCurrentView('cluster-dashboard');
+            this.props.history.push('cluster-dashboard');
           }}
           key={i}
         >
@@ -73,6 +72,8 @@ export default class Templates extends Component<PropsType, StateType> {
 }
 
 Templates.contextType = Context;
+
+export default withRouter(Templates)
 
 const DashboardIcon = styled.div`
   position: relative;

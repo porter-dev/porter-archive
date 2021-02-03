@@ -11,6 +11,7 @@ import Register from './Register';
 import CurrentError from './CurrentError';
 import Home from './home/Home';
 import Loading from 'components/Loading';
+import PorterUrls from 'shared/urls';
 
 type PropsType = {
 };
@@ -67,6 +68,11 @@ export default class Main extends Component<PropsType, StateType> {
       return <Loading />
     }
 
+    const authedUrls: PorterUrls[] = [
+      "dashboard", "templates", "integrations", "new-project",
+      "cluster-dashboard", "provisioner", "project-settings"
+    ];
+
     return (
       <Switch>
         <Route path='/login' render={() => {
@@ -85,19 +91,24 @@ export default class Main extends Component<PropsType, StateType> {
           }
         }} />
 
-        <Route path='/dashboard' render={() => {
-          if (this.state.isLoggedIn && this.state.initialized) {
-            return (
-              <Home 
-                currentProject={this.context.currentProject}
-                currentCluster={this.context.currentCluster} 
-                logOut={this.handleLogOut} 
-              />
-            );
-          } else {
-            return <Redirect to='/' />
-          }
-        }}/>
+        // TODO: Possible template this into a map from url to routed home
+        {...authedUrls.map(route =>
+            <Route path={`/${route}`} render={() => {
+            if (this.state.isLoggedIn && this.state.initialized) {
+              return (
+                <Home 
+                  currentProject={this.context.currentProject}
+                  currentCluster={this.context.currentCluster} 
+                  currentRoute={route}
+                  logOut={this.handleLogOut} 
+                />
+              );
+            } else {
+              return <Redirect to='/' />
+            }
+          }}/>
+        )}
+        
 
         <Route path='/' render={() => {
           if (this.state.isLoggedIn) {

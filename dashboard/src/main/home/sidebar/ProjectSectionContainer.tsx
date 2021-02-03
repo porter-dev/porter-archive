@@ -4,9 +4,7 @@ import styled from 'styled-components';
 import { Context } from 'shared/Context';
 import ProjectSection from './ProjectSection';
 
-type PropsType = {
-  setCurrentView: (x: string) => void,
-};
+type PropsType = {};
 
 type StateType = {
 };
@@ -21,7 +19,6 @@ export default class ProjectSectionContainer extends Component<PropsType, StateT
       <ProjectSection
         currentProject={this.context.currentProject}
         projects={this.context.projects}
-        setCurrentView={this.props.setCurrentView}
       />
     );
   }

@@ -72,18 +72,16 @@ class Home extends Component<PropsType, StateType> {
         return;
       }
 
-      // if (res.data.length > 0 && (!currentCluster && !includesCompletedInfraSet(res.data))) {
-      //   // force refresh if currentView is identical set to provisioner. Tentative solution before refactoring.
-      //   this.setState({ currentView: 'dashboard'}, () => {
-      //     this.setState({ currentView: 'provisioner', sidebarReady: true, });
-      //   });
-      // } else if (this.state.ghRedirect) {
-      //   this.setState({ currentView: 'integrations', sidebarReady: true, ghRedirect: false });
-      // } else {
-      //   this.setState({ currentView: 'provisioner'}, () => {
-      //     this.setState({ currentView: 'dashboard', sidebarReady: true });
-      //   })
-      // }
+      if (res.data.length > 0 && (!currentCluster && !includesCompletedInfraSet(res.data))) {
+        this.props.history.push("provisioner");
+        this.setState({ sidebarReady: true });
+      } else if (this.state.ghRedirect) {
+        this.props.history.push("integrations");
+        this.setState({ sidebarReady: true, ghRedirect: false });
+      } else {
+        this.props.history.push("dashboard");
+        this.setState({ sidebarReady: true });
+      }
     });
   }
 

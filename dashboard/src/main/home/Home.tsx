@@ -37,7 +37,7 @@ type StateType = {
   currentView: string,
   handleDO: boolean, // Trigger DO infra calls after oauth flow if needed
   forceRefreshClusters: boolean, // For updating ClusterSection from modal on deletion
-
+  templateNamespace: string,
   // Track last project id for refreshing clusters on project change
   prevProjectId: number | null,
   sidebarReady: boolean, // Fixes error where ~1/3 times reloading to provisioner fails
@@ -51,6 +51,7 @@ export default class Home extends Component<PropsType, StateType> {
     currentView: 'dashboard',
     prevProjectId: null as number | null,
     forceRefreshClusters: false,
+    templateNamespace: '',
     sidebarReady: false,
     handleDO: false,
   }
@@ -220,6 +221,10 @@ export default class Home extends Component<PropsType, StateType> {
     this.getProjects(defaultProjectId);
   }
 
+  handleTemplateDeploy = (namespace: string) => {
+    this.setState({ currentView: 'cluster-dashboard', templateNamespace: namespace });
+  }
+
   // TODO: Need to handle the following cases. Do a deep rearchitecture (Prov -> Dashboard?) if need be:
   // 1. Make sure clicking cluster in course drawer shows cluster-dashboard
   // 2. Make sure switching projects shows appropriate initial view (dashboard || provisioner)
@@ -263,6 +268,8 @@ export default class Home extends Component<PropsType, StateType> {
       <DashboardWrapper>
         <ClusterDashboard
           currentCluster={currentCluster}
+          namespace={this.state.templateNamespace}
+          resetNamespace={() => this.setState({ templateNamespace: '' })}
           setSidebar={(x: boolean) => this.setState({ forceSidebar: x })}
           setCurrentView={(x: string) => this.setState({ currentView: x })}
         />
@@ -301,6 +308,7 @@ export default class Home extends Component<PropsType, StateType> {
       return (
         <Templates
           setCurrentView={(x: string) => this.setState({ currentView: x })}
+          postDeployRedirect={(x: string) => this.handleTemplateDeploy(x)}
         />
       );
     } else if (currentView === 'new-project') {

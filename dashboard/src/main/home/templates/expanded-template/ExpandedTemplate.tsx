@@ -12,6 +12,7 @@ type PropsType = {
   currentTemplate: PorterTemplate,
   setCurrentTemplate: (x: PorterTemplate) => void,
   setCurrentView: (x: string) => void,
+  postDeployRedirect: (x: string) => void,
 };
 
 type StateType = {
@@ -63,6 +64,7 @@ export default class ExpandedTemplate extends Component<PropsType, StateType> {
           setCurrentView={this.props.setCurrentView}
           values={this.state.values}
           form={this.state.form}
+          postDeployRedirect={this.props.postDeployRedirect}
         />
       );
     }

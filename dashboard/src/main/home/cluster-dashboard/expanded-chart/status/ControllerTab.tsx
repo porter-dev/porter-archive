@@ -228,7 +228,7 @@ const StatusColor = styled.div`
 `;
 
 const Name = styled.div`
-  max-width: calc(100% - 75px);
+  max-width: calc(100% - 106px);
   overflow: hidden;
   text-overflow: ellipsis;
   line-height: 16px;

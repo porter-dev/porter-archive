@@ -17,6 +17,7 @@ const tabOptions = [
 
 type PropsType = {
   setCurrentView: (x: string) => void, // Link to add integration from source selector
+  postDeployRedirect: (x: string) => void,
 };
 
 type StateType = {
@@ -101,6 +102,7 @@ export default class Templates extends Component<PropsType, StateType> {
           currentTemplate={this.state.currentTemplate}
           setCurrentTemplate={(currentTemplate: PorterTemplate) => this.setState({ currentTemplate })}
           setCurrentView={this.props.setCurrentView}
+          postDeployRedirect={this.props.postDeployRedirect}
         />
       );
     }

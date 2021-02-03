@@ -8,7 +8,6 @@ import { ActionConfigType } from '../../../shared/types';
 
 import IntegrationList from './IntegrationList';
 import IntegrationForm from './integration-form/IntegrationForm';
-import RepoList from '../../../components/repo-selector/RepoList';
 
 import GHIcon from '../../../assets/GithubIcon';
 
@@ -20,6 +19,7 @@ type StateType = {
   currentIntegration: string | null,
   currentOptions: any[],
   currentTitles: any[],
+  currentIds: any[],
   currentIntegrationData: any[],
 };
 
@@ -29,6 +29,7 @@ export default class Integrations extends Component<PropsType, StateType> {
     currentIntegration: null as string | null,
     currentOptions: [] as any[],
     currentTitles: [] as any[],
+    currentIds: [] as any[],
     currentIntegrationData: [] as any[],
   }
 
@@ -74,11 +75,20 @@ export default class Integrations extends Component<PropsType, StateType> {
         });
         break;
       case 'repo':
-        api.getProjectRepos('<token>', {}, { id: currentProject.id }, (err: any, res: any) => {
+        api.getGitRepos('<token>', {
+        }, { project_id: currentProject.id }, (err: any, res: any) => {
           if (err) {
             console.log(err);
           } else {
-            // console.log(res.data);
+            let currentOptions = [] as string[];
+            let currentTitles = [] as string[];
+            let currentIds = [] as any[];
+            res.data.forEach((item: any) => {
+              currentOptions.push(item.service);
+              currentTitles.push(item.repo_entity);
+              currentIds.push(item.id);
+            })
+            this.setState({ currentOptions, currentTitles, currentIds, currentIntegrationData: res.data })
           }
         });
         break;
@@ -174,9 +184,11 @@ export default class Integrations extends Component<PropsType, StateType> {
             <LineBreak />
   
             <IntegrationList
+              currentCategory={currentCategory}
               integrations={this.state.currentOptions}
               titles={this.state.currentTitles}
               setCurrent={(x: string) => this.setState({ currentIntegration: x })}
+              itemIdentifier={this.state.currentIntegrationData}
             />
           </div>
         );
@@ -200,21 +212,17 @@ export default class Integrations extends Component<PropsType, StateType> {
             </TitleSectionAlt>
   
             <LineBreak />
-  
-            <RepoList
-              actionConfig={{
-                git_repo: '',
-                image_repo_uri: '',
-                git_repo_id: 0,
-                dockerfile_path: '',
-              } as ActionConfigType}
-              setActionConfig={(x: ActionConfigType) => {}}
-              readOnly={true}
+
+            <IntegrationList
+              currentCategory={currentCategory}
+              integrations={this.state.currentOptions}
+              titles={this.state.currentTitles}
+              setCurrent={(x: string) => this.setState({ currentIntegration: x })}
+              itemIdentifier={this.state.currentIds}
             />
           </div>
         );
       }
-      
     }
     return (
       <div>
@@ -223,6 +231,7 @@ export default class Integrations extends Component<PropsType, StateType> {
         </TitleSection>
 
         <IntegrationList
+          currentCategory={''}
           integrations={['kubernetes', 'registry', 'repo']}
           setCurrent={(x: any) => this.setState({ currentCategory: x })}
           isCategory={true}

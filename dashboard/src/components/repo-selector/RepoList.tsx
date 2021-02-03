@@ -11,6 +11,7 @@ import Loading from '../Loading';
 type PropsType = {
   actionConfig: ActionConfigType | null,
   setActionConfig: (x: ActionConfigType) => void,
+  userId?: number,
   readOnly: boolean,
 };
 
@@ -18,7 +19,6 @@ type StateType = {
   repos: RepoType[],
   loading: boolean,
   error: boolean,
-  height: number,
 };
 
 export default class ActionConfEditor extends Component<PropsType, StateType> {
@@ -26,53 +26,53 @@ export default class ActionConfEditor extends Component<PropsType, StateType> {
     repos: [] as RepoType[],
     loading: true,
     error: false,
-    height: window.innerHeight - 256,
   }
 
   componentDidMount() {
-    if (this.props.readOnly) {
-      window.addEventListener('resize', this.updateHeight.bind(this));
-    }
-
     let { currentProject } = this.context;
 
     // Get repos
-    api.getGitRepos('<token>', {
-    }, { project_id: currentProject.id }, (err: any, res: any) => {
-      if (err) {
-        this.setState({ loading: false, error: true });
-      } else {
-        var allRepos: any = [];
-        for (let i = 0; i < res.data.length; i++) {
-          var grid = res.data[i].id;
-          api.getGitRepoList('<token>', {}, { project_id: currentProject.id, git_repo_id: grid }, (err: any, res: any) => {
-            if (err) {
-              console.log(err);
-              this.setState({ loading: false, error: true });
-            } else {
-              res.data.forEach((repo: any, id: number) => {
-                repo.GHRepoID = grid;
-              })
-              allRepos = allRepos.concat(res.data);
-              this.setState({ repos: allRepos, loading: false, error: false });
-            }
+    if (!this.props.userId && this.props.userId !== 0) {
+      api.getGitRepos('<token>', {
+      }, { project_id: currentProject.id }, (err: any, res: any) => {
+        if (err) {
+          this.setState({ loading: false, error: true });
+        } else {
+          var allRepos: any = [];
+          for (let i = 0; i < res.data.length; i++) {
+            var grid = res.data[i].id;
+            api.getGitRepoList('<token>', {}, { project_id: currentProject.id, git_repo_id: grid }, (err: any, res: any) => {
+              if (err) {
+                console.log(err);
+                this.setState({ loading: false, error: true });
+              } else {
+                res.data.forEach((repo: any, id: number) => {
+                  repo.GHRepoID = grid;
+                })
+                allRepos = allRepos.concat(res.data);
+                this.setState({ repos: allRepos, loading: false, error: false });
+              }
+            })
+          }
+          if (res.data.length < 1) {
+            this.setState({ loading: false, error: false });
+          }
+        }
+      });
+    } else {
+      let grid = this.props.userId;
+      api.getGitRepoList('<token>', {}, { project_id: currentProject.id, git_repo_id: grid }, (err: any, res: any) => {
+        if (err) {
+          console.log(err);
+          this.setState({ loading: false, error: true });
+        } else {
+          res.data.forEach((repo: any, id: number) => {
+            repo.GHRepoID = grid;
           })
+          this.setState({ repos: res.data, loading: false, error: false });
         }
-        if (res.data.length < 1) {
-          this.setState({ loading: false, error: false });
-        }
-      }
-    });
-  }
-
-  componentWillUnmount() {
-    if (this.props.readOnly) {
-      window.removeEventListener('resize', this.updateHeight.bind(this));
+      })
     }
-  }
-
-  updateHeight = () => {
-    this.setState({ height: window.innerHeight - 256 });
   }
 
   setRepo = (x: RepoType) => {
@@ -111,9 +111,7 @@ export default class ActionConfEditor extends Component<PropsType, StateType> {
   renderExpanded = () => {
     if (this.props.readOnly) {
       return (
-        <ExpandedWrapperAlt
-          heightLimit={this.state.height}
-        >
+        <ExpandedWrapperAlt>
           {this.renderRepoList()}
         </ExpandedWrapperAlt>
       );
@@ -184,6 +182,6 @@ const ExpandedWrapper = styled.div`
 
 const ExpandedWrapperAlt = styled(ExpandedWrapper)`
   border: 1px solid #ffffff44;
-  max-height: ${(props: { heightLimit: number }) => props.heightLimit}px;
+  max-height: 275px;
   overflow-y: auto;
 `;

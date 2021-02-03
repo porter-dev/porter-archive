@@ -23,6 +23,7 @@ type PropsType = {
   setCurrentView: (x: string) => void,
   values: any,
   form: any,
+  postDeployRedirect: (x: string) => void,
 };
 
 type StateType = {
@@ -126,17 +127,18 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
           error: err
         })
       } else {
+        if (this.state.sourceType === 'repo') {
+          this.createGHAction(name, this.state.selectedNamespace);
+        }
         // this.props.setCurrentView('cluster-dashboard');
-        this.setState({ saveValuesStatus: 'successful' });
+        this.setState({ saveValuesStatus: 'successful' }, () => {
+          this.props.postDeployRedirect(this.state.selectedNamespace);
+        });
         posthog.capture('Deployed template', {
           name: this.props.currentTemplate.name,
           namespace: this.state.selectedNamespace,
           values: values,
         })
-
-        if (this.state.sourceType === 'repo') {
-          this.createGHAction(name, this.state.selectedNamespace);
-        }
       }
     });
   }
@@ -171,7 +173,16 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
 
     _.set(values, "image.repository", imageUrl)
     _.set(values, "image.tag", tag)
-    console.log(values);
+
+    console.log(`
+      ${this.props.currentTemplate.name}\n
+      ${this.state.selectedImageUrl}\n
+      ${values}\n
+      ${this.state.selectedNamespace}\n
+      ${name}\n
+      ${currentProject.id}\n
+      ${currentCluster.id}\n}
+    `)
 
     api.deployTemplate('<token>', {
       templateName: this.props.currentTemplate.name,
@@ -195,17 +206,18 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
           error: err
         })
       } else {
+        if (this.state.sourceType === 'repo') {
+          this.createGHAction(name, this.state.selectedNamespace);
+        }
         // this.props.setCurrentView('cluster-dashboard');
-        this.setState({ saveValuesStatus: 'successful' });
+        this.setState({ saveValuesStatus: 'successful' }, () => {
+          this.props.postDeployRedirect(this.state.selectedNamespace);
+        });
         posthog.capture('Deployed template', {
           name: this.props.currentTemplate.name,
           namespace: this.state.selectedNamespace,
           values: values,
         })
-
-        if (this.state.sourceType === 'repo') {
-          this.createGHAction(name, this.state.selectedNamespace);
-        }
       }
     });
   }
@@ -265,21 +277,18 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
           clusterMap[cluster.name] = cluster;
         })
         if (res.data.length > 0) {
-          this.setState({ clusterOptions, clusterMap }, () => {
-            console.log(clusterMap);
-          });
+          this.setState({ clusterOptions, clusterMap });
         }
       }
     });
 
-    this.updateNamespaces();
+    this.updateNamespaces(currentCluster.id);
   }
 
-  updateNamespaces = () => {
-    let { currentCluster, currentProject } = this.context;
-    console.log('hello there');
+  updateNamespaces = (id: number) => {
+    let { currentProject } = this.context;
     api.getNamespaces('<token>', {
-      cluster_id: currentCluster.id,
+      cluster_id: id,
     }, { id: currentProject.id }, (err: any, res: any) => {
       if (err) {
         console.log(err)
@@ -443,7 +452,9 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
           <Selector
             activeValue={this.state.selectedCluster}
             setActiveValue={(cluster: string) => {
-              this.context.setCurrentCluster(this.state.clusterMap[cluster], this.updateNamespaces());
+              this.context.setCurrentCluster(this.state.clusterMap[cluster]);
+              this.updateNamespaces(this.state.clusterMap[cluster].id);
+              console.log(this.state.clusterMap[cluster]);
               this.setState({ selectedCluster: cluster });
             }}
             options={this.state.clusterOptions}

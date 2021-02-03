@@ -1,6 +1,7 @@
 import aws from '../assets/aws.png';
 import digitalOcean from '../assets/do.png';
 import gcp from '../assets/gcp.png';
+import github from '../assets/github.png';
 import { InfraType } from '../shared/types';
 
 export const infraNames: any = {
@@ -63,6 +64,14 @@ export const integrationList: any = {
   'do': {
     icon: digitalOcean,
     label: 'DigitalOcean',
+  },
+  'github': {
+    icon: github,
+    label: 'GitHub',
+  },
+  'gitlab': {
+    icon: 'https://about.gitlab.com/images/press/logo/png/gitlab-icon-rgb.png',
+    label: 'Gitlab',
   }
 };
 

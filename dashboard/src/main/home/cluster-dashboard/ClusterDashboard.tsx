@@ -13,8 +13,10 @@ import ExpandedChart from './expanded-chart/ExpandedChart';
 
 type PropsType = {
   currentCluster: ClusterType,
+  namespace: string,
   setSidebar: (x: boolean) => void
   setCurrentView: (x: string) => void,
+  resetNamespace: () => void,
 };
 
 type StateType = {
@@ -28,6 +30,14 @@ export default class ClusterDashboard extends Component<PropsType, StateType> {
     namespace: 'default',
     sortType: (localStorage.getItem("SortType") ? localStorage.getItem('SortType') : 'Newest'),
     currentChart: null as (ChartType | null)
+  }
+
+  componentDidMount() {
+    if (this.props.namespace) {
+      this.setState({ namespace: this.props.namespace }, () => {
+        this.props.resetNamespace();
+      })
+    }
   }
 
   componentDidUpdate(prevProps: PropsType) {

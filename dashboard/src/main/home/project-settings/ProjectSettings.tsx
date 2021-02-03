@@ -8,9 +8,7 @@ import TabRegion from 'components/TabRegion';
 import Heading from 'components/values-form/Heading';
 import Helper from 'components/values-form/Helper';
 
-type PropsType = {
-  setCurrentView: (x: string) => void,
-}
+type PropsType = {};
 
 type StateType = {
   projectName: string,
@@ -49,9 +47,8 @@ export default class ProjectSettings extends Component<PropsType, StateType> {
 
           <DeleteButton
             onClick={() => {
-              this.context.setCurrentModal('UpdateProjectModal', {
+              this.context.setCurrentModal("UpdateProjectModal", {
                 currentProject: this.context.currentProject,
-                setCurrentView: this.props.setCurrentView,
               });
             }}
           >

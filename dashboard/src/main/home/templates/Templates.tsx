@@ -15,9 +15,7 @@ const tabOptions = [
   { label: 'Community Templates', value: 'community' }
 ];
 
-type PropsType = {
-  setCurrentView: (x: string) => void, // Link to add integration from source selector
-};
+type PropsType = {};
 
 type StateType = {
   currentTemplate: PorterTemplate | null,
@@ -100,7 +98,6 @@ export default class Templates extends Component<PropsType, StateType> {
         <ExpandedTemplate
           currentTemplate={this.state.currentTemplate}
           setCurrentTemplate={(currentTemplate: PorterTemplate) => this.setState({ currentTemplate })}
-          setCurrentView={this.props.setCurrentView}
         />
       );
     }

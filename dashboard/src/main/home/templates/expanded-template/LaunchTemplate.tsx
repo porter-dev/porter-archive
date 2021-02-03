@@ -20,7 +20,6 @@ import { safeDump } from 'js-yaml';
 type PropsType = {
   currentTemplate: any,
   hideLaunch: () => void,
-  setCurrentView: (x: string) => void,
   values: any,
   form: any,
 };
@@ -302,7 +301,6 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
             setSelectedImageUrl={this.setSelectedImageUrl}
             setSelectedTag={(x: string) => this.setState({ selectedTag: x })}
             forceExpanded={true}
-            setCurrentView={this.props.setCurrentView}
           />
           <br />
         </>

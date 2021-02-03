@@ -24,17 +24,19 @@ import ProjectSettings from './project-settings/ProjectSettings';
 import ConfirmOverlay from 'components/ConfirmOverlay';
 import Modal from './modals/Modal';
 import * as FullStory from '@fullstory/browser';
+import { Redirect, RouteComponentProps, withRouter } from 'react-router';
+import PorterUrls from 'shared/urls';
 
-type PropsType = {
+type PropsType = RouteComponentProps & {
   logOut: () => void,
   currentProject: ProjectType,
   currentCluster: ClusterType,
+  currentRoute: PorterUrls,
 };
 
 type StateType = {
   forceSidebar: boolean,
   showWelcome: boolean,
-  currentView: string,
   handleDO: boolean, // Trigger DO infra calls after oauth flow if needed
   ghRedirect: boolean,
   forceRefreshClusters: boolean, // For updating ClusterSection from modal on deletion
@@ -45,11 +47,10 @@ type StateType = {
 };
 
 // TODO: Handle cluster connected but with some failed infras (no successful set)
-export default class Home extends Component<PropsType, StateType> {
+class Home extends Component<PropsType, StateType> {
   state = {
     forceSidebar: true,
     showWelcome: false,
-    currentView: 'dashboard',
     prevProjectId: null as number | null,
     forceRefreshClusters: false,
     sidebarReady: false,
@@ -72,16 +73,14 @@ export default class Home extends Component<PropsType, StateType> {
       }
 
       if (res.data.length > 0 && (!currentCluster && !includesCompletedInfraSet(res.data))) {
-        // force refresh if currentView is identical set to provisioner. Tentative solution before refactoring.
-        this.setState({ currentView: 'dashboard'}, () => {
-          this.setState({ currentView: 'provisioner', sidebarReady: true, });
-        });
+        this.props.history.push("provisioner");
+        this.setState({ sidebarReady: true });
       } else if (this.state.ghRedirect) {
-        this.setState({ currentView: 'integrations', sidebarReady: true, ghRedirect: false });
+        this.props.history.push("integrations");
+        this.setState({ sidebarReady: true, ghRedirect: false });
       } else {
-        this.setState({ currentView: 'provisioner'}, () => {
-          this.setState({ currentView: 'dashboard', sidebarReady: true });
-        })
+        this.props.history.push("dashboard");
+        this.setState({ sidebarReady: true });
       }
     });
   }
@@ -94,7 +93,7 @@ export default class Home extends Component<PropsType, StateType> {
         console.log(err);
       } else if (res.data) {
         if (res.data.length === 0) {
-          this.setState({ currentView: 'new-project', sidebarReady: true, });
+          <Redirect to="new-project"></Redirect>
         } else if (res.data.length > 0 && !currentProject) {
           setProjects(res.data);
 
@@ -106,7 +105,7 @@ export default class Home extends Component<PropsType, StateType> {
               } 
             });
             this.context.setCurrentProject(foundProject);
-            this.setState({ currentView: 'provisioner' });
+            <Redirect to="provisioner"></Redirect>
           }
 
           if (!foundProject) {
@@ -153,7 +152,7 @@ export default class Home extends Component<PropsType, StateType> {
         console.log(err);
         return;
       }
-      this.setState({ currentView: 'provisioner' });
+      <Redirect to="provisioner"></Redirect>
     });
   }
 
@@ -181,7 +180,7 @@ export default class Home extends Component<PropsType, StateType> {
           });
         } else if (infras[0] === 'docr') {
           this.provisionDOCR(tgtIntegration.id, tier, () => {
-            this.setState({ currentView: 'provisioner' });
+            <Redirect to="provisioner"></Redirect>
           });
         } else {
           this.provisionDOKS(tgtIntegration.id, region);
@@ -271,14 +270,15 @@ export default class Home extends Component<PropsType, StateType> {
         <ClusterDashboard
           currentCluster={currentCluster}
           setSidebar={(x: boolean) => this.setState({ forceSidebar: x })}
-          setCurrentView={(x: string) => this.setState({ currentView: x })}
+          // setCurrentView={(x: string) => this.setState({ currentView: x })}
         />
       </DashboardWrapper>
     );
   }
 
   renderContents = () => {
-    let { currentView, handleDO } = this.state;
+    // let { handleDO } = this.state;
+    let currentView = this.props.currentRoute;
     if (this.context.currentProject && currentView !== 'new-project') {
       if (currentView === 'cluster-dashboard') {
         return this.renderDashboard();
@@ -286,7 +286,6 @@ export default class Home extends Component<PropsType, StateType> {
         return (
           <DashboardWrapper>
             <Dashboard 
-              setCurrentView={(x: string) => this.setState({ currentView: x })}
               projectId={this.context.currentProject?.id}
             />
           </DashboardWrapper>
@@ -295,35 +294,21 @@ export default class Home extends Component<PropsType, StateType> {
         return <Integrations />;
       } else if (currentView === 'provisioner') {
         return (
-          <ProvisionerStatus
-            setCurrentView={(x: string) => this.setState({ currentView: x })} 
-          />
+          <ProvisionerStatus/>
         );
       } else if (currentView === 'project-settings') {
         return (
-          <ProjectSettings  setCurrentView={(x: string) => this.setState({ currentView: x })} />
+          <ProjectSettings />
         )
       }
 
       return (
-        <Templates
-          setCurrentView={(x: string) => this.setState({ currentView: x })}
-        />
+        <Templates/>
       );
     } else if (currentView === 'new-project') {
       return (
-        <NewProject 
-          setCurrentView={(x: string, data: any ) => this.setState({ currentView: x })} 
-        />
+        <NewProject/>
       );
-    }
-  }
-
-  setCurrentView = (x: string) => {
-    if (x === 'dashboard') {
-      this.initializeView();
-    } else {
-      this.setState({ currentView: x });
     }
   }
 
@@ -331,15 +316,14 @@ export default class Home extends Component<PropsType, StateType> {
     if (this.context.projects.length > 0) {
 
       // Force sidebar closed on first provision
-      if (this.state.currentView === 'provisioner' && this.state.forceSidebar) {
+      if (this.props.currentRoute === 'provisioner' && this.state.forceSidebar) {
         this.setState({ forceSidebar: false });
       } else {
         return (
           <Sidebar
             forceSidebar={this.state.forceSidebar}
             setWelcome={(x: boolean) => this.setState({ showWelcome: x })}
-            setCurrentView={this.setCurrentView}
-            currentView={this.state.currentView}
+            currentView={this.props.currentRoute}
             forceRefreshClusters={this.state.forceRefreshClusters}
             setRefreshClusters={(x: boolean) => this.setState({ forceRefreshClusters: x })}
           />
@@ -359,7 +343,7 @@ export default class Home extends Component<PropsType, StateType> {
           this.context.setCurrentProject(res.data[0]);
         } else {
           this.context.setCurrentProject(null);
-          this.setState({ currentView: 'new-project' });
+          this.props.history.push("new-project");
         }
         this.context.setCurrentModal(null, null);
       }
@@ -434,7 +418,7 @@ export default class Home extends Component<PropsType, StateType> {
       }
     });
     setCurrentModal(null, null)
-    this.setState({ currentView: 'dashboard' });
+    this.props.history.push("dashboard");
   }
 
   render() {
@@ -486,7 +470,7 @@ export default class Home extends Component<PropsType, StateType> {
         <ViewWrapper>
           <Navbar
             logOut={this.props.logOut}
-            currentView={this.state.currentView} // For form feedback
+            currentView={this.props.currentRoute} // For form feedback
           />
           {this.renderContents()}
         </ViewWrapper>
@@ -503,6 +487,8 @@ export default class Home extends Component<PropsType, StateType> {
 }
 
 Home.contextType = Context;
+
+export default withRouter(Home);
 
 const ViewWrapper = styled.div`
   height: 100%;

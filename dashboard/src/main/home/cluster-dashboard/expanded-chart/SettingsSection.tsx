@@ -16,7 +16,6 @@ import InputRow from 'components/values-form/InputRow';
 type PropsType = {
   currentChart: ChartType,
   refreshChart: () => void,
-  setCurrentView: (x: string) => void,
   setShowDeleteOverlay: (x: boolean) => void,
 };
 
@@ -138,7 +137,6 @@ export default class SettingsSection extends Component<PropsType, StateType> {
             setSelectedImageUrl={(x: string) => this.setState({ selectedImageUrl: x })}
             setSelectedTag={(x: string) => this.setState({ selectedTag: x })}
             forceExpanded={true}
-            setCurrentView={this.props.setCurrentView}
           />
         </>
       );

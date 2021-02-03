@@ -8,23 +8,23 @@ import { Context } from 'shared/Context';
 
 import SaveButton from 'components/SaveButton';
 import CheckboxList from 'components/values-form/CheckboxList';
+import { RouteComponentProps, withRouter } from 'react-router';
 
-type PropsType = {
+type PropsType = RouteComponentProps & {
   projectName: string,
-  setCurrentView: (x: string, data?: any) => void,
 };
 
 type StateType = {
   buttonStatus: string,
 };
 
-export default class ExistingClusterSection extends Component<PropsType, StateType> {
+class ExistingClusterSection extends Component<PropsType, StateType> {
   state = {
     buttonStatus: '',
   }
 
   onCreateProject = () => {
-    let { projectName, setCurrentView } = this.props;
+    let { projectName } = this.props;
     let { user, setProjects, setCurrentProject } = this.context;
 
     this.setState({ buttonStatus: 'loading' });
@@ -45,7 +45,8 @@ export default class ExistingClusterSection extends Component<PropsType, StateTy
                 return el.name === projectName;
               });
               setCurrentProject(proj);
-              setCurrentView('dashboard', null);
+
+              this.props.history.push("dashboard")
             } 
           }
         });
@@ -77,6 +78,8 @@ export default class ExistingClusterSection extends Component<PropsType, StateTy
 }
 
 ExistingClusterSection.contextType = Context;
+
+export default withRouter(ExistingClusterSection);
 
 const Padding = styled.div`
   height: 15px;

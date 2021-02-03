@@ -13,12 +13,12 @@ import Helper from 'components/values-form/Helper';
 import Heading from 'components/values-form/Heading';
 import SaveButton from 'components/SaveButton';
 import CheckboxList from 'components/values-form/CheckboxList';
+import { RouteComponentProps, withRouter } from 'react-router';
 
-type PropsType = {
+type PropsType = RouteComponentProps & {
   setSelectedProvisioner: (x: string | null) => void,
   handleError: () => void,
   projectName: string,
-  setCurrentView: (x: string | null, data?: any) => void,
   infras: InfraType[],
 };
 
@@ -59,7 +59,7 @@ const regionOptions = [
 ];
 
 // TODO: Consolidate across forms w/ HOC
-export default class AWSFormSection extends Component<PropsType, StateType> {
+class AWSFormSection extends Component<PropsType, StateType> {
   state = {
     awsRegion: 'us-east-1',
     awsAccessId: '',
@@ -185,7 +185,7 @@ export default class AWSFormSection extends Component<PropsType, StateType> {
 
   provisionEKS = () => {
     console.log('Provisioning EKS');
-    let { setCurrentView, handleError } = this.props;
+    let { handleError } = this.props;
     let { awsAccessId, awsSecretKey, awsRegion } = this.state;
     let { currentProject } = this.context;
 
@@ -210,14 +210,14 @@ export default class AWSFormSection extends Component<PropsType, StateType> {
           handleError();
           return;
         }
-        setCurrentView('provisioner');
+        this.props.history.push("provisioner");
       })
     })
   }
 
   // TODO: handle generically (with > 2 steps)
   onCreateAWS = () => {
-    let { projectName, setCurrentView } = this.props;
+    let { projectName } = this.props;
     let { selectedInfras } = this.state;
 
     if (!projectName) {
@@ -226,7 +226,7 @@ export default class AWSFormSection extends Component<PropsType, StateType> {
         this.provisionECR(this.provisionEKS);
       } else if (selectedInfras[0].value === 'ecr') {
         // Case: project exists, only provision ECR
-        this.provisionECR(() => setCurrentView('provisioner'));
+        this.provisionECR(() => this.props.history.push("provisioner"));
       } else {
         // Case: project exists, only provision EKS
         this.provisionEKS();
@@ -238,7 +238,7 @@ export default class AWSFormSection extends Component<PropsType, StateType> {
       } else if (selectedInfras[0].value === 'ecr') {
         // Case: project DNE, only provision ECR
         this.createProject(() => this.provisionECR(() => {
-          setCurrentView('provisioner');
+          this.props.history.push("provisioner");
         }));
       } else {
         // Case: project DNE, only provision EKS
@@ -323,6 +323,8 @@ export default class AWSFormSection extends Component<PropsType, StateType> {
 }
 
 AWSFormSection.contextType = Context;
+
+export default withRouter(AWSFormSection);
 
 const Padding = styled.div`
   height: 15px;

@@ -13,12 +13,12 @@ import Helper from 'components/values-form/Helper';
 import Heading from 'components/values-form/Heading';
 import SaveButton from 'components/SaveButton';
 import CheckboxList from 'components/values-form/CheckboxList';
+import { RouteComponentProps, withRouter } from 'react-router';
 
-type PropsType = {
+type PropsType = RouteComponentProps & {
   setSelectedProvisioner: (x: string | null) => void,
   handleError: () => void,
   projectName: string,
-  setCurrentView: (x: string | null, data?: any) => void,
   infras: InfraType[],
 };
 
@@ -62,7 +62,7 @@ const regionOptions = [
   { value: 'us-west4', label: 'us-west4' },
 ]
 
-export default class GCPFormSection extends Component<PropsType, StateType> {
+class GCPFormSection extends Component<PropsType, StateType> {
   state = {
     gcpRegion: 'us-east1',
     gcpProjectId: '',
@@ -171,7 +171,7 @@ export default class GCPFormSection extends Component<PropsType, StateType> {
 
   provisionGKE = (id: number) => {
     console.log('Provisioning GKE');
-    let { setCurrentView, handleError } = this.props;
+    let { handleError } = this.props;
     let { currentProject } = this.context;
 
     let clusterName = `${currentProject.name}-cluster`
@@ -184,12 +184,11 @@ export default class GCPFormSection extends Component<PropsType, StateType> {
         handleError();
         return;
       }
-      setCurrentView('provisioner');
+      this.props.history.push("provisioner");
     })
   }
 
   handleCreateFlow = () => {
-    let { setCurrentView } = this.props;
     let { selectedInfras, gcpKeyData, gcpProjectId, gcpRegion } = this.state;
     let { currentProject } = this.context;
     api.createGCPIntegration('<token>', {
@@ -208,7 +207,7 @@ export default class GCPFormSection extends Component<PropsType, StateType> {
           this.provisionGCR(id, () => this.provisionGKE(id));
         } else if (selectedInfras[0].value === 'gcr') {
           // Case: project exists, only provision GCR
-          this.provisionGCR(id, () => setCurrentView('provisioner'));
+          this.provisionGCR(id, () => this.props.history.push("provisioner"));
         } else {
           // Case: project exists, only provision GKE
           this.provisionGKE(id);
@@ -304,6 +303,8 @@ export default class GCPFormSection extends Component<PropsType, StateType> {
 }
 
 GCPFormSection.contextType = Context;
+
+export default withRouter(GCPFormSection);
 
 const Padding = styled.div`
   height: 15px;

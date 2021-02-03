@@ -11,11 +11,11 @@ import ClusterSection from './ClusterSection';
 import ProjectSectionContainer from './ProjectSectionContainer';
 import loading from 'assets/loading.gif';
 import posthog from 'posthog-js';
+import { RouteComponentProps, withRouter } from 'react-router';
 
-type PropsType = {
+type PropsType = RouteComponentProps & {
   forceSidebar: boolean,
   setWelcome: (x: boolean) => void,
-  setCurrentView: (x: string) => void,
   currentView: string,
   forceRefreshClusters: boolean,
   setRefreshClusters: (x: boolean) => void,
@@ -29,7 +29,7 @@ type StateType = {
   forceCloseDrawer: boolean
 };
 
-export default class Sidebar extends Component<PropsType, StateType> {
+class Sidebar extends Component<PropsType, StateType> {
 
   // Need closeDrawer to hide drawer on sidebar close
   state = {
@@ -60,7 +60,7 @@ export default class Sidebar extends Component<PropsType, StateType> {
   handleKeyDown = (e: KeyboardEvent): void => {
     if (e.key === 'Meta' || e.key === 'Control') {
       this.setState({ pressingCtrl: true });
-    } else if (e.keyCode === 220 && this.state.pressingCtrl) {
+    } else if (e.code === "Backslash" && this.state.pressingCtrl) {
       this.toggleSidebar();
     }
   };
@@ -94,21 +94,21 @@ export default class Sidebar extends Component<PropsType, StateType> {
   };
 
   renderProjectContents = () => {
-    let { currentView, setCurrentView } = this.props;
+    let { currentView } = this.props;
     let { currentProject, setCurrentModal } = this.context;
     if (currentProject) {
       return (
         <>
           <SidebarLabel>Home</SidebarLabel>
           <NavButton
-            onClick={() => (currentView !== 'provisioner') && setCurrentView('dashboard')}
+            onClick={() => (currentView !== 'provisioner') && this.props.history.push("dashboard")}
             selected={currentView === 'dashboard' || currentView === 'provisioner'}
           >
             <Img src={category} />
             Dashboard
           </NavButton>
           <NavButton
-            onClick={() => setCurrentView('templates')}
+            onClick={() => this.props.history.push("templates")}
             selected={currentView === 'templates'}
           >
             <Img src={filter} />
@@ -130,7 +130,7 @@ export default class Sidebar extends Component<PropsType, StateType> {
             return obj.user_id === this.context.user.userId;
           })[0].kind === 'admin' &&
             <NavButton
-              onClick={() => this.props.setCurrentView('project-settings')}
+              onClick={() => this.props.history.push("project-settings")}
               selected={this.props.currentView === 'project-settings'}
             >
               <Img enlarge={true} src={settings} />
@@ -146,7 +146,6 @@ export default class Sidebar extends Component<PropsType, StateType> {
             releaseDrawer={() => this.setState({ forceCloseDrawer: false })}
             setWelcome={this.props.setWelcome}
             currentView={currentView}
-            setCurrentView={setCurrentView}
             isSelected={currentView === 'cluster-dashboard'}
             forceRefreshClusters={this.props.forceRefreshClusters}
             setRefreshClusters={this.props.setRefreshClusters}
@@ -179,9 +178,7 @@ export default class Sidebar extends Component<PropsType, StateType> {
             <i className="material-icons">double_arrow</i>
           </CollapseButton>
 
-          <ProjectSectionContainer 
-            setCurrentView={this.props.setCurrentView}
-          />
+          <ProjectSectionContainer />
 
           <br />
 
@@ -193,6 +190,8 @@ export default class Sidebar extends Component<PropsType, StateType> {
 }
 
 Sidebar.contextType = Context;
+
+export default withRouter(Sidebar);
 
 const ProjectPlaceholder = styled.div`
   background: #ffffff11;

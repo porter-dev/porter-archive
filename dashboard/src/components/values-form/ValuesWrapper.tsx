@@ -40,7 +40,8 @@ export default class ValuesWrapper extends Component<PropsType, StateType> {
 
             // If no name is assigned use values.yaml variable as identifier
             let key = item.name || item.variable;
-            let def = (item.value && item.value[0]) || (item.settings && item.settings.default);
+            let def = item.settings && item.settings.unit ? `${item.settings.default}${item.settings.unit}` : item.settings.default
+            def = (item.value && item.value[0]) || def;
 
             // Handle add to list of required fields
             if (item.required) {

@@ -9,8 +9,9 @@ import { Context } from 'shared/Context';
 import SaveButton from 'components/SaveButton';
 import InputRow from 'components/values-form/InputRow';
 import ConfirmOverlay from 'components/ConfirmOverlay';
+import { RouteComponentProps, withRouter } from 'react-router';
 
-type PropsType = {
+type PropsType = RouteComponentProps & {
   setRefreshClusters: (x: boolean) => void,
 };
 
@@ -20,7 +21,7 @@ type StateType = {
   showDeleteOverlay: boolean
 };
 
-export default class UpdateClusterModal extends Component<PropsType, StateType> {
+class UpdateClusterModal extends Component<PropsType, StateType> {
   state = {
     clusterName: this.context.currentCluster.name,
     status: null as string | null,
@@ -42,7 +43,14 @@ export default class UpdateClusterModal extends Component<PropsType, StateType> 
         return;
       }
 
-      if (!currentCluster?.infra_id) return;
+      if (!currentCluster?.infra_id) {
+        // TODO: make this more declarative from the Home component
+        this.props.setRefreshClusters(true);
+        this.setState({ status: 'successful', showDeleteOverlay: false });
+        this.context.setCurrentModal(null, null);
+        this.props.history.push("dashboard");
+        return;
+      }
 
       // Handle destroying infra we've provisioned
       switch (currentCluster.service) {
@@ -168,6 +176,8 @@ export default class UpdateClusterModal extends Component<PropsType, StateType> 
 }
 
 UpdateClusterModal.contextType = Context;
+
+export default withRouter(UpdateClusterModal);
 
 const Help = styled.a`
   position: absolute;

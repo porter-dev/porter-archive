@@ -25,7 +25,7 @@ import ConfirmOverlay from 'components/ConfirmOverlay';
 import Modal from './modals/Modal';
 import * as FullStory from '@fullstory/browser';
 import { Redirect, RouteComponentProps, withRouter } from 'react-router';
-import PorterUrls from 'shared/urls';
+import {PorterUrls} from 'shared/urls';
 
 type PropsType = RouteComponentProps & {
   logOut: () => void,
@@ -79,7 +79,8 @@ class Home extends Component<PropsType, StateType> {
         this.props.history.push("integrations");
         this.setState({ sidebarReady: true, ghRedirect: false });
       } else {
-        this.props.history.push("dashboard");
+        // TODO: figure out when exactly in flow we need to send user to dashboard
+        // this.props.history.push("dashboard");
         this.setState({ sidebarReady: true });
       }
     });
@@ -215,7 +216,7 @@ class Home extends Component<PropsType, StateType> {
     this.setState({ ghRedirect: urlParams.get('gh_oauth') !== null });
     urlParams.delete('gh_oauth');
     
-    window.location.href.indexOf('127.0.0.1') === -1 && posthog.init(process.env.POSTHOG_API_KEY || 'placeholder', {
+    window.location.href.indexOf('localhost') === -1 && posthog.init(process.env.POSTHOG_API_KEY || 'placeholder', {
       api_host: process.env.POSTHOG_HOST || 'placeholder',
       loaded: function(posthog: any) { 
         posthog.identify(user.userId) 
@@ -277,7 +278,6 @@ class Home extends Component<PropsType, StateType> {
   }
 
   renderContents = () => {
-    // let { handleDO } = this.state;
     let currentView = this.props.currentRoute;
     if (this.context.currentProject && currentView !== 'new-project') {
       if (currentView === 'cluster-dashboard') {
@@ -321,6 +321,7 @@ class Home extends Component<PropsType, StateType> {
       } else {
         return (
           <Sidebar
+            key="sidebar"
             forceSidebar={this.state.forceSidebar}
             setWelcome={(x: boolean) => this.setState({ showWelcome: x })}
             currentView={this.props.currentRoute}
@@ -417,7 +418,7 @@ class Home extends Component<PropsType, StateType> {
         }
       }
     });
-    setCurrentModal(null, null)
+    setCurrentModal(null, null);
     this.props.history.push("dashboard");
   }
 

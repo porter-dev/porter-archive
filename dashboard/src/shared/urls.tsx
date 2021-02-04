@@ -1,11 +1,11 @@
-type PorterUrls =
-  | "dashboard"
-  | "templates"
-  | "integrations"
-  | "new-project"
-  | "cluster-dashboard"
-  | "provisioner"
-  | "project-settings";
+export const PorterUrls = [
+  "dashboard",
+  "templates",
+  "integrations",
+  "new-project",
+  "cluster-dashboard",
+  "provisioner",
+  "project-settings",
+];
 
-
-export default PorterUrls;
+export type PorterUrls = typeof PorterUrls[number];

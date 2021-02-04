@@ -11,7 +11,7 @@ import Register from './Register';
 import CurrentError from './CurrentError';
 import Home from './home/Home';
 import Loading from 'components/Loading';
-import PorterUrls from 'shared/urls';
+import {PorterUrls} from 'shared/urls';
 
 type PropsType = {
 };
@@ -92,14 +92,16 @@ export default class Main extends Component<PropsType, StateType> {
         }} />
 
         // TODO: Possible template this into a map from url to routed home
-        {...authedUrls.map(route =>
-            <Route key={route} path={`/${route}`} render={() => {
-            if (this.state.isLoggedIn && this.state.initialized) {
+        {/* {...authedUrls.map(route => */}
+            <Route path={`/:subroute`} render={routeProps => {
+            const urlRoute = routeProps.location.pathname.slice(1);
+            if (this.state.isLoggedIn && this.state.initialized && PorterUrls.includes(urlRoute)) {
               return (
-                <Home 
+                <Home
+                  key="home"
                   currentProject={this.context.currentProject}
                   currentCluster={this.context.currentCluster} 
-                  currentRoute={route}
+                  currentRoute={urlRoute as PorterUrls}
                   logOut={this.handleLogOut} 
                 />
               );
@@ -107,7 +109,7 @@ export default class Main extends Component<PropsType, StateType> {
               return <Redirect to='/' />
             }
           }}/>
-        )}
+        {/* )} */}
         
 
         <Route path='/' render={() => {

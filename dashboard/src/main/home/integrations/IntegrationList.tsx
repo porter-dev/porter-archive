@@ -19,11 +19,13 @@ type PropsType = {
 
 type StateType = {
   displayImages: boolean[],
+  allCollapsed: boolean,
 };
 
 export default class IntegrationList extends Component<PropsType, StateType> {
   state = {
     displayImages: [] as boolean[],
+    allCollapsed: false,
   }
 
   componentDidMount() {
@@ -52,7 +54,7 @@ export default class IntegrationList extends Component<PropsType, StateType> {
     for (let i = 0; i < this.state.displayImages.length; i++) {
       x.push(false);
     }
-    this.setState({ displayImages: x });
+    this.setState({ displayImages: x, allCollapsed: true });
   }
 
   expandAll = () => {
@@ -60,13 +62,29 @@ export default class IntegrationList extends Component<PropsType, StateType> {
     for (let i = 0; i < this.state.displayImages.length; i++) {
       x.push(true);
     }
-    this.setState({ displayImages: x });
+    this.setState({ displayImages: x, allCollapsed: false });
   }
 
   toggleDisplay = (event: any, index: number) => {
     event.stopPropagation();
     let x = this.state.displayImages;
     x[index] = !x[index];
+    if (x[index]) {
+      this.setState({ allCollapsed: false });
+    } else {
+      let collapsed = true;
+      for (let i = 0; i < x.length; i++) {
+        if (x[i]) {
+          collapsed = false;
+          break
+        }
+      }
+      if (collapsed) {
+        this.setState({ allCollapsed: true });
+      } else {
+        this.setState({ allCollapsed: false });
+      }
+    }
     this.setState({ displayImages: x });
   }
 
@@ -188,18 +206,20 @@ export default class IntegrationList extends Component<PropsType, StateType> {
       <StyledIntegrationList>
         {(this.props.titles && this.props.titles.length > 0) &&
           <ControlRow>
-            <ButtonTray>
-              <Button
-                onClick={() => this.collapseAll()}
-              >
-                <i className="material-icons">expand_less</i> Collapse All
-              </Button>
-              <Button
-                onClick={() => this.expandAll()}
-              >
-                <i className="material-icons">expand_more</i> Expand All
-              </Button>
-            </ButtonTray>
+            <Button
+              onClick={() => {
+                if (this.state.allCollapsed) {
+                  this.expandAll()
+                } else {
+                  this.collapseAll()
+                }
+              }}
+            >
+              {this.state.allCollapsed
+                ? <><i className="material-icons">expand_more</i> Expand All</>
+                : <><i className="material-icons">expand_less</i> Collapse All</>
+              }
+            </Button>
           </ControlRow>
         }
         {this.renderContents()}

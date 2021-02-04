@@ -93,7 +93,7 @@ export default class Main extends Component<PropsType, StateType> {
 
         // TODO: Possible template this into a map from url to routed home
         {...authedUrls.map(route =>
-            <Route path={`/${route}`} render={() => {
+            <Route key={route} path={`/${route}`} render={() => {
             if (this.state.isLoggedIn && this.state.initialized) {
               return (
                 <Home 

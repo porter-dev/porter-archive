@@ -1,59 +1,57 @@
-import React, { Component } from 'react';
-import styled, { createGlobalStyle } from 'styled-components';
-import { BrowserRouter, Route, Redirect, Switch } from 'react-router-dom';
-import close from 'assets/close.png';
+import React, { Component } from "react";
+import styled, { createGlobalStyle } from "styled-components";
+import { BrowserRouter, Route, Redirect, Switch } from "react-router-dom";
+import close from "assets/close.png";
 
-import api from 'shared/api';
-import { Context } from 'shared/Context';
+import api from "shared/api";
+import { Context } from "shared/Context";
 
-import Login from './Login';
-import Register from './Register';
-import CurrentError from './CurrentError';
-import Home from './home/Home';
-import Loading from 'components/Loading';
-import {PorterUrls} from 'shared/urls';
+import Login from "./Login";
+import Register from "./Register";
+import CurrentError from "./CurrentError";
+import Home from "./home/Home";
+import Loading from "components/Loading";
+import { PorterUrls } from "shared/urls";
 
-type PropsType = {
-};
+type PropsType = {};
 
 type StateType = {
-  loading: boolean,
-  isLoggedIn: boolean,
-  initialized: boolean,
+  loading: boolean;
+  isLoggedIn: boolean;
+  initialized: boolean;
 };
 
 export default class Main extends Component<PropsType, StateType> {
-  
   state = {
     loading: true,
-    isLoggedIn : false,
-    initialized: localStorage.getItem("init") === 'true'
-  }
+    isLoggedIn: false,
+    initialized: localStorage.getItem("init") === "true",
+  };
 
   componentDidMount() {
     let { setUser } = this.context;
-    api.checkAuth('', {}, {}, (err: any, res: any) => {    
+    api.checkAuth("", {}, {}, (err: any, res: any) => {
       if (err && err.response?.status == 403) {
-        this.setState({ isLoggedIn: false, loading: false })
+        this.setState({ isLoggedIn: false, loading: false });
       }
 
       if (res && res.data) {
         setUser(res?.data?.id, res?.data?.email);
         this.setState({ isLoggedIn: true, initialized: true, loading: false });
       } else {
-        this.setState({ isLoggedIn: false, loading: false })
+        this.setState({ isLoggedIn: false, loading: false });
       }
     });
   }
 
   initialize = () => {
-    this.setState({isLoggedIn: true, initialized: true});
-    localStorage.setItem('init', 'true');
-  }
-  
+    this.setState({ isLoggedIn: true, initialized: true });
+    localStorage.setItem("init", "true");
+  };
+
   authenticate = () => {
     this.setState({ isLoggedIn: true, initialized: true });
-  }
+  };
 
   handleLogOut = () => {
     // Clears local storage for proper rendering of clusters
@@ -61,77 +59,89 @@ export default class Main extends Component<PropsType, StateType> {
 
     this.context.clearContext();
     this.setState({ isLoggedIn: false, initialized: true });
-  }
+  };
 
   renderMain = () => {
     if (this.state.loading) {
-      return <Loading />
+      return <Loading />;
     }
 
     const authedUrls: PorterUrls[] = [
-      "dashboard", "templates", "integrations", "new-project",
-      "cluster-dashboard", "provisioner", "project-settings"
+      "dashboard",
+      "templates",
+      "integrations",
+      "new-project",
+      "cluster-dashboard",
+      "provisioner",
+      "project-settings",
     ];
 
     return (
       <Switch>
-        <Route path='/login' render={() => {
-          if (!this.state.isLoggedIn) {
-            return <Login authenticate={this.authenticate} />
-          } else {
-            return <Redirect to='/' />
-          }
-        }} />
-
-        <Route path='/register' render={() => {
-          if (!this.state.isLoggedIn) {
-            return <Register authenticate={this.initialize} />
-          } else {
-            return <Redirect to='/' />
-          }
-        }} />
-
-        // TODO: Possible template this into a map from url to routed home
-        {/* {...authedUrls.map(route => */}
-            <Route path={`/:subroute`} render={routeProps => {
+        <Route
+          path="/login"
+          render={() => {
+            if (!this.state.isLoggedIn) {
+              return <Login authenticate={this.authenticate} />;
+            } else {
+              return <Redirect to="/" />;
+            }
+          }}
+        />
+        <Route
+          path="/register"
+          render={() => {
+            if (!this.state.isLoggedIn) {
+              return <Register authenticate={this.initialize} />;
+            } else {
+              return <Redirect to="/" />;
+            }
+          }}
+        />
+        <Route
+          path={`/:subroute`}
+          render={(routeProps) => {
             const urlRoute = routeProps.location.pathname.slice(1);
-            if (this.state.isLoggedIn && this.state.initialized && PorterUrls.includes(urlRoute)) {
+            if (
+              this.state.isLoggedIn &&
+              this.state.initialized &&
+              PorterUrls.includes(urlRoute)
+            ) {
               return (
                 <Home
                   key="home"
                   currentProject={this.context.currentProject}
-                  currentCluster={this.context.currentCluster} 
+                  currentCluster={this.context.currentCluster}
                   currentRoute={urlRoute as PorterUrls}
-                  logOut={this.handleLogOut} 
+                  logOut={this.handleLogOut}
                 />
               );
             } else {
-              return <Redirect to='/' />
+              return <Redirect to="/" />;
             }
-          }}/>
-        {/* )} */}
-        
-
-        <Route path='/' render={() => {
-          if (this.state.isLoggedIn) {
-            return <Redirect to='/dashboard'/>
-          } else if (this.state.initialized) {
-            return <Redirect to='/login'/>
-          } else {
-            return <Redirect to='/register' />
-          }
-        }}/>
+          }}
+        />
+        <Route
+          path="/"
+          render={() => {
+            if (this.state.isLoggedIn) {
+              return <Redirect to="/dashboard" />;
+            } else if (this.state.initialized) {
+              return <Redirect to="/login" />;
+            } else {
+              return <Redirect to="/register" />;
+            }
+          }}
+        />
       </Switch>
     );
-  }
+  };
 
   render() {
     return (
       <StyledMain>
         <GlobalStyle />
-        <BrowserRouter>
-          {this.renderMain()}
-        </BrowserRouter>
+        <BrowserRouter>{this.renderMain()}</BrowserRouter>
         <CurrentError currentError={this.context.currentError} />
       </StyledMain>
     );

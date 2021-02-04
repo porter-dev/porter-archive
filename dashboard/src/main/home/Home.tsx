@@ -79,7 +79,8 @@ class Home extends Component<PropsType, StateType> {
         this.props.history.push("integrations");
         this.setState({ sidebarReady: true, ghRedirect: false });
       } else {
-        this.props.history.push("dashboard");
+        // TODO: figure out when exactly in flow we need to send user to dashboard
+        // this.props.history.push("dashboard");
         this.setState({ sidebarReady: true });
       }
     });

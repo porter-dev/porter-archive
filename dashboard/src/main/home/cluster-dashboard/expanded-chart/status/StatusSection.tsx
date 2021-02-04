@@ -76,14 +76,14 @@ export default class StatusSection extends Component<PropsType, StateType> {
           {this.renderLogs()}
         </Wrapper>
       )
-    } else {
-      return (
-        <NoControllers> 
-          <i className="material-icons">category</i> 
-          No objects to display. This might happen while your app is still deploying.
-        </NoControllers>
-      )
     }
+
+    return (
+      <NoControllers> 
+        <i className="material-icons">category</i> 
+        No objects to display. This might happen while your app is still deploying.
+      </NoControllers>
+    )
   }
 
   componentDidMount() {

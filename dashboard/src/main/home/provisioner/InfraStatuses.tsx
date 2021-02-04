@@ -7,6 +7,7 @@ import { infraNames } from 'shared/common';
 
 type PropsType = {
   infras: InfraType[],
+  selectInfra: (infra: InfraType) => void,
 };
 
 type StateType = {
@@ -31,7 +32,10 @@ export default class InfraStatuses extends Component<PropsType, StateType> {
       <StyledInfraStatuses>
         {this.props.infras.map((infra: InfraType, i: number) => {
           return (
-            <InfraRow key={infra.id}>
+            <InfraRow 
+              key={infra.id}
+              onClick={() => this.props.selectInfra(infra)}
+            >
               {this.renderStatusIcon(infra.status)}
               {infraNames[infra.kind]}
             </InfraRow>

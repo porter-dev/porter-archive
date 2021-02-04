@@ -315,8 +315,7 @@ class ProvisionerStatus extends Component<PropsType, StateType> {
             }
           />
         </LoadingBar>
-        <InfraStatuses infras={infras} />
-
+        
         <LogStream>
           <Wrapper ref={this.parentRef}>{this.renderLogs()}</Wrapper>
         </LogStream>

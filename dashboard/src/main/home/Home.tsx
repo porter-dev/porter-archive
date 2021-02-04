@@ -19,7 +19,6 @@ import IntegrationsModal from './modals/IntegrationsModal';
 import IntegrationsInstructionsModal from './modals/IntegrationsInstructionsModal';
 import NewProject from './new-project/NewProject';
 import Navbar from './navbar/Navbar';
-import ProvisionerStatus from './provisioner/ProvisionerStatus';
 import ProjectSettings from './project-settings/ProjectSettings';
 import ConfirmOverlay from 'components/ConfirmOverlay';
 import Modal from './modals/Modal';
@@ -61,28 +60,16 @@ class Home extends Component<PropsType, StateType> {
   // TODO: Refactor and prevent flash + multiple reload
   initializeView = () => {
     let { currentProject } = this.props;
-    let { currentCluster } = this.context;
     
     if (!currentProject) return;
 
-    // Check if current project is provisioning
-    api.getInfra('<token>', {}, { project_id: currentProject.id }, (err: any, res: any) => {
-      if (err) {
-        console.log(err);
-        return;
-      }
-
-      if (res.data.length > 0 && (!currentCluster && !includesCompletedInfraSet(res.data))) {
-        this.props.history.push("provisioner");
-        this.setState({ sidebarReady: true });
-      } else if (this.state.ghRedirect) {
-        this.props.history.push("integrations");
-        this.setState({ sidebarReady: true, ghRedirect: false });
-      } else {
-        this.props.history.push("dashboard");
-        this.setState({ sidebarReady: true });
-      }
-    });
+    if (this.state.ghRedirect) {
+      this.props.history.push("integrations");
+      this.setState({ sidebarReady: true, ghRedirect: false });
+    } else {
+      this.props.history.push("dashboard");
+      this.setState({ sidebarReady: true });
+    }
   }
 
   getProjects = (id?: number) => {
@@ -215,7 +202,7 @@ class Home extends Component<PropsType, StateType> {
     this.setState({ ghRedirect: urlParams.get('gh_oauth') !== null });
     urlParams.delete('gh_oauth');
     
-    window.location.href.indexOf('127.0.0.1') === -1 && posthog.init(process.env.POSTHOG_API_KEY || 'placeholder', {
+    window.location.href.indexOf('localhost') === -1 && posthog.init(process.env.POSTHOG_API_KEY || 'placeholder', {
       api_host: process.env.POSTHOG_HOST || 'placeholder',
       loaded: function(posthog: any) { 
         posthog.identify(user.userId) 
@@ -292,10 +279,6 @@ class Home extends Component<PropsType, StateType> {
         );
       } else if (currentView === 'integrations') {
         return <Integrations />;
-      } else if (currentView === 'provisioner') {
-        return (
-          <ProvisionerStatus/>
-        );
       } else if (currentView === 'project-settings') {
         return (
           <ProjectSettings />

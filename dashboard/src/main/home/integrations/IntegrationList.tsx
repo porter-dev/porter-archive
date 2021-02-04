@@ -47,6 +47,22 @@ export default class IntegrationList extends Component<PropsType, StateType> {
     }
   }
 
+  collapseAll = () => {
+    let x = [];
+    for (let i = 0; i < this.state.displayImages.length; i++) {
+      x.push(false);
+    }
+    this.setState({ displayImages: x });
+  }
+
+  expandAll = () => {
+    let x = [];
+    for (let i = 0; i < this.state.displayImages.length; i++) {
+      x.push(true);
+    }
+    this.setState({ displayImages: x });
+  }
+
   toggleDisplay = (event: any, index: number) => {
     event.stopPropagation();
     let x = this.state.displayImages;
@@ -85,15 +101,21 @@ export default class IntegrationList extends Component<PropsType, StateType> {
                   <Subtitle>{subtitle}</Subtitle>
                 </Description>
               </Flex>
-              <I
-                className="material-icons"
-                showList={this.state.displayImages[i]}
-                onClick={(e) => {
-                  this.toggleDisplay(e, i);
-                }}
+              <MaterialIconTray
+                isCategory={isCategory}
+                disabled={false}
               >
-                {isCategory ? 'launch' : 'expand_more'}
-              </I>
+                <i className="material-icons">more_vert</i>
+                <I
+                  className="material-icons"
+                  showList={this.state.displayImages[i]}
+                  onClick={(e) => {
+                    this.toggleDisplay(e, i);
+                  }}
+                >
+                  {isCategory ? 'launch' : 'expand_more'}
+                </I>
+              </MaterialIconTray>
             </MainRow>
             {this.state.displayImages[i] &&
               <ImageHodler
@@ -164,6 +186,22 @@ export default class IntegrationList extends Component<PropsType, StateType> {
   render() {
     return ( 
       <StyledIntegrationList>
+        {(this.props.titles && this.props.titles.length > 0) &&
+          <ControlRow>
+            <ButtonTray>
+              <Button
+                onClick={() => this.collapseAll()}
+              >
+                <i className="material-icons">expand_less</i> Collapse All
+              </Button>
+              <Button
+                onClick={() => this.expandAll()}
+              >
+                <i className="material-icons">expand_more</i> Expand All
+              </Button>
+            </ButtonTray>
+          </ControlRow>
+        }
         {this.renderContents()}
       </StyledIntegrationList>
     );
@@ -184,6 +222,24 @@ const ImageHodler = styled.div`
   margin-top: ${(props: {adjustMargin: boolean}) => props.adjustMargin ? '-10px' : '0px'};
 `;
 
+const MaterialIconTray = styled.div`
+  width: 64px;
+  margin-right: -7px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  > i {
+    background: #26282f;
+    border-radius: 20px;
+    font-size: 18px;
+    padding: 5px;
+    color: ${(props: { isCategory: boolean, disabled: boolean }) => props.isCategory ? '#616feecc' : '#ffffff44'};
+    :hover {
+      background: ${(props: { isCategory: boolean, disabled: boolean }) => props.disabled ? '' : '#ffffff11'};
+    }
+  }
+`;
+
 const MainRow = styled.div`
   height: 70px;
   width: 100%;
@@ -195,13 +251,7 @@ const MainRow = styled.div`
   :hover {
     background: ${(props: { isCategory: boolean, disabled: boolean }) => props.disabled ? '' : '#ffffff11'};
     > i {
-      background: ${(props: { isCategory: boolean, disabled: boolean }) =>
-        props.disabled
-        ? ''
-        : props.isCategory
-          ? '#ffffff11'
-          : '#26282f'
-      };;
+      background: ${(props: { isCategory: boolean, disabled: boolean }) => props.disabled ? '' : '#ffffff11' };
     }
   }
 
@@ -274,4 +324,62 @@ const StyledIntegrationList = styled.div`
 
 const I = styled.i`
   transform: ${(props: { showList: boolean }) => props.showList ? 'rotate(180deg)' : ''};
+`;
+
+const ControlRow = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  padding-left: 0px;
+`;
+
+const ButtonTray = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  &:first-child {
+    margin-right: 14px;
+  }
+`;
+
+const Button = styled.div`
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 13px;
+  cursor: pointer;
+  font-family: 'Work Sans', sans-serif;
+  border-radius: 8px;
+  color: white;
+  height: 35px;
+  padding: 0px 8px;
+  padding-bottom: 1px;
+  margin-right: 10px;
+  font-weight: 500;
+  padding-right: 15px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  box-shadow: 0 5px 8px 0px #00000010;
+  cursor: ${(props: { disabled?: boolean }) => props.disabled ? 'not-allowed' : 'pointer'};
+
+  background: ${(props: { disabled?: boolean }) => props.disabled ? '#aaaabbee' : '#616FEEcc'};
+  :hover {
+    background: ${(props: { disabled?: boolean }) => props.disabled ? '' : '#505edddd'};
+  }
+
+  > i {
+    color: white;
+    width: 18px;
+    height: 18px;
+    font-weight: 600;
+    font-size: 12px;
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    margin-right: 5px;
+    justify-content: center;
+  }
 `;

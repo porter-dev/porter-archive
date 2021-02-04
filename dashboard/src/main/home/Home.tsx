@@ -93,8 +93,10 @@ class Home extends Component<PropsType, StateType> {
       if (err) {
         console.log(err);
       } else if (res.data) {
+        console.log("NOPROJ");
+        console.log(res.data);
         if (res.data.length === 0) {
-          <Redirect to="new-project"></Redirect>
+          this.props.history.push("new-project");
         } else if (res.data.length > 0 && !currentProject) {
           setProjects(res.data);
 

@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"regexp"
+	"strings"
 
 	"github.com/aws/aws-sdk-go/service/ecr"
 	"github.com/porter-dev/porter/internal/repository"
@@ -49,16 +50,14 @@ func InitGlobalStream(client *redis.Client) error {
 		GlobalStreamName,
 	).Result()
 
-	fmt.Println(xInfoGroups, err)
-
-	if err != nil {
+	// if error is not NOGROUP error, return
+	if err != nil && !strings.Contains(err.Error(), "NOGROUP") {
 		return err
 	}
 
 	for _, group := range xInfoGroups {
 		// if the group exists, return with no error
 		if group.Name == GlobalStreamGroupName {
-			fmt.Println("group already exists")
 			return nil
 		}
 	}
@@ -70,8 +69,6 @@ func InitGlobalStream(client *redis.Client) error {
 		GlobalStreamGroupName,
 		"$",
 	).Result()
-
-	fmt.Println("xgroup created", err)
 
 	return err
 }

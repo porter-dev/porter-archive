@@ -32,6 +32,9 @@ export default class IntegrationList extends Component<PropsType, StateType> {
       x.push(true);
     }
     this.setState({ displayImages: x });
+
+    this.toggleDisplay = this.toggleDisplay.bind(this);
+    this.handleParent = this.handleParent.bind(this);
   }
 
   componentDidUpdate(prevProps: PropsType) {
@@ -44,10 +47,15 @@ export default class IntegrationList extends Component<PropsType, StateType> {
     }
   }
 
-  toggleDisplay = (index: number) => {
+  toggleDisplay = (event: any, index: number) => {
+    event.stopPropagation();
     let x = this.state.displayImages;
     x[index] = !x[index];
     this.setState({ displayImages: x });
+  }
+
+  handleParent = (event: any, integration: string) => {
+    this.props.setCurrent(integration);
   }
 
   renderContents = () => {
@@ -64,7 +72,9 @@ export default class IntegrationList extends Component<PropsType, StateType> {
             disabled={false}
           >
             <MainRow
-              onClick={() => setCurrent(integration)}
+              onClick={(e: any) => {
+                this.handleParent(e, integration);
+              }}
               isCategory={isCategory}
               disabled={false}
             >
@@ -75,9 +85,15 @@ export default class IntegrationList extends Component<PropsType, StateType> {
                   <Subtitle>{subtitle}</Subtitle>
                 </Description>
               </Flex>
-              <i className="material-icons">
-                {isCategory ? 'launch' : 'more_vert'}
-              </i>
+              <I
+                className="material-icons"
+                showList={this.state.displayImages[i]}
+                onClick={(e) => {
+                  this.toggleDisplay(e, i);
+                }}
+              >
+                {isCategory ? 'launch' : 'expand_more'}
+              </I>
             </MainRow>
             {this.state.displayImages[i] &&
               <ImageHodler
@@ -179,12 +195,13 @@ const MainRow = styled.div`
   :hover {
     background: ${(props: { isCategory: boolean, disabled: boolean }) => props.disabled ? '' : '#ffffff11'};
     > i {
-      background: ${(props: { isCategory: boolean, disabled: boolean }) => props.disabled ? '' : '#ffffff11'};
-    }
-    > div {
-      > i {
-        background: ${(props: { isCategory: boolean, disabled: boolean }) => props.disabled ? '' : '#ffffff11'};
-      }
+      background: ${(props: { isCategory: boolean, disabled: boolean }) =>
+        props.disabled
+        ? ''
+        : props.isCategory
+          ? '#ffffff11'
+          : '#26282f'
+      };;
     }
   }
 
@@ -194,6 +211,9 @@ const MainRow = styled.div`
     padding: 5px;
     color: ${(props: { isCategory: boolean, disabled: boolean }) => props.isCategory ? '#616feecc' : '#ffffff44'};
     margin-right: -7px;
+    :hover {
+      background: ${(props: { isCategory: boolean, disabled: boolean }) => props.disabled ? '' : '#ffffff11'};
+    }
   }
 `;
 
@@ -250,4 +270,8 @@ const Placeholder = styled.div`
 
 const StyledIntegrationList = styled.div`
   margin-top: 20px;
+`;
+
+const I = styled.i`
+  transform: ${(props: { showList: boolean }) => props.showList ? 'rotate(180deg)' : ''};
 `;

@@ -1,42 +1,46 @@
-import React, { Component } from 'react';
-import styled from 'styled-components';
+import React, { Component } from "react";
+import styled from "styled-components";
 
-import api from 'shared/api';
-import { Context } from 'shared/Context';
+import api from "shared/api";
+import { Context } from "shared/Context";
 
-import Feedback from './Feedback';
+import Feedback from "./Feedback";
 
 type PropsType = {
-  logOut: () => void,
-  currentView: string,
+  logOut: () => void;
+  currentView: string;
 };
 
 type StateType = {
-  showDropdown: boolean,
+  showDropdown: boolean;
 };
 
 export default class Navbar extends Component<PropsType, StateType> {
   state = {
     showDropdown: false,
-  }
+  };
 
   handleLogout = (): void => {
     let { logOut } = this.props;
     let { setCurrentError } = this.context;
 
     // Attempt user logout
-    api.logOutUser('<token>', {}, {}, (err: any, res: any) => {
+    api.logOutUser("<token>", {}, {}, (err: any, res: any) => {
       err ? setCurrentError(err.response.data.errors[0]) : logOut();
-    }); 
-  }
+    });
+  };
 
   renderSettingsDropdown = () => {
     if (this.state.showDropdown) {
       return (
         <>
-          <CloseOverlay onClick={() => this.setState({ showDropdown: false })} />
-          <Dropdown dropdownWidth='250px' dropdownMaxHeight='200px'>
-            <DropdownLabel>{this.context.user && this.context.user.email}</DropdownLabel>
+          <CloseOverlay
+            onClick={() => this.setState({ showDropdown: false })}
+          />
+          <Dropdown dropdownWidth="250px" dropdownMaxHeight="200px">
+            <DropdownLabel>
+              {this.context.user && this.context.user.email}
+            </DropdownLabel>
             <LogOutButton onClick={this.handleLogout}>
               <i className="material-icons">keyboard_return</i> Log Out
             </LogOutButton>
@@ -44,16 +48,18 @@ export default class Navbar extends Component<PropsType, StateType> {
         </>
       );
     }
-  }
+  };
 
   render() {
     return (
       <StyledNavbar>
         <Feedback currentView={this.props.currentView} />
         <NavButton selected={this.state.showDropdown}>
-          <i 
-            className="material-icons-outlined" 
-            onClick={() => this.setState({ showDropdown: !this.state.showDropdown })}
+          <i
+            className="material-icons-outlined"
+            onClick={() =>
+              this.setState({ showDropdown: !this.state.showDropdown })
+            }
           >
             account_circle
           </i>
@@ -81,15 +87,17 @@ const LogOutButton = styled.button`
   height: 40px;
   font-size: 13px;
   font-weight: 500;
-  font-family: 'Work Sans', sans-serif;
+  font-family: "Work Sans", sans-serif;
   color: white;
   width: 100%;
   border: 0;
   text-align: left;
   background: none;
-  cursor: ${(props) => (!props.disabled ? 'pointer' : 'default')};
+  cursor: ${(props) => (!props.disabled ? "pointer" : "default")};
   user-select: none;
-  :focus { outline: 0 }
+  :focus {
+    outline: 0;
+  }
   :hover {
     background: #ffffff11;
   }
@@ -130,21 +138,35 @@ const Dropdown = styled.div`
   right: 0;
   top: calc(100% + 5px);
   background: #26282f;
-  width: ${(props: { dropdownWidth: string, dropdownMaxHeight: string, feedbackSent?: boolean }) => props.dropdownWidth};
-  max-height: ${(props: { dropdownWidth: string, dropdownMaxHeight: string, feedbackSent?: boolean }) => props.dropdownMaxHeight ? props.dropdownMaxHeight : '300px'};
+  width: ${(props: {
+    dropdownWidth: string;
+    dropdownMaxHeight: string;
+    feedbackSent?: boolean;
+  }) => props.dropdownWidth};
+  max-height: ${(props: {
+    dropdownWidth: string;
+    dropdownMaxHeight: string;
+    feedbackSent?: boolean;
+  }) => (props.dropdownMaxHeight ? props.dropdownMaxHeight : "300px")};
   border-radius: 3px;
   z-index: 999;
   overflow-y: auto;
   margin-bottom: 20px;
   box-shadow: 0 8px 20px 0px #00000088;
-  animation: ${(props: { dropdownWidth: string, dropdownMaxHeight: string, feedbackSent?: boolean }) => props.feedbackSent ? 'flyOff 0.3s 0.05s' : ''};
+  animation: ${(props: {
+    dropdownWidth: string;
+    dropdownMaxHeight: string;
+    feedbackSent?: boolean;
+  }) => (props.feedbackSent ? "flyOff 0.3s 0.05s" : "")};
   animation-fill-mode: forwards;
   @keyframes flyOff {
     from {
-      opacity: 1; transform: translateX(0px);
+      opacity: 1;
+      transform: translateX(0px);
     }
     to {
-      opacity: 0; transform: translateX(100px);
+      opacity: 0;
+      transform: translateX(100px);
     }
   }
 `;
@@ -154,8 +176,12 @@ const DropdownAlt = styled(Dropdown)`
   opacity: 0;
   animation-fill-mode: forwards;
   @keyframes fadeIn {
-    from { opacity: 0 }
-    to { opacity: 1 }
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
   }
 `;
 
@@ -182,17 +208,19 @@ const NavButton = styled.a`
       color: #ffffff;
     }
   }
-  
+
   > i {
     cursor: pointer;
-    color: ${(props: { selected?: boolean }) => props.selected ? '#ffffff' : '#ffffff88'};
+    color: ${(props: { selected?: boolean }) =>
+      props.selected ? "#ffffff" : "#ffffff88"};
     font-size: 24px;
   }
 `;
 
 const FeedbackButton = styled(NavButton)`
-  color: ${(props: { selected?: boolean }) => props.selected ? '#ffffff' : '#ffffff88'};
-  font-family: 'Work Sans', sans-serif;
+  color: ${(props: { selected?: boolean }) =>
+    props.selected ? "#ffffff" : "#ffffff88"};
+  font-family: "Work Sans", sans-serif;
   font-size: 14px;
   margin-right: 20px;
   :hover {
@@ -206,7 +234,8 @@ const FeedbackButton = styled(NavButton)`
 
   > div {
     > i {
-      color: ${(props: { selected?: boolean }) => props.selected ? '#ffffff' : '#ffffff88'};
+      color: ${(props: { selected?: boolean }) =>
+        props.selected ? "#ffffff" : "#ffffff88"};
       font-size: 26px;
       margin-right: 6px;
     }

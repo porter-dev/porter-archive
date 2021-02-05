@@ -1,12 +1,6 @@
-import React, { Component } from 'react';
+import React, { Component } from "react";
 
-import { ProjectType, ClusterType } from 'shared/types';
-
-type PropsType = {
-}
-
-type StateType = {
-}
+import { ProjectType, ClusterType } from "shared/types";
 
 const Context = React.createContext({});
 
@@ -37,21 +31,24 @@ class ContextProvider extends Component {
     },
     currentCluster: null as ClusterType | null,
     setCurrentCluster: (currentCluster: ClusterType, callback?: any) => {
-      localStorage.setItem(this.state.currentProject.id + '-cluster', JSON.stringify(currentCluster));
+      localStorage.setItem(
+        this.state.currentProject.id + "-cluster",
+        JSON.stringify(currentCluster)
+      );
       this.setState({ currentCluster }, () => {
         callback && callback();
       });
     },
     currentProject: null as ProjectType | null,
     setCurrentProject: (currentProject: ProjectType, callback?: any) => {
-      localStorage.setItem('currentProject', currentProject.id.toString());
+      localStorage.setItem("currentProject", currentProject.id.toString());
       this.setState({ currentProject }, () => {
         callback && callback();
       });
     },
     projects: [] as ProjectType[],
     setProjects: (projects: ProjectType[]) => {
-      projects.sort((a: any, b: any) => (a.name > b.name) ? 1 : -1);
+      projects.sort((a: any, b: any) => (a.name > b.name ? 1 : -1));
       this.setState({ projects });
     },
     user: null as any,
@@ -73,13 +70,11 @@ class ContextProvider extends Component {
         user: null,
         devOpsMode: true,
       });
-    }
+    },
   };
-  
+
   render() {
-    return (
-      <Provider value={this.state}>{this.props.children}</Provider>
-    );
+    return <Provider value={this.state}>{this.props.children}</Provider>;
   }
 }
 

@@ -3,13 +3,14 @@ import styled from 'styled-components';
 import { Context } from 'shared/Context';
 import { InfraType } from 'shared/types';
 import posthog from 'posthog-js';
+import { RouteComponentProps, withRouter } from "react-router";
 
 import ansiparse from 'shared/ansiparser'
 import loading from 'assets/loading.gif';
 import warning from 'assets/warning.png';
 
-type PropsType = {
-  selectedInfra: InfraType,
+type PropsType = RouteComponentProps & {
+    selectedInfra: InfraType
 };
 
 type StateType = {
@@ -20,7 +21,7 @@ type StateType = {
   currentStep: number,
 };
 
-export default class Logs extends Component<PropsType, StateType> {
+class ProvisionerLogs extends Component<PropsType, StateType> {
   
   state = {
     logs: [] as string[],
@@ -34,17 +35,33 @@ export default class Logs extends Component<PropsType, StateType> {
   parentRef = React.createRef<HTMLDivElement>()
 
   scrollToBottom = () => {
+    console.log(this.parentRef.current)
     this.parentRef.current.lastElementChild.scrollIntoView({ behavior: "auto" })
   }
 
   renderLogs = () => {
     let { selectedInfra } = this.props;
+
     if (!selectedInfra) {
-      return <Message>Please select a pod to view its logs.</Message>
+        return <Message>Please select a resource.</Message>
     }
+
+    if (selectedInfra.status == 'destroyed') {
+        return (
+            <Message>
+                This resource has been auto-destroyed due to an error during provisioning.
+            </Message>
+        )
+    }
+
+    if (selectedInfra.status == 'error' && this.state.logs.length == 0) {
+        return <Message>Porter encountered an error while provisioning this resource.</Message>
+    }
+
     if (this.state.logs.length == 0) {
-      return <Message>No logs to display from this pod.</Message>
+        return <Message>{selectedInfra.status}</Message>
     }
+
     return this.state.logs.map((log, i) => {
         return <Log key={i}>{log}</Log>
     })
@@ -60,7 +77,6 @@ export default class Logs extends Component<PropsType, StateType> {
   }
 
   setupWebsocket = () => {
-    let { selectedInfra }= this.props;
     this.ws.onopen = () => {
       console.log('connected to websocket')
     }
@@ -133,6 +149,14 @@ export default class Logs extends Component<PropsType, StateType> {
   }
 
   componentDidMount() {
+    let { currentProject } = this.context;
+    let { selectedInfra } = this.props;
+
+    if (!selectedInfra) return;
+
+    let protocol = process.env.NODE_ENV == 'production' ? 'wss' : 'ws'
+    this.ws = new WebSocket(`${protocol}://${process.env.API_SERVER}/api/projects/${currentProject.id}/provision/${selectedInfra.kind}/${selectedInfra.id}/logs`)
+
     this.setupWebsocket()
     this.scrollToBottom();
   }
@@ -154,7 +178,8 @@ export default class Logs extends Component<PropsType, StateType> {
   }
 }
 
-Logs.contextType = Context;
+ProvisionerLogs.contextType = Context;
+export default withRouter(ProvisionerLogs);
 
 const Scroll = styled.div`
   align-items: center;
@@ -226,6 +251,7 @@ const LogStream = styled.div`
 
 const Message = styled.div`
   display: flex;
+  flex-direction: column;
   height: 100%;
   width: 100%;
   align-items: center;
@@ -236,4 +262,5 @@ const Message = styled.div`
 
 const Log = styled.div`
   font-family: monospace;
+  font-size: 12px;
 `;

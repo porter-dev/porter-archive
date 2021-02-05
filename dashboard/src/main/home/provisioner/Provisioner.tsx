@@ -58,12 +58,14 @@ class Provisioner extends Component<PropsType, StateType> {
       this.setState({ 
         error: false, 
         infras: res.data, 
-        loading: false 
+        loading: false,
+        selectedInfra: res.data[0],
       });
     });
   }
 
   render() {
+    console.log(this.state.infras)
     if (this.state.loading) {
       return (
         <StyledProvisioner> 
@@ -79,10 +81,14 @@ class Provisioner extends Component<PropsType, StateType> {
             <InfraStatuses 
               infras={this.state.infras} 
               selectInfra={this.selectInfra.bind(this)}
+              selectedInfra={this.state.selectedInfra}
             />
           </TabWrapper>
 
-          <ProvisionerLogs selectedInfra={this.state.selectedInfra} />
+          <ProvisionerLogs 
+            key={this.state.selectedInfra?.id} 
+            selectedInfra={this.state.selectedInfra} 
+          />
         </StyledProvisioner>
       )
     }
@@ -98,28 +104,6 @@ class Provisioner extends Component<PropsType, StateType> {
 Provisioner.contextType = Context;
 
 export default withRouter(Provisioner);
-
-const Wrapper = styled.div`
-  width: 100%;
-  height: 100%;
-  overflow: auto;
-  padding: 20px 25px;
-`;
-
-const Log = styled.div`
-  font-family: monospace;
-`;
-
-const LogStream = styled.div`
-  height: 300px;
-  margin-top: 20px;
-  font-size: 13px;
-  border: 2px solid #ffffff55;
-  border-radius: 10px;
-  width: 100%;
-  background: #00000022;
-  user-select: text;
-`;
 
 const StyledProvisioner = styled.div`
   width: 100%;

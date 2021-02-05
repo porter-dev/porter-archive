@@ -315,7 +315,7 @@ class ProvisionerStatus extends Component<PropsType, StateType> {
             }
           />
         </LoadingBar>
-        
+
         <LogStream>
           <Wrapper ref={this.parentRef}>{this.renderLogs()}</Wrapper>
         </LogStream>
@@ -329,47 +329,6 @@ class ProvisionerStatus extends Component<PropsType, StateType> {
 ProvisionerStatus.contextType = Context;
 
 export default withRouter(ProvisionerStatus);
-
-const Options = styled.div`
-  width: 100%;
-  height: 25px;
-  background: #397ae3;
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: space-between;
-`
-
-const Refresh = styled.div`
-  display: flex;
-  align-items: center;
-  width: 87px;
-  user-select: none;
-  cursor: pointer;
-  height: 100%;
-
-  > i {
-    margin-left: 6px;
-    font-size: 17px;
-    margin-right: 6px;
-  }
-
-  :hover {
-    background: #2468d6;
-  }
-`
-
-// const Link = styled.a`
-//   cursor: pointer;
-//   margin-left: 5px;
-//   margin-right: 5px;
-// `;
-
-const Warning = styled.span`
-  color: ${(props: { highlight: boolean, makeFlush?: boolean }) => props.highlight ? '#f5cb42' : ''};
-  margin-left: ${(props: { highlight: boolean, makeFlush?: boolean }) => props.makeFlush ? '' : '5px'};
-  margin-right: 5px;
-`;
 
 const Wrapper = styled.div`
   width: 100%;

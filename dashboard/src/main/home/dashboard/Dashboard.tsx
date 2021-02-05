@@ -17,22 +17,23 @@ type PropsType = RouteComponentProps & {
   projectId: number | null;
 };
 
-type TabType = "main" | "provisioner"
+const tabOptions = [
+  { label: "Project Overview", value: "overview" },
+  { label: "Provisioner Status", value: "provisioner" },
+];
+// TODO: rethink this typing, should be coupled with tabOptions
+type TabType = "overview" | "provisioner"
 
 type StateType = {
   infras: InfraType[];
   currentTab: TabType;
 };
 
-const tabOptions = [
-  { label: "Project Overview", value: "overview" },
-  { label: "Provisioner Status", value: "provisioner" },
-];
 
 class Dashboard extends Component<PropsType, StateType> {
   state = {
     infras: [] as InfraType[],
-    currentTab: "main" as TabType,
+    currentTab: "overview" as TabType,
   };
 
   refreshInfras = () => {
@@ -56,13 +57,6 @@ class Dashboard extends Component<PropsType, StateType> {
 
   componentDidMount() {
     this.refreshInfras();
-
-    if (
-      new URLSearchParams(this.props.location.search).get("tab") ===
-      "provisioner"
-    ) {
-      this.setState({ currentTab: "provisioner" });
-    }
   }
 
   componentDidUpdate(prevProps: PropsType) {
@@ -76,6 +70,13 @@ class Dashboard extends Component<PropsType, StateType> {
   };
 
   renderTabContents = () => {
+    const currentTab = new URLSearchParams(this.props.location.search).get("tab")
+    if (
+      currentTab && currentTab !== this.state.currentTab
+    ) {
+      this.setState({ currentTab: currentTab as TabType });
+    }
+
     if (this.state.currentTab === "provisioner") {
       return <Provisioner />;
     } else {
@@ -135,7 +136,7 @@ class Dashboard extends Component<PropsType, StateType> {
 
             <TabRegion
               currentTab={this.state.currentTab}
-              setCurrentTab={(x: TabType) => this.setState({ currentTab: x })}
+              setCurrentTab={(x: TabType) => this.props.history.push(`dashboard?tab=${x}`)}
               options={tabOptions}
             >
               {this.renderTabContents()}

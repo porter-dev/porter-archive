@@ -4,10 +4,9 @@ import posthog from 'posthog-js';
 
 import api from 'shared/api';
 import { Context } from 'shared/Context';
-import ansiparse from 'shared/ansiparser'
 import loading from 'assets/loading.gif';
 import warning from 'assets/warning.png';
-import { InfraType } from 'shared/types';
+import { InfraType, ProjectType } from 'shared/types';
 import Loading from 'components/Loading';
 
 import Helper from 'components/values-form/Helper';
@@ -28,6 +27,7 @@ type StateType = {
   infras: InfraType[],
   loading: boolean,
   selectedInfra: InfraType,
+  currentProject: ProjectType,
 };
 
 class Provisioner extends Component<PropsType, StateType> {
@@ -41,6 +41,7 @@ class Provisioner extends Component<PropsType, StateType> {
     infras: [] as InfraType[],
     selectedInfra: null as InfraType,
     loading: true,
+    currentProject: this.context.currentProject,
   }
 
   selectInfra = (infra: InfraType) => {
@@ -48,7 +49,7 @@ class Provisioner extends Component<PropsType, StateType> {
   }
 
   componentDidMount() {
-    let { currentProject } = this.context;
+    let { currentProject } = this.state;
 
     api.getInfra('<token>', {}, { 
       project_id: currentProject.id 
@@ -65,7 +66,6 @@ class Provisioner extends Component<PropsType, StateType> {
   }
 
   render() {
-    console.log(this.state.infras)
     if (this.state.loading) {
       return (
         <StyledProvisioner> 

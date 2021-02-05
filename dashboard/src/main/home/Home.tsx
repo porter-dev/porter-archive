@@ -36,11 +36,11 @@ type StateType = {
   forceSidebar: boolean,
   showWelcome: boolean,
   handleDO: boolean, // Trigger DO infra calls after oauth flow if needed
-  ghRedirect: boolean,
   forceRefreshClusters: boolean, // For updating ClusterSection from modal on deletion
-
+  templateNamespace: string,
   // Track last project id for refreshing clusters on project change
   prevProjectId: number | null,
+  ghRedirect: boolean,
 };
 
 // TODO: Handle cluster connected but with some failed infras (no successful set)
@@ -48,11 +48,12 @@ class Home extends Component<PropsType, StateType> {
   state = {
     forceSidebar: true,
     showWelcome: false,
+    ghRedirect: false,
     prevProjectId: null as number | null,
     forceRefreshClusters: false,
+    templateNamespace: '',
     sidebarReady: false,
     handleDO: false,
-    ghRedirect: false,
   }
 
   // TODO: Refactor and prevent flash + multiple reload
@@ -209,6 +210,11 @@ class Home extends Component<PropsType, StateType> {
     this.getProjects(defaultProjectId);
   }
 
+  handleTemplateDeploy = (namespace: string) => {
+    this.setState({ templateNamespace: namespace });
+    // Add routing
+  }
+
   // TODO: Need to handle the following cases. Do a deep rearchitecture (Prov -> Dashboard?) if need be:
   // 1. Make sure clicking cluster in drawer shows cluster-dashboard
   // 2. Make sure switching projects shows appropriate initial view (dashboard || provisioner)
@@ -252,6 +258,8 @@ class Home extends Component<PropsType, StateType> {
       <DashboardWrapper>
         <ClusterDashboard
           currentCluster={currentCluster}
+          namespace={this.state.templateNamespace}
+          resetNamespace={() => this.setState({ templateNamespace: '' })}
           setSidebar={(x: boolean) => this.setState({ forceSidebar: x })}
           // setCurrentView={(x: string) => this.setState({ currentView: x })}
         />
@@ -281,7 +289,7 @@ class Home extends Component<PropsType, StateType> {
       }
 
       return (
-        <Templates/>
+        <Templates />
       );
     } else if (currentView === 'new-project') {
       return (
@@ -320,6 +328,7 @@ class Home extends Component<PropsType, StateType> {
         setProjects(res.data);
         if (res.data.length > 0) {
           this.context.setCurrentProject(res.data[0]);
+          // Redirect to dashboard
         } else {
           this.context.setCurrentProject(null);
           this.props.history.push("new-project");

@@ -1,30 +1,30 @@
-import React, { Component } from 'react';
-import styled from 'styled-components';
+import React, { Component } from "react";
+import styled from "styled-components";
 
-import { edgeColors } from 'shared/rosettaStone';
-import { EdgeType } from 'shared/types';
+import { edgeColors } from "shared/rosettaStone";
+import { EdgeType } from "shared/types";
 
 const thickness = 12;
 
 type PropsType = {
-  x1: number,
-  y1: number,
-  x2: number,
-  y2: number,
-  originX: number,
-  originY: number,
-  edge: EdgeType,
-  setCurrentEdge: (edge: EdgeType) => void
+  x1: number;
+  y1: number;
+  x2: number;
+  y2: number;
+  originX: number;
+  originY: number;
+  edge: EdgeType;
+  setCurrentEdge: (edge: EdgeType) => void;
 };
 
 type StateType = {
-  showArrowHead: boolean
+  showArrowHead: boolean;
 };
 
 export default class Edge extends Component<PropsType, StateType> {
   state = {
-    showArrowHead: true
-  }
+    showArrowHead: true,
+  };
 
   render() {
     let { originX, originY, edge, setCurrentEdge } = this.props;
@@ -32,13 +32,13 @@ export default class Edge extends Component<PropsType, StateType> {
     let x2 = Math.round(originX + this.props.x2);
     let y1 = Math.round(originY - this.props.y1);
     let y2 = Math.round(originY - this.props.y2);
-    
-    var length = Math.sqrt(((x2-x1) * (x2-x1)) + ((y2-y1) * (y2-y1)));
+
+    var length = Math.sqrt((x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1));
     // center
-    var cx = ((x1 + x2) / 2) - (length / 2);
-    var cy = ((y1 + y2) / 2) - (thickness / 2);
+    var cx = (x1 + x2) / 2 - length / 2;
+    var cy = (y1 + y2) / 2 - thickness / 2;
     // angle
-    var angle = Math.atan2((y1 - y2), (x1 - x2)) * (180 / Math.PI);
+    var angle = Math.atan2(y1 - y2, x1 - x2) * (180 / Math.PI);
 
     return (
       <StyledEdge
@@ -50,7 +50,9 @@ export default class Edge extends Component<PropsType, StateType> {
         onMouseLeave={() => setCurrentEdge(null)}
         type={edge.type}
       >
-        {this.state.showArrowHead ? <ArrowHead color={edgeColors[edge.type]} /> : null}
+        {this.state.showArrowHead ? (
+          <ArrowHead color={edgeColors[edge.type]} />
+        ) : null}
         <VisibleLine color={edgeColors[edge.type]} />
       </StyledEdge>
     );
@@ -58,32 +60,35 @@ export default class Edge extends Component<PropsType, StateType> {
 }
 
 const ArrowHead = styled.div`
-  width: 0; 
+  width: 0;
   height: 0;
   margin-left: 20px;
   border-top: 5px solid transparent;
-  border-bottom: 5px solid transparent; 
-  border-right: 10px solid ${(props: { color: string }) => props.color ? props.color : '#ffffff66'};
+  border-bottom: 5px solid transparent;
+  border-right: 10px solid
+    ${(props: { color: string }) => (props.color ? props.color : "#ffffff66")};
 `;
 
 const VisibleLine = styled.section`
   height: 2px;
   width: 100%;
-  background: ${(props: { color: string }) => props.color ? props.color : '#ffffff66'};
+  background: ${(props: { color: string }) =>
+    props.color ? props.color : "#ffffff66"};
 `;
 
 const StyledEdge: any = styled.div.attrs((props: any) => ({
   style: {
-    top: props.cy + 'px',
-    left: props.cx + 'px',
-    transform: 'rotate(' + props.angle + 'deg)',
-    width: props.length + 'px'
+    top: props.cy + "px",
+    left: props.cx + "px",
+    transform: "rotate(" + props.angle + "deg)",
+    width: props.length + "px",
   },
 }))`
   position: absolute;
   height: ${thickness}px;
   cursor: pointer;
-  z-index: ${(props: { type: string, color: string }) => props.type == 'ControlRel' ? '1' : '0'};
+  z-index: ${(props: { type: string; color: string }) =>
+    props.type == "ControlRel" ? "1" : "0"};
   display: flex;
   align-items: center;
   justify-content: center;

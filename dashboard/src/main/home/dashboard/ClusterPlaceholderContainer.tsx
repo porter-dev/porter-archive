@@ -1,25 +1,21 @@
-import React, { Component } from 'react';
-import styled from 'styled-components';
+import React, { Component } from "react";
 
-import { Context } from 'shared/Context';
-import ClusterPlaceholder from './ClusterPlaceholder';
+import { Context } from "shared/Context";
+import ClusterPlaceholder from "./ClusterPlaceholder";
 
 type PropsType = {};
 
-type StateType = {
-};
+type StateType = {};
 
 // Props in context to project section to trigger update on context change
-export default class ClusterPlaceholderContainer extends Component<PropsType, StateType> {
-  state = {
-  }
+export default class ClusterPlaceholderContainer extends Component<
+  PropsType,
+  StateType
+> {
+  state = {};
 
   render() {
-    return (
-      <ClusterPlaceholder
-        currentCluster={this.context.currentCluster}
-      />
-    );
+    return <ClusterPlaceholder currentCluster={this.context.currentCluster} />;
   }
 }
 

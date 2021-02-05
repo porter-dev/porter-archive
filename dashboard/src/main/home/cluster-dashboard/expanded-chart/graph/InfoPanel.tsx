@@ -1,48 +1,47 @@
-import React, { Component } from 'react';
-import styled from 'styled-components';
-import yaml from 'js-yaml';
+import React, { Component } from "react";
+import styled from "styled-components";
+import yaml from "js-yaml";
 
-import { kindToIcon, edgeColors } from 'shared/rosettaStone';
-import { NodeType, EdgeType } from 'shared/types';
+import { kindToIcon, edgeColors } from "shared/rosettaStone";
+import { NodeType, EdgeType } from "shared/types";
 
-import YamlEditor from 'components/YamlEditor';
+import YamlEditor from "components/YamlEditor";
 
 type PropsType = {
-  currentNode: NodeType,
-  currentEdge: EdgeType,
-  openedNode: NodeType,
-  setSuppressDisplay: (x: boolean) => void,
-  closeNode: () => void,
-  isExpanded: boolean,
-  showRevisions: boolean
+  currentNode: NodeType;
+  currentEdge: EdgeType;
+  openedNode: NodeType;
+  setSuppressDisplay: (x: boolean) => void;
+  closeNode: () => void;
+  isExpanded: boolean;
+  showRevisions: boolean;
 };
 
 type StateType = {
-  wrapperHeight: number
+  wrapperHeight: number;
 };
 
 export default class InfoPanel extends Component<PropsType, StateType> {
   state = {
-    wrapperHeight: 0
-  }
+    wrapperHeight: 0,
+  };
 
   renderIcon = (kind: string) => {
-
-    let icon = 'tonality';
+    let icon = "tonality";
     if (Object.keys(kindToIcon).includes(kind)) {
-      icon = kindToIcon[kind]; 
+      icon = kindToIcon[kind];
     }
-    
+
     return (
       <IconWrapper>
         <i className="material-icons">{icon}</i>
       </IconWrapper>
     );
-  }
+  };
 
   renderColorBlock = (type: string) => {
     return <ColorBlock color={edgeColors[type]} />;
-  }
+  };
 
   wrapperRef: any = React.createRef();
 
@@ -51,9 +50,11 @@ export default class InfoPanel extends Component<PropsType, StateType> {
   }
 
   componentDidUpdate(prevProps: PropsType) {
-    if ((prevProps.openedNode !== this.props.openedNode 
-      || prevProps.isExpanded !== this.props.isExpanded
-      || prevProps.showRevisions !== this.props.showRevisions) && this.wrapperRef
+    if (
+      (prevProps.openedNode !== this.props.openedNode ||
+        prevProps.isExpanded !== this.props.isExpanded ||
+        prevProps.showRevisions !== this.props.showRevisions) &&
+      this.wrapperRef
     ) {
       this.setState({ wrapperHeight: this.wrapperRef.offsetHeight });
     }
@@ -67,27 +68,23 @@ export default class InfoPanel extends Component<PropsType, StateType> {
           <Div>
             {this.renderIcon(openedNode.kind)}
             {openedNode.kind}
-            <ResourceName>
-              {openedNode.name}
-            </ResourceName>
+            <ResourceName>{openedNode.name}</ResourceName>
           </Div>
-          <YamlWrapper ref={element => this.wrapperRef = element}>
+          <YamlWrapper ref={(element) => (this.wrapperRef = element)}>
             <YamlEditor
               value={yaml.dump(openedNode.RawYAML)}
               readOnly={true}
-              height={this.state.wrapperHeight + 'px'}
+              height={this.state.wrapperHeight + "px"}
             />
           </YamlWrapper>
         </Wrapped>
-      )
+      );
     } else if (currentNode) {
       return (
         <Div>
           {this.renderIcon(currentNode.kind)}
           {currentNode.kind}
-          <ResourceName>
-            {currentNode.name}
-          </ResourceName>
+          <ResourceName>{currentNode.name}</ResourceName>
         </Div>
       );
     } else if (currentEdge) {
@@ -96,7 +93,7 @@ export default class InfoPanel extends Component<PropsType, StateType> {
           {this.renderColorBlock(currentEdge.type)}
           {this.renderEdgeMessage(currentEdge)}
         </EdgeInfo>
-      )
+      );
     }
 
     return (
@@ -106,20 +103,20 @@ export default class InfoPanel extends Component<PropsType, StateType> {
         </IconWrapper>
         Hover over a node or edge to display info.
       </Div>
-    )
-  }
+    );
+  };
 
   renderEdgeMessage = (edge: EdgeType) => {
     // TODO: render more information about edges (labels, spec property field)
-    switch(edge.type) {
+    switch (edge.type) {
       case "ControlRel":
-        return "Controller Relation"
+        return "Controller Relation";
       case "LabelRel":
-        return "Label Relation"
+        return "Label Relation";
       case "SpecRel":
-        return "Spec Relation"
+        return "Spec Relation";
     }
-  }
+  };
 
   render() {
     let { openedNode, closeNode, setSuppressDisplay } = this.props;
@@ -133,7 +130,11 @@ export default class InfoPanel extends Component<PropsType, StateType> {
       >
         {this.renderContents()}
 
-        {openedNode ? <i onClick={closeNode} className="material-icons">close</i> : null}
+        {openedNode ? (
+          <i onClick={closeNode} className="material-icons">
+            close
+          </i>
+        ) : null}
       </StyledInfoPanel>
     );
   }
@@ -163,7 +164,8 @@ const ColorBlock = styled.div`
   border-radius: 3px;
   margin-left: -2px;
   margin-right: 13px;
-  background: ${(props: { color: string }) => props.color ? props.color : '#ffffff66'};
+  background: ${(props: { color: string }) =>
+    props.color ? props.color : "#ffffff66"};
 `;
 
 const Div = styled.div`
@@ -209,11 +211,13 @@ const StyledInfoPanel = styled.div`
   right: 15px;
   bottom: 15px;
   color: #ffffff66;
-  height: ${(props: { expanded: boolean }) => props.expanded ? 'calc(100% - 68px)' : '40px'};
-  width: ${(props: { expanded: boolean }) => props.expanded ? 'calc(50% - 68px)' : '400px'};
+  height: ${(props: { expanded: boolean }) =>
+    props.expanded ? "calc(100% - 68px)" : "40px"};
+  width: ${(props: { expanded: boolean }) =>
+    props.expanded ? "calc(50% - 68px)" : "400px"};
   max-width: 600px;
   min-width: 400px;
-  background: #34373Cdf;
+  background: #34373cdf;
   border-radius: 3px;
   padding-left: 11px;
   display: inline-block;

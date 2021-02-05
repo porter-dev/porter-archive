@@ -1,36 +1,36 @@
-import React, { Component } from 'react';
-import styled from 'styled-components';
-import github from 'assets/github.png';
-import info from 'assets/info.svg';
+import React, { Component } from "react";
+import styled from "styled-components";
+import github from "assets/github.png";
+import info from "assets/info.svg";
 
-import api from 'shared/api';
-import { RepoType, ChartType } from 'shared/types';
-import { Context } from 'shared/Context';
+import api from "shared/api";
+import { RepoType, ChartType } from "shared/types";
+import { Context } from "shared/Context";
 
-import Loading from 'components/Loading';
-import BranchList from './BranchList';
-import ContentsList from './ContentsList';
-import NewGHAction from './NewGHAction';
+import Loading from "components/Loading";
+import BranchList from "./BranchList";
+import ContentsList from "./ContentsList";
+import NewGHAction from "./NewGHAction";
 
 type PropsType = {
-  chart: ChartType | null,
-  forceExpanded?: boolean,
-  selectedRepo: RepoType | null,
-  selectedBranch: string,
-  subdirectory: string,
-  setSelectedRepo: (x: RepoType) => void,
-  setSelectedBranch: (x: string) => void,
-  setSubdirectory: (x: string) => void
+  chart: ChartType | null;
+  forceExpanded?: boolean;
+  selectedRepo: RepoType | null;
+  selectedBranch: string;
+  subdirectory: string;
+  setSelectedRepo: (x: RepoType) => void;
+  setSelectedBranch: (x: string) => void;
+  setSubdirectory: (x: string) => void;
 };
 
 type StateType = {
-  isExpanded: boolean,
-  loading: boolean,
-  error: boolean,
-  repos: RepoType[]
-  branchGrID: number,
-  dockerfileSelected: boolean,
-  imageURL: string,
+  isExpanded: boolean;
+  loading: boolean;
+  error: boolean;
+  repos: RepoType[];
+  branchGrID: number;
+  dockerfileSelected: boolean;
+  imageURL: string;
 };
 
 export default class RepoSelector extends Component<PropsType, StateType> {
@@ -42,73 +42,95 @@ export default class RepoSelector extends Component<PropsType, StateType> {
     branchGrID: null as number,
     dockerfileSelected: false,
     imageURL: null as string,
-  }
+  };
 
   componentDidMount() {
     let { currentProject } = this.context;
 
     // Get repos
-    api.getGitRepos('<token>', {
-    }, { project_id: currentProject.id }, (err: any, res: any) => {
-      if (err) {
-        this.setState({ loading: false, error: true });
-      } else {
-        var allRepos: any = [];
-        let counter = 0;
-        for (let i = 0; i < res.data.length; i++) {
-          var grid = res.data[i].id;
-          api.getGitRepoList('<token>', {}, { project_id: currentProject.id, git_repo_id: grid }, (err: any, res: any) => {
-            if (err) {
-              console.log(err);
-              this.setState({ loading: false, error: true });
-            } else {
-              res.data.forEach((repo: any, id: number) => {
-                repo.GHRepoID = grid;
-              })
-              allRepos = allRepos.concat(res.data);
-              this.setState({ repos: allRepos, loading: false, error: false });
-            }
-          })
+    api.getGitRepos(
+      "<token>",
+      {},
+      { project_id: currentProject.id },
+      (err: any, res: any) => {
+        if (err) {
+          this.setState({ loading: false, error: true });
+        } else {
+          var allRepos: any = [];
+          let counter = 0;
+          for (let i = 0; i < res.data.length; i++) {
+            var grid = res.data[i].id;
+            api.getGitRepoList(
+              "<token>",
+              {},
+              { project_id: currentProject.id, git_repo_id: grid },
+              (err: any, res: any) => {
+                if (err) {
+                  console.log(err);
+                  this.setState({ loading: false, error: true });
+                } else {
+                  res.data.forEach((repo: any, id: number) => {
+                    repo.GHRepoID = grid;
+                  });
+                  allRepos = allRepos.concat(res.data);
+                  this.setState({
+                    repos: allRepos,
+                    loading: false,
+                    error: false,
+                  });
+                }
+              }
+            );
+          }
         }
       }
-    });
+    );
   }
 
   createGHAction = () => {
     let { currentProject, currentCluster } = this.context;
-    let path = this.props.subdirectory + '/Dockerfile';
-    if (path[0] === '/') {
+    let path = this.props.subdirectory + "/Dockerfile";
+    if (path[0] === "/") {
       path = path.substring(1, path.length);
     }
 
-    api.createGHAction('<token>', {
-      git_repo: this.props.selectedRepo.FullName,
-      image_repo_uri: this.state.imageURL,
-      dockerfile_path: path,
-      git_repo_id: this.props.selectedRepo.GHRepoID,
-    }, {
-      project_id: currentProject.id,
-      CLUSTER_ID: currentCluster.id,
-      RELEASE_NAME: this.props.chart.name,
-      RELEASE_NAMESPACE: this.props.chart.namespace,
-    }, (err: any, res: any) => {
-      if (err) {
-        console.log(err);
-        this.setState({ error: true });
-      } else {
-        console.log(res.data);
+    api.createGHAction(
+      "<token>",
+      {
+        git_repo: this.props.selectedRepo.FullName,
+        image_repo_uri: this.state.imageURL,
+        dockerfile_path: path,
+        git_repo_id: this.props.selectedRepo.GHRepoID,
+      },
+      {
+        project_id: currentProject.id,
+        CLUSTER_ID: currentCluster.id,
+        RELEASE_NAME: this.props.chart.name,
+        RELEASE_NAMESPACE: this.props.chart.namespace,
+      },
+      (err: any, res: any) => {
+        if (err) {
+          console.log(err);
+          this.setState({ error: true });
+        } else {
+          console.log(res.data);
+        }
       }
-    });
-  }
+    );
+  };
 
   renderRepoList = () => {
     let { repos, loading, error } = this.state;
     if (loading) {
-      return <LoadingWrapper><Loading /></LoadingWrapper>
+      return (
+        <LoadingWrapper>
+          <Loading />
+        </LoadingWrapper>
+      );
     } else if (error || !repos) {
-      return <LoadingWrapper>Error loading repos.</LoadingWrapper>
+      return <LoadingWrapper>Error loading repos.</LoadingWrapper>;
     } else if (repos.length == 0) {
-      return <LoadingWrapper>No connected repos found.</LoadingWrapper>
+      return <LoadingWrapper>No connected repos found.</LoadingWrapper>;
     }
 
     return repos.map((repo: RepoType, i: number) => {
@@ -119,11 +141,12 @@ export default class RepoSelector extends Component<PropsType, StateType> {
           lastItem={i === repos.length - 1}
           onClick={() => this.props.setSelectedRepo(repo)}
         >
-          <img src={github} />{repo.FullName}
+          <img src={github} />
+          {repo.FullName}
         </RepoName>
       );
     });
-  }
+  };
 
   renderExpanded = () => {
     let {
@@ -132,16 +155,12 @@ export default class RepoSelector extends Component<PropsType, StateType> {
       subdirectory,
       setSelectedRepo,
       setSelectedBranch,
-      setSubdirectory
+      setSubdirectory,
     } = this.props;
 
     if (!selectedRepo) {
-      return (
-        <ExpandedWrapper>
-          {this.renderRepoList()}
-        </ExpandedWrapper>
-      );
-    } else if (selectedBranch === '') {
+      return <ExpandedWrapper>{this.renderRepoList()}</ExpandedWrapper>;
+    } else if (selectedBranch === "") {
       return (
         <div>
           <ExpandedWrapperAlt>
@@ -151,16 +170,13 @@ export default class RepoSelector extends Component<PropsType, StateType> {
                 this.setState({ branchGrID: selectedRepo.GHRepoID });
                 setSelectedBranch(branch);
               }}
-              repoName={selectedRepo.FullName.split('/')[1]}
-              owner={selectedRepo.FullName.split('/')[0]}
+              repoName={selectedRepo.FullName.split("/")[1]}
+              owner={selectedRepo.FullName.split("/")[0]}
               selectedBranch={selectedBranch}
             />
           </ExpandedWrapperAlt>
           <ButtonTray>
-            <BackButton
-              width='130px'
-              onClick={() => setSelectedRepo(null)}
-            >
+            <BackButton width="130px" onClick={() => setSelectedRepo(null)}>
               <i className="material-icons">keyboard_backspace</i>
               Select Repo
             </BackButton>
@@ -173,7 +189,7 @@ export default class RepoSelector extends Component<PropsType, StateType> {
           <ExpandedWrapperAlt>
             <NewGHAction
               repoName={selectedRepo.FullName}
-              dockerPath={subdirectory + '/Dockerfile'}
+              dockerPath={subdirectory + "/Dockerfile"}
               grid={this.state.branchGrID}
               chart={this.props.chart}
               imgURL={this.state.imageURL}
@@ -182,31 +198,30 @@ export default class RepoSelector extends Component<PropsType, StateType> {
           </ExpandedWrapperAlt>
           <ButtonTray>
             <BackButton
-              width='130px'
+              width="130px"
               onClick={() => this.setState({ dockerfileSelected: false })}
             >
-              <i className='material-icons'>keyboard_backspace</i>
+              <i className="material-icons">keyboard_backspace</i>
               Select Dockerfile
             </BackButton>
-            <BackButton
-              width='146px'
-              onClick={() => this.createGHAction()}
-            >
-              <i className='material-icons'>play_circle_outline</i>
+            <BackButton width="146px" onClick={() => this.createGHAction()}>
+              <i className="material-icons">play_circle_outline</i>
               Create Github Action
             </BackButton>
           </ButtonTray>
         </div>
-      )
+      );
     }
     return (
       <div>
         <ExpandedWrapperAlt>
           <ContentsList
             grid={this.state.branchGrID}
-            setSubdirectory={(subdirectory: string) => setSubdirectory(subdirectory)}
-            repoName={selectedRepo.FullName.split('/')[1]}
-            owner={selectedRepo.FullName.split('/')[0]}
+            setSubdirectory={(subdirectory: string) =>
+              setSubdirectory(subdirectory)
+            }
+            repoName={selectedRepo.FullName.split("/")[1]}
+            owner={selectedRepo.FullName.split("/")[0]}
             selectedBranch={selectedBranch}
             subdirectory={subdirectory}
             setDockerfile={() => this.setState({ dockerfileSelected: true })}
@@ -214,8 +229,12 @@ export default class RepoSelector extends Component<PropsType, StateType> {
         </ExpandedWrapperAlt>
         <ButtonTray>
           <BackButton
-            onClick={() => {setSelectedBranch(''); setSubdirectory(''); this.setState({ imageURL: '' })}}
-            width='140px'
+            onClick={() => {
+              setSelectedBranch("");
+              setSubdirectory("");
+              this.setState({ imageURL: "" });
+            }}
+            width="140px"
           >
             <i className="material-icons">keyboard_backspace</i>
             Select Branch
@@ -223,18 +242,18 @@ export default class RepoSelector extends Component<PropsType, StateType> {
         </ButtonTray>
       </div>
     );
-  }
+  };
 
   renderSelected = () => {
     let { selectedRepo, subdirectory, selectedBranch } = this.props;
     if (selectedRepo) {
-      let subdir = subdirectory === '' ? '' : '/' + subdirectory;
+      let subdir = subdirectory === "" ? "" : "/" + subdirectory;
       return (
         <RepoLabel>
           <img src={github} />
           {selectedRepo.FullName + subdir}
           <SelectedBranch>
-            {!selectedBranch ? '(Select Branch)' : selectedBranch}
+            {!selectedBranch ? "(Select Branch)" : selectedBranch}
           </SelectedBranch>
         </RepoLabel>
       );
@@ -245,13 +264,13 @@ export default class RepoSelector extends Component<PropsType, StateType> {
         No source selected
       </RepoLabel>
     );
-  }
+  };
 
   handleClick = () => {
     if (!this.props.forceExpanded) {
       this.setState({ isExpanded: !this.state.isExpanded });
     }
-  }
+  };
 
   render() {
     return (
@@ -262,7 +281,11 @@ export default class RepoSelector extends Component<PropsType, StateType> {
           forceExpanded={this.props.forceExpanded}
         >
           {this.renderSelected()}
-          {this.props.forceExpanded ? null : <i className="material-icons">{this.state.isExpanded ? 'close' : 'build'}</i>}
+          {this.props.forceExpanded ? null : (
+            <i className="material-icons">
+              {this.state.isExpanded ? "close" : "build"}
+            </i>
+          )}
         </StyledRepoSelector>
 
         {this.state.isExpanded ? this.renderExpanded() : null}
@@ -314,13 +337,16 @@ const RepoName = styled.div`
   display: flex;
   width: 100%;
   font-size: 13px;
-  border-bottom: 1px solid ${(props: { lastItem: boolean, isSelected: boolean }) => props.lastItem ? '#00000000' : '#606166'};
+  border-bottom: 1px solid
+    ${(props: { lastItem: boolean; isSelected: boolean }) =>
+      props.lastItem ? "#00000000" : "#606166"};
   color: #ffffff;
   user-select: none;
   align-items: center;
   padding: 10px 0px;
   cursor: pointer;
-  background: ${(props: { isSelected: boolean, lastItem: boolean }) => props.isSelected ? '#ffffff22' : '#ffffff11'};
+  background: ${(props: { isSelected: boolean; lastItem: boolean }) =>
+    props.isSelected ? "#ffffff22" : "#ffffff11"};
   :hover {
     background: #ffffff22;
 
@@ -356,8 +382,7 @@ const ExpandedWrapper = styled.div`
   overflow-y: auto;
 `;
 
-const ExpandedWrapperAlt = styled(ExpandedWrapper)`
-`;
+const ExpandedWrapperAlt = styled(ExpandedWrapper)``;
 
 const RepoLabel = styled.div`
   display: flex;
@@ -375,7 +400,8 @@ const StyledRepoSelector = styled.div`
   width: 100%;
   margin-top: 22px;
   border: 1px solid #ffffff55;
-  background: ${(props: { isExpanded: boolean, forceExpanded: boolean }) => props.isExpanded ? '#ffffff11' : ''};
+  background: ${(props: { isExpanded: boolean; forceExpanded: boolean }) =>
+    props.isExpanded ? "#ffffff11" : ""};
   border-radius: 3px;
   user-select: none;
   height: 40px;
@@ -384,7 +410,8 @@ const StyledRepoSelector = styled.div`
   display: flex;
   align-items: center;
   justify-content: space-between;
-  cursor: ${(props: { isExpanded: boolean, forceExpanded: boolean }) => props.forceExpanded ? '' : 'pointer'};
+  cursor: ${(props: { isExpanded: boolean; forceExpanded: boolean }) =>
+    props.forceExpanded ? "" : "pointer"};
   :hover {
     background: #ffffff11;
 

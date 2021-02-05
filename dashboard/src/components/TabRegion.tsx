@@ -1,20 +1,19 @@
-import React, { Component } from 'react';
-import styled from 'styled-components';
+import React, { Component } from "react";
+import styled from "styled-components";
 
-import TabSelector from './TabSelector';
-import Loading from './Loading';
+import TabSelector from "./TabSelector";
+import Loading from "./Loading";
 
 type PropsType = {
-  options: { label: string, value: string }[],
-  currentTab: string,
-  setCurrentTab: (x: string) => void,
-  defaultTab?: string,
-  addendum?: any,
-  color?: string | null,
+  options: { label: string; value: string }[];
+  currentTab: string;
+  setCurrentTab: (x: string) => void;
+  defaultTab?: string;
+  addendum?: any;
+  color?: string | null;
 };
 
-type StateType = {
-};
+type StateType = {};
 
 // Manages a tab selector and renders the associated view
 export default class TabRegion extends Component<PropsType, StateType> {
@@ -22,7 +21,7 @@ export default class TabRegion extends Component<PropsType, StateType> {
     if (!this.props.defaultTab && this.props.options[0]) {
       this.props.setCurrentTab(this.props.options[0].value);
     }
-  }
+  };
 
   componentDidMount() {
     this.setDefaultTab();
@@ -31,7 +30,7 @@ export default class TabRegion extends Component<PropsType, StateType> {
   componentDidUpdate(prevProps: PropsType) {
     let { options, currentTab } = this.props;
     if (prevProps.options !== options) {
-      if (options.filter(x => x.value === currentTab).length === 0) {
+      if (options.filter((x) => x.value === currentTab).length === 0) {
         this.setDefaultTab();
       }
     }
@@ -39,9 +38,7 @@ export default class TabRegion extends Component<PropsType, StateType> {
 
   renderContents = () => {
     if (!this.props.currentTab) {
-      return (
-        <Loading />
-      );
+      return <Loading />;
     }
 
     return (
@@ -54,19 +51,13 @@ export default class TabRegion extends Component<PropsType, StateType> {
           addendum={this.props.addendum}
         />
         <Gap />
-        <TabContents>
-          {this.props.children}
-        </TabContents>
+        <TabContents>{this.props.children}</TabContents>
       </Div>
     );
-  }
+  };
 
   render() {
-    return (
-      <StyledTabRegion>
-        {this.renderContents()}
-      </StyledTabRegion>
-    );
+    return <StyledTabRegion>{this.renderContents()}</StyledTabRegion>;
   }
 }
 

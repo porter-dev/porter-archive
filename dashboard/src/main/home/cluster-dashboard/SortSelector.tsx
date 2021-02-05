@@ -1,31 +1,31 @@
-import React, { Component } from 'react';
-import styled from 'styled-components';
+import React, { Component } from "react";
+import styled from "styled-components";
 
-import { Context } from 'shared/Context';
+import { Context } from "shared/Context";
 
-import Selector from 'components/Selector';
+import Selector from "components/Selector";
 
 type PropsType = {
-  setSortType: (x: string) => void,
-  sortType: string
+  setSortType: (x: string) => void;
+  sortType: string;
 };
 
 type StateType = {
-  sortOptions: { label: string, value: string }[]
+  sortOptions: { label: string; value: string }[];
 };
 
-// TODO: fix update to unmounted component 
+// TODO: fix update to unmounted component
 export default class SortSelector extends Component<PropsType, StateType> {
   state = {
     sortOptions: [
-      { label: 'Newest', value: 'Newest' },
-      { label: 'Oldest', value: 'Oldest' },
-      { label: 'Alphabetical', value: 'Alphabetical' }
-    ] as {label: string, value: string}[]
-  }
+      { label: "Newest", value: "Newest" },
+      { label: "Oldest", value: "Oldest" },
+      { label: "Alphabetical", value: "Alphabetical" },
+    ] as { label: string; value: string }[],
+  };
 
   render() {
-    return ( 
+    return (
       <StyledSortSelector>
         <Label>
           <i className="material-icons">sort</i> Sort
@@ -34,9 +34,9 @@ export default class SortSelector extends Component<PropsType, StateType> {
           activeValue={this.props.sortType}
           setActiveValue={(sortType) => this.props.setSortType(sortType)}
           options={this.state.sortOptions}
-          dropdownLabel='Sort By'
-          width='150px'
-          dropdownWidth='230px'
+          dropdownLabel="Sort By"
+          width="150px"
+          dropdownWidth="230px"
           closeOverlay={true}
         />
       </StyledSortSelector>

@@ -1,25 +1,24 @@
-import React, { Component } from 'react';
-import styled from 'styled-components';
+import React, { Component } from "react";
+import styled from "styled-components";
 
-import { InviteType } from 'shared/types';
-import api from 'shared/api';
-import { Context } from 'shared/Context';
+import { InviteType } from "shared/types";
+import api from "shared/api";
+import { Context } from "shared/Context";
 
-import Loading from 'components/Loading';
-import InputRow from 'components/values-form/InputRow';
-import Helper from 'components/values-form/Helper';
-import Heading from 'components/values-form/Heading';
+import Loading from "components/Loading";
+import InputRow from "components/values-form/InputRow";
+import Helper from "components/values-form/Helper";
+import Heading from "components/values-form/Heading";
 
-type PropsType = {
-}
+type PropsType = {};
 
 type StateType = {
-  loading: boolean,
-  invites: InviteType[],
-  email: string,
-  invalidEmail: boolean,
-  isHTTPS: boolean,
-}
+  loading: boolean;
+  invites: InviteType[];
+  email: string;
+  invalidEmail: boolean;
+  isHTTPS: boolean;
+};
 
 const dummyInvites = [];
 
@@ -27,10 +26,10 @@ export default class InviteList extends Component<PropsType, StateType> {
   state = {
     loading: true,
     invites: [] as InviteType[],
-    email: '',
+    email: "",
     invalidEmail: false,
-    isHTTPS: (process.env.API_SERVER === 'dashboard.getporter.dev'),
-  }
+    isHTTPS: process.env.API_SERVER === "dashboard.getporter.dev",
+  };
 
   componentDidMount() {
     this.getInviteData();
@@ -38,18 +37,23 @@ export default class InviteList extends Component<PropsType, StateType> {
 
   getInviteData = () => {
     let { currentProject } = this.context;
-    
-    this.setState({ loading: true })
-    api.getInvites('<token>', {}, {
-      id: currentProject.id
-    }, (err: any, res: any) => {
-      if (err) {
-        console.log(err);
-      } else {
-        this.setState({ invites: res.data, loading: false });
+
+    this.setState({ loading: true });
+    api.getInvites(
+      "<token>",
+      {},
+      {
+        id: currentProject.id,
+      },
+      (err: any, res: any) => {
+        if (err) {
+          console.log(err);
+        } else {
+          this.setState({ invites: res.data, loading: false });
+        }
       }
-    });
-  }
+    );
+  };
 
   validateEmail = () => {
     var regex = /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
@@ -59,61 +63,91 @@ export default class InviteList extends Component<PropsType, StateType> {
     } else {
       this.setState({ invalidEmail: true });
     }
-  }
+  };
 
   createInvite = () => {
     let { currentProject } = this.context;
-    api.createInvite('<token>', { email: this.state.email }, { id: currentProject.id }, (err: any, res: any) => {
-      if (err) {
-        console.log(err);
-      } else {
-        this.getInviteData();
-        this.setState({ email: '' });
+    api.createInvite(
+      "<token>",
+      { email: this.state.email },
+      { id: currentProject.id },
+      (err: any, res: any) => {
+        if (err) {
+          console.log(err);
+        } else {
+          this.getInviteData();
+          this.setState({ email: "" });
+        }
       }
-    })
-  }
+    );
+  };
 
   deleteInvite = (index: number) => {
     let { currentProject } = this.context;
-    api.deleteInvite('<token>', {}, {
-      id: currentProject.id, invId: this.state.invites[index].id
-    }, (err: any, res: any) => {
-      if (err) {
-        console.log(err);
-      } else {
-        this.getInviteData();
+    api.deleteInvite(
+      "<token>",
+      {},
+      {
+        id: currentProject.id,
+        invId: this.state.invites[index].id,
+      },
+      (err: any, res: any) => {
+        if (err) {
+          console.log(err);
+        } else {
+          this.getInviteData();
+        }
       }
-    })
-  }
+    );
+  };
 
   replaceInvite = (index: number) => {
     let { currentProject } = this.context;
-    api.createInvite('<token>', { email: this.state.invites[index].email }, { id: currentProject.id }, (err: any, res: any) => {
-      if (err) {
-        console.log(err);
-      } else {
-        api.deleteInvite('<token>', {}, {
-          id: currentProject.id, invId: this.state.invites[index].id
-        }, (err: any, res: any) => {
-          if (err) {
-            console.log(err);
-          } else {
-            this.getInviteData();
-          }
-        })
+    api.createInvite(
+      "<token>",
+      { email: this.state.invites[index].email },
+      { id: currentProject.id },
+      (err: any, res: any) => {
+        if (err) {
+          console.log(err);
+        } else {
+          api.deleteInvite(
+            "<token>",
+            {},
+            {
+              id: currentProject.id,
+              invId: this.state.invites[index].id,
+            },
+            (err: any, res: any) => {
+              if (err) {
+                console.log(err);
+              } else {
+                this.getInviteData();
+              }
+            }
+          );
+        }
       }
-    })
-  }
+    );
+  };
 
   copyToClip = (index: number) => {
     let { currentProject } = this.context;
-    navigator.clipboard.writeText(
-      `${this.state.isHTTPS ? 'https://' : ''}${process.env.API_SERVER}/api/projects/${currentProject.id}/invites/${this.state.invites[index].token}`
-    ).then(function() {
-    }, function() {
-      console.log("couldn't copy link to clipboard");
-    })
-  }
+    navigator.clipboard
+      .writeText(
+        `${this.state.isHTTPS ? "https://" : ""}${
+          process.env.API_SERVER
+        }/api/projects/${currentProject.id}/invites/${
+          this.state.invites[index].token
+        }`
+      )
+      .then(
+        function () {},
+        function () {
+          console.log("couldn't copy link to clipboard");
+        }
+      );
+  };
 
   renderInvitations = () => {
     let { currentProject } = this.context;
@@ -122,46 +156,35 @@ export default class InviteList extends Component<PropsType, StateType> {
     } else {
       var invContent: any[] = [];
       var collabList: any[] = [];
-      this.state.invites.sort((a: any, b: any) => (a.email > b.email) ? 1 : -1);
-      this.state.invites.sort((a: any, b: any) => (a.accepted > b.accepted) ? 1 : -1);
+      this.state.invites.sort((a: any, b: any) => (a.email > b.email ? 1 : -1));
+      this.state.invites.sort((a: any, b: any) =>
+        a.accepted > b.accepted ? 1 : -1
+      );
       for (let i = 0; i < this.state.invites.length; i++) {
         if (this.state.invites[i].accepted) {
           collabList.push(
             <Tr key={i}>
-              <MailTd isTop={i === 0}>
-                {this.state.invites[i].email}
-              </MailTd>
-              <LinkTd isTop={i === 0}>
-              </LinkTd>
+              <MailTd isTop={i === 0}>{this.state.invites[i].email}</MailTd>
+              <LinkTd isTop={i === 0}></LinkTd>
               <Td isTop={i === 0}>
-                <CopyButton
-                  invis={true}
-                >
-                  Remove
-                </CopyButton>
+                <CopyButton invis={true}>Remove</CopyButton>
               </Td>
             </Tr>
           );
         } else if (this.state.invites[i].expired) {
           invContent.push(
             <Tr key={i}>
-              <MailTd isTop={i === 0}>
-                {this.state.invites[i].email}
-              </MailTd>
+              <MailTd isTop={i === 0}>{this.state.invites[i].email}</MailTd>
               <LinkTd isTop={i === 0}>
                 <Rower>
                   Link Expired.
-                  <NewLinkButton
-                    onClick={() => this.replaceInvite(i)}
-                  >
+                  <NewLinkButton onClick={() => this.replaceInvite(i)}>
                     <u>Generate a new link</u>
                   </NewLinkButton>
                 </Rower>
               </LinkTd>
               <Td isTop={i === 0}>
-                <CopyButton
-                  onClick={() => this.deleteInvite(i)}
-                >
+                <CopyButton onClick={() => this.deleteInvite(i)}>
                   Delete Invite
                 </CopyButton>
               </Td>
@@ -170,33 +193,31 @@ export default class InviteList extends Component<PropsType, StateType> {
         } else {
           invContent.push(
             <Tr key={i}>
-              <MailTd isTop={i === 0}>
-                {this.state.invites[i].email}
-              </MailTd>
+              <MailTd isTop={i === 0}>{this.state.invites[i].email}</MailTd>
               <LinkTd isTop={i === 0}>
                 <Rower>
                   <ShareLink
                     disabled={true}
-                    type='string'
-                    value={`${this.state.isHTTPS ? 'https://' : ''}${process.env.API_SERVER}/api/projects/${currentProject.id}/invites/${this.state.invites[i].token}`}
-                    placeholder='Unable to retrieve link'
+                    type="string"
+                    value={`${this.state.isHTTPS ? "https://" : ""}${
+                      process.env.API_SERVER
+                    }/api/projects/${currentProject.id}/invites/${
+                      this.state.invites[i].token
+                    }`}
+                    placeholder="Unable to retrieve link"
                   />
-                  <CopyButton
-                    onClick={() => this.copyToClip(i)}
-                  >
+                  <CopyButton onClick={() => this.copyToClip(i)}>
                     Copy Link
                   </CopyButton>
                 </Rower>
               </LinkTd>
               <Td isTop={i === 0}>
-                <CopyButton
-                  onClick={() => this.deleteInvite(i)}
-                >
+                <CopyButton onClick={() => this.deleteInvite(i)}>
                   Delete Invite
                 </CopyButton>
               </Td>
             </Tr>
-          )
+          );
         }
       }
 
@@ -204,14 +225,22 @@ export default class InviteList extends Component<PropsType, StateType> {
         <>
           <Heading>Invites & Collaborators</Heading>
           <Helper>Manage pending invites and view collaborators.</Helper>
-          {((invContent.length > 0) || (collabList.length > 0))
-            ? <Table><tbody>{invContent}{collabList}</tbody></Table>
-            : <Placeholder>This project currently has no invites or collaborators.</Placeholder>
-          }
+          {invContent.length > 0 || collabList.length > 0 ? (
+            <Table>
+              <tbody>
+                {invContent}
+                {collabList}
+              </tbody>
+            </Table>
+          ) : (
+            <Placeholder>
+              This project currently has no invites or collaborators.
+            </Placeholder>
+          )}
         </>
-      )
+      );
     }
-  }
+  };
 
   render() {
     return (
@@ -221,27 +250,22 @@ export default class InviteList extends Component<PropsType, StateType> {
         <DarkMatter />
         <InputRow
           value={this.state.email}
-          type='text'
+          type="text"
           setValue={(x: string) => this.setState({ email: x })}
-          width='calc(100%)'
-          placeholder='ex: mrp@getporter.dev'
+          width="calc(100%)"
+          placeholder="ex: mrp@getporter.dev"
         />
         <ButtonWrapper>
-          <InviteButton
-            disabled={false}
-            onClick={() => this.validateEmail()}
-          >
+          <InviteButton disabled={false} onClick={() => this.validateEmail()}>
             Create Invite
           </InviteButton>
-          {this.state.invalidEmail &&
-            <Invalid>
-              Invalid email address. Please try again.
-            </Invalid>
-          }
+          {this.state.invalidEmail && (
+            <Invalid>Invalid email address. Please try again.</Invalid>
+          )}
         </ButtonWrapper>
         {this.renderInvitations()}
       </>
-    )
+    );
   }
 }
 
@@ -271,7 +295,8 @@ const DarkMatter = styled.div`
 `;
 
 const CopyButton = styled.div`
-  visibility: ${(props: { invis?: boolean }) => props.invis ? 'hidden' : 'visible'};
+  visibility: ${(props: { invis?: boolean }) =>
+    props.invis ? "hidden" : "visible"};
   color: #ffffff;
   font-weight: 400;
   font-size: 13px;
@@ -307,7 +332,7 @@ const InviteButton = styled.div<{ disabled: boolean }>`
   height: 35px;
   font-size: 13px;
   font-weight: 500;
-  font-family: 'Work Sans', sans-serif;
+  font-family: "Work Sans", sans-serif;
   color: white;
   display: flex;
   align-items: center;
@@ -320,13 +345,16 @@ const InviteButton = styled.div<{ disabled: boolean }>`
   justify-content: center;
   border: 0;
   border-radius: 5px;
-  background: ${props => !props.disabled ? '#616FEEcc' : '#aaaabb'};
-  box-shadow: ${props => !props.disabled ? '0 2px 5px 0 #00000030' : 'none'};
-  cursor: ${props => !props.disabled ? 'pointer' : 'default'};
+  background: ${(props) => (!props.disabled ? "#616FEEcc" : "#aaaabb")};
+  box-shadow: ${(props) =>
+    !props.disabled ? "0 2px 5px 0 #00000030" : "none"};
+  cursor: ${(props) => (!props.disabled ? "pointer" : "default")};
   user-select: none;
-  :focus { outline: 0 }
+  :focus {
+    outline: 0;
+  }
   :hover {
-    filter: ${props => !props.disabled ? 'brightness(120%)' : ''};
+    filter: ${(props) => (!props.disabled ? "brightness(120%)" : "")};
   }
   margin-bottom: 10px;
 `;
@@ -371,14 +399,14 @@ const Table = styled.table`
 const Td = styled.td`
   white-space: nowrap;
   padding: 6px 0px;
-  border-top: ${(props: { isTop: boolean }) => (props.isTop ? 'none' : '1px solid #ffffff55')};
+  border-top: ${(props: { isTop: boolean }) =>
+    props.isTop ? "none" : "1px solid #ffffff55"};
   &:last-child {
     padding-right: 16px;
   }
 `;
 
-const Tr = styled.tr`
-`;
+const Tr = styled.tr``;
 
 const MailTd = styled(Td)`
   padding: 0 12px;
@@ -397,5 +425,5 @@ const Invalid = styled.div`
   color: #f5cb42;
   margin-left: 15px;
   font-size: 13px;
-  font-family: 'Work Sans', sans-serif;
+  font-family: "Work Sans", sans-serif;
 `;

@@ -1,42 +1,47 @@
-import React, { Component } from 'react';
-import styled from 'styled-components';
-import gradient from 'assets/gradient.jpg';
+import React, { Component } from "react";
+import styled from "styled-components";
+import gradient from "assets/gradient.jpg";
 
-import { Context } from 'shared/Context';
-import { ChartType, StorageType, ClusterType } from 'shared/types';
-import api from 'shared/api';
+import { Context } from "shared/Context";
+import { ChartType, ClusterType } from "shared/types";
 
-import ChartList from './chart/ChartList';
-import NamespaceSelector from './NamespaceSelector';
-import SortSelector from './SortSelector';
-import ExpandedChart from './expanded-chart/ExpandedChart';
-import { Redirect, RouteComponentProps, withRouter } from 'react-router';
+import ChartList from "./chart/ChartList";
+import NamespaceSelector from "./NamespaceSelector";
+import SortSelector from "./SortSelector";
+import ExpandedChart from "./expanded-chart/ExpandedChart";
+import { RouteComponentProps, withRouter } from "react-router";
 
 type PropsType = RouteComponentProps & {
-  currentCluster: ClusterType,
-  setSidebar: (x: boolean) => void,
+  currentCluster: ClusterType;
+  setSidebar: (x: boolean) => void;
 };
 
 type StateType = {
-  namespace: string,
-  sortType: string,
-  currentChart: ChartType | null
+  namespace: string;
+  sortType: string;
+  currentChart: ChartType | null;
 };
 
 class ClusterDashboard extends Component<PropsType, StateType> {
   state = {
-    namespace: 'default',
-    sortType: (localStorage.getItem("SortType") ? localStorage.getItem('SortType') : 'Newest'),
-    currentChart: null as (ChartType | null)
-  }
+    namespace: "default",
+    sortType: localStorage.getItem("SortType")
+      ? localStorage.getItem("SortType")
+      : "Newest",
+    currentChart: null as ChartType | null,
+  };
 
   componentDidUpdate(prevProps: PropsType) {
     localStorage.setItem("SortType", this.state.sortType);
     // Reset namespace filter and close expanded chart on cluster change
     if (prevProps.currentCluster !== this.props.currentCluster) {
-      this.setState({ namespace: 'default', sortType: (
-        localStorage.getItem("SortType") ? localStorage.getItem('SortType') : 'Newest'
-      ), currentChart: null });
+      this.setState({
+        namespace: "default",
+        sortType: localStorage.getItem("SortType")
+          ? localStorage.getItem("SortType")
+          : "Newest",
+        currentChart: null,
+      });
     }
   }
 
@@ -46,7 +51,9 @@ class ClusterDashboard extends Component<PropsType, StateType> {
       return (
         <DashboardIcon>
           <DashboardImage src={gradient} />
-          <Overlay>{currentCluster && currentCluster.name[0].toUpperCase()}</Overlay>
+          <Overlay>
+            {currentCluster && currentCluster.name[0].toUpperCase()}
+          </Overlay>
         </DashboardIcon>
       );
     }
@@ -56,18 +63,20 @@ class ClusterDashboard extends Component<PropsType, StateType> {
         <i className="material-icons">device_hub</i>
       </DashboardIcon>
     );
-  }
+  };
 
   renderContents = () => {
     let { currentCluster, setSidebar } = this.props;
-    
+
     if (this.state.currentChart) {
       return (
         <ExpandedChart
           namespace={this.state.namespace}
           currentCluster={this.props.currentCluster}
           currentChart={this.state.currentChart}
-          setCurrentChart={(x: ChartType | null) => this.setState({ currentChart: x })}
+          setCurrentChart={(x: ChartType | null) =>
+            this.setState({ currentChart: x })
+          }
           setSidebar={setSidebar}
         />
       );
@@ -78,9 +87,9 @@ class ClusterDashboard extends Component<PropsType, StateType> {
         <TitleSection>
           {this.renderDashboardIcon()}
           <Title>{currentCluster.name}</Title>
-          <i 
+          <i
             className="material-icons"
-            onClick={() => this.context.setCurrentModal('UpdateClusterModal')}
+            onClick={() => this.context.setCurrentModal("UpdateClusterModal")}
           >
             more_vert
           </i>
@@ -92,15 +101,15 @@ class ClusterDashboard extends Component<PropsType, StateType> {
               <i className="material-icons">info</i> Info
             </InfoLabel>
           </TopRow>
-          <Description>Cluster dashboard for {currentCluster.name}.</Description>
+          <Description>
+            Cluster dashboard for {currentCluster.name}.
+          </Description>
         </InfoSection>
 
         <LineBreak />
-        
+
         <ControlRow>
-          <Button
-            onClick={() => this.props.history.push("templates")}
-          >
+          <Button onClick={() => this.props.history.push("templates")}>
             <i className="material-icons">add</i> Deploy Template
           </Button>
           <SortFilterWrapper>
@@ -119,18 +128,16 @@ class ClusterDashboard extends Component<PropsType, StateType> {
           currentCluster={currentCluster}
           namespace={this.state.namespace}
           sortType={this.state.sortType}
-          setCurrentChart={(x: ChartType | null) => this.setState({ currentChart: x })}
+          setCurrentChart={(x: ChartType | null) =>
+            this.setState({ currentChart: x })
+          }
         />
       </div>
     );
-  }
+  };
 
   render() {
-    return (
-      <div>
-        {this.renderContents()}
-      </div>
-    );
+    return <div>{this.renderContents()}</div>;
   }
 }
 
@@ -163,10 +170,10 @@ const InfoLabel = styled.div`
   height: 20px;
   display: flex;
   align-items: center;
-  color: #7A838F;
+  color: #7a838f;
   font-size: 13px;
   > i {
-    color: #8B949F;
+    color: #8b949f;
     font-size: 18px;
     margin-right: 5px;
   }
@@ -174,7 +181,7 @@ const InfoLabel = styled.div`
 
 const InfoSection = styled.div`
   margin-top: 20px;
-  font-family: 'Work Sans', sans-serif;
+  font-family: "Work Sans", sans-serif;
   margin-left: 0px;
   margin-bottom: 35px;
 `;
@@ -186,7 +193,7 @@ const Button = styled.div`
   justify-content: space-between;
   font-size: 13px;
   cursor: pointer;
-  font-family: 'Work Sans', sans-serif;
+  font-family: "Work Sans", sans-serif;
   border-radius: 20px;
   color: white;
   height: 35px;
@@ -199,11 +206,14 @@ const Button = styled.div`
   white-space: nowrap;
   text-overflow: ellipsis;
   box-shadow: 0 5px 8px 0px #00000010;
-  cursor: ${(props: { disabled?: boolean }) => props.disabled ? 'not-allowed' : 'pointer'};
+  cursor: ${(props: { disabled?: boolean }) =>
+    props.disabled ? "not-allowed" : "pointer"};
 
-  background: ${(props: { disabled?: boolean }) => props.disabled ? '#aaaabbee' : '#616FEEcc'};
+  background: ${(props: { disabled?: boolean }) =>
+    props.disabled ? "#aaaabbee" : "#616FEEcc"};
   :hover {
-    background: ${(props: { disabled?: boolean }) => props.disabled ? '' : '#505edddd'};
+    background: ${(props: { disabled?: boolean }) =>
+      props.disabled ? "" : "#505edddd"};
   }
 
   > i {
@@ -223,7 +233,7 @@ const Button = styled.div`
 const ButtonAlt = styled(Button)`
   min-width: 150px;
   max-width: 150px;
-  background: #7A838Fdd;
+  background: #7a838fdd;
 
   :hover {
     background: #69727eee;
@@ -250,7 +260,7 @@ const Overlay = styled.div`
   justify-content: center;
   font-size: 24px;
   font-weight: 500;
-  font-family: 'Work Sans', sans-serif;
+  font-family: "Work Sans", sans-serif;
   color: white;
 `;
 
@@ -269,7 +279,7 @@ const DashboardIcon = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #676C7C;
+  background: #676c7c;
   border: 2px solid #8e94aa;
 
   > i {
@@ -280,7 +290,7 @@ const DashboardIcon = styled.div`
 const Title = styled.div`
   font-size: 20px;
   font-weight: 500;
-  font-family: 'Work Sans', sans-serif;
+  font-family: "Work Sans", sans-serif;
   margin-left: 18px;
   color: #ffffff;
   white-space: nowrap;

@@ -1,43 +1,47 @@
-import { render } from '@testing-library/react';
-import React, { Component } from 'react';
-import styled from 'styled-components';
+import React, { Component } from "react";
+import styled from "styled-components";
 
-import gradient from 'assets/gradient.jpg';
-import { Context } from 'shared/Context';
-import { InfraType } from 'shared/types';
-import api from 'shared/api';
+import gradient from "assets/gradient.jpg";
+import { Context } from "shared/Context";
+import { InfraType } from "shared/types";
+import api from "shared/api";
 
-import ProvisionerSettings from '../provisioner/ProvisionerSettings';
-import ClusterPlaceholderContainer from './ClusterPlaceholderContainer';
-import { Redirect, RouteComponentProps, withRouter } from 'react-router';
+import ProvisionerSettings from "../provisioner/ProvisionerSettings";
+import ClusterPlaceholderContainer from "./ClusterPlaceholderContainer";
+import { Redirect, RouteComponentProps, withRouter } from "react-router";
 
 type PropsType = RouteComponentProps & {
-  projectId: number | null,
+  projectId: number | null;
 };
 
 type StateType = {
-  infras: InfraType[],
+  infras: InfraType[];
 };
 
 class Dashboard extends Component<PropsType, StateType> {
   state = {
     infras: [] as InfraType[],
-  }
+  };
 
   refreshInfras = () => {
     if (this.props.projectId) {
-      api.getInfra('<token>', {}, { 
-        project_id: this.props.projectId,
-      }, (err: any, res: any) => {
-        if (err) {
-          console.log(err);
-          return;
-        } 
-        this.setState({ infras: res.data });
-      });
+      api.getInfra(
+        "<token>",
+        {},
+        {
+          project_id: this.props.projectId,
+        },
+        (err: any, res: any) => {
+          if (err) {
+            console.log(err);
+            return;
+          }
+          this.setState({ infras: res.data });
+        }
+      );
     }
-  }
-  
+  };
+
   componentDidMount() {
     this.refreshInfras();
   }
@@ -50,7 +54,7 @@ class Dashboard extends Component<PropsType, StateType> {
 
   onShowProjectSettings = () => {
     this.props.history.push("project-settings");
-  }
+  };
 
   render() {
     let { currentProject, currentCluster } = this.context;
@@ -61,30 +65,27 @@ class Dashboard extends Component<PropsType, StateType> {
         {currentProject && (
           <DashboardWrapper>
             <TitleSection>
-            <DashboardIcon>
-              <DashboardImage src={gradient} />
-              <Overlay>
-                {currentProject && currentProject.name[0].toUpperCase()}
-              </Overlay>
-            </DashboardIcon>
+              <DashboardIcon>
+                <DashboardImage src={gradient} />
+                <Overlay>
+                  {currentProject && currentProject.name[0].toUpperCase()}
+                </Overlay>
+              </DashboardIcon>
               <Title>{currentProject && currentProject.name}</Title>
               {this.context.currentProject.roles.filter((obj: any) => {
                 return obj.user_id === this.context.user.userId;
-              })[0].kind === 'admin' &&
-                <i
-                  className="material-icons"
-                  onClick={onShowProjectSettings}
-                >
+              })[0].kind === "admin" && (
+                <i className="material-icons" onClick={onShowProjectSettings}>
                   more_vert
                 </i>
-              }
+              )}
             </TitleSection>
 
             <InfoSection>
               <TopRow>
                 <InfoLabel>
                   <i className="material-icons">info</i> Info
-              </InfoLabel>
+                </InfoLabel>
               </TopRow>
               <Description>
                 Project overview for {currentProject && currentProject.name}.
@@ -93,21 +94,17 @@ class Dashboard extends Component<PropsType, StateType> {
 
             <LineBreak />
 
-            {!currentCluster 
-              ? (
-                <>
-                  <Banner>
-                    <i className="material-icons">error_outline</i>
-                    This project currently has no clusters connected.
-                    </Banner>
-                  <ProvisionerSettings 
-                    infras={infras}
-                  />
-                </>
-              ) : (
-                <ClusterPlaceholderContainer/>
-              )
-            }
+            {!currentCluster ? (
+              <>
+                <Banner>
+                  <i className="material-icons">error_outline</i>
+                  This project currently has no clusters connected.
+                </Banner>
+                <ProvisionerSettings infras={infras} />
+              </>
+            ) : (
+              <ClusterPlaceholderContainer />
+            )}
           </DashboardWrapper>
         )}
       </>
@@ -156,10 +153,10 @@ const InfoLabel = styled.div`
   height: 20px;
   display: flex;
   align-items: center;
-  color: #7A838F;
+  color: #7a838f;
   font-size: 13px;
   > i {
-    color: #8B949F;
+    color: #8b949f;
     font-size: 18px;
     margin-right: 5px;
   }
@@ -167,7 +164,7 @@ const InfoLabel = styled.div`
 
 const InfoSection = styled.div`
   margin-top: 20px;
-  font-family: 'Work Sans', sans-serif;
+  font-family: "Work Sans", sans-serif;
   margin-left: 0px;
   margin-bottom: 35px;
 `;
@@ -192,7 +189,7 @@ const Overlay = styled.div`
   justify-content: center;
   font-size: 24px;
   font-weight: 500;
-  font-family: 'Work Sans', sans-serif;
+  font-family: "Work Sans", sans-serif;
   color: white;
 `;
 
@@ -219,7 +216,7 @@ const DashboardIcon = styled.div`
 const Title = styled.div`
   font-size: 20px;
   font-weight: 500;
-  font-family: 'Work Sans', sans-serif;
+  font-family: "Work Sans", sans-serif;
   margin-left: 18px;
   color: #ffffff;
   white-space: nowrap;

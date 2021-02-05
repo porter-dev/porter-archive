@@ -1,18 +1,18 @@
-import React, { Component } from 'react';
-import styled from 'styled-components';
-import gradient from 'assets/gradient.jpg';
+import React, { Component } from "react";
+import styled from "styled-components";
+import gradient from "assets/gradient.jpg";
 
-import { Context } from 'shared/Context';
-import { ProjectType, InfraType } from 'shared/types';
-import { RouteComponentProps, withRouter } from 'react-router';
+import { Context } from "shared/Context";
+import { ProjectType } from "shared/types";
+import { RouteComponentProps, withRouter } from "react-router";
 
 type PropsType = RouteComponentProps & {
-  currentProject: ProjectType,
-  projects: ProjectType[],
+  currentProject: ProjectType;
+  projects: ProjectType[];
 };
 
 type StateType = {
-  expanded: boolean
+  expanded: boolean;
 };
 
 class ProjectSection extends Component<PropsType, StateType> {
@@ -38,7 +38,7 @@ class ProjectSection extends Component<PropsType, StateType> {
         </Option>
       );
     });
-  }
+  };
 
   renderDropdown = () => {
     if (this.state.expanded) {
@@ -50,7 +50,7 @@ class ProjectSection extends Component<PropsType, StateType> {
             <Option
               selected={false}
               lastItem={true}
-              onClick={() => this.props.history.push('new-project')}
+              onClick={() => this.props.history.push("new-project")}
             >
               <ProjectIconAlt>+</ProjectIconAlt>
               <ProjectLabel>Create a Project</ProjectLabel>
@@ -59,11 +59,11 @@ class ProjectSection extends Component<PropsType, StateType> {
         </div>
       );
     }
-  }
+  };
 
   handleExpand = () => {
     this.setState({ expanded: !this.state.expanded });
-  }
+  };
 
   render() {
     let { currentProject } = this.props;
@@ -86,7 +86,7 @@ class ProjectSection extends Component<PropsType, StateType> {
       );
     }
     return (
-      <InitializeButton onClick={() => this.props.history.push('new-project')}>
+      <InitializeButton onClick={() => this.props.history.push("new-project")}>
         <Plus>+</Plus> Create a Project
       </InitializeButton>
     );
@@ -136,10 +136,12 @@ const InitializeButton = styled.div`
   }
 `;
 
-const Option = styled.div` 
+const Option = styled.div`
   width: 100%;
   border-top: 1px solid #00000000;
-  border-bottom: 1px solid ${(props: { selected: boolean, lastItem?: boolean }) => props.lastItem ? '#ffffff00' : '#ffffff15'};
+  border-bottom: 1px solid
+    ${(props: { selected: boolean; lastItem?: boolean }) =>
+      props.lastItem ? "#ffffff00" : "#ffffff15"};
   height: 45px;
   display: flex;
   align-items: center;
@@ -148,9 +150,11 @@ const Option = styled.div`
   padding-left: 10px;
   cursor: pointer;
   padding-right: 10px;
-  background: ${(props: { selected: boolean, lastItem?: boolean }) => props.selected ? '#ffffff11' : ''};
+  background: ${(props: { selected: boolean; lastItem?: boolean }) =>
+    props.selected ? "#ffffff11" : ""};
   :hover {
-    background: ${(props: { selected: boolean, lastItem?: boolean }) => props.selected ? '' : '#ffffff22'};
+    background: ${(props: { selected: boolean; lastItem?: boolean }) =>
+      props.selected ? "" : "#ffffff22"};
   }
 
   > i {
@@ -234,7 +238,7 @@ const MainSelector = styled.div`
   align-items: center;
   margin: 10px 0 0;
   font-size: 14px;
-  font-family: 'Work Sans', sans-serif;
+  font-family: "Work Sans", sans-serif;
   font-weight: 600;
   cursor: pointer;
   padding: 10px 0;
@@ -253,6 +257,7 @@ const MainSelector = styled.div`
     align-items: center;
     justify-content: center;
     border-radius: 20px;
-    background: ${(props: { expanded: boolean }) => props.expanded ? '#ffffff22' : ''};
+    background: ${(props: { expanded: boolean }) =>
+      props.expanded ? "#ffffff22" : ""};
   }
 `;

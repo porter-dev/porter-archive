@@ -1,5 +1,5 @@
-import React from 'react';  
-import styled from 'styled-components';
+import React from "react";
+import styled from "styled-components";
 
 export default function Helper(props: { children: any }) {
   return <StyledHelper>{props.children}</StyledHelper>;

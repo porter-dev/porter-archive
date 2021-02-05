@@ -1,48 +1,44 @@
-import React, { Component } from 'react';
-import styled from 'styled-components';
+import React, { Component } from "react";
+import styled from "styled-components";
 
-import { kindToIcon } from 'shared/rosettaStone';
-import { NodeType } from 'shared/types';
+import { kindToIcon } from "shared/rosettaStone";
+import { NodeType } from "shared/types";
 
 type PropsType = {
-  node: NodeType,
-  originX: number,
-  originY: number,
-  nodeMouseDown: () => void,
-  nodeMouseUp: () => void,
-  isActive: boolean,
-  showKindLabels: boolean,
-  setCurrentNode: (node: NodeType) => void,
-  isOpen: boolean
+  node: NodeType;
+  originX: number;
+  originY: number;
+  nodeMouseDown: () => void;
+  nodeMouseUp: () => void;
+  isActive: boolean;
+  showKindLabels: boolean;
+  setCurrentNode: (node: NodeType) => void;
+  isOpen: boolean;
 };
 
-type StateType = {
-};
+type StateType = {};
 
 export default class Node extends Component<PropsType, StateType> {
-  state = {
-  }
+  state = {};
 
   render() {
     let { x, y, w, h, name, kind } = this.props.node;
     let { originX, originY, nodeMouseDown, nodeMouseUp, isActive } = this.props;
 
-    let icon = 'tonality';
+    let icon = "tonality";
     if (Object.keys(kindToIcon).includes(kind)) {
-      icon = kindToIcon[kind]; 
+      icon = kindToIcon[kind];
     }
 
     return (
       <StyledNode
-        x={Math.round(originX + x - (w / 2))}
-        y={Math.round(originY - y - (h / 2))}
+        x={Math.round(originX + x - w / 2)}
+        y={Math.round(originY - y - h / 2)}
         w={Math.round(w)}
         h={Math.round(h)}
       >
-        <Kind>
-          {this.props.showKindLabels ? kind : null}
-        </Kind>
-        <NodeBlock 
+        <Kind>{this.props.showKindLabels ? kind : null}</Kind>
+        <NodeBlock
           onMouseDown={nodeMouseDown}
           onMouseUp={nodeMouseUp}
           onMouseEnter={() => this.props.setCurrentNode(this.props.node)}
@@ -52,9 +48,7 @@ export default class Node extends Component<PropsType, StateType> {
         >
           <i className="material-icons">{icon}</i>
         </NodeBlock>
-        <NodeLabel>
-          {name}
-        </NodeLabel>
+        <NodeLabel>{name}</NodeLabel>
       </StyledNode>
     );
   }
@@ -70,7 +64,7 @@ const Kind = styled.div`
   min-width: 1px;
   height: 25px;
   font-size: 13px;
-  font-family: 'Work Sans', sans-serif;
+  font-family: "Work Sans", sans-serif;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -84,7 +78,7 @@ const NodeLabel = styled.div`
   color: #aaaabb;
   max-width: 140px;
   font-size: 13px;
-  font-family: 'Work Sans', sans-serif;
+  font-family: "Work Sans", sans-serif;
   text-align: center;
   white-space: nowrap;
   overflow: hidden;
@@ -100,8 +94,10 @@ const NodeBlock = styled.div`
   align-items: center;
   justify-content: center;
   border-radius: 100px;
-  border: ${(props: { isActive: boolean, isOpen: boolean }) => props.isOpen ? '3px solid #ffffff' : ''};
-  box-shadow: ${(props: { isActive: boolean, isOpen: boolean }) => props.isActive ? '0 0 10px #ffffff66' : '0px 0px 10px 2px #00000022'};
+  border: ${(props: { isActive: boolean; isOpen: boolean }) =>
+    props.isOpen ? "3px solid #ffffff" : ""};
+  box-shadow: ${(props: { isActive: boolean; isOpen: boolean }) =>
+    props.isActive ? "0 0 10px #ffffff66" : "0px 0px 10px 2px #00000022"};
   z-index: 100;
   cursor: pointer;
   :hover {
@@ -115,13 +111,13 @@ const NodeBlock = styled.div`
 
 const StyledNode: any = styled.div.attrs((props: NodeType) => ({
   style: {
-    top: props.y + 'px',
-    left: props.x + 'px',
-    },
+    top: props.y + "px",
+    left: props.x + "px",
+  },
 }))`
   position: absolute;
-  width: ${(props: NodeType) => props.w + 'px'};
-  height: ${(props: NodeType) => props.h + 'px'};
+  width: ${(props: NodeType) => props.w + "px"};
+  height: ${(props: NodeType) => props.h + "px"};
   color: #ffffff22;
   border-radius: 100px;
   display: flex;

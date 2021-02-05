@@ -1,34 +1,34 @@
-import React, { Component } from 'react';
-import styled from 'styled-components';
-import yaml from 'js-yaml';
+import React, { Component } from "react";
+import styled from "styled-components";
+import yaml from "js-yaml";
 
-import { Context } from 'shared/Context';
-import { ResourceType, ChartType } from 'shared/types';
+import { Context } from "shared/Context";
+import { ResourceType, ChartType } from "shared/types";
 
-import Loading from 'components/Loading';
-import ResourceTab from 'components/ResourceTab';
-import YamlEditor from 'components/YamlEditor';
+import Loading from "components/Loading";
+import ResourceTab from "components/ResourceTab";
+import YamlEditor from "components/YamlEditor";
 
 type PropsType = {
-  currentChart: ChartType,
-  components: ResourceType[],
-  showRevisions: boolean,
+  currentChart: ChartType;
+  components: ResourceType[];
+  showRevisions: boolean;
 };
 
 type StateType = {
-  showKindLabels: boolean,
-  yaml: string | null,
-  wrapperHeight: number,
-  selectedResource: { kind: string, name: string } | null,
+  showKindLabels: boolean;
+  yaml: string | null;
+  wrapperHeight: number;
+  selectedResource: { kind: string; name: string } | null;
 };
 
 export default class ListSection extends Component<PropsType, StateType> {
   state = {
     showKindLabels: true,
-    yaml: '# Select a resource to view its manifest' as string | null,
+    yaml: "# Select a resource to view its manifest" as string | null,
     wrapperHeight: 0,
-    selectedResource: null as { kind: string, name: string } | null,
-  }
+    selectedResource: null as { kind: string; name: string } | null,
+  };
 
   wrapperRef: any = React.createRef();
 
@@ -37,23 +37,31 @@ export default class ListSection extends Component<PropsType, StateType> {
   }
 
   componentDidUpdate(prevProps: PropsType) {
-
     // Adjust yaml wrapper height on revision toggle
-    if ((prevProps.showRevisions !== this.props.showRevisions) && this.wrapperRef) {
+    if (
+      prevProps.showRevisions !== this.props.showRevisions &&
+      this.wrapperRef
+    ) {
       this.setState({ wrapperHeight: this.wrapperRef.offsetHeight });
     }
 
-    if (prevProps.components !== this.props.components && this.state.selectedResource) {
+    if (
+      prevProps.components !== this.props.components &&
+      this.state.selectedResource
+    ) {
       let matchingResourceFound = false;
       this.props.components.forEach((resource: ResourceType) => {
-        if (resource.Kind === this.state.selectedResource.kind && resource.Name === this.state.selectedResource.name) {
+        if (
+          resource.Kind === this.state.selectedResource.kind &&
+          resource.Name === this.state.selectedResource.name
+        ) {
           let rawYaml = yaml.dump(resource.RawYAML);
           this.setState({ yaml: rawYaml });
           matchingResourceFound = true;
         }
       });
       if (!matchingResourceFound) {
-        this.setState({ yaml: '# Select a resource to view its manifest' });
+        this.setState({ yaml: "# Select a resource to view its manifest" });
       }
     }
   }
@@ -64,10 +72,12 @@ export default class ListSection extends Component<PropsType, StateType> {
       return (
         <ResourceTab
           key={i}
-          handleClick={() => this.setState({ 
-            yaml: rawYaml,
-            selectedResource: { kind: resource.Kind, name: resource.Name }
-          })}
+          handleClick={() =>
+            this.setState({
+              yaml: rawYaml,
+              selectedResource: { kind: resource.Kind, name: resource.Name },
+            })
+          }
           selected={this.state.yaml === rawYaml}
           label={resource.Kind}
           name={resource.Name}
@@ -75,30 +85,26 @@ export default class ListSection extends Component<PropsType, StateType> {
         />
       );
     });
-  }
+  };
 
   renderTabs = () => {
     if (this.props.components && this.props.components.length > 0) {
-      return (
-        <TabWrapper>
-          {this.renderResourceList()}
-        </TabWrapper>
-      );
+      return <TabWrapper>{this.renderResourceList()}</TabWrapper>;
     }
 
-    return <Loading offset='-30px' />;
-  }
+    return <Loading offset="-30px" />;
+  };
 
   render() {
     return (
       <StyledListSection>
         {this.renderTabs()}
-        <FlexWrapper ref={element => this.wrapperRef = element}>
+        <FlexWrapper ref={(element) => (this.wrapperRef = element)}>
           <YamlWrapper>
             <YamlEditor
               value={this.state.yaml}
               onChange={(e: any) => this.setState({ yaml: e })}
-              height={this.state.wrapperHeight - 2 + 'px'}
+              height={this.state.wrapperHeight - 2 + "px"}
               border={true}
               readOnly={true}
             />

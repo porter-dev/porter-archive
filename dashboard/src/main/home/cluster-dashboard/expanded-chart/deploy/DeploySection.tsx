@@ -1,58 +1,53 @@
-import React, { Component } from 'react';
-import styled from 'styled-components';
+import React, { Component } from "react";
+import styled from "styled-components";
 
-import Loading from 'components/Loading';
-import { Context } from 'shared/Context';
-import { ChartType } from 'shared/types';
+import Loading from "components/Loading";
+import { Context } from "shared/Context";
+import { ChartType } from "shared/types";
 
-import EventTab from './EventTab';
+import EventTab from "./EventTab";
 
 type PropsType = {
-  currentChart: ChartType,
+  currentChart: ChartType;
 };
 
 type StateType = {
-  events: any[],
-  loading: boolean,
+  events: any[];
+  loading: boolean;
 };
 
 export default class StatusSection extends Component<PropsType, StateType> {
   state = {
     events: [] as any[],
     loading: true,
-  }
+  };
 
   renderTabs = () => {
     return this.state.events.map((c, i) => {
-      return (
-        <EventTab />
-      )
-    })
-  }
+      return <EventTab />;
+    });
+  };
 
   renderStatusSection = () => {
     if (this.state.loading) {
       return (
-        <NoEvents> 
+        <NoEvents>
           <Loading />
         </NoEvents>
-      )
+      );
     }
     if (this.state.events.length > 0) {
-      return (
-        <Wrapper>
-          {this.renderTabs()}
-        </Wrapper>
-      )
+      return <Wrapper>{this.renderTabs()}</Wrapper>;
     } else {
       return (
-        <NoEvents> 
-          <i className="material-icons">category</i> 
-          No events to display. This might happen while your app is still deploying.
+        <NoEvents>
+          <i className="material-icons">category</i>
+          No events to display. This might happen while your app is still
+          deploying.
         </NoEvents>
-      )
+      );
     }
-  }
+  };
 
   componentDidMount() {
     const { currentChart } = this.props;
@@ -73,14 +68,12 @@ export default class StatusSection extends Component<PropsType, StateType> {
     //   }
     //   this.setState({ controllers: res.data, loading: false })
     // });
-    this.setState({events: [1, 2, 3], loading: false})
+    this.setState({ events: [1, 2, 3], loading: false });
   }
 
   render() {
     return (
-      <StyledDeploySection>
-        {this.renderStatusSection()}
-      </StyledDeploySection>
+      <StyledDeploySection>{this.renderStatusSection()}</StyledDeploySection>
     );
   }
 }

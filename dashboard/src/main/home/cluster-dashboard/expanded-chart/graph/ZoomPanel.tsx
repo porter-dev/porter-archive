@@ -1,19 +1,19 @@
-import React, { Component } from 'react';
-import styled from 'styled-components';
+import React, { Component } from "react";
+import styled from "styled-components";
 
 type PropsType = {
-    btnZoomIn: () => void,
-    btnZoomOut: () => void,
+  btnZoomIn: () => void;
+  btnZoomOut: () => void;
 };
 
 type StateType = {
-  wrapperHeight: number
+  wrapperHeight: number;
 };
 
 export default class ZoomPanel extends Component<PropsType, StateType> {
   state = {
-    wrapperHeight: 0
-  }
+    wrapperHeight: 0,
+  };
 
   wrapperRef: any = React.createRef();
 
@@ -32,15 +32,11 @@ export default class ZoomPanel extends Component<PropsType, StateType> {
           <i className="material-icons">remove</i>
         </IconWrapper>
       </Div>
-    )
-  }
+    );
+  };
 
   render() {
-    return (
-      <StyledZoomer>
-        {this.renderContents()}
-      </StyledZoomer>
-    );
+    return <StyledZoomer>{this.renderContents()}</StyledZoomer>;
   }
 }
 
@@ -75,7 +71,7 @@ const StyledZoomer = styled.div`
   color: #ffffff;
   height: 64px;
   width: 36px;
-  background: #34373Cdf;
+  background: #34373cdf;
   border-radius: 3px;
   padding-left: 11px;
   display: inline-block;

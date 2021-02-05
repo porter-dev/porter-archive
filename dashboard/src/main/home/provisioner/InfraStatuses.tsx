@@ -1,30 +1,32 @@
-import React, { Component } from 'react';
-import styled from 'styled-components';
+import React, { Component } from "react";
+import styled from "styled-components";
 
-import loadingDots from 'assets/loading-dots.gif';
-import { InfraType } from 'shared/types';
-import { infraNames } from 'shared/common';
+import loadingDots from "assets/loading-dots.gif";
+import { InfraType } from "shared/types";
+import { infraNames } from "shared/common";
 
 type PropsType = {
-  infras: InfraType[],
+  infras: InfraType[];
 };
 
-type StateType = {
-};
+type StateType = {};
 
 export default class InfraStatuses extends Component<PropsType, StateType> {
-  state = {
-  }
+  state = {};
 
   renderStatusIcon = (status: string) => {
-    if (status === 'created') {
+    if (status === "created") {
       return <StatusIcon>✓</StatusIcon>;
-    } else if (status === 'creating') {
-      return <StatusIcon><img src={loadingDots} /></StatusIcon>
-    } else if (status === 'error') {
-      return <StatusIcon color='#e3366d'>✗</StatusIcon>
+    } else if (status === "creating") {
+      return (
+        <StatusIcon>
+          <img src={loadingDots} />
+        </StatusIcon>
+      );
+    } else if (status === "error") {
+      return <StatusIcon color="#e3366d">✗</StatusIcon>;
     }
-  }
+  };
 
   render() {
     return (
@@ -35,7 +37,7 @@ export default class InfraStatuses extends Component<PropsType, StateType> {
               {this.renderStatusIcon(infra.status)}
               {infraNames[infra.kind]}
             </InfraRow>
-          )
+          );
         })}
       </StyledInfraStatuses>
     );
@@ -48,7 +50,7 @@ const StatusIcon = styled.div<{ color?: string }>`
   justify-content: center;
   width: 20px;
   font-size: 16px;
-  color: ${props => props.color ? props.color : '#68c49c'};
+  color: ${(props) => (props.color ? props.color : "#68c49c")};
   margin-right: 10px;
 `;
 

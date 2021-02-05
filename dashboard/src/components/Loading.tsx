@@ -1,17 +1,15 @@
-import React, { Component } from 'react';
-import styled from 'styled-components';
-import loading from 'assets/loading.gif';
+import React, { Component } from "react";
+import styled from "styled-components";
+import loading from "assets/loading.gif";
 
 type PropsType = {
-  offset?: string
+  offset?: string;
 };
 
-type StateType = {
-};
+type StateType = {};
 
 export default class Loading extends Component<PropsType, StateType> {
-  state = {
-  }
+  state = {};
 
   render() {
     return (

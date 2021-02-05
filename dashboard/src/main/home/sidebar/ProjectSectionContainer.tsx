@@ -1,18 +1,19 @@
-import React, { Component } from 'react';
-import styled from 'styled-components';
+import React, { Component } from "react";
+import styled from "styled-components";
 
-import { Context } from 'shared/Context';
-import ProjectSection from './ProjectSection';
+import { Context } from "shared/Context";
+import ProjectSection from "./ProjectSection";
 
 type PropsType = {};
 
-type StateType = {
-};
+type StateType = {};
 
 // Props in context to project section to trigger update on context change
-export default class ProjectSectionContainer extends Component<PropsType, StateType> {
-  state = {
-  }
+export default class ProjectSectionContainer extends Component<
+  PropsType,
+  StateType
+> {
+  state = {};
 
   render() {
     return (

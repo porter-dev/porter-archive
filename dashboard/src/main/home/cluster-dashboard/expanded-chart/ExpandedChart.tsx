@@ -1,51 +1,56 @@
-import React, { Component } from 'react';
-import styled from 'styled-components';
-import yaml from 'js-yaml';
-import close from 'assets/close.png';
-import _ from 'lodash';
+import React, { Component } from "react";
+import styled from "styled-components";
+import yaml from "js-yaml";
+import close from "assets/close.png";
+import _ from "lodash";
 
-import { ResourceType, ChartType, StorageType, ClusterType } from 'shared/types';
-import { Context } from 'shared/Context';
-import api from 'shared/api';
+import {
+  ResourceType,
+  ChartType,
+  StorageType,
+  ClusterType,
+} from "shared/types";
+import { Context } from "shared/Context";
+import api from "shared/api";
 
-import ConfirmOverlay from 'components/ConfirmOverlay';
-import Loading from 'components/Loading';
-import StatusIndicator from 'components/StatusIndicator';
-import TabRegion from 'components/TabRegion';
-import ValuesWrapper from 'components/values-form/ValuesWrapper';
-import ValuesForm from 'components/values-form/ValuesForm';
-import RevisionSection from './RevisionSection';
-import ValuesYaml from './ValuesYaml';
-import GraphSection from './GraphSection';
-import ListSection from './ListSection';
-import StatusSection from './status/StatusSection';
-import SettingsSection from './SettingsSection';
+import ConfirmOverlay from "components/ConfirmOverlay";
+import Loading from "components/Loading";
+import StatusIndicator from "components/StatusIndicator";
+import TabRegion from "components/TabRegion";
+import ValuesWrapper from "components/values-form/ValuesWrapper";
+import ValuesForm from "components/values-form/ValuesForm";
+import RevisionSection from "./RevisionSection";
+import ValuesYaml from "./ValuesYaml";
+import GraphSection from "./GraphSection";
+import ListSection from "./ListSection";
+import StatusSection from "./status/StatusSection";
+import SettingsSection from "./SettingsSection";
 
 type PropsType = {
-  namespace: string,
-  currentChart: ChartType,
-  currentCluster: ClusterType,
-  setCurrentChart: (x: ChartType | null) => void,
-  setSidebar: (x: boolean) => void,
+  namespace: string;
+  currentChart: ChartType;
+  currentCluster: ClusterType;
+  setCurrentChart: (x: ChartType | null) => void;
+  setSidebar: (x: boolean) => void;
 };
 
 type StateType = {
-  loading: boolean,
-  showRevisions: boolean,
-  components: ResourceType[],
-  podSelectors: string[]
-  isPreview: boolean,
-  devOpsMode: boolean,
-  tabOptions: any[],
-  tabContents: any,
-  currentTab: string | null,
-  saveValuesStatus: string | null,
-  forceRefreshRevisions: boolean, // Update revisions after upgrading values
-  controllers: Record<string, Record<string, any>>,
-  websockets: Record<string, any>,
-  url: string | null,
-  showDeleteOverlay: boolean,
-  deleting: boolean,
+  loading: boolean;
+  showRevisions: boolean;
+  components: ResourceType[];
+  podSelectors: string[];
+  isPreview: boolean;
+  devOpsMode: boolean;
+  tabOptions: any[];
+  tabContents: any;
+  currentTab: string | null;
+  saveValuesStatus: string | null;
+  forceRefreshRevisions: boolean; // Update revisions after upgrading values
+  controllers: Record<string, Record<string, any>>;
+  websockets: Record<string, any>;
+  url: string | null;
+  showDeleteOverlay: boolean;
+  deleting: boolean;
 };
 
 export default class ExpandedChart extends Component<PropsType, StateType> {
@@ -55,144 +60,167 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
     components: [] as ResourceType[],
     podSelectors: [] as string[],
     isPreview: false,
-    devOpsMode: localStorage.getItem('devOpsMode') === 'true',
+    devOpsMode: localStorage.getItem("devOpsMode") === "true",
     tabOptions: [] as any[],
     tabContents: [] as any,
     currentTab: null as string | null,
-    saveValuesStatus: null as (string | null),
+    saveValuesStatus: null as string | null,
     forceRefreshRevisions: false,
     controllers: {} as Record<string, Record<string, any>>,
-    websockets : {} as Record<string, any>,
+    websockets: {} as Record<string, any>,
     url: null as string | null,
     showDeleteOverlay: false,
     deleting: false,
-  }
+  };
 
   // Retrieve full chart data (includes form and values)
   getChartData = (chart: ChartType) => {
     let { currentProject } = this.context;
     let { currentCluster, currentChart, setCurrentChart } = this.props;
-    
-    this.setState({ loading: true })
-    api.getChart('<token>', {
-      namespace: currentChart.namespace,
-      cluster_id: currentCluster.id,
-      storage: StorageType.Secret
-    }, {
-      name: chart.name,
-      revision: chart.version,
-      id: currentProject.id
-    }, (err: any, res: any) => {
-      if (err) {
-        console.log(err)
-      } else {
-        setCurrentChart(res.data);
-        this.setState({ loading: false });
+
+    this.setState({ loading: true });
+    api.getChart(
+      "<token>",
+      {
+        namespace: currentChart.namespace,
+        cluster_id: currentCluster.id,
+        storage: StorageType.Secret,
+      },
+      {
+        name: chart.name,
+        revision: chart.version,
+        id: currentProject.id,
+      },
+      (err: any, res: any) => {
+        if (err) {
+          console.log(err);
+        } else {
+          setCurrentChart(res.data);
+          this.setState({ loading: false });
+        }
       }
-    });
-  }
+    );
+  };
 
   getControllers = async (chart: ChartType) => {
     let { currentCluster, currentProject, setCurrentError } = this.context;
 
     // don't retrieve controllers for chart that failed to even deploy.
-    if (chart.info.status == 'failed') return;
+    if (chart.info.status == "failed") return;
 
     await new Promise((next: (res?: any) => void) => {
-      api.getChartControllers('<token>', {
-        namespace: chart.namespace,
-        cluster_id: currentCluster.id,
-        storage: StorageType.Secret
-      }, {
-        id: currentProject.id,
-        name: chart.name,
-        revision: chart.version
-      }, (err: any, res: any) => {
-        if (err) {
-          setCurrentError(JSON.stringify(err));
-          return
-        }
+      api.getChartControllers(
+        "<token>",
+        {
+          namespace: chart.namespace,
+          cluster_id: currentCluster.id,
+          storage: StorageType.Secret,
+        },
+        {
+          id: currentProject.id,
+          name: chart.name,
+          revision: chart.version,
+        },
+        (err: any, res: any) => {
+          if (err) {
+            setCurrentError(JSON.stringify(err));
+            return;
+          }
 
-        res.data.forEach(async (c: any) => {
-          await new Promise((nextController: (res?: any) => void) => {
-            c.metadata.kind = c.kind
-            this.setState({
-              controllers: {
-                ...this.state.controllers,
-                [c.metadata.uid] : c
-              }
-            }, () => {
-              nextController();
-            })
-          })
-        })
-        next();
-      });
-    })
-  }
-  
+          res.data.forEach(async (c: any) => {
+            await new Promise((nextController: (res?: any) => void) => {
+              c.metadata.kind = c.kind;
+              this.setState(
+                {
+                  controllers: {
+                    ...this.state.controllers,
+                    [c.metadata.uid]: c,
+                  },
+                },
+                () => {
+                  nextController();
+                }
+              );
+            });
+          });
+          next();
+        }
+      );
+    });
+  };
+
   setupWebsocket = (kind: string, chart: ChartType) => {
     let { currentCluster, currentProject } = this.context;
-    let protocol = process.env.NODE_ENV == 'production' ? 'wss' : 'ws';
-    let ws = new WebSocket(`${protocol}://${process.env.API_SERVER}/api/projects/${currentProject.id}/k8s/${kind}/status?cluster_id=${currentCluster.id}`);
+    let protocol = process.env.NODE_ENV == "production" ? "wss" : "ws";
+    let ws = new WebSocket(
+      `${protocol}://${process.env.API_SERVER}/api/projects/${currentProject.id}/k8s/${kind}/status?cluster_id=${currentCluster.id}`
+    );
     ws.onopen = () => {
-      console.log('connected to websocket');
-    }
+      console.log("connected to websocket");
+    };
 
     ws.onmessage = (evt: MessageEvent) => {
       let event = JSON.parse(evt.data);
       let object = event.Object;
-      object.metadata.kind = event.Kind
-      
+      object.metadata.kind = event.Kind;
+
       if (!this.state.controllers[object.metadata.uid]) return;
 
       this.setState({
         controllers: {
           ...this.state.controllers,
-          [object.metadata.uid]: object
-        }
-      })
-    }
+          [object.metadata.uid]: object,
+        },
+      });
+    };
 
     ws.onclose = () => {
-      console.log('closing websocket');
-    }
+      console.log("closing websocket");
+    };
 
     ws.onerror = (err: ErrorEvent) => {
       console.log(err);
       ws.close();
-    }
+    };
 
     return ws;
-  }
+  };
 
   setControllerWebsockets = (controller_types: any[], chart: ChartType) => {
     let websockets = controller_types.map((kind: string) => {
       return this.setupWebsocket(kind, chart);
-    })
+    });
     this.setState({ websockets });
-  }
+  };
 
   updateResources = () => {
     let { currentCluster, currentProject } = this.context;
     let { currentChart } = this.props;
 
-    api.getChartComponents('<token>', {
-      namespace: currentChart.namespace,
-      cluster_id: currentCluster.id,
-      storage: StorageType.Secret
-    }, {
-      id: currentProject.id,
-      name: currentChart.name,
-      revision: currentChart.version
-    }, (err: any, res: any) => {
-      if (err) {
-        console.log(err)
-      } else {
-        this.setState({ components: res.data.Objects, podSelectors: res.data.PodSelectors });
+    api.getChartComponents(
+      "<token>",
+      {
+        namespace: currentChart.namespace,
+        cluster_id: currentCluster.id,
+        storage: StorageType.Secret,
+      },
+      {
+        id: currentProject.id,
+        name: currentChart.name,
+        revision: currentChart.version,
+      },
+      (err: any, res: any) => {
+        if (err) {
+          console.log(err);
+        } else {
+          this.setState({
+            components: res.data.Objects,
+            podSelectors: res.data.PodSelectors,
+          });
+        }
       }
-    });
-  }
+    );
+  };
 
   refreshChart = () => this.getChartData(this.props.currentChart);
 
@@ -206,86 +234,89 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
     }
 
     // Weave in preexisting values and convert to yaml
-    let valuesYaml = yaml.dump({ ...(this.props.currentChart.config as Object), ...values });
-    
-    this.setState({ saveValuesStatus: 'loading' });
-    this.refreshChart();
-    api.upgradeChartValues('<token>', {
-      namespace: this.props.currentChart.namespace,
-      storage: StorageType.Secret,
-      values: valuesYaml,
-    }, {
-      id: currentProject.id, 
-      name: this.props.currentChart.name,
-      cluster_id: currentCluster.id,
-    }, (err: any, res: any) => {
-      if (err) {
-        this.setState({ saveValuesStatus: 'error' });
-        console.log(err)
-      } else {
-        this.setState({ 
-          saveValuesStatus: 'successful',
-          forceRefreshRevisions: true, 
-        });
-      }
+    let valuesYaml = yaml.dump({
+      ...(this.props.currentChart.config as Object),
+      ...values,
     });
-  }
-  
+
+    this.setState({ saveValuesStatus: "loading" });
+    this.refreshChart();
+    api.upgradeChartValues(
+      "<token>",
+      {
+        namespace: this.props.currentChart.namespace,
+        storage: StorageType.Secret,
+        values: valuesYaml,
+      },
+      {
+        id: currentProject.id,
+        name: this.props.currentChart.name,
+        cluster_id: currentCluster.id,
+      },
+      (err: any, res: any) => {
+        if (err) {
+          this.setState({ saveValuesStatus: "error" });
+          console.log(err);
+        } else {
+          this.setState({
+            saveValuesStatus: "successful",
+            forceRefreshRevisions: true,
+          });
+        }
+      }
+    );
+  };
+
   renderTabContents = () => {
-    let { 
-      currentTab, 
-      podSelectors, 
-      components, 
+    let {
+      currentTab,
+      podSelectors,
+      components,
       showRevisions,
       saveValuesStatus,
       tabOptions,
     } = this.state;
     let { currentChart, setSidebar } = this.props;
     let chart = currentChart;
-    
+
     switch (currentTab) {
-      case 'status': 
-        return (
-          <StatusSection currentChart={chart} selectors={podSelectors} />
-        );
-      case 'settings': 
+      case "status":
+        return <StatusSection currentChart={chart} selectors={podSelectors} />;
+      case "settings":
         return (
           <SettingsSection
             currentChart={chart}
             refreshChart={this.refreshChart}
-            setShowDeleteOverlay={(x: boolean) => this.setState({ showDeleteOverlay: x })}
-          /> 
+            setShowDeleteOverlay={(x: boolean) =>
+              this.setState({ showDeleteOverlay: x })
+            }
+          />
         );
-      case 'graph': 
+      case "graph":
         return (
           <GraphSection
             components={components}
             currentChart={chart}
             setSidebar={setSidebar}
-
             // Handle resize YAML wrapper
             showRevisions={showRevisions}
           />
         );
-      case 'list': 
+      case "list":
         return (
           <ListSection
             currentChart={chart}
             components={components}
-
             // Handle resize YAML wrapper
             showRevisions={showRevisions}
           />
         );
-      case 'values': 
+      case "values":
         return (
-          <ValuesYaml
-            currentChart={chart}
-            refreshChart={this.refreshChart}
-          />
+          <ValuesYaml currentChart={chart} refreshChart={this.refreshChart} />
         );
       default:
-        if (tabOptions && currentTab && currentTab.includes('@')) {
+        if (tabOptions && currentTab && currentTab.includes("@")) {
           return (
             <ValuesWrapper
               formTabs={tabOptions}
@@ -294,29 +325,26 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
               isInModal={true}
               currentTab={currentTab}
             >
-              {
-                (metaState: any, setMetaState: any) => {
-                  return tabOptions.map((tab: any, i: number) => {
-
-                    // If tab is current, render
-                    if (tab.value === currentTab) {
-                      return (
-                        <ValuesForm
-                          key={i}
-                          metaState={metaState}
-                          setMetaState={setMetaState}
-                          sections={tab.sections} 
-                        />
-                      );
-                    }
-                  });
-                }
-              }
+              {(metaState: any, setMetaState: any) => {
+                return tabOptions.map((tab: any, i: number) => {
+                  // If tab is current, render
+                  if (tab.value === currentTab) {
+                    return (
+                      <ValuesForm
+                        key={i}
+                        metaState={metaState}
+                        setMetaState={setMetaState}
+                        sections={tab.sections}
+                      />
+                    );
+                  }
+                });
+              }}
             </ValuesWrapper>
           );
         }
     }
-  }
+  };
 
   updateTabs() {
     let formData = this.props.currentChart.form;
@@ -325,8 +353,8 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
     // Generate form tabs if form.yaml exists
     if (formData) {
       formData.tabs.map((tab: any, i: number) => {
-        tabOptions.push({ 
-          value: '@' + tab.name,
+        tabOptions.push({
+          value: "@" + tab.name,
           label: tab.label,
           sections: tab.sections,
           context: tab.context,
@@ -336,24 +364,26 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
 
     // Append universal tabs
     tabOptions.push(
-      { label: 'Status', value: 'status' },
-      { label: 'Chart Overview', value: 'graph' },
+      { label: "Status", value: "status" },
+      { label: "Chart Overview", value: "graph" }
     );
 
     if (this.state.devOpsMode) {
       tabOptions.push(
-        { label: 'Manifests', value: 'list' },
-        { label: 'Raw Values', value: 'values' }
+        { label: "Manifests", value: "list" },
+        { label: "Raw Values", value: "values" }
       );
     }
 
     // Settings tab is always last
-    tabOptions.push({ label: 'Settings', value: 'settings' });
+    tabOptions.push({ label: "Settings", value: "settings" });
 
     // Filter tabs if previewing an old revision
     if (this.state.isPreview) {
-      let liveTabs = ['status', 'settings', 'deploy'];
-      tabOptions = tabOptions.filter((tab: any) => !liveTabs.includes(tab.value));
+      let liveTabs = ["status", "settings", "deploy"];
+      tabOptions = tabOptions.filter(
+        (tab: any) => !liveTabs.includes(tab.value)
+      );
     }
 
     this.setState({ tabOptions });
@@ -362,127 +392,149 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
   setRevision = (chart: ChartType, isCurrent?: boolean) => {
     this.setState({ isPreview: !isCurrent });
     this.getChartData(chart);
-  }
+  };
 
   // TODO: consolidate with pop + push in refreshTabs
   toggleDevOpsMode = () => {
     if (this.state.devOpsMode) {
       this.setState({ devOpsMode: false }, () => {
         this.updateTabs();
-        localStorage.setItem('devOpsMode', 'false');
+        localStorage.setItem("devOpsMode", "false");
       });
     } else {
       this.setState({ devOpsMode: true }, () => {
         this.updateTabs();
-        localStorage.setItem('devOpsMode', 'true');
+        localStorage.setItem("devOpsMode", "true");
       });
     }
-  }
+  };
 
   renderIcon = () => {
     let { currentChart } = this.props;
 
-    if (currentChart.chart.metadata.icon && currentChart.chart.metadata.icon !== '') {
-      return <Icon src={currentChart.chart.metadata.icon} />
+    if (
+      currentChart.chart.metadata.icon &&
+      currentChart.chart.metadata.icon !== ""
+    ) {
+      return <Icon src={currentChart.chart.metadata.icon} />;
     } else {
-      return <i className="material-icons">tonality</i>
+      return <i className="material-icons">tonality</i>;
     }
-  }
+  };
 
   readableDate = (s: string) => {
     let ts = new Date(s);
     let date = ts.toLocaleDateString();
-    let time = ts.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+    let time = ts.toLocaleTimeString([], {
+      hour: "numeric",
+      minute: "2-digit",
+    });
     return `${time} on ${date}`;
-  }
+  };
 
   getChartStatus = (chartStatus: string) => {
-    if (chartStatus === 'deployed') {
-
+    if (chartStatus === "deployed") {
       for (var uid in this.state.controllers) {
-        let value = this.state.controllers[uid]
-        let available = this.getAvailability(value.metadata.kind, value)
-        let progressing = true
+        let value = this.state.controllers[uid];
+        let available = this.getAvailability(value.metadata.kind, value);
+        let progressing = true;
 
-        this.state.controllers[uid]?.status?.conditions?.forEach((condition: any) => {
-          if (condition.type == "Progressing" && condition.status == "False" 
-              && condition.reason == "ProgressDeadlineExceeded") {
-            progressing = false
+        this.state.controllers[uid]?.status?.conditions?.forEach(
+          (condition: any) => {
+            if (
+              condition.type == "Progressing" &&
+              condition.status == "False" &&
+              condition.reason == "ProgressDeadlineExceeded"
+            ) {
+              progressing = false;
+            }
           }
-        })
-        
+        );
+
         if (!available && progressing) {
-          return 'loading'
+          return "loading";
         } else if (!available && !progressing) {
-          return 'failed'
+          return "failed";
         }
       }
-      return 'deployed'
+      return "deployed";
     }
-    return chartStatus
-  }
+    return chartStatus;
+  };
 
   getAvailability = (kind: string, c: any) => {
     switch (kind?.toLowerCase()) {
       case "deployment":
       case "replicaset":
-        return (c.status.availableReplicas == c.status.replicas)
+        return c.status.availableReplicas == c.status.replicas;
       case "statefulset":
-       return (c.status.readyReplicas == c.status.replicas)
+        return c.status.readyReplicas == c.status.replicas;
       case "daemonset":
-        return (c.status.numberAvailable == c.status.desiredNumberScheduled)
-      }
-  }
+        return c.status.numberAvailable == c.status.desiredNumberScheduled;
+    }
+  };
 
   componentDidMount() {
     let { currentCluster, currentProject } = this.context;
     let { currentChart } = this.props;
 
     this.getChartData(this.props.currentChart);
-    this.getControllers(this.props.currentChart)
+    this.getControllers(this.props.currentChart);
     this.setControllerWebsockets(
       ["deployment", "statefulset", "daemonset", "replicaset"],
-      this.props.currentChart 
+      this.props.currentChart
     );
 
-    api.getChartComponents('<token>', {
-      namespace: currentChart.namespace,
-      cluster_id: currentCluster.id,
-      storage: StorageType.Secret
-    }, {
-      id: currentProject.id,
-      name: currentChart.name,
-      revision: currentChart.version
-    }, (err: any, res: any) => {
-      if (err) {
-        console.log(err)
-      } else {
-        this.setState({ components: res.data.Objects });
+    api.getChartComponents(
+      "<token>",
+      {
+        namespace: currentChart.namespace,
+        cluster_id: currentCluster.id,
+        storage: StorageType.Secret,
+      },
+      {
+        id: currentProject.id,
+        name: currentChart.name,
+        revision: currentChart.version,
+      },
+      (err: any, res: any) => {
+        if (err) {
+          console.log(err);
+        } else {
+          this.setState({ components: res.data.Objects });
+        }
       }
-    });
+    );
 
-    api.getIngress('<token>', { 
-      cluster_id: currentCluster.id,
-    }, {
-      id: currentProject.id,
-      name: `${this.props.currentChart.name}-docker`,
-      namespace: `${this.props.currentChart.namespace}`
-    }, (err: any, res: any) => {
-      if (err) {
-        console.log(err);
-        return
-      }
+    api.getIngress(
+      "<token>",
+      {
+        cluster_id: currentCluster.id,
+      },
+      {
+        id: currentProject.id,
+        name: `${this.props.currentChart.name}-docker`,
+        namespace: `${this.props.currentChart.namespace}`,
+      },
+      (err: any, res: any) => {
+        if (err) {
+          console.log(err);
+          return;
+        }
 
-      if (res.data?.spec?.rules && res.data?.spec?.rules[0]?.host) {
-        this.setState({url: `https://${res.data?.spec?.rules[0]?.host}` })
-        return;
-      }
+        if (res.data?.spec?.rules && res.data?.spec?.rules[0]?.host) {
+          this.setState({ url: `https://${res.data?.spec?.rules[0]?.host}` });
+          return;
+        }
 
-      if (res.data?.status?.loadBalancer?.ingress) {
-        this.setState({ url: `http://${res.data?.status?.loadBalancer?.ingress[0]?.hostname}` })
-        return;
+        if (res.data?.status?.loadBalancer?.ingress) {
+          this.setState({
+            url: `http://${res.data?.status?.loadBalancer?.ingress[0]?.hostname}`,
+          });
+          return;
+        }
       }
-    });
+    );
 
     this.updateTabs();
   }
@@ -505,21 +557,21 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
   renderUrl = () => {
     if (this.state.url) {
       return (
-        <Url href={this.state.url} target='_blank'>
+        <Url href={this.state.url} target="_blank">
           <i className="material-icons">link</i>
           {this.state.url}
         </Url>
       );
     } else {
-      let serviceName = null as string
-      let serviceNamespace = null as string
+      let serviceName = null as string;
+      let serviceNamespace = null as string;
 
       this.state.components.forEach((c: any) => {
         if (c.Kind == "Service") {
-          serviceName = c.Name
-          serviceNamespace = c.Namespace
+          serviceName = c.Name;
+          serviceNamespace = c.Namespace;
         }
-      })
+      });
 
       return (
         <Url>
@@ -528,41 +580,49 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
         </Url>
       );
     }
-  }
+  };
 
   handleUninstallChart = () => {
     let { currentProject, currentCluster } = this.context;
     let { currentChart } = this.props;
     this.setState({ deleting: true });
-    api.uninstallTemplate('<token>', {
-    }, {
-      namespace: currentChart.namespace,
-      storage: StorageType.Secret,
-      name: currentChart.name,
-      id: currentProject.id,
-      cluster_id: currentCluster.id,
-    }, (err: any, res: any) => {
-      if (err) {
-        console.log(err)
-      } else {
-        this.setState({ showDeleteOverlay: false });
-        this.props.setCurrentChart(null);
+    api.uninstallTemplate(
+      "<token>",
+      {},
+      {
+        namespace: currentChart.namespace,
+        storage: StorageType.Secret,
+        name: currentChart.name,
+        id: currentProject.id,
+        cluster_id: currentCluster.id,
+      },
+      (err: any, res: any) => {
+        if (err) {
+          console.log(err);
+        } else {
+          this.setState({ showDeleteOverlay: false });
+          this.props.setCurrentChart(null);
+        }
       }
-    });
-  }
+    );
+  };
 
   renderDeleteOverlay = () => {
     if (this.state.deleting) {
-      return <DeleteOverlay><Loading /></DeleteOverlay>;
+      return (
+        <DeleteOverlay>
+          <Loading />
+        </DeleteOverlay>
+      );
     }
-  }
+  };
 
   render() {
     let { currentChart, setCurrentChart } = this.props;
     let chart = currentChart;
     let status = this.getChartStatus(chart.info.status);
 
-    return ( 
+    return (
       <>
         <CloseOverlay onClick={() => setCurrentChart(null)} />
         <StyledExpandedChart>
@@ -573,22 +633,23 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
             onNo={() => this.setState({ showDeleteOverlay: false })}
           />
           {this.renderDeleteOverlay()}
-          
+
           <HeaderWrapper>
             <TitleSection>
               <Title>
-                <IconWrapper>{this.renderIcon()}</IconWrapper>{chart.name}
+                <IconWrapper>{this.renderIcon()}</IconWrapper>
+                {chart.name}
               </Title>
               {this.renderUrl()}
               <InfoWrapper>
-                <StatusIndicator 
+                <StatusIndicator
                   controllers={this.state.controllers}
                   status={chart.info.status}
-                  margin_left={'0px'}
+                  margin_left={"0px"}
                 />
                 <LastDeployed>
-                  <Dot>•</Dot>Last deployed 
-                  {' ' + this.readableDate(chart.info.last_deployed)}
+                  <Dot>•</Dot>Last deployed
+                  {" " + this.readableDate(chart.info.last_deployed)}
                 </LastDeployed>
               </InfoWrapper>
 
@@ -603,12 +664,16 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
 
             <RevisionSection
               showRevisions={this.state.showRevisions}
-              toggleShowRevisions={() => this.setState({ showRevisions: !this.state.showRevisions })}
+              toggleShowRevisions={() =>
+                this.setState({ showRevisions: !this.state.showRevisions })
+              }
               chart={chart}
               refreshChart={this.refreshChart}
               setRevision={this.setRevision}
               forceRefreshRevisions={this.state.forceRefreshRevisions}
-              refreshRevisionsOff={() => this.setState({ forceRefreshRevisions: false })}
+              refreshRevisionsOff={() =>
+                this.setState({ forceRefreshRevisions: false })
+              }
               status={status}
             />
           </HeaderWrapper>
@@ -617,9 +682,12 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
             currentTab={this.state.currentTab}
             setCurrentTab={(x: string) => this.setState({ currentTab: x })}
             options={this.state.tabOptions}
-            color={this.state.isPreview ? '#f5cb42' : null}
+            color={this.state.isPreview ? "#f5cb42" : null}
             addendum={
-              <TabButton onClick={this.toggleDevOpsMode} devOpsMode={this.state.devOpsMode}>
+              <TabButton
+                onClick={this.toggleDevOpsMode}
+                devOpsMode={this.state.devOpsMode}
+              >
                 <i className="material-icons">offline_bolt</i> DevOps Mode
               </TabButton>
             }
@@ -646,19 +714,23 @@ const DeleteOverlay = styled.div`
   padding-bottom: 30px;
   align-items: center;
   justify-content: center;
-  font-family: 'Work Sans', sans-serif;
+  font-family: "Work Sans", sans-serif;
   font-size: 18px;
   font-weight: 500;
   color: white;
   flex-direction: column;
-  background: rgb(0,0,0,0.73);
+  background: rgb(0, 0, 0, 0.73);
   opacity: 0;
   animation: lindEnter 0.2s;
   animation-fill-mode: forwards;
 
   @keyframes lindEnter {
-    from { opacity: 0; }
-    to   { opacity: 1; }
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
   }
 `;
 
@@ -695,13 +767,17 @@ const TabButton = styled.div`
   align-items: center;
   justify-content: center;
   font-size: 13px;
-  color: ${(props: { devOpsMode: boolean }) => props.devOpsMode ? '#aaaabb' : '#aaaabb55'};
+  color: ${(props: { devOpsMode: boolean }) =>
+    props.devOpsMode ? "#aaaabb" : "#aaaabb55"};
   margin-left: 35px;
   border-radius: 20px;
-  text-shadow: 0px 0px 8px ${(props: { devOpsMode: boolean }) => props.devOpsMode ? '#ffffff66' : 'none'};
+  text-shadow: 0px 0px 8px
+    ${(props: { devOpsMode: boolean }) =>
+      props.devOpsMode ? "#ffffff66" : "none"};
   cursor: pointer;
   :hover {
-    color: ${(props: { devOpsMode: boolean }) => props.devOpsMode ? '' : '#aaaabb99'};
+    color: ${(props: { devOpsMode: boolean }) =>
+      props.devOpsMode ? "" : "#aaaabb99"};
   }
 
   > i {
@@ -721,13 +797,16 @@ const CloseOverlay = styled.div`
   opacity: 0;
   animation-fill-mode: forwards;
   @keyframes fadeIn {
-    from { opacity: 0 }
-    to { opacity: 1 }
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
   }
 `;
 
-const HeaderWrapper = styled.div`
-`;
+const HeaderWrapper = styled.div``;
 
 const Dot = styled.div`
   margin-right: 9px;
@@ -762,14 +841,14 @@ const TagWrapper = styled.div`
   border: 1px solid #ffffff44;
   border-radius: 3px;
   padding-left: 5px;
-  background: #26282E;
+  background: #26282e;
 `;
 
 const NamespaceTag = styled.div`
   height: 20px;
   margin-left: 6px;
   color: #aaaabb;
-  background: #43454A;
+  background: #43454a;
   border-radius: 3px;
   font-size: 12px;
   display: flex;
@@ -843,17 +922,23 @@ const StyledExpandedChart = styled.div`
   top: 25px;
   left: 25px;
   border-radius: 10px;
-  background: #26272F;
+  background: #26272f;
   box-shadow: 0 5px 12px 4px #00000033;
   animation: floatIn 0.3s;
   animation-timing-function: ease-out;
   animation-fill-mode: forwards;
-  padding: 25px; 
+  padding: 25px;
   display: flex;
   flex-direction: column;
 
   @keyframes floatIn {
-    from { opacity: 0; transform: translateY(30px) }
-    to { opacity: 1; transform: translateY(0px) }
+    from {
+      opacity: 0;
+      transform: translateY(30px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0px);
+    }
   }
 `;

@@ -13,6 +13,21 @@ import { StorageType } from './types';
 
 const checkAuth = baseApi('GET', '/api/auth/check');
 
+const connectECRRegistry = baseApi<{
+  name: string,
+  aws_integration_id: string,
+}, { id: number }>('POST', pathParams => {
+  return `/api/projects/${pathParams.id}/registries`;
+});
+
+const connectGCRRegistry = baseApi<{
+  name: string,
+  gcp_integration_id: string,
+  url: string,
+}, { id: number }>('POST', pathParams => {
+  return `/api/projects/${pathParams.id}/registries`;
+});
+
 const createAWSIntegration = baseApi<{
   aws_region: string,
   aws_cluster_id?: string,
@@ -40,13 +55,6 @@ const createDOKS = baseApi<{
   project_id: number,
 }>('POST', pathParams => {
   return `/api/projects/${pathParams.project_id}/provision/doks`;
-});
-
-const createECR = baseApi<{
-  name: string,
-  aws_integration_id: string,
-}, { id: number }>('POST', pathParams => {
-  return `/api/projects/${pathParams.id}/registries`;
 });
 
 const createGCPIntegration = baseApi<{
@@ -438,10 +446,11 @@ const upgradeChartValues = baseApi<{
 // Bundle export to allow default api import (api.<method> is more readable)
 export default {
   checkAuth,
+  connectECRRegistry,
+  connectGCRRegistry,
   createAWSIntegration,
   createDOCR,
   createDOKS,
-  createECR,
   createGCPIntegration,
   createGCR,
   createGHAction,

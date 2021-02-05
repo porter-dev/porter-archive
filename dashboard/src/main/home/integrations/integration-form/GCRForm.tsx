@@ -19,6 +19,7 @@ type StateType = {
   gcpRegion: string,
   serviceAccountKey: string,
   gcpProjectID: string,
+  url: string,
 };
 
 export default class GCRForm extends Component<PropsType, StateType> {
@@ -27,11 +28,12 @@ export default class GCRForm extends Component<PropsType, StateType> {
     gcpRegion: '',
     serviceAccountKey: '',
     gcpProjectID: '',
+    url: '',
   }
 
   isDisabled = (): boolean => {
-    let { credentialsName, serviceAccountKey } = this.state;
-    if (credentialsName === '' || serviceAccountKey === '') {
+    let { credentialsName, gcpRegion, gcpProjectID, serviceAccountKey } = this.state;
+    if (credentialsName === '' || gcpRegion  === '' || serviceAccountKey === '' || gcpProjectID === '') {
       return true;
     }
     return false;
@@ -50,7 +52,20 @@ export default class GCRForm extends Component<PropsType, StateType> {
       if (err) {
         console.log(err);
       } else {
-        console.log(res.data);
+        api.connectGCRRegistry('<token>', {
+          name: this.state.credentialsName,
+          gcp_integration_id: res.data.id,
+          url: this.state.url,
+        }, {
+          id: currentProject.id,
+        }, (err: any, res: any) => {
+          if (err) {
+            console.log(err);
+          } else {
+            console.log(res.data);
+            this.props.closeForm();
+          }
+        })
       }
     })
   }
@@ -64,7 +79,7 @@ export default class GCRForm extends Component<PropsType, StateType> {
           <InputRow
             type='text'
             value={this.state.credentialsName}
-            setValue={(x: string) => this.setState({ credentialsName: x })}
+            setValue={(credentialsName: string) => this.setState({ credentialsName })}
             label='🏷️ Registry Name'
             placeholder='ex: paper-straw'
             width='100%'
@@ -74,14 +89,14 @@ export default class GCRForm extends Component<PropsType, StateType> {
           <InputRow
             type='text'
             value={this.state.gcpRegion}
-            setValue={(x: string) => this.setState({ gcpRegion: x })}
+            setValue={(gcpRegion: string) => this.setState({ gcpRegion })}
             label='📍 GCP Region'
-            placeholder='ex: uranus-north-12'
+            placeholder='ex: uranus-north3'
             width='100%'
           />
           <TextArea
             value={this.state.serviceAccountKey}
-            setValue={(x: string) => this.setState({ serviceAccountKey: x })}
+            setValue={(serviceAccountKey: string) => this.setState({ serviceAccountKey })}
             label='🔑 Service Account Key (JSON)'
             placeholder='(Paste your JSON service account key here)'
             width='100%'
@@ -89,9 +104,17 @@ export default class GCRForm extends Component<PropsType, StateType> {
           <InputRow
             type='text'
             value={this.state.gcpProjectID}
-            setValue={(x: string) => this.setState({ gcpProjectID: x })}
-            label='GCP Project ID'
-            placeholder='ex: porter-dev-273614'
+            setValue={(gcpProjectID: string) => this.setState({ gcpProjectID })}
+            label='📝 GCP Project ID'
+            placeholder='ex: skynet-dev-172969'
+            width='100%'
+          />
+          <InputRow
+            type='text'
+            value={this.state.url}
+            setValue={(url: string) => this.setState({ url })}
+            label='🔗 GCR URL'
+            placeholder='ex: gcr.io/skynet-dev-172969'
             width='100%'
           />
         </CredentialWrapper>

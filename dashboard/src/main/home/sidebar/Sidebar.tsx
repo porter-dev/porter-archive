@@ -10,7 +10,6 @@ import { Context } from 'shared/Context';
 import ClusterSection from './ClusterSection';
 import ProjectSectionContainer from './ProjectSectionContainer';
 import loading from 'assets/loading.gif';
-import posthog from 'posthog-js';
 import { RouteComponentProps, withRouter } from 'react-router';
 
 type PropsType = RouteComponentProps & {
@@ -116,9 +115,11 @@ class Sidebar extends Component<PropsType, StateType> {
           </NavButton>
           <NavButton
             selected={currentView === 'integrations'}
-            //onClick={() => {
-            //  setCurrentView('integrations')
-           // }}
+            /* 
+            onClick={() => {
+              setCurrentView('integrations')
+            }}
+            */
             onClick={() => {
               setCurrentModal('IntegrationsInstructionsModal', {})
             }}

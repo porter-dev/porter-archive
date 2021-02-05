@@ -2,17 +2,15 @@ import React, { Component } from 'react';
 import styled from 'styled-components';
 import branch_icon from 'assets/branch.png';
 
-import api from 'shared/api';
-import { Context } from 'shared/Context';
+import api from '../../shared/api';
+import { Context } from '../../shared/Context';
+import { ActionConfigType } from '../..//shared/types';
 
 import Loading from '../Loading';
 
 type PropsType = {
-  grid: number,
-  repoName: string,
-  owner: string,
-  setSelectedBranch: (x: string) => void,
-  selectedBranch: string
+  actionConfig: ActionConfigType,
+  setBranch: (x: string) => void,
 };
 
 type StateType = {
@@ -29,15 +27,16 @@ export default class BranchList extends Component<PropsType, StateType> {
   }
 
   componentDidMount() {
+    let { actionConfig } = this.props;
     let { currentProject } = this.context;
 
     // Get branches
     api.getBranches('<token>', {}, {
       project_id: currentProject.id,
-      git_repo_id: this.props.grid,
+      git_repo_id: actionConfig.git_repo_id,
       kind: 'github',
-      owner: this.props.owner,
-      name: this.props.repoName,
+      owner: actionConfig.git_repo.split('/')[0],
+      name: actionConfig.git_repo.split('/')[1],
     }, (err: any, res: any) => {
       if (err) {
         console.log(err);
@@ -60,9 +59,8 @@ export default class BranchList extends Component<PropsType, StateType> {
       return (
         <BranchName
           key={i}
-          isSelected={branch === this.props.selectedBranch}
           lastItem={i === branches.length - 1}
-          onClick={() => this.props.setSelectedBranch(branch)}
+          onClick={() => this.props.setBranch(branch)}
         >
           <img src={branch_icon} />{branch}
         </BranchName>
@@ -85,13 +83,13 @@ const BranchName = styled.div`
   display: flex;
   width: 100%;
   font-size: 13px;
-  border-bottom: 1px solid ${(props: { lastItem: boolean, isSelected: boolean }) => props.lastItem ? '#00000000' : '#606166'};
+  border-bottom: 1px solid ${(props: { lastItem: boolean }) => props.lastItem ? '#00000000' : '#606166'};
   color: #ffffff;
   user-select: none;
   align-items: center;
   padding: 10px 0px;
   cursor: pointer;
-  background: ${(props: { isSelected: boolean, lastItem: boolean }) => props.isSelected ? '#ffffff22' : '#ffffff11'};
+  background: #ffffff11;
   :hover {
     background: #ffffff22;
 

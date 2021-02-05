@@ -1,6 +1,5 @@
 import React, { Component } from 'react';
 import styled from 'styled-components';
-import posthog from 'posthog-js';
 
 import api from 'shared/api';
 import { Context } from 'shared/Context';

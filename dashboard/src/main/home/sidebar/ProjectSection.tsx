@@ -20,6 +20,24 @@ class ProjectSection extends Component<PropsType, StateType> {
     expanded: false,
   };
 
+  wrapperRef: any = React.createRef();
+
+  componentDidMount() {
+    document.addEventListener('mousedown', this.handleClickOutside.bind(this));
+  }
+
+  componentWillUnmount() {
+    document.removeEventListener('mousedown', this.handleClickOutside.bind(this));
+  }
+
+  handleClickOutside = (e: any) => {
+    if (
+      this.wrapperRef && this.wrapperRef.current && !this.wrapperRef.current.contains(e.target)
+    ) {
+      this.setState({ expanded: false });
+    }
+  }
+
   renderOptionList = () => {
     let { setCurrentProject } = this.context;
 
@@ -28,7 +46,7 @@ class ProjectSection extends Component<PropsType, StateType> {
         <Option
           key={i}
           selected={project.name === this.props.currentProject.name}
-          onClick={() => setCurrentProject(project)}
+          onClick={() => {this.setState({ expanded: false }); setCurrentProject(project)}}
         >
           <ProjectIcon>
             <ProjectImage src={gradient} />
@@ -44,13 +62,12 @@ class ProjectSection extends Component<PropsType, StateType> {
     if (this.state.expanded) {
       return (
         <div>
-          <CloseOverlay onClick={() => this.setState({ expanded: false })} />
           <Dropdown>
             {this.renderOptionList()}
             <Option
               selected={false}
               lastItem={true}
-              onClick={() => this.props.history.push('new-project')}
+              onClick={() => { this.props.history.push('new-project') }}
             >
               <ProjectIconAlt>+</ProjectIconAlt>
               <ProjectLabel>Create a Project</ProjectLabel>
@@ -69,7 +86,9 @@ class ProjectSection extends Component<PropsType, StateType> {
     let { currentProject } = this.props;
     if (currentProject) {
       return (
-        <StyledProjectSection>
+        <StyledProjectSection
+          ref={this.wrapperRef}
+        >
           <MainSelector
             onClick={this.handleExpand}
             expanded={this.state.expanded}
@@ -101,13 +120,6 @@ const ProjectLabel = styled.div`
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
-`;
-
-const AddButton = styled.div`
-  display: flex;
-  align-items: center;
-  font-size: 13px;
-  padding: 12px 15px;
 `;
 
 const Plus = styled.div`
@@ -159,15 +171,6 @@ const Option = styled.div`
     margin-left: 5px;
     color: #ffffff44;
   }
-`;
-
-const CloseOverlay = styled.div`
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  z-index: 999;
 `;
 
 const Dropdown = styled.div`

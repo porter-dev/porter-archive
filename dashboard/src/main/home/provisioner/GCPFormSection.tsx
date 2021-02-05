@@ -157,16 +157,16 @@ class GCPFormSection extends Component<PropsType, StateType> {
     let { currentProject } = this.context;
     let { handleError } = this.props;
 
-    // api.createGCR('<token>', {
-    //   gcp_integration_id: id,
-    // }, { project_id: currentProject.id }, (err: any, res: any) => {
-    //   if (err) {
-    //     console.log(err);
-    //     handleError();
-    //     return;
-    //   }
-    callback && callback();
-    // });
+    api.createGCR('<token>', {
+      gcp_integration_id: id,
+    }, { project_id: currentProject.id }, (err: any, res: any) => {
+      if (err) {
+        console.log(err);
+        handleError();
+        return;
+      }
+      callback && callback();
+    });
   }
 
   provisionGKE = (id: number) => {
@@ -175,17 +175,17 @@ class GCPFormSection extends Component<PropsType, StateType> {
     let { currentProject } = this.context;
 
     let clusterName = `${currentProject.name}-cluster`
-    // api.createGKE('<token>', {
-    //   gke_name: clusterName,
-    //   gcp_integration_id: id,
-    // }, { project_id: currentProject.id }, (err: any, res: any) => {
-    //   if (err) {
-    //     console.log(err);
-    //     handleError();
-    //     return;
-    //   }
-    this.props.history.push("dashboard?tab=provisioner");
-    // })
+    api.createGKE('<token>', {
+      gke_name: clusterName,
+      gcp_integration_id: id,
+    }, { project_id: currentProject.id }, (err: any, res: any) => {
+      if (err) {
+        console.log(err);
+        handleError();
+        return;
+      }
+      this.props.history.push("dashboard?tab=provisioner");
+    })
   }
 
   handleCreateFlow = () => {

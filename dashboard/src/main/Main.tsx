@@ -72,7 +72,6 @@ export default class Main extends Component<PropsType, StateType> {
       "integrations",
       "new-project",
       "cluster-dashboard",
-      "provisioner",
       "project-settings",
     ];
 

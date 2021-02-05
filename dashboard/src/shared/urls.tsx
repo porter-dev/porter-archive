@@ -4,7 +4,6 @@ export const PorterUrls = [
   "integrations",
   "new-project",
   "cluster-dashboard",
-  "provisioner",
   "project-settings",
 ];
 

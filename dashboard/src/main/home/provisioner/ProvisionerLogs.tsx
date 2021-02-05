@@ -35,7 +35,6 @@ class ProvisionerLogs extends Component<PropsType, StateType> {
   parentRef = React.createRef<HTMLDivElement>()
 
   scrollToBottom = () => {
-    console.log(this.parentRef.current)
     this.parentRef.current.lastElementChild.scrollIntoView({ behavior: "auto" })
   }
 
@@ -85,7 +84,7 @@ class ProvisionerLogs extends Component<PropsType, StateType> {
       let event = JSON.parse(evt.data);
       let validEvents = [] as any[];
       let err = null;
-      
+      console.log(event)
       for (var i = 0; i < event.length; i++) {
         let msg = event[i];
         if (msg["Values"] && msg["Values"]["data"] && this.isJSON(msg["Values"]["data"])) { 

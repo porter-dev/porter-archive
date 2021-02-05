@@ -5,7 +5,6 @@ import styled from 'styled-components';
 import { Context } from 'shared/Context';
 import api from 'shared/api';
 import { ClusterType, ProjectType } from 'shared/types';
-import { includesCompletedInfraSet } from 'shared/common';
 
 import Sidebar from './sidebar/Sidebar';
 import Dashboard from './dashboard/Dashboard';
@@ -24,7 +23,7 @@ import ConfirmOverlay from 'components/ConfirmOverlay';
 import Modal from './modals/Modal';
 import * as FullStory from '@fullstory/browser';
 import { Redirect, RouteComponentProps, withRouter } from 'react-router';
-import PorterUrls from 'shared/urls';
+import {PorterUrls} from 'shared/urls';
 
 type PropsType = RouteComponentProps & {
   logOut: () => void,
@@ -42,7 +41,6 @@ type StateType = {
 
   // Track last project id for refreshing clusters on project change
   prevProjectId: number | null,
-  sidebarReady: boolean, // Fixes error where ~1/3 times reloading to provisioner fails
 };
 
 // TODO: Handle cluster connected but with some failed infras (no successful set)
@@ -65,10 +63,9 @@ class Home extends Component<PropsType, StateType> {
 
     if (this.state.ghRedirect) {
       this.props.history.push("integrations");
-      this.setState({ sidebarReady: true, ghRedirect: false });
+      this.setState({ ghRedirect: false });
     } else {
       this.props.history.push("dashboard");
-      this.setState({ sidebarReady: true });
     }
   }
 
@@ -80,7 +77,7 @@ class Home extends Component<PropsType, StateType> {
         console.log(err);
       } else if (res.data) {
         if (res.data.length === 0) {
-          <Redirect to="new-project"></Redirect>
+          this.props.history.push("new-project");
         } else if (res.data.length > 0 && !currentProject) {
           setProjects(res.data);
 
@@ -92,7 +89,6 @@ class Home extends Component<PropsType, StateType> {
               } 
             });
             this.context.setCurrentProject(foundProject);
-            <Redirect to="provisioner"></Redirect>
           }
 
           if (!foundProject) {
@@ -214,7 +210,7 @@ class Home extends Component<PropsType, StateType> {
   }
 
   // TODO: Need to handle the following cases. Do a deep rearchitecture (Prov -> Dashboard?) if need be:
-  // 1. Make sure clicking cluster in course drawer shows cluster-dashboard
+  // 1. Make sure clicking cluster in drawer shows cluster-dashboard
   // 2. Make sure switching projects shows appropriate initial view (dashboard || provisioner)
   // 3. Make sure initializing from URL (DO oauth) displays the appropriate initial view
   componentDidUpdate(prevProps: PropsType) {
@@ -264,7 +260,6 @@ class Home extends Component<PropsType, StateType> {
   }
 
   renderContents = () => {
-    // let { handleDO } = this.state;
     let currentView = this.props.currentRoute;
     if (this.context.currentProject && currentView !== 'new-project') {
       if (currentView === 'cluster-dashboard') {
@@ -304,6 +299,7 @@ class Home extends Component<PropsType, StateType> {
       } else {
         return (
           <Sidebar
+            key="sidebar"
             forceSidebar={this.state.forceSidebar}
             setWelcome={(x: boolean) => this.setState({ showWelcome: x })}
             currentView={this.props.currentRoute}
@@ -400,7 +396,7 @@ class Home extends Component<PropsType, StateType> {
         }
       }
     });
-    setCurrentModal(null, null)
+    setCurrentModal(null, null);
     this.props.history.push("dashboard");
   }
 

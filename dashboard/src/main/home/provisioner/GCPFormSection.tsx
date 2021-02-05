@@ -184,7 +184,7 @@ class GCPFormSection extends Component<PropsType, StateType> {
         handleError();
         return;
       }
-      this.props.history.push("provisioner");
+      this.props.history.push("dashboard?tab=provisioner");
     })
   }
 
@@ -207,7 +207,7 @@ class GCPFormSection extends Component<PropsType, StateType> {
           this.provisionGCR(id, () => this.provisionGKE(id));
         } else if (selectedInfras[0].value === 'gcr') {
           // Case: project exists, only provision GCR
-          this.provisionGCR(id, () => this.props.history.push("provisioner"));
+          this.provisionGCR(id, () => this.props.history.push("dashboard?tab=provisioner"));
         } else {
           // Case: project exists, only provision GKE
           this.provisionGKE(id);

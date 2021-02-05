@@ -1,58 +1,66 @@
-import React, { Component } from 'react';
-import styled from 'styled-components';
+import React, { Component } from "react";
+import styled from "styled-components";
 
-import api from 'shared/api';
-import { ProjectType } from 'shared/types';
-import { isAlphanumeric } from 'shared/common';
-import { Context } from 'shared/Context';
+import api from "shared/api";
+import { ProjectType } from "shared/types";
+import { isAlphanumeric } from "shared/common";
+import { Context } from "shared/Context";
 
-import SaveButton from 'components/SaveButton';
-import CheckboxList from 'components/values-form/CheckboxList';
-import { RouteComponentProps, withRouter } from 'react-router';
+import SaveButton from "components/SaveButton";
+import { RouteComponentProps, withRouter } from "react-router";
 
 type PropsType = RouteComponentProps & {
-  projectName: string,
+  projectName: string;
 };
 
 type StateType = {
-  buttonStatus: string,
+  buttonStatus: string;
 };
 
 class ExistingClusterSection extends Component<PropsType, StateType> {
   state = {
-    buttonStatus: '',
-  }
+    buttonStatus: "",
+  };
 
   onCreateProject = () => {
     let { projectName } = this.props;
     let { user, setProjects, setCurrentProject } = this.context;
 
-    this.setState({ buttonStatus: 'loading' });
-    api.createProject('<token>', { name: projectName }, {
-    }, (err: any, res: any) => {
-      if (err) {
-        console.log(err);
-      } else {
-        api.getProjects('<token>', {}, { 
-          id: user.userId 
-        }, (err: any, res: any) => {
-          if (err) {
-            console.log(err)
-          } else if (res.data) {
-            setProjects(res.data);
-            if (res.data.length > 0) {
-              let proj = res.data.find((el: ProjectType) => {
-                return el.name === projectName;
-              });
-              setCurrentProject(proj);
+    this.setState({ buttonStatus: "loading" });
+    api.createProject(
+      "<token>",
+      { name: projectName },
+      {},
+      (err: any, res: any) => {
+        if (err) {
+          console.log(err);
+        } else {
+          api.getProjects(
+            "<token>",
+            {},
+            {
+              id: user.userId,
+            },
+            (err: any, res: any) => {
+              if (err) {
+                console.log(err);
+              } else if (res.data) {
+                setProjects(res.data);
+                if (res.data.length > 0) {
+                  let proj = res.data.find((el: ProjectType) => {
+                    return el.name === projectName;
+                  });
+                  setCurrentProject(proj);
 
-              this.props.history.push("dashboard")
-            } 
-          }
-        });
+                  this.props.history.push("dashboard");
+                }
+              }
+            }
+          );
+        }
       }
-    });
-  }
+    );
+  };
 
   render() {
     let { children, projectName } = this.props;
@@ -65,12 +73,12 @@ class ExistingClusterSection extends Component<PropsType, StateType> {
         </Placeholder>
         {children ? children : <Padding />}
         <SaveButton
-          text='Submit'
+          text="Submit"
           disabled={!isAlphanumeric(projectName)}
           onClick={this.onCreateProject}
           status={buttonStatus}
           makeFlush={true}
-          helper='Note: Provisioning can take up to 15 minutes'
+          helper="Note: Provisioning can take up to 15 minutes"
         />
       </StyledExistingClusterSection>
     );

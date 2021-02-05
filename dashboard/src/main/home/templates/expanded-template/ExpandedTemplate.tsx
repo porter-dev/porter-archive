@@ -1,26 +1,26 @@
-import React, { Component } from 'react';
-import styled from 'styled-components';
+import React, { Component } from "react";
+import styled from "styled-components";
 
-import { PorterTemplate } from 'shared/types';
-import api from 'shared/api';
+import { PorterTemplate } from "shared/types";
+import api from "shared/api";
 
-import TemplateInfo from './TemplateInfo';
-import LaunchTemplate from './LaunchTemplate';
-import Loading from 'components/Loading';
+import TemplateInfo from "./TemplateInfo";
+import LaunchTemplate from "./LaunchTemplate";
+import Loading from "components/Loading";
 
 type PropsType = {
-  currentTemplate: PorterTemplate,
-  setCurrentTemplate: (x: PorterTemplate) => void,
+  currentTemplate: PorterTemplate;
+  setCurrentTemplate: (x: PorterTemplate) => void;
 };
 
 type StateType = {
-  showLaunchTemplate: boolean,
-  form: any | null,
-  values: any | null,
-  loading: boolean,
-  error: boolean,
-  markdown: string | null,
-  keywords: string[],
+  showLaunchTemplate: boolean;
+  form: any | null;
+  values: any | null;
+  loading: boolean;
+  error: boolean;
+  markdown: string | null;
+  keywords: string[];
 };
 
 export default class ExpandedTemplate extends Component<PropsType, StateType> {
@@ -32,28 +32,44 @@ export default class ExpandedTemplate extends Component<PropsType, StateType> {
     error: false,
     markdown: null as string | null,
     keywords: [] as string[],
-  }
+  };
 
   componentDidMount() {
     this.setState({ loading: true });
-    api.getTemplateInfo('<token>', {}, {
-      name: this.props.currentTemplate.name.toLowerCase().trim(),
-      version: 'latest',
-    }, (err: any, res: any) => {
-      if (err) {
-        this.setState({ loading: false, error: true });
-      } else {
-        let { form, values, markdown, metadata } = res.data;
-        let keywords = metadata.keywords;
-        this.setState({ form, values, markdown, keywords, loading: false, error: false });
+    api.getTemplateInfo(
+      "<token>",
+      {},
+      {
+        name: this.props.currentTemplate.name.toLowerCase().trim(),
+        version: "latest",
+      },
+      (err: any, res: any) => {
+        if (err) {
+          this.setState({ loading: false, error: true });
+        } else {
+          let { form, values, markdown, metadata } = res.data;
+          let keywords = metadata.keywords;
+          this.setState({
+            form,
+            values,
+            markdown,
+            keywords,
+            loading: false,
+            error: false,
+          });
+        }
       }
-    });
+    );
   }
 
   renderContents = () => {
-      if (this.state.loading) {
-        return <LoadingWrapper><Loading /></LoadingWrapper>;
-      }
+    if (this.state.loading) {
+      return (
+        <LoadingWrapper>
+          <Loading />
+        </LoadingWrapper>
+      );
+    }
     if (this.state.showLaunchTemplate) {
       return (
         <LaunchTemplate
@@ -76,13 +92,11 @@ export default class ExpandedTemplate extends Component<PropsType, StateType> {
         />
       </FadeWrapper>
     );
-  }
+  };
 
   render() {
     return (
-      <StyledExpandedTemplate>
-        {this.renderContents()}
-      </StyledExpandedTemplate>
+      <StyledExpandedTemplate>{this.renderContents()}</StyledExpandedTemplate>
     );
   }
 }
@@ -90,8 +104,12 @@ export default class ExpandedTemplate extends Component<PropsType, StateType> {
 const FadeWrapper = styled.div`
   animation: fadeIn 0.2s;
   @keyframes fadeIn {
-    from: { opacity: 0 }
-    to: { opacity: 1 }
+    from: {
+      opacity: 0;
+    }
+    to: {
+      opacity: 1;
+    }
   }
 `;
 

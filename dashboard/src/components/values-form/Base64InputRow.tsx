@@ -1,41 +1,44 @@
-import React, { ChangeEvent, Component } from 'react';
-import styled from 'styled-components';
+import React, { ChangeEvent, Component } from "react";
+import styled from "styled-components";
 
 type PropsType = {
-  label?: string,
-  type: string,
-  value: string | number,
-  setValue: (x: string | number) => void,
-  unit?: string,
-  placeholder?: string,
-  width?: string,
-  disabled?: boolean,
-  isRequired?: boolean,
+  label?: string;
+  type: string;
+  value: string | number;
+  setValue: (x: string | number) => void;
+  unit?: string;
+  placeholder?: string;
+  width?: string;
+  disabled?: boolean;
+  isRequired?: boolean;
 };
 
 type StateType = {
-  readOnly: boolean
+  readOnly: boolean;
 };
 
 export default class InputRow extends Component<PropsType, StateType> {
   state = {
-    readOnly: true
-  }
+    readOnly: true,
+  };
 
   handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     this.props.setValue(e.target.value);
-  }
-  
+  };
+
   render() {
     let { label, value, type, unit, placeholder, width } = this.props;
     value = value.toString();
     value = atob(value);
     return (
       <StyledInputRow>
-        <Label>{label} <Required>{this.props.isRequired ? ' *' : null}</Required></Label>
+        <Label>
+          {label} <Required>{this.props.isRequired ? " *" : null}</Required>
+        </Label>
         <InputWrapper>
           <Input
-            readOnly={this.state.readOnly} onFocus={() => this.setState({ readOnly: false })}
+            readOnly={this.state.readOnly}
+            onFocus={() => this.setState({ readOnly: false })}
             disabled={this.props.disabled}
             placeholder={placeholder}
             width={width}
@@ -72,8 +75,10 @@ const Input = styled.input`
   background: #ffffff11;
   border: 1px solid #ffffff55;
   border-radius: 3px;
-  width: ${(props: { disabled: boolean, width: string }) => props.width ? props.width : '270px'};
-  color: ${(props: { disabled: boolean, width: string }) => props.disabled ? '#ffffff44' : 'white'};
+  width: ${(props: { disabled: boolean; width: string }) =>
+    props.width ? props.width : "270px"};
+  color: ${(props: { disabled: boolean; width: string }) =>
+    props.disabled ? "#ffffff44" : "white"};
   padding: 5px 10px;
   margin-right: 8px;
   height: 30px;
@@ -85,7 +90,7 @@ const Label = styled.div`
   display: flex;
   align-items: center;
   font-size: 13px;
-  font-family: 'Work Sans', sans-serif;
+  font-family: "Work Sans", sans-serif;
 `;
 
 const StyledInputRow = styled.div`

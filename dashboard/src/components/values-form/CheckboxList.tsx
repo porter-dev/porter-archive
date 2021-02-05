@@ -1,17 +1,15 @@
-import React from 'react';
-import styled from 'styled-components';
+import React from "react";
+import styled from "styled-components";
 
 type PropsType = {
-  label?: string,
-  options: { disabled?: boolean, value: string, label: string }[],
-  selected: { value: string, label: string }[],
-  setSelected: (x: { value: string, label: string }[]) => void,
+  label?: string;
+  options: { disabled?: boolean; value: string; label: string }[];
+  selected: { value: string; label: string }[];
+  setSelected: (x: { value: string; label: string }[]) => void;
 };
 
-const CheckboxList = ({ 
-  label, options, selected, setSelected,
-}: PropsType) => {
-  let onSelectOption = (option: { value: string, label: string }) => {
+const CheckboxList = ({ label, options, selected, setSelected }: PropsType) => {
+  let onSelectOption = (option: { value: string; label: string }) => {
     if (!selected.includes(option)) {
       selected.push(option);
       setSelected(selected);
@@ -19,14 +17,14 @@ const CheckboxList = ({
       selected.splice(selected.indexOf(option), 1);
       setSelected(selected);
     }
-  }
-  
+  };
+
   return (
     <StyledCheckboxList>
       {label && <Label>{label}</Label>}
-      {options.map((option: { value: string, label: string }, i: number) => {
+      {options.map((option: { value: string; label: string }, i: number) => {
         return (
-          <CheckboxOption 
+          <CheckboxOption
             isLast={i === options.length - 1}
             onClick={() => onSelectOption(option)}
             key={i}
@@ -40,7 +38,7 @@ const CheckboxList = ({
       })}
     </StyledCheckboxList>
   );
-}
+};
 export default CheckboxList;
 
 const Checkbox = styled.div`
@@ -49,7 +47,8 @@ const Checkbox = styled.div`
   border: 1px solid #ffffff55;
   margin: 1px 15px 0px 1px;
   border-radius: 3px;
-  background: ${(props: { checked: boolean }) => props.checked ? '#ffffff22' : '#ffffff11'};
+  background: ${(props: { checked: boolean }) =>
+    props.checked ? "#ffffff22" : "#ffffff11"};
   display: flex;
   align-items: center;
   justify-content: center;
@@ -57,7 +56,7 @@ const Checkbox = styled.div`
   > i {
     font-size: 12px;
     padding-left: 0px;
-    display: ${(props: { checked: boolean }) => props.checked ? '' : 'none'};
+    display: ${(props: { checked: boolean }) => (props.checked ? "" : "none")};
   }
 `;
 
@@ -68,7 +67,7 @@ const CheckboxOption = styled.div<{ isLast: boolean }>`
   display: flex;
   cursor: pointer;
   align-items: center;
-  border-bottom: ${props => props.isLast ? '' : '1px solid #ffffff22'};
+  border-bottom: ${(props) => (props.isLast ? "" : "1px solid #ffffff22")};
   font-size: 13px;
 
   :hover {

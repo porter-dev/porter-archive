@@ -1,36 +1,35 @@
-import React, { Component } from 'react';
-import styled from 'styled-components';
-import category from 'assets/category.svg';
-import integrations from 'assets/integrations.svg';
-import filter from 'assets/filter.svg';
-import settings from 'assets/settings.svg';
+import React, { Component } from "react";
+import styled from "styled-components";
+import category from "assets/category.svg";
+import integrations from "assets/integrations.svg";
+import filter from "assets/filter.svg";
+import settings from "assets/settings.svg";
 
-import { Context } from 'shared/Context';
+import { Context } from "shared/Context";
 
-import ClusterSection from './ClusterSection';
-import ProjectSectionContainer from './ProjectSectionContainer';
-import loading from 'assets/loading.gif';
-import posthog from 'posthog-js';
-import { RouteComponentProps, withRouter } from 'react-router';
+import ClusterSection from "./ClusterSection";
+import ProjectSectionContainer from "./ProjectSectionContainer";
+import loading from "assets/loading.gif";
+import posthog from "posthog-js";
+import { RouteComponentProps, withRouter } from "react-router";
 
 type PropsType = RouteComponentProps & {
-  forceSidebar: boolean,
-  setWelcome: (x: boolean) => void,
-  currentView: string,
-  forceRefreshClusters: boolean,
-  setRefreshClusters: (x: boolean) => void,
+  forceSidebar: boolean;
+  setWelcome: (x: boolean) => void;
+  currentView: string;
+  forceRefreshClusters: boolean;
+  setRefreshClusters: (x: boolean) => void;
 };
 
 type StateType = {
-  showSidebar: boolean,
-  initializedSidebar: boolean,
-  pressingCtrl: boolean,
-  showTooltip: boolean,
-  forceCloseDrawer: boolean
+  showSidebar: boolean;
+  initializedSidebar: boolean;
+  pressingCtrl: boolean;
+  showTooltip: boolean;
+  forceCloseDrawer: boolean;
 };
 
 class Sidebar extends Component<PropsType, StateType> {
-
   // Need closeDrawer to hide drawer on sidebar close
   state = {
     showSidebar: true,
@@ -41,13 +40,13 @@ class Sidebar extends Component<PropsType, StateType> {
   };
 
   componentDidMount() {
-    document.addEventListener('keydown', this.handleKeyDown);
-    document.addEventListener('keyup', this.handleKeyUp);
+    document.addEventListener("keydown", this.handleKeyDown);
+    document.addEventListener("keyup", this.handleKeyUp);
   }
 
   componentWillUnmount() {
-    document.removeEventListener('keydown', this.handleKeyDown);
-    document.removeEventListener('keyup', this.handleKeyUp);
+    document.removeEventListener("keydown", this.handleKeyDown);
+    document.removeEventListener("keyup", this.handleKeyUp);
   }
 
   // Need to override showDrawer when the sidebar is closed
@@ -55,10 +54,10 @@ class Sidebar extends Component<PropsType, StateType> {
     if (prevProps.forceSidebar !== this.props.forceSidebar) {
       this.setState({ showSidebar: this.props.forceSidebar });
     }
-  }  
+  }
 
   handleKeyDown = (e: KeyboardEvent): void => {
-    if (e.key === 'Meta' || e.key === 'Control') {
+    if (e.key === "Meta" || e.key === "Control") {
       this.setState({ pressingCtrl: true });
     } else if (e.code === "Backslash" && this.state.pressingCtrl) {
       this.toggleSidebar();
@@ -66,13 +65,16 @@ class Sidebar extends Component<PropsType, StateType> {
   };
 
   handleKeyUp = (e: KeyboardEvent): void => {
-    if (e.key === 'Meta' || e.key === 'Control') {
+    if (e.key === "Meta" || e.key === "Control") {
       this.setState({ pressingCtrl: false });
     }
   };
 
   toggleSidebar = (): void => {
-    this.setState({ showSidebar: !this.state.showSidebar, forceCloseDrawer: true });
+    this.setState({
+      showSidebar: !this.state.showSidebar,
+      forceCloseDrawer: true,
+    });
   };
 
   renderPullTab = (): JSX.Element | undefined => {
@@ -87,9 +89,7 @@ class Sidebar extends Component<PropsType, StateType> {
 
   renderTooltip = (): JSX.Element | undefined => {
     if (this.state.showTooltip) {
-      return (
-        <Tooltip>⌘/CTRL + \</Tooltip>
-      );
+      return <Tooltip>⌘/CTRL + \</Tooltip>;
     }
   };
 
@@ -101,26 +101,31 @@ class Sidebar extends Component<PropsType, StateType> {
         <>
           <SidebarLabel>Home</SidebarLabel>
           <NavButton
-            onClick={() => (currentView !== 'provisioner') && this.props.history.push("dashboard")}
-            selected={currentView === 'dashboard' || currentView === 'provisioner'}
+            onClick={() =>
+              currentView !== "provisioner" &&
+              this.props.history.push("dashboard")
+            }
+            selected={
+              currentView === "dashboard" || currentView === "provisioner"
+            }
           >
             <Img src={category} />
             Dashboard
           </NavButton>
           <NavButton
             onClick={() => this.props.history.push("templates")}
-            selected={currentView === 'templates'}
+            selected={currentView === "templates"}
           >
             <Img src={filter} />
             Templates
           </NavButton>
           <NavButton
-            selected={currentView === 'integrations'}
+            selected={currentView === "integrations"}
             //onClick={() => {
             //  setCurrentView('integrations')
-           // }}
+            // }}
             onClick={() => {
-              setCurrentModal('IntegrationsInstructionsModal', {})
+              setCurrentModal("IntegrationsInstructionsModal", {});
             }}
           >
             <Img src={integrations} />
@@ -128,25 +133,25 @@ class Sidebar extends Component<PropsType, StateType> {
           </NavButton>
           {this.context.currentProject.roles.filter((obj: any) => {
             return obj.user_id === this.context.user.userId;
-          })[0].kind === 'admin' &&
+          })[0].kind === "admin" && (
             <NavButton
               onClick={() => this.props.history.push("project-settings")}
-              selected={this.props.currentView === 'project-settings'}
+              selected={this.props.currentView === "project-settings"}
             >
               <Img enlarge={true} src={settings} />
               Settings
             </NavButton>
-          }
+          )}
 
           <br />
 
           <SidebarLabel>Current Cluster</SidebarLabel>
-          <ClusterSection 
-            forceCloseDrawer={this.state.forceCloseDrawer} 
+          <ClusterSection
+            forceCloseDrawer={this.state.forceCloseDrawer}
             releaseDrawer={() => this.setState({ forceCloseDrawer: false })}
             setWelcome={this.props.setWelcome}
             currentView={currentView}
-            isSelected={currentView === 'cluster-dashboard'}
+            isSelected={currentView === "cluster-dashboard"}
             forceRefreshClusters={this.props.forceRefreshClusters}
             setRefreshClusters={this.props.setRefreshClusters}
           />
@@ -155,12 +160,8 @@ class Sidebar extends Component<PropsType, StateType> {
     }
 
     // Render placeholder if no project exists
-    return (
-      <ProjectPlaceholder>
-        No projects found.
-      </ProjectPlaceholder>
-    );
-  }
+    return <ProjectPlaceholder>No projects found.</ProjectPlaceholder>;
+  };
 
   // SidebarBg is separate to cover retracted drawer
   render() {
@@ -169,10 +170,14 @@ class Sidebar extends Component<PropsType, StateType> {
         {this.renderPullTab()}
         <StyledSidebar showSidebar={this.state.showSidebar}>
           <SidebarBg />
-          <CollapseButton 
-            onClick={this.toggleSidebar} 
-            onMouseOver={() => { this.setState({ showTooltip: true }) }}
-            onMouseOut={() => { this.setState({ showTooltip: false }) }}
+          <CollapseButton
+            onClick={this.toggleSidebar}
+            onMouseOver={() => {
+              this.setState({ showTooltip: true });
+            }}
+            onMouseOut={() => {
+              this.setState({ showTooltip: false });
+            }}
           >
             {this.renderTooltip()}
             <i className="material-icons">double_arrow</i>
@@ -202,7 +207,7 @@ const ProjectPlaceholder = styled.div`
   justify-content: center;
   height: calc(100% - 100px);
   font-size: 13px;
-  font-family: 'Work Sans', sans-serif;
+  font-family: "Work Sans", sans-serif;
   color: #aaaabb;
   padding-bottom: 80px;
 
@@ -219,16 +224,19 @@ const NavButton = styled.div`
   height: 42px;
   padding: 12px 35px 1px 53px;
   font-size: 14px;
-  font-family: 'Work Sans', sans-serif;
+  font-family: "Work Sans", sans-serif;
   color: #ffffff;
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
-  background: ${(props: { disabled?: boolean, selected?: boolean }) => props.selected ? '#ffffff11' : ''};
-  cursor: ${(props: { disabled?: boolean, selected?: boolean }) => props.disabled ? 'not-allowed' : 'pointer'};
+  background: ${(props: { disabled?: boolean; selected?: boolean }) =>
+    props.selected ? "#ffffff11" : ""};
+  cursor: ${(props: { disabled?: boolean; selected?: boolean }) =>
+    props.disabled ? "not-allowed" : "pointer"};
 
   :hover {
-    background: ${(props: { disabled?: boolean, selected?: boolean }) => props.selected ? '' : '#ffffff08'};
+    background: ${(props: { disabled?: boolean; selected?: boolean }) =>
+      props.selected ? "" : "#ffffff08"};
   }
 
   > i {
@@ -246,11 +254,11 @@ const NavButton = styled.div`
 
 const Img = styled.img<{ enlarge?: boolean }>`
   padding: 4px 4px;
-  height: ${props => props.enlarge ? '27px' : '23px'};
-  width: ${props => props.enlarge ? '27px' : '23px'};
+  height: ${(props) => (props.enlarge ? "27px" : "23px")};
+  width: ${(props) => (props.enlarge ? "27px" : "23px")};
   border-radius: 3px;
   position: absolute;
-  left: ${props => props.enlarge ? '19px' : '20px'};
+  left: ${(props) => (props.enlarge ? "19px" : "20px")};
   top: 9px;
 `;
 
@@ -261,7 +269,7 @@ const BottomSection = styled.div`
 `;
 
 const LogOutButton = styled(NavButton)`
-  width: calc(100% - 55px); 
+  width: calc(100% - 55px);
   border-top-right-radius: 3px;
   border-bottom-right-radius: 3px;
   margin-left: -1px;
@@ -312,7 +320,9 @@ const UserSection = styled.div`
 const RingWrapper = styled.div`
   width: 28px;
   border-radius: 30px;
-  :focus { outline: 0 }
+  :focus {
+    outline: 0;
+  }
   height: 28px;
   padding: 3px;
   border: 2px solid #ffffff44;
@@ -343,7 +353,7 @@ const PullTab = styled.div`
   position: fixed;
   width: 30px;
   height: 50px;
-  background: #7A838F77;
+  background: #7a838f77;
   top: calc(50vh - 60px);
   left: 0;
   z-index: 1;
@@ -352,7 +362,7 @@ const PullTab = styled.div`
   cursor: pointer;
 
   :hover {
-    background: #99a5aF77;
+    background: #99a5af77;
   }
 
   > i {
@@ -384,8 +394,12 @@ const Tooltip = styled.div`
   animation: faded-in 0.2s 0.15s;
   animation-fill-mode: forwards;
   @keyframes faded-in {
-    from { opacity: 0 }
-    to { opacity: 1 }
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
   }
 `;
 
@@ -415,20 +429,29 @@ const CollapseButton = styled.div`
 `;
 
 const StyledSidebar = styled.section`
-  font-family: 'Work Sans', sans-serif;
+  font-family: "Work Sans", sans-serif;
   width: 200px;
   position: relative;
   padding-top: 20px;
   height: 100vh;
   z-index: 2;
-  animation: ${(props: { showSidebar: boolean }) => (props.showSidebar ? 'showSidebar 0.4s' : 'hideSidebar 0.4s')};
+  animation: ${(props: { showSidebar: boolean }) =>
+    props.showSidebar ? "showSidebar 0.4s" : "hideSidebar 0.4s"};
   animation-fill-mode: forwards;
   @keyframes showSidebar {
-    from { margin-left: -220px }
-    to { margin-left: 0px }
+    from {
+      margin-left: -220px;
+    }
+    to {
+      margin-left: 0px;
+    }
   }
   @keyframes hideSidebar {
-    from { margin-left: 0px }
-    to { margin-left: -220px }
+    from {
+      margin-left: 0px;
+    }
+    to {
+      margin-left: -220px;
+    }
   }
 `;

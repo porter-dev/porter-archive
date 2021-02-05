@@ -1,22 +1,21 @@
-import React, { ChangeEvent, Component } from 'react';
-import styled from 'styled-components';
+import React, { Component } from "react";
+import styled from "styled-components";
 
 type PropsType = {
-  label?: string,
-  value: string,
-  setValue: (x: string) => void,
-  placeholder?: string
-  width?: string
-  disabled?: boolean
+  label?: string;
+  value: string;
+  setValue: (x: string) => void;
+  placeholder?: string;
+  width?: string;
+  disabled?: boolean;
 };
 
-type StateType = {
-};
+type StateType = {};
 
 export default class TextArea extends Component<PropsType, StateType> {
   handleChange = (e: any) => {
     this.props.setValue(e.target.value);
-  }
+  };
 
   render() {
     let { label, value, placeholder, width } = this.props;
@@ -27,7 +26,7 @@ export default class TextArea extends Component<PropsType, StateType> {
           disabled={this.props.disabled}
           placeholder={placeholder}
           width={width}
-          value={value || ''}
+          value={value || ""}
           onChange={this.handleChange}
         />
       </StyledTextArea>
@@ -43,8 +42,10 @@ const InputArea = styled.textarea`
   background: #ffffff11;
   border: 1px solid #ffffff55;
   border-radius: 3px;
-  width: ${(props: { disabled: boolean, width: string }) => props.width ? props.width : '270px'};
-  color: ${(props: { disabled: boolean, width: string }) => props.disabled ? '#ffffff44' : 'white'};
+  width: ${(props: { disabled: boolean; width: string }) =>
+    props.width ? props.width : "270px"};
+  color: ${(props: { disabled: boolean; width: string }) =>
+    props.disabled ? "#ffffff44" : "white"};
   padding: 5px 10px;
   margin-right: 8px;
   height: 8em;
@@ -55,7 +56,7 @@ const Label = styled.div`
   color: #ffffff;
   margin-bottom: 10px;
   font-size: 13px;
-  font-family: 'Work Sans', sans-serif;
+  font-family: "Work Sans", sans-serif;
 `;
 
 const StyledTextArea = styled.div`

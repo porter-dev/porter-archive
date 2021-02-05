@@ -1,24 +1,24 @@
-import React, { Component } from 'react';
-import styled from 'styled-components';
-import close from 'assets/close.png';
-import gradient from 'assets/gradient.jpg';
+import React, { Component } from "react";
+import styled from "styled-components";
+import close from "assets/close.png";
+import gradient from "assets/gradient.jpg";
 
-import api from 'shared/api';
-import { Context } from 'shared/Context';
+import api from "shared/api";
+import { Context } from "shared/Context";
 
-import SaveButton from 'components/SaveButton';
-import InputRow from 'components/values-form/InputRow';
-import ConfirmOverlay from 'components/ConfirmOverlay';
-import { RouteComponentProps, withRouter } from 'react-router';
+import SaveButton from "components/SaveButton";
+import InputRow from "components/values-form/InputRow";
+import ConfirmOverlay from "components/ConfirmOverlay";
+import { RouteComponentProps, withRouter } from "react-router";
 
 type PropsType = RouteComponentProps & {
-  setRefreshClusters: (x: boolean) => void,
+  setRefreshClusters: (x: boolean) => void;
 };
 
 type StateType = {
-  clusterName: string,
-  status: string | null,
-  showDeleteOverlay: boolean
+  clusterName: string;
+  status: string | null;
+  showDeleteOverlay: boolean;
 };
 
 class UpdateClusterModal extends Component<PropsType, StateType> {
@@ -30,109 +30,132 @@ class UpdateClusterModal extends Component<PropsType, StateType> {
 
   handleDelete = () => {
     let { currentProject, currentCluster } = this.context;
-    this.setState({ status: 'loading' });
+    this.setState({ status: "loading" });
 
-    api.deleteCluster('<token>', {}, { 
-      project_id: currentProject.id,
-      cluster_id: currentCluster.id,
-    }, (err: any, res: any) => {
+    api.deleteCluster(
+      "<token>",
+      {},
+      {
+        project_id: currentProject.id,
+        cluster_id: currentCluster.id,
+      },
+      (err: any, res: any) => {
+        if (err) {
+          this.setState({ status: "error" });
+          console.log(err);
+          return;
+        }
 
-      if (err) {
-        this.setState({ status: 'error' });
-        console.log(err)
-        return;
-      }
+        if (!currentCluster?.infra_id) {
+          // TODO: make this more declarative from the Home component
+          this.props.setRefreshClusters(true);
+          this.setState({ status: "successful", showDeleteOverlay: false });
+          this.context.setCurrentModal(null, null);
+          this.props.history.push("dashboard");
+          return;
+        }
 
-      if (!currentCluster?.infra_id) {
-        // TODO: make this more declarative from the Home component
+        // Handle destroying infra we've provisioned
+        switch (currentCluster.service) {
+          case "eks":
+            api.destroyEKS(
+              "<token>",
+              { eks_name: currentCluster.name },
+              {
+                project_id: currentProject.id,
+                infra_id: currentCluster.infra_id,
+              },
+              (err: any, res: any) => {
+                if (err) {
+                  this.setState({ status: "error" });
+                  console.log(err);
+                } else {
+                  console.log("destroyed provisioned infra.");
+                }
+              }
+            );
+            break;
+
+          case "gke":
+            api.destroyGKE(
+              "<token>",
+              { gke_name: currentCluster.name },
+              {
+                project_id: currentProject.id,
+                infra_id: currentCluster.infra_id,
+              },
+              (err: any, res: any) => {
+                if (err) {
+                  this.setState({ status: "error" });
+                  console.log(err);
+                } else {
+                  console.log("destroyed provisioned infra.");
+                }
+              }
+            );
+            break;
+
+          case "doks":
+            api.destroyDOKS(
+              "<token>",
+              { doks_name: currentCluster.name },
+              {
+                project_id: currentProject.id,
+                infra_id: currentCluster.infra_id,
+              },
+              (err: any, res: any) => {
+                if (err) {
+                  this.setState({ status: "error" });
+                  console.log(err);
+                } else {
+                  console.log("destroyed provisioned infra.");
+                }
+              }
+            );
+            break;
+        }
+
         this.props.setRefreshClusters(true);
-        this.setState({ status: 'successful', showDeleteOverlay: false });
+        this.setState({ status: "successful", showDeleteOverlay: false });
         this.context.setCurrentModal(null, null);
-        this.props.history.push("dashboard");
-        return;
       }
-
-      // Handle destroying infra we've provisioned
-      switch (currentCluster.service) {
-        case 'eks':
-          api.destroyEKS('<token>', { eks_name: currentCluster.name }, { 
-            project_id: currentProject.id,
-            infra_id: currentCluster.infra_id,
-          }, (err: any, res: any) => {
-            if (err) {
-              this.setState({ status: 'error' });
-              console.log(err)
-            } else {
-              console.log('destroyed provisioned infra.');
-            }
-          });
-          break;
-
-        case 'gke':
-          api.destroyGKE('<token>', { gke_name: currentCluster.name }, { 
-            project_id: currentProject.id,
-            infra_id: currentCluster.infra_id,
-          }, (err: any, res: any) => {
-            if (err) {
-              this.setState({ status: 'error' });
-              console.log(err)
-            } else {
-              console.log('destroyed provisioned infra.');
-            }
-          });
-          break;
-
-        case 'doks':
-          api.destroyDOKS('<token>', { doks_name : currentCluster.name }, { 
-            project_id: currentProject.id,
-            infra_id: currentCluster.infra_id,
-          }, (err: any, res: any) => {
-            if (err) {
-              this.setState({ status: 'error' });
-              console.log(err)
-            } else {
-              console.log('destroyed provisioned infra.');
-            }
-          });
-          break;
-      }
-        
-      this.props.setRefreshClusters(true);
-      this.setState({ status: 'successful', showDeleteOverlay: false });
-      this.context.setCurrentModal(null, null);
-    });
-  }
+    );
+  };
 
   renderWarning = () => {
     let { currentCluster } = this.context;
     if (!currentCluster?.infra_id || !currentCluster.service) {
-      return(
+      return (
         <Warning highlight={true}>
-          ⚠️ Since this cluster was not provisioned by Porter, deleting the cluster will only detach this cluster from your project. To delete the cluster itself, you must do so manually.
+          ⚠️ Since this cluster was not provisioned by Porter, deleting the
+          cluster will only detach this cluster from your project. To delete the
+          cluster itself, you must do so manually.
         </Warning>
-      )    
+      );
     }
 
-    return(
+    return (
       <Warning highlight={true}>
-        ⚠️ Deletion may result in dangling resources. Please visit your cloud provider's console to ensure that all resources have been removed. Note that deleting the cluster does not delete your registries.
+        ⚠️ Deletion may result in dangling resources. Please visit your cloud
+        provider's console to ensure that all resources have been removed. Note
+        that deleting the cluster does not delete your registries.
       </Warning>
-    )    
-  }
+    );
+  };
 
   render() {
     return (
       <StyledUpdateProjectModal>
-        <CloseButton onClick={() => {
-          this.context.setCurrentModal(null, null);
-        }}>
+        <CloseButton
+          onClick={() => {
+            this.context.setCurrentModal(null, null);
+          }}
+        >
           <CloseButtonImg src={close} />
         </CloseButton>
 
         <ModalTitle>Cluster Settings</ModalTitle>
-        <Subtitle>
-          Cluster name
-        </Subtitle>
+        <Subtitle>Cluster name</Subtitle>
 
         <InputWrapper>
           <DashboardIcon>
@@ -140,26 +163,26 @@ class UpdateClusterModal extends Component<PropsType, StateType> {
           </DashboardIcon>
           <InputRow
             disabled={true}
-            type='string'
+            type="string"
             value={this.state.clusterName}
             setValue={(x: string) => this.setState({ clusterName: x })}
-            placeholder='ex: perspective-vortex'
-            width='470px'
+            placeholder="ex: perspective-vortex"
+            width="470px"
           />
         </InputWrapper>
 
         {this.renderWarning()}
 
-        <Help 
-          href='https://docs.getporter.dev/docs/getting-started-with-porter-on-aws#deleting-provisioned-resources'
-          target='_blank'
+        <Help
+          href="https://docs.getporter.dev/docs/getting-started-with-porter-on-aws#deleting-provisioned-resources"
+          target="_blank"
         >
           <i className="material-icons">help_outline</i> Help
         </Help>
 
         <SaveButton
-          text='Delete Cluster'
-          color='#b91133'
+          text="Delete Cluster"
+          color="#b91133"
           onClick={() => this.setState({ showDeleteOverlay: true })}
           status={this.state.status}
         />
@@ -171,7 +194,7 @@ class UpdateClusterModal extends Component<PropsType, StateType> {
           onNo={() => this.setState({ showDeleteOverlay: false })}
         />
       </StyledUpdateProjectModal>
-      );
+    );
   }
 }
 
@@ -212,7 +235,8 @@ const Warning = styled.div`
     margin-right: 10px;
     font-size: 18px;
   }
-  color: ${(props: { highlight: boolean, makeFlush?: boolean }) => props.highlight ? '#f5cb42' : ''};
+  color: ${(props: { highlight: boolean; makeFlush?: boolean }) =>
+    props.highlight ? "#f5cb42" : ""};
 `;
 
 const DashboardIcon = styled.div`
@@ -228,7 +252,7 @@ const DashboardIcon = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #676C7C;
+  background: #676c7c;
   border: 2px solid #8e94aa;
   color: white;
 
@@ -244,7 +268,7 @@ const InputWrapper = styled.div`
 
 const Subtitle = styled.div`
   margin-top: 23px;
-  font-family: 'Work Sans', sans-serif;
+  font-family: "Work Sans", sans-serif;
   font-size: 13px;
   color: #aaaabb;
   overflow: hidden;
@@ -257,7 +281,7 @@ const ModalTitle = styled.div`
   margin: 0px 0px 13px;
   display: flex;
   flex: 1;
-  font-family: 'Assistant';
+  font-family: "Assistant";
   font-size: 18px;
   color: #ffffff;
   user-select: none;
@@ -290,7 +314,7 @@ const CloseButtonImg = styled.img`
   margin: 0 auto;
 `;
 
-const StyledUpdateProjectModal= styled.div`
+const StyledUpdateProjectModal = styled.div`
   width: 100%;
   position: absolute;
   left: 0;

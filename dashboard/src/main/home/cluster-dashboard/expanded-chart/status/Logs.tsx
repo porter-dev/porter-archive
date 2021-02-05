@@ -1,116 +1,129 @@
-import React, { Component } from 'react';
-import styled from 'styled-components';
-import { Context } from 'shared/Context';
+import React, { Component } from "react";
+import styled from "styled-components";
+import { Context } from "shared/Context";
 
 type PropsType = {
-  selectedPod: any,
+  selectedPod: any;
 };
 
 type StateType = {
-  logs: string[],
-  ws: any,
-  scroll: boolean,
+  logs: string[];
+  ws: any;
+  scroll: boolean;
 };
 
 export default class Logs extends Component<PropsType, StateType> {
-  
   state = {
     logs: [] as string[],
-    ws : null as any,
+    ws: null as any,
     scroll: true,
-  }
+  };
 
   ws = null as any;
-  parentRef = React.createRef<HTMLDivElement>()
+  parentRef = React.createRef<HTMLDivElement>();
 
   scrollToBottom = (smooth: boolean) => {
     if (smooth) {
-      this.parentRef.current.lastElementChild.scrollIntoView({ behavior: "smooth" })
+      this.parentRef.current.lastElementChild.scrollIntoView({
+        behavior: "smooth",
+      });
     } else {
-      this.parentRef.current.lastElementChild.scrollIntoView({ behavior: "auto" })
+      this.parentRef.current.lastElementChild.scrollIntoView({
+        behavior: "auto",
+      });
     }
-  }
+  };
 
   renderLogs = () => {
     let { selectedPod } = this.props;
     if (!selectedPod?.metadata?.name) {
-      return <Message>Please select a pod to view its logs.</Message>
+      return <Message>Please select a pod to view its logs.</Message>;
     }
     if (this.state.logs.length == 0) {
-      return <Message>No logs to display from this pod.</Message>
+      return <Message>No logs to display from this pod.</Message>;
     }
     return this.state.logs.map((log, i) => {
-        return <Log key={i}>{log}</Log>
-    })
-  }
+      return <Log key={i}>{log}</Log>;
+    });
+  };
 
-  setupWebsocket = () => {  
+  setupWebsocket = () => {
     let { currentCluster, currentProject } = this.context;
     let { selectedPod } = this.props;
-    if (!selectedPod.metadata?.name) return
-    let protocol = process.env.NODE_ENV == 'production' ? 'wss' : 'ws'
-    this.ws = new WebSocket(`${protocol}://${process.env.API_SERVER}/api/projects/${currentProject.id}/k8s/${selectedPod?.metadata?.namespace}/pod/${selectedPod?.metadata?.name}/logs?cluster_id=${currentCluster.id}&service_account_id=${currentCluster.service_account_id}`)
+    if (!selectedPod.metadata?.name) return;
+    let protocol = process.env.NODE_ENV == "production" ? "wss" : "ws";
+    this.ws = new WebSocket(
+      `${protocol}://${process.env.API_SERVER}/api/projects/${currentProject.id}/k8s/${selectedPod?.metadata?.namespace}/pod/${selectedPod?.metadata?.name}/logs?cluster_id=${currentCluster.id}&service_account_id=${currentCluster.service_account_id}`
+    );
 
     this.ws.onopen = () => {
-      console.log('connected to websocket')
-    }
+      console.log("connected to websocket");
+    };
 
     this.ws.onmessage = (evt: MessageEvent) => {
       this.setState({ logs: [...this.state.logs, evt.data] }, () => {
         if (this.state.scroll) {
-          this.scrollToBottom(false)
+          this.scrollToBottom(false);
         }
-      })
-    }
+      });
+    };
 
     this.ws.onerror = (err: ErrorEvent) => {
-      console.log("websocket error:", err)
-    }
+      console.log("websocket error:", err);
+    };
 
     this.ws.onclose = () => {
-      console.log("closing pod logs")
-    }
-  }
+      console.log("closing pod logs");
+    };
+  };
 
   refreshLogs = () => {
     if (this.ws) {
       this.ws.close();
       this.ws = null;
-      this.setState({logs: []})
+      this.setState({ logs: [] });
       this.setupWebsocket();
     }
-  }
+  };
 
   componentDidMount() {
-    this.setupWebsocket()
+    this.setupWebsocket();
     this.scrollToBottom(false);
   }
 
   componentWillUnmount() {
-    console.log('log unmount')
+    console.log("log unmount");
     if (this.ws) {
-      this.ws.close()
+      this.ws.close();
     }
   }
 
   render() {
     return (
       <LogStream>
-        <Wrapper ref={this.parentRef}>
-          {this.renderLogs()}
-        </Wrapper>
+        <Wrapper ref={this.parentRef}>{this.renderLogs()}</Wrapper>
         <Options>
-          <Scroll onClick={()=> {
-            this.setState({scroll: !this.state.scroll}, () => {
-              if (this.state.scroll) {
-                this.scrollToBottom(true)
-              }
-            }); 
-          }}>
-            <input type="checkbox" checked={this.state.scroll} onChange={() => {}}/>
+          <Scroll
+            onClick={() => {
+              this.setState({ scroll: !this.state.scroll }, () => {
+                if (this.state.scroll) {
+                  this.scrollToBottom(true);
+                }
+              });
+            }}
+          >
+            <input
+              type="checkbox"
+              checked={this.state.scroll}
+              onChange={() => {}}
+            />
             Scroll to Bottom
           </Scroll>
-          <Refresh onClick={() => {this.refreshLogs()}}>
+          <Refresh
+            onClick={() => {
+              this.refreshLogs();
+            }}
+          >
             <i className="material-icons">autorenew</i>
             Refresh
           </Refresh>
@@ -139,7 +152,7 @@ const Scroll = styled.div`
     margin-right: 6px;
     pointer-events: none;
   }
-`
+`;
 
 const Refresh = styled.div`
   display: flex;
@@ -158,7 +171,7 @@ const Refresh = styled.div`
   :hover {
     background: #2468d6;
   }
-`
+`;
 
 const Options = styled.div`
   width: 100%;
@@ -168,7 +181,7 @@ const Options = styled.div`
   flex-direction: row;
   align-items: center;
   justify-content: space-between;
-`
+`;
 
 const Wrapper = styled.div`
   width: 100%;
@@ -187,7 +200,7 @@ const LogStream = styled.div`
   user-select: text;
   max-width: 65%;
   overflow-y: auto;
-  overflow-wrap: break-word; 
+  overflow-wrap: break-word;
 `;
 
 const Message = styled.div`

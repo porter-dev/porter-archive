@@ -1,24 +1,22 @@
-import React, { Component } from 'react';
-import styled from 'styled-components';
-import _ from 'lodash';
+import React, { Component } from "react";
+import styled from "styled-components";
 
-import { Section, FormElement } from 'shared/types';
-import { Context } from 'shared/Context';
-import api from 'shared/api';
+import { Section, FormElement } from "shared/types";
+import { Context } from "shared/Context";
 
-import CheckboxRow from './CheckboxRow';
-import InputRow from './InputRow';
-import Base64InputRow from './Base64InputRow';
-import SelectRow from './SelectRow';
-import Helper from './Helper';
-import Heading from './Heading';
-import ExpandableResource from '../ExpandableResource';
-import VeleroForm from '../forms/VeleroForm';
+import CheckboxRow from "./CheckboxRow";
+import InputRow from "./InputRow";
+import Base64InputRow from "./Base64InputRow";
+import SelectRow from "./SelectRow";
+import Helper from "./Helper";
+import Heading from "./Heading";
+import ExpandableResource from "../ExpandableResource";
+import VeleroForm from "../forms/VeleroForm";
 
 type PropsType = {
-  sections?: Section[],
-  metaState?: any,
-  setMetaState?: any,
+  sections?: Section[];
+  metaState?: any;
+  setMetaState?: any;
 };
 
 type StateType = any;
@@ -28,55 +26,54 @@ export default class ValuesForm extends Component<PropsType, StateType> {
     let key = item.name || item.variable;
     let value = this.props.metaState[key];
     if (item.settings && item.settings.unit && value) {
-      value = value.split(item.settings.unit)[0]
+      value = value.split(item.settings.unit)[0];
     }
     return value;
-  }
+  };
 
   renderSection = (section: Section) => {
     return section.contents.map((item: FormElement, i: number) => {
-
       // If no name is assigned use values.yaml variable as identifier
       let key = item.name || item.variable;
       switch (item.type) {
-        case 'heading':
+        case "heading":
           return <Heading key={i}>{item.label}</Heading>;
-        case 'subtitle':
+        case "subtitle":
           return <Helper key={i}>{item.label}</Helper>;
-        case 'resource-list':
+        case "resource-list":
           if (Array.isArray(item.value)) {
             return (
               <ResourceList>
-                {
-                  item.value.map((resource: any, i: number) => {
-                    return (
-                      <ExpandableResource
-                        key={i}
-                        resource={resource}
-                        isLast={i === item.value.length - 1}
-                        roundAllCorners={true}
-                      />
-                    );
-                  })
-                }
+                {item.value.map((resource: any, i: number) => {
+                  return (
+                    <ExpandableResource
+                      key={i}
+                      resource={resource}
+                      isLast={i === item.value.length - 1}
+                      roundAllCorners={true}
+                    />
+                  );
+                })}
               </ResourceList>
             );
           }
-        case 'checkbox':
+        case "checkbox":
           return (
             <CheckboxRow
               key={i}
               checked={this.props.metaState[key]}
-              toggle={() => this.props.setMetaState({ [key]: !this.props.metaState[key] })}
+              toggle={() =>
+                this.props.setMetaState({ [key]: !this.props.metaState[key] })
+              }
               label={item.label}
             />
           );
-        case 'array-input':
+        case "array-input":
           return (
             <InputRow
               key={i}
               isRequired={item.required}
-              type='text'
+              type="text"
               value={this.getInputValue(item)}
               setValue={(x: string) => {
                 this.props.setMetaState({ [key]: [x] });
@@ -85,15 +82,15 @@ export default class ValuesForm extends Component<PropsType, StateType> {
               unit={item.settings ? item.settings.unit : null}
             />
           );
-        case 'string-input':
+        case "string-input":
           return (
             <InputRow
               key={i}
               isRequired={item.required}
-              type='text'
+              type="text"
               value={this.getInputValue(item)}
               setValue={(x: string) => {
-                if (item.settings && item.settings.unit && x !== '') {
+                if (item.settings && item.settings.unit && x !== "") {
                   x = x + item.settings.unit;
                 }
                 this.props.setMetaState({ [key]: x });
@@ -102,17 +99,17 @@ export default class ValuesForm extends Component<PropsType, StateType> {
               unit={item.settings ? item.settings.unit : null}
             />
           );
-        case 'number-input':
+        case "number-input":
           return (
             <InputRow
               key={i}
               isRequired={item.required}
-              type='number'
+              type="number"
               value={this.getInputValue(item)}
               setValue={(x: number) => {
                 let val: string | number = x;
                 if (Number.isNaN(x)) {
-                  val = ''
+                  val = "";
                 }
 
                 // Convert to string if unit is set
@@ -120,53 +117,50 @@ export default class ValuesForm extends Component<PropsType, StateType> {
                   val = x.toString();
                   val = val + item.settings.unit;
                 }
-                
+
                 this.props.setMetaState({ [key]: val });
               }}
               label={item.label}
               unit={item.settings ? item.settings.unit : null}
             />
           );
-        case 'select':
+        case "select":
           return (
             <SelectRow
               key={i}
               value={this.props.metaState[key]}
               setActiveValue={(val) => this.props.setMetaState({ [key]: val })}
               options={item.settings.options}
-              dropdownLabel=''
+              dropdownLabel=""
               label={item.label}
             />
           );
-        case 'provider-select':
+        case "provider-select":
           return (
             <SelectRow
               key={i}
               value={this.props.metaState[key]}
               setActiveValue={(val) => this.props.setMetaState({ [key]: val })}
               options={[
-                { value: 'gcp', label: 'Google Cloud Platform (GCP)' },
-                { value: 'aws', label: 'Amazon Web Services (AWS)' },
-                { value: 'do', label: 'DigitalOcean' },
+                { value: "gcp", label: "Google Cloud Platform (GCP)" },
+                { value: "aws", label: "Amazon Web Services (AWS)" },
+                { value: "do", label: "DigitalOcean" },
               ]}
-              dropdownLabel=''
+              dropdownLabel=""
               label={item.label}
             />
           );
-        case 'velero-create-backup':
-          return (
-            <VeleroForm
-            />
-          );
-        case 'base-64':
+        case "velero-create-backup":
+          return <VeleroForm />;
+        case "base-64":
           return (
             <Base64InputRow
               key={i}
               isRequired={item.required}
-              type='text'
+              type="text"
               value={this.getInputValue(item)}
               setValue={(x: string) => {
-                if (item.settings && item.settings.unit && x !== '') {
+                if (item.settings && item.settings.unit && x !== "") {
                   x = x + item.settings.unit;
                 }
                 this.props.setMetaState({ [key]: btoa(x) });
@@ -175,15 +169,15 @@ export default class ValuesForm extends Component<PropsType, StateType> {
               unit={item.settings ? item.settings.unit : null}
             />
           );
-        case 'base-64-password':
+        case "base-64-password":
           return (
             <Base64InputRow
               key={i}
               isRequired={item.required}
-              type='password'
+              type="password"
               value={this.getInputValue(item)}
               setValue={(x: string) => {
-                if (item.settings && item.settings.unit && x !== '') {
+                if (item.settings && item.settings.unit && x !== "") {
                   x = x + item.settings.unit;
                 }
                 this.props.setMetaState({ [key]: btoa(x) });
@@ -195,7 +189,7 @@ export default class ValuesForm extends Component<PropsType, StateType> {
         default:
       }
     });
-  }
+  };
 
   renderFormContents = () => {
     if (this.props.metaState) {
@@ -207,14 +201,10 @@ export default class ValuesForm extends Component<PropsType, StateType> {
           }
         }
 
-        return (
-          <div key={i}>
-            {this.renderSection(section)}
-          </div>
-        );
+        return <div key={i}>{this.renderSection(section)}</div>;
       });
     }
-  }
+  };
 
   render() {
     return (

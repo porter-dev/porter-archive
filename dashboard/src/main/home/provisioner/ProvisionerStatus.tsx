@@ -1,102 +1,121 @@
-import React, { Component } from 'react';
-import styled from 'styled-components';
-import posthog from 'posthog-js';
+import React, { Component } from "react";
+import styled from "styled-components";
+import posthog from "posthog-js";
 
-import api from 'shared/api';
-import { Context } from 'shared/Context';
-import ansiparse from 'shared/ansiparser'
-import loading from 'assets/loading.gif';
-import warning from 'assets/warning.png';
-import { InfraType } from 'shared/types';
-import { filterOldInfras } from 'shared/common';
+import api from "shared/api";
+import { Context } from "shared/Context";
+import ansiparse from "shared/ansiparser";
+import loading from "assets/loading.gif";
+import warning from "assets/warning.png";
+import { InfraType } from "shared/types";
+import { filterOldInfras } from "shared/common";
 
-import Helper from 'components/values-form/Helper';
-import InfraStatuses from './InfraStatuses';
+import Helper from "components/values-form/Helper";
+import InfraStatuses from "./InfraStatuses";
 import { RouteComponentProps, withRouter } from "react-router";
 import { Link } from "react-router-dom";
 
 type PropsType = RouteComponentProps & {};
 
 type StateType = {
-  error: boolean,
-  logs: string[],
-  websockets: any[],
-  maxStep : Record<string, number>,
-  currentStep: Record<string, number>,
-  triggerEnd: boolean,
-  infras: InfraType[],
+  error: boolean;
+  logs: string[];
+  websockets: any[];
+  maxStep: Record<string, number>;
+  currentStep: Record<string, number>;
+  triggerEnd: boolean;
+  infras: InfraType[];
 };
 
 const dummyInfras = [
-  { kind: 'ecr', status: 'creating', id: 5, project_id: 1 }, 
-  { kind: 'eks', status: 'error', id: 3, project_id: 1 },
-  { kind: 'eks', status: 'error', id: 1, project_id: 1 },
-  { kind: 'eks', status: 'error', id: 4, project_id: 1 },
-  { kind: 'ecr', status: 'created', id: 2, project_id: 1 },
+  { kind: "ecr", status: "creating", id: 5, project_id: 1 },
+  { kind: "eks", status: "error", id: 3, project_id: 1 },
+  { kind: "eks", status: "error", id: 1, project_id: 1 },
+  { kind: "eks", status: "error", id: 4, project_id: 1 },
+  { kind: "ecr", status: "created", id: 2, project_id: 1 },
 ];
 
 class ProvisionerStatus extends Component<PropsType, StateType> {
   state = {
     error: false,
     logs: [] as string[],
-    websockets : [] as any[],
+    websockets: [] as any[],
     maxStep: {} as Record<string, any>,
     currentStep: {} as Record<string, number>,
     triggerEnd: false,
     infras: [] as InfraType[],
-  }
+  };
 
-  parentRef = React.createRef<HTMLDivElement>()
+  parentRef = React.createRef<HTMLDivElement>();
 
   scrollToBottom = (smooth: boolean) => {
     if (smooth) {
-      this.parentRef.current.lastElementChild.scrollIntoView({ behavior: "smooth" })
+      this.parentRef.current.lastElementChild.scrollIntoView({
+        behavior: "smooth",
+      });
     } else {
-      this.parentRef.current.lastElementChild.scrollIntoView({ behavior: "auto" })
+      this.parentRef.current.lastElementChild.scrollIntoView({
+        behavior: "auto",
+      });
     }
-  }
+  };
 
   componentDidMount() {
-    console.log('mounting provisioner')
+    console.log("mounting provisioner");
     let { currentProject } = this.context;
-    let protocol = process.env.NODE_ENV == 'production' ? 'wss' : 'ws'
+    let protocol = process.env.NODE_ENV == "production" ? "wss" : "ws";
 
     // Check if current project is provisioning
-    api.getInfra('<token>', {}, { 
-      project_id: currentProject.id 
-    }, (err: any, res: any) => {
-      if (err) {
-        console.log(err);
-      } 
-      
-      let infras = filterOldInfras(res.data);
-      let error = false;
-
-      let maxStep = {} as Record<string, number>
-
-      infras.forEach((infra: InfraType, i: number) => {
-        maxStep[infra.kind] = null;
-        if (infra.status === 'error') {
-          error = true;
+    api.getInfra(
+      "<token>",
+      {},
+      {
+        project_id: currentProject.id,
+      },
+      (err: any, res: any) => {
+        if (err) {
+          console.log(err);
         }
-      });
 
-      // Filter historical infras list for most current instances of each
-      let websockets = infras.map((infra: any) => {
-        let ws = new WebSocket(`${protocol}://${process.env.API_SERVER}/api/projects/${currentProject.id}/provision/${infra.kind}/${infra.id}/logs`)
-        return this.setupWebsocket(ws, infra)
-      });
-  
-      this.setState({ error, infras, websockets, maxStep, logs: ["Provisioning resources..."] });
-    });
+        let infras = filterOldInfras(res.data);
+        let error = false;
+
+        let maxStep = {} as Record<string, number>;
+
+        infras.forEach((infra: InfraType, i: number) => {
+          maxStep[infra.kind] = null;
+          if (infra.status === "error") {
+            error = true;
+          }
+        });
+
+        // Filter historical infras list for most current instances of each
+        let websockets = infras.map((infra: any) => {
+          let ws = new WebSocket(
+            `${protocol}://${process.env.API_SERVER}/api/projects/${currentProject.id}/provision/${infra.kind}/${infra.id}/logs`
+          );
+          return this.setupWebsocket(ws, infra);
+        });
+
+        this.setState({
+          error,
+          infras,
+          websockets,
+          maxStep,
+          logs: ["Provisioning resources..."],
+        });
+      }
+    );
   }
 
   componentWillUnmount() {
-    if (this.state.websockets.length == 0) { return; }
+    if (this.state.websockets.length == 0) {
+      return;
+    }
 
     this.state.websockets.forEach((ws: any) => {
-      ws.close()
-    })
+      ws.close();
+    });
   }
 
   isJSON = (str: string) => {
@@ -106,21 +125,25 @@ class ProvisionerStatus extends Component<PropsType, StateType> {
       return false;
     }
     return true;
-  }
+  };
 
   setupWebsocket = (ws: WebSocket, infra: any) => {
     ws.onopen = () => {
-      console.log('connected to websocket')
-    }
+      console.log("connected to websocket");
+    };
 
     ws.onmessage = (evt: MessageEvent) => {
       let event = JSON.parse(evt.data);
       let validEvents = [] as any[];
       let err = null;
-      
+
       for (var i = 0; i < event.length; i++) {
         let msg = event[i];
-        if (msg["Values"] && msg["Values"]["data"] && this.isJSON(msg["Values"]["data"])) { 
+        if (
+          msg["Values"] &&
+          msg["Values"]["data"] &&
+          this.isJSON(msg["Values"]["data"])
+        ) {
           let d = JSON.parse(msg["Values"]["data"]);
 
           if (d["kind"] == "error") {
@@ -129,24 +152,32 @@ class ProvisionerStatus extends Component<PropsType, StateType> {
           }
 
           // add only valid events
-          if (d["log"] != null && d["created_resources"] != null && d["total_resources"] != null) {
+          if (
+            d["log"] != null &&
+            d["created_resources"] != null &&
+            d["total_resources"] != null
+          ) {
             validEvents.push(d);
           }
         }
       }
 
       if (err) {
-        posthog.capture('Provisioning Error', {error: err});
+        posthog.capture("Provisioning Error", { error: err });
 
         let e = ansiparse(err).map((el: any) => {
           return el.text;
-        })
+        });
 
-        let index = this.state.infras.findIndex(el => el.kind === infra.kind)
-        infra.status = "error"
-        let infras = this.state.infras
-        infras[index] = infra
-        this.setState({ logs: [...this.state.logs, ...e], error: true, infras });
+        let index = this.state.infras.findIndex((el) => el.kind === infra.kind);
+        infra.status = "error";
+        let infras = this.state.infras;
+        infras[index] = infra;
+        this.setState({
+          logs: [...this.state.logs, ...e],
+          error: true,
+          infras,
+        });
         return;
       }
 
@@ -154,107 +185,123 @@ class ProvisionerStatus extends Component<PropsType, StateType> {
         return;
       }
 
-      if (!this.state.maxStep[infra.kind] || !this.state.maxStep[infra.kind]["total_resources"]) {
+      if (
+        !this.state.maxStep[infra.kind] ||
+        !this.state.maxStep[infra.kind]["total_resources"]
+      ) {
         this.setState({
           maxStep: {
             ...this.state.maxStep,
-            [infra.kind] : validEvents[validEvents.length - 1]["total_resources"]
-          }
-        })
+            [infra.kind]:
+              validEvents[validEvents.length - 1]["total_resources"],
+          },
+        });
       }
-      
-      let logs = [] as any[]
+
+      let logs = [] as any[];
       validEvents.forEach((e: any) => {
-        logs.push(...ansiparse(e["log"]))
-      })
+        logs.push(...ansiparse(e["log"]));
+      });
 
       logs = logs.map((log: any) => {
-        return log.text
-      })
+        return log.text;
+      });
 
-      this.setState({ 
-        logs: [...this.state.logs, ...logs], 
-        currentStep: {
-          ...this.state.currentStep,
-          [infra.kind] : validEvents[validEvents.length - 1]["created_resources"]
+      this.setState(
+        {
+          logs: [...this.state.logs, ...logs],
+          currentStep: {
+            ...this.state.currentStep,
+            [infra.kind]:
+              validEvents[validEvents.length - 1]["created_resources"],
+          },
         },
-      }, () => {
-        this.scrollToBottom(false)
-      })
-    }
+        () => {
+          this.scrollToBottom(false);
+        }
+      );
+    };
 
     ws.onerror = (err: ErrorEvent) => {
-      console.log('websocket err', err)
-    }
+      console.log("websocket err", err);
+    };
 
     ws.onclose = () => {
-      console.log('closing provisioner websocket')
-    }
+      console.log("closing provisioner websocket");
+    };
 
-    return ws
-  }
+    return ws;
+  };
 
   renderLogs = () => {
     return this.state.logs.map((log, i) => {
       return <Log key={i}>{log}</Log>;
     });
-  }
+  };
 
   onEnd = () => {
     let myInterval = setInterval(() => {
-      api.getClusters('<token>', {}, { 
-        id: this.context.currentProject.id 
-      }, (err: any, res: any) => {
-        if (err) {
-          console.log(err);
-        } else if (res.data) {
-          let clusters = res.data;
-          if (clusters.length > 0) {
-            this.props.history.push("dashboard");
-            // console.log('provision end project: ', this.context.currentProject);
-            // console.log('provision end cluster: ', this.context.currentCluster);
-            clearInterval(myInterval);
-          } else {
-            // console.log('looped!')
-            // console.log('response :', res.data);
-            // console.log('provision end project: ', this.context.currentProject);
-            // console.log('provision end cluster: ', this.context.currentCluster);
+      api.getClusters(
+        "<token>",
+        {},
+        {
+          id: this.context.currentProject.id,
+        },
+        (err: any, res: any) => {
+          if (err) {
+            console.log(err);
+          } else if (res.data) {
+            let clusters = res.data;
+            if (clusters.length > 0) {
+              this.props.history.push("dashboard");
+              // console.log('provision end project: ', this.context.currentProject);
+              // console.log('provision end cluster: ', this.context.currentCluster);
+              clearInterval(myInterval);
+            } else {
+              // console.log('looped!')
+              // console.log('response :', res.data);
+              // console.log('provision end project: ', this.context.currentProject);
+              // console.log('provision end cluster: ', this.context.currentCluster);
+            }
           }
         }
-      });
+      );
     }, 1000);
-  }
+  };
 
   refreshLogs = () => {
-    if (this.state.websockets.length == 0) { return; }
+    if (this.state.websockets.length == 0) {
+      return;
+    }
     let { currentProject } = this.context;
-    let protocol = process.env.NODE_ENV == 'production' ? 'wss' : 'ws'
+    let protocol = process.env.NODE_ENV == "production" ? "wss" : "ws";
 
     this.state.websockets.forEach((ws: any) => {
-      ws.close()
-    })
+      ws.close();
+    });
 
-    this.setState({ 
+    this.setState({
       websockets: [],
-      logs: []
-    })
+      logs: [],
+    });
 
     let websockets = this.state.infras.map((infra: any) => {
-      let ws = new WebSocket(`${protocol}://${process.env.API_SERVER}/api/projects/${currentProject.id}/provision/${infra.kind}/${infra.infra_id}/logs`)
-      return this.setupWebsocket(ws, infra)
+      let ws = new WebSocket(
+        `${protocol}://${process.env.API_SERVER}/api/projects/${currentProject.id}/provision/${infra.kind}/${infra.infra_id}/logs`
+      );
+      return this.setupWebsocket(ws, infra);
     });
 
     this.setState({ websockets, logs: ["Provisioning resources..."] });
-    
-  }
-  
+  };
+
   render() {
     let { error, triggerEnd, infras } = this.state;
-    
+
     let maxStep = 0;
     let currentStep = 0;
     let skip = false;
-    
+
     for (let i = 0; i < infras.length; i++) {
       if (!this.state.maxStep[infras[i].kind]) {
         skip = true;
@@ -263,14 +310,14 @@ class ProvisionerStatus extends Component<PropsType, StateType> {
 
     if (!skip) {
       for (let key in this.state.maxStep) {
-        maxStep += this.state.maxStep[key]
-        currentStep += this.state.currentStep[key]
-      }  
+        maxStep += this.state.maxStep[key];
+        currentStep += this.state.currentStep[key];
+      }
     }
 
     if (maxStep !== 0 && currentStep === maxStep && !triggerEnd) {
-      posthog.capture('Provisioning complete!')
-      this.onEnd()
+      posthog.capture("Provisioning complete!");
+      this.onEnd();
       this.setState({ triggerEnd: true });
     }
 
@@ -339,7 +386,7 @@ const Options = styled.div`
   flex-direction: row;
   align-items: center;
   justify-content: space-between;
-`
+`;
 
 const Refresh = styled.div`
   display: flex;
@@ -358,7 +405,7 @@ const Refresh = styled.div`
   :hover {
     background: #2468d6;
   }
-`
+`;
 
 // const Link = styled.a`
 //   cursor: pointer;
@@ -367,8 +414,10 @@ const Refresh = styled.div`
 // `;
 
 const Warning = styled.span`
-  color: ${(props: { highlight: boolean, makeFlush?: boolean }) => props.highlight ? '#f5cb42' : ''};
-  margin-left: ${(props: { highlight: boolean, makeFlush?: boolean }) => props.makeFlush ? '' : '5px'};
+  color: ${(props: { highlight: boolean; makeFlush?: boolean }) =>
+    props.highlight ? "#f5cb42" : ""};
+  margin-left: ${(props: { highlight: boolean; makeFlush?: boolean }) =>
+    props.makeFlush ? "" : "5px"};
   margin-right: 5px;
 `;
 
@@ -405,7 +454,7 @@ const Message = styled.div`
 `;
 
 const Loaded = styled.div<{ progress: string }>`
-  width: ${props => props.progress};
+  width: ${(props) => props.progress};
   height: 100%;
   background: linear-gradient(to right, #4f8aff, #8e7dff, #4f8aff);
   background-size: 400% 400%;
@@ -413,8 +462,12 @@ const Loaded = styled.div<{ progress: string }>`
   animation: linkLoad 2s infinite;
 
   @keyframes linkLoad {
-    0%{background-position:91% 100%}
-    100%{background-position:10% 0%}
+    0% {
+      background-position: 91% 100%;
+    }
+    100% {
+      background-position: 10% 0%;
+    }
   }
 `;
 
@@ -430,7 +483,7 @@ const LoadingBar = styled.div`
 const Title = styled.div`
   font-size: 24px;
   font-weight: 600;
-  font-family: 'Work Sans', sans-serif;
+  font-family: "Work Sans", sans-serif;
   color: #ffffff;
   white-space: nowrap;
   overflow: hidden;
@@ -456,7 +509,7 @@ const TitleSection = styled.div`
       margin-bottom: -2px;
       font-size: 18px;
       margin-left: 18px;
-      color: #858FAAaa;
+      color: #858faaaa;
       cursor: pointer;
       :hover {
         color: #aaaabb;

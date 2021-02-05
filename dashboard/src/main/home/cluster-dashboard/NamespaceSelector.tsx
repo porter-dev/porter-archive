@@ -1,46 +1,58 @@
-import React, { Component } from 'react';
-import styled from 'styled-components';
+import React, { Component } from "react";
+import styled from "styled-components";
 
-import { Context } from 'shared/Context';
-import api from 'shared/api';
+import { Context } from "shared/Context";
+import api from "shared/api";
 
-import Selector from 'components/Selector';
+import Selector from "components/Selector";
 
 type PropsType = {
-  setNamespace: (x: string) => void,
-  namespace: string
+  setNamespace: (x: string) => void;
+  namespace: string;
 };
 
 type StateType = {
-  namespaceOptions: { label: string, value: string }[]
+  namespaceOptions: { label: string; value: string }[];
 };
 
-// TODO: fix update to unmounted component 
+// TODO: fix update to unmounted component
 export default class NamespaceSelector extends Component<PropsType, StateType> {
   _isMounted = false;
 
   state = {
-    namespaceOptions: [] as { label: string, value: string }[]
-  }
+    namespaceOptions: [] as { label: string; value: string }[],
+  };
 
   updateOptions = () => {
     let { currentCluster, currentProject } = this.context;
 
-    api.getNamespaces('<token>', {
-      cluster_id: currentCluster.id,
-    }, { id: currentProject.id }, (err: any, res: any) => {
-      if (err && this._isMounted) {
-        // setCurrentError('Could not read clusters: ' + JSON.stringify(err));
-        this.setState({ namespaceOptions: [{ label: 'All', value: '' }] });
-      } else if (this._isMounted) {
-        let namespaceOptions: { label: string, value: string }[] = [{ label: 'All', value: '' }];
-        res.data.items.forEach((x: { metadata: { name: string }}, i: number) => {
-          namespaceOptions.push({ label: x.metadata.name, value: x.metadata.name });
-        })
-        this.setState({ namespaceOptions });
+    api.getNamespaces(
+      "<token>",
+      {
+        cluster_id: currentCluster.id,
+      },
+      { id: currentProject.id },
+      (err: any, res: any) => {
+        if (err && this._isMounted) {
+          // setCurrentError('Could not read clusters: ' + JSON.stringify(err));
+          this.setState({ namespaceOptions: [{ label: "All", value: "" }] });
+        } else if (this._isMounted) {
+          let namespaceOptions: { label: string; value: string }[] = [
+            { label: "All", value: "" },
+          ];
+          res.data.items.forEach(
+            (x: { metadata: { name: string } }, i: number) => {
+              namespaceOptions.push({
+                label: x.metadata.name,
+                value: x.metadata.name,
+              });
+            }
+          );
+          this.setState({ namespaceOptions });
+        }
       }
-    });
-  }
+    );
+  };
 
   componentDidMount() {
     this._isMounted = true;
@@ -58,7 +70,7 @@ export default class NamespaceSelector extends Component<PropsType, StateType> {
   }
 
   render() {
-    return ( 
+    return (
       <StyledNamespaceSelector>
         <Label>
           <i className="material-icons">filter_alt</i> Filter
@@ -67,9 +79,9 @@ export default class NamespaceSelector extends Component<PropsType, StateType> {
           activeValue={this.props.namespace}
           setActiveValue={(namespace) => this.props.setNamespace(namespace)}
           options={this.state.namespaceOptions}
-          dropdownLabel='Namespace'
-          width='150px'
-          dropdownWidth='230px'
+          dropdownLabel="Namespace"
+          width="150px"
+          dropdownWidth="230px"
           closeOverlay={true}
         />
       </StyledNamespaceSelector>

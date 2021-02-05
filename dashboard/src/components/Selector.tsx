@@ -1,97 +1,109 @@
-import React, { Component } from 'react';
-import styled from 'styled-components';
+import React, { Component } from "react";
+import styled from "styled-components";
 
 type PropsType = {
-  activeValue: string,
-  options: { value: string, label: string }[],
-  setActiveValue: (x: string) => void,
-  width: string,
-  height?: string,
-  dropdownLabel?: string,
-  dropdownWidth?: string,
-  dropdownMaxHeight?: string,
-  closeOverlay?: boolean
+  activeValue: string;
+  options: { value: string; label: string }[];
+  setActiveValue: (x: string) => void;
+  width: string;
+  height?: string;
+  dropdownLabel?: string;
+  dropdownWidth?: string;
+  dropdownMaxHeight?: string;
+  closeOverlay?: boolean;
 };
 
-type StateType = {
-};
+type StateType = {};
 
 export default class Selector extends Component<PropsType, StateType> {
   state = {
-    expanded: false
-  }
+    expanded: false,
+  };
 
   wrapperRef: any = React.createRef();
   parentRef: any = React.createRef();
 
   componentDidMount() {
-    document.addEventListener('mousedown', this.handleClickOutside.bind(this));
+    document.addEventListener("mousedown", this.handleClickOutside.bind(this));
   }
 
   componentWillUnmount() {
-    document.removeEventListener('mousedown', this.handleClickOutside.bind(this));
+    document.removeEventListener(
+      "mousedown",
+      this.handleClickOutside.bind(this)
+    );
   }
 
   handleClickOutside = (event: any) => {
     if (
-      (this.wrapperRef && this.wrapperRef.current && !this.wrapperRef.current.contains(event.target)) &&
-      (this.parentRef && this.parentRef.current && !this.parentRef.current.contains(event.target))
+      this.wrapperRef &&
+      this.wrapperRef.current &&
+      !this.wrapperRef.current.contains(event.target) &&
+      this.parentRef &&
+      this.parentRef.current &&
+      !this.parentRef.current.contains(event.target)
     ) {
-      this.setState({ expanded: false })
+      this.setState({ expanded: false });
     }
-  }
+  };
 
-  handleOptionClick = (option: { value: string, label: string }) => {
+  handleOptionClick = (option: { value: string; label: string }) => {
     this.props.setActiveValue(option.value);
     this.props.closeOverlay ? null : this.setState({ expanded: false });
-  }
+  };
 
   renderOptionList = () => {
     let { options, activeValue } = this.props;
-    return options.map((option: { value: string, label: string }, i: number) => {
-      return (
-        <Option
-          key={i}
-          selected={option.value === activeValue}
-          onClick={() => this.handleOptionClick(option)}
-          lastItem={i === options.length - 1}
-        >
-          {option.label}
-        </Option>
-      );
-    });
-  }
+    return options.map(
+      (option: { value: string; label: string }, i: number) => {
+        return (
+          <Option
+            key={i}
+            selected={option.value === activeValue}
+            onClick={() => this.handleOptionClick(option)}
+            lastItem={i === options.length - 1}
+          >
+            {option.label}
+          </Option>
+        );
+      }
+    );
+  };
 
   renderDropdownLabel = () => {
-    if (this.props.dropdownLabel && this.props.dropdownLabel !== '') {
-      return (
-        <DropdownLabel>{this.props.dropdownLabel}</DropdownLabel>
-      );
+    if (this.props.dropdownLabel && this.props.dropdownLabel !== "") {
+      return <DropdownLabel>{this.props.dropdownLabel}</DropdownLabel>;
     }
-  }
+  };
 
   renderDropdown = () => {
     if (this.state.expanded) {
       return (
         <Dropdown
           ref={this.wrapperRef}
-          dropdownWidth={this.props.dropdownWidth ? this.props.dropdownWidth : this.props.width}
+          dropdownWidth={
+            this.props.dropdownWidth
+              ? this.props.dropdownWidth
+              : this.props.width
+          }
           dropdownMaxHeight={this.props.dropdownMaxHeight}
           onClick={() => this.setState({ expanded: false })}
         >
           {this.renderDropdownLabel()}
           {this.renderOptionList()}
         </Dropdown>
-      )
+      );
     }
-  }
+  };
 
   getLabel = (value: string): any => {
-    let tgt = this.props.options.find((element: { value: string, label: string }) => element.value === value);
+    let tgt = this.props.options.find(
+      (element: { value: string; label: string }) => element.value === value
+    );
     if (tgt) {
       return tgt.label;
     }
-  }
+  };
 
   render() {
     let { activeValue } = this.props;
@@ -105,7 +117,7 @@ export default class Selector extends Component<PropsType, StateType> {
           height={this.props.height}
         >
           <TextWrap>
-            {activeValue === '' ? 'All' : this.getLabel(activeValue)}
+            {activeValue === "" ? "All" : this.getLabel(activeValue)}
           </TextWrap>
           <i className="material-icons">arrow_drop_down</i>
         </MainSelector>
@@ -129,10 +141,12 @@ const DropdownLabel = styled.div`
   margin: 10px 13px;
 `;
 
-const Option = styled.div` 
+const Option = styled.div`
   width: 100%;
   border-top: 1px solid #00000000;
-  border-bottom: 1px solid ${(props: { selected: boolean, lastItem: boolean }) => props.lastItem ? '#ffffff00' : '#ffffff15'};
+  border-bottom: 1px solid
+    ${(props: { selected: boolean; lastItem: boolean }) =>
+      props.lastItem ? "#ffffff00" : "#ffffff15"};
   height: 37px;
   font-size: 13px;
   padding-top: 9px;
@@ -143,7 +157,8 @@ const Option = styled.div`
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  background: ${(props: { selected: boolean, lastItem: boolean }) => props.selected ? '#ffffff11' : ''};
+  background: ${(props: { selected: boolean; lastItem: boolean }) =>
+    props.selected ? "#ffffff11" : ""};
 
   :hover {
     background: #ffffff22;
@@ -164,8 +179,10 @@ const Dropdown = styled.div`
   right: 0;
   top: calc(100% + 5px);
   background: #26282f;
-  width: ${(props: { dropdownWidth: string, dropdownMaxHeight: string }) => props.dropdownWidth};
-  max-height: ${(props: { dropdownWidth: string, dropdownMaxHeight: string }) => props.dropdownMaxHeight || '300px'};
+  width: ${(props: { dropdownWidth: string; dropdownMaxHeight: string }) =>
+    props.dropdownWidth};
+  max-height: ${(props: { dropdownWidth: string; dropdownMaxHeight: string }) =>
+    props.dropdownMaxHeight || "300px"};
   border-radius: 3px;
   z-index: 999;
   overflow-y: auto;
@@ -175,12 +192,14 @@ const Dropdown = styled.div`
 
 const StyledSelector = styled.div<{ width: string }>`
   position: relative;
-  width: ${props => props.width};
+  width: ${(props) => props.width};
 `;
 
 const MainSelector = styled.div`
-  width: ${(props: { expanded: boolean, width: string, height?: string }) => props.width};
-  height: ${(props: { expanded: boolean, width: string, height?: string }) => props.height ? props.height : '35px'};
+  width: ${(props: { expanded: boolean; width: string; height?: string }) =>
+    props.width};
+  height: ${(props: { expanded: boolean; width: string; height?: string }) =>
+    props.height ? props.height : "35px"};
   border: 1px solid #ffffff55;
   font-size: 13px;
   padding: 5px 10px;
@@ -190,13 +209,25 @@ const MainSelector = styled.div`
   align-items: center;
   justify-content: space-between;
   cursor: pointer;
-  background: ${(props: { expanded: boolean, width: string, height?: string }) => props.expanded ? '#ffffff33' : '#ffffff11'};
+  background: ${(props: {
+    expanded: boolean;
+    width: string;
+    height?: string;
+  }) => (props.expanded ? "#ffffff33" : "#ffffff11")};
   :hover {
-    background: ${(props: { expanded: boolean, width: string, height?: string }) => props.expanded ? '#ffffff33' : '#ffffff22'};
+    background: ${(props: {
+      expanded: boolean;
+      width: string;
+      height?: string;
+    }) => (props.expanded ? "#ffffff33" : "#ffffff22")};
   }
 
   > i {
     font-size: 20px;
-    transform: ${(props: { expanded: boolean, width: string, height?: string }) => props.expanded ? 'rotate(180deg)' : ''};
+    transform: ${(props: {
+      expanded: boolean;
+      width: string;
+      height?: string;
+    }) => (props.expanded ? "rotate(180deg)" : "")};
   }
 `;

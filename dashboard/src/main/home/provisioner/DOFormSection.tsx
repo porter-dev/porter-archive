@@ -1,143 +1,143 @@
-import React, { Component } from 'react';
-import styled from 'styled-components';
+import React, { Component } from "react";
+import styled from "styled-components";
 
-import close from 'assets/close.png';
-import { isAlphanumeric } from 'shared/common';
-import api from 'shared/api';
-import { Context } from 'shared/Context';
-import { ProjectType, InfraType } from 'shared/types';
+import close from "assets/close.png";
+import { isAlphanumeric } from "shared/common";
+import api from "shared/api";
+import { Context } from "shared/Context";
+import { InfraType } from "shared/types";
 
-import SelectRow from 'components/values-form/SelectRow';
-import Helper from 'components/values-form/Helper';
-import Heading from 'components/values-form/Heading';
-import SaveButton from 'components/SaveButton';
-import CheckboxList from 'components/values-form/CheckboxList';
+import SelectRow from "components/values-form/SelectRow";
+import Helper from "components/values-form/Helper";
+import Heading from "components/values-form/Heading";
+import SaveButton from "components/SaveButton";
+import CheckboxList from "components/values-form/CheckboxList";
 
 type PropsType = {
-  setSelectedProvisioner: (x: string | null) => void,
-  handleError: () => void,
-  projectName: string,
-  infras: InfraType[],
+  setSelectedProvisioner: (x: string | null) => void;
+  handleError: () => void;
+  projectName: string;
+  infras: InfraType[];
 };
 
 type StateType = {
-  selectedInfras: { value: string, label: string }[],
-  subscriptionTier: string,
-  doRegion: string,
+  selectedInfras: { value: string; label: string }[];
+  subscriptionTier: string;
+  doRegion: string;
 };
 
 const provisionOptions = [
-  { value: 'docr', label: 'Digital Ocean Container Registry' },
-  { value: 'doks', label: 'Digital Ocean Kubernetes Service' },
+  { value: "docr", label: "Digital Ocean Container Registry" },
+  { value: "doks", label: "Digital Ocean Kubernetes Service" },
 ];
 
 const tierOptions = [
-  { value: 'basic', label: 'Basic' },
-  { value: 'starter', label: 'Starter' },
-  { value: 'professional', label: 'Professional' },
+  { value: "basic", label: "Basic" },
+  { value: "starter", label: "Starter" },
+  { value: "professional", label: "Professional" },
 ];
 
 const regionOptions = [
-  { value: 'ams3', label: 'Amsterdam 3' },
-  { value: 'blr1', label: 'Bangalore 1' },
-  { value: 'fra1', label: 'Frankfurt 1' },
-  { value: 'lon1', label: 'London 1' },
-  { value: 'nyc1', label: 'New York 1' },
-  { value: 'nyc3', label: 'New York 3' },
-  { value: 'sfo2', label: 'San Francisco 2' },
-  { value: 'sfo3', label: 'San Francisco 3' },
-  { value: 'sgp1', label: 'Singapore 1' },
-  { value: 'tor1', label: 'Toronto 1' },
+  { value: "ams3", label: "Amsterdam 3" },
+  { value: "blr1", label: "Bangalore 1" },
+  { value: "fra1", label: "Frankfurt 1" },
+  { value: "lon1", label: "London 1" },
+  { value: "nyc1", label: "New York 1" },
+  { value: "nyc3", label: "New York 3" },
+  { value: "sfo2", label: "San Francisco 2" },
+  { value: "sfo3", label: "San Francisco 3" },
+  { value: "sgp1", label: "Singapore 1" },
+  { value: "tor1", label: "Toronto 1" },
 ];
 
 // TODO: Consolidate across forms w/ HOC
 export default class DOFormSection extends Component<PropsType, StateType> {
   state = {
     selectedInfras: [...provisionOptions],
-    subscriptionTier: 'starter',
-    doRegion: 'nyc1',
-  }
+    subscriptionTier: "starter",
+    doRegion: "nyc1",
+  };
 
   componentDidMount = () => {
     let { infras } = this.props;
     let { selectedInfras } = this.state;
 
     if (infras) {
-      
       // From the dashboard, only uncheck and disable if "creating" or "created"
       let filtered = selectedInfras;
-      infras.forEach(
-        (infra: InfraType, i: number) => {
-          let { kind, status } = infra;
-          if (status === 'creating' || status === 'created') {
-            filtered = filtered.filter((item: any) => {
-              return item.value !== kind;
-            });
-          }
+      infras.forEach((infra: InfraType, i: number) => {
+        let { kind, status } = infra;
+        if (status === "creating" || status === "created") {
+          filtered = filtered.filter((item: any) => {
+            return item.value !== kind;
+          });
         }
-      );
+      });
       this.setState({ selectedInfras: filtered });
     }
-  }
+  };
 
   checkFormDisabled = () => {
-    let { 
-      selectedInfras,
-    } = this.state;
+    let { selectedInfras } = this.state;
     let { projectName } = this.props;
-    if (projectName || projectName === '') {
+    if (projectName || projectName === "") {
       return !isAlphanumeric(projectName) || selectedInfras.length === 0;
     } else {
       return selectedInfras.length === 0;
     }
-  }
+  };
 
   // Step 1: Create a project
   createProject = (callback?: any) => {
-    console.log('Creating project');
+    console.log("Creating project");
     let { projectName, handleError } = this.props;
-    let { 
-      user, 
-      setProjects, 
-      setCurrentProject, 
-    } = this.context;
+    let { user, setProjects, setCurrentProject } = this.context;
 
-    api.createProject('<token>', { name: projectName }, {
-    }, (err: any, res: any) => {
-      if (err) {
-        console.log(err);
-        handleError();
-        return;
-      } else {
-        let proj = res.data;
+    api.createProject(
+      "<token>",
+      { name: projectName },
+      {},
+      (err: any, res: any) => {
+        if (err) {
+          console.log(err);
+          handleError();
+          return;
+        } else {
+          let proj = res.data;
 
-        // Need to set project list for dropdown
-        // TODO: consolidate into ProjectSection (case on exists in list on set)
-        api.getProjects('<token>', {}, { 
-          id: user.userId 
-        }, (err: any, res: any) => {
-          if (err) {
-            console.log(err);
-            handleError();
-            return;
-          }
-          setProjects(res.data);
-          setCurrentProject(proj);
-          callback && callback(proj.id);
-        });
+          // Need to set project list for dropdown
+          // TODO: consolidate into ProjectSection (case on exists in list on set)
+          api.getProjects(
+            "<token>",
+            {},
+            {
+              id: user.userId,
+            },
+            (err: any, res: any) => {
+              if (err) {
+                console.log(err);
+                handleError();
+                return;
+              }
+              setProjects(res.data);
+              setCurrentProject(proj);
+              callback && callback(proj.id);
+            }
+          );
+        }
       }
-    });
-  }
+    );
+  };
 
   doRedirect = (projectId: number) => {
     let { subscriptionTier, doRegion, selectedInfras } = this.state;
     let redirectUrl = `/api/oauth/projects/${projectId}/digitalocean?project_id=${projectId}&provision=do`;
     redirectUrl += `&tier=${subscriptionTier}&region=${doRegion}`;
-    selectedInfras.forEach((option: { value: string, label: string }) => {
+    selectedInfras.forEach((option: { value: string; label: string }) => {
       redirectUrl += `&infras=${option.value}`;
     });
     window.location.href = redirectUrl;
-  }
+  };
 
   // TODO: handle generically (with > 2 steps)
   onCreateDO = () => {
@@ -150,7 +150,7 @@ export default class DOFormSection extends Component<PropsType, StateType> {
     } else {
       this.createProject((projectId: number) => this.doRedirect(projectId));
     }
-  }
+  };
 
   render() {
     let { setSelectedProvisioner } = this.props;
@@ -165,37 +165,41 @@ export default class DOFormSection extends Component<PropsType, StateType> {
           <Heading isAtTop={true}>DigitalOcean Settings</Heading>
           <SelectRow
             options={tierOptions}
-            width='100%'
+            width="100%"
             value={subscriptionTier}
-            setActiveValue={(x: string) => this.setState({ subscriptionTier: x })}
-            label='💰 Subscription Tier'
+            setActiveValue={(x: string) =>
+              this.setState({ subscriptionTier: x })
+            }
+            label="💰 Subscription Tier"
           />
           <SelectRow
             options={regionOptions}
-            width='100%'
-            dropdownMaxHeight='240px'
+            width="100%"
+            dropdownMaxHeight="240px"
             value={doRegion}
             setActiveValue={(x: string) => this.setState({ doRegion: x })}
-            label='📍 DigitalOcean Region'
+            label="📍 DigitalOcean Region"
           />
           <Br />
           <Heading>DigitalOcean Resources</Heading>
-          <Helper>Porter will provision the following DigitalOcean resources</Helper>
+          <Helper>
+            Porter will provision the following DigitalOcean resources
+          </Helper>
           <CheckboxList
             options={provisionOptions}
             selected={selectedInfras}
-            setSelected={(x: { value: string, label: string }[]) => {
+            setSelected={(x: { value: string; label: string }[]) => {
               this.setState({ selectedInfras: x });
             }}
           />
         </FormSection>
         {this.props.children ? this.props.children : <Padding />}
         <SaveButton
-          text='Submit'
+          text="Submit"
           disabled={this.checkFormDisabled()}
           onClick={this.onCreateDO}
           makeFlush={true}
-          helper='Note: Provisioning can take up to 15 minutes'
+          helper="Note: Provisioning can take up to 15 minutes"
         />
       </StyledAWSFormSection>
     );

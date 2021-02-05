@@ -1,88 +1,93 @@
-import React, { Component } from 'react';
-import styled from 'styled-components';
-import drawerBg from 'assets/drawer-bg.png';
+import React, { Component } from "react";
+import styled from "styled-components";
+import drawerBg from "assets/drawer-bg.png";
 
-import api from 'shared/api';
-import { Context } from 'shared/Context';
-import { ClusterType } from 'shared/types';
+import api from "shared/api";
+import { Context } from "shared/Context";
+import { ClusterType } from "shared/types";
 
-import Drawer from './Drawer';
-import { RouteComponentProps, withRouter } from 'react-router';
+import Drawer from "./Drawer";
+import { RouteComponentProps, withRouter } from "react-router";
 
 type PropsType = RouteComponentProps & {
-  forceCloseDrawer: boolean,
-  releaseDrawer: () => void,
-  setWelcome: (x: boolean) => void,
-  currentView: string,
-  isSelected: boolean,
-  forceRefreshClusters: boolean,
-  setRefreshClusters: (x: boolean) => void,
+  forceCloseDrawer: boolean;
+  releaseDrawer: () => void;
+  setWelcome: (x: boolean) => void;
+  currentView: string;
+  isSelected: boolean;
+  forceRefreshClusters: boolean;
+  setRefreshClusters: (x: boolean) => void;
 };
 
 type StateType = {
-  showDrawer: boolean,
-  initializedDrawer: boolean,
-  clusters: ClusterType[],
+  showDrawer: boolean;
+  initializedDrawer: boolean;
+  clusters: ClusterType[];
 
   // Track last project id for refreshing clusters on project change
-  prevProjectId: number
+  prevProjectId: number;
 };
 
 class ClusterSection extends Component<PropsType, StateType> {
-
   // Need to track initialized for animation mounting
   state = {
     showDrawer: false,
     initializedDrawer: false,
     clusters: [] as ClusterType[],
-    prevProjectId: this.context.currentProject.id
+    prevProjectId: this.context.currentProject.id,
   };
 
   updateClusters = () => {
     let { currentProject, setCurrentCluster } = this.context;
 
     // TODO: query with selected filter once implemented
-    api.getClusters('<token>', {}, { id: currentProject.id }, (err: any, res: any) => {
-      if (err) {
-
-        // Assume intializing if no contexts
-        this.props.setWelcome(true);
-      } else {
-        this.props.setWelcome(false);
-        // TODO: handle uninitialized kubeconfig
-        if (res.data) {
-          let clusters = res.data;
-          clusters.sort((a: any, b: any) => a.id - b.id);
-          if (clusters.length > 0) {
-            this.setState({ clusters });
-            let saved = JSON.parse(localStorage.getItem(currentProject.id + '-cluster'));
-            if (saved !== 'null') {
-              setCurrentCluster(clusters[0]);
-              for (let i = 0; i < clusters.length; i++) {
-                if (
-                  clusters[i].id === saved.id &&
-                  clusters[i].project_id === saved.project_id && 
-                  clusters[i].name === saved.name
-                ) {
-                  setCurrentCluster(clusters[i]);
-                  break;
+    api.getClusters(
+      "<token>",
+      {},
+      { id: currentProject.id },
+      (err: any, res: any) => {
+        if (err) {
+          // Assume intializing if no contexts
+          this.props.setWelcome(true);
+        } else {
+          this.props.setWelcome(false);
+          // TODO: handle uninitialized kubeconfig
+          if (res.data) {
+            let clusters = res.data;
+            clusters.sort((a: any, b: any) => a.id - b.id);
+            if (clusters.length > 0) {
+              this.setState({ clusters });
+              let saved = JSON.parse(
+                localStorage.getItem(currentProject.id + "-cluster")
+              );
+              if (saved !== "null") {
+                setCurrentCluster(clusters[0]);
+                for (let i = 0; i < clusters.length; i++) {
+                  if (
+                    clusters[i].id === saved.id &&
+                    clusters[i].project_id === saved.project_id &&
+                    clusters[i].name === saved.name
+                  ) {
+                    setCurrentCluster(clusters[i]);
+                    break;
+                  }
                 }
+              } else {
+                setCurrentCluster(clusters[0]);
               }
-            } else {
-              setCurrentCluster(clusters[0]);
+            } else if (
+              this.props.currentView !== "provisioner" &&
+              this.props.currentView !== "new-project"
+            ) {
+              this.setState({ clusters: [] });
+              setCurrentCluster(null);
+              // this.props.history.push("dashboard");
             }
-          } else if (
-            this.props.currentView !== 'provisioner'
-            && this.props.currentView !== 'new-project'
-          ) {
-            this.setState({ clusters: [] });
-            setCurrentCluster(null);
-            // this.props.history.push("dashboard");
           }
         }
       }
-    });
-  }
+    );
+  };
 
   componentDidMount() {
     this.updateClusters();
@@ -91,8 +96,7 @@ class ClusterSection extends Component<PropsType, StateType> {
   // Need to override showDrawer when the sidebar is closed
   componentDidUpdate(prevProps: PropsType) {
     if (prevProps !== this.props) {
-
-      // Refresh clusters on project change 
+      // Refresh clusters on project change
       if (this.state.prevProjectId !== this.context.currentProject.id) {
         this.updateClusters();
         this.setState({ prevProjectId: this.context.currentProject.id });
@@ -107,7 +111,7 @@ class ClusterSection extends Component<PropsType, StateType> {
       }
     }
   }
-  
+
   toggleDrawer = (): void => {
     if (!this.state.initializedDrawer) {
       this.setState({ initializedDrawer: true });
@@ -128,8 +132,10 @@ class ClusterSection extends Component<PropsType, StateType> {
   };
 
   showClusterConfigModal = () => {
-    this.context.setCurrentModal('ClusterConfigModal', { updateClusters: this.updateClusters });
-  }
+    this.context.setCurrentModal("ClusterConfigModal", {
+      updateClusters: this.updateClusters,
+    });
+  };
 
   renderContents = (): JSX.Element => {
     let { clusters, showDrawer } = this.state;
@@ -138,8 +144,12 @@ class ClusterSection extends Component<PropsType, StateType> {
     if (clusters.length > 0) {
       return (
         <ClusterSelector isSelected={this.props.isSelected}>
-          <LinkWrapper onClick={() => this.props.history.push('cluster-dashboard')}>
-            <ClusterIcon><i className="material-icons">device_hub</i></ClusterIcon>
+          <LinkWrapper
+            onClick={() => this.props.history.push("cluster-dashboard")}
+          >
+            <ClusterIcon>
+              <i className="material-icons">device_hub</i>
+            </ClusterIcon>
             <ClusterName>{currentCluster && currentCluster.name}</ClusterName>
           </LinkWrapper>
           <DrawerButton onClick={this.toggleDrawer}>
@@ -154,11 +164,13 @@ class ClusterSection extends Component<PropsType, StateType> {
 
     return (
       <InitializeButton
-        onClick={() => this.context.setCurrentModal('ClusterInstructionsModal', {})}
+        onClick={() =>
+          this.context.setCurrentModal("ClusterInstructionsModal", {})
+        }
       >
         <Plus>+</Plus> Connect a Cluster
       </InitializeButton>
-    )
+    );
   };
 
   render() {
@@ -203,7 +215,7 @@ const InitializeButton = styled.div`
 
 const BgAccent = styled.img`
   height: 42px;
-  background: #819BFD;
+  background: #819bfd;
   width: 30px;
   border-top-left-radius: 100px;
   max-width: 30px;
@@ -240,14 +252,18 @@ const ClusterName = styled.div`
 
 const DropdownIcon = styled.span`
   position: absolute;
-  right: ${(props: { showDrawer: boolean }) => (props.showDrawer ? '-2px' : '2px')};
+  right: ${(props: { showDrawer: boolean }) =>
+    props.showDrawer ? "-2px" : "2px"};
   top: 10px;
   > i {
     font-size: 18px;
   }
-  -webkit-transform: ${(props: { showDrawer: boolean }) => (props.showDrawer ? 'rotate(-90deg)' : 'rotate(90deg)')};
-  transform: ${(props: { showDrawer: boolean }) => (props.showDrawer ? 'rotate(-90deg)' : 'rotate(90deg)')};
-  animation: ${(props: { showDrawer: boolean }) => (props.showDrawer ? 'rotateLeft 0.5s' : 'rotateRight 0.5s')};
+  -webkit-transform: ${(props: { showDrawer: boolean }) =>
+    props.showDrawer ? "rotate(-90deg)" : "rotate(90deg)"};
+  transform: ${(props: { showDrawer: boolean }) =>
+    props.showDrawer ? "rotate(-90deg)" : "rotate(90deg)"};
+  animation: ${(props: { showDrawer: boolean }) =>
+    props.showDrawer ? "rotateLeft 0.5s" : "rotateRight 0.5s"};
   animation-fill-mode: forwards;
 
   @keyframes rotateLeft {
@@ -265,7 +281,6 @@ const DropdownIcon = styled.span`
       transform: rotate(-90deg);
     }
   }
-
 `;
 
 const ClusterIcon = styled.div`
@@ -298,10 +313,12 @@ const ClusterSelector = styled.div`
   font-weight: 500;
   color: white;
   cursor: pointer;
-  background: ${(props: { isSelected: boolean }) => props.isSelected ? '#ffffff11' : ''};
+  background: ${(props: { isSelected: boolean }) =>
+    props.isSelected ? "#ffffff11" : ""};
   z-index: 1;
 
   :hover {
-    background: ${(props: { isSelected: boolean }) => props.isSelected ? '' : '#ffffff08'};
+    background: ${(props: { isSelected: boolean }) =>
+      props.isSelected ? "" : "#ffffff08"};
   }
 `;

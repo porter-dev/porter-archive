@@ -1,25 +1,25 @@
-import React, { Component } from 'react';
-import styled from 'styled-components';
-import tag_icon from 'assets/tag.png';
-import info from 'assets/info.svg';
+import React, { Component } from "react";
+import styled from "styled-components";
+import tag_icon from "assets/tag.png";
+import info from "assets/info.svg";
 
-import api from 'shared/api';
-import { Context } from 'shared/Context';
+import api from "shared/api";
+import { Context } from "shared/Context";
 
-import Loading from '../Loading';
+import Loading from "../Loading";
 
 type PropsType = {
-  setSelectedTag: (x: string) => void,
-  selectedTag: string,
-  selectedImageUrl: string,
-  registryId: number,
+  setSelectedTag: (x: string) => void;
+  selectedTag: string;
+  selectedImageUrl: string;
+  registryId: number;
 };
 
 type StateType = {
-  loading: boolean,
-  error: boolean,
-  tags: string[],
-  currentTag: string | null,
+  loading: boolean;
+  error: boolean;
+  tags: string[];
+  currentTag: string | null;
 };
 
 export default class TagList extends Component<PropsType, StateType> {
@@ -28,42 +28,50 @@ export default class TagList extends Component<PropsType, StateType> {
     error: false,
     tags: [] as string[],
     currentTag: this.props.selectedTag,
-  }
+  };
 
   componentDidMount() {
     const { currentProject } = this.context;
-    let splits = this.props.selectedImageUrl.split('/');
+    let splits = this.props.selectedImageUrl.split("/");
     let repoName = splits[splits.length - 1];
-    api.getImageTags('<token>', {}, 
-      { 
+    api.getImageTags(
+      "<token>",
+      {},
+      {
         project_id: currentProject.id,
         registry_id: this.props.registryId,
         repo_name: repoName,
-      }, (err: any, res: any) => {
-      if (err) {
-        console.log(err)
-        this.setState({ loading: false, error: true });
-      } else {
-        let tags = res.data.map((tag: any, i: number) => {
-          return tag.tag;
-        });
-        this.setState({ tags, loading: false });
+      },
+      (err: any, res: any) => {
+        if (err) {
+          console.log(err);
+          this.setState({ loading: false, error: true });
+        } else {
+          let tags = res.data.map((tag: any, i: number) => {
+            return tag.tag;
+          });
+          this.setState({ tags, loading: false });
+        }
       }
-    });
+    );
   }
 
   setTag = (tag: string) => {
     let { selectedTag, setSelectedTag } = this.props;
     setSelectedTag(tag);
     this.setState({ currentTag: tag });
-  }
+  };
 
   renderTagList = () => {
     let { tags, loading, error } = this.state;
     if (loading) {
-      return <LoadingWrapper><Loading /></LoadingWrapper>
+      return (
+        <LoadingWrapper>
+          <Loading />
+        </LoadingWrapper>
+      );
     } else if (error || !tags) {
-      return <LoadingWrapper>Error loading tags</LoadingWrapper>
+      return <LoadingWrapper>Error loading tags</LoadingWrapper>;
     }
 
     return tags.map((tag: string, i: number) => {
@@ -74,21 +82,20 @@ export default class TagList extends Component<PropsType, StateType> {
           lastItem={i === tags.length - 1}
           onClick={() => this.setTag(tag)}
         >
-          <img src={tag_icon} />{tag}
+          <img src={tag_icon} />
+          {tag}
         </TagName>
       );
     });
-  }
+  };
 
   render() {
     return (
-<>
+      <>
         <TagNameAlt>
           <img src={info} /> Select Image Tag
         </TagNameAlt>
-              <StyledTagList>
-        {this.renderTagList()}
-      </StyledTagList>
+        <StyledTagList>{this.renderTagList()}</StyledTagList>
       </>
     );
   }
@@ -106,13 +113,16 @@ const TagName = styled.div`
   display: flex;
   width: 100%;
   font-size: 13px;
-  border-bottom: 1px solid ${(props: { lastItem?: boolean, isSelected?: boolean }) => props.lastItem ? '#00000000' : '#606166'};
+  border-bottom: 1px solid
+    ${(props: { lastItem?: boolean; isSelected?: boolean }) =>
+      props.lastItem ? "#00000000" : "#606166"};
   color: #ffffff;
   user-select: none;
   align-items: center;
   padding: 10px 0px;
   cursor: pointer;
-  background: ${(props: { isSelected?: boolean, lastItem?: boolean }) => props.isSelected ? '#ffffff11' : ''};
+  background: ${(props: { isSelected?: boolean; lastItem?: boolean }) =>
+    props.isSelected ? "#ffffff11" : ""};
   :hover {
     background: #ffffff22;
 

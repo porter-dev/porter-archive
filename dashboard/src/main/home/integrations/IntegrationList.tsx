@@ -1,19 +1,16 @@
-import React, { Component } from 'react';
-import styled from 'styled-components';
+import React, { Component } from "react";
+import styled from "styled-components";
 
-import { Context } from 'shared/Context';
-import { integrationList } from 'shared/common';
-import api from 'shared/api';
+import { integrationList } from "shared/common";
 
 type PropsType = {
-  setCurrent: (x: any) => void,
-  integrations: string[],
-  titles?: string[],
-  isCategory?: boolean
+  setCurrent: (x: any) => void;
+  integrations: string[];
+  titles?: string[];
+  isCategory?: boolean;
 };
 
-type StateType = {
-};
+type StateType = {};
 
 export default class IntegrationList extends Component<PropsType, StateType> {
   renderContents = () => {
@@ -22,14 +19,16 @@ export default class IntegrationList extends Component<PropsType, StateType> {
     console.log(`integrations: ${integrations}`);
     if (titles && titles.length > 0) {
       return integrations.map((integration: string, i: number) => {
-        let icon = integrationList[integration] && integrationList[integration].icon;
-        let subtitle = integrationList[integration] && integrationList[integration].label;
+        let icon =
+          integrationList[integration] && integrationList[integration].icon;
+        let subtitle =
+          integrationList[integration] && integrationList[integration].label;
         let label = titles[i];
-        let disabled = integration === 'kubernetes' || integration === 'repo';
+        let disabled = integration === "kubernetes" || integration === "repo";
         return (
           <Integration
             key={i}
-            onClick={() => disabled ? null : setCurrent(integration)}
+            onClick={() => (disabled ? null : setCurrent(integration))}
             isCategory={isCategory}
             disabled={disabled}
           >
@@ -40,19 +39,23 @@ export default class IntegrationList extends Component<PropsType, StateType> {
                 <Subtitle>{subtitle}</Subtitle>
               </Description>
             </Flex>
-            <i className="material-icons">{isCategory ? 'launch' : 'more_vert'}</i>
+            <i className="material-icons">
+              {isCategory ? "launch" : "more_vert"}
+            </i>
           </Integration>
         );
       });
     } else if (integrations && integrations.length > 0) {
       return integrations.map((integration: string, i: number) => {
-        let icon = integrationList[integration] && integrationList[integration].icon;
-        let label = integrationList[integration] && integrationList[integration].label;
-        let disabled = integration === 'kubernetes' || integration === 'repo';
+        let icon =
+          integrationList[integration] && integrationList[integration].icon;
+        let label =
+          integrationList[integration] && integrationList[integration].label;
+        let disabled = integration === "kubernetes" || integration === "repo";
         return (
           <Integration
             key={i}
-            onClick={() => disabled ? null : setCurrent(integration)}
+            onClick={() => (disabled ? null : setCurrent(integration))}
             isCategory={isCategory}
             disabled={disabled}
           >
@@ -60,23 +63,19 @@ export default class IntegrationList extends Component<PropsType, StateType> {
               <Icon src={icon && icon} />
               <Label>{label}</Label>
             </Flex>
-            <i className="material-icons">{isCategory ? 'launch' : 'more_vert'}</i>
+            <i className="material-icons">
+              {isCategory ? "launch" : "more_vert"}
+            </i>
           </Integration>
         );
       });
     }
-    return (
-      <Placeholder>
-        No integrations set up yet.
-      </Placeholder>
-    );
-  }
-  
+    return <Placeholder>No integrations set up yet.</Placeholder>;
+  };
+
   render() {
-    return ( 
-      <StyledIntegrationList>
-        {this.renderContents()}
-      </StyledIntegrationList>
+    return (
+      <StyledIntegrationList>{this.renderContents()}</StyledIntegrationList>
     );
   }
 }
@@ -96,15 +95,18 @@ const Integration = styled.div`
   justify-content: space-between;
   padding: 25px;
   background: #26282f;
-  cursor: ${(props: { isCategory: boolean, disabled: boolean }) => props.disabled ? 'not-allowed' : 'pointer'};
+  cursor: ${(props: { isCategory: boolean; disabled: boolean }) =>
+    props.disabled ? "not-allowed" : "pointer"};
   margin-bottom: 15px;
   border-radius: 5px;
   box-shadow: 0 5px 8px 0px #00000033;
   :hover {
-    background: ${(props: { isCategory: boolean, disabled: boolean }) => props.disabled ? '' : '#ffffff11'};
+    background: ${(props: { isCategory: boolean; disabled: boolean }) =>
+      props.disabled ? "" : "#ffffff11"};
 
     > i {
-      background: ${(props: { isCategory: boolean, disabled: boolean }) => props.disabled ? '' : '#ffffff11'};
+      background: ${(props: { isCategory: boolean; disabled: boolean }) =>
+        props.disabled ? "" : "#ffffff11"};
     }
   }
 
@@ -112,7 +114,8 @@ const Integration = styled.div`
     border-radius: 20px;
     font-size: 18px;
     padding: 5px;
-    color: ${(props: { isCategory: boolean, disabled: boolean }) => props.isCategory ? '#616feecc' : '#ffffff44'};
+    color: ${(props: { isCategory: boolean; disabled: boolean }) =>
+      props.isCategory ? "#616feecc" : "#ffffff44"};
     margin-right: -7px;
   }
 `;
@@ -149,7 +152,7 @@ const Placeholder = styled.div`
   display: flex;
   align-items: center;
   font-size: 13px;
-  font-family: 'Work Sans', sans-serif;
+  font-family: "Work Sans", sans-serif;
   justify-content: center;
   margin-top: 30px;
   background: #ffffff11;

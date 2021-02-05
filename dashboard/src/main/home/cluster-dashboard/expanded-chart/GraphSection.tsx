@@ -1,27 +1,27 @@
-import React, { Component } from 'react';
-import styled from 'styled-components';
+import React, { Component } from "react";
+import styled from "styled-components";
 
-import { Context } from 'shared/Context';
-import { ResourceType, ChartType } from 'shared/types';
+import { Context } from "shared/Context";
+import { ResourceType, ChartType } from "shared/types";
 
-import GraphDisplay from './graph/GraphDisplay';
-import Loading from 'components/Loading';
+import GraphDisplay from "./graph/GraphDisplay";
+import Loading from "components/Loading";
 
 type PropsType = {
-  components: ResourceType[],
-  currentChart: ChartType,
-  setSidebar: (x: boolean) => void,
-  showRevisions: boolean
+  components: ResourceType[];
+  currentChart: ChartType;
+  setSidebar: (x: boolean) => void;
+  showRevisions: boolean;
 };
 
 type StateType = {
-  isExpanded: boolean
+  isExpanded: boolean;
 };
 
 export default class GraphSection extends Component<PropsType, StateType> {
   state = {
-    isExpanded: false
-  }
+    isExpanded: false,
+  };
 
   renderContents = () => {
     if (this.props.components && this.props.components.length > 0) {
@@ -36,15 +36,11 @@ export default class GraphSection extends Component<PropsType, StateType> {
       );
     }
 
-    return <Loading offset='-30px' />;
-  }
+    return <Loading offset="-30px" />;
+  };
 
   render() {
-    return (
-      <StyledGraphSection>
-        {this.renderContents()}
-      </StyledGraphSection>
-    );
+    return <StyledGraphSection>{this.renderContents()}</StyledGraphSection>;
   }
 }
 

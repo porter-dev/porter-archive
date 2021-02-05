@@ -1,30 +1,30 @@
-import React, { Component } from 'react';
-import styled from 'styled-components';
+import React, { Component } from "react";
+import styled from "styled-components";
 
-import { Context } from 'shared/Context';
-import { handleSubmitFeedback } from 'shared/feedback';
+import { Context } from "shared/Context";
+import { handleSubmitFeedback } from "shared/feedback";
 
 type PropsType = {
-  currentView: string,
+  currentView: string;
 };
 
 type StateType = {
-  feedbackSent: boolean,
-  showFeedbackDropdown: boolean,
-  feedbackText: string,
+  feedbackSent: boolean;
+  showFeedbackDropdown: boolean;
+  feedbackText: string;
 };
 
 export default class Feedback extends Component<PropsType, StateType> {
   state = {
     feedbackSent: false,
     showFeedbackDropdown: false,
-    feedbackText: '',
-  }
+    feedbackText: "",
+  };
 
   renderReceipt = () => {
     if (this.state.feedbackSent) {
       return (
-        <DropdownAlt dropdownWidth='300px' dropdownMaxHeight='200px'>
+        <DropdownAlt dropdownWidth="300px" dropdownMaxHeight="200px">
           <ConfirmationMessage>
             <i className="material-icons-outlined">emoji_food_beverage</i>
             Thanks for improving Porter.
@@ -32,35 +32,48 @@ export default class Feedback extends Component<PropsType, StateType> {
         </DropdownAlt>
       );
     }
-  }
+  };
 
   onSubmitFeedback = () => {
     let { user } = this.context;
-    let msg = '👤 ' + user.email + ' 📍 ' + this.props.currentView + ': ' + this.state.feedbackText;
+    let msg =
+      "👤 " +
+      user.email +
+      " 📍 " +
+      this.props.currentView +
+      ": " +
+      this.state.feedbackText;
     handleSubmitFeedback(msg, () => {
-      this.setState({ feedbackSent: true, feedbackText: '' });
+      this.setState({ feedbackSent: true, feedbackText: "" });
     });
-  }
+  };
 
   renderFeedbackDropdown = () => {
     if (this.state.showFeedbackDropdown) {
-      let disabled = this.state.feedbackText === '';
+      let disabled = this.state.feedbackText === "";
       return (
         <>
-          <CloseOverlay onClick={() => this.setState({ showFeedbackDropdown: false, feedbackSent: false })} />
-          <Dropdown 
-            feedbackSent={this.state.feedbackSent} 
-            dropdownWidth='300px' 
-            dropdownMaxHeight='200px'
+          <CloseOverlay
+            onClick={() =>
+              this.setState({
+                showFeedbackDropdown: false,
+                feedbackSent: false,
+              })
+            }
+          />
+          <Dropdown
+            feedbackSent={this.state.feedbackSent}
+            dropdownWidth="300px"
+            dropdownMaxHeight="200px"
           >
-            <FeedbackInput 
+            <FeedbackInput
               autoFocus={true}
               value={this.state.feedbackText}
               onChange={(e) => this.setState({ feedbackText: e.target.value })}
-              placeholder='Help us improve this page.' 
+              placeholder="Help us improve this page."
             />
-            <SendButton 
-              disabled={disabled} 
+            <SendButton
+              disabled={disabled}
               onClick={() => !disabled && this.onSubmitFeedback()}
             >
               <i className="material-icons">send</i> Send
@@ -70,15 +83,19 @@ export default class Feedback extends Component<PropsType, StateType> {
         </>
       );
     }
-  }
+  };
 
   render() {
     return (
       <FeedbackButton>
-        <Flex onClick={() => this.setState({ showFeedbackDropdown: !this.state.showFeedbackDropdown })}>
-          <i className="material-icons-outlined">
-            campaign
-          </i>
+        <Flex
+          onClick={() =>
+            this.setState({
+              showFeedbackDropdown: !this.state.showFeedbackDropdown,
+            })
+          }
+        >
+          <i className="material-icons-outlined">campaign</i>
           Feedback?
         </Flex>
         {this.renderFeedbackDropdown()}
@@ -122,14 +139,16 @@ const SendButton = styled.div`
   display: flex;
   align-items: center;
   height: 40px;
-  cursor: ${(props: { disabled: boolean }) => props.disabled ? 'not-allowed' : 'pointer'};
+  cursor: ${(props: { disabled: boolean }) =>
+    props.disabled ? "not-allowed" : "pointer"};
   justify-content: center;
   margin-top: -3px;
   font-size: 13px;
   font-weight: 500;
-  font-family: 'Work Sans', sans-serif;
+  font-family: "Work Sans", sans-serif;
   :hover {
-    background: ${(props: { disabled: boolean }) => props.disabled ? '' : '#ffffff11'};
+    background: ${(props: { disabled: boolean }) =>
+      props.disabled ? "" : "#ffffff11"};
   }
 
   > i {
@@ -155,7 +174,7 @@ const FeedbackInput = styled.textarea`
   color: white;
   border: 0;
   font-size: 13px;
-  font-family: 'Work Sans', sans-serif;
+  font-family: "Work Sans", sans-serif;
   background: #aaaabb11;
 `;
 
@@ -170,21 +189,35 @@ const Dropdown = styled.div`
   right: 0;
   top: calc(100% + 5px);
   background: #26282f;
-  width: ${(props: { dropdownWidth: string, dropdownMaxHeight: string, feedbackSent?: boolean }) => props.dropdownWidth};
-  max-height: ${(props: { dropdownWidth: string, dropdownMaxHeight: string, feedbackSent?: boolean }) => props.dropdownMaxHeight ? props.dropdownMaxHeight : '300px'};
+  width: ${(props: {
+    dropdownWidth: string;
+    dropdownMaxHeight: string;
+    feedbackSent?: boolean;
+  }) => props.dropdownWidth};
+  max-height: ${(props: {
+    dropdownWidth: string;
+    dropdownMaxHeight: string;
+    feedbackSent?: boolean;
+  }) => (props.dropdownMaxHeight ? props.dropdownMaxHeight : "300px")};
   border-radius: 3px;
   z-index: 999;
   overflow-y: auto;
   margin-bottom: 20px;
   box-shadow: 0 8px 20px 0px #00000088;
-  animation: ${(props: { dropdownWidth: string, dropdownMaxHeight: string, feedbackSent?: boolean }) => props.feedbackSent ? 'flyOff 0.3s 0.05s' : ''};
+  animation: ${(props: {
+    dropdownWidth: string;
+    dropdownMaxHeight: string;
+    feedbackSent?: boolean;
+  }) => (props.feedbackSent ? "flyOff 0.3s 0.05s" : "")};
   animation-fill-mode: forwards;
   @keyframes flyOff {
     from {
-      opacity: 1; transform: translateX(0px);
+      opacity: 1;
+      transform: translateX(0px);
     }
     to {
-      opacity: 0; transform: translateX(100px);
+      opacity: 0;
+      transform: translateX(100px);
     }
   }
 `;
@@ -194,8 +227,12 @@ const DropdownAlt = styled(Dropdown)`
   opacity: 0;
   animation-fill-mode: forwards;
   @keyframes fadeIn {
-    from { opacity: 0 }
-    to { opacity: 1 }
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
   }
 `;
 
@@ -210,17 +247,19 @@ const NavButton = styled.a`
       color: #ffffff;
     }
   }
-  
+
   > i {
     cursor: pointer;
-    color: ${(props: { selected?: boolean }) => props.selected ? '#ffffff' : '#ffffff88'};
+    color: ${(props: { selected?: boolean }) =>
+      props.selected ? "#ffffff" : "#ffffff88"};
     font-size: 24px;
   }
 `;
 
 const FeedbackButton = styled(NavButton)`
-  color: ${(props: { selected?: boolean }) => props.selected ? '#ffffff' : '#ffffff88'};
-  font-family: 'Work Sans', sans-serif;
+  color: ${(props: { selected?: boolean }) =>
+    props.selected ? "#ffffff" : "#ffffff88"};
+  font-family: "Work Sans", sans-serif;
   font-size: 14px;
   margin-right: 20px;
   :hover {
@@ -234,7 +273,8 @@ const FeedbackButton = styled(NavButton)`
 
   > div {
     > i {
-      color: ${(props: { selected?: boolean }) => props.selected ? '#ffffff' : '#ffffff88'};
+      color: ${(props: { selected?: boolean }) =>
+        props.selected ? "#ffffff" : "#ffffff88"};
       font-size: 26px;
       margin-right: 6px;
     }

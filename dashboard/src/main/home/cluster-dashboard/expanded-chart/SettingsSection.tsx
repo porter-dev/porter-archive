@@ -1,87 +1,100 @@
-import React, { Component } from 'react';
-import styled from 'styled-components';
-import api from 'shared/api';
-import yaml from 'js-yaml';
+import React, { Component } from "react";
+import styled from "styled-components";
+import api from "shared/api";
+import yaml from "js-yaml";
 
-import { ChartType, RepoType, StorageType, ActionConfigType } from 'shared/types';
-import { Context } from 'shared/Context';
+import {
+  ChartType,
+  RepoType,
+  StorageType,
+  ActionConfigType,
+} from "shared/types";
+import { Context } from "shared/Context";
 
-import ImageSelector from 'components/image-selector/ImageSelector';
-import RepoSelector from 'components/repo-selector/RepoSelector';
-import SaveButton from 'components/SaveButton';
-import Heading from 'components/values-form/Heading';
-import Helper from 'components/values-form/Helper';
-import InputRow from 'components/values-form/InputRow';
+import ImageSelector from "components/image-selector/ImageSelector";
+import RepoSelector from "components/repo-selector/RepoSelector";
+import SaveButton from "components/SaveButton";
+import Heading from "components/values-form/Heading";
+import Helper from "components/values-form/Helper";
+import InputRow from "components/values-form/InputRow";
 
 type PropsType = {
-  currentChart: ChartType,
-  refreshChart: () => void,
-  setShowDeleteOverlay: (x: boolean) => void,
+  currentChart: ChartType;
+  refreshChart: () => void;
+  setShowDeleteOverlay: (x: boolean) => void;
 };
 
 type StateType = {
-  sourceType: string,
-  selectedImageUrl: string | null,
-  selectedTag: string | null,
-  saveValuesStatus: string | null,
-  values: string,
-  selectedRepo: RepoType | null,
-  selectedBranch: string,
-  subdirectory: string,
-  webhookToken: string,
-  highlightCopyButton: boolean,
+  sourceType: string;
+  selectedImageUrl: string | null;
+  selectedTag: string | null;
+  saveValuesStatus: string | null;
+  values: string;
+  selectedRepo: RepoType | null;
+  selectedBranch: string;
+  subdirectory: string;
+  webhookToken: string;
+  highlightCopyButton: boolean;
   action: ActionConfigType;
 };
 
 export default class SettingsSection extends Component<PropsType, StateType> {
   state = {
-    sourceType: 'registry',
-    selectedImageUrl: '',
-    selectedTag: '',
-    values: '',
-    saveValuesStatus: null as (string | null),
+    sourceType: "registry",
+    selectedImageUrl: "",
+    selectedTag: "",
+    values: "",
+    saveValuesStatus: null as string | null,
     selectedRepo: null as RepoType | null,
-    selectedBranch: '',
-    subdirectory: '',
-    webhookToken: '',
+    selectedBranch: "",
+    subdirectory: "",
+    webhookToken: "",
     highlightCopyButton: false,
     action: {
-      git_repo: '',
-      image_repo_uri: '',
+      git_repo: "",
+      image_repo_uri: "",
       git_repo_id: 0,
-      dockerfile_path: '',
+      dockerfile_path: "",
     } as ActionConfigType,
-  }
+  };
 
   // TODO: read in set image from form context instead of config
   componentDidMount() {
     let { currentCluster, currentProject } = this.context;
 
     let image = this.props.currentChart.config?.image;
-    this.setState({ 
-      selectedImageUrl: image?.repository, 
-      selectedTag: image?.tag 
+    this.setState({
+      selectedImageUrl: image?.repository,
+      selectedTag: image?.tag,
     });
 
-    api.getReleaseToken('<token>', {
-      namespace: this.props.currentChart.namespace,
-      cluster_id: currentCluster.id,
-      storage: StorageType.Secret
-    }, { id: currentProject.id, name: this.props.currentChart.name }, (err: any, res: any) => {
-      if (err) {
-        console.log(err)
-      } else {
-        this.setState({ action: res.data.git_action_config, webhookToken: res.data.webhook_token });
+    api.getReleaseToken(
+      "<token>",
+      {
+        namespace: this.props.currentChart.namespace,
+        cluster_id: currentCluster.id,
+        storage: StorageType.Secret,
+      },
+      { id: currentProject.id, name: this.props.currentChart.name },
+      (err: any, res: any) => {
+        if (err) {
+          console.log(err);
+        } else {
+          this.setState({
+            action: res.data.git_action_config,
+            webhookToken: res.data.webhook_token,
+          });
+        }
       }
-    });
+    );
   }
 
   redeployWithNewImage = (img: string, tag: string) => {
-    this.setState({ saveValuesStatus: 'loading' });
+    this.setState({ saveValuesStatus: "loading" });
     let { currentCluster, currentProject } = this.context;
 
     // If tag is explicitly declared, parse tag
-    let imgSplits = img.split(':');
+    let imgSplits = img.split(":");
     let parsedTag = null;
     if (imgSplits.length > 1) {
       img = imgSplits[0];
@@ -92,28 +105,33 @@ export default class SettingsSection extends Component<PropsType, StateType> {
       image: {
         repository: img,
         tag: parsedTag || tag,
-      }
-    }
+      },
+    };
 
     let values = yaml.dump(image);
-    api.upgradeChartValues('<token>', {
-      namespace: this.props.currentChart.namespace,
-      storage: StorageType.Secret,
-      values,
-    }, {
-      id: currentProject.id, 
-      name: this.props.currentChart.name,
-      cluster_id: currentCluster.id,
-    }, (err: any, res: any) => {
-      if (err) {
-        console.log(err)
-        this.setState({ saveValuesStatus: 'error' });
-      } else {
-        this.setState({ saveValuesStatus: 'successful' });
-        this.props.refreshChart();
+    api.upgradeChartValues(
+      "<token>",
+      {
+        namespace: this.props.currentChart.namespace,
+        storage: StorageType.Secret,
+        values,
+      },
+      {
+        id: currentProject.id,
+        name: this.props.currentChart.name,
+        cluster_id: currentCluster.id,
+      },
+      (err: any, res: any) => {
+        if (err) {
+          console.log(err);
+          this.setState({ saveValuesStatus: "error" });
+        } else {
+          this.setState({ saveValuesStatus: "successful" });
+          this.props.refreshChart();
+        }
       }
-    });
-  }
+    );
+  };
 
   /*
     <Helper>
@@ -124,17 +142,17 @@ export default class SettingsSection extends Component<PropsType, StateType> {
     </Helper>
   */
   renderSourceSection = () => {
-    if (this.state.sourceType === 'registry') {
+    if (this.state.sourceType === "registry") {
       return (
         <>
           <Heading>Connected Source</Heading>
-          <Helper>
-            Specify a container image and tag.
-          </Helper>
+          <Helper>Specify a container image and tag.</Helper>
           <ImageSelector
             selectedImageUrl={this.state.selectedImageUrl}
             selectedTag={this.state.selectedTag}
-            setSelectedImageUrl={(x: string) => this.setState({ selectedImageUrl: x })}
+            setSelectedImageUrl={(x: string) =>
+              this.setState({ selectedImageUrl: x })
+            }
             setSelectedTag={(x: string) => this.setState({ selectedTag: x })}
             forceExpanded={true}
           />
@@ -145,48 +163,54 @@ export default class SettingsSection extends Component<PropsType, StateType> {
     let { currentProject } = this.context;
     return (
       <>
-        {this.state.action.git_repo.length > 0
-          ?
+        {this.state.action.git_repo.length > 0 ? (
           <>
             <Heading>Connected Source</Heading>
             <Holder>
               <InputRow
                 disabled={true}
-                label='Git Repository'
-                type='text'
-                width='100%'
+                label="Git Repository"
+                type="text"
+                width="100%"
                 value={this.state.action.git_repo}
                 setValue={(x: string) => console.log(x)}
               />
               <InputRow
                 disabled={true}
-                label='Dockerfile Path'
-                type='text'
-                width='100%'
+                label="Dockerfile Path"
+                type="text"
+                width="100%"
                 value={this.state.action.dockerfile_path}
                 setValue={(x: string) => console.log(x)}
               />
               <InputRow
                 disabled={true}
-                label='Docker Image Repository'
-                type='text'
-                width='100%'
+                label="Docker Image Repository"
+                type="text"
+                width="100%"
                 value={this.state.action.image_repo_uri}
                 setValue={(x: string) => console.log(x)}
               />
             </Holder>
           </>
-          :
+        ) : (
           <>
             <Heading>Connect a Source</Heading>
             <Helper>
-              Select a repo to connect to. You can 
-              <A padRight={true} href={`/api/oauth/projects/${currentProject.id}/github?redirected=true`}>
+              Select a repo to connect to. You can
+              <A
+                padRight={true}
+                href={`/api/oauth/projects/${currentProject.id}/github?redirected=true`}
+              >
                 log in with GitHub
-              </A> or
-              <Highlight onClick={() => this.setState({ sourceType: 'registry' })}>
+              </A>{" "}
+              or
+              <Highlight
+                onClick={() => this.setState({ sourceType: "registry" })}
+              >
                 link an image registry
-              </Highlight>.
+              </Highlight>
+              .
             </Helper>
             <RepoSelector
               chart={this.props.currentChart}
@@ -194,15 +218,21 @@ export default class SettingsSection extends Component<PropsType, StateType> {
               selectedRepo={this.state.selectedRepo}
               selectedBranch={this.state.selectedBranch}
               subdirectory={this.state.subdirectory}
-              setSelectedRepo={(x: RepoType) => this.setState({ selectedRepo: x })}
-              setSelectedBranch={(x: string) => this.setState({ selectedBranch: x })}
-              setSubdirectory={(x: string) => this.setState({ subdirectory: x })}
+              setSelectedRepo={(x: RepoType) =>
+                this.setState({ selectedRepo: x })
+              }
+              setSelectedBranch={(x: string) =>
+                this.setState({ selectedBranch: x })
+              }
+              setSubdirectory={(x: string) =>
+                this.setState({ subdirectory: x })
+              }
             />
           </>
-        }
+        )}
       </>
     );
-  }
+  };
 
   renderWebhookSection = () => {
     if (true || this.state.webhookToken) {
@@ -210,12 +240,14 @@ export default class SettingsSection extends Component<PropsType, StateType> {
       return (
         <>
           <Heading>Redeploy Webhook</Heading>
-          <Helper>Programmatically deploy by calling this secret webhook.</Helper>
+          <Helper>
+            Programmatically deploy by calling this secret webhook.
+          </Helper>
           <Webhook copiedToClipboard={this.state.highlightCopyButton}>
             <div>{webhookText}</div>
-            <i 
+            <i
               className="material-icons"
-              onClick={() => { 
+              onClick={() => {
                 navigator.clipboard.writeText(webhookText);
                 this.setState({ highlightCopyButton: true });
               }}
@@ -227,7 +259,7 @@ export default class SettingsSection extends Component<PropsType, StateType> {
         </>
       );
     }
-  }
+  };
 
   render() {
     return (
@@ -236,16 +268,26 @@ export default class SettingsSection extends Component<PropsType, StateType> {
           {this.renderSourceSection()}
           {this.renderWebhookSection()}
           <Heading>Additional Settings</Heading>
-          <Button color='#b91133' onClick={() => this.props.setShowDeleteOverlay(true)}>
+          <Button
+            color="#b91133"
+            onClick={() => this.props.setShowDeleteOverlay(true)}
+          >
             Delete {this.props.currentChart.name}
           </Button>
         </StyledSettingsSection>
         <SaveButton
-          text='Save Settings'
-          onClick={() => this.redeployWithNewImage(this.state.selectedImageUrl, this.state.selectedTag)}
+          text="Save Settings"
+          onClick={() =>
+            this.redeployWithNewImage(
+              this.state.selectedImageUrl,
+              this.state.selectedTag
+            )
+          }
           status={this.state.saveValuesStatus}
           makeFlush={true}
-          disabled={this.state.selectedImageUrl && this.state.selectedTag ? false : true}
+          disabled={
+            this.state.selectedImageUrl && this.state.selectedTag ? false : true
+          }
         />
       </Wrapper>
     );
@@ -260,19 +302,22 @@ const Button = styled.button`
   margin-top: 20px;
   margin-bottom: 30px;
   font-weight: 500;
-  font-family: 'Work Sans', sans-serif;
+  font-family: "Work Sans", sans-serif;
   color: white;
   padding: 6px 20px 7px 20px;
   text-align: left;
   border: 0;
   border-radius: 5px;
-  background: ${(props) => (!props.disabled ? props.color : '#aaaabb')};
-  box-shadow: ${(props) => (!props.disabled ? '0 2px 5px 0 #00000030' : 'none')};
-  cursor: ${(props) => (!props.disabled ? 'pointer' : 'default')};
+  background: ${(props) => (!props.disabled ? props.color : "#aaaabb")};
+  box-shadow: ${(props) =>
+    !props.disabled ? "0 2px 5px 0 #00000030" : "none"};
+  cursor: ${(props) => (!props.disabled ? "pointer" : "default")};
   user-select: none;
-  :focus { outline: 0 }
+  :focus {
+    outline: 0;
+  }
   :hover {
-    filter: ${(props) => (!props.disabled ? 'brightness(120%)' : '')};
+    filter: ${(props) => (!props.disabled ? "brightness(120%)" : "")};
   }
 `;
 
@@ -293,10 +338,11 @@ const Webhook = styled.div`
   > div {
     user-select: all;
   }
-  
+
   > i {
     padding: 5px;
-    background: ${(props: { copiedToClipboard: boolean }) => props.copiedToClipboard ? '#616FEEcc' : '#ffffff22'};
+    background: ${(props: { copiedToClipboard: boolean }) =>
+      props.copiedToClipboard ? "#616FEEcc" : "#ffffff22"};
     border-radius: 5px;
     position: absolute;
     right: 10px;
@@ -305,7 +351,8 @@ const Webhook = styled.div`
     color: #ffffff;
 
     :hover {
-      background: ${(props: { copiedToClipboard: boolean }) => props.copiedToClipboard ? '' : '#ffffff44'};;
+      background: ${(props: { copiedToClipboard: boolean }) =>
+        props.copiedToClipboard ? "" : "#ffffff44"};
     }
   }
 `;
@@ -315,7 +362,8 @@ const Highlight = styled.div`
   text-decoration: underline;
   margin-left: 5px;
   cursor: pointer;
-  padding-right: ${(props: { padRight?: boolean }) => props.padRight ? '5px' : ''};
+  padding-right: ${(props: { padRight?: boolean }) =>
+    props.padRight ? "5px" : ""};
 `;
 
 const A = styled.a`
@@ -323,7 +371,8 @@ const A = styled.a`
   text-decoration: underline;
   margin-left: 5px;
   cursor: pointer;
-  padding-right: ${(props: { padRight?: boolean }) => props.padRight ? '5px' : ''};
+  padding-right: ${(props: { padRight?: boolean }) =>
+    props.padRight ? "5px" : ""};
 `;
 
 const Wrapper = styled.div`

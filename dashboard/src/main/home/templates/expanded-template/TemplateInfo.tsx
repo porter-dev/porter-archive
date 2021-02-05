@@ -1,61 +1,55 @@
-import React, { Component } from 'react';
-import styled from 'styled-components';
-import rocket from 'assets/rocket.png';
-import Markdown from 'markdown-to-jsx';
+import React, { Component } from "react";
+import styled from "styled-components";
+import rocket from "assets/rocket.png";
+import Markdown from "markdown-to-jsx";
 
-import { Context } from 'shared/Context';
-import Loading from 'components/Loading';
+import { Context } from "shared/Context";
 
-import { PorterTemplate } from 'shared/types';
-import Helper from 'components/values-form/Helper';
+import { PorterTemplate } from "shared/types";
+import Helper from "components/values-form/Helper";
 
-import hardcodedNames from '../hardcodedNameDict';
+import hardcodedNames from "../hardcodedNameDict";
 
 type PropsType = {
-  currentTemplate: any,
-  setCurrentTemplate: (x: PorterTemplate) => void,
-  launchTemplate: () => void,
-  markdown: string | null,
-  keywords: string[],
+  currentTemplate: any;
+  setCurrentTemplate: (x: PorterTemplate) => void;
+  launchTemplate: () => void;
+  markdown: string | null;
+  keywords: string[];
 };
 
-type StateType = {
-};
+type StateType = {};
 
 export default class TemplateInfo extends Component<PropsType, StateType> {
   renderIcon = (icon: string) => {
     if (icon) {
-      return <Icon src={icon} />
+      return <Icon src={icon} />;
     }
 
     return (
-      <Polymer><i className="material-icons">layers</i></Polymer>
+      <Polymer>
+        <i className="material-icons">layers</i>
+      </Polymer>
     );
-  }
+  };
 
   renderTagList = () => {
     if (this.props.keywords) {
       return this.props.keywords.map((tag: string, i: number) => {
-        return (
-          <Tag key={i}>{tag}</Tag>
-        )
+        return <Tag key={i}>{tag}</Tag>;
       });
     }
-  }
+  };
 
   renderMarkdown = () => {
     let { currentTemplate, markdown } = this.props;
     if (markdown) {
-      return (
-        <Markdown>{markdown}</Markdown>
-      );
+      return <Markdown>{markdown}</Markdown>;
     }
     return currentTemplate.description;
-  }
-
+  };
 
   renderTagSection = () => {
-
     // Rendering doesn't make sense until search + clicking on tags is supported
     if (false && this.props.keywords && this.props.keywords.length > 0) {
       return (
@@ -65,7 +59,7 @@ export default class TemplateInfo extends Component<PropsType, StateType> {
         </TagSection>
       );
     }
-  }
+  };
 
   renderBanner = () => {
     let { currentCluster } = this.context;
@@ -79,40 +73,44 @@ export default class TemplateInfo extends Component<PropsType, StateType> {
           </Banner>
         </>
       );
-    } else if (this.props.currentTemplate.name.toLowerCase() === 'docker') {
+    } else if (this.props.currentTemplate.name.toLowerCase() === "docker") {
       return (
         <>
           <Br />
           <Banner>
             <i className="material-icons-outlined">info</i>
-            For instructions on connecting to your registry 
-            <Link 
+            For instructions on connecting to your registry
+            <Link
               target="_blank"
               href="https://docs.getporter.dev/docs/cli-documentation#pushing-docker-images-to-your-porter-image-registry"
             >
               refer to our docs
-            </Link>.
+            </Link>
+            .
           </Banner>
         </>
       );
-    } else if (this.props.currentTemplate.name.toLowerCase() === 'https-issuer') {
+    } else if (
+      this.props.currentTemplate.name.toLowerCase() === "https-issuer"
+    ) {
       return (
         <>
           <Br />
           <Banner>
             <i className="material-icons-outlined">info</i>
             To use this template you must first follow
-            <Link 
+            <Link
               target="_blank"
               href="https://docs.getporter.dev/docs/https-and-custom-domains"
             >
               Porter's HTTPS setup guide
-            </Link> (5 minutes).
+            </Link>{" "}
+            (5 minutes).
           </Banner>
         </>
       );
     }
-  }
+  };
 
   render() {
     let { currentCluster } = this.context;
@@ -127,10 +125,15 @@ export default class TemplateInfo extends Component<PropsType, StateType> {
       <StyledExpandedTemplate>
         <TitleSection>
           <Flex>
-            <i className="material-icons" onClick={() => this.props.setCurrentTemplate(null)}>
+            <i
+              className="material-icons"
+              onClick={() => this.props.setCurrentTemplate(null)}
+            >
               keyboard_backspace
             </i>
-            {icon ? this.renderIcon(icon) : this.renderIcon(currentTemplate.icon)}
+            {icon
+              ? this.renderIcon(icon)
+              : this.renderIcon(currentTemplate.icon)}
             <Title>{name}</Title>
           </Flex>
           <Button
@@ -145,9 +148,7 @@ export default class TemplateInfo extends Component<PropsType, StateType> {
         {this.renderTagSection()}
         <LineBreak />
         {this.renderBanner()}
-        <ContentSection>
-          {this.renderMarkdown()}
-        </ContentSection>
+        <ContentSection>{this.renderMarkdown()}</ContentSection>
       </StyledExpandedTemplate>
     );
   }
@@ -211,7 +212,7 @@ const TagSection = styled.div`
   margin-top: 25px;
   display: flex;
   font-size: 13px;
-  font-family: 'Work Sans', sans-serif;
+  font-family: "Work Sans", sans-serif;
   align-items: center;
 
   > i {
@@ -239,16 +240,19 @@ const Flex = styled.div`
 
 const Button = styled.div`
   height: 35px;
-  background: ${(props: { isDisabled: boolean }) => (!props.isDisabled ? '#616feecc' : '#aaaabb')};
+  background: ${(props: { isDisabled: boolean }) =>
+    !props.isDisabled ? "#616feecc" : "#aaaabb"};
   :hover {
-    background: ${(props: { isDisabled: boolean }) => (!props.isDisabled ? '#505edddd' : '#aaaabb')};
+    background: ${(props: { isDisabled: boolean }) =>
+      !props.isDisabled ? "#505edddd" : "#aaaabb"};
   }
   color: white;
   font-weight: 500;
   font-size: 13px;
   padding: 10px 15px;
   border-radius: 3px;
-  cursor: ${(props: { isDisabled: boolean }) => (!props.isDisabled ? 'pointer' : 'default')};
+  cursor: ${(props: { isDisabled: boolean }) =>
+    !props.isDisabled ? "pointer" : "default"};
   box-shadow: 0 5px 8px 0px #00000010;
   display: flex;
   flex-direction: row;
@@ -271,12 +275,11 @@ const Icon = styled.img`
   margin-bottom: -1px;
 `;
 
-
 const Polymer = styled.div`
   margin-bottom: -3px;
 
   > i {
-    color: ${props => props.theme.containerIcon};
+    color: ${(props) => props.theme.containerIcon};
     font-size: 24px;
     margin-left: 12px;
     margin-right: 3px;
@@ -286,7 +289,7 @@ const Polymer = styled.div`
 const Title = styled.div`
   font-size: 24px;
   font-weight: 600;
-  font-family: 'Work Sans', sans-serif;
+  font-family: "Work Sans", sans-serif;
   margin-left: 10px;
   border-radius: 2px;
   color: #ffffff;

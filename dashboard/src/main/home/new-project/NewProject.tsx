@@ -1,26 +1,26 @@
-import React, { Component } from 'react';
-import styled from 'styled-components';
+import React, { Component } from "react";
+import styled from "styled-components";
 
-import gradient from 'assets/gradient.jpg';
-import { Context } from 'shared/Context';
-import { isAlphanumeric } from 'shared/common';
+import gradient from "assets/gradient.jpg";
+import { Context } from "shared/Context";
+import { isAlphanumeric } from "shared/common";
 
-import InputRow from 'components/values-form/InputRow';
-import Helper from 'components/values-form/Helper';
-import ProvisionerSettings from '../provisioner/ProvisionerSettings';
+import InputRow from "components/values-form/InputRow";
+import Helper from "components/values-form/Helper";
+import ProvisionerSettings from "../provisioner/ProvisionerSettings";
 
 type PropsType = {};
 
 type StateType = {
-  projectName: string,
-  selectedProvider: string | null,
+  projectName: string;
+  selectedProvider: string | null;
 };
 
 export default class NewProject extends Component<PropsType, StateType> {
   state = {
-    projectName: '',
+    projectName: "",
     selectedProvider: null as string | null,
-  }
+  };
 
   render() {
     let { projectName } = this.state;
@@ -31,7 +31,12 @@ export default class NewProject extends Component<PropsType, StateType> {
         </TitleSection>
         <Helper>
           Project name
-          <Warning highlight={!isAlphanumeric(this.state.projectName) && this.state.projectName !== ''}>
+          <Warning
+            highlight={
+              !isAlphanumeric(this.state.projectName) &&
+              this.state.projectName !== ""
+            }
+          >
             (lowercase letters, numbers, and "-" only)
           </Warning>
           <Required>*</Required>
@@ -39,20 +44,21 @@ export default class NewProject extends Component<PropsType, StateType> {
         <InputWrapper>
           <ProjectIcon>
             <ProjectImage src={gradient} />
-            <Letter>{this.state.projectName ? this.state.projectName[0].toUpperCase() : '-'}</Letter>
+            <Letter>
+              {this.state.projectName
+                ? this.state.projectName[0].toUpperCase()
+                : "-"}
+            </Letter>
           </ProjectIcon>
           <InputRow
-            type='string'
+            type="string"
             value={this.state.projectName}
             setValue={(x: string) => this.setState({ projectName: x })}
-            placeholder='ex: perspective-vortex'
-            width='470px'
+            placeholder="ex: perspective-vortex"
+            width="470px"
           />
         </InputWrapper>
-        <ProvisionerSettings 
-          isInNewProject={true}
-          projectName={projectName}
-        />
+        <ProvisionerSettings isInNewProject={true} projectName={projectName} />
         <Br />
       </StyledNewProject>
     );
@@ -197,7 +203,7 @@ const Letter = styled.div`
   justify-content: center;
   font-size: 24px;
   font-weight: 500;
-  font-family: 'Work Sans', sans-serif;
+  font-family: "Work Sans", sans-serif;
 `;
 
 const ProjectImage = styled.img`
@@ -224,15 +230,17 @@ const InputWrapper = styled.div`
 `;
 
 const Warning = styled.span`
-  color: ${(props: { highlight: boolean, makeFlush?: boolean }) => props.highlight ? '#f5cb42' : ''};
-  margin-left: ${(props: { highlight: boolean, makeFlush?: boolean }) => props.makeFlush ? '' : '5px'};
+  color: ${(props: { highlight: boolean; makeFlush?: boolean }) =>
+    props.highlight ? "#f5cb42" : ""};
+  margin-left: ${(props: { highlight: boolean; makeFlush?: boolean }) =>
+    props.makeFlush ? "" : "5px"};
 `;
 
 const Icon = styled.img`
   height: 42px;
   margin-top: 30px;
   margin-bottom: 15px;
-  filter: ${(props: { bw?: boolean }) => props.bw ? 'grayscale(1)' : ''};
+  filter: ${(props: { bw?: boolean }) => (props.bw ? "grayscale(1)" : "")};
 `;
 
 const BlockDescription = styled.div`
@@ -247,7 +255,7 @@ const BlockDescription = styled.div`
   display: -webkit-box;
   overflow: hidden;
   -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;  
+  -webkit-box-orient: vertical;
 `;
 
 const BlockTitle = styled.div`
@@ -273,26 +281,40 @@ const Block = styled.div`
   align-item: center;
   justify-content: space-between;
   height: 170px;
-  cursor: ${(props: { disabled?: boolean }) => props.disabled ? '' : 'pointer'};
+  cursor: ${(props: { disabled?: boolean }) =>
+    props.disabled ? "" : "pointer"};
   color: #ffffff;
   position: relative;
   background: #26282f;
   box-shadow: 0 3px 5px 0px #00000022;
   :hover {
-    background: ${(props: { disabled?: boolean }) => props.disabled ? '' : '#ffffff11'};
+    background: ${(props: { disabled?: boolean }) =>
+      props.disabled ? "" : "#ffffff11"};
   }
 
   animation: fadeIn 0.3s 0s;
   @keyframes fadeIn {
-    from { opacity: 0 }
-    to { opacity: 1 }
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
   }
 `;
 
 const ShinyBlock = styled(Block)`
-  background: linear-gradient(36deg, rgba(240,106,40,0.9) 0%, rgba(229,83,229,0.9) 100%);
+  background: linear-gradient(
+    36deg,
+    rgba(240, 106, 40, 0.9) 0%,
+    rgba(229, 83, 229, 0.9) 100%
+  );
   :hover {
-    background: linear-gradient(36deg, rgba(240,106,40,1) 0%, rgba(229,83,229,1) 100%);
+    background: linear-gradient(
+      36deg,
+      rgba(240, 106, 40, 1) 0%,
+      rgba(229, 83, 229, 1) 100%
+    );
   }
 `;
 
@@ -309,7 +331,7 @@ const BlockList = styled.div`
 const Title = styled.div`
   font-size: 24px;
   font-weight: 600;
-  font-family: 'Work Sans', sans-serif;
+  font-family: "Work Sans", sans-serif;
   color: #ffffff;
   white-space: nowrap;
   overflow: hidden;
@@ -329,7 +351,7 @@ const TitleSection = styled.div`
       margin-bottom: -2px;
       font-size: 18px;
       margin-left: 18px;
-      color: #858FAAaa;
+      color: #858faaaa;
       cursor: pointer;
       :hover {
         color: #aaaabb;

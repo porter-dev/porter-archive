@@ -1,35 +1,34 @@
-import React, { Component } from 'react';
-import styled from 'styled-components';
-import close from 'assets/close.png';
+import React, { Component } from "react";
+import styled from "styled-components";
+import close from "assets/close.png";
 
-import { Context } from 'shared/Context';
-import api from 'shared/api';
-import { integrationList } from 'shared/common';
+import { Context } from "shared/Context";
+import api from "shared/api";
+import { integrationList } from "shared/common";
 
-type PropsType = {
-};
+type PropsType = {};
 
 type StateType = {
-  integrations: any[],
+  integrations: any[];
 };
 
 export default class IntegrationsModal extends Component<PropsType, StateType> {
   state = {
     integrations: [] as any[],
-  }
+  };
 
   componentDidMount() {
     let { category } = this.context.currentModalData;
-    if (category === 'kubernetes') {
-      api.getClusterIntegrations('<token>', {}, {}, (err: any, res: any) => {
+    if (category === "kubernetes") {
+      api.getClusterIntegrations("<token>", {}, {}, (err: any, res: any) => {
         if (err) {
           console.log(err);
         } else {
           this.setState({ integrations: res.data });
         }
       });
-    } else if (category === 'registry') {
-      api.getRegistryIntegrations('<token>', {}, {}, (err: any, res: any) => {
+    } else if (category === "registry") {
+      api.getRegistryIntegrations("<token>", {}, {}, (err: any, res: any) => {
         if (err) {
           console.log(err);
         } else {
@@ -38,7 +37,7 @@ export default class IntegrationsModal extends Component<PropsType, StateType> {
         }
       });
     } else {
-      api.getRepoIntegrations('<token>', {}, {}, (err: any, res: any) => {
+      api.getRepoIntegrations("<token>", {}, {}, (err: any, res: any) => {
         if (err) {
           console.log(err);
         } else {
@@ -52,10 +51,15 @@ export default class IntegrationsModal extends Component<PropsType, StateType> {
     if (this.context.currentModalData) {
       let { setCurrentIntegration } = this.context.currentModalData;
       return this.state.integrations.map((integration: any, i: number) => {
-        let icon = integrationList[integration.service] && integrationList[integration.service].icon;
-        let disabled = integration.service === 'kube' || integration.service === 'docker' || integration.service === 'gcr';
+        let icon =
+          integrationList[integration.service] &&
+          integrationList[integration.service].icon;
+        let disabled =
+          integration.service === "kube" ||
+          integration.service === "docker" ||
+          integration.service === "gcr";
         return (
-          <IntegrationOption 
+          <IntegrationOption
             key={i}
             disabled={disabled}
             onClick={() => {
@@ -71,20 +75,22 @@ export default class IntegrationsModal extends Component<PropsType, StateType> {
         );
       });
     }
-  }
- 
+  };
+
   render() {
     return (
       <StyledIntegrationsModal>
-        <CloseButton onClick={() => {
-          this.context.setCurrentModal(null, null);
-        }}>
+        <CloseButton
+          onClick={() => {
+            this.context.setCurrentModal(null, null);
+          }}
+        >
           <CloseButtonImg src={close} />
         </CloseButton>
 
         <ModalTitle>Add a New Integration</ModalTitle>
         <Subtitle>Select the service you would like to connect to.</Subtitle>
-       
+
         <IntegrationsCatalog>
           {this.renderIntegrationsCatalog()}
         </IntegrationsCatalog>
@@ -114,9 +120,11 @@ const IntegrationOption = styled.div`
   display: flex;
   align-items: center;
   padding: 20px;
-  cursor: ${(props: { disabled: boolean }) => props.disabled ? 'not-allowed' : 'pointer'};
+  cursor: ${(props: { disabled: boolean }) =>
+    props.disabled ? "not-allowed" : "pointer"};
   :hover {
-    background: ${(props: { disabled: boolean }) => props.disabled ? '' : '#ffffff22'};
+    background: ${(props: { disabled: boolean }) =>
+      props.disabled ? "" : "#ffffff22"};
   }
 `;
 
@@ -132,7 +140,7 @@ const IntegrationsCatalog = styled.div`
 
 const Subtitle = styled.div`
   padding: 10px 0px;
-  font-family: 'Work Sans', sans-serif;
+  font-family: "Work Sans", sans-serif;
   font-size: 13px;
   color: #aaaabb;
   overflow: hidden;
@@ -144,7 +152,7 @@ const ModalTitle = styled.div`
   margin: 0px 0px 13px;
   display: flex;
   flex: 1;
-  font-family: 'Assistant';
+  font-family: "Assistant";
   font-size: 18px;
   color: #ffffff;
   user-select: none;
@@ -177,7 +185,7 @@ const CloseButtonImg = styled.img`
   margin: 0 auto;
 `;
 
-const StyledIntegrationsModal= styled.div`
+const StyledIntegrationsModal = styled.div`
   width: 100%;
   position: absolute;
   left: 0;

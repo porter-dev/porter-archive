@@ -1,40 +1,42 @@
-import React, { Component } from 'react';
-import styled from 'styled-components';
-import close from 'assets/close.png';
+import React, { Component } from "react";
+import styled from "styled-components";
+import close from "assets/close.png";
 
-import { Context } from 'shared/Context';
+import { Context } from "shared/Context";
 
 type PropsType = {
-  currentError: string,
+  currentError: string;
 };
 
-type StateType = {
-};
+type StateType = {};
 
 export default class CurrentError extends Component<PropsType, StateType> {
   state = {
     expanded: false,
-  }
+  };
 
   componentDidUpdate(prevProps: PropsType) {
     if (
-      prevProps.currentError !== this.props.currentError
-      && this.props.currentError === 'Provisioning failed. Check your credentials and try again.'
+      prevProps.currentError !== this.props.currentError &&
+      this.props.currentError ===
+        "Provisioning failed. Check your credentials and try again."
     ) {
       this.setState({ expanded: true });
     }
   }
-  
+
   render() {
     if (this.props.currentError) {
       if (!this.state.expanded) {
         return (
           <StyledCurrentError onClick={() => this.setState({ expanded: true })}>
             <ErrorText>Error: {this.props.currentError}</ErrorText>
-            <CloseButton onClick={(e) => {
-              this.context.setCurrentError(null);
-              e.stopPropagation();
-            }}>
+            <CloseButton
+              onClick={(e) => {
+                this.context.setCurrentError(null);
+                e.stopPropagation();
+              }}
+            >
               <CloseButtonImg src={close} />
             </CloseButton>
           </StyledCurrentError>
@@ -95,7 +97,7 @@ const StyledCurrentError = styled.div`
   left: 100px;
   padding: 15px;
   padding-right: 0px;
-  font-family: 'Work Sans', sans-serif;
+  font-family: "Work Sans", sans-serif;
   height: 50px;
   font-size: 13px;
   border-radius: 3px;
@@ -115,10 +117,12 @@ const StyledCurrentError = styled.div`
 
   @keyframes floatIn {
     from {
-      opacity: 0; transform: translateY(20px);
+      opacity: 0;
+      transform: translateY(20px);
     }
     to {
-      opacity: 1; transform: translateY(0px);
+      opacity: 1;
+      transform: translateY(0px);
     }
   }
 `;

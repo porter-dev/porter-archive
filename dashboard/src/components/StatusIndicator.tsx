@@ -1,11 +1,11 @@
-import React, { Component } from 'react';
-import styled from 'styled-components';
-import loading from 'assets/loading.gif';
+import React, { Component } from "react";
+import styled from "styled-components";
+import loading from "assets/loading.gif";
 
 type PropsType = {
-    status: string,
-    controllers: Record<string, Record<string, any>>,
-    margin_left: string,
+  status: string;
+  controllers: Record<string, Record<string, any>>;
+  margin_left: string;
 };
 
 type StateType = {};
@@ -13,65 +13,70 @@ type StateType = {};
 // Manages a tab selector and renders the associated view
 export default class StatusIndicator extends Component<PropsType, StateType> {
   renderStatus = (status: string) => {
-    if (status == 'loading') {
+    if (status == "loading") {
       return (
         <div>
           <Spinner src={loading} />
         </div>
-      )
+      );
     }
 
     return (
       <div>
         <StatusColor status={status} />
       </div>
-    )
-  }
+    );
+  };
 
   getChartStatus = (chartStatus: string) => {
-    if (chartStatus === 'deployed') {
+    if (chartStatus === "deployed") {
       for (var uid in this.props.controllers) {
-        let value = this.props.controllers[uid]
-        let available = this.getAvailability(value.metadata.kind, value)
-        let progressing = true
+        let value = this.props.controllers[uid];
+        let available = this.getAvailability(value.metadata.kind, value);
+        let progressing = true;
 
-        this.props.controllers[uid]?.status?.conditions?.forEach((condition: any) => {
-          if (condition.type == "Progressing" && condition.status == "False"
-              && condition.reason == "ProgressDeadlineExceeded") {
-            progressing = false
+        this.props.controllers[uid]?.status?.conditions?.forEach(
+          (condition: any) => {
+            if (
+              condition.type == "Progressing" &&
+              condition.status == "False" &&
+              condition.reason == "ProgressDeadlineExceeded"
+            ) {
+              progressing = false;
+            }
           }
-        })
+        );
 
         if (!available && progressing) {
-          return 'loading'
+          return "loading";
         } else if (!available && !progressing) {
-          return 'failed'
+          return "failed";
         }
       }
-      return 'deployed'
+      return "deployed";
     }
-    return chartStatus
-  }
+    return chartStatus;
+  };
 
   getAvailability = (kind: string, c: any) => {
     switch (kind?.toLowerCase()) {
       case "deployment":
       case "replicaset":
-        return (c.status.availableReplicas == c.status.replicas)
+        return c.status.availableReplicas == c.status.replicas;
       case "statefulset":
-       return (c.status.readyReplicas == c.status.replicas)
+        return c.status.readyReplicas == c.status.replicas;
       case "daemonset":
-        return (c.status.numberAvailable == c.status.desiredNumberScheduled)
-      }
-  }
+        return c.status.numberAvailable == c.status.desiredNumberScheduled;
+    }
+  };
 
   render() {
-    let status = this.getChartStatus(this.props.status)
+    let status = this.getChartStatus(this.props.status);
     return (
-    <Status margin_left={this.props.margin_left}>
+      <Status margin_left={this.props.margin_left}>
         {this.renderStatus(status)}
         {status}
-    </Status>
+      </Status>
     );
   }
 }
@@ -87,7 +92,12 @@ const StatusColor = styled.div`
   margin-bottom: 1px;
   width: 8px;
   height: 8px;
-  background: ${(props: { status: string }) => (props.status === 'deployed' ? '#4797ff' : props.status === 'failed' ? "#ed5f85" : "#f5cb42")};
+  background: ${(props: { status: string }) =>
+    props.status === "deployed"
+      ? "#4797ff"
+      : props.status === "failed"
+      ? "#ed5f85"
+      : "#f5cb42"};
   border-radius: 20px;
   margin-right: 16px;
 `;
@@ -99,13 +109,17 @@ const Status = styled.div`
   flex-direction: row;
   text-transform: capitalize;
   align-items: center;
-  font-family: 'Hind Siliguri', sans-serif;
+  font-family: "Hind Siliguri", sans-serif;
   color: #aaaabb;
   animation: fadeIn 0.5s;
-  margin-left: ${(props: { margin_left: string}) => props.margin_left};
+  margin-left: ${(props: { margin_left: string }) => props.margin_left};
 
   @keyframes fadeIn {
-    from { opacity: 0 }
-    to { opacity: 1 }
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
   }
 `;

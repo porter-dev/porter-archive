@@ -1,33 +1,33 @@
-import React, { Component } from 'react';
-import styled from 'styled-components';
-import yaml from 'js-yaml';
+import React, { Component } from "react";
+import styled from "styled-components";
+import yaml from "js-yaml";
 
-import { ChartType, StorageType } from 'shared/types';
-import api from 'shared/api';
-import { Context } from 'shared/Context';
+import { ChartType, StorageType } from "shared/types";
+import api from "shared/api";
+import { Context } from "shared/Context";
 
-import YamlEditor from 'components/YamlEditor';
-import SaveButton from 'components/SaveButton';
+import YamlEditor from "components/YamlEditor";
+import SaveButton from "components/SaveButton";
 
 type PropsType = {
-  currentChart: ChartType
-  refreshChart: () => void
+  currentChart: ChartType;
+  refreshChart: () => void;
 };
 
 type StateType = {
-  values: string,
-  saveValuesStatus: string | null
+  values: string;
+  saveValuesStatus: string | null;
 };
 
 // TODO: handle zoom out
 export default class ValuesYaml extends Component<PropsType, StateType> {
   state = {
-    values: '',
-    saveValuesStatus: null as (string | null)
-  }
+    values: "",
+    saveValuesStatus: null as string | null,
+  };
 
   updateValues() {
-    let values = '# Nothing here yet';
+    let values = "# Nothing here yet";
     if (this.props.currentChart.config) {
       values = yaml.dump(this.props.currentChart.config);
     }
@@ -46,26 +46,31 @@ export default class ValuesYaml extends Component<PropsType, StateType> {
 
   handleSaveValues = () => {
     let { currentCluster, setCurrentError, currentProject } = this.context;
-    this.setState({ saveValuesStatus: 'loading' });
+    this.setState({ saveValuesStatus: "loading" });
 
-    api.upgradeChartValues('<token>', {
-      namespace: this.props.currentChart.namespace,
-      storage: StorageType.Secret,
-      values: this.state.values
-    }, {
-      id: currentProject.id, 
-      name: this.props.currentChart.name,
-      cluster_id: currentCluster.id,
-    }, (err: any, res: any) => {
-      if (err) {
-        console.log(err)
-        this.setState({ saveValuesStatus: 'error' });
-      } else {
-        this.setState({ saveValuesStatus: 'successful' });
-        this.props.refreshChart();
+    api.upgradeChartValues(
+      "<token>",
+      {
+        namespace: this.props.currentChart.namespace,
+        storage: StorageType.Secret,
+        values: this.state.values,
+      },
+      {
+        id: currentProject.id,
+        name: this.props.currentChart.name,
+        cluster_id: currentCluster.id,
+      },
+      (err: any, res: any) => {
+        if (err) {
+          console.log(err);
+          this.setState({ saveValuesStatus: "error" });
+        } else {
+          this.setState({ saveValuesStatus: "successful" });
+          this.props.refreshChart();
+        }
       }
-    });
-  }
+    );
+  };
 
   render() {
     return (
@@ -77,7 +82,7 @@ export default class ValuesYaml extends Component<PropsType, StateType> {
           />
         </Wrapper>
         <SaveButton
-          text='Update Values'
+          text="Update Values"
           onClick={this.handleSaveValues}
           status={this.state.saveValuesStatus}
           makeFlush={true}

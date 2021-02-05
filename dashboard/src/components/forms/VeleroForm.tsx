@@ -1,46 +1,43 @@
-import React, { Component } from 'react';
-import styled from 'styled-components';
+import React, { Component } from "react";
 
-import Heading from '../values-form/Heading';
-import Helper from '../values-form/Helper';
-import InputRow from '../values-form/InputRow';
-import MultiSelect from '../values-form/MultiSelect';
+import Heading from "../values-form/Heading";
+import InputRow from "../values-form/InputRow";
+import MultiSelect from "../values-form/MultiSelect";
 
-type PropsType = {
-};
+type PropsType = {};
 
 type StateType = {
-  name: string,
-  excludeNamespaces: string[],
-  excludeResources: string[],
-  includeNamespaces: string[],
-  includeResources: string[],
-  storageLocation: string,
-  volumeSnapshotLocations: string[],
+  name: string;
+  excludeNamespaces: string[];
+  excludeResources: string[];
+  includeNamespaces: string[];
+  includeResources: string[];
+  storageLocation: string;
+  volumeSnapshotLocations: string[];
 };
 
 export default class VeleroForm extends Component<PropsType, StateType> {
   state = {
-    name: '',
+    name: "",
     excludeNamespaces: [] as string[],
     excludeResources: [] as string[],
     includeNamespaces: [] as string[],
     includeResources: [] as string[],
-    storageLocation: '',
+    storageLocation: "",
     volumeSnapshotLocations: [] as string[],
-  }
+  };
 
   render() {
     return (
       <>
         <Heading>Create a Bakup</Heading>
         <InputRow
-          placeholder='ex: my-backup'
-          type='text'
-          width='300px'
+          placeholder="ex: my-backup"
+          type="text"
+          width="300px"
           value={this.state.name}
           setValue={(x: string) => this.setState({ name: x })}
-          label='Name'
+          label="Name"
         />
         <MultiSelect />
       </>

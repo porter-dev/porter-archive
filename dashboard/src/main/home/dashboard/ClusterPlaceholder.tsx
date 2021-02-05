@@ -1,25 +1,27 @@
-import React, { Component } from 'react';
-import styled from 'styled-components';
+import React, { Component } from "react";
+import styled from "styled-components";
 
-import api from 'shared/api';
-import { Context } from 'shared/Context';
-import { ClusterType } from 'shared/types';
+import { Context } from "shared/Context";
+import { ClusterType } from "shared/types";
 
-import ClusterList from './ClusterList';
-import Loading from 'components/Loading';
+import ClusterList from "./ClusterList";
+import Loading from "components/Loading";
 
 type PropsType = {
-  currentCluster: ClusterType,
+  currentCluster: ClusterType;
 };
 
 type StateType = {
-  loading: boolean,
+  loading: boolean;
 };
 
-export default class ClusterPlaceholder extends Component<PropsType, StateType> {
+export default class ClusterPlaceholder extends Component<
+  PropsType,
+  StateType
+> {
   state = {
     loading: true,
-  }
+  };
 
   componentDidMount() {
     setTimeout(() => {
@@ -48,18 +50,18 @@ export default class ClusterPlaceholder extends Component<PropsType, StateType> 
             This project currently has no clusters connected.
           </Banner>
           <StyledStatusPlaceholder>
-            <Highlight onClick={() => {
-              this.context.setCurrentModal('ClusterInstructionsModal', {});
-            }}>
+            <Highlight
+              onClick={() => {
+                this.context.setCurrentModal("ClusterInstructionsModal", {});
+              }}
+            >
               + Connect a Cluster
             </Highlight>
           </StyledStatusPlaceholder>
         </>
       );
     } else {
-      return (
-        <ClusterList/>
-      );
+      return <ClusterList />;
     }
   }
 }
@@ -111,6 +113,6 @@ const StyledStatusPlaceholder = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
-  font-family: 'Work Sans', sans-serif;
+  font-family: "Work Sans", sans-serif;
   user-select: text;
 `;

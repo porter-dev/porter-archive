@@ -1,27 +1,27 @@
-import React, { Component } from 'react';
-import styled from 'styled-components';
-import close from 'assets/close.png';
-import TabSelector from 'components/TabSelector';
+import React, { Component } from "react";
+import styled from "styled-components";
+import close from "assets/close.png";
+import TabSelector from "components/TabSelector";
 
-import { Context } from 'shared/Context';
+import { Context } from "shared/Context";
 
-type PropsType = {
-};
+type PropsType = {};
 
 type StateType = {
-  currentTab: string,
-  currentPage: number,
+  currentTab: string;
+  currentPage: number;
 };
 
-const tabOptions = [
-  { label: 'MacOS', value: 'mac' }
-];
+const tabOptions = [{ label: "MacOS", value: "mac" }];
 
-export default class ClusterInstructionsModal extends Component<PropsType, StateType> {
+export default class ClusterInstructionsModal extends Component<
+  PropsType,
+  StateType
+> {
   state = {
-    currentTab: 'mac',
+    currentTab: "mac",
     currentPage: 0,
-  }
+  };
 
   renderPage = () => {
     switch (this.state.currentPage) {
@@ -30,27 +30,41 @@ export default class ClusterInstructionsModal extends Component<PropsType, State
           <Placeholder>
             1. To install the Porter CLI, first retrieve the latest binary:
             <Code>
-              &#123;<br />
-              name=$(curl -s https://api.github.com/repos/porter-dev/porter/releases/latest | grep "browser_download_url.*porter_.*_Darwin_x86_64\.zip" | cut -d ":" -f 2,3 | tr -d \")<br />
-              name=$(basename $name)<br />
-              curl -L https://github.com/porter-dev/porter/releases/latest/download/$name --output $name<br />
-              unzip -a $name<br />
-              rm $name<br />
+              &#123;
+              <br />
+              name=$(curl -s
+              https://api.github.com/repos/porter-dev/porter/releases/latest |
+              grep "browser_download_url.*porter_.*_Darwin_x86_64\.zip" | cut -d
+              ":" -f 2,3 | tr -d \")
+              <br />
+              name=$(basename $name)
+              <br />
+              curl -L
+              https://github.com/porter-dev/porter/releases/latest/download/$name
+              --output $name
+              <br />
+              unzip -a $name
+              <br />
+              rm $name
+              <br />
               &#125;
             </Code>
             2. Move the file into your bin:
             <Code>
-              chmod +x ./porter<br />
+              chmod +x ./porter
+              <br />
               sudo mv ./porter /usr/local/bin/porter
             </Code>
             3. Log in to the Porter CLI:
             <Code>
-              porter config set-host {location.protocol + '//' + location.host}<br/>
+              porter config set-host {location.protocol + "//" + location.host}
+              <br />
               porter auth login
             </Code>
             4. Configure the Porter CLI and link your current context:
             <Code>
-              porter config set-project {this.context.currentProject.id}<br/>
+              porter config set-project {this.context.currentProject.id}
+              <br />
               porter connect kubeconfig
             </Code>
           </Placeholder>
@@ -64,24 +78,30 @@ export default class ClusterInstructionsModal extends Component<PropsType, State
               porter connect kubeconfig --kubeconfig path/to/kubeconfig
             </Code>
             <Bold>Passing a context list</Bold>
-            You can initialize Porter with a set of contexts by passing a context list to start. The contexts that Porter will be able to access are the same as kubectl config get-contexts. For example, if there are two contexts named minikube and staging, you could connect both of them via:
+            You can initialize Porter with a set of contexts by passing a
+            context list to start. The contexts that Porter will be able to
+            access are the same as kubectl config get-contexts. For example, if
+            there are two contexts named minikube and staging, you could connect
+            both of them via:
             <Code>
               porter connect kubeconfig --contexts minikube --contexts staging
             </Code>
           </Placeholder>
         );
       default:
-        return
+        return;
     }
-  }
- 
+  };
+
   render() {
     let { currentPage, currentTab } = this.state;
     return (
       <StyledClusterInstructionsModal>
-        <CloseButton onClick={() => {
-          this.context.setCurrentModal(null, null);
-        }}>
+        <CloseButton
+          onClick={() => {
+            this.context.setCurrentModal(null, null);
+          }}
+        >
           <CloseButtonImg src={close} />
         </CloseButton>
 
@@ -90,21 +110,31 @@ export default class ClusterInstructionsModal extends Component<PropsType, State
         <TabSelector
           options={tabOptions}
           currentTab={currentTab}
-          setCurrentTab={(value: string) => this.setState({ currentTab: value })}
+          setCurrentTab={(value: string) =>
+            this.setState({ currentTab: value })
+          }
         />
 
         {this.renderPage()}
         <PageSection>
           <PageCount>{currentPage + 1}/2</PageCount>
-          <i 
+          <i
             className="material-icons"
-            onClick={() => currentPage > 0 ? this.setState({ currentPage: currentPage - 1 }) : null}
+            onClick={() =>
+              currentPage > 0
+                ? this.setState({ currentPage: currentPage - 1 })
+                : null
+            }
           >
             arrow_back
           </i>
-          <i 
+          <i
             className="material-icons"
-            onClick={() => currentPage < 1 ? this.setState({ currentPage: currentPage + 1 }) : null}
+            onClick={() =>
+              currentPage < 1
+                ? this.setState({ currentPage: currentPage + 1 })
+                : null
+            }
           >
             arrow_forward
           </i>
@@ -132,7 +162,7 @@ const PageSection = styled.div`
   color: #ffffff;
   justify-content: flex-end;
   user-select: none;
-  
+
   > i {
     font-size: 18px;
     margin-left: 2px;
@@ -146,7 +176,7 @@ const PageSection = styled.div`
 `;
 
 const Code = styled.div`
-  background: #181B21;
+  background: #181b21;
   padding: 10px 15px;
   border: 1px solid #ffffff44;
   border-radius: 5px;
@@ -161,7 +191,8 @@ const Code = styled.div`
 const A = styled.a`
   color: #ffffff;
   text-decoration: underline;
-  cursor: ${(props: { disabled?: boolean }) => props.disabled ? 'not-allowed' : 'pointer'};
+  cursor: ${(props: { disabled?: boolean }) =>
+    props.disabled ? "not-allowed" : "pointer"};
 `;
 
 const Placeholder = styled.div`
@@ -180,7 +211,7 @@ const Bold = styled.div`
 
 const Subtitle = styled.div`
   padding: 17px 0px 25px;
-  font-family: 'Work Sans', sans-serif;
+  font-family: "Work Sans", sans-serif;
   font-size: 13px;
   color: #aaaabb;
   margin-top: 3px;
@@ -193,7 +224,7 @@ const ModalTitle = styled.div`
   margin: 0px 0px 13px;
   display: flex;
   flex: 1;
-  font-family: 'Assistant';
+  font-family: "Assistant";
   font-size: 18px;
   color: #ffffff;
   user-select: none;
@@ -226,7 +257,7 @@ const CloseButtonImg = styled.img`
   margin: 0 auto;
 `;
 
-const StyledClusterInstructionsModal= styled.div`
+const StyledClusterInstructionsModal = styled.div`
   width: 100%;
   position: absolute;
   left: 0;

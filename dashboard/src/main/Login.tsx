@@ -1,39 +1,40 @@
-import React, { ChangeEvent, Component } from 'react';
-import styled from 'styled-components';
-import logo from 'assets/logo.png';
+import React, { ChangeEvent, Component } from "react";
+import styled from "styled-components";
+import logo from "assets/logo.png";
 
-import api from 'shared/api';
-import { emailRegex } from 'shared/regex';
-import { Context } from 'shared/Context';
+import api from "shared/api";
+import { emailRegex } from "shared/regex";
+import { Context } from "shared/Context";
 
 type PropsType = {
-  authenticate: () => void
+  authenticate: () => void;
 };
 
 type StateType = {
-  email: string,
-  password: string,
-  emailError: boolean,
-  credentialError: boolean
+  email: string;
+  password: string;
+  emailError: boolean;
+  credentialError: boolean;
 };
 
 export default class Login extends Component<PropsType, StateType> {
   state = {
-    email: '',
-    password: '',
+    email: "",
+    password: "",
     emailError: false,
-    credentialError: false
-  }
+    credentialError: false,
+  };
 
   handleKeyDown = (e: any) => {
-    e.key === 'Enter' ? this.handleLogin() : null;
-  }
+    e.key === "Enter" ? this.handleLogin() : null;
+  };
 
   componentDidMount() {
     let urlParams = new URLSearchParams(window.location.search);
-    let emailFromCLI = urlParams.get('email');
-    emailFromCLI ? this.setState({email: emailFromCLI}) :
-    document.addEventListener("keydown", this.handleKeyDown);
+    let emailFromCLI = urlParams.get("email");
+    emailFromCLI
+      ? this.setState({ email: emailFromCLI })
+      : document.addEventListener("keydown", this.handleKeyDown);
   }
 
   componentWillUnmount() {
@@ -50,42 +51,53 @@ export default class Login extends Component<PropsType, StateType> {
       this.setState({ emailError: true });
     } else {
       // Attempt user login
-      api.logInUser('', {
-        email: email,
-        password: password
-      }, {}, (err: any, res: any) => {
-        // TODO: case and set credential error
-        if (err) {
-          this.context.setCurrentError(err.response.data.errors[0])
+      api.logInUser(
+        "",
+        {
+          email: email,
+          password: password,
+        },
+        {},
+        (err: any, res: any) => {
+          // TODO: case and set credential error
+          if (err) {
+            this.context.setCurrentError(err.response.data.errors[0]);
+          }
+          if (res?.data?.redirect) {
+            window.location.href = res.data.redirect;
+          } else {
+            setUser(res?.data?.id, res?.data?.email);
+            err ? console.log(err.response.data) : authenticate();
+          }
         }
-        if (res?.data?.redirect) {
-          window.location.href = res.data.redirect;
-        } else {
-          setUser(res?.data?.id, res?.data?.email)
-          err ? console.log(err.response.data) : authenticate();
-        }
-      });
+      );
     }
-  }
+  };
 
   renderEmailError = () => {
     let { emailError } = this.state;
     if (emailError) {
       return (
-        <ErrorHelper><div />Please enter a valid email</ErrorHelper>
+        <ErrorHelper>
+          <div />
+          Please enter a valid email
+        </ErrorHelper>
       );
     }
-  }
+  };
 
   renderCredentialError = () => {
     let { credentialError } = this.state;
     if (credentialError) {
       return (
-        <ErrorHelper><div />Incorrect email or password</ErrorHelper>
+        <ErrorHelper>
+          <div />
+          Incorrect email or password
+        </ErrorHelper>
       );
     }
-  }
-  
+  };
+
   render() {
     let { email, password, credentialError, emailError } = this.state;
 
@@ -100,15 +112,15 @@ export default class Login extends Component<PropsType, StateType> {
             <Line />
             <Prompt>Log in to Porter</Prompt>
             <InputWrapper>
-              <Input 
-                type='email' 
-                placeholder='Email'
+              <Input
+                type="email"
+                placeholder="Email"
                 value={email}
-                onChange={(e: ChangeEvent<HTMLInputElement>) => 
-                  this.setState({ 
+                onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                  this.setState({
                     email: e.target.value,
                     emailError: false,
-                    credentialError: false
+                    credentialError: false,
                   })
                 }
                 valid={!credentialError && !emailError}
@@ -116,14 +128,14 @@ export default class Login extends Component<PropsType, StateType> {
               {this.renderEmailError()}
             </InputWrapper>
             <InputWrapper>
-              <Input 
-                type='password' 
-                placeholder='Password'
+              <Input
+                type="password"
+                placeholder="Password"
                 value={password}
-                onChange={(e: ChangeEvent<HTMLInputElement>) => 
-                  this.setState({ 
-                    password: e.target.value, 
-                    credentialError: false 
+                onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                  this.setState({
+                    password: e.target.value,
+                    credentialError: false,
                   })
                 }
                 valid={!credentialError}
@@ -132,8 +144,9 @@ export default class Login extends Component<PropsType, StateType> {
             </InputWrapper>
             <Button onClick={this.handleLogin}>Continue</Button>
 
-            <Helper>Don't have an account?
-              <Link href='/register'>Sign up</Link>
+            <Helper>
+              Don't have an account?
+              <Link href="/register">Sign up</Link>
             </Helper>
           </FormWrapper>
         </LoginPanel>
@@ -146,13 +159,13 @@ Login.contextType = Context;
 
 const Link = styled.a`
   margin-left: 5px;
-  color: #819BFD;
+  color: #819bfd;
 `;
 
 const Helper = styled.div`
   margin: 52px 0px 20px;
   font-size: 14px;
-  font-family: 'Work Sans', sans-serif;
+  font-family: "Work Sans", sans-serif;
   color: #ffffff44;
 `;
 
@@ -174,7 +187,7 @@ const ErrorHelper = styled.div`
   width: 170px;
   user-select: none;
   background: #272731;
-  font-family: 'Work Sans', sans-serif;
+  font-family: "Work Sans", sans-serif;
   font-size: 12px;
   display: flex;
   align-items: center;
@@ -207,12 +220,12 @@ const Button = styled.button`
   display: flex;
   justify-content: center;
   align-items: center;
-  font-family: 'Work Sans', sans-serif;
+  font-family: "Work Sans", sans-serif;
   cursor: pointer;
   margin-top: 25px;
   border-radius: 2px;
   border: 0;
-  background: #819BFD;
+  background: #819bfd;
   color: white;
   font-weight: 500;
   font-size: 14px;
@@ -224,19 +237,20 @@ const InputWrapper = styled.div`
 
 const Input = styled.input`
   width: 200px;
-  font-family: 'Work Sans', sans-serif;
+  font-family: "Work Sans", sans-serif;
   margin: 8px 0px;
   height: 30px;
   padding: 8px;
   background: #ffffff12;
   color: #ffffff;
-  border: ${(props: { valid?: boolean }) => props.valid ? '0' : '1px solid #ff3b62'};
+  border: ${(props: { valid?: boolean }) =>
+    props.valid ? "0" : "1px solid #ff3b62"};
   border-radius: 2px;
-  font-size: 14px
+  font-size: 14px;
 `;
 
 const Prompt = styled.div`
-  font-family: 'Work Sans', sans-serif;
+  font-family: "Work Sans", sans-serif;
   font-weight: 500;
   font-size: 15px;
   margin-bottom: 18px;
@@ -268,8 +282,12 @@ const GradientBg = styled.div`
   left: -40%;
   animation: flip 6s infinite linear;
   @keyframes flip {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
+    from {
+      transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(360deg);
+    }
   }
 `;
 

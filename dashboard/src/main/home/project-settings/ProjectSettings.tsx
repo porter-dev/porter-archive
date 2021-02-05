@@ -1,30 +1,30 @@
-import React, { Component } from 'react';
-import styled from 'styled-components';
+import React, { Component } from "react";
+import styled from "styled-components";
 
-import { Context } from 'shared/Context';
+import { Context } from "shared/Context";
 
-import InviteList from './InviteList';
-import TabRegion from 'components/TabRegion';
-import Heading from 'components/values-form/Heading';
-import Helper from 'components/values-form/Helper';
+import InviteList from "./InviteList";
+import TabRegion from "components/TabRegion";
+import Heading from "components/values-form/Heading";
+import Helper from "components/values-form/Helper";
 
 type PropsType = {};
 
 type StateType = {
-  projectName: string,
-  currentTab: string,
-}
+  projectName: string;
+  currentTab: string;
+};
 
 const tabOptions = [
-  { value: 'manage-access', label: 'Manage Access' },
-  { value: 'additional-settings', label: 'Additional Settings' }
+  { value: "manage-access", label: "Manage Access" },
+  { value: "additional-settings", label: "Additional Settings" },
 ];
 
 export default class ProjectSettings extends Component<PropsType, StateType> {
   state = {
-    projectName: '',
-    currentTab: 'manage-access',
-  }
+    projectName: "",
+    currentTab: "manage-access",
+  };
 
   componentDidMount() {
     let { currentProject } = this.context;
@@ -32,18 +32,20 @@ export default class ProjectSettings extends Component<PropsType, StateType> {
   }
 
   renderTabContents = () => {
-    if (this.state.currentTab === 'manage-access') {
+    if (this.state.currentTab === "manage-access") {
       return <InviteList />;
     } else {
       return (
         <>
           <Heading isAtTop={true}>Delete Project</Heading>
           <Helper>
-            Permanently delete this project. This will destroy all clusters tied to this project that have been provisioned by Porter. Note that this will not delete the image registries provisioned by Porter. To delete the registries, please do so manually in your cloud console.
+            Permanently delete this project. This will destroy all clusters tied
+            to this project that have been provisioned by Porter. Note that this
+            will not delete the image registries provisioned by Porter. To
+            delete the registries, please do so manually in your cloud console.
           </Helper>
 
           <Warning highlight={true}>This action cannot be undone.</Warning>
-
 
           <DeleteButton
             onClick={() => {
@@ -57,9 +59,9 @@ export default class ProjectSettings extends Component<PropsType, StateType> {
         </>
       );
     }
-  }
+  };
 
-  render () {
+  render() {
     return (
       <StyledProjectSettings>
         <TitleSection>
@@ -81,14 +83,15 @@ ProjectSettings.contextType = Context;
 
 const Warning = styled.div`
   font-size: 13px;
-  color: ${(props: { highlight: boolean, makeFlush?: boolean }) => props.highlight ? '#f5cb42' : ''};
+  color: ${(props: { highlight: boolean; makeFlush?: boolean }) =>
+    props.highlight ? "#f5cb42" : ""};
   margin-bottom: 20px;
 `;
 
 const Title = styled.div`
   font-size: 24px;
   font-weight: 600;
-  font-family: 'Work Sans', sans-serif;
+  font-family: "Work Sans", sans-serif;
   color: #ffffff;
   white-space: nowrap;
   overflow: hidden;
@@ -114,7 +117,7 @@ const DeleteButton = styled.div`
   height: 35px;
   font-size: 13px;
   font-weight: 500;
-  font-family: 'Work Sans', sans-serif;
+  font-family: "Work Sans", sans-serif;
   color: white;
   display: flex;
   align-items: center;
@@ -129,7 +132,9 @@ const DeleteButton = styled.div`
   box-shadow: 0 2px 5px 0 #00000030;
   cursor: pointer;
   user-select: none;
-  :focus { outline: 0 }
+  :focus {
+    outline: 0;
+  }
   :hover {
     filter: brightness(120%);
   }

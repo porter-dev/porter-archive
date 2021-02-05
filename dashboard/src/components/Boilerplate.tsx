@@ -1,24 +1,16 @@
-import React, { Component } from 'react';
-import styled from 'styled-components';
+import React, { Component } from "react";
+import styled from "styled-components";
 
-type PropsType = {
-};
+type PropsType = {};
 
-type StateType = {
-};
+type StateType = {};
 
 export default class Boilerplate extends Component<PropsType, StateType> {
-  state = {
-  }
+  state = {};
 
   render() {
-    return (
-      <StyledBoilerplate>
-        boilerplate
-      </StyledBoilerplate>
-    );
+    return <StyledBoilerplate>boilerplate</StyledBoilerplate>;
   }
 }
 
-const StyledBoilerplate = styled.div`
-`;
+const StyledBoilerplate = styled.div``;

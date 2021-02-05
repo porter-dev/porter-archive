@@ -1,22 +1,15 @@
-import React, { Component } from 'react';
-import styled from 'styled-components';
+import React, { Component } from "react";
+import styled from "styled-components";
 
-type PropsType = {
-};
+type PropsType = {};
 
-type StateType = {
-};
+type StateType = {};
 
 export default class PipelinesSection extends Component<PropsType, StateType> {
-  state = {
-  }
+  state = {};
 
   render() {
-    return (
-      <StyledPipelinesSection>
-        
-      </StyledPipelinesSection>
-    );
+    return <StyledPipelinesSection></StyledPipelinesSection>;
   }
 }
 
@@ -31,5 +24,5 @@ const StyledPipelinesSection = styled.div`
   text-align: center;
   font-size: 13px;
   background: #ffffff08;
-  font-family: 'Work Sans', sans-serif;
+  font-family: "Work Sans", sans-serif;
 `;

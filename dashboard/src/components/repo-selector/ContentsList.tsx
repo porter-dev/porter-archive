@@ -1,69 +1,77 @@
-import { stringify } from 'querystring';
-import React, { Component } from 'react';
-import styled from 'styled-components';
-import file from 'assets/file.svg';
-import folder from 'assets/folder.svg';
-import info from 'assets/info.svg';
+import React, { Component } from "react";
+import styled from "styled-components";
+import file from "assets/file.svg";
+import folder from "assets/folder.svg";
+import info from "assets/info.svg";
 
-import api from 'shared/api';
-import { Context } from 'shared/Context';
-import { FileType } from 'shared/types';
+import api from "shared/api";
+import { Context } from "shared/Context";
+import { FileType } from "shared/types";
 
-import Loading from '../Loading';
+import Loading from "../Loading";
 
 type PropsType = {
-  grid: number,
-  repoName: string,
-  owner: string,
-  selectedBranch: string,
-  subdirectory: string,
-  setSubdirectory: (x: string) => void,
-  setDockerfile: () => void,
+  grid: number;
+  repoName: string;
+  owner: string;
+  selectedBranch: string;
+  subdirectory: string;
+  setSubdirectory: (x: string) => void;
+  setDockerfile: () => void;
 };
 
 type StateType = {
-  loading: boolean,
-  error: boolean,
-  contents: FileType[]
+  loading: boolean;
+  error: boolean;
+  contents: FileType[];
 };
 
 export default class ContentsList extends Component<PropsType, StateType> {
   state = {
     loading: true,
     error: false,
-    contents: [] as FileType[]
-  }
+    contents: [] as FileType[],
+  };
 
   updateContents = () => {
     let { currentProject } = this.context;
 
     // Get branch contents
-    api.getBranchContents('<token>', { dir: this.props.subdirectory }, {
-      project_id: currentProject.id,
-      git_repo_id: this.props.grid,
-      kind: 'github',
-      owner: this.props.owner,
-      name: this.props.repoName,
-      branch: this.props.selectedBranch
-    }, (err: any, res: any) => {
-      if (err) {
-        console.log(err);
-        this.setState({ loading: false, error: true });
-      } else {
-        let files = [] as FileType[];
-        let folders = [] as FileType[];
-        res.data.map((x: FileType, i: number) => {
-          x.Type === 'dir' ? folders.push(x) : files.push(x);
-        });
+    api.getBranchContents(
+      "<token>",
+      { dir: this.props.subdirectory },
+      {
+        project_id: currentProject.id,
+        git_repo_id: this.props.grid,
+        kind: "github",
+        owner: this.props.owner,
+        name: this.props.repoName,
+        branch: this.props.selectedBranch,
+      },
+      (err: any, res: any) => {
+        if (err) {
+          console.log(err);
+          this.setState({ loading: false, error: true });
+        } else {
+          let files = [] as FileType[];
+          let folders = [] as FileType[];
+          res.data.map((x: FileType, i: number) => {
+            x.Type === "dir" ? folders.push(x) : files.push(x);
+          });
 
-        folders.sort((a: FileType, b: FileType) => { return a.Path < b.Path ? 1 : 0 });
-        files.sort((a: FileType, b: FileType) => { return a.Path < b.Path ? 1 : 0 });
-        let contents = folders.concat(files);
-        
-        this.setState({ contents, loading: false, error: false });
+          folders.sort((a: FileType, b: FileType) => {
+            return a.Path < b.Path ? 1 : 0;
+          });
+          files.sort((a: FileType, b: FileType) => {
+            return a.Path < b.Path ? 1 : 0;
+          });
+          let contents = folders.concat(files);
+
+          this.setState({ contents, loading: false, error: false });
+        }
       }
-    });
-  }
+    );
+  };
 
   componentDidMount() {
     this.updateContents();
@@ -71,22 +79,26 @@ export default class ContentsList extends Component<PropsType, StateType> {
 
   componentDidUpdate(prevProps: PropsType) {
     if (this.props.subdirectory !== prevProps.subdirectory) {
-      this.updateContents();  
+      this.updateContents();
     }
   }
 
   renderContentList = () => {
     let { contents, loading, error } = this.state;
     if (loading) {
-      return <LoadingWrapper><Loading /></LoadingWrapper>
+      return (
+        <LoadingWrapper>
+          <Loading />
+        </LoadingWrapper>
+      );
     } else if (error || !contents) {
-      return <LoadingWrapper>Error loading repo contents.</LoadingWrapper>
+      return <LoadingWrapper>Error loading repo contents.</LoadingWrapper>;
     }
 
     return contents.map((item: FileType, i: number) => {
-      let splits = item.Path.split('/');
+      let splits = item.Path.split("/");
       let fileName = splits[splits.length - 1];
-      if (item.Type === 'dir') {
+      if (item.Type === "dir") {
         return (
           <Item
             key={i}
@@ -100,7 +112,7 @@ export default class ContentsList extends Component<PropsType, StateType> {
         );
       }
 
-      if (fileName === 'Dockerfile') {
+      if (fileName === "Dockerfile") {
         return (
           <FileItem
             key={i}
@@ -114,48 +126,40 @@ export default class ContentsList extends Component<PropsType, StateType> {
         );
       }
       return (
-        <FileItem
-          key={i}
-          lastItem={i === contents.length - 1}
-        >
+        <FileItem key={i} lastItem={i === contents.length - 1}>
           <img src={file} />
           {fileName}
         </FileItem>
       );
     });
-  }
+  };
 
   renderJumpToParent = () => {
     let { subdirectory, setSubdirectory } = this.props;
-    if (subdirectory !== '') {
-      let splits = subdirectory.split('/');
-      let subdir = '';
+    if (subdirectory !== "") {
+      let splits = subdirectory.split("/");
+      let subdir = "";
       if (splits.length !== 1) {
-        subdir = subdirectory.replace(splits[splits.length - 1], '');
-        if (subdir.charAt(subdir.length - 1) === '/') {
+        subdir = subdirectory.replace(splits[splits.length - 1], "");
+        if (subdir.charAt(subdir.length - 1) === "/") {
           subdir = subdir.slice(0, subdir.length - 1);
         }
       }
 
       return (
-        <Item
-          lastItem={false}
-          onClick={() => setSubdirectory(subdir)}
-        >
+        <Item lastItem={false} onClick={() => setSubdirectory(subdir)}>
           <BackLabel>..</BackLabel>
         </Item>
       );
     }
 
     return (
-      <FileItem
-        lastItem={false}
-      >
+      <FileItem lastItem={false}>
         <img src={info} />
         Select subfolder (Optional)
       </FileItem>
     );
-  }
+  };
 
   render() {
     return (
@@ -180,13 +184,16 @@ const Item = styled.div`
   display: flex;
   width: 100%;
   font-size: 13px;
-  border-bottom: 1px solid ${(props: { lastItem: boolean, isSelected?: boolean }) => props.lastItem ? '#00000000' : '#606166'};
+  border-bottom: 1px solid
+    ${(props: { lastItem: boolean; isSelected?: boolean }) =>
+      props.lastItem ? "#00000000" : "#606166"};
   color: #ffffff;
   user-select: none;
   align-items: center;
   padding: 10px 0px;
   cursor: pointer;
-  background: ${(props: { isSelected?: boolean, lastItem: boolean }) => props.isSelected ? '#ffffff22' : '#ffffff11'};
+  background: ${(props: { isSelected?: boolean; lastItem: boolean }) =>
+    props.isSelected ? "#ffffff22" : "#ffffff11"};
   :hover {
     background: #ffffff22;
 
@@ -204,10 +211,13 @@ const Item = styled.div`
 `;
 
 const FileItem = styled(Item)`
-  cursor: ${(props: {isADocker?: boolean}) => props.isADocker ? 'pointer' : 'default'};
-  color: ${(props: {isADocker?: boolean}) => props.isADocker ? '#fff' : '#ffffff55'};
+  cursor: ${(props: { isADocker?: boolean }) =>
+    props.isADocker ? "pointer" : "default"};
+  color: ${(props: { isADocker?: boolean }) =>
+    props.isADocker ? "#fff" : "#ffffff55"};
   :hover {
-    background: ${(props: {isADocker?: boolean}) => props.isADocker ? '#ffffff22' : '#ffffff11'};
+    background: ${(props: { isADocker?: boolean }) =>
+      props.isADocker ? "#ffffff22" : "#ffffff11"};
   }
 `;
 

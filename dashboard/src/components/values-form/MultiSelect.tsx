@@ -1,32 +1,27 @@
-import React, { Component } from 'react';
-import styled from 'styled-components';
+import React, { Component } from "react";
+import styled from "styled-components";
 
-type PropsType = {
-};
+type PropsType = {};
 
 type StateType = {
-  options: { label: string, value: string }[],
+  options: { label: string; value: string }[];
 };
 
 export default class MultiSelect extends Component<PropsType, StateType> {
   state = {
-    options: [] as { label: string, value: string }[],
-  }
+    options: [] as { label: string; value: string }[],
+  };
 
-  renderOptions = () => {
-    
-  }
+  renderOptions = () => {};
 
   render() {
     return (
       <>
-        <StyledMultiSelect>
-        </StyledMultiSelect>
+        <StyledMultiSelect></StyledMultiSelect>
         boilerplate
       </>
     );
   }
 }
 
-const StyledMultiSelect = styled.div`
-`;
+const StyledMultiSelect = styled.div``;

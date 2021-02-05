@@ -1,15 +1,14 @@
-import React, { Component } from 'react';
-import styled from 'styled-components';
+import React, { Component } from "react";
+import styled from "styled-components";
 
 type PropsType = {
-  message: string,
-  show: boolean,
-  onYes: () => void,
-  onNo: () => void
+  message: string;
+  show: boolean;
+  onYes: () => void;
+  onNo: () => void;
 };
 
-type StateType = {
-};
+type StateType = {};
 
 export default class ConfirmOverlay extends Component<PropsType, StateType> {
   render() {
@@ -18,16 +17,8 @@ export default class ConfirmOverlay extends Component<PropsType, StateType> {
         <StyledConfirmOverlay>
           {this.props.message}
           <ButtonRow>
-            <ConfirmButton
-              onClick={this.props.onYes}
-            >
-              Yes
-          </ConfirmButton>
-            <ConfirmButton
-              onClick={this.props.onNo}
-            >
-              No
-          </ConfirmButton>
+            <ConfirmButton onClick={this.props.onYes}>Yes</ConfirmButton>
+            <ConfirmButton onClick={this.props.onNo}>No</ConfirmButton>
           </ButtonRow>
         </StyledConfirmOverlay>
       );
@@ -48,19 +39,23 @@ const StyledConfirmOverlay = styled.div`
   padding-bottom: 30px;
   align-items: center;
   justify-content: center;
-  font-family: 'Work Sans', sans-serif;
+  font-family: "Work Sans", sans-serif;
   font-size: 18px;
   font-weight: 500;
   color: white;
   flex-direction: column;
-  background: rgb(0,0,0,0.73);
+  background: rgb(0, 0, 0, 0.73);
   opacity: 0;
   animation: lindEnter 0.2s;
   animation-fill-mode: forwards;
 
   @keyframes lindEnter {
-    from { opacity: 0; }
-    to   { opacity: 1; }
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
   }
 `;
 
@@ -75,21 +70,27 @@ const ButtonRow = styled.div`
 const ConfirmButton = styled.div`
   font-size: 18px;
   padding: 10px 15px;
-  outline: none; 
+  outline: none;
   border: 1px solid white;
-  border-radius: 10px; 
-  text-align: center; 
+  border-radius: 10px;
+  text-align: center;
   width: 80px;
   cursor: pointer;
   opacity: 0;
-  font-family: 'Work Sans', sans-serif;
+  font-family: "Work Sans", sans-serif;
   font-size: 18px;
   font-weight: 500;
   animation: linEnter 0.3s 0.1s;
   animation-fill-mode: forwards;
   @keyframes linEnter {
-    from { transform: translateY(20px); opacity: 0; }
-    to   { transform: translateY(0px); opacity: 1; }
+    from {
+      transform: translateY(20px);
+      opacity: 0;
+    }
+    to {
+      transform: translateY(0px);
+      opacity: 1;
+    }
   }
   :hover {
     background: white;

@@ -1,14 +1,13 @@
-import React, { Component } from 'react';
-import styled from 'styled-components';
+import React, { Component } from "react";
+import styled from "styled-components";
 
 type PropsType = {
-  label: string,
-  checked: boolean,
-  toggle: () => void
+  label: string;
+  checked: boolean;
+  toggle: () => void;
 };
 
-type StateType = {
-};
+type StateType = {};
 
 export default class CheckboxRow extends Component<PropsType, StateType> {
   render() {
@@ -24,7 +23,7 @@ export default class CheckboxRow extends Component<PropsType, StateType> {
     );
   }
 }
-        
+
 const CheckboxWrapper = styled.div`
   display: flex;
   align-items: center;
@@ -42,7 +41,8 @@ const Checkbox = styled.div`
   border: 1px solid #ffffff55;
   margin: 1px 10px 0px 1px;
   border-radius: 3px;
-  background: ${(props: { checked: boolean }) => props.checked ? '#ffffff22' : '#ffffff11'};
+  background: ${(props: { checked: boolean }) =>
+    props.checked ? "#ffffff22" : "#ffffff11"};
   display: flex;
   align-items: center;
   justify-content: center;
@@ -50,7 +50,7 @@ const Checkbox = styled.div`
   > i {
     font-size: 12px;
     padding-left: 0px;
-    display: ${(props: { checked: boolean }) => props.checked ? '' : 'none'};
+    display: ${(props: { checked: boolean }) => (props.checked ? "" : "none")};
   }
 `;
 

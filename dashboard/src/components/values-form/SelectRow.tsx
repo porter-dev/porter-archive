@@ -1,20 +1,19 @@
-import React, { Component } from 'react';
-import styled from 'styled-components';
+import React, { Component } from "react";
+import styled from "styled-components";
 
-import Selector from '../Selector';
+import Selector from "../Selector";
 
 type PropsType = {
-  label: string,
-  value: string,
-  setActiveValue: (x: string) => void,
-  options: { value: string, label: string }[],
-  dropdownLabel?: string,
-  width?: string,
-  dropdownMaxHeight?: string,
+  label: string;
+  value: string;
+  setActiveValue: (x: string) => void;
+  options: { value: string; label: string }[];
+  dropdownLabel?: string;
+  width?: string;
+  dropdownMaxHeight?: string;
 };
 
-type StateType = {
-};
+type StateType = {};
 
 export default class SelectRow extends Component<PropsType, StateType> {
   render() {
@@ -27,7 +26,7 @@ export default class SelectRow extends Component<PropsType, StateType> {
             setActiveValue={this.props.setActiveValue}
             options={this.props.options}
             dropdownLabel={this.props.dropdownLabel}
-            width={this.props.width || '270px'}
+            width={this.props.width || "270px"}
             dropdownWidth={this.props.width}
             dropdownMaxHeight={this.props.dropdownMaxHeight}
           />
@@ -37,8 +36,7 @@ export default class SelectRow extends Component<PropsType, StateType> {
   }
 }
 
-const SelectWrapper = styled.div`
-`;
+const SelectWrapper = styled.div``;
 
 const Label = styled.div`
   color: #ffffff;

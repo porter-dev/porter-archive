@@ -1,36 +1,33 @@
-import React, { Component } from 'react';
-import styled from 'styled-components';
+import React, { Component } from "react";
 
-import DockerHubForm from './DockerHubForm';
-import GKEForm from './GKEForm';
-import EKSForm from './EKSForm';
-import GCRForm from './GCRForm';
-import ECRForm from './ECRForm';
+import DockerHubForm from "./DockerHubForm";
+import GKEForm from "./GKEForm";
+import EKSForm from "./EKSForm";
+import GCRForm from "./GCRForm";
+import ECRForm from "./ECRForm";
 
 type PropsType = {
-  integrationName: string,
-  closeForm: () => void,
+  integrationName: string;
+  closeForm: () => void;
 };
 
-type StateType = {
-};
+type StateType = {};
 
 export default class IntegrationForm extends Component<PropsType, StateType> {
-  state = {
-  }
+  state = {};
 
   render() {
     let { closeForm } = this.props;
     switch (this.props.integrationName) {
-      case 'docker-hub':
+      case "docker-hub":
         return <DockerHubForm closeForm={closeForm} />;
-      case 'gke':
+      case "gke":
         return <GKEForm closeForm={closeForm} />;
-      case 'eks':
+      case "eks":
         return <EKSForm closeForm={closeForm} />;
-      case 'ecr':
+      case "ecr":
         return <ECRForm closeForm={closeForm} />;
-      case 'gcr':
+      case "gcr":
         return <GCRForm closeForm={closeForm} />;
       default:
         return null;

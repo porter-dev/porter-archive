@@ -1,29 +1,27 @@
-import React, { Component } from 'react';
-import styled from 'styled-components';
-import close from 'assets/close.png';
+import React, { Component } from "react";
+import styled from "styled-components";
+import close from "assets/close.png";
 
-import { Context } from 'shared/Context';
-import { ClusterType } from 'shared/types';
-import { RouteComponentProps, withRouter } from 'react-router';
+import { Context } from "shared/Context";
+import { ClusterType } from "shared/types";
+import { RouteComponentProps, withRouter } from "react-router";
 
 type PropsType = RouteComponentProps & {
-  toggleDrawer: () => void,
-  showDrawer: boolean,
-  clusters: ClusterType[],
+  toggleDrawer: () => void;
+  showDrawer: boolean;
+  clusters: ClusterType[];
 };
 
-type StateType = {
-};
+type StateType = {};
 
 class Drawer extends Component<PropsType, StateType> {
-
   renderClusterList = (): JSX.Element[] | JSX.Element => {
     let { clusters } = this.props;
     let { currentCluster, setCurrentCluster } = this.context;
 
     if (clusters.length > 0 && currentCluster) {
       clusters.sort((a, b) => a.id - b.id);
-      
+
       return clusters.map((cluster: ClusterType, i: number) => {
         /*
         let active = this.context.activeProject &&
@@ -34,23 +32,26 @@ class Drawer extends Component<PropsType, StateType> {
           <ClusterOption
             key={i}
             active={cluster.name === currentCluster.name}
-            onClick={() => { setCurrentCluster(cluster); this.props.history.push('cluster-dashboard') }}
+            onClick={() => {
+              setCurrentCluster(cluster);
+              this.props.history.push("cluster-dashboard");
+            }}
           >
-            <ClusterIcon><i className="material-icons">device_hub</i></ClusterIcon>
+            <ClusterIcon>
+              <i className="material-icons">device_hub</i>
+            </ClusterIcon>
             <ClusterName>{cluster.name}</ClusterName>
           </ClusterOption>
         );
       });
     }
 
-    return <Placeholder>No clusters selected</Placeholder>
+    return <Placeholder>No clusters selected</Placeholder>;
   };
 
   renderCloseOverlay = (): JSX.Element | undefined => {
     if (this.props.showDrawer) {
-      return (
-        <CloseOverlay onClick={this.props.toggleDrawer} />
-      );
+      return <CloseOverlay onClick={this.props.toggleDrawer} />;
     }
   };
 
@@ -65,9 +66,11 @@ class Drawer extends Component<PropsType, StateType> {
 
           {this.renderClusterList()}
 
-          <InitializeButton onClick={() => {
-            this.context.setCurrentModal('ClusterInstructionsModal', {});
-          }}>
+          <InitializeButton
+            onClick={() => {
+              this.context.setCurrentModal("ClusterInstructionsModal", {});
+            }}
+          >
             <Plus>+</Plus> Add a Cluster
           </InitializeButton>
         </StyledDrawer>
@@ -128,7 +131,8 @@ const ClusterOption = styled.div`
   overflow: hidden;
   text-overflow: ellipsis;
   cursor: pointer;
-  background: ${(props: { active?: boolean }) => props.active ? '#ffffff18' : ''};
+  background: ${(props: { active?: boolean }) =>
+    props.active ? "#ffffff18" : ""};
   :hover {
     background: #ffffff22;
   }
@@ -194,18 +198,32 @@ const StyledDrawer = styled.div`
   overflow-y: auto;
   padding-bottom: 40px;
   top: 0;
-  left: ${(props: { showDrawer: boolean }) => (props.showDrawer ? '-30px' : '200px')};
+  left: ${(props: { showDrawer: boolean }) =>
+    props.showDrawer ? "-30px" : "200px"};
   z-index: -2;
   background: #00000fd4;
-  animation: ${(props: { showDrawer: boolean }) => (props.showDrawer ? 'slideDrawerRight 0.4s' : 'slideDrawerLeft 0.4s')};
+  animation: ${(props: { showDrawer: boolean }) =>
+    props.showDrawer ? "slideDrawerRight 0.4s" : "slideDrawerLeft 0.4s"};
   animation-fill-mode: forwards;
   @keyframes slideDrawerRight {
-    from { left: -30px; opacity: 0; }
-    to { left: 200px; opacity: 1; }
+    from {
+      left: -30px;
+      opacity: 0;
+    }
+    to {
+      left: 200px;
+      opacity: 1;
+    }
   }
   @keyframes slideDrawerLeft {
-    from { left: 200px; opacity: 1; }
-    to { left: -30px; opacity: 0; }
+    from {
+      left: 200px;
+      opacity: 1;
+    }
+    to {
+      left: -30px;
+      opacity: 0;
+    }
   }
 `;
 

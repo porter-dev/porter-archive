@@ -1,71 +1,74 @@
-import React, { Component } from 'react';
-import styled from 'styled-components';
+import React, { Component } from "react";
+import styled from "styled-components";
 
-import { Context } from 'shared/Context';
-import api from 'shared/api';
-import { ClusterType } from 'shared/types';
-import Helper from 'components/values-form/Helper';
+import { Context } from "shared/Context";
+import api from "shared/api";
+import { ClusterType } from "shared/types";
+import Helper from "components/values-form/Helper";
 
-import Loading from 'components/Loading';
-import { RouteComponentProps, withRouter } from 'react-router';
+import Loading from "components/Loading";
+import { RouteComponentProps, withRouter } from "react-router";
 
 type PropsType = RouteComponentProps;
 
 type StateType = {
-  loading: boolean,
-  error: string,
-  clusters: ClusterType[],
+  loading: boolean;
+  error: string;
+  clusters: ClusterType[];
 };
 
 class Templates extends Component<PropsType, StateType> {
   state = {
     loading: true,
-    error: '',
+    error: "",
     clusters: [] as ClusterType[],
-  }
+  };
 
   componentDidMount() {
-    api.getClusters('<token>', {}, { id: this.context.currentProject.id }, (err: any, res: any) => {
-      if (res && res.data) {
-        this.setState({ clusters: res.data, loading: false, error: '' });
-      } else {
-        this.setState({ loading: false, error: err });
+    api.getClusters(
+      "<token>",
+      {},
+      { id: this.context.currentProject.id },
+      (err: any, res: any) => {
+        if (res && res.data) {
+          this.setState({ clusters: res.data, loading: false, error: "" });
+        } else {
+          this.setState({ loading: false, error: err });
+        }
       }
-    });
+    );
   }
 
   renderIcon = () => {
     return (
-      <DashboardIcon><i className="material-icons">device_hub</i></DashboardIcon>
+      <DashboardIcon>
+        <i className="material-icons">device_hub</i>
+      </DashboardIcon>
     );
-  }
+  };
 
   renderClusters = () => {
     return this.state.clusters.map((cluster: ClusterType, i: number) => {
       return (
-        <TemplateBlock 
-          onClick={() => { 
-            this.context.setCurrentCluster(cluster); 
-            this.props.history.push('cluster-dashboard');
+        <TemplateBlock
+          onClick={() => {
+            this.context.setCurrentCluster(cluster);
+            this.props.history.push("cluster-dashboard");
           }}
           key={i}
         >
           {this.renderIcon()}
-          <TemplateTitle>
-            {cluster.name}
-          </TemplateTitle>
+          <TemplateTitle>{cluster.name}</TemplateTitle>
         </TemplateBlock>
       );
     });
-  }
-  
+  };
+
   render() {
     return (
       <>
         <Helper>Clusters connected to this project:</Helper>
-        <TemplateList>
-          {this.renderClusters()}
-        </TemplateList>
+        <TemplateList>{this.renderClusters()}</TemplateList>
       </>
     );
   }
@@ -73,7 +76,7 @@ class Templates extends Component<PropsType, StateType> {
 
 Templates.contextType = Context;
 
-export default withRouter(Templates)
+export default withRouter(Templates);
 
 const DashboardIcon = styled.div`
   position: relative;
@@ -84,7 +87,7 @@ const DashboardIcon = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #676C7C;
+  background: #676c7c;
   border: 2px solid #8e94aa;
 
   > i {
@@ -126,8 +129,12 @@ const TemplateBlock = styled.div`
 
   animation: fadeIn 0.3s 0s;
   @keyframes fadeIn {
-    from { opacity: 0 }
-    to { opacity: 1 }
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
   }
 `;
 
@@ -144,7 +151,7 @@ const TemplateList = styled.div`
 const Title = styled.div`
   font-size: 24px;
   font-weight: 600;
-  font-family: 'Work Sans', sans-serif;
+  font-family: "Work Sans", sans-serif;
   color: #ffffff;
   white-space: nowrap;
   overflow: hidden;
@@ -164,7 +171,7 @@ const TitleSection = styled.div`
       margin-bottom: -2px;
       font-size: 18px;
       margin-left: 18px;
-      color: #858FAAaa;
+      color: #858faaaa;
       cursor: pointer;
       :hover {
         color: #aaaabb;

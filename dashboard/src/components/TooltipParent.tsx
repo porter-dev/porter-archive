@@ -1,32 +1,34 @@
-import React, { Component } from 'react';
-import styled from 'styled-components';
+import React, { Component } from "react";
+import styled from "styled-components";
 
 type PropsType = {
-  tooltipText: string
+  tooltipText: string;
 };
 
 type StateType = {
-  showTooltip: boolean,
+  showTooltip: boolean;
 };
 
 export default class TooltipParent extends Component<PropsType, StateType> {
   state = {
     showTooltip: false,
-  }
+  };
 
   renderTooltip = (): JSX.Element | undefined => {
     if (this.state.showTooltip) {
-      return (
-        <Tooltip>{this.props.tooltipText}</Tooltip>
-      );
+      return <Tooltip>{this.props.tooltipText}</Tooltip>;
     }
-  }
+  };
 
   render() {
     return (
       <StyledTooltipParent
-        onMouseOver={() => { this.setState({ showTooltip: true }) }}
-        onMouseOut={() => { this.setState({ showTooltip: false }) }}
+        onMouseOver={() => {
+          this.setState({ showTooltip: true });
+        }}
+        onMouseOut={() => {
+          this.setState({ showTooltip: false });
+        }}
       >
         {this.props.children}
         {this.renderTooltip()}
@@ -54,8 +56,12 @@ const Tooltip = styled.div`
   animation: faded-in 0.2s 0.15s;
   animation-fill-mode: forwards;
   @keyframes faded-in {
-    from { opacity: 0 }
-    to { opacity: 1 }
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
   }
 `;
 

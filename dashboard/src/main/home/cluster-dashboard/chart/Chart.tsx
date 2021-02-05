@@ -1,48 +1,51 @@
-import React, { Component } from 'react';
-import styled from 'styled-components';
+import React, { Component } from "react";
+import styled from "styled-components";
 
-import { ChartType, StorageType } from '../../../../shared/types';
-import { Context } from '../../../../shared/Context';
-import StatusIndicator from '../../../../components/StatusIndicator';
+import { ChartType, StorageType } from "shared/types";
+import { Context } from "shared/Context";
+import StatusIndicator from "components/StatusIndicator";
 
 type PropsType = {
-  chart: ChartType,
-  setCurrentChart: (c: ChartType) => void,
-  controllers: Record<string, any>,
+  chart: ChartType;
+  setCurrentChart: (c: ChartType) => void;
+  controllers: Record<string, any>;
 };
 
 type StateType = {
-  expand: boolean,
-  update: any[],
+  expand: boolean;
+  update: any[];
 };
 
 export default class Chart extends Component<PropsType, StateType> {
   state = {
     expand: false,
     update: [] as any[],
-  }
+  };
 
   renderIcon = () => {
     let { chart } = this.props;
 
-    if (chart.chart.metadata.icon && chart.chart.metadata.icon !== '') {
-      return <Icon src={chart.chart.metadata.icon} />
+    if (chart.chart.metadata.icon && chart.chart.metadata.icon !== "") {
+      return <Icon src={chart.chart.metadata.icon} />;
     } else {
-      return <i className="material-icons">tonality</i>
+      return <i className="material-icons">tonality</i>;
     }
-  }
+  };
 
   readableDate = (s: string) => {
     let ts = new Date(s);
     let date = ts.toLocaleDateString();
-    let time = ts.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+    let time = ts.toLocaleTimeString([], {
+      hour: "numeric",
+      minute: "2-digit",
+    });
     return `${time} on ${date}`;
-  }
+  };
 
   render() {
     let { chart, setCurrentChart } = this.props;
 
-    return ( 
+    return (
       <StyledChart
         onMouseEnter={() => this.setState({ expand: true })}
         onMouseLeave={() => this.setState({ expand: false })}
@@ -50,29 +53,26 @@ export default class Chart extends Component<PropsType, StateType> {
         onClick={() => setCurrentChart(chart)}
       >
         <Title>
-          <IconWrapper>
-            {this.renderIcon()}
-          </IconWrapper>
+          <IconWrapper>{this.renderIcon()}</IconWrapper>
           {chart.name}
         </Title>
 
         <BottomWrapper>
           <InfoWrapper>
             <StatusIndicator
-              controllers={this.props.controllers} 
+              controllers={this.props.controllers}
               status={chart.info.status}
-              margin_left={'17px'}
+              margin_left={"17px"}
             />
             <LastDeployed>
-              <Dot>•</Dot> Last deployed {this.readableDate(chart.info.last_deployed)}
+              <Dot>•</Dot> Last deployed{" "}
+              {this.readableDate(chart.info.last_deployed)}
             </LastDeployed>
           </InfoWrapper>
 
           <TagWrapper>
             Namespace
-            <NamespaceTag>
-              {chart.namespace}
-            </NamespaceTag>
+            <NamespaceTag>{chart.namespace}</NamespaceTag>
           </TagWrapper>
         </BottomWrapper>
 
@@ -182,7 +182,7 @@ const Title = styled.div`
   text-decoration: none;
   padding: 12px 35px 12px 45px;
   font-size: 14px;
-  font-family: 'Work Sans', sans-serif;
+  font-family: "Work Sans", sans-serif;
   font-weight: 500;
   color: #ffffff;
   width: 80%;
@@ -191,7 +191,7 @@ const Title = styled.div`
   text-overflow: ellipsis;
   animation: fadeIn 0.5s;
 
-  >img {
+  > img {
     background: none;
     top: 12px;
     left: 13px;
@@ -210,17 +210,19 @@ const StyledChart = styled.div`
   border-radius: 5px;
   box-shadow: 0 5px 8px 0px #00000033;
   position: relative;
-  border: 2px solid #9EB4FF00;
+  border: 2px solid #9eb4ff00;
   width: calc(100% + 2px);
   height: calc(100% + 2px);
 
-  animation: ${(props: { expand: boolean }) => props.expand ? 'expand' : 'shrink'} 0.12s;
+  animation: ${(props: { expand: boolean }) =>
+      props.expand ? "expand" : "shrink"}
+    0.12s;
   animation-fill-mode: forwards;
   animation-timing-function: ease-out;
 
   @keyframes expand {
-    from { 
-      width: calc(100% + 2px); 
+    from {
+      width: calc(100% + 2px);
       padding-top: 4px;
       padding-bottom: 14px;
       margin-left: 0px;
@@ -233,7 +235,7 @@ const StyledChart = styled.div`
       width: calc(100% + 22px);
       padding-top: 7px;
       padding-bottom: 20px;
-      margin-left: -10px; 
+      margin-left: -10px;
       box-shadow: 0 8px 20px 0px #00000030;
       padding-left: 5px;
       margin-bottom: 21px;
@@ -242,21 +244,21 @@ const StyledChart = styled.div`
   }
 
   @keyframes shrink {
-    from { 
+    from {
       width: calc(100% + 22px);
       padding-top: 7px;
       padding-bottom: 20px;
-      margin-left: -10px; 
+      margin-left: -10px;
       box-shadow: 0 8px 20px 0px #00000030;
       padding-left: 5px;
       margin-bottom: 21px;
       margin-top: -4px;
     }
     to {
-      width: calc(100% + 2px); 
+      width: calc(100% + 2px);
       padding-top: 4px;
       padding-bottom: 14px;
-      margin-left: 0px; 
+      margin-left: 0px;
       box-shadow: 0 5px 8px 0px #00000033;
       padding-left: 1px;
       margin-bottom: 25px;

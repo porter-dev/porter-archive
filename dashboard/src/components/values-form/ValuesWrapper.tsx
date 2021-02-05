@@ -1,46 +1,45 @@
-import React, { Component } from 'react';
-import styled from 'styled-components';
+import React, { Component } from "react";
+import styled from "styled-components";
 
-import { Section, FormElement } from '../../shared/types';
-import { Context } from '../../shared/Context';
+import { Section, FormElement } from "../../shared/types";
+import { Context } from "../../shared/Context";
 
-import SaveButton from '../SaveButton';
+import SaveButton from "../SaveButton";
 
 type PropsType = {
-  formTabs: any,
-  onSubmit: (formValues: any) => void,
-  disabled?: boolean,
-  saveValuesStatus?: string | null,
-  isInModal?: boolean,
-  currentTab?: string, // For resetting state when flipping b/w tabs in ExpandedChart
+  formTabs: any;
+  onSubmit: (formValues: any) => void;
+  disabled?: boolean;
+  saveValuesStatus?: string | null;
+  isInModal?: boolean;
+  currentTab?: string; // For resetting state when flipping b/w tabs in ExpandedChart
 };
 
 type StateType = any;
 
 const providerMap: any = {
-  'gke': 'gcp',
-  'eks': 'aws',
-  'doks': 'do',
+  gke: "gcp",
+  eks: "aws",
+  doks: "do",
 };
 
 // Manages the consolidated state of all form tabs ("metastate")
 export default class ValuesWrapper extends Component<PropsType, StateType> {
-
   // No need to render, so OK to set as class variable outside of state
   requiredFields: string[] = [];
 
   updateFormState() {
     let metaState: any = {};
     this.props.formTabs.forEach((tab: any, i: number) => {
-
       // TODO: reconcile tab.name and tab.value
-      if (tab.name || (tab.value && tab.value.includes('@'))) {
+      if (tab.name || (tab.value && tab.value.includes("@"))) {
         tab.sections.forEach((section: Section, i: number) => {
           section.contents.forEach((item: FormElement, i: number) => {
-
             // If no name is assigned use values.yaml variable as identifier
             let key = item.name || item.variable;
-            let def = (item.value && item.value[0]) || (item.settings && item.settings.default);
+            let def =
+              (item.value && item.value[0]) ||
+              (item.settings && item.settings.default);
 
             // Handle add to list of required fields
             if (item.required) {
@@ -48,29 +47,29 @@ export default class ValuesWrapper extends Component<PropsType, StateType> {
             }
 
             switch (item.type) {
-              case 'checkbox':
+              case "checkbox":
                 metaState[key] = def ? def : false;
                 break;
-              case 'string-input':
-                metaState[key] = def ? def : '';
+              case "string-input":
+                metaState[key] = def ? def : "";
                 break;
-              case 'array-input':
+              case "array-input":
                 metaState[key] = def ? def : [];
                 break;
-              case 'number-input':
-                metaState[key] = def.toString() ? def : '';
+              case "number-input":
+                metaState[key] = def.toString() ? def : "";
                 break;
-              case 'select':
+              case "select":
                 metaState[key] = def ? def : item.settings.options[0].value;
                 break;
-              case 'provider-select':
+              case "provider-select":
                 def = providerMap[this.context.currentCluster.service];
-                metaState[key] = def ? def : 'aws';
+                metaState[key] = def ? def : "aws";
                 break;
-              case 'base-64':
-                metaState[key] = def ? def : '';
-              case 'base-64-password':
-                metaState[key] = def ? def : '';
+              case "base-64":
+                metaState[key] = def ? def : "";
+              case "base-64-password":
+                metaState[key] = def ? def : "";
               default:
             }
           });
@@ -86,7 +85,8 @@ export default class ValuesWrapper extends Component<PropsType, StateType> {
   }
 
   componentDidUpdate(prevProps: PropsType) {
-    if (this.props.formTabs !== prevProps.formTabs || 
+    if (
+      this.props.formTabs !== prevProps.formTabs ||
       this.props.currentTab !== prevProps.currentTab
     ) {
       this.updateFormState();
@@ -99,24 +99,30 @@ export default class ValuesWrapper extends Component<PropsType, StateType> {
     this.requiredFields.forEach((field: string, i: number) => {
       valueIndicators.push(this.state[field] && true);
     });
-    return valueIndicators.includes(false) || valueIndicators.includes('')
-  }
+    return valueIndicators.includes(false) || valueIndicators.includes("");
+  };
 
   renderButton = () => {
     let { formTabs, currentTab } = this.props;
-    let tab = formTabs.find((t: any) => t.name === currentTab || t.value === currentTab);
-    if (tab && tab.context && tab.context.type === 'helm/values') {
+    let tab = formTabs.find(
+      (t: any) => t.name === currentTab || t.value === currentTab
+    );
+    if (tab && tab.context && tab.context.type === "helm/values") {
       return (
         <SaveButton
           disabled={this.isDisabled() || this.props.disabled}
-          text='Deploy'
+          text="Deploy"
           onClick={() => this.props.onSubmit(this.state)}
-          status={this.isDisabled() ? 'Missing required fields' : this.props.saveValuesStatus}
+          status={
+            this.isDisabled()
+              ? "Missing required fields"
+              : this.props.saveValuesStatus
+          }
           makeFlush={true}
         />
       );
     }
-  }
+  };
 
   render() {
     let renderFunc: any = this.props.children;

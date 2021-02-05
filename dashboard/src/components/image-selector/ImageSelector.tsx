@@ -1,30 +1,30 @@
-import React, { Component } from 'react';
-import styled from 'styled-components';
-import info from 'assets/info.svg';
-import edit from 'assets/edit.svg';
+import React, { Component } from "react";
+import styled from "styled-components";
+import info from "assets/info.svg";
+import edit from "assets/edit.svg";
 
-import api from 'shared/api';
-import { integrationList } from 'shared/common';
-import { Context } from 'shared/Context';
-import { ImageType } from 'shared/types';
+import api from "shared/api";
+import { integrationList } from "shared/common";
+import { Context } from "shared/Context";
+import { ImageType } from "shared/types";
 
-import Loading from '../Loading';
-import TagList from './TagList';
+import Loading from "../Loading";
+import TagList from "./TagList";
 
 type PropsType = {
-  forceExpanded?: boolean,
-  selectedImageUrl: string | null,
-  selectedTag: string | null,
-  setSelectedImageUrl: (x: string) => void,
-  setSelectedTag: (x: string) => void,
+  forceExpanded?: boolean;
+  selectedImageUrl: string | null;
+  selectedTag: string | null;
+  setSelectedImageUrl: (x: string) => void;
+  setSelectedTag: (x: string) => void;
 };
 
 type StateType = {
-  isExpanded: boolean,
-  loading: boolean,
-  error: boolean,
-  images: ImageType[],
-  clickedImage: ImageType | null,
+  isExpanded: boolean;
+  loading: boolean;
+  error: boolean;
+  images: ImageType[];
+  clickedImage: ImageType | null;
 };
 
 export default class ImageSelector extends Component<PropsType, StateType> {
@@ -34,75 +34,89 @@ export default class ImageSelector extends Component<PropsType, StateType> {
     error: false,
     images: [] as ImageType[],
     clickedImage: null as ImageType | null,
-  }
+  };
 
   componentDidMount() {
     const { currentProject, setCurrentError } = this.context;
-    let images = [] as ImageType[]
-    let errors = [] as number[]
-    api.getProjectRegistries('<token>', {}, { id: currentProject.id }, async (err: any, res: any) => {
-      if (err) {
-        console.log(err);
-        this.setState({ error: true });
-      } else {
-        let registries = res.data;
-        if (registries.length === 0) {
-          this.setState({ loading: false });
-        }
+    let images = [] as ImageType[];
+    let errors = [] as number[];
+    api.getProjectRegistries(
+      "<token>",
+      {},
+      { id: currentProject.id },
+      async (err: any, res: any) => {
+        if (err) {
+          console.log(err);
+          this.setState({ error: true });
+        } else {
+          let registries = res.data;
+          if (registries.length === 0) {
+            this.setState({ loading: false });
+          }
 
-        // Loop over connected image registries
-        registries.forEach(async (registry: any, i: number) => {
-          await new Promise((nextController: (res?: any) => void) => {           
-            api.getImageRepos('<token>', {}, 
-              { 
-                project_id: currentProject.id,
-                registry_id: registry.id,
-              }, (err: any, res: any) => {
-              if (err) {
-                errors.push(1);
-              } else {
-                res.data.sort((a: any, b: any) => (a.name > b.name) ? 1 : -1);
-                // Loop over found image repositories
-                let newImg = res.data.map((img: any) => {
-                  if (this.props.selectedImageUrl === img.uri) {
-                    this.setState({ 
-                      clickedImage: {
+          // Loop over connected image registries
+          registries.forEach(async (registry: any, i: number) => {
+            await new Promise((nextController: (res?: any) => void) => {
+              api.getImageRepos(
+                "<token>",
+                {},
+                {
+                  project_id: currentProject.id,
+                  registry_id: registry.id,
+                },
+                (err: any, res: any) => {
+                  if (err) {
+                    errors.push(1);
+                  } else {
+                    res.data.sort((a: any, b: any) =>
+                      a.name > b.name ? 1 : -1
+                    );
+                    // Loop over found image repositories
+                    let newImg = res.data.map((img: any) => {
+                      if (this.props.selectedImageUrl === img.uri) {
+                        this.setState({
+                          clickedImage: {
+                            kind: registry.service,
+                            source: img.uri,
+                            name: img.name,
+                            registryId: registry.id,
+                          },
+                        });
+                      }
+                      return {
                         kind: registry.service,
                         source: img.uri,
                         name: img.name,
                         registryId: registry.id,
-                      }
+                      };
+                    });
+                    images.push(...newImg);
+                    errors.push(0);
+                  }
+
+                  if (i == registries.length - 1) {
+                    let error =
+                      errors.reduce((a, b) => {
+                        return a + b;
+                      }) == registries.length
+                        ? true
+                        : false;
+
+                    this.setState({
+                      images,
+                      loading: false,
+                      error,
                     });
                   }
-                  return {
-                    kind: registry.service, 
-                    source: img.uri,
-                    name: img.name,
-                    registryId: registry.id,
-                  }
-                })
-                images.push(...newImg)
-                errors.push(0);
-              }
-              
-              if (i == registries.length - 1) {
-                let error = errors.reduce((a, b) => {
-                  return a + b;
-                }) == registries.length ? true : false; 
 
-                this.setState({
-                  images,
-                  loading: false,
-                  error,
-                });
-              }
-
-              nextController()
-            });    
-          })
-        });
+                  nextController();
+                }
+              );
+            });
+          });
+        }
       }
-    });
+    );
   }
 
   /*
@@ -113,46 +127,48 @@ export default class ImageSelector extends Component<PropsType, StateType> {
   renderImageList = () => {
     let { images, loading, error } = this.state;
     if (loading) {
-      return <LoadingWrapper><Loading /></LoadingWrapper>
-    } else if (error || !images) {
-      return <LoadingWrapper>Error loading repos</LoadingWrapper>
-    } else if (images.length === 0) {
       return (
         <LoadingWrapper>
-          No registries found. 
+          <Loading />
         </LoadingWrapper>
       );
+    } else if (error || !images) {
+      return <LoadingWrapper>Error loading repos</LoadingWrapper>;
+    } else if (images.length === 0) {
+      return <LoadingWrapper>No registries found.</LoadingWrapper>;
     }
 
     return images.map((image: ImageType, i: number) => {
-      let icon = integrationList[image.kind] && integrationList[image.kind].icon;
+      let icon =
+        integrationList[image.kind] && integrationList[image.kind].icon;
       if (!icon) {
-        icon = integrationList['docker'].icon;
+        icon = integrationList["docker"].icon;
       }
       return (
         <ImageItem
           key={i}
           isSelected={image.source === this.props.selectedImageUrl}
           lastItem={i === images.length - 1}
-          onClick={() => { 
+          onClick={() => {
             this.props.setSelectedImageUrl(image.source);
             this.setState({ clickedImage: image });
           }}
         >
-          <img src={icon && icon} />{image.source}
+          <img src={icon && icon} />
+          {image.source}
         </ImageItem>
       );
     });
-  }
+  };
 
   renderBackButton = () => {
     let { setSelectedImageUrl } = this.props;
     if (this.state.clickedImage) {
       return (
         <BackButton
-          width='175px'
+          width="175px"
           onClick={() => {
-            setSelectedImageUrl('');
+            setSelectedImageUrl("");
             this.setState({ clickedImage: null });
           }}
         >
@@ -161,16 +177,14 @@ export default class ImageSelector extends Component<PropsType, StateType> {
         </BackButton>
       );
     }
-  }
+  };
 
   renderExpanded = () => {
     let { selectedTag, selectedImageUrl, setSelectedTag } = this.props;
     if (!this.state.clickedImage) {
       return (
         <div>
-          <ExpandedWrapper>
-            {this.renderImageList()}
-          </ExpandedWrapper>
+          <ExpandedWrapper>{this.renderImageList()}</ExpandedWrapper>
           {this.renderBackButton()}
         </div>
       );
@@ -189,7 +203,7 @@ export default class ImageSelector extends Component<PropsType, StateType> {
         </div>
       );
     }
-  }
+  };
 
   renderSelected = () => {
     let { selectedImageUrl, setSelectedImageUrl } = this.props;
@@ -197,11 +211,13 @@ export default class ImageSelector extends Component<PropsType, StateType> {
     let icon = info;
     if (clickedImage) {
       icon = clickedImage.kind;
-      icon = integrationList[clickedImage.kind] && integrationList[clickedImage.kind].icon;
+      icon =
+        integrationList[clickedImage.kind] &&
+        integrationList[clickedImage.kind].icon;
       if (!icon) {
-        icon = integrationList['docker'].icon;
+        icon = integrationList["docker"].icon;
       }
-    } else if (selectedImageUrl && selectedImageUrl !== '') {
+    } else if (selectedImageUrl && selectedImageUrl !== "") {
       icon = edit;
     }
     return (
@@ -210,21 +226,21 @@ export default class ImageSelector extends Component<PropsType, StateType> {
         <Input
           onClick={(e: any) => e.stopPropagation()}
           value={selectedImageUrl}
-          onChange={(e: any) => { 
-            setSelectedImageUrl(e.target.value); 
+          onChange={(e: any) => {
+            setSelectedImageUrl(e.target.value);
             this.setState({ clickedImage: null });
           }}
-          placeholder='Enter or select your container image URL'
+          placeholder="Enter or select your container image URL"
         />
       </Label>
     );
-  }
+  };
 
   handleClick = () => {
     if (!this.props.forceExpanded) {
       this.setState({ isExpanded: !this.state.isExpanded });
     }
-  }
+  };
 
   render() {
     return (
@@ -235,7 +251,11 @@ export default class ImageSelector extends Component<PropsType, StateType> {
           forceExpanded={this.props.forceExpanded}
         >
           {this.renderSelected()}
-          {this.props.forceExpanded ? null : <i className="material-icons">{this.state.isExpanded ? 'close' : 'build'}</i>}
+          {this.props.forceExpanded ? null : (
+            <i className="material-icons">
+              {this.state.isExpanded ? "close" : "build"}
+            </i>
+          )}
         </StyledImageSelector>
 
         {this.state.isExpanded ? this.renderExpanded() : null}
@@ -292,13 +312,16 @@ const ImageItem = styled.div`
   display: flex;
   width: 100%;
   font-size: 13px;
-  border-bottom: 1px solid ${(props: { lastItem: boolean, isSelected: boolean }) => props.lastItem ? '#00000000' : '#606166'};
+  border-bottom: 1px solid
+    ${(props: { lastItem: boolean; isSelected: boolean }) =>
+      props.lastItem ? "#00000000" : "#606166"};
   color: #ffffff;
   user-select: none;
   align-items: center;
   padding: 10px 0px;
   cursor: pointer;
-  background: ${(props: { isSelected: boolean, lastItem: boolean }) => props.isSelected ? '#ffffff11' : ''};
+  background: ${(props: { isSelected: boolean; lastItem: boolean }) =>
+    props.isSelected ? "#ffffff11" : ""};
   :hover {
     background: #ffffff22;
 
@@ -352,7 +375,8 @@ const StyledImageSelector = styled.div`
   width: 100%;
   margin-top: 22px;
   border: 1px solid #ffffff55;
-  background: ${(props: { isExpanded: boolean, forceExpanded: boolean }) => props.isExpanded ? '#ffffff11' : ''};
+  background: ${(props: { isExpanded: boolean; forceExpanded: boolean }) =>
+    props.isExpanded ? "#ffffff11" : ""};
   border-radius: 3px;
   user-select: none;
   height: 40px;
@@ -361,7 +385,8 @@ const StyledImageSelector = styled.div`
   display: flex;
   align-items: center;
   justify-content: space-between;
-  cursor: ${(props: { isExpanded: boolean, forceExpanded: boolean }) => props.forceExpanded ? '' : 'pointer'};
+  cursor: ${(props: { isExpanded: boolean; forceExpanded: boolean }) =>
+    props.forceExpanded ? "" : "pointer"};
   :hover {
     background: #ffffff11;
 

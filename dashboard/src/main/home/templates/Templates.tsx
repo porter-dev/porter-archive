@@ -1,47 +1,47 @@
-import React, { Component } from 'react';
-import styled from 'styled-components';
+import React, { Component } from "react";
+import styled from "styled-components";
 
-import { Context } from 'shared/Context';
-import api from 'shared/api';
-import { PorterTemplate } from 'shared/types';
+import { Context } from "shared/Context";
+import api from "shared/api";
+import { PorterTemplate } from "shared/types";
 
-import TabSelector from 'components/TabSelector';
-import ExpandedTemplate from './expanded-template/ExpandedTemplate';
-import Loading from 'components/Loading';
+import TabSelector from "components/TabSelector";
+import ExpandedTemplate from "./expanded-template/ExpandedTemplate";
+import Loading from "components/Loading";
 
-import hardcodedNames from './hardcodedNameDict';
+import hardcodedNames from "./hardcodedNameDict";
 
-const tabOptions = [
-  { label: 'Community Templates', value: 'community' }
-];
+const tabOptions = [{ label: "Community Templates", value: "community" }];
 
 type PropsType = {};
 
 type StateType = {
-  currentTemplate: PorterTemplate | null,
-  currentTab: string,
-  porterTemplates: PorterTemplate[],
-  loading: boolean,
-  error: boolean
+  currentTemplate: PorterTemplate | null;
+  currentTab: string;
+  porterTemplates: PorterTemplate[];
+  loading: boolean;
+  error: boolean;
 };
 
 export default class Templates extends Component<PropsType, StateType> {
   state = {
-    currentTemplate: null as (PorterTemplate | null),
-    currentTab: 'community',
+    currentTemplate: null as PorterTemplate | null,
+    currentTab: "community",
     porterTemplates: [] as PorterTemplate[],
     loading: true,
     error: false,
-  }
+  };
 
   componentDidMount() {
-    api.getTemplates('<token>', {}, {}, (err: any, res: any) => {
+    api.getTemplates("<token>", {}, {}, (err: any, res: any) => {
       if (err) {
         this.setState({ loading: false, error: true });
       } else {
         this.setState({ porterTemplates: res.data, error: false }, () => {
-          this.state.porterTemplates.sort((a, b) => (a.name > b.name) ? 1 : -1);
-          this.state.porterTemplates.sort((a,b) => (a.name === 'docker') ? -1 : (b.name === 'docker') ? 1 : 0);
+          this.state.porterTemplates.sort((a, b) => (a.name > b.name ? 1 : -1));
+          this.state.porterTemplates.sort((a, b) =>
+            a.name === "docker" ? -1 : b.name === "docker" ? 1 : 0
+          );
           this.setState({ loading: false });
         });
       }
@@ -54,15 +54,21 @@ export default class Templates extends Component<PropsType, StateType> {
     }
 
     return (
-      <Polymer><i className="material-icons">layers</i></Polymer>
+      <Polymer>
+        <i className="material-icons">layers</i>
+      </Polymer>
     );
-  }
+  };
 
   renderTemplateList = () => {
     let { loading, error, porterTemplates } = this.state;
 
     if (loading) {
-      return <LoadingWrapper><Loading /></LoadingWrapper>
+      return (
+        <LoadingWrapper>
+          <Loading />
+        </LoadingWrapper>
+      );
     } else if (error) {
       return (
         <Placeholder>
@@ -77,27 +83,34 @@ export default class Templates extends Component<PropsType, StateType> {
       );
     }
 
-    return this.state.porterTemplates.map((template: PorterTemplate, i: number) => {
-      let { name, icon, description } = template;
-      if (hardcodedNames[name]) {
-        name = hardcodedNames[name];
+    return this.state.porterTemplates.map(
+      (template: PorterTemplate, i: number) => {
+        let { name, icon, description } = template;
+        if (hardcodedNames[name]) {
+          name = hardcodedNames[name];
+        }
+        return (
+          <TemplateBlock
+            key={i}
+            onClick={() => this.setState({ currentTemplate: template })}
+          >
+            {this.renderIcon(icon)}
+            <TemplateTitle>{name}</TemplateTitle>
+            <TemplateDescription>{description}</TemplateDescription>
+          </TemplateBlock>
+        );
       }
-      return (
-        <TemplateBlock key={i} onClick={() => this.setState({ currentTemplate: template })}>
-          {this.renderIcon(icon)}
-          <TemplateTitle>{name}</TemplateTitle>
-          <TemplateDescription>{description}</TemplateDescription>
-        </TemplateBlock>
-      )
-    });
-  }
+    );
+  };
 
   renderContents = () => {
     if (this.state.currentTemplate) {
       return (
         <ExpandedTemplate
           currentTemplate={this.state.currentTemplate}
-          setCurrentTemplate={(currentTemplate: PorterTemplate) => this.setState({ currentTemplate })}
+          setCurrentTemplate={(currentTemplate: PorterTemplate) =>
+            this.setState({ currentTemplate })
+          }
         />
       );
     }
@@ -106,22 +119,25 @@ export default class Templates extends Component<PropsType, StateType> {
       <TemplatesWrapper>
         <TitleSection>
           <Title>Template Explorer</Title>
-          <a href='https://docs.getporter.dev/docs/porter-templates' target='_blank'>
+          <a
+            href="https://docs.getporter.dev/docs/porter-templates"
+            target="_blank"
+          >
             <i className="material-icons">help_outline</i>
           </a>
         </TitleSection>
         <TabSelector
           options={tabOptions}
           currentTab={this.state.currentTab}
-          setCurrentTab={(value: string) => this.setState({ currentTab: value })}
+          setCurrentTab={(value: string) =>
+            this.setState({ currentTab: value })
+          }
         />
-        <TemplateList>
-          {this.renderTemplateList()}
-        </TemplateList>
+        <TemplateList>{this.renderTemplateList()}</TemplateList>
       </TemplatesWrapper>
     );
-  }
-  
+  };
+
   render() {
     return this.renderContents();
   }
@@ -173,7 +189,7 @@ const TemplateDescription = styled.div`
   display: -webkit-box;
   overflow: hidden;
   -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;  
+  -webkit-box-orient: vertical;
 `;
 
 const TemplateTitle = styled.div`
@@ -210,8 +226,12 @@ const TemplateBlock = styled.div`
 
   animation: fadeIn 0.3s 0s;
   @keyframes fadeIn {
-    from { opacity: 0 }
-    to { opacity: 1 }
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
   }
 `;
 
@@ -228,7 +248,7 @@ const TemplateList = styled.div`
 const Title = styled.div`
   font-size: 24px;
   font-weight: 600;
-  font-family: 'Work Sans', sans-serif;
+  font-family: "Work Sans", sans-serif;
   color: #ffffff;
   white-space: nowrap;
   overflow: hidden;
@@ -248,7 +268,7 @@ const TitleSection = styled.div`
       margin-bottom: -2px;
       font-size: 18px;
       margin-left: 18px;
-      color: #858FAAaa;
+      color: #858faaaa;
       cursor: pointer;
       :hover {
         color: #aaaabb;

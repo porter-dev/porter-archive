@@ -61,13 +61,26 @@ class Home extends Component<PropsType, StateType> {
 
     if (!currentProject) return;
 
-    if (this.state.ghRedirect) {
-      this.props.history.push("integrations");
-      this.setState({ ghRedirect: false });
-    } else {
-      if (this.props.currentRoute !== "dashboard")
-        this.props.history.push("dashboard");
-    }
+    api.getInfra('<token>', {}, { 
+      project_id: currentProject.id 
+    }, (err: any, res: any) => {
+      if (err) return;
+      
+      let creating = false;
+
+      for (var i = 0; i < res.data.length; i++) {
+        creating = res.data[i].status === "creating"
+      }
+
+      if (creating) {
+        this.props.history.push("dashboard?tab=provisioner");
+      } else if (this.state.ghRedirect) {
+        this.props.history.push("integrations");
+        this.setState({ ghRedirect: false });
+      } else if (this.props.currentRoute !== "dashboard") {
+          this.props.history.push("dashboard");
+      }
+    });
   };
 
   getProjects = (id?: number) => {

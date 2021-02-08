@@ -77,8 +77,12 @@ class ProvisionerLogs extends Component<PropsType, StateType> {
       }
     }
 
+    let count = 0;
     return logs.map((log, i) => {
-        return <Log key={i + 1}>{`[Step ${i + 1}/${maxStep}]` + log}</Log>
+      if (log.trim().length != 0) {
+        count += 1;
+        return <Log key={i + 1}>{`[Step ${count}/${maxStep}] ` + log}</Log>
+      }
     })
   }
 

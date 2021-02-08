@@ -223,7 +223,7 @@ class AWSFormSection extends Component<PropsType, StateType> {
               handleError();
               return;
             }
-            this.props.history.push("provisioner");
+            this.props.history.push("dashboard?tab=provisioner");
           }
         );
       }
@@ -241,7 +241,7 @@ class AWSFormSection extends Component<PropsType, StateType> {
         this.provisionECR(this.provisionEKS);
       } else if (selectedInfras[0].value === "ecr") {
         // Case: project exists, only provision ECR
-        this.provisionECR(() => this.props.history.push("provisioner"));
+        this.provisionECR(() => this.props.history.push("dashboard?tab=provisioner"));
       } else {
         // Case: project exists, only provision EKS
         this.provisionEKS();
@@ -252,11 +252,9 @@ class AWSFormSection extends Component<PropsType, StateType> {
         this.createProject(() => this.provisionECR(this.provisionEKS));
       } else if (selectedInfras[0].value === "ecr") {
         // Case: project DNE, only provision ECR
-        this.createProject(() =>
-          this.provisionECR(() => {
-            this.props.history.push("provisioner");
-          })
-        );
+        this.createProject(() => this.provisionECR(() => {
+          this.props.history.push("dashboard?tab=provisioner");
+        }));
       } else {
         // Case: project DNE, only provision EKS
         this.createProject(this.provisionEKS);

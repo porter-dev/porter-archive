@@ -1,3 +1,4 @@
+import { render } from "@testing-library/react";
 import React, { Component } from "react";
 import styled from "styled-components";
 
@@ -9,18 +10,30 @@ import api from "shared/api";
 import ProvisionerSettings from "../provisioner/ProvisionerSettings";
 import ClusterPlaceholderContainer from "./ClusterPlaceholderContainer";
 import { Redirect, RouteComponentProps, withRouter } from "react-router";
+import TabRegion from "components/TabRegion";
+import Provisioner from "../provisioner/Provisioner";
 
 type PropsType = RouteComponentProps & {
   projectId: number | null;
 };
 
+const tabOptions = [
+  { label: "Project Overview", value: "overview" },
+  { label: "Provisioner Status", value: "provisioner" },
+];
+// TODO: rethink this typing, should be coupled with tabOptions
+type TabType = "overview" | "provisioner"
+
 type StateType = {
   infras: InfraType[];
+  currentTab: TabType;
 };
+
 
 class Dashboard extends Component<PropsType, StateType> {
   state = {
     infras: [] as InfraType[],
+    currentTab: "overview" as TabType,
   };
 
   refreshInfras = () => {
@@ -54,6 +67,35 @@ class Dashboard extends Component<PropsType, StateType> {
 
   onShowProjectSettings = () => {
     this.props.history.push("project-settings");
+  };
+
+  renderTabContents = () => {
+    const currentTab = new URLSearchParams(this.props.location.search).get("tab")
+    if (
+      currentTab && currentTab !== this.state.currentTab
+    ) {
+      this.setState({ currentTab: currentTab as TabType });
+    }
+
+    if (this.state.currentTab === "provisioner") {
+      return <Provisioner />;
+    } else {
+      return (
+        <>
+          {!this.context.currentCluster ? (
+            <>
+              <Banner>
+                <i className="material-icons">error_outline</i>
+                This project currently has no clusters conncted.
+              </Banner>
+              <ProvisionerSettings infras={this.state.infras} />
+            </>
+          ) : (
+            <ClusterPlaceholderContainer />
+          )}
+        </>
+      );
+    }
   };
 
   render() {
@@ -92,19 +134,13 @@ class Dashboard extends Component<PropsType, StateType> {
               </Description>
             </InfoSection>
 
-            <LineBreak />
-
-            {!currentCluster ? (
-              <>
-                <Banner>
-                  <i className="material-icons">error_outline</i>
-                  This project currently has no clusters connected.
-                </Banner>
-                <ProvisionerSettings infras={infras} />
-              </>
-            ) : (
-              <ClusterPlaceholderContainer />
-            )}
+            <TabRegion
+              currentTab={this.state.currentTab}
+              setCurrentTab={(x: TabType) => this.props.history.push(`dashboard?tab=${x}`)}
+              options={tabOptions}
+            >
+              {this.renderTabContents()}
+            </TabRegion>
           </DashboardWrapper>
         )}
       </>
@@ -123,7 +159,7 @@ const DashboardWrapper = styled.div`
 const Banner = styled.div`
   height: 40px;
   width: 100%;
-  margin: 10px 0 30px;
+  margin: 5px 0 30px;
   font-size: 13px;
   display: flex;
   border-radius: 5px;
@@ -166,7 +202,7 @@ const InfoSection = styled.div`
   margin-top: 20px;
   font-family: "Work Sans", sans-serif;
   margin-left: 0px;
-  margin-bottom: 35px;
+  margin-bottom: 30px;
 `;
 
 const LineBreak = styled.div`

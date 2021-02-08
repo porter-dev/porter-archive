@@ -8,8 +8,9 @@ import { integrationList } from "shared/common";
 import { Context } from "shared/Context";
 import { ImageType } from "shared/types";
 
-import Loading from "../Loading";
-import TagList from "./TagList";
+import Loading from '../Loading';
+import TagList from './TagList';
+import ImageList from './ImageList';
 
 type PropsType = {
   forceExpanded?: boolean;
@@ -258,7 +259,18 @@ export default class ImageSelector extends Component<PropsType, StateType> {
           )}
         </StyledImageSelector>
 
-        {this.state.isExpanded ? this.renderExpanded() : null}
+        {this.state.isExpanded
+          ?
+          <ImageList
+            selectedImageUrl={this.props.selectedImageUrl}
+            selectedTag={this.props.selectedTag}
+            clickedImage={this.state.clickedImage}
+            setSelectedImageUrl={this.props.setSelectedImageUrl}
+            setSelectedTag={this.props.setSelectedTag}
+            setClickedImage={(x: ImageType) => this.setState({ clickedImage: x })}
+          />
+          : null
+        }
       </div>
     );
   }

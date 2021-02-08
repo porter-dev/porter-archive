@@ -41,7 +41,11 @@ class ContextProvider extends Component {
     },
     currentProject: null as ProjectType | null,
     setCurrentProject: (currentProject: ProjectType, callback?: any) => {
-      localStorage.setItem("currentProject", currentProject.id.toString());
+      if (currentProject) {
+        localStorage.setItem('currentProject', currentProject.id.toString());
+      } else {
+        localStorage.removeItem('currentProject');
+      }
       this.setState({ currentProject }, () => {
         callback && callback();
       });

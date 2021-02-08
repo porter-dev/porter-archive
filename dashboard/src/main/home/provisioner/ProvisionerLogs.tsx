@@ -18,7 +18,7 @@ type StateType = {
   ws: any,
   scroll: boolean,
   maxStep: number,
-  currentStep: number,
+  error: boolean,
 };
 
 class ProvisionerLogs extends Component<PropsType, StateType> {
@@ -28,7 +28,7 @@ class ProvisionerLogs extends Component<PropsType, StateType> {
     ws : null as any,
     scroll: true,
     maxStep: 0,
-    currentStep: 0,
+    error: false,
   }
 
   ws = null as any;
@@ -40,29 +40,45 @@ class ProvisionerLogs extends Component<PropsType, StateType> {
 
   renderLogs = () => {
     let { selectedInfra } = this.props;
-
+    let { logs, maxStep } = this.state;
     if (!selectedInfra) {
         return <Message>Please select a resource.</Message>
     }
 
     if (selectedInfra.status == 'destroyed') {
         return (
-            <Message>
-                This resource has been auto-destroyed due to an error during provisioning.
-            </Message>
+          <Message>
+              This resource has been auto-destroyed due to an error during provisioning.
+              <div>
+                Please check with your cloud provider to make sure all resources have been properly destroyed.
+              </div>
+          </Message>
         )
     }
 
-    if (selectedInfra.status == 'error' && this.state.logs.length == 0) {
-        return <Message>Porter encountered an error while provisioning this resource.</Message>
+    if (logs.length == 0) {
+      switch (selectedInfra.status) {
+        case "creating":
+          return (
+            <Loading>
+              <LoadingGif src={loading} /> Provisioning resources...
+            </Loading>
+          )
+        case "destroying":
+          return (
+            <Message>
+              <LoadingGif src={loading} /> Destroying resources...
+            </Message>
+          )
+        case "error":
+          return <Message>Porter encountered an error while provisioning this resource.</Message>
+        default:
+          return <Message>{selectedInfra.status}</Message>
+      }
     }
 
-    if (this.state.logs.length == 0) {
-        return <Message>{selectedInfra.status}</Message>
-    }
-
-    return this.state.logs.map((log, i) => {
-        return <Log key={i}>{log}</Log>
+    return logs.map((log, i) => {
+        return <Log key={i + 1}>{`[Step ${i + 1}/${maxStep}]` + log}</Log>
     })
   }
 
@@ -84,7 +100,7 @@ class ProvisionerLogs extends Component<PropsType, StateType> {
       let event = JSON.parse(evt.data);
       let validEvents = [] as any[];
       let err = null;
-      console.log(event)
+
       for (var i = 0; i < event.length; i++) {
         let msg = event[i];
         if (msg["Values"] && msg["Values"]["data"] && this.isJSON(msg["Values"]["data"])) { 
@@ -109,17 +125,13 @@ class ProvisionerLogs extends Component<PropsType, StateType> {
           return el.text;
         })
 
-        this.setState({ logs: [...this.state.logs, ...e] });
+        this.setState({ logs: [...this.state.logs, ...e], error: true });
         return;
       }
 
       if (validEvents.length == 0) {
         return;
       }
-
-      this.setState({
-          maxStep: validEvents[validEvents.length - 1]["total_resources"]
-      })
       
       let logs = [] as any[]
       validEvents.forEach((e: any) => {
@@ -132,7 +144,7 @@ class ProvisionerLogs extends Component<PropsType, StateType> {
 
       this.setState({ 
         logs: [...this.state.logs, ...logs], 
-        currentStep: validEvents[validEvents.length - 1]["created_resources"],
+        maxStep: validEvents[validEvents.length - 1]["total_resources"]
       }, () => {
         this.scrollToBottom()
       })
@@ -180,53 +192,23 @@ class ProvisionerLogs extends Component<PropsType, StateType> {
 ProvisionerLogs.contextType = Context;
 export default withRouter(ProvisionerLogs);
 
-const Scroll = styled.div`
-  align-items: center;
-  display: flex;
-  cursor: pointer;
-  width: 145px;
-  height: 100%;
-
-  :hover {
-    background: #2468d6;
-  }
-
-  > input {
-    width; 18px;
-    margin-left: 10px;
-    margin-right: 6px;
-    pointer-events: none;
-  }
-`
-
-const Refresh = styled.div`
-  display: flex;
-  align-items: center;
-  width: 87px;
-  user-select: none;
-  cursor: pointer;
-  height: 100%;
-
-  > i {
-    margin-left: 6px;
-    font-size: 17px;
-    margin-right: 6px;
-  }
-
-  :hover {
-    background: #2468d6;
-  }
-`
-
-const Options = styled.div`
-  width: 100%;
-  height: 25px;
-  background: #397ae3;
+const Loading = styled.div`
   display: flex;
   flex-direction: row;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center;
+  height: 100%;
+  width: 100%;
+  color: #ffffff44;
+  font-size: 13px;
 `
+
+const LoadingGif = styled.img`
+  width: 15px;
+  height: 15px;
+  margin-right: 9px;
+  margin-bottom: 0px;
+`;
 
 const Wrapper = styled.div`
   width: 100%;

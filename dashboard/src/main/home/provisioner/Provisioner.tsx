@@ -54,12 +54,16 @@ class Provisioner extends Component<PropsType, StateType> {
       project_id: currentProject.id 
     }, (err: any, res: any) => {
       if (err) return;
-      
+
+      let infras = res.data.sort((a: InfraType, b: InfraType) => {
+        return b.id - a.id
+      });
+
       this.setState({ 
         error: false, 
-        infras: res.data, 
+        infras, 
         loading: false,
-        selectedInfra: res.data[0],
+        selectedInfra: infras[0],
       });
     });
   }

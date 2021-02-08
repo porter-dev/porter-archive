@@ -1,7 +1,8 @@
-import aws from "assets/aws.png";
-import digitalOcean from "assets/do.png";
-import gcp from "assets/gcp.png";
-import { InfraType } from "shared/types";
+import aws from '../assets/aws.png';
+import digitalOcean from '../assets/do.png';
+import gcp from '../assets/gcp.png';
+import github from '../assets/github.png';
+import { InfraType } from '../shared/types';
 
 export const infraNames: any = {
   ecr: "Elastic Container Registry (ECR)",
@@ -19,11 +20,10 @@ export const integrationList: any = {
     label: "Kubernetes",
     buttonText: "Add a Cluster",
   },
-  repo: {
-    icon:
-      "https://3.bp.blogspot.com/-xhNpNJJyQhk/XIe4GY78RQI/AAAAAAAAItc/ouueFUj2Hqo5dntmnKqEaBJR4KQ4Q2K3ACK4BGAYYCw/s1600/logo%2Bgit%2Bicon.png",
-    label: "Git Repository",
-    buttonText: "Add a Repository",
+  'repo': {
+    icon: 'https://3.bp.blogspot.com/-xhNpNJJyQhk/XIe4GY78RQI/AAAAAAAAItc/ouueFUj2Hqo5dntmnKqEaBJR4KQ4Q2K3ACK4BGAYYCw/s1600/logo%2Bgit%2Bicon.png',
+    label: 'Git Repository',
+    buttonText: 'Link a Github Account',
   },
   registry: {
     icon:
@@ -69,8 +69,16 @@ export const integrationList: any = {
   },
   do: {
     icon: digitalOcean,
-    label: "DigitalOcean",
+    label: 'DigitalOcean',
   },
+  'github': {
+    icon: github,
+    label: 'GitHub',
+  },
+  'gitlab': {
+    icon: 'https://about.gitlab.com/images/press/logo/png/gitlab-icon-rgb.png',
+    label: 'Gitlab',
+  }
 };
 
 export const isAlphanumeric = (x: string | null) => {
@@ -85,72 +93,4 @@ export const getIgnoreCase = (object: any, key: string) => {
   return object[
     Object.keys(object).find((k) => k.toLowerCase() === key.toLowerCase())
   ];
-};
-
-export const includesCompletedInfraSet = (infras: InfraType[]): boolean => {
-  // TODO: declare globally while avoidiing changes to the array on helper call
-  let infraSets = [
-    ["ecr", "eks"],
-    ["gcr", "gke"],
-    ["docr", "doks"],
-  ];
-  if (infras.length === 0) {
-    return false;
-  }
-
-  let completed = [] as string[];
-  infras.forEach((infra: InfraType, i: number) => {
-    if (infra.status === "created") {
-      completed.push(infra.kind);
-    }
-  });
-
-  completed.forEach((kind: string, i: number) => {
-    infraSets.forEach((infraSet: string[], i: number) => {
-      infraSet.includes(kind) && infraSet.splice(infraSet.indexOf(kind), 1);
-    });
-  });
-
-  let anyCompleted = false;
-  infraSets.forEach((infraSet: string[], i: number) => {
-    if (infraSet.length === 0) {
-      anyCompleted = true;
-    }
-  });
-  return anyCompleted;
-};
-
-export const filterOldInfras = (infras: InfraType[]): InfraType[] => {
-  let infraSets = [
-    ["ecr", "eks"],
-    ["gcr", "gke"],
-    ["docr", "doks"],
-  ];
-  let newestInstances = {} as any;
-  let newestId = -1;
-  let whitelistedInfras = [] as string[];
-  infras.forEach((infra: InfraType, i: number) => {
-    // Determine the most recent set for which provisioning was attempted
-    if (infra.id > newestId) {
-      newestId = infra.id;
-      infraSets.forEach((infraSet: string[]) => {
-        infraSet.includes(infra.kind) ? (whitelistedInfras = infraSet) : null;
-      });
-    }
-
-    if (!newestInstances[infra.kind]) {
-      newestInstances[infra.kind] = infra;
-    } else {
-      let existingId = newestInstances[infra.kind].id;
-      if (infra.id > existingId) {
-        newestInstances[infra.kind] = infra;
-      }
-    }
-  });
-
-  let newestInfras = Object.values(newestInstances) as InfraType[];
-  let result = newestInfras.filter((x: InfraType) => {
-    return whitelistedInfras.includes(x.kind);
-  });
-  return result;
-};
+}

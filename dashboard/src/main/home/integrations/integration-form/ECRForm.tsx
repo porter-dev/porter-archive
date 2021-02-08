@@ -45,36 +45,26 @@ export default class ECRForm extends Component<PropsType, StateType> {
     let { awsRegion, awsAccessId, awsSecretKey, credentialsName } = this.state;
     let { currentProject } = this.context;
 
-    api.createAWSIntegration(
-      "<token>",
-      {
-        aws_region: awsRegion,
-        aws_access_key_id: awsAccessId,
-        aws_secret_access_key: awsSecretKey,
-      },
-      { id: currentProject.id },
-      (err: any, res: any) => {
-        if (err) {
-          console.log(err);
-        } else {
-          api.createECR(
-            "<token>",
-            {
-              name: credentialsName,
-              aws_integration_id: res.data.id,
-            },
-            { id: currentProject.id },
-            (err: any, res: any) => {
-              if (err) {
-                console.log(err);
-              } else {
-                this.props.closeForm();
-              }
-            }
-          );
-        }
+    api.createAWSIntegration('<token>', {
+      aws_region: awsRegion,
+      aws_access_key_id: awsAccessId,
+      aws_secret_access_key: awsSecretKey,
+    }, { id: currentProject.id }, (err: any, res: any) => {
+      if (err) {
+        console.log(err);
+      } else {
+        api.connectECRRegistry('<token>', {
+          name: credentialsName,
+          aws_integration_id: res.data.id,
+        }, { id: currentProject.id }, (err: any, res: any) => {
+          if (err) {
+            console.log(err);
+          } else {
+            this.props.closeForm();
+          }
+        });
       }
-    );
+    });
   };
 
   render() {

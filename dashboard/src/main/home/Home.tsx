@@ -5,7 +5,6 @@ import styled from "styled-components";
 import { Context } from "shared/Context";
 import api from "shared/api";
 import { ClusterType, ProjectType } from "shared/types";
-import { includesCompletedInfraSet } from "shared/common";
 
 import Sidebar from "./sidebar/Sidebar";
 import Dashboard from "./dashboard/Dashboard";
@@ -19,7 +18,6 @@ import IntegrationsModal from "./modals/IntegrationsModal";
 import IntegrationsInstructionsModal from "./modals/IntegrationsInstructionsModal";
 import NewProject from "./new-project/NewProject";
 import Navbar from "./navbar/Navbar";
-import ProvisionerStatus from "./provisioner/ProvisionerStatus";
 import ProjectSettings from "./project-settings/ProjectSettings";
 import ConfirmOverlay from "components/ConfirmOverlay";
 import Modal from "./modals/Modal";
@@ -43,7 +41,6 @@ type StateType = {
 
   // Track last project id for refreshing clusters on project change
   prevProjectId: number | null;
-  sidebarReady: boolean; // Fixes error where ~1/3 times reloading to provisioner fails
 };
 
 // TODO: Handle cluster connected but with some failed infras (no successful set)
@@ -61,38 +58,29 @@ class Home extends Component<PropsType, StateType> {
   // TODO: Refactor and prevent flash + multiple reload
   initializeView = () => {
     let { currentProject } = this.props;
-    let { currentCluster } = this.context;
 
     if (!currentProject) return;
 
-    // Check if current project is provisioning
-    api.getInfra(
-      "<token>",
-      {},
-      { project_id: currentProject.id },
-      (err: any, res: any) => {
-        if (err) {
-          console.log(err);
-          return;
-        }
+    api.getInfra('<token>', {}, { 
+      project_id: currentProject.id 
+    }, (err: any, res: any) => {
+      if (err) return;
+      
+      let creating = false;
 
-        if (
-          res.data.length > 0 &&
-          !currentCluster &&
-          !includesCompletedInfraSet(res.data)
-        ) {
-          this.props.history.push("provisioner");
-          this.setState({ sidebarReady: true });
-        } else if (this.state.ghRedirect) {
-          this.props.history.push("integrations");
-          this.setState({ sidebarReady: true, ghRedirect: false });
-        } else {
-          // TODO: figure out when exactly in flow we need to send user to dashboard
-          // this.props.history.push("dashboard");
-          this.setState({ sidebarReady: true });
-        }
+      for (var i = 0; i < res.data.length; i++) {
+        creating = res.data[i].status === "creating"
       }
-    );
+
+      if (creating) {
+        this.props.history.push("dashboard?tab=provisioner");
+      } else if (this.state.ghRedirect) {
+        this.props.history.push("integrations");
+        this.setState({ ghRedirect: false });
+      } else if (this.props.currentRoute !== "dashboard") {
+          this.props.history.push("dashboard");
+      }
+    });
   };
 
   getProjects = (id?: number) => {
@@ -119,7 +107,6 @@ class Home extends Component<PropsType, StateType> {
                 }
               });
               this.context.setCurrentProject(foundProject);
-              <Redirect to="provisioner"></Redirect>;
             }
 
             if (!foundProject) {
@@ -181,7 +168,7 @@ class Home extends Component<PropsType, StateType> {
           console.log(err);
           return;
         }
-        <Redirect to="provisioner"></Redirect>;
+        this.props.history.push("dashboard?tab=provisioner");
       }
     );
   };
@@ -214,7 +201,7 @@ class Home extends Component<PropsType, StateType> {
             });
           } else if (infras[0] === "docr") {
             this.provisionDOCR(tgtIntegration.id, tier, () => {
-              <Redirect to="provisioner"></Redirect>;
+              this.props.history.push("dashboard?tab=provisioner");
             });
           } else {
             this.provisionDOKS(tgtIntegration.id, region);
@@ -263,7 +250,7 @@ class Home extends Component<PropsType, StateType> {
   }
 
   // TODO: Need to handle the following cases. Do a deep rearchitecture (Prov -> Dashboard?) if need be:
-  // 1. Make sure clicking cluster in course drawer shows cluster-dashboard
+  // 1. Make sure clicking cluster in drawer shows cluster-dashboard
   // 2. Make sure switching projects shows appropriate initial view (dashboard || provisioner)
   // 3. Make sure initializing from URL (DO oauth) displays the appropriate initial view
   componentDidUpdate(prevProps: PropsType) {
@@ -342,8 +329,6 @@ class Home extends Component<PropsType, StateType> {
         );
       } else if (currentView === "integrations") {
         return <Integrations />;
-      } else if (currentView === "provisioner") {
-        return <ProvisionerStatus />;
       } else if (currentView === "project-settings") {
         return <ProjectSettings />;
       }
@@ -356,26 +341,18 @@ class Home extends Component<PropsType, StateType> {
 
   renderSidebar = () => {
     if (this.context.projects.length > 0) {
-      // Force sidebar closed on first provision
-      if (
-        this.props.currentRoute === "provisioner" &&
-        this.state.forceSidebar
-      ) {
-        this.setState({ forceSidebar: false });
-      } else {
-        return (
-          <Sidebar
-            key="sidebar"
-            forceSidebar={this.state.forceSidebar}
-            setWelcome={(x: boolean) => this.setState({ showWelcome: x })}
-            currentView={this.props.currentRoute}
-            forceRefreshClusters={this.state.forceRefreshClusters}
-            setRefreshClusters={(x: boolean) =>
-              this.setState({ forceRefreshClusters: x })
-            }
-          />
-        );
-      }
+      return (
+        <Sidebar
+          key="sidebar"
+          forceSidebar={this.state.forceSidebar}
+          setWelcome={(x: boolean) => this.setState({ showWelcome: x })}
+          currentView={this.props.currentRoute}
+          forceRefreshClusters={this.state.forceRefreshClusters}
+          setRefreshClusters={(x: boolean) =>
+            this.setState({ forceRefreshClusters: x })
+          }
+        />
+      );
     }
   };
 

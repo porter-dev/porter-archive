@@ -37,8 +37,12 @@ export default class Node extends Component<PropsType, StateType> {
         w={Math.round(w)}
         h={Math.round(h)}
       >
-        <Kind>{this.props.showKindLabels ? kind : null}</Kind>
-        <NodeBlock
+        <Kind>
+          <StyledMark>
+            {this.props.showKindLabels ? kind : null}
+          </StyledMark>
+        </Kind>
+        <NodeBlock 
           onMouseDown={nodeMouseDown}
           onMouseUp={nodeMouseUp}
           onMouseEnter={() => this.props.setCurrentNode(this.props.node)}
@@ -48,7 +52,11 @@ export default class Node extends Component<PropsType, StateType> {
         >
           <i className="material-icons">{icon}</i>
         </NodeBlock>
-        <NodeLabel>{name}</NodeLabel>
+        <NodeLabel>
+          <StyledMark>
+            {name}
+          </StyledMark>
+        </NodeLabel>
       </StyledNode>
     );
   }
@@ -68,7 +76,7 @@ const Kind = styled.div`
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  z-index: 0;
+  z-index: 101;
 `;
 
 const NodeLabel = styled.div`
@@ -83,7 +91,7 @@ const NodeLabel = styled.div`
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  z-index: 0;
+  z-index: 101;
 `;
 
 const NodeBlock = styled.div`
@@ -123,4 +131,9 @@ const StyledNode: any = styled.div.attrs((props: NodeType) => ({
   display: flex;
   flex-direction: column;
   align-items: center;
+`;
+
+const StyledMark = styled.mark`
+  background-color: #202227aa;
+  color: #aaaabb;
 `;

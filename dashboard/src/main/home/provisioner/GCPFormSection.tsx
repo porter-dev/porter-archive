@@ -190,42 +190,36 @@ class GCPFormSection extends Component<PropsType, StateType> {
           handleError();
           return;
         }
-        this.props.history.push("provisioner");
-      }
-    );
-  };
+        this.props.history.push("dashboard?tab=provisioner");
+    });
+  }
 
   handleCreateFlow = () => {
     let { selectedInfras, gcpKeyData, gcpProjectId, gcpRegion } = this.state;
     let { currentProject } = this.context;
-    api.createGCPIntegration(
-      "<token>",
-      {
-        gcp_region: gcpRegion,
-        gcp_key_data: gcpKeyData,
-        gcp_project_id: gcpProjectId,
-      },
-      { project_id: currentProject.id },
-      (err: any, res: any) => {
-        if (err) {
-          console.log(err);
-        } else if (res?.data) {
-          console.log("gcp provisioned with response: ", res.data);
-          let { id } = res.data;
+    api.createGCPIntegration('<token>', {
+      gcp_region: gcpRegion,
+      gcp_key_data: gcpKeyData,
+      gcp_project_id: gcpProjectId,
+    }, { project_id: currentProject.id }, (err: any, res: any) => {
+      if (err) {
+        console.log(err);
+      } else if (res?.data) {
+        console.log('gcp provisioned with response: ', res.data);
+        let { id } = res.data;
 
-          if (selectedInfras.length === 2) {
-            // Case: project exists, provision GCR + GKE
-            this.provisionGCR(id, () => this.provisionGKE(id));
-          } else if (selectedInfras[0].value === "gcr") {
-            // Case: project exists, only provision GCR
-            this.provisionGCR(id, () => this.props.history.push("provisioner"));
-          } else {
-            // Case: project exists, only provision GKE
-            this.provisionGKE(id);
-          }
+        if (selectedInfras.length === 2) {
+          // Case: project exists, provision GCR + GKE
+          this.provisionGCR(id, () => this.provisionGKE(id));
+        } else if (selectedInfras[0].value === 'gcr') {
+          // Case: project exists, only provision GCR
+          this.provisionGCR(id, () => this.props.history.push("dashboard?tab=provisioner"));
+        } else {
+          // Case: project exists, only provision GKE
+          this.provisionGKE(id);
         }
       }
-    );
+    });
   };
 
   // TODO: handle generically (with > 2 steps)

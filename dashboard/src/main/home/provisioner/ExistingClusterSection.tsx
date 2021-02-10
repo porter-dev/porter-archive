@@ -52,7 +52,7 @@ class ExistingClusterSection extends Component<PropsType, StateType> {
                   });
                   setCurrentProject(proj);
 
-                  this.props.history.push("dashboard");
+                  this.props.history.push("dashboard?tab=overview");
                 }
               }
             }

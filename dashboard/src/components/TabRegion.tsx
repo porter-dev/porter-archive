@@ -17,21 +17,18 @@ type StateType = {};
 
 // Manages a tab selector and renders the associated view
 export default class TabRegion extends Component<PropsType, StateType> {
-  setDefaultTab = () => {
-    if (!this.props.defaultTab && this.props.options[0]) {
-      this.props.setCurrentTab(this.props.options[0].value);
-    }
-  };
-
-  componentDidMount() {
-    this.setDefaultTab();
-  }
+  defaultTab = () =>
+    this.props.defaultTab
+      ? this.props.defaultTab
+      : this.props.options[0]
+      ? this.props.options[0].value
+      : "";
 
   componentDidUpdate(prevProps: PropsType) {
     let { options, currentTab } = this.props;
     if (prevProps.options !== options) {
       if (options.filter((x) => x.value === currentTab).length === 0) {
-        this.setDefaultTab();
+        this.props.setCurrentTab(this.defaultTab());
       }
     }
   }

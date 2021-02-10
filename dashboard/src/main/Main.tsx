@@ -10,7 +10,7 @@ import Register from "./Register";
 import CurrentError from "./CurrentError";
 import Home from "./home/Home";
 import Loading from "components/Loading";
-import { PorterUrls } from "shared/urls";
+import { PorterUrls } from "shared/routing";
 
 type PropsType = {};
 

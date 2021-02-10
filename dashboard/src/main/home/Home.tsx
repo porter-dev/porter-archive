@@ -23,7 +23,7 @@ import ConfirmOverlay from "components/ConfirmOverlay";
 import Modal from "./modals/Modal";
 import * as FullStory from "@fullstory/browser";
 import { Redirect, RouteComponentProps, withRouter } from "react-router";
-import { PorterUrls } from "shared/urls";
+import { PorterUrls } from "shared/routing";
 
 type PropsType = RouteComponentProps & {
   logOut: () => void;
@@ -61,26 +61,30 @@ class Home extends Component<PropsType, StateType> {
 
     if (!currentProject) return;
 
-    api.getInfra('<token>', {}, { 
-      project_id: currentProject.id 
-    }, (err: any, res: any) => {
-      if (err) return;
-      
-      let creating = false;
+    api.getInfra(
+      "<token>",
+      {},
+      {
+        project_id: currentProject.id,
+      },
+      (err: any, res: any) => {
+        if (err) return;
+        let creating = false;
 
-      for (var i = 0; i < res.data.length; i++) {
-        creating = res.data[i].status === "creating"
-      }
+        for (var i = 0; i < res.data.length; i++) {
+          creating = res.data[i].status === "creating";
+        }
 
-      if (creating) {
-        this.props.history.push("dashboard?tab=provisioner");
-      } else if (this.state.ghRedirect) {
-        this.props.history.push("integrations");
-        this.setState({ ghRedirect: false });
-      } else if (this.props.currentRoute !== "dashboard") {
+        if (creating) {
+          this.props.history.push("dashboard?tab=provisioner");
+        } else if (this.state.ghRedirect) {
+          this.props.history.push("integrations");
+          this.setState({ ghRedirect: false });
+        } else if (this.props.currentRoute !== "dashboard") {
           this.props.history.push("dashboard");
+        }
       }
-    });
+    );
   };
 
   getProjects = (id?: number) => {
@@ -108,7 +112,6 @@ class Home extends Component<PropsType, StateType> {
               });
               this.context.setCurrentProject(foundProject);
             }
-
             if (!foundProject) {
               res.data.forEach((project: ProjectType, i: number) => {
                 if (

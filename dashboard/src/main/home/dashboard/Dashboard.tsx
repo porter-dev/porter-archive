@@ -1,4 +1,3 @@
-import { render } from "@testing-library/react";
 import React, { Component } from "react";
 import styled from "styled-components";
 
@@ -9,9 +8,11 @@ import api from "shared/api";
 
 import ProvisionerSettings from "../provisioner/ProvisionerSettings";
 import ClusterPlaceholderContainer from "./ClusterPlaceholderContainer";
-import { Redirect, RouteComponentProps, withRouter } from "react-router";
+import { RouteComponentProps, withRouter } from "react-router";
 import TabRegion from "components/TabRegion";
 import Provisioner from "../provisioner/Provisioner";
+
+import { setSearchParam } from "shared/routing";
 
 type PropsType = RouteComponentProps & {
   projectId: number | null;
@@ -22,18 +23,15 @@ const tabOptions = [
   { label: "Provisioner Status", value: "provisioner" },
 ];
 // TODO: rethink this typing, should be coupled with tabOptions
-type TabType = "overview" | "provisioner"
+type TabType = "overview" | "provisioner";
 
 type StateType = {
   infras: InfraType[];
-  currentTab: TabType;
 };
-
 
 class Dashboard extends Component<PropsType, StateType> {
   state = {
     infras: [] as InfraType[],
-    currentTab: "overview" as TabType,
   };
 
   refreshInfras = () => {
@@ -69,15 +67,10 @@ class Dashboard extends Component<PropsType, StateType> {
     this.props.history.push("project-settings");
   };
 
-  renderTabContents = () => {
-    const currentTab = new URLSearchParams(this.props.location.search).get("tab")
-    if (
-      currentTab && currentTab !== this.state.currentTab
-    ) {
-      this.setState({ currentTab: currentTab as TabType });
-    }
+  currentTab = () => new URLSearchParams(this.props.location.search).get("tab");
 
-    if (this.state.currentTab === "provisioner") {
+  renderTabContents = () => {
+    if (this.currentTab() === "provisioner") {
       return <Provisioner />;
     } else {
       return (
@@ -99,8 +92,7 @@ class Dashboard extends Component<PropsType, StateType> {
   };
 
   render() {
-    let { currentProject, currentCluster } = this.context;
-    let { infras } = this.state;
+    let { currentProject } = this.context;
     let { onShowProjectSettings } = this;
     return (
       <>
@@ -135,8 +127,12 @@ class Dashboard extends Component<PropsType, StateType> {
             </InfoSection>
 
             <TabRegion
-              currentTab={this.state.currentTab}
-              setCurrentTab={(x: TabType) => this.props.history.push(`dashboard?tab=${x}`)}
+              currentTab={this.currentTab()}
+              setCurrentTab={(x: TabType) =>
+                this.props.history.push(
+                  setSearchParam(this.props.location, "tab", x)
+                )
+              }
               options={tabOptions}
             >
               {this.renderTabContents()}

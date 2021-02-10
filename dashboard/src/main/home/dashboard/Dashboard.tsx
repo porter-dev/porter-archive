@@ -22,8 +22,8 @@ const tabOptions = [
   { label: "Project Overview", value: "overview" },
   { label: "Provisioner Status", value: "provisioner" },
 ];
-// TODO: rethink this typing, should be coupled with tabOptions
-type TabType = "overview" | "provisioner";
+// TODO: rethink this list, should be coupled with tabOptions
+const tabOptionStrings = ["overview", "provisioner"];
 
 type StateType = {
   infras: InfraType[];
@@ -61,6 +61,10 @@ class Dashboard extends Component<PropsType, StateType> {
     if (this.props.projectId && prevProps.projectId !== this.props.projectId) {
       this.refreshInfras();
     }
+
+    if (!tabOptionStrings.includes(this.currentTab())) {
+      this.setCurrentTab("overview");
+    }
   }
 
   onShowProjectSettings = () => {
@@ -90,6 +94,9 @@ class Dashboard extends Component<PropsType, StateType> {
       );
     }
   };
+
+  setCurrentTab = (x: string) =>
+    this.props.history.push(setSearchParam(this.props.location, "tab", x));
 
   render() {
     let { currentProject } = this.context;
@@ -128,11 +135,7 @@ class Dashboard extends Component<PropsType, StateType> {
 
             <TabRegion
               currentTab={this.currentTab()}
-              setCurrentTab={(x: TabType) =>
-                this.props.history.push(
-                  setSearchParam(this.props.location, "tab", x)
-                )
-              }
+              setCurrentTab={this.setCurrentTab}
               options={tabOptions}
             >
               {this.renderTabContents()}

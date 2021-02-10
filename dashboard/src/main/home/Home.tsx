@@ -81,7 +81,7 @@ class Home extends Component<PropsType, StateType> {
           this.props.history.push("integrations");
           this.setState({ ghRedirect: false });
         } else if (this.props.currentRoute !== "dashboard") {
-          this.props.history.push("dashboard");
+          this.props.history.push("dashboard?tab=overview");
         }
       }
     );
@@ -476,7 +476,7 @@ class Home extends Component<PropsType, StateType> {
       }
     );
     setCurrentModal(null, null);
-    this.props.history.push("dashboard");
+    this.props.history.push("dashboard?tab=overview");
   };
 
   render() {

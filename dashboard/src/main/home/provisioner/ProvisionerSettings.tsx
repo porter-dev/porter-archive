@@ -39,7 +39,7 @@ class NewProject extends Component<PropsType, StateType> {
     setCurrentError(
       "Provisioning failed. Check your credentials and try again."
     );
-    this.props.history.push("dashboard");
+    this.props.history.push("dashboard?tab=overview");
   };
 
   renderSelectedProvider = () => {

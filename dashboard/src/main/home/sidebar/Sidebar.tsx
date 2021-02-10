@@ -7,10 +7,10 @@ import settings from "assets/settings.svg";
 
 import { Context } from "shared/Context";
 
-import ClusterSection from './ClusterSection';
-import ProjectSectionContainer from './ProjectSectionContainer';
-import loading from 'assets/loading.gif';
-import { RouteComponentProps, withRouter } from 'react-router';
+import ClusterSection from "./ClusterSection";
+import ProjectSectionContainer from "./ProjectSectionContainer";
+import loading from "assets/loading.gif";
+import { RouteComponentProps, withRouter } from "react-router";
 
 type PropsType = RouteComponentProps & {
   forceSidebar: boolean;
@@ -102,7 +102,7 @@ class Sidebar extends Component<PropsType, StateType> {
           <NavButton
             onClick={() =>
               currentView !== "provisioner" &&
-              this.props.history.push("dashboard")
+              this.props.history.push("dashboard?tab=overview")
             }
             selected={
               currentView === "dashboard" || currentView === "provisioner"
@@ -119,7 +119,7 @@ class Sidebar extends Component<PropsType, StateType> {
             Templates
           </NavButton>
           <NavButton
-            selected={currentView === 'integrations'}
+            selected={currentView === "integrations"}
             /* 
             onClick={() => {
               setCurrentView('integrations')

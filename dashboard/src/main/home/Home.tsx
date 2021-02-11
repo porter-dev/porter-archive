@@ -74,14 +74,11 @@ class Home extends Component<PropsType, StateType> {
         for (var i = 0; i < res.data.length; i++) {
           creating = res.data[i].status === "creating";
         }
-
         if (creating) {
           this.props.history.push("dashboard?tab=provisioner");
         } else if (this.state.ghRedirect) {
           this.props.history.push("integrations");
           this.setState({ ghRedirect: false });
-        } else if (this.props.currentRoute !== "dashboard") {
-          this.props.history.push("dashboard?tab=overview");
         }
       }
     );
@@ -321,6 +318,7 @@ class Home extends Component<PropsType, StateType> {
 
   renderContents = () => {
     let currentView = this.props.currentRoute;
+    console.log(this.props.currentRoute);
     if (this.context.currentProject && currentView !== "new-project") {
       if (currentView === "cluster-dashboard") {
         return this.renderDashboard();

@@ -26,7 +26,7 @@ export default class ValuesForm extends Component<PropsType, StateType> {
     let key = item.name || item.variable;
     let value = this.props.metaState[key];
     
-    if (item.settings && item.settings.unit && value) {
+    if (item.settings && item.settings.unit && value && value.includes) {
       value = value.split(item.settings.unit)[0];
     }
     return value;

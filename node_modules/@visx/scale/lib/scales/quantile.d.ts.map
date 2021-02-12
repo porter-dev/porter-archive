@@ -1,1 +1,0 @@
-{"version":3,"file":"quantile.d.ts","sourceRoot":"","sources":["../../src/scales/quantile.ts"],"names":[],"mappings":"AACA,OAAO,EAAE,aAAa,EAAE,MAAM,eAAe,CAAC;AAC9C,OAAO,EAAE,0BAA0B,EAAE,MAAM,sBAAsB,CAAC;AAGlE,eAAO,MAAM,mBAAmB,ihBAA0D,CAAC;AAE3F,MAAM,CAAC,OAAO,UAAU,mBAAmB,CAAC,MAAM,GAAG,aAAa,EAChE,MAAM,CAAC,EAAE,0BAA0B,CAAC,UAAU,EAAE,MAAM,CAAC,mDAGxD"}

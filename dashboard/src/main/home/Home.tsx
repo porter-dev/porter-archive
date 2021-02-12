@@ -318,7 +318,6 @@ class Home extends Component<PropsType, StateType> {
 
   renderContents = () => {
     let currentView = this.props.currentRoute;
-    console.log(this.props.currentRoute);
     if (this.context.currentProject && currentView !== "new-project") {
       if (currentView === "cluster-dashboard") {
         return this.renderDashboard();

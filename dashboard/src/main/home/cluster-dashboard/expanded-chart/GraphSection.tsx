@@ -51,4 +51,6 @@ const StyledGraphSection = styled.div`
   height: 100%;
   background: #ffffff11;
   font-size: 13px;
+  border-radius: 5px;
+  overflow: hidden;
 `;

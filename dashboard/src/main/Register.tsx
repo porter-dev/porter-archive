@@ -275,7 +275,7 @@ const Prompt = styled.div`
 const Logo = styled.img`
   width: 140px;
   margin-top: 50px;
-  margin-bottom: 55px;
+  margin-bottom: 60px;
   user-select: none;
 `;
 

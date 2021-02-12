@@ -127,10 +127,8 @@ export default class Main extends Component<PropsType, StateType> {
           render={() => {
             if (this.state.isLoggedIn) {
               return <Redirect to="/dashboard" />;
-            } else if (this.state.initialized) {
-              return <Redirect to="/login" />;
             } else {
-              return <Redirect to="/register" />;
+              return <Redirect to="/login" />;
             }
           }}
         />

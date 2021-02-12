@@ -71,6 +71,21 @@ func (repo *UserRepository) ReadUserByEmail(email string) (*models.User, error) 
 	return nil, gorm.ErrRecordNotFound
 }
 
+// ReadUserByGithubUserID finds a single user based on their github id field
+func (repo *UserRepository) ReadUserByGithubUserID(id int64) (*models.User, error) {
+	if !repo.canQuery {
+		return nil, errors.New("Cannot read from database")
+	}
+
+	for _, u := range repo.users {
+		if u.GithubUserID == id && id != 0 {
+			return u, nil
+		}
+	}
+
+	return nil, gorm.ErrRecordNotFound
+}
+
 // UpdateUser modifies an existing User in the database
 func (repo *UserRepository) UpdateUser(user *models.User) (*models.User, error) {
 	if !repo.canQuery {

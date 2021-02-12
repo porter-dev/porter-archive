@@ -210,11 +210,15 @@ func (app *App) upsertUserFromToken(tok *oauth2.Token) (*models.User, error) {
 		}
 
 		user, err = app.Repo.User.CreateUser(user)
+
+		if err != nil {
+			return nil, err
+		}
 	} else if err != nil {
 		return nil, fmt.Errorf("unexpected error occurred:", err.Error())
 	}
 
-	return user, err
+	return user, nil
 }
 
 // updates a project's repository clients with the token information.

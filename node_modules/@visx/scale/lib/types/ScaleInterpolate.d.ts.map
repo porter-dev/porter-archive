@@ -1,1 +1,0 @@
-{"version":3,"file":"ScaleInterpolate.d.ts","sourceRoot":"","sources":["../../src/types/ScaleInterpolate.ts"],"names":[],"mappings":"AAAA,oBAAY,gBAAgB,GACxB,KAAK,GACL,KAAK,GACL,KAAK,GACL,KAAK,GACL,UAAU,GACV,UAAU,GACV,WAAW,GACX,gBAAgB,CAAC;AAErB,MAAM,WAAW,sBAAsB;IACrC,IAAI,EAAE,KAAK,GAAG,WAAW,GAAG,gBAAgB,CAAC;IAC7C,KAAK,CAAC,EAAE,MAAM,CAAC;CAChB"}

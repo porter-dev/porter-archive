@@ -1,1 +1,0 @@
-{"version":3,"file":"createColorInterpolator.d.ts","sourceRoot":"","sources":["../../src/utils/createColorInterpolator.ts"],"names":[],"mappings":"AAAA,OAAO,EAEL,cAAc,EAOf,MAAM,gBAAgB,CAAC;AACxB,OAAO,EAAE,sBAAsB,EAAE,gBAAgB,EAAE,MAAM,2BAA2B,CAAC;AAarF,MAAM,CAAC,OAAO,UAAU,uBAAuB,CAC7C,WAAW,EAAE,gBAAgB,GAAG,sBAAsB,yBAkBvD"}

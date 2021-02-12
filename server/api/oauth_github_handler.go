@@ -4,7 +4,9 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"net/url"
 	"strconv"
+	"strings"
 
 	"github.com/porter-dev/porter/internal/models"
 	"gorm.io/gorm"
@@ -119,6 +121,11 @@ func (app *App) HandleGithubOAuthCallback(w http.ResponseWriter, r *http.Request
 		// otherwise, create the user if not exists
 		user, err := app.upsertUserFromToken(token)
 
+		if strings.Contains(err.Error(), "already registered") {
+			http.Redirect(w, r, "/login?error="+url.QueryEscape(err.Error()), 302)
+			return
+		}
+
 		if err != nil {
 			http.Error(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)
 			return
@@ -204,14 +211,23 @@ func (app *App) upsertUserFromToken(tok *oauth2.Token) (*models.User, error) {
 			return nil, fmt.Errorf("github user must have an email")
 		}
 
-		user = &models.User{
-			Email:        primary,
-			GithubUserID: githubUser.GetID(),
-		}
+		// check if a user with that email address already exists
+		_, err = app.Repo.User.ReadUserByEmail(primary)
 
-		user, err = app.Repo.User.CreateUser(user)
+		if err == gorm.ErrRecordNotFound {
+			user = &models.User{
+				Email:        primary,
+				GithubUserID: githubUser.GetID(),
+			}
 
-		if err != nil {
+			user, err = app.Repo.User.CreateUser(user)
+
+			if err != nil {
+				return nil, err
+			}
+		} else if err == nil {
+			return nil, fmt.Errorf("email already registered")
+		} else if err != nil {
 			return nil, err
 		}
 	} else if err != nil {

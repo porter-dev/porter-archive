@@ -126,24 +126,12 @@ func (app *App) HandleGithubOAuthCallback(w http.ResponseWriter, r *http.Request
 
 		// log the user in
 		app.Logger.Info().Msgf("New user created: %d", user.ID)
-		var redirect string
-
-		if valR := session.Values["redirect"]; valR != nil {
-			redirect = session.Values["redirect"].(string)
-		}
 
 		session.Values["authenticated"] = true
 		session.Values["user_id"] = user.ID
 		session.Values["email"] = user.Email
 		session.Values["redirect"] = ""
 		session.Save(r, w)
-
-		w.WriteHeader(http.StatusCreated)
-
-		if err := app.sendUser(w, user.ID, user.Email, redirect); err != nil {
-			app.handleErrorFormDecoding(err, ErrUserDecode, w)
-			return
-		}
 	}
 
 	if session.Values["query_params"] != "" {
@@ -196,9 +184,29 @@ func (app *App) upsertUserFromToken(tok *oauth2.Token) (*models.User, error) {
 
 	// if the user does not exist, create new user
 	if err != nil && err == gorm.ErrRecordNotFound {
+		emails, _, err := client.Users.ListEmails(context.Background(), &github.ListOptions{})
+
+		if err != nil {
+			return nil, err
+		}
+
+		primary := ""
+
+		// get the primary email
+		for _, email := range emails {
+			if email.GetPrimary() {
+				primary = email.GetEmail()
+				break
+			}
+		}
+
+		if primary == "" {
+			return nil, fmt.Errorf("github user must have an email")
+		}
+
 		user = &models.User{
-			Email:        *githubUser.Email,
-			GithubUserID: *githubUser.ID,
+			Email:        primary,
+			GithubUserID: githubUser.GetID(),
 		}
 
 		user, err = app.Repo.User.CreateUser(user)

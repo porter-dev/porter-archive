@@ -16,7 +16,7 @@ import (
 	"github.com/porter-dev/porter/server/api"
 	"github.com/porter-dev/porter/server/router"
 
-	sessionstore "github.com/porter-dev/porter/internal/auth"
+	"github.com/porter-dev/porter/internal/auth/sessionstore"
 )
 
 type tester struct {

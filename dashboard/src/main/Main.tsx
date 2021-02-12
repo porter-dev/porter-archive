@@ -28,7 +28,10 @@ export default class Main extends Component<PropsType, StateType> {
   };
 
   componentDidMount() {
-    let { setUser } = this.context;
+    let { setUser, setCurrentError } = this.context;
+    let urlParams = new URLSearchParams(window.location.search);
+    let error = urlParams.get("error");
+    error && setCurrentError(error);
     api.checkAuth("", {}, {}, (err: any, res: any) => {
       if (err && err.response?.status == 403) {
         this.setState({ isLoggedIn: false, loading: false });

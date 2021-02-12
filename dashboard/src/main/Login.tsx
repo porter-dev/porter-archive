@@ -1,6 +1,7 @@
 import React, { ChangeEvent, Component } from "react";
 import styled from "styled-components";
 import logo from "assets/logo.png";
+import github from "assets/github-icon.png";
 
 import api from "shared/api";
 import { emailRegex } from "shared/regex";
@@ -98,6 +99,11 @@ export default class Login extends Component<PropsType, StateType> {
     }
   };
 
+  githubRedirect = () => {
+    let redirectUrl = `/api/oauth/login/github`;
+    window.location.href = redirectUrl;
+  };
+
   render() {
     let { email, password, credentialError, emailError } = this.state;
 
@@ -109,8 +115,18 @@ export default class Login extends Component<PropsType, StateType> {
           </OverflowWrapper>
           <FormWrapper>
             <Logo src={logo} />
-            <Line />
             <Prompt>Log in to Porter</Prompt>
+            <OAuthButton onClick={this.githubRedirect}>
+              <IconWrapper>
+                <Icon src={github} />
+                Log in with GitHub
+              </IconWrapper>
+            </OAuthButton>
+            <OrWrapper>
+              <Line />
+              <Or>or</Or>
+            </OrWrapper>
+            <DarkMatter />
             <InputWrapper>
               <Input
                 type="email"
@@ -157,14 +173,69 @@ export default class Login extends Component<PropsType, StateType> {
 
 Login.contextType = Context;
 
+const DarkMatter = styled.div`
+  margin-top: -10px;
+`;
+
+const Or = styled.div`
+  position: absolute;
+  width: 30px;
+  text-align: center;
+  background: #111114;
+  z-index: 999;
+  left: calc(50% - 15px);
+  margin-top: -1px;
+`;
+
+const OrWrapper = styled.div`
+  display: flex;
+  align-items: center;
+  color: #ffffff44;
+  font-size: 14px;
+  position: relative;
+`;
+
+const IconWrapper = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 10px;
+  height: 100%;
+`;
+
+const Icon = styled.img`
+  height: 18px;
+  margin-right: 20px;
+`;
+
+const OAuthButton = styled.div`
+  width: 200px;
+  height: 30px;
+  display: flex;
+  background: #ffffff;
+  align-items: center;
+  border-radius: 3px;
+  color: #000000;
+  cursor: pointer;
+  user-select: none;
+  font-weight: 500;
+  font-size: 13px;
+  :hover {
+    background: #ffffffdd;
+  }
+`;
+
 const Link = styled.a`
   margin-left: 5px;
   color: #819bfd;
 `;
 
 const Helper = styled.div`
-  margin: 52px 0px 20px;
-  font-size: 14px;
+  position: absolute;
+  bottom: 30px;
+  width: 100%;
+  text-align: center;
+  font-size: 13px;
   font-family: "Work Sans", sans-serif;
   color: #ffffff44;
 `;
@@ -208,21 +279,22 @@ const ErrorHelper = styled.div`
 `;
 
 const Line = styled.div`
-  height: 3px;
+  min-height: 3px;
   width: 100px;
+  z-index: 999;
   background: #ffffff22;
-  margin: 40px 0px 35px;
+  margin: 30px 0px 30px;
 `;
 
 const Button = styled.button`
   width: 200px;
-  height: 30px;
+  min-height: 30px;
   display: flex;
   justify-content: center;
   align-items: center;
   font-family: "Work Sans", sans-serif;
   cursor: pointer;
-  margin-top: 25px;
+  margin-top: 9px;
   border-radius: 2px;
   border: 0;
   background: #819bfd;
@@ -257,8 +329,9 @@ const Prompt = styled.div`
 `;
 
 const Logo = styled.img`
-  width: 150px;
-  margin-top: 53px;
+  width: 140px;
+  margin-top: 50px;
+  margin-bottom: 45px;
   user-select: none;
 `;
 
@@ -293,7 +366,7 @@ const GradientBg = styled.div`
 
 const LoginPanel = styled.div`
   width: 330px;
-  height: 450px;
+  height: 470px;
   background: white;
   margin-top: -20px;
   border-radius: 10px;

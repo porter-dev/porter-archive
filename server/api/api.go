@@ -68,8 +68,9 @@ type App struct {
 	DBConf config.DBConf
 
 	// oauth-specific clients
-	GithubConf *oauth2.Config
-	DOConf     *oauth2.Config
+	GithubUserConf    *oauth2.Config
+	GithubProjectConf *oauth2.Config
+	DOConf            *oauth2.Config
 
 	db         *gorm.DB
 	validator  *vr.Validate
@@ -117,7 +118,14 @@ func New(conf *AppConfig) (*App, error) {
 
 	// if server config contains OAuth client info, create clients
 	if sc := conf.ServerConf; sc.GithubClientID != "" && sc.GithubClientSecret != "" {
-		app.GithubConf = oauth.NewGithubClient(&oauth.Config{
+		app.GithubUserConf = oauth.NewGithubClient(&oauth.Config{
+			ClientID:     sc.GithubClientID,
+			ClientSecret: sc.GithubClientSecret,
+			Scopes:       []string{"read:user", "user:email"},
+			BaseURL:      sc.ServerURL,
+		})
+
+		app.GithubProjectConf = oauth.NewGithubClient(&oauth.Config{
 			ClientID:     sc.GithubClientID,
 			ClientSecret: sc.GithubClientSecret,
 			Scopes:       []string{"repo", "read:user", "workflow"},

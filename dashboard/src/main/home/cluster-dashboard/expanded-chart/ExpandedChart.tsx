@@ -22,6 +22,7 @@ import ValuesForm from "components/values-form/ValuesForm";
 import RevisionSection from "./RevisionSection";
 import ValuesYaml from "./ValuesYaml";
 import GraphSection from "./GraphSection";
+import MetricsSection from "./MetricsSection";
 import ListSection from "./ListSection";
 import StatusSection from "./status/StatusSection";
 import SettingsSection from "./SettingsSection";
@@ -280,6 +281,8 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
     let chart = currentChart;
 
     switch (currentTab) {
+      case "metrics":
+        return <MetricsSection currentChart={chart} />;
       case "status":
         return <StatusSection currentChart={chart} selectors={podSelectors} />;
       case "settings":
@@ -365,6 +368,7 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
     // Append universal tabs
     tabOptions.push(
       { label: "Status", value: "status" },
+      // { label: "Metrics", value: "metrics" },
       { label: "Chart Overview", value: "graph" }
     );
 

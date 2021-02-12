@@ -4,9 +4,11 @@
   "private": true,
   "dependencies": {
     "@fullstory/browser": "^1.4.5",
+    "@material-ui/core": "^4.11.3",
     "@types/js-yaml": "^3.12.5",
     "@types/lodash": "^4.14.165",
     "@types/markdown-to-jsx": "^6.11.3",
+    "@types/material-ui": "^0.21.8",
     "@types/qs": "^6.9.5",
     "@types/random-words": "^1.1.0",
     "@visx/curve": "^1.0.0",

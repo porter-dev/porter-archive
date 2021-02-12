@@ -10,6 +10,9 @@ type User struct {
 
 	Email    string `json:"email" gorm:"unique"`
 	Password string `json:"password"`
+
+	// The github user id used for login (optional)
+	GithubUserID int64
 }
 
 // UserExternal represents the User type that is sent over REST

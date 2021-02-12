@@ -1,0 +1,1 @@
+{"version":3,"file":"utc.d.ts","sourceRoot":"","sources":["../../src/scales/utc.ts"],"names":[],"mappings":"AACA,OAAO,EAAE,aAAa,EAAE,MAAM,eAAe,CAAC;AAC9C,OAAO,EAAE,0BAA0B,EAAE,MAAM,sBAAsB,CAAC;AAGlE,eAAO,MAAM,cAAc,mdAQ1B,CAAC;AAEF,MAAM,CAAC,OAAO,UAAU,cAAc,CAAC,MAAM,GAAG,aAAa,EAC3D,MAAM,CAAC,EAAE,0BAA0B,CAAC,KAAK,EAAE,MAAM,CAAC,uDAGnD"}

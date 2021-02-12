@@ -22,7 +22,7 @@ import ValuesForm from "components/values-form/ValuesForm";
 import RevisionSection from "./RevisionSection";
 import ValuesYaml from "./ValuesYaml";
 import GraphSection from "./GraphSection";
-import MetricsSection from "./MetricsSection";
+import MetricsSection from "./metrics/MetricsSection";
 import ListSection from "./ListSection";
 import StatusSection from "./status/StatusSection";
 import SettingsSection from "./SettingsSection";

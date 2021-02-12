@@ -1,0 +1,1 @@
+{"version":3,"file":"quantize.d.ts","sourceRoot":"","sources":["../../src/scales/quantize.ts"],"names":[],"mappings":"AACA,OAAO,EAAE,aAAa,EAAE,MAAM,eAAe,CAAC;AAC9C,OAAO,EAAE,0BAA0B,EAAE,MAAM,sBAAsB,CAAC;AAGlE,eAAO,MAAM,mBAAmB,0lBAM/B,CAAC;AAEF,MAAM,CAAC,OAAO,UAAU,mBAAmB,CAAC,MAAM,GAAG,aAAa,EAChE,MAAM,CAAC,EAAE,0BAA0B,CAAC,UAAU,EAAE,MAAM,CAAC,mDAGxD"}

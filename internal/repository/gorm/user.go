@@ -44,6 +44,15 @@ func (repo *UserRepository) ReadUserByEmail(email string) (*models.User, error) 
 	return user, nil
 }
 
+// ReadUserByGithubUserID finds a single user based on their github user id
+func (repo *UserRepository) ReadUserByGithubUserID(id int64) (*models.User, error) {
+	user := &models.User{}
+	if err := repo.db.Where("github_user_id = ?", id).First(&user).Error; err != nil {
+		return nil, err
+	}
+	return user, nil
+}
+
 // UpdateUser modifies an existing User in the database
 func (repo *UserRepository) UpdateUser(user *models.User) (*models.User, error) {
 	if err := repo.db.Save(user).Error; err != nil {

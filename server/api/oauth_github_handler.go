@@ -7,6 +7,7 @@ import (
 	"strconv"
 
 	"github.com/porter-dev/porter/internal/models"
+	"gorm.io/gorm"
 
 	"github.com/go-chi/chi"
 	"github.com/google/go-github/github"
@@ -28,7 +29,7 @@ func (app *App) HandleGithubOAuthStartUser(w http.ResponseWriter, r *http.Reques
 	}
 
 	// specify access type offline to get a refresh token
-	url := app.GithubConf.AuthCodeURL(state, oauth2.AccessTypeOnline)
+	url := app.GithubUserConf.AuthCodeURL(state, oauth2.AccessTypeOnline)
 
 	http.Redirect(w, r, url, 302)
 }
@@ -47,7 +48,7 @@ func (app *App) HandleGithubOAuthStartProject(w http.ResponseWriter, r *http.Req
 	}
 
 	// specify access type offline to get a refresh token
-	url := app.GithubConf.AuthCodeURL(state, oauth2.AccessTypeOffline)
+	url := app.GithubProjectConf.AuthCodeURL(state, oauth2.AccessTypeOffline)
 
 	http.Redirect(w, r, url, 302)
 }
@@ -97,7 +98,7 @@ func (app *App) HandleGithubOAuthCallback(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	token, err := app.GithubConf.Exchange(oauth2.NoContext, r.URL.Query().Get("code"))
+	token, err := app.GithubProjectConf.Exchange(oauth2.NoContext, r.URL.Query().Get("code"))
 
 	if err != nil {
 		http.Error(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)
@@ -109,10 +110,41 @@ func (app *App) HandleGithubOAuthCallback(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	userID, _ := session.Values["user_id"].(uint)
-	projID, _ := session.Values["project_id"].(uint)
+	if session.Values["project_id"] != nil && session.Values["project_id"] != "" {
+		userID, _ := session.Values["user_id"].(uint)
+		projID, _ := session.Values["project_id"].(uint)
 
-	app.updateProjectFromToken(projID, userID, token)
+		app.updateProjectFromToken(projID, userID, token)
+	} else {
+		// otherwise, create the user if not exists
+		user, err := app.upsertUserFromToken(token)
+
+		if err != nil {
+			http.Error(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)
+			return
+		}
+
+		// log the user in
+		app.Logger.Info().Msgf("New user created: %d", user.ID)
+		var redirect string
+
+		if valR := session.Values["redirect"]; valR != nil {
+			redirect = session.Values["redirect"].(string)
+		}
+
+		session.Values["authenticated"] = true
+		session.Values["user_id"] = user.ID
+		session.Values["email"] = user.Email
+		session.Values["redirect"] = ""
+		session.Save(r, w)
+
+		w.WriteHeader(http.StatusCreated)
+
+		if err := app.sendUser(w, user.ID, user.Email, redirect); err != nil {
+			app.handleErrorFormDecoding(err, ErrUserDecode, w)
+			return
+		}
+	}
 
 	if session.Values["query_params"] != "" {
 		http.Redirect(w, r, fmt.Sprintf("/dashboard?%s", session.Values["query_params"]), 302)
@@ -130,6 +162,7 @@ func (app *App) populateOAuthSession(w http.ResponseWriter, r *http.Request, sta
 
 	// need state parameter to validate when redirected
 	session.Values["state"] = state
+	session.Values["query_params"] = r.URL.RawQuery
 
 	if isProject {
 		// read the project id and add it to the session
@@ -140,7 +173,6 @@ func (app *App) populateOAuthSession(w http.ResponseWriter, r *http.Request, sta
 		}
 
 		session.Values["project_id"] = uint(projID)
-		session.Values["query_params"] = r.URL.RawQuery
 	}
 
 	if err := session.Save(r, w); err != nil {
@@ -150,14 +182,37 @@ func (app *App) populateOAuthSession(w http.ResponseWriter, r *http.Request, sta
 	return nil
 }
 
-func (app *App) upsertUserFromToken() error {
-	return fmt.Errorf("UNIMPLEMENTED")
+func (app *App) upsertUserFromToken(tok *oauth2.Token) (*models.User, error) {
+	// determine if the user already exists
+	client := github.NewClient(app.GithubProjectConf.Client(oauth2.NoContext, tok))
+
+	githubUser, _, err := client.Users.Get(context.Background(), "")
+
+	if err != nil {
+		return nil, err
+	}
+
+	user, err := app.Repo.User.ReadUserByGithubUserID(*githubUser.ID)
+
+	// if the user does not exist, create new user
+	if err != nil && err == gorm.ErrRecordNotFound {
+		user = &models.User{
+			Email:        *githubUser.Email,
+			GithubUserID: *githubUser.ID,
+		}
+
+		user, err = app.Repo.User.CreateUser(user)
+	} else if err != nil {
+		return nil, fmt.Errorf("unexpected error occurred:", err.Error())
+	}
+
+	return user, err
 }
 
 // updates a project's repository clients with the token information.
 func (app *App) updateProjectFromToken(projectID uint, userID uint, tok *oauth2.Token) error {
 	// get the list of repositories that this token has access to
-	client := github.NewClient(app.GithubConf.Client(oauth2.NoContext, tok))
+	client := github.NewClient(app.GithubProjectConf.Client(oauth2.NoContext, tok))
 
 	user, _, err := client.Users.Get(context.Background(), "")
 

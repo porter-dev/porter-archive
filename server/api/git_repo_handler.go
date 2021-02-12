@@ -68,7 +68,7 @@ func (app *App) HandleListRepos(w http.ResponseWriter, r *http.Request) {
 
 	res := make([]Repo, 0)
 
-	client := github.NewClient(app.GithubConf.Client(oauth2.NoContext, tok))
+	client := github.NewClient(app.GithubProjectConf.Client(oauth2.NoContext, tok))
 
 	// list all repositories for specified user
 	repos, _, err := client.Repositories.List(context.Background(), "", nil)
@@ -101,7 +101,7 @@ func (app *App) HandleGetBranches(w http.ResponseWriter, r *http.Request) {
 	owner := chi.URLParam(r, "owner")
 	name := chi.URLParam(r, "name")
 
-	client := github.NewClient(app.GithubConf.Client(oauth2.NoContext, tok))
+	client := github.NewClient(app.GithubProjectConf.Client(oauth2.NoContext, tok))
 
 	// List all branches for a specified repo
 	branches, _, err := client.Repositories.ListBranches(context.Background(), owner, name, nil)
@@ -127,7 +127,7 @@ func (app *App) HandleGetBranchContents(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	client := github.NewClient(app.GithubConf.Client(oauth2.NoContext, tok))
+	client := github.NewClient(app.GithubProjectConf.Client(oauth2.NoContext, tok))
 
 	queryParams, err := url.ParseQuery(r.URL.RawQuery)
 	if err != nil {

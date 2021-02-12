@@ -113,7 +113,7 @@ func (app *App) HandleCreateGitAction(w http.ResponseWriter, r *http.Request) {
 		GitRepoName:    repoSplit[1],
 		GitRepoOwner:   repoSplit[0],
 		Repo:           *app.Repo,
-		GithubConf:     app.GithubConf,
+		GithubConf:     app.GithubProjectConf,
 		WebhookToken:   release.WebhookToken,
 		ProjectID:      uint(projID),
 		ReleaseName:    name,

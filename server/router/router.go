@@ -144,6 +144,11 @@ func New(a *api.App) *chi.Mux {
 				mw.WriteAccess,
 			),
 		)
+		r.Method(
+			"GET",
+			"/oauth/login/github",
+			requestlog.NewHandler(a.HandleGithubOAuthStartUser, l),
+		)
 
 		r.Method(
 			"GET",

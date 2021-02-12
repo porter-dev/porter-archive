@@ -13,6 +13,7 @@ type UserRepository interface {
 	CheckPassword(id int, pwd string) (bool, error)
 	ReadUser(id uint) (*models.User, error)
 	ReadUserByEmail(email string) (*models.User, error)
+	ReadUserByGithubUserID(id int64) (*models.User, error)
 	UpdateUser(user *models.User) (*models.User, error)
 	DeleteUser(user *models.User) (*models.User, error)
 }

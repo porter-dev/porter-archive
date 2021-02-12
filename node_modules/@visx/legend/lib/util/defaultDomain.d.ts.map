@@ -1,0 +1,1 @@
+{"version":3,"file":"defaultDomain.d.ts","sourceRoot":"","sources":["../../src/util/defaultDomain.ts"],"names":[],"mappings":"AAAA,OAAO,EAAE,OAAO,EAAE,MAAM,aAAa,CAAC;AAEtC,MAAM,CAAC,OAAO,UAAU,aAAa,CAAC,KAAK,SAAS,OAAO,CAAC,MAAM,CAAC,EAAE,EACnE,KAAS,EACT,KAAK,GACN,EAAE;IACD,KAAK,EAAE,MAAM,CAAC;IACd,KAAK,EAAE,KAAK,CAAC;CACd,OAYA"}

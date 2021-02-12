@@ -1,0 +1,1 @@
+{"version":3,"file":"bitcoinPrice.d.ts","sourceRoot":"","sources":["../../src/mocks/bitcoinPrice.ts"],"names":[],"mappings":"AAAA,MAAM,WAAW,YAAY;IAC3B,KAAK,EAAE,MAAM,CAAC;IACd,IAAI,EAAE,MAAM,CAAC;CACd;AAED,MAAM,WAAW,aAAa;IAC5B,QAAQ,EAAE,MAAM,CAAC;IACjB,MAAM,EAAE,YAAY,EAAE,CAAC;CACxB;AAED,QAAA,MAAM,YAAY,EAAE,aAiXnB,CAAC;AAEF,eAAe,YAAY,CAAC"}

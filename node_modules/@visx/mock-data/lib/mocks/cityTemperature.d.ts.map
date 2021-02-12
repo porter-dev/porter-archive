@@ -1,0 +1,1 @@
+{"version":3,"file":"cityTemperature.d.ts","sourceRoot":"","sources":["../../src/mocks/cityTemperature.ts"],"names":[],"mappings":"AAAA,MAAM,WAAW,eAAe;IAC9B,IAAI,EAAE,MAAM,CAAC;IACb,UAAU,EAAE,MAAM,CAAC;IACnB,eAAe,EAAE,MAAM,CAAC;IACxB,MAAM,EAAE,MAAM,CAAC;CAChB;AAED,QAAA,MAAM,eAAe,EAAE,eAAe,EAqpErC,CAAC;AAEF,eAAe,eAAe,CAAC"}

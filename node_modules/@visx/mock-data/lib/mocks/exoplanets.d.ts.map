@@ -1,0 +1,1 @@
+{"version":3,"file":"exoplanets.d.ts","sourceRoot":"","sources":["../../src/mocks/exoplanets.ts"],"names":[],"mappings":"AAAA,MAAM,WAAW,UAAU;IACzB,IAAI,EAAE,MAAM,CAAC;IACb,MAAM,EAAE,MAAM,CAAC;IACf,QAAQ,EAAE,MAAM,GAAG,IAAI,CAAC;CACzB;AAED,QAAA,MAAM,UAAU,EAAE,UAAU,EAsqK3B,CAAC;AAEF,eAAe,UAAU,CAAC"}

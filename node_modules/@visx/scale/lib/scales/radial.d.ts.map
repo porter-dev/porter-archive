@@ -1,0 +1,1 @@
+{"version":3,"file":"radial.d.ts","sourceRoot":"","sources":["../../src/scales/radial.ts"],"names":[],"mappings":"AACA,OAAO,EAAE,aAAa,EAAE,MAAM,eAAe,CAAC;AAC9C,OAAO,EAAE,0BAA0B,EAAE,MAAM,sBAAsB,CAAC;AAGlE,eAAO,MAAM,iBAAiB,6mBAO7B,CAAC;AAEF,MAAM,CAAC,OAAO,UAAU,iBAAiB,CAAC,MAAM,GAAG,aAAa,EAC9D,MAAM,CAAC,EAAE,0BAA0B,CAAC,QAAQ,EAAE,MAAM,CAAC,yDAGtD"}

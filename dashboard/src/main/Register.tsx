@@ -1,6 +1,7 @@
 import React, { ChangeEvent, Component, useContext } from "react";
 import styled from "styled-components";
 import logo from "assets/logo.png";
+import github from "assets/github-icon.png";
 
 import api from "shared/api";
 import { emailRegex } from "shared/regex";
@@ -38,6 +39,11 @@ export default class Register extends Component<PropsType, StateType> {
   componentWillUnmount() {
     document.removeEventListener("keydown", this.handleKeyDown);
   }
+
+  githubRedirect = () => {
+    let redirectUrl = `/api/oauth/login/github`;
+    window.location.href = redirectUrl;
+  };
 
   handleRegister = (): void => {
     let { email, password, confirmPassword } = this.state;
@@ -116,6 +122,17 @@ export default class Register extends Component<PropsType, StateType> {
           <FormWrapper>
             <Logo src={logo} />
             <Prompt>Sign up for Porter</Prompt>
+            <OAuthButton onClick={this.githubRedirect}>
+              <IconWrapper>
+                <Icon src={github} />
+                Sign up with GitHub
+              </IconWrapper>
+            </OAuthButton>
+            <OrWrapper>
+              <Line />
+              <Or>or</Or>
+            </OrWrapper>
+            <DarkMatter />
             <InputWrapper>
               <Input
                 type="email"
@@ -169,6 +186,58 @@ export default class Register extends Component<PropsType, StateType> {
 }
 
 Register.contextType = Context;
+
+const DarkMatter = styled.div`
+  margin-top: -10px;
+`;
+
+const Or = styled.div`
+  position: absolute;
+  width: 30px;
+  text-align: center;
+  background: #111114;
+  z-index: 999;
+  left: calc(50% - 15px);
+  margin-top: -1px;
+`;
+
+const OrWrapper = styled.div`
+  display: flex;
+  align-items: center;
+  color: #ffffff44;
+  font-size: 14px;
+  position: relative;
+`;
+
+const IconWrapper = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 10px;
+  height: 100%;
+`;
+
+const Icon = styled.img`
+  height: 18px;
+  margin-right: 20px;
+`;
+
+const OAuthButton = styled.div`
+  width: 200px;
+  height: 30px;
+  display: flex;
+  background: #ffffff;
+  align-items: center;
+  border-radius: 3px;
+  color: #000000;
+  cursor: pointer;
+  user-select: none;
+  font-weight: 500;
+  font-size: 13px;
+  :hover {
+    background: #ffffffdd;
+  }
+`;
 
 const Link = styled.a`
   margin-left: 5px;
@@ -275,7 +344,7 @@ const Prompt = styled.div`
 const Logo = styled.img`
   width: 140px;
   margin-top: 50px;
-  margin-bottom: 60px;
+  margin-bottom: 35px;
   user-select: none;
 `;
 
@@ -310,7 +379,7 @@ const GradientBg = styled.div`
 
 const LoginPanel = styled.div`
   width: 330px;
-  height: 470px;
+  height: 500px;
   background: white;
   margin-top: -20px;
   border-radius: 10px;

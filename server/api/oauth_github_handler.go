@@ -121,12 +121,10 @@ func (app *App) HandleGithubOAuthCallback(w http.ResponseWriter, r *http.Request
 		// otherwise, create the user if not exists
 		user, err := app.upsertUserFromToken(token)
 
-		if strings.Contains(err.Error(), "already registered") {
+		if err != nil && strings.Contains(err.Error(), "already registered") {
 			http.Redirect(w, r, "/login?error="+url.QueryEscape(err.Error()), 302)
 			return
-		}
-
-		if err != nil {
+		} else if err != nil {
 			http.Error(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)
 			return
 		}

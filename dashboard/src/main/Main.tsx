@@ -10,7 +10,7 @@ import Register from "./Register";
 import CurrentError from "./CurrentError";
 import Home from "./home/Home";
 import Loading from "components/Loading";
-import { PorterUrls } from "shared/urls";
+import { PorterUrls } from "shared/routing";
 
 type PropsType = {};
 
@@ -28,7 +28,10 @@ export default class Main extends Component<PropsType, StateType> {
   };
 
   componentDidMount() {
-    let { setUser } = this.context;
+    let { setUser, setCurrentError } = this.context;
+    let urlParams = new URLSearchParams(window.location.search);
+    let error = urlParams.get("error");
+    error && setCurrentError(error);
     api.checkAuth("", {}, {}, (err: any, res: any) => {
       if (err && err.response?.status == 403) {
         this.setState({ isLoggedIn: false, loading: false });
@@ -124,10 +127,8 @@ export default class Main extends Component<PropsType, StateType> {
           render={() => {
             if (this.state.isLoggedIn) {
               return <Redirect to="/dashboard" />;
-            } else if (this.state.initialized) {
-              return <Redirect to="/login" />;
             } else {
-              return <Redirect to="/register" />;
+              return <Redirect to="/login" />;
             }
           }}
         />

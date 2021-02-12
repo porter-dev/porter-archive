@@ -1,22 +1,26 @@
-import React, { Component } from 'react';
-import styled from 'styled-components';
-import randomWords from 'random-words';
-import posthog from 'posthog-js';
-import _ from 'lodash';
-import { Context } from 'shared/Context';
-import api from 'shared/api';
+import React, { Component } from "react";
+import styled from "styled-components";
+import randomWords from "random-words";
+import posthog from "posthog-js";
+import _ from "lodash";
+import { Context } from "shared/Context";
+import api from "shared/api";
 
-import { ActionConfigType, ChoiceType, ClusterType, StorageType } from 'shared/types';
-import Selector from 'components/Selector';
-import ImageSelector from 'components/image-selector/ImageSelector';
-import TabRegion from 'components/TabRegion';
-import InputRow from 'components/values-form/InputRow';
-import SaveButton from 'components/SaveButton';
-import ActionConfEditor from 'components/repo-selector/ActionConfEditor';
-import ValuesWrapper from 'components/values-form/ValuesWrapper';
-import ValuesForm from 'components/values-form/ValuesForm';
-import { isAlphanumeric } from 'shared/common';
-import { safeDump } from 'js-yaml';
+import {
+  ActionConfigType,
+  ChoiceType,
+  ClusterType,
+  StorageType,
+} from "shared/types";
+import Selector from "components/Selector";
+import ImageSelector from "components/image-selector/ImageSelector";
+import TabRegion from "components/TabRegion";
+import InputRow from "components/values-form/InputRow";
+import SaveButton from "components/SaveButton";
+import ActionConfEditor from "components/repo-selector/ActionConfEditor";
+import ValuesWrapper from "components/values-form/ValuesWrapper";
+import ValuesForm from "components/values-form/ValuesForm";
+import { isAlphanumeric } from "shared/common";
 
 type PropsType = {
   currentTemplate: any;
@@ -26,48 +30,48 @@ type PropsType = {
 };
 
 type StateType = {
-  currentView: string,
-  clusterOptions: { label: string, value: string }[],
-  clusterMap: { [clusterId: string]: ClusterType },
-  saveValuesStatus: string | null
-  selectedNamespace: string,
-  selectedCluster: string,
-  selectedImageUrl: string | null,
-  sourceType: string,
-  selectedTag: string | null,
-  templateName: string,
-  tabOptions: ChoiceType[],
-  currentTab: string | null,
-  tabContents: any
-  namespaceOptions: { label: string, value: string }[],
-  actionConfig: ActionConfigType,
-  branch: string,
-  pathIsSet: boolean,
+  currentView: string;
+  clusterOptions: { label: string; value: string }[];
+  clusterMap: { [clusterId: string]: ClusterType };
+  saveValuesStatus: string | null;
+  selectedNamespace: string;
+  selectedCluster: string;
+  selectedImageUrl: string | null;
+  sourceType: string;
+  selectedTag: string | null;
+  templateName: string;
+  tabOptions: ChoiceType[];
+  currentTab: string | null;
+  tabContents: any;
+  namespaceOptions: { label: string; value: string }[];
+  actionConfig: ActionConfigType;
+  branch: string;
+  pathIsSet: boolean;
 };
 
 export default class LaunchTemplate extends Component<PropsType, StateType> {
   state = {
-    currentView: 'repo',
-    clusterOptions: [] as { label: string, value: string }[],
+    currentView: "repo",
+    clusterOptions: [] as { label: string; value: string }[],
     clusterMap: {} as { [clusterId: string]: ClusterType },
-    saveValuesStatus: 'No container image specified' as (string | null),
+    saveValuesStatus: "No container image specified" as string | null,
     selectedCluster: this.context.currentCluster.name,
     selectedNamespace: "default",
-    selectedImageUrl: '' as string | null,
-    sourceType: 'registry',
-    templateName: '',
-    selectedTag: '' as string | null,
+    selectedImageUrl: "" as string | null,
+    sourceType: "registry",
+    templateName: "",
+    selectedTag: "" as string | null,
     tabOptions: [] as ChoiceType[],
     currentTab: null as string | null,
     tabContents: [] as any,
-    namespaceOptions: [] as { label: string, value: string }[],
+    namespaceOptions: [] as { label: string; value: string }[],
     actionConfig: {
-      git_repo: '',
-      image_repo_uri: '',
+      git_repo: "",
+      image_repo_uri: "",
       git_repo_id: 0,
-      dockerfile_path: '',
+      dockerfile_path: "",
     } as ActionConfigType,
-    branch: '',
+    branch: "",
     pathIsSet: false,
   };
 
@@ -75,25 +79,30 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
     let { currentProject, currentCluster } = this.context;
     let { actionConfig } = this.state;
 
-    api.createGHAction('<token>', {
-      git_repo: actionConfig.git_repo,
-      image_repo_uri: actionConfig.image_repo_uri,
-      dockerfile_path: actionConfig.dockerfile_path,
-      git_repo_id: actionConfig.git_repo_id,
-    }, {
-      project_id: currentProject.id,
-      CLUSTER_ID: currentCluster.id,
-      RELEASE_NAME: chartName,
-      RELEASE_NAMESPACE: chartNamespace,
-    }, (err: any, res: any) => {
-      if (err) {
-        console.log(err);
-      } else {
-        // Exit to initial settings tab
-        console.log(res.data);
+    api.createGHAction(
+      "<token>",
+      {
+        git_repo: actionConfig.git_repo,
+        image_repo_uri: actionConfig.image_repo_uri,
+        dockerfile_path: actionConfig.dockerfile_path,
+        git_repo_id: actionConfig.git_repo_id,
+      },
+      {
+        project_id: currentProject.id,
+        CLUSTER_ID: currentCluster.id,
+        RELEASE_NAME: chartName,
+        RELEASE_NAMESPACE: chartNamespace,
+      },
+      (err: any, res: any) => {
+        if (err) {
+          console.log(err);
+        } else {
+          // Exit to initial settings tab
+          console.log(res.data);
+        }
       }
-    });
-  }
+    );
+  };
 
   onSubmitAddon = (wildcard?: any) => {
     let { currentCluster, currentProject } = this.context;
@@ -106,41 +115,46 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
       _.set(values, key, wildcard[key]);
     }
 
-    api.deployTemplate('<token>', {
-      templateName: this.props.currentTemplate.name,
-      storage: StorageType.Secret,
-      formValues: values,
-      namespace: this.state.selectedNamespace,
-      name,
-    }, {
-      id: currentProject.id,
-      cluster_id: currentCluster.id,
-      name: this.props.currentTemplate.name.toLowerCase().trim(),
-      version: 'latest',
-    }, (err: any, res: any) => {
-      if (err) {
-        this.setState({ saveValuesStatus: 'error' });
-        posthog.capture('Failed to deploy template', {
-          name: this.props.currentTemplate.name,
-          namespace: this.state.selectedNamespace,
-          values: values,
-          error: err
-        })
-      } else {
-        if (this.state.sourceType === 'repo') {
-          this.createGHAction(name, this.state.selectedNamespace);
+    api.deployTemplate(
+      "<token>",
+      {
+        templateName: this.props.currentTemplate.name,
+        storage: StorageType.Secret,
+        formValues: values,
+        namespace: this.state.selectedNamespace,
+        name,
+      },
+      {
+        id: currentProject.id,
+        cluster_id: currentCluster.id,
+        name: this.props.currentTemplate.name.toLowerCase().trim(),
+        version: "latest",
+      },
+      (err: any, res: any) => {
+        if (err) {
+          this.setState({ saveValuesStatus: "error" });
+          posthog.capture("Failed to deploy template", {
+            name: this.props.currentTemplate.name,
+            namespace: this.state.selectedNamespace,
+            values: values,
+            error: err,
+          });
+        } else {
+          if (this.state.sourceType === "repo") {
+            this.createGHAction(name, this.state.selectedNamespace);
+          }
+          // this.props.setCurrentView('cluster-dashboard');
+          this.setState({ saveValuesStatus: "successful" }, () => {
+            // redirect to dashboard
+          });
+          posthog.capture("Deployed template", {
+            name: this.props.currentTemplate.name,
+            namespace: this.state.selectedNamespace,
+            values: values,
+          });
         }
-        // this.props.setCurrentView('cluster-dashboard');
-        this.setState({ saveValuesStatus: 'successful' }, () => {
-          // redirect to dashboard
-        });
-        posthog.capture('Deployed template', {
-          name: this.props.currentTemplate.name,
-          namespace: this.state.selectedNamespace,
-          values: values,
-        })
       }
-    });
+    );
   };
 
   onSubmit = (rawValues: any) => {
@@ -166,13 +180,13 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
       tag = "latest";
     }
 
-    if (this.state.sourceType === 'repo') {
-      imageUrl = 'hello-world';
-      tag = 'latest';
+    if (this.state.sourceType === "repo") {
+      imageUrl = "hello-world";
+      tag = "latest";
     }
 
-    _.set(values, "image.repository", imageUrl)
-    _.set(values, "image.tag", tag)
+    _.set(values, "image.repository", imageUrl);
+    _.set(values, "image.tag", tag);
 
     console.log(`
       ${this.props.currentTemplate.name}\n
@@ -182,44 +196,49 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
       ${name}\n
       ${currentProject.id}\n
       ${currentCluster.id}\n}
-    `)
+    `);
 
-    api.deployTemplate('<token>', {
-      templateName: this.props.currentTemplate.name,
-      imageURL: this.state.selectedImageUrl,
-      storage: StorageType.Secret,
-      formValues: values,
-      namespace: this.state.selectedNamespace,
-      name,
-    }, {
-      id: currentProject.id,
-      cluster_id: currentCluster.id,
-      name: this.props.currentTemplate.name.toLowerCase().trim(),
-      version: 'latest',
-    }, (err: any, res: any) => {
-      if (err) {
-        this.setState({ saveValuesStatus: 'error' });
-        posthog.capture('Failed to deploy template', {
-          name: this.props.currentTemplate.name,
-          namespace: this.state.selectedNamespace,
-          values: values,
-          error: err
-        })
-      } else {
-        if (this.state.sourceType === 'repo') {
-          this.createGHAction(name, this.state.selectedNamespace);
+    api.deployTemplate(
+      "<token>",
+      {
+        templateName: this.props.currentTemplate.name,
+        imageURL: this.state.selectedImageUrl,
+        storage: StorageType.Secret,
+        formValues: values,
+        namespace: this.state.selectedNamespace,
+        name,
+      },
+      {
+        id: currentProject.id,
+        cluster_id: currentCluster.id,
+        name: this.props.currentTemplate.name.toLowerCase().trim(),
+        version: "latest",
+      },
+      (err: any, res: any) => {
+        if (err) {
+          this.setState({ saveValuesStatus: "error" });
+          posthog.capture("Failed to deploy template", {
+            name: this.props.currentTemplate.name,
+            namespace: this.state.selectedNamespace,
+            values: values,
+            error: err,
+          });
+        } else {
+          if (this.state.sourceType === "repo") {
+            this.createGHAction(name, this.state.selectedNamespace);
+          }
+          // this.props.setCurrentView('cluster-dashboard');
+          this.setState({ saveValuesStatus: "successful" }, () => {
+            // redirect to dashboard with namespace
+          });
+          posthog.capture("Deployed template", {
+            name: this.props.currentTemplate.name,
+            namespace: this.state.selectedNamespace,
+            values: values,
+          });
         }
-        // this.props.setCurrentView('cluster-dashboard');
-        this.setState({ saveValuesStatus: 'successful' }, () => {
-          // redirect to dashboard with namespace
-        });
-        posthog.capture('Deployed template', {
-          name: this.props.currentTemplate.name,
-          namespace: this.state.selectedNamespace,
-          values: values,
-        })
       }
-    });
+    );
   };
 
   renderTabContents = () => {
@@ -269,46 +288,58 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
         tabOptions.push({ value: tab.name, label: tab.label });
       }
     });
-    this.setState({ tabOptions });
+    this.setState({ tabOptions, currentTab: tabOptions[0]["value"] });
 
     // TODO: query with selected filter once implemented
     let { currentProject, currentCluster } = this.context;
-    api.getClusters('<token>', {}, { id: currentProject.id }, (err: any, res: any) => {
-      if (err) {
-        // console.log(err)
-      } else if (res.data) {
-        let clusterOptions: { label: string, value: string }[] = [];
-        let clusterMap: { [clusterId: string]: ClusterType } = {};
-        res.data.forEach((cluster: ClusterType, i: number) => {
-          clusterOptions.push({ label: cluster.name, value: cluster.name });
-          clusterMap[cluster.name] = cluster;
-        })
-        if (res.data.length > 0) {
-          this.setState({ clusterOptions, clusterMap });
+    api.getClusters(
+      "<token>",
+      {},
+      { id: currentProject.id },
+      (err: any, res: any) => {
+        if (err) {
+          // console.log(err)
+        } else if (res.data) {
+          let clusterOptions: { label: string; value: string }[] = [];
+          let clusterMap: { [clusterId: string]: ClusterType } = {};
+          res.data.forEach((cluster: ClusterType, i: number) => {
+            clusterOptions.push({ label: cluster.name, value: cluster.name });
+            clusterMap[cluster.name] = cluster;
+          });
+          if (res.data.length > 0) {
+            this.setState({ clusterOptions, clusterMap });
+          }
         }
       }
-    });
+    );
 
     this.updateNamespaces(currentCluster.id);
   }
 
   updateNamespaces = (id: number) => {
     let { currentProject } = this.context;
-    api.getNamespaces('<token>', {
-      cluster_id: id,
-    }, { id: currentProject.id }, (err: any, res: any) => {
-      if (err) {
-        console.log(err)
-      } else if (res.data) {
-        let namespaceOptions = res.data.items.map((x: { metadata: {name: string}}) => { 
-          return { label: x.metadata.name, value: x.metadata.name } 
-        });
-        if (res.data.items.length > 0) {
-          this.setState({ namespaceOptions });
+    api.getNamespaces(
+      "<token>",
+      {
+        cluster_id: id,
+      },
+      { id: currentProject.id },
+      (err: any, res: any) => {
+        if (err) {
+          console.log(err);
+        } else if (res.data) {
+          let namespaceOptions = res.data.items.map(
+            (x: { metadata: { name: string } }) => {
+              return { label: x.metadata.name, value: x.metadata.name };
+            }
+          );
+          if (res.data.items.length > 0) {
+            this.setState({ namespaceOptions });
+          }
         }
       }
-    });
-  }
+    );
+  };
 
   setSelectedImageUrl = (x: string) => {
     if (x === "") {
@@ -376,15 +407,16 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
     let { currentProject } = this.context;
 
     if (this.props.form?.hasSource) {
-      if (this.state.sourceType === 'registry') {
+      if (this.state.sourceType === "registry") {
         return (
           <>
             <Subtitle>
-              Select the container image you would like to connect to this template or
-              <Highlight onClick={() => this.setState({ sourceType: 'repo' })}>
+              Select the container image you would like to connect to this
+              template or
+              <Highlight onClick={() => this.setState({ sourceType: "repo" })}>
                 link a git repository
-              </Highlight>.
-              <Required>*</Required>
+              </Highlight>
+              .<Required>*</Required>
             </Subtitle>
             <DarkMatter />
             <ImageSelector
@@ -396,43 +428,53 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
             />
             <br />
           </>
-        )
+        );
       } else {
         return (
           <>
             <Subtitle>
-              Select a repo to connect to. You can 
-              <A padRight={true} href={`/api/oauth/projects/${currentProject.id}/github?redirected=true`}>
+              Select a repo to connect to. You can
+              <A
+                padRight={true}
+                href={`/api/oauth/projects/${currentProject.id}/github?redirected=true`}
+              >
                 log in with GitHub
-              </A> or
+              </A>{" "}
+              or
               <Highlight
-                onClick={() => this.setState({
-                  sourceType: 'registry',
-                  actionConfig: {
-                    git_repo: '',
-                    image_repo_uri: '',
-                    git_repo_id: 0,
-                    dockerfile_path: '',
-                  } as ActionConfigType
-                })}
+                onClick={() =>
+                  this.setState({
+                    sourceType: "registry",
+                    actionConfig: {
+                      git_repo: "",
+                      image_repo_uri: "",
+                      git_repo_id: 0,
+                      dockerfile_path: "",
+                    } as ActionConfigType,
+                  })
+                }
               >
                 link an image registry
-              </Highlight>.
-              <Required>*</Required>
+              </Highlight>
+              .<Required>*</Required>
             </Subtitle>
             <ActionConfEditor
               actionConfig={this.state.actionConfig}
               branch={this.state.branch}
               pathIsSet={this.state.pathIsSet}
-              setActionConfig={(actionConfig: ActionConfigType) => this.setState({ actionConfig }, () => {
-                this.setSelectedImageUrl(this.state.actionConfig.image_repo_uri);
-              })}
+              setActionConfig={(actionConfig: ActionConfigType) =>
+                this.setState({ actionConfig }, () => {
+                  this.setSelectedImageUrl(
+                    this.state.actionConfig.image_repo_uri
+                  );
+                })
+              }
               setBranch={(branch: string) => this.setState({ branch })}
               setPath={(pathIsSet: boolean) => this.setState({ pathIsSet })}
             />
             <br />
           </>
-        )
+        );
       }
     }
   };
@@ -499,9 +541,10 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
             }
           >
             (lowercase letters, numbers, and "-" only)
-          </Warning>. (Optional)
+          </Warning>
+          . (Optional)
         </Subtitle>
-        <DarkMatter antiHeight='-27px' />
+        <DarkMatter antiHeight="-27px" />
         <InputRow
           type="text"
           value={this.state.templateName}
@@ -678,7 +721,8 @@ const Highlight = styled.div`
   text-decoration: underline;
   margin-left: 5px;
   cursor: pointer;
-  padding-right: ${(props: { padRight?: boolean }) => props.padRight ? '5px' : ''};
+  padding-right: ${(props: { padRight?: boolean }) =>
+    props.padRight ? "5px" : ""};
 `;
 
 const A = styled.a`
@@ -686,5 +730,6 @@ const A = styled.a`
   text-decoration: underline;
   margin-left: 5px;
   cursor: pointer;
-  padding-right: ${(props: { padRight?: boolean }) => props.padRight ? '5px' : ''};
+  padding-right: ${(props: { padRight?: boolean }) =>
+    props.padRight ? "5px" : ""};
 `;

@@ -70,7 +70,6 @@ func (p *PorterHelper) getGCR(serverURL string) (user string, secret string, err
 	if cachedEntry != nil && cachedEntry.IsValid(time.Now()) {
 		token = cachedEntry.AuthorizationToken
 	} else {
-		host := viper.GetString("host")
 		projID := viper.GetUint("project")
 
 		client := cmd.GetAPIClient()
@@ -196,7 +195,6 @@ func (p *PorterHelper) getECR(serverURL string) (user string, secret string, err
 	if cachedEntry != nil && cachedEntry.IsValid(time.Now()) {
 		token = cachedEntry.AuthorizationToken
 	} else {
-		host := viper.GetString("host")
 		projID := viper.GetUint("project")
 
 		client := cmd.GetAPIClient()

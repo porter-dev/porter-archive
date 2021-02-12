@@ -115,8 +115,7 @@ export default class Register extends Component<PropsType, StateType> {
           </OverflowWrapper>
           <FormWrapper>
             <Logo src={logo} />
-            <Line />
-            <Prompt>Create Account</Prompt>
+            <Prompt>Sign up for Porter</Prompt>
             <InputWrapper>
               <Input
                 type="email"
@@ -177,8 +176,11 @@ const Link = styled.a`
 `;
 
 const Helper = styled.div`
-  margin: 30px 0px 20px;
-  font-size: 14px;
+  position: absolute;
+  bottom: 30px;
+  width: 100%;
+  text-align: center;
+  font-size: 13px;
   font-family: "Work Sans", sans-serif;
   color: #ffffff44;
 `;
@@ -240,7 +242,7 @@ const Button = styled.button`
   align-items: center;
   font-family: "Work Sans", sans-serif;
   cursor: pointer;
-  margin-top: 25px;
+  margin-top: 9px;
   border-radius: 2px;
   border: 0;
   background: #819bfd;
@@ -271,8 +273,9 @@ const Prompt = styled.div`
 `;
 
 const Logo = styled.img`
-  width: 150px;
-  margin-top: 40px;
+  width: 140px;
+  margin-top: 50px;
+  margin-bottom: 60px;
   user-select: none;
 `;
 
@@ -307,7 +310,7 @@ const GradientBg = styled.div`
 
 const LoginPanel = styled.div`
   width: 330px;
-  height: 450px;
+  height: 470px;
   background: white;
   margin-top: -20px;
   border-radius: 10px;

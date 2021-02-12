@@ -24,7 +24,7 @@ export default class InputRow extends Component<PropsType, StateType> {
 
   handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     if (this.props.type === "number") {
-      this.props.setValue(parseInt(e.target.value));
+      this.props.setValue(parseFloat(e.target.value));
     } else {
       this.props.setValue(e.target.value);
     }

@@ -222,7 +222,7 @@ export default class RevisionSection extends Component<PropsType, StateType> {
             ? `Current Revision`
             : `Previewing Revision (Not Deployed)`}{" "}
           - <Revision>No. {this.props.chart.version}</Revision>
-          <i className="material-icons">expand_more</i>
+          <i className="material-icons">arrow_drop_down</i>
         </RevisionHeader>
 
         <RevisionList>{this.renderExpanded()}</RevisionList>

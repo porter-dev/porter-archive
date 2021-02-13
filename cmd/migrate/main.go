@@ -2,6 +2,9 @@ package main
 
 import (
 	"fmt"
+	"log"
+
+	"github.com/porter-dev/porter/cmd/migrate/keyrotate"
 
 	adapter "github.com/porter-dev/porter/internal/adapter"
 	"github.com/porter-dev/porter/internal/config"
@@ -9,6 +12,8 @@ import (
 	"github.com/porter-dev/porter/internal/models"
 
 	ints "github.com/porter-dev/porter/internal/models/integrations"
+
+	"github.com/joeshaw/envdecode"
 )
 
 func main() {
@@ -54,4 +59,34 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+
+	if shouldRotate, oldKeyStr, newKeyStr := shouldKeyRotate(); shouldRotate {
+		oldKey := [32]byte{}
+		newKey := [32]byte{}
+
+		copy(oldKey[:], []byte(oldKeyStr))
+		copy(newKey[:], []byte(newKeyStr))
+
+		err := keyrotate.Rotate(db, &oldKey, &newKey)
+
+		if err != nil {
+			panic(err)
+		}
+	}
+}
+
+type RotateConf struct {
+	OldEncryptionKey string `env:"OLD_ENCRYPTION_KEY"`
+	NewEncryptionKey string `env:"NEW_ENCRYPTION_KEY"`
+}
+
+func shouldKeyRotate() (bool, string, string) {
+	var c RotateConf
+
+	if err := envdecode.StrictDecode(&c); err != nil {
+		log.Fatalf("Failed to decode migration conf: %s", err)
+		return false, "", ""
+	}
+
+	return c.OldEncryptionKey != "" && c.NewEncryptionKey != "", c.OldEncryptionKey, c.NewEncryptionKey
 }

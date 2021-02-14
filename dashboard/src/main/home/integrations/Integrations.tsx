@@ -1,26 +1,24 @@
 import React, { Component } from "react";
 import styled from "styled-components";
 
-import { Context } from 'shared/Context';
-import api from 'shared/api';
-import { integrationList } from 'shared/common';
-import { ActionConfigType, ChoiceType } from 'shared/types';
+import { Context } from "shared/Context";
+import api from "shared/api";
+import { integrationList } from "shared/common";
 
 import IntegrationList from "./IntegrationList";
 import IntegrationForm from "./integration-form/IntegrationForm";
 
-import GHIcon from 'assets/GithubIcon';
+import GHIcon from "assets/GithubIcon";
 
-type PropsType = {
-};
+type PropsType = {};
 
 type StateType = {
-  currentCategory: string | null,
-  currentIntegration: string | null,
-  currentOptions: any[],
-  currentTitles: any[],
-  currentIds: any[],
-  currentIntegrationData: any[],
+  currentCategory: string | null;
+  currentIntegration: string | null;
+  currentOptions: any[];
+  currentTitles: any[];
+  currentIds: any[];
+  currentIntegrationData: any[];
 };
 
 export default class Integrations extends Component<PropsType, StateType> {
@@ -43,65 +41,49 @@ export default class Integrations extends Component<PropsType, StateType> {
     });
     switch (categoryType) {
       case "kubernetes":
-        api.getProjectClusters(
-          "<token>",
-          {},
-          { id: currentProject.id },
-          (err: any, res: any) => {
-            if (err) {
-              console.log(err);
-            } else {
-              // console.log(res.data)
-            }
-          }
-        );
+        api
+          .getProjectClusters("<token>", {}, { id: currentProject.id })
+          .then()
+          .catch(console.log);
         break;
       case "registry":
-        api.getProjectRegistries(
-          "<token>",
-          {},
-          { id: currentProject.id },
-          (err: any, res: any) => {
-            if (err) {
-              console.log(err);
-            } else {
-              // Sort res.data into service type and sort each service's registry alphabetically
-              let grouped: any = {};
-              let final: any = [];
-              for (let i = 0; i < res.data.length; i++) {
-                let p = res.data[i].service;
-                if (!grouped[p]) {
-                  grouped[p] = [];
-                }
-                grouped[p].push(res.data[i]);
+        api
+          .getProjectRegistries("<token>", {}, { id: currentProject.id })
+          .then((res) => {
+            // Sort res.data into service type and sort each service's registry alphabetically
+            let grouped: any = {};
+            let final: any = [];
+            for (let i = 0; i < res.data.length; i++) {
+              let p = res.data[i].service;
+              if (!grouped[p]) {
+                grouped[p] = [];
               }
-              Object.values(grouped).forEach((val: any) => {
-                final = final.concat(
-                  val.sort((a: any, b: any) => (a.name > b.name ? 1 : -1))
-                );
-              });
-
-              let currentOptions = [] as string[];
-              let currentTitles = [] as string[];
-              final.forEach((integration: any, i: number) => {
-                currentOptions.push(integration.service);
-                currentTitles.push(integration.name);
-              });
-              this.setState({
-                currentOptions,
-                currentTitles,
-                currentIntegrationData: res.data,
-              });
+              grouped[p].push(res.data[i]);
             }
-          }
-        );
+            Object.values(grouped).forEach((val: any) => {
+              final = final.concat(
+                val.sort((a: any, b: any) => (a.name > b.name ? 1 : -1))
+              );
+            });
+
+            let currentOptions = [] as string[];
+            let currentTitles = [] as string[];
+            final.forEach((integration: any, i: number) => {
+              currentOptions.push(integration.service);
+              currentTitles.push(integration.name);
+            });
+            this.setState({
+              currentOptions,
+              currentTitles,
+              currentIntegrationData: res.data,
+            });
+          })
+          .catch(console.log);
         break;
-      case 'repo':
-        api.getGitRepos('<token>', {
-        }, { project_id: currentProject.id }, (err: any, res: any) => {
-          if (err) {
-            console.log(err);
-          } else {
+      case "repo":
+        api
+          .getGitRepos("<token>", {}, { project_id: currentProject.id })
+          .then((res) => {
             let currentOptions = [] as string[];
             let currentTitles = [] as string[];
             let currentIds = [] as any[];
@@ -109,10 +91,15 @@ export default class Integrations extends Component<PropsType, StateType> {
               currentOptions.push(item.service);
               currentTitles.push(item.repo_entity);
               currentIds.push(item.id);
-            })
-            this.setState({ currentOptions, currentTitles, currentIds, currentIntegrationData: res.data })
-          }
-        });
+            });
+            this.setState({
+              currentOptions,
+              currentTitles,
+              currentIds,
+              currentIntegrationData: res.data,
+            });
+          })
+          .catch(console.log);
         break;
       default:
         console.log("Unknown integration category.");
@@ -187,38 +174,52 @@ export default class Integrations extends Component<PropsType, StateType> {
         </div>
       );
     } else if (currentCategory) {
-      let icon = integrationList[currentCategory] && integrationList[currentCategory].icon;
-      let label = integrationList[currentCategory] && integrationList[currentCategory].label;
-      let buttonText = integrationList[currentCategory] && integrationList[currentCategory].buttonText;
-      if (currentCategory !== 'repo') {
+      let icon =
+        integrationList[currentCategory] &&
+        integrationList[currentCategory].icon;
+      let label =
+        integrationList[currentCategory] &&
+        integrationList[currentCategory].label;
+      let buttonText =
+        integrationList[currentCategory] &&
+        integrationList[currentCategory].buttonText;
+      if (currentCategory !== "repo") {
         return (
           <div>
             <TitleSectionAlt>
               <Flex>
-                <i className="material-icons" onClick={() => this.setState({ currentCategory: null })}>
+                <i
+                  className="material-icons"
+                  onClick={() => this.setState({ currentCategory: null })}
+                >
                   keyboard_backspace
                 </i>
                 <Icon src={icon && icon} />
                 <Title>{label}</Title>
               </Flex>
-              <Button 
-                onClick={() => this.context.setCurrentModal('IntegrationsModal', { 
-                  category: currentCategory,
-                  setCurrentIntegration: (x: string) => this.setState({ currentIntegration: x })
-                })}
+              <Button
+                onClick={() =>
+                  this.context.setCurrentModal("IntegrationsModal", {
+                    category: currentCategory,
+                    setCurrentIntegration: (x: string) =>
+                      this.setState({ currentIntegration: x }),
+                  })
+                }
               >
                 <i className="material-icons">add</i>
                 {buttonText}
               </Button>
             </TitleSectionAlt>
-  
+
             <LineBreak />
-  
+
             <IntegrationList
               currentCategory={currentCategory}
               integrations={this.state.currentOptions}
               titles={this.state.currentTitles}
-              setCurrent={(x: string) => this.setState({ currentIntegration: x })}
+              setCurrent={(x: string) =>
+                this.setState({ currentIntegration: x })
+              }
               itemIdentifier={this.state.currentIntegrationData}
             />
           </div>
@@ -228,27 +229,34 @@ export default class Integrations extends Component<PropsType, StateType> {
           <div>
             <TitleSectionAlt>
               <Flex>
-                <i className="material-icons" onClick={() => this.setState({ currentCategory: null })}>
+                <i
+                  className="material-icons"
+                  onClick={() => this.setState({ currentCategory: null })}
+                >
                   keyboard_backspace
                 </i>
                 <Icon src={icon && icon} />
                 <Title>{label}</Title>
               </Flex>
-              <Button 
-                onClick={() => window.open(`/api/oauth/projects/${currentProject.id}/github`)}
+              <Button
+                onClick={() =>
+                  window.open(`/api/oauth/projects/${currentProject.id}/github`)
+                }
               >
                 <GHIcon />
                 {buttonText}
               </Button>
             </TitleSectionAlt>
-  
+
             <LineBreak />
 
             <IntegrationList
               currentCategory={currentCategory}
               integrations={this.state.currentOptions}
               titles={this.state.currentTitles}
-              setCurrent={(x: string) => this.setState({ currentIntegration: x })}
+              setCurrent={(x: string) =>
+                this.setState({ currentIntegration: x })
+              }
               itemIdentifier={this.state.currentIds}
             />
           </div>
@@ -262,8 +270,8 @@ export default class Integrations extends Component<PropsType, StateType> {
         </TitleSection>
 
         <IntegrationList
-          currentCategory={''}
-          integrations={['kubernetes', 'registry', 'repo']}
+          currentCategory={""}
+          integrations={["kubernetes", "registry", "repo"]}
           setCurrent={(x: any) => this.setState({ currentCategory: x })}
           isCategory={true}
         />

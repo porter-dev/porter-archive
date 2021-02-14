@@ -61,22 +61,24 @@ export default class Register extends Component<PropsType, StateType> {
     // Check for valid input
     if (emailRegex.test(email) && confirmPassword === password) {
       // Attempt user registration
-      api.registerUser(
-        "",
-        {
-          email: email,
-          password: password,
-        },
-        {},
-        (err: any, res: any) => {
+      api
+        .registerUser(
+          "",
+          {
+            email: email,
+            password: password,
+          },
+          {}
+        )
+        .then((res: any) => {
           if (res?.data?.redirect) {
             window.location.href = res.data.redirect;
           } else {
             setUser(res?.data?.id, res?.data?.email);
-            err ? setCurrentError(err.response.data.errors[0]) : authenticate();
+            authenticate();
           }
-        }
-      );
+        })
+        .catch((err) => setCurrentError(err.response.data.errors[0]));
     }
   };
 

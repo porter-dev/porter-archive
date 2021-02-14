@@ -61,14 +61,15 @@ class Home extends Component<PropsType, StateType> {
 
     if (!currentProject) return;
 
-    api.getInfra(
-      "<token>",
-      {},
-      {
-        project_id: currentProject.id,
-      },
-      (err: any, res: any) => {
-        if (err) return;
+    api
+      .getInfra(
+        "<token>",
+        {},
+        {
+          project_id: currentProject.id,
+        }
+      )
+      .then((res) => {
         let creating = false;
 
         for (var i = 0; i < res.data.length; i++) {
@@ -80,21 +81,16 @@ class Home extends Component<PropsType, StateType> {
           this.props.history.push("integrations");
           this.setState({ ghRedirect: false });
         }
-      }
-    );
+      });
   };
 
   getProjects = (id?: number) => {
     let { user, setProjects } = this.context;
     let { currentProject } = this.props;
-    api.getProjects(
-      "<token>",
-      {},
-      { id: user.userId },
-      (err: any, res: any) => {
-        if (err) {
-          console.log(err);
-        } else if (res.data) {
+    api
+      .getProjects("<token>", {}, { id: user.userId })
+      .then((res) => {
+        if (res.data) {
           if (res.data.length === 0) {
             this.props.history.push("new-project");
           } else if (res.data.length > 0 && !currentProject) {
@@ -125,13 +121,13 @@ class Home extends Component<PropsType, StateType> {
             }
           }
         }
-      }
-    );
+      })
+      .catch(console.log);
   };
 
   provisionDOCR = (integrationId: number, tier: string, callback?: any) => {
     console.log("Provisioning DOCR...");
-    api.createDOCR(
+    return api.createDOCR(
       "<token>",
       {
         do_integration_id: integrationId,
@@ -140,53 +136,39 @@ class Home extends Component<PropsType, StateType> {
       },
       {
         project_id: this.props.currentProject.id,
-      },
-      (err: any, res: any) => {
-        if (err) {
-          console.log(err);
-          return;
-        }
-        callback && callback();
       }
     );
   };
 
   provisionDOKS = (integrationId: number, region: string) => {
     console.log("Provisioning DOKS...");
-    api.createDOKS(
-      "<token>",
-      {
-        do_integration_id: integrationId,
-        doks_name: this.props.currentProject.name,
-        do_region: region,
-      },
-      {
-        project_id: this.props.currentProject.id,
-      },
-      (err: any, res: any) => {
-        if (err) {
-          console.log(err);
-          return;
+    return api
+      .createDOKS(
+        "<token>",
+        {
+          do_integration_id: integrationId,
+          doks_name: this.props.currentProject.name,
+          do_region: region,
+        },
+        {
+          project_id: this.props.currentProject.id,
         }
-        this.props.history.push("dashboard?tab=provisioner");
-      }
-    );
+      )
+      .then(() => this.props.history.push("dashboard?tab=provisioner"));
   };
 
   checkDO = () => {
     let { currentProject } = this.props;
     if (this.state.handleDO && currentProject?.id) {
-      api.getOAuthIds(
-        "<token>",
-        {},
-        {
-          project_id: currentProject.id,
-        },
-        (err: any, res: any) => {
-          if (err) {
-            console.log(err);
-            return;
+      api
+        .getOAuthIds(
+          "<token>",
+          {},
+          {
+            project_id: currentProject.id,
           }
+        )
+        .then((res) => {
           let tgtIntegration = res.data.find((integration: any) => {
             return integration.client === "do";
           });
@@ -206,8 +188,8 @@ class Home extends Component<PropsType, StateType> {
           } else {
             this.provisionDOKS(tgtIntegration.id, region);
           }
-        }
-      );
+        })
+        .catch(console.log);
       this.setState({ handleDO: false });
     }
   };
@@ -358,14 +340,10 @@ class Home extends Component<PropsType, StateType> {
 
   projectOverlayCall = () => {
     let { user, setProjects } = this.context;
-    api.getProjects(
-      "<token>",
-      {},
-      { id: user.userId },
-      (err: any, res: any) => {
-        if (err) {
-          console.log(err);
-        } else if (res.data) {
+    api
+      .getProjects("<token>", {}, { id: user.userId })
+      .then((res) => {
+        if (res.data) {
           setProjects(res.data);
           if (res.data.length > 0) {
             this.context.setCurrentProject(res.data[0]);
@@ -375,37 +353,23 @@ class Home extends Component<PropsType, StateType> {
           }
           this.context.setCurrentModal(null, null);
         }
-      }
-    );
+      })
+      .catch(console.log);
   };
 
   handleDelete = () => {
     let { setCurrentModal, currentProject } = this.context;
     localStorage.removeItem(currentProject.id + "-cluster");
-    api.deleteProject(
-      "<token>",
-      {},
-      { id: currentProject.id },
-      (err: any, res: any) => {
-        if (err) {
-          console.log(err);
-        } else {
-          this.projectOverlayCall();
-        }
-      }
-    );
+    api
+      .deleteProject("<token>", {}, { id: currentProject.id })
+      .then(this.projectOverlayCall)
+      .catch(console.log);
 
     // Loop through and delete infra of all clusters we've provisioned
-    api.getClusters(
-      "<token>",
-      {},
-      { id: currentProject.id },
-      (err: any, res: any) => {
-        if (err) {
-          console.log(err);
-          return;
-        }
-
+    api
+      .getClusters("<token>", {}, { id: currentProject.id })
+      .then((res) => {
+        // TODO: promise.map
         for (var i = 0; i < res.data.length; i++) {
           let cluster = res.data[i];
           if (!cluster.infra_id) continue;
@@ -413,65 +377,56 @@ class Home extends Component<PropsType, StateType> {
           // Handle destroying infra we've provisioned
           switch (cluster.service) {
             case "eks":
-              api.destroyEKS(
-                "<token>",
-                { eks_name: cluster.name },
-                {
-                  project_id: currentProject.id,
-                  infra_id: cluster.infra_id,
-                },
-                (err: any, res: any) => {
-                  if (err) {
-                    console.log(err);
-                  } else {
-                    console.log(
-                      "destroyed provisioned infra:",
-                      cluster.infra_id
-                    );
+              api
+                .destroyEKS(
+                  "<token>",
+                  { eks_name: cluster.name },
+                  {
+                    project_id: currentProject.id,
+                    infra_id: cluster.infra_id,
                   }
-                }
-              );
+                )
+                .then(() =>
+                  console.log("destroyed provisioned infra:", cluster.infra_id)
+                )
+                .catch(console.log);
               break;
 
             case "gke":
-              api.destroyGKE(
-                "<token>",
-                { gke_name: cluster.name },
-                {
-                  project_id: currentProject.id,
-                  infra_id: cluster.infra_id,
-                },
-                (err: any, res: any) => {
-                  if (err) {
-                    console.log(err);
-                  } else {
-                    console.log("destroyed provisioned infra.");
+              api
+                .destroyGKE(
+                  "<token>",
+                  { gke_name: cluster.name },
+                  {
+                    project_id: currentProject.id,
+                    infra_id: cluster.infra_id,
                   }
-                }
-              );
+                )
+                .then(() =>
+                  console.log("destroyed provisioned infra:", cluster.infra_id)
+                )
+                .catch(console.log);
               break;
 
             case "doks":
-              api.destroyDOKS(
-                "<token>",
-                { doks_name: cluster.name },
-                {
-                  project_id: currentProject.id,
-                  infra_id: cluster.infra_id,
-                },
-                (err: any, res: any) => {
-                  if (err) {
-                    console.log(err);
-                  } else {
-                    console.log("destroyed provisioned infra.");
+              api
+                .destroyDOKS(
+                  "<token>",
+                  { doks_name: cluster.name },
+                  {
+                    project_id: currentProject.id,
+                    infra_id: cluster.infra_id,
                   }
-                }
-              );
+                )
+                .then(() =>
+                  console.log("destroyed provisioned infra:", cluster.infra_id)
+                )
+                .catch(console.log);
               break;
           }
         }
-      }
-    );
+      })
+      .catch(console.log);
     setCurrentModal(null, null);
     this.props.history.push("dashboard?tab=overview");
   };

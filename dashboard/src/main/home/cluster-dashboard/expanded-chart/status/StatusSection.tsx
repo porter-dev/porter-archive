@@ -75,42 +75,43 @@ export default class StatusSection extends Component<PropsType, StateType> {
           <TabWrapper>{this.renderTabs()}</TabWrapper>
           {this.renderLogs()}
         </Wrapper>
-      )
+      );
     }
 
     return (
-      <NoControllers> 
-        <i className="material-icons">category</i> 
-        No objects to display. This might happen while your app is still deploying.
+      <NoControllers>
+        <i className="material-icons">category</i>
+        No objects to display. This might happen while your app is still
+        deploying.
       </NoControllers>
-    )
-  }
+    );
+  };
 
   componentDidMount() {
     const { selectors, currentChart } = this.props;
     let { currentCluster, currentProject, setCurrentError } = this.context;
 
-    api.getChartControllers(
-      "<token>",
-      {
-        namespace: currentChart.namespace,
-        cluster_id: currentCluster.id,
-        storage: StorageType.Secret,
-      },
-      {
-        id: currentProject.id,
-        name: currentChart.name,
-        revision: currentChart.version,
-      },
-      (err: any, res: any) => {
-        if (err) {
-          setCurrentError(JSON.stringify(err));
-          this.setState({ controllers: [], loading: false });
-          return;
+    api
+      .getChartControllers(
+        "<token>",
+        {
+          namespace: currentChart.namespace,
+          cluster_id: currentCluster.id,
+          storage: StorageType.Secret,
+        },
+        {
+          id: currentProject.id,
+          name: currentChart.name,
+          revision: currentChart.version,
         }
+      )
+      .then((res) => {
         this.setState({ controllers: res.data, loading: false });
-      }
-    );
+      })
+      .catch((err) => {
+        setCurrentError(JSON.stringify(err));
+        this.setState({ controllers: [], loading: false });
+      });
   }
 
   render() {

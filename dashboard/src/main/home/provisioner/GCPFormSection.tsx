@@ -107,68 +107,55 @@ class GCPFormSection extends Component<PropsType, StateType> {
     }
   };
 
+  catchError = (err: any) => {
+    console.log(err);
+    this.props.handleError();
+  };
+
   // Step 1: Create a project
   createProject = (callback?: any) => {
     console.log("Creating project");
     let { projectName, handleError } = this.props;
     let { user, setProjects, setCurrentProject } = this.context;
 
-    api.createProject(
-      "<token>",
-      { name: projectName },
-      {},
-      (err: any, res: any) => {
-        if (err) {
-          console.log(err);
-          handleError();
-          return;
-        } else {
-          let proj = res.data;
+    api
+      .createProject("<token>", { name: projectName }, {})
+      .then((res) => {
+        let proj = res.data;
 
-          // Need to set project list for dropdown
-          // TODO: consolidate into ProjectSection (case on exists in list on set)
-          api.getProjects(
+        // Need to set project list for dropdown
+        // TODO: consolidate into ProjectSection (case on exists in list on set)
+        api
+          .getProjects(
             "<token>",
             {},
             {
               id: user.userId,
-            },
-            (err: any, res: any) => {
-              if (err) {
-                console.log(err);
-                handleError();
-                return;
-              }
-              setProjects(res.data);
-              setCurrentProject(proj);
-              callback && callback();
             }
-          );
-        }
-      }
-    );
+          )
+          .then((res) => {
+            setProjects(res.data);
+            setCurrentProject(proj);
+            callback && callback();
+          })
+          .catch(this.catchError);
+      })
+      .catch(this.catchError);
   };
 
   provisionGCR = (id: number, callback?: any) => {
     console.log("Provisioning GCR");
     let { currentProject } = this.context;
-    let { handleError } = this.props;
 
-    api.createGCR(
-      "<token>",
-      {
-        gcp_integration_id: id,
-      },
-      { project_id: currentProject.id },
-      (err: any, res: any) => {
-        if (err) {
-          console.log(err);
-          handleError();
-          return;
-        }
-        callback && callback();
-      }
-    );
+    return api
+      .createGCR(
+        "<token>",
+        {
+          gcp_integration_id: id,
+        },
+        { project_id: currentProject.id }
+      )
+      .catch(this.catchError);
   };
 
   provisionGKE = (id: number) => {
@@ -177,49 +164,54 @@ class GCPFormSection extends Component<PropsType, StateType> {
     let { currentProject } = this.context;
 
     let clusterName = `${currentProject.name}-cluster`;
-    api.createGKE(
-      "<token>",
-      {
-        gke_name: clusterName,
-        gcp_integration_id: id,
-      },
-      { project_id: currentProject.id },
-      (err: any, res: any) => {
-        if (err) {
-          console.log(err);
-          handleError();
-          return;
-        }
+    api
+      .createGKE(
+        "<token>",
+        {
+          gke_name: clusterName,
+          gcp_integration_id: id,
+        },
+        { project_id: currentProject.id }
+      )
+      .then((res) => {
         this.props.history.push("dashboard?tab=provisioner");
-    });
-  }
+      })
+      .catch(this.catchError);
+  };
 
   handleCreateFlow = () => {
     let { selectedInfras, gcpKeyData, gcpProjectId, gcpRegion } = this.state;
     let { currentProject } = this.context;
-    api.createGCPIntegration('<token>', {
-      gcp_region: gcpRegion,
-      gcp_key_data: gcpKeyData,
-      gcp_project_id: gcpProjectId,
-    }, { project_id: currentProject.id }, (err: any, res: any) => {
-      if (err) {
-        console.log(err);
-      } else if (res?.data) {
-        console.log('gcp provisioned with response: ', res.data);
-        let { id } = res.data;
+    api
+      .createGCPIntegration(
+        "<token>",
+        {
+          gcp_region: gcpRegion,
+          gcp_key_data: gcpKeyData,
+          gcp_project_id: gcpProjectId,
+        },
+        { project_id: currentProject.id }
+      )
+      .then((res) => {
+        if (res?.data) {
+          console.log("gcp provisioned with response: ", res.data);
+          let { id } = res.data;
 
-        if (selectedInfras.length === 2) {
-          // Case: project exists, provision GCR + GKE
-          this.provisionGCR(id, () => this.provisionGKE(id));
-        } else if (selectedInfras[0].value === 'gcr') {
-          // Case: project exists, only provision GCR
-          this.provisionGCR(id, () => this.props.history.push("dashboard?tab=provisioner"));
-        } else {
-          // Case: project exists, only provision GKE
-          this.provisionGKE(id);
+          if (selectedInfras.length === 2) {
+            // Case: project exists, provision GCR + GKE
+            this.provisionGCR(id).then(() => this.provisionGKE(id));
+          } else if (selectedInfras[0].value === "gcr") {
+            // Case: project exists, only provision GCR
+            this.provisionGCR(id).then(() =>
+              this.props.history.push("dashboard?tab=provisioner")
+            );
+          } else {
+            // Case: project exists, only provision GKE
+            this.provisionGKE(id);
+          }
         }
-      }
-    });
+      })
+      .catch(console.log);
   };
 
   // TODO: handle generically (with > 2 steps)

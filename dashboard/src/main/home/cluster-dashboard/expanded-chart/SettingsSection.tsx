@@ -25,31 +25,31 @@ type PropsType = {
 };
 
 type StateType = {
-  actionConfig: ActionConfigType,
-  sourceType: string,
-  selectedImageUrl: string | null,
-  selectedTag: string | null,
-  saveValuesStatus: string | null,
-  values: string,
-  webhookToken: string,
-  highlightCopyButton: boolean,
+  actionConfig: ActionConfigType;
+  sourceType: string;
+  selectedImageUrl: string | null;
+  selectedTag: string | null;
+  saveValuesStatus: string | null;
+  values: string;
+  webhookToken: string;
+  highlightCopyButton: boolean;
   action: ActionConfigType;
 };
 
 export default class SettingsSection extends Component<PropsType, StateType> {
   state = {
     actionConfig: {
-      git_repo: '',
-      image_repo_uri: '',
+      git_repo: "",
+      image_repo_uri: "",
       git_repo_id: 0,
-      dockerfile_path: '',
+      dockerfile_path: "",
     } as ActionConfigType,
-    sourceType: '',
-    selectedImageUrl: '',
-    selectedTag: '',
-    values: '',
-    saveValuesStatus: null as (string | null),
-    webhookToken: '',
+    sourceType: "",
+    selectedImageUrl: "",
+    selectedTag: "",
+    values: "",
+    saveValuesStatus: null as string | null,
+    webhookToken: "",
     highlightCopyButton: false,
     action: {
       git_repo: "",
@@ -69,18 +69,24 @@ export default class SettingsSection extends Component<PropsType, StateType> {
       selectedTag: image?.tag,
     });
 
-    api.getReleaseToken('<token>', {
-      namespace: this.props.currentChart.namespace,
-      cluster_id: currentCluster.id,
-      storage: StorageType.Secret
-    }, { id: currentProject.id, name: this.props.currentChart.name }, (err: any, res: any) => {
-      if (err) {
-        console.log(err);
-      } else {
+    api
+      .getReleaseToken(
+        "<token>",
+        {
+          namespace: this.props.currentChart.namespace,
+          cluster_id: currentCluster.id,
+          storage: StorageType.Secret,
+        },
+        { id: currentProject.id, name: this.props.currentChart.name }
+      )
+      .then((res) => {
         console.log(res.data);
-        this.setState({ action: res.data.git_action_config, webhookToken: res.data.webhook_token });
-      }
-    });
+        this.setState({
+          action: res.data.git_action_config,
+          webhookToken: res.data.webhook_token,
+        });
+      })
+      .catch(console.log);
   }
 
   redeployWithNewImage = (img: string, tag: string) => {
@@ -103,28 +109,28 @@ export default class SettingsSection extends Component<PropsType, StateType> {
     };
 
     let values = yaml.dump(image);
-    api.upgradeChartValues(
-      "<token>",
-      {
-        namespace: this.props.currentChart.namespace,
-        storage: StorageType.Secret,
-        values,
-      },
-      {
-        id: currentProject.id,
-        name: this.props.currentChart.name,
-        cluster_id: currentCluster.id,
-      },
-      (err: any, res: any) => {
-        if (err) {
-          console.log(err);
-          this.setState({ saveValuesStatus: "error" });
-        } else {
-          this.setState({ saveValuesStatus: "successful" });
-          this.props.refreshChart();
+    api
+      .upgradeChartValues(
+        "<token>",
+        {
+          namespace: this.props.currentChart.namespace,
+          storage: StorageType.Secret,
+          values,
+        },
+        {
+          id: currentProject.id,
+          name: this.props.currentChart.name,
+          cluster_id: currentCluster.id,
         }
-      }
-    );
+      )
+      .then((res) => {
+        this.setState({ saveValuesStatus: "successful" });
+        this.props.refreshChart();
+      })
+      .catch((err) => {
+        console.log(err);
+        this.setState({ saveValuesStatus: "error" });
+      });
   };
 
   /*
@@ -143,34 +149,34 @@ export default class SettingsSection extends Component<PropsType, StateType> {
           <Holder>
             <InputRow
               disabled={true}
-              label='Git Repository'
-              type='text'
-              width='100%'
+              label="Git Repository"
+              type="text"
+              width="100%"
               value={this.state.action.git_repo}
               setValue={(x: string) => console.log(x)}
             />
             <InputRow
               disabled={true}
-              label='Dockerfile Path'
-              type='text'
-              width='100%'
+              label="Dockerfile Path"
+              type="text"
+              width="100%"
               value={this.state.action.dockerfile_path}
               setValue={(x: string) => console.log(x)}
             />
             <InputRow
               disabled={true}
-              label='Docker Image Repository'
-              type='text'
-              width='100%'
+              label="Docker Image Repository"
+              type="text"
+              width="100%"
               value={this.state.action.image_repo_uri}
               setValue={(x: string) => console.log(x)}
             />
           </Holder>
         </>
-      )
+      );
     }
 
-    if (this.state.sourceType === 'registry') {
+    if (this.state.sourceType === "registry") {
       return (
         <>
           <Heading>Connected Source</Heading>
@@ -193,19 +199,26 @@ export default class SettingsSection extends Component<PropsType, StateType> {
       <>
         <Heading>Connect a Source</Heading>
         <Helper>
-          Select a repo to connect to. You can 
-          <A padRight={true} href={`/api/oauth/projects/${currentProject.id}/github?redirected=true`}>
+          Select a repo to connect to. You can
+          <A
+            padRight={true}
+            href={`/api/oauth/projects/${currentProject.id}/github?redirected=true`}
+          >
             log in with GitHub
-          </A> or
-          <Highlight onClick={() => this.setState({ sourceType: 'registry' })}>
+          </A>{" "}
+          or
+          <Highlight onClick={() => this.setState({ sourceType: "registry" })}>
             link an image registry
-          </Highlight>.
+          </Highlight>
+          .
         </Helper>
         <RepoSelector
           chart={this.props.currentChart}
           forceExpanded={true}
           actionConfig={this.state.actionConfig}
-          setActionConfig={(actionConfig: ActionConfigType) => this.setState({ actionConfig })}
+          setActionConfig={(actionConfig: ActionConfigType) =>
+            this.setState({ actionConfig })
+          }
         />
       </>
     );

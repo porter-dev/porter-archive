@@ -36,20 +36,16 @@ class Dashboard extends Component<PropsType, StateType> {
 
   refreshInfras = () => {
     if (this.props.projectId) {
-      api.getInfra(
-        "<token>",
-        {},
-        {
-          project_id: this.props.projectId,
-        },
-        (err: any, res: any) => {
-          if (err) {
-            console.log(err);
-            return;
+      api
+        .getInfra(
+          "<token>",
+          {},
+          {
+            project_id: this.props.projectId,
           }
-          this.setState({ infras: res.data });
-        }
-      );
+        )
+        .then((res) => this.setState({ infras: res.data }))
+        .catch(console.log);
     }
   };
 

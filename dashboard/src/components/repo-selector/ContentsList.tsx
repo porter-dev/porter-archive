@@ -4,17 +4,17 @@ import file from "assets/file.svg";
 import folder from "assets/folder.svg";
 import info from "assets/info.svg";
 
-import api from '../../shared/api';
-import { Context } from '../../shared/Context';
-import { FileType, ActionConfigType } from '../../shared/types';
+import api from "../../shared/api";
+import { Context } from "../../shared/Context";
+import { FileType, ActionConfigType } from "../../shared/types";
 
 import Loading from "../Loading";
 
 type PropsType = {
-  actionConfig: ActionConfigType | null,
-  branch: string,
-  setActionConfig: (x: ActionConfigType) => void,
-  setPath: () => void,
+  actionConfig: ActionConfigType | null;
+  branch: string;
+  setActionConfig: (x: ActionConfigType) => void;
+  setPath: () => void;
 };
 
 type StateType = {
@@ -36,38 +36,48 @@ export default class ContentsList extends Component<PropsType, StateType> {
     updatedConfig.dockerfile_path = x;
     setActionConfig(updatedConfig);
     this.updateContents();
-  }
+  };
 
   updateContents = () => {
     let { actionConfig, branch } = this.props;
     let { currentProject } = this.context;
 
     // Get branch contents
-    api.getBranchContents('<token>', { dir: actionConfig.dockerfile_path }, {
-      project_id: currentProject.id,
-      git_repo_id: actionConfig.git_repo_id,
-      kind: 'github',
-      owner: actionConfig.git_repo.split('/')[0],
-      name: actionConfig.git_repo.split('/')[1],
-      branch: branch,
-    }, (err: any, res: any) => {
-      if (err) {
-        console.log(err);
-        this.setState({ loading: false, error: true });
-      } else {
+    api
+      .getBranchContents(
+        "<token>",
+        { dir: actionConfig.dockerfile_path },
+        {
+          project_id: currentProject.id,
+          git_repo_id: actionConfig.git_repo_id,
+          kind: "github",
+          owner: actionConfig.git_repo.split("/")[0],
+          name: actionConfig.git_repo.split("/")[1],
+          branch: branch,
+        }
+      )
+      .then((res) => {
         let files = [] as FileType[];
         let folders = [] as FileType[];
         res.data.map((x: FileType, i: number) => {
-          x.Type === 'dir' ? folders.push(x) : files.push(x);
+          x.Type === "dir" ? folders.push(x) : files.push(x);
         });
 
-        folders.sort((a: FileType, b: FileType) => { return a.Path < b.Path ? 1 : 0 });
-        files.sort((a: FileType, b: FileType) => { return a.Path < b.Path ? 1 : 0 });
+        folders.sort((a: FileType, b: FileType) => {
+          return a.Path < b.Path ? 1 : 0;
+        });
+        files.sort((a: FileType, b: FileType) => {
+          return a.Path < b.Path ? 1 : 0;
+        });
         let contents = folders.concat(files);
-        
+
         this.setState({ contents, loading: false, error: false });
-      }
-    });
+      })
+      .catch((err) => {
+        console.log(err);
+
+        this.setState({ loading: false, error: true });
+      });
   };
 
   componentDidMount() {
@@ -127,21 +137,21 @@ export default class ContentsList extends Component<PropsType, StateType> {
 
   renderJumpToParent = () => {
     let { actionConfig } = this.props;
-    if (actionConfig.dockerfile_path !== '') {
-      let splits = actionConfig.dockerfile_path.split('/');
-      let subdir = '';
+    if (actionConfig.dockerfile_path !== "") {
+      let splits = actionConfig.dockerfile_path.split("/");
+      let subdir = "";
       if (splits.length !== 1) {
-        subdir = actionConfig.dockerfile_path.replace(splits[splits.length - 1], '');
-        if (subdir.charAt(subdir.length - 1) === '/') {
+        subdir = actionConfig.dockerfile_path.replace(
+          splits[splits.length - 1],
+          ""
+        );
+        if (subdir.charAt(subdir.length - 1) === "/") {
           subdir = subdir.slice(0, subdir.length - 1);
         }
       }
 
       return (
-        <Item
-          lastItem={false}
-          onClick={() => this.setSubdirectory(subdir)}
-        >
+        <Item lastItem={false} onClick={() => this.setSubdirectory(subdir)}>
           <BackLabel>..</BackLabel>
         </Item>
       );

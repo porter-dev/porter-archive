@@ -36,30 +36,28 @@ export default class ExpandedTemplate extends Component<PropsType, StateType> {
 
   componentDidMount() {
     this.setState({ loading: true });
-    api.getTemplateInfo(
-      "<token>",
-      {},
-      {
-        name: this.props.currentTemplate.name.toLowerCase().trim(),
-        version: "latest",
-      },
-      (err: any, res: any) => {
-        if (err) {
-          this.setState({ loading: false, error: true });
-        } else {
-          let { form, values, markdown, metadata } = res.data;
-          let keywords = metadata.keywords;
-          this.setState({
-            form,
-            values,
-            markdown,
-            keywords,
-            loading: false,
-            error: false,
-          });
+    api
+      .getTemplateInfo(
+        "<token>",
+        {},
+        {
+          name: this.props.currentTemplate.name.toLowerCase().trim(),
+          version: "latest",
         }
-      }
-    );
+      )
+      .then((res) => {
+        let { form, values, markdown, metadata } = res.data;
+        let keywords = metadata.keywords;
+        this.setState({
+          form,
+          values,
+          markdown,
+          keywords,
+          loading: false,
+          error: false,
+        });
+      })
+      .catch((err) => this.setState({ loading: false, error: true }));
   }
 
   renderContents = () => {

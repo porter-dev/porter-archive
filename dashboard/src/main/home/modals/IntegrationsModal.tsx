@@ -20,30 +20,20 @@ export default class IntegrationsModal extends Component<PropsType, StateType> {
   componentDidMount() {
     let { category } = this.context.currentModalData;
     if (category === "kubernetes") {
-      api.getClusterIntegrations("<token>", {}, {}, (err: any, res: any) => {
-        if (err) {
-          console.log(err);
-        } else {
-          this.setState({ integrations: res.data });
-        }
-      });
+      api
+        .getClusterIntegrations("<token>", {}, {})
+        .then((res) => this.setState({ integrations: res.data }))
+        .catch((err) => console.log(err));
     } else if (category === "registry") {
-      api.getRegistryIntegrations("<token>", {}, {}, (err: any, res: any) => {
-        if (err) {
-          console.log(err);
-        } else {
-          // console.log(res.data)
-          this.setState({ integrations: res.data });
-        }
-      });
+      api
+        .getRegistryIntegrations("<token>", {}, {})
+        .then((res) => this.setState({ integrations: res.data }))
+        .catch((err) => console.log(err));
     } else {
-      api.getRepoIntegrations("<token>", {}, {}, (err: any, res: any) => {
-        if (err) {
-          console.log(err);
-        } else {
-          this.setState({ integrations: res.data });
-        }
-      });
+      api
+        .getRepoIntegrations("<token>", {}, {})
+        .then((res) => this.setState({ integrations: res.data }))
+        .catch((err) => console.log(err));
     }
   }
 
@@ -51,8 +41,11 @@ export default class IntegrationsModal extends Component<PropsType, StateType> {
     if (this.context.currentModalData) {
       let { setCurrentIntegration } = this.context.currentModalData;
       return this.state.integrations.map((integration: any, i: number) => {
-        let icon = integrationList[integration.service] && integrationList[integration.service].icon;
-        let disabled = integration.service === 'kube' || integration.service === 'docker';
+        let icon =
+          integrationList[integration.service] &&
+          integrationList[integration.service].icon;
+        let disabled =
+          integration.service === "kube" || integration.service === "docker";
         return (
           <IntegrationOption
             key={i}

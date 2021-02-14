@@ -2,15 +2,15 @@ import React, { Component } from "react";
 import styled from "styled-components";
 import branch_icon from "assets/branch.png";
 
-import api from '../../shared/api';
-import { Context } from '../../shared/Context';
-import { ActionConfigType } from '../..//shared/types';
+import api from "../../shared/api";
+import { Context } from "../../shared/Context";
+import { ActionConfigType } from "../..//shared/types";
 
 import Loading from "../Loading";
 
 type PropsType = {
-  actionConfig: ActionConfigType,
-  setBranch: (x: string) => void,
+  actionConfig: ActionConfigType;
+  setBranch: (x: string) => void;
 };
 
 type StateType = {
@@ -31,20 +31,25 @@ export default class BranchList extends Component<PropsType, StateType> {
     let { currentProject } = this.context;
 
     // Get branches
-    api.getBranches('<token>', {}, {
-      project_id: currentProject.id,
-      git_repo_id: actionConfig.git_repo_id,
-      kind: 'github',
-      owner: actionConfig.git_repo.split('/')[0],
-      name: actionConfig.git_repo.split('/')[1],
-    }, (err: any, res: any) => {
-      if (err) {
+    api
+      .getBranches(
+        "<token>",
+        {},
+        {
+          project_id: currentProject.id,
+          git_repo_id: actionConfig.git_repo_id,
+          kind: "github",
+          owner: actionConfig.git_repo.split("/")[0],
+          name: actionConfig.git_repo.split("/")[1],
+        }
+      )
+      .then((res) =>
+        this.setState({ branches: res.data, loading: false, error: false })
+      )
+      .catch((err) => {
         console.log(err);
         this.setState({ loading: false, error: true });
-      } else {
-        this.setState({ branches: res.data, loading: false, error: false });
-      }
-    });
+      });
   }
 
   renderBranchList = () => {
@@ -84,7 +89,9 @@ const BranchName = styled.div`
   display: flex;
   width: 100%;
   font-size: 13px;
-  border-bottom: 1px solid ${(props: { lastItem: boolean }) => props.lastItem ? '#00000000' : '#606166'};
+  border-bottom: 1px solid
+    ${(props: { lastItem: boolean }) =>
+      props.lastItem ? "#00000000" : "#606166"};
   color: #ffffff;
   user-select: none;
   align-items: center;

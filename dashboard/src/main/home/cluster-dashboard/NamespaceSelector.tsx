@@ -26,17 +26,16 @@ export default class NamespaceSelector extends Component<PropsType, StateType> {
   updateOptions = () => {
     let { currentCluster, currentProject } = this.context;
 
-    api.getNamespaces(
-      "<token>",
-      {
-        cluster_id: currentCluster.id,
-      },
-      { id: currentProject.id },
-      (err: any, res: any) => {
-        if (err && this._isMounted) {
-          // setCurrentError('Could not read clusters: ' + JSON.stringify(err));
-          this.setState({ namespaceOptions: [{ label: "All", value: "" }] });
-        } else if (this._isMounted) {
+    api
+      .getNamespaces(
+        "<token>",
+        {
+          cluster_id: currentCluster.id,
+        },
+        { id: currentProject.id }
+      )
+      .then((res) => {
+        if (this._isMounted) {
           let namespaceOptions: { label: string; value: string }[] = [
             { label: "All", value: "" },
           ];
@@ -50,8 +49,12 @@ export default class NamespaceSelector extends Component<PropsType, StateType> {
           );
           this.setState({ namespaceOptions });
         }
-      }
-    );
+      })
+      .catch((err) => {
+        if (this._isMounted) {
+          this.setState({ namespaceOptions: [{ label: "All", value: "" }] });
+        }
+      });
   };
 
   componentDidMount() {

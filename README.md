@@ -32,7 +32,7 @@ Porter brings the simplicity of a traditional PaaS to your own cloud provider wh
 - Marketplace for one click add-ons (e.g. MongoDB, Redis, PostgreSQL)
 - Application rollback to previously deployed versions
 - Deploy webhooks that can be triggered from CI/CD pipelines
-- Native CI/CD with buildpacks for non-Dockerized apps (Coming Soon)
+- Native CI/CD with buildpacks for non-Dockerized apps (🚧 Coming Soon)
 
 ### DevOps Mode
 For those who are familiar with Kubernetes and Helm:
@@ -47,7 +47,7 @@ For those who are familiar with Kubernetes and Helm:
 
 ## Docs
 
-Below are instructions for a quickstart. For full documentation, visit our [official Docs page.](https://docs.getporter.dev)
+Below are instructions for a quickstart. For full documentation, please visit our [official Docs.](https://docs.getporter.dev)
 
 ## CLI Installation
 ### Mac 
@@ -70,16 +70,16 @@ chmod +x ./porter
 sudo mv ./porter /usr/local/bin/porter
 ```
 
-For Linux and Windows installation, see our [Docs](https://docs.getporter.dev/docs/cli-documentation#linux). 
+For Linux and Windows installation, see our [Docs](https://docs.getporter.dev/docs/cli-documentation#linux).
 
 ## Getting Started
 1. Sign up and log into [Porter Dashboard](https://dashboard.getporter.dev).
 
-2. Create a Project and select a cloud provider you want to provision a Kubernetes cluster in (AWS, GCP, DO). It is also possible to [link up your own Kubernetes cluster.](https://docs.getporter.dev/docs/cli-documentation#linking-your-own-private-image-registry)
+2. Create a Project and select a cloud provider you want to provision a Kubernetes cluster in (AWS, GCP, DO). It is also possible to [link up your own Kubernetes cluster.](https://docs.getporter.dev/docs/cli-documentation#connecting-to-an-existing-cluster)
 
 3. [Put in your credentials](https://docs.getporter.dev/docs/getting-started-with-porter-on-aws), then Porter will automatically provision a cluster and an image registry in your own cloud account.
 
-4. [Build and push your Docker image](https://docs.getporter.dev/docs/cli-documentation#porter-docker-configure), or connect your git repository if your application is not dockerized.
+4. [Build and push your Docker image](https://docs.getporter.dev/docs/cli-documentation#porter-docker-configure), or connect your git repository. We are currently working on supporting the latter option for non-Dockerized applications.
 
 5. From the Templates tab on the Dashboard, select the Docker template. Click on the image you have just pushed, configure the port, then hit deploy.
 

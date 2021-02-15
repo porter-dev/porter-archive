@@ -229,7 +229,7 @@ func (app *App) upsertUserFromToken(tok *oauth2.Token) (*models.User, error) {
 			return nil, err
 		}
 	} else if err != nil {
-		return nil, fmt.Errorf("unexpected error occurred:", err.Error())
+		return nil, fmt.Errorf("unexpected error occurred:%s", err.Error())
 	}
 
 	return user, nil

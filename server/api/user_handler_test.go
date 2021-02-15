@@ -2,6 +2,7 @@ package api_test
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"reflect"
@@ -9,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/go-test/deep"
+	"github.com/porter-dev/porter/internal/auth/token"
 	"github.com/porter-dev/porter/internal/models"
 )
 
@@ -104,6 +106,53 @@ var authCheckTests = []*userTest{
 
 func TestHandleAuthCheck(t *testing.T) {
 	testUserRequests(t, authCheckTests, true)
+}
+
+func TestHandleAuthCheckToken(t *testing.T) {
+	tester := newTester(true)
+
+	initUserDefault(tester)
+	initProject(tester)
+
+	// generate a new token
+	tokGen, _ := token.GetTokenForAPI(1, 1)
+
+	tok, _ := tokGen.EncodeToken(&token.TokenGeneratorConf{
+		TokenSecret: "secret",
+	})
+
+	req, err := http.NewRequest(
+		"GET",
+		"/api/auth/check",
+		strings.NewReader(""),
+	)
+
+	tester.req = req
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", tok))
+	tester.execute()
+
+	rr := tester.rr
+
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// first, check that the status matches
+	if status := rr.Code; status != 200 {
+		t.Errorf("%s, handler returned wrong status code: got %v want %v",
+			"auth check token", status, 200)
+	}
+
+	gotBody := &models.UserExternal{}
+	expBody := &models.UserExternal{}
+
+	json.Unmarshal(tester.rr.Body.Bytes(), gotBody)
+	json.Unmarshal([]byte(`{"id":1,"email":"belanger@getporter.dev"}`), expBody)
+
+	if !reflect.DeepEqual(gotBody, expBody) {
+		t.Errorf("%s, handler returned wrong body: got %v want %v",
+			"auth check token", gotBody, expBody)
+	}
 }
 
 var createUserTests = []*userTest{

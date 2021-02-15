@@ -2,6 +2,13 @@ package actions
 
 import "fmt"
 
+func getCheckoutCodeStep() GithubActionYAMLStep {
+	return GithubActionYAMLStep{
+		Name: "Checkout code",
+		Uses: "actions/checkout@v2.3.4",
+	}
+}
+
 const download string = `
 name=$(curl -s https://api.github.com/repos/porter-dev/porter/releases/latest | grep "browser_download_url.*/porter_.*_Linux_x86_64\.zip" | cut -d ":" -f 2,3 | tr -d \")
 name=$(basename $name)

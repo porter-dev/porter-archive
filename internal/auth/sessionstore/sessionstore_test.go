@@ -34,7 +34,7 @@ func TestPGStore(t *testing.T) {
 	repo := test.NewRepository(true)
 
 	ss, err := sessionstore.NewStore(repo, config.ServerConf{
-		CookieSecret: []byte("secret"),
+		CookieSecrets: []string{"secret"},
 	})
 
 	if err != nil {
@@ -128,13 +128,15 @@ func TestPGStore(t *testing.T) {
 	if err = ss.Save(req, headerOnlyResponseWriter(m), session); err != nil {
 		t.Fatal("Failed to save session:", err.Error())
 	}
+
+	t.Errorf("")
 }
 
 func TestSessionOptionsAreUniquePerSession(t *testing.T) {
 	repo := test.NewRepository(true)
 
 	ss, err := sessionstore.NewStore(repo, config.ServerConf{
-		CookieSecret: []byte("secret"),
+		CookieSecrets: []string{"secret"},
 	})
 
 	if err != nil {

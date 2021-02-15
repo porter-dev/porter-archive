@@ -131,18 +131,19 @@ type bodyDOIntegrationID struct {
 // the one stored in the session
 func (auth *Auth) DoesUserIDMatch(next http.Handler, loc IDLocation) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// first check for token
-		tok := auth.getTokenFromRequest(r)
-
-		if tok != nil && tok.SubKind == token.User && auth.doesSessionMatchID(r, tok.IBy) {
-			next.ServeHTTP(w, r)
-			return
-		}
-
 		var err error
 		id, err := findUserIDInRequest(r, loc)
 
-		if err == nil && auth.doesSessionMatchID(r, uint(id)) {
+		// first check for token
+		tok := auth.getTokenFromRequest(r)
+
+		if err != nil {
+			http.Error(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)
+			return
+		} else if tok != nil && tok.IBy == uint(id) {
+			next.ServeHTTP(w, r)
+			return
+		} else if auth.doesSessionMatchID(r, uint(id)) {
 			next.ServeHTTP(w, r)
 		} else {
 			http.Error(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)
@@ -657,6 +658,14 @@ func (auth *Auth) doesSessionMatchID(r *http.Request, id uint) bool {
 func (auth *Auth) isLoggedIn(w http.ResponseWriter, r *http.Request) bool {
 	// first check for Bearer token
 
+	tok := auth.getTokenFromRequest(r)
+
+	fmt.Println("CHECKED TOKEN FROM REQUEST", tok)
+
+	if tok != nil {
+		return true
+	}
+
 	session, err := auth.store.Get(r, auth.cookieName)
 	if err != nil {
 		session.Values["authenticated"] = false
@@ -683,7 +692,9 @@ func (auth *Auth) getTokenFromRequest(r *http.Request) *token.Token {
 
 	reqToken = strings.TrimSpace(splitToken[1])
 
-	tok, _ := token.GetTokenFromEncoded(reqToken, auth.tokenConf)
+	tok, err := token.GetTokenFromEncoded(reqToken, auth.tokenConf)
+
+	fmt.Printf("ERROR WAS %v\n", err)
 
 	return tok
 }

@@ -4,6 +4,7 @@ import { Context } from "shared/Context";
 
 type PropsType = {
   selectedPod: any;
+  podError: string;
 };
 
 type StateType = {
@@ -40,7 +41,7 @@ export default class Logs extends Component<PropsType, StateType> {
       return <Message>Please select a pod to view its logs.</Message>;
     }
     if (this.state.logs.length == 0) {
-      return <Message>No logs to display from this pod.</Message>;
+      return <Message>{this.props.podError || "No logs to display from this pod."}</Message>;
     }
     return this.state.logs.map((log, i) => {
       return <Log key={i}>{log}</Log>;
@@ -206,9 +207,11 @@ const LogStream = styled.div`
 const Message = styled.div`
   display: flex;
   height: 100%;
-  width: 100%;
+  width: calc(100% - 150px);
   align-items: center;
   justify-content: center;
+  margin-left: 75px;
+  text-align: center;
   color: #ffffff44;
   font-size: 13px;
 `;

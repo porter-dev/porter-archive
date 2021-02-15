@@ -22,7 +22,7 @@ type ServerConf struct {
 	Port                 int           `env:"SERVER_PORT,default=8080"`
 	StaticFilePath       string        `env:"STATIC_FILE_PATH,default=/porter/static"`
 	CookieName           string        `env:"COOKIE_NAME,default=porter"`
-	CookieSecret         []byte        `env:"COOKIE_SECRET,default=secret"`
+	CookieSecrets        []string      `env:"COOKIE_SECRETS,default=hashkey;blockkey"`
 	TokenGeneratorSecret string        `env:"TOKEN_GENERATOR_SECRET,default=secret"`
 	TimeoutRead          time.Duration `env:"SERVER_TIMEOUT_READ,default=5s"`
 	TimeoutWrite         time.Duration `env:"SERVER_TIMEOUT_WRITE,default=10s"`
@@ -66,7 +66,7 @@ func FromEnv() *Conf {
 	var c Conf
 
 	if err := envdecode.StrictDecode(&c); err != nil {
-		log.Fatalf("Failed to decode: %s", err)
+		log.Fatalf("Failed to decode server conf: %s", err)
 	}
 
 	return &c

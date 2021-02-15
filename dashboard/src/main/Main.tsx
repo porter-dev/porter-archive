@@ -32,18 +32,21 @@ export default class Main extends Component<PropsType, StateType> {
     let urlParams = new URLSearchParams(window.location.search);
     let error = urlParams.get("error");
     error && setCurrentError(error);
-    api.checkAuth("", {}, {}, (err: any, res: any) => {
-      if (err && err.response?.status == 403) {
-        this.setState({ isLoggedIn: false, loading: false });
-      }
-
-      if (res && res.data) {
-        setUser(res?.data?.id, res?.data?.email);
-        this.setState({ isLoggedIn: true, initialized: true, loading: false });
-      } else {
-        this.setState({ isLoggedIn: false, loading: false });
-      }
-    });
+    api
+      .checkAuth("", {}, {})
+      .then((res) => {
+        if (res && res.data) {
+          setUser(res?.data?.id, res?.data?.email);
+          this.setState({
+            isLoggedIn: true,
+            initialized: true,
+            loading: false,
+          });
+        } else {
+          this.setState({ isLoggedIn: false, loading: false });
+        }
+      })
+      .catch((err) => this.setState({ isLoggedIn: false, loading: false }));
   }
 
   initialize = () => {

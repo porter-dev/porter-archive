@@ -111,8 +111,10 @@ func (store *PGStore) save(session *sessions.Session) error {
 
 // NewStore takes an initialized db and session key pairs to create a session-store in postgres db.
 func NewStore(repo *repository.Repository, conf config.ServerConf) (*PGStore, error) {
-	keyPairs := [][]byte{
-		conf.CookieSecret,
+	keyPairs := [][]byte{}
+
+	for _, key := range conf.CookieSecrets {
+		keyPairs = append(keyPairs, []byte(key))
 	}
 
 	dbStore := &PGStore{
@@ -129,9 +131,14 @@ func NewStore(repo *repository.Repository, conf config.ServerConf) (*PGStore, er
 
 // NewFilesystemStore takes session key pairs to create a session-store in the local fs without using a db.
 func NewFilesystemStore(conf config.ServerConf) *sessions.FilesystemStore {
+	keyPairs := [][]byte{}
+
+	for _, key := range conf.CookieSecrets {
+		keyPairs = append(keyPairs, []byte(key))
+	}
 
 	// Defaults to os.TempDir() when first argument (path) isn't specified.
-	store := sessions.NewFilesystemStore("", conf.CookieSecret)
+	store := sessions.NewFilesystemStore("", keyPairs...)
 
 	return store
 }

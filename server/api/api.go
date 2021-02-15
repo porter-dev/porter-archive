@@ -2,11 +2,14 @@ package api
 
 import (
 	"fmt"
+	"net/http"
+	"strings"
 
 	"github.com/go-playground/locales/en"
 	ut "github.com/go-playground/universal-translator"
 	vr "github.com/go-playground/validator/v10"
 	"github.com/porter-dev/porter/internal/auth/sessionstore"
+	"github.com/porter-dev/porter/internal/auth/token"
 	"github.com/porter-dev/porter/internal/oauth"
 	"golang.org/x/oauth2"
 	"gorm.io/gorm"
@@ -75,6 +78,7 @@ type App struct {
 	db         *gorm.DB
 	validator  *vr.Validate
 	translator *ut.Translator
+	tokenConf  *token.TokenGeneratorConf
 }
 
 // New returns a new App instance
@@ -142,5 +146,25 @@ func New(conf *AppConfig) (*App, error) {
 		})
 	}
 
+	app.tokenConf = &token.TokenGeneratorConf{
+		TokenSecret: conf.ServerConf.TokenGeneratorSecret,
+	}
+
 	return app, nil
+}
+
+func (app *App) getTokenFromRequest(r *http.Request) *token.Token {
+	reqToken := r.Header.Get("Authorization")
+
+	splitToken := strings.Split(reqToken, "Bearer")
+
+	if len(splitToken) != 2 {
+		return nil
+	}
+
+	reqToken = strings.TrimSpace(splitToken[1])
+
+	tok, _ := token.GetTokenFromEncoded(reqToken, app.tokenConf)
+
+	return tok
 }

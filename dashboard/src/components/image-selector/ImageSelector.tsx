@@ -8,9 +8,9 @@ import { integrationList } from "shared/common";
 import { Context } from "shared/Context";
 import { ImageType } from "shared/types";
 
-import Loading from '../Loading';
-import TagList from './TagList';
-import ImageList from './ImageList';
+import Loading from "../Loading";
+import TagList from "./TagList";
+import ImageList from "./ImageList";
 
 type PropsType = {
   forceExpanded?: boolean;
@@ -41,83 +41,76 @@ export default class ImageSelector extends Component<PropsType, StateType> {
     const { currentProject, setCurrentError } = this.context;
     let images = [] as ImageType[];
     let errors = [] as number[];
-    api.getProjectRegistries(
-      "<token>",
-      {},
-      { id: currentProject.id },
-      async (err: any, res: any) => {
-        if (err) {
-          console.log(err);
-          this.setState({ error: true });
-        } else {
-          let registries = res.data;
-          if (registries.length === 0) {
-            this.setState({ loading: false });
-          }
+    api
+      .getProjectRegistries("<token>", {}, { id: currentProject.id })
+      .then(async (res) => {
+        let registries = res.data;
+        if (registries.length === 0) {
+          this.setState({ loading: false });
+        }
 
-          // Loop over connected image registries
-          registries.forEach(async (registry: any, i: number) => {
-            await new Promise((nextController: (res?: any) => void) => {
-              api.getImageRepos(
+        // Loop over connected image registries
+        registries.forEach(async (registry: any, i: number) => {
+          await new Promise((nextController: (res?: any) => void) => {
+            api
+              .getImageRepos(
                 "<token>",
                 {},
                 {
                   project_id: currentProject.id,
                   registry_id: registry.id,
-                },
-                (err: any, res: any) => {
-                  if (err) {
-                    errors.push(1);
-                  } else {
-                    res.data.sort((a: any, b: any) =>
-                      a.name > b.name ? 1 : -1
-                    );
-                    // Loop over found image repositories
-                    let newImg = res.data.map((img: any) => {
-                      if (this.props.selectedImageUrl === img.uri) {
-                        this.setState({
-                          clickedImage: {
-                            kind: registry.service,
-                            source: img.uri,
-                            name: img.name,
-                            registryId: registry.id,
-                          },
-                        });
-                      }
-                      return {
+                }
+              )
+              .then((res) => {
+                res.data.sort((a: any, b: any) => (a.name > b.name ? 1 : -1));
+                // Loop over found image repositories
+                let newImg = res.data.map((img: any) => {
+                  if (this.props.selectedImageUrl === img.uri) {
+                    this.setState({
+                      clickedImage: {
                         kind: registry.service,
                         source: img.uri,
                         name: img.name,
                         registryId: registry.id,
-                      };
-                    });
-                    images.push(...newImg);
-                    errors.push(0);
-                  }
-
-                  if (i == registries.length - 1) {
-                    let error =
-                      errors.reduce((a, b) => {
-                        return a + b;
-                      }) == registries.length
-                        ? true
-                        : false;
-
-                    this.setState({
-                      images,
-                      loading: false,
-                      error,
+                      },
                     });
                   }
+                  return {
+                    kind: registry.service,
+                    source: img.uri,
+                    name: img.name,
+                    registryId: registry.id,
+                  };
+                });
+                images.push(...newImg);
+                errors.push(0);
+              })
+              .catch(() => errors.push(1))
+              .finally(() => {
+                if (i == registries.length - 1) {
+                  let error =
+                    errors.reduce((a, b) => {
+                      return a + b;
+                    }) == registries.length
+                      ? true
+                      : false;
 
-                  nextController();
+                  this.setState({
+                    images,
+                    loading: false,
+                    error,
+                  });
                 }
-              );
-            });
+
+                nextController();
+              });
           });
-        }
-      }
-    );
+        });
+      })
+      .catch((err) => {
+        console.log(err);
+        this.setState({ error: true });
+      });
   }
 
   /*
@@ -259,18 +252,18 @@ export default class ImageSelector extends Component<PropsType, StateType> {
           )}
         </StyledImageSelector>
 
-        {this.state.isExpanded
-          ?
+        {this.state.isExpanded ? (
           <ImageList
             selectedImageUrl={this.props.selectedImageUrl}
             selectedTag={this.props.selectedTag}
             clickedImage={this.state.clickedImage}
             setSelectedImageUrl={this.props.setSelectedImageUrl}
             setSelectedTag={this.props.setSelectedTag}
-            setClickedImage={(x: ImageType) => this.setState({ clickedImage: x })}
+            setClickedImage={(x: ImageType) =>
+              this.setState({ clickedImage: x })
+            }
           />
-          : null
-        }
+        ) : null}
       </div>
     );
   }

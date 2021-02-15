@@ -1,4 +1,3 @@
-/*
 import React, { useMemo, useCallback } from 'react';
 import { AreaClosed, Line, Bar } from '@visx/shape';
 import appleStock, { AppleStock } from '@visx/mock-data/lib/mocks/appleStock';
@@ -12,13 +11,18 @@ import { LinearGradient } from '@visx/gradient';
 import { max, extent, bisector } from 'd3-array';
 import { timeFormat } from 'd3-time-format';
 
+/*
+export const accentColor = '#f5cb42';
+export const accentColorDark = '#949eff';
+*/
+
 type TooltipData = AppleStock;
 
 const stock = appleStock.slice(800);
-export const background = '#3b6978';
-export const background2 = '#204051';
-export const accentColor = '#edffea';
-export const accentColorDark = '#75daad';
+export const background = '#3b697800';
+export const background2 = '#20405100';
+export const accentColor = '#949eff';
+export const accentColorDark = '#949eff';
 const tooltipStyles = {
   ...defaultStyles,
   background,
@@ -55,7 +59,7 @@ export default withTooltip<AreaProps, TooltipData>(
 
     // bounds
     const innerWidth = width - margin.left - margin.right;
-    const innerHeight = height - margin.top - margin.bottom;
+    const innerHeight = height - margin.top - margin.bottom - 20;
 
     // scales
     const dateScale = useMemo(
@@ -109,25 +113,7 @@ export default withTooltip<AreaProps, TooltipData>(
             rx={14}
           />
           <LinearGradient id="area-background-gradient" from={background} to={background2} />
-          <LinearGradient id="area-gradient" from={accentColor} to={accentColor} toOpacity={0.1} />
-          <GridRows
-            left={margin.left}
-            scale={stockValueScale}
-            width={innerWidth}
-            strokeDasharray="1,3"
-            stroke={accentColor}
-            strokeOpacity={0}
-            pointerEvents="none"
-          />
-          <GridColumns
-            top={margin.top}
-            scale={dateScale}
-            height={innerHeight}
-            strokeDasharray="1,3"
-            stroke={accentColor}
-            strokeOpacity={0.2}
-            pointerEvents="none"
-          />
+          <LinearGradient id="area-gradient" from={accentColor} to={accentColor} toOpacity={0} />
           <AreaClosed<AppleStock>
             data={stock}
             x={d => dateScale(getDate(d)) ?? 0}
@@ -194,13 +180,16 @@ export default withTooltip<AreaProps, TooltipData>(
               {`$${getStockValue(tooltipData)}`}
             </TooltipWithBounds>
             <Tooltip
-              top={innerHeight + margin.top - 14}
+              top={-10}
               left={tooltipLeft}
               style={{
                 ...defaultStyles,
-                minWidth: 72,
+                background: '#26272f',
+                color: '#aaaabb',
+                width: 100,
+                paddingTop: 35,
                 textAlign: 'center',
-                transform: 'translateX(-50%)',
+                transform: 'translateX(-60px)',
               }}
             >
               {formatDate(getDate(tooltipData))}
@@ -211,4 +200,3 @@ export default withTooltip<AreaProps, TooltipData>(
     );
   },
 );
-*/

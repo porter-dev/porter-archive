@@ -368,7 +368,7 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
     // Append universal tabs
     tabOptions.push(
       { label: "Status", value: "status" },
-      { label: "Metrics", value: "metrics" },
+      //{ label: "Metrics", value: "metrics" },
       { label: "Chart Overview", value: "graph" }
     );
 

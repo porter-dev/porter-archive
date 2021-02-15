@@ -68,6 +68,26 @@ func (app *App) HandleCreateUser(w http.ResponseWriter, r *http.Request) {
 
 // HandleAuthCheck checks whether current session is authenticated and returns user ID if so.
 func (app *App) HandleAuthCheck(w http.ResponseWriter, r *http.Request) {
+	// first, check for token
+	tok := app.getTokenFromRequest(r)
+
+	if tok != nil {
+		// read the user
+		user, err := app.Repo.User.ReadUser(tok.IBy)
+
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		if err := app.sendUser(w, tok.IBy, user.Email, ""); err != nil {
+			app.handleErrorFormDecoding(err, ErrUserDecode, w)
+			return
+		}
+
+		return
+	}
+
 	session, err := app.Store.Get(r, app.ServerConf.CookieName)
 
 	if err != nil {

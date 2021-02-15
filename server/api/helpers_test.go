@@ -59,13 +59,14 @@ func newTester(canQuery bool) *tester {
 	appConf := config.Conf{
 		Debug: true,
 		Server: config.ServerConf{
-			Port:         8080,
-			CookieName:   "porter",
-			CookieSecret: []byte("secret"),
-			TimeoutRead:  time.Second * 5,
-			TimeoutWrite: time.Second * 10,
-			TimeoutIdle:  time.Second * 15,
-			IsTesting:    true,
+			Port:                 8080,
+			CookieName:           "porter",
+			CookieSecrets:        []string{"secret"},
+			TimeoutRead:          time.Second * 5,
+			TimeoutWrite:         time.Second * 10,
+			TimeoutIdle:          time.Second * 15,
+			IsTesting:            true,
+			TokenGeneratorSecret: "secret",
 		},
 		// unimportant here
 		Db: config.DBConf{},

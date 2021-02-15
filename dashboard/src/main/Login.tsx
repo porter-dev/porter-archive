@@ -52,26 +52,27 @@ export default class Login extends Component<PropsType, StateType> {
       this.setState({ emailError: true });
     } else {
       // Attempt user login
-      api.logInUser(
-        "",
-        {
-          email: email,
-          password: password,
-        },
-        {},
-        (err: any, res: any) => {
+      api
+        .logInUser(
+          "",
+          {
+            email: email,
+            password: password,
+          },
+          {}
+        )
+        .then((res) => {
           // TODO: case and set credential error
-          if (err) {
-            this.context.setCurrentError(err.response.data.errors[0]);
-          }
           if (res?.data?.redirect) {
             window.location.href = res.data.redirect;
           } else {
             setUser(res?.data?.id, res?.data?.email);
-            err ? console.log(err.response.data) : authenticate();
+            authenticate();
           }
-        }
-      );
+        })
+        .catch((err) =>
+          this.context.setCurrentError(err.response.data.errors[0])
+        );
     }
   };
 

@@ -35,32 +35,29 @@ export default class RevisionSection extends Component<PropsType, StateType> {
     maxVersion: 0, // Track most recent version even when previewing old revisions
   };
 
-  refreshHistory = (callback?: () => void) => {
+  refreshHistory = () => {
     let { chart } = this.props;
     let { currentCluster, currentProject } = this.context;
-    api.getRevisions(
-      "<token>",
-      {
-        namespace: chart.namespace,
-        cluster_id: currentCluster.id,
-        storage: StorageType.Secret,
-      },
-      { id: currentProject.id, name: chart.name },
-      (err: any, res: any) => {
-        if (err) {
-          console.log(err);
-        } else {
-          res.data.sort((a: ChartType, b: ChartType) => {
-            return -(a.version - b.version);
-          });
-          this.setState({
-            revisions: res.data,
-            maxVersion: res.data[0].version,
-          });
-          callback && callback();
-        }
-      }
-    );
+    return api
+      .getRevisions(
+        "<token>",
+        {
+          namespace: chart.namespace,
+          cluster_id: currentCluster.id,
+          storage: StorageType.Secret,
+        },
+        { id: currentProject.id, name: chart.name }
+      )
+      .then((res) => {
+        res.data.sort((a: ChartType, b: ChartType) => {
+          return -(a.version - b.version);
+        });
+        this.setState({
+          revisions: res.data,
+          maxVersion: res.data[0].version,
+        });
+      })
+      .catch(console.log);
   };
 
   componentDidMount() {
@@ -73,7 +70,7 @@ export default class RevisionSection extends Component<PropsType, StateType> {
       this.props.refreshRevisionsOff();
 
       // Force refresh occurs on submit -> set current to newest
-      this.refreshHistory(() => {
+      this.refreshHistory().then(() => {
         this.props.setRevision(this.state.revisions[0], true);
       });
     } else if (this.props.chart !== prevProps.chart) {
@@ -97,31 +94,31 @@ export default class RevisionSection extends Component<PropsType, StateType> {
     let revisionNumber = this.state.rollbackRevision;
     this.setState({ loading: true, rollbackRevision: null });
 
-    api.rollbackChart(
-      "<token>",
-      {
-        namespace: this.props.chart.namespace,
-        storage: StorageType.Secret,
-        revision: revisionNumber,
-      },
-      {
-        id: currentProject.id,
-        name: this.props.chart.name,
-        cluster_id: currentCluster.id,
-      },
-      (err: any, res: any) => {
-        if (err) {
-          console.log(err);
-          setCurrentError(err.response.data);
-          this.setState({ loading: false });
-        } else {
-          this.setState({ loading: false });
-          this.refreshHistory(() => {
-            this.props.setRevision(this.state.revisions[0], true);
-          });
+    api
+      .rollbackChart(
+        "<token>",
+        {
+          namespace: this.props.chart.namespace,
+          storage: StorageType.Secret,
+          revision: revisionNumber,
+        },
+        {
+          id: currentProject.id,
+          name: this.props.chart.name,
+          cluster_id: currentCluster.id,
         }
-      }
-    );
+      )
+      .then((res) => {
+        this.setState({ loading: false });
+        this.refreshHistory().then(() => {
+          this.props.setRevision(this.state.revisions[0], true);
+        });
+      })
+      .catch((err) => {
+        console.log(err);
+        setCurrentError(err.response.data);
+        this.setState({ loading: false });
+      });
   };
 
   handleClickRevision = (revision: ChartType) => {

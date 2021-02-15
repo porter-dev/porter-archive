@@ -1,28 +1,28 @@
-import React, { Component } from 'react';
-import styled from 'styled-components';
+import React, { Component } from "react";
+import styled from "styled-components";
 
-import api from '../../shared/api';
-import { integrationList } from '../../shared/common';
-import { Context } from '../../shared/Context';
-import { ImageType } from '../../shared/types';
+import api from "shared/api";
+import { integrationList } from "shared/common";
+import { Context } from "shared/Context";
+import { ImageType } from "shared/types";
 
-import Loading from '../Loading';
-import TagList from './TagList';
+import Loading from "../Loading";
+import TagList from "./TagList";
 
 type PropsType = {
-  selectedImageUrl: string | null,
-  selectedTag: string | null,
-  clickedImage: ImageType | null,
-  registry?: any,
-  setSelectedImageUrl: (x: string) => void,
-  setSelectedTag: (x: string) => void,
-  setClickedImage: (x: ImageType) => void,
+  selectedImageUrl: string | null;
+  selectedTag: string | null;
+  clickedImage: ImageType | null;
+  registry?: any;
+  setSelectedImageUrl: (x: string) => void;
+  setSelectedTag: (x: string) => void;
+  setClickedImage: (x: ImageType) => void;
 };
 
 type StateType = {
-  loading: boolean,
-  error: boolean,
-  images: ImageType[],
+  loading: boolean;
+  error: boolean;
+  images: ImageType[];
 };
 
 export default class ImageSelector extends Component<PropsType, StateType> {
@@ -30,116 +30,127 @@ export default class ImageSelector extends Component<PropsType, StateType> {
     loading: true,
     error: false,
     images: [] as ImageType[],
-  }
+  };
 
   componentDidMount() {
     const { currentProject, setCurrentError } = this.context;
-    let images = [] as ImageType[]
-    let errors = [] as number[]
+    let images = [] as ImageType[];
+    let errors = [] as number[];
     if (!this.props.registry) {
-      api.getProjectRegistries('<token>', {}, { id: currentProject.id }, async (err: any, res: any) => {
-        if (err) {
-          console.log(err);
-          this.setState({ loading: false, error: true });
-        } else {
+      api
+        .getProjectRegistries("<token>", {}, { id: currentProject.id })
+        .then((res) => {
           let registries = res.data;
           if (registries.length === 0) {
             this.setState({ loading: false });
           }
           // Loop over connected image registries
+          // TODO: promise.map the whole thing
           registries.forEach(async (registry: any, i: number) => {
-            await new Promise((nextController: (res?: any) => void) => {           
-              api.getImageRepos('<token>', {}, 
-                { 
-                  project_id: currentProject.id,
-                  registry_id: registry.id,
-                }, (err: any, res: any) => {
-                if (err) {
-                  errors.push(1);
-                } else {
-                  res.data.sort((a: any, b: any) => (a.name > b.name) ? 1 : -1);
-                  // Loop over found image repositories
-                  let newImg = res.data.map((img: any) => {
-                    if (this.props.selectedImageUrl === img.uri) {
-                      this.props.setClickedImage(
-                        {
+            await new Promise(
+              (resolveToNextController: (res?: any) => void) => {
+                api
+                  .getImageRepos(
+                    "<token>",
+                    {},
+                    {
+                      project_id: currentProject.id,
+                      registry_id: registry.id,
+                    }
+                  )
+                  .then((res) => {
+                    res.data.sort((a: any, b: any) =>
+                      a.name > b.name ? 1 : -1
+                    );
+                    // Loop over found image repositories
+                    let newImg = res.data.map((img: any) => {
+                      if (this.props.selectedImageUrl === img.uri) {
+                        this.props.setClickedImage({
                           kind: registry.service,
                           source: img.uri,
                           name: img.name,
                           registryId: registry.id,
-                        }
-                      );
-                    }
-                    return {
-                      kind: registry.service, 
-                      source: img.uri,
-                      name: img.name,
-                      registryId: registry.id,
-                    }
+                        });
+                      }
+                      return {
+                        kind: registry.service,
+                        source: img.uri,
+                        name: img.name,
+                        registryId: registry.id,
+                      };
+                    });
+                    images.push(...newImg);
+                    errors.push(0);
                   })
-                  images.push(...newImg)
-                  errors.push(0);
-                }
-                
-                if (i == registries.length - 1) {
-                  let error = errors.reduce((a, b) => {
-                    return a + b;
-                  }) == registries.length ? true : false; 
-  
-                  this.setState({
-                    images,
-                    loading: false,
-                    error,
+                  .catch((err) => errors.push(1))
+                  .finally(() => {
+                    if (i == registries.length - 1) {
+                      let error =
+                        errors.reduce((a, b) => {
+                          return a + b;
+                        }) == registries.length
+                          ? true
+                          : false;
+
+                      this.setState({
+                        images,
+                        loading: false,
+                        error,
+                      });
+                    }
+                    resolveToNextController();
                   });
-                }
-  
-                nextController()
-              });
-            })
+              }
+            );
           });
-        }
-      });
+        })
+        .catch((err) => {
+          console.log(err);
+          this.setState({ loading: false, error: true });
+        });
     } else {
-      api.getImageRepos('<token>', {}, 
-      { 
-        project_id: currentProject.id,
-        registry_id: this.props.registry.id,
-      }, (err: any, res: any) => {
-        if (err) {
-          this.setState({
-            loading: false,
-            error: true,
-          });
-        } else {
-          res.data.sort((a: any, b: any) => (a.name > b.name) ? 1 : -1);
+      api
+        .getImageRepos(
+          "<token>",
+          {},
+          {
+            project_id: currentProject.id,
+            registry_id: this.props.registry.id,
+          }
+        )
+        .then((res) => {
+          res.data.sort((a: any, b: any) => (a.name > b.name ? 1 : -1));
           // Loop over found image repositories
           let newImg = res.data.map((img: any) => {
             if (this.props.selectedImageUrl === img.uri) {
-              this.props.setClickedImage(
-                {
-                  kind: this.props.registry.service,
-                  source: img.uri,
-                  name: img.name,
-                  registryId: this.props.registry.id,
-                }
-              );
+              this.props.setClickedImage({
+                kind: this.props.registry.service,
+                source: img.uri,
+                name: img.name,
+                registryId: this.props.registry.id,
+              });
             }
             return {
-              kind: this.props.registry.service, 
+              kind: this.props.registry.service,
               source: img.uri,
               name: img.name,
               registryId: this.props.registry.id,
-            }
-          })
-          images.push(...newImg)
+            };
+          });
+          images.push(...newImg);
 
           this.setState({
             images,
             loading: false,
             error: false,
           });
-        }
-      });
+        })
+        .catch((err) =>
+          this.setState({
+            loading: false,
+            error: true,
+          })
+        );
     }
   }
 
@@ -151,46 +162,48 @@ export default class ImageSelector extends Component<PropsType, StateType> {
   renderImageList = () => {
     let { images, loading, error } = this.state;
     if (loading) {
-      return <LoadingWrapper><Loading /></LoadingWrapper>
-    } else if (error || !images) {
-      return <LoadingWrapper>Error loading repos</LoadingWrapper>
-    } else if (images.length === 0) {
       return (
         <LoadingWrapper>
-          No registries found. 
+          <Loading />
         </LoadingWrapper>
       );
+    } else if (error || !images) {
+      return <LoadingWrapper>Error loading repos</LoadingWrapper>;
+    } else if (images.length === 0) {
+      return <LoadingWrapper>No registries found.</LoadingWrapper>;
     }
 
     return images.map((image: ImageType, i: number) => {
-      let icon = integrationList[image.kind] && integrationList[image.kind].icon;
+      let icon =
+        integrationList[image.kind] && integrationList[image.kind].icon;
       if (!icon) {
-        icon = integrationList['docker'].icon;
+        icon = integrationList["docker"].icon;
       }
       return (
         <ImageItem
           key={i}
           isSelected={image.source === this.props.selectedImageUrl}
           lastItem={i === images.length - 1}
-          onClick={() => { 
+          onClick={() => {
             this.props.setSelectedImageUrl(image.source);
             this.props.setClickedImage(image);
           }}
         >
-          <img src={icon && icon} />{image.source}
+          <img src={icon && icon} />
+          {image.source}
         </ImageItem>
       );
     });
-  }
+  };
 
   renderBackButton = () => {
     let { setSelectedImageUrl } = this.props;
     if (this.props.clickedImage) {
       return (
         <BackButton
-          width='175px'
+          width="175px"
           onClick={() => {
-            setSelectedImageUrl('');
+            setSelectedImageUrl("");
             this.props.setClickedImage(null);
           }}
         >
@@ -199,16 +212,14 @@ export default class ImageSelector extends Component<PropsType, StateType> {
         </BackButton>
       );
     }
-  }
+  };
 
   renderExpanded = () => {
     let { selectedTag, selectedImageUrl, setSelectedTag } = this.props;
     if (!this.props.clickedImage) {
       return (
         <div>
-          <ExpandedWrapper>
-            {this.renderImageList()}
-          </ExpandedWrapper>
+          <ExpandedWrapper>{this.renderImageList()}</ExpandedWrapper>
           {this.renderBackButton()}
         </div>
       );
@@ -227,14 +238,10 @@ export default class ImageSelector extends Component<PropsType, StateType> {
         </div>
       );
     }
-  }
+  };
 
   render() {
-    return (
-      <>
-        {this.renderExpanded()}
-      </>
-    );
+    return <>{this.renderExpanded()}</>;
   }
 }
 
@@ -269,13 +276,16 @@ const ImageItem = styled.div`
   display: flex;
   width: 100%;
   font-size: 13px;
-  border-bottom: 1px solid ${(props: { lastItem: boolean, isSelected: boolean }) => props.lastItem ? '#00000000' : '#606166'};
+  border-bottom: 1px solid
+    ${(props: { lastItem: boolean; isSelected: boolean }) =>
+      props.lastItem ? "#00000000" : "#606166"};
   color: #ffffff;
   user-select: none;
   align-items: center;
   padding: 10px 0px;
   cursor: pointer;
-  background: ${(props: { isSelected: boolean, lastItem: boolean }) => props.isSelected ? '#ffffff11' : ''};
+  background: ${(props: { isSelected: boolean; lastItem: boolean }) =>
+    props.isSelected ? "#ffffff11" : ""};
   :hover {
     background: #ffffff22;
 

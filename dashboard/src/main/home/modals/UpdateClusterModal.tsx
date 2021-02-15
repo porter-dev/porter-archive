@@ -28,24 +28,25 @@ class UpdateClusterModal extends Component<PropsType, StateType> {
     showDeleteOverlay: false,
   };
 
+  catchErr = (err: any) => {
+    this.setState({ status: "error" });
+    console.log(err);
+  };
+
   handleDelete = () => {
     let { currentProject, currentCluster } = this.context;
     this.setState({ status: "loading" });
 
-    api.deleteCluster(
-      "<token>",
-      {},
-      {
-        project_id: currentProject.id,
-        cluster_id: currentCluster.id,
-      },
-      (err: any, res: any) => {
-        if (err) {
-          this.setState({ status: "error" });
-          console.log(err);
-          return;
+    api
+      .deleteCluster(
+        "<token>",
+        {},
+        {
+          project_id: currentProject.id,
+          cluster_id: currentCluster.id,
         }
-
+      )
+      .then((_) => {
         if (!currentCluster?.infra_id) {
           // TODO: make this more declarative from the Home component
           this.props.setRefreshClusters(true);
@@ -58,68 +59,52 @@ class UpdateClusterModal extends Component<PropsType, StateType> {
         // Handle destroying infra we've provisioned
         switch (currentCluster.service) {
           case "eks":
-            api.destroyEKS(
-              "<token>",
-              { eks_name: currentCluster.name },
-              {
-                project_id: currentProject.id,
-                infra_id: currentCluster.infra_id,
-              },
-              (err: any, res: any) => {
-                if (err) {
-                  this.setState({ status: "error" });
-                  console.log(err);
-                } else {
-                  console.log("destroyed provisioned infra.");
+            api
+              .destroyEKS(
+                "<token>",
+                { eks_name: currentCluster.name },
+                {
+                  project_id: currentProject.id,
+                  infra_id: currentCluster.infra_id,
                 }
-              }
-            );
+              )
+              .then(() => console.log("destroyed provisioned infra."))
+              .catch(this.catchErr);
             break;
-
           case "gke":
-            api.destroyGKE(
-              "<token>",
-              { gke_name: currentCluster.name },
-              {
-                project_id: currentProject.id,
-                infra_id: currentCluster.infra_id,
-              },
-              (err: any, res: any) => {
-                if (err) {
-                  this.setState({ status: "error" });
-                  console.log(err);
-                } else {
-                  console.log("destroyed provisioned infra.");
+            api
+              .destroyGKE(
+                "<token>",
+                { gke_name: currentCluster.name },
+                {
+                  project_id: currentProject.id,
+                  infra_id: currentCluster.infra_id,
                 }
-              }
-            );
+              )
+              .then(() => console.log("destroyed provisioned infra."))
+              .catch(this.catchErr);
             break;
 
           case "doks":
-            api.destroyDOKS(
-              "<token>",
-              { doks_name: currentCluster.name },
-              {
-                project_id: currentProject.id,
-                infra_id: currentCluster.infra_id,
-              },
-              (err: any, res: any) => {
-                if (err) {
-                  this.setState({ status: "error" });
-                  console.log(err);
-                } else {
-                  console.log("destroyed provisioned infra.");
+            api
+              .destroyDOKS(
+                "<token>",
+                { doks_name: currentCluster.name },
+                {
+                  project_id: currentProject.id,
+                  infra_id: currentCluster.infra_id,
                 }
-              }
-            );
+              )
+              .then(() => console.log("destroyed provisioned infra."))
+              .catch(this.catchErr);
             break;
         }
 
         this.props.setRefreshClusters(true);
         this.setState({ status: "successful", showDeleteOverlay: false });
         this.context.setCurrentModal(null, null);
-      }
-    );
+      })
+      .catch(this.catchErr);
   };
 
   renderWarning = () => {

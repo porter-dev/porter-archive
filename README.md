@@ -6,29 +6,33 @@
 
 ![Provisioning View](https://user-images.githubusercontent.com/22849518/104234811-fe2dcb00-5421-11eb-9ce3-c0ebefc37476.png)
 
+## Community and Updates
+
+For help, questions, or if you just want a place to hang out, [join our Discord community.](https://discord.gg/MhYNuWwqum)
+
+To keep updated on our progress, please watch the repo for new releases (**Watch > Custom > Releases**) and [follow us on Twitter!](https://twitter.com/getporterdev)
 
 ## Why Porter?
 ### A PaaS that grows with your applications
 
 A traditional PaaS like Heroku is great for minimizing unnecessary DevOps work but doesn't offer enough flexibility as your applications grow. Custom network rules, resource constraints, and cost are common reasons developers move their applications off Heroku beyond a certain scale. 
 
-Porter brings the simplicity of a traditional PaaS to your own cloud provider while preserving the configurability of Kubernetes. Porter is built on top of a popular Kubernetes package manager called Helm and is compatible with standard Kubernetes management tools like `kubectl`, preparing your infra for mature DevOps work from day one.
+Porter brings the simplicity of a traditional PaaS to your own cloud provider while preserving the configurability of Kubernetes. Porter is built on top of a popular Kubernetes package manager `helm` and is compatible with standard Kubernetes management tools like `kubectl`, preparing your infra for mature DevOps work from day one.
 
 ![image](https://user-images.githubusercontent.com/65516095/103713478-71e75800-4f8a-11eb-915f-adee9d4f5bf7.png)
 
 ## Features
 ### Basics
 - One-click provisioning of a Kubernetes cluster in your own cloud console
-  - AWS ✅
-  - GCP ✅
-  - Digital Ocean ✅
-  
+  - ✅   AWS
+  - ✅   GCP
+  - ✅   Digital Ocean
 - Simple deploy of any public or private Docker image
-
 - Heroku-like GUI to monitor application status, logs, and history
 - Marketplace for one click add-ons (e.g. MongoDB, Redis, PostgreSQL)
 - Application rollback to previously deployed versions
-- Native CI/CD with buildpacks (Coming Soon)
+- Deploy webhooks that can be triggered from CI/CD pipelines
+- Native CI/CD with buildpacks for non-Dockerized apps (Coming Soon)
 
 ### DevOps Mode
 For those who are familiar with Kubernetes and Helm:
@@ -40,6 +44,10 @@ For those who are familiar with Kubernetes and Helm:
 - Rollback/update of existing releases, including editing of raw `values.yaml`
 
 ![Graph View](https://user-images.githubusercontent.com/22849518/101073320-43322800-356d-11eb-9b69-a68bd951992e.png)
+
+## Docs
+
+Below are instructions for a quickstart. For full documentation, visit our [official Docs page.](https://docs.getporter.dev)
 
 ## CLI Installation
 ### Mac 
@@ -67,19 +75,13 @@ For Linux and Windows installation, see our [Docs](https://docs.getporter.dev/do
 ## Getting Started
 1. Sign up and log into [Porter Dashboard](https://dashboard.getporter.dev).
 
-2. Create a Project and select a cloud provider you want to provision a Kubernetes cluster in.
+2. Create a Project and select a cloud provider you want to provision a Kubernetes cluster in (AWS, GCP, DO). It is also possible to [link up your own Kubernetes cluster.](https://docs.getporter.dev/docs/cli-documentation#linking-your-own-private-image-registry)
 
 3. [Put in your credentials](https://docs.getporter.dev/docs/getting-started-with-porter-on-aws), then Porter will automatically provision a cluster and an image registry in your own cloud account.
 
-4. [Build and push your Docker image to the provisioned registry with the CLI](https://docs.getporter.dev/docs/cli-documentation#porter-docker-configure).
+4. [Build and push your Docker image](https://docs.getporter.dev/docs/cli-documentation#porter-docker-configure), or connect your git repository if your application is not dockerized.
 
 5. From the Templates tab on the Dashboard, select the Docker template. Click on the image you have just pushed, configure the port, then hit deploy.
-
-## Keep Updated
-We are iterating fast and will be regularly announcing new releases in this repository. If you'd like to follow our progress, please watch the repo for releases (**Watch > Custom > Releases**) and leave us a star!
-
-## Want Help?
-We are always hanging out in our [Discord community](https://discord.gg/MhYNuWwqum). Join us there if you need help or have any questions!
 
 ## Want to Help?
 We welcome all contributions. Submit an issue or a pull request to help us improve Porter!

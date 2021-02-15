@@ -91,6 +91,13 @@ func login() error {
 		}
 
 		client = api.NewClientWithToken(getHost()+"/api", token)
+
+		user, _ := client.AuthCheck(context.Background())
+
+		if user == nil {
+			color.Red("Invalid token.")
+			return nil
+		}
 	} else {
 		client = api.NewClient(getHost()+"/api", "cookie.json")
 	}

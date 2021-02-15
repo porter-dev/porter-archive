@@ -1,8 +1,6 @@
 package gorm
 
 import (
-	"fmt"
-
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/repository"
 	"gorm.io/gorm"
@@ -60,8 +58,6 @@ func (repo *InfraRepository) ReadInfra(id uint) (*models.Infra, error) {
 	if err := repo.db.Where("id = ?", id).First(&infra).Error; err != nil {
 		return nil, err
 	}
-
-	fmt.Println("INNFRA LAST APPLIED", string(infra.LastApplied))
 
 	err := repo.DecryptInfraData(infra, repo.key)
 

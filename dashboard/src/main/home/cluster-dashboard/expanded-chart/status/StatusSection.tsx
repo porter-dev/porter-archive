@@ -20,6 +20,7 @@ type StateType = {
   selectedPod: any;
   controllers: any[];
   loading: boolean;
+  podError: string;
 };
 
 export default class StatusSection extends Component<PropsType, StateType> {
@@ -29,11 +30,13 @@ export default class StatusSection extends Component<PropsType, StateType> {
     selectedPod: {} as any,
     controllers: [] as any[],
     loading: true,
+    podError: "",
   };
 
   renderLogs = () => {
     return (
       <Logs
+        podError={this.state.podError}
         key={this.state.selectedPod?.metadata?.name}
         selectedPod={this.state.selectedPod}
       />
@@ -56,6 +59,7 @@ export default class StatusSection extends Component<PropsType, StateType> {
           controller={c}
           isLast={i === this.state.controllers.length - 1}
           isFirst={i === 0}
+          setPodError={(x: string) => this.setState({ podError: x })}
         />
       );
     });

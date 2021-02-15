@@ -11,6 +11,7 @@ type PropsType = {
   selectPod: Function;
   isLast?: boolean;
   isFirst?: boolean;
+  setPodError: (x: string) => void;
 };
 
 type StateType = {
@@ -102,16 +103,18 @@ export default class ControllerTab extends Component<PropsType, StateType> {
   };
 
   getPodStatus = (status: any) => {
-    if (status?.phase == "Pending" && status?.containerStatuses !== undefined) {
+    if (status?.phase === "Pending" && status?.containerStatuses !== undefined) {
       return status.containerStatuses[0].state.waiting.reason;
       // return 'waiting'
+    } else if (status?.phase === "Pending") {
+      return "Pending"
     }
 
-    if (status?.phase == "Failed") {
+    if (status?.phase === "Failed") {
       return "failed";
     }
 
-    if (status?.phase == "Running") {
+    if (status?.phase === "Running") {
       let collatedStatus = "running";
 
       status?.containerStatuses?.forEach((s: any) => {
@@ -150,6 +153,8 @@ export default class ControllerTab extends Component<PropsType, StateType> {
               key={pod.metadata?.name}
               selected={selectedPod?.metadata?.name === pod?.metadata?.name}
               onClick={() => {
+                this.props.setPodError("");
+                (status === "failed" && pod.status?.message) && this.props.setPodError(pod.status?.message);
                 selectPod(pod);
               }}
             >

@@ -34,61 +34,60 @@ export default class ChartList extends Component<PropsType, StateType> {
     websockets: {} as Record<string, any>,
   };
 
+  // TODO: promisify
   updateCharts = (callback: Function) => {
     let { currentCluster, currentProject, setCurrentError } = this.context;
     this.setState({ loading: true });
 
-    api.getCharts(
-      "<token>",
-      {
-        namespace: this.props.namespace,
-        cluster_id: currentCluster.id,
-        storage: StorageType.Secret,
-        limit: 20,
-        skip: 0,
-        byDate: false,
-        statusFilter: [
-          "deployed",
-          "uninstalled",
-          "pending",
-          "pending_upgrade",
-          "pending_rollback",
-          "superseded",
-          "failed",
-        ],
-      },
-      { id: currentProject.id },
-      (err: any, res: any) => {
-        if (err) {
-          console.log(err);
-          setCurrentError(JSON.stringify(err));
-          this.setState({ loading: false, error: true });
-        } else {
-          let charts = res.data || [];
-          if (this.props.sortType == "Newest") {
-            charts.sort((a: any, b: any) =>
-              Date.parse(a.info.last_deployed) >
-              Date.parse(b.info.last_deployed)
-                ? -1
-                : 1
-            );
-          } else if (this.props.sortType == "Oldest") {
-            charts.sort((a: any, b: any) =>
-              Date.parse(a.info.last_deployed) >
-              Date.parse(b.info.last_deployed)
-                ? 1
-                : -1
-            );
-          } else if (this.props.sortType == "Alphabetical") {
-            charts.sort((a: any, b: any) => (a.name > b.name ? 1 : -1));
-          }
-          this.setState({ charts }, () => {
-            this.setState({ loading: false, error: false });
-          });
-          callback(charts);
+    api
+      .getCharts(
+        "<token>",
+        {
+          namespace: this.props.namespace,
+          cluster_id: currentCluster.id,
+          storage: StorageType.Secret,
+          limit: 20,
+          skip: 0,
+          byDate: false,
+          statusFilter: [
+            "deployed",
+            "uninstalled",
+            "pending",
+            "pending_upgrade",
+            "pending_rollback",
+            "superseded",
+            "failed",
+          ],
+        },
+        { id: currentProject.id }
+      )
+      .then((res) => {
+        let charts = res.data || [];
+        if (this.props.sortType == "Newest") {
+          charts.sort((a: any, b: any) =>
+            Date.parse(a.info.last_deployed) > Date.parse(b.info.last_deployed)
+              ? -1
+              : 1
+          );
+        } else if (this.props.sortType == "Oldest") {
+          charts.sort((a: any, b: any) =>
+            Date.parse(a.info.last_deployed) > Date.parse(b.info.last_deployed)
+              ? 1
+              : -1
+          );
+        } else if (this.props.sortType == "Alphabetical") {
+          charts.sort((a: any, b: any) => (a.name > b.name ? 1 : -1));
         }
-      }
-    );
+        this.setState({ charts }, () => {
+          this.setState({ loading: false, error: false });
+        });
+        callback(charts);
+      })
+      .catch((err) => {
+        console.log(err);
+        setCurrentError(JSON.stringify(err));
+        this.setState({ loading: false, error: true });
+      });
   };
 
   setupWebsocket = (kind: string) => {
@@ -150,23 +149,21 @@ export default class ChartList extends Component<PropsType, StateType> {
       if (chart.info.status == "failed") return;
 
       await new Promise((next: (res?: any) => void) => {
-        api.getChartControllers(
-          "<token>",
-          {
-            namespace: chart.namespace,
-            cluster_id: currentCluster.id,
-            storage: StorageType.Secret,
-          },
-          {
-            id: currentProject.id,
-            name: chart.name,
-            revision: chart.version,
-          },
-          (err: any, res: any) => {
-            if (err) {
-              setCurrentError(JSON.stringify(err));
-              return;
+        api
+          .getChartControllers(
+            "<token>",
+            {
+              namespace: chart.namespace,
+              cluster_id: currentCluster.id,
+              storage: StorageType.Secret,
+            },
+            {
+              id: currentProject.id,
+              name: chart.name,
+              revision: chart.version,
             }
+          )
+          .then((res) => {
             // transform controller array into hash table for easy lookup during updates.
             let chartControllers = {} as Record<string, Record<string, any>>;
             res.data.forEach((c: any) => {
@@ -194,8 +191,11 @@ export default class ChartList extends Component<PropsType, StateType> {
               });
             });
             next();
-          }
-        );
+          })
+          .catch((err) => {
+            setCurrentError(JSON.stringify(err));
+            return;
+          });
       });
     });
   };

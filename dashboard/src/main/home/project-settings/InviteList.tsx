@@ -39,20 +39,16 @@ export default class InviteList extends Component<PropsType, StateType> {
     let { currentProject } = this.context;
 
     this.setState({ loading: true });
-    api.getInvites(
-      "<token>",
-      {},
-      {
-        id: currentProject.id,
-      },
-      (err: any, res: any) => {
-        if (err) {
-          console.log(err);
-        } else {
-          this.setState({ invites: res.data, loading: false });
+    api
+      .getInvites(
+        "<token>",
+        {},
+        {
+          id: currentProject.id,
         }
-      }
-    );
+      )
+      .then((res) => this.setState({ invites: res.data, loading: false }))
+      .catch((err) => console.log(err));
   };
 
   validateEmail = () => {
@@ -67,68 +63,54 @@ export default class InviteList extends Component<PropsType, StateType> {
 
   createInvite = () => {
     let { currentProject } = this.context;
-    api.createInvite(
-      "<token>",
-      { email: this.state.email },
-      { id: currentProject.id },
-      (err: any, res: any) => {
-        if (err) {
-          console.log(err);
-        } else {
-          this.getInviteData();
-          this.setState({ email: "" });
-        }
-      }
-    );
+    api
+      .createInvite(
+        "<token>",
+        { email: this.state.email },
+        { id: currentProject.id }
+      )
+      .then((_) => {
+        this.getInviteData();
+        this.setState({ email: "" });
+      })
+      .catch((err) => console.log(err));
   };
 
   deleteInvite = (index: number) => {
     let { currentProject } = this.context;
-    api.deleteInvite(
-      "<token>",
-      {},
-      {
-        id: currentProject.id,
-        invId: this.state.invites[index].id,
-      },
-      (err: any, res: any) => {
-        if (err) {
-          console.log(err);
-        } else {
-          this.getInviteData();
+    api
+      .deleteInvite(
+        "<token>",
+        {},
+        {
+          id: currentProject.id,
+          invId: this.state.invites[index].id,
         }
-      }
-    );
+      )
+      .then(this.getInviteData)
+      .catch((err) => console.log(err));
   };
 
   replaceInvite = (index: number) => {
     let { currentProject } = this.context;
-    api.createInvite(
-      "<token>",
-      { email: this.state.invites[index].email },
-      { id: currentProject.id },
-      (err: any, res: any) => {
-        if (err) {
-          console.log(err);
-        } else {
-          api.deleteInvite(
-            "<token>",
-            {},
-            {
-              id: currentProject.id,
-              invId: this.state.invites[index].id,
-            },
-            (err: any, res: any) => {
-              if (err) {
-                console.log(err);
-              } else {
-                this.getInviteData();
-              }
-            }
-          );
-        }
-      }
-    );
+    api
+      .createInvite(
+        "<token>",
+        { email: this.state.invites[index].email },
+        { id: currentProject.id }
+      )
+      .then((_) =>
+        api.deleteInvite(
+          "<token>",
+          {},
+          {
+            id: currentProject.id,
+            invId: this.state.invites[index].id,
+          }
+        )
+      )
+      .then(this.getInviteData)
+      .catch((err) => console.log(err));
   };
 
   copyToClip = (index: number) => {

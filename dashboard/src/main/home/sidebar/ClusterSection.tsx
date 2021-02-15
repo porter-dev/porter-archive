@@ -41,52 +41,45 @@ class ClusterSection extends Component<PropsType, StateType> {
     let { currentProject, setCurrentCluster } = this.context;
 
     // TODO: query with selected filter once implemented
-    api.getClusters(
-      "<token>",
-      {},
-      { id: currentProject.id },
-      (err: any, res: any) => {
-        if (err) {
-          // Assume intializing if no contexts
-          this.props.setWelcome(true);
-        } else {
-          this.props.setWelcome(false);
-          // TODO: handle uninitialized kubeconfig
-          if (res.data) {
-            let clusters = res.data;
-            clusters.sort((a: any, b: any) => a.id - b.id);
-            if (clusters.length > 0) {
-              this.setState({ clusters });
-              let saved = JSON.parse(
-                localStorage.getItem(currentProject.id + "-cluster")
-              );
-              if (saved !== "null") {
-                setCurrentCluster(clusters[0]);
-                for (let i = 0; i < clusters.length; i++) {
-                  if (
-                    clusters[i].id === saved.id &&
-                    clusters[i].project_id === saved.project_id &&
-                    clusters[i].name === saved.name
-                  ) {
-                    setCurrentCluster(clusters[i]);
-                    break;
-                  }
+    api
+      .getClusters("<token>", {}, { id: currentProject.id })
+      .then((res) => {
+        this.props.setWelcome(false);
+        // TODO: handle uninitialized kubeconfig
+        if (res.data) {
+          let clusters = res.data;
+          clusters.sort((a: any, b: any) => a.id - b.id);
+          if (clusters.length > 0) {
+            this.setState({ clusters });
+            let saved = JSON.parse(
+              localStorage.getItem(currentProject.id + "-cluster")
+            );
+            if (saved !== "null") {
+              setCurrentCluster(clusters[0]);
+              for (let i = 0; i < clusters.length; i++) {
+                if (
+                  clusters[i].id === saved.id &&
+                  clusters[i].project_id === saved.project_id &&
+                  clusters[i].name === saved.name
+                ) {
+                  setCurrentCluster(clusters[i]);
+                  break;
                 }
-              } else {
-                setCurrentCluster(clusters[0]);
               }
-            } else if (
-              this.props.currentView !== "provisioner" &&
-              this.props.currentView !== "new-project"
-            ) {
-              this.setState({ clusters: [] });
-              setCurrentCluster(null);
-              // this.props.history.push("dashboard?tab=overview");
+            } else {
+              setCurrentCluster(clusters[0]);
             }
+          } else if (
+            this.props.currentView !== "provisioner" &&
+            this.props.currentView !== "new-project"
+          ) {
+            this.setState({ clusters: [] });
+            setCurrentCluster(null);
+            // this.props.history.push("dashboard?tab=overview");
           }
         }
-      }
-    );
+      })
+      .catch((err) => this.props.setWelcome(true));
   };
 
   componentDidMount() {

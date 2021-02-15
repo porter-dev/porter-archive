@@ -33,10 +33,9 @@ export default class Templates extends Component<PropsType, StateType> {
   };
 
   componentDidMount() {
-    api.getTemplates("<token>", {}, {}, (err: any, res: any) => {
-      if (err) {
-        this.setState({ loading: false, error: true });
-      } else {
+    api
+      .getTemplates("<token>", {}, {})
+      .then((res) => {
         this.setState({ porterTemplates: res.data, error: false }, () => {
           this.state.porterTemplates.sort((a, b) => (a.name > b.name ? 1 : -1));
           this.state.porterTemplates.sort((a, b) =>
@@ -44,8 +43,8 @@ export default class Templates extends Component<PropsType, StateType> {
           );
           this.setState({ loading: false });
         });
-      }
-    });
+      })
+      .catch(() => this.setState({ loading: false, error: true }));
   }
 
   renderIcon = (icon: string) => {

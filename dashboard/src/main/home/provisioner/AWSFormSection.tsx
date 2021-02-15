@@ -104,130 +104,100 @@ class AWSFormSection extends Component<PropsType, StateType> {
     }
   };
 
+  catchError = (err: any) => {
+    console.log(err);
+    this.props.handleError();
+  };
+
   // Step 1: Create a project
+  // TODO: promisify this function
   createProject = (callback?: any) => {
     console.log("Creating project");
     let { projectName, handleError } = this.props;
     let { user, setProjects, setCurrentProject, currentProject } = this.context;
 
-    api.createProject(
-      "<token>",
-      { name: projectName },
-      {},
-      (err: any, res: any) => {
-        if (err) {
-          console.log(err);
-          handleError();
-          return;
-        } else {
-          let proj = res.data;
-
-          // Need to set project list for dropdown
-          // TODO: consolidate into ProjectSection (case on exists in list on set)
-          api.getProjects(
+    api
+      .createProject("<token>", { name: projectName }, {})
+      .then((res) => {
+        let proj = res.data;
+        // Need to set project list for dropdown
+        // TODO: consolidate into ProjectSection (case on exists in list on set)
+        api
+          .getProjects(
             "<token>",
             {},
             {
               id: user.userId,
-            },
-            (err: any, res: any) => {
-              if (err) {
-                console.log(err);
-                handleError();
-                return;
-              }
-              setProjects(res.data);
-              setCurrentProject(proj, () => {
-                callback && callback();
-              });
             }
-          );
-        }
-      }
-    );
+          )
+          .then((res) => {
+            setProjects(res.data);
+            setCurrentProject(proj, () => {
+              callback && callback();
+            });
+          })
+          .catch(this.catchError);
+      })
+      .catch(this.catchError);
   };
 
-  provisionECR = (callback?: any) => {
+  provisionECR = () => {
     console.log("Provisioning ECR");
     let { awsAccessId, awsSecretKey, awsRegion } = this.state;
     let { currentProject } = this.context;
-    let { handleError } = this.props;
 
-    api.createAWSIntegration(
-      "<token>",
-      {
-        aws_region: awsRegion,
-        aws_access_key_id: awsAccessId,
-        aws_secret_access_key: awsSecretKey,
-      },
-      { id: currentProject.id },
-      (err: any, res: any) => {
-        if (err) {
-          console.log(err);
-          handleError();
-          return;
-        }
-
+    return api
+      .createAWSIntegration(
+        "<token>",
+        {
+          aws_region: awsRegion,
+          aws_access_key_id: awsAccessId,
+          aws_secret_access_key: awsSecretKey,
+        },
+        { id: currentProject.id }
+      )
+      .then((res) =>
         api.provisionECR(
           "<token>",
           {
             aws_integration_id: res.data.id,
             ecr_name: `${currentProject.name}-registry`,
           },
-          { id: currentProject.id },
-          (err: any, res: any) => {
-            if (err) {
-              console.log(err);
-              handleError();
-              return;
-            }
-            callback && callback();
-          }
-        );
-      }
-    );
+          { id: currentProject.id }
+        )
+      )
+      .catch(this.catchError);
   };
 
   provisionEKS = () => {
     console.log("Provisioning EKS");
-    let { handleError } = this.props;
     let { awsAccessId, awsSecretKey, awsRegion } = this.state;
     let { currentProject } = this.context;
 
     let clusterName = `${currentProject.name}-cluster`;
-    api.createAWSIntegration(
-      "<token>",
-      {
-        aws_region: awsRegion,
-        aws_access_key_id: awsAccessId,
-        aws_secret_access_key: awsSecretKey,
-        aws_cluster_id: clusterName,
-      },
-      { id: currentProject.id },
-      (err: any, res: any) => {
-        if (err) {
-          console.log(err);
-          handleError();
-          return;
-        }
+    api
+      .createAWSIntegration(
+        "<token>",
+        {
+          aws_region: awsRegion,
+          aws_access_key_id: awsAccessId,
+          aws_secret_access_key: awsSecretKey,
+          aws_cluster_id: clusterName,
+        },
+        { id: currentProject.id }
+      )
+      .then((res) =>
         api.provisionEKS(
           "<token>",
           {
             aws_integration_id: res.data.id,
             eks_name: clusterName,
           },
-          { id: currentProject.id },
-          (err: any, eks: any) => {
-            if (err) {
-              console.log(err);
-              handleError();
-              return;
-            }
-            this.props.history.push("dashboard?tab=provisioner");
-          }
-        );
-      }
-    );
+          { id: currentProject.id }
+        )
+      )
+      .then(() => this.props.history.push("dashboard?tab=provisioner"))
+      .catch(this.catchError);
   };
 
   // TODO: handle generically (with > 2 steps)
@@ -238,10 +208,12 @@ class AWSFormSection extends Component<PropsType, StateType> {
     if (!projectName) {
       if (selectedInfras.length === 2) {
         // Case: project exists, provision ECR + EKS
-        this.provisionECR(this.provisionEKS);
+        this.provisionECR().then(this.provisionEKS);
       } else if (selectedInfras[0].value === "ecr") {
         // Case: project exists, only provision ECR
-        this.provisionECR(() => this.props.history.push("dashboard?tab=provisioner"));
+        this.provisionECR().then(() =>
+          this.props.history.push("dashboard?tab=provisioner")
+        );
       } else {
         // Case: project exists, only provision EKS
         this.provisionEKS();
@@ -249,12 +221,14 @@ class AWSFormSection extends Component<PropsType, StateType> {
     } else {
       if (selectedInfras.length === 2) {
         // Case: project DNE, provision ECR + EKS
-        this.createProject(() => this.provisionECR(this.provisionEKS));
+        this.createProject(() => this.provisionECR().then(this.provisionEKS));
       } else if (selectedInfras[0].value === "ecr") {
         // Case: project DNE, only provision ECR
-        this.createProject(() => this.provisionECR(() => {
-          this.props.history.push("dashboard?tab=provisioner");
-        }));
+        this.createProject(() =>
+          this.provisionECR().then(() => {
+            this.props.history.push("dashboard?tab=provisioner");
+          })
+        );
       } else {
         // Case: project DNE, only provision EKS
         this.createProject(this.provisionEKS);

@@ -71,7 +71,9 @@ func (app *App) HandleListRepos(w http.ResponseWriter, r *http.Request) {
 	client := github.NewClient(app.GithubProjectConf.Client(oauth2.NoContext, tok))
 
 	// list all repositories for specified user
-	repos, _, err := client.Repositories.List(context.Background(), "", nil)
+	repos, _, err := client.Repositories.List(context.Background(), "", &github.RepositoryListOptions{
+		Sort: "updated",
+	})
 
 	if err != nil {
 		app.handleErrorInternal(err, w)

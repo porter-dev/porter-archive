@@ -87,46 +87,37 @@ export default class DOFormSection extends Component<PropsType, StateType> {
     }
   };
 
+  catchError = (err: any) => {
+    console.log(err);
+    this.props.handleError();
+    return;
+  };
+
   // Step 1: Create a project
   createProject = (callback?: any) => {
     console.log("Creating project");
-    let { projectName, handleError } = this.props;
+    let { projectName } = this.props;
     let { user, setProjects, setCurrentProject } = this.context;
 
-    api.createProject(
-      "<token>",
-      { name: projectName },
-      {},
-      (err: any, res: any) => {
-        if (err) {
-          console.log(err);
-          handleError();
-          return;
-        } else {
-          let proj = res.data;
+    api
+      .createProject("<token>", { name: projectName }, {})
+      .then(async (res) => {
+        let proj = res.data;
 
-          // Need to set project list for dropdown
-          // TODO: consolidate into ProjectSection (case on exists in list on set)
-          api.getProjects(
-            "<token>",
-            {},
-            {
-              id: user.userId,
-            },
-            (err: any, res: any) => {
-              if (err) {
-                console.log(err);
-                handleError();
-                return;
-              }
-              setProjects(res.data);
-              setCurrentProject(proj);
-              callback && callback(proj.id);
-            }
-          );
-        }
-      }
-    );
+        // Need to set project list for dropdown
+        // TODO: consolidate into ProjectSection (case on exists in list on set)
+        const res_1 = await api.getProjects(
+          "<token>",
+          {},
+          {
+            id: user.userId,
+          }
+        );
+        setProjects(res_1.data);
+        setCurrentProject(proj);
+        callback && callback(proj.id);
+      })
+      .catch(this.catchError);
   };
 
   doRedirect = (projectId: number) => {

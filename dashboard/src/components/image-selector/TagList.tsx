@@ -34,26 +34,26 @@ export default class TagList extends Component<PropsType, StateType> {
     const { currentProject } = this.context;
     let splits = this.props.selectedImageUrl.split("/");
     let repoName = splits[splits.length - 1];
-    api.getImageTags(
-      "<token>",
-      {},
-      {
-        project_id: currentProject.id,
-        registry_id: this.props.registryId,
-        repo_name: repoName,
-      },
-      (err: any, res: any) => {
-        if (err) {
-          console.log(err);
-          this.setState({ loading: false, error: true });
-        } else {
-          let tags = res.data.map((tag: any, i: number) => {
-            return tag.tag;
-          });
-          this.setState({ tags, loading: false });
+    api
+      .getImageTags(
+        "<token>",
+        {},
+        {
+          project_id: currentProject.id,
+          registry_id: this.props.registryId,
+          repo_name: repoName,
         }
-      }
-    );
+      )
+      .then((res) => {
+        let tags = res.data.map((tag: any, i: number) => {
+          return tag.tag;
+        });
+        this.setState({ tags, loading: false });
+      })
+      .catch((err) => {
+        console.log(err);
+        this.setState({ loading: false, error: true });
+      });
   }
 
   setTag = (tag: string) => {

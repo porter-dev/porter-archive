@@ -27,39 +27,30 @@ class ExistingClusterSection extends Component<PropsType, StateType> {
     let { user, setProjects, setCurrentProject } = this.context;
 
     this.setState({ buttonStatus: "loading" });
-    api.createProject(
-      "<token>",
-      { name: projectName },
-      {},
-      (err: any, res: any) => {
-        if (err) {
-          console.log(err);
-        } else {
-          api.getProjects(
-            "<token>",
-            {},
-            {
-              id: user.userId,
-            },
-            (err: any, res: any) => {
-              if (err) {
-                console.log(err);
-              } else if (res.data) {
-                setProjects(res.data);
-                if (res.data.length > 0) {
-                  let proj = res.data.find((el: ProjectType) => {
-                    return el.name === projectName;
-                  });
-                  setCurrentProject(proj);
-
-                  this.props.history.push("dashboard?tab=overview");
-                }
-              }
-            }
-          );
+    api
+      .createProject("<token>", { name: projectName }, {})
+      .then((res) =>
+        api.getProjects(
+          "<token>",
+          {},
+          {
+            id: user.userId,
+          }
+        )
+      )
+      .then((res) => {
+        if (res.data) {
+          setProjects(res.data);
+          if (res.data.length > 0) {
+            let proj = res.data.find((el: ProjectType) => {
+              return el.name === projectName;
+            });
+            setCurrentProject(proj);
+            this.props.history.push("dashboard?tab=overview");
+          }
         }
-      }
-    );
+      })
+      .catch(console.log);
   };
 
   render() {

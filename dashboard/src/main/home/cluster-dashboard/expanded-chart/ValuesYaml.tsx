@@ -48,28 +48,28 @@ export default class ValuesYaml extends Component<PropsType, StateType> {
     let { currentCluster, setCurrentError, currentProject } = this.context;
     this.setState({ saveValuesStatus: "loading" });
 
-    api.upgradeChartValues(
-      "<token>",
-      {
-        namespace: this.props.currentChart.namespace,
-        storage: StorageType.Secret,
-        values: this.state.values,
-      },
-      {
-        id: currentProject.id,
-        name: this.props.currentChart.name,
-        cluster_id: currentCluster.id,
-      },
-      (err: any, res: any) => {
-        if (err) {
-          console.log(err);
-          this.setState({ saveValuesStatus: "error" });
-        } else {
-          this.setState({ saveValuesStatus: "successful" });
-          this.props.refreshChart();
+    api
+      .upgradeChartValues(
+        "<token>",
+        {
+          namespace: this.props.currentChart.namespace,
+          storage: StorageType.Secret,
+          values: this.state.values,
+        },
+        {
+          id: currentProject.id,
+          name: this.props.currentChart.name,
+          cluster_id: currentCluster.id,
         }
-      }
-    );
+      )
+      .then((res) => {
+        this.setState({ saveValuesStatus: "successful" });
+        this.props.refreshChart();
+      })
+      .catch((err) => {
+        console.log(err);
+        this.setState({ saveValuesStatus: "error" });
+      });
   };
 
   render() {

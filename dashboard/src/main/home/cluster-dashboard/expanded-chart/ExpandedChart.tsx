@@ -80,27 +80,25 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
     let { currentCluster, currentChart, setCurrentChart } = this.props;
 
     this.setState({ loading: true });
-    api.getChart(
-      "<token>",
-      {
-        namespace: currentChart.namespace,
-        cluster_id: currentCluster.id,
-        storage: StorageType.Secret,
-      },
-      {
-        name: chart.name,
-        revision: chart.version,
-        id: currentProject.id,
-      },
-      (err: any, res: any) => {
-        if (err) {
-          console.log(err);
-        } else {
-          setCurrentChart(res.data);
-          this.setState({ loading: false });
+    api
+      .getChart(
+        "<token>",
+        {
+          namespace: currentChart.namespace,
+          cluster_id: currentCluster.id,
+          storage: StorageType.Secret,
+        },
+        {
+          name: chart.name,
+          revision: chart.version,
+          id: currentProject.id,
         }
-      }
-    );
+      )
+      .then((res) => {
+        setCurrentChart(res.data);
+        this.setState({ loading: false });
+      })
+      .catch(console.log);
   };
 
   getControllers = async (chart: ChartType) => {
@@ -108,26 +106,23 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
 
     // don't retrieve controllers for chart that failed to even deploy.
     if (chart.info.status == "failed") return;
-
+    // TODO: properly promisify
     await new Promise((next: (res?: any) => void) => {
-      api.getChartControllers(
-        "<token>",
-        {
-          namespace: chart.namespace,
-          cluster_id: currentCluster.id,
-          storage: StorageType.Secret,
-        },
-        {
-          id: currentProject.id,
-          name: chart.name,
-          revision: chart.version,
-        },
-        (err: any, res: any) => {
-          if (err) {
-            setCurrentError(JSON.stringify(err));
-            return;
+      api
+        .getChartControllers(
+          "<token>",
+          {
+            namespace: chart.namespace,
+            cluster_id: currentCluster.id,
+            storage: StorageType.Secret,
+          },
+          {
+            id: currentProject.id,
+            name: chart.name,
+            revision: chart.version,
           }
-
+        )
+        .then((res) => {
           res.data.forEach(async (c: any) => {
             await new Promise((nextController: (res?: any) => void) => {
               c.metadata.kind = c.kind;
@@ -145,8 +140,8 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
             });
           });
           next();
-        }
-      );
+        })
+        .catch((err) => setCurrentError(JSON.stringify(err)));
     });
   };
 
@@ -198,29 +193,27 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
     let { currentCluster, currentProject } = this.context;
     let { currentChart } = this.props;
 
-    api.getChartComponents(
-      "<token>",
-      {
-        namespace: currentChart.namespace,
-        cluster_id: currentCluster.id,
-        storage: StorageType.Secret,
-      },
-      {
-        id: currentProject.id,
-        name: currentChart.name,
-        revision: currentChart.version,
-      },
-      (err: any, res: any) => {
-        if (err) {
-          console.log(err);
-        } else {
-          this.setState({
-            components: res.data.Objects,
-            podSelectors: res.data.PodSelectors,
-          });
+    api
+      .getChartComponents(
+        "<token>",
+        {
+          namespace: currentChart.namespace,
+          cluster_id: currentCluster.id,
+          storage: StorageType.Secret,
+        },
+        {
+          id: currentProject.id,
+          name: currentChart.name,
+          revision: currentChart.version,
         }
-      }
-    );
+      )
+      .then((res) => {
+        this.setState({
+          components: res.data.Objects,
+          podSelectors: res.data.PodSelectors,
+        });
+      })
+      .catch(console.log);
   };
 
   refreshChart = () => this.getChartData(this.props.currentChart);
@@ -242,30 +235,30 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
 
     this.setState({ saveValuesStatus: "loading" });
     this.refreshChart();
-    api.upgradeChartValues(
-      "<token>",
-      {
-        namespace: this.props.currentChart.namespace,
-        storage: StorageType.Secret,
-        values: valuesYaml,
-      },
-      {
-        id: currentProject.id,
-        name: this.props.currentChart.name,
-        cluster_id: currentCluster.id,
-      },
-      (err: any, res: any) => {
-        if (err) {
-          this.setState({ saveValuesStatus: "error" });
-          console.log(err);
-        } else {
-          this.setState({
-            saveValuesStatus: "successful",
-            forceRefreshRevisions: true,
-          });
+    api
+      .upgradeChartValues(
+        "<token>",
+        {
+          namespace: this.props.currentChart.namespace,
+          storage: StorageType.Secret,
+          values: valuesYaml,
+        },
+        {
+          id: currentProject.id,
+          name: this.props.currentChart.name,
+          cluster_id: currentCluster.id,
         }
-      }
-    );
+      )
+      .then((res) => {
+        this.setState({
+          saveValuesStatus: "successful",
+          forceRefreshRevisions: true,
+        });
+      })
+      .catch((err) => {
+        this.setState({ saveValuesStatus: "error" });
+        console.log(err);
+      });
   };
 
   renderTabContents = () => {
@@ -489,43 +482,36 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
       this.props.currentChart
     );
 
-    api.getChartComponents(
-      "<token>",
-      {
-        namespace: currentChart.namespace,
-        cluster_id: currentCluster.id,
-        storage: StorageType.Secret,
-      },
-      {
-        id: currentProject.id,
-        name: currentChart.name,
-        revision: currentChart.version,
-      },
-      (err: any, res: any) => {
-        if (err) {
-          console.log(err);
-        } else {
-          this.setState({ components: res.data.Objects });
+    api
+      .getChartComponents(
+        "<token>",
+        {
+          namespace: currentChart.namespace,
+          cluster_id: currentCluster.id,
+          storage: StorageType.Secret,
+        },
+        {
+          id: currentProject.id,
+          name: currentChart.name,
+          revision: currentChart.version,
         }
-      }
-    );
+      )
+      .then((res) => this.setState({ components: res.data.Objects }))
+      .catch(console.log);
 
-    api.getIngress(
-      "<token>",
-      {
-        cluster_id: currentCluster.id,
-      },
-      {
-        id: currentProject.id,
-        name: `${this.props.currentChart.name}-docker`,
-        namespace: `${this.props.currentChart.namespace}`,
-      },
-      (err: any, res: any) => {
-        if (err) {
-          console.log(err);
-          return;
+    api
+      .getIngress(
+        "<token>",
+        {
+          cluster_id: currentCluster.id,
+        },
+        {
+          id: currentProject.id,
+          name: `${this.props.currentChart.name}-docker`,
+          namespace: `${this.props.currentChart.namespace}`,
         }
-
+      )
+      .then((res) => {
         if (res.data?.spec?.rules && res.data?.spec?.rules[0]?.host) {
           this.setState({ url: `https://${res.data?.spec?.rules[0]?.host}` });
           return;
@@ -537,8 +523,8 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
           });
           return;
         }
-      }
-    );
+      })
+      .catch(console.log);
 
     this.updateTabs();
   }
@@ -590,25 +576,23 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
     let { currentProject, currentCluster } = this.context;
     let { currentChart } = this.props;
     this.setState({ deleting: true });
-    api.uninstallTemplate(
-      "<token>",
-      {},
-      {
-        namespace: currentChart.namespace,
-        storage: StorageType.Secret,
-        name: currentChart.name,
-        id: currentProject.id,
-        cluster_id: currentCluster.id,
-      },
-      (err: any, res: any) => {
-        if (err) {
-          console.log(err);
-        } else {
-          this.setState({ showDeleteOverlay: false });
-          this.props.setCurrentChart(null);
+    api
+      .uninstallTemplate(
+        "<token>",
+        {},
+        {
+          namespace: currentChart.namespace,
+          storage: StorageType.Secret,
+          name: currentChart.name,
+          id: currentProject.id,
+          cluster_id: currentCluster.id,
         }
-      }
-    );
+      )
+      .then((res) => {
+        this.setState({ showDeleteOverlay: false });
+        this.props.setCurrentChart(null);
+      })
+      .catch(console.log);
   };
 
   renderDeleteOverlay = () => {

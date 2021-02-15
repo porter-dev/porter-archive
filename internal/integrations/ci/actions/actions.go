@@ -75,34 +75,35 @@ func (g *GithubActions) Setup() (string, error) {
 		return "", err
 	}
 
-	return g.commitGithubFile(client, fileBytes)
+	return g.commitGithubFile(client, g.getPorterYMLFileName(), fileBytes)
 }
 
 type GithubActionYAMLStep struct {
-	Name string `yaml:"name"`
-	ID   string `yaml:"id"`
-	Run  string `yaml:"run"`
+	Name string `yaml:"name,omitempty"`
+	ID   string `yaml:"id,omitempty"`
+	Uses string `yaml:"uses,omitempty"`
+	Run  string `yaml:"run,omitempty"`
 }
 
 type GithubActionYAMLOnPushBranches struct {
-	Branches []string `yaml:"branches"`
+	Branches []string `yaml:"branches,omitempty"`
 }
 
 type GithubActionYAMLOnPush struct {
-	Push GithubActionYAMLOnPushBranches `yaml:"push"`
+	Push GithubActionYAMLOnPushBranches `yaml:"push,omitempty"`
 }
 
 type GithubActionYAMLJob struct {
-	RunsOn string                 `yaml:"runs-on"`
-	Steps  []GithubActionYAMLStep `yaml:"steps"`
+	RunsOn string                 `yaml:"runs-on,omitempty"`
+	Steps  []GithubActionYAMLStep `yaml:"steps,omitempty"`
 }
 
 type GithubActionYAML struct {
-	On GithubActionYAMLOnPush `yaml:"on"`
+	On GithubActionYAMLOnPush `yaml:"on,omitempty"`
 
-	Name string `yaml:"name"`
+	Name string `yaml:"name,omitempty"`
 
-	Jobs map[string]GithubActionYAMLJob `yaml:"jobs"`
+	Jobs map[string]GithubActionYAMLJob `yaml:"jobs,omitempty"`
 }
 
 func (g *GithubActions) GetGithubActionYAML() ([]byte, error) {
@@ -119,6 +120,7 @@ func (g *GithubActions) GetGithubActionYAML() ([]byte, error) {
 			"porter-deploy": GithubActionYAMLJob{
 				RunsOn: "ubuntu-latest",
 				Steps: []GithubActionYAMLStep{
+					getCheckoutCodeStep(),
 					getDownloadPorterStep(),
 					getConfigurePorterStep(g.getPorterTokenSecretName()),
 					getDockerBuildPushStep(g.DockerFilePath, g.ImageRepoURL),
@@ -199,18 +201,25 @@ func (g *GithubActions) getWebhookSecretName() string {
 	)
 }
 
+func (g *GithubActions) getPorterYMLFileName() string {
+	return fmt.Sprintf("porter_%s.yml", strings.Replace(
+		strings.ToLower(g.ReleaseName), "-", "_", -1),
+	)
+}
+
 func (g *GithubActions) getPorterTokenSecretName() string {
 	return fmt.Sprintf("PORTER_TOKEN_%d", g.ProjectID)
 }
 
 func (g *GithubActions) commitGithubFile(
 	client *github.Client,
+	filename string,
 	contents []byte,
 ) (string, error) {
-	fmt.Println("GITHUB ACTION CONTENTS ARE", string(contents))
+	filepath := ".github/workflows/" + filename
 
 	opts := &github.RepositoryContentFileOptions{
-		Message: github.String("Create porter.yml file"),
+		Message: github.String(fmt.Sprintf("Create %s file", filename)),
 		Content: contents,
 		Branch:  github.String(g.defaultBranch),
 		Committer: &github.CommitAuthor{
@@ -219,11 +228,11 @@ func (g *GithubActions) commitGithubFile(
 		},
 	}
 
-	resp, _, err := client.Repositories.CreateFile(
+	resp, _, err := client.Repositories.UpdateFile(
 		context.TODO(),
 		g.GitRepoOwner,
 		g.GitRepoName,
-		".github/workflows/porter.yml",
+		filepath,
 		opts,
 	)
 

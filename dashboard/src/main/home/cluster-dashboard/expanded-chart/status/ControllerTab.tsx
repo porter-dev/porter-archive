@@ -46,21 +46,18 @@ export default class ControllerTab extends Component<PropsType, StateType> {
     }
     selectors.push(selector);
 
-    api.getMatchingPods(
-      "<token>",
-      {
-        cluster_id: currentCluster.id,
-        selectors,
-      },
-      {
-        id: currentProject.id,
-      },
-      (err: any, res: any) => {
-        if (err) {
-          console.log(err);
-          setCurrentError(JSON.stringify(err));
-          return;
+    api
+      .getMatchingPods(
+        "<token>",
+        {
+          cluster_id: currentCluster.id,
+          selectors,
+        },
+        {
+          id: currentProject.id,
         }
+      )
+      .then((res) => {
         let pods = res?.data?.map((pod: any) => {
           return {
             namespace: pod?.metadata?.namespace,
@@ -78,8 +75,12 @@ export default class ControllerTab extends Component<PropsType, StateType> {
         if (isFirst) {
           selectPod(res.data[0]);
         }
-      }
-    );
+      })
+      .catch((err) => {
+        console.log(err);
+        setCurrentError(JSON.stringify(err));
+        return;
+      });
   }
 
   getAvailability = (kind: string, c: any) => {

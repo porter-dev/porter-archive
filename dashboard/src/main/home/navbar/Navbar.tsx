@@ -25,9 +25,10 @@ export default class Navbar extends Component<PropsType, StateType> {
     let { setCurrentError } = this.context;
 
     // Attempt user logout
-    api.logOutUser("<token>", {}, {}, (err: any, res: any) => {
-      err ? setCurrentError(err.response.data.errors[0]) : logOut();
-    });
+    api
+      .logOutUser("<token>", {}, {})
+      .then(logOut)
+      .catch((err) => setCurrentError(err.response.data.errors[0]));
   };
 
   renderSettingsDropdown = () => {

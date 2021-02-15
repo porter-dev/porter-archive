@@ -25,18 +25,16 @@ class Templates extends Component<PropsType, StateType> {
   };
 
   componentDidMount() {
-    api.getClusters(
-      "<token>",
-      {},
-      { id: this.context.currentProject.id },
-      (err: any, res: any) => {
-        if (res && res.data) {
+    api
+      .getClusters("<token>", {}, { id: this.context.currentProject.id })
+      .then((res) => {
+        if (res.data) {
           this.setState({ clusters: res.data, loading: false, error: "" });
         } else {
-          this.setState({ loading: false, error: err });
+          this.setState({ loading: false, error: "Response data missing" });
         }
-      }
-    );
+      })
+      .catch((err) => this.setState(err));
   }
 
   renderIcon = () => {
@@ -68,9 +66,7 @@ class Templates extends Component<PropsType, StateType> {
     return (
       <StyledClusterList>
         <Helper>Clusters connected to this project:</Helper>
-        <TemplateList>
-          {this.renderClusters()}
-        </TemplateList>
+        <TemplateList>{this.renderClusters()}</TemplateList>
       </StyledClusterList>
     );
   }

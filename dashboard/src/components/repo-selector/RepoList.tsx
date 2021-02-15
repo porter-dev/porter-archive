@@ -33,63 +33,58 @@ export default class ActionConfEditor extends Component<PropsType, StateType> {
 
     // Get repos
     if (!this.props.userId && this.props.userId !== 0) {
-      api.getGitRepos(
-        "<token>",
-        {},
-        { project_id: currentProject.id },
-        (err: any, res: any) => {
-          if (err) {
-            this.setState({ loading: false, error: true });
-          } else {
-            var allRepos: any = [];
-            for (let i = 0; i < res.data.length; i++) {
-              var grid = res.data[i].id;
-              api.getGitRepoList(
+      api
+        .getGitRepos("<token>", {}, { project_id: currentProject.id })
+        .then((res) => {
+          var allRepos: any = [];
+          // TODO: make into promise.all
+          for (let i = 0; i < res.data.length; i++) {
+            var grid = res.data[i].id;
+            api
+              .getGitRepoList(
                 "<token>",
                 {},
-                { project_id: currentProject.id, git_repo_id: grid },
-                (err: any, res: any) => {
-                  if (err) {
-                    console.log(err);
-                    this.setState({ loading: false, error: true });
-                  } else {
-                    res.data.forEach((repo: any, id: number) => {
-                      repo.GHRepoID = grid;
-                    });
-                    allRepos = allRepos.concat(res.data);
-                    this.setState({
-                      repos: allRepos,
-                      loading: false,
-                      error: false,
-                    });
-                  }
-                }
-              );
-            }
-            if (res.data.length < 1) {
-              this.setState({ loading: false, error: false });
-            }
+                { project_id: currentProject.id, git_repo_id: grid }
+              )
+              .then((res) => {
+                res.data.forEach((repo: any, id: number) => {
+                  repo.GHRepoID = grid;
+                });
+                allRepos = allRepos.concat(res.data);
+                this.setState({
+                  repos: allRepos,
+                  loading: false,
+                  error: false,
+                });
+              })
+              .catch((err) => {
+                console.log(err);
+                this.setState({ loading: false, error: true });
+              });
           }
-        }
-      );
+          if (res.data.length < 1) {
+            this.setState({ loading: false, error: false });
+          }
+        })
+        .catch((err) => this.setState({ loading: false, error: true }));
     } else {
       let grid = this.props.userId;
-      api.getGitRepoList(
-        "<token>",
-        {},
-        { project_id: currentProject.id, git_repo_id: grid },
-        (err: any, res: any) => {
-          if (err) {
-            console.log(err);
-            this.setState({ loading: false, error: true });
-          } else {
-            res.data.forEach((repo: any, id: number) => {
-              repo.GHRepoID = grid;
-            });
-            this.setState({ repos: res.data, loading: false, error: false });
-          }
-        }
-      );
+      api
+        .getGitRepoList(
+          "<token>",
+          {},
+          { project_id: currentProject.id, git_repo_id: grid }
+        )
+        .then((res) => {
+          res.data.forEach((repo: any, id: number) => {
+            repo.GHRepoID = grid;
+          });
+          this.setState({ repos: res.data, loading: false, error: false });
+        })
+        .catch((err) => {
+          console.log(err);
+          this.setState({ loading: false, error: true });
+        });
     }
   }
 

@@ -12,6 +12,7 @@ import (
 	"github.com/porter-dev/porter/internal/auth/token"
 	"github.com/porter-dev/porter/internal/forms"
 	"github.com/porter-dev/porter/internal/integrations/ci/actions"
+	"github.com/porter-dev/porter/internal/models"
 )
 
 // HandleCreateGitAction creates a new Github action in a repository for a given
@@ -56,10 +57,28 @@ func (app *App) HandleCreateGitAction(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	gaExt := app.createGitActionFromForm(projID, release, name, form, w, r)
+
+	w.WriteHeader(http.StatusCreated)
+
+	if err := json.NewEncoder(w).Encode(gaExt); err != nil {
+		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
+		return
+	}
+}
+
+func (app *App) createGitActionFromForm(
+	projID uint64,
+	release *models.Release,
+	name string,
+	form *forms.CreateGitAction,
+	w http.ResponseWriter,
+	r *http.Request,
+) *models.GitActionConfigExternal {
 	// validate the form
 	if err := app.validator.Struct(form); err != nil {
 		app.handleErrorFormValidation(err, ErrProjectValidateFields, w)
-		return
+		return nil
 	}
 
 	// convert the form to a git action config
@@ -67,7 +86,7 @@ func (app *App) HandleCreateGitAction(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
-		return
+		return nil
 	}
 
 	// read the git repo
@@ -75,21 +94,21 @@ func (app *App) HandleCreateGitAction(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
-		return
+		return nil
 	}
 
 	repoSplit := strings.Split(gitAction.GitRepo, "/")
 
 	if len(repoSplit) != 2 {
 		app.handleErrorFormDecoding(fmt.Errorf("invalid formatting of repo name"), ErrProjectDecode, w)
-		return
+		return nil
 	}
 
 	session, err := app.Store.Get(r, app.ServerConf.CookieName)
 
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+		return nil
 	}
 
 	userID, _ := session.Values["user_id"].(uint)
@@ -102,9 +121,8 @@ func (app *App) HandleCreateGitAction(w http.ResponseWriter, r *http.Request) {
 	})
 
 	if err != nil {
-		fmt.Println("ERROR GENERATING TOKEN", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+		return nil
 	}
 
 	// create the commit in the git repo
@@ -125,9 +143,8 @@ func (app *App) HandleCreateGitAction(w http.ResponseWriter, r *http.Request) {
 	_, err = gaRunner.Setup()
 
 	if err != nil {
-		fmt.Println("ERROR RUNNING SETUP", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+		return nil
 	}
 
 	// handle write to the database
@@ -135,17 +152,10 @@ func (app *App) HandleCreateGitAction(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		app.handleErrorDataWrite(err, w)
-		return
+		return nil
 	}
 
 	app.Logger.Info().Msgf("New git action created: %d", ga.ID)
 
-	w.WriteHeader(http.StatusCreated)
-
-	gaExt := ga.Externalize()
-
-	if err := json.NewEncoder(w).Encode(gaExt); err != nil {
-		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
-		return
-	}
+	return ga.Externalize()
 }

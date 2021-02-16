@@ -44,6 +44,7 @@ func main() {
 		&models.Infra{},
 		&models.GitActionConfig{},
 		&models.Invite{},
+		&models.AuthCode{},
 		&ints.KubeIntegration{},
 		&ints.BasicIntegration{},
 		&ints.OIDCIntegration{},

@@ -400,10 +400,10 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
           <>
             <Subtitle>
               Select the container image you would like to connect to this
-              template or
-              <Highlight onClick={() => this.setState({ sourceType: "repo" })}>
+              template
+              {/* <Highlight onClick={() => this.setState({ sourceType: "repo" })}>
                 link a git repository
-              </Highlight>
+              </Highlight> */}
               .<Required>*</Required>
             </Subtitle>
             <DarkMatter />

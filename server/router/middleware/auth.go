@@ -64,7 +64,12 @@ func (auth *Auth) BasicAuthenticateWithRedirect(next http.Handler) http.Handler 
 			}
 
 			// need state parameter to validate when redirected
-			session.Values["redirect"] = r.URL.Path
+			if r.URL.RawQuery == "" {
+				session.Values["redirect"] = r.URL.Path
+			} else {
+				session.Values["redirect"] = r.URL.Path + "?" + r.URL.RawQuery
+			}
+
 			session.Save(r, w)
 
 			http.Redirect(w, r, "/dashboard", 302)

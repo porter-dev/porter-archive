@@ -22,6 +22,10 @@ func Rotate(db *_gorm.DB, oldKey, newKey *[32]byte) error {
 
 	fmt.Printf("beginning key rotation from %s to %s\n", string(oldKeyBytes), string(newKeyBytes))
 
+	for i, b := range oldKeyBytes {
+		fmt.Println(i, ":", string(b), string(newKeyBytes[i]))
+	}
+
 	err := rotateClusterModel(db, oldKey, newKey)
 
 	if err != nil {
@@ -123,6 +127,8 @@ func rotateClusterModel(db *_gorm.DB, oldKey, newKey *[32]byte) error {
 	// cluster-scoped repository
 	repo := gorm.NewClusterRepository(db, oldKey).(*gorm.ClusterRepository)
 
+	fmt.Printf("rotating %d clusters\n", count)
+
 	// iterate (count / stepSize) + 1 times using Limit and Offset
 	for i := 0; i < (int(count)/stepSize)+1; i++ {
 		clusters := []*models.Cluster{}
@@ -132,21 +138,29 @@ func rotateClusterModel(db *_gorm.DB, oldKey, newKey *[32]byte) error {
 		}
 
 		// decrypt with the old key
-		for _, cluster := range clusters {
+		for i, cluster := range clusters {
+			fmt.Printf("decrypting %d: %s\n", i, cluster.Name)
+
 			err := repo.DecryptClusterData(cluster, oldKey)
 
 			if err != nil {
 				return err
 			}
+
+			fmt.Printf("decrypted %d: %s\n", i, cluster.Name)
 		}
 
 		// encrypt with the new key and re-insert
 		for _, cluster := range clusters {
+			fmt.Printf("encrypting %d: %s\n", i, cluster.Name)
+
 			err := repo.EncryptClusterData(cluster, newKey)
 
 			if err != nil {
 				return err
 			}
+
+			fmt.Printf("encrypted %d: %s\n", i, cluster.Name)
 
 			if err := db.Save(cluster).Error; err != nil {
 				return err
@@ -154,7 +168,7 @@ func rotateClusterModel(db *_gorm.DB, oldKey, newKey *[32]byte) error {
 		}
 	}
 
-	fmt.Printf("rotated %d clusters", count)
+	fmt.Printf("rotated %d clusters\n", count)
 
 	return nil
 }

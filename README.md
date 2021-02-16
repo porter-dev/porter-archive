@@ -1,6 +1,6 @@
 # Porter 
 [![MIT License](https://img.shields.io/apm/l/atomic-design-ui.svg?)](https://github.com/tterb/atomic-design-ui/blob/master/LICENSEs) [![Go Report Card](https://goreportcard.com/badge/gojp/goreportcard)](https://goreportcard.com/report/github.com/porter-dev/porter) [![Discord](https://img.shields.io/discord/542888846271184896?color=7389D8&label=community&logo=discord&logoColor=ffffff)](https://discord.gg/MhYNuWwqum)
-
+[![Twitter](https://img.shields.io/twitter/url/https/twitter.com/cloudposse.svg?style=social&label=Follow)](https://twitter.com/getporterdev)
 
 **Porter is a Kubernetes-powered PaaS that runs in your own cloud provider.** Porter brings the Heroku experience to Kubernetes without compromising its flexibility. Get started on Porter without the overhead of DevOps and fully customize your infra later when you need to.
 
@@ -10,7 +10,7 @@
 
 For help, questions, or if you just want a place to hang out, [join our Discord community.](https://discord.gg/MhYNuWwqum)
 
-To keep updated on our progress, please watch the repo for new releases (**Watch > Custom > Releases**) and [follow us on Twitter!](https://twitter.com/getporterdev)
+To keep updated on our progress, please watch the repo for new releases (**Watch > Custom > Releases**) and [follow us on Twitter](https://twitter.com/getporterdev)!
 
 ## Why Porter?
 ### A PaaS that grows with your applications
@@ -32,7 +32,7 @@ Porter brings the simplicity of a traditional PaaS to your own cloud provider wh
 - Marketplace for one click add-ons (e.g. MongoDB, Redis, PostgreSQL)
 - Application rollback to previously deployed versions
 - Deploy webhooks that can be triggered from CI/CD pipelines
-- Native CI/CD with buildpacks for non-Dockerized apps (Coming Soon)
+- Native CI/CD with buildpacks for non-Dockerized apps (🚧 Coming Soon)
 
 ### DevOps Mode
 For those who are familiar with Kubernetes and Helm:
@@ -47,7 +47,7 @@ For those who are familiar with Kubernetes and Helm:
 
 ## Docs
 
-Below are instructions for a quickstart. For full documentation, visit our [official Docs page.](https://docs.getporter.dev)
+Below are instructions for a quickstart. For full documentation, please visit our [official Docs.](https://docs.getporter.dev)
 
 ## CLI Installation
 ### Mac 
@@ -70,19 +70,20 @@ chmod +x ./porter
 sudo mv ./porter /usr/local/bin/porter
 ```
 
-For Linux and Windows installation, see our [Docs](https://docs.getporter.dev/docs/cli-documentation#linux). 
+For Linux and Windows installation, see our [Docs](https://docs.getporter.dev/docs/cli-documentation#linux).
 
 ## Getting Started
 1. Sign up and log into [Porter Dashboard](https://dashboard.getporter.dev).
 
-2. Create a Project and select a cloud provider you want to provision a Kubernetes cluster in (AWS, GCP, DO). It is also possible to [link up your own Kubernetes cluster.](https://docs.getporter.dev/docs/cli-documentation#linking-your-own-private-image-registry)
+2. Create a Project and select a cloud provider you want to provision a Kubernetes cluster in (AWS, GCP, DO). It is also possible to [link up your own Kubernetes cluster.](https://docs.getporter.dev/docs/cli-documentation#connecting-to-an-existing-cluster)
 
 3. [Put in your credentials](https://docs.getporter.dev/docs/getting-started-with-porter-on-aws), then Porter will automatically provision a cluster and an image registry in your own cloud account.
 
-4. [Build and push your Docker image](https://docs.getporter.dev/docs/cli-documentation#porter-docker-configure), or connect your git repository if your application is not dockerized.
+4. [Build and push your Docker image](https://docs.getporter.dev/docs/cli-documentation#porter-docker-configure), or connect your git repository. We are currently working on supporting the latter option for non-Dockerized applications.
 
 5. From the Templates tab on the Dashboard, select the Docker template. Click on the image you have just pushed, configure the port, then hit deploy.
 
 ## Want to Help?
-We welcome all contributions. Submit an issue or a pull request to help us improve Porter!
+We welcome all contributions. Submit an issue or a pull request to help us improve Porter! If you're interested in contributing, please [join our Discord community.](https://discord.gg/MhYNuWwqum) 
+
 ![porter](https://user-images.githubusercontent.com/65516095/103712859-def9ee00-4f88-11eb-804c-4b775d697ec4.jpeg)

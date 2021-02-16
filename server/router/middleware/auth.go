@@ -187,23 +187,28 @@ func (auth *Auth) DoesUserHaveProjectAccess(
 		// first check for token
 		tok := auth.getTokenFromRequest(r)
 
+		var userID uint
+
 		if tok != nil && tok.ProjectID == uint(projID) {
 			next.ServeHTTP(w, r)
 			return
-		}
+		} else if tok != nil {
+			userID = tok.IBy
+		} else {
+			session, err := auth.store.Get(r, auth.cookieName)
 
-		session, err := auth.store.Get(r, auth.cookieName)
+			if err != nil {
+				http.Error(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)
+				return
+			}
 
-		if err != nil {
-			http.Error(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)
-			return
-		}
+			sessionUserID, ok := session.Values["user_id"]
+			userID = sessionUserID.(uint)
 
-		userID, ok := session.Values["user_id"].(uint)
-
-		if !ok {
-			http.Error(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)
-			return
+			if !ok {
+				http.Error(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)
+				return
+			}
 		}
 
 		// get the project

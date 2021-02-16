@@ -27,19 +27,18 @@ type Token struct {
 	IAt       *time.Time `json:"iat"`
 }
 
-func GetTokenForUser(userID, projID uint) (*Token, error) {
-	if userID == 0 || projID == 0 {
+func GetTokenForUser(userID uint) (*Token, error) {
+	if userID == 0 {
 		return nil, fmt.Errorf("id cannot be 0")
 	}
 
 	iat := time.Now()
 
 	return &Token{
-		SubKind:   User,
-		Sub:       fmt.Sprintf("%d", userID),
-		ProjectID: projID,
-		IBy:       userID,
-		IAt:       &iat,
+		SubKind: User,
+		Sub:     fmt.Sprintf("%d", userID),
+		IBy:     userID,
+		IAt:     &iat,
 	}, nil
 }
 

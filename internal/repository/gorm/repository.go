@@ -20,6 +20,7 @@ func NewRepository(db *gorm.DB, key *[32]byte) *repository.Repository {
 		Infra:            NewInfraRepository(db, key),
 		GitActionConfig:  NewGitActionConfigRepository(db),
 		Invite:           NewInviteRepository(db),
+		AuthCode:         NewAuthCodeRepository(db),
 		KubeIntegration:  NewKubeIntegrationRepository(db, key),
 		BasicIntegration: NewBasicIntegrationRepository(db, key),
 		OIDCIntegration:  NewOIDCIntegrationRepository(db, key),

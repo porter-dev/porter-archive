@@ -63,6 +63,20 @@ func New(a *api.App) *chi.Mux {
 		)
 
 		r.Method(
+			"GET",
+			"/cli/login",
+			auth.BasicAuthenticateWithRedirect(
+				requestlog.NewHandler(a.HandleCLILoginUser, l),
+			),
+		)
+
+		r.Method(
+			"GET",
+			"/cli/login/exchange",
+			requestlog.NewHandler(a.HandleCLILoginExchangeToken, l),
+		)
+
+		r.Method(
 			"POST",
 			"/login",
 			requestlog.NewHandler(a.HandleLoginUser, l),

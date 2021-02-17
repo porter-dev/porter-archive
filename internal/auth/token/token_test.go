@@ -13,7 +13,7 @@ func TestGetAndEncodeTokenForUser(t *testing.T) {
 		TokenSecret: "fakesecret",
 	}
 
-	tok, err := token.GetTokenForUser(1, 1)
+	tok, err := token.GetTokenForUser(1)
 
 	if err != nil {
 		t.Fatalf("%v\n", err)

@@ -127,7 +127,8 @@ class Home extends Component<PropsType, StateType> {
 
   provisionDOCR = (integrationId: number, tier: string, callback?: any) => {
     console.log("Provisioning DOCR...");
-    return api.createDOCR(
+    return api
+    .createDOCR(
       "<token>",
       {
         do_integration_id: integrationId,
@@ -137,7 +138,8 @@ class Home extends Component<PropsType, StateType> {
       {
         project_id: this.props.currentProject.id,
       }
-    );
+    )
+    .then(() => callback()); 
   };
 
   provisionDOKS = (integrationId: number, region: string) => {

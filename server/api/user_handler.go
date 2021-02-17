@@ -3,15 +3,20 @@ package api
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
+	"math/rand"
 	"net/http"
+	"net/url"
 	"strconv"
 	"strings"
+	"time"
 
 	"golang.org/x/crypto/bcrypt"
 
 	"gorm.io/gorm"
 
 	"github.com/go-chi/chi"
+	"github.com/porter-dev/porter/internal/auth/token"
 	"github.com/porter-dev/porter/internal/forms"
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/repository"
@@ -100,6 +105,103 @@ func (app *App) HandleAuthCheck(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 
 	if err := app.sendUser(w, userID, email, ""); err != nil {
+		app.handleErrorFormDecoding(err, ErrUserDecode, w)
+		return
+	}
+}
+
+// HandleCLILoginUser verifies that a user is logged in, and generates an access
+// token for usage from the CLI
+func (app *App) HandleCLILoginUser(w http.ResponseWriter, r *http.Request) {
+	queryParams, _ := url.ParseQuery(r.URL.RawQuery)
+
+	redirect := queryParams["redirect"][0]
+
+	session, err := app.Store.Get(r, app.ServerConf.CookieName)
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	userID, _ := session.Values["user_id"].(uint)
+
+	// generate the token
+	jwt, err := token.GetTokenForUser(userID)
+
+	if err != nil {
+		app.handleErrorInternal(err, w)
+		return
+	}
+
+	encoded, err := jwt.EncodeToken(&token.TokenGeneratorConf{
+		TokenSecret: app.ServerConf.TokenGeneratorSecret,
+	})
+
+	if err != nil {
+		app.handleErrorInternal(err, w)
+		return
+	}
+
+	// generate 64 characters long authorization code
+	const letters = "abcdefghijklmnopqrstuvwxyz123456789"
+	code := make([]byte, 64)
+
+	for i := range code {
+		code[i] = letters[rand.Intn(len(letters))]
+	}
+
+	expiry := time.Now().Add(30 * time.Second)
+
+	// create auth code object and send back authorization code
+	authCode := &models.AuthCode{
+		Token:             encoded,
+		AuthorizationCode: string(code),
+		Expiry:            &expiry,
+	}
+
+	authCode, err = app.Repo.AuthCode.CreateAuthCode(authCode)
+
+	if err != nil {
+		app.handleErrorInternal(err, w)
+		return
+	}
+
+	http.Redirect(w, r, fmt.Sprintf("%s/?code=%s", redirect, url.QueryEscape(authCode.AuthorizationCode)), 302)
+}
+
+type ExchangeRequest struct {
+	AuthorizationCode string `json:"authorization_code"`
+}
+
+type ExchangeResponse struct {
+	Token string `json:"token"`
+}
+
+// HandleCLILoginExchangeToken exchanges an authorization code for a token
+func (app *App) HandleCLILoginExchangeToken(w http.ResponseWriter, r *http.Request) {
+	// read the request body and look up the authorization token
+	req := &ExchangeRequest{}
+
+	if err := json.NewDecoder(r.Body).Decode(req); err != nil {
+		app.handleErrorFormDecoding(err, ErrUserDecode, w)
+		return
+	}
+
+	authCode, err := app.Repo.AuthCode.ReadAuthCode(req.AuthorizationCode)
+
+	if err != nil || authCode.IsExpired() {
+		http.Error(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)
+		return
+	}
+
+	res := &ExchangeResponse{
+		Token: authCode.Token,
+	}
+
+	w.WriteHeader(http.StatusOK)
+
+	if err := json.NewEncoder(w).Encode(res); err != nil {
 		app.handleErrorFormDecoding(err, ErrUserDecode, w)
 		return
 	}

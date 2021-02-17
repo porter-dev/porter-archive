@@ -127,8 +127,6 @@ func rotateClusterModel(db *_gorm.DB, oldKey, newKey *[32]byte) error {
 	// cluster-scoped repository
 	repo := gorm.NewClusterRepository(db, oldKey).(*gorm.ClusterRepository)
 
-	fmt.Printf("rotating %d clusters\n", count)
-
 	// iterate (count / stepSize) + 1 times using Limit and Offset
 	for i := 0; i < (int(count)/stepSize)+1; i++ {
 		clusters := []*models.Cluster{}
@@ -138,29 +136,31 @@ func rotateClusterModel(db *_gorm.DB, oldKey, newKey *[32]byte) error {
 		}
 
 		// decrypt with the old key
-		for i, cluster := range clusters {
-			fmt.Printf("decrypting %d: %s\n", i, cluster.Name)
-
+		for _, cluster := range clusters {
 			err := repo.DecryptClusterData(cluster, oldKey)
 
 			if err != nil {
 				return err
 			}
+			if err != nil {
+				fmt.Printf("error decrypting cluster %d\n", cluster.ID)
 
-			fmt.Printf("decrypted %d: %s\n", i, cluster.Name)
+				// in these cases we'll wipe the data -- if it can't be decrypted, we can't
+				// recover it
+				cluster.CertificateAuthorityData = []byte{}
+				cluster.TokenCache.Token = []byte{}
+			}
 		}
 
 		// encrypt with the new key and re-insert
 		for _, cluster := range clusters {
-			fmt.Printf("encrypting %d: %s\n", i, cluster.Name)
-
 			err := repo.EncryptClusterData(cluster, newKey)
 
 			if err != nil {
+				fmt.Printf("error encrypting cluster %d\n", cluster.ID)
+
 				return err
 			}
-
-			fmt.Printf("encrypted %d: %s\n", i, cluster.Name)
 
 			if err := db.Save(cluster).Error; err != nil {
 				return err
@@ -197,7 +197,12 @@ func rotateClusterCandidateModel(db *_gorm.DB, oldKey, newKey *[32]byte) error {
 			err := repo.DecryptClusterCandidateData(cc, oldKey)
 
 			if err != nil {
-				return err
+				fmt.Printf("error decrypting cluster candidate %d\n", cc.ID)
+
+				// in these cases we'll wipe the data -- if it can't be decrypted, we can't
+				// recover it
+				cc.AWSClusterIDGuess = []byte{}
+				cc.Kubeconfig = []byte{}
 			}
 		}
 
@@ -206,6 +211,8 @@ func rotateClusterCandidateModel(db *_gorm.DB, oldKey, newKey *[32]byte) error {
 			err := repo.EncryptClusterCandidateData(cc, newKey)
 
 			if err != nil {
+				fmt.Printf("error encrypting cluster candidate %d\n", cc.ID)
+
 				return err
 			}
 
@@ -215,7 +222,7 @@ func rotateClusterCandidateModel(db *_gorm.DB, oldKey, newKey *[32]byte) error {
 		}
 	}
 
-	fmt.Printf("rotated %d cluster candidates", count)
+	fmt.Printf("rotated %d cluster candidates\n", count)
 
 	return nil
 }
@@ -244,7 +251,12 @@ func rotateRegistryModel(db *_gorm.DB, oldKey, newKey *[32]byte) error {
 			err := repo.DecryptRegistryData(reg, oldKey)
 
 			if err != nil {
-				return err
+				fmt.Printf("error decrypting registry %d\n", reg.ID)
+
+				// in these cases we'll wipe the data -- if it can't be decrypted, we can't
+				// recover it
+				reg.TokenCache.Token = []byte{}
+
 			}
 		}
 
@@ -253,6 +265,8 @@ func rotateRegistryModel(db *_gorm.DB, oldKey, newKey *[32]byte) error {
 			err := repo.EncryptRegistryData(reg, newKey)
 
 			if err != nil {
+				fmt.Printf("error encrypting registry %d\n", reg.ID)
+
 				return err
 			}
 
@@ -262,7 +276,7 @@ func rotateRegistryModel(db *_gorm.DB, oldKey, newKey *[32]byte) error {
 		}
 	}
 
-	fmt.Printf("rotated %d registries", count)
+	fmt.Printf("rotated %d registries\n", count)
 
 	return nil
 }
@@ -291,7 +305,11 @@ func rotateHelmRepoModel(db *_gorm.DB, oldKey, newKey *[32]byte) error {
 			err := repo.DecryptHelmRepoData(hr, oldKey)
 
 			if err != nil {
-				return err
+				fmt.Printf("error decrypting helm repo %d\n", hr.ID)
+
+				// in these cases we'll wipe the data -- if it can't be decrypted, we can't
+				// recover it
+				hr.TokenCache.Token = []byte{}
 			}
 		}
 
@@ -300,6 +318,8 @@ func rotateHelmRepoModel(db *_gorm.DB, oldKey, newKey *[32]byte) error {
 			err := repo.EncryptHelmRepoData(hr, newKey)
 
 			if err != nil {
+				fmt.Printf("error encrypting helm repo %d\n", hr.ID)
+
 				return err
 			}
 
@@ -309,7 +329,7 @@ func rotateHelmRepoModel(db *_gorm.DB, oldKey, newKey *[32]byte) error {
 		}
 	}
 
-	fmt.Printf("rotated %d helm repos", count)
+	fmt.Printf("rotated %d helm repos\n", count)
 
 	return nil
 }
@@ -338,7 +358,11 @@ func rotateInfraModel(db *_gorm.DB, oldKey, newKey *[32]byte) error {
 			err := repo.DecryptInfraData(infra, oldKey)
 
 			if err != nil {
-				return err
+				fmt.Printf("error decrypting infra %d\n", infra.ID)
+
+				// in these cases we'll wipe the data -- if it can't be decrypted, we can't
+				// recover it
+				infra.LastApplied = []byte{}
 			}
 		}
 
@@ -347,6 +371,8 @@ func rotateInfraModel(db *_gorm.DB, oldKey, newKey *[32]byte) error {
 			err := repo.EncryptInfraData(infra, newKey)
 
 			if err != nil {
+				fmt.Printf("error encrypting infra %d\n", infra.ID)
+
 				return err
 			}
 
@@ -356,7 +382,7 @@ func rotateInfraModel(db *_gorm.DB, oldKey, newKey *[32]byte) error {
 		}
 	}
 
-	fmt.Printf("rotated %d infras", count)
+	fmt.Printf("rotated %d infras\n", count)
 
 	return nil
 }
@@ -385,7 +411,16 @@ func rotateKubeIntegrationModel(db *_gorm.DB, oldKey, newKey *[32]byte) error {
 			err := repo.DecryptKubeIntegrationData(ki, oldKey)
 
 			if err != nil {
-				return err
+				fmt.Printf("error decrypting kube integration %d\n", ki.ID)
+
+				// in these cases we'll wipe the data -- if it can't be decrypted, we can't
+				// recover it
+				ki.ClientCertificateData = []byte{}
+				ki.ClientKeyData = []byte{}
+				ki.Token = []byte{}
+				ki.Username = []byte{}
+				ki.Password = []byte{}
+				ki.Kubeconfig = []byte{}
 			}
 		}
 
@@ -394,6 +429,8 @@ func rotateKubeIntegrationModel(db *_gorm.DB, oldKey, newKey *[32]byte) error {
 			err := repo.EncryptKubeIntegrationData(ki, newKey)
 
 			if err != nil {
+				fmt.Printf("error encrypting kube integration %d\n", ki.ID)
+
 				return err
 			}
 
@@ -403,7 +440,7 @@ func rotateKubeIntegrationModel(db *_gorm.DB, oldKey, newKey *[32]byte) error {
 		}
 	}
 
-	fmt.Printf("rotated %d kube integrations", count)
+	fmt.Printf("rotated %d kube integrations\n", count)
 
 	return nil
 }
@@ -432,7 +469,12 @@ func rotateBasicIntegrationModel(db *_gorm.DB, oldKey, newKey *[32]byte) error {
 			err := repo.DecryptBasicIntegrationData(basic, oldKey)
 
 			if err != nil {
-				return err
+				fmt.Printf("error decrypting basic integration %d\n", basic.ID)
+
+				// in these cases we'll wipe the data -- if it can't be decrypted, we can't
+				// recover it
+				basic.Username = []byte{}
+				basic.Password = []byte{}
 			}
 		}
 
@@ -441,6 +483,8 @@ func rotateBasicIntegrationModel(db *_gorm.DB, oldKey, newKey *[32]byte) error {
 			err := repo.EncryptBasicIntegrationData(basic, newKey)
 
 			if err != nil {
+				fmt.Printf("error encrypting basic integration %d\n", basic.ID)
+
 				return err
 			}
 
@@ -450,7 +494,7 @@ func rotateBasicIntegrationModel(db *_gorm.DB, oldKey, newKey *[32]byte) error {
 		}
 	}
 
-	fmt.Printf("rotated %d basic integrations", count)
+	fmt.Printf("rotated %d basic integrations\n", count)
 
 	return nil
 }
@@ -479,7 +523,16 @@ func rotateOIDCIntegrationModel(db *_gorm.DB, oldKey, newKey *[32]byte) error {
 			err := repo.DecryptOIDCIntegrationData(oidc, oldKey)
 
 			if err != nil {
-				return err
+				fmt.Printf("error decrypting oidc integration %d\n", oidc.ID)
+
+				// in these cases we'll wipe the data -- if it can't be decrypted, we can't
+				// recover it
+				oidc.IssuerURL = []byte{}
+				oidc.ClientID = []byte{}
+				oidc.ClientSecret = []byte{}
+				oidc.CertificateAuthorityData = []byte{}
+				oidc.IDToken = []byte{}
+				oidc.RefreshToken = []byte{}
 			}
 		}
 
@@ -488,6 +541,8 @@ func rotateOIDCIntegrationModel(db *_gorm.DB, oldKey, newKey *[32]byte) error {
 			err := repo.EncryptOIDCIntegrationData(oidc, newKey)
 
 			if err != nil {
+				fmt.Printf("error encrypting oidc integration %d\n", oidc.ID)
+
 				return err
 			}
 
@@ -497,7 +552,7 @@ func rotateOIDCIntegrationModel(db *_gorm.DB, oldKey, newKey *[32]byte) error {
 		}
 	}
 
-	fmt.Printf("rotated %d oidc integrations", count)
+	fmt.Printf("rotated %d oidc integrations\n", count)
 
 	return nil
 }
@@ -526,7 +581,13 @@ func rotateOAuthIntegrationModel(db *_gorm.DB, oldKey, newKey *[32]byte) error {
 			err := repo.DecryptOAuthIntegrationData(oauth, oldKey)
 
 			if err != nil {
-				return err
+				fmt.Printf("error decrypting oauth integration %d\n", oauth.ID)
+
+				// in these cases we'll wipe the data -- if it can't be decrypted, we can't
+				// recover it
+				oauth.ClientID = []byte{}
+				oauth.AccessToken = []byte{}
+				oauth.RefreshToken = []byte{}
 			}
 		}
 
@@ -535,6 +596,8 @@ func rotateOAuthIntegrationModel(db *_gorm.DB, oldKey, newKey *[32]byte) error {
 			err := repo.EncryptOAuthIntegrationData(oauth, newKey)
 
 			if err != nil {
+				fmt.Printf("error encrypting oauth integration %d\n", oauth.ID)
+
 				return err
 			}
 
@@ -544,7 +607,7 @@ func rotateOAuthIntegrationModel(db *_gorm.DB, oldKey, newKey *[32]byte) error {
 		}
 	}
 
-	fmt.Printf("rotated %d oauth integrations", count)
+	fmt.Printf("rotated %d oauth integrations\n", count)
 
 	return nil
 }
@@ -573,7 +636,11 @@ func rotateGCPIntegrationModel(db *_gorm.DB, oldKey, newKey *[32]byte) error {
 			err := repo.DecryptGCPIntegrationData(gcp, oldKey)
 
 			if err != nil {
-				return err
+				fmt.Printf("error decrypting gcp integration %d\n", gcp.ID)
+
+				// in these cases we'll wipe the data -- if it can't be decrypted, we can't
+				// recover it
+				gcp.GCPKeyData = []byte{}
 			}
 		}
 
@@ -582,6 +649,8 @@ func rotateGCPIntegrationModel(db *_gorm.DB, oldKey, newKey *[32]byte) error {
 			err := repo.EncryptGCPIntegrationData(gcp, newKey)
 
 			if err != nil {
+				fmt.Printf("error encrypting gcp integration %d\n", gcp.ID)
+
 				return err
 			}
 
@@ -591,7 +660,7 @@ func rotateGCPIntegrationModel(db *_gorm.DB, oldKey, newKey *[32]byte) error {
 		}
 	}
 
-	fmt.Printf("rotated %d gcp integrations", count)
+	fmt.Printf("rotated %d gcp integrations\n", count)
 
 	return nil
 }
@@ -620,7 +689,14 @@ func rotateAWSIntegrationModel(db *_gorm.DB, oldKey, newKey *[32]byte) error {
 			err := repo.DecryptAWSIntegrationData(aws, oldKey)
 
 			if err != nil {
-				return err
+				fmt.Printf("error encrypting aws integration %d\n", aws.ID)
+
+				// in these cases we'll wipe the data -- if it can't be decrypted, we can't
+				// recover it
+				aws.AWSAccessKeyID = []byte{}
+				aws.AWSClusterID = []byte{}
+				aws.AWSSecretAccessKey = []byte{}
+				aws.AWSSessionToken = []byte{}
 			}
 		}
 
@@ -629,6 +705,8 @@ func rotateAWSIntegrationModel(db *_gorm.DB, oldKey, newKey *[32]byte) error {
 			err := repo.EncryptAWSIntegrationData(aws, newKey)
 
 			if err != nil {
+				fmt.Printf("error decrypting aws integration %d\n", aws.ID)
+
 				return err
 			}
 
@@ -638,7 +716,7 @@ func rotateAWSIntegrationModel(db *_gorm.DB, oldKey, newKey *[32]byte) error {
 		}
 	}
 
-	fmt.Printf("rotated %d aws integrations", count)
+	fmt.Printf("rotated %d aws integrations\n", count)
 
 	return nil
 }

@@ -129,4 +129,7 @@ type ChartTemplateForm struct {
 type InstallChartTemplateForm struct {
 	*ReleaseForm
 	*ChartTemplateForm
+
+	// optional git action config
+	GithubActionConfig *CreateGitActionOptional `json:"github_action,omitempty"`
 }

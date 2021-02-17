@@ -3,6 +3,8 @@ package keyrotate
 import (
 	"fmt"
 
+	"encoding/hex"
+
 	"github.com/porter-dev/porter/internal/models"
 	ints "github.com/porter-dev/porter/internal/models/integrations"
 	gorm "github.com/porter-dev/porter/internal/repository/gorm"
@@ -131,7 +133,7 @@ func rotateClusterModel(db *_gorm.DB, oldKey, newKey *[32]byte) error {
 	for i := 0; i < (int(count)/stepSize)+1; i++ {
 		clusters := []*models.Cluster{}
 
-		if err := db.Offset(i * stepSize).Limit(stepSize).Preload("TokenCache").Find(&clusters).Error; err != nil {
+		if err := db.Order("id asc").Offset(i * stepSize).Limit(stepSize).Preload("TokenCache").Find(&clusters).Error; err != nil {
 			return err
 		}
 
@@ -188,7 +190,7 @@ func rotateClusterCandidateModel(db *_gorm.DB, oldKey, newKey *[32]byte) error {
 	for i := 0; i < (int(count)/stepSize)+1; i++ {
 		ccs := []*models.ClusterCandidate{}
 
-		if err := db.Offset(i * stepSize).Limit(stepSize).Find(&ccs).Error; err != nil {
+		if err := db.Order("id asc").Offset(i * stepSize).Limit(stepSize).Find(&ccs).Error; err != nil {
 			return err
 		}
 
@@ -242,7 +244,7 @@ func rotateRegistryModel(db *_gorm.DB, oldKey, newKey *[32]byte) error {
 	for i := 0; i < (int(count)/stepSize)+1; i++ {
 		regs := []*models.Registry{}
 
-		if err := db.Offset(i * stepSize).Limit(stepSize).Preload("TokenCache").Find(&regs).Error; err != nil {
+		if err := db.Order("id asc").Offset(i * stepSize).Limit(stepSize).Preload("TokenCache").Find(&regs).Error; err != nil {
 			return err
 		}
 
@@ -296,7 +298,7 @@ func rotateHelmRepoModel(db *_gorm.DB, oldKey, newKey *[32]byte) error {
 	for i := 0; i < (int(count)/stepSize)+1; i++ {
 		hrs := []*models.HelmRepo{}
 
-		if err := db.Offset(i * stepSize).Limit(stepSize).Preload("TokenCache").Find(&hrs).Error; err != nil {
+		if err := db.Order("id asc").Offset(i * stepSize).Limit(stepSize).Preload("TokenCache").Find(&hrs).Error; err != nil {
 			return err
 		}
 
@@ -349,7 +351,7 @@ func rotateInfraModel(db *_gorm.DB, oldKey, newKey *[32]byte) error {
 	for i := 0; i < (int(count)/stepSize)+1; i++ {
 		infras := []*models.Infra{}
 
-		if err := db.Offset(i * stepSize).Limit(stepSize).Find(&infras).Error; err != nil {
+		if err := db.Order("id asc").Offset(i * stepSize).Limit(stepSize).Find(&infras).Error; err != nil {
 			return err
 		}
 
@@ -358,7 +360,13 @@ func rotateInfraModel(db *_gorm.DB, oldKey, newKey *[32]byte) error {
 			err := repo.DecryptInfraData(infra, oldKey)
 
 			if err != nil {
-				fmt.Printf("error decrypting infra %d\n", infra.ID)
+				oldKeyBytes := make([]byte, 32)
+				newKeyBytes := make([]byte, 32)
+
+				copy(oldKeyBytes[:], oldKey[:])
+				copy(newKeyBytes[:], newKey[:])
+
+				fmt.Printf("error decrypting infra %d, %s, %s, %s\n", infra.ID, hex.EncodeToString(infra.LastApplied), string(oldKeyBytes), string(newKeyBytes))
 
 				// in these cases we'll wipe the data -- if it can't be decrypted, we can't
 				// recover it
@@ -402,7 +410,7 @@ func rotateKubeIntegrationModel(db *_gorm.DB, oldKey, newKey *[32]byte) error {
 	for i := 0; i < (int(count)/stepSize)+1; i++ {
 		kis := []*ints.KubeIntegration{}
 
-		if err := db.Offset(i * stepSize).Limit(stepSize).Find(&kis).Error; err != nil {
+		if err := db.Order("id asc").Offset(i * stepSize).Limit(stepSize).Find(&kis).Error; err != nil {
 			return err
 		}
 
@@ -460,7 +468,7 @@ func rotateBasicIntegrationModel(db *_gorm.DB, oldKey, newKey *[32]byte) error {
 	for i := 0; i < (int(count)/stepSize)+1; i++ {
 		basics := []*ints.BasicIntegration{}
 
-		if err := db.Offset(i * stepSize).Limit(stepSize).Find(&basics).Error; err != nil {
+		if err := db.Order("id asc").Offset(i * stepSize).Limit(stepSize).Find(&basics).Error; err != nil {
 			return err
 		}
 
@@ -514,7 +522,7 @@ func rotateOIDCIntegrationModel(db *_gorm.DB, oldKey, newKey *[32]byte) error {
 	for i := 0; i < (int(count)/stepSize)+1; i++ {
 		oidcs := []*ints.OIDCIntegration{}
 
-		if err := db.Offset(i * stepSize).Limit(stepSize).Find(&oidcs).Error; err != nil {
+		if err := db.Order("id asc").Offset(i * stepSize).Limit(stepSize).Find(&oidcs).Error; err != nil {
 			return err
 		}
 
@@ -572,7 +580,7 @@ func rotateOAuthIntegrationModel(db *_gorm.DB, oldKey, newKey *[32]byte) error {
 	for i := 0; i < (int(count)/stepSize)+1; i++ {
 		oauths := []*ints.OAuthIntegration{}
 
-		if err := db.Offset(i * stepSize).Limit(stepSize).Find(&oauths).Error; err != nil {
+		if err := db.Order("id asc").Offset(i * stepSize).Limit(stepSize).Find(&oauths).Error; err != nil {
 			return err
 		}
 
@@ -627,7 +635,7 @@ func rotateGCPIntegrationModel(db *_gorm.DB, oldKey, newKey *[32]byte) error {
 	for i := 0; i < (int(count)/stepSize)+1; i++ {
 		gcps := []*ints.GCPIntegration{}
 
-		if err := db.Offset(i * stepSize).Limit(stepSize).Find(&gcps).Error; err != nil {
+		if err := db.Order("id asc").Offset(i * stepSize).Limit(stepSize).Find(&gcps).Error; err != nil {
 			return err
 		}
 
@@ -680,7 +688,7 @@ func rotateAWSIntegrationModel(db *_gorm.DB, oldKey, newKey *[32]byte) error {
 	for i := 0; i < (int(count)/stepSize)+1; i++ {
 		awss := []*ints.AWSIntegration{}
 
-		if err := db.Offset(i * stepSize).Limit(stepSize).Find(&awss).Error; err != nil {
+		if err := db.Order("id asc").Offset(i * stepSize).Limit(stepSize).Find(&awss).Error; err != nil {
 			return err
 		}
 

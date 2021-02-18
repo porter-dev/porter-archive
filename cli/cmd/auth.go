@@ -8,6 +8,7 @@ import (
 	"github.com/fatih/color"
 
 	"github.com/porter-dev/porter/cli/cmd/api"
+	loginBrowser "github.com/porter-dev/porter/cli/cmd/login"
 	"github.com/porter-dev/porter/cli/cmd/utils"
 	"github.com/spf13/cobra"
 )
@@ -56,6 +57,7 @@ var logoutCmd = &cobra.Command{
 }
 
 var token string = ""
+var manual bool = false
 
 func init() {
 	rootCmd.AddCommand(authCmd)
@@ -77,30 +79,17 @@ func init() {
 		"",
 		"bearer token for authentication",
 	)
+
+	loginCmd.PersistentFlags().BoolVar(
+		&manual,
+		"manual",
+		false,
+		"whether to prompt for manual authentication (username/pw)",
+	)
 }
 
 func login() error {
-	var client *api.Client
-
-	if token != "" {
-		// set the token in config
-		err := setToken(token)
-
-		if err != nil {
-			return err
-		}
-
-		client = api.NewClientWithToken(getHost()+"/api", token)
-
-		user, _ := client.AuthCheck(context.Background())
-
-		if user == nil {
-			color.Red("Invalid token.")
-			return nil
-		}
-	} else {
-		client = api.NewClient(getHost()+"/api", "cookie.json")
-	}
+	client := api.NewClientWithToken(getHost()+"/api", getToken())
 
 	user, _ := client.AuthCheck(context.Background())
 
@@ -108,6 +97,83 @@ func login() error {
 		color.Yellow("You are already logged in. If you'd like to log out, run \"porter auth logout\".")
 		return nil
 	}
+
+	// check for the --manual flag
+	if manual {
+		return loginManual()
+	}
+
+	// check for a token
+	var err error
+
+	if token == "" {
+		token, err = loginBrowser.Login(getHost())
+
+		if err != nil {
+			return err
+		}
+
+		// set the token in config
+		err = setToken(token)
+
+		if err != nil {
+			return err
+		}
+
+		client := api.NewClientWithToken(getHost()+"/api", token)
+
+		user, err := client.AuthCheck(context.Background())
+
+		if user == nil {
+			color.Red("Invalid token.")
+			return err
+		}
+
+		color.New(color.FgGreen).Println("Successfully logged in!")
+
+		// get a list of projects, and set the current project
+		projects, err := client.ListUserProjects(context.Background(), user.ID)
+
+		if err != nil {
+			return err
+		}
+
+		if len(projects) > 0 {
+			setProject(projects[0].ID)
+		}
+	} else {
+		// set the token in config
+		err = setToken(token)
+
+		if err != nil {
+			return err
+		}
+
+		client := api.NewClientWithToken(getHost()+"/api", token)
+
+		user, err := client.AuthCheck(context.Background())
+
+		if user == nil {
+			color.Red("Invalid token.")
+			return err
+		}
+
+		color.New(color.FgGreen).Println("Successfully logged in!")
+
+		projID, err := api.GetProjectIDFromToken(token)
+
+		if err != nil {
+			return err
+		}
+
+		setProject(projID)
+	}
+
+	return nil
+}
+
+func loginManual() error {
+	client := api.NewClient(getHost()+"/api", "cookie.json")
 
 	var username, pw string
 
@@ -136,26 +202,15 @@ func login() error {
 
 	color.New(color.FgGreen).Println("Successfully logged in!")
 
-	// if the login was token-based, decode the claims to get the token
-	if token != "" {
-		projID, err := api.GetProjectIDFromToken(token)
+	// get a list of projects, and set the current project
+	projects, err := client.ListUserProjects(context.Background(), _user.ID)
 
-		if err != nil {
-			return err
-		}
+	if err != nil {
+		return err
+	}
 
-		setProject(projID)
-	} else {
-		// get a list of projects, and set the current project
-		projects, err := client.ListUserProjects(context.Background(), _user.ID)
-
-		if err != nil {
-			return err
-		}
-
-		if len(projects) > 0 {
-			setProject(projects[0].ID)
-		}
+	if len(projects) > 0 {
+		setProject(projects[0].ID)
 	}
 
 	return nil
@@ -198,6 +253,8 @@ func logout(user *api.AuthCheckResponse, client *api.Client, args []string) erro
 	if err != nil {
 		return err
 	}
+
+	setToken("")
 
 	color.Green("Successfully logged out")
 

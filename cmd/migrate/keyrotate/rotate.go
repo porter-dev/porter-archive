@@ -14,69 +14,98 @@ import (
 const stepSize = 100
 
 func Rotate(db *_gorm.DB, oldKey, newKey *[32]byte) error {
+	oldKeyBytes := make([]byte, 32)
+	newKeyBytes := make([]byte, 32)
+
+	copy(oldKeyBytes[:], oldKey[:])
+	copy(newKeyBytes[:], newKey[:])
+
+	fmt.Printf("beginning key rotation from %s to %s\n", string(oldKeyBytes), string(newKeyBytes))
+
 	err := rotateClusterModel(db, oldKey, newKey)
 
 	if err != nil {
+		fmt.Printf("failed on cluster rotation: %v\n", err)
 		return err
 	}
 
 	err = rotateClusterCandidateModel(db, oldKey, newKey)
 
 	if err != nil {
+		fmt.Printf("failed on cc rotation: %v\n", err)
+
 		return err
 	}
 
 	err = rotateRegistryModel(db, oldKey, newKey)
 
 	if err != nil {
+		fmt.Printf("failed on registry rotation: %v\n", err)
+
 		return err
 	}
 
 	err = rotateHelmRepoModel(db, oldKey, newKey)
 
 	if err != nil {
+		fmt.Printf("failed on hr rotation: %v\n", err)
+
 		return err
 	}
 
 	err = rotateInfraModel(db, oldKey, newKey)
 
 	if err != nil {
+		fmt.Printf("failed on infra rotation: %v\n", err)
+
 		return err
 	}
 
 	err = rotateKubeIntegrationModel(db, oldKey, newKey)
 
 	if err != nil {
+		fmt.Printf("failed on ki rotation: %v\n", err)
+
 		return err
 	}
 
 	err = rotateBasicIntegrationModel(db, oldKey, newKey)
 
 	if err != nil {
+		fmt.Printf("failed on basic rotation: %v\n", err)
+
 		return err
 	}
 
 	err = rotateOIDCIntegrationModel(db, oldKey, newKey)
 
 	if err != nil {
+		fmt.Printf("failed on oidc rotation: %v\n", err)
+
 		return err
 	}
 
 	err = rotateOAuthIntegrationModel(db, oldKey, newKey)
 
 	if err != nil {
+		fmt.Printf("failed on oauth rotation: %v\n", err)
+
 		return err
 	}
 
 	err = rotateGCPIntegrationModel(db, oldKey, newKey)
 
 	if err != nil {
+		fmt.Printf("failed on gcp rotation: %v\n", err)
+
 		return err
 	}
 
 	err = rotateAWSIntegrationModel(db, oldKey, newKey)
 
 	if err != nil {
+		fmt.Printf("failed on aws rotation: %v\n", err)
+
 		return err
 	}
 

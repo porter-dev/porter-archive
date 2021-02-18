@@ -13,6 +13,7 @@ type Repository struct {
 	Infra            InfraRepository
 	GitActionConfig  GitActionConfigRepository
 	Invite           InviteRepository
+	AuthCode         AuthCodeRepository
 	KubeIntegration  KubeIntegrationRepository
 	BasicIntegration BasicIntegrationRepository
 	OIDCIntegration  OIDCIntegrationRepository

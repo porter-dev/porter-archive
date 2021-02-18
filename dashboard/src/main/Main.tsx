@@ -10,7 +10,7 @@ import Register from "./Register";
 import CurrentError from "./CurrentError";
 import Home from "./home/Home";
 import Loading from "components/Loading";
-import { PorterUrls } from "shared/routing";
+import { PorterUrl, PorterUrls } from "shared/routing";
 
 type PropsType = {};
 
@@ -71,15 +71,6 @@ export default class Main extends Component<PropsType, StateType> {
       return <Loading />;
     }
 
-    const authedUrls: PorterUrls[] = [
-      "dashboard",
-      "templates",
-      "integrations",
-      "new-project",
-      "cluster-dashboard",
-      "project-settings",
-    ];
-
     return (
       <Switch>
         <Route
@@ -116,7 +107,7 @@ export default class Main extends Component<PropsType, StateType> {
                   key="home"
                   currentProject={this.context.currentProject}
                   currentCluster={this.context.currentCluster}
-                  currentRoute={urlRoute as PorterUrls}
+                  currentRoute={urlRoute as PorterUrl}
                   logOut={this.handleLogOut}
                 />
               );

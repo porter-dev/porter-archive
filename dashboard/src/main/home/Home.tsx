@@ -1,35 +1,35 @@
 import React, { Component } from "react";
+import { RouteComponentProps, withRouter } from "react-router";
 import posthog from "posthog-js";
 import styled from "styled-components";
+import * as FullStory from "@fullstory/browser";
 
-import { Context } from "shared/Context";
 import api from "shared/api";
+import { Context } from "shared/Context";
+import { PorterUrl } from "shared/routing";
 import { ClusterType, ProjectType } from "shared/types";
 
-import Sidebar from "./sidebar/Sidebar";
-import Dashboard from "./dashboard/Dashboard";
-import ClusterDashboard from "./cluster-dashboard/ClusterDashboard";
-import Loading from "components/Loading";
-import Templates from "./templates/Templates";
-import Integrations from "./integrations/Integrations";
-import UpdateClusterModal from "./modals/UpdateClusterModal";
-import ClusterInstructionsModal from "./modals/ClusterInstructionsModal";
-import IntegrationsModal from "./modals/IntegrationsModal";
-import IntegrationsInstructionsModal from "./modals/IntegrationsInstructionsModal";
-import NewProject from "./new-project/NewProject";
-import Navbar from "./navbar/Navbar";
-import ProjectSettings from "./project-settings/ProjectSettings";
 import ConfirmOverlay from "components/ConfirmOverlay";
+import Loading from "components/Loading";
+import ClusterDashboard from "./cluster-dashboard/ClusterDashboard";
+import Dashboard from "./dashboard/Dashboard";
+import Integrations from "./integrations/Integrations";
+import Templates from "./launch/Launch";
+import ClusterInstructionsModal from "./modals/ClusterInstructionsModal";
+import IntegrationsInstructionsModal from "./modals/IntegrationsInstructionsModal";
+import IntegrationsModal from "./modals/IntegrationsModal";
 import Modal from "./modals/Modal";
-import * as FullStory from "@fullstory/browser";
-import { Redirect, RouteComponentProps, withRouter } from "react-router";
-import { PorterUrls } from "shared/routing";
+import UpdateClusterModal from "./modals/UpdateClusterModal";
+import Navbar from "./navbar/Navbar";
+import NewProject from "./new-project/NewProject";
+import ProjectSettings from "./project-settings/ProjectSettings";
+import Sidebar from "./sidebar/Sidebar";
 
 type PropsType = RouteComponentProps & {
   logOut: () => void;
   currentProject: ProjectType;
   currentCluster: ClusterType;
-  currentRoute: PorterUrls;
+  currentRoute: PorterUrl;
 };
 
 type StateType = {
@@ -128,18 +128,18 @@ class Home extends Component<PropsType, StateType> {
   provisionDOCR = (integrationId: number, tier: string, callback?: any) => {
     console.log("Provisioning DOCR...");
     return api
-    .createDOCR(
-      "<token>",
-      {
-        do_integration_id: integrationId,
-        docr_name: this.props.currentProject.name,
-        docr_subscription_tier: tier,
-      },
-      {
-        project_id: this.props.currentProject.id,
-      }
-    )
-    .then(() => callback()); 
+      .createDOCR(
+        "<token>",
+        {
+          do_integration_id: integrationId,
+          docr_name: this.props.currentProject.name,
+          docr_subscription_tier: tier,
+        },
+        {
+          project_id: this.props.currentProject.id,
+        }
+      )
+      .then(() => callback());
   };
 
   provisionDOKS = (integrationId: number, region: string) => {

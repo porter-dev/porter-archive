@@ -11,7 +11,10 @@ import Loading from "components/Loading";
 
 import hardcodedNames from "./hardcodedNameDict";
 
-const tabOptions = [{ label: "Community Templates", value: "community" }];
+const tabOptions = [
+  { label: "Launch service", value: "docker" },
+  { label: "Community Templates", value: "community" },
+];
 
 type PropsType = {};
 
@@ -26,7 +29,7 @@ type StateType = {
 export default class Templates extends Component<PropsType, StateType> {
   state = {
     currentTemplate: null as PorterTemplate | null,
-    currentTab: "community",
+    currentTab: "docker",
     porterTemplates: [] as PorterTemplate[],
     loading: true,
     error: false,
@@ -41,7 +44,11 @@ export default class Templates extends Component<PropsType, StateType> {
           this.state.porterTemplates.sort((a, b) =>
             a.name === "docker" ? -1 : b.name === "docker" ? 1 : 0
           );
-          this.setState({ loading: false });
+          // TODO: properly find "docker" template instead of relying on first
+          this.setState({
+            loading: false,
+            currentTemplate: this.state.porterTemplates[0],
+          });
         });
       })
       .catch(() => this.setState({ loading: false, error: true }));
@@ -82,8 +89,9 @@ export default class Templates extends Component<PropsType, StateType> {
       );
     }
 
-    return this.state.porterTemplates.map(
-      (template: PorterTemplate, i: number) => {
+    return this.state.porterTemplates
+      .filter((t) => t.name.toLowerCase() !== "docker")
+      .map((template: PorterTemplate, i: number) => {
         let { name, icon, description } = template;
         if (hardcodedNames[name]) {
           name = hardcodedNames[name];
@@ -98,11 +106,25 @@ export default class Templates extends Component<PropsType, StateType> {
             <TemplateDescription>{description}</TemplateDescription>
           </TemplateBlock>
         );
-      }
-    );
+      });
   };
 
-  renderContents = () => {
+  renderDefaultTemplate = () => {
+    if (this.state.currentTemplate) {
+      return (
+        <ExpandedTemplate
+          currentTemplate={this.state.porterTemplates[0]}
+          setCurrentTemplate={(currentTemplate: PorterTemplate) =>
+            this.setState({ currentTemplate })
+          }
+          skipDescription={true}
+        />
+      );
+    }
+    return null;
+  };
+
+  renderCommunityTemplates = () => {
     if (this.state.currentTemplate) {
       return (
         <ExpandedTemplate
@@ -113,11 +135,14 @@ export default class Templates extends Component<PropsType, StateType> {
         />
       );
     }
+    return <TemplateList>{this.renderTemplateList()}</TemplateList>;
+  };
 
+  render() {
     return (
       <TemplatesWrapper>
         <TitleSection>
-          <Title>Template Explorer</Title>
+          <Title>Launch</Title>
           <a
             href="https://docs.getporter.dev/docs/porter-templates"
             target="_blank"
@@ -129,16 +154,18 @@ export default class Templates extends Component<PropsType, StateType> {
           options={tabOptions}
           currentTab={this.state.currentTab}
           setCurrentTab={(value: string) =>
-            this.setState({ currentTab: value })
+            this.setState({
+              currentTab: value,
+              currentTemplate:
+                value === "docker" ? this.state.porterTemplates[0] : null,
+            })
           }
         />
-        <TemplateList>{this.renderTemplateList()}</TemplateList>
+        {this.state.currentTab === "docker"
+          ? this.renderDefaultTemplate()
+          : this.renderCommunityTemplates()}
       </TemplatesWrapper>
     );
-  };
-
-  render() {
-    return this.renderContents();
   }
 }
 

@@ -23,20 +23,25 @@ class ProjectSection extends Component<PropsType, StateType> {
   wrapperRef: any = React.createRef();
 
   componentDidMount() {
-    document.addEventListener('mousedown', this.handleClickOutside.bind(this));
+    document.addEventListener("mousedown", this.handleClickOutside.bind(this));
   }
 
   componentWillUnmount() {
-    document.removeEventListener('mousedown', this.handleClickOutside.bind(this));
+    document.removeEventListener(
+      "mousedown",
+      this.handleClickOutside.bind(this)
+    );
   }
 
   handleClickOutside = (e: any) => {
     if (
-      this.wrapperRef && this.wrapperRef.current && !this.wrapperRef.current.contains(e.target)
+      this.wrapperRef &&
+      this.wrapperRef.current &&
+      !this.wrapperRef.current.contains(e.target)
     ) {
       this.setState({ expanded: false });
     }
-  }
+  };
 
   renderOptionList = () => {
     let { setCurrentProject } = this.context;
@@ -46,7 +51,11 @@ class ProjectSection extends Component<PropsType, StateType> {
         <Option
           key={i}
           selected={project.name === this.props.currentProject.name}
-          onClick={() => {this.setState({ expanded: false }); setCurrentProject(project)}}
+          onClick={() => {
+            this.setState({ expanded: false });
+            setCurrentProject(project);
+            this.props.history.push("dashboard");
+          }}
         >
           <ProjectIcon>
             <ProjectImage src={gradient} />
@@ -67,7 +76,9 @@ class ProjectSection extends Component<PropsType, StateType> {
             <Option
               selected={false}
               lastItem={true}
-              onClick={() => { this.props.history.push('new-project') }}
+              onClick={() => {
+                this.props.history.push("new-project");
+              }}
             >
               <ProjectIconAlt>+</ProjectIconAlt>
               <ProjectLabel>Create a Project</ProjectLabel>
@@ -86,9 +97,7 @@ class ProjectSection extends Component<PropsType, StateType> {
     let { currentProject } = this.props;
     if (currentProject) {
       return (
-        <StyledProjectSection
-          ref={this.wrapperRef}
-        >
+        <StyledProjectSection ref={this.wrapperRef}>
           <MainSelector
             onClick={this.handleExpand}
             expanded={this.state.expanded}

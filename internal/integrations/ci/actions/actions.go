@@ -79,31 +79,31 @@ func (g *GithubActions) Setup() (string, error) {
 }
 
 type GithubActionYAMLStep struct {
-	Name string `yaml:"name"`
-	ID   string `yaml:"id"`
-	Uses string `yaml:"uses"`
-	Run  string `yaml:"run"`
+	Name string `yaml:"name,omitempty"`
+	ID   string `yaml:"id,omitempty"`
+	Uses string `yaml:"uses,omitempty"`
+	Run  string `yaml:"run,omitempty"`
 }
 
 type GithubActionYAMLOnPushBranches struct {
-	Branches []string `yaml:"branches"`
+	Branches []string `yaml:"branches,omitempty"`
 }
 
 type GithubActionYAMLOnPush struct {
-	Push GithubActionYAMLOnPushBranches `yaml:"push"`
+	Push GithubActionYAMLOnPushBranches `yaml:"push,omitempty"`
 }
 
 type GithubActionYAMLJob struct {
-	RunsOn string                 `yaml:"runs-on"`
-	Steps  []GithubActionYAMLStep `yaml:"steps"`
+	RunsOn string                 `yaml:"runs-on,omitempty"`
+	Steps  []GithubActionYAMLStep `yaml:"steps,omitempty"`
 }
 
 type GithubActionYAML struct {
-	On GithubActionYAMLOnPush `yaml:"on"`
+	On GithubActionYAMLOnPush `yaml:"on,omitempty"`
 
-	Name string `yaml:"name"`
+	Name string `yaml:"name,omitempty"`
 
-	Jobs map[string]GithubActionYAMLJob `yaml:"jobs"`
+	Jobs map[string]GithubActionYAMLJob `yaml:"jobs,omitempty"`
 }
 
 func (g *GithubActions) GetGithubActionYAML() ([]byte, error) {

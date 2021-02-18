@@ -20,15 +20,9 @@ type PropsType = {
   setMetaState?: any;
 };
 
-type StateType = {
-  dummyValues: string[];
-};
+type StateType = any;
 
 export default class ValuesForm extends Component<PropsType, StateType> {
-  state = {
-    dummyValues: ["Rocky Road", "Chocolate", "Vanilla", "Mint Chocolate Chip", "Macha"]
-  }
-  
   getInputValue = (item: FormElement) => {
     let key = item.name || item.variable;
     let value = this.props.metaState[key];
@@ -219,11 +213,6 @@ export default class ValuesForm extends Component<PropsType, StateType> {
       <StyledValuesForm>
         <DarkMatter />
         {this.renderFormContents()}
-        <InputArray 
-          label="Ice Cream Flavors" 
-          values={this.state.dummyValues}
-          setValues={(x: string[]) => this.setState({ dummyValues: x })}
-        />
       </StyledValuesForm>
     );
   }

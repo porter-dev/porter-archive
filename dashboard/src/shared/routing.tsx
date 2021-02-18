@@ -1,8 +1,16 @@
 import { Location } from "history";
 
+export type PorterUrl =
+  | "dashboard"
+  | "launch"
+  | "integrations"
+  | "new-project"
+  | "cluster-dashboard"
+  | "project-settings";
+
 export const PorterUrls = [
   "dashboard",
-  "templates",
+  "launch",
   "integrations",
   "new-project",
   "cluster-dashboard",
@@ -21,5 +29,3 @@ export const setSearchParam = (
     search: urlParams.toString(),
   };
 };
-
-export type PorterUrls = typeof PorterUrls[number];

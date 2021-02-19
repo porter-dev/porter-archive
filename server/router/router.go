@@ -1028,6 +1028,20 @@ func New(a *api.App) *chi.Mux {
 
 		r.Method(
 			"GET",
+			"/projects/{project_id}/k8s/metrics",
+			auth.DoesUserHaveProjectAccess(
+				auth.DoesUserHaveClusterAccess(
+					requestlog.NewHandler(a.HandleGetPodMetrics, l),
+					mw.URLParam,
+					mw.QueryParam,
+				),
+				mw.URLParam,
+				mw.ReadAccess,
+			),
+		)
+
+		r.Method(
+			"GET",
 			"/projects/{project_id}/k8s/{namespace}/pod/{name}/logs",
 			auth.DoesUserHaveProjectAccess(
 				auth.DoesUserHaveClusterAccess(

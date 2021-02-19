@@ -2,6 +2,7 @@ package api
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/url"
 
@@ -9,6 +10,7 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/porter-dev/porter/internal/forms"
 	"github.com/porter-dev/porter/internal/kubernetes"
+	"github.com/porter-dev/porter/internal/kubernetes/prometheus"
 	v1 "k8s.io/api/core/v1"
 )
 
@@ -320,4 +322,69 @@ func (app *App) HandleStreamControllerStatus(w http.ResponseWriter, r *http.Requ
 		app.handleErrorWebsocketWrite(err, w)
 		return
 	}
+}
+
+func (app *App) HandleGetPodMetrics(w http.ResponseWriter, r *http.Request) {
+	vals, err := url.ParseQuery(r.URL.RawQuery)
+
+	if err != nil {
+		app.handleErrorFormDecoding(err, ErrReleaseDecode, w)
+		return
+	}
+
+	// get the filter options
+	form := &forms.MetricsQueryForm{
+		K8sForm: &forms.K8sForm{
+			OutOfClusterConfig: &kubernetes.OutOfClusterConfig{
+				Repo:              app.Repo,
+				DigitalOceanOAuth: app.DOConf,
+			},
+		},
+		QueryOpts: &prometheus.QueryOpts{},
+	}
+
+	form.K8sForm.PopulateK8sOptionsFromQueryParams(vals, app.Repo.Cluster)
+
+	// decode from JSON to form value
+	if err := json.NewDecoder(r.Body).Decode(form.QueryOpts); err != nil {
+		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
+		return
+	}
+
+	// validate the form
+	if err := app.validator.Struct(form); err != nil {
+		app.handleErrorFormValidation(err, ErrK8sValidate, w)
+		return
+	}
+
+	// create a new agent
+	var agent *kubernetes.Agent
+
+	if app.ServerConf.IsTesting {
+		agent = app.TestAgents.K8sAgent
+	} else {
+		agent, err = kubernetes.GetAgentOutOfClusterConfig(form.OutOfClusterConfig)
+	}
+
+	// get prometheus service
+	promSvc, found, err := prometheus.GetPrometheusService(agent.Clientset)
+
+	if err != nil {
+		app.handleErrorFormValidation(err, ErrK8sValidate, w)
+		return
+	}
+
+	if !found {
+		app.handleErrorFormValidation(err, ErrK8sValidate, w)
+		return
+	}
+
+	rawQuery, err := prometheus.QueryPrometheus(agent.Clientset, promSvc, form.QueryOpts)
+
+	if err != nil {
+		app.handleErrorFormValidation(err, ErrK8sValidate, w)
+		return
+	}
+
+	fmt.Fprint(w, string(rawQuery))
 }

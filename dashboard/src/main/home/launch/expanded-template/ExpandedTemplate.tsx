@@ -131,5 +131,5 @@ const LoadingWrapper = styled.div`
 const StyledExpandedTemplate = styled.div`
   width: calc(90% - 150px);
   min-width: 300px;
-  padding-top: 10px;
+  padding-top: 30px;
 `;

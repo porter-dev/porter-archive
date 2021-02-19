@@ -44,7 +44,7 @@ export default class Templates extends Component<PropsType, StateType> {
           this.state.porterTemplates.sort((a, b) =>
             a.name === "docker" ? -1 : b.name === "docker" ? 1 : 0
           );
-          // TODO: properly find "docker" template instead of relying on first
+          // TODO: properly find "docker" template instead of relying on first entry
           this.setState({
             loading: false,
             currentTemplate: this.state.porterTemplates[0],

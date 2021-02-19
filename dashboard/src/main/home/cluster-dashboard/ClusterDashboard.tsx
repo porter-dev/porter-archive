@@ -109,8 +109,8 @@ class ClusterDashboard extends Component<PropsType, StateType> {
         <LineBreak />
 
         <ControlRow>
-          <Button onClick={() => this.props.history.push("templates")}>
-            <i className="material-icons">add</i> Deploy Template
+          <Button onClick={() => this.props.history.push("launch")}>
+            <i className="material-icons">add</i> Launch Template
           </Button>
           <SortFilterWrapper>
             <SortSelector

@@ -1,4 +1,4 @@
-package metrics
+package prometheus
 
 import (
 	"context"
@@ -12,7 +12,7 @@ import (
 )
 
 // returns the prometheus service name
-func GetPrometheusService(clientset *kubernetes.Clientset) (*v1.Service, bool, error) {
+func GetPrometheusService(clientset kubernetes.Interface) (*v1.Service, bool, error) {
 	services, err := clientset.CoreV1().Services("").List(context.TODO(), metav1.ListOptions{
 		LabelSelector: "app=prometheus,component=server,heritage=Helm",
 	})
@@ -39,7 +39,7 @@ type QueryOpts struct {
 }
 
 func QueryPrometheus(
-	clientset *kubernetes.Clientset,
+	clientset kubernetes.Interface,
 	service *v1.Service,
 	opts *QueryOpts,
 ) ([]byte, error) {

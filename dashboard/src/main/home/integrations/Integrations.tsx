@@ -128,7 +128,8 @@ export default class Integrations extends Component<PropsType, StateType> {
               return (
                 <Credential key={i}>
                   <i className="material-icons">admin_panel_settings</i>{" "}
-                  {item.name}
+                  {/* TODO: handle different types of items (ie. registry vs repo) */}
+                  {item.name || item.repo_entity}
                 </Credential>
               );
             })}

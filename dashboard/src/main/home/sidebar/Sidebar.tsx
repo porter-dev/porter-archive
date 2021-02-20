@@ -112,11 +112,11 @@ class Sidebar extends Component<PropsType, StateType> {
             Dashboard
           </NavButton>
           <NavButton
-            onClick={() => this.props.history.push("templates")}
-            selected={currentView === "templates"}
+            onClick={() => this.props.history.push("launch")}
+            selected={currentView === "launch"}
           >
             <Img src={filter} />
-            Templates
+            Launch
           </NavButton>
           <NavButton
             selected={currentView === "integrations"}

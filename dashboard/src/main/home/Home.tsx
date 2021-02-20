@@ -125,38 +125,40 @@ class Home extends Component<PropsType, StateType> {
       .catch(console.log);
   };
 
-  provisionDOCR = (integrationId: number, tier: string, callback?: any) => {
+  provisionDOCR = async (
+    integrationId: number,
+    tier: string,
+    callback?: any
+  ) => {
     console.log("Provisioning DOCR...");
-    return api
-      .createDOCR(
-        "<token>",
-        {
-          do_integration_id: integrationId,
-          docr_name: this.props.currentProject.name,
-          docr_subscription_tier: tier,
-        },
-        {
-          project_id: this.props.currentProject.id,
-        }
-      )
-      .then(() => callback());
+    await api.createDOCR(
+      "<token>",
+      {
+        do_integration_id: integrationId,
+        docr_name: this.props.currentProject.name,
+        docr_subscription_tier: tier,
+      },
+      {
+        project_id: this.props.currentProject.id,
+      }
+    );
+    return callback();
   };
 
-  provisionDOKS = (integrationId: number, region: string) => {
+  provisionDOKS = async (integrationId: number, region: string) => {
     console.log("Provisioning DOKS...");
-    return api
-      .createDOKS(
-        "<token>",
-        {
-          do_integration_id: integrationId,
-          doks_name: this.props.currentProject.name,
-          do_region: region,
-        },
-        {
-          project_id: this.props.currentProject.id,
-        }
-      )
-      .then(() => this.props.history.push("dashboard?tab=provisioner"));
+    await api.createDOKS(
+      "<token>",
+      {
+        do_integration_id: integrationId,
+        doks_name: this.props.currentProject.name,
+        do_region: region,
+      },
+      {
+        project_id: this.props.currentProject.id,
+      }
+    );
+    return this.props.history.push("dashboard?tab=provisioner");
   };
 
   checkDO = () => {

@@ -27,6 +27,7 @@ type PropsType = {
   hideLaunch: () => void;
   values: any;
   form: any;
+  hideBackButton?: boolean;
 };
 
 type StateType = {
@@ -473,15 +474,14 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
 
     return (
       <StyledLaunchTemplate>
-        <TitleSection>
-          <Flex>
-            <i className="material-icons" onClick={this.props.hideLaunch}>
-              keyboard_backspace
-            </i>
-            <Title>Launch Template</Title>
-          </Flex>
-        </TitleSection>
         <ClusterSection>
+          {this.props.hideBackButton ? null : (
+            <Flex>
+              <i className="material-icons" onClick={this.props.hideLaunch}>
+                keyboard_backspace
+              </i>
+            </Flex>
+          )}
           <Template>
             {icon
               ? this.renderIcon(icon)

@@ -11,6 +11,7 @@ import Loading from "components/Loading";
 type PropsType = {
   currentTemplate: PorterTemplate;
   setCurrentTemplate: (x: PorterTemplate) => void;
+  skipDescription?: boolean;
 };
 
 type StateType = {
@@ -35,6 +36,10 @@ export default class ExpandedTemplate extends Component<PropsType, StateType> {
   };
 
   componentDidMount() {
+    this.fetchTemplateInfo();
+  }
+
+  fetchTemplateInfo = () => {
     this.setState({ loading: true });
     api
       .getTemplateInfo(
@@ -58,7 +63,13 @@ export default class ExpandedTemplate extends Component<PropsType, StateType> {
         });
       })
       .catch((err) => this.setState({ loading: false, error: true }));
-  }
+  };
+
+  componentDidUpdate = (prevProps: PropsType) => {
+    if (prevProps.currentTemplate !== this.props.currentTemplate) {
+      this.fetchTemplateInfo();
+    }
+  };
 
   renderContents = () => {
     if (this.state.loading) {
@@ -68,11 +79,12 @@ export default class ExpandedTemplate extends Component<PropsType, StateType> {
         </LoadingWrapper>
       );
     }
-    if (this.state.showLaunchTemplate) {
+    if (this.props.skipDescription || this.state.showLaunchTemplate) {
       return (
         <LaunchTemplate
           currentTemplate={this.props.currentTemplate}
           hideLaunch={() => this.setState({ showLaunchTemplate: false })}
+          hideBackButton={this.props.skipDescription}
           values={this.state.values}
           form={this.state.form}
         />
@@ -119,5 +131,5 @@ const LoadingWrapper = styled.div`
 const StyledExpandedTemplate = styled.div`
   width: calc(90% - 150px);
   min-width: 300px;
-  padding-top: 75px;
+  padding-top: 10px;
 `;

@@ -129,6 +129,8 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
         }
       )
       .then((_) => {
+        console.log("ST");
+        console.log(this.state.sourceType);
         if (this.state.sourceType === "repo") {
           this.createGHAction(name, this.state.selectedNamespace);
         }
@@ -220,20 +222,29 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
         this.setState({ saveValuesStatus: "successful" }, () => {
           // redirect to dashboard with namespace
         });
-        posthog.capture("Deployed template", {
-          name: this.props.currentTemplate.name,
-          namespace: this.state.selectedNamespace,
-          values: values,
-        });
+        try {
+          posthog.capture("Deployed template", {
+            name: this.props.currentTemplate.name,
+            namespace: this.state.selectedNamespace,
+            values: values,
+          });
+        } catch (error) {
+          console.log(error);
+        }
       })
       .catch((err) => {
         this.setState({ saveValuesStatus: "error" });
-        posthog.capture("Failed to deploy template", {
-          name: this.props.currentTemplate.name,
-          namespace: this.state.selectedNamespace,
-          values: values,
-          error: err,
-        });
+
+        try {
+          posthog.capture("Failed to deploy template", {
+            name: this.props.currentTemplate.name,
+            namespace: this.state.selectedNamespace,
+            values: values,
+            error: err,
+          });
+        } catch (error) {
+          console.log(error);
+        }
       });
   };
 
@@ -458,7 +469,7 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
         <TabRegion
           options={[
             { label: "Registry", value: "registry" },
-            { label: "Github", value: "github" },
+            { label: "Github", value: "repo" },
           ]}
           currentTab={this.state.sourceType}
           setCurrentTab={(x) => this.setState({ sourceType: x })}

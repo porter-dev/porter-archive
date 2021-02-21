@@ -120,12 +120,12 @@ class Sidebar extends Component<PropsType, StateType> {
           </NavButton>
           <NavButton
             selected={currentView === "integrations"}
-            onClick={() => {
-              this.props.history.push("integrations");
-            }}
             // onClick={() => {
-            //   setCurrentModal("IntegrationsInstructionsModal", {});
+            //   this.props.history.push("integrations");
             // }}
+            onClick={() => {
+              setCurrentModal("IntegrationsInstructionsModal", {});
+            }}
           >
             <Img src={integrations} />
             Integrations

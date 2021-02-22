@@ -223,8 +223,19 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
 
     // Convert dotted keys to nested objects
     let values = {};
+
     for (let key in rawValues) {
-      _.set(values, key, rawValues[key]);
+      if (key === "ingress.annotations") {
+        let annotations = {} as Record<string, any>;
+        rawValues[key].forEach((v: string) => {
+          let splits = v.split(":");
+          annotations[splits[0].trim()] = splits[1].trim();
+        });
+
+        _.set(values, key, annotations);
+      } else {
+        _.set(values, key, rawValues[key]);
+      }
     }
 
     // Weave in preexisting values and convert to yaml

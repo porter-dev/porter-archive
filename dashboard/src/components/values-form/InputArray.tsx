@@ -14,10 +14,18 @@ type StateType = {};
 
 export default class InputArray extends Component<PropsType, StateType> {
 
-  renderInputList = () => {
+  dict2arr = (dict: Record<string, any>) => {
+    let arr = [];
+    for (let key in dict) {
+      arr.push(`${key}: ${dict[key]}`)
+    }
+    return arr
+  }
+
+  renderInputList = (values: string[]) => {
     return (
       <>
-        {this.props.values.map((value: string, i: number) => {
+        {values.map((value: string, i: number) => {
           return (
             <InputWrapper>
               <Input
@@ -25,15 +33,15 @@ export default class InputArray extends Component<PropsType, StateType> {
                 width="270px"
                 value={value}
                 onChange={(e: any) => {
-                  let values = [...this.props.values];
-                  values[i] = e.target.value;
-                  this.props.setValues(values);
+                  let v = [...values];
+                  v[i] = e.target.value;
+                  this.props.setValues(v);
                 }}
               />
               <DeleteButton onClick={() => {
-                let values = [...this.props.values];
-                values.splice(i, 1);
-                this.props.setValues(values);
+                let v = [...values];
+                v.splice(i, 1);
+                this.props.setValues(v);
               }}>
                 <i className="material-icons">cancel</i>
               </DeleteButton>
@@ -45,18 +53,24 @@ export default class InputArray extends Component<PropsType, StateType> {
   }
 
   render() {
+    let { values } = this.props;
+
+    if (!Array.isArray(values)) {
+      values = this.dict2arr(values)
+    }
+
     return (
       <StyledInputArray>
         <Label>{this.props.label}</Label>
         {
-          this.props.values.length === 0
+          values.length === 0
           ? <></>
-          : this.renderInputList()
+          : this.renderInputList(values)
         }
         <AddRowButton onClick={() => {
-          let values = [...this.props.values];
-          values.push("");
-          this.props.setValues(values);
+          let v = [...values];
+          v.push("");
+          this.props.setValues(v);
         }}>
           <i className="material-icons">add</i> Add Row
         </AddRowButton>

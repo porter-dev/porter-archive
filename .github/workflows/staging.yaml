@@ -35,3 +35,10 @@ jobs:
     - name: Push
       run: |
         docker push gcr.io/porter-dev-273614/porter:staging
+    - name: Deploy to cluster
+      run: |
+        gcloud container clusters get-credentials \
+          staging --project ${{ secrets.GCP_PROJECT_ID }}
+          
+        kubectl rollout restart deployment/porter
+    

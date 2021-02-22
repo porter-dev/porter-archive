@@ -24,3 +24,10 @@ func (ca *CreateGitAction) ToGitActionConfig() (*models.GitActionConfig, error) 
 		GitRepoID:      ca.GitRepoID,
 	}, nil
 }
+
+type CreateGitActionOptional struct {
+	GitRepo        string `json:"git_repo"`
+	ImageRepoURI   string `json:"image_repo_uri"`
+	DockerfilePath string `json:"dockerfile_path"`
+	GitRepoID      uint   `json:"git_repo_id"`
+}

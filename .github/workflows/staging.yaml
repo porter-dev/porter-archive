@@ -41,7 +41,7 @@ jobs:
     - name: Deploy to cluster
       run: |
         gcloud container clusters get-credentials \
-          staging --project ${{ secrets.GCP_PROJECT_ID }}
+          staging --region us-central1 --project ${{ secrets.GCP_PROJECT_ID }}
           
         kubectl rollout restart deployment/porter
     

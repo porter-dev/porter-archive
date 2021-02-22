@@ -21,7 +21,7 @@ export default class InputArray extends Component<PropsType, StateType> {
           return (
             <InputWrapper>
               <Input
-                placeholder="ex: asdf"
+                placeholder=""
                 width="270px"
                 value={value}
                 onChange={(e: any) => {
@@ -50,7 +50,7 @@ export default class InputArray extends Component<PropsType, StateType> {
         <Label>{this.props.label}</Label>
         {
           this.props.values.length === 0
-          ? <h1>asdf</h1>
+          ? <></>
           : this.renderInputList()
         }
         <AddRowButton onClick={() => {

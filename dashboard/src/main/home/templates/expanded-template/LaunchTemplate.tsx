@@ -161,7 +161,17 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
     // Convert dotted keys to nested objects
     let values = {};
     for (let key in rawValues) {
-      _.set(values, key, rawValues[key]);
+      if (key === "ingress.annotations") {
+        let annotations = {} as Record<string, any>;
+        rawValues[key].forEach((v: string) => {
+          let splits = v.split(":");
+          annotations[splits[0].trim()] = splits[1].trim();
+        });
+
+        _.set(values, key, annotations);
+      } else {
+        _.set(values, key, rawValues[key]);
+      }
     }
 
     let imageUrl = this.state.selectedImageUrl;
@@ -180,8 +190,28 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
       tag = "latest";
     }
 
-    _.set(values, "image.repository", imageUrl);
-    _.set(values, "image.tag", tag);
+    let provider;
+    switch (currentCluster.service) {
+      case "eks":
+        provider = "aws";
+        break;
+      case "gke":
+        provider = "gcp";
+        break;
+      case "doks":
+        provider = "digitalocean";
+        break;
+      default:
+        provider = null;
+    }
+
+    // don't overwrite for templates that already have a source (i.e. non-Docker templates)
+    if (imageUrl && tag) {
+      _.set(values, "image.repository", imageUrl);
+      _.set(values, "image.tag", tag);
+    }
+
+    _.set(values, "ingress.provider", provider);
 
     console.log(`
       ${this.props.currentTemplate.name}\n
@@ -283,6 +313,7 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
         tabOptions.push({ value: tab.name, label: tab.label });
       }
     });
+    console.log(tabOptions);
     this.setState({ tabOptions, currentTab: tabOptions[0]["value"] });
 
     // TODO: query with selected filter once implemented

@@ -1,26 +1,21 @@
 import React, { ChangeEvent, Component } from "react";
-import Slider from '@material-ui/core/Slider';
+import Slider from "@material-ui/core/Slider";
 import styled from "styled-components";
 
-type PropsType = {
-};
+type PropsType = {};
 
-type StateType = {
-};
+type StateType = {};
 
 export default class RangeSelector extends Component<PropsType, StateType> {
-  state = {
-  };
+  state = {};
 
   render() {
     return (
       <StyledInputRow>
-        <Label>
-          asdfasdf
-        </Label>
+        <Label>asdfasdf</Label>
         <Slider
           value={12}
-          onChange={() => console.log('huh')}
+          onChange={() => console.log("huh")}
           valueLabelDisplay="auto"
           aria-labelledby="range-slider"
         />

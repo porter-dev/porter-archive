@@ -13,6 +13,9 @@ jobs:
         project_id: ${{ secrets.GCP_PROJECT_ID }}
         service_account_key: ${{ secrets.GCP_SA_KEY }}
         export_default_credentials: true
+    - name: Install kubectl
+      run: |
+        sudo apt-get install kubectl
     - name: Log in to gcloud CLI
       run: gcloud auth configure-docker
     - name: Checkout
@@ -35,3 +38,10 @@ jobs:
     - name: Push
       run: |
         docker push gcr.io/porter-dev-273614/porter:staging
+    - name: Deploy to cluster
+      run: |
+        gcloud container clusters get-credentials \
+          staging --region us-central1 --project ${{ secrets.GCP_PROJECT_ID }}
+          
+        kubectl rollout restart deployment/porter
+    

@@ -12,6 +12,7 @@ import Helper from "./Helper";
 import Heading from "./Heading";
 import ExpandableResource from "../ExpandableResource";
 import VeleroForm from "../forms/VeleroForm";
+import InputArray from './InputArray';
 
 type PropsType = {
   sections?: Section[];
@@ -71,16 +72,13 @@ export default class ValuesForm extends Component<PropsType, StateType> {
           );
         case "array-input":
           return (
-            <InputRow
+            <InputArray
               key={i}
-              isRequired={item.required}
-              type="text"
-              value={this.getInputValue(item)}
-              setValue={(x: string) => {
-                this.props.setMetaState({ [key]: [x] });
+              values={this.props.metaState[key]}
+              setValues={(x: string[]) => {
+                this.props.setMetaState({ [key]: x });
               }}
               label={item.label}
-              unit={item.settings ? item.settings.unit : null}
             />
           );
         case "string-input":

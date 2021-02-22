@@ -283,6 +283,7 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
         tabOptions.push({ value: tab.name, label: tab.label });
       }
     });
+    console.log(tabOptions)
     this.setState({ tabOptions, currentTab: tabOptions[0]["value"] });
 
     // TODO: query with selected filter once implemented

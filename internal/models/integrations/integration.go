@@ -6,6 +6,7 @@ type IntegrationService string
 // The list of supported third-party services
 const (
 	GKE      IntegrationService = "gke"
+	DOKS     IntegrationService = "doks"
 	GCS      IntegrationService = "gcs"
 	S3       IntegrationService = "s3"
 	HelmRepo IntegrationService = "helm"

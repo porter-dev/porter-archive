@@ -129,6 +129,8 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
         }
       )
       .then((_) => {
+        console.log("ST");
+        console.log(this.state.sourceType);
         if (this.state.sourceType === "repo") {
           this.createGHAction(name, this.state.selectedNamespace);
         }
@@ -220,20 +222,29 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
         this.setState({ saveValuesStatus: "successful" }, () => {
           // redirect to dashboard with namespace
         });
-        posthog.capture("Deployed template", {
-          name: this.props.currentTemplate.name,
-          namespace: this.state.selectedNamespace,
-          values: values,
-        });
+        try {
+          posthog.capture("Deployed template", {
+            name: this.props.currentTemplate.name,
+            namespace: this.state.selectedNamespace,
+            values: values,
+          });
+        } catch (error) {
+          console.log(error);
+        }
       })
       .catch((err) => {
         this.setState({ saveValuesStatus: "error" });
-        posthog.capture("Failed to deploy template", {
-          name: this.props.currentTemplate.name,
-          namespace: this.state.selectedNamespace,
-          values: values,
-          error: err,
-        });
+
+        try {
+          posthog.capture("Failed to deploy template", {
+            name: this.props.currentTemplate.name,
+            namespace: this.state.selectedNamespace,
+            values: values,
+            error: err,
+          });
+        } catch (error) {
+          console.log(error);
+        }
       });
   };
 
@@ -351,7 +362,7 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
     );
   };
 
-  renderTabRegion = () => {
+  renderSettingsRegion = () => {
     if (this.state.tabOptions.length > 0) {
       return (
         <>
@@ -392,7 +403,7 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
   };
 
   // Display if current template uses source (image or repo)
-  renderSourceSelector = () => {
+  renderSourceSelectorContent = () => {
     let { currentProject } = this.context;
 
     if (this.props.form?.hasSource) {
@@ -429,22 +440,6 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
               >
                 log in with GitHub
               </A>{" "}
-              or
-              <Highlight
-                onClick={() =>
-                  this.setState({
-                    sourceType: "registry",
-                    actionConfig: {
-                      git_repo: "",
-                      image_repo_uri: "",
-                      git_repo_id: 0,
-                      dockerfile_path: "",
-                    } as ActionConfigType,
-                  })
-                }
-              >
-                link an image registry
-              </Highlight>
               .<Required>*</Required>
             </Subtitle>
             <ActionConfEditor
@@ -466,6 +461,25 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
         );
       }
     }
+  };
+
+  renderSourceSelector = () => {
+    return (
+      <>
+        <TabRegion
+          options={[
+            { label: "Registry", value: "registry" },
+            { label: "Github", value: "repo" },
+          ]}
+          currentTab={this.state.sourceType}
+          setCurrentTab={(x) => this.setState({ sourceType: x })}
+        >
+          <StyledSourceBox>
+            {this.renderSourceSelectorContent()}
+          </StyledSourceBox>
+        </TabRegion>
+      </>
+    );
   };
 
   render() {
@@ -541,7 +555,7 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
           width="100%"
         />
         {this.renderSourceSelector()}
-        {this.renderTabRegion()}
+        {this.renderSettingsRegion()}
       </StyledLaunchTemplate>
     );
   }
@@ -654,7 +668,6 @@ const ClusterSection = styled.div`
   font-family: "Work Sans", sans-serif;
   font-size: 14px;
   font-weight: 500;
-  margin-top: 20px;
   margin-bottom: 15px;
 
   > i {
@@ -720,4 +733,17 @@ const A = styled.a`
   cursor: pointer;
   padding-right: ${(props: { padRight?: boolean }) =>
     props.padRight ? "5px" : ""};
+`;
+
+const StyledSourceBox = styled.div`
+  width: 100%;
+  height: 100%;
+  background: #ffffff11;
+  color: #ffffff;
+  padding: 10px 35px 25px;
+  position: relative;
+  border-radius: 5px;
+  font-size: 13px;
+  overflow: auto;
+  margin-bottom: 25px;
 `;

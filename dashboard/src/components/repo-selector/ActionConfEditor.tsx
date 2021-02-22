@@ -1,33 +1,33 @@
-import React, { Component } from 'react';
-import styled from 'styled-components';
+import React, { Component } from "react";
+import styled from "styled-components";
 
-import { ActionConfigType } from '../../shared/types';
-import { Context } from '../../shared/Context';
+import { ActionConfigType } from "../../shared/types";
+import { Context } from "../../shared/Context";
 
-import RepoList from './RepoList';
-import BranchList from './BranchList';
-import ContentsList from './ContentsList';
-import ActionDetails from './ActionDetails';
+import RepoList from "./RepoList";
+import BranchList from "./BranchList";
+import ContentsList from "./ContentsList";
+import ActionDetails from "./ActionDetails";
 
 type PropsType = {
-  actionConfig: ActionConfigType | null,
-  branch: string,
-  pathIsSet: boolean,
-  setActionConfig: (x: ActionConfigType) => void,
-  setBranch: (x: string) => void,
-  setPath: (x: boolean) => void,
+  actionConfig: ActionConfigType | null;
+  branch: string;
+  pathIsSet: boolean;
+  setActionConfig: (x: ActionConfigType) => void;
+  setBranch: (x: string) => void;
+  setPath: (x: boolean) => void;
 };
 
 type StateType = {
-  loading: boolean,
-  error: boolean,
+  loading: boolean;
+  error: boolean;
 };
 
 export default class ActionConfEditor extends Component<PropsType, StateType> {
   state = {
     loading: true,
     error: false,
-  }
+  };
 
   renderExpanded = () => {
     let {
@@ -77,15 +77,11 @@ export default class ActionConfEditor extends Component<PropsType, StateType> {
           setActionConfig={setActionConfig}
         />
       </ExpandedWrapperAlt>
-    )
-  }
+    );
+  };
 
   render() {
-    return (
-      <>
-        {this.renderExpanded()}
-      </>
-    );
+    return <>{this.renderExpanded()}</>;
   }
 }
 
@@ -100,5 +96,4 @@ const ExpandedWrapper = styled.div`
   overflow-y: auto;
 `;
 
-const ExpandedWrapperAlt = styled(ExpandedWrapper)`
-`;
+const ExpandedWrapperAlt = styled(ExpandedWrapper)``;

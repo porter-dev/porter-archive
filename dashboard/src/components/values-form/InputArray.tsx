@@ -1,7 +1,7 @@
 import React, { Component } from "react";
 import styled from "styled-components";
 
-import InputRow from './InputRow';
+import InputRow from "./InputRow";
 
 type PropsType = {
   label?: string;
@@ -13,14 +13,13 @@ type PropsType = {
 type StateType = {};
 
 export default class InputArray extends Component<PropsType, StateType> {
-
   dict2arr = (dict: Record<string, any>) => {
     let arr = [];
     for (let key in dict) {
-      arr.push(`${key}: ${dict[key]}`)
+      arr.push(`${key}: ${dict[key]}`);
     }
-    return arr
-  }
+    return arr;
+  };
 
   renderInputList = (values: string[]) => {
     return (
@@ -38,11 +37,13 @@ export default class InputArray extends Component<PropsType, StateType> {
                   this.props.setValues(v);
                 }}
               />
-              <DeleteButton onClick={() => {
-                let v = [...values];
-                v.splice(i, 1);
-                this.props.setValues(v);
-              }}>
+              <DeleteButton
+                onClick={() => {
+                  let v = [...values];
+                  v.splice(i, 1);
+                  this.props.setValues(v);
+                }}
+              >
                 <i className="material-icons">cancel</i>
               </DeleteButton>
             </InputWrapper>
@@ -50,28 +51,26 @@ export default class InputArray extends Component<PropsType, StateType> {
         })}
       </>
     );
-  }
+  };
 
   render() {
     let { values } = this.props;
 
     if (!Array.isArray(values)) {
-      values = this.dict2arr(values)
+      values = this.dict2arr(values);
     }
 
     return (
       <StyledInputArray>
         <Label>{this.props.label}</Label>
-        {
-          values.length === 0
-          ? <></>
-          : this.renderInputList(values)
-        }
-        <AddRowButton onClick={() => {
-          let v = [...values];
-          v.push("");
-          this.props.setValues(v);
-        }}>
+        {values.length === 0 ? <></> : this.renderInputList(values)}
+        <AddRowButton
+          onClick={() => {
+            let v = [...values];
+            v.push("");
+            this.props.setValues(v);
+          }}
+        >
           <i className="material-icons">add</i> Add Row
         </AddRowButton>
       </StyledInputArray>
@@ -113,7 +112,7 @@ const DeleteButton = styled.div`
   margin-left: 8px;
   margin-top: -3px;
   justify-content: center;
-  
+
   > i {
     font-size: 17px;
     color: #ffffff44;

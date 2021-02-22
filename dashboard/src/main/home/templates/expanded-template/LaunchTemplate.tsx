@@ -192,14 +192,14 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
 
     let provider;
     switch (currentCluster.service) {
-      case 'eks':
-        provider = 'aws';
+      case "eks":
+        provider = "aws";
         break;
-      case 'gke':
-        provider = 'gcp';
+      case "gke":
+        provider = "gcp";
         break;
-      case 'doks':
-        provider = 'digitalocean';
+      case "doks":
+        provider = "digitalocean";
         break;
       default:
         provider = null;
@@ -313,7 +313,7 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
         tabOptions.push({ value: tab.name, label: tab.label });
       }
     });
-    console.log(tabOptions)
+    console.log(tabOptions);
     this.setState({ tabOptions, currentTab: tabOptions[0]["value"] });
 
     // TODO: query with selected filter once implemented

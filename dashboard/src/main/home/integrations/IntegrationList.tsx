@@ -1,31 +1,31 @@
 import React, { Component } from "react";
 import styled from "styled-components";
 
-import { Context } from '../../../shared/Context';
-import { integrationList } from '../../../shared/common';
-import { ImageType, ActionConfigType } from '../../..//shared/types';
-import ImageList from '../../../components/image-selector/ImageList';
-import RepoList from '../../../components/repo-selector/RepoList';
+import { Context } from "../../../shared/Context";
+import { integrationList } from "../../../shared/common";
+import { ImageType, ActionConfigType } from "../../..//shared/types";
+import ImageList from "../../../components/image-selector/ImageList";
+import RepoList from "../../../components/repo-selector/RepoList";
 
 type PropsType = {
-  setCurrent: (x: any) => void,
-  currentCategory: string,
-  integrations: string[],
-  itemIdentifier?: any[],
-  titles?: string[],
-  isCategory?: boolean
+  setCurrent: (x: any) => void;
+  currentCategory: string;
+  integrations: string[];
+  itemIdentifier?: any[];
+  titles?: string[];
+  isCategory?: boolean;
 };
 
 type StateType = {
-  displayImages: boolean[],
-  allCollapsed: boolean,
+  displayImages: boolean[];
+  allCollapsed: boolean;
 };
 
 export default class IntegrationList extends Component<PropsType, StateType> {
   state = {
     displayImages: [] as boolean[],
     allCollapsed: false,
-  }
+  };
 
   componentDidMount() {
     let x: boolean[] = [];
@@ -54,7 +54,7 @@ export default class IntegrationList extends Component<PropsType, StateType> {
       x.push(false);
     }
     this.setState({ displayImages: x, allCollapsed: true });
-  }
+  };
 
   expandAll = () => {
     let x = [];
@@ -62,7 +62,7 @@ export default class IntegrationList extends Component<PropsType, StateType> {
       x.push(true);
     }
     this.setState({ displayImages: x, allCollapsed: false });
-  }
+  };
 
   toggleDisplay = (event: any, index: number) => {
     event.stopPropagation();
@@ -75,7 +75,7 @@ export default class IntegrationList extends Component<PropsType, StateType> {
       for (let i = 0; i < x.length; i++) {
         if (x[i]) {
           collapsed = false;
-          break
+          break;
         }
       }
       if (collapsed) {
@@ -85,14 +85,20 @@ export default class IntegrationList extends Component<PropsType, StateType> {
       }
     }
     this.setState({ displayImages: x });
-  }
+  };
 
   handleParent = (event: any, integration: string) => {
     this.props.setCurrent(integration);
-  }
+  };
 
   renderContents = () => {
-    let { integrations, titles, setCurrent, isCategory, currentCategory } = this.props;
+    let {
+      integrations,
+      titles,
+      setCurrent,
+      isCategory,
+      currentCategory,
+    } = this.props;
     if (titles && titles.length > 0) {
       return integrations.map((integration: string, i: number) => {
         let icon =
@@ -101,11 +107,7 @@ export default class IntegrationList extends Component<PropsType, StateType> {
           integrationList[integration] && integrationList[integration].label;
         let label = titles[i];
         return (
-          <Integration
-            key={i}
-            isCategory={isCategory}
-            disabled={false}
-          >
+          <Integration key={i} isCategory={isCategory} disabled={false}>
             <MainRow
               onClick={(e: any) => {
                 this.handleParent(e, integration);
@@ -120,10 +122,7 @@ export default class IntegrationList extends Component<PropsType, StateType> {
                   <Subtitle>{subtitle}</Subtitle>
                 </Description>
               </Flex>
-              <MaterialIconTray
-                isCategory={isCategory}
-                disabled={false}
-              >
+              <MaterialIconTray isCategory={isCategory} disabled={false}>
                 <i className="material-icons">more_vert</i>
                 <I
                   className="material-icons"
@@ -132,16 +131,13 @@ export default class IntegrationList extends Component<PropsType, StateType> {
                     this.toggleDisplay(e, i);
                   }}
                 >
-                  {isCategory ? 'launch' : 'expand_more'}
+                  {isCategory ? "launch" : "expand_more"}
                 </I>
               </MaterialIconTray>
             </MainRow>
-            {this.state.displayImages[i] &&
-              <ImageHodler
-                adjustMargin={currentCategory !== 'repo'}
-              >
-                {currentCategory !== 'repo'
-                  ?
+            {this.state.displayImages[i] && (
+              <ImageHodler adjustMargin={currentCategory !== "repo"}>
+                {currentCategory !== "repo" ? (
                   <ImageList
                     selectedImageUrl={null}
                     selectedTag={null}
@@ -151,29 +147,33 @@ export default class IntegrationList extends Component<PropsType, StateType> {
                     setSelectedTag={(x: string) => {}}
                     setClickedImage={(x: ImageType) => {}}
                   />
-                  :
+                ) : (
                   <RepoList
-                    actionConfig={{
-                      git_repo: '',
-                      image_repo_uri: '',
-                      git_repo_id: 0,
-                      dockerfile_path: '',
-                    } as ActionConfigType}
+                    actionConfig={
+                      {
+                        git_repo: "",
+                        image_repo_uri: "",
+                        git_repo_id: 0,
+                        dockerfile_path: "",
+                      } as ActionConfigType
+                    }
                     setActionConfig={(x: ActionConfigType) => {}}
                     readOnly={true}
                     userId={this.props.itemIdentifier[i]}
                   />
-                }
+                )}
               </ImageHodler>
-            }
+            )}
           </Integration>
         );
       });
     } else if (integrations && integrations.length > 0) {
       return integrations.map((integration: string, i: number) => {
-        let icon = integrationList[integration] && integrationList[integration].icon;
-        let label = integrationList[integration] && integrationList[integration].label;
-        let disabled = integration === 'kubernetes';
+        let icon =
+          integrationList[integration] && integrationList[integration].icon;
+        let label =
+          integrationList[integration] && integrationList[integration].label;
+        let disabled = integration === "kubernetes";
         return (
           <Integration
             key={i}
@@ -181,15 +181,14 @@ export default class IntegrationList extends Component<PropsType, StateType> {
             isCategory={isCategory}
             disabled={disabled}
           >
-            <MainRow
-              isCategory={isCategory}
-              disabled={disabled}
-            >
+            <MainRow isCategory={isCategory} disabled={disabled}>
               <Flex>
                 <Icon src={icon && icon} />
                 <Label>{label}</Label>
               </Flex>
-              <i className="material-icons">{isCategory ? 'launch' : 'more_vert'}</i>
+              <i className="material-icons">
+                {isCategory ? "launch" : "more_vert"}
+              </i>
             </MainRow>
           </Integration>
         );
@@ -199,26 +198,31 @@ export default class IntegrationList extends Component<PropsType, StateType> {
   };
 
   render() {
-    return ( 
+    return (
       <StyledIntegrationList>
-        {(this.props.titles && this.props.titles.length > 0) &&
+        {this.props.titles && this.props.titles.length > 0 && (
           <ControlRow>
             <Button
               onClick={() => {
                 if (this.state.allCollapsed) {
-                  this.expandAll()
+                  this.expandAll();
                 } else {
-                  this.collapseAll()
+                  this.collapseAll();
                 }
               }}
             >
-              {this.state.allCollapsed
-                ? <><i className="material-icons">expand_more</i> Expand All</>
-                : <><i className="material-icons">expand_less</i> Collapse All</>
-              }
+              {this.state.allCollapsed ? (
+                <>
+                  <i className="material-icons">expand_more</i> Expand All
+                </>
+              ) : (
+                <>
+                  <i className="material-icons">expand_less</i> Collapse All
+                </>
+              )}
             </Button>
           </ControlRow>
-        }
+        )}
         {this.renderContents()}
       </StyledIntegrationList>
     );
@@ -236,7 +240,8 @@ const Flex = styled.div`
 const ImageHodler = styled.div`
   width: 100%;
   padding: 12px;
-  margin-top: ${(props: {adjustMargin: boolean}) => props.adjustMargin ? '-10px' : '0px'};
+  margin-top: ${(props: { adjustMargin: boolean }) =>
+    props.adjustMargin ? "-10px" : "0px"};
 `;
 
 const MaterialIconTray = styled.div`
@@ -250,9 +255,11 @@ const MaterialIconTray = styled.div`
     border-radius: 20px;
     font-size: 18px;
     padding: 5px;
-    color: ${(props: { isCategory: boolean, disabled: boolean }) => props.isCategory ? '#616feecc' : '#ffffff44'};
+    color: ${(props: { isCategory: boolean; disabled: boolean }) =>
+      props.isCategory ? "#616feecc" : "#ffffff44"};
     :hover {
-      background: ${(props: { isCategory: boolean, disabled: boolean }) => props.disabled ? '' : '#ffffff11'};
+      background: ${(props: { isCategory: boolean; disabled: boolean }) =>
+        props.disabled ? "" : "#ffffff11"};
     }
   }
 `;
@@ -266,9 +273,11 @@ const MainRow = styled.div`
   padding: 25px;
   border-radius: 5px;
   :hover {
-    background: ${(props: { isCategory: boolean, disabled: boolean }) => props.disabled ? '' : '#ffffff11'};
+    background: ${(props: { isCategory: boolean; disabled: boolean }) =>
+      props.disabled ? "" : "#ffffff11"};
     > i {
-      background: ${(props: { isCategory: boolean, disabled: boolean }) => props.disabled ? '' : '#ffffff11' };
+      background: ${(props: { isCategory: boolean; disabled: boolean }) =>
+        props.disabled ? "" : "#ffffff11"};
     }
   }
 
@@ -280,7 +289,8 @@ const MainRow = styled.div`
       props.isCategory ? "#616feecc" : "#ffffff44"};
     margin-right: -7px;
     :hover {
-      background: ${(props: { isCategory: boolean, disabled: boolean }) => props.disabled ? '' : '#ffffff11'};
+      background: ${(props: { isCategory: boolean; disabled: boolean }) =>
+        props.disabled ? "" : "#ffffff11"};
     }
   }
 `;
@@ -290,7 +300,8 @@ const Integration = styled.div`
   display: flex;
   flex-direction: column;
   background: #26282f;
-  cursor: ${(props: { isCategory: boolean, disabled: boolean }) => props.disabled ? 'not-allowed' : 'pointer'};
+  cursor: ${(props: { isCategory: boolean; disabled: boolean }) =>
+    props.disabled ? "not-allowed" : "pointer"};
   margin-bottom: 15px;
   border-radius: 5px;
   box-shadow: 0 5px 8px 0px #00000033;
@@ -341,7 +352,8 @@ const StyledIntegrationList = styled.div`
 `;
 
 const I = styled.i`
-  transform: ${(props: { showList: boolean }) => props.showList ? 'rotate(180deg)' : ''};
+  transform: ${(props: { showList: boolean }) =>
+    props.showList ? "rotate(180deg)" : ""};
 `;
 
 const ControlRow = styled.div`
@@ -368,7 +380,7 @@ const Button = styled.div`
   justify-content: space-between;
   font-size: 13px;
   cursor: pointer;
-  font-family: 'Work Sans', sans-serif;
+  font-family: "Work Sans", sans-serif;
   border-radius: 8px;
   color: white;
   height: 35px;
@@ -381,11 +393,14 @@ const Button = styled.div`
   white-space: nowrap;
   text-overflow: ellipsis;
   box-shadow: 0 5px 8px 0px #00000010;
-  cursor: ${(props: { disabled?: boolean }) => props.disabled ? 'not-allowed' : 'pointer'};
+  cursor: ${(props: { disabled?: boolean }) =>
+    props.disabled ? "not-allowed" : "pointer"};
 
-  background: ${(props: { disabled?: boolean }) => props.disabled ? '#aaaabbee' : '#616FEEcc'};
+  background: ${(props: { disabled?: boolean }) =>
+    props.disabled ? "#aaaabbee" : "#616FEEcc"};
   :hover {
-    background: ${(props: { disabled?: boolean }) => props.disabled ? '' : '#505edddd'};
+    background: ${(props: { disabled?: boolean }) =>
+      props.disabled ? "" : "#505edddd"};
   }
 
   > i {

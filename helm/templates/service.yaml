@@ -1,15 +1,13 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ include "porter-prod.fullname" . }}
-  labels:
-    {{- include "porter-prod.labels" . | nindent 4 }}
+  name: { { include "porter-prod.fullname" . } }
+  labels: { { - include "porter-prod.labels" . | nindent 4 } }
 spec:
-  type: {{ .Values.service.type }}
+  type: { { .Values.service.type } }
   ports:
-    - port: {{ .Values.service.port }}
+    - port: { { .Values.service.port } }
       targetPort: http
       protocol: TCP
       name: http
-  selector:
-    {{- include "porter-prod.selectorLabels" . | nindent 4 }}
+  selector: { { - include "porter-prod.selectorLabels" . | nindent 4 } }

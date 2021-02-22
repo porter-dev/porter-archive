@@ -29,7 +29,7 @@ func getDownloadPorterStep() GithubActionYAMLStep {
 
 const configure string = `
 porter auth login --token ${{secrets.%s}}
-porter docker configure
+sudo porter docker configure
 `
 
 func getConfigurePorterStep(porterTokenSecretName string) GithubActionYAMLStep {

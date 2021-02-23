@@ -10,6 +10,7 @@ import ExpandedTemplate from "./expanded-template/ExpandedTemplate";
 import Loading from "components/Loading";
 
 import hardcodedNames from "./hardcodedNameDict";
+import { Link } from "react-router-dom";
 
 const tabOptions = [
   { label: "Launch service", value: "docker" },
@@ -44,7 +45,7 @@ export default class Templates extends Component<PropsType, StateType> {
           this.state.porterTemplates.sort((a, b) =>
             a.name === "docker" ? -1 : b.name === "docker" ? 1 : 0
           );
-          // TODO: properly find "docker" template instead of relying on first
+          // TODO: properly find "docker" template instead of relying on first entry
           this.setState({
             loading: false,
             currentTemplate: this.state.porterTemplates[0],
@@ -110,6 +111,25 @@ export default class Templates extends Component<PropsType, StateType> {
   };
 
   renderDefaultTemplate = () => {
+    if (!this.context.currentCluster) {
+      return (
+        <>
+          <Banner>
+            <i className="material-icons">error_outline</i>
+            <Link to="dashboard">Provision</Link> &nbsp;or&nbsp;
+            <Link
+              to="#"
+              onClick={() =>
+                this.context.setCurrentModal("ClusterInstructionsModal")
+              }
+            >
+              connect
+            </Link>
+            &nbsp;to a cluster
+          </Banner>
+        </>
+      );
+    }
     if (this.state.currentTemplate) {
       return (
         <ExpandedTemplate
@@ -183,6 +203,22 @@ const Placeholder = styled.div`
   > i {
     font-size: 18px;
     margin-right: 12px;
+  }
+`;
+
+const Banner = styled.div`
+  height: 40px;
+  width: 100%;
+  margin: 30px 0 30px;
+  font-size: 13px;
+  display: flex;
+  border-radius: 5px;
+  padding-left: 15px;
+  align-items: center;
+  background: #ffffff11;
+  > i {
+    margin-right: 10px;
+    font-size: 18px;
   }
 `;
 

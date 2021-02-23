@@ -59,6 +59,53 @@ func (c *Client) CreateECR(
 	return bodyResp, nil
 }
 
+// CreatePrivateRegistryRequest represents the accepted fields for creating
+// a private registry
+type CreatePrivateRegistryRequest struct {
+	Name               string `json:"name"`
+	URL                string `json:"url"`
+	BasicIntegrationID uint   `json:"basic_integration_id"`
+}
+
+// CreatePrivateRegistryResponse is the resulting registry after creation
+type CreatePrivateRegistryResponse models.RegistryExternal
+
+// CreatePrivateRegistry creates a private registry integration
+func (c *Client) CreatePrivateRegistry(
+	ctx context.Context,
+	projectID uint,
+	createPR *CreatePrivateRegistryRequest,
+) (*CreatePrivateRegistryResponse, error) {
+	data, err := json.Marshal(createPR)
+
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(
+		"POST",
+		fmt.Sprintf("%s/projects/%d/registries", c.BaseURL, projectID),
+		strings.NewReader(string(data)),
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	req = req.WithContext(ctx)
+	bodyResp := &CreatePrivateRegistryResponse{}
+
+	if httpErr, err := c.sendRequest(req, bodyResp, true); httpErr != nil || err != nil {
+		if httpErr != nil {
+			return nil, fmt.Errorf("code %d, errors %v", httpErr.Code, httpErr.Errors)
+		}
+
+		return nil, err
+	}
+
+	return bodyResp, nil
+}
+
 // CreateGCRRequest represents the accepted fields for creating
 // a GCR registry
 type CreateGCRRequest struct {

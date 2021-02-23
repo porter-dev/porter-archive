@@ -26,9 +26,10 @@ type Registry struct {
 	// All fields below this line are encrypted before storage
 	// ------------------------------------------------------------------
 
-	GCPIntegrationID uint
-	AWSIntegrationID uint
-	DOIntegrationID  uint
+	GCPIntegrationID   uint
+	AWSIntegrationID   uint
+	DOIntegrationID    uint
+	BasicIntegrationID uint
 
 	// A token cache that can be used by an auth mechanism (integration), if desired
 	TokenCache integrations.RegTokenCache

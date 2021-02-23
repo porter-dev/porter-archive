@@ -940,6 +940,20 @@ func New(a *api.App) *chi.Mux {
 		)
 
 		r.Method(
+			"DELETE",
+			"/projects/{project_id}/gitrepos/{git_repo_id}",
+			auth.DoesUserHaveProjectAccess(
+				auth.DoesUserHaveGitRepoAccess(
+					requestlog.NewHandler(a.HandleDeleteProjectGitRepo, l),
+					mw.URLParam,
+					mw.URLParam,
+				),
+				mw.URLParam,
+				mw.WriteAccess,
+			),
+		)
+
+		r.Method(
 			"GET",
 			"/projects/{project_id}/gitrepos/{git_repo_id}/repos",
 			auth.DoesUserHaveProjectAccess(

@@ -66,7 +66,7 @@ export default class ActionConfEditor extends Component<PropsType, StateType> {
             this.setState({ loading: false, error: false });
           }
         })
-        .catch((err) => this.setState({ loading: false, error: true }));
+        .catch((_) => this.setState({ loading: false, error: true }));
     } else {
       let grid = this.props.userId;
       api

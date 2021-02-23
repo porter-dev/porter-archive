@@ -54,7 +54,7 @@ func getDockerBuildPushStep(dockerFilePath, repoURL string) GithubActionYAMLStep
 }
 
 const deployPorter string = `
-curl -X POST 'https://dashboard.getporter.dev/api/webhooks/deploy/${{secrets.%s}}?commit=$(git rev-parse --short HEAD)&repository=%s'
+curl -X POST "https://dashboard.getporter.dev/api/webhooks/deploy/${{secrets.%s}}?commit=$(git rev-parse --short HEAD)&repository=%s"
 `
 
 func deployPorterWebhookStep(webhookTokenSecretName, repoURL string) GithubActionYAMLStep {

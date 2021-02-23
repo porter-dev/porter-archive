@@ -227,11 +227,15 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
     for (let key in rawValues) {
       if (key === "ingress.annotations") {
         let annotations = {} as Record<string, any>;
-        rawValues[key].forEach((v: string) => {
-          let splits = v.split(":");
-          annotations[splits[0].trim()] = splits[1].trim();
-        });
 
+        if (Array.isArray(rawValues[key])) {
+          rawValues[key].forEach((v: string) => {
+            let splits = v.split(":");
+            annotations[splits[0].trim()] = splits[1].trim();
+          });
+        }
+
+        annotations["porter"] = "true";
         _.set(values, key, annotations);
       } else {
         _.set(values, key, rawValues[key]);

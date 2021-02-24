@@ -2,6 +2,7 @@ package kubernetes
 
 import (
 	"errors"
+	"fmt"
 	"path/filepath"
 	"regexp"
 	"strings"
@@ -157,11 +158,13 @@ func (conf *OutOfClusterConfig) ToRESTMapper() (meta.RESTMapper, error) {
 // GetClientConfigFromCluster will construct new clientcmd.ClientConfig using
 // the configuration saved within a Cluster model
 func (conf *OutOfClusterConfig) GetClientConfigFromCluster() (clientcmd.ClientConfig, error) {
-	cluster := conf.Cluster
+	if conf.Cluster == nil {
+		return nil, fmt.Errorf("cluster cannot be nil")
+	}
 
-	if cluster.AuthMechanism == models.Local {
+	if conf.Cluster.AuthMechanism == models.Local {
 		kubeAuth, err := conf.Repo.KubeIntegration.ReadKubeIntegration(
-			cluster.KubeIntegrationID,
+			conf.Cluster.KubeIntegrationID,
 		)
 
 		if err != nil {

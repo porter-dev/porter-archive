@@ -100,7 +100,13 @@ type OutOfClusterConfig struct {
 // the result of ToRawKubeConfigLoader, and also adds a custom http transport layer
 // if necessary (required for GCP auth)
 func (conf *OutOfClusterConfig) ToRESTConfig() (*rest.Config, error) {
-	restConf, err := conf.ToRawKubeConfigLoader().ClientConfig()
+	cmdConf, err := conf.GetClientConfigFromCluster()
+
+	if err != nil {
+		return nil, err
+	}
+
+	restConf, err := cmdConf.ClientConfig()
 
 	if err != nil {
 		return nil, err

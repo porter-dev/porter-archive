@@ -5,6 +5,7 @@ import (
 	"crypto/cipher"
 	"crypto/rand"
 	"errors"
+	"fmt"
 	"io"
 )
 
@@ -48,6 +49,12 @@ func Encrypt(plaintext []byte, key *[32]byte) (ciphertext []byte, err error) {
 // the data and provides a check that it hasn't been altered. Expects input
 // form nonce|ciphertext|tag where '|' indicates concatenation.
 func Decrypt(ciphertext []byte, key *[32]byte) (plaintext []byte, err error) {
+	keyBytes := make([]byte, 32)
+
+	copy(keyBytes[:], key[:])
+
+	fmt.Printf("KEY IS", string(keyBytes))
+
 	block, err := aes.NewCipher(key[:])
 	if err != nil {
 		return nil, err

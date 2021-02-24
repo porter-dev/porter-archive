@@ -107,7 +107,18 @@ export default class ActionConfEditor extends Component<PropsType, StateType> {
     } else if (error || !repos) {
       return <LoadingWrapper>Error loading repos.</LoadingWrapper>;
     } else if (repos.length == 0) {
-      return <LoadingWrapper>No connected repos found.</LoadingWrapper>;
+      return (
+        <LoadingWrapper>
+          No connected Github repos found. You can
+          <A
+            padRight={true}
+            href={`/api/oauth/projects/${this.context.currentProject.id}/github?redirected=true`}
+          >
+            log in with GitHub
+          </A>{" "}
+          .
+        </LoadingWrapper>
+      );
     }
 
     return repos.map((repo: RepoType, i: number) => {
@@ -204,4 +215,13 @@ const ExpandedWrapperAlt = styled(ExpandedWrapper)`
   border: 1px solid #ffffff44;
   max-height: 275px;
   overflow-y: auto;
+`;
+
+const A = styled.a`
+  color: #8590ff;
+  text-decoration: underline;
+  margin-left: 5px;
+  cursor: pointer;
+  padding-right: ${(props: { padRight?: boolean }) =>
+    props.padRight ? "5px" : ""};
 `;

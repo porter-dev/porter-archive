@@ -351,10 +351,11 @@ func (repo *ClusterRepository) DecryptClusterData(
 	}
 
 	if tok := cluster.TokenCache.Token; len(tok) > 0 {
-
 		plaintext, err := repository.Decrypt(tok, key)
 
 		if err != nil {
+			fmt.Println("ERROR DECRYPTING TOKEN CACHE", string(plaintext), cluster.TokenCache.Token)
+
 			return err
 		}
 

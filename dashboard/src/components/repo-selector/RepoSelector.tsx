@@ -1,44 +1,41 @@
-import React, { Component } from 'react';
-import styled from 'styled-components';
-import github from 'assets/github.png';
-import info from 'assets/info.svg';
-import { RepoType, ChartType, ActionConfigType } from '../../shared/types';
-import { Context } from '../../shared/Context';
+import React, { Component } from "react";
+import styled from "styled-components";
+import github from "assets/github.png";
+import info from "assets/info.svg";
+import { RepoType, ChartType, ActionConfigType } from "shared/types";
+import { Context } from "shared/Context";
 
-import ButtonTray from './ButtonTray';
-import ActionConfEditor from './ActionConfEditor';
+import ButtonTray from "./ButtonTray";
+import ActionConfEditor from "./ActionConfEditor";
 
 type PropsType = {
-  chart: ChartType | null,
-  forceExpanded?: boolean,
-  actionConfig: ActionConfigType | null,
-  setActionConfig: (x: ActionConfigType) => void,
+  chart: ChartType | null;
+  forceExpanded?: boolean;
+  actionConfig: ActionConfigType | null;
+  setActionConfig: (x: ActionConfigType) => void;
+  resetActionConfig: () => void;
 };
 
 type StateType = {
-  isExpanded: boolean,
-  repos: RepoType[]
-  branch: string,
-  pathIsSet: boolean,
-  dockerfileSelected: boolean,
+  isExpanded: boolean;
+  repos: RepoType[];
+  branch: string;
+  pathIsSet: boolean;
+  dockerfileSelected: boolean;
 };
 
 export default class RepoSelector extends Component<PropsType, StateType> {
   state = {
     isExpanded: this.props.forceExpanded,
     repos: [] as RepoType[],
-    branch: '',
+    branch: "",
     pathIsSet: false,
     dockerfileSelected: false,
-  }
+  };
 
   renderExpanded = () => {
-    let {
-      actionConfig,
-      setActionConfig,
-      chart,
-    } = this.props;
-    
+    let { actionConfig, setActionConfig, chart } = this.props;
+
     return (
       <div>
         <ActionConfEditor
@@ -48,6 +45,14 @@ export default class RepoSelector extends Component<PropsType, StateType> {
           setActionConfig={setActionConfig}
           setBranch={(branch: string) => this.setState({ branch })}
           setPath={(pathIsSet: boolean) => this.setState({ pathIsSet })}
+          reset={() => {
+            this.setState({
+              branch: "",
+              pathIsSet: false,
+              dockerfileSelected: false,
+            });
+            this.props.resetActionConfig();
+          }}
         />
         <ButtonTray
           chartName={chart.name}
@@ -66,13 +71,16 @@ export default class RepoSelector extends Component<PropsType, StateType> {
   renderSelected = () => {
     let { actionConfig } = this.props;
     if (actionConfig.git_repo) {
-      let subdir = actionConfig.dockerfile_path === '' ? '' : '/' + actionConfig.dockerfile_path;
+      let subdir =
+        actionConfig.dockerfile_path === ""
+          ? ""
+          : "/" + actionConfig.dockerfile_path;
       return (
         <RepoLabel>
           <img src={github} />
           {actionConfig.git_repo + subdir}
           <SelectedBranch>
-            {!this.state.branch ? '(Select Branch)' : this.state.branch}
+            {!this.state.branch ? "(Select Branch)" : this.state.branch}
           </SelectedBranch>
         </RepoLabel>
       );
@@ -118,15 +126,6 @@ RepoSelector.contextType = Context;
 const SelectedBranch = styled.div`
   color: #ffffff55;
   margin-left: 10px;
-`;
-
-const ExpandedWrapper = styled.div`
-  margin-top: 10px;
-  width: 100%;
-  border-radius: 3px;
-  border: 1px solid #ffffff44;
-  max-height: 275px;
-  overflow-y: auto;
 `;
 
 const RepoLabel = styled.div`

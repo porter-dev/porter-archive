@@ -2,7 +2,6 @@ package gorm
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/repository"
@@ -120,6 +119,8 @@ func (repo *ClusterRepository) UpdateClusterCandidateCreatedClusterID(
 func (repo *ClusterRepository) CreateCluster(
 	cluster *models.Cluster,
 ) (*models.Cluster, error) {
+	ctxDB := repo.db.WithContext(context.Background())
+
 	err := repo.EncryptClusterData(cluster, repo.key)
 
 	if err != nil {
@@ -128,11 +129,11 @@ func (repo *ClusterRepository) CreateCluster(
 
 	project := &models.Project{}
 
-	if err := repo.db.Where("id = ?", cluster.ProjectID).First(&project).Error; err != nil {
+	if err := ctxDB.Where("id = ?", cluster.ProjectID).First(&project).Error; err != nil {
 		return nil, err
 	}
 
-	assoc := repo.db.Model(&project).Association("Clusters")
+	assoc := ctxDB.Model(&project).Association("Clusters")
 
 	if assoc.Error != nil {
 		return nil, assoc.Error
@@ -143,7 +144,7 @@ func (repo *ClusterRepository) CreateCluster(
 	}
 
 	// create a token cache by default
-	assoc = repo.db.Model(cluster).Association("TokenCache")
+	assoc = ctxDB.Model(cluster).Association("TokenCache")
 
 	if assoc.Error != nil {
 		return nil, assoc.Error
@@ -166,10 +167,12 @@ func (repo *ClusterRepository) CreateCluster(
 func (repo *ClusterRepository) ReadCluster(
 	id uint,
 ) (*models.Cluster, error) {
+	ctxDB := repo.db.WithContext(context.Background())
+
 	cluster := &models.Cluster{}
 
 	// preload Clusters association
-	if err := repo.db.Preload("TokenCache").Where("id = ?", id).First(&cluster).Error; err != nil {
+	if err := ctxDB.Preload("TokenCache").Where("id = ?", id).First(&cluster).Error; err != nil {
 		return nil, err
 	}
 
@@ -187,9 +190,11 @@ func (repo *ClusterRepository) ReadCluster(
 func (repo *ClusterRepository) ListClustersByProjectID(
 	projectID uint,
 ) ([]*models.Cluster, error) {
+	ctxDB := repo.db.WithContext(context.Background())
+
 	clusters := []*models.Cluster{}
 
-	if err := repo.db.Where("project_id = ?", projectID).Find(&clusters).Error; err != nil {
+	if err := ctxDB.Where("project_id = ?", projectID).Find(&clusters).Error; err != nil {
 		return nil, err
 	}
 
@@ -204,13 +209,15 @@ func (repo *ClusterRepository) ListClustersByProjectID(
 func (repo *ClusterRepository) UpdateCluster(
 	cluster *models.Cluster,
 ) (*models.Cluster, error) {
+	ctxDB := repo.db.WithContext(context.Background())
+
 	err := repo.EncryptClusterData(cluster, repo.key)
 
 	if err != nil {
 		return nil, err
 	}
 
-	if err := repo.db.Save(cluster).Error; err != nil {
+	if err := ctxDB.Save(cluster).Error; err != nil {
 		return nil, err
 	}
 
@@ -354,13 +361,9 @@ func (repo *ClusterRepository) DecryptClusterData(
 	if tok := cluster.TokenCache.Token; len(tok) > 0 {
 		plaintext, err := repository.Decrypt(tok, key)
 
-		fmt.Println("DECRYPTED TOKEN CACHE")
-
 		// in the case that the token cache is down, set empty token
 		if err != nil {
-			fmt.Println("ERROR DECRYPTING TOKEN CACHE", string(plaintext), cluster.TokenCache.Token)
 			cluster.TokenCache.Token = []byte{}
-			// return err
 		} else {
 			cluster.TokenCache.Token = plaintext
 		}

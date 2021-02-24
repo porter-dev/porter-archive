@@ -1,8 +1,6 @@
 package integrations
 
 import (
-	"fmt"
-
 	"gorm.io/gorm"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -164,11 +162,7 @@ func (a *AWSIntegration) GetBearerToken(
 		return "", err
 	}
 
-	err = setTokenCache(tok.Token, tok.Expiration)
-
-	if err != nil {
-		fmt.Println("ERROR SETTING AWS TOKEN CACHE", err)
-	}
+	setTokenCache(tok.Token, tok.Expiration)
 
 	return tok.Token, nil
 }

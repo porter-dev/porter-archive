@@ -1,6 +1,7 @@
 package gorm
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/porter-dev/porter/internal/models"
@@ -226,6 +227,8 @@ func (repo *ClusterRepository) UpdateCluster(
 func (repo *ClusterRepository) UpdateClusterTokenCache(
 	tokenCache *ints.ClusterTokenCache,
 ) (*models.Cluster, error) {
+	ctxDB := repo.db.WithContext(context.Background())
+
 	if tok := tokenCache.Token; len(tok) > 0 {
 		cipherData, err := repository.Encrypt(tok, repo.key)
 
@@ -238,14 +241,14 @@ func (repo *ClusterRepository) UpdateClusterTokenCache(
 
 	cluster := &models.Cluster{}
 
-	if err := repo.db.Where("id = ?", tokenCache.ClusterID).First(&cluster).Error; err != nil {
+	if err := ctxDB.Where("id = ?", tokenCache.ClusterID).First(&cluster).Error; err != nil {
 		return nil, err
 	}
 
 	cluster.TokenCache.Token = tokenCache.Token
 	cluster.TokenCache.Expiry = tokenCache.Expiry
 
-	if err := repo.db.Save(cluster).Error; err != nil {
+	if err := ctxDB.Save(cluster).Error; err != nil {
 		return nil, err
 	}
 

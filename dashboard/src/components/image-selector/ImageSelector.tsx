@@ -378,7 +378,7 @@ const Label = styled.div`
 
 const StyledImageSelector = styled.div`
   width: 100%;
-  margin-top: 22px;
+  margin-top: 10px;
   border: 1px solid #ffffff55;
   background: ${(props: { isExpanded: boolean; forceExpanded: boolean }) =>
     props.isExpanded ? "#ffffff11" : ""};

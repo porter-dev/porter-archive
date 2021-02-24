@@ -1,8 +1,6 @@
 package gorm
 
 import (
-	"fmt"
-
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/repository"
 	"gorm.io/gorm"
@@ -342,25 +340,23 @@ func (repo *ClusterRepository) DecryptClusterData(
 		plaintext, err := repository.Decrypt(cluster.CertificateAuthorityData, key)
 
 		if err != nil {
-			fmt.Println("ERROR DECRYPTING, DATA IS", string(plaintext), cluster.CertificateAuthorityData)
-
 			return err
 		}
 
 		cluster.CertificateAuthorityData = plaintext
 	}
 
-	if tok := cluster.TokenCache.Token; len(tok) > 0 {
-		plaintext, err := repository.Decrypt(tok, key)
+	// if tok := cluster.TokenCache.Token; len(tok) > 0 {
+	// 	plaintext, err := repository.Decrypt(tok, key)
 
-		if err != nil {
-			fmt.Println("ERROR DECRYPTING TOKEN CACHE", string(plaintext), cluster.TokenCache.Token)
+	// 	if err != nil {
+	// 		fmt.Println("ERROR DECRYPTING TOKEN CACHE", string(plaintext), cluster.TokenCache.Token)
 
-			return err
-		}
+	// 		return err
+	// 	}
 
-		cluster.TokenCache.Token = plaintext
-	}
+	// 	cluster.TokenCache.Token = plaintext
+	// }
 
 	return nil
 }

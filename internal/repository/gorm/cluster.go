@@ -1,6 +1,8 @@
 package gorm
 
 import (
+	"fmt"
+
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/repository"
 	"gorm.io/gorm"
@@ -340,6 +342,8 @@ func (repo *ClusterRepository) DecryptClusterData(
 		plaintext, err := repository.Decrypt(cluster.CertificateAuthorityData, key)
 
 		if err != nil {
+			fmt.Println("ERROR DECRYPTING, DATA IS", string(plaintext), cluster.CertificateAuthorityData)
+
 			return err
 		}
 

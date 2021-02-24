@@ -127,7 +127,12 @@ func (app *App) HandleGetRelease(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	k8sForm.PopulateK8sOptionsFromQueryParams(vals, app.Repo.Cluster)
+	err = k8sForm.PopulateK8sOptionsFromQueryParams(vals, app.Repo.Cluster)
+
+	if err != nil {
+		app.handleErrorInternal(err, w)
+		return
+	}
 
 	// validate the form
 	if err := app.validator.Struct(k8sForm); err != nil {
@@ -293,7 +298,12 @@ func (app *App) HandleGetReleaseControllers(w http.ResponseWriter, r *http.Reque
 		},
 	}
 
-	k8sForm.PopulateK8sOptionsFromQueryParams(vals, app.Repo.Cluster)
+	err = k8sForm.PopulateK8sOptionsFromQueryParams(vals, app.Repo.Cluster)
+
+	if err != nil {
+		app.handleErrorInternal(err, w)
+		return
+	}
 
 	// validate the form
 	if err := app.validator.Struct(k8sForm); err != nil {

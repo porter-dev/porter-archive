@@ -57,7 +57,7 @@ func Dockerhub(
 		context.Background(),
 		projectID,
 		&api.CreatePrivateRegistryRequest{
-			URL:                fmt.Sprintf("docker.io/%s", repoName),
+			URL:                fmt.Sprintf("index.docker.io/%s", repoName),
 			Name:               repoName,
 			BasicIntegrationID: integration.ID,
 		},

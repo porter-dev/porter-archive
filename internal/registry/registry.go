@@ -835,9 +835,15 @@ func (r *Registry) getPrivateRegistryDockerConfigFile(
 
 	parsedURL, _ := url.Parse(key)
 
+	authConfigKey := parsedURL.Host
+
+	if strings.Contains(r.URL, "index.docker.io") {
+		authConfigKey = "https://index.docker.io/v1/"
+	}
+
 	return &configfile.ConfigFile{
 		AuthConfigs: map[string]types.AuthConfig{
-			parsedURL.Host: types.AuthConfig{
+			authConfigKey: types.AuthConfig{
 				Username: string(basic.Username),
 				Password: string(basic.Password),
 				Auth:     generateAuthToken(string(basic.Username), string(basic.Password)),

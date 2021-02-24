@@ -337,6 +337,35 @@ func (c *Client) GetGCRAuthorizationToken(
 	return bodyResp, nil
 }
 
+// GetDockerhubAuthorizationToken gets a Docker Hub authorization token
+func (c *Client) GetDockerhubAuthorizationToken(
+	ctx context.Context,
+	projectID uint,
+) (*GetTokenResponse, error) {
+	req, err := http.NewRequest(
+		"GET",
+		fmt.Sprintf("%s/projects/%d/registries/dockerhub/token", c.BaseURL, projectID),
+		nil,
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	bodyResp := &GetTokenResponse{}
+	req = req.WithContext(ctx)
+
+	if httpErr, err := c.sendRequest(req, bodyResp, true); httpErr != nil || err != nil {
+		if httpErr != nil {
+			return nil, fmt.Errorf("code %d, errors %v", httpErr.Code, httpErr.Errors)
+		}
+
+		return nil, err
+	}
+
+	return bodyResp, nil
+}
+
 type GetDOCRTokenRequest struct {
 	ServerURL string `json:"server_url"`
 }

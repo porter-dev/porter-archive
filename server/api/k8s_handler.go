@@ -55,6 +55,11 @@ func (app *App) HandleListNamespaces(w http.ResponseWriter, r *http.Request) {
 		agent = app.TestAgents.K8sAgent
 	} else {
 		agent, err = kubernetes.GetAgentOutOfClusterConfig(form.OutOfClusterConfig)
+
+		if err != nil {
+			app.handleErrorInternal(err, w)
+			return
+		}
 	}
 
 	namespaces, err := agent.ListNamespaces()
@@ -116,6 +121,11 @@ func (app *App) HandleGetPodLogs(w http.ResponseWriter, r *http.Request) {
 		agent = app.TestAgents.K8sAgent
 	} else {
 		agent, err = kubernetes.GetAgentOutOfClusterConfig(form.OutOfClusterConfig)
+
+		if err != nil {
+			app.handleErrorInternal(err, w)
+			return
+		}
 	}
 
 	upgrader.CheckOrigin = func(r *http.Request) bool { return true }
@@ -180,6 +190,11 @@ func (app *App) HandleGetIngress(w http.ResponseWriter, r *http.Request) {
 		agent = app.TestAgents.K8sAgent
 	} else {
 		agent, err = kubernetes.GetAgentOutOfClusterConfig(form.OutOfClusterConfig)
+
+		if err != nil {
+			app.handleErrorInternal(err, w)
+			return
+		}
 	}
 
 	ingress, err := agent.GetIngress(namespace, name)
@@ -237,6 +252,11 @@ func (app *App) HandleListPods(w http.ResponseWriter, r *http.Request) {
 		agent = app.TestAgents.K8sAgent
 	} else {
 		agent, err = kubernetes.GetAgentOutOfClusterConfig(form.OutOfClusterConfig)
+
+		if err != nil {
+			app.handleErrorInternal(err, w)
+			return
+		}
 	}
 
 	pods := []v1.Pod{}
@@ -301,6 +321,11 @@ func (app *App) HandleStreamControllerStatus(w http.ResponseWriter, r *http.Requ
 		agent = app.TestAgents.K8sAgent
 	} else {
 		agent, err = kubernetes.GetAgentOutOfClusterConfig(form.OutOfClusterConfig)
+
+		if err != nil {
+			app.handleErrorInternal(err, w)
+			return
+		}
 	}
 
 	upgrader.CheckOrigin = func(r *http.Request) bool { return true }

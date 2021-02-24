@@ -1,6 +1,7 @@
 package forms
 
 import (
+	"fmt"
 	"net/url"
 	"strconv"
 
@@ -31,6 +32,8 @@ func (kf *K8sForm) PopulateK8sOptionsFromQueryParams(
 		if err != nil {
 			return err
 		}
+
+		fmt.Println("CLUSTER IS", cluster, cluster.ID)
 
 		kf.Cluster = cluster
 	}

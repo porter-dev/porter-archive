@@ -3,6 +3,7 @@ package integrations
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 
 	"golang.org/x/oauth2/google"
 	"gorm.io/gorm"
@@ -110,7 +111,11 @@ func (g *GCPIntegration) GetBearerToken(
 	}
 
 	// update the token cache
-	setTokenCache(tok.AccessToken, tok.Expiry)
+	err = setTokenCache(tok.AccessToken, tok.Expiry)
+
+	if err != nil {
+		fmt.Println("ERROR SETTING GCP TOKEN CACHE", err)
+	}
 
 	return tok.AccessToken, nil
 }

@@ -18,20 +18,23 @@ func Dockerhub(
 		return 0, fmt.Errorf("no project set, please run porter project set [id]")
 	}
 
-	// query for helm repo name
-	repoName, err := utils.PromptPlaintext(fmt.Sprintf(`Provide the image path: `))
+	// query for dockerhub name
+
+	repoName, err := utils.PromptPlaintext(fmt.Sprintf(`Provide the Docker Hub image path, in the form of ${org_name}/${repo_name}. For example, porter1/porter.
+Image path: `))
 
 	if err != nil {
 		return 0, err
 	}
 
-	username, err := utils.PromptPlaintext(fmt.Sprintf(`Username: `))
+	username, err := utils.PromptPlaintext(fmt.Sprintf(`Docker Hub username: `))
 
 	if err != nil {
 		return 0, err
 	}
 
-	password, err := utils.PromptPasswordWithConfirmation()
+	password, err := utils.PromptPassword(`Provide the Docker Hub personal access token.
+Token:`)
 
 	if err != nil {
 		return 0, err

@@ -1,6 +1,8 @@
 package models
 
 import (
+	"strings"
+
 	"github.com/porter-dev/porter/internal/models/integrations"
 	"gorm.io/gorm"
 )
@@ -65,6 +67,8 @@ func (r *Registry) Externalize() *RegistryExternal {
 		serv = integrations.GCR
 	} else if r.DOIntegrationID != 0 {
 		serv = integrations.DOCR
+	} else if strings.Contains(r.URL, "index.docker.io") {
+		serv = integrations.DockerHub
 	}
 
 	return &RegistryExternal{

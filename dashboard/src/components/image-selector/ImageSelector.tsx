@@ -174,32 +174,6 @@ export default class ImageSelector extends Component<PropsType, StateType> {
     }
   };
 
-  renderExpanded = () => {
-    let { selectedTag, selectedImageUrl, setSelectedTag } = this.props;
-    if (!this.state.clickedImage || this.props.noTagSelection) {
-      return (
-        <div>
-          <ExpandedWrapper>{this.renderImageList()}</ExpandedWrapper>
-          {this.renderBackButton()}
-        </div>
-      );
-    } else {
-      return (
-        <div>
-          <ExpandedWrapper>
-            <TagList
-              selectedTag={selectedTag}
-              selectedImageUrl={selectedImageUrl}
-              setSelectedTag={setSelectedTag}
-              registryId={this.state.clickedImage.registryId}
-            />
-          </ExpandedWrapper>
-          {this.renderBackButton()}
-        </div>
-      );
-    }
-  };
-
   renderSelected = () => {
     let { selectedImageUrl, setSelectedImageUrl } = this.props;
     let { clickedImage } = this.state;
@@ -258,6 +232,7 @@ export default class ImageSelector extends Component<PropsType, StateType> {
             selectedImageUrl={this.props.selectedImageUrl}
             selectedTag={this.props.selectedTag}
             clickedImage={this.state.clickedImage}
+            noTagSelection={this.props.noTagSelection}
             setSelectedImageUrl={this.props.setSelectedImageUrl}
             setSelectedTag={this.props.setSelectedTag}
             setClickedImage={(x: ImageType) =>

@@ -2,6 +2,7 @@ package kubernetes
 
 import (
 	"errors"
+	"fmt"
 	"path/filepath"
 	"regexp"
 	"strings"
@@ -99,7 +100,13 @@ type OutOfClusterConfig struct {
 // the result of ToRawKubeConfigLoader, and also adds a custom http transport layer
 // if necessary (required for GCP auth)
 func (conf *OutOfClusterConfig) ToRESTConfig() (*rest.Config, error) {
-	restConf, err := conf.ToRawKubeConfigLoader().ClientConfig()
+	cmdConf, err := conf.GetClientConfigFromCluster()
+
+	if err != nil {
+		return nil, err
+	}
+
+	restConf, err := cmdConf.ClientConfig()
 
 	if err != nil {
 		return nil, err
@@ -157,11 +164,13 @@ func (conf *OutOfClusterConfig) ToRESTMapper() (meta.RESTMapper, error) {
 // GetClientConfigFromCluster will construct new clientcmd.ClientConfig using
 // the configuration saved within a Cluster model
 func (conf *OutOfClusterConfig) GetClientConfigFromCluster() (clientcmd.ClientConfig, error) {
-	cluster := conf.Cluster
+	if conf.Cluster == nil {
+		return nil, fmt.Errorf("cluster cannot be nil")
+	}
 
-	if cluster.AuthMechanism == models.Local {
+	if conf.Cluster.AuthMechanism == models.Local {
 		kubeAuth, err := conf.Repo.KubeIntegration.ReadKubeIntegration(
-			cluster.KubeIntegrationID,
+			conf.Cluster.KubeIntegrationID,
 		)
 
 		if err != nil {

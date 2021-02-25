@@ -480,3 +480,22 @@ func (app *App) sendUser(w http.ResponseWriter, userID uint, email, redirect str
 	}
 	return nil
 }
+
+func (app *App) getUserIDFromRequest(r *http.Request) (uint, error) {
+	session, err := app.Store.Get(r, app.ServerConf.CookieName)
+
+	if err != nil {
+		return 0, err
+	}
+
+	// first, check for token
+	tok := app.getTokenFromRequest(r)
+
+	if tok != nil {
+		return tok.IBy, nil
+	}
+
+	userID, _ := session.Values["user_id"].(uint)
+
+	return userID, nil
+}

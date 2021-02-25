@@ -755,6 +755,16 @@ func New(a *api.App) *chi.Mux {
 
 		r.Method(
 			"GET",
+			"/projects/{project_id}/registries/dockerhub/token",
+			auth.DoesUserHaveProjectAccess(
+				requestlog.NewHandler(a.HandleGetProjectRegistryDockerhubToken, l),
+				mw.URLParam,
+				mw.WriteAccess,
+			),
+		)
+
+		r.Method(
+			"GET",
 			"/projects/{project_id}/registries/docr/token",
 			auth.DoesUserHaveProjectAccess(
 				requestlog.NewHandler(a.HandleGetProjectRegistryDOCRToken, l),

@@ -73,6 +73,9 @@ export default class ControllerTab extends Component<PropsType, StateType> {
         this.setState({ pods, raw: res.data, showTooltip });
 
         if (isFirst) {
+          let pod = res.data[0];
+          let status = this.getPodStatus(pod.status);
+          (status === "failed" && pod.status?.message) && this.props.setPodError(pod.status?.message);
           selectPod(res.data[0]);
         }
       })

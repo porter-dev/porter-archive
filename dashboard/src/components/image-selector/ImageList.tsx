@@ -14,6 +14,7 @@ type PropsType = {
   selectedTag: string | null;
   clickedImage: ImageType | null;
   registry?: any;
+  noTagSelection?: boolean;
   setSelectedImageUrl: (x: string) => void;
   setSelectedTag: (x: string) => void;
   setClickedImage: (x: ImageType) => void;
@@ -216,7 +217,8 @@ export default class ImageSelector extends Component<PropsType, StateType> {
 
   renderExpanded = () => {
     let { selectedTag, selectedImageUrl, setSelectedTag } = this.props;
-    if (!this.props.clickedImage) {
+
+    if (!this.props.clickedImage || this.props.noTagSelection) {
       return (
         <div>
           <ExpandedWrapper>{this.renderImageList()}</ExpandedWrapper>

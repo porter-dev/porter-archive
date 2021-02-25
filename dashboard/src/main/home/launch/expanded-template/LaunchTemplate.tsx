@@ -50,6 +50,13 @@ type StateType = {
   pathIsSet: boolean;
 };
 
+const defaultActionConfig: ActionConfigType = {
+  git_repo: "",
+  image_repo_uri: "",
+  git_repo_id: 0,
+  dockerfile_path: "",
+};
+
 export default class LaunchTemplate extends Component<PropsType, StateType> {
   state = {
     currentView: "repo",
@@ -66,12 +73,7 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
     currentTab: null as string | null,
     tabContents: [] as any,
     namespaceOptions: [] as { label: string; value: string }[],
-    actionConfig: {
-      git_repo: "",
-      image_repo_uri: "",
-      git_repo_id: 0,
-      dockerfile_path: "",
-    } as ActionConfigType,
+    actionConfig: { ...defaultActionConfig },
     branch: "",
     pathIsSet: false,
   };
@@ -214,7 +216,7 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
           version: "latest",
         }
       )
-      .then((res) => {
+      .then((_) => {
         if (this.state.sourceType === "repo") {
           this.createGHAction(name, this.state.selectedNamespace);
         }
@@ -404,8 +406,6 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
 
   // Display if current template uses source (image or repo)
   renderSourceSelectorContent = () => {
-    let { currentProject } = this.context;
-
     if (this.props.form?.hasSource) {
       if (this.state.sourceType === "registry") {
         return (
@@ -433,14 +433,8 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
         return (
           <>
             <Subtitle>
-              Select a repo to connect to. You can
-              <A
-                padRight={true}
-                href={`/api/oauth/projects/${currentProject.id}/github?redirected=true`}
-              >
-                log in with GitHub
-              </A>{" "}
-              .<Required>*</Required>
+              Select a repo to connect to, then a Dockerfile to build from.
+              <Required>*</Required>
             </Subtitle>
             <ActionConfEditor
               actionConfig={this.state.actionConfig}
@@ -455,6 +449,13 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
               }
               setBranch={(branch: string) => this.setState({ branch })}
               setPath={(pathIsSet: boolean) => this.setState({ pathIsSet })}
+              reset={() => {
+                this.setState({
+                  actionConfig: { ...defaultActionConfig },
+                  branch: "",
+                  pathIsSet: false,
+                });
+              }}
             />
             <br />
           </>
@@ -577,13 +578,6 @@ const Link = styled.a`
   margin-left: 5px;
 `;
 
-const LineBreak = styled.div`
-  width: calc(100% - 0px);
-  height: 2px;
-  background: #ffffff20;
-  margin: 35px 0px 35px;
-`;
-
 const Wrapper = styled.div`
   width: 100%;
   position: relative;
@@ -693,25 +687,6 @@ const Flex = styled.div`
   }
 `;
 
-const Title = styled.div`
-  font-size: 24px;
-  font-weight: 600;
-  font-family: "Work Sans", sans-serif;
-  margin-left: 11px;
-  border-radius: 2px;
-  color: #ffffff;
-`;
-
-const TitleSection = styled.div`
-  display: flex;
-  margin-left: -42px;
-  height: 40px;
-  flex-direction: row;
-  justify-content: space-between;
-  width: calc(100% + 42px);
-  align-items: center;
-`;
-
 const StyledLaunchTemplate = styled.div`
   width: 100%;
   padding-bottom: 150px;
@@ -726,13 +701,17 @@ const Highlight = styled.div`
     props.padRight ? "5px" : ""};
 `;
 
-const A = styled.a`
-  color: #8590ff;
-  text-decoration: underline;
-  margin-left: 5px;
-  cursor: pointer;
-  padding-right: ${(props: { padRight?: boolean }) =>
-    props.padRight ? "5px" : ""};
+const StyledSourceBox = styled.div`
+  width: 100%;
+  height: 100%;
+  background: #ffffff11;
+  color: #ffffff;
+  padding: 10px 35px 25px;
+  position: relative;
+  border-radius: 5px;
+  font-size: 13px;
+  overflow: auto;
+  margin-bottom: 25px;
 `;
 
 const StyledSourceBox = styled.div`

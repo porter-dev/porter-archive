@@ -43,6 +43,30 @@ var connectECRCmd = &cobra.Command{
 	},
 }
 
+var connectDockerhubCmd = &cobra.Command{
+	Use:   "dockerhub",
+	Short: "Adds a Docker Hub registry integration to a project",
+	Run: func(cmd *cobra.Command, args []string) {
+		err := checkLoginAndRun(args, runConnectDockerhub)
+
+		if err != nil {
+			os.Exit(1)
+		}
+	},
+}
+
+var connectRegistryCmd = &cobra.Command{
+	Use:   "registry",
+	Short: "Adds a custom image registry to a project",
+	Run: func(cmd *cobra.Command, args []string) {
+		err := checkLoginAndRun(args, runConnectRegistry)
+
+		if err != nil {
+			os.Exit(1)
+		}
+	},
+}
+
 var connectActionsCmd = &cobra.Command{
 	Use:   "actions",
 	Short: "Adds Github Actions to a project",
@@ -127,6 +151,8 @@ func init() {
 
 	connectCmd.AddCommand(connectActionsCmd)
 	connectCmd.AddCommand(connectECRCmd)
+	connectCmd.AddCommand(connectRegistryCmd)
+	connectCmd.AddCommand(connectDockerhubCmd)
 	connectCmd.AddCommand(connectGCRCmd)
 	connectCmd.AddCommand(connectDOCRCmd)
 	connectCmd.AddCommand(connectHRCmd)
@@ -182,6 +208,32 @@ func runConnectGCR(_ *api.AuthCheckResponse, client *api.Client, _ []string) err
 
 func runConnectDOCR(_ *api.AuthCheckResponse, client *api.Client, _ []string) error {
 	regID, err := connect.DOCR(
+		client,
+		getProjectID(),
+	)
+
+	if err != nil {
+		return err
+	}
+
+	return setRegistry(regID)
+}
+
+func runConnectDockerhub(_ *api.AuthCheckResponse, client *api.Client, _ []string) error {
+	regID, err := connect.Dockerhub(
+		client,
+		getProjectID(),
+	)
+
+	if err != nil {
+		return err
+	}
+
+	return setRegistry(regID)
+}
+
+func runConnectRegistry(_ *api.AuthCheckResponse, client *api.Client, _ []string) error {
+	regID, err := connect.Registry(
 		client,
 		getProjectID(),
 	)

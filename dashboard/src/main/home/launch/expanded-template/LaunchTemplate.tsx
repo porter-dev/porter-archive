@@ -713,16 +713,3 @@ const StyledSourceBox = styled.div`
   overflow: auto;
   margin-bottom: 25px;
 `;
-
-const StyledSourceBox = styled.div`
-  width: 100%;
-  height: 100%;
-  background: #ffffff11;
-  color: #ffffff;
-  padding: 10px 35px 25px;
-  position: relative;
-  border-radius: 5px;
-  font-size: 13px;
-  overflow: auto;
-  margin-bottom: 25px;
-`;

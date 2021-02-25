@@ -134,6 +134,10 @@ func dockerConfig(user *api.AuthCheckResponse, client *api.Client, args []string
 		return err
 	}
 
+	if config.CredentialHelpers == nil {
+		config.CredentialHelpers = make(map[string]string)
+	}
+
 	for _, regURL := range regToAdd {
 		// if this is a dockerhub registry, see if an auth config has already been generated
 		// for index.docker.io

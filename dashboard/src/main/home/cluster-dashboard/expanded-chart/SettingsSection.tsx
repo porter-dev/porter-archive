@@ -36,14 +36,17 @@ type StateType = {
   action: ActionConfigType;
 };
 
+// TODO: put in shared, duped from LaunchTemplate.tsx
+const defaultActionConfig: ActionConfigType = {
+  git_repo: "",
+  image_repo_uri: "",
+  git_repo_id: 0,
+  dockerfile_path: "",
+};
+
 export default class SettingsSection extends Component<PropsType, StateType> {
   state = {
-    actionConfig: {
-      git_repo: "",
-      image_repo_uri: "",
-      git_repo_id: 0,
-      dockerfile_path: "",
-    } as ActionConfigType,
+    actionConfig: defaultActionConfig,
     sourceType: "",
     selectedImageUrl: "",
     selectedTag: "",
@@ -218,6 +221,9 @@ export default class SettingsSection extends Component<PropsType, StateType> {
           actionConfig={this.state.actionConfig}
           setActionConfig={(actionConfig: ActionConfigType) =>
             this.setState({ actionConfig })
+          }
+          resetActionConfig={() =>
+            this.setState({ actionConfig: defaultActionConfig })
           }
         />
       </>

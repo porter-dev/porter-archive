@@ -71,6 +71,10 @@ func (r *Registry) ListRepositories(
 		return r.listDOCRRepositories(repo, doAuth)
 	}
 
+	if r.BasicIntegrationID != 0 {
+		return r.listPrivateRegistryRepositories(repo)
+	}
+
 	return nil, fmt.Errorf("error listing repositories")
 }
 
@@ -252,6 +256,102 @@ func (r *Registry) listDOCRRepositories(
 	return res, nil
 }
 
+func (r *Registry) listPrivateRegistryRepositories(
+	repo repository.Repository,
+) ([]*Repository, error) {
+	// handle dockerhub different, as it doesn't implement the docker registry http api
+	if strings.Contains(r.URL, "docker.io") {
+		// in this case, we just return the single dockerhub repository that's linked
+		res := make([]*Repository, 0)
+
+		res = append(res, &Repository{
+			Name: strings.Split(r.URL, "docker.io/")[1],
+			URI:  r.URL,
+		})
+
+		return res, nil
+	}
+
+	basic, err := repo.BasicIntegration.ReadBasicIntegration(
+		r.BasicIntegrationID,
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	// Just use service account key to authenticate, since scopes may not be in place
+	// for oauth. This also prevents us from making more requests.
+	client := &http.Client{}
+
+	// get the host and scheme to make the request
+	parsedURL, err := url.Parse(r.URL)
+
+	req, err := http.NewRequest(
+		"GET",
+		fmt.Sprintf("%s://%s/v2/_catalog", parsedURL.Scheme, parsedURL.Host),
+		nil,
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	req.SetBasicAuth(string(basic.Username), string(basic.Password))
+
+	resp, err := client.Do(req)
+
+	if err != nil {
+		return nil, err
+	}
+
+	// if the status code is 404, fallback to the Docker Hub implementation
+	if resp.StatusCode == 404 {
+		req, err := http.NewRequest(
+			"GET",
+			fmt.Sprintf("%s/", r.URL),
+			nil,
+		)
+
+		if err != nil {
+			return nil, err
+		}
+
+		fmt.Println("AUTH IS", string(basic.Username), string(basic.Password))
+
+		req.SetBasicAuth(string(basic.Username), string(basic.Password))
+
+		resp, err = client.Do(req)
+
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	gcrResp := gcrRepositoryResp{}
+
+	fmt.Println("STATUS IS", resp.Status)
+
+	if err := json.NewDecoder(resp.Body).Decode(&gcrResp); err != nil {
+		return nil, fmt.Errorf("Could not read private registry repositories: %v", err)
+	}
+
+	res := make([]*Repository, 0)
+
+	if err != nil {
+		return nil, err
+	}
+
+	for _, repo := range gcrResp.Repositories {
+		res = append(res, &Repository{
+			Name: repo,
+			URI:  parsedURL.Host + "/" + repo,
+		})
+	}
+
+	return res, nil
+}
+
 func (r *Registry) getTokenCache() (tok *ints.TokenCache, err error) {
 	return &ints.TokenCache{
 		Token:  r.TokenCache.Token,
@@ -294,6 +394,10 @@ func (r *Registry) ListImages(
 
 	if r.DOIntegrationID != 0 {
 		return r.listDOCRImages(repoName, repo, doAuth)
+	}
+
+	if r.BasicIntegrationID != 0 {
+		return r.listPrivateRegistryImages(repoName, repo)
 	}
 
 	return nil, fmt.Errorf("error listing images")
@@ -444,6 +548,118 @@ func (r *Registry) listDOCRImages(
 	return res, nil
 }
 
+func (r *Registry) listPrivateRegistryImages(repoName string, repo repository.Repository) ([]*Image, error) {
+	// handle dockerhub different, as it doesn't implement the docker registry http api
+	if strings.Contains(r.URL, "docker.io") {
+		return r.listDockerHubImages(repoName, repo)
+	}
+
+	basic, err := repo.BasicIntegration.ReadBasicIntegration(
+		r.BasicIntegrationID,
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	// Just use service account key to authenticate, since scopes may not be in place
+	// for oauth. This also prevents us from making more requests.
+	client := &http.Client{}
+
+	// get the host and scheme to make the request
+	parsedURL, err := url.Parse(r.URL)
+
+	req, err := http.NewRequest(
+		"GET",
+		fmt.Sprintf("%s://%s/v2/%s/tags/list", parsedURL.Scheme, parsedURL.Host, repoName),
+		nil,
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	req.SetBasicAuth(string(basic.Username), string(basic.Password))
+
+	resp, err := client.Do(req)
+
+	if err != nil {
+		return nil, err
+	}
+
+	gcrResp := gcrImageResp{}
+
+	if err := json.NewDecoder(resp.Body).Decode(&gcrResp); err != nil {
+		return nil, fmt.Errorf("Could not read private registry repositories: %v", err)
+	}
+
+	res := make([]*Image, 0)
+
+	for _, tag := range gcrResp.Tags {
+		res = append(res, &Image{
+			RepositoryName: repoName,
+			Tag:            tag,
+		})
+	}
+
+	return res, nil
+}
+
+type dockerHubImageResult struct {
+	Name string `json:"name"`
+}
+
+type dockerHubImageResp struct {
+	Results []dockerHubImageResult `json:"results"`
+}
+
+func (r *Registry) listDockerHubImages(repoName string, repo repository.Repository) ([]*Image, error) {
+	basic, err := repo.BasicIntegration.ReadBasicIntegration(
+		r.BasicIntegrationID,
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	client := &http.Client{}
+
+	req, err := http.NewRequest(
+		"GET",
+		fmt.Sprintf("https://hub.docker.com/v2/repositories/%s/tags", strings.Split(r.URL, "docker.io/")[1]),
+		nil,
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	req.SetBasicAuth(string(basic.Username), string(basic.Password))
+
+	resp, err := client.Do(req)
+
+	if err != nil {
+		return nil, err
+	}
+
+	imageResp := dockerHubImageResp{}
+
+	if err := json.NewDecoder(resp.Body).Decode(&imageResp); err != nil {
+		return nil, fmt.Errorf("Could not read private registry repositories: %v", err)
+	}
+
+	res := make([]*Image, 0)
+
+	for _, result := range imageResp.Results {
+		res = append(res, &Image{
+			RepositoryName: repoName,
+			Tag:            result.Name,
+		})
+	}
+
+	return res, nil
+}
+
 // GetDockerConfigJSON returns a dockerconfigjson file contents with "auths"
 // populated.
 func (r *Registry) GetDockerConfigJSON(
@@ -464,6 +680,10 @@ func (r *Registry) GetDockerConfigJSON(
 
 	if r.DOIntegrationID != 0 {
 		conf, err = r.getDOCRDockerConfigFile(repo, doAuth)
+	}
+
+	if r.BasicIntegrationID != 0 {
+		conf, err = r.getPrivateRegistryDockerConfigFile(repo)
 	}
 
 	if err != nil {
@@ -591,6 +811,42 @@ func (r *Registry) getDOCRDockerConfigFile(
 				Username: tok,
 				Password: tok,
 				Auth:     generateAuthToken(tok, tok),
+			},
+		},
+	}, nil
+}
+
+func (r *Registry) getPrivateRegistryDockerConfigFile(
+	repo repository.Repository,
+) (*configfile.ConfigFile, error) {
+	basic, err := repo.BasicIntegration.ReadBasicIntegration(
+		r.BasicIntegrationID,
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	key := r.URL
+
+	if !strings.Contains(key, "http") {
+		key = "https://" + key
+	}
+
+	parsedURL, _ := url.Parse(key)
+
+	authConfigKey := parsedURL.Host
+
+	if strings.Contains(r.URL, "index.docker.io") {
+		authConfigKey = "https://index.docker.io/v1/"
+	}
+
+	return &configfile.ConfigFile{
+		AuthConfigs: map[string]types.AuthConfig{
+			authConfigKey: types.AuthConfig{
+				Username: string(basic.Username),
+				Password: string(basic.Password),
+				Auth:     generateAuthToken(string(basic.Username), string(basic.Password)),
 			},
 		},
 	}, nil

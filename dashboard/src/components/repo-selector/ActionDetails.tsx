@@ -70,6 +70,7 @@ export default class ActionDetails extends Component<PropsType, StateType> {
           setSelectedImageUrl={this.setURL}
           setSelectedTag={() => null}
           forceExpanded={true}
+          noTagSelection={true}
         />
       </Holder>
     );

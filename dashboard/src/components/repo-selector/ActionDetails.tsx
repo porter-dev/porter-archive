@@ -45,31 +45,6 @@ export default class ActionDetails extends Component<PropsType, StateType> {
   };
 
   renderConfirmation = () => {
-    var imageComponent
-
-    if (!this.props.actionConfig.image_repo_uri) {
-      imageComponent = <div>
-          <Label>Target Image URL</Label>
-          <ImageSelector
-            selectedTag="latest"
-            selectedImageUrl={this.props.actionConfig.image_repo_uri}
-            setSelectedImageUrl={this.setURL}
-            setSelectedTag={() => null}
-            forceExpanded={true}
-            noTagSelection={true}
-          />
-        </div>
-    } else {
-      imageComponent = <InputRow
-        disabled={true}
-        label="Target Image URL"
-        type="text"
-        width="100%"
-        value={this.props.actionConfig.image_repo_uri}
-        setValue={(x: string) => console.log(x)}
-      />
-    }
-
     return (
       <Holder>
         <InputRow
@@ -88,7 +63,15 @@ export default class ActionDetails extends Component<PropsType, StateType> {
           value={this.props.actionConfig.dockerfile_path}
           setValue={(x: string) => console.log(x)}
         />
-        {imageComponent}
+        <Label>Target Image URL</Label>
+          <ImageSelector
+            selectedTag="latest"
+            selectedImageUrl={this.props.actionConfig.image_repo_uri}
+            setSelectedImageUrl={this.setURL}
+            setSelectedTag={() => null}
+            forceExpanded={true}
+            noTagSelection={true}
+          />
       </Holder>
     );
   };

@@ -47,12 +47,10 @@ spec:
   clusterIP: None
   publishNotReadyAddresses: true
   ports:
-    
     - name: tcp-client
       port: 2181
       targetPort: client
-    
-    
+
     - name: follower
       port: 2888
       targetPort: follower
@@ -79,12 +77,10 @@ metadata:
 spec:
   type: ClusterIP
   ports:
-    
     - name: tcp-client
       port: 2181
       targetPort: client
-    
-    
+
     - name: follower
       port: 2888
       targetPort: follower
@@ -182,7 +178,6 @@ spec:
         app.kubernetes.io/managed-by: Helm
         app.kubernetes.io/component: zookeeper
     spec:
-      
       serviceAccountName: default
       securityContext:
         fsGroup: 1001
@@ -196,16 +191,16 @@ spec:
             - bash
             - -ec
             - |
-                # Execute entrypoint as usual after obtaining ZOO_SERVER_ID based on POD hostname
-                HOSTNAME=`hostname -s`
-                if [[ $HOSTNAME =~ (.*)-([0-9]+)$ ]]; then
-                  ORD=${BASH_REMATCH[2]}
-                  export ZOO_SERVER_ID=$((ORD+1))
-                else
-                  echo "Failed to get index from hostname $HOST"
-                  exit 1
-                fi
-                exec /entrypoint.sh /run.sh
+              # Execute entrypoint as usual after obtaining ZOO_SERVER_ID based on POD hostname
+              HOSTNAME=`hostname -s`
+              if [[ $HOSTNAME =~ (.*)-([0-9]+)$ ]]; then
+                ORD=${BASH_REMATCH[2]}
+                export ZOO_SERVER_ID=$((ORD+1))
+              else
+                echo "Failed to get index from hostname $HOST"
+                exit 1
+              fi
+              exec /entrypoint.sh /run.sh
           resources:
             requests:
               cpu: 250m
@@ -234,7 +229,7 @@ spec:
             - name: ZOO_MAX_SESSION_TIMEOUT
               value: "40000"
             - name: ZOO_SERVERS
-              value: my-release-zookeeper-0.my-release-zookeeper-headless.default.svc.cluster.local:2888:3888 
+              value: my-release-zookeeper-0.my-release-zookeeper-headless.default.svc.cluster.local:2888:3888
             - name: ZOO_ENABLE_AUTH
               value: "no"
             - name: ZOO_HEAP_SIZE
@@ -249,18 +244,21 @@ spec:
                   apiVersion: v1
                   fieldPath: metadata.name
           ports:
-            
             - name: client
               containerPort: 2181
-            
-            
+
             - name: follower
               containerPort: 2888
             - name: election
               containerPort: 3888
           livenessProbe:
             exec:
-              command: ['/bin/bash', '-c', 'echo "ruok" | timeout 2 nc -w 2 localhost 2181 | grep imok']
+              command:
+                [
+                  "/bin/bash",
+                  "-c",
+                  'echo "ruok" | timeout 2 nc -w 2 localhost 2181 | grep imok',
+                ]
             initialDelaySeconds: 30
             periodSeconds: 10
             timeoutSeconds: 5
@@ -268,7 +266,12 @@ spec:
             failureThreshold: 6
           readinessProbe:
             exec:
-              command: ['/bin/bash', '-c', 'echo "ruok" | timeout 2 nc -w 2 localhost 2181 | grep imok']
+              command:
+                [
+                  "/bin/bash",
+                  "-c",
+                  'echo "ruok" | timeout 2 nc -w 2 localhost 2181 | grep imok',
+                ]
             initialDelaySeconds: 5
             periodSeconds: 10
             timeoutSeconds: 5
@@ -319,7 +322,7 @@ spec:
         app.kubernetes.io/instance: my-release
         app.kubernetes.io/managed-by: Helm
         app.kubernetes.io/component: kafka
-    spec:      
+    spec:
       securityContext:
         fsGroup: 1001
         runAsUser: 1001
@@ -409,17 +412,17 @@ spec:
               port: kafka-client
             initialDelaySeconds: 10
             timeoutSeconds: 5
-            failureThreshold: 
-            periodSeconds: 
-            successThreshold: 
+            failureThreshold:
+            periodSeconds:
+            successThreshold:
           readinessProbe:
             tcpSocket:
               port: kafka-client
             initialDelaySeconds: 5
             timeoutSeconds: 5
             failureThreshold: 6
-            periodSeconds: 
-            successThreshold: 
+            periodSeconds:
+            successThreshold:
           resources:
             limits: {}
             requests: {}
@@ -443,4 +446,3 @@ spec:
         resources:
           requests:
             storage: "8Gi"
-

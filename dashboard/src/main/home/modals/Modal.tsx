@@ -46,7 +46,7 @@ export default class Modal extends Component<PropsType, StateType> {
 }
 
 const Overlay = styled.div`
-  position: absolute;
+  position: fixed;
   margin: 0;
   padding: 0;
   top: 0;
@@ -55,26 +55,13 @@ const Overlay = styled.div`
   height: 100%;
   background-color: rgba(0, 0, 0, 0.6);
   z-index: 3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 `;
 
 const StyledModal = styled.div`
   position: absolute;
-  top: calc(
-    50% -
-      (
-        ${(props: { width?: string; height?: string }) =>
-            props.height ? props.height : "425px"} / 2
-      )
-  );
-  left: calc(
-    50% -
-      (
-        ${(props: { width?: string; height?: string }) =>
-            props.width ? props.width : "760px"} / 2
-      )
-  );
-  display: flex;
-  justify-content: center;
   width: ${(props: { width?: string; height?: string }) =>
     props.width ? props.width : "760px"};
   max-width: 80vw;

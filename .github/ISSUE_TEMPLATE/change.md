@@ -1,13 +1,12 @@
 ---
 name: Change
-about: 🛠️ Update functionality that already exists. 
-
+about: 🛠️ Update functionality that already exists.
 ---
 
 # Location
 
-- [ ] Browser 
-- [ ] CLI 
+- [ ] Browser
+- [ ] CLI
 - [ ] API
 
 # Motivation

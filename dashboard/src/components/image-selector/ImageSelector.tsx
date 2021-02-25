@@ -18,6 +18,7 @@ type PropsType = {
   selectedTag: string | null;
   setSelectedImageUrl: (x: string) => void;
   setSelectedTag: (x: string) => void;
+  noTagSelection?: boolean;
 };
 
 type StateType = {
@@ -175,7 +176,7 @@ export default class ImageSelector extends Component<PropsType, StateType> {
 
   renderExpanded = () => {
     let { selectedTag, selectedImageUrl, setSelectedTag } = this.props;
-    if (!this.state.clickedImage) {
+    if (!this.state.clickedImage || this.props.noTagSelection) {
       return (
         <div>
           <ExpandedWrapper>{this.renderImageList()}</ExpandedWrapper>
@@ -319,7 +320,7 @@ const ImageItem = styled.div`
   font-size: 13px;
   border-bottom: 1px solid
     ${(props: { lastItem: boolean; isSelected: boolean }) =>
-      props.lastItem ? "#00000000" : "#606166"};
+    props.lastItem ? "#00000000" : "#606166"};
   color: #ffffff;
   user-select: none;
   align-items: center;

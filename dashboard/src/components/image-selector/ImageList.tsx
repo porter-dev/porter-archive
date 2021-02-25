@@ -37,6 +37,7 @@ export default class ImageSelector extends Component<PropsType, StateType> {
     const { currentProject, setCurrentError } = this.context;
     let images = [] as ImageType[];
     let errors = [] as number[];
+
     if (!this.props.registry) {
       api
         .getProjectRegistries("<token>", {}, { id: currentProject.id })
@@ -92,13 +93,20 @@ export default class ImageSelector extends Component<PropsType, StateType> {
                         }) == registries.length
                           ? true
                           : false;
-
+                      
                       this.setState({
                         images,
                         loading: false,
                         error,
                       });
+                    } else {
+                      this.setState({
+                        images,
+                      })
                     }
+
+                   
+                    
                     resolveToNextController();
                   });
               }

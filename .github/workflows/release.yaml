@@ -1,7 +1,7 @@
 on:
   push:
     tags:
-    - 'v*' # Push events to matching v*, i.e. v1.0, v20.15.10
+      - "v*" # Push events to matching v*, i.e. v1.0, v20.15.10
 
 name: Create release w/ binaries and docker image
 
@@ -9,38 +9,38 @@ jobs:
   docker-build-push:
     runs-on: ubuntu-latest
     steps:
-    - name: Get tag name
-      id: tag_name
-      run: |
-        tag=${GITHUB_TAG/refs\/tags\//}
-        echo ::set-output name=tag::$tag
-      env:
-        GITHUB_TAG: ${{ github.ref }}
-    - name: Checkout
-      uses: actions/checkout@v2.3.4
-    - name: Setup docker
-      uses: docker/login-action@v1
-      with:
-        username: ${{ secrets.DOCKERHUB_USERNAME }}
-        password: ${{ secrets.DOCKERHUB_TOKEN }}
-    - name: Write Dashboard Environment Variables
-      run: |
-        cat >./dashboard/.env <<EOL
-        NODE_ENV=production
-        API_SERVER=dashboard.getporter.dev
-        FULLSTORY_ORG_ID=${{secrets.FULLSTORY_ORG_ID}}
-        DISCORD_KEY=${{secrets.DISCORD_KEY}}
-        DISCORD_CID=${{secrets.DISCORD_CID}}
-        FEEDBACK_ENDPOINT=${{secrets.FEEDBACK_ENDPOINT}}
-        EOL
+      - name: Get tag name
+        id: tag_name
+        run: |
+          tag=${GITHUB_TAG/refs\/tags\//}
+          echo ::set-output name=tag::$tag
+        env:
+          GITHUB_TAG: ${{ github.ref }}
+      - name: Checkout
+        uses: actions/checkout@v2.3.4
+      - name: Setup docker
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: Write Dashboard Environment Variables
+        run: |
+          cat >./dashboard/.env <<EOL
+          NODE_ENV=production
+          API_SERVER=dashboard.getporter.dev
+          FULLSTORY_ORG_ID=${{secrets.FULLSTORY_ORG_ID}}
+          DISCORD_KEY=${{secrets.DISCORD_KEY}}
+          DISCORD_CID=${{secrets.DISCORD_CID}}
+          FEEDBACK_ENDPOINT=${{secrets.FEEDBACK_ENDPOINT}}
+          EOL
 
-        cat ./dashboard/.env
-    - name: Build
-      run: |
-        DOCKER_BUILDKIT=1 docker build . -t porter1/porter:${{steps.tag_name.outputs.tag}} -f ./docker/Dockerfile
-    - name: Push
-      run: |
-        docker push porter1/porter:${{steps.tag_name.outputs.tag}}
+          cat ./dashboard/.env
+      - name: Build
+        run: |
+          DOCKER_BUILDKIT=1 docker build . -t porter1/porter:${{steps.tag_name.outputs.tag}} -f ./docker/Dockerfile
+      - name: Push
+        run: |
+          docker push porter1/porter:${{steps.tag_name.outputs.tag}}
   build:
     name: Build binaries
     runs-on: ubuntu-latest
@@ -93,7 +93,7 @@ jobs:
       # Note: we have to zip all binaries before uploading them as artifacts --
       # without this step, the binaries will be uploaded but the file metadata will
       # be listed as plaintext after downloading the artifact in a later step
-      # 
+      #
       # TODO: investigate
       - name: Zip Linux binaries
         run: |
@@ -151,7 +151,7 @@ jobs:
       - name: Install gon via HomeBrew for code signing and app notarization
         run: |
           brew tap mitchellh/gon
-          brew install mitchellh/gon/gon  
+          brew install mitchellh/gon/gon
       - name: Create a porter.gon.json file
         run: |
           echo "
@@ -246,7 +246,7 @@ jobs:
           draft: false
           prerelease: true
       - name: Upload Linux CLI Release Asset
-        id: upload-linux-cli-release-asset 
+        id: upload-linux-cli-release-asset
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -257,7 +257,7 @@ jobs:
           asset_name: porter_${{steps.tag_name.outputs.tag}}_Linux_x86_64.zip
           asset_content_type: application/zip
       - name: Upload Linux Server Release Asset
-        id: upload-linux-server-release-asset 
+        id: upload-linux-server-release-asset
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -268,7 +268,7 @@ jobs:
           asset_name: portersvr_${{steps.tag_name.outputs.tag}}_Linux_x86_64.zip
           asset_content_type: application/zip
       - name: Upload Linux Docker Credential Release Asset
-        id: upload-linux-docker-cred-release-asset 
+        id: upload-linux-docker-cred-release-asset
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -279,7 +279,7 @@ jobs:
           asset_name: docker-credential-porter_${{steps.tag_name.outputs.tag}}_Linux_x86_64.zip
           asset_content_type: application/zip
       - name: Upload Darwin CLI Release Asset
-        id: upload-darwin-cli-release-asset 
+        id: upload-darwin-cli-release-asset
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -290,7 +290,7 @@ jobs:
           asset_name: porter_${{steps.tag_name.outputs.tag}}_Darwin_x86_64.zip
           asset_content_type: application/zip
       - name: Upload Darwin Server Release Asset
-        id: upload-darwin-server-release-asset 
+        id: upload-darwin-server-release-asset
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -301,7 +301,7 @@ jobs:
           asset_name: portersvr_${{steps.tag_name.outputs.tag}}_Darwin_x86_64.zip
           asset_content_type: application/zip
       - name: Upload Darwin Docker Credential Release Asset
-        id: upload-darwin-docker-cred-release-asset 
+        id: upload-darwin-docker-cred-release-asset
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -312,7 +312,7 @@ jobs:
           asset_name: docker-credential-porter_${{steps.tag_name.outputs.tag}}_Darwin_x86_64.zip
           asset_content_type: application/zip
       - name: Upload Windows CLI Release Asset
-        id: upload-windows-cli-release-asset 
+        id: upload-windows-cli-release-asset
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -323,7 +323,7 @@ jobs:
           asset_name: porter_${{steps.tag_name.outputs.tag}}_Windows_x86_64.zip
           asset_content_type: application/zip
       - name: Upload Windows Server Release Asset
-        id: upload-windows-server-release-asset 
+        id: upload-windows-server-release-asset
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -334,7 +334,7 @@ jobs:
           asset_name: portersvr_${{steps.tag_name.outputs.tag}}_Windows_x86_64.zip
           asset_content_type: application/zip
       - name: Upload Windows Docker Credential Release Asset
-        id: upload-windows-docker-cred-release-asset 
+        id: upload-windows-docker-cred-release-asset
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -345,7 +345,7 @@ jobs:
           asset_name: docker-credential-porter_${{steps.tag_name.outputs.tag}}_Windows_x86_64.zip
           asset_content_type: application/zip
       - name: Upload Static Release Asset
-        id: upload-static-release-asset 
+        id: upload-static-release-asset
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

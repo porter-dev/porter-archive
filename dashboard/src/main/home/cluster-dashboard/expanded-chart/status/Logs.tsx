@@ -41,7 +41,11 @@ export default class Logs extends Component<PropsType, StateType> {
       return <Message>Please select a pod to view its logs.</Message>;
     }
     if (this.state.logs.length == 0) {
-      return <Message>{this.props.podError || "No logs to display from this pod."}</Message>;
+      return (
+        <Message>
+          {this.props.podError || "No logs to display from this pod."}
+        </Message>
+      );
     }
     return this.state.logs.map((log, i) => {
       return <Log key={i}>{log}</Log>;

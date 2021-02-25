@@ -1,13 +1,12 @@
 ---
 name: Feature
 about: ✨ Add new functionality to the project.
-
 ---
 
 # Location
 
-- [ ] Browser 
-- [ ] CLI 
+- [ ] Browser
+- [ ] CLI
 - [ ] API
 
 # Requirements

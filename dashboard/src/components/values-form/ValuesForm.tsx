@@ -12,6 +12,7 @@ import Helper from "./Helper";
 import Heading from "./Heading";
 import ExpandableResource from "../ExpandableResource";
 import VeleroForm from "../forms/VeleroForm";
+import InputArray from "./InputArray";
 
 type PropsType = {
   sections?: Section[];
@@ -25,7 +26,7 @@ export default class ValuesForm extends Component<PropsType, StateType> {
   getInputValue = (item: FormElement) => {
     let key = item.name || item.variable;
     let value = this.props.metaState[key];
-    
+
     if (item.settings && item.settings.unit && value && value.includes) {
       value = value.split(item.settings.unit)[0];
     }
@@ -71,16 +72,13 @@ export default class ValuesForm extends Component<PropsType, StateType> {
           );
         case "array-input":
           return (
-            <InputRow
+            <InputArray
               key={i}
-              isRequired={item.required}
-              type="text"
-              value={this.getInputValue(item)}
-              setValue={(x: string) => {
-                this.props.setMetaState({ [key]: [x] });
+              values={this.props.metaState[key]}
+              setValues={(x: string[]) => {
+                this.props.setMetaState({ [key]: x });
               }}
               label={item.label}
-              unit={item.settings ? item.settings.unit : null}
             />
           );
         case "string-input":
@@ -143,9 +141,9 @@ export default class ValuesForm extends Component<PropsType, StateType> {
               value={this.props.metaState[key]}
               setActiveValue={(val) => this.props.setMetaState({ [key]: val })}
               options={[
-                { value: 'aws', label: 'Amazon Web Services (AWS)' },
-                { value: 'gcp', label: 'Google Cloud Platform (GCP)' },
-                { value: 'do', label: 'DigitalOcean' },
+                { value: "aws", label: "Amazon Web Services (AWS)" },
+                { value: "gcp", label: "Google Cloud Platform (GCP)" },
+                { value: "do", label: "DigitalOcean" },
               ]}
               dropdownLabel=""
               label={item.label}

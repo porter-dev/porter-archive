@@ -38,11 +38,9 @@ export default class Node extends Component<PropsType, StateType> {
         h={Math.round(h)}
       >
         <Kind>
-          <StyledMark>
-            {this.props.showKindLabels ? kind : null}
-          </StyledMark>
+          <StyledMark>{this.props.showKindLabels ? kind : null}</StyledMark>
         </Kind>
-        <NodeBlock 
+        <NodeBlock
           onMouseDown={nodeMouseDown}
           onMouseUp={nodeMouseUp}
           onMouseEnter={() => this.props.setCurrentNode(this.props.node)}
@@ -53,9 +51,7 @@ export default class Node extends Component<PropsType, StateType> {
           <i className="material-icons">{icon}</i>
         </NodeBlock>
         <NodeLabel>
-          <StyledMark>
-            {name}
-          </StyledMark>
+          <StyledMark>{name}</StyledMark>
         </NodeLabel>
       </StyledNode>
     );

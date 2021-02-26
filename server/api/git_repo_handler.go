@@ -134,7 +134,6 @@ func (app *App) HandleGetBranches(w http.ResponseWriter, r *http.Request) {
 	// List all branches for a specified repo
 	branches, _, err := client.Repositories.ListBranches(context.Background(), owner, name, nil)
 	if err != nil {
-		fmt.Println(err)
 		return
 	}
 
@@ -185,7 +184,6 @@ func (app *App) HandleGetBranchContents(w http.ResponseWriter, r *http.Request) 
 
 	// Ret2: recursively traverse all dirs to create config bundle (case on type == dir)
 	// https://api.github.com/repos/porter-dev/porter/contents?ref=frontend-graph
-	// fmt.Println(res)
 	json.NewEncoder(w).Encode(res)
 }
 

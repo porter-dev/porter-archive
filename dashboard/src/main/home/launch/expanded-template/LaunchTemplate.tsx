@@ -439,81 +439,81 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
 
   // Display if current template uses source (image or repo)
   renderSourceSelectorContent = () => {
-    if (this.props.form?.hasSource) {
-      if (this.state.sourceType === "registry") {
-        return (
-          <>
-            <Subtitle>
-              Select the container image you would like to connect to this
-              template
-              {/* <Highlight onClick={() => this.setState({ sourceType: "repo" })}>
-                link a git repository
-              </Highlight> */}
-              .<Required>*</Required>
-            </Subtitle>
-            <DarkMatter />
-            <ImageSelector
-              selectedTag={this.state.selectedTag}
-              selectedImageUrl={this.state.selectedImageUrl}
-              setSelectedImageUrl={this.setSelectedImageUrl}
-              setSelectedTag={(x: string) => this.setState({ selectedTag: x })}
-              forceExpanded={true}
-            />
-            <br />
-          </>
-        );
-      } else {
-        return (
-          <>
-            <Subtitle>
-              Select a repo to connect to, then a Dockerfile to build from.
-              <Required>*</Required>
-            </Subtitle>
-            <ActionConfEditor
-              actionConfig={this.state.actionConfig}
-              branch={this.state.branch}
-              pathIsSet={this.state.pathIsSet}
-              setActionConfig={(actionConfig: ActionConfigType) =>
-                this.setState({ actionConfig }, () => {
-                  this.setSelectedImageUrl(
-                    this.state.actionConfig.image_repo_uri
-                  );
-                })
-              }
-              setBranch={(branch: string) => this.setState({ branch })}
-              setPath={(pathIsSet: boolean) => this.setState({ pathIsSet })}
-              reset={() => {
-                this.setState({
-                  actionConfig: { ...defaultActionConfig },
-                  branch: "",
-                  pathIsSet: false,
-                });
-              }}
-            />
-            <br />
-          </>
-        );
-      }
+    if (this.state.sourceType === "registry") {
+      return (
+        <>
+          <Subtitle>
+            Select the container image you would like to connect to this
+            template
+            {/* <Highlight onClick={() => this.setState({ sourceType: "repo" })}>
+              link a git repository
+            </Highlight> */}
+            .<Required>*</Required>
+          </Subtitle>
+          <DarkMatter />
+          <ImageSelector
+            selectedTag={this.state.selectedTag}
+            selectedImageUrl={this.state.selectedImageUrl}
+            setSelectedImageUrl={this.setSelectedImageUrl}
+            setSelectedTag={(x: string) => this.setState({ selectedTag: x })}
+            forceExpanded={true}
+          />
+          <br />
+        </>
+      );
+    } else {
+      return (
+        <>
+          <Subtitle>
+            Select a repo to connect to, then a Dockerfile to build from.
+            <Required>*</Required>
+          </Subtitle>
+          <ActionConfEditor
+            actionConfig={this.state.actionConfig}
+            branch={this.state.branch}
+            pathIsSet={this.state.pathIsSet}
+            setActionConfig={(actionConfig: ActionConfigType) =>
+              this.setState({ actionConfig }, () => {
+                this.setSelectedImageUrl(
+                  this.state.actionConfig.image_repo_uri
+                );
+              })
+            }
+            setBranch={(branch: string) => this.setState({ branch })}
+            setPath={(pathIsSet: boolean) => this.setState({ pathIsSet })}
+            reset={() => {
+              this.setState({
+                actionConfig: { ...defaultActionConfig },
+                branch: "",
+                pathIsSet: false,
+              });
+            }}
+          />
+          <br />
+        </>
+      );
     }
   };
 
   renderSourceSelector = () => {
-    return (
-      <>
-        <TabRegion
-          options={[
-            { label: "Registry", value: "registry" },
-            { label: "Github", value: "repo" },
-          ]}
-          currentTab={this.state.sourceType}
-          setCurrentTab={(x) => this.setState({ sourceType: x })}
-        >
-          <StyledSourceBox>
-            {this.renderSourceSelectorContent()}
-          </StyledSourceBox>
-        </TabRegion>
-      </>
-    );
+    if (this.props.form?.hasSource) {
+      return (
+        <>
+          <TabRegion
+            options={[
+              { label: "Registry", value: "registry" },
+              { label: "Github", value: "repo" },
+            ]}
+            currentTab={this.state.sourceType}
+            setCurrentTab={(x) => this.setState({ sourceType: x })}
+          >
+            <StyledSourceBox>
+              {this.renderSourceSelectorContent()}
+            </StyledSourceBox>
+          </TabRegion>
+        </>
+      );
+    }
   };
 
   render() {

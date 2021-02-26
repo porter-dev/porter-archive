@@ -66,14 +66,12 @@ func (app *App) HandleListRepoIntegrations(w http.ResponseWriter, r *http.Reques
 
 // HandleCreateGCPIntegration creates a new GCP integration in the DB
 func (app *App) HandleCreateGCPIntegration(w http.ResponseWriter, r *http.Request) {
-	session, err := app.Store.Get(r, app.ServerConf.CookieName)
+	userID, err := app.getUserIDFromRequest(r)
 
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-
-	userID, _ := session.Values["user_id"].(uint)
 
 	projID, err := strconv.ParseUint(chi.URLParam(r, "project_id"), 0, 64)
 
@@ -129,14 +127,12 @@ func (app *App) HandleCreateGCPIntegration(w http.ResponseWriter, r *http.Reques
 
 // HandleCreateAWSIntegration creates a new AWS integration in the DB
 func (app *App) HandleCreateAWSIntegration(w http.ResponseWriter, r *http.Request) {
-	session, err := app.Store.Get(r, app.ServerConf.CookieName)
+	userID, err := app.getUserIDFromRequest(r)
 
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-
-	userID, _ := session.Values["user_id"].(uint)
 
 	projID, err := strconv.ParseUint(chi.URLParam(r, "project_id"), 0, 64)
 
@@ -192,14 +188,12 @@ func (app *App) HandleCreateAWSIntegration(w http.ResponseWriter, r *http.Reques
 
 // HandleCreateBasicAuthIntegration creates a new basic auth integration in the DB
 func (app *App) HandleCreateBasicAuthIntegration(w http.ResponseWriter, r *http.Request) {
-	session, err := app.Store.Get(r, app.ServerConf.CookieName)
+	userID, err := app.getUserIDFromRequest(r)
 
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-
-	userID, _ := session.Values["user_id"].(uint)
 
 	projID, err := strconv.ParseUint(chi.URLParam(r, "project_id"), 0, 64)
 

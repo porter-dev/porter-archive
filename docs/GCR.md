@@ -8,13 +8,13 @@ Select **Create Service Account** and provide a name and brief description for t
 
 <img src="https://files.readme.io/aa8cda5-Screen_Shot_2020-06-24_at_4.03.33_PM.png" width="80%">
 
-After the service account has been created, you need to create a JSON key for your service account by going to **Actions** -> **Create key** and then selecting JSON as your key type. Once your JSON key file has downloaded, use the `porter connect gcr` command to add the registry to your project. 
+After the service account has been created, you need to create a JSON key for your service account by going to **Actions** -> **Create key** and then selecting JSON as your key type. Once your JSON key file has downloaded, use the `porter connect gcr` command to add the registry to your project.
 
 For example, for a key named `gcp-key-file.json` on Mac:
 
 ```diff
 $ cd ~/Downloads
-$ porter connect gcr 
+$ porter connect gcr
 Please provide the full path to a service account key file.
 Key file location: ./gcp-key-file.json
 + created gcp integration with id 3

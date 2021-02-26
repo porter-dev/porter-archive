@@ -2,7 +2,7 @@ import React, { Component } from "react";
 import styled from "styled-components";
 import category from "assets/category.svg";
 import integrations from "assets/integrations.svg";
-import filter from "assets/filter.svg";
+import rocket from "assets/rocket.png";
 import settings from "assets/settings.svg";
 
 import { Context } from "shared/Context";
@@ -112,19 +112,17 @@ class Sidebar extends Component<PropsType, StateType> {
             Dashboard
           </NavButton>
           <NavButton
-            onClick={() => this.props.history.push("templates")}
-            selected={currentView === "templates"}
+            onClick={() => this.props.history.push("launch")}
+            selected={currentView === "launch"}
           >
-            <Img src={filter} />
-            Templates
+            <Img src={rocket} />
+            Launch
           </NavButton>
           <NavButton
             selected={currentView === "integrations"}
-            /* 
-            onClick={() => {
-              setCurrentView('integrations')
-            }}
-            */
+            // onClick={() => {
+            //   this.props.history.push("integrations");
+            // }}
             onClick={() => {
               setCurrentModal("IntegrationsInstructionsModal", {});
             }}

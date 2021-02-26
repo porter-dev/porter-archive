@@ -1,8 +1,8 @@
-import aws from '../assets/aws.png';
-import digitalOcean from '../assets/do.png';
-import gcp from '../assets/gcp.png';
-import github from '../assets/github.png';
-import { InfraType } from '../shared/types';
+import aws from "../assets/aws.png";
+import digitalOcean from "../assets/do.png";
+import gcp from "../assets/gcp.png";
+import github from "../assets/github.png";
+import { InfraType } from "../shared/types";
 
 export const infraNames: any = {
   ecr: "Elastic Container Registry (ECR)",
@@ -20,10 +20,11 @@ export const integrationList: any = {
     label: "Kubernetes",
     buttonText: "Add a Cluster",
   },
-  'repo': {
-    icon: 'https://3.bp.blogspot.com/-xhNpNJJyQhk/XIe4GY78RQI/AAAAAAAAItc/ouueFUj2Hqo5dntmnKqEaBJR4KQ4Q2K3ACK4BGAYYCw/s1600/logo%2Bgit%2Bicon.png',
-    label: 'Git Repository',
-    buttonText: 'Link a Github Account',
+  repo: {
+    icon:
+      "https://3.bp.blogspot.com/-xhNpNJJyQhk/XIe4GY78RQI/AAAAAAAAItc/ouueFUj2Hqo5dntmnKqEaBJR4KQ4Q2K3ACK4BGAYYCw/s1600/logo%2Bgit%2Bicon.png",
+    label: "Git Repository",
+    buttonText: "Link a Github Account",
   },
   registry: {
     icon:
@@ -69,16 +70,16 @@ export const integrationList: any = {
   },
   do: {
     icon: digitalOcean,
-    label: 'DigitalOcean',
+    label: "DigitalOcean",
   },
-  'github': {
+  github: {
     icon: github,
-    label: 'GitHub',
+    label: "GitHub",
   },
-  'gitlab': {
-    icon: 'https://about.gitlab.com/images/press/logo/png/gitlab-icon-rgb.png',
-    label: 'Gitlab',
-  }
+  gitlab: {
+    icon: "https://about.gitlab.com/images/press/logo/png/gitlab-icon-rgb.png",
+    label: "Gitlab",
+  },
 };
 
 export const isAlphanumeric = (x: string | null) => {
@@ -93,4 +94,4 @@ export const getIgnoreCase = (object: any, key: string) => {
   return object[
     Object.keys(object).find((k) => k.toLowerCase() === key.toLowerCase())
   ];
-}
+};

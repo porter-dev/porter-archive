@@ -297,7 +297,7 @@ const Title = styled.div`
 
 const TitleSection = styled.div`
   display: flex;
-  margin-left: -42px;
+  margin-left: 0px;
   flex-direction: row;
   height: 40px;
   justify-content: space-between;

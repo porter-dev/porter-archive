@@ -1,7 +1,6 @@
 package forms
 
 import (
-	"fmt"
 	"net/url"
 	"strconv"
 
@@ -32,17 +31,14 @@ func (rf *ReleaseForm) PopulateHelmOptionsFromQueryParams(
 		if err != nil {
 			return err
 		}
-		fmt.Println("setting cluster")
 		rf.Cluster = cluster
 	}
 
 	if namespace, ok := vals["namespace"]; ok && len(namespace) == 1 {
-		fmt.Println("setting namespace")
 		rf.Namespace = namespace[0]
 	}
 
 	if storage, ok := vals["storage"]; ok && len(storage) == 1 {
-		fmt.Println("setting storage")
 		rf.Storage = storage[0]
 	}
 
@@ -129,4 +125,7 @@ type ChartTemplateForm struct {
 type InstallChartTemplateForm struct {
 	*ReleaseForm
 	*ChartTemplateForm
+
+	// optional git action config
+	GithubActionConfig *CreateGitActionOptional `json:"github_action,omitempty"`
 }

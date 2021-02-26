@@ -28,7 +28,7 @@ export default class ValuesForm extends Component<PropsType, StateType> {
   getInputValue = (item: FormElement) => {
     let key = item.name || item.variable;
     let value = this.props.metaState[key];
-    
+
     if (item.settings && item.settings.unit && value && value.includes) {
       value = value.split(item.settings.unit)[0];
     }
@@ -153,9 +153,9 @@ export default class ValuesForm extends Component<PropsType, StateType> {
               value={this.props.metaState[key]}
               setActiveValue={(val) => this.props.setMetaState({ [key]: val })}
               options={[
-                { value: 'aws', label: 'Amazon Web Services (AWS)' },
-                { value: 'gcp', label: 'Google Cloud Platform (GCP)' },
-                { value: 'do', label: 'DigitalOcean' },
+                { value: "aws", label: "Amazon Web Services (AWS)" },
+                { value: "gcp", label: "Google Cloud Platform (GCP)" },
+                { value: "do", label: "DigitalOcean" },
               ]}
               dropdownLabel=""
               label={item.label}

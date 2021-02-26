@@ -755,6 +755,16 @@ func New(a *api.App) *chi.Mux {
 
 		r.Method(
 			"GET",
+			"/projects/{project_id}/registries/dockerhub/token",
+			auth.DoesUserHaveProjectAccess(
+				requestlog.NewHandler(a.HandleGetProjectRegistryDockerhubToken, l),
+				mw.URLParam,
+				mw.WriteAccess,
+			),
+		)
+
+		r.Method(
+			"GET",
 			"/projects/{project_id}/registries/docr/token",
 			auth.DoesUserHaveProjectAccess(
 				requestlog.NewHandler(a.HandleGetProjectRegistryDOCRToken, l),
@@ -936,6 +946,20 @@ func New(a *api.App) *chi.Mux {
 				requestlog.NewHandler(a.HandleListProjectGitRepos, l),
 				mw.URLParam,
 				mw.ReadAccess,
+			),
+		)
+
+		r.Method(
+			"DELETE",
+			"/projects/{project_id}/gitrepos/{git_repo_id}",
+			auth.DoesUserHaveProjectAccess(
+				auth.DoesUserHaveGitRepoAccess(
+					requestlog.NewHandler(a.HandleDeleteProjectGitRepo, l),
+					mw.URLParam,
+					mw.URLParam,
+				),
+				mw.URLParam,
+				mw.WriteAccess,
 			),
 		)
 

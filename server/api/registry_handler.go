@@ -1,6 +1,7 @@
 package api
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"net/http"
 	"strconv"
@@ -158,6 +159,50 @@ func (app *App) HandleGetProjectRegistryECRToken(w http.ResponseWriter, r *http.
 				token = *output.AuthorizationData[0].AuthorizationToken
 				expiresAt = output.AuthorizationData[0].ExpiresAt
 			}
+		}
+	}
+
+	resp := &RegTokenResponse{
+		Token:     token,
+		ExpiresAt: expiresAt,
+	}
+
+	w.WriteHeader(http.StatusOK)
+
+	if err := json.NewEncoder(w).Encode(resp); err != nil {
+		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
+		return
+	}
+}
+
+// HandleGetProjectRegistryDockerhubToken gets a Dockerhub token for a registry
+func (app *App) HandleGetProjectRegistryDockerhubToken(w http.ResponseWriter, r *http.Request) {
+	projID, err := strconv.ParseUint(chi.URLParam(r, "project_id"), 0, 64)
+
+	if err != nil || projID == 0 {
+		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
+		return
+	}
+
+	// list registries and find one that matches the region
+	regs, err := app.Repo.Registry.ListRegistriesByProjectID(uint(projID))
+	var token string
+	var expiresAt *time.Time
+
+	for _, reg := range regs {
+		if reg.BasicIntegrationID != 0 && strings.Contains(reg.URL, "index.docker.io") {
+			basic, err := app.Repo.BasicIntegration.ReadBasicIntegration(reg.BasicIntegrationID)
+
+			if err != nil {
+				app.handleErrorDataRead(err, w)
+				return
+			}
+
+			token = base64.StdEncoding.EncodeToString([]byte(string(basic.Username) + ":" + string(basic.Password)))
+
+			// we'll just set an arbitrary 30-day expiry time (this is not enforced)
+			timeExpires := time.Now().Add(30 * 24 * 3600 * time.Second)
+			expiresAt = &timeExpires
 		}
 	}
 
@@ -441,32 +486,4 @@ func (app *App) HandleListImages(w http.ResponseWriter, r *http.Request) {
 		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
 		return
 	}
-
-	// ref, err := name.ParseReference("gcr.io/google-containers/pause")
-	// if err != nil {
-	// 	fmt.Println(err)
-	// 	return
-	// }
-
-	// img, err := remote.Image(ref)
-	// if err != nil {
-	// 	fmt.Println(err)
-	// 	return
-	// }
-	// fmt.Println(img.Size())
-
-	// ctx := r.Context()
-	// reg, err := name.NewRegistry("index.docker.io")
-	// if err != nil {
-	// 	fmt.Println("fuk")
-	// 	fmt.Println(err)
-	// 	return
-	// }
-
-	// stuff, err := remote.Catalog(ctx, reg, remote.WithAuthFromKeychain(authn.DefaultKeychain))
-	// if err != nil {
-	// 	fmt.Println(err)
-	// 	return
-	// }
-	// fmt.Println(stuff[0])
 }

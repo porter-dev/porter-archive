@@ -2,7 +2,6 @@ package api_test
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"strings"
 	"testing"
@@ -269,8 +268,6 @@ func publicIntBodyValidator(c *publicIntTest, tester *tester, t *testing.T) {
 
 	bytes := tester.rr.Body.Bytes()
 
-	fmt.Println(string(bytes))
-
 	json.Unmarshal(bytes, &gotBody)
 	json.Unmarshal([]byte(c.expBody), &expBody)
 
@@ -311,8 +308,6 @@ func basicIntBodyValidator(c *publicIntTest, tester *tester, t *testing.T) {
 	expBody := &ints.BasicIntegration{}
 
 	bytes := tester.rr.Body.Bytes()
-
-	fmt.Println(string(bytes))
 
 	json.Unmarshal(bytes, &gotBody)
 	json.Unmarshal([]byte(c.expBody), &expBody)

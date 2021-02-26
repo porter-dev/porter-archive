@@ -85,8 +85,6 @@ func GlobalStreamListener(
 	repo repository.Repository,
 	errorChan chan error,
 ) {
-	fmt.Println("starting global stream listener")
-
 	for {
 		xstreams, err := client.XReadGroup(
 			context.Background(),
@@ -97,8 +95,6 @@ func GlobalStreamListener(
 				Block:    0,
 			},
 		).Result()
-
-		fmt.Println(xstreams, err)
 
 		if err != nil {
 			errorChan <- err

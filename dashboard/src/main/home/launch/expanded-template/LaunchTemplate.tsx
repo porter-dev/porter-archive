@@ -439,81 +439,81 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
 
   // Display if current template uses source (image or repo)
   renderSourceSelectorContent = () => {
-    if (this.props.form?.hasSource) {
-      if (this.state.sourceType === "registry") {
-        return (
-          <>
-            <Subtitle>
-              Select the container image you would like to connect to this
-              template
-              {/* <Highlight onClick={() => this.setState({ sourceType: "repo" })}>
-                link a git repository
-              </Highlight> */}
-              .<Required>*</Required>
-            </Subtitle>
-            <DarkMatter />
-            <ImageSelector
-              selectedTag={this.state.selectedTag}
-              selectedImageUrl={this.state.selectedImageUrl}
-              setSelectedImageUrl={this.setSelectedImageUrl}
-              setSelectedTag={(x: string) => this.setState({ selectedTag: x })}
-              forceExpanded={true}
-            />
-            <br />
-          </>
-        );
-      } else {
-        return (
-          <>
-            <Subtitle>
-              Select a repo to connect to, then a Dockerfile to build from.
-              <Required>*</Required>
-            </Subtitle>
-            <ActionConfEditor
-              actionConfig={this.state.actionConfig}
-              branch={this.state.branch}
-              pathIsSet={this.state.pathIsSet}
-              setActionConfig={(actionConfig: ActionConfigType) =>
-                this.setState({ actionConfig }, () => {
-                  this.setSelectedImageUrl(
-                    this.state.actionConfig.image_repo_uri
-                  );
-                })
-              }
-              setBranch={(branch: string) => this.setState({ branch })}
-              setPath={(pathIsSet: boolean) => this.setState({ pathIsSet })}
-              reset={() => {
-                this.setState({
-                  actionConfig: { ...defaultActionConfig },
-                  branch: "",
-                  pathIsSet: false,
-                });
-              }}
-            />
-            <br />
-          </>
-        );
-      }
+    if (this.state.sourceType === "registry") {
+      return (
+        <>
+          <Subtitle>
+            Select the container image you would like to connect to this
+            template
+            {/* <Highlight onClick={() => this.setState({ sourceType: "repo" })}>
+              link a git repository
+            </Highlight> */}
+            .<Required>*</Required>
+          </Subtitle>
+          <DarkMatter />
+          <ImageSelector
+            selectedTag={this.state.selectedTag}
+            selectedImageUrl={this.state.selectedImageUrl}
+            setSelectedImageUrl={this.setSelectedImageUrl}
+            setSelectedTag={(x: string) => this.setState({ selectedTag: x })}
+            forceExpanded={true}
+          />
+          <br />
+        </>
+      );
+    } else {
+      return (
+        <>
+          <Subtitle>
+            Select a repo to connect to, then a Dockerfile to build from.
+            <Required>*</Required>
+          </Subtitle>
+          <ActionConfEditor
+            actionConfig={this.state.actionConfig}
+            branch={this.state.branch}
+            pathIsSet={this.state.pathIsSet}
+            setActionConfig={(actionConfig: ActionConfigType) =>
+              this.setState({ actionConfig }, () => {
+                this.setSelectedImageUrl(
+                  this.state.actionConfig.image_repo_uri
+                );
+              })
+            }
+            setBranch={(branch: string) => this.setState({ branch })}
+            setPath={(pathIsSet: boolean) => this.setState({ pathIsSet })}
+            reset={() => {
+              this.setState({
+                actionConfig: { ...defaultActionConfig },
+                branch: "",
+                pathIsSet: false,
+              });
+            }}
+          />
+          <br />
+        </>
+      );
     }
   };
 
   renderSourceSelector = () => {
-    return (
-      <>
-        <TabRegion
-          options={[
-            { label: "Registry", value: "registry" },
-            { label: "GitHub", value: "repo" },
-          ]}
-          currentTab={this.state.sourceType}
-          setCurrentTab={(x) => this.setState({ sourceType: x })}
-        >
-          <StyledSourceBox>
-            {this.renderSourceSelectorContent()}
-          </StyledSourceBox>
-        </TabRegion>
-      </>
-    );
+    if (this.props.form?.hasSource) {
+      return (
+        <>
+          <TabRegion
+            options={[
+              { label: "Registry", value: "registry" },
+              { label: "GitHub", value: "repo" },
+            ]}
+            currentTab={this.state.sourceType}
+            setCurrentTab={(x) => this.setState({ sourceType: x })}
+          >
+            <StyledSourceBox>
+              {this.renderSourceSelectorContent()}
+            </StyledSourceBox>
+          </TabRegion>
+        </>
+      );
+    }
   };
 
   render() {
@@ -524,20 +524,17 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
       <StyledLaunchTemplate>
         {
           name !== 'docker' && 
-          <HeaderSection>
-            {this.props.hideBackButton ? null : (
-              <Flex>
-                <i className="material-icons" onClick={this.props.hideLaunch}>
-                  keyboard_backspace
-                </i>
-              </Flex>
-            )}
-            <Template>
-              {icon
-                ? this.renderIcon(icon)
-                : this.renderIcon(currentTemplate.icon)}
-              {name}
-            </Template>
+            <HeaderSection>
+            <i
+              className="material-icons"
+              onClick={this.props.hideLaunch}
+            >
+              keyboard_backspace
+            </i>
+            {icon
+              ? this.renderIcon(icon)
+              : this.renderIcon(currentTemplate.icon)}
+            <Title>{name}</Title>
           </HeaderSection>
         }
         <DarkMatter antiHeight="-13px" />
@@ -604,6 +601,31 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
 
 LaunchTemplate.contextType = Context;
 
+const Title = styled.div`
+  font-size: 24px;
+  font-weight: 600;
+  font-family: "Work Sans", sans-serif;
+  margin-left: 10px;
+  border-radius: 2px;
+  color: #ffffff;
+`;
+
+const HeaderSection = styled.div`
+  display: flex;
+  align-items: center;
+
+  > i {
+    cursor: pointer;
+    font-size 24px;
+    color: #969Fbbaa;
+    padding: 3px;
+    border-radius: 100px;
+    :hover {
+      background: #ffffff11;
+    }
+  }
+`;
+
 const Heading = styled.div<{ isAtTop?: boolean }>`
   color: white;
   font-weight: 500;
@@ -612,9 +634,6 @@ const Heading = styled.div<{ isAtTop?: boolean }>`
   margin-top: ${(props) => (props.isAtTop ? "10px" : "30px")};
   display: flex;
   align-items: center;
-`;
-
-const HeaderSection = styled.div`
 `;
 
 const Warning = styled.span<{ highlight: boolean; makeFlush?: boolean }>`

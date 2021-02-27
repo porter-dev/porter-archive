@@ -383,7 +383,7 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
     if (this.state.devOpsMode) {
       tabOptions.push(
         { label: "Manifests", value: "list" },
-        { label: "Raw Values", value: "values" }
+        { label: "Helm Values", value: "values" }
       );
     }
 

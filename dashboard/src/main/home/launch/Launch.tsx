@@ -13,8 +13,8 @@ import hardcodedNames from "./hardcodedNameDict";
 import { Link } from "react-router-dom";
 
 const tabOptions = [
-  { label: "Launch service", value: "docker" },
-  { label: "Community Templates", value: "community" },
+  { label: "New Application", value: "docker" },
+  { label: "Community Add-ons", value: "community" },
 ];
 
 type PropsType = {};
@@ -162,7 +162,7 @@ export default class Templates extends Component<PropsType, StateType> {
     return (
       <TemplatesWrapper>
         <TitleSection>
-          <Title>Launch</Title>
+          <Title>Launch a Service</Title>
           <a
             href="https://docs.getporter.dev/docs/porter-templates"
             target="_blank"

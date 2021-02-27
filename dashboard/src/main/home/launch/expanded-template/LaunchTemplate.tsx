@@ -503,7 +503,7 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
         <TabRegion
           options={[
             { label: "Registry", value: "registry" },
-            { label: "Github", value: "repo" },
+            { label: "GitHub", value: "repo" },
           ]}
           currentTab={this.state.sourceType}
           setCurrentTab={(x) => this.setState({ sourceType: x })}
@@ -522,21 +522,48 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
 
     return (
       <StyledLaunchTemplate>
+        {
+          name !== 'docker' && 
+          <HeaderSection>
+            {this.props.hideBackButton ? null : (
+              <Flex>
+                <i className="material-icons" onClick={this.props.hideLaunch}>
+                  keyboard_backspace
+                </i>
+              </Flex>
+            )}
+            <Template>
+              {icon
+                ? this.renderIcon(icon)
+                : this.renderIcon(currentTemplate.icon)}
+              {name}
+            </Template>
+          </HeaderSection>
+        }
+        <DarkMatter antiHeight="-13px" />
+        <Heading isAtTop={true}>Name</Heading>
+        <Subtitle>
+          Randomly generated if left blank. 
+          <Warning
+            highlight={
+              !isAlphanumeric(this.state.templateName) &&
+              this.state.templateName !== ""
+            }
+          >
+            Lowercase letters, numbers, and "-" only.
+          </Warning>
+        </Subtitle>
+        <DarkMatter antiHeight="-29px" />
+        <InputRow
+          type="text"
+          value={this.state.templateName}
+          setValue={(x: string) => this.setState({ templateName: x })}
+          placeholder="ex: doctor-scientist"
+          width="100%"
+        />
+        <Heading>Destination</Heading>
+        <Subtitle>Specify the cluster and namespace you would like to deploy your application to.</Subtitle>
         <ClusterSection>
-          {this.props.hideBackButton ? null : (
-            <Flex>
-              <i className="material-icons" onClick={this.props.hideLaunch}>
-                keyboard_backspace
-              </i>
-            </Flex>
-          )}
-          <Template>
-            {icon
-              ? this.renderIcon(icon)
-              : this.renderIcon(currentTemplate.icon)}
-            {name}
-          </Template>
-          <i className="material-icons">arrow_right_alt</i>
           <ClusterLabel>
             <i className="material-icons">device_hub</i>Cluster
           </ClusterLabel>
@@ -568,26 +595,6 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
             closeOverlay={true}
           />
         </ClusterSection>
-        <Subtitle>
-          Template name
-          <Warning
-            highlight={
-              !isAlphanumeric(this.state.templateName) &&
-              this.state.templateName !== ""
-            }
-          >
-            (lowercase letters, numbers, and "-" only)
-          </Warning>
-          . (Optional)
-        </Subtitle>
-        <DarkMatter antiHeight="-27px" />
-        <InputRow
-          type="text"
-          value={this.state.templateName}
-          setValue={(x: string) => this.setState({ templateName: x })}
-          placeholder="ex: doctor-scientist"
-          width="100%"
-        />
         {this.renderSourceSelector()}
         {this.renderSettingsRegion()}
       </StyledLaunchTemplate>
@@ -596,6 +603,19 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
 }
 
 LaunchTemplate.contextType = Context;
+
+const Heading = styled.div<{ isAtTop?: boolean }>`
+  color: white;
+  font-weight: 500;
+  font-size: 16px;
+  margin-bottom: 5px;
+  margin-top: ${(props) => (props.isAtTop ? "10px" : "30px")};
+  display: flex;
+  align-items: center;
+`;
+
+const HeaderSection = styled.div`
+`;
 
 const Warning = styled.span<{ highlight: boolean; makeFlush?: boolean }>`
   color: ${(props) => (props.highlight ? "#f5cb42" : "")};
@@ -637,7 +657,7 @@ const DarkMatter = styled.div<{ antiHeight?: string }>`
 `;
 
 const Subtitle = styled.div`
-  padding: 11px 0px 20px;
+  padding: 11px 0px 16px;
   font-family: "Work Sans", sans-serif;
   font-size: 13px;
   color: #aaaabb;
@@ -694,8 +714,9 @@ const ClusterSection = styled.div`
   color: #ffffff;
   font-family: "Work Sans", sans-serif;
   font-size: 14px;
+  margin-top: 2px;
   font-weight: 500;
-  margin-bottom: 15px;
+  margin-bottom: 22px;
 
   > i {
     font-size: 25px;

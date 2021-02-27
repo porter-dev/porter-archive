@@ -162,7 +162,7 @@ export default class Templates extends Component<PropsType, StateType> {
     return (
       <TemplatesWrapper>
         <TitleSection>
-          <Title>Launch a Service</Title>
+          <Title>Launch</Title>
           <a
             href="https://docs.getporter.dev/docs/porter-templates"
             target="_blank"

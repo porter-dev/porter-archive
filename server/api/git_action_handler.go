@@ -121,7 +121,7 @@ func (app *App) createGitActionFromForm(
 	})
 
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		app.handleErrorInternal(err, w)
 		return nil
 	}
 
@@ -143,7 +143,7 @@ func (app *App) createGitActionFromForm(
 	_, err = gaRunner.Setup()
 
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		app.handleErrorInternal(err, w)
 		return nil
 	}
 

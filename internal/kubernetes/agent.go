@@ -146,7 +146,6 @@ func (a *Agent) GetPodLogs(namespace string, name string, conn *websocket.Conn) 
 			if _, _, err := conn.ReadMessage(); err != nil {
 				defer conn.Close()
 				errorchan <- nil
-				fmt.Println("Successfully closed log stream")
 				return
 			}
 		}
@@ -230,7 +229,6 @@ func (a *Agent) StreamControllerStatus(conn *websocket.Conn, kind string) error 
 			if _, _, err := conn.ReadMessage(); err != nil {
 				defer conn.Close()
 				defer close(stopper)
-				defer fmt.Println("Successfully closed controller status stream")
 				errorchan <- nil
 				return
 			}

@@ -60,6 +60,9 @@ export default class ValuesWrapper extends Component<PropsType, StateType> {
               case "array-input":
                 metaState[key] = def ? def : [];
                 break;
+              case "key-value-array":
+                metaState[key] = def ? def : {};
+                break;
               case "number-input":
                 metaState[key] = def.toString() ? def : "";
                 break;

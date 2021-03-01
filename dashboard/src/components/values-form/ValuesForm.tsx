@@ -12,7 +12,8 @@ import Helper from "./Helper";
 import Heading from "./Heading";
 import ExpandableResource from "../ExpandableResource";
 import VeleroForm from "../forms/VeleroForm";
-import InputArray from "./InputArray";
+import InputArray from './InputArray';
+import KeyValueArray from './KeyValueArray';
 
 type PropsType = {
   sections?: Section[];
@@ -22,6 +23,7 @@ type PropsType = {
 
 type StateType = any;
 
+// Requires an internal representation unlike other values components because metaState value underdetermines input order
 export default class ValuesForm extends Component<PropsType, StateType> {
   getInputValue = (item: FormElement) => {
     let key = item.name || item.variable;
@@ -67,6 +69,16 @@ export default class ValuesForm extends Component<PropsType, StateType> {
               toggle={() =>
                 this.props.setMetaState({ [key]: !this.props.metaState[key] })
               }
+              label={item.label}
+            />
+          );
+        case "key-value-array":
+          return (
+            <KeyValueArray
+              values={this.props.metaState[key]}
+              setValues={(x: any) => {
+                this.props.setMetaState({ [key]: x });
+              }}
               label={item.label}
             />
           );

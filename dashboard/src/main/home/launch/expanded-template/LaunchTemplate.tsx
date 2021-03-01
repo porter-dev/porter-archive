@@ -321,7 +321,6 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
     if (this.props.currentTemplate.name !== "docker") {
       this.setState({ saveValuesStatus: "" });
     }
-
     // Retrieve tab options
     let tabOptions = [] as ChoiceType[];
     this.props.form?.tabs.map((tab: any, i: number) => {
@@ -329,8 +328,8 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
         tabOptions.push({ value: tab.name, label: tab.label });
       }
     });
-    console.log(tabOptions);
-    this.setState({ tabOptions, currentTab: tabOptions[0]["value"] });
+
+    this.setState({ tabOptions, currentTab: tabOptions[0] && tabOptions[0]["value"] });
 
     // TODO: query with selected filter once implemented
     let { currentProject, currentCluster } = this.context;
@@ -496,24 +495,26 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
   };
 
   renderSourceSelector = () => {
-    if (this.props.form?.hasSource) {
-      return (
-        <>
-          <TabRegion
-            options={[
-              { label: "Registry", value: "registry" },
-              { label: "Github", value: "repo" },
-            ]}
-            currentTab={this.state.sourceType}
-            setCurrentTab={(x) => this.setState({ sourceType: x })}
-          >
-            <StyledSourceBox>
-              {this.renderSourceSelectorContent()}
-            </StyledSourceBox>
-          </TabRegion>
-        </>
-      );
+    if (!this.props.form?.hasSource) {
+      return;
     }
+
+    return (
+      <>
+        <TabRegion
+          options={[
+            { label: "Registry", value: "registry" },
+            { label: "Github", value: "repo" },
+          ]}
+          currentTab={this.state.sourceType}
+          setCurrentTab={(x) => this.setState({ sourceType: x })}
+        >
+          <StyledSourceBox>
+            {this.renderSourceSelectorContent()}
+          </StyledSourceBox>
+        </TabRegion>
+      </>
+    );
   };
 
   render() {

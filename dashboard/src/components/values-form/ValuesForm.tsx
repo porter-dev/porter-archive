@@ -12,8 +12,8 @@ import Helper from "./Helper";
 import Heading from "./Heading";
 import ExpandableResource from "../ExpandableResource";
 import VeleroForm from "../forms/VeleroForm";
-import InputArray from './InputArray';
-import KeyValueArray from './KeyValueArray';
+import InputArray from "./InputArray";
+import KeyValueArray from "./KeyValueArray";
 
 type PropsType = {
   sections?: Section[];
@@ -118,7 +118,7 @@ export default class ValuesForm extends Component<PropsType, StateType> {
               type="password"
               value={this.getInputValue(item)}
               setValue={(x: string) => {
-                console.log("string input", x)
+                console.log("string input", x);
                 if (item.settings && item.settings.unit && x !== "") {
                   x = x + item.settings.unit;
                 }

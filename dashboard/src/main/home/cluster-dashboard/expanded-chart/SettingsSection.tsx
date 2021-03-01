@@ -146,7 +146,7 @@ export default class SettingsSection extends Component<PropsType, StateType> {
   */
   renderSourceSection = () => {
     if (!this.props.currentChart.form.hasSource) {
-      return 
+      return;
     }
 
     if (this.state.action.git_repo.length > 0) {
@@ -236,7 +236,7 @@ export default class SettingsSection extends Component<PropsType, StateType> {
 
   renderWebhookSection = () => {
     if (!this.props.currentChart.form.hasSource) {
-      return 
+      return;
     }
 
     if (true || this.state.webhookToken) {

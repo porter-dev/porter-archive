@@ -15,7 +15,7 @@ type StateType = {
 export default class KeyValueArray extends Component<PropsType, StateType> {
   state = {
     values: [] as any[],
-  }
+  };
 
   componentDidMount() {
     let arr = [] as any[];
@@ -28,10 +28,10 @@ export default class KeyValueArray extends Component<PropsType, StateType> {
   valuesToObject = () => {
     let obj = {} as any;
     this.state.values.forEach((entry: any, i: number) => {
-      obj[entry.key] = entry.value; 
+      obj[entry.key] = entry.value;
     });
     return obj;
-  }
+  };
 
   renderInputList = () => {
     return (
@@ -64,13 +64,15 @@ export default class KeyValueArray extends Component<PropsType, StateType> {
                   this.props.setValues(obj);
                 }}
               />
-              <DeleteButton onClick={() => {
-                this.state.values.splice(i, 1);
-                this.setState({ values: this.state.values });
+              <DeleteButton
+                onClick={() => {
+                  this.state.values.splice(i, 1);
+                  this.setState({ values: this.state.values });
 
-                let obj = this.valuesToObject();
-                this.props.setValues(obj);
-              }}>
+                  let obj = this.valuesToObject();
+                  this.props.setValues(obj);
+                }}
+              >
                 <i className="material-icons">cancel</i>
               </DeleteButton>
             </InputWrapper>
@@ -78,21 +80,19 @@ export default class KeyValueArray extends Component<PropsType, StateType> {
         })}
       </>
     );
-  }
+  };
 
   render() {
     return (
       <StyledInputArray>
         <Label>{this.props.label}</Label>
-        {
-          this.state.values.length === 0
-          ? <></>
-          : this.renderInputList()
-        }
-        <AddRowButton onClick={() => {
-          this.state.values.push({ key: '', value: '' });
-          this.setState({ values: this.state.values });
-        }}>
+        {this.state.values.length === 0 ? <></> : this.renderInputList()}
+        <AddRowButton
+          onClick={() => {
+            this.state.values.push({ key: "", value: "" });
+            this.setState({ values: this.state.values });
+          }}
+        >
           <i className="material-icons">add</i> Add Row
         </AddRowButton>
       </StyledInputArray>
@@ -139,7 +139,7 @@ const DeleteButton = styled.div`
   margin-left: 8px;
   margin-top: -3px;
   justify-content: center;
-  
+
   > i {
     font-size: 17px;
     color: #ffffff44;

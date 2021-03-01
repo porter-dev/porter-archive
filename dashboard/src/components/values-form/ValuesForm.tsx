@@ -98,6 +98,24 @@ export default class ValuesForm extends Component<PropsType, StateType> {
               unit={item.settings ? item.settings.unit : null}
             />
           );
+        case "string-input-password":
+          return (
+            <InputRow
+              key={i}
+              isRequired={item.required}
+              type="password"
+              value={this.getInputValue(item)}
+              setValue={(x: string) => {
+                console.log("string input", x)
+                if (item.settings && item.settings.unit && x !== "") {
+                  x = x + item.settings.unit;
+                }
+                this.props.setMetaState({ [key]: x });
+              }}
+              label={item.label}
+              unit={item.settings ? item.settings.unit : null}
+            />
+          );
         case "number-input":
           return (
             <InputRow

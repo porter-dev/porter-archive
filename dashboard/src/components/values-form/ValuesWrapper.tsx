@@ -55,6 +55,8 @@ export default class ValuesWrapper extends Component<PropsType, StateType> {
               case "string-input":
                 metaState[key] = def ? def : "";
                 break;
+              case "string-input-password":
+                metaState[key] = def ? def : item.settings.default;
               case "array-input":
                 metaState[key] = def ? def : [];
                 break;

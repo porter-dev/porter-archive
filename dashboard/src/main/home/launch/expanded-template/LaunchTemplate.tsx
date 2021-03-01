@@ -103,7 +103,7 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
   };
 
   onSubmitAddon = (wildcard?: any) => {
-    let { currentCluster, currentProject } = this.context;
+    let { currentCluster, currentProject, setCurrentError } = this.context;
     let name =
       this.state.templateName || randomWords({ exactly: 3, join: "-" });
     this.setState({ saveValuesStatus: "loading" });
@@ -146,6 +146,7 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
       })
       .catch((err) => {
         this.setState({ saveValuesStatus: "error" });
+        setCurrentError(err.response.data.errors[0]);
         posthog.capture("Failed to deploy template", {
           name: this.props.currentTemplate.name,
           namespace: this.state.selectedNamespace,
@@ -315,7 +316,10 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
       }
     });
 
-    this.setState({ tabOptions, currentTab: tabOptions[0] && tabOptions[0]["value"] });
+    this.setState({
+      tabOptions,
+      currentTab: tabOptions[0] && tabOptions[0]["value"],
+    });
 
     // TODO: query with selected filter once implemented
     let { currentProject, currentCluster } = this.context;
@@ -509,13 +513,9 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
 
     return (
       <StyledLaunchTemplate>
-        {
-          name !== 'docker' && 
-            <HeaderSection>
-            <i
-              className="material-icons"
-              onClick={this.props.hideLaunch}
-            >
+        {name !== "docker" && (
+          <HeaderSection>
+            <i className="material-icons" onClick={this.props.hideLaunch}>
               keyboard_backspace
             </i>
             {icon
@@ -523,11 +523,11 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
               : this.renderIcon(currentTemplate.icon)}
             <Title>{name}</Title>
           </HeaderSection>
-        }
+        )}
         <DarkMatter antiHeight="-13px" />
-        <Heading isAtTop={true}>Name</Heading>
+        <Heading isAtTop={name !== "docker"}>Name</Heading>
         <Subtitle>
-          Randomly generated if left blank. 
+          Randomly generated if left blank.
           <Warning
             highlight={
               !isAlphanumeric(this.state.templateName) &&
@@ -546,7 +546,10 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
           width="100%"
         />
         <Heading>Destination</Heading>
-        <Subtitle>Specify the cluster and namespace you would like to deploy your application to.</Subtitle>
+        <Subtitle>
+          Specify the cluster and namespace you would like to deploy your
+          application to.
+        </Subtitle>
         <ClusterSection>
           <ClusterLabel>
             <i className="material-icons">device_hub</i>Cluster
@@ -618,7 +621,7 @@ const Heading = styled.div<{ isAtTop?: boolean }>`
   font-weight: 500;
   font-size: 16px;
   margin-bottom: 5px;
-  margin-top: ${(props) => (props.isAtTop ? "10px" : "30px")};
+  margin-top: ${(props) => (props.isAtTop ? "30px" : "10px")};
   display: flex;
   align-items: center;
 `;

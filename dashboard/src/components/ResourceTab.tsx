@@ -259,6 +259,7 @@ const StatusColor = styled.div`
 
 const ResourceName = styled.div`
   color: #ffffff;
+  max-width: 40%;
   margin-left: ${(props: { showKindLabels: boolean }) =>
     props.showKindLabels ? "10px" : ""};
   text-transform: none;

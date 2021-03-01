@@ -64,14 +64,14 @@ export default class ActionDetails extends Component<PropsType, StateType> {
           setValue={(x: string) => console.log(x)}
         />
         <Label>Target Image URL</Label>
-          <ImageSelector
-            selectedTag="latest"
-            selectedImageUrl={this.props.actionConfig.image_repo_uri}
-            setSelectedImageUrl={this.setURL}
-            setSelectedTag={() => null}
-            forceExpanded={true}
-            noTagSelection={true}
-          />
+        <ImageSelector
+          selectedTag="latest"
+          selectedImageUrl={this.props.actionConfig.image_repo_uri}
+          setSelectedImageUrl={this.setURL}
+          setSelectedTag={() => null}
+          forceExpanded={true}
+          noTagSelection={true}
+        />
       </Holder>
     );
   };

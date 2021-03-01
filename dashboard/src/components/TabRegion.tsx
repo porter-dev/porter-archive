@@ -77,7 +77,7 @@ const Div = styled.div`
 `;
 
 const TabContents = styled.div`
-  height: calc(100% - 60px);
+  height: calc(100% - 80px);
 `;
 
 const Gap = styled.div`

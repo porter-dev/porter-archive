@@ -82,6 +82,7 @@ export interface FormYAML {
   name?: string;
   icon?: string;
   description?: string;
+  hasSource?: string;
   tags?: string[];
   tabs?: {
     name: string;

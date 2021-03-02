@@ -301,7 +301,7 @@ const TitleSection = styled.div`
   flex-direction: row;
   height: 40px;
   justify-content: space-between;
-  width: calc(100% + 42px);
+  width: 100%;
   align-items: center;
 `;
 

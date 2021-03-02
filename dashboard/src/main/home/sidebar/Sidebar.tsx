@@ -298,7 +298,7 @@ const DiscordButton = styled.a`
   font-weight: bold;
   cursor: pointer;
   :hover {
-    >img {
+    > img {
       opacity: 60%;
     }
     color: #ffffff88;

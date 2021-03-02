@@ -180,7 +180,7 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
     }
 
     if (this.state.sourceType === "repo") {
-      imageUrl = "hello-world";
+      imageUrl = "porterdev/hello-porter";
       tag = "latest";
     }
 

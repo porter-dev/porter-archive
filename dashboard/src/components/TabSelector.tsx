@@ -95,10 +95,10 @@ const Tab = styled.div`
 
 const StyledTabSelector = styled.div`
   display: flex;
-  width: calc(100% - 4px);
+  width: calc(100% - 2px);
   align-items: center;
   border-bottom: 1px solid #aaaabb55;
   padding-bottom: 1px;
-  margin-left: 2px;
+  margin-left: 1px;
   position: relative;
 `;

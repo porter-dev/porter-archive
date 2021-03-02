@@ -93,7 +93,7 @@ export default class ImageSelector extends Component<PropsType, StateType> {
                         }) == registries.length
                           ? true
                           : false;
-                      
+
                       this.setState({
                         images,
                         loading: false,
@@ -102,11 +102,9 @@ export default class ImageSelector extends Component<PropsType, StateType> {
                     } else {
                       this.setState({
                         images,
-                      })
+                      });
                     }
 
-                   
-                    
                     resolveToNextController();
                   });
               }

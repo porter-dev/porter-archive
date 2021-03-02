@@ -317,8 +317,6 @@ func (r *Registry) listPrivateRegistryRepositories(
 			return nil, err
 		}
 
-		fmt.Println("AUTH IS", string(basic.Username), string(basic.Password))
-
 		req.SetBasicAuth(string(basic.Username), string(basic.Password))
 
 		resp, err = client.Do(req)
@@ -329,8 +327,6 @@ func (r *Registry) listPrivateRegistryRepositories(
 	}
 
 	gcrResp := gcrRepositoryResp{}
-
-	fmt.Println("STATUS IS", resp.Status)
 
 	if err := json.NewDecoder(resp.Body).Decode(&gcrResp); err != nil {
 		return nil, fmt.Errorf("Could not read private registry repositories: %v", err)

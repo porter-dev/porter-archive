@@ -2,7 +2,6 @@ package provisioner
 
 import (
 	"context"
-	"fmt"
 
 	redis "github.com/go-redis/redis/v8"
 	"github.com/gorilla/websocket"
@@ -39,7 +38,6 @@ func ResourceStream(client *redis.Client, streamName string, conn *websocket.Con
 			).Result()
 
 			if err != nil {
-				fmt.Println("ERROR XREAD", err)
 				return
 			}
 

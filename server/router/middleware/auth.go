@@ -670,8 +670,6 @@ func (auth *Auth) isLoggedIn(w http.ResponseWriter, r *http.Request) bool {
 
 	tok := auth.getTokenFromRequest(r)
 
-	fmt.Println("CHECKED TOKEN FROM REQUEST", tok)
-
 	if tok != nil {
 		return true
 	}
@@ -680,7 +678,7 @@ func (auth *Auth) isLoggedIn(w http.ResponseWriter, r *http.Request) bool {
 	if err != nil {
 		session.Values["authenticated"] = false
 		if err := session.Save(r, w); err != nil {
-			fmt.Println("error while saving session in isLoggedIn", err)
+			return false
 		}
 		return false
 	}

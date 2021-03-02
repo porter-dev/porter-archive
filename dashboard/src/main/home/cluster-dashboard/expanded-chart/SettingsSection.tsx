@@ -145,6 +145,10 @@ export default class SettingsSection extends Component<PropsType, StateType> {
     </Helper>
   */
   renderSourceSection = () => {
+    if (!this.props.currentChart.form.hasSource) {
+      return;
+    }
+
     if (this.state.action.git_repo.length > 0) {
       return (
         <>
@@ -231,6 +235,10 @@ export default class SettingsSection extends Component<PropsType, StateType> {
   };
 
   renderWebhookSection = () => {
+    if (!this.props.currentChart.form.hasSource) {
+      return;
+    }
+
     if (true || this.state.webhookToken) {
       let webhookText = `curl -X POST 'https://dashboard.getporter.dev/api/webhooks/deploy/${this.state.webhookToken}?commit=???&repository=???'`;
       return (

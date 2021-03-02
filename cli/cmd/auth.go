@@ -200,6 +200,9 @@ func loginManual() error {
 		return err
 	}
 
+	// set the token to empty since this is manual (cookie-based) login
+	setToken("")
+
 	color.New(color.FgGreen).Println("Successfully logged in!")
 
 	// get a list of projects, and set the current project

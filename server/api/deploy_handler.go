@@ -147,6 +147,7 @@ func (app *App) HandleDeployTemplate(w http.ResponseWriter, r *http.Request) {
 			DockerfilePath: form.GithubActionConfig.DockerfilePath,
 			GitRepoID:      form.GithubActionConfig.GitRepoID,
 			BuildEnv:       form.GithubActionConfig.BuildEnv,
+			RegistryID:     form.GithubActionConfig.RegistryID,
 		}
 
 		// validate the form

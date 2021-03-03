@@ -7,11 +7,12 @@ import (
 // CreateGitAction represents the accepted values for creating a
 // github action integration
 type CreateGitAction struct {
-	ReleaseID      uint   `json:"release_id" form:"required"`
-	GitRepo        string `json:"git_repo" form:"required"`
-	ImageRepoURI   string `json:"image_repo_uri" form:"required"`
-	DockerfilePath string `json:"dockerfile_path" form:"required"`
-	GitRepoID      uint   `json:"git_repo_id" form:"required"`
+	ReleaseID      uint              `json:"release_id" form:"required"`
+	GitRepo        string            `json:"git_repo" form:"required"`
+	ImageRepoURI   string            `json:"image_repo_uri" form:"required"`
+	DockerfilePath string            `json:"dockerfile_path" form:"required"`
+	GitRepoID      uint              `json:"git_repo_id" form:"required"`
+	BuildEnv       map[string]string `json:"env"`
 }
 
 // ToGitActionConfig converts the form to a gorm git action config model
@@ -26,8 +27,9 @@ func (ca *CreateGitAction) ToGitActionConfig() (*models.GitActionConfig, error) 
 }
 
 type CreateGitActionOptional struct {
-	GitRepo        string `json:"git_repo"`
-	ImageRepoURI   string `json:"image_repo_uri"`
-	DockerfilePath string `json:"dockerfile_path"`
-	GitRepoID      uint   `json:"git_repo_id"`
+	GitRepo        string            `json:"git_repo"`
+	ImageRepoURI   string            `json:"image_repo_uri"`
+	DockerfilePath string            `json:"dockerfile_path"`
+	GitRepoID      uint              `json:"git_repo_id"`
+	BuildEnv       map[string]string `json:"env"`
 }

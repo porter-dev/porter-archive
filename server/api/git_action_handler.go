@@ -138,6 +138,7 @@ func (app *App) createGitActionFromForm(
 		DockerFilePath: gitAction.DockerfilePath,
 		ImageRepoURL:   gitAction.ImageRepoURI,
 		PorterToken:    encoded,
+		BuildEnv:       form.BuildEnv,
 	}
 
 	_, err = gaRunner.Setup()

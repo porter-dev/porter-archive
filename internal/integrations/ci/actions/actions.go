@@ -26,6 +26,7 @@ type GithubActions struct {
 
 	WebhookToken string
 	PorterToken  string
+	BuildEnv     map[string]string
 	ProjectID    uint
 	ReleaseName  string
 
@@ -64,6 +65,13 @@ func (g *GithubActions) Setup() (string, error) {
 
 	// create a new secret with a porter token
 	err = g.createGithubSecret(client, g.getPorterTokenSecretName(), g.PorterToken)
+
+	if err != nil {
+		return "", err
+	}
+
+	// create a new secret with the build variables
+	err = g.createEnvSecret(client)
 
 	if err != nil {
 		return "", err
@@ -123,7 +131,7 @@ func (g *GithubActions) GetGithubActionYAML() ([]byte, error) {
 					getCheckoutCodeStep(),
 					getDownloadPorterStep(),
 					getConfigurePorterStep(g.getPorterTokenSecretName()),
-					getDockerBuildPushStep(g.DockerFilePath, g.ImageRepoURL),
+					getDockerBuildPushStep(g.getBuildEnvSecretName(), g.DockerFilePath, g.ImageRepoURL),
 					deployPorterWebhookStep(g.getWebhookSecretName(), g.ImageRepoURL),
 				},
 			},
@@ -195,8 +203,27 @@ func (g *GithubActions) createGithubSecret(
 	return nil
 }
 
+func (g *GithubActions) createEnvSecret(client *github.Client) error {
+	// convert the env object to a string
+	lines := make([]string, 0)
+
+	for key, val := range g.BuildEnv {
+		lines = append(lines, fmt.Sprintf(`%s=%s`, key, val))
+	}
+
+	secretName := g.getBuildEnvSecretName()
+
+	return g.createGithubSecret(client, secretName, strings.Join(lines, "\n"))
+}
+
 func (g *GithubActions) getWebhookSecretName() string {
 	return fmt.Sprintf("WEBHOOK_%s", strings.Replace(
+		strings.ToUpper(g.ReleaseName), "-", "_", -1),
+	)
+}
+
+func (g *GithubActions) getBuildEnvSecretName() string {
+	return fmt.Sprintf("ENV_%s", strings.Replace(
 		strings.ToUpper(g.ReleaseName), "-", "_", -1),
 	)
 }

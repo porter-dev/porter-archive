@@ -13,6 +13,7 @@ import (
 	"github.com/porter-dev/porter/internal/forms"
 	"github.com/porter-dev/porter/internal/integrations/ci/actions"
 	"github.com/porter-dev/porter/internal/models"
+	"github.com/porter-dev/porter/internal/registry"
 )
 
 // HandleCreateGitAction creates a new Github action in a repository for a given
@@ -79,6 +80,33 @@ func (app *App) createGitActionFromForm(
 	if err := app.validator.Struct(form); err != nil {
 		app.handleErrorFormValidation(err, ErrProjectValidateFields, w)
 		return nil
+	}
+
+	// if the registry was provisioned through Porter, create a repository if necessary
+	if form.RegistryID != 0 {
+		// read the registry
+		reg, err := app.Repo.Registry.ReadRegistry(form.RegistryID)
+
+		if err != nil {
+			app.handleErrorDataRead(err, w)
+			return nil
+		}
+
+		if reg.InfraID != 0 {
+			_reg := registry.Registry(*reg)
+			regAPI := &_reg
+
+			// parse the name from the registry
+			nameSpl := strings.Split(form.ImageRepoURI, "/")
+			repoName := nameSpl[len(nameSpl)-1]
+
+			err := regAPI.CreateRepository(*app.Repo, repoName)
+
+			if err != nil {
+				app.handleErrorInternal(err, w)
+				return nil
+			}
+		}
 	}
 
 	// convert the form to a git action config

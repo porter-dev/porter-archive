@@ -5,6 +5,7 @@ import posthog from "posthog-js";
 import _ from "lodash";
 import { Context } from "shared/Context";
 import api from "shared/api";
+import close from "assets/close.png";
 
 import {
   ActionConfigType,
@@ -66,7 +67,7 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
     selectedCluster: this.context.currentCluster.name,
     selectedNamespace: "default",
     selectedImageUrl: "" as string | null,
-    sourceType: "registry",
+    sourceType: "",
     templateName: "",
     selectedTag: "" as string | null,
     tabOptions: [] as ChoiceType[],
@@ -390,6 +391,7 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
     if (this.state.tabOptions.length > 0) {
       return (
         <>
+          <Heading>Additional Settings</Heading>
           <Subtitle>
             Configure additional settings for this template. (Optional)
           </Subtitle>
@@ -428,18 +430,45 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
 
   // Display if current template uses source (image or repo)
   renderSourceSelectorContent = () => {
-    if (this.state.sourceType === "registry") {
+    if (this.state.sourceType === "") {
       return (
-        <>
+        <BlockList>
+          <Block
+            onClick={() => {
+              this.setState({ sourceType: "repo" });
+            }}
+          >
+            <BlockIcon src="https://3.bp.blogspot.com/-xhNpNJJyQhk/XIe4GY78RQI/AAAAAAAAItc/ouueFUj2Hqo5dntmnKqEaBJR4KQ4Q2K3ACK4BGAYYCw/s1600/logo%2Bgit%2Bicon.png" />
+            <BlockTitle>Git Repository</BlockTitle>
+            <BlockDescription>
+              Deploy using source from a Git repo.
+            </BlockDescription>
+          </Block>
+          <Block
+            onClick={() => {
+              this.setState({ sourceType: "registry" });
+            }}
+          >
+            <BlockIcon src="https://cdn4.iconfinder.com/data/icons/logos-and-brands/512/97_Docker_logo_logos-512.png" />
+            <BlockTitle>Docker Registry</BlockTitle>
+            <BlockDescription>
+              Deploy an already containerized application.
+            </BlockDescription>
+          </Block>
+        </BlockList>
+      );
+    } else if (this.state.sourceType === "registry") {
+      return (
+        <StyledSourceBox>
+          <CloseButton onClick={() => this.setState({ sourceType: "" })}>
+            <CloseButtonImg src={close} />
+          </CloseButton>
           <Subtitle>
-            Select the container image you would like to connect to this
-            template
-            {/* <Highlight onClick={() => this.setState({ sourceType: "repo" })}>
-              link a git repository
-            </Highlight> */}
-            .<Required>*</Required>
+            Specify the container image you would like to connect to this
+            template.
+            <Required>*</Required>
           </Subtitle>
-          <DarkMatter />
+          <DarkMatter antiHeight="-4px" />
           <ImageSelector
             selectedTag={this.state.selectedTag}
             selectedImageUrl={this.state.selectedImageUrl}
@@ -448,15 +477,19 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
             forceExpanded={true}
           />
           <br />
-        </>
+        </StyledSourceBox>
       );
     } else {
       return (
-        <>
+        <StyledSourceBox>
+          <CloseButton onClick={() => this.setState({ sourceType: "" })}>
+            <CloseButtonImg src={close} />
+          </CloseButton>
           <Subtitle>
             Select a repo to connect to, then a Dockerfile to build from.
             <Required>*</Required>
           </Subtitle>
+          <DarkMatter antiHeight="-4px" />
           <ActionConfEditor
             actionConfig={this.state.actionConfig}
             branch={this.state.branch}
@@ -479,30 +512,20 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
             }}
           />
           <br />
-        </>
+        </StyledSourceBox>
       );
     }
   };
 
   renderSourceSelector = () => {
-    if (!this.props.form?.hasSource) {
-      return;
-    }
-
     return (
       <>
-        <TabRegion
-          options={[
-            { label: "Registry", value: "registry" },
-            { label: "Github", value: "repo" },
-          ]}
-          currentTab={this.state.sourceType}
-          setCurrentTab={(x) => this.setState({ sourceType: x })}
-        >
-          <StyledSourceBox>
-            {this.renderSourceSelectorContent()}
-          </StyledSourceBox>
-        </TabRegion>
+        <Heading>Deployment Method</Heading>
+        <Subtitle>
+          Choose the deployment method you would like to use for this
+          application.
+        </Subtitle>
+        {this.renderSourceSelectorContent()}
       </>
     );
   };
@@ -525,7 +548,7 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
           </HeaderSection>
         )}
         <DarkMatter antiHeight="-13px" />
-        <Heading isAtTop={name !== "docker"}>Name</Heading>
+        <Heading isAtTop={true}>Name</Heading>
         <Subtitle>
           Randomly generated if left blank.
           <Warning
@@ -545,6 +568,9 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
           placeholder="ex: doctor-scientist"
           width="100%"
         />
+
+        {this.props.form?.hasSource && this.renderSourceSelector()}
+
         <Heading>Destination</Heading>
         <Subtitle>
           Specify the cluster and namespace you would like to deploy your
@@ -582,7 +608,6 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
             closeOverlay={true}
           />
         </ClusterSection>
-        {this.renderSourceSelector()}
         {this.renderSettingsRegion()}
       </StyledLaunchTemplate>
     );
@@ -590,6 +615,104 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
 }
 
 LaunchTemplate.contextType = Context;
+
+const CloseButton = styled.div`
+  position: absolute;
+  display: block;
+  width: 40px;
+  height: 40px;
+  padding: 13px 0 12px 0;
+  z-index: 1;
+  text-align: center;
+  border-radius: 50%;
+  right: 15px;
+  top: 12px;
+  cursor: pointer;
+  :hover {
+    background-color: #ffffff11;
+  }
+`;
+
+const CloseButtonImg = styled.img`
+  width: 14px;
+  margin: 0 auto;
+`;
+
+const BlockIcon = styled.img<{ bw?: boolean }>`
+  height: 38px;
+  padding: 2px;
+  margin-top: 30px;
+  margin-bottom: 15px;
+  filter: ${(props) => (props.bw ? "grayscale(1)" : "")};
+`;
+
+const BlockDescription = styled.div`
+  margin-bottom: 12px;
+  color: #ffffff66;
+  text-align: center;
+  font-weight: default;
+  font-size: 13px;
+  padding: 0px 25px;
+  height: 2.4em;
+  font-size: 12px;
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+`;
+
+const BlockTitle = styled.div`
+  margin-bottom: 12px;
+  width: 80%;
+  text-align: center;
+  font-size: 14px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+`;
+
+const Block = styled.div<{ disabled?: boolean }>`
+  align-items: center;
+  user-select: none;
+  border-radius: 5px;
+  display: flex;
+  font-size: 13px;
+  overflow: hidden;
+  font-weight: 500;
+  padding: 3px 0px 12px;
+  flex-direction: column;
+  align-item: center;
+  justify-content: space-between;
+  height: 170px;
+  cursor: ${(props) => (props.disabled ? "" : "pointer")};
+  color: #ffffff;
+  position: relative;
+  background: #26282f;
+  box-shadow: 0 3px 5px 0px #00000022;
+  :hover {
+    background: ${(props) => (props.disabled ? "" : "#ffffff11")};
+  }
+
+  animation: fadeIn 0.3s 0s;
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+`;
+
+const BlockList = styled.div`
+  overflow: visible;
+  margin-top: 6px;
+  margin-bottom: 27px;
+  display: grid;
+  grid-column-gap: 25px;
+  grid-row-gap: 25px;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+`;
 
 const Title = styled.div`
   font-size: 24px;
@@ -621,7 +744,7 @@ const Heading = styled.div<{ isAtTop?: boolean }>`
   font-weight: 500;
   font-size: 16px;
   margin-bottom: 5px;
-  margin-top: ${(props) => (props.isAtTop ? "30px" : "10px")};
+  margin-top: ${(props) => (props.isAtTop ? "10px" : "30px")};
   display: flex;
   align-items: center;
 `;
@@ -725,7 +848,7 @@ const ClusterSection = styled.div`
   font-size: 14px;
   margin-top: 2px;
   font-weight: 500;
-  margin-bottom: 22px;
+  margin-bottom: 32px;
 
   > i {
     font-size: 25px;
@@ -769,10 +892,11 @@ const StyledSourceBox = styled.div`
   height: 100%;
   background: #ffffff11;
   color: #ffffff;
-  padding: 10px 35px 25px;
+  padding: 14px 35px 20px;
   position: relative;
   border-radius: 5px;
   font-size: 13px;
+  margin-top: 6px;
   overflow: auto;
   margin-bottom: 25px;
 `;

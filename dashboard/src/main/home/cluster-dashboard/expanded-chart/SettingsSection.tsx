@@ -269,7 +269,6 @@ export default class SettingsSection extends Component<PropsType, StateType> {
     return (
       <Wrapper>
         <StyledSettingsSection>
-          {this.renderSourceSection()}
           {this.renderWebhookSection()}
           <Heading>Additional Settings</Heading>
           <Button

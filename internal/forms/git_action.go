@@ -13,6 +13,7 @@ type CreateGitAction struct {
 	DockerfilePath string            `json:"dockerfile_path" form:"required"`
 	GitRepoID      uint              `json:"git_repo_id" form:"required"`
 	BuildEnv       map[string]string `json:"env"`
+	RegistryID     uint              `json:"registry_id"`
 }
 
 // ToGitActionConfig converts the form to a gorm git action config model
@@ -32,4 +33,5 @@ type CreateGitActionOptional struct {
 	DockerfilePath string            `json:"dockerfile_path"`
 	GitRepoID      uint              `json:"git_repo_id"`
 	BuildEnv       map[string]string `json:"env"`
+	RegistryID     uint              `json:"registry_id"`
 }

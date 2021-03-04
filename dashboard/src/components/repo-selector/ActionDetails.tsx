@@ -9,6 +9,9 @@ import InputRow from "../values-form/InputRow";
 type PropsType = {
   actionConfig: ActionConfigType | null;
   setActionConfig: (x: ActionConfigType) => void;
+  branch: string;
+  dockerfilePath: string;
+  folderPath: string;
 };
 
 type StateType = {
@@ -22,74 +25,54 @@ export default class ActionDetails extends Component<PropsType, StateType> {
     error: false,
   };
 
-  componentDidMount() {
-    if (this.props.actionConfig.dockerfile_path) {
-      this.setPath("/Dockerfile");
-    } else {
-      this.setPath("Dockerfile");
-    }
-  }
-
-  setPath = (x: string) => {
-    let { actionConfig, setActionConfig } = this.props;
-    let updatedConfig = actionConfig;
-    updatedConfig.dockerfile_path = updatedConfig.dockerfile_path.concat(x);
-    setActionConfig(updatedConfig);
-  };
-
-  setURL = (x: string) => {
-    let { actionConfig, setActionConfig } = this.props;
-    let updatedConfig = actionConfig;
-    updatedConfig.image_repo_uri = x;
-    setActionConfig(updatedConfig);
-  };
-
-  renderConfirmation = () => {
+  render() {
     return (
-      <Holder>
+      <>
+        <DarkMatter />
         <InputRow
           disabled={true}
           label="Git Repository"
           type="text"
           width="100%"
           value={this.props.actionConfig.git_repo}
-          setValue={(x: string) => console.log(x)}
         />
-        <InputRow
-          disabled={true}
-          label="Dockerfile Path"
-          type="text"
-          width="100%"
-          value={this.props.actionConfig.dockerfile_path}
-          setValue={(x: string) => console.log(x)}
-        />
-        <Label>Target Image URL</Label>
-        <ImageSelector
-          selectedTag="latest"
-          selectedImageUrl={this.props.actionConfig.image_repo_uri}
-          setSelectedImageUrl={this.setURL}
-          setSelectedTag={() => null}
-          forceExpanded={true}
-          noTagSelection={true}
-        />
-      </Holder>
+        {
+          this.props.dockerfilePath ? (
+            <InputRow
+              disabled={true}
+              label="Dockerfile Path"
+              type="text"
+              width="100%"
+              value={this.props.dockerfilePath}
+            />
+          ) : (
+            <InputRow
+              disabled={true}
+              label="Folder Path"
+              type="text"
+              width="100%"
+              value={this.props.folderPath}
+            />
+          )
+        }
+        <Br />
+      </>
     );
-  };
-
-  render() {
-    return <div>{this.renderConfirmation()}</div>;
   }
 }
 
-const Label = styled.div`
-  color: #ffffff;
-  display: flex;
-  align-items: center;
-  font-size: 13px;
-  font-family: "Work Sans", sans-serif;
+ActionDetails.contextType = Context;
+
+const Br = styled.div`
+  width: 100%;
+  height: 1px;
+  margin-bottom: -8px;
 `;
 
-ActionDetails.contextType = Context;
+const DarkMatter = styled.div`
+  width: 100%;
+  margin-bottom: -18px;
+`;
 
 const Holder = styled.div`
   padding: 0px 12px 24px 12px;

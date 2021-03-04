@@ -21,6 +21,7 @@ import SaveButton from "components/SaveButton";
 import ActionConfEditor from "components/repo-selector/ActionConfEditor";
 import ValuesWrapper from "components/values-form/ValuesWrapper";
 import ValuesForm from "components/values-form/ValuesForm";
+import RadioSelector from "components/RadioSelector";
 import { isAlphanumeric } from "shared/common";
 
 type PropsType = {
@@ -48,14 +49,15 @@ type StateType = {
   namespaceOptions: { label: string; value: string }[];
   actionConfig: ActionConfigType;
   branch: string;
-  pathIsSet: boolean;
+  repoType: string;
+  dockerfilePath: string | null;
+  folderPath: string | null;
 };
 
 const defaultActionConfig: ActionConfigType = {
   git_repo: "",
   image_repo_uri: "",
   git_repo_id: 0,
-  dockerfile_path: "",
 };
 
 export default class LaunchTemplate extends Component<PropsType, StateType> {
@@ -76,7 +78,9 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
     namespaceOptions: [] as { label: string; value: string }[],
     actionConfig: { ...defaultActionConfig },
     branch: "",
-    pathIsSet: false,
+    repoType: "",
+    dockerfilePath: null as string | null,
+    folderPath: null as string | null,
   };
 
   createGHAction = (chartName: string, chartNamespace: string) => {
@@ -88,8 +92,8 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
         "<token>",
         {
           git_repo: actionConfig.git_repo,
-          image_repo_uri: actionConfig.image_repo_uri,
-          dockerfile_path: actionConfig.dockerfile_path,
+          registry_id: 1,
+          dockerfile_path: this.state.dockerfilePath,
           git_repo_id: actionConfig.git_repo_id,
         },
         {
@@ -440,9 +444,7 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
           >
             <BlockIcon src="https://3.bp.blogspot.com/-xhNpNJJyQhk/XIe4GY78RQI/AAAAAAAAItc/ouueFUj2Hqo5dntmnKqEaBJR4KQ4Q2K3ACK4BGAYYCw/s1600/logo%2Bgit%2Bicon.png" />
             <BlockTitle>Git Repository</BlockTitle>
-            <BlockDescription>
-              Deploy using source from a Git repo.
-            </BlockDescription>
+            <BlockDescription>Deploy using source from a Git repo.</BlockDescription>
           </Block>
           <Block
             onClick={() => {
@@ -451,9 +453,7 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
           >
             <BlockIcon src="https://cdn4.iconfinder.com/data/icons/logos-and-brands/512/97_Docker_logo_logos-512.png" />
             <BlockTitle>Docker Registry</BlockTitle>
-            <BlockDescription>
-              Deploy an already containerized application.
-            </BlockDescription>
+            <BlockDescription>Deploy a container from an image registry.</BlockDescription>
           </Block>
         </BlockList>
       );
@@ -464,8 +464,7 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
             <CloseButtonImg src={close} />
           </CloseButton>
           <Subtitle>
-            Specify the container image you would like to connect to this
-            template.
+            Specify the container image you would like to connect to this template.
             <Required>*</Required>
           </Subtitle>
           <DarkMatter antiHeight="-4px" />
@@ -479,6 +478,26 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
           <br />
         </StyledSourceBox>
       );
+    } else if (this.state.repoType === "" && false) {
+      return (
+        <StyledSourceBox>
+          <CloseButton onClick={() => this.setState({ sourceType: "" })}>
+            <CloseButtonImg src={close} />
+          </CloseButton>
+          <Subtitle>
+            Are you using an existing Dockerfile from your repo?
+            <Required>*</Required>
+          </Subtitle>
+          <RadioSelector
+            options={[
+              { value: "dockerfile", label: "Yes, I am using an existing Dockerfile" },
+              { value: "buildpack", label: "No, I am not using an existing Dockerfile" }
+            ]}
+            selected={this.state.repoType}
+            setSelected={(x: string) => this.setState({ repoType: x })}
+          />
+        </StyledSourceBox>
+      );
     } else {
       return (
         <StyledSourceBox>
@@ -486,14 +505,13 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
             <CloseButtonImg src={close} />
           </CloseButton>
           <Subtitle>
-            Select a repo to connect to, then a Dockerfile to build from.
+            Provide a repo folder to use as source.
             <Required>*</Required>
           </Subtitle>
           <DarkMatter antiHeight="-4px" />
           <ActionConfEditor
             actionConfig={this.state.actionConfig}
             branch={this.state.branch}
-            pathIsSet={this.state.pathIsSet}
             setActionConfig={(actionConfig: ActionConfigType) =>
               this.setState({ actionConfig }, () => {
                 this.setSelectedImageUrl(
@@ -502,12 +520,16 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
               })
             }
             setBranch={(branch: string) => this.setState({ branch })}
-            setPath={(pathIsSet: boolean) => this.setState({ pathIsSet })}
+            setDockerfilePath={(x: string) => this.setState({ dockerfilePath: x })}
+            dockerfilePath={this.state.dockerfilePath}
+            folderPath={this.state.folderPath}
+            setFolderPath={(x: string) => this.setState({ folderPath: x })}
             reset={() => {
               this.setState({
                 actionConfig: { ...defaultActionConfig },
                 branch: "",
-                pathIsSet: false,
+                dockerfilePath: null,
+                folderPath: null,
               });
             }}
           />
@@ -522,12 +544,11 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
       <>
         <Heading>Deployment Method</Heading>
         <Subtitle>
-          Choose the deployment method you would like to use for this
-          application.
+          Choose the deployment method you would like to use for this application.
         </Subtitle>
         {this.renderSourceSelectorContent()}
       </>
-    );
+    )
   };
 
   render() {

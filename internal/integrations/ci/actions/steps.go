@@ -31,7 +31,7 @@ func getDownloadPorterStep() GithubActionYAMLStep {
 }
 
 const configure string = `
-porter auth login --token ${{secrets.%s}}
+sudo porter auth login --token ${{secrets.%s}}
 sudo porter docker configure
 `
 
@@ -45,7 +45,7 @@ func getConfigurePorterStep(porterTokenSecretName string) GithubActionYAMLStep {
 
 const dockerBuildPush string = `
 docker build %s --file %s -t %s:$(git rev-parse --short HEAD)
-docker push %s:$(git rev-parse --short HEAD)
+sudo docker push %s:$(git rev-parse --short HEAD)
 `
 
 func getDockerBuildPushStep(dockerFilePath, repoURL string) GithubActionYAMLStep {

@@ -16,7 +16,7 @@ type PropsType = {
   setActionConfig: (x: ActionConfigType) => void;
   setBranch: (x: string) => void;
   setPath: (x: boolean) => void;
-  reset: () => void;
+  reset: any;
 };
 
 type StateType = {

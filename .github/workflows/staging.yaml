@@ -44,4 +44,3 @@ jobs:
           staging --region us-central1 --project ${{ secrets.GCP_PROJECT_ID }}
           
         kubectl rollout restart deployment/porter
-    

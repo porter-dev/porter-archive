@@ -37,7 +37,10 @@ export default class ValuesWrapper extends Component<PropsType, StateType> {
           section.contents.forEach((item: FormElement, i: number) => {
             // If no name is assigned use values.yaml variable as identifier
             let key = item.name || item.variable;
-            let def = item.settings && item.settings.unit ? `${item.settings.default}${item.settings.unit}` : item.settings.default
+            let def =
+              item.settings && item.settings.unit
+                ? `${item.settings.default}${item.settings.unit}`
+                : item.settings.default;
             def = (item.value && item.value[0]) || def;
 
             // Handle add to list of required fields
@@ -52,8 +55,13 @@ export default class ValuesWrapper extends Component<PropsType, StateType> {
               case "string-input":
                 metaState[key] = def ? def : "";
                 break;
+              case "string-input-password":
+                metaState[key] = def ? def : item.settings.default;
               case "array-input":
                 metaState[key] = def ? def : [];
+                break;
+              case "key-value-array":
+                metaState[key] = def ? def : {};
                 break;
               case "number-input":
                 metaState[key] = def.toString() ? def : "";

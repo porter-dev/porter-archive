@@ -94,8 +94,8 @@ spec:
       app.kubernetes.io/name: cassandra
       app.kubernetes.io/instance: my-release
     matchExpressions:
-      - {key: tier, operator: In, values: [cache]}
-      - {key: environment, operator: NotIn, values: [dev]}
+      - { key: tier, operator: In, values: [cache] }
+      - { key: environment, operator: NotIn, values: [dev] }
   serviceName: my-release-cassandra-headless
   podManagementPolicy: OrderedReady
   replicas: 2
@@ -109,10 +109,9 @@ spec:
         app.kubernetes.io/instance: my-release
         app.kubernetes.io/managed-by: Helm
     spec:
-      
       affinity:
         podAffinity:
-          
+
         podAntiAffinity:
           preferredDuringSchedulingIgnoredDuringExecution:
             - podAffinityTerm:
@@ -125,7 +124,7 @@ spec:
                 topologyKey: kubernetes.io/hostname
               weight: 1
         nodeAffinity:
-          
+
       securityContext:
         fsGroup: 1001
       containers:
@@ -211,17 +210,17 @@ spec:
               containerPort: 9042
             - name: thrift
               containerPort: 9160
-          resources: 
+          resources:
             limits: {}
             requests: {}
           volumeMounts:
             - name: data
               mountPath: /bitnami/cassandra
-            
+
       volumes:
-      - name: config-volume
-        configMap:
-          name: config-example
+        - name: config-volume
+          configMap:
+            name: config-example
   volumeClaimTemplates:
     - metadata:
         name: data
@@ -234,4 +233,3 @@ spec:
         resources:
           requests:
             storage: "8Gi"
-

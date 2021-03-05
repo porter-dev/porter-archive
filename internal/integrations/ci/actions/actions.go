@@ -117,7 +117,7 @@ func (g *GithubActions) GetGithubActionYAML() ([]byte, error) {
 		},
 		Name: "Deploy to Porter",
 		Jobs: map[string]GithubActionYAMLJob{
-			"porter-deploy": GithubActionYAMLJob{
+			"porter-deploy": {
 				RunsOn: "ubuntu-latest",
 				Steps: []GithubActionYAMLStep{
 					getCheckoutCodeStep(),

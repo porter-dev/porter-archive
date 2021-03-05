@@ -1,19 +1,19 @@
+import GHIcon from "assets/GithubIcon";
 import React, { Component } from "react";
-import styled from "styled-components";
+import { RouteComponentProps, withRouter } from "react-router";
 
-import { Context } from "shared/Context";
 import api from "shared/api";
 import { integrationList } from "shared/common";
+import { Context } from "shared/Context";
+import { setSearchParam } from "shared/routing";
+import styled from "styled-components";
 
-import IntegrationList from "./IntegrationList";
 import IntegrationForm from "./integration-form/IntegrationForm";
+import IntegrationList from "./IntegrationList";
 
-import GHIcon from "assets/GithubIcon";
-
-type PropsType = {};
+type PropsType = RouteComponentProps & {};
 
 type StateType = {
-  currentCategory: string | null;
   currentIntegration: string | null;
   currentOptions: any[];
   currentTitles: any[];
@@ -21,15 +21,18 @@ type StateType = {
   currentIntegrationData: any[];
 };
 
-export default class Integrations extends Component<PropsType, StateType> {
+const IntegrationCategories = ["registry", "repo"] /*"kubernetes",*/
+
+class Integrations extends Component<PropsType, StateType> {
   state = {
-    currentCategory: null as string | null,
     currentIntegration: null as string | null,
     currentOptions: [] as any[],
     currentTitles: [] as any[],
     currentIds: [] as any[],
     currentIntegrationData: [] as any[],
   };
+
+  getCurrentCategory = () => new URLSearchParams(this.props.location.search).get("category");
 
   // TODO: implement once backend is restructured
   getIntegrations = (categoryType: string) => {
@@ -106,12 +109,20 @@ export default class Integrations extends Component<PropsType, StateType> {
     }
   };
 
+  componentDidMount() {
+    const currentCategory = this.getCurrentCategory();
+    if (currentCategory) {
+      this.getIntegrations(currentCategory);
+    }
+  }
+
   componentDidUpdate(prevProps: PropsType, prevState: StateType) {
+    const currentCategory = this.getCurrentCategory();
     if (
-      this.state.currentCategory &&
-      this.state.currentCategory !== prevState.currentCategory
+      currentCategory &&
+      currentCategory !== new URLSearchParams(prevProps.location.search).get("category")
     ) {
-      this.getIntegrations(this.state.currentCategory);
+      this.getIntegrations(currentCategory);
     }
   }
 
@@ -142,7 +153,11 @@ export default class Integrations extends Component<PropsType, StateType> {
 
   renderContents = () => {
     let { currentProject } = this.context;
-    let { currentCategory, currentIntegration } = this.state;
+    let { currentIntegration } = this.state;
+    const currentCategory = this.getCurrentCategory();
+    if (currentCategory && !IntegrationCategories.includes(currentCategory)) {
+      this.props.history.push("integrations");
+    }
 
     // TODO: Split integration page into separate component
     if (currentIntegration) {
@@ -168,7 +183,7 @@ export default class Integrations extends Component<PropsType, StateType> {
             integrationName={currentIntegration}
             closeForm={() => {
               this.setState({ currentIntegration: null });
-              this.getIntegrations(this.state.currentCategory);
+              this.getIntegrations(currentCategory);
             }}
           />
           <Br />
@@ -191,7 +206,7 @@ export default class Integrations extends Component<PropsType, StateType> {
               <Flex>
                 <i
                   className="material-icons"
-                  onClick={() => this.setState({ currentCategory: null })}
+                  onClick={() => this.props.history.push("integrations")}
                 >
                   keyboard_backspace
                 </i>
@@ -232,7 +247,7 @@ export default class Integrations extends Component<PropsType, StateType> {
               <Flex>
                 <i
                   className="material-icons"
-                  onClick={() => this.setState({ currentCategory: null })}
+                  onClick={() => this.props.history.push("integrations")}
                 >
                   keyboard_backspace
                 </i>
@@ -260,7 +275,7 @@ export default class Integrations extends Component<PropsType, StateType> {
               }
               itemIdentifier={this.state.currentIds}
             />
-          </div>
+          </div >
         );
       }
     }
@@ -273,7 +288,7 @@ export default class Integrations extends Component<PropsType, StateType> {
         <IntegrationList
           currentCategory={""}
           integrations={["kubernetes", "registry", "repo"]}
-          setCurrent={(x: any) => this.setState({ currentCategory: x })}
+          setCurrent={(x: any) => this.props.history.push(setSearchParam(this.props.location, "category", x))}
           isCategory={true}
         />
       </div>
@@ -286,6 +301,8 @@ export default class Integrations extends Component<PropsType, StateType> {
 }
 
 Integrations.contextType = Context;
+
+export default withRouter(Integrations);
 
 const Label = styled.div`
   font-size: 14px;

@@ -1,6 +1,9 @@
 package actions
 
-import "fmt"
+import (
+	"fmt"
+	"path/filepath"
+)
 
 func getCheckoutCodeStep() GithubActionYAMLStep {
 	return GithubActionYAMLStep{
@@ -28,7 +31,7 @@ func getDownloadPorterStep() GithubActionYAMLStep {
 }
 
 const configure string = `
-porter auth login --token ${{secrets.%s}}
+sudo porter auth login --token ${{secrets.%s}}
 sudo porter docker configure
 `
 
@@ -41,15 +44,15 @@ func getConfigurePorterStep(porterTokenSecretName string) GithubActionYAMLStep {
 }
 
 const dockerBuildPush string = `
-docker build . --file %s -t %s:$(git rev-parse --short HEAD)
-docker push %s:$(git rev-parse --short HEAD)
+docker build %s --file %s -t %s:$(git rev-parse --short HEAD)
+sudo docker push %s:$(git rev-parse --short HEAD)
 `
 
 func getDockerBuildPushStep(dockerFilePath, repoURL string) GithubActionYAMLStep {
 	return GithubActionYAMLStep{
 		Name: "Docker build, push",
 		ID:   "docker_build_push",
-		Run:  fmt.Sprintf(dockerBuildPush, dockerFilePath, repoURL, repoURL),
+		Run:  fmt.Sprintf(dockerBuildPush, filepath.Dir(dockerFilePath), dockerFilePath, repoURL, repoURL),
 	}
 }
 

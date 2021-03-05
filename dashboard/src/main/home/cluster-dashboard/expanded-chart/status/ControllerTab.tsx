@@ -73,6 +73,11 @@ export default class ControllerTab extends Component<PropsType, StateType> {
         this.setState({ pods, raw: res.data, showTooltip });
 
         if (isFirst) {
+          let pod = res.data[0];
+          let status = this.getPodStatus(pod.status);
+          status === "failed" &&
+            pod.status?.message &&
+            this.props.setPodError(pod.status?.message);
           selectPod(res.data[0]);
         }
       })
@@ -104,11 +109,14 @@ export default class ControllerTab extends Component<PropsType, StateType> {
   };
 
   getPodStatus = (status: any) => {
-    if (status?.phase === "Pending" && status?.containerStatuses !== undefined) {
+    if (
+      status?.phase === "Pending" &&
+      status?.containerStatuses !== undefined
+    ) {
       return status.containerStatuses[0].state.waiting.reason;
       // return 'waiting'
     } else if (status?.phase === "Pending") {
-      return "Pending"
+      return "Pending";
     }
 
     if (status?.phase === "Failed") {
@@ -155,7 +163,9 @@ export default class ControllerTab extends Component<PropsType, StateType> {
               selected={selectedPod?.metadata?.name === pod?.metadata?.name}
               onClick={() => {
                 this.props.setPodError("");
-                (status === "failed" && pod.status?.message) && this.props.setPodError(pod.status?.message);
+                status === "failed" &&
+                  pod.status?.message &&
+                  this.props.setPodError(pod.status?.message);
                 selectPod(pod);
               }}
             >

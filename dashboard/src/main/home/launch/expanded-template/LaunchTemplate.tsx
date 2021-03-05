@@ -103,7 +103,7 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
   };
 
   onSubmitAddon = (wildcard?: any) => {
-    let { currentCluster, currentProject } = this.context;
+    let { currentCluster, currentProject, setCurrentError } = this.context;
     let name =
       this.state.templateName || randomWords({ exactly: 3, join: "-" });
     this.setState({ saveValuesStatus: "loading" });
@@ -131,8 +131,6 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
         }
       )
       .then((_) => {
-        console.log("ST");
-        console.log(this.state.sourceType);
         if (this.state.sourceType === "repo") {
           this.createGHAction(name, this.state.selectedNamespace);
         }
@@ -148,6 +146,7 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
       })
       .catch((err) => {
         this.setState({ saveValuesStatus: "error" });
+        setCurrentError(err.response.data.errors[0]);
         posthog.capture("Failed to deploy template", {
           name: this.props.currentTemplate.name,
           namespace: this.state.selectedNamespace,
@@ -181,12 +180,32 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
     }
 
     if (this.state.sourceType === "repo") {
-      imageUrl = "hello-world";
+      imageUrl = "porterdev/hello-porter";
       tag = "latest";
     }
 
-    _.set(values, "image.repository", imageUrl);
-    _.set(values, "image.tag", tag);
+    let provider;
+    switch (currentCluster.service) {
+      case "eks":
+        provider = "aws";
+        break;
+      case "gke":
+        provider = "gcp";
+        break;
+      case "doks":
+        provider = "digitalocean";
+        break;
+      default:
+        provider = null;
+    }
+
+    // don't overwrite for templates that already have a source (i.e. non-Docker templates)
+    if (imageUrl && tag) {
+      _.set(values, "image.repository", imageUrl);
+      _.set(values, "image.tag", tag);
+    }
+
+    _.set(values, "ingress.provider", provider);
 
     console.log(`
       ${this.props.currentTemplate.name}\n
@@ -289,7 +308,6 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
     if (this.props.currentTemplate.name !== "docker") {
       this.setState({ saveValuesStatus: "" });
     }
-
     // Retrieve tab options
     let tabOptions = [] as ChoiceType[];
     this.props.form?.tabs.map((tab: any, i: number) => {
@@ -297,7 +315,11 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
         tabOptions.push({ value: tab.name, label: tab.label });
       }
     });
-    this.setState({ tabOptions, currentTab: tabOptions[0]["value"] });
+
+    this.setState({
+      tabOptions,
+      currentTab: tabOptions[0] && tabOptions[0]["value"],
+    });
 
     // TODO: query with selected filter once implemented
     let { currentProject, currentCluster } = this.context;
@@ -406,65 +428,67 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
 
   // Display if current template uses source (image or repo)
   renderSourceSelectorContent = () => {
-    if (this.props.form?.hasSource) {
-      if (this.state.sourceType === "registry") {
-        return (
-          <>
-            <Subtitle>
-              Select the container image you would like to connect to this
-              template
-              {/* <Highlight onClick={() => this.setState({ sourceType: "repo" })}>
-                link a git repository
-              </Highlight> */}
-              .<Required>*</Required>
-            </Subtitle>
-            <DarkMatter />
-            <ImageSelector
-              selectedTag={this.state.selectedTag}
-              selectedImageUrl={this.state.selectedImageUrl}
-              setSelectedImageUrl={this.setSelectedImageUrl}
-              setSelectedTag={(x: string) => this.setState({ selectedTag: x })}
-              forceExpanded={true}
-            />
-            <br />
-          </>
-        );
-      } else {
-        return (
-          <>
-            <Subtitle>
-              Select a repo to connect to, then a Dockerfile to build from.
-              <Required>*</Required>
-            </Subtitle>
-            <ActionConfEditor
-              actionConfig={this.state.actionConfig}
-              branch={this.state.branch}
-              pathIsSet={this.state.pathIsSet}
-              setActionConfig={(actionConfig: ActionConfigType) =>
-                this.setState({ actionConfig }, () => {
-                  this.setSelectedImageUrl(
-                    this.state.actionConfig.image_repo_uri
-                  );
-                })
-              }
-              setBranch={(branch: string) => this.setState({ branch })}
-              setPath={(pathIsSet: boolean) => this.setState({ pathIsSet })}
-              reset={() => {
-                this.setState({
-                  actionConfig: { ...defaultActionConfig },
-                  branch: "",
-                  pathIsSet: false,
-                });
-              }}
-            />
-            <br />
-          </>
-        );
-      }
+    if (this.state.sourceType === "registry") {
+      return (
+        <>
+          <Subtitle>
+            Select the container image you would like to connect to this
+            template
+            {/* <Highlight onClick={() => this.setState({ sourceType: "repo" })}>
+              link a git repository
+            </Highlight> */}
+            .<Required>*</Required>
+          </Subtitle>
+          <DarkMatter />
+          <ImageSelector
+            selectedTag={this.state.selectedTag}
+            selectedImageUrl={this.state.selectedImageUrl}
+            setSelectedImageUrl={this.setSelectedImageUrl}
+            setSelectedTag={(x: string) => this.setState({ selectedTag: x })}
+            forceExpanded={true}
+          />
+          <br />
+        </>
+      );
+    } else {
+      return (
+        <>
+          <Subtitle>
+            Select a repo to connect to, then a Dockerfile to build from.
+            <Required>*</Required>
+          </Subtitle>
+          <ActionConfEditor
+            actionConfig={this.state.actionConfig}
+            branch={this.state.branch}
+            pathIsSet={this.state.pathIsSet}
+            setActionConfig={(actionConfig: ActionConfigType) =>
+              this.setState({ actionConfig }, () => {
+                this.setSelectedImageUrl(
+                  this.state.actionConfig.image_repo_uri
+                );
+              })
+            }
+            setBranch={(branch: string) => this.setState({ branch })}
+            setPath={(pathIsSet: boolean) => this.setState({ pathIsSet })}
+            reset={() => {
+              this.setState({
+                actionConfig: { ...defaultActionConfig },
+                branch: "",
+                pathIsSet: false,
+              });
+            }}
+          />
+          <br />
+        </>
+      );
     }
   };
 
   renderSourceSelector = () => {
+    if (!this.props.form?.hasSource) {
+      return;
+    }
+
     return (
       <>
         <TabRegion
@@ -489,21 +513,44 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
 
     return (
       <StyledLaunchTemplate>
-        <ClusterSection>
-          {this.props.hideBackButton ? null : (
-            <Flex>
-              <i className="material-icons" onClick={this.props.hideLaunch}>
-                keyboard_backspace
-              </i>
-            </Flex>
-          )}
-          <Template>
+        {name !== "docker" && (
+          <HeaderSection>
+            <i className="material-icons" onClick={this.props.hideLaunch}>
+              keyboard_backspace
+            </i>
             {icon
               ? this.renderIcon(icon)
               : this.renderIcon(currentTemplate.icon)}
-            {name}
-          </Template>
-          <i className="material-icons">arrow_right_alt</i>
+            <Title>{name}</Title>
+          </HeaderSection>
+        )}
+        <DarkMatter antiHeight="-13px" />
+        <Heading isAtTop={name !== "docker"}>Name</Heading>
+        <Subtitle>
+          Randomly generated if left blank.
+          <Warning
+            highlight={
+              !isAlphanumeric(this.state.templateName) &&
+              this.state.templateName !== ""
+            }
+          >
+            Lowercase letters, numbers, and "-" only.
+          </Warning>
+        </Subtitle>
+        <DarkMatter antiHeight="-29px" />
+        <InputRow
+          type="text"
+          value={this.state.templateName}
+          setValue={(x: string) => this.setState({ templateName: x })}
+          placeholder="ex: doctor-scientist"
+          width="100%"
+        />
+        <Heading>Destination</Heading>
+        <Subtitle>
+          Specify the cluster and namespace you would like to deploy your
+          application to.
+        </Subtitle>
+        <ClusterSection>
           <ClusterLabel>
             <i className="material-icons">device_hub</i>Cluster
           </ClusterLabel>
@@ -535,26 +582,6 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
             closeOverlay={true}
           />
         </ClusterSection>
-        <Subtitle>
-          Template name
-          <Warning
-            highlight={
-              !isAlphanumeric(this.state.templateName) &&
-              this.state.templateName !== ""
-            }
-          >
-            (lowercase letters, numbers, and "-" only)
-          </Warning>
-          . (Optional)
-        </Subtitle>
-        <DarkMatter antiHeight="-27px" />
-        <InputRow
-          type="text"
-          value={this.state.templateName}
-          setValue={(x: string) => this.setState({ templateName: x })}
-          placeholder="ex: doctor-scientist"
-          width="100%"
-        />
         {this.renderSourceSelector()}
         {this.renderSettingsRegion()}
       </StyledLaunchTemplate>
@@ -563,6 +590,41 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
 }
 
 LaunchTemplate.contextType = Context;
+
+const Title = styled.div`
+  font-size: 24px;
+  font-weight: 600;
+  font-family: "Work Sans", sans-serif;
+  margin-left: 10px;
+  border-radius: 2px;
+  color: #ffffff;
+`;
+
+const HeaderSection = styled.div`
+  display: flex;
+  align-items: center;
+
+  > i {
+    cursor: pointer;
+    font-size 24px;
+    color: #969Fbbaa;
+    padding: 3px;
+    border-radius: 100px;
+    :hover {
+      background: #ffffff11;
+    }
+  }
+`;
+
+const Heading = styled.div<{ isAtTop?: boolean }>`
+  color: white;
+  font-weight: 500;
+  font-size: 16px;
+  margin-bottom: 5px;
+  margin-top: ${(props) => (props.isAtTop ? "30px" : "10px")};
+  display: flex;
+  align-items: center;
+`;
 
 const Warning = styled.span<{ highlight: boolean; makeFlush?: boolean }>`
   color: ${(props) => (props.highlight ? "#f5cb42" : "")};
@@ -604,7 +666,7 @@ const DarkMatter = styled.div<{ antiHeight?: string }>`
 `;
 
 const Subtitle = styled.div`
-  padding: 11px 0px 20px;
+  padding: 11px 0px 16px;
   font-family: "Work Sans", sans-serif;
   font-size: 13px;
   color: #aaaabb;
@@ -661,8 +723,9 @@ const ClusterSection = styled.div`
   color: #ffffff;
   font-family: "Work Sans", sans-serif;
   font-size: 14px;
+  margin-top: 2px;
   font-weight: 500;
-  margin-bottom: 15px;
+  margin-bottom: 22px;
 
   > i {
     font-size: 25px;

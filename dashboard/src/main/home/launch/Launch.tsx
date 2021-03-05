@@ -13,8 +13,8 @@ import hardcodedNames from "./hardcodedNameDict";
 import { Link } from "react-router-dom";
 
 const tabOptions = [
-  { label: "Launch service", value: "docker" },
-  { label: "Community Templates", value: "community" },
+  { label: "New Application", value: "docker" },
+  { label: "Community Add-ons", value: "community" },
 ];
 
 type PropsType = {};

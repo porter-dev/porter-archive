@@ -3,13 +3,11 @@ import styled from "styled-components";
 import info from "assets/info.svg";
 import edit from "assets/edit.svg";
 
-import api from "shared/api";
 import { integrationList } from "shared/common";
 import { Context } from "shared/Context";
 import { ImageType } from "shared/types";
 
 import Loading from "../Loading";
-import TagList from "./TagList";
 import ImageList from "./ImageList";
 
 type PropsType = {
@@ -295,7 +293,7 @@ const ImageItem = styled.div`
   font-size: 13px;
   border-bottom: 1px solid
     ${(props: { lastItem: boolean; isSelected: boolean }) =>
-      props.lastItem ? "#00000000" : "#606166"};
+    props.lastItem ? "#00000000" : "#606166"};
   color: #ffffff;
   user-select: none;
   align-items: center;

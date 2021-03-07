@@ -414,7 +414,7 @@ const TitleSectionAlt = styled(TitleSection)`
 const StyledIntegrations = styled.div`
   width: calc(90% - 150px);
   min-width: 300px;
-  padding-top: 45px;
+  padding-top: 75px;
 `;
 
 const LineBreak = styled.div`

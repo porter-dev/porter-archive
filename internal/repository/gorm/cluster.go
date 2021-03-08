@@ -252,6 +252,12 @@ func (repo *ClusterRepository) UpdateClusterTokenCache(
 		return nil, err
 	}
 
+	// delete the existing token cache first
+	if err := ctxDB.Where("id = ?", tokenCache.ID).Unscoped().Delete(&cluster.TokenCache).Error; err != nil {
+		return nil, err
+	}
+
+	// set the new token cache
 	cluster.TokenCache.Token = tokenCache.Token
 	cluster.TokenCache.Expiry = tokenCache.Expiry
 

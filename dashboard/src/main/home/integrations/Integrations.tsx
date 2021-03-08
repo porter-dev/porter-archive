@@ -8,7 +8,7 @@ import { Context } from "shared/Context";
 import { setSearchParam } from "shared/routing";
 import styled from "styled-components";
 
-import IntegrationForm from "./integration-form/IntegrationForm";
+import CreateIntegrationForm from "./create-integration/CreateIntegrationForm";
 import IntegrationList from "./IntegrationList";
 
 type PropsType = RouteComponentProps & {};
@@ -159,7 +159,7 @@ class Integrations extends Component<PropsType, StateType> {
       this.props.history.push("integrations");
     }
 
-    // TODO: Split integration page into separate component
+    // TODO: Split integration page into separate component / deprecate this flow
     if (currentIntegration) {
       let icon =
         integrationList[currentIntegration] &&
@@ -179,7 +179,7 @@ class Integrations extends Component<PropsType, StateType> {
             </Flex>
           </TitleSectionAlt>
           {this.renderIntegrationContents()}
-          <IntegrationForm
+          <CreateIntegrationForm
             integrationName={currentIntegration}
             closeForm={() => {
               this.setState({ currentIntegration: null });

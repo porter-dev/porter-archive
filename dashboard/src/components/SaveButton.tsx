@@ -129,7 +129,6 @@ const Button = styled.button`
   font-family: "Work Sans", sans-serif;
   color: white;
   padding: 6px 20px 7px 20px;
-  margin: 20px 20px 20px 20px;
   text-align: left;
   border: 0;
   border-radius: 5px;

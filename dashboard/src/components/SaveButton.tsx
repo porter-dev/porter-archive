@@ -86,7 +86,7 @@ const StatusWrapper = styled.div`
     font-size: 18px;
     margin-right: 10px;
     color: ${(props: { successful: boolean }) =>
-      props.successful ? "#4797ff" : "#fcba03"};
+    props.successful ? "#4797ff" : "#fcba03"};
   }
 
   animation: statusFloatIn 0.5s;
@@ -129,6 +129,7 @@ const Button = styled.button`
   font-family: "Work Sans", sans-serif;
   color: white;
   padding: 6px 20px 7px 20px;
+  margin: 20px 20px 20px 20px;
   text-align: left;
   border: 0;
   border-radius: 5px;

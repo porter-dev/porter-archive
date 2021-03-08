@@ -41,7 +41,9 @@ export default class IntegrationList extends Component<PropsType, StateType> {
   };
 
   toggleDisplay = (event: MouseEvent, index: number) => {
-    event.stopPropagation();
+    if (event) {
+      event.stopPropagation();
+    }
     let x = this.state.displayExpanded;
     x[index] = !x[index];
     this.setState({ displayExpanded: x });
@@ -205,6 +207,7 @@ const Placeholder = styled.div`
 
 const StyledIntegrationList = styled.div`
   margin-top: 20px;
+  margin-bottom: 80px;
 `;
 
 const I = styled.i`

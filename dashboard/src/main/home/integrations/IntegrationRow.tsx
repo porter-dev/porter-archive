@@ -1,10 +1,12 @@
 import styled from "styled-components";
-import React, { Component, MouseEventHandler } from "react";
+import React, { Component, MouseEvent, MouseEventHandler } from "react";
 
 import ImageList from "components/image-selector/ImageList";
 import RepoList from "components/repo-selector/RepoList";
 import { ActionConfigType } from "shared/types";
 import { integrationList } from "shared/common";
+
+import CreateIntegrationForm from "./create-integration/CreateIntegrationForm";
 
 type PropsType = {
   toggleCollapse: MouseEventHandler;
@@ -16,9 +18,32 @@ type PropsType = {
 };
 
 type StateType = {
+  editMode: boolean;
 };
 
 export default class IntegrationRow extends Component<PropsType, StateType> {
+  state = {
+    editMode: false
+  };
+
+  editButtonOnClick = (e: MouseEvent) => {
+    e.stopPropagation();
+    if (!this.props.expanded) {
+      this.setState({
+        editMode: true
+      });
+      this.props.toggleCollapse(null);
+    }
+    else {
+      this.setState({
+        editMode: !this.state.editMode
+      });
+      if (this.state.editMode) {
+        this.props.toggleCollapse(null);
+      }
+    }
+  }
+
   render = () => {
     const icon =
       integrationList[this.props.integration] && integrationList[this.props.integration].icon;
@@ -37,7 +62,8 @@ export default class IntegrationRow extends Component<PropsType, StateType> {
           </Description>
         </Flex>
         <MaterialIconTray disabled={false}>
-          <i className="material-icons">more_vert</i>
+          {/* <i className="material-icons"
+            onClick={this.editButtonOnClick}>mode_edit</i> */}
           <I
             className="material-icons"
             showList={this.props.expanded}
@@ -47,7 +73,7 @@ export default class IntegrationRow extends Component<PropsType, StateType> {
           </I>
         </MaterialIconTray>
       </MainRow>
-      {this.props.expanded && (
+      {this.props.expanded && !this.state.editMode && (
         <ImageHodler adjustMargin={this.props.category !== "repo"}>
           {this.props.category !== "repo" ? (
             <ImageList
@@ -76,6 +102,14 @@ export default class IntegrationRow extends Component<PropsType, StateType> {
           )}
         </ImageHodler>
       )}
+      {
+        this.props.expanded && this.state.editMode && <CreateIntegrationForm
+          integrationName={this.props.integration}
+          closeForm={() => {
+            this.setState({ editMode: false });
+          }}
+        />
+      }
     </Integration>
   }
 
@@ -136,7 +170,7 @@ const MainRow = styled.div`
 `;
 
 const MaterialIconTray = styled.div`
-  width: 64px;
+  width: 32px;
   margin-right: -7px;
   display: flex;
   align-items: center;

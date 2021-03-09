@@ -103,7 +103,7 @@ class Sidebar extends Component<PropsType, StateType> {
           <NavButton
             onClick={() =>
               currentView !== "provisioner" &&
-              this.props.history.push("dashboard?tab=overview")
+              this.props.history.push("/dashboard?tab=overview")
             }
             selected={
               currentView === "dashboard" || currentView === "provisioner"
@@ -113,7 +113,7 @@ class Sidebar extends Component<PropsType, StateType> {
             Dashboard
           </NavButton>
           <NavButton
-            onClick={() => this.props.history.push("launch")}
+            onClick={() => this.props.history.push("/launch")}
             selected={currentView === "launch"}
           >
             <Img src={rocket} />
@@ -122,7 +122,7 @@ class Sidebar extends Component<PropsType, StateType> {
           <NavButton
             selected={currentView === "integrations"}
             onClick={() => {
-              this.props.history.push("integrations");
+              this.props.history.push("/integrations");
             }}
           // onClick={() => {
           //   setCurrentModal("IntegrationsInstructionsModal", {});
@@ -135,7 +135,7 @@ class Sidebar extends Component<PropsType, StateType> {
             return obj.user_id === this.context.user.userId;
           })[0].kind === "admin" && (
               <NavButton
-                onClick={() => this.props.history.push("project-settings")}
+                onClick={() => this.props.history.push("/project-settings")}
                 selected={this.props.currentView === "project-settings"}
               >
                 <Img enlarge={true} src={settings} />

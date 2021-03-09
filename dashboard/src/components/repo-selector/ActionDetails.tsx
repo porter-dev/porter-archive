@@ -22,14 +22,6 @@ export default class ActionDetails extends Component<PropsType, StateType> {
     error: false,
   };
 
-  componentDidMount() {
-    if (this.props.actionConfig.dockerfile_path) {
-      this.setPath("/Dockerfile");
-    } else {
-      this.setPath("Dockerfile");
-    }
-  }
-
   setPath = (x: string) => {
     let { actionConfig, setActionConfig } = this.props;
     let updatedConfig = actionConfig;

@@ -17,6 +17,7 @@ import SaveButton from "components/SaveButton";
 import Heading from "components/values-form/Heading";
 import Helper from "components/values-form/Helper";
 import InputRow from "components/values-form/InputRow";
+import _ from "lodash";
 
 type PropsType = {
   currentChart: ChartType;
@@ -111,14 +112,25 @@ export default class SettingsSection extends Component<PropsType, StateType> {
       },
     };
 
-    let values = yaml.dump(image);
+    let values = {};
+    let rawValues = this.props.currentChart.config
+    for (let key in rawValues) {
+      _.set(values, key, rawValues[key])
+    }
+
+    // Weave in preexisting values and convert to yaml
+    let valuesYaml = yaml.dump({
+      ...values,
+      ...image,
+    });
+
     api
       .upgradeChartValues(
         "<token>",
         {
           namespace: this.props.currentChart.namespace,
           storage: StorageType.Secret,
-          values,
+          values: valuesYaml
         },
         {
           id: currentProject.id,
@@ -136,14 +148,6 @@ export default class SettingsSection extends Component<PropsType, StateType> {
       });
   };
 
-  /*
-    <Helper>
-      Specify a container image and tag or
-      <Highlight onClick={() => this.setState({ sourceType: 'repo' })}>
-        link a repo
-      </Highlight>.
-    </Helper>
-  */
   renderSourceSection = () => {
     if (!this.props.currentChart?.form?.hasSource) {
       return;
@@ -183,52 +187,18 @@ export default class SettingsSection extends Component<PropsType, StateType> {
       );
     }
 
-    if (this.state.sourceType === "registry") {
-      return (
-        <>
-          <Heading>Connected Source</Heading>
-          <Helper>Specify a container image and tag.</Helper>
-          <ImageSelector
-            selectedImageUrl={this.state.selectedImageUrl}
-            selectedTag={this.state.selectedTag}
-            setSelectedImageUrl={(x: string) =>
-              this.setState({ selectedImageUrl: x })
-            }
-            setSelectedTag={(x: string) => this.setState({ selectedTag: x })}
-            forceExpanded={true}
-          />
-        </>
-      );
-    }
-
-    let { currentProject } = this.context;
     return (
       <>
-        <Heading>Connect a Source</Heading>
-        <Helper>
-          Select a repo to connect to. You can
-          <A
-            padRight={true}
-            href={`/api/oauth/projects/${currentProject.id}/github?redirected=true`}
-          >
-            log in with GitHub
-          </A>{" "}
-          or
-          <Highlight onClick={() => this.setState({ sourceType: "registry" })}>
-            link an image registry
-          </Highlight>
-          .
-        </Helper>
-        <RepoSelector
-          chart={this.props.currentChart}
+        <Heading>Connected Source</Heading>
+        <Helper>Specify a container image and tag.</Helper>
+        <ImageSelector
+          selectedImageUrl={this.state.selectedImageUrl}
+          selectedTag={this.state.selectedTag}
+          setSelectedImageUrl={(x: string) =>
+            this.setState({ selectedImageUrl: x })
+          }
+          setSelectedTag={(x: string) => this.setState({ selectedTag: x })}
           forceExpanded={true}
-          actionConfig={this.state.actionConfig}
-          setActionConfig={(actionConfig: ActionConfigType) =>
-            this.setState({ actionConfig })
-          }
-          resetActionConfig={() =>
-            this.setState({ actionConfig: defaultActionConfig })
-          }
         />
       </>
     );
@@ -240,7 +210,7 @@ export default class SettingsSection extends Component<PropsType, StateType> {
     }
 
     if (true || this.state.webhookToken) {
-      let webhookText = `curl -X POST 'https://dashboard.getporter.dev/api/webhooks/deploy/${this.state.webhookToken}?commit=???&repository=???'`;
+      let webhookText = `curl -X POST 'https://dashboard.getporter.dev/api/webhooks/deploy/${this.state.webhookToken}?commit=YOUR_COMMIT_HASH&repository=IMAGE_REPOSITORY_URL'`;
       return (
         <>
           <Heading>Redeploy Webhook</Heading>

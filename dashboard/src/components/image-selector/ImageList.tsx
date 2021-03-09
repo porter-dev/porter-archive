@@ -33,6 +33,7 @@ export default class ImageList extends Component<PropsType, StateType> {
     images: [] as ImageType[],
   };
 
+  // TODO: Try to unhook before unmount
   componentDidMount() {
     const { currentProject, setCurrentError } = this.context;
     let images = [] as ImageType[];

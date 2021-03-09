@@ -6,7 +6,7 @@ import { integrationList } from "shared/common";
 import IntegrationRow from "./IntegrationRow";
 
 type PropsType = {
-  setCurrent: (x: any) => void;
+  setCurrent?: (x: string) => void;
   currentCategory: string;
   integrations: string[];
   itemIdentifier?: any[];
@@ -49,9 +49,9 @@ export default class IntegrationList extends Component<PropsType, StateType> {
     this.setState({ displayExpanded: x });
   };
 
-  handleParent = (event: any, integration: string) => {
-    this.props.setCurrent(integration);
-  };
+  handleParent = (event: any, integration: string) =>
+    this.props.setCurrent && this.props.setCurrent(integration);
+
 
   renderContents = () => {
     let {
@@ -83,7 +83,7 @@ export default class IntegrationList extends Component<PropsType, StateType> {
         return (
           <Integration
             key={i}
-            onClick={() => (disabled ? null : setCurrent(integration))}
+            onClick={() => (disabled ? null : (setCurrent && setCurrent(integration)))}
             disabled={disabled}
           >
             <MainRow disabled={disabled}>

@@ -1,6 +1,6 @@
 import GHIcon from "assets/GithubIcon";
 import React, { Component } from "react";
-import { RouteComponentProps, withRouter } from "react-router";
+import { Route, RouteComponentProps, Switch, withRouter } from "react-router";
 
 import api from "shared/api";
 import { integrationList } from "shared/common";
@@ -159,6 +159,24 @@ class Integrations extends Component<PropsType, StateType> {
       this.props.history.push("integrations");
     }
 
+    return (<Switch>
+      <Route path="/integrations/create/:integration" children={({ match }: any) => <div>{match.integration}</div>} />
+      <Route path="/integrations/category/:category" children={({ match }: any) => <div>{match.category}</div>} />
+      <Route>
+        <div>
+          <TitleSection>
+            <Title>Integrations</Title>
+          </TitleSection>
+
+          <IntegrationList
+            currentCategory={""}
+            integrations={["kubernetes", "registry", "repo"]}
+            setCurrent={(x: any) => this.props.history.push(setSearchParam(this.props.location, "category", x))}
+            isCategory={true}
+          />
+        </div>
+      </Route>
+    </Switch>)
     // TODO: Split integration page into separate component / deprecate this flow
     if (currentIntegration) {
       let icon =
@@ -279,20 +297,6 @@ class Integrations extends Component<PropsType, StateType> {
         );
       }
     }
-    return (
-      <div>
-        <TitleSection>
-          <Title>Integrations</Title>
-        </TitleSection>
-
-        <IntegrationList
-          currentCategory={""}
-          integrations={["kubernetes", "registry", "repo"]}
-          setCurrent={(x: any) => this.props.history.push(setSearchParam(this.props.location, "category", x))}
-          isCategory={true}
-        />
-      </div>
-    );
   };
 
   render() {

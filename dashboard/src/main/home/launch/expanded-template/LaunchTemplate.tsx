@@ -81,7 +81,6 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
   createGHAction = (chartName: string, chartNamespace: string) => {
     let { currentProject, currentCluster } = this.context;
     let { actionConfig } = this.state;
-
     api
       .createGHAction(
         "<token>",

@@ -153,6 +153,40 @@ export default class SettingsSection extends Component<PropsType, StateType> {
       return;
     }
 
+    if (this.state.action.git_repo.length > 0) {
+      return (
+        <>
+          <Heading>Connected Source</Heading>
+          <Holder>
+            <InputRow
+              disabled={true}
+              label="Git Repository"
+              type="text"
+              width="100%"
+              value={this.state.action.git_repo}
+              setValue={(x: string) => console.log(x)}
+            />
+            <InputRow
+              disabled={true}
+              label="Dockerfile Path"
+              type="text"
+              width="100%"
+              value={this.state.action.dockerfile_path}
+              setValue={(x: string) => console.log(x)}
+            />
+            <InputRow
+              disabled={true}
+              label="Docker Image Repository"
+              type="text"
+              width="100%"
+              value={this.state.action.image_repo_uri}
+              setValue={(x: string) => console.log(x)}
+            />
+          </Holder>
+        </>
+      );
+    }
+
     return (
       <>
         <Heading>Connected Source</Heading>

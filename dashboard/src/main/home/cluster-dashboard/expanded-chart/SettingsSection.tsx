@@ -145,7 +145,7 @@ export default class SettingsSection extends Component<PropsType, StateType> {
     </Helper>
   */
   renderSourceSection = () => {
-    if (!this.props.currentChart.form.hasSource) {
+    if (!this.props.currentChart?.form?.hasSource) {
       return;
     }
 
@@ -235,7 +235,7 @@ export default class SettingsSection extends Component<PropsType, StateType> {
   };
 
   renderWebhookSection = () => {
-    if (!this.props.currentChart.form.hasSource) {
+    if (!this.props.currentChart?.form?.hasSource) {
       return;
     }
 

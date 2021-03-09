@@ -168,6 +168,7 @@ export default class ImageList extends Component<PropsType, StateType> {
   */
   renderImageList = () => {
     let { images, loading, error } = this.state;
+
     if (loading) {
       return (
         <LoadingWrapper>

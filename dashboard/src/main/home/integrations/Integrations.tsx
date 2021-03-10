@@ -22,7 +22,7 @@ class Integrations extends Component<PropsType, StateType> {
   };
 
   render = () => <StyledIntegrations><Switch>
-    <Route path="/integrations/create/:category/:integration" render={(rp) => {
+    <Route path="/integrations/:category/create/:integration" render={(rp) => {
       const { integration, category } = rp.match.params;
       if (!IntegrationCategoryStrings.includes(category)) {
         this.props.history.push("/integrations");
@@ -36,7 +36,7 @@ class Integrations extends Component<PropsType, StateType> {
             <Flex>
               <i
                 className="material-icons"
-                onClick={() => this.props.history.push(`/integrations/category/${category}`)}
+                onClick={() => this.props.history.push(`/integrations/${category}`)}
               >
                 keyboard_backspace
                 </i>
@@ -47,7 +47,7 @@ class Integrations extends Component<PropsType, StateType> {
           <CreateIntegrationForm
             integrationName={integration}
             closeForm={() => {
-              this.props.history.push(`/integrations/category/${category}`)
+              this.props.history.push(`/integrations/${category}`)
             }}
           />
           <Br />
@@ -55,7 +55,7 @@ class Integrations extends Component<PropsType, StateType> {
       );
 
     }} />
-    <Route path="/integrations/category/:category" render={(rp) => {
+    <Route path="/integrations/:category" render={(rp) => {
       const currentCategory = rp.match.params.category;
       if (!IntegrationCategoryStrings.includes(currentCategory)) {
         this.props.history.push("/integrations");
@@ -73,7 +73,7 @@ class Integrations extends Component<PropsType, StateType> {
         <IntegrationList
           currentCategory={""}
           integrations={["kubernetes", "registry", "repo"]}
-          setCurrent={(x) => this.props.history.push(`/integrations/category/${x}`)}
+          setCurrent={(x) => this.props.history.push(`/integrations/${x}`)}
           isCategory={true}
         />
       </div>

@@ -83,7 +83,7 @@ class IntegrationCategories extends Component<PropsType, StateType> {
             this.setState({
               currentOptions,
               currentTitles,
-              currentIntegrationData: res.data,
+              currentIntegrationData: final,
             });
           })
           .catch(console.log);
@@ -144,7 +144,7 @@ class IntegrationCategories extends Component<PropsType, StateType> {
                 this.context.setCurrentModal("IntegrationsModal", {
                   category: currentCategory,
                   setCurrentIntegration: (x: string) =>
-                    this.props.history.push(`/integrations/create/${this.props.category}/${x}`),
+                    this.props.history.push(`/integrations/${this.props.category}/create/${x}`),
                 })
               }
             >

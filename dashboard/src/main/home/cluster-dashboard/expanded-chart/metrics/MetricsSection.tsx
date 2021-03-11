@@ -2,6 +2,7 @@ import React, { Component } from "react";
 import styled from "styled-components";
 import ParentSize from "@visx/responsive/lib/components/ParentSize";
 
+import api from "shared/api";
 import { Context } from "shared/Context";
 import { ChartType } from "shared/types";
 
@@ -18,12 +19,52 @@ type StateType = {
   dropdownExpanded: boolean;
 };
 
+var fakeData = [{
+  date: 1613512500,
+  value: 0.00017923172010701633,
+},
+{
+  date: 1613513100,
+  value: 0.00018,
+},
+{
+  date: 1613513700,
+  value: 0.0001923,
+}]
+
 export default class ListSection extends Component<PropsType, StateType> {
   state = {
     selectedRange: "1H",
     selectedMetricLabel: "CPU Utilization",
     dropdownExpanded: false,
   };
+
+  componentDidMount() {
+    const { selectors, currentChart } = this.props;
+    let { currentCluster, currentProject, setCurrentError } = this.context;
+
+    api
+      .getChartControllers(
+        "<token>",
+        {
+          namespace: currentChart.namespace,
+          cluster_id: currentCluster.id,
+          storage: StorageType.Secret,
+        },
+        {
+          id: currentProject.id,
+          name: currentChart.name,
+          revision: currentChart.version,
+        }
+      )
+      .then((res) => {
+        this.setState({ controllers: res.data, loading: false });
+      })
+      .catch((err) => {
+        setCurrentError(JSON.stringify(err));
+        this.setState({ controllers: [], loading: false });
+      });
+  }
 
   renderDropdown = () => {
     if (this.state.dropdownExpanded) {
@@ -69,7 +110,7 @@ export default class ListSection extends Component<PropsType, StateType> {
     return (
       <StyledMetricsSection>
         <ParentSize>
-          {({ width, height }) => <AreaChart width={width} height={height} />}
+          {({ width, height }) => <AreaChart data={fakeData} width={width} height={height} />}
         </ParentSize>
         <MetricSelector
           onClick={() =>

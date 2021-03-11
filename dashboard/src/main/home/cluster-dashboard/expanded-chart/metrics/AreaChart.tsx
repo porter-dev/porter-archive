@@ -20,9 +20,13 @@ export const accentColor = '#f5cb42';
 export const accentColorDark = '#949eff';
 */
 
-type TooltipData = AppleStock;
+interface MetricsData {
+  date: number; // unix timestamp
+  value: number; // value 
+}
 
-const stock = appleStock.slice(800);
+type TooltipData = MetricsData;
+
 export const background = "#3b697800";
 export const background2 = "#20405100";
 export const accentColor = "#949eff";
@@ -35,14 +39,15 @@ const tooltipStyles = {
 };
 
 // util
-const formatDate = timeFormat("%b %d, '%y");
+const formatDate = timeFormat("%H:%M:%S %b %d, '%y");
 
 // accessors
-const getDate = (d: AppleStock) => new Date(d.date);
-const getStockValue = (d: AppleStock) => d.close;
-const bisectDate = bisector<AppleStock, Date>((d) => new Date(d.date)).left;
+const getDate = (d: MetricsData) => new Date(d.date*1000);
+const getValue = (d: MetricsData) => d.value;
+const bisectDate = bisector<MetricsData, Date>((d) => new Date(d.date*1000)).left;
 
 export type AreaProps = {
+  data: MetricsData[],
   width: number;
   height: number;
   margin?: { top: number; right: number; bottom: number; left: number };
@@ -50,6 +55,7 @@ export type AreaProps = {
 
 export default withTooltip<AreaProps, TooltipData>(
   ({
+    data,
     width,
     height,
     margin = { top: 0, right: 0, bottom: 0, left: 0 },
@@ -70,7 +76,7 @@ export default withTooltip<AreaProps, TooltipData>(
       () =>
         scaleTime({
           range: [margin.left, innerWidth + margin.left],
-          domain: extent(stock, getDate) as [Date, Date],
+          domain: extent(data, getDate) as [Date, Date],
         }),
       [innerWidth, margin.left]
     );
@@ -78,7 +84,7 @@ export default withTooltip<AreaProps, TooltipData>(
       () =>
         scaleLinear({
           range: [innerHeight + margin.top, margin.top],
-          domain: [0, (max(stock, getStockValue) || 0) + innerHeight / 3],
+          domain: [0, 1.25 * max(data, getValue)],
           nice: true,
         }),
       [margin.top, innerHeight]
@@ -93,9 +99,9 @@ export default withTooltip<AreaProps, TooltipData>(
       ) => {
         const { x } = localPoint(event) || { x: 0 };
         const x0 = dateScale.invert(x);
-        const index = bisectDate(stock, x0, 1);
-        const d0 = stock[index - 1];
-        const d1 = stock[index];
+        const index = bisectDate(data, x0, 1);
+        const d0 = data[index - 1];
+        const d1 = data[index];
         let d = d0;
         if (d1 && getDate(d1)) {
           d =
@@ -107,7 +113,7 @@ export default withTooltip<AreaProps, TooltipData>(
         showTooltip({
           tooltipData: d,
           tooltipLeft: x,
-          tooltipTop: stockValueScale(getStockValue(d)),
+          tooltipTop: stockValueScale(getValue(d)),
         });
       },
       [showTooltip, stockValueScale, dateScale]
@@ -135,10 +141,10 @@ export default withTooltip<AreaProps, TooltipData>(
             to={accentColor}
             toOpacity={0}
           />
-          <AreaClosed<AppleStock>
-            data={stock}
+          <AreaClosed<MetricsData>
+            data={data}
             x={(d) => dateScale(getDate(d)) ?? 0}
-            y={(d) => stockValueScale(getStockValue(d)) ?? 0}
+            y={(d) => stockValueScale(getValue(d)) ?? 0}
             yScale={stockValueScale}
             strokeWidth={1}
             stroke="url(#area-gradient)"
@@ -198,7 +204,7 @@ export default withTooltip<AreaProps, TooltipData>(
               left={tooltipLeft + 12}
               style={tooltipStyles}
             >
-              {`$${getStockValue(tooltipData)}`}
+              {getValue(tooltipData)}
             </TooltipWithBounds>
             <Tooltip
               top={-10}

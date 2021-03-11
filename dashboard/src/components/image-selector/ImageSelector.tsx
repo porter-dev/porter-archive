@@ -3,13 +3,11 @@ import styled from "styled-components";
 import info from "assets/info.svg";
 import edit from "assets/edit.svg";
 
-import api from "shared/api";
 import { integrationList } from "shared/common";
 import { Context } from "shared/Context";
 import { ImageType } from "shared/types";
 
 import Loading from "../Loading";
-import TagList from "./TagList";
 import ImageList from "./ImageList";
 
 type PropsType = {
@@ -18,6 +16,7 @@ type PropsType = {
   selectedTag: string | null;
   setSelectedImageUrl: (x: string) => void;
   setSelectedTag: (x: string) => void;
+  noTagSelection?: boolean;
 };
 
 type StateType = {
@@ -37,81 +36,81 @@ export default class ImageSelector extends Component<PropsType, StateType> {
     clickedImage: null as ImageType | null,
   };
 
-  componentDidMount() {
-    const { currentProject, setCurrentError } = this.context;
-    let images = [] as ImageType[];
-    let errors = [] as number[];
-    api
-      .getProjectRegistries("<token>", {}, { id: currentProject.id })
-      .then(async (res) => {
-        let registries = res.data;
-        if (registries.length === 0) {
-          this.setState({ loading: false });
-        }
+  // componentDidMount() {
+  //   const { currentProject, setCurrentError } = this.context;
+  //   let images = [] as ImageType[];
+  //   let errors = [] as number[];
+  //   api
+  //     .getProjectRegistries("<token>", {}, { id: currentProject.id })
+  //     .then(async (res) => {
+  //       let registries = res.data;
+  //       if (registries.length === 0) {
+  //         this.setState({ loading: false });
+  //       }
 
-        // Loop over connected image registries
-        registries.forEach(async (registry: any, i: number) => {
-          await new Promise((nextController: (res?: any) => void) => {
-            api
-              .getImageRepos(
-                "<token>",
-                {},
-                {
-                  project_id: currentProject.id,
-                  registry_id: registry.id,
-                }
-              )
-              .then((res) => {
-                res.data.sort((a: any, b: any) => (a.name > b.name ? 1 : -1));
-                // Loop over found image repositories
-                let newImg = res.data.map((img: any) => {
-                  if (this.props.selectedImageUrl === img.uri) {
-                    this.setState({
-                      clickedImage: {
-                        kind: registry.service,
-                        source: img.uri,
-                        name: img.name,
-                        registryId: registry.id,
-                      },
-                    });
-                  }
-                  return {
-                    kind: registry.service,
-                    source: img.uri,
-                    name: img.name,
-                    registryId: registry.id,
-                  };
-                });
-                images.push(...newImg);
-                errors.push(0);
-              })
-              .catch(() => errors.push(1))
-              .finally(() => {
-                if (i == registries.length - 1) {
-                  let error =
-                    errors.reduce((a, b) => {
-                      return a + b;
-                    }) == registries.length
-                      ? true
-                      : false;
+  //       // Loop over connected image registries
+  //       registries.forEach(async (registry: any, i: number) => {
+  //         await new Promise((nextController: (res?: any) => void) => {
+  //           api
+  //             .getImageRepos(
+  //               "<token>",
+  //               {},
+  //               {
+  //                 project_id: currentProject.id,
+  //                 registry_id: registry.id,
+  //               }
+  //             )
+  //             .then((res) => {
+  //               res.data.sort((a: any, b: any) => (a.name > b.name ? 1 : -1));
+  //               // Loop over found image repositories
+  //               let newImg = res.data.map((img: any) => {
+  //                 if (this.props.selectedImageUrl === img.uri) {
+  //                   this.setState({
+  //                     clickedImage: {
+  //                       kind: registry.service,
+  //                       source: img.uri,
+  //                       name: img.name,
+  //                       registryId: registry.id,
+  //                     },
+  //                   });
+  //                 }
+  //                 return {
+  //                   kind: registry.service,
+  //                   source: img.uri,
+  //                   name: img.name,
+  //                   registryId: registry.id,
+  //                 };
+  //               });
+  //               images.push(...newImg);
+  //               errors.push(0);
+  //             })
+  //             .catch(() => errors.push(1))
+  //             .finally(() => {
+  //               if (i == registries.length - 1) {
+  //                 let error =
+  //                   errors.reduce((a, b) => {
+  //                     return a + b;
+  //                   }) == registries.length
+  //                     ? true
+  //                     : false;
 
-                  this.setState({
-                    images,
-                    loading: false,
-                    error,
-                  });
-                }
+  //                 this.setState({
+  //                   images,
+  //                   loading: false,
+  //                   error,
+  //                 });
+  //               }
 
-                nextController();
-              });
-          });
-        });
-      })
-      .catch((err) => {
-        console.log(err);
-        this.setState({ error: true });
-      });
-  }
+  //               nextController();
+  //             });
+  //         });
+  //       });
+  //     })
+  //     .catch((err) => {
+  //       console.log(err);
+  //       this.setState({ error: true });
+  //     });
+  // }
 
   /*
   <Highlight onClick={() => this.props.setCurrentView('integrations')}>
@@ -169,32 +168,6 @@ export default class ImageSelector extends Component<PropsType, StateType> {
           <i className="material-icons">keyboard_backspace</i>
           Select Image Repo
         </BackButton>
-      );
-    }
-  };
-
-  renderExpanded = () => {
-    let { selectedTag, selectedImageUrl, setSelectedTag } = this.props;
-    if (!this.state.clickedImage) {
-      return (
-        <div>
-          <ExpandedWrapper>{this.renderImageList()}</ExpandedWrapper>
-          {this.renderBackButton()}
-        </div>
-      );
-    } else {
-      return (
-        <div>
-          <ExpandedWrapper>
-            <TagList
-              selectedTag={selectedTag}
-              selectedImageUrl={selectedImageUrl}
-              setSelectedTag={setSelectedTag}
-              registryId={this.state.clickedImage.registryId}
-            />
-          </ExpandedWrapper>
-          {this.renderBackButton()}
-        </div>
       );
     }
   };
@@ -257,6 +230,7 @@ export default class ImageSelector extends Component<PropsType, StateType> {
             selectedImageUrl={this.props.selectedImageUrl}
             selectedTag={this.props.selectedTag}
             clickedImage={this.state.clickedImage}
+            noTagSelection={this.props.noTagSelection}
             setSelectedImageUrl={this.props.setSelectedImageUrl}
             setSelectedTag={this.props.setSelectedTag}
             setClickedImage={(x: ImageType) =>
@@ -319,7 +293,7 @@ const ImageItem = styled.div`
   font-size: 13px;
   border-bottom: 1px solid
     ${(props: { lastItem: boolean; isSelected: boolean }) =>
-      props.lastItem ? "#00000000" : "#606166"};
+    props.lastItem ? "#00000000" : "#606166"};
   color: #ffffff;
   user-select: none;
   align-items: center;
@@ -378,7 +352,7 @@ const Label = styled.div`
 
 const StyledImageSelector = styled.div`
   width: 100%;
-  margin-top: 22px;
+  margin-top: 10px;
   border: 1px solid #ffffff55;
   background: ${(props: { isExpanded: boolean; forceExpanded: boolean }) =>
     props.isExpanded ? "#ffffff11" : ""};

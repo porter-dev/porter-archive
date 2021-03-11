@@ -395,6 +395,7 @@ const MailTd = styled(Td)`
   max-width: 186px;
   min-width: 186px;
   overflow: hidden;
+  color: #aaaabb;
   text-overflow: ellipsis;
 `;
 

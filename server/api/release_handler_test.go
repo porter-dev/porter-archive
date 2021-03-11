@@ -2,7 +2,6 @@ package api_test
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -361,8 +360,6 @@ var rollbackReleaseTests = []*releaseTest{
 				expBody := &release.Release{}
 
 				expBodyJSON := releaseStubToReleaseJSON(releaseStub{"wordpress", "default", 3, "1.0.1", release.StatusDeployed})
-
-				fmt.Println(rr2.Body.String())
 
 				json.Unmarshal(rr2.Body.Bytes(), gotBody)
 				json.Unmarshal([]byte(expBodyJSON), expBody)

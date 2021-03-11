@@ -79,7 +79,7 @@ class Dashboard extends Component<PropsType, StateType> {
             <>
               <Banner>
                 <i className="material-icons">error_outline</i>
-                This project currently has no clusters conncted.
+                This project currently has no clusters connected.
               </Banner>
               <ProvisionerSettings infras={this.state.infras} />
             </>

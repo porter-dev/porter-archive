@@ -7,7 +7,6 @@ type PropsType = {};
 
 type StateType = {};
 
-
 export default class App extends Component<PropsType, StateType> {
   render() {
     return (

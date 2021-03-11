@@ -1,4 +1,4 @@
-version: '3'
+version: "3"
 services:
   webpack:
     build:
@@ -52,12 +52,12 @@ services:
     container_name: nginx
     restart: unless-stopped
     ports:
-      - '8080:8080'
+      - "8080:8080"
     volumes:
       - ./docker/nginx_local.conf:/etc/nginx/nginx.conf:ro
     depends_on:
       - porter
-      - webpack    
+      - webpack
 
 volumes:
   database:

@@ -160,7 +160,7 @@ export default class ContentsList extends Component<PropsType, StateType> {
     return (
       <FileItem lastItem={false}>
         <img src={info} />
-        Select subfolder (Optional)
+        Select path to Dockerfile
       </FileItem>
     );
   };

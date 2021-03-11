@@ -96,5 +96,5 @@ const Label = styled.div`
 
 const StyledInputRow = styled.div`
   margin-bottom: 15px;
-  margin-top: 20px;
+  margin-top: 22px;
 `;

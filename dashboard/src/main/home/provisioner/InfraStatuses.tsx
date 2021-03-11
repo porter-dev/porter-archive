@@ -6,9 +6,9 @@ import { InfraType } from "shared/types";
 import { infraNames } from "shared/common";
 
 type PropsType = {
-  infras: InfraType[],
-  selectInfra: (infra: InfraType) => void,
-  selectedInfra: InfraType,
+  infras: InfraType[];
+  selectInfra: (infra: InfraType) => void;
+  selectedInfra: InfraType;
 };
 
 type StateType = {};
@@ -19,10 +19,14 @@ export default class InfraStatuses extends Component<PropsType, StateType> {
   renderStatusIcon = (status: string) => {
     if (status === "created") {
       return <StatusIcon>✓</StatusIcon>;
-    } else if (status === 'creating' || status === 'destroying') {
-      return <StatusIcon><img src={loadingDots} /></StatusIcon>
-    } else if (status === 'error' || status === 'destroyed') {
-      return <StatusIcon color='#e3366d'>✗</StatusIcon>
+    } else if (status === "creating" || status === "destroying") {
+      return (
+        <StatusIcon>
+          <img src={loadingDots} />
+        </StatusIcon>
+      );
+    } else if (status === "error" || status === "destroyed") {
+      return <StatusIcon color="#e3366d">✗</StatusIcon>;
     }
   };
 
@@ -31,9 +35,9 @@ export default class InfraStatuses extends Component<PropsType, StateType> {
       <StyledInfraStatuses>
         {this.props.infras.map((infra: InfraType, i: number) => {
           return (
-            <InfraRow 
+            <InfraRow
               key={infra.id}
-              selected={(infra.id === this.props.selectedInfra?.id)}
+              selected={infra.id === this.props.selectedInfra?.id}
               onClick={() => this.props.selectInfra(infra)}
             >
               {infraNames[infra.kind]}
@@ -52,7 +56,7 @@ const StatusIcon = styled.div<{ color?: string }>`
   justify-content: center;
   width: 20px;
   font-size: 16px;
-  color: ${props => props.color ? props.color : '#68c49c'};
+  color: ${(props) => (props.color ? props.color : "#68c49c")};
   margin-left: 10px;
 `;
 
@@ -75,8 +79,10 @@ const InfraRow = styled.div`
   display: flex;
   align-items: center;
   justify-content: space-between;
-  color: ${(props: {selected: boolean}) => props.selected ? 'white' : '#ffffff66'};
-  background: ${(props: {selected: boolean}) => props.selected ? '#ffffff18' : ''};
+  color: ${(props: { selected: boolean }) =>
+    props.selected ? "white" : "#ffffff66"};
+  background: ${(props: { selected: boolean }) =>
+    props.selected ? "#ffffff18" : ""};
   font-size: 13px;
   padding: 20px 19px 20px 42px;
   text-shadow: 0px 0px 8px none;

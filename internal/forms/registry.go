@@ -9,23 +9,25 @@ import (
 // CreateRegistry represents the accepted values for creating a
 // registry
 type CreateRegistry struct {
-	Name             string `json:"name" form:"required"`
-	ProjectID        uint   `json:"project_id" form:"required"`
-	URL              string `json:"url"`
-	GCPIntegrationID uint   `json:"gcp_integration_id"`
-	AWSIntegrationID uint   `json:"aws_integration_id"`
-	DOIntegrationID  uint   `json:"do_integration_id"`
+	Name               string `json:"name" form:"required"`
+	ProjectID          uint   `json:"project_id" form:"required"`
+	URL                string `json:"url"`
+	GCPIntegrationID   uint   `json:"gcp_integration_id"`
+	AWSIntegrationID   uint   `json:"aws_integration_id"`
+	DOIntegrationID    uint   `json:"do_integration_id"`
+	BasicIntegrationID uint   `json:"basic_integration_id"`
 }
 
 // ToRegistry converts the form to a gorm registry model
 func (cr *CreateRegistry) ToRegistry(repo repository.Repository) (*models.Registry, error) {
 	registry := &models.Registry{
-		Name:             cr.Name,
-		ProjectID:        cr.ProjectID,
-		URL:              cr.URL,
-		GCPIntegrationID: cr.GCPIntegrationID,
-		AWSIntegrationID: cr.AWSIntegrationID,
-		DOIntegrationID:  cr.DOIntegrationID,
+		Name:               cr.Name,
+		ProjectID:          cr.ProjectID,
+		URL:                cr.URL,
+		GCPIntegrationID:   cr.GCPIntegrationID,
+		AWSIntegrationID:   cr.AWSIntegrationID,
+		DOIntegrationID:    cr.DOIntegrationID,
+		BasicIntegrationID: cr.BasicIntegrationID,
 	}
 
 	if registry.URL == "" && registry.AWSIntegrationID != 0 {

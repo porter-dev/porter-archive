@@ -37,28 +37,24 @@ export default class ActionDetails extends Component<PropsType, StateType> {
           width="100%"
           value={this.props.actionConfig.git_repo}
         />
-        {
-          this.props.dockerfilePath ? (
-            <InputRow
-              disabled={true}
-              label="Dockerfile Path"
-              type="text"
-              width="100%"
-              value={this.props.dockerfilePath}
-            />
-          ) : (
-            <InputRow
-              disabled={true}
-              label="Folder Path"
-              type="text"
-              width="100%"
-              value={this.props.folderPath}
-            />
-          )
-        }
-        <AdvancedHeader>
-          Advanced Settings
-        </AdvancedHeader>
+        {this.props.dockerfilePath ? (
+          <InputRow
+            disabled={true}
+            label="Dockerfile Path"
+            type="text"
+            width="100%"
+            value={this.props.dockerfilePath}
+          />
+        ) : (
+          <InputRow
+            disabled={true}
+            label="Folder Path"
+            type="text"
+            width="100%"
+            value={this.props.folderPath}
+          />
+        )}
+        <AdvancedHeader>Advanced Settings</AdvancedHeader>
         <Br />
       </>
     );

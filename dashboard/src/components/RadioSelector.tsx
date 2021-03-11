@@ -4,7 +4,7 @@ import styled from "styled-components";
 type PropsType = {
   selected: string;
   setSelected: (x: string) => void;
-  options: { value: string, label: string }[];
+  options: { value: string; label: string }[];
 };
 
 type StateType = {};
@@ -13,17 +13,19 @@ export default class RadioSelector extends Component<PropsType, StateType> {
   render() {
     return (
       <StyledRadioSelector>
-        {this.props.options.map((option: { label: string, value: string }, i: number) => {
-          let selected = option.value === this.props.selected;
-          return (
-            <RadioRow onClick={() => this.props.setSelected(option.value)}>
-              <Indicator selected={selected}>
-                {selected && <Circle />}
-              </Indicator>
-              {option.label}
-            </RadioRow>
-          );
-        })}
+        {this.props.options.map(
+          (option: { label: string; value: string }, i: number) => {
+            let selected = option.value === this.props.selected;
+            return (
+              <RadioRow onClick={() => this.props.setSelected(option.value)}>
+                <Indicator selected={selected}>
+                  {selected && <Circle />}
+                </Indicator>
+                {option.label}
+              </RadioRow>
+            );
+          }
+        )}
       </StyledRadioSelector>
     );
   }
@@ -51,7 +53,7 @@ const Indicator = styled.div<{ selected: boolean }>`
   height: 16px;
   border: 1px solid #ffffff55;
   margin: 1px 10px 0px 1px;
-  background: ${props => props.selected ? "#ffffff22" : "#ffffff11"};
+  background: ${(props) => (props.selected ? "#ffffff22" : "#ffffff11")};
 `;
 
 const Circle = styled.div`
@@ -61,5 +63,4 @@ const Circle = styled.div`
   border-radius: 15px;
 `;
 
-const StyledRadioSelector = styled.div`
-`;
+const StyledRadioSelector = styled.div``;

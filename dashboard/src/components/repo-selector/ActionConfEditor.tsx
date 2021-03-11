@@ -40,12 +40,7 @@ export default class ActionConfEditor extends Component<PropsType, StateType> {
   };
 
   renderExpanded = () => {
-    let {
-      actionConfig,
-      branch,
-      setActionConfig,
-      setBranch,
-    } = this.props;
+    let { actionConfig, branch, setActionConfig, setBranch } = this.props;
 
     if (!actionConfig.git_repo) {
       return (
@@ -57,7 +52,7 @@ export default class ActionConfEditor extends Component<PropsType, StateType> {
           />
         </ExpandedWrapper>
       );
-    } 
+    } else if (!this.props.dockerfilePath && !this.props.folderPath) {
     /* else if (!branch) {
       return (
         <>
@@ -74,8 +69,7 @@ export default class ActionConfEditor extends Component<PropsType, StateType> {
           </BackButton>
         </>
       );
-    } */ 
-    else if (!this.props.dockerfilePath && !this.props.folderPath) {
+    } */
       return (
         <>
           <ExpandedWrapperAlt>
@@ -88,7 +82,10 @@ export default class ActionConfEditor extends Component<PropsType, StateType> {
             />
           </ExpandedWrapperAlt>
           <Br />
-          <BackButton width="135px" onClick={() => setActionConfig({ ...defaultActionConfig })}>
+          <BackButton
+            width="135px"
+            onClick={() => setActionConfig({ ...defaultActionConfig })}
+          >
             <i className="material-icons">keyboard_backspace</i>
             Select Repo
           </BackButton>
@@ -106,10 +103,13 @@ export default class ActionConfEditor extends Component<PropsType, StateType> {
           setSelectedRegistryId={this.props.setSelectedRegistryId}
         />
         <Flex>
-          <BackButton width="140px" onClick={() => {
-            this.props.setDockerfilePath(null);
-            this.props.setFolderPath(null);
-          }}>
+          <BackButton
+            width="140px"
+            onClick={() => {
+              this.props.setDockerfilePath(null);
+              this.props.setFolderPath(null);
+            }}
+          >
             <i className="material-icons">keyboard_backspace</i>
             Select Folder
           </BackButton>
@@ -166,7 +166,7 @@ const Br = styled.div`
 
 const Flex = styled.div`
   display: flex;
-  align-items: center;  
+  align-items: center;
 `;
 
 const HeaderButton = styled.div`

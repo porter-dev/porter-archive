@@ -234,7 +234,7 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
         }
       )
       .then((_) => {
-        console.log("Deployed template.")
+        console.log("Deployed template.");
         if (this.state.sourceType === "repo") {
           console.log("Creating GHA");
           this.createGHAction(name, this.state.selectedNamespace);
@@ -273,12 +273,18 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
   };
 
   submitIsDisabled = () => {
-    let { templateName, sourceType, selectedImageUrl, dockerfilePath, folderPath } = this.state;
-    
+    let {
+      templateName,
+      sourceType,
+      selectedImageUrl,
+      dockerfilePath,
+      folderPath,
+    } = this.state;
+
     // Allow if name is invalid
     if (templateName.length > 0 && !isAlphanumeric(templateName)) {
       return true;
-    } 
+    }
 
     if (this.props.form?.hasSource) {
       // Allow if source type is registry and image URL is specified
@@ -295,7 +301,7 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
     } else {
       return false;
     }
-  }
+  };
 
   getStatus = () => {
     if (this.submitIsDisabled()) {
@@ -307,7 +313,7 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
     } else {
       return this.state.saveValuesStatus;
     }
-  }
+  };
 
   renderTabContents = () => {
     return (
@@ -470,7 +476,9 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
           >
             <BlockIcon src="https://3.bp.blogspot.com/-xhNpNJJyQhk/XIe4GY78RQI/AAAAAAAAItc/ouueFUj2Hqo5dntmnKqEaBJR4KQ4Q2K3ACK4BGAYYCw/s1600/logo%2Bgit%2Bicon.png" />
             <BlockTitle>Git Repository</BlockTitle>
-            <BlockDescription>Deploy using source from a Git repo.</BlockDescription>
+            <BlockDescription>
+              Deploy using source from a Git repo.
+            </BlockDescription>
           </Block>
           <Block
             onClick={() => {
@@ -479,7 +487,9 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
           >
             <BlockIcon src="https://cdn4.iconfinder.com/data/icons/logos-and-brands/512/97_Docker_logo_logos-512.png" />
             <BlockTitle>Docker Registry</BlockTitle>
-            <BlockDescription>Deploy a container from an image registry.</BlockDescription>
+            <BlockDescription>
+              Deploy a container from an image registry.
+            </BlockDescription>
           </Block>
         </BlockList>
       );
@@ -490,7 +500,8 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
             <CloseButtonImg src={close} />
           </CloseButton>
           <Subtitle>
-            Specify the container image you would like to connect to this template.
+            Specify the container image you would like to connect to this
+            template.
             <Required>*</Required>
           </Subtitle>
           <DarkMatter antiHeight="-4px" />
@@ -516,8 +527,14 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
           </Subtitle>
           <RadioSelector
             options={[
-              { value: "dockerfile", label: "Yes, I am using an existing Dockerfile" },
-              { value: "buildpack", label: "No, I am not using an existing Dockerfile" }
+              {
+                value: "dockerfile",
+                label: "Yes, I am using an existing Dockerfile",
+              },
+              {
+                value: "buildpack",
+                label: "No, I am not using an existing Dockerfile",
+              },
             ]}
             selected={this.state.repoType}
             setSelected={(x: string) => this.setState({ repoType: x })}
@@ -546,7 +563,9 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
               })
             }
             setBranch={(branch: string) => this.setState({ branch })}
-            setDockerfilePath={(x: string) => this.setState({ dockerfilePath: x })}
+            setDockerfilePath={(x: string) =>
+              this.setState({ dockerfilePath: x })
+            }
             dockerfilePath={this.state.dockerfilePath}
             folderPath={this.state.folderPath}
             setFolderPath={(x: string) => this.setState({ folderPath: x })}
@@ -559,7 +578,7 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
               });
             }}
             setSelectedRegistryId={(x: number) => {
-              this.setState({ selectedRegistryId: x })
+              this.setState({ selectedRegistryId: x });
             }}
           />
           <br />
@@ -573,12 +592,13 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
       <>
         <Heading>Deployment Method</Heading>
         <Subtitle>
-          Choose the deployment method you would like to use for this application.
+          Choose the deployment method you would like to use for this
+          application.
           <Required>*</Required>
         </Subtitle>
         {this.renderSourceSelectorContent()}
       </>
-    )
+    );
   };
 
   render() {

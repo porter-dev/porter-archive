@@ -82,9 +82,7 @@ export default class BranchList extends Component<PropsType, StateType> {
   render() {
     return (
       <>
-        <InfoRow
-          lastItem={false}
-        >
+        <InfoRow lastItem={false}>
           <img src={info} />
           Select Branch
         </InfoRow>

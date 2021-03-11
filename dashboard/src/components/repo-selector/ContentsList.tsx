@@ -27,11 +27,7 @@ type StateType = {
   dockerfiles: string[];
 };
 
-const dummyDockerfiles = [
-  "dev.Dockerfile",
-  "prod.Dockerfile",
-  "Dockerfile",
-]
+const dummyDockerfiles = ["dev.Dockerfile", "prod.Dockerfile", "Dockerfile"];
 
 export default class ContentsList extends Component<PropsType, StateType> {
   state = {
@@ -48,13 +44,12 @@ export default class ContentsList extends Component<PropsType, StateType> {
 
   setSubdirectory = (x: string) => {
     this.setState({ currentDir: x }, () => this.updateContents());
-    
   };
 
   updateContents = () => {
     let { currentProject } = this.context;
     let { actionConfig, branch } = this.props;
-    console.log(this.state.currentDir)
+    console.log(this.state.currentDir);
     // Get branch contents
     api
       .getBranchContents(
@@ -145,14 +140,11 @@ export default class ContentsList extends Component<PropsType, StateType> {
   };
 
   renderJumpToParent = () => {
-    if (this.state.currentDir !== "") { 
+    if (this.state.currentDir !== "") {
       let splits = this.state.currentDir.split("/");
       let subdir = "";
       if (splits.length !== 1) {
-        subdir = this.state.currentDir.replace(
-          splits[splits.length - 1],
-          ""
-        );
+        subdir = this.state.currentDir.replace(splits[splits.length - 1], "");
         if (subdir.charAt(subdir.length - 1) === "/") {
           subdir = subdir.slice(0, subdir.length - 1);
         }
@@ -185,13 +177,13 @@ export default class ContentsList extends Component<PropsType, StateType> {
     if (dockerfiles.length > 0) {
       this.setState({ dockerfiles });
     } else {
-      if (this.state.currentDir !== "") { 
+      if (this.state.currentDir !== "") {
         this.props.setFolderPath(this.state.currentDir);
       } else {
         this.props.setFolderPath("./");
       }
     }
-  }
+  };
 
   renderOverlay = () => {
     if (this.state.dockerfiles.length > 0) {
@@ -202,39 +194,43 @@ export default class ContentsList extends Component<PropsType, StateType> {
             <CloseButtonImg src={close} />
           </CloseButton>
           <Label>
-            Porter has detected at least one Dockerfile in this folder. Would you like to use an existing Dockerfile?
+            Porter has detected at least one Dockerfile in this folder. Would
+            you like to use an existing Dockerfile?
           </Label>
           <DockerfileList>
             {this.state.dockerfiles.map((dockerfile: string, i: number) => {
               return (
                 <Row
                   key={i}
-                  onClick={() => this.props.setDockerfilePath(`${this.state.currentDir}/${dockerfile}`)} 
+                  onClick={() =>
+                    this.props.setDockerfilePath(
+                      `${this.state.currentDir}/${dockerfile}`
+                    )
+                  }
                   isLast={this.state.dockerfiles.length - 1 === i}
                 >
-                  <Indicator selected={false}>
-                  </Indicator>
+                  <Indicator selected={false}></Indicator>
                   {dockerfile}
                 </Row>
               );
             })}
           </DockerfileList>
-          <ConfirmButton onClick={() => this.props.setFolderPath(this.state.currentDir)}>
+          <ConfirmButton
+            onClick={() => this.props.setFolderPath(this.state.currentDir)}
+          >
             Skip
           </ConfirmButton>
         </Overlay>
       );
     }
-  }
+  };
 
   render() {
     return (
       <>
         {this.renderJumpToParent()}
         {this.renderContentList()}
-        <UseButton onClick={this.handleContinue}>
-          Continue
-        </UseButton>
+        <UseButton onClick={this.handleContinue}>Continue</UseButton>
         {this.renderOverlay()}
       </>
     );
@@ -285,7 +281,7 @@ const Indicator = styled.div<{ selected: boolean }>`
   border: 1px solid #ffffff55;
   margin: 1px 10px 0px 1px;
   margin-right: 13px;
-  background: ${props => props.selected ? "#ffffff22" : "#ffffff11"};
+  background: ${(props) => (props.selected ? "#ffffff22" : "#ffffff11")};
 `;
 
 const Label = styled.div`
@@ -311,7 +307,7 @@ const Row = styled.div<{ isLast: boolean }>`
   padding-left: 10px;
   display: flex;
   align-items: center;
-  border-bottom: ${props => !props.isLast && "1px solid #aaaabb"};
+  border-bottom: ${(props) => !props.isLast && "1px solid #aaaabb"};
   cursor: pointer;
   :hover {
     background: #ffffff22;
@@ -371,7 +367,7 @@ const UseButton = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #616FEEcc;
+  background: #616feecc;
   font-weight: 500;
   padding: 10px 15px;
   border-radius: 3px;

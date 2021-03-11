@@ -30,12 +30,17 @@ export default class ContentsList extends Component<PropsType, StateType> {
     contents: [] as FileType[],
   };
 
-  setSubdirectory = (x: string) => {
+  setSubdirectory = (x: string, fileName?: string) => {
     let { actionConfig, setActionConfig } = this.props;
     let updatedConfig = actionConfig;
-    updatedConfig.dockerfile_path = x;
+    let path = x;
+    console.log(fileName)
+    updatedConfig.dockerfile_path = path;
     setActionConfig(updatedConfig);
     this.updateContents();
+    if (fileName?.includes("Dockerfile")) {
+      this.props.setPath();
+    }
   };
 
   updateContents = () => {
@@ -113,13 +118,13 @@ export default class ContentsList extends Component<PropsType, StateType> {
         );
       }
 
-      if (fileName === "Dockerfile") {
+      if (fileName.includes("Dockerfile")) {
         return (
           <FileItem
             key={i}
             lastItem={i === contents.length - 1}
             isADocker
-            onClick={() => this.props.setPath()}
+            onClick={() => this.setSubdirectory(item.Path, fileName)}
           >
             <img src={file} />
             {fileName}

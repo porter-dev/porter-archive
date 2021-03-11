@@ -52,6 +52,7 @@ type StateType = {
   repoType: string;
   dockerfilePath: string | null;
   folderPath: string | null;
+  selectedRegistryId: number | null;
 };
 
 const defaultActionConfig: ActionConfigType = {
@@ -65,7 +66,7 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
     currentView: "repo",
     clusterOptions: [] as { label: string; value: string }[],
     clusterMap: {} as { [clusterId: string]: ClusterType },
-    saveValuesStatus: "No container image specified" as string | null,
+    saveValuesStatus: "" as string | null,
     selectedCluster: this.context.currentCluster.name,
     selectedNamespace: "default",
     selectedImageUrl: "" as string | null,
@@ -81,19 +82,20 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
     repoType: "",
     dockerfilePath: null as string | null,
     folderPath: null as string | null,
+    selectedRegistryId: null as number | null,
   };
 
   createGHAction = (chartName: string, chartNamespace: string) => {
     let { currentProject, currentCluster } = this.context;
     let { actionConfig } = this.state;
-
     api
       .createGHAction(
         "<token>",
         {
           git_repo: actionConfig.git_repo,
-          registry_id: 1,
+          registry_id: this.state.selectedRegistryId,
           dockerfile_path: this.state.dockerfilePath,
+          folder_path: this.state.folderPath,
           git_repo_id: actionConfig.git_repo_id,
         },
         {
@@ -136,28 +138,29 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
         }
       )
       .then((_) => {
-        if (this.state.sourceType === "repo") {
-          this.createGHAction(name, this.state.selectedNamespace);
-        }
         // this.props.setCurrentView('cluster-dashboard');
         this.setState({ saveValuesStatus: "successful" }, () => {
           // redirect to dashboard
         });
+        /*
         posthog.capture("Deployed template", {
           name: this.props.currentTemplate.name,
           namespace: this.state.selectedNamespace,
           values: values,
         });
+        */
       })
       .catch((err) => {
         this.setState({ saveValuesStatus: "error" });
         setCurrentError(err.response.data.errors[0]);
+        /*
         posthog.capture("Failed to deploy template", {
           name: this.props.currentTemplate.name,
           namespace: this.state.selectedNamespace,
           values: values,
           error: err,
         });
+        */
       });
   };
 
@@ -212,16 +215,6 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
 
     _.set(values, "ingress.provider", provider);
 
-    console.log(`
-      ${this.props.currentTemplate.name}\n
-      ${this.state.selectedImageUrl}\n
-      ${values}\n
-      ${this.state.selectedNamespace}\n
-      ${name}\n
-      ${currentProject.id}\n
-      ${currentCluster.id}\n}
-    `);
-
     api
       .deployTemplate(
         "<token>",
@@ -241,13 +234,16 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
         }
       )
       .then((_) => {
+        console.log("Deployed template.")
         if (this.state.sourceType === "repo") {
+          console.log("Creating GHA");
           this.createGHAction(name, this.state.selectedNamespace);
         }
         // this.props.setCurrentView('cluster-dashboard');
         this.setState({ saveValuesStatus: "successful" }, () => {
           // redirect to dashboard with namespace
         });
+        /*
         try {
           posthog.capture("Deployed template", {
             name: this.props.currentTemplate.name,
@@ -257,10 +253,11 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
         } catch (error) {
           console.log(error);
         }
+        */
       })
       .catch((err) => {
         this.setState({ saveValuesStatus: "error" });
-
+        /*
         try {
           posthog.capture("Failed to deploy template", {
             name: this.props.currentTemplate.name,
@@ -271,8 +268,46 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
         } catch (error) {
           console.log(error);
         }
+        */
       });
   };
+
+  submitIsDisabled = () => {
+    let { templateName, sourceType, selectedImageUrl, dockerfilePath, folderPath } = this.state;
+    
+    // Allow if name is invalid
+    if (templateName.length > 0 && !isAlphanumeric(templateName)) {
+      return true;
+    } 
+
+    if (this.props.form?.hasSource) {
+      // Allow if source type is registry and image URL is specified
+      if (sourceType === "registry" && selectedImageUrl) {
+        return false;
+      }
+
+      // Allow if source type is repo and dockerfile or folder path is set
+      if (sourceType === "repo" && (dockerfilePath || folderPath)) {
+        return false;
+      }
+
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  getStatus = () => {
+    if (this.submitIsDisabled()) {
+      let { templateName } = this.state;
+      if (templateName.length > 0 && !isAlphanumeric(templateName)) {
+        return "Template name contains illegal characters";
+      }
+      return "No application source specified";
+    } else {
+      return this.state.saveValuesStatus;
+    }
+  }
 
   renderTabContents = () => {
     return (
@@ -283,12 +318,8 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
             ? this.onSubmit
             : this.onSubmitAddon
         }
-        saveValuesStatus={this.state.saveValuesStatus}
-        disabled={
-          (this.state.templateName.length > 0 &&
-            !isAlphanumeric(this.state.templateName)) ||
-          (this.props.form?.hasSource ? !this.state.selectedImageUrl : false)
-        }
+        saveValuesStatus={this.getStatus()}
+        disabled={this.submitIsDisabled()}
       >
         {(metaState: any, setMetaState: any) => {
           return this.props.form?.tabs.map((tab: any, i: number) => {
@@ -371,11 +402,6 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
   };
 
   setSelectedImageUrl = (x: string) => {
-    if (x === "") {
-      this.setState({ saveValuesStatus: "No container image specified" });
-    } else {
-      this.setState({ saveValuesStatus: "" });
-    }
     this.setState({ selectedImageUrl: x });
   };
 
@@ -532,6 +558,9 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
                 folderPath: null,
               });
             }}
+            setSelectedRegistryId={(x: number) => {
+              this.setState({ selectedRegistryId: x })
+            }}
           />
           <br />
         </StyledSourceBox>
@@ -545,6 +574,7 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
         <Heading>Deployment Method</Heading>
         <Subtitle>
           Choose the deployment method you would like to use for this application.
+          <Required>*</Required>
         </Subtitle>
         {this.renderSourceSelectorContent()}
       </>

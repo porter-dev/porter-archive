@@ -12,6 +12,7 @@ type PropsType = {
   branch: string;
   dockerfilePath: string;
   folderPath: string;
+  setSelectedRegistryId: (x: number) => void;
 };
 
 type StateType = {
@@ -55,6 +56,9 @@ export default class ActionDetails extends Component<PropsType, StateType> {
             />
           )
         }
+        <AdvancedHeader>
+          Advanced Settings
+        </AdvancedHeader>
         <Br />
       </>
     );
@@ -62,6 +66,10 @@ export default class ActionDetails extends Component<PropsType, StateType> {
 }
 
 ActionDetails.contextType = Context;
+
+const AdvancedHeader = styled.div`
+  margin-top: 15px;
+`;
 
 const Br = styled.div`
   width: 100%;

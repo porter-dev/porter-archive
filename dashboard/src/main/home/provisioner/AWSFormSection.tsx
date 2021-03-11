@@ -41,7 +41,7 @@ const regionOptions = [
   { value: "us-west-1", label: "US West (N. California) us-west-1" },
   { value: "us-west-2", label: "US West (Oregon) us-west-2" },
   { value: "af-south-1", label: "Africa (Cape Town) af-south-1" },
-  { value: "ap-east-1", label: "Asia Pacific (Hong Kong)ap-east-1" },
+  { value: "ap-east-1", label: "Asia Pacific (Hong Kong) ap-east-1" },
   { value: "ap-south-1", label: "Asia Pacific (Mumbai) ap-south-1" },
   { value: "ap-northeast-2", label: "Asia Pacific (Seoul) ap-northeast-2" },
   { value: "ap-southeast-1", label: "Asia Pacific (Singapore) ap-southeast-1" },

@@ -19,6 +19,7 @@ type PropsType = {
   setDockerfilePath: (x: string) => void;
   folderPath: string;
   setFolderPath: (x: string) => void;
+  setSelectedRegistryId: (x: number) => void;
 };
 
 type StateType = {
@@ -102,6 +103,7 @@ export default class ActionConfEditor extends Component<PropsType, StateType> {
           setActionConfig={setActionConfig}
           dockerfilePath={this.props.dockerfilePath}
           folderPath={this.props.folderPath}
+          setSelectedRegistryId={this.props.setSelectedRegistryId}
         />
         <Flex>
           <BackButton width="140px" onClick={() => {

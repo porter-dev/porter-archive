@@ -182,7 +182,15 @@ export default class ContentsList extends Component<PropsType, StateType> {
         dockerfiles.push(fileName);
       }
     });
-    this.setState({ dockerfiles });
+    if (dockerfiles.length > 0) {
+      this.setState({ dockerfiles });
+    } else {
+      if (this.state.currentDir !== "") { 
+        this.props.setFolderPath(this.state.currentDir);
+      } else {
+        this.props.setFolderPath("./");
+      }
+    }
   }
 
   renderOverlay = () => {
@@ -200,6 +208,7 @@ export default class ContentsList extends Component<PropsType, StateType> {
             {this.state.dockerfiles.map((dockerfile: string, i: number) => {
               return (
                 <Row
+                  key={i}
                   onClick={() => this.props.setDockerfilePath(`${this.state.currentDir}/${dockerfile}`)} 
                   isLast={this.state.dockerfiles.length - 1 === i}
                 >

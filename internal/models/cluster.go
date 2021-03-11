@@ -96,6 +96,8 @@ func (c *Cluster) Externalize() *ClusterExternal {
 		serv = integrations.EKS
 	} else if c.GCPIntegrationID != 0 {
 		serv = integrations.GKE
+	} else if c.DOIntegrationID != 0 {
+		serv = integrations.DOKS
 	}
 
 	return &ClusterExternal{

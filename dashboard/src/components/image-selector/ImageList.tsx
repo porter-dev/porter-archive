@@ -14,6 +14,7 @@ type PropsType = {
   selectedTag: string | null;
   clickedImage: ImageType | null;
   registry?: any;
+  noTagSelection?: boolean;
   setSelectedImageUrl: (x: string) => void;
   setSelectedTag: (x: string) => void;
   setClickedImage: (x: ImageType) => void;
@@ -25,7 +26,7 @@ type StateType = {
   images: ImageType[];
 };
 
-export default class ImageSelector extends Component<PropsType, StateType> {
+export default class ImageList extends Component<PropsType, StateType> {
   state = {
     loading: true,
     error: false,
@@ -36,6 +37,7 @@ export default class ImageSelector extends Component<PropsType, StateType> {
     const { currentProject, setCurrentError } = this.context;
     let images = [] as ImageType[];
     let errors = [] as number[];
+
     if (!this.props.registry) {
       api
         .getProjectRegistries("<token>", {}, { id: currentProject.id })
@@ -97,7 +99,12 @@ export default class ImageSelector extends Component<PropsType, StateType> {
                         loading: false,
                         error,
                       });
+                    } else {
+                      this.setState({
+                        images,
+                      });
                     }
+
                     resolveToNextController();
                   });
               }
@@ -216,7 +223,8 @@ export default class ImageSelector extends Component<PropsType, StateType> {
 
   renderExpanded = () => {
     let { selectedTag, selectedImageUrl, setSelectedTag } = this.props;
-    if (!this.props.clickedImage) {
+
+    if (!this.props.clickedImage || this.props.noTagSelection) {
       return (
         <div>
           <ExpandedWrapper>{this.renderImageList()}</ExpandedWrapper>
@@ -245,7 +253,7 @@ export default class ImageSelector extends Component<PropsType, StateType> {
   }
 }
 
-ImageSelector.contextType = Context;
+ImageList.contextType = Context;
 
 const BackButton = styled.div`
   display: flex;
@@ -278,7 +286,7 @@ const ImageItem = styled.div`
   font-size: 13px;
   border-bottom: 1px solid
     ${(props: { lastItem: boolean; isSelected: boolean }) =>
-      props.lastItem ? "#00000000" : "#606166"};
+    props.lastItem ? "#00000000" : "#606166"};
   color: #ffffff;
   user-select: none;
   align-items: center;

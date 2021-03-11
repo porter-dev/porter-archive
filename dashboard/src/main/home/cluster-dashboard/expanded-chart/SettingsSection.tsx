@@ -36,14 +36,17 @@ type StateType = {
   action: ActionConfigType;
 };
 
+// TODO: put in shared, duped from LaunchTemplate.tsx
+const defaultActionConfig: ActionConfigType = {
+  git_repo: "",
+  image_repo_uri: "",
+  git_repo_id: 0,
+  dockerfile_path: "",
+};
+
 export default class SettingsSection extends Component<PropsType, StateType> {
   state = {
-    actionConfig: {
-      git_repo: "",
-      image_repo_uri: "",
-      git_repo_id: 0,
-      dockerfile_path: "",
-    } as ActionConfigType,
+    actionConfig: defaultActionConfig,
     sourceType: "",
     selectedImageUrl: "",
     selectedTag: "",
@@ -142,6 +145,10 @@ export default class SettingsSection extends Component<PropsType, StateType> {
     </Helper>
   */
   renderSourceSection = () => {
+    if (!this.props.currentChart.form.hasSource) {
+      return;
+    }
+
     if (this.state.action.git_repo.length > 0) {
       return (
         <>
@@ -219,12 +226,19 @@ export default class SettingsSection extends Component<PropsType, StateType> {
           setActionConfig={(actionConfig: ActionConfigType) =>
             this.setState({ actionConfig })
           }
+          resetActionConfig={() =>
+            this.setState({ actionConfig: defaultActionConfig })
+          }
         />
       </>
     );
   };
 
   renderWebhookSection = () => {
+    if (!this.props.currentChart.form.hasSource) {
+      return;
+    }
+
     if (true || this.state.webhookToken) {
       let webhookText = `curl -X POST 'https://dashboard.getporter.dev/api/webhooks/deploy/${this.state.webhookToken}?commit=???&repository=???'`;
       return (

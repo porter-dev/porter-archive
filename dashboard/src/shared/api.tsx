@@ -10,29 +10,38 @@ import { StorageType } from "./types";
  * @param {(err: Object, res: Object) => void} callback - Callback function.
  */
 
-const checkAuth = baseApi('GET', '/api/auth/check');
+const checkAuth = baseApi("GET", "/api/auth/check");
 
-const connectECRRegistry = baseApi<{
-  name: string,
-  aws_integration_id: string,
-}, { id: number }>('POST', pathParams => {
+const connectECRRegistry = baseApi<
+  {
+    name: string;
+    aws_integration_id: string;
+  },
+  { id: number }
+>("POST", (pathParams) => {
   return `/api/projects/${pathParams.id}/registries`;
 });
 
-const connectGCRRegistry = baseApi<{
-  name: string,
-  gcp_integration_id: string,
-  url: string,
-}, { id: number }>('POST', pathParams => {
+const connectGCRRegistry = baseApi<
+  {
+    name: string;
+    gcp_integration_id: string;
+    url: string;
+  },
+  { id: number }
+>("POST", (pathParams) => {
   return `/api/projects/${pathParams.id}/registries`;
 });
 
-const createAWSIntegration = baseApi<{
-  aws_region: string,
-  aws_cluster_id?: string,
-  aws_access_key_id: string,
-  aws_secret_access_key: string,
-}, { id: number }>('POST', pathParams => {
+const createAWSIntegration = baseApi<
+  {
+    aws_region: string;
+    aws_cluster_id?: string;
+    aws_access_key_id: string;
+    aws_secret_access_key: string;
+  },
+  { id: number }
+>("POST", (pathParams) => {
   return `/api/projects/${pathParams.id}/integrations/aws`;
 });
 
@@ -62,13 +71,16 @@ const createDOKS = baseApi<
   return `/api/projects/${pathParams.project_id}/provision/doks`;
 });
 
-const createGCPIntegration = baseApi<{
-  gcp_region: string,
-  gcp_key_data: string,
-  gcp_project_id: string,
-}, {
-  project_id: number,
-}>('POST', pathParams => {
+const createGCPIntegration = baseApi<
+  {
+    gcp_region: string;
+    gcp_key_data: string;
+    gcp_project_id: string;
+  },
+  {
+    project_id: number;
+  }
+>("POST", (pathParams) => {
   return `/api/projects/${pathParams.project_id}/integrations/gcp`;
 });
 

@@ -5,17 +5,19 @@ type IntegrationService string
 
 // The list of supported third-party services
 const (
-	GKE      IntegrationService = "gke"
-	GCS      IntegrationService = "gcs"
-	S3       IntegrationService = "s3"
-	HelmRepo IntegrationService = "helm"
-	EKS      IntegrationService = "eks"
-	Kube     IntegrationService = "kube"
-	GCR      IntegrationService = "gcr"
-	ECR      IntegrationService = "ecr"
-	DOCR     IntegrationService = "docr"
-	Github   IntegrationService = "github"
-	Docker   IntegrationService = "docker"
+	GKE       IntegrationService = "gke"
+	DOKS      IntegrationService = "doks"
+	GCS       IntegrationService = "gcs"
+	S3        IntegrationService = "s3"
+	HelmRepo  IntegrationService = "helm"
+	EKS       IntegrationService = "eks"
+	Kube      IntegrationService = "kube"
+	GCR       IntegrationService = "gcr"
+	ECR       IntegrationService = "ecr"
+	DOCR      IntegrationService = "docr"
+	Github    IntegrationService = "github"
+	DockerHub IntegrationService = "dockerhub"
+	Docker    IntegrationService = "docker"
 )
 
 // PorterIntegration is a supported integration service, specifying an auth

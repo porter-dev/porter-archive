@@ -1,7 +1,7 @@
-const path = require('path');
+const path = require("path");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
-const webpack = require('webpack');
-const dotenv = require('dotenv');
+const webpack = require("webpack");
+const dotenv = require("dotenv");
 
 module.exports = () => {
   const env = dotenv.config().parsed;
@@ -11,9 +11,9 @@ module.exports = () => {
   }, {});
 
   return {
-    entry: './src/index.tsx',
-    target: 'web',
-    mode: 'development',
+    entry: "./src/index.tsx",
+    target: "web",
+    mode: "development",
     module: {
       rules: [
         {
@@ -27,33 +27,31 @@ module.exports = () => {
         },
         {
           test: /\.(png|svg|jpg|gif|mp3)$/,
-          use: [
-            'file-loader'
-          ]
+          use: ["file-loader"],
         },
-        { test: /\.css$/, use: [ 'css-loader' ] },
+        { test: /\.css$/, use: ["css-loader"] },
         {
           test: /\.(woff(2)?|ttf|eot)(\?v=\d+\.\d+\.\d+)?$/,
           use: [
             {
-              loader: 'file-loader',
+              loader: "file-loader",
               options: {
-                name: '[name].[ext]',
-                outputPath: 'fonts/'
-              }
-            }
-          ]
-        }
+                name: "[name].[ext]",
+                outputPath: "fonts/",
+              },
+            },
+          ],
+        },
       ],
     },
     resolve: {
       modules: [path.resolve(__dirname, "src"), "node_modules"],
-      extensions: ['*', '.tsx', '.ts', '.js', '.jsx', '.json'],
+      extensions: ["*", ".tsx", ".ts", ".js", ".jsx", ".json"],
     },
     output: {
-      filename: 'bundle.js',
-      path: path.resolve(__dirname, 'build'),
-      publicPath: '/'
+      filename: "bundle.js",
+      path: path.resolve(__dirname, "build"),
+      publicPath: "/",
     },
     devServer: {
       historyApiFallback: true,
@@ -62,7 +60,7 @@ module.exports = () => {
       new HtmlWebpackPlugin({
         template: path.resolve(__dirname, "src", "index.html"),
       }),
-      new webpack.DefinePlugin(envKeys)
-    ]
-  }
+      new webpack.DefinePlugin(envKeys),
+    ],
+  };
 };

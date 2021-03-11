@@ -1,6 +1,8 @@
 package models
 
 import (
+	"strings"
+
 	"github.com/porter-dev/porter/internal/models/integrations"
 	"gorm.io/gorm"
 )
@@ -26,9 +28,10 @@ type Registry struct {
 	// All fields below this line are encrypted before storage
 	// ------------------------------------------------------------------
 
-	GCPIntegrationID uint
-	AWSIntegrationID uint
-	DOIntegrationID  uint
+	GCPIntegrationID   uint
+	AWSIntegrationID   uint
+	DOIntegrationID    uint
+	BasicIntegrationID uint
 
 	// A token cache that can be used by an auth mechanism (integration), if desired
 	TokenCache integrations.RegTokenCache
@@ -64,6 +67,8 @@ func (r *Registry) Externalize() *RegistryExternal {
 		serv = integrations.GCR
 	} else if r.DOIntegrationID != 0 {
 		serv = integrations.DOCR
+	} else if strings.Contains(r.URL, "index.docker.io") {
+		serv = integrations.DockerHub
 	}
 
 	return &RegistryExternal{

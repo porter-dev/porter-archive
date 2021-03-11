@@ -10,8 +10,12 @@ import ExpandedTemplate from "./expanded-template/ExpandedTemplate";
 import Loading from "components/Loading";
 
 import hardcodedNames from "./hardcodedNameDict";
+import { Link } from "react-router-dom";
 
-const tabOptions = [{ label: "Community Templates", value: "community" }];
+const tabOptions = [
+  { label: "New Application", value: "docker" },
+  { label: "Community Add-ons", value: "community" },
+];
 
 type PropsType = {};
 
@@ -26,7 +30,7 @@ type StateType = {
 export default class Templates extends Component<PropsType, StateType> {
   state = {
     currentTemplate: null as PorterTemplate | null,
-    currentTab: "community",
+    currentTab: "docker",
     porterTemplates: [] as PorterTemplate[],
     loading: true,
     error: false,
@@ -41,7 +45,11 @@ export default class Templates extends Component<PropsType, StateType> {
           this.state.porterTemplates.sort((a, b) =>
             a.name === "docker" ? -1 : b.name === "docker" ? 1 : 0
           );
-          this.setState({ loading: false });
+          // TODO: properly find "docker" template instead of relying on first entry
+          this.setState({
+            loading: false,
+            currentTemplate: this.state.porterTemplates[0],
+          });
         });
       })
       .catch(() => this.setState({ loading: false, error: true }));
@@ -82,8 +90,9 @@ export default class Templates extends Component<PropsType, StateType> {
       );
     }
 
-    return this.state.porterTemplates.map(
-      (template: PorterTemplate, i: number) => {
+    return this.state.porterTemplates
+      .filter((t) => t.name.toLowerCase() !== "docker")
+      .map((template: PorterTemplate, i: number) => {
         let { name, icon, description } = template;
         if (hardcodedNames[name]) {
           name = hardcodedNames[name];
@@ -98,11 +107,44 @@ export default class Templates extends Component<PropsType, StateType> {
             <TemplateDescription>{description}</TemplateDescription>
           </TemplateBlock>
         );
-      }
-    );
+      });
   };
 
-  renderContents = () => {
+  renderDefaultTemplate = () => {
+    if (!this.context.currentCluster) {
+      return (
+        <>
+          <Banner>
+            <i className="material-icons">error_outline</i>
+            <Link to="dashboard">Provision</Link> &nbsp;or&nbsp;
+            <Link
+              to="#"
+              onClick={() =>
+                this.context.setCurrentModal("ClusterInstructionsModal")
+              }
+            >
+              connect
+            </Link>
+            &nbsp;to a cluster
+          </Banner>
+        </>
+      );
+    }
+    if (this.state.currentTemplate) {
+      return (
+        <ExpandedTemplate
+          currentTemplate={this.state.porterTemplates[0]}
+          setCurrentTemplate={(currentTemplate: PorterTemplate) =>
+            this.setState({ currentTemplate })
+          }
+          skipDescription={true}
+        />
+      );
+    }
+    return null;
+  };
+
+  renderCommunityTemplates = () => {
     if (this.state.currentTemplate) {
       return (
         <ExpandedTemplate
@@ -113,11 +155,14 @@ export default class Templates extends Component<PropsType, StateType> {
         />
       );
     }
+    return <TemplateList>{this.renderTemplateList()}</TemplateList>;
+  };
 
+  render() {
     return (
       <TemplatesWrapper>
         <TitleSection>
-          <Title>Template Explorer</Title>
+          <Title>Launch</Title>
           <a
             href="https://docs.getporter.dev/docs/porter-templates"
             target="_blank"
@@ -129,16 +174,18 @@ export default class Templates extends Component<PropsType, StateType> {
           options={tabOptions}
           currentTab={this.state.currentTab}
           setCurrentTab={(value: string) =>
-            this.setState({ currentTab: value })
+            this.setState({
+              currentTab: value,
+              currentTemplate:
+                value === "docker" ? this.state.porterTemplates[0] : null,
+            })
           }
         />
-        <TemplateList>{this.renderTemplateList()}</TemplateList>
+        {this.state.currentTab === "docker"
+          ? this.renderDefaultTemplate()
+          : this.renderCommunityTemplates()}
       </TemplatesWrapper>
     );
-  };
-
-  render() {
-    return this.renderContents();
   }
 }
 
@@ -156,6 +203,22 @@ const Placeholder = styled.div`
   > i {
     font-size: 18px;
     margin-right: 12px;
+  }
+`;
+
+const Banner = styled.div`
+  height: 40px;
+  width: 100%;
+  margin: 30px 0 30px;
+  font-size: 13px;
+  display: flex;
+  border-radius: 5px;
+  padding-left: 15px;
+  align-items: center;
+  background: #ffffff11;
+  > i {
+    margin-right: 10px;
+    font-size: 18px;
   }
 `;
 

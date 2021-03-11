@@ -223,6 +223,7 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
 
     // Convert dotted keys to nested objects
     let values = {};
+
     for (let key in rawValues) {
       _.set(values, key, rawValues[key]);
     }
@@ -361,14 +362,14 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
     // Append universal tabs
     tabOptions.push(
       { label: "Status", value: "status" },
-      //{ label: "Metrics", value: "metrics" },
+      { label: "Metrics", value: "metrics" },
       { label: "Chart Overview", value: "graph" }
     );
 
     if (this.state.devOpsMode) {
       tabOptions.push(
         { label: "Manifests", value: "list" },
-        { label: "Raw Values", value: "values" }
+        { label: "Helm Values", value: "values" }
       );
     }
 

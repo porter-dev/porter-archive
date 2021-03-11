@@ -1,7 +1,8 @@
 import React, { Component } from "react";
 import styled from "styled-components";
-import ParentSize from '@visx/responsive/lib/components/ParentSize';
+import ParentSize from "@visx/responsive/lib/components/ParentSize";
 
+import api from "shared/api";
 import { Context } from "shared/Context";
 import { ChartType } from "shared/types";
 
@@ -13,26 +14,68 @@ type PropsType = {
 };
 
 type StateType = {
-  selectedRange: string,
-  selectedMetricLabel: string,
-  dropdownExpanded: boolean,
+  selectedRange: string;
+  selectedMetricLabel: string;
+  dropdownExpanded: boolean;
 };
+
+var fakeData = [{
+  date: 1613512500,
+  value: 0.00017923172010701633,
+},
+{
+  date: 1613513100,
+  value: 0.00018,
+},
+{
+  date: 1613513700,
+  value: 0.0001923,
+}]
 
 export default class ListSection extends Component<PropsType, StateType> {
   state = {
-    selectedRange: '1H',
-    selectedMetricLabel: 'CPU Utilization',
+    selectedRange: "1H",
+    selectedMetricLabel: "CPU Utilization",
     dropdownExpanded: false,
+  };
+
+  componentDidMount() {
+    const { selectors, currentChart } = this.props;
+    let { currentCluster, currentProject, setCurrentError } = this.context;
+
+    api
+      .getChartControllers(
+        "<token>",
+        {
+          namespace: currentChart.namespace,
+          cluster_id: currentCluster.id,
+          storage: StorageType.Secret,
+        },
+        {
+          id: currentProject.id,
+          name: currentChart.name,
+          revision: currentChart.version,
+        }
+      )
+      .then((res) => {
+        this.setState({ controllers: res.data, loading: false });
+      })
+      .catch((err) => {
+        setCurrentError(JSON.stringify(err));
+        this.setState({ controllers: [], loading: false });
+      });
   }
 
   renderDropdown = () => {
     if (this.state.dropdownExpanded) {
       return (
         <>
-          <DropdownOverlay onClick={() => this.setState({ dropdownExpanded: false })} />
+          <DropdownOverlay
+            onClick={() => this.setState({ dropdownExpanded: false })}
+          />
           <Dropdown
-            dropdownWidth='200px'
-            dropdownMaxHeight='200px'
+            dropdownWidth="200px"
+            dropdownMaxHeight="200px"
             onClick={() => this.setState({ dropdownExpanded: false })}
           >
             {this.renderOptionList()}
@@ -44,8 +87,8 @@ export default class ListSection extends Component<PropsType, StateType> {
 
   renderOptionList = () => {
     let metricOptions = [
-      { value: 'cpu', label: 'CPU Utilization' },
-      { value: 'ram', label: 'RAM Utilization' },
+      { value: "cpu", label: "CPU Utilization" },
+      { value: "ram", label: "RAM Utilization" },
     ];
     return metricOptions.map(
       (option: { value: string; label: string }, i: number) => {
@@ -67,10 +110,12 @@ export default class ListSection extends Component<PropsType, StateType> {
     return (
       <StyledMetricsSection>
         <ParentSize>
-          {({ width, height }) => <AreaChart width={width} height={height} />}
+          {({ width, height }) => <AreaChart data={fakeData} width={width} height={height} />}
         </ParentSize>
-        <MetricSelector 
-          onClick={() => this.setState({ dropdownExpanded: !this.state.dropdownExpanded })}
+        <MetricSelector
+          onClick={() =>
+            this.setState({ dropdownExpanded: !this.state.dropdownExpanded })
+          }
         >
           {this.state.selectedMetricLabel}
           <i className="material-icons">arrow_drop_down</i>
@@ -79,12 +124,12 @@ export default class ListSection extends Component<PropsType, StateType> {
         <RangeWrapper>
           <TabSelector
             options={[
-              { value: '1H', label: '1H' }, 
-              { value: '1D', label: '1D' },
-              { value: '1M', label: '1M' }, 
-              { value: '3M', label: '3M' },
-              { value: '1Y', label: '1Y' }, 
-              { value: 'ALL', label: 'ALL' },
+              { value: "1H", label: "1H" },
+              { value: "1D", label: "1D" },
+              { value: "1M", label: "1M" },
+              { value: "3M", label: "3M" },
+              { value: "1Y", label: "1Y" },
+              { value: "ALL", label: "ALL" },
             ]}
             currentTab={this.state.selectedRange}
             setCurrentTab={(x: string) => this.setState({ selectedRange: x })}

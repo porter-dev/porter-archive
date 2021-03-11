@@ -12,6 +12,8 @@ import Helper from "./Helper";
 import Heading from "./Heading";
 import ExpandableResource from "../ExpandableResource";
 import VeleroForm from "../forms/VeleroForm";
+import InputArray from "./InputArray";
+import KeyValueArray from "./KeyValueArray";
 
 type PropsType = {
   sections?: Section[];
@@ -21,11 +23,12 @@ type PropsType = {
 
 type StateType = any;
 
+// Requires an internal representation unlike other values components because metaState value underdetermines input order
 export default class ValuesForm extends Component<PropsType, StateType> {
   getInputValue = (item: FormElement) => {
     let key = item.name || item.variable;
     let value = this.props.metaState[key];
-    
+
     if (item.settings && item.settings.unit && value && value.includes) {
       value = value.split(item.settings.unit)[0];
     }
@@ -69,18 +72,25 @@ export default class ValuesForm extends Component<PropsType, StateType> {
               label={item.label}
             />
           );
-        case "array-input":
+        case "key-value-array":
           return (
-            <InputRow
-              key={i}
-              isRequired={item.required}
-              type="text"
-              value={this.getInputValue(item)}
-              setValue={(x: string) => {
-                this.props.setMetaState({ [key]: [x] });
+            <KeyValueArray
+              values={this.props.metaState[key]}
+              setValues={(x: any) => {
+                this.props.setMetaState({ [key]: x });
               }}
               label={item.label}
-              unit={item.settings ? item.settings.unit : null}
+            />
+          );
+        case "array-input":
+          return (
+            <InputArray
+              key={i}
+              values={this.props.metaState[key]}
+              setValues={(x: string[]) => {
+                this.props.setMetaState({ [key]: x });
+              }}
+              label={item.label}
             />
           );
         case "string-input":
@@ -91,6 +101,24 @@ export default class ValuesForm extends Component<PropsType, StateType> {
               type="text"
               value={this.getInputValue(item)}
               setValue={(x: string) => {
+                if (item.settings && item.settings.unit && x !== "") {
+                  x = x + item.settings.unit;
+                }
+                this.props.setMetaState({ [key]: x });
+              }}
+              label={item.label}
+              unit={item.settings ? item.settings.unit : null}
+            />
+          );
+        case "string-input-password":
+          return (
+            <InputRow
+              key={i}
+              isRequired={item.required}
+              type="password"
+              value={this.getInputValue(item)}
+              setValue={(x: string) => {
+                console.log("string input", x);
                 if (item.settings && item.settings.unit && x !== "") {
                   x = x + item.settings.unit;
                 }
@@ -143,9 +171,9 @@ export default class ValuesForm extends Component<PropsType, StateType> {
               value={this.props.metaState[key]}
               setActiveValue={(val) => this.props.setMetaState({ [key]: val })}
               options={[
-                { value: 'aws', label: 'Amazon Web Services (AWS)' },
-                { value: 'gcp', label: 'Google Cloud Platform (GCP)' },
-                { value: 'do', label: 'DigitalOcean' },
+                { value: "aws", label: "Amazon Web Services (AWS)" },
+                { value: "gcp", label: "Google Cloud Platform (GCP)" },
+                { value: "do", label: "DigitalOcean" },
               ]}
               dropdownLabel=""
               label={item.label}

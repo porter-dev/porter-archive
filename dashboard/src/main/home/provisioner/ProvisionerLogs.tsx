@@ -137,9 +137,9 @@ class ProvisionerLogs extends Component<PropsType, StateType> {
       }
 
       if (err) {
-        window.analytics.track('Provisioning Error', {
+        window.analytics.track("Provisioning Error", {
           error: err,
-        })
+        });
         let e = ansiparse(err).map((el: any) => {
           return el.text;
         });

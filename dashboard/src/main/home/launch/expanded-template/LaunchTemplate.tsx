@@ -22,7 +22,6 @@ import ValuesWrapper from "components/values-form/ValuesWrapper";
 import ValuesForm from "components/values-form/ValuesForm";
 import { isAlphanumeric } from "shared/common";
 
-
 type PropsType = RouteComponentProps & {
   currentTemplate: any;
   hideLaunch: () => void;
@@ -137,23 +136,25 @@ class LaunchTemplate extends Component<PropsType, StateType> {
 
         this.setState({ saveValuesStatus: "successful" }, () => {
           // redirect to dashboard
-          setTimeout(() => { this.props.history.push("cluster-dashboard")}, 500);
-          window.analytics.track('Deployed Add-on', {
+          setTimeout(() => {
+            this.props.history.push("cluster-dashboard");
+          }, 500);
+          window.analytics.track("Deployed Add-on", {
             name: this.props.currentTemplate.name,
             namespace: this.state.selectedNamespace,
             values: values,
-          })
+          });
         });
       })
       .catch((err) => {
         this.setState({ saveValuesStatus: "error" });
         setCurrentError(err.response.data.errors[0]);
-        window.analytics.track('Failed to Deploy Add-on', {
+        window.analytics.track("Failed to Deploy Add-on", {
           name: this.props.currentTemplate.name,
           namespace: this.state.selectedNamespace,
           values: values,
           error: err,
-        })
+        });
       });
   };
 
@@ -243,15 +244,17 @@ class LaunchTemplate extends Component<PropsType, StateType> {
         // this.props.setCurrentView('cluster-dashboard');
         this.setState({ saveValuesStatus: "successful" }, () => {
           // redirect to dashboard with namespace
-          setTimeout(() => { this.props.history.push("cluster-dashboard")}, 1000);
+          setTimeout(() => {
+            this.props.history.push("cluster-dashboard");
+          }, 1000);
         });
         try {
-          window.analytics.track('Deployed Application', {
+          window.analytics.track("Deployed Application", {
             name: this.props.currentTemplate.name,
             namespace: this.state.selectedNamespace,
             sourceType: this.state.sourceType,
             values: values,
-          })
+          });
         } catch (error) {
           console.log(error);
         }
@@ -260,13 +263,13 @@ class LaunchTemplate extends Component<PropsType, StateType> {
         this.setState({ saveValuesStatus: "error" });
 
         try {
-          window.analytics.track('Failed to Deploy Application', {
+          window.analytics.track("Failed to Deploy Application", {
             name: this.props.currentTemplate.name,
             namespace: this.state.selectedNamespace,
             sourceType: this.state.sourceType,
             values: values,
             error: err,
-          })
+          });
         } catch (error) {
           console.log(error);
         }

@@ -294,7 +294,7 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
 
       // Allow if source type is repo and dockerfile or folder path is set
       if (sourceType === "repo" && (dockerfilePath || folderPath)) {
-        return false;
+        return !this.state.selectedRegistryId;
       }
 
       return true;
@@ -304,7 +304,17 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
   };
 
   getStatus = () => {
+    let {
+      selectedRegistryId,
+      sourceType,
+      dockerfilePath,
+      folderPath,
+    } = this.state;
+
     if (this.submitIsDisabled()) {
+      if (sourceType === "repo" && (dockerfilePath || folderPath) && !selectedRegistryId) {
+        return "A connected container registry is required"
+      }
       let { templateName } = this.state;
       if (templateName.length > 0 && !isAlphanumeric(templateName)) {
         return "Template name contains illegal characters";
@@ -580,6 +590,7 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
             setSelectedRegistryId={(x: number) => {
               this.setState({ selectedRegistryId: x });
             }}
+            selectedRegistryId={this.state.selectedRegistryId}
           />
           <br />
         </StyledSourceBox>

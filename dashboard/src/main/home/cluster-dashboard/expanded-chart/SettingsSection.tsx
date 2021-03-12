@@ -101,9 +101,9 @@ export default class SettingsSection extends Component<PropsType, StateType> {
     };
 
     let values = {};
-    let rawValues = this.props.currentChart.config
+    let rawValues = this.props.currentChart.config;
     for (let key in rawValues) {
-      _.set(values, key, rawValues[key])
+      _.set(values, key, rawValues[key]);
     }
 
     // Weave in preexisting values and convert to yaml
@@ -118,7 +118,7 @@ export default class SettingsSection extends Component<PropsType, StateType> {
         {
           namespace: this.props.currentChart.namespace,
           storage: StorageType.Secret,
-          values: valuesYaml
+          values: valuesYaml,
         },
         {
           id: currentProject.id,

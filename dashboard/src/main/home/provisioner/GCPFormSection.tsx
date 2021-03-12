@@ -293,7 +293,7 @@ class GCPFormSection extends Component<PropsType, StateType> {
           />
           <Br />
           <Heading>GCP Resources</Heading>
-          <Helper>Porter will provision the following GCP resources</Helper>
+          <Helper>Porter will provision the following GCP resources in your own cloud.</Helper>
           <CheckboxList
             options={provisionOptions}
             selected={selectedInfras}
@@ -302,8 +302,8 @@ class GCPFormSection extends Component<PropsType, StateType> {
             }}
           />
           <Helper>
-            Important: AWS will bill you for any provisioned resources. Learn more about EKS pricing
-            <Highlight href="https://aws.amazon.com/eks/pricing/" target="_blank">here</Highlight>
+            By default, Porter creates a cluster with three e2-medium instances (2vCPUs and 4GB RAM each). Google Cloud will bill you for any provisioned resources. Learn more about GKE pricing
+            <Highlight href="https://cloud.google.com/kubernetes-engine/pricing" target="_blank">here</Highlight>.
           </Helper>
           <CheckboxRow
             required={true}
@@ -335,7 +335,6 @@ const Highlight = styled.a`
   cursor: pointer;
   text-decoration: none;
   margin-left: 5px;
-  margin-right: 10px;
 `;
 
 const Padding = styled.div`

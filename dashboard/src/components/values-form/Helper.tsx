@@ -11,6 +11,4 @@ const StyledHelper = styled.div`
   font-size: 13px;
   margin-bottom: 15px;
   margin-top: 20px;
-  display: flex;
-  align-items: center;
 `;

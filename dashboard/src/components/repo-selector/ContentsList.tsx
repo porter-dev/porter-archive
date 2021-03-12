@@ -216,7 +216,7 @@ export default class ContentsList extends Component<PropsType, StateType> {
             })}
           </DockerfileList>
           <ConfirmButton
-            onClick={() => this.props.setFolderPath(this.state.currentDir)}
+            onClick={() => this.props.setFolderPath(this.state.currentDir || "./")}
           >
             No, I don't want to use a Dockerfile
           </ConfirmButton>

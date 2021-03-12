@@ -7,6 +7,7 @@ import api from "shared/api";
 import { Context } from "shared/Context";
 import { InfraType } from "shared/types";
 
+import CheckboxRow from "components/values-form/CheckboxRow";
 import SelectRow from "components/values-form/SelectRow";
 import Helper from "components/values-form/Helper";
 import Heading from "components/values-form/Heading";
@@ -24,6 +25,7 @@ type StateType = {
   selectedInfras: { value: string; label: string }[];
   subscriptionTier: string;
   doRegion: string;
+  provisionConfirmed: boolean;
 };
 
 const provisionOptions = [
@@ -56,6 +58,7 @@ export default class DOFormSection extends Component<PropsType, StateType> {
     selectedInfras: [...provisionOptions],
     subscriptionTier: "starter",
     doRegion: "nyc1",
+    provisionConfirmed: false,
   };
 
   componentDidMount = () => {
@@ -143,6 +146,17 @@ export default class DOFormSection extends Component<PropsType, StateType> {
     }
   };
 
+  getButtonStatus = () => {
+    if (this.props.projectName) {
+      if (!isAlphanumeric(this.props.projectName)) {
+        return "Project name contains illegal characters";
+      }
+    }
+    if (!this.state.provisionConfirmed || this.props.projectName === "") {
+      return "Required fields missing";
+    }
+  }
+
   render() {
     let { setSelectedProvisioner } = this.props;
     let { selectedInfras, subscriptionTier, doRegion } = this.state;
@@ -183,6 +197,16 @@ export default class DOFormSection extends Component<PropsType, StateType> {
               this.setState({ selectedInfras: x });
             }}
           />
+          <Helper>
+            Important: AWS will bill you for any provisioned resources. Learn more about EKS pricing
+            <Highlight href="https://aws.amazon.com/eks/pricing/" target="_blank">here</Highlight>
+          </Helper>
+          <CheckboxRow
+            required={true}
+            checked={this.state.provisionConfirmed}
+            toggle={() => this.setState({ provisionConfirmed: !this.state.provisionConfirmed })}
+            label="I understand and wish to proceed"
+          />
         </FormSection>
         {this.props.children ? this.props.children : <Padding />}
         <SaveButton
@@ -190,6 +214,7 @@ export default class DOFormSection extends Component<PropsType, StateType> {
           disabled={this.checkFormDisabled()}
           onClick={this.onCreateDO}
           makeFlush={true}
+          status={this.getButtonStatus()}
           helper="Note: Provisioning can take up to 15 minutes"
         />
       </StyledAWSFormSection>
@@ -198,6 +223,14 @@ export default class DOFormSection extends Component<PropsType, StateType> {
 }
 
 DOFormSection.contextType = Context;
+
+const Highlight = styled.a`
+  color: #8590ff;
+  cursor: pointer;
+  text-decoration: none;
+  margin-left: 5px;
+  margin-right: 10px;
+`;
 
 const Padding = styled.div`
   height: 15px;

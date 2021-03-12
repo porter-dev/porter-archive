@@ -149,6 +149,7 @@ export default class ActionConfEditor extends Component<PropsType, StateType> {
     });
   };
 
+  
   renderExpanded = () => {
     if (this.props.readOnly) {
       return (

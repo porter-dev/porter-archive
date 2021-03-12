@@ -282,7 +282,7 @@ export default class MetricsSection extends Component<PropsType, StateType> {
             onClick={() => this.setState({ dropdownExpanded: false })}
           />
           <Dropdown
-            dropdownWidth="200px"
+            dropdownWidth="230px"
             dropdownMaxHeight="200px"
             onClick={() => this.setState({ dropdownExpanded: false })}
           >
@@ -411,7 +411,7 @@ export default class MetricsSection extends Component<PropsType, StateType> {
             width={width} 
             height={height} 
             resolution={this.state.selectedRange}
-            margin={{ top: 70, right: 0, bottom: 0, left: 50 }}
+            margin={{ top: 60, right: 0, bottom: 0, left: 50 }}
           />}
         </ParentSize>
         <MetricSelector
@@ -419,7 +419,9 @@ export default class MetricsSection extends Component<PropsType, StateType> {
             this.setState({ dropdownExpanded: !this.state.dropdownExpanded })
           }
         >
+          <MetricsLabel>
           {this.state.selectedMetricLabel}
+          </MetricsLabel>
           <i className="material-icons">arrow_drop_down</i>
           {this.renderDropdown()}
         </MetricSelector>
@@ -428,7 +430,7 @@ export default class MetricsSection extends Component<PropsType, StateType> {
             this.setState({ controllerDropdownExpanded: !this.state.controllerDropdownExpanded })
           }
         >
-          {this.state.selectedController?.metadata?.name}
+          <MetricsLabel>{this.state.selectedController?.metadata?.name}</MetricsLabel>
           <i className="material-icons">arrow_drop_down</i>
           {this.renderControllerDropdown()}
         </ControllerSelector>
@@ -437,7 +439,7 @@ export default class MetricsSection extends Component<PropsType, StateType> {
             this.setState({ podDropdownExpanded: !this.state.podDropdownExpanded })
           }
         >
-          {this.state.selectedPod}
+          <MetricsLabel>{this.state.selectedPod}</MetricsLabel>
           <i className="material-icons">arrow_drop_down</i>
           {this.renderPodDropdown()}
         </PodSelector>
@@ -513,10 +515,10 @@ const Dropdown = styled.div`
 
 const RangeWrapper = styled.div`
   position: absolute;
-  top: 20px;
-  left: 0;
+  top: 0;
+  left: calc(100% - 200px);
   font-weight: bold;
-  width: calc(100% - 36px);
+  width: 156px;
 `;
 
 const MetricSelector = styled.div`
@@ -524,7 +526,7 @@ const MetricSelector = styled.div`
   font-weight: 500;
   color: #ffffff;
   position: absolute;
-  top: 0;
+  top: 10px;
   left: 0;
   display: flex;
   align-items: center;
@@ -543,12 +545,19 @@ const MetricSelector = styled.div`
   }
 `;
 
+const MetricsLabel = styled.div`
+white-space: nowrap;
+text-overflow: ellipsis;
+overflow: hidden;
+max-width: 200px;
+`
+
 const ControllerSelector = styled(MetricSelector)`
-  left: 200px;
+  left: 230px;
 `
 
 const PodSelector = styled(MetricSelector)`
-  left: 500px;
+  left: 490px;
 `
 
 const StyledMetricsSection = styled.div`

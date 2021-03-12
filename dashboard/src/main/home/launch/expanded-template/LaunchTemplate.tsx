@@ -844,6 +844,7 @@ const Warning = styled.span<{ highlight: boolean; makeFlush?: boolean }>`
 const Required = styled.div`
   margin-left: 8px;
   color: #fc4976;
+  dislay: inline-block;
 `;
 
 const Link = styled.a`

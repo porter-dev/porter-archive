@@ -81,6 +81,10 @@ export default class DOFormSection extends Component<PropsType, StateType> {
   };
 
   checkFormDisabled = () => {
+    if (!this.state.provisionConfirmed) {
+      return true;
+    }
+    
     let { selectedInfras } = this.state;
     let { projectName } = this.props;
     if (projectName || projectName === "") {
@@ -188,7 +192,7 @@ export default class DOFormSection extends Component<PropsType, StateType> {
           <Br />
           <Heading>DigitalOcean Resources</Heading>
           <Helper>
-            Porter will provision the following DigitalOcean resources
+            Porter will provision the following DigitalOcean resources in your own cloud.
           </Helper>
           <CheckboxList
             options={provisionOptions}
@@ -198,8 +202,8 @@ export default class DOFormSection extends Component<PropsType, StateType> {
             }}
           />
           <Helper>
-            Important: AWS will bill you for any provisioned resources. Learn more about EKS pricing
-            <Highlight href="https://aws.amazon.com/eks/pricing/" target="_blank">here</Highlight>
+            By default, Porter creates a cluster with three Standard (2vCPUs / 2GB RAM) droplets. DigitalOcean will bill you for any provisioned resources. Learn more about DOKS pricing
+            <Highlight href="https://www.digitalocean.com/products/kubernetes/" target="_blank">here</Highlight>.
           </Helper>
           <CheckboxRow
             required={true}
@@ -229,7 +233,6 @@ const Highlight = styled.a`
   cursor: pointer;
   text-decoration: none;
   margin-left: 5px;
-  margin-right: 10px;
 `;
 
 const Padding = styled.div`

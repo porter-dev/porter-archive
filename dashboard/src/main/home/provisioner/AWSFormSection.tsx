@@ -304,7 +304,7 @@ class AWSFormSection extends Component<PropsType, StateType> {
           />
           <Br />
           <Heading>AWS Resources</Heading>
-          <Helper>Porter will provision the following AWS resources</Helper>
+          <Helper>Porter will provision the following AWS resources in your own cloud.</Helper>
           <CheckboxList
             options={provisionOptions}
             selected={selectedInfras}
@@ -313,8 +313,8 @@ class AWSFormSection extends Component<PropsType, StateType> {
             }}
           />
           <Helper>
-            Important: AWS will bill you for any provisioned resources. Learn more about EKS pricing
-            <Highlight href="https://aws.amazon.com/eks/pricing/" target="_blank">here</Highlight>
+            By default, Porter creates a cluster with three t2.medium instances (2vCPUs and 4GB RAM each). AWS will bill you for any provisioned resources. Learn more about EKS pricing
+            <Highlight href="https://aws.amazon.com/eks/pricing/" target="_blank">here</Highlight>.
           </Helper>
           <CheckboxRow
             required={true}
@@ -346,7 +346,6 @@ const Highlight = styled.a`
   cursor: pointer;
   text-decoration: none;
   margin-left: 5px;
-  margin-right: 10px;
 `;
 
 const Padding = styled.div`

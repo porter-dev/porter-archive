@@ -8,6 +8,7 @@ import { Context } from "shared/Context";
 import { InfraType } from "shared/types";
 
 import SelectRow from "components/values-form/SelectRow";
+import CheckboxRow from "components/values-form/CheckboxRow";
 import InputRow from "components/values-form/InputRow";
 import Helper from "components/values-form/Helper";
 import Heading from "components/values-form/Heading";
@@ -28,6 +29,7 @@ type StateType = {
   gcpKeyData: string;
   selectedInfras: { value: string; label: string }[];
   buttonStatus: string;
+  provisionConfirmed: boolean;
 };
 
 const provisionOptions = [
@@ -69,6 +71,7 @@ class GCPFormSection extends Component<PropsType, StateType> {
     gcpKeyData: "",
     selectedInfras: [...provisionOptions],
     buttonStatus: "",
+    provisionConfirmed: false,
   };
 
   componentDidMount = () => {
@@ -91,6 +94,10 @@ class GCPFormSection extends Component<PropsType, StateType> {
   };
 
   checkFormDisabled = () => {
+    if (!this.state.provisionConfirmed) {
+      return true;
+    }
+
     let { gcpRegion, gcpProjectId, gcpKeyData, selectedInfras } = this.state;
     let { projectName } = this.props;
     if (projectName || projectName === "") {
@@ -226,6 +233,18 @@ class GCPFormSection extends Component<PropsType, StateType> {
     }
   };
 
+  getButtonStatus = () => {
+    if (this.props.projectName) {
+      if (!isAlphanumeric(this.props.projectName)) {
+        return "Project name contains illegal characters";
+      }
+    }
+    if (!this.state.gcpProjectId || !this.state.gcpKeyData || !this.state.provisionConfirmed || this.props.projectName === "") {
+      return "Required fields missing";
+    }
+    return this.state.buttonStatus;
+  }
+
   render() {
     let { setSelectedProvisioner } = this.props;
     let { gcpRegion, gcpProjectId, gcpKeyData, selectedInfras } = this.state;
@@ -282,6 +301,16 @@ class GCPFormSection extends Component<PropsType, StateType> {
               this.setState({ selectedInfras: x });
             }}
           />
+          <Helper>
+            Important: AWS will bill you for any provisioned resources. Learn more about EKS pricing
+            <Highlight href="https://aws.amazon.com/eks/pricing/" target="_blank">here</Highlight>
+          </Helper>
+          <CheckboxRow
+            required={true}
+            checked={this.state.provisionConfirmed}
+            toggle={() => this.setState({ provisionConfirmed: !this.state.provisionConfirmed })}
+            label="I understand and wish to proceed"
+          />
         </FormSection>
         {this.props.children ? this.props.children : <Padding />}
         <SaveButton
@@ -289,7 +318,7 @@ class GCPFormSection extends Component<PropsType, StateType> {
           disabled={this.checkFormDisabled() || this.state.buttonStatus === "loading"}
           onClick={this.onCreateGCP}
           makeFlush={true}
-          status={this.state.buttonStatus}
+          status={this.getButtonStatus()}
           helper="Note: Provisioning can take up to 15 minutes"
         />
       </StyledGCPFormSection>
@@ -300,6 +329,14 @@ class GCPFormSection extends Component<PropsType, StateType> {
 GCPFormSection.contextType = Context;
 
 export default withRouter(GCPFormSection);
+
+const Highlight = styled.a`
+  color: #8590ff;
+  cursor: pointer;
+  text-decoration: none;
+  margin-left: 5px;
+  margin-right: 10px;
+`;
 
 const Padding = styled.div`
   height: 15px;

@@ -105,9 +105,9 @@ export default class Main extends Component<PropsType, StateType> {
           }}
         />
         <Route
-          path={`/*`}
+          path={`/:baseRoute`}
           render={(routeProps) => {
-            const baseRoute = routeProps.location.pathname.slice(1);
+            const baseRoute = routeProps.match.params.baseRoute;
             if (
               this.state.isLoggedIn &&
               this.state.initialized &&

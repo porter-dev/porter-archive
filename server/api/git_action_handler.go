@@ -164,6 +164,7 @@ func (app *App) createGitActionFromForm(
 		ProjectID:      uint(projID),
 		ReleaseName:    name,
 		DockerFilePath: gitAction.DockerfilePath,
+		FolderPath:     gitAction.FolderPath,
 		ImageRepoURL:   gitAction.ImageRepoURI,
 		PorterToken:    encoded,
 		BuildEnv:       form.BuildEnv,

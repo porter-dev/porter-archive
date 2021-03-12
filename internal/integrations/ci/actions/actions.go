@@ -31,6 +31,7 @@ type GithubActions struct {
 	ReleaseName  string
 
 	DockerFilePath string
+	FolderPath     string
 	ImageRepoURL   string
 
 	defaultBranch string
@@ -115,6 +116,20 @@ type GithubActionYAML struct {
 }
 
 func (g *GithubActions) GetGithubActionYAML() ([]byte, error) {
+	gaSteps := []GithubActionYAMLStep{
+		getCheckoutCodeStep(),
+		getDownloadPorterStep(),
+		getConfigurePorterStep(g.getPorterTokenSecretName()),
+	}
+
+	if g.DockerFilePath == "" {
+		gaSteps = append(gaSteps, getBuildPackPushStep(g.getBuildEnvSecretName(), g.DockerFilePath, g.ImageRepoURL))
+	} else {
+		gaSteps = append(gaSteps, getDockerBuildPushStep(g.getBuildEnvSecretName(), g.DockerFilePath, g.ImageRepoURL))
+	}
+
+	gaSteps = append(gaSteps, deployPorterWebhookStep(g.getWebhookSecretName(), g.ImageRepoURL))
+
 	actionYAML := &GithubActionYAML{
 		On: GithubActionYAMLOnPush{
 			Push: GithubActionYAMLOnPushBranches{
@@ -127,13 +142,7 @@ func (g *GithubActions) GetGithubActionYAML() ([]byte, error) {
 		Jobs: map[string]GithubActionYAMLJob{
 			"porter-deploy": {
 				RunsOn: "ubuntu-latest",
-				Steps: []GithubActionYAMLStep{
-					getCheckoutCodeStep(),
-					getDownloadPorterStep(),
-					getConfigurePorterStep(g.getPorterTokenSecretName()),
-					getDockerBuildPushStep(g.getBuildEnvSecretName(), g.DockerFilePath, g.ImageRepoURL),
-					deployPorterWebhookStep(g.getWebhookSecretName(), g.ImageRepoURL),
-				},
+				Steps:  gaSteps,
 			},
 		},
 	}

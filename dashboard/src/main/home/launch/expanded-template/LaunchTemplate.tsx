@@ -53,7 +53,7 @@ type StateType = {
   repoType: string;
   dockerfilePath: string | null;
   folderPath: string | null;
-  selectedRegistryId: number | null;
+  selectedRegistry: any | null;
 };
 
 const defaultActionConfig: ActionConfigType = {
@@ -83,7 +83,7 @@ class LaunchTemplate extends Component<PropsType, StateType> {
     repoType: "",
     dockerfilePath: null as string | null,
     folderPath: null as string | null,
-    selectedRegistryId: null as number | null,
+    selectedRegistry: null as any | null,
   };
 
   createGHAction = (chartName: string, chartNamespace: string) => {
@@ -94,9 +94,10 @@ class LaunchTemplate extends Component<PropsType, StateType> {
         "<token>",
         {
           git_repo: actionConfig.git_repo,
-          registry_id: this.state.selectedRegistryId,
+          registry_id: this.state.selectedRegistry.id,
           dockerfile_path: this.state.dockerfilePath,
           folder_path: this.state.folderPath,
+          image_repo_uri: `${this.state.selectedRegistry.url}/${chartName}-${chartNamespace}`,
           git_repo_id: actionConfig.git_repo_id,
         },
         {
@@ -301,7 +302,7 @@ class LaunchTemplate extends Component<PropsType, StateType> {
 
       // Allow if source type is repo and dockerfile or folder path is set
       if (sourceType === "repo" && (dockerfilePath || folderPath)) {
-        return !this.state.selectedRegistryId;
+        return !this.state.selectedRegistry;
       }
 
       return true;
@@ -312,7 +313,7 @@ class LaunchTemplate extends Component<PropsType, StateType> {
 
   getStatus = () => {
     let {
-      selectedRegistryId,
+      selectedRegistry,
       sourceType,
       dockerfilePath,
       folderPath,
@@ -322,7 +323,7 @@ class LaunchTemplate extends Component<PropsType, StateType> {
       if (
         sourceType === "repo" &&
         (dockerfilePath || folderPath) &&
-        !selectedRegistryId
+        !selectedRegistry
       ) {
         return "A connected container registry is required";
       }
@@ -598,10 +599,10 @@ class LaunchTemplate extends Component<PropsType, StateType> {
                 folderPath: null,
               });
             }}
-            setSelectedRegistryId={(x: number) => {
-              this.setState({ selectedRegistryId: x });
+            setSelectedRegistry={(x: any) => {
+              this.setState({ selectedRegistry: x });
             }}
-            selectedRegistryId={this.state.selectedRegistryId}
+            selectedRegistry={this.state.selectedRegistry}
           />
           <br />
         </StyledSourceBox>

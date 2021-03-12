@@ -159,26 +159,26 @@ const RepoName = styled.div`
   font-size: 13px;
   border-bottom: 1px solid
     ${(props: { lastItem: boolean; isSelected: boolean; readOnly: boolean }) =>
-    props.lastItem ? "#00000000" : "#606166"};
+      props.lastItem ? "#00000000" : "#606166"};
   color: #ffffff;
   user-select: none;
   align-items: center;
   padding: 10px 0px;
   cursor: ${(props: {
-      lastItem: boolean;
-      isSelected: boolean;
-      readOnly: boolean;
-    }) => (props.readOnly ? "default" : "pointer")};
+    lastItem: boolean;
+    isSelected: boolean;
+    readOnly: boolean;
+  }) => (props.readOnly ? "default" : "pointer")};
   pointer-events: ${(props: {
-      lastItem: boolean;
-      isSelected: boolean;
-      readOnly: boolean;
-    }) => (props.readOnly ? "none" : "auto")};
+    lastItem: boolean;
+    isSelected: boolean;
+    readOnly: boolean;
+  }) => (props.readOnly ? "none" : "auto")};
   background: ${(props: {
-      lastItem: boolean;
-      isSelected: boolean;
-      readOnly: boolean;
-    }) => (props.isSelected ? "#ffffff22" : "#ffffff11")};
+    lastItem: boolean;
+    isSelected: boolean;
+    readOnly: boolean;
+  }) => (props.isSelected ? "#ffffff22" : "#ffffff11")};
   :hover {
     background: #ffffff22;
 

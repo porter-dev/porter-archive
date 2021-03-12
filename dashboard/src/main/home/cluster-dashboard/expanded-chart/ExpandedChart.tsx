@@ -234,8 +234,6 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
       ...values,
     });
 
-    console.log("VALUES YAML", valuesYaml)
-
     this.setState({ saveValuesStatus: "loading" });
     this.refreshChart();
     api
@@ -257,10 +255,19 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
           saveValuesStatus: "successful",
           forceRefreshRevisions: true,
         });
+
+        window.analytics.track("Chart Upgraded", {
+          chart: this.props.currentChart.name,
+          values: valuesYaml,
+        });
       })
       .catch((err) => {
         this.setState({ saveValuesStatus: "error" });
-        console.log(err);
+        window.analytics.track("Failed to Upgrade Chart", {
+          chart: this.props.currentChart.name,
+          values: valuesYaml,
+          error: err,
+        });
       });
   };
 

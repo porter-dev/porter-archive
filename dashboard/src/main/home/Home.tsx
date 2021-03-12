@@ -1,8 +1,6 @@
 import React, { Component } from "react";
 import { RouteComponentProps, withRouter } from "react-router";
-import posthog from "posthog-js";
 import styled from "styled-components";
-import * as FullStory from "@fullstory/browser";
 
 import api from "shared/api";
 import { Context } from "shared/Context";
@@ -199,9 +197,6 @@ class Home extends Component<PropsType, StateType> {
   };
 
   componentDidMount() {
-    let { user } = this.context;
-    FullStory.identify(user.email);
-
     // Handle redirect from DO
     let queryString = window.location.search;
     let urlParams = new URLSearchParams(queryString);
@@ -219,19 +214,8 @@ class Home extends Component<PropsType, StateType> {
       this.checkDO();
     }
 
-    // initialize posthog on non-localhosts. Gracefully fail when env vars are not set.
     this.setState({ ghRedirect: urlParams.get("gh_oauth") !== null });
     urlParams.delete("gh_oauth");
-
-    window.location.href.indexOf("localhost") === -1 &&
-      posthog.init(process.env.POSTHOG_API_KEY || "placeholder", {
-        api_host: process.env.POSTHOG_HOST || "placeholder",
-        loaded: function (posthog: any) {
-          posthog.identify(user.userId);
-          posthog.people.set({ email: user.email });
-        },
-      });
-
     this.getProjects(defaultProjectId);
   }
 

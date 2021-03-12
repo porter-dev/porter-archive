@@ -119,6 +119,7 @@ export default class ImageSelector extends Component<PropsType, StateType> {
   */
   renderImageList = () => {
     let { images, loading, error } = this.state;
+
     if (loading) {
       return (
         <LoadingWrapper>
@@ -195,7 +196,11 @@ export default class ImageSelector extends Component<PropsType, StateType> {
           value={selectedImageUrl}
           onChange={(e: any) => {
             setSelectedImageUrl(e.target.value);
-            this.setState({ clickedImage: null });
+            this.setState({ clickedImage: null, isExpanded: false });
+
+            if (e.target.value == "") {
+              this.setState({ isExpanded: true });
+            }
           }}
           placeholder="Enter or select your container image URL"
         />

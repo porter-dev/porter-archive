@@ -30,13 +30,13 @@ func GetPrometheusService(clientset kubernetes.Interface) (*v1.Service, bool, er
 }
 
 type QueryOpts struct {
-	Metric     string   `json:"metric"`
-	ShouldSum  bool     `json:"should_sum"`
-	PodList    []string `json:"pods"`
-	Namespace  string   `json:"namespace"`
-	StartRange uint     `json:"start_range"`
-	EndRange   uint     `json:"end_range"`
-	Resolution string   `json:"resolution"`
+	Metric     string   `schema:"metric"`
+	ShouldSum  bool     `schema:"shouldsum"`
+	PodList    []string `schema:"pods"`
+	Namespace  string   `schema:"namespace"`
+	StartRange uint     `schema:"startrange"`
+	EndRange   uint     `schema:"endrange"`
+	Resolution string   `schema:"resolution"`
 }
 
 func QueryPrometheus(

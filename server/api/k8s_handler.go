@@ -7,6 +7,7 @@ import (
 	"net/url"
 
 	"github.com/go-chi/chi"
+	"github.com/gorilla/schema"
 	"github.com/gorilla/websocket"
 	"github.com/porter-dev/porter/internal/forms"
 	"github.com/porter-dev/porter/internal/kubernetes"
@@ -346,7 +347,10 @@ func (app *App) HandleGetPodMetrics(w http.ResponseWriter, r *http.Request) {
 	form.K8sForm.PopulateK8sOptionsFromQueryParams(vals, app.Repo.Cluster)
 
 	// decode from JSON to form value
-	if err := json.NewDecoder(r.Body).Decode(form.QueryOpts); err != nil {
+	decoder := schema.NewDecoder()
+	decoder.IgnoreUnknownKeys(true)
+
+	if err := decoder.Decode(form.QueryOpts, vals); err != nil {
 		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
 		return
 	}
@@ -370,19 +374,19 @@ func (app *App) HandleGetPodMetrics(w http.ResponseWriter, r *http.Request) {
 	promSvc, found, err := prometheus.GetPrometheusService(agent.Clientset)
 
 	if err != nil {
-		app.handleErrorFormValidation(err, ErrK8sValidate, w)
+		app.handleErrorInternal(err, w)
 		return
 	}
 
 	if !found {
-		app.handleErrorFormValidation(err, ErrK8sValidate, w)
+		app.handleErrorInternal(err, w)
 		return
 	}
 
 	rawQuery, err := prometheus.QueryPrometheus(agent.Clientset, promSvc, form.QueryOpts)
 
 	if err != nil {
-		app.handleErrorFormValidation(err, ErrK8sValidate, w)
+		app.handleErrorInternal(err, w)
 		return
 	}
 

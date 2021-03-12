@@ -348,6 +348,22 @@ const getMatchingPods = baseApi<
   return `/api/projects/${pathParams.id}/k8s/pods`;
 });
 
+const getMetrics = baseApi<
+  {
+    cluster_id: number;
+    metric: string,
+    shouldsum: boolean,
+    pods: string[],
+    namespace: string,
+    startrange: number,
+    endrange: number,
+    resolution: string,
+  },
+  { id: number }
+>("GET", (pathParams) => {
+  return `/api/projects/${pathParams.id}/k8s/metrics`;
+});
+
 const getNamespaces = baseApi<
   {
     cluster_id: number;
@@ -598,6 +614,7 @@ export default {
   getIngress,
   getInvites,
   getMatchingPods,
+  getMetrics,
   getNamespaces,
   getOAuthIds,
   getProjectClusters,

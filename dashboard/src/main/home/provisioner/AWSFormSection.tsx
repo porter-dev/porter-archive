@@ -202,6 +202,7 @@ class AWSFormSection extends Component<PropsType, StateType> {
 
   // TODO: handle generically (with > 2 steps)
   onCreateAWS = () => {
+    this.setState({ buttonStatus: "loading" });
     let { projectName } = this.props;
     let { selectedInfras } = this.state;
 
@@ -296,9 +297,10 @@ class AWSFormSection extends Component<PropsType, StateType> {
         {this.props.children ? this.props.children : <Padding />}
         <SaveButton
           text="Submit"
-          disabled={this.checkFormDisabled()}
+          disabled={this.checkFormDisabled() || this.state.buttonStatus === "loading"}
           onClick={this.onCreateAWS}
           makeFlush={true}
+          status={this.state.buttonStatus}
           helper="Note: Provisioning can take up to 15 minutes"
         />
       </StyledAWSFormSection>

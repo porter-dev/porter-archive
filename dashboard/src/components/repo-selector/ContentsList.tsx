@@ -218,7 +218,7 @@ export default class ContentsList extends Component<PropsType, StateType> {
           <ConfirmButton
             onClick={() => this.props.setFolderPath(this.state.currentDir)}
           >
-            Skip
+            No, I don't want to use a Dockerfile
           </ConfirmButton>
         </Overlay>
       );

@@ -43,6 +43,14 @@ type MetricsMemoryDataResponse = {
   }[],
 }[]
 
+type MetricsNetworkDataResponse = {
+  pod?: string,
+  results: {
+    date: number,
+    bytes: string,
+  }[],
+}[]
+
 const resolutions : { [range: string]: string } = {
   "1H": "15s",
   "6H": "15s",
@@ -192,6 +200,22 @@ export default class MetricsSection extends Component<PropsType, StateType> {
               return {
                 date: d.date,
                 value: parseFloat(d.memory) / (1024 * 1024), // put units in Mi
+              }
+            }
+          )
+
+          this.setState({ data: tData })
+        } else if (kind == "network") {
+          let data = res.data as MetricsNetworkDataResponse
+
+          let tData = data[0].results.map(
+            (d: {
+              date: number,
+              bytes: string,
+            }, i: number) => {
+              return {
+                date: d.date,
+                value: parseFloat(d.bytes) / (1024), // put units in Ki
               }
             }
           )
@@ -360,6 +384,7 @@ export default class MetricsSection extends Component<PropsType, StateType> {
     let metricOptions = [
       { value: "cpu", label: "CPU Utilization (vCPUs)" },
       { value: "memory", label: "RAM Utilization (Mi)" },
+      { value: "network", label: "Network Received Bytes (Ki)" },
     ];
     return metricOptions.map(
       (option: { value: string; label: string }, i: number) => {

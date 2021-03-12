@@ -401,6 +401,15 @@ const getProjects = baseApi<{}, { id: number }>("GET", (pathParams) => {
   return `/api/users/${pathParams.id}/projects`;
 });
 
+const getPrometheusIsInstalled = baseApi<
+{
+  cluster_id: number;
+},
+{ id: number }
+>("GET", (pathParams) => {
+return `/api/projects/${pathParams.id}/k8s/prometheus/detect`;
+});
+
 const getRegistryIntegrations = baseApi("GET", "/api/integrations/registry");
 
 const getReleaseToken = baseApi<
@@ -621,6 +630,7 @@ export default {
   getProjectRegistries,
   getProjectRepos,
   getProjects,
+  getPrometheusIsInstalled,
   getRegistryIntegrations,
   getReleaseToken,
   getRepoIntegrations,

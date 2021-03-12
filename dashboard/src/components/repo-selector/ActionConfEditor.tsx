@@ -20,6 +20,7 @@ type PropsType = {
   folderPath: string;
   setFolderPath: (x: string) => void;
   setSelectedRegistryId: (x: number) => void;
+  selectedRegistryId: number;
 };
 
 type StateType = {
@@ -93,31 +94,17 @@ export default class ActionConfEditor extends Component<PropsType, StateType> {
       );
     }
     return (
-      <>
-        <ActionDetails
-          branch={branch}
-          actionConfig={actionConfig}
-          setActionConfig={setActionConfig}
-          dockerfilePath={this.props.dockerfilePath}
-          folderPath={this.props.folderPath}
-          setSelectedRegistryId={this.props.setSelectedRegistryId}
-        />
-        <Flex>
-          <BackButton
-            width="140px"
-            onClick={() => {
-              this.props.setDockerfilePath(null);
-              this.props.setFolderPath(null);
-            }}
-          >
-            <i className="material-icons">keyboard_backspace</i>
-            Select Folder
-          </BackButton>
-          <StatusWrapper>
-            <i className="material-icons">done</i> Source selected.
-          </StatusWrapper>
-        </Flex>
-      </>
+      <ActionDetails
+        branch={branch}
+        setDockerfilePath={this.props.setDockerfilePath}
+        setFolderPath={this.props.setFolderPath}
+        actionConfig={actionConfig}
+        setActionConfig={setActionConfig}
+        dockerfilePath={this.props.dockerfilePath}
+        folderPath={this.props.folderPath}
+        setSelectedRegistryId={this.props.setSelectedRegistryId}
+        selectedRegistryId={this.props.selectedRegistryId}
+      />
     );
   };
 
@@ -127,37 +114,6 @@ export default class ActionConfEditor extends Component<PropsType, StateType> {
 }
 
 ActionConfEditor.contextType = Context;
-
-const StatusWrapper = styled.div`
-  display: flex;
-  align-items: center;
-  font-family: "Work Sans", sans-serif;
-  font-size: 13px;
-  color: #ffffff55;
-  margin-right: 25px;
-  margin-left: 20px;
-  margin-top: 26px;
-
-  > i {
-    font-size: 18px;
-    margin-right: 10px;
-    color: #4797ff;
-  }
-
-  animation: statusFloatIn 0.5s;
-  animation-fill-mode: forwards;
-
-  @keyframes statusFloatIn {
-    from {
-      opacity: 0;
-      transform: translateY(10px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0px);
-    }
-  }
-`;
 
 const Br = styled.div`
   width: 100%;

@@ -44,7 +44,7 @@ export default class Chart extends Component<PropsType, StateType> {
 
   componentDidMount() {
     window.analytics.track("Opened Chart", {
-      chart: this.props.chart.chart.metadata.name,
+      chart: this.props.chart.name,
     });
   }
 

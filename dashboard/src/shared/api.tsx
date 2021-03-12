@@ -99,6 +99,7 @@ const createGHAction = baseApi<
   {
     git_repo: string;
     registry_id: number;
+    image_repo_uri: string;
     dockerfile_path: string;
     folder_path: string;
     git_repo_id: number;

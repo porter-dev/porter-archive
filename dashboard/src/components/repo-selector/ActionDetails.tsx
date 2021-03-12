@@ -15,8 +15,8 @@ type PropsType = {
   branch: string;
   dockerfilePath: string;
   folderPath: string;
-  setSelectedRegistryId: (x: number) => void;
-  selectedRegistryId: number;
+  setSelectedRegistry: (x: any) => void;
+  selectedRegistry: any;
   setDockerfilePath: (x: string) => void;
   setFolderPath: (x: string) => void;
 };
@@ -52,7 +52,7 @@ export default class ActionDetails extends Component<PropsType, StateType> {
       .then((res: any) => {
         this.setState({ registries: res.data, loading: false });
         if (res.data.length === 1) {
-          this.props.setSelectedRegistryId(res.data[0].id);
+          this.props.setSelectedRegistry(res.data[0]);
         }
       })
       .catch((err: any) => console.log(err));
@@ -78,9 +78,9 @@ export default class ActionDetails extends Component<PropsType, StateType> {
       return (
         <RegistryItem
           key={i}
-          isSelected={registry.id === this.props.selectedRegistryId}
+          isSelected={registry.id === this.props.selectedRegistry.id}
           lastItem={i === registries.length - 1}
-          onClick={() => this.props.setSelectedRegistryId(registry.id)}
+          onClick={() => this.props.setSelectedRegistry(registry)}
         >
           <img src={icon && icon} />
           {registry.url}
@@ -145,7 +145,7 @@ export default class ActionDetails extends Component<PropsType, StateType> {
             <i className="material-icons">keyboard_backspace</i>
             Select Folder
           </BackButton>
-          {this.props.selectedRegistryId ? (
+          {this.props.selectedRegistry ? (
             <StatusWrapper successful={true}>
               <i className="material-icons">done</i> Source selected.
             </StatusWrapper>

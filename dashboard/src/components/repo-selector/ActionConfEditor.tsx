@@ -19,8 +19,8 @@ type PropsType = {
   setDockerfilePath: (x: string) => void;
   folderPath: string;
   setFolderPath: (x: string) => void;
-  setSelectedRegistryId: (x: number) => void;
-  selectedRegistryId: number;
+  setSelectedRegistry: (x: any) => void;
+  selectedRegistry: any;
 };
 
 type StateType = {
@@ -102,8 +102,8 @@ export default class ActionConfEditor extends Component<PropsType, StateType> {
         setActionConfig={setActionConfig}
         dockerfilePath={this.props.dockerfilePath}
         folderPath={this.props.folderPath}
-        setSelectedRegistryId={this.props.setSelectedRegistryId}
-        selectedRegistryId={this.props.selectedRegistryId}
+        setSelectedRegistry={this.props.setSelectedRegistry}
+        selectedRegistry={this.props.selectedRegistry}
       />
     );
   };

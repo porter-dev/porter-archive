@@ -55,11 +55,16 @@ func QueryPrometheus(
 		query = fmt.Sprintf("rate(container_cpu_usage_seconds_total{%s}[5m])", podSelector)
 	} else if opts.Metric == "memory" {
 		query = fmt.Sprintf("container_memory_usage_bytes{%s}", podSelector)
+	} else if opts.Metric == "network" {
+		netPodSelector := fmt.Sprintf(`namespace="%s",pod=~"%s",container="POD"`, opts.Namespace, strings.Join(opts.PodList, "|"))
+		query = fmt.Sprintf("rate(container_network_receive_bytes_total{%s}[5m])", netPodSelector)
 	}
 
 	if opts.ShouldSum {
 		query = fmt.Sprintf("sum(%s)", query)
 	}
+
+	fmt.Println("QUERY IS", query)
 
 	queryParams := map[string]string{
 		"query": query,
@@ -101,6 +106,7 @@ type promParsedSingletonQueryResult struct {
 	Date   interface{} `json:"date,omitempty"`
 	CPU    interface{} `json:"cpu,omitempty"`
 	Memory interface{} `json:"memory,omitempty"`
+	Bytes  interface{} `json:"bytes,omitempty"`
 }
 
 type promParsedSingletonQuery struct {
@@ -131,6 +137,8 @@ func parseQuery(rawQuery []byte, metric string) ([]byte, error) {
 				singletonResult.CPU = values[1]
 			} else if metric == "memory" {
 				singletonResult.Memory = values[1]
+			} else if metric == "network" {
+				singletonResult.Bytes = values[1]
 			}
 
 			singletonResults = append(singletonResults, *singletonResult)

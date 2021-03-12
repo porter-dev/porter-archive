@@ -33,6 +33,7 @@ type PropsType = {
   currentCluster: ClusterType;
   setCurrentChart: (x: ChartType | null) => void;
   setSidebar: (x: boolean) => void;
+  isMetricsInstalled: boolean;
 };
 
 type StateType = {
@@ -364,7 +365,15 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
     // Append universal tabs
     tabOptions.push(
       { label: "Status", value: "status" },
-      { label: "Metrics", value: "metrics" },
+    );
+
+    if (this.props.isMetricsInstalled) {
+      tabOptions.push(
+        { label: "Metrics", value: "metrics" },
+      )
+    }
+
+    tabOptions.push(
       { label: "Chart Overview", value: "graph" }
     );
 

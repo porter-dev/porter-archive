@@ -26,13 +26,14 @@ type StateType = {
   images: ImageType[];
 };
 
-export default class ImageSelector extends Component<PropsType, StateType> {
+export default class ImageList extends Component<PropsType, StateType> {
   state = {
     loading: true,
     error: false,
     images: [] as ImageType[],
   };
 
+  // TODO: Try to unhook before unmount
   componentDidMount() {
     const { currentProject, setCurrentError } = this.context;
     let images = [] as ImageType[];
@@ -168,6 +169,7 @@ export default class ImageSelector extends Component<PropsType, StateType> {
   */
   renderImageList = () => {
     let { images, loading, error } = this.state;
+
     if (loading) {
       return (
         <LoadingWrapper>
@@ -253,7 +255,7 @@ export default class ImageSelector extends Component<PropsType, StateType> {
   }
 }
 
-ImageSelector.contextType = Context;
+ImageList.contextType = Context;
 
 const BackButton = styled.div`
   display: flex;
@@ -286,7 +288,7 @@ const ImageItem = styled.div`
   font-size: 13px;
   border-bottom: 1px solid
     ${(props: { lastItem: boolean; isSelected: boolean }) =>
-      props.lastItem ? "#00000000" : "#606166"};
+    props.lastItem ? "#00000000" : "#606166"};
   color: #ffffff;
   user-select: none;
   align-items: center;

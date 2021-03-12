@@ -3,13 +3,11 @@ import styled from "styled-components";
 import info from "assets/info.svg";
 import edit from "assets/edit.svg";
 
-import api from "shared/api";
 import { integrationList } from "shared/common";
 import { Context } from "shared/Context";
 import { ImageType } from "shared/types";
 
 import Loading from "../Loading";
-import TagList from "./TagList";
 import ImageList from "./ImageList";
 
 type PropsType = {
@@ -121,6 +119,7 @@ export default class ImageSelector extends Component<PropsType, StateType> {
   */
   renderImageList = () => {
     let { images, loading, error } = this.state;
+
     if (loading) {
       return (
         <LoadingWrapper>
@@ -197,7 +196,11 @@ export default class ImageSelector extends Component<PropsType, StateType> {
           value={selectedImageUrl}
           onChange={(e: any) => {
             setSelectedImageUrl(e.target.value);
-            this.setState({ clickedImage: null });
+            this.setState({ clickedImage: null, isExpanded: false });
+
+            if (e.target.value == "") {
+              this.setState({ isExpanded: true });
+            }
           }}
           placeholder="Enter or select your container image URL"
         />
@@ -295,7 +298,7 @@ const ImageItem = styled.div`
   font-size: 13px;
   border-bottom: 1px solid
     ${(props: { lastItem: boolean; isSelected: boolean }) =>
-      props.lastItem ? "#00000000" : "#606166"};
+    props.lastItem ? "#00000000" : "#606166"};
   color: #ffffff;
   user-select: none;
   align-items: center;

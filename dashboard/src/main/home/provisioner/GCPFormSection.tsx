@@ -216,6 +216,7 @@ class GCPFormSection extends Component<PropsType, StateType> {
 
   // TODO: handle generically (with > 2 steps)
   onCreateGCP = () => {
+    this.setState({ buttonStatus: "loading" });
     let { projectName } = this.props;
 
     if (!projectName) {
@@ -285,9 +286,10 @@ class GCPFormSection extends Component<PropsType, StateType> {
         {this.props.children ? this.props.children : <Padding />}
         <SaveButton
           text="Submit"
-          disabled={this.checkFormDisabled()}
+          disabled={this.checkFormDisabled() || this.state.buttonStatus === "loading"}
           onClick={this.onCreateGCP}
           makeFlush={true}
+          status={this.state.buttonStatus}
           helper="Note: Provisioning can take up to 15 minutes"
         />
       </StyledGCPFormSection>

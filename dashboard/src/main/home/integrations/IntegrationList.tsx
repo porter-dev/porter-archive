@@ -24,7 +24,7 @@ export default class IntegrationList extends Component<PropsType, StateType> {
   };
 
   allCollapsed = () =>
-    this.state.displayExpanded.reduce((prev, cur) => prev && !cur, true)
+    this.state.displayExpanded.reduce((prev, cur) => prev && !cur, true);
 
   componentDidUpdate(prevProps: PropsType) {
     if (prevProps.integrations !== this.props.integrations) {
@@ -33,7 +33,9 @@ export default class IntegrationList extends Component<PropsType, StateType> {
   }
 
   collapseAll = () => {
-    this.setState({ displayExpanded: this.props.integrations.map(() => false) });
+    this.setState({
+      displayExpanded: this.props.integrations.map(() => false),
+    });
   };
 
   expandAll = () => {
@@ -52,26 +54,22 @@ export default class IntegrationList extends Component<PropsType, StateType> {
   handleParent = (event: any, integration: string) =>
     this.props.setCurrent && this.props.setCurrent(integration);
 
-
   renderContents = () => {
-    let {
-      integrations,
-      titles,
-      setCurrent,
-      isCategory,
-    } = this.props;
+    let { integrations, titles, setCurrent, isCategory } = this.props;
     if (titles && titles.length > 0) {
       return integrations.map((integration: string, i: number) => {
         let label = titles[i];
-        return <IntegrationRow
-          category={this.props.currentCategory}
-          integration={integration}
-          expanded={this.state.displayExpanded[i]}
-          key={i}
-          itemId={this.props.itemIdentifier[i]}
-          label={label}
-          toggleCollapse={(e: MouseEvent) => this.toggleDisplay(e, i)}
-        ></IntegrationRow>;
+        return (
+          <IntegrationRow
+            category={this.props.currentCategory}
+            integration={integration}
+            expanded={this.state.displayExpanded[i]}
+            key={i}
+            itemId={this.props.itemIdentifier[i]}
+            label={label}
+            toggleCollapse={(e: MouseEvent) => this.toggleDisplay(e, i)}
+          ></IntegrationRow>
+        );
       });
     } else if (integrations && integrations.length > 0) {
       return integrations.map((integration: string, i: number) => {
@@ -83,7 +81,9 @@ export default class IntegrationList extends Component<PropsType, StateType> {
         return (
           <Integration
             key={i}
-            onClick={() => (disabled ? null : (setCurrent && setCurrent(integration)))}
+            onClick={() =>
+              disabled ? null : setCurrent && setCurrent(integration)
+            }
             disabled={disabled}
           >
             <MainRow disabled={disabled}>
@@ -102,27 +102,29 @@ export default class IntegrationList extends Component<PropsType, StateType> {
     return <Placeholder>No integrations set up yet.</Placeholder>;
   };
 
-  collapseAllButton = () => <Button
-    onClick={() => this.allCollapsed() ? this.expandAll() : this.collapseAll()}
-  >
-    {this.allCollapsed() ? (
-      <>
-        <i className="material-icons">expand_more</i> Expand All
-    </>
-    ) : (
-      <>
-        <i className="material-icons">expand_less</i> Collapse All
-    </>
-    )}
-  </Button>;
+  collapseAllButton = () => (
+    <Button
+      onClick={() =>
+        this.allCollapsed() ? this.expandAll() : this.collapseAll()
+      }
+    >
+      {this.allCollapsed() ? (
+        <>
+          <i className="material-icons">expand_more</i> Expand All
+        </>
+      ) : (
+        <>
+          <i className="material-icons">expand_less</i> Collapse All
+        </>
+      )}
+    </Button>
+  );
 
   render() {
     return (
       <StyledIntegrationList>
         {this.props.titles && this.props.titles.length > 0 && (
-          <ControlRow>
-            {this.collapseAllButton()}
-          </ControlRow>
+          <ControlRow>{this.collapseAllButton()}</ControlRow>
         )}
         {this.renderContents()}
       </StyledIntegrationList>
@@ -148,10 +150,10 @@ const MainRow = styled.div`
   border-radius: 5px;
   :hover {
     background: ${(props: { disabled: boolean }) =>
-    props.disabled ? "" : "#ffffff11"};
+      props.disabled ? "" : "#ffffff11"};
     > i {
       background: ${(props: { disabled: boolean }) =>
-    props.disabled ? "" : "#ffffff11"};
+        props.disabled ? "" : "#ffffff11"};
     }
   }
 
@@ -163,7 +165,7 @@ const MainRow = styled.div`
     margin-right: -7px;
     :hover {
       background: ${(props: { disabled: boolean }) =>
-    props.disabled ? "" : "#ffffff11"};
+        props.disabled ? "" : "#ffffff11"};
     }
   }
 `;
@@ -250,7 +252,7 @@ const Button = styled.div`
     props.disabled ? "#aaaabbee" : "#616FEEcc"};
   :hover {
     background: ${(props: { disabled?: boolean }) =>
-    props.disabled ? "" : "#505edddd"};
+      props.disabled ? "" : "#505edddd"};
   }
 
   > i {

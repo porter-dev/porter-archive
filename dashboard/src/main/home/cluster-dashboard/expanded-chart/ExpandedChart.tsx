@@ -256,18 +256,18 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
           forceRefreshRevisions: true,
         });
 
-        window.analytics.track('Chart Upgraded', {
+        window.analytics.track("Chart Upgraded", {
           chart: this.props.currentChart.name,
           values: valuesYaml,
-        })
+        });
       })
       .catch((err) => {
         this.setState({ saveValuesStatus: "error" });
-        window.analytics.track('Failed to Upgrade Chart', {
+        window.analytics.track("Failed to Upgrade Chart", {
           chart: this.props.currentChart.name,
           values: valuesYaml,
           error: err,
-        })
+        });
       });
   };
 

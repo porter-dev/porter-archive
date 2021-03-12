@@ -34,7 +34,7 @@ export default class ContentsList extends Component<PropsType, StateType> {
     let { actionConfig, setActionConfig } = this.props;
     let updatedConfig = actionConfig;
     let path = x;
-    console.log(fileName)
+    console.log(fileName);
     updatedConfig.dockerfile_path = path;
     setActionConfig(updatedConfig);
     this.updateContents();

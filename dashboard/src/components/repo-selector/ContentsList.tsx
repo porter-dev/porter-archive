@@ -204,7 +204,7 @@ export default class ContentsList extends Component<PropsType, StateType> {
                   key={i}
                   onClick={() =>
                     this.props.setDockerfilePath(
-                      `${this.state.currentDir}/${dockerfile}`
+                      `${this.state.currentDir || "."}/${dockerfile}`
                     )
                   }
                   isLast={this.state.dockerfiles.length - 1 === i}

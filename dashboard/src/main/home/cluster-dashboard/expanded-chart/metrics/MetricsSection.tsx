@@ -411,7 +411,7 @@ export default class MetricsSection extends Component<PropsType, StateType> {
             width={width} 
             height={height} 
             resolution={this.state.selectedRange}
-            margin={{ top: 60, right: 0, bottom: 0, left: 50 }}
+            margin={{ top: 60, right: -40, bottom: 0, left: 50 }}
           />}
         </ParentSize>
         <MetricSelector
@@ -516,7 +516,7 @@ const Dropdown = styled.div`
 const RangeWrapper = styled.div`
   position: absolute;
   top: 0;
-  left: calc(100% - 200px);
+  right: 0;
   font-weight: bold;
   width: 156px;
 `;

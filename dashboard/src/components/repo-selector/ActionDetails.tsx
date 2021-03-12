@@ -29,9 +29,9 @@ type StateType = {
 };
 
 const dummyRegistries = [
-  { id: 1, service: 'ecr', url: 'https://idfkasdfasdf' },
-  { id: 12, service: 'ecr', url: 'https://dfasdfidfkasdfasdf' },
-  { id: 11, service: 'gcr', url: 'https://idfkasdfasdf' },
+  { id: 1, service: "ecr", url: "https://idfkasdfasdf" },
+  { id: 12, service: "ecr", url: "https://dfasdfidfkasdfasdf" },
+  { id: 11, service: "gcr", url: "https://idfkasdfasdf" },
 ] as any[];
 
 export default class ActionDetails extends Component<PropsType, StateType> {
@@ -44,7 +44,11 @@ export default class ActionDetails extends Component<PropsType, StateType> {
 
   componentDidMount() {
     api
-      .getProjectRegistries("<token>", {}, { id: this.context.currentProject.id })
+      .getProjectRegistries(
+        "<token>",
+        {},
+        { id: this.context.currentProject.id }
+      )
       .then((res: any) => {
         this.setState({ registries: res.data, loading: false });
         if (res.data.length === 1) {
@@ -66,7 +70,8 @@ export default class ActionDetails extends Component<PropsType, StateType> {
 
     return registries.map((registry: any, i: number) => {
       let icon =
-        integrationList[registry.service] && integrationList[registry.service].icon;
+        integrationList[registry.service] &&
+        integrationList[registry.service].icon;
       if (!icon) {
         icon = integrationList["docker"].icon;
       }
@@ -96,7 +101,7 @@ export default class ActionDetails extends Component<PropsType, StateType> {
         </>
       );
     }
-  }
+  };
 
   render() {
     return (
@@ -140,17 +145,16 @@ export default class ActionDetails extends Component<PropsType, StateType> {
             <i className="material-icons">keyboard_backspace</i>
             Select Folder
           </BackButton>
-          { 
-            this.props.selectedRegistryId ? (
-              <StatusWrapper successful={true}>
-                <i className="material-icons">done</i> Source selected.
-              </StatusWrapper>
-            ) : (
-              <StatusWrapper>
-                <i className="material-icons">error_outline</i> A connected container registry is required
-              </StatusWrapper>
-            )
-          }
+          {this.props.selectedRegistryId ? (
+            <StatusWrapper successful={true}>
+              <i className="material-icons">done</i> Source selected.
+            </StatusWrapper>
+          ) : (
+            <StatusWrapper>
+              <i className="material-icons">error_outline</i> A connected
+              container registry is required
+            </StatusWrapper>
+          )}
         </Flex>
       </>
     );
@@ -227,7 +231,7 @@ const StatusWrapper = styled.div<{ successful?: boolean }>`
   > i {
     font-size: 18px;
     margin-right: 10px;
-    color: ${props => props.successful ? "#4797ff" : "#fcba03"};
+    color: ${(props) => (props.successful ? "#4797ff" : "#fcba03")};
   }
 
   animation: statusFloatIn 0.5s;

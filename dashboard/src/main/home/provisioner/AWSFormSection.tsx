@@ -250,11 +250,16 @@ class AWSFormSection extends Component<PropsType, StateType> {
         return "Project name contains illegal characters";
       }
     }
-    if (!this.state.awsAccessId || !this.state.awsSecretKey || !this.state.provisionConfirmed || this.props.projectName === "") {
+    if (
+      !this.state.awsAccessId ||
+      !this.state.awsSecretKey ||
+      !this.state.provisionConfirmed ||
+      this.props.projectName === ""
+    ) {
       return "Required fields missing";
     }
     return this.state.buttonStatus;
-  }
+  };
 
   render() {
     let { setSelectedProvisioner } = this.props;
@@ -304,7 +309,9 @@ class AWSFormSection extends Component<PropsType, StateType> {
           />
           <Br />
           <Heading>AWS Resources</Heading>
-          <Helper>Porter will provision the following AWS resources in your own cloud.</Helper>
+          <Helper>
+            Porter will provision the following AWS resources in your own cloud.
+          </Helper>
           <CheckboxList
             options={provisionOptions}
             selected={selectedInfras}
@@ -313,20 +320,34 @@ class AWSFormSection extends Component<PropsType, StateType> {
             }}
           />
           <Helper>
-            By default, Porter creates a cluster with three t2.medium instances (2vCPUs and 4GB RAM each). AWS will bill you for any provisioned resources. Learn more about EKS pricing
-            <Highlight href="https://aws.amazon.com/eks/pricing/" target="_blank">here</Highlight>.
+            By default, Porter creates a cluster with three t2.medium instances
+            (2vCPUs and 4GB RAM each). AWS will bill you for any provisioned
+            resources. Learn more about EKS pricing
+            <Highlight
+              href="https://aws.amazon.com/eks/pricing/"
+              target="_blank"
+            >
+              here
+            </Highlight>
+            .
           </Helper>
           <CheckboxRow
             required={true}
             checked={this.state.provisionConfirmed}
-            toggle={() => this.setState({ provisionConfirmed: !this.state.provisionConfirmed })}
+            toggle={() =>
+              this.setState({
+                provisionConfirmed: !this.state.provisionConfirmed,
+              })
+            }
             label="I understand and wish to proceed"
           />
         </FormSection>
         {this.props.children ? this.props.children : <Padding />}
         <SaveButton
           text="Submit"
-          disabled={this.checkFormDisabled() || this.state.buttonStatus === "loading"}
+          disabled={
+            this.checkFormDisabled() || this.state.buttonStatus === "loading"
+          }
           onClick={this.onCreateAWS}
           makeFlush={true}
           status={this.getButtonStatus()}

@@ -86,7 +86,7 @@ const StatusWrapper = styled.div`
     font-size: 18px;
     margin-right: 10px;
     color: ${(props: { successful: boolean }) =>
-    props.successful ? "#4797ff" : "#fcba03"};
+      props.successful ? "#4797ff" : "#fcba03"};
   }
 
   animation: statusFloatIn 0.5s;

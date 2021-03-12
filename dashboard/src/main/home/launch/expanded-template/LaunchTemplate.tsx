@@ -25,7 +25,6 @@ import ValuesForm from "components/values-form/ValuesForm";
 import RadioSelector from "components/RadioSelector";
 import { isAlphanumeric } from "shared/common";
 
-
 type PropsType = RouteComponentProps & {
   currentTemplate: any;
   hideLaunch: () => void;
@@ -143,7 +142,9 @@ class LaunchTemplate extends Component<PropsType, StateType> {
         // this.props.setCurrentView('cluster-dashboard');
         this.setState({ saveValuesStatus: "successful" }, () => {
           // redirect to dashboard
-          setTimeout(() => { this.props.history.push("cluster-dashboard")}, 1000);
+          setTimeout(() => {
+            this.props.history.push("cluster-dashboard");
+          }, 1000);
         });
         /*
         posthog.capture("Deployed template", {
@@ -245,7 +246,9 @@ class LaunchTemplate extends Component<PropsType, StateType> {
         // this.props.setCurrentView('cluster-dashboard');
         this.setState({ saveValuesStatus: "successful" }, () => {
           // redirect to dashboard with namespace
-          setTimeout(() => { this.props.history.push("cluster-dashboard")}, 1000);
+          setTimeout(() => {
+            this.props.history.push("cluster-dashboard");
+          }, 1000);
         });
         /*
         try {
@@ -316,8 +319,12 @@ class LaunchTemplate extends Component<PropsType, StateType> {
     } = this.state;
 
     if (this.submitIsDisabled()) {
-      if (sourceType === "repo" && (dockerfilePath || folderPath) && !selectedRegistryId) {
-        return "A connected container registry is required"
+      if (
+        sourceType === "repo" &&
+        (dockerfilePath || folderPath) &&
+        !selectedRegistryId
+      ) {
+        return "A connected container registry is required";
       }
       let { templateName } = this.state;
       if (templateName.length > 0 && !isAlphanumeric(templateName)) {

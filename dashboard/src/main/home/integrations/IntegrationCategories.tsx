@@ -8,7 +8,6 @@ import { RouteComponentProps, withRouter } from "react-router";
 import IntegrationList from "./IntegrationList";
 import api from "shared/api";
 
-
 type PropsType = RouteComponentProps & {
   category: string;
 };
@@ -38,7 +37,6 @@ class IntegrationCategories extends Component<PropsType, StateType> {
       this.getIntegrationsForCategory(this.props.category);
     }
   }
-
 
   getIntegrationsForCategory = (categoryType: string) => {
     const { currentProject } = this.context;
@@ -117,8 +115,7 @@ class IntegrationCategories extends Component<PropsType, StateType> {
   render = () => {
     const { category: currentCategory } = this.props;
     let icon =
-      integrationList[currentCategory] &&
-      integrationList[currentCategory].icon;
+      integrationList[currentCategory] && integrationList[currentCategory].icon;
     let label =
       integrationList[currentCategory] &&
       integrationList[currentCategory].label;
@@ -144,7 +141,9 @@ class IntegrationCategories extends Component<PropsType, StateType> {
                 this.context.setCurrentModal("IntegrationsModal", {
                   category: currentCategory,
                   setCurrentIntegration: (x: string) =>
-                    this.props.history.push(`/integrations/${this.props.category}/create/${x}`),
+                    this.props.history.push(
+                      `/integrations/${this.props.category}/create/${x}`
+                    ),
                 })
               }
             >
@@ -179,7 +178,9 @@ class IntegrationCategories extends Component<PropsType, StateType> {
             </Flex>
             <Button
               onClick={() =>
-                window.open(`/api/oauth/projects/${this.context.currentProject.id}/github`)
+                window.open(
+                  `/api/oauth/projects/${this.context.currentProject.id}/github`
+                )
               }
             >
               <GHIcon />
@@ -195,10 +196,10 @@ class IntegrationCategories extends Component<PropsType, StateType> {
             titles={this.state.currentTitles}
             itemIdentifier={this.state.currentIds}
           />
-        </div >
+        </div>
       );
     }
-  }
+  };
 }
 
 IntegrationCategories.contextType = Context;

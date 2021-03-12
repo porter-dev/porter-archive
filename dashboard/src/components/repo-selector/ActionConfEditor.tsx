@@ -54,7 +54,7 @@ export default class ActionConfEditor extends Component<PropsType, StateType> {
         </ExpandedWrapper>
       );
     } else if (!this.props.dockerfilePath && !this.props.folderPath) {
-    /* else if (!branch) {
+      /* else if (!branch) {
       return (
         <>
           <ExpandedWrapperAlt>

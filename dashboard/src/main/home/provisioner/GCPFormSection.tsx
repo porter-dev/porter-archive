@@ -239,11 +239,16 @@ class GCPFormSection extends Component<PropsType, StateType> {
         return "Project name contains illegal characters";
       }
     }
-    if (!this.state.gcpProjectId || !this.state.gcpKeyData || !this.state.provisionConfirmed || this.props.projectName === "") {
+    if (
+      !this.state.gcpProjectId ||
+      !this.state.gcpKeyData ||
+      !this.state.provisionConfirmed ||
+      this.props.projectName === ""
+    ) {
       return "Required fields missing";
     }
     return this.state.buttonStatus;
-  }
+  };
 
   render() {
     let { setSelectedProvisioner } = this.props;
@@ -293,7 +298,9 @@ class GCPFormSection extends Component<PropsType, StateType> {
           />
           <Br />
           <Heading>GCP Resources</Heading>
-          <Helper>Porter will provision the following GCP resources in your own cloud.</Helper>
+          <Helper>
+            Porter will provision the following GCP resources in your own cloud.
+          </Helper>
           <CheckboxList
             options={provisionOptions}
             selected={selectedInfras}
@@ -302,20 +309,34 @@ class GCPFormSection extends Component<PropsType, StateType> {
             }}
           />
           <Helper>
-            By default, Porter creates a cluster with three e2-medium instances (2vCPUs and 4GB RAM each). Google Cloud will bill you for any provisioned resources. Learn more about GKE pricing
-            <Highlight href="https://cloud.google.com/kubernetes-engine/pricing" target="_blank">here</Highlight>.
+            By default, Porter creates a cluster with three e2-medium instances
+            (2vCPUs and 4GB RAM each). Google Cloud will bill you for any
+            provisioned resources. Learn more about GKE pricing
+            <Highlight
+              href="https://cloud.google.com/kubernetes-engine/pricing"
+              target="_blank"
+            >
+              here
+            </Highlight>
+            .
           </Helper>
           <CheckboxRow
             required={true}
             checked={this.state.provisionConfirmed}
-            toggle={() => this.setState({ provisionConfirmed: !this.state.provisionConfirmed })}
+            toggle={() =>
+              this.setState({
+                provisionConfirmed: !this.state.provisionConfirmed,
+              })
+            }
             label="I understand and wish to proceed"
           />
         </FormSection>
         {this.props.children ? this.props.children : <Padding />}
         <SaveButton
           text="Submit"
-          disabled={this.checkFormDisabled() || this.state.buttonStatus === "loading"}
+          disabled={
+            this.checkFormDisabled() || this.state.buttonStatus === "loading"
+          }
           onClick={this.onCreateGCP}
           makeFlush={true}
           status={this.getButtonStatus()}

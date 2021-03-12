@@ -234,7 +234,7 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
       ...values,
     });
 
-    console.log("VALUES YAML", valuesYaml)
+    console.log("VALUES YAML", valuesYaml);
 
     this.setState({ saveValuesStatus: "loading" });
     this.refreshChart();

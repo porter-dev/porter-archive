@@ -19,11 +19,7 @@ export default class CheckboxRow extends Component<PropsType, StateType> {
             <i className="material-icons">done</i>
           </Checkbox>
           {this.props.label}
-          { 
-            this.props.required && (
-              <Required>*</Required>
-            )
-          }
+          {this.props.required && <Required>*</Required>}
         </CheckboxWrapper>
       </StyledCheckboxRow>
     );

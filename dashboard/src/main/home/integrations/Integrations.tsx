@@ -14,71 +14,83 @@ type StateType = {
   currentIntegrationData: any[];
 };
 
-const IntegrationCategoryStrings = ["registry", "repo"] /*"kubernetes",*/
+const IntegrationCategoryStrings = ["registry", "repo"]; /*"kubernetes",*/
 
 class Integrations extends Component<PropsType, StateType> {
   state = {
     currentIntegrationData: [] as any[],
   };
 
-  render = () => <StyledIntegrations><Switch>
-    <Route path="/integrations/:category/create/:integration" render={(rp) => {
-      const { integration, category } = rp.match.params;
-      if (!IntegrationCategoryStrings.includes(category)) {
-        this.props.history.push("/integrations");
-      }
-      let icon =
-        integrationList[integration] &&
-        integrationList[integration].icon;
-      return (
-        <div>
-          <TitleSectionAlt>
-            <Flex>
-              <i
-                className="material-icons"
-                onClick={() => this.props.history.push(`/integrations/${category}`)}
-              >
-                keyboard_backspace
-                </i>
-              <Icon src={icon && icon} />
-              <Title>{integrationList[integration].label}</Title>
-            </Flex>
-          </TitleSectionAlt>
-          <CreateIntegrationForm
-            integrationName={integration}
-            closeForm={() => {
-              this.props.history.push(`/integrations/${category}`)
-            }}
-          />
-          <Br />
-        </div>
-      );
-
-    }} />
-    <Route path="/integrations/:category" render={(rp) => {
-      const currentCategory = rp.match.params.category;
-      if (!IntegrationCategoryStrings.includes(currentCategory)) {
-        this.props.history.push("/integrations");
-      }
-      return <IntegrationCategories
-        category={currentCategory}
-      ></IntegrationCategories>
-    }} />
-    <Route>
-      <div>
-        <TitleSection>
-          <Title>Integrations</Title>
-        </TitleSection>
-
-        <IntegrationList
-          currentCategory={""}
-          integrations={["kubernetes", "registry", "repo"]}
-          setCurrent={(x) => this.props.history.push(`/integrations/${x}`)}
-          isCategory={true}
+  render = () => (
+    <StyledIntegrations>
+      <Switch>
+        <Route
+          path="/integrations/:category/create/:integration"
+          render={(rp) => {
+            const { integration, category } = rp.match.params;
+            if (!IntegrationCategoryStrings.includes(category)) {
+              this.props.history.push("/integrations");
+            }
+            let icon =
+              integrationList[integration] && integrationList[integration].icon;
+            return (
+              <div>
+                <TitleSectionAlt>
+                  <Flex>
+                    <i
+                      className="material-icons"
+                      onClick={() =>
+                        this.props.history.push(`/integrations/${category}`)
+                      }
+                    >
+                      keyboard_backspace
+                    </i>
+                    <Icon src={icon && icon} />
+                    <Title>{integrationList[integration].label}</Title>
+                  </Flex>
+                </TitleSectionAlt>
+                <CreateIntegrationForm
+                  integrationName={integration}
+                  closeForm={() => {
+                    this.props.history.push(`/integrations/${category}`);
+                  }}
+                />
+                <Br />
+              </div>
+            );
+          }}
         />
-      </div>
-    </Route>
-  </Switch></StyledIntegrations>;
+        <Route
+          path="/integrations/:category"
+          render={(rp) => {
+            const currentCategory = rp.match.params.category;
+            if (!IntegrationCategoryStrings.includes(currentCategory)) {
+              this.props.history.push("/integrations");
+            }
+            return (
+              <IntegrationCategories
+                category={currentCategory}
+              ></IntegrationCategories>
+            );
+          }}
+        />
+        <Route>
+          <div>
+            <TitleSection>
+              <Title>Integrations</Title>
+            </TitleSection>
+
+            <IntegrationList
+              currentCategory={""}
+              integrations={["kubernetes", "registry", "repo"]}
+              setCurrent={(x) => this.props.history.push(`/integrations/${x}`)}
+              isCategory={true}
+            />
+          </div>
+        </Route>
+      </Switch>
+    </StyledIntegrations>
+  );
 }
 
 export default withRouter(Integrations);

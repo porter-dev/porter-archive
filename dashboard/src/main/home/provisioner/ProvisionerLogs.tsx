@@ -2,7 +2,6 @@ import React, { Component } from "react";
 import styled from "styled-components";
 import { Context } from "shared/Context";
 import { InfraType } from "shared/types";
-import posthog from "posthog-js";
 import { RouteComponentProps, withRouter } from "react-router";
 
 import ansiparse from "shared/ansiparser";
@@ -138,8 +137,9 @@ class ProvisionerLogs extends Component<PropsType, StateType> {
       }
 
       if (err) {
-        posthog.capture("Provisioning Error", { error: err });
-
+        window.analytics.track('Provisioning Error', {
+          error: err,
+        })
         let e = ansiparse(err).map((el: any) => {
           return el.text;
         });

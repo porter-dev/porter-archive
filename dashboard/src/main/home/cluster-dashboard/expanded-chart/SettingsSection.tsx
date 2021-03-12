@@ -16,6 +16,7 @@ import SaveButton from "components/SaveButton";
 import Heading from "components/values-form/Heading";
 import Helper from "components/values-form/Helper";
 import InputRow from "components/values-form/InputRow";
+import _ from "lodash";
 
 type PropsType = {
   currentChart: ChartType;
@@ -99,14 +100,25 @@ export default class SettingsSection extends Component<PropsType, StateType> {
       },
     };
 
-    let values = yaml.dump(image);
+    let values = {};
+    let rawValues = this.props.currentChart.config
+    for (let key in rawValues) {
+      _.set(values, key, rawValues[key])
+    }
+
+    // Weave in preexisting values and convert to yaml
+    let valuesYaml = yaml.dump({
+      ...values,
+      ...image,
+    });
+
     api
       .upgradeChartValues(
         "<token>",
         {
           namespace: this.props.currentChart.namespace,
           storage: StorageType.Secret,
-          values,
+          values: valuesYaml
         },
         {
           id: currentProject.id,
@@ -125,12 +137,12 @@ export default class SettingsSection extends Component<PropsType, StateType> {
   };
 
   renderWebhookSection = () => {
-    if (!this.props.currentChart.form.hasSource) {
+    if (!this.props.currentChart?.form?.hasSource) {
       return;
     }
 
     if (true || this.state.webhookToken) {
-      let webhookText = `curl -X POST 'https://dashboard.getporter.dev/api/webhooks/deploy/${this.state.webhookToken}?commit=???&repository=???'`;
+      let webhookText = `curl -X POST 'https://dashboard.getporter.dev/api/webhooks/deploy/${this.state.webhookToken}?commit=YOUR_COMMIT_HASH&repository=IMAGE_REPOSITORY_URL'`;
       return (
         <>
           <Heading>Redeploy Webhook</Heading>

@@ -6,6 +6,7 @@ import _ from "lodash";
 import { Context } from "shared/Context";
 import api from "shared/api";
 import close from "assets/close.png";
+import { RouteComponentProps, withRouter } from "react-router";
 
 import {
   ActionConfigType,
@@ -24,7 +25,8 @@ import ValuesForm from "components/values-form/ValuesForm";
 import RadioSelector from "components/RadioSelector";
 import { isAlphanumeric } from "shared/common";
 
-type PropsType = {
+
+type PropsType = RouteComponentProps & {
   currentTemplate: any;
   hideLaunch: () => void;
   values: any;
@@ -61,7 +63,7 @@ const defaultActionConfig: ActionConfigType = {
   git_repo_id: 0,
 };
 
-export default class LaunchTemplate extends Component<PropsType, StateType> {
+class LaunchTemplate extends Component<PropsType, StateType> {
   state = {
     currentView: "repo",
     clusterOptions: [] as { label: string; value: string }[],
@@ -141,6 +143,7 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
         // this.props.setCurrentView('cluster-dashboard');
         this.setState({ saveValuesStatus: "successful" }, () => {
           // redirect to dashboard
+          setTimeout(() => { this.props.history.push("cluster-dashboard")}, 1000);
         });
         /*
         posthog.capture("Deployed template", {
@@ -242,6 +245,7 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
         // this.props.setCurrentView('cluster-dashboard');
         this.setState({ saveValuesStatus: "successful" }, () => {
           // redirect to dashboard with namespace
+          setTimeout(() => { this.props.history.push("cluster-dashboard")}, 1000);
         });
         /*
         try {
@@ -697,6 +701,7 @@ export default class LaunchTemplate extends Component<PropsType, StateType> {
 }
 
 LaunchTemplate.contextType = Context;
+export default withRouter(LaunchTemplate);
 
 const CloseButton = styled.div`
   position: absolute;

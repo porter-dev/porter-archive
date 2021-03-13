@@ -17,7 +17,7 @@ type StateType = {};
 
 export default class Selector extends Component<PropsType, StateType> {
   state = {
-    expanded: false,
+    expanded: false
   };
 
   wrapperRef: any = React.createRef();
@@ -192,7 +192,7 @@ const Dropdown = styled.div`
 
 const StyledSelector = styled.div<{ width: string }>`
   position: relative;
-  width: ${(props) => props.width};
+  width: ${props => props.width};
 `;
 
 const MainSelector = styled.div`

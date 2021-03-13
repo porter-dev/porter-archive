@@ -12,16 +12,26 @@ import ActionDetails from "./ActionDetails";
 type PropsType = {
   actionConfig: ActionConfigType | null;
   branch: string;
-  pathIsSet: boolean;
   setActionConfig: (x: ActionConfigType) => void;
   setBranch: (x: string) => void;
-  setPath: (x: boolean) => void;
   reset: any;
+  dockerfilePath: string;
+  setDockerfilePath: (x: string) => void;
+  folderPath: string;
+  setFolderPath: (x: string) => void;
+  setSelectedRegistry: (x: any) => void;
+  selectedRegistry: any;
 };
 
 type StateType = {
   loading: boolean;
   error: boolean;
+};
+
+const defaultActionConfig: ActionConfigType = {
+  git_repo: "",
+  image_repo_uri: "",
+  git_repo_id: 0,
 };
 
 export default class ActionConfEditor extends Component<PropsType, StateType> {
@@ -31,14 +41,7 @@ export default class ActionConfEditor extends Component<PropsType, StateType> {
   };
 
   renderExpanded = () => {
-    let {
-      actionConfig,
-      branch,
-      pathIsSet,
-      setActionConfig,
-      setBranch,
-      setPath,
-    } = this.props;
+    let { actionConfig, branch, setActionConfig, setBranch } = this.props;
 
     if (!actionConfig.git_repo) {
       return (
@@ -50,7 +53,8 @@ export default class ActionConfEditor extends Component<PropsType, StateType> {
           />
         </ExpandedWrapper>
       );
-    } else if (!branch) {
+    } else if (!this.props.dockerfilePath && !this.props.folderPath) {
+      /* else if (!branch) {
       return (
         <>
           <ExpandedWrapperAlt>
@@ -59,10 +63,14 @@ export default class ActionConfEditor extends Component<PropsType, StateType> {
               setBranch={(branch: string) => setBranch(branch)}
             />
           </ExpandedWrapperAlt>
-          {this.renderResetButton()}
+          <Br />
+          <BackButton width="135px" onClick={() => setActionConfig({ ...defaultActionConfig })}>
+            <i className="material-icons">keyboard_backspace</i>
+            Select Repo
+          </BackButton>
         </>
       );
-    } else if (!pathIsSet) {
+    } */
       return (
         <>
           <ExpandedWrapperAlt>
@@ -70,32 +78,33 @@ export default class ActionConfEditor extends Component<PropsType, StateType> {
               actionConfig={actionConfig}
               branch={branch}
               setActionConfig={setActionConfig}
-              setPath={() => setPath(true)}
+              setDockerfilePath={(x: string) => this.props.setDockerfilePath(x)}
+              setFolderPath={(x: string) => this.props.setFolderPath(x)}
             />
           </ExpandedWrapperAlt>
-          {this.renderResetButton()}
+          <Br />
+          <BackButton
+            width="135px"
+            onClick={() => setActionConfig({ ...defaultActionConfig })}
+          >
+            <i className="material-icons">keyboard_backspace</i>
+            Select Repo
+          </BackButton>
         </>
       );
     }
     return (
-      <>
-        <ExpandedWrapperAlt>
-          <ActionDetails
-            actionConfig={actionConfig}
-            setActionConfig={setActionConfig}
-          />
-        </ExpandedWrapperAlt>
-        {this.renderResetButton()}
-      </>
-    );
-  };
-
-  renderResetButton = () => {
-    return (
-      <BackButton width="150px" onClick={this.props.reset}>
-        <i className="material-icons">keyboard_backspace</i>
-        Reset Selection
-      </BackButton>
+      <ActionDetails
+        branch={branch}
+        setDockerfilePath={this.props.setDockerfilePath}
+        setFolderPath={this.props.setFolderPath}
+        actionConfig={actionConfig}
+        setActionConfig={setActionConfig}
+        dockerfilePath={this.props.dockerfilePath}
+        folderPath={this.props.folderPath}
+        setSelectedRegistry={this.props.setSelectedRegistry}
+        selectedRegistry={this.props.selectedRegistry}
+      />
     );
   };
 
@@ -105,6 +114,31 @@ export default class ActionConfEditor extends Component<PropsType, StateType> {
 }
 
 ActionConfEditor.contextType = Context;
+
+const Br = styled.div`
+  width: 100%;
+  height: 8px;
+`;
+
+const Flex = styled.div`
+  display: flex;
+  align-items: center;
+`;
+
+const HeaderButton = styled.div`
+  margin-bottom: 5px;
+  padding: 5px 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 500;
+  margin-right: 10px;
+`;
+
+const RepoHeader = styled.div`
+  display: flex;
+  align-items: center;
+`;
 
 const ExpandedWrapper = styled.div`
   margin-top: 10px;
@@ -121,10 +155,13 @@ const BackButton = styled.div`
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-top: 10px;
+  margin-top: 22px;
   cursor: pointer;
   font-size: 13px;
+  height: 35px;
   padding: 5px 13px;
+  margin-bottom: -7px;
+  padding-right: 15px;
   border: 1px solid #ffffff55;
   border-radius: 3px;
   width: ${(props: { width: string }) => props.width};

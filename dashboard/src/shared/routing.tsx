@@ -14,7 +14,7 @@ export const PorterUrls = [
   "integrations",
   "new-project",
   "cluster-dashboard",
-  "project-settings",
+  "project-settings"
 ];
 
 export const setSearchParam = (
@@ -26,6 +26,6 @@ export const setSearchParam = (
   urlParams.set(key, value);
   return {
     pathname: location.pathname,
-    search: urlParams.toString(),
+    search: urlParams.toString()
   };
 };

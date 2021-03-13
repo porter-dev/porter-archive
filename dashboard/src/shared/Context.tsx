@@ -54,10 +54,17 @@ class ContextProvider extends Component {
     setProjects: (projects: ProjectType[]) => {
       projects.sort((a: any, b: any) => (a.name > b.name ? 1 : -1));
       this.setState({ projects });
+      window.analytics.identify(this.state.user.userid, {
+        projects,
+      });
     },
     user: null as any,
     setUser: (userId: number, email: string) => {
       this.setState({ user: { userId, email } });
+      window.analytics.identify(userId, {
+        email: email,
+        createdAt: Date.now(),
+      });
     },
     devOpsMode: true,
     setDevOpsMode: (devOpsMode: boolean) => {

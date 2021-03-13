@@ -59,6 +59,7 @@ module.exports = () => {
     plugins: [
       new HtmlWebpackPlugin({
         template: path.resolve(__dirname, "src", "index.html"),
+        segmentKey: `${process.env.SEGMENT_PUBLIC_KEY}`,
       }),
       new webpack.DefinePlugin(envKeys),
     ],

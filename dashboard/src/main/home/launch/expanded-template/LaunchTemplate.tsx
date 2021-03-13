@@ -4,6 +4,7 @@ import randomWords from "random-words";
 import _ from "lodash";
 import { Context } from "shared/Context";
 import api from "shared/api";
+import close from "assets/close.png";
 import { RouteComponentProps, withRouter } from "react-router";
 
 import {
@@ -20,6 +21,7 @@ import SaveButton from "components/SaveButton";
 import ActionConfEditor from "components/repo-selector/ActionConfEditor";
 import ValuesWrapper from "components/values-form/ValuesWrapper";
 import ValuesForm from "components/values-form/ValuesForm";
+import RadioSelector from "components/RadioSelector";
 import { isAlphanumeric } from "shared/common";
 
 type PropsType = RouteComponentProps & {
@@ -47,14 +49,17 @@ type StateType = {
   namespaceOptions: { label: string; value: string }[];
   actionConfig: ActionConfigType;
   branch: string;
-  pathIsSet: boolean;
+  repoType: string;
+  dockerfilePath: string | null;
+  folderPath: string | null;
+  selectedRegistry: any | null;
+  env: any;
 };
 
 const defaultActionConfig: ActionConfigType = {
   git_repo: "",
   image_repo_uri: "",
   git_repo_id: 0,
-  dockerfile_path: "",
 };
 
 class LaunchTemplate extends Component<PropsType, StateType> {
@@ -62,11 +67,11 @@ class LaunchTemplate extends Component<PropsType, StateType> {
     currentView: "repo",
     clusterOptions: [] as { label: string; value: string }[],
     clusterMap: {} as { [clusterId: string]: ClusterType },
-    saveValuesStatus: "No container image specified" as string | null,
+    saveValuesStatus: "" as string | null,
     selectedCluster: this.context.currentCluster.name,
     selectedNamespace: "default",
     selectedImageUrl: "" as string | null,
-    sourceType: "registry",
+    sourceType: "",
     templateName: "",
     selectedTag: "" as string | null,
     tabOptions: [] as ChoiceType[],
@@ -75,7 +80,11 @@ class LaunchTemplate extends Component<PropsType, StateType> {
     namespaceOptions: [] as { label: string; value: string }[],
     actionConfig: { ...defaultActionConfig },
     branch: "",
-    pathIsSet: false,
+    repoType: "",
+    dockerfilePath: null as string | null,
+    folderPath: null as string | null,
+    selectedRegistry: null as any | null,
+    env: {},
   };
 
   createGHAction = (chartName: string, chartNamespace: string) => {
@@ -86,9 +95,12 @@ class LaunchTemplate extends Component<PropsType, StateType> {
         "<token>",
         {
           git_repo: actionConfig.git_repo,
-          image_repo_uri: actionConfig.image_repo_uri,
-          dockerfile_path: actionConfig.dockerfile_path,
+          registry_id: this.state.selectedRegistry.id,
+          dockerfile_path: this.state.dockerfilePath,
+          folder_path: this.state.folderPath,
+          image_repo_uri: `${this.state.selectedRegistry.url}/${chartName}-${chartNamespace}`,
           git_repo_id: actionConfig.git_repo_id,
+          env: this.state.env,
         },
         {
           project_id: currentProject.id,
@@ -130,10 +142,7 @@ class LaunchTemplate extends Component<PropsType, StateType> {
         }
       )
       .then((_) => {
-        if (this.state.sourceType === "repo") {
-          this.createGHAction(name, this.state.selectedNamespace);
-        }
-
+        // this.props.setCurrentView('cluster-dashboard');
         this.setState({ saveValuesStatus: "successful" }, () => {
           // redirect to dashboard
           setTimeout(() => {
@@ -209,16 +218,6 @@ class LaunchTemplate extends Component<PropsType, StateType> {
 
     _.set(values, "ingress.provider", provider);
 
-    console.log(`
-      ${this.props.currentTemplate.name}\n
-      ${this.state.selectedImageUrl}\n
-      ${values}\n
-      ${this.state.selectedNamespace}\n
-      ${name}\n
-      ${currentProject.id}\n
-      ${currentCluster.id}\n}
-    `);
-
     api
       .deployTemplate(
         "<token>",
@@ -238,7 +237,9 @@ class LaunchTemplate extends Component<PropsType, StateType> {
         }
       )
       .then((_) => {
+        console.log("Deployed template.");
         if (this.state.sourceType === "repo") {
+          console.log("Creating GHA");
           this.createGHAction(name, this.state.selectedNamespace);
         }
         // this.props.setCurrentView('cluster-dashboard');
@@ -248,6 +249,7 @@ class LaunchTemplate extends Component<PropsType, StateType> {
             this.props.history.push("cluster-dashboard");
           }, 1000);
         });
+        /*
         try {
           window.analytics.track("Deployed Application", {
             name: this.props.currentTemplate.name,
@@ -258,10 +260,11 @@ class LaunchTemplate extends Component<PropsType, StateType> {
         } catch (error) {
           console.log(error);
         }
+        */
       })
       .catch((err) => {
         this.setState({ saveValuesStatus: "error" });
-
+        /*
         try {
           window.analytics.track("Failed to Deploy Application", {
             name: this.props.currentTemplate.name,
@@ -273,7 +276,65 @@ class LaunchTemplate extends Component<PropsType, StateType> {
         } catch (error) {
           console.log(error);
         }
+        */
       });
+  };
+
+  submitIsDisabled = () => {
+    let {
+      templateName,
+      sourceType,
+      selectedImageUrl,
+      dockerfilePath,
+      folderPath,
+    } = this.state;
+
+    // Allow if name is invalid
+    if (templateName.length > 0 && !isAlphanumeric(templateName)) {
+      return true;
+    }
+
+    if (this.props.form?.hasSource) {
+      // Allow if source type is registry and image URL is specified
+      if (sourceType === "registry" && selectedImageUrl) {
+        return false;
+      }
+
+      // Allow if source type is repo and dockerfile or folder path is set
+      if (sourceType === "repo" && (dockerfilePath || folderPath)) {
+        return !this.state.selectedRegistry;
+      }
+
+      return true;
+    } else {
+      return false;
+    }
+  };
+
+  getStatus = () => {
+    let {
+      selectedRegistry,
+      sourceType,
+      dockerfilePath,
+      folderPath,
+    } = this.state;
+
+    if (this.submitIsDisabled()) {
+      if (
+        sourceType === "repo" &&
+        (dockerfilePath || folderPath) &&
+        !selectedRegistry
+      ) {
+        return "A connected container registry is required";
+      }
+      let { templateName } = this.state;
+      if (templateName.length > 0 && !isAlphanumeric(templateName)) {
+        return "Template name contains illegal characters";
+      }
+      return "No application source specified";
+    } else {
+      return this.state.saveValuesStatus;
+    }
   };
 
   renderTabContents = () => {
@@ -285,12 +346,8 @@ class LaunchTemplate extends Component<PropsType, StateType> {
             ? this.onSubmit
             : this.onSubmitAddon
         }
-        saveValuesStatus={this.state.saveValuesStatus}
-        disabled={
-          (this.state.templateName.length > 0 &&
-            !isAlphanumeric(this.state.templateName)) ||
-          (this.props.form?.hasSource ? !this.state.selectedImageUrl : false)
-        }
+        saveValuesStatus={this.getStatus()}
+        disabled={this.submitIsDisabled()}
       >
         {(metaState: any, setMetaState: any) => {
           return this.props.form?.tabs.map((tab: any, i: number) => {
@@ -299,6 +356,7 @@ class LaunchTemplate extends Component<PropsType, StateType> {
               return (
                 <ValuesForm
                   metaState={metaState}
+                  handleEnvChange={(x: any) => this.setState({ env: x })}
                   setMetaState={setMetaState}
                   key={tab.name}
                   sections={tab.sections}
@@ -373,11 +431,6 @@ class LaunchTemplate extends Component<PropsType, StateType> {
   };
 
   setSelectedImageUrl = (x: string) => {
-    if (x === "") {
-      this.setState({ saveValuesStatus: "No container image specified" });
-    } else {
-      this.setState({ saveValuesStatus: "" });
-    }
     this.setState({ selectedImageUrl: x });
   };
 
@@ -397,6 +450,7 @@ class LaunchTemplate extends Component<PropsType, StateType> {
     if (this.state.tabOptions.length > 0) {
       return (
         <>
+          <Heading>Additional Settings</Heading>
           <Subtitle>
             Configure additional settings for this template. (Optional)
           </Subtitle>
@@ -435,18 +489,45 @@ class LaunchTemplate extends Component<PropsType, StateType> {
 
   // Display if current template uses source (image or repo)
   renderSourceSelectorContent = () => {
-    if (this.state.sourceType === "registry") {
+    if (this.state.sourceType === "") {
       return (
-        <>
+        <BlockList>
+          <Block
+            onClick={() => {
+              this.setState({ sourceType: "repo" });
+            }}
+          >
+            <BlockIcon src="https://3.bp.blogspot.com/-xhNpNJJyQhk/XIe4GY78RQI/AAAAAAAAItc/ouueFUj2Hqo5dntmnKqEaBJR4KQ4Q2K3ACK4BGAYYCw/s1600/logo%2Bgit%2Bicon.png" />
+            <BlockTitle>Git Repository</BlockTitle>
+            <BlockDescription>
+              Deploy using source from a Git repo.
+            </BlockDescription>
+          </Block>
+          <Block
+            onClick={() => {
+              this.setState({ sourceType: "registry" });
+            }}
+          >
+            <BlockIcon src="https://cdn4.iconfinder.com/data/icons/logos-and-brands/512/97_Docker_logo_logos-512.png" />
+            <BlockTitle>Docker Registry</BlockTitle>
+            <BlockDescription>
+              Deploy a container from an image registry.
+            </BlockDescription>
+          </Block>
+        </BlockList>
+      );
+    } else if (this.state.sourceType === "registry") {
+      return (
+        <StyledSourceBox>
+          <CloseButton onClick={() => this.setState({ sourceType: "" })}>
+            <CloseButtonImg src={close} />
+          </CloseButton>
           <Subtitle>
-            Select the container image you would like to connect to this
-            template
-            {/* <Highlight onClick={() => this.setState({ sourceType: "repo" })}>
-              link a git repository
-            </Highlight> */}
-            .<Required>*</Required>
+            Specify the container image you would like to connect to this
+            template.
+            <Required>*</Required>
           </Subtitle>
-          <DarkMatter />
+          <DarkMatter antiHeight="-4px" />
           <ImageSelector
             selectedTag={this.state.selectedTag}
             selectedImageUrl={this.state.selectedImageUrl}
@@ -455,19 +536,48 @@ class LaunchTemplate extends Component<PropsType, StateType> {
             forceExpanded={true}
           />
           <br />
-        </>
+        </StyledSourceBox>
+      );
+    } else if (this.state.repoType === "" && false) {
+      return (
+        <StyledSourceBox>
+          <CloseButton onClick={() => this.setState({ sourceType: "" })}>
+            <CloseButtonImg src={close} />
+          </CloseButton>
+          <Subtitle>
+            Are you using an existing Dockerfile from your repo?
+            <Required>*</Required>
+          </Subtitle>
+          <RadioSelector
+            options={[
+              {
+                value: "dockerfile",
+                label: "Yes, I am using an existing Dockerfile",
+              },
+              {
+                value: "buildpack",
+                label: "No, I am not using an existing Dockerfile",
+              },
+            ]}
+            selected={this.state.repoType}
+            setSelected={(x: string) => this.setState({ repoType: x })}
+          />
+        </StyledSourceBox>
       );
     } else {
       return (
-        <>
+        <StyledSourceBox>
+          <CloseButton onClick={() => this.setState({ sourceType: "" })}>
+            <CloseButtonImg src={close} />
+          </CloseButton>
           <Subtitle>
-            Select a repo to connect to, then a Dockerfile to build from.
+            Provide a repo folder to use as source.
             <Required>*</Required>
           </Subtitle>
+          <DarkMatter antiHeight="-4px" />
           <ActionConfEditor
             actionConfig={this.state.actionConfig}
             branch={this.state.branch}
-            pathIsSet={this.state.pathIsSet}
             setActionConfig={(actionConfig: ActionConfigType) =>
               this.setState({ actionConfig }, () => {
                 this.setSelectedImageUrl(
@@ -476,40 +586,41 @@ class LaunchTemplate extends Component<PropsType, StateType> {
               })
             }
             setBranch={(branch: string) => this.setState({ branch })}
-            setPath={(pathIsSet: boolean) => this.setState({ pathIsSet })}
+            setDockerfilePath={(x: string) =>
+              this.setState({ dockerfilePath: x })
+            }
+            dockerfilePath={this.state.dockerfilePath}
+            folderPath={this.state.folderPath}
+            setFolderPath={(x: string) => this.setState({ folderPath: x })}
             reset={() => {
               this.setState({
                 actionConfig: { ...defaultActionConfig },
                 branch: "",
-                pathIsSet: false,
+                dockerfilePath: null,
+                folderPath: null,
               });
             }}
+            setSelectedRegistry={(x: any) => {
+              this.setState({ selectedRegistry: x });
+            }}
+            selectedRegistry={this.state.selectedRegistry}
           />
           <br />
-        </>
+        </StyledSourceBox>
       );
     }
   };
 
   renderSourceSelector = () => {
-    if (!this.props.form?.hasSource) {
-      return;
-    }
-
     return (
       <>
-        <TabRegion
-          options={[
-            { label: "Registry", value: "registry" },
-            { label: "Github", value: "repo" },
-          ]}
-          currentTab={this.state.sourceType}
-          setCurrentTab={(x) => this.setState({ sourceType: x })}
-        >
-          <StyledSourceBox>
-            {this.renderSourceSelectorContent()}
-          </StyledSourceBox>
-        </TabRegion>
+        <Heading>Deployment Method</Heading>
+        <Subtitle>
+          Choose the deployment method you would like to use for this
+          application.
+          <Required>*</Required>
+        </Subtitle>
+        {this.renderSourceSelectorContent()}
       </>
     );
   };
@@ -532,7 +643,7 @@ class LaunchTemplate extends Component<PropsType, StateType> {
           </HeaderSection>
         )}
         <DarkMatter antiHeight="-13px" />
-        <Heading isAtTop={name !== "docker"}>Name</Heading>
+        <Heading isAtTop={true}>Name</Heading>
         <Subtitle>
           Randomly generated if left blank.
           <Warning
@@ -552,6 +663,9 @@ class LaunchTemplate extends Component<PropsType, StateType> {
           placeholder="ex: doctor-scientist"
           width="100%"
         />
+
+        {this.props.form?.hasSource && this.renderSourceSelector()}
+
         <Heading>Destination</Heading>
         <Subtitle>
           Specify the cluster and namespace you would like to deploy your
@@ -589,7 +703,6 @@ class LaunchTemplate extends Component<PropsType, StateType> {
             closeOverlay={true}
           />
         </ClusterSection>
-        {this.renderSourceSelector()}
         {this.renderSettingsRegion()}
       </StyledLaunchTemplate>
     );
@@ -597,8 +710,105 @@ class LaunchTemplate extends Component<PropsType, StateType> {
 }
 
 LaunchTemplate.contextType = Context;
-
 export default withRouter(LaunchTemplate);
+
+const CloseButton = styled.div`
+  position: absolute;
+  display: block;
+  width: 40px;
+  height: 40px;
+  padding: 13px 0 12px 0;
+  z-index: 1;
+  text-align: center;
+  border-radius: 50%;
+  right: 15px;
+  top: 12px;
+  cursor: pointer;
+  :hover {
+    background-color: #ffffff11;
+  }
+`;
+
+const CloseButtonImg = styled.img`
+  width: 14px;
+  margin: 0 auto;
+`;
+
+const BlockIcon = styled.img<{ bw?: boolean }>`
+  height: 38px;
+  padding: 2px;
+  margin-top: 30px;
+  margin-bottom: 15px;
+  filter: ${(props) => (props.bw ? "grayscale(1)" : "")};
+`;
+
+const BlockDescription = styled.div`
+  margin-bottom: 12px;
+  color: #ffffff66;
+  text-align: center;
+  font-weight: default;
+  font-size: 13px;
+  padding: 0px 25px;
+  height: 2.4em;
+  font-size: 12px;
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+`;
+
+const BlockTitle = styled.div`
+  margin-bottom: 12px;
+  width: 80%;
+  text-align: center;
+  font-size: 14px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+`;
+
+const Block = styled.div<{ disabled?: boolean }>`
+  align-items: center;
+  user-select: none;
+  border-radius: 5px;
+  display: flex;
+  font-size: 13px;
+  overflow: hidden;
+  font-weight: 500;
+  padding: 3px 0px 12px;
+  flex-direction: column;
+  align-item: center;
+  justify-content: space-between;
+  height: 170px;
+  cursor: ${(props) => (props.disabled ? "" : "pointer")};
+  color: #ffffff;
+  position: relative;
+  background: #26282f;
+  box-shadow: 0 3px 5px 0px #00000022;
+  :hover {
+    background: ${(props) => (props.disabled ? "" : "#ffffff11")};
+  }
+
+  animation: fadeIn 0.3s 0s;
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+`;
+
+const BlockList = styled.div`
+  overflow: visible;
+  margin-top: 6px;
+  margin-bottom: 27px;
+  display: grid;
+  grid-column-gap: 25px;
+  grid-row-gap: 25px;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+`;
 
 const Title = styled.div`
   font-size: 24px;
@@ -630,7 +840,7 @@ const Heading = styled.div<{ isAtTop?: boolean }>`
   font-weight: 500;
   font-size: 16px;
   margin-bottom: 5px;
-  margin-top: ${(props) => (props.isAtTop ? "30px" : "10px")};
+  margin-top: ${(props) => (props.isAtTop ? "10px" : "30px")};
   display: flex;
   align-items: center;
 `;
@@ -643,6 +853,7 @@ const Warning = styled.span<{ highlight: boolean; makeFlush?: boolean }>`
 const Required = styled.div`
   margin-left: 8px;
   color: #fc4976;
+  dislay: inline-block;
 `;
 
 const Link = styled.a`
@@ -734,7 +945,7 @@ const ClusterSection = styled.div`
   font-size: 14px;
   margin-top: 2px;
   font-weight: 500;
-  margin-bottom: 22px;
+  margin-bottom: 32px;
 
   > i {
     font-size: 25px;
@@ -778,10 +989,11 @@ const StyledSourceBox = styled.div`
   height: 100%;
   background: #ffffff11;
   color: #ffffff;
-  padding: 10px 35px 25px;
+  padding: 14px 35px 20px;
   position: relative;
   border-radius: 5px;
   font-size: 13px;
+  margin-top: 6px;
   overflow: auto;
   margin-bottom: 25px;
 `;

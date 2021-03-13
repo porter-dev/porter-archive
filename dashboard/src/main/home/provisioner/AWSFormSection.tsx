@@ -9,6 +9,7 @@ import { InfraType } from "shared/types";
 
 import SelectRow from "components/values-form/SelectRow";
 import InputRow from "components/values-form/InputRow";
+import CheckboxRow from "components/values-form/CheckboxRow";
 import Helper from "components/values-form/Helper";
 import Heading from "components/values-form/Heading";
 import SaveButton from "components/SaveButton";
@@ -28,6 +29,7 @@ type StateType = {
   awsSecretKey: string;
   selectedInfras: { value: string; label: string }[];
   buttonStatus: string;
+  provisionConfirmed: boolean;
 };
 
 const provisionOptions = [
@@ -41,7 +43,7 @@ const regionOptions = [
   { value: "us-west-1", label: "US West (N. California) us-west-1" },
   { value: "us-west-2", label: "US West (Oregon) us-west-2" },
   { value: "af-south-1", label: "Africa (Cape Town) af-south-1" },
-  { value: "ap-east-1", label: "Asia Pacific (Hong Kong)ap-east-1" },
+  { value: "ap-east-1", label: "Asia Pacific (Hong Kong) ap-east-1" },
   { value: "ap-south-1", label: "Asia Pacific (Mumbai) ap-south-1" },
   { value: "ap-northeast-2", label: "Asia Pacific (Seoul) ap-northeast-2" },
   { value: "ap-southeast-1", label: "Asia Pacific (Singapore) ap-southeast-1" },
@@ -66,6 +68,7 @@ class AWSFormSection extends Component<PropsType, StateType> {
     awsSecretKey: "",
     selectedInfras: [...provisionOptions],
     buttonStatus: "",
+    provisionConfirmed: false,
   };
 
   componentDidMount = () => {
@@ -88,6 +91,10 @@ class AWSFormSection extends Component<PropsType, StateType> {
   };
 
   checkFormDisabled = () => {
+    if (!this.state.provisionConfirmed) {
+      return true;
+    }
+
     let { awsRegion, awsAccessId, awsSecretKey, selectedInfras } = this.state;
     let { projectName } = this.props;
     if (projectName || projectName === "") {
@@ -202,6 +209,7 @@ class AWSFormSection extends Component<PropsType, StateType> {
 
   // TODO: handle generically (with > 2 steps)
   onCreateAWS = () => {
+    this.setState({ buttonStatus: "loading" });
     let { projectName } = this.props;
     let { selectedInfras } = this.state;
 
@@ -234,6 +242,23 @@ class AWSFormSection extends Component<PropsType, StateType> {
         this.createProject(this.provisionEKS);
       }
     }
+  };
+
+  getButtonStatus = () => {
+    if (this.props.projectName) {
+      if (!isAlphanumeric(this.props.projectName)) {
+        return "Project name contains illegal characters";
+      }
+    }
+    if (
+      !this.state.awsAccessId ||
+      !this.state.awsSecretKey ||
+      !this.state.provisionConfirmed ||
+      this.props.projectName === ""
+    ) {
+      return "Required fields missing";
+    }
+    return this.state.buttonStatus;
   };
 
   render() {
@@ -284,7 +309,9 @@ class AWSFormSection extends Component<PropsType, StateType> {
           />
           <Br />
           <Heading>AWS Resources</Heading>
-          <Helper>Porter will provision the following AWS resources</Helper>
+          <Helper>
+            Porter will provision the following AWS resources in your own cloud.
+          </Helper>
           <CheckboxList
             options={provisionOptions}
             selected={selectedInfras}
@@ -292,13 +319,38 @@ class AWSFormSection extends Component<PropsType, StateType> {
               this.setState({ selectedInfras: x });
             }}
           />
+          <Helper>
+            By default, Porter creates a cluster with three t2.medium instances
+            (2vCPUs and 4GB RAM each). AWS will bill you for any provisioned
+            resources. Learn more about EKS pricing
+            <Highlight
+              href="https://aws.amazon.com/eks/pricing/"
+              target="_blank"
+            >
+              here
+            </Highlight>
+            .
+          </Helper>
+          <CheckboxRow
+            required={true}
+            checked={this.state.provisionConfirmed}
+            toggle={() =>
+              this.setState({
+                provisionConfirmed: !this.state.provisionConfirmed,
+              })
+            }
+            label="I understand and wish to proceed"
+          />
         </FormSection>
         {this.props.children ? this.props.children : <Padding />}
         <SaveButton
           text="Submit"
-          disabled={this.checkFormDisabled()}
+          disabled={
+            this.checkFormDisabled() || this.state.buttonStatus === "loading"
+          }
           onClick={this.onCreateAWS}
           makeFlush={true}
+          status={this.getButtonStatus()}
           helper="Note: Provisioning can take up to 15 minutes"
         />
       </StyledAWSFormSection>
@@ -309,6 +361,13 @@ class AWSFormSection extends Component<PropsType, StateType> {
 AWSFormSection.contextType = Context;
 
 export default withRouter(AWSFormSection);
+
+const Highlight = styled.a`
+  color: #8590ff;
+  cursor: pointer;
+  text-decoration: none;
+  margin-left: 5px;
+`;
 
 const Padding = styled.div`
   height: 15px;

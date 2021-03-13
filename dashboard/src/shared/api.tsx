@@ -98,9 +98,12 @@ const createGCR = baseApi<
 const createGHAction = baseApi<
   {
     git_repo: string;
+    registry_id: number;
     image_repo_uri: string;
     dockerfile_path: string;
+    folder_path: string;
     git_repo_id: number;
+    env: any;
   },
   {
     project_id: number;

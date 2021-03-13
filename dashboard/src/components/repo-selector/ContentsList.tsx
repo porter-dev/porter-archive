@@ -3,6 +3,7 @@ import styled from "styled-components";
 import file from "assets/file.svg";
 import folder from "assets/folder.svg";
 import info from "assets/info.svg";
+import close from "assets/close.png";
 
 import api from "../../shared/api";
 import { Context } from "../../shared/Context";
@@ -14,44 +15,46 @@ type PropsType = {
   actionConfig: ActionConfigType | null;
   branch: string;
   setActionConfig: (x: ActionConfigType) => void;
-  setPath: () => void;
+  setDockerfilePath: (x: string) => void;
+  setFolderPath: (x: string) => void;
 };
 
 type StateType = {
   loading: boolean;
   error: boolean;
   contents: FileType[];
+  currentDir: string;
+  dockerfiles: string[];
 };
+
+const dummyDockerfiles = ["dev.Dockerfile", "prod.Dockerfile", "Dockerfile"];
 
 export default class ContentsList extends Component<PropsType, StateType> {
   state = {
     loading: true,
     error: false,
     contents: [] as FileType[],
+    currentDir: "",
+    dockerfiles: [] as string[],
   };
 
-  setSubdirectory = (x: string, fileName?: string) => {
-    let { actionConfig, setActionConfig } = this.props;
-    let updatedConfig = actionConfig;
-    let path = x;
-    console.log(fileName);
-    updatedConfig.dockerfile_path = path;
-    setActionConfig(updatedConfig);
+  componentDidMount() {
     this.updateContents();
-    if (fileName?.includes("Dockerfile")) {
-      this.props.setPath();
-    }
+  }
+
+  setSubdirectory = (x: string) => {
+    this.setState({ currentDir: x }, () => this.updateContents());
   };
 
   updateContents = () => {
-    let { actionConfig, branch } = this.props;
     let { currentProject } = this.context;
-
+    let { actionConfig, branch } = this.props;
+    console.log(this.state.currentDir);
     // Get branch contents
     api
       .getBranchContents(
         "<token>",
-        { dir: actionConfig.dockerfile_path },
+        { dir: this.state.currentDir },
         {
           project_id: currentProject.id,
           git_repo_id: actionConfig.git_repo_id,
@@ -85,10 +88,6 @@ export default class ContentsList extends Component<PropsType, StateType> {
       });
   };
 
-  componentDidMount() {
-    this.updateContents();
-  }
-
   renderContentList = () => {
     let { contents, loading, error } = this.state;
     if (loading) {
@@ -108,7 +107,7 @@ export default class ContentsList extends Component<PropsType, StateType> {
         return (
           <Item
             key={i}
-            isSelected={item.Path === this.props.actionConfig.dockerfile_path}
+            isSelected={item.Path === this.state.currentDir}
             lastItem={i === contents.length - 1}
             onClick={() => this.setSubdirectory(item.Path)}
           >
@@ -124,7 +123,7 @@ export default class ContentsList extends Component<PropsType, StateType> {
             key={i}
             lastItem={i === contents.length - 1}
             isADocker
-            onClick={() => this.setSubdirectory(item.Path, fileName)}
+            onClick={() => this.props.setDockerfilePath(item.Path)}
           >
             <img src={file} />
             {fileName}
@@ -141,15 +140,11 @@ export default class ContentsList extends Component<PropsType, StateType> {
   };
 
   renderJumpToParent = () => {
-    let { actionConfig } = this.props;
-    if (actionConfig.dockerfile_path !== "") {
-      let splits = actionConfig.dockerfile_path.split("/");
+    if (this.state.currentDir !== "") {
+      let splits = this.state.currentDir.split("/");
       let subdir = "";
       if (splits.length !== 1) {
-        subdir = actionConfig.dockerfile_path.replace(
-          splits[splits.length - 1],
-          ""
-        );
+        subdir = this.state.currentDir.replace(splits[splits.length - 1], "");
         if (subdir.charAt(subdir.length - 1) === "/") {
           subdir = subdir.slice(0, subdir.length - 1);
         }
@@ -165,22 +160,225 @@ export default class ContentsList extends Component<PropsType, StateType> {
     return (
       <FileItem lastItem={false}>
         <img src={info} />
-        Select path to Dockerfile
+        Select Application Folder
       </FileItem>
     );
   };
 
+  handleContinue = () => {
+    let dockerfiles = [] as string[];
+    this.state.contents.forEach((item: FileType, i: number) => {
+      let splits = item.Path.split("/");
+      let fileName = splits[splits.length - 1];
+      if (fileName.includes("Dockerfile")) {
+        dockerfiles.push(fileName);
+      }
+    });
+    if (dockerfiles.length > 0) {
+      this.setState({ dockerfiles });
+    } else {
+      if (this.state.currentDir !== "") {
+        this.props.setFolderPath(this.state.currentDir);
+      } else {
+        this.props.setFolderPath("./");
+      }
+    }
+  };
+
+  renderOverlay = () => {
+    if (this.state.dockerfiles.length > 0) {
+      return (
+        <Overlay>
+          <BgOverlay onClick={() => this.setState({ dockerfiles: [] })} />
+          <CloseButton onClick={() => this.setState({ dockerfiles: [] })}>
+            <CloseButtonImg src={close} />
+          </CloseButton>
+          <Label>
+            Porter has detected at least one Dockerfile in this folder. Would
+            you like to use an existing Dockerfile?
+          </Label>
+          <DockerfileList>
+            {this.state.dockerfiles.map((dockerfile: string, i: number) => {
+              return (
+                <Row
+                  key={i}
+                  onClick={() =>
+                    this.props.setDockerfilePath(
+                      `${this.state.currentDir || "."}/${dockerfile}`
+                    )
+                  }
+                  isLast={this.state.dockerfiles.length - 1 === i}
+                >
+                  <Indicator selected={false}></Indicator>
+                  {dockerfile}
+                </Row>
+              );
+            })}
+          </DockerfileList>
+          <ConfirmButton
+            onClick={() =>
+              this.props.setFolderPath(this.state.currentDir || "./")
+            }
+          >
+            No, I don't want to use a Dockerfile
+          </ConfirmButton>
+        </Overlay>
+      );
+    }
+  };
+
   render() {
     return (
-      <div>
+      <>
         {this.renderJumpToParent()}
         {this.renderContentList()}
-      </div>
+        <UseButton onClick={this.handleContinue}>Continue</UseButton>
+        {this.renderOverlay()}
+      </>
     );
   }
 }
 
 ContentsList.contextType = Context;
+
+const BgOverlay = styled.div`
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+  background-color: rgba(0, 0, 0, 0.8);
+  z-index: -1;
+`;
+
+const CloseButton = styled.div`
+  position: absolute;
+  display: block;
+  width: 40px;
+  height: 40px;
+  padding: 13px 0 12px 0;
+  z-index: 1;
+  text-align: center;
+  border-radius: 50%;
+  right: 15px;
+  top: 12px;
+  cursor: pointer;
+  :hover {
+    background-color: #ffffff11;
+  }
+`;
+
+const CloseButtonImg = styled.img`
+  width: 14px;
+  margin: 0 auto;
+`;
+
+const Indicator = styled.div<{ selected: boolean }>`
+  border-radius: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border: 1px solid #ffffff55;
+  margin: 1px 10px 0px 1px;
+  margin-right: 13px;
+  background: ${(props) => (props.selected ? "#ffffff22" : "#ffffff11")};
+`;
+
+const Label = styled.div`
+  max-width: 420px;
+  line-height: 1.5em;
+  text-align: center;
+  font-size: 14px;
+`;
+
+const DockerfileList = styled.div`
+  border-radius: 3px;
+  margin-top: 20px;
+  border: 1px solid #aaaabb;
+  background: #ffffff22;
+  width: 100%;
+  max-width: 500px;
+  max-height: 140px;
+  overflow-y: auto;
+`;
+
+const Row = styled.div<{ isLast: boolean }>`
+  height: 35px;
+  padding-left: 10px;
+  display: flex;
+  align-items: center;
+  border-bottom: ${(props) => !props.isLast && "1px solid #aaaabb"};
+  cursor: pointer;
+  :hover {
+    background: #ffffff22;
+  }
+`;
+
+const ConfirmButton = styled.div`
+  font-size: 18px;
+  padding: 7px 12px;
+  outline: none;
+  border: 1px solid white;
+  margin-top: 25px;
+  border-radius: 10px;
+  text-align: center;
+  cursor: pointer;
+  opacity: 0;
+  font-family: "Work Sans", sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  animation: linEnter 0.3s 0.1s;
+  animation-fill-mode: forwards;
+  @keyframes linEnter {
+    from {
+      transform: translateY(20px);
+      opacity: 0;
+    }
+    to {
+      transform: translateY(0px);
+      opacity: 1;
+    }
+  }
+  :hover {
+    background: white;
+    color: #232323;
+  }
+`;
+
+const Overlay = styled.div`
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  padding: 0 90px;
+`;
+
+const UseButton = styled.div`
+  position: absolute;
+  bottom: 28px;
+  left: 185px;
+  height: 35px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #616feecc;
+  font-weight: 500;
+  padding: 10px 15px;
+  border-radius: 3px;
+  box-shadow: 0 2px 5px 0 #00000030;
+  cursor: pointer;
+  :hover {
+    filter: brightness(120%);
+  }
+`;
 
 const BackLabel = styled.div`
   font-size: 16px;

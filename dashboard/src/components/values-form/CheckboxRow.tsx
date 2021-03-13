@@ -5,6 +5,7 @@ type PropsType = {
   label: string;
   checked: boolean;
   toggle: () => void;
+  required?: boolean;
 };
 
 type StateType = {};
@@ -18,11 +19,17 @@ export default class CheckboxRow extends Component<PropsType, StateType> {
             <i className="material-icons">done</i>
           </Checkbox>
           {this.props.label}
+          {this.props.required && <Required>*</Required>}
         </CheckboxWrapper>
       </StyledCheckboxRow>
     );
   }
 }
+
+const Required = styled.section`
+  margin-left: 8px;
+  color: #fc4976;
+`;
 
 const CheckboxWrapper = styled.div`
   display: flex;

@@ -44,15 +44,33 @@ func getConfigurePorterStep(porterTokenSecretName string) GithubActionYAMLStep {
 }
 
 const dockerBuildPush string = `
+export $(echo "${{secrets.%s}}" | xargs)
 docker build %s --file %s -t %s:$(git rev-parse --short HEAD)
 sudo docker push %s:$(git rev-parse --short HEAD)
 `
 
-func getDockerBuildPushStep(dockerFilePath, repoURL string) GithubActionYAMLStep {
+func getDockerBuildPushStep(envSecretName, dockerFilePath, repoURL string) GithubActionYAMLStep {
 	return GithubActionYAMLStep{
 		Name: "Docker build, push",
 		ID:   "docker_build_push",
-		Run:  fmt.Sprintf(dockerBuildPush, filepath.Dir(dockerFilePath), dockerFilePath, repoURL, repoURL),
+		Run:  fmt.Sprintf(dockerBuildPush, envSecretName, filepath.Dir(dockerFilePath), dockerFilePath, repoURL, repoURL),
+	}
+}
+
+const buildPackPush string = `
+export $(echo "${{secrets.%s}}" | xargs)
+sudo add-apt-repository ppa:cncf-buildpacks/pack-cli
+sudo apt-get update
+sudo apt-get install pack-cli
+pack build %s:$(git rev-parse --short HEAD) --path %s --builder heroku/buildpacks:18
+sudo docker push %s:$(git rev-parse --short HEAD)
+`
+
+func getBuildPackPushStep(envSecretName, folderPath, repoURL string) GithubActionYAMLStep {
+	return GithubActionYAMLStep{
+		Name: "Docker build, push",
+		ID:   "docker_build_push",
+		Run:  fmt.Sprintf(buildPackPush, envSecretName, repoURL, folderPath, repoURL),
 	}
 }
 

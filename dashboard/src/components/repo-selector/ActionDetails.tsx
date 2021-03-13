@@ -100,7 +100,6 @@ export default class ActionDetails extends Component<PropsType, StateType> {
         <>
           <Subtitle>
             Select an Image Destination
-            <InfoTooltip text="hola" />
             <Required>*</Required>
           </Subtitle>
           <ExpandedWrapper>{this.renderIntegrationList()}</ExpandedWrapper>

@@ -54,6 +54,7 @@ type StateType = {
   dockerfilePath: string | null;
   folderPath: string | null;
   selectedRegistry: any | null;
+  env: any;
 };
 
 const defaultActionConfig: ActionConfigType = {
@@ -84,6 +85,7 @@ class LaunchTemplate extends Component<PropsType, StateType> {
     dockerfilePath: null as string | null,
     folderPath: null as string | null,
     selectedRegistry: null as any | null,
+    env: {},
   };
 
   createGHAction = (chartName: string, chartNamespace: string) => {
@@ -99,6 +101,7 @@ class LaunchTemplate extends Component<PropsType, StateType> {
           folder_path: this.state.folderPath,
           image_repo_uri: `${this.state.selectedRegistry.url}/${chartName}-${chartNamespace}`,
           git_repo_id: actionConfig.git_repo_id,
+          env: this.state.env,
         },
         {
           project_id: currentProject.id,
@@ -356,6 +359,7 @@ class LaunchTemplate extends Component<PropsType, StateType> {
               return (
                 <ValuesForm
                   metaState={metaState}
+                  handleEnvChange={(x: any) => this.setState({ env: x })}
                   setMetaState={setMetaState}
                   key={tab.name}
                   sections={tab.sections}

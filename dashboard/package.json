@@ -3,7 +3,6 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
-    "@fullstory/browser": "^1.4.5",
     "@material-ui/core": "^4.11.3",
     "@types/d3-array": "^2.9.0",
     "@types/d3-time-format": "^3.0.0",
@@ -32,7 +31,6 @@
     "js-yaml": "^3.14.0",
     "lodash": "^4.17.20",
     "markdown-to-jsx": "^7.0.1",
-    "posthog-js": "^1.8.5",
     "qs": "^6.9.4",
     "random-words": "^1.1.1",
     "react": "^16.13.1",

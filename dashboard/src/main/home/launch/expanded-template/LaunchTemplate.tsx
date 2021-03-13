@@ -1,7 +1,6 @@
 import React, { Component } from "react";
 import styled from "styled-components";
 import randomWords from "random-words";
-import posthog from "posthog-js";
 import _ from "lodash";
 import { Context } from "shared/Context";
 import api from "shared/api";
@@ -148,27 +147,23 @@ class LaunchTemplate extends Component<PropsType, StateType> {
           // redirect to dashboard
           setTimeout(() => {
             this.props.history.push("cluster-dashboard");
-          }, 1000);
+          }, 500);
+          window.analytics.track("Deployed Add-on", {
+            name: this.props.currentTemplate.name,
+            namespace: this.state.selectedNamespace,
+            values: values,
+          });
         });
-        /*
-        posthog.capture("Deployed template", {
-          name: this.props.currentTemplate.name,
-          namespace: this.state.selectedNamespace,
-          values: values,
-        });
-        */
       })
       .catch((err) => {
         this.setState({ saveValuesStatus: "error" });
         setCurrentError(err.response.data.errors[0]);
-        /*
-        posthog.capture("Failed to deploy template", {
+        window.analytics.track("Failed to Deploy Add-on", {
           name: this.props.currentTemplate.name,
           namespace: this.state.selectedNamespace,
           values: values,
           error: err,
         });
-        */
       });
   };
 
@@ -256,9 +251,10 @@ class LaunchTemplate extends Component<PropsType, StateType> {
         });
         /*
         try {
-          posthog.capture("Deployed template", {
+          window.analytics.track("Deployed Application", {
             name: this.props.currentTemplate.name,
             namespace: this.state.selectedNamespace,
+            sourceType: this.state.sourceType,
             values: values,
           });
         } catch (error) {
@@ -270,9 +266,10 @@ class LaunchTemplate extends Component<PropsType, StateType> {
         this.setState({ saveValuesStatus: "error" });
         /*
         try {
-          posthog.capture("Failed to deploy template", {
+          window.analytics.track("Failed to Deploy Application", {
             name: this.props.currentTemplate.name,
             namespace: this.state.selectedNamespace,
+            sourceType: this.state.sourceType,
             values: values,
             error: err,
           });

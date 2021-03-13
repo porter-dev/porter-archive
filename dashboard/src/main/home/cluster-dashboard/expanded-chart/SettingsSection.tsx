@@ -12,7 +12,6 @@ import {
 import { Context } from "shared/Context";
 
 import ImageSelector from "components/image-selector/ImageSelector";
-import RepoSelector from "components/repo-selector/RepoSelector";
 import SaveButton from "components/SaveButton";
 import Heading from "components/values-form/Heading";
 import Helper from "components/values-form/Helper";
@@ -26,7 +25,6 @@ type PropsType = {
 };
 
 type StateType = {
-  actionConfig: ActionConfigType;
   sourceType: string;
   selectedImageUrl: string | null;
   selectedTag: string | null;
@@ -37,17 +35,8 @@ type StateType = {
   action: ActionConfigType;
 };
 
-// TODO: put in shared, duped from LaunchTemplate.tsx
-const defaultActionConfig: ActionConfigType = {
-  git_repo: "",
-  image_repo_uri: "",
-  git_repo_id: 0,
-  dockerfile_path: "",
-};
-
 export default class SettingsSection extends Component<PropsType, StateType> {
   state = {
-    actionConfig: defaultActionConfig,
     sourceType: "",
     selectedImageUrl: "",
     selectedTag: "",
@@ -59,7 +48,6 @@ export default class SettingsSection extends Component<PropsType, StateType> {
       git_repo: "",
       image_repo_uri: "",
       git_repo_id: 0,
-      dockerfile_path: "",
     } as ActionConfigType,
   };
 
@@ -148,62 +136,6 @@ export default class SettingsSection extends Component<PropsType, StateType> {
       });
   };
 
-  renderSourceSection = () => {
-    if (!this.props.currentChart?.form?.hasSource) {
-      return;
-    }
-
-    if (this.state.action.git_repo.length > 0) {
-      return (
-        <>
-          <Heading>Connected Source</Heading>
-          <Holder>
-            <InputRow
-              disabled={true}
-              label="Git Repository"
-              type="text"
-              width="100%"
-              value={this.state.action.git_repo}
-              setValue={(x: string) => console.log(x)}
-            />
-            <InputRow
-              disabled={true}
-              label="Dockerfile Path"
-              type="text"
-              width="100%"
-              value={this.state.action.dockerfile_path}
-              setValue={(x: string) => console.log(x)}
-            />
-            <InputRow
-              disabled={true}
-              label="Docker Image Repository"
-              type="text"
-              width="100%"
-              value={this.state.action.image_repo_uri}
-              setValue={(x: string) => console.log(x)}
-            />
-          </Holder>
-        </>
-      );
-    }
-
-    return (
-      <>
-        <Heading>Connected Source</Heading>
-        <Helper>Specify a container image and tag.</Helper>
-        <ImageSelector
-          selectedImageUrl={this.state.selectedImageUrl}
-          selectedTag={this.state.selectedTag}
-          setSelectedImageUrl={(x: string) =>
-            this.setState({ selectedImageUrl: x })
-          }
-          setSelectedTag={(x: string) => this.setState({ selectedTag: x })}
-          forceExpanded={true}
-        />
-      </>
-    );
-  };
-
   renderWebhookSection = () => {
     if (!this.props.currentChart?.form?.hasSource) {
       return;
@@ -239,7 +171,6 @@ export default class SettingsSection extends Component<PropsType, StateType> {
     return (
       <Wrapper>
         <StyledSettingsSection>
-          {this.renderSourceSection()}
           {this.renderWebhookSection()}
           <Heading>Additional Settings</Heading>
           <Button

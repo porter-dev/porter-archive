@@ -284,7 +284,7 @@ const BottomSection = styled.div`
 const DiscordButton = styled.a`
   position: absolute;
   text-decoration: none;
-  bottom: 15px;
+  bottom: 17px;
   display: flex;
   align-items: center;
   width: calc(100% - 30px);

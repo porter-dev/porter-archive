@@ -11,6 +11,8 @@ import SortSelector from "./SortSelector";
 import ExpandedChart from "./expanded-chart/ExpandedChart";
 import { RouteComponentProps, withRouter } from "react-router";
 
+import api from "shared/api";
+
 type PropsType = RouteComponentProps & {
   currentCluster: ClusterType;
   setSidebar: (x: boolean) => void;
@@ -20,6 +22,7 @@ type StateType = {
   namespace: string;
   sortType: string;
   currentChart: ChartType | null;
+  isMetricsInstalled: boolean;
 };
 
 class ClusterDashboard extends Component<PropsType, StateType> {
@@ -29,7 +32,27 @@ class ClusterDashboard extends Component<PropsType, StateType> {
       ? localStorage.getItem("SortType")
       : "Newest",
     currentChart: null as ChartType | null,
+    isMetricsInstalled: false,
   };
+
+  componentDidMount() {
+    api
+      .getPrometheusIsInstalled(
+        "<token>",
+        {
+          cluster_id: this.context.currentCluster.id,
+        },
+        {
+          id: this.context.currentProject.id,
+        }
+      )
+      .then((res) => {
+        this.setState({ isMetricsInstalled: true });
+      })
+      .catch(() => {
+        this.setState({ isMetricsInstalled: false });
+      });
+  }
 
   componentDidUpdate(prevProps: PropsType) {
     localStorage.setItem("SortType", this.state.sortType);
@@ -77,6 +100,7 @@ class ClusterDashboard extends Component<PropsType, StateType> {
           setCurrentChart={(x: ChartType | null) =>
             this.setState({ currentChart: x })
           }
+          isMetricsInstalled={this.state.isMetricsInstalled}
           setSidebar={setSidebar}
         />
       );

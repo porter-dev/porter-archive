@@ -26,7 +26,7 @@ type StateType = {
 export default class ResourceTab extends Component<PropsType, StateType> {
   state = {
     expanded: this.props.expanded || false,
-    showTooltip: false,
+    showTooltip: false
   };
 
   renderDropdownIcon = () => {
@@ -95,7 +95,7 @@ export default class ResourceTab extends Component<PropsType, StateType> {
       handleClick,
       selected,
       status,
-      roundAllCorners,
+      roundAllCorners
     } = this.props;
     return (
       <StyledResourceTab

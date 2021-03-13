@@ -79,9 +79,9 @@ class ContextProvider extends Component {
         currentProject: null,
         projects: [],
         user: null,
-        devOpsMode: true,
+        devOpsMode: true
       });
-    },
+    }
   };
 
   render() {

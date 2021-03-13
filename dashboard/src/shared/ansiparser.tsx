@@ -8,7 +8,7 @@ const foregroundColors = {
   "35": "magenta",
   "36": "cyan",
   "37": "white",
-  "90": "grey",
+  "90": "grey"
 } as Record<string, string>;
 
 const backgroundColors = {
@@ -19,13 +19,13 @@ const backgroundColors = {
   "44": "blue",
   "45": "magenta",
   "46": "cyan",
-  "47": "white",
+  "47": "white"
 } as Record<string, string>;
 
 const styles = {
   "1": "bold",
   "3": "italic",
-  "4": "underline",
+  "4": "underline"
 } as Record<string, string>;
 
 const eraseChar = (matchingText: any, result: any) => {

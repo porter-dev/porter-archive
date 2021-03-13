@@ -11,11 +11,11 @@ export const kindToIcon: { [kind: string]: string } = {
   Role: "portrait",
   RoleBinding: "swap_horizontal_circle",
   ConfigMap: "map",
-  PodSecurityPolicy: "security",
+  PodSecurityPolicy: "security"
 };
 
 export const edgeColors: { [kind: string]: string } = {
   LabelRel: "#32a85f",
   ControlRel: "#fcb603",
-  SpecRel: "#949EFF",
+  SpecRel: "#949EFF"
 };

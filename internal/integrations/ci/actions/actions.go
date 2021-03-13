@@ -123,7 +123,7 @@ func (g *GithubActions) GetGithubActionYAML() ([]byte, error) {
 	}
 
 	if g.DockerFilePath == "" {
-		gaSteps = append(gaSteps, getBuildPackPushStep(g.getBuildEnvSecretName(), g.DockerFilePath, g.ImageRepoURL))
+		gaSteps = append(gaSteps, getBuildPackPushStep(g.getBuildEnvSecretName(), g.FolderPath, g.ImageRepoURL))
 	} else {
 		gaSteps = append(gaSteps, getDockerBuildPushStep(g.getBuildEnvSecretName(), g.DockerFilePath, g.ImageRepoURL))
 	}

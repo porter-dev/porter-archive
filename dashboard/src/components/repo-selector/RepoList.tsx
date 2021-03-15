@@ -1,6 +1,7 @@
 import React, { Component } from "react";
 import styled from "styled-components";
 import github from "assets/github.png";
+import info from "assets/info.svg";
 
 import api from "shared/api";
 import { RepoType, ActionConfigType } from "shared/types";
@@ -52,6 +53,15 @@ export default class ActionConfEditor extends Component<PropsType, StateType> {
                   repo.GHRepoID = grid;
                 });
                 allRepos = allRepos.concat(res.data);
+                allRepos.sort((a: any, b: any) => {
+                  if (a.FullName < b.FullName) {
+                    return -1;
+                  } else if (a.FullName > b.FullName) {
+                    return 1;
+                  } else {
+                    return 0;
+                  }
+                });
                 this.setState({
                   repos: allRepos,
                   loading: false,
@@ -80,6 +90,7 @@ export default class ActionConfEditor extends Component<PropsType, StateType> {
           res.data.forEach((repo: any, id: number) => {
             repo.GHRepoID = grid;
           });
+          // TODO: sort repos alphabetically
           this.setState({ repos: res.data, loading: false, error: false });
         })
         .catch((err) => {
@@ -142,7 +153,19 @@ export default class ActionConfEditor extends Component<PropsType, StateType> {
     if (this.props.readOnly) {
       return <ExpandedWrapperAlt>{this.renderRepoList()}</ExpandedWrapperAlt>;
     } else {
-      return <ExpandedWrapper>{this.renderRepoList()}</ExpandedWrapper>;
+      return (
+        <ExpandedWrapper>
+          <InfoRow
+            isSelected={false}
+            lastItem={false}
+            readOnly={this.props.readOnly}
+          >
+            <img src={info} />
+            Select Repo
+          </InfoRow>
+          {this.renderRepoList()}
+        </ExpandedWrapper>
+      );
     }
   };
 
@@ -159,26 +182,26 @@ const RepoName = styled.div`
   font-size: 13px;
   border-bottom: 1px solid
     ${(props: { lastItem: boolean; isSelected: boolean; readOnly: boolean }) =>
-    props.lastItem ? "#00000000" : "#606166"};
+      props.lastItem ? "#00000000" : "#606166"};
   color: #ffffff;
   user-select: none;
   align-items: center;
   padding: 10px 0px;
   cursor: ${(props: {
-      lastItem: boolean;
-      isSelected: boolean;
-      readOnly: boolean;
-    }) => (props.readOnly ? "default" : "pointer")};
+    lastItem: boolean;
+    isSelected: boolean;
+    readOnly: boolean;
+  }) => (props.readOnly ? "default" : "pointer")};
   pointer-events: ${(props: {
-      lastItem: boolean;
-      isSelected: boolean;
-      readOnly: boolean;
-    }) => (props.readOnly ? "none" : "auto")};
+    lastItem: boolean;
+    isSelected: boolean;
+    readOnly: boolean;
+  }) => (props.readOnly ? "none" : "auto")};
   background: ${(props: {
-      lastItem: boolean;
-      isSelected: boolean;
-      readOnly: boolean;
-    }) => (props.isSelected ? "#ffffff22" : "#ffffff11")};
+    lastItem: boolean;
+    isSelected: boolean;
+    readOnly: boolean;
+  }) => (props.isSelected ? "#ffffff22" : "#ffffff11")};
   :hover {
     background: #ffffff22;
 
@@ -192,6 +215,14 @@ const RepoName = styled.div`
     height: 18px;
     margin-left: 12px;
     margin-right: 12px;
+  }
+`;
+
+const InfoRow = styled(RepoName)`
+  cursor: default;
+  color: #ffffff55;
+  :hover {
+    background: #ffffff11;
   }
 `;
 

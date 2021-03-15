@@ -5,7 +5,7 @@ type PropsType = {
   label?: string;
   type: string;
   value: string | number;
-  setValue: (x: string | number) => void;
+  setValue?: (x: string | number) => void;
   unit?: string;
   placeholder?: string;
   width?: string;

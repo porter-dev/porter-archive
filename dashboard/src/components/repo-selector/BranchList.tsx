@@ -1,6 +1,7 @@
 import React, { Component } from "react";
 import styled from "styled-components";
 import branch_icon from "assets/branch.png";
+import info from "assets/info.svg";
 
 import api from "../../shared/api";
 import { Context } from "../../shared/Context";
@@ -79,7 +80,15 @@ export default class BranchList extends Component<PropsType, StateType> {
   };
 
   render() {
-    return <div>{this.renderBranchList()}</div>;
+    return (
+      <>
+        <InfoRow lastItem={false}>
+          <img src={info} />
+          Select Branch
+        </InfoRow>
+        {this.renderBranchList()}
+      </>
+    );
   }
 }
 
@@ -111,6 +120,14 @@ const BranchName = styled.div`
     height: 18px;
     margin-left: 12px;
     margin-right: 12px;
+  }
+`;
+
+const InfoRow = styled(BranchName)`
+  cursor: default;
+  color: #ffffff55;
+  :hover {
+    background: #ffffff11;
   }
 `;
 

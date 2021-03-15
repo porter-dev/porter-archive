@@ -182,6 +182,7 @@ const Placeholder = styled.div`
 const Required = styled.div`
   margin-left: 8px;
   color: #fc4976;
+  display: inline-block;
 `;
 
 const Highlight = styled.div`

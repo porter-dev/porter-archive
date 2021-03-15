@@ -42,12 +42,6 @@ export default class Chart extends Component<PropsType, StateType> {
     return `${time} on ${date}`;
   };
 
-  componentDidMount() {
-    window.analytics.track("Opened Chart", {
-      chart: this.props.chart.name,
-    });
-  }
-
   render() {
     let { chart, setCurrentChart } = this.props;
 

@@ -203,6 +203,7 @@ const PositionWrapper = styled.div<{ selectedProvider: string | null }>``;
 const Highlight = styled.div`
   margin-left: 5px;
   color: #8590ff;
+  display: inline-block;
   cursor: pointer;
 `;
 
@@ -219,6 +220,7 @@ const BlockList = styled.div`
 const Required = styled.div`
   margin-left: 8px;
   color: #fc4976;
+  display: inline-block;
 `;
 
 const Icon = styled.img<{ bw?: boolean }>`

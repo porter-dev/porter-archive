@@ -23,98 +23,96 @@ type StateType = {
 
 export default class IntegrationRow extends Component<PropsType, StateType> {
   state = {
-    editMode: false
+    editMode: false,
   };
 
   editButtonOnClick = (e: MouseEvent) => {
     e.stopPropagation();
     if (!this.props.expanded) {
       this.setState({
-        editMode: true
+        editMode: true,
       });
       this.props.toggleCollapse(null);
-    }
-    else {
+    } else {
       this.setState({
-        editMode: !this.state.editMode
+        editMode: !this.state.editMode,
       });
       if (this.state.editMode) {
         this.props.toggleCollapse(null);
       }
     }
-  }
+  };
 
   render = () => {
     const icon =
-      integrationList[this.props.integration] && integrationList[this.props.integration].icon;
+      integrationList[this.props.integration] &&
+      integrationList[this.props.integration].icon;
     const subtitle =
-      integrationList[this.props.integration] && integrationList[this.props.integration].label;
-    return <Integration disabled={false}>
-      <MainRow
-        onClick={this.props.toggleCollapse}
-        disabled={false}
-      >
-        <Flex>
-          <Icon src={icon && icon} />
-          <Description>
-            <Label>{this.props.label}</Label>
-            <Subtitle>{subtitle}</Subtitle>
-          </Description>
-        </Flex>
-        <MaterialIconTray disabled={false}>
-          {/* <i className="material-icons"
+      integrationList[this.props.integration] &&
+      integrationList[this.props.integration].label;
+    return (
+      <Integration disabled={false}>
+        <MainRow onClick={this.props.toggleCollapse} disabled={false}>
+          <Flex>
+            <Icon src={icon && icon} />
+            <Description>
+              <Label>{this.props.label}</Label>
+              <Subtitle>{subtitle}</Subtitle>
+            </Description>
+          </Flex>
+          <MaterialIconTray disabled={false}>
+            {/* <i className="material-icons"
             onClick={this.editButtonOnClick}>mode_edit</i> */}
-          <I
-            className="material-icons"
-            showList={this.props.expanded}
-            onClick={this.props.toggleCollapse}
-          >
-            expand_more
-          </I>
-        </MaterialIconTray>
-      </MainRow>
-      {this.props.expanded && !this.state.editMode && (
-        <ImageHodler adjustMargin={this.props.category !== "repo"}>
-          {this.props.category !== "repo" ? (
-            <ImageList
-              selectedImageUrl={null}
-              selectedTag={null}
-              clickedImage={null}
-              registry={this.props.itemId}
-              setSelectedImageUrl={() => { }}
-              setSelectedTag={() => { }}
-              setClickedImage={() => { }}
-            />
-          ) : (
-            <RepoList
-              actionConfig={
-                {
-                  git_repo: "",
-                  image_repo_uri: "",
-                  git_repo_id: 0,
-                  dockerfile_path: "",
-                } as ActionConfigType
-              }
-              setActionConfig={() => { }}
-              readOnly={true}
-              userId={this.props.itemId}
-            />
-          )}
-        </ImageHodler>
-      )}
-      {
-        this.props.expanded && this.state.editMode && <CreateIntegrationForm
-          integrationName={this.props.integration}
-          closeForm={() => {
-            this.setState({ editMode: false });
-          }}
-        />
-      }
-    </Integration>
-  }
-
+            <I
+              className="material-icons"
+              showList={this.props.expanded}
+              onClick={this.props.toggleCollapse}
+            >
+              expand_more
+            </I>
+          </MaterialIconTray>
+        </MainRow>
+        {this.props.expanded && !this.state.editMode && (
+          <ImageHodler adjustMargin={this.props.category !== "repo"}>
+            {this.props.category !== "repo" ? (
+              <ImageList
+                selectedImageUrl={null}
+                selectedTag={null}
+                clickedImage={null}
+                registry={this.props.itemId}
+                setSelectedImageUrl={() => {}}
+                setSelectedTag={() => {}}
+                setClickedImage={() => {}}
+              />
+            ) : (
+              <RepoList
+                actionConfig={
+                  {
+                    git_repo: "",
+                    image_repo_uri: "",
+                    git_repo_id: 0,
+                    dockerfile_path: "",
+                  } as ActionConfigType
+                }
+                setActionConfig={() => {}}
+                readOnly={true}
+                userId={this.props.itemId}
+              />
+            )}
+          </ImageHodler>
+        )}
+        {this.props.expanded && this.state.editMode && (
+          <CreateIntegrationForm
+            integrationName={this.props.integration}
+            closeForm={() => {
+              this.setState({ editMode: false });
+            }}
+          />
+        )}
+      </Integration>
+    );
+  };
 }
-
 
 const Flex = styled.div`
   display: flex;
@@ -149,10 +147,10 @@ const MainRow = styled.div`
   border-radius: 5px;
   :hover {
     background: ${(props: { disabled: boolean }) =>
-    props.disabled ? "" : "#ffffff11"};
+      props.disabled ? "" : "#ffffff11"};
     > i {
       background: ${(props: { disabled: boolean }) =>
-    props.disabled ? "" : "#ffffff11"};
+        props.disabled ? "" : "#ffffff11"};
     }
   }
 
@@ -164,7 +162,7 @@ const MainRow = styled.div`
     margin-right: -7px;
     :hover {
       background: ${(props: { disabled: boolean }) =>
-    props.disabled ? "" : "#ffffff11"};
+        props.disabled ? "" : "#ffffff11"};
     }
   }
 `;
@@ -183,7 +181,7 @@ const MaterialIconTray = styled.div`
     color: #ffffff44;
     :hover {
       background: ${(props: { disabled: boolean }) =>
-    props.disabled ? "" : "#ffffff11"};
+        props.disabled ? "" : "#ffffff11"};
     }
   }
 `;
@@ -208,7 +206,6 @@ const Subtitle = styled.div`
   align-items: center;
   padding-top: 5px;
 `;
-
 
 const I = styled.i`
   transform: ${(props: { showList: boolean }) =>

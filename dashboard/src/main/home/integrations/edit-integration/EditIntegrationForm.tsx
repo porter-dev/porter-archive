@@ -13,7 +13,10 @@ type PropsType = {
 
 type StateType = {};
 
-export default class CreateIntegrationForm extends Component<PropsType, StateType> {
+export default class CreateIntegrationForm extends Component<
+  PropsType,
+  StateType
+> {
   state = {};
 
   render = () => {
@@ -31,5 +34,5 @@ export default class CreateIntegrationForm extends Component<PropsType, StateTyp
       default:
         return null;
     }
-  }
+  };
 }

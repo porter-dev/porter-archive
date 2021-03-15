@@ -33,6 +33,7 @@ type PropsType = {
   currentCluster: ClusterType;
   setCurrentChart: (x: ChartType | null) => void;
   setSidebar: (x: boolean) => void;
+  isMetricsInstalled: boolean;
 };
 
 type StateType = {
@@ -234,8 +235,6 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
       ...values,
     });
 
-    console.log("VALUES YAML", valuesYaml)
-
     this.setState({ saveValuesStatus: "loading" });
     this.refreshChart();
     api
@@ -257,10 +256,19 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
           saveValuesStatus: "successful",
           forceRefreshRevisions: true,
         });
+
+        window.analytics.track("Chart Upgraded", {
+          chart: this.props.currentChart.name,
+          values: valuesYaml,
+        });
       })
       .catch((err) => {
         this.setState({ saveValuesStatus: "error" });
-        console.log(err);
+        window.analytics.track("Failed to Upgrade Chart", {
+          chart: this.props.currentChart.name,
+          values: valuesYaml,
+          error: err,
+        });
       });
   };
 
@@ -364,7 +372,15 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
     // Append universal tabs
     tabOptions.push(
       { label: "Status", value: "status" },
-      //{ label: "Metrics", value: "metrics" },
+    );
+
+    if (this.props.isMetricsInstalled) {
+      tabOptions.push(
+        { label: "Metrics", value: "metrics" },
+      )
+    }
+
+    tabOptions.push(
       { label: "Chart Overview", value: "graph" }
     );
 
@@ -478,11 +494,15 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
     let { currentCluster, currentProject } = this.context;
     let { currentChart } = this.props;
 
-    this.getChartData(this.props.currentChart);
-    this.getControllers(this.props.currentChart);
+    window.analytics.track("Opened Chart", {
+      chart: currentChart.name,
+    });
+
+    this.getChartData(currentChart);
+    this.getControllers(currentChart);
     this.setControllerWebsockets(
       ["deployment", "statefulset", "daemonset", "replicaset"],
-      this.props.currentChart
+      currentChart
     );
 
     api

@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -702,7 +701,9 @@ func (auth *Auth) getTokenFromRequest(r *http.Request) *token.Token {
 
 	tok, err := token.GetTokenFromEncoded(reqToken, auth.tokenConf)
 
-	fmt.Printf("ERROR WAS %v\n", err)
+	if err != nil {
+		return nil
+	}
 
 	return tok
 }

@@ -86,7 +86,7 @@ const StatusWrapper = styled.div`
     font-size: 18px;
     margin-right: 10px;
     color: ${(props: { successful: boolean }) =>
-    props.successful ? "#4797ff" : "#fcba03"};
+      props.successful ? "#4797ff" : "#fcba03"};
   }
 
   animation: statusFloatIn 0.5s;
@@ -132,15 +132,14 @@ const Button = styled.button`
   text-align: left;
   border: 0;
   border-radius: 5px;
-  background: ${(props) => (!props.disabled ? props.color : "#aaaabb")};
-  box-shadow: ${(props) =>
-    !props.disabled ? "0 2px 5px 0 #00000030" : "none"};
-  cursor: ${(props) => (!props.disabled ? "pointer" : "default")};
+  background: ${props => (!props.disabled ? props.color : "#aaaabb")};
+  box-shadow: ${props => (!props.disabled ? "0 2px 5px 0 #00000030" : "none")};
+  cursor: ${props => (!props.disabled ? "pointer" : "default")};
   user-select: none;
   :focus {
     outline: 0;
   }
   :hover {
-    filter: ${(props) => (!props.disabled ? "brightness(120%)" : "")};
+    filter: ${props => (!props.disabled ? "brightness(120%)" : "")};
   }
 `;

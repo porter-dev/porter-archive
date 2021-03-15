@@ -124,9 +124,9 @@ class Sidebar extends Component<PropsType, StateType> {
             onClick={() => {
               this.props.history.push("/integrations");
             }}
-          // onClick={() => {
-          //   setCurrentModal("IntegrationsInstructionsModal", {});
-          // }}
+            // onClick={() => {
+            //   setCurrentModal("IntegrationsInstructionsModal", {});
+            // }}
           >
             <Img src={integrations} />
             Integrations
@@ -134,14 +134,14 @@ class Sidebar extends Component<PropsType, StateType> {
           {this.context.currentProject.roles.filter((obj: any) => {
             return obj.user_id === this.context.user.userId;
           })[0].kind === "admin" && (
-              <NavButton
-                onClick={() => this.props.history.push("/project-settings")}
-                selected={this.props.currentView === "project-settings"}
-              >
-                <Img enlarge={true} src={settings} />
+            <NavButton
+              onClick={() => this.props.history.push("/project-settings")}
+              selected={this.props.currentView === "project-settings"}
+            >
+              <Img enlarge={true} src={settings} />
               Settings
-              </NavButton>
-            )}
+            </NavButton>
+          )}
 
           <br />
 
@@ -249,7 +249,7 @@ const NavButton = styled.div`
 
   :hover {
     background: ${(props: { disabled?: boolean; selected?: boolean }) =>
-    props.selected ? "" : "#ffffff08"};
+      props.selected ? "" : "#ffffff08"};
   }
 
   > i {
@@ -284,7 +284,7 @@ const BottomSection = styled.div`
 const DiscordButton = styled.a`
   position: absolute;
   text-decoration: none;
-  bottom: 15px;
+  bottom: 17px;
   display: flex;
   align-items: center;
   width: calc(100% - 30px);

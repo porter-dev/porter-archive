@@ -261,7 +261,9 @@ const BackButton = styled.div`
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-top: 10px;
+  margin-top: 28px;
+  margin-bottom: -6px;
+  height: 35px;
   cursor: pointer;
   font-size: 13px;
   padding: 5px 13px;

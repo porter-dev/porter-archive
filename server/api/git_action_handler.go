@@ -92,20 +92,18 @@ func (app *App) createGitActionFromForm(
 			return nil
 		}
 
-		if reg.InfraID != 0 {
-			_reg := registry.Registry(*reg)
-			regAPI := &_reg
+		_reg := registry.Registry(*reg)
+		regAPI := &_reg
 
-			// parse the name from the registry
-			nameSpl := strings.Split(form.ImageRepoURI, "/")
-			repoName := nameSpl[len(nameSpl)-1]
+		// parse the name from the registry
+		nameSpl := strings.Split(form.ImageRepoURI, "/")
+		repoName := nameSpl[len(nameSpl)-1]
 
-			err := regAPI.CreateRepository(*app.Repo, repoName)
+		err = regAPI.CreateRepository(*app.Repo, repoName)
 
-			if err != nil {
-				app.handleErrorInternal(err, w)
-				return nil
-			}
+		if err != nil {
+			app.handleErrorInternal(err, w)
+			return nil
 		}
 	}
 

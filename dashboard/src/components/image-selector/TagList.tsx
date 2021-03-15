@@ -72,6 +72,8 @@ export default class TagList extends Component<PropsType, StateType> {
       );
     } else if (error || !tags) {
       return <LoadingWrapper>Error loading tags</LoadingWrapper>;
+    } else if (tags.length === 0) {
+      return <LoadingWrapper>This image repository is empty.</LoadingWrapper>;
     }
 
     return tags.map((tag: string, i: number) => {

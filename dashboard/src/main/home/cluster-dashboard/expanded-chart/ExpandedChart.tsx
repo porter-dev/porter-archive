@@ -494,11 +494,15 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
     let { currentCluster, currentProject } = this.context;
     let { currentChart } = this.props;
 
-    this.getChartData(this.props.currentChart);
-    this.getControllers(this.props.currentChart);
+    window.analytics.track("Opened Chart", {
+      chart: currentChart.name,
+    });
+
+    this.getChartData(currentChart);
+    this.getControllers(currentChart);
     this.setControllerWebsockets(
       ["deployment", "statefulset", "daemonset", "replicaset"],
-      this.props.currentChart
+      currentChart
     );
 
     api

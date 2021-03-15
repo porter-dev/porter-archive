@@ -96,7 +96,6 @@ class LaunchTemplate extends Component<PropsType, StateType> {
     if (this.state.selectedRegistry.service === "dockerhub") {
       imageRepoUri = this.state.selectedRegistry.url;
     }
-    console.log('Registry ID is: ', this.state.selectedRegistry.id);
 
     api
       .createGHAction(

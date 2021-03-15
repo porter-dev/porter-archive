@@ -167,12 +167,32 @@ export default class Login extends Component<PropsType, StateType> {
             </Helper>
           </FormWrapper>
         </LoginPanel>
+
+        <Footer>
+          © 2021 Porter Technologies Inc. • 
+          <Link href="https://docs.getporter.dev/docs/terms-of-service" target="_blank">
+            Terms & Privacy
+          </Link>
+        </Footer>
       </StyledLogin>
     );
   }
 }
 
 Login.contextType = Context;
+
+const Footer = styled.div`
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  margin-bottom: 30px;
+  width: 100vw;
+  text-align: center;
+  color: #aaaabb;
+  font-size: 13px;
+  padding-right: 8px;
+  font: Work Sans, sans-serif;
+`;
 
 const DarkMatter = styled.div`
   margin-top: -10px;

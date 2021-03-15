@@ -90,6 +90,13 @@ class LaunchTemplate extends Component<PropsType, StateType> {
   createGHAction = (chartName: string, chartNamespace: string) => {
     let { currentProject, currentCluster } = this.context;
     let { actionConfig } = this.state;
+    let imageRepoUri = `${this.state.selectedRegistry.url}/${chartName}-${chartNamespace}`;
+
+    // DockerHub registry integration is per repo
+    if (this.state.selectedRegistry.service === "dockerhub") {
+      imageRepoUri = this.state.selectedRegistry.url;
+    }
+
     api
       .createGHAction(
         "<token>",
@@ -98,7 +105,7 @@ class LaunchTemplate extends Component<PropsType, StateType> {
           registry_id: this.state.selectedRegistry.id,
           dockerfile_path: this.state.dockerfilePath,
           folder_path: this.state.folderPath,
-          image_repo_uri: `${this.state.selectedRegistry.url}/${chartName}-${chartNamespace}`,
+          image_repo_uri: imageRepoUri,
           git_repo_id: actionConfig.git_repo_id,
           env: this.state.env,
         },
@@ -853,7 +860,7 @@ const Warning = styled.span<{ highlight: boolean; makeFlush?: boolean }>`
 const Required = styled.div`
   margin-left: 8px;
   color: #fc4976;
-  dislay: inline-block;
+  display: inline-block;
 `;
 
 const Link = styled.a`

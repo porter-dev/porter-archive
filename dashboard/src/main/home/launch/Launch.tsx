@@ -331,7 +331,6 @@ const TitleSection = styled.div`
       font-size: 18px;
       margin-left: 18px;
       color: #858faaaa;
-      cursor: pointer;
       :hover {
         color: #aaaabb;
       }

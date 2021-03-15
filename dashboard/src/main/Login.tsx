@@ -169,7 +169,7 @@ export default class Login extends Component<PropsType, StateType> {
         </LoginPanel>
 
         <Footer>
-          © 2021 Porter Technologies Inc. | 
+          © 2021 Porter Technologies Inc. • 
           <Link href="https://docs.getporter.dev/docs/terms-of-service" target="_blank">
             Terms & Privacy
           </Link>

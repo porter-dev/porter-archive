@@ -23,7 +23,7 @@ export default class Login extends Component<PropsType, StateType> {
     email: "",
     password: "",
     emailError: false,
-    credentialError: false
+    credentialError: false,
   };
 
   handleKeyDown = (e: any) => {
@@ -57,11 +57,11 @@ export default class Login extends Component<PropsType, StateType> {
           "",
           {
             email: email,
-            password: password
+            password: password,
           },
           {}
         )
-        .then(res => {
+        .then((res) => {
           // TODO: case and set credential error
           if (res?.data?.redirect) {
             window.location.href = res.data.redirect;
@@ -70,7 +70,7 @@ export default class Login extends Component<PropsType, StateType> {
             authenticate();
           }
         })
-        .catch(err =>
+        .catch((err) =>
           this.context.setCurrentError(err.response.data.errors[0])
         );
     }
@@ -137,7 +137,7 @@ export default class Login extends Component<PropsType, StateType> {
                   this.setState({
                     email: e.target.value,
                     emailError: false,
-                    credentialError: false
+                    credentialError: false,
                   })
                 }
                 valid={!credentialError && !emailError}
@@ -152,7 +152,7 @@ export default class Login extends Component<PropsType, StateType> {
                 onChange={(e: ChangeEvent<HTMLInputElement>) =>
                   this.setState({
                     password: e.target.value,
-                    credentialError: false
+                    credentialError: false,
                   })
                 }
                 valid={!credentialError}
@@ -169,8 +169,11 @@ export default class Login extends Component<PropsType, StateType> {
         </LoginPanel>
 
         <Footer>
-          © 2021 Porter Technologies Inc. • 
-          <Link href="https://docs.getporter.dev/docs/terms-of-service" target="_blank">
+          © 2021 Porter Technologies Inc. •
+          <Link
+            href="https://docs.getporter.dev/docs/terms-of-service"
+            target="_blank"
+          >
             Terms & Privacy
           </Link>
         </Footer>

@@ -46,7 +46,7 @@ export default class Logs extends Component<PropsType, StateType> {
         <Message>
           ⌛ This job has been completed. You can now delete this job.
         </Message>
-      )
+      );
     }
 
     if (this.state.logs.length == 0) {

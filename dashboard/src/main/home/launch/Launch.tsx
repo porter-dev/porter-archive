@@ -60,7 +60,6 @@ export default class Templates extends Component<PropsType, StateType> {
         {}
       )
       .then((res) => {
-        console.log(res.data);
         this.setState({ applicationTemplates: res.data, error: false }, () => {
           this.state.applicationTemplates.sort((a, b) =>
             a.version > b.version ? 1 : -1

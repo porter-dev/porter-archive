@@ -232,7 +232,16 @@ export default class ContentsList extends Component<PropsType, StateType> {
       <>
         {this.renderJumpToParent()}
         {this.renderContentList()}
-        <UseButton onClick={this.handleContinue}>Continue</UseButton>
+        <FlexWrapper>
+          <UseButton onClick={this.handleContinue}>Continue</UseButton>
+          <StatusWrapper
+            href="https://docs.getporter.dev/docs/auto-deploy-requirements#auto-build-with-cloud-native-buildpacks"
+            target="_blank"
+          >
+            <i className="material-icons">help_outline</i>
+            <div>Auto build requirements</div>
+          </StatusWrapper>
+        </FlexWrapper>
         {this.renderOverlay()}
       </>
     );
@@ -240,6 +249,31 @@ export default class ContentsList extends Component<PropsType, StateType> {
 }
 
 ContentsList.contextType = Context;
+
+const FlexWrapper = styled.div`
+  position: absolute;
+  bottom: 28px;
+  left: 185px;
+  display: flex;
+  align-items: center;
+`;
+
+const StatusWrapper = styled.a<{ successful?: boolean }>`
+  display: flex;
+  align-items: center;
+  font-family: "Work Sans", sans-serif;
+  font-size: 13px;
+  color: #949eff;
+  margin-right: 25px;
+  margin-left: 20px;
+  cursor: pointer;
+  text-decoration: none;
+
+  > i {
+    font-size: 18px;
+    margin-right: 8px;
+  }
+`;
 
 const BgOverlay = styled.div`
   position: absolute;
@@ -362,9 +396,6 @@ const Overlay = styled.div`
 `;
 
 const UseButton = styled.div`
-  position: absolute;
-  bottom: 28px;
-  left: 185px;
   height: 35px;
   display: flex;
   align-items: center;

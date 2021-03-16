@@ -50,7 +50,7 @@ export default class ControllerTab extends Component<PropsType, StateType> {
     if (selectors.length == 0 && this.props.selectors) {
       selectors = this.props.selectors;
     }
-    
+
     api
       .getMatchingPods(
         "<token>",
@@ -111,7 +111,7 @@ export default class ControllerTab extends Component<PropsType, StateType> {
           c.status?.desiredNumberScheduled || 0,
         ];
       case "job":
-        return [1, 1]
+        return [1, 1];
     }
   };
 
@@ -156,10 +156,10 @@ export default class ControllerTab extends Component<PropsType, StateType> {
     let status = available == total ? "running" : "waiting";
 
     if (controller.kind?.toLowerCase() == "job" && !controller.status.active) {
-      status = "completed"
+      status = "completed";
     }
 
-    console.log("STATUS", status)
+    console.log("STATUS", status);
 
     return (
       <ResourceTab
@@ -171,8 +171,11 @@ export default class ControllerTab extends Component<PropsType, StateType> {
       >
         {this.state.raw.map((pod, i) => {
           let status = this.getPodStatus(pod.status);
-          if (controller.kind?.toLowerCase() == "job" && !controller.status.active) {
-            status = "completed"
+          if (
+            controller.kind?.toLowerCase() == "job" &&
+            !controller.status.active
+          ) {
+            status = "completed";
           }
           return (
             <Tab
@@ -278,7 +281,7 @@ const StatusColor = styled.div`
       : props.status === "failed"
       ? "#ed5f85"
       : props.status === "completed"
-      ? '#00d12a'
+      ? "#00d12a"
       : "#f5cb42"};
   border-radius: 20px;
 `;

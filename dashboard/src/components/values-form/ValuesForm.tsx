@@ -82,7 +82,10 @@ export default class ValuesForm extends Component<PropsType, StateType> {
                 this.props.setMetaState({ [key]: x });
 
                 // Need to pull env vars out of form.yaml for createGHA build env vars
-                if (this.props.handleEnvChange && key === "container.env.normal") {
+                if (
+                  this.props.handleEnvChange &&
+                  key === "container.env.normal"
+                ) {
                   this.props.handleEnvChange(x);
                 }
               }}

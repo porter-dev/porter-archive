@@ -74,7 +74,7 @@ export default class TemplateInfo extends Component<PropsType, StateType> {
           </Banner>
         </>
       );
-    } else if (this.props.currentTab == 'docker') {
+    } else if (this.props.currentTab == "docker") {
       return (
         <>
           <Br />

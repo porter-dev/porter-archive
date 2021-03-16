@@ -80,7 +80,10 @@ export default class ActionDetails extends Component<PropsType, StateType> {
       return (
         <RegistryItem
           key={i}
-          isSelected={this.props.selectedRegistry && registry.id === this.props.selectedRegistry.id}
+          isSelected={
+            this.props.selectedRegistry &&
+            registry.id === this.props.selectedRegistry.id
+          }
           lastItem={i === registries.length - 1}
           onClick={() => this.props.setSelectedRegistry(registry)}
         >
@@ -138,10 +141,14 @@ export default class ActionDetails extends Component<PropsType, StateType> {
         )}
         {this.renderRegistrySection()}
         <SubtitleAlt>
-          <Bold>Note:</Bold> To auto-deploy each time you push changes, Porter will write Github Secrets and a GitHub Actions file to your repo.
-            <Highlight href="https://docs.getporter.dev/docs/auto-deploy-requirements#cicd-with-github-actions" target="_blank">
-              Learn More
-            </Highlight>
+          <Bold>Note:</Bold> To auto-deploy each time you push changes, Porter
+          will write Github Secrets and a GitHub Actions file to your repo.
+          <Highlight
+            href="https://docs.getporter.dev/docs/auto-deploy-requirements#cicd-with-github-actions"
+            target="_blank"
+          >
+            Learn More
+          </Highlight>
         </SubtitleAlt>
         <Br />
 
@@ -162,8 +169,8 @@ export default class ActionDetails extends Component<PropsType, StateType> {
             </StatusWrapper>
           ) : (
             <StatusWrapper>
-              <i className="material-icons">error_outline</i> 
-              A connected container registry is required
+              <i className="material-icons">error_outline</i>A connected
+              container registry is required
             </StatusWrapper>
           )}
         </Flex>
@@ -209,7 +216,6 @@ const SubtitleAlt = styled.div`
   margin-bottom: -7px;
   font-weight: 400;
 `;
-
 
 const RegistryItem = styled.div`
   display: flex;

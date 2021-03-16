@@ -644,9 +644,7 @@ class LaunchTemplate extends Component<PropsType, StateType> {
           <i className="material-icons" onClick={this.props.hideLaunch}>
             keyboard_backspace
           </i>
-          {icon
-            ? this.renderIcon(icon)
-            : this.renderIcon(currentTemplate.icon)}
+          {icon ? this.renderIcon(icon) : this.renderIcon(currentTemplate.icon)}
           <Title>{name}</Title>
         </HeaderSection>
         <DarkMatter antiHeight="-13px" />

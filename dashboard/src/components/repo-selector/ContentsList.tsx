@@ -234,8 +234,11 @@ export default class ContentsList extends Component<PropsType, StateType> {
         {this.renderContentList()}
         <FlexWrapper>
           <UseButton onClick={this.handleContinue}>Continue</UseButton>
-          <StatusWrapper href="https://docs.getporter.dev/docs/auto-deploy-requirements#auto-build-with-cloud-native-buildpacks" target="_blank">
-            <i className="material-icons">help_outline</i> 
+          <StatusWrapper
+            href="https://docs.getporter.dev/docs/auto-deploy-requirements#auto-build-with-cloud-native-buildpacks"
+            target="_blank"
+          >
+            <i className="material-icons">help_outline</i>
             <div>Auto build requirements</div>
           </StatusWrapper>
         </FlexWrapper>
@@ -260,7 +263,7 @@ const StatusWrapper = styled.a<{ successful?: boolean }>`
   align-items: center;
   font-family: "Work Sans", sans-serif;
   font-size: 13px;
-  color: #949eff;;
+  color: #949eff;
   margin-right: 25px;
   margin-left: 20px;
   cursor: pointer;

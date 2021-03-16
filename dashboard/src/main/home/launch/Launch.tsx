@@ -52,13 +52,19 @@ export default class Templates extends Component<PropsType, StateType> {
       .catch(() => this.setState({ loading: false, error: true }));
 
     api
-      .getApplicationTemplates("<token>", { 
-        repo_url: process.env.APPLICATION_CHART_REPO_URL 
-      }, {})
+      .getApplicationTemplates(
+        "<token>",
+        {
+          repo_url: process.env.APPLICATION_CHART_REPO_URL,
+        },
+        {}
+      )
       .then((res) => {
-        console.log(res.data)
-        this.setState({ applicationTemplates: res.data, error: false }, () => {    
-          this.state.applicationTemplates.sort((a, b) => (a.version > b.version ? 1 : -1));      
+        console.log(res.data);
+        this.setState({ applicationTemplates: res.data, error: false }, () => {
+          this.state.applicationTemplates.sort((a, b) =>
+            a.version > b.version ? 1 : -1
+          );
           this.setState({
             loading: false,
           });
@@ -102,8 +108,8 @@ export default class Templates extends Component<PropsType, StateType> {
       );
     }
 
-    return this.state.applicationTemplates
-      .map((template: PorterTemplate, i: number) => {
+    return this.state.applicationTemplates.map(
+      (template: PorterTemplate, i: number) => {
         let { name, icon, description } = template;
         if (hardcodedNames[name]) {
           name = hardcodedNames[name];
@@ -118,7 +124,8 @@ export default class Templates extends Component<PropsType, StateType> {
             <TemplateDescription>{description}</TemplateDescription>
           </TemplateBlock>
         );
-      });
+      }
+    );
   };
 
   renderAddonList = () => {
@@ -144,8 +151,8 @@ export default class Templates extends Component<PropsType, StateType> {
       );
     }
 
-    return this.state.addonTemplates
-      .map((template: PorterTemplate, i: number) => {
+    return this.state.addonTemplates.map(
+      (template: PorterTemplate, i: number) => {
         let { name, icon, description } = template;
         if (hardcodedNames[name]) {
           name = hardcodedNames[name];
@@ -160,7 +167,8 @@ export default class Templates extends Component<PropsType, StateType> {
             <TemplateDescription>{description}</TemplateDescription>
           </TemplateBlock>
         );
-      });
+      }
+    );
   };
 
   renderApplicationTemplates = () => {

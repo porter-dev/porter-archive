@@ -4,7 +4,7 @@ import "net/url"
 
 // ChartForm is the base type for CRUD operations on charts
 type ChartForm struct {
-	RepoURL string
+	RepoURL string 
 	Name    string `json:"name"`
 	Version string `json:"version"`
 }

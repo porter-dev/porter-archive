@@ -22,7 +22,8 @@ type PropsType = {};
 type StateType = {
   currentTemplate: PorterTemplate | null;
   currentTab: string;
-  porterTemplates: PorterTemplate[];
+  addonTemplates: PorterTemplate[];
+  applicationTemplates: PorterTemplate[];
   loading: boolean;
   error: boolean;
 };
@@ -31,24 +32,35 @@ export default class Templates extends Component<PropsType, StateType> {
   state = {
     currentTemplate: null as PorterTemplate | null,
     currentTab: "docker",
-    porterTemplates: [] as PorterTemplate[],
+    addonTemplates: [] as PorterTemplate[],
+    applicationTemplates: [] as PorterTemplate[],
     loading: true,
     error: false,
   };
 
   componentDidMount() {
     api
-      .getTemplates("<token>", {}, {})
+      .getAddonTemplates("<token>", {}, {})
       .then((res) => {
-        this.setState({ porterTemplates: res.data, error: false }, () => {
-          this.state.porterTemplates.sort((a, b) => (a.name > b.name ? 1 : -1));
-          this.state.porterTemplates.sort((a, b) =>
-            a.name === "docker" ? -1 : b.name === "docker" ? 1 : 0
-          );
-          // TODO: properly find "docker" template instead of relying on first entry
+        this.setState({ addonTemplates: res.data, error: false }, () => {
+          this.state.addonTemplates.sort((a, b) => (a.name > b.name ? 1 : -1));
           this.setState({
             loading: false,
-            currentTemplate: this.state.porterTemplates[0],
+          });
+        });
+      })
+      .catch(() => this.setState({ loading: false, error: true }));
+
+    api
+      .getApplicationTemplates("<token>", { 
+        repo_url: process.env.APPLICATION_CHART_REPO_URL 
+      }, {})
+      .then((res) => {
+        console.log(res.data)
+        this.setState({ applicationTemplates: res.data, error: false }, () => {    
+          this.state.applicationTemplates.sort((a, b) => (a.version > b.version ? 1 : -1));      
+          this.setState({
+            loading: false,
           });
         });
       })
@@ -67,8 +79,8 @@ export default class Templates extends Component<PropsType, StateType> {
     );
   };
 
-  renderTemplateList = () => {
-    let { loading, error, porterTemplates } = this.state;
+  renderApplicationList = () => {
+    let { loading, error, applicationTemplates } = this.state;
 
     if (loading) {
       return (
@@ -82,7 +94,7 @@ export default class Templates extends Component<PropsType, StateType> {
           <i className="material-icons">error</i> Error retrieving templates.
         </Placeholder>
       );
-    } else if (porterTemplates.length === 0) {
+    } else if (applicationTemplates.length === 0) {
       return (
         <Placeholder>
           <i className="material-icons">category</i> No templates found.
@@ -90,8 +102,7 @@ export default class Templates extends Component<PropsType, StateType> {
       );
     }
 
-    return this.state.porterTemplates
-      .filter((t) => t.name.toLowerCase() !== "docker")
+    return this.state.applicationTemplates
       .map((template: PorterTemplate, i: number) => {
         let { name, icon, description } = template;
         if (hardcodedNames[name]) {
@@ -110,7 +121,49 @@ export default class Templates extends Component<PropsType, StateType> {
       });
   };
 
-  renderDefaultTemplate = () => {
+  renderAddonList = () => {
+    let { loading, error, addonTemplates } = this.state;
+
+    if (loading) {
+      return (
+        <LoadingWrapper>
+          <Loading />
+        </LoadingWrapper>
+      );
+    } else if (error) {
+      return (
+        <Placeholder>
+          <i className="material-icons">error</i> Error retrieving templates.
+        </Placeholder>
+      );
+    } else if (addonTemplates.length === 0) {
+      return (
+        <Placeholder>
+          <i className="material-icons">category</i> No templates found.
+        </Placeholder>
+      );
+    }
+
+    return this.state.addonTemplates
+      .map((template: PorterTemplate, i: number) => {
+        let { name, icon, description } = template;
+        if (hardcodedNames[name]) {
+          name = hardcodedNames[name];
+        }
+        return (
+          <TemplateBlock
+            key={i}
+            onClick={() => this.setState({ currentTemplate: template })}
+          >
+            {this.renderIcon(icon)}
+            <TemplateTitle>{name}</TemplateTitle>
+            <TemplateDescription>{description}</TemplateDescription>
+          </TemplateBlock>
+        );
+      });
+  };
+
+  renderApplicationTemplates = () => {
     if (!this.context.currentCluster) {
       return (
         <>
@@ -133,21 +186,23 @@ export default class Templates extends Component<PropsType, StateType> {
     if (this.state.currentTemplate) {
       return (
         <ExpandedTemplate
-          currentTemplate={this.state.porterTemplates[0]}
+          currentTab={this.state.currentTab}
+          currentTemplate={this.state.currentTemplate}
           setCurrentTemplate={(currentTemplate: PorterTemplate) =>
             this.setState({ currentTemplate })
           }
-          skipDescription={true}
+          skipDescription={false}
         />
       );
     }
-    return null;
+    return <TemplateList>{this.renderApplicationList()}</TemplateList>;
   };
 
-  renderCommunityTemplates = () => {
+  renderAddonTemplates = () => {
     if (this.state.currentTemplate) {
       return (
         <ExpandedTemplate
+          currentTab={this.state.currentTab}
           currentTemplate={this.state.currentTemplate}
           setCurrentTemplate={(currentTemplate: PorterTemplate) =>
             this.setState({ currentTemplate })
@@ -155,7 +210,7 @@ export default class Templates extends Component<PropsType, StateType> {
         />
       );
     }
-    return <TemplateList>{this.renderTemplateList()}</TemplateList>;
+    return <TemplateList>{this.renderAddonList()}</TemplateList>;
   };
 
   render() {
@@ -176,14 +231,13 @@ export default class Templates extends Component<PropsType, StateType> {
           setCurrentTab={(value: string) =>
             this.setState({
               currentTab: value,
-              currentTemplate:
-                value === "docker" ? this.state.porterTemplates[0] : null,
+              currentTemplate: null,
             })
           }
         />
         {this.state.currentTab === "docker"
-          ? this.renderDefaultTemplate()
-          : this.renderCommunityTemplates()}
+          ? this.renderApplicationTemplates()
+          : this.renderAddonTemplates()}
       </TemplatesWrapper>
     );
   }

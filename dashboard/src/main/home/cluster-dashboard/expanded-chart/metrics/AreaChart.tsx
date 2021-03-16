@@ -2,7 +2,7 @@ import React, { useMemo, useCallback } from "react";
 import { AreaClosed, Line, Bar } from "@visx/shape";
 import { curveMonotoneX } from "@visx/curve";
 import { scaleTime, scaleLinear } from "@visx/scale";
-import { AxisLeft, AxisBottom } from '@visx/axis';
+import { AxisLeft, AxisBottom } from "@visx/axis";
 
 import {
   withTooltip,
@@ -11,7 +11,7 @@ import {
   defaultStyles,
 } from "@visx/tooltip";
 
-import { GridRows, GridColumns } from '@visx/grid';
+import { GridRows, GridColumns } from "@visx/grid";
 
 import { WithTooltipProvidedProps } from "@visx/tooltip/lib/enhancers/withTooltip";
 import { localPoint } from "@visx/event";
@@ -24,15 +24,14 @@ export const accentColor = '#f5cb42';
 export const accentColorDark = '#949eff';
 */
 
-
 export type MetricsData = {
   date: number; // unix timestamp
-  value: number; // value 
-}
+  value: number; // value
+};
 
 type TooltipData = MetricsData;
 
-var globalData : MetricsData[]
+var globalData: MetricsData[];
 
 export const background = "#3b697800";
 export const background2 = "#20405100";
@@ -52,18 +51,19 @@ const hourFormat = timeFormat("%H:%M");
 const dayFormat = timeFormat("%b %d");
 
 // map resolutions to formats
-const formats : { [range: string]: (date: Date) => string } = {
+const formats: { [range: string]: (date: Date) => string } = {
   "1H": hourFormat,
   "6H": hourFormat,
   "1D": hourFormat,
   "1M": dayFormat,
-}
+};
 
 // accessors
-const getDate = (d: MetricsData) => new Date(d.date*1000);
+const getDate = (d: MetricsData) => new Date(d.date * 1000);
 const getValue = (d: MetricsData) => d.value;
 
-const bisectDate = bisector<MetricsData, Date>((d) => new Date(d.date*1000)).left;
+const bisectDate = bisector<MetricsData, Date>((d) => new Date(d.date * 1000))
+  .left;
 
 export type AreaProps = {
   data: MetricsData[];
@@ -86,10 +86,10 @@ export default withTooltip<AreaProps, TooltipData>(
     tooltipTop = 0,
     tooltipLeft = 0,
   }: AreaProps & WithTooltipProvidedProps<TooltipData>) => {
-    globalData = data
+    globalData = data;
 
     if (width == 0 || height == 0 || width < 10) {
-      return null
+      return null;
     }
 
     // bounds
@@ -144,7 +144,7 @@ export default withTooltip<AreaProps, TooltipData>(
         });
       },
       [showTooltip, valueScale, dateScale, width, height, data]
-    )
+    );
 
     return (
       <div>
@@ -205,7 +205,7 @@ export default withTooltip<AreaProps, TooltipData>(
             tickLabelProps={() => ({
               fill: "white",
               fontSize: 11,
-              textAnchor: 'start',
+              textAnchor: "start",
               fillOpacity: 0.4,
               dy: 0,
             })}
@@ -219,7 +219,7 @@ export default withTooltip<AreaProps, TooltipData>(
             tickLabelProps={() => ({
               fill: "white",
               fontSize: 11,
-              textAnchor: 'middle',
+              textAnchor: "middle",
               fillOpacity: 0.4,
             })}
           />

@@ -28,42 +28,42 @@ type StateType = {
 };
 
 type MetricsCPUDataResponse = {
-  pod?: string,
+  pod?: string;
   results: {
-    date: number,
-    cpu: string,
-  }[],
-}[]
+    date: number;
+    cpu: string;
+  }[];
+}[];
 
 type MetricsMemoryDataResponse = {
-  pod?: string,
+  pod?: string;
   results: {
-    date: number,
-    memory: string,
-  }[],
-}[]
+    date: number;
+    memory: string;
+  }[];
+}[];
 
 type MetricsNetworkDataResponse = {
-  pod?: string,
+  pod?: string;
   results: {
-    date: number,
-    bytes: string,
-  }[],
-}[]
+    date: number;
+    bytes: string;
+  }[];
+}[];
 
-const resolutions : { [range: string]: string } = {
+const resolutions: { [range: string]: string } = {
   "1H": "15s",
   "6H": "15s",
   "1D": "15s",
   "1M": "5h",
-}
+};
 
-const secondsBeforeNow : { [range: string]: number } = {
+const secondsBeforeNow: { [range: string]: number } = {
   "1H": 60 * 60,
   "6H": 60 * 60 * 6,
   "1D": 60 * 60 * 24,
   "1M": 60 * 60 * 24 * 30,
-}
+};
 
 export default class MetricsSection extends Component<PropsType, StateType> {
   state = {
@@ -103,54 +103,60 @@ export default class MetricsSection extends Component<PropsType, StateType> {
         // TODO -- check at least one controller returned
 
         // iterate through the controllers to get the list of pods
-        this.setState({ controllers: res.data, selectedController: res.data[0] });
-        
-        this.getPods()
+        this.setState({
+          controllers: res.data,
+          selectedController: res.data[0],
+        });
+
+        this.getPods();
       })
       .catch((err) => {
         setCurrentError(JSON.stringify(err));
         this.setState({ controllers: [] });
-      });      
+      });
   }
 
   componentDidUpdate(prevProps: PropsType, prevState: StateType) {
     // if resolution, data kind, controllers, or pods have changed, update data
     if (this.state.selectedMetric != prevState.selectedMetric) {
-      this.getMetrics()
+      this.getMetrics();
     }
 
     if (this.state.selectedRange != prevState.selectedRange) {
-      this.getMetrics()
+      this.getMetrics();
     }
 
     if (this.state.selectedPod != prevState.selectedPod) {
-      this.getMetrics()
+      this.getMetrics();
     }
 
-    if (this.state.selectedController?.metadata?.name != prevState.selectedController?.metadata?.name) {
-      this.getMetrics()
+    if (
+      this.state.selectedController?.metadata?.name !=
+      prevState.selectedController?.metadata?.name
+    ) {
+      this.getMetrics();
     }
   }
 
   getMetrics = () => {
     if (this.state.pods.length == 0) {
-      return
+      return;
     }
 
     let { currentChart } = this.props;
     let { currentCluster, currentProject, setCurrentError } = this.context;
-    let kind = this.state.selectedMetric
-    let shouldsum = true
+    let kind = this.state.selectedMetric;
+    let shouldsum = true;
 
     // calculate start and end range
     var d = new Date();
     var end = Math.round(d.getTime() / 1000);
-    var start = end - secondsBeforeNow[this.state.selectedRange]
+    var start = end - secondsBeforeNow[this.state.selectedRange];
 
-    let pods = this.state.pods
+    let pods = this.state.pods;
 
     if (this.state.selectedPod != "All") {
-      pods = [this.state.selectedPod]
+      pods = [this.state.selectedPod];
     }
 
     api
@@ -173,61 +179,70 @@ export default class MetricsSection extends Component<PropsType, StateType> {
       .then((res) => {
         // transform the metrics to expected form
         if (kind == "cpu") {
-          let data = res.data as MetricsCPUDataResponse
-          
-          // if summed, just look at the first data
-            let tData = data[0].results.map(
-              (d: {
-                date: number,
-                cpu: string,
-              }, i: number) => {
-                return {
-                  date: d.date,
-                  value: parseFloat(d.cpu),
-                }
-              }
-            )
+          let data = res.data as MetricsCPUDataResponse;
 
-            this.setState({ data: tData })
+          // if summed, just look at the first data
+          let tData = data[0].results.map(
+            (
+              d: {
+                date: number;
+                cpu: string;
+              },
+              i: number
+            ) => {
+              return {
+                date: d.date,
+                value: parseFloat(d.cpu),
+              };
+            }
+          );
+
+          this.setState({ data: tData });
         } else if (kind == "memory") {
-          let data = res.data as MetricsMemoryDataResponse
+          let data = res.data as MetricsMemoryDataResponse;
 
           let tData = data[0].results.map(
-            (d: {
-              date: number,
-              memory: string,
-            }, i: number) => {
+            (
+              d: {
+                date: number;
+                memory: string;
+              },
+              i: number
+            ) => {
               return {
                 date: d.date,
                 value: parseFloat(d.memory) / (1024 * 1024), // put units in Mi
-              }
+              };
             }
-          )
+          );
 
-          this.setState({ data: tData })
+          this.setState({ data: tData });
         } else if (kind == "network") {
-          let data = res.data as MetricsNetworkDataResponse
+          let data = res.data as MetricsNetworkDataResponse;
 
           let tData = data[0].results.map(
-            (d: {
-              date: number,
-              bytes: string,
-            }, i: number) => {
+            (
+              d: {
+                date: number;
+                bytes: string;
+              },
+              i: number
+            ) => {
               return {
                 date: d.date,
-                value: parseFloat(d.bytes) / (1024), // put units in Ki
-              }
+                value: parseFloat(d.bytes) / 1024, // put units in Ki
+              };
             }
-          )
+          );
 
-          this.setState({ data: tData })
+          this.setState({ data: tData });
         }
       })
       .catch((err) => {
         setCurrentError(JSON.stringify(err));
         // this.setState({ controllers: [], loading: false });
       });
-  }
+  };
 
   getPods = () => {
     let { selectedController } = this.state;
@@ -235,7 +250,8 @@ export default class MetricsSection extends Component<PropsType, StateType> {
 
     let selectors = [] as string[];
     let ml =
-      selectedController?.spec?.selector?.matchLabels || selectedController?.spec?.selector;
+      selectedController?.spec?.selector?.matchLabels ||
+      selectedController?.spec?.selector;
     let i = 1;
     let selector = "";
     for (var key in ml) {
@@ -260,19 +276,19 @@ export default class MetricsSection extends Component<PropsType, StateType> {
       )
       .then((res) => {
         let pods = res?.data?.map((pod: any) => {
-          return pod?.metadata?.name
+          return pod?.metadata?.name;
         });
 
         this.setState({ pods, selectedPod: "All" });
 
-        this.getMetrics()
+        this.getMetrics();
       })
       .catch((err) => {
         console.log(err);
         setCurrentError(JSON.stringify(err));
         return;
       });
-  }
+  };
 
   renderDropdown = () => {
     if (this.state.dropdownExpanded) {
@@ -313,7 +329,7 @@ export default class MetricsSection extends Component<PropsType, StateType> {
   };
 
   renderPodOptionList = () => {
-    let allPod = [(
+    let allPod = [
       <Option
         key={0}
         selected={"All" === this.state.selectedPod}
@@ -321,25 +337,23 @@ export default class MetricsSection extends Component<PropsType, StateType> {
         lastItem={false}
       >
         All (summed)
-      </Option>
-    )];
+      </Option>,
+    ];
 
-    let podOptions = this.state.pods.map(
-      (option: string, i: number) => {
-        return (
-          <Option
-            key={i + 1}
-            selected={option === this.state.selectedPod}
-            onClick={() => this.setState({ selectedPod: option })}
-            lastItem={i === this.state.pods.length - 1}
-          >
-            {option}
-          </Option>
-        );
-      }
-    )
+    let podOptions = this.state.pods.map((option: string, i: number) => {
+      return (
+        <Option
+          key={i + 1}
+          selected={option === this.state.selectedPod}
+          onClick={() => this.setState({ selectedPod: option })}
+          lastItem={i === this.state.pods.length - 1}
+        >
+          {option}
+        </Option>
+      );
+    });
 
-    return allPod.concat(podOptions)
+    return allPod.concat(podOptions);
   };
 
   renderControllerDropdown = () => {
@@ -362,22 +376,20 @@ export default class MetricsSection extends Component<PropsType, StateType> {
   };
 
   renderControllerOptionList = () => {
-    return this.state.controllers.map(
-      (controller: any, i: number) => {
-        let name = controller?.metadata?.name
+    return this.state.controllers.map((controller: any, i: number) => {
+      let name = controller?.metadata?.name;
 
-        return (
-          <Option
-            key={i}
-            selected={name === this.state.selectedController?.metadata?.name}
-            onClick={() => this.setState({ selectedController: controller })}
-            lastItem={i === this.state.controllers.length - 1}
-          >
-            {name}
-          </Option>
-        );
-      }
-    )
+      return (
+        <Option
+          key={i}
+          selected={name === this.state.selectedController?.metadata?.name}
+          onClick={() => this.setState({ selectedController: controller })}
+          lastItem={i === this.state.controllers.length - 1}
+        >
+          {name}
+        </Option>
+      );
+    });
   };
 
   renderOptionList = () => {
@@ -392,7 +404,12 @@ export default class MetricsSection extends Component<PropsType, StateType> {
           <Option
             key={i}
             selected={option.value === this.state.selectedMetric}
-            onClick={() => this.setState({ selectedMetric: option.value, selectedMetricLabel: option.label })}
+            onClick={() =>
+              this.setState({
+                selectedMetric: option.value,
+                selectedMetricLabel: option.label,
+              })
+            }
             lastItem={i === metricOptions.length - 1}
           >
             {option.label}
@@ -406,37 +423,44 @@ export default class MetricsSection extends Component<PropsType, StateType> {
     return (
       <StyledMetricsSection>
         <ParentSize>
-          {({ width, height }) => <AreaChart 
-            data={this.state.data} 
-            width={width} 
-            height={height} 
-            resolution={this.state.selectedRange}
-            margin={{ top: 60, right: -40, bottom: 0, left: 50 }}
-          />}
+          {({ width, height }) => (
+            <AreaChart
+              data={this.state.data}
+              width={width}
+              height={height}
+              resolution={this.state.selectedRange}
+              margin={{ top: 60, right: -40, bottom: 0, left: 50 }}
+            />
+          )}
         </ParentSize>
         <MetricSelector
           onClick={() =>
             this.setState({ dropdownExpanded: !this.state.dropdownExpanded })
           }
         >
-          <MetricsLabel>
-          {this.state.selectedMetricLabel}
-          </MetricsLabel>
+          <MetricsLabel>{this.state.selectedMetricLabel}</MetricsLabel>
           <i className="material-icons">arrow_drop_down</i>
           {this.renderDropdown()}
         </MetricSelector>
         <ControllerSelector
           onClick={() =>
-            this.setState({ controllerDropdownExpanded: !this.state.controllerDropdownExpanded })
+            this.setState({
+              controllerDropdownExpanded: !this.state
+                .controllerDropdownExpanded,
+            })
           }
         >
-          <MetricsLabel>{this.state.selectedController?.metadata?.name}</MetricsLabel>
+          <MetricsLabel>
+            {this.state.selectedController?.metadata?.name}
+          </MetricsLabel>
           <i className="material-icons">arrow_drop_down</i>
           {this.renderControllerDropdown()}
         </ControllerSelector>
         <PodSelector
           onClick={() =>
-            this.setState({ podDropdownExpanded: !this.state.podDropdownExpanded })
+            this.setState({
+              podDropdownExpanded: !this.state.podDropdownExpanded,
+            })
           }
         >
           <MetricsLabel>{this.state.selectedPod}</MetricsLabel>
@@ -512,7 +536,6 @@ const Dropdown = styled.div`
   box-shadow: 0 4px 8px 0px #00000088;
 `;
 
-
 const RangeWrapper = styled.div`
   position: absolute;
   top: 0;
@@ -546,19 +569,19 @@ const MetricSelector = styled.div`
 `;
 
 const MetricsLabel = styled.div`
-white-space: nowrap;
-text-overflow: ellipsis;
-overflow: hidden;
-max-width: 200px;
-`
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  max-width: 200px;
+`;
 
 const ControllerSelector = styled(MetricSelector)`
   left: 230px;
-`
+`;
 
 const PodSelector = styled(MetricSelector)`
   left: 490px;
-`
+`;
 
 const StyledMetricsSection = styled.div`
   width: 100%;

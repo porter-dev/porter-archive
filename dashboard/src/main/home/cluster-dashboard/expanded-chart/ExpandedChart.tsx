@@ -288,7 +288,11 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
       case "metrics":
         return <MetricsSection currentChart={chart} />;
       case "status":
-        return <StatusSection currentChart={chart} selectors={podSelectors} />;
+        let controller_uid = Object.keys(this.state.controllers)[0]
+        if (chart.chart.metadata.name == "job") {
+          return <StatusSection currentChart={chart} selectors={[`job-name=${chart.name}-job,controller-uid=${controller_uid}`]} />;          
+        }
+        return <StatusSection currentChart={chart} />;
       case "settings":
         return (
           <SettingsSection
@@ -453,6 +457,11 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
       for (var uid in this.state.controllers) {
         let value = this.state.controllers[uid];
         let available = this.getAvailability(value.metadata.kind, value);
+
+        if (value.metadata.kind?.toLowerCase() == "job" && !value.status?.active) {
+          return "completed";
+        }
+
         let progressing = true;
 
         this.state.controllers[uid]?.status?.conditions?.forEach(
@@ -487,6 +496,8 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
         return c.status.readyReplicas == c.status.replicas;
       case "daemonset":
         return c.status.numberAvailable == c.status.desiredNumberScheduled;
+      case "job":
+        return c.status.active
     }
   };
 
@@ -639,6 +650,7 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
     let { currentChart, setCurrentChart } = this.props;
     let chart = currentChart;
     let status = this.getChartStatus(chart.info.status);
+
     return (
       <>
         <CloseOverlay onClick={() => setCurrentChart(null)} />

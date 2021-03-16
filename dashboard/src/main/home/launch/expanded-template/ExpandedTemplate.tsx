@@ -42,17 +42,16 @@ export default class ExpandedTemplate extends Component<PropsType, StateType> {
 
   fetchTemplateInfo = () => {
     this.setState({ loading: true });
-    let params = this.props.currentTab == "docker" ? { repo_url: process.env.APPLICATION_CHART_REPO_URL} : {}
-    
+    let params =
+      this.props.currentTab == "docker"
+        ? { repo_url: process.env.APPLICATION_CHART_REPO_URL }
+        : {};
+
     api
-      .getTemplateInfo(
-        "<token>",
-        params,
-        {
-          name: this.props.currentTemplate.name.toLowerCase().trim(),
-          version: "latest",
-        }
-      )
+      .getTemplateInfo("<token>", params, {
+        name: this.props.currentTemplate.name.toLowerCase().trim(),
+        version: "latest",
+      })
       .then((res) => {
         let { form, values, markdown, metadata } = res.data;
         let keywords = metadata.keywords;

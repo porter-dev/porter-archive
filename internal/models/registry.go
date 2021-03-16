@@ -71,11 +71,18 @@ func (r *Registry) Externalize() *RegistryExternal {
 		serv = integrations.DockerHub
 	}
 
+	uri := r.URL
+
+	// remove the protocol
+	if splStr := strings.Split(uri, "://"); len(splStr) > 1 {
+		uri = splStr[1]
+	}
+
 	return &RegistryExternal{
 		ID:        r.ID,
 		ProjectID: r.ProjectID,
 		Name:      r.Name,
-		URL:       r.URL,
+		URL:       uri,
 		Service:   serv,
 		InfraID:   r.InfraID,
 	}

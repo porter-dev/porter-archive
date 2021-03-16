@@ -8,6 +8,7 @@ import api from "../../shared/api";
 import Loading from "components/Loading";
 import { ActionConfigType } from "../../shared/types";
 import InputRow from "../values-form/InputRow";
+import InfoTooltip from "components/InfoTooltip";
 
 type PropsType = {
   actionConfig: ActionConfigType | null;
@@ -43,6 +44,7 @@ export default class ActionDetails extends Component<PropsType, StateType> {
   };
 
   componentDidMount() {
+    // TODO: Handle custom registry case (unroll repos?)
     api
       .getProjectRegistries(
         "<token>",
@@ -96,7 +98,10 @@ export default class ActionDetails extends Component<PropsType, StateType> {
     } else {
       return (
         <>
-          <Subtitle>Container Registry</Subtitle>
+          <Subtitle>
+            Select an Image Destination
+            <Required>*</Required>
+          </Subtitle>
           <ExpandedWrapper>{this.renderIntegrationList()}</ExpandedWrapper>
         </>
       );
@@ -162,6 +167,12 @@ export default class ActionDetails extends Component<PropsType, StateType> {
 }
 
 ActionDetails.contextType = Context;
+
+const Required = styled.div`
+  margin-left: 8px;
+  color: #fc4976;
+  display: inline-block;
+`;
 
 const Subtitle = styled.div`
   margin-top: 21px;

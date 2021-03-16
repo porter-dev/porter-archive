@@ -178,9 +178,14 @@ const deployTemplate = baseApi<
     cluster_id: number;
     name: string;
     version: string;
+    repo_url?: string;
   }
 >("POST", pathParams => {
-  let { cluster_id, id, name, version } = pathParams;
+  let { cluster_id, id, name, version, repo_url } = pathParams;
+
+  if (repo_url) {
+    return `/api/projects/${id}/deploy/${name}/${version}?cluster_id=${cluster_id}&repo_url=${repo_url}`;
+  }
   return `/api/projects/${id}/deploy/${name}/${version}?cluster_id=${cluster_id}`;
 });
 
@@ -476,14 +481,23 @@ const getRevisions = baseApi<
   return `/api/projects/${pathParams.id}/releases/${pathParams.name}/history`;
 });
 
-const getTemplateInfo = baseApi<{}, { name: string; version: string }>(
+const getTemplateInfo = baseApi<{
+  repo_url?: string
+}, { name: string; version: string }>(
   "GET",
   pathParams => {
     return `/api/templates/${pathParams.name}/${pathParams.version}`;
   }
 );
 
-const getTemplates = baseApi("GET", "/api/templates");
+const getAddonTemplates = baseApi("GET", "/api/templates");
+
+const getApplicationTemplates = baseApi<
+  {
+    repo_url?: string
+  },
+  {}
+>("GET", "/api/templates");
 
 const getUser = baseApi<{}, { id: number }>("GET", pathParams => {
   return `/api/users/${pathParams.id}`;
@@ -557,7 +571,7 @@ const uninstallTemplate = baseApi<
   }
 >("POST", pathParams => {
   let { id, name, cluster_id, storage, namespace } = pathParams;
-  return `/api/projects/${id}/deploy/${name}?cluster_id=${cluster_id}&namespace=${namespace}&storage=${storage}`;
+  return `/api/projects/${id}/delete/${name}?cluster_id=${cluster_id}&namespace=${namespace}&storage=${storage}`;
 });
 
 const updateUser = baseApi<
@@ -637,7 +651,8 @@ export default {
   getRepos,
   getRevisions,
   getTemplateInfo,
-  getTemplates,
+  getAddonTemplates,
+  getApplicationTemplates,
   getUser,
   linkGithubProject,
   logInUser,

@@ -33,6 +33,11 @@ export default class StatusIndicator extends Component<PropsType, StateType> {
       for (var uid in this.props.controllers) {
         let value = this.props.controllers[uid];
         let available = this.getAvailability(value.metadata.kind, value);
+
+        if (value.metadata.kind?.toLowerCase() === "job" && !value.status?.active) {
+          return "completed"
+        }
+
         let progressing = true;
 
         this.props.controllers[uid]?.status?.conditions?.forEach(
@@ -67,6 +72,8 @@ export default class StatusIndicator extends Component<PropsType, StateType> {
         return c.status.readyReplicas == c.status.replicas;
       case "daemonset":
         return c.status.numberAvailable == c.status.desiredNumberScheduled;
+      case "job":
+        return c.status.active
     }
   };
 
@@ -97,6 +104,8 @@ const StatusColor = styled.div`
       ? "#4797ff"
       : props.status === "failed"
       ? "#ed5f85"
+      : props.status === "completed"
+      ? '#00d12a'
       : "#f5cb42"};
   border-radius: 20px;
   margin-right: 16px;

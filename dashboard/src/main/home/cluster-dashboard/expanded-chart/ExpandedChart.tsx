@@ -288,7 +288,11 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
       case "metrics":
         return <MetricsSection currentChart={chart} />;
       case "status":
-        return <StatusSection currentChart={chart} selectors={podSelectors} />;
+        let controller_uid = Object.keys(this.state.controllers)[0]
+        if (chart.chart.metadata.name == "job") {
+          return <StatusSection currentChart={chart} selectors={[`job-name=${chart.name}-job,controller-uid=${controller_uid}`]} />;          
+        }
+        return <StatusSection currentChart={chart} />;
       case "settings":
         return (
           <SettingsSection
@@ -453,6 +457,11 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
       for (var uid in this.state.controllers) {
         let value = this.state.controllers[uid];
         let available = this.getAvailability(value.metadata.kind, value);
+
+        if (value.metadata.kind?.toLowerCase() == "job" && !value.status?.active) {
+          return "completed";
+        }
+
         let progressing = true;
 
         this.state.controllers[uid]?.status?.conditions?.forEach(
@@ -487,6 +496,8 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
         return c.status.readyReplicas == c.status.replicas;
       case "daemonset":
         return c.status.numberAvailable == c.status.desiredNumberScheduled;
+      case "job":
+        return c.status.active
     }
   };
 
@@ -519,34 +530,41 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
           revision: currentChart.version,
         }
       )
-      .then((res) => this.setState({ components: res.data.Objects }))
-      .catch(console.log);
-
-    api
-      .getIngress(
-        "<token>",
-        {
-          cluster_id: currentCluster.id,
-        },
-        {
-          id: currentProject.id,
-          name: `${this.props.currentChart.name}-docker`,
-          namespace: `${this.props.currentChart.namespace}`,
-        }
-      )
-      .then((res) => {
-        if (res.data?.spec?.rules && res.data?.spec?.rules[0]?.host) {
-          this.setState({ url: `https://${res.data?.spec?.rules[0]?.host}` });
-          return;
+      .then((res) => this.setState({ components: res.data.Objects }, () => {
+        let ingressName = null;
+        for (var i = 0; i < this.state.components.length; i++) {
+          if (this.state.components[i].Kind === "Ingress") {
+            ingressName = this.state.components[i].Name;
+          }
         }
 
-        if (res.data?.status?.loadBalancer?.ingress) {
-          this.setState({
-            url: `http://${res.data?.status?.loadBalancer?.ingress[0]?.hostname}`,
-          });
-          return;
-        }
-      })
+      api
+        .getIngress(
+          "<token>",
+          {
+            cluster_id: currentCluster.id,
+          },
+          {
+            id: currentProject.id,
+            name: ingressName,
+            namespace: `${this.props.currentChart.namespace}`,
+          }
+        )
+        .then((res) => {
+          if (res.data?.spec?.rules && res.data?.spec?.rules[0]?.host) {
+            this.setState({ url: `https://${res.data?.spec?.rules[0]?.host}` });
+            return;
+          }
+  
+          if (res.data?.status?.loadBalancer?.ingress) {
+            this.setState({
+              url: `http://${res.data?.status?.loadBalancer?.ingress[0]?.hostname}`,
+            });
+            return;
+          }
+        })
+        .catch(console.log);
+      }))
       .catch(console.log);
 
     this.updateTabs();
@@ -651,7 +669,7 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
                 <IconWrapper>{this.renderIcon()}</IconWrapper>
                 {chart.name}
               </Title>
-              {this.renderUrl()}
+              {chart.chart.metadata.name != "worker" && chart.chart.metadata.name != "job" && this.renderUrl()}
               <InfoWrapper>
                 <StatusIndicator
                   controllers={this.state.controllers}

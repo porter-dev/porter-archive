@@ -26,6 +26,7 @@ import { isAlphanumeric } from "shared/common";
 
 type PropsType = RouteComponentProps & {
   currentTemplate: any;
+  currentTab: string;
   hideLaunch: () => void;
   values: any;
   form: any;
@@ -241,6 +242,7 @@ class LaunchTemplate extends Component<PropsType, StateType> {
           cluster_id: currentCluster.id,
           name: this.props.currentTemplate.name.toLowerCase().trim(),
           version: "latest",
+          repo_url: process.env.APPLICATION_CHART_REPO_URL,
         }
       )
       .then((_) => {
@@ -349,7 +351,7 @@ class LaunchTemplate extends Component<PropsType, StateType> {
       <ValuesWrapper
         formTabs={this.props.form?.tabs}
         onSubmit={
-          this.props.currentTemplate.name === "docker"
+          this.props.currentTab === "docker"
             ? this.onSubmit
             : this.onSubmitAddon
         }
@@ -638,17 +640,15 @@ class LaunchTemplate extends Component<PropsType, StateType> {
 
     return (
       <StyledLaunchTemplate>
-        {name !== "docker" && (
-          <HeaderSection>
-            <i className="material-icons" onClick={this.props.hideLaunch}>
-              keyboard_backspace
-            </i>
-            {icon
-              ? this.renderIcon(icon)
-              : this.renderIcon(currentTemplate.icon)}
-            <Title>{name}</Title>
-          </HeaderSection>
-        )}
+        <HeaderSection>
+          <i className="material-icons" onClick={this.props.hideLaunch}>
+            keyboard_backspace
+          </i>
+          {icon
+            ? this.renderIcon(icon)
+            : this.renderIcon(currentTemplate.icon)}
+          <Title>{name}</Title>
+        </HeaderSection>
         <DarkMatter antiHeight="-13px" />
         <Heading isAtTop={true}>Name</Heading>
         <Subtitle>
@@ -835,6 +835,7 @@ const Title = styled.div`
 const HeaderSection = styled.div`
   display: flex;
   align-items: center;
+  margin-bottom: 30px;
 
   > i {
     cursor: pointer;
@@ -931,7 +932,8 @@ const NamespaceLabel = styled.div`
 
 const Icon = styled.img`
   width: 21px;
-  margin-right: 10px;
+  margin-right: 6px;
+  margin-left: 10px;
 `;
 
 const Polymer = styled.div`

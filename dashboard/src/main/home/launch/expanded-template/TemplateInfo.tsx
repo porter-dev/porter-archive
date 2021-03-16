@@ -12,6 +12,7 @@ import hardcodedNames from "../hardcodedNameDict";
 
 type PropsType = {
   currentTemplate: any;
+  currentTab: string;
   setCurrentTemplate: (x: PorterTemplate) => void;
   launchTemplate: () => void;
   markdown: string | null;
@@ -73,7 +74,7 @@ export default class TemplateInfo extends Component<PropsType, StateType> {
           </Banner>
         </>
       );
-    } else if (this.props.currentTemplate.name.toLowerCase() === "docker") {
+    } else if (this.props.currentTab == 'docker') {
       return (
         <>
           <Br />

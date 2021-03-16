@@ -137,6 +137,12 @@ export default class ActionDetails extends Component<PropsType, StateType> {
           />
         )}
         {this.renderRegistrySection()}
+        <SubtitleAlt>
+          <Bold>Note:</Bold> To auto-deploy each time you push changes, Porter will write Github Secrets and a GitHub Actions file to your repo.
+            <Highlight href="https://docs.getporter.dev/docs/auto-deploy-requirements#cicd-with-github-actions" target="_blank">
+              Learn More
+            </Highlight>
+        </SubtitleAlt>
         <Br />
 
         <Flex>
@@ -152,12 +158,12 @@ export default class ActionDetails extends Component<PropsType, StateType> {
           </BackButton>
           {this.props.selectedRegistry ? (
             <StatusWrapper successful={true}>
-              <i className="material-icons">done</i> Source selected.
+              <i className="material-icons">done</i> Source selected
             </StatusWrapper>
           ) : (
             <StatusWrapper>
-              <i className="material-icons">error_outline</i> A connected
-              container registry is required
+              <i className="material-icons">error_outline</i> 
+              A connected container registry is required
             </StatusWrapper>
           )}
         </Flex>
@@ -168,6 +174,19 @@ export default class ActionDetails extends Component<PropsType, StateType> {
 
 ActionDetails.contextType = Context;
 
+const Highlight = styled.a`
+  color: #949eff;
+  text-decoration: none;
+  margin-left: 5px;
+  cursor: pointer;
+`;
+
+const Bold = styled.div`
+  font-weight: 800;
+  color: #ffffff;
+  margin-right: 5px;
+`;
+
 const Required = styled.div`
   margin-left: 8px;
   color: #fc4976;
@@ -177,6 +196,20 @@ const Required = styled.div`
 const Subtitle = styled.div`
   margin-top: 21px;
 `;
+
+const SubtitleAlt = styled.div`
+  padding: 11px 0px 16px;
+  font-family: "Work Sans", sans-serif;
+  font-size: 13px;
+  color: #aaaabb;
+  line-height: 1.6em;
+  display: flex;
+  align-items: center;
+  margin-top: -3px;
+  margin-bottom: -7px;
+  font-weight: 400;
+`;
+
 
 const RegistryItem = styled.div`
   display: flex;

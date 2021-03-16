@@ -719,6 +719,12 @@ class LaunchTemplate extends Component<PropsType, StateType> {
 LaunchTemplate.contextType = Context;
 export default withRouter(LaunchTemplate);
 
+const Bold = styled.div`
+  font-weight: bold;
+  color: white;
+  margin-right: 5px;
+`;
+
 const CloseButton = styled.div`
   position: absolute;
   display: block;

@@ -36,6 +36,7 @@ require (
 	github.com/google/go-github/v33 v33.0.0
 	github.com/google/go-querystring v1.0.0 // indirect
 	github.com/googleapis/gnostic v0.2.2 // indirect
+	github.com/gorilla/schema v1.2.0
 	github.com/gorilla/securecookie v1.1.1
 	github.com/gorilla/sessions v1.2.1
 	github.com/gorilla/websocket v1.4.2

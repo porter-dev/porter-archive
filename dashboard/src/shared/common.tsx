@@ -17,7 +17,7 @@ export const integrationList: any = {
   kubernetes: {
     icon:
       "https://uxwing.com/wp-content/themes/uxwing/download/10-brands-and-social-media/kubernetes.png",
-    label: "Kubernetes Cluster",
+    label: "Kubernetes",
     buttonText: "Add a Cluster",
   },
   repo: {

@@ -10,6 +10,7 @@ import Loading from "components/Loading";
 
 type PropsType = {
   currentTemplate: PorterTemplate;
+  currentTab: string;
   setCurrentTemplate: (x: PorterTemplate) => void;
   skipDescription?: boolean;
 };
@@ -41,10 +42,12 @@ export default class ExpandedTemplate extends Component<PropsType, StateType> {
 
   fetchTemplateInfo = () => {
     this.setState({ loading: true });
+    let params = this.props.currentTab == "docker" ? { repo_url: process.env.APPLICATION_CHART_REPO_URL} : {}
+    
     api
       .getTemplateInfo(
         "<token>",
-        {},
+        params,
         {
           name: this.props.currentTemplate.name.toLowerCase().trim(),
           version: "latest",
@@ -82,6 +85,7 @@ export default class ExpandedTemplate extends Component<PropsType, StateType> {
     if (this.props.skipDescription || this.state.showLaunchTemplate) {
       return (
         <LaunchTemplate
+          currentTab={this.props.currentTab}
           currentTemplate={this.props.currentTemplate}
           hideLaunch={() => this.setState({ showLaunchTemplate: false })}
           hideBackButton={this.props.skipDescription}
@@ -94,6 +98,7 @@ export default class ExpandedTemplate extends Component<PropsType, StateType> {
     return (
       <FadeWrapper>
         <TemplateInfo
+          currentTab={this.props.currentTab}
           currentTemplate={this.props.currentTemplate}
           setCurrentTemplate={this.props.setCurrentTemplate}
           launchTemplate={() => this.setState({ showLaunchTemplate: true })}

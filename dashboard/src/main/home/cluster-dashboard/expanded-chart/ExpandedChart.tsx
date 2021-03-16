@@ -519,34 +519,41 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
           revision: currentChart.version,
         }
       )
-      .then((res) => this.setState({ components: res.data.Objects }))
-      .catch(console.log);
-
-    api
-      .getIngress(
-        "<token>",
-        {
-          cluster_id: currentCluster.id,
-        },
-        {
-          id: currentProject.id,
-          name: `${this.props.currentChart.name}-docker`,
-          namespace: `${this.props.currentChart.namespace}`,
-        }
-      )
-      .then((res) => {
-        if (res.data?.spec?.rules && res.data?.spec?.rules[0]?.host) {
-          this.setState({ url: `https://${res.data?.spec?.rules[0]?.host}` });
-          return;
+      .then((res) => this.setState({ components: res.data.Objects }, () => {
+        let ingressName = null;
+        for (var i = 0; i < this.state.components.length; i++) {
+          if (this.state.components[i].Kind === "Ingress") {
+            ingressName = this.state.components[i].Name;
+          }
         }
 
-        if (res.data?.status?.loadBalancer?.ingress) {
-          this.setState({
-            url: `http://${res.data?.status?.loadBalancer?.ingress[0]?.hostname}`,
-          });
-          return;
-        }
-      })
+      api
+        .getIngress(
+          "<token>",
+          {
+            cluster_id: currentCluster.id,
+          },
+          {
+            id: currentProject.id,
+            name: ingressName,
+            namespace: `${this.props.currentChart.namespace}`,
+          }
+        )
+        .then((res) => {
+          if (res.data?.spec?.rules && res.data?.spec?.rules[0]?.host) {
+            this.setState({ url: `https://${res.data?.spec?.rules[0]?.host}` });
+            return;
+          }
+  
+          if (res.data?.status?.loadBalancer?.ingress) {
+            this.setState({
+              url: `http://${res.data?.status?.loadBalancer?.ingress[0]?.hostname}`,
+            });
+            return;
+          }
+        })
+        .catch(console.log);
+      }))
       .catch(console.log);
 
     this.updateTabs();
@@ -632,7 +639,6 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
     let { currentChart, setCurrentChart } = this.props;
     let chart = currentChart;
     let status = this.getChartStatus(chart.info.status);
-
     return (
       <>
         <CloseOverlay onClick={() => setCurrentChart(null)} />
@@ -651,7 +657,7 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
                 <IconWrapper>{this.renderIcon()}</IconWrapper>
                 {chart.name}
               </Title>
-              {this.renderUrl()}
+              {chart.chart.metadata.name != "worker" && chart.chart.metadata.name != "job" && this.renderUrl()}
               <InfoWrapper>
                 <StatusIndicator
                   controllers={this.state.controllers}

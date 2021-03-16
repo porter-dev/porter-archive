@@ -78,7 +78,10 @@ export default class ActionDetails extends Component<PropsType, StateType> {
       return (
         <RegistryItem
           key={i}
-          isSelected={this.props.selectedRegistry && registry.id === this.props.selectedRegistry.id}
+          isSelected={
+            this.props.selectedRegistry &&
+            registry.id === this.props.selectedRegistry.id
+          }
           lastItem={i === registries.length - 1}
           onClick={() => this.props.setSelectedRegistry(registry)}
         >

@@ -26,7 +26,7 @@ type StateType = {
 export default class ResourceTab extends Component<PropsType, StateType> {
   state = {
     expanded: this.props.expanded || false,
-    showTooltip: false
+    showTooltip: false,
   };
 
   renderDropdownIcon = () => {
@@ -95,7 +95,7 @@ export default class ResourceTab extends Component<PropsType, StateType> {
       handleClick,
       selected,
       status,
-      roundAllCorners
+      roundAllCorners,
     } = this.props;
     return (
       <StyledResourceTab
@@ -254,7 +254,7 @@ const StatusColor = styled.div`
       : props.status === "failed" || props.status === "FailedValidation"
       ? "#ed5f85"
       : props.status === "completed"
-      ? '#00d12a'
+      ? "#00d12a"
       : "#f5cb42"};
   border-radius: 20px;
 `;

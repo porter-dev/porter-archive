@@ -202,7 +202,7 @@ class Home extends Component<PropsType, StateType> {
     // Handle redirect from DO
     let queryString = window.location.search;
     let urlParams = new URLSearchParams(queryString);
-    
+
     window.analytics.identify(user.userId, {
       email: user.email,
       createdAt: Date.now(),

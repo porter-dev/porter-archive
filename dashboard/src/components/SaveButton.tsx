@@ -116,7 +116,7 @@ const ButtonWrapper = styled.div`
       `;
     }
     return `
-      bottom: 0;
+      bottom: 5px;
       right: 0;
     `;
   }}

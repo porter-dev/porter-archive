@@ -10,7 +10,7 @@ import (
 type DNSRecord struct {
 	gorm.Model
 
-	SubdomainPrefix string `json:"subdomain_prefix"`
+	SubdomainPrefix string `json:"subdomain_prefix" gorm:"unique"`
 	RootDomain      string `json:"root_domain"`
 
 	Endpoint string `json:"endpoint"`

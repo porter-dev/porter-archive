@@ -29,6 +29,7 @@ type ServerConf struct {
 	TimeoutIdle          time.Duration `env:"SERVER_TIMEOUT_IDLE,default=15s"`
 	IsLocal              bool          `env:"IS_LOCAL,default=false"`
 	IsTesting            bool          `env:"IS_TESTING,default=false"`
+	AppRootDomain        string        `env:"APP_ROOT_DOMAIN"`
 
 	DefaultHelmRepoURL string `env:"HELM_REPO_URL,default=https://porter-dev.github.io/chart-repo/"`
 

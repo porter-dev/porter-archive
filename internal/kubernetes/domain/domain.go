@@ -3,8 +3,11 @@ package domain
 import (
 	"context"
 	"fmt"
+	"math/rand"
 	"net"
+	"strings"
 
+	"github.com/porter-dev/porter/internal/models"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/api/extensions/v1beta1"
 	"k8s.io/client-go/kubernetes"
@@ -13,15 +16,61 @@ import (
 	"k8s.io/apimachinery/pkg/util/intstr"
 )
 
-type PorterEndpoint struct {
-	SubdomainPrefix string
-	RootDomain      string
+// GetNGINXIngressServiceIP retrieves the external address of the nginx-ingress service
+func GetNGINXIngressServiceIP(clientset kubernetes.Interface) (string, bool, error) {
+	svcList, err := clientset.CoreV1().Services("").List(context.TODO(), metav1.ListOptions{
+		LabelSelector: "app.kubernetes.io/component=controller,app.kubernetes.io/managed-by=Helm",
+	})
 
-	Endpoint string
-	Hostname string
+	if err != nil {
+		return "", false, err
+	}
+
+	var nginxSvc *v1.Service
+	exists := false
+
+	for _, svc := range svcList.Items {
+		// check that helm chart annotation is correct exists
+		if chartAnn, found := svc.Annotations["helm.sh/chart"]; found {
+			if strings.Contains(chartAnn, "ingress-nginx") && svc.Spec.Type == v1.ServiceTypeLoadBalancer {
+				nginxSvc = &svc
+				exists = true
+			}
+		}
+	}
+
+	return nginxSvc.Spec.LoadBalancerIP, exists, nil
 }
 
-func (e *PorterEndpoint) CreateDomain(clientset kubernetes.Interface) error {
+// DNSRecord wraps the gorm DNSRecord model
+type DNSRecord models.DNSRecord
+
+type CreateDNSRecordConfig struct {
+	ReleaseName string
+	RootDomain  string
+	Endpoint    string
+}
+
+// NewDNSRecordForEndpoint generates a random subdomain and returns a DNSRecord
+// model
+func (c *CreateDNSRecordConfig) NewDNSRecordForEndpoint() *models.DNSRecord {
+	const allowed = "123456789abcdefghijklmnopqrstuvwxyz"
+	suffix := make([]byte, 8)
+	for i := range suffix {
+		suffix[i] = allowed[rand.Intn(len(allowed))]
+	}
+
+	subdomain := fmt.Sprintf("%s-%s", c.ReleaseName, string(suffix))
+
+	return &models.DNSRecord{
+		SubdomainPrefix: subdomain,
+		RootDomain:      c.RootDomain,
+		Endpoint:        c.Endpoint,
+		Hostname:        fmt.Sprintf("%s.%s", subdomain, c.RootDomain),
+	}
+}
+
+func (e *DNSRecord) CreateDomain(clientset kubernetes.Interface) error {
 	// determine if IP address or domain
 	err := e.createIngress(clientset)
 
@@ -32,7 +81,7 @@ func (e *PorterEndpoint) CreateDomain(clientset kubernetes.Interface) error {
 	return e.createServiceWithEndpoint(clientset)
 }
 
-func (e *PorterEndpoint) createIngress(clientset kubernetes.Interface) error {
+func (e *DNSRecord) createIngress(clientset kubernetes.Interface) error {
 	_, err := clientset.ExtensionsV1beta1().Ingresses("default").Create(
 		context.TODO(),
 		&v1beta1.Ingress{
@@ -48,12 +97,12 @@ func (e *PorterEndpoint) createIngress(clientset kubernetes.Interface) error {
 			},
 			Spec: v1beta1.IngressSpec{
 				Rules: []v1beta1.IngressRule{
-					v1beta1.IngressRule{
+					{
 						Host: fmt.Sprintf("%s.%s", e.SubdomainPrefix, e.RootDomain),
 						IngressRuleValue: v1beta1.IngressRuleValue{
 							HTTP: &v1beta1.HTTPIngressRuleValue{
 								Paths: []v1beta1.HTTPIngressPath{
-									v1beta1.HTTPIngressPath{
+									{
 										Backend: v1beta1.IngressBackend{
 											ServiceName: e.SubdomainPrefix,
 											ServicePort: intstr.IntOrString{
@@ -75,13 +124,13 @@ func (e *PorterEndpoint) createIngress(clientset kubernetes.Interface) error {
 	return err
 }
 
-func (e *PorterEndpoint) createServiceWithEndpoint(clientset kubernetes.Interface) error {
+func (e *DNSRecord) createServiceWithEndpoint(clientset kubernetes.Interface) error {
 	// determine if endpoint needs to be created or external name is ok
 	isIPv4 := net.ParseIP(e.Endpoint) != nil
 
 	svcSpec := v1.ServiceSpec{
 		Ports: []v1.ServicePort{
-			v1.ServicePort{
+			{
 				Port: 80,
 				TargetPort: intstr.IntOrString{
 					Type:   intstr.Int,
@@ -89,7 +138,7 @@ func (e *PorterEndpoint) createServiceWithEndpoint(clientset kubernetes.Interfac
 				},
 				Name: "http",
 			},
-			v1.ServicePort{
+			{
 				Port: 443,
 				TargetPort: intstr.IntOrString{
 					Type:   intstr.Int,
@@ -134,18 +183,18 @@ func (e *PorterEndpoint) createServiceWithEndpoint(clientset kubernetes.Interfac
 					Namespace: "default",
 				},
 				Subsets: []v1.EndpointSubset{
-					v1.EndpointSubset{
+					{
 						Addresses: []v1.EndpointAddress{
-							v1.EndpointAddress{
+							{
 								IP: e.Endpoint,
 							},
 						},
 						Ports: []v1.EndpointPort{
-							v1.EndpointPort{
+							{
 								Name: "http",
 								Port: 80,
 							},
-							v1.EndpointPort{
+							{
 								Name: "https",
 								Port: 443,
 							},

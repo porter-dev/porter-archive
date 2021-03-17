@@ -126,7 +126,8 @@ export default class ActionConfEditor extends Component<PropsType, StateType> {
             href={`/api/oauth/projects/${this.context.currentProject.id}/github?redirected=true`}
           >
             log in with GitHub
-          </A>.
+          </A>
+          .
         </LoadingWrapper>
       );
     }

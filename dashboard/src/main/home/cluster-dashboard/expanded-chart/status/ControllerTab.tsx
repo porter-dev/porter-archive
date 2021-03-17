@@ -47,7 +47,7 @@ export default class ControllerTab extends Component<PropsType, StateType> {
     }
     selectors.push(selector);
 
-    if (selectors.length == 0 && this.props.selectors) {
+    if (controller.kind.toLowerCase() == "job" && this.props.selectors) {
       selectors = this.props.selectors;
     }
 
@@ -111,7 +111,8 @@ export default class ControllerTab extends Component<PropsType, StateType> {
           c.status?.desiredNumberScheduled || 0,
         ];
       case "job":
-        return [1, 1];
+        console.log(c)
+        return [1, 1]
     }
   };
 
@@ -121,7 +122,6 @@ export default class ControllerTab extends Component<PropsType, StateType> {
       status?.containerStatuses !== undefined
     ) {
       return status.containerStatuses[0].state.waiting.reason;
-      // return 'waiting'
     } else if (status?.phase === "Pending") {
       return "Pending";
     }
@@ -155,28 +155,21 @@ export default class ControllerTab extends Component<PropsType, StateType> {
     let [available, total] = this.getAvailability(controller.kind, controller);
     let status = available == total ? "running" : "waiting";
 
-    if (controller.kind?.toLowerCase() == "job" && !controller.status.active) {
-      status = "completed";
+    if (controller.kind.toLowerCase() === "job" && this.state.raw.length == 0) {
+      status = "completed" 
     }
-
-    console.log("STATUS", status);
 
     return (
       <ResourceTab
         label={controller.kind}
-        name={controller.metadata.name}
+        // handle CronJob case
+        name={controller.metadata?.name || controller.name}
         status={{ label: status, available, total }}
         isLast={isLast}
         expanded={isFirst}
       >
         {this.state.raw.map((pod, i) => {
           let status = this.getPodStatus(pod.status);
-          if (
-            controller.kind?.toLowerCase() == "job" &&
-            !controller.status.active
-          ) {
-            status = "completed";
-          }
           return (
             <Tab
               key={pod.metadata?.name}

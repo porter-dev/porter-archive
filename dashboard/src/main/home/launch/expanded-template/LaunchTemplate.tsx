@@ -534,7 +534,9 @@ class LaunchTemplate extends Component<PropsType, StateType> {
           <Subtitle>
             Specify the container image you would like to connect to this
             template.
-            <Highlight onClick={() => this.props.history.push("integrations/registry")}>
+            <Highlight
+              onClick={() => this.props.history.push("integrations/registry")}
+            >
               Manage Docker registries
             </Highlight>
             <Required>*</Required>
@@ -584,7 +586,9 @@ class LaunchTemplate extends Component<PropsType, StateType> {
           </CloseButton>
           <Subtitle>
             Provide a repo folder to use as source.
-            <Highlight onClick={() => this.props.history.push("integrations/repo")}>
+            <Highlight
+              onClick={() => this.props.history.push("integrations/repo")}
+            >
               Manage Git repos
             </Highlight>
             <Required>*</Required>

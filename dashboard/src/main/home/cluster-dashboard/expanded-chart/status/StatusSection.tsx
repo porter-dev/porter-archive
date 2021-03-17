@@ -53,12 +53,13 @@ export default class StatusSection extends Component<PropsType, StateType> {
     return this.state.controllers.map((c, i) => {
       return (
         <ControllerTab
-          key={c.metadata.uid}
+          // handle CronJob case
+          key={c.metadata?.uid || c.uid}
           selectedPod={this.state.selectedPod}
           selectPod={this.selectPod.bind(this)}
-          selectors={this.props.selectors}
+          selectors={this.props.selectors ? [this.props.selectors[i]] : null}
           controller={c}
-          isLast={i === this.state.controllers.length - 1}
+          isLast={i === this.state.controllers?.length - 1}
           isFirst={i === 0}
           setPodError={(x: string) => this.setState({ podError: x })}
         />
@@ -74,12 +75,21 @@ export default class StatusSection extends Component<PropsType, StateType> {
         </NoControllers>
       );
     }
-    if (this.state.controllers.length > 0) {
+    if (this.state.controllers?.length > 0) {
       return (
         <Wrapper>
           <TabWrapper>{this.renderTabs()}</TabWrapper>
           {this.renderLogs()}
         </Wrapper>
+      );
+    }
+
+    if (this.props.currentChart.chart.metadata.name === "job") {
+      return (
+        <NoControllers>
+          <i className="material-icons">category</i>
+          There are no jobs currently running.
+        </NoControllers>
       );
     }
 
@@ -110,8 +120,9 @@ export default class StatusSection extends Component<PropsType, StateType> {
           revision: currentChart.version,
         }
       )
-      .then((res) => {
-        this.setState({ controllers: res.data, loading: false });
+      .then((res : any) => {
+        let controllers = currentChart.chart.metadata.name == "job" ? res.data[0]?.status.active : res.data
+        this.setState({controllers, loading: false})
       })
       .catch((err) => {
         setCurrentError(JSON.stringify(err));

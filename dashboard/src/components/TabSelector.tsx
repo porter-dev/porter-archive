@@ -46,7 +46,7 @@ export default class TabSelector extends Component<PropsType, StateType> {
         <TabWrapper>
           {this.renderTabList()}
           <Tab lastItem={true} highlight={null}>
-            { this.props.noBuffer ? null : <Buffer /> }
+            {this.props.noBuffer ? null : <Buffer />}
           </Tab>
         </TabWrapper>
         {this.props.addendum}

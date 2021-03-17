@@ -2,11 +2,13 @@ import React, { Component } from "react";
 import styled from "styled-components";
 import ParentSize from "@visx/responsive/lib/components/ParentSize";
 
+import settings from "assets/settings.svg";
 import api from "shared/api";
 import { Context } from "shared/Context";
 import { ChartType, StorageType } from "shared/types";
 
 import TabSelector from "components/TabSelector";
+import SelectRow from "components/values-form/SelectRow";
 import AreaChart, { MetricsData } from "./AreaChart";
 
 type PropsType = {
@@ -14,9 +16,9 @@ type PropsType = {
 };
 
 type StateType = {
-  controllers: any[];
+  controllerOptions: any[];
   selectedController: any;
-  pods: string[];
+  pods: any[];
   selectedPod: string;
   selectedRange: string;
   selectedMetric: string;
@@ -25,6 +27,7 @@ type StateType = {
   podDropdownExpanded: boolean;
   dropdownExpanded: boolean;
   data: MetricsData[];
+  showMetricsSettings: boolean;
 };
 
 type MetricsCPUDataResponse = {
@@ -67,9 +70,9 @@ const secondsBeforeNow: { [range: string]: number } = {
 
 export default class MetricsSection extends Component<PropsType, StateType> {
   state = {
-    pods: [] as string[],
+    pods: [] as any[],
     selectedPod: "",
-    controllers: [] as any[],
+    controllerOptions: [] as any[],
     selectedController: null as any,
     selectedRange: "1H",
     selectedMetric: "cpu",
@@ -78,6 +81,7 @@ export default class MetricsSection extends Component<PropsType, StateType> {
     podDropdownExpanded: false,
     controllerDropdownExpanded: false,
     data: [] as MetricsData[],
+    showMetricsSettings: false,
   };
 
   componentDidMount() {
@@ -101,18 +105,23 @@ export default class MetricsSection extends Component<PropsType, StateType> {
       )
       .then((res) => {
         // TODO -- check at least one controller returned
+        let controllerOptions = [] as any[];
+        res.data.map((controller: any) => {
+          let name = controller?.metadata?.name;
+          controllerOptions.push({ value: controller, label: name });
+        })
 
         // iterate through the controllers to get the list of pods
         this.setState({
-          controllers: res.data,
-          selectedController: res.data[0],
+          controllerOptions,
+          selectedController: controllerOptions[0].value,
         });
 
         this.getPods();
       })
       .catch((err) => {
         setCurrentError(JSON.stringify(err));
-        this.setState({ controllers: [] });
+        this.setState({ controllerOptions: [] as any[] });
       });
   }
 
@@ -153,11 +162,15 @@ export default class MetricsSection extends Component<PropsType, StateType> {
     var end = Math.round(d.getTime() / 1000);
     var start = end - secondsBeforeNow[this.state.selectedRange];
 
-    let pods = this.state.pods;
+    let pods = this.state.pods.map((pod: any) => {
+      return pod.value;
+    });
 
     if (this.state.selectedPod != "All") {
       pods = [this.state.selectedPod];
     }
+
+
 
     api
       .getMetrics(
@@ -166,7 +179,7 @@ export default class MetricsSection extends Component<PropsType, StateType> {
           cluster_id: currentCluster.id,
           metric: kind,
           shouldsum: shouldsum,
-          pods: pods,
+          pods,
           namespace: currentChart.namespace,
           startrange: start,
           endrange: end,
@@ -275,8 +288,10 @@ export default class MetricsSection extends Component<PropsType, StateType> {
         }
       )
       .then((res) => {
-        let pods = res?.data?.map((pod: any) => {
-          return pod?.metadata?.name;
+        let pods = [{ value: "All", label: "All (Summed)" }] as any[];
+        res?.data?.forEach((pod: any) => {
+          let name = pod?.metadata?.name;
+          pods.push({ value: name, label: name});
         });
 
         this.setState({ pods, selectedPod: "All" });
@@ -309,89 +324,6 @@ export default class MetricsSection extends Component<PropsType, StateType> {
     }
   };
 
-  renderPodDropdown = () => {
-    if (this.state.podDropdownExpanded) {
-      return (
-        <>
-          <DropdownOverlay
-            onClick={() => this.setState({ podDropdownExpanded: false })}
-          />
-          <Dropdown
-            dropdownWidth="400px"
-            dropdownMaxHeight="200px"
-            onClick={() => this.setState({ podDropdownExpanded: false })}
-          >
-            {this.renderPodOptionList()}
-          </Dropdown>
-        </>
-      );
-    }
-  };
-
-  renderPodOptionList = () => {
-    let allPod = [
-      <Option
-        key={0}
-        selected={"All" === this.state.selectedPod}
-        onClick={() => this.setState({ selectedPod: "All" })}
-        lastItem={false}
-      >
-        All (summed)
-      </Option>,
-    ];
-
-    let podOptions = this.state.pods.map((option: string, i: number) => {
-      return (
-        <Option
-          key={i + 1}
-          selected={option === this.state.selectedPod}
-          onClick={() => this.setState({ selectedPod: option })}
-          lastItem={i === this.state.pods.length - 1}
-        >
-          {option}
-        </Option>
-      );
-    });
-
-    return allPod.concat(podOptions);
-  };
-
-  renderControllerDropdown = () => {
-    if (this.state.controllerDropdownExpanded) {
-      return (
-        <>
-          <DropdownOverlay
-            onClick={() => this.setState({ controllerDropdownExpanded: false })}
-          />
-          <Dropdown
-            dropdownWidth="300px"
-            dropdownMaxHeight="200px"
-            onClick={() => this.setState({ controllerDropdownExpanded: false })}
-          >
-            {this.renderControllerOptionList()}
-          </Dropdown>
-        </>
-      );
-    }
-  };
-
-  renderControllerOptionList = () => {
-    return this.state.controllers.map((controller: any, i: number) => {
-      let name = controller?.metadata?.name;
-
-      return (
-        <Option
-          key={i}
-          selected={name === this.state.selectedController?.metadata?.name}
-          onClick={() => this.setState({ selectedController: controller })}
-          lastItem={i === this.state.controllers.length - 1}
-        >
-          {name}
-        </Option>
-      );
-    });
-  };
-
   renderOptionList = () => {
     let metricOptions = [
       { value: "cpu", label: "CPU Utilization (vCPUs)" },
@@ -419,72 +351,137 @@ export default class MetricsSection extends Component<PropsType, StateType> {
     );
   };
 
+  renderMetricsSettings = () => {
+    if (this.state.showMetricsSettings && true) {
+      return (
+        <>
+          <DropdownOverlay
+            onClick={() => this.setState({ showMetricsSettings: false })}
+          />
+          <DropdownAlt
+            dropdownWidth="330px"
+            dropdownMaxHeight="300px"
+          >
+            <Label>Additional Settings</Label>
+            <SelectRow
+              label="Target Controller"
+              value={this.state.selectedController}
+              setActiveValue={(x: any) => this.setState({ selectedController: x })}
+              options={this.state.controllerOptions}
+              width="100%"
+            />
+            <SelectRow
+              label="Target Pod"
+              value={this.state.selectedPod}
+              setActiveValue={(x: any) => this.setState({ selectedPod: x })}
+              options={this.state.pods}
+              width="100%"
+            />
+          </DropdownAlt>
+        </>
+      );
+    }
+  }
+
   render() {
     return (
       <StyledMetricsSection>
+        <MetricsHeader>
+          <Flex>
+            <MetricSelector
+              onClick={() =>
+                this.setState({ dropdownExpanded: !this.state.dropdownExpanded })
+              }
+            >
+              <MetricsLabel>{this.state.selectedMetricLabel}</MetricsLabel>
+              <i className="material-icons">arrow_drop_down</i>
+              {this.renderDropdown()}
+            </MetricSelector>
+            <Relative>
+              <IconWrapper 
+                onClick={() => this.setState({ showMetricsSettings: true })}
+              >
+                <SettingsIcon src={settings} />
+              </IconWrapper>
+              {this.renderMetricsSettings()}
+            </Relative>
+          </Flex>
+          <RangeWrapper>
+            <TabSelector
+              noBuffer={true}
+              options={[
+                { value: "1H", label: "1H" },
+                { value: "6H", label: "6H" },
+                { value: "1D", label: "1D" },
+                { value: "1M", label: "1M" },
+              ]}
+              currentTab={this.state.selectedRange}
+              setCurrentTab={(x: string) => this.setState({ selectedRange: x })}
+            />
+          </RangeWrapper>
+        </MetricsHeader>
         <ParentSize>
           {({ width, height }) => (
             <AreaChart
               data={this.state.data}
               width={width}
-              height={height}
+              height={height - 10}
               resolution={this.state.selectedRange}
-              margin={{ top: 60, right: -40, bottom: 0, left: 50 }}
+              margin={{ top: 40, right: -40, bottom: 0, left: 50 }}
             />
           )}
         </ParentSize>
-        <MetricSelector
-          onClick={() =>
-            this.setState({ dropdownExpanded: !this.state.dropdownExpanded })
-          }
-        >
-          <MetricsLabel>{this.state.selectedMetricLabel}</MetricsLabel>
-          <i className="material-icons">arrow_drop_down</i>
-          {this.renderDropdown()}
-        </MetricSelector>
-        <ControllerSelector
-          onClick={() =>
-            this.setState({
-              controllerDropdownExpanded: !this.state
-                .controllerDropdownExpanded,
-            })
-          }
-        >
-          <MetricsLabel>
-            {this.state.selectedController?.metadata?.name}
-          </MetricsLabel>
-          <i className="material-icons">arrow_drop_down</i>
-          {this.renderControllerDropdown()}
-        </ControllerSelector>
-        <PodSelector
-          onClick={() =>
-            this.setState({
-              podDropdownExpanded: !this.state.podDropdownExpanded,
-            })
-          }
-        >
-          <MetricsLabel>{this.state.selectedPod}</MetricsLabel>
-          <i className="material-icons">arrow_drop_down</i>
-          {this.renderPodDropdown()}
-        </PodSelector>
-        <RangeWrapper>
-          <TabSelector
-            options={[
-              { value: "1H", label: "1H" },
-              { value: "6H", label: "6H" },
-              { value: "1D", label: "1D" },
-              { value: "1M", label: "1M" },
-            ]}
-            currentTab={this.state.selectedRange}
-            setCurrentTab={(x: string) => this.setState({ selectedRange: x })}
-          />
-        </RangeWrapper>
       </StyledMetricsSection>
     );
   }
 }
 
 MetricsSection.contextType = Context;
+
+const Label = styled.div`
+  font-weight: bold;
+`;
+
+const Relative = styled.div`
+  position: relative;
+`;
+
+const IconWrapper = styled.div`
+  display: flex;
+  position: relative;
+  align-items: center;
+  justify-content: center;
+  margin-top: 2px;
+  border-radius: 30px;
+  height: 25px;
+  width: 25px;
+  margin-left: 8px;
+  cursor: pointer;
+  :hover {
+    background: #ffffff22;
+  }
+`;
+
+const SettingsIcon = styled.img`
+  opacity: 0.4;
+  width: 20px;
+  height: 20px;
+  margin-left: -1px;
+  margin-bottom: -2px;
+`;
+
+const Flex = styled.div`
+  display: flex;
+  align-items: center;
+`;
+
+const MetricsHeader = styled.div`
+  width: 100%;
+  display: flex;
+  align-items: center;
+  overflow: visible;
+  justify-content: space-between;
+`;
 
 const DropdownOverlay = styled.div`
   position: fixed;
@@ -533,7 +530,12 @@ const Dropdown = styled.div`
   z-index: 999;
   overflow-y: auto;
   margin-bottom: 20px;
-  box-shadow: 0 4px 8px 0px #00000088;
+  box-shadow: 0px 4px 10px 0px #00000088;
+`;
+
+const DropdownAlt = styled(Dropdown)`
+  padding: 20px 20px 7px;
+  overflow: visible;
 `;
 
 const RangeWrapper = styled.div`
@@ -542,15 +544,14 @@ const RangeWrapper = styled.div`
   right: 0;
   font-weight: bold;
   width: 156px;
+  margin-top: -8px;
 `;
 
 const MetricSelector = styled.div`
   font-size: 13px;
   font-weight: 500;
+  position: relative;
   color: #ffffff;
-  position: absolute;
-  top: 10px;
-  left: 0;
   display: flex;
   align-items: center;
   cursor: pointer;
@@ -575,19 +576,11 @@ const MetricsLabel = styled.div`
   max-width: 200px;
 `;
 
-const ControllerSelector = styled(MetricSelector)`
-  left: 230px;
-`;
-
-const PodSelector = styled(MetricSelector)`
-  left: 490px;
-`;
-
 const StyledMetricsSection = styled.div`
   width: 100%;
   height: 100%;
-  background: #20222700;
   display: flex;
+  flex-direction: column;
   position: relative;
   font-size: 13px;
   border-radius: 5px;

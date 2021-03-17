@@ -67,7 +67,7 @@ func ParseControllers(objs []map[string]interface{}) []Object {
 
 		switch kind.(string) {
 		// Parse for all possible controller types
-		case "Deployment", "StatefulSet", "ReplicaSet", "DaemonSet", "Job":
+		case "Deployment", "StatefulSet", "ReplicaSet", "DaemonSet", "Job", "CronJob":
 			name := getField(obj, "metadata", "name")
 			namespace := getField(obj, "metadata", "namespace")
 

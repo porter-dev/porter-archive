@@ -33,7 +33,7 @@ func GetNGINXIngressServiceIP(clientset kubernetes.Interface) (string, bool, err
 		fmt.Println("CHECKING SVC", svc.ObjectMeta.Name)
 
 		// check that helm chart annotation is correct exists
-		if chartAnn, found := svc.Annotations["helm.sh/chart"]; found {
+		if chartAnn, found := svc.ObjectMeta.Annotations["helm.sh/chart"]; found {
 			fmt.Println("FOUND CHART ANNOTATION", chartAnn)
 
 			if (strings.Contains(chartAnn, "ingress-nginx") || strings.Contains(chartAnn, "nginx-ingress")) && svc.Spec.Type == v1.ServiceTypeLoadBalancer {

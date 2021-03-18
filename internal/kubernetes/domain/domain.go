@@ -39,6 +39,10 @@ func GetNGINXIngressServiceIP(clientset kubernetes.Interface) (string, bool, err
 		}
 	}
 
+	if !exists {
+		return "", false, nil
+	}
+
 	return nginxSvc.Spec.LoadBalancerIP, exists, nil
 }
 

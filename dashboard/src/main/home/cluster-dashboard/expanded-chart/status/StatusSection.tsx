@@ -10,7 +10,7 @@ import Logs from "./Logs";
 import ControllerTab from "./ControllerTab";
 
 type PropsType = {
-  selectors: string[];
+  selectors?: string[];
   currentChart: ChartType;
 };
 
@@ -56,6 +56,7 @@ export default class StatusSection extends Component<PropsType, StateType> {
           key={c.metadata.uid}
           selectedPod={this.state.selectedPod}
           selectPod={this.selectPod.bind(this)}
+          selectors={this.props.selectors}
           controller={c}
           isLast={i === this.state.controllers.length - 1}
           isFirst={i === 0}
@@ -92,7 +93,7 @@ export default class StatusSection extends Component<PropsType, StateType> {
   };
 
   componentDidMount() {
-    const { selectors, currentChart } = this.props;
+    const { currentChart } = this.props;
     let { currentCluster, currentProject, setCurrentError } = this.context;
 
     api

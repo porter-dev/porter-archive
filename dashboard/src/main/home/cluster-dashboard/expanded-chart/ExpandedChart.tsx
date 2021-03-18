@@ -33,6 +33,7 @@ type PropsType = {
   currentCluster: ClusterType;
   setCurrentChart: (x: ChartType | null) => void;
   setSidebar: (x: boolean) => void;
+  isMetricsInstalled: boolean;
 };
 
 type StateType = {
@@ -255,10 +256,19 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
           saveValuesStatus: "successful",
           forceRefreshRevisions: true,
         });
+
+        window.analytics.track("Chart Upgraded", {
+          chart: this.props.currentChart.name,
+          values: valuesYaml,
+        });
       })
       .catch((err) => {
         this.setState({ saveValuesStatus: "error" });
-        console.log(err);
+        window.analytics.track("Failed to Upgrade Chart", {
+          chart: this.props.currentChart.name,
+          values: valuesYaml,
+          error: err,
+        });
       });
   };
 
@@ -278,7 +288,18 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
       case "metrics":
         return <MetricsSection currentChart={chart} />;
       case "status":
-        return <StatusSection currentChart={chart} selectors={podSelectors} />;
+        let controller_uid = Object.keys(this.state.controllers)[0];
+        if (chart.chart.metadata.name == "job") {
+          return (
+            <StatusSection
+              currentChart={chart}
+              selectors={[
+                `job-name=${chart.name}-job,controller-uid=${controller_uid}`,
+              ]}
+            />
+          );
+        }
+        return <StatusSection currentChart={chart} />;
       case "settings":
         return (
           <SettingsSection
@@ -360,11 +381,13 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
     }
 
     // Append universal tabs
-    tabOptions.push(
-      { label: "Status", value: "status" },
-      //{ label: "Metrics", value: "metrics" },
-      { label: "Chart Overview", value: "graph" }
-    );
+    tabOptions.push({ label: "Status", value: "status" });
+
+    if (this.props.isMetricsInstalled) {
+      tabOptions.push({ label: "Metrics", value: "metrics" });
+    }
+
+    tabOptions.push({ label: "Chart Overview", value: "graph" });
 
     if (this.state.devOpsMode) {
       tabOptions.push(
@@ -435,6 +458,14 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
       for (var uid in this.state.controllers) {
         let value = this.state.controllers[uid];
         let available = this.getAvailability(value.metadata.kind, value);
+
+        if (
+          value.metadata.kind?.toLowerCase() == "job" &&
+          !value.status?.active
+        ) {
+          return "completed";
+        }
+
         let progressing = true;
 
         this.state.controllers[uid]?.status?.conditions?.forEach(
@@ -469,6 +500,8 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
         return c.status.readyReplicas == c.status.replicas;
       case "daemonset":
         return c.status.numberAvailable == c.status.desiredNumberScheduled;
+      case "job":
+        return c.status.active;
     }
   };
 
@@ -476,11 +509,15 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
     let { currentCluster, currentProject } = this.context;
     let { currentChart } = this.props;
 
-    this.getChartData(this.props.currentChart);
-    this.getControllers(this.props.currentChart);
+    window.analytics.track("Opened Chart", {
+      chart: currentChart.name,
+    });
+
+    this.getChartData(currentChart);
+    this.getControllers(currentChart);
     this.setControllerWebsockets(
       ["deployment", "statefulset", "daemonset", "replicaset"],
-      this.props.currentChart
+      currentChart
     );
 
     api
@@ -497,34 +534,45 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
           revision: currentChart.version,
         }
       )
-      .then((res) => this.setState({ components: res.data.Objects }))
-      .catch(console.log);
+      .then((res) =>
+        this.setState({ components: res.data.Objects }, () => {
+          let ingressName = null;
+          for (var i = 0; i < this.state.components.length; i++) {
+            if (this.state.components[i].Kind === "Ingress") {
+              ingressName = this.state.components[i].Name;
+            }
+          }
 
-    api
-      .getIngress(
-        "<token>",
-        {
-          cluster_id: currentCluster.id,
-        },
-        {
-          id: currentProject.id,
-          name: `${this.props.currentChart.name}-docker`,
-          namespace: `${this.props.currentChart.namespace}`,
-        }
+          api
+            .getIngress(
+              "<token>",
+              {
+                cluster_id: currentCluster.id,
+              },
+              {
+                id: currentProject.id,
+                name: ingressName,
+                namespace: `${this.props.currentChart.namespace}`,
+              }
+            )
+            .then((res) => {
+              if (res.data?.spec?.rules && res.data?.spec?.rules[0]?.host) {
+                this.setState({
+                  url: `https://${res.data?.spec?.rules[0]?.host}`,
+                });
+                return;
+              }
+
+              if (res.data?.status?.loadBalancer?.ingress) {
+                this.setState({
+                  url: `http://${res.data?.status?.loadBalancer?.ingress[0]?.hostname}`,
+                });
+                return;
+              }
+            })
+            .catch(console.log);
+        })
       )
-      .then((res) => {
-        if (res.data?.spec?.rules && res.data?.spec?.rules[0]?.host) {
-          this.setState({ url: `https://${res.data?.spec?.rules[0]?.host}` });
-          return;
-        }
-
-        if (res.data?.status?.loadBalancer?.ingress) {
-          this.setState({
-            url: `http://${res.data?.status?.loadBalancer?.ingress[0]?.hostname}`,
-          });
-          return;
-        }
-      })
       .catch(console.log);
 
     this.updateTabs();
@@ -629,7 +677,9 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
                 <IconWrapper>{this.renderIcon()}</IconWrapper>
                 {chart.name}
               </Title>
-              {this.renderUrl()}
+              {chart.chart.metadata.name != "worker" &&
+                chart.chart.metadata.name != "job" &&
+                this.renderUrl()}
               <InfoWrapper>
                 <StatusIndicator
                   controllers={this.state.controllers}

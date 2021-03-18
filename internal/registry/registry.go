@@ -373,6 +373,48 @@ func (r *Registry) setTokenCacheFunc(
 	}
 }
 
+// CreateRepository creates a repository for a registry, if needed
+// (currently only required for ECR)
+func (r *Registry) CreateRepository(
+	repo repository.Repository,
+	name string,
+) error {
+	// if aws, create repository
+	if r.AWSIntegrationID != 0 {
+		return r.createECRRepository(repo, name)
+	}
+
+	// otherwise, no-op
+	return nil
+}
+
+func (r *Registry) createECRRepository(
+	repo repository.Repository,
+	name string,
+) error {
+	aws, err := repo.AWSIntegration.ReadAWSIntegration(
+		r.AWSIntegrationID,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	sess, err := aws.GetSession()
+
+	if err != nil {
+		return err
+	}
+
+	svc := ecr.New(sess)
+
+	_, err = svc.CreateRepository(&ecr.CreateRepositoryInput{
+		RepositoryName: &name,
+	})
+
+	return err
+}
+
 // ListImages lists the images for an image repository
 func (r *Registry) ListImages(
 	repoName string,

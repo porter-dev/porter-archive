@@ -7,6 +7,9 @@ const hardcodedNames: { [key: string]: string } = {
   postgresql: "PostgreSQL",
   redis: "Redis",
   ubuntu: "Ubuntu",
+  web: "Web Service",
+  worker: "Worker",
+  job: "Job",
 };
 
 export default hardcodedNames;

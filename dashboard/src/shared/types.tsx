@@ -165,5 +165,4 @@ export interface ActionConfigType {
   git_repo: string;
   image_repo_uri: string;
   git_repo_id: number;
-  dockerfile_path: string;
 }

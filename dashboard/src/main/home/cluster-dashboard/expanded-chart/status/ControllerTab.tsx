@@ -9,6 +9,7 @@ type PropsType = {
   controller: any;
   selectedPod: any;
   selectPod: Function;
+  selectors: any;
   isLast?: boolean;
   isFirst?: boolean;
   setPodError: (x: string) => void;
@@ -45,6 +46,10 @@ export default class ControllerTab extends Component<PropsType, StateType> {
       i += 1;
     }
     selectors.push(selector);
+
+    if (selectors.length == 0 && this.props.selectors) {
+      selectors = this.props.selectors;
+    }
 
     api
       .getMatchingPods(
@@ -105,6 +110,8 @@ export default class ControllerTab extends Component<PropsType, StateType> {
           c.status?.numberAvailable || 0,
           c.status?.desiredNumberScheduled || 0,
         ];
+      case "job":
+        return [1, 1];
     }
   };
 
@@ -147,6 +154,13 @@ export default class ControllerTab extends Component<PropsType, StateType> {
     let { controller, selectedPod, isLast, selectPod, isFirst } = this.props;
     let [available, total] = this.getAvailability(controller.kind, controller);
     let status = available == total ? "running" : "waiting";
+
+    if (controller.kind?.toLowerCase() == "job" && !controller.status.active) {
+      status = "completed";
+    }
+
+    console.log("STATUS", status);
+
     return (
       <ResourceTab
         label={controller.kind}
@@ -157,6 +171,12 @@ export default class ControllerTab extends Component<PropsType, StateType> {
       >
         {this.state.raw.map((pod, i) => {
           let status = this.getPodStatus(pod.status);
+          if (
+            controller.kind?.toLowerCase() == "job" &&
+            !controller.status.active
+          ) {
+            status = "completed";
+          }
           return (
             <Tab
               key={pod.metadata?.name}
@@ -260,6 +280,8 @@ const StatusColor = styled.div`
       ? "#4797ff"
       : props.status === "failed"
       ? "#ed5f85"
+      : props.status === "completed"
+      ? "#00d12a"
       : "#f5cb42"};
   border-radius: 20px;
 `;

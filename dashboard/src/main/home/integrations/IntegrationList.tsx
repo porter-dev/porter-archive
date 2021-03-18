@@ -1,14 +1,12 @@
-import React, { Component } from "react";
+import React, { Component, MouseEvent } from "react";
 import styled from "styled-components";
 
-import { Context } from "../../../shared/Context";
-import { integrationList } from "../../../shared/common";
-import { ImageType, ActionConfigType } from "../../..//shared/types";
-import ImageList from "../../../components/image-selector/ImageList";
-import RepoList from "../../../components/repo-selector/RepoList";
+import { Context } from "shared/Context";
+import { integrationList } from "shared/common";
+import IntegrationRow from "./IntegrationRow";
 
 type PropsType = {
-  setCurrent: (x: any) => void;
+  setCurrent?: (x: string) => void;
   currentCategory: string;
   integrations: string[];
   itemIdentifier?: any[];
@@ -17,154 +15,60 @@ type PropsType = {
 };
 
 type StateType = {
-  displayImages: boolean[];
-  allCollapsed: boolean;
+  displayExpanded: boolean[];
 };
 
 export default class IntegrationList extends Component<PropsType, StateType> {
   state = {
-    displayImages: [] as boolean[],
-    allCollapsed: false,
+    displayExpanded: this.props.integrations.map(() => false),
   };
 
-  componentDidMount() {
-    let x: boolean[] = [];
-    for (let i = 0; i < this.props.integrations.length; i++) {
-      x.push(true);
-    }
-    this.setState({ displayImages: x });
-
-    this.toggleDisplay = this.toggleDisplay.bind(this);
-    this.handleParent = this.handleParent.bind(this);
-  }
+  allCollapsed = () =>
+    this.state.displayExpanded.reduce((prev, cur) => prev && !cur, true);
 
   componentDidUpdate(prevProps: PropsType) {
     if (prevProps.integrations !== this.props.integrations) {
-      let x: boolean[] = [];
-      for (let i = 0; i < this.props.integrations.length; i++) {
-        x.push(true);
-      }
-      this.setState({ displayImages: x });
+      this.collapseAll();
     }
   }
 
   collapseAll = () => {
-    let x = [];
-    for (let i = 0; i < this.state.displayImages.length; i++) {
-      x.push(false);
-    }
-    this.setState({ displayImages: x, allCollapsed: true });
+    this.setState({
+      displayExpanded: this.props.integrations.map(() => false),
+    });
   };
 
   expandAll = () => {
-    let x = [];
-    for (let i = 0; i < this.state.displayImages.length; i++) {
-      x.push(true);
-    }
-    this.setState({ displayImages: x, allCollapsed: false });
+    this.setState({ displayExpanded: this.props.integrations.map(() => true) });
   };
 
-  toggleDisplay = (event: any, index: number) => {
-    event.stopPropagation();
-    let x = this.state.displayImages;
+  toggleDisplay = (event: MouseEvent, index: number) => {
+    if (event) {
+      event.stopPropagation();
+    }
+    let x = this.state.displayExpanded;
     x[index] = !x[index];
-    if (x[index]) {
-      this.setState({ allCollapsed: false });
-    } else {
-      let collapsed = true;
-      for (let i = 0; i < x.length; i++) {
-        if (x[i]) {
-          collapsed = false;
-          break;
-        }
-      }
-      if (collapsed) {
-        this.setState({ allCollapsed: true });
-      } else {
-        this.setState({ allCollapsed: false });
-      }
-    }
-    this.setState({ displayImages: x });
+    this.setState({ displayExpanded: x });
   };
 
-  handleParent = (event: any, integration: string) => {
-    this.props.setCurrent(integration);
-  };
+  handleParent = (event: any, integration: string) =>
+    this.props.setCurrent && this.props.setCurrent(integration);
 
   renderContents = () => {
-    let {
-      integrations,
-      titles,
-      setCurrent,
-      isCategory,
-      currentCategory,
-    } = this.props;
+    let { integrations, titles, setCurrent, isCategory } = this.props;
     if (titles && titles.length > 0) {
       return integrations.map((integration: string, i: number) => {
-        let icon =
-          integrationList[integration] && integrationList[integration].icon;
-        let subtitle =
-          integrationList[integration] && integrationList[integration].label;
         let label = titles[i];
         return (
-          <Integration key={i} isCategory={isCategory} disabled={false}>
-            <MainRow
-              onClick={(e: any) => {
-                this.handleParent(e, integration);
-              }}
-              isCategory={isCategory}
-              disabled={false}
-            >
-              <Flex>
-                <Icon src={icon && icon} />
-                <Description>
-                  <Label>{label}</Label>
-                  <Subtitle>{subtitle}</Subtitle>
-                </Description>
-              </Flex>
-              <MaterialIconTray isCategory={isCategory} disabled={false}>
-                <i className="material-icons">more_vert</i>
-                <I
-                  className="material-icons"
-                  showList={this.state.displayImages[i]}
-                  onClick={(e) => {
-                    this.toggleDisplay(e, i);
-                  }}
-                >
-                  {isCategory ? "launch" : "expand_more"}
-                </I>
-              </MaterialIconTray>
-            </MainRow>
-            {this.state.displayImages[i] && (
-              <ImageHodler adjustMargin={currentCategory !== "repo"}>
-                {currentCategory !== "repo" ? (
-                  <ImageList
-                    selectedImageUrl={null}
-                    selectedTag={null}
-                    clickedImage={null}
-                    registry={this.props.itemIdentifier[i]}
-                    setSelectedImageUrl={(x: string) => {}}
-                    setSelectedTag={(x: string) => {}}
-                    setClickedImage={(x: ImageType) => {}}
-                  />
-                ) : (
-                  <RepoList
-                    actionConfig={
-                      {
-                        git_repo: "",
-                        image_repo_uri: "",
-                        git_repo_id: 0,
-                        dockerfile_path: "",
-                      } as ActionConfigType
-                    }
-                    setActionConfig={(x: ActionConfigType) => {}}
-                    readOnly={true}
-                    userId={this.props.itemIdentifier[i]}
-                  />
-                )}
-              </ImageHodler>
-            )}
-          </Integration>
+          <IntegrationRow
+            category={this.props.currentCategory}
+            integration={integration}
+            expanded={this.state.displayExpanded[i]}
+            key={i}
+            itemId={this.props.itemIdentifier[i]}
+            label={label}
+            toggleCollapse={(e: MouseEvent) => this.toggleDisplay(e, i)}
+          ></IntegrationRow>
         );
       });
     } else if (integrations && integrations.length > 0) {
@@ -177,11 +81,12 @@ export default class IntegrationList extends Component<PropsType, StateType> {
         return (
           <Integration
             key={i}
-            onClick={() => (disabled ? null : setCurrent(integration))}
-            isCategory={isCategory}
+            onClick={() =>
+              disabled ? null : setCurrent && setCurrent(integration)
+            }
             disabled={disabled}
           >
-            <MainRow isCategory={isCategory} disabled={disabled}>
+            <MainRow disabled={disabled}>
               <Flex>
                 <Icon src={icon && icon} />
                 <Label>{label}</Label>
@@ -197,31 +102,29 @@ export default class IntegrationList extends Component<PropsType, StateType> {
     return <Placeholder>No integrations set up yet.</Placeholder>;
   };
 
+  collapseAllButton = () => (
+    <Button
+      onClick={() =>
+        this.allCollapsed() ? this.expandAll() : this.collapseAll()
+      }
+    >
+      {this.allCollapsed() ? (
+        <>
+          <i className="material-icons">expand_more</i> Expand All
+        </>
+      ) : (
+        <>
+          <i className="material-icons">expand_less</i> Collapse All
+        </>
+      )}
+    </Button>
+  );
+
   render() {
     return (
       <StyledIntegrationList>
         {this.props.titles && this.props.titles.length > 0 && (
-          <ControlRow>
-            <Button
-              onClick={() => {
-                if (this.state.allCollapsed) {
-                  this.expandAll();
-                } else {
-                  this.collapseAll();
-                }
-              }}
-            >
-              {this.state.allCollapsed ? (
-                <>
-                  <i className="material-icons">expand_more</i> Expand All
-                </>
-              ) : (
-                <>
-                  <i className="material-icons">expand_less</i> Collapse All
-                </>
-              )}
-            </Button>
-          </ControlRow>
+          <ControlRow>{this.collapseAllButton()}</ControlRow>
         )}
         {this.renderContents()}
       </StyledIntegrationList>
@@ -237,33 +140,6 @@ const Flex = styled.div`
   justify-content: center;
 `;
 
-const ImageHodler = styled.div`
-  width: 100%;
-  padding: 12px;
-  margin-top: ${(props: { adjustMargin: boolean }) =>
-    props.adjustMargin ? "-10px" : "0px"};
-`;
-
-const MaterialIconTray = styled.div`
-  width: 64px;
-  margin-right: -7px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  > i {
-    background: #26282f;
-    border-radius: 20px;
-    font-size: 18px;
-    padding: 5px;
-    color: ${(props: { isCategory: boolean; disabled: boolean }) =>
-      props.isCategory ? "#616feecc" : "#ffffff44"};
-    :hover {
-      background: ${(props: { isCategory: boolean; disabled: boolean }) =>
-        props.disabled ? "" : "#ffffff11"};
-    }
-  }
-`;
-
 const MainRow = styled.div`
   height: 70px;
   width: 100%;
@@ -273,10 +149,10 @@ const MainRow = styled.div`
   padding: 25px;
   border-radius: 5px;
   :hover {
-    background: ${(props: { isCategory: boolean; disabled: boolean }) =>
+    background: ${(props: { disabled: boolean }) =>
       props.disabled ? "" : "#ffffff11"};
     > i {
-      background: ${(props: { isCategory: boolean; disabled: boolean }) =>
+      background: ${(props: { disabled: boolean }) =>
         props.disabled ? "" : "#ffffff11"};
     }
   }
@@ -285,11 +161,10 @@ const MainRow = styled.div`
     border-radius: 20px;
     font-size: 18px;
     padding: 5px;
-    color: ${(props: { isCategory: boolean; disabled: boolean }) =>
-      props.isCategory ? "#616feecc" : "#ffffff44"};
+    color: #ffffff44;
     margin-right: -7px;
     :hover {
-      background: ${(props: { isCategory: boolean; disabled: boolean }) =>
+      background: ${(props: { disabled: boolean }) =>
         props.disabled ? "" : "#ffffff11"};
     }
   }
@@ -300,32 +175,17 @@ const Integration = styled.div`
   display: flex;
   flex-direction: column;
   background: #26282f;
-  cursor: ${(props: { isCategory: boolean; disabled: boolean }) =>
+  cursor: ${(props: { disabled: boolean }) =>
     props.disabled ? "not-allowed" : "pointer"};
   margin-bottom: 15px;
   border-radius: 5px;
   box-shadow: 0 5px 8px 0px #00000033;
 `;
 
-const Description = styled.div`
-  display: flex;
-  flex-direction: column;
-  margin: 0;
-  padding: 0;
-`;
-
 const Label = styled.div`
   color: #ffffff;
   font-size: 14px;
   font-weight: 500;
-`;
-
-const Subtitle = styled.div`
-  color: #aaaabb;
-  font-size: 13px;
-  display: flex;
-  align-items: center;
-  padding-top: 5px;
 `;
 
 const Icon = styled.img`
@@ -349,6 +209,7 @@ const Placeholder = styled.div`
 
 const StyledIntegrationList = styled.div`
   margin-top: 20px;
+  margin-bottom: 80px;
 `;
 
 const I = styled.i`
@@ -362,15 +223,6 @@ const ControlRow = styled.div`
   align-items: center;
   margin-bottom: 24px;
   padding-left: 0px;
-`;
-
-const ButtonTray = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  &:first-child {
-    margin-right: 14px;
-  }
 `;
 
 const Button = styled.div`

@@ -19,7 +19,7 @@ import (
 // GetNGINXIngressServiceIP retrieves the external address of the nginx-ingress service
 func GetNGINXIngressServiceIP(clientset kubernetes.Interface) (string, bool, error) {
 	svcList, err := clientset.CoreV1().Services("").List(context.TODO(), metav1.ListOptions{
-		LabelSelector: "app.kubernetes.io/component=controller,app.kubernetes.io/managed-by=Helm",
+		LabelSelector: "app.kubernetes.io/managed-by=Helm",
 	})
 
 	if err != nil {

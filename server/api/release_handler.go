@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/porter-dev/porter/internal/kubernetes/prometheus"
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/templater/parser"
 	"helm.sh/helm/v3/pkg/release"
@@ -70,7 +71,8 @@ func (app *App) HandleListReleases(w http.ResponseWriter, r *http.Request) {
 // PorterRelease is a helm release with a form attached
 type PorterRelease struct {
 	*release.Release
-	Form *models.FormYAML `json:"form"`
+	Form       *models.FormYAML `json:"form"`
+	HasMetrics bool             `json:"has_metrics"`
 }
 
 // HandleGetRelease retrieves a single release based on a name and revision
@@ -149,7 +151,7 @@ func (app *App) HandleGetRelease(w http.ResponseWriter, r *http.Request) {
 		HelmRelease:   release,
 	}
 
-	res := &PorterRelease{release, nil}
+	res := &PorterRelease{release, nil, false}
 
 	for _, file := range release.Chart.Files {
 		if strings.Contains(file.Name, "form.yaml") {
@@ -175,6 +177,16 @@ func (app *App) HandleGetRelease(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 	}
+
+	// get prometheus service
+	_, found, err := prometheus.GetPrometheusService(agent.K8sAgent.Clientset)
+
+	if err != nil {
+		app.handleErrorFormValidation(err, ErrK8sValidate, w)
+		return
+	}
+
+	res.HasMetrics = found
 
 	if err := json.NewEncoder(w).Encode(res); err != nil {
 		app.handleErrorFormDecoding(err, ErrReleaseDecode, w)
@@ -351,6 +363,16 @@ func (app *App) HandleGetReleaseControllers(w http.ResponseWriter, r *http.Reque
 			retrievedControllers = append(retrievedControllers, rc)
 		case "ReplicaSet":
 			rc, err := k8sAgent.GetReplicaSet(c)
+
+			if err != nil {
+				app.handleErrorDataRead(err, w)
+				return
+			}
+
+			rc.Kind = c.Kind
+			retrievedControllers = append(retrievedControllers, rc)
+		case "Job":
+			rc, err := k8sAgent.GetJob(c)
 
 			if err != nil {
 				app.handleErrorDataRead(err, w)

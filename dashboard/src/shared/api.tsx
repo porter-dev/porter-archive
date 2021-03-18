@@ -98,9 +98,12 @@ const createGCR = baseApi<
 const createGHAction = baseApi<
   {
     git_repo: string;
+    registry_id: number;
     image_repo_uri: string;
     dockerfile_path: string;
+    folder_path: string;
     git_repo_id: number;
+    env: any;
   },
   {
     project_id: number;
@@ -140,6 +143,20 @@ const createProject = baseApi<{ name: string }, {}>("POST", (pathParams) => {
   return `/api/projects`;
 });
 
+const createSubdomain = baseApi<
+  {
+    release_name: string;
+  },
+  {
+    id: number;
+    cluster_id: number;
+  }
+>("POST", (pathParams) => {
+  let { cluster_id, id } = pathParams;
+
+  return `/api/projects/${id}/k8s/subdomain?cluster_id=${cluster_id}`;
+});
+
 const deleteCluster = baseApi<
   {},
   {
@@ -175,9 +192,14 @@ const deployTemplate = baseApi<
     cluster_id: number;
     name: string;
     version: string;
+    repo_url?: string;
   }
 >("POST", (pathParams) => {
-  let { cluster_id, id, name, version } = pathParams;
+  let { cluster_id, id, name, version, repo_url } = pathParams;
+
+  if (repo_url) {
+    return `/api/projects/${id}/deploy/${name}/${version}?cluster_id=${cluster_id}&repo_url=${repo_url}`;
+  }
   return `/api/projects/${id}/deploy/${name}/${version}?cluster_id=${cluster_id}`;
 });
 
@@ -348,6 +370,22 @@ const getMatchingPods = baseApi<
   return `/api/projects/${pathParams.id}/k8s/pods`;
 });
 
+const getMetrics = baseApi<
+  {
+    cluster_id: number;
+    metric: string;
+    shouldsum: boolean;
+    pods: string[];
+    namespace: string;
+    startrange: number;
+    endrange: number;
+    resolution: string;
+  },
+  { id: number }
+>("GET", (pathParams) => {
+  return `/api/projects/${pathParams.id}/k8s/metrics`;
+});
+
 const getNamespaces = baseApi<
   {
     cluster_id: number;
@@ -383,6 +421,15 @@ const getProjectRepos = baseApi<{}, { id: number }>("GET", (pathParams) => {
 
 const getProjects = baseApi<{}, { id: number }>("GET", (pathParams) => {
   return `/api/users/${pathParams.id}/projects`;
+});
+
+const getPrometheusIsInstalled = baseApi<
+  {
+    cluster_id: number;
+  },
+  { id: number }
+>("GET", (pathParams) => {
+  return `/api/projects/${pathParams.id}/k8s/prometheus/detect`;
 });
 
 const getRegistryIntegrations = baseApi("GET", "/api/integrations/registry");
@@ -451,14 +498,23 @@ const getRevisions = baseApi<
   return `/api/projects/${pathParams.id}/releases/${pathParams.name}/history`;
 });
 
-const getTemplateInfo = baseApi<{}, { name: string; version: string }>(
-  "GET",
-  (pathParams) => {
-    return `/api/templates/${pathParams.name}/${pathParams.version}`;
-  }
-);
+const getTemplateInfo = baseApi<
+  {
+    repo_url?: string;
+  },
+  { name: string; version: string }
+>("GET", (pathParams) => {
+  return `/api/templates/${pathParams.name}/${pathParams.version}`;
+});
 
-const getTemplates = baseApi("GET", "/api/templates");
+const getAddonTemplates = baseApi("GET", "/api/templates");
+
+const getApplicationTemplates = baseApi<
+  {
+    repo_url?: string;
+  },
+  {}
+>("GET", "/api/templates");
 
 const getUser = baseApi<{}, { id: number }>("GET", (pathParams) => {
   return `/api/users/${pathParams.id}`;
@@ -532,7 +588,7 @@ const uninstallTemplate = baseApi<
   }
 >("POST", (pathParams) => {
   let { id, name, cluster_id, storage, namespace } = pathParams;
-  return `/api/projects/${id}/deploy/${name}?cluster_id=${cluster_id}&namespace=${namespace}&storage=${storage}`;
+  return `/api/projects/${id}/delete/${name}?cluster_id=${cluster_id}&namespace=${namespace}&storage=${storage}`;
 });
 
 const updateUser = baseApi<
@@ -578,6 +634,7 @@ export default {
   deleteCluster,
   deleteInvite,
   deleteProject,
+  createSubdomain,
   deployTemplate,
   destroyEKS,
   destroyGKE,
@@ -598,19 +655,22 @@ export default {
   getIngress,
   getInvites,
   getMatchingPods,
+  getMetrics,
   getNamespaces,
   getOAuthIds,
   getProjectClusters,
   getProjectRegistries,
   getProjectRepos,
   getProjects,
+  getPrometheusIsInstalled,
   getRegistryIntegrations,
   getReleaseToken,
   getRepoIntegrations,
   getRepos,
   getRevisions,
   getTemplateInfo,
-  getTemplates,
+  getAddonTemplates,
+  getApplicationTemplates,
   getUser,
   linkGithubProject,
   logInUser,

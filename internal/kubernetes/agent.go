@@ -110,6 +110,15 @@ func (a *Agent) GetDaemonSet(c grapher.Object) (*appsv1.DaemonSet, error) {
 	)
 }
 
+// GetJob gets the job by name and namespace
+func (a *Agent) GetJob(c grapher.Object) (*batchv1.Job, error) {
+	return a.Clientset.BatchV1().Jobs(c.Namespace).Get(
+		context.TODO(),
+		c.Name,
+		metav1.GetOptions{},
+	)
+}
+
 // GetPodsByLabel retrieves pods with matching labels
 func (a *Agent) GetPodsByLabel(selector string) (*v1.PodList, error) {
 	// Search in all namespaces for matching pods

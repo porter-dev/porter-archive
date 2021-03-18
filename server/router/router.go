@@ -1023,7 +1023,7 @@ func New(a *api.App) *chi.Mux {
 		// /api/projects/{project_id}/deploy routes
 		r.Method(
 			"POST",
-			"/projects/{project_id}/deploy/{name}",
+			"/projects/{project_id}/delete/{name}",
 			auth.DoesUserHaveProjectAccess(
 				auth.DoesUserHaveClusterAccess(
 					requestlog.NewHandler(a.HandleUninstallTemplate, l),
@@ -1042,6 +1042,34 @@ func New(a *api.App) *chi.Mux {
 			auth.DoesUserHaveProjectAccess(
 				auth.DoesUserHaveClusterAccess(
 					requestlog.NewHandler(a.HandleListNamespaces, l),
+					mw.URLParam,
+					mw.QueryParam,
+				),
+				mw.URLParam,
+				mw.ReadAccess,
+			),
+		)
+
+		r.Method(
+			"GET",
+			"/projects/{project_id}/k8s/prometheus/detect",
+			auth.DoesUserHaveProjectAccess(
+				auth.DoesUserHaveClusterAccess(
+					requestlog.NewHandler(a.HandleDetectPrometheusInstalled, l),
+					mw.URLParam,
+					mw.QueryParam,
+				),
+				mw.URLParam,
+				mw.ReadAccess,
+			),
+		)
+
+		r.Method(
+			"GET",
+			"/projects/{project_id}/k8s/metrics",
+			auth.DoesUserHaveProjectAccess(
+				auth.DoesUserHaveClusterAccess(
+					requestlog.NewHandler(a.HandleGetPodMetrics, l),
 					mw.URLParam,
 					mw.QueryParam,
 				),
@@ -1098,6 +1126,21 @@ func New(a *api.App) *chi.Mux {
 			auth.DoesUserHaveProjectAccess(
 				auth.DoesUserHaveClusterAccess(
 					requestlog.NewHandler(a.HandleListPods, l),
+					mw.URLParam,
+					mw.QueryParam,
+				),
+				mw.URLParam,
+				mw.ReadAccess,
+			),
+		)
+
+		// /api/projects/{project_id}/subdomain routes
+		r.Method(
+			"POST",
+			"/projects/{project_id}/k8s/subdomain",
+			auth.DoesUserHaveProjectAccess(
+				auth.DoesUserHaveClusterAccess(
+					requestlog.NewHandler(a.HandleCreateDNSRecord, l),
 					mw.URLParam,
 					mw.QueryParam,
 				),

@@ -2,13 +2,16 @@ package api
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/url"
 
 	"github.com/go-chi/chi"
+	"github.com/gorilla/schema"
 	"github.com/gorilla/websocket"
 	"github.com/porter-dev/porter/internal/forms"
 	"github.com/porter-dev/porter/internal/kubernetes"
+	"github.com/porter-dev/porter/internal/kubernetes/prometheus"
 	v1 "k8s.io/api/core/v1"
 )
 
@@ -320,4 +323,118 @@ func (app *App) HandleStreamControllerStatus(w http.ResponseWriter, r *http.Requ
 		app.handleErrorWebsocketWrite(err, w)
 		return
 	}
+}
+
+// HandleDetectPrometheusInstalled detects a prometheus installation in the target cluster
+func (app *App) HandleDetectPrometheusInstalled(w http.ResponseWriter, r *http.Request) {
+	vals, err := url.ParseQuery(r.URL.RawQuery)
+
+	if err != nil {
+		app.handleErrorFormDecoding(err, ErrReleaseDecode, w)
+		return
+	}
+
+	// get the filter options
+	form := &forms.K8sForm{
+		OutOfClusterConfig: &kubernetes.OutOfClusterConfig{
+			Repo:              app.Repo,
+			DigitalOceanOAuth: app.DOConf,
+		},
+	}
+
+	form.PopulateK8sOptionsFromQueryParams(vals, app.Repo.Cluster)
+
+	// validate the form
+	if err := app.validator.Struct(form); err != nil {
+		app.handleErrorFormValidation(err, ErrK8sValidate, w)
+		return
+	}
+
+	// create a new agent
+	var agent *kubernetes.Agent
+
+	if app.ServerConf.IsTesting {
+		agent = app.TestAgents.K8sAgent
+	} else {
+		agent, err = kubernetes.GetAgentOutOfClusterConfig(form.OutOfClusterConfig)
+	}
+
+	// detect prometheus service
+	_, found, err := prometheus.GetPrometheusService(agent.Clientset)
+
+	if !found {
+		http.NotFound(w, r)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	return
+}
+
+func (app *App) HandleGetPodMetrics(w http.ResponseWriter, r *http.Request) {
+	vals, err := url.ParseQuery(r.URL.RawQuery)
+
+	if err != nil {
+		app.handleErrorFormDecoding(err, ErrReleaseDecode, w)
+		return
+	}
+
+	// get the filter options
+	form := &forms.MetricsQueryForm{
+		K8sForm: &forms.K8sForm{
+			OutOfClusterConfig: &kubernetes.OutOfClusterConfig{
+				Repo:              app.Repo,
+				DigitalOceanOAuth: app.DOConf,
+			},
+		},
+		QueryOpts: &prometheus.QueryOpts{},
+	}
+
+	form.K8sForm.PopulateK8sOptionsFromQueryParams(vals, app.Repo.Cluster)
+
+	// decode from JSON to form value
+	decoder := schema.NewDecoder()
+	decoder.IgnoreUnknownKeys(true)
+
+	if err := decoder.Decode(form.QueryOpts, vals); err != nil {
+		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
+		return
+	}
+
+	// validate the form
+	if err := app.validator.Struct(form); err != nil {
+		app.handleErrorFormValidation(err, ErrK8sValidate, w)
+		return
+	}
+
+	// create a new agent
+	var agent *kubernetes.Agent
+
+	if app.ServerConf.IsTesting {
+		agent = app.TestAgents.K8sAgent
+	} else {
+		agent, err = kubernetes.GetAgentOutOfClusterConfig(form.OutOfClusterConfig)
+	}
+
+	// get prometheus service
+	promSvc, found, err := prometheus.GetPrometheusService(agent.Clientset)
+
+	if err != nil {
+		app.handleErrorInternal(err, w)
+		return
+	}
+
+	if !found {
+		app.handleErrorInternal(err, w)
+		return
+	}
+
+	rawQuery, err := prometheus.QueryPrometheus(agent.Clientset, promSvc, form.QueryOpts)
+
+	if err != nil {
+		app.handleErrorInternal(err, w)
+		return
+	}
+
+	fmt.Fprint(w, string(rawQuery))
 }

@@ -1,14 +1,18 @@
 import React, { useMemo, useCallback } from "react";
 import { AreaClosed, Line, Bar } from "@visx/shape";
-import appleStock, { AppleStock } from "@visx/mock-data/lib/mocks/appleStock";
 import { curveMonotoneX } from "@visx/curve";
 import { scaleTime, scaleLinear } from "@visx/scale";
+import { AxisLeft, AxisBottom } from "@visx/axis";
+
 import {
   withTooltip,
   Tooltip,
   TooltipWithBounds,
   defaultStyles,
 } from "@visx/tooltip";
+
+import { GridRows, GridColumns } from "@visx/grid";
+
 import { WithTooltipProvidedProps } from "@visx/tooltip/lib/enhancers/withTooltip";
 import { localPoint } from "@visx/event";
 import { LinearGradient } from "@visx/gradient";
@@ -20,9 +24,15 @@ export const accentColor = '#f5cb42';
 export const accentColorDark = '#949eff';
 */
 
-type TooltipData = AppleStock;
+export type MetricsData = {
+  date: number; // unix timestamp
+  value: number; // value
+};
 
-const stock = appleStock.slice(800);
+type TooltipData = MetricsData;
+
+var globalData: MetricsData[];
+
 export const background = "#3b697800";
 export const background2 = "#20405100";
 export const accentColor = "#949eff";
@@ -35,14 +45,29 @@ const tooltipStyles = {
 };
 
 // util
-const formatDate = timeFormat("%b %d, '%y");
+const formatDate = timeFormat("%H:%M:%S %b %d, '%y");
+
+const hourFormat = timeFormat("%H:%M");
+const dayFormat = timeFormat("%b %d");
+
+// map resolutions to formats
+const formats: { [range: string]: (date: Date) => string } = {
+  "1H": hourFormat,
+  "6H": hourFormat,
+  "1D": hourFormat,
+  "1M": dayFormat,
+};
 
 // accessors
-const getDate = (d: AppleStock) => new Date(d.date);
-const getStockValue = (d: AppleStock) => d.close;
-const bisectDate = bisector<AppleStock, Date>((d) => new Date(d.date)).left;
+const getDate = (d: MetricsData) => new Date(d.date * 1000);
+const getValue = (d: MetricsData) => d.value;
+
+const bisectDate = bisector<MetricsData, Date>((d) => new Date(d.date * 1000))
+  .left;
 
 export type AreaProps = {
+  data: MetricsData[];
+  resolution: string;
   width: number;
   height: number;
   margin?: { top: number; right: number; bottom: number; left: number };
@@ -50,6 +75,8 @@ export type AreaProps = {
 
 export default withTooltip<AreaProps, TooltipData>(
   ({
+    data,
+    resolution,
     width,
     height,
     margin = { top: 0, right: 0, bottom: 0, left: 0 },
@@ -59,10 +86,14 @@ export default withTooltip<AreaProps, TooltipData>(
     tooltipTop = 0,
     tooltipLeft = 0,
   }: AreaProps & WithTooltipProvidedProps<TooltipData>) => {
-    if (width < 10) return null;
+    globalData = data;
+
+    if (width == 0 || height == 0 || width < 10) {
+      return null;
+    }
 
     // bounds
-    const innerWidth = width - margin.left - margin.right;
+    const innerWidth = width - margin.left - margin.right - 40;
     const innerHeight = height - margin.top - margin.bottom - 20;
 
     // scales
@@ -70,18 +101,18 @@ export default withTooltip<AreaProps, TooltipData>(
       () =>
         scaleTime({
           range: [margin.left, innerWidth + margin.left],
-          domain: extent(stock, getDate) as [Date, Date],
+          domain: extent(globalData, getDate) as [Date, Date],
         }),
-      [innerWidth, margin.left]
+      [innerWidth, margin.left, width, height, data]
     );
-    const stockValueScale = useMemo(
+    const valueScale = useMemo(
       () =>
         scaleLinear({
           range: [innerHeight + margin.top, margin.top],
-          domain: [0, (max(stock, getStockValue) || 0) + innerHeight / 3],
+          domain: [0, 1.25 * max(globalData, getValue)],
           nice: true,
         }),
-      [margin.top, innerHeight]
+      [margin.top, innerHeight, width, height, data]
     );
 
     // tooltip handler
@@ -93,10 +124,11 @@ export default withTooltip<AreaProps, TooltipData>(
       ) => {
         const { x } = localPoint(event) || { x: 0 };
         const x0 = dateScale.invert(x);
-        const index = bisectDate(stock, x0, 1);
-        const d0 = stock[index - 1];
-        const d1 = stock[index];
+        const index = bisectDate(globalData, x0, 1);
+        const d0 = globalData[index - 1];
+        const d1 = globalData[index];
         let d = d0;
+
         if (d1 && getDate(d1)) {
           d =
             x0.valueOf() - getDate(d0).valueOf() >
@@ -104,13 +136,14 @@ export default withTooltip<AreaProps, TooltipData>(
               ? d1
               : d0;
         }
+
         showTooltip({
           tooltipData: d,
-          tooltipLeft: x,
-          tooltipTop: stockValueScale(getStockValue(d)),
+          tooltipLeft: x || 0,
+          tooltipTop: valueScale(getValue(d)) || 0,
         });
       },
-      [showTooltip, stockValueScale, dateScale]
+      [showTooltip, valueScale, dateScale, width, height, data]
     );
 
     return (
@@ -135,15 +168,60 @@ export default withTooltip<AreaProps, TooltipData>(
             to={accentColor}
             toOpacity={0}
           />
-          <AreaClosed<AppleStock>
-            data={stock}
+          <GridRows
+            left={margin.left}
+            scale={valueScale}
+            width={innerWidth}
+            strokeDasharray="1,3"
+            stroke="white"
+            strokeOpacity={0.2}
+            pointerEvents="none"
+          />
+          <GridColumns
+            top={margin.top}
+            scale={dateScale}
+            height={innerHeight}
+            strokeDasharray="1,3"
+            stroke="white"
+            strokeOpacity={0.2}
+            pointerEvents="none"
+          />
+          <AreaClosed<MetricsData>
+            data={data}
             x={(d) => dateScale(getDate(d)) ?? 0}
-            y={(d) => stockValueScale(getStockValue(d)) ?? 0}
-            yScale={stockValueScale}
+            y={(d) => valueScale(getValue(d)) ?? 0}
+            height={innerHeight}
+            yScale={valueScale}
             strokeWidth={1}
             stroke="url(#area-gradient)"
             fill="url(#area-gradient)"
             curve={curveMonotoneX}
+          />
+          <AxisLeft
+            left={10}
+            scale={valueScale}
+            hideAxisLine={true}
+            hideTicks={true}
+            tickLabelProps={() => ({
+              fill: "white",
+              fontSize: 11,
+              textAnchor: "start",
+              fillOpacity: 0.4,
+              dy: 0,
+            })}
+          />
+          <AxisBottom
+            top={height - 20}
+            scale={dateScale}
+            tickFormat={formats[resolution]}
+            hideAxisLine={true}
+            hideTicks={true}
+            tickLabelProps={() => ({
+              fill: "white",
+              fontSize: 11,
+              textAnchor: "middle",
+              fillOpacity: 0.4,
+            })}
           />
           <Bar
             x={margin.left}
@@ -198,7 +276,7 @@ export default withTooltip<AreaProps, TooltipData>(
               left={tooltipLeft + 12}
               style={tooltipStyles}
             >
-              {`$${getStockValue(tooltipData)}`}
+              {getValue(tooltipData)}
             </TooltipWithBounds>
             <Tooltip
               top={-10}

@@ -13,24 +13,26 @@ type PropsType = {
 
 type StateType = {};
 
-export default class IntegrationForm extends Component<PropsType, StateType> {
+export default class CreateIntegrationForm extends Component<
+  PropsType,
+  StateType
+> {
   state = {};
 
-  render() {
-    let { closeForm } = this.props;
+  render = () => {
     switch (this.props.integrationName) {
       case "docker-hub":
-        return <DockerHubForm closeForm={closeForm} />;
+        return <DockerHubForm closeForm={this.props.closeForm} />;
       case "gke":
-        return <GKEForm closeForm={closeForm} />;
+        return <GKEForm closeForm={this.props.closeForm} />;
       case "eks":
-        return <EKSForm closeForm={closeForm} />;
+        return <EKSForm closeForm={this.props.closeForm} />;
       case "ecr":
-        return <ECRForm closeForm={closeForm} />;
+        return <ECRForm closeForm={this.props.closeForm} />;
       case "gcr":
-        return <GCRForm closeForm={closeForm} />;
+        return <GCRForm closeForm={this.props.closeForm} />;
       default:
         return null;
     }
-  }
+  };
 }

@@ -94,35 +94,36 @@ export default class Main extends Component<PropsType, StateType> {
           }}
         />
         <Route
-          path={`/:subroute`}
-          render={(routeProps) => {
-            const urlRoute = routeProps.location.pathname.slice(1);
-            if (
-              this.state.isLoggedIn &&
-              this.state.initialized &&
-              PorterUrls.includes(urlRoute)
-            ) {
-              return (
-                <Home
-                  key="home"
-                  currentProject={this.context.currentProject}
-                  currentCluster={this.context.currentCluster}
-                  currentRoute={urlRoute as PorterUrl}
-                  logOut={this.handleLogOut}
-                />
-              );
-            } else {
-              return <Redirect to="/" />;
-            }
-          }}
-        />
-        <Route
+          exact
           path="/"
           render={() => {
             if (this.state.isLoggedIn) {
               return <Redirect to="/dashboard" />;
             } else {
               return <Redirect to="/login" />;
+            }
+          }}
+        />
+        <Route
+          path={`/:baseRoute`}
+          render={(routeProps) => {
+            const baseRoute = routeProps.match.params.baseRoute;
+            if (
+              this.state.isLoggedIn &&
+              this.state.initialized &&
+              PorterUrls.includes(baseRoute)
+            ) {
+              return (
+                <Home
+                  key="home"
+                  currentProject={this.context.currentProject}
+                  currentCluster={this.context.currentCluster}
+                  currentRoute={baseRoute as PorterUrl}
+                  logOut={this.handleLogOut}
+                />
+              );
+            } else {
+              return <Redirect to="/" />;
             }
           }}
         />

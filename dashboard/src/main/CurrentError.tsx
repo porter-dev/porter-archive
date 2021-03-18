@@ -94,7 +94,7 @@ const StyledCurrentError = styled.div`
   position: fixed;
   bottom: 22px;
   width: 300px;
-  left: 100px;
+  left: 20px;
   padding: 15px;
   padding-right: 0px;
   font-family: "Work Sans", sans-serif;

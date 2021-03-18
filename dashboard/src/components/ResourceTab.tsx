@@ -253,6 +253,8 @@ const StatusColor = styled.div`
       ? "#4797ff"
       : props.status === "failed" || props.status === "FailedValidation"
       ? "#ed5f85"
+      : props.status === "completed"
+      ? "#00d12a"
       : "#f5cb42"};
   border-radius: 20px;
 `;

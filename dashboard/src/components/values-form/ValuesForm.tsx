@@ -19,6 +19,7 @@ type PropsType = {
   sections?: Section[];
   metaState?: any;
   setMetaState?: any;
+  handleEnvChange?: (x: any) => void;
 };
 
 type StateType = any;
@@ -47,7 +48,7 @@ export default class ValuesForm extends Component<PropsType, StateType> {
         case "resource-list":
           if (Array.isArray(item.value)) {
             return (
-              <ResourceList>
+              <ResourceList key={i}>
                 {item.value.map((resource: any, i: number) => {
                   return (
                     <ExpandableResource
@@ -75,9 +76,18 @@ export default class ValuesForm extends Component<PropsType, StateType> {
         case "key-value-array":
           return (
             <KeyValueArray
+              key={i}
               values={this.props.metaState[key]}
               setValues={(x: any) => {
                 this.props.setMetaState({ [key]: x });
+
+                // Need to pull env vars out of form.yaml for createGHA build env vars
+                if (
+                  this.props.handleEnvChange &&
+                  key === "container.env.normal"
+                ) {
+                  this.props.handleEnvChange(x);
+                }
               }}
               label={item.label}
             />

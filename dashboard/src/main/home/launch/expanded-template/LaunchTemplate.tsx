@@ -563,6 +563,11 @@ class LaunchTemplate extends Component<PropsType, StateType> {
           <Subtitle>
             Specify the container image you would like to connect to this
             template.
+            <Highlight
+              onClick={() => this.props.history.push("integrations/registry")}
+            >
+              Manage Docker registries
+            </Highlight>
             <Required>*</Required>
           </Subtitle>
           <DarkMatter antiHeight="-4px" />
@@ -610,6 +615,11 @@ class LaunchTemplate extends Component<PropsType, StateType> {
           </CloseButton>
           <Subtitle>
             Provide a repo folder to use as source.
+            <Highlight
+              onClick={() => this.props.history.push("integrations/repo")}
+            >
+              Manage Git repos
+            </Highlight>
             <Required>*</Required>
           </Subtitle>
           <DarkMatter antiHeight="-4px" />
@@ -1019,11 +1029,9 @@ const StyledLaunchTemplate = styled.div`
 
 const Highlight = styled.div`
   color: #8590ff;
-  text-decoration: underline;
+  text-decoration: none;
   margin-left: 5px;
   cursor: pointer;
-  padding-right: ${(props: { padRight?: boolean }) =>
-    props.padRight ? "5px" : ""};
 `;
 
 const StyledSourceBox = styled.div`

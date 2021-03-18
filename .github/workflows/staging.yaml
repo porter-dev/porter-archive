@@ -1,4 +1,4 @@
-name: Build, Push to GCR.
+name: Deploy to staging
 on:
   push:
     branches:

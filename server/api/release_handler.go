@@ -371,8 +371,8 @@ func (app *App) HandleGetReleaseControllers(w http.ResponseWriter, r *http.Reque
 
 			rc.Kind = c.Kind
 			retrievedControllers = append(retrievedControllers, rc)
-		case "Job":
-			rc, err := k8sAgent.GetJob(c)
+		case "CronJob":
+			rc, err := k8sAgent.GetCronJob(c)
 
 			if err != nil {
 				app.handleErrorDataRead(err, w)

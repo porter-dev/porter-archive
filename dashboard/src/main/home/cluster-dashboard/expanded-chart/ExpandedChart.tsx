@@ -107,6 +107,7 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
 
     // don't retrieve controllers for chart that failed to even deploy.
     if (chart.info.status == "failed") return;
+
     // TODO: properly promisify
     await new Promise((next: (res?: any) => void) => {
       api
@@ -288,14 +289,16 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
       case "metrics":
         return <MetricsSection currentChart={chart} />;
       case "status":
-        let controller_uid = Object.keys(this.state.controllers)[0];
+        let activeJobs = Object.values(this.state.controllers)[0]?.status.active;
+        let selectors = activeJobs?.map((job: any) => {
+          return `job-name=${job.name},controller-uid=${job.uid}`
+        })
+
         if (chart.chart.metadata.name == "job") {
           return (
             <StatusSection
               currentChart={chart}
-              selectors={[
-                `job-name=${chart.name}-job,controller-uid=${controller_uid}`,
-              ]}
+              selectors={selectors}
             />
           );
         }
@@ -458,14 +461,6 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
       for (var uid in this.state.controllers) {
         let value = this.state.controllers[uid];
         let available = this.getAvailability(value.metadata.kind, value);
-
-        if (
-          value.metadata.kind?.toLowerCase() == "job" &&
-          !value.status?.active
-        ) {
-          return "completed";
-        }
-
         let progressing = true;
 
         this.state.controllers[uid]?.status?.conditions?.forEach(
@@ -500,8 +495,6 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
         return c.status.readyReplicas == c.status.replicas;
       case "daemonset":
         return c.status.numberAvailable == c.status.desiredNumberScheduled;
-      case "job":
-        return c.status.active;
     }
   };
 

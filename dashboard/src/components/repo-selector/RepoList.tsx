@@ -123,11 +123,10 @@ export default class ActionConfEditor extends Component<PropsType, StateType> {
         <LoadingWrapper>
           No connected Github repos found. You can
           <A
-            padRight={true}
             href={`/api/oauth/projects/${this.context.currentProject.id}/github?redirected=true`}
           >
             log in with GitHub
-          </A>{" "}
+          </A>
           .
         </LoadingWrapper>
       );
@@ -254,6 +253,4 @@ const A = styled.a`
   text-decoration: underline;
   margin-left: 5px;
   cursor: pointer;
-  padding-right: ${(props: { padRight?: boolean }) =>
-    props.padRight ? "5px" : ""};
 `;

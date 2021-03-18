@@ -12,6 +12,7 @@ type PropsType = {
   setCurrentTab: (value: string) => void;
   addendum?: any;
   color?: string;
+  noBuffer?: boolean;
 };
 
 type StateType = {};
@@ -45,7 +46,7 @@ export default class TabSelector extends Component<PropsType, StateType> {
         <TabWrapper>
           {this.renderTabList()}
           <Tab lastItem={true} highlight={null}>
-            <Buffer />
+            {this.props.noBuffer ? null : <Buffer />}
           </Tab>
         </TabWrapper>
         {this.props.addendum}

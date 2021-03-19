@@ -104,6 +104,12 @@ func (e *DNSRecord) createIngress(clientset kubernetes.Interface) error {
 				Namespace: "default",
 			},
 			Spec: v1beta1.IngressSpec{
+				TLS: []v1beta1.IngressTLS{
+					{
+						Hosts:      []string{fmt.Sprintf("%s.%s", e.SubdomainPrefix, e.RootDomain)},
+						SecretName: "wildcard-cert-tls",
+					},
+				},
 				Rules: []v1beta1.IngressRule{
 					{
 						Host: fmt.Sprintf("%s.%s", e.SubdomainPrefix, e.RootDomain),

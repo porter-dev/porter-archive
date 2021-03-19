@@ -234,7 +234,7 @@ class LaunchTemplate extends Component<PropsType, StateType> {
           api.createSubdomain(
             "<token>",
             {
-              release_name: this.props.currentTemplate.name.toLowerCase().trim(),
+              release_name: name,
             },
             {
               id: currentProject.id,

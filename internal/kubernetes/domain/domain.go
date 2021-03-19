@@ -39,6 +39,7 @@ func GetNGINXIngressServiceIP(clientset kubernetes.Interface) (string, bool, err
 				fmt.Println("GOT AN INGRESS NGINX")
 				nginxSvc = &svc
 				exists = true
+				break
 			}
 		}
 	}
@@ -48,6 +49,10 @@ func GetNGINXIngressServiceIP(clientset kubernetes.Interface) (string, bool, err
 	}
 
 	fmt.Println("IP ARRAY IS", nginxSvc.Status.LoadBalancer.Ingress)
+
+	specBytes, _ := nginxSvc.Marshal()
+
+	fmt.Println("SPEC IS", string(specBytes))
 
 	if ipArr := nginxSvc.Status.LoadBalancer.Ingress; len(ipArr) > 0 {
 		// first default to ip, then check hostname

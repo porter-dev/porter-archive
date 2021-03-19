@@ -143,6 +143,20 @@ const createProject = baseApi<{ name: string }, {}>("POST", (pathParams) => {
   return `/api/projects`;
 });
 
+const createSubdomain = baseApi<
+  {
+    release_name: string;
+  },
+  {
+    id: number;
+    cluster_id: number;
+  }
+>("POST", (pathParams) => {
+  let { cluster_id, id } = pathParams;
+
+  return `/api/projects/${id}/k8s/subdomain?cluster_id=${cluster_id}`;
+});
+
 const deleteCluster = baseApi<
   {},
   {
@@ -620,6 +634,7 @@ export default {
   deleteCluster,
   deleteInvite,
   deleteProject,
+  createSubdomain,
   deployTemplate,
   destroyEKS,
   destroyGKE,

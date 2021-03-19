@@ -175,14 +175,14 @@ class LaunchTemplate extends Component<PropsType, StateType> {
       });
   };
 
-  onSubmit = (rawValues: any) => {
+  onSubmit = async (rawValues: any) => {
     let { currentCluster, currentProject } = this.context;
     let name =
       this.state.templateName || randomWords({ exactly: 3, join: "-" });
     this.setState({ saveValuesStatus: "loading" });
 
     // Convert dotted keys to nested objects
-    let values = {};
+    let values: any = {};
     for (let key in rawValues) {
       _.set(values, key, rawValues[key]);
     }
@@ -215,7 +215,7 @@ class LaunchTemplate extends Component<PropsType, StateType> {
         provider = "digitalocean";
         break;
       default:
-        provider = null;
+        provider = "";
     }
 
     // don't overwrite for templates that already have a source (i.e. non-Docker templates)
@@ -225,6 +225,37 @@ class LaunchTemplate extends Component<PropsType, StateType> {
     }
 
     _.set(values, "ingress.provider", provider);
+    var url: string;
+
+    // check if template is docker and create external domain if necessary
+    if (this.props.currentTemplate.name == "web") {
+      if (values?.ingress?.enabled && values?.ingress?.hosts?.length == 0) {
+        url = await new Promise((resolve, reject) => {
+          api
+            .createSubdomain(
+              "<token>",
+              {
+                release_name: name,
+              },
+              {
+                id: currentProject.id,
+                cluster_id: currentCluster.id,
+              }
+            )
+            .then((res) => {
+              resolve(res.data?.external_url);
+            })
+            .catch((err) => {
+              this.setState({ saveValuesStatus: "error" });
+            });
+        });
+
+        values.ingress.hosts = [url];
+        values.ingress.custom_domain = true;
+      }
+    }
+
+    console.log("VALUES ARE", values);
 
     api
       .deployTemplate(

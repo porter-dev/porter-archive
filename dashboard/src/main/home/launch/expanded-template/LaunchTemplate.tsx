@@ -182,7 +182,7 @@ class LaunchTemplate extends Component<PropsType, StateType> {
     this.setState({ saveValuesStatus: "loading" });
 
     // Convert dotted keys to nested objects
-    let values : any = {};
+    let values: any = {};
     for (let key in rawValues) {
       _.set(values, key, rawValues[key]);
     }
@@ -225,35 +225,37 @@ class LaunchTemplate extends Component<PropsType, StateType> {
     }
 
     _.set(values, "ingress.provider", provider);
-    var url : string
+    var url: string;
 
     // check if template is docker and create external domain if necessary
     if (this.props.currentTemplate.name == "web") {
       if (values?.ingress?.enabled && values?.ingress?.hosts?.length == 0) {
         url = await new Promise((resolve, reject) => {
-          api.createSubdomain(
-            "<token>",
-            {
-              release_name: name,
-            },
-            {
-              id: currentProject.id,
-              cluster_id: currentCluster.id,
-            }
-          ).then((res) => {
-            resolve(res.data?.external_url)
-          })
-          .catch((err) => {
-            this.setState({ saveValuesStatus: "error" });
-          });
-        })
+          api
+            .createSubdomain(
+              "<token>",
+              {
+                release_name: name,
+              },
+              {
+                id: currentProject.id,
+                cluster_id: currentCluster.id,
+              }
+            )
+            .then((res) => {
+              resolve(res.data?.external_url);
+            })
+            .catch((err) => {
+              this.setState({ saveValuesStatus: "error" });
+            });
+        });
 
-        values.ingress.hosts = [url]
-        values.ingress.custom_domain = true
+        values.ingress.hosts = [url];
+        values.ingress.custom_domain = true;
       }
     }
 
-    console.log("VALUES ARE", values)
+    console.log("VALUES ARE", values);
 
     api
       .deployTemplate(

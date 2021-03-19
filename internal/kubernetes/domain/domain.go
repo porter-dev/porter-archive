@@ -155,11 +155,15 @@ func (e *DNSRecord) createServiceWithEndpoint(clientset kubernetes.Interface) er
 
 	// case service spec on ipv4
 	if isIPv4 {
+		fmt.Println("TYPE IS IPV4", e.Endpoint)
 		svcSpec.ClusterIP = "None"
 	} else {
+		fmt.Println("TYPE IS EXTERNAL NAME", e.Endpoint)
 		svcSpec.Type = "ExternalName"
 		svcSpec.ExternalName = e.Endpoint
 	}
+
+	fmt.Println("SVC SPEC IS", svcSpec)
 
 	// create service
 	_, err := clientset.CoreV1().Services("default").Create(

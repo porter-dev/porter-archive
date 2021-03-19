@@ -45,6 +45,7 @@ func main() {
 		&models.GitActionConfig{},
 		&models.Invite{},
 		&models.AuthCode{},
+		&models.DNSRecord{},
 		&ints.KubeIntegration{},
 		&ints.BasicIntegration{},
 		&ints.OIDCIntegration{},

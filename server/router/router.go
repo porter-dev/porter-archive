@@ -1133,6 +1133,21 @@ func New(a *api.App) *chi.Mux {
 				mw.ReadAccess,
 			),
 		)
+
+		// /api/projects/{project_id}/subdomain routes
+		r.Method(
+			"POST",
+			"/projects/{project_id}/k8s/subdomain",
+			auth.DoesUserHaveProjectAccess(
+				auth.DoesUserHaveClusterAccess(
+					requestlog.NewHandler(a.HandleCreateDNSRecord, l),
+					mw.URLParam,
+					mw.QueryParam,
+				),
+				mw.URLParam,
+				mw.ReadAccess,
+			),
+		)
 	})
 
 	staticFilePath := a.ServerConf.StaticFilePath

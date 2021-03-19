@@ -215,7 +215,7 @@ class LaunchTemplate extends Component<PropsType, StateType> {
         provider = "digitalocean";
         break;
       default:
-        provider = null;
+        provider = "";
     }
 
     // don't overwrite for templates that already have a source (i.e. non-Docker templates)

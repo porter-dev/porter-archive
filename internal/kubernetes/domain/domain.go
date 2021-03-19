@@ -44,7 +44,12 @@ func GetNGINXIngressServiceIP(clientset kubernetes.Interface) (string, bool, err
 	}
 
 	if ipArr := nginxSvc.Status.LoadBalancer.Ingress; len(ipArr) > 0 {
-		return ipArr[0].IP, true, nil
+		// first default to ip, then check hostname
+		if ipArr[0].IP != "" {
+			return ipArr[0].IP, true, nil
+		} else if ipArr[0].Hostname != "" {
+			return ipArr[0].Hostname, true, nil
+		}
 	}
 
 	return "", false, nil

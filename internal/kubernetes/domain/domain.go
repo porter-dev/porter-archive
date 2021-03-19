@@ -35,6 +35,7 @@ func GetNGINXIngressServiceIP(clientset kubernetes.Interface) (string, bool, err
 			if (strings.Contains(chartAnn, "ingress-nginx") || strings.Contains(chartAnn, "nginx-ingress")) && svc.Spec.Type == v1.ServiceTypeLoadBalancer {
 				nginxSvc = &svc
 				exists = true
+				break
 			}
 		}
 	}

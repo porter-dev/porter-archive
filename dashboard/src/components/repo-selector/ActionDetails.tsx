@@ -147,7 +147,7 @@ export default class ActionDetails extends Component<PropsType, StateType> {
             href="https://docs.getporter.dev/docs/auto-deploy-requirements#cicd-with-github-actions"
             target="_blank"
           >
-            Learn More
+            Learn more
           </Highlight>
         </SubtitleAlt>
         <Br />

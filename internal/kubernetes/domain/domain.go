@@ -31,8 +31,12 @@ func GetNGINXIngressServiceIP(clientset kubernetes.Interface) (string, bool, err
 
 	for _, svc := range svcList.Items {
 		// check that helm chart annotation is correct exists
+		fmt.Println("CHECKING SVC", svc.ObjectMeta.Name)
+
 		if chartAnn, found := svc.ObjectMeta.Labels["helm.sh/chart"]; found {
+			fmt.Println("FOUND CHART ANNOTATION", chartAnn)
 			if (strings.Contains(chartAnn, "ingress-nginx") || strings.Contains(chartAnn, "nginx-ingress")) && svc.Spec.Type == v1.ServiceTypeLoadBalancer {
+				fmt.Println("GOT AN INGRESS NGINX")
 				nginxSvc = &svc
 				exists = true
 			}
@@ -43,8 +47,17 @@ func GetNGINXIngressServiceIP(clientset kubernetes.Interface) (string, bool, err
 		return "", false, nil
 	}
 
+	fmt.Println("IP ARRAY IS", nginxSvc.Status.LoadBalancer.Ingress)
+
 	if ipArr := nginxSvc.Status.LoadBalancer.Ingress; len(ipArr) > 0 {
-		return ipArr[0].IP, true, nil
+		// first default to ip, then check hostname
+		if ipArr[0].IP != "" {
+			fmt.Println("GOT IP ADDR", ipArr[0].IP)
+			return ipArr[0].IP, true, nil
+		} else if ipArr[0].Hostname != "" {
+			fmt.Println("GOT HOSTNAME", ipArr[0].Hostname)
+			return ipArr[0].Hostname, true, nil
+		}
 	}
 
 	return "", false, nil

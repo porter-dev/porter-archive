@@ -71,6 +71,10 @@ const createDOKS = baseApi<
   return `/api/projects/${pathParams.project_id}/provision/doks`;
 });
 
+const createEmailVerification = baseApi<{}, {}>("POST", (pathParams) => {
+  return `/api/email/verify/initiate`;
+});
+
 const createGCPIntegration = baseApi<
   {
     gcp_region: string;
@@ -648,6 +652,7 @@ export default {
   createAWSIntegration,
   createDOCR,
   createDOKS,
+  createEmailVerification,
   createGCPIntegration,
   createGCR,
   createGHAction,

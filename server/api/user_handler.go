@@ -400,8 +400,9 @@ func (app *App) InitiatePWResetUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	queryVals := url.Values{
-		"token": []string{rawToken},
-		"email": []string{form.Email},
+		"token":    []string{rawToken},
+		"email":    []string{form.Email},
+		"token_id": []string{fmt.Sprintf("%d", pwReset.ID)},
 	}
 
 	sgClient := email.SendgridClient{
@@ -411,7 +412,7 @@ func (app *App) InitiatePWResetUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	err = sgClient.SendPWResetEmail(
-		fmt.Sprintf("https://%s/auth/reset?%s", app.ServerConf.ServerURL, queryVals.Encode()),
+		fmt.Sprintf("%s/password/reset/finalize?%s", app.ServerConf.ServerURL, queryVals.Encode()),
 		form.Email,
 	)
 
@@ -519,7 +520,7 @@ func (app *App) FinalizPWResetUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	hashedPW, err := bcrypt.GenerateFromPassword([]byte(user.Password), 8)
+	hashedPW, err := bcrypt.GenerateFromPassword([]byte(form.NewPassword), 8)
 
 	if err != nil {
 		app.handleErrorDataWrite(err, w)

@@ -5,8 +5,10 @@ import { BrowserRouter, Route, Redirect, Switch } from "react-router-dom";
 import api from "shared/api";
 import { Context } from "shared/Context";
 
-import Login from "./Login";
-import Register from "./Register";
+import ResetPasswordInit from "./auth/ResetPasswordInit";
+import ResetPasswordFinalize from "./auth/ResetPasswordFinalize";
+import Login from "./auth/Login";
+import Register from "./auth/Register";
 import CurrentError from "./CurrentError";
 import Home from "./home/Home";
 import Loading from "components/Loading";
@@ -88,6 +90,26 @@ export default class Main extends Component<PropsType, StateType> {
           render={() => {
             if (!this.state.isLoggedIn) {
               return <Register authenticate={this.initialize} />;
+            } else {
+              return <Redirect to="/" />;
+            }
+          }}
+        />
+        <Route
+          path="/password/reset/finalize"
+          render={() => {
+            if (!this.state.isLoggedIn) {
+              return <ResetPasswordFinalize />;
+            } else {
+              return <Redirect to="/" />;
+            }
+          }}
+        />
+        <Route
+          path="/password/reset"
+          render={() => {
+            if (!this.state.isLoggedIn) {
+              return <ResetPasswordInit />;
             } else {
               return <Redirect to="/" />;
             }

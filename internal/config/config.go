@@ -36,6 +36,10 @@ type ServerConf struct {
 	GithubClientID     string `env:"GITHUB_CLIENT_ID"`
 	GithubClientSecret string `env:"GITHUB_CLIENT_SECRET"`
 
+	SendgridAPIKey            string `env:"SENDGRID_API_KEY"`
+	SendgridPWResetTemplateID string `env:"SENDGRID_PW_RESET_TEMPLATE_ID"`
+	SendgridSenderEmail       string `env:"SENDGRID_SENDER_EMAIL"`
+
 	DOClientID          string `env:"DO_CLIENT_ID"`
 	DOClientSecret      string `env:"DO_CLIENT_SECRET"`
 	ProvisionerImageTag string `env:"PROV_IMAGE_TAG,default=latest"`

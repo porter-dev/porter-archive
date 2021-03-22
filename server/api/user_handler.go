@@ -18,6 +18,7 @@ import (
 	"github.com/go-chi/chi"
 	"github.com/porter-dev/porter/internal/auth/token"
 	"github.com/porter-dev/porter/internal/forms"
+	"github.com/porter-dev/porter/internal/integrations/email"
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/repository"
 )
@@ -351,6 +352,201 @@ func (app *App) HandleDeleteUser(w http.ResponseWriter, r *http.Request) {
 		app.Logger.Info().Msgf("User deleted: %d", user.ID)
 		w.WriteHeader(http.StatusNoContent)
 	}
+}
+
+// InitiatePWResetUser initiates the password reset flow based on an email. The endpoint
+// checks if the email exists, but returns a 200 status code regardless, since we don't
+// want to leak in-use emails
+func (app *App) InitiatePWResetUser(w http.ResponseWriter, r *http.Request) {
+	form := &forms.InitiateResetUserPasswordForm{}
+
+	// decode from JSON to form value
+	if err := json.NewDecoder(r.Body).Decode(form); err != nil {
+		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
+		return
+	}
+
+	// validate the form
+	if err := app.validator.Struct(form); err != nil {
+		app.handleErrorFormValidation(err, ErrProjectValidateFields, w)
+		return
+	}
+
+	// check that the email exists; return 200 status code even if it doesn't
+	_, err := app.Repo.User.ReadUserByEmail(form.Email)
+
+	if err == gorm.ErrRecordNotFound {
+		w.WriteHeader(http.StatusOK)
+		return
+	} else if err != nil {
+		app.handleErrorDataRead(err, w)
+		return
+	}
+
+	// convert the form to a project model
+	pwReset, rawToken, err := form.ToPWResetToken()
+
+	if err != nil {
+		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
+		return
+	}
+
+	// handle write to the database
+	pwReset, err = app.Repo.PWResetToken.CreatePWResetToken(pwReset)
+
+	if err != nil {
+		app.handleErrorDataWrite(err, w)
+		return
+	}
+
+	queryVals := url.Values{
+		"token": []string{rawToken},
+		"email": []string{form.Email},
+	}
+
+	sgClient := email.SendgridClient{
+		APIKey:            app.ServerConf.SendgridAPIKey,
+		PWResetTemplateID: app.ServerConf.SendgridPWResetTemplateID,
+		SenderEmail:       app.ServerConf.SendgridSenderEmail,
+	}
+
+	err = sgClient.SendPWResetEmail(
+		fmt.Sprintf("https://%s/auth/reset?%s", app.ServerConf.ServerURL, queryVals.Encode()),
+		form.Email,
+	)
+
+	if err != nil {
+		app.handleErrorInternal(err, w)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	return
+}
+
+// VerifyPWResetUser makes sure that the token is correct and still valid
+func (app *App) VerifyPWResetUser(w http.ResponseWriter, r *http.Request) {
+	form := &forms.VerifyResetUserPasswordForm{}
+
+	// decode from JSON to form value
+	if err := json.NewDecoder(r.Body).Decode(form); err != nil {
+		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
+		return
+	}
+
+	// validate the form
+	if err := app.validator.Struct(form); err != nil {
+		app.handleErrorFormValidation(err, ErrProjectValidateFields, w)
+		return
+	}
+
+	token, err := app.Repo.PWResetToken.ReadPWResetToken(form.PWResetTokenID)
+
+	if err != nil {
+		w.WriteHeader(http.StatusForbidden)
+		return
+	}
+
+	// make sure the token is still valid and has not expired
+	if !token.IsValid || token.IsExpired() {
+		w.WriteHeader(http.StatusForbidden)
+		return
+	}
+
+	// check that the email matches
+	if token.Email != form.Email {
+		w.WriteHeader(http.StatusForbidden)
+		return
+	}
+
+	// make sure the token is correct
+	if err := bcrypt.CompareHashAndPassword([]byte(token.Token), []byte(form.Token)); err != nil {
+		w.WriteHeader(http.StatusForbidden)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	return
+}
+
+// FinalizPWResetUser completes the password reset flow based on an email.
+func (app *App) FinalizPWResetUser(w http.ResponseWriter, r *http.Request) {
+	form := &forms.FinalizeResetUserPasswordForm{}
+
+	// decode from JSON to form value
+	if err := json.NewDecoder(r.Body).Decode(form); err != nil {
+		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
+		return
+	}
+
+	// validate the form
+	if err := app.validator.Struct(form); err != nil {
+		app.handleErrorFormValidation(err, ErrProjectValidateFields, w)
+		return
+	}
+
+	// verify the token is valid
+	token, err := app.Repo.PWResetToken.ReadPWResetToken(form.PWResetTokenID)
+
+	if err != nil {
+		w.WriteHeader(http.StatusForbidden)
+		return
+	}
+
+	// make sure the token is still valid and has not expired
+	if !token.IsValid || token.IsExpired() {
+		w.WriteHeader(http.StatusForbidden)
+		return
+	}
+
+	// check that the email matches
+	if token.Email != form.Email {
+		w.WriteHeader(http.StatusForbidden)
+		return
+	}
+
+	// make sure the token is correct
+	if err := bcrypt.CompareHashAndPassword([]byte(token.Token), []byte(form.Token)); err != nil {
+		w.WriteHeader(http.StatusForbidden)
+		return
+	}
+
+	// check that the email exists
+	user, err := app.Repo.User.ReadUserByEmail(form.Email)
+
+	if err != nil {
+		w.WriteHeader(http.StatusForbidden)
+		return
+	}
+
+	hashedPW, err := bcrypt.GenerateFromPassword([]byte(user.Password), 8)
+
+	if err != nil {
+		app.handleErrorDataWrite(err, w)
+		return
+	}
+
+	user.Password = string(hashedPW)
+
+	user, err = app.Repo.User.UpdateUser(user)
+
+	if err != nil {
+		app.handleErrorDataWrite(err, w)
+		return
+	}
+
+	// invalidate the token
+	token.IsValid = false
+
+	_, err = app.Repo.PWResetToken.UpdatePWResetToken(token)
+
+	if err != nil {
+		app.handleErrorDataWrite(err, w)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	return
 }
 
 // ------------------------ User handler helper functions ------------------------ //

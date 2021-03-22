@@ -22,6 +22,7 @@ func NewRepository(db *gorm.DB, key *[32]byte) *repository.Repository {
 		Invite:           NewInviteRepository(db),
 		AuthCode:         NewAuthCodeRepository(db),
 		DNSRecord:        NewDNSRecordRepository(db),
+		PWResetToken:     NewPWResetTokenRepository(db),
 		KubeIntegration:  NewKubeIntegrationRepository(db, key),
 		BasicIntegration: NewBasicIntegrationRepository(db, key),
 		OIDCIntegration:  NewOIDCIntegrationRepository(db, key),

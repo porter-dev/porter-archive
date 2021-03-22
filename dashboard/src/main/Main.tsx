@@ -9,6 +9,7 @@ import ResetPasswordInit from "./auth/ResetPasswordInit";
 import ResetPasswordFinalize from "./auth/ResetPasswordFinalize";
 import Login from "./auth/Login";
 import Register from "./auth/Register";
+import VerifyEmail from "./auth/VerifyEmail";
 import CurrentError from "./CurrentError";
 import Home from "./home/Home";
 import Loading from "components/Loading";
@@ -19,6 +20,7 @@ type PropsType = {};
 type StateType = {
   loading: boolean;
   isLoggedIn: boolean;
+  isEmailVerified: boolean;
   initialized: boolean;
 };
 
@@ -26,6 +28,7 @@ export default class Main extends Component<PropsType, StateType> {
   state = {
     loading: true,
     isLoggedIn: false,
+    isEmailVerified: false,
     initialized: localStorage.getItem("init") === "true",
   };
 
@@ -41,6 +44,7 @@ export default class Main extends Component<PropsType, StateType> {
           setUser(res?.data?.id, res?.data?.email);
           this.setState({
             isLoggedIn: true,
+            isEmailVerified: res?.data?.email_verified,
             initialized: true,
             loading: false,
           });
@@ -71,6 +75,18 @@ export default class Main extends Component<PropsType, StateType> {
   renderMain = () => {
     if (this.state.loading) {
       return <Loading />;
+    }
+
+    // if logged in but not verified, block until email verification
+    if (this.state.isLoggedIn && !this.state.isEmailVerified) {
+      return <Switch>
+        <Route
+          path="/"
+          render={() => {
+            return <VerifyEmail />
+          }}
+        />
+      </Switch>
     }
 
     return (

@@ -109,3 +109,8 @@ type FinalizeResetUserPasswordForm struct {
 	Token          string `json:"token" form:"required"`
 	NewPassword    string `json:"new_password" form:"required,max=255"`
 }
+
+type FinalizeVerifyEmailForm struct {
+	TokenID uint   `json:"token_id" form:"required"`
+	Token   string `json:"token" form:"required"`
+}

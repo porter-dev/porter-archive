@@ -98,6 +98,40 @@ func New(a *api.App) *chi.Mux {
 			),
 		)
 
+		r.Method(
+			"POST",
+			"/email/verify/initiate",
+			auth.BasicAuthenticate(
+				requestlog.NewHandler(a.InitiateEmailVerifyUser, l),
+			),
+		)
+
+		r.Method(
+			"GET",
+			"/email/verify/finalize",
+			auth.BasicAuthenticateWithRedirect(
+				requestlog.NewHandler(a.FinalizEmailVerifyUser, l),
+			),
+		)
+
+		r.Method(
+			"POST",
+			"/password/reset/initiate",
+			requestlog.NewHandler(a.InitiatePWResetUser, l),
+		)
+
+		r.Method(
+			"POST",
+			"/password/reset/verify",
+			requestlog.NewHandler(a.VerifyPWResetUser, l),
+		)
+
+		r.Method(
+			"POST",
+			"/password/reset/finalize",
+			requestlog.NewHandler(a.FinalizPWResetUser, l),
+		)
+
 		// /api/integrations routes
 		r.Method(
 			"GET",

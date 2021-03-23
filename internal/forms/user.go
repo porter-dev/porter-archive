@@ -1,6 +1,8 @@
 package forms
 
 import (
+	"time"
+
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/repository"
 	"golang.org/x/crypto/bcrypt"
@@ -69,4 +71,46 @@ func (uuf *DeleteUserForm) ToUser(_ repository.UserRepository) (*models.User, er
 			ID: uuf.ID,
 		},
 	}, nil
+}
+
+// InitiateResetUserPasswordForm represents the accepted values for resetting a user's password
+type InitiateResetUserPasswordForm struct {
+	Email string `json:"email" form:"required"`
+}
+
+func (ruf *InitiateResetUserPasswordForm) ToPWResetToken() (*models.PWResetToken, string, error) {
+	expiry := time.Now().Add(30 * time.Minute)
+
+	rawToken := stringWithCharset(32, randCharset)
+
+	hashedToken, err := bcrypt.GenerateFromPassword([]byte(rawToken), 8)
+
+	if err != nil {
+		return nil, "", err
+	}
+
+	return &models.PWResetToken{
+		Email:   ruf.Email,
+		IsValid: true,
+		Expiry:  &expiry,
+		Token:   string(hashedToken),
+	}, rawToken, nil
+}
+
+type VerifyResetUserPasswordForm struct {
+	Email          string `json:"email" form:"required,max=255,email"`
+	PWResetTokenID uint   `json:"token_id" form:"required"`
+	Token          string `json:"token" form:"required"`
+}
+
+type FinalizeResetUserPasswordForm struct {
+	Email          string `json:"email" form:"required,max=255,email"`
+	PWResetTokenID uint   `json:"token_id" form:"required"`
+	Token          string `json:"token" form:"required"`
+	NewPassword    string `json:"new_password" form:"required,max=255"`
+}
+
+type FinalizeVerifyEmailForm struct {
+	TokenID uint   `json:"token_id" form:"required"`
+	Token   string `json:"token" form:"required"`
 }

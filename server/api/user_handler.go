@@ -558,7 +558,7 @@ func (app *App) InitiatePWResetUser(w http.ResponseWriter, r *http.Request) {
 		}
 
 		err = sgClient.SendGHPWEmail(
-			fmt.Sprintf("%s/api//oauth/login/github", app.ServerConf.ServerURL),
+			fmt.Sprintf("%s/api/oauth/login/github", app.ServerConf.ServerURL),
 			form.Email,
 		)
 
@@ -566,6 +566,9 @@ func (app *App) InitiatePWResetUser(w http.ResponseWriter, r *http.Request) {
 			app.handleErrorInternal(err, w)
 			return
 		}
+
+		w.WriteHeader(http.StatusOK)
+		return
 	}
 
 	// convert the form to a project model

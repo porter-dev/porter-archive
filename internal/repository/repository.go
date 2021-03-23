@@ -14,6 +14,7 @@ type Repository struct {
 	GitActionConfig  GitActionConfigRepository
 	Invite           InviteRepository
 	AuthCode         AuthCodeRepository
+	DNSRecord        DNSRecordRepository
 	KubeIntegration  KubeIntegrationRepository
 	BasicIntegration BasicIntegrationRepository
 	OIDCIntegration  OIDCIntegrationRepository

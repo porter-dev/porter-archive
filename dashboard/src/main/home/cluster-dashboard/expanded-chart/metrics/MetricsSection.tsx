@@ -109,7 +109,7 @@ export default class MetricsSection extends Component<PropsType, StateType> {
         res.data.map((controller: any) => {
           let name = controller?.metadata?.name;
           controllerOptions.push({ value: controller, label: name });
-        })
+        });
 
         // iterate through the controllers to get the list of pods
         this.setState({
@@ -169,8 +169,6 @@ export default class MetricsSection extends Component<PropsType, StateType> {
     if (this.state.selectedPod != "All") {
       pods = [this.state.selectedPod];
     }
-
-
 
     api
       .getMetrics(
@@ -291,7 +289,7 @@ export default class MetricsSection extends Component<PropsType, StateType> {
         let pods = [{ value: "All", label: "All (Summed)" }] as any[];
         res?.data?.forEach((pod: any) => {
           let name = pod?.metadata?.name;
-          pods.push({ value: name, label: name});
+          pods.push({ value: name, label: name });
         });
 
         this.setState({ pods, selectedPod: "All" });
@@ -358,15 +356,14 @@ export default class MetricsSection extends Component<PropsType, StateType> {
           <DropdownOverlay
             onClick={() => this.setState({ showMetricsSettings: false })}
           />
-          <DropdownAlt
-            dropdownWidth="330px"
-            dropdownMaxHeight="300px"
-          >
+          <DropdownAlt dropdownWidth="330px" dropdownMaxHeight="300px">
             <Label>Additional Settings</Label>
             <SelectRow
               label="Target Controller"
               value={this.state.selectedController}
-              setActiveValue={(x: any) => this.setState({ selectedController: x })}
+              setActiveValue={(x: any) =>
+                this.setState({ selectedController: x })
+              }
               options={this.state.controllerOptions}
               width="100%"
             />
@@ -381,7 +378,7 @@ export default class MetricsSection extends Component<PropsType, StateType> {
         </>
       );
     }
-  }
+  };
 
   render() {
     return (
@@ -390,7 +387,9 @@ export default class MetricsSection extends Component<PropsType, StateType> {
           <Flex>
             <MetricSelector
               onClick={() =>
-                this.setState({ dropdownExpanded: !this.state.dropdownExpanded })
+                this.setState({
+                  dropdownExpanded: !this.state.dropdownExpanded,
+                })
               }
             >
               <MetricsLabel>{this.state.selectedMetricLabel}</MetricsLabel>
@@ -398,7 +397,7 @@ export default class MetricsSection extends Component<PropsType, StateType> {
               {this.renderDropdown()}
             </MetricSelector>
             <Relative>
-              <IconWrapper 
+              <IconWrapper
                 onClick={() => this.setState({ showMetricsSettings: true })}
               >
                 <SettingsIcon src={settings} />

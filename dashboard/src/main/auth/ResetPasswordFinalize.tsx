@@ -4,7 +4,7 @@ import logo from "assets/logo.png";
 
 import api from "shared/api";
 import { Context } from "shared/Context";
-import Loading from "components/Loading"
+import Loading from "components/Loading";
 
 type PropsType = {};
 
@@ -26,7 +26,7 @@ export default class ResetPasswordInit extends Component<PropsType, StateType> {
     password: "",
     token_id: 0,
     passwordError: false,
-    tokenError: false, 
+    tokenError: false,
     loading: true,
     submitted: false,
   };
@@ -43,25 +43,27 @@ export default class ResetPasswordInit extends Component<PropsType, StateType> {
     let tokenIDFromParams = urlParams.get("token_id");
 
     api
-    .createPasswordResetVerify(
-      "",
-      {
-        email: emailFromParam,
-        token: tokenFromParams,
-        token_id: parseInt(tokenIDFromParams),
-      },
-      {}
-    )
-    .then(() => {
-        this.setState({ loading: false })
-    })
-    .catch((err) =>
-      this.setState({ loading: false, tokenError: true })
-    );
+      .createPasswordResetVerify(
+        "",
+        {
+          email: emailFromParam,
+          token: tokenFromParams,
+          token_id: parseInt(tokenIDFromParams),
+        },
+        {}
+      )
+      .then(() => {
+        this.setState({ loading: false });
+      })
+      .catch((err) => this.setState({ loading: false, tokenError: true }));
 
     document.addEventListener("keydown", this.handleKeyDown);
 
-    this.setState({ email: emailFromParam, token: tokenFromParams, token_id: parseInt(tokenIDFromParams) })
+    this.setState({
+      email: emailFromParam,
+      token: tokenFromParams,
+      token_id: parseInt(tokenIDFromParams),
+    });
   }
 
   componentWillUnmount() {
@@ -85,64 +87,76 @@ export default class ResetPasswordInit extends Component<PropsType, StateType> {
 
     // Call reset password
     api
-    .createPasswordResetFinalize(
-      "",
-      {
-        email: email,
-        token: token,
-        token_id: token_id,
-        new_password: password,
-      },
-      {}
-    )
-    .then((res) => {
+      .createPasswordResetFinalize(
+        "",
+        {
+          email: email,
+          token: token,
+          token_id: token_id,
+          new_password: password,
+        },
+        {}
+      )
+      .then((res) => {
         // redirect to dashboard with message after timeout
-        this.setState({ submitted: true })
+        this.setState({ submitted: true });
 
         setTimeout(() => {
-            window.location.href = "/login"
-        }, 2000)
-    })
-    .catch((err) =>
-      this.setState({ tokenError: true })
-    );
+          window.location.href = "/login";
+        }, 2000);
+      })
+      .catch((err) => this.setState({ tokenError: true }));
   };
 
   render() {
-    let { password, passwordError, submitted, loading, tokenError } = this.state;
+    let {
+      password,
+      passwordError,
+      submitted,
+      loading,
+      tokenError,
+    } = this.state;
 
-    let inputSection = <div>
+    let inputSection = (
+      <div>
         <InputWrapper>
-              <Input
-                type="password"
-                placeholder="Password"
-                value={password}
-                onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                  this.setState({
-                    password: e.target.value,
-                    passwordError: false,
-                  })
-                }
-                valid={!passwordError}
-              />
-              {this.renderPasswordError()}
-            </InputWrapper>
-            <Button onClick={this.handleResetPasswordFinalize}>Continue</Button>
-    </div>
+          <Input
+            type="password"
+            placeholder="Password"
+            value={password}
+            onChange={(e: ChangeEvent<HTMLInputElement>) =>
+              this.setState({
+                password: e.target.value,
+                passwordError: false,
+              })
+            }
+            valid={!passwordError}
+          />
+          {this.renderPasswordError()}
+        </InputWrapper>
+        <Button onClick={this.handleResetPasswordFinalize}>Continue</Button>
+      </div>
+    );
 
     if (loading) {
-        inputSection = <StatusText>
-            <Loading />
+      inputSection = (
+        <StatusText>
+          <Loading />
         </StatusText>
+      );
     } else if (tokenError) {
-        inputSection = <StatusText>
-            Link has already been used or has expired. Please 
-            <Link href="/password/reset">try again.</Link>
+      inputSection = (
+        <StatusText>
+          Link has already been used or has expired. Please
+          <Link href="/password/reset">try again.</Link>
         </StatusText>
+      );
     } else if (submitted) {
-        inputSection = <StatusText>
-            Password changed successfully! Redirecting to login...
+      inputSection = (
+        <StatusText>
+          Password changed successfully! Redirecting to login...
         </StatusText>
+      );
     }
 
     return (
@@ -348,10 +362,10 @@ const Prompt = styled.div`
 `;
 
 const StatusText = styled.div`
-padding: 18px 30px; 
-font-family: "Work Sans", sans-serif;
-font-size: 14px;
-line-height: 160%;
+  padding: 18px 30px;
+  font-family: "Work Sans", sans-serif;
+  font-size: 14px;
+  line-height: 160%;
 `;
 
 const Logo = styled.img`

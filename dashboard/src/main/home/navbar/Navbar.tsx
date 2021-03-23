@@ -20,17 +20,6 @@ export default class Navbar extends Component<PropsType, StateType> {
     showDropdown: false,
   };
 
-  handleLogout = (): void => {
-    let { logOut } = this.props;
-    let { setCurrentError } = this.context;
-
-    // Attempt user logout
-    api
-      .logOutUser("<token>", {}, {})
-      .then(logOut)
-      .catch((err) => setCurrentError(err.response.data.errors[0]));
-  };
-
   renderSettingsDropdown = () => {
     if (this.state.showDropdown) {
       return (
@@ -42,7 +31,7 @@ export default class Navbar extends Component<PropsType, StateType> {
             <DropdownLabel>
               {this.context.user && this.context.user.email}
             </DropdownLabel>
-            <LogOutButton onClick={this.handleLogout}>
+            <LogOutButton onClick={this.props.logOut}>
               <i className="material-icons">keyboard_return</i> Log Out
             </LogOutButton>
           </Dropdown>

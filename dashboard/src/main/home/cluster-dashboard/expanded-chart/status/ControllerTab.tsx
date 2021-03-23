@@ -111,8 +111,8 @@ export default class ControllerTab extends Component<PropsType, StateType> {
           c.status?.desiredNumberScheduled || 0,
         ];
       case "job":
-        console.log(c)
-        return [1, 1]
+        console.log(c);
+        return [1, 1];
     }
   };
 
@@ -156,7 +156,7 @@ export default class ControllerTab extends Component<PropsType, StateType> {
     let status = available == total ? "running" : "waiting";
 
     if (controller.kind.toLowerCase() === "job" && this.state.raw.length == 0) {
-      status = "completed" 
+      status = "completed";
     }
 
     return (

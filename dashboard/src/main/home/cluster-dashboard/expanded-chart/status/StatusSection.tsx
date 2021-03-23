@@ -120,9 +120,12 @@ export default class StatusSection extends Component<PropsType, StateType> {
           revision: currentChart.version,
         }
       )
-      .then((res : any) => {
-        let controllers = currentChart.chart.metadata.name == "job" ? res.data[0]?.status.active : res.data
-        this.setState({controllers, loading: false})
+      .then((res: any) => {
+        let controllers =
+          currentChart.chart.metadata.name == "job"
+            ? res.data[0]?.status.active
+            : res.data;
+        this.setState({ controllers, loading: false });
       })
       .catch((err) => {
         setCurrentError(JSON.stringify(err));

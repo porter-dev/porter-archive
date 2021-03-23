@@ -9,6 +9,7 @@ import (
 
 	"github.com/go-chi/chi"
 	"github.com/porter-dev/porter/internal/forms"
+	"github.com/porter-dev/porter/internal/integrations/email"
 	"github.com/porter-dev/porter/internal/models"
 )
 
@@ -63,6 +64,38 @@ func (app *App) HandleCreateInvite(w http.ResponseWriter, r *http.Request) {
 		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
 		return
 	}
+
+	// send invite email
+	project, err := app.Repo.Project.ReadProject(uint(projID))
+
+	if err != nil {
+		return
+	}
+
+	userID, err := app.getUserIDFromRequest(r)
+
+	if err != nil {
+		return
+	}
+
+	user, err := app.Repo.User.ReadUser(userID)
+
+	if err != nil {
+		return
+	}
+
+	sgClient := email.SendgridClient{
+		APIKey:                  app.ServerConf.SendgridAPIKey,
+		ProjectInviteTemplateID: app.ServerConf.SendgridProjectInviteTemplateID,
+		SenderEmail:             app.ServerConf.SendgridSenderEmail,
+	}
+
+	sgClient.SendProjectInviteEmail(
+		fmt.Sprintf("%s/api/projects/%d/invites/%s", app.ServerConf.ServerURL, projID, invite.Token),
+		project.Name,
+		user.Email,
+		form.Email,
+	)
 }
 
 // HandleAcceptInvite accepts an invite to a new project: if successful, a new role

@@ -22,6 +22,7 @@ import (
 	memory "github.com/porter-dev/porter/internal/repository/memory"
 	"github.com/porter-dev/porter/internal/validator"
 	"helm.sh/helm/v3/pkg/storage"
+	segment "gopkg.in/segmentio/analytics-go.v3"
 
 	"github.com/porter-dev/porter/internal/config"
 )
@@ -79,6 +80,7 @@ type App struct {
 	validator  *vr.Validate
 	translator *ut.Translator
 	tokenConf  *token.TokenGeneratorConf
+	segmentClient *segment.Client
 }
 
 // New returns a new App instance
@@ -148,6 +150,11 @@ func New(conf *AppConfig) (*App, error) {
 
 	app.tokenConf = &token.TokenGeneratorConf{
 		TokenSecret: conf.ServerConf.TokenGeneratorSecret,
+	}
+
+	if sc := conf.ServerConf; sc.SegmentClientKey != "" {
+		client := segment.New(sc.SegmentClientKey)
+		app.segmentClient = &client
 	}
 
 	return app, nil

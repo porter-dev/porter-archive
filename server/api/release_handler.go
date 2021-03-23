@@ -19,6 +19,7 @@ import (
 	"github.com/porter-dev/porter/internal/helm/grapher"
 	"github.com/porter-dev/porter/internal/kubernetes"
 	"github.com/porter-dev/porter/internal/repository"
+	segment "gopkg.in/segmentio/analytics-go.v3"
 )
 
 // Enumeration of release API error codes, represented as int64
@@ -632,6 +633,13 @@ func (app *App) HandleReleaseDeployWebhook(w http.ResponseWriter, r *http.Reques
 
 		return
 	}
+	userID, _ := app.getUserIDFromRequest(r)
+
+	client := *app.segmentClient
+	client.Enqueue(segment.Track{
+		UserId: fmt.Sprintf("%v", userID),
+		Event: "Triggered Re-deploy via Webhook",
+	})
 
 	w.WriteHeader(http.StatusOK)
 }

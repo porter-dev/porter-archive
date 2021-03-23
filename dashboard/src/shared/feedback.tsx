@@ -10,18 +10,18 @@ export const handleSubmitFeedback = (
       {
         key: process.env.DISCORD_KEY,
         cid: process.env.DISCORD_CID,
-        message: msg,
+        message: msg
       },
       {
         headers: {
-          Authorization: `Bearer <>`,
-        },
+          Authorization: `Bearer <>`
+        }
       }
     )
-    .then((res) => {
+    .then(res => {
       callback && callback(null, res);
     })
-    .catch((err) => {
+    .catch(err => {
       callback && callback(err, null);
     });
 };

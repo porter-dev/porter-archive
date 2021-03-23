@@ -5,8 +5,11 @@ import { BrowserRouter, Route, Redirect, Switch } from "react-router-dom";
 import api from "shared/api";
 import { Context } from "shared/Context";
 
-import Login from "./Login";
-import Register from "./Register";
+import ResetPasswordInit from "./auth/ResetPasswordInit";
+import ResetPasswordFinalize from "./auth/ResetPasswordFinalize";
+import Login from "./auth/Login";
+import Register from "./auth/Register";
+import VerifyEmail from "./auth/VerifyEmail";
 import CurrentError from "./CurrentError";
 import Home from "./home/Home";
 import Loading from "components/Loading";
@@ -17,6 +20,7 @@ type PropsType = {};
 type StateType = {
   loading: boolean;
   isLoggedIn: boolean;
+  isEmailVerified: boolean;
   initialized: boolean;
 };
 
@@ -24,7 +28,8 @@ export default class Main extends Component<PropsType, StateType> {
   state = {
     loading: true,
     isLoggedIn: false,
-    initialized: localStorage.getItem("init") === "true",
+    isEmailVerified: false,
+    initialized: localStorage.getItem("init") === "true"
   };
 
   componentDidMount() {
@@ -34,19 +39,20 @@ export default class Main extends Component<PropsType, StateType> {
     error && setCurrentError(error);
     api
       .checkAuth("", {}, {})
-      .then((res) => {
+      .then(res => {
         if (res && res.data) {
           setUser(res?.data?.id, res?.data?.email);
           this.setState({
             isLoggedIn: true,
+            isEmailVerified: res?.data?.email_verified,
             initialized: true,
-            loading: false,
+            loading: false
           });
         } else {
           this.setState({ isLoggedIn: false, loading: false });
         }
       })
-      .catch((err) => this.setState({ isLoggedIn: false, loading: false }));
+      .catch(err => this.setState({ isLoggedIn: false, loading: false }));
   }
 
   initialize = () => {
@@ -69,6 +75,20 @@ export default class Main extends Component<PropsType, StateType> {
   renderMain = () => {
     if (this.state.loading) {
       return <Loading />;
+    }
+
+    // if logged in but not verified, block until email verification
+    if (this.state.isLoggedIn && !this.state.isEmailVerified) {
+      return (
+        <Switch>
+          <Route
+            path="/"
+            render={() => {
+              return <VerifyEmail />;
+            }}
+          />
+        </Switch>
+      );
     }
 
     return (
@@ -94,6 +114,26 @@ export default class Main extends Component<PropsType, StateType> {
           }}
         />
         <Route
+          path="/password/reset/finalize"
+          render={() => {
+            if (!this.state.isLoggedIn) {
+              return <ResetPasswordFinalize />;
+            } else {
+              return <Redirect to="/" />;
+            }
+          }}
+        />
+        <Route
+          path="/password/reset"
+          render={() => {
+            if (!this.state.isLoggedIn) {
+              return <ResetPasswordInit />;
+            } else {
+              return <Redirect to="/" />;
+            }
+          }}
+        />
+        <Route
           exact
           path="/"
           render={() => {
@@ -106,7 +146,7 @@ export default class Main extends Component<PropsType, StateType> {
         />
         <Route
           path={`/:baseRoute`}
-          render={(routeProps) => {
+          render={routeProps => {
             const baseRoute = routeProps.match.params.baseRoute;
             if (
               this.state.isLoggedIn &&

@@ -196,11 +196,13 @@ func (app *App) upsertUserFromToken(tok *oauth2.Token) (*models.User, error) {
 		}
 
 		primary := ""
+		verified := false
 
 		// get the primary email
 		for _, email := range emails {
 			if email.GetPrimary() {
 				primary = email.GetEmail()
+				verified = email.GetVerified()
 				break
 			}
 		}
@@ -214,8 +216,9 @@ func (app *App) upsertUserFromToken(tok *oauth2.Token) (*models.User, error) {
 
 		if err == gorm.ErrRecordNotFound {
 			user = &models.User{
-				Email:        primary,
-				GithubUserID: githubUser.GetID(),
+				Email:         primary,
+				EmailVerified: verified,
+				GithubUserID:  githubUser.GetID(),
 			}
 
 			user, err = app.Repo.User.CreateUser(user)

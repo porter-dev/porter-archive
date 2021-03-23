@@ -38,6 +38,7 @@ type ServerConf struct {
 
 	SendgridAPIKey                  string `env:"SENDGRID_API_KEY"`
 	SendgridPWResetTemplateID       string `env:"SENDGRID_PW_RESET_TEMPLATE_ID"`
+	SendgridPWGHTemplateID          string `env:"SENDGRID_PW_GH_TEMPLATE_ID"`
 	SendgridVerifyEmailTemplateID   string `env:"SENDGRID_VERIFY_EMAIL_TEMPLATE_ID"`
 	SendgridProjectInviteTemplateID string `env:"SENDGRID_INVITE_TEMPLATE_ID"`
 	SendgridSenderEmail             string `env:"SENDGRID_SENDER_EMAIL"`
@@ -45,7 +46,7 @@ type ServerConf struct {
 	DOClientID          string `env:"DO_CLIENT_ID"`
 	DOClientSecret      string `env:"DO_CLIENT_SECRET"`
 	ProvisionerImageTag string `env:"PROV_IMAGE_TAG,default=latest"`
-	SegmentClientKey	string `env:"SEGMENT_CLIENT_KEY"`
+	SegmentClientKey    string `env:"SEGMENT_CLIENT_KEY"`
 }
 
 // DBConf is the database configuration: if generated from environment variables,

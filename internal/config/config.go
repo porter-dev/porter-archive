@@ -38,6 +38,7 @@ type ServerConf struct {
 	DOClientID          string `env:"DO_CLIENT_ID"`
 	DOClientSecret      string `env:"DO_CLIENT_SECRET"`
 	ProvisionerImageTag string `env:"PROV_IMAGE_TAG,default=latest"`
+	SegmentClientKey	string `env:"SEGMENT_CLIENT_KEY"`
 }
 
 // DBConf is the database configuration: if generated from environment variables,

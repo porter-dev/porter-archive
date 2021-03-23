@@ -1,6 +1,7 @@
 package api
 
 import (
+	"fmt"
 	"encoding/json"
 	"net/http"
 	"net/url"
@@ -35,6 +36,7 @@ func (app *App) HandleListTemplates(w http.ResponseWriter, r *http.Request) {
 	repoIndex, err := loader.LoadRepoIndexPublic(repoURL)
 
 	if err != nil {
+		fmt.Println("ERRRRRRRRSDFSDFSDFSDFSDFSDFSDFSDFSFFSD", err)
 		app.handleErrorFormDecoding(err, ErrReleaseDecode, w)
 		return
 	}

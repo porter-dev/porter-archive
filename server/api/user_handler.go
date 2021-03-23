@@ -541,7 +541,7 @@ func (app *App) InitiatePWResetUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// check that the email exists; return 200 status code even if it doesn't
-	_, err := app.Repo.User.ReadUserByEmail(form.Email)
+	user, err := app.Repo.User.ReadUserByEmail(form.Email)
 
 	if err == gorm.ErrRecordNotFound {
 		w.WriteHeader(http.StatusOK)
@@ -549,6 +549,25 @@ func (app *App) InitiatePWResetUser(w http.ResponseWriter, r *http.Request) {
 	} else if err != nil {
 		app.handleErrorDataRead(err, w)
 		return
+	}
+
+	// if the user is a Github user, send them a Github email
+	if user.GithubUserID != 0 {
+		sgClient := email.SendgridClient{
+			APIKey:         app.ServerConf.SendgridAPIKey,
+			PWGHTemplateID: app.ServerConf.SendgridPWGHTemplateID,
+			SenderEmail:    app.ServerConf.SendgridSenderEmail,
+		}
+
+		err = sgClient.SendGHPWEmail(
+			fmt.Sprintf("%s/api//oauth/login/github", app.ServerConf.ServerURL),
+			form.Email,
+		)
+
+		if err != nil {
+			app.handleErrorInternal(err, w)
+			return
+		}
 	}
 
 	// convert the form to a project model

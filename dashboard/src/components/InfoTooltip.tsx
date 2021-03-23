@@ -11,7 +11,7 @@ type StateType = {
 
 export default class InfoTooltip extends Component<PropsType, StateType> {
   state = {
-    showTooltip: false
+    showTooltip: false,
   };
 
   render() {

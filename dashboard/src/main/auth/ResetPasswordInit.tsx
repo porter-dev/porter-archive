@@ -62,7 +62,7 @@ export default class ResetPasswordInit extends Component<PropsType, StateType> {
           {}
         )
         .then((res) => {
-          this.setState({ submitted: true })
+          this.setState({ submitted: true });
         })
         .catch((err) =>
           this.context.setCurrentError(err.response.data.errors[0])
@@ -73,29 +73,34 @@ export default class ResetPasswordInit extends Component<PropsType, StateType> {
   render() {
     let { email, emailError, submitted } = this.state;
 
-    let formSection = <div>
+    let formSection = (
+      <div>
         <InputWrapper>
-              <Input
-                type="email"
-                placeholder="Email"
-                value={email}
-                onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                  this.setState({
-                    email: e.target.value,
-                    emailError: false,
-                  })
-                }
-                valid={!emailError}
-              />
-              {this.renderEmailError()}
-            </InputWrapper>
-            <Button onClick={this.handleResetPasswordInit}>Continue</Button>
-    </div>
+          <Input
+            type="email"
+            placeholder="Email"
+            value={email}
+            onChange={(e: ChangeEvent<HTMLInputElement>) =>
+              this.setState({
+                email: e.target.value,
+                emailError: false,
+              })
+            }
+            valid={!emailError}
+          />
+          {this.renderEmailError()}
+        </InputWrapper>
+        <Button onClick={this.handleResetPasswordInit}>Continue</Button>
+      </div>
+    );
 
     if (submitted) {
-        formSection = <StatusText>
-            If we found an account matching { email }, we've sent you password reset instructions. Remember to check your spam folder.
+      formSection = (
+        <StatusText>
+          If we found an account matching {email}, we've sent you password reset
+          instructions. Remember to check your spam folder.
         </StatusText>
+      );
     }
 
     return (
@@ -308,10 +313,10 @@ const Logo = styled.img`
 `;
 
 const StatusText = styled.div`
-padding: 18px 30px; 
-font-family: "Work Sans", sans-serif;
-font-size: 14px;
-line-height: 160%;
+  padding: 18px 30px;
+  font-family: "Work Sans", sans-serif;
+  font-size: 14px;
+  line-height: 160%;
 `;
 
 const FormWrapper = styled.div`

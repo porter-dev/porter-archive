@@ -18,7 +18,7 @@ const connectECRRegistry = baseApi<
     aws_integration_id: string;
   },
   { id: number }
->("POST", pathParams => {
+>("POST", (pathParams) => {
   return `/api/projects/${pathParams.id}/registries`;
 });
 
@@ -29,7 +29,7 @@ const connectGCRRegistry = baseApi<
     url: string;
   },
   { id: number }
->("POST", pathParams => {
+>("POST", (pathParams) => {
   return `/api/projects/${pathParams.id}/registries`;
 });
 
@@ -41,7 +41,7 @@ const createAWSIntegration = baseApi<
     aws_secret_access_key: string;
   },
   { id: number }
->("POST", pathParams => {
+>("POST", (pathParams) => {
   return `/api/projects/${pathParams.id}/integrations/aws`;
 });
 
@@ -54,7 +54,7 @@ const createDOCR = baseApi<
   {
     project_id: number;
   }
->("POST", pathParams => {
+>("POST", (pathParams) => {
   return `/api/projects/${pathParams.project_id}/provision/docr`;
 });
 
@@ -67,11 +67,11 @@ const createDOKS = baseApi<
   {
     project_id: number;
   }
->("POST", pathParams => {
+>("POST", (pathParams) => {
   return `/api/projects/${pathParams.project_id}/provision/doks`;
 });
 
-const createEmailVerification = baseApi<{}, {}>("POST", pathParams => {
+const createEmailVerification = baseApi<{}, {}>("POST", (pathParams) => {
   return `/api/email/verify/initiate`;
 });
 
@@ -84,7 +84,7 @@ const createGCPIntegration = baseApi<
   {
     project_id: number;
   }
->("POST", pathParams => {
+>("POST", (pathParams) => {
   return `/api/projects/${pathParams.project_id}/integrations/gcp`;
 });
 
@@ -95,7 +95,7 @@ const createGCR = baseApi<
   {
     project_id: number;
   }
->("POST", pathParams => {
+>("POST", (pathParams) => {
   return `/api/projects/${pathParams.project_id}/provision/gcr`;
 });
 
@@ -115,7 +115,7 @@ const createGHAction = baseApi<
     RELEASE_NAME: string;
     RELEASE_NAMESPACE: string;
   }
->("POST", pathParams => {
+>("POST", (pathParams) => {
   let { project_id, CLUSTER_ID, RELEASE_NAME, RELEASE_NAMESPACE } = pathParams;
   return `/api/projects/${project_id}/ci/actions?cluster_id=${CLUSTER_ID}&name=${RELEASE_NAME}&namespace=${RELEASE_NAMESPACE}`;
 });
@@ -128,7 +128,7 @@ const createGKE = baseApi<
   {
     project_id: number;
   }
->("POST", pathParams => {
+>("POST", (pathParams) => {
   return `/api/projects/${pathParams.project_id}/provision/gke`;
 });
 
@@ -139,7 +139,7 @@ const createInvite = baseApi<
   {
     id: number;
   }
->("POST", pathParams => {
+>("POST", (pathParams) => {
   return `/api/projects/${pathParams.id}/invites`;
 });
 
@@ -148,7 +148,7 @@ const createPasswordReset = baseApi<
     email: string;
   },
   {}
->("POST", pathParams => {
+>("POST", (pathParams) => {
   return `/api/password/reset/initiate`;
 });
 
@@ -159,7 +159,7 @@ const createPasswordResetVerify = baseApi<
     token_id: number;
   },
   {}
->("POST", pathParams => {
+>("POST", (pathParams) => {
   return `/api/password/reset/verify`;
 });
 
@@ -171,11 +171,11 @@ const createPasswordResetFinalize = baseApi<
     new_password: string;
   },
   {}
->("POST", pathParams => {
+>("POST", (pathParams) => {
   return `/api/password/reset/finalize`;
 });
 
-const createProject = baseApi<{ name: string }, {}>("POST", pathParams => {
+const createProject = baseApi<{ name: string }, {}>("POST", (pathParams) => {
   return `/api/projects`;
 });
 
@@ -187,7 +187,7 @@ const createSubdomain = baseApi<
     id: number;
     cluster_id: number;
   }
->("POST", pathParams => {
+>("POST", (pathParams) => {
   let { cluster_id, id } = pathParams;
 
   return `/api/projects/${id}/k8s/subdomain?cluster_id=${cluster_id}`;
@@ -199,18 +199,18 @@ const deleteCluster = baseApi<
     project_id: number;
     cluster_id: number;
   }
->("DELETE", pathParams => {
+>("DELETE", (pathParams) => {
   return `/api/projects/${pathParams.project_id}/clusters/${pathParams.cluster_id}`;
 });
 
 const deleteInvite = baseApi<{}, { id: number; invId: number }>(
   "DELETE",
-  pathParams => {
+  (pathParams) => {
     return `/api/projects/${pathParams.id}/invites/${pathParams.invId}`;
   }
 );
 
-const deleteProject = baseApi<{}, { id: number }>("DELETE", pathParams => {
+const deleteProject = baseApi<{}, { id: number }>("DELETE", (pathParams) => {
   return `/api/projects/${pathParams.id}`;
 });
 
@@ -230,7 +230,7 @@ const deployTemplate = baseApi<
     version: string;
     repo_url?: string;
   }
->("POST", pathParams => {
+>("POST", (pathParams) => {
   let { cluster_id, id, name, version, repo_url } = pathParams;
 
   if (repo_url) {
@@ -247,7 +247,7 @@ const destroyCluster = baseApi<
     project_id: number;
     infra_id: number;
   }
->("POST", pathParams => {
+>("POST", (pathParams) => {
   return `/api/projects/${pathParams.project_id}/infra/${pathParams.infra_id}/eks/destroy`;
 });
 
@@ -263,7 +263,7 @@ const getBranchContents = baseApi<
     name: string;
     branch: string;
   }
->("GET", pathParams => {
+>("GET", (pathParams) => {
   return `/api/projects/${pathParams.project_id}/gitrepos/${pathParams.git_repo_id}/repos/${pathParams.kind}/${pathParams.owner}/${pathParams.name}/${pathParams.branch}/contents`;
 });
 
@@ -276,7 +276,7 @@ const getBranches = baseApi<
     owner: string;
     name: string;
   }
->("GET", pathParams => {
+>("GET", (pathParams) => {
   return `/api/projects/${pathParams.project_id}/gitrepos/${pathParams.git_repo_id}/repos/${pathParams.kind}/${pathParams.owner}/${pathParams.name}/branches`;
 });
 
@@ -287,7 +287,7 @@ const getChart = baseApi<
     storage: StorageType;
   },
   { id: number; name: string; revision: number }
->("GET", pathParams => {
+>("GET", (pathParams) => {
   return `/api/projects/${pathParams.id}/releases/${pathParams.name}/${pathParams.revision}`;
 });
 
@@ -302,7 +302,7 @@ const getCharts = baseApi<
     statusFilter: string[];
   },
   { id: number }
->("GET", pathParams => {
+>("GET", (pathParams) => {
   return `/api/projects/${pathParams.id}/releases`;
 });
 
@@ -313,7 +313,7 @@ const getChartComponents = baseApi<
     storage: StorageType;
   },
   { id: number; name: string; revision: number }
->("GET", pathParams => {
+>("GET", (pathParams) => {
   return `/api/projects/${pathParams.id}/releases/${pathParams.name}/${pathParams.revision}/components`;
 });
 
@@ -324,13 +324,13 @@ const getChartControllers = baseApi<
     storage: StorageType;
   },
   { id: number; name: string; revision: number }
->("GET", pathParams => {
+>("GET", (pathParams) => {
   return `/api/projects/${pathParams.id}/releases/${pathParams.name}/${pathParams.revision}/controllers`;
 });
 
 const getClusterIntegrations = baseApi("GET", "/api/integrations/cluster");
 
-const getClusters = baseApi<{}, { id: number }>("GET", pathParams => {
+const getClusters = baseApi<{}, { id: number }>("GET", (pathParams) => {
   return `/api/projects/${pathParams.id}/clusters`;
 });
 
@@ -340,7 +340,7 @@ const getGitRepoList = baseApi<
     project_id: number;
     git_repo_id: number;
   }
->("GET", pathParams => {
+>("GET", (pathParams) => {
   return `/api/projects/${pathParams.project_id}/gitrepos/${pathParams.git_repo_id}/repos`;
 });
 
@@ -349,7 +349,7 @@ const getGitRepos = baseApi<
   {
     project_id: number;
   }
->("GET", pathParams => {
+>("GET", (pathParams) => {
   return `/api/projects/${pathParams.project_id}/gitrepos`;
 });
 
@@ -359,7 +359,7 @@ const getImageRepos = baseApi<
     project_id: number;
     registry_id: number;
   }
->("GET", pathParams => {
+>("GET", (pathParams) => {
   return `/api/projects/${pathParams.project_id}/registries/${pathParams.registry_id}/repositories`;
 });
 
@@ -370,7 +370,7 @@ const getImageTags = baseApi<
     registry_id: number;
     repo_name: string;
   }
->("GET", pathParams => {
+>("GET", (pathParams) => {
   return `/api/projects/${pathParams.project_id}/registries/${pathParams.registry_id}/repositories/${pathParams.repo_name}`;
 });
 
@@ -379,7 +379,7 @@ const getInfra = baseApi<
   {
     project_id: number;
   }
->("GET", pathParams => {
+>("GET", (pathParams) => {
   return `/api/projects/${pathParams.project_id}/infra`;
 });
 
@@ -388,11 +388,11 @@ const getIngress = baseApi<
     cluster_id: number;
   },
   { name: string; namespace: string; id: number }
->("GET", pathParams => {
+>("GET", (pathParams) => {
   return `/api/projects/${pathParams.id}/k8s/${pathParams.namespace}/ingress/${pathParams.name}`;
 });
 
-const getInvites = baseApi<{}, { id: number }>("GET", pathParams => {
+const getInvites = baseApi<{}, { id: number }>("GET", (pathParams) => {
   return `/api/projects/${pathParams.id}/invites`;
 });
 
@@ -402,7 +402,7 @@ const getMatchingPods = baseApi<
     selectors: string[];
   },
   { id: number }
->("GET", pathParams => {
+>("GET", (pathParams) => {
   return `/api/projects/${pathParams.id}/k8s/pods`;
 });
 
@@ -418,7 +418,7 @@ const getMetrics = baseApi<
     resolution: string;
   },
   { id: number }
->("GET", pathParams => {
+>("GET", (pathParams) => {
   return `/api/projects/${pathParams.id}/k8s/metrics`;
 });
 
@@ -427,7 +427,7 @@ const getNamespaces = baseApi<
     cluster_id: number;
   },
   { id: number }
->("GET", pathParams => {
+>("GET", (pathParams) => {
   return `/api/projects/${pathParams.id}/k8s/namespaces`;
 });
 
@@ -436,23 +436,26 @@ const getOAuthIds = baseApi<
   {
     project_id: number;
   }
->("GET", pathParams => {
+>("GET", (pathParams) => {
   return `/api/projects/${pathParams.project_id}/integrations/oauth`;
 });
 
-const getProjectClusters = baseApi<{}, { id: number }>("GET", pathParams => {
+const getProjectClusters = baseApi<{}, { id: number }>("GET", (pathParams) => {
   return `/api/projects/${pathParams.id}/clusters`;
 });
 
-const getProjectRegistries = baseApi<{}, { id: number }>("GET", pathParams => {
-  return `/api/projects/${pathParams.id}/registries`;
-});
+const getProjectRegistries = baseApi<{}, { id: number }>(
+  "GET",
+  (pathParams) => {
+    return `/api/projects/${pathParams.id}/registries`;
+  }
+);
 
-const getProjectRepos = baseApi<{}, { id: number }>("GET", pathParams => {
+const getProjectRepos = baseApi<{}, { id: number }>("GET", (pathParams) => {
   return `/api/projects/${pathParams.id}/repos`;
 });
 
-const getProjects = baseApi<{}, { id: number }>("GET", pathParams => {
+const getProjects = baseApi<{}, { id: number }>("GET", (pathParams) => {
   return `/api/users/${pathParams.id}/projects`;
 });
 
@@ -461,7 +464,7 @@ const getPrometheusIsInstalled = baseApi<
     cluster_id: number;
   },
   { id: number }
->("GET", pathParams => {
+>("GET", (pathParams) => {
   return `/api/projects/${pathParams.id}/k8s/prometheus/detect`;
 });
 
@@ -474,7 +477,7 @@ const getReleaseToken = baseApi<
     storage: StorageType;
   },
   { name: string; id: number }
->("GET", pathParams => {
+>("GET", (pathParams) => {
   return `/api/projects/${pathParams.id}/releases/${pathParams.name}/webhook_token`;
 });
 
@@ -486,7 +489,7 @@ const destroyEKS = baseApi<
     project_id: number;
     infra_id: number;
   }
->("POST", pathParams => {
+>("POST", (pathParams) => {
   return `/api/projects/${pathParams.project_id}/infra/${pathParams.infra_id}/eks/destroy`;
 });
 
@@ -498,7 +501,7 @@ const destroyGKE = baseApi<
     project_id: number;
     infra_id: number;
   }
->("POST", pathParams => {
+>("POST", (pathParams) => {
   return `/api/projects/${pathParams.project_id}/infra/${pathParams.infra_id}/gke/destroy`;
 });
 
@@ -510,13 +513,13 @@ const destroyDOKS = baseApi<
     project_id: number;
     infra_id: number;
   }
->("POST", pathParams => {
+>("POST", (pathParams) => {
   return `/api/projects/${pathParams.project_id}/infra/${pathParams.infra_id}/doks/destroy`;
 });
 
 const getRepoIntegrations = baseApi("GET", "/api/integrations/repo");
 
-const getRepos = baseApi<{}, { id: number }>("GET", pathParams => {
+const getRepos = baseApi<{}, { id: number }>("GET", (pathParams) => {
   return `/api/projects/${pathParams.id}/repos`;
 });
 
@@ -527,7 +530,7 @@ const getRevisions = baseApi<
     storage: StorageType;
   },
   { id: number; name: string }
->("GET", pathParams => {
+>("GET", (pathParams) => {
   return `/api/projects/${pathParams.id}/releases/${pathParams.name}/history`;
 });
 
@@ -536,7 +539,7 @@ const getTemplateInfo = baseApi<
     repo_url?: string;
   },
   { name: string; version: string }
->("GET", pathParams => {
+>("GET", (pathParams) => {
   return `/api/templates/${pathParams.name}/${pathParams.version}`;
 });
 
@@ -549,7 +552,7 @@ const getApplicationTemplates = baseApi<
   {}
 >("GET", "/api/templates");
 
-const getUser = baseApi<{}, { id: number }>("GET", pathParams => {
+const getUser = baseApi<{}, { id: number }>("GET", (pathParams) => {
   return `/api/users/${pathParams.id}`;
 });
 
@@ -558,7 +561,7 @@ const linkGithubProject = baseApi<
   {
     project_id: number;
   }
->("GET", pathParams => {
+>("GET", (pathParams) => {
   return `/api/oauth/projects/${pathParams.project_id}/github`;
 });
 
@@ -575,7 +578,7 @@ const provisionECR = baseApi<
     aws_integration_id: string;
   },
   { id: number }
->("POST", pathParams => {
+>("POST", (pathParams) => {
   return `/api/projects/${pathParams.id}/provision/ecr`;
 });
 
@@ -585,7 +588,7 @@ const provisionEKS = baseApi<
     aws_integration_id: string;
   },
   { id: number }
->("POST", pathParams => {
+>("POST", (pathParams) => {
   return `/api/projects/${pathParams.id}/provision/eks`;
 });
 
@@ -605,7 +608,7 @@ const rollbackChart = baseApi<
     name: string;
     cluster_id: number;
   }
->("POST", pathParams => {
+>("POST", (pathParams) => {
   let { id, name, cluster_id } = pathParams;
   return `/api/projects/${id}/releases/${name}/rollback?cluster_id=${cluster_id}`;
 });
@@ -619,7 +622,7 @@ const uninstallTemplate = baseApi<
     namespace: string;
     storage: StorageType;
   }
->("POST", pathParams => {
+>("POST", (pathParams) => {
   let { id, name, cluster_id, storage, namespace } = pathParams;
   return `/api/projects/${id}/delete/${name}?cluster_id=${cluster_id}&namespace=${namespace}&storage=${storage}`;
 });
@@ -630,7 +633,7 @@ const updateUser = baseApi<
     allowedContexts?: string[];
   },
   { id: number }
->("PUT", pathParams => {
+>("PUT", (pathParams) => {
   return `/api/users/${pathParams.id}`;
 });
 
@@ -645,7 +648,7 @@ const upgradeChartValues = baseApi<
     name: string;
     cluster_id: number;
   }
->("POST", pathParams => {
+>("POST", (pathParams) => {
   let { id, name, cluster_id } = pathParams;
   return `/api/projects/${id}/releases/${name}/upgrade?cluster_id=${cluster_id}`;
 });
@@ -718,5 +721,5 @@ export default {
   rollbackChart,
   uninstallTemplate,
   updateUser,
-  upgradeChartValues
+  upgradeChartValues,
 };

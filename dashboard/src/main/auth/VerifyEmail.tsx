@@ -6,7 +6,9 @@ import api from "shared/api";
 import { emailRegex } from "shared/regex";
 import { Context } from "shared/Context";
 
-type PropsType = {};
+type PropsType = {
+  handleLogout: () => void;
+};
 
 type StateType = {
   submitted: boolean;
@@ -18,32 +20,50 @@ export default class VerifyEmail extends Component<PropsType, StateType> {
   };
 
   handleSendEmail = (): void => {
-      api
-        .createEmailVerification("", {}, {})
-        .then((res) => {
-          this.setState({ submitted: true })
-        })
-        .catch((err) =>
-          this.context.setCurrentError(err.response.data.errors[0])
-        );
+    api
+      .createEmailVerification("", {}, {})
+      .then((res) => {
+        this.setState({ submitted: true });
+      })
+      .catch((err) =>
+        this.context.setCurrentError(err.response.data.errors[0])
+      );
   };
 
   render() {
     let { submitted } = this.state;
 
-    let formSection = <div>
+    let formSection = (
+      <div>
         <InputWrapper>
-            <StatusText>
-                Please verify your email to continue onto Porter.
-            </StatusText>
-            </InputWrapper>
-            <Button onClick={this.handleSendEmail}>Send Verification Email</Button>
-    </div>
+          <StatusText>A verification email will be sent to</StatusText>
+          <Email>{this.context.user?.email}</Email>
+        </InputWrapper>
+        <StatusText>
+          Proceed below to verify your email and finish setting up your profile
+        </StatusText>
+        <Button onClick={this.handleSendEmail}>Send Verification Email</Button>
+      </div>
+    );
 
     if (submitted) {
-        formSection = <StatusText>
-            Please check your inbox for a verification email! Remember to check your spam folder.
-        </StatusText>
+      formSection = (
+        <>
+          <Buffer />
+          <StatusText lessPadding={true}>
+            A verification email was sent to{" "}
+            <White>{this.context.user?.email}</White>
+          </StatusText>
+          <StatusText lessPadding={true}>
+            Check your inbox for a verification email. Don't forget to check
+            your spam folder
+          </StatusText>
+          <StatusText lessPadding={true}>
+            Need help?
+            <Link href="mailto:contact@getporter.dev">Contact us</Link>
+          </StatusText>
+        </>
+      );
     }
 
     return (
@@ -54,9 +74,13 @@ export default class VerifyEmail extends Component<PropsType, StateType> {
           </OverflowWrapper>
           <FormWrapper>
             <Logo src={logo} />
-            <Prompt>Verify Email</Prompt>
+            <Prompt>Verify Your Email</Prompt>
             <DarkMatter />
             {formSection}
+            <Helper>
+              Want to use a different email?
+              <Link onClick={this.props.handleLogout}>Log out</Link>
+            </Helper>
           </FormWrapper>
         </LoginPanel>
 
@@ -76,6 +100,28 @@ export default class VerifyEmail extends Component<PropsType, StateType> {
 
 VerifyEmail.contextType = Context;
 
+const Buffer = styled.div`
+  width: 100%;
+  height: 20px;
+`;
+
+const White = styled.div`
+  color: white;
+`;
+
+const Email = styled.div`
+  background: #ffffff11;
+  border: 1px solid #ffffff44;
+  border-radius: 3px;
+  font-size: 14px;
+  color: #aaaabb;
+  height: 30px;
+  margin: 0 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+`;
+
 const Footer = styled.div`
   position: absolute;
   bottom: 0;
@@ -90,7 +136,7 @@ const Footer = styled.div`
 `;
 
 const DarkMatter = styled.div`
-  margin-top: -10px;
+  margin-top: -20px;
 `;
 
 const Or = styled.div`
@@ -144,6 +190,7 @@ const OAuthButton = styled.div`
 const Link = styled.a`
   margin-left: 5px;
   color: #819bfd;
+  cursor: pointer;
 `;
 
 const Helper = styled.div`
@@ -247,15 +294,17 @@ const Prompt = styled.div`
 const Logo = styled.img`
   width: 140px;
   margin-top: 50px;
-  margin-bottom: 75px;
+  margin-bottom: 60px;
   user-select: none;
 `;
 
-const StatusText = styled.div`
-padding: 18px 30px; 
-font-family: "Work Sans", sans-serif;
-font-size: 14px;
-line-height: 160%;
+const StatusText = styled.div<{ lessPadding?: boolean }>`
+  padding: ${(props) => (props.lessPadding ? "10px" : "18px")} 40px;
+  font-family: "Work Sans", sans-serif;
+  font-size: 14px;
+  line-height: 160%;
+  color: #aaaabb;
+  text-align: center;
 `;
 
 const FormWrapper = styled.div`

@@ -106,8 +106,6 @@ func (app *App) HandleAuthCheck(w http.ResponseWriter, r *http.Request) {
 
 	user, err := app.Repo.User.ReadUser(userID)
 
-	fmt.Println("EMAIL VERIFIED IS", user.EmailVerified)
-
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

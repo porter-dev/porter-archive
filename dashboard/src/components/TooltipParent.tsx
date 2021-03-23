@@ -11,7 +11,7 @@ type StateType = {
 
 export default class TooltipParent extends Component<PropsType, StateType> {
   state = {
-    showTooltip: false,
+    showTooltip: false
   };
 
   renderTooltip = (): JSX.Element | undefined => {

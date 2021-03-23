@@ -106,8 +106,6 @@ func (app *App) HandleAuthCheck(w http.ResponseWriter, r *http.Request) {
 
 	user, err := app.Repo.User.ReadUser(userID)
 
-	fmt.Println("EMAIL VERIFIED IS", user.EmailVerified)
-
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -560,7 +558,7 @@ func (app *App) InitiatePWResetUser(w http.ResponseWriter, r *http.Request) {
 		}
 
 		err = sgClient.SendGHPWEmail(
-			fmt.Sprintf("%s/api//oauth/login/github", app.ServerConf.ServerURL),
+			fmt.Sprintf("%s/api/oauth/login/github", app.ServerConf.ServerURL),
 			form.Email,
 		)
 
@@ -568,6 +566,9 @@ func (app *App) InitiatePWResetUser(w http.ResponseWriter, r *http.Request) {
 			app.handleErrorInternal(err, w)
 			return
 		}
+
+		w.WriteHeader(http.StatusOK)
+		return
 	}
 
 	// convert the form to a project model

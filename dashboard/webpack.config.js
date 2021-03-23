@@ -18,16 +18,16 @@ module.exports = () => {
       rules: [
         {
           test: /\.(ts|tsx)$/,
-          loader: "ts-loader"
+          loader: "ts-loader",
         },
         {
           enforce: "pre",
           test: /\.js$/,
-          loader: "source-map-loader"
+          loader: "source-map-loader",
         },
         {
           test: /\.(png|svg|jpg|gif|mp3)$/,
-          use: ["file-loader"]
+          use: ["file-loader"],
         },
         { test: /\.css$/, use: ["css-loader"] },
         {
@@ -37,31 +37,31 @@ module.exports = () => {
               loader: "file-loader",
               options: {
                 name: "[name].[ext]",
-                outputPath: "fonts/"
-              }
-            }
-          ]
-        }
-      ]
+                outputPath: "fonts/",
+              },
+            },
+          ],
+        },
+      ],
     },
     resolve: {
       modules: [path.resolve(__dirname, "src"), "node_modules"],
-      extensions: ["*", ".tsx", ".ts", ".js", ".jsx", ".json"]
+      extensions: ["*", ".tsx", ".ts", ".js", ".jsx", ".json"],
     },
     output: {
       filename: "bundle.js",
       path: path.resolve(__dirname, "build"),
-      publicPath: "/"
+      publicPath: "/",
     },
     devServer: {
-      historyApiFallback: true
+      historyApiFallback: true,
     },
     plugins: [
       new HtmlWebpackPlugin({
         template: path.resolve(__dirname, "src", "index.html"),
-        segmentKey: `${process.env.SEGMENT_PUBLIC_KEY}`
+        segmentKey: `${process.env.SEGMENT_PUBLIC_KEY}`,
       }),
-      new webpack.DefinePlugin(envKeys)
-    ]
+      new webpack.DefinePlugin(envKeys),
+    ],
   };
 };

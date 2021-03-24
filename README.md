@@ -32,11 +32,11 @@ Porter brings the simplicity of a traditional PaaS to your own cloud provider wh
   - ✅ GCP
   - ✅ Digital Ocean
 - Simple deploy of any public or private Docker image
+- Auto CI/CD with [buildpacks](https://buildpacks.io) for non-Dockerized apps
 - Heroku-like GUI to monitor application status, logs, and history
-- Marketplace for one click add-ons (e.g. MongoDB, Redis, PostgreSQL)
 - Application rollback to previously deployed versions
-- Deploy webhooks that can be triggered from CI/CD pipelines
-- Native CI/CD with buildpacks for non-Dockerized apps (🚧 Coming Soon)
+- Zero-downtime deploy and health checks
+- Marketplace for one click add-ons (e.g. MongoDB, Redis, PostgreSQL)
 
 ### DevOps Mode
 
@@ -54,45 +54,16 @@ For those who are familiar with Kubernetes and Helm:
 
 Below are instructions for a quickstart. For full documentation, please visit our [official Docs.](https://docs.getporter.dev)
 
-## CLI Installation
-
-### Mac
-
-Run the following command to grab the latest binary:
-
-```sh
-{
-name=$(curl -s https://api.github.com/repos/porter-dev/porter/releases/latest | grep "browser_download_url.*/porter_.*_Darwin_x86_64\.zip" | cut -d ":" -f 2,3 | tr -d \")
-name=$(basename $name)
-curl -L https://github.com/porter-dev/porter/releases/latest/download/$name --output $name
-unzip -a $name
-rm $name
-}
-```
-
-Then move the file into your bin:
-
-```sh
-chmod +x ./porter
-sudo mv ./porter /usr/local/bin/porter
-```
-
-For Linux and Windows installation, see our [Docs](https://docs.getporter.dev/docs/cli-documentation#linux).
-
 ## Getting Started
 
 1. Sign up and log into [Porter Dashboard](https://dashboard.getporter.dev).
 
-2. Create a Project and select a cloud provider you want to provision a Kubernetes cluster in (AWS, GCP, DO). It is also possible to [link up your own Kubernetes cluster.](https://docs.getporter.dev/docs/cli-documentation#connecting-to-an-existing-cluster)
+2. Create a Project and [put in your cloud provider credentials](https://docs.getporter.dev/docs/getting-started-with-porter-on-aws). Porter will automatically provision a Kubernetes cluster in your own cloud. It is also possible to [link up an existing Kubernetes cluster.](https://docs.getporter.dev/docs/cli-documentation#connecting-to-an-existing-cluster)
 
-3. [Put in your credentials](https://docs.getporter.dev/docs/getting-started-with-porter-on-aws), then Porter will automatically provision a cluster and an image registry in your own cloud account.
-
-4. [Build and push your Docker image](https://docs.getporter.dev/docs/cli-documentation#porter-docker-configure), or connect your git repository. We are currently working on supporting the latter option for non-Dockerized applications.
-
-5. From the Templates tab on the Dashboard, select the Docker template. Click on the image you have just pushed, configure the port, then hit deploy.
+3. Deploy your applications from a [git repository](https://docs.getporter.dev/docs/applications) or [Docker image registry](https://docs.getporter.dev/docs/cli-documentation#porter-docker-configure).
 
 ## Want to Help?
 
-We welcome all contributions. Submit an issue or a pull request to help us improve Porter! If you're interested in contributing, please [join our Discord community.](https://discord.gg/MhYNuWwqum)
+We welcome all contributions. Submit an issue or a pull request to help us improve Porter! If you're interested in contributing, please [join our Discord community](https://discord.gg/MhYNuWwqum) for more info.
 
 ![porter](https://user-images.githubusercontent.com/65516095/103712859-def9ee00-4f88-11eb-804c-4b775d697ec4.jpeg)

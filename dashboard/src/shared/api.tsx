@@ -71,6 +71,10 @@ const createDOKS = baseApi<
   return `/api/projects/${pathParams.project_id}/provision/doks`;
 });
 
+const createEmailVerification = baseApi<{}, {}>("POST", (pathParams) => {
+  return `/api/email/verify/initiate`;
+});
+
 const createGCPIntegration = baseApi<
   {
     gcp_region: string;
@@ -137,6 +141,38 @@ const createInvite = baseApi<
   }
 >("POST", (pathParams) => {
   return `/api/projects/${pathParams.id}/invites`;
+});
+
+const createPasswordReset = baseApi<
+  {
+    email: string;
+  },
+  {}
+>("POST", (pathParams) => {
+  return `/api/password/reset/initiate`;
+});
+
+const createPasswordResetVerify = baseApi<
+  {
+    email: string;
+    token: string;
+    token_id: number;
+  },
+  {}
+>("POST", (pathParams) => {
+  return `/api/password/reset/verify`;
+});
+
+const createPasswordResetFinalize = baseApi<
+  {
+    email: string;
+    token: string;
+    token_id: number;
+    new_password: string;
+  },
+  {}
+>("POST", (pathParams) => {
+  return `/api/password/reset/finalize`;
 });
 
 const createProject = baseApi<{ name: string }, {}>("POST", (pathParams) => {
@@ -625,11 +661,15 @@ export default {
   createAWSIntegration,
   createDOCR,
   createDOKS,
+  createEmailVerification,
   createGCPIntegration,
   createGCR,
   createGHAction,
   createGKE,
   createInvite,
+  createPasswordReset,
+  createPasswordResetVerify,
+  createPasswordResetFinalize,
   createProject,
   deleteCluster,
   deleteInvite,

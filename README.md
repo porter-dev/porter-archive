@@ -32,11 +32,11 @@ Porter brings the simplicity of a traditional PaaS to your own cloud provider wh
   - ✅ GCP
   - ✅ Digital Ocean
 - Simple deploy of any public or private Docker image
+- Auto CI/CD with [buildpacks](https://buildpacks.io) for non-Dockerized apps
 - Heroku-like GUI to monitor application status, logs, and history
-- Marketplace for one click add-ons (e.g. MongoDB, Redis, PostgreSQL)
 - Application rollback to previously deployed versions
-- Deploy webhooks that can be triggered from CI/CD pipelines
-- Native CI/CD with buildpacks for non-Dockerized apps
+- Zero-downtime deploy and health checks
+- Marketplace for one click add-ons (e.g. MongoDB, Redis, PostgreSQL)
 
 ### DevOps Mode
 
@@ -58,9 +58,9 @@ Below are instructions for a quickstart. For full documentation, please visit ou
 
 1. Sign up and log into [Porter Dashboard](https://dashboard.getporter.dev).
 
-2. Create a Project and [put in your cloud provider credentials](https://docs.getporter.dev/docs/getting-started-with-porter-on-aws). Porter will automatically provision a Kubernetes cluster in your own cloud. It is also possible to [link up an existing Kubernetes cluster to Porter.](https://docs.getporter.dev/docs/cli-documentation#connecting-to-an-existing-cluster)
+2. Create a Project and [put in your cloud provider credentials](https://docs.getporter.dev/docs/getting-started-with-porter-on-aws). Porter will automatically provision a Kubernetes cluster in your own cloud. It is also possible to [link up an existing Kubernetes cluster.](https://docs.getporter.dev/docs/cli-documentation#connecting-to-an-existing-cluster)
 
-3. [Deploy from a git repository](https://docs.getporter.dev/docs/applications) or [deploy from a Docker image registry](https://docs.getporter.dev/docs/cli-documentation#porter-docker-configure).
+3. Deploy your applications from a [git repository](https://docs.getporter.dev/docs/applications) or [Docker image registry](https://docs.getporter.dev/docs/cli-documentation#porter-docker-configure).
 
 ## Want to Help?
 

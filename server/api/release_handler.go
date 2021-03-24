@@ -633,12 +633,13 @@ func (app *App) HandleReleaseDeployWebhook(w http.ResponseWriter, r *http.Reques
 
 		return
 	}
-	userID, _ := app.getUserIDFromRequest(r)
 
 	client := *app.segmentClient
 	client.Enqueue(segment.Track{
-		UserId: fmt.Sprintf("%v", userID),
+		UserId: "anonymous",
 		Event: "Triggered Re-deploy via Webhook",
+		Properties: segment.NewProperties().
+			Set("repository", repository),
 	})
 
 	w.WriteHeader(http.StatusOK)

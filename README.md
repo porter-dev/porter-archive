@@ -9,7 +9,7 @@
 
 ## Community and Updates
 
-For help, questions, or if you just want a place to hang out, [join our Discord community.](https://discord.gg/MhYNuWwqum)
+For help, questions, or if you just want a place to hang out, [join our Discord community.](https://discord.gg/34n7NN7FJ7)
 
 To keep updated on our progress, please watch the repo for new releases (**Watch > Custom > Releases**) and [follow us on Twitter](https://twitter.com/getporterdev)!
 

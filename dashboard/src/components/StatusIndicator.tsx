@@ -68,7 +68,7 @@ export default class StatusIndicator extends Component<PropsType, StateType> {
       case "daemonset":
         return c.status.numberAvailable == c.status.desiredNumberScheduled;
       case "cronjob":
-        return 1
+        return 1;
     }
   };
 

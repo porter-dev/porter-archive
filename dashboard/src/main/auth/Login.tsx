@@ -162,8 +162,8 @@ export default class Login extends Component<PropsType, StateType> {
             <Button onClick={this.handleLogin}>Continue</Button>
 
             <Helper>
-              Don't have an account?
-              <Link href="/register">Sign up</Link>
+              <Link href="/register">Sign up</Link> |
+              <Link href="/password/reset">Forgot password?</Link>
             </Helper>
           </FormWrapper>
         </LoginPanel>

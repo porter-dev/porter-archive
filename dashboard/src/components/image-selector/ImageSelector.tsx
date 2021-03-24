@@ -192,6 +192,7 @@ export default class ImageSelector extends Component<PropsType, StateType> {
       <Label>
         <img src={icon} />
         <Input
+          autoFocus={true}
           onClick={(e: any) => e.stopPropagation()}
           value={selectedImageUrl}
           onChange={(e: any) => {
@@ -202,7 +203,7 @@ export default class ImageSelector extends Component<PropsType, StateType> {
               this.setState({ isExpanded: true });
             }
           }}
-          placeholder="Enter or select your container image URL"
+          placeholder="Type your container image URL here (or select below)"
         />
       </Label>
     );

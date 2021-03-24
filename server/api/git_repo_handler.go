@@ -72,6 +72,9 @@ func (app *App) HandleListRepos(w http.ResponseWriter, r *http.Request) {
 
 	// list all repositories for specified user
 	repos, _, err := client.Repositories.List(context.Background(), "", &github.RepositoryListOptions{
+		ListOptions: github.ListOptions{
+			PerPage: 100,
+		},
 		Sort: "updated",
 	})
 

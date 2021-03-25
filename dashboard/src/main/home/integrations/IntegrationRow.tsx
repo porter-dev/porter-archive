@@ -10,6 +10,7 @@ import CreateIntegrationForm from "./create-integration/CreateIntegrationForm";
 
 type PropsType = {
   toggleCollapse: MouseEventHandler;
+  triggerDelete: MouseEventHandler;
   label: string;
   integration: string;
   expanded: boolean;
@@ -63,6 +64,12 @@ export default class IntegrationRow extends Component<PropsType, StateType> {
           <MaterialIconTray disabled={false}>
             {/* <i className="material-icons"
             onClick={this.editButtonOnClick}>mode_edit</i> */}
+            <i
+              className="material-icons"
+              onClick={this.props.triggerDelete}
+            >
+              delete
+            </i>
             <I
               className="material-icons"
               showList={this.props.expanded}
@@ -168,8 +175,7 @@ const MainRow = styled.div`
 `;
 
 const MaterialIconTray = styled.div`
-  width: 32px;
-  margin-right: -7px;
+  max-width: 60px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -178,6 +184,7 @@ const MaterialIconTray = styled.div`
     border-radius: 20px;
     font-size: 18px;
     padding: 5px;
+    margin: 0 5px; 
     color: #ffffff44;
     :hover {
       background: ${(props: { disabled: boolean }) =>

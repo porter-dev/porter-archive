@@ -197,17 +197,9 @@ class Home extends Component<PropsType, StateType> {
   };
 
   componentDidMount() {
-    let { user, projects } = this.context;
-
     // Handle redirect from DO
     let queryString = window.location.search;
     let urlParams = new URLSearchParams(queryString);
-
-    window.analytics.identify(user.userId, {
-      email: user.email,
-      createdAt: Date.now(),
-      projects,
-    });
 
     let err = urlParams.get("error");
     if (err) {

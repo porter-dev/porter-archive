@@ -4,6 +4,8 @@ import styled from "styled-components";
 import { Context } from "shared/Context";
 import { integrationList } from "shared/common";
 import IntegrationRow from "./IntegrationRow";
+import ConfirmOverlay from "components/ConfirmOverlay";
+import api from "shared/api";
 
 type PropsType = {
   setCurrent?: (x: string) => void;
@@ -12,15 +14,22 @@ type PropsType = {
   itemIdentifier?: any[];
   titles?: string[];
   isCategory?: boolean;
+  updateIntegrationList: () => void;
 };
 
 type StateType = {
   displayExpanded: boolean[];
+  isDelete: boolean;
+  deleteName: string;
+  deleteID: number;
 };
 
 export default class IntegrationList extends Component<PropsType, StateType> {
   state = {
     displayExpanded: this.props.integrations.map(() => false),
+    isDelete: false,
+    deleteName: "",
+    deleteID: 0,
   };
 
   allCollapsed = () =>
@@ -51,14 +60,59 @@ export default class IntegrationList extends Component<PropsType, StateType> {
     this.setState({ displayExpanded: x });
   };
 
+  triggerDelete = (event: MouseEvent, i: number, id: number) => {
+    if (event) {
+      event.stopPropagation();
+    }
+
+    this.setState({ isDelete: true, deleteName: this.props.titles[i], deleteID: id })
+  }
+
+  handleDeleteIntegration = () => {
+    let { currentProject } = this.context;
+
+    if (this.props.currentCategory === "registry") {
+      api.deleteRegistryIntegration(
+        "<token>",
+        {},
+        {
+          project_id: currentProject.id,
+          registry_id: this.state.deleteID,
+        }
+      ).then(() => {
+        this.setState({ isDelete: false })
+        this.props.updateIntegrationList()
+      }).catch((err) => {
+        this.context.setCurrentError(err)
+      })
+    } else if (this.props.currentCategory === "repo") {
+      api.deleteGitRepoIntegration(
+        "<token>",
+        {},
+        {
+          project_id: currentProject.id,
+          git_repo_id: this.state.deleteID,
+        }
+      ).then(() => {
+        this.setState({ isDelete: false })
+        this.props.updateIntegrationList()
+      }).catch((err) => {
+        this.context.setCurrentError(err)
+      })
+    }
+  }
+
   handleParent = (event: any, integration: string) =>
     this.props.setCurrent && this.props.setCurrent(integration);
 
   renderContents = () => {
     let { integrations, titles, setCurrent, isCategory } = this.props;
+
     if (titles && titles.length > 0) {
       return integrations.map((integration: string, i: number) => {
         let label = titles[i];
+        let item_id = this.props.itemIdentifier[i].id || this.props.itemIdentifier[i]
+
         return (
           <IntegrationRow
             category={this.props.currentCategory}
@@ -68,6 +122,7 @@ export default class IntegrationList extends Component<PropsType, StateType> {
             itemId={this.props.itemIdentifier[i]}
             label={label}
             toggleCollapse={(e: MouseEvent) => this.toggleDisplay(e, i)}
+            triggerDelete={(e: MouseEvent) => this.triggerDelete(e, i, item_id)}
           ></IntegrationRow>
         );
       });
@@ -123,6 +178,12 @@ export default class IntegrationList extends Component<PropsType, StateType> {
   render() {
     return (
       <StyledIntegrationList>
+        <ConfirmOverlay
+          show={this.state.isDelete}
+          message={`Are you sure you want to delete the ${this.props.currentCategory === "registry" ? "Docker registry integration" : "Github integration"} with name ${this.state.deleteName}?`}
+          onYes={this.handleDeleteIntegration}
+          onNo={() => this.setState({ isDelete: false })}
+        />
         {this.props.titles && this.props.titles.length > 0 && (
           <ControlRow>{this.collapseAllButton()}</ControlRow>
         )}

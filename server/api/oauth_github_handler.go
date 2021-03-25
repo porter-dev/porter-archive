@@ -136,7 +136,7 @@ func (app *App) HandleGithubOAuthCallback(w http.ResponseWriter, r *http.Request
 			UserId: fmt.Sprintf("%v", user.ID),
 			Traits: segment.NewTraits().
 				SetEmail(user.Email).
-				Set("github", "false"),
+				Set("github", "true"),
 		})
 
 		client.Enqueue(segment.Track{

@@ -53,7 +53,7 @@ const Indicator = styled.div<{ selected: boolean }>`
   height: 16px;
   border: 1px solid #ffffff55;
   margin: 1px 10px 0px 1px;
-  background: ${(props) => (props.selected ? "#ffffff22" : "#ffffff11")};
+  background: ${props => (props.selected ? "#ffffff22" : "#ffffff11")};
 `;
 
 const Circle = styled.div`

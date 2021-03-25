@@ -159,6 +159,7 @@ class IntegrationCategories extends Component<PropsType, StateType> {
             integrations={this.state.currentOptions}
             titles={this.state.currentTitles}
             itemIdentifier={this.state.currentIntegrationData}
+            updateIntegrationList={() => this.getIntegrationsForCategory(this.props.category)}
           />
         </div>
       );
@@ -195,6 +196,7 @@ class IntegrationCategories extends Component<PropsType, StateType> {
             integrations={this.state.currentOptions}
             titles={this.state.currentTitles}
             itemIdentifier={this.state.currentIds}
+            updateIntegrationList={() => this.getIntegrationsForCategory(this.props.category)}
           />
         </div>
       );

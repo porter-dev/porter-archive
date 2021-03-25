@@ -70,18 +70,33 @@ func (app *App) HandleListRepos(w http.ResponseWriter, r *http.Request) {
 
 	client := github.NewClient(app.GithubProjectConf.Client(oauth2.NoContext, tok))
 
-	// list all repositories for specified user
-	repos, _, err := client.Repositories.List(context.Background(), "", &github.RepositoryListOptions{
-		Sort: "updated",
-	})
+	allRepos := make([]*github.Repository, 0)
 
-	if err != nil {
-		app.handleErrorInternal(err, w)
-		return
+	opt := &github.RepositoryListOptions{
+		ListOptions: github.ListOptions{
+			PerPage: 100,
+		},
+		Sort: "updated",
 	}
 
-	// TODO -- check if repo has already been appended -- there may be duplicates
-	for _, repo := range repos {
+	for {
+		repos, resp, err := client.Repositories.List(context.Background(), "", opt)
+
+		if err != nil {
+			app.handleErrorInternal(err, w)
+			return
+		}
+
+		allRepos = append(allRepos, repos...)
+
+		if resp.NextPage == 0 {
+			break
+		}
+
+		opt.Page = resp.NextPage
+	}
+
+	for _, repo := range allRepos {
 		res = append(res, Repo{
 			FullName: repo.GetFullName(),
 			Kind:     "github",

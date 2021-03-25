@@ -85,6 +85,7 @@ class Integrations extends Component<PropsType, StateType> {
               integrations={["kubernetes", "registry", "repo"]}
               setCurrent={(x) => this.props.history.push(`/integrations/${x}`)}
               isCategory={true}
+              updateIntegrationList={() => {}}
             />
           </div>
         </Route>

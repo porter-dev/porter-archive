@@ -203,6 +203,16 @@ const deleteCluster = baseApi<
   return `/api/projects/${pathParams.project_id}/clusters/${pathParams.cluster_id}`;
 });
 
+const deleteGitRepoIntegration = baseApi<
+  {},
+  {
+    project_id: number;
+    git_repo_id: number;
+  }
+>("DELETE", (pathParams) => {
+  return `/api/projects/${pathParams.project_id}/gitrepos/${pathParams.git_repo_id}`;
+});
+
 const deleteInvite = baseApi<{}, { id: number; invId: number }>(
   "DELETE",
   (pathParams) => {
@@ -212,6 +222,16 @@ const deleteInvite = baseApi<{}, { id: number; invId: number }>(
 
 const deleteProject = baseApi<{}, { id: number }>("DELETE", (pathParams) => {
   return `/api/projects/${pathParams.id}`;
+});
+
+const deleteRegistryIntegration = baseApi<
+  {},
+  {
+    project_id: number;
+    registry_id: number;
+  }
+>("DELETE", (pathParams) => {
+  return `/api/projects/${pathParams.project_id}/registries/${pathParams.registry_id}`;
 });
 
 const deployTemplate = baseApi<
@@ -672,8 +692,10 @@ export default {
   createPasswordResetFinalize,
   createProject,
   deleteCluster,
+  deleteGitRepoIntegration,
   deleteInvite,
   deleteProject,
+  deleteRegistryIntegration,
   createSubdomain,
   deployTemplate,
   destroyEKS,

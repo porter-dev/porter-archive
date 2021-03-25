@@ -14,7 +14,7 @@ type GitRepo struct {
 	ProjectID uint `json:"project_id"`
 
 	// The username/organization that this repo integration is linked to
-	RepoEntity string `json:"repo_entity" gorm:"unique"`
+	RepoEntity string `json:"repo_entity"`
 
 	// The various auth mechanisms available to the integration
 	OAuthIntegrationID uint

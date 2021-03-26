@@ -121,9 +121,8 @@ class UpdateClusterModal extends Component<PropsType, StateType> {
 
     return (
       <Warning highlight={true}>
-        ⚠️ Deletion may result in dangling resources. Please visit your cloud
-        provider's console to ensure that all resources have been removed. Note
-        that deleting the cluster does not delete your registries.
+        ⚠️ Deletion may result in dangling resources. For a guide on
+        how to delete dangling resources, click on the Help Button below. 
       </Warning>
     );
   };
@@ -159,7 +158,7 @@ class UpdateClusterModal extends Component<PropsType, StateType> {
         {this.renderWarning()}
 
         <Help
-          href="https://docs.getporter.dev/docs/getting-started-with-porter-on-aws#deleting-provisioned-resources"
+          href="https://docs.getporter.dev/docs/deleting-dangling-resources"
           target="_blank"
         >
           <i className="material-icons">help_outline</i> Help

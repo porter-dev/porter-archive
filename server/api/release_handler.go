@@ -131,6 +131,7 @@ func (app *App) HandleGetRelease(w http.ResponseWriter, r *http.Request) {
 	}
 
 	k8sForm.PopulateK8sOptionsFromQueryParams(vals, app.Repo.Cluster)
+	k8sForm.DefaultNamespace = form.ReleaseForm.Namespace
 
 	// validate the form
 	if err := app.validator.Struct(k8sForm); err != nil {
@@ -637,7 +638,7 @@ func (app *App) HandleReleaseDeployWebhook(w http.ResponseWriter, r *http.Reques
 	client := *app.segmentClient
 	client.Enqueue(segment.Track{
 		UserId: "anonymous",
-		Event: "Triggered Re-deploy via Webhook",
+		Event:  "Triggered Re-deploy via Webhook",
 		Properties: segment.NewProperties().
 			Set("repository", repository),
 	})

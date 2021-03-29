@@ -31,7 +31,7 @@ export default class ChartList extends Component<PropsType, StateType> {
     controllers: {} as Record<string, Record<string, any>>,
     loading: false,
     error: false,
-    websockets: {} as Record<string, any>,
+    websockets: {} as Record<string, any>
   };
 
   // TODO: promisify
@@ -56,12 +56,12 @@ export default class ChartList extends Component<PropsType, StateType> {
             "pending_upgrade",
             "pending_rollback",
             "superseded",
-            "failed",
-          ],
+            "failed"
+          ]
         },
         { id: currentProject.id }
       )
-      .then((res) => {
+      .then(res => {
         let charts = res.data || [];
         if (this.props.sortType == "Newest") {
           charts.sort((a: any, b: any) =>
@@ -83,7 +83,7 @@ export default class ChartList extends Component<PropsType, StateType> {
         });
         callback(charts);
       })
-      .catch((err) => {
+      .catch(err => {
         console.log(err);
         setCurrentError(JSON.stringify(err));
         this.setState({ loading: false, error: true });
@@ -117,8 +117,8 @@ export default class ChartList extends Component<PropsType, StateType> {
       this.setState({
         controllers: {
           ...this.state.controllers,
-          [chartKey]: chartControllers,
-        },
+          [chartKey]: chartControllers
+        }
       });
     };
 
@@ -155,15 +155,15 @@ export default class ChartList extends Component<PropsType, StateType> {
             {
               namespace: chart.namespace,
               cluster_id: currentCluster.id,
-              storage: StorageType.Secret,
+              storage: StorageType.Secret
             },
             {
               id: currentProject.id,
               name: chart.name,
-              revision: chart.version,
+              revision: chart.version
             }
           )
-          .then((res) => {
+          .then(res => {
             // transform controller array into hash table for easy lookup during updates.
             let chartControllers = {} as Record<string, Record<string, any>>;
             res.data.forEach((c: any) => {
@@ -177,12 +177,12 @@ export default class ChartList extends Component<PropsType, StateType> {
                   {
                     chartLookupTable: {
                       ...this.state.chartLookupTable,
-                      [c.metadata.uid]: `${chart.namespace}-${chart.name}`,
+                      [c.metadata.uid]: `${chart.namespace}-${chart.name}`
                     },
                     controllers: {
                       ...this.state.controllers,
-                      [`${chart.namespace}-${chart.name}`]: chartControllers,
-                    },
+                      [`${chart.namespace}-${chart.name}`]: chartControllers
+                    }
                   },
                   () => {
                     nextController();
@@ -192,7 +192,7 @@ export default class ChartList extends Component<PropsType, StateType> {
             });
             next();
           })
-          .catch((err) => {
+          .catch(err => {
             setCurrentError(JSON.stringify(err));
             return;
           });
@@ -206,7 +206,7 @@ export default class ChartList extends Component<PropsType, StateType> {
       "deployment",
       "statefulset",
       "daemonset",
-      "replicaset",
+      "replicaset"
     ]);
   }
 

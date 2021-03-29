@@ -12,7 +12,7 @@ type StateType = {
 
 export default class ZoomPanel extends Component<PropsType, StateType> {
   state = {
-    wrapperHeight: 0,
+    wrapperHeight: 0
   };
 
   wrapperRef: any = React.createRef();

@@ -28,7 +28,7 @@ export default class InviteList extends Component<PropsType, StateType> {
     invites: [] as InviteType[],
     email: "",
     invalidEmail: false,
-    isHTTPS: process.env.API_SERVER === "dashboard.getporter.dev",
+    isHTTPS: process.env.API_SERVER === "dashboard.getporter.dev"
   };
 
   componentDidMount() {
@@ -44,11 +44,11 @@ export default class InviteList extends Component<PropsType, StateType> {
         "<token>",
         {},
         {
-          id: currentProject.id,
+          id: currentProject.id
         }
       )
-      .then((res) => this.setState({ invites: res.data, loading: false }))
-      .catch((err) => console.log(err));
+      .then(res => this.setState({ invites: res.data, loading: false }))
+      .catch(err => console.log(err));
   };
 
   validateEmail = () => {
@@ -69,11 +69,11 @@ export default class InviteList extends Component<PropsType, StateType> {
         { email: this.state.email },
         { id: currentProject.id }
       )
-      .then((_) => {
+      .then(_ => {
         this.getInviteData();
         this.setState({ email: "" });
       })
-      .catch((err) => console.log(err));
+      .catch(err => console.log(err));
   };
 
   deleteInvite = (index: number) => {
@@ -84,11 +84,11 @@ export default class InviteList extends Component<PropsType, StateType> {
         {},
         {
           id: currentProject.id,
-          invId: this.state.invites[index].id,
+          invId: this.state.invites[index].id
         }
       )
       .then(this.getInviteData)
-      .catch((err) => console.log(err));
+      .catch(err => console.log(err));
   };
 
   replaceInvite = (index: number) => {
@@ -99,18 +99,18 @@ export default class InviteList extends Component<PropsType, StateType> {
         { email: this.state.invites[index].email },
         { id: currentProject.id }
       )
-      .then((_) =>
+      .then(_ =>
         api.deleteInvite(
           "<token>",
           {},
           {
             id: currentProject.id,
-            invId: this.state.invites[index].id,
+            invId: this.state.invites[index].id
           }
         )
       )
       .then(this.getInviteData)
-      .catch((err) => console.log(err));
+      .catch(err => console.log(err));
   };
 
   copyToClip = (index: number) => {
@@ -124,8 +124,8 @@ export default class InviteList extends Component<PropsType, StateType> {
         }`
       )
       .then(
-        function () {},
-        function () {
+        function() {},
+        function() {
           console.log("couldn't copy link to clipboard");
         }
       );
@@ -327,16 +327,15 @@ const InviteButton = styled.div<{ disabled: boolean }>`
   justify-content: center;
   border: 0;
   border-radius: 5px;
-  background: ${(props) => (!props.disabled ? "#616FEEcc" : "#aaaabb")};
-  box-shadow: ${(props) =>
-    !props.disabled ? "0 2px 5px 0 #00000030" : "none"};
-  cursor: ${(props) => (!props.disabled ? "pointer" : "default")};
+  background: ${props => (!props.disabled ? "#616FEEcc" : "#aaaabb")};
+  box-shadow: ${props => (!props.disabled ? "0 2px 5px 0 #00000030" : "none")};
+  cursor: ${props => (!props.disabled ? "pointer" : "default")};
   user-select: none;
   :focus {
     outline: 0;
   }
   :hover {
-    filter: ${(props) => (!props.disabled ? "brightness(120%)" : "")};
+    filter: ${props => (!props.disabled ? "brightness(120%)" : "")};
   }
   margin-bottom: 10px;
 `;

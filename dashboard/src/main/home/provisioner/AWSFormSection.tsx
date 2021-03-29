@@ -34,7 +34,7 @@ type StateType = {
 
 const provisionOptions = [
   { value: "ecr", label: "Elastic Container Registry (ECR)" },
-  { value: "eks", label: "Elastic Kubernetes Service (EKS)" },
+  { value: "eks", label: "Elastic Kubernetes Service (EKS)" }
 ];
 
 const regionOptions = [
@@ -57,7 +57,7 @@ const regionOptions = [
   { value: "eu-west-3", label: "Europe (Paris) eu-west-3" },
   { value: "eu-north-1", label: "Europe (Stockholm) eu-north-1" },
   { value: "me-south-1", label: "Middle East (Bahrain) me-south-1" },
-  { value: "sa-east-1", label: "South America (São Paulo) sa-east-1" },
+  { value: "sa-east-1", label: "South America (São Paulo) sa-east-1" }
 ];
 
 // TODO: Consolidate across forms w/ HOC
@@ -68,7 +68,7 @@ class AWSFormSection extends Component<PropsType, StateType> {
     awsSecretKey: "",
     selectedInfras: [...provisionOptions],
     buttonStatus: "",
-    provisionConfirmed: false,
+    provisionConfirmed: false
   };
 
   componentDidMount = () => {
@@ -125,7 +125,7 @@ class AWSFormSection extends Component<PropsType, StateType> {
 
     api
       .createProject("<token>", { name: projectName }, {})
-      .then((res) => {
+      .then(res => {
         let proj = res.data;
         // Need to set project list for dropdown
         // TODO: consolidate into ProjectSection (case on exists in list on set)
@@ -134,10 +134,10 @@ class AWSFormSection extends Component<PropsType, StateType> {
             "<token>",
             {},
             {
-              id: user.userId,
+              id: user.userId
             }
           )
-          .then((res) => {
+          .then(res => {
             setProjects(res.data);
             setCurrentProject(proj, () => {
               callback && callback();
@@ -159,16 +159,16 @@ class AWSFormSection extends Component<PropsType, StateType> {
         {
           aws_region: awsRegion,
           aws_access_key_id: awsAccessId,
-          aws_secret_access_key: awsSecretKey,
+          aws_secret_access_key: awsSecretKey
         },
         { id: currentProject.id }
       )
-      .then((res) =>
+      .then(res =>
         api.provisionECR(
           "<token>",
           {
             aws_integration_id: res.data.id,
-            ecr_name: `${currentProject.name}-registry`,
+            ecr_name: `${currentProject.name}-registry`
           },
           { id: currentProject.id }
         )
@@ -189,16 +189,16 @@ class AWSFormSection extends Component<PropsType, StateType> {
           aws_region: awsRegion,
           aws_access_key_id: awsAccessId,
           aws_secret_access_key: awsSecretKey,
-          aws_cluster_id: clusterName,
+          aws_cluster_id: clusterName
         },
         { id: currentProject.id }
       )
-      .then((res) =>
+      .then(res =>
         api.provisionEKS(
           "<token>",
           {
             aws_integration_id: res.data.id,
-            eks_name: clusterName,
+            eks_name: clusterName
           },
           { id: currentProject.id }
         )
@@ -336,7 +336,7 @@ class AWSFormSection extends Component<PropsType, StateType> {
             checked={this.state.provisionConfirmed}
             toggle={() =>
               this.setState({
-                provisionConfirmed: !this.state.provisionConfirmed,
+                provisionConfirmed: !this.state.provisionConfirmed
               })
             }
             label="I understand and wish to proceed"

@@ -9,7 +9,7 @@ type StateType = {
 
 export default class MultiSelect extends Component<PropsType, StateType> {
   state = {
-    options: [] as { label: string; value: string }[],
+    options: [] as { label: string; value: string }[]
   };
 
   renderOptions = () => {};

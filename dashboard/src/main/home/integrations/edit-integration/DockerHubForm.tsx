@@ -20,7 +20,7 @@ export default class DockerHubForm extends Component<PropsType, StateType> {
     registryURL: "",
     dockerEmail: "",
     dockerUsername: "",
-    dockerPassword: "",
+    dockerPassword: ""
   };
 
   isDisabled = (): boolean => {
@@ -28,7 +28,7 @@ export default class DockerHubForm extends Component<PropsType, StateType> {
       registryURL,
       dockerEmail,
       dockerUsername,
-      dockerPassword,
+      dockerPassword
     } = this.state;
     if (
       registryURL === "" ||

@@ -21,6 +21,7 @@ import (
 	"github.com/porter-dev/porter/internal/integrations/email"
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/repository"
+	segment "gopkg.in/segmentio/analytics-go.v3"
 )
 
 // Enumeration of user API error codes, represented as int64
@@ -50,6 +51,23 @@ func (app *App) HandleCreateUser(w http.ResponseWriter, r *http.Request) {
 	)
 
 	if err == nil {
+		// send to segment
+		client := *app.segmentClient
+
+		client.Enqueue(segment.Identify{
+			UserId: fmt.Sprintf("%v", user.ID),
+			Traits: segment.NewTraits().
+				SetEmail(user.Email).
+				Set("github", "false"),
+		})
+
+		client.Enqueue(segment.Track{
+			UserId: fmt.Sprintf("%v", user.ID),
+			Event:  "New User",
+			Properties: segment.NewProperties().
+				Set("email", user.Email),
+		})
+
 		app.Logger.Info().Msgf("New user created: %d", user.ID)
 		var redirect string
 
@@ -498,8 +516,6 @@ func (app *App) FinalizEmailVerifyUser(w http.ResponseWriter, r *http.Request) {
 	user.EmailVerified = true
 
 	user, err = app.Repo.User.UpdateUser(user)
-
-	fmt.Println("UPDATED USER WITH VERIFIED EMAIL", user)
 
 	if err != nil {
 		http.Redirect(w, r, "/dashboard?error="+url.QueryEscape("Could not verify email address"), 302)

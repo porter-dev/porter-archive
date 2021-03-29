@@ -22,12 +22,6 @@ func Rotate(db *_gorm.DB, oldKey, newKey *[32]byte) error {
 	copy(oldKeyBytes[:], oldKey[:])
 	copy(newKeyBytes[:], newKey[:])
 
-	fmt.Printf("beginning key rotation from %s to %s\n", string(oldKeyBytes), string(newKeyBytes))
-
-	for i, b := range oldKeyBytes {
-		fmt.Println(i, ":", string(b), string(newKeyBytes[i]))
-	}
-
 	err := rotateClusterModel(db, oldKey, newKey)
 
 	if err != nil {

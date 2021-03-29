@@ -18,7 +18,7 @@ export default class ResetPasswordInit extends Component<PropsType, StateType> {
   state = {
     email: "",
     emailError: false,
-    submitted: false,
+    submitted: false
   };
 
   handleKeyDown = (e: any) => {
@@ -57,14 +57,14 @@ export default class ResetPasswordInit extends Component<PropsType, StateType> {
         .createPasswordReset(
           "",
           {
-            email: email,
+            email: email
           },
           {}
         )
-        .then((res) => {
+        .then(res => {
           this.setState({ submitted: true });
         })
-        .catch((err) =>
+        .catch(err =>
           this.context.setCurrentError(err.response.data.errors[0])
         );
     }
@@ -83,7 +83,7 @@ export default class ResetPasswordInit extends Component<PropsType, StateType> {
             onChange={(e: ChangeEvent<HTMLInputElement>) =>
               this.setState({
                 email: e.target.value,
-                emailError: false,
+                emailError: false
               })
             }
             valid={!emailError}

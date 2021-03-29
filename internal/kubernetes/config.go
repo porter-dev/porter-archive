@@ -89,8 +89,9 @@ func GetAgentTesting(objects ...runtime.Object) *Agent {
 // OutOfClusterConfig is the set of parameters required for an out-of-cluster connection.
 // This implements RESTClientGetter
 type OutOfClusterConfig struct {
-	Cluster *models.Cluster
-	Repo    *repository.Repository
+	Cluster          *models.Cluster
+	Repo             *repository.Repository
+	DefaultNamespace string // optional
 
 	// Only required if using DigitalOcean OAuth as an auth mechanism
 	DigitalOceanOAuth *oauth2.Config
@@ -186,7 +187,15 @@ func (conf *OutOfClusterConfig) GetClientConfigFromCluster() (clientcmd.ClientCo
 		return nil, err
 	}
 
-	config := clientcmd.NewDefaultClientConfig(*apiConfig, &clientcmd.ConfigOverrides{})
+	overrides := &clientcmd.ConfigOverrides{}
+
+	if conf.DefaultNamespace != "" {
+		overrides.Context = api.Context{
+			Namespace: conf.DefaultNamespace,
+		}
+	}
+
+	config := clientcmd.NewDefaultClientConfig(*apiConfig, overrides)
 
 	return config, nil
 }

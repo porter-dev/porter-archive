@@ -23,7 +23,7 @@ export default class GKEForm extends Component<PropsType, StateType> {
     clusterName: "",
     clusterEndpoint: "",
     clusterCA: "",
-    serviceAccountKey: "",
+    serviceAccountKey: ""
   };
 
   isDisabled = (): boolean => {
@@ -31,7 +31,7 @@ export default class GKEForm extends Component<PropsType, StateType> {
       clusterName,
       clusterEndpoint,
       clusterCA,
-      serviceAccountKey,
+      serviceAccountKey
     } = this.state;
     if (
       clusterName === "" ||

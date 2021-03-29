@@ -32,7 +32,7 @@ class ClusterDashboard extends Component<PropsType, StateType> {
       ? localStorage.getItem("SortType")
       : "Newest",
     currentChart: null as ChartType | null,
-    isMetricsInstalled: false,
+    isMetricsInstalled: false
   };
 
   componentDidMount() {
@@ -40,13 +40,13 @@ class ClusterDashboard extends Component<PropsType, StateType> {
       .getPrometheusIsInstalled(
         "<token>",
         {
-          cluster_id: this.context.currentCluster.id,
+          cluster_id: this.context.currentCluster.id
         },
         {
-          id: this.context.currentProject.id,
+          id: this.context.currentProject.id
         }
       )
-      .then((res) => {
+      .then(res => {
         this.setState({ isMetricsInstalled: true });
       })
       .catch(() => {
@@ -63,7 +63,7 @@ class ClusterDashboard extends Component<PropsType, StateType> {
         sortType: localStorage.getItem("SortType")
           ? localStorage.getItem("SortType")
           : "Newest",
-        currentChart: null,
+        currentChart: null
       });
     }
   }
@@ -138,11 +138,11 @@ class ClusterDashboard extends Component<PropsType, StateType> {
           </Button>
           <SortFilterWrapper>
             <SortSelector
-              setSortType={(sortType) => this.setState({ sortType })}
+              setSortType={sortType => this.setState({ sortType })}
               sortType={this.state.sortType}
             />
             <NamespaceSelector
-              setNamespace={(namespace) => this.setState({ namespace })}
+              setNamespace={namespace => this.setState({ namespace })}
               namespace={this.state.namespace}
             />
           </SortFilterWrapper>

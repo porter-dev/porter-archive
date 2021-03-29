@@ -236,7 +236,7 @@ export default class MetricsSection extends Component<PropsType, StateType> {
 
     if (this.state.selectedMetric == "nginx:errors") {
       pods = [this.state.selectedIngress?.name];
-      namespace = this.state.selectedIngress?.namespace || "default"
+      namespace = this.state.selectedIngress?.namespace || "default";
       shouldsum = false;
     }
 

@@ -46,6 +46,7 @@ func main() {
 		&models.Invite{},
 		&models.AuthCode{},
 		&models.DNSRecord{},
+		&models.PWResetToken{},
 		&ints.KubeIntegration{},
 		&ints.BasicIntegration{},
 		&ints.OIDCIntegration{},

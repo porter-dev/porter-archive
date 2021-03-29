@@ -27,7 +27,7 @@ export default class TagList extends Component<PropsType, StateType> {
     loading: true,
     error: false,
     tags: [] as string[],
-    currentTag: this.props.selectedTag,
+    currentTag: this.props.selectedTag
   };
 
   componentDidMount() {
@@ -41,16 +41,16 @@ export default class TagList extends Component<PropsType, StateType> {
         {
           project_id: currentProject.id,
           registry_id: this.props.registryId,
-          repo_name: repoName,
+          repo_name: repoName
         }
       )
-      .then((res) => {
+      .then(res => {
         let tags = res.data.map((tag: any, i: number) => {
           return tag.tag;
         });
         this.setState({ tags, loading: false });
       })
-      .catch((err) => {
+      .catch(err => {
         console.log(err);
         this.setState({ loading: false, error: true });
       });

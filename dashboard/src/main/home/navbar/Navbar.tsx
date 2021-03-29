@@ -17,18 +17,7 @@ type StateType = {
 
 export default class Navbar extends Component<PropsType, StateType> {
   state = {
-    showDropdown: false,
-  };
-
-  handleLogout = (): void => {
-    let { logOut } = this.props;
-    let { setCurrentError } = this.context;
-
-    // Attempt user logout
-    api
-      .logOutUser("<token>", {}, {})
-      .then(logOut)
-      .catch((err) => setCurrentError(err.response.data.errors[0]));
+    showDropdown: false
   };
 
   renderSettingsDropdown = () => {
@@ -42,7 +31,7 @@ export default class Navbar extends Component<PropsType, StateType> {
             <DropdownLabel>
               {this.context.user && this.context.user.email}
             </DropdownLabel>
-            <LogOutButton onClick={this.handleLogout}>
+            <LogOutButton onClick={this.props.logOut}>
               <i className="material-icons">keyboard_return</i> Log Out
             </LogOutButton>
           </Dropdown>
@@ -94,7 +83,7 @@ const LogOutButton = styled.button`
   border: 0;
   text-align: left;
   background: none;
-  cursor: ${(props) => (!props.disabled ? "pointer" : "default")};
+  cursor: ${props => (!props.disabled ? "pointer" : "default")};
   user-select: none;
   :focus {
     outline: 0;

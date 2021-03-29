@@ -19,6 +19,7 @@ import (
 	"github.com/porter-dev/porter/internal/helm/grapher"
 	"github.com/porter-dev/porter/internal/kubernetes"
 	"github.com/porter-dev/porter/internal/repository"
+	segment "gopkg.in/segmentio/analytics-go.v3"
 )
 
 // Enumeration of release API error codes, represented as int64
@@ -130,6 +131,7 @@ func (app *App) HandleGetRelease(w http.ResponseWriter, r *http.Request) {
 	}
 
 	k8sForm.PopulateK8sOptionsFromQueryParams(vals, app.Repo.Cluster)
+	k8sForm.DefaultNamespace = form.ReleaseForm.Namespace
 
 	// validate the form
 	if err := app.validator.Struct(k8sForm); err != nil {
@@ -632,6 +634,14 @@ func (app *App) HandleReleaseDeployWebhook(w http.ResponseWriter, r *http.Reques
 
 		return
 	}
+
+	client := *app.segmentClient
+	client.Enqueue(segment.Track{
+		UserId: "anonymous",
+		Event:  "Triggered Re-deploy via Webhook",
+		Properties: segment.NewProperties().
+			Set("repository", repository),
+	})
 
 	w.WriteHeader(http.StatusOK)
 }

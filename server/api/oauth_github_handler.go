@@ -17,6 +17,7 @@ import (
 	"golang.org/x/oauth2"
 
 	"github.com/porter-dev/porter/internal/models/integrations"
+	segment "gopkg.in/segmentio/analytics-go.v3"
 )
 
 // HandleGithubOAuthStartUser starts the oauth2 flow for a user login request.
@@ -129,6 +130,23 @@ func (app *App) HandleGithubOAuthCallback(w http.ResponseWriter, r *http.Request
 			return
 		}
 
+		// send to segment
+		client := *app.segmentClient
+		client.Enqueue(segment.Identify{
+			UserId: fmt.Sprintf("%v", user.ID),
+			Traits: segment.NewTraits().
+				SetEmail(user.Email).
+				Set("github", "true"),
+		})
+
+		client.Enqueue(segment.Track{
+			UserId: fmt.Sprintf("%v", user.ID),
+			Event: "New User",
+			Properties: segment.NewProperties().
+				Set("email", user.Email),
+		})
+
+
 		// log the user in
 		app.Logger.Info().Msgf("New user created: %d", user.ID)
 
@@ -196,11 +214,13 @@ func (app *App) upsertUserFromToken(tok *oauth2.Token) (*models.User, error) {
 		}
 
 		primary := ""
+		verified := false
 
 		// get the primary email
 		for _, email := range emails {
 			if email.GetPrimary() {
 				primary = email.GetEmail()
+				verified = email.GetVerified()
 				break
 			}
 		}
@@ -214,8 +234,9 @@ func (app *App) upsertUserFromToken(tok *oauth2.Token) (*models.User, error) {
 
 		if err == gorm.ErrRecordNotFound {
 			user = &models.User{
-				Email:        primary,
-				GithubUserID: githubUser.GetID(),
+				Email:         primary,
+				EmailVerified: verified,
+				GithubUserID:  githubUser.GetID(),
 			}
 
 			user, err = app.Repo.User.CreateUser(user)

@@ -25,7 +25,7 @@ class IntegrationCategories extends Component<PropsType, StateType> {
     currentOptions: [] as any[],
     currentTitles: [] as any[],
     currentIds: [] as any[],
-    currentIntegrationData: [] as any[],
+    currentIntegrationData: [] as any[]
   };
 
   componentDidMount() {
@@ -43,7 +43,7 @@ class IntegrationCategories extends Component<PropsType, StateType> {
     this.setState({
       currentOptions: [],
       currentTitles: [],
-      currentIntegrationData: [],
+      currentIntegrationData: []
     });
     switch (categoryType) {
       case "kubernetes":
@@ -55,7 +55,7 @@ class IntegrationCategories extends Component<PropsType, StateType> {
       case "registry":
         api
           .getProjectRegistries("<token>", {}, { id: currentProject.id })
-          .then((res) => {
+          .then(res => {
             // Sort res.data into service type and sort each service's registry alphabetically
             let grouped: any = {};
             let final: any = [];
@@ -81,7 +81,7 @@ class IntegrationCategories extends Component<PropsType, StateType> {
             this.setState({
               currentOptions,
               currentTitles,
-              currentIntegrationData: final,
+              currentIntegrationData: final
             });
           })
           .catch(console.log);
@@ -89,7 +89,7 @@ class IntegrationCategories extends Component<PropsType, StateType> {
       case "repo":
         api
           .getGitRepos("<token>", {}, { project_id: currentProject.id })
-          .then((res) => {
+          .then(res => {
             let currentOptions = [] as string[];
             let currentTitles = [] as string[];
             let currentIds = [] as any[];
@@ -102,7 +102,7 @@ class IntegrationCategories extends Component<PropsType, StateType> {
               currentOptions,
               currentTitles,
               currentIds,
-              currentIntegrationData: res.data,
+              currentIntegrationData: res.data
             });
           })
           .catch(console.log);
@@ -143,7 +143,7 @@ class IntegrationCategories extends Component<PropsType, StateType> {
                   setCurrentIntegration: (x: string) =>
                     this.props.history.push(
                       `/integrations/${this.props.category}/create/${x}`
-                    ),
+                    )
                 })
               }
             >
@@ -159,6 +159,9 @@ class IntegrationCategories extends Component<PropsType, StateType> {
             integrations={this.state.currentOptions}
             titles={this.state.currentTitles}
             itemIdentifier={this.state.currentIntegrationData}
+            updateIntegrationList={() =>
+              this.getIntegrationsForCategory(this.props.category)
+            }
           />
         </div>
       );
@@ -195,6 +198,9 @@ class IntegrationCategories extends Component<PropsType, StateType> {
             integrations={this.state.currentOptions}
             titles={this.state.currentTitles}
             itemIdentifier={this.state.currentIds}
+            updateIntegrationList={() =>
+              this.getIntegrationsForCategory(this.props.category)
+            }
           />
         </div>
       );

@@ -17,8 +17,8 @@ import (
 // HandleListTemplates retrieves a list of Porter templates
 // TODO: test and reduce fragility (handle untar/parse error for individual charts)
 // TODO: separate markdown retrieval into its own query if necessary
-func (app *App) HandleListTemplates(w http.ResponseWriter, r *http.Request) {		
-	
+func (app *App) HandleListTemplates(w http.ResponseWriter, r *http.Request) {
+
 	vals, err := url.ParseQuery(r.URL.RawQuery)
 
 	if err != nil {

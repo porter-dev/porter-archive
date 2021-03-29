@@ -9,6 +9,8 @@ import Loading from "components/Loading";
 import InfraStatuses from "./InfraStatuses";
 import ProvisionerLogs from "./ProvisionerLogs";
 import { RouteComponentProps, withRouter } from "react-router";
+import { stringify } from "qs";
+import { forEach } from "lodash";
 
 type PropsType = RouteComponentProps & {};
 
@@ -36,7 +38,7 @@ class Provisioner extends Component<PropsType, StateType> {
     infras: [] as InfraType[],
     selectedInfra: null as InfraType,
     loading: true,
-    currentProject: this.context.currentProject,
+    currentProject: this.context.currentProject
   };
 
   selectInfra = (infra: InfraType) => {
@@ -44,6 +46,42 @@ class Provisioner extends Component<PropsType, StateType> {
   };
 
   componentDidMount() {
+    this.updateInfras()
+  }
+
+  componentDidUpdate(prevProps : PropsType, prevState : StateType) {
+    // Check that an infra that was previously in a non-created state, and 
+    // which was a cluster, is now in a created state. If so, propagate update
+    // so that cluster can be refreshed. 
+    let prevInfraStates : Record<number, string> = {}
+
+    prevState.infras.forEach((infra, i) => {
+      prevInfraStates[infra.id] = infra.status
+    })
+
+    this.state.infras.forEach((infra, i) => {
+      if (prevInfraStates[infra.id] && infra.status == "created" && prevInfraStates[infra.id] != "created") {
+        api
+        .getClusters("<token>", {}, { id: this.context.currentProject.id })
+        .then(res => {
+          this.context.setCurrentCluster(res.data[0])
+        })
+        .catch(err => {
+          this.context.setCurrentError(err)
+        });
+      }
+    })
+  }
+
+  refresh = () => {
+    this.updateInfras()
+  }
+
+  updateInfras = () => {
+    this.setState({
+      loading: true,
+    });
+
     let { currentProject } = this.state;
 
     api
@@ -51,10 +89,10 @@ class Provisioner extends Component<PropsType, StateType> {
         "<token>",
         {},
         {
-          project_id: currentProject.id,
+          project_id: currentProject.id
         }
       )
-      .then((res) => {
+      .then(res => {
         let infras = res.data.sort((a: InfraType, b: InfraType) => {
           return b.id - a.id;
         });
@@ -63,7 +101,7 @@ class Provisioner extends Component<PropsType, StateType> {
           error: false,
           infras,
           loading: false,
-          selectedInfra: infras[0],
+          selectedInfra: infras[0]
         });
       })
       .catch();
@@ -92,6 +130,7 @@ class Provisioner extends Component<PropsType, StateType> {
           <ProvisionerLogs
             key={this.state.selectedInfra?.id}
             selectedInfra={this.state.selectedInfra}
+            updateInfras={this.updateInfras}
           />
         </StyledProvisioner>
       );
@@ -99,7 +138,9 @@ class Provisioner extends Component<PropsType, StateType> {
 
     return (
       <StyledProvisioner>
-        You have not provisioned any resources for this project through Porter.
+        You have not provisioned any resources for this project through Porter. <RefreshText
+          onClick={this.refresh}
+        >Refresh</RefreshText>
       </StyledProvisioner>
     );
   }
@@ -128,3 +169,10 @@ const TabWrapper = styled.div`
   height: 100%;
   overflow-y: auto;
 `;
+
+const RefreshText = styled.div`
+  display: inline;
+  margin-left: 4px;
+  color: #8590ff;
+  cursor: pointer;
+`

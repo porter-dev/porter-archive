@@ -29,21 +29,29 @@ func GetPrometheusService(clientset kubernetes.Interface) (*v1.Service, bool, er
 	return &services.Items[0], true, nil
 }
 
+type SimpleIngress struct {
+	Name      string `json:"name"`
+	Namespace string `json:"namespace"`
+}
+
 // GetIngressesWithNGINXAnnotation gets an array of names for all ingresses controlled by
 // NGINX
-func GetIngressesWithNGINXAnnotation(clientset kubernetes.Interface) ([]string, error) {
+func GetIngressesWithNGINXAnnotation(clientset kubernetes.Interface) ([]SimpleIngress, error) {
 	ingressList, err := clientset.NetworkingV1beta1().Ingresses("").List(context.TODO(), metav1.ListOptions{})
 
 	if err != nil {
 		return nil, err
 	}
 
-	res := make([]string, 0)
+	res := make([]SimpleIngress, 0)
 
 	for _, ingress := range ingressList.Items {
 		if ingressAnn, found := ingress.ObjectMeta.Annotations["kubernetes.io/ingress.class"]; found {
 			if ingressAnn == "nginx" {
-				res = append(res, ingress.ObjectMeta.Name)
+				res = append(res, SimpleIngress{
+					Name:      ingress.ObjectMeta.Name,
+					Namespace: ingress.ObjectMeta.Namespace,
+				})
 			}
 		}
 	}

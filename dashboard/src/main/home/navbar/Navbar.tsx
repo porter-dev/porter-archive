@@ -44,15 +44,13 @@ export default class Navbar extends Component<PropsType, StateType> {
     return (
       <StyledNavbar>
         <Feedback currentView={this.props.currentView} />
-        <NavButton 
-          selected={this.state.showDropdown} 
+        <NavButton
+          selected={this.state.showDropdown}
           onClick={() =>
             this.setState({ showDropdown: !this.state.showDropdown })
           }
         >
-          <I className="material-icons-outlined">
-            account_circle
-          </I>
+          <I className="material-icons-outlined">account_circle</I>
           {this.context.user.email}
           {this.renderSettingsDropdown()}
         </NavButton>

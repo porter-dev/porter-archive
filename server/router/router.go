@@ -1184,7 +1184,7 @@ func New(a *api.App) *chi.Mux {
 
 		r.Method(
 			"DELETE",
-			"/projects/{project_id}/k8s/pods",
+			"/projects/{project_id}/k8s/pods/{namespace}/{name}",
 			auth.DoesUserHaveProjectAccess(
 				auth.DoesUserHaveClusterAccess(
 					requestlog.NewHandler(a.HandleDeletePod, l),

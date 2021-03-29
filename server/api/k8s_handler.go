@@ -262,6 +262,55 @@ func (app *App) HandleListPods(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// HandleDeletePod deletes the pod given the name and namespace.
+func (app *App) HandleDeletePod(w http.ResponseWriter, r *http.Request) {
+	// get path parameters
+	namespace := chi.URLParam(r, "namespace")
+	name := chi.URLParam(r, "name")
+
+	vals, err := url.ParseQuery(r.URL.RawQuery)
+
+	if err != nil {
+		app.handleErrorFormDecoding(err, ErrReleaseDecode, w)
+		return
+	}
+
+	// get the filter options
+	form := &forms.K8sForm{
+		OutOfClusterConfig: &kubernetes.OutOfClusterConfig{
+			Repo:              app.Repo,
+			DigitalOceanOAuth: app.DOConf,
+		},
+	}
+
+	form.PopulateK8sOptionsFromQueryParams(vals, app.Repo.Cluster)
+
+	// validate the form
+	if err := app.validator.Struct(form); err != nil {
+		app.handleErrorFormValidation(err, ErrK8sValidate, w)
+		return
+	}
+
+	// create a new agent
+	var agent *kubernetes.Agent
+
+	if app.ServerConf.IsTesting {
+		agent = app.TestAgents.K8sAgent
+	} else {
+		agent, err = kubernetes.GetAgentOutOfClusterConfig(form.OutOfClusterConfig)
+	}
+
+	err = agent.DeletePod(namespace, name)
+
+	if err != nil {
+		app.handleErrorInternal(err, w)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	return
+}
+
 // HandleStreamControllerStatus test calls
 // TODO: Refactor repeated calls.
 func (app *App) HandleStreamControllerStatus(w http.ResponseWriter, r *http.Request) {

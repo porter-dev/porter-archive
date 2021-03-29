@@ -44,8 +44,9 @@ export default class Feedback extends Component<PropsType, StateType> {
       ": " +
       this.state.feedbackText;
     handleSubmitFeedback(msg, () => {
-      this.setState({ feedbackSent: true, feedbackText: "" });
+      // console.log("submitted")
     });
+    this.setState({ feedbackSent: true, feedbackText: "" });
   };
 
   renderFeedbackDropdown = () => {

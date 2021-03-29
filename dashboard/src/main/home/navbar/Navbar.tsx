@@ -44,15 +44,16 @@ export default class Navbar extends Component<PropsType, StateType> {
     return (
       <StyledNavbar>
         <Feedback currentView={this.props.currentView} />
-        <NavButton selected={this.state.showDropdown}>
-          <i
-            className="material-icons-outlined"
-            onClick={() =>
-              this.setState({ showDropdown: !this.state.showDropdown })
-            }
-          >
+        <NavButton 
+          selected={this.state.showDropdown} 
+          onClick={() =>
+            this.setState({ showDropdown: !this.state.showDropdown })
+          }
+        >
+          <I className="material-icons-outlined">
             account_circle
-          </i>
+          </I>
+          {this.context.user.email}
           {this.renderSettingsDropdown()}
         </NavButton>
       </StyledNavbar>
@@ -61,6 +62,10 @@ export default class Navbar extends Component<PropsType, StateType> {
 }
 
 Navbar.contextType = Context;
+
+const I = styled.i`
+  margin-right: 7px;
+`;
 
 const CloseOverlay = styled.div`
   position: fixed;
@@ -191,12 +196,16 @@ const NavButton = styled.a`
   display: flex;
   position: relative;
   align-items: center;
+  font-size: 14px;
+  color: #ffffff88;
+  cursor: pointer;
   justify-content: center;
   margin-right: 15px;
   :hover {
     > i {
       color: #ffffff;
     }
+    color: #ffffff;
   }
 
   > i {

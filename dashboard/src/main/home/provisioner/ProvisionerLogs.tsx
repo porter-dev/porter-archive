@@ -10,6 +10,7 @@ import warning from "assets/warning.png";
 
 type PropsType = RouteComponentProps & {
   selectedInfra: InfraType;
+  updateInfras: () => void;
 };
 
 type StateType = {
@@ -170,6 +171,10 @@ class ProvisionerLogs extends Component<PropsType, StateType> {
           this.scrollToBottom();
         }
       );
+
+      if (validEvents.length == parseInt(validEvents[validEvents.length - 1]["total_resources"])) {
+        this.props.updateInfras()
+      }
     };
 
     this.ws.onerror = (err: ErrorEvent) => {

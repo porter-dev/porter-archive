@@ -134,6 +134,7 @@ export default class DOFormSection extends Component<PropsType, StateType> {
     selectedInfras.forEach((option: { value: string; label: string }) => {
       redirectUrl += `&infras=${option.value}`;
     });
+    redirectUrl += "&tab=provisioner"
     window.location.href = redirectUrl;
   };
 

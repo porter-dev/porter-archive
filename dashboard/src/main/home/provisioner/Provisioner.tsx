@@ -44,6 +44,18 @@ class Provisioner extends Component<PropsType, StateType> {
   };
 
   componentDidMount() {
+    this.updateInfras()
+  }
+
+  refresh = () => {
+    this.updateInfras()
+  }
+
+  updateInfras = () => {
+    this.setState({
+      loading: true,
+    });
+
     let { currentProject } = this.state;
 
     api
@@ -99,7 +111,9 @@ class Provisioner extends Component<PropsType, StateType> {
 
     return (
       <StyledProvisioner>
-        You have not provisioned any resources for this project through Porter.
+        You have not provisioned any resources for this project through Porter. <RefreshText
+          onClick={this.refresh}
+        >Refresh</RefreshText>
       </StyledProvisioner>
     );
   }
@@ -128,3 +142,10 @@ const TabWrapper = styled.div`
   height: 100%;
   overflow-y: auto;
 `;
+
+const RefreshText = styled.div`
+  display: inline;
+  margin-left: 4px;
+  color: #8590ff;
+  cursor: pointer;
+`

@@ -131,8 +131,8 @@ export default class MetricsSection extends Component<PropsType, StateType> {
           });
 
           let ingressOptions = [] as any[];
-          res.data.map((ingress: string) => {
-            ingressOptions.push({ value: ingress, label: ingress });
+          res.data.map((ingress: any) => {
+            ingressOptions.push({ value: ingress, label: ingress.name });
           });
 
           // iterate through the controllers to get the list of pods
@@ -205,7 +205,7 @@ export default class MetricsSection extends Component<PropsType, StateType> {
       this.getMetrics();
     }
 
-    if (this.state.selectedIngress != prevState.selectedIngress) {
+    if (this.state.selectedIngress?.name != prevState.selectedIngress?.name) {
       this.getMetrics();
     }
   }
@@ -219,6 +219,7 @@ export default class MetricsSection extends Component<PropsType, StateType> {
     let { currentCluster, currentProject, setCurrentError } = this.context;
     let kind = this.state.selectedMetric;
     let shouldsum = true;
+    let namespace = currentChart.namespace;
 
     // calculate start and end range
     var d = new Date();
@@ -234,7 +235,8 @@ export default class MetricsSection extends Component<PropsType, StateType> {
     }
 
     if (this.state.selectedMetric == "nginx:errors") {
-      pods = [this.state.selectedIngress];
+      pods = [this.state.selectedIngress?.name];
+      namespace = this.state.selectedIngress?.namespace || "default"
       shouldsum = false;
     }
 
@@ -246,7 +248,7 @@ export default class MetricsSection extends Component<PropsType, StateType> {
           metric: kind,
           shouldsum: shouldsum,
           pods,
-          namespace: currentChart.namespace,
+          namespace: namespace,
           startrange: start,
           endrange: end,
           resolution: resolutions[this.state.selectedRange]

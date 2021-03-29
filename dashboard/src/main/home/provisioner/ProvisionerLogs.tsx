@@ -168,16 +168,10 @@ class ProvisionerLogs extends Component<PropsType, StateType> {
           maxStep: validEvents[validEvents.length - 1]["total_resources"]
         },
         () => {
+          this.props.updateInfras();
           this.scrollToBottom();
         }
       );
-
-      if (
-        parseInt(validEvents[validEvents.length - 1]["created_resources"]) >=
-        parseInt(validEvents[validEvents.length - 1]["total_resources"])
-      ) {
-        this.props.updateInfras();
-      }
     };
 
     this.ws.onerror = (err: ErrorEvent) => {

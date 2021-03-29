@@ -172,7 +172,7 @@ class ProvisionerLogs extends Component<PropsType, StateType> {
         }
       );
 
-      if (validEvents.length == parseInt(validEvents[validEvents.length - 1]["total_resources"])) {
+      if (validEvents.length >= parseInt(validEvents[validEvents.length - 1]["total_resources"])) {
         this.props.updateInfras()
       }
     };

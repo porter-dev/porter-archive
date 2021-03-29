@@ -168,7 +168,10 @@ class ProvisionerLogs extends Component<PropsType, StateType> {
           maxStep: validEvents[validEvents.length - 1]["total_resources"]
         },
         () => {
-          this.props.updateInfras();
+          setTimeout(() => {
+            this.props.updateInfras();
+          }, 3000)
+          
           this.scrollToBottom();
         }
       );

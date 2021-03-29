@@ -61,7 +61,7 @@ export default class ClusterPlaceholder extends Component<
         </>
       );
     } else {
-      return <ClusterList />;
+      return <ClusterList currentCluster={this.props.currentCluster} />;
     }
   }
 }

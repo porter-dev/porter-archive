@@ -9,7 +9,9 @@ import Helper from "components/values-form/Helper";
 import Loading from "components/Loading";
 import { RouteComponentProps, withRouter } from "react-router";
 
-type PropsType = RouteComponentProps;
+type PropsType = RouteComponentProps & {
+  currentCluster: ClusterType;
+};
 
 type StateType = {
   loading: boolean;
@@ -25,6 +27,16 @@ class Templates extends Component<PropsType, StateType> {
   };
 
   componentDidMount() {
+    this.updateClusterList();
+  }
+
+  componentDidUpdate(prevProps: PropsType) {
+    if (prevProps.currentCluster?.name != this.props.currentCluster?.name) {
+      this.updateClusterList();
+    }
+  }
+
+  updateClusterList = () => {
     api
       .getClusters("<token>", {}, { id: this.context.currentProject.id })
       .then(res => {
@@ -35,7 +47,7 @@ class Templates extends Component<PropsType, StateType> {
         }
       })
       .catch(err => this.setState(err));
-  }
+  };
 
   renderIcon = () => {
     return (

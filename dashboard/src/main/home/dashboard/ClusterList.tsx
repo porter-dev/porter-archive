@@ -27,12 +27,12 @@ class Templates extends Component<PropsType, StateType> {
   };
 
   componentDidMount() {
-    this.updateClusterList()
+    this.updateClusterList();
   }
 
-  componentDidUpdate(prevProps : PropsType) {
+  componentDidUpdate(prevProps: PropsType) {
     if (prevProps.currentCluster?.name != this.props.currentCluster?.name) {
-      this.updateClusterList()
+      this.updateClusterList();
     }
   }
 
@@ -47,7 +47,7 @@ class Templates extends Component<PropsType, StateType> {
         }
       })
       .catch(err => this.setState(err));
-  }
+  };
 
   renderIcon = () => {
     return (

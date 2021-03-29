@@ -46,40 +46,44 @@ class Provisioner extends Component<PropsType, StateType> {
   };
 
   componentDidMount() {
-    this.updateInfras()
+    this.updateInfras();
   }
 
-  componentDidUpdate(prevProps : PropsType, prevState : StateType) {
-    // Check that an infra that was previously in a non-created state, and 
+  componentDidUpdate(prevProps: PropsType, prevState: StateType) {
+    // Check that an infra that was previously in a non-created state, and
     // which was a cluster, is now in a created state. If so, propagate update
-    // so that cluster can be refreshed. 
-    let prevInfraStates : Record<number, string> = {}
+    // so that cluster can be refreshed.
+    let prevInfraStates: Record<number, string> = {};
 
     prevState.infras.forEach((infra, i) => {
-      prevInfraStates[infra.id] = infra.status
-    })
+      prevInfraStates[infra.id] = infra.status;
+    });
 
     this.state.infras.forEach((infra, i) => {
-      if (prevInfraStates[infra.id] && infra.status == "created" && prevInfraStates[infra.id] != "created") {
+      if (
+        prevInfraStates[infra.id] &&
+        infra.status == "created" &&
+        prevInfraStates[infra.id] != "created"
+      ) {
         api
-        .getClusters("<token>", {}, { id: this.context.currentProject.id })
-        .then(res => {
-          this.context.setCurrentCluster(res.data[0])
-        })
-        .catch(err => {
-          this.context.setCurrentError(err)
-        });
+          .getClusters("<token>", {}, { id: this.context.currentProject.id })
+          .then(res => {
+            this.context.setCurrentCluster(res.data[0]);
+          })
+          .catch(err => {
+            this.context.setCurrentError(err);
+          });
       }
-    })
+    });
   }
 
   refresh = () => {
-    this.updateInfras()
-  }
+    this.updateInfras();
+  };
 
   updateInfras = () => {
     this.setState({
-      loading: true,
+      loading: true
     });
 
     let { currentProject } = this.state;
@@ -105,7 +109,7 @@ class Provisioner extends Component<PropsType, StateType> {
         });
       })
       .catch();
-  }
+  };
 
   render() {
     if (this.state.loading) {
@@ -138,9 +142,8 @@ class Provisioner extends Component<PropsType, StateType> {
 
     return (
       <StyledProvisioner>
-        You have not provisioned any resources for this project through Porter. <RefreshText
-          onClick={this.refresh}
-        >Refresh</RefreshText>
+        You have not provisioned any resources for this project through Porter.{" "}
+        <RefreshText onClick={this.refresh}>Refresh</RefreshText>
       </StyledProvisioner>
     );
   }
@@ -175,4 +178,4 @@ const RefreshText = styled.div`
   margin-left: 4px;
   color: #8590ff;
   cursor: pointer;
-`
+`;

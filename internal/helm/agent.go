@@ -94,6 +94,7 @@ func (a *Agent) UpgradeReleaseByValues(
 	ch := rel.Chart
 
 	cmd := action.NewUpgrade(a.ActionConfig)
+	cmd.Namespace = rel.Namespace
 
 	if conf.Cluster != nil && a.K8sAgent != nil && conf.Registries != nil && len(conf.Registries) > 0 {
 		cmd.PostRenderer, err = NewDockerSecretsPostRenderer(

@@ -24,7 +24,7 @@ export default class VeleroForm extends Component<PropsType, StateType> {
     includeNamespaces: [] as string[],
     includeResources: [] as string[],
     storageLocation: "",
-    volumeSnapshotLocations: [] as string[],
+    volumeSnapshotLocations: [] as string[]
   };
 
   render() {

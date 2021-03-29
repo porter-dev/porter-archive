@@ -20,7 +20,7 @@ export default class ClusterPlaceholder extends Component<
   StateType
 > {
   state = {
-    loading: true,
+    loading: true
   };
 
   componentDidMount() {
@@ -61,7 +61,7 @@ export default class ClusterPlaceholder extends Component<
         </>
       );
     } else {
-      return <ClusterList />;
+      return <ClusterList currentCluster={this.props.currentCluster} />;
     }
   }
 }

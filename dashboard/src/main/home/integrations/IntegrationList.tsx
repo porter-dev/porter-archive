@@ -29,7 +29,7 @@ export default class IntegrationList extends Component<PropsType, StateType> {
     displayExpanded: this.props.integrations.map(() => false),
     isDelete: false,
     deleteName: "",
-    deleteID: 0,
+    deleteID: 0
   };
 
   allCollapsed = () =>
@@ -43,7 +43,7 @@ export default class IntegrationList extends Component<PropsType, StateType> {
 
   collapseAll = () => {
     this.setState({
-      displayExpanded: this.props.integrations.map(() => false),
+      displayExpanded: this.props.integrations.map(() => false)
     });
   };
 
@@ -65,42 +65,52 @@ export default class IntegrationList extends Component<PropsType, StateType> {
       event.stopPropagation();
     }
 
-    this.setState({ isDelete: true, deleteName: this.props.titles[i], deleteID: id })
-  }
+    this.setState({
+      isDelete: true,
+      deleteName: this.props.titles[i],
+      deleteID: id
+    });
+  };
 
   handleDeleteIntegration = () => {
     let { currentProject } = this.context;
 
     if (this.props.currentCategory === "registry") {
-      api.deleteRegistryIntegration(
-        "<token>",
-        {},
-        {
-          project_id: currentProject.id,
-          registry_id: this.state.deleteID,
-        }
-      ).then(() => {
-        this.setState({ isDelete: false })
-        this.props.updateIntegrationList()
-      }).catch((err) => {
-        this.context.setCurrentError(err)
-      })
+      api
+        .deleteRegistryIntegration(
+          "<token>",
+          {},
+          {
+            project_id: currentProject.id,
+            registry_id: this.state.deleteID
+          }
+        )
+        .then(() => {
+          this.setState({ isDelete: false });
+          this.props.updateIntegrationList();
+        })
+        .catch(err => {
+          this.context.setCurrentError(err);
+        });
     } else if (this.props.currentCategory === "repo") {
-      api.deleteGitRepoIntegration(
-        "<token>",
-        {},
-        {
-          project_id: currentProject.id,
-          git_repo_id: this.state.deleteID,
-        }
-      ).then(() => {
-        this.setState({ isDelete: false })
-        this.props.updateIntegrationList()
-      }).catch((err) => {
-        this.context.setCurrentError(err)
-      })
+      api
+        .deleteGitRepoIntegration(
+          "<token>",
+          {},
+          {
+            project_id: currentProject.id,
+            git_repo_id: this.state.deleteID
+          }
+        )
+        .then(() => {
+          this.setState({ isDelete: false });
+          this.props.updateIntegrationList();
+        })
+        .catch(err => {
+          this.context.setCurrentError(err);
+        });
     }
-  }
+  };
 
   handleParent = (event: any, integration: string) =>
     this.props.setCurrent && this.props.setCurrent(integration);
@@ -111,7 +121,8 @@ export default class IntegrationList extends Component<PropsType, StateType> {
     if (titles && titles.length > 0) {
       return integrations.map((integration: string, i: number) => {
         let label = titles[i];
-        let item_id = this.props.itemIdentifier[i].id || this.props.itemIdentifier[i]
+        let item_id =
+          this.props.itemIdentifier[i].id || this.props.itemIdentifier[i];
 
         return (
           <IntegrationRow
@@ -180,7 +191,11 @@ export default class IntegrationList extends Component<PropsType, StateType> {
       <StyledIntegrationList>
         <ConfirmOverlay
           show={this.state.isDelete}
-          message={`Are you sure you want to delete the ${this.props.currentCategory === "registry" ? "Docker registry integration" : "Github integration"} with name ${this.state.deleteName}?`}
+          message={`Are you sure you want to delete the ${
+            this.props.currentCategory === "registry"
+              ? "Docker registry integration"
+              : "Github integration"
+          } with name ${this.state.deleteName}?`}
           onYes={this.handleDeleteIntegration}
           onNo={() => this.setState({ isDelete: false })}
         />

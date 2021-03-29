@@ -33,6 +33,7 @@ func GetAgentOutOfClusterConfig(form *Form, l *logger.Logger) (*Agent, error) {
 	// create a kubernetes agent
 	conf := &kubernetes.OutOfClusterConfig{
 		Cluster:           form.Cluster,
+		DefaultNamespace:  form.Namespace,
 		Repo:              form.Repo,
 		DigitalOceanOAuth: form.DigitalOceanOAuth,
 	}
@@ -48,21 +49,29 @@ func GetAgentOutOfClusterConfig(form *Form, l *logger.Logger) (*Agent, error) {
 
 // GetAgentFromK8sAgent creates a new Agent
 func GetAgentFromK8sAgent(stg string, ns string, l *logger.Logger, k8sAgent *kubernetes.Agent) (*Agent, error) {
-	clientset, ok := k8sAgent.Clientset.(*k8s.Clientset)
+	// clientset, ok := k8sAgent.Clientset.(*k8s.Clientset)
 
-	if !ok {
-		return nil, errors.New("Agent Clientset was not of type *(k8s.io/client-go/kubernetes).Clientset")
+	// if !ok {
+	// 	return nil, errors.New("Agent Clientset was not of type *(k8s.io/client-go/kubernetes).Clientset")
+	// }
+
+	// actionConf := &action.Configuration{
+	// 	RESTClientGetter: k8sAgent.RESTClientGetter,
+	// 	KubeClient:       kube.New(k8sAgent.RESTClientGetter),
+	// 	Releases:         StorageMap[stg](l, clientset.CoreV1(), ns),
+	// 	Log:              l.Printf,
+	// }
+
+	actionConf := &action.Configuration{}
+
+	if err := actionConf.Init(k8sAgent.RESTClientGetter, ns, stg, l.Printf); err != nil {
+		return nil, err
 	}
 
 	// use k8s agent to create Helm agent
 	return &Agent{
-		ActionConfig: &action.Configuration{
-			RESTClientGetter: k8sAgent.RESTClientGetter,
-			KubeClient:       kube.New(k8sAgent.RESTClientGetter),
-			Releases:         StorageMap[stg](l, clientset.CoreV1(), ns),
-			Log:              l.Printf,
-		},
-		K8sAgent: k8sAgent,
+		ActionConfig: actionConf,
+		K8sAgent:     k8sAgent,
 	}, nil
 }
 

@@ -20,7 +20,7 @@ export default class ClusterInstructionsModal extends Component<
 > {
   state = {
     currentTab: "mac",
-    currentPage: 0,
+    currentPage: 0
   };
 
   renderPage = () => {
@@ -84,7 +84,7 @@ export default class ClusterInstructionsModal extends Component<
             there are two contexts named minikube and staging, you could connect
             both of them via:
             <Code>
-              porter connect kubeconfig --contexts minikube --contexts staging
+              porter connect kubeconfig --context minikube --context staging
             </Code>
           </Placeholder>
         );

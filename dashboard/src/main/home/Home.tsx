@@ -50,7 +50,7 @@ class Home extends Component<PropsType, StateType> {
     forceRefreshClusters: false,
     sidebarReady: false,
     handleDO: false,
-    ghRedirect: false,
+    ghRedirect: false
   };
 
   // TODO: Refactor and prevent flash + multiple reload
@@ -64,10 +64,10 @@ class Home extends Component<PropsType, StateType> {
         "<token>",
         {},
         {
-          project_id: currentProject.id,
+          project_id: currentProject.id
         }
       )
-      .then((res) => {
+      .then(res => {
         let creating = false;
 
         for (var i = 0; i < res.data.length; i++) {
@@ -87,7 +87,7 @@ class Home extends Component<PropsType, StateType> {
     let { currentProject } = this.props;
     api
       .getProjects("<token>", {}, { id: user.userId })
-      .then((res) => {
+      .then(res => {
         if (res.data) {
           if (res.data.length === 0) {
             this.props.history.push("new-project");
@@ -134,10 +134,10 @@ class Home extends Component<PropsType, StateType> {
       {
         do_integration_id: integrationId,
         docr_name: this.props.currentProject.name,
-        docr_subscription_tier: tier,
+        docr_subscription_tier: tier
       },
       {
-        project_id: this.props.currentProject.id,
+        project_id: this.props.currentProject.id
       }
     );
     return callback();
@@ -150,10 +150,10 @@ class Home extends Component<PropsType, StateType> {
       {
         do_integration_id: integrationId,
         doks_name: this.props.currentProject.name,
-        do_region: region,
+        do_region: region
       },
       {
-        project_id: this.props.currentProject.id,
+        project_id: this.props.currentProject.id
       }
     );
     return this.props.history.push("dashboard?tab=provisioner");
@@ -167,10 +167,10 @@ class Home extends Component<PropsType, StateType> {
           "<token>",
           {},
           {
-            project_id: currentProject.id,
+            project_id: currentProject.id
           }
         )
-        .then((res) => {
+        .then(res => {
           let tgtIntegration = res.data.find((integration: any) => {
             return integration.client === "do";
           });
@@ -330,7 +330,7 @@ class Home extends Component<PropsType, StateType> {
     let { user, setProjects } = this.context;
     api
       .getProjects("<token>", {}, { id: user.userId })
-      .then((res) => {
+      .then(res => {
         if (res.data) {
           setProjects(res.data);
           if (res.data.length > 0) {
@@ -356,7 +356,7 @@ class Home extends Component<PropsType, StateType> {
     // Loop through and delete infra of all clusters we've provisioned
     api
       .getClusters("<token>", {}, { id: currentProject.id })
-      .then((res) => {
+      .then(res => {
         // TODO: promise.map
         for (var i = 0; i < res.data.length; i++) {
           let cluster = res.data[i];
@@ -371,7 +371,7 @@ class Home extends Component<PropsType, StateType> {
                   { eks_name: cluster.name },
                   {
                     project_id: currentProject.id,
-                    infra_id: cluster.infra_id,
+                    infra_id: cluster.infra_id
                   }
                 )
                 .then(() =>
@@ -387,7 +387,7 @@ class Home extends Component<PropsType, StateType> {
                   { gke_name: cluster.name },
                   {
                     project_id: currentProject.id,
-                    infra_id: cluster.infra_id,
+                    infra_id: cluster.infra_id
                   }
                 )
                 .then(() =>
@@ -403,7 +403,7 @@ class Home extends Component<PropsType, StateType> {
                   { doks_name: cluster.name },
                   {
                     project_id: currentProject.id,
-                    infra_id: cluster.infra_id,
+                    infra_id: cluster.infra_id
                   }
                 )
                 .then(() =>

@@ -140,6 +140,15 @@ func (a *Agent) GetPodsByLabel(selector string) (*v1.PodList, error) {
 	)
 }
 
+// DeletePod deletes a pod by name and namespace
+func (a *Agent) DeletePod(namespace string, name string) error {
+	return a.Clientset.CoreV1().Pods(namespace).Delete(
+		context.TODO(),
+		name,
+		metav1.DeleteOptions{},
+	)
+}
+
 // GetPodLogs streams real-time logs from a given pod.
 func (a *Agent) GetPodLogs(namespace string, name string, conn *websocket.Conn) error {
 	tails := int64(400)

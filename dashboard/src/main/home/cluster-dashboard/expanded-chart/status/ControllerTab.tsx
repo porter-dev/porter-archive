@@ -4,6 +4,7 @@ import api from "shared/api";
 import { Context } from "shared/Context";
 
 import ResourceTab from "components/ResourceTab";
+import ConfirmOverlay from "components/ConfirmOverlay";
 
 type PropsType = {
   controller: any;
@@ -19,6 +20,7 @@ type StateType = {
   pods: any[];
   raw: any[];
   showTooltip: boolean[];
+  podPendingDelete: any;
 };
 
 // Controller tab in log section that displays list of pods on click.
@@ -27,9 +29,10 @@ export default class ControllerTab extends Component<PropsType, StateType> {
     pods: [] as any[],
     raw: [] as any[],
     showTooltip: [] as boolean[],
+    podPendingDelete: null as any
   };
 
-  componentDidMount() {
+  updatePods = () => {
     let { currentCluster, currentProject, setCurrentError } = this.context;
     let { controller, selectPod, isFirst } = this.props;
 
@@ -56,18 +59,19 @@ export default class ControllerTab extends Component<PropsType, StateType> {
         "<token>",
         {
           cluster_id: currentCluster.id,
-          selectors,
+          selectors
         },
         {
-          id: currentProject.id,
+          id: currentProject.id
         }
       )
-      .then((res) => {
+      .then(res => {
         let pods = res?.data?.map((pod: any) => {
+          console.log(pod?.metadata?.namespace);
           return {
             namespace: pod?.metadata?.namespace,
             name: pod?.metadata?.name,
-            phase: pod?.status?.phase,
+            phase: pod?.status?.phase
           };
         });
         let showTooltip = new Array(pods.length);
@@ -86,11 +90,15 @@ export default class ControllerTab extends Component<PropsType, StateType> {
           selectPod(res.data[0]);
         }
       })
-      .catch((err) => {
+      .catch(err => {
         console.log(err);
         setCurrentError(JSON.stringify(err));
         return;
       });
+  };
+
+  componentDidMount() {
+    this.updatePods();
   }
 
   getAvailability = (kind: string, c: any) => {
@@ -101,14 +109,14 @@ export default class ControllerTab extends Component<PropsType, StateType> {
           c.status?.availableReplicas ||
             c.status?.replicas - c.status?.unavailableReplicas ||
             0,
-          c.status?.replicas || 0,
+          c.status?.replicas || 0
         ];
       case "statefulset":
         return [c.status?.readyReplicas || 0, c.status?.replicas || 0];
       case "daemonset":
         return [
           c.status?.numberAvailable || 0,
-          c.status?.desiredNumberScheduled || 0,
+          c.status?.desiredNumberScheduled || 0
         ];
       case "job":
         console.log(c);
@@ -150,6 +158,40 @@ export default class ControllerTab extends Component<PropsType, StateType> {
     }
   };
 
+  handleDeletePod = (pod: any) => {
+    api
+      .deletePod(
+        "<token>",
+        {
+          cluster_id: this.context.currentCluster.id
+        },
+        {
+          name: pod.metadata?.name,
+          namespace: pod.metadata?.namespace,
+          id: this.context.currentProject.id
+        }
+      )
+      .then(res => {
+        this.updatePods();
+        this.setState({ podPendingDelete: null });
+      })
+      .catch(err => {
+        this.context.setCurrentError(JSON.stringify(err));
+        this.setState({ podPendingDelete: null });
+      });
+  };
+
+  renderDeleteButton = (pod: any) => {
+    return (
+      <CloseIcon
+        className="material-icons-outlined"
+        onClick={() => this.setState({ podPendingDelete: pod })}
+      >
+        close
+      </CloseIcon>
+    );
+  };
+
   render() {
     let { controller, selectedPod, isLast, selectPod, isFirst } = this.props;
     let [available, total] = this.getAvailability(controller.kind, controller);
@@ -170,6 +212,9 @@ export default class ControllerTab extends Component<PropsType, StateType> {
       >
         {this.state.raw.map((pod, i) => {
           let status = this.getPodStatus(pod.status);
+          if (i === 2) {
+            status = "failed";
+          }
           return (
             <Tab
               key={pod.metadata?.name}
@@ -205,16 +250,41 @@ export default class ControllerTab extends Component<PropsType, StateType> {
               <Status>
                 <StatusColor status={status} />
                 {status}
+                {status === "failed" && this.renderDeleteButton(pod)}
               </Status>
             </Tab>
           );
         })}
+        <ConfirmOverlay
+          message="Are you sure you want to delete this pod?"
+          show={this.state.podPendingDelete}
+          onYes={() => this.handleDeletePod(this.state.podPendingDelete)}
+          onNo={() => this.setState({ podPendingDelete: null })}
+        />
       </ResourceTab>
     );
   }
 }
 
 ControllerTab.contextType = Context;
+
+const CloseIcon = styled.i`
+  font-size: 14px;
+  display: flex;
+  font-weight: bold;
+  align-items: center;
+  justify-content: center;
+  border-radius: 5px;
+  background: #ffffff22;
+  width: 18px;
+  height: 18px;
+  margin-right: -6px;
+  margin-left: 10px;
+  cursor: pointer;
+  :hover {
+    background: #ffffff44;
+  }
+`;
 
 const Rail = styled.div`
   width: 2px;
@@ -245,9 +315,9 @@ const Gutter = styled.div`
 
 const Status = styled.div`
   display: flex;
-  width: 50px;
   font-size: 12px;
   text-transform: capitalize;
+  margin-left: 5px;
   justify-content: flex-end;
   align-items: center;
   font-family: "Work Sans", sans-serif;
@@ -280,7 +350,6 @@ const StatusColor = styled.div`
 `;
 
 const Name = styled.div`
-  max-width: calc(100% - 106px);
   overflow: hidden;
   text-overflow: ellipsis;
   line-height: 16px;

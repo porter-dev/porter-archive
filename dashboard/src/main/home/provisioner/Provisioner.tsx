@@ -53,21 +53,30 @@ class Provisioner extends Component<PropsType, StateType> {
     // Check that an infra that was previously in a non-created state, and
     // which was a cluster, is now in a created state. If so, propagate update
     // so that cluster can be refreshed.
+    console.log("called component did update", prevProps, prevState)
+
     let prevInfraStates: Record<number, string> = {};
 
     prevState.infras.forEach((infra, i) => {
       prevInfraStates[infra.id] = infra.status;
     });
 
+    console.log("got previous infra states", prevInfraStates)
+
     this.state.infras.forEach((infra, i) => {
+      console.log("testing current infra", infra, prevInfraStates[infra.id], infra.status == "created", prevInfraStates[infra.id] != "created")
+
       if (
         prevInfraStates[infra.id] &&
         infra.status == "created" &&
         prevInfraStates[infra.id] != "created"
       ) {
+        console.log("triggered get clusters")
+
         api
           .getClusters("<token>", {}, { id: this.context.currentProject.id })
           .then(res => {
+            console.log("got the clusters", res.data)
             this.context.setCurrentCluster(res.data[0]);
           })
           .catch(err => {

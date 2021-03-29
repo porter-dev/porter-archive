@@ -221,12 +221,12 @@ const deleteInvite = baseApi<{}, { id: number; invId: number }>(
 );
 
 const deletePod = baseApi<
-{
-  cluster_id: number;
-},
-{ name: string; namespace: string; id: number }
+  {
+    cluster_id: number;
+  },
+  { name: string; namespace: string; id: number }
 >("DELETE", pathParams => {
-  return `/api/projects/${pathParams.id}/k8s/pods`;
+  return `/api/projects/${pathParams.id}/k8s/pods/${pathParams.namespace}/${pathParams.name}`;
 });
 
 const deleteProject = baseApi<{}, { id: number }>("DELETE", pathParams => {

@@ -23,7 +23,7 @@ type StateType = {
 export default class ValuesYaml extends Component<PropsType, StateType> {
   state = {
     values: "",
-    saveValuesStatus: null as string | null,
+    saveValuesStatus: null as string | null
   };
 
   updateValues() {
@@ -54,19 +54,19 @@ export default class ValuesYaml extends Component<PropsType, StateType> {
         {
           namespace: this.props.currentChart.namespace,
           storage: StorageType.Secret,
-          values: this.state.values,
+          values: this.state.values
         },
         {
           id: currentProject.id,
           name: this.props.currentChart.name,
-          cluster_id: currentCluster.id,
+          cluster_id: currentCluster.id
         }
       )
-      .then((res) => {
+      .then(res => {
         this.setState({ saveValuesStatus: "successful" });
         this.props.refreshChart();
       })
-      .catch((err) => {
+      .catch(err => {
         console.log(err);
         this.setState({ saveValuesStatus: "error" });
       });

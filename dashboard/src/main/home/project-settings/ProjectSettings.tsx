@@ -17,13 +17,13 @@ type StateType = {
 
 const tabOptions = [
   { value: "manage-access", label: "Manage Access" },
-  { value: "additional-settings", label: "Additional Settings" },
+  { value: "additional-settings", label: "Additional Settings" }
 ];
 
 export default class ProjectSettings extends Component<PropsType, StateType> {
   state = {
     projectName: "",
-    currentTab: "manage-access",
+    currentTab: "manage-access"
   };
 
   componentDidMount() {
@@ -46,10 +46,18 @@ export default class ProjectSettings extends Component<PropsType, StateType> {
           </Helper>
 
           <Helper>
-            Destruction of resources sometimes results in dangling resources. To ensure
-            that everything has been properly destroyed, please visit your cloud provider's console.
-            Instructions to properly delete all resources can be found  
-            <a target="none" href="https://docs.getporter.dev/docs/deleting-dangling-resources"> here</a>.
+            Destruction of resources sometimes results in dangling resources. To
+            ensure that everything has been properly destroyed, please visit
+            your cloud provider's console. Instructions to properly delete all
+            resources can be found
+            <a
+              target="none"
+              href="https://docs.getporter.dev/docs/deleting-dangling-resources"
+            >
+              {" "}
+              here
+            </a>
+            .
           </Helper>
 
           <Warning highlight={true}>This action cannot be undone.</Warning>
@@ -57,7 +65,7 @@ export default class ProjectSettings extends Component<PropsType, StateType> {
           <DeleteButton
             onClick={() => {
               this.context.setCurrentModal("UpdateProjectModal", {
-                currentProject: this.context.currentProject,
+                currentProject: this.context.currentProject
               });
             }}
           >

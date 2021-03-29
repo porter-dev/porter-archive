@@ -168,7 +168,7 @@ export default class ValuesForm extends Component<PropsType, StateType> {
             <SelectRow
               key={i}
               value={this.props.metaState[key]}
-              setActiveValue={(val) => this.props.setMetaState({ [key]: val })}
+              setActiveValue={val => this.props.setMetaState({ [key]: val })}
               options={item.settings.options}
               dropdownLabel=""
               label={item.label}
@@ -179,11 +179,11 @@ export default class ValuesForm extends Component<PropsType, StateType> {
             <SelectRow
               key={i}
               value={this.props.metaState[key]}
-              setActiveValue={(val) => this.props.setMetaState({ [key]: val })}
+              setActiveValue={val => this.props.setMetaState({ [key]: val })}
               options={[
                 { value: "aws", label: "Amazon Web Services (AWS)" },
                 { value: "gcp", label: "Google Cloud Platform (GCP)" },
-                { value: "do", label: "DigitalOcean" },
+                { value: "do", label: "DigitalOcean" }
               ]}
               dropdownLabel=""
               label={item.label}

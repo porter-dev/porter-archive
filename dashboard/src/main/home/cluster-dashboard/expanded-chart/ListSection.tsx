@@ -27,7 +27,7 @@ export default class ListSection extends Component<PropsType, StateType> {
     showKindLabels: true,
     yaml: "# Select a resource to view its manifest" as string | null,
     wrapperHeight: 0,
-    selectedResource: null as { kind: string; name: string } | null,
+    selectedResource: null as { kind: string; name: string } | null
   };
 
   wrapperRef: any = React.createRef();
@@ -75,7 +75,7 @@ export default class ListSection extends Component<PropsType, StateType> {
           handleClick={() =>
             this.setState({
               yaml: rawYaml,
-              selectedResource: { kind: resource.Kind, name: resource.Name },
+              selectedResource: { kind: resource.Kind, name: resource.Name }
             })
           }
           selected={this.state.yaml === rawYaml}
@@ -99,7 +99,7 @@ export default class ListSection extends Component<PropsType, StateType> {
     return (
       <StyledListSection>
         {this.renderTabs()}
-        <FlexWrapper ref={(element) => (this.wrapperRef = element)}>
+        <FlexWrapper ref={element => (this.wrapperRef = element)}>
           <YamlWrapper>
             <YamlEditor
               value={this.state.yaml}

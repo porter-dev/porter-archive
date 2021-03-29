@@ -32,7 +32,7 @@ export default class RevisionSection extends Component<PropsType, StateType> {
     revisions: [] as ChartType[],
     rollbackRevision: null as number | null,
     loading: false,
-    maxVersion: 0, // Track most recent version even when previewing old revisions
+    maxVersion: 0 // Track most recent version even when previewing old revisions
   };
 
   refreshHistory = () => {
@@ -44,17 +44,17 @@ export default class RevisionSection extends Component<PropsType, StateType> {
         {
           namespace: chart.namespace,
           cluster_id: currentCluster.id,
-          storage: StorageType.Secret,
+          storage: StorageType.Secret
         },
         { id: currentProject.id, name: chart.name }
       )
-      .then((res) => {
+      .then(res => {
         res.data.sort((a: ChartType, b: ChartType) => {
           return -(a.version - b.version);
         });
         this.setState({
           revisions: res.data,
-          maxVersion: res.data[0].version,
+          maxVersion: res.data[0].version
         });
       })
       .catch(console.log);
@@ -83,7 +83,7 @@ export default class RevisionSection extends Component<PropsType, StateType> {
     let date = ts.toLocaleDateString();
     let time = ts.toLocaleTimeString([], {
       hour: "numeric",
-      minute: "2-digit",
+      minute: "2-digit"
     });
     return `${time} on ${date}`;
   };
@@ -100,21 +100,21 @@ export default class RevisionSection extends Component<PropsType, StateType> {
         {
           namespace: this.props.chart.namespace,
           storage: StorageType.Secret,
-          revision: revisionNumber,
+          revision: revisionNumber
         },
         {
           id: currentProject.id,
           name: this.props.chart.name,
-          cluster_id: currentCluster.id,
+          cluster_id: currentCluster.id
         }
       )
-      .then((res) => {
+      .then(res => {
         this.setState({ loading: false });
         this.refreshHistory().then(() => {
           this.props.setRevision(this.state.revisions[0], true);
         });
       })
-      .catch((err) => {
+      .catch(err => {
         console.log(err);
         setCurrentError(err.response.data);
         this.setState({ loading: false });

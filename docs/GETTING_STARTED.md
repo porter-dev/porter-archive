@@ -99,5 +99,5 @@ porter connect kubeconfig --kubeconfig path/to/kubeconfig
 You can initialize Porter with a set of contexts by passing a context list to start. The contexts that Porter will be able to access are the same as `kubectl config get-contexts`. For example, if there are two contexts named `minikube` and `staging`, you could connect both of them via:
 
 ```sh
-porter connect kubeconfig --contexts minikube --contexts staging
+porter connect kubeconfig --context minikube --context staging
 ```

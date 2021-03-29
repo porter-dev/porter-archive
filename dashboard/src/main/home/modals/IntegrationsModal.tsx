@@ -14,7 +14,7 @@ type StateType = {
 
 export default class IntegrationsModal extends Component<PropsType, StateType> {
   state = {
-    integrations: [] as any[],
+    integrations: [] as any[]
   };
 
   componentDidMount() {
@@ -22,18 +22,18 @@ export default class IntegrationsModal extends Component<PropsType, StateType> {
     if (category === "kubernetes") {
       api
         .getClusterIntegrations("<token>", {}, {})
-        .then((res) => this.setState({ integrations: res.data }))
-        .catch((err) => console.log(err));
+        .then(res => this.setState({ integrations: res.data }))
+        .catch(err => console.log(err));
     } else if (category === "registry") {
       api
         .getRegistryIntegrations("<token>", {}, {})
-        .then((res) => this.setState({ integrations: res.data }))
-        .catch((err) => console.log(err));
+        .then(res => this.setState({ integrations: res.data }))
+        .catch(err => console.log(err));
     } else {
       api
         .getRepoIntegrations("<token>", {}, {})
-        .then((res) => this.setState({ integrations: res.data }))
-        .catch((err) => console.log(err));
+        .then(res => this.setState({ integrations: res.data }))
+        .catch(err => console.log(err));
     }
   }
 

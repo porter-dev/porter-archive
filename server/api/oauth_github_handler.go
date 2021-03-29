@@ -17,6 +17,7 @@ import (
 	"golang.org/x/oauth2"
 
 	"github.com/porter-dev/porter/internal/models/integrations"
+	segment "gopkg.in/segmentio/analytics-go.v3"
 )
 
 // HandleGithubOAuthStartUser starts the oauth2 flow for a user login request.
@@ -128,6 +129,23 @@ func (app *App) HandleGithubOAuthCallback(w http.ResponseWriter, r *http.Request
 			http.Error(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)
 			return
 		}
+
+		// send to segment
+		client := *app.segmentClient
+		client.Enqueue(segment.Identify{
+			UserId: fmt.Sprintf("%v", user.ID),
+			Traits: segment.NewTraits().
+				SetEmail(user.Email).
+				Set("github", "true"),
+		})
+
+		client.Enqueue(segment.Track{
+			UserId: fmt.Sprintf("%v", user.ID),
+			Event: "New User",
+			Properties: segment.NewProperties().
+				Set("email", user.Email),
+		})
+
 
 		// log the user in
 		app.Logger.Info().Msgf("New user created: %d", user.ID)

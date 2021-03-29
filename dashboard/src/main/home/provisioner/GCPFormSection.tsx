@@ -34,7 +34,7 @@ type StateType = {
 
 const provisionOptions = [
   { value: "gcr", label: "Google Container Registry (GCR)" },
-  { value: "gke", label: "Google Kubernetes Engine (GKE)" },
+  { value: "gke", label: "Google Kubernetes Engine (GKE)" }
 ];
 
 const regionOptions = [
@@ -61,7 +61,7 @@ const regionOptions = [
   { value: "us-west1", label: "us-west1" },
   { value: "us-west2", label: "us-west2" },
   { value: "us-west3", label: "us-west3" },
-  { value: "us-west4", label: "us-west4" },
+  { value: "us-west4", label: "us-west4" }
 ];
 
 class GCPFormSection extends Component<PropsType, StateType> {
@@ -71,7 +71,7 @@ class GCPFormSection extends Component<PropsType, StateType> {
     gcpKeyData: "",
     selectedInfras: [...provisionOptions],
     buttonStatus: "",
-    provisionConfirmed: false,
+    provisionConfirmed: false
   };
 
   componentDidMount = () => {
@@ -127,7 +127,7 @@ class GCPFormSection extends Component<PropsType, StateType> {
 
     api
       .createProject("<token>", { name: projectName }, {})
-      .then((res) => {
+      .then(res => {
         let proj = res.data;
 
         // Need to set project list for dropdown
@@ -137,10 +137,10 @@ class GCPFormSection extends Component<PropsType, StateType> {
             "<token>",
             {},
             {
-              id: user.userId,
+              id: user.userId
             }
           )
-          .then((res) => {
+          .then(res => {
             setProjects(res.data);
             setCurrentProject(proj);
             callback && callback();
@@ -158,7 +158,7 @@ class GCPFormSection extends Component<PropsType, StateType> {
       .createGCR(
         "<token>",
         {
-          gcp_integration_id: id,
+          gcp_integration_id: id
         },
         { project_id: currentProject.id }
       )
@@ -176,11 +176,11 @@ class GCPFormSection extends Component<PropsType, StateType> {
         "<token>",
         {
           gke_name: clusterName,
-          gcp_integration_id: id,
+          gcp_integration_id: id
         },
         { project_id: currentProject.id }
       )
-      .then((res) => {
+      .then(res => {
         this.props.history.push("dashboard?tab=provisioner");
       })
       .catch(this.catchError);
@@ -195,11 +195,11 @@ class GCPFormSection extends Component<PropsType, StateType> {
         {
           gcp_region: gcpRegion,
           gcp_key_data: gcpKeyData,
-          gcp_project_id: gcpProjectId,
+          gcp_project_id: gcpProjectId
         },
         { project_id: currentProject.id }
       )
-      .then((res) => {
+      .then(res => {
         if (res?.data) {
           console.log("gcp provisioned with response: ", res.data);
           let { id } = res.data;
@@ -325,7 +325,7 @@ class GCPFormSection extends Component<PropsType, StateType> {
             checked={this.state.provisionConfirmed}
             toggle={() =>
               this.setState({
-                provisionConfirmed: !this.state.provisionConfirmed,
+                provisionConfirmed: !this.state.provisionConfirmed
               })
             }
             label="I understand and wish to proceed"

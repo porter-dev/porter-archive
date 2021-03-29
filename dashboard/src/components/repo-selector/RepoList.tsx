@@ -28,7 +28,7 @@ export default class RepoList extends Component<PropsType, StateType> {
     repos: [] as RepoType[],
     loading: true,
     error: false,
-    searchFilter: "",
+    searchFilter: ""
   };
 
   // TODO: Try to unhook before unmount
@@ -39,14 +39,14 @@ export default class RepoList extends Component<PropsType, StateType> {
     if (!this.props.userId && this.props.userId !== 0) {
       api
         .getGitRepos("<token>", {}, { project_id: currentProject.id })
-        .then(async (res) => {
+        .then(async res => {
           if (res.data.length == 0) {
             this.setState({ loading: false, error: false });
-            return
+            return;
           }
 
           var allRepos: any = [];
-          var errors : any = [];
+          var errors: any = [];
 
           var promises = res.data.map((gitrepo: any, id: number) => {
             return new Promise((resolve, reject) => {
@@ -56,32 +56,34 @@ export default class RepoList extends Component<PropsType, StateType> {
                   {},
                   { project_id: currentProject.id, git_repo_id: gitrepo.id }
                 )
-                .then((res) => {
+                .then(res => {
                   res.data.forEach((repo: any, id: number) => {
                     repo.GHRepoID = gitrepo.id;
                   });
 
-                  resolve(res.data)
+                  resolve(res.data);
                 })
-                .catch((err) => {
-                  errors.push(err)
-                  resolve([])
+                .catch(err => {
+                  errors.push(err);
+                  resolve([]);
                 });
-              })
-            })  
+            });
+          });
 
           var sepRepos = await Promise.all(promises);
 
           allRepos = [].concat.apply([], sepRepos);
 
           // remove duplicates based on name
-          allRepos = allRepos.filter((repo : any, index : number, self : any) => {
-            var keep = index === self.findIndex((_repo : any) => {
-              return repo.FullName === _repo.FullName
-            })
+          allRepos = allRepos.filter((repo: any, index: number, self: any) => {
+            var keep =
+              index ===
+              self.findIndex((_repo: any) => {
+                return repo.FullName === _repo.FullName;
+              });
 
-            return keep
-          })
+            return keep;
+          });
 
           // sort repos based on name
           allRepos.sort((a: any, b: any) => {
@@ -100,11 +102,11 @@ export default class RepoList extends Component<PropsType, StateType> {
             this.setState({
               repos: allRepos,
               loading: false,
-              error: false,
+              error: false
             });
           }
         })
-        .catch((_) => this.setState({ loading: false, error: true }));
+        .catch(_ => this.setState({ loading: false, error: true }));
     } else {
       let grid = this.props.userId;
 
@@ -114,8 +116,8 @@ export default class RepoList extends Component<PropsType, StateType> {
           {},
           { project_id: currentProject.id, git_repo_id: grid }
         )
-        .then((res) => {
-          var repos : any = res.data
+        .then(res => {
+          var repos: any = res.data;
 
           repos.forEach((repo: any, id: number) => {
             repo.GHRepoID = grid;
@@ -133,7 +135,7 @@ export default class RepoList extends Component<PropsType, StateType> {
 
           this.setState({ repos: repos, loading: false, error: false });
         })
-        .catch((err) => {
+        .catch(err => {
           this.setState({ loading: false, error: true });
         });
     }
@@ -171,27 +173,29 @@ export default class RepoList extends Component<PropsType, StateType> {
       );
     }
 
-    return repos.filter((repo: RepoType, i: number) => {
-      return repo.FullName.includes(this.state.searchFilter || "")
-    }).map((repo: RepoType, i: number) => {
-      return (
-        <RepoName
-          key={i}
-          isSelected={repo.FullName === this.props.actionConfig.git_repo}
-          lastItem={i === repos.length - 1}
-          onClick={() => this.setRepo(repo)}
-          readOnly={this.props.readOnly}
-        >
-          <img src={github} />
-          {repo.FullName}
-        </RepoName>
-      );
-    });
+    return repos
+      .filter((repo: RepoType, i: number) => {
+        return repo.FullName.includes(this.state.searchFilter || "");
+      })
+      .map((repo: RepoType, i: number) => {
+        return (
+          <RepoName
+            key={i}
+            isSelected={repo.FullName === this.props.actionConfig.git_repo}
+            lastItem={i === repos.length - 1}
+            onClick={() => this.setRepo(repo)}
+            readOnly={this.props.readOnly}
+          >
+            <img src={github} />
+            {repo.FullName}
+          </RepoName>
+        );
+      });
   };
 
   renderExpanded = () => {
     if (this.props.readOnly) {
-      return <ExpandedWrapperAlt>{this.renderRepoList()}</ExpandedWrapperAlt>
+      return <ExpandedWrapperAlt>{this.renderRepoList()}</ExpandedWrapperAlt>;
     } else {
       return (
         <ExpandedWrapper>
@@ -201,7 +205,7 @@ export default class RepoList extends Component<PropsType, StateType> {
             readOnly={this.props.readOnly}
           >
             <i className="material-icons">search</i>
-            <SearchInput 
+            <SearchInput
               value={this.state.searchFilter}
               onChange={(e: any) => {
                 this.setState({ searchFilter: e.target.value });
@@ -209,9 +213,7 @@ export default class RepoList extends Component<PropsType, StateType> {
               placeholder="Search repos..."
             />
           </InfoRow>
-          <ExpandedWrapper>
-            {this.renderRepoList()}
-          </ExpandedWrapper>
+          <ExpandedWrapper>{this.renderRepoList()}</ExpandedWrapper>
         </ExpandedWrapper>
       );
     }
@@ -258,7 +260,8 @@ const RepoName = styled.div`
     }
   }
 
-  > img,i {
+  > img,
+  i {
     width: 18px;
     height: 18px;
     margin-left: 12px;
@@ -294,14 +297,14 @@ const ExpandedWrapper = styled.div`
   border-radius: 3px;
   border: 0px solid #ffffff44;
   max-height: 235px;
-  top: 40px; 
+  top: 40px;
 
   > i {
     font-size: 18px;
     display: block;
-    position: absolute; 
-    left: 10px; 
-    top: 10px; 
+    position: absolute;
+    left: 10px;
+    top: 10px;
   }
 `;
 
@@ -326,5 +329,5 @@ const SearchInput = styled.input`
   width: 100%;
   color: white;
   padding: 0;
-  height: 20px; 
+  height: 20px;
 `;

@@ -29,7 +29,7 @@ export default class ControllerTab extends Component<PropsType, StateType> {
     pods: [] as any[],
     raw: [] as any[],
     showTooltip: [] as boolean[],
-    podPendingDelete: null as any,
+    podPendingDelete: null as any
   };
 
   updatePods = () => {
@@ -67,7 +67,7 @@ export default class ControllerTab extends Component<PropsType, StateType> {
       )
       .then(res => {
         let pods = res?.data?.map((pod: any) => {
-          console.log(pod?.metadata?.namespace)
+          console.log(pod?.metadata?.namespace);
           return {
             namespace: pod?.metadata?.namespace,
             name: pod?.metadata?.name,
@@ -95,7 +95,7 @@ export default class ControllerTab extends Component<PropsType, StateType> {
         setCurrentError(JSON.stringify(err));
         return;
       });
-  }
+  };
 
   componentDidMount() {
     this.updatePods();
@@ -168,27 +168,29 @@ export default class ControllerTab extends Component<PropsType, StateType> {
         {
           name: pod.metadata?.name,
           namespace: pod.metadata?.namespace,
-          id: this.context.currentProject.id,
+          id: this.context.currentProject.id
         }
       )
       .then(res => {
         this.updatePods();
+        this.setState({ podPendingDelete: null });
       })
       .catch(err => {
         this.context.setCurrentError(JSON.stringify(err));
+        this.setState({ podPendingDelete: null });
       });
-  }
+  };
 
   renderDeleteButton = (pod: any) => {
     return (
-      <CloseIcon 
+      <CloseIcon
         className="material-icons-outlined"
         onClick={() => this.setState({ podPendingDelete: pod })}
       >
         close
       </CloseIcon>
     );
-  }
+  };
 
   render() {
     let { controller, selectedPod, isLast, selectPod, isFirst } = this.props;
@@ -211,7 +213,7 @@ export default class ControllerTab extends Component<PropsType, StateType> {
         {this.state.raw.map((pod, i) => {
           let status = this.getPodStatus(pod.status);
           if (i === 2) {
-            status = "failed"
+            status = "failed";
           }
           return (
             <Tab

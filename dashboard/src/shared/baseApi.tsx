@@ -31,7 +31,9 @@ export const baseApi = <T extends {}, S = {}>(
         }
       });
     } else if (requestType === "DELETE") {
-      return axios.delete(endpointString + "?" + qs.stringify(params, { arrayFormat: "repeat" }));
+      return axios.delete(
+        endpointString + "?" + qs.stringify(params, { arrayFormat: "repeat" })
+      );
     } else {
       return axios.get(endpointString, {
         params,

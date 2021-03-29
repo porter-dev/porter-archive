@@ -4,6 +4,7 @@ import api from "shared/api";
 import { Context } from "shared/Context";
 
 import ResourceTab from "components/ResourceTab";
+import ConfirmOverlay from "components/ConfirmOverlay";
 
 type PropsType = {
   controller: any;
@@ -19,6 +20,7 @@ type StateType = {
   pods: any[];
   raw: any[];
   showTooltip: boolean[];
+  podPendingDelete: any;
 };
 
 // Controller tab in log section that displays list of pods on click.
@@ -26,7 +28,8 @@ export default class ControllerTab extends Component<PropsType, StateType> {
   state = {
     pods: [] as any[],
     raw: [] as any[],
-    showTooltip: [] as boolean[]
+    showTooltip: [] as boolean[],
+    podPendingDelete: null as any
   };
 
   updatePods = () => {
@@ -64,7 +67,7 @@ export default class ControllerTab extends Component<PropsType, StateType> {
       )
       .then(res => {
         let pods = res?.data?.map((pod: any) => {
-          console.log(pod?.metadata?.namespace)
+          console.log(pod?.metadata?.namespace);
           return {
             namespace: pod?.metadata?.namespace,
             name: pod?.metadata?.name,
@@ -92,7 +95,7 @@ export default class ControllerTab extends Component<PropsType, StateType> {
         setCurrentError(JSON.stringify(err));
         return;
       });
-  }
+  };
 
   componentDidMount() {
     this.updatePods();
@@ -156,10 +159,6 @@ export default class ControllerTab extends Component<PropsType, StateType> {
   };
 
   handleDeletePod = (pod: any) => {
-    console.log("clusterId", this.context.currentCluster.id);
-    console.log("name", pod.metadata?.name);
-    console.log("namespace", pod.metadata?.namespace);
-    console.log("id", this.context.currentProject.id);
     api
       .deletePod(
         "<token>",
@@ -169,27 +168,29 @@ export default class ControllerTab extends Component<PropsType, StateType> {
         {
           name: pod.metadata?.name,
           namespace: pod.metadata?.namespace,
-          id: this.context.currentProject.id,
+          id: this.context.currentProject.id
         }
       )
       .then(res => {
         this.updatePods();
+        this.setState({ podPendingDelete: null });
       })
       .catch(err => {
         this.context.setCurrentError(JSON.stringify(err));
+        this.setState({ podPendingDelete: null });
       });
-  }
+  };
 
   renderDeleteButton = (pod: any) => {
     return (
-      <CloseIcon 
+      <CloseIcon
         className="material-icons-outlined"
-        onClick={() => this.handleDeletePod(pod)}
+        onClick={() => this.setState({ podPendingDelete: pod })}
       >
         close
       </CloseIcon>
     );
-  }
+  };
 
   render() {
     let { controller, selectedPod, isLast, selectPod, isFirst } = this.props;
@@ -211,6 +212,9 @@ export default class ControllerTab extends Component<PropsType, StateType> {
       >
         {this.state.raw.map((pod, i) => {
           let status = this.getPodStatus(pod.status);
+          if (i === 2) {
+            status = "failed";
+          }
           return (
             <Tab
               key={pod.metadata?.name}
@@ -251,6 +255,12 @@ export default class ControllerTab extends Component<PropsType, StateType> {
             </Tab>
           );
         })}
+        <ConfirmOverlay
+          message="Are you sure you want to delete this pod?"
+          show={this.state.podPendingDelete}
+          onYes={() => this.handleDeletePod(this.state.podPendingDelete)}
+          onNo={() => this.setState({ podPendingDelete: null })}
+        />
       </ResourceTab>
     );
   }

@@ -19,7 +19,7 @@ type StateType = {
 
 class ExistingClusterSection extends Component<PropsType, StateType> {
   state = {
-    buttonStatus: ""
+    buttonStatus: "",
   };
 
   onCreateProject = () => {
@@ -29,16 +29,16 @@ class ExistingClusterSection extends Component<PropsType, StateType> {
     this.setState({ buttonStatus: "loading" });
     api
       .createProject("<token>", { name: projectName }, {})
-      .then(res =>
+      .then((res) =>
         api.getProjects(
           "<token>",
           {},
           {
-            id: user.userId
+            id: user.userId,
           }
         )
       )
-      .then(res => {
+      .then((res) => {
         if (res.data) {
           setProjects(res.data);
           if (res.data.length > 0) {

@@ -19,7 +19,7 @@ type StateType = {
 export default class NewProject extends Component<PropsType, StateType> {
   state = {
     projectName: "",
-    selectedProvider: null as string | null
+    selectedProvider: null as string | null,
   };
 
   render() {

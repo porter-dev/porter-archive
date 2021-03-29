@@ -36,7 +36,7 @@ class Sidebar extends Component<PropsType, StateType> {
     initializedSidebar: false,
     pressingCtrl: false,
     showTooltip: false,
-    forceCloseDrawer: false
+    forceCloseDrawer: false,
   };
 
   componentDidMount() {
@@ -73,7 +73,7 @@ class Sidebar extends Component<PropsType, StateType> {
   toggleSidebar = (): void => {
     this.setState({
       showSidebar: !this.state.showSidebar,
-      forceCloseDrawer: true
+      forceCloseDrawer: true,
     });
   };
 
@@ -267,11 +267,11 @@ const NavButton = styled.div`
 
 const Img = styled.img<{ enlarge?: boolean }>`
   padding: 4px 4px;
-  height: ${props => (props.enlarge ? "27px" : "23px")};
-  width: ${props => (props.enlarge ? "27px" : "23px")};
+  height: ${(props) => (props.enlarge ? "27px" : "23px")};
+  width: ${(props) => (props.enlarge ? "27px" : "23px")};
   border-radius: 3px;
   position: absolute;
-  left: ${props => (props.enlarge ? "19px" : "20px")};
+  left: ${(props) => (props.enlarge ? "19px" : "20px")};
   top: 9px;
 `;
 

@@ -32,7 +32,7 @@ type StateType = {
 const dummyRegistries = [
   { id: 1, service: "ecr", url: "https://idfkasdfasdf" },
   { id: 12, service: "ecr", url: "https://dfasdfidfkasdfasdf" },
-  { id: 11, service: "gcr", url: "https://idfkasdfasdf" }
+  { id: 11, service: "gcr", url: "https://idfkasdfasdf" },
 ] as any[];
 
 export default class ActionDetails extends Component<PropsType, StateType> {
@@ -40,7 +40,7 @@ export default class ActionDetails extends Component<PropsType, StateType> {
     dockerRepo: "",
     error: false,
     registries: null as any[] | null,
-    loading: true
+    loading: true,
   };
 
   componentDidMount() {
@@ -281,7 +281,7 @@ const StatusWrapper = styled.div<{ successful?: boolean }>`
   > i {
     font-size: 18px;
     margin-right: 10px;
-    color: ${props => (props.successful ? "#4797ff" : "#fcba03")};
+    color: ${(props) => (props.successful ? "#4797ff" : "#fcba03")};
   }
 
   animation: statusFloatIn 0.5s;

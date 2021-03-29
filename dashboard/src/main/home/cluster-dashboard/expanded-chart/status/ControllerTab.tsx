@@ -59,19 +59,19 @@ export default class ControllerTab extends Component<PropsType, StateType> {
         "<token>",
         {
           cluster_id: currentCluster.id,
-          selectors
+          selectors,
         },
         {
-          id: currentProject.id
+          id: currentProject.id,
         }
       )
-      .then(res => {
+      .then((res) => {
         let pods = res?.data?.map((pod: any) => {
-          console.log(pod?.metadata?.namespace)
+          console.log(pod?.metadata?.namespace);
           return {
             namespace: pod?.metadata?.namespace,
             name: pod?.metadata?.name,
-            phase: pod?.status?.phase
+            phase: pod?.status?.phase,
           };
         });
         let showTooltip = new Array(pods.length);
@@ -90,12 +90,12 @@ export default class ControllerTab extends Component<PropsType, StateType> {
           selectPod(res.data[0]);
         }
       })
-      .catch(err => {
+      .catch((err) => {
         console.log(err);
         setCurrentError(JSON.stringify(err));
         return;
       });
-  }
+  };
 
   componentDidMount() {
     this.updatePods();
@@ -109,14 +109,14 @@ export default class ControllerTab extends Component<PropsType, StateType> {
           c.status?.availableReplicas ||
             c.status?.replicas - c.status?.unavailableReplicas ||
             0,
-          c.status?.replicas || 0
+          c.status?.replicas || 0,
         ];
       case "statefulset":
         return [c.status?.readyReplicas || 0, c.status?.replicas || 0];
       case "daemonset":
         return [
           c.status?.numberAvailable || 0,
-          c.status?.desiredNumberScheduled || 0
+          c.status?.desiredNumberScheduled || 0,
         ];
       case "job":
         console.log(c);
@@ -163,7 +163,7 @@ export default class ControllerTab extends Component<PropsType, StateType> {
       .deletePod(
         "<token>",
         {
-          cluster_id: this.context.currentCluster.id
+          cluster_id: this.context.currentCluster.id,
         },
         {
           name: pod.metadata?.name,
@@ -171,24 +171,26 @@ export default class ControllerTab extends Component<PropsType, StateType> {
           id: this.context.currentProject.id,
         }
       )
-      .then(res => {
+      .then((res) => {
         this.updatePods();
+        this.setState({ podPendingDelete: null });
       })
-      .catch(err => {
+      .catch((err) => {
         this.context.setCurrentError(JSON.stringify(err));
+        this.setState({ podPendingDelete: null });
       });
-  }
+  };
 
   renderDeleteButton = (pod: any) => {
     return (
-      <CloseIcon 
+      <CloseIcon
         className="material-icons-outlined"
         onClick={() => this.setState({ podPendingDelete: pod })}
       >
         close
       </CloseIcon>
     );
-  }
+  };
 
   render() {
     let { controller, selectedPod, isLast, selectPod, isFirst } = this.props;
@@ -211,7 +213,7 @@ export default class ControllerTab extends Component<PropsType, StateType> {
         {this.state.raw.map((pod, i) => {
           let status = this.getPodStatus(pod.status);
           if (i === 2) {
-            status = "failed"
+            status = "failed";
           }
           return (
             <Tab

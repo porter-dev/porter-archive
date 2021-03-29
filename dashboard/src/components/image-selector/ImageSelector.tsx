@@ -33,7 +33,7 @@ export default class ImageSelector extends Component<PropsType, StateType> {
     loading: true,
     error: false,
     images: [] as ImageType[],
-    clickedImage: null as ImageType | null
+    clickedImage: null as ImageType | null,
   };
 
   // componentDidMount() {

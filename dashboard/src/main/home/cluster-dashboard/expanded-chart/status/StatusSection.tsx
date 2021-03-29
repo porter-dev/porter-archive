@@ -30,7 +30,7 @@ export default class StatusSection extends Component<PropsType, StateType> {
     selectedPod: {} as any,
     controllers: [] as any[],
     loading: true,
-    podError: ""
+    podError: "",
   };
 
   renderLogs = () => {
@@ -45,7 +45,7 @@ export default class StatusSection extends Component<PropsType, StateType> {
 
   selectPod = (pod: any) => {
     this.setState({
-      selectedPod: pod
+      selectedPod: pod,
     });
   };
 
@@ -112,12 +112,12 @@ export default class StatusSection extends Component<PropsType, StateType> {
         {
           namespace: currentChart.namespace,
           cluster_id: currentCluster.id,
-          storage: StorageType.Secret
+          storage: StorageType.Secret,
         },
         {
           id: currentProject.id,
           name: currentChart.name,
-          revision: currentChart.version
+          revision: currentChart.version,
         }
       )
       .then((res: any) => {
@@ -127,7 +127,7 @@ export default class StatusSection extends Component<PropsType, StateType> {
             : res.data;
         this.setState({ controllers, loading: false });
       })
-      .catch(err => {
+      .catch((err) => {
         setCurrentError(JSON.stringify(err));
         this.setState({ controllers: [], loading: false });
       });

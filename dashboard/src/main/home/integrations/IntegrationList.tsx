@@ -29,7 +29,7 @@ export default class IntegrationList extends Component<PropsType, StateType> {
     displayExpanded: this.props.integrations.map(() => false),
     isDelete: false,
     deleteName: "",
-    deleteID: 0
+    deleteID: 0,
   };
 
   allCollapsed = () =>
@@ -43,7 +43,7 @@ export default class IntegrationList extends Component<PropsType, StateType> {
 
   collapseAll = () => {
     this.setState({
-      displayExpanded: this.props.integrations.map(() => false)
+      displayExpanded: this.props.integrations.map(() => false),
     });
   };
 
@@ -68,7 +68,7 @@ export default class IntegrationList extends Component<PropsType, StateType> {
     this.setState({
       isDelete: true,
       deleteName: this.props.titles[i],
-      deleteID: id
+      deleteID: id,
     });
   };
 
@@ -82,14 +82,14 @@ export default class IntegrationList extends Component<PropsType, StateType> {
           {},
           {
             project_id: currentProject.id,
-            registry_id: this.state.deleteID
+            registry_id: this.state.deleteID,
           }
         )
         .then(() => {
           this.setState({ isDelete: false });
           this.props.updateIntegrationList();
         })
-        .catch(err => {
+        .catch((err) => {
           this.context.setCurrentError(err);
         });
     } else if (this.props.currentCategory === "repo") {
@@ -99,14 +99,14 @@ export default class IntegrationList extends Component<PropsType, StateType> {
           {},
           {
             project_id: currentProject.id,
-            git_repo_id: this.state.deleteID
+            git_repo_id: this.state.deleteID,
           }
         )
         .then(() => {
           this.setState({ isDelete: false });
           this.props.updateIntegrationList();
         })
-        .catch(err => {
+        .catch((err) => {
           this.context.setCurrentError(err);
         });
     }

@@ -29,7 +29,7 @@ export default class Main extends Component<PropsType, StateType> {
     loading: true,
     isLoggedIn: false,
     isEmailVerified: false,
-    initialized: localStorage.getItem("init") === "true"
+    initialized: localStorage.getItem("init") === "true",
   };
 
   componentDidMount() {
@@ -39,20 +39,20 @@ export default class Main extends Component<PropsType, StateType> {
     error && setCurrentError(error);
     api
       .checkAuth("", {}, {})
-      .then(res => {
+      .then((res) => {
         if (res && res.data) {
           setUser(res?.data?.id, res?.data?.email);
           this.setState({
             isLoggedIn: true,
             isEmailVerified: res?.data?.email_verified,
             initialized: true,
-            loading: false
+            loading: false,
           });
         } else {
           this.setState({ isLoggedIn: false, loading: false });
         }
       })
-      .catch(err => this.setState({ isLoggedIn: false, loading: false }));
+      .catch((err) => this.setState({ isLoggedIn: false, loading: false }));
   }
 
   initialize = () => {
@@ -63,20 +63,20 @@ export default class Main extends Component<PropsType, StateType> {
   authenticate = () => {
     api
       .checkAuth("", {}, {})
-      .then(res => {
+      .then((res) => {
         if (res && res.data) {
           this.context.setUser(res?.data?.id, res?.data?.email);
           this.setState({
             isLoggedIn: true,
             isEmailVerified: res?.data?.email_verified,
             initialized: true,
-            loading: false
+            loading: false,
           });
         } else {
           this.setState({ isLoggedIn: false, loading: false });
         }
       })
-      .catch(err => this.setState({ isLoggedIn: false, loading: false }));
+      .catch((err) => this.setState({ isLoggedIn: false, loading: false }));
   };
 
   handleLogOut = () => {
@@ -89,7 +89,9 @@ export default class Main extends Component<PropsType, StateType> {
         this.setState({ isLoggedIn: false, initialized: true });
         localStorage.clear();
       })
-      .catch(err => this.context.setCurrentError(err.response.data.errors[0]));
+      .catch((err) =>
+        this.context.setCurrentError(err.response.data.errors[0])
+      );
   };
 
   renderMain = () => {
@@ -166,7 +168,7 @@ export default class Main extends Component<PropsType, StateType> {
         />
         <Route
           path={`/:baseRoute`}
-          render={routeProps => {
+          render={(routeProps) => {
             const baseRoute = routeProps.match.params.baseRoute;
             if (
               this.state.isLoggedIn &&

@@ -17,7 +17,7 @@ type StateType = {
 
 export default class Navbar extends Component<PropsType, StateType> {
   state = {
-    showDropdown: false
+    showDropdown: false,
   };
 
   renderSettingsDropdown = () => {
@@ -44,15 +44,13 @@ export default class Navbar extends Component<PropsType, StateType> {
     return (
       <StyledNavbar>
         <Feedback currentView={this.props.currentView} />
-        <NavButton 
-          selected={this.state.showDropdown} 
+        <NavButton
+          selected={this.state.showDropdown}
           onClick={() =>
             this.setState({ showDropdown: !this.state.showDropdown })
           }
         >
-          <I className="material-icons-outlined">
-            account_circle
-          </I>
+          <I className="material-icons-outlined">account_circle</I>
           {this.context.user.email}
           {this.renderSettingsDropdown()}
         </NavButton>
@@ -88,7 +86,7 @@ const LogOutButton = styled.button`
   border: 0;
   text-align: left;
   background: none;
-  cursor: ${props => (!props.disabled ? "pointer" : "default")};
+  cursor: ${(props) => (!props.disabled ? "pointer" : "default")};
   user-select: none;
   :focus {
     outline: 0;

@@ -10,6 +10,7 @@ import warning from "assets/warning.png";
 
 type PropsType = RouteComponentProps & {
   selectedInfra: InfraType;
+  updateInfras: () => void;
 };
 
 type StateType = {
@@ -26,7 +27,7 @@ class ProvisionerLogs extends Component<PropsType, StateType> {
     ws: null as any,
     scroll: true,
     maxStep: 0,
-    error: false,
+    error: false
   };
 
   ws = null as any;
@@ -34,7 +35,7 @@ class ProvisionerLogs extends Component<PropsType, StateType> {
 
   scrollToBottom = () => {
     this.parentRef.current.lastElementChild.scrollIntoView({
-      behavior: "auto",
+      behavior: "auto"
     });
   };
 
@@ -138,7 +139,7 @@ class ProvisionerLogs extends Component<PropsType, StateType> {
 
       if (err) {
         window.analytics.track("Provisioning Error", {
-          error: err,
+          error: err
         });
         let e = ansiparse(err).map((el: any) => {
           return el.text;
@@ -164,9 +165,13 @@ class ProvisionerLogs extends Component<PropsType, StateType> {
       this.setState(
         {
           logs: [...this.state.logs, ...logs],
-          maxStep: validEvents[validEvents.length - 1]["total_resources"],
+          maxStep: validEvents[validEvents.length - 1]["total_resources"]
         },
         () => {
+          setTimeout(() => {
+            this.props.updateInfras();
+          }, 3000)
+          
           this.scrollToBottom();
         }
       );

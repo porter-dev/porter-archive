@@ -25,7 +25,7 @@ class UpdateClusterModal extends Component<PropsType, StateType> {
   state = {
     clusterName: this.context.currentCluster.name,
     status: null as string | null,
-    showDeleteOverlay: false,
+    showDeleteOverlay: false
   };
 
   catchErr = (err: any) => {
@@ -43,10 +43,10 @@ class UpdateClusterModal extends Component<PropsType, StateType> {
         {},
         {
           project_id: currentProject.id,
-          cluster_id: currentCluster.id,
+          cluster_id: currentCluster.id
         }
       )
-      .then((_) => {
+      .then(_ => {
         if (!currentCluster?.infra_id) {
           // TODO: make this more declarative from the Home component
           this.props.setRefreshClusters(true);
@@ -65,7 +65,7 @@ class UpdateClusterModal extends Component<PropsType, StateType> {
                 { eks_name: currentCluster.name },
                 {
                   project_id: currentProject.id,
-                  infra_id: currentCluster.infra_id,
+                  infra_id: currentCluster.infra_id
                 }
               )
               .then(() => console.log("destroyed provisioned infra."))
@@ -78,7 +78,7 @@ class UpdateClusterModal extends Component<PropsType, StateType> {
                 { gke_name: currentCluster.name },
                 {
                   project_id: currentProject.id,
-                  infra_id: currentCluster.infra_id,
+                  infra_id: currentCluster.infra_id
                 }
               )
               .then(() => console.log("destroyed provisioned infra."))
@@ -92,7 +92,7 @@ class UpdateClusterModal extends Component<PropsType, StateType> {
                 { doks_name: currentCluster.name },
                 {
                   project_id: currentProject.id,
-                  infra_id: currentCluster.infra_id,
+                  infra_id: currentCluster.infra_id
                 }
               )
               .then(() => console.log("destroyed provisioned infra."))
@@ -121,9 +121,8 @@ class UpdateClusterModal extends Component<PropsType, StateType> {
 
     return (
       <Warning highlight={true}>
-        ⚠️ Deletion may result in dangling resources. Please visit your cloud
-        provider's console to ensure that all resources have been removed. Note
-        that deleting the cluster does not delete your registries.
+        ⚠️ Deletion may result in dangling resources. For a guide on how to
+        delete dangling resources, click on the Help Button below.
       </Warning>
     );
   };
@@ -159,7 +158,7 @@ class UpdateClusterModal extends Component<PropsType, StateType> {
         {this.renderWarning()}
 
         <Help
-          href="https://docs.getporter.dev/docs/getting-started-with-porter-on-aws#deleting-provisioned-resources"
+          href="https://docs.getporter.dev/docs/deleting-dangling-resources"
           target="_blank"
         >
           <i className="material-icons">help_outline</i> Help

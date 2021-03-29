@@ -33,7 +33,7 @@ export default class ExpandedTemplate extends Component<PropsType, StateType> {
     loading: true,
     error: false,
     markdown: null as string | null,
-    keywords: [] as string[],
+    keywords: [] as string[]
   };
 
   componentDidMount() {
@@ -50,9 +50,9 @@ export default class ExpandedTemplate extends Component<PropsType, StateType> {
     api
       .getTemplateInfo("<token>", params, {
         name: this.props.currentTemplate.name.toLowerCase().trim(),
-        version: "latest",
+        version: "latest"
       })
-      .then((res) => {
+      .then(res => {
         let { form, values, markdown, metadata } = res.data;
         let keywords = metadata.keywords;
         this.setState({
@@ -61,10 +61,10 @@ export default class ExpandedTemplate extends Component<PropsType, StateType> {
           markdown,
           keywords,
           loading: false,
-          error: false,
+          error: false
         });
       })
-      .catch((err) => this.setState({ loading: false, error: true }));
+      .catch(err => this.setState({ loading: false, error: true }));
   };
 
   componentDidUpdate = (prevProps: PropsType) => {

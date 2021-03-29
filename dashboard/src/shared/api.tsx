@@ -220,6 +220,15 @@ const deleteInvite = baseApi<{}, { id: number; invId: number }>(
   }
 );
 
+const deletePod = baseApi<
+  {
+    cluster_id: number;
+  },
+  { name: string; namespace: string; id: number }
+>("DELETE", pathParams => {
+  return `/api/projects/${pathParams.id}/k8s/pods/${pathParams.namespace}/${pathParams.name}`;
+});
+
 const deleteProject = baseApi<{}, { id: number }>("DELETE", pathParams => {
   return `/api/projects/${pathParams.id}`;
 });
@@ -449,6 +458,15 @@ const getNamespaces = baseApi<
   { id: number }
 >("GET", pathParams => {
   return `/api/projects/${pathParams.id}/k8s/namespaces`;
+});
+
+const getNGINXIngresses = baseApi<
+  {
+    cluster_id: number;
+  },
+  { id: number }
+>("GET", pathParams => {
+  return `/api/projects/${pathParams.id}/k8s/prometheus/ingresses`;
 });
 
 const getOAuthIds = baseApi<
@@ -691,6 +709,7 @@ export default {
   deleteCluster,
   deleteGitRepoIntegration,
   deleteInvite,
+  deletePod,
   deleteProject,
   deleteRegistryIntegration,
   createSubdomain,
@@ -716,6 +735,7 @@ export default {
   getMatchingPods,
   getMetrics,
   getNamespaces,
+  getNGINXIngresses,
   getOAuthIds,
   getProjectClusters,
   getProjectRegistries,

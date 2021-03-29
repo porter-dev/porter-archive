@@ -29,6 +29,36 @@ func GetPrometheusService(clientset kubernetes.Interface) (*v1.Service, bool, er
 	return &services.Items[0], true, nil
 }
 
+type SimpleIngress struct {
+	Name      string `json:"name"`
+	Namespace string `json:"namespace"`
+}
+
+// GetIngressesWithNGINXAnnotation gets an array of names for all ingresses controlled by
+// NGINX
+func GetIngressesWithNGINXAnnotation(clientset kubernetes.Interface) ([]SimpleIngress, error) {
+	ingressList, err := clientset.NetworkingV1beta1().Ingresses("").List(context.TODO(), metav1.ListOptions{})
+
+	if err != nil {
+		return nil, err
+	}
+
+	res := make([]SimpleIngress, 0)
+
+	for _, ingress := range ingressList.Items {
+		if ingressAnn, found := ingress.ObjectMeta.Annotations["kubernetes.io/ingress.class"]; found {
+			if ingressAnn == "nginx" {
+				res = append(res, SimpleIngress{
+					Name:      ingress.ObjectMeta.Name,
+					Namespace: ingress.ObjectMeta.Namespace,
+				})
+			}
+		}
+	}
+
+	return res, nil
+}
+
 type QueryOpts struct {
 	Metric     string   `schema:"metric"`
 	ShouldSum  bool     `schema:"shouldsum"`
@@ -58,6 +88,10 @@ func QueryPrometheus(
 	} else if opts.Metric == "network" {
 		netPodSelector := fmt.Sprintf(`namespace="%s",pod=~"%s",container="POD"`, opts.Namespace, strings.Join(opts.PodList, "|"))
 		query = fmt.Sprintf("rate(container_network_receive_bytes_total{%s}[5m])", netPodSelector)
+	} else if opts.Metric == "nginx:errors" {
+		num := fmt.Sprintf(`sum(rate(nginx_ingress_controller_requests{status=~"5.*",namespace="%s",ingress=~"%s"}[5m]) OR on() vector(0))`, opts.Namespace, strings.Join(opts.PodList, "|"))
+		denom := fmt.Sprintf(`sum(rate(nginx_ingress_controller_requests{namespace="%s",ingress=~"%s"}[5m]) > 0)`, opts.Namespace, strings.Join(opts.PodList, "|"))
+		query = fmt.Sprintf(`%s / %s * 100 OR on() vector(0)`, num, denom)
 	}
 
 	if opts.ShouldSum {
@@ -101,10 +135,11 @@ type promRawQuery struct {
 }
 
 type promParsedSingletonQueryResult struct {
-	Date   interface{} `json:"date,omitempty"`
-	CPU    interface{} `json:"cpu,omitempty"`
-	Memory interface{} `json:"memory,omitempty"`
-	Bytes  interface{} `json:"bytes,omitempty"`
+	Date     interface{} `json:"date,omitempty"`
+	CPU      interface{} `json:"cpu,omitempty"`
+	Memory   interface{} `json:"memory,omitempty"`
+	Bytes    interface{} `json:"bytes,omitempty"`
+	ErrorPct interface{} `json:"error_pct,omitempty"`
 }
 
 type promParsedSingletonQuery struct {
@@ -137,6 +172,8 @@ func parseQuery(rawQuery []byte, metric string) ([]byte, error) {
 				singletonResult.Memory = values[1]
 			} else if metric == "network" {
 				singletonResult.Bytes = values[1]
+			} else if metric == "nginx:errors" {
+				singletonResult.ErrorPct = values[1]
 			}
 
 			singletonResults = append(singletonResults, *singletonResult)

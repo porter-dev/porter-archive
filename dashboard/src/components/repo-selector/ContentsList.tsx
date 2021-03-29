@@ -35,7 +35,7 @@ export default class ContentsList extends Component<PropsType, StateType> {
     error: false,
     contents: [] as FileType[],
     currentDir: "",
-    dockerfiles: [] as string[],
+    dockerfiles: [] as string[]
   };
 
   componentDidMount() {
@@ -61,10 +61,10 @@ export default class ContentsList extends Component<PropsType, StateType> {
           kind: "github",
           owner: actionConfig.git_repo.split("/")[0],
           name: actionConfig.git_repo.split("/")[1],
-          branch: branch,
+          branch: branch
         }
       )
-      .then((res) => {
+      .then(res => {
         let files = [] as FileType[];
         let folders = [] as FileType[];
         res.data.map((x: FileType, i: number) => {
@@ -81,7 +81,7 @@ export default class ContentsList extends Component<PropsType, StateType> {
 
         this.setState({ contents, loading: false, error: false });
       })
-      .catch((err) => {
+      .catch(err => {
         console.log(err);
 
         this.setState({ loading: false, error: true });
@@ -317,7 +317,7 @@ const Indicator = styled.div<{ selected: boolean }>`
   border: 1px solid #ffffff55;
   margin: 1px 10px 0px 1px;
   margin-right: 13px;
-  background: ${(props) => (props.selected ? "#ffffff22" : "#ffffff11")};
+  background: ${props => (props.selected ? "#ffffff22" : "#ffffff11")};
 `;
 
 const Label = styled.div`
@@ -343,7 +343,7 @@ const Row = styled.div<{ isLast: boolean }>`
   padding-left: 10px;
   display: flex;
   align-items: center;
-  border-bottom: ${(props) => !props.isLast && "1px solid #aaaabb"};
+  border-bottom: ${props => !props.isLast && "1px solid #aaaabb"};
   cursor: pointer;
   :hover {
     background: #ffffff22;

@@ -18,7 +18,7 @@ const IntegrationCategoryStrings = ["registry", "repo"]; /*"kubernetes",*/
 
 class Integrations extends Component<PropsType, StateType> {
   state = {
-    currentIntegrationData: [] as any[],
+    currentIntegrationData: [] as any[]
   };
 
   render = () => (
@@ -26,7 +26,7 @@ class Integrations extends Component<PropsType, StateType> {
       <Switch>
         <Route
           path="/integrations/:category/create/:integration"
-          render={(rp) => {
+          render={rp => {
             const { integration, category } = rp.match.params;
             if (!IntegrationCategoryStrings.includes(category)) {
               this.props.history.push("/integrations");
@@ -62,7 +62,7 @@ class Integrations extends Component<PropsType, StateType> {
         />
         <Route
           path="/integrations/:category"
-          render={(rp) => {
+          render={rp => {
             const currentCategory = rp.match.params.category;
             if (!IntegrationCategoryStrings.includes(currentCategory)) {
               this.props.history.push("/integrations");
@@ -83,7 +83,7 @@ class Integrations extends Component<PropsType, StateType> {
             <IntegrationList
               currentCategory={""}
               integrations={["kubernetes", "registry", "repo"]}
-              setCurrent={(x) => this.props.history.push(`/integrations/${x}`)}
+              setCurrent={x => this.props.history.push(`/integrations/${x}`)}
               isCategory={true}
               updateIntegrationList={() => {}}
             />

@@ -53,7 +53,7 @@ func (app *App) HandleCreateUser(w http.ResponseWriter, r *http.Request) {
 	if err == nil {
 		// send to segment
 		client := *app.segmentClient
-		
+
 		client.Enqueue(segment.Identify{
 			UserId: fmt.Sprintf("%v", user.ID),
 			Traits: segment.NewTraits().
@@ -63,7 +63,7 @@ func (app *App) HandleCreateUser(w http.ResponseWriter, r *http.Request) {
 
 		client.Enqueue(segment.Track{
 			UserId: fmt.Sprintf("%v", user.ID),
-			Event: "New User",
+			Event:  "New User",
 			Properties: segment.NewProperties().
 				Set("email", user.Email),
 		})
@@ -516,8 +516,6 @@ func (app *App) FinalizEmailVerifyUser(w http.ResponseWriter, r *http.Request) {
 	user.EmailVerified = true
 
 	user, err = app.Repo.User.UpdateUser(user)
-
-	fmt.Println("UPDATED USER WITH VERIFIED EMAIL", user)
 
 	if err != nil {
 		http.Redirect(w, r, "/dashboard?error="+url.QueryEscape("Could not verify email address"), 302)

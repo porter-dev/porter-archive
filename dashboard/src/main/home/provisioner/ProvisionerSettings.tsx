@@ -29,7 +29,7 @@ const providers = ["aws", "gcp", "do"];
 class NewProject extends Component<PropsType, StateType> {
   state = {
     selectedProvider: null as string | null,
-    infras: [] as InfraType[],
+    infras: [] as InfraType[]
   };
 
   // Handle any submission (pre-status) error
@@ -65,7 +65,7 @@ class NewProject extends Component<PropsType, StateType> {
                 <Highlight
                   onClick={() =>
                     this.setState({
-                      selectedProvider: "skipped",
+                      selectedProvider: "skipped"
                     })
                   }
                 >
@@ -227,7 +227,7 @@ const Icon = styled.img<{ bw?: boolean }>`
   height: 42px;
   margin-top: 30px;
   margin-bottom: 15px;
-  filter: ${(props) => (props.bw ? "grayscale(1)" : "")};
+  filter: ${props => (props.bw ? "grayscale(1)" : "")};
 `;
 
 const BlockDescription = styled.div`
@@ -268,13 +268,13 @@ const Block = styled.div<{ disabled?: boolean }>`
   align-item: center;
   justify-content: space-between;
   height: 170px;
-  cursor: ${(props) => (props.disabled ? "" : "pointer")};
+  cursor: ${props => (props.disabled ? "" : "pointer")};
   color: #ffffff;
   position: relative;
   background: #26282f;
   box-shadow: 0 3px 5px 0px #00000022;
   :hover {
-    background: ${(props) => (props.disabled ? "" : "#ffffff11")};
+    background: ${props => (props.disabled ? "" : "#ffffff11")};
   }
 
   animation: fadeIn 0.3s 0s;

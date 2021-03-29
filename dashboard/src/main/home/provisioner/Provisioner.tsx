@@ -82,10 +82,6 @@ class Provisioner extends Component<PropsType, StateType> {
   };
 
   updateInfras = () => {
-    this.setState({
-      loading: true
-    });
-
     let { currentProject } = this.state;
 
     api
@@ -143,7 +139,10 @@ class Provisioner extends Component<PropsType, StateType> {
     return (
       <StyledProvisioner>
         You have not provisioned any resources for this project through Porter.{" "}
-        <RefreshText onClick={this.refresh}>Refresh</RefreshText>
+        <RefreshText onClick={() => {
+          this.setState({ loading: true }); 
+          this.refresh()
+        }}>Refresh</RefreshText>
       </StyledProvisioner>
     );
   }

@@ -14,7 +14,7 @@ import { Link } from "react-router-dom";
 
 const tabOptions = [
   { label: "New Application", value: "docker" },
-  { label: "Community Add-ons", value: "community" }
+  { label: "Community Add-ons", value: "community" },
 ];
 
 type PropsType = {};
@@ -35,17 +35,17 @@ export default class Templates extends Component<PropsType, StateType> {
     addonTemplates: [] as PorterTemplate[],
     applicationTemplates: [] as PorterTemplate[],
     loading: true,
-    error: false
+    error: false,
   };
 
   componentDidMount() {
     api
       .getAddonTemplates("<token>", {}, {})
-      .then(res => {
+      .then((res) => {
         this.setState({ addonTemplates: res.data, error: false }, () => {
           this.state.addonTemplates.sort((a, b) => (a.name > b.name ? 1 : -1));
           this.setState({
-            loading: false
+            loading: false,
           });
         });
       })
@@ -55,17 +55,17 @@ export default class Templates extends Component<PropsType, StateType> {
       .getApplicationTemplates(
         "<token>",
         {
-          repo_url: process.env.APPLICATION_CHART_REPO_URL
+          repo_url: process.env.APPLICATION_CHART_REPO_URL,
         },
         {}
       )
-      .then(res => {
+      .then((res) => {
         this.setState({ applicationTemplates: res.data, error: false }, () => {
           this.state.applicationTemplates.sort((a, b) =>
             a.version > b.version ? 1 : -1
           );
           this.setState({
-            loading: false
+            loading: false,
           });
         });
       })
@@ -238,7 +238,7 @@ export default class Templates extends Component<PropsType, StateType> {
           setCurrentTab={(value: string) =>
             this.setState({
               currentTab: value,
-              currentTemplate: null
+              currentTemplate: null,
             })
           }
         />

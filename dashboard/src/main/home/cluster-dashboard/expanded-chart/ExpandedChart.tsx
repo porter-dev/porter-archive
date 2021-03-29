@@ -8,7 +8,7 @@ import {
   ResourceType,
   ChartType,
   StorageType,
-  ClusterType
+  ClusterType,
 } from "shared/types";
 import { Context } from "shared/Context";
 import api from "shared/api";
@@ -72,7 +72,7 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
     websockets: {} as Record<string, any>,
     url: null as string | null,
     showDeleteOverlay: false,
-    deleting: false
+    deleting: false,
   };
 
   // Retrieve full chart data (includes form and values)
@@ -87,15 +87,15 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
         {
           namespace: currentChart.namespace,
           cluster_id: currentCluster.id,
-          storage: StorageType.Secret
+          storage: StorageType.Secret,
         },
         {
           name: chart.name,
           revision: chart.version,
-          id: currentProject.id
+          id: currentProject.id,
         }
       )
-      .then(res => {
+      .then((res) => {
         setCurrentChart(res.data);
         this.setState({ loading: false });
       })
@@ -116,15 +116,15 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
           {
             namespace: chart.namespace,
             cluster_id: currentCluster.id,
-            storage: StorageType.Secret
+            storage: StorageType.Secret,
           },
           {
             id: currentProject.id,
             name: chart.name,
-            revision: chart.version
+            revision: chart.version,
           }
         )
-        .then(res => {
+        .then((res) => {
           res.data.forEach(async (c: any) => {
             await new Promise((nextController: (res?: any) => void) => {
               c.metadata.kind = c.kind;
@@ -132,8 +132,8 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
                 {
                   controllers: {
                     ...this.state.controllers,
-                    [c.metadata.uid]: c
-                  }
+                    [c.metadata.uid]: c,
+                  },
                 },
                 () => {
                   nextController();
@@ -143,7 +143,7 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
           });
           next();
         })
-        .catch(err => setCurrentError(JSON.stringify(err)));
+        .catch((err) => setCurrentError(JSON.stringify(err)));
     });
   };
 
@@ -167,8 +167,8 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
       this.setState({
         controllers: {
           ...this.state.controllers,
-          [object.metadata.uid]: object
-        }
+          [object.metadata.uid]: object,
+        },
       });
     };
 
@@ -201,18 +201,18 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
         {
           namespace: currentChart.namespace,
           cluster_id: currentCluster.id,
-          storage: StorageType.Secret
+          storage: StorageType.Secret,
         },
         {
           id: currentProject.id,
           name: currentChart.name,
-          revision: currentChart.version
+          revision: currentChart.version,
         }
       )
-      .then(res => {
+      .then((res) => {
         this.setState({
           components: res.data.Objects,
-          podSelectors: res.data.PodSelectors
+          podSelectors: res.data.PodSelectors,
         });
       })
       .catch(console.log);
@@ -233,7 +233,7 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
     // Weave in preexisting values and convert to yaml
     let valuesYaml = yaml.dump({
       ...(this.props.currentChart.config as Object),
-      ...values
+      ...values,
     });
 
     this.setState({ saveValuesStatus: "loading" });
@@ -244,31 +244,31 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
         {
           namespace: this.props.currentChart.namespace,
           storage: StorageType.Secret,
-          values: valuesYaml
+          values: valuesYaml,
         },
         {
           id: currentProject.id,
           name: this.props.currentChart.name,
-          cluster_id: currentCluster.id
+          cluster_id: currentCluster.id,
         }
       )
-      .then(res => {
+      .then((res) => {
         this.setState({
           saveValuesStatus: "successful",
-          forceRefreshRevisions: true
+          forceRefreshRevisions: true,
         });
 
         window.analytics.track("Chart Upgraded", {
           chart: this.props.currentChart.name,
-          values: valuesYaml
+          values: valuesYaml,
         });
       })
-      .catch(err => {
+      .catch((err) => {
         this.setState({ saveValuesStatus: "error" });
         window.analytics.track("Failed to Upgrade Chart", {
           chart: this.props.currentChart.name,
           values: valuesYaml,
-          error: err
+          error: err,
         });
       });
   };
@@ -280,7 +280,7 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
       components,
       showRevisions,
       saveValuesStatus,
-      tabOptions
+      tabOptions,
     } = this.state;
     let { currentChart, setSidebar } = this.props;
     let chart = currentChart;
@@ -374,7 +374,7 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
           value: "@" + tab.name,
           label: tab.label,
           sections: tab.sections,
-          context: tab.context
+          context: tab.context,
         });
       });
     }
@@ -447,7 +447,7 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
     let date = ts.toLocaleDateString();
     let time = ts.toLocaleTimeString([], {
       hour: "numeric",
-      minute: "2-digit"
+      minute: "2-digit",
     });
     return `${time} on ${date}`;
   };
@@ -499,7 +499,7 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
     let { currentChart } = this.props;
 
     window.analytics.track("Opened Chart", {
-      chart: currentChart.name
+      chart: currentChart.name,
     });
 
     this.getChartData(currentChart);
@@ -515,15 +515,15 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
         {
           namespace: currentChart.namespace,
           cluster_id: currentCluster.id,
-          storage: StorageType.Secret
+          storage: StorageType.Secret,
         },
         {
           id: currentProject.id,
           name: currentChart.name,
-          revision: currentChart.version
+          revision: currentChart.version,
         }
       )
-      .then(res =>
+      .then((res) =>
         this.setState({ components: res.data.Objects }, () => {
           let ingressName = null;
           for (var i = 0; i < this.state.components.length; i++) {
@@ -536,25 +536,25 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
             .getIngress(
               "<token>",
               {
-                cluster_id: currentCluster.id
+                cluster_id: currentCluster.id,
               },
               {
                 id: currentProject.id,
                 name: ingressName,
-                namespace: `${this.props.currentChart.namespace}`
+                namespace: `${this.props.currentChart.namespace}`,
               }
             )
-            .then(res => {
+            .then((res) => {
               if (res.data?.spec?.rules && res.data?.spec?.rules[0]?.host) {
                 this.setState({
-                  url: `https://${res.data?.spec?.rules[0]?.host}`
+                  url: `https://${res.data?.spec?.rules[0]?.host}`,
                 });
                 return;
               }
 
               if (res.data?.status?.loadBalancer?.ingress) {
                 this.setState({
-                  url: `http://${res.data?.status?.loadBalancer?.ingress[0]?.hostname}`
+                  url: `http://${res.data?.status?.loadBalancer?.ingress[0]?.hostname}`,
                 });
                 return;
               }
@@ -623,10 +623,10 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
           storage: StorageType.Secret,
           name: currentChart.name,
           id: currentProject.id,
-          cluster_id: currentCluster.id
+          cluster_id: currentCluster.id,
         }
       )
-      .then(res => {
+      .then((res) => {
         this.setState({ showDeleteOverlay: false });
         this.props.setCurrentChart(null);
       })

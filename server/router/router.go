@@ -1182,6 +1182,20 @@ func New(a *api.App) *chi.Mux {
 			),
 		)
 
+		r.Method(
+			"DELETE",
+			"/projects/{project_id}/k8s/pods",
+			auth.DoesUserHaveProjectAccess(
+				auth.DoesUserHaveClusterAccess(
+					requestlog.NewHandler(a.HandleDeletePod, l),
+					mw.URLParam,
+					mw.QueryParam,
+				),
+				mw.URLParam,
+				mw.ReadAccess,
+			),
+		)
+
 		// /api/projects/{project_id}/subdomain routes
 		r.Method(
 			"POST",

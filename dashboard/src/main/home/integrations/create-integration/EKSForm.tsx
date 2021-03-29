@@ -25,7 +25,7 @@ export default class EKSForm extends Component<PropsType, StateType> {
     clusterEndpoint: "",
     clusterCA: "",
     awsAccessId: "",
-    awsSecretKey: "",
+    awsSecretKey: ""
   };
 
   isDisabled = (): boolean => {
@@ -34,7 +34,7 @@ export default class EKSForm extends Component<PropsType, StateType> {
       clusterEndpoint,
       clusterCA,
       awsAccessId,
-      awsSecretKey,
+      awsSecretKey
     } = this.state;
     if (
       clusterName === "" ||

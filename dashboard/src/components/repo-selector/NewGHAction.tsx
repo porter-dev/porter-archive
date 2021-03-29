@@ -27,7 +27,7 @@ export default class NewGHAction extends Component<PropsType, StateType> {
     dockerRepo: "",
     trueDockerPath: this.props.dockerPath,
     loading: false,
-    error: false,
+    error: false
   };
 
   componentDidMount() {
@@ -36,7 +36,7 @@ export default class NewGHAction extends Component<PropsType, StateType> {
         trueDockerPath: this.props.dockerPath.substring(
           1,
           this.props.dockerPath.length
-        ),
+        )
       });
     }
   }

@@ -451,6 +451,15 @@ const getNamespaces = baseApi<
   return `/api/projects/${pathParams.id}/k8s/namespaces`;
 });
 
+const getNGINXIngresses = baseApi<
+  {
+    cluster_id: number;
+  },
+  { id: number }
+>("GET", pathParams => {
+  return `/api/projects/${pathParams.id}/k8s/prometheus/ingresses`;
+});
+
 const getOAuthIds = baseApi<
   {},
   {
@@ -716,6 +725,7 @@ export default {
   getMatchingPods,
   getMetrics,
   getNamespaces,
+  getNGINXIngresses,
   getOAuthIds,
   getProjectClusters,
   getProjectRegistries,

@@ -30,13 +30,13 @@ type StateType = {
 
 const provisionOptions = [
   { value: "docr", label: "Digital Ocean Container Registry" },
-  { value: "doks", label: "Digital Ocean Kubernetes Service" },
+  { value: "doks", label: "Digital Ocean Kubernetes Service" }
 ];
 
 const tierOptions = [
   { value: "basic", label: "Basic" },
   { value: "starter", label: "Starter" },
-  { value: "professional", label: "Professional" },
+  { value: "professional", label: "Professional" }
 ];
 
 const regionOptions = [
@@ -49,7 +49,7 @@ const regionOptions = [
   { value: "sfo2", label: "San Francisco 2" },
   { value: "sfo3", label: "San Francisco 3" },
   { value: "sgp1", label: "Singapore 1" },
-  { value: "tor1", label: "Toronto 1" },
+  { value: "tor1", label: "Toronto 1" }
 ];
 
 // TODO: Consolidate across forms w/ HOC
@@ -58,7 +58,7 @@ export default class DOFormSection extends Component<PropsType, StateType> {
     selectedInfras: [...provisionOptions],
     subscriptionTier: "starter",
     doRegion: "nyc1",
-    provisionConfirmed: false,
+    provisionConfirmed: false
   };
 
   componentDidMount = () => {
@@ -108,7 +108,7 @@ export default class DOFormSection extends Component<PropsType, StateType> {
 
     api
       .createProject("<token>", { name: projectName }, {})
-      .then(async (res) => {
+      .then(async res => {
         let proj = res.data;
 
         // Need to set project list for dropdown
@@ -117,7 +117,7 @@ export default class DOFormSection extends Component<PropsType, StateType> {
           "<token>",
           {},
           {
-            id: user.userId,
+            id: user.userId
           }
         );
         setProjects(res_1.data);
@@ -219,7 +219,7 @@ export default class DOFormSection extends Component<PropsType, StateType> {
             checked={this.state.provisionConfirmed}
             toggle={() =>
               this.setState({
-                provisionConfirmed: !this.state.provisionConfirmed,
+                provisionConfirmed: !this.state.provisionConfirmed
               })
             }
             label="I understand and wish to proceed"

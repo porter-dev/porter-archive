@@ -20,8 +20,8 @@ export default class SortSelector extends Component<PropsType, StateType> {
     sortOptions: [
       { label: "Newest", value: "Newest" },
       { label: "Oldest", value: "Oldest" },
-      { label: "Alphabetical", value: "Alphabetical" },
-    ] as { label: string; value: string }[],
+      { label: "Alphabetical", value: "Alphabetical" }
+    ] as { label: string; value: string }[]
   };
 
   render() {
@@ -32,7 +32,7 @@ export default class SortSelector extends Component<PropsType, StateType> {
         </Label>
         <Selector
           activeValue={this.props.sortType}
-          setActiveValue={(sortType) => this.props.setSortType(sortType)}
+          setActiveValue={sortType => this.props.setSortType(sortType)}
           options={this.state.sortOptions}
           dropdownLabel="Sort By"
           width="150px"

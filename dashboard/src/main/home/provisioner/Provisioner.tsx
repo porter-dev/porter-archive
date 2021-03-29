@@ -97,11 +97,17 @@ class Provisioner extends Component<PropsType, StateType> {
           return b.id - a.id;
         });
 
+        let selectedInfra = this.state.selectedInfra
+
+        if (!selectedInfra) {
+          selectedInfra = infras[0]
+        }
+
         this.setState({
           error: false,
           infras,
           loading: false,
-          selectedInfra: infras[0]
+          selectedInfra
         });
       })
       .catch();

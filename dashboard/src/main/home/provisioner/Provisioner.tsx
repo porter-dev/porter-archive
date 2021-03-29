@@ -36,7 +36,7 @@ class Provisioner extends Component<PropsType, StateType> {
     infras: [] as InfraType[],
     selectedInfra: null as InfraType,
     loading: true,
-    currentProject: this.context.currentProject,
+    currentProject: this.context.currentProject
   };
 
   selectInfra = (infra: InfraType) => {
@@ -51,10 +51,10 @@ class Provisioner extends Component<PropsType, StateType> {
         "<token>",
         {},
         {
-          project_id: currentProject.id,
+          project_id: currentProject.id
         }
       )
-      .then((res) => {
+      .then(res => {
         let infras = res.data.sort((a: InfraType, b: InfraType) => {
           return b.id - a.id;
         });
@@ -63,7 +63,7 @@ class Provisioner extends Component<PropsType, StateType> {
           error: false,
           infras,
           loading: false,
-          selectedInfra: infras[0],
+          selectedInfra: infras[0]
         });
       })
       .catch();

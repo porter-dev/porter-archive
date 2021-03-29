@@ -82,7 +82,7 @@ export default class GraphDisplay extends Component<PropsType, StateType> {
     currentEdge: null as EdgeType | null,
     openedNode: null as NodeType | null,
     suppressCloseNode: false,
-    suppressDisplay: false,
+    suppressDisplay: false
   };
 
   spaceRef: any = React.createRef();
@@ -122,7 +122,7 @@ export default class GraphDisplay extends Component<PropsType, StateType> {
     let width = this.spaceRef.offsetWidth;
     this.setState({
       originX: Math.round(width / 2),
-      originY: Math.round(height / 2),
+      originY: Math.round(height / 2)
     });
 
     // Suppress trackpad gestures
@@ -164,7 +164,7 @@ export default class GraphDisplay extends Component<PropsType, StateType> {
             x: this.getRandomIntBetweenRange(-500, 0),
             y: this.getRandomIntBetweenRange(0, 250),
             w: 40,
-            h: 40,
+            h: 40
           };
         case "Deployment":
         case "StatefulSet":
@@ -178,7 +178,7 @@ export default class GraphDisplay extends Component<PropsType, StateType> {
             x: this.getRandomIntBetweenRange(0, 500),
             y: this.getRandomIntBetweenRange(0, 250),
             w: 40,
-            h: 40,
+            h: 40
           };
         case "Service":
         case "Ingress":
@@ -191,7 +191,7 @@ export default class GraphDisplay extends Component<PropsType, StateType> {
             x: this.getRandomIntBetweenRange(0, 500),
             y: this.getRandomIntBetweenRange(-250, 0),
             w: 40,
-            h: 40,
+            h: 40
           };
         default:
           return {
@@ -202,7 +202,7 @@ export default class GraphDisplay extends Component<PropsType, StateType> {
             x: this.getRandomIntBetweenRange(-400, 0),
             y: this.getRandomIntBetweenRange(-250, 0),
             w: 40,
-            h: 40,
+            h: 40
           };
       }
     });
@@ -216,7 +216,7 @@ export default class GraphDisplay extends Component<PropsType, StateType> {
           edges.push({
             type: "ControlRel",
             source: rel.Source,
-            target: rel.Target,
+            target: rel.Target
           });
         }
       });
@@ -225,7 +225,7 @@ export default class GraphDisplay extends Component<PropsType, StateType> {
           edges.push({
             type: "LabelRel",
             source: rel.Source,
-            target: rel.Target,
+            target: rel.Target
           });
         }
       });
@@ -234,7 +234,7 @@ export default class GraphDisplay extends Component<PropsType, StateType> {
           edges.push({
             type: "SpecRel",
             source: rel.Source,
-            target: rel.Target,
+            target: rel.Target
           });
         }
       });
@@ -287,7 +287,7 @@ export default class GraphDisplay extends Component<PropsType, StateType> {
         panX: null,
         panY: null,
         deltaX: null,
-        deltaY: null,
+        deltaY: null
       });
     }
   };
@@ -302,7 +302,7 @@ export default class GraphDisplay extends Component<PropsType, StateType> {
         panX: null,
         panY: null,
         deltaX: null,
-        deltaY: null,
+        deltaY: null
       });
     }
   };
@@ -314,7 +314,7 @@ export default class GraphDisplay extends Component<PropsType, StateType> {
     this.setState({
       nodeClickX: cursorX,
       nodeClickY: cursorY,
-      suppressCloseNode: true,
+      suppressCloseNode: true
     });
 
     // Push to activeIds if not already present
@@ -334,7 +334,7 @@ export default class GraphDisplay extends Component<PropsType, StateType> {
     this.setState({
       activeIds: holding,
       preventBgDrag: true,
-      relocateAllowed: true,
+      relocateAllowed: true
     });
   };
 
@@ -362,7 +362,7 @@ export default class GraphDisplay extends Component<PropsType, StateType> {
       deltaY: null,
       panX: null,
       panY: null,
-      scale: 1,
+      scale: 1
     });
   };
 
@@ -372,7 +372,7 @@ export default class GraphDisplay extends Component<PropsType, StateType> {
       nodeClickX,
       cursorY,
       nodeClickY,
-      suppressCloseNode,
+      suppressCloseNode
     } = this.state;
     this.setState({ dragBg: false, activeIds: [] });
 
@@ -401,7 +401,7 @@ export default class GraphDisplay extends Component<PropsType, StateType> {
       anchorY,
       nodes,
       activeIds,
-      relocateAllowed,
+      relocateAllowed
     } = this.state;
 
     // Suppress navigation gestures
@@ -478,7 +478,7 @@ export default class GraphDisplay extends Component<PropsType, StateType> {
       }
       this.setState({
         originX: Math.round(width / 2) - nudge,
-        originY: Math.round(height / 2),
+        originY: Math.round(height / 2)
       });
     });
   };
@@ -496,7 +496,7 @@ export default class GraphDisplay extends Component<PropsType, StateType> {
       panY,
       anchorX,
       anchorY,
-      relocateAllowed,
+      relocateAllowed
     } = this.state;
 
     let minX = 0;
@@ -606,7 +606,7 @@ export default class GraphDisplay extends Component<PropsType, StateType> {
     return (
       <StyledGraphDisplay
         isExpanded={this.state.isExpanded}
-        ref={(element) => (this.spaceRef = element)}
+        ref={element => (this.spaceRef = element)}
         onMouseMove={this.handleMouseMove}
         onMouseDown={this.state.suppressDisplay ? null : this.handleMouseDown}
         onMouseUp={this.state.suppressDisplay ? null : this.handleMouseUp}

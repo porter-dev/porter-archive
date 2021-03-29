@@ -20,7 +20,7 @@ export default class ClusterInstructionsModal extends Component<
 > {
   state = {
     currentTab: "mac",
-    currentPage: 0,
+    currentPage: 0
   };
 
   renderPage = () => {

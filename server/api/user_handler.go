@@ -18,8 +18,10 @@ import (
 	"github.com/go-chi/chi"
 	"github.com/porter-dev/porter/internal/auth/token"
 	"github.com/porter-dev/porter/internal/forms"
+	"github.com/porter-dev/porter/internal/integrations/email"
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/repository"
+	segment "gopkg.in/segmentio/analytics-go.v3"
 )
 
 // Enumeration of user API error codes, represented as int64
@@ -49,6 +51,23 @@ func (app *App) HandleCreateUser(w http.ResponseWriter, r *http.Request) {
 	)
 
 	if err == nil {
+		// send to segment
+		client := *app.segmentClient
+
+		client.Enqueue(segment.Identify{
+			UserId: fmt.Sprintf("%v", user.ID),
+			Traits: segment.NewTraits().
+				SetEmail(user.Email).
+				Set("github", "false"),
+		})
+
+		client.Enqueue(segment.Track{
+			UserId: fmt.Sprintf("%v", user.ID),
+			Event:  "New User",
+			Properties: segment.NewProperties().
+				Set("email", user.Email),
+		})
+
 		app.Logger.Info().Msgf("New user created: %d", user.ID)
 		var redirect string
 
@@ -64,7 +83,7 @@ func (app *App) HandleCreateUser(w http.ResponseWriter, r *http.Request) {
 
 		w.WriteHeader(http.StatusCreated)
 
-		if err := app.sendUser(w, user.ID, user.Email, redirect); err != nil {
+		if err := app.sendUser(w, user.ID, user.Email, false, redirect); err != nil {
 			app.handleErrorFormDecoding(err, ErrUserDecode, w)
 			return
 		}
@@ -85,7 +104,7 @@ func (app *App) HandleAuthCheck(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		if err := app.sendUser(w, tok.IBy, user.Email, ""); err != nil {
+		if err := app.sendUser(w, tok.IBy, user.Email, user.EmailVerified, ""); err != nil {
 			app.handleErrorFormDecoding(err, ErrUserDecode, w)
 			return
 		}
@@ -102,9 +121,17 @@ func (app *App) HandleAuthCheck(w http.ResponseWriter, r *http.Request) {
 
 	userID, _ := session.Values["user_id"].(uint)
 	email, _ := session.Values["email"].(string)
+
+	user, err := app.Repo.User.ReadUser(userID)
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
 	w.WriteHeader(http.StatusOK)
 
-	if err := app.sendUser(w, userID, email, ""); err != nil {
+	if err := app.sendUser(w, userID, email, user.EmailVerified, ""); err != nil {
 		app.handleErrorFormDecoding(err, ErrUserDecode, w)
 		return
 	}
@@ -261,7 +288,7 @@ func (app *App) HandleLoginUser(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusOK)
 
-	if err := app.sendUser(w, storedUser.ID, storedUser.Email, redirect); err != nil {
+	if err := app.sendUser(w, storedUser.ID, storedUser.Email, storedUser.EmailVerified, redirect); err != nil {
 		app.handleErrorFormDecoding(err, ErrUserDecode, w)
 		return
 	}
@@ -351,6 +378,380 @@ func (app *App) HandleDeleteUser(w http.ResponseWriter, r *http.Request) {
 		app.Logger.Info().Msgf("User deleted: %d", user.ID)
 		w.WriteHeader(http.StatusNoContent)
 	}
+}
+
+// InitiateEmailVerifyUser initiates the email verification flow for a logged-in user
+func (app *App) InitiateEmailVerifyUser(w http.ResponseWriter, r *http.Request) {
+	userID, err := app.getUserIDFromRequest(r)
+
+	if err != nil {
+		app.handleErrorInternal(err, w)
+		return
+	}
+
+	user, err := app.Repo.User.ReadUser(userID)
+
+	if err != nil {
+		app.handleErrorInternal(err, w)
+		return
+	}
+
+	// error already handled by helper
+	if err != nil {
+		return
+	}
+
+	form := &forms.InitiateResetUserPasswordForm{
+		Email: user.Email,
+	}
+
+	// convert the form to a pw reset token model
+	pwReset, rawToken, err := form.ToPWResetToken()
+
+	if err != nil {
+		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
+		return
+	}
+
+	// handle write to the database
+	pwReset, err = app.Repo.PWResetToken.CreatePWResetToken(pwReset)
+
+	if err != nil {
+		app.handleErrorDataWrite(err, w)
+		return
+	}
+
+	queryVals := url.Values{
+		"token":    []string{rawToken},
+		"token_id": []string{fmt.Sprintf("%d", pwReset.ID)},
+	}
+
+	sgClient := email.SendgridClient{
+		APIKey:                app.ServerConf.SendgridAPIKey,
+		VerifyEmailTemplateID: app.ServerConf.SendgridVerifyEmailTemplateID,
+		SenderEmail:           app.ServerConf.SendgridSenderEmail,
+	}
+
+	err = sgClient.SendEmailVerification(
+		fmt.Sprintf("%s/api/email/verify/finalize?%s", app.ServerConf.ServerURL, queryVals.Encode()),
+		form.Email,
+	)
+
+	if err != nil {
+		app.handleErrorInternal(err, w)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	return
+}
+
+// FinalizEmailVerifyUser completes the email verification flow for a user.
+func (app *App) FinalizEmailVerifyUser(w http.ResponseWriter, r *http.Request) {
+	userID, err := app.getUserIDFromRequest(r)
+
+	if err != nil {
+		app.handleErrorInternal(err, w)
+		return
+	}
+
+	user, err := app.Repo.User.ReadUser(userID)
+
+	if err != nil {
+		app.handleErrorInternal(err, w)
+		return
+	}
+
+	vals, err := url.ParseQuery(r.URL.RawQuery)
+
+	if err != nil {
+		http.Redirect(w, r, "/dashboard?error="+url.QueryEscape("Invalid email verification URL"), 302)
+		return
+	}
+
+	var tokenStr string
+	var tokenID uint
+
+	if tokenArr, ok := vals["token"]; ok && len(tokenArr) == 1 {
+		tokenStr = tokenArr[0]
+	} else {
+		http.Redirect(w, r, "/dashboard?error="+url.QueryEscape("Invalid email verification URL: token required"), 302)
+		return
+	}
+
+	if tokenIDArr, ok := vals["token_id"]; ok && len(tokenIDArr) == 1 {
+		id, err := strconv.ParseUint(tokenIDArr[0], 10, 64)
+
+		if err != nil {
+			http.Redirect(w, r, "/dashboard?error="+url.QueryEscape("Invalid email verification URL: valid token id required"), 302)
+			return
+		}
+
+		tokenID = uint(id)
+	} else {
+		http.Redirect(w, r, "/dashboard?error="+url.QueryEscape("Invalid email verification URL: valid token id required"), 302)
+		return
+	}
+
+	// verify the token is valid
+	token, err := app.Repo.PWResetToken.ReadPWResetToken(tokenID)
+
+	if err != nil {
+		http.Redirect(w, r, "/dashboard?error="+url.QueryEscape("Email verification error: valid token required"), 302)
+		return
+	}
+
+	// make sure the token is still valid and has not expired
+	if !token.IsValid || token.IsExpired() {
+		http.Redirect(w, r, "/dashboard?error="+url.QueryEscape("Email verification error: valid token required"), 302)
+		return
+	}
+
+	// make sure the token is correct
+	if err := bcrypt.CompareHashAndPassword([]byte(token.Token), []byte(tokenStr)); err != nil {
+		http.Redirect(w, r, "/dashboard?error="+url.QueryEscape("Email verification error: valid token required"), 302)
+		return
+	}
+
+	user.EmailVerified = true
+
+	user, err = app.Repo.User.UpdateUser(user)
+
+	if err != nil {
+		http.Redirect(w, r, "/dashboard?error="+url.QueryEscape("Could not verify email address"), 302)
+		return
+	}
+
+	// invalidate the token
+	token.IsValid = false
+
+	_, err = app.Repo.PWResetToken.UpdatePWResetToken(token)
+
+	if err != nil {
+		http.Redirect(w, r, "/dashboard?error="+url.QueryEscape("Could not verify email address"), 302)
+		return
+	}
+
+	http.Redirect(w, r, "/dashboard", 302)
+	return
+}
+
+// InitiatePWResetUser initiates the password reset flow based on an email. The endpoint
+// checks if the email exists, but returns a 200 status code regardless, since we don't
+// want to leak in-use emails
+func (app *App) InitiatePWResetUser(w http.ResponseWriter, r *http.Request) {
+	form := &forms.InitiateResetUserPasswordForm{}
+
+	// decode from JSON to form value
+	if err := json.NewDecoder(r.Body).Decode(form); err != nil {
+		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
+		return
+	}
+
+	// validate the form
+	if err := app.validator.Struct(form); err != nil {
+		app.handleErrorFormValidation(err, ErrProjectValidateFields, w)
+		return
+	}
+
+	// check that the email exists; return 200 status code even if it doesn't
+	user, err := app.Repo.User.ReadUserByEmail(form.Email)
+
+	if err == gorm.ErrRecordNotFound {
+		w.WriteHeader(http.StatusOK)
+		return
+	} else if err != nil {
+		app.handleErrorDataRead(err, w)
+		return
+	}
+
+	// if the user is a Github user, send them a Github email
+	if user.GithubUserID != 0 {
+		sgClient := email.SendgridClient{
+			APIKey:         app.ServerConf.SendgridAPIKey,
+			PWGHTemplateID: app.ServerConf.SendgridPWGHTemplateID,
+			SenderEmail:    app.ServerConf.SendgridSenderEmail,
+		}
+
+		err = sgClient.SendGHPWEmail(
+			fmt.Sprintf("%s/api/oauth/login/github", app.ServerConf.ServerURL),
+			form.Email,
+		)
+
+		if err != nil {
+			app.handleErrorInternal(err, w)
+			return
+		}
+
+		w.WriteHeader(http.StatusOK)
+		return
+	}
+
+	// convert the form to a project model
+	pwReset, rawToken, err := form.ToPWResetToken()
+
+	if err != nil {
+		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
+		return
+	}
+
+	// handle write to the database
+	pwReset, err = app.Repo.PWResetToken.CreatePWResetToken(pwReset)
+
+	if err != nil {
+		app.handleErrorDataWrite(err, w)
+		return
+	}
+
+	queryVals := url.Values{
+		"token":    []string{rawToken},
+		"email":    []string{form.Email},
+		"token_id": []string{fmt.Sprintf("%d", pwReset.ID)},
+	}
+
+	sgClient := email.SendgridClient{
+		APIKey:            app.ServerConf.SendgridAPIKey,
+		PWResetTemplateID: app.ServerConf.SendgridPWResetTemplateID,
+		SenderEmail:       app.ServerConf.SendgridSenderEmail,
+	}
+
+	err = sgClient.SendPWResetEmail(
+		fmt.Sprintf("%s/password/reset/finalize?%s", app.ServerConf.ServerURL, queryVals.Encode()),
+		form.Email,
+	)
+
+	if err != nil {
+		app.handleErrorInternal(err, w)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	return
+}
+
+// VerifyPWResetUser makes sure that the token is correct and still valid
+func (app *App) VerifyPWResetUser(w http.ResponseWriter, r *http.Request) {
+	form := &forms.VerifyResetUserPasswordForm{}
+
+	// decode from JSON to form value
+	if err := json.NewDecoder(r.Body).Decode(form); err != nil {
+		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
+		return
+	}
+
+	// validate the form
+	if err := app.validator.Struct(form); err != nil {
+		app.handleErrorFormValidation(err, ErrProjectValidateFields, w)
+		return
+	}
+
+	token, err := app.Repo.PWResetToken.ReadPWResetToken(form.PWResetTokenID)
+
+	if err != nil {
+		w.WriteHeader(http.StatusForbidden)
+		return
+	}
+
+	// make sure the token is still valid and has not expired
+	if !token.IsValid || token.IsExpired() {
+		w.WriteHeader(http.StatusForbidden)
+		return
+	}
+
+	// check that the email matches
+	if token.Email != form.Email {
+		w.WriteHeader(http.StatusForbidden)
+		return
+	}
+
+	// make sure the token is correct
+	if err := bcrypt.CompareHashAndPassword([]byte(token.Token), []byte(form.Token)); err != nil {
+		w.WriteHeader(http.StatusForbidden)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	return
+}
+
+// FinalizPWResetUser completes the password reset flow based on an email.
+func (app *App) FinalizPWResetUser(w http.ResponseWriter, r *http.Request) {
+	form := &forms.FinalizeResetUserPasswordForm{}
+
+	// decode from JSON to form value
+	if err := json.NewDecoder(r.Body).Decode(form); err != nil {
+		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
+		return
+	}
+
+	// validate the form
+	if err := app.validator.Struct(form); err != nil {
+		app.handleErrorFormValidation(err, ErrProjectValidateFields, w)
+		return
+	}
+
+	// verify the token is valid
+	token, err := app.Repo.PWResetToken.ReadPWResetToken(form.PWResetTokenID)
+
+	if err != nil {
+		w.WriteHeader(http.StatusForbidden)
+		return
+	}
+
+	// make sure the token is still valid and has not expired
+	if !token.IsValid || token.IsExpired() {
+		w.WriteHeader(http.StatusForbidden)
+		return
+	}
+
+	// check that the email matches
+	if token.Email != form.Email {
+		w.WriteHeader(http.StatusForbidden)
+		return
+	}
+
+	// make sure the token is correct
+	if err := bcrypt.CompareHashAndPassword([]byte(token.Token), []byte(form.Token)); err != nil {
+		w.WriteHeader(http.StatusForbidden)
+		return
+	}
+
+	// check that the email exists
+	user, err := app.Repo.User.ReadUserByEmail(form.Email)
+
+	if err != nil {
+		w.WriteHeader(http.StatusForbidden)
+		return
+	}
+
+	hashedPW, err := bcrypt.GenerateFromPassword([]byte(form.NewPassword), 8)
+
+	if err != nil {
+		app.handleErrorDataWrite(err, w)
+		return
+	}
+
+	user.Password = string(hashedPW)
+
+	user, err = app.Repo.User.UpdateUser(user)
+
+	if err != nil {
+		app.handleErrorDataWrite(err, w)
+		return
+	}
+
+	// invalidate the token
+	token.IsValid = false
+
+	_, err = app.Repo.PWResetToken.UpdatePWResetToken(token)
+
+	if err != nil {
+		app.handleErrorDataWrite(err, w)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	return
 }
 
 // ------------------------ User handler helper functions ------------------------ //
@@ -463,16 +864,18 @@ func doesUserExist(repo *repository.Repository, user *models.User) *HTTPError {
 }
 
 type SendUserExt struct {
-	ID       uint   `json:"id"`
-	Email    string `json:"email"`
-	Redirect string `json:"redirect,omitempty"`
+	ID            uint   `json:"id"`
+	Email         string `json:"email"`
+	EmailVerified bool   `json:"email_verified"`
+	Redirect      string `json:"redirect,omitempty"`
 }
 
-func (app *App) sendUser(w http.ResponseWriter, userID uint, email, redirect string) error {
+func (app *App) sendUser(w http.ResponseWriter, userID uint, email string, emailVerified bool, redirect string) error {
 	resUser := &SendUserExt{
-		ID:       userID,
-		Email:    email,
-		Redirect: redirect,
+		ID:            userID,
+		Email:         email,
+		EmailVerified: emailVerified,
+		Redirect:      redirect,
 	}
 
 	if err := json.NewEncoder(w).Encode(resUser); err != nil {

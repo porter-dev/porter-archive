@@ -34,16 +34,21 @@ class ClusterSection extends Component<PropsType, StateType> {
     showDrawer: false,
     initializedDrawer: false,
     clusters: [] as ClusterType[],
-    prevProjectId: this.context.currentProject.id,
+    prevProjectId: this.context.currentProject.id
   };
 
   updateClusters = () => {
-    let { currentProject, setCurrentCluster } = this.context;
+    let { user, currentProject, setCurrentCluster } = this.context;
 
     // TODO: query with selected filter once implemented
     api
       .getClusters("<token>", {}, { id: currentProject.id })
-      .then((res) => {
+      .then(res => {
+        window.analytics.identify(user.userId, {
+          currentProject,
+          clusters: res.data
+        });
+
         this.props.setWelcome(false);
         // TODO: handle uninitialized kubeconfig
         if (res.data) {
@@ -79,7 +84,7 @@ class ClusterSection extends Component<PropsType, StateType> {
           }
         }
       })
-      .catch((err) => this.props.setWelcome(true));
+      .catch(err => this.props.setWelcome(true));
   };
 
   componentDidMount() {
@@ -126,7 +131,7 @@ class ClusterSection extends Component<PropsType, StateType> {
 
   showClusterConfigModal = () => {
     this.context.setCurrentModal("ClusterConfigModal", {
-      updateClusters: this.updateClusters,
+      updateClusters: this.updateClusters
     });
   };
 

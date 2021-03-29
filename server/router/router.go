@@ -98,6 +98,40 @@ func New(a *api.App) *chi.Mux {
 			),
 		)
 
+		r.Method(
+			"POST",
+			"/email/verify/initiate",
+			auth.BasicAuthenticate(
+				requestlog.NewHandler(a.InitiateEmailVerifyUser, l),
+			),
+		)
+
+		r.Method(
+			"GET",
+			"/email/verify/finalize",
+			auth.BasicAuthenticateWithRedirect(
+				requestlog.NewHandler(a.FinalizEmailVerifyUser, l),
+			),
+		)
+
+		r.Method(
+			"POST",
+			"/password/reset/initiate",
+			requestlog.NewHandler(a.InitiatePWResetUser, l),
+		)
+
+		r.Method(
+			"POST",
+			"/password/reset/verify",
+			requestlog.NewHandler(a.VerifyPWResetUser, l),
+		)
+
+		r.Method(
+			"POST",
+			"/password/reset/finalize",
+			requestlog.NewHandler(a.FinalizPWResetUser, l),
+		)
+
 		// /api/integrations routes
 		r.Method(
 			"GET",
@@ -1056,6 +1090,20 @@ func New(a *api.App) *chi.Mux {
 			auth.DoesUserHaveProjectAccess(
 				auth.DoesUserHaveClusterAccess(
 					requestlog.NewHandler(a.HandleDetectPrometheusInstalled, l),
+					mw.URLParam,
+					mw.QueryParam,
+				),
+				mw.URLParam,
+				mw.ReadAccess,
+			),
+		)
+
+		r.Method(
+			"GET",
+			"/projects/{project_id}/k8s/prometheus/ingresses",
+			auth.DoesUserHaveProjectAccess(
+				auth.DoesUserHaveClusterAccess(
+					requestlog.NewHandler(a.HandleListNGINXIngresses, l),
 					mw.URLParam,
 					mw.QueryParam,
 				),

@@ -1,187 +1,87 @@
-import React, { ChangeEvent, Component, useContext } from "react";
+import React, { ChangeEvent, Component } from "react";
 import styled from "styled-components";
 import logo from "assets/logo.png";
-import github from "assets/github-icon.png";
 
 import api from "shared/api";
 import { emailRegex } from "shared/regex";
 import { Context } from "shared/Context";
 
 type PropsType = {
-  authenticate: () => void;
+  handleLogout: () => void;
 };
 
 type StateType = {
-  email: string;
-  password: string;
-  confirmPassword: string;
-  emailError: boolean;
-  confirmPasswordError: boolean;
+  submitted: boolean;
 };
 
-export default class Register extends Component<PropsType, StateType> {
+export default class VerifyEmail extends Component<PropsType, StateType> {
   state = {
-    email: "",
-    password: "",
-    confirmPassword: "",
-    emailError: false,
-    confirmPasswordError: false,
+    submitted: false
   };
 
-  handleKeyDown = (e: any) => {
-    e.key === "Enter" ? this.handleRegister() : null;
-  };
-
-  componentDidMount() {
-    document.addEventListener("keydown", this.handleKeyDown);
-  }
-
-  componentWillUnmount() {
-    document.removeEventListener("keydown", this.handleKeyDown);
-  }
-
-  githubRedirect = () => {
-    let redirectUrl = `/api/oauth/login/github`;
-    window.location.href = redirectUrl;
-  };
-
-  handleRegister = (): void => {
-    let { email, password, confirmPassword } = this.state;
-    let { authenticate } = this.props;
-    let { setCurrentError, setUser } = this.context;
-
-    if (!emailRegex.test(email)) {
-      this.setState({ emailError: true });
-    }
-
-    if (confirmPassword !== password) {
-      this.setState({ confirmPasswordError: true });
-    }
-
-    // Check for valid input
-    if (emailRegex.test(email) && confirmPassword === password) {
-      // Attempt user registration
-      api
-        .registerUser(
-          "",
-          {
-            email: email,
-            password: password,
-          },
-          {}
-        )
-        .then((res: any) => {
-          if (res?.data?.redirect) {
-            window.location.href = res.data.redirect;
-          } else {
-            setUser(res?.data?.id, res?.data?.email);
-            authenticate();
-          }
-        })
-        .catch((err) => setCurrentError(err.response.data.errors[0]));
-    }
-  };
-
-  renderEmailError = () => {
-    let { emailError } = this.state;
-    if (emailError) {
-      return (
-        <ErrorHelper>
-          <div />
-          Please enter a valid email
-        </ErrorHelper>
-      );
-    }
-  };
-
-  renderConfirmPasswordError = () => {
-    let { confirmPasswordError } = this.state;
-    if (confirmPasswordError) {
-      return (
-        <ErrorHelper>
-          <div />
-          Passwords do not match
-        </ErrorHelper>
-      );
-    }
+  handleSendEmail = (): void => {
+    api
+      .createEmailVerification("", {}, {})
+      .then(res => {
+        this.setState({ submitted: true });
+      })
+      .catch(err => this.context.setCurrentError(err.response.data.errors[0]));
   };
 
   render() {
-    let {
-      email,
-      password,
-      confirmPassword,
-      emailError,
-      confirmPasswordError,
-    } = this.state;
+    let { submitted } = this.state;
+
+    let formSection = (
+      <div>
+        <InputWrapper>
+          <StatusText>A verification email will be sent to</StatusText>
+          <Email>{this.context.user?.email}</Email>
+        </InputWrapper>
+        <StatusText>
+          Proceed below to verify your email and finish setting up your profile
+        </StatusText>
+        <Button onClick={this.handleSendEmail}>Send Verification Email</Button>
+      </div>
+    );
+
+    if (submitted) {
+      formSection = (
+        <>
+          <Buffer />
+          <StatusText lessPadding={true}>
+            A verification email was sent to{" "}
+            <White>{this.context.user?.email}</White>
+          </StatusText>
+          <StatusText lessPadding={true}>
+            Check your inbox for a verification email. Don't forget to check
+            your spam folder
+          </StatusText>
+          <StatusText lessPadding={true}>
+            Need help?
+            <Link href="mailto:contact@getporter.dev">Contact us</Link>
+          </StatusText>
+        </>
+      );
+    }
 
     return (
-      <StyledRegister>
+      <StyledLogin>
         <LoginPanel>
           <OverflowWrapper>
             <GradientBg />
           </OverflowWrapper>
           <FormWrapper>
             <Logo src={logo} />
-            <Prompt>Sign up for Porter</Prompt>
-            <OAuthButton onClick={this.githubRedirect}>
-              <IconWrapper>
-                <Icon src={github} />
-                Sign up with GitHub
-              </IconWrapper>
-            </OAuthButton>
-            <OrWrapper>
-              <Line />
-              <Or>or</Or>
-            </OrWrapper>
+            <Prompt>Verify Your Email</Prompt>
             <DarkMatter />
-            <InputWrapper>
-              <Input
-                type="email"
-                placeholder="Email"
-                value={email}
-                onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                  this.setState({ email: e.target.value, emailError: false })
-                }
-                valid={!emailError}
-              />
-              {this.renderEmailError()}
-            </InputWrapper>
-            <Input
-              type="password"
-              placeholder="Password"
-              value={password}
-              onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                this.setState({
-                  password: e.target.value,
-                  confirmPasswordError: false,
-                })
-              }
-              valid={true}
-            />
-            <InputWrapper>
-              <Input
-                type="password"
-                placeholder="Confirm Password"
-                value={confirmPassword}
-                onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                  this.setState({
-                    confirmPassword: e.target.value,
-                    confirmPasswordError: false,
-                  })
-                }
-                valid={!confirmPasswordError}
-              />
-              {this.renderConfirmPasswordError()}
-            </InputWrapper>
-            <Button onClick={this.handleRegister}>Continue</Button>
-
+            {formSection}
             <Helper>
-              Have an account?
-              <Link href="/login">Sign in</Link>
+              Want to use a different email?
+              <Link onClick={this.props.handleLogout}>Log out</Link>
             </Helper>
           </FormWrapper>
         </LoginPanel>
+
         <Footer>
           © 2021 Porter Technologies Inc. •
           <Link
@@ -191,12 +91,34 @@ export default class Register extends Component<PropsType, StateType> {
             Terms & Privacy
           </Link>
         </Footer>
-      </StyledRegister>
+      </StyledLogin>
     );
   }
 }
 
-Register.contextType = Context;
+VerifyEmail.contextType = Context;
+
+const Buffer = styled.div`
+  width: 100%;
+  height: 20px;
+`;
+
+const White = styled.div`
+  color: white;
+`;
+
+const Email = styled.div`
+  background: #ffffff11;
+  border: 1px solid #ffffff44;
+  border-radius: 3px;
+  font-size: 14px;
+  color: #aaaabb;
+  height: 30px;
+  margin: 0 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+`;
 
 const Footer = styled.div`
   position: absolute;
@@ -212,7 +134,7 @@ const Footer = styled.div`
 `;
 
 const DarkMatter = styled.div`
-  margin-top: -10px;
+  margin-top: -20px;
 `;
 
 const Or = styled.div`
@@ -266,6 +188,7 @@ const OAuthButton = styled.div`
 const Link = styled.a`
   margin-left: 5px;
   color: #819bfd;
+  cursor: pointer;
 `;
 
 const Helper = styled.div`
@@ -286,10 +209,6 @@ const OverflowWrapper = styled.div`
   height: 100%;
   overflow: hidden;
   border-radius: 10px;
-`;
-
-const InputWrapper = styled.div`
-  position: relative;
 `;
 
 const ErrorHelper = styled.div`
@@ -321,27 +240,32 @@ const ErrorHelper = styled.div`
 `;
 
 const Line = styled.div`
-  height: 3px;
+  min-height: 3px;
   width: 100px;
+  z-index: 999;
   background: #ffffff22;
-  margin: 35px 0px 30px;
+  margin: 30px 0px 30px;
 `;
 
 const Button = styled.button`
   width: 200px;
-  height: 30px;
+  min-height: 30px;
   display: flex;
   justify-content: center;
   align-items: center;
   font-family: "Work Sans", sans-serif;
   cursor: pointer;
-  margin-top: 9px;
+  margin: 9px auto;
   border-radius: 2px;
   border: 0;
   background: #819bfd;
   color: white;
   font-weight: 500;
   font-size: 14px;
+`;
+
+const InputWrapper = styled.div`
+  position: relative;
 `;
 
 const Input = styled.input`
@@ -368,8 +292,17 @@ const Prompt = styled.div`
 const Logo = styled.img`
   width: 140px;
   margin-top: 50px;
-  margin-bottom: 35px;
+  margin-bottom: 60px;
   user-select: none;
+`;
+
+const StatusText = styled.div<{ lessPadding?: boolean }>`
+  padding: ${props => (props.lessPadding ? "10px" : "18px")} 40px;
+  font-family: "Work Sans", sans-serif;
+  font-size: 14px;
+  line-height: 160%;
+  color: #aaaabb;
+  text-align: center;
 `;
 
 const FormWrapper = styled.div`
@@ -403,7 +336,7 @@ const GradientBg = styled.div`
 
 const LoginPanel = styled.div`
   width: 330px;
-  height: 500px;
+  height: 470px;
   background: white;
   margin-top: -20px;
   border-radius: 10px;
@@ -413,7 +346,7 @@ const LoginPanel = styled.div`
   align-items: center;
 `;
 
-const StyledRegister = styled.div`
+const StyledLogin = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;

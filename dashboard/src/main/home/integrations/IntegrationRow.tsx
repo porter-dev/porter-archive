@@ -10,6 +10,7 @@ import CreateIntegrationForm from "./create-integration/CreateIntegrationForm";
 
 type PropsType = {
   toggleCollapse: MouseEventHandler;
+  triggerDelete: MouseEventHandler;
   label: string;
   integration: string;
   expanded: boolean;
@@ -23,19 +24,19 @@ type StateType = {
 
 export default class IntegrationRow extends Component<PropsType, StateType> {
   state = {
-    editMode: false,
+    editMode: false
   };
 
   editButtonOnClick = (e: MouseEvent) => {
     e.stopPropagation();
     if (!this.props.expanded) {
       this.setState({
-        editMode: true,
+        editMode: true
       });
       this.props.toggleCollapse(null);
     } else {
       this.setState({
-        editMode: !this.state.editMode,
+        editMode: !this.state.editMode
       });
       if (this.state.editMode) {
         this.props.toggleCollapse(null);
@@ -63,6 +64,9 @@ export default class IntegrationRow extends Component<PropsType, StateType> {
           <MaterialIconTray disabled={false}>
             {/* <i className="material-icons"
             onClick={this.editButtonOnClick}>mode_edit</i> */}
+            <i className="material-icons" onClick={this.props.triggerDelete}>
+              delete
+            </i>
             <I
               className="material-icons"
               showList={this.props.expanded}
@@ -91,7 +95,7 @@ export default class IntegrationRow extends Component<PropsType, StateType> {
                     git_repo: "",
                     image_repo_uri: "",
                     git_repo_id: 0,
-                    dockerfile_path: "",
+                    dockerfile_path: ""
                   } as ActionConfigType
                 }
                 setActionConfig={() => {}}
@@ -168,8 +172,7 @@ const MainRow = styled.div`
 `;
 
 const MaterialIconTray = styled.div`
-  width: 32px;
-  margin-right: -7px;
+  max-width: 60px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -178,6 +181,7 @@ const MaterialIconTray = styled.div`
     border-radius: 20px;
     font-size: 18px;
     padding: 5px;
+    margin: 0 5px;
     color: #ffffff44;
     :hover {
       background: ${(props: { disabled: boolean }) =>

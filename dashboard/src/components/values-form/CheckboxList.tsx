@@ -67,7 +67,7 @@ const CheckboxOption = styled.div<{ isLast: boolean }>`
   display: flex;
   cursor: pointer;
   align-items: center;
-  border-bottom: ${(props) => (props.isLast ? "" : "1px solid #ffffff22")};
+  border-bottom: ${props => (props.isLast ? "" : "1px solid #ffffff22")};
   font-size: 13px;
 
   :hover {

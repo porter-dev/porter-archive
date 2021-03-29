@@ -24,7 +24,7 @@ export default class BranchList extends Component<PropsType, StateType> {
   state = {
     loading: true,
     error: false,
-    branches: [] as string[],
+    branches: [] as string[]
   };
 
   componentDidMount() {
@@ -41,13 +41,13 @@ export default class BranchList extends Component<PropsType, StateType> {
           git_repo_id: actionConfig.git_repo_id,
           kind: "github",
           owner: actionConfig.git_repo.split("/")[0],
-          name: actionConfig.git_repo.split("/")[1],
+          name: actionConfig.git_repo.split("/")[1]
         }
       )
-      .then((res) =>
+      .then(res =>
         this.setState({ branches: res.data, loading: false, error: false })
       )
-      .catch((err) => {
+      .catch(err => {
         console.log(err);
         this.setState({ loading: false, error: true });
       });

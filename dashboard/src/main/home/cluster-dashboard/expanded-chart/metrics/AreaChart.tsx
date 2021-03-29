@@ -8,7 +8,7 @@ import {
   withTooltip,
   Tooltip,
   TooltipWithBounds,
-  defaultStyles,
+  defaultStyles
 } from "@visx/tooltip";
 
 import { GridRows, GridColumns } from "@visx/grid";
@@ -41,7 +41,7 @@ const tooltipStyles = {
   ...defaultStyles,
   background,
   border: "1px solid white",
-  color: "white",
+  color: "white"
 };
 
 // util
@@ -55,14 +55,14 @@ const formats: { [range: string]: (date: Date) => string } = {
   "1H": hourFormat,
   "6H": hourFormat,
   "1D": hourFormat,
-  "1M": dayFormat,
+  "1M": dayFormat
 };
 
 // accessors
 const getDate = (d: MetricsData) => new Date(d.date * 1000);
 const getValue = (d: MetricsData) => d.value;
 
-const bisectDate = bisector<MetricsData, Date>((d) => new Date(d.date * 1000))
+const bisectDate = bisector<MetricsData, Date>(d => new Date(d.date * 1000))
   .left;
 
 export type AreaProps = {
@@ -84,7 +84,7 @@ export default withTooltip<AreaProps, TooltipData>(
     hideTooltip,
     tooltipData,
     tooltipTop = 0,
-    tooltipLeft = 0,
+    tooltipLeft = 0
   }: AreaProps & WithTooltipProvidedProps<TooltipData>) => {
     globalData = data;
 
@@ -101,7 +101,7 @@ export default withTooltip<AreaProps, TooltipData>(
       () =>
         scaleTime({
           range: [margin.left, innerWidth + margin.left],
-          domain: extent(globalData, getDate) as [Date, Date],
+          domain: extent(globalData, getDate) as [Date, Date]
         }),
       [innerWidth, margin.left, width, height, data]
     );
@@ -110,7 +110,7 @@ export default withTooltip<AreaProps, TooltipData>(
         scaleLinear({
           range: [innerHeight + margin.top, margin.top],
           domain: [0, 1.25 * max(globalData, getValue)],
-          nice: true,
+          nice: true
         }),
       [margin.top, innerHeight, width, height, data]
     );
@@ -140,7 +140,7 @@ export default withTooltip<AreaProps, TooltipData>(
         showTooltip({
           tooltipData: d,
           tooltipLeft: x || 0,
-          tooltipTop: valueScale(getValue(d)) || 0,
+          tooltipTop: valueScale(getValue(d)) || 0
         });
       },
       [showTooltip, valueScale, dateScale, width, height, data]
@@ -188,8 +188,8 @@ export default withTooltip<AreaProps, TooltipData>(
           />
           <AreaClosed<MetricsData>
             data={data}
-            x={(d) => dateScale(getDate(d)) ?? 0}
-            y={(d) => valueScale(getValue(d)) ?? 0}
+            x={d => dateScale(getDate(d)) ?? 0}
+            y={d => valueScale(getValue(d)) ?? 0}
             height={innerHeight}
             yScale={valueScale}
             strokeWidth={1}
@@ -207,7 +207,7 @@ export default withTooltip<AreaProps, TooltipData>(
               fontSize: 11,
               textAnchor: "start",
               fillOpacity: 0.4,
-              dy: 0,
+              dy: 0
             })}
           />
           <AxisBottom
@@ -220,7 +220,7 @@ export default withTooltip<AreaProps, TooltipData>(
               fill: "white",
               fontSize: 11,
               textAnchor: "middle",
-              fillOpacity: 0.4,
+              fillOpacity: 0.4
             })}
           />
           <Bar
@@ -288,7 +288,7 @@ export default withTooltip<AreaProps, TooltipData>(
                 width: 100,
                 paddingTop: 35,
                 textAlign: "center",
-                transform: "translateX(-60px)",
+                transform: "translateX(-60px)"
               }}
             >
               {formatDate(getDate(tooltipData))}

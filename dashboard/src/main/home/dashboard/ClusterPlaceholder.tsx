@@ -20,7 +20,7 @@ export default class ClusterPlaceholder extends Component<
   StateType
 > {
   state = {
-    loading: true,
+    loading: true
   };
 
   componentDidMount() {

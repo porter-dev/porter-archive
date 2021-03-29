@@ -20,7 +20,7 @@ type StateType = {
 
 export default class GraphSection extends Component<PropsType, StateType> {
   state = {
-    isExpanded: false,
+    isExpanded: false
   };
 
   renderContents = () => {

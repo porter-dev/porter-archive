@@ -17,7 +17,9 @@ type PropsType = {
 
 type StateType = {
   controllerOptions: any[];
+  ingressOptions: any[];
   selectedController: any;
+  selectedIngress: any;
   pods: any[];
   selectedPod: string;
   selectedRange: string;
@@ -28,6 +30,7 @@ type StateType = {
   dropdownExpanded: boolean;
   data: MetricsData[];
   showMetricsSettings: boolean;
+  metricsOptions: MetricsOption[];
 };
 
 type MetricsCPUDataResponse = {
@@ -54,6 +57,19 @@ type MetricsNetworkDataResponse = {
   }[];
 }[];
 
+type MetricsNGINXErrorsDataResponse = {
+  pod?: string;
+  results: {
+    date: number;
+    error_pct: string;
+  }[];
+}[];
+
+type MetricsOption = {
+  value: string;
+  label: string;
+}
+
 const resolutions: { [range: string]: string } = {
   "1H": "15s",
   "6H": "15s",
@@ -74,6 +90,8 @@ export default class MetricsSection extends Component<PropsType, StateType> {
     selectedPod: "",
     controllerOptions: [] as any[],
     selectedController: null as any,
+    ingressOptions: [] as any[],
+    selectedIngress: null as any,
     selectedRange: "1H",
     selectedMetric: "cpu",
     selectedMetricLabel: "CPU Utilization (vCPUs)",
@@ -82,12 +100,51 @@ export default class MetricsSection extends Component<PropsType, StateType> {
     controllerDropdownExpanded: false,
     data: [] as MetricsData[],
     showMetricsSettings: false,
+    metricsOptions: [
+      { value: "cpu", label: "CPU Utilization (vCPUs)" },
+      { value: "memory", label: "RAM Utilization (Mi)" },
+      { value: "network", label: "Network Received Bytes (Ki)" },
+    ],
   };
 
   componentDidMount() {
     // get all controllers and read in a list of pods
     let { currentChart } = this.props;
     let { currentCluster, currentProject, setCurrentError } = this.context;
+    
+    if (currentChart.chart?.metadata?.name == "ingress-nginx") {
+      api.getNGINXIngresses(
+        "<token>",
+          {
+            cluster_id: currentCluster.id,
+          },
+          {
+            id: currentProject.id,
+          }
+      ).then((res) => {
+        let metricsOptions = this.state.metricsOptions
+        metricsOptions.push({
+          value: "nginx:errors",
+          label: "5XX Error Percentage"
+        })
+
+        let ingressOptions = [] as any[];
+        res.data.map((ingress: string) => {
+          ingressOptions.push({ value: ingress, label: ingress });
+        });
+
+        // iterate through the controllers to get the list of pods
+        this.setState({
+          metricsOptions,
+          ingressOptions,
+          selectedIngress: ingressOptions[0].value,
+        });
+      })
+      .catch((err) => {
+        setCurrentError(JSON.stringify(err));
+        this.setState({ controllerOptions: [] as any[] });
+      });
+    }
 
     api
       .getChartControllers(
@@ -145,6 +202,10 @@ export default class MetricsSection extends Component<PropsType, StateType> {
     ) {
       this.getMetrics();
     }
+
+    if (this.state.selectedIngress != prevState.selectedIngress) {
+      this.getMetrics();
+    }
   }
 
   getMetrics = () => {
@@ -168,6 +229,11 @@ export default class MetricsSection extends Component<PropsType, StateType> {
 
     if (this.state.selectedPod != "All") {
       pods = [this.state.selectedPod];
+    }
+
+    if (this.state.selectedMetric == "nginx:errors") {
+      pods = [this.state.selectedIngress]
+      shouldsum = false
     }
 
     api
@@ -242,6 +308,25 @@ export default class MetricsSection extends Component<PropsType, StateType> {
               return {
                 date: d.date,
                 value: parseFloat(d.bytes) / 1024, // put units in Ki
+              };
+            }
+          );
+
+          this.setState({ data: tData });
+        } else if (kind == "nginx:errors") {
+          let data = res.data as MetricsNGINXErrorsDataResponse;
+
+          let tData = data[0].results.map(
+            (
+              d: {
+                date: number;
+                error_pct: string;
+              },
+              i: number
+            ) => {
+              return {
+                date: d.date,
+                value: parseFloat(d.error_pct), // put units in Ki
               };
             }
           );
@@ -323,12 +408,7 @@ export default class MetricsSection extends Component<PropsType, StateType> {
   };
 
   renderOptionList = () => {
-    let metricOptions = [
-      { value: "cpu", label: "CPU Utilization (vCPUs)" },
-      { value: "memory", label: "RAM Utilization (Mi)" },
-      { value: "network", label: "Network Received Bytes (Ki)" },
-    ];
-    return metricOptions.map(
+    return this.state.metricsOptions.map(
       (option: { value: string; label: string }, i: number) => {
         return (
           <Option
@@ -340,7 +420,7 @@ export default class MetricsSection extends Component<PropsType, StateType> {
                 selectedMetricLabel: option.label,
               })
             }
-            lastItem={i === metricOptions.length - 1}
+            lastItem={i === this.state.metricsOptions.length - 1}
           >
             {option.label}
           </Option>
@@ -351,6 +431,28 @@ export default class MetricsSection extends Component<PropsType, StateType> {
 
   renderMetricsSettings = () => {
     if (this.state.showMetricsSettings && true) {
+      if (this.state.selectedMetric == "nginx:errors") {
+        return (
+          <>
+          <DropdownOverlay
+            onClick={() => this.setState({ showMetricsSettings: false })}
+          />
+          <DropdownAlt dropdownWidth="330px" dropdownMaxHeight="300px">
+            <Label>Additional Settings</Label>
+            <SelectRow
+              label="Target Ingress"
+              value={this.state.selectedIngress}
+              setActiveValue={(x: any) =>
+                this.setState({ selectedIngress: x })
+              }
+              options={this.state.ingressOptions}
+              width="100%"
+            />
+          </DropdownAlt>
+        </>
+        )
+      }
+
       return (
         <>
           <DropdownOverlay

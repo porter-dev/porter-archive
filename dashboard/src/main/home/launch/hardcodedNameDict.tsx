@@ -9,7 +9,7 @@ const hardcodedNames: { [key: string]: string } = {
   ubuntu: "Ubuntu",
   web: "Web Service",
   worker: "Worker",
-  job: "Job"
+  job: "Job",
 };
 
 export default hardcodedNames;

@@ -56,7 +56,7 @@ const StatusIcon = styled.div<{ color?: string }>`
   justify-content: center;
   width: 20px;
   font-size: 16px;
-  color: ${props => (props.color ? props.color : "#68c49c")};
+  color: ${(props) => (props.color ? props.color : "#68c49c")};
   margin-left: 10px;
 `;
 

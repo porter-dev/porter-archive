@@ -16,16 +16,18 @@ type StateType = {
 
 export default class VerifyEmail extends Component<PropsType, StateType> {
   state = {
-    submitted: false
+    submitted: false,
   };
 
   handleSendEmail = (): void => {
     api
       .createEmailVerification("", {}, {})
-      .then(res => {
+      .then((res) => {
         this.setState({ submitted: true });
       })
-      .catch(err => this.context.setCurrentError(err.response.data.errors[0]));
+      .catch((err) =>
+        this.context.setCurrentError(err.response.data.errors[0])
+      );
   };
 
   render() {
@@ -297,7 +299,7 @@ const Logo = styled.img`
 `;
 
 const StatusText = styled.div<{ lessPadding?: boolean }>`
-  padding: ${props => (props.lessPadding ? "10px" : "18px")} 40px;
+  padding: ${(props) => (props.lessPadding ? "10px" : "18px")} 40px;
   font-family: "Work Sans", sans-serif;
   font-size: 14px;
   line-height: 160%;

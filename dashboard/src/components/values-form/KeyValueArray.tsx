@@ -14,7 +14,7 @@ type StateType = {
 
 export default class KeyValueArray extends Component<PropsType, StateType> {
   state = {
-    values: [] as any[]
+    values: [] as any[],
   };
 
   componentDidMount() {

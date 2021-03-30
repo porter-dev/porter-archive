@@ -31,13 +31,13 @@ type StateType = {
 const defaultActionConfig: ActionConfigType = {
   git_repo: "",
   image_repo_uri: "",
-  git_repo_id: 0
+  git_repo_id: 0,
 };
 
 export default class ActionConfEditor extends Component<PropsType, StateType> {
   state = {
     loading: true,
-    error: false
+    error: false,
   };
 
   renderExpanded = () => {

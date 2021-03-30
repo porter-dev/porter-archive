@@ -30,7 +30,7 @@ export default class ImageList extends Component<PropsType, StateType> {
   state = {
     loading: true,
     error: false,
-    images: [] as ImageType[]
+    images: [] as ImageType[],
   };
 
   // TODO: Try to unhook before unmount
@@ -42,7 +42,7 @@ export default class ImageList extends Component<PropsType, StateType> {
     if (!this.props.registry) {
       api
         .getProjectRegistries("<token>", {}, { id: currentProject.id })
-        .then(res => {
+        .then((res) => {
           let registries = res.data;
           if (registries.length === 0) {
             this.setState({ loading: false });
@@ -58,10 +58,10 @@ export default class ImageList extends Component<PropsType, StateType> {
                     {},
                     {
                       project_id: currentProject.id,
-                      registry_id: registry.id
+                      registry_id: registry.id,
                     }
                   )
-                  .then(res => {
+                  .then((res) => {
                     res.data.sort((a: any, b: any) =>
                       a.name > b.name ? 1 : -1
                     );
@@ -72,20 +72,20 @@ export default class ImageList extends Component<PropsType, StateType> {
                           kind: registry.service,
                           source: img.uri,
                           name: img.name,
-                          registryId: registry.id
+                          registryId: registry.id,
                         });
                       }
                       return {
                         kind: registry.service,
                         source: img.uri,
                         name: img.name,
-                        registryId: registry.id
+                        registryId: registry.id,
                       };
                     });
                     images.push(...newImg);
                     errors.push(0);
                   })
-                  .catch(err => errors.push(1))
+                  .catch((err) => errors.push(1))
                   .finally(() => {
                     if (i == registries.length - 1) {
                       let error =
@@ -98,11 +98,11 @@ export default class ImageList extends Component<PropsType, StateType> {
                       this.setState({
                         images,
                         loading: false,
-                        error
+                        error,
                       });
                     } else {
                       this.setState({
-                        images
+                        images,
                       });
                     }
 
@@ -112,7 +112,7 @@ export default class ImageList extends Component<PropsType, StateType> {
             );
           });
         })
-        .catch(err => {
+        .catch((err) => {
           console.log(err);
           this.setState({ loading: false, error: true });
         });
@@ -123,10 +123,10 @@ export default class ImageList extends Component<PropsType, StateType> {
           {},
           {
             project_id: currentProject.id,
-            registry_id: this.props.registry.id
+            registry_id: this.props.registry.id,
           }
         )
-        .then(res => {
+        .then((res) => {
           res.data.sort((a: any, b: any) => (a.name > b.name ? 1 : -1));
           // Loop over found image repositories
           let newImg = res.data.map((img: any) => {
@@ -135,14 +135,14 @@ export default class ImageList extends Component<PropsType, StateType> {
                 kind: this.props.registry.service,
                 source: img.uri,
                 name: img.name,
-                registryId: this.props.registry.id
+                registryId: this.props.registry.id,
               });
             }
             return {
               kind: this.props.registry.service,
               source: img.uri,
               name: img.name,
-              registryId: this.props.registry.id
+              registryId: this.props.registry.id,
             };
           });
           images.push(...newImg);
@@ -150,13 +150,13 @@ export default class ImageList extends Component<PropsType, StateType> {
           this.setState({
             images,
             loading: false,
-            error: false
+            error: false,
           });
         })
-        .catch(err =>
+        .catch((err) =>
           this.setState({
             loading: false,
-            error: true
+            error: true,
           })
         );
     }

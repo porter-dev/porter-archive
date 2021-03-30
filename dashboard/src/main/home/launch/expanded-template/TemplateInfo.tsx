@@ -280,7 +280,7 @@ const Polymer = styled.div`
   margin-bottom: -3px;
 
   > i {
-    color: ${props => props.theme.containerIcon};
+    color: ${(props) => props.theme.containerIcon};
     font-size: 24px;
     margin-left: 12px;
     margin-right: 3px;

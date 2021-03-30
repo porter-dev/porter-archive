@@ -18,7 +18,7 @@ export default class Feedback extends Component<PropsType, StateType> {
   state = {
     feedbackSent: false,
     showFeedbackDropdown: false,
-    feedbackText: ""
+    feedbackText: "",
   };
 
   renderReceipt = () => {
@@ -58,7 +58,7 @@ export default class Feedback extends Component<PropsType, StateType> {
             onClick={() =>
               this.setState({
                 showFeedbackDropdown: false,
-                feedbackSent: false
+                feedbackSent: false,
               })
             }
           />
@@ -70,7 +70,7 @@ export default class Feedback extends Component<PropsType, StateType> {
             <FeedbackInput
               autoFocus={true}
               value={this.state.feedbackText}
-              onChange={e => this.setState({ feedbackText: e.target.value })}
+              onChange={(e) => this.setState({ feedbackText: e.target.value })}
               placeholder="Help us improve this page."
             />
             <SendButton
@@ -92,7 +92,7 @@ export default class Feedback extends Component<PropsType, StateType> {
         <Flex
           onClick={() =>
             this.setState({
-              showFeedbackDropdown: !this.state.showFeedbackDropdown
+              showFeedbackDropdown: !this.state.showFeedbackDropdown,
             })
           }
         >

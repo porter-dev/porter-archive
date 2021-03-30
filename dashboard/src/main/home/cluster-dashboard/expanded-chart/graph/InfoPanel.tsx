@@ -23,7 +23,7 @@ type StateType = {
 
 export default class InfoPanel extends Component<PropsType, StateType> {
   state = {
-    wrapperHeight: 0
+    wrapperHeight: 0,
   };
 
   renderIcon = (kind: string) => {
@@ -70,7 +70,7 @@ export default class InfoPanel extends Component<PropsType, StateType> {
             {openedNode.kind}
             <ResourceName>{openedNode.name}</ResourceName>
           </Div>
-          <YamlWrapper ref={element => (this.wrapperRef = element)}>
+          <YamlWrapper ref={(element) => (this.wrapperRef = element)}>
             <YamlEditor
               value={yaml.dump(openedNode.RawYAML)}
               readOnly={true}

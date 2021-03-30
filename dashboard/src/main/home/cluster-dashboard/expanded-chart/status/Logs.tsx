@@ -17,7 +17,7 @@ export default class Logs extends Component<PropsType, StateType> {
   state = {
     logs: [] as string[],
     ws: null as any,
-    scroll: true
+    scroll: true,
   };
 
   ws = null as any;
@@ -26,11 +26,11 @@ export default class Logs extends Component<PropsType, StateType> {
   scrollToBottom = (smooth: boolean) => {
     if (smooth) {
       this.parentRef.current.lastElementChild.scrollIntoView({
-        behavior: "smooth"
+        behavior: "smooth",
       });
     } else {
       this.parentRef.current.lastElementChild.scrollIntoView({
-        behavior: "auto"
+        behavior: "auto",
       });
     }
   };

@@ -28,7 +28,7 @@ export default class RepoList extends Component<PropsType, StateType> {
     repos: [] as RepoType[],
     loading: true,
     error: false,
-    searchFilter: ""
+    searchFilter: "",
   };
 
   // TODO: Try to unhook before unmount
@@ -39,7 +39,7 @@ export default class RepoList extends Component<PropsType, StateType> {
     if (!this.props.userId && this.props.userId !== 0) {
       api
         .getGitRepos("<token>", {}, { project_id: currentProject.id })
-        .then(async res => {
+        .then(async (res) => {
           if (res.data.length == 0) {
             this.setState({ loading: false, error: false });
             return;
@@ -56,14 +56,14 @@ export default class RepoList extends Component<PropsType, StateType> {
                   {},
                   { project_id: currentProject.id, git_repo_id: gitrepo.id }
                 )
-                .then(res => {
+                .then((res) => {
                   res.data.forEach((repo: any, id: number) => {
                     repo.GHRepoID = gitrepo.id;
                   });
 
                   resolve(res.data);
                 })
-                .catch(err => {
+                .catch((err) => {
                   errors.push(err);
                   resolve([]);
                 });
@@ -102,11 +102,11 @@ export default class RepoList extends Component<PropsType, StateType> {
             this.setState({
               repos: allRepos,
               loading: false,
-              error: false
+              error: false,
             });
           }
         })
-        .catch(_ => this.setState({ loading: false, error: true }));
+        .catch((_) => this.setState({ loading: false, error: true }));
     } else {
       let grid = this.props.userId;
 
@@ -116,7 +116,7 @@ export default class RepoList extends Component<PropsType, StateType> {
           {},
           { project_id: currentProject.id, git_repo_id: grid }
         )
-        .then(res => {
+        .then((res) => {
           var repos: any = res.data;
 
           repos.forEach((repo: any, id: number) => {
@@ -135,7 +135,7 @@ export default class RepoList extends Component<PropsType, StateType> {
 
           this.setState({ repos: repos, loading: false, error: false });
         })
-        .catch(err => {
+        .catch((err) => {
           this.setState({ loading: false, error: true });
         });
     }

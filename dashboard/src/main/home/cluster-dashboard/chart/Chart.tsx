@@ -19,7 +19,7 @@ type StateType = {
 export default class Chart extends Component<PropsType, StateType> {
   state = {
     expand: false,
-    update: [] as any[]
+    update: [] as any[],
   };
 
   renderIcon = () => {
@@ -37,7 +37,7 @@ export default class Chart extends Component<PropsType, StateType> {
     let date = ts.toLocaleDateString();
     let time = ts.toLocaleTimeString([], {
       hour: "numeric",
-      minute: "2-digit"
+      minute: "2-digit",
     });
     return `${time} on ${date}`;
   };

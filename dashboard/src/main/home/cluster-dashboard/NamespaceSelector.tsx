@@ -20,7 +20,7 @@ export default class NamespaceSelector extends Component<PropsType, StateType> {
   _isMounted = false;
 
   state = {
-    namespaceOptions: [] as { label: string; value: string }[]
+    namespaceOptions: [] as { label: string; value: string }[],
   };
 
   updateOptions = () => {
@@ -30,27 +30,27 @@ export default class NamespaceSelector extends Component<PropsType, StateType> {
       .getNamespaces(
         "<token>",
         {
-          cluster_id: currentCluster.id
+          cluster_id: currentCluster.id,
         },
         { id: currentProject.id }
       )
-      .then(res => {
+      .then((res) => {
         if (this._isMounted) {
           let namespaceOptions: { label: string; value: string }[] = [
-            { label: "All", value: "" }
+            { label: "All", value: "" },
           ];
           res.data.items.forEach(
             (x: { metadata: { name: string } }, i: number) => {
               namespaceOptions.push({
                 label: x.metadata.name,
-                value: x.metadata.name
+                value: x.metadata.name,
               });
             }
           );
           this.setState({ namespaceOptions });
         }
       })
-      .catch(err => {
+      .catch((err) => {
         if (this._isMounted) {
           this.setState({ namespaceOptions: [{ label: "All", value: "" }] });
         }
@@ -80,7 +80,7 @@ export default class NamespaceSelector extends Component<PropsType, StateType> {
         </Label>
         <Selector
           activeValue={this.props.namespace}
-          setActiveValue={namespace => this.props.setNamespace(namespace)}
+          setActiveValue={(namespace) => this.props.setNamespace(namespace)}
           options={this.state.namespaceOptions}
           dropdownLabel="Namespace"
           width="150px"

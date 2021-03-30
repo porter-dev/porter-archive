@@ -25,7 +25,7 @@ export default class ECRForm extends Component<PropsType, StateType> {
     credentialsName: "",
     awsRegion: "",
     awsAccessId: "",
-    awsSecretKey: ""
+    awsSecretKey: "",
   };
 
   isDisabled = (): boolean => {
@@ -53,16 +53,16 @@ export default class ECRForm extends Component<PropsType, StateType> {
         {
           aws_region: awsRegion,
           aws_access_key_id: awsAccessId,
-          aws_secret_access_key: awsSecretKey
+          aws_secret_access_key: awsSecretKey,
         },
         { id: currentProject.id }
       )
-      .then(res =>
+      .then((res) =>
         api.connectECRRegistry(
           "<token>",
           {
             name: credentialsName,
-            aws_integration_id: res.data.id
+            aws_integration_id: res.data.id,
           },
           { id: currentProject.id }
         )

@@ -19,7 +19,7 @@ type StateType = {
 export default class StatusSection extends Component<PropsType, StateType> {
   state = {
     events: [] as any[],
-    loading: true
+    loading: true,
   };
 
   renderTabs = () => {

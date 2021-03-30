@@ -74,14 +74,14 @@ const resolutions: { [range: string]: string } = {
   "1H": "15s",
   "6H": "15s",
   "1D": "15s",
-  "1M": "5h"
+  "1M": "5h",
 };
 
 const secondsBeforeNow: { [range: string]: number } = {
   "1H": 60 * 60,
   "6H": 60 * 60 * 6,
   "1D": 60 * 60 * 24,
-  "1M": 60 * 60 * 24 * 30
+  "1M": 60 * 60 * 24 * 30,
 };
 
 export default class MetricsSection extends Component<PropsType, StateType> {
@@ -103,8 +103,8 @@ export default class MetricsSection extends Component<PropsType, StateType> {
     metricsOptions: [
       { value: "cpu", label: "CPU Utilization (vCPUs)" },
       { value: "memory", label: "RAM Utilization (Mi)" },
-      { value: "network", label: "Network Received Bytes (Ki)" }
-    ]
+      { value: "network", label: "Network Received Bytes (Ki)" },
+    ],
   };
 
   componentDidMount() {
@@ -117,17 +117,17 @@ export default class MetricsSection extends Component<PropsType, StateType> {
         .getNGINXIngresses(
           "<token>",
           {
-            cluster_id: currentCluster.id
+            cluster_id: currentCluster.id,
           },
           {
-            id: currentProject.id
+            id: currentProject.id,
           }
         )
-        .then(res => {
+        .then((res) => {
           let metricsOptions = this.state.metricsOptions;
           metricsOptions.push({
             value: "nginx:errors",
-            label: "5XX Error Percentage"
+            label: "5XX Error Percentage",
           });
 
           let ingressOptions = [] as any[];
@@ -139,10 +139,10 @@ export default class MetricsSection extends Component<PropsType, StateType> {
           this.setState({
             metricsOptions,
             ingressOptions,
-            selectedIngress: ingressOptions[0].value
+            selectedIngress: ingressOptions[0].value,
           });
         })
-        .catch(err => {
+        .catch((err) => {
           setCurrentError(JSON.stringify(err));
           this.setState({ controllerOptions: [] as any[] });
         });
@@ -154,15 +154,15 @@ export default class MetricsSection extends Component<PropsType, StateType> {
         {
           namespace: currentChart.namespace,
           cluster_id: currentCluster.id,
-          storage: StorageType.Secret
+          storage: StorageType.Secret,
         },
         {
           id: currentProject.id,
           name: currentChart.name,
-          revision: currentChart.version
+          revision: currentChart.version,
         }
       )
-      .then(res => {
+      .then((res) => {
         // TODO -- check at least one controller returned
         let controllerOptions = [] as any[];
         res.data.map((controller: any) => {
@@ -173,12 +173,12 @@ export default class MetricsSection extends Component<PropsType, StateType> {
         // iterate through the controllers to get the list of pods
         this.setState({
           controllerOptions,
-          selectedController: controllerOptions[0].value
+          selectedController: controllerOptions[0].value,
         });
 
         this.getPods();
       })
-      .catch(err => {
+      .catch((err) => {
         setCurrentError(JSON.stringify(err));
         this.setState({ controllerOptions: [] as any[] });
       });
@@ -251,13 +251,13 @@ export default class MetricsSection extends Component<PropsType, StateType> {
           namespace: namespace,
           startrange: start,
           endrange: end,
-          resolution: resolutions[this.state.selectedRange]
+          resolution: resolutions[this.state.selectedRange],
         },
         {
-          id: currentProject.id
+          id: currentProject.id,
         }
       )
-      .then(res => {
+      .then((res) => {
         // transform the metrics to expected form
         if (kind == "cpu") {
           let data = res.data as MetricsCPUDataResponse;
@@ -273,7 +273,7 @@ export default class MetricsSection extends Component<PropsType, StateType> {
             ) => {
               return {
                 date: d.date,
-                value: parseFloat(d.cpu)
+                value: parseFloat(d.cpu),
               };
             }
           );
@@ -292,7 +292,7 @@ export default class MetricsSection extends Component<PropsType, StateType> {
             ) => {
               return {
                 date: d.date,
-                value: parseFloat(d.memory) / (1024 * 1024) // put units in Mi
+                value: parseFloat(d.memory) / (1024 * 1024), // put units in Mi
               };
             }
           );
@@ -311,7 +311,7 @@ export default class MetricsSection extends Component<PropsType, StateType> {
             ) => {
               return {
                 date: d.date,
-                value: parseFloat(d.bytes) / 1024 // put units in Ki
+                value: parseFloat(d.bytes) / 1024, // put units in Ki
               };
             }
           );
@@ -330,7 +330,7 @@ export default class MetricsSection extends Component<PropsType, StateType> {
             ) => {
               return {
                 date: d.date,
-                value: parseFloat(d.error_pct) // put units in Ki
+                value: parseFloat(d.error_pct), // put units in Ki
               };
             }
           );
@@ -338,7 +338,7 @@ export default class MetricsSection extends Component<PropsType, StateType> {
           this.setState({ data: tData });
         }
       })
-      .catch(err => {
+      .catch((err) => {
         setCurrentError(JSON.stringify(err));
         // this.setState({ controllers: [], loading: false });
       });
@@ -368,13 +368,13 @@ export default class MetricsSection extends Component<PropsType, StateType> {
         "<token>",
         {
           cluster_id: currentCluster.id,
-          selectors
+          selectors,
         },
         {
-          id: currentProject.id
+          id: currentProject.id,
         }
       )
-      .then(res => {
+      .then((res) => {
         let pods = [{ value: "All", label: "All (Summed)" }] as any[];
         res?.data?.forEach((pod: any) => {
           let name = pod?.metadata?.name;
@@ -385,7 +385,7 @@ export default class MetricsSection extends Component<PropsType, StateType> {
 
         this.getMetrics();
       })
-      .catch(err => {
+      .catch((err) => {
         console.log(err);
         setCurrentError(JSON.stringify(err));
         return;
@@ -421,7 +421,7 @@ export default class MetricsSection extends Component<PropsType, StateType> {
             onClick={() =>
               this.setState({
                 selectedMetric: option.value,
-                selectedMetricLabel: option.label
+                selectedMetricLabel: option.label,
               })
             }
             lastItem={i === this.state.metricsOptions.length - 1}
@@ -494,7 +494,7 @@ export default class MetricsSection extends Component<PropsType, StateType> {
             <MetricSelector
               onClick={() =>
                 this.setState({
-                  dropdownExpanded: !this.state.dropdownExpanded
+                  dropdownExpanded: !this.state.dropdownExpanded,
                 })
               }
             >
@@ -518,7 +518,7 @@ export default class MetricsSection extends Component<PropsType, StateType> {
                 { value: "1H", label: "1H" },
                 { value: "6H", label: "6H" },
                 { value: "1D", label: "1D" },
-                { value: "1M", label: "1M" }
+                { value: "1M", label: "1M" },
               ]}
               currentTab={this.state.selectedRange}
               setCurrentTab={(x: string) => this.setState({ selectedRange: x })}

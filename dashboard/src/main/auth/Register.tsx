@@ -25,7 +25,7 @@ export default class Register extends Component<PropsType, StateType> {
     password: "",
     confirmPassword: "",
     emailError: false,
-    confirmPasswordError: false
+    confirmPasswordError: false,
   };
 
   handleKeyDown = (e: any) => {
@@ -66,7 +66,7 @@ export default class Register extends Component<PropsType, StateType> {
           "",
           {
             email: email,
-            password: password
+            password: password,
           },
           {}
         )
@@ -78,7 +78,7 @@ export default class Register extends Component<PropsType, StateType> {
             authenticate();
           }
         })
-        .catch(err => setCurrentError(err.response.data.errors[0]));
+        .catch((err) => setCurrentError(err.response.data.errors[0]));
     }
   };
 
@@ -112,7 +112,7 @@ export default class Register extends Component<PropsType, StateType> {
       password,
       confirmPassword,
       emailError,
-      confirmPasswordError
+      confirmPasswordError,
     } = this.state;
 
     return (
@@ -154,7 +154,7 @@ export default class Register extends Component<PropsType, StateType> {
               onChange={(e: ChangeEvent<HTMLInputElement>) =>
                 this.setState({
                   password: e.target.value,
-                  confirmPasswordError: false
+                  confirmPasswordError: false,
                 })
               }
               valid={true}
@@ -167,7 +167,7 @@ export default class Register extends Component<PropsType, StateType> {
                 onChange={(e: ChangeEvent<HTMLInputElement>) =>
                   this.setState({
                     confirmPassword: e.target.value,
-                    confirmPasswordError: false
+                    confirmPasswordError: false,
                   })
                 }
                 valid={!confirmPasswordError}

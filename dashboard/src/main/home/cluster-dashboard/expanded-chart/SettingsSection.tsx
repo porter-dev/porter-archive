@@ -7,7 +7,7 @@ import {
   ChartType,
   RepoType,
   StorageType,
-  ActionConfigType
+  ActionConfigType,
 } from "shared/types";
 import { Context } from "shared/Context";
 
@@ -47,8 +47,8 @@ export default class SettingsSection extends Component<PropsType, StateType> {
     action: {
       git_repo: "",
       image_repo_uri: "",
-      git_repo_id: 0
-    } as ActionConfigType
+      git_repo_id: 0,
+    } as ActionConfigType,
   };
 
   // TODO: read in set image from form context instead of config
@@ -58,7 +58,7 @@ export default class SettingsSection extends Component<PropsType, StateType> {
     let image = this.props.currentChart.config?.image;
     this.setState({
       selectedImageUrl: image?.repository,
-      selectedTag: image?.tag
+      selectedTag: image?.tag,
     });
 
     api
@@ -67,15 +67,15 @@ export default class SettingsSection extends Component<PropsType, StateType> {
         {
           namespace: this.props.currentChart.namespace,
           cluster_id: currentCluster.id,
-          storage: StorageType.Secret
+          storage: StorageType.Secret,
         },
         { id: currentProject.id, name: this.props.currentChart.name }
       )
-      .then(res => {
+      .then((res) => {
         console.log(res.data);
         this.setState({
           action: res.data.git_action_config,
-          webhookToken: res.data.webhook_token
+          webhookToken: res.data.webhook_token,
         });
       })
       .catch(console.log);
@@ -96,8 +96,8 @@ export default class SettingsSection extends Component<PropsType, StateType> {
     let image = {
       image: {
         repository: img,
-        tag: parsedTag || tag
-      }
+        tag: parsedTag || tag,
+      },
     };
 
     let values = {};
@@ -109,7 +109,7 @@ export default class SettingsSection extends Component<PropsType, StateType> {
     // Weave in preexisting values and convert to yaml
     let valuesYaml = yaml.dump({
       ...values,
-      ...image
+      ...image,
     });
 
     api
@@ -118,19 +118,19 @@ export default class SettingsSection extends Component<PropsType, StateType> {
         {
           namespace: this.props.currentChart.namespace,
           storage: StorageType.Secret,
-          values: valuesYaml
+          values: valuesYaml,
         },
         {
           id: currentProject.id,
           name: this.props.currentChart.name,
-          cluster_id: currentCluster.id
+          cluster_id: currentCluster.id,
         }
       )
-      .then(res => {
+      .then((res) => {
         this.setState({ saveValuesStatus: "successful" });
         this.props.refreshChart();
       })
-      .catch(err => {
+      .catch((err) => {
         console.log(err);
         this.setState({ saveValuesStatus: "error" });
       });
@@ -213,15 +213,16 @@ const Button = styled.button`
   text-align: left;
   border: 0;
   border-radius: 5px;
-  background: ${props => (!props.disabled ? props.color : "#aaaabb")};
-  box-shadow: ${props => (!props.disabled ? "0 2px 5px 0 #00000030" : "none")};
-  cursor: ${props => (!props.disabled ? "pointer" : "default")};
+  background: ${(props) => (!props.disabled ? props.color : "#aaaabb")};
+  box-shadow: ${(props) =>
+    !props.disabled ? "0 2px 5px 0 #00000030" : "none"};
+  cursor: ${(props) => (!props.disabled ? "pointer" : "default")};
   user-select: none;
   :focus {
     outline: 0;
   }
   :hover {
-    filter: ${props => (!props.disabled ? "brightness(120%)" : "")};
+    filter: ${(props) => (!props.disabled ? "brightness(120%)" : "")};
   }
 `;
 

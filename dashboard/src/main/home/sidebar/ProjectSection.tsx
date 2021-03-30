@@ -17,7 +17,7 @@ type StateType = {
 
 class ProjectSection extends Component<PropsType, StateType> {
   state = {
-    expanded: false
+    expanded: false,
   };
 
   wrapperRef: any = React.createRef();

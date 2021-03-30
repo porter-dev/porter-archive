@@ -21,7 +21,7 @@ type PropsType = RouteComponentProps & {
 
 const tabOptions = [
   { label: "Project Overview", value: "overview" },
-  { label: "Provisioner Status", value: "provisioner" }
+  { label: "Provisioner Status", value: "provisioner" },
 ];
 // TODO: rethink this list, should be coupled with tabOptions
 const tabOptionStrings = ["overview", "provisioner"];
@@ -32,7 +32,7 @@ type StateType = {
 
 class Dashboard extends Component<PropsType, StateType> {
   state = {
-    infras: [] as InfraType[]
+    infras: [] as InfraType[],
   };
 
   refreshInfras = () => {
@@ -42,10 +42,10 @@ class Dashboard extends Component<PropsType, StateType> {
           "<token>",
           {},
           {
-            project_id: this.props.projectId
+            project_id: this.props.projectId,
           }
         )
-        .then(res => this.setState({ infras: res.data }))
+        .then((res) => this.setState({ infras: res.data }))
         .catch(console.log);
     }
   };
@@ -72,7 +72,7 @@ class Dashboard extends Component<PropsType, StateType> {
 
   renderTabContents = () => {
     if (this.currentTab() === "provisioner") {
-      return <Provisioner setRefreshClusters={this.props.setRefreshClusters}/>;
+      return <Provisioner setRefreshClusters={this.props.setRefreshClusters} />;
     } else {
       return (
         <>

@@ -40,7 +40,7 @@ export default class Main extends Component<PropsType, StateType> {
     api
       .checkAuth("", {}, {})
       .then(res => {
-        if (res && res.data) {
+        if (res && res?.data) {
           setUser(res?.data?.id, res?.data?.email);
           this.setState({
             isLoggedIn: true,
@@ -64,7 +64,7 @@ export default class Main extends Component<PropsType, StateType> {
     api
       .checkAuth("", {}, {})
       .then(res => {
-        if (res && res.data) {
+        if (res && res?.data) {
           this.context.setUser(res?.data?.id, res?.data?.email);
           this.setState({
             isLoggedIn: true,
@@ -89,7 +89,7 @@ export default class Main extends Component<PropsType, StateType> {
         this.setState({ isLoggedIn: false, initialized: true });
         localStorage.clear();
       })
-      .catch(err => this.context.setCurrentError(err.response.data.errors[0]));
+      .catch(err => this.context.setCurrentError(err.response?.data.errors[0]));
   };
 
   renderMain = () => {

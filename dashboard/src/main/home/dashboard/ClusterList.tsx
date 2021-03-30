@@ -23,7 +23,7 @@ class Templates extends Component<PropsType, StateType> {
   state = {
     loading: true,
     error: "",
-    clusters: [] as ClusterType[]
+    clusters: [] as ClusterType[],
   };
 
   componentDidMount() {
@@ -39,14 +39,14 @@ class Templates extends Component<PropsType, StateType> {
   updateClusterList = () => {
     api
       .getClusters("<token>", {}, { id: this.context.currentProject.id })
-      .then(res => {
+      .then((res) => {
         if (res.data) {
           this.setState({ clusters: res.data, loading: false, error: "" });
         } else {
           this.setState({ loading: false, error: "Response data missing" });
         }
       })
-      .catch(err => this.setState(err));
+      .catch((err) => this.setState(err));
   };
 
   renderIcon = () => {

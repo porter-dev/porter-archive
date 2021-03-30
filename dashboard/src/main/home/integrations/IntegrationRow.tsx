@@ -24,19 +24,19 @@ type StateType = {
 
 export default class IntegrationRow extends Component<PropsType, StateType> {
   state = {
-    editMode: false
+    editMode: false,
   };
 
   editButtonOnClick = (e: MouseEvent) => {
     e.stopPropagation();
     if (!this.props.expanded) {
       this.setState({
-        editMode: true
+        editMode: true,
       });
       this.props.toggleCollapse(null);
     } else {
       this.setState({
-        editMode: !this.state.editMode
+        editMode: !this.state.editMode,
       });
       if (this.state.editMode) {
         this.props.toggleCollapse(null);
@@ -95,7 +95,7 @@ export default class IntegrationRow extends Component<PropsType, StateType> {
                     git_repo: "",
                     image_repo_uri: "",
                     git_repo_id: 0,
-                    dockerfile_path: ""
+                    dockerfile_path: "",
                   } as ActionConfigType
                 }
                 setActionConfig={() => {}}

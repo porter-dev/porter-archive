@@ -28,7 +28,7 @@ export default class ResetPasswordInit extends Component<PropsType, StateType> {
     passwordError: false,
     tokenError: false,
     loading: true,
-    submitted: false
+    submitted: false,
   };
 
   handleKeyDown = (e: any) => {
@@ -48,21 +48,21 @@ export default class ResetPasswordInit extends Component<PropsType, StateType> {
         {
           email: emailFromParam,
           token: tokenFromParams,
-          token_id: parseInt(tokenIDFromParams)
+          token_id: parseInt(tokenIDFromParams),
         },
         {}
       )
       .then(() => {
         this.setState({ loading: false });
       })
-      .catch(err => this.setState({ loading: false, tokenError: true }));
+      .catch((err) => this.setState({ loading: false, tokenError: true }));
 
     document.addEventListener("keydown", this.handleKeyDown);
 
     this.setState({
       email: emailFromParam,
       token: tokenFromParams,
-      token_id: parseInt(tokenIDFromParams)
+      token_id: parseInt(tokenIDFromParams),
     });
   }
 
@@ -93,11 +93,11 @@ export default class ResetPasswordInit extends Component<PropsType, StateType> {
           email: email,
           token: token,
           token_id: token_id,
-          new_password: password
+          new_password: password,
         },
         {}
       )
-      .then(res => {
+      .then((res) => {
         // redirect to dashboard with message after timeout
         this.setState({ submitted: true });
 
@@ -105,7 +105,7 @@ export default class ResetPasswordInit extends Component<PropsType, StateType> {
           window.location.href = "/login";
         }, 2000);
       })
-      .catch(err => this.setState({ tokenError: true }));
+      .catch((err) => this.setState({ tokenError: true }));
   };
 
   render() {
@@ -114,7 +114,7 @@ export default class ResetPasswordInit extends Component<PropsType, StateType> {
       passwordError,
       submitted,
       loading,
-      tokenError
+      tokenError,
     } = this.state;
 
     let inputSection = (
@@ -127,7 +127,7 @@ export default class ResetPasswordInit extends Component<PropsType, StateType> {
             onChange={(e: ChangeEvent<HTMLInputElement>) =>
               this.setState({
                 password: e.target.value,
-                passwordError: false
+                passwordError: false,
               })
             }
             valid={!passwordError}

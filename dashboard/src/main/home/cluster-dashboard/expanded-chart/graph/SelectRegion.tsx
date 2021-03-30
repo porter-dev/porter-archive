@@ -50,8 +50,8 @@ const StyledSelectRegion: any = styled.div.attrs(
       top: props.y + "px",
       left: props.x + "px",
       width: props.w + "px",
-      height: props.h + "px"
-    }
+      height: props.h + "px",
+    },
   })
 )`
   position: absolute;

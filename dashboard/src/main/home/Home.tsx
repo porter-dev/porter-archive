@@ -294,7 +294,12 @@ class Home extends Component<PropsType, StateType> {
       } else if (currentView === "dashboard") {
         return (
           <DashboardWrapper>
-            <Dashboard projectId={this.context.currentProject?.id} />
+            <Dashboard 
+              projectId={this.context.currentProject?.id} 
+              setRefreshClusters={(x: boolean) =>
+                this.setState({ forceRefreshClusters: x })
+              }
+            />
           </DashboardWrapper>
         );
       } else if (currentView === "integrations") {

@@ -12,7 +12,9 @@ import { RouteComponentProps, withRouter } from "react-router";
 import { stringify } from "qs";
 import { forEach } from "lodash";
 
-type PropsType = RouteComponentProps & {};
+type PropsType = RouteComponentProps & {
+  setRefreshClusters: (x: boolean) => void;
+};
 
 type StateType = {
   error: boolean;
@@ -65,14 +67,7 @@ class Provisioner extends Component<PropsType, StateType> {
         infra.status == "created" &&
         prevInfraStates[infra.id] != "created"
       ) {
-        api
-          .getClusters("<token>", {}, { id: this.context.currentProject.id })
-          .then(res => {
-            this.context.setCurrentCluster(res.data[0]);
-          })
-          .catch(err => {
-            this.context.setCurrentError(err);
-          });
+        this.props.setRefreshClusters(true)
       }
     });
   }

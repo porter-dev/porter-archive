@@ -23,7 +23,7 @@ type StateType = {
 
 export default class Edge extends Component<PropsType, StateType> {
   state = {
-    showArrowHead: true
+    showArrowHead: true,
   };
 
   render() {
@@ -81,8 +81,8 @@ const StyledEdge: any = styled.div.attrs((props: any) => ({
     top: props.cy + "px",
     left: props.cx + "px",
     transform: "rotate(" + props.angle + "deg)",
-    width: props.length + "px"
-  }
+    width: props.length + "px",
+  },
 }))`
   position: absolute;
   height: ${thickness}px;

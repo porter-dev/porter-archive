@@ -21,14 +21,14 @@ export const baseApi = <T extends {}, S = {}>(
     if (requestType === "POST") {
       return axios.post(endpointString, params, {
         headers: {
-          Authorization: `Bearer ${token}`
-        }
+          Authorization: `Bearer ${token}`,
+        },
       });
     } else if (requestType === "PUT") {
       return axios.put(endpointString, params, {
         headers: {
-          Authorization: `Bearer ${token}`
-        }
+          Authorization: `Bearer ${token}`,
+        },
       });
     } else if (requestType === "DELETE") {
       return axios.delete(
@@ -37,9 +37,9 @@ export const baseApi = <T extends {}, S = {}>(
     } else {
       return axios.get(endpointString, {
         params,
-        paramsSerializer: function(params) {
+        paramsSerializer: function (params) {
           return qs.stringify(params, { arrayFormat: "repeat" });
-        }
+        },
       });
     }
   };

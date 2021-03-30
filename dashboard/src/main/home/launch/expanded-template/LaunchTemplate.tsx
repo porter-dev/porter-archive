@@ -11,7 +11,7 @@ import {
   ActionConfigType,
   ChoiceType,
   ClusterType,
-  StorageType
+  StorageType,
 } from "shared/types";
 import Selector from "components/Selector";
 import ImageSelector from "components/image-selector/ImageSelector";
@@ -60,7 +60,7 @@ type StateType = {
 const defaultActionConfig: ActionConfigType = {
   git_repo: "",
   image_repo_uri: "",
-  git_repo_id: 0
+  git_repo_id: 0,
 };
 
 class LaunchTemplate extends Component<PropsType, StateType> {
@@ -85,7 +85,7 @@ class LaunchTemplate extends Component<PropsType, StateType> {
     dockerfilePath: null as string | null,
     folderPath: null as string | null,
     selectedRegistry: null as any | null,
-    env: {}
+    env: {},
   };
 
   createGHAction = (chartName: string, chartNamespace: string) => {
@@ -108,16 +108,16 @@ class LaunchTemplate extends Component<PropsType, StateType> {
           folder_path: this.state.folderPath,
           image_repo_uri: imageRepoUri,
           git_repo_id: actionConfig.git_repo_id,
-          env: this.state.env
+          env: this.state.env,
         },
         {
           project_id: currentProject.id,
           CLUSTER_ID: currentCluster.id,
           RELEASE_NAME: chartName,
-          RELEASE_NAMESPACE: chartNamespace
+          RELEASE_NAMESPACE: chartNamespace,
         }
       )
-      .then(res => console.log(res.data))
+      .then((res) => console.log(res.data))
       .catch(console.log);
   };
 
@@ -140,16 +140,16 @@ class LaunchTemplate extends Component<PropsType, StateType> {
           storage: StorageType.Secret,
           formValues: values,
           namespace: this.state.selectedNamespace,
-          name
+          name,
         },
         {
           id: currentProject.id,
           cluster_id: currentCluster.id,
           name: this.props.currentTemplate.name.toLowerCase().trim(),
-          version: "latest"
+          version: "latest",
         }
       )
-      .then(_ => {
+      .then((_) => {
         // this.props.setCurrentView('cluster-dashboard');
         this.setState({ saveValuesStatus: "successful" }, () => {
           // redirect to dashboard
@@ -159,18 +159,18 @@ class LaunchTemplate extends Component<PropsType, StateType> {
           window.analytics.track("Deployed Add-on", {
             name: this.props.currentTemplate.name,
             namespace: this.state.selectedNamespace,
-            values: values
+            values: values,
           });
         });
       })
-      .catch(err => {
+      .catch((err) => {
         this.setState({ saveValuesStatus: "error" });
         setCurrentError(err.response.data.errors[0]);
         window.analytics.track("Failed to Deploy Add-on", {
           name: this.props.currentTemplate.name,
           namespace: this.state.selectedNamespace,
           values: values,
-          error: err
+          error: err,
         });
       });
   };
@@ -235,17 +235,17 @@ class LaunchTemplate extends Component<PropsType, StateType> {
             .createSubdomain(
               "<token>",
               {
-                release_name: name
+                release_name: name,
               },
               {
                 id: currentProject.id,
-                cluster_id: currentCluster.id
+                cluster_id: currentCluster.id,
               }
             )
-            .then(res => {
+            .then((res) => {
               resolve(res.data?.external_url);
             })
-            .catch(err => {
+            .catch((err) => {
               this.setState({ saveValuesStatus: "error" });
             });
         });
@@ -266,17 +266,17 @@ class LaunchTemplate extends Component<PropsType, StateType> {
           storage: StorageType.Secret,
           formValues: values,
           namespace: this.state.selectedNamespace,
-          name
+          name,
         },
         {
           id: currentProject.id,
           cluster_id: currentCluster.id,
           name: this.props.currentTemplate.name.toLowerCase().trim(),
           version: "latest",
-          repo_url: process.env.APPLICATION_CHART_REPO_URL
+          repo_url: process.env.APPLICATION_CHART_REPO_URL,
         }
       )
-      .then(_ => {
+      .then((_) => {
         console.log("Deployed template.");
         if (this.state.sourceType === "repo") {
           console.log("Creating GHA");
@@ -302,7 +302,7 @@ class LaunchTemplate extends Component<PropsType, StateType> {
         }
         */
       })
-      .catch(err => {
+      .catch((err) => {
         this.setState({ saveValuesStatus: "error" });
         /*
         try {
@@ -326,7 +326,7 @@ class LaunchTemplate extends Component<PropsType, StateType> {
       sourceType,
       selectedImageUrl,
       dockerfilePath,
-      folderPath
+      folderPath,
     } = this.state;
 
     // Allow if name is invalid
@@ -356,7 +356,7 @@ class LaunchTemplate extends Component<PropsType, StateType> {
       selectedRegistry,
       sourceType,
       dockerfilePath,
-      folderPath
+      folderPath,
     } = this.state;
 
     if (this.submitIsDisabled()) {
@@ -423,12 +423,12 @@ class LaunchTemplate extends Component<PropsType, StateType> {
 
     this.setState({
       tabOptions,
-      currentTab: tabOptions[0] && tabOptions[0]["value"]
+      currentTab: tabOptions[0] && tabOptions[0]["value"],
     });
 
     // TODO: query with selected filter once implemented
     let { currentProject, currentCluster } = this.context;
-    api.getClusters("<token>", {}, { id: currentProject.id }).then(res => {
+    api.getClusters("<token>", {}, { id: currentProject.id }).then((res) => {
       if (res.data) {
         let clusterOptions: { label: string; value: string }[] = [];
         let clusterMap: { [clusterId: string]: ClusterType } = {};
@@ -451,11 +451,11 @@ class LaunchTemplate extends Component<PropsType, StateType> {
       .getNamespaces(
         "<token>",
         {
-          cluster_id: id
+          cluster_id: id,
         },
         { id: currentProject.id }
       )
-      .then(res => {
+      .then((res) => {
         if (res.data) {
           let namespaceOptions = res.data.items.map(
             (x: { metadata: { name: string } }) => {
@@ -597,12 +597,12 @@ class LaunchTemplate extends Component<PropsType, StateType> {
             options={[
               {
                 value: "dockerfile",
-                label: "Yes, I am using an existing Dockerfile"
+                label: "Yes, I am using an existing Dockerfile",
               },
               {
                 value: "buildpack",
-                label: "No, I am not using an existing Dockerfile"
-              }
+                label: "No, I am not using an existing Dockerfile",
+              },
             ]}
             selected={this.state.repoType}
             setSelected={(x: string) => this.setState({ repoType: x })}
@@ -647,7 +647,7 @@ class LaunchTemplate extends Component<PropsType, StateType> {
                 actionConfig: { ...defaultActionConfig },
                 branch: "",
                 dockerfilePath: null,
-                folderPath: null
+                folderPath: null,
               });
             }}
             setSelectedRegistry={(x: any) => {
@@ -791,7 +791,7 @@ const BlockIcon = styled.img<{ bw?: boolean }>`
   padding: 2px;
   margin-top: 30px;
   margin-bottom: 15px;
-  filter: ${props => (props.bw ? "grayscale(1)" : "")};
+  filter: ${(props) => (props.bw ? "grayscale(1)" : "")};
 `;
 
 const BlockDescription = styled.div`
@@ -832,13 +832,13 @@ const Block = styled.div<{ disabled?: boolean }>`
   align-item: center;
   justify-content: space-between;
   height: 170px;
-  cursor: ${props => (props.disabled ? "" : "pointer")};
+  cursor: ${(props) => (props.disabled ? "" : "pointer")};
   color: #ffffff;
   position: relative;
   background: #26282f;
   box-shadow: 0 3px 5px 0px #00000022;
   :hover {
-    background: ${props => (props.disabled ? "" : "#ffffff11")};
+    background: ${(props) => (props.disabled ? "" : "#ffffff11")};
   }
 
   animation: fadeIn 0.3s 0s;
@@ -893,14 +893,14 @@ const Heading = styled.div<{ isAtTop?: boolean }>`
   font-weight: 500;
   font-size: 16px;
   margin-bottom: 5px;
-  margin-top: ${props => (props.isAtTop ? "10px" : "30px")};
+  margin-top: ${(props) => (props.isAtTop ? "10px" : "30px")};
   display: flex;
   align-items: center;
 `;
 
 const Warning = styled.span<{ highlight: boolean; makeFlush?: boolean }>`
-  color: ${props => (props.highlight ? "#f5cb42" : "")};
-  margin-left: ${props => (props.makeFlush ? "" : "5px")};
+  color: ${(props) => (props.highlight ? "#f5cb42" : "")};
+  margin-left: ${(props) => (props.makeFlush ? "" : "5px")};
 `;
 
 const Required = styled.div`
@@ -935,7 +935,7 @@ const Placeholder = styled.div`
 
 const DarkMatter = styled.div<{ antiHeight?: string }>`
   width: 100%;
-  margin-top: ${props => props.antiHeight || "-15px"};
+  margin-top: ${(props) => props.antiHeight || "-15px"};
 `;
 
 const Subtitle = styled.div`
@@ -979,7 +979,7 @@ const Polymer = styled.div`
   margin-bottom: -3px;
 
   > i {
-    color: ${props => props.theme.containerIcon};
+    color: ${(props) => props.theme.containerIcon};
     font-size: 18px;
     margin-right: 10px;
   }

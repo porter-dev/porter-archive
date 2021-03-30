@@ -40,7 +40,7 @@ class Provisioner extends Component<PropsType, StateType> {
     infras: [] as InfraType[],
     selectedInfra: null as InfraType,
     loading: true,
-    currentProject: this.context.currentProject
+    currentProject: this.context.currentProject,
   };
 
   selectInfra = (infra: InfraType) => {
@@ -67,7 +67,7 @@ class Provisioner extends Component<PropsType, StateType> {
         infra.status == "created" &&
         prevInfraStates[infra.id] != "created"
       ) {
-        this.props.setRefreshClusters(true)
+        this.props.setRefreshClusters(true);
       }
     });
   }
@@ -84,25 +84,25 @@ class Provisioner extends Component<PropsType, StateType> {
         "<token>",
         {},
         {
-          project_id: currentProject.id
+          project_id: currentProject.id,
         }
       )
-      .then(res => {
+      .then((res) => {
         let infras = res.data.sort((a: InfraType, b: InfraType) => {
           return b.id - a.id;
         });
 
-        let selectedInfra = this.state.selectedInfra
+        let selectedInfra = this.state.selectedInfra;
 
         if (!selectedInfra) {
-          selectedInfra = infras[0]
+          selectedInfra = infras[0];
         }
 
         this.setState({
           error: false,
           infras,
           loading: false,
-          selectedInfra
+          selectedInfra,
         });
       })
       .catch();
@@ -140,10 +140,14 @@ class Provisioner extends Component<PropsType, StateType> {
     return (
       <StyledProvisioner>
         You have not provisioned any resources for this project through Porter.{" "}
-        <RefreshText onClick={() => {
-          this.setState({ loading: true }); 
-          this.refresh()
-        }}>Refresh</RefreshText>
+        <RefreshText
+          onClick={() => {
+            this.setState({ loading: true });
+            this.refresh();
+          }}
+        >
+          Refresh
+        </RefreshText>
       </StyledProvisioner>
     );
   }

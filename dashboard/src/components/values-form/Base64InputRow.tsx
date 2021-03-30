@@ -19,7 +19,7 @@ type StateType = {
 
 export default class InputRow extends Component<PropsType, StateType> {
   state = {
-    readOnly: true
+    readOnly: true,
   };
 
   handleChange = (e: ChangeEvent<HTMLInputElement>) => {

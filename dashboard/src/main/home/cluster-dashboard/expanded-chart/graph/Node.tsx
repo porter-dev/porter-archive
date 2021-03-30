@@ -116,8 +116,8 @@ const NodeBlock = styled.div`
 const StyledNode: any = styled.div.attrs((props: NodeType) => ({
   style: {
     top: props.y + "px",
-    left: props.x + "px"
-  }
+    left: props.x + "px",
+  },
 }))`
   position: absolute;
   width: ${(props: NodeType) => props.w + "px"};

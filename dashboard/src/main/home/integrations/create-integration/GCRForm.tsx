@@ -28,7 +28,7 @@ export default class GCRForm extends Component<PropsType, StateType> {
     gcpRegion: "",
     serviceAccountKey: "",
     gcpProjectID: "",
-    url: ""
+    url: "",
   };
 
   isDisabled = (): boolean => {
@@ -36,7 +36,7 @@ export default class GCRForm extends Component<PropsType, StateType> {
       credentialsName,
       gcpRegion,
       gcpProjectID,
-      serviceAccountKey
+      serviceAccountKey,
     } = this.state;
     if (
       credentialsName === "" ||
@@ -60,26 +60,26 @@ export default class GCRForm extends Component<PropsType, StateType> {
         {
           gcp_region: this.state.gcpRegion,
           gcp_key_data: this.state.serviceAccountKey,
-          gcp_project_id: this.state.gcpProjectID
+          gcp_project_id: this.state.gcpProjectID,
         },
         {
-          project_id: currentProject.id
+          project_id: currentProject.id,
         }
       )
-      .then(res =>
+      .then((res) =>
         api.connectGCRRegistry(
           "<token>",
           {
             name: this.state.credentialsName,
             gcp_integration_id: res.data.id,
-            url: this.state.url
+            url: this.state.url,
           },
           {
-            id: currentProject.id
+            id: currentProject.id,
           }
         )
       )
-      .then(res => {
+      .then((res) => {
         console.log(res.data);
         this.props.closeForm();
       })

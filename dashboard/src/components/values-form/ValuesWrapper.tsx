@@ -20,7 +20,7 @@ type StateType = any;
 const providerMap: any = {
   gke: "gcp",
   eks: "aws",
-  doks: "do"
+  doks: "do",
 };
 
 // Manages the consolidated state of all form tabs ("metastate")

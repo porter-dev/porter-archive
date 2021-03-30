@@ -16,6 +16,7 @@ import { setSearchParam } from "shared/routing";
 
 type PropsType = RouteComponentProps & {
   projectId: number | null;
+  setRefreshClusters: (x: boolean) => void;
 };
 
 const tabOptions = [
@@ -71,7 +72,7 @@ class Dashboard extends Component<PropsType, StateType> {
 
   renderTabContents = () => {
     if (this.currentTab() === "provisioner") {
-      return <Provisioner />;
+      return <Provisioner setRefreshClusters={this.props.setRefreshClusters}/>;
     } else {
       return (
         <>

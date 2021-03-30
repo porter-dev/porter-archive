@@ -51,7 +51,7 @@ export default class Navbar extends Component<PropsType, StateType> {
           }
         >
           <I className="material-icons-outlined">account_circle</I>
-          {this.context.user.email}
+          {this.context.user?.email}
           {this.renderSettingsDropdown()}
         </NavButton>
       </StyledNavbar>

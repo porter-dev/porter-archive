@@ -20,6 +20,7 @@ type PropsType = {
   metaState?: any;
   setMetaState?: any;
   handleEnvChange?: (x: any) => void;
+  disabled?: boolean;
 };
 
 type StateType = any;
@@ -90,6 +91,7 @@ export default class ValuesForm extends Component<PropsType, StateType> {
                 }
               }}
               label={item.label}
+              disabled={this.props.disabled}
             />
           );
         case "array-input":
@@ -101,6 +103,7 @@ export default class ValuesForm extends Component<PropsType, StateType> {
                 this.props.setMetaState({ [key]: x });
               }}
               label={item.label}
+              disabled={this.props.disabled}
             />
           );
         case "string-input":
@@ -118,6 +121,7 @@ export default class ValuesForm extends Component<PropsType, StateType> {
               }}
               label={item.label}
               unit={item.settings ? item.settings.unit : null}
+              disabled={this.props.disabled}
             />
           );
         case "string-input-password":
@@ -136,6 +140,7 @@ export default class ValuesForm extends Component<PropsType, StateType> {
               }}
               label={item.label}
               unit={item.settings ? item.settings.unit : null}
+              disabled={this.props.disabled}
             />
           );
         case "number-input":
@@ -161,6 +166,7 @@ export default class ValuesForm extends Component<PropsType, StateType> {
               }}
               label={item.label}
               unit={item.settings ? item.settings.unit : null}
+              disabled={this.props.disabled}
             />
           );
         case "select":
@@ -206,6 +212,7 @@ export default class ValuesForm extends Component<PropsType, StateType> {
               }}
               label={item.label}
               unit={item.settings ? item.settings.unit : null}
+              disabled={this.props.disabled}
             />
           );
         case "base-64-password":
@@ -223,6 +230,7 @@ export default class ValuesForm extends Component<PropsType, StateType> {
               }}
               label={item.label}
               unit={item.settings ? item.settings.unit : null}
+              disabled={this.props.disabled}
             />
           );
         default:

@@ -49,7 +49,7 @@ type Agent struct {
 }
 
 type Message struct {
-	EventType string
+	EventType string `json:"event_type"`
 	Object    interface{}
 	Kind      string
 }
@@ -64,6 +64,38 @@ func (a *Agent) ListNamespaces() (*v1.NamespaceList, error) {
 		context.TODO(),
 		metav1.ListOptions{},
 	)
+}
+
+// ListJobsByLabel lists jobs in a namespace matching a label
+func (a *Agent) ListJobsByLabel(namespace, labelKey, labelVal string) ([]batchv1.Job, error) {
+	resp, err := a.Clientset.BatchV1().Jobs(namespace).List(
+		context.TODO(),
+		metav1.ListOptions{
+			LabelSelector: fmt.Sprintf("%s=%s", labelKey, labelVal),
+		},
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return resp.Items, nil
+}
+
+// GetJobPods lists all pods belonging to a job in a namespace
+func (a *Agent) GetJobPods(namespace, jobName string) ([]v1.Pod, error) {
+	resp, err := a.Clientset.CoreV1().Pods(namespace).List(
+		context.TODO(),
+		metav1.ListOptions{
+			LabelSelector: fmt.Sprintf("%s=%s", "job-name", jobName),
+		},
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return resp.Items, nil
 }
 
 // GetIngress gets ingress given the name and namespace
@@ -150,7 +182,9 @@ func (a *Agent) GetPodLogs(namespace string, name string, conn *websocket.Conn) 
 		TailLines: &tails,
 	}
 	req := a.Clientset.CoreV1().Pods(namespace).GetLogs(name, &podLogOpts)
+
 	podLogs, err := req.Stream(context.TODO())
+
 	if err != nil {
 		return fmt.Errorf("Cannot open log stream for pod %s", name)
 	}
@@ -222,6 +256,8 @@ func (a *Agent) StreamControllerStatus(conn *websocket.Conn, kind string) error 
 		informer = factory.Apps().V1().ReplicaSets().Informer()
 	case "daemonset":
 		informer = factory.Apps().V1().DaemonSets().Informer()
+	case "job":
+		informer = factory.Batch().V1().Jobs().Informer()
 	}
 
 	stopper := make(chan struct{})
@@ -235,6 +271,30 @@ func (a *Agent) StreamControllerStatus(conn *websocket.Conn, kind string) error 
 				Object:    newObj,
 				Kind:      strings.ToLower(kind),
 			}
+			if writeErr := conn.WriteJSON(msg); writeErr != nil {
+				errorchan <- writeErr
+				return
+			}
+		},
+		AddFunc: func(obj interface{}) {
+			msg := Message{
+				EventType: "ADD",
+				Object:    obj,
+				Kind:      strings.ToLower(kind),
+			}
+
+			if writeErr := conn.WriteJSON(msg); writeErr != nil {
+				errorchan <- writeErr
+				return
+			}
+		},
+		DeleteFunc: func(obj interface{}) {
+			msg := Message{
+				EventType: "DELETE",
+				Object:    obj,
+				Kind:      strings.ToLower(kind),
+			}
+
 			if writeErr := conn.WriteJSON(msg); writeErr != nil {
 				errorchan <- writeErr
 				return

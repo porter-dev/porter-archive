@@ -159,17 +159,20 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
 
     ws.onmessage = (evt: MessageEvent) => {
       let event = JSON.parse(evt.data);
-      let object = event.Object;
-      object.metadata.kind = event.Kind;
 
-      if (!this.state.controllers[object.metadata.uid]) return;
+      if (event.event_type == "UPDATE") {
+        let object = event.Object;
+        object.metadata.kind = event.Kind;
 
-      this.setState({
-        controllers: {
-          ...this.state.controllers,
-          [object.metadata.uid]: object
-        }
-      });
+        if (!this.state.controllers[object.metadata.uid]) return;
+
+        this.setState({
+          controllers: {
+            ...this.state.controllers,
+            [object.metadata.uid]: object
+          }
+        });
+      }
     };
 
     ws.onclose = () => {

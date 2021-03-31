@@ -8,7 +8,7 @@ import { ChartType, ClusterType } from "shared/types";
 import ChartList from "./chart/ChartList";
 import NamespaceSelector from "./NamespaceSelector";
 import SortSelector from "./SortSelector";
-import ExpandedChart from "./expanded-chart/ExpandedChart";
+import ExpandedJobChart from "./expanded-chart/ExpandedJobChart";
 import { RouteComponentProps, withRouter } from "react-router";
 
 import api from "shared/api";
@@ -93,14 +93,23 @@ class ClusterDashboard extends Component<PropsType, StateType> {
 
     if (this.state.currentChart) {
       return (
-        <ExpandedChart
+        // <ExpandedChart
+        //   namespace={this.state.namespace}
+        //   currentCluster={this.props.currentCluster}
+        //   currentChart={this.state.currentChart}
+        //   setCurrentChart={(x: ChartType | null) =>
+        //     this.setState({ currentChart: x })
+        //   }
+        //   isMetricsInstalled={this.state.isMetricsInstalled}
+        //   setSidebar={setSidebar}
+        // />
+        <ExpandedJobChart
           namespace={this.state.namespace}
           currentCluster={this.props.currentCluster}
           currentChart={this.state.currentChart}
           setCurrentChart={(x: ChartType | null) =>
             this.setState({ currentChart: x })
           }
-          isMetricsInstalled={this.state.isMetricsInstalled}
           setSidebar={setSidebar}
         />
       );

@@ -5,6 +5,7 @@ import { Context } from "shared/Context";
 type PropsType = {
   selectedPod: any;
   podError: string;
+  rawText?: boolean;
 };
 
 type StateType = {
@@ -37,11 +38,12 @@ export default class Logs extends Component<PropsType, StateType> {
 
   renderLogs = () => {
     let { selectedPod } = this.props;
+
     if (!selectedPod?.metadata?.name) {
       return <Message>Please select a pod to view its logs.</Message>;
     }
 
-    if (selectedPod?.status.phase === "Succeeded") {
+    if (selectedPod?.status.phase === "Succeeded" && !this.props.rawText) {
       return (
         <Message>
           ⌛ This job has been completed. You can now delete this job.
@@ -113,6 +115,12 @@ export default class Logs extends Component<PropsType, StateType> {
   }
 
   render() {
+    if (this.props.rawText) {
+      return <LogStreamAlt>
+      <Wrapper ref={this.parentRef}>{this.renderLogs()}</Wrapper>
+      </LogStreamAlt>
+    }
+
     return (
       <LogStream>
         <Wrapper ref={this.parentRef}>{this.renderLogs()}</Wrapper>
@@ -216,6 +224,11 @@ const LogStream = styled.div`
   overflow-y: auto;
   overflow-wrap: break-word;
 `;
+
+const LogStreamAlt = styled(LogStream)`
+  width: 100%;
+  max-width: 100%;
+`
 
 const Message = styled.div`
   display: flex;

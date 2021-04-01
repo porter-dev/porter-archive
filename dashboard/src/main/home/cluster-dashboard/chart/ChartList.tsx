@@ -4,6 +4,7 @@ import styled from "styled-components";
 import { Context } from "shared/Context";
 import api from "shared/api";
 import { ChartType, StorageType, ClusterType } from "shared/types";
+import { PorterUrl } from "shared/routing";
 
 import Chart from "./Chart";
 import Loading from "components/Loading";
@@ -13,6 +14,7 @@ type PropsType = {
   namespace: string;
   sortType: string;
   setCurrentChart: (c: ChartType) => void;
+  currentView: PorterUrl;
 };
 
 type StateType = {
@@ -63,6 +65,19 @@ export default class ChartList extends Component<PropsType, StateType> {
       )
       .then((res) => {
         let charts = res.data || [];
+
+        // filter charts based on the current view
+        let { currentView } = this.props;
+
+        charts = charts.filter((chart: ChartType) => {
+          return (
+            (currentView == "jobs" && chart.chart.metadata.name == "job") ||
+            ((currentView == "applications" ||
+              currentView == "cluster-dashboard") &&
+              chart.chart.metadata.name != "job")
+          );
+        });
+
         if (this.props.sortType == "Newest") {
           charts.sort((a: any, b: any) =>
             Date.parse(a.info.last_deployed) > Date.parse(b.info.last_deployed)
@@ -223,7 +238,8 @@ export default class ChartList extends Component<PropsType, StateType> {
     if (
       prevProps.currentCluster !== this.props.currentCluster ||
       prevProps.namespace !== this.props.namespace ||
-      prevProps.sortType !== this.props.sortType
+      prevProps.sortType !== this.props.sortType ||
+      prevProps.currentView !== this.props.currentView
     ) {
       this.updateCharts(this.getControllers);
     }
@@ -247,8 +263,9 @@ export default class ChartList extends Component<PropsType, StateType> {
     } else if (charts.length === 0) {
       return (
         <Placeholder>
-          <i className="material-icons">category</i> No charts found in this
-          namespace.
+          <i className="material-icons">category</i> No
+          {this.props.currentView === "jobs" ? ` jobs` : ` charts`} found in
+          this namespace.
         </Placeholder>
       );
     }

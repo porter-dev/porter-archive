@@ -321,7 +321,6 @@ const InviteButton = styled.div<{ disabled: boolean }>`
   padding: 0 15px;
   margin-top: 13px;
   text-align: left;
-  background: red;
   float: left;
   margin-left: 0;
   justify-content: center;

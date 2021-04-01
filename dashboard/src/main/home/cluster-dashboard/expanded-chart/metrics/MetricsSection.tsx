@@ -8,6 +8,7 @@ import { Context } from "shared/Context";
 import { ChartType, StorageType } from "shared/types";
 
 import TabSelector from "components/TabSelector";
+import Loading from "components/Loading";
 import SelectRow from "components/values-form/SelectRow";
 import AreaChart, { MetricsData } from "./AreaChart";
 
@@ -525,17 +526,21 @@ export default class MetricsSection extends Component<PropsType, StateType> {
             />
           </RangeWrapper>
         </MetricsHeader>
-        <ParentSize>
-          {({ width, height }) => (
-            <AreaChart
-              data={this.state.data}
-              width={width}
-              height={height - 10}
-              resolution={this.state.selectedRange}
-              margin={{ top: 40, right: -40, bottom: 0, left: 50 }}
-            />
-          )}
-        </ParentSize>
+        {this.state.data.length === 0 ? (
+          <Loading />
+        ) : (
+          <ParentSize>
+            {({ width, height }) => (
+              <AreaChart
+                data={this.state.data}
+                width={width}
+                height={height - 10}
+                resolution={this.state.selectedRange}
+                margin={{ top: 40, right: -40, bottom: 0, left: 50 }}
+              />
+            )}
+          </ParentSize>
+        )}
       </StyledMetricsSection>
     );
   }

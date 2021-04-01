@@ -5,6 +5,7 @@ import { Context } from "shared/Context";
 type PropsType = {
   selectedPod: any;
   podError: string;
+  rawText?: boolean;
 };
 
 type StateType = {
@@ -36,12 +37,17 @@ export default class Logs extends Component<PropsType, StateType> {
   };
 
   renderLogs = () => {
-    let { selectedPod } = this.props;
+    let { selectedPod, podError } = this.props;
+
+    if (podError && podError != "") {
+      return <Message>{this.props.podError}</Message>;
+    }
+
     if (!selectedPod?.metadata?.name) {
       return <Message>Please select a pod to view its logs.</Message>;
     }
 
-    if (selectedPod?.status.phase === "Succeeded") {
+    if (selectedPod?.status.phase === "Succeeded" && !this.props.rawText) {
       return (
         <Message>
           ⌛ This job has been completed. You can now delete this job.
@@ -50,11 +56,7 @@ export default class Logs extends Component<PropsType, StateType> {
     }
 
     if (this.state.logs.length == 0) {
-      return (
-        <Message>
-          {this.props.podError || "No logs to display from this pod."}
-        </Message>
-      );
+      return <Message>No logs to display from this pod.</Message>;
     }
     return this.state.logs.map((log, i) => {
       return <Log key={i}>{log}</Log>;
@@ -64,7 +66,7 @@ export default class Logs extends Component<PropsType, StateType> {
   setupWebsocket = () => {
     let { currentCluster, currentProject } = this.context;
     let { selectedPod } = this.props;
-    if (!selectedPod.metadata?.name) return;
+    if (!selectedPod?.metadata?.name) return;
     let protocol = process.env.NODE_ENV == "production" ? "wss" : "ws";
     this.ws = new WebSocket(
       `${protocol}://${process.env.API_SERVER}/api/projects/${currentProject.id}/k8s/${selectedPod?.metadata?.namespace}/pod/${selectedPod?.metadata?.name}/logs?cluster_id=${currentCluster.id}&service_account_id=${currentCluster.service_account_id}`
@@ -113,6 +115,14 @@ export default class Logs extends Component<PropsType, StateType> {
   }
 
   render() {
+    if (this.props.rawText) {
+      return (
+        <LogStreamAlt>
+          <Wrapper ref={this.parentRef}>{this.renderLogs()}</Wrapper>
+        </LogStreamAlt>
+      );
+    }
+
     return (
       <LogStream>
         <Wrapper ref={this.parentRef}>{this.renderLogs()}</Wrapper>
@@ -215,6 +225,11 @@ const LogStream = styled.div`
   max-width: 65%;
   overflow-y: auto;
   overflow-wrap: break-word;
+`;
+
+const LogStreamAlt = styled(LogStream)`
+  width: 100%;
+  max-width: 100%;
 `;
 
 const Message = styled.div`

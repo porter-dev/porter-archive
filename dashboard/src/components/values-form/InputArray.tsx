@@ -6,6 +6,7 @@ type PropsType = {
   values: string[];
   setValues: (x: string[]) => void;
   width?: string;
+  disabled?: boolean;
 };
 
 type StateType = {};
@@ -17,6 +18,22 @@ export default class InputArray extends Component<PropsType, StateType> {
       arr.push(`${key}: ${dict[key]}`);
     }
     return arr;
+  };
+
+  renderDeleteButton = (values: string[], i: number) => {
+    if (!this.props.disabled) {
+      return (
+        <DeleteButton
+          onClick={() => {
+            let v = [...values];
+            v.splice(i, 1);
+            this.props.setValues(v);
+          }}
+        >
+          <i className="material-icons">cancel</i>
+        </DeleteButton>
+      );
+    }
   };
 
   renderInputList = (values: string[]) => {
@@ -34,16 +51,9 @@ export default class InputArray extends Component<PropsType, StateType> {
                   v[i] = e.target.value;
                   this.props.setValues(v);
                 }}
+                disabled={this.props.disabled}
               />
-              <DeleteButton
-                onClick={() => {
-                  let v = [...values];
-                  v.splice(i, 1);
-                  this.props.setValues(v);
-                }}
-              >
-                <i className="material-icons">cancel</i>
-              </DeleteButton>
+              {this.renderDeleteButton(values, i)}
             </InputWrapper>
           );
         })}

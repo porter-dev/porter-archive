@@ -139,7 +139,6 @@ const DeleteButton = styled.div`
   padding: 0 15px;
   margin-top: 10px;
   text-align: left;
-  background: red;
   float: left;
   margin-left: 0;
   justify-content: center;

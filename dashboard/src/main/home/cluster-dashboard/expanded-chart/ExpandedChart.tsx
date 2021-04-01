@@ -292,15 +292,6 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
       case "metrics":
         return <MetricsSection currentChart={chart} />;
       case "status":
-        let activeJobs = Object.values(this.state.controllers)[0]?.status
-          .active;
-        let selectors = activeJobs?.map((job: any) => {
-          return `job-name=${job.name},controller-uid=${job.uid}`;
-        });
-
-        if (chart.chart.metadata.name == "job") {
-          return <StatusSection currentChart={chart} selectors={selectors} />;
-        }
         return <StatusSection currentChart={chart} />;
       case "settings":
         return (
@@ -344,6 +335,7 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
               saveValuesStatus={this.state.saveValuesStatus}
               isInModal={true}
               currentTab={currentTab}
+              renderSaveButton={true}
             >
               {(metaState: any, setMetaState: any) => {
                 return tabOptions.map((tab: any, i: number) => {

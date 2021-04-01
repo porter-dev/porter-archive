@@ -4,10 +4,12 @@ import gradient from "assets/gradient.jpg";
 
 import { Context } from "shared/Context";
 import { ChartType, ClusterType } from "shared/types";
+import { PorterUrl } from "shared/routing";
 
 import ChartList from "./chart/ChartList";
 import NamespaceSelector from "./NamespaceSelector";
 import SortSelector from "./SortSelector";
+import ExpandedChart from "./expanded-chart/ExpandedChart";
 import ExpandedJobChart from "./expanded-chart/ExpandedJobChart";
 import { RouteComponentProps, withRouter } from "react-router";
 
@@ -16,6 +18,7 @@ import api from "shared/api";
 type PropsType = RouteComponentProps & {
   currentCluster: ClusterType;
   setSidebar: (x: boolean) => void;
+  currentView: PorterUrl;
 };
 
 type StateType = {
@@ -89,27 +92,30 @@ class ClusterDashboard extends Component<PropsType, StateType> {
   };
 
   renderContents = () => {
-    let { currentCluster, setSidebar } = this.props;
-
-    if (this.state.currentChart) {
+    let { currentCluster, setSidebar, currentView } = this.props;
+    
+    if (this.state.currentChart && currentView == "jobs") {
       return (
-        // <ExpandedChart
-        //   namespace={this.state.namespace}
-        //   currentCluster={this.props.currentCluster}
-        //   currentChart={this.state.currentChart}
-        //   setCurrentChart={(x: ChartType | null) =>
-        //     this.setState({ currentChart: x })
-        //   }
-        //   isMetricsInstalled={this.state.isMetricsInstalled}
-        //   setSidebar={setSidebar}
-        // />
         <ExpandedJobChart
+        namespace={this.state.namespace}
+        currentCluster={this.props.currentCluster}
+        currentChart={this.state.currentChart}
+        setCurrentChart={(x: ChartType | null) =>
+          this.setState({ currentChart: x })
+        }
+        setSidebar={setSidebar}
+      />
+      )
+    } else if (this.state.currentChart) {
+      return (
+        <ExpandedChart
           namespace={this.state.namespace}
           currentCluster={this.props.currentCluster}
           currentChart={this.state.currentChart}
           setCurrentChart={(x: ChartType | null) =>
             this.setState({ currentChart: x })
           }
+          isMetricsInstalled={this.state.isMetricsInstalled}
           setSidebar={setSidebar}
         />
       );
@@ -158,6 +164,7 @@ class ClusterDashboard extends Component<PropsType, StateType> {
         </ControlRow>
 
         <ChartList
+          currentView={currentView}
           currentCluster={currentCluster}
           namespace={this.state.namespace}
           sortType={this.state.sortType}

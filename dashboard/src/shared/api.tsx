@@ -420,9 +420,9 @@ const getJobs = baseApi<
 {
   cluster_id: number;
 },
-{ chart: string; namespace: string; id: number }
+{ chart: string; namespace: string; release_name: string, id: number }
 >("GET", pathParams => {
-return `/api/projects/${pathParams.id}/k8s/${pathParams.namespace}/${pathParams.chart}/jobs`;
+return `/api/projects/${pathParams.id}/k8s/${pathParams.namespace}/${pathParams.chart}/${pathParams.release_name}/jobs`;
 });
 
 const getJobPods = baseApi<

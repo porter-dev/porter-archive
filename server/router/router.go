@@ -1142,7 +1142,7 @@ func New(a *api.App) *chi.Mux {
 
 		r.Method(
 			"GET",
-			"/projects/{project_id}/k8s/{namespace}/{chart}/jobs",
+			"/projects/{project_id}/k8s/{namespace}/{chart}/{release_name}/jobs",
 			auth.DoesUserHaveProjectAccess(
 				auth.DoesUserHaveClusterAccess(
 					requestlog.NewHandler(a.HandleListJobsByChart, l),

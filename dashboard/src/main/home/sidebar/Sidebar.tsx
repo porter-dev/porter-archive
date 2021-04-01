@@ -93,6 +93,36 @@ class Sidebar extends Component<PropsType, StateType> {
     }
   };
 
+  renderClusterContent = () => {
+    let { currentView } = this.props;
+    let { currentCluster } = this.context;
+
+    if (currentCluster) {
+      return (
+        <>
+          <NavButton
+            selected={currentView === "applications"}
+            onClick={() => {
+              this.props.history.push("/applications");
+            }}
+          >
+            <Img src={integrations} />
+            Applications
+          </NavButton>
+          <NavButton
+            selected={currentView === "jobs"}
+            onClick={() => {
+              this.props.history.push("/jobs");
+            }}
+          >
+            <Img src={integrations} />
+            Jobs
+          </NavButton>
+        </>
+      )
+    }
+  }
+
   renderProjectContents = () => {
     let { currentView } = this.props;
     let { currentProject, setCurrentModal } = this.context;
@@ -155,6 +185,7 @@ class Sidebar extends Component<PropsType, StateType> {
             forceRefreshClusters={this.props.forceRefreshClusters}
             setRefreshClusters={this.props.setRefreshClusters}
           />
+          {this.renderClusterContent()}
         </>
       );
     }

@@ -25,6 +25,7 @@ type PropsType = RouteComponentProps & {
 
 type StateType = {
   awsRegion: string;
+  awsMachineType: string;
   awsAccessId: string;
   awsSecretKey: string;
   selectedInfras: { value: string; label: string }[];
@@ -60,10 +61,20 @@ const regionOptions = [
   { value: "sa-east-1", label: "South America (São Paulo) sa-east-1" },
 ];
 
+const machineTypeOptions = [
+  { value: "t2.medium", label: "t2.medium"},
+  { value: "t2.xlarge", label: "t2.xlarge"},
+  { value: "t2.2xlarge", label: "t2.2xlarge"},
+  { value: "t3.medium", label: "t3.medium"},
+  { value: "t3.xlarge", label: "t3.xlarge"},
+  { value: "t3.2xlarge", label: "t3.2xlarge"},
+]
+
 // TODO: Consolidate across forms w/ HOC
 class AWSFormSection extends Component<PropsType, StateType> {
   state = {
     awsRegion: "us-east-1",
+    awsMachineType: "t2.medium",
     awsAccessId: "",
     awsSecretKey: "",
     selectedInfras: [...provisionOptions],
@@ -178,7 +189,7 @@ class AWSFormSection extends Component<PropsType, StateType> {
 
   provisionEKS = () => {
     console.log("Provisioning EKS");
-    let { awsAccessId, awsSecretKey, awsRegion } = this.state;
+    let { awsAccessId, awsSecretKey, awsRegion, awsMachineType } = this.state;
     let { currentProject } = this.context;
 
     let clusterName = `${currentProject.name}-cluster`;
@@ -199,6 +210,7 @@ class AWSFormSection extends Component<PropsType, StateType> {
           {
             aws_integration_id: res.data.id,
             eks_name: clusterName,
+            machine_type: awsMachineType,
           },
           { id: currentProject.id }
         )
@@ -263,7 +275,7 @@ class AWSFormSection extends Component<PropsType, StateType> {
 
   render() {
     let { setSelectedProvisioner } = this.props;
-    let { awsRegion, awsAccessId, awsSecretKey, selectedInfras } = this.state;
+    let { awsRegion, awsMachineType, awsAccessId, awsSecretKey, selectedInfras } = this.state;
 
     return (
       <StyledAWSFormSection>
@@ -288,6 +300,14 @@ class AWSFormSection extends Component<PropsType, StateType> {
             dropdownMaxHeight="240px"
             setActiveValue={(x: string) => this.setState({ awsRegion: x })}
             label="📍 AWS Region"
+          />
+          <SelectRow
+            options={machineTypeOptions}
+            width="100%"
+            value={awsMachineType}
+            dropdownMaxHeight="240px"
+            setActiveValue={(x: string) => this.setState({ awsMachineType: x })}
+            label="⚙️ AWS Machine Type"
           />
           <InputRow
             type="text"

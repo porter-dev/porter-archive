@@ -312,7 +312,7 @@ func (a *Agent) ProvisionECR(
 func (a *Agent) ProvisionEKS(
 	projectID uint,
 	awsConf *integrations.AWSIntegration,
-	eksName string,
+	eksName, machineType string,
 	repo repository.Repository,
 	infra *models.Infra,
 	operation provisioner.ProvisionerOperation,
@@ -337,6 +337,7 @@ func (a *Agent) ProvisionEKS(
 		},
 		EKS: &eks.Conf{
 			ClusterName: eksName,
+			MachineType: machineType,
 		},
 	}
 

@@ -46,7 +46,7 @@ export default class JobResource extends Component<PropsType, StateType> {
           name: this.props.job.metadata?.name,
           namespace: this.props.job.metadata?.namespace,
         }
-      ).then(res => {
+      ).then(res => {          
           this.setState({ pods: res.data })
           callback()
       })
@@ -86,7 +86,7 @@ export default class JobResource extends Component<PropsType, StateType> {
         }
     })
 
-    return `Failed at ${this.readableDate(failedCondition.lastTransitionTime)}`
+    return failedCondition ? `Failed at ${this.readableDate(failedCondition.lastTransitionTime)}` : "Failed"
 }
 
   renderLogsSection = () => {
@@ -94,7 +94,7 @@ export default class JobResource extends Component<PropsType, StateType> {
           return <JobLogsWrapper>
               <Logs 
                 selectedPod={this.state.pods[0]}
-                podError={""}
+                podError={!this.state.pods[0] ? "Pod no longer exists." : ""}
                 rawText={true}
               />
           </JobLogsWrapper>

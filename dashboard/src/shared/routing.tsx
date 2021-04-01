@@ -6,7 +6,9 @@ export type PorterUrl =
   | "integrations"
   | "new-project"
   | "cluster-dashboard"
-  | "project-settings";
+  | "project-settings"
+  | "applications"
+  | "jobs";
 
 export const PorterUrls = [
   "dashboard",
@@ -14,7 +16,9 @@ export const PorterUrls = [
   "integrations",
   "new-project",
   "cluster-dashboard",
-  "project-settings"
+  "project-settings",
+  "applications",
+  "jobs",
 ];
 
 export const setSearchParam = (

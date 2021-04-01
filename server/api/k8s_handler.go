@@ -266,6 +266,7 @@ func (app *App) HandleListJobsByChart(w http.ResponseWriter, r *http.Request) {
 	// get path parameters
 	namespace := chi.URLParam(r, "namespace")
 	chart := chi.URLParam(r, "chart")
+	releaseName := chi.URLParam(r, "release_name")
 
 	vals, err := url.ParseQuery(r.URL.RawQuery)
 
@@ -299,7 +300,13 @@ func (app *App) HandleListJobsByChart(w http.ResponseWriter, r *http.Request) {
 		agent, err = kubernetes.GetAgentOutOfClusterConfig(form.OutOfClusterConfig)
 	}
 
-	jobs, err := agent.ListJobsByLabel(namespace, "helm.sh/chart", chart)
+	jobs, err := agent.ListJobsByLabel(namespace, kubernetes.Label{
+		Key: "helm.sh/chart",
+		Val: chart,
+	}, kubernetes.Label{
+		Key: "meta.helm.sh/release-name",
+		Val: releaseName,
+	})
 
 	if err != nil {
 		app.handleErrorFormDecoding(err, ErrReleaseDecode, w)

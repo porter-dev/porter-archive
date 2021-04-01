@@ -92,14 +92,12 @@ export default class ExpandedJobChart extends Component<PropsType, StateType> {
       let exists = false
       jobs.forEach((job : any, i : number, self : any[]) => {
           if (job.metadata?.name == newJob.metadata?.name && job.metadata?.namespace == newJob.metadata?.namespace) {
-              console.log("GOT MATCH")
               self[i] = newJob
               exists = true
           }
       })
 
       if (!exists) {
-          console.log("NEED TO PUSH", newJob)
         jobs.push(newJob)
       }
 
@@ -127,8 +125,9 @@ export default class ExpandedJobChart extends Component<PropsType, StateType> {
       if (event.event_type == "ADD" || event.event_type == "UPDATE") {
           // filter job belonging to chart
           let chartLabel = event.Object?.metadata?.labels["helm.sh/chart"]
+          let releaseLabel = event.Object?.metadata?.labels["meta.helm.sh/release-name"]
 
-          if (chartLabel && chartLabel == chartVersion) {
+          if (chartLabel && releaseLabel && chartLabel == chartVersion && releaseLabel == chart.name) {
             this.mergeNewJob(event.Object)
           }
       }
@@ -192,7 +191,7 @@ export default class ExpandedJobChart extends Component<PropsType, StateType> {
       .catch(err => {
         console.log(err);
         this.setState({ saveValuesStatus: "error" });
-        setCurrentError(err)
+        setCurrentError(JSON.stringify(err))
       });
   };
 
@@ -208,6 +207,7 @@ export default class ExpandedJobChart extends Component<PropsType, StateType> {
           id: currentProject.id,
           chart: `${chart.chart.metadata.name}-${chart.chart.metadata.version}`,
           namespace: chart.namespace,
+          release_name: chart.name,
         }
       ).then(res => {
           // sort jobs by started timestamp
@@ -240,7 +240,7 @@ export default class ExpandedJobChart extends Component<PropsType, StateType> {
                 <JobList jobs={this.state.jobs} />
                 <SaveButton
                     text="Rerun Job"
-                    onClick={this.handleSaveValues}
+                    onClick={() => this.handleSaveValues()}
                     status={this.state.saveValuesStatus}
                     makeFlush={true}
                 />
@@ -259,12 +259,14 @@ export default class ExpandedJobChart extends Component<PropsType, StateType> {
       default:
             if (this.state.tabOptions && currentTab && currentTab.includes("@")) {
               return (
-                <ValuesWrapper
+                <TabWrapper>
+                    <ValuesWrapper
                   formTabs={this.state.tabOptions}
                   onSubmit={this.handleSaveValues}
                   saveValuesStatus={this.state.saveValuesStatus}
                   isInModal={true}
                   currentTab={currentTab}
+                  renderSaveButton={false}
                 >
                   {(metaState: any, setMetaState: any) => {
                     return this.state.tabOptions.map((tab: any, i: number) => {
@@ -283,6 +285,14 @@ export default class ExpandedJobChart extends Component<PropsType, StateType> {
                     });
                   }}
                 </ValuesWrapper>
+                <SaveButton
+                    text="Rerun Job"
+                    onClick={() => this.handleSaveValues()}
+                    status={this.state.saveValuesStatus}
+                    makeFlush={true}
+                />
+            </TabWrapper>
+                
               );
             }
     }

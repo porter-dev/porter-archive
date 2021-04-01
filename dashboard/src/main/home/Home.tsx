@@ -280,6 +280,7 @@ class Home extends Component<PropsType, StateType> {
         <ClusterDashboard
           currentCluster={currentCluster}
           setSidebar={(x: boolean) => this.setState({ forceSidebar: x })}
+          currentView={this.props.currentRoute}
           // setCurrentView={(x: string) => this.setState({ currentView: x })}
         />
       </DashboardWrapper>
@@ -288,8 +289,9 @@ class Home extends Component<PropsType, StateType> {
 
   renderContents = () => {
     let currentView = this.props.currentRoute;
+    
     if (this.context.currentProject && currentView !== "new-project") {
-      if (currentView === "cluster-dashboard") {
+      if (currentView === "cluster-dashboard" || currentView === "applications" || currentView === "jobs") {
         return this.renderDashboard();
       } else if (currentView === "dashboard") {
         return (

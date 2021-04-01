@@ -67,11 +67,22 @@ func (a *Agent) ListNamespaces() (*v1.NamespaceList, error) {
 }
 
 // ListJobsByLabel lists jobs in a namespace matching a label
-func (a *Agent) ListJobsByLabel(namespace, labelKey, labelVal string) ([]batchv1.Job, error) {
+type Label struct {
+	Key string
+	Val string
+}
+
+func (a *Agent) ListJobsByLabel(namespace string, labels ...Label) ([]batchv1.Job, error) {
+	selectors := make([]string, 0)
+
+	for _, label := range labels {
+		selectors = append(selectors, fmt.Sprintf("%s=%s", label.Key, label.Val))
+	}
+
 	resp, err := a.Clientset.BatchV1().Jobs(namespace).List(
 		context.TODO(),
 		metav1.ListOptions{
-			LabelSelector: fmt.Sprintf("%s=%s", labelKey, labelVal),
+			LabelSelector: strings.Join(selectors, ","),
 		},
 	)
 

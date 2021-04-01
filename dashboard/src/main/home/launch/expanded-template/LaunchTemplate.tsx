@@ -388,6 +388,7 @@ class LaunchTemplate extends Component<PropsType, StateType> {
         }
         saveValuesStatus={this.getStatus()}
         disabled={this.submitIsDisabled()}
+        renderSaveButton={true}
       >
         {(metaState: any, setMetaState: any) => {
           return this.props.form?.tabs.map((tab: any, i: number) => {

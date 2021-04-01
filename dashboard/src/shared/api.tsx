@@ -624,6 +624,7 @@ const provisionEKS = baseApi<
   {
     eks_name: string;
     aws_integration_id: string;
+    machine_type: string;
   },
   { id: number }
 >("POST", (pathParams) => {

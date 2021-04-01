@@ -5,7 +5,6 @@ import close from "assets/close.png";
 import _ from "lodash";
 
 import {
-  ResourceType,
   ChartType,
   StorageType,
   ClusterType
@@ -16,10 +15,8 @@ import api from "shared/api";
 import SaveButton from "components/SaveButton";
 import ConfirmOverlay from "components/ConfirmOverlay";
 import Loading from "components/Loading";
-import StatusIndicator from "components/StatusIndicator";
 import TabRegion from "components/TabRegion";
 import JobList from "./jobs/JobList"
-import ExpandableResource from "components/ExpandableResource";
 import SettingsSection from "./SettingsSection";
 import ValuesWrapper from "components/values-form/ValuesWrapper";
 import ValuesForm from "components/values-form/ValuesForm";
@@ -231,7 +228,6 @@ export default class ExpandedJobChart extends Component<PropsType, StateType> {
 
   renderTabContents = () => {
     let currentTab = this.state.currentTab
-    let { currentChart } = this.props;
 
     switch (currentTab) {
       case "jobs":
@@ -345,38 +341,6 @@ export default class ExpandedJobChart extends Component<PropsType, StateType> {
     return `${time} on ${date}`;
   };
 
-  getChartStatus = (chartStatus: string) => {
-      return "jobs"
-
-    // if (chartStatus === "deployed") {
-    //   for (var uid in this.state.controllers) {
-    //     let value = this.state.controllers[uid];
-    //     let available = this.getAvailability(value.metadata.kind, value);
-    //     let progressing = true;
-
-    //     this.state.controllers[uid]?.status?.conditions?.forEach(
-    //       (condition: any) => {
-    //         if (
-    //           condition.type == "Progressing" &&
-    //           condition.status == "False" &&
-    //           condition.reason == "ProgressDeadlineExceeded"
-    //         ) {
-    //           progressing = false;
-    //         }
-    //       }
-    //     );
-
-    //     if (!available && progressing) {
-    //       return "loading";
-    //     } else if (!available && !progressing) {
-    //       return "failed";
-    //     }
-    //   }
-    //   return "deployed";
-    // }
-    // return chartStatus;
-  };
-
   componentDidMount() {
     let { currentCluster, currentProject } = this.context;
     let { currentChart } = this.props;
@@ -441,7 +405,6 @@ export default class ExpandedJobChart extends Component<PropsType, StateType> {
   render() {
     let { currentChart, setCurrentChart } = this.props;
     let chart = currentChart;
-    let status = this.getChartStatus(chart.info.status);
 
     return (
       <>
@@ -529,58 +492,6 @@ const DeleteOverlay = styled.div`
     to {
       opacity: 1;
     }
-  }
-`;
-
-const Bolded = styled.div`
-  font-weight: 500;
-  color: #ffffff44;
-  margin-right: 6px;
-`;
-
-const Url = styled.a`
-  display: block;
-  margin-left: 2px;
-  font-size: 13px;
-  margin-top: 16px;
-  user-select: all;
-  margin-bottom: -5px;
-  user-select: text;
-  display: flex;
-  align-items: center;
-
-  > i {
-    font-size: 15px;
-    margin-right: 10px;
-  }
-`;
-
-const TabButton = styled.div`
-  position: absolute;
-  right: 0px;
-  height: 30px;
-  background: linear-gradient(to right, #26282f00, #26282f 20%);
-  padding-left: 30px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 13px;
-  color: ${(props: { devOpsMode: boolean }) =>
-    props.devOpsMode ? "#aaaabb" : "#aaaabb55"};
-  margin-left: 35px;
-  border-radius: 20px;
-  text-shadow: 0px 0px 8px
-    ${(props: { devOpsMode: boolean }) =>
-      props.devOpsMode ? "#ffffff66" : "none"};
-  cursor: pointer;
-  :hover {
-    color: ${(props: { devOpsMode: boolean }) =>
-      props.devOpsMode ? "" : "#aaaabb99"};
-  }
-
-  > i {
-    font-size: 17px;
-    margin-right: 9px;
   }
 `;
 
@@ -739,11 +650,4 @@ const StyledExpandedChart = styled.div`
       transform: translateY(0px);
     }
   }
-`;
-
-const ResourceList = styled.div`
-  margin-bottom: 15px;
-  margin-top: 20px;
-  border-radius: 5px;
-  overflow: hidden;
 `;

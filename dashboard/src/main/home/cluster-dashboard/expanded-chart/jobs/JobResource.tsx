@@ -1,9 +1,6 @@
 import React, { MouseEvent, Component } from "react";
 import styled from "styled-components";
-
-import { ChartType, StorageType } from "shared/types";
 import { Context } from "shared/Context";
-import StatusIndicator from "components/StatusIndicator";
 
 import api from "shared/api";
 import Logs from "../status/Logs"

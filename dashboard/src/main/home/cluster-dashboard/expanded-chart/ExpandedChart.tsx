@@ -31,12 +31,13 @@ type PropsType = {
   namespace: string;
   currentChart: ChartType;
   currentCluster: ClusterType;
-  setCurrentChart: (x: ChartType | null) => void;
+  closeChart: () => void;
   setSidebar: (x: boolean) => void;
   isMetricsInstalled: boolean;
 };
 
 type StateType = {
+  currentChart: ChartType;
   loading: boolean;
   showRevisions: boolean;
   components: ResourceType[];
@@ -57,6 +58,7 @@ type StateType = {
 
 export default class ExpandedChart extends Component<PropsType, StateType> {
   state = {
+    currentChart: this.props.currentChart,
     loading: true,
     showRevisions: false,
     components: [] as ResourceType[],
@@ -78,7 +80,7 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
   // Retrieve full chart data (includes form and values)
   getChartData = (chart: ChartType) => {
     let { currentProject } = this.context;
-    let { currentCluster, currentChart, setCurrentChart } = this.props;
+    let { currentCluster, currentChart } = this.props;
 
     this.setState({ loading: true });
     api
@@ -96,8 +98,9 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
         }
       )
       .then((res) => {
-        setCurrentChart(res.data);
-        this.setState({ loading: false });
+        this.setState({ currentChart: res.data, loading: false }, () => {
+          this.updateTabs();
+        });
       })
       .catch(console.log);
   };
@@ -125,7 +128,7 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
           }
         )
         .then((res) => {
-          res.data.forEach(async (c: any) => {
+          res.data?.forEach(async (c: any) => {
             await new Promise((nextController: (res?: any) => void) => {
               c.metadata.kind = c.kind;
               this.setState(
@@ -159,17 +162,20 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
 
     ws.onmessage = (evt: MessageEvent) => {
       let event = JSON.parse(evt.data);
-      let object = event.Object;
-      object.metadata.kind = event.Kind;
 
-      if (!this.state.controllers[object.metadata.uid]) return;
+      if (event.event_type == "UPDATE") {
+        let object = event.Object;
+        object.metadata.kind = event.Kind;
 
-      this.setState({
-        controllers: {
-          ...this.state.controllers,
-          [object.metadata.uid]: object,
-        },
-      });
+        if (!this.state.controllers[object.metadata.uid]) return;
+
+        this.setState({
+          controllers: {
+            ...this.state.controllers,
+            [object.metadata.uid]: object,
+          },
+        });
+      }
     };
 
     ws.onclose = () => {
@@ -193,7 +199,7 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
 
   updateResources = () => {
     let { currentCluster, currentProject } = this.context;
-    let { currentChart } = this.props;
+    let { currentChart } = this.state;
 
     api
       .getChartComponents(
@@ -218,7 +224,7 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
       .catch(console.log);
   };
 
-  refreshChart = () => this.getChartData(this.props.currentChart);
+  refreshChart = () => this.getChartData(this.state.currentChart);
 
   onSubmit = (rawValues: any) => {
     let { currentProject, currentCluster, setCurrentError } = this.context;
@@ -232,7 +238,7 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
 
     // Weave in preexisting values and convert to yaml
     let valuesYaml = yaml.dump({
-      ...(this.props.currentChart.config as Object),
+      ...(this.state.currentChart.config as Object),
       ...values,
     });
 
@@ -242,13 +248,13 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
       .upgradeChartValues(
         "<token>",
         {
-          namespace: this.props.currentChart.namespace,
+          namespace: this.state.currentChart.namespace,
           storage: StorageType.Secret,
           values: valuesYaml,
         },
         {
           id: currentProject.id,
-          name: this.props.currentChart.name,
+          name: this.state.currentChart.name,
           cluster_id: currentCluster.id,
         }
       )
@@ -259,14 +265,14 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
         });
 
         window.analytics.track("Chart Upgraded", {
-          chart: this.props.currentChart.name,
+          chart: this.state.currentChart.name,
           values: valuesYaml,
         });
       })
       .catch((err) => {
         this.setState({ saveValuesStatus: "error" });
         window.analytics.track("Failed to Upgrade Chart", {
-          chart: this.props.currentChart.name,
+          chart: this.state.currentChart.name,
           values: valuesYaml,
           error: err,
         });
@@ -282,22 +288,14 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
       saveValuesStatus,
       tabOptions,
     } = this.state;
-    let { currentChart, setSidebar } = this.props;
+    let { setSidebar } = this.props;
+    let { currentChart } = this.state;
     let chart = currentChart;
 
     switch (currentTab) {
       case "metrics":
         return <MetricsSection currentChart={chart} />;
       case "status":
-        let activeJobs = Object.values(this.state.controllers)[0]?.status
-          .active;
-        let selectors = activeJobs?.map((job: any) => {
-          return `job-name=${job.name},controller-uid=${job.uid}`;
-        });
-
-        if (chart.chart.metadata.name == "job") {
-          return <StatusSection currentChart={chart} selectors={selectors} />;
-        }
         return <StatusSection currentChart={chart} />;
       case "settings":
         return (
@@ -341,6 +339,7 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
               saveValuesStatus={this.state.saveValuesStatus}
               isInModal={true}
               currentTab={currentTab}
+              renderSaveButton={true}
             >
               {(metaState: any, setMetaState: any) => {
                 return tabOptions.map((tab: any, i: number) => {
@@ -364,7 +363,7 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
   };
 
   updateTabs() {
-    let formData = this.props.currentChart.form;
+    let formData = this.state.currentChart.form;
     let tabOptions = [] as any[];
 
     // Generate form tabs if form.yaml exists
@@ -430,7 +429,7 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
   };
 
   renderIcon = () => {
-    let { currentChart } = this.props;
+    let { currentChart } = this.state;
 
     if (
       currentChart.chart.metadata.icon &&
@@ -496,7 +495,7 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
 
   componentDidMount() {
     let { currentCluster, currentProject } = this.context;
-    let { currentChart } = this.props;
+    let { currentChart } = this.state;
 
     window.analytics.track("Opened Chart", {
       chart: currentChart.name,
@@ -541,7 +540,7 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
               {
                 id: currentProject.id,
                 name: ingressName,
-                namespace: `${this.props.currentChart.namespace}`,
+                namespace: `${this.state.currentChart.namespace}`,
               }
             )
             .then((res) => {
@@ -563,20 +562,11 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
         })
       )
       .catch(console.log);
-
-    this.updateTabs();
-  }
-
-  componentDidUpdate(prevProps: PropsType) {
-    if (this.props.currentChart !== prevProps.currentChart) {
-      this.updateTabs();
-      this.updateResources();
-    }
   }
 
   componentWillUnmount() {
-    if (this.state.websockets) {
-      this.state.websockets.forEach((ws: WebSocket) => {
+    if (this.state.websockets?.length > 0) {
+      this.state.websockets?.forEach((ws: WebSocket) => {
         ws.close();
       });
     }
@@ -594,7 +584,7 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
       let serviceName = null as string;
       let serviceNamespace = null as string;
 
-      this.state.components.forEach((c: any) => {
+      this.state.components?.forEach((c: any) => {
         if (c.Kind == "Service") {
           serviceName = c.Name;
           serviceNamespace = c.Namespace;
@@ -612,7 +602,7 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
 
   handleUninstallChart = () => {
     let { currentProject, currentCluster } = this.context;
-    let { currentChart } = this.props;
+    let { currentChart } = this.state;
     this.setState({ deleting: true });
     api
       .uninstallTemplate(
@@ -628,7 +618,7 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
       )
       .then((res) => {
         this.setState({ showDeleteOverlay: false });
-        this.props.setCurrentChart(null);
+        this.props.closeChart();
       })
       .catch(console.log);
   };
@@ -644,13 +634,14 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
   };
 
   render() {
-    let { currentChart, setCurrentChart } = this.props;
+    let { closeChart } = this.props;
+    let { currentChart } = this.state;
     let chart = currentChart;
     let status = this.getChartStatus(chart.info.status);
 
     return (
       <>
-        <CloseOverlay onClick={() => setCurrentChart(null)} />
+        <CloseOverlay onClick={closeChart} />
         <StyledExpandedChart>
           <ConfirmOverlay
             show={this.state.showDeleteOverlay}
@@ -686,7 +677,7 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
               </TagWrapper>
             </TitleSection>
 
-            <CloseButton onClick={() => setCurrentChart(null)}>
+            <CloseButton onClick={closeChart}>
               <CloseButtonImg src={close} />
             </CloseButton>
 
@@ -944,7 +935,6 @@ const CloseButtonImg = styled.img`
 const StyledExpandedChart = styled.div`
   width: calc(100% - 50px);
   height: calc(100% - 50px);
-  background: red;
   z-index: 0;
   position: absolute;
   top: 25px;

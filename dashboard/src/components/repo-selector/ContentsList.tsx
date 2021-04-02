@@ -49,7 +49,7 @@ export default class ContentsList extends Component<PropsType, StateType> {
   updateContents = () => {
     let { currentProject } = this.context;
     let { actionConfig, branch } = this.props;
-    console.log(this.state.currentDir);
+
     // Get branch contents
     api
       .getBranchContents(

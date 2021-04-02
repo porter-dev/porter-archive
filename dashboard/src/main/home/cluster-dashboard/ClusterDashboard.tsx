@@ -1,14 +1,18 @@
 import React, { Component } from "react";
 import styled from "styled-components";
 import gradient from "assets/gradient.jpg";
+import monojob from "assets/monojob.png";
+import monoweb from "assets/monoweb.png";
 
 import { Context } from "shared/Context";
 import { ChartType, ClusterType } from "shared/types";
+import { PorterUrl } from "shared/routing";
 
 import ChartList from "./chart/ChartList";
 import NamespaceSelector from "./NamespaceSelector";
 import SortSelector from "./SortSelector";
 import ExpandedChart from "./expanded-chart/ExpandedChart";
+import ExpandedJobChart from "./expanded-chart/ExpandedJobChart";
 import { RouteComponentProps, withRouter } from "react-router";
 
 import api from "shared/api";
@@ -16,6 +20,7 @@ import api from "shared/api";
 type PropsType = RouteComponentProps & {
   currentCluster: ClusterType;
   setSidebar: (x: boolean) => void;
+  currentView: PorterUrl;
 };
 
 type StateType = {
@@ -55,7 +60,6 @@ class ClusterDashboard extends Component<PropsType, StateType> {
   }
 
   componentDidUpdate(prevProps: PropsType) {
-    localStorage.setItem("SortType", this.state.sortType);
     // Reset namespace filter and close expanded chart on cluster change
     if (prevProps.currentCluster !== this.props.currentCluster) {
       this.setState({
@@ -66,40 +70,43 @@ class ClusterDashboard extends Component<PropsType, StateType> {
         currentChart: null,
       });
     }
+
+    if (prevProps.currentView !== this.props.currentView) {
+      this.setState({
+        namespace: "default",
+        sortType: "Newest",
+        currentChart: null,
+      });
+    }
   }
 
   renderDashboardIcon = () => {
-    if (false) {
-      let { currentCluster } = this.props;
-      return (
-        <DashboardIcon>
-          <DashboardImage src={gradient} />
-          <Overlay>
-            {currentCluster && currentCluster.name[0].toUpperCase()}
-          </Overlay>
-        </DashboardIcon>
-      );
+    if (this.props.currentView === "jobs") {
+      return <Img src={monojob} />;
+    } else {
+      return <Img src={monoweb} />;
     }
-
-    return (
-      <DashboardIcon>
-        <i className="material-icons">device_hub</i>
-      </DashboardIcon>
-    );
   };
 
   renderContents = () => {
-    let { currentCluster, setSidebar } = this.props;
-
-    if (this.state.currentChart) {
+    let { currentCluster, setSidebar, currentView } = this.props;
+    if (this.state.currentChart && currentView === "jobs") {
+      return (
+        <ExpandedJobChart
+          namespace={this.state.namespace}
+          currentCluster={this.props.currentCluster}
+          currentChart={this.state.currentChart}
+          closeChart={() => this.setState({ currentChart: null })}
+          setSidebar={setSidebar}
+        />
+      );
+    } else if (this.state.currentChart) {
       return (
         <ExpandedChart
           namespace={this.state.namespace}
           currentCluster={this.props.currentCluster}
           currentChart={this.state.currentChart}
-          setCurrentChart={(x: ChartType | null) =>
-            this.setState({ currentChart: x })
-          }
+          closeChart={() => this.setState({ currentChart: null })}
           isMetricsInstalled={this.state.isMetricsInstalled}
           setSidebar={setSidebar}
         />
@@ -110,13 +117,7 @@ class ClusterDashboard extends Component<PropsType, StateType> {
       <div>
         <TitleSection>
           {this.renderDashboardIcon()}
-          <Title>{currentCluster.name}</Title>
-          <i
-            className="material-icons"
-            onClick={() => this.context.setCurrentModal("UpdateClusterModal")}
-          >
-            more_vert
-          </i>
+          <Title>{currentView}</Title>
         </TitleSection>
 
         <InfoSection>
@@ -126,7 +127,9 @@ class ClusterDashboard extends Component<PropsType, StateType> {
             </InfoLabel>
           </TopRow>
           <Description>
-            Cluster dashboard for {currentCluster.name}.
+            {currentView === "jobs"
+              ? `An overview of past and current jobs for ${currentCluster.name}.`
+              : `An overview of web services and workers running on ${currentCluster.name}.`}
           </Description>
         </InfoSection>
 
@@ -149,6 +152,7 @@ class ClusterDashboard extends Component<PropsType, StateType> {
         </ControlRow>
 
         <ChartList
+          currentView={currentView}
           currentCluster={currentCluster}
           namespace={this.state.namespace}
           sortType={this.state.sortType}
@@ -183,7 +187,7 @@ const TopRow = styled.div`
 `;
 
 const Description = styled.div`
-  color: #ffffff;
+  color: #aaaabb;
   margin-top: 13px;
   margin-left: 2px;
   font-size: 13px;
@@ -311,6 +315,10 @@ const DashboardIcon = styled.div`
   }
 `;
 
+const Img = styled.img`
+  width: 30px;
+`;
+
 const Title = styled.div`
   font-size: 20px;
   font-weight: 500;
@@ -320,6 +328,7 @@ const Title = styled.div`
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  text-transform: capitalize;
 `;
 
 const TitleSection = styled.div`

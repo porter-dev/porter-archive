@@ -3,6 +3,8 @@ import styled from "styled-components";
 import category from "assets/category.svg";
 import integrations from "assets/integrations.svg";
 import rocket from "assets/rocket.png";
+import monojob from "assets/monojob.png";
+import monoweb from "assets/monoweb.png";
 import settings from "assets/settings.svg";
 import discordLogo from "assets/discord.svg";
 
@@ -93,6 +95,50 @@ class Sidebar extends Component<PropsType, StateType> {
     }
   };
 
+  renderClusterContent = () => {
+    let { currentView } = this.props;
+    let { currentCluster } = this.context;
+
+    if (currentCluster) {
+      return (
+        <>
+          <NavButton
+            selected={currentView === "applications"}
+            onClick={() => {
+              this.props.history.push("/applications");
+            }}
+          >
+            <BranchPad>
+              <Gutter>
+                <Rail />
+                <Circle />
+                <Rail lastTab={false} />
+              </Gutter>
+            </BranchPad>
+            <Img src={monoweb} />
+            Applications
+          </NavButton>
+          <NavButton
+            selected={currentView === "jobs"}
+            onClick={() => {
+              this.props.history.push("/jobs");
+            }}
+          >
+            <BranchPad>
+              <Gutter>
+                <Rail />
+                <Circle />
+                <Rail lastTab={true} />
+              </Gutter>
+            </BranchPad>
+            <Img src={monojob} />
+            Jobs
+          </NavButton>
+        </>
+      );
+    }
+  };
+
   renderProjectContents = () => {
     let { currentView } = this.props;
     let { currentProject, setCurrentModal } = this.context;
@@ -151,10 +197,11 @@ class Sidebar extends Component<PropsType, StateType> {
             releaseDrawer={() => this.setState({ forceCloseDrawer: false })}
             setWelcome={this.props.setWelcome}
             currentView={currentView}
-            isSelected={currentView === "cluster-dashboard"}
+            isSelected={false}
             forceRefreshClusters={this.props.forceRefreshClusters}
             setRefreshClusters={this.props.setRefreshClusters}
           />
+          {this.renderClusterContent()}
         </>
       );
     }
@@ -203,6 +250,40 @@ Sidebar.contextType = Context;
 
 export default withRouter(Sidebar);
 
+const BranchPad = styled.div`
+  width: 20px;
+  height: 42px;
+  margin-left: 2px;
+  margin-right: 8px;
+`;
+
+const Rail = styled.div`
+  width: 2px;
+  background: ${(props: { lastTab?: boolean }) =>
+    props.lastTab ? "" : "#52545D"};
+  height: 50%;
+`;
+
+const Circle = styled.div`
+  min-width: 10px;
+  min-height: 2px;
+  margin-bottom: -2px;
+  margin-left: 8px;
+  background: #52545d;
+`;
+
+const Gutter = styled.div`
+  position: absolute;
+  top: 0px;
+  left: 22px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  overflow: visible;
+`;
+
 const Icon = styled.img`
   height: 25px;
   width: 25px;
@@ -231,11 +312,12 @@ const ProjectPlaceholder = styled.div`
 `;
 
 const NavButton = styled.div`
-  display: block;
+  display: flex;
+  align-items: center;
   position: relative;
   text-decoration: none;
   height: 42px;
-  padding: 12px 35px 1px 53px;
+  padding: 0 30px 2px 20px;
   font-size: 14px;
   font-family: "Work Sans", sans-serif;
   color: #ffffff;
@@ -266,13 +348,12 @@ const NavButton = styled.div`
 `;
 
 const Img = styled.img<{ enlarge?: boolean }>`
-  padding: 4px 4px;
-  height: ${(props) => (props.enlarge ? "27px" : "23px")};
-  width: ${(props) => (props.enlarge ? "27px" : "23px")};
+  padding: ${(props) => (props.enlarge ? "0 0 0 1px" : "4px")};
+  height: 23px;
+  width: 23px;
+  padding-top: 4px;
   border-radius: 3px;
-  position: absolute;
-  left: ${(props) => (props.enlarge ? "19px" : "20px")};
-  top: 9px;
+  margin-right: 10px;
 `;
 
 const BottomSection = styled.div`

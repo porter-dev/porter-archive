@@ -63,7 +63,7 @@ class Templates extends Component<PropsType, StateType> {
         <TemplateBlock
           onClick={() => {
             this.context.setCurrentCluster(cluster);
-            this.props.history.push("cluster-dashboard");
+            this.props.history.push("applications");
           }}
           key={i}
         >

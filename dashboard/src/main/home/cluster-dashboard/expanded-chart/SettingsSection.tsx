@@ -72,7 +72,6 @@ export default class SettingsSection extends Component<PropsType, StateType> {
         { id: currentProject.id, name: this.props.currentChart.name }
       )
       .then((res) => {
-        console.log(res.data);
         this.setState({
           action: res.data.git_action_config,
           webhookToken: res.data.webhook_token,
@@ -287,7 +286,7 @@ const Wrapper = styled.div`
 
 const StyledSettingsSection = styled.div`
   width: 100%;
-  height: calc(100% - 60px);
+  height: calc(100% - 65px);
   background: #ffffff11;
   padding: 0 35px;
   padding-bottom: 50px;

@@ -76,7 +76,6 @@ func (app *App) HandleListNamespaces(w http.ResponseWriter, r *http.Request) {
 // HandleGetPodLogs returns real-time logs of the pod via websockets
 // TODO: Refactor repeated calls.
 func (app *App) HandleGetPodLogs(w http.ResponseWriter, r *http.Request) {
-
 	// get session to retrieve correct kubeconfig
 	_, err := app.Store.Get(r, app.ServerConf.CookieName)
 
@@ -136,6 +135,55 @@ func (app *App) HandleGetPodLogs(w http.ResponseWriter, r *http.Request) {
 		app.handleErrorWebsocketWrite(err, w)
 		return
 	}
+}
+
+// HandleDeletePod deletes the pod given the name and namespace.
+func (app *App) HandleDeletePod(w http.ResponseWriter, r *http.Request) {
+	// get path parameters
+	namespace := chi.URLParam(r, "namespace")
+	name := chi.URLParam(r, "name")
+
+	vals, err := url.ParseQuery(r.URL.RawQuery)
+
+	if err != nil {
+		app.handleErrorFormDecoding(err, ErrReleaseDecode, w)
+		return
+	}
+
+	// get the filter options
+	form := &forms.K8sForm{
+		OutOfClusterConfig: &kubernetes.OutOfClusterConfig{
+			Repo:              app.Repo,
+			DigitalOceanOAuth: app.DOConf,
+		},
+	}
+
+	form.PopulateK8sOptionsFromQueryParams(vals, app.Repo.Cluster)
+
+	// validate the form
+	if err := app.validator.Struct(form); err != nil {
+		app.handleErrorFormValidation(err, ErrK8sValidate, w)
+		return
+	}
+
+	// create a new agent
+	var agent *kubernetes.Agent
+
+	if app.ServerConf.IsTesting {
+		agent = app.TestAgents.K8sAgent
+	} else {
+		agent, err = kubernetes.GetAgentOutOfClusterConfig(form.OutOfClusterConfig)
+	}
+
+	err = agent.DeletePod(namespace, name)
+
+	if err != nil {
+		app.handleErrorInternal(err, w)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	return
 }
 
 // HandleGetIngress returns the ingress object given the name and namespace.
@@ -262,8 +310,66 @@ func (app *App) HandleListPods(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// HandleDeletePod deletes the pod given the name and namespace.
-func (app *App) HandleDeletePod(w http.ResponseWriter, r *http.Request) {
+// HandleListJobsByChart lists all jobs belonging to a specific Helm chart
+func (app *App) HandleListJobsByChart(w http.ResponseWriter, r *http.Request) {
+	// get path parameters
+	namespace := chi.URLParam(r, "namespace")
+	chart := chi.URLParam(r, "chart")
+	releaseName := chi.URLParam(r, "release_name")
+
+	vals, err := url.ParseQuery(r.URL.RawQuery)
+
+	if err != nil {
+		app.handleErrorFormDecoding(err, ErrReleaseDecode, w)
+		return
+	}
+
+	// get the filter options
+	form := &forms.K8sForm{
+		OutOfClusterConfig: &kubernetes.OutOfClusterConfig{
+			Repo:              app.Repo,
+			DigitalOceanOAuth: app.DOConf,
+		},
+	}
+
+	form.PopulateK8sOptionsFromQueryParams(vals, app.Repo.Cluster)
+
+	// validate the form
+	if err := app.validator.Struct(form); err != nil {
+		app.handleErrorFormValidation(err, ErrK8sValidate, w)
+		return
+	}
+
+	// create a new agent
+	var agent *kubernetes.Agent
+
+	if app.ServerConf.IsTesting {
+		agent = app.TestAgents.K8sAgent
+	} else {
+		agent, err = kubernetes.GetAgentOutOfClusterConfig(form.OutOfClusterConfig)
+	}
+
+	jobs, err := agent.ListJobsByLabel(namespace, kubernetes.Label{
+		Key: "helm.sh/chart",
+		Val: chart,
+	}, kubernetes.Label{
+		Key: "meta.helm.sh/release-name",
+		Val: releaseName,
+	})
+
+	if err != nil {
+		app.handleErrorFormDecoding(err, ErrReleaseDecode, w)
+		return
+	}
+
+	if err := json.NewEncoder(w).Encode(jobs); err != nil {
+		app.handleErrorFormDecoding(err, ErrK8sDecode, w)
+		return
+	}
+}
+
+// HandleListJobPods lists all pods belonging to a specific job
+func (app *App) HandleListJobPods(w http.ResponseWriter, r *http.Request) {
 	// get path parameters
 	namespace := chi.URLParam(r, "namespace")
 	name := chi.URLParam(r, "name")
@@ -300,15 +406,17 @@ func (app *App) HandleDeletePod(w http.ResponseWriter, r *http.Request) {
 		agent, err = kubernetes.GetAgentOutOfClusterConfig(form.OutOfClusterConfig)
 	}
 
-	err = agent.DeletePod(namespace, name)
+	pods, err := agent.GetJobPods(namespace, name)
 
 	if err != nil {
-		app.handleErrorInternal(err, w)
+		app.handleErrorFormDecoding(err, ErrReleaseDecode, w)
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
-	return
+	if err := json.NewEncoder(w).Encode(pods); err != nil {
+		app.handleErrorFormDecoding(err, ErrK8sDecode, w)
+		return
+	}
 }
 
 // HandleStreamControllerStatus test calls

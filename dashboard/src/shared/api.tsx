@@ -425,6 +425,24 @@ const getInvites = baseApi<{}, { id: number }>("GET", (pathParams) => {
   return `/api/projects/${pathParams.id}/invites`;
 });
 
+const getJobs = baseApi<
+  {
+    cluster_id: number;
+  },
+  { chart: string; namespace: string; release_name: string; id: number }
+>("GET", (pathParams) => {
+  return `/api/projects/${pathParams.id}/k8s/${pathParams.namespace}/${pathParams.chart}/${pathParams.release_name}/jobs`;
+});
+
+const getJobPods = baseApi<
+  {
+    cluster_id: number;
+  },
+  { name: string; namespace: string; id: number }
+>("GET", (pathParams) => {
+  return `/api/projects/${pathParams.id}/k8s/jobs/${pathParams.namespace}/${pathParams.name}/pods`;
+});
+
 const getMatchingPods = baseApi<
   {
     cluster_id: number;
@@ -624,6 +642,7 @@ const provisionEKS = baseApi<
   {
     eks_name: string;
     aws_integration_id: string;
+    machine_type: string;
   },
   { id: number }
 >("POST", (pathParams) => {
@@ -735,6 +754,8 @@ export default {
   getInfra,
   getIngress,
   getInvites,
+  getJobs,
+  getJobPods,
   getMatchingPods,
   getMetrics,
   getNamespaces,

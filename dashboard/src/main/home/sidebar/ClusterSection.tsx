@@ -141,9 +141,9 @@ class ClusterSection extends Component<PropsType, StateType> {
 
     if (clusters.length > 0) {
       return (
-        <ClusterSelector isSelected={this.props.isSelected}>
+        <ClusterSelector isSelected={false}>
           <LinkWrapper
-            onClick={() => this.props.history.push("cluster-dashboard")}
+            onClick={() => this.context.setCurrentModal("UpdateClusterModal")}
           >
             <ClusterIcon>
               <i className="material-icons">device_hub</i>
@@ -212,14 +212,14 @@ const InitializeButton = styled.div`
 `;
 
 const BgAccent = styled.img`
-  height: 42px;
+  height: 30px;
   background: #819bfd;
   width: 30px;
   border-top-left-radius: 100px;
   max-width: 30px;
   border-bottom-left-radius: 100px;
   position: absolute;
-  top: 0;
+  top: 6px;
   right: -8px;
   border: none;
   outline: none;
@@ -306,13 +306,13 @@ const ClusterSelector = styled.div`
   padding-left: 7px;
   width: 100%;
   height: 42px;
-  margin: 8px auto 10px auto;
+  margin: 8px auto 0 auto;
   font-size: 14px;
   font-weight: 500;
   color: white;
   cursor: pointer;
   background: ${(props: { isSelected: boolean }) =>
-    props.isSelected ? "#ffffff11" : ""};
+    props.isSelected ? "#ffffff08" : ""};
   z-index: 1;
 
   :hover {

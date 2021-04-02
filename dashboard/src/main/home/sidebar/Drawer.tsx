@@ -34,7 +34,7 @@ class Drawer extends Component<PropsType, StateType> {
             active={cluster.name === currentCluster.name}
             onClick={() => {
               setCurrentCluster(cluster);
-              this.props.history.push("cluster-dashboard");
+              this.props.history.push("applications");
             }}
           >
             <ClusterIcon>

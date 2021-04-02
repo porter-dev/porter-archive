@@ -73,7 +73,9 @@ export default class ExpandedJobChart extends Component<PropsType, StateType> {
         }
       )
       .then((res) => {
-        this.setState({ currentChart: res.data, loading: false });
+        this.setState({ currentChart: res.data, loading: false }, () => {
+          this.updateTabs();
+        });
       })
       .catch(console.log);
   };
@@ -357,23 +359,8 @@ export default class ExpandedJobChart extends Component<PropsType, StateType> {
 
     this.getChartData(currentChart);
     this.getJobs(currentChart);
-    this.updateTabs();
     this.setupJobWebsocket(currentChart);
   }
-
-  componentDidUpdate(prevProps: PropsType) {
-    if (this.props.currentChart !== prevProps.currentChart) {
-      this.updateTabs();
-    }
-  }
-
-  //   componentWillUnmount() {
-  //     if (this.state.websockets) {
-  //       this.state.websockets.forEach((ws: WebSocket) => {
-  //         ws.close();
-  //       });
-  //     }
-  //   }
 
   handleUninstallChart = () => {
     let { currentProject, currentCluster } = this.context;

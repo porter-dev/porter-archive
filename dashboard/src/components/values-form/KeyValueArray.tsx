@@ -6,6 +6,7 @@ type PropsType = {
   values: any;
   setValues: (x: any) => void;
   width?: string;
+  disabled?: boolean;
 };
 
 type StateType = {
@@ -33,6 +34,24 @@ export default class KeyValueArray extends Component<PropsType, StateType> {
     return obj;
   };
 
+  renderDeleteButton = (i: number) => {
+    if (!this.props.disabled) {
+      return (
+        <DeleteButton
+          onClick={() => {
+            this.state.values.splice(i, 1);
+            this.setState({ values: this.state.values });
+
+            let obj = this.valuesToObject();
+            this.props.setValues(obj);
+          }}
+        >
+          <i className="material-icons">cancel</i>
+        </DeleteButton>
+      );
+    }
+  };
+
   renderInputList = () => {
     return (
       <>
@@ -50,6 +69,7 @@ export default class KeyValueArray extends Component<PropsType, StateType> {
                   let obj = this.valuesToObject();
                   this.props.setValues(obj);
                 }}
+                disabled={this.props.disabled}
               />
               <Spacer />
               <Input
@@ -63,18 +83,9 @@ export default class KeyValueArray extends Component<PropsType, StateType> {
                   let obj = this.valuesToObject();
                   this.props.setValues(obj);
                 }}
+                disabled={this.props.disabled}
               />
-              <DeleteButton
-                onClick={() => {
-                  this.state.values.splice(i, 1);
-                  this.setState({ values: this.state.values });
-
-                  let obj = this.valuesToObject();
-                  this.props.setValues(obj);
-                }}
-              >
-                <i className="material-icons">cancel</i>
-              </DeleteButton>
+              {this.renderDeleteButton(i)}
             </InputWrapper>
           );
         })}
@@ -87,14 +98,18 @@ export default class KeyValueArray extends Component<PropsType, StateType> {
       <StyledInputArray>
         <Label>{this.props.label}</Label>
         {this.state.values.length === 0 ? <></> : this.renderInputList()}
-        <AddRowButton
-          onClick={() => {
-            this.state.values.push({ key: "", value: "" });
-            this.setState({ values: this.state.values });
-          }}
-        >
-          <i className="material-icons">add</i> Add Row
-        </AddRowButton>
+        {this.props.disabled ? (
+          <></>
+        ) : (
+          <AddRowButton
+            onClick={() => {
+              this.state.values.push({ key: "", value: "" });
+              this.setState({ values: this.state.values });
+            }}
+          >
+            <i className="material-icons">add</i> Add Row
+          </AddRowButton>
+        )}
       </StyledInputArray>
     );
   }

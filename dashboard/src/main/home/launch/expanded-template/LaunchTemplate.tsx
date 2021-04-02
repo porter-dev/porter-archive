@@ -117,7 +117,7 @@ class LaunchTemplate extends Component<PropsType, StateType> {
           RELEASE_NAMESPACE: chartNamespace,
         }
       )
-      .then((res) => console.log(res.data))
+      .then((res) => console.log(""))
       .catch(console.log);
   };
 
@@ -153,8 +153,10 @@ class LaunchTemplate extends Component<PropsType, StateType> {
         // this.props.setCurrentView('cluster-dashboard');
         this.setState({ saveValuesStatus: "successful" }, () => {
           // redirect to dashboard
+          let dst =
+            this.props.currentTemplate.name === "job" ? "jobs" : "applications";
           setTimeout(() => {
-            this.props.history.push("cluster-dashboard");
+            this.props.history.push(dst);
           }, 500);
           window.analytics.track("Deployed Add-on", {
             name: this.props.currentTemplate.name,
@@ -286,7 +288,11 @@ class LaunchTemplate extends Component<PropsType, StateType> {
         this.setState({ saveValuesStatus: "successful" }, () => {
           // redirect to dashboard with namespace
           setTimeout(() => {
-            this.props.history.push("cluster-dashboard");
+            let dst =
+              this.props.currentTemplate.name === "job"
+                ? "jobs"
+                : "applications";
+            this.props.history.push(dst);
           }, 1000);
         });
         /*
@@ -388,6 +394,7 @@ class LaunchTemplate extends Component<PropsType, StateType> {
         }
         saveValuesStatus={this.getStatus()}
         disabled={this.submitIsDisabled()}
+        renderSaveButton={true}
       >
         {(metaState: any, setMetaState: any) => {
           return this.props.form?.tabs.map((tab: any, i: number) => {
@@ -726,7 +733,6 @@ class LaunchTemplate extends Component<PropsType, StateType> {
             setActiveValue={(cluster: string) => {
               this.context.setCurrentCluster(this.state.clusterMap[cluster]);
               this.updateNamespaces(this.state.clusterMap[cluster].id);
-              console.log(this.state.clusterMap[cluster]);
               this.setState({ selectedCluster: cluster });
             }}
             options={this.state.clusterOptions}

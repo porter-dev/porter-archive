@@ -48,6 +48,7 @@ func (ce *CreateECRInfra) ToInfra() (*models.Infra, error) {
 // EKS infra via the provisioning container
 type CreateEKSInfra struct {
 	EKSName          string `json:"eks_name" form:"required"`
+	MachineType      string `json:"machine_type"`
 	ProjectID        uint   `json:"project_id" form:"required"`
 	AWSIntegrationID uint   `json:"aws_integration_id" form:"required"`
 }

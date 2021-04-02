@@ -23,6 +23,7 @@ const tabOptions = [
   { label: "Project Overview", value: "overview" },
   { label: "Provisioner Status", value: "provisioner" },
 ];
+
 // TODO: rethink this list, should be coupled with tabOptions
 const tabOptionStrings = ["overview", "provisioner"];
 
@@ -174,7 +175,7 @@ const TopRow = styled.div`
 `;
 
 const Description = styled.div`
-  color: #ffffff;
+  color: #aaaabb;
   margin-top: 13px;
   margin-left: 2px;
   font-size: 13px;

@@ -98,7 +98,9 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
         }
       )
       .then((res) => {
-        this.setState({ currentChart: res.data, loading: false });
+        this.setState({ currentChart: res.data, loading: false }, () => {
+          this.updateTabs();
+        });
       })
       .catch(console.log);
   };
@@ -560,15 +562,6 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
         })
       )
       .catch(console.log);
-
-    this.updateTabs();
-  }
-
-  componentDidUpdate(prevProps: PropsType) {
-    if (this.props.currentChart !== prevProps.currentChart) {
-      this.updateTabs();
-      this.updateResources();
-    }
   }
 
   componentWillUnmount() {

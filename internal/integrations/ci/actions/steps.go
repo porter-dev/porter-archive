@@ -59,10 +59,11 @@ func getDockerBuildPushStep(envSecretName, dockerFilePath, repoURL string) Githu
 
 const buildPackPush string = `
 export $(echo "${{secrets.%s}}" | xargs)
+echo "${{secrets.%s}}" > /.env_porter
 sudo add-apt-repository ppa:cncf-buildpacks/pack-cli
 sudo apt-get update
 sudo apt-get install pack-cli
-sudo pack build %s:$(git rev-parse --short HEAD) --path %s --builder heroku/buildpacks:18
+sudo pack build %s:$(git rev-parse --short HEAD) --path %s --builder heroku/buildpacks:18 --env-file ./env_porter
 sudo docker push %s:$(git rev-parse --short HEAD)
 `
 
@@ -70,7 +71,7 @@ func getBuildPackPushStep(envSecretName, folderPath, repoURL string) GithubActio
 	return GithubActionYAMLStep{
 		Name: "Docker build, push",
 		ID:   "docker_build_push",
-		Run:  fmt.Sprintf(buildPackPush, envSecretName, repoURL, folderPath, repoURL),
+		Run:  fmt.Sprintf(buildPackPush, envSecretName, envSecretName, repoURL, folderPath, repoURL),
 	}
 }
 

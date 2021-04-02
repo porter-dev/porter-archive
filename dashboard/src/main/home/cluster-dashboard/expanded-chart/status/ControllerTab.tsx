@@ -67,7 +67,6 @@ export default class ControllerTab extends Component<PropsType, StateType> {
       )
       .then((res) => {
         let pods = res?.data?.map((pod: any) => {
-          console.log(pod?.metadata?.namespace);
           return {
             namespace: pod?.metadata?.namespace,
             name: pod?.metadata?.name,
@@ -119,7 +118,6 @@ export default class ControllerTab extends Component<PropsType, StateType> {
           c.status?.desiredNumberScheduled || 0,
         ];
       case "job":
-        console.log(c);
         return [1, 1];
     }
   };

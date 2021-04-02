@@ -13,6 +13,7 @@ type PropsType = {
   saveValuesStatus?: string | null;
   isInModal?: boolean;
   currentTab?: string; // For resetting state when flipping b/w tabs in ExpandedChart
+  renderSaveButton?: boolean;
 };
 
 type StateType = any;
@@ -110,24 +111,26 @@ export default class ValuesWrapper extends Component<PropsType, StateType> {
   };
 
   renderButton = () => {
-    let { formTabs, currentTab } = this.props;
-    let tab = formTabs.find(
-      (t: any) => t.name === currentTab || t.value === currentTab
-    );
-    if (tab && tab.context && tab.context.type === "helm/values") {
-      return (
-        <SaveButton
-          disabled={this.isDisabled() || this.props.disabled}
-          text="Deploy"
-          onClick={() => this.props.onSubmit(this.state)}
-          status={
-            this.isDisabled()
-              ? "Missing required fields"
-              : this.props.saveValuesStatus
-          }
-          makeFlush={true}
-        />
+    if (this.props.renderSaveButton) {
+      let { formTabs, currentTab } = this.props;
+      let tab = formTabs.find(
+        (t: any) => t.name === currentTab || t.value === currentTab
       );
+      if (tab && tab.context && tab.context.type === "helm/values") {
+        return (
+          <SaveButton
+            disabled={this.isDisabled() || this.props.disabled}
+            text="Deploy"
+            onClick={() => this.props.onSubmit(this.state)}
+            status={
+              this.isDisabled()
+                ? "Missing required fields"
+                : this.props.saveValuesStatus
+            }
+            makeFlush={true}
+          />
+        );
+      }
     }
   };
 

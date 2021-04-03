@@ -59,7 +59,7 @@ func getDockerBuildPushStep(envSecretName, dockerFilePath, repoURL string) Githu
 
 const buildPackPush string = `
 export $(echo "${{secrets.%s}}" | xargs)
-echo "${{secrets.%s}}" > /.env_porter
+echo "${{secrets.%s}}" > ./env_porter
 sudo add-apt-repository ppa:cncf-buildpacks/pack-cli
 sudo apt-get update
 sudo apt-get install pack-cli

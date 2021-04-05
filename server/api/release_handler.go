@@ -308,6 +308,7 @@ func (app *App) HandleGetReleaseControllers(w http.ResponseWriter, r *http.Reque
 	}
 
 	k8sForm.PopulateK8sOptionsFromQueryParams(vals, app.Repo.Cluster)
+	k8sForm.DefaultNamespace = form.ReleaseForm.Namespace
 
 	// validate the form
 	if err := app.validator.Struct(k8sForm); err != nil {

@@ -87,6 +87,43 @@ func (g *GithubActions) Setup() (string, error) {
 	return g.commitGithubFile(client, g.getPorterYMLFileName(), fileBytes)
 }
 
+func (g *GithubActions) Cleanup() error {
+	client, err := g.getClient()
+
+	if err != nil {
+		return err
+	}
+
+	// get the repository to find the default branch
+	repo, _, err := client.Repositories.Get(
+		context.TODO(),
+		g.GitRepoOwner,
+		g.GitRepoName,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	g.defaultBranch = repo.GetDefaultBranch()
+
+	// delete the webhook token secret
+	err = g.deleteGithubSecret(client, g.getWebhookSecretName())
+
+	if err != nil {
+		return err
+	}
+
+	// delete the env secret
+	err = g.deleteGithubSecret(client, g.getBuildEnvSecretName())
+
+	if err != nil {
+		return err
+	}
+
+	return g.deleteGithubFile(client, g.getPorterYMLFileName())
+}
+
 type GithubActionYAMLStep struct {
 	Name string `yaml:"name,omitempty"`
 	ID   string `yaml:"id,omitempty"`
@@ -209,7 +246,32 @@ func (g *GithubActions) createGithubSecret(
 	// write the secret to the repo
 	_, err = client.Actions.CreateOrUpdateRepoSecret(context.TODO(), g.GitRepoOwner, g.GitRepoName, encryptedSecret)
 
-	return nil
+	return err
+}
+
+func (g *GithubActions) deleteGithubSecret(
+	client *github.Client,
+	secretName string,
+) error {
+	// delete the secret from the repo
+	_, err := client.Actions.DeleteRepoSecret(
+		context.TODO(),
+		g.GitRepoOwner,
+		g.GitRepoName,
+		secretName,
+	)
+
+	return err
+}
+
+func (g *GithubActions) CreateEnvSecret() error {
+	client, err := g.getClient()
+
+	if err != nil {
+		return err
+	}
+
+	return g.createEnvSecret(client)
 }
 
 func (g *GithubActions) createEnvSecret(client *github.Client) error {
@@ -253,11 +315,26 @@ func (g *GithubActions) commitGithubFile(
 	contents []byte,
 ) (string, error) {
 	filepath := ".github/workflows/" + filename
+	sha := ""
+
+	// get contents of a file if it exists
+	fileData, _, _, _ := client.Repositories.GetContents(
+		context.TODO(),
+		g.GitRepoOwner,
+		g.GitRepoName,
+		filepath,
+		&github.RepositoryContentGetOptions{},
+	)
+
+	if fileData != nil {
+		sha = *fileData.SHA
+	}
 
 	opts := &github.RepositoryContentFileOptions{
 		Message: github.String(fmt.Sprintf("Create %s file", filename)),
 		Content: contents,
 		Branch:  github.String(g.defaultBranch),
+		SHA:     &sha,
 		Committer: &github.CommitAuthor{
 			Name:  github.String("Porter Bot"),
 			Email: github.String("contact@getporter.dev"),
@@ -277,4 +354,49 @@ func (g *GithubActions) commitGithubFile(
 	}
 
 	return *resp.Commit.SHA, nil
+}
+
+func (g *GithubActions) deleteGithubFile(
+	client *github.Client,
+	filename string,
+) error {
+	filepath := ".github/workflows/" + filename
+	sha := ""
+
+	// get contents of a file if it exists
+	fileData, _, _, _ := client.Repositories.GetContents(
+		context.TODO(),
+		g.GitRepoOwner,
+		g.GitRepoName,
+		filepath,
+		&github.RepositoryContentGetOptions{},
+	)
+
+	if fileData != nil {
+		sha = *fileData.SHA
+	}
+
+	opts := &github.RepositoryContentFileOptions{
+		Message: github.String(fmt.Sprintf("Delete %s file", filename)),
+		Branch:  github.String(g.defaultBranch),
+		SHA:     &sha,
+		Committer: &github.CommitAuthor{
+			Name:  github.String("Porter Bot"),
+			Email: github.String("contact@getporter.dev"),
+		},
+	}
+
+	_, _, err := client.Repositories.DeleteFile(
+		context.TODO(),
+		g.GitRepoOwner,
+		g.GitRepoName,
+		filepath,
+		opts,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

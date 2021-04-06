@@ -16,4 +16,4 @@ https://docs.getporter.dev/docs/setting-up-cicd-1
 -------------------------------------------------------------------
 EOF
 
-sleep infinity
+/main

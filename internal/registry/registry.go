@@ -469,6 +469,10 @@ func (r *Registry) listECRImages(repoName string, repo repository.Repository) ([
 	res := make([]*Image, 0)
 
 	for _, img := range resp.ImageIds {
+		if img.ImageTag == nil {
+			continue
+		}
+
 		res = append(res, &Image{
 			Digest:         *img.ImageDigest,
 			Tag:            *img.ImageTag,

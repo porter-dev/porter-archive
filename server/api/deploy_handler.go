@@ -6,12 +6,15 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
+	"strings"
 
 	"github.com/go-chi/chi"
 	"github.com/porter-dev/porter/internal/forms"
 	"github.com/porter-dev/porter/internal/helm"
 	"github.com/porter-dev/porter/internal/helm/loader"
+	"github.com/porter-dev/porter/internal/integrations/ci/actions"
 	"github.com/porter-dev/porter/internal/models"
+	"gopkg.in/yaml.v2"
 )
 
 // HandleDeployTemplate triggers a chart deployment from a template
@@ -166,6 +169,13 @@ func (app *App) HandleDeployTemplate(w http.ResponseWriter, r *http.Request) {
 func (app *App) HandleUninstallTemplate(w http.ResponseWriter, r *http.Request) {
 	name := chi.URLParam(r, "name")
 
+	vals, err := url.ParseQuery(r.URL.RawQuery)
+
+	if err != nil {
+		app.handleErrorFormDecoding(err, ErrReleaseDecode, w)
+		return
+	}
+
 	form := &forms.GetReleaseForm{
 		ReleaseForm: &forms.ReleaseForm{
 			Form: &helm.Form{
@@ -187,9 +197,81 @@ func (app *App) HandleUninstallTemplate(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	_, err = agent.UninstallChart(name)
+	resp, err := agent.UninstallChart(name)
 	if err != nil {
 		return
+	}
+
+	// update the github actions env if the release exists and is built from source
+	if cName := resp.Release.Chart.Metadata.Name; cName == "job" || cName == "web" || cName == "worker" {
+		clusterID, err := strconv.ParseUint(vals["cluster_id"][0], 10, 64)
+
+		if err != nil {
+			app.sendExternalError(err, http.StatusInternalServerError, HTTPError{
+				Code:   ErrReleaseReadData,
+				Errors: []string{"release not found"},
+			}, w)
+		}
+
+		release, err := app.Repo.Release.ReadRelease(uint(clusterID), name, resp.Release.Namespace)
+		gitAction := release.GitActionConfig
+
+		if release != nil && gitAction.ID != 0 {
+			// parse env into build env
+			cEnv := &ContainerEnvConfig{}
+			rawValues, err := yaml.Marshal(resp.Release.Config)
+
+			if err != nil {
+				app.sendExternalError(err, http.StatusInternalServerError, HTTPError{
+					Code:   ErrReleaseReadData,
+					Errors: []string{"could not get values of previous revision"},
+				}, w)
+			}
+
+			yaml.Unmarshal(rawValues, cEnv)
+
+			gr, err := app.Repo.GitRepo.ReadGitRepo(gitAction.GitRepoID)
+
+			if err != nil {
+				app.sendExternalError(err, http.StatusInternalServerError, HTTPError{
+					Code:   ErrReleaseReadData,
+					Errors: []string{"github repo integration not found"},
+				}, w)
+			}
+
+			repoSplit := strings.Split(gitAction.GitRepo, "/")
+
+			projID, err := strconv.ParseUint(chi.URLParam(r, "project_id"), 0, 64)
+
+			if err != nil || projID == 0 {
+				app.handleErrorFormDecoding(err, ErrProjectDecode, w)
+				return
+			}
+
+			gaRunner := &actions.GithubActions{
+				GitIntegration: gr,
+				GitRepoName:    repoSplit[1],
+				GitRepoOwner:   repoSplit[0],
+				Repo:           *app.Repo,
+				GithubConf:     app.GithubProjectConf,
+				WebhookToken:   release.WebhookToken,
+				ProjectID:      uint(projID),
+				ReleaseName:    name,
+				DockerFilePath: gitAction.DockerfilePath,
+				FolderPath:     gitAction.FolderPath,
+				ImageRepoURL:   gitAction.ImageRepoURI,
+				BuildEnv:       cEnv.Container.Env.Normal,
+			}
+
+			err = gaRunner.Cleanup()
+
+			if err != nil {
+				app.sendExternalError(err, http.StatusInternalServerError, HTTPError{
+					Code:   ErrReleaseReadData,
+					Errors: []string{"could not remove github action"},
+				}, w)
+			}
+		}
 	}
 
 	w.WriteHeader(http.StatusOK)

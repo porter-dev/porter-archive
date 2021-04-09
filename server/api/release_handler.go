@@ -677,6 +677,15 @@ func (app *App) HandleReleaseDeployWebhook(w http.ResponseWriter, r *http.Reques
 	rel, err := agent.GetRelease(form.Name, 0)
 	rel.Config["image"] = image
 
+	if rel.Config["auto_deploy"] == false {
+		app.sendExternalError(err, http.StatusInternalServerError, HTTPError{
+			Code:   ErrReleaseDeploy,
+			Errors: []string{"Deploy webhook is disabled for this deployment."},
+		}, w)
+
+		return
+	} 
+
 	registries, err := app.Repo.Registry.ListRegistriesByProjectID(uint(form.ReleaseForm.Cluster.ProjectID))
 
 	if err != nil {

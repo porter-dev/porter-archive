@@ -58,6 +58,54 @@ type ListOptions struct {
 	FieldSelector string
 }
 
+// CreateConfigMap creates the configmap given the key-value pairs and namespace
+func (a *Agent) CreateConfigMap(name string, namespace string, configMap map[string]string) (*v1.ConfigMap, error) {
+	return a.Clientset.CoreV1().ConfigMaps(namespace).Create(
+		context.TODO(),
+		&v1.ConfigMap{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: name,
+				Namespace: namespace,
+			},
+			Data: configMap,
+		},
+		metav1.CreateOptions{},
+	)
+}
+
+// UpdateConfigMap updates the configmap given its name and namespace
+func (a *Agent) UpdateConfigMap(name string, namespace string, configMap map[string]string) (*v1.ConfigMap, error) {
+	return a.Clientset.CoreV1().ConfigMaps(namespace).Update(
+		context.TODO(),
+		&v1.ConfigMap{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: name,
+				Namespace: namespace,
+			},
+			Data: configMap,
+		},
+		metav1.UpdateOptions{},
+	)
+}
+
+// DeleteConfigMap deletes the configmap given its name and namespace
+func (a *Agent) DeleteConfigMap(name string, namespace string) (error) {
+	return a.Clientset.CoreV1().ConfigMaps(namespace).Delete(
+		context.TODO(),
+		name,
+		metav1.DeleteOptions{},
+	)
+}
+
+// GetConfigMap retrieves the configmap given its name and namespace
+func (a *Agent) GetConfigMap(name string, namespace string) (*v1.ConfigMap, error) {
+	return a.Clientset.CoreV1().ConfigMaps(namespace).Get(
+		context.TODO(),
+		name,
+		metav1.GetOptions{},
+	)
+}
+
 // ListNamespaces simply lists namespaces
 func (a *Agent) ListNamespaces() (*v1.NamespaceList, error) {
 	return a.Clientset.CoreV1().Namespaces().List(

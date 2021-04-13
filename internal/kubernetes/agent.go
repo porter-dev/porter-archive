@@ -106,6 +106,14 @@ func (a *Agent) GetConfigMap(name string, namespace string) (*v1.ConfigMap, erro
 	)
 }
 
+// ListConfigMaps simply lists namespaces
+func (a *Agent) ListConfigMaps(namespace string) (*v1.ConfigMapList, error) {
+	return a.Clientset.CoreV1().ConfigMaps(namespace).List(
+		context.TODO(),
+		metav1.ListOptions{},
+	)
+}
+
 // ListNamespaces simply lists namespaces
 func (a *Agent) ListNamespaces() (*v1.NamespaceList, error) {
 	return a.Clientset.CoreV1().Namespaces().List(

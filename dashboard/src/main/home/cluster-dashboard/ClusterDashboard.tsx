@@ -107,11 +107,66 @@ class ClusterDashboard extends Component<PropsType, StateType> {
 
   renderBody = () => {
     let { currentCluster, setSidebar, currentView } = this.props;
+    let { currentProject } = this.context;
+    api
+    .listConfigMaps(
+      "<token>",
+      {
+        namespace: "default",
+        cluster_id: currentCluster.id
+      },
+      { id: currentProject.id }
+    )
+    .then((res) => {
+      console.log("CONFIGMAP", res)
+    })
+    .catch((err) => {
+      console.log("CONFIGMAP", err)
+    });
     if (currentView === "env-groups") {
       return (
         <>
           <ControlRow>
-            <Button onClick={() => this.props.history.push("launch")}>
+            <Button onClick={() => {
+              // api
+              // .createConfigMap(
+              //   "<token>",
+              //   {
+              //     name: "black-skirts",
+              //     namespace: "default",
+              //     variables: {
+              //       hey: "dev",
+              //       bro: "cha",
+              //       BROTHER: 'ok'
+              //     },
+              //   },
+              //   { id: currentProject.id, cluster_id: currentCluster.id }
+              // )
+              // .then((res) => {
+              //   console.log("CONFIGMAP", res)
+              // })
+              // .catch((err) => {
+              //   console.log("CONFIGMAP", err)
+              // });
+
+              api
+              .deleteConfigMap(
+                "<token>",
+                {
+                  name: "black-skirts",
+                  namespace: "default",
+                  cluster_id: currentCluster.id
+                },
+                { id: currentProject.id }
+              )
+              .then((res) => {
+                console.log("CONFIGMAP", res)
+              })
+              .catch((err) => {
+                console.log("CONFIGMAP", err)
+              });
+
+            }}>
               <i className="material-icons">add</i> Create Env Group
             </Button>
             <SortFilterWrapper>

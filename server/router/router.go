@@ -1254,10 +1254,24 @@ func New(a *api.App) *chi.Mux {
 
 		r.Method(
 			"GET",
-			"/projects/{project_id}/k8s/configmap/get",
+			"/projects/{project_id}/k8s/configmap",
 			auth.DoesUserHaveProjectAccess(
 				auth.DoesUserHaveClusterAccess(
 					requestlog.NewHandler(a.HandleGetConfigMap, l),
+					mw.URLParam,
+					mw.QueryParam,
+				),
+				mw.URLParam,
+				mw.ReadAccess,
+			),
+		)
+
+		r.Method(
+			"GET",
+			"/projects/{project_id}/k8s/configmap/list",
+			auth.DoesUserHaveProjectAccess(
+				auth.DoesUserHaveClusterAccess(
+					requestlog.NewHandler(a.HandleListConfigMaps, l),
 					mw.URLParam,
 					mw.QueryParam,
 				),

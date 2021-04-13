@@ -10,11 +10,10 @@ import { ChartType, ClusterType } from "shared/types";
 import { PorterUrl } from "shared/routing";
 
 import ChartList from "./chart/ChartList";
-import EnvGroupList from "./env-groups/EnvGroupList";
+import EnvGroupDashboard from "./env-groups/EnvGroupDashboard";
 import NamespaceSelector from "./NamespaceSelector";
 import SortSelector from "./SortSelector";
 import ExpandedChart from "./expanded-chart/ExpandedChart";
-import ExpandedEnvGroup from "./env-groups/ExpandedEnvGroup";
 import ExpandedJobChart from "./expanded-chart/ExpandedJobChart";
 import { RouteComponentProps, withRouter } from "react-router";
 
@@ -30,7 +29,6 @@ type StateType = {
   namespace: string;
   sortType: string;
   currentChart: ChartType | null;
-  expandedEnvGroup: any;
   isMetricsInstalled: boolean;
 };
 
@@ -41,7 +39,6 @@ class ClusterDashboard extends Component<PropsType, StateType> {
       ? localStorage.getItem("SortType")
       : "Newest",
     currentChart: null as ChartType | null,
-    expandedEnvGroup: null as any,
     isMetricsInstalled: false,
   };
 
@@ -88,8 +85,6 @@ class ClusterDashboard extends Component<PropsType, StateType> {
   renderDashboardIcon = () => {
     if (this.props.currentView === "jobs") {
       return <Img src={monojob} />;
-    } else if (this.props.currentView === "env-groups") {
-      return <Img src={sliders} />;
     } else {
       return <Img src={monoweb} />;
     }
@@ -98,8 +93,6 @@ class ClusterDashboard extends Component<PropsType, StateType> {
   getDescription = (currentView: string): string => {
     if (currentView === "jobs") {
       return "Scripts and tasks that run once or on a repeating interval.";
-    } else if (currentView === "env-groups") {
-      return "Groups of environment variables for storing secrets and configuration."
     } else {
       return "Continuously running web services, workers, and add-ons.";
     }
@@ -107,64 +100,35 @@ class ClusterDashboard extends Component<PropsType, StateType> {
 
   renderBody = () => {
     let { currentCluster, setSidebar, currentView } = this.props;
-    if (currentView === "env-groups") {
-      return (
-        <>
-          <ControlRow>
-            <Button onClick={() => this.props.history.push("launch")}>
-              <i className="material-icons">add</i> Create Env Group
-            </Button>
-            <SortFilterWrapper>
-              <SortSelector
-                setSortType={(sortType) => this.setState({ sortType })}
-                sortType={this.state.sortType}
-              />
-              <NamespaceSelector
-                setNamespace={(namespace) => this.setState({ namespace })}
-                namespace={this.state.namespace}
-              />
-            </SortFilterWrapper>
-          </ControlRow>
+    return (
+      <>
+        <ControlRow>
+          <Button onClick={() => this.props.history.push("launch")}>
+            <i className="material-icons">add</i> Launch Template
+          </Button>
+          <SortFilterWrapper>
+            <SortSelector
+              setSortType={(sortType) => this.setState({ sortType })}
+              sortType={this.state.sortType}
+            />
+            <NamespaceSelector
+              setNamespace={(namespace) => this.setState({ namespace })}
+              namespace={this.state.namespace}
+            />
+          </SortFilterWrapper>
+        </ControlRow>
 
-          <EnvGroupList
-            currentCluster={currentCluster}
-            namespace={this.state.namespace}
-            sortType={this.state.sortType}
-            setExpandedEnvGroup={(envGroup: any) => this.setState({ expandedEnvGroup: envGroup })}
-          />
-        </>
-      );
-    } else {
-      return (
-        <>
-          <ControlRow>
-            <Button onClick={() => this.props.history.push("launch")}>
-              <i className="material-icons">add</i> Launch Template
-            </Button>
-            <SortFilterWrapper>
-              <SortSelector
-                setSortType={(sortType) => this.setState({ sortType })}
-                sortType={this.state.sortType}
-              />
-              <NamespaceSelector
-                setNamespace={(namespace) => this.setState({ namespace })}
-                namespace={this.state.namespace}
-              />
-            </SortFilterWrapper>
-          </ControlRow>
-
-          <ChartList
-            currentView={currentView}
-            currentCluster={currentCluster}
-            namespace={this.state.namespace}
-            sortType={this.state.sortType}
-            setCurrentChart={(x: ChartType | null) =>
-              this.setState({ currentChart: x })
-            }
-          />
-        </>
-      );
-    }
+        <ChartList
+          currentView={currentView}
+          currentCluster={currentCluster}
+          namespace={this.state.namespace}
+          sortType={this.state.sortType}
+          setCurrentChart={(x: ChartType | null) =>
+            this.setState({ currentChart: x })
+          }
+        />
+      </>
+    );
   }
 
   renderContents = () => {
@@ -190,14 +154,9 @@ class ClusterDashboard extends Component<PropsType, StateType> {
           setSidebar={setSidebar}
         />
       );
-    } else if (this.state.expandedEnvGroup && currentView === "env-groups") {
+    } else if (currentView === "env-groups") {
       return (
-        <ExpandedEnvGroup
-          namespace={this.state.namespace}
-          currentCluster={this.props.currentCluster}
-          initialEnvGroup={this.state.expandedEnvGroup}
-          closeExpanded={() => this.setState({ expandedEnvGroup: null })}
-        />
+        <EnvGroupDashboard currentCluster={this.props.currentCluster} />
       );
     }
 
@@ -205,7 +164,7 @@ class ClusterDashboard extends Component<PropsType, StateType> {
       <div>
         <TitleSection>
           {this.renderDashboardIcon()}
-          <Title>{currentView === "env-groups" ? "Environment Groups" : currentView}</Title>
+          <Title>{currentView}</Title>
         </TitleSection>
 
         <InfoSection>

@@ -1,0 +1,178 @@
+import React, { Component } from "react";
+import styled from "styled-components";
+
+import sliders from "assets/sliders.svg";
+
+import { Context } from "shared/Context";
+import { ClusterType } from "shared/types";
+
+import DashboardHeader from "../DashboardHeader";
+import NamespaceSelector from "../NamespaceSelector";
+import SortSelector from "../SortSelector";
+import EnvGroupList from "./EnvGroupList";
+import CreateEnvGroup from "./CreateEnvGroup";
+import ExpandedEnvGroup from "./ExpandedEnvGroup";
+import { RouteComponentProps, withRouter } from "react-router";
+
+type PropsType = RouteComponentProps & {
+  currentCluster: ClusterType;
+};
+
+type StateType = {
+  expand: boolean;
+  update: any[];
+  sortType: string;
+  expandedEnvGroup: any;
+  namespace: string;
+  createEnvMode: boolean;
+};
+
+class EnvGroupDashboard extends Component<PropsType, StateType> {
+  state = {
+    expand: false,
+    update: [] as any[],
+    namespace: "default",
+    expandedEnvGroup: null as any,
+    createEnvMode: false,
+    sortType: localStorage.getItem("SortType")
+      ? localStorage.getItem("SortType")
+      : "Newest",
+  };
+
+  readableDate = (s: string) => {
+    let ts = new Date(s);
+    let date = ts.toLocaleDateString();
+    let time = ts.toLocaleTimeString([], {
+      hour: "numeric",
+      minute: "2-digit",
+    });
+    return `${time} on ${date}`;
+  };
+
+  renderBody = () => {
+    if (this.state.createEnvMode) {
+      return (
+        <CreateEnvGroup goBack={() => this.setState({ createEnvMode: false })} />
+      )
+    } else {
+      return (
+        <>
+          <ControlRow>
+            <Button onClick={() => this.setState({ createEnvMode: !this.state.createEnvMode })}>
+              <i className="material-icons">add</i> Create Env Group
+            </Button>
+            <SortFilterWrapper>
+              <SortSelector
+                setSortType={(sortType) => this.setState({ sortType })}
+                sortType={this.state.sortType}
+              />
+              <NamespaceSelector
+                setNamespace={(namespace) => this.setState({ namespace })}
+                namespace={this.state.namespace}
+              />
+            </SortFilterWrapper>
+          </ControlRow>
+
+          <EnvGroupList
+            currentCluster={this.props.currentCluster}
+            namespace={this.state.namespace}
+            sortType={this.state.sortType}
+            setExpandedEnvGroup={(envGroup: any) => this.setState({ expandedEnvGroup: envGroup })}
+          />
+        </>
+      )
+    }
+  }
+
+  renderContents = () => {
+    if (this.state.expandedEnvGroup) {
+      return (
+        <ExpandedEnvGroup
+          namespace={this.state.namespace}
+          currentCluster={this.props.currentCluster}
+          initialEnvGroup={this.state.expandedEnvGroup}
+          closeExpanded={() => this.setState({ expandedEnvGroup: null })}
+        />
+      );
+    } else {
+      return (
+        <>
+          <DashboardHeader
+            image={sliders}
+            title="Environment Groups"
+            description="Groups of environment variables for storing secrets and configuration."
+          />
+          {this.renderBody()}
+        </>
+      );
+    }
+  }
+
+  render() {
+    return (
+      <>{this.renderContents()}</>
+    );
+  }
+}
+
+EnvGroupDashboard.contextType = Context;
+
+export default withRouter(EnvGroupDashboard);
+
+const SortFilterWrapper = styled.div`
+  width: 468px;
+  display: flex;
+  justify-content: space-between;
+`;
+
+const ControlRow = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 35px;
+  padding-left: 0px;
+`;
+
+const Button = styled.div`
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 13px;
+  cursor: pointer;
+  font-family: "Work Sans", sans-serif;
+  border-radius: 20px;
+  color: white;
+  height: 35px;
+  padding: 0px 8px;
+  padding-bottom: 1px;
+  margin-right: 10px;
+  font-weight: 500;
+  padding-right: 15px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  box-shadow: 0 5px 8px 0px #00000010;
+  cursor: ${(props: { disabled?: boolean }) =>
+    props.disabled ? "not-allowed" : "pointer"};
+
+  background: ${(props: { disabled?: boolean }) =>
+    props.disabled ? "#aaaabbee" : "#616FEEcc"};
+  :hover {
+    background: ${(props: { disabled?: boolean }) =>
+      props.disabled ? "" : "#505edddd"};
+  }
+
+  > i {
+    color: white;
+    width: 18px;
+    height: 18px;
+    font-weight: 600;
+    font-size: 12px;
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    margin-right: 5px;
+    justify-content: center;
+  }
+`;

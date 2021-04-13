@@ -105,9 +105,10 @@ class ClusterDashboard extends Component<PropsType, StateType> {
     }
   }
 
-  renderBody = () => {
-    let { currentCluster, setSidebar, currentView } = this.props;
+  examples = () => {
+    let { currentCluster } = this.props;
     let { currentProject } = this.context;
+
     api
     .listConfigMaps(
       "<token>",
@@ -123,49 +124,72 @@ class ClusterDashboard extends Component<PropsType, StateType> {
     .catch((err) => {
       console.log("CONFIGMAP", err)
     });
+
+    api
+    .getConfigMap(
+      "<token>",
+      {
+        name: "jacksn-park",
+        namespace: "default",
+        cluster_id: currentCluster.id
+      },
+      { id: currentProject.id }
+    )
+    .then((res) => {
+      console.log("CONFIGMAP", res)
+    })
+    .catch((err) => {
+      console.log("CONFIGMAP", err)
+    });
+
+    api
+    .createConfigMap(
+      "<token>",
+      {
+        name: "black-skirts",
+        namespace: "default",
+        variables: {
+          hey: "dev",
+          bro: "cha",
+          BROTHER: 'ok'
+        },
+      },
+      { id: currentProject.id, cluster_id: currentCluster.id }
+    )
+    .then((res) => {
+      console.log("CONFIGMAP", res)
+    })
+    .catch((err) => {
+      console.log("CONFIGMAP", err)
+    });
+
+    api
+    .deleteConfigMap(
+      "<token>",
+      {
+        name: "black-skirts",
+        namespace: "default",
+        cluster_id: currentCluster.id
+      },
+      { id: currentProject.id }
+    )
+    .then((res) => {
+      console.log("CONFIGMAP", res)
+    })
+    .catch((err) => {
+      console.log("CONFIGMAP", err)
+    });
+  }
+
+  renderBody = () => {
+    let { currentCluster, setSidebar, currentView } = this.props;
+    let { currentProject } = this.context;
+    
     if (currentView === "env-groups") {
       return (
         <>
           <ControlRow>
             <Button onClick={() => {
-              // api
-              // .createConfigMap(
-              //   "<token>",
-              //   {
-              //     name: "black-skirts",
-              //     namespace: "default",
-              //     variables: {
-              //       hey: "dev",
-              //       bro: "cha",
-              //       BROTHER: 'ok'
-              //     },
-              //   },
-              //   { id: currentProject.id, cluster_id: currentCluster.id }
-              // )
-              // .then((res) => {
-              //   console.log("CONFIGMAP", res)
-              // })
-              // .catch((err) => {
-              //   console.log("CONFIGMAP", err)
-              // });
-
-              api
-              .deleteConfigMap(
-                "<token>",
-                {
-                  name: "black-skirts",
-                  namespace: "default",
-                  cluster_id: currentCluster.id
-                },
-                { id: currentProject.id }
-              )
-              .then((res) => {
-                console.log("CONFIGMAP", res)
-              })
-              .catch((err) => {
-                console.log("CONFIGMAP", err)
-              });
-
             }}>
               <i className="material-icons">add</i> Create Env Group
             </Button>

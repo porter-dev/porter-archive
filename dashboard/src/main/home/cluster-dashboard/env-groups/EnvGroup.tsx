@@ -35,6 +35,10 @@ export default class EnvGroup extends Component<PropsType, StateType> {
 
   render() {
     let { envGroup, setExpanded } = this.props;
+    let name = envGroup?.metadata?.name;
+    let timestamp = envGroup?.metadata?.creationTimestamp;
+    let namespace = envGroup?.metadata?.namespace;
+    let varCount = Object.values(envGroup?.data || {}).length;
 
     return (
       <StyledEnvGroup
@@ -47,23 +51,23 @@ export default class EnvGroup extends Component<PropsType, StateType> {
           <IconWrapper>
             <Icon src={key} />
           </IconWrapper>
-          {envGroup.name}
+          {name}
         </Title>
 
         <BottomWrapper>
           <InfoWrapper>
             <LastDeployed>
-              Last updated {this.readableDate(envGroup.last_updated)}
+              Last updated {this.readableDate(timestamp)}
             </LastDeployed>
           </InfoWrapper>
 
           <TagWrapper>
             Namespace
-            <NamespaceTag>{envGroup.namespace}</NamespaceTag>
+            <NamespaceTag>{namespace}</NamespaceTag>
           </TagWrapper>
         </BottomWrapper>
 
-        <Version>12 variables</Version>
+        <Version>{varCount} variables</Version>
       </StyledEnvGroup>
     );
   }

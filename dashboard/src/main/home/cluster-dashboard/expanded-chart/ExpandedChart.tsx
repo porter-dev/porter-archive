@@ -351,6 +351,9 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
                         metaState={metaState}
                         setMetaState={setMetaState}
                         sections={tab.sections}
+
+                        // For env group loader
+                        namespace={this.props.namespace}
                       />
                     );
                   }

@@ -21,6 +21,8 @@ type PropsType = {
   setMetaState?: any;
   handleEnvChange?: (x: any) => void;
   disabled?: boolean;
+  namespace?: string;
+  clusterId?: number;
 };
 
 type StateType = any;
@@ -78,6 +80,8 @@ export default class ValuesForm extends Component<PropsType, StateType> {
           return (
             <KeyValueArray
               key={i}
+              namespace={this.props.namespace}
+              clusterId={this.props.clusterId}
               values={this.props.metaState[key]}
               setValues={(x: any) => {
                 this.props.setMetaState({ [key]: x });

@@ -116,7 +116,6 @@ const InfoWrapper = styled.div`
 const LastDeployed = styled.div`
   font-size: 13px;
   margin-left: 10px;
-  margin-top: -1px;
   display: flex;
   align-items: center;
   color: #aaaabb66;

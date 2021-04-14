@@ -16,23 +16,21 @@ import TabRegion from "components/TabRegion";
 import KeyValueArray from "components/values-form/KeyValueArray";
 import Heading from "components/values-form/Heading";
 import Helper from "components/values-form/Helper";
-import SettingsSection from "../expanded-chart/SettingsSection";
 
 type PropsType = {
   namespace: string;
-  initialEnvGroup: any;
+  envGroup: any;
   currentCluster: ClusterType;
   closeExpanded: () => void;
 };
 
 type StateType = {
-  currentEnvGroup: any;
   loading: boolean;
   currentTab: string | null;
   showDeleteOverlay: boolean;
   deleting: boolean;
   saveValuesStatus: string | null;
-  values: any[];
+  values: any;
 };
 
 const tabOptions = [
@@ -42,25 +40,40 @@ const tabOptions = [
 
 export default class ExpandedEnvGroup extends Component<PropsType, StateType> {
   state = {
-    currentEnvGroup: this.props.initialEnvGroup,
     loading: true,
     currentTab: "environment",
     showDeleteOverlay: false,
     deleting: false,
     saveValuesStatus: null as string | null,
-    values: [] as any[],
+    values: this.props.envGroup.data as any,
   };
 
-  getEnvGroupData = () => {
-    // Get complete envgroup data
-  };
+  handleUpdateValues = (config?: any) => {
+    let { envGroup } = this.props;
+    let name = envGroup.metadata.name;
+    let namespace = envGroup.metadata.namespace;
 
-  handleSaveValues = (config?: any) => {
-    // Save env group values
+    this.setState({ saveValuesStatus: "loading" });
+    api.updateConfigMap("<token>", {
+      name,
+      namespace,
+      variables: this.state.values,
+    }, { 
+      id: this.context.currentProject.id,
+      cluster_id: this.props.currentCluster.id
+    })
+      .then((res) => {
+        this.setState({ saveValuesStatus: "successful" });
+      })
+      .catch((err) => {
+        this.setState({ saveValuesStatus: "error" });
+      });
   };
 
   renderTabContents = () => {
     let currentTab = this.state.currentTab;
+    let { envGroup, namespace } = this.props;
+    let name = envGroup.metadata.name;
 
     switch (currentTab) {
       case "environment":
@@ -70,13 +83,14 @@ export default class ExpandedEnvGroup extends Component<PropsType, StateType> {
               <Heading>Environment Variables</Heading>
               <Helper>Set environment variables for your secrets and environment-specific configuration.</Helper>
               <KeyValueArray
-                values={this.state.values}
+                namespace={namespace}
+                values={this.state.values || {}}
                 setValues={(x: any) => this.setState({ values: x })}
               />
             </InnerWrapper>
             <SaveButton
               text="Update"
-              onClick={() => this.handleSaveValues()}
+              onClick={() => this.handleUpdateValues()}
               status={this.state.saveValuesStatus}
               makeFlush={true}
             />
@@ -92,7 +106,7 @@ export default class ExpandedEnvGroup extends Component<PropsType, StateType> {
                 color="#b91133"
                 onClick={() => this.setState({ showDeleteOverlay: true })}
               >
-                Delete {this.state.currentEnvGroup.name}
+                Delete {name}
               </Button>
             </InnerWrapper>
           </TabWrapper>
@@ -111,7 +125,25 @@ export default class ExpandedEnvGroup extends Component<PropsType, StateType> {
   };
 
   handleDeleteEnvGroup = () => {
-    
+    let { envGroup } = this.props;
+    let name = envGroup.metadata.name;
+    let namespace = envGroup.metadata.namespace;
+
+    this.setState({ deleting: true });
+    api.deleteConfigMap("<token>", {
+      name,
+      namespace,
+      cluster_id: this.props.currentCluster.id
+    }, { id: this.context.currentProject.id })
+      .then((res) => {
+        this.props.closeExpanded();
+        this.setState({ deleting: false });
+        // console.log("CONFIGMAP", res);
+      })
+      .catch((err) => {
+        this.setState({ deleting: false, showDeleteOverlay: false });
+        // console.log("CONFIGMAP", err);
+      });
   };
 
   renderDeleteOverlay = () => {
@@ -126,7 +158,10 @@ export default class ExpandedEnvGroup extends Component<PropsType, StateType> {
 
   render() {
     let { closeExpanded } = this.props;
-    let { currentEnvGroup } = this.state;
+    let { envGroup } = this.props;
+    let name = envGroup.metadata.name;
+    let timestamp = envGroup.metadata.creationTimestamp;
+    let namespace = envGroup.metadata.namespace;
 
     return (
       <>
@@ -134,7 +169,7 @@ export default class ExpandedEnvGroup extends Component<PropsType, StateType> {
         <StyledExpandedChart>
           <ConfirmOverlay
             show={this.state.showDeleteOverlay}
-            message={`Are you sure you want to delete ${currentEnvGroup.name}?`}
+            message={`Are you sure you want to delete ${name}?`}
             onYes={this.handleDeleteEnvGroup}
             onNo={() => this.setState({ showDeleteOverlay: false })}
           />
@@ -146,16 +181,16 @@ export default class ExpandedEnvGroup extends Component<PropsType, StateType> {
                 <IconWrapper>
                   <Icon src={key} />
                 </IconWrapper>
-                {currentEnvGroup.name}
+                {name}
               </Title>
               <InfoWrapper>
                 <LastDeployed>
-                  Last updated {this.readableDate(currentEnvGroup.last_updated)}
+                  Last updated {this.readableDate(timestamp)}
                 </LastDeployed>
               </InfoWrapper>
 
               <TagWrapper>
-                Namespace <NamespaceTag>{currentEnvGroup.namespace}</NamespaceTag>
+                Namespace <NamespaceTag>{namespace}</NamespaceTag>
               </TagWrapper>
             </TitleSection>
 

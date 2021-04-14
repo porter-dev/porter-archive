@@ -51,7 +51,7 @@ export default class KeyValueArray extends Component<PropsType, StateType> {
       values.push(entry);
     });
     return values;
-  }
+  };
 
   renderDeleteButton = (i: number) => {
     if (!this.props.disabled) {
@@ -120,8 +120,8 @@ export default class KeyValueArray extends Component<PropsType, StateType> {
           width="665px"
           height="332px"
         >
-          <LoadEnvGroupModal 
-            namespace={this.props.namespace} 
+          <LoadEnvGroupModal
+            namespace={this.props.namespace}
             clusterId={this.props.clusterId}
             closeModal={() => this.setState({ showEnvModal: false })}
             setValues={(values: any) => {
@@ -130,9 +130,9 @@ export default class KeyValueArray extends Component<PropsType, StateType> {
             }}
           />
         </Modal>
-      )
+      );
     }
-  }
+  };
 
   render() {
     return (
@@ -153,15 +153,15 @@ export default class KeyValueArray extends Component<PropsType, StateType> {
                 <i className="material-icons">add</i> Add Row
               </AddRowButton>
               <Spacer />
-              {
-                this.props.namespace && (
-                  <LoadButton 
-                    onClick={() => this.setState({ showEnvModal: !this.state.showEnvModal })}
-                  >
-                    <img src={sliders} /> Load from Env Group
-                  </LoadButton>
-                )
-              }
+              {this.props.namespace && (
+                <LoadButton
+                  onClick={() =>
+                    this.setState({ showEnvModal: !this.state.showEnvModal })
+                  }
+                >
+                  <img src={sliders} /> Load from Env Group
+                </LoadButton>
+              )}
             </InputWrapper>
           )}
         </StyledInputArray>

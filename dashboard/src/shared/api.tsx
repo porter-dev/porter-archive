@@ -737,7 +737,7 @@ const createConfigMap = baseApi<
     namespace: string;
     variables: Record<string, string>;
   },
-  { id: number, cluster_id: number }
+  { id: number; cluster_id: number }
 >("POST", (pathParams) => {
   let { id, cluster_id } = pathParams;
   return `/api/projects/${id}/k8s/configmap/create?cluster_id=${cluster_id}`;
@@ -749,7 +749,7 @@ const updateConfigMap = baseApi<
     namespace: string;
     variables: Record<string, string>;
   },
-  { id: number, cluster_id: number }
+  { id: number; cluster_id: number }
 >("POST", (pathParams) => {
   let { id, cluster_id } = pathParams;
   return `/api/projects/${id}/k8s/configmap/update?cluster_id=${cluster_id}`;
@@ -757,8 +757,8 @@ const updateConfigMap = baseApi<
 
 const deleteConfigMap = baseApi<
   {
-    name: string,
-    namespace: string,
+    name: string;
+    namespace: string;
     cluster_id: number;
   },
   { id: number }

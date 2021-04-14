@@ -2,13 +2,12 @@ import React, { Component } from "react";
 import styled from "styled-components";
 
 type PropsType = {
-  image: any,
-  title: string,
-  description: string,
+  image: any;
+  title: string;
+  description: string;
 };
 
-type StateType = {
-};
+type StateType = {};
 
 export default class DashboardHeader extends Component<PropsType, StateType> {
   render() {
@@ -25,9 +24,7 @@ export default class DashboardHeader extends Component<PropsType, StateType> {
               <i className="material-icons">info</i> Info
             </InfoLabel>
           </TopRow>
-          <Description>
-            {this.props.description}
-          </Description>
+          <Description>{this.props.description}</Description>
         </InfoSection>
 
         <LineBreak />

@@ -35,7 +35,7 @@ type StateType = {
 
 const tabOptions = [
   { value: "environment", label: "Environment Variables" },
-  { value: "settings", label: "Settings" }
+  { value: "settings", label: "Settings" },
 ];
 
 export default class ExpandedEnvGroup extends Component<PropsType, StateType> {
@@ -54,14 +54,19 @@ export default class ExpandedEnvGroup extends Component<PropsType, StateType> {
     let namespace = envGroup.metadata.namespace;
 
     this.setState({ saveValuesStatus: "loading" });
-    api.updateConfigMap("<token>", {
-      name,
-      namespace,
-      variables: this.state.values,
-    }, { 
-      id: this.context.currentProject.id,
-      cluster_id: this.props.currentCluster.id
-    })
+    api
+      .updateConfigMap(
+        "<token>",
+        {
+          name,
+          namespace,
+          variables: this.state.values,
+        },
+        {
+          id: this.context.currentProject.id,
+          cluster_id: this.props.currentCluster.id,
+        }
+      )
       .then((res) => {
         this.setState({ saveValuesStatus: "successful" });
       })
@@ -81,7 +86,10 @@ export default class ExpandedEnvGroup extends Component<PropsType, StateType> {
           <TabWrapper>
             <InnerWrapper>
               <Heading>Environment Variables</Heading>
-              <Helper>Set environment variables for your secrets and environment-specific configuration.</Helper>
+              <Helper>
+                Set environment variables for your secrets and
+                environment-specific configuration.
+              </Helper>
               <KeyValueArray
                 namespace={namespace}
                 values={this.state.values || {}}
@@ -101,7 +109,10 @@ export default class ExpandedEnvGroup extends Component<PropsType, StateType> {
           <TabWrapper>
             <InnerWrapper full={true}>
               <Heading>Manage Environment Group</Heading>
-              <Helper>Permanently delete this set of environment variables. This action cannot be undone.</Helper>
+              <Helper>
+                Permanently delete this set of environment variables. This
+                action cannot be undone.
+              </Helper>
               <Button
                 color="#b91133"
                 onClick={() => this.setState({ showDeleteOverlay: true })}
@@ -130,11 +141,16 @@ export default class ExpandedEnvGroup extends Component<PropsType, StateType> {
     let namespace = envGroup.metadata.namespace;
 
     this.setState({ deleting: true });
-    api.deleteConfigMap("<token>", {
-      name,
-      namespace,
-      cluster_id: this.props.currentCluster.id
-    }, { id: this.context.currentProject.id })
+    api
+      .deleteConfigMap(
+        "<token>",
+        {
+          name,
+          namespace,
+          cluster_id: this.props.currentCluster.id,
+        },
+        { id: this.context.currentProject.id }
+      )
       .then((res) => {
         this.props.closeExpanded();
         this.setState({ deleting: false });
@@ -242,7 +258,7 @@ const Button = styled.button`
 
 const InnerWrapper = styled.div<{ full?: boolean }>`
   width: 100%;
-  height: ${props => props.full ? "100%" : "calc(100% - 65px)"};
+  height: ${(props) => (props.full ? "100%" : "calc(100% - 65px)")};
   background: #ffffff11;
   padding: 0 35px;
   padding-bottom: 50px;

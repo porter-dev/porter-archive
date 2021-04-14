@@ -30,23 +30,28 @@ export default class LoadEnvGroupModal extends Component<PropsType, StateType> {
     loading: true,
     error: false,
     selectedEnvGroup: null as any,
-    buttonStatus: ""
+    buttonStatus: "",
   };
 
   onSubmit = () => {
     this.props.setValues(this.state.selectedEnvGroup.data);
     this.props.closeModal();
-  }
+  };
 
   updateEnvGroups = () => {
-    api.listConfigMaps("<token>", {
-      namespace: this.props.namespace,
-      cluster_id: this.props.clusterId || this.context.currentCluster.id
-    }, { 
-      id: this.context.currentProject.id 
-    })
+    api
+      .listConfigMaps(
+        "<token>",
+        {
+          namespace: this.props.namespace,
+          cluster_id: this.props.clusterId || this.context.currentCluster.id,
+        },
+        {
+          id: this.context.currentProject.id,
+        }
+      )
       .then((res) => {
-        this.setState({ 
+        this.setState({
           envGroups: res?.data?.items as any[],
           loading: false,
         });
@@ -63,10 +68,16 @@ export default class LoadEnvGroupModal extends Component<PropsType, StateType> {
 
   renderEnvGroupList = () => {
     if (this.state.loading) {
-      return <LoadingWrapper><Loading /></LoadingWrapper>;
+      return (
+        <LoadingWrapper>
+          <Loading />
+        </LoadingWrapper>
+      );
     } else if (this.state.envGroups.length === 0) {
       return (
-        <Placeholder>No environment groups found in this namespace ({this.props.namespace})</Placeholder>
+        <Placeholder>
+          No environment groups found in this namespace ({this.props.namespace})
+        </Placeholder>
       );
     } else {
       return this.state.envGroups.map((envGroup: any, i: number) => {
@@ -83,7 +94,7 @@ export default class LoadEnvGroupModal extends Component<PropsType, StateType> {
         );
       });
     }
-  }
+  };
 
   render() {
     return (
@@ -93,11 +104,12 @@ export default class LoadEnvGroupModal extends Component<PropsType, StateType> {
         </CloseButton>
 
         <ModalTitle>Load from Environment Group</ModalTitle>
-        <Subtitle>Select an existing group of environment variables in this namespace ({this.props.namespace}).</Subtitle>
+        <Subtitle>
+          Select an existing group of environment variables in this namespace (
+          {this.props.namespace}).
+        </Subtitle>
 
-        <EnvGroupList>
-          {this.renderEnvGroupList()}
-        </EnvGroupList>
+        <EnvGroupList>{this.renderEnvGroupList()}</EnvGroupList>
 
         <SaveButton
           disabled={!this.state.selectedEnvGroup}
@@ -124,18 +136,18 @@ const LoadingWrapper = styled.div`
   height: 150px;
 `;
 
-const EnvGroupRow = styled.div<{ lastItem?: boolean, isSelected: boolean }>`
+const EnvGroupRow = styled.div<{ lastItem?: boolean; isSelected: boolean }>`
   display: flex;
   width: 100%;
   font-size: 13px;
   border-bottom: 1px solid
-    ${props => props.lastItem ? "#00000000" : "#606166"};
+    ${(props) => (props.lastItem ? "#00000000" : "#606166")};
   color: #ffffff;
   user-select: none;
   align-items: center;
   padding: 10px 0px;
   cursor: pointer;
-  background: ${props => props.isSelected ? "#ffffff11" : ""};
+  background: ${(props) => (props.isSelected ? "#ffffff11" : "")};
   :hover {
     background: #ffffff11;
   }

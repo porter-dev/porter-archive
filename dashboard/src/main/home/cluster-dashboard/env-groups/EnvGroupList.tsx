@@ -35,14 +35,19 @@ export default class EnvGroupList extends Component<PropsType, StateType> {
   };
 
   updateEnvGroups = () => {
-    api.listConfigMaps("<token>", {
-      namespace: this.props.namespace,
-      cluster_id: this.props.currentCluster.id
-    }, { 
-      id: this.context.currentProject.id 
-    })
+    api
+      .listConfigMaps(
+        "<token>",
+        {
+          namespace: this.props.namespace,
+          cluster_id: this.props.currentCluster.id,
+        },
+        {
+          id: this.context.currentProject.id,
+        }
+      )
       .then((res) => {
-        this.setState({ 
+        this.setState({
           envGroups: res?.data?.items as any,
           loading: false,
         });

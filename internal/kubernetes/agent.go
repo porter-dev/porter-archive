@@ -66,6 +66,9 @@ func (a *Agent) CreateConfigMap(name string, namespace string, configMap map[str
 			ObjectMeta: metav1.ObjectMeta{
 				Name: name,
 				Namespace: namespace,
+				Labels: map[string]string{
+					"porter": "true",
+				},
 			},
 			Data: configMap,
 		},
@@ -81,6 +84,9 @@ func (a *Agent) UpdateConfigMap(name string, namespace string, configMap map[str
 			ObjectMeta: metav1.ObjectMeta{
 				Name: name,
 				Namespace: namespace,
+				Labels: map[string]string{
+					"porter": "true",
+				},
 			},
 			Data: configMap,
 		},
@@ -110,7 +116,9 @@ func (a *Agent) GetConfigMap(name string, namespace string) (*v1.ConfigMap, erro
 func (a *Agent) ListConfigMaps(namespace string) (*v1.ConfigMapList, error) {
 	return a.Clientset.CoreV1().ConfigMaps(namespace).List(
 		context.TODO(),
-		metav1.ListOptions{},
+		metav1.ListOptions{
+			LabelSelector: "porter=true",
+		},
 	)
 }
 

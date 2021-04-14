@@ -47,11 +47,31 @@ export default class EnvGroupList extends Component<PropsType, StateType> {
         }
       )
       .then((res) => {
-        this.setState({
-          envGroups: res?.data?.items as any,
-          loading: false,
-        });
-        console.log(res.data.items);
+        let sortedGroups = res?.data?.items;
+        switch (this.props.sortType) {
+          case "Oldest":
+            sortedGroups.sort((a: any, b: any) =>
+              Date.parse(a.metadata.creationTimestamp) >
+              Date.parse(b.metadata.creationTimestamp)
+                ? 1
+                : -1
+            );
+            break;
+          case "Alphabetical":
+            sortedGroups.sort((a: any, b: any) =>
+              a.metadata.name > b.metadata.name ? 1 : -1
+            );
+            console.log(sortedGroups);
+            break;
+          default:
+            sortedGroups.sort((a: any, b: any) =>
+              Date.parse(a.metadata.creationTimestamp) >
+              Date.parse(b.metadata.creationTimestamp)
+                ? -1
+                : 1
+            );
+        }
+        this.setState({ envGroups: sortedGroups, loading: false });
       })
       .catch((err) => {
         this.setState({ loading: false, error: true });

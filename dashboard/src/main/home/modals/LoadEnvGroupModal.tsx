@@ -76,7 +76,8 @@ export default class LoadEnvGroupModal extends Component<PropsType, StateType> {
     } else if (this.state.envGroups.length === 0) {
       return (
         <Placeholder>
-          No environment groups found in this namespace ({this.props.namespace}).
+          No environment groups found in this namespace ({this.props.namespace}
+          ).
         </Placeholder>
       );
     } else {
@@ -114,7 +115,11 @@ export default class LoadEnvGroupModal extends Component<PropsType, StateType> {
         <SaveButton
           disabled={!this.state.selectedEnvGroup}
           text="Load Selected Env Group"
-          status={!this.state.selectedEnvGroup ? "No env group selected" : ""}
+          status={
+            !this.state.selectedEnvGroup
+              ? "No env group selected"
+              : "Existing env variables will be overidden"
+          }
           onClick={this.onSubmit}
         />
       </StyledLoadEnvGroupModal>
@@ -170,7 +175,7 @@ const EnvGroupList = styled.div`
   border-radius: 3px;
   background: #ffffff11;
   border: 1px solid #ffffff44;
-  max-height: 150px;
+  max-height: 160px;
   overflow-y: auto;
 `;
 

@@ -210,9 +210,6 @@ export default class ControllerTab extends Component<PropsType, StateType> {
       >
         {this.state.raw.map((pod, i) => {
           let status = this.getPodStatus(pod.status);
-          if (i === 2) {
-            status = "failed";
-          }
           return (
             <Tab
               key={pod.metadata?.name}

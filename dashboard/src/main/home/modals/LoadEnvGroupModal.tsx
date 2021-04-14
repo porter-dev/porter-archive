@@ -76,7 +76,7 @@ export default class LoadEnvGroupModal extends Component<PropsType, StateType> {
     } else if (this.state.envGroups.length === 0) {
       return (
         <Placeholder>
-          No environment groups found in this namespace ({this.props.namespace})
+          No environment groups found in this namespace ({this.props.namespace}).
         </Placeholder>
       );
     } else {
@@ -130,6 +130,8 @@ const Placeholder = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
+  color: #aaaabb;
+  font-size: 13px;
 `;
 
 const LoadingWrapper = styled.div`

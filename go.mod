@@ -4,6 +4,7 @@ go 1.15
 
 require (
 	cloud.google.com/go v0.65.0
+	github.com/AlecAivazis/survey/v2 v2.2.9
 	github.com/Azure/go-autorest/autorest v0.11.1 // indirect
 	github.com/Azure/go-autorest/autorest/adal v0.9.5 // indirect
 	github.com/DATA-DOG/go-sqlmock v1.5.0

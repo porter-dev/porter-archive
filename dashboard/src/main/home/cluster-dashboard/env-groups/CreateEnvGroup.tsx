@@ -2,8 +2,11 @@ import React, { Component } from "react";
 import styled from "styled-components";
 
 import sliders from "assets/sliders.svg";
+import api from "shared/api";
 
 import { Context } from "shared/Context";
+import { ClusterType } from "shared/types";
+
 import InputRow from "components/values-form/InputRow";
 import KeyValueArray from "components/values-form/KeyValueArray";
 import Selector from "components/Selector";
@@ -13,6 +16,7 @@ import { isAlphanumeric } from "shared/common";
 
 type PropsType = {
   goBack: () => void;
+  currentCluster: ClusterType;
 };
 
 type StateType = {
@@ -22,6 +26,7 @@ type StateType = {
   selectedNamespace: string;
   namespaceOptions: any[];
   envVariables: any;
+  submitStatus: string;
 };
 
 export default class CreateEnvGroup extends Component<PropsType, StateType> {
@@ -29,15 +34,64 @@ export default class CreateEnvGroup extends Component<PropsType, StateType> {
     expand: false,
     update: [] as any[],
     envGroupName: "",
-    selectedNamespace: "",
+    selectedNamespace: "default",
     namespaceOptions: [] as any[],
     envVariables: {} as any,
+    submitStatus: "",
   };
 
-  isDisabled = () => {
-    return !(!isAlphanumeric(this.state.envGroupName) &&
-    this.state.envGroupName !== "");
+  componentDidMount() {
+    this.updateNamespaces();
   }
+
+  isDisabled = () => {
+    return !isAlphanumeric(this.state.envGroupName) ||
+    this.state.envGroupName === "";
+  }
+
+  onSubmit = () => {
+    this.setState({ submitStatus: "loading" });
+    api.createConfigMap("<token>", {
+      name: this.state.envGroupName,
+      namespace: this.state.selectedNamespace,
+      variables: this.state.envVariables,
+    }, { 
+      id: this.context.currentProject.id,
+      cluster_id: this.props.currentCluster.id
+    })
+      .then((res) => {
+        this.setState({ submitStatus: "successful" });
+        this.props.goBack();
+      })
+      .catch((err) => {
+        this.setState({ submitStatus: "Could not create" });
+      });
+  }
+
+  updateNamespaces = () => {
+    let { currentProject } = this.context;
+    api
+      .getNamespaces(
+        "<token>",
+        {
+          cluster_id: this.props.currentCluster.id,
+        },
+        { id: currentProject.id }
+      )
+      .then((res) => {
+        if (res.data) {
+          let namespaceOptions = res.data.items.map(
+            (x: { metadata: { name: string } }) => {
+              return { label: x.metadata.name, value: x.metadata.name };
+            }
+          );
+          if (res.data.items.length > 0) {
+            this.setState({ namespaceOptions });
+          }
+        }
+      })
+      .catch(console.log);
+  };
 
   render() {
     return (
@@ -55,8 +109,8 @@ export default class CreateEnvGroup extends Component<PropsType, StateType> {
           <DarkMatter antiHeight="-13px" />
           <Heading isAtTop={true}>Name</Heading>
           <Subtitle>
-            Randomly generated if left blank.
             <Warning
+              makeFlush={true}
               highlight={
                 !isAlphanumeric(this.state.envGroupName) &&
                 this.state.envGroupName !== ""
@@ -100,17 +154,18 @@ export default class CreateEnvGroup extends Component<PropsType, StateType> {
             Set environment variables for your secrets and environment-specific configuration.
           </Helper>
           <KeyValueArray
+            namespace={this.state.selectedNamespace}
             values={this.state.envVariables}
             setValues={(x: any) => this.setState({ envVariables: x })}
           />
           <SaveButton
             disabled={this.isDisabled()}
-            text="Deploy"
-            onClick={() => console.log("asdf")}
+            text="Create Env Group"
+            onClick={this.onSubmit}
             status={
               this.isDisabled()
                 ? "Missing required fields"
-                : "What is the status?"
+                : this.state.submitStatus
             }
             makeFlush={true}
           />
@@ -129,7 +184,7 @@ const Buffer = styled.div`
 `;
 
 const StyledCreateEnvGroup = styled.div`
-  padding-bottom: 50px;
+  padding-bottom: 70px;
   position: relative;
 `;
 

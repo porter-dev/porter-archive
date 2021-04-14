@@ -87,11 +87,11 @@ const Spinner = styled.img`
   width: 15px;
   height: 15px;
   margin-right: 15px;
-  margin-bottom: -1px;
+  margin-bottom: -3px;
 `;
 
 const StatusColor = styled.div`
-  margin-bottom: 1px;
+  margin-top: 1px;
   width: 8px;
   height: 8px;
   background: ${(props: { status: string }) =>
@@ -103,6 +103,7 @@ const StatusColor = styled.div`
       ? "#00d12a"
       : "#f5cb42"};
   border-radius: 20px;
+  margin-left: 3px;
   margin-right: 16px;
 `;
 
@@ -113,7 +114,7 @@ const Status = styled.div`
   flex-direction: row;
   text-transform: capitalize;
   align-items: center;
-  font-family: "Hind Siliguri", sans-serif;
+  font-family: "Work Sans", sans-serif;
   color: #aaaabb;
   animation: fadeIn 0.5s;
   margin-left: ${(props: { margin_left: string }) => props.margin_left};

@@ -1,5 +1,9 @@
 import React, { Component } from "react";
 import styled from "styled-components";
+import Modal from "../../main/home/modals/Modal";
+import LoadEnvGroupModal from "../../main/home/modals/LoadEnvGroupModal";
+
+import sliders from "assets/sliders.svg";
 
 type PropsType = {
   label?: string;
@@ -7,15 +11,19 @@ type PropsType = {
   setValues: (x: any) => void;
   width?: string;
   disabled?: boolean;
+  namespace?: string;
+  clusterId?: number;
 };
 
 type StateType = {
   values: any[];
+  showEnvModal: boolean;
 };
 
 export default class KeyValueArray extends Component<PropsType, StateType> {
   state = {
     values: [] as any[],
+    showEnvModal: false,
   };
 
   componentDidMount() {
@@ -33,6 +41,17 @@ export default class KeyValueArray extends Component<PropsType, StateType> {
     });
     return obj;
   };
+
+  objectToValues = (obj: any) => {
+    let values = [] as any[];
+    Object.keys(obj).forEach((key: string, i: number) => {
+      let entry = {} as any;
+      entry.key = key;
+      entry.value = obj[key];
+      values.push(entry);
+    });
+    return values;
+  }
 
   renderDeleteButton = (i: number) => {
     if (!this.props.disabled) {
@@ -93,27 +112,85 @@ export default class KeyValueArray extends Component<PropsType, StateType> {
     );
   };
 
+  renderEnvModal = () => {
+    if (this.state.showEnvModal) {
+      return (
+        <Modal
+          onRequestClose={() => this.setState({ showEnvModal: false })}
+          width="665px"
+          height="332px"
+        >
+          <LoadEnvGroupModal 
+            namespace={this.props.namespace} 
+            clusterId={this.props.clusterId}
+            closeModal={() => this.setState({ showEnvModal: false })}
+            setValues={(values: any) => {
+              this.props.setValues(values);
+              this.setState({ values: this.objectToValues(values) });
+            }}
+          />
+        </Modal>
+      )
+    }
+  }
+
   render() {
     return (
-      <StyledInputArray>
-        <Label>{this.props.label}</Label>
-        {this.state.values.length === 0 ? <></> : this.renderInputList()}
-        {this.props.disabled ? (
-          <></>
-        ) : (
-          <AddRowButton
-            onClick={() => {
-              this.state.values.push({ key: "", value: "" });
-              this.setState({ values: this.state.values });
-            }}
-          >
-            <i className="material-icons">add</i> Add Row
-          </AddRowButton>
-        )}
-      </StyledInputArray>
+      <>
+        <StyledInputArray>
+          <Label>{this.props.label}</Label>
+          {this.state.values.length === 0 ? <></> : this.renderInputList()}
+          {this.props.disabled ? (
+            <></>
+          ) : (
+            <InputWrapper>
+              <AddRowButton
+                onClick={() => {
+                  this.state.values.push({ key: "", value: "" });
+                  this.setState({ values: this.state.values });
+                }}
+              >
+                <i className="material-icons">add</i> Add Row
+              </AddRowButton>
+              <Spacer />
+              {
+                this.props.namespace && (
+                  <LoadButton 
+                    onClick={() => this.setState({ showEnvModal: !this.state.showEnvModal })}
+                  >
+                    <img src={sliders} /> Load from Env Group
+                  </LoadButton>
+                )
+              }
+            </InputWrapper>
+          )}
+        </StyledInputArray>
+        {this.renderEnvModal()}
+      </>
     );
   }
 }
+
+const CloseOverlay = styled.div`
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 999;
+  background: #202227;
+  animation: fadeIn 0.2s 0s;
+  opacity: 0;
+  animation-fill-mode: forwards;
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+`;
 
 const Spacer = styled.div`
   width: 10px;
@@ -123,7 +200,6 @@ const Spacer = styled.div`
 const AddRowButton = styled.div`
   display: flex;
   align-items: center;
-  margin-top: 5px;
   width: 270px;
   font-size: 13px;
   color: #aaaabb;
@@ -143,6 +219,25 @@ const AddRowButton = styled.div`
     display: flex;
     align-items: center;
     justify-content: center;
+  }
+`;
+
+const LoadButton = styled(AddRowButton)`
+  background: none;
+  border: 1px solid #ffffff55;
+  > i {
+    color: #ffffff44;
+    font-size: 16px;
+    margin-left: 8px;
+    margin-right: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  > img {
+    width: 14px;
+    margin-left: 8px;
+    margin-right: 12px;
   }
 `;
 
@@ -171,6 +266,7 @@ const DeleteButton = styled.div`
 const InputWrapper = styled.div`
   display: flex;
   align-items: center;
+  margin-top: 5px;
 `;
 
 const Input = styled.input`

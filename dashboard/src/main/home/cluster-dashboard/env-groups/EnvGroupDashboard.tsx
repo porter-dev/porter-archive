@@ -52,7 +52,10 @@ class EnvGroupDashboard extends Component<PropsType, StateType> {
   renderBody = () => {
     if (this.state.createEnvMode) {
       return (
-        <CreateEnvGroup goBack={() => this.setState({ createEnvMode: false })} />
+        <CreateEnvGroup 
+          goBack={() => this.setState({ createEnvMode: false })}
+          currentCluster={this.props.currentCluster}
+        />
       )
     } else {
       return (
@@ -90,7 +93,7 @@ class EnvGroupDashboard extends Component<PropsType, StateType> {
         <ExpandedEnvGroup
           namespace={this.state.namespace}
           currentCluster={this.props.currentCluster}
-          initialEnvGroup={this.state.expandedEnvGroup}
+          envGroup={this.state.expandedEnvGroup}
           closeExpanded={() => this.setState({ expandedEnvGroup: null })}
         />
       );

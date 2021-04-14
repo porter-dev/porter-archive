@@ -3,8 +3,7 @@ import styled from "styled-components";
 
 import { Context } from "shared/Context";
 import api from "shared/api";
-import { ChartType, StorageType, ClusterType } from "shared/types";
-import { PorterUrl } from "shared/routing";
+import { ClusterType } from "shared/types";
 
 import EnvGroup from "./EnvGroup";
 import Loading from "components/Loading";
@@ -30,16 +29,32 @@ const dummyEnvGroups = [
 
 export default class EnvGroupList extends Component<PropsType, StateType> {
   state = {
-    envGroups: dummyEnvGroups as any[],
+    envGroups: [] as any[],
     loading: false,
     error: false,
   };
 
   updateEnvGroups = () => {
-    // retrieve and set env groups
+    api.listConfigMaps("<token>", {
+      namespace: this.props.namespace,
+      cluster_id: this.props.currentCluster.id
+    }, { 
+      id: this.context.currentProject.id 
+    })
+      .then((res) => {
+        this.setState({ 
+          envGroups: res?.data?.items as any,
+          loading: false,
+        });
+        console.log(res.data.items);
+      })
+      .catch((err) => {
+        this.setState({ loading: false, error: true });
+      });
   };
 
   componentDidMount() {
+    this.setState({ loading: true });
     this.updateEnvGroups();
   }
 

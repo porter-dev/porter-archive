@@ -19,6 +19,7 @@ import (
 const (
 	ErrK8sDecode ErrorCode = iota + 600
 	ErrK8sValidate
+	ErrEnvDecode
 )
 
 var upgrader = websocket.Upgrader{
@@ -71,6 +72,264 @@ func (app *App) HandleListNamespaces(w http.ResponseWriter, r *http.Request) {
 		app.handleErrorFormDecoding(err, ErrK8sDecode, w)
 		return
 	}
+}
+
+// HandleCreateConfigMap deletes the pod given the name and namespace.
+func (app *App) HandleCreateConfigMap(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("CREATING CONFGIMAP")
+	vals, err := url.ParseQuery(r.URL.RawQuery)
+	if err != nil {
+		app.handleErrorFormDecoding(err, ErrReleaseDecode, w)
+		return
+	}
+
+	// get the filter options
+	form := &forms.K8sForm{
+		OutOfClusterConfig: &kubernetes.OutOfClusterConfig{
+			Repo:              app.Repo,
+			DigitalOceanOAuth: app.DOConf,
+		},
+	}
+
+	form.PopulateK8sOptionsFromQueryParams(vals, app.Repo.Cluster)
+
+	// validate the form
+	if err := app.validator.Struct(form); err != nil {
+		app.handleErrorFormValidation(err, ErrK8sValidate, w)
+		return
+	}
+
+	// create a new agent
+	var agent *kubernetes.Agent
+
+	if app.ServerConf.IsTesting {
+		agent = app.TestAgents.K8sAgent
+	} else {
+		agent, err = kubernetes.GetAgentOutOfClusterConfig(form.OutOfClusterConfig)
+	}
+
+	configMap := &forms.ConfigMapForm{}
+
+	if err := json.NewDecoder(r.Body).Decode(configMap); err != nil {
+		app.handleErrorFormDecoding(err, ErrUserDecode, w)
+		return
+	}
+
+	_, err = agent.CreateConfigMap(configMap.Name, configMap.Namespace, configMap.EnvVariables)
+
+	if err != nil {
+		app.handleErrorInternal(err, w)
+		return
+	}
+
+	if err := json.NewEncoder(w).Encode(configMap); err != nil {
+		app.handleErrorFormDecoding(err, ErrEnvDecode, w)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	return
+}
+
+// HandleListConfigMaps lists all configmaps in a namespace.
+func (app *App) HandleListConfigMaps(w http.ResponseWriter, r *http.Request) {
+	vals, err := url.ParseQuery(r.URL.RawQuery)
+	
+	if err != nil {
+		app.handleErrorFormDecoding(err, ErrReleaseDecode, w)
+		return
+	}
+
+	// get the filter options
+	form := &forms.K8sForm{
+		OutOfClusterConfig: &kubernetes.OutOfClusterConfig{
+			Repo:              app.Repo,
+			DigitalOceanOAuth: app.DOConf,
+		},
+	}
+
+	form.PopulateK8sOptionsFromQueryParams(vals, app.Repo.Cluster)
+
+	// validate the form
+	if err := app.validator.Struct(form); err != nil {
+		app.handleErrorFormValidation(err, ErrK8sValidate, w)
+		return
+	}
+
+	// create a new agent
+	var agent *kubernetes.Agent
+
+	if app.ServerConf.IsTesting {
+		agent = app.TestAgents.K8sAgent
+	} else {
+		agent, err = kubernetes.GetAgentOutOfClusterConfig(form.OutOfClusterConfig)
+	}
+
+	configMaps, err := agent.ListConfigMaps(vals["namespace"][0])
+
+	if err != nil {
+		app.handleErrorInternal(err, w)
+		return
+	}
+
+	if err := json.NewEncoder(w).Encode(configMaps); err != nil {
+		app.handleErrorFormDecoding(err, ErrEnvDecode, w)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	return
+}
+
+// HandleGetConfigMap retreives the configmap given the name and namespace.
+func (app *App) HandleGetConfigMap(w http.ResponseWriter, r *http.Request) {
+	vals, err := url.ParseQuery(r.URL.RawQuery)
+	
+	if err != nil {
+		app.handleErrorFormDecoding(err, ErrReleaseDecode, w)
+		return
+	}
+
+	// get the filter options
+	form := &forms.K8sForm{
+		OutOfClusterConfig: &kubernetes.OutOfClusterConfig{
+			Repo:              app.Repo,
+			DigitalOceanOAuth: app.DOConf,
+		},
+	}
+
+	form.PopulateK8sOptionsFromQueryParams(vals, app.Repo.Cluster)
+
+	// validate the form
+	if err := app.validator.Struct(form); err != nil {
+		app.handleErrorFormValidation(err, ErrK8sValidate, w)
+		return
+	}
+
+	// create a new agent
+	var agent *kubernetes.Agent
+
+	if app.ServerConf.IsTesting {
+		agent = app.TestAgents.K8sAgent
+	} else {
+		agent, err = kubernetes.GetAgentOutOfClusterConfig(form.OutOfClusterConfig)
+	}
+
+	configMap, err := agent.GetConfigMap(vals["name"][0], vals["namespace"][0])
+
+	if err != nil {
+		app.handleErrorInternal(err, w)
+		return
+	}
+
+	if err := json.NewEncoder(w).Encode(configMap); err != nil {
+		app.handleErrorFormDecoding(err, ErrEnvDecode, w)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	return
+}
+
+// HandleDeleteConfigMap deletes the pod given the name and namespace.
+func (app *App) HandleDeleteConfigMap(w http.ResponseWriter, r *http.Request) {
+	vals, err := url.ParseQuery(r.URL.RawQuery)
+	if err != nil {
+		app.handleErrorFormDecoding(err, ErrReleaseDecode, w)
+		return
+	}
+
+	// get the filter options
+	form := &forms.K8sForm{
+		OutOfClusterConfig: &kubernetes.OutOfClusterConfig{
+			Repo:              app.Repo,
+			DigitalOceanOAuth: app.DOConf,
+		},
+	}
+
+	form.PopulateK8sOptionsFromQueryParams(vals, app.Repo.Cluster)
+
+	// validate the form
+	if err := app.validator.Struct(form); err != nil {
+		app.handleErrorFormValidation(err, ErrK8sValidate, w)
+		return
+	}
+
+	// create a new agent
+	var agent *kubernetes.Agent
+
+	if app.ServerConf.IsTesting {
+		agent = app.TestAgents.K8sAgent
+	} else {
+		agent, err = kubernetes.GetAgentOutOfClusterConfig(form.OutOfClusterConfig)
+	}
+
+	err = agent.DeleteConfigMap(vals["name"][0], vals["namespace"][0])
+
+	if err != nil {
+		app.handleErrorInternal(err, w)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	return
+}
+
+// HandleUpdateConfigMap deletes the pod given the name and namespace.
+func (app *App) HandleUpdateConfigMap(w http.ResponseWriter, r *http.Request) {
+	vals, err := url.ParseQuery(r.URL.RawQuery)
+
+	if err != nil {
+		app.handleErrorFormDecoding(err, ErrReleaseDecode, w)
+		return
+	}
+
+	// get the filter options
+	form := &forms.K8sForm{
+		OutOfClusterConfig: &kubernetes.OutOfClusterConfig{
+			Repo:              app.Repo,
+			DigitalOceanOAuth: app.DOConf,
+		},
+	}
+
+	form.PopulateK8sOptionsFromQueryParams(vals, app.Repo.Cluster)
+
+	// validate the form
+	if err := app.validator.Struct(form); err != nil {
+		app.handleErrorFormValidation(err, ErrK8sValidate, w)
+		return
+	}
+
+	// create a new agent
+	var agent *kubernetes.Agent
+
+	if app.ServerConf.IsTesting {
+		agent = app.TestAgents.K8sAgent
+	} else {
+		agent, err = kubernetes.GetAgentOutOfClusterConfig(form.OutOfClusterConfig)
+	}
+
+	configMap := &forms.ConfigMapForm{}
+
+	if err := json.NewDecoder(r.Body).Decode(configMap); err != nil {
+		app.handleErrorFormDecoding(err, ErrEnvDecode, w)
+		return
+	}
+
+	_, err = agent.UpdateConfigMap(configMap.Name, configMap.Namespace, configMap.EnvVariables)
+
+	if err != nil {
+		app.handleErrorInternal(err, w)
+		return
+	}
+
+	if err := json.NewEncoder(w).Encode(configMap); err != nil {
+		app.handleErrorFormDecoding(err, ErrEnvDecode, w)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	return
 }
 
 // HandleGetPodLogs returns real-time logs of the pod via websockets

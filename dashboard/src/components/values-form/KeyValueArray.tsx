@@ -13,6 +13,7 @@ type PropsType = {
   disabled?: boolean;
   namespace?: string;
   clusterId?: number;
+  envLoader?: boolean;
 };
 
 type StateType = {
@@ -118,7 +119,7 @@ export default class KeyValueArray extends Component<PropsType, StateType> {
         <Modal
           onRequestClose={() => this.setState({ showEnvModal: false })}
           width="665px"
-          height="332px"
+          height="342px"
         >
           <LoadEnvGroupModal
             namespace={this.props.namespace}
@@ -153,7 +154,7 @@ export default class KeyValueArray extends Component<PropsType, StateType> {
                 <i className="material-icons">add</i> Add Row
               </AddRowButton>
               <Spacer />
-              {this.props.namespace && (
+              {this.props.namespace && this.props.envLoader && (
                 <LoadButton
                   onClick={() =>
                     this.setState({ showEnvModal: !this.state.showEnvModal })
@@ -236,7 +237,7 @@ const LoadButton = styled(AddRowButton)`
   }
   > img {
     width: 14px;
-    margin-left: 8px;
+    margin-left: 10px;
     margin-right: 12px;
   }
 `;

@@ -96,7 +96,7 @@ class ClusterDashboard extends Component<PropsType, StateType> {
     } else {
       return "Continuously running web services, workers, and add-ons.";
     }
-  }
+  };
 
   renderBody = () => {
     let { currentCluster, setSidebar, currentView } = this.props;
@@ -129,7 +129,7 @@ class ClusterDashboard extends Component<PropsType, StateType> {
         />
       </>
     );
-  }
+  };
 
   renderContents = () => {
     let { currentCluster, setSidebar, currentView } = this.props;
@@ -155,9 +155,7 @@ class ClusterDashboard extends Component<PropsType, StateType> {
         />
       );
     } else if (currentView === "env-groups") {
-      return (
-        <EnvGroupDashboard currentCluster={this.props.currentCluster} />
-      );
+      return <EnvGroupDashboard currentCluster={this.props.currentCluster} />;
     }
 
     return (
@@ -173,9 +171,7 @@ class ClusterDashboard extends Component<PropsType, StateType> {
               <i className="material-icons">info</i> Info
             </InfoLabel>
           </TopRow>
-          <Description>
-            {this.getDescription(currentView)}
-          </Description>
+          <Description>{this.getDescription(currentView)}</Description>
         </InfoSection>
 
         <LineBreak />

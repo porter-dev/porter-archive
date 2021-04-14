@@ -52,16 +52,20 @@ class EnvGroupDashboard extends Component<PropsType, StateType> {
   renderBody = () => {
     if (this.state.createEnvMode) {
       return (
-        <CreateEnvGroup 
+        <CreateEnvGroup
           goBack={() => this.setState({ createEnvMode: false })}
           currentCluster={this.props.currentCluster}
         />
-      )
+      );
     } else {
       return (
         <>
           <ControlRow>
-            <Button onClick={() => this.setState({ createEnvMode: !this.state.createEnvMode })}>
+            <Button
+              onClick={() =>
+                this.setState({ createEnvMode: !this.state.createEnvMode })
+              }
+            >
               <i className="material-icons">add</i> Create Env Group
             </Button>
             <SortFilterWrapper>
@@ -80,12 +84,14 @@ class EnvGroupDashboard extends Component<PropsType, StateType> {
             currentCluster={this.props.currentCluster}
             namespace={this.state.namespace}
             sortType={this.state.sortType}
-            setExpandedEnvGroup={(envGroup: any) => this.setState({ expandedEnvGroup: envGroup })}
+            setExpandedEnvGroup={(envGroup: any) =>
+              this.setState({ expandedEnvGroup: envGroup })
+            }
           />
         </>
-      )
+      );
     }
-  }
+  };
 
   renderContents = () => {
     if (this.state.expandedEnvGroup) {
@@ -109,12 +115,10 @@ class EnvGroupDashboard extends Component<PropsType, StateType> {
         </>
       );
     }
-  }
+  };
 
   render() {
-    return (
-      <>{this.renderContents()}</>
-    );
+    return <>{this.renderContents()}</>;
   }
 }
 

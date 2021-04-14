@@ -45,20 +45,26 @@ export default class CreateEnvGroup extends Component<PropsType, StateType> {
   }
 
   isDisabled = () => {
-    return !isAlphanumeric(this.state.envGroupName) ||
-    this.state.envGroupName === "";
-  }
+    return (
+      !isAlphanumeric(this.state.envGroupName) || this.state.envGroupName === ""
+    );
+  };
 
   onSubmit = () => {
     this.setState({ submitStatus: "loading" });
-    api.createConfigMap("<token>", {
-      name: this.state.envGroupName,
-      namespace: this.state.selectedNamespace,
-      variables: this.state.envVariables,
-    }, { 
-      id: this.context.currentProject.id,
-      cluster_id: this.props.currentCluster.id
-    })
+    api
+      .createConfigMap(
+        "<token>",
+        {
+          name: this.state.envGroupName,
+          namespace: this.state.selectedNamespace,
+          variables: this.state.envVariables,
+        },
+        {
+          id: this.context.currentProject.id,
+          cluster_id: this.props.currentCluster.id,
+        }
+      )
       .then((res) => {
         this.setState({ submitStatus: "successful" });
         this.props.goBack();
@@ -66,7 +72,7 @@ export default class CreateEnvGroup extends Component<PropsType, StateType> {
       .catch((err) => {
         this.setState({ submitStatus: "Could not create" });
       });
-  }
+  };
 
   updateNamespaces = () => {
     let { currentProject } = this.context;
@@ -99,9 +105,7 @@ export default class CreateEnvGroup extends Component<PropsType, StateType> {
         <StyledCreateEnvGroup>
           <HeaderSection>
             <Button onClick={this.props.goBack}>
-              <i className="material-icons">
-                keyboard_backspace
-              </i>
+              <i className="material-icons">keyboard_backspace</i>
               Back
             </Button>
             <Title>Create an Environment Group</Title>
@@ -130,7 +134,8 @@ export default class CreateEnvGroup extends Component<PropsType, StateType> {
 
           <Heading>Destination</Heading>
           <Subtitle>
-            Specify the namespace you would like to create this environment group in.
+            Specify the namespace you would like to create this environment
+            group in.
           </Subtitle>
           <DestinationSection>
             <NamespaceLabel>
@@ -151,7 +156,8 @@ export default class CreateEnvGroup extends Component<PropsType, StateType> {
 
           <Heading>Environment Variables</Heading>
           <Helper>
-            Set environment variables for your secrets and environment-specific configuration.
+            Set environment variables for your secrets and environment-specific
+            configuration.
           </Helper>
           <KeyValueArray
             namespace={this.state.selectedNamespace}

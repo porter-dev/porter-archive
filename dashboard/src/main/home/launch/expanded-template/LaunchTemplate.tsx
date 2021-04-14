@@ -414,7 +414,6 @@ class LaunchTemplate extends Component<PropsType, StateType> {
                   setMetaState={setMetaState}
                   key={tab.name}
                   sections={tab.sections}
-
                   // For env group loader
                   namespace={this.state.selectedNamespace}
                   clusterId={this.state.selectedClusterId}
@@ -744,7 +743,10 @@ class LaunchTemplate extends Component<PropsType, StateType> {
             setActiveValue={(cluster: string) => {
               this.context.setCurrentCluster(this.state.clusterMap[cluster]);
               this.updateNamespaces(this.state.clusterMap[cluster].id);
-              this.setState({ selectedCluster: cluster, selectedClusterId: this.state.clusterMap[cluster].id });
+              this.setState({
+                selectedCluster: cluster,
+                selectedClusterId: this.state.clusterMap[cluster].id,
+              });
             }}
             options={this.state.clusterOptions}
             width="250px"

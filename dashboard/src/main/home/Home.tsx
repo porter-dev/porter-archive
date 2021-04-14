@@ -294,7 +294,7 @@ class Home extends Component<PropsType, StateType> {
       if (
         currentView === "cluster-dashboard" ||
         currentView === "applications" ||
-        currentView === "jobs" || 
+        currentView === "jobs" ||
         currentView === "env-groups"
       ) {
         return this.renderDashboard();

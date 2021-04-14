@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/porter-dev/porter/cli/cmd/api"
+	"github.com/porter-dev/porter/cli/cmd/utils"
 	"github.com/spf13/cobra"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -15,11 +16,13 @@ import (
 	"k8s.io/kubectl/pkg/util/term"
 )
 
+var namespace string
+
 // runCmd represents the "porter run" base command when called
 // without any subcommands
 var runCmd = &cobra.Command{
-	Use:   "run [cmd]",
-	Args:  cobra.ExactArgs(1),
+	Use:   "run [release] -- COMMAND [args...]",
+	Args:  cobra.MinimumNArgs(2),
 	Short: "Runs a command inside a connected cluster container.",
 	Run: func(cmd *cobra.Command, args []string) {
 		err := checkLoginAndRun(args, run)
@@ -39,13 +42,37 @@ func init() {
 		getHost(),
 		"host url of Porter instance",
 	)
+
+	runCmd.PersistentFlags().StringVar(
+		&namespace,
+		"namespace",
+		"default",
+		"namespace of release to connect to",
+	)
 }
 
 func run(_ *api.AuthCheckResponse, client *api.Client, args []string) error {
-	podNames, err := getPods(client)
+	fmt.Println("ARGS ARE", args)
+
+	podNames, err := getPods(client, namespace, args[0])
 
 	if err != nil {
 		return fmt.Errorf("Could not retrieve list of pods: %s", err.Error())
+	}
+
+	// if length of pods is 0, throw error
+	pod := ""
+
+	if len(podNames) == 0 {
+		return fmt.Errorf("At least one pod must exist in this deployment.")
+	} else if len(podNames) == 1 {
+		pod = podNames[0]
+	} else {
+		pod, err = utils.PromptSelect("Select the pod:", podNames)
+
+		if err != nil {
+			return err
+		}
 	}
 
 	restConf, err := getRESTConfig(client)
@@ -54,7 +81,7 @@ func run(_ *api.AuthCheckResponse, client *api.Client, args []string) error {
 		return fmt.Errorf("Could not retrieve kube credentials: %s", err.Error())
 	}
 
-	return executeRun(restConf, "default", podNames[0])
+	return executeRun(restConf, namespace, pod, args[1:])
 }
 
 func getRESTConfig(client *api.Client) (*rest.Config, error) {
@@ -91,11 +118,11 @@ func getRESTConfig(client *api.Client) (*rest.Config, error) {
 	return restConf, nil
 }
 
-func getPods(client *api.Client) ([]string, error) {
+func getPods(client *api.Client, namespace, releaseName string) ([]string, error) {
 	pID := getProjectID()
 	cID := getClusterID()
 
-	resp, err := client.GetK8sAllPods(context.TODO(), pID, cID, "default", "same-name")
+	resp, err := client.GetK8sAllPods(context.TODO(), pID, cID, namespace, releaseName)
 
 	if err != nil {
 		return nil, err
@@ -110,7 +137,7 @@ func getPods(client *api.Client) ([]string, error) {
 	return res, nil
 }
 
-func executeRun(config *rest.Config, namespace, name string) error {
+func executeRun(config *rest.Config, namespace, name string, args []string) error {
 	restClient, err := rest.RESTClientFor(config)
 
 	if err != nil {
@@ -124,7 +151,9 @@ func executeRun(config *rest.Config, namespace, name string) error {
 		SubResource("exec")
 
 	// req.Param("container", "web")
-	req.Param("command", "sh")
+	for _, arg := range args {
+		req.Param("command", arg)
+	}
 	req.Param("stdin", "true")
 	req.Param("stdout", "true")
 	req.Param("tty", "true")

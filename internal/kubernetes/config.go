@@ -181,7 +181,7 @@ func (conf *OutOfClusterConfig) GetClientConfigFromCluster() (clientcmd.ClientCo
 		return clientcmd.NewClientConfigFromBytes(kubeAuth.Kubeconfig)
 	}
 
-	apiConfig, err := conf.createRawConfigFromCluster()
+	apiConfig, err := conf.CreateRawConfigFromCluster()
 
 	if err != nil {
 		return nil, err
@@ -200,7 +200,7 @@ func (conf *OutOfClusterConfig) GetClientConfigFromCluster() (clientcmd.ClientCo
 	return config, nil
 }
 
-func (conf *OutOfClusterConfig) createRawConfigFromCluster() (*api.Config, error) {
+func (conf *OutOfClusterConfig) CreateRawConfigFromCluster() (*api.Config, error) {
 	cluster := conf.Cluster
 
 	apiConfig := &api.Config{}

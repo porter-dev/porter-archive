@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/service/ecr"
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/oauth"
@@ -408,11 +409,23 @@ func (r *Registry) createECRRepository(
 
 	svc := ecr.New(sess)
 
-	_, err = svc.CreateRepository(&ecr.CreateRepositoryInput{
-		RepositoryName: &name,
+	// determine if repository already exists
+	_, err = svc.DescribeRepositories(&ecr.DescribeRepositoriesInput{
+		RepositoryNames: []*string{&name},
 	})
 
-	return err
+	// if the repository was not found, create it
+	if aerr, ok := err.(awserr.Error); ok && aerr.Code() == ecr.ErrCodeRepositoryNotFoundException {
+		_, err = svc.CreateRepository(&ecr.CreateRepositoryInput{
+			RepositoryName: &name,
+		})
+
+		return err
+	} else if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // ListImages lists the images for an image repository

@@ -24,8 +24,13 @@ func MergeYAML(base, override []byte) (map[string]interface{}, error) {
 
 // CoalesceValues replaces arrays and scalar values, merges maps
 func CoalesceValues(base, override map[string]interface{}) map[string]interface{} {
-	for key, val := range base {
+	if base == nil && override != nil {
+		return override
+	} else if override == nil {
+		return base
+	}
 
+	for key, val := range base {
 		if oVal, ok := override[key]; ok {
 			if oVal == nil {
 				delete(override, key)

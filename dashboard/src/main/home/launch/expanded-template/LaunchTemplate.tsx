@@ -40,6 +40,7 @@ type StateType = {
   saveValuesStatus: string | null;
   selectedNamespace: string;
   selectedCluster: string;
+  selectedClusterId: number;
   selectedImageUrl: string | null;
   sourceType: string;
   selectedTag: string | null;
@@ -60,6 +61,7 @@ type StateType = {
 const defaultActionConfig: ActionConfigType = {
   git_repo: "",
   image_repo_uri: "",
+  branch: "",
   git_repo_id: 0,
 };
 
@@ -70,6 +72,7 @@ class LaunchTemplate extends Component<PropsType, StateType> {
     clusterMap: {} as { [clusterId: string]: ClusterType },
     saveValuesStatus: "" as string | null,
     selectedCluster: this.context.currentCluster.name,
+    selectedClusterId: this.context.currentCluster.id,
     selectedNamespace: "default",
     selectedImageUrl: "" as string | null,
     sourceType: "",
@@ -103,6 +106,7 @@ class LaunchTemplate extends Component<PropsType, StateType> {
         "<token>",
         {
           git_repo: actionConfig.git_repo,
+          git_branch: this.state.branch,
           registry_id: this.state.selectedRegistry.id,
           dockerfile_path: this.state.dockerfilePath,
           folder_path: this.state.folderPath,
@@ -412,6 +416,9 @@ class LaunchTemplate extends Component<PropsType, StateType> {
                   setMetaState={setMetaState}
                   key={tab.name}
                   sections={tab.sections}
+                  // For env group loader
+                  namespace={this.state.selectedNamespace}
+                  clusterId={this.state.selectedClusterId}
                 />
               );
             }
@@ -738,7 +745,10 @@ class LaunchTemplate extends Component<PropsType, StateType> {
             setActiveValue={(cluster: string) => {
               this.context.setCurrentCluster(this.state.clusterMap[cluster]);
               this.updateNamespaces(this.state.clusterMap[cluster].id);
-              this.setState({ selectedCluster: cluster });
+              this.setState({
+                selectedCluster: cluster,
+                selectedClusterId: this.state.clusterMap[cluster].id,
+              });
             }}
             options={this.state.clusterOptions}
             width="250px"

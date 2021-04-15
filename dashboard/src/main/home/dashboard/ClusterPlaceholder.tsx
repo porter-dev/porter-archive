@@ -44,21 +44,16 @@ export default class ClusterPlaceholder extends Component<
       );
     } else if (!this.props.currentCluster) {
       return (
-        <>
-          <Banner>
-            <i className="material-icons">error_outline</i>
-            This project currently has no clusters connected.
-          </Banner>
-          <StyledStatusPlaceholder>
-            <Highlight
-              onClick={() => {
-                this.context.setCurrentModal("ClusterInstructionsModal", {});
-              }}
-            >
-              + Connect a Cluster
-            </Highlight>
-          </StyledStatusPlaceholder>
-        </>
+        <StyledStatusPlaceholder>
+          You need to connect a cluster to use Porter.
+          <Highlight
+            onClick={() => {
+              this.context.setCurrentModal("ClusterInstructionsModal", {});
+            }}
+          >
+            + Connect an existing cluster
+          </Highlight>
+        </StyledStatusPlaceholder>
       );
     } else {
       return <ClusterList currentCluster={this.props.currentCluster} />;
@@ -78,7 +73,7 @@ const LoadingWrapper = styled.div`
 const Highlight = styled.div`
   color: #8590ff;
   cursor: pointer;
-  margin-left: 10px;
+  margin-left: 5px;
   margin-right: 10px;
 `;
 
@@ -100,15 +95,13 @@ const Banner = styled.div`
 
 const StyledStatusPlaceholder = styled.div`
   width: 100%;
-  height: calc(100vh - 450px);
-  margin-top: 30px;
+  height: calc(100vh - 470px);
+  margin-top: 10px;
   display: flex;
-  align-items: center;
   color: #aaaabb;
   border-radius: 5px;
   text-align: center;
   font-size: 13px;
-  padding-bottom: 25px;
   background: #ffffff09;
   display: flex;
   align-items: center;

@@ -294,7 +294,8 @@ class Home extends Component<PropsType, StateType> {
       if (
         currentView === "cluster-dashboard" ||
         currentView === "applications" ||
-        currentView === "jobs"
+        currentView === "jobs" ||
+        currentView === "env-groups"
       ) {
         return this.renderDashboard();
       } else if (currentView === "dashboard") {
@@ -313,7 +314,6 @@ class Home extends Component<PropsType, StateType> {
       } else if (currentView === "project-settings") {
         return <ProjectSettings />;
       }
-
       return <Templates />;
     } else if (currentView === "new-project") {
       return <NewProject />;

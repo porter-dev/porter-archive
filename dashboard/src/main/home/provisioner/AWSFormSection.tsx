@@ -62,13 +62,13 @@ const regionOptions = [
 ];
 
 const machineTypeOptions = [
-  { value: "t2.medium", label: "t2.medium"},
-  { value: "t2.xlarge", label: "t2.xlarge"},
-  { value: "t2.2xlarge", label: "t2.2xlarge"},
-  { value: "t3.medium", label: "t3.medium"},
-  { value: "t3.xlarge", label: "t3.xlarge"},
-  { value: "t3.2xlarge", label: "t3.2xlarge"},
-]
+  { value: "t2.medium", label: "t2.medium" },
+  { value: "t2.xlarge", label: "t2.xlarge" },
+  { value: "t2.2xlarge", label: "t2.2xlarge" },
+  { value: "t3.medium", label: "t3.medium" },
+  { value: "t3.xlarge", label: "t3.xlarge" },
+  { value: "t3.2xlarge", label: "t3.2xlarge" },
+];
 
 // TODO: Consolidate across forms w/ HOC
 class AWSFormSection extends Component<PropsType, StateType> {
@@ -275,7 +275,13 @@ class AWSFormSection extends Component<PropsType, StateType> {
 
   render() {
     let { setSelectedProvisioner } = this.props;
-    let { awsRegion, awsMachineType, awsAccessId, awsSecretKey, selectedInfras } = this.state;
+    let {
+      awsRegion,
+      awsMachineType,
+      awsAccessId,
+      awsSecretKey,
+      selectedInfras,
+    } = this.state;
 
     return (
       <StyledAWSFormSection>

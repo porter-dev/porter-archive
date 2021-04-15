@@ -35,7 +35,6 @@ const provisionOptions = [
 
 const tierOptions = [
   { value: "basic", label: "Basic" },
-  { value: "starter", label: "Starter" },
   { value: "professional", label: "Professional" },
 ];
 
@@ -56,7 +55,7 @@ const regionOptions = [
 export default class DOFormSection extends Component<PropsType, StateType> {
   state = {
     selectedInfras: [...provisionOptions],
-    subscriptionTier: "starter",
+    subscriptionTier: "basic",
     doRegion: "nyc1",
     provisionConfirmed: false,
   };

@@ -745,6 +745,7 @@ func (app *App) HandleUpgradeRelease(w http.ResponseWriter, r *http.Request) {
 				WebhookToken:   release.WebhookToken,
 				ProjectID:      uint(projID),
 				ReleaseName:    name,
+				GitBranch:      gitAction.GitBranch,
 				DockerFilePath: gitAction.DockerfilePath,
 				FolderPath:     gitAction.FolderPath,
 				ImageRepoURL:   gitAction.ImageRepoURI,
@@ -836,7 +837,7 @@ func (app *App) HandleReleaseDeployWebhook(w http.ResponseWriter, r *http.Reques
 		}, w)
 
 		return
-	} 
+	}
 
 	registries, err := app.Repo.Registry.ListRegistriesByProjectID(uint(form.ReleaseForm.Cluster.ProjectID))
 
@@ -995,6 +996,7 @@ func (app *App) HandleRollbackRelease(w http.ResponseWriter, r *http.Request) {
 				WebhookToken:   release.WebhookToken,
 				ProjectID:      uint(projID),
 				ReleaseName:    name,
+				GitBranch:      gitAction.GitBranch,
 				DockerFilePath: gitAction.DockerfilePath,
 				FolderPath:     gitAction.FolderPath,
 				ImageRepoURL:   gitAction.ImageRepoURI,

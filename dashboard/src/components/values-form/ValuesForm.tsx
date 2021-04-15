@@ -21,6 +21,8 @@ type PropsType = {
   setMetaState?: any;
   handleEnvChange?: (x: any) => void;
   disabled?: boolean;
+  namespace?: string;
+  clusterId?: number;
 };
 
 type StateType = any;
@@ -74,10 +76,35 @@ export default class ValuesForm extends Component<PropsType, StateType> {
               label={item.label}
             />
           );
+        case "env-key-value-array":
+          return (
+            <KeyValueArray
+              key={i}
+              envLoader={true}
+              namespace={this.props.namespace}
+              clusterId={this.props.clusterId}
+              values={this.props.metaState[key]}
+              setValues={(x: any) => {
+                this.props.setMetaState({ [key]: x });
+
+                // Need to pull env vars out of form.yaml for createGHA build env vars
+                if (
+                  this.props.handleEnvChange &&
+                  key === "container.env.normal"
+                ) {
+                  this.props.handleEnvChange(x);
+                }
+              }}
+              label={item.label}
+              disabled={this.props.disabled}
+            />
+          );
         case "key-value-array":
           return (
             <KeyValueArray
               key={i}
+              namespace={this.props.namespace}
+              clusterId={this.props.clusterId}
               values={this.props.metaState[key]}
               setValues={(x: any) => {
                 this.props.setMetaState({ [key]: x });

@@ -43,7 +43,6 @@ export default class ActionConfEditor extends Component<PropsType, StateType> {
 
   renderExpanded = () => {
     let { actionConfig, branch, setActionConfig, setBranch } = this.props;
-    console.log("BRANCH IS", branch)
 
     if (!actionConfig.git_repo) {
       return (
@@ -65,7 +64,9 @@ export default class ActionConfEditor extends Component<PropsType, StateType> {
             />
           </ExpandedWrapperAlt>
           <Br />
-          <BackButton width="135px" onClick={() => setActionConfig({ ...defaultActionConfig })}>
+          <BackButton width="135px" onClick={() => {
+            setActionConfig({ ...defaultActionConfig })
+          }}>
             <i className="material-icons">keyboard_backspace</i>
             Select Repo
           </BackButton>
@@ -85,11 +86,13 @@ export default class ActionConfEditor extends Component<PropsType, StateType> {
           </ExpandedWrapperAlt>
           <Br />
           <BackButton
-            width="135px"
-            onClick={() => setActionConfig({ ...defaultActionConfig })}
+            width="145px"
+            onClick={() => {
+              setBranch("")
+            }}
           >
             <i className="material-icons">keyboard_backspace</i>
-            Select Repo
+            Select Branch
           </BackButton>
         </>
       );

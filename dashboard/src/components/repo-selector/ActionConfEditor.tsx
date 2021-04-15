@@ -31,6 +31,7 @@ type StateType = {
 const defaultActionConfig: ActionConfigType = {
   git_repo: "",
   image_repo_uri: "",
+  branch: "",
   git_repo_id: 0,
 };
 
@@ -53,8 +54,7 @@ export default class ActionConfEditor extends Component<PropsType, StateType> {
           />
         </ExpandedWrapper>
       );
-    } else if (!this.props.dockerfilePath && !this.props.folderPath) {
-      /* else if (!branch) {
+    } else if (!branch) {
       return (
         <>
           <ExpandedWrapperAlt>
@@ -64,13 +64,18 @@ export default class ActionConfEditor extends Component<PropsType, StateType> {
             />
           </ExpandedWrapperAlt>
           <Br />
-          <BackButton width="135px" onClick={() => setActionConfig({ ...defaultActionConfig })}>
+          <BackButton
+            width="135px"
+            onClick={() => {
+              setActionConfig({ ...defaultActionConfig });
+            }}
+          >
             <i className="material-icons">keyboard_backspace</i>
             Select Repo
           </BackButton>
         </>
       );
-    } */
+    } else if (!this.props.dockerfilePath && !this.props.folderPath) {
       return (
         <>
           <ExpandedWrapperAlt>
@@ -84,11 +89,13 @@ export default class ActionConfEditor extends Component<PropsType, StateType> {
           </ExpandedWrapperAlt>
           <Br />
           <BackButton
-            width="135px"
-            onClick={() => setActionConfig({ ...defaultActionConfig })}
+            width="145px"
+            onClick={() => {
+              setBranch("");
+            }}
           >
             <i className="material-icons">keyboard_backspace</i>
-            Select Repo
+            Select Branch
           </BackButton>
         </>
       );

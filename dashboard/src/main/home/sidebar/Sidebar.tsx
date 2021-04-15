@@ -7,6 +7,7 @@ import monojob from "assets/monojob.png";
 import monoweb from "assets/monoweb.png";
 import settings from "assets/settings.svg";
 import discordLogo from "assets/discord.svg";
+import sliders from "assets/sliders.svg";
 
 import { Context } from "shared/Context";
 
@@ -108,13 +109,6 @@ class Sidebar extends Component<PropsType, StateType> {
               this.props.history.push("/applications");
             }}
           >
-            <BranchPad>
-              <Gutter>
-                <Rail />
-                <Circle />
-                <Rail lastTab={false} />
-              </Gutter>
-            </BranchPad>
             <Img src={monoweb} />
             Applications
           </NavButton>
@@ -124,15 +118,17 @@ class Sidebar extends Component<PropsType, StateType> {
               this.props.history.push("/jobs");
             }}
           >
-            <BranchPad>
-              <Gutter>
-                <Rail />
-                <Circle />
-                <Rail lastTab={true} />
-              </Gutter>
-            </BranchPad>
             <Img src={monojob} />
             Jobs
+          </NavButton>
+          <NavButton
+            selected={currentView === "env-groups"}
+            onClick={() => {
+              this.props.history.push("/env-groups");
+            }}
+          >
+            <Img src={sliders} />
+            Env Groups
           </NavButton>
         </>
       );

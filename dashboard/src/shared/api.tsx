@@ -102,6 +102,7 @@ const createGCR = baseApi<
 const createGHAction = baseApi<
   {
     git_repo: string;
+    git_branch: string;
     registry_id: number;
     image_repo_uri: string;
     dockerfile_path: string;
@@ -710,6 +711,62 @@ const upgradeChartValues = baseApi<
   return `/api/projects/${id}/releases/${name}/upgrade?cluster_id=${cluster_id}`;
 });
 
+const listConfigMaps = baseApi<
+  {
+    namespace: string;
+    cluster_id: number;
+  },
+  { id: number }
+>("GET", (pathParams) => {
+  return `/api/projects/${pathParams.id}/k8s/configmap/list`;
+});
+
+const getConfigMap = baseApi<
+  {
+    name: string;
+    namespace: string;
+    cluster_id: number;
+  },
+  { id: number }
+>("GET", (pathParams) => {
+  return `/api/projects/${pathParams.id}/k8s/configmap`;
+});
+
+const createConfigMap = baseApi<
+  {
+    name: string;
+    namespace: string;
+    variables: Record<string, string>;
+  },
+  { id: number; cluster_id: number }
+>("POST", (pathParams) => {
+  let { id, cluster_id } = pathParams;
+  return `/api/projects/${id}/k8s/configmap/create?cluster_id=${cluster_id}`;
+});
+
+const updateConfigMap = baseApi<
+  {
+    name: string;
+    namespace: string;
+    variables: Record<string, string>;
+  },
+  { id: number; cluster_id: number }
+>("POST", (pathParams) => {
+  let { id, cluster_id } = pathParams;
+  return `/api/projects/${id}/k8s/configmap/update?cluster_id=${cluster_id}`;
+});
+
+const deleteConfigMap = baseApi<
+  {
+    name: string;
+    namespace: string;
+    cluster_id: number;
+  },
+  { id: number }
+>("DELETE", (pathParams) => {
+  return `/api/projects/${pathParams.id}/k8s/configmap/delete`;
+});
+
 // Bundle export to allow default api import (api.<method> is more readable)
 export default {
   checkAuth,
@@ -728,7 +785,9 @@ export default {
   createPasswordResetVerify,
   createPasswordResetFinalize,
   createProject,
+  createConfigMap,
   deleteCluster,
+  deleteConfigMap,
   deleteGitRepoIntegration,
   deleteInvite,
   deletePod,
@@ -747,6 +806,7 @@ export default {
   getChartControllers,
   getClusterIntegrations,
   getClusters,
+  getConfigMap,
   getGitRepoList,
   getGitRepos,
   getImageRepos,
@@ -776,6 +836,7 @@ export default {
   getApplicationTemplates,
   getUser,
   linkGithubProject,
+  listConfigMaps,
   logInUser,
   logOutUser,
   provisionECR,
@@ -784,5 +845,6 @@ export default {
   rollbackChart,
   uninstallTemplate,
   updateUser,
+  updateConfigMap,
   upgradeChartValues,
 };

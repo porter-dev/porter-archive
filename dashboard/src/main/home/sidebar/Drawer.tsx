@@ -71,7 +71,7 @@ class Drawer extends Component<PropsType, StateType> {
               this.context.setCurrentModal("ClusterInstructionsModal", {});
             }}
           >
-            <Plus>+</Plus> Add a Cluster
+            <Plus>+</Plus> Connect a Cluster
           </InitializeButton>
         </StyledDrawer>
       </div>

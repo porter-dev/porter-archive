@@ -349,6 +349,10 @@ class LaunchTemplate extends Component<PropsType, StateType> {
       return true;
     }
 
+    if (this.state.saveValuesStatus == "loading") {
+      return true;
+    }
+
     if (this.props.form?.hasSource) {
       // Allow if source type is registry and image URL is specified
       if (sourceType === "registry" && selectedImageUrl) {
@@ -374,22 +378,28 @@ class LaunchTemplate extends Component<PropsType, StateType> {
       folderPath,
     } = this.state;
 
-    if (this.submitIsDisabled()) {
-      if (
-        sourceType === "repo" &&
-        (dockerfilePath || folderPath) &&
-        !selectedRegistry
-      ) {
-        return "A connected container registry is required";
-      }
-      let { templateName } = this.state;
-      if (templateName.length > 0 && !isAlphanumeric(templateName)) {
-        return "Template name contains illegal characters";
-      }
-      return "No application source specified";
-    } else {
+    if (!this.submitIsDisabled()) {
       return this.state.saveValuesStatus;
     }
+
+    // handle exception when deploy process is on loading
+    if (this.state.saveValuesStatus === "loading") {
+      return "loading"
+    }
+
+    if (
+      sourceType === "repo" &&
+      (dockerfilePath || folderPath) &&
+      !selectedRegistry
+    ) {
+      return "A connected container registry is required";
+    }
+    let { templateName } = this.state;
+    if (templateName.length > 0 && !isAlphanumeric(templateName)) {
+      return "Template name contains illegal characters";
+    }
+    return "No application source specified";
+
   };
 
   renderTabContents = () => {

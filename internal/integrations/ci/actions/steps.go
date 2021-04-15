@@ -45,7 +45,8 @@ func getConfigurePorterStep(porterTokenSecretName string) GithubActionYAMLStep {
 
 const dockerBuildPush string = `
 export $(echo "${{secrets.%s}}" | xargs)
-sudo docker build %s --file %s -t %s:$(git rev-parse --short HEAD)
+echo "${{secrets.%s}}" > ./env_porter
+sudo docker build %s $(cat ./env_porter | sed 's@^@--build-arg @g' | paste -s -d " " -) --file %s -t %s:$(git rev-parse --short HEAD)
 sudo docker push %s:$(git rev-parse --short HEAD)
 `
 

@@ -898,6 +898,20 @@ func New(a *api.App) *chi.Mux {
 
 		r.Method(
 			"GET",
+			"/projects/{project_id}/releases/{name}/{revision}/pods/all",
+			auth.DoesUserHaveProjectAccess(
+				auth.DoesUserHaveClusterAccess(
+					requestlog.NewHandler(a.HandleGetReleaseAllPods, l),
+					mw.URLParam,
+					mw.QueryParam,
+				),
+				mw.URLParam,
+				mw.ReadAccess,
+			),
+		)
+
+		r.Method(
+			"GET",
 			"/projects/{project_id}/releases/{name}/history",
 			auth.DoesUserHaveProjectAccess(
 				auth.DoesUserHaveClusterAccess(
@@ -1081,6 +1095,20 @@ func New(a *api.App) *chi.Mux {
 				),
 				mw.URLParam,
 				mw.ReadAccess,
+			),
+		)
+
+		r.Method(
+			"GET",
+			"/projects/{project_id}/k8s/kubeconfig",
+			auth.DoesUserHaveProjectAccess(
+				auth.DoesUserHaveClusterAccess(
+					requestlog.NewHandler(a.HandleGetTemporaryKubeconfig, l),
+					mw.URLParam,
+					mw.QueryParam,
+				),
+				mw.URLParam,
+				mw.WriteAccess,
 			),
 		)
 

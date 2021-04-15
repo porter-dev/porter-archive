@@ -13,6 +13,7 @@ import (
 	"github.com/porter-dev/porter/internal/kubernetes"
 	"github.com/porter-dev/porter/internal/kubernetes/prometheus"
 	v1 "k8s.io/api/core/v1"
+	"k8s.io/client-go/tools/clientcmd"
 )
 
 // Enumeration of k8s API error codes, represented as int64
@@ -902,4 +903,45 @@ func (app *App) HandleGetPodMetrics(w http.ResponseWriter, r *http.Request) {
 	}
 
 	fmt.Fprint(w, string(rawQuery))
+}
+
+type KubeconfigResponse struct {
+	Kubeconfig []byte `json:"kubeconfig"`
+}
+
+func (app *App) HandleGetTemporaryKubeconfig(w http.ResponseWriter, r *http.Request) {
+	vals, err := url.ParseQuery(r.URL.RawQuery)
+
+	if err != nil {
+		app.handleErrorFormDecoding(err, ErrReleaseDecode, w)
+		return
+	}
+
+	// get the filter options
+	form := &forms.K8sForm{
+		OutOfClusterConfig: &kubernetes.OutOfClusterConfig{
+			Repo:              app.Repo,
+			DigitalOceanOAuth: app.DOConf,
+		},
+	}
+
+	form.PopulateK8sOptionsFromQueryParams(vals, app.Repo.Cluster)
+
+	// get the API config
+	apiConf, err := form.OutOfClusterConfig.CreateRawConfigFromCluster()
+
+	if err != nil {
+		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
+		return
+	}
+
+	bytes, err := clientcmd.Write(*apiConf)
+	res := &KubeconfigResponse{
+		Kubeconfig: bytes,
+	}
+
+	if err := json.NewEncoder(w).Encode(res); err != nil {
+		app.handleErrorFormDecoding(err, ErrK8sDecode, w)
+		return
+	}
 }

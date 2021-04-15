@@ -102,6 +102,7 @@ const createGCR = baseApi<
 const createGHAction = baseApi<
   {
     git_repo: string;
+    git_branch: string;
     registry_id: number;
     image_repo_uri: string;
     dockerfile_path: string;

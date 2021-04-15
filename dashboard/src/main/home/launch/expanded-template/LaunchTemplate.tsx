@@ -60,6 +60,7 @@ type StateType = {
 const defaultActionConfig: ActionConfigType = {
   git_repo: "",
   image_repo_uri: "",
+  branch: "",
   git_repo_id: 0,
 };
 
@@ -103,6 +104,7 @@ class LaunchTemplate extends Component<PropsType, StateType> {
         "<token>",
         {
           git_repo: actionConfig.git_repo,
+          git_branch: this.state.branch,
           registry_id: this.state.selectedRegistry.id,
           dockerfile_path: this.state.dockerfilePath,
           folder_path: this.state.folderPath,

@@ -64,9 +64,12 @@ export default class ActionConfEditor extends Component<PropsType, StateType> {
             />
           </ExpandedWrapperAlt>
           <Br />
-          <BackButton width="135px" onClick={() => {
-            setActionConfig({ ...defaultActionConfig })
-          }}>
+          <BackButton
+            width="135px"
+            onClick={() => {
+              setActionConfig({ ...defaultActionConfig });
+            }}
+          >
             <i className="material-icons">keyboard_backspace</i>
             Select Repo
           </BackButton>
@@ -88,7 +91,7 @@ export default class ActionConfEditor extends Component<PropsType, StateType> {
           <BackButton
             width="145px"
             onClick={() => {
-              setBranch("")
+              setBranch("");
             }}
           >
             <i className="material-icons">keyboard_backspace</i>

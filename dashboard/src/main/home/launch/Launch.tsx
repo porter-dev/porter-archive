@@ -61,9 +61,11 @@ export default class Templates extends Component<PropsType, StateType> {
       )
       .then((res) => {
         this.setState({ applicationTemplates: res.data, error: false }, () => {
-          let preferredOrder = ['web', 'worker', 'job']
+          let preferredOrder = ["web", "worker", "job"];
           this.state.applicationTemplates.sort((a, b) => {
-            return preferredOrder.indexOf(a.name) - preferredOrder.indexOf(b.name)
+            return (
+              preferredOrder.indexOf(a.name) - preferredOrder.indexOf(b.name)
+            );
           });
           this.setState({
             loading: false,

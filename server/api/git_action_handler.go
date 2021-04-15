@@ -151,6 +151,8 @@ func (app *App) createGitActionFromForm(
 		return nil
 	}
 
+	fmt.Println("GIT ACTIONB BRANCH IS", gitAction.GitBranch)
+
 	// create the commit in the git repo
 	gaRunner := &actions.GithubActions{
 		GitIntegration: gr,
@@ -161,6 +163,7 @@ func (app *App) createGitActionFromForm(
 		WebhookToken:   release.WebhookToken,
 		ProjectID:      uint(projID),
 		ReleaseName:    name,
+		GitBranch:      gitAction.GitBranch,
 		DockerFilePath: gitAction.DockerfilePath,
 		FolderPath:     gitAction.FolderPath,
 		ImageRepoURL:   gitAction.ImageRepoURI,

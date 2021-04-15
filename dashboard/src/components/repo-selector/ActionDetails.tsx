@@ -122,6 +122,13 @@ export default class ActionDetails extends Component<PropsType, StateType> {
           width="100%"
           value={this.props.actionConfig.git_repo}
         />
+        <InputRow
+          disabled={true}
+          label="Branch"
+          type="text"
+          width="100%"
+          value={this.props.branch}
+        />
         {this.props.dockerfilePath ? (
           <InputRow
             disabled={true}

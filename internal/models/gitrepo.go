@@ -55,6 +55,9 @@ type GitActionConfig struct {
 	// The git repo in ${owner}/${repo} form
 	GitRepo string `json:"git_repo"`
 
+	// The git branch to use
+	GitBranch string `json:"git_branch"`
+
 	// The complete image repository uri to pull from
 	ImageRepoURI string `json:"image_repo_uri"`
 

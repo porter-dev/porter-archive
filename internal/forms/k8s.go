@@ -37,3 +37,9 @@ func (kf *K8sForm) PopulateK8sOptionsFromQueryParams(
 
 	return nil
 }
+
+type ConfigMapForm struct {
+	Name string `json:"name" form:"required"`
+	Namespace string `json:"namespace" form:"required"`
+	EnvVariables map[string]string `json:"variables"`
+}

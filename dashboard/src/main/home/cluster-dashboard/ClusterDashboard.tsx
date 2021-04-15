@@ -3,12 +3,14 @@ import styled from "styled-components";
 import gradient from "assets/gradient.jpg";
 import monojob from "assets/monojob.png";
 import monoweb from "assets/monoweb.png";
+import sliders from "assets/sliders.svg";
 
 import { Context } from "shared/Context";
 import { ChartType, ClusterType } from "shared/types";
 import { PorterUrl } from "shared/routing";
 
 import ChartList from "./chart/ChartList";
+import EnvGroupDashboard from "./env-groups/EnvGroupDashboard";
 import NamespaceSelector from "./NamespaceSelector";
 import SortSelector from "./SortSelector";
 import ExpandedChart from "./expanded-chart/ExpandedChart";
@@ -88,53 +90,18 @@ class ClusterDashboard extends Component<PropsType, StateType> {
     }
   };
 
-  renderContents = () => {
-    let { currentCluster, setSidebar, currentView } = this.props;
-    if (this.state.currentChart && currentView === "jobs") {
-      return (
-        <ExpandedJobChart
-          namespace={this.state.namespace}
-          currentCluster={this.props.currentCluster}
-          currentChart={this.state.currentChart}
-          closeChart={() => this.setState({ currentChart: null })}
-          setSidebar={setSidebar}
-        />
-      );
-    } else if (this.state.currentChart) {
-      return (
-        <ExpandedChart
-          namespace={this.state.namespace}
-          currentCluster={this.props.currentCluster}
-          currentChart={this.state.currentChart}
-          closeChart={() => this.setState({ currentChart: null })}
-          isMetricsInstalled={this.state.isMetricsInstalled}
-          setSidebar={setSidebar}
-        />
-      );
+  getDescription = (currentView: string): string => {
+    if (currentView === "jobs") {
+      return "Scripts and tasks that run once or on a repeating interval.";
+    } else {
+      return "Continuously running web services, workers, and add-ons.";
     }
+  };
 
+  renderBody = () => {
+    let { currentCluster, setSidebar, currentView } = this.props;
     return (
-      <div>
-        <TitleSection>
-          {this.renderDashboardIcon()}
-          <Title>{currentView}</Title>
-        </TitleSection>
-
-        <InfoSection>
-          <TopRow>
-            <InfoLabel>
-              <i className="material-icons">info</i> Info
-            </InfoLabel>
-          </TopRow>
-          <Description>
-            {currentView === "jobs"
-              ? `An overview of past and current jobs for ${currentCluster.name}.`
-              : `An overview of web services and workers running on ${currentCluster.name}.`}
-          </Description>
-        </InfoSection>
-
-        <LineBreak />
-
+      <>
         <ControlRow>
           <Button onClick={() => this.props.history.push("launch")}>
             <i className="material-icons">add</i> Launch Template
@@ -160,6 +127,56 @@ class ClusterDashboard extends Component<PropsType, StateType> {
             this.setState({ currentChart: x })
           }
         />
+      </>
+    );
+  };
+
+  renderContents = () => {
+    let { currentCluster, setSidebar, currentView } = this.props;
+    if (this.state.currentChart && currentView === "jobs") {
+      return (
+        <ExpandedJobChart
+          namespace={this.state.namespace}
+          currentCluster={this.props.currentCluster}
+          currentChart={this.state.currentChart}
+          closeChart={() => this.setState({ currentChart: null })}
+          setSidebar={setSidebar}
+        />
+      );
+    } else if (this.state.currentChart) {
+      return (
+        <ExpandedChart
+          namespace={this.state.namespace}
+          currentCluster={this.props.currentCluster}
+          currentChart={this.state.currentChart}
+          closeChart={() => this.setState({ currentChart: null })}
+          isMetricsInstalled={this.state.isMetricsInstalled}
+          setSidebar={setSidebar}
+        />
+      );
+    } else if (currentView === "env-groups") {
+      return <EnvGroupDashboard currentCluster={this.props.currentCluster} />;
+    }
+
+    return (
+      <div>
+        <TitleSection>
+          {this.renderDashboardIcon()}
+          <Title>{currentView}</Title>
+        </TitleSection>
+
+        <InfoSection>
+          <TopRow>
+            <InfoLabel>
+              <i className="material-icons">info</i> Info
+            </InfoLabel>
+          </TopRow>
+          <Description>{this.getDescription(currentView)}</Description>
+        </InfoSection>
+
+        <LineBreak />
+
+        {this.renderBody()}
       </div>
     );
   };

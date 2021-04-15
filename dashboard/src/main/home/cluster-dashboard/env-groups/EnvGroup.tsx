@@ -1,14 +1,15 @@
 import React, { Component } from "react";
 import styled from "styled-components";
 
+import key from "assets/key.svg";
+
 import { ChartType, StorageType } from "shared/types";
 import { Context } from "shared/Context";
 import StatusIndicator from "components/StatusIndicator";
 
 type PropsType = {
-  chart: ChartType;
-  setCurrentChart: (c: ChartType) => void;
-  controllers: Record<string, any>;
+  envGroup: any;
+  setExpanded: () => void;
 };
 
 type StateType = {
@@ -16,20 +17,10 @@ type StateType = {
   update: any[];
 };
 
-export default class Chart extends Component<PropsType, StateType> {
+export default class EnvGroup extends Component<PropsType, StateType> {
   state = {
     expand: false,
     update: [] as any[],
-  };
-
-  renderIcon = () => {
-    let { chart } = this.props;
-
-    if (chart.chart.metadata.icon && chart.chart.metadata.icon !== "") {
-      return <Icon src={chart.chart.metadata.icon} />;
-    } else {
-      return <i className="material-icons">tonality</i>;
-    }
   };
 
   readableDate = (s: string) => {
@@ -43,46 +34,46 @@ export default class Chart extends Component<PropsType, StateType> {
   };
 
   render() {
-    let { chart, setCurrentChart } = this.props;
+    let { envGroup, setExpanded } = this.props;
+    let name = envGroup?.metadata?.name;
+    let timestamp = envGroup?.metadata?.creationTimestamp;
+    let namespace = envGroup?.metadata?.namespace;
+    let varCount = Object.values(envGroup?.data || {}).length;
 
     return (
-      <StyledChart
+      <StyledEnvGroup
         onMouseEnter={() => this.setState({ expand: true })}
         onMouseLeave={() => this.setState({ expand: false })}
         expand={this.state.expand}
-        onClick={() => setCurrentChart(chart)}
+        onClick={() => setExpanded()}
       >
         <Title>
-          <IconWrapper>{this.renderIcon()}</IconWrapper>
-          {chart.name}
+          <IconWrapper>
+            <Icon src={key} />
+          </IconWrapper>
+          {name}
         </Title>
 
         <BottomWrapper>
           <InfoWrapper>
-            <StatusIndicator
-              controllers={this.props.controllers}
-              status={chart.info.status}
-              margin_left={"17px"}
-            />
             <LastDeployed>
-              <Dot>•</Dot> Last deployed{" "}
-              {this.readableDate(chart.info.last_deployed)}
+              Last updated {this.readableDate(timestamp)}
             </LastDeployed>
           </InfoWrapper>
 
           <TagWrapper>
             Namespace
-            <NamespaceTag>{chart.namespace}</NamespaceTag>
+            <NamespaceTag>{namespace}</NamespaceTag>
           </TagWrapper>
         </BottomWrapper>
 
-        <Version>v{chart.version}</Version>
-      </StyledChart>
+        <Version>{varCount} variables</Version>
+      </StyledEnvGroup>
     );
   }
 }
 
-Chart.contextType = Context;
+EnvGroup.contextType = Context;
 
 const BottomWrapper = styled.div`
   display: flex;
@@ -115,7 +106,8 @@ const InfoWrapper = styled.div`
 
 const LastDeployed = styled.div`
   font-size: 13px;
-  margin-left: 10px;
+  margin-left: 14px;
+  margin-top: -1px;
   display: flex;
   align-items: center;
   color: #aaaabb66;
@@ -201,7 +193,7 @@ const Title = styled.div`
   }
 `;
 
-const StyledChart = styled.div`
+const StyledEnvGroup = styled.div`
   background: #26282f;
   cursor: pointer;
   margin-bottom: 25px;

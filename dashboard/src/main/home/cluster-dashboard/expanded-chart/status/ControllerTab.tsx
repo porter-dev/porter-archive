@@ -141,7 +141,7 @@ export default class ControllerTab extends Component<PropsType, StateType> {
 
       status?.containerStatuses?.forEach((s: any) => {
         if (s.state?.waiting) {
-          collatedStatus = "waiting";
+          collatedStatus = s.state?.waiting.reason === "CrashLoopBackOff" ? "failed" : "waiting";
         } else if (s.state?.terminated) {
           collatedStatus = "failed";
         }
@@ -195,6 +195,18 @@ export default class ControllerTab extends Component<PropsType, StateType> {
     let [available, total] = this.getAvailability(controller.kind, controller);
     let status = available == total ? "running" : "waiting";
 
+    controller?.status?.conditions?.forEach(
+      (condition: any) => {
+        if (
+          condition.type == "Progressing" &&
+          condition.status == "False" &&
+          condition.reason == "ProgressDeadlineExceeded"
+        ) {
+          status = 'failed';
+        }
+      }
+    );
+    
     if (controller.kind.toLowerCase() === "job" && this.state.raw.length == 0) {
       status = "completed";
     }
@@ -210,9 +222,6 @@ export default class ControllerTab extends Component<PropsType, StateType> {
       >
         {this.state.raw.map((pod, i) => {
           let status = this.getPodStatus(pod.status);
-          if (i === 2) {
-            status = "failed";
-          }
           return (
             <Tab
               key={pod.metadata?.name}

@@ -12,6 +12,8 @@ import (
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/templater/parser"
 	"helm.sh/helm/v3/pkg/release"
+	v1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/go-chi/chi"
 	"github.com/porter-dev/porter/internal/forms"
@@ -390,6 +392,156 @@ func (app *App) HandleGetReleaseControllers(w http.ResponseWriter, r *http.Reque
 	}
 
 	if err := json.NewEncoder(w).Encode(retrievedControllers); err != nil {
+		app.handleErrorFormDecoding(err, ErrReleaseDecode, w)
+		return
+	}
+}
+
+// HandleGetReleaseAllPods retrieves all pods that are associated with a given release.
+func (app *App) HandleGetReleaseAllPods(w http.ResponseWriter, r *http.Request) {
+	name := chi.URLParam(r, "name")
+	revision, err := strconv.ParseUint(chi.URLParam(r, "revision"), 0, 64)
+
+	form := &forms.GetReleaseForm{
+		ReleaseForm: &forms.ReleaseForm{
+			Form: &helm.Form{
+				Repo:              app.Repo,
+				DigitalOceanOAuth: app.DOConf,
+			},
+		},
+		Name:     name,
+		Revision: int(revision),
+	}
+
+	agent, err := app.getAgentFromQueryParams(
+		w,
+		r,
+		form.ReleaseForm,
+		form.ReleaseForm.PopulateHelmOptionsFromQueryParams,
+	)
+
+	// errors are handled in app.getAgentFromQueryParams
+	if err != nil {
+		return
+	}
+
+	release, err := agent.GetRelease(form.Name, form.Revision)
+
+	if err != nil {
+		app.sendExternalError(err, http.StatusNotFound, HTTPError{
+			Code:   ErrReleaseReadData,
+			Errors: []string{"release not found"},
+		}, w)
+
+		return
+	}
+
+	vals, err := url.ParseQuery(r.URL.RawQuery)
+
+	if err != nil {
+		app.handleErrorFormDecoding(err, ErrReleaseDecode, w)
+		return
+	}
+
+	// get the filter options
+	k8sForm := &forms.K8sForm{
+		OutOfClusterConfig: &kubernetes.OutOfClusterConfig{
+			Repo:              app.Repo,
+			DigitalOceanOAuth: app.DOConf,
+		},
+	}
+
+	k8sForm.PopulateK8sOptionsFromQueryParams(vals, app.Repo.Cluster)
+	k8sForm.DefaultNamespace = form.ReleaseForm.Namespace
+
+	// validate the form
+	if err := app.validator.Struct(k8sForm); err != nil {
+		app.handleErrorFormValidation(err, ErrK8sValidate, w)
+		return
+	}
+
+	// create a new kubernetes agent
+	var k8sAgent *kubernetes.Agent
+
+	if app.ServerConf.IsTesting {
+		k8sAgent = app.TestAgents.K8sAgent
+	} else {
+		k8sAgent, err = kubernetes.GetAgentOutOfClusterConfig(k8sForm.OutOfClusterConfig)
+	}
+
+	yamlArr := grapher.ImportMultiDocYAML([]byte(release.Manifest))
+	controllers := grapher.ParseControllers(yamlArr)
+	pods := make([]v1.Pod, 0)
+
+	// get current status of each controller
+	for _, c := range controllers {
+		var selector *metav1.LabelSelector
+
+		switch c.Kind {
+		case "Deployment":
+			rc, err := k8sAgent.GetDeployment(c)
+
+			if err != nil {
+				app.handleErrorDataRead(err, w)
+				return
+			}
+
+			selector = rc.Spec.Selector
+		case "StatefulSet":
+			rc, err := k8sAgent.GetStatefulSet(c)
+
+			if err != nil {
+				app.handleErrorDataRead(err, w)
+				return
+			}
+
+			selector = rc.Spec.Selector
+		case "DaemonSet":
+			rc, err := k8sAgent.GetDaemonSet(c)
+
+			if err != nil {
+				app.handleErrorDataRead(err, w)
+				return
+			}
+
+			selector = rc.Spec.Selector
+		case "ReplicaSet":
+			rc, err := k8sAgent.GetReplicaSet(c)
+
+			if err != nil {
+				app.handleErrorDataRead(err, w)
+				return
+			}
+
+			selector = rc.Spec.Selector
+		case "CronJob":
+			rc, err := k8sAgent.GetCronJob(c)
+
+			if err != nil {
+				app.handleErrorDataRead(err, w)
+				return
+			}
+
+			selector = rc.Spec.JobTemplate.Spec.Selector
+		}
+
+		selectors := make([]string, 0)
+
+		for key, val := range selector.MatchLabels {
+			selectors = append(selectors, key+"="+val)
+		}
+
+		podList, err := k8sAgent.GetPodsByLabel(strings.Join(selectors, ","))
+
+		if err != nil {
+			app.handleErrorDataRead(err, w)
+			return
+		}
+
+		pods = append(pods, podList.Items...)
+	}
+
+	if err := json.NewEncoder(w).Encode(pods); err != nil {
 		app.handleErrorFormDecoding(err, ErrReleaseDecode, w)
 		return
 	}

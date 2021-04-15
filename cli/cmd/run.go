@@ -4,7 +4,9 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"strings"
 
+	"github.com/fatih/color"
 	"github.com/porter-dev/porter/cli/cmd/api"
 	"github.com/porter-dev/porter/cli/cmd/utils"
 	"github.com/spf13/cobra"
@@ -52,7 +54,7 @@ func init() {
 }
 
 func run(_ *api.AuthCheckResponse, client *api.Client, args []string) error {
-	fmt.Println("ARGS ARE", args)
+	color.New(color.FgGreen).Println("Running", strings.Join(args[1:], " "), "for release", args[0])
 
 	podNames, err := getPods(client, namespace, args[0])
 

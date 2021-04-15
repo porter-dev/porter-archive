@@ -7,6 +7,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/AlecAivazis/survey/v2"
 	"golang.org/x/crypto/ssh/terminal"
 )
 
@@ -54,4 +55,27 @@ func PromptPasswordWithConfirmation() (string, error) {
 	}
 
 	return pw, nil
+}
+
+type selectAnswer struct {
+	Response string `survey:"response"`
+}
+
+func PromptSelect(prompt string, options []string) (string, error) {
+	var qs = []*survey.Question{
+		{
+			Name: "response",
+			Prompt: &survey.Select{
+				Message: prompt,
+				Options: options,
+				Default: options[0],
+			},
+		},
+	}
+
+	ans := &selectAnswer{}
+
+	err := survey.Ask(qs, ans)
+
+	return ans.Response, err
 }

@@ -31,6 +31,7 @@ type StateType = {
 const defaultActionConfig: ActionConfigType = {
   git_repo: "",
   image_repo_uri: "",
+  branch: "",
   git_repo_id: 0,
 };
 
@@ -42,6 +43,7 @@ export default class ActionConfEditor extends Component<PropsType, StateType> {
 
   renderExpanded = () => {
     let { actionConfig, branch, setActionConfig, setBranch } = this.props;
+    console.log("BRANCH IS", branch)
 
     if (!actionConfig.git_repo) {
       return (
@@ -53,8 +55,7 @@ export default class ActionConfEditor extends Component<PropsType, StateType> {
           />
         </ExpandedWrapper>
       );
-    } else if (!this.props.dockerfilePath && !this.props.folderPath) {
-      /* else if (!branch) {
+    } else if (!branch) {
       return (
         <>
           <ExpandedWrapperAlt>
@@ -70,7 +71,7 @@ export default class ActionConfEditor extends Component<PropsType, StateType> {
           </BackButton>
         </>
       );
-    } */
+    } else if (!this.props.dockerfilePath && !this.props.folderPath) {
       return (
         <>
           <ExpandedWrapperAlt>

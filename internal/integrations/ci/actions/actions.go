@@ -30,6 +30,7 @@ type GithubActions struct {
 	ProjectID    uint
 	ReleaseName  string
 
+	GitBranch      string
 	DockerFilePath string
 	FolderPath     string
 	ImageRepoURL   string
@@ -167,11 +168,17 @@ func (g *GithubActions) GetGithubActionYAML() ([]byte, error) {
 
 	gaSteps = append(gaSteps, deployPorterWebhookStep(g.getWebhookSecretName(), g.ImageRepoURL))
 
+	branch := g.GitBranch
+
+	if branch == "" {
+		branch = g.defaultBranch
+	}
+
 	actionYAML := &GithubActionYAML{
 		On: GithubActionYAMLOnPush{
 			Push: GithubActionYAMLOnPushBranches{
 				Branches: []string{
-					g.defaultBranch,
+					branch,
 				},
 			},
 		},

@@ -383,6 +383,14 @@ class LaunchTemplate extends Component<PropsType, StateType> {
       procfilePath,
     } = this.state;
 
+    if (
+      sourceType === "repo" &&
+      (!dockerfilePath && folderPath) &&
+      !procfilePath
+    ) {
+      return "Procfile not detected."
+    }
+
     if (!this.submitIsDisabled()) {
       return this.state.saveValuesStatus;
     }
@@ -390,14 +398,6 @@ class LaunchTemplate extends Component<PropsType, StateType> {
     // handle exception when deploy process is on loading
     if (this.state.saveValuesStatus === "loading") {
       return "loading"
-    }
-
-    if (
-      sourceType === "repo" &&
-      (!dockerfilePath && folderPath) &&
-      !procfilePath
-    ) {
-      return "Procfile not detected."
     }
 
     if (

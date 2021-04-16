@@ -149,9 +149,9 @@ export default class DOFormSection extends Component<PropsType, StateType> {
   };
 
   doRedirect = (projectId: number) => {
-    let { subscriptionTier, doRegion, selectedInfras } = this.state;
+    let { subscriptionTier, doRegion, selectedInfras, clusterName } = this.state;
     let redirectUrl = `/api/oauth/projects/${projectId}/digitalocean?project_id=${projectId}&provision=do`;
-    redirectUrl += `&tier=${subscriptionTier}&region=${doRegion}`;
+    redirectUrl += `&tier=${subscriptionTier}&region=${doRegion}&cluster_name=${clusterName}`;
     selectedInfras.forEach((option: { value: string; label: string }) => {
       redirectUrl += `&infras=${option.value}`;
     });

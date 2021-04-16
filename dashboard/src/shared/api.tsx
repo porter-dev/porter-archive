@@ -297,6 +297,22 @@ const getBranchContents = baseApi<
   return `/api/projects/${pathParams.project_id}/gitrepos/${pathParams.git_repo_id}/repos/${pathParams.kind}/${pathParams.owner}/${pathParams.name}/${pathParams.branch}/contents`;
 });
 
+const getProcfileContents = baseApi<
+  {
+    path: string;
+  },
+  {
+    project_id: number;
+    git_repo_id: number;
+    kind: string;
+    owner: string;
+    name: string;
+    branch: string;
+  }
+>("GET", (pathParams) => {
+  return `/api/projects/${pathParams.project_id}/gitrepos/${pathParams.git_repo_id}/repos/${pathParams.kind}/${pathParams.owner}/${pathParams.name}/${pathParams.branch}/procfile`;
+});
+
 const getBranches = baseApi<
   {},
   {
@@ -821,6 +837,7 @@ export default {
   getNamespaces,
   getNGINXIngresses,
   getOAuthIds,
+  getProcfileContents,
   getProjectClusters,
   getProjectRegistries,
   getProjectRepos,

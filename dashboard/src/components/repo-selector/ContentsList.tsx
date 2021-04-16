@@ -28,6 +28,7 @@ type StateType = {
   contents: FileType[];
   currentDir: string;
   dockerfiles: string[];
+  processes: Record<string, string>;
 };
 
 export default class ContentsList extends Component<PropsType, StateType> {
@@ -37,6 +38,7 @@ export default class ContentsList extends Component<PropsType, StateType> {
     contents: [] as FileType[],
     currentDir: "",
     dockerfiles: [] as string[],
+    processes: null as Record<string, string>,
   };
 
   componentDidMount() {
@@ -86,6 +88,26 @@ export default class ContentsList extends Component<PropsType, StateType> {
         console.log(err);
 
         this.setState({ loading: false, error: true });
+      });
+
+    api
+      .getProcfileContents(
+        "<token>",
+        { path: "./Procfile" },
+        {
+          project_id: currentProject.id,
+          git_repo_id: actionConfig.git_repo_id,
+          kind: "github",
+          owner: actionConfig.git_repo.split("/")[0],
+          name: actionConfig.git_repo.split("/")[1],
+          branch: branch,
+        }
+      )
+      .then((res) => {
+        this.setState({ processes: res.data})
+      })
+      .catch((err) => {
+        console.log(err);
       });
   };
 
@@ -192,6 +214,7 @@ export default class ContentsList extends Component<PropsType, StateType> {
 
   renderOverlay = () => {
     if (this.props.procfilePath) {
+      let processes = Object.keys(this.state.processes);
       return (
         <Overlay>
           <BgOverlay onClick={() => this.setState({ dockerfiles: [] }, () => {
@@ -208,24 +231,21 @@ export default class ContentsList extends Component<PropsType, StateType> {
             like to run?
           </Label>
           <DockerfileList>
-            {this.state.dockerfiles.map((dockerfile: string, i: number) => {
-              return (
-                <Row
-                  key={i}
-                  onClick={() => {
-                    console.log('ok')
-                    this.props.setProcfileProcess(
-                      'web'
-                    )
-                  }
-                  }
-                  isLast={this.state.dockerfiles.length - 1 === i}
-                >
-                  <Indicator selected={false}></Indicator>
-                  {dockerfile}
-                </Row>
-              );
-            })}
+            {
+              processes.map((process: string, i: number) => {
+                return (
+                  <Row
+                    key={i}
+                    onClick={() => { this.props.setProcfileProcess(process) }
+                    }
+                    isLast={processes.length - 1 === i}
+                  >
+                    <Indicator selected={false}></Indicator>
+                    {process}
+                  </Row>
+                );
+              })            
+            }
           </DockerfileList>
         </Overlay>
       );
@@ -262,7 +282,7 @@ export default class ContentsList extends Component<PropsType, StateType> {
           <ConfirmButton
             onClick={() => {
               this.props.setFolderPath(this.state.currentDir || "./")
-              this.props.setProcfilePath(`${this.state.currentDir}/Procfile` || `./Procfile`)
+              this.props.setProcfilePath("./Procfile")
             }
             }
           >

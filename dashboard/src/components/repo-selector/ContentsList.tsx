@@ -86,26 +86,6 @@ export default class ContentsList extends Component<PropsType, StateType> {
 
         this.setState({ loading: false, error: true });
       });
-
-      api
-      .getProcfileContents(
-        "<token>",
-        { path: "./Procfile" },
-        {
-          project_id: currentProject.id,
-          git_repo_id: actionConfig.git_repo_id,
-          kind: "github",
-          owner: actionConfig.git_repo.split("/")[0],
-          name: actionConfig.git_repo.split("/")[1],
-          branch: branch,
-        }
-      )
-      .then((res) => {
-        console.log(res.data)      
-      })
-      .catch((err) => {
-        console.log(err);
-      });
   };
 
   renderContentList = () => {

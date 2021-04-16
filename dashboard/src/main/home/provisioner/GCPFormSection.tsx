@@ -81,7 +81,7 @@ class GCPFormSection extends Component<PropsType, StateType> {
   componentDidMount = () => {
     let { infras } = this.props;
     let { selectedInfras } = this.state;
-    this.setClusterNameIfNotSet()
+    this.setClusterNameIfNotSet();
 
     if (infras) {
       // From the dashboard, only uncheck and disable if "creating" or "created"
@@ -98,39 +98,60 @@ class GCPFormSection extends Component<PropsType, StateType> {
     }
   };
 
-  componentDidUpdate = (prevProps : PropsType, prevState : StateType) => {
+  componentDidUpdate = (prevProps: PropsType, prevState: StateType) => {
     if (prevProps.projectName != this.props.projectName) {
-      this.setClusterNameIfNotSet()
+      this.setClusterNameIfNotSet();
     }
-  }
+  };
 
   setClusterNameIfNotSet = () => {
-    let projectName = this.props.projectName || this.context.currentProject?.name
+    let projectName =
+      this.props.projectName || this.context.currentProject?.name;
 
-    if (!this.state.clusterNameSet && !this.state.clusterName.includes(`${projectName}-cluster`)) {
+    if (
+      !this.state.clusterNameSet &&
+      !this.state.clusterName.includes(`${projectName}-cluster`)
+    ) {
       this.setState({
-        clusterName: `${projectName}-cluster-${Math.random().toString(36).substring(2, 8)}`
-      })
+        clusterName: `${projectName}-cluster-${Math.random()
+          .toString(36)
+          .substring(2, 8)}`,
+      });
     }
-  }
+  };
 
   checkFormDisabled = () => {
     if (!this.state.provisionConfirmed) {
       return true;
     }
 
-    let { gcpRegion, gcpProjectId, gcpKeyData, selectedInfras, clusterName } = this.state;
+    let {
+      gcpRegion,
+      gcpProjectId,
+      gcpKeyData,
+      selectedInfras,
+      clusterName,
+    } = this.state;
     let { projectName } = this.props;
     if (projectName || projectName === "") {
       return (
         !isAlphanumeric(projectName) ||
-        !(gcpProjectId !== "" && gcpKeyData !== "" && gcpRegion !== "" && clusterName !== "") ||
+        !(
+          gcpProjectId !== "" &&
+          gcpKeyData !== "" &&
+          gcpRegion !== "" &&
+          clusterName !== ""
+        ) ||
         selectedInfras.length === 0
       );
     } else {
       return (
-        !(gcpProjectId !== "" && gcpKeyData !== "" && gcpRegion !== "" && clusterName !== "") ||
-        selectedInfras.length === 0
+        !(
+          gcpProjectId !== "" &&
+          gcpKeyData !== "" &&
+          gcpRegion !== "" &&
+          clusterName !== ""
+        ) || selectedInfras.length === 0
       );
     }
   };
@@ -274,18 +295,25 @@ class GCPFormSection extends Component<PropsType, StateType> {
   renderClusterNameSection = () => {
     let { selectedInfras, clusterName } = this.state;
 
-    if (selectedInfras.length == 2 ||  (selectedInfras.length == 1 && selectedInfras[0].value === "gke")) {
-      return <InputRow
-        type="text"
-        value={clusterName}
-        setValue={(x: string) => this.setState({ clusterName: x, clusterNameSet: true })}
-        label="Cluster Name"
-        placeholder="ex: porter-cluster"
-        width="100%"
-        isRequired={true}
-      />
+    if (
+      selectedInfras.length == 2 ||
+      (selectedInfras.length == 1 && selectedInfras[0].value === "gke")
+    ) {
+      return (
+        <InputRow
+          type="text"
+          value={clusterName}
+          setValue={(x: string) =>
+            this.setState({ clusterName: x, clusterNameSet: true })
+          }
+          label="Cluster Name"
+          placeholder="ex: porter-cluster"
+          width="100%"
+          isRequired={true}
+        />
+      );
     }
-  }
+  };
 
   render() {
     let { setSelectedProvisioner } = this.props;

@@ -29,9 +29,11 @@ export default class KeyValueArray extends Component<PropsType, StateType> {
 
   componentDidMount() {
     let arr = [] as any[];
-    Object.keys(this.props.values).forEach((key: string, i: number) => {
-      arr.push({ key, value: this.props.values[key] });
-    });
+    if (this.props.values) {
+      Object.keys(this.props.values).forEach((key: string, i: number) => {
+        arr.push({ key, value: this.props.values[key] });
+      });
+    }
     this.setState({ values: arr });
   }
 

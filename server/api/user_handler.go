@@ -170,7 +170,7 @@ func (app *App) HandleCLILoginUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// generate 64 characters long authorization code
-	code, err := repository.GenerateRandomBytes(64)
+	code, err := repository.GenerateRandomBytes(32)
 
 	if err != nil {
 		app.handleErrorInternal(err, w)

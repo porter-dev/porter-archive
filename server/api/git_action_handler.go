@@ -151,8 +151,6 @@ func (app *App) createGitActionFromForm(
 		return nil
 	}
 
-	fmt.Println("GIT ACTIONB BRANCH IS", gitAction.GitBranch)
-
 	// create the commit in the git repo
 	gaRunner := &actions.GithubActions{
 		GitIntegration: gr,

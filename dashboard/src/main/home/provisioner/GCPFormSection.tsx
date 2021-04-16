@@ -191,12 +191,11 @@ class GCPFormSection extends Component<PropsType, StateType> {
     let { handleError } = this.props;
     let { currentProject } = this.context;
 
-    let clusterName = `${currentProject.name}-cluster`;
     api
       .createGKE(
         "<token>",
         {
-          gke_name: clusterName,
+          gke_name: this.state.clusterName,
           gcp_integration_id: id,
         },
         { project_id: currentProject.id }

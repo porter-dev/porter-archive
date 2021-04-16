@@ -26,9 +26,7 @@ export default class DashboardHeader extends Component<PropsType, StateType> {
               <i className="material-icons">info</i> Info
             </InfoLabel>
           </TopRow>
-          <Description>
-            {this.props.description}
-          </Description>
+          <Description>{this.props.description}</Description>
         </InfoSection>
 
         <LineBreak />

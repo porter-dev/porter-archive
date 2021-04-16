@@ -68,7 +68,7 @@ type CreateDNSRecordConfig struct {
 // NewDNSRecordForEndpoint generates a random subdomain and returns a DNSRecord
 // model
 func (c *CreateDNSRecordConfig) NewDNSRecordForEndpoint() *models.DNSRecord {
-	suffix, _ := repository.GenerateRandomBytes(16)
+	suffix, _ := repository.GenerateRandomBytes(8)
 
 	subdomain := fmt.Sprintf("%s-%s", c.ReleaseName, suffix)
 

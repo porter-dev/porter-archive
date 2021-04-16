@@ -28,6 +28,8 @@ type StateType = {
   awsMachineType: string;
   awsAccessId: string;
   awsSecretKey: string;
+  clusterName: string;
+  clusterNameSet: boolean;
   selectedInfras: { value: string; label: string }[];
   buttonStatus: string;
   provisionConfirmed: boolean;
@@ -77,6 +79,8 @@ class AWSFormSection extends Component<PropsType, StateType> {
     awsMachineType: "t2.medium",
     awsAccessId: "",
     awsSecretKey: "",
+    clusterName: "",
+    clusterNameSet: false,
     selectedInfras: [...provisionOptions],
     buttonStatus: "",
     provisionConfirmed: false,
@@ -85,6 +89,7 @@ class AWSFormSection extends Component<PropsType, StateType> {
   componentDidMount = () => {
     let { infras } = this.props;
     let { selectedInfras } = this.state;
+    this.setClusterNameIfNotSet()
 
     if (infras) {
       // From the dashboard, only uncheck and disable if "creating" or "created"
@@ -101,22 +106,38 @@ class AWSFormSection extends Component<PropsType, StateType> {
     }
   };
 
+  componentDidUpdate = (prevProps : PropsType, prevState : StateType) => {
+    if (prevProps.projectName != this.props.projectName) {
+      this.setClusterNameIfNotSet()
+    }
+  }
+
+  setClusterNameIfNotSet = () => {
+    let projectName = this.props.projectName || this.context.currentProject?.name
+
+    if (!this.state.clusterNameSet && !this.state.clusterName.includes(`${projectName}-cluster`)) {
+      this.setState({
+        clusterName: `${projectName}-cluster-${Math.random().toString(36).substring(2, 8)}`
+      })
+    }
+  }
+
   checkFormDisabled = () => {
     if (!this.state.provisionConfirmed) {
       return true;
     }
 
-    let { awsRegion, awsAccessId, awsSecretKey, selectedInfras } = this.state;
+    let { awsRegion, awsAccessId, awsSecretKey, selectedInfras, clusterName } = this.state;
     let { projectName } = this.props;
     if (projectName || projectName === "") {
       return (
         !isAlphanumeric(projectName) ||
-        !(awsAccessId !== "" && awsSecretKey !== "" && awsRegion !== "") ||
+        !(awsAccessId !== "" && awsSecretKey !== "" && awsRegion !== "" && clusterName !== "") ||
         selectedInfras.length === 0
       );
     } else {
       return (
-        !(awsAccessId !== "" && awsSecretKey !== "" && awsRegion !== "") ||
+        !(awsAccessId !== "" && awsSecretKey !== "" && awsRegion !== "" && clusterName !== "") ||
         selectedInfras.length === 0
       );
     }
@@ -188,11 +209,9 @@ class AWSFormSection extends Component<PropsType, StateType> {
   };
 
   provisionEKS = () => {
-    console.log("Provisioning EKS");
-    let { awsAccessId, awsSecretKey, awsRegion, awsMachineType } = this.state;
+    let { awsAccessId, awsSecretKey, awsRegion, awsMachineType, clusterName } = this.state;
     let { currentProject } = this.context;
 
-    let clusterName = `${currentProject.name}-cluster`;
     api
       .createAWSIntegration(
         "<token>",
@@ -266,12 +285,29 @@ class AWSFormSection extends Component<PropsType, StateType> {
       !this.state.awsAccessId ||
       !this.state.awsSecretKey ||
       !this.state.provisionConfirmed ||
+      !this.state.clusterName ||
       this.props.projectName === ""
     ) {
       return "Required fields missing";
     }
     return this.state.buttonStatus;
   };
+
+  renderClusterNameSection = () => {
+    let { selectedInfras, clusterName } = this.state;
+
+    if (selectedInfras.length == 2 ||  (selectedInfras.length == 1 && selectedInfras[0].value === "eks")) {
+      return <InputRow
+        type="text"
+        value={clusterName}
+        setValue={(x: string) => this.setState({ clusterName: x, clusterNameSet: true })}
+        label="Cluster Name"
+        placeholder="ex: porter-cluster"
+        width="100%"
+        isRequired={true}
+      />
+    }
+  }
 
   render() {
     let { setSelectedProvisioner } = this.props;
@@ -345,6 +381,7 @@ class AWSFormSection extends Component<PropsType, StateType> {
               this.setState({ selectedInfras: x });
             }}
           />
+          {this.renderClusterNameSection()}
           <Helper>
             By default, Porter creates a cluster with three t2.medium instances
             (2vCPUs and 4GB RAM each). AWS will bill you for any provisioned

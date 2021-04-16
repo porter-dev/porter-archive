@@ -169,9 +169,7 @@ export default class ActionDetails extends Component<PropsType, StateType> {
             <i className="material-icons">keyboard_backspace</i>
             Select Folder
           </BackButton>
-          {
-          
-          (!this.props.procfilePath && !this.props.dockerfilePath) ? (
+          {!this.props.procfilePath && !this.props.dockerfilePath ? (
             <StatusWrapper>
               <i className="material-icons">error_outline</i>
               Procfile not detected.
@@ -185,8 +183,7 @@ export default class ActionDetails extends Component<PropsType, StateType> {
               <i className="material-icons">error_outline</i>A connected
               container registry is required
             </StatusWrapper>
-          )          
-          }
+          )}
         </Flex>
       </>
     );

@@ -106,7 +106,12 @@ export default class ActionConfEditor extends Component<PropsType, StateType> {
       );
     }
 
-    if (this.props.procfilePath && this.props.folderPath && !this.props.dockerfilePath &&!this.props.procfileProcess) {
+    if (
+      this.props.procfilePath &&
+      this.props.folderPath &&
+      !this.props.dockerfilePath &&
+      !this.props.procfileProcess
+    ) {
       return (
         <>
           <ExpandedWrapperAlt>
@@ -117,7 +122,9 @@ export default class ActionConfEditor extends Component<PropsType, StateType> {
               procfilePath={this.props.procfilePath}
               setDockerfilePath={(x: string) => this.props.setDockerfilePath(x)}
               setProcfilePath={(x: string) => this.props.setProcfilePath(x)}
-              setProcfileProcess={(x: string) => this.props.setProcfileProcess(x)}
+              setProcfileProcess={(x: string) =>
+                this.props.setProcfileProcess(x)
+              }
               setFolderPath={(x: string) => this.props.setFolderPath(x)}
             />
           </ExpandedWrapperAlt>
@@ -132,7 +139,7 @@ export default class ActionConfEditor extends Component<PropsType, StateType> {
             Select Branch
           </BackButton>
         </>
-      )
+      );
     }
 
     return (

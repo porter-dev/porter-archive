@@ -44,10 +44,14 @@ export default class ValuesForm extends Component<PropsType, StateType> {
     return section.contents.map((item: FormElement, i: number) => {
       // If no name is assigned use values.yaml variable as identifier
       let key = item.name || item.variable;
-      
+
       // ugly exception to hide start command option when procfile process is set.
-      if ((item.variable === "container.command" || (item.type == "subtitle" && item.name == "command_description")) && this.props.procfileProcess) {
-          return;
+      if (
+        (item.variable === "container.command" ||
+          (item.type == "subtitle" && item.name == "command_description")) &&
+        this.props.procfileProcess
+      ) {
+        return;
       }
 
       switch (item.type) {

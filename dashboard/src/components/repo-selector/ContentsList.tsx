@@ -16,6 +16,7 @@ type PropsType = {
   branch: string;
   procfilePath?: string;
   setActionConfig: (x: ActionConfigType) => void;
+  setProcfileProcess?: (x: string) => void; 
   setDockerfilePath: (x: string) => void;
   setProcfilePath: (x: string) => void;
   setFolderPath: (x: string) => void;
@@ -190,6 +191,45 @@ export default class ContentsList extends Component<PropsType, StateType> {
   };
 
   renderOverlay = () => {
+    if (this.props.procfilePath) {
+      return (
+        <Overlay>
+          <BgOverlay onClick={() => this.setState({ dockerfiles: [] }, () => {
+            this.props.setFolderPath("");
+            this.props.setProcfilePath("");
+          })} />
+          <CloseButton onClick={() => this.setState({ dockerfiles: [] }, () => {
+            this.props.setProcfilePath("");
+          })}>
+            <CloseButtonImg src={close} />
+          </CloseButton>
+          <Label>
+            Porter has detected a Procfile in this folder. Which process would you
+            like to run?
+          </Label>
+          <DockerfileList>
+            {this.state.dockerfiles.map((dockerfile: string, i: number) => {
+              return (
+                <Row
+                  key={i}
+                  onClick={() => {
+                    console.log('ok')
+                    this.props.setProcfileProcess(
+                      'web'
+                    )
+                  }
+                  }
+                  isLast={this.state.dockerfiles.length - 1 === i}
+                >
+                  <Indicator selected={false}></Indicator>
+                  {dockerfile}
+                </Row>
+              );
+            })}
+          </DockerfileList>
+        </Overlay>
+      );
+    }
     if (this.state.dockerfiles.length > 0) {
       return (
         <Overlay>

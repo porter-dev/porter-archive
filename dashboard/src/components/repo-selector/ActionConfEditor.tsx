@@ -17,7 +17,9 @@ type PropsType = {
   reset: any;
   dockerfilePath: string;
   procfilePath: string;
+  procfileProcess: string;
   setDockerfilePath: (x: string) => void;
+  setProcfileProcess: (x: string) => void;
   setProcfilePath: (x: string) => void;
   folderPath: string;
   setFolderPath: (x: string) => void;
@@ -104,11 +106,10 @@ export default class ActionConfEditor extends Component<PropsType, StateType> {
       );
     }
 
-    if (this.props.procfilePath && this.props.folderPath && !this.props.dockerfilePath) {
+    if (this.props.procfilePath && this.props.folderPath && !this.props.dockerfilePath &&!this.props.procfileProcess) {
       return (
         <>
-        <div>hello</div>
-          {/* <ExpandedWrapperAlt>
+          <ExpandedWrapperAlt>
             <ContentsList
               actionConfig={actionConfig}
               branch={branch}
@@ -116,6 +117,7 @@ export default class ActionConfEditor extends Component<PropsType, StateType> {
               procfilePath={this.props.procfilePath}
               setDockerfilePath={(x: string) => this.props.setDockerfilePath(x)}
               setProcfilePath={(x: string) => this.props.setProcfilePath(x)}
+              setProcfileProcess={(x: string) => this.props.setProcfileProcess(x)}
               setFolderPath={(x: string) => this.props.setFolderPath(x)}
             />
           </ExpandedWrapperAlt>
@@ -128,7 +130,7 @@ export default class ActionConfEditor extends Component<PropsType, StateType> {
           >
             <i className="material-icons">keyboard_backspace</i>
             Select Branch
-          </BackButton> */}
+          </BackButton>
         </>
       )
     }
@@ -138,6 +140,8 @@ export default class ActionConfEditor extends Component<PropsType, StateType> {
         branch={branch}
         setDockerfilePath={this.props.setDockerfilePath}
         setFolderPath={this.props.setFolderPath}
+        setProcfilePath={this.props.setProcfilePath}
+        setProcfileProcess={this.props.setProcfileProcess}
         actionConfig={actionConfig}
         setActionConfig={setActionConfig}
         dockerfilePath={this.props.dockerfilePath}

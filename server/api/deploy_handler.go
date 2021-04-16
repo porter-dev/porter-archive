@@ -257,6 +257,7 @@ func (app *App) HandleUninstallTemplate(w http.ResponseWriter, r *http.Request) 
 				WebhookToken:   release.WebhookToken,
 				ProjectID:      uint(projID),
 				ReleaseName:    name,
+				GitBranch:      gitAction.GitBranch,
 				DockerFilePath: gitAction.DockerfilePath,
 				FolderPath:     gitAction.FolderPath,
 				ImageRepoURL:   gitAction.ImageRepoURI,

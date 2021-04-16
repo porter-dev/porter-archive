@@ -9,6 +9,7 @@ import (
 type CreateGitAction struct {
 	ReleaseID      uint              `json:"release_id" form:"required"`
 	GitRepo        string            `json:"git_repo" form:"required"`
+	GitBranch      string            `json:"git_branch"`
 	ImageRepoURI   string            `json:"image_repo_uri" form:"required"`
 	DockerfilePath string            `json:"dockerfile_path"`
 	FolderPath     string            `json:"folder_path"`
@@ -22,6 +23,7 @@ func (ca *CreateGitAction) ToGitActionConfig() (*models.GitActionConfig, error) 
 	return &models.GitActionConfig{
 		ReleaseID:      ca.ReleaseID,
 		GitRepo:        ca.GitRepo,
+		GitBranch:      ca.GitBranch,
 		ImageRepoURI:   ca.ImageRepoURI,
 		DockerfilePath: ca.DockerfilePath,
 		FolderPath:     ca.FolderPath,
@@ -31,6 +33,7 @@ func (ca *CreateGitAction) ToGitActionConfig() (*models.GitActionConfig, error) 
 
 type CreateGitActionOptional struct {
 	GitRepo        string            `json:"git_repo"`
+	GitBranch      string            `json:"git_branch"`
 	ImageRepoURI   string            `json:"image_repo_uri"`
 	DockerfilePath string            `json:"dockerfile_path"`
 	FolderPath     string            `json:"folder_path"`

@@ -45,7 +45,8 @@ func getConfigurePorterStep(porterTokenSecretName string) GithubActionYAMLStep {
 
 const dockerBuildPush string = `
 export $(echo "${{secrets.%s}}" | xargs)
-sudo docker build %s --file %s -t %s:$(git rev-parse --short HEAD)
+echo "${{secrets.%s}}" > ./env_porter
+sudo docker build %s $(cat ./env_porter | awk 'NF' | sed 's@^@--build-arg @g' | paste -s -d " " -) --file %s -t %s:$(git rev-parse --short HEAD)
 sudo docker push %s:$(git rev-parse --short HEAD)
 `
 
@@ -53,7 +54,7 @@ func getDockerBuildPushStep(envSecretName, dockerFilePath, repoURL string) Githu
 	return GithubActionYAMLStep{
 		Name: "Docker build, push",
 		ID:   "docker_build_push",
-		Run:  fmt.Sprintf(dockerBuildPush, envSecretName, filepath.Dir(dockerFilePath), dockerFilePath, repoURL, repoURL),
+		Run:  fmt.Sprintf(dockerBuildPush, envSecretName, envSecretName, filepath.Dir(dockerFilePath), dockerFilePath, repoURL, repoURL),
 	}
 }
 

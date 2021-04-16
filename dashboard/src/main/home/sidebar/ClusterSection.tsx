@@ -246,6 +246,7 @@ const ClusterName = styled.div`
   width: 130px;
   margin-left: 3px;
   font-weight: 400;
+  color: #ffffff44;
 `;
 
 const DropdownIcon = styled.span`
@@ -289,6 +290,7 @@ const ClusterIcon = styled.div`
     margin-bottom: 0px;
     margin-left: 17px;
     margin-right: 10px;
+    color: #ffffff44;
   }
 `;
 
@@ -306,7 +308,7 @@ const ClusterSelector = styled.div`
   padding-left: 7px;
   width: 100%;
   height: 42px;
-  margin: 8px auto 0 auto;
+  margin: 0 auto 0 auto;
   font-size: 14px;
   font-weight: 500;
   color: white;

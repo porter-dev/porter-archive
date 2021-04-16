@@ -3,11 +3,11 @@ package domain
 import (
 	"context"
 	"fmt"
-	"math/rand"
 	"net"
 	"strings"
 
 	"github.com/porter-dev/porter/internal/models"
+	"github.com/porter-dev/porter/internal/repository"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/api/extensions/v1beta1"
 	"k8s.io/client-go/kubernetes"
@@ -68,13 +68,9 @@ type CreateDNSRecordConfig struct {
 // NewDNSRecordForEndpoint generates a random subdomain and returns a DNSRecord
 // model
 func (c *CreateDNSRecordConfig) NewDNSRecordForEndpoint() *models.DNSRecord {
-	const allowed = "123456789abcdefghijklmnopqrstuvwxyz"
-	suffix := make([]byte, 8)
-	for i := range suffix {
-		suffix[i] = allowed[rand.Intn(len(allowed))]
-	}
+	suffix, _ := repository.GenerateRandomBytes(16)
 
-	subdomain := fmt.Sprintf("%s-%s", c.ReleaseName, string(suffix))
+	subdomain := fmt.Sprintf("%s-%s", c.ReleaseName, suffix)
 
 	return &models.DNSRecord{
 		SubdomainPrefix: subdomain,

@@ -143,13 +143,13 @@ class Home extends Component<PropsType, StateType> {
     return callback();
   };
 
-  provisionDOKS = async (integrationId: number, region: string) => {
+  provisionDOKS = async (integrationId: number, region: string, clusterName: string) => {
     console.log("Provisioning DOKS...");
     await api.createDOKS(
       "<token>",
       {
         do_integration_id: integrationId,
-        doks_name: this.props.currentProject.name,
+        doks_name: clusterName,
         do_region: region,
       },
       {
@@ -178,17 +178,18 @@ class Home extends Component<PropsType, StateType> {
           let urlParams = new URLSearchParams(queryString);
           let tier = urlParams.get("tier");
           let region = urlParams.get("region");
+          let clusterName = urlParams.get("cluster_name")
           let infras = urlParams.getAll("infras");
           if (infras.length === 2) {
             this.provisionDOCR(tgtIntegration.id, tier, () => {
-              this.provisionDOKS(tgtIntegration.id, region);
+              this.provisionDOKS(tgtIntegration.id, region, clusterName);
             });
           } else if (infras[0] === "docr") {
             this.provisionDOCR(tgtIntegration.id, tier, () => {
               this.props.history.push("dashboard?tab=provisioner");
             });
           } else {
-            this.provisionDOKS(tgtIntegration.id, region);
+            this.provisionDOKS(tgtIntegration.id, region, clusterName);
           }
         })
         .catch(console.log);

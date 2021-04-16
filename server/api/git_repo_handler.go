@@ -6,7 +6,9 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"regexp"
 	"strconv"
+	"strings"
 
 	"golang.org/x/oauth2"
 
@@ -200,6 +202,65 @@ func (app *App) HandleGetBranchContents(w http.ResponseWriter, r *http.Request) 
 	// Ret2: recursively traverse all dirs to create config bundle (case on type == dir)
 	// https://api.github.com/repos/porter-dev/porter/contents?ref=frontend-graph
 	json.NewEncoder(w).Encode(res)
+}
+
+type GetProcfileContentsResp map[string]string
+
+var procfileRegex = regexp.MustCompile("^([A-Za-z0-9_]+):\\s*(.+)$")
+
+// HandleGetProcfileContents retrieves the contents of a procfile in a github repo
+func (app *App) HandleGetProcfileContents(w http.ResponseWriter, r *http.Request) {
+	tok, err := app.githubTokenFromRequest(r)
+
+	if err != nil {
+		app.handleErrorInternal(err, w)
+		return
+	}
+
+	client := github.NewClient(app.GithubProjectConf.Client(oauth2.NoContext, tok))
+	owner := chi.URLParam(r, "owner")
+	name := chi.URLParam(r, "name")
+	branch := chi.URLParam(r, "branch")
+
+	queryParams, err := url.ParseQuery(r.URL.RawQuery)
+
+	if err != nil {
+		app.handleErrorFormDecoding(err, ErrReleaseDecode, w)
+		return
+	}
+
+	resp, _, _, err := client.Repositories.GetContents(
+		context.TODO(),
+		owner,
+		name,
+		queryParams["path"][0],
+		&github.RepositoryContentGetOptions{
+			Ref: branch,
+		},
+	)
+
+	if err != nil {
+		app.handleErrorInternal(err, w)
+		return
+	}
+
+	fileData, err := resp.GetContent()
+
+	if err != nil {
+		app.handleErrorInternal(err, w)
+		return
+	}
+
+	parsedContents := make(GetProcfileContentsResp)
+
+	// parse the procfile information
+	for _, line := range strings.Split(fileData, "\n") {
+		if matches := procfileRegex.FindStringSubmatch(line); matches != nil {
+			parsedContents[matches[1]] = matches[2]
+		}
+	}
+
+	json.NewEncoder(w).Encode(parsedContents)
 }
 
 // finds the github token given the git repo id and the project id

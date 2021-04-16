@@ -1053,6 +1053,20 @@ func New(a *api.App) *chi.Mux {
 			),
 		)
 
+		r.Method(
+			"GET",
+			"/projects/{project_id}/gitrepos/{git_repo_id}/repos/{kind}/{owner}/{name}/{branch}/procfile",
+			auth.DoesUserHaveProjectAccess(
+				auth.DoesUserHaveGitRepoAccess(
+					requestlog.NewHandler(a.HandleGetProcfileContents, l),
+					mw.URLParam,
+					mw.URLParam,
+				),
+				mw.URLParam,
+				mw.ReadAccess,
+			),
+		)
+
 		// /api/projects/{project_id}/deploy routes
 		r.Method(
 			"POST",

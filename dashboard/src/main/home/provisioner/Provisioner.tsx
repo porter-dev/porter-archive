@@ -159,8 +159,8 @@ export default withRouter(Provisioner);
 
 const StyledProvisioner = styled.div`
   width: 100%;
-  height: 350px;
-  background: #ffffff11;
+  height: calc(100vh - 470px);
+  background: #ffffff09;
   color: #aaaabb;
   border-radius: 5px;
   display: flex;

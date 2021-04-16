@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>Porter | Butler</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <meta name="HandheldFriendly" content="true">
+  <link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400&display=swap" rel="stylesheet">
+  <style type="text/css">
+    .center-me {
+      margin: 0 auto;
+      min-width: 25%;
+      text-align: center;
+    }
+
+    body {
+      background: #e3e5e8;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-top: calc(50vh - 220px);
+    }
+
+    h1 {
+      font-family: 'Work Sans', sans-serif;
+      font-size: 40px;
+      font-weight: 400;
+      color: #46484a;
+      user-select: none;
+      text-align: center;
+      opacity: 0;
+      animation: fadeIn 0.8s 0.2s;
+      animation-fill-mode: forwards;
+    }
+
+    h2 {
+      font-family: 'Work Sans', sans-serif;
+      font-size: 18px;
+      font-weight: 400;
+      color: #787878;
+      margin-top: 0px;
+      width: 80%;
+      max-width: 660px;
+      opacity: 0;
+      text-align: center;
+      line-height: 1.8em;
+      user-select: none;
+      animation: fadeIn 0.5s 0.3s;
+      animation-fill-mode: forwards;
+    }
+
+    img {
+      width: 120px;
+      margin-bottom: 20px;
+      animation: floatIn 1s;
+    }
+
+    @keyframes floatIn {
+      from { opacity: 0; transform: translateY(80px) }
+      to { opacity: 1; transform: translateY(0px) }
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0 }
+      to { opacity: 1 }
+    }
+
+    div {
+      box-sizing: border-box;
+      border-top-right-radius: 5px;
+      border-bottom-right-radius: 5px;
+      height: 100%;
+      background: #5c93ed;
+      display: flex;
+      align-items: center;
+      font-family: 'Open Sans', sans-serif;
+      justify-content: center;
+      cursor: pointer;
+      color: white;
+      border: 0;
+      width: 130px;
+      height: 50px;
+      margin-top: 45px;
+      font-size: 15px;
+      border-radius: 5px;
+      box-shadow: 0 0 2px 4px #6da4fe77;
+      z-index: 999;
+      user-select: none;
+      animation: pulsate 2s infinite;
+    }
+
+    div:hover {
+      background: #4b82dc;
+    }
+
+    @keyframes pulsate {
+      from { box-shadow: 0 0 0px 0px #6da4fe77; }
+      to { box-shadow: 0 0 3px 15px #6da4fe00; }
+    }
+      
+  </style>
+</head>
+
+<body>
+  <img src='https://i.ibb.co/y64zfm5/porter.png'></img>
+  <h1>One moment, please</h1>
+  <h2>
+    Your application is currently being built and will be ready soon. This page will disappear once your application is live. To view build logs, navigate to your connected GitHub repo and select the Actions tab.
+  </h2>
+  <div onclick="location.reload();">Refresh Page</div>
+</body>
+
+</html>

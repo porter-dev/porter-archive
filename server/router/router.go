@@ -898,6 +898,20 @@ func New(a *api.App) *chi.Mux {
 
 		r.Method(
 			"GET",
+			"/projects/{project_id}/releases/{name}/{revision}/pods/all",
+			auth.DoesUserHaveProjectAccess(
+				auth.DoesUserHaveClusterAccess(
+					requestlog.NewHandler(a.HandleGetReleaseAllPods, l),
+					mw.URLParam,
+					mw.QueryParam,
+				),
+				mw.URLParam,
+				mw.ReadAccess,
+			),
+		)
+
+		r.Method(
+			"GET",
 			"/projects/{project_id}/releases/{name}/history",
 			auth.DoesUserHaveProjectAccess(
 				auth.DoesUserHaveClusterAccess(
@@ -1086,6 +1100,20 @@ func New(a *api.App) *chi.Mux {
 
 		r.Method(
 			"GET",
+			"/projects/{project_id}/k8s/kubeconfig",
+			auth.DoesUserHaveProjectAccess(
+				auth.DoesUserHaveClusterAccess(
+					requestlog.NewHandler(a.HandleGetTemporaryKubeconfig, l),
+					mw.URLParam,
+					mw.QueryParam,
+				),
+				mw.URLParam,
+				mw.WriteAccess,
+			),
+		)
+
+		r.Method(
+			"GET",
 			"/projects/{project_id}/k8s/prometheus/detect",
 			auth.DoesUserHaveProjectAccess(
 				auth.DoesUserHaveClusterAccess(
@@ -1216,6 +1244,76 @@ func New(a *api.App) *chi.Mux {
 			auth.DoesUserHaveProjectAccess(
 				auth.DoesUserHaveClusterAccess(
 					requestlog.NewHandler(a.HandleDeletePod, l),
+					mw.URLParam,
+					mw.QueryParam,
+				),
+				mw.URLParam,
+				mw.ReadAccess,
+			),
+		)
+
+		r.Method(
+			"POST",
+			"/projects/{project_id}/k8s/configmap/create",
+			auth.DoesUserHaveProjectAccess(
+				auth.DoesUserHaveClusterAccess(
+					requestlog.NewHandler(a.HandleCreateConfigMap, l),
+					mw.URLParam,
+					mw.QueryParam,
+				),
+				mw.URLParam,
+				mw.ReadAccess,
+			),
+		)
+
+		r.Method(
+			"DELETE",
+			"/projects/{project_id}/k8s/configmap/delete",
+			auth.DoesUserHaveProjectAccess(
+				auth.DoesUserHaveClusterAccess(
+					requestlog.NewHandler(a.HandleDeleteConfigMap, l),
+					mw.URLParam,
+					mw.QueryParam,
+				),
+				mw.URLParam,
+				mw.ReadAccess,
+			),
+		)
+
+		r.Method(
+			"GET",
+			"/projects/{project_id}/k8s/configmap",
+			auth.DoesUserHaveProjectAccess(
+				auth.DoesUserHaveClusterAccess(
+					requestlog.NewHandler(a.HandleGetConfigMap, l),
+					mw.URLParam,
+					mw.QueryParam,
+				),
+				mw.URLParam,
+				mw.ReadAccess,
+			),
+		)
+
+		r.Method(
+			"GET",
+			"/projects/{project_id}/k8s/configmap/list",
+			auth.DoesUserHaveProjectAccess(
+				auth.DoesUserHaveClusterAccess(
+					requestlog.NewHandler(a.HandleListConfigMaps, l),
+					mw.URLParam,
+					mw.QueryParam,
+				),
+				mw.URLParam,
+				mw.ReadAccess,
+			),
+		)
+
+		r.Method(
+			"POST",
+			"/projects/{project_id}/k8s/configmap/update",
+			auth.DoesUserHaveProjectAccess(
+				auth.DoesUserHaveClusterAccess(
+					requestlog.NewHandler(a.HandleUpdateConfigMap, l),
 					mw.URLParam,
 					mw.QueryParam,
 				),

@@ -8,6 +8,7 @@ export type PorterUrl =
   | "cluster-dashboard"
   | "project-settings"
   | "applications"
+  | "env-groups"
   | "jobs";
 
 export const PorterUrls = [
@@ -18,6 +19,7 @@ export const PorterUrls = [
   "cluster-dashboard",
   "project-settings",
   "applications",
+  "env-groups",
   "jobs",
 ];
 

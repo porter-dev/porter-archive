@@ -21,11 +21,12 @@ type PropsType = RouteComponentProps & {
 
 const tabOptions = [
   { label: "Project Overview", value: "overview" },
+  { label: "Create a Cluster", value: "create-cluster" },
   { label: "Provisioner Status", value: "provisioner" },
 ];
 
 // TODO: rethink this list, should be coupled with tabOptions
-const tabOptionStrings = ["overview", "provisioner"];
+const tabOptionStrings = ["overview", "create-cluster", "provisioner"];
 
 type StateType = {
   infras: InfraType[];
@@ -74,27 +75,24 @@ class Dashboard extends Component<PropsType, StateType> {
   renderTabContents = () => {
     if (this.currentTab() === "provisioner") {
       return <Provisioner setRefreshClusters={this.props.setRefreshClusters} />;
-    } else {
+    } else if (this.currentTab() === "create-cluster") {
       return (
         <>
-          {!this.context.currentCluster ? (
-            <>
-              <Banner>
-                <i className="material-icons">error_outline</i>
-                This project currently has no clusters connected.
-              </Banner>
-              <ProvisionerSettings infras={this.state.infras} />
-            </>
-          ) : (
-            <ClusterPlaceholderContainer />
-          )}
+          <Banner>
+            <i className="material-icons">info</i>
+            Create a cluster to link to this project.
+          </Banner>
+          <ProvisionerSettings infras={this.state.infras} />
         </>
       );
+    } else {
+      return <ClusterPlaceholderContainer />;
     }
   };
 
-  setCurrentTab = (x: string) =>
+  setCurrentTab = (x: string) => {
     this.props.history.push(setSearchParam(this.props.location, "tab", x));
+  };
 
   render() {
     let { currentProject } = this.context;

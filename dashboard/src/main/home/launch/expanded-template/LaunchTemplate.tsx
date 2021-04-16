@@ -384,7 +384,7 @@ class LaunchTemplate extends Component<PropsType, StateType> {
 
     // handle exception when deploy process is on loading
     if (this.state.saveValuesStatus === "loading") {
-      return "loading"
+      return "loading";
     }
 
     if (
@@ -399,7 +399,6 @@ class LaunchTemplate extends Component<PropsType, StateType> {
       return "Template name contains illegal characters";
     }
     return "No application source specified";
-
   };
 
   renderTabContents = () => {

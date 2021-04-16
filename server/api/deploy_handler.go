@@ -2,7 +2,6 @@ package api
 
 import (
 	"encoding/json"
-	"math/rand"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -14,6 +13,7 @@ import (
 	"github.com/porter-dev/porter/internal/helm/loader"
 	"github.com/porter-dev/porter/internal/integrations/ci/actions"
 	"github.com/porter-dev/porter/internal/models"
+	"github.com/porter-dev/porter/internal/repository"
 	"gopkg.in/yaml.v2"
 )
 
@@ -116,11 +116,11 @@ func (app *App) HandleDeployTemplate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// generate 8 characters long webhook token.
-	const letters = "abcdefghijklmnopqrstuvwxyz"
-	token := make([]byte, 8)
-	for i := range token {
-		token[i] = letters[rand.Intn(len(letters))]
+	token, err := repository.GenerateRandomBytes(16)
+
+	if err != nil {
+		app.handleErrorInternal(err, w)
+		return
 	}
 
 	// create release with webhook token in db
@@ -129,7 +129,7 @@ func (app *App) HandleDeployTemplate(w http.ResponseWriter, r *http.Request) {
 		ProjectID:    form.ReleaseForm.Form.Cluster.ProjectID,
 		Namespace:    form.ReleaseForm.Form.Namespace,
 		Name:         form.ChartTemplateForm.Name,
-		WebhookToken: string(token),
+		WebhookToken: token,
 	}
 
 	_, err = app.Repo.Release.CreateRelease(release)

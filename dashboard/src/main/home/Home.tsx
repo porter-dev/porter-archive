@@ -143,7 +143,11 @@ class Home extends Component<PropsType, StateType> {
     return callback();
   };
 
-  provisionDOKS = async (integrationId: number, region: string, clusterName: string) => {
+  provisionDOKS = async (
+    integrationId: number,
+    region: string,
+    clusterName: string
+  ) => {
     console.log("Provisioning DOKS...");
     await api.createDOKS(
       "<token>",
@@ -178,7 +182,7 @@ class Home extends Component<PropsType, StateType> {
           let urlParams = new URLSearchParams(queryString);
           let tier = urlParams.get("tier");
           let region = urlParams.get("region");
-          let clusterName = urlParams.get("cluster_name")
+          let clusterName = urlParams.get("cluster_name");
           let infras = urlParams.getAll("infras");
           if (infras.length === 2) {
             this.provisionDOCR(tgtIntegration.id, tier, () => {

@@ -1,6 +1,8 @@
 import React, { Component } from "react";
 import styled from "styled-components";
 
+import { Context } from "shared/Context";
+
 type PropsType = {
   image: any;
   title: string;
@@ -33,6 +35,8 @@ export default class DashboardHeader extends Component<PropsType, StateType> {
   }
 }
 
+DashboardHeader.contextType = Context;
+
 const Img = styled.img`
   width: 30px;
 `;
@@ -54,6 +58,7 @@ const Description = styled.div`
   margin-top: 13px;
   margin-left: 2px;
   font-size: 13px;
+  line-height: 1.5em;
 `;
 
 const InfoLabel = styled.div`
@@ -83,10 +88,18 @@ const Title = styled.div`
   font-family: "Work Sans", sans-serif;
   margin-left: 18px;
   color: #ffffff;
+  text-transform: capitalize;
+  white-space: nowrap;
+`;
+
+const ClusterLabel = styled.div`
+  color: #ffffff22;
+  font-size: 14px;
+  text-transform: none;
+  font-weight: 400;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  text-transform: capitalize;
 `;
 
 const TitleSection = styled.div`

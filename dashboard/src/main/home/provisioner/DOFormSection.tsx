@@ -186,7 +186,7 @@ export default class DOFormSection extends Component<PropsType, StateType> {
   renderClusterNameSection = () => {
     let { selectedInfras, clusterName } = this.state;
 
-    if (selectedInfras.length == 2 ||  (selectedInfras.length == 1 && selectedInfras[0].value === "eks")) {
+    if (selectedInfras.length == 2 ||  (selectedInfras.length == 1 && selectedInfras[0].value === "doks")) {
       return <InputRow
         type="text"
         value={clusterName}

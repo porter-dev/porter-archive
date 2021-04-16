@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"math/rand"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -171,11 +170,11 @@ func (app *App) HandleCLILoginUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// generate 64 characters long authorization code
-	const letters = "abcdefghijklmnopqrstuvwxyz123456789"
-	code := make([]byte, 64)
+	code, err := repository.GenerateRandomBytes(32)
 
-	for i := range code {
-		code[i] = letters[rand.Intn(len(letters))]
+	if err != nil {
+		app.handleErrorInternal(err, w)
+		return
 	}
 
 	expiry := time.Now().Add(30 * time.Second)
@@ -183,7 +182,7 @@ func (app *App) HandleCLILoginUser(w http.ResponseWriter, r *http.Request) {
 	// create auth code object and send back authorization code
 	authCode := &models.AuthCode{
 		Token:             encoded,
-		AuthorizationCode: string(code),
+		AuthorizationCode: code,
 		Expiry:            &expiry,
 	}
 

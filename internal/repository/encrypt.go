@@ -4,6 +4,7 @@ import (
 	"crypto/aes"
 	"crypto/cipher"
 	"crypto/rand"
+	"encoding/hex"
 	"errors"
 	"io"
 )
@@ -19,6 +20,19 @@ func NewEncryptionKey() *[32]byte {
 		panic(err)
 	}
 	return &key
+}
+
+// NewRandomString generates a random string.
+// It panics if the source of randomness fails.
+func GenerateRandomBytes(n int) (string, error) {
+	b := make([]byte, n)
+	_, err := rand.Read(b)
+
+	if err != nil {
+		return "", err
+	}
+
+	return hex.EncodeToString(b), nil
 }
 
 // Encrypt encrypts data using 256-bit AES-GCM.  This both hides the content of

@@ -15,6 +15,7 @@ type PropsType = {
   setActionConfig: (x: ActionConfigType) => void;
   branch: string;
   dockerfilePath: string;
+  procfilePath: string;
   folderPath: string;
   setSelectedRegistry: (x: any) => void;
   selectedRegistry: any;
@@ -28,12 +29,6 @@ type StateType = {
   registries: any[] | null;
   loading: boolean;
 };
-
-const dummyRegistries = [
-  { id: 1, service: "ecr", url: "https://idfkasdfasdf" },
-  { id: 12, service: "ecr", url: "https://dfasdfidfkasdfasdf" },
-  { id: 11, service: "gcr", url: "https://idfkasdfasdf" },
-] as any[];
 
 export default class ActionDetails extends Component<PropsType, StateType> {
   state = {
@@ -112,6 +107,7 @@ export default class ActionDetails extends Component<PropsType, StateType> {
   };
 
   render() {
+    console.log(this.props.dockerfilePath, this.props.folderPath, this.props.procfilePath)
     return (
       <>
         <DarkMatter />
@@ -173,6 +169,11 @@ export default class ActionDetails extends Component<PropsType, StateType> {
           {this.props.selectedRegistry ? (
             <StatusWrapper successful={true}>
               <i className="material-icons">done</i> Source selected
+            </StatusWrapper>
+          ) : (!this.props.procfilePath && !this.props.dockerfilePath) ? (
+            <StatusWrapper>
+              <i className="material-icons">error_outline</i>
+              Procfile not detected.
             </StatusWrapper>
           ) : (
             <StatusWrapper>

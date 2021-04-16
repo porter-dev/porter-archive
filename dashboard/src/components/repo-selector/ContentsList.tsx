@@ -14,8 +14,10 @@ import Loading from "../Loading";
 type PropsType = {
   actionConfig: ActionConfigType | null;
   branch: string;
+  procfilePath?: string;
   setActionConfig: (x: ActionConfigType) => void;
   setDockerfilePath: (x: string) => void;
+  setProcfilePath: (x: string) => void;
   setFolderPath: (x: string) => void;
 };
 
@@ -26,8 +28,6 @@ type StateType = {
   currentDir: string;
   dockerfiles: string[];
 };
-
-const dummyDockerfiles = ["dev.Dockerfile", "prod.Dockerfile", "Dockerfile"];
 
 export default class ContentsList extends Component<PropsType, StateType> {
   state = {
@@ -130,6 +130,7 @@ export default class ContentsList extends Component<PropsType, StateType> {
           </FileItem>
         );
       }
+
       return (
         <FileItem key={i} lastItem={i === contents.length - 1}>
           <img src={file} />
@@ -172,6 +173,9 @@ export default class ContentsList extends Component<PropsType, StateType> {
       let fileName = splits[splits.length - 1];
       if (fileName.includes("Dockerfile")) {
         dockerfiles.push(fileName);
+      }
+      if (fileName.includes("Procfile")) {
+        this.props.setProcfilePath(item.Path)
       }
     });
     if (dockerfiles.length > 0) {
@@ -216,8 +220,10 @@ export default class ContentsList extends Component<PropsType, StateType> {
             })}
           </DockerfileList>
           <ConfirmButton
-            onClick={() =>
+            onClick={() => {
               this.props.setFolderPath(this.state.currentDir || "./")
+              this.props.setProcfilePath(`${this.state.currentDir}/Procfile` || `./Procfile`)
+            }
             }
           >
             No, I don't want to use a Dockerfile

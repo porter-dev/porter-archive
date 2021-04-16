@@ -54,7 +54,7 @@ func getDockerBuildPushStep(envSecretName, dockerFilePath, repoURL string) Githu
 	return GithubActionYAMLStep{
 		Name: "Docker build, push",
 		ID:   "docker_build_push",
-		Run:  fmt.Sprintf(dockerBuildPush, envSecretName, filepath.Dir(dockerFilePath), dockerFilePath, repoURL, repoURL),
+		Run:  fmt.Sprintf(dockerBuildPush, envSecretName, envSecretName, filepath.Dir(dockerFilePath), dockerFilePath, repoURL, repoURL),
 	}
 }
 

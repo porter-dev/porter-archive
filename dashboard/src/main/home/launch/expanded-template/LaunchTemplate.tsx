@@ -50,6 +50,7 @@ type StateType = {
   tabContents: any;
   namespaceOptions: { label: string; value: string }[];
   actionConfig: ActionConfigType;
+  procfileProcess: string;
   branch: string;
   repoType: string;
   dockerfilePath: string | null;
@@ -87,6 +88,7 @@ class LaunchTemplate extends Component<PropsType, StateType> {
     branch: "",
     repoType: "",
     dockerfilePath: null as string | null,
+    procfileProcess: null as string | null,
     procfilePath: null as string | null,
     folderPath: null as string | null,
     selectedRegistry: null as any | null,
@@ -427,6 +429,14 @@ class LaunchTemplate extends Component<PropsType, StateType> {
         renderSaveButton={true}
       >
         {(metaState: any, setMetaState: any) => {
+
+          if (!metaState) {
+            return;
+          }
+          
+          // handle when procfileProcess is already specified
+          metaState['container.command'] = this.state.procfileProcess ? this.state.procfileProcess : "";
+
           return this.props.form?.tabs.map((tab: any, i: number) => {
             // If tab is current, render
             if (tab.name === this.state.currentTab) {
@@ -440,6 +450,8 @@ class LaunchTemplate extends Component<PropsType, StateType> {
                   // For env group loader
                   namespace={this.state.selectedNamespace}
                   clusterId={this.state.selectedClusterId}
+                  // For procfile process
+                  procfileProcess={this.state.procfileProcess}
                 />
               );
             }
@@ -675,6 +687,8 @@ class LaunchTemplate extends Component<PropsType, StateType> {
                 );
               })
             }
+            procfileProcess={this.state.procfileProcess}
+            setProcfileProcess={(procfileProcess: string) => this.setState({ procfileProcess })}
             setBranch={(branch: string) => this.setState({ branch })}
             setDockerfilePath={(x: string) =>
               this.setState({ dockerfilePath: x })

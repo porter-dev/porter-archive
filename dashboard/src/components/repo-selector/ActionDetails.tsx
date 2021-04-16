@@ -16,6 +16,8 @@ type PropsType = {
   branch: string;
   dockerfilePath: string;
   procfilePath: string;
+  setProcfilePath: (x: string) => void;
+  setProcfileProcess: (x: string) => void;
   folderPath: string;
   setSelectedRegistry: (x: any) => void;
   selectedRegistry: any;
@@ -107,7 +109,6 @@ export default class ActionDetails extends Component<PropsType, StateType> {
   };
 
   render() {
-    console.log(this.props.dockerfilePath, this.props.folderPath, this.props.procfilePath)
     return (
       <>
         <DarkMatter />
@@ -161,6 +162,8 @@ export default class ActionDetails extends Component<PropsType, StateType> {
             onClick={() => {
               this.props.setDockerfilePath(null);
               this.props.setFolderPath(null);
+              this.props.setProcfilePath(null);
+              this.props.setProcfileProcess(null);
             }}
           >
             <i className="material-icons">keyboard_backspace</i>

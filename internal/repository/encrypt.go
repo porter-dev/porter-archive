@@ -4,7 +4,7 @@ import (
 	"crypto/aes"
 	"crypto/cipher"
 	"crypto/rand"
-	"encoding/base64"
+	"encoding/hex"
 	"errors"
 	"io"
 )
@@ -32,7 +32,7 @@ func GenerateRandomBytes(n int) (string, error) {
 		return "", err
 	}
 
-	return base64.URLEncoding.EncodeToString(b), nil
+	return hex.EncodeToString(b), nil
 }
 
 // Encrypt encrypts data using 256-bit AES-GCM.  This both hides the content of

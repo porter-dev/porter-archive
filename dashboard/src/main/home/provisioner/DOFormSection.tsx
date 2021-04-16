@@ -7,6 +7,7 @@ import api from "shared/api";
 import { Context } from "shared/Context";
 import { InfraType } from "shared/types";
 
+import InputRow from "components/values-form/InputRow";
 import CheckboxRow from "components/values-form/CheckboxRow";
 import SelectRow from "components/values-form/SelectRow";
 import Helper from "components/values-form/Helper";
@@ -25,6 +26,8 @@ type StateType = {
   selectedInfras: { value: string; label: string }[];
   subscriptionTier: string;
   doRegion: string;
+  clusterName: string;
+  clusterNameSet: boolean;
   provisionConfirmed: boolean;
 };
 
@@ -57,12 +60,15 @@ export default class DOFormSection extends Component<PropsType, StateType> {
     selectedInfras: [...provisionOptions],
     subscriptionTier: "basic",
     doRegion: "nyc1",
+    clusterName: "",
+    clusterNameSet: false,
     provisionConfirmed: false,
   };
 
   componentDidMount = () => {
     let { infras } = this.props;
     let { selectedInfras } = this.state;
+    this.setClusterNameIfNotSet()
 
     if (infras) {
       // From the dashboard, only uncheck and disable if "creating" or "created"
@@ -79,17 +85,33 @@ export default class DOFormSection extends Component<PropsType, StateType> {
     }
   };
 
+  componentDidUpdate = (prevProps : PropsType, prevState : StateType) => {
+    if (prevProps.projectName != this.props.projectName) {
+      this.setClusterNameIfNotSet()
+    }
+  }
+
+  setClusterNameIfNotSet = () => {
+    let projectName = this.props.projectName || this.context.currentProject?.name
+
+    if (!this.state.clusterNameSet && !this.state.clusterName.includes(`${projectName}-cluster`)) {
+      this.setState({
+        clusterName: `${projectName}-cluster-${Math.random().toString(36).substring(2, 8)}`
+      })
+    }
+  }
+
   checkFormDisabled = () => {
     if (!this.state.provisionConfirmed) {
       return true;
     }
 
-    let { selectedInfras } = this.state;
+    let { selectedInfras, clusterName } = this.state;
     let { projectName } = this.props;
     if (projectName || projectName === "") {
-      return !isAlphanumeric(projectName) || selectedInfras.length === 0;
+      return !isAlphanumeric(projectName) || selectedInfras.length === 0 || !clusterName;
     } else {
-      return selectedInfras.length === 0;
+      return selectedInfras.length === 0 || !clusterName;
     }
   };
 
@@ -156,10 +178,26 @@ export default class DOFormSection extends Component<PropsType, StateType> {
         return "Project name contains illegal characters";
       }
     }
-    if (!this.state.provisionConfirmed || this.props.projectName === "") {
+    if (!this.state.provisionConfirmed || this.props.projectName === "" || !this.state.clusterName) {
       return "Required fields missing";
     }
   };
+
+  renderClusterNameSection = () => {
+    let { selectedInfras, clusterName } = this.state;
+
+    if (selectedInfras.length == 2 ||  (selectedInfras.length == 1 && selectedInfras[0].value === "eks")) {
+      return <InputRow
+        type="text"
+        value={clusterName}
+        setValue={(x: string) => this.setState({ clusterName: x, clusterNameSet: true })}
+        label="Cluster Name"
+        placeholder="ex: porter-cluster"
+        width="100%"
+        isRequired={true}
+      />
+    }
+  }
 
   render() {
     let { setSelectedProvisioner } = this.props;
@@ -202,6 +240,7 @@ export default class DOFormSection extends Component<PropsType, StateType> {
               this.setState({ selectedInfras: x });
             }}
           />
+          {this.renderClusterNameSection()}
           <Helper>
             By default, Porter creates a cluster with three Standard (2vCPUs /
             2GB RAM) droplets. DigitalOcean will bill you for any provisioned

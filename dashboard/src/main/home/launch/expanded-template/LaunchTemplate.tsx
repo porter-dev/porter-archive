@@ -53,6 +53,7 @@ type StateType = {
   branch: string;
   repoType: string;
   dockerfilePath: string | null;
+  procfilePath: string | null;
   folderPath: string | null;
   selectedRegistry: any | null;
   env: any;
@@ -86,6 +87,7 @@ class LaunchTemplate extends Component<PropsType, StateType> {
     branch: "",
     repoType: "",
     dockerfilePath: null as string | null,
+    procfilePath: null as string | null,
     folderPath: null as string | null,
     selectedRegistry: null as any | null,
     env: {},
@@ -376,6 +378,7 @@ class LaunchTemplate extends Component<PropsType, StateType> {
       sourceType,
       dockerfilePath,
       folderPath,
+      procfilePath,
     } = this.state;
 
     if (!this.submitIsDisabled()) {
@@ -385,6 +388,14 @@ class LaunchTemplate extends Component<PropsType, StateType> {
     // handle exception when deploy process is on loading
     if (this.state.saveValuesStatus === "loading") {
       return "loading"
+    }
+
+    if (
+      sourceType === "repo" &&
+      (!dockerfilePath && folderPath) &&
+      !procfilePath
+    ) {
+      return "Procfile not detected."
     }
 
     if (
@@ -588,7 +599,7 @@ class LaunchTemplate extends Component<PropsType, StateType> {
     } else if (this.state.sourceType === "registry") {
       return (
         <StyledSourceBox>
-          <CloseButton onClick={() => this.setState({ sourceType: "" })}>
+          <CloseButton onClick={() => this.setState({ sourceType: "", selectedImageUrl: "", selectedTag: "" })}>
             <CloseButtonImg src={close} />
           </CloseButton>
           <Subtitle>
@@ -668,6 +679,10 @@ class LaunchTemplate extends Component<PropsType, StateType> {
             setDockerfilePath={(x: string) =>
               this.setState({ dockerfilePath: x })
             }
+            setProcfilePath={(x: string) => {
+              this.setState({ procfilePath: x })
+            }}
+            procfilePath={this.state.procfilePath}
             dockerfilePath={this.state.dockerfilePath}
             folderPath={this.state.folderPath}
             setFolderPath={(x: string) => this.setState({ folderPath: x })}

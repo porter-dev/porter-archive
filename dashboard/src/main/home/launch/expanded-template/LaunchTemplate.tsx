@@ -385,10 +385,11 @@ class LaunchTemplate extends Component<PropsType, StateType> {
 
     if (
       sourceType === "repo" &&
-      (!dockerfilePath && folderPath) &&
+      !dockerfilePath &&
+      folderPath &&
       !procfilePath
     ) {
-      return "Procfile not detected."
+      return "Procfile not detected.";
     }
 
     if (!this.submitIsDisabled()) {
@@ -397,7 +398,7 @@ class LaunchTemplate extends Component<PropsType, StateType> {
 
     // handle exception when deploy process is on loading
     if (this.state.saveValuesStatus === "loading") {
-      return "loading"
+      return "loading";
     }
 
     if (
@@ -412,7 +413,6 @@ class LaunchTemplate extends Component<PropsType, StateType> {
       return "Template name contains illegal characters";
     }
     return "No application source specified";
-
   };
 
   renderTabContents = () => {
@@ -429,13 +429,14 @@ class LaunchTemplate extends Component<PropsType, StateType> {
         renderSaveButton={true}
       >
         {(metaState: any, setMetaState: any) => {
-
           if (!metaState) {
             return;
           }
-          
+
           // handle when procfileProcess is already specified
-          metaState['container.command'] = this.state.procfileProcess ? this.state.procfileProcess : "";
+          metaState["container.command"] = this.state.procfileProcess
+            ? this.state.procfileProcess
+            : "";
 
           return this.props.form?.tabs.map((tab: any, i: number) => {
             // If tab is current, render
@@ -611,7 +612,15 @@ class LaunchTemplate extends Component<PropsType, StateType> {
     } else if (this.state.sourceType === "registry") {
       return (
         <StyledSourceBox>
-          <CloseButton onClick={() => this.setState({ sourceType: "", selectedImageUrl: "", selectedTag: "" })}>
+          <CloseButton
+            onClick={() =>
+              this.setState({
+                sourceType: "",
+                selectedImageUrl: "",
+                selectedTag: "",
+              })
+            }
+          >
             <CloseButtonImg src={close} />
           </CloseButton>
           <Subtitle>
@@ -688,13 +697,15 @@ class LaunchTemplate extends Component<PropsType, StateType> {
               })
             }
             procfileProcess={this.state.procfileProcess}
-            setProcfileProcess={(procfileProcess: string) => this.setState({ procfileProcess })}
+            setProcfileProcess={(procfileProcess: string) =>
+              this.setState({ procfileProcess })
+            }
             setBranch={(branch: string) => this.setState({ branch })}
             setDockerfilePath={(x: string) =>
               this.setState({ dockerfilePath: x })
             }
             setProcfilePath={(x: string) => {
-              this.setState({ procfilePath: x })
+              this.setState({ procfilePath: x });
             }}
             procfilePath={this.state.procfilePath}
             dockerfilePath={this.state.dockerfilePath}

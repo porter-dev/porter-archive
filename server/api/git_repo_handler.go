@@ -147,7 +147,10 @@ func (app *App) HandleGetBranches(w http.ResponseWriter, r *http.Request) {
 	client := github.NewClient(app.GithubProjectConf.Client(oauth2.NoContext, tok))
 
 	// List all branches for a specified repo
-	branches, _, err := client.Repositories.ListBranches(context.Background(), owner, name, nil)
+	branches, _, err := client.Repositories.ListBranches(context.Background(), owner, name, &github.ListOptions{
+		PerPage: 100,
+	})
+
 	if err != nil {
 		return
 	}

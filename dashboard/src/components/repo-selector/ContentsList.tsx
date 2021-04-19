@@ -197,9 +197,9 @@ export default class ContentsList extends Component<PropsType, StateType> {
       if (fileName.includes("Dockerfile")) {
         dockerfiles.push(fileName);
       }
-      if (fileName.includes("Procfile")) {
-        this.props.setProcfilePath(item.Path);
-      }
+      // if (fileName.includes("Procfile")) {
+      //   this.props.setProcfilePath(item.Path);
+      // }
     });
     if (dockerfiles.length > 0) {
       this.setState({ dockerfiles });

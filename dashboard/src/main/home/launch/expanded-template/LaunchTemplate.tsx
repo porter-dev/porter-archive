@@ -50,9 +50,11 @@ type StateType = {
   tabContents: any;
   namespaceOptions: { label: string; value: string }[];
   actionConfig: ActionConfigType;
+  procfileProcess: string;
   branch: string;
   repoType: string;
   dockerfilePath: string | null;
+  procfilePath: string | null;
   folderPath: string | null;
   selectedRegistry: any | null;
   env: any;
@@ -86,6 +88,8 @@ class LaunchTemplate extends Component<PropsType, StateType> {
     branch: "",
     repoType: "",
     dockerfilePath: null as string | null,
+    procfileProcess: null as string | null,
+    procfilePath: null as string | null,
     folderPath: null as string | null,
     selectedRegistry: null as any | null,
     env: {},
@@ -376,7 +380,17 @@ class LaunchTemplate extends Component<PropsType, StateType> {
       sourceType,
       dockerfilePath,
       folderPath,
+      procfilePath,
     } = this.state;
+
+    if (
+      sourceType === "repo" &&
+      !dockerfilePath &&
+      folderPath &&
+      !procfilePath
+    ) {
+      return "Procfile not detected.";
+    }
 
     if (!this.submitIsDisabled()) {
       return this.state.saveValuesStatus;
@@ -415,6 +429,15 @@ class LaunchTemplate extends Component<PropsType, StateType> {
         renderSaveButton={true}
       >
         {(metaState: any, setMetaState: any) => {
+          if (!metaState) {
+            return;
+          }
+
+          // handle when procfileProcess is already specified
+          metaState["container.command"] = this.state.procfileProcess
+            ? this.state.procfileProcess
+            : "";
+
           return this.props.form?.tabs.map((tab: any, i: number) => {
             // If tab is current, render
             if (tab.name === this.state.currentTab) {
@@ -428,6 +451,8 @@ class LaunchTemplate extends Component<PropsType, StateType> {
                   // For env group loader
                   namespace={this.state.selectedNamespace}
                   clusterId={this.state.selectedClusterId}
+                  // For procfile process
+                  procfileProcess={this.state.procfileProcess}
                 />
               );
             }
@@ -587,7 +612,15 @@ class LaunchTemplate extends Component<PropsType, StateType> {
     } else if (this.state.sourceType === "registry") {
       return (
         <StyledSourceBox>
-          <CloseButton onClick={() => this.setState({ sourceType: "" })}>
+          <CloseButton
+            onClick={() =>
+              this.setState({
+                sourceType: "",
+                selectedImageUrl: "",
+                selectedTag: "",
+              })
+            }
+          >
             <CloseButtonImg src={close} />
           </CloseButton>
           <Subtitle>
@@ -663,10 +696,18 @@ class LaunchTemplate extends Component<PropsType, StateType> {
                 );
               })
             }
+            procfileProcess={this.state.procfileProcess}
+            setProcfileProcess={(procfileProcess: string) =>
+              this.setState({ procfileProcess })
+            }
             setBranch={(branch: string) => this.setState({ branch })}
             setDockerfilePath={(x: string) =>
               this.setState({ dockerfilePath: x })
             }
+            setProcfilePath={(x: string) => {
+              this.setState({ procfilePath: x });
+            }}
+            procfilePath={this.state.procfilePath}
             dockerfilePath={this.state.dockerfilePath}
             folderPath={this.state.folderPath}
             setFolderPath={(x: string) => this.setState({ folderPath: x })}

@@ -14,8 +14,11 @@ import Loading from "../Loading";
 type PropsType = {
   actionConfig: ActionConfigType | null;
   branch: string;
+  procfilePath?: string;
   setActionConfig: (x: ActionConfigType) => void;
+  setProcfileProcess?: (x: string) => void;
   setDockerfilePath: (x: string) => void;
+  setProcfilePath: (x: string) => void;
   setFolderPath: (x: string) => void;
 };
 
@@ -25,9 +28,8 @@ type StateType = {
   contents: FileType[];
   currentDir: string;
   dockerfiles: string[];
+  processes: Record<string, string>;
 };
-
-const dummyDockerfiles = ["dev.Dockerfile", "prod.Dockerfile", "Dockerfile"];
 
 export default class ContentsList extends Component<PropsType, StateType> {
   state = {
@@ -36,6 +38,7 @@ export default class ContentsList extends Component<PropsType, StateType> {
     contents: [] as FileType[],
     currentDir: "",
     dockerfiles: [] as string[],
+    processes: null as Record<string, string>,
   };
 
   componentDidMount() {
@@ -86,6 +89,26 @@ export default class ContentsList extends Component<PropsType, StateType> {
 
         this.setState({ loading: false, error: true });
       });
+
+    api
+      .getProcfileContents(
+        "<token>",
+        { path: "./Procfile" },
+        {
+          project_id: currentProject.id,
+          git_repo_id: actionConfig.git_repo_id,
+          kind: "github",
+          owner: actionConfig.git_repo.split("/")[0],
+          name: actionConfig.git_repo.split("/")[1],
+          branch: branch,
+        }
+      )
+      .then((res) => {
+        this.setState({ processes: res.data });
+      })
+      .catch((err) => {
+        console.log(err);
+      });
   };
 
   renderContentList = () => {
@@ -130,6 +153,7 @@ export default class ContentsList extends Component<PropsType, StateType> {
           </FileItem>
         );
       }
+
       return (
         <FileItem key={i} lastItem={i === contents.length - 1}>
           <img src={file} />
@@ -173,6 +197,9 @@ export default class ContentsList extends Component<PropsType, StateType> {
       if (fileName.includes("Dockerfile")) {
         dockerfiles.push(fileName);
       }
+      if (fileName.includes("Procfile")) {
+        this.props.setProcfilePath(item.Path);
+      }
     });
     if (dockerfiles.length > 0) {
       this.setState({ dockerfiles });
@@ -186,6 +213,50 @@ export default class ContentsList extends Component<PropsType, StateType> {
   };
 
   renderOverlay = () => {
+    if (this.props.procfilePath) {
+      let processes = Object.keys(this.state.processes);
+      return (
+        <Overlay>
+          <BgOverlay
+            onClick={() =>
+              this.setState({ dockerfiles: [] }, () => {
+                this.props.setFolderPath("");
+                this.props.setProcfilePath("");
+              })
+            }
+          />
+          <CloseButton
+            onClick={() =>
+              this.setState({ dockerfiles: [] }, () => {
+                this.props.setProcfilePath("");
+              })
+            }
+          >
+            <CloseButtonImg src={close} />
+          </CloseButton>
+          <Label>
+            Porter has detected a Procfile in this folder. Which process would
+            you like to run?
+          </Label>
+          <DockerfileList>
+            {processes.map((process: string, i: number) => {
+              return (
+                <Row
+                  key={i}
+                  onClick={() => {
+                    this.props.setProcfileProcess(process);
+                  }}
+                  isLast={processes.length - 1 === i}
+                >
+                  <Indicator selected={false}></Indicator>
+                  {process}
+                </Row>
+              );
+            })}
+          </DockerfileList>
+        </Overlay>
+      );
+    }
     if (this.state.dockerfiles.length > 0) {
       return (
         <Overlay>
@@ -216,9 +287,10 @@ export default class ContentsList extends Component<PropsType, StateType> {
             })}
           </DockerfileList>
           <ConfirmButton
-            onClick={() =>
-              this.props.setFolderPath(this.state.currentDir || "./")
-            }
+            onClick={() => {
+              this.props.setFolderPath(this.state.currentDir || "./");
+              this.props.setProcfilePath("./Procfile");
+            }}
           >
             No, I don't want to use a Dockerfile
           </ConfirmButton>

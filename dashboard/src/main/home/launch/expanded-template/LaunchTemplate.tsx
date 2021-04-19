@@ -383,14 +383,14 @@ class LaunchTemplate extends Component<PropsType, StateType> {
       procfilePath,
     } = this.state;
 
-    if (
-      sourceType === "repo" &&
-      !dockerfilePath &&
-      folderPath &&
-      !procfilePath
-    ) {
-      return "Procfile not detected.";
-    }
+    // if (
+    //   sourceType === "repo" &&
+    //   !dockerfilePath &&
+    //   folderPath &&
+    //   !procfilePath
+    // ) {
+    //   return "Procfile not detected.";
+    // }
 
     if (!this.submitIsDisabled()) {
       return this.state.saveValuesStatus;

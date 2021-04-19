@@ -289,7 +289,9 @@ export default class ContentsList extends Component<PropsType, StateType> {
           <ConfirmButton
             onClick={() => {
               this.props.setFolderPath(this.state.currentDir || "./");
-              this.props.setProcfilePath("./Procfile");
+              if (this.state.processes && Object.keys(this.state.processes).length > 0) {
+                this.props.setProcfilePath("./Procfile");
+              }
             }}
           >
             No, I don't want to use a Dockerfile

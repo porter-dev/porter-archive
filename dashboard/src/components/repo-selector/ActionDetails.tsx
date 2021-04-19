@@ -170,22 +170,23 @@ export default class ActionDetails extends Component<PropsType, StateType> {
             Select Folder
           </BackButton>
           {
-          // !this.props.procfilePath && !this.props.dockerfilePath ? (
-          //   <StatusWrapper>
-          //     <i className="material-icons">error_outline</i>
-          //     Procfile not detected.
-          //   </StatusWrapper>
-          // ) : 
-          this.props.selectedRegistry ? (
-            <StatusWrapper successful={true}>
-              <i className="material-icons">done</i> Source selected
-            </StatusWrapper>
-          ) : (
-            <StatusWrapper>
-              <i className="material-icons">error_outline</i>A connected
-              container registry is required
-            </StatusWrapper>
-          )}
+            // !this.props.procfilePath && !this.props.dockerfilePath ? (
+            //   <StatusWrapper>
+            //     <i className="material-icons">error_outline</i>
+            //     Procfile not detected.
+            //   </StatusWrapper>
+            // ) :
+            this.props.selectedRegistry ? (
+              <StatusWrapper successful={true}>
+                <i className="material-icons">done</i> Source selected
+              </StatusWrapper>
+            ) : (
+              <StatusWrapper>
+                <i className="material-icons">error_outline</i>A connected
+                container registry is required
+              </StatusWrapper>
+            )
+          }
         </Flex>
       </>
     );

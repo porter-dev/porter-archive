@@ -15,6 +15,9 @@ type PropsType = {
   setActionConfig: (x: ActionConfigType) => void;
   branch: string;
   dockerfilePath: string;
+  procfilePath: string;
+  setProcfilePath: (x: string) => void;
+  setProcfileProcess: (x: string) => void;
   folderPath: string;
   setSelectedRegistry: (x: any) => void;
   selectedRegistry: any;
@@ -28,12 +31,6 @@ type StateType = {
   registries: any[] | null;
   loading: boolean;
 };
-
-const dummyRegistries = [
-  { id: 1, service: "ecr", url: "https://idfkasdfasdf" },
-  { id: 12, service: "ecr", url: "https://dfasdfidfkasdfasdf" },
-  { id: 11, service: "gcr", url: "https://idfkasdfasdf" },
-] as any[];
 
 export default class ActionDetails extends Component<PropsType, StateType> {
   state = {
@@ -165,12 +162,19 @@ export default class ActionDetails extends Component<PropsType, StateType> {
             onClick={() => {
               this.props.setDockerfilePath(null);
               this.props.setFolderPath(null);
+              this.props.setProcfilePath(null);
+              this.props.setProcfileProcess(null);
             }}
           >
             <i className="material-icons">keyboard_backspace</i>
             Select Folder
           </BackButton>
-          {this.props.selectedRegistry ? (
+          {!this.props.procfilePath && !this.props.dockerfilePath ? (
+            <StatusWrapper>
+              <i className="material-icons">error_outline</i>
+              Procfile not detected.
+            </StatusWrapper>
+          ) : this.props.selectedRegistry ? (
             <StatusWrapper successful={true}>
               <i className="material-icons">done</i> Source selected
             </StatusWrapper>

@@ -16,7 +16,11 @@ type PropsType = {
   setBranch: (x: string) => void;
   reset: any;
   dockerfilePath: string;
+  procfilePath: string;
+  procfileProcess: string;
   setDockerfilePath: (x: string) => void;
+  setProcfileProcess: (x: string) => void;
+  setProcfilePath: (x: string) => void;
   folderPath: string;
   setFolderPath: (x: string) => void;
   setSelectedRegistry: (x: any) => void;
@@ -84,6 +88,7 @@ export default class ActionConfEditor extends Component<PropsType, StateType> {
               branch={branch}
               setActionConfig={setActionConfig}
               setDockerfilePath={(x: string) => this.props.setDockerfilePath(x)}
+              setProcfilePath={(x: string) => this.props.setProcfilePath(x)}
               setFolderPath={(x: string) => this.props.setFolderPath(x)}
             />
           </ExpandedWrapperAlt>
@@ -100,14 +105,54 @@ export default class ActionConfEditor extends Component<PropsType, StateType> {
         </>
       );
     }
+
+    if (
+      this.props.procfilePath &&
+      this.props.folderPath &&
+      !this.props.dockerfilePath &&
+      !this.props.procfileProcess
+    ) {
+      return (
+        <>
+          <ExpandedWrapperAlt>
+            <ContentsList
+              actionConfig={actionConfig}
+              branch={branch}
+              setActionConfig={setActionConfig}
+              procfilePath={this.props.procfilePath}
+              setDockerfilePath={(x: string) => this.props.setDockerfilePath(x)}
+              setProcfilePath={(x: string) => this.props.setProcfilePath(x)}
+              setProcfileProcess={(x: string) =>
+                this.props.setProcfileProcess(x)
+              }
+              setFolderPath={(x: string) => this.props.setFolderPath(x)}
+            />
+          </ExpandedWrapperAlt>
+          <Br />
+          <BackButton
+            width="145px"
+            onClick={() => {
+              setBranch("");
+            }}
+          >
+            <i className="material-icons">keyboard_backspace</i>
+            Select Branch
+          </BackButton>
+        </>
+      );
+    }
+
     return (
       <ActionDetails
         branch={branch}
         setDockerfilePath={this.props.setDockerfilePath}
         setFolderPath={this.props.setFolderPath}
+        setProcfilePath={this.props.setProcfilePath}
+        setProcfileProcess={this.props.setProcfileProcess}
         actionConfig={actionConfig}
         setActionConfig={setActionConfig}
         dockerfilePath={this.props.dockerfilePath}
+        procfilePath={this.props.procfilePath}
         folderPath={this.props.folderPath}
         setSelectedRegistry={this.props.setSelectedRegistry}
         selectedRegistry={this.props.selectedRegistry}

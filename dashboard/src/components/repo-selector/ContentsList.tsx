@@ -289,7 +289,10 @@ export default class ContentsList extends Component<PropsType, StateType> {
           <ConfirmButton
             onClick={() => {
               this.props.setFolderPath(this.state.currentDir || "./");
-              if (this.state.processes && Object.keys(this.state.processes).length > 0) {
+              if (
+                this.state.processes &&
+                Object.keys(this.state.processes).length > 0
+              ) {
                 this.props.setProcfilePath("./Procfile");
               }
             }}

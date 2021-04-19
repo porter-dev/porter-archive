@@ -191,7 +191,6 @@ export default class ContentsList extends Component<PropsType, StateType> {
 
   handleContinue = () => {
     let dockerfiles = [] as string[];
-    console.log(this.state.currentDir)
     this.state.contents.forEach((item: FileType, i: number) => {
       let splits = item.Path.split("/");
       let fileName = splits[splits.length - 1];

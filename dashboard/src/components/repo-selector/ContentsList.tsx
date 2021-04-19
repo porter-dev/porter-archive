@@ -191,15 +191,16 @@ export default class ContentsList extends Component<PropsType, StateType> {
 
   handleContinue = () => {
     let dockerfiles = [] as string[];
+    console.log(this.state.currentDir)
     this.state.contents.forEach((item: FileType, i: number) => {
       let splits = item.Path.split("/");
       let fileName = splits[splits.length - 1];
       if (fileName.includes("Dockerfile")) {
         dockerfiles.push(fileName);
       }
-      // if (fileName.includes("Procfile")) {
-      //   this.props.setProcfilePath(item.Path);
-      // }
+      if (this.state.currentDir === "" && fileName.includes("Procfile")) {
+        this.props.setProcfilePath("./Procfile");
+      }
     });
     if (dockerfiles.length > 0) {
       this.setState({ dockerfiles });

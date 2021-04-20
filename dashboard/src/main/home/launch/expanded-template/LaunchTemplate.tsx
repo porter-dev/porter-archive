@@ -433,9 +433,9 @@ class LaunchTemplate extends Component<PropsType, StateType> {
           }
 
           // handle when procfileProcess is already specified
-          metaState["container.command"] = this.state.procfileProcess
-            ? this.state.procfileProcess
-            : "";
+          if (this.state.procfileProcess) {
+            metaState["container.command"] = this.state.procfileProcess
+          }
 
           return this.props.form?.tabs.map((tab: any, i: number) => {
             // If tab is current, render

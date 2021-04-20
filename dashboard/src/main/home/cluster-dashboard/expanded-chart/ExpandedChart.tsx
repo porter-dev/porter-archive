@@ -270,6 +270,7 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
         });
       })
       .catch((err) => {
+        console.log(err)
         this.setState({ saveValuesStatus: "error" });
         window.analytics.track("Failed to Upgrade Chart", {
           chart: this.state.currentChart.name,

@@ -101,6 +101,7 @@ export default class GraphDisplay extends Component<PropsType, StateType> {
     let graph = localStorage.getItem(
       `charts.${currentChart.name}-${currentChart.version}`
     );
+    
     let nodes = [] as NodeType[];
     let edges = [] as EdgeType[];
 
@@ -247,8 +248,6 @@ export default class GraphDisplay extends Component<PropsType, StateType> {
   storeChartGraph = (props?: PropsType) => {
 
     let useProps = props || this.props;
-
-    console.log("STORE CHART GRAPH CALLED ON", useProps, props, this.props)
 
     let { currentChart } = useProps;
     let graph = JSON.parse(JSON.stringify(this.state));

@@ -99,6 +99,7 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
       )
       .then((res) => {
         this.setState({ currentChart: res.data, loading: false }, () => {
+          this.updateResources();
           this.updateTabs();
         });
       })

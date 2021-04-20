@@ -16,8 +16,8 @@ type ListFilter struct {
 
 // listStatesFromNames accepts the following list of names:
 //
-// "deployed", "uninstalled", "uninstalling", "pending", "pending_upgrade",
-// "pending_rollback", "superseded", "failed"
+// "deployed", "uninstalled", "uninstalling", "pending-install", "pending-upgrade",
+// "pending-rollback", "superseded", "failed"
 //
 // It returns an action.ListStates to be used in an action.List as filters for
 // releases in a certain state.

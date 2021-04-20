@@ -232,18 +232,22 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
     // Convert dotted keys to nested objects
     let values = {};
 
+    // Weave in preexisting values and convert to yaml
+    if (this.props.currentChart.config) {
+      values = this.props.currentChart.config;
+    }
+
     for (let key in rawValues) {
       _.set(values, key, rawValues[key]);
     }
 
-    // Weave in preexisting values and convert to yaml
     let valuesYaml = yaml.dump({
-      ...(this.state.currentChart.config as Object),
       ...values,
     });
 
     this.setState({ saveValuesStatus: "loading" });
     this.refreshChart();
+    
     api
       .upgradeChartValues(
         "<token>",

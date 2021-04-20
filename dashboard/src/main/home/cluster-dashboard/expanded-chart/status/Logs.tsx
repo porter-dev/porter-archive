@@ -1,6 +1,7 @@
 import React, { Component } from "react";
 import styled from "styled-components";
 import { Context } from "shared/Context";
+import * as Anser from 'anser';
 
 type PropsType = {
   selectedPod: any;
@@ -9,14 +10,14 @@ type PropsType = {
 };
 
 type StateType = {
-  logs: string[];
+  logs: Anser.AnserJsonEntry[][];
   ws: any;
   scroll: boolean;
 };
 
 export default class Logs extends Component<PropsType, StateType> {
   state = {
-    logs: [] as string[],
+    logs: [] as Anser.AnserJsonEntry[][],
     ws: null as any,
     scroll: true,
   };
@@ -58,8 +59,20 @@ export default class Logs extends Component<PropsType, StateType> {
     if (this.state.logs.length == 0) {
       return <Message>No logs to display from this pod.</Message>;
     }
+
     return this.state.logs.map((log, i) => {
-      return <Log key={i}>{log}</Log>;
+      return <Log key={i}>
+        {this.state.logs[i].map((ansi, j) => {
+          if (ansi.clearLine) {
+            console.log("CLEAR LINE IS", ansi.clearLine)
+            return null
+          }
+
+          return <LogSpan key={i + "." + j} ansi={ansi}>
+            {ansi.content.replace(/ /g, '\u00a0')}
+          </LogSpan>
+        })}
+      </Log>;
     });
   };
 
@@ -77,7 +90,12 @@ export default class Logs extends Component<PropsType, StateType> {
     };
 
     this.ws.onmessage = (evt: MessageEvent) => {
-      this.setState({ logs: [...this.state.logs, evt.data] }, () => {
+      let ansiLog = Anser.ansiToJson(evt.data)
+
+      let logs = this.state.logs
+      logs.push(ansiLog)
+
+      this.setState({ logs: logs }, () => {
         if (this.state.scroll) {
           this.scrollToBottom(false);
         }
@@ -247,3 +265,11 @@ const Message = styled.div`
 const Log = styled.div`
   font-family: monospace;
 `;
+
+const LogSpan = styled.span`
+  font-family: 'Roboto Mono';
+  font-size: 12px;
+  font-weight: ${(props: { ansi: Anser.AnserJsonEntry }) => props.ansi?.decoration && props.ansi?.decoration == "bold" ? "700" : "400"};
+  color: ${(props: { ansi: Anser.AnserJsonEntry }) => props.ansi?.fg ? `rgb(${props.ansi?.fg})` : "white"};
+  background-color: ${(props: { ansi: Anser.AnserJsonEntry }) => props.ansi?.bg ? `rgb(${props.ansi?.bg})` : "transparent"};
+`

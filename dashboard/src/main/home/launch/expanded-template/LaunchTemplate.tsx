@@ -244,7 +244,7 @@ class LaunchTemplate extends Component<PropsType, StateType> {
 
     // check if template is docker and create external domain if necessary
     if (this.props.currentTemplate.name == "web") {
-      if (values?.ingress?.enabled && values?.ingress?.hosts?.length == 0) {
+      if (!values?.ingress?.custom_domain) {
         url = await new Promise((resolve, reject) => {
           api
             .createSubdomain(
@@ -265,8 +265,7 @@ class LaunchTemplate extends Component<PropsType, StateType> {
             });
         });
 
-        values.ingress.hosts = [url];
-        values.ingress.custom_domain = true;
+        values.ingress.porter_hosts = [url];
       }
     }
 

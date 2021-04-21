@@ -3,8 +3,7 @@ import styled from "styled-components";
 import close from "assets/close.png";
 import AceEditor from "react-ace";
 
-import "ace-builds/src-noconflict/mode-yaml";
-import "ace-builds/src-noconflict/theme-terminal";
+import "shared/ace-porter-theme"
 
 import { Context } from "shared/Context";
 
@@ -34,7 +33,7 @@ export default class EnvEditorModal extends Component<PropsType, StateType> {
   };
 
   onChange = (e: string) => { 
-      this.setState({envFile: e})
+    this.setState({envFile: e})
   }
 
   componentDidMount() {
@@ -56,20 +55,16 @@ export default class EnvEditorModal extends Component<PropsType, StateType> {
           <AceEditor
             mode="markdown"
             value={this.state.envFile}
-            theme="terminal"
+            theme="porter"
             onChange={(e: string) => this.onChange(e)}
             name="codeEditor"
             editorProps={{ $blockScrolling: true }}
             height="100%"
             width="100%"
-            style={{    
-                borderRadius: "5px", 
-                fontFamily: "monospace !important"
-            }}
-            showPrintMargin={true}
+            showPrintMargin={false}
             showGutter={true}
             highlightActiveLine={true}
-            fontSize={15}
+            fontSize={14}
           />
         </Editor>
 

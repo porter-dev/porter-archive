@@ -64,7 +64,6 @@ export default class Logs extends Component<PropsType, StateType> {
       return <Log key={i}>
         {this.state.logs[i].map((ansi, j) => {
           if (ansi.clearLine) {
-            console.log("CLEAR LINE IS", ansi.clearLine)
             return null
           }
 
@@ -85,9 +84,7 @@ export default class Logs extends Component<PropsType, StateType> {
       `${protocol}://${process.env.API_SERVER}/api/projects/${currentProject.id}/k8s/${selectedPod?.metadata?.namespace}/pod/${selectedPod?.metadata?.name}/logs?cluster_id=${currentCluster.id}&service_account_id=${currentCluster.service_account_id}`
     );
 
-    this.ws.onopen = () => {
-      console.log("connected to websocket");
-    };
+    this.ws.onopen = () => {};
 
     this.ws.onmessage = (evt: MessageEvent) => {
       let ansiLog = Anser.ansiToJson(evt.data)
@@ -102,13 +99,9 @@ export default class Logs extends Component<PropsType, StateType> {
       });
     };
 
-    this.ws.onerror = (err: ErrorEvent) => {
-      console.log("websocket error:", err);
-    };
+    this.ws.onerror = (err: ErrorEvent) => {};
 
-    this.ws.onclose = () => {
-      console.log("closing pod logs");
-    };
+    this.ws.onclose = () => {};
   };
 
   refreshLogs = () => {

@@ -98,9 +98,15 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
         }
       )
       .then((res) => {
-        this.setState({ currentChart: res.data, loading: false }, () => {
-          this.updateTabs();
-        });
+        this.updateComponents({ currentChart: res.data, loading: false }, res.data);
+        // // if the current tab is manifests or chart overview, update components as well
+        // if (this.state.currentTab == "graph" || this.state.currentTab == "list") {
+        //   this.updateComponents({ currentChart: res.data, loading: false }, currentChart);
+        // } else {
+        //   this.setState({ currentChart: res.data, loading: false }, () => {
+        //     this.updateTabs()
+        //   })
+        // }
       })
       .catch(console.log);
   };
@@ -197,9 +203,8 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
     this.setState({ websockets });
   };
 
-  updateResources = () => {
+  updateComponents = (state : any, currentChart : ChartType) => {
     let { currentCluster, currentProject } = this.context;
-    let { currentChart } = this.state;
 
     api
       .getChartComponents(
@@ -216,10 +221,13 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
         }
       )
       .then((res) => {
-        this.setState({
-          components: res.data.Objects,
-          podSelectors: res.data.PodSelectors,
-        });
+        let newState = state || {}
+
+        newState.components = res.data.Objects
+        newState.podSelectors = res.data.PodSelectors
+
+        this.setState(newState);
+        this.updateTabs();
       })
       .catch(console.log);
   };

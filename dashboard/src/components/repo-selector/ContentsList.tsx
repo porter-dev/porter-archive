@@ -197,8 +197,8 @@ export default class ContentsList extends Component<PropsType, StateType> {
       if (fileName.includes("Dockerfile")) {
         dockerfiles.push(fileName);
       }
-      if (fileName.includes("Procfile")) {
-        this.props.setProcfilePath(item.Path);
+      if (this.state.currentDir === "" && fileName == "Procfile") {
+        this.props.setProcfilePath("./Procfile");
       }
     });
     if (dockerfiles.length > 0) {
@@ -213,8 +213,9 @@ export default class ContentsList extends Component<PropsType, StateType> {
   };
 
   renderOverlay = () => {
+    console.log(this.props.procfilePath)
     if (this.props.procfilePath) {
-      let processes = Object.keys(this.state.processes);
+      let processes = this.state.processes ? Object.keys(this.state.processes) : [];
       return (
         <Overlay>
           <BgOverlay
@@ -289,7 +290,13 @@ export default class ContentsList extends Component<PropsType, StateType> {
           <ConfirmButton
             onClick={() => {
               this.props.setFolderPath(this.state.currentDir || "./");
-              this.props.setProcfilePath("./Procfile");
+              if (
+                this.state.processes &&
+                Object.keys(this.state.processes).length > 0
+              ) {
+                console.log('setting procfile')
+                this.props.setProcfilePath("./Procfile");
+              }
             }}
           >
             No, I don't want to use a Dockerfile

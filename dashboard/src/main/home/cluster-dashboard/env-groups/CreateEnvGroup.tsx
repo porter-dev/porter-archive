@@ -163,6 +163,7 @@ export default class CreateEnvGroup extends Component<PropsType, StateType> {
             namespace={this.state.selectedNamespace}
             values={this.state.envVariables}
             setValues={(x: any) => this.setState({ envVariables: x })}
+            fileUpload={true}
           />
           <SaveButton
             disabled={this.isDisabled()}

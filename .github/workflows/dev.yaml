@@ -31,6 +31,7 @@ jobs:
           FEEDBACK_ENDPOINT=${{secrets.FEEDBACK_ENDPOINT}}
           POSTHOG_API_KEY=${{secrets.POSTHOG_API_KEY}}
           POSTHOG_HOST=${{secrets.POSTHOG_HOST}}
+          SEGMENT_PUBLIC_KEY=${{secrets.SEGMENT_PUBLIC_KEY}}
           APPLICATION_CHART_REPO_URL=${{secrets.APPLICATION_CHART_REPO_URL}}
           EOL
       - name: Build

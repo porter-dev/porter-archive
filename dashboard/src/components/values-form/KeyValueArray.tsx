@@ -4,6 +4,8 @@ import Modal from "../../main/home/modals/Modal";
 import LoadEnvGroupModal from "../../main/home/modals/LoadEnvGroupModal";
 
 import sliders from "assets/sliders.svg";
+import upload from "assets/upload.svg";
+import { keysIn } from "lodash";
 
 type PropsType = {
   label?: string;
@@ -14,6 +16,7 @@ type PropsType = {
   namespace?: string;
   clusterId?: number;
   envLoader?: boolean;
+  fileUpload?: boolean;
 };
 
 type StateType = {
@@ -137,6 +140,76 @@ export default class KeyValueArray extends Component<PropsType, StateType> {
     }
   };
 
+    // Parses src into an Object
+  parseEnv = (src: any, options: any) => {
+    const debug = Boolean(options && options.debug)
+    const obj = {} as Record<string, string>
+    const NEWLINE = '\n'
+    const RE_INI_KEY_VAL = /^\s*([\w.-]+)\s*=\s*(.*)?\s*$/
+    const RE_NEWLINES = /\\n/g
+    const NEWLINES_MATCH = /\n|\r|\r\n/
+
+    // convert Buffers before splitting into lines and processing
+    src.toString().split(NEWLINES_MATCH).forEach(function (line: any, idx: any) {
+      // matching "KEY' and 'VAL' in 'KEY=VAL'
+      const keyValueArr = line.match(RE_INI_KEY_VAL)
+      // matched?
+      if (keyValueArr != null) {
+        const key = keyValueArr[1]
+        // default undefined or missing values to empty string
+        let val = (keyValueArr[2] || '')
+        const end = val.length - 1
+        const isDoubleQuoted = val[0] === '"' && val[end] === '"'
+        const isSingleQuoted = val[0] === "'" && val[end] === "'"
+
+        // if single or double quoted, remove quotes
+        if (isSingleQuoted || isDoubleQuoted) {
+          val = val.substring(1, end)
+
+          // if double quoted, expand newlines
+          if (isDoubleQuoted) {
+            val = val.replace(RE_NEWLINES, NEWLINE)
+          }
+        } else {
+          // remove surrounding whitespace
+          val = val.trim()
+        }
+
+        obj[key] = val
+      } else if (debug) {
+        console.log(`did not match key and value when parsing line ${idx + 1}: ${line}`)
+      }
+    })
+
+    return obj
+  }
+
+  readFile = (event: any) => {
+    event.preventDefault()
+    const reader = new FileReader()
+    reader.onload = async (e) => {
+      let text = (e.target.result)
+      let env = this.parseEnv(text, null)
+
+      for (let key in env) {
+        // filter duplicate keys
+        let dup = this.state.values.filter((el) => {
+          console.log(el, key)
+          if (el["key"] == key) {
+            return false
+          }
+        })
+
+        console.log(dup)
+
+        this.state.values.push({ key, value: env[key] });
+      }
+      this.setState({ values: this.state.values });
+    }
+    reader.readAsText(event.target.files[0], 'UTF-8')
+
+  }
+
   render() {
     return (
       <>
@@ -164,6 +237,19 @@ export default class KeyValueArray extends Component<PropsType, StateType> {
                 >
                   <img src={sliders} /> Load from Env Group
                 </LoadButton>
+              )}
+              {this.props.fileUpload && (
+                <UploadButton
+                  onClick={()=>{
+                    document.getElementById("file").click();
+                  }}
+                >
+                  <img src={upload} /> Upload from File
+                  <input id='file' hidden type="file" onChange={(event) => {
+                    this.readFile(event)
+                    event.currentTarget.value = null
+                  }}/>
+                </UploadButton>
               )}
             </InputWrapper>
           )}
@@ -227,6 +313,26 @@ const AddRowButton = styled.div`
 
 const LoadButton = styled(AddRowButton)`
   background: none;
+  border: 1px solid #ffffff55;
+  > i {
+    color: #ffffff44;
+    font-size: 16px;
+    margin-left: 8px;
+    margin-right: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  > img {
+    width: 14px;
+    margin-left: 10px;
+    margin-right: 12px;
+  }
+`;
+
+const UploadButton = styled(AddRowButton)`
+  background: none;
+  position: relative;
   border: 1px solid #ffffff55;
   > i {
     color: #ffffff44;

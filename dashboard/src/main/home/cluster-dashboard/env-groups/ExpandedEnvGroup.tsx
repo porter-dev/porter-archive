@@ -48,7 +48,7 @@ export default class ExpandedEnvGroup extends Component<PropsType, StateType> {
     values: this.props.envGroup.data as any,
   };
 
-  handleUpdateValues = (config?: any) => {
+  handleUpdateValues = () => {
     let { envGroup } = this.props;
     let name = envGroup.metadata.name;
     let namespace = envGroup.metadata.namespace;
@@ -93,7 +93,8 @@ export default class ExpandedEnvGroup extends Component<PropsType, StateType> {
               <KeyValueArray
                 namespace={namespace}
                 values={this.state.values || {}}
-                setValues={(x: any) => this.setState({ values: x })}
+                setValues={(x: any) => this.setState({ values: x }, () => {console.log(this.state.values)})}
+                fileUpload={true}
               />
             </InnerWrapper>
             <SaveButton

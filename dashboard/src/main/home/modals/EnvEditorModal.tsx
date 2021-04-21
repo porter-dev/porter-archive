@@ -64,6 +64,7 @@ export default class EnvEditorModal extends Component<PropsType, StateType> {
             width="100%"
             style={{    
                 borderRadius: "5px", 
+                fontFamily: "monospace !important"
             }}
             showPrintMargin={true}
             showGutter={true}

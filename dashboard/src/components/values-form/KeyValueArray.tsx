@@ -223,7 +223,10 @@ export default class KeyValueArray extends Component<PropsType, StateType> {
 
     }
 
-    this.setState({ values: this.state.values });
+    this.setState({ values: this.state.values }, () => {
+      let obj = this.valuesToObject();
+      this.props.setValues(obj);
+    });
   }
 
   render() {

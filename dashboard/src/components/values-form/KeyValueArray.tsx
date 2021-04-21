@@ -2,6 +2,7 @@ import React, { Component } from "react";
 import styled from "styled-components";
 import Modal from "../../main/home/modals/Modal";
 import LoadEnvGroupModal from "../../main/home/modals/LoadEnvGroupModal";
+import EnvEditorModal from "../../main/home/modals/EnvEditorModal";
 
 import sliders from "assets/sliders.svg";
 import upload from "assets/upload.svg";
@@ -22,12 +23,14 @@ type PropsType = {
 type StateType = {
   values: any[];
   showEnvModal: boolean;
+  showEditorModal: boolean;
 };
 
 export default class KeyValueArray extends Component<PropsType, StateType> {
   state = {
     values: [] as any[],
     showEnvModal: false,
+    showEditorModal: false,
   };
 
   componentDidMount() {
@@ -140,6 +143,23 @@ export default class KeyValueArray extends Component<PropsType, StateType> {
     }
   };
 
+  renderEditorModal = () => {
+    if (this.state.showEditorModal) {
+      return (
+        <Modal
+          onRequestClose={() => this.setState({ showEditorModal: false })}
+          width="60%"
+          height="80%"
+        >
+          <EnvEditorModal
+            closeModal={() => this.setState({ showEditorModal: false })}
+            setEnvVariables={(envFile: string) => this.readFile(envFile)}
+          />
+        </Modal>
+      );
+    }
+  };
+
     // Parses src into an Object
   parseEnv = (src: any, options: any) => {
     const debug = Boolean(options && options.debug)
@@ -184,30 +204,26 @@ export default class KeyValueArray extends Component<PropsType, StateType> {
     return obj
   }
 
-  readFile = (event: any) => {
-    event.preventDefault()
-    const reader = new FileReader()
-    reader.onload = async (e) => {
-      let text = (e.target.result)
-      let env = this.parseEnv(text, null)
+  readFile = (env: string) => {
+    let envObj = this.parseEnv(env, null)
+    let push = true;
 
-      for (let key in env) {
-        // filter duplicate keys
-        let dup = this.state.values.filter((el) => {
-          console.log(el, key)
-          if (el["key"] == key) {
-            return false
-          }
-        })
-
-        console.log(dup)
-
-        this.state.values.push({ key, value: env[key] });
+    for (let key in envObj) {
+      for (var i = 0; i < this.state.values.length; i++) {
+        let existingKey = this.state.values[i]["key"]
+        if (key === existingKey) {
+          this.state.values[i]["value"] = envObj[key]
+          push = false;
+        }
       }
-      this.setState({ values: this.state.values });
-    }
-    reader.readAsText(event.target.files[0], 'UTF-8')
 
+      if (push) {
+        this.state.values.push({ key, value: envObj[key] });
+      }
+
+    }
+
+    this.setState({ values: this.state.values });
   }
 
   render() {
@@ -241,45 +257,21 @@ export default class KeyValueArray extends Component<PropsType, StateType> {
               {this.props.fileUpload && (
                 <UploadButton
                   onClick={()=>{
-                    document.getElementById("file").click();
+                    this.setState({ showEditorModal: true });
                   }}
                 >
-                  <img src={upload} /> Upload from File
-                  <input id='file' hidden type="file" onChange={(event) => {
-                    this.readFile(event)
-                    event.currentTarget.value = null
-                  }}/>
+                  <img src={upload} /> Copy from File
                 </UploadButton>
               )}
             </InputWrapper>
           )}
         </StyledInputArray>
         {this.renderEnvModal()}
+        {this.renderEditorModal()}
       </>
     );
   }
 }
-
-const CloseOverlay = styled.div`
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  z-index: 999;
-  background: #202227;
-  animation: fadeIn 0.2s 0s;
-  opacity: 0;
-  animation-fill-mode: forwards;
-  @keyframes fadeIn {
-    from {
-      opacity: 0;
-    }
-    to {
-      opacity: 1;
-    }
-  }
-`;
 
 const Spacer = styled.div`
   width: 10px;

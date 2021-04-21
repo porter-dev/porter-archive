@@ -1359,15 +1359,17 @@ func New(a *api.App) *chi.Mux {
 	fs := http.FileServer(http.Dir(staticFilePath))
 
 	r.Get("/*", func(w http.ResponseWriter, r *http.Request) {
-		// Set static files involving html, js, or empty cache to "no-cache", which means they must be validated
-		// for changes before the browser uses the cache
-		if base := path.Base(r.URL.Path); strings.Contains(base, "html") || strings.Contains(base, "js") || base == "." || base == "/" {
-			w.Header().Set("Cache-Control", "no-cache")
-		}
-
 		if _, err := os.Stat(staticFilePath + r.RequestURI); os.IsNotExist(err) {
+			w.Header().Set("Cache-Control", "no-cache")
+
 			http.StripPrefix(r.URL.Path, fs).ServeHTTP(w, r)
 		} else {
+			// Set static files involving html, js, or empty cache to "no-cache", which means they must be validated
+			// for changes before the browser uses the cache
+			if base := path.Base(r.URL.Path); strings.Contains(base, "html") || strings.Contains(base, "js") || base == "." || base == "/" {
+				w.Header().Set("Cache-Control", "no-cache")
+			}
+
 			fs.ServeHTTP(w, r)
 		}
 	})

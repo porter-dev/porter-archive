@@ -244,7 +244,7 @@ class LaunchTemplate extends Component<PropsType, StateType> {
 
     // check if template is docker and create external domain if necessary
     if (this.props.currentTemplate.name == "web") {
-      if (values?.ingress?.enabled && values?.ingress?.hosts?.length == 0) {
+      if (!values?.ingress?.custom_domain) {
         url = await new Promise((resolve, reject) => {
           api
             .createSubdomain(
@@ -265,8 +265,7 @@ class LaunchTemplate extends Component<PropsType, StateType> {
             });
         });
 
-        values.ingress.hosts = [url];
-        values.ingress.custom_domain = true;
+        values.ingress.porter_hosts = [url];
       }
     }
 
@@ -383,14 +382,14 @@ class LaunchTemplate extends Component<PropsType, StateType> {
       procfilePath,
     } = this.state;
 
-    if (
-      sourceType === "repo" &&
-      !dockerfilePath &&
-      folderPath &&
-      !procfilePath
-    ) {
-      return "Procfile not detected.";
-    }
+    // if (
+    //   sourceType === "repo" &&
+    //   !dockerfilePath &&
+    //   folderPath &&
+    //   !procfilePath
+    // ) {
+    //   return "Procfile not detected.";
+    // }
 
     if (!this.submitIsDisabled()) {
       return this.state.saveValuesStatus;
@@ -434,9 +433,9 @@ class LaunchTemplate extends Component<PropsType, StateType> {
           }
 
           // handle when procfileProcess is already specified
-          metaState["container.command"] = this.state.procfileProcess
-            ? this.state.procfileProcess
-            : "";
+          if (this.state.procfileProcess) {
+            metaState["container.command"] = this.state.procfileProcess
+          }
 
           return this.props.form?.tabs.map((tab: any, i: number) => {
             // If tab is current, render

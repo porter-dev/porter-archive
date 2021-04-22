@@ -110,6 +110,7 @@ export default class GCRForm extends Component<PropsType, StateType> {
             height="100%"
             isRequired={true}
           />
+          <Helper>GCR URI, in the form <CodeBlock>[gcr_domain]/[gcp_project_id]</CodeBlock>. For example, <CodeBlock>gcr.io/skynet-dev-172969</CodeBlock>.</Helper>
           <InputRow
             type="text"
             value={this.state.url}
@@ -117,6 +118,7 @@ export default class GCRForm extends Component<PropsType, StateType> {
             label="🔗 GCR URL"
             placeholder="ex: gcr.io/skynet-dev-172969"
             width="100%"
+            isRequired={true}
           />
         </CredentialWrapper>
         <SaveButton
@@ -142,3 +144,14 @@ const StyledForm = styled.div`
   position: relative;
   padding-bottom: 75px;
 `;
+
+const CodeBlock = styled.span`
+  display: inline-block; 
+  background-color: #1b1d26;
+  color: white; 
+  border-radius: 5px; 
+  font-family: monospace;
+  padding: 2px 3px; 
+  margin-top: -2px; 
+  user-select: text;
+`

@@ -5,7 +5,7 @@ import { Context } from "shared/Context";
 import api from "shared/api";
 
 import InputRow from "components/values-form/InputRow";
-import TextArea from "components/values-form/TextArea";
+import UploadArea from "components/values-form/UploadArea";
 import SaveButton from "components/SaveButton";
 import Heading from "components/values-form/Heading";
 import Helper from "components/values-form/Helper";
@@ -33,16 +33,12 @@ export default class GCRForm extends Component<PropsType, StateType> {
 
   isDisabled = (): boolean => {
     let {
-      credentialsName,
-      gcpRegion,
-      gcpProjectID,
       serviceAccountKey,
+      credentialsName
     } = this.state;
     if (
-      credentialsName === "" ||
-      gcpRegion === "" ||
       serviceAccountKey === "" ||
-      gcpProjectID === ""
+      credentialsName === ""
     ) {
       return true;
     }
@@ -99,6 +95,7 @@ export default class GCRForm extends Component<PropsType, StateType> {
             setValue={(credentialsName: string) =>
               this.setState({ credentialsName })
             }
+            isRequired={true}
             label="🏷️ Registry Name"
             placeholder="ex: paper-straw"
             width="100%"
@@ -113,14 +110,13 @@ export default class GCRForm extends Component<PropsType, StateType> {
             placeholder="ex: uranus-north3"
             width="100%"
           />
-          <TextArea
-            value={this.state.serviceAccountKey}
-            setValue={(serviceAccountKey: string) =>
-              this.setState({ serviceAccountKey })
-            }
-            label="🔑 Service Account Key (JSON)"
-            placeholder="(Paste your JSON service account key here)"
+          <UploadArea
+            setValue={(x: any) => this.setState({ serviceAccountKey: x })}
+            label="🔒 GCP Key Data (JSON)"
+            placeholder="Choose a file or drag it here."
             width="100%"
+            height="100%"
+            isRequired={true}
           />
           <InputRow
             type="text"

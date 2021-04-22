@@ -7,6 +7,7 @@ import api from "shared/api";
 import { Context } from "shared/Context";
 import { InfraType } from "shared/types";
 
+import UploadArea from "components/values-form/UploadArea";
 import SelectRow from "components/values-form/SelectRow";
 import CheckboxRow from "components/values-form/CheckboxRow";
 import InputRow from "components/values-form/InputRow";
@@ -352,15 +353,15 @@ class GCPFormSection extends Component<PropsType, StateType> {
             width="100%"
             isRequired={true}
           />
-          <InputRow
-            type="password"
-            value={gcpKeyData}
+          <UploadArea
             setValue={(x: string) => this.setState({ gcpKeyData: x })}
             label="🔒 GCP Key Data (JSON)"
-            placeholder="○ ○ ○ ○ ○ ○ ○ ○ ○"
+            placeholder="Choose a file or drag it here."
             width="100%"
+            height="100%"
             isRequired={true}
           />
+
           <Br />
           <Heading>GCP Resources</Heading>
           <Helper>

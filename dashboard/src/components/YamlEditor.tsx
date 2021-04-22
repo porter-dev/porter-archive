@@ -53,6 +53,10 @@ class YamlEditor extends Component<PropsType, StateType> {
             height={this.props.height}
             width="100%"
             style={{ borderRadius: "5px" }}
+            showPrintMargin={false}
+            showGutter={true}
+            highlightActiveLine={true}
+            fontSize={14}
           />
         </Editor>
       </Holder>

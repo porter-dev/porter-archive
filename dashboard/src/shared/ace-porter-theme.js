@@ -8,21 +8,21 @@ ace['define']('ace/theme/porter', ['require', 'exports', 'module', 'ace/lib/dom'
     font-size: 14px;
     }
     .ace-porter {
-    background-color: #191919;
+    background-color: #1b1d26;
     }
     .ace-porter .ace_gutter {
-    background: #232323;
+    background: #1b1d26;
     color: #929292
     }
     .ace-porter .ace_print-margin {
     width: 1px;
-    background: #232323
+    background: #1b1d26
     }
     .ace-porter .ace_cursor {
-    color: white
+    color: #bfc7d5
     }
     .ace-porter .ace_marker-layer .ace_selection {
-    background: #000000
+    background: #32374D
     }
     .ace-porter.ace_multiselect .ace_selection.ace_start {
     box-shadow: 0 0 3px 0px #191919;
@@ -51,10 +51,10 @@ ace['define']('ace/theme/porter', ['require', 'exports', 'module', 'ace/lib/dom'
     .ace-porter .ace_storage,
     .ace-porter .ace_storage.ace_type,
     .ace-porter .ace_support.ace_type {
-    color: tomato
+    color: #ff5572
     }
     .ace-porter .ace_keyword.ace_operator {
-    color: deeppink
+    color: #ff5572
     }
     .ace-porter .ace_constant.ace_character,
     .ace-porter .ace_constant.ace_language,
@@ -62,7 +62,7 @@ ace['define']('ace/theme/porter', ['require', 'exports', 'module', 'ace/lib/dom'
     .ace-porter .ace_keyword.ace_other.ace_unit,
     .ace-porter .ace_support.ace_constant,
     .ace-porter .ace_variable.ace_parameter {
-    color: #E78C45
+    color: #F78C6C
     }
     .ace-porter .ace_constant.ace_other {
     color: gold
@@ -90,17 +90,17 @@ ace['define']('ace/theme/porter', ['require', 'exports', 'module', 'ace/lib/dom'
     }
     .ace-porter .ace_heading,
     .ace-porter .ace_string {
-    color: #B9CA4A
+    color: #80CBC4
     }
     .ace-porter .ace_entity.ace_name.ace_tag,
     .ace-porter .ace_entity.ace_other.ace_attribute-name,
     .ace-porter .ace_meta.ace_tag,
     .ace-porter .ace_string.ace_regexp,
     .ace-porter .ace_variable {
-    color: #D54E53
+    color: #ff5572
     }
     .ace-porter .ace_comment {
-    color: orangered
+    color: #949eff
     }
     .ace-porter .ace_indent-guide {
     background: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAACCAYAAACZgbYnAAAAEklEQVQImWNgYGBgYLBWV/8PAAK4AYnhiq+xAAAAAElFTkSuQmCC) right repeat-y;

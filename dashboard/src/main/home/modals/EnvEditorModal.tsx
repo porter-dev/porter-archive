@@ -1,9 +1,10 @@
-import React, { Component } from "react";
+import React, { Component, createRef } from "react";
 import styled from "styled-components";
 import close from "assets/close.png";
 import AceEditor from "react-ace";
 
 import "shared/ace-porter-theme"
+import "ace-builds/src-noconflict/mode-text";
 
 import { Context } from "shared/Context";
 
@@ -27,6 +28,8 @@ export default class EnvEditorModal extends Component<PropsType, StateType> {
     envFile: "",
   };
 
+  aceEditorRef = React.createRef<AceEditor>();
+
   onSubmit = () => {
     this.props.setEnvVariables(this.state.envFile)
     this.props.closeModal();
@@ -36,8 +39,7 @@ export default class EnvEditorModal extends Component<PropsType, StateType> {
     this.setState({envFile: e})
   }
 
-  componentDidMount() {
-  }
+  componentDidMount() {}
 
   render() {
     return (
@@ -48,12 +50,13 @@ export default class EnvEditorModal extends Component<PropsType, StateType> {
 
         <ModalTitle>Load from Environment Group</ModalTitle>
         <Subtitle>
-          Copy paste your environment file.
+          Copy paste your environment file in .env format:
         </Subtitle>
 
         <Editor onSubmit={(e: any) => {e.preventDefault()}} border={true}>
           <AceEditor
-            mode="markdown"
+            ref={this.aceEditorRef}
+            mode="text"
             value={this.state.envFile}
             theme="porter"
             onChange={(e: string) => this.onChange(e)}
@@ -61,6 +64,7 @@ export default class EnvEditorModal extends Component<PropsType, StateType> {
             editorProps={{ $blockScrolling: true }}
             height="100%"
             width="100%"
+            style={{ borderRadius: "5px" }}
             showPrintMargin={false}
             showGutter={true}
             highlightActiveLine={true}
@@ -92,6 +96,17 @@ const Editor = styled.form`
     props.border ? "1px solid #ffffff22" : ""};
   height: 80%;
   font-family: monospace !important;
+  .ace_scrollbar {
+    display: none;
+  }
+  .ace_editor,
+  .ace_editor * {
+    font-family: "Monaco", "Menlo", "Ubuntu Mono", "Droid Sans Mono", "Consolas",
+      monospace !important;
+    font-size: 12px !important;
+    font-weight: 400 !important;
+    letter-spacing: 0 !important;
+  }
 `;
 
 const Subtitle = styled.div`

@@ -27,7 +27,7 @@ type PropsType = RouteComponentProps & {
 type StateType = {
   gcpRegion: string;
   gcpProjectId: string;
-  gcpKeyData: string;
+  gcpKeyData: any;
   clusterName: string;
   clusterNameSet: boolean;
   selectedInfras: { value: string; label: string }[];
@@ -319,7 +319,7 @@ class GCPFormSection extends Component<PropsType, StateType> {
   render() {
     let { setSelectedProvisioner } = this.props;
     let { gcpRegion, gcpProjectId, gcpKeyData, selectedInfras } = this.state;
-
+    console.log('gcpkeydata', gcpKeyData)
     return (
       <StyledGCPFormSection>
         <FormSection>
@@ -354,7 +354,7 @@ class GCPFormSection extends Component<PropsType, StateType> {
             isRequired={true}
           />
           <UploadArea
-            setValue={(x: string) => this.setState({ gcpKeyData: x })}
+            setValue={(x: any) => this.setState({ gcpKeyData: x })}
             label="🔒 GCP Key Data (JSON)"
             placeholder="Choose a file or drag it here."
             width="100%"

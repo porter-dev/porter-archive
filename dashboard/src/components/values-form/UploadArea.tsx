@@ -4,7 +4,7 @@ import upload from "assets/upload.svg";
 
 type PropsType = {
   label?: string;
-  setValue: (x: string) => void;
+  setValue: (x: any) => void;
   width?: string;
   height?: string;
   placeholder?: string;
@@ -12,34 +12,31 @@ type PropsType = {
 };
 
 type StateType = {
-    fileContents: any;
     fileName: string;
 };
 
 export default class UploadArea extends Component<PropsType, StateType> {
     state = {
-        fileContents: null as string,
         fileName: null as string,
     }
     handleChange = (e: any) => {
     this.props.setValue(e.target.value);
   };
 
-  readFile = (event: any) => {
-    event.preventDefault()
+  readFile = (file: any) => {
     const reader = new FileReader()
     reader.onload = async (e) => {
       let text = (e.target.result)
-      console.log(e)
-    //   this.setState({ fileContents: text });
+      this.props.setValue(text);
     }
-    reader.readAsText(event.target.files[0], 'UTF-8')
+    reader.readAsText(file, 'UTF-8')
+    this.setState({ fileName: file.name });
   }
 
   render() {
     let { label, placeholder } = this.props;
-
-    if (this.state.fileContents) {
+    console.log(this.state.fileName)
+    if (this.state.fileName) {
         placeholder = `Uploaded ${this.state.fileName}`
     }
 
@@ -49,11 +46,21 @@ export default class UploadArea extends Component<PropsType, StateType> {
             {label}
             <Required>{this.props.isRequired ? " *" : null}</Required>
         </Label> 
-        <DNDArea onClick={() => {
+        <DNDArea 
+        onDragOver={(e: any) => {e.preventDefault()}}
+        onDragEnter={(e: any) => {e.preventDefault()}}
+        onDragLeave={(e: any) => {e.preventDefault()}}
+        onDrop={(e: any) => {
+            e.preventDefault();
+            const files = e.dataTransfer.files;
+            this.readFile(files[0])
+        }}
+        onClick={() => {
             document.getElementById("file").click();
         }}>
         <input id='file' hidden type="file" onChange={(event) => {
-            this.readFile(event)
+            event.preventDefault();
+            this.readFile(event.target.files[0]);
             event.currentTarget.value = null
         }}/>
         <Message>

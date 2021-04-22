@@ -260,7 +260,7 @@ const Log = styled.div`
 `;
 
 const LogSpan = styled.span`
-  font-family: 'Roboto Mono';
+  font-family: monospace, sans-serif;
   font-size: 12px;
   font-weight: ${(props: { ansi: Anser.AnserJsonEntry }) => props.ansi?.decoration && props.ansi?.decoration == "bold" ? "700" : "400"};
   color: ${(props: { ansi: Anser.AnserJsonEntry }) => props.ansi?.fg ? `rgb(${props.ansi?.fg})` : "white"};

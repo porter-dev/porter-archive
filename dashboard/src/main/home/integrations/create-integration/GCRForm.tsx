@@ -102,14 +102,6 @@ export default class GCRForm extends Component<PropsType, StateType> {
           />
           <Heading>GCP Settings</Heading>
           <Helper>Service account credentials for GCP permissions.</Helper>
-          <InputRow
-            type="text"
-            value={this.state.gcpRegion}
-            setValue={(gcpRegion: string) => this.setState({ gcpRegion })}
-            label="📍 GCP Region"
-            placeholder="ex: uranus-north3"
-            width="100%"
-          />
           <UploadArea
             setValue={(x: any) => this.setState({ serviceAccountKey: x })}
             label="🔒 GCP Key Data (JSON)"
@@ -117,22 +109,6 @@ export default class GCRForm extends Component<PropsType, StateType> {
             width="100%"
             height="100%"
             isRequired={true}
-          />
-          <InputRow
-            type="text"
-            value={this.state.gcpProjectID}
-            setValue={(gcpProjectID: string) => this.setState({ gcpProjectID })}
-            label="📝 GCP Project ID"
-            placeholder="ex: skynet-dev-172969"
-            width="100%"
-          />
-          <InputRow
-            type="text"
-            value={this.state.url}
-            setValue={(url: string) => this.setState({ url })}
-            label="🔗 GCR URL"
-            placeholder="ex: gcr.io/skynet-dev-172969"
-            width="100%"
           />
         </CredentialWrapper>
         <SaveButton

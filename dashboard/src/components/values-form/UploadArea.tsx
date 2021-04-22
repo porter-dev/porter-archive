@@ -58,7 +58,7 @@ export default class UploadArea extends Component<PropsType, StateType> {
         onClick={() => {
             document.getElementById("file").click();
         }}>
-        <input id='file' hidden type="file" onChange={(event) => {
+        <input id='file' hidden type="file" accept=".json" onChange={(event) => {
             event.preventDefault();
             this.readFile(event.target.files[0]);
             event.currentTarget.value = null

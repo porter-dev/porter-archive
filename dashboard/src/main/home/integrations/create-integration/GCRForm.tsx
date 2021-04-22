@@ -110,6 +110,14 @@ export default class GCRForm extends Component<PropsType, StateType> {
             height="100%"
             isRequired={true}
           />
+          <InputRow
+            type="text"
+            value={this.state.url}
+            setValue={(url: string) => this.setState({ url })}
+            label="🔗 GCR URL"
+            placeholder="ex: gcr.io/skynet-dev-172969"
+            width="100%"
+          />
         </CredentialWrapper>
         <SaveButton
           text="Save Settings"

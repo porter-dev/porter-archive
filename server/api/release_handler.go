@@ -790,7 +790,6 @@ func (app *App) HandleReleaseDeployWebhook(w http.ResponseWriter, r *http.Reques
 	vals, err := url.ParseQuery(r.URL.RawQuery)
 
 	commit := vals["commit"][0]
-	repository := vals["repository"][0]
 
 	if err != nil {
 		app.handleErrorFormDecoding(err, ErrReleaseDecode, w)
@@ -823,12 +822,8 @@ func (app *App) HandleReleaseDeployWebhook(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	image := map[string]interface{}{}
-	image["repository"] = repository
-	image["tag"] = commit
-
 	rel, err := agent.GetRelease(form.Name, 0)
-	rel.Config["image"] = image
+	rel.Config["image"].(map[string]interface{})["tag"] = commit
 
 	if rel.Config["auto_deploy"] == false {
 		app.sendExternalError(err, http.StatusInternalServerError, HTTPError{
@@ -870,7 +865,7 @@ func (app *App) HandleReleaseDeployWebhook(w http.ResponseWriter, r *http.Reques
 		UserId: "anonymous",
 		Event:  "Triggered Re-deploy via Webhook",
 		Properties: segment.NewProperties().
-			Set("repository", repository),
+			Set("repository", rel.Config["image"].(map[string]interface{})["repository"]),
 	})
 
 	w.WriteHeader(http.StatusOK)

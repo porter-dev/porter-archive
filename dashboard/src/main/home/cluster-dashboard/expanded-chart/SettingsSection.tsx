@@ -141,7 +141,7 @@ export default class SettingsSection extends Component<PropsType, StateType> {
     }
 
     if (true || this.state.webhookToken) {
-      let webhookText = `curl -X POST 'https://dashboard.getporter.dev/api/webhooks/deploy/${this.state.webhookToken}?commit=YOUR_COMMIT_HASH&repository=IMAGE_REPOSITORY_URL'`;
+      let webhookText = `curl -X POST 'https://dashboard.getporter.dev/api/webhooks/deploy/${this.state.webhookToken}?commit=YOUR_COMMIT_HASH'`;
       return (
         <>
           <Heading>Redeploy Webhook</Heading>

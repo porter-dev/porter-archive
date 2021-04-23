@@ -828,7 +828,7 @@ func (app *App) HandleReleaseDeployWebhook(w http.ResponseWriter, r *http.Reques
 
 	gitAction := release.GitActionConfig
 
-	if release != nil && gitAction.ID != 0 {
+	if gitAction.ID != 0 && repository == "porterdev/hello-porter" {
 		repository = gitAction.ImageRepoURI
 	}
 

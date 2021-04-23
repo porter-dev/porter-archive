@@ -789,13 +789,11 @@ func (app *App) HandleReleaseDeployWebhook(w http.ResponseWriter, r *http.Reques
 
 	vals, err := url.ParseQuery(r.URL.RawQuery)
 
-	commit := vals["commit"][0]
-
 	if err != nil {
 		app.handleErrorFormDecoding(err, ErrReleaseDecode, w)
 		return
 	}
-
+	
 	form := &forms.UpgradeReleaseForm{
 		ReleaseForm: &forms.ReleaseForm{
 			Form: &helm.Form{
@@ -823,8 +821,22 @@ func (app *App) HandleReleaseDeployWebhook(w http.ResponseWriter, r *http.Reques
 	}
 
 	rel, err := agent.GetRelease(form.Name, 0)
-	rel.Config["image"].(map[string]interface{})["tag"] = commit
 
+	// repository is set to current repository by default
+	commit := vals["commit"][0]
+	repository := rel.Config["image"].(map[string]interface{})["repository"]
+
+	gitAction := release.GitActionConfig
+
+	if release != nil && gitAction.ID != 0 {
+		repository = gitAction.ImageRepoURI
+	}
+
+	image := map[string]interface{}{}
+	image["repository"] = repository
+	image["tag"] = commit
+	rel.Config["image"] = image
+	
 	if rel.Config["auto_deploy"] == false {
 		app.sendExternalError(err, http.StatusInternalServerError, HTTPError{
 			Code:   ErrReleaseDeploy,
@@ -865,7 +877,7 @@ func (app *App) HandleReleaseDeployWebhook(w http.ResponseWriter, r *http.Reques
 		UserId: "anonymous",
 		Event:  "Triggered Re-deploy via Webhook",
 		Properties: segment.NewProperties().
-			Set("repository", rel.Config["image"].(map[string]interface{})["repository"]),
+			Set("repository", repository),
 	})
 
 	w.WriteHeader(http.StatusOK)

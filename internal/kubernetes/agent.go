@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"strings"
@@ -33,6 +34,7 @@ import (
 	v1beta1 "k8s.io/api/extensions/v1beta1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 	"k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes"
@@ -64,7 +66,7 @@ func (a *Agent) CreateConfigMap(name string, namespace string, configMap map[str
 		context.TODO(),
 		&v1.ConfigMap{
 			ObjectMeta: metav1.ObjectMeta{
-				Name: name,
+				Name:      name,
 				Namespace: namespace,
 				Labels: map[string]string{
 					"porter": "true",
@@ -76,27 +78,112 @@ func (a *Agent) CreateConfigMap(name string, namespace string, configMap map[str
 	)
 }
 
-// UpdateConfigMap updates the configmap given its name and namespace
-func (a *Agent) UpdateConfigMap(name string, namespace string, configMap map[string]string) (*v1.ConfigMap, error) {
-	return a.Clientset.CoreV1().ConfigMaps(namespace).Update(
+// CreateLinkedSecret creates a secret given the key-value pairs and namespace. Values are
+// base64 encoded
+func (a *Agent) CreateLinkedSecret(name, namespace, cmName string, data map[string][]byte) (*v1.Secret, error) {
+	return a.Clientset.CoreV1().Secrets(namespace).Create(
 		context.TODO(),
-		&v1.ConfigMap{
+		&v1.Secret{
 			ObjectMeta: metav1.ObjectMeta{
-				Name: name,
+				Name:      name,
 				Namespace: namespace,
 				Labels: map[string]string{
-					"porter": "true",
+					"porter":    "true",
+					"configmap": cmName,
 				},
 			},
-			Data: configMap,
+			Data: data,
 		},
-		metav1.UpdateOptions{},
+		metav1.CreateOptions{},
 	)
 }
 
+type mergeConfigMapData struct {
+	Data map[string]*string `json:"data"`
+}
+
+// UpdateConfigMap updates the configmap given its name and namespace
+func (a *Agent) UpdateConfigMap(name string, namespace string, configMap map[string]string) error {
+	cmData := make(map[string]*string)
+
+	for key, val := range configMap {
+		cmData[key] = &val
+
+		if len(val) == 0 {
+			cmData[key] = nil
+		}
+	}
+
+	mergeCM := &mergeConfigMapData{
+		Data: cmData,
+	}
+
+	patchBytes, err := json.Marshal(mergeCM)
+
+	if err != nil {
+		return err
+	}
+
+	_, err = a.Clientset.CoreV1().ConfigMaps(namespace).Patch(
+		context.Background(),
+		name,
+		types.MergePatchType,
+		patchBytes,
+		metav1.PatchOptions{},
+	)
+
+	return err
+}
+
+type mergeLinkedSecretData struct {
+	Data map[string]*[]byte `json:"data"`
+}
+
+// UpdateLinkedSecret updates the secret given its name and namespace
+func (a *Agent) UpdateLinkedSecret(name, namespace, cmName string, data map[string][]byte) error {
+	secretData := make(map[string]*[]byte)
+
+	for key, val := range data {
+		secretData[key] = &val
+
+		if len(val) == 0 {
+			secretData[key] = nil
+		}
+	}
+
+	mergeSecret := &mergeLinkedSecretData{
+		Data: secretData,
+	}
+
+	patchBytes, err := json.Marshal(mergeSecret)
+
+	if err != nil {
+		return err
+	}
+
+	_, err = a.Clientset.CoreV1().Secrets(namespace).Patch(
+		context.TODO(),
+		name,
+		types.MergePatchType,
+		patchBytes,
+		metav1.PatchOptions{},
+	)
+
+	return err
+}
+
 // DeleteConfigMap deletes the configmap given its name and namespace
-func (a *Agent) DeleteConfigMap(name string, namespace string) (error) {
+func (a *Agent) DeleteConfigMap(name string, namespace string) error {
 	return a.Clientset.CoreV1().ConfigMaps(namespace).Delete(
+		context.TODO(),
+		name,
+		metav1.DeleteOptions{},
+	)
+}
+
+// DeleteLinkedSecret deletes the secret given its name and namespace
+func (a *Agent) DeleteLinkedSecret(name, namespace string) error {
+	return a.Clientset.CoreV1().Secrets(namespace).Delete(
 		context.TODO(),
 		name,
 		metav1.DeleteOptions{},

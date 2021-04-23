@@ -789,14 +789,11 @@ func (app *App) HandleReleaseDeployWebhook(w http.ResponseWriter, r *http.Reques
 
 	vals, err := url.ParseQuery(r.URL.RawQuery)
 
-	commit := vals["commit"][0]
-	repository := vals["repository"][0]
-
 	if err != nil {
 		app.handleErrorFormDecoding(err, ErrReleaseDecode, w)
 		return
 	}
-
+	
 	form := &forms.UpgradeReleaseForm{
 		ReleaseForm: &forms.ReleaseForm{
 			Form: &helm.Form{
@@ -823,13 +820,23 @@ func (app *App) HandleReleaseDeployWebhook(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
+	rel, err := agent.GetRelease(form.Name, 0)
+
+	// repository is set to current repository by default
+	commit := vals["commit"][0]
+	repository := rel.Config["image"].(map[string]interface{})["repository"]
+
+	gitAction := release.GitActionConfig
+
+	if gitAction.ID != 0 && repository == "porterdev/hello-porter" {
+		repository = gitAction.ImageRepoURI
+	}
+
 	image := map[string]interface{}{}
 	image["repository"] = repository
 	image["tag"] = commit
-
-	rel, err := agent.GetRelease(form.Name, 0)
 	rel.Config["image"] = image
-
+	
 	if rel.Config["auto_deploy"] == false {
 		app.sendExternalError(err, http.StatusInternalServerError, HTTPError{
 			Code:   ErrReleaseDeploy,

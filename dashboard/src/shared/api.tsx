@@ -753,6 +753,7 @@ const createConfigMap = baseApi<
     name: string;
     namespace: string;
     variables: Record<string, string>;
+    secret_variables?: Record<string, string>;
   },
   { id: number; cluster_id: number }
 >("POST", (pathParams) => {
@@ -765,6 +766,7 @@ const updateConfigMap = baseApi<
     name: string;
     namespace: string;
     variables: Record<string, string>;
+    secret_variables?: Record<string, string>;
   },
   { id: number; cluster_id: number }
 >("POST", (pathParams) => {

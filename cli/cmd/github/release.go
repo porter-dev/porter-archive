@@ -156,7 +156,6 @@ func (z *ZIPReleaseGetter) getDownloadRegexp() (*regexp.Regexp, error) {
 // // it, and adds the binary to the porter directory
 // func DownloadLatestServerRelease(porterDir string) error {
 // 	releaseURL, staticReleaseURL, err := getLatestReleaseDownloadURL()
-// 	fmt.Println(releaseURL)
 
 // 	if err != nil {
 // 		return err

@@ -1,17 +1,24 @@
 import React, { Component } from "react";
 import styled from "styled-components";
-import Modal from "../../main/home/modals/Modal";
-import LoadEnvGroupModal from "../../main/home/modals/LoadEnvGroupModal";
-import EnvEditorModal from "../../main/home/modals/EnvEditorModal";
+import Modal from "main/home/modals/Modal";
+import EnvEditorModal from "main/home/modals/EnvEditorModal";
 
 import sliders from "assets/sliders.svg";
 import upload from "assets/upload.svg";
 import { keysIn } from "lodash";
 
+export type KeyValueType = {
+    key: string;
+    value: string;
+    hidden: boolean;
+    locked: boolean;
+    deleted: boolean;
+}
+
 type PropsType = {
   label?: string;
-  values: any;
-  setValues: (x: any) => void;
+  values: KeyValueType[];
+  setValues: (x: KeyValueType[]) => void;
   width?: string;
   disabled?: boolean;
   namespace?: string;
@@ -22,57 +29,31 @@ type PropsType = {
 };
 
 type StateType = {
-  values: any[];
   showEnvModal: boolean;
   showEditorModal: boolean;
 };
 
 export default class KeyValueArray extends Component<PropsType, StateType> {
   state = {
-    values: [] as any[],
     showEnvModal: false,
     showEditorModal: false,
   };
 
   componentDidMount() {
-    let arr = [] as any[];
-    if (this.props.values) {
-      Object.keys(this.props.values).forEach((key: string, i: number) => {
-        arr.push({ key, value: this.props.values[key] });
-      });
-    }
-    this.setState({ values: arr });
+      if (!this.props.values) {
+          let _values = [] as KeyValueType[];
+          this.props.setValues(_values)
+      }
   }
-
-  valuesToObject = () => {
-    let obj = {} as any;
-    this.state.values.forEach((entry: any, i: number) => {
-      obj[entry.key] = entry.value;
-    });
-    return obj;
-  };
-
-  objectToValues = (obj: any) => {
-    let values = [] as any[];
-    Object.keys(obj).forEach((key: string, i: number) => {
-      let entry = {} as any;
-      entry.key = key;
-      entry.value = obj[key];
-      values.push(entry);
-    });
-    return values;
-  };
 
   renderDeleteButton = (i: number) => {
     if (!this.props.disabled) {
       return (
         <DeleteButton
           onClick={() => {
-            this.state.values.splice(i, 1);
-            this.setState({ values: this.state.values });
-
-            let obj = this.valuesToObject();
-            this.props.setValues(obj);
+            let _values = this.props.values
+            _values[i].deleted = true
+            this.props.setValues(_values);
           }}
         >
           <i className="material-icons">cancel</i>
@@ -81,11 +62,26 @@ export default class KeyValueArray extends Component<PropsType, StateType> {
     }
   };
 
-  renderHiddenOption = (hidden: boolean, i: number) => {
-    if (this.props.secretOption && hidden) {
+  renderHiddenOption = (hidden: boolean, locked: boolean, i: number) => {
+    if (this.props.secretOption) {
+      let icon = <i className="material-icons">lock_open</i>
+
+      if (hidden) {
+        icon = <i className="material-icons">lock</i>
+      }
+
       return (
-        <HideButton>
-          <i className="material-icons">lock</i>
+        <HideButton
+          onClick={() => {
+              if (!locked) {
+                let  _values = this.props.values
+                _values[i].hidden = !_values[i].hidden;
+                this.props.setValues(_values)
+              }
+          }}
+          disabled={locked}
+        >
+          {icon}
         </HideButton>
       );
     }
@@ -94,66 +90,42 @@ export default class KeyValueArray extends Component<PropsType, StateType> {
   renderInputList = () => {
     return (
       <>
-        {this.state.values.map((entry: any, i: number) => {
-          return (
-            <InputWrapper key={i}>
-              <Input
-                placeholder="ex: key"
-                width="270px"
-                value={entry.key}
-                onChange={(e: any) => {
-                  this.state.values[i].key = e.target.value;
-                  this.setState({ values: this.state.values });
-
-                  let obj = this.valuesToObject();
-                  this.props.setValues(obj);
-                }}
-                disabled={this.props.disabled || entry.value.includes("PORTERSECRET") }
-              />
-              <Spacer />
-              <Input
-                placeholder="ex: value"
-                width="270px"
-                value={entry.value}
-                onChange={(e: any) => {
-                  this.state.values[i].value = e.target.value;
-                  this.setState({ values: this.state.values });
-
-                  let obj = this.valuesToObject();
-                  this.props.setValues(obj);
-                }}
-                disabled={this.props.disabled || entry.value.includes("PORTERSECRET") }
-                type={entry.value.includes("PORTERSECRET") ? "password" : "text"}
-              />
-              {this.renderDeleteButton(i)}
-              {this.renderHiddenOption(entry.value.includes("PORTERSECRET"), i)}
-            </InputWrapper>
-          );
+        {this.props.values.map((entry: KeyValueType, i: number) => {
+            if (!entry.deleted) {
+                return (
+                    <InputWrapper key={i}>
+                      <Input
+                        placeholder="ex: key"
+                        width="270px"
+                        value={entry.key}
+                        onChange={(e: any) => {
+                          let _values = this.props.values
+                          _values[i].key = e.target.value;
+                          this.props.setValues(_values);
+                        }}
+                        disabled={this.props.disabled || entry.locked}
+                      />
+                      <Spacer />
+                      <Input
+                        placeholder="ex: value"
+                        width="270px"
+                        value={entry.value}
+                        onChange={(e: any) => {
+                          let _values = this.props.values
+                          _values[i].value = e.target.value;
+                          this.props.setValues(_values);
+                        }}
+                        disabled={this.props.disabled || entry.locked}
+                        type={entry.hidden ? "password" : "text"}
+                      />
+                      {this.renderHiddenOption(entry.hidden, entry.locked, i)}
+                      {this.renderDeleteButton(i)}
+                    </InputWrapper>
+                  );
+            }
         })}
       </>
     );
-  };
-
-  renderEnvModal = () => {
-    if (this.state.showEnvModal) {
-      return (
-        <Modal
-          onRequestClose={() => this.setState({ showEnvModal: false })}
-          width="665px"
-          height="342px"
-        >
-          <LoadEnvGroupModal
-            namespace={this.props.namespace}
-            clusterId={this.props.clusterId}
-            closeModal={() => this.setState({ showEnvModal: false })}
-            setValues={(values: any) => {
-              this.props.setValues(values);
-              this.setState({ values: this.objectToValues(values) });
-            }}
-          />
-        </Modal>
-      );
-    }
   };
 
   renderEditorModal = () => {
@@ -220,72 +192,74 @@ export default class KeyValueArray extends Component<PropsType, StateType> {
   readFile = (env: string) => {
     let envObj = this.parseEnv(env, null)
     let push = true;
+    let _values = this.props.values
 
     for (let key in envObj) {
-      for (var i = 0; i < this.state.values.length; i++) {
-        let existingKey = this.state.values[i]["key"]
+      for (var i = 0; i < this.props.values.length; i++) {
+        let existingKey = this.props.values[i]["key"]
         if (key === existingKey) {
-          this.state.values[i]["value"] = envObj[key]
+            _values[i]["value"] = envObj[key]
           push = false;
         }
       }
 
       if (push) {
-        this.state.values.push({ key, value: envObj[key] });
+        _values.push({ key, value: envObj[key], hidden: false, locked: false, deleted: false });
       }
 
     }
 
-    this.setState({ values: this.state.values }, () => {
-      let obj = this.valuesToObject();
-      this.props.setValues(obj);
-    });
+    this.props.setValues(_values);
   }
 
   render() {
-    return (
-      <>
-        <StyledInputArray>
-          <Label>{this.props.label}</Label>
-          {this.state.values.length === 0 ? <></> : this.renderInputList()}
-          {this.props.disabled ? (
-            <></>
-          ) : (
-            <InputWrapper>
-              <AddRowButton
-                onClick={() => {
-                  this.state.values.push({ key: "", value: "" });
-                  this.setState({ values: this.state.values });
-                }}
-              >
-                <i className="material-icons">add</i> Add Row
-              </AddRowButton>
-              <Spacer />
-              {this.props.namespace && this.props.envLoader && (
-                <LoadButton
-                  onClick={() =>
-                    this.setState({ showEnvModal: !this.state.showEnvModal })
-                  }
-                >
-                  <img src={sliders} /> Load from Env Group
-                </LoadButton>
-              )}
-              {this.props.fileUpload && (
-                <UploadButton
-                  onClick={()=>{
-                    this.setState({ showEditorModal: true });
-                  }}
-                >
-                  <img src={upload} /> Copy from File
-                </UploadButton>
-              )}
-            </InputWrapper>
-          )}
-        </StyledInputArray>
-        {this.renderEnvModal()}
-        {this.renderEditorModal()}
-      </>
-    );
+      if (this.props.values) {
+        return (
+            <>
+              <StyledInputArray>
+                <Label>{this.props.label}</Label>
+                {this.props.values.length === 0 ? <></> : this.renderInputList()}
+                {this.props.disabled ? (
+                  <></>
+                ) : (
+                  <InputWrapper>
+                    <AddRowButton
+                      onClick={() => {
+                        let _values = this.props.values
+                        _values.push({ key: "", value: "", hidden: false, locked: false, deleted: false });
+                        this.props.setValues(_values)
+                      }}
+                    >
+                      <i className="material-icons">add</i> Add Row
+                    </AddRowButton>
+                    <Spacer />
+                    {this.props.namespace && this.props.envLoader && (
+                      <LoadButton
+                        onClick={() =>
+                          this.setState({ showEnvModal: !this.state.showEnvModal })
+                        }
+                      >
+                        <img src={sliders} /> Load from Env Group
+                      </LoadButton>
+                    )}
+                    {this.props.fileUpload && (
+                      <UploadButton
+                        onClick={()=>{
+                          this.setState({ showEditorModal: true });
+                        }}
+                      >
+                        <img src={upload} /> Copy from File
+                      </UploadButton>
+                    )}
+                  </InputWrapper>
+                )}
+              </StyledInputArray>
+              {this.renderEditorModal()}
+            </>
+          );
+      }
+
+      return null
   }
 }
 
@@ -384,10 +358,10 @@ const HideButton = styled(DeleteButton)`
   margin-top: -5px;
   > i {
     font-size: 19px;
-    cursor: default;
+    cursor: ${(props : {disabled: boolean}) => props.disabled ? "default" : "pointer"};
     :hover {
-      color: #ffffff44;
-    }
+        color: ${(props : {disabled: boolean}) => props.disabled ? "#ffffff44" : "#ffffff88"};
+      }
   }
 `
 

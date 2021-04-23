@@ -108,6 +108,7 @@ export default class ValuesForm extends Component<PropsType, StateType> {
               }}
               label={item.label}
               disabled={this.props.disabled}
+              secretOption={true}
             />
           );
         case "key-value-array":

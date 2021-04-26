@@ -58,6 +58,7 @@ type StateType = {
   folderPath: string | null;
   selectedRegistry: any | null;
   env: any;
+  overrideValues: any;
 };
 
 const defaultActionConfig: ActionConfigType = {
@@ -93,6 +94,10 @@ class LaunchTemplate extends Component<PropsType, StateType> {
     folderPath: null as string | null,
     selectedRegistry: null as any | null,
     env: {},
+    overrideValues: {
+      abba: false,
+      tracy: "mcgrady"
+    },
   };
 
   createGHAction = (chartName: string, chartNamespace: string) => {
@@ -426,15 +431,11 @@ class LaunchTemplate extends Component<PropsType, StateType> {
         saveValuesStatus={this.getStatus()}
         disabled={this.submitIsDisabled()}
         renderSaveButton={true}
+        overrideValues={this.state.overrideValues}
       >
         {(metaState: any, setMetaState: any) => {
           if (!metaState) {
             return;
-          }
-
-          // handle when procfileProcess is already specified
-          if (this.state.procfileProcess) {
-            metaState["container.command"] = this.state.procfileProcess
           }
 
           return this.props.form?.tabs.map((tab: any, i: number) => {
@@ -697,7 +698,13 @@ class LaunchTemplate extends Component<PropsType, StateType> {
             }
             procfileProcess={this.state.procfileProcess}
             setProcfileProcess={(procfileProcess: string) =>
-              this.setState({ procfileProcess })
+              this.setState({ 
+                procfileProcess, 
+                overrideValues: {
+                  "container.command": procfileProcess || "",
+                  showStartCommand: !procfileProcess
+                } 
+              })
             }
             setBranch={(branch: string) => this.setState({ branch })}
             setDockerfilePath={(x: string) =>

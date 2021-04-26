@@ -108,7 +108,7 @@ export default class KeyValueArray extends Component<PropsType, StateType> {
                   let obj = this.valuesToObject();
                   this.props.setValues(obj);
                 }}
-                disabled={this.props.disabled || entry.value.includes("PORTERSECRET") }
+                disabled={this.props.disabled || entry?.value?.includes("PORTERSECRET") }
               />
               <Spacer />
               <Input
@@ -122,11 +122,11 @@ export default class KeyValueArray extends Component<PropsType, StateType> {
                   let obj = this.valuesToObject();
                   this.props.setValues(obj);
                 }}
-                disabled={this.props.disabled || entry.value.includes("PORTERSECRET") }
-                type={entry.value.includes("PORTERSECRET") ? "password" : "text"}
+                disabled={this.props.disabled || entry?.value?.includes("PORTERSECRET") }
+                type={entry?.value?.includes("PORTERSECRET") ? "password" : "text"}
               />
               {this.renderDeleteButton(i)}
-              {this.renderHiddenOption(entry.value.includes("PORTERSECRET"), i)}
+              {this.renderHiddenOption(entry?.value?.includes("PORTERSECRET"), i)}
             </InputWrapper>
           );
         })}

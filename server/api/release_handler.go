@@ -793,7 +793,7 @@ func (app *App) HandleReleaseDeployWebhook(w http.ResponseWriter, r *http.Reques
 		app.handleErrorFormDecoding(err, ErrReleaseDecode, w)
 		return
 	}
-	
+
 	form := &forms.UpgradeReleaseForm{
 		ReleaseForm: &forms.ReleaseForm{
 			Form: &helm.Form{
@@ -836,7 +836,7 @@ func (app *App) HandleReleaseDeployWebhook(w http.ResponseWriter, r *http.Reques
 	image["repository"] = repository
 	image["tag"] = commit
 	rel.Config["image"] = image
-	
+
 	if rel.Config["auto_deploy"] == false {
 		app.sendExternalError(err, http.StatusInternalServerError, HTTPError{
 			Code:   ErrReleaseDeploy,
@@ -1047,6 +1047,7 @@ func (app *App) getAgentFromQueryParams(
 		err := f(vals, app.Repo.Cluster)
 
 		if err != nil {
+			app.handleErrorInternal(err, w)
 			return nil, err
 		}
 	}
@@ -1076,6 +1077,10 @@ func (app *App) getAgentFromReleaseForm(
 		agent = app.TestAgents.HelmAgent
 	} else {
 		agent, err = helm.GetAgentOutOfClusterConfig(form.Form, app.Logger)
+	}
+
+	if err != nil {
+		app.handleErrorInternal(err, w)
 	}
 
 	return agent, err

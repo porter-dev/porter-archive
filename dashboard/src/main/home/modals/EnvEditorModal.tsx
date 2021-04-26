@@ -36,7 +36,7 @@ export default class EnvEditorModal extends Component<PropsType, StateType> {
   };
 
   onChange = (e: string) => { 
-    this.setState({envFile: e})
+    this.setState({ envFile: e })
   }
 
   componentDidMount() {}

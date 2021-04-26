@@ -248,7 +248,7 @@ class Home extends Component<PropsType, StateType> {
       return (
         <DashboardWrapper>
           <Placeholder>
-            <Bold>Porter - Getting Started</Bold>
+            <Bold>Porter - Getting</Bold>
             <br />
             <br />
             1. Navigate to{" "}

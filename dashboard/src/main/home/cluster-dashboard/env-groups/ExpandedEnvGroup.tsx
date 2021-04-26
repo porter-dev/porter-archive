@@ -1,6 +1,5 @@
 import React, { Component } from "react";
 import styled from "styled-components";
-import yaml from "js-yaml";
 import close from "assets/close.png";
 import key from "assets/key.svg";
 import _ from "lodash";

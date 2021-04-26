@@ -39,20 +39,12 @@ export default class ValuesForm extends Component<PropsType, StateType> {
     }
     return value;
   };
-
+  
   renderSection = (section: Section) => {
     return section.contents.map((item: FormElement, i: number) => {
+      
       // If no name is assigned use values.yaml variable as identifier
       let key = item.name || item.variable;
-
-      // ugly exception to hide start command option when procfile process is set.
-      if (
-        (item.variable === "container.command" ||
-          (item.type == "subtitle" && item.name == "command_description")) &&
-        this.props.procfileProcess
-      ) {
-        return;
-      }
 
       switch (item.type) {
         case "heading":
@@ -277,10 +269,11 @@ export default class ValuesForm extends Component<PropsType, StateType> {
 
   renderFormContents = () => {
     if (this.props.metaState) {
+      console.log(this.props.metaState)
       return this.props.sections.map((section: Section, i: number) => {
         // Hide collapsible section if deciding field is false
         if (section.show_if) {
-          if (!this.props.metaState[section.show_if]) {
+          if (this.props.metaState[section.show_if] === false) {
             return null;
           }
         }

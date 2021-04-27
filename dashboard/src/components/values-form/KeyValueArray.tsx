@@ -95,6 +95,15 @@ export default class KeyValueArray extends Component<PropsType, StateType> {
     return (
       <>
         {this.state.values.map((entry: any, i: number) => {
+
+          // Preprocess non-string env values set via raw Helm values
+          let { value } = entry;
+          if (typeof value === "object") {
+            value = JSON.stringify(value);
+          } else if (typeof value === "number") {
+            value = value.toString();
+          }
+
           return (
             <InputWrapper key={i}>
               <Input
@@ -108,13 +117,13 @@ export default class KeyValueArray extends Component<PropsType, StateType> {
                   let obj = this.valuesToObject();
                   this.props.setValues(obj);
                 }}
-                disabled={this.props.disabled || entry?.value?.includes("PORTERSECRET") }
+                disabled={this.props.disabled || value.includes("PORTERSECRET") }
               />
               <Spacer />
               <Input
                 placeholder="ex: value"
                 width="270px"
-                value={entry.value}
+                value={value}
                 onChange={(e: any) => {
                   this.state.values[i].value = e.target.value;
                   this.setState({ values: this.state.values });
@@ -122,11 +131,11 @@ export default class KeyValueArray extends Component<PropsType, StateType> {
                   let obj = this.valuesToObject();
                   this.props.setValues(obj);
                 }}
-                disabled={this.props.disabled || entry?.value?.includes("PORTERSECRET") }
-                type={entry?.value?.includes("PORTERSECRET") ? "password" : "text"}
+                disabled={this.props.disabled || value.includes("PORTERSECRET") }
+                type={value.includes("PORTERSECRET") ? "password" : "text"}
               />
               {this.renderDeleteButton(i)}
-              {this.renderHiddenOption(entry?.value?.includes("PORTERSECRET"), i)}
+              {this.renderHiddenOption(value.includes("PORTERSECRET"), i)}
             </InputWrapper>
           );
         })}

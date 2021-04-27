@@ -50,8 +50,8 @@ export default class ExpandedEnvGroup extends Component<PropsType, StateType> {
 
   componentDidMount() {
     // parse env group props into values type
-    let envVariables = [] as KeyValueType[]
-    let envGroupData = this.props.envGroup.data
+    let envVariables = [] as KeyValueType[];
+    let envGroupData = this.props.envGroup.data;
 
     for (const key in envGroupData) {
       envVariables.push({
@@ -60,10 +60,10 @@ export default class ExpandedEnvGroup extends Component<PropsType, StateType> {
         hidden: envGroupData[key].includes("PORTERSECRET"),
         locked: envGroupData[key].includes("PORTERSECRET"),
         deleted: false,
-      })
+      });
     }
 
-    this.setState({ envVariables })
+    this.setState({ envVariables });
   }
 
   handleUpdateValues = () => {
@@ -71,8 +71,8 @@ export default class ExpandedEnvGroup extends Component<PropsType, StateType> {
     let name = envGroup.metadata.name;
     let namespace = envGroup.metadata.namespace;
 
-    let apiEnvVariables : Record<string, string> = {}
-    let secretEnvVariables : Record<string, string> = {}
+    let apiEnvVariables: Record<string, string> = {};
+    let secretEnvVariables: Record<string, string> = {};
 
     this.state.envVariables.forEach((envVar: KeyValueType) => {
       if (envVar.hidden) {
@@ -83,12 +83,12 @@ export default class ExpandedEnvGroup extends Component<PropsType, StateType> {
         }
       } else {
         if (envVar.deleted) {
-          apiEnvVariables[envVar.key] = null
+          apiEnvVariables[envVar.key] = null;
         } else {
-          apiEnvVariables[envVar.key] = envVar.value
+          apiEnvVariables[envVar.key] = envVar.value;
         }
       }
-    })
+    });
 
     this.setState({ saveValuesStatus: "loading" });
     api

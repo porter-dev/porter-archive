@@ -3,7 +3,7 @@ import styled from "styled-components";
 import close from "assets/close.png";
 import AceEditor from "react-ace";
 
-import "shared/ace-porter-theme"
+import "shared/ace-porter-theme";
 import "ace-builds/src-noconflict/mode-text";
 
 import { Context } from "shared/Context";
@@ -22,7 +22,7 @@ type StateType = {
 };
 
 export default class EnvEditorModal extends Component<PropsType, StateType> {
-    state = {
+  state = {
     error: false,
     buttonStatus: "",
     envFile: "",
@@ -31,13 +31,13 @@ export default class EnvEditorModal extends Component<PropsType, StateType> {
   aceEditorRef = React.createRef<AceEditor>();
 
   onSubmit = () => {
-    this.props.setEnvVariables(this.state.envFile)
+    this.props.setEnvVariables(this.state.envFile);
     this.props.closeModal();
   };
 
-  onChange = (e: string) => { 
-    this.setState({envFile: e})
-  }
+  onChange = (e: string) => {
+    this.setState({ envFile: e });
+  };
 
   componentDidMount() {}
 
@@ -49,11 +49,14 @@ export default class EnvEditorModal extends Component<PropsType, StateType> {
         </CloseButton>
 
         <ModalTitle>Load from Environment Group</ModalTitle>
-        <Subtitle>
-          Copy paste your environment file in .env format:
-        </Subtitle>
+        <Subtitle>Copy paste your environment file in .env format:</Subtitle>
 
-        <Editor onSubmit={(e: any) => {e.preventDefault()}} border={true}>
+        <Editor
+          onSubmit={(e: any) => {
+            e.preventDefault();
+          }}
+          border={true}
+        >
           <AceEditor
             ref={this.aceEditorRef}
             mode="text"

@@ -104,6 +104,7 @@ export default class EnvGroupArray extends Component<PropsType, StateType> {
                           this.props.setValues(_values);
                         }}
                         disabled={this.props.disabled || entry.locked}
+                        spellCheck={false}
                       />
                       <Spacer />
                       <Input
@@ -117,6 +118,7 @@ export default class EnvGroupArray extends Component<PropsType, StateType> {
                         }}
                         disabled={this.props.disabled || entry.locked}
                         type={entry.hidden ? "password" : "text"}
+                        spellCheck={false}
                       />
                       {this.renderHiddenOption(entry.hidden, entry.locked, i)}
                       {this.renderDeleteButton(i)}

@@ -74,7 +74,35 @@ export default class ExpandedEnvGroup extends Component<PropsType, StateType> {
     let apiEnvVariables : Record<string, string> = {}
     let secretEnvVariables : Record<string, string> = {}
 
-    this.state.envVariables.forEach((envVar: KeyValueType) => {
+    let envVariables = this.state.envVariables
+
+    envVariables.filter((envVar: KeyValueType, index : number, self : KeyValueType[]) => {
+      // remove any collisions that are marked as deleted and are duplicates, unless they are 
+      // all delete collisions
+      let numDeleteCollisions = self.reduce((n, _envVar : KeyValueType) => {
+        return n + (_envVar.key === envVar.key && envVar.deleted ? 1 : 0);
+      }, 0)
+
+      let numCollisions = self.reduce((n, _envVar : KeyValueType) => {
+        return n + (_envVar.key === envVar.key ? 1 : 0);
+      }, 0)
+
+      if (numCollisions == numDeleteCollisions) {
+        // if all collisions are delete collisions, just remove duplicates
+        return index === self.findIndex((_envVar : KeyValueType) => (
+          _envVar.key === envVar.key
+        ))
+      } else if (numCollisions == 1) {
+        // if there's just one collision (self), keep the object
+        return true
+      } else {
+        // if there are more collisions than delete collisions, remove all duplicates that
+        // are deletions
+        return index === self.findIndex((_envVar : KeyValueType) => (
+          _envVar.key === envVar.key && !_envVar.deleted
+        ))
+      }
+    }).forEach((envVar: KeyValueType) => {
       if (envVar.hidden) {
         if (envVar.deleted) {
           secretEnvVariables[envVar.key] = null

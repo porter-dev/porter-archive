@@ -53,8 +53,8 @@ export default class CreateEnvGroup extends Component<PropsType, StateType> {
   onSubmit = () => {
     this.setState({ submitStatus: "loading" });
 
-    let apiEnvVariables : Record<string, string> = {}
-    let secretEnvVariables : Record<string, string> = {}
+    let apiEnvVariables: Record<string, string> = {};
+    let secretEnvVariables: Record<string, string> = {};
 
     let envVariables = this.state.envVariables
 
@@ -79,9 +79,7 @@ export default class CreateEnvGroup extends Component<PropsType, StateType> {
           apiEnvVariables[envVar.key] = envVar.value
         }
       }
-    })
-
-    console.log("API ENV VARIABLES ARE", apiEnvVariables, secretEnvVariables)
+    });
 
     api
       .createConfigMap(

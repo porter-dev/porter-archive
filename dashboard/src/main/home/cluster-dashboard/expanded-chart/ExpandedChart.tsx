@@ -98,7 +98,10 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
         }
       )
       .then((res) => {
-        this.updateComponents({ currentChart: res.data, loading: false }, res.data);
+        this.updateComponents(
+          { currentChart: res.data, loading: false },
+          res.data
+        );
         // // if the current tab is manifests or chart overview, update components as well
         // if (this.state.currentTab == "graph" || this.state.currentTab == "list") {
         //   this.updateComponents({ currentChart: res.data, loading: false }, currentChart);
@@ -203,7 +206,7 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
     this.setState({ websockets });
   };
 
-  updateComponents = (state : any, currentChart : ChartType) => {
+  updateComponents = (state: any, currentChart: ChartType) => {
     let { currentCluster, currentProject } = this.context;
 
     api
@@ -221,10 +224,10 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
         }
       )
       .then((res) => {
-        let newState = state || {}
+        let newState = state || {};
 
-        newState.components = res.data.Objects
-        newState.podSelectors = res.data.PodSelectors
+        newState.components = res.data.Objects;
+        newState.podSelectors = res.data.PodSelectors;
 
         this.setState(newState);
         this.updateTabs();
@@ -255,7 +258,7 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
 
     this.setState({ saveValuesStatus: "loading" });
     this.refreshChart();
-    
+
     api
       .upgradeChartValues(
         "<token>",
@@ -282,7 +285,7 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
         });
       })
       .catch((err) => {
-        console.log(err)
+        console.log(err);
         this.setState({ saveValuesStatus: "error" });
         window.analytics.track("Failed to Upgrade Chart", {
           chart: this.state.currentChart.name,

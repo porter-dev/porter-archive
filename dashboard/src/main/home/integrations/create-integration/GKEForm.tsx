@@ -121,7 +121,7 @@ export default class GKEForm extends Component<PropsType, StateType> {
           onClick={this.isDisabled() ? null : this.handleSubmit}
         />
 
-              {/* <UploadButton
+        {/* <UploadButton
       onClick={()=>{
         // document.getElementById("file").click();
         this.setState({ showEditorModal: true });
@@ -133,7 +133,6 @@ export default class GKEForm extends Component<PropsType, StateType> {
         event.currentTarget.value = null
       }}/>}
     </UploadButton> */}
-      
       </StyledForm>
     );
   }

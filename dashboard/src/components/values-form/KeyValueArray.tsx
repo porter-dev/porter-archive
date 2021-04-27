@@ -109,6 +109,7 @@ export default class KeyValueArray extends Component<PropsType, StateType> {
                   this.props.setValues(obj);
                 }}
                 disabled={this.props.disabled || entry?.value?.includes("PORTERSECRET") }
+                spellCheck={false}
               />
               <Spacer />
               <Input
@@ -124,6 +125,7 @@ export default class KeyValueArray extends Component<PropsType, StateType> {
                 }}
                 disabled={this.props.disabled || entry?.value?.includes("PORTERSECRET") }
                 type={entry?.value?.includes("PORTERSECRET") ? "password" : "text"}
+                spellCheck={false}
               />
               {this.renderDeleteButton(i)}
               {this.renderHiddenOption(entry?.value?.includes("PORTERSECRET"), i)}

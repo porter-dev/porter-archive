@@ -107,7 +107,8 @@ func (a *Agent) UpdateConfigMap(name string, namespace string, configMap map[str
 	cmData := make(map[string]*string)
 
 	for key, val := range configMap {
-		cmData[key] = &val
+		valCopy := val
+		cmData[key] = &valCopy
 
 		if len(val) == 0 {
 			cmData[key] = nil
@@ -144,7 +145,8 @@ func (a *Agent) UpdateLinkedSecret(name, namespace, cmName string, data map[stri
 	secretData := make(map[string]*[]byte)
 
 	for key, val := range data {
-		secretData[key] = &val
+		valCopy := val
+		secretData[key] = &valCopy
 
 		if len(val) == 0 {
 			secretData[key] = nil

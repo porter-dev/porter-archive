@@ -319,7 +319,7 @@ class GCPFormSection extends Component<PropsType, StateType> {
   render() {
     let { setSelectedProvisioner } = this.props;
     let { gcpRegion, gcpProjectId, gcpKeyData, selectedInfras } = this.state;
-    console.log('gcpkeydata', gcpKeyData)
+    console.log("gcpkeydata", gcpKeyData);
     return (
       <StyledGCPFormSection>
         <FormSection>

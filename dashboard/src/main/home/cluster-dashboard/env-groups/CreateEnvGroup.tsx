@@ -53,16 +53,16 @@ export default class CreateEnvGroup extends Component<PropsType, StateType> {
   onSubmit = () => {
     this.setState({ submitStatus: "loading" });
 
-    let apiEnvVariables : Record<string, string> = {}
-    let secretEnvVariables : Record<string, string> = {}
+    let apiEnvVariables: Record<string, string> = {};
+    let secretEnvVariables: Record<string, string> = {};
 
     this.state.envVariables.forEach((envVar: KeyValueType) => {
       if (envVar.hidden) {
-        secretEnvVariables[envVar.key] = envVar.value
+        secretEnvVariables[envVar.key] = envVar.value;
       } else {
-        apiEnvVariables[envVar.key] = envVar.value
+        apiEnvVariables[envVar.key] = envVar.value;
       }
-    })
+    });
 
     api
       .createConfigMap(

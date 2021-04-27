@@ -91,38 +91,40 @@ export default class EnvGroupArray extends Component<PropsType, StateType> {
     return (
       <>
         {this.props.values.map((entry: KeyValueType, i: number) => {
-          if (!entry.deleted) {
-            return (
-              <InputWrapper key={i}>
-                <Input
-                  placeholder="ex: key"
-                  width="270px"
-                  value={entry.key}
-                  onChange={(e: any) => {
-                    let _values = this.props.values;
-                    _values[i].key = e.target.value;
-                    this.props.setValues(_values);
-                  }}
-                  disabled={this.props.disabled || entry.locked}
-                />
-                <Spacer />
-                <Input
-                  placeholder="ex: value"
-                  width="270px"
-                  value={entry.value}
-                  onChange={(e: any) => {
-                    let _values = this.props.values;
-                    _values[i].value = e.target.value;
-                    this.props.setValues(_values);
-                  }}
-                  disabled={this.props.disabled || entry.locked}
-                  type={entry.hidden ? "password" : "text"}
-                />
-                {this.renderHiddenOption(entry.hidden, entry.locked, i)}
-                {this.renderDeleteButton(i)}
-              </InputWrapper>
-            );
-          }
+            if (!entry.deleted) {
+                return (
+                    <InputWrapper key={i}>
+                      <Input
+                        placeholder="ex: key"
+                        width="270px"
+                        value={entry.key}
+                        onChange={(e: any) => {
+                          let _values = this.props.values
+                          _values[i].key = e.target.value;
+                          this.props.setValues(_values);
+                        }}
+                        disabled={this.props.disabled || entry.locked}
+                        spellCheck={false}
+                      />
+                      <Spacer />
+                      <Input
+                        placeholder="ex: value"
+                        width="270px"
+                        value={entry.value}
+                        onChange={(e: any) => {
+                          let _values = this.props.values
+                          _values[i].value = e.target.value;
+                          this.props.setValues(_values);
+                        }}
+                        disabled={this.props.disabled || entry.locked}
+                        type={entry.hidden ? "password" : "text"}
+                        spellCheck={false}
+                      />
+                      {this.renderHiddenOption(entry.hidden, entry.locked, i)}
+                      {this.renderDeleteButton(i)}
+                    </InputWrapper>
+                  );
+            }
         })}
       </>
     );

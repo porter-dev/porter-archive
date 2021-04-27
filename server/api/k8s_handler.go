@@ -372,11 +372,11 @@ func (app *App) HandleUpdateConfigMap(w http.ResponseWriter, r *http.Request) {
 
 	// add all secret env variables to configmap with value PORTERSECRET_${configmap_name}
 	for key, val := range configMap.SecretEnvVariables {
-		configMap.EnvVariables[key] = fmt.Sprintf("PORTERSECRET_%s", configMap.Name)
-
-		// if val is empty, set to empty
-		if val == "" {
+		// if val is empty and key does not exist in configmap already, set to empty
+		if _, found := configMap.EnvVariables[key]; val == "" && !found {
 			configMap.EnvVariables[key] = ""
+		} else if val != "" {
+			configMap.EnvVariables[key] = fmt.Sprintf("PORTERSECRET_%s", configMap.Name)
 		}
 	}
 

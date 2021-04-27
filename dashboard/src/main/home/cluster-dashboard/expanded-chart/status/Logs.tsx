@@ -1,7 +1,7 @@
 import React, { Component } from "react";
 import styled from "styled-components";
 import { Context } from "shared/Context";
-import * as Anser from 'anser';
+import * as Anser from "anser";
 
 type PropsType = {
   selectedPod: any;
@@ -61,17 +61,21 @@ export default class Logs extends Component<PropsType, StateType> {
     }
 
     return this.state.logs.map((log, i) => {
-      return <Log key={i}>
-        {this.state.logs[i].map((ansi, j) => {
-          if (ansi.clearLine) {
-            return null
-          }
+      return (
+        <Log key={i}>
+          {this.state.logs[i].map((ansi, j) => {
+            if (ansi.clearLine) {
+              return null;
+            }
 
-          return <LogSpan key={i + "." + j} ansi={ansi}>
-            {ansi.content.replace(/ /g, '\u00a0')}
-          </LogSpan>
-        })}
-      </Log>;
+            return (
+              <LogSpan key={i + "." + j} ansi={ansi}>
+                {ansi.content.replace(/ /g, "\u00a0")}
+              </LogSpan>
+            );
+          })}
+        </Log>
+      );
     });
   };
 
@@ -87,10 +91,10 @@ export default class Logs extends Component<PropsType, StateType> {
     this.ws.onopen = () => {};
 
     this.ws.onmessage = (evt: MessageEvent) => {
-      let ansiLog = Anser.ansiToJson(evt.data)
+      let ansiLog = Anser.ansiToJson(evt.data);
 
-      let logs = this.state.logs
-      logs.push(ansiLog)
+      let logs = this.state.logs;
+      logs.push(ansiLog);
 
       this.setState({ logs: logs }, () => {
         if (this.state.scroll) {
@@ -262,7 +266,10 @@ const Log = styled.div`
 const LogSpan = styled.span`
   font-family: monospace, sans-serif;
   font-size: 12px;
-  font-weight: ${(props: { ansi: Anser.AnserJsonEntry }) => props.ansi?.decoration && props.ansi?.decoration == "bold" ? "700" : "400"};
-  color: ${(props: { ansi: Anser.AnserJsonEntry }) => props.ansi?.fg ? `rgb(${props.ansi?.fg})` : "white"};
-  background-color: ${(props: { ansi: Anser.AnserJsonEntry }) => props.ansi?.bg ? `rgb(${props.ansi?.bg})` : "transparent"};
-`
+  font-weight: ${(props: { ansi: Anser.AnserJsonEntry }) =>
+    props.ansi?.decoration && props.ansi?.decoration == "bold" ? "700" : "400"};
+  color: ${(props: { ansi: Anser.AnserJsonEntry }) =>
+    props.ansi?.fg ? `rgb(${props.ansi?.fg})` : "white"};
+  background-color: ${(props: { ansi: Anser.AnserJsonEntry }) =>
+    props.ansi?.bg ? `rgb(${props.ansi?.bg})` : "transparent"};
+`;

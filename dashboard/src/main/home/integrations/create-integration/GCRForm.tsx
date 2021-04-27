@@ -32,14 +32,8 @@ export default class GCRForm extends Component<PropsType, StateType> {
   };
 
   isDisabled = (): boolean => {
-    let {
-      serviceAccountKey,
-      credentialsName
-    } = this.state;
-    if (
-      serviceAccountKey === "" ||
-      credentialsName === ""
-    ) {
+    let { serviceAccountKey, credentialsName } = this.state;
+    if (serviceAccountKey === "" || credentialsName === "") {
       return true;
     }
     return false;
@@ -110,7 +104,11 @@ export default class GCRForm extends Component<PropsType, StateType> {
             height="100%"
             isRequired={true}
           />
-          <Helper>GCR URI, in the form <CodeBlock>[gcr_domain]/[gcp_project_id]</CodeBlock>. For example, <CodeBlock>gcr.io/skynet-dev-172969</CodeBlock>.</Helper>
+          <Helper>
+            GCR URI, in the form{" "}
+            <CodeBlock>[gcr_domain]/[gcp_project_id]</CodeBlock>. For example,{" "}
+            <CodeBlock>gcr.io/skynet-dev-172969</CodeBlock>.
+          </Helper>
           <InputRow
             type="text"
             value={this.state.url}
@@ -146,12 +144,12 @@ const StyledForm = styled.div`
 `;
 
 const CodeBlock = styled.span`
-  display: inline-block; 
+  display: inline-block;
   background-color: #1b1d26;
-  color: white; 
-  border-radius: 5px; 
+  color: white;
+  border-radius: 5px;
   font-family: monospace;
-  padding: 2px 3px; 
-  margin-top: -2px; 
+  padding: 2px 3px;
+  margin-top: -2px;
   user-select: text;
-`
+`;

@@ -12,60 +12,74 @@ type PropsType = {
 };
 
 type StateType = {
-    fileName: string;
+  fileName: string;
 };
 
 export default class UploadArea extends Component<PropsType, StateType> {
-    state = {
-        fileName: null as string,
-    }
-    handleChange = (e: any) => {
+  state = {
+    fileName: null as string,
+  };
+  handleChange = (e: any) => {
     this.props.setValue(e.target.value);
   };
 
   readFile = (file: any) => {
-    const reader = new FileReader()
+    const reader = new FileReader();
     reader.onload = async (e) => {
-      let text = (e.target.result)
+      let text = e.target.result;
       this.props.setValue(text);
-    }
-    reader.readAsText(file, 'UTF-8')
+    };
+    reader.readAsText(file, "UTF-8");
     this.setState({ fileName: file.name });
-  }
+  };
 
   render() {
     let { label, placeholder } = this.props;
-    console.log(this.state.fileName)
+    console.log(this.state.fileName);
     if (this.state.fileName) {
-        placeholder = `Uploaded ${this.state.fileName}`
+      placeholder = `Uploaded ${this.state.fileName}`;
     }
 
     return (
       <StyledUploadArea>
         <Label>
-            {label}
-            <Required>{this.props.isRequired ? " *" : null}</Required>
-        </Label> 
-        <DNDArea 
-        onDragOver={(e: any) => {e.preventDefault()}}
-        onDragEnter={(e: any) => {e.preventDefault()}}
-        onDragLeave={(e: any) => {e.preventDefault()}}
-        onDrop={(e: any) => {
+          {label}
+          <Required>{this.props.isRequired ? " *" : null}</Required>
+        </Label>
+        <DNDArea
+          onDragOver={(e: any) => {
+            e.preventDefault();
+          }}
+          onDragEnter={(e: any) => {
+            e.preventDefault();
+          }}
+          onDragLeave={(e: any) => {
+            e.preventDefault();
+          }}
+          onDrop={(e: any) => {
             e.preventDefault();
             const files = e.dataTransfer.files;
-            this.readFile(files[0])
-        }}
-        onClick={() => {
+            this.readFile(files[0]);
+          }}
+          onClick={() => {
             document.getElementById("file").click();
-        }}>
-        <input id='file' hidden type="file" accept=".json" onChange={(event) => {
-            event.preventDefault();
-            this.readFile(event.target.files[0]);
-            event.currentTarget.value = null
-        }}/>
-        <Message>
-            <img src={upload} style={{ marginRight: "6px", height: "16px"}} /> {placeholder}
-        </Message>
+          }}
+        >
+          <input
+            id="file"
+            hidden
+            type="file"
+            accept=".json"
+            onChange={(event) => {
+              event.preventDefault();
+              this.readFile(event.target.files[0]);
+              event.currentTarget.value = null;
+            }}
+          />
+          <Message>
+            <img src={upload} style={{ marginRight: "6px", height: "16px" }} />{" "}
+            {placeholder}
+          </Message>
         </DNDArea>
       </StyledUploadArea>
     );
@@ -73,10 +87,10 @@ export default class UploadArea extends Component<PropsType, StateType> {
 }
 
 const Message = styled.div`
-    display: flex;
-    align-items: center;
-    vertical-align: middle;
-`
+  display: flex;
+  align-items: center;
+  vertical-align: middle;
+`;
 
 const Required = styled.div`
   margin-left: 8px;
@@ -111,7 +125,6 @@ const Label = styled.div`
   font-size: 13px;
   font-family: "Work Sans", sans-serif;
 `;
-
 
 const StyledUploadArea = styled.div`
   margin-top: 20px;

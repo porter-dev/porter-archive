@@ -2,7 +2,7 @@ import React, { Component } from "react";
 import styled from "styled-components";
 import AceEditor from "react-ace";
 
-import "shared/ace-porter-theme"
+import "shared/ace-porter-theme";
 import "ace-builds/src-noconflict/mode-yaml";
 
 type PropsType = {

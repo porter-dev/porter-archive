@@ -78,7 +78,7 @@ export default class ExpandedEnvGroup extends Component<PropsType, StateType> {
       if (envVar.hidden) {
         if (envVar.deleted) {
           secretEnvVariables[envVar.key] = null
-        } else if (envVar.value.includes("PORTERSECRET")) {
+        } else if (!envVar.value.includes("PORTERSECRET")) {
           secretEnvVariables[envVar.key] = envVar.value
         }
       } else {

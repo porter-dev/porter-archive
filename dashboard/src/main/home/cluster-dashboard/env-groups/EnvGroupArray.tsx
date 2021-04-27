@@ -33,7 +33,7 @@ type StateType = {
   showEditorModal: boolean;
 };
 
-export default class KeyValueArray extends Component<PropsType, StateType> {
+export default class EnvGroupArray extends Component<PropsType, StateType> {
   state = {
     showEnvModal: false,
     showEditorModal: false,

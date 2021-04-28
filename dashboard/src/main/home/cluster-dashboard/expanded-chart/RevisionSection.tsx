@@ -17,6 +17,7 @@ type PropsType = {
   forceRefreshRevisions: boolean;
   refreshRevisionsOff: () => void;
   status: string;
+  shouldUpdate: boolean;
 };
 
 type StateType = {
@@ -159,6 +160,7 @@ export default class RevisionSection extends Component<PropsType, StateType> {
           <Td>{revision.version}</Td>
           <Td>{this.readableDate(revision.info.last_deployed)}</Td>
           <Td>{this.renderStatus(revision)}</Td>
+          <Td>v{revision.chart.metadata.version}</Td>
           <Td>
             <RollbackButton
               disabled={isCurrent}
@@ -184,6 +186,7 @@ export default class RevisionSection extends Component<PropsType, StateType> {
                 <Th>Revision No.</Th>
                 <Th>Timestamp</Th>
                 <Th>Status</Th>
+                <Th>Template Version</Th>
                 <Th>Rollback</Th>
               </Tr>
               {this.renderRevisionList()}
@@ -220,6 +223,10 @@ export default class RevisionSection extends Component<PropsType, StateType> {
             : `Previewing Revision (Not Deployed)`}{" "}
           - <Revision>No. {this.props.chart.version}</Revision>
           <i className="material-icons">arrow_drop_down</i>
+          <RevisionUpdateMessage>
+            <i className="material-icons">notification_important</i>
+            {!this.props.shouldUpdate ? `Update available` : ""}
+          </RevisionUpdateMessage>
         </RevisionHeader>
 
         <RevisionList>{this.renderExpanded()}</RevisionList>
@@ -389,3 +396,18 @@ const StyledRevisionSection = styled.div`
     }
   }
 `;
+
+const RevisionUpdateMessage = styled.div`
+  position: absolute; 
+  right: 40px; 
+  color: white;
+  display: flex;
+  align-items: center;
+
+  > i {
+    margin-right: 6px;
+    font-size: 20px;
+    cursor: pointer;
+    border-radius: 20px;
+  }
+`

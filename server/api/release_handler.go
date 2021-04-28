@@ -19,6 +19,7 @@ import (
 	"github.com/porter-dev/porter/internal/forms"
 	"github.com/porter-dev/porter/internal/helm"
 	"github.com/porter-dev/porter/internal/helm/grapher"
+	"github.com/porter-dev/porter/internal/helm/loader"
 	"github.com/porter-dev/porter/internal/integrations/ci/actions"
 	"github.com/porter-dev/porter/internal/kubernetes"
 	"github.com/porter-dev/porter/internal/repository"
@@ -76,9 +77,12 @@ func (app *App) HandleListReleases(w http.ResponseWriter, r *http.Request) {
 // PorterRelease is a helm release with a form attached
 type PorterRelease struct {
 	*release.Release
-	Form       *models.FormYAML `json:"form"`
-	HasMetrics bool             `json:"has_metrics"`
+	Form          *models.FormYAML `json:"form"`
+	HasMetrics    bool             `json:"has_metrics"`
+	LatestVersion string           `json:"latest_version"`
 }
+
+var porterApplications = map[string]string{"web": "", "job": "", "worker": ""}
 
 // HandleGetRelease retrieves a single release based on a name and revision
 func (app *App) HandleGetRelease(w http.ResponseWriter, r *http.Request) {
@@ -157,7 +161,7 @@ func (app *App) HandleGetRelease(w http.ResponseWriter, r *http.Request) {
 		HelmRelease:   release,
 	}
 
-	res := &PorterRelease{release, nil, false}
+	res := &PorterRelease{release, nil, false, ""}
 
 	for _, file := range release.Chart.Files {
 		if strings.Contains(file.Name, "form.yaml") {
@@ -193,6 +197,18 @@ func (app *App) HandleGetRelease(w http.ResponseWriter, r *http.Request) {
 	}
 
 	res.HasMetrics = found
+
+	// detect if Porter application chart and attempt to get the latest version
+	// from chart repo
+	if _, found := porterApplications[res.Chart.Metadata.Name]; found {
+		repoIndex, err := loader.LoadRepoIndexPublic(app.ServerConf.DefaultHelmRepoURL)
+
+		if err == nil {
+			porterChart := loader.FindPorterChartInIndexList(repoIndex, res.Chart.Metadata.Name)
+
+			res.LatestVersion = porterChart.Versions[0]
+		}
+	}
 
 	if err := json.NewEncoder(w).Encode(res); err != nil {
 		app.handleErrorFormDecoding(err, ErrReleaseDecode, w)

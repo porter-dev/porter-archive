@@ -60,6 +60,10 @@ type UpgradeReleaseConfig struct {
 	Cluster    *models.Cluster
 	Repo       repository.Repository
 	Registries []*models.Registry
+
+	// The version of the chart to use (optional). If not set, the chart from the previous
+	// release is re-used
+	// ChartVersion *string
 }
 
 // UpgradeRelease upgrades a specific release with new values.yaml
@@ -90,6 +94,14 @@ func (a *Agent) UpgradeReleaseByValues(
 	if err != nil {
 		return nil, fmt.Errorf("Could not get release to be upgraded: %v", err)
 	}
+
+	// var ch *chart.Chart
+
+	// if conf.ChartVersion == nil {
+	// 	ch = rel.Chart
+	// } else {
+	// 	// get the chart version from the repo
+	// }
 
 	ch := rel.Chart
 

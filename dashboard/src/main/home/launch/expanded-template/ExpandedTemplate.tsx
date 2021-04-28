@@ -7,6 +7,7 @@ import api from "shared/api";
 import TemplateInfo from "./TemplateInfo";
 import LaunchTemplate from "./LaunchTemplate";
 import Loading from "components/Loading";
+import { template } from "lodash";
 
 type PropsType = {
   currentTemplate: PorterTemplate;
@@ -50,7 +51,7 @@ export default class ExpandedTemplate extends Component<PropsType, StateType> {
     api
       .getTemplateInfo("<token>", params, {
         name: this.props.currentTemplate.name.toLowerCase().trim(),
-        version: "latest",
+        version: this.props.currentTemplate.currentVersion,
       })
       .then((res) => {
         let { form, values, markdown, metadata } = res.data;
@@ -68,7 +69,8 @@ export default class ExpandedTemplate extends Component<PropsType, StateType> {
   };
 
   componentDidUpdate = (prevProps: PropsType) => {
-    if (prevProps.currentTemplate !== this.props.currentTemplate) {
+    if (prevProps.currentTemplate.name !== this.props.currentTemplate.name ||
+      prevProps.currentTemplate.currentVersion !== this.props.currentTemplate.currentVersion) {
       this.fetchTemplateInfo();
     }
   };
@@ -100,6 +102,14 @@ export default class ExpandedTemplate extends Component<PropsType, StateType> {
           currentTab={this.props.currentTab}
           currentTemplate={this.props.currentTemplate}
           setCurrentTemplate={this.props.setCurrentTemplate}
+          setCurrentVersion={(version) => {
+            let template = {
+              ...this.props.currentTemplate,
+              currentVersion: version,
+            }
+
+            this.props.setCurrentTemplate(template)
+          }}
           launchTemplate={() => this.setState({ showLaunchTemplate: true })}
           markdown={this.state.markdown}
           keywords={this.state.keywords}

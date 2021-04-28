@@ -34,6 +34,7 @@ export interface ChartType {
   config: any;
   version: number;
   namespace: string;
+  latest_version: string;
 }
 
 export interface ResourceType {
@@ -72,7 +73,8 @@ export enum StorageType {
 // PorterTemplate represents a bundled Porter template
 export interface PorterTemplate {
   name: string;
-  version: string;
+  versions: string[];
+  currentVersion: string;
   description: string;
   icon: string;
 }

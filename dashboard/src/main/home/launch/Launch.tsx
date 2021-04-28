@@ -11,6 +11,8 @@ import Loading from "components/Loading";
 
 import hardcodedNames from "./hardcodedNameDict";
 import { Link } from "react-router-dom";
+import semver from "semver";
+import { version } from "html-webpack-plugin";
 
 const tabOptions = [
   { label: "New Application", value: "docker" },
@@ -42,8 +44,21 @@ export default class Templates extends Component<PropsType, StateType> {
     api
       .getAddonTemplates("<token>", {}, {})
       .then((res) => {
-        this.setState({ addonTemplates: res.data, error: false }, () => {
+        let sortedVersionData = res.data.map((template : any) => {
+          let versions = template.versions.reverse()
+
+          versions = template.versions.sort(semver.rcompare)
+
+          return {
+            ...template,
+            versions,
+            currentVersion: versions[0],
+          }          
+        })
+
+        this.setState({ addonTemplates: sortedVersionData, error: false }, () => {
           this.state.addonTemplates.sort((a, b) => (a.name > b.name ? 1 : -1));
+
           this.setState({
             loading: false,
           });
@@ -60,7 +75,19 @@ export default class Templates extends Component<PropsType, StateType> {
         {}
       )
       .then((res) => {
-        this.setState({ applicationTemplates: res.data, error: false }, () => {
+        let sortedVersionData = res.data.map((template : any) => {
+          let versions = template.versions.reverse()
+
+          versions = template.versions.sort(semver.rcompare)
+
+          return {
+            ...template,
+            versions,
+            currentVersion: versions[0],
+          }          
+        })
+
+        this.setState({ applicationTemplates: sortedVersionData, error: false }, () => {
           let preferredOrder = ["web", "worker", "job"];
           this.state.applicationTemplates.sort((a, b) => {
             return (
@@ -198,9 +225,9 @@ export default class Templates extends Component<PropsType, StateType> {
         <ExpandedTemplate
           currentTab={this.state.currentTab}
           currentTemplate={this.state.currentTemplate}
-          setCurrentTemplate={(currentTemplate: PorterTemplate) =>
+          setCurrentTemplate={(currentTemplate: PorterTemplate) => {
             this.setState({ currentTemplate })
-          }
+          }}
           skipDescription={false}
         />
       );
@@ -214,9 +241,9 @@ export default class Templates extends Component<PropsType, StateType> {
         <ExpandedTemplate
           currentTab={this.state.currentTab}
           currentTemplate={this.state.currentTemplate}
-          setCurrentTemplate={(currentTemplate: PorterTemplate) =>
+          setCurrentTemplate={(currentTemplate: PorterTemplate) => {
             this.setState({ currentTemplate })
-          }
+          }}
         />
       );
     }

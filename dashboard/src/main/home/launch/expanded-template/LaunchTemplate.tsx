@@ -581,10 +581,12 @@ class LaunchTemplate extends Component<PropsType, StateType> {
 
   // Display if current template uses source (image or repo)
   renderSourceSelectorContent = () => {
+    let { capabilities } = this.context;
+
     if (this.state.sourceType === "") {
       return (
         <BlockList>
-          <Block
+          {capabilities.github && (<Block
             onClick={() => {
               this.setState({ sourceType: "repo" });
             }}
@@ -594,7 +596,7 @@ class LaunchTemplate extends Component<PropsType, StateType> {
             <BlockDescription>
               Deploy using source from a Git repo.
             </BlockDescription>
-          </Block>
+          </Block>)}
           <Block
             onClick={() => {
               this.setState({ sourceType: "registry" });

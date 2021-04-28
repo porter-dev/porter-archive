@@ -38,15 +38,12 @@ class ClusterSection extends Component<PropsType, StateType> {
   };
 
   updateClusters = () => {
-    console.log("updating clusters...")
     let { user, currentProject, setCurrentCluster } = this.context;
 
     // TODO: query with selected filter once implemented
     api
       .getClusters("<token>", {}, { id: currentProject.id })
       .then((res) => {
-        console.log("clusters are..");
-        console.log(res.data);
         window.analytics.identify(user.userId, {
           currentProject,
           clusters: res.data,
@@ -62,7 +59,7 @@ class ClusterSection extends Component<PropsType, StateType> {
             let saved = JSON.parse(
               localStorage.getItem(currentProject.id + "-cluster")
             );
-            if (saved !== "null") {
+            if (saved && saved !== "null") {
               // Ensures currentCluster isn't prematurely set (causes issues downstream)
               let loaded = false;
               for (let i = 0; i < clusters.length; i++) {
@@ -73,17 +70,14 @@ class ClusterSection extends Component<PropsType, StateType> {
                 ) {
                   loaded = true;
                   setCurrentCluster(clusters[i]);
-                  console.log("a: set current to", clusters[i]);
                   break;
                 }
               }
               if (!loaded) {
                 setCurrentCluster(clusters[0]);
-                console.log("b: set current to", clusters[0]);
               }
             } else {
               setCurrentCluster(clusters[0]);
-              console.log("c: set current to", clusters[0]);
             }
           } else if (
             this.props.currentView !== "provisioner" &&
@@ -91,7 +85,6 @@ class ClusterSection extends Component<PropsType, StateType> {
           ) {
             this.setState({ clusters: [] });
             setCurrentCluster(null);
-            console.log("d set cluster");
             // this.props.history.push("dashboard?tab=overview");
           }
         }

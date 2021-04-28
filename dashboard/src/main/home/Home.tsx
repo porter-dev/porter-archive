@@ -82,6 +82,27 @@ class Home extends Component<PropsType, StateType> {
       });
   };
 
+  getCapabilities = () => {
+    let { currentProject } = this.props;
+    if (!currentProject) return;
+
+    api
+      .getCapabilities(
+        "<token>",
+        {},
+        {
+          id: currentProject.id
+        }
+      )
+      .then((res) => {
+        console.log(res.data)
+        this.context.setCapabilities(res.data)
+      })
+      .catch((err) => {
+        console.log(err)
+      });
+  }
+
   getProjects = (id?: number) => {
     let { user, setProjects } = this.context;
     let { currentProject } = this.props;
@@ -222,6 +243,7 @@ class Home extends Component<PropsType, StateType> {
     this.setState({ ghRedirect: urlParams.get("gh_oauth") !== null });
     urlParams.delete("gh_oauth");
     this.getProjects(defaultProjectId);
+    this.getCapabilities();
   }
 
   // TODO: Need to handle the following cases. Do a deep rearchitecture (Prov -> Dashboard?) if need be:
@@ -237,6 +259,7 @@ class Home extends Component<PropsType, StateType> {
         this.checkDO();
       } else {
         this.initializeView();
+        this.getCapabilities();
       }
     }
   }

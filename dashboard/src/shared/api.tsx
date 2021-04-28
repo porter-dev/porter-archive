@@ -629,6 +629,10 @@ const getUser = baseApi<{}, { id: number }>("GET", (pathParams) => {
   return `/api/users/${pathParams.id}`;
 });
 
+const getCapabilities = baseApi<{}, { id: number }>("GET", (pathParams) => {
+  return `/api/projects/${pathParams.id}/capabilities`;
+});
+
 const linkGithubProject = baseApi<
   {},
   {
@@ -818,6 +822,7 @@ export default {
   destroyDOKS,
   getBranchContents,
   getBranches,
+  getCapabilities,
   getChart,
   getCharts,
   getChartComponents,

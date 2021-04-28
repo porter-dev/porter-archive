@@ -41,6 +41,7 @@
     "react-dom": "^16.13.1",
     "react-modal": "^3.11.2",
     "react-router-dom": "^5.2.0",
+    "semver": "^7.3.5",
     "styled-components": "^5.2.0"
   },
   "scripts": {
@@ -62,6 +63,7 @@
     "@types/react-modal": "^3.10.6",
     "@types/react-router": "^5.1.8",
     "@types/react-router-dom": "^5.1.5",
+    "@types/semver": "^7.3.5",
     "@types/styled-components": "^5.1.3",
     "file-loader": "^6.1.0",
     "html-webpack-plugin": "^4.5.0",

@@ -26,6 +26,7 @@ import MetricsSection from "./metrics/MetricsSection";
 import ListSection from "./ListSection";
 import StatusSection from "./status/StatusSection";
 import SettingsSection from "./SettingsSection";
+import ChartList from "../chart/ChartList";
 
 type PropsType = {
   namespace: string;
@@ -43,6 +44,7 @@ type StateType = {
   components: ResourceType[];
   podSelectors: string[];
   isPreview: boolean;
+  isUpdatingChart: boolean;
   devOpsMode: boolean;
   tabOptions: any[];
   tabContents: any;
@@ -64,6 +66,7 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
     components: [] as ResourceType[],
     podSelectors: [] as string[],
     isPreview: false,
+    isUpdatingChart: false,
     devOpsMode: localStorage.getItem("devOpsMode") === "true",
     tabOptions: [] as any[],
     tabContents: [] as any,
@@ -415,9 +418,9 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
     // Settings tab is always last
     tabOptions.push({ label: "Settings", value: "settings" });
 
-    // Filter tabs if previewing an old revision
-    if (this.state.isPreview) {
-      let liveTabs = ["status", "settings", "deploy"];
+    // Filter tabs if previewing an old revision or updating the chart version
+    if (this.state.isPreview || this.state.isUpdatingChart) {
+      let liveTabs = ["status", "settings", "deploy", "metrics"];
       tabOptions = tabOptions.filter(
         (tab: any) => !liveTabs.includes(tab.value)
       );
@@ -712,6 +715,7 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
                 this.setState({ forceRefreshRevisions: false })
               }
               status={status}
+              shouldUpdate={chart.latest_version && chart.latest_version !== chart.chart.metadata.version}
             />
           </HeaderWrapper>
 

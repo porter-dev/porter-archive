@@ -167,3 +167,8 @@ export interface ActionConfigType {
   image_repo_uri: string;
   git_repo_id: number;
 }
+
+export interface CapabilityType {
+  github: boolean;
+  provisioner: boolean;
+}

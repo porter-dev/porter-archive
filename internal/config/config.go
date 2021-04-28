@@ -14,6 +14,7 @@ type Conf struct {
 	Db     DBConf
 	K8s    K8sConf
 	Redis  RedisConf
+	Capabilities CapConf
 }
 
 // ServerConf is the server configuration
@@ -68,6 +69,11 @@ type DBConf struct {
 // K8sConf is the global configuration for the k8s agents
 type K8sConf struct {
 	IsTesting bool `env:"K8S_IS_TESTING,default=false"`
+}
+
+type CapConf struct {
+	Provisioner bool `env:"PROVISIONER_ENABLED,default=true"`
+	Github bool `env:"GITHUB_ENABLED,default=true"`
 }
 
 // FromEnv generates a configuration from environment variables

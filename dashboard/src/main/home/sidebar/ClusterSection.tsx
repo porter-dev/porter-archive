@@ -59,7 +59,7 @@ class ClusterSection extends Component<PropsType, StateType> {
             let saved = JSON.parse(
               localStorage.getItem(currentProject.id + "-cluster")
             );
-            if (saved !== "null") {
+            if (saved && saved !== "null") {
               // Ensures currentCluster isn't prematurely set (causes issues downstream)
               let loaded = false;
               for (let i = 0; i < clusters.length; i++) {

@@ -56,30 +56,36 @@ export default class CreateEnvGroup extends Component<PropsType, StateType> {
     let apiEnvVariables: Record<string, string> = {};
     let secretEnvVariables: Record<string, string> = {};
 
-    let envVariables = this.state.envVariables
+    let envVariables = this.state.envVariables;
 
-    envVariables.filter((envVar: KeyValueType, index : number, self : KeyValueType[]) => {
-      // remove any collisions that are marked as deleted and are duplicates
-      let numCollisions = self.reduce((n, _envVar : KeyValueType) => {
-        return n + (_envVar.key === envVar.key ? 1 : 0);
-      }, 0)
+    envVariables
+      .filter((envVar: KeyValueType, index: number, self: KeyValueType[]) => {
+        // remove any collisions that are marked as deleted and are duplicates
+        let numCollisions = self.reduce((n, _envVar: KeyValueType) => {
+          return n + (_envVar.key === envVar.key ? 1 : 0);
+        }, 0);
 
-      if (numCollisions == 1) {
-        return true
-      } else {
-        return index === self.findIndex((_envVar : KeyValueType) => (
-          _envVar.key === envVar.key && !_envVar.deleted
-        ))
-      }
-    }).forEach((envVar: KeyValueType) => {
-      if (!envVar.deleted) {
-        if (envVar.hidden) {
-          secretEnvVariables[envVar.key] = envVar.value
+        if (numCollisions == 1) {
+          return true;
         } else {
-          apiEnvVariables[envVar.key] = envVar.value
+          return (
+            index ===
+            self.findIndex(
+              (_envVar: KeyValueType) =>
+                _envVar.key === envVar.key && !_envVar.deleted
+            )
+          );
         }
-      }
-    });
+      })
+      .forEach((envVar: KeyValueType) => {
+        if (!envVar.deleted) {
+          if (envVar.hidden) {
+            secretEnvVariables[envVar.key] = envVar.value;
+          } else {
+            apiEnvVariables[envVar.key] = envVar.value;
+          }
+        }
+      });
 
     api
       .createConfigMap(

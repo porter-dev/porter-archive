@@ -101,7 +101,7 @@ export default class GraphDisplay extends Component<PropsType, StateType> {
     let graph = localStorage.getItem(
       `charts.${currentChart.name}-${currentChart.version}`
     );
-    
+
     let nodes = [] as NodeType[];
     let edges = [] as EdgeType[];
 
@@ -146,7 +146,7 @@ export default class GraphDisplay extends Component<PropsType, StateType> {
 
   // Live update on rollback/upgrade
   componentDidUpdate(prevProps: PropsType) {
-    if (!(_.isEqual(prevProps.currentChart, this.props.currentChart))) {
+    if (!_.isEqual(prevProps.currentChart, this.props.currentChart)) {
       this.storeChartGraph(prevProps);
       this.getChartGraph();
     }
@@ -246,7 +246,6 @@ export default class GraphDisplay extends Component<PropsType, StateType> {
   };
 
   storeChartGraph = (props?: PropsType) => {
-
     let useProps = props || this.props;
 
     let { currentChart } = useProps;
@@ -565,7 +564,7 @@ export default class GraphDisplay extends Component<PropsType, StateType> {
           isOpen={node === this.state.openedNode}
           // Parameterized to allow setting to null
           setCurrentNode={(node: NodeType) => {
-            this.setState({ currentNode: node })
+            this.setState({ currentNode: node });
           }}
         />
       );

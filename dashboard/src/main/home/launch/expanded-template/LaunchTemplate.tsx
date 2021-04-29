@@ -19,8 +19,7 @@ import TabRegion from "components/TabRegion";
 import InputRow from "components/values-form/InputRow";
 import SaveButton from "components/SaveButton";
 import ActionConfEditor from "components/repo-selector/ActionConfEditor";
-import ValuesWrapper from "components/values-form/ValuesWrapper";
-import ValuesForm from "components/values-form/ValuesForm";
+import FormWrapper from "components/values-form/FormWrapper";
 import RadioSelector from "components/RadioSelector";
 import { isAlphanumeric } from "shared/common";
 
@@ -96,7 +95,7 @@ class LaunchTemplate extends Component<PropsType, StateType> {
     env: {},
     overrideValues: {
       abba: false,
-      tracy: "mcgrady"
+      tracy: "mcgrady",
     },
   };
 
@@ -419,54 +418,6 @@ class LaunchTemplate extends Component<PropsType, StateType> {
     return "No application source specified";
   };
 
-  renderTabContents = () => {
-    return (
-      <ValuesWrapper
-        formTabs={this.props.form?.tabs}
-        onSubmit={
-          this.props.currentTab === "docker"
-            ? this.onSubmit
-            : this.onSubmitAddon
-        }
-        saveValuesStatus={this.getStatus()}
-        disabled={this.submitIsDisabled()}
-        renderSaveButton={true}
-        overrideValues={this.state.overrideValues}
-      >
-        {(metaState: any, setMetaState: any) => {
-          if (!metaState) {
-            return;
-          }
-
-          // handle when procfileProcess is already specified
-          if (this.state.procfileProcess) {
-            metaState["container.command"] = this.state.procfileProcess;
-          }
-
-          return this.props.form?.tabs.map((tab: any, i: number) => {
-            // If tab is current, render
-            if (tab.name === this.state.currentTab) {
-              return (
-                <ValuesForm
-                  metaState={metaState}
-                  handleEnvChange={(x: any) => this.setState({ env: x })}
-                  setMetaState={setMetaState}
-                  key={tab.name}
-                  sections={tab.sections}
-                  // For env group loader
-                  namespace={this.state.selectedNamespace}
-                  clusterId={this.state.selectedClusterId}
-                  // For procfile process
-                  procfileProcess={this.state.procfileProcess}
-                />
-              );
-            }
-          });
-        }}
-      </ValuesWrapper>
-    );
-  };
-
   componentDidMount() {
     if (this.props.currentTemplate.name !== "docker") {
       this.setState({ saveValuesStatus: "" });
@@ -552,13 +503,14 @@ class LaunchTemplate extends Component<PropsType, StateType> {
           <Subtitle>
             Configure additional settings for this template. (Optional)
           </Subtitle>
-          <TabRegion
-            options={this.state.tabOptions}
-            currentTab={this.state.currentTab}
-            setCurrentTab={(x: string) => this.setState({ currentTab: x })}
-          >
-            {this.renderTabContents()}
-          </TabRegion>
+          <FormWrapper
+            formData={this.props.form}
+            onSubmit={(values: any) => {
+              alert("Check console output.");
+              console.log("Raw submission values:");
+              console.log(values);
+            }}
+          />
         </>
       );
     } else {
@@ -649,32 +601,6 @@ class LaunchTemplate extends Component<PropsType, StateType> {
           <br />
         </StyledSourceBox>
       );
-    } else if (this.state.repoType === "" && false) {
-      return (
-        <StyledSourceBox>
-          <CloseButton onClick={() => this.setState({ sourceType: "" })}>
-            <CloseButtonImg src={close} />
-          </CloseButton>
-          <Subtitle>
-            Are you using an existing Dockerfile from your repo?
-            <Required>*</Required>
-          </Subtitle>
-          <RadioSelector
-            options={[
-              {
-                value: "dockerfile",
-                label: "Yes, I am using an existing Dockerfile",
-              },
-              {
-                value: "buildpack",
-                label: "No, I am not using an existing Dockerfile",
-              },
-            ]}
-            selected={this.state.repoType}
-            setSelected={(x: string) => this.setState({ repoType: x })}
-          />
-        </StyledSourceBox>
-      );
     } else {
       return (
         <StyledSourceBox>
@@ -703,12 +629,12 @@ class LaunchTemplate extends Component<PropsType, StateType> {
             }
             procfileProcess={this.state.procfileProcess}
             setProcfileProcess={(procfileProcess: string) =>
-              this.setState({ 
-                procfileProcess, 
+              this.setState({
+                procfileProcess,
                 overrideValues: {
                   "container.command": procfileProcess || "",
-                  showStartCommand: !procfileProcess
-                } 
+                  showStartCommand: !procfileProcess,
+                },
               })
             }
             setBranch={(branch: string) => this.setState({ branch })}

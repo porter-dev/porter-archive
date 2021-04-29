@@ -151,7 +151,7 @@ export default class FormWrapper extends Component<PropsType, StateType> {
   };
 
   componentDidMount() {
-    this.updateTabs();
+    this.updateTabs(true);
   }
 
   componentDidUpdate(prevProps: any) {
@@ -159,7 +159,8 @@ export default class FormWrapper extends Component<PropsType, StateType> {
       !_.isEqual(prevProps.tabOptions, this.props.tabOptions) ||
       !_.isEqual(prevProps.formData, this.props.formData)
     ) {
-      this.updateTabs();
+      let formHasChanged = !_.isEqual(prevProps.formData, this.props.formData);
+      this.updateTabs(formHasChanged);
     }
   }
 

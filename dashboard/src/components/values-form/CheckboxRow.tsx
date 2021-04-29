@@ -35,6 +35,7 @@ const CheckboxWrapper = styled.div`
   display: flex;
   align-items: center;
   cursor: pointer;
+  font-size: 13px;
   :hover {
     > div {
       background: #ffffff22;

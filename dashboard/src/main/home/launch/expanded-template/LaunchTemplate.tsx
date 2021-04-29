@@ -249,7 +249,7 @@ class LaunchTemplate extends Component<PropsType, StateType> {
 
     // check if template is docker and create external domain if necessary
     if (this.props.currentTemplate.name == "web") {
-      if (!values?.ingress?.custom_domain) {
+      if (values?.ingress?.enabled && !values?.ingress?.custom_domain) {
         url = await new Promise((resolve, reject) => {
           api
             .createSubdomain(
@@ -436,6 +436,11 @@ class LaunchTemplate extends Component<PropsType, StateType> {
         {(metaState: any, setMetaState: any) => {
           if (!metaState) {
             return;
+          }
+
+          // handle when procfileProcess is already specified
+          if (this.state.procfileProcess) {
+            metaState["container.command"] = this.state.procfileProcess;
           }
 
           return this.props.form?.tabs.map((tab: any, i: number) => {

@@ -1,6 +1,9 @@
-import ace from 'brace';
+import ace from "brace";
 
-ace['define']('ace/theme/porter', ['require', 'exports', 'module', 'ace/lib/dom'], (acequire, exports) => {
+ace["define"](
+  "ace/theme/porter",
+  ["require", "exports", "module", "ace/lib/dom"],
+  (acequire, exports) => {
     exports.isDark = true;
     exports.cssClass = "ace-porter";
     exports.cssText = `.ace-porter, div.ace_content, div.ace_line, div.ace_gutter-cell {\
@@ -105,7 +108,8 @@ ace['define']('ace/theme/porter', ['require', 'exports', 'module', 'ace/lib/dom'
     .ace-porter .ace_indent-guide {
     background: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAACCAYAAACZgbYnAAAAEklEQVQImWNgYGBgYLBWV/8PAAK4AYnhiq+xAAAAAElFTkSuQmCC) right repeat-y;
     }`;
-    
+
     var dom = acequire("../lib/dom");
     dom.importCssString(exports.cssText, exports.cssClass);
-});
+  }
+);

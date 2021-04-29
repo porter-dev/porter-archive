@@ -789,9 +789,6 @@ func (app *App) HandleReleaseDeployWebhook(w http.ResponseWriter, r *http.Reques
 
 	vals, err := url.ParseQuery(r.URL.RawQuery)
 
-	commit := vals["commit"][0]
-	repository := vals["repository"][0]
-
 	if err != nil {
 		app.handleErrorFormDecoding(err, ErrReleaseDecode, w)
 		return
@@ -823,11 +820,21 @@ func (app *App) HandleReleaseDeployWebhook(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
+	rel, err := agent.GetRelease(form.Name, 0)
+
+	// repository is set to current repository by default
+	commit := vals["commit"][0]
+	repository := rel.Config["image"].(map[string]interface{})["repository"]
+
+	gitAction := release.GitActionConfig
+
+	if gitAction.ID != 0 && repository == "porterdev/hello-porter" {
+		repository = gitAction.ImageRepoURI
+	}
+
 	image := map[string]interface{}{}
 	image["repository"] = repository
 	image["tag"] = commit
-
-	rel, err := agent.GetRelease(form.Name, 0)
 	rel.Config["image"] = image
 
 	if rel.Config["auto_deploy"] == false {
@@ -1040,6 +1047,7 @@ func (app *App) getAgentFromQueryParams(
 		err := f(vals, app.Repo.Cluster)
 
 		if err != nil {
+			app.handleErrorInternal(err, w)
 			return nil, err
 		}
 	}
@@ -1069,6 +1077,10 @@ func (app *App) getAgentFromReleaseForm(
 		agent = app.TestAgents.HelmAgent
 	} else {
 		agent, err = helm.GetAgentOutOfClusterConfig(form.Form, app.Logger)
+	}
+
+	if err != nil {
+		app.handleErrorInternal(err, w)
 	}
 
 	return agent, err

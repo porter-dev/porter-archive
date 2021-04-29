@@ -18,7 +18,7 @@ import KeyValueArray from "./KeyValueArray";
 type PropsType = {
   sections?: Section[];
   metaState?: any;
-  setMetaState?: any;
+  setMetaState?: (key: string, value: any) => void;
   handleEnvChange?: (x: any) => void;
   disabled?: boolean;
   namespace?: string;
@@ -32,7 +32,7 @@ type StateType = any;
 export default class ValuesForm extends Component<PropsType, StateType> {
   getInputValue = (item: FormElement) => {
     let key = item.name || item.variable;
-    let value = this.props.metaState[key];
+    let value = this.props.metaState[key]?.value;
 
     if (item.settings && item.settings.unit && value && value.includes) {
       value = value.split(item.settings.unit)[0];
@@ -72,9 +72,9 @@ export default class ValuesForm extends Component<PropsType, StateType> {
           return (
             <CheckboxRow
               key={i}
-              checked={this.props.metaState[key]}
+              checked={this.props.metaState[key]?.value}
               toggle={() =>
-                this.props.setMetaState({ [key]: !this.props.metaState[key] })
+                this.props.setMetaState(key, !this.props.metaState[key]?.value)
               }
               label={item.label}
             />
@@ -86,20 +86,21 @@ export default class ValuesForm extends Component<PropsType, StateType> {
               envLoader={true}
               namespace={this.props.namespace}
               clusterId={this.props.clusterId}
-              values={this.props.metaState[key]}
+              values={this.props.metaState[key]?.value}
               setValues={(x: any) => {
-                this.props.setMetaState({ [key]: x });
+                this.props.setMetaState(key, x);
 
                 // Need to pull env vars out of form.yaml for createGHA build env vars
                 if (
                   this.props.handleEnvChange &&
                   key === "container.env.normal"
                 ) {
-                  this.props.handleEnvChange(x);
+                  // this.props.handleEnvChange(x);
                 }
               }}
               label={item.label}
               disabled={this.props.disabled}
+              secretOption={true}
             />
           );
         case "key-value-array":
@@ -108,16 +109,16 @@ export default class ValuesForm extends Component<PropsType, StateType> {
               key={i}
               namespace={this.props.namespace}
               clusterId={this.props.clusterId}
-              values={this.props.metaState[key]}
+              values={this.props.metaState[key]?.value}
               setValues={(x: any) => {
-                this.props.setMetaState({ [key]: x });
+                this.props.setMetaState(key, x);
 
                 // Need to pull env vars out of form.yaml for createGHA build env vars
                 if (
                   this.props.handleEnvChange &&
                   key === "container.env.normal"
                 ) {
-                  this.props.handleEnvChange(x);
+                  //this.props.handleEnvChange(x);
                 }
               }}
               label={item.label}
@@ -128,9 +129,9 @@ export default class ValuesForm extends Component<PropsType, StateType> {
           return (
             <InputArray
               key={i}
-              values={this.props.metaState[key]}
+              values={this.props.metaState[key]?.value}
               setValues={(x: string[]) => {
-                this.props.setMetaState({ [key]: x });
+                this.props.setMetaState(key, x);
               }}
               label={item.label}
               disabled={this.props.disabled}
@@ -147,7 +148,7 @@ export default class ValuesForm extends Component<PropsType, StateType> {
                 if (item.settings && item.settings.unit && x !== "") {
                   x = x + item.settings.unit;
                 }
-                this.props.setMetaState({ [key]: x });
+                this.props.setMetaState(key, x);
               }}
               label={item.label}
               unit={item.settings ? item.settings.unit : null}
@@ -165,7 +166,7 @@ export default class ValuesForm extends Component<PropsType, StateType> {
                 if (item.settings && item.settings.unit && x !== "") {
                   x = x + item.settings.unit;
                 }
-                this.props.setMetaState({ [key]: x });
+                this.props.setMetaState(key, x);
               }}
               label={item.label}
               unit={item.settings ? item.settings.unit : null}
@@ -191,7 +192,7 @@ export default class ValuesForm extends Component<PropsType, StateType> {
                   val = val + item.settings.unit;
                 }
 
-                this.props.setMetaState({ [key]: val });
+                this.props.setMetaState(key, val);
               }}
               label={item.label}
               unit={item.settings ? item.settings.unit : null}
@@ -202,8 +203,8 @@ export default class ValuesForm extends Component<PropsType, StateType> {
           return (
             <SelectRow
               key={i}
-              value={this.props.metaState[key]}
-              setActiveValue={(val) => this.props.setMetaState({ [key]: val })}
+              value={this.props.metaState[key]?.value}
+              setActiveValue={(val) => this.props.setMetaState(key, val)}
               options={item.settings.options}
               dropdownLabel=""
               label={item.label}
@@ -213,8 +214,8 @@ export default class ValuesForm extends Component<PropsType, StateType> {
           return (
             <SelectRow
               key={i}
-              value={this.props.metaState[key]}
-              setActiveValue={(val) => this.props.setMetaState({ [key]: val })}
+              value={this.props.metaState[key]?.value}
+              setActiveValue={(val) => this.props.setMetaState(key, val)}
               options={[
                 { value: "aws", label: "Amazon Web Services (AWS)" },
                 { value: "gcp", label: "Google Cloud Platform (GCP)" },
@@ -237,7 +238,7 @@ export default class ValuesForm extends Component<PropsType, StateType> {
                 if (item.settings && item.settings.unit && x !== "") {
                   x = x + item.settings.unit;
                 }
-                this.props.setMetaState({ [key]: btoa(x) });
+                this.props.setMetaState(key, btoa(x));
               }}
               label={item.label}
               unit={item.settings ? item.settings.unit : null}
@@ -255,7 +256,7 @@ export default class ValuesForm extends Component<PropsType, StateType> {
                 if (item.settings && item.settings.unit && x !== "") {
                   x = x + item.settings.unit;
                 }
-                this.props.setMetaState({ [key]: btoa(x) });
+                this.props.setMetaState(key, btoa(x));
               }}
               label={item.label}
               unit={item.settings ? item.settings.unit : null}
@@ -269,11 +270,10 @@ export default class ValuesForm extends Component<PropsType, StateType> {
 
   renderFormContents = () => {
     if (this.props.metaState) {
-      console.log(this.props.metaState)
       return this.props.sections.map((section: Section, i: number) => {
         // Hide collapsible section if deciding field is false
         if (section.show_if) {
-          if (this.props.metaState[section.show_if] === false) {
+          if (this.props.metaState[section.show_if]?.value === false) {
             return null;
           }
         }

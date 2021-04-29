@@ -1,6 +1,8 @@
 import React, { Component } from "react";
 import styled from "styled-components";
 import AceEditor from "react-ace";
+import FormWrapper from "components/values-form/FormWrapper";
+import CheckboxRow from "components/values-form/CheckboxRow";
 import yaml from "js-yaml";
 
 import "shared/ace-porter-theme"
@@ -15,20 +17,38 @@ type PropsType = {
 
 type StateType = {
   rawYaml: string;
+  showBonusTabs: boolean;
+  showStateDebugger: boolean;
 };
+
+const tabOptions = [
+  { value: "a", label: "Bonus Tab A" },
+  { value: "b", label: "Bonus Tab B" },
+];
 
 export default class FormDebugger extends Component<PropsType, StateType> {
   state = {
     rawYaml: "",
+    showBonusTabs: false,
+    showStateDebugger: true,
   }
 
-  renderForm = () => {
-    let formData = yaml.load(this.state.rawYaml);
-    return <h1>silver lining</h1>
+  renderTabContents = (currentTab: string) => {
+    return (
+      <TabWrapper>
+        {this.state.rawYaml.toString().slice(0, 300) || "No raw YAML inputted."}
+      </TabWrapper>
+    )
   }
 
   aceEditorRef = React.createRef<AceEditor>();
   render() {
+    let formData = {};
+    try {
+      formData = yaml.load(this.state.rawYaml);
+    } catch (err: any) {
+      console.log("YAML parsing error.")
+    }
     return (
       <StyledFormDebugger>
         <Button onClick={this.props.goBack}>
@@ -52,7 +72,8 @@ export default class FormDebugger extends Component<PropsType, StateType> {
             style={{ 
               borderRadius: "5px", 
               border: "1px solid #ffffff22",
-              marginTop: "27px"
+              marginTop: "27px",
+              marginBottom: "27px"
             }}
             showPrintMargin={false}
             showGutter={true}
@@ -60,12 +81,47 @@ export default class FormDebugger extends Component<PropsType, StateType> {
           />
         </EditorWrapper>
 
+        <CheckboxRow
+          label="Show form state debugger"
+          checked={this.state.showStateDebugger}
+          toggle={() => this.setState({ showStateDebugger: !this.state.showStateDebugger })}
+        />
+        <CheckboxRow
+          label="Include non-form dummy tabs"
+          checked={this.state.showBonusTabs}
+          toggle={() => this.setState({ showBonusTabs: !this.state.showBonusTabs })}
+        />
+
         <Heading>🎨 Rendered Form</Heading>
-        {this.renderForm()}
+        <Br />
+        <FormWrapper
+          showStateDebugger={this.state.showStateDebugger}
+          formData={formData}
+          tabOptions={this.state.showBonusTabs ? tabOptions : []}
+          renderTabContents={this.state.showBonusTabs ? this.renderTabContents : null}
+        />
       </StyledFormDebugger>
     );
   }
 }
+
+const Br = styled.div`
+  width: 100%;
+  height: 12px;
+`;
+
+const TabWrapper = styled.div`
+  background: #ffffff11;
+  height: 200px;
+  width: 100%;
+  border-radius: 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  overflow: auto;
+  padding: 50px;
+`;
 
 const EditorWrapper = styled.div`
   .ace_editor,

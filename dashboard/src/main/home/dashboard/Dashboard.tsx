@@ -74,9 +74,9 @@ class Dashboard extends Component<PropsType, StateType> {
     let { pressingK, pressingCtrl } = this.state;
     if (e.key === "Meta" || e.key === "Control") {
       this.setState({ pressingCtrl: true });
-    } 
+    }
     if (e.key === "k") {
-      this.setState({ pressingK: true }); 
+      this.setState({ pressingK: true });
     }
     if (e.key === "z" && pressingK && pressingCtrl) {
       this.setState({ pressingK: false, pressingCtrl: false });
@@ -86,8 +86,8 @@ class Dashboard extends Component<PropsType, StateType> {
 
   handleKeyUp = (e: KeyboardEvent): void => {
     if (e.key === "Meta" || e.key === "Control" || e.key === "k") {
-      this.setState({ pressingCtrl: false, pressingK: false, });
-    } 
+      this.setState({ pressingCtrl: false, pressingK: false });
+    }
   };
 
   componentDidUpdate(prevProps: PropsType) {
@@ -135,50 +135,52 @@ class Dashboard extends Component<PropsType, StateType> {
       <>
         {currentProject && (
           <DashboardWrapper>
-            {
-              this.state.showFormDebugger ? (
-                <FormDebugger 
-                  goBack={() => this.setState({ showFormDebugger: false })} 
-                />
-              ) : (
-                <>
-                  <TitleSection>
-                    <DashboardIcon>
-                      <DashboardImage src={gradient} />
-                      <Overlay>
-                        {currentProject && currentProject.name[0].toUpperCase()}
-                      </Overlay>
-                    </DashboardIcon>
-                    <Title>{currentProject && currentProject.name}</Title>
-                    {this.context.currentProject.roles.filter((obj: any) => {
-                      return obj.user_id === this.context.user.userId;
-                    })[0].kind === "admin" && (
-                      <i className="material-icons" onClick={onShowProjectSettings}>
-                        more_vert
-                      </i>
-                    )}
-                  </TitleSection>
+            {this.state.showFormDebugger ? (
+              <FormDebugger
+                goBack={() => this.setState({ showFormDebugger: false })}
+              />
+            ) : (
+              <>
+                <TitleSection>
+                  <DashboardIcon>
+                    <DashboardImage src={gradient} />
+                    <Overlay>
+                      {currentProject && currentProject.name[0].toUpperCase()}
+                    </Overlay>
+                  </DashboardIcon>
+                  <Title>{currentProject && currentProject.name}</Title>
+                  {this.context.currentProject.roles.filter((obj: any) => {
+                    return obj.user_id === this.context.user.userId;
+                  })[0].kind === "admin" && (
+                    <i
+                      className="material-icons"
+                      onClick={onShowProjectSettings}
+                    >
+                      more_vert
+                    </i>
+                  )}
+                </TitleSection>
 
-                  <InfoSection>
-                    <TopRow>
-                      <InfoLabel>
-                        <i className="material-icons">info</i> Info
-                      </InfoLabel>
-                    </TopRow>
-                    <Description>
-                      Project overview for {currentProject && currentProject.name}.
-                    </Description>
-                  </InfoSection>
-                  <TabRegion
-                    currentTab={this.currentTab()}
-                    setCurrentTab={this.setCurrentTab}
-                    options={tabOptions}
-                  >
-                    {this.renderTabContents()}
-                  </TabRegion>
-                </>
-              )
-            }
+                <InfoSection>
+                  <TopRow>
+                    <InfoLabel>
+                      <i className="material-icons">info</i> Info
+                    </InfoLabel>
+                  </TopRow>
+                  <Description>
+                    Project overview for {currentProject && currentProject.name}
+                    .
+                  </Description>
+                </InfoSection>
+                <TabRegion
+                  currentTab={this.currentTab()}
+                  setCurrentTab={this.setCurrentTab}
+                  options={tabOptions}
+                >
+                  {this.renderTabContents()}
+                </TabRegion>
+              </>
+            )}
           </DashboardWrapper>
         )}
       </>

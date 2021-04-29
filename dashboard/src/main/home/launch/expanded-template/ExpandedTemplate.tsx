@@ -55,7 +55,7 @@ export default class ExpandedTemplate extends Component<PropsType, StateType> {
       .then((res) => {
         let { form, values, markdown, metadata } = res.data;
         let keywords = metadata.keywords;
-        console.log(form)
+        console.log(form);
         this.setState({
           form,
           values,

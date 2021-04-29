@@ -5,7 +5,7 @@ import FormWrapper from "components/values-form/FormWrapper";
 import CheckboxRow from "components/values-form/CheckboxRow";
 import yaml from "js-yaml";
 
-import "shared/ace-porter-theme"
+import "shared/ace-porter-theme";
 import "ace-builds/src-noconflict/mode-text";
 
 import Heading from "./Heading";
@@ -31,15 +31,16 @@ export default class FormDebugger extends Component<PropsType, StateType> {
     rawYaml: "",
     showBonusTabs: false,
     showStateDebugger: true,
-  }
+  };
 
   renderTabContents = (currentTab: string) => {
+    console.log("oofok");
     return (
       <TabWrapper>
         {this.state.rawYaml.toString().slice(0, 300) || "No raw YAML inputted."}
       </TabWrapper>
-    )
-  }
+    );
+  };
 
   aceEditorRef = React.createRef<AceEditor>();
   render() {
@@ -47,7 +48,7 @@ export default class FormDebugger extends Component<PropsType, StateType> {
     try {
       formData = yaml.load(this.state.rawYaml);
     } catch (err: any) {
-      console.log("YAML parsing error.")
+      console.log("YAML parsing error.");
     }
     return (
       <StyledFormDebugger>
@@ -69,11 +70,11 @@ export default class FormDebugger extends Component<PropsType, StateType> {
             editorProps={{ $blockScrolling: true }}
             height="300px"
             width="100%"
-            style={{ 
-              borderRadius: "5px", 
+            style={{
+              borderRadius: "5px",
               border: "1px solid #ffffff22",
               marginTop: "27px",
-              marginBottom: "27px"
+              marginBottom: "27px",
             }}
             showPrintMargin={false}
             showGutter={true}
@@ -84,12 +85,16 @@ export default class FormDebugger extends Component<PropsType, StateType> {
         <CheckboxRow
           label="Show form state debugger"
           checked={this.state.showStateDebugger}
-          toggle={() => this.setState({ showStateDebugger: !this.state.showStateDebugger })}
+          toggle={() =>
+            this.setState({ showStateDebugger: !this.state.showStateDebugger })
+          }
         />
         <CheckboxRow
           label="Include non-form dummy tabs"
           checked={this.state.showBonusTabs}
-          toggle={() => this.setState({ showBonusTabs: !this.state.showBonusTabs })}
+          toggle={() =>
+            this.setState({ showBonusTabs: !this.state.showBonusTabs })
+          }
         />
 
         <Heading>🎨 Rendered Form</Heading>
@@ -98,7 +103,14 @@ export default class FormDebugger extends Component<PropsType, StateType> {
           showStateDebugger={this.state.showStateDebugger}
           formData={formData}
           tabOptions={this.state.showBonusTabs ? tabOptions : []}
-          renderTabContents={this.state.showBonusTabs ? this.renderTabContents : null}
+          renderTabContents={
+            this.state.showBonusTabs ? this.renderTabContents : null
+          }
+          onSubmit={(values: any) => {
+            alert("Check console output.");
+            console.log("Raw submission values:");
+            console.log(values);
+          }}
         />
       </StyledFormDebugger>
     );

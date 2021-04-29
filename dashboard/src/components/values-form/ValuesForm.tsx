@@ -39,10 +39,9 @@ export default class ValuesForm extends Component<PropsType, StateType> {
     }
     return value;
   };
-  
+
   renderSection = (section: Section) => {
     return section.contents.map((item: FormElement, i: number) => {
-      
       // If no name is assigned use values.yaml variable as identifier
       let key = item.name || item.variable;
 
@@ -54,7 +53,7 @@ export default class ValuesForm extends Component<PropsType, StateType> {
         case "resource-list":
           if (Array.isArray(item.value)) {
             return (
-              <ResourceList key={i}>
+              <ResourceList key={key}>
                 {item.value.map((resource: any, i: number) => {
                   return (
                     <ExpandableResource
@@ -71,7 +70,8 @@ export default class ValuesForm extends Component<PropsType, StateType> {
         case "checkbox":
           return (
             <CheckboxRow
-              key={i}
+              key={key}
+              isRequired={item.required}
               checked={this.props.metaState[key]?.value}
               toggle={() =>
                 this.props.setMetaState(key, !this.props.metaState[key]?.value)
@@ -82,7 +82,7 @@ export default class ValuesForm extends Component<PropsType, StateType> {
         case "env-key-value-array":
           return (
             <KeyValueArray
-              key={i}
+              key={key}
               envLoader={true}
               namespace={this.props.namespace}
               clusterId={this.props.clusterId}
@@ -106,7 +106,7 @@ export default class ValuesForm extends Component<PropsType, StateType> {
         case "key-value-array":
           return (
             <KeyValueArray
-              key={i}
+              key={key}
               namespace={this.props.namespace}
               clusterId={this.props.clusterId}
               values={this.props.metaState[key]?.value}
@@ -128,7 +128,7 @@ export default class ValuesForm extends Component<PropsType, StateType> {
         case "array-input":
           return (
             <InputArray
-              key={i}
+              key={key}
               values={this.props.metaState[key]?.value}
               setValues={(x: string[]) => {
                 this.props.setMetaState(key, x);
@@ -140,7 +140,7 @@ export default class ValuesForm extends Component<PropsType, StateType> {
         case "string-input":
           return (
             <InputRow
-              key={i}
+              key={key}
               isRequired={item.required}
               type="text"
               value={this.getInputValue(item)}
@@ -158,7 +158,7 @@ export default class ValuesForm extends Component<PropsType, StateType> {
         case "string-input-password":
           return (
             <InputRow
-              key={i}
+              key={key}
               isRequired={item.required}
               type="password"
               value={this.getInputValue(item)}
@@ -176,7 +176,7 @@ export default class ValuesForm extends Component<PropsType, StateType> {
         case "number-input":
           return (
             <InputRow
-              key={i}
+              key={key}
               isRequired={item.required}
               type="number"
               value={this.getInputValue(item)}
@@ -202,7 +202,7 @@ export default class ValuesForm extends Component<PropsType, StateType> {
         case "select":
           return (
             <SelectRow
-              key={i}
+              key={key}
               value={this.props.metaState[key]?.value}
               setActiveValue={(val) => this.props.setMetaState(key, val)}
               options={item.settings.options}
@@ -213,7 +213,7 @@ export default class ValuesForm extends Component<PropsType, StateType> {
         case "provider-select":
           return (
             <SelectRow
-              key={i}
+              key={key}
               value={this.props.metaState[key]?.value}
               setActiveValue={(val) => this.props.setMetaState(key, val)}
               options={[
@@ -230,7 +230,7 @@ export default class ValuesForm extends Component<PropsType, StateType> {
         case "base-64":
           return (
             <Base64InputRow
-              key={i}
+              key={key}
               isRequired={item.required}
               type="text"
               value={this.getInputValue(item)}
@@ -248,7 +248,7 @@ export default class ValuesForm extends Component<PropsType, StateType> {
         case "base-64-password":
           return (
             <Base64InputRow
-              key={i}
+              key={key}
               isRequired={item.required}
               type="password"
               value={this.getInputValue(item)}

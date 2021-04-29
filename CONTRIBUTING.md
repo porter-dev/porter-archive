@@ -1,6 +1,6 @@
 # Contributing to Porter
 
-First off, thanks for considering contributing to Porter. There are many types of contributions you can make to Porter, including bug reports and fixes, improving documentation, writing tutorials, and even larger feature requests or changes.
+First off, thanks for considering contributing to Porter. There are many types of contributions you can make, including bug reports and fixes, improving documentation, writing tutorials, and larger feature requests or changes.
 
 Before you contribute, make sure to read these guidelines thoroughly, so that you can get your pull request reviewed and finalized as quickly as possible. 
 
@@ -43,7 +43,7 @@ If you'd like to suggest a feature, we have a **#suggestions** channel on Discor
 
 ## Writing Code 
 
-Our backend is written in Golang, and our frontend is written in Typescript (using React). The root of the project is a Go repository containing `go.mod` and `go.sum`, while the `/dashboard` folder contains the React app with `package.json`. Our templates/add-ons are hosted in other repositories and are written using Helm. 
+Our backend is written in Golang, and our frontend is written in Typescript (using React). The root of the project is a Go repository containing `go.mod` and `go.sum`, while the `/dashboard` folder contains the React app with `package.json`. Our templates/add-ons are hosted in other repositories and are written using Helm (more info on contributing to these repositories will be added soon). 
 
 ### Navigating the Codebase
 

@@ -1356,12 +1356,8 @@ func New(a *api.App) *chi.Mux {
 		// capabilities
 		r.Method(
 			"GET",
-			"/projects/{project_id}/capabilities",
-			auth.DoesUserHaveProjectAccess(
-				requestlog.NewHandler(a.HandleGetCapabilities, l),
-				mw.URLParam,
-				mw.ReadAccess,
-			),
+			"/capabilities",
+			requestlog.NewHandler(a.HandleGetCapabilities, l),
 		)
 	})
 

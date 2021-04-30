@@ -629,8 +629,8 @@ const getUser = baseApi<{}, { id: number }>("GET", (pathParams) => {
   return `/api/users/${pathParams.id}`;
 });
 
-const getCapabilities = baseApi<{}, { id: number }>("GET", (pathParams) => {
-  return `/api/projects/${pathParams.id}/capabilities`;
+const getCapabilities = baseApi<{}, {}>("GET", () => {
+  return `/api/capabilities`;
 });
 
 const linkGithubProject = baseApi<

@@ -29,14 +29,17 @@ const tabOptions = [
   { value: "b", label: "Bonus Tab B" },
 ];
 
-// TODO: handle checkbox_a true (pass in initialized state)
 export default class FormDebugger extends Component<PropsType, StateType> {
   state = {
     rawYaml: initYaml,
     showBonusTabs: false,
     showStateDebugger: true,
-    valuesToOverride: null as any,
-    checkbox_a: false,
+    valuesToOverride: {
+      checkbox_a: {
+        value: true,
+      },
+    } as any,
+    checkbox_a: true,
     isReadOnly: false,
   };
 
@@ -74,7 +77,7 @@ export default class FormDebugger extends Component<PropsType, StateType> {
             onChange={(e: string) => this.setState({ rawYaml: e })}
             name="codeEditor"
             editorProps={{ $blockScrolling: true }}
-            height="300px"
+            height="450px"
             width="100%"
             style={{
               borderRadius: "5px",

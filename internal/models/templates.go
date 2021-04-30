@@ -42,14 +42,15 @@ type FormSection struct {
 
 // FormContent is a form's atomic unit
 type FormContent struct {
-	Context  *FormContext `yaml:"context" json:"context"`
-	Type     string       `yaml:"type" json:"type"`
-	Label    string       `yaml:"label" json:"label"`
-	Required bool         `json:"required"`
-	Name     string       `yaml:"name,omitempty" json:"name,omitempty"`
-	Variable string       `yaml:"variable,omitempty" json:"variable,omitempty"`
-	Value    interface{}  `yaml:"value,omitempty" json:"value,omitempty"`
-	Settings struct {
+	Context     *FormContext `yaml:"context" json:"context"`
+	Type        string       `yaml:"type" json:"type"`
+	Label       string       `yaml:"label" json:"label"`
+	Required    bool         `json:"required"`
+	Name        string       `yaml:"name,omitempty" json:"name,omitempty"`
+	Variable    string       `yaml:"variable,omitempty" json:"variable,omitempty"`
+	Placeholder string       `yaml:"placeholder,omitempty" json:"placeholder,omitempty"`
+	Value       interface{}  `yaml:"value,omitempty" json:"value,omitempty"`
+	Settings    struct {
 		Default     interface{} `yaml:"default,omitempty" json:"default,omitempty"`
 		Unit        interface{} `yaml:"unit,omitempty" json:"unit,omitempty"`
 		Options     interface{} `yaml:"options,omitempty" json:"options,omitempty"`

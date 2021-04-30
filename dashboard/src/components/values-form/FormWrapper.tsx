@@ -72,6 +72,15 @@ export default class FormWrapper extends Component<PropsType, StateType> {
                   return;
                 }
 
+                if (
+                  item.type === "variable" &&
+                  item.variable &&
+                  item.settings?.default
+                ) {
+                  metaState[item.variable] = item.settings.default;
+                  return;
+                }
+
                 // If no name is assigned use values.yaml variable as identifier
                 let key = item.name || item.variable;
 
@@ -175,18 +184,22 @@ export default class FormWrapper extends Component<PropsType, StateType> {
   };
 
   componentDidMount() {
-    this.updateTabs(true);
+    console.log(this.props.formData);
+    this.setState(
+      {
+        metaState: {
+          ...this.state.metaState,
+          ...this.props.valuesToOverride,
+        },
+      },
+      () => {
+        this.updateTabs(true);
+        this.props.clearValuesToOverride && this.props.clearValuesToOverride();
+      }
+    );
   }
 
   componentDidUpdate(prevProps: any) {
-    if (
-      !_.isEqual(prevProps.tabOptions, this.props.tabOptions) ||
-      !_.isEqual(prevProps.formData, this.props.formData)
-    ) {
-      let formHasChanged = !_.isEqual(prevProps.formData, this.props.formData);
-      this.updateTabs(formHasChanged);
-    }
-
     // Override metaState values set from outside FormWrapper
     if (
       this.props.valuesToOverride &&
@@ -200,10 +213,27 @@ export default class FormWrapper extends Component<PropsType, StateType> {
           },
         },
         () => {
+          // Seems redundant with below but need to ensure no leaked state updates
+          if (
+            !_.isEqual(prevProps.tabOptions, this.props.tabOptions) ||
+            !_.isEqual(prevProps.formData, this.props.formData)
+          ) {
+            let formHasChanged = !_.isEqual(
+              prevProps.formData,
+              this.props.formData
+            );
+            this.updateTabs(formHasChanged);
+          }
           this.props.clearValuesToOverride &&
             this.props.clearValuesToOverride();
         }
       );
+    } else if (
+      !_.isEqual(prevProps.tabOptions, this.props.tabOptions) ||
+      !_.isEqual(prevProps.formData, this.props.formData)
+    ) {
+      let formHasChanged = !_.isEqual(prevProps.formData, this.props.formData);
+      this.updateTabs(formHasChanged);
     }
   }
 

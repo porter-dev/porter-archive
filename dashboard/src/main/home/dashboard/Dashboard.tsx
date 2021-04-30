@@ -82,7 +82,7 @@ class Dashboard extends Component<PropsType, StateType> {
             <i className="material-icons">info</i>
             Create a cluster to link to this project.
           </Banner>
-          <ProvisionerSettings infras={this.state.infras} />
+          <ProvisionerSettings infras={this.state.infras} provisioner={true} />
         </>
       );
     } else {
@@ -95,8 +95,21 @@ class Dashboard extends Component<PropsType, StateType> {
   };
 
   render() {
-    let { currentProject } = this.context;
+    let { currentProject, capabilities } = this.context;
     let { onShowProjectSettings } = this;
+
+    let tabOptions = [
+      { label: "Project Overview", value: "overview" },
+      { label: "Create a Cluster", value: "create-cluster" },
+      { label: "Provisioner Status", value: "provisioner" },
+    ]
+    
+    if (!capabilities?.provisioner) {
+      tabOptions = [
+        { label: "Project Overview", value: "overview" },
+      ]
+    }
+
     return (
       <>
         {currentProject && (

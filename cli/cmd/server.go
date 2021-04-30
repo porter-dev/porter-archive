@@ -208,6 +208,8 @@ func startLocal(
 		"SQL_LITE_PATH=" + sqlLitePath,
 		"STATIC_FILE_PATH=" + staticFilePath,
 		"REDIS_ENABLED=false",
+		"GITHUB_ENABLED=false",
+		"PROVISIONER_ENABLED=false",
 	}...)
 
 	cmdPorter.Stdout = os.Stdout

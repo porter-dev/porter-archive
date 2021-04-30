@@ -1357,7 +1357,7 @@ func New(a *api.App) *chi.Mux {
 		r.Method(
 			"GET",
 			"/capabilities",
-			requestlog.NewHandler(a.HandleGetCapabilities, l),
+			http.HandlerFunc(a.HandleGetCapabilities),
 		)
 	})
 

@@ -57,7 +57,7 @@ type StateType = {
   folderPath: string | null;
   selectedRegistry: any | null;
   env: any;
-  overrideValues: any;
+  valuesToOverride: any | null;
 };
 
 const defaultActionConfig: ActionConfigType = {
@@ -93,10 +93,7 @@ class LaunchTemplate extends Component<PropsType, StateType> {
     folderPath: null as string | null,
     selectedRegistry: null as any | null,
     env: {},
-    overrideValues: {
-      abba: false,
-      tracy: "mcgrady",
-    },
+    valuesToOverride: null as any | null,
   };
 
   createGHAction = (chartName: string, chartNamespace: string) => {
@@ -386,15 +383,6 @@ class LaunchTemplate extends Component<PropsType, StateType> {
       procfilePath,
     } = this.state;
 
-    // if (
-    //   sourceType === "repo" &&
-    //   !dockerfilePath &&
-    //   folderPath &&
-    //   !procfilePath
-    // ) {
-    //   return "Procfile not detected.";
-    // }
-
     if (!this.submitIsDisabled()) {
       return this.state.saveValuesStatus;
     }
@@ -505,11 +493,18 @@ class LaunchTemplate extends Component<PropsType, StateType> {
           </Subtitle>
           <FormWrapper
             formData={this.props.form}
-            onSubmit={(values: any) => {
-              alert("Check console output.");
-              console.log("Raw submission values:");
-              console.log(values);
+            saveValuesStatus={this.state.saveValuesStatus}
+            valuesToOverride={this.state.valuesToOverride}
+            clearValuesToOverride={() => this.setState({ valuesToOverride: null })}
+            externalValues={{
+              namespace: this.state.selectedNamespace,
+              clusterId: this.context.currentCluster.id,
             }}
+            onSubmit={
+              this.props.currentTab === "docker"
+                ? this.onSubmit
+                : this.onSubmitAddon
+            }
           />
         </>
       );
@@ -631,9 +626,13 @@ class LaunchTemplate extends Component<PropsType, StateType> {
             setProcfileProcess={(procfileProcess: string) =>
               this.setState({
                 procfileProcess,
-                overrideValues: {
-                  "container.command": procfileProcess || "",
-                  showStartCommand: !procfileProcess,
+                valuesToOverride: {
+                  "container.command": {
+                    value: procfileProcess || "",
+                  },
+                  showStartCommand: {
+                    value: !procfileProcess,
+                  }
                 },
               })
             }

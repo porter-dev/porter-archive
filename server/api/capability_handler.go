@@ -1,7 +1,6 @@
 package api
 
 import (
-	"fmt"
 	"encoding/json"
 	"net/http"
 )
@@ -16,7 +15,7 @@ type CapabilitiesExternal struct {
 func (app *App) HandleGetCapabilities(w http.ResponseWriter, r *http.Request) {
 
 	cap := app.CapConf
-	fmt.Println(app.CapConf)
+
 	capExternal := &CapabilitiesExternal{
 		Provisioner: cap.Provisioner,
 		GitHub: cap.Github,

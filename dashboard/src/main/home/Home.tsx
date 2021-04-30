@@ -90,9 +90,7 @@ class Home extends Component<PropsType, StateType> {
       .getCapabilities(
         "<token>",
         {},
-        {
-          id: currentProject.id
-        }
+        {}
       )
       .then((res) => {
         console.log(res.data)

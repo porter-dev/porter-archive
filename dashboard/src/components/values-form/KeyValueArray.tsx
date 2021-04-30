@@ -24,7 +24,6 @@ type StateType = {
   values: any[];
   showEnvModal: boolean;
   showEditorModal: boolean;
-  
 };
 
 export default class KeyValueArray extends Component<PropsType, StateType> {

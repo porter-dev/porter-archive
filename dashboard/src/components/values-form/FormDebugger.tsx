@@ -98,9 +98,11 @@ export default class FormDebugger extends Component<PropsType, StateType> {
         <CheckboxRow
           label="Read-only"
           checked={this.state.isReadOnly}
-          toggle={() => this.setState({
-            isReadOnly: !this.state.isReadOnly,
-          })}
+          toggle={() =>
+            this.setState({
+              isReadOnly: !this.state.isReadOnly,
+            })
+          }
         />
         <CheckboxRow
           label="Include non-form dummy tabs"
@@ -119,9 +121,9 @@ export default class FormDebugger extends Component<PropsType, StateType> {
               // Override the form value for checkbox_a
               valuesToOverride: {
                 checkbox_a: {
-                  value: !this.state.checkbox_a
-                }
-              }
+                  value: !this.state.checkbox_a,
+                },
+              },
             })
           }
         />
@@ -130,7 +132,9 @@ export default class FormDebugger extends Component<PropsType, StateType> {
         <Br />
         <FormWrapper
           valuesToOverride={this.state.valuesToOverride}
-          clearValuesToOverride={() => this.setState({ valuesToOverride: null })}
+          clearValuesToOverride={() =>
+            this.setState({ valuesToOverride: null })
+          }
           showStateDebugger={this.state.showStateDebugger}
           formData={formData}
           isReadOnly={this.state.isReadOnly}

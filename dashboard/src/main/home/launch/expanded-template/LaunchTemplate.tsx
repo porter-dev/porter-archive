@@ -495,7 +495,9 @@ class LaunchTemplate extends Component<PropsType, StateType> {
             formData={this.props.form}
             saveValuesStatus={this.state.saveValuesStatus}
             valuesToOverride={this.state.valuesToOverride}
-            clearValuesToOverride={() => this.setState({ valuesToOverride: null })}
+            clearValuesToOverride={() =>
+              this.setState({ valuesToOverride: null })
+            }
             externalValues={{
               namespace: this.state.selectedNamespace,
               clusterId: this.context.currentCluster.id,
@@ -632,7 +634,7 @@ class LaunchTemplate extends Component<PropsType, StateType> {
                   },
                   showStartCommand: {
                     value: !procfileProcess,
-                  }
+                  },
                 },
               })
             }

@@ -44,7 +44,7 @@ type StateType = {
 
 /**
  * Renders from raw JSON form data and manages form state.
- * 
+ *
  * To control values using external state prop in "valuesToOverride" (refer to
  * FormDebugger or LaunchTemplate for example usage).
  */
@@ -145,7 +145,10 @@ export default class FormWrapper extends Component<PropsType, StateType> {
       if (tabOptions.length > 0) {
         this.setState({
           tabOptions: tabOptions,
-          currentTab: this.state.currentTab === "" ? tabOptions[0].value : this.state.currentTab,
+          currentTab:
+            this.state.currentTab === ""
+              ? tabOptions[0].value
+              : this.state.currentTab,
           metaState,
           requiredFields: requiredFields,
         });
@@ -189,12 +192,18 @@ export default class FormWrapper extends Component<PropsType, StateType> {
       this.props.valuesToOverride &&
       !_.isEqual(prevProps.valuesToOverride, this.props.valuesToOverride)
     ) {
-      this.setState({ metaState: {
-        ...this.state.metaState,
-        ...this.props.valuesToOverride,
-      }}, () => {
-        this.props.clearValuesToOverride && this.props.clearValuesToOverride();
-      });
+      this.setState(
+        {
+          metaState: {
+            ...this.state.metaState,
+            ...this.props.valuesToOverride,
+          },
+        },
+        () => {
+          this.props.clearValuesToOverride &&
+            this.props.clearValuesToOverride();
+        }
+      );
     }
   }
 

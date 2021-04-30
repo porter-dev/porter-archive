@@ -19,6 +19,9 @@ type StateType = {
   rawYaml: string;
   showBonusTabs: boolean;
   showStateDebugger: boolean;
+  valuesToOverride: any;
+  checkbox_a: boolean;
+  isReadOnly: boolean;
 };
 
 const tabOptions = [
@@ -26,15 +29,18 @@ const tabOptions = [
   { value: "b", label: "Bonus Tab B" },
 ];
 
+// TODO: handle checkbox_a true (pass in initialized state)
 export default class FormDebugger extends Component<PropsType, StateType> {
   state = {
-    rawYaml: "",
+    rawYaml: initYaml,
     showBonusTabs: false,
     showStateDebugger: true,
+    valuesToOverride: null as any,
+    checkbox_a: false,
+    isReadOnly: false,
   };
 
   renderTabContents = (currentTab: string) => {
-    console.log("oofok");
     return (
       <TabWrapper>
         {this.state.rawYaml.toString().slice(0, 300) || "No raw YAML inputted."}
@@ -90,18 +96,44 @@ export default class FormDebugger extends Component<PropsType, StateType> {
           }
         />
         <CheckboxRow
+          label="Read-only"
+          checked={this.state.isReadOnly}
+          toggle={() => this.setState({
+            isReadOnly: !this.state.isReadOnly,
+          })}
+        />
+        <CheckboxRow
           label="Include non-form dummy tabs"
           checked={this.state.showBonusTabs}
           toggle={() =>
             this.setState({ showBonusTabs: !this.state.showBonusTabs })
           }
         />
+        <CheckboxRow
+          label="checkbox_a"
+          checked={this.state.checkbox_a}
+          toggle={() =>
+            this.setState({
+              checkbox_a: !this.state.checkbox_a,
+
+              // Override the form value for checkbox_a
+              valuesToOverride: {
+                checkbox_a: {
+                  value: !this.state.checkbox_a
+                }
+              }
+            })
+          }
+        />
 
         <Heading>🎨 Rendered Form</Heading>
         <Br />
         <FormWrapper
+          valuesToOverride={this.state.valuesToOverride}
+          clearValuesToOverride={() => this.setState({ valuesToOverride: null })}
           showStateDebugger={this.state.showStateDebugger}
           formData={formData}
+          isReadOnly={this.state.isReadOnly}
           tabOptions={this.state.showBonusTabs ? tabOptions : []}
           renderTabContents={
             this.state.showBonusTabs ? this.renderTabContents : null
@@ -190,4 +222,68 @@ const Button = styled.div`
     margin-right: 5px;
     justify-content: center;
   }
+`;
+
+const initYaml = `name: Porter Example
+hasSource: true
+tabs:
+- name: main
+  label: Main
+  sections:
+  - name: header
+    contents: 
+    - type: heading
+      label: 🍺 Porter Demo Form
+    - type: subtitle
+      name: command_description
+      label: Basic form demonstrating some of the features of form.yaml
+    - type: string-input
+      placeholder: "ex: pilsner"
+      label: Required Field A
+      required: true
+      variable: field_a
+    - type: string-input
+      placeholder: "ex: sapporo"
+      required: true
+      label: Required Field B
+      variable: field_b
+    - type: subtitle
+      label: "Note: Hidden required fields aren't supported yet (global only)"
+  - name: controlled-by-external
+    show_if: checkbox_a
+    contents:
+    - type: heading
+      label: Conditional Display (A)
+    - type: subtitle
+      label: This section can be externally controlled by the value of checkbox_a
+    - type: string-input
+      variable: input_a
+      placeholder: "Override w/ input_a"
+  - name: domain_name
+    show_if: ingress.custom_domain
+    contents:
+    - type: array-input
+      variable: ingress.hosts
+      label: Domain Name
+- name: env
+  label: Environment
+  sections:
+  - name: env_vars
+    contents:
+    - type: heading
+      label: Environment Variables
+    - type: subtitle
+      label: Set environment variables for your secrets and environment-specific configuration.
+    - type: env-key-value-array
+      label: 
+      variable: container.env.normal
+- name: advanced
+  label: Advanced
+  sections:
+  - name: advanced
+    contents:
+    - type: heading
+      label: Some Header
+    - type: subtitle
+      label: Some helper text
 `;

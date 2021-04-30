@@ -662,10 +662,11 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
               tabOptions={this.state.tabOptions}
               isInModal={true}
               renderTabContents={this.renderTabContents}
-              onSubmit={(values: any) => {
-                alert("Check console output.");
-                console.log("Raw submission values:");
-                console.log(values);
+              onSubmit={this.onSubmit}
+              saveValuesStatus={this.state.saveValuesStatus}
+              externalValues={{
+                namespace: this.props.namespace,
+                clusterId: this.context.currentCluster.id,
               }}
               color={this.state.isPreview ? "#f5cb42" : null}
               addendum={

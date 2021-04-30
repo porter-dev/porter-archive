@@ -21,9 +21,7 @@ type PropsType = {
   setMetaState?: (key: string, value: any) => void;
   handleEnvChange?: (x: any) => void;
   disabled?: boolean;
-  namespace?: string;
-  clusterId?: number;
-  procfileProcess?: string;
+  externalValues?: any;
 };
 
 type StateType = any;
@@ -31,17 +29,23 @@ type StateType = any;
 // Requires an internal representation unlike other values components because metaState value underdetermines input order
 export default class ValuesForm extends Component<PropsType, StateType> {
   getInputValue = (item: FormElement) => {
-    let key = item.name || item.variable;
-    let value = this.props.metaState[key]?.value;
+    if (item) {
+      let key = item.name || item.variable;
+      let value = this.props.metaState[key]?.value;
 
-    if (item.settings && item.settings.unit && value && value.includes) {
-      value = value.split(item.settings.unit)[0];
+      if (item.settings && item.settings.unit && value && value.includes) {
+        value = value.split(item.settings.unit)[0];
+      }
+      return value;
     }
-    return value;
   };
 
   renderSection = (section: Section) => {
     return section.contents.map((item: FormElement, i: number) => {
+      if (!item) {
+        return;
+      }
+
       // If no name is assigned use values.yaml variable as identifier
       let key = item.name || item.variable;
 
@@ -84,8 +88,7 @@ export default class ValuesForm extends Component<PropsType, StateType> {
             <KeyValueArray
               key={key}
               envLoader={true}
-              namespace={this.props.namespace}
-              clusterId={this.props.clusterId}
+              externalValues={this.props.externalValues}
               values={this.props.metaState[key]?.value}
               setValues={(x: any) => {
                 this.props.setMetaState(key, x);
@@ -107,20 +110,9 @@ export default class ValuesForm extends Component<PropsType, StateType> {
           return (
             <KeyValueArray
               key={key}
-              namespace={this.props.namespace}
-              clusterId={this.props.clusterId}
+              externalValues={this.props.externalValues}
               values={this.props.metaState[key]?.value}
-              setValues={(x: any) => {
-                this.props.setMetaState(key, x);
-
-                // Need to pull env vars out of form.yaml for createGHA build env vars
-                if (
-                  this.props.handleEnvChange &&
-                  key === "container.env.normal"
-                ) {
-                  //this.props.handleEnvChange(x);
-                }
-              }}
+              setValues={(x: any) => this.props.setMetaState(key, x)}
               label={item.label}
               disabled={this.props.disabled}
             />
@@ -141,6 +133,7 @@ export default class ValuesForm extends Component<PropsType, StateType> {
           return (
             <InputRow
               key={key}
+              placeholder={item.placeholder}
               isRequired={item.required}
               type="text"
               value={this.getInputValue(item)}
@@ -178,6 +171,7 @@ export default class ValuesForm extends Component<PropsType, StateType> {
             <InputRow
               key={key}
               isRequired={item.required}
+              placeholder={item.placeholder}
               type="number"
               value={this.getInputValue(item)}
               setValue={(x: number) => {
@@ -273,7 +267,10 @@ export default class ValuesForm extends Component<PropsType, StateType> {
       return this.props.sections.map((section: Section, i: number) => {
         // Hide collapsible section if deciding field is false
         if (section.show_if) {
-          if (this.props.metaState[section.show_if]?.value === false) {
+          if (
+            !this.props.metaState[section.show_if] || 
+            this.props.metaState[section.show_if].value === false
+          ) {
             return null;
           }
         }

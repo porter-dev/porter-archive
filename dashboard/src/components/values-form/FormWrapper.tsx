@@ -1,42 +1,59 @@
 import React, { Component } from "react";
 import styled from "styled-components";
+import _ from "lodash";
 
 import { Section, FormElement } from "shared/types";
 import { Context } from "shared/Context";
 import TabRegion from "components/TabRegion";
 import ValuesForm from "components/values-form/ValuesForm";
-import _ from "lodash";
-
 import SaveButton from "../SaveButton";
 
 type PropsType = {
-  showStateDebugger?: boolean;
   formData: any;
   onSubmit?: (formValues: any) => void;
   saveValuesStatus?: string | null;
-  isInModal?: boolean;
+
+  // Handle additional non-form tabs
   renderTabContents?: (currentTab: string) => any;
   tabOptions?: any[];
+  tabOptionsOnly?: boolean;
+
+  // Allow external control of state
+  valuesToOverride?: any;
+  clearValuesToOverride?: () => void;
+
+  // External values made available to all child components
+  externalValues?: any;
+
+  // Display and debugger settings
+  isInModal?: boolean;
+  isReadOnly?: boolean;
+  showStateDebugger?: boolean;
 
   // TabRegion props to pass through
   color?: string;
   addendum?: any;
-  // overrideValues?: any;
 };
 
 type StateType = {
-  currentTab: string;
-  tabOptions: { value: string; label: string }[];
   metaState: any;
   requiredFields: string[];
+  currentTab: string;
+  tabOptions: { value: string; label: string }[];
 };
 
+/**
+ * Renders from raw JSON form data and manages form state.
+ * 
+ * To control values using external state prop in "valuesToOverride" (refer to
+ * FormDebugger or LaunchTemplate for example usage).
+ */
 export default class FormWrapper extends Component<PropsType, StateType> {
   state = {
-    currentTab: "",
-    tabOptions: [] as { value: string; label: string }[],
     metaState: {} as any,
     requiredFields: [] as string[],
+    currentTab: "",
+    tabOptions: [] as { value: string; label: string }[],
   };
 
   updateTabs = (resetState?: boolean) => {
@@ -45,12 +62,16 @@ export default class FormWrapper extends Component<PropsType, StateType> {
       let tabs = this.props.formData?.tabs;
       let requiredFields = [] as string[];
       let metaState: any = {};
-      if (tabs) {
+      if (tabs && !this.props.tabOptionsOnly) {
         tabs.forEach((tab: any, i: number) => {
-          if (tab.name && tab.label) {
-            // If a tab is valid, first extract state
+          if (tab?.name && tab.label) {
+            // If a tab is valid, extract state
             tab.sections.forEach((section: Section, i: number) => {
-              section.contents.forEach((item: FormElement, i: number) => {
+              section?.contents.forEach((item: FormElement, i: number) => {
+                if (item === null || item === undefined) {
+                  return;
+                }
+
                 // If no name is assigned use values.yaml variable as identifier
                 let key = item.name || item.variable;
 
@@ -124,7 +145,7 @@ export default class FormWrapper extends Component<PropsType, StateType> {
       if (tabOptions.length > 0) {
         this.setState({
           tabOptions: tabOptions,
-          currentTab: tabOptions[0].value,
+          currentTab: this.state.currentTab === "" ? tabOptions[0].value : this.state.currentTab,
           metaState,
           requiredFields: requiredFields,
         });
@@ -138,7 +159,7 @@ export default class FormWrapper extends Component<PropsType, StateType> {
       let tabs = this.props.formData?.tabs;
       if (tabs) {
         tabs.forEach((tab: any, i: number) => {
-          if (tab.name && tab.label) {
+          if (tab?.name && tab.label) {
             tabOptions.push({ value: tab.name, label: tab.label });
           }
         });
@@ -161,6 +182,19 @@ export default class FormWrapper extends Component<PropsType, StateType> {
     ) {
       let formHasChanged = !_.isEqual(prevProps.formData, this.props.formData);
       this.updateTabs(formHasChanged);
+    }
+
+    // Override metaState values set from outside FormWrapper
+    if (
+      this.props.valuesToOverride &&
+      !_.isEqual(prevProps.valuesToOverride, this.props.valuesToOverride)
+    ) {
+      this.setState({ metaState: {
+        ...this.state.metaState,
+        ...this.props.valuesToOverride,
+      }}, () => {
+        this.props.clearValuesToOverride && this.props.clearValuesToOverride();
+      });
     }
   }
 
@@ -191,13 +225,15 @@ export default class FormWrapper extends Component<PropsType, StateType> {
     if (tabs) {
       let matchedTab = null as any;
       tabs.forEach((tab: any, i: number) => {
-        if (tab.name === this.state.currentTab) {
+        if (tab?.name === this.state.currentTab) {
           matchedTab = tab;
         }
       });
       if (matchedTab) {
         return (
           <ValuesForm
+            externalValues={this.props.externalValues}
+            disabled={this.props.isReadOnly}
             metaState={this.state.metaState}
             setMetaState={(key: string, value: any) => {
               let metaState: any = this.state.metaState;
@@ -243,6 +279,10 @@ export default class FormWrapper extends Component<PropsType, StateType> {
   };
 
   showSaveButton = (): boolean => {
+    if (this.props.isReadOnly || this.state.tabOptions?.length === 0) {
+      return false;
+    }
+
     // Check if current tab is among non-form tab options{
     let nonFormTabValues = this.props.tabOptions?.map((tab: any, i: number) => {
       return tab.value;

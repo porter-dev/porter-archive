@@ -107,6 +107,7 @@ func main() {
 		Repository: repo,
 		ServerConf: appConf.Server,
 		RedisConf:  &appConf.Redis,
+		CapConf: 	appConf.Capabilities,
 		DBConf:     appConf.Db,
 	})
 

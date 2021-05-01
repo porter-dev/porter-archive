@@ -40,10 +40,18 @@ export default class Navbar extends Component<PropsType, StateType> {
     }
   };
 
+  renderFeedbackButton = () => {
+    if (this.context?.capabilities?.provisioner) {
+      return (
+        <Feedback currentView={this.props.currentView} />
+      )
+    }
+  }
+
   render() {
     return (
       <StyledNavbar>
-        <Feedback currentView={this.props.currentView} />
+        {this.renderFeedbackButton()}
         <NavButton
           selected={this.state.showDropdown}
           onClick={() =>

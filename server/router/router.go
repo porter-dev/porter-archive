@@ -1352,6 +1352,13 @@ func New(a *api.App) *chi.Mux {
 				mw.ReadAccess,
 			),
 		)
+
+		// capabilities
+		r.Method(
+			"GET",
+			"/capabilities",
+			http.HandlerFunc(a.HandleGetCapabilities),
+		)
 	})
 
 	staticFilePath := a.ServerConf.StaticFilePath

@@ -210,6 +210,14 @@ func startLocal(
 		"REDIS_ENABLED=false",
 	}...)
 
+	if _, found := os.LookupEnv("GITHUB_ENABLED"); !found {
+		cmdPorter.Env = append(cmdPorter.Env, "GITHUB_ENABLED=false")
+	}
+
+	if _, found := os.LookupEnv("PROVISIONER_ENABLED"); !found {
+		cmdPorter.Env = append(cmdPorter.Env, "PROVISIONER_ENABLED=false")
+	}
+
 	cmdPorter.Stdout = os.Stdout
 	cmdPorter.Stderr = os.Stderr
 

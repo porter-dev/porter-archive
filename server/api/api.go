@@ -42,6 +42,7 @@ type AppConfig struct {
 	ServerConf config.ServerConf
 	RedisConf  *config.RedisConf
 	DBConf     config.DBConf
+	CapConf config.CapConf
 
 	// TestAgents if API is in testing mode
 	TestAgents *TestAgents
@@ -70,6 +71,9 @@ type App struct {
 
 	// config for db
 	DBConf config.DBConf
+
+	// config for capabilities
+	CapConf config.CapConf
 
 	// oauth-specific clients
 	GithubUserConf    *oauth2.Config
@@ -102,6 +106,7 @@ func New(conf *AppConfig) (*App, error) {
 		ServerConf: conf.ServerConf,
 		RedisConf:  conf.RedisConf,
 		DBConf:     conf.DBConf,
+		CapConf: 	conf.CapConf,
 		TestAgents: conf.TestAgents,
 		db:         conf.DB,
 		validator:  validator,

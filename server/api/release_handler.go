@@ -830,6 +830,8 @@ func (app *App) HandleReleaseDeployWebhook(w http.ResponseWriter, r *http.Reques
 
 	if gitAction.ID != 0 && repository == "porterdev/hello-porter" {
 		repository = gitAction.ImageRepoURI
+	} else if gitAction.ID != 0 && repository == "porterdev/hello-porter-job" {
+		repository = gitAction.ImageRepoURI
 	}
 
 	image := map[string]interface{}{}

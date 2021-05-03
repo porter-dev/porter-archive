@@ -23,6 +23,7 @@ export default class NewProject extends Component<PropsType, StateType> {
   };
 
   render() {
+    let { capabilities } = this.context;
     let { projectName } = this.state;
     return (
       <StyledNewProject>
@@ -58,7 +59,7 @@ export default class NewProject extends Component<PropsType, StateType> {
             width="470px"
           />
         </InputWrapper>
-        <ProvisionerSettings isInNewProject={true} projectName={projectName} />
+        <ProvisionerSettings isInNewProject={true} projectName={projectName} provisioner={capabilities?.provisioner} />
         <Br />
       </StyledNewProject>
     );

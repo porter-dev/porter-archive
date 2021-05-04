@@ -55,13 +55,14 @@ export default class Main extends Component<PropsType, StateType> {
         }
       })
       .catch((err) => this.setState({ isLoggedIn: false, loading: false }));
-    
-    api.getCapabilities("", {}, {})
-    .then((res) => {
-      console.log(res.data)
-      this.setState({local: !res.data?.provisioner})
-    })
-    .catch((err) => console.log(err));
+
+    api
+      .getCapabilities("", {}, {})
+      .then((res) => {
+        console.log(res.data);
+        this.setState({ local: !res.data?.provisioner });
+      })
+      .catch((err) => console.log(err));
   }
 
   initialize = () => {
@@ -109,7 +110,11 @@ export default class Main extends Component<PropsType, StateType> {
     }
 
     // if logged in but not verified, block until email verification
-    if (!this.state.local && this.state.isLoggedIn && !this.state.isEmailVerified) {
+    if (
+      !this.state.local &&
+      this.state.isLoggedIn &&
+      !this.state.isEmailVerified
+    ) {
       return (
         <Switch>
           <Route

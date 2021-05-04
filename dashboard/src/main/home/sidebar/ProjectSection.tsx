@@ -1,6 +1,6 @@
 import React, { Component } from "react";
 import styled from "styled-components";
-import gradient from "assets/gradient.jpg";
+import gradient from "assets/gradient.png";
 
 import { Context } from "shared/Context";
 import { ProjectType } from "shared/types";
@@ -210,6 +210,8 @@ const Letter = styled.div`
   height: 100%;
   width: 100%;
   position: absolute;
+  padding-bottom: 2px;
+  font-weight: 500;
   background: #00000028;
   top: 0;
   left: 0;

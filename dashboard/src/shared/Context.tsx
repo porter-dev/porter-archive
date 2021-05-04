@@ -65,7 +65,7 @@ class ContextProvider extends Component {
     },
     capabilities: null as CapabilityType,
     setCapabilities: (capabilities: CapabilityType) => {
-      this.setState({ capabilities })
+      this.setState({ capabilities });
     },
     clearContext: () => {
       this.setState({

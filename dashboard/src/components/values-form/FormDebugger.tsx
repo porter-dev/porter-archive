@@ -3,6 +3,7 @@ import styled from "styled-components";
 import AceEditor from "react-ace";
 import FormWrapper from "components/values-form/FormWrapper";
 import CheckboxRow from "components/values-form/CheckboxRow";
+import InputRow from "components/values-form/InputRow";
 import yaml from "js-yaml";
 
 import "shared/ace-porter-theme";
@@ -21,6 +22,7 @@ type StateType = {
   showStateDebugger: boolean;
   valuesToOverride: any;
   checkbox_a: boolean;
+  input_a: string;
   isReadOnly: boolean;
 };
 
@@ -40,6 +42,7 @@ export default class FormDebugger extends Component<PropsType, StateType> {
       },
     } as any,
     checkbox_a: true,
+    input_a: "",
     isReadOnly: false,
   };
 
@@ -123,12 +126,32 @@ export default class FormDebugger extends Component<PropsType, StateType> {
 
               // Override the form value for checkbox_a
               valuesToOverride: {
+                ...this.state.valuesToOverride,
                 checkbox_a: {
                   value: !this.state.checkbox_a,
                 },
               },
             })
           }
+        />
+        <InputRow
+          type="string"
+          value={this.state.input_a}
+          setValue={(x: string) =>
+            this.setState({
+              input_a: x,
+
+              // Override the form value for input_a
+              valuesToOverride: {
+                ...this.state.valuesToOverride,
+                input_a: {
+                  value: x,
+                },
+              },
+            })
+          }
+          label={"input_a"}
+          placeholder="ex: override text"
         />
 
         <Heading>🎨 Rendered Form</Heading>

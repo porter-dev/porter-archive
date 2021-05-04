@@ -280,7 +280,7 @@ export default class DOFormSection extends Component<PropsType, StateType> {
             .
           </Helper>
           <CheckboxRow
-            required={true}
+            isRequired={true}
             checked={this.state.provisionConfirmed}
             toggle={() =>
               this.setState({

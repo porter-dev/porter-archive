@@ -104,10 +104,12 @@ export interface FormElement {
   required?: boolean;
   name?: string;
   variable?: string;
+  placeholder?: string;
   value?: any;
   settings?: {
     default?: number | string | boolean;
     options?: any[];
+    omitUnitFromValue?: boolean;
     unit?: string;
   };
 }

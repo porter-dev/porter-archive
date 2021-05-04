@@ -230,9 +230,6 @@ export default class ExpandedJobChart extends Component<PropsType, StateType> {
 
       return date2.getTime() - date1.getTime();
     });
-
-    console.log("JOBS ARE", jobs);
-
     this.setState({ jobs });
   };
 
@@ -408,11 +405,6 @@ export default class ExpandedJobChart extends Component<PropsType, StateType> {
               isInModal={true}
               renderTabContents={this.renderTabContents}
               tabOptionsOnly={true}
-              onSubmit={(values: any) => {
-                alert("Check console output.");
-                console.log("Raw submission values:");
-                console.log(values);
-              }}
             />
           </BodyWrapper>
         </StyledExpandedChart>
@@ -610,6 +602,7 @@ const StyledExpandedChart = styled.div`
   animation-fill-mode: forwards;
   padding: 25px;
   display: flex;
+  overflow: hidden;
   flex-direction: column;
 
   @keyframes floatIn {

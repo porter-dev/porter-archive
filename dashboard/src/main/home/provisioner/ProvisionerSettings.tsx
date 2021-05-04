@@ -52,7 +52,6 @@ class NewProject extends Component<PropsType, StateType> {
     }
 
     let renderSkipHelper = () => {
-
       if (!this.props.provisioner) {
         return;
       }
@@ -139,7 +138,9 @@ class NewProject extends Component<PropsType, StateType> {
     let { selectedProvider } = this.state;
     let { isInNewProject } = this.props;
     let { provisioner } = this.props;
-    let helper = provisioner ? "Note: Provisioning can take up to 15 minutes" : ""
+    let helper = provisioner
+      ? "Note: Provisioning can take up to 15 minutes"
+      : "";
 
     if (isInNewProject && !selectedProvider) {
       return (
@@ -161,24 +162,22 @@ class NewProject extends Component<PropsType, StateType> {
             helper={helper}
           />
         </>
-      )
+      );
     }
-  }
+  };
 
   componentDidMount() {
     let { provisioner } = this.props;
 
     if (!provisioner) {
-      this.setState({selectedProvider: "skipped"})
+      this.setState({ selectedProvider: "skipped" });
     }
   }
 
   componentDidUpdate(prevProps: PropsType) {
-    if (
-      prevProps.provisioner !== this.props.provisioner
-    ) {
+    if (prevProps.provisioner !== this.props.provisioner) {
       if (!this.props.provisioner) {
-        this.setState({selectedProvider: "skipped"})
+        this.setState({ selectedProvider: "skipped" });
       }
     }
   }
@@ -194,22 +193,18 @@ class NewProject extends Component<PropsType, StateType> {
         <>
           Select your hosting backend:<Required>*</Required>
         </>
-      )
+      );
     } else {
-      return (
-        "Need a cluster? Provision through Porter:"
-      )
+      return "Need a cluster? Provision through Porter:";
     }
-  }
+  };
 
   render() {
     let { selectedProvider } = this.state;
 
     return (
       <StyledProvisionerSettings>
-        <Helper>
-          {this.renderHelperText()}
-        </Helper>
+        <Helper>{this.renderHelperText()}</Helper>
         {!selectedProvider ? (
           <BlockList>
             {providers.map((provider: string, i: number) => {

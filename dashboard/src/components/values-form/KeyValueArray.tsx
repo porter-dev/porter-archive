@@ -14,8 +14,7 @@ type PropsType = {
   setValues: (x: any) => void;
   width?: string;
   disabled?: boolean;
-  namespace?: string;
-  clusterId?: number;
+  externalValues?: any;
   envLoader?: boolean;
   fileUpload?: boolean;
   secretOption?: boolean;
@@ -153,8 +152,8 @@ export default class KeyValueArray extends Component<PropsType, StateType> {
           height="342px"
         >
           <LoadEnvGroupModal
-            namespace={this.props.namespace}
-            clusterId={this.props.clusterId}
+            namespace={this.props.externalValues?.namespace}
+            clusterId={this.props.externalValues?.clusterId}
             closeModal={() => this.setState({ showEnvModal: false })}
             setValues={(values: any) => {
               this.props.setValues(values);
@@ -275,7 +274,7 @@ export default class KeyValueArray extends Component<PropsType, StateType> {
                 <i className="material-icons">add</i> Add Row
               </AddRowButton>
               <Spacer />
-              {this.props.namespace && this.props.envLoader && (
+              {this.props.externalValues?.namespace && this.props.envLoader && (
                 <LoadButton
                   onClick={() =>
                     this.setState({ showEnvModal: !this.state.showEnvModal })

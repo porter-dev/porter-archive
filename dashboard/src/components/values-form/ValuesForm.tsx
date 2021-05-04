@@ -81,6 +81,7 @@ export default class ValuesForm extends Component<PropsType, StateType> {
           return (
             <CheckboxRow
               key={key}
+              disabled={this.props.disabled}
               isRequired={item.required}
               checked={this.props.metaState[key]?.value}
               toggle={() =>

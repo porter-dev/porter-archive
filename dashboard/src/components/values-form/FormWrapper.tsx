@@ -56,7 +56,7 @@ export default class FormWrapper extends Component<PropsType, StateType> {
     tabOptions: [] as { value: string; label: string }[],
   };
 
-  updateTabs = (resetState?: boolean) => {
+  updateTabs = (resetState?: boolean, callback?: any) => {
     if (resetState) {
       let tabOptions = [] as { value: string; label: string }[];
       let tabs = this.props.formData?.tabs;
@@ -85,7 +85,9 @@ export default class FormWrapper extends Component<PropsType, StateType> {
                 let key = item.name || item.variable;
 
                 let def =
-                  item.settings && item.settings.unit && !item.settings.omitUnitFromValue
+                  item.settings &&
+                  item.settings.unit &&
+                  !item.settings.omitUnitFromValue
                     ? `${item.settings.default}${item.settings.unit}`
                     : item.settings?.default;
                 def = (item.value && item.value[0]) || def;
@@ -152,17 +154,20 @@ export default class FormWrapper extends Component<PropsType, StateType> {
         tabOptions = tabOptions.concat(this.props.tabOptions);
       }
       if (tabOptions.length > 0) {
-        this.setState({
-          tabOptions: tabOptions,
-          currentTab:
-            this.state.currentTab === ""
-              ? tabOptions[0].value
-              : this.state.currentTab,
-          metaState,
-          requiredFields: requiredFields,
-        });
+        this.setState(
+          {
+            tabOptions: tabOptions,
+            currentTab:
+              this.state.currentTab === ""
+                ? tabOptions[0].value
+                : this.state.currentTab,
+            metaState,
+            requiredFields: requiredFields,
+          },
+          callback
+        );
       } else {
-        this.setState({ tabOptions });
+        this.setState({ tabOptions }, callback);
       }
     } else {
       // TODO: refactor by consolidating w/ above
@@ -179,24 +184,25 @@ export default class FormWrapper extends Component<PropsType, StateType> {
       if (this.props.tabOptions?.length > 0) {
         tabOptions = tabOptions.concat(this.props.tabOptions);
       }
-      this.setState({ tabOptions });
+      this.setState({ tabOptions }, callback);
     }
   };
 
   componentDidMount() {
-    console.log(this.props.formData);
-    this.setState(
-      {
-        metaState: {
-          ...this.state.metaState,
-          ...this.props.valuesToOverride,
+    this.updateTabs(true, () => {
+      this.setState(
+        {
+          metaState: {
+            ...this.state.metaState,
+            ...this.props.valuesToOverride,
+          },
         },
-      },
-      () => {
-        this.updateTabs(true);
-        this.props.clearValuesToOverride && this.props.clearValuesToOverride();
-      }
-    );
+        () => {
+          this.props.clearValuesToOverride &&
+            this.props.clearValuesToOverride();
+        }
+      );
+    });
   }
 
   componentDidUpdate(prevProps: any) {

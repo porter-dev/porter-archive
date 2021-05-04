@@ -109,6 +109,7 @@ export interface FormElement {
   settings?: {
     default?: number | string | boolean;
     options?: any[];
+    omitUnitFromValue?: boolean;
     unit?: string;
   };
 }

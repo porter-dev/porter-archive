@@ -6,6 +6,7 @@ type PropsType = {
   checked: boolean;
   toggle: () => void;
   isRequired?: boolean;
+  disabled?: boolean;
 };
 
 type StateType = {};
@@ -14,7 +15,10 @@ export default class CheckboxRow extends Component<PropsType, StateType> {
   render() {
     return (
       <StyledCheckboxRow>
-        <CheckboxWrapper onClick={this.props.toggle}>
+        <CheckboxWrapper
+          disabled={this.props.disabled}
+          onClick={!this.props.disabled && this.props.toggle}
+        >
           <Checkbox checked={this.props.checked}>
             <i className="material-icons">done</i>
           </Checkbox>
@@ -31,10 +35,10 @@ const Required = styled.section`
   color: #fc4976;
 `;
 
-const CheckboxWrapper = styled.div`
+const CheckboxWrapper = styled.div<{ disabled?: boolean }>`
   display: flex;
   align-items: center;
-  cursor: pointer;
+  cursor: ${(props) => (props.disabled ? "not-allowed" : "pointer")};
   font-size: 13px;
   :hover {
     > div {
@@ -43,14 +47,13 @@ const CheckboxWrapper = styled.div`
   }
 `;
 
-const Checkbox = styled.div`
+const Checkbox = styled.div<{ checked: boolean }>`
   width: 16px;
   height: 16px;
   border: 1px solid #ffffff55;
   margin: 1px 10px 0px 1px;
   border-radius: 3px;
-  background: ${(props: { checked: boolean }) =>
-    props.checked ? "#ffffff22" : "#ffffff11"};
+  background: ${(props) => (props.checked ? "#ffffff22" : "#ffffff11")};
   display: flex;
   align-items: center;
   justify-content: center;
@@ -58,7 +61,7 @@ const Checkbox = styled.div`
   > i {
     font-size: 12px;
     padding-left: 0px;
-    display: ${(props: { checked: boolean }) => (props.checked ? "" : "none")};
+    display: ${(props) => (props.checked ? "" : "none")};
   }
 `;
 

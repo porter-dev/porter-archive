@@ -163,6 +163,7 @@ func executeRun(config *rest.Config, namespace, name string, args []string) erro
 	t := term.TTY{
 		In:  os.Stdin,
 		Out: os.Stdout,
+		Raw: true,
 	}
 
 	fn := func() error {

@@ -34,9 +34,11 @@ export default class InputRow extends Component<PropsType, StateType> {
     let { label, value, type, unit, placeholder, width } = this.props;
     return (
       <StyledInputRow>
-        <Label>
-          {label} <Required>{this.props.isRequired ? " *" : null}</Required>
-        </Label>
+        {label && (
+          <Label>
+            {label} <Required>{this.props.isRequired ? " *" : null}</Required>
+          </Label>
+        )}
         <InputWrapper>
           <Input
             readOnly={this.state.readOnly}

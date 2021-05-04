@@ -85,7 +85,7 @@ export default class FormWrapper extends Component<PropsType, StateType> {
                 let key = item.name || item.variable;
 
                 let def =
-                  item.settings && item.settings.unit
+                  item.settings && item.settings.unit && !item.settings.omitUnitFromValue
                     ? `${item.settings.default}${item.settings.unit}`
                     : item.settings?.default;
                 def = (item.value && item.value[0]) || def;
@@ -119,7 +119,7 @@ export default class FormWrapper extends Component<PropsType, StateType> {
                     value = def || {};
                     break;
                   case "number-input":
-                    value = def.toString() ? def : "";
+                    value = def?.toString() ? def : "";
                     break;
                   case "select":
                     value = def || item.settings.options[0].value;

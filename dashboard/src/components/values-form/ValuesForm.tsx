@@ -33,7 +33,13 @@ export default class ValuesForm extends Component<PropsType, StateType> {
       let key = item.name || item.variable;
       let value = this.props.metaState[key]?.value;
 
-      if (item.settings && item.settings.unit && value && value.includes) {
+      if (
+        item.settings &&
+        item.settings.unit &&
+        value &&
+        value.includes &&
+        !item.settings.omitUnitFromValue
+      ) {
         value = value.split(item.settings.unit)[0];
       }
       return value;
@@ -138,7 +144,13 @@ export default class ValuesForm extends Component<PropsType, StateType> {
               type="text"
               value={this.getInputValue(item)}
               setValue={(x: string) => {
-                if (item.settings && item.settings.unit && x !== "") {
+                console.log("dafuq");
+                if (
+                  item.settings &&
+                  item.settings.unit &&
+                  x !== "" &&
+                  !item.settings.omitUnitFromValue
+                ) {
                   x = x + item.settings.unit;
                 }
                 this.props.setMetaState(key, x);
@@ -156,7 +168,12 @@ export default class ValuesForm extends Component<PropsType, StateType> {
               type="password"
               value={this.getInputValue(item)}
               setValue={(x: string) => {
-                if (item.settings && item.settings.unit && x !== "") {
+                if (
+                  item.settings &&
+                  item.settings.unit &&
+                  x !== "" &&
+                  !item.settings.omitUnitFromValue
+                ) {
                   x = x + item.settings.unit;
                 }
                 this.props.setMetaState(key, x);
@@ -181,7 +198,12 @@ export default class ValuesForm extends Component<PropsType, StateType> {
                 }
 
                 // Convert to string if unit is set
-                if (item.settings && item.settings.unit) {
+                console.log("huh", item);
+                if (
+                  item.settings &&
+                  item.settings.unit &&
+                  !item.settings.omitUnitFromValue
+                ) {
                   val = x.toString();
                   val = val + item.settings.unit;
                 }
@@ -229,7 +251,12 @@ export default class ValuesForm extends Component<PropsType, StateType> {
               type="text"
               value={this.getInputValue(item)}
               setValue={(x: string) => {
-                if (item.settings && item.settings.unit && x !== "") {
+                if (
+                  item.settings &&
+                  item.settings.unit &&
+                  x !== "" &&
+                  !item.settings.omitUnitFromValue
+                ) {
                   x = x + item.settings.unit;
                 }
                 this.props.setMetaState(key, btoa(x));
@@ -247,7 +274,12 @@ export default class ValuesForm extends Component<PropsType, StateType> {
               type="password"
               value={this.getInputValue(item)}
               setValue={(x: string) => {
-                if (item.settings && item.settings.unit && x !== "") {
+                if (
+                  item.settings &&
+                  item.settings.unit &&
+                  x !== "" &&
+                  !item.settings.omitUnitFromValue
+                ) {
                   x = x + item.settings.unit;
                 }
                 this.props.setMetaState(key, btoa(x));

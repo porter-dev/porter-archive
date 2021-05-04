@@ -541,17 +541,19 @@ class LaunchTemplate extends Component<PropsType, StateType> {
     if (this.state.sourceType === "") {
       return (
         <BlockList>
-          {capabilities.github && (<Block
-            onClick={() => {
-              this.setState({ sourceType: "repo" });
-            }}
-          >
-            <BlockIcon src="https://3.bp.blogspot.com/-xhNpNJJyQhk/XIe4GY78RQI/AAAAAAAAItc/ouueFUj2Hqo5dntmnKqEaBJR4KQ4Q2K3ACK4BGAYYCw/s1600/logo%2Bgit%2Bicon.png" />
-            <BlockTitle>Git Repository</BlockTitle>
-            <BlockDescription>
-              Deploy using source from a Git repo.
-            </BlockDescription>
-          </Block>)}
+          {capabilities.github && (
+            <Block
+              onClick={() => {
+                this.setState({ sourceType: "repo" });
+              }}
+            >
+              <BlockIcon src="https://3.bp.blogspot.com/-xhNpNJJyQhk/XIe4GY78RQI/AAAAAAAAItc/ouueFUj2Hqo5dntmnKqEaBJR4KQ4Q2K3ACK4BGAYYCw/s1600/logo%2Bgit%2Bicon.png" />
+              <BlockTitle>Git Repository</BlockTitle>
+              <BlockDescription>
+                Deploy using source from a Git repo.
+              </BlockDescription>
+            </Block>
+          )}
           <Block
             onClick={() => {
               this.setState({ sourceType: "registry" });

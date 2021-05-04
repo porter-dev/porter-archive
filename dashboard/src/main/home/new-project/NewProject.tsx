@@ -59,7 +59,11 @@ export default class NewProject extends Component<PropsType, StateType> {
             width="470px"
           />
         </InputWrapper>
-        <ProvisionerSettings isInNewProject={true} projectName={projectName} provisioner={capabilities?.provisioner} />
+        <ProvisionerSettings
+          isInNewProject={true}
+          projectName={projectName}
+          provisioner={capabilities?.provisioner}
+        />
         <Br />
       </StyledNewProject>
     );

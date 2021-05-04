@@ -14,11 +14,9 @@
 kill_child_procs=false
 
 while getopts ":c" opt; do
-  echo "OPT IS $opt"
   case $opt in
     c)
       kill_child_procs=true
-      echo "set kill child procs"
   esac
 done
 
@@ -46,12 +44,13 @@ graceful_shutdown() {
     # request graceful shutdown from target_pid
     kill -0 ${target_pid} 2>/dev/null && kill -TERM ${target_pid}
 
-    if $kill_child_procs; do
+    if $kill_child_procs
+    then
         for c in $(ps -o pid= --ppid $target_pid); do
           # request graceful shutdown of all children, and append to process list
           kill -0 $c 2>/dev/null && kill -TERM $c && list="$list $c" || true
         done
-    done
+    fi
 
     if [ -n "$target_pid" ]; then
         # schedule hard kill after timeout

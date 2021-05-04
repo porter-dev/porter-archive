@@ -213,7 +213,6 @@ export default class ContentsList extends Component<PropsType, StateType> {
   };
 
   renderOverlay = () => {
-    console.log(this.props.procfilePath);
     if (this.props.procfilePath) {
       let processes = this.state.processes
         ? Object.keys(this.state.processes)

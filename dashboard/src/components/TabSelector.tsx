@@ -44,6 +44,7 @@ export default class TabSelector extends Component<PropsType, StateType> {
     return (
       <StyledTabSelector>
         <TabWrapper>
+          <Line />
           {this.renderTabList()}
           <Tab lastItem={true} highlight={null}>
             {this.props.noBuffer ? null : <Buffer />}
@@ -54,6 +55,16 @@ export default class TabSelector extends Component<PropsType, StateType> {
     );
   }
 }
+
+const Line = styled.div`
+  height: 1px;
+  position: absolute;
+  top: 29px;
+  z-index: 0;
+  left: 0;
+  background: #aaaabb55;
+  width: 100%;
+`;
 
 const Buffer = styled.div`
   width: 138px;
@@ -98,7 +109,6 @@ const StyledTabSelector = styled.div`
   display: flex;
   width: calc(100% - 2px);
   align-items: center;
-  border-bottom: 1px solid #aaaabb55;
   padding-bottom: 1px;
   margin-left: 1px;
   position: relative;

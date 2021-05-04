@@ -62,7 +62,7 @@ export default class FormWrapper extends Component<PropsType, StateType> {
       let tabs = this.props.formData?.tabs;
       let requiredFields = [] as string[];
       let metaState: any = {};
-      if (tabs && !this.props.tabOptionsOnly) {
+      if (tabs) {
         tabs.forEach((tab: any, i: number) => {
           if (tab?.name && tab.label) {
             // If a tab is valid, extract state
@@ -146,7 +146,9 @@ export default class FormWrapper extends Component<PropsType, StateType> {
                 }
               });
             });
-            tabOptions.push({ value: tab.name, label: tab.label });
+            if (!this.props.tabOptionsOnly) {
+              tabOptions.push({ value: tab.name, label: tab.label });
+            }
           }
         });
       }

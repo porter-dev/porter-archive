@@ -74,6 +74,8 @@ export default class ExpandedJobChart extends Component<PropsType, StateType> {
         }
       )
       .then((res) => {
+        console.log("Charts for breakfast");
+        console.log(res.data);
         this.setState({ currentChart: res.data, loading: false }, () => {
           this.updateTabs();
         });

@@ -150,7 +150,7 @@ export default class JobResource extends Component<PropsType, StateType> {
             <MaterialIconTray disabled={false}>
               {/* <i className="material-icons"
               onClick={this.editButtonOnClick}>mode_edit</i> */}
-              <i className="material-icons" onClick={this.expandJob}>
+              <i className="material-icons">
                 {this.state.expanded ? "expand_less" : "expand_more"}
               </i>
             </MaterialIconTray>
@@ -231,6 +231,7 @@ const MainRow = styled.div`
 
 const MaterialIconTray = styled.div`
   max-width: 60px;
+  user-select: none;
   display: flex;
   align-items: center;
   justify-content: space-between;

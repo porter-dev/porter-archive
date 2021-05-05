@@ -270,8 +270,6 @@ class LaunchTemplate extends Component<PropsType, StateType> {
       }
     }
 
-    console.log("VALUES ARE", values);
-
     api
       .deployTemplate(
         "<token>",

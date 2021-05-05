@@ -72,7 +72,7 @@ graceful_shutdown() {
     [ -z "$target_pid" ] && echo "Exit Gracefully (0)" && exit 0 || echo "Dirty Exit (1)" && exit 1
 }
 
-trap 'graceful_shutdown $1 $2' SIGTERM SIGINT SIGHUP
+trap 'graceful_shutdown $grace_period_seconds $target' SIGTERM SIGINT SIGHUP
 
 echo "waiting for job kill signal..."
 sleep infinity &

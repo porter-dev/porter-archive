@@ -230,8 +230,6 @@ export default class ExpandedJobChart extends Component<PropsType, StateType> {
       return date2.getTime() - date1.getTime();
     });
 
-    console.log("JOBS ARE", jobs);
-
     this.setState({ jobs });
   };
 

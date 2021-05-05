@@ -59,7 +59,6 @@ export default class Main extends Component<PropsType, StateType> {
     api
       .getCapabilities("", {}, {})
       .then((res) => {
-        console.log(res.data);
         this.setState({ local: !res.data?.provisioner });
       })
       .catch((err) => console.log(err));

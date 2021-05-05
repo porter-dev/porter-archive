@@ -145,7 +145,6 @@ export default class ValuesForm extends Component<PropsType, StateType> {
               type="text"
               value={this.getInputValue(item)}
               setValue={(x: string) => {
-                console.log("dafuq");
                 if (
                   item.settings &&
                   item.settings.unit &&
@@ -199,7 +198,6 @@ export default class ValuesForm extends Component<PropsType, StateType> {
                 }
 
                 // Convert to string if unit is set
-                console.log("huh", item);
                 if (
                   item.settings &&
                   item.settings.unit &&

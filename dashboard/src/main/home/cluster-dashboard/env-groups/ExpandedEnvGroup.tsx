@@ -514,6 +514,7 @@ const StyledExpandedChart = styled.div`
   position: absolute;
   top: 25px;
   left: 25px;
+  overflow: hidden;
   border-radius: 10px;
   background: #26272f;
   box-shadow: 0 5px 12px 4px #00000033;

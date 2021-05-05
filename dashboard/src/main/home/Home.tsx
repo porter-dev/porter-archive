@@ -221,8 +221,10 @@ class Home extends Component<PropsType, StateType> {
     let { user } = this.context;
 
     // Initialize Highlight
-    H.init("y2d13lgr");
-    H.identify(user.email, { id: user.id });
+    if (window.location.href.includes("dashboard.getporter.dev")) {
+      H.init("y2d13lgr");
+      H.identify(user.email, { id: user.id });
+    }
 
     // Handle redirect from DO
     let queryString = window.location.search;

@@ -330,7 +330,20 @@ export default class FormWrapper extends Component<PropsType, StateType> {
       return false;
     }
 
-    // Check if current tab is among non-form tab options{
+    let tabs = this.props.formData?.tabs;
+    if (tabs) {
+      let matchedTab = null as any;
+      tabs.forEach((tab: any, i: number) => {
+        if (tab?.name === this.state.currentTab) {
+          matchedTab = tab;
+        }
+      });
+      if (matchedTab) {
+        return true;
+      }
+    }
+
+    // Check if current tab is among non-form tab options
     let nonFormTabValues = this.props.tabOptions?.map((tab: any, i: number) => {
       return tab.value;
     });

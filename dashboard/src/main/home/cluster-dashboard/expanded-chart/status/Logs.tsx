@@ -29,10 +29,14 @@ export default class Logs extends Component<PropsType, StateType> {
     if (smooth) {
       this.parentRef.current.lastElementChild.scrollIntoView({
         behavior: "smooth",
+        block: "nearest",
+        inline: "start",
       });
     } else {
       this.parentRef.current.lastElementChild.scrollIntoView({
         behavior: "auto",
+        block: "nearest",
+        inline: "start",
       });
     }
   };

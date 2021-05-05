@@ -402,6 +402,7 @@ export default class ExpandedJobChart extends Component<PropsType, StateType> {
               formData={this.state.formData}
               tabOptions={this.state.tabOptions}
               isInModal={true}
+              isReadOnly={true}
               renderTabContents={this.renderTabContents}
               tabOptionsOnly={true}
               onSubmit={this.handleSaveValues}

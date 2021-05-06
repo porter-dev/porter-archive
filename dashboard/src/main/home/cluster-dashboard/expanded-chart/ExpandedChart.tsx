@@ -876,6 +876,7 @@ const Title = styled.div`
   font-weight: 500;
   display: flex;
   align-items: center;
+  user-select: text;
 `;
 
 const TitleSection = styled.div`

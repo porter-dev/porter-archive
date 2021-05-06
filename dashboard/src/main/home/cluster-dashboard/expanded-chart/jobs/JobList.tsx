@@ -24,7 +24,7 @@ export default class JobList extends Component<PropsType, StateType> {
       return (
         <>
           {this.props.jobs.map((job: any, i: number) => {
-            return <JobResource key={i} job={job} />;
+            return <JobResource key={job?.metadata?.name} job={job} />;
           })}
         </>
       );

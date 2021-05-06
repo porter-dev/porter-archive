@@ -400,11 +400,13 @@ export default class ExpandedJobChart extends Component<PropsType, StateType> {
           <BodyWrapper>
             <FormWrapper
               formData={this.state.formData}
-              isReadOnly={true}
               tabOptions={this.state.tabOptions}
               isInModal={true}
+              isReadOnly={true}
               renderTabContents={this.renderTabContents}
               tabOptionsOnly={true}
+              onSubmit={this.handleSaveValues}
+              saveValuesStatus={this.state.saveValuesStatus}
             />
           </BodyWrapper>
         </StyledExpandedChart>

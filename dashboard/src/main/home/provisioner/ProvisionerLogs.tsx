@@ -46,18 +46,18 @@ class ProvisionerLogs extends Component<PropsType, StateType> {
       return <Message>Please select a resource.</Message>;
     }
 
-    if (selectedInfra.status == "destroyed") {
-      return (
-        <Message>
-          This resource has been auto-destroyed due to an error during
-          provisioning.
-          <div>
-            Please check with your cloud provider to make sure all resources
-            have been properly destroyed.
-          </div>
-        </Message>
-      );
-    }
+    // if (selectedInfra.status == "destroyed") {
+    //   return (
+    //     <Message>
+    //       This resource has been auto-destroyed due to an error during
+    //       provisioning.
+    //       <div>
+    //         Please check with your cloud provider to make sure all resources
+    //         have been properly destroyed.
+    //       </div>
+    //     </Message>
+    //   );
+    // }
 
     if (logs.length == 0) {
       switch (selectedInfra.status) {

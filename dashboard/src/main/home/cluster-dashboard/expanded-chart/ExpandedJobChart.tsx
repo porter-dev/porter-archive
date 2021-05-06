@@ -14,8 +14,7 @@ import Loading from "components/Loading";
 import TabRegion from "components/TabRegion";
 import JobList from "./jobs/JobList";
 import SettingsSection from "./SettingsSection";
-import ValuesWrapper from "components/values-form/ValuesWrapper";
-import ValuesForm from "components/values-form/ValuesForm";
+import FormWrapper from "components/values-form/FormWrapper";
 
 type PropsType = {
   namespace: string;
@@ -36,6 +35,8 @@ type StateType = {
   showDeleteOverlay: boolean;
   deleting: boolean;
   saveValuesStatus: string | null;
+  formData: any;
+  valuesToOverride: any;
 };
 
 export default class ExpandedJobChart extends Component<PropsType, StateType> {
@@ -50,6 +51,8 @@ export default class ExpandedJobChart extends Component<PropsType, StateType> {
     showDeleteOverlay: false,
     deleting: false,
     saveValuesStatus: null as string | null,
+    formData: {} as any,
+    valuesToOverride: {} as any,
   };
 
   // Retrieve full chart data (includes form and values)
@@ -233,9 +236,7 @@ export default class ExpandedJobChart extends Component<PropsType, StateType> {
     this.setState({ jobs });
   };
 
-  renderTabContents = () => {
-    let currentTab = this.state.currentTab;
-
+  renderTabContents = (currentTab: string) => {
     switch (currentTab) {
       case "jobs":
         return (
@@ -260,48 +261,25 @@ export default class ExpandedJobChart extends Component<PropsType, StateType> {
           />
         );
       default:
-        if (this.state.tabOptions && currentTab && currentTab.includes("@")) {
-          return (
-            <TabWrapper>
-              <ValuesWrapper
-                formTabs={this.state.tabOptions}
-                onSubmit={this.handleSaveValues}
-                saveValuesStatus={this.state.saveValuesStatus}
-                isInModal={true}
-                currentTab={currentTab}
-                renderSaveButton={false}
-              >
-                {(metaState: any, setMetaState: any) => {
-                  return this.state.tabOptions.map((tab: any, i: number) => {
-                    // If tab is current, render
-                    if (tab.value === currentTab) {
-                      return (
-                        <ValuesForm
-                          key={i}
-                          metaState={metaState}
-                          setMetaState={setMetaState}
-                          sections={tab.sections}
-                          disabled={true}
-                        />
-                      );
-                    }
-                  });
-                }}
-              </ValuesWrapper>
-              <SaveButton
-                text="Rerun Job"
-                onClick={() => this.handleSaveValues()}
-                status={this.state.saveValuesStatus}
-                makeFlush={true}
-              />
-            </TabWrapper>
-          );
-        }
     }
   };
 
   updateTabs() {
     let formData = this.state.currentChart.form;
+    if (formData) {
+      this.setState(
+        {
+          formData,
+        },
+        () =>
+          this.setState({
+            // TODO: handle passing in override values at same time as formData
+            valuesToOverride: {
+              showCronToggle: { value: false },
+            },
+          })
+      );
+    }
     let tabOptions = [] as any[];
 
     // Append universal tabs
@@ -310,7 +288,7 @@ export default class ExpandedJobChart extends Component<PropsType, StateType> {
     if (formData) {
       formData.tabs.map((tab: any, i: number) => {
         tabOptions.push({
-          value: "@" + tab.name,
+          value: tab.name,
           label: tab.label,
           sections: tab.sections,
           context: tab.context,
@@ -433,14 +411,21 @@ export default class ExpandedJobChart extends Component<PropsType, StateType> {
             </CloseButton>
           </HeaderWrapper>
 
-          <TabRegion
-            currentTab={this.state.currentTab}
-            setCurrentTab={(x: string) => this.setState({ currentTab: x })}
-            options={this.state.tabOptions}
-            color={null}
-          >
-            {this.renderTabContents()}
-          </TabRegion>
+          <BodyWrapper>
+            <FormWrapper
+              valuesToOverride={this.state.valuesToOverride}
+              clearValuesToOverride={() =>
+                this.setState({ valuesToOverride: {} })
+              }
+              formData={this.state.formData}
+              tabOptions={this.state.tabOptions}
+              isInModal={true}
+              renderTabContents={this.renderTabContents}
+              tabOptionsOnly={true}
+              onSubmit={this.handleSaveValues}
+              saveValuesStatus={this.state.saveValuesStatus}
+            />
+          </BodyWrapper>
         </StyledExpandedChart>
       </>
     );
@@ -448,6 +433,12 @@ export default class ExpandedJobChart extends Component<PropsType, StateType> {
 }
 
 ExpandedJobChart.contextType = Context;
+
+const BodyWrapper = styled.div`
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+`;
 
 const TabWrapper = styled.div`
   height: 100%;
@@ -630,6 +621,7 @@ const StyledExpandedChart = styled.div`
   animation-fill-mode: forwards;
   padding: 25px;
   display: flex;
+  overflow: hidden;
   flex-direction: column;
 
   @keyframes floatIn {

@@ -29,11 +29,12 @@ else
   target=$2
 fi  
 
+pattern="$(printf '[%s]%s' $(echo $target | cut -c 1) $(echo $target | cut -c 2-))"
+
 graceful_shutdown() {
     echo "starting graceful shutdown..."
 
     local timeout=$1
-    local pattern="$(printf '[%s]%s' $(echo $2 | cut -c 1) $(echo $2 | cut -c 2-))"
 
     echo "searching for process pattern: $pattern"
 
@@ -74,8 +75,16 @@ graceful_shutdown() {
 
 trap 'graceful_shutdown $grace_period_seconds $target' SIGTERM SIGINT SIGHUP
 
-echo "waiting for job kill signal..."
-sleep infinity &
-child=$!
+echo "waiting for job to start..."
 
-wait "$child"
+sleep 10
+
+target_pid_arr=$(ps x | grep -v './job_killer.sh' | grep "$pattern" | awk '{ printf "%d ", $1 }' | sort)
+target_pid=$target_pid_arr
+
+if [ -n "$target_pid" ]; then
+    tail --pid=$target_pid -f /dev/null &
+    child=$!
+
+    wait "$child"
+fi

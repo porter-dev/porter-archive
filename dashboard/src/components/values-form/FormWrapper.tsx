@@ -258,6 +258,10 @@ export default class FormWrapper extends Component<PropsType, StateType> {
   };
 
   isDisabled = () => {
+    if (this.props.saveValuesStatus == "loading") {
+      return true;
+    }
+
     let requiredMissing = false;
     this.state.requiredFields.forEach((requiredKey: string, i: number) => {
       if (!this.isSet(this.state.metaState[requiredKey]?.value)) {
@@ -371,7 +375,7 @@ export default class FormWrapper extends Component<PropsType, StateType> {
             text="Deploy"
             onClick={this.handleSubmit}
             status={
-              this.isDisabled()
+              this.isDisabled() && this.props.saveValuesStatus != "loading"
                 ? "Missing required fields"
                 : this.props.saveValuesStatus
             }

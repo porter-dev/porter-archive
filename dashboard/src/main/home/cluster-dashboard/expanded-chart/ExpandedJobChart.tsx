@@ -362,8 +362,6 @@ export default class ExpandedJobChart extends Component<PropsType, StateType> {
     let { currentChart } = this.state;
     let chart = currentChart;
 
-    console.log(this.state.formData)
-
     return (
       <>
         <CloseOverlay onClick={closeChart} />

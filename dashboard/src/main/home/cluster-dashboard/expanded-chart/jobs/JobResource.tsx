@@ -96,6 +96,22 @@ export default class JobResource extends Component<PropsType, StateType> {
   };
 
   renderConfigSection = () => {
+    let { job } = this.props;
+    let commandString = job?.spec?.template?.spec?.containers[0]?.command?.join(
+      " "
+    );
+    let envArray = job?.spec?.template?.spec?.containers[0]?.env;
+    let envObject = {} as any;
+    envArray &&
+      envArray.forEach((env: any, i: number) => {
+        envObject[env.name] = env.value;
+      });
+    
+    // Handle no config to show
+    if (!commandString && _.isEmpty(envObject)) {
+      return;
+    }
+
     if (!this.state.configIsExpanded) {
       return (
         <ExpandConfigBar
@@ -106,17 +122,6 @@ export default class JobResource extends Component<PropsType, StateType> {
         </ExpandConfigBar>
       );
     } else {
-      let { job } = this.props;
-      let commandString = job?.spec?.template?.spec?.containers[0]?.command?.join(
-        " "
-      );
-      let envArray = job?.spec?.template?.spec?.containers[0]?.env;
-      let envObject = {} as any;
-      envArray &&
-        envArray.forEach((env: any, i: number) => {
-          envObject[env.name] = env.value;
-        });
-
       return (
         <>
           <ExpandConfigBar
@@ -126,14 +131,23 @@ export default class JobResource extends Component<PropsType, StateType> {
             Hide Job Config
           </ExpandConfigBar>
           <ConfigSection>
-            Command: <Command>{commandString}</Command>
+            {
+              commandString ? (
+                <>Command: <Command>{commandString}</Command></>
+              ) : (
+                <DarkMatter size="-18px" />
+              )
+            }
             {!_.isEmpty(envObject) && (
-              <KeyValueArray
-                envLoader={true}
-                values={envObject}
-                label="Environment Variables:"
-                disabled={true}
-              />
+              <>
+                <KeyValueArray
+                  envLoader={true}
+                  values={envObject}
+                  label="Environment Variables:"
+                  disabled={true}
+                />
+                <DarkMatter />
+              </>
             )}
           </ConfigSection>
         </>
@@ -221,6 +235,11 @@ export default class JobResource extends Component<PropsType, StateType> {
 
 JobResource.contextType = Context;
 
+const DarkMatter = styled.div<{ size?: string }>`
+  width: 100%;
+  margin-bottom: ${props => props.size || "-13px"};
+`;
+
 const Command = styled.span`
   font-family: monospace;
   color: #aaaabb;
@@ -228,7 +247,7 @@ const Command = styled.span`
 `;
 
 const ConfigSection = styled.div`
-  padding: 30px 30px 20px;
+  padding: 20px 30px;
   font-size: 13px;
   font-weight: 500;
 `;

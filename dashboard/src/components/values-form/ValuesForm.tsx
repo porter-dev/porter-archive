@@ -47,7 +47,7 @@ export default class ValuesForm extends Component<PropsType, StateType> {
   };
 
   renderSection = (section: Section) => {
-    return section.contents.map((item: FormElement, i: number) => {
+    return section.contents?.map((item: FormElement, i: number) => {
       if (!item) {
         return;
       }
@@ -64,7 +64,7 @@ export default class ValuesForm extends Component<PropsType, StateType> {
           if (Array.isArray(item.value)) {
             return (
               <ResourceList key={key}>
-                {item.value.map((resource: any, i: number) => {
+                {item.value?.map((resource: any, i: number) => {
                   return (
                     <ExpandableResource
                       key={i}
@@ -295,7 +295,7 @@ export default class ValuesForm extends Component<PropsType, StateType> {
 
   renderFormContents = () => {
     if (this.props.metaState) {
-      return this.props.sections.map((section: Section, i: number) => {
+      return this.props.sections?.map((section: Section, i: number) => {
         // Hide collapsible section if deciding field is false
         if (section.show_if) {
           if (

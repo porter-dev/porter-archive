@@ -47,6 +47,8 @@ type StateType = {
  *
  * To control values using external state prop in "valuesToOverride" (refer to
  * FormDebugger or LaunchTemplate for example usage).
+ *
+ * TODO: Handle passing in valuesToOverride at same time as formData
  */
 export default class FormWrapper extends Component<PropsType, StateType> {
   state = {
@@ -77,7 +79,7 @@ export default class FormWrapper extends Component<PropsType, StateType> {
                   item.variable &&
                   item.settings?.default
                 ) {
-                  metaState[item.variable] = item.settings.default;
+                  metaState[item.variable] = { value: item.settings.default };
                   return;
                 }
 
@@ -211,6 +213,7 @@ export default class FormWrapper extends Component<PropsType, StateType> {
     // Override metaState values set from outside FormWrapper
     if (
       this.props.valuesToOverride &&
+      !_.isEmpty(this.props.valuesToOverride) &&
       !_.isEqual(prevProps.valuesToOverride, this.props.valuesToOverride)
     ) {
       this.setState(

@@ -11,7 +11,7 @@ import { keysIn } from "lodash";
 type PropsType = {
   label?: string;
   values: any;
-  setValues: (x: any) => void;
+  setValues?: (x: any) => void;
   width?: string;
   disabled?: boolean;
   externalValues?: any;

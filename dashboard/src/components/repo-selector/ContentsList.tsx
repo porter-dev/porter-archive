@@ -295,7 +295,6 @@ export default class ContentsList extends Component<PropsType, StateType> {
                 this.state.processes &&
                 Object.keys(this.state.processes).length > 0
               ) {
-                console.log("setting procfile");
                 this.props.setProcfilePath("./Procfile");
               }
             }}

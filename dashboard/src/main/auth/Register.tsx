@@ -38,11 +38,12 @@ export default class Register extends Component<PropsType, StateType> {
     document.addEventListener("keydown", this.handleKeyDown);
 
     // get capabilities to case on github
-    api.getCapabilities("", {}, {})
-    .then((res) => {      
-      this.setState({hasGithub: res.data?.github})
-    })
-    .catch((err) => console.log(err));
+    api
+      .getCapabilities("", {}, {})
+      .then((res) => {
+        this.setState({ hasGithub: res.data?.github });
+      })
+      .catch((err) => console.log(err));
   }
 
   componentWillUnmount() {
@@ -120,20 +121,19 @@ export default class Register extends Component<PropsType, StateType> {
       return (
         <>
           <OAuthButton onClick={this.githubRedirect}>
-              <IconWrapper>
-                <Icon src={github} />
-                Sign up with GitHub
-              </IconWrapper>
-            </OAuthButton>
-            <OrWrapper>
-              <Line />
-              <Or>or</Or>
-            </OrWrapper>
+            <IconWrapper>
+              <Icon src={github} />
+              Sign up with GitHub
+            </IconWrapper>
+          </OAuthButton>
+          <OrWrapper>
+            <Line />
+            <Or>or</Or>
+          </OrWrapper>
         </>
-      )
+      );
     }
-  }
-
+  };
 
   render() {
     let {

@@ -3,6 +3,7 @@ import { RouteComponentProps, withRouter } from "react-router";
 import styled from "styled-components";
 
 import api from "shared/api";
+import { H } from "highlight.run";
 import { Context } from "shared/Context";
 import { PorterUrl } from "shared/routing";
 import { ClusterType, ProjectType } from "shared/types";
@@ -87,19 +88,14 @@ class Home extends Component<PropsType, StateType> {
     if (!currentProject) return;
 
     api
-      .getCapabilities(
-        "<token>",
-        {},
-        {}
-      )
+      .getCapabilities("<token>", {}, {})
       .then((res) => {
-        console.log(res.data)
-        this.context.setCapabilities(res.data)
+        this.context.setCapabilities(res.data);
       })
       .catch((err) => {
-        console.log(err)
+        console.log(err);
       });
-  }
+  };
 
   getProjects = (id?: number) => {
     let { user, setProjects } = this.context;
@@ -221,6 +217,17 @@ class Home extends Component<PropsType, StateType> {
   };
 
   componentDidMount() {
+    let { user } = this.context;
+
+    // Initialize Highlight
+    if (
+      window.location.href.includes("dashboard.getporter.dev") &&
+      !user.email.includes("@getporter.dev")
+    ) {
+      H.init("y2d13lgr");
+      H.identify(user.email, { id: user.id });
+    }
+
     // Handle redirect from DO
     let queryString = window.location.search;
     let urlParams = new URLSearchParams(queryString);
@@ -269,7 +276,7 @@ class Home extends Component<PropsType, StateType> {
       return (
         <DashboardWrapper>
           <Placeholder>
-            <Bold>Porter - Getting Started</Bold>
+            <Bold>Porter - Getting</Bold>
             <br />
             <br />
             1. Navigate to{" "}

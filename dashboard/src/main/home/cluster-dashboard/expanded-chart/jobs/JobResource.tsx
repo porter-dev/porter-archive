@@ -224,9 +224,12 @@ export default class JobResource extends Component<PropsType, StateType> {
 
   renderStopButton = () => {
     if (!this.props.job.status?.succeeded && !this.props.job.status?.failed) {
-      return <i className="material-icons" onClick={this.stopJob}>
-        stop
-      </i>
+      // look for a sidecar container 
+      if (this.props.job?.spec?.template?.spec?.containers.length == 2) {
+        return <i className="material-icons" onClick={this.stopJob}>
+          stop
+        </i>
+      }
     }
   }
 

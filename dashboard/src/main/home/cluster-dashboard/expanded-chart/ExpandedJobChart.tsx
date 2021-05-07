@@ -82,13 +82,16 @@ export default class ExpandedJobChart extends Component<PropsType, StateType> {
       .then((res) => {
         let image = res.data?.config?.image?.repository;
         if (image === "porterdev/hello-porter-job") {
-          this.setState({ 
-            currentChart: res.data, 
-            loading: false,
-            imageIsPlaceholder: true,
-          }, () => {
-            this.updateTabs();
-          });
+          this.setState(
+            {
+              currentChart: res.data,
+              loading: false,
+              imageIsPlaceholder: true,
+            },
+            () => {
+              this.updateTabs();
+            }
+          );
         } else {
           this.setState({ currentChart: res.data, loading: false }, () => {
             this.updateTabs();
@@ -262,10 +265,11 @@ export default class ExpandedJobChart extends Component<PropsType, StateType> {
                 <Header>
                   <Spinner src={loading} /> This job is currently being deployed
                 </Header>
-                Navigate to the "Actions" tab of your GitHub repo to view live build logs.
+                Navigate to the "Actions" tab of your GitHub repo to view live
+                build logs.
               </TextWrap>
             </Placeholder>
-          )
+          );
         }
         return (
           <TabWrapper>
@@ -462,8 +466,7 @@ export default class ExpandedJobChart extends Component<PropsType, StateType> {
 
 ExpandedJobChart.contextType = Context;
 
-const TextWrap = styled.div`
-`;
+const TextWrap = styled.div``;
 
 const Header = styled.div`
   font-weight: 500;

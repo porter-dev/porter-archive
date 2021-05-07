@@ -220,7 +220,10 @@ class Home extends Component<PropsType, StateType> {
     let { user } = this.context;
 
     // Initialize Highlight
-    if (window.location.href.includes("dashboard.getporter.dev")) {
+    if (
+      window.location.href.includes("dashboard.getporter.dev") &&
+      !user.email.includes("@getporter.dev")
+    ) {
       H.init("y2d13lgr");
       H.identify(user.email, { id: user.id });
     }

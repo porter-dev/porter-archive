@@ -2,6 +2,7 @@ package helm
 
 import (
 	"bytes"
+	"fmt"
 	"io"
 	"net/url"
 	"regexp"
@@ -99,6 +100,74 @@ func (d *DockerSecretsPostRenderer) Run(
 	// without modification
 	if err != nil {
 		return renderedManifests, nil
+	}
+
+	// Check to see if the resources loaded into the postrenderer contain a configmap
+	// with a manifest that needs secrets generation as well. If this is the case, create and
+	// run another postrenderer for this specific manifest.
+	for i, res := range d.resources {
+		kindVal, hasKind := res["kind"]
+		if !hasKind {
+			continue
+		}
+
+		kind, ok := kindVal.(string)
+
+		if !ok {
+			continue
+		}
+
+		if kind == "ConfigMap" {
+			labelVal := getNestedResource(res, "metadata", "labels")
+
+			if labelVal == nil {
+				continue
+			}
+
+			porterLabelVal, exists := labelVal["getporter.dev/manifest"]
+
+			if !exists {
+				continue
+			}
+
+			if labelValStr, ok := porterLabelVal.(string); ok && labelValStr == "true" {
+				data := getNestedResource(res, "data")
+				manifestData, exists := data["manifest"]
+
+				if !exists {
+					continue
+				}
+
+				manifestDataStr, ok := manifestData.(string)
+
+				if !ok {
+					continue
+				}
+
+				dCopy := &DockerSecretsPostRenderer{
+					Cluster:    d.Cluster,
+					Repo:       d.Repo,
+					Agent:      d.Agent,
+					Namespace:  d.Namespace,
+					DOAuth:     d.DOAuth,
+					registries: d.registries,
+					podSpecs:   make([]resource, 0),
+					resources:  make([]resource, 0),
+				}
+
+				newData, err := dCopy.Run(bytes.NewBufferString(manifestDataStr))
+
+				if err != nil {
+					continue
+				}
+
+				data["manifest"] = string(newData.Bytes())
+
+				d.resources[i] = res
+
+				fmt.Println("RES IS", res, d.resources[i])
+			}
+		}
 	}
 
 	// create the necessary secrets
@@ -425,6 +494,7 @@ func getPodSpecFromResource(kind string, res resource) resource {
 
 func getNestedResource(res resource, keys ...string) resource {
 	curr := res
+
 	var ok bool
 
 	for _, key := range keys {

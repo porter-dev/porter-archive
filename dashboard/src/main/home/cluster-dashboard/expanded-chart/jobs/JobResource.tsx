@@ -26,11 +26,35 @@ export default class JobResource extends Component<PropsType, StateType> {
     pods: [] as any[],
   };
 
-  expandJob = () => {
+  expandJob = (event: MouseEvent) => {
+    if (event) {
+      event.stopPropagation();
+    }
+    
     this.getPods(() => {
       this.setState({ expanded: !this.state.expanded });
     });
   };
+  
+  stopJob = (event: MouseEvent) => {
+    if (event) {
+      event.stopPropagation();
+    }
+    
+    let { currentCluster, currentProject, setCurrentError } = this.context;
+
+    api.stopJob(
+      "<token>",
+        {},
+        {
+          id: currentProject.id,
+          name: this.props.job.metadata?.name,
+          namespace: this.props.job.metadata?.namespace,
+          cluster_id: currentCluster.id,
+        }
+    ).then((res) => {})
+      .catch((err) => setCurrentError(JSON.stringify(err)));
+  }
 
   getPods = (callback: () => void) => {
     let { currentCluster, currentProject, setCurrentError } = this.context;
@@ -198,6 +222,17 @@ export default class JobResource extends Component<PropsType, StateType> {
     return <Status color="#ffffff11">Running</Status>;
   };
 
+  renderStopButton = () => {
+    if (!this.props.job.status?.succeeded && !this.props.job.status?.failed) {
+      // look for a sidecar container 
+      if (this.props.job?.spec?.template?.spec?.containers.length == 2) {
+        return <i className="material-icons" onClick={this.stopJob}>
+          stop
+        </i>
+      }
+    }
+  }
+
   render() {
     let icon =
       "https://user-images.githubusercontent.com/65516095/111258413-4e2c3800-85f3-11eb-8a6a-88e03460f8fe.png";
@@ -221,7 +256,8 @@ export default class JobResource extends Component<PropsType, StateType> {
             <CommandString>{commandString}</CommandString>
             {this.renderStatus()}
             <MaterialIconTray disabled={false}>
-              <i className="material-icons">
+              {this.renderStopButton()}
+              <i className="material-icons" onClick={this.expandJob}>
                 {this.state.expanded ? "expand_less" : "expand_more"}
               </i>
             </MaterialIconTray>

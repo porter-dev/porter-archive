@@ -17,7 +17,7 @@ export default class CheckboxRow extends Component<PropsType, StateType> {
       <StyledCheckboxRow>
         <CheckboxWrapper
           disabled={this.props.disabled}
-          onClick={!this.props.disabled && this.props.toggle}
+          onClick={!this.props.disabled ? this.props.toggle : undefined}
         >
           <Checkbox checked={this.props.checked}>
             <i className="material-icons">done</i>

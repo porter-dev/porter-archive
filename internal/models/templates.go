@@ -51,11 +51,12 @@ type FormContent struct {
 	Placeholder string       `yaml:"placeholder,omitempty" json:"placeholder,omitempty"`
 	Value       interface{}  `yaml:"value,omitempty" json:"value,omitempty"`
 	Settings    struct {
-		Default           interface{} `yaml:"default,omitempty" json:"default,omitempty"`
-		Unit              interface{} `yaml:"unit,omitempty" json:"unit,omitempty"`
-		OmitUnitFromValue bool        `yaml:"omitUnitFromValue,omitempty" json:"omitUnitFromValue,omitempty"`
-		Options           interface{} `yaml:"options,omitempty" json:"options,omitempty"`
-		Placeholder       string      `yaml:"placeholder,omitempty" json:"placeholder,omitempty"`
+		Default            interface{} `yaml:"default,omitempty" json:"default,omitempty"`
+		Unit               interface{} `yaml:"unit,omitempty" json:"unit,omitempty"`
+		OmitUnitFromValue  bool        `yaml:"omitUnitFromValue,omitempty" json:"omitUnitFromValue,omitempty"`
+		DisableAfterLaunch bool        `yaml:"disableAfterLaunch,omitempty" json:"disableAfterLaunch,omitempty"`
+		Options            interface{} `yaml:"options,omitempty" json:"options,omitempty"`
+		Placeholder        string      `yaml:"placeholder,omitempty" json:"placeholder,omitempty"`
 	} `yaml:"settings,omitempty" json:"settings,omitempty"`
 }
 

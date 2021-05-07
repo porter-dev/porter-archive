@@ -499,6 +499,7 @@ class LaunchTemplate extends Component<PropsType, StateType> {
             externalValues={{
               namespace: this.state.selectedNamespace,
               clusterId: this.context.currentCluster.id,
+              isLaunch: true,
             }}
             onSubmit={
               this.props.currentTab === "docker"

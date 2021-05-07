@@ -36,6 +36,7 @@ type StateType = {
   deleting: boolean;
   saveValuesStatus: string | null;
   formData: any;
+  valuesToOverride: any;
 };
 
 export default class ExpandedJobChart extends Component<PropsType, StateType> {
@@ -51,6 +52,7 @@ export default class ExpandedJobChart extends Component<PropsType, StateType> {
     deleting: false,
     saveValuesStatus: null as string | null,
     formData: {} as any,
+    valuesToOverride: {} as any,
   };
 
   // Retrieve full chart data (includes form and values)
@@ -230,6 +232,7 @@ export default class ExpandedJobChart extends Component<PropsType, StateType> {
 
       return date2.getTime() - date1.getTime();
     });
+
     this.setState({ jobs });
   };
 
@@ -264,7 +267,18 @@ export default class ExpandedJobChart extends Component<PropsType, StateType> {
   updateTabs() {
     let formData = this.state.currentChart.form;
     if (formData) {
-      this.setState({ formData });
+      this.setState(
+        {
+          formData,
+        },
+        () =>
+          this.setState({
+            // TODO: handle passing in override values at same time as formData
+            valuesToOverride: {
+              showCronToggle: { value: false },
+            },
+          })
+      );
     }
     let tabOptions = [] as any[];
 
@@ -399,10 +413,13 @@ export default class ExpandedJobChart extends Component<PropsType, StateType> {
 
           <BodyWrapper>
             <FormWrapper
+              valuesToOverride={this.state.valuesToOverride}
+              clearValuesToOverride={() =>
+                this.setState({ valuesToOverride: {} })
+              }
               formData={this.state.formData}
               tabOptions={this.state.tabOptions}
               isInModal={true}
-              isReadOnly={true}
               renderTabContents={this.renderTabContents}
               tabOptionsOnly={true}
               onSubmit={this.handleSaveValues}

@@ -47,6 +47,8 @@ type StateType = {
  *
  * To control values using external state prop in "valuesToOverride" (refer to
  * FormDebugger or LaunchTemplate for example usage).
+ *
+ * TODO: Handle passing in valuesToOverride at same time as formData
  */
 export default class FormWrapper extends Component<PropsType, StateType> {
   state = {
@@ -66,8 +68,8 @@ export default class FormWrapper extends Component<PropsType, StateType> {
         tabs.forEach((tab: any, i: number) => {
           if (tab?.name && tab.label) {
             // If a tab is valid, extract state
-            tab.sections.forEach((section: Section, i: number) => {
-              section?.contents.forEach((item: FormElement, i: number) => {
+            tab.sections?.forEach((section: Section, i: number) => {
+              section?.contents?.forEach((item: FormElement, i: number) => {
                 if (item === null || item === undefined) {
                   return;
                 }
@@ -77,7 +79,7 @@ export default class FormWrapper extends Component<PropsType, StateType> {
                   item.variable &&
                   item.settings?.default
                 ) {
-                  metaState[item.variable] = item.settings.default;
+                  metaState[item.variable] = { value: item.settings.default };
                   return;
                 }
 
@@ -211,6 +213,7 @@ export default class FormWrapper extends Component<PropsType, StateType> {
     // Override metaState values set from outside FormWrapper
     if (
       this.props.valuesToOverride &&
+      !_.isEmpty(this.props.valuesToOverride) &&
       !_.isEqual(prevProps.valuesToOverride, this.props.valuesToOverride)
     ) {
       this.setState(
@@ -263,7 +266,7 @@ export default class FormWrapper extends Component<PropsType, StateType> {
     }
 
     let requiredMissing = false;
-    this.state.requiredFields.forEach((requiredKey: string, i: number) => {
+    this.state.requiredFields?.forEach((requiredKey: string, i: number) => {
       if (!this.isSet(this.state.metaState[requiredKey]?.value)) {
         requiredMissing = true;
       }
@@ -322,7 +325,7 @@ export default class FormWrapper extends Component<PropsType, StateType> {
   handleSubmit = () => {
     // Extract metaState values
     let submissionValues: any = {};
-    Object.keys(this.state.metaState).forEach((key: string, i: number) => {
+    Object.keys(this.state.metaState)?.forEach((key: string, i: number) => {
       submissionValues[key] = this.state.metaState[key]?.value;
     });
 

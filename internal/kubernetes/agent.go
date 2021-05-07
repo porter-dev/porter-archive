@@ -34,11 +34,15 @@ import (
 	v1beta1 "k8s.io/api/extensions/v1beta1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 	"k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/cache"
+	"k8s.io/client-go/tools/remotecommand"
 
 	"github.com/porter-dev/porter/internal/config"
 )
@@ -347,19 +351,34 @@ func (a *Agent) DeletePod(namespace string, name string) error {
 
 // GetPodLogs streams real-time logs from a given pod.
 func (a *Agent) GetPodLogs(namespace string, name string, conn *websocket.Conn) error {
+	// get the pod to read in the list of contains
+	pod, err := a.Clientset.CoreV1().Pods(namespace).Get(
+		context.Background(),
+		name,
+		metav1.GetOptions{},
+	)
+
+	if err != nil {
+		return fmt.Errorf("Cannot get pod %s: %s", name, err.Error())
+	}
+
+	container := pod.Spec.Containers[0].Name
+
 	tails := int64(400)
 
 	// follow logs
 	podLogOpts := v1.PodLogOptions{
 		Follow:    true,
 		TailLines: &tails,
+		Container: container,
 	}
+
 	req := a.Clientset.CoreV1().Pods(namespace).GetLogs(name, &podLogOpts)
 
 	podLogs, err := req.Stream(context.TODO())
 
 	if err != nil {
-		return fmt.Errorf("Cannot open log stream for pod %s", name)
+		return fmt.Errorf("Cannot open log stream for pod %s: %s", name, err.Error())
 	}
 	defer podLogs.Close()
 
@@ -408,6 +427,55 @@ func (a *Agent) GetPodLogs(namespace string, name string, conn *websocket.Conn) 
 			return err
 		}
 	}
+}
+
+// StopJobWithJobSidecar sends a termination signal to a job running with a sidecar
+func (a *Agent) StopJobWithJobSidecar(namespace, name string) error {
+	jobPods, err := a.GetJobPods(namespace, name)
+
+	if err != nil {
+		return err
+	}
+
+	podName := jobPods[0].ObjectMeta.Name
+
+	restConf, err := a.RESTClientGetter.ToRESTConfig()
+
+	restConf.GroupVersion = &schema.GroupVersion{
+		Group:   "api",
+		Version: "v1",
+	}
+
+	restConf.NegotiatedSerializer = runtime.NewSimpleNegotiatedSerializer(runtime.SerializerInfo{})
+
+	restClient, err := rest.RESTClientFor(restConf)
+
+	if err != nil {
+		return err
+	}
+
+	req := restClient.Post().
+		Resource("pods").
+		Name(podName).
+		Namespace(namespace).
+		SubResource("exec")
+
+	req.Param("command", "./signal.sh")
+	req.Param("container", "sidecar")
+	req.Param("stdin", "true")
+	req.Param("stdout", "false")
+	req.Param("tty", "false")
+
+	exec, err := remotecommand.NewSPDYExecutor(restConf, "POST", req.URL())
+
+	if err != nil {
+		return err
+	}
+
+	return exec.Stream(remotecommand.StreamOptions{
+		Tty:   false,
+		Stdin: strings.NewReader("./signal.sh"),
+	})
 }
 
 // StreamControllerStatus streams controller status. Supports Deployment, StatefulSet, ReplicaSet, and DaemonSet

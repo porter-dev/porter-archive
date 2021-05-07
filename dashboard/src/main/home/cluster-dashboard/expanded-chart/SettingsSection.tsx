@@ -179,20 +179,6 @@ export default class SettingsSection extends Component<PropsType, StateType> {
             Delete {this.props.currentChart.name}
           </Button>
         </StyledSettingsSection>
-        <SaveButton
-          text="Save Settings"
-          onClick={() =>
-            this.redeployWithNewImage(
-              this.state.selectedImageUrl,
-              this.state.selectedTag
-            )
-          }
-          status={this.state.saveValuesStatus}
-          makeFlush={true}
-          disabled={
-            this.state.selectedImageUrl && this.state.selectedTag ? false : true
-          }
-        />
       </Wrapper>
     );
   }
@@ -286,7 +272,7 @@ const Wrapper = styled.div`
 
 const StyledSettingsSection = styled.div`
   width: 100%;
-  height: calc(100% - 65px);
+  height: calc(100%);
   background: #ffffff11;
   padding: 0 35px;
   padding-bottom: 50px;

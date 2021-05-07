@@ -130,7 +130,7 @@ export default class JobResource extends Component<PropsType, StateType> {
       envArray.forEach((env: any, i: number) => {
         envObject[env.name] = env.value;
       });
-
+    
     // Handle no config to show
     if (!commandString && _.isEmpty(envObject)) {
       return;
@@ -155,13 +155,13 @@ export default class JobResource extends Component<PropsType, StateType> {
             Hide Job Config
           </ExpandConfigBar>
           <ConfigSection>
-            {commandString ? (
-              <>
-                Command: <Command>{commandString}</Command>
-              </>
-            ) : (
-              <DarkMatter size="-18px" />
-            )}
+            {
+              commandString ? (
+                <>Command: <Command>{commandString}</Command></>
+              ) : (
+                <DarkMatter size="-18px" />
+              )
+            }
             {!_.isEmpty(envObject) && (
               <>
                 <KeyValueArray
@@ -273,7 +273,7 @@ JobResource.contextType = Context;
 
 const DarkMatter = styled.div<{ size?: string }>`
   width: 100%;
-  margin-bottom: ${(props) => props.size || "-13px"};
+  margin-bottom: ${props => props.size || "-13px"};
 `;
 
 const Command = styled.span`

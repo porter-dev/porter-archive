@@ -72,16 +72,18 @@ const InputWrapper = styled.div`
   align-items: center;
 `;
 
-const Input = styled.input`
+const Input = styled.input<{ disabled: boolean, width: string }>`
   outline: none;
   border: none;
   font-size: 13px;
   background: #ffffff11;
   border: 1px solid #ffffff55;
+  cursor: ${props =>
+    props.disabled ? "not-allowed" : ""};
   border-radius: 3px;
-  width: ${(props: { disabled: boolean; width: string }) =>
+  width: ${props =>
     props.width ? props.width : "270px"};
-  color: ${(props: { disabled: boolean; width: string }) =>
+  color: ${props =>
     props.disabled ? "#ffffff44" : "white"};
   padding: 5px 10px;
   height: 35px;

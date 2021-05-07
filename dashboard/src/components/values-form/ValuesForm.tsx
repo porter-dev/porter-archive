@@ -54,7 +54,9 @@ export default class ValuesForm extends Component<PropsType, StateType> {
 
       // If no name is assigned use values.yaml variable as identifier
       let key = item.name || item.variable;
-      let isDisabled = item.settings?.disableAfterLaunch && !this.props.externalValues?.isLaunch;
+      let isDisabled =
+        item.settings?.disableAfterLaunch &&
+        !this.props.externalValues?.isLaunch;
       isDisabled = isDisabled || this.props.disabled;
 
       switch (item.type) {

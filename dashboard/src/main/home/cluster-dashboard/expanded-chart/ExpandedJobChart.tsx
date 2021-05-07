@@ -104,8 +104,6 @@ export default class ExpandedJobChart extends Component<PropsType, StateType> {
   refreshChart = () => this.getChartData(this.state.currentChart);
 
   mergeNewJob = (newJob: any) => {
-    console.log("newJob", newJob);
-    console.log("image?", newJob.values?.image?.repository);
     let jobs = this.state.jobs;
     let exists = false;
     jobs.forEach((job: any, i: number, self: any[]) => {
@@ -252,7 +250,8 @@ export default class ExpandedJobChart extends Component<PropsType, StateType> {
 
       return date2.getTime() - date1.getTime();
     });
-
+    console.log("newest job", jobs[0]);
+    console.log("newest image", jobs[0]?.spec?.template?.spec?.containers[0]?.image);
     this.setState({ jobs });
   };
 

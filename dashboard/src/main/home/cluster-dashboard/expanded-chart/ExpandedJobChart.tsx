@@ -3,6 +3,7 @@ import styled from "styled-components";
 import yaml from "js-yaml";
 import close from "assets/close.png";
 import _ from "lodash";
+import loading from "assets/loading.gif";
 
 import { ChartType, StorageType, ClusterType } from "shared/types";
 import { Context } from "shared/Context";
@@ -15,6 +16,7 @@ import TabRegion from "components/TabRegion";
 import JobList from "./jobs/JobList";
 import SettingsSection from "./SettingsSection";
 import FormWrapper from "components/values-form/FormWrapper";
+import { PlaceHolder } from "brace";
 
 type PropsType = {
   namespace: string;
@@ -26,6 +28,7 @@ type PropsType = {
 
 type StateType = {
   currentChart: ChartType;
+  imageIsPlaceholder: boolean;
   loading: boolean;
   jobs: any[];
   tabOptions: any[];
@@ -42,6 +45,7 @@ type StateType = {
 export default class ExpandedJobChart extends Component<PropsType, StateType> {
   state = {
     currentChart: this.props.currentChart,
+    imageIsPlaceholder: false,
     loading: true,
     jobs: [] as any[],
     tabOptions: [] as any[],
@@ -76,9 +80,20 @@ export default class ExpandedJobChart extends Component<PropsType, StateType> {
         }
       )
       .then((res) => {
-        this.setState({ currentChart: res.data, loading: false }, () => {
-          this.updateTabs();
-        });
+        let image = res.data?.config?.image?.repository;
+        if (image === "porterdev/hello-porter-job") {
+          this.setState({ 
+            currentChart: res.data, 
+            loading: false,
+            imageIsPlaceholder: true,
+          }, () => {
+            this.updateTabs();
+          });
+        } else {
+          this.setState({ currentChart: res.data, loading: false }, () => {
+            this.updateTabs();
+          });
+        }
       })
       .catch(console.log);
   };
@@ -86,6 +101,8 @@ export default class ExpandedJobChart extends Component<PropsType, StateType> {
   refreshChart = () => this.getChartData(this.state.currentChart);
 
   mergeNewJob = (newJob: any) => {
+    console.log("newJob", newJob);
+    console.log("image?", newJob.values?.image?.repository);
     let jobs = this.state.jobs;
     let exists = false;
     jobs.forEach((job: any, i: number, self: any[]) => {
@@ -239,6 +256,18 @@ export default class ExpandedJobChart extends Component<PropsType, StateType> {
   renderTabContents = (currentTab: string) => {
     switch (currentTab) {
       case "jobs":
+        if (this.state.imageIsPlaceholder) {
+          return (
+            <Placeholder>
+              <TextWrap>
+                <Header>
+                  <Spinner src={loading} /> This job is currently being deployed
+                </Header>
+                Navigate to the "Actions" tab of your GitHub repo to view live build logs.
+              </TextWrap>
+            </Placeholder>
+          )
+        }
         return (
           <TabWrapper>
             <JobList jobs={this.state.jobs} />
@@ -326,7 +355,6 @@ export default class ExpandedJobChart extends Component<PropsType, StateType> {
   };
 
   componentDidMount() {
-    let { currentCluster, currentProject } = this.context;
     let { currentChart } = this.state;
 
     window.analytics.track("Opened Chart", {
@@ -413,6 +441,7 @@ export default class ExpandedJobChart extends Component<PropsType, StateType> {
 
           <BodyWrapper>
             <FormWrapper
+              isReadOnly={this.state.imageIsPlaceholder}
               valuesToOverride={this.state.valuesToOverride}
               clearValuesToOverride={() =>
                 this.setState({ valuesToOverride: {} })
@@ -433,6 +462,35 @@ export default class ExpandedJobChart extends Component<PropsType, StateType> {
 }
 
 ExpandedJobChart.contextType = Context;
+
+const TextWrap = styled.div`
+`;
+
+const Header = styled.div`
+  font-weight: 500;
+  color: #aaaabb;
+  font-size: 16px;
+  margin-bottom: 15px;
+`;
+
+const Placeholder = styled.div`
+  height: 100%;
+  padding: 30px;
+  padding-bottom: 70px;
+  font-size: 13px;
+  color: #ffffff44;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+`;
+
+const Spinner = styled.img`
+  width: 15px;
+  height: 15px;
+  margin-right: 12px;
+  margin-bottom: -2px;
+`;
 
 const BodyWrapper = styled.div`
   width: 100%;

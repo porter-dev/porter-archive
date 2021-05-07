@@ -54,6 +54,8 @@ export default class ValuesForm extends Component<PropsType, StateType> {
 
       // If no name is assigned use values.yaml variable as identifier
       let key = item.name || item.variable;
+      let isDisabled = item.settings?.disableAfterLaunch && !this.props.externalValues?.isLaunch;
+      isDisabled = isDisabled || this.props.disabled;
 
       switch (item.type) {
         case "heading":
@@ -81,7 +83,7 @@ export default class ValuesForm extends Component<PropsType, StateType> {
           return (
             <CheckboxRow
               key={key}
-              disabled={this.props.disabled}
+              disabled={isDisabled}
               isRequired={item.required}
               checked={this.props.metaState[key]?.value}
               toggle={() =>
@@ -109,7 +111,7 @@ export default class ValuesForm extends Component<PropsType, StateType> {
                 }
               }}
               label={item.label}
-              disabled={this.props.disabled}
+              disabled={isDisabled}
               secretOption={true}
             />
           );
@@ -121,7 +123,7 @@ export default class ValuesForm extends Component<PropsType, StateType> {
               values={this.props.metaState[key]?.value}
               setValues={(x: any) => this.props.setMetaState(key, x)}
               label={item.label}
-              disabled={this.props.disabled}
+              disabled={isDisabled}
             />
           );
         case "array-input":
@@ -133,7 +135,7 @@ export default class ValuesForm extends Component<PropsType, StateType> {
                 this.props.setMetaState(key, x);
               }}
               label={item.label}
-              disabled={this.props.disabled}
+              disabled={isDisabled}
             />
           );
         case "string-input":
@@ -157,7 +159,7 @@ export default class ValuesForm extends Component<PropsType, StateType> {
               }}
               label={item.label}
               unit={item.settings ? item.settings.unit : null}
-              disabled={this.props.disabled}
+              disabled={isDisabled}
             />
           );
         case "string-input-password":
@@ -180,7 +182,7 @@ export default class ValuesForm extends Component<PropsType, StateType> {
               }}
               label={item.label}
               unit={item.settings ? item.settings.unit : null}
-              disabled={this.props.disabled}
+              disabled={isDisabled}
             />
           );
         case "number-input":
@@ -211,7 +213,7 @@ export default class ValuesForm extends Component<PropsType, StateType> {
               }}
               label={item.label}
               unit={item.settings ? item.settings.unit : null}
-              disabled={this.props.disabled}
+              disabled={isDisabled}
             />
           );
         case "select":
@@ -262,7 +264,7 @@ export default class ValuesForm extends Component<PropsType, StateType> {
               }}
               label={item.label}
               unit={item.settings ? item.settings.unit : null}
-              disabled={this.props.disabled}
+              disabled={isDisabled}
             />
           );
         case "base-64-password":
@@ -285,7 +287,7 @@ export default class ValuesForm extends Component<PropsType, StateType> {
               }}
               label={item.label}
               unit={item.settings ? item.settings.unit : null}
-              disabled={this.props.disabled}
+              disabled={isDisabled}
             />
           );
         default:

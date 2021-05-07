@@ -110,6 +110,7 @@ export interface FormElement {
     default?: number | string | boolean;
     options?: any[];
     omitUnitFromValue?: boolean;
+    disableAfterLaunch?: boolean;
     unit?: string;
   };
 }

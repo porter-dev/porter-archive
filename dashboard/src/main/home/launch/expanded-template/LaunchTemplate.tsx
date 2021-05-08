@@ -242,7 +242,7 @@ class LaunchTemplate extends Component<PropsType, StateType> {
 
     _.set(values, "ingress.provider", provider);
     var url: string;
-
+    console.log("ok here", values);
     // check if template is docker and create external domain if necessary
     if (this.props.currentTemplate.name == "web") {
       if (values?.ingress?.enabled && !values?.ingress?.custom_domain) {
@@ -770,12 +770,6 @@ class LaunchTemplate extends Component<PropsType, StateType> {
 LaunchTemplate.contextType = Context;
 export default withRouter(LaunchTemplate);
 
-const Bold = styled.div`
-  font-weight: bold;
-  color: white;
-  margin-right: 5px;
-`;
-
 const CloseButton = styled.div`
   position: absolute;
   display: block;
@@ -997,12 +991,6 @@ const Polymer = styled.div`
   }
 `;
 
-const Template = styled.div`
-  display: flex;
-  align-items: center;
-  margin-right: 13px;
-`;
-
 const ClusterSection = styled.div`
   display: flex;
   align-items: center;
@@ -1017,22 +1005,6 @@ const ClusterSection = styled.div`
     font-size: 25px;
     color: #ffffff44;
     margin-right: 13px;
-  }
-`;
-
-const Flex = styled.div`
-  display: flex;
-  align-items: center;
-
-  > i {
-    cursor: pointer;
-    font-size 24px;
-    color: #969Fbbaa;
-    padding: 3px;
-    border-radius: 100px;
-    :hover {
-      background: #ffffff11;
-    }
   }
 `;
 

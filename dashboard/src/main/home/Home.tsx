@@ -221,8 +221,8 @@ class Home extends Component<PropsType, StateType> {
 
     // Initialize Highlight
     if (
-      window.location.href.includes("dashboard.getporter.dev")
-      && !user.email.includes("@getporter.dev")
+      window.location.href.includes("dashboard.getporter.dev") &&
+      !user.email.includes("@getporter.dev")
     ) {
       H.init("y2d13lgr");
       H.identify(user.email, { id: user.id });

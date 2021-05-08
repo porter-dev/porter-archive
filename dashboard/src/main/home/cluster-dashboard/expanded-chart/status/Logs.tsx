@@ -127,7 +127,6 @@ export default class Logs extends Component<PropsType, StateType> {
   }
 
   componentWillUnmount() {
-    console.log("log unmount");
     if (this.ws) {
       this.ws.close();
     }

@@ -791,12 +791,11 @@ const deleteConfigMap = baseApi<
 
 const stopJob = baseApi<
   {},
-  { name: string; namespace: string; id: number, cluster_id: number }
+  { name: string; namespace: string; id: number; cluster_id: number }
 >("POST", (pathParams) => {
-  let { id, name, namespace, cluster_id } = pathParams
+  let { id, name, namespace, cluster_id } = pathParams;
   return `/api/projects/${id}/k8s/jobs/${namespace}/${name}/stop?cluster_id=${cluster_id}`;
 });
-
 
 // Bundle export to allow default api import (api.<method> is more readable)
 export default {

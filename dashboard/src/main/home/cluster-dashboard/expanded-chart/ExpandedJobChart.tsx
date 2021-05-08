@@ -179,8 +179,30 @@ export default class ExpandedJobChart extends Component<PropsType, StateType> {
     let conf: string;
 
     if (!config) {
+      let values = {};
+
+      console.log("newest image", this.state.newestImage);
+      let imageUrl = this.state.newestImage;
+      let tag = null;
+  
+      if (imageUrl.includes(":")) {
+        let splits = imageUrl.split(":");
+        imageUrl = splits[0];
+        tag = splits[1];
+      } else if (!tag) {
+        tag = "latest";
+      }
+
+      if (imageUrl) {
+        _.set(values, "image.repository", imageUrl);
+        _.set(values, "image.tag", tag);
+      }
+
+      console.log("values before yaml", values)
+
       conf = yaml.dump({
         ...this.state.currentChart.config,
+        ...values,
       });
     } else {
       // Convert dotted keys to nested objects

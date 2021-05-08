@@ -29,6 +29,7 @@ type PropsType = {
 type StateType = {
   currentChart: ChartType;
   imageIsPlaceholder: boolean;
+  newestImage: string;
   loading: boolean;
   jobs: any[];
   tabOptions: any[];
@@ -46,6 +47,7 @@ export default class ExpandedJobChart extends Component<PropsType, StateType> {
   state = {
     currentChart: this.props.currentChart,
     imageIsPlaceholder: false,
+    newestImage: null as string,
     loading: true,
     jobs: [] as any[],
     tabOptions: [] as any[],
@@ -188,8 +190,24 @@ export default class ExpandedJobChart extends Component<PropsType, StateType> {
         _.set(values, key, config[key]);
       }
 
+      let imageUrl = this.state.newestImage;
+      let tag = null;
+  
+      if (imageUrl.includes(":")) {
+        let splits = imageUrl.split(":");
+        imageUrl = splits[0];
+        tag = splits[1];
+      } else if (!tag) {
+        tag = "latest";
+      }
+
+      if (imageUrl) {
+        _.set(values, "image.repository", imageUrl);
+        _.set(values, "image.tag", tag);
+      }
+
       // Weave in preexisting values and convert to yaml
-      conf = yaml.dump({
+      values = yaml.dump({
         ...(this.state.currentChart.config as Object),
         ...values,
       });
@@ -250,9 +268,12 @@ export default class ExpandedJobChart extends Component<PropsType, StateType> {
 
       return date2.getTime() - date1.getTime();
     });
-    console.log("newest job", jobs[0]);
-    console.log("newest image", jobs[0]?.spec?.template?.spec?.containers[0]?.image);
-    this.setState({ jobs });
+    let newestImage = jobs[0]?.spec?.template?.spec?.containers[0]?.image;
+    if (newestImage && newestImage !== "porterdev/hello-porter-job" && newestImage !== "porterdev/hello-porter-job:latest") {
+      this.setState({ jobs, newestImage, imageIsPlaceholder: false });
+    } else {
+      this.setState({ jobs });
+    }
   };
 
   renderTabContents = (currentTab: string) => {

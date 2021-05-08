@@ -180,11 +180,9 @@ export default class ExpandedJobChart extends Component<PropsType, StateType> {
 
     if (!config) {
       let values = {};
-
-      console.log("newest image", this.state.newestImage);
       let imageUrl = this.state.newestImage;
       let tag = null;
-  
+
       if (imageUrl.includes(":")) {
         let splits = imageUrl.split(":");
         imageUrl = splits[0];
@@ -197,8 +195,6 @@ export default class ExpandedJobChart extends Component<PropsType, StateType> {
         _.set(values, "image.repository", imageUrl);
         _.set(values, "image.tag", tag);
       }
-
-      console.log("values before yaml", values)
 
       conf = yaml.dump({
         ...this.state.currentChart.config,
@@ -212,10 +208,9 @@ export default class ExpandedJobChart extends Component<PropsType, StateType> {
         _.set(values, key, config[key]);
       }
 
-      console.log("newest image", this.state.newestImage);
       let imageUrl = this.state.newestImage;
       let tag = null;
-  
+
       if (imageUrl.includes(":")) {
         let splits = imageUrl.split(":");
         imageUrl = splits[0];
@@ -229,14 +224,11 @@ export default class ExpandedJobChart extends Component<PropsType, StateType> {
         _.set(values, "image.tag", tag);
       }
 
-      console.log("values before yaml", values)
-
       // Weave in preexisting values and convert to yaml
       conf = yaml.dump({
         ...(this.state.currentChart.config as Object),
         ...values,
       });
-      console.log("yaml converted", values)
     }
 
     api
@@ -295,7 +287,11 @@ export default class ExpandedJobChart extends Component<PropsType, StateType> {
       return date2.getTime() - date1.getTime();
     });
     let newestImage = jobs[0]?.spec?.template?.spec?.containers[0]?.image;
-    if (newestImage && newestImage !== "porterdev/hello-porter-job" && newestImage !== "porterdev/hello-porter-job:latest") {
+    if (
+      newestImage &&
+      newestImage !== "porterdev/hello-porter-job" &&
+      newestImage !== "porterdev/hello-porter-job:latest"
+    ) {
       this.setState({ jobs, newestImage, imageIsPlaceholder: false });
     } else {
       this.setState({ jobs });

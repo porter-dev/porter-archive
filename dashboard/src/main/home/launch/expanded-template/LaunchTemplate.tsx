@@ -242,7 +242,7 @@ class LaunchTemplate extends Component<PropsType, StateType> {
 
     _.set(values, "ingress.provider", provider);
     var url: string;
-
+    console.log("ok here", values);
     // check if template is docker and create external domain if necessary
     if (this.props.currentTemplate.name == "web") {
       if (values?.ingress?.enabled && !values?.ingress?.custom_domain) {

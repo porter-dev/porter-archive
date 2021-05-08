@@ -83,7 +83,7 @@ export default class ExpandedJobChart extends Component<PropsType, StateType> {
       )
       .then((res) => {
         let image = res.data?.config?.image?.repository;
-        if (image === "porterdev/hello-porter-job") {
+        if (image === "porterdev/hello-porter-job" && !this.state.newestImage) {
           this.setState(
             {
               currentChart: res.data,

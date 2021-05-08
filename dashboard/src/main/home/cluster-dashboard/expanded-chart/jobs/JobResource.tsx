@@ -30,21 +30,22 @@ export default class JobResource extends Component<PropsType, StateType> {
     if (event) {
       event.stopPropagation();
     }
-    
+
     this.getPods(() => {
       this.setState({ expanded: !this.state.expanded });
     });
   };
-  
+
   stopJob = (event: MouseEvent) => {
     if (event) {
       event.stopPropagation();
     }
-    
+
     let { currentCluster, currentProject, setCurrentError } = this.context;
 
-    api.stopJob(
-      "<token>",
+    api
+      .stopJob(
+        "<token>",
         {},
         {
           id: currentProject.id,
@@ -52,9 +53,10 @@ export default class JobResource extends Component<PropsType, StateType> {
           namespace: this.props.job.metadata?.namespace,
           cluster_id: currentCluster.id,
         }
-    ).then((res) => {})
+      )
+      .then((res) => {})
       .catch((err) => setCurrentError(JSON.stringify(err)));
-  }
+  };
 
   getPods = (callback: () => void) => {
     let { currentCluster, currentProject, setCurrentError } = this.context;
@@ -224,14 +226,16 @@ export default class JobResource extends Component<PropsType, StateType> {
 
   renderStopButton = () => {
     if (!this.props.job.status?.succeeded && !this.props.job.status?.failed) {
-      // look for a sidecar container 
+      // look for a sidecar container
       if (this.props.job?.spec?.template?.spec?.containers.length == 2) {
-        return <i className="material-icons" onClick={this.stopJob}>
-          stop
-        </i>
+        return (
+          <i className="material-icons" onClick={this.stopJob}>
+            stop
+          </i>
+        );
       }
     }
-  }
+  };
 
   render() {
     let icon =

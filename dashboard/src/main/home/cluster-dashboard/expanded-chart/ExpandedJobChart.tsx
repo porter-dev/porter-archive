@@ -190,6 +190,7 @@ export default class ExpandedJobChart extends Component<PropsType, StateType> {
         _.set(values, key, config[key]);
       }
 
+      console.log("newest image", this.state.newestImage);
       let imageUrl = this.state.newestImage;
       let tag = null;
   
@@ -206,11 +207,14 @@ export default class ExpandedJobChart extends Component<PropsType, StateType> {
         _.set(values, "image.tag", tag);
       }
 
+      console.log("values before yaml", values)
+
       // Weave in preexisting values and convert to yaml
-      values = yaml.dump({
+      conf = yaml.dump({
         ...(this.state.currentChart.config as Object),
         ...values,
       });
+      console.log("yaml converted", values)
     }
 
     api

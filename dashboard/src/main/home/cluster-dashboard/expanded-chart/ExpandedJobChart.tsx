@@ -29,6 +29,7 @@ type PropsType = {
 type StateType = {
   currentChart: ChartType;
   imageIsPlaceholder: boolean;
+  newestImage: string;
   loading: boolean;
   jobs: any[];
   tabOptions: any[];
@@ -46,6 +47,7 @@ export default class ExpandedJobChart extends Component<PropsType, StateType> {
   state = {
     currentChart: this.props.currentChart,
     imageIsPlaceholder: false,
+    newestImage: null as string,
     loading: true,
     jobs: [] as any[],
     tabOptions: [] as any[],
@@ -81,7 +83,7 @@ export default class ExpandedJobChart extends Component<PropsType, StateType> {
       )
       .then((res) => {
         let image = res.data?.config?.image?.repository;
-        if (image === "porterdev/hello-porter-job") {
+        if (image === "porterdev/hello-porter-job" && !this.state.newestImage) {
           this.setState(
             {
               currentChart: res.data,
@@ -104,8 +106,6 @@ export default class ExpandedJobChart extends Component<PropsType, StateType> {
   refreshChart = () => this.getChartData(this.state.currentChart);
 
   mergeNewJob = (newJob: any) => {
-    console.log("newJob", newJob);
-    console.log("image?", newJob.values?.image?.repository);
     let jobs = this.state.jobs;
     let exists = false;
     jobs.forEach((job: any, i: number, self: any[]) => {
@@ -179,8 +179,26 @@ export default class ExpandedJobChart extends Component<PropsType, StateType> {
     let conf: string;
 
     if (!config) {
+      let values = {};
+      let imageUrl = this.state.newestImage;
+      let tag = null;
+
+      if (imageUrl.includes(":")) {
+        let splits = imageUrl.split(":");
+        imageUrl = splits[0];
+        tag = splits[1];
+      } else if (!tag) {
+        tag = "latest";
+      }
+
+      if (imageUrl) {
+        _.set(values, "image.repository", imageUrl);
+        _.set(values, "image.tag", tag);
+      }
+
       conf = yaml.dump({
         ...this.state.currentChart.config,
+        ...values,
       });
     } else {
       // Convert dotted keys to nested objects
@@ -188,6 +206,22 @@ export default class ExpandedJobChart extends Component<PropsType, StateType> {
 
       for (let key in config) {
         _.set(values, key, config[key]);
+      }
+
+      let imageUrl = this.state.newestImage;
+      let tag = null;
+
+      if (imageUrl.includes(":")) {
+        let splits = imageUrl.split(":");
+        imageUrl = splits[0];
+        tag = splits[1];
+      } else if (!tag) {
+        tag = "latest";
+      }
+
+      if (imageUrl) {
+        _.set(values, "image.repository", imageUrl);
+        _.set(values, "image.tag", tag);
       }
 
       // Weave in preexisting values and convert to yaml
@@ -252,8 +286,16 @@ export default class ExpandedJobChart extends Component<PropsType, StateType> {
 
       return date2.getTime() - date1.getTime();
     });
-
-    this.setState({ jobs });
+    let newestImage = jobs[0]?.spec?.template?.spec?.containers[0]?.image;
+    if (
+      newestImage &&
+      newestImage !== "porterdev/hello-porter-job" &&
+      newestImage !== "porterdev/hello-porter-job:latest"
+    ) {
+      this.setState({ jobs, newestImage, imageIsPlaceholder: false });
+    } else {
+      this.setState({ jobs });
+    }
   };
 
   renderTabContents = (currentTab: string) => {

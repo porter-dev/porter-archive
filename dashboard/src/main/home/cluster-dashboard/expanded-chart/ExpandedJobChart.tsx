@@ -83,7 +83,7 @@ export default class ExpandedJobChart extends Component<PropsType, StateType> {
       )
       .then((res) => {
         let image = res.data?.config?.image?.repository;
-        if (image === "porterdev/hello-porter-job" && !this.state.newestImage) {
+        if ((image === "porterdev/hello-porter-job" || image === "public.ecr.aws/o1j4x7p4/hello-porter-job") && !this.state.newestImage) {
           this.setState(
             {
               currentChart: res.data,
@@ -171,6 +171,43 @@ export default class ExpandedJobChart extends Component<PropsType, StateType> {
 
     return ws;
   };
+
+  setupCronJobWebsocket = (chart: ChartType) => {
+    // let chartVersion = `${chart.chart.metadata.name}-${chart.chart.metadata.version}`;
+
+    let { currentCluster, currentProject } = this.context;
+    let protocol = process.env.NODE_ENV == "production" ? "wss" : "ws";
+    let ws = new WebSocket(
+      `${protocol}://${process.env.API_SERVER}/api/projects/${currentProject.id}/k8s/cronjob/status?cluster_id=${currentCluster.id}`
+    );
+    ws.onopen = () => {
+      console.log("connected to websocket");
+    };
+
+    ws.onmessage = (evt: MessageEvent) => {
+      let event = JSON.parse(evt.data);
+      let object = event.Object;
+      object.metadata.kind = event.Kind;
+
+      // if imageIsPlaceholder is true, update the newestImage and imageIsPlaceholder fields
+      if ((event.event_type == "ADD" || event.event_type == "UPDATE") && this.state.imageIsPlaceholder) {
+        let newestImage = event.Object?.spec?.jobTemplate?.spec?.template?.spec?.containers[0]?.image;
+
+        this.setState({ newestImage, imageIsPlaceholder: false })
+      }
+    };
+
+    ws.onclose = () => {
+      console.log("closing websocket");
+    };
+
+    ws.onerror = (err: ErrorEvent) => {
+      console.log(err);
+      ws.close();
+    };
+
+    return ws;
+  }
 
   handleSaveValues = (config?: any) => {
     let { currentCluster, setCurrentError, currentProject } = this.context;
@@ -290,7 +327,9 @@ export default class ExpandedJobChart extends Component<PropsType, StateType> {
     if (
       newestImage &&
       newestImage !== "porterdev/hello-porter-job" &&
-      newestImage !== "porterdev/hello-porter-job:latest"
+      newestImage !== "porterdev/hello-porter-job:latest" &&
+      newestImage !== "public.ecr.aws/o1j4x7p4/hello-porter-job" &&
+      newestImage !== "public.ecr.aws/o1j4x7p4/hello-porter-job:latest"
     ) {
       this.setState({ jobs, newestImage, imageIsPlaceholder: false });
     } else {
@@ -345,15 +384,7 @@ export default class ExpandedJobChart extends Component<PropsType, StateType> {
       this.setState(
         {
           formData,
-        },
-        () =>
-          this.setState({
-            // TODO: handle passing in override values at same time as formData
-            valuesToOverride: {
-              showCronToggle: { value: false },
-            },
-          })
-      );
+        });
     }
     let tabOptions = [] as any[];
 
@@ -410,6 +441,7 @@ export default class ExpandedJobChart extends Component<PropsType, StateType> {
     this.getChartData(currentChart);
     this.getJobs(currentChart);
     this.setupJobWebsocket(currentChart);
+    this.setupCronJobWebsocket(currentChart);
   }
 
   handleUninstallChart = () => {

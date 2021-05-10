@@ -211,10 +211,10 @@ class LaunchTemplate extends Component<PropsType, StateType> {
 
     if (this.state.sourceType === "repo") {
       if (this.props.currentTemplate?.name == "job") {
-        imageUrl = "porterdev/hello-porter-job";
+        imageUrl = "public.ecr.aws/o1j4x7p4/hello-porter-job";
         tag = "latest";
       } else {
-        imageUrl = "porterdev/hello-porter";
+        imageUrl = "public.ecr.aws/o1j4x7p4/hello-porter";
         tag = "latest";
       }
     }

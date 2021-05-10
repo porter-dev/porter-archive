@@ -485,6 +485,7 @@ func (a *Agent) StreamControllerStatus(conn *websocket.Conn, kind string) error 
 		a.Clientset,
 		0,
 	)
+
 	var informer cache.SharedInformer
 
 	// Spins up an informer depending on kind. Convert to lowercase for robustness
@@ -499,6 +500,8 @@ func (a *Agent) StreamControllerStatus(conn *websocket.Conn, kind string) error 
 		informer = factory.Apps().V1().DaemonSets().Informer()
 	case "job":
 		informer = factory.Batch().V1().Jobs().Informer()
+	case "cronjob":
+		informer = factory.Batch().V1beta1().CronJobs().Informer()
 	}
 
 	stopper := make(chan struct{})

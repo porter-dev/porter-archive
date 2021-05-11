@@ -14,7 +14,8 @@ type PropsType = {
   saveValuesStatus?: string | null;
 
   // Handle additional non-form tabs
-  renderTabContents?: (currentTab: string) => any;
+  // TODO: find cleaner way to share submitValues w/ rerun jobs button
+  renderTabContents?: (currentTab: string, submitValues?: any) => any;
   tabOptions?: any[];
   tabOptionsOnly?: boolean;
 
@@ -302,7 +303,16 @@ export default class FormWrapper extends Component<PropsType, StateType> {
 
     // If no form tabs match, check against external tabs
     if (this.props.renderTabContents) {
-      return this.props.renderTabContents(this.state.currentTab);
+      // TODO: find a cleaner way to share submissionValues w/ rerun button
+      let submissionValues: any = {};
+      Object.keys(this.state.metaState)?.forEach((key: string, i: number) => {
+        submissionValues[key] = this.state.metaState[key]?.value;
+      });
+
+      return this.props.renderTabContents(
+        this.state.currentTab,
+        submissionValues
+      );
     }
     return <div>No matched tabs found.</div>;
   };

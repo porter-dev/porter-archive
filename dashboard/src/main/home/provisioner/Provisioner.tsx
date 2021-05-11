@@ -146,6 +146,7 @@ class Provisioner extends Component<PropsType, StateType> {
             this.refresh();
           }}
         >
+          <i className="material-icons">autorenew</i>
           Refresh
         </RefreshText>
       </StyledProvisioner>
@@ -178,8 +179,15 @@ const TabWrapper = styled.div`
 `;
 
 const RefreshText = styled.div`
-  display: inline;
-  margin-left: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 8px;
   color: #8590ff;
   cursor: pointer;
+
+  > i {
+    font-size: 16px;
+    margin-right: 3px;
+  }
 `;

@@ -83,7 +83,11 @@ export default class ExpandedJobChart extends Component<PropsType, StateType> {
       )
       .then((res) => {
         let image = res.data?.config?.image?.repository;
-        if ((image === "porterdev/hello-porter-job" || image === "public.ecr.aws/o1j4x7p4/hello-porter-job") && !this.state.newestImage) {
+        if (
+          (image === "porterdev/hello-porter-job" ||
+            image === "public.ecr.aws/o1j4x7p4/hello-porter-job") &&
+          !this.state.newestImage
+        ) {
           this.setState(
             {
               currentChart: res.data,
@@ -190,10 +194,15 @@ export default class ExpandedJobChart extends Component<PropsType, StateType> {
       object.metadata.kind = event.Kind;
 
       // if imageIsPlaceholder is true, update the newestImage and imageIsPlaceholder fields
-      if ((event.event_type == "ADD" || event.event_type == "UPDATE") && this.state.imageIsPlaceholder) {
-        let newestImage = event.Object?.spec?.jobTemplate?.spec?.template?.spec?.containers[0]?.image;
+      if (
+        (event.event_type == "ADD" || event.event_type == "UPDATE") &&
+        this.state.imageIsPlaceholder
+      ) {
+        let newestImage =
+          event.Object?.spec?.jobTemplate?.spec?.template?.spec?.containers[0]
+            ?.image;
 
-        this.setState({ newestImage, imageIsPlaceholder: false })
+        this.setState({ newestImage, imageIsPlaceholder: false });
       }
     };
 
@@ -207,7 +216,7 @@ export default class ExpandedJobChart extends Component<PropsType, StateType> {
     };
 
     return ws;
-  }
+  };
 
   handleSaveValues = (config?: any) => {
     let { currentCluster, setCurrentError, currentProject } = this.context;
@@ -337,7 +346,7 @@ export default class ExpandedJobChart extends Component<PropsType, StateType> {
     }
   };
 
-  renderTabContents = (currentTab: string) => {
+  renderTabContents = (currentTab: string, submitValues?: any) => {
     switch (currentTab) {
       case "jobs":
         if (this.state.imageIsPlaceholder) {
@@ -358,7 +367,7 @@ export default class ExpandedJobChart extends Component<PropsType, StateType> {
             <JobList jobs={this.state.jobs} />
             <SaveButton
               text="Rerun Job"
-              onClick={() => this.handleSaveValues()}
+              onClick={() => this.handleSaveValues(submitValues)}
               status={this.state.saveValuesStatus}
               makeFlush={true}
             />
@@ -381,10 +390,9 @@ export default class ExpandedJobChart extends Component<PropsType, StateType> {
   updateTabs() {
     let formData = this.state.currentChart.form;
     if (formData) {
-      this.setState(
-        {
-          formData,
-        });
+      this.setState({
+        formData,
+      });
     }
     let tabOptions = [] as any[];
 

@@ -2,7 +2,6 @@ package helm
 
 import (
 	"bytes"
-	"fmt"
 	"io"
 	"net/url"
 	"regexp"
@@ -164,8 +163,6 @@ func (d *DockerSecretsPostRenderer) Run(
 				data["manifest"] = string(newData.Bytes())
 
 				d.resources[i] = res
-
-				fmt.Println("RES IS", res, d.resources[i])
 			}
 		}
 	}

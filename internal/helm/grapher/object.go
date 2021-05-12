@@ -12,7 +12,7 @@ type Object struct {
 
 // ParseObjs parses a k8s object from a single-document yaml
 // and returns an array of objects that includes its children.
-func ParseObjs(objs []map[string]interface{}) []Object {
+func ParseObjs(objs []map[string]interface{}, releaseNamespace string) []Object {
 	objArr := []Object{}
 
 	for i, obj := range objs {
@@ -27,7 +27,7 @@ func ParseObjs(objs []map[string]interface{}) []Object {
 		namespace := getField(obj, "metadata", "namespace")
 
 		if namespace == nil {
-			namespace = "default"
+			namespace = releaseNamespace
 		}
 
 		if name == nil {

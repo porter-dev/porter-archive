@@ -240,7 +240,7 @@ func (app *App) HandleGetReleaseComponents(w http.ResponseWriter, r *http.Reques
 	}
 
 	yamlArr := grapher.ImportMultiDocYAML([]byte(release.Manifest))
-	objects := grapher.ParseObjs(yamlArr)
+	objects := grapher.ParseObjs(yamlArr, release.Namespace)
 
 	parsed := grapher.ParsedObjs{
 		Objects: objects,

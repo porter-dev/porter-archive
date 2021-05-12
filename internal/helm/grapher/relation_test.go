@@ -139,7 +139,7 @@ func TestControlRels(t *testing.T) {
 		}
 
 		yamlArr := grapher.ImportMultiDocYAML(file)
-		objects := grapher.ParseObjs(yamlArr)
+		objects := grapher.ParseObjs(yamlArr, "default")
 		parsed := grapher.ParsedObjs{
 			Objects: objects,
 		}
@@ -192,7 +192,7 @@ func TestLabelRels(t *testing.T) {
 		}
 
 		yamlArr := grapher.ImportMultiDocYAML(file)
-		objects := grapher.ParseObjs(yamlArr)
+		objects := grapher.ParseObjs(yamlArr, "default")
 		parsed := grapher.ParsedObjs{
 			Objects: objects,
 		}
@@ -241,7 +241,7 @@ func TestSpecRels(t *testing.T) {
 		}
 
 		yamlArr := grapher.ImportMultiDocYAML(file)
-		objects := grapher.ParseObjs(yamlArr)
+		objects := grapher.ParseObjs(yamlArr, "default")
 		parsed := grapher.ParsedObjs{
 			Objects: objects,
 		}

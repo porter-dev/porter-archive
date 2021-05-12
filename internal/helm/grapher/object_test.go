@@ -136,7 +136,7 @@ func TestParseObj(t *testing.T) {
 		}
 
 		yamlArr := grapher.ImportMultiDocYAML(file)
-		objects := grapher.ParseObjs(yamlArr)
+		objects := grapher.ParseObjs(yamlArr, "default")
 
 		for i, o := range objects {
 			if k8sObj.Expected[i].Kind != o.Kind {

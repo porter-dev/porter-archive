@@ -2,7 +2,7 @@ import React, { Component } from "react";
 import styled from "styled-components";
 import Modal from "../../main/home/modals/Modal";
 import LoadEnvGroupModal from "../../main/home/modals/LoadEnvGroupModal";
-import EnvEditorModal from "../../main/home/modals/EnvEditorModal"
+import EnvEditorModal from "../../main/home/modals/EnvEditorModal";
 
 import sliders from "assets/sliders.svg";
 import upload from "assets/upload.svg";

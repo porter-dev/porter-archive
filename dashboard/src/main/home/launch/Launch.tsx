@@ -50,25 +50,30 @@ export default class Templates extends Component<PropsType, StateType> {
         {}
       )
       .then((res) => {
-        let sortedVersionData = res.data.map((template : any) => {
-          let versions = template.versions.reverse()
+        let sortedVersionData = res.data.map((template: any) => {
+          let versions = template.versions.reverse();
 
-          versions = template.versions.sort(semver.rcompare)
+          versions = template.versions.sort(semver.rcompare);
 
           return {
             ...template,
             versions,
             currentVersion: versions[0],
-          }          
-        })
-
-        this.setState({ addonTemplates: sortedVersionData, error: false }, () => {
-          this.state.addonTemplates.sort((a, b) => (a.name > b.name ? 1 : -1));
-
-          this.setState({
-            loading: false,
-          });
+          };
         });
+
+        this.setState(
+          { addonTemplates: sortedVersionData, error: false },
+          () => {
+            this.state.addonTemplates.sort((a, b) =>
+              a.name > b.name ? 1 : -1
+            );
+
+            this.setState({
+              loading: false,
+            });
+          }
+        );
       })
       .catch(() => this.setState({ loading: false, error: true }));
 
@@ -81,29 +86,32 @@ export default class Templates extends Component<PropsType, StateType> {
         {}
       )
       .then((res) => {
-        let sortedVersionData = res.data.map((template : any) => {
-          let versions = template.versions.reverse()
+        let sortedVersionData = res.data.map((template: any) => {
+          let versions = template.versions.reverse();
 
-          versions = template.versions.sort(semver.rcompare)
+          versions = template.versions.sort(semver.rcompare);
 
           return {
             ...template,
             versions,
             currentVersion: versions[0],
-          }          
-        })
-
-        this.setState({ applicationTemplates: sortedVersionData, error: false }, () => {
-          let preferredOrder = ["web", "worker", "job"];
-          this.state.applicationTemplates.sort((a, b) => {
-            return (
-              preferredOrder.indexOf(a.name) - preferredOrder.indexOf(b.name)
-            );
-          });
-          this.setState({
-            loading: false,
-          });
+          };
         });
+
+        this.setState(
+          { applicationTemplates: sortedVersionData, error: false },
+          () => {
+            let preferredOrder = ["web", "worker", "job"];
+            this.state.applicationTemplates.sort((a, b) => {
+              return (
+                preferredOrder.indexOf(a.name) - preferredOrder.indexOf(b.name)
+              );
+            });
+            this.setState({
+              loading: false,
+            });
+          }
+        );
       })
       .catch(() => this.setState({ loading: false, error: true }));
   }
@@ -232,7 +240,7 @@ export default class Templates extends Component<PropsType, StateType> {
           currentTab={this.state.currentTab}
           currentTemplate={this.state.currentTemplate}
           setCurrentTemplate={(currentTemplate: PorterTemplate) => {
-            this.setState({ currentTemplate })
+            this.setState({ currentTemplate });
           }}
           skipDescription={false}
         />
@@ -248,7 +256,7 @@ export default class Templates extends Component<PropsType, StateType> {
           currentTab={this.state.currentTab}
           currentTemplate={this.state.currentTemplate}
           setCurrentTemplate={(currentTemplate: PorterTemplate) => {
-            this.setState({ currentTemplate })
+            this.setState({ currentTemplate });
           }}
         />
       );

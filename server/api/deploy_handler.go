@@ -37,7 +37,7 @@ func (app *App) HandleDeployTemplate(w http.ResponseWriter, r *http.Request) {
 	getChartForm := &forms.ChartForm{
 		Name:    name,
 		Version: version,
-		RepoURL: app.ServerConf.DefaultHelmRepoURL,
+		RepoURL: app.ServerConf.DefaultApplicationHelmRepoURL,
 	}
 
 	// if a repo_url is passed as query param, it will be populated
@@ -214,63 +214,66 @@ func (app *App) HandleUninstallTemplate(w http.ResponseWriter, r *http.Request) 
 		}
 
 		release, err := app.Repo.Release.ReadRelease(uint(clusterID), name, resp.Release.Namespace)
-		gitAction := release.GitActionConfig
 
-		if release != nil && gitAction.ID != 0 {
-			// parse env into build env
-			cEnv := &ContainerEnvConfig{}
-			rawValues, err := yaml.Marshal(resp.Release.Config)
+		if release != nil {
+			gitAction := release.GitActionConfig
 
-			if err != nil {
-				app.sendExternalError(err, http.StatusInternalServerError, HTTPError{
-					Code:   ErrReleaseReadData,
-					Errors: []string{"could not get values of previous revision"},
-				}, w)
-			}
+			if gitAction.ID != 0 {
+				// parse env into build env
+				cEnv := &ContainerEnvConfig{}
+				rawValues, err := yaml.Marshal(resp.Release.Config)
 
-			yaml.Unmarshal(rawValues, cEnv)
+				if err != nil {
+					app.sendExternalError(err, http.StatusInternalServerError, HTTPError{
+						Code:   ErrReleaseReadData,
+						Errors: []string{"could not get values of previous revision"},
+					}, w)
+				}
 
-			gr, err := app.Repo.GitRepo.ReadGitRepo(gitAction.GitRepoID)
+				yaml.Unmarshal(rawValues, cEnv)
 
-			if err != nil {
-				app.sendExternalError(err, http.StatusInternalServerError, HTTPError{
-					Code:   ErrReleaseReadData,
-					Errors: []string{"github repo integration not found"},
-				}, w)
-			}
+				gr, err := app.Repo.GitRepo.ReadGitRepo(gitAction.GitRepoID)
 
-			repoSplit := strings.Split(gitAction.GitRepo, "/")
+				if err != nil {
+					app.sendExternalError(err, http.StatusInternalServerError, HTTPError{
+						Code:   ErrReleaseReadData,
+						Errors: []string{"github repo integration not found"},
+					}, w)
+				}
 
-			projID, err := strconv.ParseUint(chi.URLParam(r, "project_id"), 0, 64)
+				repoSplit := strings.Split(gitAction.GitRepo, "/")
 
-			if err != nil || projID == 0 {
-				app.handleErrorFormDecoding(err, ErrProjectDecode, w)
-				return
-			}
+				projID, err := strconv.ParseUint(chi.URLParam(r, "project_id"), 0, 64)
 
-			gaRunner := &actions.GithubActions{
-				GitIntegration: gr,
-				GitRepoName:    repoSplit[1],
-				GitRepoOwner:   repoSplit[0],
-				Repo:           *app.Repo,
-				GithubConf:     app.GithubProjectConf,
-				WebhookToken:   release.WebhookToken,
-				ProjectID:      uint(projID),
-				ReleaseName:    name,
-				GitBranch:      gitAction.GitBranch,
-				DockerFilePath: gitAction.DockerfilePath,
-				FolderPath:     gitAction.FolderPath,
-				ImageRepoURL:   gitAction.ImageRepoURI,
-				BuildEnv:       cEnv.Container.Env.Normal,
-			}
+				if err != nil || projID == 0 {
+					app.handleErrorFormDecoding(err, ErrProjectDecode, w)
+					return
+				}
 
-			err = gaRunner.Cleanup()
+				gaRunner := &actions.GithubActions{
+					GitIntegration: gr,
+					GitRepoName:    repoSplit[1],
+					GitRepoOwner:   repoSplit[0],
+					Repo:           *app.Repo,
+					GithubConf:     app.GithubProjectConf,
+					WebhookToken:   release.WebhookToken,
+					ProjectID:      uint(projID),
+					ReleaseName:    name,
+					GitBranch:      gitAction.GitBranch,
+					DockerFilePath: gitAction.DockerfilePath,
+					FolderPath:     gitAction.FolderPath,
+					ImageRepoURL:   gitAction.ImageRepoURI,
+					BuildEnv:       cEnv.Container.Env.Normal,
+				}
 
-			if err != nil {
-				app.sendExternalError(err, http.StatusInternalServerError, HTTPError{
-					Code:   ErrReleaseReadData,
-					Errors: []string{"could not remove github action"},
-				}, w)
+				err = gaRunner.Cleanup()
+
+				if err != nil {
+					app.sendExternalError(err, http.StatusInternalServerError, HTTPError{
+						Code:   ErrReleaseReadData,
+						Errors: []string{"could not remove github action"},
+					}, w)
+				}
 			}
 		}
 	}

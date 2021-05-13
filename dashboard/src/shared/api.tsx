@@ -617,10 +617,10 @@ const getTemplateInfo = baseApi<
 });
 
 const getTemplates = baseApi<
-{
-  repo_url?: string;
-},
-{}
+  {
+    repo_url?: string;
+  },
+  {}
 >("GET", "/api/templates");
 
 const getUser = baseApi<{}, { id: number }>("GET", (pathParams) => {

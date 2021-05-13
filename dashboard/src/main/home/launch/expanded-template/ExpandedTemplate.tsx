@@ -69,8 +69,11 @@ export default class ExpandedTemplate extends Component<PropsType, StateType> {
   };
 
   componentDidUpdate = (prevProps: PropsType) => {
-    if (prevProps.currentTemplate.name !== this.props.currentTemplate.name ||
-      prevProps.currentTemplate.currentVersion !== this.props.currentTemplate.currentVersion) {
+    if (
+      prevProps.currentTemplate.name !== this.props.currentTemplate.name ||
+      prevProps.currentTemplate.currentVersion !==
+        this.props.currentTemplate.currentVersion
+    ) {
       this.fetchTemplateInfo();
     }
   };
@@ -106,9 +109,9 @@ export default class ExpandedTemplate extends Component<PropsType, StateType> {
             let template = {
               ...this.props.currentTemplate,
               currentVersion: version,
-            }
+            };
 
-            this.props.setCurrentTemplate(template)
+            this.props.setCurrentTemplate(template);
           }}
           launchTemplate={() => this.setState({ showLaunchTemplate: true })}
           markdown={this.state.markdown}

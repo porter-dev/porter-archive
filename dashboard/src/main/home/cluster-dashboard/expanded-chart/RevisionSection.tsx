@@ -18,7 +18,7 @@ type PropsType = {
   refreshRevisionsOff: () => void;
   status: string;
   shouldUpdate: boolean;
-  upgradeVersion: (version: string, cb : () => void) => void;
+  upgradeVersion: (version: string, cb: () => void) => void;
   latestVersion: string;
 };
 
@@ -229,33 +229,35 @@ export default class RevisionSection extends Component<PropsType, StateType> {
             - <Revision>No. {this.props.chart.version}</Revision>
             <i className="material-icons">arrow_drop_down</i>
           </RevisionPreview>
-          {
-            this.props.shouldUpdate && <div><RevisionUpdateMessage
-              onClick={(e) => {
-                e.stopPropagation()
-                this.setState({ upgradeVersion: this.props.latestVersion })
-              }}
-            >
-              <i className="material-icons">notification_important</i>
-              Update available
-            </RevisionUpdateMessage>
-            <ConfirmOverlay
-              show={!!this.state.upgradeVersion}
-              message={`Are you sure you want to upgrade to version ${this.state.upgradeVersion}?`}
-              onYes={(e) => {
-                e.stopPropagation()
+          {this.props.shouldUpdate && isCurrent && (
+            <div>
+              <RevisionUpdateMessage
+                onClick={(e) => {
+                  e.stopPropagation();
+                  this.setState({ upgradeVersion: this.props.latestVersion });
+                }}
+              >
+                <i className="material-icons">notification_important</i>
+                Template Update Available
+              </RevisionUpdateMessage>
+              <ConfirmOverlay
+                show={!!this.state.upgradeVersion}
+                message={`Are you sure you want to redeploy and upgrade to version ${this.state.upgradeVersion}?`}
+                onYes={(e) => {
+                  e.stopPropagation();
 
-                this.props.upgradeVersion(this.state.upgradeVersion, () => {
-                  this.setState({ loading: false })
-                })
-                this.setState({ upgradeVersion: "", loading: true })
-              }}
-              onNo={(e) => {
-                e.stopPropagation()
-                this.setState({ upgradeVersion: "" })
-              }}
-            /></div>
-          }
+                  this.props.upgradeVersion(this.state.upgradeVersion, () => {
+                    this.setState({ loading: false });
+                  });
+                  this.setState({ upgradeVersion: "", loading: true });
+                }}
+                onNo={(e) => {
+                  e.stopPropagation();
+                  this.setState({ upgradeVersion: "" });
+                }}
+              />
+            </div>
+          )}
         </RevisionHeader>
         <RevisionList>{this.renderExpanded()}</RevisionList>
       </div>
@@ -428,21 +430,20 @@ const StyledRevisionSection = styled.div`
 
 const RevisionPreview = styled.div`
   display: flex;
-  max-width: 200px; 
   align-items: center;
-`
+`;
 
 const RevisionUpdateMessage = styled.div`
   color: white;
   display: flex;
   align-items: center;
-  padding: 4px 10px; 
-  border-radius: 5px; 
-  margin-right: 10px; 
+  padding: 4px 10px;
+  border-radius: 5px;
+  margin-right: 10px;
 
   :hover {
     border: 1px solid white;
-    padding: 3px 9px; 
+    padding: 3px 9px;
   }
 
   > i {
@@ -452,4 +453,4 @@ const RevisionUpdateMessage = styled.div`
     border-radius: 20px;
     transform: none;
   }
-`
+`;

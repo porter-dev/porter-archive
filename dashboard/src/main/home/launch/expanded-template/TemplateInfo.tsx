@@ -28,7 +28,7 @@ type StateType = {
 export default class TemplateInfo extends Component<PropsType, StateType> {
   state = {
     currentVersion: this.props.currentTemplate.currentVersion,
-  }
+  };
 
   renderIcon = (icon: string) => {
     if (icon) {
@@ -130,12 +130,14 @@ export default class TemplateInfo extends Component<PropsType, StateType> {
       name = hardcodedNames[name];
     }
 
-    let versionOptions = this.props.currentTemplate.versions.map((version: string) => {
-      return {
-        value: version,
-        label: "v" + version,
+    let versionOptions = this.props.currentTemplate.versions.map(
+      (version: string) => {
+        return {
+          value: version,
+          label: "v" + version,
+        };
       }
-    })
+    );
 
     return (
       <StyledExpandedTemplate>
@@ -154,14 +156,16 @@ export default class TemplateInfo extends Component<PropsType, StateType> {
           </Flex>
           <StyledVersionSelector>
             <Selector
-                activeValue={this.props.currentTemplate.currentVersion}
-                setActiveValue={(version) => this.props.setCurrentVersion(version)}
-                options={versionOptions}
-                dropdownLabel="Version"
-                width="150px"
-                dropdownWidth="230px"
-                closeOverlay={true}
-              />
+              activeValue={this.props.currentTemplate.currentVersion}
+              setActiveValue={(version) =>
+                this.props.setCurrentVersion(version)
+              }
+              options={versionOptions}
+              dropdownLabel="Version"
+              width="150px"
+              dropdownWidth="230px"
+              closeOverlay={true}
+            />
             <Button
               isDisabled={!currentCluster}
               onClick={!currentCluster ? null : this.props.launchTemplate}
@@ -284,7 +288,7 @@ const Button = styled.div`
   display: flex;
   flex-direction: row;
   align-items: center;
-  margin-left: 10px; 
+  margin-left: 10px;
 
   > img {
     width: 16px;

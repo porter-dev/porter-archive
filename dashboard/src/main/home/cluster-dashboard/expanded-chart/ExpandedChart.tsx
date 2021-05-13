@@ -325,7 +325,7 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
           values: valuesYaml,
         });
 
-        cb && cb()
+        cb && cb();
       })
       .catch((err) => {
         console.log(err);
@@ -699,7 +699,7 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
             <RevisionSection
               showRevisions={this.state.showRevisions}
               toggleShowRevisions={() => {
-                this.setState({ showRevisions: !this.state.showRevisions })
+                this.setState({ showRevisions: !this.state.showRevisions });
               }}
               chart={chart}
               refreshChart={this.refreshChart}
@@ -709,7 +709,10 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
                 this.setState({ forceRefreshRevisions: false })
               }
               status={status}
-              shouldUpdate={chart.latest_version && chart.latest_version !== chart.chart.metadata.version}
+              shouldUpdate={
+                chart.latest_version &&
+                chart.latest_version !== chart.chart.metadata.version
+              }
               latestVersion={chart.latest_version}
               upgradeVersion={this.handleUpgradeVersion}
             />

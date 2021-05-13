@@ -29,10 +29,14 @@ export default class Logs extends Component<PropsType, StateType> {
     if (smooth) {
       this.parentRef.current.lastElementChild.scrollIntoView({
         behavior: "smooth",
+        block: "nearest",
+        inline: "start",
       });
     } else {
       this.parentRef.current.lastElementChild.scrollIntoView({
         behavior: "auto",
+        block: "nearest",
+        inline: "start",
       });
     }
   };
@@ -57,7 +61,15 @@ export default class Logs extends Component<PropsType, StateType> {
     }
 
     if (this.state.logs.length == 0) {
-      return <Message>No logs to display from this pod.</Message>;
+      return (
+        <Message>
+          No logs to display from this pod.
+          <Highlight onClick={this.refreshLogs}>
+            <i className="material-icons">autorenew</i>
+            Refresh
+          </Highlight>
+        </Message>
+      );
     }
 
     return this.state.logs.map((log, i) => {
@@ -123,7 +135,6 @@ export default class Logs extends Component<PropsType, StateType> {
   }
 
   componentWillUnmount() {
-    console.log("log unmount");
     if (this.ws) {
       this.ws.close();
     }
@@ -173,6 +184,20 @@ export default class Logs extends Component<PropsType, StateType> {
 }
 
 Logs.contextType = Context;
+
+const Highlight = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 8px;
+  color: #8590ff;
+  cursor: pointer;
+
+  > i {
+    font-size: 16px;
+    margin-right: 3px;
+  }
+`;
 
 const Scroll = styled.div`
   align-items: center;

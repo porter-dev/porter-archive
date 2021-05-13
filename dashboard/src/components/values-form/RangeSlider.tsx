@@ -12,10 +12,10 @@ export default class RangeSelector extends Component<PropsType, StateType> {
   render() {
     return (
       <StyledInputRow>
-        <Label>asdfasdf</Label>
+        <Label>XYZ</Label>
         <Slider
           value={12}
-          onChange={() => console.log("huh")}
+          onChange={() => console.log("xyz")}
           valueLabelDisplay="auto"
           aria-labelledby="range-slider"
         />

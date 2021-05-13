@@ -1,6 +1,6 @@
 import React, { Component } from "react";
 
-import { ProjectType, ClusterType } from "shared/types";
+import { ProjectType, ClusterType, CapabilityType } from "shared/types";
 
 const Context = React.createContext({});
 
@@ -62,6 +62,10 @@ class ContextProvider extends Component {
     devOpsMode: true,
     setDevOpsMode: (devOpsMode: boolean) => {
       this.setState({ devOpsMode });
+    },
+    capabilities: null as CapabilityType,
+    setCapabilities: (capabilities: CapabilityType) => {
+      this.setState({ capabilities });
     },
     clearContext: () => {
       this.setState({

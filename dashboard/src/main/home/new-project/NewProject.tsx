@@ -1,7 +1,7 @@
 import React, { Component } from "react";
 import styled from "styled-components";
 
-import gradient from "assets/gradient.jpg";
+import gradient from "assets/gradient.png";
 import { Context } from "shared/Context";
 import { isAlphanumeric } from "shared/common";
 
@@ -23,6 +23,7 @@ export default class NewProject extends Component<PropsType, StateType> {
   };
 
   render() {
+    let { capabilities } = this.context;
     let { projectName } = this.state;
     return (
       <StyledNewProject>
@@ -58,7 +59,11 @@ export default class NewProject extends Component<PropsType, StateType> {
             width="470px"
           />
         </InputWrapper>
-        <ProvisionerSettings isInNewProject={true} projectName={projectName} />
+        <ProvisionerSettings
+          isInNewProject={true}
+          projectName={projectName}
+          provisioner={capabilities?.provisioner}
+        />
         <Br />
       </StyledNewProject>
     );

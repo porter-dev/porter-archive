@@ -1,7 +1,6 @@
 import React, { Component } from "react";
 import styled from "styled-components";
 import close from "assets/close.png";
-import gradient from "assets/gradient.jpg";
 
 import api from "shared/api";
 import { Context } from "shared/Context";

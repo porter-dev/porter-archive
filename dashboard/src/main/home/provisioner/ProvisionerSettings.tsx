@@ -17,6 +17,7 @@ type PropsType = RouteComponentProps & {
   isInNewProject?: boolean;
   projectName?: string;
   infras?: InfraType[];
+  provisioner?: boolean;
 };
 
 type StateType = {
@@ -42,11 +43,19 @@ class NewProject extends Component<PropsType, StateType> {
     this.props.history.push("dashboard?tab=overview");
   };
 
-  renderSelectedProvider = () => {
+  renderSelectedProvider = (override?: string) => {
     let { selectedProvider } = this.state;
     let { projectName, infras } = this.props;
 
+    if (override) {
+      selectedProvider = override;
+    }
+
     let renderSkipHelper = () => {
+      if (!this.props.provisioner) {
+        return;
+      }
+
       return (
         <>
           {selectedProvider === "skipped" ? (
@@ -125,20 +134,77 @@ class NewProject extends Component<PropsType, StateType> {
     }
   };
 
-  render() {
+  renderFooter = () => {
     let { selectedProvider } = this.state;
     let { isInNewProject } = this.props;
+    let { provisioner } = this.props;
+    let helper = provisioner
+      ? "Note: Provisioning can take up to 15 minutes"
+      : "";
+
+    if (isInNewProject && !selectedProvider) {
+      return (
+        <>
+          <Helper>
+            Already have a Kubernetes cluster?
+            <Highlight
+              onClick={() => this.setState({ selectedProvider: "skipped" })}
+            >
+              Skip
+            </Highlight>
+          </Helper>
+          <Br />
+          <SaveButton
+            text="Submit"
+            disabled={true}
+            onClick={() => {}}
+            makeFlush={true}
+            helper={helper}
+          />
+        </>
+      );
+    }
+  };
+
+  componentDidMount() {
+    let { provisioner } = this.props;
+
+    if (!provisioner) {
+      this.setState({ selectedProvider: "skipped" });
+    }
+  }
+
+  componentDidUpdate(prevProps: PropsType) {
+    if (prevProps.provisioner !== this.props.provisioner) {
+      if (!this.props.provisioner) {
+        this.setState({ selectedProvider: "skipped" });
+      }
+    }
+  }
+
+  renderHelperText = () => {
+    let { isInNewProject, provisioner } = this.props;
+    if (!provisioner) {
+      return;
+    }
+
+    if (isInNewProject) {
+      return (
+        <>
+          Select your hosting backend:<Required>*</Required>
+        </>
+      );
+    } else {
+      return "Need a cluster? Provision through Porter:";
+    }
+  };
+
+  render() {
+    let { selectedProvider } = this.state;
+
     return (
       <StyledProvisionerSettings>
-        <Helper>
-          {isInNewProject ? (
-            <>
-              Select your hosting backend:<Required>*</Required>
-            </>
-          ) : (
-            "Need a cluster? Provision through Porter:"
-          )}
-        </Helper>
+        <Helper>{this.renderHelperText()}</Helper>
         {!selectedProvider ? (
           <BlockList>
             {providers.map((provider: string, i: number) => {
@@ -160,26 +226,7 @@ class NewProject extends Component<PropsType, StateType> {
         ) : (
           <>{this.renderSelectedProvider()}</>
         )}
-        {isInNewProject && !selectedProvider && (
-          <>
-            <Helper>
-              Already have a Kubernetes cluster?
-              <Highlight
-                onClick={() => this.setState({ selectedProvider: "skipped" })}
-              >
-                Skip
-              </Highlight>
-            </Helper>
-            <Br />
-            <SaveButton
-              text="Submit"
-              disabled={true}
-              onClick={() => {}}
-              makeFlush={true}
-              helper="Note: Provisioning can take up to 15 minutes"
-            />
-          </>
-        )}
+        {this.renderFooter()}
       </StyledProvisionerSettings>
     );
   }

@@ -22,6 +22,7 @@ type StateType = {
   isLoggedIn: boolean;
   isEmailVerified: boolean;
   initialized: boolean;
+  local: boolean;
 };
 
 export default class Main extends Component<PropsType, StateType> {
@@ -30,6 +31,7 @@ export default class Main extends Component<PropsType, StateType> {
     isLoggedIn: false,
     isEmailVerified: false,
     initialized: localStorage.getItem("init") === "true",
+    local: false,
   };
 
   componentDidMount() {
@@ -53,6 +55,13 @@ export default class Main extends Component<PropsType, StateType> {
         }
       })
       .catch((err) => this.setState({ isLoggedIn: false, loading: false }));
+
+    api
+      .getCapabilities("", {}, {})
+      .then((res) => {
+        this.setState({ local: !res.data?.provisioner });
+      })
+      .catch((err) => console.log(err));
   }
 
   initialize = () => {
@@ -100,7 +109,11 @@ export default class Main extends Component<PropsType, StateType> {
     }
 
     // if logged in but not verified, block until email verification
-    if (this.state.isLoggedIn && !this.state.isEmailVerified) {
+    if (
+      !this.state.local &&
+      this.state.isLoggedIn &&
+      !this.state.isEmailVerified
+    ) {
       return (
         <Switch>
           <Route

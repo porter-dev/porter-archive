@@ -46,7 +46,7 @@ export default class ExpandedTemplate extends Component<PropsType, StateType> {
     let params =
       this.props.currentTab == "docker"
         ? { repo_url: process.env.APPLICATION_CHART_REPO_URL }
-        : {};
+        : { repo_url: process.env.ADDON_CHART_REPO_URL };
 
     api
       .getTemplateInfo("<token>", params, {

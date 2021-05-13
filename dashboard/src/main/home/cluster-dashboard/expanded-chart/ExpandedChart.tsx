@@ -286,7 +286,7 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
       });
   };
 
-  handleUpgradeVersion = (version: string) => {
+  handleUpgradeVersion = (version: string, cb: () => void) => {
     let { currentProject, currentCluster, setCurrentError } = this.context;
 
     // convert current values to yaml
@@ -324,10 +324,12 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
           chart: this.state.currentChart.name,
           values: valuesYaml,
         });
+
+        cb && cb()
       })
       .catch((err) => {
         console.log(err);
-        this.setState({ saveValuesStatus: "error" });
+        this.setState({ saveValuesStatus: "error", loading: false });
         window.analytics.track("Failed to Upgrade Chart", {
           chart: this.state.currentChart.name,
           values: valuesYaml,

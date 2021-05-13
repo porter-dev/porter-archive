@@ -768,48 +768,51 @@ func (app *App) HandleUpgradeRelease(w http.ResponseWriter, r *http.Request) {
 		}
 
 		release, err := app.Repo.Release.ReadRelease(uint(clusterID), name, rel.Namespace)
-		gitAction := release.GitActionConfig
 
-		if release != nil && gitAction.ID != 0 {
-			// parse env into build env
-			cEnv := &ContainerEnvConfig{}
+		if release != nil {
+			gitAction := release.GitActionConfig
 
-			yaml.Unmarshal([]byte(form.Values), cEnv)
+			if gitAction.ID != 0 {
+				// parse env into build env
+				cEnv := &ContainerEnvConfig{}
 
-			gr, err := app.Repo.GitRepo.ReadGitRepo(gitAction.GitRepoID)
+				yaml.Unmarshal([]byte(form.Values), cEnv)
 
-			if err != nil {
-				app.sendExternalError(err, http.StatusInternalServerError, HTTPError{
-					Code:   ErrReleaseReadData,
-					Errors: []string{"github repo integration not found"},
-				}, w)
-			}
+				gr, err := app.Repo.GitRepo.ReadGitRepo(gitAction.GitRepoID)
 
-			repoSplit := strings.Split(gitAction.GitRepo, "/")
+				if err != nil {
+					app.sendExternalError(err, http.StatusInternalServerError, HTTPError{
+						Code:   ErrReleaseReadData,
+						Errors: []string{"github repo integration not found"},
+					}, w)
+				}
 
-			gaRunner := &actions.GithubActions{
-				GitIntegration: gr,
-				GitRepoName:    repoSplit[1],
-				GitRepoOwner:   repoSplit[0],
-				Repo:           *app.Repo,
-				GithubConf:     app.GithubProjectConf,
-				WebhookToken:   release.WebhookToken,
-				ProjectID:      uint(projID),
-				ReleaseName:    name,
-				GitBranch:      gitAction.GitBranch,
-				DockerFilePath: gitAction.DockerfilePath,
-				FolderPath:     gitAction.FolderPath,
-				ImageRepoURL:   gitAction.ImageRepoURI,
-				BuildEnv:       cEnv.Container.Env.Normal,
-			}
+				repoSplit := strings.Split(gitAction.GitRepo, "/")
 
-			err = gaRunner.CreateEnvSecret()
+				gaRunner := &actions.GithubActions{
+					GitIntegration: gr,
+					GitRepoName:    repoSplit[1],
+					GitRepoOwner:   repoSplit[0],
+					Repo:           *app.Repo,
+					GithubConf:     app.GithubProjectConf,
+					WebhookToken:   release.WebhookToken,
+					ProjectID:      uint(projID),
+					ReleaseName:    name,
+					GitBranch:      gitAction.GitBranch,
+					DockerFilePath: gitAction.DockerfilePath,
+					FolderPath:     gitAction.FolderPath,
+					ImageRepoURL:   gitAction.ImageRepoURI,
+					BuildEnv:       cEnv.Container.Env.Normal,
+				}
 
-			if err != nil {
-				app.sendExternalError(err, http.StatusInternalServerError, HTTPError{
-					Code:   ErrReleaseReadData,
-					Errors: []string{"could not update github secret"},
-				}, w)
+				err = gaRunner.CreateEnvSecret()
+
+				if err != nil {
+					app.sendExternalError(err, http.StatusInternalServerError, HTTPError{
+						Code:   ErrReleaseReadData,
+						Errors: []string{"could not update github secret"},
+					}, w)
+				}
 			}
 		}
 	}
@@ -1013,63 +1016,66 @@ func (app *App) HandleRollbackRelease(w http.ResponseWriter, r *http.Request) {
 		}
 
 		release, err := app.Repo.Release.ReadRelease(uint(clusterID), name, rel.Namespace)
-		gitAction := release.GitActionConfig
 
-		if release != nil && gitAction.ID != 0 {
-			// parse env into build env
-			cEnv := &ContainerEnvConfig{}
-			rawValues, err := yaml.Marshal(rel.Config)
+		if release != nil {
+			gitAction := release.GitActionConfig
 
-			if err != nil {
-				app.sendExternalError(err, http.StatusInternalServerError, HTTPError{
-					Code:   ErrReleaseReadData,
-					Errors: []string{"could not get values of previous revision"},
-				}, w)
-			}
+			if gitAction.ID != 0 {
+				// parse env into build env
+				cEnv := &ContainerEnvConfig{}
+				rawValues, err := yaml.Marshal(rel.Config)
 
-			yaml.Unmarshal(rawValues, cEnv)
+				if err != nil {
+					app.sendExternalError(err, http.StatusInternalServerError, HTTPError{
+						Code:   ErrReleaseReadData,
+						Errors: []string{"could not get values of previous revision"},
+					}, w)
+				}
 
-			gr, err := app.Repo.GitRepo.ReadGitRepo(gitAction.GitRepoID)
+				yaml.Unmarshal(rawValues, cEnv)
 
-			if err != nil {
-				app.sendExternalError(err, http.StatusInternalServerError, HTTPError{
-					Code:   ErrReleaseReadData,
-					Errors: []string{"github repo integration not found"},
-				}, w)
-			}
+				gr, err := app.Repo.GitRepo.ReadGitRepo(gitAction.GitRepoID)
 
-			repoSplit := strings.Split(gitAction.GitRepo, "/")
+				if err != nil {
+					app.sendExternalError(err, http.StatusInternalServerError, HTTPError{
+						Code:   ErrReleaseReadData,
+						Errors: []string{"github repo integration not found"},
+					}, w)
+				}
 
-			projID, err := strconv.ParseUint(chi.URLParam(r, "project_id"), 0, 64)
+				repoSplit := strings.Split(gitAction.GitRepo, "/")
 
-			if err != nil || projID == 0 {
-				app.handleErrorFormDecoding(err, ErrProjectDecode, w)
-				return
-			}
+				projID, err := strconv.ParseUint(chi.URLParam(r, "project_id"), 0, 64)
 
-			gaRunner := &actions.GithubActions{
-				GitIntegration: gr,
-				GitRepoName:    repoSplit[1],
-				GitRepoOwner:   repoSplit[0],
-				Repo:           *app.Repo,
-				GithubConf:     app.GithubProjectConf,
-				WebhookToken:   release.WebhookToken,
-				ProjectID:      uint(projID),
-				ReleaseName:    name,
-				GitBranch:      gitAction.GitBranch,
-				DockerFilePath: gitAction.DockerfilePath,
-				FolderPath:     gitAction.FolderPath,
-				ImageRepoURL:   gitAction.ImageRepoURI,
-				BuildEnv:       cEnv.Container.Env.Normal,
-			}
+				if err != nil || projID == 0 {
+					app.handleErrorFormDecoding(err, ErrProjectDecode, w)
+					return
+				}
 
-			err = gaRunner.CreateEnvSecret()
+				gaRunner := &actions.GithubActions{
+					GitIntegration: gr,
+					GitRepoName:    repoSplit[1],
+					GitRepoOwner:   repoSplit[0],
+					Repo:           *app.Repo,
+					GithubConf:     app.GithubProjectConf,
+					WebhookToken:   release.WebhookToken,
+					ProjectID:      uint(projID),
+					ReleaseName:    name,
+					GitBranch:      gitAction.GitBranch,
+					DockerFilePath: gitAction.DockerfilePath,
+					FolderPath:     gitAction.FolderPath,
+					ImageRepoURL:   gitAction.ImageRepoURI,
+					BuildEnv:       cEnv.Container.Env.Normal,
+				}
 
-			if err != nil {
-				app.sendExternalError(err, http.StatusInternalServerError, HTTPError{
-					Code:   ErrReleaseReadData,
-					Errors: []string{"could not update github secret"},
-				}, w)
+				err = gaRunner.CreateEnvSecret()
+
+				if err != nil {
+					app.sendExternalError(err, http.StatusInternalServerError, HTTPError{
+						Code:   ErrReleaseReadData,
+						Errors: []string{"could not update github secret"},
+					}, w)
+				}
 			}
 		}
 	}

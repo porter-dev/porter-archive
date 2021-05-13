@@ -155,7 +155,7 @@ class LaunchTemplate extends Component<PropsType, StateType> {
           id: currentProject.id,
           cluster_id: currentCluster.id,
           name: this.props.currentTemplate.name.toLowerCase().trim(),
-          version: "latest",
+          version: this.props.currentTemplate?.currentVersion || "latest",
           repo_url: process.env.ADDON_CHART_REPO_URL,
         }
       )
@@ -286,7 +286,7 @@ class LaunchTemplate extends Component<PropsType, StateType> {
           id: currentProject.id,
           cluster_id: currentCluster.id,
           name: this.props.currentTemplate.name.toLowerCase().trim(),
-          version: "latest",
+          version: this.props.currentTemplate?.currentVersion || "latest",
           repo_url: process.env.APPLICATION_CHART_REPO_URL,
         }
       )

@@ -627,6 +627,10 @@ const getUser = baseApi<{}, { id: number }>("GET", (pathParams) => {
   return `/api/users/${pathParams.id}`;
 });
 
+const getCapabilities = baseApi<{}, {}>("GET", () => {
+  return `/api/capabilities`;
+});
+
 const linkGithubProject = baseApi<
   {},
   {
@@ -784,6 +788,14 @@ const deleteConfigMap = baseApi<
   return `/api/projects/${pathParams.id}/k8s/configmap/delete`;
 });
 
+const stopJob = baseApi<
+  {},
+  { name: string; namespace: string; id: number; cluster_id: number }
+>("POST", (pathParams) => {
+  let { id, name, namespace, cluster_id } = pathParams;
+  return `/api/projects/${id}/k8s/jobs/${namespace}/${name}/stop?cluster_id=${cluster_id}`;
+});
+
 // Bundle export to allow default api import (api.<method> is more readable)
 export default {
   checkAuth,
@@ -817,6 +829,7 @@ export default {
   destroyDOKS,
   getBranchContents,
   getBranches,
+  getCapabilities,
   getChart,
   getCharts,
   getChartComponents,
@@ -864,4 +877,5 @@ export default {
   updateUser,
   updateConfigMap,
   upgradeChartValues,
+  stopJob,
 };

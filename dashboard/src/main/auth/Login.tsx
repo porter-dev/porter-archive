@@ -16,6 +16,7 @@ type StateType = {
   password: string;
   emailError: boolean;
   credentialError: boolean;
+  hasGithub: boolean;
 };
 
 export default class Login extends Component<PropsType, StateType> {
@@ -24,6 +25,7 @@ export default class Login extends Component<PropsType, StateType> {
     password: "",
     emailError: false,
     credentialError: false,
+    hasGithub: true,
   };
 
   handleKeyDown = (e: any) => {
@@ -36,6 +38,14 @@ export default class Login extends Component<PropsType, StateType> {
     emailFromCLI
       ? this.setState({ email: emailFromCLI })
       : document.addEventListener("keydown", this.handleKeyDown);
+
+    // get capabilities to case on github
+    api
+      .getCapabilities("", {}, {})
+      .then((res) => {
+        this.setState({ hasGithub: res.data?.github });
+      })
+      .catch((err) => console.log(err));
   }
 
   componentWillUnmount() {
@@ -105,6 +115,25 @@ export default class Login extends Component<PropsType, StateType> {
     window.location.href = redirectUrl;
   };
 
+  renderGithubSection = () => {
+    if (this.state.hasGithub) {
+      return (
+        <>
+          <OAuthButton onClick={this.githubRedirect}>
+            <IconWrapper>
+              <Icon src={github} />
+              Log in with GitHub
+            </IconWrapper>
+          </OAuthButton>
+          <OrWrapper>
+            <Line />
+            <Or>or</Or>
+          </OrWrapper>
+        </>
+      );
+    }
+  };
+
   render() {
     let { email, password, credentialError, emailError } = this.state;
 
@@ -117,16 +146,7 @@ export default class Login extends Component<PropsType, StateType> {
           <FormWrapper>
             <Logo src={logo} />
             <Prompt>Log in to Porter</Prompt>
-            <OAuthButton onClick={this.githubRedirect}>
-              <IconWrapper>
-                <Icon src={github} />
-                Log in with GitHub
-              </IconWrapper>
-            </OAuthButton>
-            <OrWrapper>
-              <Line />
-              <Or>or</Or>
-            </OrWrapper>
+            {this.renderGithubSection()}
             <DarkMatter />
             <InputWrapper>
               <Input

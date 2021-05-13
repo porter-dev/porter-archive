@@ -17,6 +17,7 @@ type StateType = {
   confirmPassword: string;
   emailError: boolean;
   confirmPasswordError: boolean;
+  hasGithub: boolean;
 };
 
 export default class Register extends Component<PropsType, StateType> {
@@ -26,6 +27,7 @@ export default class Register extends Component<PropsType, StateType> {
     confirmPassword: "",
     emailError: false,
     confirmPasswordError: false,
+    hasGithub: true,
   };
 
   handleKeyDown = (e: any) => {
@@ -34,6 +36,14 @@ export default class Register extends Component<PropsType, StateType> {
 
   componentDidMount() {
     document.addEventListener("keydown", this.handleKeyDown);
+
+    // get capabilities to case on github
+    api
+      .getCapabilities("", {}, {})
+      .then((res) => {
+        this.setState({ hasGithub: res.data?.github });
+      })
+      .catch((err) => console.log(err));
   }
 
   componentWillUnmount() {
@@ -106,6 +116,25 @@ export default class Register extends Component<PropsType, StateType> {
     }
   };
 
+  renderGithubSection = () => {
+    if (this.state.hasGithub) {
+      return (
+        <>
+          <OAuthButton onClick={this.githubRedirect}>
+            <IconWrapper>
+              <Icon src={github} />
+              Sign up with GitHub
+            </IconWrapper>
+          </OAuthButton>
+          <OrWrapper>
+            <Line />
+            <Or>or</Or>
+          </OrWrapper>
+        </>
+      );
+    }
+  };
+
   render() {
     let {
       email,
@@ -124,16 +153,7 @@ export default class Register extends Component<PropsType, StateType> {
           <FormWrapper>
             <Logo src={logo} />
             <Prompt>Sign up for Porter</Prompt>
-            <OAuthButton onClick={this.githubRedirect}>
-              <IconWrapper>
-                <Icon src={github} />
-                Sign up with GitHub
-              </IconWrapper>
-            </OAuthButton>
-            <OrWrapper>
-              <Line />
-              <Or>or</Or>
-            </OrWrapper>
+            {this.renderGithubSection()}
             <DarkMatter />
             <InputWrapper>
               <Input

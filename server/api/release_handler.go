@@ -258,7 +258,7 @@ func (app *App) HandleGetReleaseComponents(w http.ResponseWriter, r *http.Reques
 	}
 
 	yamlArr := grapher.ImportMultiDocYAML([]byte(release.Manifest))
-	objects := grapher.ParseObjs(yamlArr)
+	objects := grapher.ParseObjs(yamlArr, release.Namespace)
 
 	parsed := grapher.ParsedObjs{
 		Objects: objects,
@@ -879,7 +879,9 @@ func (app *App) HandleReleaseDeployWebhook(w http.ResponseWriter, r *http.Reques
 
 	gitAction := release.GitActionConfig
 
-	if gitAction.ID != 0 && repository == "porterdev/hello-porter" {
+	if gitAction.ID != 0 && (repository == "porterdev/hello-porter" || repository == "public.ecr.aws/o1j4x7p4/hello-porter") {
+		repository = gitAction.ImageRepoURI
+	} else if gitAction.ID != 0 && (repository == "porterdev/hello-porter-job" || repository == "public.ecr.aws/o1j4x7p4/hello-porter-job") {
 		repository = gitAction.ImageRepoURI
 	}
 

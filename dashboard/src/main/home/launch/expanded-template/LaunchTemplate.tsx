@@ -19,8 +19,7 @@ import TabRegion from "components/TabRegion";
 import InputRow from "components/values-form/InputRow";
 import SaveButton from "components/SaveButton";
 import ActionConfEditor from "components/repo-selector/ActionConfEditor";
-import ValuesWrapper from "components/values-form/ValuesWrapper";
-import ValuesForm from "components/values-form/ValuesForm";
+import FormWrapper from "components/values-form/FormWrapper";
 import RadioSelector from "components/RadioSelector";
 import { isAlphanumeric } from "shared/common";
 
@@ -58,6 +57,7 @@ type StateType = {
   folderPath: string | null;
   selectedRegistry: any | null;
   env: any;
+  valuesToOverride: any | null;
 };
 
 const defaultActionConfig: ActionConfigType = {
@@ -93,6 +93,7 @@ class LaunchTemplate extends Component<PropsType, StateType> {
     folderPath: null as string | null,
     selectedRegistry: null as any | null,
     env: {},
+    valuesToOverride: null as any | null,
   };
 
   createGHAction = (chartName: string, chartNamespace: string) => {
@@ -211,10 +212,10 @@ class LaunchTemplate extends Component<PropsType, StateType> {
 
     if (this.state.sourceType === "repo") {
       if (this.props.currentTemplate?.name == "job") {
-        imageUrl = "porterdev/hello-porter-job";
+        imageUrl = "public.ecr.aws/o1j4x7p4/hello-porter-job";
         tag = "latest";
       } else {
-        imageUrl = "porterdev/hello-porter";
+        imageUrl = "public.ecr.aws/o1j4x7p4/hello-porter";
         tag = "latest";
       }
     }
@@ -242,7 +243,7 @@ class LaunchTemplate extends Component<PropsType, StateType> {
 
     _.set(values, "ingress.provider", provider);
     var url: string;
-
+    console.log("ok here", values);
     // check if template is docker and create external domain if necessary
     if (this.props.currentTemplate.name == "web") {
       if (values?.ingress?.enabled && !values?.ingress?.custom_domain) {
@@ -381,15 +382,6 @@ class LaunchTemplate extends Component<PropsType, StateType> {
       procfilePath,
     } = this.state;
 
-    // if (
-    //   sourceType === "repo" &&
-    //   !dockerfilePath &&
-    //   folderPath &&
-    //   !procfilePath
-    // ) {
-    //   return "Procfile not detected.";
-    // }
-
     if (!this.submitIsDisabled()) {
       return this.state.saveValuesStatus;
     }
@@ -411,53 +403,6 @@ class LaunchTemplate extends Component<PropsType, StateType> {
       return "Template name contains illegal characters";
     }
     return "No application source specified";
-  };
-
-  renderTabContents = () => {
-    return (
-      <ValuesWrapper
-        formTabs={this.props.form?.tabs}
-        onSubmit={
-          this.props.currentTab === "docker"
-            ? this.onSubmit
-            : this.onSubmitAddon
-        }
-        saveValuesStatus={this.getStatus()}
-        disabled={this.submitIsDisabled()}
-        renderSaveButton={true}
-      >
-        {(metaState: any, setMetaState: any) => {
-          if (!metaState) {
-            return;
-          }
-
-          // handle when procfileProcess is already specified
-          if (this.state.procfileProcess) {
-            metaState["container.command"] = this.state.procfileProcess;
-          }
-
-          return this.props.form?.tabs.map((tab: any, i: number) => {
-            // If tab is current, render
-            if (tab.name === this.state.currentTab) {
-              return (
-                <ValuesForm
-                  metaState={metaState}
-                  handleEnvChange={(x: any) => this.setState({ env: x })}
-                  setMetaState={setMetaState}
-                  key={tab.name}
-                  sections={tab.sections}
-                  // For env group loader
-                  namespace={this.state.selectedNamespace}
-                  clusterId={this.state.selectedClusterId}
-                  // For procfile process
-                  procfileProcess={this.state.procfileProcess}
-                />
-              );
-            }
-          });
-        }}
-      </ValuesWrapper>
-    );
   };
 
   componentDidMount() {
@@ -545,13 +490,24 @@ class LaunchTemplate extends Component<PropsType, StateType> {
           <Subtitle>
             Configure additional settings for this template. (Optional)
           </Subtitle>
-          <TabRegion
-            options={this.state.tabOptions}
-            currentTab={this.state.currentTab}
-            setCurrentTab={(x: string) => this.setState({ currentTab: x })}
-          >
-            {this.renderTabContents()}
-          </TabRegion>
+          <FormWrapper
+            formData={this.props.form}
+            saveValuesStatus={this.state.saveValuesStatus}
+            valuesToOverride={this.state.valuesToOverride}
+            clearValuesToOverride={() =>
+              this.setState({ valuesToOverride: null })
+            }
+            externalValues={{
+              namespace: this.state.selectedNamespace,
+              clusterId: this.context.currentCluster.id,
+              isLaunch: true,
+            }}
+            onSubmit={
+              this.props.currentTab === "docker"
+                ? this.onSubmit
+                : this.onSubmitAddon
+            }
+          />
         </>
       );
     } else {
@@ -580,20 +536,24 @@ class LaunchTemplate extends Component<PropsType, StateType> {
 
   // Display if current template uses source (image or repo)
   renderSourceSelectorContent = () => {
+    let { capabilities } = this.context;
+
     if (this.state.sourceType === "") {
       return (
         <BlockList>
-          <Block
-            onClick={() => {
-              this.setState({ sourceType: "repo" });
-            }}
-          >
-            <BlockIcon src="https://3.bp.blogspot.com/-xhNpNJJyQhk/XIe4GY78RQI/AAAAAAAAItc/ouueFUj2Hqo5dntmnKqEaBJR4KQ4Q2K3ACK4BGAYYCw/s1600/logo%2Bgit%2Bicon.png" />
-            <BlockTitle>Git Repository</BlockTitle>
-            <BlockDescription>
-              Deploy using source from a Git repo.
-            </BlockDescription>
-          </Block>
+          {capabilities.github && (
+            <Block
+              onClick={() => {
+                this.setState({ sourceType: "repo" });
+              }}
+            >
+              <BlockIcon src="https://3.bp.blogspot.com/-xhNpNJJyQhk/XIe4GY78RQI/AAAAAAAAItc/ouueFUj2Hqo5dntmnKqEaBJR4KQ4Q2K3ACK4BGAYYCw/s1600/logo%2Bgit%2Bicon.png" />
+              <BlockTitle>Git Repository</BlockTitle>
+              <BlockDescription>
+                Deploy using source from a Git repo.
+              </BlockDescription>
+            </Block>
+          )}
           <Block
             onClick={() => {
               this.setState({ sourceType: "registry" });
@@ -642,32 +602,6 @@ class LaunchTemplate extends Component<PropsType, StateType> {
           <br />
         </StyledSourceBox>
       );
-    } else if (this.state.repoType === "" && false) {
-      return (
-        <StyledSourceBox>
-          <CloseButton onClick={() => this.setState({ sourceType: "" })}>
-            <CloseButtonImg src={close} />
-          </CloseButton>
-          <Subtitle>
-            Are you using an existing Dockerfile from your repo?
-            <Required>*</Required>
-          </Subtitle>
-          <RadioSelector
-            options={[
-              {
-                value: "dockerfile",
-                label: "Yes, I am using an existing Dockerfile",
-              },
-              {
-                value: "buildpack",
-                label: "No, I am not using an existing Dockerfile",
-              },
-            ]}
-            selected={this.state.repoType}
-            setSelected={(x: string) => this.setState({ repoType: x })}
-          />
-        </StyledSourceBox>
-      );
     } else {
       return (
         <StyledSourceBox>
@@ -696,7 +630,17 @@ class LaunchTemplate extends Component<PropsType, StateType> {
             }
             procfileProcess={this.state.procfileProcess}
             setProcfileProcess={(procfileProcess: string) =>
-              this.setState({ procfileProcess })
+              this.setState({
+                procfileProcess,
+                valuesToOverride: {
+                  "container.command": {
+                    value: procfileProcess || "",
+                  },
+                  showStartCommand: {
+                    value: !procfileProcess,
+                  },
+                },
+              })
             }
             setBranch={(branch: string) => this.setState({ branch })}
             setDockerfilePath={(x: string) =>
@@ -826,12 +770,6 @@ class LaunchTemplate extends Component<PropsType, StateType> {
 
 LaunchTemplate.contextType = Context;
 export default withRouter(LaunchTemplate);
-
-const Bold = styled.div`
-  font-weight: bold;
-  color: white;
-  margin-right: 5px;
-`;
 
 const CloseButton = styled.div`
   position: absolute;
@@ -1054,12 +992,6 @@ const Polymer = styled.div`
   }
 `;
 
-const Template = styled.div`
-  display: flex;
-  align-items: center;
-  margin-right: 13px;
-`;
-
 const ClusterSection = styled.div`
   display: flex;
   align-items: center;
@@ -1074,22 +1006,6 @@ const ClusterSection = styled.div`
     font-size: 25px;
     color: #ffffff44;
     margin-right: 13px;
-  }
-`;
-
-const Flex = styled.div`
-  display: flex;
-  align-items: center;
-
-  > i {
-    cursor: pointer;
-    font-size 24px;
-    color: #969Fbbaa;
-    padding: 3px;
-    border-radius: 100px;
-    :hover {
-      background: #ffffff11;
-    }
   }
 `;
 

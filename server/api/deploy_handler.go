@@ -37,7 +37,7 @@ func (app *App) HandleDeployTemplate(w http.ResponseWriter, r *http.Request) {
 	getChartForm := &forms.ChartForm{
 		Name:    name,
 		Version: version,
-		RepoURL: app.ServerConf.DefaultHelmRepoURL,
+		RepoURL: app.ServerConf.DefaultApplicationHelmRepoURL,
 	}
 
 	// if a repo_url is passed as query param, it will be populated

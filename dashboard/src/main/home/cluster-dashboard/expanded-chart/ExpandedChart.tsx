@@ -298,6 +298,56 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
       });
   };
 
+  handleUpgradeVersion = (version: string) => {
+    let { currentProject, currentCluster, setCurrentError } = this.context;
+
+    // convert current values to yaml
+    let values = this.props.currentChart.config;
+
+    let valuesYaml = yaml.dump({
+      ...values,
+    });
+
+    this.setState({ saveValuesStatus: "loading" });
+    this.refreshChart();
+
+    api
+      .upgradeChartValues(
+        "<token>",
+        {
+          namespace: this.state.currentChart.namespace,
+          storage: StorageType.Secret,
+          values: valuesYaml,
+          version: version,
+        },
+        {
+          id: currentProject.id,
+          name: this.state.currentChart.name,
+          cluster_id: currentCluster.id,
+        }
+      )
+      .then((res) => {
+        this.setState({
+          saveValuesStatus: "successful",
+          forceRefreshRevisions: true,
+        });
+
+        window.analytics.track("Chart Upgraded", {
+          chart: this.state.currentChart.name,
+          values: valuesYaml,
+        });
+      })
+      .catch((err) => {
+        console.log(err);
+        this.setState({ saveValuesStatus: "error" });
+        window.analytics.track("Failed to Upgrade Chart", {
+          chart: this.state.currentChart.name,
+          values: valuesYaml,
+          error: err,
+        });
+      });
+  };
+
   renderTabContents = () => {
     let {
       currentTab,
@@ -704,9 +754,9 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
 
             <RevisionSection
               showRevisions={this.state.showRevisions}
-              toggleShowRevisions={() =>
+              toggleShowRevisions={() => {
                 this.setState({ showRevisions: !this.state.showRevisions })
-              }
+              }}
               chart={chart}
               refreshChart={this.refreshChart}
               setRevision={this.setRevision}
@@ -716,6 +766,8 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
               }
               status={status}
               shouldUpdate={chart.latest_version && chart.latest_version !== chart.chart.metadata.version}
+              latestVersion={chart.latest_version}
+              upgradeVersion={this.handleUpgradeVersion}
             />
           </HeaderWrapper>
 

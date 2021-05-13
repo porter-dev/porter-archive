@@ -31,7 +31,8 @@ type ServerConf struct {
 	IsTesting            bool          `env:"IS_TESTING,default=false"`
 	AppRootDomain        string        `env:"APP_ROOT_DOMAIN,default=porter.run"`
 
-	DefaultHelmRepoURL string `env:"HELM_REPO_URL,default=https://porter-dev.github.io/chart-repo/"`
+	DefaultApplicationHelmRepoURL string `env:"HELM_APP_REPO_URL,default=https://charts.dev.getporter.dev"`
+	DefaultAddonHelmRepoURL       string `env:"HELM_ADD_ON_REPO_URL,default=https://chart-addons.dev.getporter.dev"`
 
 	GithubClientID     string `env:"GITHUB_CLIENT_ID"`
 	GithubClientSecret string `env:"GITHUB_CLIENT_SECRET"`

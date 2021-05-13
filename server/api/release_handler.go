@@ -201,12 +201,14 @@ func (app *App) HandleGetRelease(w http.ResponseWriter, r *http.Request) {
 	// detect if Porter application chart and attempt to get the latest version
 	// from chart repo
 	if _, found := porterApplications[res.Chart.Metadata.Name]; found {
-		repoIndex, err := loader.LoadRepoIndexPublic(app.ServerConf.DefaultHelmRepoURL)
+		repoIndex, err := loader.LoadRepoIndexPublic(app.ServerConf.DefaultApplicationHelmRepoURL)
 
 		if err == nil {
 			porterChart := loader.FindPorterChartInIndexList(repoIndex, res.Chart.Metadata.Name)
 
-			res.LatestVersion = porterChart.Versions[0]
+			if porterChart != nil && len(porterChart.Versions) > 0 {
+				res.LatestVersion = porterChart.Versions[0]
+			}
 		}
 	}
 
@@ -708,6 +710,39 @@ func (app *App) HandleUpgradeRelease(w http.ResponseWriter, r *http.Request) {
 		Cluster:    form.ReleaseForm.Cluster,
 		Repo:       *app.Repo,
 		Registries: registries,
+	}
+
+	// if the chart version is set, load a chart from the repo
+	if form.ChartVersion != "" {
+		release, err := agent.GetRelease(form.Name, 0)
+
+		if err != nil {
+			app.sendExternalError(err, http.StatusNotFound, HTTPError{
+				Code:   ErrReleaseReadData,
+				Errors: []string{"release not found"},
+			}, w)
+
+			return
+		}
+
+		if _, found := porterApplications[release.Chart.Metadata.Name]; found {
+			chart, err := loader.LoadChartPublic(
+				app.ServerConf.DefaultApplicationHelmRepoURL,
+				release.Chart.Metadata.Name,
+				form.ChartVersion,
+			)
+
+			if err != nil {
+				app.sendExternalError(err, http.StatusNotFound, HTTPError{
+					Code:   ErrReleaseReadData,
+					Errors: []string{"chart not found"},
+				}, w)
+
+				return
+			}
+
+			conf.Chart = chart
+		}
 	}
 
 	rel, err := agent.UpgradeRelease(conf, form.Values, app.DOConf)

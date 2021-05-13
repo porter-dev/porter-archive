@@ -551,6 +551,10 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
         }
       });
 
+      if (!serviceName || !serviceNamespace) {
+        return;
+      }
+
       return (
         <Url>
           <Bolded>Internal URI:</Bolded>

@@ -18,11 +18,14 @@ type PropsType = {
   refreshRevisionsOff: () => void;
   status: string;
   shouldUpdate: boolean;
+  upgradeVersion: (version: string) => void;
+  latestVersion: string;
 };
 
 type StateType = {
   revisions: ChartType[];
   rollbackRevision: number | null;
+  upgradeVersion: string;
   loading: boolean;
   maxVersion: number;
 };
@@ -32,6 +35,7 @@ export default class RevisionSection extends Component<PropsType, StateType> {
   state = {
     revisions: [] as ChartType[],
     rollbackRevision: null as number | null,
+    upgradeVersion: "",
     loading: false,
     maxVersion: 0, // Track most recent version even when previewing old revisions
   };
@@ -223,12 +227,24 @@ export default class RevisionSection extends Component<PropsType, StateType> {
             : `Previewing Revision (Not Deployed)`}{" "}
           - <Revision>No. {this.props.chart.version}</Revision>
           <i className="material-icons">arrow_drop_down</i>
-          <RevisionUpdateMessage>
-            <i className="material-icons">notification_important</i>
-            {!this.props.shouldUpdate ? `Update available` : ""}
-          </RevisionUpdateMessage>
+          {
+            this.props.shouldUpdate && <div><RevisionUpdateMessage
+              onClick={(e) => {
+                e.stopPropagation()
+                this.setState({ upgradeVersion: this.props.latestVersion })
+              }}
+            >
+              <i className="material-icons">notification_important</i>
+              Update available
+            </RevisionUpdateMessage>
+            <ConfirmOverlay
+              show={!!this.state.upgradeVersion}
+              message={`Are you sure you want to upgrade to version ${this.state.upgradeVersion}?`}
+              onYes={() => this.props.upgradeVersion(this.state.upgradeVersion)}
+              onNo={() => this.setState({ upgradeVersion: "" })}
+            /></div>
+          }
         </RevisionHeader>
-
         <RevisionList>{this.renderExpanded()}</RevisionList>
       </div>
     );
@@ -403,6 +419,13 @@ const RevisionUpdateMessage = styled.div`
   color: white;
   display: flex;
   align-items: center;
+  padding: 4px 10px; 
+  border-radius: 5px; 
+
+  :hover {
+    border: 1px solid white;
+    padding: 3px 9px; 
+  }
 
   > i {
     margin-right: 6px;

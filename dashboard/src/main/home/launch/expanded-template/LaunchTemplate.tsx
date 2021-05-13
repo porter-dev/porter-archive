@@ -155,6 +155,7 @@ class LaunchTemplate extends Component<PropsType, StateType> {
           cluster_id: currentCluster.id,
           name: this.props.currentTemplate.name.toLowerCase().trim(),
           version: "latest",
+          repo_url: process.env.ADDON_CHART_REPO_URL,
         }
       )
       .then((_) => {
@@ -268,8 +269,6 @@ class LaunchTemplate extends Component<PropsType, StateType> {
         values.ingress.porter_hosts = [url];
       }
     }
-
-    console.log("VALUES ARE", values);
 
     api
       .deployTemplate(

@@ -42,7 +42,13 @@ export default class Templates extends Component<PropsType, StateType> {
 
   componentDidMount() {
     api
-      .getAddonTemplates("<token>", {}, {})
+      .getTemplates(
+        "<token>",
+        {
+          repo_url: process.env.ADDON_CHART_REPO_URL,
+        },
+        {}
+      )
       .then((res) => {
         let sortedVersionData = res.data.map((template : any) => {
           let versions = template.versions.reverse()
@@ -67,7 +73,7 @@ export default class Templates extends Component<PropsType, StateType> {
       .catch(() => this.setState({ loading: false, error: true }));
 
     api
-      .getApplicationTemplates(
+      .getTemplates(
         "<token>",
         {
           repo_url: process.env.APPLICATION_CHART_REPO_URL,

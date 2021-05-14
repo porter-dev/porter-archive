@@ -15,6 +15,7 @@ type PropsType = {
   setCurrentTemplate: (x: PorterTemplate) => void;
   skipDescription?: boolean;
   showLaunchFlow: () => void;
+  setForm: (x: any) => void;
 };
 
 type StateType = {
@@ -57,8 +58,8 @@ export default class ExpandedTemplate extends Component<PropsType, StateType> {
       .then((res) => {
         let { form, values, markdown, metadata } = res.data;
         let keywords = metadata.keywords;
+        this.props.setForm(form);
         this.setState({
-          form,
           values,
           markdown,
           keywords,

@@ -17,6 +17,9 @@ type PropsType = RouteComponentProps & {
   templateName: string;
   setTemplateName: (x: string) => void;
   setValuesToOverride: (x: any) => void;
+  setPage: (x: string) => void;
+  sourceType: string;
+  setSourceType: (x: string) => void;
 
   imageUrl: string;
   setImageUrl: (x: string) => void;
@@ -42,7 +45,6 @@ type PropsType = RouteComponentProps & {
 };
 
 type StateType = {
-  sourceType: string;
 };
 
 const defaultActionConfig: ActionConfigType = {
@@ -53,22 +55,15 @@ const defaultActionConfig: ActionConfigType = {
 };
 
 class SourcePage extends Component<PropsType, StateType> {
-  state = {
-    sourceType: "",
-  };
-
   renderSourceSelector = () => {
     let { capabilities } = this.context;
+    let { sourceType, setSourceType } = this.props;
 
-    if (this.state.sourceType === "") {
+    if (sourceType === "") {
       return (
         <BlockList>
           {capabilities.github && (
-            <Block
-              onClick={() => {
-                this.setState({ sourceType: "repo" });
-              }}
-            >
+            <Block onClick={() => setSourceType("repo")}>
               <BlockIcon src="https://3.bp.blogspot.com/-xhNpNJJyQhk/XIe4GY78RQI/AAAAAAAAItc/ouueFUj2Hqo5dntmnKqEaBJR4KQ4Q2K3ACK4BGAYYCw/s1600/logo%2Bgit%2Bicon.png" />
               <BlockTitle>Git Repository</BlockTitle>
               <BlockDescription>
@@ -76,11 +71,7 @@ class SourcePage extends Component<PropsType, StateType> {
               </BlockDescription>
             </Block>
           )}
-          <Block
-            onClick={() => {
-              this.setState({ sourceType: "registry" });
-            }}
-          >
+          <Block onClick={() => setSourceType("registry")}>
             <BlockIcon src="https://cdn4.iconfinder.com/data/icons/logos-and-brands/512/97_Docker_logo_logos-512.png" />
             <BlockTitle>Docker Registry</BlockTitle>
             <BlockDescription>
@@ -92,7 +83,7 @@ class SourcePage extends Component<PropsType, StateType> {
     } 
     
     // Display image selector
-    if (this.state.sourceType === "registry") {
+    if (sourceType === "registry") {
       let { 
         imageUrl,
         setImageUrl,
@@ -103,7 +94,7 @@ class SourcePage extends Component<PropsType, StateType> {
         <StyledSourceBox>
           <CloseButton
             onClick={() => {
-              this.setState({ sourceType: "" });
+              setSourceType("");
               setImageUrl("");
               setImageTag("");
             }}
@@ -155,7 +146,7 @@ class SourcePage extends Component<PropsType, StateType> {
     } = this.props;
     return (
       <StyledSourceBox>
-        <CloseButton onClick={() => this.setState({ sourceType: "" })}>
+        <CloseButton onClick={() => setSourceType("")}>
           <CloseButtonImg src={close} />
         </CloseButton>
         <Subtitle>
@@ -249,52 +240,51 @@ class SourcePage extends Component<PropsType, StateType> {
   }
 
   render() {
-    let { templateName, setTemplateName } = this.props;
+    let { templateName, setTemplateName, setPage } = this.props;
 
     return (
-      <PaddingWrapper>
-        <StyledSourcePage>
-          <Helper>
-            Name
-            <Warning
-              highlight={!isAlphanumeric(templateName) && templateName !== ""}
-            >
-              (lowercase letters, numbers, and "-" only)
-            </Warning>
-            <Required>*</Required>
-          </Helper>
-          <InputWrapper>
-            <InputRow
-              type="string"
-              value={templateName}
-              setValue={setTemplateName}
-              placeholder="ex: perspective-vortex"
-              width="470px"
-            />
-          </InputWrapper>
-          <Helper>
-            Choose a deployment method:
-            <Required>*</Required>
-          </Helper>
-          <Br />
-          {this.renderSourceSelector()}
-          <Helper>
-            Learn more about
-            <Highlight>
-              deploying services to Porter
-            </Highlight>
-          </Helper>
-          <Buffer />
-          <SaveButton
-            text="Continue"
-            disabled={!this.checkSourceSelected()}
-            onClick={() => {}}
-            status={this.getButtonStatus()}
-            makeFlush={true}
-            helper={this.getButtonHelper()}
+      <StyledSourcePage>
+        <Heading>Name</Heading>
+        <Helper>
+          Randomly generated if left blank
+          <Warning
+            highlight={!isAlphanumeric(templateName) && templateName !== ""}
+          >
+            (lowercase letters, numbers, and "-" only)
+          </Warning>
+        </Helper>
+        <InputWrapper>
+          <InputRow
+            type="string"
+            value={templateName}
+            setValue={setTemplateName}
+            placeholder="ex: perspective-vortex"
+            width="470px"
           />
-        </StyledSourcePage>
-      </PaddingWrapper>
+        </InputWrapper>
+        <Heading>Deployment Method</Heading>
+        <Helper>
+          Deploy from a Git repository or a Docker registry:
+          <Required>*</Required>
+        </Helper>
+        <Br />
+        {this.renderSourceSelector()}
+        <Helper>
+          Learn more about
+          <Highlight>
+            deploying services to Porter
+          </Highlight>
+        </Helper>
+        <Buffer />
+        <SaveButton
+          text="Continue"
+          disabled={!this.checkSourceSelected()}
+          onClick={() => setPage("settings")}
+          status={this.getButtonStatus()}
+          makeFlush={true}
+          helper={this.getButtonHelper()}
+        />
+      </StyledSourcePage>
     );
   }
 }
@@ -302,12 +292,19 @@ class SourcePage extends Component<PropsType, StateType> {
 SourcePage.contextType = Context;
 export default withRouter(SourcePage);
 
-const PaddingWrapper = styled.div`
-  padding-bottom: 150px;
+const Heading = styled.div<{ isAtTop?: boolean }>`
+  color: white;
+  font-weight: 500;
+  font-size: 16px;
+  margin-bottom: 5px;
+  margin-top: ${(props) => (props.isAtTop ? "10px" : "30px")};
+  display: flex;
+  align-items: center;
 `;
 
 const StyledSourcePage = styled.div`
   position: relative;
+  margin-top: -5px;
 `;
 
 const Buffer = styled.div`
@@ -331,8 +328,6 @@ const Subtitle = styled.div`
   font-size: 13px;
   color: #aaaabb;
   line-height: 1.6em;
-  display: flex;
-  align-items: center;
 `;
 
 const CloseButton = styled.div`
@@ -458,7 +453,7 @@ const Highlight = styled.div`
   text-decoration: none;
   margin-left: 5px;
   cursor: pointer;
-  display: inline-block;
+  display: inline;
 `;
 
 const StyledSourceBox = styled.div`

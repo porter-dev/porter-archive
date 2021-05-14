@@ -4,10 +4,10 @@ import "helm.sh/helm/v3/pkg/chart"
 
 // PorterChartList is how a chart gets displayed when listed
 type PorterChartList struct {
-	Name        string `json:"name"`
-	Version     string `json:"version"`
-	Description string `json:"description"`
-	Icon        string `json:"icon"`
+	Name        string   `json:"name"`
+	Versions    []string `json:"versions"`
+	Description string   `json:"description"`
+	Icon        string   `json:"icon"`
 }
 
 // PorterChartRead is a chart with detailed information and a form for reading

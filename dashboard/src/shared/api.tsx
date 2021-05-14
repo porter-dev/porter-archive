@@ -616,9 +616,7 @@ const getTemplateInfo = baseApi<
   return `/api/templates/${pathParams.name}/${pathParams.version}`;
 });
 
-const getAddonTemplates = baseApi("GET", "/api/templates");
-
-const getApplicationTemplates = baseApi<
+const getTemplates = baseApi<
   {
     repo_url?: string;
   },
@@ -720,6 +718,7 @@ const upgradeChartValues = baseApi<
     namespace: string;
     storage: StorageType;
     values: string;
+    version?: string;
   },
   {
     id: number;
@@ -864,8 +863,7 @@ export default {
   getRepos,
   getRevisions,
   getTemplateInfo,
-  getAddonTemplates,
-  getApplicationTemplates,
+  getTemplates,
   getUser,
   linkGithubProject,
   listConfigMaps,

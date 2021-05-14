@@ -17,22 +17,57 @@ import (
 
 // RepoIndexToPorterChartList converts an index file to a list of porter charts
 func RepoIndexToPorterChartList(index *repo.IndexFile) []*models.PorterChartList {
+	// sort the entries before parsing
+	index.SortEntries()
+
 	porterCharts := make([]*models.PorterChartList, 0)
 
-	for _, entry := range index.Entries {
-		indexChart := entry[0]
+	for _, entryVersions := range index.Entries {
+		indexChart := entryVersions[0]
+		versions := make([]string, 0)
+
+		for _, entryVersion := range entryVersions {
+			versions = append(versions, entryVersion.Version)
+		}
 
 		porterChart := &models.PorterChartList{
 			Name:        indexChart.Name,
-			Version:     indexChart.Version,
 			Description: indexChart.Description,
 			Icon:        indexChart.Icon,
+			Versions:    versions,
 		}
 
 		porterCharts = append(porterCharts, porterChart)
 	}
 
 	return porterCharts
+}
+
+// FindPorterChartInIndexList finds a chart by name given an index file and returns it
+func FindPorterChartInIndexList(index *repo.IndexFile, name string) *models.PorterChartList {
+	// sort the entries before parsing
+	index.SortEntries()
+
+	for _, entryVersions := range index.Entries {
+		indexChart := entryVersions[0]
+
+		if indexChart.Name == name {
+			versions := make([]string, 0)
+
+			for _, entryVersion := range entryVersions {
+				versions = append(versions, entryVersion.Version)
+			}
+
+			return &models.PorterChartList{
+				Name:        indexChart.Name,
+				Description: indexChart.Description,
+				Icon:        indexChart.Icon,
+				Versions:    versions,
+			}
+		}
+	}
+
+	return nil
 }
 
 // BasicAuthClient is just a username/password to set on requests

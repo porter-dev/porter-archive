@@ -50,6 +50,6 @@ Open your terminal in the root repository and enter:
 
 It will promt you for a password. Enter `porter`
 
-Next, verify your email.
+Next, update your email in the database to `verified":
 
 `UPDATE users SET email_verified='t' WHERE id=1;`

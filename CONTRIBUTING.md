@@ -92,7 +92,7 @@ DB_NAME=porter
 SQL_LITE=false
 ```
 
-Once you've done this, go to the root repository, and run `docker-compose -f docker-compose-dev.yaml up`. You should see postgres, webpack, and porter containers spin up. When the webpack and porter containers have finished compiling and have spun up successfully (this will take 5-10 minutes after the containers start), you can navigate to `localhost:8080` and you should be greeted with the "Log In" screen. 
+Once you've done this, go to the root repository, and run `docker-compose -f docker-compose.dev.yaml up`. You should see postgres, webpack, and porter containers spin up. When the webpack and porter containers have finished compiling and have spun up successfully (this will take 5-10 minutes after the containers start), you can navigate to `localhost:8080` and you should be greeted with the "Log In" screen. 
 
 At this point, you can make a change to any `.go` file to trigger a backend rebuild, and any file in `/dashboard/src` to trigger a hot reload. Happy developing!
 

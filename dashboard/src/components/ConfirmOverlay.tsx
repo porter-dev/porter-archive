@@ -4,8 +4,8 @@ import styled from "styled-components";
 type PropsType = {
   message: string;
   show: boolean;
-  onYes: () => void;
-  onNo: () => void;
+  onYes: React.MouseEventHandler;
+  onNo: React.MouseEventHandler;
 };
 
 type StateType = {};

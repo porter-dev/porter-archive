@@ -22,6 +22,7 @@ type PropsType = {};
 
 type StateType = {
   currentTemplate: PorterTemplate | null;
+  form: any;
   currentTab: string;
   addonTemplates: PorterTemplate[];
   applicationTemplates: PorterTemplate[];
@@ -33,6 +34,7 @@ type StateType = {
 export default class Templates extends Component<PropsType, StateType> {
   state = {
     currentTemplate: null as PorterTemplate | null,
+    form: null as any,
     currentTab: "porter",
     addonTemplates: [] as PorterTemplate[],
     applicationTemplates: [] as PorterTemplate[],
@@ -180,6 +182,7 @@ export default class Templates extends Component<PropsType, StateType> {
     if (this.state.currentTemplate) {
       return (
         <ExpandedTemplate
+          setForm={(x: any) => this.setState({ form: x })}
           showLaunchFlow={() => this.setState({ isOnLaunchFlow: true })}
           currentTab={this.state.currentTab}
           currentTemplate={this.state.currentTemplate}
@@ -248,6 +251,7 @@ export default class Templates extends Component<PropsType, StateType> {
     } else {
       return (
         <LaunchFlow
+          form={this.state.form}
           currentTab={this.state.currentTab}
           currentTemplate={this.state.currentTemplate} 
           hideLaunchFlow={() => this.setState({ isOnLaunchFlow: false })}

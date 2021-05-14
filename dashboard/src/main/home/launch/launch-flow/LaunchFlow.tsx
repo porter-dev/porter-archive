@@ -1,8 +1,15 @@
 import React, { Component } from "react";
 import styled from "styled-components";
+import _ from "lodash";
+import randomWords from "random-words";
+import { RouteComponentProps, withRouter } from "react-router";
+
+import api from "shared/api";
+import { Context } from "shared/Context";
 
 import hardcodedNames from "../hardcodedNameDict";
 import SourcePage from "./SourcePage";
+import SettingsPage from "./SettingsPage";
 
 import {
   PorterTemplate,
@@ -12,15 +19,18 @@ import {
   StorageType,
 } from "shared/types";
 
-type PropsType = {
+type PropsType = RouteComponentProps & {
   currentTab?: string;
   currentTemplate: PorterTemplate;
   hideLaunchFlow: () => void;
+  form: any;
 };
 
 type StateType = {
   currentPage: string;
   templateName: string;
+  sourceType: string;
+  valuesToOverride: any;
 
   imageUrl: string;
   imageTag: string;
@@ -34,7 +44,8 @@ type StateType = {
   folderPath: string | null;
   selectedRegistry: any;
 
-  valuesToOverride: any;
+  selectedNamespace: string;
+  saveValuesStatus: string;
 };
 
 const defaultActionConfig: ActionConfigType = {
@@ -44,10 +55,15 @@ const defaultActionConfig: ActionConfigType = {
   git_repo_id: 0,
 };
 
-export default class LaunchFlow extends Component<PropsType, StateType> {
+class LaunchFlow extends Component<PropsType, StateType> {
   state = {
     currentPage: "source",
     templateName: "",
+    saveValuesStatus: "",
+    sourceType: "",
+    selectedNamespace: "default",
+    valuesToOverride: {} as any,
+
     imageUrl: "",
     imageTag: "",
 
@@ -59,14 +75,244 @@ export default class LaunchFlow extends Component<PropsType, StateType> {
     procfilePath: null as string | null,
     folderPath: null as string | null,
     selectedRegistry: null as any,
+  };
 
-    valuesToOverride: {} as any,
+  createGHAction = (chartName: string, chartNamespace: string, env?: any) => {
+    let { currentProject, currentCluster } = this.context;
+    let { 
+      actionConfig,
+      branch,
+      selectedRegistry,
+      dockerfilePath,
+      folderPath,
+    } = this.state;
+    let imageRepoUri = `${selectedRegistry.url}/${chartName}-${chartNamespace}`;
+
+    // DockerHub registry integration is per repo
+    if (selectedRegistry.service === "dockerhub") {
+      imageRepoUri = selectedRegistry.url;
+    }
+
+    api
+      .createGHAction(
+        "<token>",
+        {
+          git_repo: actionConfig.git_repo,
+          git_branch: branch,
+          registry_id: selectedRegistry.id,
+          dockerfile_path: dockerfilePath,
+          folder_path: folderPath,
+          image_repo_uri: imageRepoUri,
+          git_repo_id: actionConfig.git_repo_id,
+          env: env,
+        },
+        {
+          project_id: currentProject.id,
+          CLUSTER_ID: currentCluster.id,
+          RELEASE_NAME: chartName,
+          RELEASE_NAMESPACE: chartNamespace,
+        }
+      )
+      .then((res) => console.log(""))
+      .catch((err) => this.setState({
+        saveValuesStatus: `Could not create GitHub Action: ${err}`,
+      }));
+  };
+
+  onSubmitAddon = (wildcard?: any) => {
+    let {
+      selectedNamespace
+    } = this.state;
+    let { currentCluster, currentProject, setCurrentError } = this.context;
+    let name =
+      this.state.templateName || randomWords({ exactly: 3, join: "-" });
+    this.setState({ saveValuesStatus: "loading" });
+
+    let values = {};
+    for (let key in wildcard) {
+      _.set(values, key, wildcard[key]);
+    }
+
+    api
+      .deployTemplate(
+        "<token>",
+        {
+          templateName: this.props.currentTemplate.name,
+          storage: StorageType.Secret,
+          formValues: values,
+          namespace: selectedNamespace,
+          name,
+        },
+        {
+          id: currentProject.id,
+          cluster_id: currentCluster.id,
+          name: this.props.currentTemplate.name.toLowerCase().trim(),
+          version: this.props.currentTemplate?.currentVersion || "latest",
+          repo_url: process.env.ADDON_CHART_REPO_URL,
+        }
+      )
+      .then((_) => {
+        // this.props.setCurrentView('cluster-dashboard');
+        this.setState({ saveValuesStatus: "successful" }, () => {
+          // redirect to dashboard
+          let dst =
+            this.props.currentTemplate.name === "job" ? "jobs" : "applications";
+          setTimeout(() => {
+            this.props.history.push(dst);
+          }, 500);
+          window.analytics.track("Deployed Add-on", {
+            name: this.props.currentTemplate.name,
+            namespace: selectedNamespace,
+            values: values,
+          });
+        });
+      })
+      .catch((err) => {
+        this.setState({ saveValuesStatus: `Could not deploy template: ${err}` });
+        setCurrentError(err.response.data.errors[0]);
+        window.analytics.track("Failed to Deploy Add-on", {
+          name: this.props.currentTemplate.name,
+          namespace: selectedNamespace,
+          values: values,
+          error: err,
+        });
+      });
+  };
+
+  onSubmit = async (rawValues: any) => {
+    let { currentCluster, currentProject } = this.context;
+    let { 
+      selectedNamespace, 
+      templateName,
+      imageUrl, 
+      imageTag,
+      sourceType
+    } = this.state;
+    let name = templateName || randomWords({ exactly: 3, join: "-" });
+    this.setState({ saveValuesStatus: "loading" });
+
+    // Convert dotted keys to nested objects
+    let values: any = {};
+    for (let key in rawValues) {
+      _.set(values, key, rawValues[key]);
+    }
+
+    let tag = imageTag;
+    if (imageUrl.includes(":")) {
+      let splits = imageUrl.split(":");
+      imageUrl = splits[0];
+      tag = splits[1];
+    } else if (!tag) {
+      tag = "latest";
+    }
+
+    if (sourceType === "repo") {
+      if (this.props.currentTemplate?.name == "job") {
+        imageUrl = "public.ecr.aws/o1j4x7p4/hello-porter-job";
+        tag = "latest";
+      } else {
+        imageUrl = "public.ecr.aws/o1j4x7p4/hello-porter";
+        tag = "latest";
+      }
+    }
+
+    let provider;
+    switch (currentCluster.service) {
+      case "eks":
+        provider = "aws";
+        break;
+      case "gke":
+        provider = "gcp";
+        break;
+      case "doks":
+        provider = "digitalocean";
+        break;
+      default:
+        provider = "";
+    }
+
+    // don't overwrite for templates that already have a source (i.e. non-Docker templates)
+    if (imageUrl && tag) {
+      _.set(values, "image.repository", imageUrl);
+      _.set(values, "image.tag", tag);
+    }
+
+    _.set(values, "ingress.provider", provider);
+    var url: string;
+    // check if template is docker and create external domain if necessary
+    if (this.props.currentTemplate.name == "web") {
+      if (values?.ingress?.enabled && !values?.ingress?.custom_domain) {
+        url = await new Promise((resolve, reject) => {
+          api
+            .createSubdomain(
+              "<token>",
+              {
+                release_name: name,
+              },
+              {
+                id: currentProject.id,
+                cluster_id: currentCluster.id,
+              }
+            )
+            .then((res) => {
+              resolve(res.data?.external_url);
+            })
+            .catch((err) => {
+              this.setState({ saveValuesStatus: `Could not create subdomain: ${err}` });
+            });
+        });
+
+        values.ingress.porter_hosts = [url];
+      }
+    }
+
+    api
+      .deployTemplate(
+        "<token>",
+        {
+          templateName: this.props.currentTemplate.name,
+          imageURL: imageUrl,
+          storage: StorageType.Secret,
+          formValues: values,
+          namespace: selectedNamespace,
+          name,
+        },
+        {
+          id: currentProject.id,
+          cluster_id: currentCluster.id,
+          name: this.props.currentTemplate.name.toLowerCase().trim(),
+          version: this.props.currentTemplate?.currentVersion || "latest",
+          repo_url: process.env.APPLICATION_CHART_REPO_URL,
+        }
+      )
+      .then((_: any) => {
+        if (sourceType === "repo") {
+          let env = rawValues["container.env.normal"];
+          console.log(env);
+          this.createGHAction(name, selectedNamespace, env);
+        }
+        // this.props.setCurrentView('cluster-dashboard');
+        this.setState({ saveValuesStatus: "successful" }, () => {
+          // redirect to dashboard with namespace
+          setTimeout(() => {
+            let dst =
+              this.props.currentTemplate.name === "job"
+                ? "jobs"
+                : "applications";
+            this.props.history.push(dst);
+          }, 1000);
+        });
+      })
+      .catch((err: any) => {
+        this.setState({ saveValuesStatus: `Could not deploy template: ${err}` });
+      });
   };
 
   renderCurrentPage = () => {
-    let { currentTemplate } = this.props;
+    let { form, currentTab } = this.props;
     let { 
       currentPage, 
+      valuesToOverride,
       templateName,
       imageUrl,
       imageTag,
@@ -77,13 +323,21 @@ export default class LaunchFlow extends Component<PropsType, StateType> {
       procfileProcess,
       procfilePath,
       folderPath,
-      selectedRegistry
+      selectedNamespace,
+      selectedRegistry,
+      saveValuesStatus,
+      sourceType,
     } = this.state;
 
-    if (currentPage === "source") {
+    if (currentPage === "source" && currentTab === "porter") {
       return (
         <SourcePage
+          sourceType={sourceType}
+          setSourceType={(x: string) => this.setState({ sourceType: x })}
           templateName={templateName}
+          setPage={(x: string) => {
+            this.setState({ currentPage: x });
+          }}
           setTemplateName={(x: string) => this.setState({ templateName: x })}
           setValuesToOverride={(x: any) => 
             this.setState({ valuesToOverride: x })
@@ -121,6 +375,23 @@ export default class LaunchFlow extends Component<PropsType, StateType> {
         />
       );
     }
+
+    // Display main (non-source) settings page
+    return (
+      <SettingsPage
+        onSubmit={currentTab === "porter" ? this.onSubmit : this.onSubmitAddon}
+        saveValuesStatus={saveValuesStatus}
+        selectedNamespace={selectedNamespace}
+        setSelectedNamespace={(x: string) => this.setState({ selectedNamespace: x })}
+        templateName={templateName}
+        setTemplateName={(x: string) => this.setState({ templateName: x })}
+        hasSource={currentTab === "porter"}
+        setPage={(x: string) => this.setState({ currentPage: x })}
+        form={form}
+        valuesToOverride={valuesToOverride}
+        clearValuesToOverride={() => this.setState({ valuesToOverride: null })}
+      />
+    );
   }
 
   renderIcon = () => {
@@ -156,10 +427,19 @@ export default class LaunchFlow extends Component<PropsType, StateType> {
           <Title>New {name} {currentTab === "porter" ? null : "Instance"}</Title>
         </TitleSection>
         {this.renderCurrentPage()}
+        <Br />
       </StyledLaunchFlow>
     );
   }
 }
+
+LaunchFlow.contextType = Context;
+export default withRouter(LaunchFlow);
+
+const Br = styled.div`
+  width: 100%;
+  height: 120px;
+`;
 
 const Icon = styled.img`
   width: 40px;
@@ -239,20 +519,6 @@ const TitleSection = styled.div`
 const StyledLaunchFlow = styled.div`
   width: calc(90% - 130px);
   min-width: 300px;
-  position: relative;
-  padding-top: 50px;
+  padding-top: 20px;
   margin-top: calc(50vh - 340px);
-  opacity: 0;
-  animation: slideIn 0.5s 0s;
-  animation-fill-mode: forwards;
-  @keyframes slideIn {
-    from {
-      opacity: 0;
-      transform: translateX(-30px);
-    }
-    to {
-      opacity: 1;
-      transform: translateX(0px);
-    }
-  }
 `;

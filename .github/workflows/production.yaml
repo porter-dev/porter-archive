@@ -32,7 +32,8 @@ jobs:
           POSTHOG_API_KEY=${{secrets.POSTHOG_API_KEY}}
           POSTHOG_HOST=${{secrets.POSTHOG_HOST}}
           SEGMENT_PUBLIC_KEY=${{secrets.SEGMENT_PUBLIC_KEY}}
-          APPLICATION_CHART_REPO_URL=${{secrets.APPLICATION_CHART_REPO_URL}}
+          APPLICATION_CHART_REPO_URL=https://charts.getporter.dev
+          ADDON_CHART_REPO_URL=https://chart-addons.getporter.dev
           EOL
       - name: Build
         run: |

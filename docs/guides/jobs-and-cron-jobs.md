@@ -52,3 +52,21 @@ When you set up a cron job to deploy from a Github repository, the cron job will
 > 🚧
 > 
 > **Note:** we are working on a better solution for deploying cron jobs from a Github repository, so that the cron job only rebuilds when you want it to. This will be addressed in an upcoming release.
+
+# Advanced Configuration Options
+
+## Stopping Jobs
+
+Jobs can be stopped by clicking the stop icon on a job in a "Running" state:
+
+![Stop job](https://user-images.githubusercontent.com/25448214/118313395-acc14580-b4c0-11eb-833b-a5d91ce8334c.png "Screen Shot 2021-05-14 at 2 28 27 PM")
+
+You can configure the stopping behavior of the job in the "Advanced" tab. By default, Porter will send `SIGTERM` to the job and all child processes of the job, wait for the job to terminate, and send `SIGKILL` if the job has not terminated after 30 seconds. The time between `SIGTERM` and `SIGKILL` can be configured, and you can avoid sending the signal to all child processes by toggling the "Propagate SIGTERM to child processes" checkbox. 
+
+## Manual Runs of Cron Jobs
+
+If you would like to trigger a manual run of a cron job, you can simply untoggle the "Enable cron schedule" checkbox in the "Main" tab of the Job. This will create a one-off run of the job, and **will cancel the cron schedule until you toggle it back on**. 
+
+## Concurrency Limits for Jobs
+
+You can prevent jobs from running concurrently by toggling the "Allow jobs to execute concurrently" checkbox in the "Advanced" tab. This may be desired if your jobs are writing to data sources, and you wish to prevent duplicate entries. 

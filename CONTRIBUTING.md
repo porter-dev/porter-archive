@@ -1,6 +1,6 @@
 # Contributing to Porter
 
-First off, thanks for considering contributing to Porter. There are many types of contributions you can make, including bug reports and fixes, improving documentation, writing tutorials, and larger feature requests or changes.
+First off, thanks for considering contributing to Porter. There are many types of contributions you can make, including bug reports and fixes, improving documentation, writing tutorials, and larger feature requests or changes. You can contribute to this repo or the [porter-charts](https://github.com/porter-dev/porter-charts) repo if you're interested in developing charts. 
 
 Before you contribute, make sure to read these guidelines thoroughly, so that you can get your pull request reviewed and finalized as quickly as possible. 
 

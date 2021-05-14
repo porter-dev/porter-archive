@@ -230,6 +230,15 @@ const deletePod = baseApi<
   return `/api/projects/${pathParams.id}/k8s/pods/${pathParams.namespace}/${pathParams.name}`;
 });
 
+const getPodEvents = baseApi<
+  {
+    cluster_id: number;
+  },
+  { name: string; namespace: string; id: number }
+>("GET", (pathParams) => {
+  return `/api/projects/${pathParams.id}/k8s/pods/${pathParams.namespace}/${pathParams.name}/events/list`;
+});
+
 const deleteProject = baseApi<{}, { id: number }>("DELETE", (pathParams) => {
   return `/api/projects/${pathParams.id}`;
 });
@@ -852,6 +861,7 @@ export default {
   getNamespaces,
   getNGINXIngresses,
   getOAuthIds,
+  getPodEvents,
   getProcfileContents,
   getProjectClusters,
   getProjectRegistries,

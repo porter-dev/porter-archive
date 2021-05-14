@@ -1269,6 +1269,20 @@ func New(a *api.App) *chi.Mux {
 		)
 
 		r.Method(
+			"GET",
+			"/projects/{project_id}/k8s/pods/{namespace}/{name}/events/list",
+			auth.DoesUserHaveProjectAccess(
+				auth.DoesUserHaveClusterAccess(
+					requestlog.NewHandler(a.HandleListPodEvents, l),
+					mw.URLParam,
+					mw.QueryParam,
+				),
+				mw.URLParam,
+				mw.ReadAccess,
+			),
+		)
+
+		r.Method(
 			"POST",
 			"/projects/{project_id}/k8s/configmap/create",
 			auth.DoesUserHaveProjectAccess(

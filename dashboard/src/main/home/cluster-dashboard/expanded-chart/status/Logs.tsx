@@ -2,6 +2,7 @@ import React, { Component } from "react";
 import styled from "styled-components";
 import { Context } from "shared/Context";
 import * as Anser from "anser";
+import api from "shared/api";
 
 type PropsType = {
   selectedPod: any;
@@ -91,6 +92,37 @@ export default class Logs extends Component<PropsType, StateType> {
     });
   };
 
+  getPodStatus = (status: any) => {
+    if (
+      status?.phase === "Pending" &&
+      status?.containerStatuses !== undefined
+    ) {
+      return status.containerStatuses[0].state.waiting.reason;
+    } else if (status?.phase === "Pending") {
+      return "pending";
+    }
+
+    if (status?.phase === "Failed") {
+      return "failed";
+    }
+
+    if (status?.phase === "Running") {
+      let collatedStatus = "running";
+
+      status?.containerStatuses?.forEach((s: any) => {
+        if (s.state?.waiting) {
+          collatedStatus =
+            s.state?.waiting.reason === "CrashLoopBackOff"
+              ? "failed"
+              : "waiting";
+        } else if (s.state?.terminated) {
+          collatedStatus = "failed";
+        }
+      });
+      return collatedStatus;
+    }
+  };
+
   setupWebsocket = () => {
     let { currentCluster, currentProject } = this.context;
     let { selectedPod } = this.props;
@@ -130,6 +162,40 @@ export default class Logs extends Component<PropsType, StateType> {
   };
 
   componentDidMount() {
+    let { selectedPod } = this.props;
+    let status = this.getPodStatus(selectedPod?.status)
+    if (status == "failed" || status == "pending" || status == "waiting") {
+      api
+      .getPodEvents(
+        "<token>",
+        {
+          cluster_id: this.context.currentCluster.id,
+        },
+        {
+          name: selectedPod?.metadata?.name,
+          namespace: selectedPod?.metadata?.namespace,
+          id: this.context.currentProject.id,
+        }
+      )
+      .then((res) => {
+        let logs = [] as Anser.AnserJsonEntry[][]
+        // TODO: column view
+        // logs.push(Anser.ansiToJson("\u001b[33;5;196mEvent Type\u001b[0m \t || \t \u001b[43m\u001b[34m\tReason\t\u001b[0m \t ||\tMessage"))
+  
+        res.data.items.forEach((evt: any) => {
+          let ansiEvtType = evt.type == "Warning" ? "\u001b[31m" : "\u001b[32m"
+          let ansiLog = Anser.ansiToJson(`${ansiEvtType}${evt.type}\u001b[0m \t \u001b[43m\u001b[34m\t${evt.reason} \u001b[0m \t ${evt.message}`);
+          logs.push(ansiLog)
+        })
+        this.setState({logs: logs})
+        console.log(res)
+      })
+      .catch((err) => {
+        console.log(err)
+      });
+      return;
+    } 
+    
     this.setupWebsocket();
     this.scrollToBottom(false);
   }

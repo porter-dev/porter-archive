@@ -42,7 +42,7 @@ Once you've done this, go to the root repository, and run `docker-compose -f doc
 
 When the webpack and porter containers have finished compiling and have spun up successfully, you can navigate to `localhost:8080`, and you should be greeted with the "Log In" screen.
 
-Next, Register your admin account. Once it's complete, it will ask you to verify your Email; we will manually verify it through Postgres.
+Next, register your admin account. Once it's complete, it will ask you to verify your email; we will manually verify it through Postgres.
 
 Open your terminal in the root repository and enter:
 

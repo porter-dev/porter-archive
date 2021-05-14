@@ -4,10 +4,12 @@ services:
     build:
       context: ./dashboard
       dockerfile: ./docker/dev.Dockerfile
+    env_file:
+      - ./dashboard/.env
     restart: on-failure
     volumes:
-      - ./dashboard:/webpack:rw,cached
-      - /webpack/node_modules
+      - ./dashboard/src:/webpack/src:rw,cached
+      - ./dashboard/package.json:/webpack/package.json
   porter:
     build:
       context: .

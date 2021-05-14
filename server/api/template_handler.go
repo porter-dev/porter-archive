@@ -26,7 +26,7 @@ func (app *App) HandleListTemplates(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	repoURL := app.ServerConf.DefaultHelmRepoURL
+	repoURL := app.ServerConf.DefaultApplicationHelmRepoURL
 
 	if inputRepoURL, ok := vals["repo_url"]; ok && len(inputRepoURL) == 1 {
 		repoURL = inputRepoURL[0]
@@ -57,7 +57,7 @@ func (app *App) HandleReadTemplate(w http.ResponseWriter, r *http.Request) {
 	form := &forms.ChartForm{
 		Name:    name,
 		Version: version,
-		RepoURL: app.ServerConf.DefaultHelmRepoURL,
+		RepoURL: app.ServerConf.DefaultApplicationHelmRepoURL,
 	}
 
 	// if a repo_url is passed as query param, it will be populated

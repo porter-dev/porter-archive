@@ -1,4 +1,4 @@
-# Deploy Django Application ( Non Dockerize )
+# Deploy Django Application (Non-Dockerize)
 
 To deploy your Django Application in Porter. You need to tweak something on your Django Application.
 
@@ -74,15 +74,15 @@ To deploy your Django Application in Porter. You need to tweak something on your
   ![image](https://user-images.githubusercontent.com/52728901/118363692-2db73480-b5c8-11eb-8420-cf05a8cabf44.png)
 
 6. Then in Destination, just leave it default.
-7. In Additional settings, especify container port that you use in gunicorn in Procfile ( ex. 8989). 
-   You can configure your own domain, click Configure Custom Domain then put your desire domain name (im using default porter domain)
+7. In Additional settings, specify the container port that you use in gunicorn in Procfile ( ex. 8989). 
+   You can configure your domain, click Configure Custom Domain then put your desire domain name (im using the default porter domain)
    
    ![tempsnip](https://user-images.githubusercontent.com/52728901/118364073-8a671f00-b5c9-11eb-9b15-cfe53b1db7bf.png)
 
-8. In Environtment. Put DJANGO_ALLOWED_HOSTS that we especify on django settings. Then inpute your domain that you put in Configure Custom Domain.
+8. In Environment. Put DJANGO_ALLOWED_HOSTS that we specify on django settings. Then input your domain that you put in Configure Custom Domain.
 
     ![image](https://user-images.githubusercontent.com/52728901/118364222-28f38000-b5ca-11eb-9ce3-94b24f3f43b7.png)
 
-9. Click Deploy then wait buildpack to finish and push to porter. (You can see it on your repository under Action tab )
+9. Click Deploy then wait for buildpack to finish and push to porter. (You can see it on your repository under the Action tab )
 
   ![image](https://user-images.githubusercontent.com/52728901/118364697-209c4480-b5cc-11eb-8b06-d9a4a1a89143.png)

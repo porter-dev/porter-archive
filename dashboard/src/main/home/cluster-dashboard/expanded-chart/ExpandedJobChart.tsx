@@ -93,15 +93,19 @@ export default class ExpandedJobChart extends Component<PropsType, StateType> {
               currentChart: res.data,
               loading: false,
               imageIsPlaceholder: true,
+              newestImage: image,
             },
             () => {
               this.updateTabs();
             }
           );
         } else {
-          this.setState({ currentChart: res.data, loading: false }, () => {
-            this.updateTabs();
-          });
+          this.setState(
+            { currentChart: res.data, loading: false, newestImage: image },
+            () => {
+              this.updateTabs();
+            }
+          );
         }
       })
       .catch(console.log);

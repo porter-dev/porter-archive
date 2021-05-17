@@ -115,14 +115,14 @@ export default class SettingsPage extends Component<PropsType, StateType> {
   };
 
   renderSettingsRegion = () => {
-    let {
-      saveValuesStatus,
-      selectedNamespace,
-      onSubmit,
-    } = this.props;
+    let { saveValuesStatus, selectedNamespace, onSubmit } = this.props;
 
     if (this.state.currentTab === "") {
-      return <LoadingWrapper><Loading /></LoadingWrapper>;
+      return (
+        <LoadingWrapper>
+          <Loading />
+        </LoadingWrapper>
+      );
     }
     if (this.state.tabOptions.length > 0) {
       let {
@@ -176,12 +176,8 @@ export default class SettingsPage extends Component<PropsType, StateType> {
   };
 
   renderHeaderSection = () => {
-    let {
-      hasSource,
-      templateName,
-      setTemplateName
-    } = this.props;
-    
+    let { hasSource, templateName, setTemplateName } = this.props;
+
     if (hasSource) {
       return (
         <BackButton
@@ -193,7 +189,7 @@ export default class SettingsPage extends Component<PropsType, StateType> {
           <i className="material-icons">first_page</i>
           Source Settings
         </BackButton>
-      )
+      );
     }
 
     return (
@@ -218,17 +214,12 @@ export default class SettingsPage extends Component<PropsType, StateType> {
         </InputWrapper>
       </>
     );
-  }
+  };
 
   render() {
-    let {
-      selectedCluster,
-    } = this.state;
+    let { selectedCluster } = this.state;
 
-    let {
-      selectedNamespace,
-      setSelectedNamespace,
-    } = this.props;
+    let { selectedNamespace, setSelectedNamespace } = this.props;
 
     return (
       <PaddingWrapper>

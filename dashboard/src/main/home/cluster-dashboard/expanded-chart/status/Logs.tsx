@@ -103,7 +103,7 @@ export default class Logs extends Component<PropsType, StateType> {
     }
 
     if (status?.phase === "Succeeded") {
-      return "succeeded"
+      return "succeeded";
     }
 
     if (status?.phase === "Failed") {
@@ -168,7 +168,7 @@ export default class Logs extends Component<PropsType, StateType> {
   componentDidMount() {
     let { selectedPod } = this.props;
     let status = this.getPodStatus(selectedPod?.status);
-    console.log("STATUS", selectedPod?.status, status)
+    console.log("STATUS", selectedPod?.status, status);
     if (status == "running" || status == "succeeded") {
       this.setupWebsocket();
       this.scrollToBottom(false);
@@ -193,8 +193,7 @@ export default class Logs extends Component<PropsType, StateType> {
         // logs.push(Anser.ansiToJson("\u001b[33;5;196mEvent Type\u001b[0m \t || \t \u001b[43m\u001b[34m\tReason\t\u001b[0m \t ||\tMessage"))
 
         res.data.items.forEach((evt: any) => {
-          let ansiEvtType =
-            evt.type == "Warning" ? "\u001b[31m" : "\u001b[32m";
+          let ansiEvtType = evt.type == "Warning" ? "\u001b[31m" : "\u001b[32m";
           let ansiLog = Anser.ansiToJson(
             `${ansiEvtType}${evt.type}\u001b[0m \t \u001b[43m\u001b[34m\t${evt.reason} \u001b[0m \t ${evt.message}`
           );

@@ -156,24 +156,22 @@ export default class Templates extends Component<PropsType, StateType> {
 
     return (
       <TemplateList>
-        {templates.map(
-          (template: PorterTemplate, i: number) => {
-            let { name, icon, description } = template;
-            if (hardcodedNames[name]) {
-              name = hardcodedNames[name];
-            }
-            return (
-              <TemplateBlock
-                key={name}
-                onClick={() => this.setState({ currentTemplate: template })}
-              >
-                {this.renderIcon(icon)}
-                <TemplateTitle>{name}</TemplateTitle>
-                <TemplateDescription>{description}</TemplateDescription>
-              </TemplateBlock>
-            );
+        {templates.map((template: PorterTemplate, i: number) => {
+          let { name, icon, description } = template;
+          if (hardcodedNames[name]) {
+            name = hardcodedNames[name];
           }
-        )}
+          return (
+            <TemplateBlock
+              key={name}
+              onClick={() => this.setState({ currentTemplate: template })}
+            >
+              {this.renderIcon(icon)}
+              <TemplateTitle>{name}</TemplateTitle>
+              <TemplateDescription>{description}</TemplateDescription>
+            </TemplateBlock>
+          );
+        })}
       </TemplateList>
     );
   };
@@ -197,7 +195,7 @@ export default class Templates extends Component<PropsType, StateType> {
     } else {
       return this.renderTemplateList(this.state.addonTemplates);
     }
-  }
+  };
 
   render() {
     if (!this.state.isOnLaunchFlow || !this.state.currentTemplate) {
@@ -212,40 +210,41 @@ export default class Templates extends Component<PropsType, StateType> {
               <i className="material-icons">help_outline</i>
             </a>
           </TitleSection>
-          {
-            this.context.currentCluster ? (
-              <>
-                <TabSelector
-                  options={tabOptions}
-                  currentTab={this.state.currentTab}
-                  setCurrentTab={(value: string) =>
-                    this.setState({
-                      currentTab: value,
-                      currentTemplate: null,
-                    })
-                  }
-                />
-                {this.renderTabContents()}
-              </>
-            ) : (
-              <>
-                <Banner>
-                  <i className="material-icons">error_outline</i>
-                  No cluster connected to this project.
-                </Banner>
-                <StyledStatusPlaceholder>
-                  You need to connect a cluster to use Porter.
-                  <Highlight
-                    onClick={() => {
-                      this.context.setCurrentModal("ClusterInstructionsModal", {});
-                    }}
-                  >
-                    + Connect an existing cluster
-                  </Highlight>
-                </StyledStatusPlaceholder>
-              </>
-            )
-          }
+          {this.context.currentCluster ? (
+            <>
+              <TabSelector
+                options={tabOptions}
+                currentTab={this.state.currentTab}
+                setCurrentTab={(value: string) =>
+                  this.setState({
+                    currentTab: value,
+                    currentTemplate: null,
+                  })
+                }
+              />
+              {this.renderTabContents()}
+            </>
+          ) : (
+            <>
+              <Banner>
+                <i className="material-icons">error_outline</i>
+                No cluster connected to this project.
+              </Banner>
+              <StyledStatusPlaceholder>
+                You need to connect a cluster to use Porter.
+                <Highlight
+                  onClick={() => {
+                    this.context.setCurrentModal(
+                      "ClusterInstructionsModal",
+                      {}
+                    );
+                  }}
+                >
+                  + Connect an existing cluster
+                </Highlight>
+              </StyledStatusPlaceholder>
+            </>
+          )}
         </TemplatesWrapper>
       );
     } else {
@@ -253,7 +252,7 @@ export default class Templates extends Component<PropsType, StateType> {
         <LaunchFlow
           form={this.state.form}
           currentTab={this.state.currentTab}
-          currentTemplate={this.state.currentTemplate} 
+          currentTemplate={this.state.currentTemplate}
           hideLaunchFlow={() => this.setState({ isOnLaunchFlow: false })}
         />
       );

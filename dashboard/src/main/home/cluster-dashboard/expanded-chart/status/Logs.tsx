@@ -102,6 +102,10 @@ export default class Logs extends Component<PropsType, StateType> {
       return "pending";
     }
 
+    if (status?.phase === "Succeeded") {
+      return "succeeded"
+    }
+
     if (status?.phase === "Failed") {
       return "failed";
     }
@@ -164,43 +168,44 @@ export default class Logs extends Component<PropsType, StateType> {
   componentDidMount() {
     let { selectedPod } = this.props;
     let status = this.getPodStatus(selectedPod?.status);
-    if (status == "failed" || status == "pending" || status == "waiting") {
-      api
-        .getPodEvents(
-          "<token>",
-          {
-            cluster_id: this.context.currentCluster.id,
-          },
-          {
-            name: selectedPod?.metadata?.name,
-            namespace: selectedPod?.metadata?.namespace,
-            id: this.context.currentProject.id,
-          }
-        )
-        .then((res) => {
-          let logs = [] as Anser.AnserJsonEntry[][];
-          // TODO: column view
-          // logs.push(Anser.ansiToJson("\u001b[33;5;196mEvent Type\u001b[0m \t || \t \u001b[43m\u001b[34m\tReason\t\u001b[0m \t ||\tMessage"))
-
-          res.data.items.forEach((evt: any) => {
-            let ansiEvtType =
-              evt.type == "Warning" ? "\u001b[31m" : "\u001b[32m";
-            let ansiLog = Anser.ansiToJson(
-              `${ansiEvtType}${evt.type}\u001b[0m \t \u001b[43m\u001b[34m\t${evt.reason} \u001b[0m \t ${evt.message}`
-            );
-            logs.push(ansiLog);
-          });
-          this.setState({ logs: logs });
-          console.log(res);
-        })
-        .catch((err) => {
-          console.log(err);
-        });
+    console.log("STATUS", selectedPod?.status, status)
+    if (status == "running" || status == "succeeded") {
+      this.setupWebsocket();
+      this.scrollToBottom(false);
       return;
     }
 
-    this.setupWebsocket();
-    this.scrollToBottom(false);
+    api
+      .getPodEvents(
+        "<token>",
+        {
+          cluster_id: this.context.currentCluster.id,
+        },
+        {
+          name: selectedPod?.metadata?.name,
+          namespace: selectedPod?.metadata?.namespace,
+          id: this.context.currentProject.id,
+        }
+      )
+      .then((res) => {
+        let logs = [] as Anser.AnserJsonEntry[][];
+        // TODO: column view
+        // logs.push(Anser.ansiToJson("\u001b[33;5;196mEvent Type\u001b[0m \t || \t \u001b[43m\u001b[34m\tReason\t\u001b[0m \t ||\tMessage"))
+
+        res.data.items.forEach((evt: any) => {
+          let ansiEvtType =
+            evt.type == "Warning" ? "\u001b[31m" : "\u001b[32m";
+          let ansiLog = Anser.ansiToJson(
+            `${ansiEvtType}${evt.type}\u001b[0m \t \u001b[43m\u001b[34m\t${evt.reason} \u001b[0m \t ${evt.message}`
+          );
+          logs.push(ansiLog);
+        });
+        this.setState({ logs: logs });
+        console.log(res);
+      })
+      .catch((err) => {
+        console.log(err);
+      });
   }
 
   componentWillUnmount() {

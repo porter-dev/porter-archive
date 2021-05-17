@@ -77,22 +77,6 @@ const Highlight = styled.div`
   margin-right: 10px;
 `;
 
-const Banner = styled.div`
-  height: 40px;
-  width: 100%;
-  margin: 15px 0;
-  font-size: 13px;
-  display: flex;
-  border-radius: 5px;
-  padding-left: 15px;
-  align-items: center;
-  background: #ffffff11;
-  > i {
-    margin-right: 10px;
-    font-size: 18px;
-  }
-`;
-
 const StyledStatusPlaceholder = styled.div`
   width: 100%;
   height: calc(100vh - 470px);

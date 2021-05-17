@@ -3,8 +3,8 @@ import React, { Component } from "react";
 import styled from "styled-components";
 
 import { integrationList } from "shared/common";
-import { Context } from "../../shared/Context";
-import api from "../../shared/api";
+import { Context } from "shared/Context";
+import api from "shared/api";
 import Loading from "components/Loading";
 import { ActionConfigType } from "../../shared/types";
 import InputRow from "../values-form/InputRow";
@@ -164,6 +164,7 @@ export default class ActionDetails extends Component<PropsType, StateType> {
               this.props.setFolderPath(null);
               this.props.setProcfilePath(null);
               this.props.setProcfileProcess(null);
+              this.props.setSelectedRegistry(null);
             }}
           >
             <i className="material-icons">keyboard_backspace</i>
@@ -330,7 +331,7 @@ const BackButton = styled.div`
   margin-bottom: -7px;
   padding-right: 15px;
   border: 1px solid #ffffff55;
-  border-radius: 3px;
+  border-radius: 100px;
   width: ${(props: { width: string }) => props.width};
   color: white;
   background: #ffffff11;

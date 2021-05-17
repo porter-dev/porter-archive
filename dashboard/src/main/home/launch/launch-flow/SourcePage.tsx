@@ -252,7 +252,12 @@ class SourcePage extends Component<PropsType, StateType> {
         {this.renderSourceSelector()}
         <Helper>
           Learn more about
-          <Highlight>deploying services to Porter</Highlight>
+          <Highlight
+            href="https://docs.getporter.dev/docs/add-ons"
+            target="_blank"
+          >
+            deploying services to Porter
+          </Highlight>
         </Helper>
         <Buffer />
         <SaveButton
@@ -427,7 +432,7 @@ const Warning = styled.span`
     props.makeFlush ? "" : "5px"};
 `;
 
-const Highlight = styled.div`
+const Highlight = styled.a`
   color: #8590ff;
   text-decoration: none;
   margin-left: 5px;

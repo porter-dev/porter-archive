@@ -114,11 +114,16 @@ class LaunchFlow extends Component<PropsType, StateType> {
         }
       )
       .then((res) => console.log(""))
-      .catch((err) =>
+      .catch((err) => {
+        let parsedErr =
+          err?.response?.data?.errors && err.response.data.errors[0];
+        if (parsedErr) {
+          err = parsedErr;
+        }
         this.setState({
           saveValuesStatus: `Could not create GitHub Action: ${err}`,
-        })
-      );
+        });
+      });
   };
 
   onSubmitAddon = (wildcard?: any) => {
@@ -168,6 +173,11 @@ class LaunchFlow extends Component<PropsType, StateType> {
         });
       })
       .catch((err) => {
+        let parsedErr =
+          err?.response?.data?.errors && err.response.data.errors[0];
+        if (parsedErr) {
+          err = parsedErr;
+        }
         this.setState({
           saveValuesStatus: `Could not deploy template: ${err}`,
         });
@@ -260,6 +270,11 @@ class LaunchFlow extends Component<PropsType, StateType> {
               resolve(res.data?.external_url);
             })
             .catch((err) => {
+              let parsedErr =
+                err?.response?.data?.errors && err.response.data.errors[0];
+              if (parsedErr) {
+                err = parsedErr;
+              }
               this.setState({
                 saveValuesStatus: `Could not create subdomain: ${err}`,
               });
@@ -289,7 +304,7 @@ class LaunchFlow extends Component<PropsType, StateType> {
           repo_url: process.env.APPLICATION_CHART_REPO_URL,
         }
       )
-      .then((_: any) => {
+      .then((res: any) => {
         if (sourceType === "repo") {
           let env = rawValues["container.env.normal"];
           console.log(env);
@@ -308,6 +323,12 @@ class LaunchFlow extends Component<PropsType, StateType> {
         });
       })
       .catch((err: any) => {
+        let parsedErr =
+          err?.response?.data?.errors && err.response.data.errors[0];
+        console.log(parsedErr);
+        if (parsedErr) {
+          err = parsedErr;
+        }
         this.setState({
           saveValuesStatus: `Could not deploy template: ${err}`,
         });

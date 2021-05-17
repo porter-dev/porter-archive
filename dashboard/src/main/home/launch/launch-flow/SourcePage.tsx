@@ -44,8 +44,7 @@ type PropsType = RouteComponentProps & {
   setSelectedRegistry: (x: string) => void;
 };
 
-type StateType = {
-};
+type StateType = {};
 
 const defaultActionConfig: ActionConfigType = {
   git_repo: "",
@@ -80,16 +79,11 @@ class SourcePage extends Component<PropsType, StateType> {
           </Block>
         </BlockList>
       );
-    } 
-    
+    }
+
     // Display image selector
     if (sourceType === "registry") {
-      let { 
-        imageUrl,
-        setImageUrl,
-        imageTag,
-        setImageTag,
-      } = this.props;
+      let { imageUrl, setImageUrl, imageTag, setImageTag } = this.props;
       return (
         <StyledSourceBox>
           <CloseButton
@@ -125,7 +119,7 @@ class SourcePage extends Component<PropsType, StateType> {
     }
 
     // Display repo selector
-    let { 
+    let {
       history,
       setValuesToOverride,
       setImageUrl,
@@ -151,9 +145,7 @@ class SourcePage extends Component<PropsType, StateType> {
         </CloseButton>
         <Subtitle>
           Provide a repo folder to use as source.
-          <Highlight
-            onClick={() => history.push("integrations/repo")}
-          >
+          <Highlight onClick={() => history.push("integrations/repo")}>
             Manage Git repos
           </Highlight>
           <Required>*</Required>
@@ -205,39 +197,28 @@ class SourcePage extends Component<PropsType, StateType> {
   };
 
   checkSourceSelected = () => {
-    let {
-      imageUrl,
-      selectedRegistry,
-    } = this.props;
+    let { imageUrl, selectedRegistry } = this.props;
     return imageUrl || selectedRegistry;
-  }
+  };
 
   // TODO: consolidate status w/ helper at button-level
   getButtonStatus = () => {
-    let {
-      imageUrl,
-      selectedRegistry,
-      imageTag,
-      templateName,
-    } = this.props;
+    let { imageUrl, selectedRegistry, imageTag, templateName } = this.props;
     if (!isAlphanumeric(templateName) && templateName !== "") {
-      return "Name contains illegal characters"
+      return "Name contains illegal characters";
     }
     if (imageUrl || selectedRegistry) {
       return "";
     }
-    return "No source selected"
-  }
+    return "No source selected";
+  };
 
   getButtonHelper = () => {
-    let {
-      imageUrl,
-      imageTag,
-    } = this.props;
+    let { imageUrl, imageTag } = this.props;
     if (imageUrl && !imageTag) {
       return 'Tag "latest" will be used by default';
     }
-  }
+  };
 
   render() {
     let { templateName, setTemplateName, setPage } = this.props;
@@ -271,9 +252,7 @@ class SourcePage extends Component<PropsType, StateType> {
         {this.renderSourceSelector()}
         <Helper>
           Learn more about
-          <Highlight>
-            deploying services to Porter
-          </Highlight>
+          <Highlight>deploying services to Porter</Highlight>
         </Helper>
         <Buffer />
         <SaveButton

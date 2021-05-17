@@ -79,7 +79,7 @@ class LaunchFlow extends Component<PropsType, StateType> {
 
   createGHAction = (chartName: string, chartNamespace: string, env?: any) => {
     let { currentProject, currentCluster } = this.context;
-    let { 
+    let {
       actionConfig,
       branch,
       selectedRegistry,
@@ -114,15 +114,15 @@ class LaunchFlow extends Component<PropsType, StateType> {
         }
       )
       .then((res) => console.log(""))
-      .catch((err) => this.setState({
-        saveValuesStatus: `Could not create GitHub Action: ${err}`,
-      }));
+      .catch((err) =>
+        this.setState({
+          saveValuesStatus: `Could not create GitHub Action: ${err}`,
+        })
+      );
   };
 
   onSubmitAddon = (wildcard?: any) => {
-    let {
-      selectedNamespace
-    } = this.state;
+    let { selectedNamespace } = this.state;
     let { currentCluster, currentProject, setCurrentError } = this.context;
     let name =
       this.state.templateName || randomWords({ exactly: 3, join: "-" });
@@ -168,7 +168,9 @@ class LaunchFlow extends Component<PropsType, StateType> {
         });
       })
       .catch((err) => {
-        this.setState({ saveValuesStatus: `Could not deploy template: ${err}` });
+        this.setState({
+          saveValuesStatus: `Could not deploy template: ${err}`,
+        });
         setCurrentError(err.response.data.errors[0]);
         window.analytics.track("Failed to Deploy Add-on", {
           name: this.props.currentTemplate.name,
@@ -181,12 +183,12 @@ class LaunchFlow extends Component<PropsType, StateType> {
 
   onSubmit = async (rawValues: any) => {
     let { currentCluster, currentProject } = this.context;
-    let { 
-      selectedNamespace, 
+    let {
+      selectedNamespace,
       templateName,
-      imageUrl, 
+      imageUrl,
       imageTag,
-      sourceType
+      sourceType,
     } = this.state;
     let name = templateName || randomWords({ exactly: 3, join: "-" });
     this.setState({ saveValuesStatus: "loading" });
@@ -258,7 +260,9 @@ class LaunchFlow extends Component<PropsType, StateType> {
               resolve(res.data?.external_url);
             })
             .catch((err) => {
-              this.setState({ saveValuesStatus: `Could not create subdomain: ${err}` });
+              this.setState({
+                saveValuesStatus: `Could not create subdomain: ${err}`,
+              });
             });
         });
 
@@ -304,14 +308,16 @@ class LaunchFlow extends Component<PropsType, StateType> {
         });
       })
       .catch((err: any) => {
-        this.setState({ saveValuesStatus: `Could not deploy template: ${err}` });
+        this.setState({
+          saveValuesStatus: `Could not deploy template: ${err}`,
+        });
       });
   };
 
   renderCurrentPage = () => {
     let { form, currentTab } = this.props;
-    let { 
-      currentPage, 
+    let {
+      currentPage,
       valuesToOverride,
       templateName,
       imageUrl,
@@ -339,29 +345,27 @@ class LaunchFlow extends Component<PropsType, StateType> {
             this.setState({ currentPage: x });
           }}
           setTemplateName={(x: string) => this.setState({ templateName: x })}
-          setValuesToOverride={(x: any) => 
+          setValuesToOverride={(x: any) =>
             this.setState({ valuesToOverride: x })
           }
-
           imageUrl={imageUrl}
           setImageUrl={(x: string) => this.setState({ imageUrl: x })}
           imageTag={imageTag}
           setImageTag={(x: string) => this.setState({ imageTag: x })}
-
           actionConfig={actionConfig}
-          setActionConfig={(x: ActionConfigType) => 
+          setActionConfig={(x: ActionConfigType) =>
             this.setState({ actionConfig: x })
           }
           branch={branch}
           setBranch={(x: string) => this.setState({ branch: x })}
           procfileProcess={procfileProcess}
-          setProcfileProcess={(x: string) => 
+          setProcfileProcess={(x: string) =>
             this.setState({ procfileProcess: x })
           }
           repoType={repoType}
           setRepoType={(x: string) => this.setState({ repoType: x })}
           dockerfilePath={dockerfilePath}
-          setDockerfilePath={(x: string) => 
+          setDockerfilePath={(x: string) =>
             this.setState({ dockerfilePath: x })
           }
           folderPath={folderPath}
@@ -369,7 +373,7 @@ class LaunchFlow extends Component<PropsType, StateType> {
           procfilePath={procfilePath}
           setProcfilePath={(x: string) => this.setState({ procfilePath: x })}
           selectedRegistry={selectedRegistry}
-          setSelectedRegistry={(x: string) => 
+          setSelectedRegistry={(x: string) =>
             this.setState({ selectedRegistry: x })
           }
         />
@@ -382,7 +386,9 @@ class LaunchFlow extends Component<PropsType, StateType> {
         onSubmit={currentTab === "porter" ? this.onSubmit : this.onSubmitAddon}
         saveValuesStatus={saveValuesStatus}
         selectedNamespace={selectedNamespace}
-        setSelectedNamespace={(x: string) => this.setState({ selectedNamespace: x })}
+        setSelectedNamespace={(x: string) =>
+          this.setState({ selectedNamespace: x })
+        }
         templateName={templateName}
         setTemplateName={(x: string) => this.setState({ templateName: x })}
         hasSource={currentTab === "porter"}
@@ -392,7 +398,7 @@ class LaunchFlow extends Component<PropsType, StateType> {
         clearValuesToOverride={() => this.setState({ valuesToOverride: null })}
       />
     );
-  }
+  };
 
   renderIcon = () => {
     let icon = this.props.currentTemplate?.icon;
@@ -417,14 +423,13 @@ class LaunchFlow extends Component<PropsType, StateType> {
     return (
       <StyledLaunchFlow>
         <TitleSection>
-          <i
-            className="material-icons"
-            onClick={this.props.hideLaunchFlow}
-          >
+          <i className="material-icons" onClick={this.props.hideLaunchFlow}>
             keyboard_backspace
           </i>
           {this.renderIcon()}
-          <Title>New {name} {currentTab === "porter" ? null : "Instance"}</Title>
+          <Title>
+            New {name} {currentTab === "porter" ? null : "Instance"}
+          </Title>
         </TitleSection>
         {this.renderCurrentPage()}
         <Br />

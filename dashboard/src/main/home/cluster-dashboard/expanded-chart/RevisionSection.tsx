@@ -17,11 +17,15 @@ type PropsType = {
   forceRefreshRevisions: boolean;
   refreshRevisionsOff: () => void;
   status: string;
+  shouldUpdate: boolean;
+  upgradeVersion: (version: string, cb: () => void) => void;
+  latestVersion: string;
 };
 
 type StateType = {
   revisions: ChartType[];
   rollbackRevision: number | null;
+  upgradeVersion: string;
   loading: boolean;
   maxVersion: number;
 };
@@ -31,6 +35,7 @@ export default class RevisionSection extends Component<PropsType, StateType> {
   state = {
     revisions: [] as ChartType[],
     rollbackRevision: null as number | null,
+    upgradeVersion: "",
     loading: false,
     maxVersion: 0, // Track most recent version even when previewing old revisions
   };
@@ -159,6 +164,7 @@ export default class RevisionSection extends Component<PropsType, StateType> {
           <Td>{revision.version}</Td>
           <Td>{this.readableDate(revision.info.last_deployed)}</Td>
           <Td>{this.renderStatus(revision)}</Td>
+          <Td>v{revision.chart.metadata.version}</Td>
           <Td>
             <RollbackButton
               disabled={isCurrent}
@@ -184,6 +190,7 @@ export default class RevisionSection extends Component<PropsType, StateType> {
                 <Th>Revision No.</Th>
                 <Th>Timestamp</Th>
                 <Th>Status</Th>
+                <Th>Template Version</Th>
                 <Th>Rollback</Th>
               </Tr>
               {this.renderRevisionList()}
@@ -215,13 +222,43 @@ export default class RevisionSection extends Component<PropsType, StateType> {
           isCurrent={isCurrent}
           onClick={this.props.toggleShowRevisions}
         >
-          {isCurrent
-            ? `Current Revision`
-            : `Previewing Revision (Not Deployed)`}{" "}
-          - <Revision>No. {this.props.chart.version}</Revision>
-          <i className="material-icons">arrow_drop_down</i>
-        </RevisionHeader>
+          <RevisionPreview>
+            {isCurrent
+              ? `Current Revision`
+              : `Previewing Revision (Not Deployed)`}{" "}
+            - <Revision>No. {this.props.chart.version}</Revision>
+            <i className="material-icons">arrow_drop_down</i>
+          </RevisionPreview>
+          {this.props.shouldUpdate && isCurrent && (
+            <div>
+              <RevisionUpdateMessage
+                onClick={(e) => {
+                  e.stopPropagation();
+                  this.setState({ upgradeVersion: this.props.latestVersion });
+                }}
+              >
+                <i className="material-icons">notification_important</i>
+                Template Update Available
+              </RevisionUpdateMessage>
+              <ConfirmOverlay
+                show={!!this.state.upgradeVersion}
+                message={`Are you sure you want to redeploy and upgrade to version ${this.state.upgradeVersion}?`}
+                onYes={(e) => {
+                  e.stopPropagation();
 
+                  this.props.upgradeVersion(this.state.upgradeVersion, () => {
+                    this.setState({ loading: false });
+                  });
+                  this.setState({ upgradeVersion: "", loading: true });
+                }}
+                onNo={(e) => {
+                  e.stopPropagation();
+                  this.setState({ upgradeVersion: "" });
+                }}
+              />
+            </div>
+          )}
+        </RevisionHeader>
         <RevisionList>{this.renderExpanded()}</RevisionList>
       </div>
     );
@@ -342,6 +379,7 @@ const RevisionHeader = styled.div`
   color: ${(props: { showRevisions: boolean; isCurrent: boolean }) =>
     props.isCurrent ? "#ffffff66" : "#f5cb42"};
   display: flex;
+  justify-content: space-between;
   align-items: center;
   height: 40px;
   font-size: 13px;
@@ -352,12 +390,12 @@ const RevisionHeader = styled.div`
     props.showRevisions ? "#ffffff11" : ""};
   :hover {
     background: #ffffff18;
-    > i {
+    > div > i {
       background: #ffffff22;
     }
   }
 
-  > i {
+  > div > i {
     margin-left: 12px;
     font-size: 20px;
     cursor: pointer;
@@ -387,5 +425,32 @@ const StyledRevisionSection = styled.div`
     to {
       max-height: 250px;
     }
+  }
+`;
+
+const RevisionPreview = styled.div`
+  display: flex;
+  align-items: center;
+`;
+
+const RevisionUpdateMessage = styled.div`
+  color: white;
+  display: flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 5px;
+  margin-right: 10px;
+
+  :hover {
+    border: 1px solid white;
+    padding: 3px 9px;
+  }
+
+  > i {
+    margin-right: 6px;
+    font-size: 20px;
+    cursor: pointer;
+    border-radius: 20px;
+    transform: none;
   }
 `;

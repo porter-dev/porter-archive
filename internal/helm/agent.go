@@ -60,6 +60,9 @@ type UpgradeReleaseConfig struct {
 	Cluster    *models.Cluster
 	Repo       repository.Repository
 	Registries []*models.Registry
+
+	// Optional, if chart should be overriden
+	Chart *chart.Chart
 }
 
 // UpgradeRelease upgrades a specific release with new values.yaml
@@ -92,6 +95,10 @@ func (a *Agent) UpgradeReleaseByValues(
 	}
 
 	ch := rel.Chart
+
+	if conf.Chart != nil {
+		ch = conf.Chart
+	}
 
 	cmd := action.NewUpgrade(a.ActionConfig)
 	cmd.Namespace = rel.Namespace

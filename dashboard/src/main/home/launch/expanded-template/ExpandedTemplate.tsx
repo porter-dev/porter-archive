@@ -14,6 +14,8 @@ type PropsType = {
   currentTab: string;
   setCurrentTemplate: (x: PorterTemplate) => void;
   skipDescription?: boolean;
+  showLaunchFlow: () => void;
+  setForm: (x: any) => void;
 };
 
 type StateType = {
@@ -44,7 +46,7 @@ export default class ExpandedTemplate extends Component<PropsType, StateType> {
   fetchTemplateInfo = () => {
     this.setState({ loading: true });
     let params =
-      this.props.currentTab == "docker"
+      this.props.currentTab == "porter"
         ? { repo_url: process.env.APPLICATION_CHART_REPO_URL }
         : { repo_url: process.env.ADDON_CHART_REPO_URL };
 
@@ -56,8 +58,8 @@ export default class ExpandedTemplate extends Component<PropsType, StateType> {
       .then((res) => {
         let { form, values, markdown, metadata } = res.data;
         let keywords = metadata.keywords;
+        this.props.setForm(form);
         this.setState({
-          form,
           values,
           markdown,
           keywords,
@@ -113,7 +115,7 @@ export default class ExpandedTemplate extends Component<PropsType, StateType> {
 
             this.props.setCurrentTemplate(template);
           }}
-          launchTemplate={() => this.setState({ showLaunchTemplate: true })}
+          launchTemplate={this.props.showLaunchFlow}
           markdown={this.state.markdown}
           keywords={this.state.keywords}
         />

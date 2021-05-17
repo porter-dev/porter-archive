@@ -48,7 +48,7 @@ export default class ChartList extends Component<PropsType, StateType> {
           namespace: this.props.namespace,
           cluster_id: currentCluster.id,
           storage: StorageType.Secret,
-          limit: 20,
+          limit: 50,
           skip: 0,
           byDate: false,
           statusFilter: [

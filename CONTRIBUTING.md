@@ -1,6 +1,6 @@
 # Contributing to Porter
 
-First off, thanks for considering contributing to Porter. There are many types of contributions you can make, including bug reports and fixes, improving documentation, writing tutorials, and larger feature requests or changes.
+First off, thanks for considering contributing to Porter. There are many types of contributions you can make, including bug reports and fixes, improving documentation, writing tutorials, and larger feature requests or changes. You can contribute to this repo or the [porter-charts](https://github.com/porter-dev/porter-charts) repo if you're interested in developing charts. 
 
 Before you contribute, make sure to read these guidelines thoroughly, so that you can get your pull request reviewed and finalized as quickly as possible. 
 
@@ -92,9 +92,13 @@ DB_NAME=porter
 SQL_LITE=false
 ```
 
-Once you've done this, go to the root repository, and run `docker-compose -f docker-compose-dev.yaml up`. You should see postgres, webpack, and porter containers spin up. When the webpack and porter containers have finished compiling and have spun up successfully (this will take 5-10 minutes after the containers start), you can navigate to `localhost:8080` and you should be greeted with the "Log In" screen. 
+Once you've done this, go to the root repository, and run `docker-compose -f docker-compose.dev.yaml up`. You should see postgres, webpack, and porter containers spin up. When the webpack and porter containers have finished compiling and have spun up successfully (this will take 5-10 minutes after the containers start), you can navigate to `localhost:8080` and you should be greeted with the "Log In" screen. 
 
-At this point, you can make a change to any `.go` file to trigger a backend rebuild, and any file in `/dashboard/src` to trigger a hot reload. Happy developing!
+At this point, you can make a change to any `.go` file to trigger a backend rebuild, and any file in `/dashboard/src` to trigger a hot reload. 
+
+For a more detailed development guide, [go here](/docs/developing/setup.md). 
+
+Happy developing!
 
 ### Testing 
 

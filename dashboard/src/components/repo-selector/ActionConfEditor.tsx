@@ -215,7 +215,7 @@ const BackButton = styled.div`
   margin-bottom: -7px;
   padding-right: 15px;
   border: 1px solid #ffffff55;
-  border-radius: 3px;
+  border-radius: 100px;
   width: ${(props: { width: string }) => props.width};
   color: white;
   background: #ffffff11;

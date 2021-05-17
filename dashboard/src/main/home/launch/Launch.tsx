@@ -8,14 +8,13 @@ import { PorterTemplate } from "shared/types";
 import TabSelector from "components/TabSelector";
 import ExpandedTemplate from "./expanded-template/ExpandedTemplate";
 import Loading from "components/Loading";
+import LaunchFlow from "./launch-flow/LaunchFlow";
 
 import hardcodedNames from "./hardcodedNameDict";
-import { Link } from "react-router-dom";
 import semver from "semver";
-import { version } from "html-webpack-plugin";
 
 const tabOptions = [
-  { label: "New Application", value: "docker" },
+  { label: "New Application", value: "porter" },
   { label: "Community Add-ons", value: "community" },
 ];
 
@@ -23,21 +22,25 @@ type PropsType = {};
 
 type StateType = {
   currentTemplate: PorterTemplate | null;
+  form: any;
   currentTab: string;
   addonTemplates: PorterTemplate[];
   applicationTemplates: PorterTemplate[];
   loading: boolean;
   error: boolean;
+  isOnLaunchFlow: boolean;
 };
 
 export default class Templates extends Component<PropsType, StateType> {
   state = {
     currentTemplate: null as PorterTemplate | null,
-    currentTab: "docker",
+    form: null as any,
+    currentTab: "porter",
     addonTemplates: [] as PorterTemplate[],
     applicationTemplates: [] as PorterTemplate[],
     loading: true,
     error: false,
+    isOnLaunchFlow: false,
   };
 
   componentDidMount() {
@@ -128,8 +131,8 @@ export default class Templates extends Component<PropsType, StateType> {
     );
   };
 
-  renderApplicationList = () => {
-    let { loading, error, applicationTemplates } = this.state;
+  renderTemplateList = (templates: any) => {
+    let { loading, error } = this.state;
 
     if (loading) {
       return (
@@ -143,7 +146,7 @@ export default class Templates extends Component<PropsType, StateType> {
           <i className="material-icons">error</i> Error retrieving templates.
         </Placeholder>
       );
-    } else if (applicationTemplates.length === 0) {
+    } else if (templates.length === 0) {
       return (
         <Placeholder>
           <i className="material-icons">category</i> No templates found.
@@ -151,108 +154,36 @@ export default class Templates extends Component<PropsType, StateType> {
       );
     }
 
-    return this.state.applicationTemplates.map(
-      (template: PorterTemplate, i: number) => {
-        let { name, icon, description } = template;
-        if (hardcodedNames[name]) {
-          name = hardcodedNames[name];
-        }
-        return (
-          <TemplateBlock
-            key={i}
-            onClick={() => this.setState({ currentTemplate: template })}
-          >
-            {this.renderIcon(icon)}
-            <TemplateTitle>{name}</TemplateTitle>
-            <TemplateDescription>{description}</TemplateDescription>
-          </TemplateBlock>
-        );
-      }
+    return (
+      <TemplateList>
+        {templates.map(
+          (template: PorterTemplate, i: number) => {
+            let { name, icon, description } = template;
+            if (hardcodedNames[name]) {
+              name = hardcodedNames[name];
+            }
+            return (
+              <TemplateBlock
+                key={name}
+                onClick={() => this.setState({ currentTemplate: template })}
+              >
+                {this.renderIcon(icon)}
+                <TemplateTitle>{name}</TemplateTitle>
+                <TemplateDescription>{description}</TemplateDescription>
+              </TemplateBlock>
+            );
+          }
+        )}
+      </TemplateList>
     );
   };
 
-  renderAddonList = () => {
-    let { loading, error, addonTemplates } = this.state;
-
-    if (loading) {
-      return (
-        <LoadingWrapper>
-          <Loading />
-        </LoadingWrapper>
-      );
-    } else if (error) {
-      return (
-        <Placeholder>
-          <i className="material-icons">error</i> Error retrieving templates.
-        </Placeholder>
-      );
-    } else if (addonTemplates.length === 0) {
-      return (
-        <Placeholder>
-          <i className="material-icons">category</i> No templates found.
-        </Placeholder>
-      );
-    }
-
-    return this.state.addonTemplates.map(
-      (template: PorterTemplate, i: number) => {
-        let { name, icon, description } = template;
-        if (hardcodedNames[name]) {
-          name = hardcodedNames[name];
-        }
-        return (
-          <TemplateBlock
-            key={i}
-            onClick={() => this.setState({ currentTemplate: template })}
-          >
-            {this.renderIcon(icon)}
-            <TemplateTitle>{name}</TemplateTitle>
-            <TemplateDescription>{description}</TemplateDescription>
-          </TemplateBlock>
-        );
-      }
-    );
-  };
-
-  renderApplicationTemplates = () => {
-    if (!this.context.currentCluster) {
-      return (
-        <>
-          <Banner>
-            <i className="material-icons">error_outline</i>
-            <Link to="dashboard">Provision</Link> &nbsp;or&nbsp;
-            <Link
-              to="#"
-              onClick={() =>
-                this.context.setCurrentModal("ClusterInstructionsModal")
-              }
-            >
-              connect
-            </Link>
-            &nbsp;to a cluster
-          </Banner>
-        </>
-      );
-    }
+  renderTabContents = () => {
     if (this.state.currentTemplate) {
       return (
         <ExpandedTemplate
-          currentTab={this.state.currentTab}
-          currentTemplate={this.state.currentTemplate}
-          setCurrentTemplate={(currentTemplate: PorterTemplate) => {
-            this.setState({ currentTemplate });
-          }}
-          skipDescription={false}
-        />
-      );
-    }
-    return <TemplateList>{this.renderApplicationList()}</TemplateList>;
-  };
-
-  renderAddonTemplates = () => {
-    if (this.state.currentTemplate) {
-      return (
-        <ExpandedTemplate
+          setForm={(x: any) => this.setState({ form: x })}
+          showLaunchFlow={() => this.setState({ isOnLaunchFlow: true })}
           currentTab={this.state.currentTab}
           currentTemplate={this.state.currentTemplate}
           setCurrentTemplate={(currentTemplate: PorterTemplate) => {
@@ -261,36 +192,72 @@ export default class Templates extends Component<PropsType, StateType> {
         />
       );
     }
-    return <TemplateList>{this.renderAddonList()}</TemplateList>;
-  };
+    if (this.state.currentTab === "porter") {
+      return this.renderTemplateList(this.state.applicationTemplates);
+    } else {
+      return this.renderTemplateList(this.state.addonTemplates);
+    }
+  }
 
   render() {
-    return (
-      <TemplatesWrapper>
-        <TitleSection>
-          <Title>Launch</Title>
-          <a
-            href="https://docs.getporter.dev/docs/porter-templates"
-            target="_blank"
-          >
-            <i className="material-icons">help_outline</i>
-          </a>
-        </TitleSection>
-        <TabSelector
-          options={tabOptions}
-          currentTab={this.state.currentTab}
-          setCurrentTab={(value: string) =>
-            this.setState({
-              currentTab: value,
-              currentTemplate: null,
-            })
+    if (!this.state.isOnLaunchFlow || !this.state.currentTemplate) {
+      return (
+        <TemplatesWrapper>
+          <TitleSection>
+            <Title>Launch</Title>
+            <a
+              href="https://docs.getporter.dev/docs/porter-templates"
+              target="_blank"
+            >
+              <i className="material-icons">help_outline</i>
+            </a>
+          </TitleSection>
+          {
+            this.context.currentCluster ? (
+              <>
+                <TabSelector
+                  options={tabOptions}
+                  currentTab={this.state.currentTab}
+                  setCurrentTab={(value: string) =>
+                    this.setState({
+                      currentTab: value,
+                      currentTemplate: null,
+                    })
+                  }
+                />
+                {this.renderTabContents()}
+              </>
+            ) : (
+              <>
+                <Banner>
+                  <i className="material-icons">error_outline</i>
+                  No cluster connected to this project.
+                </Banner>
+                <StyledStatusPlaceholder>
+                  You need to connect a cluster to use Porter.
+                  <Highlight
+                    onClick={() => {
+                      this.context.setCurrentModal("ClusterInstructionsModal", {});
+                    }}
+                  >
+                    + Connect an existing cluster
+                  </Highlight>
+                </StyledStatusPlaceholder>
+              </>
+            )
           }
+        </TemplatesWrapper>
+      );
+    } else {
+      return (
+        <LaunchFlow
+          form={this.state.form}
+          currentTab={this.state.currentTab}
+          currentTemplate={this.state.currentTemplate} 
+          hideLaunchFlow={() => this.setState({ isOnLaunchFlow: false })}
         />
-        {this.state.currentTab === "docker"
-          ? this.renderApplicationTemplates()
-          : this.renderAddonTemplates()}
-      </TemplatesWrapper>
-    );
+      );
+    }
   }
 }
 
@@ -325,6 +292,31 @@ const Banner = styled.div`
     margin-right: 10px;
     font-size: 18px;
   }
+`;
+
+const Highlight = styled.div`
+  color: #8590ff;
+  cursor: pointer;
+  margin-left: 5px;
+  margin-right: 10px;
+`;
+
+const StyledStatusPlaceholder = styled.div`
+  width: 100%;
+  height: calc(100vh - 365px);
+  margin-top: 20px;
+  display: flex;
+  color: #aaaabb;
+  border-radius: 5px;
+  padding-bottom: 20px;
+  text-align: center;
+  font-size: 13px;
+  background: #ffffff09;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: "Work Sans", sans-serif;
+  user-select: text;
 `;
 
 const LoadingWrapper = styled.div`

@@ -82,7 +82,7 @@ export default class TemplateInfo extends Component<PropsType, StateType> {
           </Banner>
         </>
       );
-    } else if (this.props.currentTab == "docker") {
+    } else if (this.props.currentTab == "porter") {
       return (
         <>
           <Br />
@@ -113,8 +113,8 @@ export default class TemplateInfo extends Component<PropsType, StateType> {
               href="https://docs.getporter.dev/docs/https-and-custom-domains"
             >
               Porter's HTTPS setup guide
-            </Link>{" "}
-            (5 minutes).
+            </Link>
+            &nbsp;(5 minutes).
           </Banner>
         </>
       );
@@ -189,7 +189,6 @@ TemplateInfo.contextType = Context;
 
 const Link = styled.a`
   color: #8590ff;
-  margin-right: 5px;
   cursor: pointer;
   margin-left: 5px;
 `;

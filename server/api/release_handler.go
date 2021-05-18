@@ -549,7 +549,8 @@ func (app *App) HandleGetReleaseAllPods(w http.ResponseWriter, r *http.Request) 
 			selectors = append(selectors, key+"="+val)
 		}
 
-		podList, err := k8sAgent.GetPodsByLabel(strings.Join(selectors, ","))
+		namespace := vals.Get("namespace")
+		podList, err := k8sAgent.GetPodsByLabel(strings.Join(selectors, ","), namespace)
 
 		if err != nil {
 			app.handleErrorDataRead(err, w)
@@ -928,13 +929,15 @@ func (app *App) HandleReleaseDeployWebhook(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	client := *app.segmentClient
-	client.Enqueue(segment.Track{
-		UserId: "anonymous",
-		Event:  "Triggered Re-deploy via Webhook",
-		Properties: segment.NewProperties().
-			Set("repository", repository),
-	})
+	if app.segmentClient != nil {
+		client := *app.segmentClient
+		client.Enqueue(segment.Track{
+			UserId: "anonymous",
+			Event:  "Triggered Re-deploy via Webhook",
+			Properties: segment.NewProperties().
+				Set("repository", repository),
+		})
+	}
 
 	w.WriteHeader(http.StatusOK)
 }

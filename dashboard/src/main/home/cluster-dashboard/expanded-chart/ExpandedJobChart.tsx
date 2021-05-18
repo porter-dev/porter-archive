@@ -203,6 +203,7 @@ export default class ExpandedJobChart extends Component<PropsType, StateType> {
         (event.event_type == "ADD" || event.event_type == "UPDATE") &&
         this.state.imageIsPlaceholder
       ) {
+        console.log("set to false in setting up cron")
         let newestImage =
           event.Object?.spec?.jobTemplate?.spec?.template?.spec?.containers[0]
             ?.image;
@@ -346,6 +347,7 @@ export default class ExpandedJobChart extends Component<PropsType, StateType> {
       newestImage !== "public.ecr.aws/o1j4x7p4/hello-porter-job" &&
       newestImage !== "public.ecr.aws/o1j4x7p4/hello-porter-job:latest"
     ) {
+      console.log("set to false in sort");
       this.setState({ jobs, newestImage, imageIsPlaceholder: false });
     } else {
       this.setState({ jobs });

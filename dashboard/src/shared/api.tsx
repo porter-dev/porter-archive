@@ -472,6 +472,7 @@ const getJobPods = baseApi<
 const getMatchingPods = baseApi<
   {
     cluster_id: number;
+    namespace: string;
     selectors: string[];
   },
   { id: number }

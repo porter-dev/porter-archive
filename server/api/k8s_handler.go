@@ -664,9 +664,10 @@ func (app *App) HandleListPods(w http.ResponseWriter, r *http.Request) {
 		agent, err = kubernetes.GetAgentOutOfClusterConfig(form.OutOfClusterConfig)
 	}
 
+	namespace := vals.Get("namespace")
 	pods := []v1.Pod{}
 	for _, selector := range vals["selectors"] {
-		podsList, err := agent.GetPodsByLabel(selector)
+		podsList, err := agent.GetPodsByLabel(selector, namespace)
 
 		if err != nil {
 			app.handleErrorFormValidation(err, ErrK8sValidate, w)

@@ -19,7 +19,7 @@ To deploy your Django Application in Porter. You need to tweak something on your
   ```
 3. Add this below allowed host. Put CIDR accordning to the K8s kubelet CIDR
   ```python
-  ALLOWED_CIDR_NETS = os.environ.get("ALLOWED_CIDR_NETS", default='10.0.0.0/8').split(" ")
+  ALLOWED_CIDR_NETS = os.environ.get("ALLOWED_CIDR_NETS", default='10.0.0.0/16').split(" ")
   ```
 4. Add django-allow-cidr middleware on the top of django middleware
   ```python

@@ -549,7 +549,8 @@ func (app *App) HandleGetReleaseAllPods(w http.ResponseWriter, r *http.Request) 
 			selectors = append(selectors, key+"="+val)
 		}
 
-		podList, err := k8sAgent.GetPodsByLabel(strings.Join(selectors, ","))
+		namespace := vals.Get("namespace")
+		podList, err := k8sAgent.GetPodsByLabel(strings.Join(selectors, ","), namespace)
 
 		if err != nil {
 			app.handleErrorDataRead(err, w)

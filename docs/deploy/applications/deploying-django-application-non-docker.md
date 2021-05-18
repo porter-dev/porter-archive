@@ -21,7 +21,7 @@ To deploy your Django Application in Porter. You need to tweak something on your
   ```python
   ALLOWED_CIDR_NETS = os.environ.get("ALLOWED_CIDR_NETS", default='10.0.0.0/16').split(" ")
   ```
-4. Add django-allow-cidr middleware on the top of django middleware
+4. Add `django-allow-cidr` middleware on the top of Django middleware:
   ```python
   MIDDLEWARE = [
     'allow_cidr.middleware.AllowCIDRMiddleware',

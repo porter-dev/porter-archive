@@ -39,7 +39,7 @@ To deploy your Django Application in Porter. You need to tweak something on your
   )
   STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
   ```
-7. Add Procfile file and add this
+7. Add Procfile and add this:
   ```
   web: gunicorn <project-name>.wsgi -b 0.0.0.0:8989 --timeout 120 (ex. web: gunicorn djangosample.wsgi -b 0.0.0.0:8989 --timeout 120 )
   ```

@@ -59,6 +59,7 @@ export default class ControllerTab extends Component<PropsType, StateType> {
         "<token>",
         {
           cluster_id: currentCluster.id,
+          namespace: controller?.metadata?.namespace,
           selectors,
         },
         {

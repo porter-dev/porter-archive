@@ -205,8 +205,13 @@ export default class ExpandedJobChart extends Component<PropsType, StateType> {
         let newestImage =
           event.Object?.spec?.jobTemplate?.spec?.template?.spec?.containers[0]
             ?.image;
-        if (newestImage) {
-          console.log("newest", newestImage);
+        if (
+          newestImage &&
+          newestImage !== "porterdev/hello-porter-job" &&
+          newestImage !== "porterdev/hello-porter-job:latest" &&
+          newestImage !== "public.ecr.aws/o1j4x7p4/hello-porter-job" &&
+          newestImage !== "public.ecr.aws/o1j4x7p4/hello-porter-job:latest"
+        ) {
           this.setState({ newestImage, imageIsPlaceholder: false });
         }
       }

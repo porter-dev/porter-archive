@@ -4,7 +4,7 @@ To deploy your Django Application in Porter. You need to tweak something on your
 
 > 📘 Prerequisites
 > - Django Application
-> - Docker Registry Integrate on your account ( Work only on ACR, GCR, DOCR )
+> - Docker Registry integration on your account ([See docs](https://docs.getporter.dev/docs/linking-an-existing-docker-container-registry))
 
 
 ## Prepare Django Application

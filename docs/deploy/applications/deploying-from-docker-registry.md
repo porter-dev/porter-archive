@@ -17,7 +17,7 @@ Let's get started!
 
 ![Image repo selection](https://files.readme.io/9d796f4-Screen_Shot_2021-03-18_at_11.26.45_AM.png "Screen Shot 2021-03-18 at 11.26.45 AM.png")
 
-4. Further down under **Additional Settings**, you can configure remaining options like your service's port and computing resources. Once you're ready, click the **Deploy** button to launch. You will be redirected to the cluster dashboard where you should see your newly deployed service.
+4. Select "Continue" after specifying your image. Under **Additional Settings**, you can configure remaining options like your service's port and computing resources. Once you're ready, click the **Deploy** button to launch. You will be redirected to the cluster dashboard where you should see your newly deployed service.
 
 5. To programmatically redeploy your service (for instance, from a CI pipeline), you will need to call your service's custom webhook. You can find your webhook by expanding your deployed service and going to the **Settings** tab.
 

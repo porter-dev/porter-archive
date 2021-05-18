@@ -131,21 +131,22 @@ func (app *App) HandleGithubOAuthCallback(w http.ResponseWriter, r *http.Request
 		}
 
 		// send to segment
-		client := *app.segmentClient
-		client.Enqueue(segment.Identify{
-			UserId: fmt.Sprintf("%v", user.ID),
-			Traits: segment.NewTraits().
-				SetEmail(user.Email).
-				Set("github", "true"),
-		})
+		if app.segmentClient != nil {
+			client := *app.segmentClient
+			client.Enqueue(segment.Identify{
+				UserId: fmt.Sprintf("%v", user.ID),
+				Traits: segment.NewTraits().
+					SetEmail(user.Email).
+					Set("github", "true"),
+			})
 
-		client.Enqueue(segment.Track{
-			UserId: fmt.Sprintf("%v", user.ID),
-			Event: "New User",
-			Properties: segment.NewProperties().
-				Set("email", user.Email),
-		})
-
+			client.Enqueue(segment.Track{
+				UserId: fmt.Sprintf("%v", user.ID),
+				Event:  "New User",
+				Properties: segment.NewProperties().
+					Set("email", user.Email),
+			})
+		}
 
 		// log the user in
 		app.Logger.Info().Msgf("New user created: %d", user.ID)

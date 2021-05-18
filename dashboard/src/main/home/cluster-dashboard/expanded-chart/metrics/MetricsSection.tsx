@@ -369,6 +369,7 @@ export default class MetricsSection extends Component<PropsType, StateType> {
         "<token>",
         {
           cluster_id: currentCluster.id,
+          namespace: selectedController?.metadata?.namespace,
           selectors,
         },
         {

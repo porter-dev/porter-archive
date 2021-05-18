@@ -181,7 +181,7 @@ export default class ExpandedJobChart extends Component<PropsType, StateType> {
   };
 
   setupCronJobWebsocket = (chart: ChartType) => {
-    // let chartVersion = `${chart.chart.metadata.name}-${chart.chart.metadata.version}`;
+    let chartVersion = `${chart.chart.metadata.name}-${chart.chart.metadata.version}`;
 
     let { currentCluster, currentProject } = this.context;
     let protocol = process.env.NODE_ENV == "production" ? "wss" : "ws";
@@ -202,18 +202,29 @@ export default class ExpandedJobChart extends Component<PropsType, StateType> {
         (event.event_type == "ADD" || event.event_type == "UPDATE") &&
         this.state.imageIsPlaceholder
       ) {
-        let newestImage =
-          event.Object?.spec?.jobTemplate?.spec?.template?.spec?.containers[0]
-            ?.image;
+        // filter job belonging to chart
+        let chartLabel = event.Object?.metadata?.labels["helm.sh/chart"];
+        let releaseLabel =
+          event.Object?.metadata?.labels["meta.helm.sh/release-name"];
+
         if (
-          newestImage &&
-          newestImage !== "porterdev/hello-porter-job" &&
-          newestImage !== "porterdev/hello-porter-job:latest" &&
-          newestImage !== "public.ecr.aws/o1j4x7p4/hello-porter-job" &&
-          newestImage !== "public.ecr.aws/o1j4x7p4/hello-porter-job:latest"
+          chartLabel &&
+          releaseLabel &&
+          chartLabel == chartVersion &&
+          releaseLabel == chart.name
         ) {
-          console.log("set to false on crons", newestImage)
-          this.setState({ newestImage, imageIsPlaceholder: false });
+          let newestImage =
+            event.Object?.spec?.jobTemplate?.spec?.template?.spec?.containers[0]
+              ?.image;
+          if (
+            newestImage &&
+            newestImage !== "porterdev/hello-porter-job" &&
+            newestImage !== "porterdev/hello-porter-job:latest" &&
+            newestImage !== "public.ecr.aws/o1j4x7p4/hello-porter-job" &&
+            newestImage !== "public.ecr.aws/o1j4x7p4/hello-porter-job:latest"
+          ) {
+            this.setState({ newestImage, imageIsPlaceholder: false });
+          }
         }
       }
     };

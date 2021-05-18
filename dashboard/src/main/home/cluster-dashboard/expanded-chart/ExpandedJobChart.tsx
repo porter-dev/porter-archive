@@ -83,6 +83,7 @@ export default class ExpandedJobChart extends Component<PropsType, StateType> {
       )
       .then((res) => {
         let image = res.data?.config?.image?.repository;
+        console.log("got chart data", image);
         if (
           (image === "porterdev/hello-porter-job" ||
             image === "public.ecr.aws/o1j4x7p4/hello-porter-job") &&
@@ -337,6 +338,7 @@ export default class ExpandedJobChart extends Component<PropsType, StateType> {
       return date2.getTime() - date1.getTime();
     });
     let newestImage = jobs[0]?.spec?.template?.spec?.containers[0]?.image;
+    console.log("newest image", newestImage);
     if (
       newestImage &&
       newestImage !== "porterdev/hello-porter-job" &&

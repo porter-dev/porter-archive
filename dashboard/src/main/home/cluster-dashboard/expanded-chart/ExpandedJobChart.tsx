@@ -206,16 +206,18 @@ export default class ExpandedJobChart extends Component<PropsType, StateType> {
         let chartLabel = event.Object?.metadata?.labels["helm.sh/chart"];
         let releaseLabel =
           event.Object?.metadata?.labels["meta.helm.sh/release-name"];
-
+        console.log("filtering job belonging to chart");
         if (
           chartLabel &&
           releaseLabel &&
           chartLabel == chartVersion &&
           releaseLabel == chart.name
         ) {
+          console.log("belonged to chart");
           let newestImage =
             event.Object?.spec?.jobTemplate?.spec?.template?.spec?.containers[0]
               ?.image;
+          console.log("newest image", newestImage)
           if (
             newestImage &&
             newestImage !== "porterdev/hello-porter-job" &&
@@ -223,6 +225,7 @@ export default class ExpandedJobChart extends Component<PropsType, StateType> {
             newestImage !== "public.ecr.aws/o1j4x7p4/hello-porter-job" &&
             newestImage !== "public.ecr.aws/o1j4x7p4/hello-porter-job:latest"
           ) {
+            console.log("setting image placeholder to false");
             this.setState({ newestImage, imageIsPlaceholder: false });
           }
         }

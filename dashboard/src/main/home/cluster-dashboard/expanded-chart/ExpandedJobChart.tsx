@@ -181,7 +181,8 @@ export default class ExpandedJobChart extends Component<PropsType, StateType> {
   };
 
   setupCronJobWebsocket = (chart: ChartType) => {
-    let chartVersion = `${chart.chart.metadata.name}-${chart.chart.metadata.version}`;
+    let releaseName = chart.name
+    let releaseNamespace = chart.namespace
 
     let { currentCluster, currentProject } = this.context;
     let protocol = process.env.NODE_ENV == "production" ? "wss" : "ws";
@@ -203,15 +204,14 @@ export default class ExpandedJobChart extends Component<PropsType, StateType> {
         this.state.imageIsPlaceholder
       ) {
         // filter job belonging to chart
-        let chartLabel = event.Object?.metadata?.labels["helm.sh/chart"];
-        let releaseLabel =
-          event.Object?.metadata?.labels["meta.helm.sh/release-name"];
-        console.log("filtering job belonging to chart");
+        let relNameAnn = event.Object?.metadata?.annotations["meta.helm.sh/release-name"]
+        let relNamespaceAnn = event.Object?.metadata?.annotations["meta.helm.sh/release-namespace"]
+        
         if (
-          chartLabel &&
-          releaseLabel &&
-          chartLabel == chartVersion &&
-          releaseLabel == chart.name
+          relNameAnn &&
+          relNamespaceAnn &&
+          releaseName == relNameAnn &&
+          releaseNamespace == relNamespaceAnn
         ) {
           console.log("belonged to chart");
           let newestImage =

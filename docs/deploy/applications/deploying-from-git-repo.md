@@ -24,7 +24,7 @@ Let's get started!
 > 
 > If you specify a folder in your repo to use as source, Porter will autodetect the language runtime and build your application using Cloud Native Buildpacks. For more details refer to our guide on [requirements for auto build](https://docs.getporter.dev/docs/auto-deploy-requirements).
 
-4. Further down under **Additional Settings**, you can configure remaining options like your service's port and computing resources. Once you're ready, click the **Deploy** button to launch. You will be redirected to the cluster dashboard where you should see your newly deployed service.
+4. Select "Continue" once your source has been connected. Under **Additional Settings**, you can configure remaining options like your service's port and computing resources. Once you're ready, click the **Deploy** button to launch. You will be redirected to the cluster dashboard where you should see your newly deployed service.
 
 ![Deployed service](https://files.readme.io/4f731ca-Screen_Shot_2021-03-17_at_7.53.40_PM.png "Screen Shot 2021-03-17 at 7.53.40 PM.png")
 

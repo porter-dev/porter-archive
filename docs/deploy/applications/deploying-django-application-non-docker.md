@@ -9,7 +9,7 @@ To deploy your Django Application in Porter. You need to tweak something on your
 
 ## Prepare Django Application
 
-1. Install django-allow-cidr ( A Django Middleware to enable use of CIDR IP ranges in ALLOWED_HOSTS )
+1. Install `django-allow-cidr` (Django middleware to enable the use of CIDR IP ranges in `ALLOWED_HOSTS`)
   ```sh
   pip install django-allow-cidr
   ```

@@ -32,7 +32,7 @@ To deploy your Django Application in Porter. You need to tweak something on your
   ```sh
   pip install gunicorn
   ```
-6. Add static folder then put your html and css files. Locate static url settings and add static file dirs below
+6. Add static folder and add your HTML and CSS files. Locate static URL settings and add static file dirs below:
   ```python
   STATICFILES_DIRS = (
     os.path.join(BASE_DIR, 'static'),

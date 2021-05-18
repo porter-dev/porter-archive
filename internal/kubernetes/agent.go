@@ -330,9 +330,9 @@ func (a *Agent) GetCronJob(c grapher.Object) (*batchv1beta1.CronJob, error) {
 }
 
 // GetPodsByLabel retrieves pods with matching labels
-func (a *Agent) GetPodsByLabel(selector string) (*v1.PodList, error) {
+func (a *Agent) GetPodsByLabel(selector string, namespace string) (*v1.PodList, error) {
 	// Search in all namespaces for matching pods
-	return a.Clientset.CoreV1().Pods("").List(
+	return a.Clientset.CoreV1().Pods(namespace).List(
 		context.TODO(),
 		metav1.ListOptions{
 			LabelSelector: selector,

@@ -215,6 +215,16 @@ func (a *Agent) ListConfigMaps(namespace string) (*v1.ConfigMapList, error) {
 	)
 }
 
+// ListEvents lists the events of a given object.
+func (a *Agent) ListEvents(name string, namespace string) (*v1.EventList, error) {
+	return a.Clientset.CoreV1().Events(namespace).List(
+		context.TODO(),
+		metav1.ListOptions{
+			FieldSelector: fmt.Sprintf("involvedObject.name=%s,involvedObject.namespace=%s", name, namespace),
+		},
+	)
+}
+
 // ListNamespaces simply lists namespaces
 func (a *Agent) ListNamespaces() (*v1.NamespaceList, error) {
 	return a.Clientset.CoreV1().Namespaces().List(
@@ -330,9 +340,9 @@ func (a *Agent) GetCronJob(c grapher.Object) (*batchv1beta1.CronJob, error) {
 }
 
 // GetPodsByLabel retrieves pods with matching labels
-func (a *Agent) GetPodsByLabel(selector string) (*v1.PodList, error) {
+func (a *Agent) GetPodsByLabel(selector string, namespace string) (*v1.PodList, error) {
 	// Search in all namespaces for matching pods
-	return a.Clientset.CoreV1().Pods("").List(
+	return a.Clientset.CoreV1().Pods(namespace).List(
 		context.TODO(),
 		metav1.ListOptions{
 			LabelSelector: selector,

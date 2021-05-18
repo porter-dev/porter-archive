@@ -83,7 +83,6 @@ export default class ExpandedJobChart extends Component<PropsType, StateType> {
       )
       .then((res) => {
         let image = res.data?.config?.image?.repository;
-        console.log("got chart data", image);
         if (
           (image === "porterdev/hello-porter-job" ||
             image === "public.ecr.aws/o1j4x7p4/hello-porter-job") &&
@@ -203,12 +202,13 @@ export default class ExpandedJobChart extends Component<PropsType, StateType> {
         (event.event_type == "ADD" || event.event_type == "UPDATE") &&
         this.state.imageIsPlaceholder
       ) {
-        console.log("set to false in setting up cron")
         let newestImage =
           event.Object?.spec?.jobTemplate?.spec?.template?.spec?.containers[0]
             ?.image;
-
-        this.setState({ newestImage, imageIsPlaceholder: false });
+        if (newestImage) {
+          console.log("newest", newestImage);
+          this.setState({ newestImage, imageIsPlaceholder: false });
+        }
       }
     };
 
@@ -339,7 +339,6 @@ export default class ExpandedJobChart extends Component<PropsType, StateType> {
       return date2.getTime() - date1.getTime();
     });
     let newestImage = jobs[0]?.spec?.template?.spec?.containers[0]?.image;
-    console.log("newest image", newestImage);
     if (
       newestImage &&
       newestImage !== "porterdev/hello-porter-job" &&
@@ -347,7 +346,6 @@ export default class ExpandedJobChart extends Component<PropsType, StateType> {
       newestImage !== "public.ecr.aws/o1j4x7p4/hello-porter-job" &&
       newestImage !== "public.ecr.aws/o1j4x7p4/hello-porter-job:latest"
     ) {
-      console.log("set to false in sort");
       this.setState({ jobs, newestImage, imageIsPlaceholder: false });
     } else {
       this.setState({ jobs });

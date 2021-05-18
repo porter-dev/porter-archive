@@ -212,6 +212,7 @@ export default class ExpandedJobChart extends Component<PropsType, StateType> {
           newestImage !== "public.ecr.aws/o1j4x7p4/hello-porter-job" &&
           newestImage !== "public.ecr.aws/o1j4x7p4/hello-porter-job:latest"
         ) {
+          console.log("set to false on crons", newestImage)
           this.setState({ newestImage, imageIsPlaceholder: false });
         }
       }
@@ -351,6 +352,7 @@ export default class ExpandedJobChart extends Component<PropsType, StateType> {
       newestImage !== "public.ecr.aws/o1j4x7p4/hello-porter-job" &&
       newestImage !== "public.ecr.aws/o1j4x7p4/hello-porter-job:latest"
     ) {
+      console.log("set to false on sorting")
       this.setState({ jobs, newestImage, imageIsPlaceholder: false });
     } else {
       this.setState({ jobs });

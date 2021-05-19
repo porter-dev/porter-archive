@@ -78,7 +78,7 @@ class LaunchFlow extends Component<PropsType, StateType> {
   };
 
   createGHAction = (chartName: string, chartNamespace: string, env?: any) => {
-    let { currentProject, currentCluster } = this.context;
+    let { currentProject, currentCluster, setCurrentError } = this.context;
     let {
       actionConfig,
       branch,
@@ -123,6 +123,8 @@ class LaunchFlow extends Component<PropsType, StateType> {
         this.setState({
           saveValuesStatus: `Could not create GitHub Action: ${err}`,
         });
+
+        setCurrentError(err)
       });
   };
 
@@ -179,7 +181,7 @@ class LaunchFlow extends Component<PropsType, StateType> {
           err = parsedErr;
         }
         this.setState({
-          saveValuesStatus: `Could not deploy template: ${err}`,
+          saveValuesStatus: parsedErr,
         });
         setCurrentError(err.response.data.errors[0]);
         window.analytics.track("Failed to Deploy Add-on", {
@@ -192,7 +194,7 @@ class LaunchFlow extends Component<PropsType, StateType> {
   };
 
   onSubmit = async (rawValues: any) => {
-    let { currentCluster, currentProject } = this.context;
+    let { currentCluster, currentProject, setCurrentError } = this.context;
     let {
       selectedNamespace,
       templateName,
@@ -278,6 +280,8 @@ class LaunchFlow extends Component<PropsType, StateType> {
               this.setState({
                 saveValuesStatus: `Could not create subdomain: ${err}`,
               });
+
+              setCurrentError(err)
             });
         });
 
@@ -332,6 +336,7 @@ class LaunchFlow extends Component<PropsType, StateType> {
         this.setState({
           saveValuesStatus: `Could not deploy template: ${err}`,
         });
+        setCurrentError(err)
       });
   };
 

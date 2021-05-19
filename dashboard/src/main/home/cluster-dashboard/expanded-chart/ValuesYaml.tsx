@@ -67,8 +67,18 @@ export default class ValuesYaml extends Component<PropsType, StateType> {
         this.props.refreshChart();
       })
       .catch((err) => {
-        console.log(err);
-        this.setState({ saveValuesStatus: "error" });
+        let parsedErr =
+          err?.response?.data?.errors && err.response.data.errors[0];
+          
+        if (parsedErr) {
+          err = parsedErr;
+        }
+
+        this.setState({
+          saveValuesStatus: parsedErr,
+        });
+
+        setCurrentError(parsedErr);
       });
   };
 

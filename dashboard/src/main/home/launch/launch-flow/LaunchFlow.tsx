@@ -179,7 +179,7 @@ class LaunchFlow extends Component<PropsType, StateType> {
           err = parsedErr;
         }
         this.setState({
-          saveValuesStatus: `Could not deploy template: ${err}`,
+          saveValuesStatus: parsedErr,
         });
         setCurrentError(err.response.data.errors[0]);
         window.analytics.track("Failed to Deploy Add-on", {

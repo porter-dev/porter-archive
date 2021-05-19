@@ -30,6 +30,7 @@ type StateType = {
   isMetricsInstalled: boolean;
 };
 
+// TODO: add advanced routing (by project, cluster, namespace, and expanded object)
 class ClusterDashboard extends Component<PropsType, StateType> {
   state = {
     namespace: "default",

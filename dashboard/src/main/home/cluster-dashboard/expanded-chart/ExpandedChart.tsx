@@ -276,8 +276,19 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
         });
       })
       .catch((err) => {
-        console.log(err);
-        this.setState({ saveValuesStatus: "error" });
+        let parsedErr =
+          err?.response?.data?.errors && err.response.data.errors[0];
+
+        if (parsedErr) {
+          err = parsedErr;
+        }
+
+        this.setState({
+          saveValuesStatus: err,
+        });
+
+        setCurrentError(parsedErr);
+
         window.analytics.track("Failed to Upgrade Chart", {
           chart: this.state.currentChart.name,
           values: valuesYaml,
@@ -328,8 +339,20 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
         cb && cb();
       })
       .catch((err) => {
-        console.log(err);
-        this.setState({ saveValuesStatus: "error", loading: false });
+        let parsedErr =
+          err?.response?.data?.errors && err.response.data.errors[0]
+
+        if (parsedErr) {
+          err = parsedErr;
+        }
+        
+        this.setState({
+          saveValuesStatus: err,
+          loading: false,
+        });
+
+        setCurrentError(parsedErr);
+
         window.analytics.track("Failed to Upgrade Chart", {
           chart: this.state.currentChart.name,
           values: valuesYaml,

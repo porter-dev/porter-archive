@@ -322,9 +322,18 @@ export default class ExpandedJobChart extends Component<PropsType, StateType> {
         this.refreshChart();
       })
       .catch((err) => {
-        console.log(err);
-        this.setState({ saveValuesStatus: "error" });
-        setCurrentError(JSON.stringify(err));
+        let parsedErr =
+          err?.response?.data?.errors && err.response.data.errors[0];
+          
+        if (parsedErr) {
+          err = parsedErr;
+        }
+
+        this.setState({
+          saveValuesStatus: parsedErr,
+        });
+
+        setCurrentError(parsedErr);
       });
   };
 

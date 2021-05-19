@@ -45,7 +45,7 @@ For those who are familiar with Kubernetes and Helm:
 
 - Connect to existing Kubernetes clusters that are not provisioned by Porter
 - Visualize, deploy, and configure Helm charts via the GUI
-- User-generated [form overlays](https://docs.getporter.dev/docs/porter-templates) for managing `values.yaml`
+- User-generated [form overlays](https://github.com/porter-dev/porter-charts/blob/master/docs/form-yaml-reference.md) for managing `values.yaml`
 - In-depth view of releases, including revision histories and component graphs
 - Rollback/update of existing releases, including editing of raw `values.yaml`
 

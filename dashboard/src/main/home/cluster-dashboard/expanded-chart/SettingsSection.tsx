@@ -82,7 +82,7 @@ export default class SettingsSection extends Component<PropsType, StateType> {
 
   redeployWithNewImage = (img: string, tag: string) => {
     this.setState({ saveValuesStatus: "loading" });
-    let { currentCluster, currentProject } = this.context;
+    let { currentCluster, currentProject, setCurrentError } = this.context;
 
     // If tag is explicitly declared, parse tag
     let imgSplits = img.split(":");
@@ -130,8 +130,18 @@ export default class SettingsSection extends Component<PropsType, StateType> {
         this.props.refreshChart();
       })
       .catch((err) => {
-        console.log(err);
-        this.setState({ saveValuesStatus: "error" });
+        let parsedErr =
+          err?.response?.data?.errors && err.response.data.errors[0];
+          
+        if (parsedErr) {
+          err = parsedErr;
+        }
+
+        this.setState({
+          saveValuesStatus: parsedErr,
+        });
+
+        setCurrentError(parsedErr);
       });
   };
 

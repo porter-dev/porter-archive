@@ -4,6 +4,7 @@ import gradient from "assets/gradient.png";
 
 import { Context } from "shared/Context";
 import { ProjectType } from "shared/types";
+import { pushQueryParams, pushFiltered } from "shared/routing";
 import { RouteComponentProps, withRouter } from "react-router";
 
 type PropsType = RouteComponentProps & {
@@ -43,9 +44,15 @@ class ProjectSection extends Component<PropsType, StateType> {
     }
   };
 
-  renderOptionList = () => {
-    let { setCurrentProject } = this.context;
+  setCurrentProject = (project: ProjectType) => {
+    this.context.setCurrentProject(project, () => {
+      if (project) {
+        pushQueryParams(this.props, { project_id: project.id.toString() });
+      }
+    });
+  }
 
+  renderOptionList = () => {
     return this.props.projects.map((project: ProjectType, i: number) => {
       return (
         <Option
@@ -53,8 +60,8 @@ class ProjectSection extends Component<PropsType, StateType> {
           selected={project.name === this.props.currentProject.name}
           onClick={() => {
             this.setState({ expanded: false });
-            setCurrentProject(project);
-            this.props.history.push("dashboard");
+            this.setCurrentProject(project);
+            pushFiltered(this.props, "/dashboard", ["project_id"]);
           }}
         >
           <ProjectIcon>
@@ -76,9 +83,9 @@ class ProjectSection extends Component<PropsType, StateType> {
             <Option
               selected={false}
               lastItem={true}
-              onClick={() => {
-                this.props.history.push("new-project");
-              }}
+              onClick={() =>
+                pushFiltered(this.props, "new-project", ["project_id"])
+              }
             >
               <ProjectIconAlt>+</ProjectIconAlt>
               <ProjectLabel>Create a Project</ProjectLabel>
@@ -114,7 +121,7 @@ class ProjectSection extends Component<PropsType, StateType> {
       );
     }
     return (
-      <InitializeButton onClick={() => this.props.history.push("new-project")}>
+      <InitializeButton onClick={() => pushFiltered(this.props, "new-project", ["project_id"])}>
         <Plus>+</Plus> Create a Project
       </InitializeButton>
     );

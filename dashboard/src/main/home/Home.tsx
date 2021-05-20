@@ -5,7 +5,7 @@ import styled from "styled-components";
 import api from "shared/api";
 import { H } from "highlight.run";
 import { Context } from "shared/Context";
-import { PorterUrl } from "shared/routing";
+import { PorterUrl, pushQueryParams, pushFiltered } from "shared/routing";
 import { ClusterType, ProjectType } from "shared/types";
 
 import ConfirmOverlay from "components/ConfirmOverlay";
@@ -75,9 +75,9 @@ class Home extends Component<PropsType, StateType> {
           creating = res.data[i].status === "creating";
         }
         if (creating) {
-          this.props.history.push("dashboard?tab=provisioner");
+          pushFiltered(this.props, "/dashboard?tab=provisioner", ["project_id"]);
         } else if (this.state.ghRedirect) {
-          this.props.history.push("integrations");
+          pushFiltered(this.props, "/integrations", ["project_id"]);
           this.setState({ ghRedirect: false });
         }
       });
@@ -97,15 +97,30 @@ class Home extends Component<PropsType, StateType> {
       });
   };
 
+  setCurrentProject = (project: ProjectType) => {
+    this.context.setCurrentProject(project, () => {
+      if (project) {
+        pushQueryParams(this.props, { project_id: project.id.toString() });
+      }
+    });
+  }
+
   getProjects = (id?: number) => {
     let { user, setProjects } = this.context;
     let { currentProject } = this.props;
+    let queryString = window.location.search;
+    let urlParams = new URLSearchParams(queryString);
+    let projectId = urlParams.get("project_id");
+    if (!projectId && currentProject?.id) {
+      pushQueryParams(this.props, { project_id: currentProject.id.toString() });
+    }
+
     api
       .getProjects("<token>", {}, { id: user.userId })
       .then((res) => {
         if (res.data) {
           if (res.data.length === 0) {
-            this.props.history.push("new-project");
+            pushFiltered(this.props, "/new-project", ["project_id"]);
           } else if (res.data.length > 0 && !currentProject) {
             setProjects(res.data);
 
@@ -116,7 +131,7 @@ class Home extends Component<PropsType, StateType> {
                   foundProject = project;
                 }
               });
-              this.context.setCurrentProject(foundProject);
+              this.setCurrentProject(foundProject);
             }
             if (!foundProject) {
               res.data.forEach((project: ProjectType, i: number) => {
@@ -127,7 +142,7 @@ class Home extends Component<PropsType, StateType> {
                   foundProject = project;
                 }
               });
-              this.context.setCurrentProject(
+              this.setCurrentProject(
                 foundProject ? foundProject : res.data[0]
               );
               this.initializeView();
@@ -175,7 +190,7 @@ class Home extends Component<PropsType, StateType> {
         project_id: this.props.currentProject.id,
       }
     );
-    return this.props.history.push("dashboard?tab=provisioner");
+    return pushFiltered(this.props, "/dashboard?tab=provisioner", ["project_id"]);
   };
 
   checkDO = () => {
@@ -205,7 +220,7 @@ class Home extends Component<PropsType, StateType> {
             });
           } else if (infras[0] === "docr") {
             this.provisionDOCR(tgtIntegration.id, tier, () => {
-              this.props.history.push("dashboard?tab=provisioner");
+              pushFiltered(this.props, "/dashboard?tab=provisioner", ["project_id"]);
             });
           } else {
             this.provisionDOKS(tgtIntegration.id, region, clusterName);
@@ -238,9 +253,8 @@ class Home extends Component<PropsType, StateType> {
     }
 
     let provision = urlParams.get("provision");
-    let defaultProjectId = null;
+    let defaultProjectId = parseInt(urlParams.get("project_id"));
     if (provision === "do") {
-      defaultProjectId = parseInt(urlParams.get("project_id"));
       this.setState({ handleDO: true });
       this.checkDO();
     }
@@ -307,7 +321,7 @@ class Home extends Component<PropsType, StateType> {
     } else if (!currentCluster) {
       return <Loading />;
     }
-
+    console.log("current route", this.props.currentRoute);
     return (
       <DashboardWrapper>
         <ClusterDashboard
@@ -378,10 +392,10 @@ class Home extends Component<PropsType, StateType> {
         if (res.data) {
           setProjects(res.data);
           if (res.data.length > 0) {
-            this.context.setCurrentProject(res.data[0]);
+            this.setCurrentProject(res.data[0]);
           } else {
-            this.context.setCurrentProject(null);
-            this.props.history.push("new-project");
+            this.setCurrentProject(null);
+            pushFiltered(this.props, "/new-project", ["project_id"]);
           }
           this.context.setCurrentModal(null, null);
         }
@@ -460,7 +474,7 @@ class Home extends Component<PropsType, StateType> {
       })
       .catch(console.log);
     setCurrentModal(null, null);
-    this.props.history.push("dashboard?tab=overview");
+    pushFiltered(this.props, "/dashboard", []);
   };
 
   render() {

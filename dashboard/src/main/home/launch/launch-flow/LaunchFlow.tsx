@@ -6,6 +6,7 @@ import { RouteComponentProps, withRouter } from "react-router";
 
 import api from "shared/api";
 import { Context } from "shared/Context";
+import { pushFiltered } from "shared/routing";
 
 import hardcodedNames from "../hardcodedNameDict";
 import SourcePage from "./SourcePage";
@@ -163,7 +164,7 @@ class LaunchFlow extends Component<PropsType, StateType> {
           let dst =
             this.props.currentTemplate.name === "job" ? "jobs" : "applications";
           setTimeout(() => {
-            this.props.history.push(dst);
+            pushFiltered(this.props, dst, ["project_id"]);
           }, 500);
           window.analytics.track("Deployed Add-on", {
             name: this.props.currentTemplate.name,
@@ -318,7 +319,7 @@ class LaunchFlow extends Component<PropsType, StateType> {
               this.props.currentTemplate.name === "job"
                 ? "jobs"
                 : "applications";
-            this.props.history.push(dst);
+            pushFiltered(this.props, dst, ["project_id"]);
           }, 1000);
         });
       })

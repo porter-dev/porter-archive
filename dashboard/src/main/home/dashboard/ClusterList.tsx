@@ -5,8 +5,8 @@ import { Context } from "shared/Context";
 import api from "shared/api";
 import { ClusterType } from "shared/types";
 import Helper from "components/values-form/Helper";
+import { pushFiltered } from "shared/routing";
 
-import Loading from "components/Loading";
 import { RouteComponentProps, withRouter } from "react-router";
 
 type PropsType = RouteComponentProps & {
@@ -63,7 +63,7 @@ class Templates extends Component<PropsType, StateType> {
         <TemplateBlock
           onClick={() => {
             this.context.setCurrentCluster(cluster);
-            this.props.history.push("applications");
+            pushFiltered(this.props, "applications", ["project_id"]);
           }}
           key={i}
         >

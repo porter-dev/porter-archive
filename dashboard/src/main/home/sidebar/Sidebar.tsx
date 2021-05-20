@@ -15,6 +15,7 @@ import ClusterSection from "./ClusterSection";
 import ProjectSectionContainer from "./ProjectSectionContainer";
 import loading from "assets/loading.gif";
 import { RouteComponentProps, withRouter } from "react-router";
+import { pushFiltered } from "shared/routing";
 
 type PropsType = RouteComponentProps & {
   forceSidebar: boolean;
@@ -105,27 +106,27 @@ class Sidebar extends Component<PropsType, StateType> {
         <>
           <NavButton
             selected={currentView === "applications"}
-            onClick={() => {
-              this.props.history.push("/applications");
-            }}
+            onClick={() => 
+              pushFiltered(this.props, "/applications", ["project_id"])
+            }
           >
             <Img src={monoweb} />
             Applications
           </NavButton>
           <NavButton
             selected={currentView === "jobs"}
-            onClick={() => {
-              this.props.history.push("/jobs");
-            }}
+            onClick={() => 
+              pushFiltered(this.props, "/jobs", ["project_id"])
+            }
           >
             <Img src={monojob} />
             Jobs
           </NavButton>
           <NavButton
             selected={currentView === "env-groups"}
-            onClick={() => {
-              this.props.history.push("/env-groups");
-            }}
+            onClick={() => 
+              pushFiltered(this.props, "/env-groups", ["project_id"])
+            }
           >
             <Img src={sliders} />
             Env Groups
@@ -136,7 +137,7 @@ class Sidebar extends Component<PropsType, StateType> {
   };
 
   renderProjectContents = () => {
-    let { currentView } = this.props;
+    let { currentView, history, location } = this.props;
     let { currentProject, setCurrentModal } = this.context;
     if (currentProject) {
       return (
@@ -145,7 +146,7 @@ class Sidebar extends Component<PropsType, StateType> {
           <NavButton
             onClick={() =>
               currentView !== "provisioner" &&
-              this.props.history.push("/dashboard?tab=overview")
+                pushFiltered(this.props, "/dashboard", ["project_id"])
             }
             selected={
               currentView === "dashboard" || currentView === "provisioner"
@@ -155,7 +156,9 @@ class Sidebar extends Component<PropsType, StateType> {
             Dashboard
           </NavButton>
           <NavButton
-            onClick={() => this.props.history.push("/launch")}
+            onClick={() => 
+              pushFiltered(this.props, "/launch", ["project_id"])
+            }
             selected={currentView === "launch"}
           >
             <Img src={rocket} />
@@ -163,12 +166,9 @@ class Sidebar extends Component<PropsType, StateType> {
           </NavButton>
           <NavButton
             selected={currentView === "integrations"}
-            onClick={() => {
-              this.props.history.push("/integrations");
-            }}
-            // onClick={() => {
-            //   setCurrentModal("IntegrationsInstructionsModal", {});
-            // }}
+            onClick={() => 
+              pushFiltered(this.props, "/integrations", ["project_id"])
+            }
           >
             <Img src={integrations} />
             Integrations
@@ -177,7 +177,9 @@ class Sidebar extends Component<PropsType, StateType> {
             return obj.user_id === this.context.user.userId;
           })[0].kind === "admin" && (
             <NavButton
-              onClick={() => this.props.history.push("/project-settings")}
+              onClick={() => 
+                pushFiltered(this.props, "/project-settings", ["project_id"])
+              }
               selected={this.props.currentView === "project-settings"}
             >
               <Img enlarge={true} src={settings} />

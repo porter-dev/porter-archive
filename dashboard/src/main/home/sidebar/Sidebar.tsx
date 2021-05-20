@@ -15,7 +15,7 @@ import ClusterSection from "./ClusterSection";
 import ProjectSectionContainer from "./ProjectSectionContainer";
 import loading from "assets/loading.gif";
 import { RouteComponentProps, withRouter } from "react-router";
-import { pushFiltered } from "shared/routing";
+import { pushFiltered, pushQueryParams } from "shared/routing";
 
 type PropsType = RouteComponentProps & {
   forceSidebar: boolean;
@@ -107,7 +107,7 @@ class Sidebar extends Component<PropsType, StateType> {
           <NavButton
             selected={currentView === "applications"}
             onClick={() =>
-              pushFiltered(this.props, "/applications", ["project_id"])
+              pushFiltered(this.props, "/applications", ["project_id"], { cluster: currentCluster.name })
             }
           >
             <Img src={monoweb} />
@@ -115,7 +115,7 @@ class Sidebar extends Component<PropsType, StateType> {
           </NavButton>
           <NavButton
             selected={currentView === "jobs"}
-            onClick={() => pushFiltered(this.props, "/jobs", ["project_id"])}
+            onClick={() => pushFiltered(this.props, "/jobs", ["project_id"], { cluster: currentCluster.name })}
           >
             <Img src={monojob} />
             Jobs
@@ -123,7 +123,7 @@ class Sidebar extends Component<PropsType, StateType> {
           <NavButton
             selected={currentView === "env-groups"}
             onClick={() =>
-              pushFiltered(this.props, "/env-groups", ["project_id"])
+              pushFiltered(this.props, "/env-groups", ["project_id"], { cluster: currentCluster.name })
             }
           >
             <Img src={sliders} />

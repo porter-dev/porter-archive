@@ -75,9 +75,9 @@ class Home extends Component<PropsType, StateType> {
           creating = res.data[i].status === "creating";
         }
         if (creating) {
-          pushFiltered(this.props, "/dashboard?tab=provisioner", [
+          pushFiltered(this.props, "/dashboard", [
             "project_id",
-          ]);
+          ], { tab: "provisioner" });
         } else if (this.state.ghRedirect) {
           pushFiltered(this.props, "/integrations", ["project_id"]);
           this.setState({ ghRedirect: false });
@@ -182,9 +182,9 @@ class Home extends Component<PropsType, StateType> {
         project_id: this.props.currentProject.id,
       }
     );
-    return pushFiltered(this.props, "/dashboard?tab=provisioner", [
+    return pushFiltered(this.props, "/dashboard", [
       "project_id",
-    ]);
+    ], { tab: "provisioner" });
   };
 
   checkDO = () => {
@@ -214,9 +214,9 @@ class Home extends Component<PropsType, StateType> {
             });
           } else if (infras[0] === "docr") {
             this.provisionDOCR(tgtIntegration.id, tier, () => {
-              pushFiltered(this.props, "/dashboard?tab=provisioner", [
+              pushFiltered(this.props, "/dashboard", [
                 "project_id",
-              ]);
+              ], { tab: "provisioner" });
             });
           } else {
             this.provisionDOKS(tgtIntegration.id, region, clusterName);

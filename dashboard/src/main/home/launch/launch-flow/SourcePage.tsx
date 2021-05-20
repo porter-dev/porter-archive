@@ -101,7 +101,7 @@ class SourcePage extends Component<PropsType, StateType> {
             template.
             <Highlight
               onClick={() =>
-                pushFiltered(this.props, "integrations/registry", [
+                pushFiltered(this.props, "/integrations/registry", [
                   "project_id",
                 ])
               }

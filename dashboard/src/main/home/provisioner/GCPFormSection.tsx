@@ -223,7 +223,7 @@ class GCPFormSection extends Component<PropsType, StateType> {
         { project_id: currentProject.id }
       )
       .then((res) =>
-        pushFiltered(this.props, "dashboard?tab=provisioner", ["project_id"])
+        pushFiltered(this.props, "/dashboard", ["project_id"], { tab: "provisioner" })
       )
       .catch(this.catchError);
   };
@@ -252,9 +252,9 @@ class GCPFormSection extends Component<PropsType, StateType> {
           } else if (selectedInfras[0].value === "gcr") {
             // Case: project exists, only provision GCR
             this.provisionGCR(id).then(() =>
-              pushFiltered(this.props, "dashboard?tab=provisioner", [
+              pushFiltered(this.props, "/dashboard", [
                 "project_id",
-              ])
+              ], { tab: "provisioner" })
             );
           } else {
             // Case: project exists, only provision GKE

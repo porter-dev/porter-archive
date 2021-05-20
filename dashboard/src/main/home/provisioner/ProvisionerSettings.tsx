@@ -41,7 +41,7 @@ class NewProject extends Component<PropsType, StateType> {
     setCurrentError(
       "Provisioning failed. Check your credentials and try again."
     );
-    pushFiltered(this.props, "dashboard?tab=overview", ["project_id"]);
+    pushFiltered(this.props, "/dashboard", ["project_id"], { tab: "overview" });
   };
 
   renderSelectedProvider = (override?: string) => {

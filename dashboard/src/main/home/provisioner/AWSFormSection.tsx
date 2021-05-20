@@ -262,7 +262,7 @@ class AWSFormSection extends Component<PropsType, StateType> {
         )
       )
       .then(() =>
-        pushFiltered(this.props, "dashboard?tab=provisioner", ["project_id"])
+        pushFiltered(this.props, "/dashboard", ["project_id"], { tab: "provisioner" })
       )
       .catch(this.catchError);
   };
@@ -280,7 +280,7 @@ class AWSFormSection extends Component<PropsType, StateType> {
       } else if (selectedInfras[0].value === "ecr") {
         // Case: project exists, only provision ECR
         this.provisionECR().then(() =>
-          pushFiltered(this.props, "dashboard?tab=provisioner", ["project_id"])
+          pushFiltered(this.props, "/dashboard", ["project_id"], { tab: "provisioner" })
         );
       } else {
         // Case: project exists, only provision EKS
@@ -294,9 +294,9 @@ class AWSFormSection extends Component<PropsType, StateType> {
         // Case: project DNE, only provision ECR
         this.createProject(() =>
           this.provisionECR().then(() =>
-            pushFiltered(this.props, "dashboard?tab=provisioner", [
+            pushFiltered(this.props, "/dashboard", [
               "project_id",
-            ])
+            ], { tab: "provisioner" })
           )
         );
       } else {

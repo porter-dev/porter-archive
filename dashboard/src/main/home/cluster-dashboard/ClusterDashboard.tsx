@@ -5,7 +5,7 @@ import monoweb from "assets/monoweb.png";
 
 import { Context } from "shared/Context";
 import { ChartType, ClusterType, ProjectType } from "shared/types";
-import { PorterUrl, pushFiltered } from "shared/routing";
+import { PorterUrl, pushFiltered, pushQueryParams } from "shared/routing";
 
 import ChartList from "./chart/ChartList";
 import EnvGroupDashboard from "./env-groups/EnvGroupDashboard";
@@ -42,14 +42,16 @@ class ClusterDashboard extends Component<PropsType, StateType> {
   };
 
   componentDidMount() {
+    let { currentCluster, currentProject } = this.context;
+    pushQueryParams(this.props, { cluster: currentCluster.name });
     api
       .getPrometheusIsInstalled(
         "<token>",
         {
-          cluster_id: this.context.currentCluster.id,
+          cluster_id: currentCluster.id,
         },
         {
-          id: this.context.currentProject.id,
+          id: currentProject.id,
         }
       )
       .then((res) => {

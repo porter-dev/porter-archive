@@ -38,7 +38,7 @@ class ClusterSection extends Component<PropsType, StateType> {
   };
 
   updateClusters = () => {
-    let { user, currentProject, setCurrentCluster } = this.context;
+    let { user, currentProject, setCurrentCluster, currentCluster } = this.context;
 
     // TODO: query with selected filter once implemented
     api
@@ -55,11 +55,25 @@ class ClusterSection extends Component<PropsType, StateType> {
           let clusters = res.data;
           clusters.sort((a: any, b: any) => a.id - b.id);
           if (clusters.length > 0) {
+
+            // Set cluster from URL if specified
+            let queryString = window.location.search;
+            let urlParams = new URLSearchParams(queryString);
+            let clusterName = urlParams.get("cluster");
+            let defaultCluster = null;
+            if (clusterName) {
+              clusters.forEach((cluster: ClusterType) => {
+                if (cluster.name === clusterName) {
+                  defaultCluster = cluster;
+                }
+              })
+            }
+
             this.setState({ clusters });
             let saved = JSON.parse(
               localStorage.getItem(currentProject.id + "-cluster")
             );
-            if (saved && saved !== "null") {
+            if (!defaultCluster && saved && saved !== "null") {
               // Ensures currentCluster isn't prematurely set (causes issues downstream)
               let loaded = false;
               for (let i = 0; i < clusters.length; i++) {
@@ -77,7 +91,7 @@ class ClusterSection extends Component<PropsType, StateType> {
                 setCurrentCluster(clusters[0]);
               }
             } else {
-              setCurrentCluster(clusters[0]);
+              setCurrentCluster(defaultCluster || clusters[0]);
             }
           } else if (
             this.props.currentView !== "provisioner" &&

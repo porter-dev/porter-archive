@@ -2,6 +2,7 @@ import React, { ChangeEvent, Component } from "react";
 import styled from "styled-components";
 import logo from "assets/logo.png";
 import github from "assets/github-icon.png";
+import GoogleIcon from "assets/GoogleIcon";
 
 import api from "shared/api";
 import { emailRegex } from "shared/regex";
@@ -17,6 +18,7 @@ type StateType = {
   emailError: boolean;
   credentialError: boolean;
   hasGithub: boolean;
+  hasGoogle: boolean;
 };
 
 export default class Login extends Component<PropsType, StateType> {
@@ -26,6 +28,7 @@ export default class Login extends Component<PropsType, StateType> {
     emailError: false,
     credentialError: false,
     hasGithub: true,
+    hasGoogle: false,
   };
 
   handleKeyDown = (e: any) => {
@@ -43,7 +46,10 @@ export default class Login extends Component<PropsType, StateType> {
     api
       .getCapabilities("", {}, {})
       .then((res) => {
-        this.setState({ hasGithub: res.data?.github });
+        this.setState({ 
+          hasGithub: false,
+          hasGoogle: res.data?.google,
+        });
       })
       .catch((err) => console.log(err));
   }
@@ -115,21 +121,33 @@ export default class Login extends Component<PropsType, StateType> {
     window.location.href = redirectUrl;
   };
 
+  googleRedirect = () => {
+    let redirectUrl = `/api/oauth/login/google`;
+    window.location.href = redirectUrl;
+  };
+
   renderGithubSection = () => {
     if (this.state.hasGithub) {
       return (
-        <>
           <OAuthButton onClick={this.githubRedirect}>
             <IconWrapper>
               <Icon src={github} />
               Log in with GitHub
             </IconWrapper>
           </OAuthButton>
-          <OrWrapper>
-            <Line />
-            <Or>or</Or>
-          </OrWrapper>
-        </>
+      );
+    }
+  };
+
+  renderGoogleSection = () => {
+    if (this.state.hasGoogle) {
+      return (
+          <OAuthButton onClick={this.googleRedirect}>
+            <IconWrapper>
+              <StyledGoogleIcon />
+              Log in with Google
+            </IconWrapper>
+          </OAuthButton>
       );
     }
   };
@@ -139,7 +157,7 @@ export default class Login extends Component<PropsType, StateType> {
 
     return (
       <StyledLogin>
-        <LoginPanel>
+        <LoginPanel numOAuth={+this.state.hasGithub + +this.state.hasGoogle}>
           <OverflowWrapper>
             <GradientBg />
           </OverflowWrapper>
@@ -147,6 +165,14 @@ export default class Login extends Component<PropsType, StateType> {
             <Logo src={logo} />
             <Prompt>Log in to Porter</Prompt>
             {this.renderGithubSection()}
+            {this.renderGoogleSection()}
+            {(this.state.hasGithub || this.state.hasGoogle) ? 
+              <OrWrapper>
+                <Line />
+                <Or>or</Or>
+              </OrWrapper> :
+              null
+            }
             <DarkMatter />
             <InputWrapper>
               <Input
@@ -249,8 +275,13 @@ const IconWrapper = styled.div`
 
 const Icon = styled.img`
   height: 18px;
-  margin-right: 20px;
+  margin: 14px;
 `;
+
+const StyledGoogleIcon = styled(GoogleIcon)`
+  width: 38px;
+  height: 38px;
+`
 
 const OAuthButton = styled.div`
   width: 200px;
@@ -264,6 +295,8 @@ const OAuthButton = styled.div`
   user-select: none;
   font-weight: 500;
   font-size: 13px;
+  margin: 10px 0; 
+  overflow: hidden;
   :hover {
     background: #ffffffdd;
   }
@@ -392,11 +425,11 @@ const FormWrapper = styled.div`
 
 const GradientBg = styled.div`
   background: linear-gradient(#8ce1ff, #a59eff, #fba8ff);
-  width: 180%;
-  height: 180%;
+  width: 200%;
+  height: 200%;
   position: absolute;
-  top: -40%;
-  left: -40%;
+  top: -50%;
+  left: -50%;
   animation: flip 6s infinite linear;
   @keyframes flip {
     from {
@@ -410,7 +443,8 @@ const GradientBg = styled.div`
 
 const LoginPanel = styled.div`
   width: 330px;
-  height: 470px;
+  height: ${(props: { numOAuth: number }) =>
+    430 + props.numOAuth * 50}px;
   background: white;
   margin-top: -20px;
   border-radius: 10px;

@@ -14,6 +14,7 @@ type StateType = {
   logs: Anser.AnserJsonEntry[][];
   ws: any;
   scroll: boolean;
+  currentTab: string;
 };
 
 export default class Logs extends Component<PropsType, StateType> {
@@ -21,6 +22,7 @@ export default class Logs extends Component<PropsType, StateType> {
     logs: [] as Anser.AnserJsonEntry[][],
     ws: null as any,
     scroll: true,
+    currentTab: 'Application'
   };
 
   ws = null as any;
@@ -92,41 +94,6 @@ export default class Logs extends Component<PropsType, StateType> {
     });
   };
 
-  getPodStatus = (status: any) => {
-    if (
-      status?.phase === "Pending" &&
-      status?.containerStatuses !== undefined
-    ) {
-      return status.containerStatuses[0].state.waiting.reason;
-    } else if (status?.phase === "Pending") {
-      return "pending";
-    }
-
-    if (status?.phase === "Succeeded") {
-      return "succeeded";
-    }
-
-    if (status?.phase === "Failed") {
-      return "failed";
-    }
-
-    if (status?.phase === "Running") {
-      let collatedStatus = "running";
-
-      status?.containerStatuses?.forEach((s: any) => {
-        if (s.state?.waiting) {
-          collatedStatus =
-            s.state?.waiting.reason === "CrashLoopBackOff"
-              ? "failed"
-              : "waiting";
-        } else if (s.state?.terminated) {
-          collatedStatus = "failed";
-        }
-      });
-      return collatedStatus;
-    }
-  };
-
   setupWebsocket = () => {
     let { currentCluster, currentProject } = this.context;
     let { selectedPod } = this.props;
@@ -157,54 +124,75 @@ export default class Logs extends Component<PropsType, StateType> {
   };
 
   refreshLogs = () => {
-    if (this.ws) {
+    let { selectedPod } = this.props;
+    if (this.ws && this.state.currentTab == "Application") {
       this.ws.close();
       this.ws = null;
       this.setState({ logs: [] });
       this.setupWebsocket();
     }
+    this.retrieveEvents(selectedPod)
   };
+
+  componentDidUpdate = (prevProps: any, prevState: any) => {
+    if (prevState.currentTab !== this.state.currentTab) {
+      let { selectedPod } = this.props;
+      
+      this.setState({logs: []});
+
+      if (this.state.currentTab == "Application") {
+        this.setupWebsocket();
+        this.scrollToBottom(false);
+        return;
+      }
+
+      this.retrieveEvents(selectedPod)
+    }
+  }
+
+  retrieveEvents = (selectedPod: any) => {
+    api
+    .getPodEvents(
+      "<token>",
+      {
+        cluster_id: this.context.currentCluster.id,
+      },
+      {
+        name: selectedPod?.metadata?.name,
+        namespace: selectedPod?.metadata?.namespace,
+        id: this.context.currentProject.id,
+      }
+    )
+    .then((res) => {
+      let logs = [] as Anser.AnserJsonEntry[][];
+      // TODO: column view
+      // logs.push(Anser.ansiToJson("\u001b[33;5;196mEvent Type\u001b[0m \t || \t \u001b[43m\u001b[34m\tReason\t\u001b[0m \t ||\tMessage"))
+
+      res.data.items.forEach((evt: any) => {
+        let ansiEvtType = evt.type == "Warning" ? "\u001b[31m" : "\u001b[32m";
+        let ansiLog = Anser.ansiToJson(
+          `${ansiEvtType}${evt.type}\u001b[0m \t \u001b[43m\u001b[34m\t${evt.reason} \u001b[0m \t ${evt.message}`
+        );
+        logs.push(ansiLog);
+      });
+      this.setState({ logs: logs });
+      console.log(res);
+    })
+    .catch((err) => {
+      console.log(err);
+    });
+  }
 
   componentDidMount() {
     let { selectedPod } = this.props;
-    let status = this.getPodStatus(selectedPod?.status);
-    console.log("STATUS", selectedPod?.status, status);
-    if (status == "running" || status == "succeeded") {
+
+    if (this.state.currentTab == "Application") {
       this.setupWebsocket();
       this.scrollToBottom(false);
       return;
     }
 
-    api
-      .getPodEvents(
-        "<token>",
-        {
-          cluster_id: this.context.currentCluster.id,
-        },
-        {
-          name: selectedPod?.metadata?.name,
-          namespace: selectedPod?.metadata?.namespace,
-          id: this.context.currentProject.id,
-        }
-      )
-      .then((res) => {
-        let logs = [] as Anser.AnserJsonEntry[][];
-        // TODO: column view
-        // logs.push(Anser.ansiToJson("\u001b[33;5;196mEvent Type\u001b[0m \t || \t \u001b[43m\u001b[34m\tReason\t\u001b[0m \t ||\tMessage"))
-
-        res.data.items.forEach((evt: any) => {
-          let ansiEvtType = evt.type == "Warning" ? "\u001b[31m" : "\u001b[32m";
-          let ansiLog = Anser.ansiToJson(
-            `${ansiEvtType}${evt.type}\u001b[0m \t \u001b[43m\u001b[34m\t${evt.reason} \u001b[0m \t ${evt.message}`
-          );
-          logs.push(ansiLog);
-        });
-        this.setState({ logs: logs });
-        console.log(res);
-      })
-      .catch((err) => {
-        console.log(err);
-      });
+    this.retrieveEvents(selectedPod)
   }
 
   componentWillUnmount() {
@@ -218,6 +206,18 @@ export default class Logs extends Component<PropsType, StateType> {
       return (
         <LogStreamAlt>
           <Wrapper ref={this.parentRef}>{this.renderLogs()}</Wrapper>
+          <LogTabs>
+          <Tab 
+            onClick={() => {this.setState({currentTab: 'Application'})}} 
+            clicked={(this.state.currentTab == 'Application')}>
+            Application
+          </Tab>
+          <Tab
+            onClick={() => {this.setState({currentTab: 'System'})}} 
+            clicked={(this.state.currentTab == 'System')}>
+            System
+          </Tab>
+        </LogTabs>
         </LogStreamAlt>
       );
     }
@@ -225,6 +225,18 @@ export default class Logs extends Component<PropsType, StateType> {
     return (
       <LogStream>
         <Wrapper ref={this.parentRef}>{this.renderLogs()}</Wrapper>
+        <LogTabs>
+          <Tab 
+            onClick={() => {this.setState({currentTab: 'Application'})}} 
+            clicked={(this.state.currentTab == 'Application')}>
+            Application
+          </Tab>
+          <Tab
+            onClick={() => {this.setState({currentTab: 'System'})}} 
+            clicked={(this.state.currentTab == 'System')}>
+            System
+          </Tab>
+        </LogTabs>
         <Options>
           <Scroll
             onClick={() => {
@@ -291,6 +303,21 @@ const Scroll = styled.div`
   }
 `;
 
+const Tab = styled.div`
+  background: ${(props: {clicked: boolean}) => props.clicked ? '#503559' : '#7c548a'};
+  padding: 0px 10px;
+  margin: 0px 7px 0px 0px;
+  align-items: center;
+  display: flex;
+  cursor: pointer;
+  height: 100%;
+  border-radius: 8px 8px 0px 0px;
+
+  :hover {
+    background: #503559;
+  }
+`
+
 const Refresh = styled.div`
   display: flex;
   align-items: center;
@@ -308,6 +335,16 @@ const Refresh = styled.div`
   :hover {
     background: #2468d6;
   }
+`;
+
+const LogTabs = styled.div`
+  width: 100%;
+  height: 25px;
+  background: #202227;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-end;
 `;
 
 const Options = styled.div`

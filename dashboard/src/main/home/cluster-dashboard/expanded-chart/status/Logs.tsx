@@ -22,7 +22,7 @@ export default class Logs extends Component<PropsType, StateType> {
     logs: [] as Anser.AnserJsonEntry[][],
     ws: null as any,
     scroll: true,
-    currentTab: 'Application'
+    currentTab: "Application",
   };
 
   ws = null as any;
@@ -131,14 +131,14 @@ export default class Logs extends Component<PropsType, StateType> {
       this.setState({ logs: [] });
       this.setupWebsocket();
     }
-    this.retrieveEvents(selectedPod)
+    this.retrieveEvents(selectedPod);
   };
 
   componentDidUpdate = (prevProps: any, prevState: any) => {
     if (prevState.currentTab !== this.state.currentTab) {
       let { selectedPod } = this.props;
-      
-      this.setState({logs: []});
+
+      this.setState({ logs: [] });
 
       if (this.state.currentTab == "Application") {
         this.setupWebsocket();
@@ -146,42 +146,42 @@ export default class Logs extends Component<PropsType, StateType> {
         return;
       }
 
-      this.retrieveEvents(selectedPod)
+      this.retrieveEvents(selectedPod);
     }
-  }
+  };
 
   retrieveEvents = (selectedPod: any) => {
     api
-    .getPodEvents(
-      "<token>",
-      {
-        cluster_id: this.context.currentCluster.id,
-      },
-      {
-        name: selectedPod?.metadata?.name,
-        namespace: selectedPod?.metadata?.namespace,
-        id: this.context.currentProject.id,
-      }
-    )
-    .then((res) => {
-      let logs = [] as Anser.AnserJsonEntry[][];
-      // TODO: column view
-      // logs.push(Anser.ansiToJson("\u001b[33;5;196mEvent Type\u001b[0m \t || \t \u001b[43m\u001b[34m\tReason\t\u001b[0m \t ||\tMessage"))
+      .getPodEvents(
+        "<token>",
+        {
+          cluster_id: this.context.currentCluster.id,
+        },
+        {
+          name: selectedPod?.metadata?.name,
+          namespace: selectedPod?.metadata?.namespace,
+          id: this.context.currentProject.id,
+        }
+      )
+      .then((res) => {
+        let logs = [] as Anser.AnserJsonEntry[][];
+        // TODO: column view
+        // logs.push(Anser.ansiToJson("\u001b[33;5;196mEvent Type\u001b[0m \t || \t \u001b[43m\u001b[34m\tReason\t\u001b[0m \t ||\tMessage"))
 
-      res.data.items.forEach((evt: any) => {
-        let ansiEvtType = evt.type == "Warning" ? "\u001b[31m" : "\u001b[32m";
-        let ansiLog = Anser.ansiToJson(
-          `${ansiEvtType}${evt.type}\u001b[0m \t \u001b[43m\u001b[34m\t${evt.reason} \u001b[0m \t ${evt.message}`
-        );
-        logs.push(ansiLog);
+        res.data.items.forEach((evt: any) => {
+          let ansiEvtType = evt.type == "Warning" ? "\u001b[31m" : "\u001b[32m";
+          let ansiLog = Anser.ansiToJson(
+            `${ansiEvtType}${evt.type}\u001b[0m \t \u001b[43m\u001b[34m\t${evt.reason} \u001b[0m \t ${evt.message}`
+          );
+          logs.push(ansiLog);
+        });
+        this.setState({ logs: logs });
+        console.log(res);
+      })
+      .catch((err) => {
+        console.log(err);
       });
-      this.setState({ logs: logs });
-      console.log(res);
-    })
-    .catch((err) => {
-      console.log(err);
-    });
-  }
+  };
 
   componentDidMount() {
     let { selectedPod } = this.props;
@@ -192,7 +192,7 @@ export default class Logs extends Component<PropsType, StateType> {
       return;
     }
 
-    this.retrieveEvents(selectedPod)
+    this.retrieveEvents(selectedPod);
   }
 
   componentWillUnmount() {
@@ -207,17 +207,23 @@ export default class Logs extends Component<PropsType, StateType> {
         <LogStreamAlt>
           <Wrapper ref={this.parentRef}>{this.renderLogs()}</Wrapper>
           <LogTabs>
-          <Tab 
-            onClick={() => {this.setState({currentTab: 'Application'})}} 
-            clicked={(this.state.currentTab == 'Application')}>
-            Application
-          </Tab>
-          <Tab
-            onClick={() => {this.setState({currentTab: 'System'})}} 
-            clicked={(this.state.currentTab == 'System')}>
-            System
-          </Tab>
-        </LogTabs>
+            <Tab
+              onClick={() => {
+                this.setState({ currentTab: "Application" });
+              }}
+              clicked={this.state.currentTab == "Application"}
+            >
+              Application
+            </Tab>
+            <Tab
+              onClick={() => {
+                this.setState({ currentTab: "System" });
+              }}
+              clicked={this.state.currentTab == "System"}
+            >
+              System
+            </Tab>
+          </LogTabs>
         </LogStreamAlt>
       );
     }
@@ -226,14 +232,20 @@ export default class Logs extends Component<PropsType, StateType> {
       <LogStream>
         <Wrapper ref={this.parentRef}>{this.renderLogs()}</Wrapper>
         <LogTabs>
-          <Tab 
-            onClick={() => {this.setState({currentTab: 'Application'})}} 
-            clicked={(this.state.currentTab == 'Application')}>
+          <Tab
+            onClick={() => {
+              this.setState({ currentTab: "Application" });
+            }}
+            clicked={this.state.currentTab == "Application"}
+          >
             Application
           </Tab>
           <Tab
-            onClick={() => {this.setState({currentTab: 'System'})}} 
-            clicked={(this.state.currentTab == 'System')}>
+            onClick={() => {
+              this.setState({ currentTab: "System" });
+            }}
+            clicked={this.state.currentTab == "System"}
+          >
             System
           </Tab>
         </LogTabs>
@@ -304,7 +316,8 @@ const Scroll = styled.div`
 `;
 
 const Tab = styled.div`
-  background: ${(props: {clicked: boolean}) => props.clicked ? '#503559' : '#7c548a'};
+  background: ${(props: { clicked: boolean }) =>
+    props.clicked ? "#503559" : "#7c548a"};
   padding: 0px 10px;
   margin: 0px 7px 0px 0px;
   align-items: center;
@@ -316,7 +329,7 @@ const Tab = styled.div`
   :hover {
     background: #503559;
   }
-`
+`;
 
 const Refresh = styled.div`
   display: flex;

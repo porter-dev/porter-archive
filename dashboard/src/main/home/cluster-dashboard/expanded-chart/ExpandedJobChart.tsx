@@ -181,8 +181,8 @@ export default class ExpandedJobChart extends Component<PropsType, StateType> {
   };
 
   setupCronJobWebsocket = (chart: ChartType) => {
-    let releaseName = chart.name
-    let releaseNamespace = chart.namespace
+    let releaseName = chart.name;
+    let releaseNamespace = chart.namespace;
 
     let { currentCluster, currentProject } = this.context;
     let protocol = process.env.NODE_ENV == "production" ? "wss" : "ws";
@@ -204,9 +204,11 @@ export default class ExpandedJobChart extends Component<PropsType, StateType> {
         this.state.imageIsPlaceholder
       ) {
         // filter job belonging to chart
-        let relNameAnn = event.Object?.metadata?.annotations["meta.helm.sh/release-name"]
-        let relNamespaceAnn = event.Object?.metadata?.annotations["meta.helm.sh/release-namespace"]
-        
+        let relNameAnn =
+          event.Object?.metadata?.annotations["meta.helm.sh/release-name"];
+        let relNamespaceAnn =
+          event.Object?.metadata?.annotations["meta.helm.sh/release-namespace"];
+
         if (
           relNameAnn &&
           relNamespaceAnn &&
@@ -217,7 +219,7 @@ export default class ExpandedJobChart extends Component<PropsType, StateType> {
           let newestImage =
             event.Object?.spec?.jobTemplate?.spec?.template?.spec?.containers[0]
               ?.image;
-          console.log("newest image", newestImage)
+          console.log("newest image", newestImage);
           if (
             newestImage &&
             newestImage !== "porterdev/hello-porter-job" &&
@@ -366,7 +368,7 @@ export default class ExpandedJobChart extends Component<PropsType, StateType> {
       newestImage !== "public.ecr.aws/o1j4x7p4/hello-porter-job" &&
       newestImage !== "public.ecr.aws/o1j4x7p4/hello-porter-job:latest"
     ) {
-      console.log("set to false on sorting")
+      console.log("set to false on sorting");
       this.setState({ jobs, newestImage, imageIsPlaceholder: false });
     } else {
       this.setState({ jobs });

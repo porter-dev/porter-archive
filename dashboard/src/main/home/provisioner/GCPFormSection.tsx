@@ -163,20 +163,10 @@ class GCPFormSection extends Component<PropsType, StateType> {
     this.props.handleError();
   };
 
-  setCurrentProject = (project: ProjectType, callback?: any) => {
-    this.context.setCurrentProject(project, () => {
-      if (project) {
-        pushQueryParams(this.props, { project_id: project.id.toString() });
-      }
-      callback && callback();
-    });
-  }
-
   // Step 1: Create a project
   createProject = (callback?: any) => {
-    console.log("Creating project");
-    let { projectName, handleError } = this.props;
-    let { user, setProjects } = this.context;
+    let { projectName } = this.props;
+    let { user, setProjects, setCurrentProject } = this.context;
 
     api
       .createProject("<token>", { name: projectName }, {})
@@ -195,7 +185,7 @@ class GCPFormSection extends Component<PropsType, StateType> {
           )
           .then((res) => {
             setProjects(res.data);
-            this.setCurrentProject(proj);
+            setCurrentProject(proj);
             callback && callback();
           })
           .catch(this.catchError);
@@ -262,7 +252,9 @@ class GCPFormSection extends Component<PropsType, StateType> {
           } else if (selectedInfras[0].value === "gcr") {
             // Case: project exists, only provision GCR
             this.provisionGCR(id).then(() =>
-              pushFiltered(this.props, "dashboard?tab=provisioner", ["project_id"])
+              pushFiltered(this.props, "dashboard?tab=provisioner", [
+                "project_id",
+              ])
             );
           } else {
             // Case: project exists, only provision GKE

@@ -23,10 +23,7 @@ export const PorterUrls = [
   "jobs",
 ];
 
-export const pushQueryParams = (
-  props: any,
-  params: any,
-) => {
+export const pushQueryParams = (props: any, params: any) => {
   let { location, history } = props;
   const urlParams = new URLSearchParams(location.search);
   Object.keys(params)?.forEach((key: string) => {
@@ -41,7 +38,7 @@ export const pushQueryParams = (
 export const pushFiltered = (
   props: any, // Props for retrieving history and location
   pathname: string, // Path to redirect to
-  keys: string[], // Query params to preserve during redirect
+  keys: string[] // Query params to preserve during redirect
 ) => {
   let { location, history } = props;
   let urlParams = new URLSearchParams(location.search);
@@ -54,4 +51,4 @@ export const pushFiltered = (
     pathname,
     search: newUrlParams.toString(),
   });
-}
+};

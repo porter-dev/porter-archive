@@ -130,7 +130,9 @@ class IntegrationCategories extends Component<PropsType, StateType> {
             <Flex>
               <i
                 className="material-icons"
-                onClick={() => pushFiltered(this.props, "/integrations", ["project_id"])}
+                onClick={() =>
+                  pushFiltered(this.props, "/integrations", ["project_id"])
+                }
               >
                 keyboard_backspace
               </i>
@@ -142,7 +144,11 @@ class IntegrationCategories extends Component<PropsType, StateType> {
                 this.context.setCurrentModal("IntegrationsModal", {
                   category: currentCategory,
                   setCurrentIntegration: (x: string) =>
-                    pushFiltered(this.props, `/integrations/${this.props.category}/create/${x}`, ["project_id"]),
+                    pushFiltered(
+                      this.props,
+                      `/integrations/${this.props.category}/create/${x}`,
+                      ["project_id"]
+                    ),
                 })
               }
             >
@@ -171,7 +177,9 @@ class IntegrationCategories extends Component<PropsType, StateType> {
             <Flex>
               <i
                 className="material-icons"
-                onClick={() => pushFiltered(this.props, "/integrations", ["project_id"])}
+                onClick={() =>
+                  pushFiltered(this.props, "/integrations", ["project_id"])
+                }
               >
                 keyboard_backspace
               </i>

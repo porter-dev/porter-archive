@@ -102,7 +102,9 @@ class ClusterDashboard extends Component<PropsType, StateType> {
     return (
       <>
         <ControlRow>
-          <Button onClick={() => pushFiltered(this.props, "/launch", ["project_id"])}>
+          <Button
+            onClick={() => pushFiltered(this.props, "/launch", ["project_id"])}
+          >
             <i className="material-icons">add</i> Launch Template
           </Button>
           <SortFilterWrapper>

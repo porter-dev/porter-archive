@@ -106,7 +106,7 @@ class Sidebar extends Component<PropsType, StateType> {
         <>
           <NavButton
             selected={currentView === "applications"}
-            onClick={() => 
+            onClick={() =>
               pushFiltered(this.props, "/applications", ["project_id"])
             }
           >
@@ -115,16 +115,14 @@ class Sidebar extends Component<PropsType, StateType> {
           </NavButton>
           <NavButton
             selected={currentView === "jobs"}
-            onClick={() => 
-              pushFiltered(this.props, "/jobs", ["project_id"])
-            }
+            onClick={() => pushFiltered(this.props, "/jobs", ["project_id"])}
           >
             <Img src={monojob} />
             Jobs
           </NavButton>
           <NavButton
             selected={currentView === "env-groups"}
-            onClick={() => 
+            onClick={() =>
               pushFiltered(this.props, "/env-groups", ["project_id"])
             }
           >
@@ -146,7 +144,7 @@ class Sidebar extends Component<PropsType, StateType> {
           <NavButton
             onClick={() =>
               currentView !== "provisioner" &&
-                pushFiltered(this.props, "/dashboard", ["project_id"])
+              pushFiltered(this.props, "/dashboard", ["project_id"])
             }
             selected={
               currentView === "dashboard" || currentView === "provisioner"
@@ -156,9 +154,7 @@ class Sidebar extends Component<PropsType, StateType> {
             Dashboard
           </NavButton>
           <NavButton
-            onClick={() => 
-              pushFiltered(this.props, "/launch", ["project_id"])
-            }
+            onClick={() => pushFiltered(this.props, "/launch", ["project_id"])}
             selected={currentView === "launch"}
           >
             <Img src={rocket} />
@@ -166,7 +162,7 @@ class Sidebar extends Component<PropsType, StateType> {
           </NavButton>
           <NavButton
             selected={currentView === "integrations"}
-            onClick={() => 
+            onClick={() =>
               pushFiltered(this.props, "/integrations", ["project_id"])
             }
           >
@@ -177,7 +173,7 @@ class Sidebar extends Component<PropsType, StateType> {
             return obj.user_id === this.context.user.userId;
           })[0].kind === "admin" && (
             <NavButton
-              onClick={() => 
+              onClick={() =>
                 pushFiltered(this.props, "/project-settings", ["project_id"])
               }
               selected={this.props.currentView === "project-settings"}

@@ -41,7 +41,9 @@ class Integrations extends Component<PropsType, StateType> {
                     <i
                       className="material-icons"
                       onClick={() =>
-                        pushFiltered(this.props, `/integrations/${category}`, ["project_id"])
+                        pushFiltered(this.props, `/integrations/${category}`, [
+                          "project_id",
+                        ])
                       }
                     >
                       keyboard_backspace
@@ -53,7 +55,9 @@ class Integrations extends Component<PropsType, StateType> {
                 <CreateIntegrationForm
                   integrationName={integration}
                   closeForm={() => {
-                    pushFiltered(this.props, `/integrations/${category}`, ["project_id"]);
+                    pushFiltered(this.props, `/integrations/${category}`, [
+                      "project_id",
+                    ]);
                   }}
                 />
                 <Br />
@@ -66,7 +70,7 @@ class Integrations extends Component<PropsType, StateType> {
           render={(rp) => {
             const currentCategory = rp.match.params.category;
             if (!IntegrationCategoryStrings.includes(currentCategory)) {
-              pushFiltered(this.props, "/integrations", ["project_id"])
+              pushFiltered(this.props, "/integrations", ["project_id"]);
             }
             return (
               <IntegrationCategories
@@ -84,7 +88,9 @@ class Integrations extends Component<PropsType, StateType> {
             <IntegrationList
               currentCategory={""}
               integrations={["kubernetes", "registry", "repo"]}
-              setCurrent={(x) => pushFiltered(this.props, `/integrations/${x}`, ["project_id"])}
+              setCurrent={(x) =>
+                pushFiltered(this.props, `/integrations/${x}`, ["project_id"])
+              }
               isCategory={true}
               updateIntegrationList={() => {}}
             />

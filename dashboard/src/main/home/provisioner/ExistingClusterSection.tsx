@@ -5,6 +5,7 @@ import api from "shared/api";
 import { ProjectType } from "shared/types";
 import { isAlphanumeric } from "shared/common";
 import { Context } from "shared/Context";
+import { pushQueryParams, pushFiltered } from "shared/routing";
 
 import SaveButton from "components/SaveButton";
 import { RouteComponentProps, withRouter } from "react-router";
@@ -22,9 +23,18 @@ class ExistingClusterSection extends Component<PropsType, StateType> {
     buttonStatus: "",
   };
 
+  setCurrentProject = (project: ProjectType, callback?: any) => {
+    this.context.setCurrentProject(project, () => {
+      if (project) {
+        pushQueryParams(this.props, { project_id: project.id.toString() });
+      }
+      callback && callback();
+    });
+  }
+
   onCreateProject = () => {
     let { projectName } = this.props;
-    let { user, setProjects, setCurrentProject } = this.context;
+    let { user, setProjects } = this.context;
 
     this.setState({ buttonStatus: "loading" });
     api
@@ -45,8 +55,8 @@ class ExistingClusterSection extends Component<PropsType, StateType> {
             let proj = res.data.find((el: ProjectType) => {
               return el.name === projectName;
             });
-            setCurrentProject(proj);
-            this.props.history.push("dashboard?tab=overview");
+            this.setCurrentProject(proj);
+            pushFiltered(this.props, "dashboard?tab=overview", ["project_id"]);
           }
         }
       })

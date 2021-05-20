@@ -85,7 +85,6 @@ class ClusterSection extends Component<PropsType, StateType> {
           ) {
             this.setState({ clusters: [] });
             setCurrentCluster(null);
-            // this.props.history.push("dashboard?tab=overview");
           }
         }
       })

@@ -4,8 +4,8 @@ import monojob from "assets/monojob.png";
 import monoweb from "assets/monoweb.png";
 
 import { Context } from "shared/Context";
-import { ChartType, ClusterType } from "shared/types";
-import { PorterUrl } from "shared/routing";
+import { ChartType, ClusterType, ProjectType } from "shared/types";
+import { PorterUrl, pushFiltered } from "shared/routing";
 
 import ChartList from "./chart/ChartList";
 import EnvGroupDashboard from "./env-groups/EnvGroupDashboard";
@@ -102,7 +102,7 @@ class ClusterDashboard extends Component<PropsType, StateType> {
     return (
       <>
         <ControlRow>
-          <Button onClick={() => this.props.history.push("launch")}>
+          <Button onClick={() => pushFiltered(this.props, "/launch", ["project_id"])}>
             <i className="material-icons">add</i> Launch Template
           </Button>
           <SortFilterWrapper>

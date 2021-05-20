@@ -5,7 +5,8 @@ import close from "assets/close.png";
 import { isAlphanumeric } from "shared/common";
 import api from "shared/api";
 import { Context } from "shared/Context";
-import { InfraType } from "shared/types";
+import { InfraType, ProjectType } from "shared/types";
+import { pushQueryParams, pushFiltered } from "shared/routing";
 
 import UploadArea from "components/values-form/UploadArea";
 import SelectRow from "components/values-form/SelectRow";
@@ -162,11 +163,20 @@ class GCPFormSection extends Component<PropsType, StateType> {
     this.props.handleError();
   };
 
+  setCurrentProject = (project: ProjectType, callback?: any) => {
+    this.context.setCurrentProject(project, () => {
+      if (project) {
+        pushQueryParams(this.props, { project_id: project.id.toString() });
+      }
+      callback && callback();
+    });
+  }
+
   // Step 1: Create a project
   createProject = (callback?: any) => {
     console.log("Creating project");
     let { projectName, handleError } = this.props;
-    let { user, setProjects, setCurrentProject } = this.context;
+    let { user, setProjects } = this.context;
 
     api
       .createProject("<token>", { name: projectName }, {})
@@ -185,7 +195,7 @@ class GCPFormSection extends Component<PropsType, StateType> {
           )
           .then((res) => {
             setProjects(res.data);
-            setCurrentProject(proj);
+            this.setCurrentProject(proj);
             callback && callback();
           })
           .catch(this.catchError);
@@ -222,9 +232,9 @@ class GCPFormSection extends Component<PropsType, StateType> {
         },
         { project_id: currentProject.id }
       )
-      .then((res) => {
-        this.props.history.push("dashboard?tab=provisioner");
-      })
+      .then((res) =>
+        pushFiltered(this.props, "dashboard?tab=provisioner", ["project_id"])
+      )
       .catch(this.catchError);
   };
 
@@ -252,7 +262,7 @@ class GCPFormSection extends Component<PropsType, StateType> {
           } else if (selectedInfras[0].value === "gcr") {
             // Case: project exists, only provision GCR
             this.provisionGCR(id).then(() =>
-              this.props.history.push("dashboard?tab=provisioner")
+              pushFiltered(this.props, "dashboard?tab=provisioner", ["project_id"])
             );
           } else {
             // Case: project exists, only provision GKE

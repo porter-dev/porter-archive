@@ -5,7 +5,8 @@ import close from "assets/close.png";
 import { isAlphanumeric } from "shared/common";
 import api from "shared/api";
 import { Context } from "shared/Context";
-import { InfraType } from "shared/types";
+import { InfraType, ProjectType } from "shared/types";
+import { pushQueryParams } from "shared/routing";
 
 import InputRow from "components/values-form/InputRow";
 import CheckboxRow from "components/values-form/CheckboxRow";
@@ -131,11 +132,20 @@ export default class DOFormSection extends Component<PropsType, StateType> {
     return;
   };
 
+  setCurrentProject = (project: ProjectType, callback?: any) => {
+    this.context.setCurrentProject(project, () => {
+      if (project) {
+        pushQueryParams(this.props, { project_id: project.id.toString() });
+      }
+      callback && callback();
+    });
+  }
+
   // Step 1: Create a project
   createProject = (callback?: any) => {
     console.log("Creating project");
     let { projectName } = this.props;
-    let { user, setProjects, setCurrentProject } = this.context;
+    let { user, setProjects } = this.context;
 
     api
       .createProject("<token>", { name: projectName }, {})
@@ -152,7 +162,7 @@ export default class DOFormSection extends Component<PropsType, StateType> {
           }
         );
         setProjects(res_1.data);
-        setCurrentProject(proj);
+        this.setCurrentProject(proj);
         callback && callback(proj.id);
       })
       .catch(this.catchError);

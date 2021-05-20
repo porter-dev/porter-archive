@@ -210,7 +210,7 @@ export default class Main extends Component<PropsType, StateType> {
     return (
       <StyledMain>
         <GlobalStyle />
-        <BrowserRouter>{this.renderMain()}</BrowserRouter>
+        {this.renderMain()}
         <CurrentError currentError={this.context.currentError} />
       </StyledMain>
     );

@@ -132,20 +132,10 @@ export default class DOFormSection extends Component<PropsType, StateType> {
     return;
   };
 
-  setCurrentProject = (project: ProjectType, callback?: any) => {
-    this.context.setCurrentProject(project, () => {
-      if (project) {
-        pushQueryParams(this.props, { project_id: project.id.toString() });
-      }
-      callback && callback();
-    });
-  }
-
   // Step 1: Create a project
   createProject = (callback?: any) => {
-    console.log("Creating project");
     let { projectName } = this.props;
-    let { user, setProjects } = this.context;
+    let { user, setProjects, setCurrentProject } = this.context;
 
     api
       .createProject("<token>", { name: projectName }, {})
@@ -162,7 +152,7 @@ export default class DOFormSection extends Component<PropsType, StateType> {
           }
         );
         setProjects(res_1.data);
-        this.setCurrentProject(proj);
+        setCurrentProject(proj);
         callback && callback(proj.id);
       })
       .catch(this.catchError);

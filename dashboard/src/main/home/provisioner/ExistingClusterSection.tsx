@@ -23,18 +23,9 @@ class ExistingClusterSection extends Component<PropsType, StateType> {
     buttonStatus: "",
   };
 
-  setCurrentProject = (project: ProjectType, callback?: any) => {
-    this.context.setCurrentProject(project, () => {
-      if (project) {
-        pushQueryParams(this.props, { project_id: project.id.toString() });
-      }
-      callback && callback();
-    });
-  }
-
   onCreateProject = () => {
     let { projectName } = this.props;
-    let { user, setProjects } = this.context;
+    let { user, setProjects, setCurrentProject } = this.context;
 
     this.setState({ buttonStatus: "loading" });
     api
@@ -55,7 +46,7 @@ class ExistingClusterSection extends Component<PropsType, StateType> {
             let proj = res.data.find((el: ProjectType) => {
               return el.name === projectName;
             });
-            this.setCurrentProject(proj);
+            setCurrentProject(proj);
             pushFiltered(this.props, "dashboard?tab=overview", ["project_id"]);
           }
         }

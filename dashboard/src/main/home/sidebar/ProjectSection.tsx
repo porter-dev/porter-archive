@@ -44,15 +44,8 @@ class ProjectSection extends Component<PropsType, StateType> {
     }
   };
 
-  setCurrentProject = (project: ProjectType) => {
-    this.context.setCurrentProject(project, () => {
-      if (project) {
-        pushQueryParams(this.props, { project_id: project.id.toString() });
-      }
-    });
-  }
-
   renderOptionList = () => {
+    let { setCurrentProject } = this.context;
     return this.props.projects.map((project: ProjectType, i: number) => {
       return (
         <Option
@@ -60,7 +53,7 @@ class ProjectSection extends Component<PropsType, StateType> {
           selected={project.name === this.props.currentProject.name}
           onClick={() => {
             this.setState({ expanded: false });
-            this.setCurrentProject(project);
+            setCurrentProject(project);
             pushFiltered(this.props, "/dashboard", ["project_id"]);
           }}
         >
@@ -121,7 +114,9 @@ class ProjectSection extends Component<PropsType, StateType> {
       );
     }
     return (
-      <InitializeButton onClick={() => pushFiltered(this.props, "new-project", ["project_id"])}>
+      <InitializeButton
+        onClick={() => pushFiltered(this.props, "new-project", ["project_id"])}
+      >
         <Plus>+</Plus> Create a Project
       </InitializeButton>
     );

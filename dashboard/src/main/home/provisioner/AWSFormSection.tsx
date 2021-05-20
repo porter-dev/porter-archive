@@ -170,21 +170,11 @@ class AWSFormSection extends Component<PropsType, StateType> {
     this.props.handleError();
   };
 
-  setCurrentProject = (project: ProjectType, callback?: any) => {
-    this.context.setCurrentProject(project, () => {
-      if (project) {
-        pushQueryParams(this.props, { project_id: project.id.toString() });
-      }
-      callback && callback();
-    });
-  }
-
   // Step 1: Create a project
   // TODO: promisify this function
   createProject = (callback?: any) => {
-    console.log("Creating project");
-    let { projectName, handleError } = this.props;
-    let { user, setProjects, currentProject } = this.context;
+    let { projectName } = this.props;
+    let { user, setProjects, setCurrentProject } = this.context;
 
     api
       .createProject("<token>", { name: projectName }, {})
@@ -202,7 +192,7 @@ class AWSFormSection extends Component<PropsType, StateType> {
           )
           .then((res) => {
             setProjects(res.data);
-            this.setCurrentProject(proj, () => {
+            setCurrentProject(proj, () => {
               callback && callback();
             });
           })
@@ -271,7 +261,7 @@ class AWSFormSection extends Component<PropsType, StateType> {
           { id: currentProject.id }
         )
       )
-      .then(() => 
+      .then(() =>
         pushFiltered(this.props, "dashboard?tab=provisioner", ["project_id"])
       )
       .catch(this.catchError);
@@ -303,8 +293,10 @@ class AWSFormSection extends Component<PropsType, StateType> {
       } else if (selectedInfras[0].value === "ecr") {
         // Case: project DNE, only provision ECR
         this.createProject(() =>
-          this.provisionECR().then(() => 
-            pushFiltered(this.props, "dashboard?tab=provisioner", ["project_id"])
+          this.provisionECR().then(() =>
+            pushFiltered(this.props, "dashboard?tab=provisioner", [
+              "project_id",
+            ])
           )
         );
       } else {

@@ -215,11 +215,9 @@ export default class ExpandedJobChart extends Component<PropsType, StateType> {
           releaseName == relNameAnn &&
           releaseNamespace == relNamespaceAnn
         ) {
-          console.log("belonged to chart");
           let newestImage =
             event.Object?.spec?.jobTemplate?.spec?.template?.spec?.containers[0]
               ?.image;
-          console.log("newest image", newestImage);
           if (
             newestImage &&
             newestImage !== "porterdev/hello-porter-job" &&
@@ -227,7 +225,6 @@ export default class ExpandedJobChart extends Component<PropsType, StateType> {
             newestImage !== "public.ecr.aws/o1j4x7p4/hello-porter-job" &&
             newestImage !== "public.ecr.aws/o1j4x7p4/hello-porter-job:latest"
           ) {
-            console.log("setting image placeholder to false");
             this.setState({ newestImage, imageIsPlaceholder: false });
           }
         }
@@ -368,7 +365,6 @@ export default class ExpandedJobChart extends Component<PropsType, StateType> {
       newestImage !== "public.ecr.aws/o1j4x7p4/hello-porter-job" &&
       newestImage !== "public.ecr.aws/o1j4x7p4/hello-porter-job:latest"
     ) {
-      console.log("set to false on sorting");
       this.setState({ jobs, newestImage, imageIsPlaceholder: false });
     } else {
       this.setState({ jobs });

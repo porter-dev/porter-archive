@@ -52,7 +52,7 @@ class UpdateClusterModal extends Component<PropsType, StateType> {
           this.props.setRefreshClusters(true);
           this.setState({ status: "successful", showDeleteOverlay: false });
           this.context.setCurrentModal(null, null);
-          pushFiltered(this.props, "dashboard?tab=overview", ["project_id"]);
+          pushFiltered(this.props, "/dashboard", ["project_id"], { tab: "overview" });
           return;
         }
 

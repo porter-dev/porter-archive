@@ -96,7 +96,7 @@ class Dashboard extends Component<PropsType, StateType> {
   }
 
   onShowProjectSettings = () => {
-    pushFiltered(this.props, "project-settings", ["project_id"]);
+    pushFiltered(this.props, "/project-settings", ["project_id"]);
   };
 
   currentTab = () => new URLSearchParams(this.props.location.search).get("tab");

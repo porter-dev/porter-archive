@@ -162,9 +162,9 @@ class LaunchFlow extends Component<PropsType, StateType> {
         this.setState({ saveValuesStatus: "successful" }, () => {
           // redirect to dashboard
           let dst =
-            this.props.currentTemplate.name === "job" ? "jobs" : "applications";
+            this.props.currentTemplate.name === "job" ? "/jobs" : "/applications";
           setTimeout(() => {
-            pushFiltered(this.props, dst, ["project_id"]);
+            pushFiltered(this.props, dst, ["project_id"], { cluster: currentCluster.name });
           }, 500);
           window.analytics.track("Deployed Add-on", {
             name: this.props.currentTemplate.name,
@@ -308,7 +308,6 @@ class LaunchFlow extends Component<PropsType, StateType> {
       .then((res: any) => {
         if (sourceType === "repo") {
           let env = rawValues["container.env.normal"];
-          console.log(env);
           this.createGHAction(name, selectedNamespace, env);
         }
         // this.props.setCurrentView('cluster-dashboard');
@@ -317,9 +316,9 @@ class LaunchFlow extends Component<PropsType, StateType> {
           setTimeout(() => {
             let dst =
               this.props.currentTemplate.name === "job"
-                ? "jobs"
-                : "applications";
-            pushFiltered(this.props, dst, ["project_id"]);
+                ? "/jobs"
+                : "/applications";
+            pushFiltered(this.props, dst, ["project_id"], { cluster: currentCluster.name });
           }, 1000);
         });
       })

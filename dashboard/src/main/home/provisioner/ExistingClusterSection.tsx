@@ -46,10 +46,11 @@ class ExistingClusterSection extends Component<PropsType, StateType> {
             let proj = res.data.find((el: ProjectType) => {
               return el.name === projectName;
             });
-            setCurrentProject(proj);
-            pushFiltered(this.props, "/dashboard", ["project_id"], {
-              tab: "overview",
-            });
+            setCurrentProject(proj, () =>
+              pushFiltered(this.props, "/dashboard", ["project_id"], {
+                tab: "overview",
+              })
+            );
           }
         }
       })

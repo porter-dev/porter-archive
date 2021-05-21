@@ -152,8 +152,9 @@ export default class DOFormSection extends Component<PropsType, StateType> {
           }
         );
         setProjects(res_1.data);
-        setCurrentProject(proj);
-        callback && callback(proj.id);
+        setCurrentProject(proj, () =>
+          callback && callback(proj.id)
+        );
       })
       .catch(this.catchError);
   };

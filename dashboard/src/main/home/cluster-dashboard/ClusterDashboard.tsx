@@ -4,7 +4,7 @@ import monojob from "assets/monojob.png";
 import monoweb from "assets/monoweb.png";
 
 import { Context } from "shared/Context";
-import { ChartType, ClusterType, ProjectType } from "shared/types";
+import { ChartType, ClusterType } from "shared/types";
 import { PorterUrl, pushFiltered, pushQueryParams } from "shared/routing";
 
 import ChartList from "./chart/ChartList";
@@ -43,7 +43,23 @@ class ClusterDashboard extends Component<PropsType, StateType> {
 
   componentDidMount() {
     let { currentCluster, currentProject } = this.context;
-    pushQueryParams(this.props, { cluster: currentCluster.name });
+    // Set namespace from URL if specified
+    let queryString = window.location.search;
+    let urlParams = new URLSearchParams(queryString);
+    let defaultNamespace = urlParams.get("namespace");
+    if (defaultNamespace) {
+      if (defaultNamespace === "ALL") {
+        defaultNamespace = "";
+      }
+      this.setState({ namespace: defaultNamespace });
+    } else {
+      defaultNamespace = this.state.namespace;
+    }
+
+    pushQueryParams(this.props, { 
+      cluster: currentCluster.name,
+      namespace: defaultNamespace || "ALL",
+    });
     api
       .getPrometheusIsInstalled(
         "<token>",
@@ -71,7 +87,9 @@ class ClusterDashboard extends Component<PropsType, StateType> {
           ? localStorage.getItem("SortType")
           : "Newest",
         currentChart: null,
-      });
+      }, () =>
+        pushQueryParams(this.props, { namespace: this.state.namespace || "ALL" })
+      );
     }
 
     if (prevProps.currentView !== this.props.currentView) {
@@ -79,7 +97,9 @@ class ClusterDashboard extends Component<PropsType, StateType> {
         namespace: "default",
         sortType: "Newest",
         currentChart: null,
-      });
+      }, () =>
+        pushQueryParams(this.props, { namespace: this.state.namespace || "ALL" })
+      );
     }
   }
 
@@ -115,7 +135,11 @@ class ClusterDashboard extends Component<PropsType, StateType> {
               sortType={this.state.sortType}
             />
             <NamespaceSelector
-              setNamespace={(namespace) => this.setState({ namespace })}
+              setNamespace={(namespace) => 
+                this.setState({ namespace }, () =>
+                  pushQueryParams(this.props, { namespace: this.state.namespace || "ALL" })
+                )
+              }
               namespace={this.state.namespace}
             />
           </SortFilterWrapper>

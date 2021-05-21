@@ -47,7 +47,9 @@ class ExistingClusterSection extends Component<PropsType, StateType> {
               return el.name === projectName;
             });
             setCurrentProject(proj);
-            pushFiltered(this.props, "/dashboard", ["project_id"], { tab: "overview" });
+            pushFiltered(this.props, "/dashboard", ["project_id"], {
+              tab: "overview",
+            });
           }
         }
       })

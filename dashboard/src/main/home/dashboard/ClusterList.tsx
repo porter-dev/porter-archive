@@ -63,7 +63,9 @@ class Templates extends Component<PropsType, StateType> {
         <TemplateBlock
           onClick={() => {
             this.context.setCurrentCluster(cluster);
-            pushFiltered(this.props, "/applications", ["project_id"], { cluster: cluster.name });
+            pushFiltered(this.props, "/applications", ["project_id"], {
+              cluster: cluster.name,
+            });
           }}
           key={i}
         >

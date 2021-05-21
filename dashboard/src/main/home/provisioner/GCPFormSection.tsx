@@ -223,7 +223,9 @@ class GCPFormSection extends Component<PropsType, StateType> {
         { project_id: currentProject.id }
       )
       .then((res) =>
-        pushFiltered(this.props, "/dashboard", ["project_id"], { tab: "provisioner" })
+        pushFiltered(this.props, "/dashboard", ["project_id"], {
+          tab: "provisioner",
+        })
       )
       .catch(this.catchError);
   };
@@ -243,7 +245,6 @@ class GCPFormSection extends Component<PropsType, StateType> {
       )
       .then((res) => {
         if (res?.data) {
-          console.log("gcp provisioned with response: ", res.data);
           let { id } = res.data;
 
           if (selectedInfras.length === 2) {
@@ -252,9 +253,9 @@ class GCPFormSection extends Component<PropsType, StateType> {
           } else if (selectedInfras[0].value === "gcr") {
             // Case: project exists, only provision GCR
             this.provisionGCR(id).then(() =>
-              pushFiltered(this.props, "/dashboard", [
-                "project_id",
-              ], { tab: "provisioner" })
+              pushFiltered(this.props, "/dashboard", ["project_id"], {
+                tab: "provisioner",
+              })
             );
           } else {
             // Case: project exists, only provision GKE
@@ -321,7 +322,6 @@ class GCPFormSection extends Component<PropsType, StateType> {
   render() {
     let { setSelectedProvisioner } = this.props;
     let { gcpRegion, gcpProjectId, gcpKeyData, selectedInfras } = this.state;
-    console.log("gcpkeydata", gcpKeyData);
     return (
       <StyledGCPFormSection>
         <FormSection>

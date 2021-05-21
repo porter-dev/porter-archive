@@ -61,7 +61,6 @@ export default class EnvGroupList extends Component<PropsType, StateType> {
             sortedGroups.sort((a: any, b: any) =>
               a.metadata.name > b.metadata.name ? 1 : -1
             );
-            console.log(sortedGroups);
             break;
           default:
             sortedGroups.sort((a: any, b: any) =>

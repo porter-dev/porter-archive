@@ -54,7 +54,6 @@ class Dashboard extends Component<PropsType, StateType> {
   };
 
   componentDidMount() {
-    console.log("href is", window.location.href);
     this.refreshInfras();
     document.addEventListener("keydown", this.handleKeyDown);
     document.addEventListener("keyup", this.handleKeyUp);

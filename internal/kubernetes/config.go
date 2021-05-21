@@ -66,6 +66,16 @@ func GetAgentOutOfClusterConfig(conf *OutOfClusterConfig) (*Agent, error) {
 	return &Agent{conf, clientset}, nil
 }
 
+// IsInCluster returns true if the process is running in a Kubernetes cluster,
+// false otherwise
+func IsInCluster() bool {
+	_, err := rest.InClusterConfig()
+
+	// If the error is not nil, it is either rest.ErrNotInCluster or the in-cluster
+	// config cannot be read. In either case, in-cluster operations are not supported.
+	return err == nil
+}
+
 // GetAgentInClusterConfig uses the service account that kubernetes
 // gives to pods to connect
 func GetAgentInClusterConfig() (*Agent, error) {

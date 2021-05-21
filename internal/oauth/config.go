@@ -44,6 +44,19 @@ func NewDigitalOceanClient(cfg *Config) *oauth2.Config {
 	}
 }
 
+func NewGoogleClient(cfg *Config) *oauth2.Config {
+	return &oauth2.Config{
+		ClientID:     cfg.ClientID,
+		ClientSecret: cfg.ClientSecret,
+		Endpoint: oauth2.Endpoint{
+			AuthURL:  "https://accounts.google.com/o/oauth2/v2/auth",
+			TokenURL: "https://oauth2.googleapis.com/token",
+		},
+		RedirectURL: cfg.BaseURL + "/api/oauth/google/callback",
+		Scopes:      cfg.Scopes,
+	}
+}
+
 func CreateRandomState() string {
 	b := make([]byte, 16)
 	rand.Read(b)

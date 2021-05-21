@@ -74,17 +74,9 @@ func (app *App) HandleCreateDNSRecord(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// launch provisioning destruction pod
-	inClusterAgent, err := kubernetes.GetAgentInClusterConfig()
-
-	if err != nil {
-		app.handleErrorDataRead(err, w)
-		return
-	}
-
 	_record := domain.DNSRecord(*record)
 
-	err = _record.CreateDomain(inClusterAgent.Clientset)
+	err = _record.CreateDomain(app.InClusterAgent.Clientset)
 
 	if err != nil {
 		app.handleErrorInternal(err, w)

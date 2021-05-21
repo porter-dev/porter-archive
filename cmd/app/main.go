@@ -102,14 +102,18 @@ func main() {
 		go prov.GlobalStreamListener(redis, *repo, errorChan)
 	}
 
-	a, _ := api.New(&api.AppConfig{
+	a, err := api.New(&api.AppConfig{
 		Logger:     logger,
 		Repository: repo,
 		ServerConf: appConf.Server,
 		RedisConf:  &appConf.Redis,
-		CapConf: 	appConf.Capabilities,
+		CapConf:    appConf.Capabilities,
 		DBConf:     appConf.Db,
 	})
+
+	if err != nil {
+		logger.Fatal().Err(err).Msg("")
+	}
 
 	appRouter := router.New(a)
 

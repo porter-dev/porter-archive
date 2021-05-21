@@ -192,9 +192,9 @@ class ProvisionerLogs extends Component<PropsType, StateType> {
 
     if (!selectedInfra) return;
 
-    let protocol = process.env.NODE_ENV == "production" ? "wss" : "ws";
+    let protocol = window.location.protocol == "https:" ? "wss" : "ws";
     this.ws = new WebSocket(
-      `${protocol}://${process.env.API_SERVER}/api/projects/${currentProject.id}/provision/${selectedInfra.kind}/${selectedInfra.id}/logs`
+      `${protocol}://${window.location.host}/api/projects/${currentProject.id}/provision/${selectedInfra.kind}/${selectedInfra.id}/logs`
     );
 
     this.setupWebsocket();

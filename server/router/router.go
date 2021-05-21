@@ -214,6 +214,18 @@ func New(a *api.App) *chi.Mux {
 
 			r.Method(
 				"GET",
+				"/oauth/login/google",
+				requestlog.NewHandler(a.HandleGoogleStartUser, l),
+			)
+
+			r.Method(
+				"GET",
+				"/oauth/google/callback",
+				requestlog.NewHandler(a.HandleGoogleOAuthCallback, l),
+			)
+
+			r.Method(
+				"GET",
 				"/oauth/projects/{project_id}/digitalocean",
 				auth.DoesUserHaveProjectAccess(
 					requestlog.NewHandler(a.HandleDOOAuthStartProject, l),

@@ -47,7 +47,7 @@ export default class Login extends Component<PropsType, StateType> {
       .getCapabilities("", {}, {})
       .then((res) => {
         this.setState({ 
-          hasGithub: false,
+          hasGithub: res.data?.github,
           hasGoogle: res.data?.google,
         });
       })

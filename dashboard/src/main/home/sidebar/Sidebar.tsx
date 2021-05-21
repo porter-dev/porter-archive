@@ -107,7 +107,9 @@ class Sidebar extends Component<PropsType, StateType> {
           <NavButton
             selected={currentView === "applications"}
             onClick={() =>
-              pushFiltered(this.props, "/applications", ["project_id"], { cluster: currentCluster.name })
+              pushFiltered(this.props, "/applications", ["project_id"], {
+                cluster: currentCluster.name,
+              })
             }
           >
             <Img src={monoweb} />
@@ -115,7 +117,11 @@ class Sidebar extends Component<PropsType, StateType> {
           </NavButton>
           <NavButton
             selected={currentView === "jobs"}
-            onClick={() => pushFiltered(this.props, "/jobs", ["project_id"], { cluster: currentCluster.name })}
+            onClick={() =>
+              pushFiltered(this.props, "/jobs", ["project_id"], {
+                cluster: currentCluster.name,
+              })
+            }
           >
             <Img src={monojob} />
             Jobs
@@ -123,7 +129,9 @@ class Sidebar extends Component<PropsType, StateType> {
           <NavButton
             selected={currentView === "env-groups"}
             onClick={() =>
-              pushFiltered(this.props, "/env-groups", ["project_id"], { cluster: currentCluster.name })
+              pushFiltered(this.props, "/env-groups", ["project_id"], {
+                cluster: currentCluster.name,
+              })
             }
           >
             <Img src={sliders} />

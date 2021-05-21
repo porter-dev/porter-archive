@@ -38,7 +38,12 @@ class ClusterSection extends Component<PropsType, StateType> {
   };
 
   updateClusters = () => {
-    let { user, currentProject, setCurrentCluster, currentCluster } = this.context;
+    let {
+      user,
+      currentProject,
+      setCurrentCluster,
+      currentCluster,
+    } = this.context;
 
     // TODO: query with selected filter once implemented
     api
@@ -55,7 +60,6 @@ class ClusterSection extends Component<PropsType, StateType> {
           let clusters = res.data;
           clusters.sort((a: any, b: any) => a.id - b.id);
           if (clusters.length > 0) {
-
             // Set cluster from URL if specified
             let queryString = window.location.search;
             let urlParams = new URLSearchParams(queryString);
@@ -66,7 +70,7 @@ class ClusterSection extends Component<PropsType, StateType> {
                 if (cluster.name === clusterName) {
                   defaultCluster = cluster;
                 }
-              })
+              });
             }
 
             this.setState({ clusters });

@@ -168,7 +168,6 @@ export default class Logs extends Component<PropsType, StateType> {
   componentDidMount() {
     let { selectedPod } = this.props;
     let status = this.getPodStatus(selectedPod?.status);
-    console.log("STATUS", selectedPod?.status, status);
     if (status == "running" || status == "succeeded") {
       this.setupWebsocket();
       this.scrollToBottom(false);

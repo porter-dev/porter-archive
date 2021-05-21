@@ -23,6 +23,7 @@ import Navbar from "./navbar/Navbar";
 import NewProject from "./new-project/NewProject";
 import ProjectSettings from "./project-settings/ProjectSettings";
 import Sidebar from "./sidebar/Sidebar";
+import PageNotFound from "./PageNotFound";
 
 type PropsType = RouteComponentProps & {
   logOut: () => void;
@@ -75,9 +76,9 @@ class Home extends Component<PropsType, StateType> {
           creating = res.data[i].status === "creating";
         }
         if (creating) {
-          pushFiltered(this.props, "/dashboard", [
-            "project_id",
-          ], { tab: "provisioner" });
+          pushFiltered(this.props, "/dashboard", ["project_id"], {
+            tab: "provisioner",
+          });
         } else if (this.state.ghRedirect) {
           pushFiltered(this.props, "/integrations", ["project_id"]);
           this.setState({ ghRedirect: false });
@@ -182,9 +183,9 @@ class Home extends Component<PropsType, StateType> {
         project_id: this.props.currentProject.id,
       }
     );
-    return pushFiltered(this.props, "/dashboard", [
-      "project_id",
-    ], { tab: "provisioner" });
+    return pushFiltered(this.props, "/dashboard", ["project_id"], {
+      tab: "provisioner",
+    });
   };
 
   checkDO = () => {
@@ -214,9 +215,9 @@ class Home extends Component<PropsType, StateType> {
             });
           } else if (infras[0] === "docr") {
             this.provisionDOCR(tgtIntegration.id, tier, () => {
-              pushFiltered(this.props, "/dashboard", [
-                "project_id",
-              ], { tab: "provisioner" });
+              pushFiltered(this.props, "/dashboard", ["project_id"], {
+                tab: "provisioner",
+              });
             });
           } else {
             this.provisionDOKS(tgtIntegration.id, region, clusterName);
@@ -281,43 +282,16 @@ class Home extends Component<PropsType, StateType> {
 
   // TODO: move into ClusterDashboard
   renderDashboard = () => {
-    let { currentCluster, setCurrentModal } = this.context;
-    if (currentCluster && !currentCluster.name) {
+    let { currentCluster } = this.context;
+    if (!currentCluster || !currentCluster.name) {
       return (
         <DashboardWrapper>
-          <Placeholder>
-            <Bold>Porter - Getting</Bold>
-            <br />
-            <br />
-            1. Navigate to{" "}
-            <A onClick={() => setCurrentModal("ClusterConfigModal")}>
-              + Add a Cluster
-            </A>{" "}
-            and provide a kubeconfig. *<br />
-            <br />
-            2. Choose which contexts you would like to use from the{" "}
-            <A
-              onClick={() => {
-                setCurrentModal("ClusterConfigModal", { currentTab: "select" });
-              }}
-            >
-              Select Clusters
-            </A>{" "}
-            tab.
-            <br />
-            <br />
-            3. For additional information, please refer to our <A>docs</A>.
-            <br />
-            <br />
-            <br />* Make sure all fields are explicitly declared (e.g., certs
-            and keys).
-          </Placeholder>
+          <PageNotFound />
         </DashboardWrapper>
       );
     } else if (!currentCluster) {
       return <Loading />;
     }
-    console.log("current route", this.props.currentRoute);
     return (
       <DashboardWrapper>
         <ClusterDashboard
@@ -565,27 +539,6 @@ const DashboardWrapper = styled.div`
   padding-top: 50px;
   min-width: 300px;
   padding-bottom: 120px;
-`;
-
-const A = styled.a`
-  color: #ffffff;
-  text-decoration: underline;
-  cursor: ${(props: { disabled?: boolean }) =>
-    props.disabled ? "not-allowed" : "pointer"};
-`;
-
-const Placeholder = styled.div`
-  font-family: "Work Sans", sans-serif;
-  color: #6f6f6f;
-  font-size: 16px;
-  margin-left: 20px;
-  margin-top: 24vh;
-  user-select: none;
-`;
-
-const Bold = styled.div`
-  font-weight: bold;
-  font-size: 20px;
 `;
 
 const StyledHome = styled.div`

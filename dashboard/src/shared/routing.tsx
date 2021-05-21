@@ -40,7 +40,7 @@ export const pushFiltered = (
   props: any, // Props for retrieving history and location
   pathname: string, // Path to redirect to
   keys: string[], // Query params to preserve during redirect
-  params?: any,
+  params?: any
 ) => {
   let { location, history } = props;
   let urlParams = new URLSearchParams(location.search);
@@ -49,9 +49,10 @@ export const pushFiltered = (
     let value = urlParams.get(key);
     value && newUrlParams.set(key, value);
   });
-  params && Object.keys(params)?.forEach((key: string) => {
-    params[key] && newUrlParams.set(key, params[key]);
-  });
+  params &&
+    Object.keys(params)?.forEach((key: string) => {
+      params[key] && newUrlParams.set(key, params[key]);
+    });
   history.push({
     pathname,
     search: newUrlParams.toString(),

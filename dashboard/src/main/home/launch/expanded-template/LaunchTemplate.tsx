@@ -165,9 +165,13 @@ class LaunchTemplate extends Component<PropsType, StateType> {
         this.setState({ saveValuesStatus: "successful" }, () => {
           // TODO: redirect to appropriate cluster if not current context
           let dst =
-            this.props.currentTemplate.name === "job" ? "/jobs" : "/applications";
+            this.props.currentTemplate.name === "job"
+              ? "/jobs"
+              : "/applications";
           setTimeout(() => {
-            pushFiltered(this.props, dst, ["project_id"], { cluster: currentCluster.name });
+            pushFiltered(this.props, dst, ["project_id"], {
+              cluster: currentCluster.name,
+            });
           }, 500);
           window.analytics.track("Deployed Add-on", {
             name: this.props.currentTemplate.name,
@@ -304,7 +308,9 @@ class LaunchTemplate extends Component<PropsType, StateType> {
               this.props.currentTemplate.name === "job"
                 ? "/jobs"
                 : "/applications";
-            pushFiltered(this.props, dst, ["project_id"], { cluster: currentCluster.name });
+            pushFiltered(this.props, dst, ["project_id"], {
+              cluster: currentCluster.name,
+            });
           }, 1000);
         });
       })

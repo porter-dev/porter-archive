@@ -217,7 +217,7 @@ export default class ChartList extends Component<PropsType, StateType> {
   };
 
   componentDidMount() {
-    this.updateCharts(this.getControllers);
+    (this.props.namespace || this.props.namespace === "") && this.updateCharts(this.getControllers);
     this.setControllerWebsockets([
       "deployment",
       "statefulset",
@@ -242,14 +242,14 @@ export default class ChartList extends Component<PropsType, StateType> {
       prevProps.sortType !== this.props.sortType ||
       prevProps.currentView !== this.props.currentView
     ) {
-      this.updateCharts(this.getControllers);
+      (this.props.namespace || this.props.namespace === "") && this.updateCharts(this.getControllers);
     }
   }
 
   renderChartList = () => {
     let { loading, error, charts } = this.state;
 
-    if (loading) {
+    if (loading || (!this.props.namespace && this.props.namespace !== "")) {
       return (
         <LoadingWrapper>
           <Loading />

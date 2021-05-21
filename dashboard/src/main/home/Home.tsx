@@ -268,7 +268,6 @@ class Home extends Component<PropsType, StateType> {
   // 2. Make sure switching projects shows appropriate initial view (dashboard || provisioner)
   // 3. Make sure initializing from URL (DO oauth) displays the appropriate initial view
   componentDidUpdate(prevProps: PropsType) {
-    console.log(this.props.location)
     if (
       prevProps.currentProject !== this.props.currentProject ||
       (!prevProps.currentCluster && this.props.currentCluster)

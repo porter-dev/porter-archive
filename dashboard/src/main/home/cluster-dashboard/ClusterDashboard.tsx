@@ -33,7 +33,7 @@ type StateType = {
 // TODO: add advanced routing (by project, cluster, namespace, and expanded object)
 class ClusterDashboard extends Component<PropsType, StateType> {
   state = {
-    namespace: "default",
+    namespace: null as string,
     sortType: localStorage.getItem("SortType")
       ? localStorage.getItem("SortType")
       : "Newest",
@@ -43,23 +43,7 @@ class ClusterDashboard extends Component<PropsType, StateType> {
 
   componentDidMount() {
     let { currentCluster, currentProject } = this.context;
-    // Set namespace from URL if specified
-    let queryString = window.location.search;
-    let urlParams = new URLSearchParams(queryString);
-    let defaultNamespace = urlParams.get("namespace");
-    if (defaultNamespace) {
-      if (defaultNamespace === "ALL") {
-        defaultNamespace = "";
-      }
-      this.setState({ namespace: defaultNamespace });
-    } else {
-      defaultNamespace = this.state.namespace;
-    }
-
-    pushQueryParams(this.props, { 
-      cluster: currentCluster.name,
-      namespace: defaultNamespace || "ALL",
-    });
+    pushQueryParams(this.props, { cluster: currentCluster.name });
     api
       .getPrometheusIsInstalled(
         "<token>",
@@ -88,13 +72,12 @@ class ClusterDashboard extends Component<PropsType, StateType> {
           : "Newest",
         currentChart: null,
       }, () =>
-        pushQueryParams(this.props, { namespace: this.state.namespace || "ALL" })
+        pushQueryParams(this.props, { namespace: "default" })
       );
     }
 
     if (prevProps.currentView !== this.props.currentView) {
       this.setState({
-        namespace: "default",
         sortType: "Newest",
         currentChart: null,
       }, () =>
@@ -120,7 +103,7 @@ class ClusterDashboard extends Component<PropsType, StateType> {
   };
 
   renderBody = () => {
-    let { currentCluster, setSidebar, currentView } = this.props;
+    let { currentCluster, currentView } = this.props;
     return (
       <>
         <ControlRow>
@@ -135,11 +118,11 @@ class ClusterDashboard extends Component<PropsType, StateType> {
               sortType={this.state.sortType}
             />
             <NamespaceSelector
-              setNamespace={(namespace) => 
+              setNamespace={(namespace) => {
                 this.setState({ namespace }, () =>
                   pushQueryParams(this.props, { namespace: this.state.namespace || "ALL" })
                 )
-              }
+              }}
               namespace={this.state.namespace}
             />
           </SortFilterWrapper>

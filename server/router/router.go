@@ -11,8 +11,8 @@ import (
 	"github.com/go-chi/chi/middleware"
 	"github.com/porter-dev/porter/internal/auth/token"
 	"github.com/porter-dev/porter/server/api"
-	"github.com/porter-dev/porter/server/requestlog"
-	mw "github.com/porter-dev/porter/server/router/middleware"
+	mw "github.com/porter-dev/porter/server/middleware"
+	"github.com/porter-dev/porter/server/middleware/requestlog"
 )
 
 // New creates a new Chi router instance and registers all routes supported by the

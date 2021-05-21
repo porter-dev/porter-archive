@@ -32,7 +32,7 @@ class EnvGroupDashboard extends Component<PropsType, StateType> {
   state = {
     expand: false,
     update: [] as any[],
-    namespace: "default",
+    namespace: null as string,
     expandedEnvGroup: null as any,
     createEnvMode: false,
     sortType: localStorage.getItem("SortType")
@@ -75,9 +75,11 @@ class EnvGroupDashboard extends Component<PropsType, StateType> {
                 sortType={this.state.sortType}
               />
               <NamespaceSelector
-                setNamespace={(namespace) => 
+                setNamespace={(namespace) =>
                   this.setState({ namespace }, () =>
-                    pushQueryParams(this.props, { namespace: this.state.namespace || "ALL" })
+                    pushQueryParams(this.props, {
+                      namespace: this.state.namespace || "ALL",
+                    })
                   )
                 }
                 namespace={this.state.namespace}

@@ -53,7 +53,7 @@ class ProjectSection extends Component<PropsType, StateType> {
           selected={project.name === this.props.currentProject.name}
           onClick={() => {
             this.setState({ expanded: false });
-            setCurrentProject(project, () => 
+            setCurrentProject(project, () =>
               pushFiltered(this.props, "/dashboard", ["project_id"])
             );
           }}

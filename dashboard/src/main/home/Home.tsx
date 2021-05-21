@@ -137,7 +137,7 @@ class Home extends Component<PropsType, StateType> {
                   foundProject = project;
                 }
               });
-              setCurrentProject(foundProject || res.data[0], () => 
+              setCurrentProject(foundProject || res.data[0], () =>
                 this.initializeView()
               );
             }
@@ -292,7 +292,7 @@ class Home extends Component<PropsType, StateType> {
           <PageNotFound />
         </DashboardWrapper>
       );
-    } 
+    }
     return (
       <DashboardWrapper>
         <ClusterDashboard
@@ -365,7 +365,7 @@ class Home extends Component<PropsType, StateType> {
           if (res.data.length > 0) {
             setCurrentProject(res.data[0]);
           } else {
-            setCurrentProject(null, () => 
+            setCurrentProject(null, () =>
               pushFiltered(this.props, "/new-project", ["project_id"])
             );
           }

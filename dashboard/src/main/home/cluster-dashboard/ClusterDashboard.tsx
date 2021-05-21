@@ -65,23 +65,28 @@ class ClusterDashboard extends Component<PropsType, StateType> {
   componentDidUpdate(prevProps: PropsType) {
     // Reset namespace filter and close expanded chart on cluster change
     if (prevProps.currentCluster !== this.props.currentCluster) {
-      this.setState({
-        namespace: "default",
-        sortType: localStorage.getItem("SortType")
-          ? localStorage.getItem("SortType")
-          : "Newest",
-        currentChart: null,
-      }, () =>
-        pushQueryParams(this.props, { namespace: "default" })
+      this.setState(
+        {
+          namespace: "default",
+          sortType: localStorage.getItem("SortType")
+            ? localStorage.getItem("SortType")
+            : "Newest",
+          currentChart: null,
+        },
+        () => pushQueryParams(this.props, { namespace: "default" })
       );
     }
 
     if (prevProps.currentView !== this.props.currentView) {
-      this.setState({
-        sortType: "Newest",
-        currentChart: null,
-      }, () =>
-        pushQueryParams(this.props, { namespace: this.state.namespace || "ALL" })
+      this.setState(
+        {
+          sortType: "Newest",
+          currentChart: null,
+        },
+        () =>
+          pushQueryParams(this.props, {
+            namespace: this.state.namespace || "ALL",
+          })
       );
     }
   }
@@ -120,7 +125,9 @@ class ClusterDashboard extends Component<PropsType, StateType> {
             <NamespaceSelector
               setNamespace={(namespace) =>
                 this.setState({ namespace }, () =>
-                  pushQueryParams(this.props, { namespace: this.state.namespace || "ALL" })
+                  pushQueryParams(this.props, {
+                    namespace: this.state.namespace || "ALL",
+                  })
                 )
               }
               namespace={this.state.namespace}

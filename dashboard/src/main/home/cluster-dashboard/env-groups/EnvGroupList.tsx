@@ -89,7 +89,8 @@ export default class EnvGroupList extends Component<PropsType, StateType> {
       prevProps.namespace !== this.props.namespace ||
       prevProps.sortType !== this.props.sortType
     ) {
-      (this.props.namespace || this.props.namespace === "") && this.updateEnvGroups();
+      (this.props.namespace || this.props.namespace === "") &&
+        this.updateEnvGroups();
     }
   }
 

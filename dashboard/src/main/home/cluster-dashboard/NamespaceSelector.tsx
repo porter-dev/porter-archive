@@ -39,7 +39,7 @@ export default class NamespaceSelector extends Component<PropsType, StateType> {
           let namespaceOptions: { label: string; value: string }[] = [
             { label: "All", value: "" },
           ];
-          
+
           // Set namespace from URL if specified
           let queryString = window.location.search;
           let urlParams = new URLSearchParams(queryString);

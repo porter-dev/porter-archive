@@ -217,7 +217,8 @@ export default class ChartList extends Component<PropsType, StateType> {
   };
 
   componentDidMount() {
-    (this.props.namespace || this.props.namespace === "") && this.updateCharts(this.getControllers);
+    (this.props.namespace || this.props.namespace === "") &&
+      this.updateCharts(this.getControllers);
     this.setControllerWebsockets([
       "deployment",
       "statefulset",
@@ -242,7 +243,8 @@ export default class ChartList extends Component<PropsType, StateType> {
       prevProps.sortType !== this.props.sortType ||
       prevProps.currentView !== this.props.currentView
     ) {
-      (this.props.namespace || this.props.namespace === "") && this.updateCharts(this.getControllers);
+      (this.props.namespace || this.props.namespace === "") &&
+        this.updateCharts(this.getControllers);
     }
   }
 

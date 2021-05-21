@@ -118,11 +118,11 @@ class ClusterDashboard extends Component<PropsType, StateType> {
               sortType={this.state.sortType}
             />
             <NamespaceSelector
-              setNamespace={(namespace) => {
+              setNamespace={(namespace) =>
                 this.setState({ namespace }, () =>
                   pushQueryParams(this.props, { namespace: this.state.namespace || "ALL" })
                 )
-              }}
+              }
               namespace={this.state.namespace}
             />
           </SortFilterWrapper>

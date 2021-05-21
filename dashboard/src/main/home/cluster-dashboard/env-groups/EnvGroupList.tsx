@@ -89,14 +89,14 @@ export default class EnvGroupList extends Component<PropsType, StateType> {
       prevProps.namespace !== this.props.namespace ||
       prevProps.sortType !== this.props.sortType
     ) {
-      this.updateEnvGroups();
+      (this.props.namespace || this.props.namespace === "") && this.updateEnvGroups();
     }
   }
 
   renderEnvGroupList = () => {
     let { loading, error, envGroups } = this.state;
 
-    if (loading) {
+    if (loading || (!this.props.namespace && this.props.namespace !== "")) {
       return (
         <LoadingWrapper>
           <Loading />

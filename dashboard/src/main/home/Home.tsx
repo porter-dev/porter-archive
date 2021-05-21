@@ -137,8 +137,9 @@ class Home extends Component<PropsType, StateType> {
                   foundProject = project;
                 }
               });
-              setCurrentProject(foundProject || res.data[0]);
-              this.initializeView();
+              setCurrentProject(foundProject || res.data[0], () => 
+                this.initializeView()
+              );
             }
           }
         }
@@ -267,6 +268,7 @@ class Home extends Component<PropsType, StateType> {
   // 2. Make sure switching projects shows appropriate initial view (dashboard || provisioner)
   // 3. Make sure initializing from URL (DO oauth) displays the appropriate initial view
   componentDidUpdate(prevProps: PropsType) {
+    console.log(this.props.location)
     if (
       prevProps.currentProject !== this.props.currentProject ||
       (!prevProps.currentCluster && this.props.currentCluster)
@@ -283,15 +285,15 @@ class Home extends Component<PropsType, StateType> {
   // TODO: move into ClusterDashboard
   renderDashboard = () => {
     let { currentCluster } = this.context;
-    if (!currentCluster || !currentCluster.name) {
+    if (currentCluster?.id === -1) {
+      return <Loading />;
+    } else if (!currentCluster || !currentCluster.name) {
       return (
         <DashboardWrapper>
           <PageNotFound />
         </DashboardWrapper>
       );
-    } else if (!currentCluster) {
-      return <Loading />;
-    }
+    } 
     return (
       <DashboardWrapper>
         <ClusterDashboard
@@ -364,8 +366,9 @@ class Home extends Component<PropsType, StateType> {
           if (res.data.length > 0) {
             setCurrentProject(res.data[0]);
           } else {
-            setCurrentProject(null);
-            pushFiltered(this.props, "/new-project", ["project_id"]);
+            setCurrentProject(null, () => 
+              pushFiltered(this.props, "/new-project", ["project_id"])
+            );
           }
           this.context.setCurrentModal(null, null);
         }

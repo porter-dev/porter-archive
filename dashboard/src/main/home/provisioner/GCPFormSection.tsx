@@ -185,8 +185,9 @@ class GCPFormSection extends Component<PropsType, StateType> {
           )
           .then((res) => {
             setProjects(res.data);
-            setCurrentProject(proj);
-            callback && callback();
+            setCurrentProject(proj, () => 
+              callback && callback()
+            );
           })
           .catch(this.catchError);
       })

@@ -35,8 +35,11 @@ type ServerConf struct {
 	DefaultApplicationHelmRepoURL string `env:"HELM_APP_REPO_URL,default=https://charts.dev.getporter.dev"`
 	DefaultAddonHelmRepoURL       string `env:"HELM_ADD_ON_REPO_URL,default=https://chart-addons.dev.getporter.dev"`
 
+	BasicLoginEnabled bool `env:"BASIC_LOGIN_ENABLED,default=true"`
+
 	GithubClientID     string `env:"GITHUB_CLIENT_ID"`
 	GithubClientSecret string `env:"GITHUB_CLIENT_SECRET"`
+	GithubLoginEnabled bool   `env:"GITHUB_LOGIN_ENABLED,default=true"`
 
 	GoogleClientID         string `env:"GOOGLE_CLIENT_ID"`
 	GoogleClientSecret     string `env:"GOOGLE_CLIENT_SECRET"`
@@ -66,6 +69,7 @@ type DBConf struct {
 	Username string `env:"DB_USER,default=porter"`
 	Password string `env:"DB_PASS,default=porter"`
 	DbName   string `env:"DB_NAME,default=porter"`
+	ForceSSL bool   `env:"DB_FORCE_SSL,default=false"`
 
 	SQLLite     bool   `env:"SQL_LITE,default=false"`
 	SQLLitePath string `env:"SQL_LITE_PATH,default=/porter/porter.db"`

@@ -21,7 +21,8 @@ func New(conf *config.DBConf) (*gorm.DB, error) {
 		})
 	}
 
-	dsn := fmt.Sprintf(
+	// connect to default postgres instance first
+	baseDSN := fmt.Sprintf(
 		"user=%s password=%s port=%d host=%s",
 		conf.Username,
 		conf.Password,
@@ -30,12 +31,25 @@ func New(conf *config.DBConf) (*gorm.DB, error) {
 	)
 
 	if conf.ForceSSL {
-		dsn = dsn + " sslmode=require"
+		baseDSN = baseDSN + " sslmode=require"
 	} else {
-		dsn = dsn + " sslmode=disable"
+		baseDSN = baseDSN + " sslmode=disable"
 	}
 
-	res, err := gorm.Open(postgres.Open(dsn), &gorm.Config{
+	postgresDSN := baseDSN + " database=postgres"
+	targetDSN := baseDSN + " database=" + conf.DbName
+
+	defaultDB, err := gorm.Open(postgres.Open(postgresDSN), &gorm.Config{
+		FullSaveAssociations: true,
+	})
+
+	// attempt to create the database
+	if conf.DbName != "" {
+		defaultDB.Exec(fmt.Sprintf("CREATE DATABASE %s;", conf.DbName))
+	}
+
+	// open the database connection
+	res, err := gorm.Open(postgres.Open(targetDSN), &gorm.Config{
 		FullSaveAssociations: true,
 	})
 
@@ -46,7 +60,9 @@ func New(conf *config.DBConf) (*gorm.DB, error) {
 	if err != nil {
 		for {
 			time.Sleep(timeout)
-			res, err = gorm.Open(postgres.Open(dsn), &gorm.Config{})
+			res, err = gorm.Open(postgres.Open(targetDSN), &gorm.Config{
+				FullSaveAssociations: true,
+			})
 
 			if retryCount > 3 {
 				return nil, err

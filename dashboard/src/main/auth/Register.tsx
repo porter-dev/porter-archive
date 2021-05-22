@@ -20,6 +20,7 @@ type StateType = {
   confirmPasswordError: boolean;
   hasGithub: boolean;
   hasGoogle: boolean;
+  hasBasic: boolean;
 };
 
 export default class Register extends Component<PropsType, StateType> {
@@ -29,6 +30,7 @@ export default class Register extends Component<PropsType, StateType> {
     confirmPassword: "",
     emailError: false,
     confirmPasswordError: false,
+    hasBasic: true,
     hasGithub: true,
     hasGoogle: false,
   };
@@ -45,8 +47,9 @@ export default class Register extends Component<PropsType, StateType> {
       .getCapabilities("", {}, {})
       .then((res) => {
         this.setState({ 
-          hasGithub: res.data?.github,
-          hasGoogle: res.data?.google,
+          hasGithub: res.data?.github_login,
+          hasGoogle: res.data?.google_login,
+          hasBasic: res.data?.basic_login,
         });
       })
       .catch((err) => console.log(err));
@@ -133,7 +136,7 @@ export default class Register extends Component<PropsType, StateType> {
           <OAuthButton onClick={this.githubRedirect}>
             <IconWrapper>
               <Icon src={github} />
-              Log in with GitHub
+              Sign up with GitHub
             </IconWrapper>
           </OAuthButton>
       );
@@ -146,14 +149,14 @@ export default class Register extends Component<PropsType, StateType> {
           <OAuthButton onClick={this.googleRedirect}>
             <IconWrapper>
               <StyledGoogleIcon />
-              Log in with Google
+              Sign up with Google
             </IconWrapper>
           </OAuthButton>
       );
     }
   };
 
-  render() {
+  renderBasicSection = () => {
     let {
       email,
       password,
@@ -162,9 +165,55 @@ export default class Register extends Component<PropsType, StateType> {
       confirmPasswordError,
     } = this.state;
 
+    if (this.state.hasBasic) {
+      return <div><InputWrapper>
+        <Input
+          type="email"
+          placeholder="Email"
+          value={email}
+          onChange={(e: ChangeEvent<HTMLInputElement>) =>
+            this.setState({ email: e.target.value, emailError: false })
+          }
+          valid={!emailError}
+        />
+        {this.renderEmailError()}
+      </InputWrapper>
+      <Input
+        type="password"
+        placeholder="Password"
+        value={password}
+        onChange={(e: ChangeEvent<HTMLInputElement>) =>
+          this.setState({
+            password: e.target.value,
+            confirmPasswordError: false,
+          })
+        }
+        valid={true}
+      />
+      <InputWrapper>
+        <Input
+          type="password"
+          placeholder="Confirm Password"
+          value={confirmPassword}
+          onChange={(e: ChangeEvent<HTMLInputElement>) =>
+            this.setState({
+              confirmPassword: e.target.value,
+              confirmPasswordError: false,
+            })
+          }
+          valid={!confirmPasswordError}
+        />
+        {this.renderConfirmPasswordError()}
+      </InputWrapper>
+      <Button onClick={this.handleRegister}>Continue</Button>
+      </div>
+    }
+  }
+
+  render() {
     return (
       <StyledRegister>
-        <LoginPanel numOAuth={+this.state.hasGithub + +this.state.hasGoogle}>
+        <LoginPanel hasBasic={this.state.hasBasic} numOAuth={+this.state.hasGithub + +this.state.hasGoogle}>
           <OverflowWrapper>
             <GradientBg />
           </OverflowWrapper>
@@ -173,7 +222,7 @@ export default class Register extends Component<PropsType, StateType> {
             <Prompt>Sign up for Porter</Prompt>
             {this.renderGithubSection()}
             {this.renderGoogleSection()}
-            {(this.state.hasGithub || this.state.hasGoogle) ? 
+            {(this.state.hasGithub || this.state.hasGoogle) && this.state.hasBasic ? 
               <OrWrapper>
                 <Line />
                 <Or>or</Or>
@@ -181,47 +230,7 @@ export default class Register extends Component<PropsType, StateType> {
               null
             }
             <DarkMatter />
-            <InputWrapper>
-              <Input
-                type="email"
-                placeholder="Email"
-                value={email}
-                onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                  this.setState({ email: e.target.value, emailError: false })
-                }
-                valid={!emailError}
-              />
-              {this.renderEmailError()}
-            </InputWrapper>
-            <Input
-              type="password"
-              placeholder="Password"
-              value={password}
-              onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                this.setState({
-                  password: e.target.value,
-                  confirmPasswordError: false,
-                })
-              }
-              valid={true}
-            />
-            <InputWrapper>
-              <Input
-                type="password"
-                placeholder="Confirm Password"
-                value={confirmPassword}
-                onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                  this.setState({
-                    confirmPassword: e.target.value,
-                    confirmPasswordError: false,
-                  })
-                }
-                valid={!confirmPasswordError}
-              />
-              {this.renderConfirmPasswordError()}
-            </InputWrapper>
-            <Button onClick={this.handleRegister}>Continue</Button>
-
+            {this.renderBasicSection()}
             <Helper>
               Have an account?
               <Link href="/login">Sign in</Link>
@@ -456,8 +465,8 @@ const GradientBg = styled.div`
 
 const LoginPanel = styled.div`
   width: 330px;
-  height: ${(props: { numOAuth: number }) =>
-    450 + props.numOAuth * 50}px;
+  height: ${(props: { numOAuth: number, hasBasic: boolean }) =>
+    270 + +props.hasBasic * 180 + props.numOAuth * 50}px;
   background: white;
   margin-top: -20px;
   border-radius: 10px;

@@ -22,12 +22,18 @@ func New(conf *config.DBConf) (*gorm.DB, error) {
 	}
 
 	dsn := fmt.Sprintf(
-		"user=%s password=%s port=%d host=%s sslmode=disable",
+		"user=%s password=%s port=%d host=%s",
 		conf.Username,
 		conf.Password,
 		conf.Port,
 		conf.Host,
 	)
+
+	if conf.ForceSSL {
+		dsn = dsn + " sslmode=require"
+	} else {
+		dsn = dsn + " sslmode=disable"
+	}
 
 	res, err := gorm.Open(postgres.Open(dsn), &gorm.Config{
 		FullSaveAssociations: true,

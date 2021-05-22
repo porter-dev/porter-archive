@@ -215,7 +215,7 @@ export default class Login extends Component<PropsType, StateType> {
   render() {
     return (
       <StyledLogin>
-        <LoginPanel numOAuth={+this.state.hasGithub + +this.state.hasGoogle}>
+        <LoginPanel hasBasic={this.state.hasBasic} numOAuth={+this.state.hasGithub + +this.state.hasGoogle}>
           <OverflowWrapper>
             <GradientBg />
           </OverflowWrapper>
@@ -465,8 +465,8 @@ const GradientBg = styled.div`
 
 const LoginPanel = styled.div`
   width: 330px;
-  height: ${(props: { numOAuth: number }) =>
-    430 + props.numOAuth * 50}px;
+  height: ${(props: { numOAuth: number, hasBasic: boolean }) =>
+    280 + +props.hasBasic * 150 + props.numOAuth * 50}px;
   background: white;
   margin-top: -20px;
   border-radius: 10px;

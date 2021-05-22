@@ -93,9 +93,10 @@ type App struct {
 
 type AppCapabilities struct {
 	Provisioning bool `json:"provisioner"`
-	Subdomains   bool `json:"subdomains"`
 	Github       bool `json:"github"`
-	GoogleLogin  bool `json:"google"`
+	BasicLogin   bool `json:"basic_login"`
+	GithubLogin  bool `json:"github_login"`
+	GoogleLogin  bool `json:"google_login"`
 	Email        bool `json:"email"`
 	Analytics    bool `json:"analytics"`
 }
@@ -172,6 +173,8 @@ func New(conf *AppConfig) (*App, error) {
 			Scopes:       []string{"repo", "read:user", "workflow"},
 			BaseURL:      sc.ServerURL,
 		})
+
+		app.Capabilities.GithubLogin = sc.GithubLoginEnabled
 	}
 
 	if sc.GoogleClientID != "" && sc.GoogleClientSecret != "" {
@@ -200,6 +203,7 @@ func New(conf *AppConfig) (*App, error) {
 
 	app.Capabilities.Email = sc.SendgridAPIKey != ""
 	app.Capabilities.Analytics = sc.SegmentClientKey != ""
+	app.Capabilities.BasicLogin = sc.BasicLoginEnabled
 
 	app.tokenConf = &token.TokenGeneratorConf{
 		TokenSecret: conf.ServerConf.TokenGeneratorSecret,

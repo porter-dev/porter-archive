@@ -31,15 +31,16 @@ func getDownloadPorterStep() GithubActionYAMLStep {
 }
 
 const configure string = `
+sudo porter config set-host %s
 sudo porter auth login --token ${{secrets.%s}}
 sudo porter docker configure
 `
 
-func getConfigurePorterStep(porterTokenSecretName string) GithubActionYAMLStep {
+func getConfigurePorterStep(serverURL, porterTokenSecretName string) GithubActionYAMLStep {
 	return GithubActionYAMLStep{
 		Name: "Configure Porter",
 		ID:   "configure_porter",
-		Run:  fmt.Sprintf(configure, porterTokenSecretName),
+		Run:  fmt.Sprintf(configure, serverURL, porterTokenSecretName),
 	}
 }
 
@@ -77,13 +78,13 @@ func getBuildPackPushStep(envSecretName, folderPath, repoURL string) GithubActio
 }
 
 const deployPorter string = `
-curl -X POST "https://dashboard.getporter.dev/api/webhooks/deploy/${{secrets.%s}}?commit=$(git rev-parse --short HEAD)&repository=%s"
+curl -X POST "%s/api/webhooks/deploy/${{secrets.%s}}?commit=$(git rev-parse --short HEAD)"
 `
 
-func deployPorterWebhookStep(webhookTokenSecretName, repoURL string) GithubActionYAMLStep {
+func deployPorterWebhookStep(serverURL, webhookTokenSecretName string) GithubActionYAMLStep {
 	return GithubActionYAMLStep{
 		Name: "Deploy on Porter",
 		ID:   "deploy_porter",
-		Run:  fmt.Sprintf(deployPorter, webhookTokenSecretName, repoURL),
+		Run:  fmt.Sprintf(deployPorter, serverURL, webhookTokenSecretName),
 	}
 }

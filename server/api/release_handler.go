@@ -791,6 +791,7 @@ func (app *App) HandleUpgradeRelease(w http.ResponseWriter, r *http.Request) {
 				repoSplit := strings.Split(gitAction.GitRepo, "/")
 
 				gaRunner := &actions.GithubActions{
+					ServerURL:      app.ServerConf.ServerURL,
 					GitIntegration: gr,
 					GitRepoName:    repoSplit[1],
 					GitRepoOwner:   repoSplit[0],
@@ -1056,6 +1057,7 @@ func (app *App) HandleRollbackRelease(w http.ResponseWriter, r *http.Request) {
 				}
 
 				gaRunner := &actions.GithubActions{
+					ServerURL:      app.ServerConf.ServerURL,
 					GitIntegration: gr,
 					GitRepoName:    repoSplit[1],
 					GitRepoOwner:   repoSplit[0],

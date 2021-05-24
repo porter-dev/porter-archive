@@ -62,7 +62,7 @@ export default class ExpandedJobChart extends Component<PropsType, StateType> {
   };
 
   // Retrieve full chart data (includes form and values)
-  getChartData = (chart: ChartType) => {
+  getChartData = (chart: ChartType, revision: number) => {
     let { currentProject } = this.context;
     let { currentCluster, currentChart } = this.props;
 
@@ -77,31 +77,38 @@ export default class ExpandedJobChart extends Component<PropsType, StateType> {
         },
         {
           name: chart.name,
-          revision: chart.version,
+          revision: revision,
           id: currentProject.id,
         }
       )
       .then((res) => {
         let image = res.data?.config?.image?.repository;
+        let tag = res.data?.config?.image?.tag
+        let newestImage = tag ? image + ":" + tag : image
+
         if (
           (image === "porterdev/hello-porter-job" ||
             image === "public.ecr.aws/o1j4x7p4/hello-porter-job") &&
           !this.state.newestImage
         ) {
+          console.log("NEWEST IMAGE IS 0", newestImage)
+
           this.setState(
             {
               currentChart: res.data,
               loading: false,
               imageIsPlaceholder: true,
-              newestImage: image,
+              newestImage: newestImage,
             },
             () => {
               this.updateTabs();
             }
           );
         } else {
+          console.log("NEWEST IMAGE IS 1", newestImage)
+
           this.setState(
-            { currentChart: res.data, loading: false, newestImage: image },
+            { currentChart: res.data, loading: false, newestImage: newestImage },
             () => {
               this.updateTabs();
             }
@@ -111,7 +118,7 @@ export default class ExpandedJobChart extends Component<PropsType, StateType> {
       .catch(console.log);
   };
 
-  refreshChart = () => this.getChartData(this.state.currentChart);
+  refreshChart = (revision : number) => this.getChartData(this.state.currentChart, revision);
 
   mergeNewJob = (newJob: any) => {
     let jobs = this.state.jobs;
@@ -225,6 +232,8 @@ export default class ExpandedJobChart extends Component<PropsType, StateType> {
             newestImage !== "public.ecr.aws/o1j4x7p4/hello-porter-job" &&
             newestImage !== "public.ecr.aws/o1j4x7p4/hello-porter-job:latest"
           ) {
+            console.log("NEWEST IMAGE IS 2", newestImage)
+
             this.setState({ newestImage, imageIsPlaceholder: false });
           }
         }
@@ -254,15 +263,15 @@ export default class ExpandedJobChart extends Component<PropsType, StateType> {
       let imageUrl = this.state.newestImage;
       let tag = null;
 
-      if (imageUrl.includes(":")) {
-        let splits = imageUrl.split(":");
-        imageUrl = splits[0];
-        tag = splits[1];
-      } else if (!tag) {
-        tag = "latest";
-      }
-
       if (imageUrl) {
+        if (imageUrl.includes(":")) {
+          let splits = imageUrl.split(":");
+          imageUrl = splits[0];
+          tag = splits[1];
+        } else if (!tag) {
+          tag = "latest";
+        }
+
         _.set(values, "image.repository", imageUrl);
         _.set(values, "image.tag", tag);
       }
@@ -282,15 +291,15 @@ export default class ExpandedJobChart extends Component<PropsType, StateType> {
       let imageUrl = this.state.newestImage;
       let tag = null;
 
-      if (imageUrl.includes(":")) {
-        let splits = imageUrl.split(":");
-        imageUrl = splits[0];
-        tag = splits[1];
-      } else if (!tag) {
-        tag = "latest";
-      }
-
       if (imageUrl) {
+        if (imageUrl.includes(":")) {
+          let splits = imageUrl.split(":");
+          imageUrl = splits[0];
+          tag = splits[1];
+        } else if (!tag) {
+          tag = "latest";
+        }
+
         _.set(values, "image.repository", imageUrl);
         _.set(values, "image.tag", tag);
       }
@@ -318,7 +327,7 @@ export default class ExpandedJobChart extends Component<PropsType, StateType> {
       )
       .then((res) => {
         this.setState({ saveValuesStatus: "successful" });
-        this.refreshChart();
+        this.refreshChart(0);
       })
       .catch((err) => {
         let parsedErr =
@@ -374,6 +383,7 @@ export default class ExpandedJobChart extends Component<PropsType, StateType> {
       newestImage !== "public.ecr.aws/o1j4x7p4/hello-porter-job" &&
       newestImage !== "public.ecr.aws/o1j4x7p4/hello-porter-job:latest"
     ) {
+      console.log("NEWEST IMAGE IS 3", newestImage)
       this.setState({ jobs, newestImage, imageIsPlaceholder: false });
     } else {
       this.setState({ jobs });
@@ -411,7 +421,7 @@ export default class ExpandedJobChart extends Component<PropsType, StateType> {
         return (
           <SettingsSection
             currentChart={this.state.currentChart}
-            refreshChart={this.refreshChart}
+            refreshChart={() => this.refreshChart(0)}
             setShowDeleteOverlay={(x: boolean) =>
               this.setState({ showDeleteOverlay: x })
             }
@@ -480,7 +490,7 @@ export default class ExpandedJobChart extends Component<PropsType, StateType> {
       chart: currentChart.name,
     });
 
-    this.getChartData(currentChart);
+    this.getChartData(currentChart, currentChart.version);
     this.getJobs(currentChart);
     this.setupJobWebsocket(currentChart);
     this.setupCronJobWebsocket(currentChart);

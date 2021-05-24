@@ -62,7 +62,7 @@ export default class ExpandedJobChart extends Component<PropsType, StateType> {
   };
 
   // Retrieve full chart data (includes form and values)
-  getChartData = (chart: ChartType) => {
+  getChartData = (chart: ChartType, revision: number) => {
     let { currentProject } = this.context;
     let { currentCluster, currentChart } = this.props;
 
@@ -77,12 +77,15 @@ export default class ExpandedJobChart extends Component<PropsType, StateType> {
         },
         {
           name: chart.name,
-          revision: chart.version,
+          revision: revision,
           id: currentProject.id,
         }
       )
       .then((res) => {
         let image = res.data?.config?.image?.repository;
+        let tag = res.data?.config?.image?.tag
+        let newestImage = tag ? image + ":" + tag : image
+
         if (
           (image === "porterdev/hello-porter-job" ||
             image === "public.ecr.aws/o1j4x7p4/hello-porter-job") &&
@@ -93,7 +96,7 @@ export default class ExpandedJobChart extends Component<PropsType, StateType> {
               currentChart: res.data,
               loading: false,
               imageIsPlaceholder: true,
-              newestImage: image,
+              newestImage: newestImage,
             },
             () => {
               this.updateTabs();
@@ -101,7 +104,7 @@ export default class ExpandedJobChart extends Component<PropsType, StateType> {
           );
         } else {
           this.setState(
-            { currentChart: res.data, loading: false, newestImage: image },
+            { currentChart: res.data, loading: false, newestImage: newestImage },
             () => {
               this.updateTabs();
             }
@@ -111,7 +114,7 @@ export default class ExpandedJobChart extends Component<PropsType, StateType> {
       .catch(console.log);
   };
 
-  refreshChart = () => this.getChartData(this.state.currentChart);
+  refreshChart = (revision : number) => this.getChartData(this.state.currentChart, revision);
 
   mergeNewJob = (newJob: any) => {
     let jobs = this.state.jobs;
@@ -137,9 +140,9 @@ export default class ExpandedJobChart extends Component<PropsType, StateType> {
     let chartVersion = `${chart.chart.metadata.name}-${chart.chart.metadata.version}`;
 
     let { currentCluster, currentProject } = this.context;
-    let protocol = process.env.NODE_ENV == "production" ? "wss" : "ws";
+    let protocol = window.location.protocol == "https:" ? "wss" : "ws";
     let ws = new WebSocket(
-      `${protocol}://${process.env.API_SERVER}/api/projects/${currentProject.id}/k8s/job/status?cluster_id=${currentCluster.id}`
+      `${protocol}://${window.location.host}/api/projects/${currentProject.id}/k8s/job/status?cluster_id=${currentCluster.id}`
     );
     ws.onopen = () => {
       console.log("connected to websocket");
@@ -185,9 +188,9 @@ export default class ExpandedJobChart extends Component<PropsType, StateType> {
     let releaseNamespace = chart.namespace;
 
     let { currentCluster, currentProject } = this.context;
-    let protocol = process.env.NODE_ENV == "production" ? "wss" : "ws";
+    let protocol = window.location.protocol == "https:" ? "wss" : "ws";
     let ws = new WebSocket(
-      `${protocol}://${process.env.API_SERVER}/api/projects/${currentProject.id}/k8s/cronjob/status?cluster_id=${currentCluster.id}`
+      `${protocol}://${window.location.host}/api/projects/${currentProject.id}/k8s/cronjob/status?cluster_id=${currentCluster.id}`
     );
     ws.onopen = () => {
       console.log("connected to websocket");
@@ -254,15 +257,15 @@ export default class ExpandedJobChart extends Component<PropsType, StateType> {
       let imageUrl = this.state.newestImage;
       let tag = null;
 
-      if (imageUrl.includes(":")) {
-        let splits = imageUrl.split(":");
-        imageUrl = splits[0];
-        tag = splits[1];
-      } else if (!tag) {
-        tag = "latest";
-      }
-
       if (imageUrl) {
+        if (imageUrl.includes(":")) {
+          let splits = imageUrl.split(":");
+          imageUrl = splits[0];
+          tag = splits[1];
+        } else if (!tag) {
+          tag = "latest";
+        }
+
         _.set(values, "image.repository", imageUrl);
         _.set(values, "image.tag", tag);
       }
@@ -282,15 +285,15 @@ export default class ExpandedJobChart extends Component<PropsType, StateType> {
       let imageUrl = this.state.newestImage;
       let tag = null;
 
-      if (imageUrl.includes(":")) {
-        let splits = imageUrl.split(":");
-        imageUrl = splits[0];
-        tag = splits[1];
-      } else if (!tag) {
-        tag = "latest";
-      }
-
       if (imageUrl) {
+        if (imageUrl.includes(":")) {
+          let splits = imageUrl.split(":");
+          imageUrl = splits[0];
+          tag = splits[1];
+        } else if (!tag) {
+          tag = "latest";
+        }
+
         _.set(values, "image.repository", imageUrl);
         _.set(values, "image.tag", tag);
       }
@@ -318,7 +321,7 @@ export default class ExpandedJobChart extends Component<PropsType, StateType> {
       )
       .then((res) => {
         this.setState({ saveValuesStatus: "successful" });
-        this.refreshChart();
+        this.refreshChart(0);
       })
       .catch((err) => {
         let parsedErr =
@@ -411,7 +414,7 @@ export default class ExpandedJobChart extends Component<PropsType, StateType> {
         return (
           <SettingsSection
             currentChart={this.state.currentChart}
-            refreshChart={this.refreshChart}
+            refreshChart={() => this.refreshChart(0)}
             setShowDeleteOverlay={(x: boolean) =>
               this.setState({ showDeleteOverlay: x })
             }
@@ -480,7 +483,7 @@ export default class ExpandedJobChart extends Component<PropsType, StateType> {
       chart: currentChart.name,
     });
 
-    this.getChartData(currentChart);
+    this.getChartData(currentChart, currentChart.version);
     this.getJobs(currentChart);
     this.setupJobWebsocket(currentChart);
     this.setupCronJobWebsocket(currentChart);

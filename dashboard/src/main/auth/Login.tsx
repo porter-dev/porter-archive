@@ -2,6 +2,7 @@ import React, { ChangeEvent, Component } from "react";
 import styled from "styled-components";
 import logo from "assets/logo.png";
 import github from "assets/github-icon.png";
+import GoogleIcon from "assets/GoogleIcon";
 
 import api from "shared/api";
 import { emailRegex } from "shared/regex";
@@ -16,7 +17,10 @@ type StateType = {
   password: string;
   emailError: boolean;
   credentialError: boolean;
+  hasBasic: boolean;
   hasGithub: boolean;
+  hasGoogle: boolean;
+  hasResetPassword: boolean;
 };
 
 export default class Login extends Component<PropsType, StateType> {
@@ -25,7 +29,10 @@ export default class Login extends Component<PropsType, StateType> {
     password: "",
     emailError: false,
     credentialError: false,
+    hasBasic: true,
     hasGithub: true,
+    hasGoogle: false,
+    hasResetPassword: true,
   };
 
   handleKeyDown = (e: any) => {
@@ -43,7 +50,12 @@ export default class Login extends Component<PropsType, StateType> {
     api
       .getCapabilities("", {}, {})
       .then((res) => {
-        this.setState({ hasGithub: res.data?.github });
+        this.setState({ 
+          hasBasic: res.data?.basic_login,
+          hasGithub: res.data?.github_login,
+          hasGoogle: res.data?.google_login,
+          hasResetPassword: res.data?.email,
+        });
       })
       .catch((err) => console.log(err));
   }
@@ -115,40 +127,43 @@ export default class Login extends Component<PropsType, StateType> {
     window.location.href = redirectUrl;
   };
 
+  googleRedirect = () => {
+    let redirectUrl = `/api/oauth/login/google`;
+    window.location.href = redirectUrl;
+  };
+
   renderGithubSection = () => {
     if (this.state.hasGithub) {
       return (
-        <>
           <OAuthButton onClick={this.githubRedirect}>
             <IconWrapper>
               <Icon src={github} />
               Log in with GitHub
             </IconWrapper>
           </OAuthButton>
-          <OrWrapper>
-            <Line />
-            <Or>or</Or>
-          </OrWrapper>
-        </>
       );
     }
   };
 
-  render() {
-    let { email, password, credentialError, emailError } = this.state;
+  renderGoogleSection = () => {
+    if (this.state.hasGoogle) {
+      return (
+          <OAuthButton onClick={this.googleRedirect}>
+            <IconWrapper>
+              <StyledGoogleIcon />
+              Log in with Google
+            </IconWrapper>
+          </OAuthButton>
+      );
+    }
+  };
 
-    return (
-      <StyledLogin>
-        <LoginPanel>
-          <OverflowWrapper>
-            <GradientBg />
-          </OverflowWrapper>
-          <FormWrapper>
-            <Logo src={logo} />
-            <Prompt>Log in to Porter</Prompt>
-            {this.renderGithubSection()}
-            <DarkMatter />
-            <InputWrapper>
+  renderBasicSection = () => {
+    if (this.state.hasBasic) {
+      let { email, password, credentialError, emailError } = this.state;
+
+      return <div>
+        <InputWrapper>
               <Input
                 type="email"
                 placeholder="Email"
@@ -180,23 +195,56 @@ export default class Login extends Component<PropsType, StateType> {
               {this.renderCredentialError()}
             </InputWrapper>
             <Button onClick={this.handleLogin}>Continue</Button>
+      </div>
+    }
+  }
+  
+  renderHelper() {
+    if (this.state.hasResetPassword) {
+      return <Helper>
+        <Link href="/register">Sign up</Link> |
+        <Link href="/password/reset">Forgot password?</Link>
+      </Helper>
+    } 
 
-            <Helper>
-              <Link href="/register">Sign up</Link> |
-              <Link href="/password/reset">Forgot password?</Link>
-            </Helper>
+    return <Helper>
+      <Link href="/register">Sign up</Link>
+    </Helper>
+  }
+
+  render() {
+    return (
+      <StyledLogin>
+        <LoginPanel hasBasic={this.state.hasBasic} numOAuth={+this.state.hasGithub + +this.state.hasGoogle}>
+          <OverflowWrapper>
+            <GradientBg />
+          </OverflowWrapper>
+          <FormWrapper>
+            <Logo src={logo} />
+            <Prompt>Log in to Porter</Prompt>
+            {this.renderGithubSection()}
+            {this.renderGoogleSection()}
+            {(this.state.hasGithub || this.state.hasGoogle) && this.state.hasBasic ? 
+              <OrWrapper>
+                <Line />
+                <Or>or</Or>
+              </OrWrapper> :
+              null
+            }
+            <DarkMatter />
+            {this.renderBasicSection()}
+            {this.renderHelper()}
           </FormWrapper>
         </LoginPanel>
-
         <Footer>
-          © 2021 Porter Technologies Inc. •
-          <Link
-            href="https://docs.getporter.dev/docs/terms-of-service"
-            target="_blank"
-          >
-            Terms & Privacy
-          </Link>
-        </Footer>
+            © 2021 Porter Technologies Inc. •
+            <Link
+              href="https://docs.getporter.dev/docs/terms-of-service"
+              target="_blank"
+            >
+              Terms & Privacy
+            </Link>
+          </Footer>
       </StyledLogin>
     );
   }
@@ -249,8 +297,13 @@ const IconWrapper = styled.div`
 
 const Icon = styled.img`
   height: 18px;
-  margin-right: 20px;
+  margin: 14px;
 `;
+
+const StyledGoogleIcon = styled(GoogleIcon)`
+  width: 38px;
+  height: 38px;
+`
 
 const OAuthButton = styled.div`
   width: 200px;
@@ -264,6 +317,8 @@ const OAuthButton = styled.div`
   user-select: none;
   font-weight: 500;
   font-size: 13px;
+  margin: 10px 0; 
+  overflow: hidden;
   :hover {
     background: #ffffffdd;
   }
@@ -392,11 +447,11 @@ const FormWrapper = styled.div`
 
 const GradientBg = styled.div`
   background: linear-gradient(#8ce1ff, #a59eff, #fba8ff);
-  width: 180%;
-  height: 180%;
+  width: 200%;
+  height: 200%;
   position: absolute;
-  top: -40%;
-  left: -40%;
+  top: -50%;
+  left: -50%;
   animation: flip 6s infinite linear;
   @keyframes flip {
     from {
@@ -410,7 +465,8 @@ const GradientBg = styled.div`
 
 const LoginPanel = styled.div`
   width: 330px;
-  height: 470px;
+  height: ${(props: { numOAuth: number, hasBasic: boolean }) =>
+    280 + +props.hasBasic * 150 + props.numOAuth * 50}px;
   background: white;
   margin-top: -20px;
   border-radius: 10px;

@@ -17,6 +17,8 @@ import (
 )
 
 type GithubActions struct {
+	ServerURL string
+
 	GitIntegration *models.GitRepo
 	GitRepoName    string
 	GitRepoOwner   string
@@ -157,7 +159,7 @@ func (g *GithubActions) GetGithubActionYAML() ([]byte, error) {
 	gaSteps := []GithubActionYAMLStep{
 		getCheckoutCodeStep(),
 		getDownloadPorterStep(),
-		getConfigurePorterStep(g.getPorterTokenSecretName()),
+		getConfigurePorterStep(g.ServerURL, g.getPorterTokenSecretName()),
 	}
 
 	if g.DockerFilePath == "" {
@@ -166,7 +168,7 @@ func (g *GithubActions) GetGithubActionYAML() ([]byte, error) {
 		gaSteps = append(gaSteps, getDockerBuildPushStep(g.getBuildEnvSecretName(), g.DockerFilePath, g.ImageRepoURL))
 	}
 
-	gaSteps = append(gaSteps, deployPorterWebhookStep(g.getWebhookSecretName(), g.ImageRepoURL))
+	gaSteps = append(gaSteps, deployPorterWebhookStep(g.ServerURL, g.getWebhookSecretName()))
 
 	branch := g.GitBranch
 

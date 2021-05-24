@@ -153,6 +153,7 @@ func (app *App) createGitActionFromForm(
 
 	// create the commit in the git repo
 	gaRunner := &actions.GithubActions{
+		ServerURL:      app.ServerConf.ServerURL,
 		GitIntegration: gr,
 		GitRepoName:    repoSplit[1],
 		GitRepoOwner:   repoSplit[0],

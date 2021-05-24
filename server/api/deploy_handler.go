@@ -251,6 +251,7 @@ func (app *App) HandleUninstallTemplate(w http.ResponseWriter, r *http.Request) 
 				}
 
 				gaRunner := &actions.GithubActions{
+					ServerURL:      app.ServerConf.ServerURL,
 					GitIntegration: gr,
 					GitRepoName:    repoSplit[1],
 					GitRepoOwner:   repoSplit[0],

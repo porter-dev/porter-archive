@@ -91,8 +91,6 @@ export default class ExpandedJobChart extends Component<PropsType, StateType> {
             image === "public.ecr.aws/o1j4x7p4/hello-porter-job") &&
           !this.state.newestImage
         ) {
-          console.log("NEWEST IMAGE IS 0", newestImage)
-
           this.setState(
             {
               currentChart: res.data,
@@ -105,8 +103,6 @@ export default class ExpandedJobChart extends Component<PropsType, StateType> {
             }
           );
         } else {
-          console.log("NEWEST IMAGE IS 1", newestImage)
-
           this.setState(
             { currentChart: res.data, loading: false, newestImage: newestImage },
             () => {
@@ -232,8 +228,6 @@ export default class ExpandedJobChart extends Component<PropsType, StateType> {
             newestImage !== "public.ecr.aws/o1j4x7p4/hello-porter-job" &&
             newestImage !== "public.ecr.aws/o1j4x7p4/hello-porter-job:latest"
           ) {
-            console.log("NEWEST IMAGE IS 2", newestImage)
-
             this.setState({ newestImage, imageIsPlaceholder: false });
           }
         }
@@ -383,7 +377,6 @@ export default class ExpandedJobChart extends Component<PropsType, StateType> {
       newestImage !== "public.ecr.aws/o1j4x7p4/hello-porter-job" &&
       newestImage !== "public.ecr.aws/o1j4x7p4/hello-porter-job:latest"
     ) {
-      console.log("NEWEST IMAGE IS 3", newestImage)
       this.setState({ jobs, newestImage, imageIsPlaceholder: false });
     } else {
       this.setState({ jobs });

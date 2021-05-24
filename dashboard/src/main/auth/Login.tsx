@@ -17,8 +17,10 @@ type StateType = {
   password: string;
   emailError: boolean;
   credentialError: boolean;
+  hasBasic: boolean;
   hasGithub: boolean;
   hasGoogle: boolean;
+  hasResetPassword: boolean;
 };
 
 export default class Login extends Component<PropsType, StateType> {
@@ -27,8 +29,10 @@ export default class Login extends Component<PropsType, StateType> {
     password: "",
     emailError: false,
     credentialError: false,
+    hasBasic: true,
     hasGithub: true,
     hasGoogle: false,
+    hasResetPassword: true,
   };
 
   handleKeyDown = (e: any) => {
@@ -47,8 +51,10 @@ export default class Login extends Component<PropsType, StateType> {
       .getCapabilities("", {}, {})
       .then((res) => {
         this.setState({ 
-          hasGithub: res.data?.github,
-          hasGoogle: res.data?.google,
+          hasBasic: res.data?.basic_login,
+          hasGithub: res.data?.github_login,
+          hasGoogle: res.data?.google_login,
+          hasResetPassword: res.data?.email,
         });
       })
       .catch((err) => console.log(err));
@@ -152,29 +158,12 @@ export default class Login extends Component<PropsType, StateType> {
     }
   };
 
-  render() {
-    let { email, password, credentialError, emailError } = this.state;
+  renderBasicSection = () => {
+    if (this.state.hasBasic) {
+      let { email, password, credentialError, emailError } = this.state;
 
-    return (
-      <StyledLogin>
-        <LoginPanel numOAuth={+this.state.hasGithub + +this.state.hasGoogle}>
-          <OverflowWrapper>
-            <GradientBg />
-          </OverflowWrapper>
-          <FormWrapper>
-            <Logo src={logo} />
-            <Prompt>Log in to Porter</Prompt>
-            {this.renderGithubSection()}
-            {this.renderGoogleSection()}
-            {(this.state.hasGithub || this.state.hasGoogle) ? 
-              <OrWrapper>
-                <Line />
-                <Or>or</Or>
-              </OrWrapper> :
-              null
-            }
-            <DarkMatter />
-            <InputWrapper>
+      return <div>
+        <InputWrapper>
               <Input
                 type="email"
                 placeholder="Email"
@@ -206,23 +195,56 @@ export default class Login extends Component<PropsType, StateType> {
               {this.renderCredentialError()}
             </InputWrapper>
             <Button onClick={this.handleLogin}>Continue</Button>
+      </div>
+    }
+  }
+  
+  renderHelper() {
+    if (this.state.hasResetPassword) {
+      return <Helper>
+        <Link href="/register">Sign up</Link> |
+        <Link href="/password/reset">Forgot password?</Link>
+      </Helper>
+    } 
 
-            <Helper>
-              <Link href="/register">Sign up</Link> |
-              <Link href="/password/reset">Forgot password?</Link>
-            </Helper>
+    return <Helper>
+      <Link href="/register">Sign up</Link>
+    </Helper>
+  }
+
+  render() {
+    return (
+      <StyledLogin>
+        <LoginPanel hasBasic={this.state.hasBasic} numOAuth={+this.state.hasGithub + +this.state.hasGoogle}>
+          <OverflowWrapper>
+            <GradientBg />
+          </OverflowWrapper>
+          <FormWrapper>
+            <Logo src={logo} />
+            <Prompt>Log in to Porter</Prompt>
+            {this.renderGithubSection()}
+            {this.renderGoogleSection()}
+            {(this.state.hasGithub || this.state.hasGoogle) && this.state.hasBasic ? 
+              <OrWrapper>
+                <Line />
+                <Or>or</Or>
+              </OrWrapper> :
+              null
+            }
+            <DarkMatter />
+            {this.renderBasicSection()}
+            {this.renderHelper()}
           </FormWrapper>
         </LoginPanel>
-
         <Footer>
-          © 2021 Porter Technologies Inc. •
-          <Link
-            href="https://docs.getporter.dev/docs/terms-of-service"
-            target="_blank"
-          >
-            Terms & Privacy
-          </Link>
-        </Footer>
+            © 2021 Porter Technologies Inc. •
+            <Link
+              href="https://docs.getporter.dev/docs/terms-of-service"
+              target="_blank"
+            >
+              Terms & Privacy
+            </Link>
+          </Footer>
       </StyledLogin>
     );
   }
@@ -443,8 +465,8 @@ const GradientBg = styled.div`
 
 const LoginPanel = styled.div`
   width: 330px;
-  height: ${(props: { numOAuth: number }) =>
-    430 + props.numOAuth * 50}px;
+  height: ${(props: { numOAuth: number, hasBasic: boolean }) =>
+    280 + +props.hasBasic * 150 + props.numOAuth * 50}px;
   background: white;
   margin-top: -20px;
   border-radius: 10px;

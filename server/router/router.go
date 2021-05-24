@@ -55,11 +55,20 @@ func New(a *api.App) *chi.Mux {
 				),
 			)
 
-			r.Method(
-				"POST",
-				"/users",
-				requestlog.NewHandler(a.HandleCreateUser, l),
-			)
+			// only allow basic create user or basic login if BasicLogin feature is set
+			if a.Capabilities.BasicLogin {
+				r.Method(
+					"POST",
+					"/users",
+					requestlog.NewHandler(a.HandleCreateUser, l),
+				)
+
+				r.Method(
+					"POST",
+					"/login",
+					requestlog.NewHandler(a.HandleLoginUser, l),
+				)
+			}
 
 			r.Method(
 				"DELETE",
@@ -82,12 +91,6 @@ func New(a *api.App) *chi.Mux {
 				"GET",
 				"/cli/login/exchange",
 				requestlog.NewHandler(a.HandleCLILoginExchangeToken, l),
-			)
-
-			r.Method(
-				"POST",
-				"/login",
-				requestlog.NewHandler(a.HandleLoginUser, l),
 			)
 
 			r.Method(

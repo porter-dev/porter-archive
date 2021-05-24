@@ -9,11 +9,11 @@ import (
 
 // Conf is the configuration for the Go server
 type Conf struct {
-	Debug  bool `env:"DEBUG,default=false"`
-	Server ServerConf
-	Db     DBConf
-	K8s    K8sConf
-	Redis  RedisConf
+	Debug        bool `env:"DEBUG,default=false"`
+	Server       ServerConf
+	Db           DBConf
+	K8s          K8sConf
+	Redis        RedisConf
 	Capabilities CapConf
 }
 
@@ -35,8 +35,15 @@ type ServerConf struct {
 	DefaultApplicationHelmRepoURL string `env:"HELM_APP_REPO_URL,default=https://charts.dev.getporter.dev"`
 	DefaultAddonHelmRepoURL       string `env:"HELM_ADD_ON_REPO_URL,default=https://chart-addons.dev.getporter.dev"`
 
+	BasicLoginEnabled bool `env:"BASIC_LOGIN_ENABLED,default=true"`
+
 	GithubClientID     string `env:"GITHUB_CLIENT_ID"`
 	GithubClientSecret string `env:"GITHUB_CLIENT_SECRET"`
+	GithubLoginEnabled bool   `env:"GITHUB_LOGIN_ENABLED,default=true"`
+
+	GoogleClientID         string `env:"GOOGLE_CLIENT_ID"`
+	GoogleClientSecret     string `env:"GOOGLE_CLIENT_SECRET"`
+	GoogleRestrictedDomain string `env:"GOOGLE_RESTRICTED_DOMAIN"`
 
 	SendgridAPIKey                  string `env:"SENDGRID_API_KEY"`
 	SendgridPWResetTemplateID       string `env:"SENDGRID_PW_RESET_TEMPLATE_ID"`
@@ -62,6 +69,7 @@ type DBConf struct {
 	Username string `env:"DB_USER,default=porter"`
 	Password string `env:"DB_PASS,default=porter"`
 	DbName   string `env:"DB_NAME,default=porter"`
+	ForceSSL bool   `env:"DB_FORCE_SSL,default=false"`
 
 	SQLLite     bool   `env:"SQL_LITE,default=false"`
 	SQLLitePath string `env:"SQL_LITE_PATH,default=/porter/porter.db"`
@@ -74,7 +82,8 @@ type K8sConf struct {
 
 type CapConf struct {
 	Provisioner bool `env:"PROVISIONER_ENABLED,default=true"`
-	Github bool `env:"GITHUB_ENABLED,default=true"`
+	Github      bool `env:"GITHUB_ENABLED,default=true"`
+	Google      bool
 }
 
 // FromEnv generates a configuration from environment variables
@@ -83,6 +92,10 @@ func FromEnv() *Conf {
 
 	if err := envdecode.StrictDecode(&c); err != nil {
 		log.Fatalf("Failed to decode server conf: %s", err)
+	}
+
+	if c.Server.GoogleClientID != "" && c.Server.GoogleClientSecret != "" {
+		c.Capabilities.Google = true
 	}
 
 	return &c

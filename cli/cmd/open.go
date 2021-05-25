@@ -18,20 +18,13 @@ var openCmd = &cobra.Command{
 		user, err := client.AuthCheck(context.Background())
 
 		if err == nil {
-			utils.OpenBrowser(fmt.Sprintf("%s/login?email=%s", getHost(), user.Email))
+			utils.OpenBrowser(fmt.Sprintf("%s/login?email=%s", config.Host, user.Email))
 		} else {
-			utils.OpenBrowser(fmt.Sprintf("%s/register", getHost()))
+			utils.OpenBrowser(fmt.Sprintf("%s/register", config.Host))
 		}
 	},
 }
 
 func init() {
 	rootCmd.AddCommand(openCmd)
-
-	rootCmd.PersistentFlags().StringVar(
-		&host,
-		"host",
-		getHost(),
-		"host url of Porter instance",
-	)
 }

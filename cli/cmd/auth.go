@@ -66,20 +66,6 @@ func init() {
 	authCmd.AddCommand(registerCmd)
 	authCmd.AddCommand(logoutCmd)
 
-	authCmd.PersistentFlags().StringVar(
-		&host,
-		"host",
-		getHost(),
-		"host url of Porter instance",
-	)
-
-	loginCmd.PersistentFlags().StringVar(
-		&token,
-		"token",
-		"",
-		"bearer token for authentication",
-	)
-
 	loginCmd.PersistentFlags().BoolVar(
 		&manual,
 		"manual",
@@ -89,7 +75,7 @@ func init() {
 }
 
 func login() error {
-	client := api.NewClientWithToken(getHost()+"/api", getToken())
+	client := api.NewClientWithToken(config.Host+"/api", config.Token)
 
 	user, _ := client.AuthCheck(context.Background())
 
@@ -107,20 +93,20 @@ func login() error {
 	var err error
 
 	if token == "" {
-		token, err = loginBrowser.Login(getHost())
+		token, err = loginBrowser.Login(config.Host)
 
 		if err != nil {
 			return err
 		}
 
 		// set the token in config
-		err = setToken(token)
+		err = config.SetToken(token)
 
 		if err != nil {
 			return err
 		}
 
-		client := api.NewClientWithToken(getHost()+"/api", token)
+		client := api.NewClientWithToken(config.Host+"/api", token)
 
 		user, err := client.AuthCheck(context.Background())
 
@@ -139,17 +125,17 @@ func login() error {
 		}
 
 		if len(projects) > 0 {
-			setProject(projects[0].ID)
+			config.SetProject(projects[0].ID)
 		}
 	} else {
 		// set the token in config
-		err = setToken(token)
+		err = config.SetToken(token)
 
 		if err != nil {
 			return err
 		}
 
-		client := api.NewClientWithToken(getHost()+"/api", token)
+		client := api.NewClientWithToken(config.Host+"/api", token)
 
 		user, err := client.AuthCheck(context.Background())
 
@@ -166,14 +152,14 @@ func login() error {
 			return err
 		}
 
-		setProject(projID)
+		config.SetProject(projID)
 	}
 
 	return nil
 }
 
 func loginManual() error {
-	client := api.NewClient(getHost()+"/api", "cookie.json")
+	client := api.NewClient(config.Host+"/api", "cookie.json")
 
 	var username, pw string
 
@@ -201,7 +187,7 @@ func loginManual() error {
 	}
 
 	// set the token to empty since this is manual (cookie-based) login
-	setToken("")
+	config.SetToken("")
 
 	color.New(color.FgGreen).Println("Successfully logged in!")
 
@@ -213,7 +199,7 @@ func loginManual() error {
 	}
 
 	if len(projects) > 0 {
-		setProject(projects[0].ID)
+		config.SetProject(projects[0].ID)
 	}
 
 	return nil
@@ -257,7 +243,7 @@ func logout(user *api.AuthCheckResponse, client *api.Client, args []string) erro
 		return err
 	}
 
-	setToken("")
+	config.SetToken("")
 
 	color.Green("Successfully logged out")
 

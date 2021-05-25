@@ -2,6 +2,7 @@ import React, { Component } from "react";
 import styled from "styled-components";
 import monojob from "assets/monojob.png";
 import monoweb from "assets/monoweb.png";
+import { Switch, Route } from "react-router-dom";
 
 import { Context } from "shared/Context";
 import { ChartType, ClusterType } from "shared/types";
@@ -12,7 +13,7 @@ import EnvGroupDashboard from "./env-groups/EnvGroupDashboard";
 import NamespaceSelector from "./NamespaceSelector";
 import SortSelector from "./SortSelector";
 import ExpandedChart from "./expanded-chart/ExpandedChart";
-import ExpandedJobChart from "./expanded-chart/ExpandedJobChart";
+import ExpandedJobChartWrapper from "./expanded-chart/ExpandedJobChartWrapper";
 import { RouteComponentProps, withRouter } from "react-router";
 
 import api from "shared/api";
@@ -30,7 +31,7 @@ type StateType = {
   isMetricsInstalled: boolean;
 };
 
-// TODO: add advanced routing (by project, cluster, namespace, and expanded object)
+// TODO: should try to maintain single source of truth b/w router and context/state (ex: namespace -> being managed in parallel right now so highly inextensible and routing is fragile)
 class ClusterDashboard extends Component<PropsType, StateType> {
   state = {
     namespace: null as string,
@@ -140,9 +141,6 @@ class ClusterDashboard extends Component<PropsType, StateType> {
           currentCluster={currentCluster}
           namespace={this.state.namespace}
           sortType={this.state.sortType}
-          setCurrentChart={(x: ChartType | null) =>
-            this.setState({ currentChart: x })
-          }
         />
       </>
     );
@@ -150,17 +148,7 @@ class ClusterDashboard extends Component<PropsType, StateType> {
 
   renderContents = () => {
     let { currentCluster, setSidebar, currentView } = this.props;
-    if (this.state.currentChart && currentView === "jobs") {
-      return (
-        <ExpandedJobChart
-          namespace={this.state.namespace}
-          currentCluster={this.props.currentCluster}
-          currentChart={this.state.currentChart}
-          closeChart={() => this.setState({ currentChart: null })}
-          setSidebar={setSidebar}
-        />
-      );
-    } else if (this.state.currentChart) {
+    if (this.state.currentChart) {
       return (
         <ExpandedChart
           namespace={this.state.namespace}
@@ -176,7 +164,7 @@ class ClusterDashboard extends Component<PropsType, StateType> {
     }
 
     return (
-      <div>
+      <>
         <TitleSection>
           {this.renderDashboardIcon()}
           <Title>{currentView}</Title>
@@ -194,12 +182,25 @@ class ClusterDashboard extends Component<PropsType, StateType> {
         <LineBreak />
 
         {this.renderBody()}
-      </div>
+      </>
     );
   };
 
   render() {
-    return <div>{this.renderContents()}</div>;
+    let { setSidebar } = this.props;
+    return (
+      <Switch>
+        <Route path="/jobs/:clusterName/:namespace/:chartName">
+          <ExpandedJobChartWrapper setSidebar={setSidebar} />
+        </Route>
+        <Route path="/applications/:application">
+          <h1>Application!</h1>
+        </Route>
+        <Route path={["/jobs", "/applications", "/env-groups"]}>
+          {this.renderContents()}
+        </Route>
+      </Switch>
+    );
   }
 }
 

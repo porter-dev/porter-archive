@@ -124,7 +124,7 @@ class LaunchFlow extends Component<PropsType, StateType> {
           saveValuesStatus: `Could not create GitHub Action: ${err}`,
         });
 
-        setCurrentError(err)
+        setCurrentError(err);
       });
   };
 
@@ -281,7 +281,7 @@ class LaunchFlow extends Component<PropsType, StateType> {
                 saveValuesStatus: `Could not create subdomain: ${err}`,
               });
 
-              setCurrentError(err)
+              setCurrentError(err);
             });
         });
 
@@ -336,7 +336,7 @@ class LaunchFlow extends Component<PropsType, StateType> {
         this.setState({
           saveValuesStatus: `Could not deploy template: ${err}`,
         });
-        setCurrentError(err)
+        setCurrentError(err);
       });
   };
 

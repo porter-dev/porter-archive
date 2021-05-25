@@ -340,12 +340,12 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
       })
       .catch((err) => {
         let parsedErr =
-          err?.response?.data?.errors && err.response.data.errors[0]
+          err?.response?.data?.errors && err.response.data.errors[0];
 
         if (parsedErr) {
           err = parsedErr;
         }
-        
+
         this.setState({
           saveValuesStatus: err,
           loading: false,

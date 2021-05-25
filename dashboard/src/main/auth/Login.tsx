@@ -50,7 +50,7 @@ export default class Login extends Component<PropsType, StateType> {
     api
       .getCapabilities("", {}, {})
       .then((res) => {
-        this.setState({ 
+        this.setState({
           hasBasic: res.data?.basic_login,
           hasGithub: res.data?.github_login,
           hasGoogle: res.data?.google_login,
@@ -135,12 +135,12 @@ export default class Login extends Component<PropsType, StateType> {
   renderGithubSection = () => {
     if (this.state.hasGithub) {
       return (
-          <OAuthButton onClick={this.githubRedirect}>
-            <IconWrapper>
-              <Icon src={github} />
-              Log in with GitHub
-            </IconWrapper>
-          </OAuthButton>
+        <OAuthButton onClick={this.githubRedirect}>
+          <IconWrapper>
+            <Icon src={github} />
+            Log in with GitHub
+          </IconWrapper>
+        </OAuthButton>
       );
     }
   };
@@ -148,12 +148,12 @@ export default class Login extends Component<PropsType, StateType> {
   renderGoogleSection = () => {
     if (this.state.hasGoogle) {
       return (
-          <OAuthButton onClick={this.googleRedirect}>
-            <IconWrapper>
-              <StyledGoogleIcon />
-              Log in with Google
-            </IconWrapper>
-          </OAuthButton>
+        <OAuthButton onClick={this.googleRedirect}>
+          <IconWrapper>
+            <StyledGoogleIcon />
+            Log in with Google
+          </IconWrapper>
+        </OAuthButton>
       );
     }
   };
@@ -162,60 +162,69 @@ export default class Login extends Component<PropsType, StateType> {
     if (this.state.hasBasic) {
       let { email, password, credentialError, emailError } = this.state;
 
-      return <div>
-        <InputWrapper>
-              <Input
-                type="email"
-                placeholder="Email"
-                value={email}
-                onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                  this.setState({
-                    email: e.target.value,
-                    emailError: false,
-                    credentialError: false,
-                  })
-                }
-                valid={!credentialError && !emailError}
-              />
-              {this.renderEmailError()}
-            </InputWrapper>
-            <InputWrapper>
-              <Input
-                type="password"
-                placeholder="Password"
-                value={password}
-                onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                  this.setState({
-                    password: e.target.value,
-                    credentialError: false,
-                  })
-                }
-                valid={!credentialError}
-              />
-              {this.renderCredentialError()}
-            </InputWrapper>
-            <Button onClick={this.handleLogin}>Continue</Button>
-      </div>
+      return (
+        <div>
+          <InputWrapper>
+            <Input
+              type="email"
+              placeholder="Email"
+              value={email}
+              onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                this.setState({
+                  email: e.target.value,
+                  emailError: false,
+                  credentialError: false,
+                })
+              }
+              valid={!credentialError && !emailError}
+            />
+            {this.renderEmailError()}
+          </InputWrapper>
+          <InputWrapper>
+            <Input
+              type="password"
+              placeholder="Password"
+              value={password}
+              onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                this.setState({
+                  password: e.target.value,
+                  credentialError: false,
+                })
+              }
+              valid={!credentialError}
+            />
+            {this.renderCredentialError()}
+          </InputWrapper>
+          <Button onClick={this.handleLogin}>Continue</Button>
+        </div>
+      );
     }
-  }
-  
+  };
+
   renderHelper() {
     if (this.state.hasResetPassword) {
-      return <Helper>
-        <Link href="/register">Sign up</Link> |
-        <Link href="/password/reset">Forgot password?</Link>
-      </Helper>
-    } 
+      return (
+        <Helper>
+          <Link href="/register">Sign up</Link> |
+          <Link href="/password/reset">Forgot password?</Link>
+        </Helper>
+      );
+    }
 
-    return <Helper>
-      <Link href="/register">Sign up</Link>
-    </Helper>
+    return (
+      <Helper>
+        <Link href="/register">Sign up</Link>
+      </Helper>
+    );
   }
 
   render() {
     return (
       <StyledLogin>
-        <LoginPanel hasBasic={this.state.hasBasic} numOAuth={+this.state.hasGithub + +this.state.hasGoogle}>
+        <LoginPanel
+          hasBasic={this.state.hasBasic}
+          numOAuth={+this.state.hasGithub + +this.state.hasGoogle}
+        >
           <OverflowWrapper>
             <GradientBg />
           </OverflowWrapper>
@@ -224,27 +233,27 @@ export default class Login extends Component<PropsType, StateType> {
             <Prompt>Log in to Porter</Prompt>
             {this.renderGithubSection()}
             {this.renderGoogleSection()}
-            {(this.state.hasGithub || this.state.hasGoogle) && this.state.hasBasic ? 
+            {(this.state.hasGithub || this.state.hasGoogle) &&
+            this.state.hasBasic ? (
               <OrWrapper>
                 <Line />
                 <Or>or</Or>
-              </OrWrapper> :
-              null
-            }
+              </OrWrapper>
+            ) : null}
             <DarkMatter />
             {this.renderBasicSection()}
             {this.renderHelper()}
           </FormWrapper>
         </LoginPanel>
         <Footer>
-            © 2021 Porter Technologies Inc. •
-            <Link
-              href="https://docs.getporter.dev/docs/terms-of-service"
-              target="_blank"
-            >
-              Terms & Privacy
-            </Link>
-          </Footer>
+          © 2021 Porter Technologies Inc. •
+          <Link
+            href="https://docs.getporter.dev/docs/terms-of-service"
+            target="_blank"
+          >
+            Terms & Privacy
+          </Link>
+        </Footer>
       </StyledLogin>
     );
   }
@@ -303,7 +312,7 @@ const Icon = styled.img`
 const StyledGoogleIcon = styled(GoogleIcon)`
   width: 38px;
   height: 38px;
-`
+`;
 
 const OAuthButton = styled.div`
   width: 200px;
@@ -317,7 +326,7 @@ const OAuthButton = styled.div`
   user-select: none;
   font-weight: 500;
   font-size: 13px;
-  margin: 10px 0; 
+  margin: 10px 0;
   overflow: hidden;
   :hover {
     background: #ffffffdd;
@@ -465,7 +474,7 @@ const GradientBg = styled.div`
 
 const LoginPanel = styled.div`
   width: 330px;
-  height: ${(props: { numOAuth: number, hasBasic: boolean }) =>
+  height: ${(props: { numOAuth: number; hasBasic: boolean }) =>
     280 + +props.hasBasic * 150 + props.numOAuth * 50}px;
   background: white;
   margin-top: -20px;

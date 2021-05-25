@@ -46,7 +46,7 @@ export default class Register extends Component<PropsType, StateType> {
     api
       .getCapabilities("", {}, {})
       .then((res) => {
-        this.setState({ 
+        this.setState({
           hasGithub: res.data?.github_login,
           hasGoogle: res.data?.google_login,
           hasBasic: res.data?.basic_login,
@@ -133,12 +133,12 @@ export default class Register extends Component<PropsType, StateType> {
   renderGithubSection = () => {
     if (this.state.hasGithub) {
       return (
-          <OAuthButton onClick={this.githubRedirect}>
-            <IconWrapper>
-              <Icon src={github} />
-              Sign up with GitHub
-            </IconWrapper>
-          </OAuthButton>
+        <OAuthButton onClick={this.githubRedirect}>
+          <IconWrapper>
+            <Icon src={github} />
+            Sign up with GitHub
+          </IconWrapper>
+        </OAuthButton>
       );
     }
   };
@@ -146,12 +146,12 @@ export default class Register extends Component<PropsType, StateType> {
   renderGoogleSection = () => {
     if (this.state.hasGoogle) {
       return (
-          <OAuthButton onClick={this.googleRedirect}>
-            <IconWrapper>
-              <StyledGoogleIcon />
-              Sign up with Google
-            </IconWrapper>
-          </OAuthButton>
+        <OAuthButton onClick={this.googleRedirect}>
+          <IconWrapper>
+            <StyledGoogleIcon />
+            Sign up with Google
+          </IconWrapper>
+        </OAuthButton>
       );
     }
   };
@@ -166,54 +166,60 @@ export default class Register extends Component<PropsType, StateType> {
     } = this.state;
 
     if (this.state.hasBasic) {
-      return <div><InputWrapper>
-        <Input
-          type="email"
-          placeholder="Email"
-          value={email}
-          onChange={(e: ChangeEvent<HTMLInputElement>) =>
-            this.setState({ email: e.target.value, emailError: false })
-          }
-          valid={!emailError}
-        />
-        {this.renderEmailError()}
-      </InputWrapper>
-      <Input
-        type="password"
-        placeholder="Password"
-        value={password}
-        onChange={(e: ChangeEvent<HTMLInputElement>) =>
-          this.setState({
-            password: e.target.value,
-            confirmPasswordError: false,
-          })
-        }
-        valid={true}
-      />
-      <InputWrapper>
-        <Input
-          type="password"
-          placeholder="Confirm Password"
-          value={confirmPassword}
-          onChange={(e: ChangeEvent<HTMLInputElement>) =>
-            this.setState({
-              confirmPassword: e.target.value,
-              confirmPasswordError: false,
-            })
-          }
-          valid={!confirmPasswordError}
-        />
-        {this.renderConfirmPasswordError()}
-      </InputWrapper>
-      <Button onClick={this.handleRegister}>Continue</Button>
-      </div>
+      return (
+        <div>
+          <InputWrapper>
+            <Input
+              type="email"
+              placeholder="Email"
+              value={email}
+              onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                this.setState({ email: e.target.value, emailError: false })
+              }
+              valid={!emailError}
+            />
+            {this.renderEmailError()}
+          </InputWrapper>
+          <Input
+            type="password"
+            placeholder="Password"
+            value={password}
+            onChange={(e: ChangeEvent<HTMLInputElement>) =>
+              this.setState({
+                password: e.target.value,
+                confirmPasswordError: false,
+              })
+            }
+            valid={true}
+          />
+          <InputWrapper>
+            <Input
+              type="password"
+              placeholder="Confirm Password"
+              value={confirmPassword}
+              onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                this.setState({
+                  confirmPassword: e.target.value,
+                  confirmPasswordError: false,
+                })
+              }
+              valid={!confirmPasswordError}
+            />
+            {this.renderConfirmPasswordError()}
+          </InputWrapper>
+          <Button onClick={this.handleRegister}>Continue</Button>
+        </div>
+      );
     }
-  }
+  };
 
   render() {
     return (
       <StyledRegister>
-        <LoginPanel hasBasic={this.state.hasBasic} numOAuth={+this.state.hasGithub + +this.state.hasGoogle}>
+        <LoginPanel
+          hasBasic={this.state.hasBasic}
+          numOAuth={+this.state.hasGithub + +this.state.hasGoogle}
+        >
           <OverflowWrapper>
             <GradientBg />
           </OverflowWrapper>
@@ -222,13 +228,13 @@ export default class Register extends Component<PropsType, StateType> {
             <Prompt>Sign up for Porter</Prompt>
             {this.renderGithubSection()}
             {this.renderGoogleSection()}
-            {(this.state.hasGithub || this.state.hasGoogle) && this.state.hasBasic ? 
+            {(this.state.hasGithub || this.state.hasGoogle) &&
+            this.state.hasBasic ? (
               <OrWrapper>
                 <Line />
                 <Or>or</Or>
-              </OrWrapper> :
-              null
-            }
+              </OrWrapper>
+            ) : null}
             <DarkMatter />
             {this.renderBasicSection()}
             <Helper>
@@ -304,7 +310,7 @@ const Icon = styled.img`
 const StyledGoogleIcon = styled(GoogleIcon)`
   width: 38px;
   height: 38px;
-`
+`;
 
 const OAuthButton = styled.div`
   width: 200px;
@@ -318,7 +324,7 @@ const OAuthButton = styled.div`
   user-select: none;
   font-weight: 500;
   font-size: 13px;
-  margin: 10px 0; 
+  margin: 10px 0;
   overflow: hidden;
   :hover {
     background: #ffffffdd;
@@ -465,7 +471,7 @@ const GradientBg = styled.div`
 
 const LoginPanel = styled.div`
   width: 330px;
-  height: ${(props: { numOAuth: number, hasBasic: boolean }) =>
+  height: ${(props: { numOAuth: number; hasBasic: boolean }) =>
     270 + +props.hasBasic * 180 + props.numOAuth * 50}px;
   background: white;
   margin-top: -20px;

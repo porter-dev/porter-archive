@@ -132,7 +132,7 @@ export default class SettingsSection extends Component<PropsType, StateType> {
       .catch((err) => {
         let parsedErr =
           err?.response?.data?.errors && err.response.data.errors[0];
-          
+
         if (parsedErr) {
           err = parsedErr;
         }

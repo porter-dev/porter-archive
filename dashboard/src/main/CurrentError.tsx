@@ -39,8 +39,8 @@ export default class CurrentError extends Component<PropsType, StateType> {
                 e.stopPropagation();
 
                 this.setState({ expanded: false }, () => {
-                  this.context.setCurrentError(null)
-                })
+                  this.context.setCurrentError(null);
+                });
               }}
             >
               <CloseButtonImg src={close} />
@@ -53,19 +53,19 @@ export default class CurrentError extends Component<PropsType, StateType> {
         <Overlay>
           <ExpandedError>
             Porter encountered an error. Full error log:
-            <CodeBlock>
-              {this.props.currentError}
-            </CodeBlock>
+            <CodeBlock>{this.props.currentError}</CodeBlock>
             <ExpandButtonAlt onClick={() => this.setState({ expanded: false })}>
               <i className="material-icons">remove</i>
             </ExpandButtonAlt>
-            <CloseButtonAlt onClick={(e) => {
-              e.stopPropagation();
+            <CloseButtonAlt
+              onClick={(e) => {
+                e.stopPropagation();
 
-              this.setState({ expanded: false }, () => {
-                this.context.setCurrentError(null)
-              })
-            }}>
+                this.setState({ expanded: false }, () => {
+                  this.context.setCurrentError(null);
+                });
+              }}
+            >
               <CloseButtonImg src={close} />
             </CloseButtonAlt>
           </ExpandedError>
@@ -158,15 +158,15 @@ const ExpandButton = styled(CloseButton)`
   }
 
   > i {
-    font-size: 16px; 
+    font-size: 16px;
   }
-`
+`;
 
 const ExpandButtonAlt = styled(ExpandButton)`
   position: absolute;
   top: 5px;
   right: 34px;
-`
+`;
 
 const Overlay = styled.div`
   position: fixed;
@@ -189,17 +189,16 @@ const ExpandedError = styled.div`
   width: 700px;
   left: calc(50% - 350px);
   height: auto;
-  max-height: 500px; 
-  top: 50%; 
+  max-height: 500px;
+  top: 50%;
   transform: translateY(-50%);
   padding: 20px;
   overflow-y: auto;
   background: #272731;
   border: 1px solid #ffffff55;
   font-family: "Work Sans", sans-serif;
-  font-size: 13px; 
-  border-radius: 12px; 
-  
+  font-size: 13px;
+  border-radius: 12px;
 `;
 
 const CodeBlock = styled.span`
@@ -211,10 +210,10 @@ const CodeBlock = styled.span`
   user-select: text;
   max-height: 400px;
   width: 90%;
-  margin-left: 5%; 
-  margin-top: 20px; 
+  margin-left: 5%;
+  margin-top: 20px;
   overflow-x: hidden;
   overflow-y: auto;
-  padding: 10px; 
+  padding: 10px;
   overflow-wrap: break-word;
 `;

@@ -308,8 +308,7 @@ export default class ExpandedJobChart extends Component<PropsType, StateType> {
         {
           ...(this.state.currentChart.config as Object),
           ...values,
-        },
-        { forceQuotes: true }
+        }, { forceQuotes: true }
       );
     }
 

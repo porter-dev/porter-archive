@@ -67,8 +67,17 @@ class Templates extends Component<PropsType, StateType> {
           }}
           key={i}
         >
-          {this.renderIcon()}
-          <TemplateTitle>{cluster.name}</TemplateTitle>
+          <TitleContainer>
+            {this.renderIcon()}
+            <TemplateTitle>{cluster.name}</TemplateTitle>
+          </TitleContainer>
+          <Url>
+            <Bolded>Cluster IP:</Bolded>
+            <span>
+              {cluster.server}
+            </span>
+            <i className="material-icons-outlined">content_copy</i>
+          </Url>
         </TemplateBlock>
       );
     });
@@ -93,6 +102,14 @@ const StyledClusterList = styled.div`
   padding-left: 2px;
 `;
 
+const TitleContainer = styled.div`
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  align-items: center;
+
+
+`;
 const DashboardIcon = styled.div`
   position: relative;
   height: 45px;
@@ -104,19 +121,20 @@ const DashboardIcon = styled.div`
   justify-content: center;
   background: #676c7c;
   border: 2px solid #8e94aa;
-
+  margin-bottom: 10px;
   > i {
     font-size: 22px;
   }
 `;
 
 const TemplateTitle = styled.div`
-  margin-bottom: 26px;
+  margin-bottom: 0px;
   width: 80%;
   text-align: center;
   font-size: 14px;
   white-space: nowrap;
   overflow: hidden;
+  white-space: nowrap;
   text-overflow: ellipsis;
 `;
 
@@ -128,11 +146,11 @@ const TemplateBlock = styled.div`
   display: flex;
   font-size: 13px;
   font-weight: 500;
-  padding: 35px 10px 12px;
+  padding: 35px;
   flex-direction: column;
   align-item: center;
   justify-content: space-between;
-  height: 165px;
+  height: 192px;
   cursor: pointer;
   color: #ffffff;
   position: relative;
@@ -199,4 +217,30 @@ const TemplatesWrapper = styled.div`
   width: calc(90% - 150px);
   min-width: 300px;
   padding-top: 50px;
+`;
+
+const Url = styled.a`
+  width: 100%;
+  font-size: 13px;
+  user-select: text;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  > i {
+    margin-left: 10px;
+    font-size: 15px;
+  }
+
+  > span {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+`;
+
+const Bolded = styled.div`
+  font-weight: 500;
+  color: #ffffff44;
+  margin-right: 6px;
+  white-space: nowrap;
 `;

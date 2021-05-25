@@ -84,6 +84,7 @@ export default class ExpandedJobChart extends Component<PropsType, StateType> {
       .then((res) => {
         let image = res.data?.config?.image?.repository;
         let tag = res.data?.config?.image?.tag.toString();
+        console.log("image", res.data?.config?.image);
         console.log("stringified tag is", tag);
         let newestImage = tag ? image + ":" + tag : image
 
@@ -291,7 +292,7 @@ export default class ExpandedJobChart extends Component<PropsType, StateType> {
         if (imageUrl.includes(":")) {
           let splits = imageUrl.split(":");
           imageUrl = splits[0];
-          tag = splits[1];
+          tag = splits[1].toString();
         } else if (!tag) {
           tag = "latest";
         }

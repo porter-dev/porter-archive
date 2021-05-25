@@ -554,7 +554,7 @@ export default class ExpandedJobChart extends Component<PropsType, StateType> {
               </Title>
               <InfoWrapper>
                 <LastDeployed>
-                  Run {this.state.jobs.length} times <Dot>•</Dot>Last run
+                  Run {this.state.jobs.length} times <Dot>•</Dot>Last template update at
                   {" " + this.readableDate(chart.info.last_deployed)}
                 </LastDeployed>
               </InfoWrapper>

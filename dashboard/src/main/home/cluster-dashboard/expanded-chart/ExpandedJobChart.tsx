@@ -83,8 +83,8 @@ export default class ExpandedJobChart extends Component<PropsType, StateType> {
       )
       .then((res) => {
         let image = res.data?.config?.image?.repository;
-        let tag = res.data?.config?.image?.tag
-        let newestImage = tag ? image + ":" + tag : image
+        let tag = res.data?.config?.image?.tag.toString();
+        let newestImage = tag ? image + ":" + tag : image;
 
         if (
           (image === "porterdev/hello-porter-job" ||
@@ -104,7 +104,11 @@ export default class ExpandedJobChart extends Component<PropsType, StateType> {
           );
         } else {
           this.setState(
-            { currentChart: res.data, loading: false, newestImage: newestImage },
+            {
+              currentChart: res.data,
+              loading: false,
+              newestImage: newestImage,
+            },
             () => {
               this.updateTabs();
             }
@@ -114,7 +118,8 @@ export default class ExpandedJobChart extends Component<PropsType, StateType> {
       .catch(console.log);
   };
 
-  refreshChart = (revision : number) => this.getChartData(this.state.currentChart, revision);
+  refreshChart = (revision: number) =>
+    this.getChartData(this.state.currentChart, revision);
 
   mergeNewJob = (newJob: any) => {
     let jobs = this.state.jobs;
@@ -261,7 +266,7 @@ export default class ExpandedJobChart extends Component<PropsType, StateType> {
         if (imageUrl.includes(":")) {
           let splits = imageUrl.split(":");
           imageUrl = splits[0];
-          tag = splits[1];
+          tag = splits[1].toString();
         } else if (!tag) {
           tag = "latest";
         }
@@ -283,26 +288,28 @@ export default class ExpandedJobChart extends Component<PropsType, StateType> {
       }
 
       let imageUrl = this.state.newestImage;
-      let tag = null;
+      let tag = null as string;
 
       if (imageUrl) {
         if (imageUrl.includes(":")) {
           let splits = imageUrl.split(":");
           imageUrl = splits[0];
-          tag = splits[1];
+          tag = splits[1].toString();
         } else if (!tag) {
           tag = "latest";
         }
 
         _.set(values, "image.repository", imageUrl);
-        _.set(values, "image.tag", tag);
+        _.set(values, "image.tag", `${tag}`);
       }
 
       // Weave in preexisting values and convert to yaml
-      conf = yaml.dump({
-        ...(this.state.currentChart.config as Object),
-        ...values,
-      });
+      conf = yaml.dump(
+        {
+          ...(this.state.currentChart.config as Object),
+          ...values,
+        }, { forceQuotes: true }
+      );
     }
 
     api
@@ -326,7 +333,7 @@ export default class ExpandedJobChart extends Component<PropsType, StateType> {
       .catch((err) => {
         let parsedErr =
           err?.response?.data?.errors && err.response.data.errors[0];
-          
+
         if (parsedErr) {
           err = parsedErr;
         }

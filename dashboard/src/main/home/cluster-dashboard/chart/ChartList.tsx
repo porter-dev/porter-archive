@@ -109,7 +109,7 @@ export default class ChartList extends Component<PropsType, StateType> {
   setupWebsocket = (kind: string) => {
     let { currentCluster, currentProject } = this.context;
     let protocol = window.location.protocol == "https:" ? "wss" : "ws";
-    
+
     let ws = new WebSocket(
       `${protocol}://${window.location.host}/api/projects/${currentProject.id}/k8s/${kind}/status?cluster_id=${currentCluster.id}`
     );

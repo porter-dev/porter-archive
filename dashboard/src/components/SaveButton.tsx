@@ -81,12 +81,12 @@ const StatusWrapper = styled.div`
   font-size: 13px;
   color: #ffffff55;
   margin-right: 25px;
-  padding: 0 10px; 
+  padding: 0 10px;
 
-  max-width: 500px; 
+  max-width: 500px;
   white-space: nowrap;
   overflow: hidden;
-  text-overflow: ellipsis; 
+  text-overflow: ellipsis;
 
   > i {
     font-size: 18px;

@@ -1,7 +1,7 @@
 import React, { Component } from "react";
 import styled from "styled-components";
 
-import gradient from "assets/gradient.jpg";
+import gradient from "assets/gradient.png";
 import { Context } from "shared/Context";
 import { InfraType } from "shared/types";
 import api from "shared/api";
@@ -11,6 +11,7 @@ import ClusterPlaceholderContainer from "./ClusterPlaceholderContainer";
 import { RouteComponentProps, withRouter } from "react-router";
 import TabRegion from "components/TabRegion";
 import Provisioner from "../provisioner/Provisioner";
+import FormDebugger from "components/values-form/FormDebugger";
 
 import { setSearchParam } from "shared/routing";
 
@@ -30,11 +31,17 @@ const tabOptionStrings = ["overview", "create-cluster", "provisioner"];
 
 type StateType = {
   infras: InfraType[];
+  pressingCtrl: boolean;
+  pressingK: boolean;
+  showFormDebugger: boolean;
 };
 
 class Dashboard extends Component<PropsType, StateType> {
   state = {
     infras: [] as InfraType[],
+    pressingCtrl: false,
+    pressingK: false,
+    showFormDebugger: false,
   };
 
   refreshInfras = () => {
@@ -54,7 +61,34 @@ class Dashboard extends Component<PropsType, StateType> {
 
   componentDidMount() {
     this.refreshInfras();
+    document.addEventListener("keydown", this.handleKeyDown);
+    document.addEventListener("keyup", this.handleKeyUp);
   }
+
+  componentWillUnmount() {
+    document.removeEventListener("keydown", this.handleKeyDown);
+    document.removeEventListener("keyup", this.handleKeyUp);
+  }
+
+  handleKeyDown = (e: KeyboardEvent): void => {
+    let { pressingK, pressingCtrl } = this.state;
+    if (e.key === "Meta" || e.key === "Control") {
+      this.setState({ pressingCtrl: true });
+    }
+    if (e.key === "k") {
+      this.setState({ pressingK: true });
+    }
+    if (e.key === "z" && pressingK && pressingCtrl) {
+      this.setState({ pressingK: false, pressingCtrl: false });
+      this.setState({ showFormDebugger: !this.state.showFormDebugger });
+    }
+  };
+
+  handleKeyUp = (e: KeyboardEvent): void => {
+    if (e.key === "Meta" || e.key === "Control" || e.key === "k") {
+      this.setState({ pressingCtrl: false, pressingK: false });
+    }
+  };
 
   componentDidUpdate(prevProps: PropsType) {
     if (this.props.projectId && prevProps.projectId !== this.props.projectId) {
@@ -82,7 +116,7 @@ class Dashboard extends Component<PropsType, StateType> {
             <i className="material-icons">info</i>
             Create a cluster to link to this project.
           </Banner>
-          <ProvisionerSettings infras={this.state.infras} />
+          <ProvisionerSettings infras={this.state.infras} provisioner={true} />
         </>
       );
     } else {
@@ -95,47 +129,69 @@ class Dashboard extends Component<PropsType, StateType> {
   };
 
   render() {
-    let { currentProject } = this.context;
+    let { currentProject, capabilities } = this.context;
     let { onShowProjectSettings } = this;
+
+    let tabOptions = [
+      { label: "Project Overview", value: "overview" },
+      { label: "Create a Cluster", value: "create-cluster" },
+      { label: "Provisioner Status", value: "provisioner" },
+    ];
+
+    if (!capabilities?.provisioner) {
+      tabOptions = [{ label: "Project Overview", value: "overview" }];
+    }
+
     return (
       <>
         {currentProject && (
           <DashboardWrapper>
-            <TitleSection>
-              <DashboardIcon>
-                <DashboardImage src={gradient} />
-                <Overlay>
-                  {currentProject && currentProject.name[0].toUpperCase()}
-                </Overlay>
-              </DashboardIcon>
-              <Title>{currentProject && currentProject.name}</Title>
-              {this.context.currentProject.roles.filter((obj: any) => {
-                return obj.user_id === this.context.user.userId;
-              })[0].kind === "admin" && (
-                <i className="material-icons" onClick={onShowProjectSettings}>
-                  more_vert
-                </i>
-              )}
-            </TitleSection>
+            {this.state.showFormDebugger ? (
+              <FormDebugger
+                goBack={() => this.setState({ showFormDebugger: false })}
+              />
+            ) : (
+              <>
+                <TitleSection>
+                  <DashboardIcon>
+                    <DashboardImage src={gradient} />
+                    <Overlay>
+                      {currentProject && currentProject.name[0].toUpperCase()}
+                    </Overlay>
+                  </DashboardIcon>
+                  <Title>{currentProject && currentProject.name}</Title>
+                  {this.context.currentProject.roles.filter((obj: any) => {
+                    return obj.user_id === this.context.user.userId;
+                  })[0].kind === "admin" && (
+                    <i
+                      className="material-icons"
+                      onClick={onShowProjectSettings}
+                    >
+                      more_vert
+                    </i>
+                  )}
+                </TitleSection>
 
-            <InfoSection>
-              <TopRow>
-                <InfoLabel>
-                  <i className="material-icons">info</i> Info
-                </InfoLabel>
-              </TopRow>
-              <Description>
-                Project overview for {currentProject && currentProject.name}.
-              </Description>
-            </InfoSection>
-
-            <TabRegion
-              currentTab={this.currentTab()}
-              setCurrentTab={this.setCurrentTab}
-              options={tabOptions}
-            >
-              {this.renderTabContents()}
-            </TabRegion>
+                <InfoSection>
+                  <TopRow>
+                    <InfoLabel>
+                      <i className="material-icons">info</i> Info
+                    </InfoLabel>
+                  </TopRow>
+                  <Description>
+                    Project overview for {currentProject && currentProject.name}
+                    .
+                  </Description>
+                </InfoSection>
+                <TabRegion
+                  currentTab={this.currentTab()}
+                  setCurrentTab={this.setCurrentTab}
+                  options={tabOptions}
+                >
+                  {this.renderTabContents()}
+                </TabRegion>
+              </>
+            )}
           </DashboardWrapper>
         )}
       </>
@@ -204,7 +260,7 @@ const LineBreak = styled.div`
   width: calc(100% - 0px);
   height: 2px;
   background: #ffffff20;
-  margin: 10px 0px 35px;
+  margin: 10px 0px 20px;
 `;
 
 const Overlay = styled.div`
@@ -228,6 +284,7 @@ const DashboardImage = styled.img`
   height: 45px;
   width: 45px;
   border-radius: 5px;
+  box-shadow: 0 2px 5px 4px #00000011;
 `;
 
 const DashboardIcon = styled.div`

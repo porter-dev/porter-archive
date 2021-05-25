@@ -109,8 +109,9 @@ type RollbackReleaseForm struct {
 // UpgradeReleaseForm represents the accepted values for updating a Helm release
 type UpgradeReleaseForm struct {
 	*ReleaseForm
-	Name   string `json:"name" form:"required"`
-	Values string `json:"values" form:"required"`
+	Name         string `json:"name" form:"required"`
+	Values       string `json:"values" form:"required"`
+	ChartVersion string `json:"version"`
 }
 
 // ChartTemplateForm represents the accepted values for installing a new chart from a template.

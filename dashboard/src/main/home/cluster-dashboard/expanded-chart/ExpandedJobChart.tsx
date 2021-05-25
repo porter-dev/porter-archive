@@ -3,6 +3,7 @@ import styled from "styled-components";
 import yaml from "js-yaml";
 import close from "assets/close.png";
 import _ from "lodash";
+import loading from "assets/loading.gif";
 
 import { ChartType, StorageType, ClusterType } from "shared/types";
 import { Context } from "shared/Context";
@@ -14,8 +15,8 @@ import Loading from "components/Loading";
 import TabRegion from "components/TabRegion";
 import JobList from "./jobs/JobList";
 import SettingsSection from "./SettingsSection";
-import ValuesWrapper from "components/values-form/ValuesWrapper";
-import ValuesForm from "components/values-form/ValuesForm";
+import FormWrapper from "components/values-form/FormWrapper";
+import { PlaceHolder } from "brace";
 
 type PropsType = {
   namespace: string;
@@ -27,6 +28,8 @@ type PropsType = {
 
 type StateType = {
   currentChart: ChartType;
+  imageIsPlaceholder: boolean;
+  newestImage: string;
   loading: boolean;
   jobs: any[];
   tabOptions: any[];
@@ -36,11 +39,15 @@ type StateType = {
   showDeleteOverlay: boolean;
   deleting: boolean;
   saveValuesStatus: string | null;
+  formData: any;
+  valuesToOverride: any;
 };
 
 export default class ExpandedJobChart extends Component<PropsType, StateType> {
   state = {
     currentChart: this.props.currentChart,
+    imageIsPlaceholder: false,
+    newestImage: null as string,
     loading: true,
     jobs: [] as any[],
     tabOptions: [] as any[],
@@ -50,10 +57,12 @@ export default class ExpandedJobChart extends Component<PropsType, StateType> {
     showDeleteOverlay: false,
     deleting: false,
     saveValuesStatus: null as string | null,
+    formData: {} as any,
+    valuesToOverride: {} as any,
   };
 
   // Retrieve full chart data (includes form and values)
-  getChartData = (chart: ChartType) => {
+  getChartData = (chart: ChartType, revision: number) => {
     let { currentProject } = this.context;
     let { currentCluster, currentChart } = this.props;
 
@@ -68,19 +77,49 @@ export default class ExpandedJobChart extends Component<PropsType, StateType> {
         },
         {
           name: chart.name,
-          revision: chart.version,
+          revision: revision,
           id: currentProject.id,
         }
       )
       .then((res) => {
-        this.setState({ currentChart: res.data, loading: false }, () => {
-          this.updateTabs();
-        });
+        let image = res.data?.config?.image?.repository;
+        let tag = res.data?.config?.image?.tag.toString();
+        let newestImage = tag ? image + ":" + tag : image;
+
+        if (
+          (image === "porterdev/hello-porter-job" ||
+            image === "public.ecr.aws/o1j4x7p4/hello-porter-job") &&
+          !this.state.newestImage
+        ) {
+          this.setState(
+            {
+              currentChart: res.data,
+              loading: false,
+              imageIsPlaceholder: true,
+              newestImage: newestImage,
+            },
+            () => {
+              this.updateTabs();
+            }
+          );
+        } else {
+          this.setState(
+            {
+              currentChart: res.data,
+              loading: false,
+              newestImage: newestImage,
+            },
+            () => {
+              this.updateTabs();
+            }
+          );
+        }
       })
       .catch(console.log);
   };
 
-  refreshChart = () => this.getChartData(this.state.currentChart);
+  refreshChart = (revision: number) =>
+    this.getChartData(this.state.currentChart, revision);
 
   mergeNewJob = (newJob: any) => {
     let jobs = this.state.jobs;
@@ -106,9 +145,9 @@ export default class ExpandedJobChart extends Component<PropsType, StateType> {
     let chartVersion = `${chart.chart.metadata.name}-${chart.chart.metadata.version}`;
 
     let { currentCluster, currentProject } = this.context;
-    let protocol = process.env.NODE_ENV == "production" ? "wss" : "ws";
+    let protocol = window.location.protocol == "https:" ? "wss" : "ws";
     let ws = new WebSocket(
-      `${protocol}://${process.env.API_SERVER}/api/projects/${currentProject.id}/k8s/job/status?cluster_id=${currentCluster.id}`
+      `${protocol}://${window.location.host}/api/projects/${currentProject.id}/k8s/job/status?cluster_id=${currentCluster.id}`
     );
     ws.onopen = () => {
       console.log("connected to websocket");
@@ -149,6 +188,69 @@ export default class ExpandedJobChart extends Component<PropsType, StateType> {
     return ws;
   };
 
+  setupCronJobWebsocket = (chart: ChartType) => {
+    let releaseName = chart.name;
+    let releaseNamespace = chart.namespace;
+
+    let { currentCluster, currentProject } = this.context;
+    let protocol = window.location.protocol == "https:" ? "wss" : "ws";
+    let ws = new WebSocket(
+      `${protocol}://${window.location.host}/api/projects/${currentProject.id}/k8s/cronjob/status?cluster_id=${currentCluster.id}`
+    );
+    ws.onopen = () => {
+      console.log("connected to websocket");
+    };
+
+    ws.onmessage = (evt: MessageEvent) => {
+      let event = JSON.parse(evt.data);
+      let object = event.Object;
+      object.metadata.kind = event.Kind;
+
+      // if imageIsPlaceholder is true, update the newestImage and imageIsPlaceholder fields
+      if (
+        (event.event_type == "ADD" || event.event_type == "UPDATE") &&
+        this.state.imageIsPlaceholder
+      ) {
+        // filter job belonging to chart
+        let relNameAnn =
+          event.Object?.metadata?.annotations["meta.helm.sh/release-name"];
+        let relNamespaceAnn =
+          event.Object?.metadata?.annotations["meta.helm.sh/release-namespace"];
+
+        if (
+          relNameAnn &&
+          relNamespaceAnn &&
+          releaseName == relNameAnn &&
+          releaseNamespace == relNamespaceAnn
+        ) {
+          let newestImage =
+            event.Object?.spec?.jobTemplate?.spec?.template?.spec?.containers[0]
+              ?.image;
+          if (
+            newestImage &&
+            newestImage !== "porterdev/hello-porter-job" &&
+            newestImage !== "porterdev/hello-porter-job:latest" &&
+            newestImage !== "public.ecr.aws/o1j4x7p4/hello-porter-job" &&
+            newestImage !== "public.ecr.aws/o1j4x7p4/hello-porter-job:latest"
+          ) {
+            this.setState({ newestImage, imageIsPlaceholder: false });
+          }
+        }
+      }
+    };
+
+    ws.onclose = () => {
+      console.log("closing websocket");
+    };
+
+    ws.onerror = (err: ErrorEvent) => {
+      console.log(err);
+      ws.close();
+    };
+
+    return ws;
+  };
+
   handleSaveValues = (config?: any) => {
     let { currentCluster, setCurrentError, currentProject } = this.context;
     this.setState({ saveValuesStatus: "loading" });
@@ -156,8 +258,26 @@ export default class ExpandedJobChart extends Component<PropsType, StateType> {
     let conf: string;
 
     if (!config) {
+      let values = {};
+      let imageUrl = this.state.newestImage;
+      let tag = null;
+
+      if (imageUrl) {
+        if (imageUrl.includes(":")) {
+          let splits = imageUrl.split(":");
+          imageUrl = splits[0];
+          tag = splits[1].toString();
+        } else if (!tag) {
+          tag = "latest";
+        }
+
+        _.set(values, "image.repository", imageUrl);
+        _.set(values, "image.tag", tag);
+      }
+
       conf = yaml.dump({
         ...this.state.currentChart.config,
+        ...values,
       });
     } else {
       // Convert dotted keys to nested objects
@@ -167,11 +287,29 @@ export default class ExpandedJobChart extends Component<PropsType, StateType> {
         _.set(values, key, config[key]);
       }
 
+      let imageUrl = this.state.newestImage;
+      let tag = null as string;
+
+      if (imageUrl) {
+        if (imageUrl.includes(":")) {
+          let splits = imageUrl.split(":");
+          imageUrl = splits[0];
+          tag = splits[1].toString();
+        } else if (!tag) {
+          tag = "latest";
+        }
+
+        _.set(values, "image.repository", imageUrl);
+        _.set(values, "image.tag", `${tag}`);
+      }
+
       // Weave in preexisting values and convert to yaml
-      conf = yaml.dump({
-        ...(this.state.currentChart.config as Object),
-        ...values,
-      });
+      conf = yaml.dump(
+        {
+          ...(this.state.currentChart.config as Object),
+          ...values,
+        }, { forceQuotes: true }
+      );
     }
 
     api
@@ -190,12 +328,21 @@ export default class ExpandedJobChart extends Component<PropsType, StateType> {
       )
       .then((res) => {
         this.setState({ saveValuesStatus: "successful" });
-        this.refreshChart();
+        this.refreshChart(0);
       })
       .catch((err) => {
-        console.log(err);
-        this.setState({ saveValuesStatus: "error" });
-        setCurrentError(JSON.stringify(err));
+        let parsedErr =
+          err?.response?.data?.errors && err.response.data.errors[0];
+
+        if (parsedErr) {
+          err = parsedErr;
+        }
+
+        this.setState({
+          saveValuesStatus: parsedErr,
+        });
+
+        setCurrentError(parsedErr);
       });
   };
 
@@ -229,23 +376,42 @@ export default class ExpandedJobChart extends Component<PropsType, StateType> {
 
       return date2.getTime() - date1.getTime();
     });
-
-    console.log("JOBS ARE", jobs);
-
-    this.setState({ jobs });
+    let newestImage = jobs[0]?.spec?.template?.spec?.containers[0]?.image;
+    if (
+      newestImage &&
+      newestImage !== "porterdev/hello-porter-job" &&
+      newestImage !== "porterdev/hello-porter-job:latest" &&
+      newestImage !== "public.ecr.aws/o1j4x7p4/hello-porter-job" &&
+      newestImage !== "public.ecr.aws/o1j4x7p4/hello-porter-job:latest"
+    ) {
+      this.setState({ jobs, newestImage, imageIsPlaceholder: false });
+    } else {
+      this.setState({ jobs });
+    }
   };
 
-  renderTabContents = () => {
-    let currentTab = this.state.currentTab;
-
+  renderTabContents = (currentTab: string, submitValues?: any) => {
     switch (currentTab) {
       case "jobs":
+        if (this.state.imageIsPlaceholder) {
+          return (
+            <Placeholder>
+              <TextWrap>
+                <Header>
+                  <Spinner src={loading} /> This job is currently being deployed
+                </Header>
+                Navigate to the "Actions" tab of your GitHub repo to view live
+                build logs.
+              </TextWrap>
+            </Placeholder>
+          );
+        }
         return (
           <TabWrapper>
             <JobList jobs={this.state.jobs} />
             <SaveButton
               text="Rerun Job"
-              onClick={() => this.handleSaveValues()}
+              onClick={() => this.handleSaveValues(submitValues)}
               status={this.state.saveValuesStatus}
               makeFlush={true}
             />
@@ -255,55 +421,23 @@ export default class ExpandedJobChart extends Component<PropsType, StateType> {
         return (
           <SettingsSection
             currentChart={this.state.currentChart}
-            refreshChart={this.refreshChart}
+            refreshChart={() => this.refreshChart(0)}
             setShowDeleteOverlay={(x: boolean) =>
               this.setState({ showDeleteOverlay: x })
             }
           />
         );
       default:
-        if (this.state.tabOptions && currentTab && currentTab.includes("@")) {
-          return (
-            <TabWrapper>
-              <ValuesWrapper
-                formTabs={this.state.tabOptions}
-                onSubmit={this.handleSaveValues}
-                saveValuesStatus={this.state.saveValuesStatus}
-                isInModal={true}
-                currentTab={currentTab}
-                renderSaveButton={false}
-              >
-                {(metaState: any, setMetaState: any) => {
-                  return this.state.tabOptions.map((tab: any, i: number) => {
-                    // If tab is current, render
-                    if (tab.value === currentTab) {
-                      return (
-                        <ValuesForm
-                          key={i}
-                          metaState={metaState}
-                          setMetaState={setMetaState}
-                          sections={tab.sections}
-                          disabled={true}
-                        />
-                      );
-                    }
-                  });
-                }}
-              </ValuesWrapper>
-              <SaveButton
-                text="Rerun Job"
-                onClick={() => this.handleSaveValues()}
-                status={this.state.saveValuesStatus}
-                makeFlush={true}
-              />
-            </TabWrapper>
-          );
-        }
     }
   };
 
   updateTabs() {
     let formData = this.state.currentChart.form;
+    if (formData) {
+      this.setState({
+        formData,
+      });
+    }
     let tabOptions = [] as any[];
 
     // Append universal tabs
@@ -312,7 +446,7 @@ export default class ExpandedJobChart extends Component<PropsType, StateType> {
     if (formData) {
       formData.tabs.map((tab: any, i: number) => {
         tabOptions.push({
-          value: "@" + tab.name,
+          value: tab.name,
           label: tab.label,
           sections: tab.sections,
           context: tab.context,
@@ -350,16 +484,16 @@ export default class ExpandedJobChart extends Component<PropsType, StateType> {
   };
 
   componentDidMount() {
-    let { currentCluster, currentProject } = this.context;
     let { currentChart } = this.state;
 
     window.analytics.track("Opened Chart", {
       chart: currentChart.name,
     });
 
-    this.getChartData(currentChart);
+    this.getChartData(currentChart, currentChart.version);
     this.getJobs(currentChart);
     this.setupJobWebsocket(currentChart);
+    this.setupCronJobWebsocket(currentChart);
   }
 
   handleUninstallChart = () => {
@@ -420,7 +554,7 @@ export default class ExpandedJobChart extends Component<PropsType, StateType> {
               </Title>
               <InfoWrapper>
                 <LastDeployed>
-                  Run {this.state.jobs.length} times <Dot>•</Dot>Last run
+                  Run {this.state.jobs.length} times <Dot>•</Dot>Last template update at
                   {" " + this.readableDate(chart.info.last_deployed)}
                 </LastDeployed>
               </InfoWrapper>
@@ -435,14 +569,22 @@ export default class ExpandedJobChart extends Component<PropsType, StateType> {
             </CloseButton>
           </HeaderWrapper>
 
-          <TabRegion
-            currentTab={this.state.currentTab}
-            setCurrentTab={(x: string) => this.setState({ currentTab: x })}
-            options={this.state.tabOptions}
-            color={null}
-          >
-            {this.renderTabContents()}
-          </TabRegion>
+          <BodyWrapper>
+            <FormWrapper
+              isReadOnly={this.state.imageIsPlaceholder}
+              valuesToOverride={this.state.valuesToOverride}
+              clearValuesToOverride={() =>
+                this.setState({ valuesToOverride: {} })
+              }
+              formData={this.state.formData}
+              tabOptions={this.state.tabOptions}
+              isInModal={true}
+              renderTabContents={this.renderTabContents}
+              tabOptionsOnly={true}
+              onSubmit={this.handleSaveValues}
+              saveValuesStatus={this.state.saveValuesStatus}
+            />
+          </BodyWrapper>
         </StyledExpandedChart>
       </>
     );
@@ -450,6 +592,40 @@ export default class ExpandedJobChart extends Component<PropsType, StateType> {
 }
 
 ExpandedJobChart.contextType = Context;
+
+const TextWrap = styled.div``;
+
+const Header = styled.div`
+  font-weight: 500;
+  color: #aaaabb;
+  font-size: 16px;
+  margin-bottom: 15px;
+`;
+
+const Placeholder = styled.div`
+  height: 100%;
+  padding: 30px;
+  padding-bottom: 70px;
+  font-size: 13px;
+  color: #ffffff44;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+`;
+
+const Spinner = styled.img`
+  width: 15px;
+  height: 15px;
+  margin-right: 12px;
+  margin-bottom: -2px;
+`;
+
+const BodyWrapper = styled.div`
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+`;
 
 const TabWrapper = styled.div`
   height: 100%;
@@ -632,6 +808,7 @@ const StyledExpandedChart = styled.div`
   animation-fill-mode: forwards;
   padding: 25px;
   display: flex;
+  overflow: hidden;
   flex-direction: column;
 
   @keyframes floatIn {

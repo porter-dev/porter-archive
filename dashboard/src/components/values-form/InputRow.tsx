@@ -34,9 +34,11 @@ export default class InputRow extends Component<PropsType, StateType> {
     let { label, value, type, unit, placeholder, width } = this.props;
     return (
       <StyledInputRow>
-        <Label>
-          {label} <Required>{this.props.isRequired ? " *" : null}</Required>
-        </Label>
+        {label && (
+          <Label>
+            {label} <Required>{this.props.isRequired ? " *" : null}</Required>
+          </Label>
+        )}
         <InputWrapper>
           <Input
             readOnly={this.state.readOnly}
@@ -70,17 +72,16 @@ const InputWrapper = styled.div`
   align-items: center;
 `;
 
-const Input = styled.input`
+const Input = styled.input<{ disabled: boolean; width: string }>`
   outline: none;
   border: none;
   font-size: 13px;
   background: #ffffff11;
   border: 1px solid #ffffff55;
+  cursor: ${(props) => (props.disabled ? "not-allowed" : "")};
   border-radius: 3px;
-  width: ${(props: { disabled: boolean; width: string }) =>
-    props.width ? props.width : "270px"};
-  color: ${(props: { disabled: boolean; width: string }) =>
-    props.disabled ? "#ffffff44" : "white"};
+  width: ${(props) => (props.width ? props.width : "270px")};
+  color: ${(props) => (props.disabled ? "#ffffff44" : "white")};
   padding: 5px 10px;
   height: 35px;
 `;

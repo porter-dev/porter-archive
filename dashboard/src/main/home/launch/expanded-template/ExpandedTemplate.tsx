@@ -7,12 +7,15 @@ import api from "shared/api";
 import TemplateInfo from "./TemplateInfo";
 import LaunchTemplate from "./LaunchTemplate";
 import Loading from "components/Loading";
+import { template } from "lodash";
 
 type PropsType = {
   currentTemplate: PorterTemplate;
   currentTab: string;
   setCurrentTemplate: (x: PorterTemplate) => void;
   skipDescription?: boolean;
+  showLaunchFlow: () => void;
+  setForm: (x: any) => void;
 };
 
 type StateType = {
@@ -43,20 +46,20 @@ export default class ExpandedTemplate extends Component<PropsType, StateType> {
   fetchTemplateInfo = () => {
     this.setState({ loading: true });
     let params =
-      this.props.currentTab == "docker"
+      this.props.currentTab == "porter"
         ? { repo_url: process.env.APPLICATION_CHART_REPO_URL }
-        : {};
+        : { repo_url: process.env.ADDON_CHART_REPO_URL };
 
     api
       .getTemplateInfo("<token>", params, {
         name: this.props.currentTemplate.name.toLowerCase().trim(),
-        version: "latest",
+        version: this.props.currentTemplate.currentVersion,
       })
       .then((res) => {
         let { form, values, markdown, metadata } = res.data;
         let keywords = metadata.keywords;
+        this.props.setForm(form);
         this.setState({
-          form,
           values,
           markdown,
           keywords,
@@ -68,7 +71,11 @@ export default class ExpandedTemplate extends Component<PropsType, StateType> {
   };
 
   componentDidUpdate = (prevProps: PropsType) => {
-    if (prevProps.currentTemplate !== this.props.currentTemplate) {
+    if (
+      prevProps.currentTemplate.name !== this.props.currentTemplate.name ||
+      prevProps.currentTemplate.currentVersion !==
+        this.props.currentTemplate.currentVersion
+    ) {
       this.fetchTemplateInfo();
     }
   };
@@ -100,7 +107,15 @@ export default class ExpandedTemplate extends Component<PropsType, StateType> {
           currentTab={this.props.currentTab}
           currentTemplate={this.props.currentTemplate}
           setCurrentTemplate={this.props.setCurrentTemplate}
-          launchTemplate={() => this.setState({ showLaunchTemplate: true })}
+          setCurrentVersion={(version) => {
+            let template = {
+              ...this.props.currentTemplate,
+              currentVersion: version,
+            };
+
+            this.props.setCurrentTemplate(template);
+          }}
+          launchTemplate={this.props.showLaunchFlow}
           markdown={this.state.markdown}
           keywords={this.state.keywords}
         />

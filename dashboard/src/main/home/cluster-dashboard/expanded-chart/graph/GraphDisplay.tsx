@@ -8,6 +8,7 @@ import Edge from "./Edge";
 import InfoPanel from "./InfoPanel";
 import ZoomPanel from "./ZoomPanel";
 import SelectRegion from "./SelectRegion";
+import _ from "lodash";
 
 const zoomConstant = 0.01;
 const panConstant = 0.8;
@@ -100,8 +101,10 @@ export default class GraphDisplay extends Component<PropsType, StateType> {
     let graph = localStorage.getItem(
       `charts.${currentChart.name}-${currentChart.version}`
     );
+
     let nodes = [] as NodeType[];
     let edges = [] as EdgeType[];
+
     if (!graph) {
       nodes = this.createNodes(components);
       edges = this.createEdges(components);
@@ -143,7 +146,7 @@ export default class GraphDisplay extends Component<PropsType, StateType> {
 
   // Live update on rollback/upgrade
   componentDidUpdate(prevProps: PropsType) {
-    if (prevProps.components !== this.props.components) {
+    if (!_.isEqual(prevProps.currentChart, this.props.currentChart)) {
       this.storeChartGraph(prevProps);
       this.getChartGraph();
     }
@@ -244,6 +247,7 @@ export default class GraphDisplay extends Component<PropsType, StateType> {
 
   storeChartGraph = (props?: PropsType) => {
     let useProps = props || this.props;
+
     let { currentChart } = useProps;
     let graph = JSON.parse(JSON.stringify(this.state));
 
@@ -559,9 +563,9 @@ export default class GraphDisplay extends Component<PropsType, StateType> {
           showKindLabels={this.state.showKindLabels}
           isOpen={node === this.state.openedNode}
           // Parameterized to allow setting to null
-          setCurrentNode={(node: NodeType) =>
-            this.setState({ currentNode: node })
-          }
+          setCurrentNode={(node: NodeType) => {
+            this.setState({ currentNode: node });
+          }}
         />
       );
     });

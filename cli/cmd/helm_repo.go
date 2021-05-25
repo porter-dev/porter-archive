@@ -113,7 +113,9 @@ func listHelmRepoCharts(user *api.AuthCheckResponse, client *api.Client, args []
 	fmt.Fprintf(w, "%s\t%s\n", "NAME", "VERSION")
 
 	for _, chart := range charts {
-		fmt.Fprintf(w, "%s\t%s\n", strings.ToLower(chart.Name), chart.Version)
+		for _, version := range chart.Versions {
+			fmt.Fprintf(w, "%s\t%s\n", strings.ToLower(chart.Name), version)
+		}
 	}
 
 	w.Flush()

@@ -7,6 +7,7 @@ import { Context } from "shared/Context";
 
 import { PorterTemplate } from "shared/types";
 import Helper from "components/values-form/Helper";
+import Selector from "components/Selector";
 
 import hardcodedNames from "../hardcodedNameDict";
 
@@ -14,14 +15,21 @@ type PropsType = {
   currentTemplate: any;
   currentTab: string;
   setCurrentTemplate: (x: PorterTemplate) => void;
+  setCurrentVersion: (x: string) => void;
   launchTemplate: () => void;
   markdown: string | null;
   keywords: string[];
 };
 
-type StateType = {};
+type StateType = {
+  currentVersion: string;
+};
 
 export default class TemplateInfo extends Component<PropsType, StateType> {
+  state = {
+    currentVersion: this.props.currentTemplate.currentVersion,
+  };
+
   renderIcon = (icon: string) => {
     if (icon) {
       return <Icon src={icon} />;
@@ -74,7 +82,7 @@ export default class TemplateInfo extends Component<PropsType, StateType> {
           </Banner>
         </>
       );
-    } else if (this.props.currentTab == "docker") {
+    } else if (this.props.currentTab == "porter") {
       return (
         <>
           <Br />
@@ -105,8 +113,8 @@ export default class TemplateInfo extends Component<PropsType, StateType> {
               href="https://docs.getporter.dev/docs/https-and-custom-domains"
             >
               Porter's HTTPS setup guide
-            </Link>{" "}
-            (5 minutes).
+            </Link>
+            &nbsp;(5 minutes).
           </Banner>
         </>
       );
@@ -121,6 +129,15 @@ export default class TemplateInfo extends Component<PropsType, StateType> {
     if (hardcodedNames[name]) {
       name = hardcodedNames[name];
     }
+
+    let versionOptions = this.props.currentTemplate.versions.map(
+      (version: string) => {
+        return {
+          value: version,
+          label: "v" + version,
+        };
+      }
+    );
 
     return (
       <StyledExpandedTemplate>
@@ -137,13 +154,26 @@ export default class TemplateInfo extends Component<PropsType, StateType> {
               : this.renderIcon(currentTemplate.icon)}
             <Title>{name}</Title>
           </Flex>
-          <Button
-            isDisabled={!currentCluster}
-            onClick={!currentCluster ? null : this.props.launchTemplate}
-          >
-            <img src={rocket} />
-            Launch Template
-          </Button>
+          <StyledVersionSelector>
+            <Selector
+              activeValue={this.props.currentTemplate.currentVersion}
+              setActiveValue={(version) =>
+                this.props.setCurrentVersion(version)
+              }
+              options={versionOptions}
+              dropdownLabel="Version"
+              width="150px"
+              dropdownWidth="230px"
+              closeOverlay={true}
+            />
+            <Button
+              isDisabled={!currentCluster}
+              onClick={!currentCluster ? null : this.props.launchTemplate}
+            >
+              <img src={rocket} />
+              Launch Template
+            </Button>
+          </StyledVersionSelector>
         </TitleSection>
         <Helper>{description}</Helper>
         {this.renderTagSection()}
@@ -159,7 +189,6 @@ TemplateInfo.contextType = Context;
 
 const Link = styled.a`
   color: #8590ff;
-  margin-right: 5px;
   cursor: pointer;
   margin-left: 5px;
 `;
@@ -258,6 +287,7 @@ const Button = styled.div`
   display: flex;
   flex-direction: row;
   align-items: center;
+  margin-left: 10px;
 
   > img {
     width: 16px;
@@ -308,4 +338,9 @@ const TitleSection = styled.div`
 
 const StyledExpandedTemplate = styled.div`
   width: 100%;
+`;
+
+const StyledVersionSelector = styled.div`
+  display: flex;
+  font-size: 13px;
 `;

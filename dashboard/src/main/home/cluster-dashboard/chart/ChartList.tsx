@@ -48,15 +48,16 @@ export default class ChartList extends Component<PropsType, StateType> {
           namespace: this.props.namespace,
           cluster_id: currentCluster.id,
           storage: StorageType.Secret,
-          limit: 20,
+          limit: 50,
           skip: 0,
           byDate: false,
           statusFilter: [
             "deployed",
             "uninstalled",
             "pending",
-            "pending_upgrade",
-            "pending_rollback",
+            "pending-install",
+            "pending-upgrade",
+            "pending-rollback",
             "superseded",
             "failed",
           ],
@@ -107,9 +108,10 @@ export default class ChartList extends Component<PropsType, StateType> {
 
   setupWebsocket = (kind: string) => {
     let { currentCluster, currentProject } = this.context;
-    let protocol = process.env.NODE_ENV == "production" ? "wss" : "ws";
+    let protocol = window.location.protocol == "https:" ? "wss" : "ws";
+
     let ws = new WebSocket(
-      `${protocol}://${process.env.API_SERVER}/api/projects/${currentProject.id}/k8s/${kind}/status?cluster_id=${currentCluster.id}`
+      `${protocol}://${window.location.host}/api/projects/${currentProject.id}/k8s/${kind}/status?cluster_id=${currentCluster.id}`
     );
     ws.onopen = () => {
       console.log("connected to websocket");

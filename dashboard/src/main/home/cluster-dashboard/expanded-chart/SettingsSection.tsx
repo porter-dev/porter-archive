@@ -82,7 +82,7 @@ export default class SettingsSection extends Component<PropsType, StateType> {
 
   redeployWithNewImage = (img: string, tag: string) => {
     this.setState({ saveValuesStatus: "loading" });
-    let { currentCluster, currentProject } = this.context;
+    let { currentCluster, currentProject, setCurrentError } = this.context;
 
     // If tag is explicitly declared, parse tag
     let imgSplits = img.split(":");
@@ -130,8 +130,18 @@ export default class SettingsSection extends Component<PropsType, StateType> {
         this.props.refreshChart();
       })
       .catch((err) => {
-        console.log(err);
-        this.setState({ saveValuesStatus: "error" });
+        let parsedErr =
+          err?.response?.data?.errors && err.response.data.errors[0];
+
+        if (parsedErr) {
+          err = parsedErr;
+        }
+
+        this.setState({
+          saveValuesStatus: parsedErr,
+        });
+
+        setCurrentError(parsedErr);
       });
   };
 
@@ -141,7 +151,7 @@ export default class SettingsSection extends Component<PropsType, StateType> {
     }
 
     if (true || this.state.webhookToken) {
-      let webhookText = `curl -X POST 'https://dashboard.getporter.dev/api/webhooks/deploy/${this.state.webhookToken}?commit=YOUR_COMMIT_HASH&repository=IMAGE_REPOSITORY_URL'`;
+      let webhookText = `curl -X POST 'https://dashboard.getporter.dev/api/webhooks/deploy/${this.state.webhookToken}?commit=YOUR_COMMIT_HASH'`;
       return (
         <>
           <Heading>Redeploy Webhook</Heading>
@@ -179,20 +189,6 @@ export default class SettingsSection extends Component<PropsType, StateType> {
             Delete {this.props.currentChart.name}
           </Button>
         </StyledSettingsSection>
-        <SaveButton
-          text="Save Settings"
-          onClick={() =>
-            this.redeployWithNewImage(
-              this.state.selectedImageUrl,
-              this.state.selectedTag
-            )
-          }
-          status={this.state.saveValuesStatus}
-          makeFlush={true}
-          disabled={
-            this.state.selectedImageUrl && this.state.selectedTag ? false : true
-          }
-        />
       </Wrapper>
     );
   }
@@ -286,7 +282,7 @@ const Wrapper = styled.div`
 
 const StyledSettingsSection = styled.div`
   width: 100%;
-  height: calc(100% - 65px);
+  height: calc(100%);
   background: #ffffff11;
   padding: 0 35px;
   padding-bottom: 50px;

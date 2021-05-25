@@ -4,10 +4,10 @@ import "helm.sh/helm/v3/pkg/chart"
 
 // PorterChartList is how a chart gets displayed when listed
 type PorterChartList struct {
-	Name        string `json:"name"`
-	Version     string `json:"version"`
-	Description string `json:"description"`
-	Icon        string `json:"icon"`
+	Name        string   `json:"name"`
+	Versions    []string `json:"versions"`
+	Description string   `json:"description"`
+	Icon        string   `json:"icon"`
 }
 
 // PorterChartRead is a chart with detailed information and a form for reading
@@ -42,18 +42,21 @@ type FormSection struct {
 
 // FormContent is a form's atomic unit
 type FormContent struct {
-	Context  *FormContext `yaml:"context" json:"context"`
-	Type     string       `yaml:"type" json:"type"`
-	Label    string       `yaml:"label" json:"label"`
-	Required bool         `json:"required"`
-	Name     string       `yaml:"name,omitempty" json:"name,omitempty"`
-	Variable string       `yaml:"variable,omitempty" json:"variable,omitempty"`
-	Value    interface{}  `yaml:"value,omitempty" json:"value,omitempty"`
-	Settings struct {
-		Default     interface{} `yaml:"default,omitempty" json:"default,omitempty"`
-		Unit        interface{} `yaml:"unit,omitempty" json:"unit,omitempty"`
-		Options     interface{} `yaml:"options,omitempty" json:"options,omitempty"`
-		Placeholder string      `yaml:"placeholder,omitempty" json:"placeholder,omitempty"`
+	Context     *FormContext `yaml:"context" json:"context"`
+	Type        string       `yaml:"type" json:"type"`
+	Label       string       `yaml:"label" json:"label"`
+	Required    bool         `json:"required"`
+	Name        string       `yaml:"name,omitempty" json:"name,omitempty"`
+	Variable    string       `yaml:"variable,omitempty" json:"variable,omitempty"`
+	Placeholder string       `yaml:"placeholder,omitempty" json:"placeholder,omitempty"`
+	Value       interface{}  `yaml:"value,omitempty" json:"value,omitempty"`
+	Settings    struct {
+		Default            interface{} `yaml:"default,omitempty" json:"default,omitempty"`
+		Unit               interface{} `yaml:"unit,omitempty" json:"unit,omitempty"`
+		OmitUnitFromValue  bool        `yaml:"omitUnitFromValue,omitempty" json:"omitUnitFromValue,omitempty"`
+		DisableAfterLaunch bool        `yaml:"disableAfterLaunch,omitempty" json:"disableAfterLaunch,omitempty"`
+		Options            interface{} `yaml:"options,omitempty" json:"options,omitempty"`
+		Placeholder        string      `yaml:"placeholder,omitempty" json:"placeholder,omitempty"`
 	} `yaml:"settings,omitempty" json:"settings,omitempty"`
 }
 

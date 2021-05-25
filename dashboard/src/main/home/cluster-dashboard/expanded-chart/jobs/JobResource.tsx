@@ -1,9 +1,13 @@
 import React, { MouseEvent, Component } from "react";
 import styled from "styled-components";
 import { Context } from "shared/Context";
+import _ from "lodash";
 
 import api from "shared/api";
 import Logs from "../status/Logs";
+import plus from "assets/plus.svg";
+import closeRounded from "assets/close-rounded.png";
+import KeyValueArray from "components/values-form/KeyValueArray";
 
 type PropsType = {
   job: any;
@@ -11,19 +15,47 @@ type PropsType = {
 
 type StateType = {
   expanded: boolean;
+  configIsExpanded: boolean;
   pods: any[];
 };
 
 export default class JobResource extends Component<PropsType, StateType> {
   state = {
     expanded: false,
+    configIsExpanded: false,
     pods: [] as any[],
   };
 
-  expandJob = () => {
+  expandJob = (event: MouseEvent) => {
+    if (event) {
+      event.stopPropagation();
+    }
+
     this.getPods(() => {
       this.setState({ expanded: !this.state.expanded });
     });
+  };
+
+  stopJob = (event: MouseEvent) => {
+    if (event) {
+      event.stopPropagation();
+    }
+
+    let { currentCluster, currentProject, setCurrentError } = this.context;
+
+    api
+      .stopJob(
+        "<token>",
+        {},
+        {
+          id: currentProject.id,
+          name: this.props.job.metadata?.name,
+          namespace: this.props.job.metadata?.namespace,
+          cluster_id: currentCluster.id,
+        }
+      )
+      .then((res) => {})
+      .catch((err) => setCurrentError(JSON.stringify(err)));
   };
 
   getPods = (callback: () => void) => {
@@ -89,16 +121,79 @@ export default class JobResource extends Component<PropsType, StateType> {
       : "Failed";
   };
 
+  renderConfigSection = () => {
+    let { job } = this.props;
+    let commandString = job?.spec?.template?.spec?.containers[0]?.command?.join(
+      " "
+    );
+    let envArray = job?.spec?.template?.spec?.containers[0]?.env;
+    let envObject = {} as any;
+    envArray &&
+      envArray.forEach((env: any, i: number) => {
+        envObject[env.name] = env.value;
+      });
+
+    // Handle no config to show
+    if (!commandString && _.isEmpty(envObject)) {
+      return;
+    }
+
+    if (!this.state.configIsExpanded) {
+      return (
+        <ExpandConfigBar
+          onClick={() => this.setState({ configIsExpanded: true })}
+        >
+          <img src={plus} />
+          Show Job Config
+        </ExpandConfigBar>
+      );
+    } else {
+      return (
+        <>
+          <ExpandConfigBar
+            onClick={() => this.setState({ configIsExpanded: false })}
+          >
+            <img src={closeRounded} />
+            Hide Job Config
+          </ExpandConfigBar>
+          <ConfigSection>
+            {commandString ? (
+              <>
+                Command: <Command>{commandString}</Command>
+              </>
+            ) : (
+              <DarkMatter size="-18px" />
+            )}
+            {!_.isEmpty(envObject) && (
+              <>
+                <KeyValueArray
+                  envLoader={true}
+                  values={envObject}
+                  label="Environment Variables:"
+                  disabled={true}
+                />
+                <DarkMatter />
+              </>
+            )}
+          </ConfigSection>
+        </>
+      );
+    }
+  };
+
   renderLogsSection = () => {
     if (this.state.expanded) {
       return (
-        <JobLogsWrapper>
-          <Logs
-            selectedPod={this.state.pods[0]}
-            podError={!this.state.pods[0] ? "Pod no longer exists." : ""}
-            rawText={true}
-          />
-        </JobLogsWrapper>
+        <>
+          {this.renderConfigSection()}
+          <JobLogsWrapper>
+            <Logs
+              selectedPod={this.state.pods[0]}
+              podError={!this.state.pods[0] ? "Pod no longer exists." : ""}
+              rawText={true}
+            />
+          </JobLogsWrapper>
+        </>
       );
     }
 
@@ -129,9 +224,25 @@ export default class JobResource extends Component<PropsType, StateType> {
     return <Status color="#ffffff11">Running</Status>;
   };
 
+  renderStopButton = () => {
+    if (!this.props.job.status?.succeeded && !this.props.job.status?.failed) {
+      // look for a sidecar container
+      if (this.props.job?.spec?.template?.spec?.containers.length == 2) {
+        return (
+          <i className="material-icons" onClick={this.stopJob}>
+            stop
+          </i>
+        );
+      }
+    }
+  };
+
   render() {
     let icon =
       "https://user-images.githubusercontent.com/65516095/111258413-4e2c3800-85f3-11eb-8a6a-88e03460f8fe.png";
+    let commandString = this.props.job?.spec?.template?.spec?.containers[0]?.command?.join(
+      " "
+    );
 
     return (
       <StyledJob>
@@ -146,10 +257,10 @@ export default class JobResource extends Component<PropsType, StateType> {
             </Description>
           </Flex>
           <EndWrapper>
+            <CommandString>{commandString}</CommandString>
             {this.renderStatus()}
             <MaterialIconTray disabled={false}>
-              {/* <i className="material-icons"
-              onClick={this.editButtonOnClick}>mode_edit</i> */}
+              {this.renderStopButton()}
               <i className="material-icons" onClick={this.expandJob}>
                 {this.state.expanded ? "expand_less" : "expand_more"}
               </i>
@@ -164,6 +275,55 @@ export default class JobResource extends Component<PropsType, StateType> {
 
 JobResource.contextType = Context;
 
+const DarkMatter = styled.div<{ size?: string }>`
+  width: 100%;
+  margin-bottom: ${(props) => props.size || "-13px"};
+`;
+
+const Command = styled.span`
+  font-family: monospace;
+  color: #aaaabb;
+  margin-left: 7px;
+`;
+
+const ConfigSection = styled.div`
+  padding: 20px 30px;
+  font-size: 13px;
+  font-weight: 500;
+`;
+
+const ExpandConfigBar = styled.div`
+  display: flex;
+  align-items: center;
+  padding-left: 28px;
+  font-size: 13px;
+  height: 40px;
+  width: 100%;
+  background: #3f465288;
+  color: #ffffff;
+  user-select: none;
+  cursor: pointer;
+
+  > img {
+    width: 18px;
+    margin-right: 10px;
+  }
+
+  :hover {
+    background: #3f4652cc;
+  }
+`;
+
+const CommandString = styled.div`
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 300px;
+  color: #ffffff55;
+  margin-right: 27px;
+  font-family: monospace;
+`;
+
 const EndWrapper = styled.div`
   display: flex;
   align-items: center;
@@ -171,7 +331,7 @@ const EndWrapper = styled.div`
 
 const Status = styled.div<{ color: string }>`
   padding: 5px 10px;
-  margin-right: 20px;
+  margin-right: 12px;
   background: ${(props) => props.color};
   font-size: 13px;
   border-radius: 3px;
@@ -208,7 +368,6 @@ const StyledJob = styled.div`
   display: flex;
   flex-direction: column;
   background: #2b2e36;
-  cursor: pointer;
   margin-bottom: 20px;
   border-radius: 5px;
   overflow: hidden;
@@ -223,14 +382,16 @@ const MainRow = styled.div`
   height: 70px;
   width: 100%;
   display: flex;
+  cursor: pointer;
   align-items: center;
   justify-content: space-between;
   padding: 25px;
+  padding-right: 18px;
   border-radius: 5px;
 `;
 
 const MaterialIconTray = styled.div`
-  max-width: 60px;
+  user-select: none;
   display: flex;
   align-items: center;
   justify-content: space-between;

@@ -1,7 +1,7 @@
 import React, { Component } from "react";
 import styled from "styled-components";
 
-import gradient from "assets/gradient.jpg";
+import gradient from "assets/gradient.png";
 import { Context } from "shared/Context";
 import { isAlphanumeric } from "shared/common";
 
@@ -23,6 +23,7 @@ export default class NewProject extends Component<PropsType, StateType> {
   };
 
   render() {
+    let { capabilities } = this.context;
     let { projectName } = this.state;
     return (
       <StyledNewProject>
@@ -58,7 +59,11 @@ export default class NewProject extends Component<PropsType, StateType> {
             width="470px"
           />
         </InputWrapper>
-        <ProvisionerSettings isInNewProject={true} projectName={projectName} />
+        <ProvisionerSettings
+          isInNewProject={true}
+          projectName={projectName}
+          provisioner={capabilities?.provisioner}
+        />
         <Br />
       </StyledNewProject>
     );
@@ -72,123 +77,10 @@ const Br = styled.div`
   height: 100px;
 `;
 
-const Link = styled.a`
-  cursor: pointer;
-  margin-left: 5px;
-`;
-
-const GuideButton = styled.a`
-  display: flex;
-  align-items: center;
-  margin-left: 20px;
-  color: #aaaabb;
-  font-size: 13px;
-  margin-bottom: -1px;
-  border: 1px solid #aaaabb;
-  padding: 5px 10px;
-  padding-left: 6px;
-  border-radius: 5px;
-  cursor: pointer;
-  :hover {
-    background: #ffffff11;
-    color: #ffffff;
-    border: 1px solid #ffffff;
-
-    > i {
-      color: #ffffff;
-    }
-  }
-
-  > i {
-    color: #aaaabb;
-    font-size: 16px;
-    margin-right: 6px;
-  }
-`;
-
-const Flex = styled.div`
-  display: flex;
-  height: 170px;
-  width: 100%;
-  margin-top: -10px;
-  color: #ffffff;
-  align-items: center;
-  justify-content: center;
-`;
-
-const BlockOverlay = styled.div`
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  background: #00000055;
-  top: 0;
-  left: 0;
-`;
-
-const CloseButton = styled.div`
-  position: absolute;
-  display: block;
-  width: 40px;
-  height: 40px;
-  padding: 13px 0 12px 0;
-  z-index: 1;
-  text-align: center;
-  border-radius: 50%;
-  right: 15px;
-  top: 12px;
-  cursor: pointer;
-  :hover {
-    background-color: #ffffff11;
-  }
-`;
-
-const CloseButtonImg = styled.img`
-  width: 14px;
-  margin: 0 auto;
-`;
-
-const DarkMatter = styled.div`
-  margin-top: -30px;
-`;
-
-const FormSection = styled.div`
-  background: #ffffff11;
-  margin-top: 25px;
-  margin-bottom: 27px;
-  background: #26282f;
-  border-radius: 5px;
-  min-height: 170px;
-  padding: 25px;
-  padding-bottom: 15px;
-  font-size: 13px;
-  animation: fadeIn 0.3s 0s;
-  position: relative;
-`;
-
-const Placeholder = styled.div`
-  background: #ffffff11;
-  margin-top: 25px;
-  margin-bottom: 27px;
-  background: #26282f;
-  border-radius: 5px;
-  height: 170px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #ffffff44;
-  font-size: 13px;
-`;
-
 const Required = styled.div`
   margin-left: 8px;
   color: #fc4976;
   display: inline-block;
-`;
-
-const Highlight = styled.div`
-  margin-left: 5px;
-  color: #8590ff;
-  cursor: pointer;
 `;
 
 const Letter = styled.div`
@@ -221,7 +113,7 @@ const ProjectIcon = styled.div`
   position: relative;
   margin-right: 15px;
   font-weight: 400;
-  margin-top: 17px;
+  margin-top: 9px;
 `;
 
 const InputWrapper = styled.div`
@@ -235,98 +127,6 @@ const Warning = styled.span`
     props.highlight ? "#f5cb42" : ""};
   margin-left: ${(props: { highlight: boolean; makeFlush?: boolean }) =>
     props.makeFlush ? "" : "5px"};
-`;
-
-const Icon = styled.img`
-  height: 42px;
-  margin-top: 30px;
-  margin-bottom: 15px;
-  filter: ${(props: { bw?: boolean }) => (props.bw ? "grayscale(1)" : "")};
-`;
-
-const BlockDescription = styled.div`
-  margin-bottom: 12px;
-  color: #ffffff66;
-  text-align: center;
-  font-weight: default;
-  font-size: 13px;
-  padding: 0px 25px;
-  height: 2.4em;
-  font-size: 12px;
-  display: -webkit-box;
-  overflow: hidden;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-`;
-
-const BlockTitle = styled.div`
-  margin-bottom: 12px;
-  width: 80%;
-  text-align: center;
-  font-size: 14px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-`;
-
-const Block = styled.div`
-  align-items: center;
-  user-select: none;
-  border-radius: 5px;
-  display: flex;
-  font-size: 13px;
-  overflow: hidden;
-  font-weight: 500;
-  padding: 3px 0px 5px;
-  flex-direction: column;
-  align-item: center;
-  justify-content: space-between;
-  height: 170px;
-  cursor: ${(props: { disabled?: boolean }) =>
-    props.disabled ? "" : "pointer"};
-  color: #ffffff;
-  position: relative;
-  background: #26282f;
-  box-shadow: 0 3px 5px 0px #00000022;
-  :hover {
-    background: ${(props: { disabled?: boolean }) =>
-      props.disabled ? "" : "#ffffff11"};
-  }
-
-  animation: fadeIn 0.3s 0s;
-  @keyframes fadeIn {
-    from {
-      opacity: 0;
-    }
-    to {
-      opacity: 1;
-    }
-  }
-`;
-
-const ShinyBlock = styled(Block)`
-  background: linear-gradient(
-    36deg,
-    rgba(240, 106, 40, 0.9) 0%,
-    rgba(229, 83, 229, 0.9) 100%
-  );
-  :hover {
-    background: linear-gradient(
-      36deg,
-      rgba(240, 106, 40, 1) 0%,
-      rgba(229, 83, 229, 1) 100%
-    );
-  }
-`;
-
-const BlockList = styled.div`
-  overflow: visible;
-  margin-top: 25px;
-  margin-bottom: 27px;
-  display: grid;
-  grid-column-gap: 25px;
-  grid-row-gap: 25px;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
 `;
 
 const Title = styled.div`

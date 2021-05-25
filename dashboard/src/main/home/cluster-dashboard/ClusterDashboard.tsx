@@ -1,9 +1,7 @@
 import React, { Component } from "react";
 import styled from "styled-components";
-import gradient from "assets/gradient.jpg";
 import monojob from "assets/monojob.png";
 import monoweb from "assets/monoweb.png";
-import sliders from "assets/sliders.svg";
 
 import { Context } from "shared/Context";
 import { ChartType, ClusterType } from "shared/types";

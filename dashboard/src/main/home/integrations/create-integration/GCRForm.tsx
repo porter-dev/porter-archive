@@ -5,7 +5,7 @@ import { Context } from "shared/Context";
 import api from "shared/api";
 
 import InputRow from "components/values-form/InputRow";
-import TextArea from "components/values-form/TextArea";
+import UploadArea from "components/values-form/UploadArea";
 import SaveButton from "components/SaveButton";
 import Heading from "components/values-form/Heading";
 import Helper from "components/values-form/Helper";
@@ -32,18 +32,8 @@ export default class GCRForm extends Component<PropsType, StateType> {
   };
 
   isDisabled = (): boolean => {
-    let {
-      credentialsName,
-      gcpRegion,
-      gcpProjectID,
-      serviceAccountKey,
-    } = this.state;
-    if (
-      credentialsName === "" ||
-      gcpRegion === "" ||
-      serviceAccountKey === "" ||
-      gcpProjectID === ""
-    ) {
+    let { serviceAccountKey, credentialsName } = this.state;
+    if (serviceAccountKey === "" || credentialsName === "") {
       return true;
     }
     return false;
@@ -99,37 +89,26 @@ export default class GCRForm extends Component<PropsType, StateType> {
             setValue={(credentialsName: string) =>
               this.setState({ credentialsName })
             }
+            isRequired={true}
             label="🏷️ Registry Name"
             placeholder="ex: paper-straw"
             width="100%"
           />
           <Heading>GCP Settings</Heading>
           <Helper>Service account credentials for GCP permissions.</Helper>
-          <InputRow
-            type="text"
-            value={this.state.gcpRegion}
-            setValue={(gcpRegion: string) => this.setState({ gcpRegion })}
-            label="📍 GCP Region"
-            placeholder="ex: uranus-north3"
+          <UploadArea
+            setValue={(x: any) => this.setState({ serviceAccountKey: x })}
+            label="🔒 GCP Key Data (JSON)"
+            placeholder="Choose a file or drag it here."
             width="100%"
+            height="100%"
+            isRequired={true}
           />
-          <TextArea
-            value={this.state.serviceAccountKey}
-            setValue={(serviceAccountKey: string) =>
-              this.setState({ serviceAccountKey })
-            }
-            label="🔑 Service Account Key (JSON)"
-            placeholder="(Paste your JSON service account key here)"
-            width="100%"
-          />
-          <InputRow
-            type="text"
-            value={this.state.gcpProjectID}
-            setValue={(gcpProjectID: string) => this.setState({ gcpProjectID })}
-            label="📝 GCP Project ID"
-            placeholder="ex: skynet-dev-172969"
-            width="100%"
-          />
+          <Helper>
+            GCR URI, in the form{" "}
+            <CodeBlock>[gcr_domain]/[gcp_project_id]</CodeBlock>. For example,{" "}
+            <CodeBlock>gcr.io/skynet-dev-172969</CodeBlock>.
+          </Helper>
           <InputRow
             type="text"
             value={this.state.url}
@@ -137,6 +116,7 @@ export default class GCRForm extends Component<PropsType, StateType> {
             label="🔗 GCR URL"
             placeholder="ex: gcr.io/skynet-dev-172969"
             width="100%"
+            isRequired={true}
           />
         </CredentialWrapper>
         <SaveButton
@@ -161,4 +141,15 @@ const CredentialWrapper = styled.div`
 const StyledForm = styled.div`
   position: relative;
   padding-bottom: 75px;
+`;
+
+const CodeBlock = styled.span`
+  display: inline-block;
+  background-color: #1b1d26;
+  color: white;
+  border-radius: 5px;
+  font-family: monospace;
+  padding: 2px 3px;
+  margin-top: -2px;
+  user-select: text;
 `;

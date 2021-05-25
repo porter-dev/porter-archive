@@ -44,6 +44,7 @@ type StateType = {
 };
 
 // TODO: Handle cluster connected but with some failed infras (no successful set)
+// TODO: Set up current view / sidebar tab as dynamic Routes
 class Home extends Component<PropsType, StateType> {
   state = {
     forceSidebar: true,

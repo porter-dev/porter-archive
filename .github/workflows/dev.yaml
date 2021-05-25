@@ -14,8 +14,7 @@ jobs:
           service_account_key: ${{ secrets.GCP_SA_KEY }}
           export_default_credentials: true
       - name: Install kubectl
-        run: |
-          sudo apt-get install kubectl
+        uses: azure/setup-kubectl@v1
       - name: Log in to gcloud CLI
         run: gcloud auth configure-docker
       - name: Checkout
@@ -31,7 +30,9 @@ jobs:
           FEEDBACK_ENDPOINT=${{secrets.FEEDBACK_ENDPOINT}}
           POSTHOG_API_KEY=${{secrets.POSTHOG_API_KEY}}
           POSTHOG_HOST=${{secrets.POSTHOG_HOST}}
-          APPLICATION_CHART_REPO_URL=${{secrets.APPLICATION_CHART_REPO_URL}}
+          SEGMENT_PUBLIC_KEY=${{secrets.SEGMENT_PUBLIC_KEY}}
+          APPLICATION_CHART_REPO_URL=https://charts.dev.getporter.dev
+          ADDON_CHART_REPO_URL=https://chart-addons.dev.getporter.dev
           EOL
       - name: Build
         run: |

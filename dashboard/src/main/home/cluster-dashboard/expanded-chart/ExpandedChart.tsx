@@ -16,9 +16,7 @@ import api from "shared/api";
 import ConfirmOverlay from "components/ConfirmOverlay";
 import Loading from "components/Loading";
 import StatusIndicator from "components/StatusIndicator";
-import TabRegion from "components/TabRegion";
-import ValuesWrapper from "components/values-form/ValuesWrapper";
-import ValuesForm from "components/values-form/ValuesForm";
+import FormWrapper from "components/values-form/FormWrapper";
 import RevisionSection from "./RevisionSection";
 import ValuesYaml from "./ValuesYaml";
 import GraphSection from "./GraphSection";
@@ -26,6 +24,7 @@ import MetricsSection from "./metrics/MetricsSection";
 import ListSection from "./ListSection";
 import StatusSection from "./status/StatusSection";
 import SettingsSection from "./SettingsSection";
+import ChartList from "../chart/ChartList";
 
 type PropsType = {
   namespace: string;
@@ -43,10 +42,9 @@ type StateType = {
   components: ResourceType[];
   podSelectors: string[];
   isPreview: boolean;
+  isUpdatingChart: boolean;
   devOpsMode: boolean;
   tabOptions: any[];
-  tabContents: any;
-  currentTab: string | null;
   saveValuesStatus: string | null;
   forceRefreshRevisions: boolean; // Update revisions after upgrading values
   controllers: Record<string, Record<string, any>>;
@@ -54,6 +52,7 @@ type StateType = {
   url: string | null;
   showDeleteOverlay: boolean;
   deleting: boolean;
+  formData: any;
 };
 
 export default class ExpandedChart extends Component<PropsType, StateType> {
@@ -64,10 +63,9 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
     components: [] as ResourceType[],
     podSelectors: [] as string[],
     isPreview: false,
+    isUpdatingChart: false,
     devOpsMode: localStorage.getItem("devOpsMode") === "true",
     tabOptions: [] as any[],
-    tabContents: [] as any,
-    currentTab: null as string | null,
     saveValuesStatus: null as string | null,
     forceRefreshRevisions: false,
     controllers: {} as Record<string, Record<string, any>>,
@@ -75,6 +73,7 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
     url: null as string | null,
     showDeleteOverlay: false,
     deleting: false,
+    formData: {} as any,
   };
 
   // Retrieve full chart data (includes form and values)
@@ -98,9 +97,10 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
         }
       )
       .then((res) => {
-        this.setState({ currentChart: res.data, loading: false }, () => {
-          this.updateTabs();
-        });
+        this.updateComponents(
+          { currentChart: res.data, loading: false },
+          res.data
+        );
       })
       .catch(console.log);
   };
@@ -152,9 +152,9 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
 
   setupWebsocket = (kind: string, chart: ChartType) => {
     let { currentCluster, currentProject } = this.context;
-    let protocol = process.env.NODE_ENV == "production" ? "wss" : "ws";
+    let protocol = window.location.protocol == "https:" ? "wss" : "ws";
     let ws = new WebSocket(
-      `${protocol}://${process.env.API_SERVER}/api/projects/${currentProject.id}/k8s/${kind}/status?cluster_id=${currentCluster.id}`
+      `${protocol}://${window.location.host}/api/projects/${currentProject.id}/k8s/${kind}/status?cluster_id=${currentCluster.id}`
     );
     ws.onopen = () => {
       console.log("connected to websocket");
@@ -197,9 +197,8 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
     this.setState({ websockets });
   };
 
-  updateResources = () => {
+  updateComponents = (state: any, currentChart: ChartType) => {
     let { currentCluster, currentProject } = this.context;
-    let { currentChart } = this.state;
 
     api
       .getChartComponents(
@@ -216,10 +215,13 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
         }
       )
       .then((res) => {
-        this.setState({
-          components: res.data.Objects,
-          podSelectors: res.data.PodSelectors,
-        });
+        let newState = state || {};
+
+        newState.components = res.data.Objects;
+        newState.podSelectors = res.data.PodSelectors;
+
+        this.setState(newState);
+        this.updateTabs();
       })
       .catch(console.log);
   };
@@ -232,18 +234,22 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
     // Convert dotted keys to nested objects
     let values = {};
 
+    // Weave in preexisting values and convert to yaml
+    if (this.props.currentChart.config) {
+      values = this.props.currentChart.config;
+    }
+
     for (let key in rawValues) {
       _.set(values, key, rawValues[key]);
     }
 
-    // Weave in preexisting values and convert to yaml
     let valuesYaml = yaml.dump({
-      ...(this.state.currentChart.config as Object),
       ...values,
     });
 
     this.setState({ saveValuesStatus: "loading" });
     this.refreshChart();
+
     api
       .upgradeChartValues(
         "<token>",
@@ -270,7 +276,19 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
         });
       })
       .catch((err) => {
-        this.setState({ saveValuesStatus: "error" });
+        let parsedErr =
+          err?.response?.data?.errors && err.response.data.errors[0];
+
+        if (parsedErr) {
+          err = parsedErr;
+        }
+
+        this.setState({
+          saveValuesStatus: err,
+        });
+
+        setCurrentError(parsedErr);
+
         window.analytics.track("Failed to Upgrade Chart", {
           chart: this.state.currentChart.name,
           values: valuesYaml,
@@ -279,15 +297,72 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
       });
   };
 
-  renderTabContents = () => {
-    let {
-      currentTab,
-      podSelectors,
-      components,
-      showRevisions,
-      saveValuesStatus,
-      tabOptions,
-    } = this.state;
+  handleUpgradeVersion = (version: string, cb: () => void) => {
+    let { currentProject, currentCluster, setCurrentError } = this.context;
+
+    // convert current values to yaml
+    let values = this.props.currentChart.config;
+
+    let valuesYaml = yaml.dump({
+      ...values,
+    });
+
+    this.setState({ saveValuesStatus: "loading" });
+    this.refreshChart();
+
+    api
+      .upgradeChartValues(
+        "<token>",
+        {
+          namespace: this.state.currentChart.namespace,
+          storage: StorageType.Secret,
+          values: valuesYaml,
+          version: version,
+        },
+        {
+          id: currentProject.id,
+          name: this.state.currentChart.name,
+          cluster_id: currentCluster.id,
+        }
+      )
+      .then((res) => {
+        this.setState({
+          saveValuesStatus: "successful",
+          forceRefreshRevisions: true,
+        });
+
+        window.analytics.track("Chart Upgraded", {
+          chart: this.state.currentChart.name,
+          values: valuesYaml,
+        });
+
+        cb && cb();
+      })
+      .catch((err) => {
+        let parsedErr =
+          err?.response?.data?.errors && err.response.data.errors[0];
+
+        if (parsedErr) {
+          err = parsedErr;
+        }
+
+        this.setState({
+          saveValuesStatus: err,
+          loading: false,
+        });
+
+        setCurrentError(parsedErr);
+
+        window.analytics.track("Failed to Upgrade Chart", {
+          chart: this.state.currentChart.name,
+          values: valuesYaml,
+          error: err,
+        });
+      });
+  };
+
+  renderTabContents = (currentTab: string) => {
+    let { components, showRevisions } = this.state;
     let { setSidebar } = this.props;
     let { currentChart } = this.state;
     let chart = currentChart;
@@ -331,56 +406,17 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
           <ValuesYaml currentChart={chart} refreshChart={this.refreshChart} />
         );
       default:
-        if (tabOptions && currentTab && currentTab.includes("@")) {
-          return (
-            <ValuesWrapper
-              formTabs={tabOptions}
-              onSubmit={this.onSubmit}
-              saveValuesStatus={this.state.saveValuesStatus}
-              isInModal={true}
-              currentTab={currentTab}
-              renderSaveButton={true}
-            >
-              {(metaState: any, setMetaState: any) => {
-                return tabOptions.map((tab: any, i: number) => {
-                  // If tab is current, render
-                  if (tab.value === currentTab) {
-                    return (
-                      <ValuesForm
-                        key={i}
-                        metaState={metaState}
-                        setMetaState={setMetaState}
-                        sections={tab.sections}
-                        // For env group loader
-                        namespace={this.props.namespace}
-                      />
-                    );
-                  }
-                });
-              }}
-            </ValuesWrapper>
-          );
-        }
     }
   };
 
   updateTabs() {
     let formData = this.state.currentChart.form;
-    let tabOptions = [] as any[];
-
-    // Generate form tabs if form.yaml exists
     if (formData) {
-      formData.tabs.map((tab: any, i: number) => {
-        tabOptions.push({
-          value: "@" + tab.name,
-          label: tab.label,
-          sections: tab.sections,
-          context: tab.context,
-        });
-      });
+      this.setState({ formData });
     }
 
-    // Append universal tabs
+    // Collate non-form tabs
+    let tabOptions = [] as any[];
     tabOptions.push({ label: "Status", value: "status" });
 
     if (this.props.isMetricsInstalled) {
@@ -399,9 +435,9 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
     // Settings tab is always last
     tabOptions.push({ label: "Settings", value: "settings" });
 
-    // Filter tabs if previewing an old revision
-    if (this.state.isPreview) {
-      let liveTabs = ["status", "settings", "deploy"];
+    // Filter tabs if previewing an old revision or updating the chart version
+    if (this.state.isPreview || this.state.isUpdatingChart) {
+      let liveTabs = ["status", "settings", "deploy", "metrics"];
       tabOptions = tabOptions.filter(
         (tab: any) => !liveTabs.includes(tab.value)
       );
@@ -593,6 +629,10 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
         }
       });
 
+      if (!serviceName || !serviceNamespace) {
+        return;
+      }
+
       return (
         <Url>
           <Bolded>Internal URI:</Bolded>
@@ -685,9 +725,9 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
 
             <RevisionSection
               showRevisions={this.state.showRevisions}
-              toggleShowRevisions={() =>
-                this.setState({ showRevisions: !this.state.showRevisions })
-              }
+              toggleShowRevisions={() => {
+                this.setState({ showRevisions: !this.state.showRevisions });
+              }}
               chart={chart}
               refreshChart={this.refreshChart}
               setRevision={this.setRevision}
@@ -696,25 +736,37 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
                 this.setState({ forceRefreshRevisions: false })
               }
               status={status}
+              shouldUpdate={
+                chart.latest_version &&
+                chart.latest_version !== chart.chart.metadata.version
+              }
+              latestVersion={chart.latest_version}
+              upgradeVersion={this.handleUpgradeVersion}
             />
           </HeaderWrapper>
-
-          <TabRegion
-            currentTab={this.state.currentTab}
-            setCurrentTab={(x: string) => this.setState({ currentTab: x })}
-            options={this.state.tabOptions}
-            color={this.state.isPreview ? "#f5cb42" : null}
-            addendum={
-              <TabButton
-                onClick={this.toggleDevOpsMode}
-                devOpsMode={this.state.devOpsMode}
-              >
-                <i className="material-icons">offline_bolt</i> DevOps Mode
-              </TabButton>
-            }
-          >
-            {this.renderTabContents()}
-          </TabRegion>
+          <BodyWrapper>
+            <FormWrapper
+              formData={this.state.formData}
+              tabOptions={this.state.tabOptions}
+              isInModal={true}
+              renderTabContents={this.renderTabContents}
+              onSubmit={this.onSubmit}
+              saveValuesStatus={this.state.saveValuesStatus}
+              externalValues={{
+                namespace: this.props.namespace,
+                clusterId: this.context.currentCluster.id,
+              }}
+              color={this.state.isPreview ? "#f5cb42" : null}
+              addendum={
+                <TabButton
+                  onClick={this.toggleDevOpsMode}
+                  devOpsMode={this.state.devOpsMode}
+                >
+                  <i className="material-icons">offline_bolt</i> DevOps Mode
+                </TabButton>
+              }
+            />
+          </BodyWrapper>
         </StyledExpandedChart>
       </>
     );
@@ -722,6 +774,12 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
 }
 
 ExpandedChart.contextType = Context;
+
+const BodyWrapper = styled.div`
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+`;
 
 const DeleteOverlay = styled.div`
   position: absolute;
@@ -906,6 +964,7 @@ const Title = styled.div`
   font-weight: 500;
   display: flex;
   align-items: center;
+  user-select: text;
 `;
 
 const TitleSection = styled.div`
@@ -949,6 +1008,7 @@ const StyledExpandedChart = styled.div`
   animation-fill-mode: forwards;
   padding: 25px;
   display: flex;
+  overflow: hidden;
   flex-direction: column;
 
   @keyframes floatIn {

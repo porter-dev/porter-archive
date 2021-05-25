@@ -3,6 +3,7 @@ import { RouteComponentProps, withRouter } from "react-router";
 import styled from "styled-components";
 
 import api from "shared/api";
+import { H } from "highlight.run";
 import { Context } from "shared/Context";
 import { PorterUrl } from "shared/routing";
 import { ClusterType, ProjectType } from "shared/types";
@@ -79,6 +80,20 @@ class Home extends Component<PropsType, StateType> {
           this.props.history.push("integrations");
           this.setState({ ghRedirect: false });
         }
+      });
+  };
+
+  getCapabilities = () => {
+    let { currentProject } = this.props;
+    if (!currentProject) return;
+
+    api
+      .getCapabilities("<token>", {}, {})
+      .then((res) => {
+        this.context.setCapabilities(res.data);
+      })
+      .catch((err) => {
+        console.log(err);
       });
   };
 
@@ -202,6 +217,17 @@ class Home extends Component<PropsType, StateType> {
   };
 
   componentDidMount() {
+    let { user } = this.context;
+
+    // Initialize Highlight
+    if (
+      window.location.href.includes("dashboard.getporter.dev") &&
+      !user.email.includes("@getporter.dev")
+    ) {
+      H.init("y2d13lgr");
+      H.identify(user.email, { id: user.id });
+    }
+
     // Handle redirect from DO
     let queryString = window.location.search;
     let urlParams = new URLSearchParams(queryString);
@@ -222,6 +248,7 @@ class Home extends Component<PropsType, StateType> {
     this.setState({ ghRedirect: urlParams.get("gh_oauth") !== null });
     urlParams.delete("gh_oauth");
     this.getProjects(defaultProjectId);
+    this.getCapabilities();
   }
 
   // TODO: Need to handle the following cases. Do a deep rearchitecture (Prov -> Dashboard?) if need be:
@@ -237,6 +264,7 @@ class Home extends Component<PropsType, StateType> {
         this.checkDO();
       } else {
         this.initializeView();
+        this.getCapabilities();
       }
     }
   }
@@ -248,7 +276,7 @@ class Home extends Component<PropsType, StateType> {
       return (
         <DashboardWrapper>
           <Placeholder>
-            <Bold>Porter - Getting Started</Bold>
+            <Bold>Porter - Getting</Bold>
             <br />
             <br />
             1. Navigate to{" "}

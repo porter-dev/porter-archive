@@ -59,17 +59,22 @@ class ClusterSection extends Component<PropsType, StateType> {
             let saved = JSON.parse(
               localStorage.getItem(currentProject.id + "-cluster")
             );
-            if (saved !== "null") {
-              setCurrentCluster(clusters[0]);
+            if (saved && saved !== "null") {
+              // Ensures currentCluster isn't prematurely set (causes issues downstream)
+              let loaded = false;
               for (let i = 0; i < clusters.length; i++) {
                 if (
                   clusters[i].id === saved.id &&
                   clusters[i].project_id === saved.project_id &&
                   clusters[i].name === saved.name
                 ) {
+                  loaded = true;
                   setCurrentCluster(clusters[i]);
                   break;
                 }
+              }
+              if (!loaded) {
+                setCurrentCluster(clusters[0]);
               }
             } else {
               setCurrentCluster(clusters[0]);
@@ -173,10 +178,10 @@ class ClusterSection extends Component<PropsType, StateType> {
 
   render() {
     return (
-      <div>
+      <>
         {this.renderDrawer()}
         {this.renderContents()}
-      </div>
+      </>
     );
   }
 }

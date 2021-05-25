@@ -18,12 +18,10 @@ import KeyValueArray from "./KeyValueArray";
 type PropsType = {
   sections?: Section[];
   metaState?: any;
-  setMetaState?: any;
+  setMetaState?: (key: string, value: any) => void;
   handleEnvChange?: (x: any) => void;
   disabled?: boolean;
-  namespace?: string;
-  clusterId?: number;
-  procfileProcess?: string;
+  externalValues?: any;
 };
 
 type StateType = any;
@@ -31,28 +29,35 @@ type StateType = any;
 // Requires an internal representation unlike other values components because metaState value underdetermines input order
 export default class ValuesForm extends Component<PropsType, StateType> {
   getInputValue = (item: FormElement) => {
-    let key = item.name || item.variable;
-    let value = this.props.metaState[key];
+    if (item) {
+      let key = item.name || item.variable;
+      let value = this.props.metaState[key]?.value;
 
-    if (item.settings && item.settings.unit && value && value.includes) {
-      value = value.split(item.settings.unit)[0];
+      if (
+        item.settings &&
+        item.settings.unit &&
+        value &&
+        value.includes &&
+        !item.settings.omitUnitFromValue
+      ) {
+        value = value.split(item.settings.unit)[0];
+      }
+      return value;
     }
-    return value;
   };
 
   renderSection = (section: Section) => {
-    return section.contents.map((item: FormElement, i: number) => {
-      // If no name is assigned use values.yaml variable as identifier
-      let key = item.name || item.variable;
-
-      // ugly exception to hide start command option when procfile process is set.
-      if (
-        (item.variable === "container.command" ||
-          (item.type == "subtitle" && item.name == "command_description")) &&
-        this.props.procfileProcess
-      ) {
+    return section.contents?.map((item: FormElement, i: number) => {
+      if (!item) {
         return;
       }
+
+      // If no name is assigned use values.yaml variable as identifier
+      let key = item.name || item.variable;
+      let isDisabled =
+        item.settings?.disableAfterLaunch &&
+        !this.props.externalValues?.isLaunch;
+      isDisabled = isDisabled || this.props.disabled;
 
       switch (item.type) {
         case "heading":
@@ -62,8 +67,8 @@ export default class ValuesForm extends Component<PropsType, StateType> {
         case "resource-list":
           if (Array.isArray(item.value)) {
             return (
-              <ResourceList key={i}>
-                {item.value.map((resource: any, i: number) => {
+              <ResourceList key={key}>
+                {item.value?.map((resource: any, i: number) => {
                   return (
                     <ExpandableResource
                       key={i}
@@ -79,10 +84,12 @@ export default class ValuesForm extends Component<PropsType, StateType> {
         case "checkbox":
           return (
             <CheckboxRow
-              key={i}
-              checked={this.props.metaState[key]}
+              key={key}
+              disabled={isDisabled}
+              isRequired={item.required}
+              checked={this.props.metaState[key]?.value}
               toggle={() =>
-                this.props.setMetaState({ [key]: !this.props.metaState[key] })
+                this.props.setMetaState(key, !this.props.metaState[key]?.value)
               }
               label={item.label}
             />
@@ -90,101 +97,102 @@ export default class ValuesForm extends Component<PropsType, StateType> {
         case "env-key-value-array":
           return (
             <KeyValueArray
-              key={i}
+              key={key}
               envLoader={true}
-              namespace={this.props.namespace}
-              clusterId={this.props.clusterId}
-              values={this.props.metaState[key]}
+              externalValues={this.props.externalValues}
+              values={this.props.metaState[key]?.value}
               setValues={(x: any) => {
-                this.props.setMetaState({ [key]: x });
+                this.props.setMetaState(key, x);
 
                 // Need to pull env vars out of form.yaml for createGHA build env vars
                 if (
                   this.props.handleEnvChange &&
                   key === "container.env.normal"
                 ) {
-                  this.props.handleEnvChange(x);
+                  // this.props.handleEnvChange(x);
                 }
               }}
               label={item.label}
-              disabled={this.props.disabled}
+              disabled={isDisabled}
+              secretOption={true}
             />
           );
         case "key-value-array":
           return (
             <KeyValueArray
-              key={i}
-              namespace={this.props.namespace}
-              clusterId={this.props.clusterId}
-              values={this.props.metaState[key]}
-              setValues={(x: any) => {
-                this.props.setMetaState({ [key]: x });
-
-                // Need to pull env vars out of form.yaml for createGHA build env vars
-                if (
-                  this.props.handleEnvChange &&
-                  key === "container.env.normal"
-                ) {
-                  this.props.handleEnvChange(x);
-                }
-              }}
+              key={key}
+              externalValues={this.props.externalValues}
+              values={this.props.metaState[key]?.value}
+              setValues={(x: any) => this.props.setMetaState(key, x)}
               label={item.label}
-              disabled={this.props.disabled}
+              disabled={isDisabled}
             />
           );
         case "array-input":
           return (
             <InputArray
-              key={i}
-              values={this.props.metaState[key]}
+              key={key}
+              values={this.props.metaState[key]?.value}
               setValues={(x: string[]) => {
-                this.props.setMetaState({ [key]: x });
+                this.props.setMetaState(key, x);
               }}
               label={item.label}
-              disabled={this.props.disabled}
+              disabled={isDisabled}
             />
           );
         case "string-input":
           return (
             <InputRow
-              key={i}
+              key={key}
+              placeholder={item.placeholder}
               isRequired={item.required}
               type="text"
               value={this.getInputValue(item)}
               setValue={(x: string) => {
-                if (item.settings && item.settings.unit && x !== "") {
+                if (
+                  item.settings &&
+                  item.settings.unit &&
+                  x !== "" &&
+                  !item.settings.omitUnitFromValue
+                ) {
                   x = x + item.settings.unit;
                 }
-                this.props.setMetaState({ [key]: x });
+                this.props.setMetaState(key, x);
               }}
               label={item.label}
               unit={item.settings ? item.settings.unit : null}
-              disabled={this.props.disabled}
+              disabled={isDisabled}
             />
           );
         case "string-input-password":
           return (
             <InputRow
-              key={i}
+              key={key}
               isRequired={item.required}
               type="password"
               value={this.getInputValue(item)}
               setValue={(x: string) => {
-                if (item.settings && item.settings.unit && x !== "") {
+                if (
+                  item.settings &&
+                  item.settings.unit &&
+                  x !== "" &&
+                  !item.settings.omitUnitFromValue
+                ) {
                   x = x + item.settings.unit;
                 }
-                this.props.setMetaState({ [key]: x });
+                this.props.setMetaState(key, x);
               }}
               label={item.label}
               unit={item.settings ? item.settings.unit : null}
-              disabled={this.props.disabled}
+              disabled={isDisabled}
             />
           );
         case "number-input":
           return (
             <InputRow
-              key={i}
+              key={key}
               isRequired={item.required}
+              placeholder={item.placeholder}
               type="number"
               value={this.getInputValue(item)}
               setValue={(x: number) => {
@@ -194,24 +202,28 @@ export default class ValuesForm extends Component<PropsType, StateType> {
                 }
 
                 // Convert to string if unit is set
-                if (item.settings && item.settings.unit) {
+                if (
+                  item.settings &&
+                  item.settings.unit &&
+                  !item.settings.omitUnitFromValue
+                ) {
                   val = x.toString();
                   val = val + item.settings.unit;
                 }
 
-                this.props.setMetaState({ [key]: val });
+                this.props.setMetaState(key, val);
               }}
               label={item.label}
               unit={item.settings ? item.settings.unit : null}
-              disabled={this.props.disabled}
+              disabled={isDisabled}
             />
           );
         case "select":
           return (
             <SelectRow
-              key={i}
-              value={this.props.metaState[key]}
-              setActiveValue={(val) => this.props.setMetaState({ [key]: val })}
+              key={key}
+              value={this.props.metaState[key]?.value}
+              setActiveValue={(val) => this.props.setMetaState(key, val)}
               options={item.settings.options}
               dropdownLabel=""
               label={item.label}
@@ -220,9 +232,9 @@ export default class ValuesForm extends Component<PropsType, StateType> {
         case "provider-select":
           return (
             <SelectRow
-              key={i}
-              value={this.props.metaState[key]}
-              setActiveValue={(val) => this.props.setMetaState({ [key]: val })}
+              key={key}
+              value={this.props.metaState[key]?.value}
+              setActiveValue={(val) => this.props.setMetaState(key, val)}
               options={[
                 { value: "aws", label: "Amazon Web Services (AWS)" },
                 { value: "gcp", label: "Google Cloud Platform (GCP)" },
@@ -237,37 +249,47 @@ export default class ValuesForm extends Component<PropsType, StateType> {
         case "base-64":
           return (
             <Base64InputRow
-              key={i}
+              key={key}
               isRequired={item.required}
               type="text"
               value={this.getInputValue(item)}
               setValue={(x: string) => {
-                if (item.settings && item.settings.unit && x !== "") {
+                if (
+                  item.settings &&
+                  item.settings.unit &&
+                  x !== "" &&
+                  !item.settings.omitUnitFromValue
+                ) {
                   x = x + item.settings.unit;
                 }
-                this.props.setMetaState({ [key]: btoa(x) });
+                this.props.setMetaState(key, btoa(x));
               }}
               label={item.label}
               unit={item.settings ? item.settings.unit : null}
-              disabled={this.props.disabled}
+              disabled={isDisabled}
             />
           );
         case "base-64-password":
           return (
             <Base64InputRow
-              key={i}
+              key={key}
               isRequired={item.required}
               type="password"
               value={this.getInputValue(item)}
               setValue={(x: string) => {
-                if (item.settings && item.settings.unit && x !== "") {
+                if (
+                  item.settings &&
+                  item.settings.unit &&
+                  x !== "" &&
+                  !item.settings.omitUnitFromValue
+                ) {
                   x = x + item.settings.unit;
                 }
-                this.props.setMetaState({ [key]: btoa(x) });
+                this.props.setMetaState(key, btoa(x));
               }}
               label={item.label}
               unit={item.settings ? item.settings.unit : null}
-              disabled={this.props.disabled}
+              disabled={isDisabled}
             />
           );
         default:
@@ -277,10 +299,13 @@ export default class ValuesForm extends Component<PropsType, StateType> {
 
   renderFormContents = () => {
     if (this.props.metaState) {
-      return this.props.sections.map((section: Section, i: number) => {
+      return this.props.sections?.map((section: Section, i: number) => {
         // Hide collapsible section if deciding field is false
         if (section.show_if) {
-          if (!this.props.metaState[section.show_if]) {
+          if (
+            !this.props.metaState[section.show_if] ||
+            this.props.metaState[section.show_if].value === false
+          ) {
             return null;
           }
         }

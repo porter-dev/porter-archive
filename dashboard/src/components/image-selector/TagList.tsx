@@ -8,6 +8,8 @@ import { Context } from "shared/Context";
 
 import Loading from "../Loading";
 
+var ecrRepoRegex = /(^[a-zA-Z0-9][a-zA-Z0-9-_]*)\.dkr\.ecr(\-fips)?\.([a-zA-Z0-9][a-zA-Z0-9-_]*)\.amazonaws\.com(\.cn)?/gim;
+
 type PropsType = {
   setSelectedTag: (x: string) => void;
   selectedTag: string;
@@ -32,8 +34,16 @@ export default class TagList extends Component<PropsType, StateType> {
 
   componentDidMount() {
     const { currentProject } = this.context;
+
     let splits = this.props.selectedImageUrl.split("/");
     let repoName = splits[splits.length - 1];
+
+    let matches = this.props.selectedImageUrl.match(ecrRepoRegex);
+
+    if (matches) {
+      repoName = this.props.selectedImageUrl.split(/\/(.+)/)[1];
+    }
+
     api
       .getImageTags(
         "<token>",

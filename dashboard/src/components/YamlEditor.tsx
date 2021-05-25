@@ -2,8 +2,8 @@ import React, { Component } from "react";
 import styled from "styled-components";
 import AceEditor from "react-ace";
 
+import "shared/ace-porter-theme";
 import "ace-builds/src-noconflict/mode-yaml";
-import "ace-builds/src-noconflict/theme-terminal";
 
 type PropsType = {
   value: string;
@@ -45,7 +45,7 @@ class YamlEditor extends Component<PropsType, StateType> {
           <AceEditor
             mode="yaml"
             value={this.props.value}
-            theme="terminal"
+            theme="porter"
             onChange={this.props.onChange}
             name="codeEditor"
             readOnly={this.props.readOnly}
@@ -53,6 +53,10 @@ class YamlEditor extends Component<PropsType, StateType> {
             height={this.props.height}
             width="100%"
             style={{ borderRadius: "5px" }}
+            showPrintMargin={false}
+            showGutter={true}
+            highlightActiveLine={true}
+            fontSize={14}
           />
         </Editor>
       </Holder>

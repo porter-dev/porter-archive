@@ -230,6 +230,15 @@ const deletePod = baseApi<
   return `/api/projects/${pathParams.id}/k8s/pods/${pathParams.namespace}/${pathParams.name}`;
 });
 
+const getPodEvents = baseApi<
+  {
+    cluster_id: number;
+  },
+  { name: string; namespace: string; id: number }
+>("GET", (pathParams) => {
+  return `/api/projects/${pathParams.id}/k8s/pods/${pathParams.namespace}/${pathParams.name}/events/list`;
+});
+
 const deleteProject = baseApi<{}, { id: number }>("DELETE", (pathParams) => {
   return `/api/projects/${pathParams.id}`;
 });
@@ -463,6 +472,7 @@ const getJobPods = baseApi<
 const getMatchingPods = baseApi<
   {
     cluster_id: number;
+    namespace: string;
     selectors: string[];
   },
   { id: number }
@@ -616,9 +626,7 @@ const getTemplateInfo = baseApi<
   return `/api/templates/${pathParams.name}/${pathParams.version}`;
 });
 
-const getAddonTemplates = baseApi("GET", "/api/templates");
-
-const getApplicationTemplates = baseApi<
+const getTemplates = baseApi<
   {
     repo_url?: string;
   },
@@ -627,6 +635,10 @@ const getApplicationTemplates = baseApi<
 
 const getUser = baseApi<{}, { id: number }>("GET", (pathParams) => {
   return `/api/users/${pathParams.id}`;
+});
+
+const getCapabilities = baseApi<{}, {}>("GET", () => {
+  return `/api/capabilities`;
 });
 
 const linkGithubProject = baseApi<
@@ -716,6 +728,7 @@ const upgradeChartValues = baseApi<
     namespace: string;
     storage: StorageType;
     values: string;
+    version?: string;
   },
   {
     id: number;
@@ -753,6 +766,7 @@ const createConfigMap = baseApi<
     name: string;
     namespace: string;
     variables: Record<string, string>;
+    secret_variables?: Record<string, string>;
   },
   { id: number; cluster_id: number }
 >("POST", (pathParams) => {
@@ -765,6 +779,7 @@ const updateConfigMap = baseApi<
     name: string;
     namespace: string;
     variables: Record<string, string>;
+    secret_variables?: Record<string, string>;
   },
   { id: number; cluster_id: number }
 >("POST", (pathParams) => {
@@ -781,6 +796,14 @@ const deleteConfigMap = baseApi<
   { id: number }
 >("DELETE", (pathParams) => {
   return `/api/projects/${pathParams.id}/k8s/configmap/delete`;
+});
+
+const stopJob = baseApi<
+  {},
+  { name: string; namespace: string; id: number; cluster_id: number }
+>("POST", (pathParams) => {
+  let { id, name, namespace, cluster_id } = pathParams;
+  return `/api/projects/${id}/k8s/jobs/${namespace}/${name}/stop?cluster_id=${cluster_id}`;
 });
 
 // Bundle export to allow default api import (api.<method> is more readable)
@@ -816,6 +839,7 @@ export default {
   destroyDOKS,
   getBranchContents,
   getBranches,
+  getCapabilities,
   getChart,
   getCharts,
   getChartComponents,
@@ -837,6 +861,7 @@ export default {
   getNamespaces,
   getNGINXIngresses,
   getOAuthIds,
+  getPodEvents,
   getProcfileContents,
   getProjectClusters,
   getProjectRegistries,
@@ -849,8 +874,7 @@ export default {
   getRepos,
   getRevisions,
   getTemplateInfo,
-  getAddonTemplates,
-  getApplicationTemplates,
+  getTemplates,
   getUser,
   linkGithubProject,
   listConfigMaps,
@@ -864,4 +888,5 @@ export default {
   updateUser,
   updateConfigMap,
   upgradeChartValues,
+  stopJob,
 };

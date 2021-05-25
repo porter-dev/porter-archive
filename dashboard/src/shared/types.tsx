@@ -34,6 +34,7 @@ export interface ChartType {
   config: any;
   version: number;
   namespace: string;
+  latest_version: string;
 }
 
 export interface ResourceType {
@@ -72,7 +73,8 @@ export enum StorageType {
 // PorterTemplate represents a bundled Porter template
 export interface PorterTemplate {
   name: string;
-  version: string;
+  versions: string[];
+  currentVersion: string;
   description: string;
   icon: string;
 }
@@ -104,10 +106,13 @@ export interface FormElement {
   required?: boolean;
   name?: string;
   variable?: string;
+  placeholder?: string;
   value?: any;
   settings?: {
     default?: number | string | boolean;
     options?: any[];
+    omitUnitFromValue?: boolean;
+    disableAfterLaunch?: boolean;
     unit?: string;
   };
 }
@@ -166,4 +171,9 @@ export interface ActionConfigType {
   branch: string;
   image_repo_uri: string;
   git_repo_id: number;
+}
+
+export interface CapabilityType {
+  github: boolean;
+  provisioner: boolean;
 }

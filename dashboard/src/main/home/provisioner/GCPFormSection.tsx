@@ -7,6 +7,7 @@ import api from "shared/api";
 import { Context } from "shared/Context";
 import { InfraType } from "shared/types";
 
+import UploadArea from "components/values-form/UploadArea";
 import SelectRow from "components/values-form/SelectRow";
 import CheckboxRow from "components/values-form/CheckboxRow";
 import InputRow from "components/values-form/InputRow";
@@ -26,7 +27,7 @@ type PropsType = RouteComponentProps & {
 type StateType = {
   gcpRegion: string;
   gcpProjectId: string;
-  gcpKeyData: string;
+  gcpKeyData: any;
   clusterName: string;
   clusterNameSet: boolean;
   selectedInfras: { value: string; label: string }[];
@@ -318,7 +319,7 @@ class GCPFormSection extends Component<PropsType, StateType> {
   render() {
     let { setSelectedProvisioner } = this.props;
     let { gcpRegion, gcpProjectId, gcpKeyData, selectedInfras } = this.state;
-
+    console.log("gcpkeydata", gcpKeyData);
     return (
       <StyledGCPFormSection>
         <FormSection>
@@ -352,15 +353,15 @@ class GCPFormSection extends Component<PropsType, StateType> {
             width="100%"
             isRequired={true}
           />
-          <InputRow
-            type="password"
-            value={gcpKeyData}
-            setValue={(x: string) => this.setState({ gcpKeyData: x })}
+          <UploadArea
+            setValue={(x: any) => this.setState({ gcpKeyData: x })}
             label="🔒 GCP Key Data (JSON)"
-            placeholder="○ ○ ○ ○ ○ ○ ○ ○ ○"
+            placeholder="Choose a file or drag it here."
             width="100%"
+            height="100%"
             isRequired={true}
           />
+
           <Br />
           <Heading>GCP Resources</Heading>
           <Helper>
@@ -387,7 +388,7 @@ class GCPFormSection extends Component<PropsType, StateType> {
             .
           </Helper>
           <CheckboxRow
-            required={true}
+            isRequired={true}
             checked={this.state.provisionConfirmed}
             toggle={() =>
               this.setState({

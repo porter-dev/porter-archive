@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"strings"
@@ -33,10 +34,15 @@ import (
 	v1beta1 "k8s.io/api/extensions/v1beta1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 	"k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/cache"
+	"k8s.io/client-go/tools/remotecommand"
 
 	"github.com/porter-dev/porter/internal/config"
 )
@@ -64,7 +70,7 @@ func (a *Agent) CreateConfigMap(name string, namespace string, configMap map[str
 		context.TODO(),
 		&v1.ConfigMap{
 			ObjectMeta: metav1.ObjectMeta{
-				Name: name,
+				Name:      name,
 				Namespace: namespace,
 				Labels: map[string]string{
 					"porter": "true",
@@ -76,27 +82,114 @@ func (a *Agent) CreateConfigMap(name string, namespace string, configMap map[str
 	)
 }
 
-// UpdateConfigMap updates the configmap given its name and namespace
-func (a *Agent) UpdateConfigMap(name string, namespace string, configMap map[string]string) (*v1.ConfigMap, error) {
-	return a.Clientset.CoreV1().ConfigMaps(namespace).Update(
+// CreateLinkedSecret creates a secret given the key-value pairs and namespace. Values are
+// base64 encoded
+func (a *Agent) CreateLinkedSecret(name, namespace, cmName string, data map[string][]byte) (*v1.Secret, error) {
+	return a.Clientset.CoreV1().Secrets(namespace).Create(
 		context.TODO(),
-		&v1.ConfigMap{
+		&v1.Secret{
 			ObjectMeta: metav1.ObjectMeta{
-				Name: name,
+				Name:      name,
 				Namespace: namespace,
 				Labels: map[string]string{
-					"porter": "true",
+					"porter":    "true",
+					"configmap": cmName,
 				},
 			},
-			Data: configMap,
+			Data: data,
 		},
-		metav1.UpdateOptions{},
+		metav1.CreateOptions{},
 	)
 }
 
+type mergeConfigMapData struct {
+	Data map[string]*string `json:"data"`
+}
+
+// UpdateConfigMap updates the configmap given its name and namespace
+func (a *Agent) UpdateConfigMap(name string, namespace string, configMap map[string]string) error {
+	cmData := make(map[string]*string)
+
+	for key, val := range configMap {
+		valCopy := val
+		cmData[key] = &valCopy
+
+		if len(val) == 0 {
+			cmData[key] = nil
+		}
+	}
+
+	mergeCM := &mergeConfigMapData{
+		Data: cmData,
+	}
+
+	patchBytes, err := json.Marshal(mergeCM)
+
+	if err != nil {
+		return err
+	}
+
+	_, err = a.Clientset.CoreV1().ConfigMaps(namespace).Patch(
+		context.Background(),
+		name,
+		types.MergePatchType,
+		patchBytes,
+		metav1.PatchOptions{},
+	)
+
+	return err
+}
+
+type mergeLinkedSecretData struct {
+	Data map[string]*[]byte `json:"data"`
+}
+
+// UpdateLinkedSecret updates the secret given its name and namespace
+func (a *Agent) UpdateLinkedSecret(name, namespace, cmName string, data map[string][]byte) error {
+	secretData := make(map[string]*[]byte)
+
+	for key, val := range data {
+		valCopy := val
+		secretData[key] = &valCopy
+
+		if len(val) == 0 {
+			secretData[key] = nil
+		}
+	}
+
+	mergeSecret := &mergeLinkedSecretData{
+		Data: secretData,
+	}
+
+	patchBytes, err := json.Marshal(mergeSecret)
+
+	if err != nil {
+		return err
+	}
+
+	_, err = a.Clientset.CoreV1().Secrets(namespace).Patch(
+		context.TODO(),
+		name,
+		types.MergePatchType,
+		patchBytes,
+		metav1.PatchOptions{},
+	)
+
+	return err
+}
+
 // DeleteConfigMap deletes the configmap given its name and namespace
-func (a *Agent) DeleteConfigMap(name string, namespace string) (error) {
+func (a *Agent) DeleteConfigMap(name string, namespace string) error {
 	return a.Clientset.CoreV1().ConfigMaps(namespace).Delete(
+		context.TODO(),
+		name,
+		metav1.DeleteOptions{},
+	)
+}
+
+// DeleteLinkedSecret deletes the secret given its name and namespace
+func (a *Agent) DeleteLinkedSecret(name, namespace string) error {
+	return a.Clientset.CoreV1().Secrets(namespace).Delete(
 		context.TODO(),
 		name,
 		metav1.DeleteOptions{},
@@ -118,6 +211,16 @@ func (a *Agent) ListConfigMaps(namespace string) (*v1.ConfigMapList, error) {
 		context.TODO(),
 		metav1.ListOptions{
 			LabelSelector: "porter=true",
+		},
+	)
+}
+
+// ListEvents lists the events of a given object.
+func (a *Agent) ListEvents(name string, namespace string) (*v1.EventList, error) {
+	return a.Clientset.CoreV1().Events(namespace).List(
+		context.TODO(),
+		metav1.ListOptions{
+			FieldSelector: fmt.Sprintf("involvedObject.name=%s,involvedObject.namespace=%s", name, namespace),
 		},
 	)
 }
@@ -237,9 +340,9 @@ func (a *Agent) GetCronJob(c grapher.Object) (*batchv1beta1.CronJob, error) {
 }
 
 // GetPodsByLabel retrieves pods with matching labels
-func (a *Agent) GetPodsByLabel(selector string) (*v1.PodList, error) {
+func (a *Agent) GetPodsByLabel(selector string, namespace string) (*v1.PodList, error) {
 	// Search in all namespaces for matching pods
-	return a.Clientset.CoreV1().Pods("").List(
+	return a.Clientset.CoreV1().Pods(namespace).List(
 		context.TODO(),
 		metav1.ListOptions{
 			LabelSelector: selector,
@@ -258,19 +361,34 @@ func (a *Agent) DeletePod(namespace string, name string) error {
 
 // GetPodLogs streams real-time logs from a given pod.
 func (a *Agent) GetPodLogs(namespace string, name string, conn *websocket.Conn) error {
+	// get the pod to read in the list of contains
+	pod, err := a.Clientset.CoreV1().Pods(namespace).Get(
+		context.Background(),
+		name,
+		metav1.GetOptions{},
+	)
+
+	if err != nil {
+		return fmt.Errorf("Cannot get pod %s: %s", name, err.Error())
+	}
+
+	container := pod.Spec.Containers[0].Name
+
 	tails := int64(400)
 
 	// follow logs
 	podLogOpts := v1.PodLogOptions{
 		Follow:    true,
 		TailLines: &tails,
+		Container: container,
 	}
+
 	req := a.Clientset.CoreV1().Pods(namespace).GetLogs(name, &podLogOpts)
 
 	podLogs, err := req.Stream(context.TODO())
 
 	if err != nil {
-		return fmt.Errorf("Cannot open log stream for pod %s", name)
+		return fmt.Errorf("Cannot open log stream for pod %s: %s", name, err.Error())
 	}
 	defer podLogs.Close()
 
@@ -321,6 +439,55 @@ func (a *Agent) GetPodLogs(namespace string, name string, conn *websocket.Conn) 
 	}
 }
 
+// StopJobWithJobSidecar sends a termination signal to a job running with a sidecar
+func (a *Agent) StopJobWithJobSidecar(namespace, name string) error {
+	jobPods, err := a.GetJobPods(namespace, name)
+
+	if err != nil {
+		return err
+	}
+
+	podName := jobPods[0].ObjectMeta.Name
+
+	restConf, err := a.RESTClientGetter.ToRESTConfig()
+
+	restConf.GroupVersion = &schema.GroupVersion{
+		Group:   "api",
+		Version: "v1",
+	}
+
+	restConf.NegotiatedSerializer = runtime.NewSimpleNegotiatedSerializer(runtime.SerializerInfo{})
+
+	restClient, err := rest.RESTClientFor(restConf)
+
+	if err != nil {
+		return err
+	}
+
+	req := restClient.Post().
+		Resource("pods").
+		Name(podName).
+		Namespace(namespace).
+		SubResource("exec")
+
+	req.Param("command", "./signal.sh")
+	req.Param("container", "sidecar")
+	req.Param("stdin", "true")
+	req.Param("stdout", "false")
+	req.Param("tty", "false")
+
+	exec, err := remotecommand.NewSPDYExecutor(restConf, "POST", req.URL())
+
+	if err != nil {
+		return err
+	}
+
+	return exec.Stream(remotecommand.StreamOptions{
+		Tty:   false,
+		Stdin: strings.NewReader("./signal.sh"),
+	})
+}
+
 // StreamControllerStatus streams controller status. Supports Deployment, StatefulSet, ReplicaSet, and DaemonSet
 // TODO: Support Jobs
 func (a *Agent) StreamControllerStatus(conn *websocket.Conn, kind string) error {
@@ -328,6 +495,7 @@ func (a *Agent) StreamControllerStatus(conn *websocket.Conn, kind string) error 
 		a.Clientset,
 		0,
 	)
+
 	var informer cache.SharedInformer
 
 	// Spins up an informer depending on kind. Convert to lowercase for robustness
@@ -342,6 +510,8 @@ func (a *Agent) StreamControllerStatus(conn *websocket.Conn, kind string) error 
 		informer = factory.Apps().V1().DaemonSets().Informer()
 	case "job":
 		informer = factory.Batch().V1().Jobs().Informer()
+	case "cronjob":
+		informer = factory.Batch().V1beta1().CronJobs().Informer()
 	}
 
 	stopper := make(chan struct{})

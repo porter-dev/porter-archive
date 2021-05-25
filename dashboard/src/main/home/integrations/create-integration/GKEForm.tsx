@@ -48,6 +48,32 @@ export default class GKEForm extends Component<PropsType, StateType> {
     // TODO: implement once api is restructured
   };
 
+  // readFile = (env: string) => {
+  //   console.log(env)
+  //   event.preventDefault()
+  //   const reader = new FileReader()
+  //   reader.onload = async (e) => {
+  //     let text = (e.target.result)
+  //     let env = this.parseEnv(text, null)
+
+  //     for (let key in env) {
+  //       // filter duplicate keys
+  //       let dup = this.state.values.filter((el) => {
+  //         console.log(el, key)
+  //         if (el["key"] == key) {
+  //           return false
+  //         }
+  //       })
+
+  //       console.log(dup)
+
+  //       this.state.values.push({ key, value: env[key] });
+  //     }
+  //     this.setState({ values: this.state.values });
+  //   }
+  //   reader.readAsText(event.target.files[0], 'UTF-8')
+  // }
+
   render() {
     return (
       <StyledForm>
@@ -94,6 +120,19 @@ export default class GKEForm extends Component<PropsType, StateType> {
           disabled={this.isDisabled()}
           onClick={this.isDisabled() ? null : this.handleSubmit}
         />
+
+        {/* <UploadButton
+      onClick={()=>{
+        // document.getElementById("file").click();
+        this.setState({ showEditorModal: true });
+      }}
+      >
+      <img src={upload} /> Copy from File
+      {<input id='file' hidden type="file" onChange={(event) => {
+        this.readFile(event)
+        event.currentTarget.value = null
+      }}/>}
+    </UploadButton> */}
       </StyledForm>
     );
   }

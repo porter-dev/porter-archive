@@ -8,7 +8,7 @@ import { Context } from "shared/Context";
 import { ClusterType } from "shared/types";
 
 import InputRow from "components/values-form/InputRow";
-import KeyValueArray from "components/values-form/KeyValueArray";
+import EnvGroupArray, { KeyValueType } from "./EnvGroupArray";
 import Selector from "components/Selector";
 import Helper from "components/values-form/Helper";
 import SaveButton from "components/SaveButton";
@@ -25,7 +25,7 @@ type StateType = {
   envGroupName: string;
   selectedNamespace: string;
   namespaceOptions: any[];
-  envVariables: any;
+  envVariables: KeyValueType[];
   submitStatus: string;
 };
 
@@ -36,7 +36,7 @@ export default class CreateEnvGroup extends Component<PropsType, StateType> {
     envGroupName: "",
     selectedNamespace: "default",
     namespaceOptions: [] as any[],
-    envVariables: {} as any,
+    envVariables: [] as KeyValueType[],
     submitStatus: "",
   };
 
@@ -52,13 +52,49 @@ export default class CreateEnvGroup extends Component<PropsType, StateType> {
 
   onSubmit = () => {
     this.setState({ submitStatus: "loading" });
+
+    let apiEnvVariables: Record<string, string> = {};
+    let secretEnvVariables: Record<string, string> = {};
+
+    let envVariables = this.state.envVariables;
+
+    envVariables
+      .filter((envVar: KeyValueType, index: number, self: KeyValueType[]) => {
+        // remove any collisions that are marked as deleted and are duplicates
+        let numCollisions = self.reduce((n, _envVar: KeyValueType) => {
+          return n + (_envVar.key === envVar.key ? 1 : 0);
+        }, 0);
+
+        if (numCollisions == 1) {
+          return true;
+        } else {
+          return (
+            index ===
+            self.findIndex(
+              (_envVar: KeyValueType) =>
+                _envVar.key === envVar.key && !_envVar.deleted
+            )
+          );
+        }
+      })
+      .forEach((envVar: KeyValueType) => {
+        if (!envVar.deleted) {
+          if (envVar.hidden) {
+            secretEnvVariables[envVar.key] = envVar.value;
+          } else {
+            apiEnvVariables[envVar.key] = envVar.value;
+          }
+        }
+      });
+
     api
       .createConfigMap(
         "<token>",
         {
           name: this.state.envGroupName,
           namespace: this.state.selectedNamespace,
-          variables: this.state.envVariables,
+          variables: apiEnvVariables,
+          secret_variables: secretEnvVariables,
         },
         {
           id: this.context.currentProject.id,
@@ -159,10 +195,12 @@ export default class CreateEnvGroup extends Component<PropsType, StateType> {
             Set environment variables for your secrets and environment-specific
             configuration.
           </Helper>
-          <KeyValueArray
+          <EnvGroupArray
             namespace={this.state.selectedNamespace}
             values={this.state.envVariables}
             setValues={(x: any) => this.setState({ envVariables: x })}
+            fileUpload={true}
+            secretOption={true}
           />
           <SaveButton
             disabled={this.isDisabled()}

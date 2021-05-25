@@ -2,29 +2,35 @@ import React, { Component } from "react";
 import styled from "styled-components";
 import Modal from "../../main/home/modals/Modal";
 import LoadEnvGroupModal from "../../main/home/modals/LoadEnvGroupModal";
+import EnvEditorModal from "../../main/home/modals/EnvEditorModal";
 
 import sliders from "assets/sliders.svg";
+import upload from "assets/upload.svg";
+import { keysIn } from "lodash";
 
 type PropsType = {
   label?: string;
   values: any;
-  setValues: (x: any) => void;
+  setValues?: (x: any) => void;
   width?: string;
   disabled?: boolean;
-  namespace?: string;
-  clusterId?: number;
+  externalValues?: any;
   envLoader?: boolean;
+  fileUpload?: boolean;
+  secretOption?: boolean;
 };
 
 type StateType = {
   values: any[];
   showEnvModal: boolean;
+  showEditorModal: boolean;
 };
 
 export default class KeyValueArray extends Component<PropsType, StateType> {
   state = {
     values: [] as any[],
     showEnvModal: false,
+    showEditorModal: false,
   };
 
   componentDidMount() {
@@ -74,10 +80,28 @@ export default class KeyValueArray extends Component<PropsType, StateType> {
     }
   };
 
+  renderHiddenOption = (hidden: boolean, i: number) => {
+    if (this.props.secretOption && hidden) {
+      return (
+        <HideButton>
+          <i className="material-icons">lock</i>
+        </HideButton>
+      );
+    }
+  };
+
   renderInputList = () => {
     return (
       <>
         {this.state.values.map((entry: any, i: number) => {
+          // Preprocess non-string env values set via raw Helm values
+          let { value } = entry;
+          if (typeof value === "object") {
+            value = JSON.stringify(value);
+          } else if (typeof value === "number" || typeof value === "boolean") {
+            value = value.toString();
+          }
+
           return (
             <InputWrapper key={i}>
               <Input
@@ -91,13 +115,14 @@ export default class KeyValueArray extends Component<PropsType, StateType> {
                   let obj = this.valuesToObject();
                   this.props.setValues(obj);
                 }}
-                disabled={this.props.disabled}
+                disabled={this.props.disabled || value.includes("PORTERSECRET")}
+                spellCheck={false}
               />
               <Spacer />
               <Input
                 placeholder="ex: value"
                 width="270px"
-                value={entry.value}
+                value={value}
                 onChange={(e: any) => {
                   this.state.values[i].value = e.target.value;
                   this.setState({ values: this.state.values });
@@ -105,9 +130,12 @@ export default class KeyValueArray extends Component<PropsType, StateType> {
                   let obj = this.valuesToObject();
                   this.props.setValues(obj);
                 }}
-                disabled={this.props.disabled}
+                disabled={this.props.disabled || value.includes("PORTERSECRET")}
+                type={value.includes("PORTERSECRET") ? "password" : "text"}
+                spellCheck={false}
               />
               {this.renderDeleteButton(i)}
+              {this.renderHiddenOption(value.includes("PORTERSECRET"), i)}
             </InputWrapper>
           );
         })}
@@ -124,8 +152,8 @@ export default class KeyValueArray extends Component<PropsType, StateType> {
           height="342px"
         >
           <LoadEnvGroupModal
-            namespace={this.props.namespace}
-            clusterId={this.props.clusterId}
+            namespace={this.props.externalValues?.namespace}
+            clusterId={this.props.externalValues?.clusterId}
             closeModal={() => this.setState({ showEnvModal: false })}
             setValues={(values: any) => {
               this.props.setValues(values);
@@ -135,6 +163,96 @@ export default class KeyValueArray extends Component<PropsType, StateType> {
         </Modal>
       );
     }
+  };
+
+  renderEditorModal = () => {
+    if (this.state.showEditorModal) {
+      return (
+        <Modal
+          onRequestClose={() => this.setState({ showEditorModal: false })}
+          width="60%"
+          height="80%"
+        >
+          <EnvEditorModal
+            closeModal={() => this.setState({ showEditorModal: false })}
+            setEnvVariables={(envFile: string) => this.readFile(envFile)}
+          />
+        </Modal>
+      );
+    }
+  };
+
+  // Parses src into an Object
+  parseEnv = (src: any, options: any) => {
+    const debug = Boolean(options && options.debug);
+    const obj = {} as Record<string, string>;
+    const NEWLINE = "\n";
+    const RE_INI_KEY_VAL = /^\s*([\w.-]+)\s*=\s*(.*)?\s*$/;
+    const RE_NEWLINES = /\\n/g;
+    const NEWLINES_MATCH = /\n|\r|\r\n/;
+
+    // convert Buffers before splitting into lines and processing
+    src
+      .toString()
+      .split(NEWLINES_MATCH)
+      .forEach(function (line: any, idx: any) {
+        // matching "KEY' and 'VAL' in 'KEY=VAL'
+        const keyValueArr = line.match(RE_INI_KEY_VAL);
+        // matched?
+        if (keyValueArr != null) {
+          const key = keyValueArr[1];
+          // default undefined or missing values to empty string
+          let val = keyValueArr[2] || "";
+          const end = val.length - 1;
+          const isDoubleQuoted = val[0] === '"' && val[end] === '"';
+          const isSingleQuoted = val[0] === "'" && val[end] === "'";
+
+          // if single or double quoted, remove quotes
+          if (isSingleQuoted || isDoubleQuoted) {
+            val = val.substring(1, end);
+
+            // if double quoted, expand newlines
+            if (isDoubleQuoted) {
+              val = val.replace(RE_NEWLINES, NEWLINE);
+            }
+          } else {
+            // remove surrounding whitespace
+            val = val.trim();
+          }
+
+          obj[key] = val;
+        } else if (debug) {
+          console.log(
+            `did not match key and value when parsing line ${idx + 1}: ${line}`
+          );
+        }
+      });
+
+    return obj;
+  };
+
+  readFile = (env: string) => {
+    let envObj = this.parseEnv(env, null);
+    let push = true;
+
+    for (let key in envObj) {
+      for (var i = 0; i < this.state.values.length; i++) {
+        let existingKey = this.state.values[i]["key"];
+        if (key === existingKey) {
+          this.state.values[i]["value"] = envObj[key];
+          push = false;
+        }
+      }
+
+      if (push) {
+        this.state.values.push({ key, value: envObj[key] });
+      }
+    }
+
+    this.setState({ values: this.state.values }, () => {
+      let obj = this.valuesToObject();
+      this.props.setValues(obj);
+    });
   };
 
   render() {
@@ -156,7 +274,7 @@ export default class KeyValueArray extends Component<PropsType, StateType> {
                 <i className="material-icons">add</i> Add Row
               </AddRowButton>
               <Spacer />
-              {this.props.namespace && this.props.envLoader && (
+              {this.props.externalValues?.namespace && this.props.envLoader && (
                 <LoadButton
                   onClick={() =>
                     this.setState({ showEnvModal: !this.state.showEnvModal })
@@ -165,35 +283,24 @@ export default class KeyValueArray extends Component<PropsType, StateType> {
                   <img src={sliders} /> Load from Env Group
                 </LoadButton>
               )}
+              {this.props.fileUpload && (
+                <UploadButton
+                  onClick={() => {
+                    this.setState({ showEditorModal: true });
+                  }}
+                >
+                  <img src={upload} /> Copy from File
+                </UploadButton>
+              )}
             </InputWrapper>
           )}
         </StyledInputArray>
         {this.renderEnvModal()}
+        {this.renderEditorModal()}
       </>
     );
   }
 }
-
-const CloseOverlay = styled.div`
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  z-index: 999;
-  background: #202227;
-  animation: fadeIn 0.2s 0s;
-  opacity: 0;
-  animation-fill-mode: forwards;
-  @keyframes fadeIn {
-    from {
-      opacity: 0;
-    }
-    to {
-      opacity: 1;
-    }
-  }
-`;
 
 const Spacer = styled.div`
   width: 10px;
@@ -244,6 +351,26 @@ const LoadButton = styled(AddRowButton)`
   }
 `;
 
+const UploadButton = styled(AddRowButton)`
+  background: none;
+  position: relative;
+  border: 1px solid #ffffff55;
+  > i {
+    color: #ffffff44;
+    font-size: 16px;
+    margin-left: 8px;
+    margin-right: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  > img {
+    width: 14px;
+    margin-left: 10px;
+    margin-right: 12px;
+  }
+`;
+
 const DeleteButton = styled.div`
   width: 15px;
   height: 15px;
@@ -262,6 +389,17 @@ const DeleteButton = styled.div`
     cursor: pointer;
     :hover {
       color: #ffffff88;
+    }
+  }
+`;
+
+const HideButton = styled(DeleteButton)`
+  margin-top: -5px;
+  > i {
+    font-size: 19px;
+    cursor: default;
+    :hover {
+      color: #ffffff44;
     }
   }
 `;

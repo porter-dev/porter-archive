@@ -1,6 +1,8 @@
 import React, { Component } from "react";
 import styled from "styled-components";
 import { Context } from "shared/Context";
+import * as Anser from "anser";
+import api from "shared/api";
 
 type PropsType = {
   selectedPod: any;
@@ -9,16 +11,18 @@ type PropsType = {
 };
 
 type StateType = {
-  logs: string[];
+  logs: Anser.AnserJsonEntry[][];
   ws: any;
   scroll: boolean;
+  currentTab: string;
 };
 
 export default class Logs extends Component<PropsType, StateType> {
   state = {
-    logs: [] as string[],
+    logs: [] as Anser.AnserJsonEntry[][],
     ws: null as any,
     scroll: true,
+    currentTab: "Application",
   };
 
   ws = null as any;
@@ -28,10 +32,14 @@ export default class Logs extends Component<PropsType, StateType> {
     if (smooth) {
       this.parentRef.current.lastElementChild.scrollIntoView({
         behavior: "smooth",
+        block: "nearest",
+        inline: "start",
       });
     } else {
       this.parentRef.current.lastElementChild.scrollIntoView({
         behavior: "auto",
+        block: "nearest",
+        inline: "start",
       });
     }
   };
@@ -56,10 +64,33 @@ export default class Logs extends Component<PropsType, StateType> {
     }
 
     if (this.state.logs.length == 0) {
-      return <Message>No logs to display from this pod.</Message>;
+      return (
+        <Message>
+          No logs to display from this pod.
+          <Highlight onClick={this.refreshLogs}>
+            <i className="material-icons">autorenew</i>
+            Refresh
+          </Highlight>
+        </Message>
+      );
     }
+
     return this.state.logs.map((log, i) => {
-      return <Log key={i}>{log}</Log>;
+      return (
+        <Log key={i}>
+          {this.state.logs[i].map((ansi, j) => {
+            if (ansi.clearLine) {
+              return null;
+            }
+
+            return (
+              <LogSpan key={i + "." + j} ansi={ansi}>
+                {ansi.content.replace(/ /g, "\u00a0")}
+              </LogSpan>
+            );
+          })}
+        </Log>
+      );
     });
   };
 
@@ -67,48 +98,104 @@ export default class Logs extends Component<PropsType, StateType> {
     let { currentCluster, currentProject } = this.context;
     let { selectedPod } = this.props;
     if (!selectedPod?.metadata?.name) return;
-    let protocol = process.env.NODE_ENV == "production" ? "wss" : "ws";
+    let protocol = window.location.protocol == "https:" ? "wss" : "ws";
     this.ws = new WebSocket(
-      `${protocol}://${process.env.API_SERVER}/api/projects/${currentProject.id}/k8s/${selectedPod?.metadata?.namespace}/pod/${selectedPod?.metadata?.name}/logs?cluster_id=${currentCluster.id}&service_account_id=${currentCluster.service_account_id}`
+      `${protocol}://${window.location.host}/api/projects/${currentProject.id}/k8s/${selectedPod?.metadata?.namespace}/pod/${selectedPod?.metadata?.name}/logs?cluster_id=${currentCluster.id}&service_account_id=${currentCluster.service_account_id}`
     );
 
-    this.ws.onopen = () => {
-      console.log("connected to websocket");
-    };
+    this.ws.onopen = () => {};
 
     this.ws.onmessage = (evt: MessageEvent) => {
-      this.setState({ logs: [...this.state.logs, evt.data] }, () => {
+      let ansiLog = Anser.ansiToJson(evt.data);
+
+      let logs = this.state.logs;
+      logs.push(ansiLog);
+
+      this.setState({ logs: logs }, () => {
         if (this.state.scroll) {
           this.scrollToBottom(false);
         }
       });
     };
 
-    this.ws.onerror = (err: ErrorEvent) => {
-      console.log("websocket error:", err);
-    };
+    this.ws.onerror = (err: ErrorEvent) => {};
 
-    this.ws.onclose = () => {
-      console.log("closing pod logs");
-    };
+    this.ws.onclose = () => {};
   };
 
   refreshLogs = () => {
-    if (this.ws) {
+    let { selectedPod } = this.props;
+    if (this.ws && this.state.currentTab == "Application") {
       this.ws.close();
       this.ws = null;
       this.setState({ logs: [] });
       this.setupWebsocket();
     }
+    this.retrieveEvents(selectedPod);
+  };
+
+  componentDidUpdate = (prevProps: any, prevState: any) => {
+    if (prevState.currentTab !== this.state.currentTab) {
+      let { selectedPod } = this.props;
+
+      this.setState({ logs: [] });
+
+      if (this.state.currentTab == "Application") {
+        this.setupWebsocket();
+        this.scrollToBottom(false);
+        return;
+      }
+
+      this.retrieveEvents(selectedPod);
+    }
+  };
+
+  retrieveEvents = (selectedPod: any) => {
+    api
+      .getPodEvents(
+        "<token>",
+        {
+          cluster_id: this.context.currentCluster.id,
+        },
+        {
+          name: selectedPod?.metadata?.name,
+          namespace: selectedPod?.metadata?.namespace,
+          id: this.context.currentProject.id,
+        }
+      )
+      .then((res) => {
+        let logs = [] as Anser.AnserJsonEntry[][];
+        // TODO: column view
+        // logs.push(Anser.ansiToJson("\u001b[33;5;196mEvent Type\u001b[0m \t || \t \u001b[43m\u001b[34m\tReason\t\u001b[0m \t ||\tMessage"))
+
+        res.data.items.forEach((evt: any) => {
+          let ansiEvtType = evt.type == "Warning" ? "\u001b[31m" : "\u001b[32m";
+          let ansiLog = Anser.ansiToJson(
+            `${ansiEvtType}${evt.type}\u001b[0m \t \u001b[43m\u001b[34m\t${evt.reason} \u001b[0m \t ${evt.message}`
+          );
+          logs.push(ansiLog);
+        });
+        this.setState({ logs: logs });
+        console.log(res);
+      })
+      .catch((err) => {
+        console.log(err);
+      });
   };
 
   componentDidMount() {
-    this.setupWebsocket();
-    this.scrollToBottom(false);
+    let { selectedPod } = this.props;
+
+    if (this.state.currentTab == "Application") {
+      this.setupWebsocket();
+      this.scrollToBottom(false);
+      return;
+    }
+
+    this.retrieveEvents(selectedPod);
   }
 
   componentWillUnmount() {
-    console.log("log unmount");
     if (this.ws) {
       this.ws.close();
     }
@@ -119,6 +206,24 @@ export default class Logs extends Component<PropsType, StateType> {
       return (
         <LogStreamAlt>
           <Wrapper ref={this.parentRef}>{this.renderLogs()}</Wrapper>
+          <LogTabs>
+            <Tab
+              onClick={() => {
+                this.setState({ currentTab: "Application" });
+              }}
+              clicked={this.state.currentTab == "Application"}
+            >
+              Application
+            </Tab>
+            <Tab
+              onClick={() => {
+                this.setState({ currentTab: "System" });
+              }}
+              clicked={this.state.currentTab == "System"}
+            >
+              System
+            </Tab>
+          </LogTabs>
         </LogStreamAlt>
       );
     }
@@ -126,6 +231,24 @@ export default class Logs extends Component<PropsType, StateType> {
     return (
       <LogStream>
         <Wrapper ref={this.parentRef}>{this.renderLogs()}</Wrapper>
+        <LogTabs>
+          <Tab
+            onClick={() => {
+              this.setState({ currentTab: "Application" });
+            }}
+            clicked={this.state.currentTab == "Application"}
+          >
+            Application
+          </Tab>
+          <Tab
+            onClick={() => {
+              this.setState({ currentTab: "System" });
+            }}
+            clicked={this.state.currentTab == "System"}
+          >
+            System
+          </Tab>
+        </LogTabs>
         <Options>
           <Scroll
             onClick={() => {
@@ -159,6 +282,20 @@ export default class Logs extends Component<PropsType, StateType> {
 
 Logs.contextType = Context;
 
+const Highlight = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 8px;
+  color: #8590ff;
+  cursor: pointer;
+
+  > i {
+    font-size: 16px;
+    margin-right: 3px;
+  }
+`;
+
 const Scroll = styled.div`
   align-items: center;
   display: flex;
@@ -175,6 +312,22 @@ const Scroll = styled.div`
     margin-left: 10px;
     margin-right: 6px;
     pointer-events: none;
+  }
+`;
+
+const Tab = styled.div`
+  background: ${(props: { clicked: boolean }) =>
+    props.clicked ? "#503559" : "#7c548a"};
+  padding: 0px 10px;
+  margin: 0px 7px 0px 0px;
+  align-items: center;
+  display: flex;
+  cursor: pointer;
+  height: 100%;
+  border-radius: 8px 8px 0px 0px;
+
+  :hover {
+    background: #503559;
   }
 `;
 
@@ -195,6 +348,16 @@ const Refresh = styled.div`
   :hover {
     background: #2468d6;
   }
+`;
+
+const LogTabs = styled.div`
+  width: 100%;
+  height: 25px;
+  background: #202227;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-end;
 `;
 
 const Options = styled.div`
@@ -246,4 +409,15 @@ const Message = styled.div`
 
 const Log = styled.div`
   font-family: monospace;
+`;
+
+const LogSpan = styled.span`
+  font-family: monospace, sans-serif;
+  font-size: 12px;
+  font-weight: ${(props: { ansi: Anser.AnserJsonEntry }) =>
+    props.ansi?.decoration && props.ansi?.decoration == "bold" ? "700" : "400"};
+  color: ${(props: { ansi: Anser.AnserJsonEntry }) =>
+    props.ansi?.fg ? `rgb(${props.ansi?.fg})` : "white"};
+  background-color: ${(props: { ansi: Anser.AnserJsonEntry }) =>
+    props.ansi?.bg ? `rgb(${props.ansi?.bg})` : "transparent"};
 `;

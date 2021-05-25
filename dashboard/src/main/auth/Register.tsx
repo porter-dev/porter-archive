@@ -2,6 +2,7 @@ import React, { ChangeEvent, Component, useContext } from "react";
 import styled from "styled-components";
 import logo from "assets/logo.png";
 import github from "assets/github-icon.png";
+import GoogleIcon from "assets/GoogleIcon";
 
 import api from "shared/api";
 import { emailRegex } from "shared/regex";
@@ -17,6 +18,9 @@ type StateType = {
   confirmPassword: string;
   emailError: boolean;
   confirmPasswordError: boolean;
+  hasGithub: boolean;
+  hasGoogle: boolean;
+  hasBasic: boolean;
 };
 
 export default class Register extends Component<PropsType, StateType> {
@@ -26,6 +30,9 @@ export default class Register extends Component<PropsType, StateType> {
     confirmPassword: "",
     emailError: false,
     confirmPasswordError: false,
+    hasBasic: true,
+    hasGithub: true,
+    hasGoogle: false,
   };
 
   handleKeyDown = (e: any) => {
@@ -34,6 +41,18 @@ export default class Register extends Component<PropsType, StateType> {
 
   componentDidMount() {
     document.addEventListener("keydown", this.handleKeyDown);
+
+    // get capabilities to case on github
+    api
+      .getCapabilities("", {}, {})
+      .then((res) => {
+        this.setState({
+          hasGithub: res.data?.github_login,
+          hasGoogle: res.data?.google_login,
+          hasBasic: res.data?.basic_login,
+        });
+      })
+      .catch((err) => console.log(err));
   }
 
   componentWillUnmount() {
@@ -42,6 +61,11 @@ export default class Register extends Component<PropsType, StateType> {
 
   githubRedirect = () => {
     let redirectUrl = `/api/oauth/login/github`;
+    window.location.href = redirectUrl;
+  };
+
+  googleRedirect = () => {
+    let redirectUrl = `/api/oauth/login/google`;
     window.location.href = redirectUrl;
   };
 
@@ -106,7 +130,33 @@ export default class Register extends Component<PropsType, StateType> {
     }
   };
 
-  render() {
+  renderGithubSection = () => {
+    if (this.state.hasGithub) {
+      return (
+        <OAuthButton onClick={this.githubRedirect}>
+          <IconWrapper>
+            <Icon src={github} />
+            Sign up with GitHub
+          </IconWrapper>
+        </OAuthButton>
+      );
+    }
+  };
+
+  renderGoogleSection = () => {
+    if (this.state.hasGoogle) {
+      return (
+        <OAuthButton onClick={this.googleRedirect}>
+          <IconWrapper>
+            <StyledGoogleIcon />
+            Sign up with Google
+          </IconWrapper>
+        </OAuthButton>
+      );
+    }
+  };
+
+  renderBasicSection = () => {
     let {
       email,
       password,
@@ -115,67 +165,78 @@ export default class Register extends Component<PropsType, StateType> {
       confirmPasswordError,
     } = this.state;
 
+    if (this.state.hasBasic) {
+      return (
+        <div>
+          <InputWrapper>
+            <Input
+              type="email"
+              placeholder="Email"
+              value={email}
+              onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                this.setState({ email: e.target.value, emailError: false })
+              }
+              valid={!emailError}
+            />
+            {this.renderEmailError()}
+          </InputWrapper>
+          <Input
+            type="password"
+            placeholder="Password"
+            value={password}
+            onChange={(e: ChangeEvent<HTMLInputElement>) =>
+              this.setState({
+                password: e.target.value,
+                confirmPasswordError: false,
+              })
+            }
+            valid={true}
+          />
+          <InputWrapper>
+            <Input
+              type="password"
+              placeholder="Confirm Password"
+              value={confirmPassword}
+              onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                this.setState({
+                  confirmPassword: e.target.value,
+                  confirmPasswordError: false,
+                })
+              }
+              valid={!confirmPasswordError}
+            />
+            {this.renderConfirmPasswordError()}
+          </InputWrapper>
+          <Button onClick={this.handleRegister}>Continue</Button>
+        </div>
+      );
+    }
+  };
+
+  render() {
     return (
       <StyledRegister>
-        <LoginPanel>
+        <LoginPanel
+          hasBasic={this.state.hasBasic}
+          numOAuth={+this.state.hasGithub + +this.state.hasGoogle}
+        >
           <OverflowWrapper>
             <GradientBg />
           </OverflowWrapper>
           <FormWrapper>
             <Logo src={logo} />
             <Prompt>Sign up for Porter</Prompt>
-            <OAuthButton onClick={this.githubRedirect}>
-              <IconWrapper>
-                <Icon src={github} />
-                Sign up with GitHub
-              </IconWrapper>
-            </OAuthButton>
-            <OrWrapper>
-              <Line />
-              <Or>or</Or>
-            </OrWrapper>
+            {this.renderGithubSection()}
+            {this.renderGoogleSection()}
+            {(this.state.hasGithub || this.state.hasGoogle) &&
+            this.state.hasBasic ? (
+              <OrWrapper>
+                <Line />
+                <Or>or</Or>
+              </OrWrapper>
+            ) : null}
             <DarkMatter />
-            <InputWrapper>
-              <Input
-                type="email"
-                placeholder="Email"
-                value={email}
-                onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                  this.setState({ email: e.target.value, emailError: false })
-                }
-                valid={!emailError}
-              />
-              {this.renderEmailError()}
-            </InputWrapper>
-            <Input
-              type="password"
-              placeholder="Password"
-              value={password}
-              onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                this.setState({
-                  password: e.target.value,
-                  confirmPasswordError: false,
-                })
-              }
-              valid={true}
-            />
-            <InputWrapper>
-              <Input
-                type="password"
-                placeholder="Confirm Password"
-                value={confirmPassword}
-                onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                  this.setState({
-                    confirmPassword: e.target.value,
-                    confirmPasswordError: false,
-                  })
-                }
-                valid={!confirmPasswordError}
-              />
-              {this.renderConfirmPasswordError()}
-            </InputWrapper>
-            <Button onClick={this.handleRegister}>Continue</Button>
-
+            {this.renderBasicSection()}
             <Helper>
               Have an account?
               <Link href="/login">Sign in</Link>
@@ -243,7 +304,12 @@ const IconWrapper = styled.div`
 
 const Icon = styled.img`
   height: 18px;
-  margin-right: 20px;
+  margin: 14px;
+`;
+
+const StyledGoogleIcon = styled(GoogleIcon)`
+  width: 38px;
+  height: 38px;
 `;
 
 const OAuthButton = styled.div`
@@ -258,6 +324,8 @@ const OAuthButton = styled.div`
   user-select: none;
   font-weight: 500;
   font-size: 13px;
+  margin: 10px 0;
+  overflow: hidden;
   :hover {
     background: #ffffffdd;
   }
@@ -385,11 +453,11 @@ const FormWrapper = styled.div`
 
 const GradientBg = styled.div`
   background: linear-gradient(#8ce1ff, #a59eff, #fba8ff);
-  width: 180%;
-  height: 180%;
+  width: 200%;
+  height: 200%;
   position: absolute;
-  top: -40%;
-  left: -40%;
+  top: -50%;
+  left: -50%;
   animation: flip 6s infinite linear;
   @keyframes flip {
     from {
@@ -403,7 +471,8 @@ const GradientBg = styled.div`
 
 const LoginPanel = styled.div`
   width: 330px;
-  height: 500px;
+  height: ${(props: { numOAuth: number; hasBasic: boolean }) =>
+    270 + +props.hasBasic * 180 + props.numOAuth * 50}px;
   background: white;
   margin-top: -20px;
   border-radius: 10px;

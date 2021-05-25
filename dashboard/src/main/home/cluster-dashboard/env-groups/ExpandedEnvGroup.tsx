@@ -1,6 +1,5 @@
 import React, { Component } from "react";
 import styled from "styled-components";
-import yaml from "js-yaml";
 import close from "assets/close.png";
 import key from "assets/key.svg";
 import _ from "lodash";
@@ -13,7 +12,7 @@ import SaveButton from "components/SaveButton";
 import ConfirmOverlay from "components/ConfirmOverlay";
 import Loading from "components/Loading";
 import TabRegion from "components/TabRegion";
-import KeyValueArray from "components/values-form/KeyValueArray";
+import EnvGroupArray, { KeyValueType } from "./EnvGroupArray";
 import Heading from "components/values-form/Heading";
 import Helper from "components/values-form/Helper";
 
@@ -30,7 +29,7 @@ type StateType = {
   showDeleteOverlay: boolean;
   deleting: boolean;
   saveValuesStatus: string | null;
-  values: any;
+  envVariables: KeyValueType[];
 };
 
 const tabOptions = [
@@ -45,13 +44,87 @@ export default class ExpandedEnvGroup extends Component<PropsType, StateType> {
     showDeleteOverlay: false,
     deleting: false,
     saveValuesStatus: null as string | null,
-    values: this.props.envGroup.data as any,
+    envVariables: [] as KeyValueType[],
   };
 
-  handleUpdateValues = (config?: any) => {
+  componentDidMount() {
+    // parse env group props into values type
+    let envVariables = [] as KeyValueType[];
+    let envGroupData = this.props.envGroup.data;
+
+    for (const key in envGroupData) {
+      envVariables.push({
+        key: key,
+        value: envGroupData[key],
+        hidden: envGroupData[key].includes("PORTERSECRET"),
+        locked: envGroupData[key].includes("PORTERSECRET"),
+        deleted: false,
+      });
+    }
+
+    this.setState({ envVariables });
+  }
+
+  handleUpdateValues = () => {
     let { envGroup } = this.props;
     let name = envGroup.metadata.name;
     let namespace = envGroup.metadata.namespace;
+
+    let apiEnvVariables: Record<string, string> = {};
+    let secretEnvVariables: Record<string, string> = {};
+
+    let envVariables = this.state.envVariables;
+
+    envVariables
+      .filter((envVar: KeyValueType, index: number, self: KeyValueType[]) => {
+        // remove any collisions that are marked as deleted and are duplicates, unless they are
+        // all delete collisions
+        let numDeleteCollisions = self.reduce((n, _envVar: KeyValueType) => {
+          return n + (_envVar.key === envVar.key && envVar.deleted ? 1 : 0);
+        }, 0);
+
+        let numCollisions = self.reduce((n, _envVar: KeyValueType) => {
+          return n + (_envVar.key === envVar.key ? 1 : 0);
+        }, 0);
+
+        if (numCollisions == numDeleteCollisions) {
+          // if all collisions are delete collisions, just remove duplicates
+          return (
+            index ===
+            self.findIndex(
+              (_envVar: KeyValueType) => _envVar.key === envVar.key
+            )
+          );
+        } else if (numCollisions == 1) {
+          // if there's just one collision (self), keep the object
+          return true;
+        } else {
+          // if there are more collisions than delete collisions, remove all duplicates that
+          // are deletions
+          return (
+            index ===
+            self.findIndex(
+              (_envVar: KeyValueType) =>
+                _envVar.key === envVar.key && !_envVar.deleted
+            )
+          );
+        }
+      })
+      .forEach((envVar: KeyValueType) => {
+        if (envVar.hidden) {
+          if (envVar.deleted) {
+            secretEnvVariables[envVar.key] = null;
+          } else if (!envVar.value.includes("PORTERSECRET")) {
+            secretEnvVariables[envVar.key] = envVar.value;
+          }
+        } else {
+          if (envVar.deleted) {
+            apiEnvVariables[envVar.key] = null;
+          } else {
+            apiEnvVariables[envVar.key] = envVar.value;
+          }
+        }
+      });
 
     this.setState({ saveValuesStatus: "loading" });
     api
@@ -60,7 +133,8 @@ export default class ExpandedEnvGroup extends Component<PropsType, StateType> {
         {
           name,
           namespace,
-          variables: this.state.values,
+          variables: apiEnvVariables,
+          secret_variables: secretEnvVariables,
         },
         {
           id: this.context.currentProject.id,
@@ -90,10 +164,12 @@ export default class ExpandedEnvGroup extends Component<PropsType, StateType> {
                 Set environment variables for your secrets and
                 environment-specific configuration.
               </Helper>
-              <KeyValueArray
+              <EnvGroupArray
                 namespace={namespace}
-                values={this.state.values || {}}
-                setValues={(x: any) => this.setState({ values: x })}
+                values={this.state.envVariables}
+                setValues={(x: any) => this.setState({ envVariables: x })}
+                fileUpload={true}
+                secretOption={true}
               />
             </InnerWrapper>
             <SaveButton
@@ -154,11 +230,9 @@ export default class ExpandedEnvGroup extends Component<PropsType, StateType> {
       .then((res) => {
         this.props.closeExpanded();
         this.setState({ deleting: false });
-        // console.log("CONFIGMAP", res);
       })
       .catch((err) => {
         this.setState({ deleting: false, showDeleteOverlay: false });
-        // console.log("CONFIGMAP", err);
       });
   };
 
@@ -440,6 +514,7 @@ const StyledExpandedChart = styled.div`
   position: absolute;
   top: 25px;
   left: 25px;
+  overflow: hidden;
   border-radius: 10px;
   background: #26272f;
   box-shadow: 0 5px 12px 4px #00000033;

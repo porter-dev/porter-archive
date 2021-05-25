@@ -75,9 +75,59 @@ func (app *App) HandleListNamespaces(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// HandleListPodEvents retrieves all events tied to a pod.
+func (app *App) HandleListPodEvents(w http.ResponseWriter, r *http.Request) {
+	vals, err := url.ParseQuery(r.URL.RawQuery)
+
+	// get path parameters
+	namespace := chi.URLParam(r, "namespace")
+	name := chi.URLParam(r, "name")
+
+	if err != nil {
+		app.handleErrorFormDecoding(err, ErrReleaseDecode, w)
+		return
+	}
+
+	// get the filter options
+	form := &forms.K8sForm{
+		OutOfClusterConfig: &kubernetes.OutOfClusterConfig{
+			Repo:              app.Repo,
+			DigitalOceanOAuth: app.DOConf,
+		},
+	}
+
+	form.PopulateK8sOptionsFromQueryParams(vals, app.Repo.Cluster)
+
+	// validate the form
+	if err := app.validator.Struct(form); err != nil {
+		app.handleErrorFormValidation(err, ErrK8sValidate, w)
+		return
+	}
+
+	// create a new agent
+	var agent *kubernetes.Agent
+
+	if app.ServerConf.IsTesting {
+		agent = app.TestAgents.K8sAgent
+	} else {
+		agent, err = kubernetes.GetAgentOutOfClusterConfig(form.OutOfClusterConfig)
+	}
+
+	events, err := agent.ListEvents(name, namespace)
+
+	if err != nil {
+		app.handleErrorDataRead(err, w)
+		return
+	}
+
+	if err := json.NewEncoder(w).Encode(events); err != nil {
+		app.handleErrorFormDecoding(err, ErrK8sDecode, w)
+		return
+	}
+}
+
 // HandleCreateConfigMap deletes the pod given the name and namespace.
 func (app *App) HandleCreateConfigMap(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("CREATING CONFGIMAP")
 	vals, err := url.ParseQuery(r.URL.RawQuery)
 	if err != nil {
 		app.handleErrorFormDecoding(err, ErrReleaseDecode, w)
@@ -116,6 +166,32 @@ func (app *App) HandleCreateConfigMap(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	secretData := make(map[string][]byte)
+
+	for key, rawValue := range configMap.SecretEnvVariables {
+		// encodedValue := base64.StdEncoding.EncodeToString([]byte(rawValue))
+
+		// if err != nil {
+		// 	app.handleErrorInternal(err, w)
+		// 	return
+		// }
+
+		secretData[key] = []byte(rawValue)
+	}
+
+	// create secret first
+	_, err = agent.CreateLinkedSecret(configMap.Name, configMap.Namespace, configMap.Name, secretData)
+
+	if err != nil {
+		app.handleErrorInternal(err, w)
+		return
+	}
+
+	// add all secret env variables to configmap with value PORTERSECRET_${configmap_name}
+	for key, _ := range configMap.SecretEnvVariables {
+		configMap.EnvVariables[key] = fmt.Sprintf("PORTERSECRET_%s", configMap.Name)
+	}
+
 	_, err = agent.CreateConfigMap(configMap.Name, configMap.Namespace, configMap.EnvVariables)
 
 	if err != nil {
@@ -135,7 +211,7 @@ func (app *App) HandleCreateConfigMap(w http.ResponseWriter, r *http.Request) {
 // HandleListConfigMaps lists all configmaps in a namespace.
 func (app *App) HandleListConfigMaps(w http.ResponseWriter, r *http.Request) {
 	vals, err := url.ParseQuery(r.URL.RawQuery)
-	
+
 	if err != nil {
 		app.handleErrorFormDecoding(err, ErrReleaseDecode, w)
 		return
@@ -185,7 +261,7 @@ func (app *App) HandleListConfigMaps(w http.ResponseWriter, r *http.Request) {
 // HandleGetConfigMap retreives the configmap given the name and namespace.
 func (app *App) HandleGetConfigMap(w http.ResponseWriter, r *http.Request) {
 	vals, err := url.ParseQuery(r.URL.RawQuery)
-	
+
 	if err != nil {
 		app.handleErrorFormDecoding(err, ErrReleaseDecode, w)
 		return
@@ -265,6 +341,13 @@ func (app *App) HandleDeleteConfigMap(w http.ResponseWriter, r *http.Request) {
 		agent, err = kubernetes.GetAgentOutOfClusterConfig(form.OutOfClusterConfig)
 	}
 
+	err = agent.DeleteLinkedSecret(vals["name"][0], vals["namespace"][0])
+
+	if err != nil {
+		app.handleErrorInternal(err, w)
+		return
+	}
+
 	err = agent.DeleteConfigMap(vals["name"][0], vals["namespace"][0])
 
 	if err != nil {
@@ -317,7 +400,38 @@ func (app *App) HandleUpdateConfigMap(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = agent.UpdateConfigMap(configMap.Name, configMap.Namespace, configMap.EnvVariables)
+	secretData := make(map[string][]byte)
+
+	for key, rawValue := range configMap.SecretEnvVariables {
+		// encodedValue, err := base64.StdEncoding.DecodeString(rawValue)
+
+		// if err != nil {
+		// 	app.handleErrorInternal(err, w)
+		// 	return
+		// }
+
+		secretData[key] = []byte(rawValue)
+	}
+
+	// create secret first
+	err = agent.UpdateLinkedSecret(configMap.Name, configMap.Namespace, configMap.Name, secretData)
+
+	if err != nil {
+		app.handleErrorInternal(err, w)
+		return
+	}
+
+	// add all secret env variables to configmap with value PORTERSECRET_${configmap_name}
+	for key, val := range configMap.SecretEnvVariables {
+		// if val is empty and key does not exist in configmap already, set to empty
+		if _, found := configMap.EnvVariables[key]; val == "" && !found {
+			configMap.EnvVariables[key] = ""
+		} else if val != "" {
+			configMap.EnvVariables[key] = fmt.Sprintf("PORTERSECRET_%s", configMap.Name)
+		}
+	}
+
+	err = agent.UpdateConfigMap(configMap.Name, configMap.Namespace, configMap.EnvVariables)
 
 	if err != nil {
 		app.handleErrorInternal(err, w)
@@ -550,9 +664,10 @@ func (app *App) HandleListPods(w http.ResponseWriter, r *http.Request) {
 		agent, err = kubernetes.GetAgentOutOfClusterConfig(form.OutOfClusterConfig)
 	}
 
+	namespace := vals.Get("namespace")
 	pods := []v1.Pod{}
 	for _, selector := range vals["selectors"] {
-		podsList, err := agent.GetPodsByLabel(selector)
+		podsList, err := agent.GetPodsByLabel(selector, namespace)
 
 		if err != nil {
 			app.handleErrorFormValidation(err, ErrK8sValidate, w)
@@ -626,6 +741,55 @@ func (app *App) HandleListJobsByChart(w http.ResponseWriter, r *http.Request) {
 		app.handleErrorFormDecoding(err, ErrK8sDecode, w)
 		return
 	}
+}
+
+// HandleStopJob stops a running job
+func (app *App) HandleStopJob(w http.ResponseWriter, r *http.Request) {
+	// get path parameters
+	namespace := chi.URLParam(r, "namespace")
+	name := chi.URLParam(r, "name")
+
+	vals, err := url.ParseQuery(r.URL.RawQuery)
+
+	if err != nil {
+		app.handleErrorFormDecoding(err, ErrReleaseDecode, w)
+		return
+	}
+
+	// get the filter options
+	form := &forms.K8sForm{
+		OutOfClusterConfig: &kubernetes.OutOfClusterConfig{
+			Repo:              app.Repo,
+			DigitalOceanOAuth: app.DOConf,
+		},
+	}
+
+	form.PopulateK8sOptionsFromQueryParams(vals, app.Repo.Cluster)
+
+	// validate the form
+	if err := app.validator.Struct(form); err != nil {
+		app.handleErrorFormValidation(err, ErrK8sValidate, w)
+		return
+	}
+
+	// create a new agent
+	var agent *kubernetes.Agent
+
+	if app.ServerConf.IsTesting {
+		agent = app.TestAgents.K8sAgent
+	} else {
+		agent, err = kubernetes.GetAgentOutOfClusterConfig(form.OutOfClusterConfig)
+	}
+
+	err = agent.StopJobWithJobSidecar(namespace, name)
+
+	if err != nil {
+		app.handleErrorInternal(err, w)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	return
 }
 
 // HandleListJobPods lists all pods belonging to a specific job

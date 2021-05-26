@@ -77,9 +77,10 @@ func (app *App) HandleListReleases(w http.ResponseWriter, r *http.Request) {
 // PorterRelease is a helm release with a form attached
 type PorterRelease struct {
 	*release.Release
-	Form          *models.FormYAML `json:"form"`
-	HasMetrics    bool             `json:"has_metrics"`
-	LatestVersion string           `json:"latest_version"`
+	Form            *models.FormYAML                `json:"form"`
+	HasMetrics      bool                            `json:"has_metrics"`
+	LatestVersion   string                          `json:"latest_version"`
+	GitActionConfig *models.GitActionConfigExternal `json:"git_action_config"`
 }
 
 var porterApplications = map[string]string{"web": "", "job": "", "worker": ""}
@@ -161,7 +162,7 @@ func (app *App) HandleGetRelease(w http.ResponseWriter, r *http.Request) {
 		HelmRelease:   release,
 	}
 
-	res := &PorterRelease{release, nil, false, ""}
+	res := &PorterRelease{release, nil, false, "", nil}
 
 	for _, file := range release.Chart.Files {
 		if strings.Contains(file.Name, "form.yaml") {
@@ -209,6 +210,17 @@ func (app *App) HandleGetRelease(w http.ResponseWriter, r *http.Request) {
 			if porterChart != nil && len(porterChart.Versions) > 0 {
 				res.LatestVersion = porterChart.Versions[0]
 			}
+		}
+	}
+
+	// if the release was created from this server,
+	modelRelease, err := app.Repo.Release.ReadRelease(form.Cluster.ID, release.Name, release.Namespace)
+
+	if modelRelease != nil {
+		gitAction := modelRelease.GitActionConfig
+
+		if gitAction.ID != 0 {
+			res.GitActionConfig = gitAction.Externalize()
 		}
 	}
 

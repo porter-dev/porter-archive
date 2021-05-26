@@ -255,6 +255,11 @@ func downloadMatchingRelease(porterDir string) error {
 		EntityID:            "porter-dev",
 		RepoName:            "porter",
 		IsPlatformDependent: true,
+		Downloader: &github.ZIPDownloader{
+			ZipFolderDest:   porterDir,
+			AssetFolderDest: porterDir,
+			ZipName:         "portersvr_latest.zip",
+		},
 	}
 
 	err := z.GetRelease(Version)
@@ -271,6 +276,11 @@ func downloadMatchingRelease(porterDir string) error {
 		EntityID:            "porter-dev",
 		RepoName:            "porter",
 		IsPlatformDependent: false,
+		Downloader: &github.ZIPDownloader{
+			ZipFolderDest:   porterDir,
+			AssetFolderDest: filepath.Join(porterDir, "static"),
+			ZipName:         "static_latest.zip",
+		},
 	}
 
 	return zStatic.GetRelease(Version)

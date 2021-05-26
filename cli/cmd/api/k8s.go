@@ -96,7 +96,7 @@ func (c *Client) GetRelease(
 	ctx context.Context,
 	projectID, clusterID uint,
 	namespace, name string,
-) (GetReleaseResponse, error) {
+) (*GetReleaseResponse, error) {
 	cl := fmt.Sprintf("%d", clusterID)
 
 	req, err := http.NewRequest(
@@ -124,7 +124,7 @@ func (c *Client) GetRelease(
 		return nil, err
 	}
 
-	return *bodyResp, nil
+	return bodyResp, nil
 }
 
 // GetReleaseAllPodsResponse is the list of all pods for a given Helm release

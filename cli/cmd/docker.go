@@ -197,6 +197,11 @@ func downloadCredMatchingRelease() error {
 		EntityID:            "porter-dev",
 		RepoName:            "porter",
 		IsPlatformDependent: true,
+		Downloader: &github.ZIPDownloader{
+			ZipFolderDest:   filepath.Join(home, ".porter"),
+			AssetFolderDest: "/usr/local/bin",
+			ZipName:         "docker-credential-porter_latest.zip",
+		},
 	}
 
 	return z.GetRelease(Version)

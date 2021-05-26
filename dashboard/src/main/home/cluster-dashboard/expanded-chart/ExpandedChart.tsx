@@ -152,9 +152,9 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
 
   setupWebsocket = (kind: string, chart: ChartType) => {
     let { currentCluster, currentProject } = this.context;
-    let protocol = process.env.NODE_ENV == "production" ? "wss" : "ws";
+    let protocol = window.location.protocol == "https:" ? "wss" : "ws";
     let ws = new WebSocket(
-      `${protocol}://${process.env.API_SERVER}/api/projects/${currentProject.id}/k8s/${kind}/status?cluster_id=${currentCluster.id}`
+      `${protocol}://${window.location.host}/api/projects/${currentProject.id}/k8s/${kind}/status?cluster_id=${currentCluster.id}`
     );
     ws.onopen = () => {
       console.log("connected to websocket");
@@ -276,8 +276,19 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
         });
       })
       .catch((err) => {
-        console.log(err);
-        this.setState({ saveValuesStatus: "error" });
+        let parsedErr =
+          err?.response?.data?.errors && err.response.data.errors[0];
+
+        if (parsedErr) {
+          err = parsedErr;
+        }
+
+        this.setState({
+          saveValuesStatus: err,
+        });
+
+        setCurrentError(parsedErr);
+
         window.analytics.track("Failed to Upgrade Chart", {
           chart: this.state.currentChart.name,
           values: valuesYaml,
@@ -328,8 +339,20 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
         cb && cb();
       })
       .catch((err) => {
-        console.log(err);
-        this.setState({ saveValuesStatus: "error", loading: false });
+        let parsedErr =
+          err?.response?.data?.errors && err.response.data.errors[0];
+
+        if (parsedErr) {
+          err = parsedErr;
+        }
+
+        this.setState({
+          saveValuesStatus: err,
+          loading: false,
+        });
+
+        setCurrentError(parsedErr);
+
         window.analytics.track("Failed to Upgrade Chart", {
           chart: this.state.currentChart.name,
           values: valuesYaml,

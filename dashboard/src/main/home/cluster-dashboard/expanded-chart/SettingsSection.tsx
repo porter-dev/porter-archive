@@ -17,6 +17,7 @@ import Heading from "components/values-form/Heading";
 import Helper from "components/values-form/Helper";
 import InputRow from "components/values-form/InputRow";
 import _ from "lodash";
+import CopyToClipboard from "components/CopyToClipboard";
 
 type PropsType = {
   currentChart: ChartType;
@@ -152,12 +153,12 @@ export default class SettingsSection extends Component<PropsType, StateType> {
             <div>{webhookText}</div>
             <i
               className="material-icons"
-              onClick={() => {
-                navigator.clipboard.writeText(webhookText);
-                this.setState({ highlightCopyButton: true });
-              }}
               onMouseLeave={() => this.setState({ highlightCopyButton: false })}
             >
+              <CopyToClipboard 
+                text={webhookText} 
+                onSuccess={() => this.setState({ highlightCopyButton: true })}
+              />
               content_copy
             </i>
           </Webhook>

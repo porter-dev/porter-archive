@@ -53,6 +53,15 @@ func (repo *UserRepository) ReadUserByGithubUserID(id int64) (*models.User, erro
 	return user, nil
 }
 
+// ReadUserByGoogleUserID finds a single user based on their google user id
+func (repo *UserRepository) ReadUserByGoogleUserID(id string) (*models.User, error) {
+	user := &models.User{}
+	if err := repo.db.Where("google_user_id = ?", id).First(&user).Error; err != nil {
+		return nil, err
+	}
+	return user, nil
+}
+
 // UpdateUser modifies an existing User in the database
 func (repo *UserRepository) UpdateUser(user *models.User) (*models.User, error) {
 	if err := repo.db.Save(user).Error; err != nil {

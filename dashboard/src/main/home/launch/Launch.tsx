@@ -203,10 +203,7 @@ export default class Templates extends Component<PropsType, StateType> {
         <TemplatesWrapper>
           <TitleSection>
             <Title>Launch</Title>
-            <a
-              href="https://docs.getporter.dev/docs/porter-templates"
-              target="_blank"
-            >
+            <a href="https://docs.getporter.dev/docs/add-ons" target="_blank">
               <i className="material-icons">help_outline</i>
             </a>
           </TitleSection>

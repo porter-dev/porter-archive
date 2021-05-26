@@ -516,7 +516,7 @@ class LaunchTemplate extends Component<PropsType, StateType> {
             To configure this chart through Porter,
             <Link
               target="_blank"
-              href="https://docs.getporter.dev/docs/porter-templates"
+              href="https://docs.getporter.dev/docs/add-ons"
             >
               refer to our docs
             </Link>

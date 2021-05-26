@@ -11,6 +11,7 @@ import (
 
 	"github.com/fatih/color"
 	"github.com/porter-dev/porter/cli/cmd/api"
+	"github.com/porter-dev/porter/cli/cmd/docker"
 	"github.com/porter-dev/porter/cli/cmd/github"
 	"github.com/spf13/cobra"
 )
@@ -261,36 +262,71 @@ func deployBuild(resp *api.AuthCheckResponse, client *api.Client, args []string)
 		}
 	}
 
-	// download the repository from remote source into a temp directory
-	dst, err := downloadRepoToDir(client)
-
-	if err != nil {
-		return err
-	}
-
-	fmt.Println("DEST IS", dst)
-
-	// agent, err := docker.NewAgentFromEnv()
-
-	// if err != nil {
-	// 	return err
-	// }
-
-	// return agent.BuildLocal("./docker/dev.Dockerfile", "test-porter:latest", "/Users/abelanger/porter/porter-server")
-	return nil
-}
-
-func downloadRepoToDir(client *api.Client) (string, error) {
-	resp, err := client.GetRepoZIPDownloadURL(
+	zipResp, err := client.GetRepoZIPDownloadURL(
 		context.Background(),
 		config.Project,
 		release.GitActionConfig,
 	)
 
 	if err != nil {
-		return "", err
+		return err
 	}
 
+	// download the repository from remote source into a temp directory
+	dst, err := downloadRepoToDir(zipResp.URLString)
+
+	if err != nil {
+		return err
+	}
+
+	agent, err := docker.NewAgentFromEnv()
+
+	if err != nil {
+		return err
+	}
+
+	err = pullCurrentReleaseImage(agent)
+
+	if err != nil {
+		return err
+	}
+
+	// case on Dockerfile path
+	if release.GitActionConfig.DockerfilePath != "" {
+		return agent.BuildLocal(
+			release.GitActionConfig.DockerfilePath,
+			release.GitActionConfig.ImageRepoURI,
+			dst,
+		)
+	}
+
+	return nil
+}
+
+func pullCurrentReleaseImage(agent *docker.Agent) error {
+	// pull the currently deployed image to use cache, if possible
+	imageConfig, err := getNestedMap(release.Config, "image")
+
+	if err != nil {
+		return fmt.Errorf("could not get image config from release: %s", err.Error())
+	}
+
+	tagInterface, ok := imageConfig["tag"]
+
+	if !ok {
+		return fmt.Errorf("tag field does not exist for image")
+	}
+
+	tagStr, ok := tagInterface.(string)
+
+	if !ok {
+		return fmt.Errorf("could not cast image.tag field to string")
+	}
+
+	return agent.PullImage(fmt.Sprintf("%s:%s", release.GitActionConfig.ImageRepoURI, tagStr))
+}
+
+func downloadRepoToDir(downloadURL string) (string, error) {
 	dstDir := filepath.Join(home, ".porter")
 
 	downloader := &github.ZIPDownloader{
@@ -300,7 +336,7 @@ func downloadRepoToDir(client *api.Client) (string, error) {
 		RemoveAfterDownload: true,
 	}
 
-	err = downloader.DownloadToFile(resp.URLString)
+	err := downloader.DownloadToFile(downloadURL)
 
 	if err != nil {
 		return "", fmt.Errorf("Error downloading to file: %s", err.Error())

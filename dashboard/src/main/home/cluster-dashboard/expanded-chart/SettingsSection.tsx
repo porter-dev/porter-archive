@@ -187,7 +187,6 @@ export default class SettingsSection extends Component<PropsType, StateType> {
       });
   };
 
-
   render() {
     return (
       <Wrapper>

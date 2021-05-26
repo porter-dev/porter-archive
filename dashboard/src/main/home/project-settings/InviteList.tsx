@@ -120,8 +120,8 @@ export default class InviteList extends Component<PropsType, StateType> {
       process.env.API_SERVER
     }/api/projects/${currentProject.id}/invites/${
       this.state.invites[index].token
-    }`
-  }
+    }`;
+  };
 
   renderInvitations = () => {
     let { currentProject } = this.context;
@@ -181,7 +181,10 @@ export default class InviteList extends Component<PropsType, StateType> {
                     placeholder="Unable to retrieve link"
                   />
                   <CopyButton>
-                    <CopyToClipboard text={this.getInviteUrl(i)} onError={() => console.log("Couldn't copy to clipboard")}/>
+                    <CopyToClipboard
+                      text={this.getInviteUrl(i)}
+                      onError={() => console.log("Couldn't copy to clipboard")}
+                    />
                     Copy Link
                   </CopyButton>
                 </Rower>

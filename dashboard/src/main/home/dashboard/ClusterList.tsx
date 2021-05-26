@@ -72,17 +72,12 @@ class Templates extends Component<PropsType, StateType> {
             {this.renderIcon()}
             <TemplateTitle>{cluster.name}</TemplateTitle>
           </TitleContainer>
-          <Url onClick={e => e.stopPropagation()}>
+          <Url onClick={(e) => e.stopPropagation()}>
             <CopyToClipboard text={cluster.server} />
             <Bolded>Cluster IP:</Bolded>
-            <span>
-              {cluster.server}
-            </span>
-            <i className="material-icons-outlined">
-              content_copy
-            </i>
+            <span>{cluster.server}</span>
+            <i className="material-icons-outlined">content_copy</i>
           </Url>
-          
         </TemplateBlock>
       );
     });
@@ -112,8 +107,6 @@ const TitleContainer = styled.div`
   width: 100%;
   flex-direction: column;
   align-items: center;
-
-
 `;
 const DashboardIcon = styled.div`
   position: relative;

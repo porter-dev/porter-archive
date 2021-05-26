@@ -6,8 +6,9 @@ import api from "shared/api";
 import { ClusterType } from "shared/types";
 import Helper from "components/values-form/Helper";
 
-import Loading from "components/Loading";
 import { RouteComponentProps, withRouter } from "react-router";
+
+import CopyToClipboard from "components/CopyToClipboard";
 
 type PropsType = RouteComponentProps & {
   currentCluster: ClusterType;
@@ -71,13 +72,17 @@ class Templates extends Component<PropsType, StateType> {
             {this.renderIcon()}
             <TemplateTitle>{cluster.name}</TemplateTitle>
           </TitleContainer>
-          <Url>
+          <Url onClick={e => e.stopPropagation()}>
+            <CopyToClipboard text={cluster.server} />
             <Bolded>Cluster IP:</Bolded>
             <span>
               {cluster.server}
             </span>
-            <i className="material-icons-outlined">content_copy</i>
+            <i className="material-icons-outlined">
+              content_copy
+            </i>
           </Url>
+          
         </TemplateBlock>
       );
     });

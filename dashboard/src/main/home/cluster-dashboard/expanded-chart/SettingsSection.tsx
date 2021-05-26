@@ -155,8 +155,8 @@ export default class SettingsSection extends Component<PropsType, StateType> {
               className="material-icons"
               onMouseLeave={() => this.setState({ highlightCopyButton: false })}
             >
-              <CopyToClipboard 
-                text={webhookText} 
+              <CopyToClipboard
+                text={webhookText}
                 onSuccess={() => this.setState({ highlightCopyButton: true })}
               />
               content_copy

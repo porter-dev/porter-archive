@@ -49,25 +49,55 @@ func init() {
 func run(_ *api.AuthCheckResponse, client *api.Client, args []string) error {
 	color.New(color.FgGreen).Println("Running", strings.Join(args[1:], " "), "for release", args[0])
 
-	podNames, err := getPods(client, namespace, args[0])
+	podsSimple, err := getPods(client, namespace, args[0])
 
 	if err != nil {
 		return fmt.Errorf("Could not retrieve list of pods: %s", err.Error())
 	}
 
 	// if length of pods is 0, throw error
-	pod := ""
+	var selectedPod podSimple
 
-	if len(podNames) == 0 {
+	if len(podsSimple) == 0 {
 		return fmt.Errorf("At least one pod must exist in this deployment.")
-	} else if len(podNames) == 1 {
-		pod = podNames[0]
+	} else if len(podsSimple) == 1 {
+		selectedPod = podsSimple[0]
 	} else {
-		pod, err = utils.PromptSelect("Select the pod:", podNames)
+		podNames := make([]string, 0)
+
+		for _, podSimple := range podsSimple {
+			podNames = append(podNames, podSimple.Name)
+		}
+
+		selectedPodName, err := utils.PromptSelect("Select the pod:", podNames)
 
 		if err != nil {
 			return err
 		}
+
+		// find selected pod
+		for _, podSimple := range podsSimple {
+			if selectedPodName == podSimple.Name {
+				selectedPod = podSimple
+			}
+		}
+	}
+
+	var selectedContainerName string
+
+	// if the selected pod has multiple container, spawn selector
+	if len(selectedPod.ContainerNames) == 0 {
+		return fmt.Errorf("At least one pod must exist in this deployment.")
+	} else if len(selectedPod.ContainerNames) == 1 {
+		selectedContainerName = selectedPod.ContainerNames[0]
+	} else {
+		selectedContainer, err := utils.PromptSelect("Select the container:", selectedPod.ContainerNames)
+
+		if err != nil {
+			return err
+		}
+
+		selectedContainerName = selectedContainer
 	}
 
 	restConf, err := getRESTConfig(client)
@@ -76,7 +106,7 @@ func run(_ *api.AuthCheckResponse, client *api.Client, args []string) error {
 		return fmt.Errorf("Could not retrieve kube credentials: %s", err.Error())
 	}
 
-	return executeRun(restConf, namespace, pod, args[1:])
+	return executeRun(restConf, namespace, selectedPod.Name, selectedContainerName, args[1:])
 }
 
 func getRESTConfig(client *api.Client) (*rest.Config, error) {
@@ -113,7 +143,12 @@ func getRESTConfig(client *api.Client) (*rest.Config, error) {
 	return restConf, nil
 }
 
-func getPods(client *api.Client, namespace, releaseName string) ([]string, error) {
+type podSimple struct {
+	Name           string
+	ContainerNames []string
+}
+
+func getPods(client *api.Client, namespace, releaseName string) ([]podSimple, error) {
 	pID := config.Project
 	cID := config.Cluster
 
@@ -123,16 +158,25 @@ func getPods(client *api.Client, namespace, releaseName string) ([]string, error
 		return nil, err
 	}
 
-	res := make([]string, 0)
+	res := make([]podSimple, 0)
 
 	for _, pod := range resp {
-		res = append(res, pod.ObjectMeta.Name)
+		containerNames := make([]string, 0)
+
+		for _, container := range pod.Spec.Containers {
+			containerNames = append(containerNames, container.Name)
+		}
+
+		res = append(res, podSimple{
+			Name:           pod.ObjectMeta.Name,
+			ContainerNames: containerNames,
+		})
 	}
 
 	return res, nil
 }
 
-func executeRun(config *rest.Config, namespace, name string, args []string) error {
+func executeRun(config *rest.Config, namespace, name, container string, args []string) error {
 	restClient, err := rest.RESTClientFor(config)
 
 	if err != nil {
@@ -152,6 +196,7 @@ func executeRun(config *rest.Config, namespace, name string, args []string) erro
 	req.Param("stdin", "true")
 	req.Param("stdout", "true")
 	req.Param("tty", "true")
+	req.Param("container", "sidecar")
 
 	t := term.TTY{
 		In:  os.Stdin,

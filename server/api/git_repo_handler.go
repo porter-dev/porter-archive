@@ -266,6 +266,47 @@ func (app *App) HandleGetProcfileContents(w http.ResponseWriter, r *http.Request
 	json.NewEncoder(w).Encode(parsedContents)
 }
 
+type HandleGetRepoZIPDownloadURLResp struct {
+	URLString string `json:"url"`
+}
+
+// HandleGetRepoZIPDownloadURL gets the URL for downloading a zip file from a Github
+// repository
+func (app *App) HandleGetRepoZIPDownloadURL(w http.ResponseWriter, r *http.Request) {
+	tok, err := app.githubTokenFromRequest(r)
+
+	if err != nil {
+		app.handleErrorInternal(err, w)
+		return
+	}
+
+	client := github.NewClient(app.GithubProjectConf.Client(oauth2.NoContext, tok))
+	owner := chi.URLParam(r, "owner")
+	name := chi.URLParam(r, "name")
+	branch := chi.URLParam(r, "branch")
+
+	ghURL, _, err := client.Repositories.GetArchiveLink(
+		context.TODO(),
+		owner,
+		name,
+		github.Zipball,
+		&github.RepositoryContentGetOptions{
+			Ref: branch,
+		},
+	)
+
+	if err != nil {
+		app.handleErrorInternal(err, w)
+		return
+	}
+
+	apiResp := HandleGetRepoZIPDownloadURLResp{
+		URLString: ghURL.String(),
+	}
+
+	json.NewEncoder(w).Encode(apiResp)
+}
+
 // finds the github token given the git repo id and the project id
 func (app *App) githubTokenFromRequest(
 	r *http.Request,

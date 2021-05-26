@@ -148,6 +148,7 @@ export default class JobResource extends Component<PropsType, StateType> {
         </ExpandConfigBar>
       );
     } else {
+      let tag = job.spec.template.spec.containers[0].image.split(":")[1];
       return (
         <>
           <ExpandConfigBar
@@ -164,6 +165,9 @@ export default class JobResource extends Component<PropsType, StateType> {
             ) : (
               <DarkMatter size="-18px" />
             )}
+            <Row>
+              Image Tag: <Command>{tag}</Command>
+            </Row>
             {!_.isEmpty(envObject) && (
               <>
                 <KeyValueArray
@@ -274,6 +278,10 @@ export default class JobResource extends Component<PropsType, StateType> {
 }
 
 JobResource.contextType = Context;
+
+const Row = styled.div`
+  margin-top: 20px;
+`;
 
 const DarkMatter = styled.div<{ size?: string }>`
   width: 100%;

@@ -267,7 +267,8 @@ func (app *App) HandleGetProcfileContents(w http.ResponseWriter, r *http.Request
 }
 
 type HandleGetRepoZIPDownloadURLResp struct {
-	URLString string `json:"url"`
+	URLString       string `json:"url"`
+	LatestCommitSHA string `json:"latest_commit_sha"`
 }
 
 // HandleGetRepoZIPDownloadURL gets the URL for downloading a zip file from a Github
@@ -285,13 +286,25 @@ func (app *App) HandleGetRepoZIPDownloadURL(w http.ResponseWriter, r *http.Reque
 	name := chi.URLParam(r, "name")
 	branch := chi.URLParam(r, "branch")
 
+	branchResp, _, err := client.Repositories.GetBranch(
+		context.TODO(),
+		owner,
+		name,
+		branch,
+	)
+
+	if err != nil {
+		app.handleErrorInternal(err, w)
+		return
+	}
+
 	ghURL, _, err := client.Repositories.GetArchiveLink(
 		context.TODO(),
 		owner,
 		name,
 		github.Zipball,
 		&github.RepositoryContentGetOptions{
-			Ref: branch,
+			Ref: *branchResp.Commit.SHA,
 		},
 	)
 
@@ -301,7 +314,8 @@ func (app *App) HandleGetRepoZIPDownloadURL(w http.ResponseWriter, r *http.Reque
 	}
 
 	apiResp := HandleGetRepoZIPDownloadURLResp{
-		URLString: ghURL.String(),
+		URLString:       ghURL.String(),
+		LatestCommitSHA: *branchResp.Commit.SHA,
 	}
 
 	json.NewEncoder(w).Encode(apiResp)

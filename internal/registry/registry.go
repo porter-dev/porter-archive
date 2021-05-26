@@ -52,6 +52,9 @@ type Image struct {
 
 	// The name of the repository associated with the image.
 	RepositoryName string `json:"repository_name"`
+
+	// When the image was pushed
+	PushedAt *time.Time `json:"pushed_at"`
 }
 
 // ListRepositories lists the repositories for a registry
@@ -479,18 +482,26 @@ func (r *Registry) listECRImages(repoName string, repo repository.Repository) ([
 		return nil, err
 	}
 
+	describeResp, err := svc.DescribeImages(&ecr.DescribeImagesInput{
+		RepositoryName: &repoName,
+		ImageIds:       resp.ImageIds,
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
 	res := make([]*Image, 0)
 
-	for _, img := range resp.ImageIds {
-		if img.ImageTag == nil {
-			continue
+	for _, img := range describeResp.ImageDetails {
+		for _, tag := range img.ImageTags {
+			res = append(res, &Image{
+				Digest:         *img.ImageDigest,
+				Tag:            *tag,
+				RepositoryName: repoName,
+				PushedAt:       img.ImagePushedAt,
+			})
 		}
-
-		res = append(res, &Image{
-			Digest:         *img.ImageDigest,
-			Tag:            *img.ImageTag,
-			RepositoryName: repoName,
-		})
 	}
 
 	return res, nil

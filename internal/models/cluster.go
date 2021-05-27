@@ -66,6 +66,9 @@ type Cluster struct {
 
 	// CertificateAuthorityData for the cluster, encrypted at rest
 	CertificateAuthorityData []byte `json:"certificate-authority-data,omitempty"`
+
+	// The ingress ip for the cluster
+	IngressIP string `json:"ingress_ip"`
 }
 
 // ClusterExternal is an external Cluster to be shared over REST
@@ -86,6 +89,9 @@ type ClusterExternal struct {
 
 	// The infra id, if cluster was provisioned with Porter
 	InfraID uint `json:"infra_id"`
+
+	// The ingress ip for the cluster
+	IngressIP string `json:"ingress_ip"`
 }
 
 // Externalize generates an external Cluster to be shared over REST
@@ -107,6 +113,7 @@ func (c *Cluster) Externalize() *ClusterExternal {
 		Server:    c.Server,
 		Service:   serv,
 		InfraID:   c.InfraID,
+		IngressIP: c.IngressIP,
 	}
 }
 

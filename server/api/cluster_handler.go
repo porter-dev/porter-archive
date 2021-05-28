@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"strconv"
+	"sync"
 
 	"github.com/go-chi/chi"
 	"github.com/porter-dev/porter/internal/forms"
@@ -109,32 +110,41 @@ func (app *App) HandleListProjectClusters(w http.ResponseWriter, r *http.Request
 
 	extClusters := make([]*models.ClusterExternal, 0)
 
+	var wg sync.WaitGroup
+
 	for _, cluster := range clusters {
-		form := &forms.K8sForm{
-			OutOfClusterConfig: &kubernetes.OutOfClusterConfig{
-				Repo:              app.Repo,
-				DigitalOceanOAuth: app.DOConf,
-				Cluster:           cluster,
-			},
-		}
+		wg.Add(1)
+		go func(cluster *models.Cluster) {
+			defer wg.Done()
+			extCluster := cluster.Externalize()
 
-		var agent *kubernetes.Agent
+			form := &forms.K8sForm{
+				OutOfClusterConfig: &kubernetes.OutOfClusterConfig{
+					Repo:              app.Repo,
+					DigitalOceanOAuth: app.DOConf,
+					Cluster:           cluster,
+				},
+			}
 
-		if app.ServerConf.IsTesting {
-			agent = app.TestAgents.K8sAgent
-		} else {
-			agent, _ = kubernetes.GetAgentOutOfClusterConfig(form.OutOfClusterConfig)
-		}
+			var agent *kubernetes.Agent
 
-		endpoint, found, _ := domain.GetNGINXIngressServiceIP(agent.Clientset)
+			if app.ServerConf.IsTesting {
+				agent = app.TestAgents.K8sAgent
+			} else {
+				agent, _ = kubernetes.GetAgentOutOfClusterConfig(form.OutOfClusterConfig)
+			}
 
-		if found {
-			cluster.IngressIP = endpoint
-		}
+			endpoint, found, _ := domain.GetNGINXIngressServiceIP(agent.Clientset)
 
-		extClusters = append(extClusters, cluster.Externalize())
+			if found {
+				extCluster.IngressIP = endpoint
+			}
+
+			extClusters = append(extClusters, extCluster)
+		}(cluster)
 	}
 
+	wg.Wait()
 	w.WriteHeader(http.StatusOK)
 
 	if err := json.NewEncoder(w).Encode(extClusters); err != nil {

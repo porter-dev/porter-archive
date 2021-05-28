@@ -82,7 +82,29 @@ func (app *App) HandleReadProjectCluster(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	clusterExt := cluster.Externalize()
+	clusterExt := cluster.DetailedExternalize()
+
+	form := &forms.K8sForm{
+		OutOfClusterConfig: &kubernetes.OutOfClusterConfig{
+			Repo:              app.Repo,
+			DigitalOceanOAuth: app.DOConf,
+			Cluster:           cluster,
+		},
+	}
+
+	var agent *kubernetes.Agent
+
+	if app.ServerConf.IsTesting {
+		agent = app.TestAgents.K8sAgent
+	} else {
+		agent, _ = kubernetes.GetAgentOutOfClusterConfig(form.OutOfClusterConfig)
+	}
+
+	endpoint, found, _ := domain.GetNGINXIngressServiceIP(agent.Clientset)
+
+	if found {
+		clusterExt.IngressIP = endpoint
+	}
 
 	w.WriteHeader(http.StatusOK)
 
@@ -113,35 +135,7 @@ func (app *App) HandleListProjectClusters(w http.ResponseWriter, r *http.Request
 	var wg sync.WaitGroup
 
 	for _, cluster := range clusters {
-		wg.Add(1)
-		go func(cluster *models.Cluster) {
-			defer wg.Done()
-			extCluster := cluster.Externalize()
-
-			form := &forms.K8sForm{
-				OutOfClusterConfig: &kubernetes.OutOfClusterConfig{
-					Repo:              app.Repo,
-					DigitalOceanOAuth: app.DOConf,
-					Cluster:           cluster,
-				},
-			}
-
-			var agent *kubernetes.Agent
-
-			if app.ServerConf.IsTesting {
-				agent = app.TestAgents.K8sAgent
-			} else {
-				agent, _ = kubernetes.GetAgentOutOfClusterConfig(form.OutOfClusterConfig)
-			}
-
-			endpoint, found, _ := domain.GetNGINXIngressServiceIP(agent.Clientset)
-
-			if found {
-				extCluster.IngressIP = endpoint
-			}
-
-			extClusters = append(extClusters, extCluster)
-		}(cluster)
+		extClusters = append(extClusters, cluster.Externalize())
 	}
 
 	wg.Wait()

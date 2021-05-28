@@ -389,6 +389,16 @@ const getClusters = baseApi<{}, { id: number }>("GET", (pathParams) => {
   return `/api/projects/${pathParams.id}/clusters`;
 });
 
+const getCluster = baseApi<
+  {},
+  {
+    project_id: number;
+    cluster_id: number;
+  }
+>("GET", (pathParams) => {
+  return `/api/projects/${pathParams.project_id}/clusters/${pathParams.cluster_id}`
+});
+
 const getGitRepoList = baseApi<
   {},
   {
@@ -846,6 +856,7 @@ export default {
   getChartControllers,
   getClusterIntegrations,
   getClusters,
+  getCluster,
   getConfigMap,
   getGitRepoList,
   getGitRepos,

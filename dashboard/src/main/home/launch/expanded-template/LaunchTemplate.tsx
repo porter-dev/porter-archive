@@ -686,6 +686,7 @@ class LaunchTemplate extends Component<PropsType, StateType> {
   };
 
   render() {
+    console.log("RENDERING")
     let { name, icon } = this.props.currentTemplate;
     let { currentTemplate } = this.props;
 
@@ -755,6 +756,7 @@ class LaunchTemplate extends Component<PropsType, StateType> {
             setActiveValue={(namespace: string) =>
               this.setState({ selectedNamespace: namespace })
             }
+            addButton={true}
             options={this.state.namespaceOptions}
             width="250px"
             dropdownWidth="335px"

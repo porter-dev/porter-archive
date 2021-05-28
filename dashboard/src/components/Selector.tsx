@@ -1,9 +1,11 @@
 import React, { Component } from "react";
 import styled from "styled-components";
+import { Context } from "shared/Context";
 
 type PropsType = {
   activeValue: string;
   options: { value: string; label: string }[];
+  addButton?: boolean;
   setActiveValue: (x: string) => void;
   width: string;
   height?: string;
@@ -76,6 +78,19 @@ export default class Selector extends Component<PropsType, StateType> {
     }
   };
 
+  renderAddButton = () => {
+    if (this.props.addButton) {
+      return (
+        <NewOption onClick={() => {
+          this.context.setCurrentModal('NamespaceModal')
+        }}>
+          <Plus>+</Plus>
+          Add Namespace
+        </NewOption>
+      )
+    }
+  }
+
   renderDropdown = () => {
     if (this.state.expanded) {
       return (
@@ -91,6 +106,7 @@ export default class Selector extends Component<PropsType, StateType> {
         >
           {this.renderDropdownLabel()}
           {this.renderOptionList()}
+          {this.renderAddButton()}
         </Dropdown>
       );
     }
@@ -107,6 +123,7 @@ export default class Selector extends Component<PropsType, StateType> {
 
   render() {
     let { activeValue } = this.props;
+
     return (
       <StyledSelector width={this.props.width}>
         <MainSelector
@@ -127,6 +144,13 @@ export default class Selector extends Component<PropsType, StateType> {
   }
 }
 
+Selector.contextType = Context;
+
+const Plus = styled.div`
+  margin-right: 10px;
+  font-size: 15px;
+`;
+
 const TextWrap = styled.div`
   white-space: nowrap;
   overflow: hidden;
@@ -139,6 +163,26 @@ const DropdownLabel = styled.div`
   color: #ffffff44;
   font-weight: 500;
   margin: 10px 13px;
+`;
+
+const NewOption = styled.div`
+  display: flex;
+  width: 100%;
+  border-top: 1px solid #00000000;
+  border-bottom: 1px solid #ffffff00;
+  height: 37px;
+  font-size: 13px;
+  align-items: center;
+  padding-left: 15px;
+  cursor: pointer;
+  padding-right: 10px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+
+  :hover {
+    background: #ffffff22;
+  }
 `;
 
 const Option = styled.div`

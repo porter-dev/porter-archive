@@ -253,6 +253,7 @@ export default class SettingsPage extends Component<PropsType, StateType> {
             </NamespaceLabel>
             <Selector
               key={"namespace"}
+              addButton={true}
               activeValue={selectedNamespace}
               setActiveValue={setSelectedNamespace}
               options={this.state.namespaceOptions}

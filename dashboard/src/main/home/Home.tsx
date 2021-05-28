@@ -19,6 +19,7 @@ import IntegrationsInstructionsModal from "./modals/IntegrationsInstructionsModa
 import IntegrationsModal from "./modals/IntegrationsModal";
 import Modal from "./modals/Modal";
 import UpdateClusterModal from "./modals/UpdateClusterModal";
+import NamespaceModal from "./modals/NamespaceModal";
 import Navbar from "./navbar/Navbar";
 import NewProject from "./new-project/NewProject";
 import ProjectSettings from "./project-settings/ProjectSettings";
@@ -507,6 +508,15 @@ class Home extends Component<PropsType, StateType> {
           >
             <IntegrationsInstructionsModal />
           </Modal>
+        )}
+        {currentModal === "NamespaceModal" && (
+          <Modal
+          onRequestClose={() => setCurrentModal(null, null)}
+          width="600px"
+          height="220px"
+          >
+          <NamespaceModal />
+        </Modal>
         )}
 
         {this.renderSidebar()}

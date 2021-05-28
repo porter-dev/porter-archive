@@ -7,6 +7,10 @@ export interface ClusterType {
   service?: string;
 }
 
+export interface DetailedClusterType extends ClusterType {
+  ingress_ip?: string;
+}
+
 export interface ChartType {
   name: string;
   info: {

@@ -180,13 +180,13 @@ export default class InviteList extends Component<PropsType, StateType> {
                     }`}
                     placeholder="Unable to retrieve link"
                   />
-                  <CopyButton>
-                    <CopyToClipboard
-                      text={this.getInviteUrl(i)}
-                      onError={() => console.log("Couldn't copy to clipboard")}
-                    />
+                  <CopyToClipboard
+                    as={CopyButton}
+                    text={this.getInviteUrl(i)}
+                    onError={() => console.log("Couldn't copy to clipboard")}
+                  >
                     Copy Link
-                  </CopyButton>
+                  </CopyToClipboard>
                 </Rower>
               </LinkTd>
               <Td isTop={i === 0}>

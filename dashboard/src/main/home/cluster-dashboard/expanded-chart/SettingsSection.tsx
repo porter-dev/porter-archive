@@ -116,16 +116,18 @@ export default class SettingsSection extends Component<PropsType, StateType> {
           </Helper>
           <Webhook copiedToClipboard={this.state.highlightCopyButton}>
             <div>{webhookText}</div>
-            <i
-              className="material-icons"
-              onMouseLeave={() => this.setState({ highlightCopyButton: false })}
+            <CopyToClipboard
+              as="i"
+              text={webhookText}
+              onSuccess={() => this.setState({ highlightCopyButton: true })}
+              wrapperProps={{
+                className: "material-icons",
+                onMouseLeave: () =>
+                  this.setState({ highlightCopyButton: false }),
+              }}
             >
-              <CopyToClipboard
-                text={webhookText}
-                onSuccess={() => this.setState({ highlightCopyButton: true })}
-              />
               content_copy
-            </i>
+            </CopyToClipboard>
           </Webhook>
         </>
       );

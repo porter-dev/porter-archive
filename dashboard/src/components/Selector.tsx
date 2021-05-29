@@ -132,7 +132,9 @@ export default class Selector extends Component<PropsType, StateType> {
         <MainSelector
           ref={this.parentRef}
           onClick={() => {
-            this.props.refreshOptions();
+            if (this.props.refreshOptions) {
+              this.props.refreshOptions();
+            }
             this.setState({ expanded: !this.state.expanded });
           }}
           expanded={this.state.expanded}

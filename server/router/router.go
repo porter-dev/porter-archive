@@ -1086,7 +1086,7 @@ func New(a *api.App) *chi.Mux {
 			)
 
 			r.Method(
-				"POST",
+				"DELETE",
 				"/projects/{project_id}/k8s/namespaces/delete",
 				auth.DoesUserHaveProjectAccess(
 					auth.DoesUserHaveClusterAccess(

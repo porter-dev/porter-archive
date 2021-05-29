@@ -253,6 +253,7 @@ export default class SettingsPage extends Component<PropsType, StateType> {
             </NamespaceLabel>
             <Selector
               key={"namespace"}
+              refreshOptions={() => {this.updateNamespaces(this.context.currentCluster.id)}}
               addButton={true}
               activeValue={selectedNamespace}
               setActiveValue={setSelectedNamespace}

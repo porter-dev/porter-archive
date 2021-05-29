@@ -1072,6 +1072,34 @@ func New(a *api.App) *chi.Mux {
 			)
 
 			r.Method(
+				"POST",
+				"/projects/{project_id}/k8s/namespaces/create",
+				auth.DoesUserHaveProjectAccess(
+					auth.DoesUserHaveClusterAccess(
+						requestlog.NewHandler(a.HandleCreateNamespace, l),
+						mw.URLParam,
+						mw.QueryParam,
+					),
+					mw.URLParam,
+					mw.ReadAccess,
+				),
+			)
+
+			r.Method(
+				"POST",
+				"/projects/{project_id}/k8s/namespaces/delete",
+				auth.DoesUserHaveProjectAccess(
+					auth.DoesUserHaveClusterAccess(
+						requestlog.NewHandler(a.HandleDeleteNamespace, l),
+						mw.URLParam,
+						mw.QueryParam,
+					),
+					mw.URLParam,
+					mw.ReadAccess,
+				),
+			)
+
+			r.Method(
 				"GET",
 				"/projects/{project_id}/k8s/kubeconfig",
 				auth.DoesUserHaveProjectAccess(

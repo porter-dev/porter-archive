@@ -3,28 +3,31 @@ import styled from "styled-components";
 
 import { Context } from "shared/Context";
 import api from "shared/api";
-import { ClusterType } from "shared/types";
+import { ClusterType, DetailedClusterType } from "shared/types";
 import Helper from "components/values-form/Helper";
 
 import { RouteComponentProps, withRouter } from "react-router";
 
 import CopyToClipboard from "components/CopyToClipboard";
+import Loading from "components/Loading";
 
 type PropsType = RouteComponentProps & {
   currentCluster: ClusterType;
 };
 
+type ClustersArray = Array<ClusterType | DetailedClusterType>;
+
 type StateType = {
   loading: boolean;
   error: string;
-  clusters: ClusterType[];
+  clusters: ClustersArray;
 };
 
 class Templates extends Component<PropsType, StateType> {
   state = {
     loading: true,
     error: "",
-    clusters: [] as ClusterType[],
+    clusters: [] as ClustersArray,
   };
 
   componentDidMount() {
@@ -37,17 +40,49 @@ class Templates extends Component<PropsType, StateType> {
     }
   }
 
-  updateClusterList = () => {
-    api
-      .getClusters("<token>", {}, { id: this.context.currentProject.id })
-      .then((res) => {
-        if (res.data) {
-          this.setState({ clusters: res.data, loading: false, error: "" });
-        } else {
-          this.setState({ loading: false, error: "Response data missing" });
-        }
-      })
-      .catch((err) => this.setState(err));
+  updateClusterList = async () => {
+    try {
+      const res = await api.getClusters(
+        "<token>",
+        {},
+        { id: this.context.currentProject.id }
+      );
+
+      if (res.data) {
+        this.setState({ clusters: res.data, loading: false, error: "" });
+
+        this.state.clusters.forEach((cluster) => {
+          this.updateClusterWithDetailedData(cluster.id);
+        });
+      } else {
+        this.setState({ loading: false, error: "Response data missing" });
+      }
+    } catch (err) {
+      this.setState(err);
+    }
+  };
+
+  updateClusterWithDetailedData = async (clusterId: number) => {
+    try {
+      const currentClusterIndex = this.state.clusters.findIndex(
+        (cluster) => cluster.id === clusterId
+      );
+      const res = await api.getCluster(
+        "<token>",
+        {},
+        { project_id: this.context.currentProject.id, cluster_id: clusterId }
+      );
+      if (res.data) {
+        this.setState((prevState) => {
+          const currentCluster = prevState.clusters[currentClusterIndex];
+          prevState.clusters.splice(currentClusterIndex, 1, {
+            ...currentCluster,
+            ingress_ip: res.data.ingress_ip,
+          });
+          return prevState;
+        });
+      }
+    } catch (error) {}
   };
 
   renderIcon = () => {
@@ -58,29 +93,54 @@ class Templates extends Component<PropsType, StateType> {
     );
   };
 
-  renderClusters = () => {
-    return this.state.clusters.map((cluster: ClusterType, i: number) => {
+  renderIngressIp = (ingressIp: string | undefined) => {
+    if (typeof ingressIp !== "string") {
       return (
-        <TemplateBlock
-          onClick={() => {
-            this.context.setCurrentCluster(cluster);
-            this.props.history.push("applications");
-          }}
-          key={i}
-        >
-          <TitleContainer>
-            {this.renderIcon()}
-            <TemplateTitle>{cluster.name}</TemplateTitle>
-          </TitleContainer>
-          <Url onClick={(e) => e.stopPropagation()}>
-            <CopyToClipboard text={cluster.server} />
-            <Bolded>Cluster IP:</Bolded>
-            <span>{cluster.server}</span>
-            <i className="material-icons-outlined">content_copy</i>
-          </Url>
-        </TemplateBlock>
+        <Url onClick={(e) => e.preventDefault()}>
+          <Loading />
+        </Url>
       );
-    });
+    }
+
+    if (!ingressIp.length) {
+      return (
+        <Url>
+          <Bolded>Cluster IP:</Bolded>
+          <span>Ingress IP not available</span>
+        </Url>
+      );
+    }
+
+    return (
+      <Url onClick={(e) => e.stopPropagation()}>
+        <CopyToClipboard text={ingressIp} />
+        <Bolded>Cluster IP:</Bolded>
+        <span>{ingressIp}</span>
+        <i className="material-icons-outlined">content_copy</i>
+      </Url>
+    );
+  };
+
+  renderClusters = () => {
+    return this.state.clusters.map(
+      (cluster: DetailedClusterType, i: number) => {
+        return (
+          <TemplateBlock
+            onClick={() => {
+              this.context.setCurrentCluster(cluster);
+              this.props.history.push("applications");
+            }}
+            key={i}
+          >
+            <TitleContainer>
+              {this.renderIcon()}
+              <TemplateTitle>{cluster.name}</TemplateTitle>
+            </TitleContainer>
+            {this.renderIngressIp(cluster.ingress_ip)}
+          </TemplateBlock>
+        );
+      }
+    );
   };
 
   render() {

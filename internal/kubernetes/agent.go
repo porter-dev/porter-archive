@@ -233,6 +233,30 @@ func (a *Agent) ListNamespaces() (*v1.NamespaceList, error) {
 	)
 }
 
+// CreateNamespace creates a namespace with the given name.
+func (a *Agent) CreateNamespace(name string) (*v1.Namespace, error) {
+	namespace := v1.Namespace{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: name,
+		},
+	}
+
+	return a.Clientset.CoreV1().Namespaces().Create(
+		context.TODO(),
+		&namespace,
+		metav1.CreateOptions{},
+	)
+}
+
+// DeleteNamespace deletes the namespace given the name.
+func (a *Agent) DeleteNamespace(name string) error {
+	return a.Clientset.CoreV1().Namespaces().Delete(
+		context.TODO(),
+		name,
+		metav1.DeleteOptions{},
+	)
+}
+
 // ListJobsByLabel lists jobs in a namespace matching a label
 type Label struct {
 	Key string

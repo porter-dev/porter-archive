@@ -4,6 +4,7 @@ import { Context } from "shared/Context";
 
 type PropsType = {
   activeValue: string;
+  refreshOptions?: () => void;
   options: { value: string; label: string }[];
   addButton?: boolean;
   setActiveValue: (x: string) => void;
@@ -128,7 +129,10 @@ export default class Selector extends Component<PropsType, StateType> {
       <StyledSelector width={this.props.width}>
         <MainSelector
           ref={this.parentRef}
-          onClick={() => this.setState({ expanded: !this.state.expanded })}
+          onClick={() => {
+            this.props.refreshOptions();
+            this.setState({ expanded: !this.state.expanded })
+          }}
           expanded={this.state.expanded}
           width={this.props.width}
           height={this.props.height}

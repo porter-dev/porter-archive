@@ -78,6 +78,7 @@ func (app *App) HandleListNamespaces(w http.ResponseWriter, r *http.Request) {
 // HandleCreateNamespace creates a new namespace given the name.
 func (app *App) HandleCreateNamespace(w http.ResponseWriter, r *http.Request) {
 	vals, err := url.ParseQuery(r.URL.RawQuery)
+	fmt.Println(vals)
 	if err != nil {
 		app.handleErrorFormDecoding(err, ErrReleaseDecode, w)
 		return
@@ -108,7 +109,14 @@ func (app *App) HandleCreateNamespace(w http.ResponseWriter, r *http.Request) {
 		agent, err = kubernetes.GetAgentOutOfClusterConfig(form.OutOfClusterConfig)
 	}
 
-	namespace, err := agent.CreateNamespace(vals["name"][0])
+	ns := &forms.NamespaceForm{}
+
+	if err := json.NewDecoder(r.Body).Decode(ns); err != nil {
+		app.handleErrorFormDecoding(err, ErrUserDecode, w)
+		return
+	}
+
+	namespace, err := agent.CreateNamespace(ns.Name)
 
 	if err != nil {
 		app.handleErrorInternal(err, w)
@@ -162,7 +170,14 @@ func (app *App) HandleDeleteNamespace(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = agent.DeleteNamespace(vals["name"][0])
+	namespace := &forms.NamespaceForm{}
+
+	if err := json.NewDecoder(r.Body).Decode(namespace); err != nil {
+		app.handleErrorFormDecoding(err, ErrUserDecode, w)
+		return
+	}
+
+	err = agent.DeleteNamespace(namespace.Name)
 
 	if err != nil {
 		app.handleErrorInternal(err, w)

@@ -11,40 +11,39 @@ import InputRow from "components/values-form/InputRow";
 type PropsType = {};
 
 type StateType = {
-    namespaceName: string;
-    status: string | null; 
+  namespaceName: string;
+  status: string | null;
 };
-
 
 export default class NamespaceModal extends Component<PropsType, StateType> {
   state = {
     namespaceName: "",
     status: null as string | null,
-  }
+  };
 
   createNamespace = () => {
     api
-    .createNamespace(
-      "<token>",
-      {
-        name: this.state.namespaceName,
-      },
-      {
-        id: this.context.currentProject.id,
-        cluster_id: this.context.currentCluster.id,
-      }
-    )
-    .then((res) => {
-      this.setState({ status: "successful" }, () => {
-        setTimeout(() => {     
-          this.context.setCurrentModal(null, null) 
-        }, 1000);
+      .createNamespace(
+        "<token>",
+        {
+          name: this.state.namespaceName,
+        },
+        {
+          id: this.context.currentProject.id,
+          cluster_id: this.context.currentCluster.id,
+        }
+      )
+      .then((res) => {
+        this.setState({ status: "successful" }, () => {
+          setTimeout(() => {
+            this.context.setCurrentModal(null, null);
+          }, 1000);
+        });
+      })
+      .catch((err) => {
+        this.setState({ status: "Could not create" });
       });
-    })
-    .catch((err) => {
-      this.setState({ status: "Could not create" });
-    });
-  }
+  };
 
   render() {
     return (

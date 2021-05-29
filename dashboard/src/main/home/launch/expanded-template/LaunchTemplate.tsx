@@ -686,7 +686,7 @@ class LaunchTemplate extends Component<PropsType, StateType> {
   };
 
   render() {
-    console.log("RENDERING")
+    console.log("RENDERING");
     let { name, icon } = this.props.currentTemplate;
     let { currentTemplate } = this.props;
 

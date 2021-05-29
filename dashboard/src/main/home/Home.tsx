@@ -511,12 +511,12 @@ class Home extends Component<PropsType, StateType> {
         )}
         {currentModal === "NamespaceModal" && (
           <Modal
-          onRequestClose={() => setCurrentModal(null, null)}
-          width="600px"
-          height="220px"
+            onRequestClose={() => setCurrentModal(null, null)}
+            width="600px"
+            height="220px"
           >
-          <NamespaceModal />
-        </Modal>
+            <NamespaceModal />
+          </Modal>
         )}
 
         {this.renderSidebar()}

@@ -82,15 +82,17 @@ export default class Selector extends Component<PropsType, StateType> {
   renderAddButton = () => {
     if (this.props.addButton) {
       return (
-        <NewOption onClick={() => {
-          this.context.setCurrentModal('NamespaceModal')
-        }}>
+        <NewOption
+          onClick={() => {
+            this.context.setCurrentModal("NamespaceModal");
+          }}
+        >
           <Plus>+</Plus>
           Add Namespace
         </NewOption>
-      )
+      );
     }
-  }
+  };
 
   renderDropdown = () => {
     if (this.state.expanded) {
@@ -131,7 +133,7 @@ export default class Selector extends Component<PropsType, StateType> {
           ref={this.parentRef}
           onClick={() => {
             this.props.refreshOptions();
-            this.setState({ expanded: !this.state.expanded })
+            this.setState({ expanded: !this.state.expanded });
           }}
           expanded={this.state.expanded}
           width={this.props.width}

@@ -1,36 +1,43 @@
 // import ClipboardJS from "clipboard";
 import ClipboardJS from "clipboard";
 import React, { Component, RefObject } from "react";
+import Tooltip from "@material-ui/core/Tooltip";
 import styled from "styled-components";
 
 type PropsType = {
   text: string;
   onSuccess?: (e: ClipboardJS.Event) => void;
   onError?: (e: ClipboardJS.Event) => void;
+  wrapperProps?: any;
+  as?: any;
 };
 
 type StateType = {
   clipboard: ClipboardJS | undefined;
+  success: boolean;
 };
 
 /**
- * Enables parent onClick to copy the text provided to the CopyToClipboard element.
+ * Dynamic component to enable copy to clipboard.
+ *  By default, it will be displayed as a span, when the user clicks over the span
+ *  it will copy the text provided
  *
- *
- * Example of usage:
- * <MyCustomComponent>
- *    <CopyToClipboard
- *      text={`some usefull text ${var}`}
- *      onSuccess={(e) => console.log("Success event:", e)}
- *      onError={(e) => console.log("Error event:", e)}
- *    />
- * </MyCustomComponent>
+ * Examples of usage:
+ * <CopyToClipboard
+ *   as={MyCustomComponent}
+ *   text={`some usefull text ${var}`}
+ *   onSuccess={(e) => console.log("Success event:", e)}
+ *   onError={(e) => console.log("Error event:", e)}
+ * >
+ *   Some content
+ * </CopyToClipboard>
  */
 export default class CopyToClipboard extends Component<PropsType, StateType> {
   triggerRef: RefObject<HTMLSpanElement>;
 
   state: StateType = {
     clipboard: undefined,
+    success: false,
   };
 
   constructor(props: PropsType) {
@@ -39,11 +46,9 @@ export default class CopyToClipboard extends Component<PropsType, StateType> {
   }
 
   componentDidMount() {
-    const trigger = this.triggerRef.current.parentElement;
+    const trigger = this.triggerRef.current;
     if (!trigger) {
-      console.error(
-        "Couldn't find a parent element. The CopyToClipboard component should be inside the trigger component, for example a button"
-      );
+      console.error("Couldn't mount clipboardjs on wrapper component");
       return;
     }
     const clipboard = new ClipboardJS(trigger, {
@@ -52,7 +57,13 @@ export default class CopyToClipboard extends Component<PropsType, StateType> {
       },
     });
 
-    this.props.onSuccess && clipboard.on("success", this.props.onSuccess);
+    clipboard.on("success", (e) => {
+      this.setState({ success: true });
+      this.props.onSuccess && this.props.onSuccess(e);
+      setTimeout(() => {
+        this.setState({ success: false });
+      }, 2000);
+    });
 
     this.props.onError && clipboard.on("error", this.props.onError);
 
@@ -66,10 +77,23 @@ export default class CopyToClipboard extends Component<PropsType, StateType> {
   }
 
   render() {
-    return <NonVisibleSpan ref={this.triggerRef}></NonVisibleSpan>;
+    return (
+      <Tooltip
+        title="Copied to clipboard!"
+        open={this.state.success}
+        placement="bottom"
+        arrow
+      >
+        <DynamicSpanComponent
+          as={this.props.as || "span"}
+          ref={this.triggerRef}
+          {...(this.props.wrapperProps || {})}
+        >
+          {this.props.children}
+        </DynamicSpanComponent>
+      </Tooltip>
+    );
   }
 }
 
-const NonVisibleSpan = styled.span`
-  display: none;
-`;
+const DynamicSpanComponent = styled.span``;

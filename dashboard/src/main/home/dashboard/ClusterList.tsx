@@ -112,12 +112,15 @@ class Templates extends Component<PropsType, StateType> {
     }
 
     return (
-      <Url onClick={(e) => e.stopPropagation()}>
-        <CopyToClipboard text={ingressIp} />
+      <CopyToClipboard
+        as={Url}
+        text={ingressIp}
+        wrapperProps={{ onClick: (e: any) => e.stopPropagation() }}
+      >
         <Bolded>Cluster IP:</Bolded>
         <span>{ingressIp}</span>
         <i className="material-icons-outlined">content_copy</i>
-      </Url>
+      </CopyToClipboard>
     );
   };
 

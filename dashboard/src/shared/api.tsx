@@ -396,7 +396,7 @@ const getCluster = baseApi<
     cluster_id: number;
   }
 >("GET", (pathParams) => {
-  return `/api/projects/${pathParams.project_id}/clusters/${pathParams.cluster_id}`
+  return `/api/projects/${pathParams.project_id}/clusters/${pathParams.cluster_id}`;
 });
 
 const getGitRepoList = baseApi<

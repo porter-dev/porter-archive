@@ -498,7 +498,7 @@ class LaunchTemplate extends Component<PropsType, StateType> {
             To configure this chart through Porter,
             <Link
               target="_blank"
-              href="https://docs.getporter.dev/docs/porter-templates"
+              href="https://docs.getporter.dev/docs/add-ons"
             >
               refer to our docs
             </Link>
@@ -674,6 +674,7 @@ class LaunchTemplate extends Component<PropsType, StateType> {
   };
 
   render() {
+    console.log("RENDERING");
     let { name, icon } = this.props.currentTemplate;
     let { currentTemplate } = this.props;
 
@@ -743,6 +744,7 @@ class LaunchTemplate extends Component<PropsType, StateType> {
             setActiveValue={(namespace: string) =>
               this.setState({ selectedNamespace: namespace })
             }
+            addButton={true}
             options={this.state.namespaceOptions}
             width="250px"
             dropdownWidth="335px"

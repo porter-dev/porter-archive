@@ -21,8 +21,8 @@ import (
 	"github.com/porter-dev/porter/internal/repository"
 	memory "github.com/porter-dev/porter/internal/repository/memory"
 	"github.com/porter-dev/porter/internal/validator"
-	"helm.sh/helm/v3/pkg/storage"
 	segment "gopkg.in/segmentio/analytics-go.v3"
+	"helm.sh/helm/v3/pkg/storage"
 
 	"github.com/porter-dev/porter/internal/config"
 )
@@ -42,7 +42,7 @@ type AppConfig struct {
 	ServerConf config.ServerConf
 	RedisConf  *config.RedisConf
 	DBConf     config.DBConf
-	CapConf config.CapConf
+	CapConf    config.CapConf
 
 	// TestAgents if API is in testing mode
 	TestAgents *TestAgents
@@ -66,6 +66,9 @@ type App struct {
 	// agents exposed for testing
 	TestAgents *TestAgents
 
+	// An in-cluster agent if service is running in cluster
+	InClusterAgent *kubernetes.Agent
+
 	// redis client for redis connection
 	RedisConf *config.RedisConf
 
@@ -73,18 +76,29 @@ type App struct {
 	DBConf config.DBConf
 
 	// config for capabilities
-	CapConf config.CapConf
+	Capabilities *AppCapabilities
 
 	// oauth-specific clients
 	GithubUserConf    *oauth2.Config
 	GithubProjectConf *oauth2.Config
 	DOConf            *oauth2.Config
+	GoogleUserConf    *oauth2.Config
 
-	db         *gorm.DB
-	validator  *vr.Validate
-	translator *ut.Translator
-	tokenConf  *token.TokenGeneratorConf
+	db            *gorm.DB
+	validator     *vr.Validate
+	translator    *ut.Translator
+	tokenConf     *token.TokenGeneratorConf
 	segmentClient *segment.Client
+}
+
+type AppCapabilities struct {
+	Provisioning bool `json:"provisioner"`
+	Github       bool `json:"github"`
+	BasicLogin   bool `json:"basic_login"`
+	GithubLogin  bool `json:"github_login"`
+	GoogleLogin  bool `json:"google_login"`
+	Email        bool `json:"email"`
+	Analytics    bool `json:"analytics"`
 }
 
 // New returns a new App instance
@@ -101,16 +115,16 @@ func New(conf *AppConfig) (*App, error) {
 	}
 
 	app := &App{
-		Logger:     conf.Logger,
-		Repo:       conf.Repository,
-		ServerConf: conf.ServerConf,
-		RedisConf:  conf.RedisConf,
-		DBConf:     conf.DBConf,
-		CapConf: 	conf.CapConf,
-		TestAgents: conf.TestAgents,
-		db:         conf.DB,
-		validator:  validator,
-		translator: &translator,
+		Logger:       conf.Logger,
+		Repo:         conf.Repository,
+		ServerConf:   conf.ServerConf,
+		RedisConf:    conf.RedisConf,
+		DBConf:       conf.DBConf,
+		TestAgents:   conf.TestAgents,
+		Capabilities: &AppCapabilities{},
+		db:           conf.DB,
+		validator:    validator,
+		translator:   &translator,
 	}
 
 	// if repository not specified, default to in-memory
@@ -127,8 +141,25 @@ func New(conf *AppConfig) (*App, error) {
 
 	app.Store = store
 
+	// if application is running in-cluster, set provisioning capabilities
+	if kubernetes.IsInCluster() {
+		app.Capabilities.Provisioning = true
+
+		agent, err := kubernetes.GetAgentInClusterConfig()
+
+		if err != nil {
+			return nil, fmt.Errorf("could not get in-cluster agent: %v", err)
+		}
+
+		app.InClusterAgent = agent
+	}
+
+	sc := conf.ServerConf
+
 	// if server config contains OAuth client info, create clients
-	if sc := conf.ServerConf; sc.GithubClientID != "" && sc.GithubClientSecret != "" {
+	if sc.GithubClientID != "" && sc.GithubClientSecret != "" {
+		app.Capabilities.Github = true
+
 		app.GithubUserConf = oauth.NewGithubClient(&oauth.Config{
 			ClientID:     sc.GithubClientID,
 			ClientSecret: sc.GithubClientSecret,
@@ -142,9 +173,26 @@ func New(conf *AppConfig) (*App, error) {
 			Scopes:       []string{"repo", "read:user", "workflow"},
 			BaseURL:      sc.ServerURL,
 		})
+
+		app.Capabilities.GithubLogin = sc.GithubLoginEnabled
 	}
 
-	if sc := conf.ServerConf; sc.DOClientID != "" && sc.DOClientSecret != "" {
+	if sc.GoogleClientID != "" && sc.GoogleClientSecret != "" {
+		app.Capabilities.GoogleLogin = true
+
+		app.GoogleUserConf = oauth.NewGoogleClient(&oauth.Config{
+			ClientID:     sc.GoogleClientID,
+			ClientSecret: sc.GoogleClientSecret,
+			Scopes: []string{
+				"openid",
+				"profile",
+				"email",
+			},
+			BaseURL: sc.ServerURL,
+		})
+	}
+
+	if sc.DOClientID != "" && sc.DOClientSecret != "" {
 		app.DOConf = oauth.NewDigitalOceanClient(&oauth.Config{
 			ClientID:     sc.DOClientID,
 			ClientSecret: sc.DOClientSecret,
@@ -152,6 +200,10 @@ func New(conf *AppConfig) (*App, error) {
 			BaseURL:      sc.ServerURL,
 		})
 	}
+
+	app.Capabilities.Email = sc.SendgridAPIKey != ""
+	app.Capabilities.Analytics = sc.SegmentClientKey != ""
+	app.Capabilities.BasicLogin = sc.BasicLoginEnabled
 
 	app.tokenConf = &token.TokenGeneratorConf{
 		TokenSecret: conf.ServerConf.TokenGeneratorSecret,

@@ -44,3 +44,7 @@ type ConfigMapForm struct {
 	EnvVariables       map[string]string `json:"variables"`
 	SecretEnvVariables map[string]string `json:"secret_variables"`
 }
+
+type NamespaceForm struct {
+	Name string `json:"name" form:"required"`
+}

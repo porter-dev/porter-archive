@@ -17,6 +17,7 @@ type PropsType = {
   setSelectedImageUrl: (x: string) => void;
   setSelectedTag: (x: string) => void;
   noTagSelection?: boolean;
+  disableImageSelect?: boolean;
 };
 
 type StateType = {
@@ -36,87 +37,6 @@ export default class ImageSelector extends Component<PropsType, StateType> {
     clickedImage: null as ImageType | null,
   };
 
-  // componentDidMount() {
-  //   const { currentProject, setCurrentError } = this.context;
-  //   let images = [] as ImageType[];
-  //   let errors = [] as number[];
-  //   api
-  //     .getProjectRegistries("<token>", {}, { id: currentProject.id })
-  //     .then(async (res) => {
-  //       let registries = res.data;
-  //       if (registries.length === 0) {
-  //         this.setState({ loading: false });
-  //       }
-
-  //       // Loop over connected image registries
-  //       registries.forEach(async (registry: any, i: number) => {
-  //         await new Promise((nextController: (res?: any) => void) => {
-  //           api
-  //             .getImageRepos(
-  //               "<token>",
-  //               {},
-  //               {
-  //                 project_id: currentProject.id,
-  //                 registry_id: registry.id,
-  //               }
-  //             )
-  //             .then((res) => {
-  //               res.data.sort((a: any, b: any) => (a.name > b.name ? 1 : -1));
-  //               // Loop over found image repositories
-  //               let newImg = res.data.map((img: any) => {
-  //                 if (this.props.selectedImageUrl === img.uri) {
-  //                   this.setState({
-  //                     clickedImage: {
-  //                       kind: registry.service,
-  //                       source: img.uri,
-  //                       name: img.name,
-  //                       registryId: registry.id,
-  //                     },
-  //                   });
-  //                 }
-  //                 return {
-  //                   kind: registry.service,
-  //                   source: img.uri,
-  //                   name: img.name,
-  //                   registryId: registry.id,
-  //                 };
-  //               });
-  //               images.push(...newImg);
-  //               errors.push(0);
-  //             })
-  //             .catch(() => errors.push(1))
-  //             .finally(() => {
-  //               if (i == registries.length - 1) {
-  //                 let error =
-  //                   errors.reduce((a, b) => {
-  //                     return a + b;
-  //                   }) == registries.length
-  //                     ? true
-  //                     : false;
-
-  //                 this.setState({
-  //                   images,
-  //                   loading: false,
-  //                   error,
-  //                 });
-  //               }
-
-  //               nextController();
-  //             });
-  //         });
-  //       });
-  //     })
-  //     .catch((err) => {
-  //       console.log(err);
-  //       this.setState({ error: true });
-  //     });
-  // }
-
-  /*
-  <Highlight onClick={() => this.props.setCurrentView('integrations')}>
-    Link your registry.
-  </Highlight>
-  */
   renderImageList = () => {
     let { images, loading, error } = this.state;
 
@@ -155,24 +75,6 @@ export default class ImageSelector extends Component<PropsType, StateType> {
     });
   };
 
-  renderBackButton = () => {
-    let { setSelectedImageUrl } = this.props;
-    if (this.state.clickedImage) {
-      return (
-        <BackButton
-          width="175px"
-          onClick={() => {
-            setSelectedImageUrl("");
-            this.setState({ clickedImage: null });
-          }}
-        >
-          <i className="material-icons">keyboard_backspace</i>
-          Select Image Repo
-        </BackButton>
-      );
-    }
-  };
-
   renderSelected = () => {
     let { selectedImageUrl, setSelectedImageUrl } = this.props;
     let { clickedImage } = this.state;
@@ -192,6 +94,7 @@ export default class ImageSelector extends Component<PropsType, StateType> {
       <Label>
         <img src={icon} />
         <Input
+          disabled={this.props.disableImageSelect}
           autoFocus={true}
           onClick={(e: any) => e.stopPropagation()}
           value={selectedImageUrl}
@@ -233,6 +136,7 @@ export default class ImageSelector extends Component<PropsType, StateType> {
 
         {this.state.isExpanded ? (
           <ImageList
+            disableImageSelect={this.props.disableImageSelect}
             selectedImageUrl={this.props.selectedImageUrl}
             selectedTag={this.props.selectedTag}
             clickedImage={this.state.clickedImage}
@@ -284,13 +188,13 @@ const BackButton = styled.div`
   }
 `;
 
-const Input = styled.input`
+const Input = styled.input<{ disabled: boolean }>`
   outline: 0;
   background: none;
   border: 0;
   font-size: 13px;
   width: calc(100% - 60px);
-  color: white;
+  color: ${(props) => (props.disabled ? "#aaaabb" : "#ffffff")};
 `;
 
 const ImageItem = styled.div`

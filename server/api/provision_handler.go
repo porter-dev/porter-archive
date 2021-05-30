@@ -25,14 +25,6 @@ func (app *App) HandleProvisionTestInfra(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	// create a new agent
-	agent, err := kubernetes.GetAgentInClusterConfig()
-
-	if err != nil {
-		app.handleErrorDataRead(err, w)
-		return
-	}
-
 	form := &forms.CreateTestInfra{
 		ProjectID: uint(projID),
 	}
@@ -59,7 +51,7 @@ func (app *App) HandleProvisionTestInfra(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	_, err = agent.ProvisionTest(
+	_, err = app.InClusterAgent.ProvisionTest(
 		uint(projID),
 		infra,
 		*app.Repo,
@@ -199,17 +191,7 @@ func (app *App) HandleProvisionAWSECRInfra(w http.ResponseWriter, r *http.Reques
 	}
 
 	// launch provisioning pod
-	agent, err := kubernetes.GetAgentInClusterConfig()
-
-	if err != nil {
-		infra.Status = models.StatusError
-		infra, _ = app.Repo.Infra.UpdateInfra(infra)
-
-		app.handleErrorDataRead(err, w)
-		return
-	}
-
-	_, err = agent.ProvisionECR(
+	_, err = app.InClusterAgent.ProvisionECR(
 		uint(projID),
 		awsInt,
 		form.ECRName,
@@ -282,16 +264,6 @@ func (app *App) HandleDestroyAWSECRInfra(w http.ResponseWriter, r *http.Request)
 	}
 
 	// launch provisioning destruction pod
-	agent, err := kubernetes.GetAgentInClusterConfig()
-
-	if err != nil {
-		infra.Status = models.StatusError
-		infra, _ = app.Repo.Infra.UpdateInfra(infra)
-
-		app.handleErrorDataRead(err, w)
-		return
-	}
-
 	// mark infra for deletion
 	infra.Status = models.StatusDestroying
 	infra, err = app.Repo.Infra.UpdateInfra(infra)
@@ -301,7 +273,7 @@ func (app *App) HandleDestroyAWSECRInfra(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	_, err = agent.ProvisionECR(
+	_, err = app.InClusterAgent.ProvisionECR(
 		infra.ProjectID,
 		awsInt,
 		form.ECRName,
@@ -375,17 +347,7 @@ func (app *App) HandleProvisionAWSEKSInfra(w http.ResponseWriter, r *http.Reques
 	}
 
 	// launch provisioning pod
-	agent, err := kubernetes.GetAgentInClusterConfig()
-
-	if err != nil {
-		infra.Status = models.StatusError
-		infra, _ = app.Repo.Infra.UpdateInfra(infra)
-
-		app.handleErrorDataRead(err, w)
-		return
-	}
-
-	_, err = agent.ProvisionEKS(
+	_, err = app.InClusterAgent.ProvisionEKS(
 		uint(projID),
 		awsInt,
 		form.EKSName,
@@ -459,16 +421,6 @@ func (app *App) HandleDestroyAWSEKSInfra(w http.ResponseWriter, r *http.Request)
 	}
 
 	// launch provisioning destruction pod
-	agent, err := kubernetes.GetAgentInClusterConfig()
-
-	if err != nil {
-		infra.Status = models.StatusError
-		infra, _ = app.Repo.Infra.UpdateInfra(infra)
-
-		app.handleErrorDataRead(err, w)
-		return
-	}
-
 	// mark infra for deletion
 	infra.Status = models.StatusDestroying
 	infra, err = app.Repo.Infra.UpdateInfra(infra)
@@ -478,7 +430,7 @@ func (app *App) HandleDestroyAWSEKSInfra(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	_, err = agent.ProvisionEKS(
+	_, err = app.InClusterAgent.ProvisionEKS(
 		infra.ProjectID,
 		awsInt,
 		form.EKSName,
@@ -553,17 +505,7 @@ func (app *App) HandleProvisionGCPGCRInfra(w http.ResponseWriter, r *http.Reques
 	}
 
 	// launch provisioning pod
-	agent, err := kubernetes.GetAgentInClusterConfig()
-
-	if err != nil {
-		infra.Status = models.StatusError
-		infra, _ = app.Repo.Infra.UpdateInfra(infra)
-
-		app.handleErrorDataRead(err, w)
-		return
-	}
-
-	_, err = agent.ProvisionGCR(
+	_, err = app.InClusterAgent.ProvisionGCR(
 		uint(projID),
 		gcpInt,
 		*app.Repo,
@@ -646,17 +588,7 @@ func (app *App) HandleProvisionGCPGKEInfra(w http.ResponseWriter, r *http.Reques
 	}
 
 	// launch provisioning pod
-	agent, err := kubernetes.GetAgentInClusterConfig()
-
-	if err != nil {
-		infra.Status = models.StatusError
-		infra, _ = app.Repo.Infra.UpdateInfra(infra)
-
-		app.handleErrorDataRead(err, w)
-		return
-	}
-
-	_, err = agent.ProvisionGKE(
+	_, err = app.InClusterAgent.ProvisionGKE(
 		uint(projID),
 		gcpInt,
 		form.GKEName,
@@ -729,16 +661,6 @@ func (app *App) HandleDestroyGCPGKEInfra(w http.ResponseWriter, r *http.Request)
 	}
 
 	// launch provisioning destruction pod
-	agent, err := kubernetes.GetAgentInClusterConfig()
-
-	if err != nil {
-		infra.Status = models.StatusError
-		infra, _ = app.Repo.Infra.UpdateInfra(infra)
-
-		app.handleErrorDataRead(err, w)
-		return
-	}
-
 	// mark infra for deletion
 	infra.Status = models.StatusDestroying
 	infra, err = app.Repo.Infra.UpdateInfra(infra)
@@ -748,7 +670,7 @@ func (app *App) HandleDestroyGCPGKEInfra(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	_, err = agent.ProvisionGKE(
+	_, err = app.InClusterAgent.ProvisionGKE(
 		infra.ProjectID,
 		gcpInt,
 		form.GKEName,
@@ -866,17 +788,7 @@ func (app *App) HandleProvisionDODOCRInfra(w http.ResponseWriter, r *http.Reques
 	}
 
 	// launch provisioning pod
-	agent, err := kubernetes.GetAgentInClusterConfig()
-
-	if err != nil {
-		infra.Status = models.StatusError
-		infra, _ = app.Repo.Infra.UpdateInfra(infra)
-
-		app.handleErrorDataRead(err, w)
-		return
-	}
-
-	_, err = agent.ProvisionDOCR(
+	_, err = app.InClusterAgent.ProvisionDOCR(
 		uint(projID),
 		oauthInt,
 		app.DOConf,
@@ -951,16 +863,6 @@ func (app *App) HandleDestroyDODOCRInfra(w http.ResponseWriter, r *http.Request)
 	}
 
 	// launch provisioning destruction pod
-	agent, err := kubernetes.GetAgentInClusterConfig()
-
-	if err != nil {
-		infra.Status = models.StatusError
-		infra, _ = app.Repo.Infra.UpdateInfra(infra)
-
-		app.handleErrorDataRead(err, w)
-		return
-	}
-
 	// mark infra for deletion
 	infra.Status = models.StatusDestroying
 	infra, err = app.Repo.Infra.UpdateInfra(infra)
@@ -970,7 +872,7 @@ func (app *App) HandleDestroyDODOCRInfra(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	_, err = agent.ProvisionDOCR(
+	_, err = app.InClusterAgent.ProvisionDOCR(
 		infra.ProjectID,
 		oauthInt,
 		app.DOConf,
@@ -1046,17 +948,7 @@ func (app *App) HandleProvisionDODOKSInfra(w http.ResponseWriter, r *http.Reques
 	}
 
 	// launch provisioning pod
-	agent, err := kubernetes.GetAgentInClusterConfig()
-
-	if err != nil {
-		infra.Status = models.StatusError
-		infra, _ = app.Repo.Infra.UpdateInfra(infra)
-
-		app.handleErrorDataRead(err, w)
-		return
-	}
-
-	_, err = agent.ProvisionDOKS(
+	_, err = app.InClusterAgent.ProvisionDOKS(
 		uint(projID),
 		oauthInt,
 		app.DOConf,
@@ -1131,16 +1023,6 @@ func (app *App) HandleDestroyDODOKSInfra(w http.ResponseWriter, r *http.Request)
 	}
 
 	// launch provisioning destruction pod
-	agent, err := kubernetes.GetAgentInClusterConfig()
-
-	if err != nil {
-		infra.Status = models.StatusError
-		infra, _ = app.Repo.Infra.UpdateInfra(infra)
-
-		app.handleErrorDataRead(err, w)
-		return
-	}
-
 	// mark infra for deletion
 	infra.Status = models.StatusDestroying
 	infra, err = app.Repo.Infra.UpdateInfra(infra)
@@ -1150,7 +1032,7 @@ func (app *App) HandleDestroyDODOKSInfra(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	_, err = agent.ProvisionDOKS(
+	_, err = app.InClusterAgent.ProvisionDOKS(
 		infra.ProjectID,
 		oauthInt,
 		app.DOConf,

@@ -14,6 +14,7 @@ type User struct {
 
 	// The github user id used for login (optional)
 	GithubUserID int64
+	GoogleUserID string
 }
 
 // UserExternal represents the User type that is sent over REST

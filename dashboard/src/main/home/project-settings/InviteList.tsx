@@ -28,7 +28,7 @@ export default class InviteList extends Component<PropsType, StateType> {
     invites: [] as InviteType[],
     email: "",
     invalidEmail: false,
-    isHTTPS: process.env.API_SERVER === "dashboard.getporter.dev",
+    isHTTPS: window.location.protocol === "https:",
   };
 
   componentDidMount() {
@@ -118,7 +118,7 @@ export default class InviteList extends Component<PropsType, StateType> {
     navigator.clipboard
       .writeText(
         `${this.state.isHTTPS ? "https://" : ""}${
-          process.env.API_SERVER
+          window.location.host
         }/api/projects/${currentProject.id}/invites/${
           this.state.invites[index].token
         }`
@@ -182,7 +182,7 @@ export default class InviteList extends Component<PropsType, StateType> {
                     disabled={true}
                     type="string"
                     value={`${this.state.isHTTPS ? "https://" : ""}${
-                      process.env.API_SERVER
+                      window.location.host
                     }/api/projects/${currentProject.id}/invites/${
                       this.state.invites[i].token
                     }`}

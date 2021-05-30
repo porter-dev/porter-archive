@@ -158,7 +158,7 @@ export default class SettingsPage extends Component<PropsType, StateType> {
             To configure this chart through Porter,
             <Link
               target="_blank"
-              href="https://docs.getporter.dev/docs/porter-templates"
+              href="https://github.com/porter-dev/porter-charts/blob/master/docs/form-yaml-reference.md"
             >
               refer to our docs
             </Link>
@@ -253,6 +253,10 @@ export default class SettingsPage extends Component<PropsType, StateType> {
             </NamespaceLabel>
             <Selector
               key={"namespace"}
+              refreshOptions={() => {
+                this.updateNamespaces(this.context.currentCluster.id);
+              }}
+              addButton={true}
               activeValue={selectedNamespace}
               setActiveValue={setSelectedNamespace}
               options={this.state.namespaceOptions}

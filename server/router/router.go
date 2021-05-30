@@ -11,8 +11,8 @@ import (
 	"github.com/go-chi/chi/middleware"
 	"github.com/porter-dev/porter/internal/auth/token"
 	"github.com/porter-dev/porter/server/api"
-	"github.com/porter-dev/porter/server/requestlog"
-	mw "github.com/porter-dev/porter/server/router/middleware"
+	mw "github.com/porter-dev/porter/server/middleware"
+	"github.com/porter-dev/porter/server/middleware/requestlog"
 )
 
 // New creates a new Chi router instance and registers all routes supported by the
@@ -55,11 +55,20 @@ func New(a *api.App) *chi.Mux {
 				),
 			)
 
-			r.Method(
-				"POST",
-				"/users",
-				requestlog.NewHandler(a.HandleCreateUser, l),
-			)
+			// only allow basic create user or basic login if BasicLogin feature is set
+			if a.Capabilities.BasicLogin {
+				r.Method(
+					"POST",
+					"/users",
+					requestlog.NewHandler(a.HandleCreateUser, l),
+				)
+
+				r.Method(
+					"POST",
+					"/login",
+					requestlog.NewHandler(a.HandleLoginUser, l),
+				)
+			}
 
 			r.Method(
 				"DELETE",
@@ -82,12 +91,6 @@ func New(a *api.App) *chi.Mux {
 				"GET",
 				"/cli/login/exchange",
 				requestlog.NewHandler(a.HandleCLILoginExchangeToken, l),
-			)
-
-			r.Method(
-				"POST",
-				"/login",
-				requestlog.NewHandler(a.HandleLoginUser, l),
 			)
 
 			r.Method(
@@ -210,6 +213,18 @@ func New(a *api.App) *chi.Mux {
 				"GET",
 				"/oauth/github/callback",
 				requestlog.NewHandler(a.HandleGithubOAuthCallback, l),
+			)
+
+			r.Method(
+				"GET",
+				"/oauth/login/google",
+				requestlog.NewHandler(a.HandleGoogleStartUser, l),
+			)
+
+			r.Method(
+				"GET",
+				"/oauth/google/callback",
+				requestlog.NewHandler(a.HandleGoogleOAuthCallback, l),
 			)
 
 			r.Method(
@@ -1048,6 +1063,34 @@ func New(a *api.App) *chi.Mux {
 				auth.DoesUserHaveProjectAccess(
 					auth.DoesUserHaveClusterAccess(
 						requestlog.NewHandler(a.HandleListNamespaces, l),
+						mw.URLParam,
+						mw.QueryParam,
+					),
+					mw.URLParam,
+					mw.ReadAccess,
+				),
+			)
+
+			r.Method(
+				"POST",
+				"/projects/{project_id}/k8s/namespaces/create",
+				auth.DoesUserHaveProjectAccess(
+					auth.DoesUserHaveClusterAccess(
+						requestlog.NewHandler(a.HandleCreateNamespace, l),
+						mw.URLParam,
+						mw.QueryParam,
+					),
+					mw.URLParam,
+					mw.ReadAccess,
+				),
+			)
+
+			r.Method(
+				"DELETE",
+				"/projects/{project_id}/k8s/namespaces/delete",
+				auth.DoesUserHaveProjectAccess(
+					auth.DoesUserHaveClusterAccess(
+						requestlog.NewHandler(a.HandleDeleteNamespace, l),
 						mw.URLParam,
 						mw.QueryParam,
 					),

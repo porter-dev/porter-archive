@@ -78,7 +78,10 @@ class EnvGroupDashboard extends Component<PropsType, StateType> {
                 setNamespace={(namespace) =>
                   this.setState({ namespace }, () =>
                     pushQueryParams(this.props, {
-                      namespace: this.state.namespace === null ? "default" : this.state.namespace,
+                      namespace:
+                        this.state.namespace === null
+                          ? "default"
+                          : this.state.namespace,
                     })
                   )
                 }

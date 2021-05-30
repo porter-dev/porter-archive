@@ -76,10 +76,10 @@ class ExpandedChartWrapper extends Component<PropsType, StateType> {
               this.setState({ loading: false });
             });
         })
-      .catch((err) => {
-        console.log("err", err.response.data);
-        this.setState({ loading: false });
-      });
+        .catch((err) => {
+          console.log("err", err.response.data);
+          this.setState({ loading: false });
+        });
     }
   };
 
@@ -93,14 +93,14 @@ class ExpandedChartWrapper extends Component<PropsType, StateType> {
     let { baseRoute, namespace } = match.params as any;
     let { loading, currentChart } = this.state;
     if (loading) {
-      return <Loading />
+      return <Loading />;
     } else if (currentChart && baseRoute === "jobs") {
       return (
         <ExpandedJobChart
           namespace={namespace}
           currentChart={currentChart}
           currentCluster={this.context.currentCluster}
-          closeChart={() => 
+          closeChart={() =>
             pushFiltered(this.props, "/jobs", ["project_id"], {
               cluster: this.context.currentCluster.name,
               namespace: namespace,
@@ -116,7 +116,7 @@ class ExpandedChartWrapper extends Component<PropsType, StateType> {
           isMetricsInstalled={this.props.isMetricsInstalled}
           currentChart={currentChart}
           currentCluster={this.context.currentCluster}
-          closeChart={() => 
+          closeChart={() =>
             pushFiltered(this.props, "/jobs", ["project_id"], {
               cluster: this.context.currentCluster.name,
               namespace: namespace,
@@ -124,11 +124,9 @@ class ExpandedChartWrapper extends Component<PropsType, StateType> {
           }
           setSidebar={setSidebar}
         />
-      )
+      );
     }
-    return (
-      <PageNotFound />
-    )
+    return <PageNotFound />;
   }
 }
 

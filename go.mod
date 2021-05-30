@@ -53,6 +53,8 @@ require (
 	github.com/kr/text v0.2.0 // indirect
 	github.com/kris-nova/logger v0.0.0-20181127235838-fd0d87064b06
 	github.com/kris-nova/lolgopher v0.0.0-20180921204813-313b3abb0d9b // indirect
+	github.com/moby/moby v20.10.6+incompatible
+	github.com/moby/term v0.0.0-20201216013528-df9cb8a40635
 	github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e // indirect
 	github.com/onsi/ginkgo v1.14.2 // indirect
 	github.com/opentracing/opentracing-go v1.2.0 // indirect

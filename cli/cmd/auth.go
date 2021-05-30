@@ -220,7 +220,7 @@ func register() error {
 		return err
 	}
 
-	client := GetAPIClient()
+	client := GetAPIClient(config)
 
 	resp, err := client.CreateUser(context.Background(), &api.CreateUserRequest{
 		Email:    username,

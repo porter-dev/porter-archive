@@ -106,33 +106,66 @@ class Sidebar extends Component<PropsType, StateType> {
         <>
           <NavButton
             selected={currentView === "applications"}
-            onClick={() =>
-              pushFiltered(this.props, "/applications", ["project_id"], {
-                cluster: currentCluster.name,
-              })
-            }
+            onClick={() => {
+              let params = this.props.match.params as any;
+              let pathNamespace = params.namespace;
+
+              // If namespace is currently only in path (ex: ExpandedChart) set to param
+              if (pathNamespace) {
+                pushFiltered(this.props, "/applications", ["project_id", "cluster", "namespace"], {
+                  cluster: currentCluster.name,
+                  namespace: pathNamespace,
+                })
+              } else {
+                pushFiltered(this.props, "/applications", ["project_id", "cluster", "namespace"], {
+                  cluster: currentCluster.name,
+                })
+              }
+            }}
           >
             <Img src={monoweb} />
             Applications
           </NavButton>
           <NavButton
             selected={currentView === "jobs"}
-            onClick={() =>
-              pushFiltered(this.props, "/jobs", ["project_id"], {
-                cluster: currentCluster.name,
-              })
-            }
+            onClick={() => {
+              let params = this.props.match.params as any;
+              let pathNamespace = params.namespace;
+
+              // If namespace is currently only in path (ex: ExpandedChart) set to param
+              if (pathNamespace) {
+                pushFiltered(this.props, "/jobs", ["project_id", "cluster", "namespace"], {
+                  cluster: currentCluster.name,
+                  namespace: pathNamespace,
+                })
+              } else {
+                pushFiltered(this.props, "/jobs", ["project_id", "cluster", "namespace"], {
+                  cluster: currentCluster.name,
+                })
+              }
+            }}
           >
             <Img src={monojob} />
             Jobs
           </NavButton>
           <NavButton
             selected={currentView === "env-groups"}
-            onClick={() =>
-              pushFiltered(this.props, "/env-groups", ["project_id"], {
-                cluster: currentCluster.name,
-              })
-            }
+            onClick={() => {
+              let params = this.props.match.params as any;
+              let pathNamespace = params.namespace;
+
+              // If namespace is currently only in path (ex: ExpandedChart) set to param
+              if (pathNamespace) {
+                pushFiltered(this.props, "/env-groups", ["project_id", "cluster", "namespace"], {
+                  cluster: currentCluster.name,
+                  namespace: pathNamespace,
+                })
+              } else {
+                pushFiltered(this.props, "/env-groups", ["project_id", "cluster", "namespace"], {
+                  cluster: currentCluster.name,
+                })
+              }
+            }}
           >
             <Img src={sliders} />
             Env Groups

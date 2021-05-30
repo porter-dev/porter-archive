@@ -61,7 +61,7 @@ export default class NamespaceSelector extends Component<PropsType, StateType> {
             }
           );
           this.setState({ namespaceOptions }, () => {
-            if (urlNamespace === "") {
+            if (urlNamespace === "" || defaultNamespace === "") {
               this.props.setNamespace("");
             } else if (this.props.namespace !== defaultNamespace) {
               this.props.setNamespace(defaultNamespace);

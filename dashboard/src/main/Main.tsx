@@ -180,7 +180,7 @@ export default class Main extends Component<PropsType, StateType> {
           }}
         />
         <Route
-          path={`/:baseRoute`}
+          path={`/:baseRoute/:cluster?/:namespace?`}
           render={(routeProps) => {
             const baseRoute = routeProps.match.params.baseRoute;
             if (

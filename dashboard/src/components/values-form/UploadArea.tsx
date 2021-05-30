@@ -35,7 +35,6 @@ export default class UploadArea extends Component<PropsType, StateType> {
 
   render() {
     let { label, placeholder } = this.props;
-    console.log(this.state.fileName);
     if (this.state.fileName) {
       placeholder = `Uploaded ${this.state.fileName}`;
     }

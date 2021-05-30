@@ -60,15 +60,22 @@ class ClusterSection extends Component<PropsType, StateType> {
           let clusters = res.data;
           clusters.sort((a: any, b: any) => a.id - b.id);
           if (clusters.length > 0) {
-            // Set cluster from URL if specified
             let queryString = window.location.search;
             let urlParams = new URLSearchParams(queryString);
-            let clusterName = urlParams.get("cluster");
-            let defaultCluster = null;
-            if (clusterName) {
+            let paramClusterName = urlParams.get("cluster");
+            let params = this.props.match.params as any;
+            let pathClusterName = params.cluster;
+
+            // Set cluster from URL if in path or params
+            let defaultCluster = null as ClusterType;
+            if (paramClusterName || pathClusterName) {
               clusters.forEach((cluster: ClusterType) => {
-                if (cluster.name === clusterName) {
-                  defaultCluster = cluster;
+                if (!defaultCluster) {
+                  if (cluster.name === pathClusterName) {
+                    defaultCluster = cluster;
+                  } else if (cluster.name === paramClusterName) {
+                    defaultCluster = cluster;
+                  }
                 }
               });
             }

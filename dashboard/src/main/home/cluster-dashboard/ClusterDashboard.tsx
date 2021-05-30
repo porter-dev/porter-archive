@@ -13,7 +13,7 @@ import EnvGroupDashboard from "./env-groups/EnvGroupDashboard";
 import NamespaceSelector from "./NamespaceSelector";
 import SortSelector from "./SortSelector";
 import ExpandedChart from "./expanded-chart/ExpandedChart";
-import ExpandedJobChartWrapper from "./expanded-chart/ExpandedJobChartWrapper";
+import ExpandedChartWrapper from "./expanded-chart/ExpandedChartWrapper";
 import { RouteComponentProps, withRouter } from "react-router";
 
 import api from "shared/api";
@@ -44,7 +44,12 @@ class ClusterDashboard extends Component<PropsType, StateType> {
 
   componentDidMount() {
     let { currentCluster, currentProject } = this.context;
-    pushQueryParams(this.props, { cluster: currentCluster.name });
+    let params = this.props.match.params as any;
+    let pathClusterName = params.cluster;
+    // Don't add cluster as query param if present in path
+    if (!pathClusterName) {
+      pushQueryParams(this.props, { cluster: currentCluster.name });
+    }
     api
       .getPrometheusIsInstalled(
         "<token>",
@@ -84,9 +89,9 @@ class ClusterDashboard extends Component<PropsType, StateType> {
           sortType: "Newest",
           currentChart: null,
         },
-        () =>
+        () => 
           pushQueryParams(this.props, {
-            namespace: this.state.namespace || "ALL",
+            namespace: this.state.namespace === null ? "default" : this.state.namespace,
           })
       );
     }
@@ -125,10 +130,11 @@ class ClusterDashboard extends Component<PropsType, StateType> {
             />
             <NamespaceSelector
               setNamespace={(namespace) =>
-                this.setState({ namespace }, () =>
+                this.setState({ namespace }, () => {
                   pushQueryParams(this.props, {
                     namespace: this.state.namespace || "ALL",
                   })
+                }
                 )
               }
               namespace={this.state.namespace}
@@ -148,18 +154,7 @@ class ClusterDashboard extends Component<PropsType, StateType> {
 
   renderContents = () => {
     let { currentCluster, setSidebar, currentView } = this.props;
-    if (this.state.currentChart) {
-      return (
-        <ExpandedChart
-          namespace={this.state.namespace}
-          currentCluster={this.props.currentCluster}
-          currentChart={this.state.currentChart}
-          closeChart={() => this.setState({ currentChart: null })}
-          isMetricsInstalled={this.state.isMetricsInstalled}
-          setSidebar={setSidebar}
-        />
-      );
-    } else if (currentView === "env-groups") {
+    if (currentView === "env-groups") {
       return <EnvGroupDashboard currentCluster={this.props.currentCluster} />;
     }
 
@@ -190,11 +185,11 @@ class ClusterDashboard extends Component<PropsType, StateType> {
     let { setSidebar } = this.props;
     return (
       <Switch>
-        <Route path="/jobs/:clusterName/:namespace/:chartName">
-          <ExpandedJobChartWrapper setSidebar={setSidebar} />
-        </Route>
-        <Route path="/applications/:application">
-          <h1>Application!</h1>
+        <Route path="/:baseRoute/:clusterName+/:namespace/:chartName">
+          <ExpandedChartWrapper 
+            setSidebar={setSidebar}
+            isMetricsInstalled={this.state.isMetricsInstalled}
+          />
         </Route>
         <Route path={["/jobs", "/applications", "/env-groups"]}>
           {this.renderContents()}

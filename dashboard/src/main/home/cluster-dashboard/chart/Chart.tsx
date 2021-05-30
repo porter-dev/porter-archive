@@ -55,8 +55,7 @@ class Chart extends Component<PropsType, StateType> {
           let { location, match } = this.props;
           let urlParams = new URLSearchParams(location.search);
           let cluster = urlParams.get("cluster");
-          let namespace = urlParams.get("namespace");
-          let route = `${match.url}/${cluster}/${namespace}/${chart.name}`;
+          let route = `${match.url}/${cluster}/${chart.namespace}/${chart.name}`;
           pushFiltered(this.props, route, ["project_id"]);
         }}
       >

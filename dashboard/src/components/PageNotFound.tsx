@@ -13,6 +13,61 @@ class PageNotFound extends Component<PropsType, StateType> {
 
   render() {
     let { pathname } = this.props.location;
+    let params = this.props.match.params as any;
+    let { baseRoute } = params;
+    if (baseRoute === "applications") {
+      return (
+        <StyledPageNotFound>
+          <Mega>
+            404
+            <Inside>Application Not Found</Inside>
+          </Mega>
+          <Flex>
+            <BackButton
+              width="140px"
+              onClick={() =>
+                pushFiltered(this.props, "/applications", ["project_id"])
+              }
+            >
+              <i className="material-icons">arrow_back</i>
+              Applications
+            </BackButton>
+            {pathname && (
+              <>
+                <Splitter>|</Splitter>
+                <Helper>Could not find "{pathname}"</Helper>
+              </>
+            )}
+          </Flex>
+        </StyledPageNotFound>
+      );
+    } else if (baseRoute === "jobs") {
+      return (
+        <StyledPageNotFound>
+          <Mega>
+            404
+            <Inside>Job Not Found</Inside>
+          </Mega>
+          <Flex>
+            <BackButton
+              width="90px"
+              onClick={() =>
+                pushFiltered(this.props, "/jobs", ["project_id"])
+              }
+            >
+              <i className="material-icons">arrow_back</i>
+              Jobs
+            </BackButton>
+            {pathname && (
+              <>
+                <Splitter>|</Splitter>
+                <Helper>Could not find "{pathname}"</Helper>
+              </>
+            )}
+          </Flex>
+        </StyledPageNotFound>
+      );
+    }
     return (
       <StyledPageNotFound>
         <Mega>
@@ -58,6 +113,8 @@ const Flex = styled.div`
 
 const Helper = styled.div`
   font-size: 15px;
+  max-width: 550px;
+  margin-right: -50px;
 `;
 
 const BackButton = styled.div`

@@ -112,14 +112,24 @@ class Sidebar extends Component<PropsType, StateType> {
 
               // If namespace is currently only in path (ex: ExpandedChart) set to param
               if (pathNamespace) {
-                pushFiltered(this.props, "/applications", ["project_id", "cluster", "namespace"], {
-                  cluster: currentCluster.name,
-                  namespace: pathNamespace,
-                })
+                pushFiltered(
+                  this.props,
+                  "/applications",
+                  ["project_id", "cluster", "namespace"],
+                  {
+                    cluster: currentCluster.name,
+                    namespace: pathNamespace,
+                  }
+                );
               } else {
-                pushFiltered(this.props, "/applications", ["project_id", "cluster", "namespace"], {
-                  cluster: currentCluster.name,
-                })
+                pushFiltered(
+                  this.props,
+                  "/applications",
+                  ["project_id", "cluster", "namespace"],
+                  {
+                    cluster: currentCluster.name,
+                  }
+                );
               }
             }}
           >
@@ -134,14 +144,24 @@ class Sidebar extends Component<PropsType, StateType> {
 
               // If namespace is currently only in path (ex: ExpandedChart) set to param
               if (pathNamespace) {
-                pushFiltered(this.props, "/jobs", ["project_id", "cluster", "namespace"], {
-                  cluster: currentCluster.name,
-                  namespace: pathNamespace,
-                })
+                pushFiltered(
+                  this.props,
+                  "/jobs",
+                  ["project_id", "cluster", "namespace"],
+                  {
+                    cluster: currentCluster.name,
+                    namespace: pathNamespace,
+                  }
+                );
               } else {
-                pushFiltered(this.props, "/jobs", ["project_id", "cluster", "namespace"], {
-                  cluster: currentCluster.name,
-                })
+                pushFiltered(
+                  this.props,
+                  "/jobs",
+                  ["project_id", "cluster", "namespace"],
+                  {
+                    cluster: currentCluster.name,
+                  }
+                );
               }
             }}
           >
@@ -156,14 +176,24 @@ class Sidebar extends Component<PropsType, StateType> {
 
               // If namespace is currently only in path (ex: ExpandedChart) set to param
               if (pathNamespace) {
-                pushFiltered(this.props, "/env-groups", ["project_id", "cluster", "namespace"], {
-                  cluster: currentCluster.name,
-                  namespace: pathNamespace,
-                })
+                pushFiltered(
+                  this.props,
+                  "/env-groups",
+                  ["project_id", "cluster", "namespace"],
+                  {
+                    cluster: currentCluster.name,
+                    namespace: pathNamespace,
+                  }
+                );
               } else {
-                pushFiltered(this.props, "/env-groups", ["project_id", "cluster", "namespace"], {
-                  cluster: currentCluster.name,
-                })
+                pushFiltered(
+                  this.props,
+                  "/env-groups",
+                  ["project_id", "cluster", "namespace"],
+                  {
+                    cluster: currentCluster.name,
+                  }
+                );
               }
             }}
           >

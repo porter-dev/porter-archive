@@ -51,9 +51,7 @@ class PageNotFound extends Component<PropsType, StateType> {
           <Flex>
             <BackButton
               width="90px"
-              onClick={() =>
-                pushFiltered(this.props, "/jobs", ["project_id"])
-              }
+              onClick={() => pushFiltered(this.props, "/jobs", ["project_id"])}
             >
               <i className="material-icons">arrow_back</i>
               Jobs

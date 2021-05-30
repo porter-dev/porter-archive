@@ -89,9 +89,10 @@ class ClusterDashboard extends Component<PropsType, StateType> {
           sortType: "Newest",
           currentChart: null,
         },
-        () => 
+        () =>
           pushQueryParams(this.props, {
-            namespace: this.state.namespace === null ? "default" : this.state.namespace,
+            namespace:
+              this.state.namespace === null ? "default" : this.state.namespace,
           })
       );
     }
@@ -133,9 +134,8 @@ class ClusterDashboard extends Component<PropsType, StateType> {
                 this.setState({ namespace }, () => {
                   pushQueryParams(this.props, {
                     namespace: this.state.namespace || "ALL",
-                  })
-                }
-                )
+                  });
+                })
               }
               namespace={this.state.namespace}
             />
@@ -186,7 +186,7 @@ class ClusterDashboard extends Component<PropsType, StateType> {
     return (
       <Switch>
         <Route path="/:baseRoute/:clusterName+/:namespace/:chartName">
-          <ExpandedChartWrapper 
+          <ExpandedChartWrapper
             setSidebar={setSidebar}
             isMetricsInstalled={this.state.isMetricsInstalled}
           />

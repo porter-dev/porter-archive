@@ -6,7 +6,6 @@ import (
 	"github.com/fatih/color"
 	"github.com/porter-dev/porter/cli/cmd/api"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 	"k8s.io/client-go/util/homedir"
 )
 
@@ -36,8 +35,8 @@ func Setup() {
 	InitAndLoadConfig()
 }
 
-func GetAPIClient() *api.Client {
-	if token := viper.GetString("token"); token != "" {
+func GetAPIClient(config *CLIConfig) *api.Client {
+	if token := config.Token; token != "" {
 		return api.NewClientWithToken(config.Host+"/api", token)
 	}
 

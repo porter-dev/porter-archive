@@ -46,6 +46,18 @@ type CLIConfig struct {
 //
 // It populates the shared config object above
 func InitAndLoadConfig() {
+	initAndLoadConfig(config)
+}
+
+func InitAndLoadNewConfig() *CLIConfig {
+	newConfig := &CLIConfig{}
+
+	initAndLoadConfig(newConfig)
+
+	return newConfig
+}
+
+func initAndLoadConfig(_config *CLIConfig) {
 	initFlagSet()
 
 	// check that the .porter folder exists; create if not
@@ -94,7 +106,7 @@ func InitAndLoadConfig() {
 	}
 
 	// unmarshal the config into the shared config struct
-	viper.Unmarshal(config)
+	viper.Unmarshal(_config)
 }
 
 // initFlagSet initializes the shared flags used by multiple commands

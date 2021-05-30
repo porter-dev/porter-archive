@@ -13,7 +13,7 @@ var openCmd = &cobra.Command{
 	Use:   "open",
 	Short: "Opens the browser at the currently set Porter instance",
 	Run: func(cmd *cobra.Command, args []string) {
-		client := GetAPIClient()
+		client := GetAPIClient(config)
 
 		user, err := client.AuthCheck(context.Background())
 

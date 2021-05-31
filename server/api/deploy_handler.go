@@ -2,6 +2,7 @@ package api
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -105,7 +106,7 @@ func (app *App) HandleDeployTemplate(w http.ResponseWriter, r *http.Request) {
 		Registries: registries,
 	}
 
-	_, err = agent.InstallChart(conf, app.DOConf)
+	rel, err := agent.InstallChart(conf, app.DOConf)
 
 	if err != nil {
 		app.sendExternalError(err, http.StatusInternalServerError, HTTPError{
@@ -124,12 +125,21 @@ func (app *App) HandleDeployTemplate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// create release with webhook token in db
+	repository := rel.Config["image"].(map[string]interface{})["repository"]
+	repoStr, ok := repository.(string)
+
+	if !ok {
+		app.handleErrorInternal(fmt.Errorf("Could not find field repository in config"), w)
+		return
+	}
+
 	release := &models.Release{
 		ClusterID:    form.ReleaseForm.Form.Cluster.ID,
 		ProjectID:    form.ReleaseForm.Form.Cluster.ProjectID,
 		Namespace:    form.ReleaseForm.Form.Namespace,
 		Name:         form.ChartTemplateForm.Name,
 		WebhookToken: token,
+		ImageRepoURI: repoStr,
 	}
 
 	_, err = app.Repo.Release.CreateRelease(release)

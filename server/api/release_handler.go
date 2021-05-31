@@ -783,6 +783,24 @@ func (app *App) HandleUpgradeRelease(w http.ResponseWriter, r *http.Request) {
 		release, err := app.Repo.Release.ReadRelease(uint(clusterID), name, rel.Namespace)
 
 		if release != nil {
+			// update image repo uri if changed
+			repository := rel.Config["image"].(map[string]interface{})["repository"]
+			repoStr, ok := repository.(string)
+
+			if !ok {
+				app.handleErrorInternal(fmt.Errorf("Could not find field repository in config"), w)
+				return
+			}
+
+			if repoStr != release.ImageRepoURI {
+				release, err = app.Repo.Release.UpdateRelease(release)
+
+				if err != nil {
+					app.handleErrorInternal(err, w)
+					return
+				}
+			}
+
 			gitAction := release.GitActionConfig
 
 			if gitAction.ID != 0 {
@@ -1034,6 +1052,24 @@ func (app *App) HandleRollbackRelease(w http.ResponseWriter, r *http.Request) {
 		release, err := app.Repo.Release.ReadRelease(uint(clusterID), name, rel.Namespace)
 
 		if release != nil {
+			// update image repo uri if changed
+			repository := rel.Config["image"].(map[string]interface{})["repository"]
+			repoStr, ok := repository.(string)
+
+			if !ok {
+				app.handleErrorInternal(fmt.Errorf("Could not find field repository in config"), w)
+				return
+			}
+
+			if repoStr != release.ImageRepoURI {
+				release, err = app.Repo.Release.UpdateRelease(release)
+
+				if err != nil {
+					app.handleErrorInternal(err, w)
+					return
+				}
+			}
+
 			gitAction := release.GitActionConfig
 
 			if gitAction.ID != 0 {

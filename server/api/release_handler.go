@@ -751,7 +751,7 @@ func (app *App) HandleUpgradeRelease(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		app.sendExternalError(err, http.StatusInternalServerError, HTTPError{
 			Code:   ErrReleaseDeploy,
-			Errors: []string{"error upgrading release " + err.Error()},
+			Errors: []string{err.Error()},
 		}, w)
 
 		return
@@ -791,6 +791,7 @@ func (app *App) HandleUpgradeRelease(w http.ResponseWriter, r *http.Request) {
 				repoSplit := strings.Split(gitAction.GitRepo, "/")
 
 				gaRunner := &actions.GithubActions{
+					ServerURL:      app.ServerConf.ServerURL,
 					GitIntegration: gr,
 					GitRepoName:    repoSplit[1],
 					GitRepoOwner:   repoSplit[0],
@@ -923,7 +924,7 @@ func (app *App) HandleReleaseDeployWebhook(w http.ResponseWriter, r *http.Reques
 	if err != nil {
 		app.sendExternalError(err, http.StatusInternalServerError, HTTPError{
 			Code:   ErrReleaseDeploy,
-			Errors: []string{"error upgrading release " + err.Error()},
+			Errors: []string{err.Error()},
 		}, w)
 
 		return
@@ -1056,6 +1057,7 @@ func (app *App) HandleRollbackRelease(w http.ResponseWriter, r *http.Request) {
 				}
 
 				gaRunner := &actions.GithubActions{
+					ServerURL:      app.ServerConf.ServerURL,
 					GitIntegration: gr,
 					GitRepoName:    repoSplit[1],
 					GitRepoOwner:   repoSplit[0],

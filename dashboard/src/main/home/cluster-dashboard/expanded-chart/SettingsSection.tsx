@@ -22,6 +22,7 @@ type PropsType = {
   currentChart: ChartType;
   refreshChart: () => void;
   setShowDeleteOverlay: (x: boolean) => void;
+  showSource?: boolean;
 };
 
 type StateType = {
@@ -80,61 +81,6 @@ export default class SettingsSection extends Component<PropsType, StateType> {
       .catch(console.log);
   }
 
-  redeployWithNewImage = (img: string, tag: string) => {
-    this.setState({ saveValuesStatus: "loading" });
-    let { currentCluster, currentProject } = this.context;
-
-    // If tag is explicitly declared, parse tag
-    let imgSplits = img.split(":");
-    let parsedTag = null;
-    if (imgSplits.length > 1) {
-      img = imgSplits[0];
-      parsedTag = imgSplits[1];
-    }
-
-    let image = {
-      image: {
-        repository: img,
-        tag: parsedTag || tag,
-      },
-    };
-
-    let values = {};
-    let rawValues = this.props.currentChart.config;
-    for (let key in rawValues) {
-      _.set(values, key, rawValues[key]);
-    }
-
-    // Weave in preexisting values and convert to yaml
-    let valuesYaml = yaml.dump({
-      ...values,
-      ...image,
-    });
-
-    api
-      .upgradeChartValues(
-        "<token>",
-        {
-          namespace: this.props.currentChart.namespace,
-          storage: StorageType.Secret,
-          values: valuesYaml,
-        },
-        {
-          id: currentProject.id,
-          name: this.props.currentChart.name,
-          cluster_id: currentCluster.id,
-        }
-      )
-      .then((res) => {
-        this.setState({ saveValuesStatus: "successful" });
-        this.props.refreshChart();
-      })
-      .catch((err) => {
-        console.log(err);
-        this.setState({ saveValuesStatus: "error" });
-      });
-  };
-
   renderWebhookSection = () => {
     if (!this.props.currentChart?.form?.hasSource) {
       return;
@@ -144,6 +90,25 @@ export default class SettingsSection extends Component<PropsType, StateType> {
       let webhookText = `curl -X POST 'https://dashboard.getporter.dev/api/webhooks/deploy/${this.state.webhookToken}?commit=YOUR_COMMIT_HASH'`;
       return (
         <>
+          {this.props.showSource && (
+            <>
+              <Heading>Source Settings</Heading>
+              <Helper>Specify an image tag to use.</Helper>
+              <ImageSelector
+                selectedTag={this.state.selectedTag}
+                selectedImageUrl={this.state.selectedImageUrl}
+                setSelectedImageUrl={(x: string) =>
+                  this.setState({ selectedImageUrl: x })
+                }
+                setSelectedTag={(x: string) =>
+                  this.setState({ selectedTag: x })
+                }
+                forceExpanded={true}
+                disableImageSelect={true}
+              />
+              <Br />
+            </>
+          )}
           <Heading>Redeploy Webhook</Heading>
           <Helper>
             Programmatically deploy by calling this secret webhook.
@@ -166,10 +131,65 @@ export default class SettingsSection extends Component<PropsType, StateType> {
     }
   };
 
+  handleSubmit = () => {
+    let { currentCluster, setCurrentError, currentProject } = this.context;
+    this.setState({ saveValuesStatus: "loading" });
+
+    console.log(this.state.selectedImageUrl);
+
+    let values = {};
+    if (this.state.selectedTag) {
+      _.set(values, "image.repository", this.state.selectedImageUrl);
+      _.set(values, "image.tag", this.state.selectedTag);
+    }
+
+    // Weave in preexisting values and convert to yaml
+    let conf = yaml.dump(
+      {
+        ...(this.props.currentChart.config as Object),
+        ...values,
+      },
+      { forceQuotes: true }
+    );
+
+    api
+      .upgradeChartValues(
+        "<token>",
+        {
+          namespace: this.props.currentChart.namespace,
+          storage: StorageType.Secret,
+          values: conf,
+        },
+        {
+          id: currentProject.id,
+          name: this.props.currentChart.name,
+          cluster_id: currentCluster.id,
+        }
+      )
+      .then((res) => {
+        this.setState({ saveValuesStatus: "successful" });
+        this.props.refreshChart();
+      })
+      .catch((err) => {
+        let parsedErr =
+          err?.response?.data?.errors && err.response.data.errors[0];
+
+        if (parsedErr) {
+          err = parsedErr;
+        }
+
+        this.setState({
+          saveValuesStatus: parsedErr,
+        });
+
+        setCurrentError(parsedErr);
+      });
+  };
+
   render() {
     return (
       <Wrapper>
-        <StyledSettingsSection>
+        <StyledSettingsSection showSource={this.props.showSource}>
           {this.renderWebhookSection()}
           <Heading>Additional Settings</Heading>
           <Button
@@ -179,12 +199,25 @@ export default class SettingsSection extends Component<PropsType, StateType> {
             Delete {this.props.currentChart.name}
           </Button>
         </StyledSettingsSection>
+        {this.props.showSource && (
+          <SaveButton
+            text="Deploy"
+            status={this.state.saveValuesStatus}
+            onClick={this.handleSubmit}
+            makeFlush={true}
+          />
+        )}
       </Wrapper>
     );
   }
 }
 
 SettingsSection.contextType = Context;
+
+const Br = styled.div`
+  width: 100%;
+  height: 10px;
+`;
 
 const Button = styled.button`
   height: 35px;
@@ -270,15 +303,15 @@ const Wrapper = styled.div`
   height: 100%;
 `;
 
-const StyledSettingsSection = styled.div`
+const StyledSettingsSection = styled.div<{ showSource: boolean }>`
   width: 100%;
-  height: calc(100%);
   background: #ffffff11;
   padding: 0 35px;
   padding-bottom: 50px;
   position: relative;
   border-radius: 5px;
   overflow: auto;
+  height: ${(props) => (props.showSource ? "calc(100% - 55px)" : "100%")};
 `;
 
 const Holder = styled.div`

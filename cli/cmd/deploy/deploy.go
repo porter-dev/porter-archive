@@ -301,7 +301,11 @@ func (d *DeployAgent) getEnvFromRelease() (map[string]string, error) {
 			return nil, fmt.Errorf("could not cast environment variables to object")
 		}
 
-		mapEnvConfig[key] = valStr
+		// if the value contains PORTERSECRET, this is a "dummy" env that gets injected during
+		// run-time, so we ignore it
+		if !strings.Contains(valStr, "PORTERSECRET") {
+			mapEnvConfig[key] = valStr
+		}
 	}
 
 	return mapEnvConfig, nil

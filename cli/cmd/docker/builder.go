@@ -2,6 +2,7 @@ package docker
 
 import (
 	"context"
+	"fmt"
 	"os"
 
 	"github.com/docker/docker/api/types"
@@ -10,18 +11,35 @@ import (
 	"github.com/moby/term"
 )
 
+type BuildOpts struct {
+	ImageRepo    string
+	Tag          string
+	BuildContext string
+	Env          map[string]string
+}
+
 // BuildLocal
-func (a *Agent) BuildLocal(dockerfilePath, tag, buildContext string) error {
-	tar, err := archive.TarWithOptions(buildContext, &archive.TarOptions{})
+func (a *Agent) BuildLocal(opts *BuildOpts, dockerfilePath string) error {
+	tar, err := archive.TarWithOptions(opts.BuildContext, &archive.TarOptions{})
 
 	if err != nil {
 		return err
 	}
 
+	buildArgs := make(map[string]*string)
+
+	for key, val := range opts.Env {
+		valCopy := val
+		buildArgs[key] = &valCopy
+	}
+
 	out, err := a.client.ImageBuild(context.Background(), tar, types.ImageBuildOptions{
 		Dockerfile: dockerfilePath,
-		Tags:       []string{tag},
-		Remove:     true,
+		BuildArgs:  buildArgs,
+		Tags: []string{
+			fmt.Sprintf("%s:%s", opts.ImageRepo, opts.Tag),
+		},
+		Remove: true,
 	})
 
 	if err != nil {

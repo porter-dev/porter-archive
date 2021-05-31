@@ -12,6 +12,7 @@ import DOFormSection from "./DOFormSection";
 import SaveButton from "components/SaveButton";
 import ExistingClusterSection from "./ExistingClusterSection";
 import { RouteComponentProps, withRouter } from "react-router";
+import { pushFiltered } from "shared/routing";
 
 type PropsType = RouteComponentProps & {
   isInNewProject?: boolean;
@@ -40,7 +41,7 @@ class NewProject extends Component<PropsType, StateType> {
     setCurrentError(
       "Provisioning failed. Check your credentials and try again."
     );
-    this.props.history.push("dashboard?tab=overview");
+    pushFiltered(this.props, "/dashboard", ["project_id"], { tab: "overview" });
   };
 
   renderSelectedProvider = (override?: string) => {

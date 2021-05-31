@@ -4,13 +4,13 @@
 > 
 > **Note:** `porter deploy` was introduced in version `0.4.0` and is currently in `beta`, thus it is subject to change and may not work reliably. If you encounter an error, please [file a bug report](https://github.com/porter-dev/porter/issues/new?assignees=&labels=&template=bug.md). 
 
-Version `0.4.0` of Porter added supported for building and re-deploying an existing application using the Porter CLI. For example, the following command will re-deploy an application called `example-app` from the most recent Github commit in the specified branch/repository:
+Version `0.4.0` of Porter added supported for building and re-deploying an existing application using the Porter CLI. For example, if you have chosen to "Deploy from a Git Repository" on the Porter dashboard, the following command will re-deploy an application called `example-app` from the most recent Github commit in the specified branch/repository:
 
 ```sh
 porter deploy --app example-app
 ```
 
-The default behavior of `porter deploy` is to **use the remote repository as the source of truth**. If you would like to use a local directory (such as your current working directory) as the directory to build from, go to the [deploying from local source](#deploying-from-local-source) section.
+If you would like to use a local directory (such as your current working directory) as the directory to build from, go to the [deploying from local source](#deploying-from-local-source) section.
 
 By default, this command performs four steps: gets the environment variables for the application, builds a new Docker container from the source files, pushes a new Docker image to the remote registry, and calls the Porter webhook to re-deploy the application. However, we designed this command to be modular: if you would like to add intermediate steps in your own build process, you can call different `porter deploy` sub-commands separately:
 
@@ -20,6 +20,42 @@ By default, this command performs four steps: gets the environment variables for
 - [`porter deploy call-webhook`](#porter-deploy-call-webhook) - calls the Porter webhook to trigger a re-deploy of the application. 
 
 To see a working example, check out the [creating a custom CI pipeline]() guide.
+
+## Command Reference
+
+### `porter deploy`
+
+Builds and deploys a specified application given by the `--app` flag. For example:
+
+```sh
+porter deploy --app example-app
+```
+
+If the application has a remote Git repository source configured, this command uses the latest commit from the remote repo and branch to deploy an application. It will use the latest commit as the image tag. 
+
+To build from a local directory, you must specify the --local flag. The path can be configured via the `--path` flag. You can also overwrite the tag using the `--tag` flag. For example, to build from the local directory `~/path-to-dir` with the tag `testing`:
+
+```sh
+porter deploy --app remote-git-app --local --path ~/path-to-dir --tag testing
+```
+
+If your application is set up to use a Dockerfile by default, you can use a buildpack via the flag `--method pack`. Conversely, if your application is set up to use a buildpack by default, you can use a Dockerfile by passing the flag `--method docker`. You can specify the relative path to a Dockerfile in your remote Git repository. For example, if a Dockerfile is found at `./docker/prod.Dockerfile`, you can specify it as follows:
+
+```sh
+porter deploy --app remote-git-app --method docker --dockerfile ./docker/prod.Dockerfile
+```
+
+If an application does not have a remote Git repository source, this command will attempt to use a cloud-native buildpack builder and build from the current directory. If this is the desired behavior, you do not need to configure additional flags:
+
+```sh
+porter deploy --app local-git-app
+```
+
+If you would like to build from a Dockerfile instead, use the flag `--dockerfile` and `--method docker` as documented above. For example:
+
+```sh
+porter deploy --app local-docker-app --method docker --dockerfile ~/porter-test/prod.Dockerfile
+```
 
 ### `porter deploy get-env`
 

@@ -1,18 +1,14 @@
 import React, { Component } from "react";
+import { BrowserRouter } from "react-router-dom";
 
-import { ContextProvider } from "./shared/Context";
-import Main from "./main/Main";
+import MainWrapper from "./main/MainWrapper";
 
-type PropsType = {};
-
-type StateType = {};
-
-export default class App extends Component<PropsType, StateType> {
+export default class App extends Component {
   render() {
     return (
-      <ContextProvider>
-        <Main />
-      </ContextProvider>
+      <BrowserRouter>
+        <MainWrapper />
+      </BrowserRouter>
     );
   }
 }

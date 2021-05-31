@@ -187,5 +187,15 @@ func (app *App) createGitActionFromForm(
 
 	app.Logger.Info().Msgf("New git action created: %d", ga.ID)
 
+	// update the release in the db with the image repo uri
+	release.ImageRepoURI = gitAction.ImageRepoURI
+
+	_, err = app.Repo.Release.UpdateRelease(release)
+
+	if err != nil {
+		app.handleErrorDataWrite(err, w)
+		return nil
+	}
+
 	return ga.Externalize()
 }

@@ -13,18 +13,12 @@ import TabRegion from "components/TabRegion";
 import Provisioner from "../provisioner/Provisioner";
 import FormDebugger from "components/values-form/FormDebugger";
 
-import { setSearchParam } from "shared/routing";
+import { pushQueryParams, pushFiltered } from "shared/routing";
 
 type PropsType = RouteComponentProps & {
   projectId: number | null;
   setRefreshClusters: (x: boolean) => void;
 };
-
-const tabOptions = [
-  { label: "Project Overview", value: "overview" },
-  { label: "Create a Cluster", value: "create-cluster" },
-  { label: "Provisioner Status", value: "provisioner" },
-];
 
 // TODO: rethink this list, should be coupled with tabOptions
 const tabOptionStrings = ["overview", "create-cluster", "provisioner"];
@@ -101,7 +95,7 @@ class Dashboard extends Component<PropsType, StateType> {
   }
 
   onShowProjectSettings = () => {
-    this.props.history.push("project-settings");
+    pushFiltered(this.props, "/project-settings", ["project_id"]);
   };
 
   currentTab = () => new URLSearchParams(this.props.location.search).get("tab");
@@ -125,7 +119,7 @@ class Dashboard extends Component<PropsType, StateType> {
   };
 
   setCurrentTab = (x: string) => {
-    this.props.history.push(setSearchParam(this.props.location, "tab", x));
+    pushQueryParams(this.props, { tab: x });
   };
 
   render() {

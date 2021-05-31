@@ -9,6 +9,12 @@ export interface ClusterType {
 
 export interface DetailedClusterType extends ClusterType {
   ingress_ip?: string;
+  ingress_error?: DetailedIngressError
+}
+
+export interface DetailedIngressError {
+  message: string;
+  error: string
 }
 
 export interface ChartType {

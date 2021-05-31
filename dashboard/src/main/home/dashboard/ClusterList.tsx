@@ -3,31 +3,39 @@ import styled from "styled-components";
 
 import { Context } from "shared/Context";
 import api from "shared/api";
-import { ClusterType, DetailedClusterType } from "shared/types";
+import {
+  ClusterType,
+  DetailedClusterType,
+  DetailedIngressError,
+} from "shared/types";
 import Helper from "components/values-form/Helper";
 
 import { RouteComponentProps, withRouter } from "react-router";
 
 import CopyToClipboard from "components/CopyToClipboard";
 import Loading from "components/Loading";
+import Modal from "../modals/Modal";
 
 type PropsType = RouteComponentProps & {
   currentCluster: ClusterType;
 };
 
-type ClustersArray = Array<ClusterType | DetailedClusterType>;
-
 type StateType = {
   loading: boolean;
   error: string;
-  clusters: ClustersArray;
+  clusters: DetailedClusterType[];
+  showErrorModal?: {
+    clusterId: number;
+    show: boolean;
+  };
 };
 
 class Templates extends Component<PropsType, StateType> {
-  state = {
+  state: StateType = {
     loading: true,
     error: "",
-    clusters: [] as ClustersArray,
+    clusters: [],
+    showErrorModal: undefined,
   };
 
   componentDidMount() {
@@ -78,6 +86,7 @@ class Templates extends Component<PropsType, StateType> {
           prevState.clusters.splice(currentClusterIndex, 1, {
             ...currentCluster,
             ingress_ip: res.data.ingress_ip,
+            ingress_error: res.data.ingress_error,
           });
           return prevState;
         });
@@ -93,7 +102,11 @@ class Templates extends Component<PropsType, StateType> {
     );
   };
 
-  renderIngressIp = (ingressIp: string | undefined) => {
+  renderIngressIp = (
+    clusterId: number,
+    ingressIp: string | undefined,
+    ingressError: DetailedIngressError
+  ) => {
     if (typeof ingressIp !== "string") {
       return (
         <Url onClick={(e) => e.preventDefault()}>
@@ -102,10 +115,27 @@ class Templates extends Component<PropsType, StateType> {
       );
     }
 
+    if (!ingressIp.length && ingressError) {
+      return (
+        <>
+          <Url
+            onClick={(e) => {
+              e.stopPropagation();
+              this.setState({ showErrorModal: { clusterId, show: true } });
+            }}
+          >
+            <Bolded>Ingress IP:</Bolded>
+            <span>{ingressError.message}</span>
+            <i className="material-icons">launch</i>
+          </Url>
+        </>
+      );
+    }
+
     if (!ingressIp.length) {
       return (
         <Url>
-          <Bolded>Cluster IP:</Bolded>
+          <Bolded>Ingress IP:</Bolded>
           <span>Ingress IP not available</span>
         </Url>
       );
@@ -117,7 +147,7 @@ class Templates extends Component<PropsType, StateType> {
         text={ingressIp}
         wrapperProps={{ onClick: (e: any) => e.stopPropagation() }}
       >
-        <Bolded>Cluster IP:</Bolded>
+        <Bolded>Ingress IP:</Bolded>
         <span>{ingressIp}</span>
         <i className="material-icons-outlined">content_copy</i>
       </CopyToClipboard>
@@ -139,10 +169,37 @@ class Templates extends Component<PropsType, StateType> {
               {this.renderIcon()}
               <TemplateTitle>{cluster.name}</TemplateTitle>
             </TitleContainer>
-            {this.renderIngressIp(cluster.ingress_ip)}
+            {this.renderIngressIp(
+              cluster.id,
+              cluster.ingress_ip,
+              cluster.ingress_error
+            )}
           </TemplateBlock>
         );
       }
+    );
+  };
+
+  renderErrorModal = () => {
+    const clusterError =
+      this.state.showErrorModal?.show &&
+      this.state.clusters.find(
+        (c) => c.id === this.state.showErrorModal?.clusterId
+      );
+    const ingressError = clusterError?.ingress_error;
+    return (
+      <>
+        {clusterError && (
+          <Modal
+            onRequestClose={() => this.setState({ showErrorModal: undefined })}
+            width="665px"
+            height="min-content"
+          >
+            Porter encountered an error. Full error log:
+            <CodeBlock>{ingressError.error}</CodeBlock>
+          </Modal>
+        )}
+      </>
     );
   };
 
@@ -151,6 +208,7 @@ class Templates extends Component<PropsType, StateType> {
       <StyledClusterList>
         <Helper>Clusters connected to this project:</Helper>
         <TemplateList>{this.renderClusters()}</TemplateList>
+        {this.renderErrorModal()}
       </StyledClusterList>
     );
   }
@@ -159,6 +217,23 @@ class Templates extends Component<PropsType, StateType> {
 Templates.contextType = Context;
 
 export default withRouter(Templates);
+
+const CodeBlock = styled.span`
+  display: block;
+  background-color: #1b1d26;
+  color: white;
+  border-radius: 5px;
+  font-family: monospace;
+  user-select: text;
+  max-height: 400px;
+  width: 90%;
+  margin-left: 5%;
+  margin-top: 20px;
+  overflow-x: hidden;
+  overflow-y: auto;
+  padding: 10px;
+  overflow-wrap: break-word;
+`;
 
 const StyledClusterList = styled.div`
   margin-top: -17px;

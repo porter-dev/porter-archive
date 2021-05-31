@@ -48,13 +48,13 @@ porter deploy --app remote-git-app --method docker --dockerfile ./docker/prod.Do
 If an application does not have a remote Git repository source, this command will attempt to use a cloud-native buildpack builder and build from the current directory. If this is the desired behavior, you do not need to configure additional flags:
 
 ```sh
-porter deploy --app local-git-app
+porter deploy --app local-app
 ```
 
 If you would like to build from a Dockerfile instead, use the flag `--dockerfile` and `--method docker` as documented above. For example:
 
 ```sh
-porter deploy --app local-docker-app --method docker --dockerfile ~/porter-test/prod.Dockerfile
+porter deploy --app local-app --method docker --dockerfile ~/porter-test/prod.Dockerfile
 ```
 
 ### `porter deploy get-env`

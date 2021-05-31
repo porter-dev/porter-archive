@@ -12,27 +12,47 @@ import (
 	"github.com/porter-dev/porter/cli/cmd/api"
 	"github.com/porter-dev/porter/cli/cmd/docker"
 	"github.com/porter-dev/porter/cli/cmd/github"
+	"github.com/porter-dev/porter/cli/cmd/pack"
 	"k8s.io/client-go/util/homedir"
+)
+
+// deployBuildType is the option to use as a builder
+type deployBuildType string
+
+const (
+	// uses local Docker daemon to build and push images
+	deployBuildTypeDocker deployBuildType = "docker"
+
+	// uses cloud-native build pack to build and push images
+	deployBuildTypePack deployBuildType = "pack"
 )
 
 // DeployAgent handles the deployment and redeployment of an application on Porter
 type DeployAgent struct {
 	App string
 
-	client    *api.Client
-	release   *api.GetReleaseResponse
-	agent     *docker.Agent
-	opts      *DeployOpts
-	tag       string
-	envPrefix string
+	buildType   deployBuildType
+	client      *api.Client
+	release     *api.GetReleaseResponse
+	agent       *docker.Agent
+	opts        *DeployOpts
+	tag         string
+	envPrefix   string
+	env         map[string]string
+	imageExists bool
 }
 
 // DeployOpts are the options for creating a new DeployAgent
 type DeployOpts struct {
-	ProjectID uint
-	ClusterID uint
-	Namespace string
+	ProjectID   uint
+	ClusterID   uint
+	Namespace   string
+	Local       bool
+	LocalPath   string
+	OverrideTag string
 }
+
+var ErrNoGitActionConfig error = fmt.Errorf("specified release does not have a git action config")
 
 // NewDeployAgent creates a new DeployAgent given a Porter API client, application
 // name, and DeployOpts.
@@ -41,6 +61,7 @@ func NewDeployAgent(client *api.Client, app string, opts *DeployOpts) (*DeployAg
 		App:    app,
 		opts:   opts,
 		client: client,
+		env:    make(map[string]string),
 	}
 
 	// get release from Porter API
@@ -48,6 +69,11 @@ func NewDeployAgent(client *api.Client, app string, opts *DeployOpts) (*DeployAg
 
 	if err != nil {
 		return nil, err
+	}
+
+	// if the git action config is nil, return an error
+	if release.GitActionConfig == nil {
+		return nil, ErrNoGitActionConfig
 	}
 
 	deployAgent.release = release
@@ -66,6 +92,14 @@ func NewDeployAgent(client *api.Client, app string, opts *DeployOpts) (*DeployAg
 
 	deployAgent.agent = agent
 
+	if release.GitActionConfig.DockerfilePath != "" {
+		deployAgent.buildType = deployBuildTypeDocker
+	} else {
+		deployAgent.buildType = deployBuildTypePack
+	}
+
+	deployAgent.tag = opts.OverrideTag
+
 	return deployAgent, nil
 }
 
@@ -74,8 +108,11 @@ func (d *DeployAgent) GetBuildEnv() (map[string]string, error) {
 }
 
 func (d *DeployAgent) SetBuildEnv(envVars map[string]string) error {
+	d.env = envVars
+
 	// iterate through env and set the environment variables for the process
-	// these are prefixed with PORTER_<RELEASE> to avoid collisions
+	// these are prefixed with PORTER_<RELEASE> to avoid collisions. We use
+	// these prefixed env when calling a custom build command as a child process.
 	for key, val := range envVars {
 		prefixedKey := fmt.Sprintf("%s_%s", d.envPrefix, key)
 
@@ -113,29 +150,38 @@ func (d *DeployAgent) WriteBuildEnv(fileDest string) error {
 }
 
 func (d *DeployAgent) Build() error {
-	zipResp, err := d.client.GetRepoZIPDownloadURL(
-		context.Background(),
-		d.opts.ProjectID,
-		d.release.GitActionConfig,
-	)
+	// if build is not local, fetch remote source
+	var dst string
+	var err error
 
-	if err != nil {
-		return err
+	if !d.opts.Local {
+		zipResp, err := d.client.GetRepoZIPDownloadURL(
+			context.Background(),
+			d.opts.ProjectID,
+			d.release.GitActionConfig,
+		)
+
+		if err != nil {
+			return err
+		}
+
+		// download the repository from remote source into a temp directory
+		dst, err = d.downloadRepoToDir(zipResp.URLString)
+
+		if d.tag == "" {
+			shortRef := fmt.Sprintf("%.7s", zipResp.LatestCommitSHA)
+			d.tag = shortRef
+		}
+
+		if err != nil {
+			return err
+		}
+	} else {
+		dst = filepath.Dir(d.opts.LocalPath)
 	}
 
-	// download the repository from remote source into a temp directory
-	dst, err := d.downloadRepoToDir(zipResp.URLString)
-
-	shortRef := fmt.Sprintf("%.7s", zipResp.LatestCommitSHA)
-
-	if err != nil {
-		return err
-	}
-
-	agent, err := docker.NewAgentWithAuthGetter(d.client, d.opts.ProjectID)
-
-	if err != nil {
-		return err
+	if d.tag == "" {
+		d.tag = "latest"
 	}
 
 	err = d.pullCurrentReleaseImage()
@@ -145,14 +191,36 @@ func (d *DeployAgent) Build() error {
 		return err
 	} else if err != nil && err == docker.PullImageErrNotFound {
 		fmt.Println("could not find image, moving to build step")
+		d.imageExists = false
 	}
 
-	// case on Dockerfile path
-	if d.release.GitActionConfig.DockerfilePath != "" {
-		err = agent.BuildLocal(
-			d.release.GitActionConfig.DockerfilePath,
-			fmt.Sprintf("%s:%s", d.release.GitActionConfig.ImageRepoURI, shortRef),
-			dst,
+	if d.buildType == deployBuildTypeDocker {
+		return d.BuildDocker(dst, d.tag)
+	}
+
+	return d.BuildPack(dst, d.tag)
+}
+
+func (d *DeployAgent) BuildDocker(dst, tag string) error {
+	opts := &docker.BuildOpts{
+		ImageRepo:    d.release.GitActionConfig.ImageRepoURI,
+		Tag:          tag,
+		BuildContext: dst,
+		Env:          d.env,
+	}
+
+	return d.agent.BuildLocal(
+		opts,
+		d.release.GitActionConfig.DockerfilePath,
+	)
+}
+
+func (d *DeployAgent) BuildPack(dst, tag string) error {
+	// retag the image with "pack-cache" tag so that it doesn't re-pull from the registry
+	if d.imageExists {
+		err := d.agent.TagImage(
+			fmt.Sprintf("%s:%s", d.release.GitActionConfig.ImageRepoURI, tag),
+			fmt.Sprintf("%s:%s", d.release.GitActionConfig.ImageRepoURI, "pack-cache"),
 		)
 
 		if err != nil {
@@ -160,9 +228,30 @@ func (d *DeployAgent) Build() error {
 		}
 	}
 
-	d.tag = shortRef
+	// create pack agent and build opts
+	packAgent := &pack.Agent{}
 
-	return nil
+	opts := &docker.BuildOpts{
+		ImageRepo: d.release.GitActionConfig.ImageRepoURI,
+		// We tag the image with a stable param "pack-cache" so that pack can use the
+		// local image without attempting to re-pull from registry. We handle getting
+		// registry credentials and pushing/pulling the image.
+		Tag:          "pack-cache",
+		BuildContext: dst,
+		Env:          d.env,
+	}
+
+	// call builder
+	err := packAgent.Build(opts)
+
+	if err != nil {
+		return err
+	}
+
+	return d.agent.TagImage(
+		fmt.Sprintf("%s:%s", d.release.GitActionConfig.ImageRepoURI, "pack-cache"),
+		fmt.Sprintf("%s:%s", d.release.GitActionConfig.ImageRepoURI, tag),
+	)
 }
 
 func (d *DeployAgent) Deploy() error {
@@ -191,17 +280,6 @@ func (d *DeployAgent) Deploy() error {
 		d.tag,
 	)
 }
-
-// func deployWithNewTag(resp *api.AuthCheckResponse, client *api.Client, args []string) error {
-// 	if release == nil {
-// 		err := deployInit(resp, client, args)
-
-// 		if err != nil {
-// 			return err
-// 		}
-// 	}
-
-// }
 
 // HELPER METHODS
 func (d *DeployAgent) getEnvFromRelease() (map[string]string, error) {

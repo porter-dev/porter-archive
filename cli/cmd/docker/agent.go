@@ -139,6 +139,10 @@ func (a *Agent) ConnectContainerToNetwork(networkID, containerID, containerName 
 	return a.client.NetworkConnect(a.ctx, networkID, containerID, &network.EndpointSettings{})
 }
 
+func (a *Agent) TagImage(old, new string) error {
+	return a.client.ImageTag(a.ctx, old, new)
+}
+
 // PullImageEvent represents a response from the Docker API with an image pull event
 type PullImageEvent struct {
 	Status         string `json:"status"`
@@ -152,6 +156,8 @@ type PullImageEvent struct {
 
 var PullImageErrNotFound = fmt.Errorf("Requested image not found")
 
+var PullImageErrUnauthorized = fmt.Errorf("Could not pull image: unauthorized")
+
 // PullImage pulls an image specified by the image string
 func (a *Agent) PullImage(image string) error {
 	opts, err := a.getPullOptions(image)
@@ -163,10 +169,14 @@ func (a *Agent) PullImage(image string) error {
 	// pull the specified image
 	out, err := a.client.ImagePull(a.ctx, image, opts)
 
-	if err != nil && strings.Contains(err.Error(), "Requested image not found") {
-		return PullImageErrNotFound
-	} else if err != nil {
-		return a.handleDockerClientErr(err, "Could not pull image "+image)
+	if err != nil {
+		if client.IsErrNotFound(err) {
+			return PullImageErrNotFound
+		} else if client.IsErrUnauthorized(err) {
+			return PullImageErrUnauthorized
+		} else {
+			return a.handleDockerClientErr(err, "Could not pull image "+image)
+		}
 	}
 
 	defer out.Close()
@@ -174,24 +184,6 @@ func (a *Agent) PullImage(image string) error {
 	termFd, isTerm := term.GetFdInfo(os.Stderr)
 
 	return jsonmessage.DisplayJSONMessagesStream(out, os.Stderr, termFd, isTerm, nil)
-
-	// decoder := json.NewDecoder(out)
-
-	// var event *PullImageEvent
-
-	// for {
-	// 	if err := decoder.Decode(&event); err != nil {
-	// 		if err == io.EOF {
-	// 			break
-	// 		}
-
-	// 		return err
-	// 	}
-
-	// 	fmt.Println(event.Status)
-	// }
-
-	return nil
 }
 
 // PushImage pushes an image specified by the image string

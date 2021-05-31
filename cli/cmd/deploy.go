@@ -63,6 +63,9 @@ var deployBuildCmd = &cobra.Command{
 
 var app string
 var getEnvFileDest string
+var local bool
+var localPath string
+var tag string
 
 func init() {
 	rootCmd.AddCommand(deployCmd)
@@ -79,6 +82,29 @@ func init() {
 		"namespace",
 		"default",
 		"Namespace of the application",
+	)
+
+	deployCmd.PersistentFlags().BoolVar(
+		&local,
+		"local",
+		false,
+		"Whether local context should be used for build",
+	)
+
+	deployCmd.PersistentFlags().StringVarP(
+		&localPath,
+		"path",
+		"p",
+		".",
+		"If local build, the path to the build directory",
+	)
+
+	deployCmd.PersistentFlags().StringVarP(
+		&tag,
+		"tag",
+		"t",
+		"",
+		"If local build, the specified tag to use, if not \"latest\"",
 	)
 
 	deployCmd.AddCommand(deployGetEnvCmd)
@@ -98,9 +124,12 @@ func deployFull(resp *api.AuthCheckResponse, client *api.Client, args []string) 
 
 	// initialize the deploy agent
 	deployAgent, err := deploy.NewDeployAgent(client, app, &deploy.DeployOpts{
-		ProjectID: config.Project,
-		ClusterID: config.Cluster,
-		Namespace: namespace,
+		ProjectID:   config.Project,
+		ClusterID:   config.Cluster,
+		Namespace:   namespace,
+		Local:       local,
+		LocalPath:   localPath,
+		OverrideTag: tag,
 	})
 
 	if err != nil {

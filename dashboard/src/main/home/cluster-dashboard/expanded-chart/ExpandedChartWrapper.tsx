@@ -117,7 +117,7 @@ class ExpandedChartWrapper extends Component<PropsType, StateType> {
           currentChart={currentChart}
           currentCluster={this.context.currentCluster}
           closeChart={() =>
-            pushFiltered(this.props, "/jobs", ["project_id"], {
+            pushFiltered(this.props, "/applications", ["project_id"], {
               cluster: this.context.currentCluster.name,
               namespace: namespace,
             })

@@ -118,7 +118,7 @@ type ClusterDetailedExternal struct {
 	IngressIP string `json:"ingress_ip"`
 
 	// Error displayed in case couldn't get the IP
-	IngressError string `json:"ingress_error"`
+	IngressError error `json:"ingress_error"`
 }
 
 func (c *Cluster) DetailedExternalize() *ClusterDetailedExternal {

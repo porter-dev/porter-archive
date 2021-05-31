@@ -107,7 +107,7 @@ func (app *App) HandleReadProjectCluster(w http.ResponseWriter, r *http.Request)
 	}
 
 	if !found && ingressErr != nil {
-		clusterExt.IngressError = kubernetes.CatchK8sConnectionError(ingressErr).Error()
+		clusterExt.IngressError = kubernetes.CatchK8sConnectionError(ingressErr).Externalize()
 	}
 
 	w.WriteHeader(http.StatusOK)

@@ -116,6 +116,9 @@ type ClusterDetailedExternal struct {
 
 	// The NGINX Ingress IP to access the cluster
 	IngressIP string `json:"ingress_ip"`
+
+	// Error displayed in case couldn't get the IP
+	IngressError string `json:"ingress_error"`
 }
 
 func (c *Cluster) DetailedExternalize() *ClusterDetailedExternal {

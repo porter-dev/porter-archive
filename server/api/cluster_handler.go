@@ -100,10 +100,14 @@ func (app *App) HandleReadProjectCluster(w http.ResponseWriter, r *http.Request)
 		agent, _ = kubernetes.GetAgentOutOfClusterConfig(form.OutOfClusterConfig)
 	}
 
-	endpoint, found, _ := domain.GetNGINXIngressServiceIP(agent.Clientset)
+	endpoint, found, ingressErr := domain.GetNGINXIngressServiceIP(agent.Clientset)
 
 	if found {
 		clusterExt.IngressIP = endpoint
+	}
+
+	if !found && ingressErr != nil {
+		clusterExt.IngressError = kubernetes.CatchK8sConnectionError(ingressErr).Error()
 	}
 
 	w.WriteHeader(http.StatusOK)

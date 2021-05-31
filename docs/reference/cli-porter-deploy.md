@@ -26,7 +26,7 @@ To see a working example, check out the [creating a custom CI pipeline]() guide.
 Gets environment variables for a deployment for a specified application given by the `--app` flag. By default, env variables are printed via stdout for use in downstream commands:
 
 ```sh
-porter deploy get-env --app example-app
+porter deploy get-env --app example-app | xargs
 ```
 
 Output can also be written to a dotenv file via the `--file` flag, which should specify the destination path for a `.env` file. For example:

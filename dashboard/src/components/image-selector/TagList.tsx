@@ -32,7 +32,8 @@ export default class TagList extends Component<PropsType, StateType> {
     currentTag: this.props.selectedTag,
   };
 
-  componentDidMount() {
+  refreshTagList = () => {
+    this.setState({ loading: true });
     const { currentProject } = this.context;
 
     let splits = this.props.selectedImageUrl.split("/");
@@ -55,6 +56,14 @@ export default class TagList extends Component<PropsType, StateType> {
         }
       )
       .then((res) => {
+        // Sort if timestamp is available
+        if (res.data.length > 0 && res.data[0].pushed_at) {
+          res.data.sort((a: any, b: any) => {
+            let d1 = new Date(a.pushed_at);
+            let d2 = new Date(b.pushed_at);
+            return d2.getTime() - d1.getTime();
+          });
+        }
         let tags = res.data.map((tag: any, i: number) => {
           return tag.tag;
         });
@@ -64,6 +73,10 @@ export default class TagList extends Component<PropsType, StateType> {
         console.log(err);
         this.setState({ loading: false, error: true });
       });
+  };
+
+  componentDidMount() {
+    this.refreshTagList();
   }
 
   setTag = (tag: string) => {
@@ -105,7 +118,12 @@ export default class TagList extends Component<PropsType, StateType> {
     return (
       <>
         <TagNameAlt>
-          <img src={info} /> Select Image Tag
+          <Label>
+            <img src={info} /> Select Image Tag
+          </Label>
+          <Refresh onClick={this.refreshTagList}>
+            <i className="material-icons">autorenew</i> Refresh
+          </Refresh>
         </TagNameAlt>
         <StyledTagList>{this.renderTagList()}</StyledTagList>
       </>
@@ -114,6 +132,36 @@ export default class TagList extends Component<PropsType, StateType> {
 }
 
 TagList.contextType = Context;
+
+const Label = styled.div`
+  display: flex;
+  align-items: center;
+  > img {
+    width: 18px;
+    height: 18px;
+    margin-left: 12px;
+    margin-right: 12px;
+  }
+`;
+
+const Refresh = styled.div`
+  margin-right: 10px;
+  cursor: pointer;
+  color: #949eff;
+  display: flex;
+  align-items: center;
+  font-weight: 500;
+  border-radius: 3px;
+  padding: 2px 3px;
+  padding-right: 7px;
+  > i {
+    font-size: 17px;
+    margin-right: 6px;
+  }
+  :hover {
+    background: #ffffff11;
+  }
+`;
 
 const StyledTagList = styled.div`
   max-height: 175px;
@@ -152,10 +200,13 @@ const TagName = styled.div`
 `;
 
 const TagNameAlt = styled(TagName)`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   color: #ffffff55;
   cursor: default;
   :hover {
-    background: #ffffff11;
+    background: none;
     > i {
       background: none;
     }

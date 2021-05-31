@@ -11,6 +11,7 @@ type OAuthIntegrationClient string
 const (
 	OAuthGithub       OAuthIntegrationClient = "github"
 	OAuthDigitalOcean OAuthIntegrationClient = "do"
+	OAuthGoogle       OAuthIntegrationClient = "google"
 )
 
 // OAuthIntegration is an auth mechanism that uses oauth

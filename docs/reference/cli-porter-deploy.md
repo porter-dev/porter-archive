@@ -33,7 +33,7 @@ porter deploy --app example-app
 
 If the application has a remote Git repository source configured, this command uses the latest commit from the remote repo and branch to deploy an application. It will use the latest commit as the image tag. 
 
-To build from a local directory, you must specify the --local flag. The path can be configured via the `--path` flag. You can also overwrite the tag using the `--tag` flag. For example, to build from the local directory `~/path-to-dir` with the tag `testing`:
+To build from a local directory, you must specify the `--local` flag. The path can be configured via the `--path` flag. You can also overwrite the tag using the `--tag` flag. For example, to build from the local directory `~/path-to-dir` with the tag `testing`:
 
 ```sh
 porter deploy --app remote-git-app --local --path ~/path-to-dir --tag testing

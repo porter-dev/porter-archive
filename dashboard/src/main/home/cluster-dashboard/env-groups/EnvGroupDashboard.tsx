@@ -13,6 +13,7 @@ import EnvGroupList from "./EnvGroupList";
 import CreateEnvGroup from "./CreateEnvGroup";
 import ExpandedEnvGroup from "./ExpandedEnvGroup";
 import { RouteComponentProps, withRouter } from "react-router";
+import { pushQueryParams } from "shared/routing";
 
 type PropsType = RouteComponentProps & {
   currentCluster: ClusterType;
@@ -31,7 +32,7 @@ class EnvGroupDashboard extends Component<PropsType, StateType> {
   state = {
     expand: false,
     update: [] as any[],
-    namespace: "default",
+    namespace: null as string,
     expandedEnvGroup: null as any,
     createEnvMode: false,
     sortType: localStorage.getItem("SortType")
@@ -74,7 +75,13 @@ class EnvGroupDashboard extends Component<PropsType, StateType> {
                 sortType={this.state.sortType}
               />
               <NamespaceSelector
-                setNamespace={(namespace) => this.setState({ namespace })}
+                setNamespace={(namespace) =>
+                  this.setState({ namespace }, () => {
+                    pushQueryParams(this.props, {
+                      namespace: this.state.namespace || "ALL",
+                    });
+                  })
+                }
                 namespace={this.state.namespace}
               />
             </SortFilterWrapper>

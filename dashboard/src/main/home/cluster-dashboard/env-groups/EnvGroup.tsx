@@ -3,9 +3,7 @@ import styled from "styled-components";
 
 import key from "assets/key.svg";
 
-import { ChartType, StorageType } from "shared/types";
 import { Context } from "shared/Context";
-import StatusIndicator from "components/StatusIndicator";
 
 type PropsType = {
   envGroup: any;

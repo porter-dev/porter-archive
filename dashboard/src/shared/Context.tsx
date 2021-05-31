@@ -1,11 +1,19 @@
 import React, { Component } from "react";
 
 import { ProjectType, ClusterType, CapabilityType } from "shared/types";
+import { pushQueryParams } from "shared/routing";
 
 const Context = React.createContext({});
 
 const { Provider } = Context;
 const ContextConsumer = Context.Consumer;
+
+type PropsType = {
+  history: any;
+  location: any;
+};
+
+type StateType = any;
 
 /**
  * Component managing a universal (application-wide) data store.
@@ -18,7 +26,7 @@ const ContextConsumer = Context.Consumer;
  *    components consuming Context)
  * 4) As a rule of thumb, Context should not be used for UI-related state
  */
-class ContextProvider extends Component {
+class ContextProvider extends Component<PropsType, StateType> {
   state = {
     currentModal: null as string | null,
     currentModalData: null as any,
@@ -29,7 +37,14 @@ class ContextProvider extends Component {
     setCurrentError: (currentError: string) => {
       this.setState({ currentError });
     },
-    currentCluster: null as ClusterType | null,
+    currentCluster: {
+      id: -1,
+      name: "",
+      server: "",
+      service_account_id: -1,
+      infra_id: -1,
+      service: "",
+    },
     setCurrentCluster: (currentCluster: ClusterType, callback?: any) => {
       localStorage.setItem(
         this.state.currentProject.id + "-cluster",
@@ -41,6 +56,7 @@ class ContextProvider extends Component {
     },
     currentProject: null as ProjectType | null,
     setCurrentProject: (currentProject: ProjectType, callback?: any) => {
+      pushQueryParams(this.props, { project_id: currentProject.id.toString() });
       if (currentProject) {
         localStorage.setItem("currentProject", currentProject.id.toString());
       } else {

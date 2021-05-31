@@ -38,7 +38,12 @@ class ClusterSection extends Component<PropsType, StateType> {
   };
 
   updateClusters = () => {
-    let { user, currentProject, setCurrentCluster } = this.context;
+    let {
+      user,
+      currentProject,
+      setCurrentCluster,
+      currentCluster,
+    } = this.context;
 
     // TODO: query with selected filter once implemented
     api
@@ -55,11 +60,31 @@ class ClusterSection extends Component<PropsType, StateType> {
           let clusters = res.data;
           clusters.sort((a: any, b: any) => a.id - b.id);
           if (clusters.length > 0) {
+            let queryString = window.location.search;
+            let urlParams = new URLSearchParams(queryString);
+            let paramClusterName = urlParams.get("cluster");
+            let params = this.props.match.params as any;
+            let pathClusterName = params.cluster;
+
+            // Set cluster from URL if in path or params
+            let defaultCluster = null as ClusterType;
+            if (paramClusterName || pathClusterName) {
+              clusters.forEach((cluster: ClusterType) => {
+                if (!defaultCluster) {
+                  if (cluster.name === pathClusterName) {
+                    defaultCluster = cluster;
+                  } else if (cluster.name === paramClusterName) {
+                    defaultCluster = cluster;
+                  }
+                }
+              });
+            }
+
             this.setState({ clusters });
             let saved = JSON.parse(
               localStorage.getItem(currentProject.id + "-cluster")
             );
-            if (saved && saved !== "null") {
+            if (!defaultCluster && saved && saved !== "null") {
               // Ensures currentCluster isn't prematurely set (causes issues downstream)
               let loaded = false;
               for (let i = 0; i < clusters.length; i++) {
@@ -77,7 +102,7 @@ class ClusterSection extends Component<PropsType, StateType> {
                 setCurrentCluster(clusters[0]);
               }
             } else {
-              setCurrentCluster(clusters[0]);
+              setCurrentCluster(defaultCluster || clusters[0]);
             }
           } else if (
             this.props.currentView !== "provisioner" &&
@@ -85,7 +110,6 @@ class ClusterSection extends Component<PropsType, StateType> {
           ) {
             this.setState({ clusters: [] });
             setCurrentCluster(null);
-            // this.props.history.push("dashboard?tab=overview");
           }
         }
       })

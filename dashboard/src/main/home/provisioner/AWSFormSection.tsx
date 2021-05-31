@@ -5,7 +5,8 @@ import close from "assets/close.png";
 import { isAlphanumeric } from "shared/common";
 import api from "shared/api";
 import { Context } from "shared/Context";
-import { InfraType } from "shared/types";
+import { InfraType, ProjectType } from "shared/types";
+import { pushQueryParams, pushFiltered } from "shared/routing";
 
 import SelectRow from "components/values-form/SelectRow";
 import InputRow from "components/values-form/InputRow";
@@ -172,9 +173,8 @@ class AWSFormSection extends Component<PropsType, StateType> {
   // Step 1: Create a project
   // TODO: promisify this function
   createProject = (callback?: any) => {
-    console.log("Creating project");
-    let { projectName, handleError } = this.props;
-    let { user, setProjects, setCurrentProject, currentProject } = this.context;
+    let { projectName } = this.props;
+    let { user, setProjects, setCurrentProject } = this.context;
 
     api
       .createProject("<token>", { name: projectName }, {})
@@ -261,7 +261,11 @@ class AWSFormSection extends Component<PropsType, StateType> {
           { id: currentProject.id }
         )
       )
-      .then(() => this.props.history.push("dashboard?tab=provisioner"))
+      .then(() =>
+        pushFiltered(this.props, "/dashboard", ["project_id"], {
+          tab: "provisioner",
+        })
+      )
       .catch(this.catchError);
   };
 
@@ -278,7 +282,9 @@ class AWSFormSection extends Component<PropsType, StateType> {
       } else if (selectedInfras[0].value === "ecr") {
         // Case: project exists, only provision ECR
         this.provisionECR().then(() =>
-          this.props.history.push("dashboard?tab=provisioner")
+          pushFiltered(this.props, "/dashboard", ["project_id"], {
+            tab: "provisioner",
+          })
         );
       } else {
         // Case: project exists, only provision EKS
@@ -291,9 +297,11 @@ class AWSFormSection extends Component<PropsType, StateType> {
       } else if (selectedInfras[0].value === "ecr") {
         // Case: project DNE, only provision ECR
         this.createProject(() =>
-          this.provisionECR().then(() => {
-            this.props.history.push("dashboard?tab=provisioner");
-          })
+          this.provisionECR().then(() =>
+            pushFiltered(this.props, "/dashboard", ["project_id"], {
+              tab: "provisioner",
+            })
+          )
         );
       } else {
         // Case: project DNE, only provision EKS

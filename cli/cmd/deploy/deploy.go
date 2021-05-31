@@ -16,43 +16,44 @@ import (
 	"k8s.io/client-go/util/homedir"
 )
 
-// deployBuildType is the option to use as a builder
-type deployBuildType string
+// DeployBuildType is the option to use as a builder
+type DeployBuildType string
 
 const (
 	// uses local Docker daemon to build and push images
-	deployBuildTypeDocker deployBuildType = "docker"
+	deployBuildTypeDocker DeployBuildType = "docker"
 
 	// uses cloud-native build pack to build and push images
-	deployBuildTypePack deployBuildType = "pack"
+	deployBuildTypePack DeployBuildType = "pack"
 )
 
 // DeployAgent handles the deployment and redeployment of an application on Porter
 type DeployAgent struct {
 	App string
 
-	buildType   deployBuildType
-	client      *api.Client
-	release     *api.GetReleaseResponse
-	agent       *docker.Agent
-	opts        *DeployOpts
-	tag         string
-	envPrefix   string
-	env         map[string]string
-	imageExists bool
+	client         *api.Client
+	release        *api.GetReleaseResponse
+	agent          *docker.Agent
+	opts           *DeployOpts
+	tag            string
+	envPrefix      string
+	env            map[string]string
+	imageExists    bool
+	imageRepo      string
+	dockerfilePath string
 }
 
 // DeployOpts are the options for creating a new DeployAgent
 type DeployOpts struct {
-	ProjectID   uint
-	ClusterID   uint
-	Namespace   string
-	Local       bool
-	LocalPath   string
-	OverrideTag string
+	ProjectID       uint
+	ClusterID       uint
+	Namespace       string
+	Local           bool
+	LocalPath       string
+	LocalDockerfile string
+	OverrideTag     string
+	Method          DeployBuildType
 }
-
-var ErrNoGitActionConfig error = fmt.Errorf("specified release does not have a git action config")
 
 // NewDeployAgent creates a new DeployAgent given a Porter API client, application
 // name, and DeployOpts.
@@ -71,11 +72,6 @@ func NewDeployAgent(client *api.Client, app string, opts *DeployOpts) (*DeployAg
 		return nil, err
 	}
 
-	// if the git action config is nil, return an error
-	if release.GitActionConfig == nil {
-		return nil, ErrNoGitActionConfig
-	}
-
 	deployAgent.release = release
 
 	// set an environment prefix to avoid collisions
@@ -92,10 +88,54 @@ func NewDeployAgent(client *api.Client, app string, opts *DeployOpts) (*DeployAg
 
 	deployAgent.agent = agent
 
-	if release.GitActionConfig.DockerfilePath != "" {
-		deployAgent.buildType = deployBuildTypeDocker
+	// if build method is not set, determine based on release config
+	if opts.Method == "" {
+		if release.GitActionConfig != nil {
+			// if the git action config exists, and dockerfile path is not empty, build type
+			// is docker
+			if release.GitActionConfig.DockerfilePath != "" {
+				deployAgent.opts.Method = deployBuildTypeDocker
+			}
+
+			// otherwise build type is pack
+			deployAgent.opts.Method = deployBuildTypePack
+		} else {
+			// if the git action config does not exist, we use pack by default
+			deployAgent.opts.Method = deployBuildTypePack
+		}
+	}
+
+	if deployAgent.opts.Method == deployBuildTypeDocker {
+		if release.GitActionConfig != nil {
+			deployAgent.dockerfilePath = release.GitActionConfig.DockerfilePath
+		}
+
+		if deployAgent.opts.LocalDockerfile != "" {
+			deployAgent.dockerfilePath = deployAgent.opts.LocalDockerfile
+		}
+
+		if deployAgent.opts.LocalDockerfile == "" {
+			deployAgent.dockerfilePath = "./Dockerfile"
+		}
+	}
+
+	// if the git action config is not set, we use local builds since pulling remote source
+	// will fail. we set the image based on the git action config or the image written in the
+	// helm values
+	if release.GitActionConfig == nil {
+		deployAgent.opts.Local = true
+
+		imageRepo, err := deployAgent.getReleaseImage()
+
+		if err != nil {
+			return nil, err
+		}
+
+		deployAgent.imageRepo = imageRepo
+
+		deployAgent.dockerfilePath = deployAgent.opts.LocalDockerfile
 	} else {
-		deployAgent.buildType = deployBuildTypePack
+		deployAgent.imageRepo = release.GitActionConfig.ImageRepoURI
 	}
 
 	deployAgent.tag = opts.OverrideTag
@@ -194,7 +234,7 @@ func (d *DeployAgent) Build() error {
 		d.imageExists = false
 	}
 
-	if d.buildType == deployBuildTypeDocker {
+	if d.opts.Method == deployBuildTypeDocker {
 		return d.BuildDocker(dst, d.tag)
 	}
 
@@ -203,7 +243,7 @@ func (d *DeployAgent) Build() error {
 
 func (d *DeployAgent) BuildDocker(dst, tag string) error {
 	opts := &docker.BuildOpts{
-		ImageRepo:    d.release.GitActionConfig.ImageRepoURI,
+		ImageRepo:    d.imageRepo,
 		Tag:          tag,
 		BuildContext: dst,
 		Env:          d.env,
@@ -211,7 +251,7 @@ func (d *DeployAgent) BuildDocker(dst, tag string) error {
 
 	return d.agent.BuildLocal(
 		opts,
-		d.release.GitActionConfig.DockerfilePath,
+		d.dockerfilePath,
 	)
 }
 
@@ -219,8 +259,8 @@ func (d *DeployAgent) BuildPack(dst, tag string) error {
 	// retag the image with "pack-cache" tag so that it doesn't re-pull from the registry
 	if d.imageExists {
 		err := d.agent.TagImage(
-			fmt.Sprintf("%s:%s", d.release.GitActionConfig.ImageRepoURI, tag),
-			fmt.Sprintf("%s:%s", d.release.GitActionConfig.ImageRepoURI, "pack-cache"),
+			fmt.Sprintf("%s:%s", d.imageRepo, tag),
+			fmt.Sprintf("%s:%s", d.imageRepo, "pack-cache"),
 		)
 
 		if err != nil {
@@ -232,7 +272,7 @@ func (d *DeployAgent) BuildPack(dst, tag string) error {
 	packAgent := &pack.Agent{}
 
 	opts := &docker.BuildOpts{
-		ImageRepo: d.release.GitActionConfig.ImageRepoURI,
+		ImageRepo: d.imageRepo,
 		// We tag the image with a stable param "pack-cache" so that pack can use the
 		// local image without attempting to re-pull from registry. We handle getting
 		// registry credentials and pushing/pulling the image.
@@ -249,19 +289,16 @@ func (d *DeployAgent) BuildPack(dst, tag string) error {
 	}
 
 	return d.agent.TagImage(
-		fmt.Sprintf("%s:%s", d.release.GitActionConfig.ImageRepoURI, "pack-cache"),
-		fmt.Sprintf("%s:%s", d.release.GitActionConfig.ImageRepoURI, tag),
+		fmt.Sprintf("%s:%s", d.imageRepo, "pack-cache"),
+		fmt.Sprintf("%s:%s", d.imageRepo, tag),
 	)
 }
 
-func (d *DeployAgent) Deploy() error {
-	// push the created image
-	err := d.agent.PushImage(fmt.Sprintf("%s:%s", d.release.GitActionConfig.ImageRepoURI, d.tag))
+func (d *DeployAgent) Push() error {
+	return d.agent.PushImage(fmt.Sprintf("%s:%s", d.imageRepo, d.tag))
+}
 
-	if err != nil {
-		return err
-	}
-
+func (d *DeployAgent) CallWebhook() error {
 	releaseExt, err := d.client.GetReleaseWebhook(
 		context.Background(),
 		d.opts.ProjectID,
@@ -311,35 +348,27 @@ func (d *DeployAgent) getEnvFromRelease() (map[string]string, error) {
 	return mapEnvConfig, nil
 }
 
-type NestedMapFieldNotFoundError struct {
-	Field string
-}
+func (d *DeployAgent) getReleaseImage() (string, error) {
+	// pull the currently deployed image to use cache, if possible
+	imageConfig, err := getNestedMap(d.release.Config, "image")
 
-func (e *NestedMapFieldNotFoundError) Error() string {
-	return fmt.Sprintf("could not find field %s in configuration", e.Field)
-}
-
-func getNestedMap(obj map[string]interface{}, fields ...string) (map[string]interface{}, error) {
-	var res map[string]interface{}
-	curr := obj
-
-	for _, field := range fields {
-		objField, ok := curr[field]
-
-		if !ok {
-			return nil, &NestedMapFieldNotFoundError{field}
-		}
-
-		res, ok = objField.(map[string]interface{})
-
-		if !ok {
-			return nil, fmt.Errorf("%s is not a nested object", field)
-		}
-
-		curr = res
+	if err != nil {
+		return "", fmt.Errorf("could not get image config from release: %s", err.Error())
 	}
 
-	return res, nil
+	repoInterface, ok := imageConfig["repository"]
+
+	if !ok {
+		return "", fmt.Errorf("repository field does not exist for image")
+	}
+
+	repoStr, ok := repoInterface.(string)
+
+	if !ok {
+		return "", fmt.Errorf("could not cast image.image field to string")
+	}
+
+	return repoStr, nil
 }
 
 func (d *DeployAgent) pullCurrentReleaseImage() error {
@@ -362,9 +391,9 @@ func (d *DeployAgent) pullCurrentReleaseImage() error {
 		return fmt.Errorf("could not cast image.tag field to string")
 	}
 
-	fmt.Printf("attempting to pull image: %s\n", fmt.Sprintf("%s:%s", d.release.GitActionConfig.ImageRepoURI, tagStr))
+	fmt.Printf("attempting to pull image: %s\n", fmt.Sprintf("%s:%s", d.imageRepo, tagStr))
 
-	return d.agent.PullImage(fmt.Sprintf("%s:%s", d.release.GitActionConfig.ImageRepoURI, tagStr))
+	return d.agent.PullImage(fmt.Sprintf("%s:%s", d.imageRepo, tagStr))
 }
 
 func (d *DeployAgent) downloadRepoToDir(downloadURL string) (string, error) {
@@ -401,6 +430,37 @@ func (d *DeployAgent) downloadRepoToDir(downloadURL string) (string, error) {
 
 	if res == "" {
 		return "", fmt.Errorf("unzipped file not found on host")
+	}
+
+	return res, nil
+}
+
+type NestedMapFieldNotFoundError struct {
+	Field string
+}
+
+func (e *NestedMapFieldNotFoundError) Error() string {
+	return fmt.Sprintf("could not find field %s in configuration", e.Field)
+}
+
+func getNestedMap(obj map[string]interface{}, fields ...string) (map[string]interface{}, error) {
+	var res map[string]interface{}
+	curr := obj
+
+	for _, field := range fields {
+		objField, ok := curr[field]
+
+		if !ok {
+			return nil, &NestedMapFieldNotFoundError{field}
+		}
+
+		res, ok = objField.(map[string]interface{})
+
+		if !ok {
+			return nil, fmt.Errorf("%s is not a nested object", field)
+		}
+
+		curr = res
 	}
 
 	return res, nil

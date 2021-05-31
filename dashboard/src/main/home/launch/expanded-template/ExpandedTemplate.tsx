@@ -5,9 +5,7 @@ import { PorterTemplate } from "shared/types";
 import api from "shared/api";
 
 import TemplateInfo from "./TemplateInfo";
-import LaunchTemplate from "./LaunchTemplate";
 import Loading from "components/Loading";
-import { template } from "lodash";
 
 type PropsType = {
   currentTemplate: PorterTemplate;
@@ -86,18 +84,6 @@ export default class ExpandedTemplate extends Component<PropsType, StateType> {
         <LoadingWrapper>
           <Loading />
         </LoadingWrapper>
-      );
-    }
-    if (this.props.skipDescription || this.state.showLaunchTemplate) {
-      return (
-        <LaunchTemplate
-          currentTab={this.props.currentTab}
-          currentTemplate={this.props.currentTemplate}
-          hideLaunch={() => this.setState({ showLaunchTemplate: false })}
-          hideBackButton={this.props.skipDescription}
-          values={this.state.values}
-          form={this.state.form}
-        />
       );
     }
 

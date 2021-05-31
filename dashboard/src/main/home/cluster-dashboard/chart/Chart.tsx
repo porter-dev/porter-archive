@@ -1,13 +1,14 @@
 import React, { Component } from "react";
 import styled from "styled-components";
 
-import { ChartType, StorageType } from "shared/types";
+import { ChartType } from "shared/types";
 import { Context } from "shared/Context";
 import StatusIndicator from "components/StatusIndicator";
+import { pushFiltered, pushQueryParams } from "shared/routing";
+import { RouteComponentProps, withRouter } from "react-router";
 
-type PropsType = {
+type PropsType = RouteComponentProps & {
   chart: ChartType;
-  setCurrentChart: (c: ChartType) => void;
   controllers: Record<string, any>;
 };
 
@@ -16,7 +17,7 @@ type StateType = {
   update: any[];
 };
 
-export default class Chart extends Component<PropsType, StateType> {
+class Chart extends Component<PropsType, StateType> {
   state = {
     expand: false,
     update: [] as any[],
@@ -43,14 +44,20 @@ export default class Chart extends Component<PropsType, StateType> {
   };
 
   render() {
-    let { chart, setCurrentChart } = this.props;
+    let { chart } = this.props;
 
     return (
       <StyledChart
         onMouseEnter={() => this.setState({ expand: true })}
         onMouseLeave={() => this.setState({ expand: false })}
         expand={this.state.expand}
-        onClick={() => setCurrentChart(chart)}
+        onClick={() => {
+          let { location, match } = this.props;
+          let urlParams = new URLSearchParams(location.search);
+          let cluster = urlParams.get("cluster");
+          let route = `${match.url}/${cluster}/${chart.namespace}/${chart.name}`;
+          pushFiltered(this.props, route, ["project_id"]);
+        }}
       >
         <Title>
           <IconWrapper>{this.renderIcon()}</IconWrapper>
@@ -83,6 +90,8 @@ export default class Chart extends Component<PropsType, StateType> {
 }
 
 Chart.contextType = Context;
+
+export default withRouter(Chart);
 
 const BottomWrapper = styled.div`
   display: flex;

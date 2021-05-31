@@ -55,7 +55,6 @@ export default class LoadEnvGroupModal extends Component<PropsType, StateType> {
           envGroups: res?.data?.items as any[],
           loading: false,
         });
-        console.log(res.data.items);
       })
       .catch((err) => {
         this.setState({ loading: false, error: true });

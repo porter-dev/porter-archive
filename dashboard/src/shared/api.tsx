@@ -808,6 +808,27 @@ const deleteConfigMap = baseApi<
   return `/api/projects/${pathParams.id}/k8s/configmap/delete`;
 });
 
+const createNamespace = baseApi<
+  {
+    name: string;
+  },
+  { id: number; cluster_id: number }
+>("POST", (pathParams) => {
+  let { id, cluster_id } = pathParams;
+  return `/api/projects/${id}/k8s/namespaces/create?cluster_id=${cluster_id}`;
+});
+
+const deleteNamespace = baseApi<
+  {
+    name: string;
+    cluster_id: number;
+  },
+  { id: number }
+>("DELETE", (pathParams) => {
+  let { id } = pathParams;
+  return `/api/projects/${id}/k8s/namespaces/delete`;
+});
+
 const stopJob = baseApi<
   {},
   { name: string; namespace: string; id: number; cluster_id: number }
@@ -830,6 +851,7 @@ export default {
   createGHAction,
   createGKE,
   createInvite,
+  createNamespace,
   createPasswordReset,
   createPasswordResetVerify,
   createPasswordResetFinalize,
@@ -839,6 +861,7 @@ export default {
   deleteConfigMap,
   deleteGitRepoIntegration,
   deleteInvite,
+  deleteNamespace,
   deletePod,
   deleteProject,
   deleteRegistryIntegration,

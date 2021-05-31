@@ -2,17 +2,18 @@ import React, { Component } from "react";
 import styled from "styled-components";
 import monojob from "assets/monojob.png";
 import monoweb from "assets/monoweb.png";
+import { Switch, Route } from "react-router-dom";
 
 import { Context } from "shared/Context";
 import { ChartType, ClusterType } from "shared/types";
-import { PorterUrl } from "shared/routing";
+import { PorterUrl, pushFiltered, pushQueryParams } from "shared/routing";
 
 import ChartList from "./chart/ChartList";
 import EnvGroupDashboard from "./env-groups/EnvGroupDashboard";
 import NamespaceSelector from "./NamespaceSelector";
 import SortSelector from "./SortSelector";
 import ExpandedChart from "./expanded-chart/ExpandedChart";
-import ExpandedJobChart from "./expanded-chart/ExpandedJobChart";
+import ExpandedChartWrapper from "./expanded-chart/ExpandedChartWrapper";
 import { RouteComponentProps, withRouter } from "react-router";
 
 import api from "shared/api";
@@ -30,9 +31,10 @@ type StateType = {
   isMetricsInstalled: boolean;
 };
 
+// TODO: should try to maintain single source of truth b/w router and context/state (ex: namespace -> being managed in parallel right now so highly inextensible and routing is fragile)
 class ClusterDashboard extends Component<PropsType, StateType> {
   state = {
-    namespace: "default",
+    namespace: null as string,
     sortType: localStorage.getItem("SortType")
       ? localStorage.getItem("SortType")
       : "Newest",
@@ -41,14 +43,21 @@ class ClusterDashboard extends Component<PropsType, StateType> {
   };
 
   componentDidMount() {
+    let { currentCluster, currentProject } = this.context;
+    let params = this.props.match.params as any;
+    let pathClusterName = params.cluster;
+    // Don't add cluster as query param if present in path
+    if (!pathClusterName) {
+      pushQueryParams(this.props, { cluster: currentCluster.name });
+    }
     api
       .getPrometheusIsInstalled(
         "<token>",
         {
-          cluster_id: this.context.currentCluster.id,
+          cluster_id: currentCluster.id,
         },
         {
-          id: this.context.currentProject.id,
+          id: currentProject.id,
         }
       )
       .then((res) => {
@@ -62,21 +71,30 @@ class ClusterDashboard extends Component<PropsType, StateType> {
   componentDidUpdate(prevProps: PropsType) {
     // Reset namespace filter and close expanded chart on cluster change
     if (prevProps.currentCluster !== this.props.currentCluster) {
-      this.setState({
-        namespace: "default",
-        sortType: localStorage.getItem("SortType")
-          ? localStorage.getItem("SortType")
-          : "Newest",
-        currentChart: null,
-      });
+      this.setState(
+        {
+          namespace: "default",
+          sortType: localStorage.getItem("SortType")
+            ? localStorage.getItem("SortType")
+            : "Newest",
+          currentChart: null,
+        },
+        () => pushQueryParams(this.props, { namespace: "default" })
+      );
     }
 
     if (prevProps.currentView !== this.props.currentView) {
-      this.setState({
-        namespace: "default",
-        sortType: "Newest",
-        currentChart: null,
-      });
+      this.setState(
+        {
+          sortType: "Newest",
+          currentChart: null,
+        },
+        () =>
+          pushQueryParams(this.props, {
+            namespace:
+              this.state.namespace === null ? "default" : this.state.namespace,
+          })
+      );
     }
   }
 
@@ -97,11 +115,13 @@ class ClusterDashboard extends Component<PropsType, StateType> {
   };
 
   renderBody = () => {
-    let { currentCluster, setSidebar, currentView } = this.props;
+    let { currentCluster, currentView } = this.props;
     return (
       <>
         <ControlRow>
-          <Button onClick={() => this.props.history.push("launch")}>
+          <Button
+            onClick={() => pushFiltered(this.props, "/launch", ["project_id"])}
+          >
             <i className="material-icons">add</i> Launch Template
           </Button>
           <SortFilterWrapper>
@@ -110,7 +130,13 @@ class ClusterDashboard extends Component<PropsType, StateType> {
               sortType={this.state.sortType}
             />
             <NamespaceSelector
-              setNamespace={(namespace) => this.setState({ namespace })}
+              setNamespace={(namespace) =>
+                this.setState({ namespace }, () => {
+                  pushQueryParams(this.props, {
+                    namespace: this.state.namespace || "ALL",
+                  });
+                })
+              }
               namespace={this.state.namespace}
             />
           </SortFilterWrapper>
@@ -121,9 +147,6 @@ class ClusterDashboard extends Component<PropsType, StateType> {
           currentCluster={currentCluster}
           namespace={this.state.namespace}
           sortType={this.state.sortType}
-          setCurrentChart={(x: ChartType | null) =>
-            this.setState({ currentChart: x })
-          }
         />
       </>
     );
@@ -131,33 +154,12 @@ class ClusterDashboard extends Component<PropsType, StateType> {
 
   renderContents = () => {
     let { currentCluster, setSidebar, currentView } = this.props;
-    if (this.state.currentChart && currentView === "jobs") {
-      return (
-        <ExpandedJobChart
-          namespace={this.state.namespace}
-          currentCluster={this.props.currentCluster}
-          currentChart={this.state.currentChart}
-          closeChart={() => this.setState({ currentChart: null })}
-          setSidebar={setSidebar}
-        />
-      );
-    } else if (this.state.currentChart) {
-      return (
-        <ExpandedChart
-          namespace={this.state.namespace}
-          currentCluster={this.props.currentCluster}
-          currentChart={this.state.currentChart}
-          closeChart={() => this.setState({ currentChart: null })}
-          isMetricsInstalled={this.state.isMetricsInstalled}
-          setSidebar={setSidebar}
-        />
-      );
-    } else if (currentView === "env-groups") {
+    if (currentView === "env-groups") {
       return <EnvGroupDashboard currentCluster={this.props.currentCluster} />;
     }
 
     return (
-      <div>
+      <>
         <TitleSection>
           {this.renderDashboardIcon()}
           <Title>{currentView}</Title>
@@ -175,12 +177,25 @@ class ClusterDashboard extends Component<PropsType, StateType> {
         <LineBreak />
 
         {this.renderBody()}
-      </div>
+      </>
     );
   };
 
   render() {
-    return <div>{this.renderContents()}</div>;
+    let { setSidebar } = this.props;
+    return (
+      <Switch>
+        <Route path="/:baseRoute/:clusterName+/:namespace/:chartName">
+          <ExpandedChartWrapper
+            setSidebar={setSidebar}
+            isMetricsInstalled={this.state.isMetricsInstalled}
+          />
+        </Route>
+        <Route path={["/jobs", "/applications", "/env-groups"]}>
+          {this.renderContents()}
+        </Route>
+      </Switch>
+    );
   }
 }
 

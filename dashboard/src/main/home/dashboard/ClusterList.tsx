@@ -9,6 +9,7 @@ import {
   DetailedIngressError,
 } from "shared/types";
 import Helper from "components/values-form/Helper";
+import { pushFiltered } from "shared/routing";
 
 import { RouteComponentProps, withRouter } from "react-router";
 
@@ -161,7 +162,9 @@ class Templates extends Component<PropsType, StateType> {
           <TemplateBlock
             onClick={() => {
               this.context.setCurrentCluster(cluster);
-              this.props.history.push("applications");
+              pushFiltered(this.props, "/applications", ["project_id"], {
+                cluster: cluster.name,
+              });
             }}
             key={i}
           >

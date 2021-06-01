@@ -142,7 +142,6 @@ func (app *App) HandleListProjectClusters(w http.ResponseWriter, r *http.Request
 		extClusters = append(extClusters, cluster.Externalize())
 	}
 
-	wg.Wait()
 	w.WriteHeader(http.StatusOK)
 
 	if err := json.NewEncoder(w).Encode(extClusters); err != nil {

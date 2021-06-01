@@ -110,6 +110,25 @@ func (c *Cluster) Externalize() *ClusterExternal {
 	}
 }
 
+type ClusterDetailedExternal struct {
+	// Simple cluster external data
+	ClusterExternal
+
+	// The NGINX Ingress IP to access the cluster
+	IngressIP string `json:"ingress_ip"`
+
+	// Error displayed in case couldn't get the IP
+	IngressError error `json:"ingress_error"`
+}
+
+func (c *Cluster) DetailedExternalize() *ClusterDetailedExternal {
+	clusterExt := c.Externalize()
+
+	return &ClusterDetailedExternal{
+		ClusterExternal: *clusterExt,
+	}
+}
+
 // ClusterCandidate is a cluster integration that requires additional action
 // from the user to set up.
 type ClusterCandidate struct {

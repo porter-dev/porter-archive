@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"net/http"
 	"strconv"
-	"sync"
 
 	"github.com/go-chi/chi"
 	"github.com/porter-dev/porter/internal/forms"

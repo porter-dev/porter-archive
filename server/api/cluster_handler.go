@@ -136,7 +136,6 @@ func (app *App) HandleListProjectClusters(w http.ResponseWriter, r *http.Request
 
 	extClusters := make([]*models.ClusterExternal, 0)
 
-	var wg sync.WaitGroup
 
 	for _, cluster := range clusters {
 		extClusters = append(extClusters, cluster.Externalize())

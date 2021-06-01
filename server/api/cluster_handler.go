@@ -7,6 +7,8 @@ import (
 
 	"github.com/go-chi/chi"
 	"github.com/porter-dev/porter/internal/forms"
+	"github.com/porter-dev/porter/internal/kubernetes"
+	"github.com/porter-dev/porter/internal/kubernetes/domain"
 	"github.com/porter-dev/porter/internal/models"
 )
 
@@ -79,7 +81,33 @@ func (app *App) HandleReadProjectCluster(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	clusterExt := cluster.Externalize()
+	clusterExt := cluster.DetailedExternalize()
+
+	form := &forms.K8sForm{
+		OutOfClusterConfig: &kubernetes.OutOfClusterConfig{
+			Repo:              app.Repo,
+			DigitalOceanOAuth: app.DOConf,
+			Cluster:           cluster,
+		},
+	}
+
+	var agent *kubernetes.Agent
+
+	if app.ServerConf.IsTesting {
+		agent = app.TestAgents.K8sAgent
+	} else {
+		agent, _ = kubernetes.GetAgentOutOfClusterConfig(form.OutOfClusterConfig)
+	}
+
+	endpoint, found, ingressErr := domain.GetNGINXIngressServiceIP(agent.Clientset)
+
+	if found {
+		clusterExt.IngressIP = endpoint
+	}
+
+	if !found && ingressErr != nil {
+		clusterExt.IngressError = kubernetes.CatchK8sConnectionError(ingressErr).Externalize()
+	}
 
 	w.WriteHeader(http.StatusOK)
 
@@ -106,6 +134,7 @@ func (app *App) HandleListProjectClusters(w http.ResponseWriter, r *http.Request
 	}
 
 	extClusters := make([]*models.ClusterExternal, 0)
+
 
 	for _, cluster := range clusters {
 		extClusters = append(extClusters, cluster.Externalize())

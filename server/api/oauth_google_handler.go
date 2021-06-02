@@ -145,7 +145,7 @@ func (app *App) upsertGoogleUserFromToken(tok *oauth2.Token) (*models.User, erro
 
 	// if the app has a restricted domain, check the `hd` query param
 	if app.ServerConf.GoogleRestrictedDomain != "" {
-		if gInfo.HD != "bloomchat.app" {
+		if gInfo.HD != app.ServerConf.GoogleRestrictedDomain {
 			return nil, fmt.Errorf("Email is not in the restricted domain group.")
 		}
 	}

@@ -69,7 +69,7 @@ func testHelmRepoRequests(t *testing.T, tests []*helmTest, canQuery bool) {
 // ------------------------- TEST FIXTURES AND FUNCTIONS  ------------------------- //
 
 var createHelmRepoTests = []*helmTest{
-	&helmTest{
+	{
 		initializers: []func(t *tester){
 			initUserDefault,
 			initProject,
@@ -92,7 +92,7 @@ func TestHandleCreateHelmRepo(t *testing.T) {
 }
 
 var listHelmReposTest = []*helmTest{
-	&helmTest{
+	{
 		initializers: []func(t *tester){
 			initUserDefault,
 			initProject,

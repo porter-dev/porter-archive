@@ -69,7 +69,7 @@ func testProjRequests(t *testing.T, tests []*projTest, canQuery bool) {
 // ------------------------- TEST FIXTURES AND FUNCTIONS  ------------------------- //
 
 var createProjectTests = []*projTest{
-	&projTest{
+	{
 		initializers: []func(t *tester){
 			initUserDefault,
 		},
@@ -93,7 +93,7 @@ func TestHandleCreateProject(t *testing.T) {
 }
 
 var readProjectTests = []*projTest{
-	&projTest{
+	{
 		initializers: []func(t *tester){
 			initUserDefault,
 			initProject,
@@ -116,7 +116,7 @@ func TestHandleReadProject(t *testing.T) {
 }
 
 var deleteProjectTests = []*projTest{
-	&projTest{
+	{
 		initializers: []func(t *tester){
 			initUserDefault,
 			initProject,

@@ -73,7 +73,7 @@ func testUserRequests(t *testing.T, tests []*userTest, canQuery bool) {
 // ------------------------- TEST FIXTURES AND FUNCTIONS  ------------------------- //
 
 var authCheckTests = []*userTest{
-	&userTest{
+	{
 		initializers: []func(tester *tester){
 			initUserDefault,
 		},
@@ -82,13 +82,13 @@ var authCheckTests = []*userTest{
 		endpoint:  "/api/auth/check",
 		expStatus: http.StatusOK,
 		body:      "",
-		expBody:   `{"id":1,"email":"belanger@getporter.dev"}`,
+		expBody:   `{"id":1,"email":"belanger@getporter.dev","email_verified":false}`,
 		useCookie: true,
 		validators: []func(c *userTest, tester *tester, t *testing.T){
 			userBasicBodyValidator,
 		},
 	},
-	&userTest{
+	{
 		initializers: []func(tester *tester){
 			initUserDefault,
 		},
@@ -156,7 +156,7 @@ func TestHandleAuthCheckToken(t *testing.T) {
 }
 
 var createUserTests = []*userTest{
-	&userTest{
+	{
 		msg:      "Create user",
 		method:   "POST",
 		endpoint: "/api/users",
@@ -170,7 +170,7 @@ var createUserTests = []*userTest{
 			userModelBodyValidator,
 		},
 	},
-	&userTest{
+	{
 		msg:      "Create user invalid email",
 		method:   "POST",
 		endpoint: "/api/users",
@@ -184,7 +184,7 @@ var createUserTests = []*userTest{
 			userBasicBodyValidator,
 		},
 	},
-	&userTest{
+	{
 		msg:      "Create user missing field",
 		method:   "POST",
 		endpoint: "/api/users",
@@ -197,7 +197,7 @@ var createUserTests = []*userTest{
 			userBasicBodyValidator,
 		},
 	},
-	&userTest{
+	{
 		initializers: []func(tester *tester){
 			initUserDefault,
 		},
@@ -214,7 +214,7 @@ var createUserTests = []*userTest{
 			userBasicBodyValidator,
 		},
 	},
-	&userTest{
+	{
 		msg:      "Create user invalid field type",
 		method:   "POST",
 		endpoint: "/api/users",
@@ -235,7 +235,7 @@ func TestHandleCreateUser(t *testing.T) {
 }
 
 var createUserTestsWriteFail = []*userTest{
-	&userTest{
+	{
 		msg:      "Create user db connection down",
 		method:   "POST",
 		endpoint: "/api/users",
@@ -256,7 +256,7 @@ func TestHandleCreateUserWriteFail(t *testing.T) {
 }
 
 var loginUserTests = []*userTest{
-	&userTest{
+	{
 		initializers: []func(tester *tester){
 			initUserDefault,
 		},
@@ -268,12 +268,12 @@ var loginUserTests = []*userTest{
 			"password": "hello"
 		}`,
 		expStatus: http.StatusOK,
-		expBody:   `{"id":1,"email":"belanger@getporter.dev"}`,
+		expBody:   `{"id":1,"email":"belanger@getporter.dev","email_verified":false}`,
 		validators: []func(c *userTest, tester *tester, t *testing.T){
 			userBasicBodyValidator,
 		},
 	},
-	&userTest{
+	{
 		initializers: []func(tester *tester){
 			initUserDefault,
 		},
@@ -285,13 +285,13 @@ var loginUserTests = []*userTest{
 			"password": "hello"
 		}`,
 		expStatus: http.StatusOK,
-		expBody:   `{"id":1,"email":"belanger@getporter.dev"}`,
+		expBody:   `{"id":1,"email":"belanger@getporter.dev","email_verified":false}`,
 		useCookie: true,
 		validators: []func(c *userTest, tester *tester, t *testing.T){
 			userBasicBodyValidator,
 		},
 	},
-	&userTest{
+	{
 		msg:      "Login user unregistered email",
 		method:   "POST",
 		endpoint: "/api/login",
@@ -305,7 +305,7 @@ var loginUserTests = []*userTest{
 			userBasicBodyValidator,
 		},
 	},
-	&userTest{
+	{
 		initializers: []func(tester *tester){
 			initUserDefault,
 		},
@@ -330,7 +330,7 @@ func TestHandleLoginUser(t *testing.T) {
 }
 
 var logoutUserTests = []*userTest{
-	&userTest{
+	{
 		initializers: []func(tester *tester){
 			initUserDefault,
 		},
@@ -375,7 +375,7 @@ func TestHandleLogoutUser(t *testing.T) {
 }
 
 var readUserTests = []*userTest{
-	&userTest{
+	{
 		initializers: []func(tester *tester){
 			initUserDefault,
 		},
@@ -390,7 +390,7 @@ var readUserTests = []*userTest{
 			userModelBodyValidator,
 		},
 	},
-	&userTest{
+	{
 		initializers: []func(tester *tester){
 			initUserDefault,
 		},
@@ -411,7 +411,7 @@ func TestHandleReadUser(t *testing.T) {
 }
 
 var listUserProjectsTests = []*userTest{
-	&userTest{
+	{
 		initializers: []func(tester *tester){
 			initUserDefault,
 			initProject,
@@ -427,7 +427,7 @@ var listUserProjectsTests = []*userTest{
 			userProjectsListValidator,
 		},
 	},
-	&userTest{
+	{
 		initializers: []func(tester *tester){
 			initUserDefault,
 		},
@@ -448,7 +448,7 @@ func TestHandleListUserProjects(t *testing.T) {
 }
 
 var deleteUserTests = []*userTest{
-	&userTest{
+	{
 		initializers: []func(tester *tester){
 			initUserDefault,
 		},
@@ -495,7 +495,7 @@ var deleteUserTests = []*userTest{
 			},
 		},
 	},
-	&userTest{
+	{
 		initializers: []func(tester *tester){
 			initUserDefault,
 		},
@@ -509,7 +509,7 @@ var deleteUserTests = []*userTest{
 			userBasicBodyValidator,
 		},
 	},
-	&userTest{
+	{
 		initializers: []func(tester *tester){
 			initUserDefault,
 		},

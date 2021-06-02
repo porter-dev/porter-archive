@@ -108,7 +108,7 @@ type listReleaseTest struct {
 }
 
 var listReleaseTests = []listReleaseTest{
-	listReleaseTest{
+	{
 		name:      "simple test across namespaces, should sort by name",
 		namespace: "",
 		filter: &helm.ListFilter{
@@ -119,17 +119,17 @@ var listReleaseTests = []listReleaseTest{
 			StatusFilter: []string{"deployed"},
 		},
 		releases: []releaseStub{
-			releaseStub{"airwatch", "default", 1, "1.0.0", release.StatusDeployed},
-			releaseStub{"wordpress", "default", 1, "1.0.1", release.StatusDeployed},
-			releaseStub{"not-in-default-namespace", "other", 1, "1.0.2", release.StatusDeployed},
+			{"airwatch", "default", 1, "1.0.0", release.StatusDeployed},
+			{"wordpress", "default", 1, "1.0.1", release.StatusDeployed},
+			{"not-in-default-namespace", "other", 1, "1.0.2", release.StatusDeployed},
 		},
 		expRes: []releaseStub{
-			releaseStub{"airwatch", "default", 1, "1.0.0", release.StatusDeployed},
-			releaseStub{"not-in-default-namespace", "other", 1, "1.0.2", release.StatusDeployed},
-			releaseStub{"wordpress", "default", 1, "1.0.1", release.StatusDeployed},
+			{"airwatch", "default", 1, "1.0.0", release.StatusDeployed},
+			{"not-in-default-namespace", "other", 1, "1.0.2", release.StatusDeployed},
+			{"wordpress", "default", 1, "1.0.1", release.StatusDeployed},
 		},
 	},
-	listReleaseTest{
+	{
 		name:      "simple test only default namespace",
 		namespace: "default",
 		filter: &helm.ListFilter{
@@ -140,16 +140,16 @@ var listReleaseTests = []listReleaseTest{
 			StatusFilter: []string{"deployed"},
 		},
 		releases: []releaseStub{
-			releaseStub{"airwatch", "default", 1, "1.0.0", release.StatusDeployed},
-			releaseStub{"wordpress", "default", 1, "1.0.1", release.StatusDeployed},
-			releaseStub{"not-in-default-namespace", "other", 1, "1.0.2", release.StatusDeployed},
+			{"airwatch", "default", 1, "1.0.0", release.StatusDeployed},
+			{"wordpress", "default", 1, "1.0.1", release.StatusDeployed},
+			{"not-in-default-namespace", "other", 1, "1.0.2", release.StatusDeployed},
 		},
 		expRes: []releaseStub{
-			releaseStub{"airwatch", "default", 1, "1.0.0", release.StatusDeployed},
-			releaseStub{"wordpress", "default", 1, "1.0.1", release.StatusDeployed},
+			{"airwatch", "default", 1, "1.0.0", release.StatusDeployed},
+			{"wordpress", "default", 1, "1.0.1", release.StatusDeployed},
 		},
 	},
-	listReleaseTest{
+	{
 		name:      "simple test limit",
 		namespace: "",
 		filter: &helm.ListFilter{
@@ -160,13 +160,13 @@ var listReleaseTests = []listReleaseTest{
 			StatusFilter: []string{"deployed"},
 		},
 		releases: []releaseStub{
-			releaseStub{"airwatch", "default", 1, "1.0.0", release.StatusDeployed},
-			releaseStub{"not-in-default-namespace", "other", 1, "1.0.1", release.StatusDeployed},
-			releaseStub{"wordpress", "default", 1, "1.0.2", release.StatusDeployed},
+			{"airwatch", "default", 1, "1.0.0", release.StatusDeployed},
+			{"not-in-default-namespace", "other", 1, "1.0.1", release.StatusDeployed},
+			{"wordpress", "default", 1, "1.0.2", release.StatusDeployed},
 		},
 		expRes: []releaseStub{
-			releaseStub{"airwatch", "default", 1, "1.0.0", release.StatusDeployed},
-			releaseStub{"not-in-default-namespace", "other", 1, "1.0.1", release.StatusDeployed},
+			{"airwatch", "default", 1, "1.0.0", release.StatusDeployed},
+			{"not-in-default-namespace", "other", 1, "1.0.1", release.StatusDeployed},
 		},
 	},
 }
@@ -200,13 +200,13 @@ type getReleaseTest struct {
 }
 
 var getReleaseTests = []getReleaseTest{
-	getReleaseTest{
+	{
 		name:      "simple get with revision 0 (latest)",
 		namespace: "default",
 		releases: []releaseStub{
-			releaseStub{"airwatch", "default", 1, "1.0.0", release.StatusDeployed},
-			releaseStub{"wordpress", "default", 1, "1.0.1", release.StatusDeployed},
-			releaseStub{"not-in-default-namespace", "other", 1, "1.0.2", release.StatusDeployed},
+			{"airwatch", "default", 1, "1.0.0", release.StatusDeployed},
+			{"wordpress", "default", 1, "1.0.1", release.StatusDeployed},
+			{"not-in-default-namespace", "other", 1, "1.0.2", release.StatusDeployed},
 		},
 		getName:    "airwatch",
 		getVersion: 1,
@@ -234,16 +234,16 @@ func TestGetReleases(t *testing.T) {
 }
 
 var listReleaseHistoryTests = []listReleaseTest{
-	listReleaseTest{
+	{
 		name:      "simple history test",
 		namespace: "default",
 		releases: []releaseStub{
-			releaseStub{"wordpress", "default", 2, "1.0.2", release.StatusDeployed},
-			releaseStub{"wordpress", "default", 1, "1.0.1", release.StatusSuperseded},
+			{"wordpress", "default", 2, "1.0.2", release.StatusDeployed},
+			{"wordpress", "default", 1, "1.0.1", release.StatusSuperseded},
 		},
 		expRes: []releaseStub{
-			releaseStub{"wordpress", "default", 1, "1.0.1", release.StatusSuperseded},
-			releaseStub{"wordpress", "default", 2, "1.0.2", release.StatusDeployed},
+			{"wordpress", "default", 1, "1.0.1", release.StatusSuperseded},
+			{"wordpress", "default", 2, "1.0.2", release.StatusDeployed},
 		},
 	},
 }
@@ -268,17 +268,17 @@ func TestListReleaseHistory(t *testing.T) {
 }
 
 var upgradeTests = []listReleaseTest{
-	listReleaseTest{
+	{
 		name:      "simple history test",
 		namespace: "default",
 		releases: []releaseStub{
-			releaseStub{"wordpress", "default", 2, "1.0.2", release.StatusDeployed},
-			releaseStub{"wordpress", "default", 1, "1.0.1", release.StatusSuperseded},
+			{"wordpress", "default", 2, "1.0.2", release.StatusDeployed},
+			{"wordpress", "default", 1, "1.0.1", release.StatusSuperseded},
 		},
 		expRes: []releaseStub{
-			releaseStub{"wordpress", "default", 1, "1.0.1", release.StatusSuperseded},
-			releaseStub{"wordpress", "default", 2, "1.0.2", release.StatusSuperseded},
-			releaseStub{"wordpress", "default", 3, "1.0.2", release.StatusDeployed},
+			{"wordpress", "default", 1, "1.0.1", release.StatusSuperseded},
+			{"wordpress", "default", 2, "1.0.2", release.StatusSuperseded},
+			{"wordpress", "default", 3, "1.0.2", release.StatusDeployed},
 		},
 	},
 }
@@ -305,12 +305,12 @@ var upgradeTests = []listReleaseTest{
 // }
 
 var rollbackReleaseTests = []getReleaseTest{
-	getReleaseTest{
+	{
 		name:      "simple rollback test",
 		namespace: "default",
 		releases: []releaseStub{
-			releaseStub{"wordpress", "default", 2, "1.0.2", release.StatusDeployed},
-			releaseStub{"wordpress", "default", 1, "1.0.1", release.StatusSuperseded},
+			{"wordpress", "default", 2, "1.0.2", release.StatusDeployed},
+			{"wordpress", "default", 1, "1.0.1", release.StatusSuperseded},
 		},
 		getName:    "wordpress",
 		getVersion: 3,

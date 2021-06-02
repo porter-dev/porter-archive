@@ -86,7 +86,7 @@ func testReleaseRequests(t *testing.T, tests []*releaseTest, canQuery bool) {
 // ------------------------- TEST FIXTURES AND FUNCTIONS  ------------------------- //
 
 var listReleasesTests = []*releaseTest{
-	&releaseTest{
+	{
 		initializers: []func(tester *tester){
 			initDefaultReleases,
 		},
@@ -109,7 +109,7 @@ var listReleasesTests = []*releaseTest{
 			releaseReleaseArrBodyValidator,
 		},
 	},
-	&releaseTest{
+	{
 		initializers: []func(tester *tester){
 			initDefaultReleases,
 		},
@@ -143,7 +143,7 @@ func TestHandleListReleases(t *testing.T) {
 }
 
 var getReleaseTests = []*releaseTest{
-	&releaseTest{
+	{
 		initializers: []func(tester *tester){
 			initDefaultReleases,
 		},
@@ -151,7 +151,7 @@ var getReleaseTests = []*releaseTest{
 		method:    "GET",
 		namespace: "default",
 		endpoint: "/api/projects/1/releases/airwatch/1?" + url.Values{
-			"namespace":  []string{""},
+			"namespace":  []string{"default"},
 			"cluster_id": []string{"1"},
 			"storage":    []string{"memory"},
 		}.Encode(),
@@ -163,7 +163,7 @@ var getReleaseTests = []*releaseTest{
 			releaseReleaseBodyValidator,
 		},
 	},
-	&releaseTest{
+	{
 		initializers: []func(tester *tester){
 			initDefaultReleases,
 		},
@@ -190,7 +190,7 @@ func TestHandleGetRelease(t *testing.T) {
 }
 
 var listReleaseHistoryTests = []*releaseTest{
-	&releaseTest{
+	{
 		initializers: []func(tester *tester){
 			initHistoryReleases,
 		},
@@ -210,7 +210,7 @@ var listReleaseHistoryTests = []*releaseTest{
 			releaseReleaseArrBodyValidator,
 		},
 	},
-	&releaseTest{
+	{
 		initializers: []func(tester *tester){
 			initDefaultReleases,
 		},
@@ -237,7 +237,7 @@ func TestHandleListReleaseHistory(t *testing.T) {
 }
 
 var upgradeReleaseTests = []*releaseTest{
-	&releaseTest{
+	{
 		initializers: []func(tester *tester){
 			initHistoryReleases,
 		},
@@ -315,7 +315,7 @@ func TestUpgradeRelease(t *testing.T) {
 }
 
 var rollbackReleaseTests = []*releaseTest{
-	&releaseTest{
+	{
 		initializers: []func(tester *tester){
 			initHistoryReleases,
 		},
@@ -414,14 +414,14 @@ func initHistoryReleases(tester *tester) {
 }
 
 var sampleReleaseStubs = []releaseStub{
-	releaseStub{"airwatch", "default", 1, "1.0.0", release.StatusDeployed},
-	releaseStub{"not-in-default-namespace", "other", 1, "1.0.1", release.StatusDeployed},
-	releaseStub{"wordpress", "default", 1, "1.0.2", release.StatusDeployed},
+	{"airwatch", "default", 1, "1.0.0", release.StatusDeployed},
+	{"not-in-default-namespace", "other", 1, "1.0.1", release.StatusDeployed},
+	{"wordpress", "default", 1, "1.0.2", release.StatusDeployed},
 }
 
 var historyReleaseStubs = []releaseStub{
-	releaseStub{"wordpress", "default", 1, "1.0.1", release.StatusSuperseded},
-	releaseStub{"wordpress", "default", 2, "1.0.2", release.StatusDeployed},
+	{"wordpress", "default", 1, "1.0.1", release.StatusSuperseded},
+	{"wordpress", "default", 2, "1.0.2", release.StatusDeployed},
 }
 
 func releaseStubsToReleaseJSON(rels []releaseStub) string {

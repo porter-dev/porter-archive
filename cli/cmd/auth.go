@@ -7,7 +7,7 @@ import (
 
 	"github.com/fatih/color"
 
-	"github.com/porter-dev/porter/cli/cmd/api"
+	"github.com/porter-dev/porter/api"
 	loginBrowser "github.com/porter-dev/porter/cli/cmd/login"
 	"github.com/porter-dev/porter/cli/cmd/utils"
 	"github.com/spf13/cobra"

@@ -149,7 +149,7 @@ func testImagesRequests(t *testing.T, tests []*imagesTest, canQuery bool) {
 // }
 
 var listRegistryTests = []*regTest{
-	&regTest{
+	{
 		initializers: []func(t *tester){
 			initUserDefault,
 			initProject,
@@ -173,7 +173,7 @@ func TestHandleListRegistries(t *testing.T) {
 }
 
 var updateRegistryTests = []*regTest{
-	&regTest{
+	{
 		initializers: []func(t *tester){
 			initUserDefault,
 			initProject,
@@ -197,7 +197,7 @@ func TestHandleUpdateRegistry(t *testing.T) {
 }
 
 var deleteRegTests = []*regTest{
-	&regTest{
+	{
 		initializers: []func(t *tester){
 			initUserDefault,
 			initProject,

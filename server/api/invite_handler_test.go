@@ -70,7 +70,7 @@ func testInviteRequests(t *testing.T, tests []*inviteTest, canQuery bool) {
 // ------------------------- TEST FIXTURES AND FUNCTIONS  ------------------------- //
 
 var createInviteTests = []*inviteTest{
-	&inviteTest{
+	{
 		initializers: []func(t *tester){
 			initUserDefault,
 			initProject,
@@ -80,7 +80,7 @@ var createInviteTests = []*inviteTest{
 		endpoint:  "/api/projects/1/invites",
 		body:      `{"email":"test@test.it"}`,
 		expStatus: http.StatusCreated,
-		expBody:   `{"expired":false,"email":"test@test.it","accepted":false}`,
+		expBody:   `{"id":1,"expired":false,"email":"test@test.it","accepted":false}`,
 		useCookie: true,
 		validators: []func(c *inviteTest, tester *tester, t *testing.T){
 			func(c *inviteTest, tester *tester, t *testing.T) {
@@ -109,7 +109,7 @@ func TestHandleCreateInvite(t *testing.T) {
 }
 
 var listInvitesTest = []*inviteTest{
-	&inviteTest{
+	{
 		initializers: []func(t *tester){
 			initUserDefault,
 			initProject,
@@ -120,7 +120,7 @@ var listInvitesTest = []*inviteTest{
 		endpoint:  "/api/projects/1/invites",
 		body:      ``,
 		expStatus: http.StatusOK,
-		expBody:   `[{"expired":false,"email":"test@test.it","accepted":false}]`,
+		expBody:   `[{"id":1,"expired":false,"email":"test@test.it","accepted":false}]`,
 		useCookie: true,
 		validators: []func(c *inviteTest, tester *tester, t *testing.T){
 			func(c *inviteTest, tester *tester, t *testing.T) {
@@ -149,7 +149,7 @@ func TestHandleListInvites(t *testing.T) {
 }
 
 var acceptInviteTests = []*inviteTest{
-	&inviteTest{
+	{
 		initializers: []func(t *tester){
 			initUserDefault,
 			initUserAlt,
@@ -187,52 +187,76 @@ var acceptInviteTests = []*inviteTest{
 			},
 		},
 	},
-	&inviteTest{
+	{
 		initializers: []func(t *tester){
 			initUserDefault,
 			initUserAlt,
 			initProject,
 			initInvite,
 		},
-		msg:        "Accept invite wrong token",
-		method:     "GET",
-		endpoint:   "/api/projects/1/invites/abcd1",
-		body:       ``,
-		expStatus:  http.StatusForbidden,
-		expBody:    ``,
-		useCookie:  true,
-		validators: []func(c *inviteTest, tester *tester, t *testing.T){},
+		msg:       "Accept invite wrong token",
+		method:    "GET",
+		endpoint:  "/api/projects/1/invites/abcd1",
+		body:      ``,
+		expStatus: http.StatusFound,
+		expBody:   ``,
+		useCookie: true,
+		validators: []func(c *inviteTest, tester *tester, t *testing.T){
+			func(c *inviteTest, tester *tester, t *testing.T) {
+				expRes := "/dashboard?error=Invalid+invite+token"
+
+				if expRes != tester.rr.HeaderMap.Get("Location") {
+					t.Fatalf("Redirect location not correct: expected %v, got %v\n", expRes, tester.rr.HeaderMap.Get("Location"))
+				}
+			},
+		},
 	},
-	&inviteTest{
+	{
 		initializers: []func(t *tester){
 			initUserDefault,
 			initProject,
 			initInvite,
 		},
-		msg:        "Accept invite wrong user",
-		method:     "GET",
-		endpoint:   "/api/projects/1/invites/abcd",
-		body:       ``,
-		expStatus:  http.StatusForbidden,
-		expBody:    ``,
-		useCookie:  true,
-		validators: []func(c *inviteTest, tester *tester, t *testing.T){},
+		msg:       "Accept invite wrong user",
+		method:    "GET",
+		endpoint:  "/api/projects/1/invites/abcd",
+		body:      ``,
+		expStatus: http.StatusFound,
+		expBody:   ``,
+		useCookie: true,
+		validators: []func(c *inviteTest, tester *tester, t *testing.T){
+			func(c *inviteTest, tester *tester, t *testing.T) {
+				expRes := "/dashboard?error=Wrong+email+for+invite"
+
+				if expRes != tester.rr.HeaderMap.Get("Location") {
+					t.Fatalf("Redirect location not correct: expected %v, got %v\n", expRes, tester.rr.HeaderMap.Get("Location"))
+				}
+			},
+		},
 	},
-	&inviteTest{
+	{
 		initializers: []func(t *tester){
 			initUserDefault,
 			initUserAlt,
 			initProject,
 			initInviteExpiredToken,
 		},
-		msg:        "Accept invite expired token",
-		method:     "GET",
-		endpoint:   "/api/projects/1/invites/abcd",
-		body:       ``,
-		expStatus:  http.StatusForbidden,
-		expBody:    ``,
-		useCookie:  true,
-		validators: []func(c *inviteTest, tester *tester, t *testing.T){},
+		msg:       "Accept invite expired token",
+		method:    "GET",
+		endpoint:  "/api/projects/1/invites/abcd",
+		body:      ``,
+		expStatus: http.StatusFound,
+		expBody:   ``,
+		useCookie: true,
+		validators: []func(c *inviteTest, tester *tester, t *testing.T){
+			func(c *inviteTest, tester *tester, t *testing.T) {
+				expRes := "/dashboard?error=Invite+has+expired"
+
+				if expRes != tester.rr.HeaderMap.Get("Location") {
+					t.Fatalf("Redirect location not correct: expected %v, got %v\n", expRes, tester.rr.HeaderMap.Get("Location"))
+				}
+			},
+		},
 	},
 }
 

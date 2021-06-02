@@ -1,18 +1,19 @@
-package api_test
+package client_test
 
 import (
 	"context"
 	"testing"
 
+	"github.com/porter-dev/porter/cli/cmd/api"
 	"github.com/porter-dev/porter/internal/models"
 
-	"github.com/porter-dev/porter/cli/cmd/api"
+	"github.com/porter-dev/porter/client"
 )
 
-func initProject(name string, client *api.Client, t *testing.T) *api.CreateProjectResponse {
+func initProject(name string, client *client.Client, t *testing.T) *client.CreateProjectResponse {
 	t.Helper()
 
-	resp, err := client.CreateProject(context.Background(), &api.CreateProjectRequest{
+	resp, err := client.CreateProject(context.Background(), &client.CreateProjectRequest{
 		Name: name,
 	})
 

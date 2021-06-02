@@ -9,7 +9,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/porter-dev/porter/cli/cmd/api"
+	"github.com/porter-dev/porter/api"
 	"github.com/porter-dev/porter/cli/cmd/docker"
 	"github.com/porter-dev/porter/cli/cmd/github"
 	"github.com/porter-dev/porter/cli/cmd/pack"

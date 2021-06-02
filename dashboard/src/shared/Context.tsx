@@ -3,7 +3,7 @@ import React, { Component } from "react";
 import { ProjectType, ClusterType, CapabilityType } from "shared/types";
 import { pushQueryParams } from "shared/routing";
 
-const Context = React.createContext({});
+const Context = React.createContext<GlobalContextType>({} as GlobalContextType);
 
 const { Provider } = Context;
 const ContextConsumer = Context.Consumer;
@@ -13,7 +13,31 @@ type PropsType = {
   location: any;
 };
 
-type StateType = any;
+type StateType = GlobalContextType;
+
+export interface GlobalContextType {
+  currentModal: string;
+  currentModalData: any;
+  setCurrentModal: (currentModal: string, currentModalData?: any) => void;
+  currentError: string | null;
+  setCurrentError: (currentError: string) => void;
+  currentCluster: ClusterType;
+  setCurrentCluster: (currentCluster: ClusterType, callback?: any) => void;
+  currentProject: ProjectType | null;
+  setCurrentProject: (
+    currentProject: ProjectType,
+    callback?: () => void
+  ) => void;
+  projects: ProjectType[];
+  setProjects: (projects: ProjectType[]) => void;
+  user: any;
+  setUser: (userId: number, email: string) => void;
+  devOpsMode: boolean;
+  setDevOpsMode: (devOpsMode: boolean) => void;
+  capabilities: CapabilityType;
+  setCapabilities: (capabilities: CapabilityType) => void;
+  clearContext: () => void;
+}
 
 /**
  * Component managing a universal (application-wide) data store.

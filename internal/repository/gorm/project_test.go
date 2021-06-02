@@ -88,7 +88,7 @@ func TestCreateProjectRole(t *testing.T) {
 	expProj := &models.Project{
 		Name: "project-test",
 		Roles: []models.Role{
-			models.Role{
+			{
 				Kind:      models.RoleAdmin,
 				UserID:    0,
 				ProjectID: 1,
@@ -148,7 +148,7 @@ func TestListProjectsByUserID(t *testing.T) {
 		expProj := &models.Project{
 			Name: "project-test",
 			Roles: []models.Role{
-				models.Role{
+				{
 					Kind:      models.RoleAdmin,
 					UserID:    tester.initUsers[0].Model.ID,
 					ProjectID: uint(i + 1),

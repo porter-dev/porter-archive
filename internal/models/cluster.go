@@ -227,35 +227,35 @@ type ClusterResolverInfo struct {
 // ClusterResolverInfos is a map of the information for actions to be
 // performed in order to initialize a cluster
 var ClusterResolverInfos = map[ClusterResolverName]ClusterResolverInfo{
-	ClusterCAData: ClusterResolverInfo{
+	ClusterCAData: {
 		Docs:   "https://github.com/porter-dev/porter",
 		Fields: "cluster_ca_data",
 	},
-	ClusterLocalhost: ClusterResolverInfo{
+	ClusterLocalhost: {
 		Docs:   "https://github.com/porter-dev/porter",
 		Fields: "cluster_hostname",
 	},
-	ClientCertData: ClusterResolverInfo{
+	ClientCertData: {
 		Docs:   "https://github.com/porter-dev/porter",
 		Fields: "client_cert_data",
 	},
-	ClientKeyData: ClusterResolverInfo{
+	ClientKeyData: {
 		Docs:   "https://github.com/porter-dev/porter",
 		Fields: "client_key_data",
 	},
-	OIDCIssuerData: ClusterResolverInfo{
+	OIDCIssuerData: {
 		Docs:   "https://github.com/porter-dev/porter",
 		Fields: "oidc_idp_issuer_ca_data",
 	},
-	TokenData: ClusterResolverInfo{
+	TokenData: {
 		Docs:   "https://github.com/porter-dev/porter",
 		Fields: "token_data",
 	},
-	GCPKeyData: ClusterResolverInfo{
+	GCPKeyData: {
 		Docs:   "https://github.com/porter-dev/porter",
 		Fields: "gcp_key_data",
 	},
-	AWSData: ClusterResolverInfo{
+	AWSData: {
 		Docs:   "https://github.com/porter-dev/porter",
 		Fields: "aws_access_key_id,aws_secret_access_key,aws_cluster_id",
 	},

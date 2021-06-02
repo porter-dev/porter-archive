@@ -806,7 +806,7 @@ func (r *Registry) getECRDockerConfigFile(
 
 	return &configfile.ConfigFile{
 		AuthConfigs: map[string]types.AuthConfig{
-			key: types.AuthConfig{
+			key: {
 				Username: parts[0],
 				Password: parts[1],
 				Auth:     token,
@@ -836,7 +836,7 @@ func (r *Registry) getGCRDockerConfigFile(
 
 	return &configfile.ConfigFile{
 		AuthConfigs: map[string]types.AuthConfig{
-			parsedURL.Host: types.AuthConfig{
+			parsedURL.Host: {
 				Username: "_json_key",
 				Password: string(gcp.GCPKeyData),
 				Auth:     generateAuthToken("_json_key", string(gcp.GCPKeyData)),
@@ -873,7 +873,7 @@ func (r *Registry) getDOCRDockerConfigFile(
 
 	return &configfile.ConfigFile{
 		AuthConfigs: map[string]types.AuthConfig{
-			parsedURL.Host: types.AuthConfig{
+			parsedURL.Host: {
 				Username: tok,
 				Password: tok,
 				Auth:     generateAuthToken(tok, tok),
@@ -909,7 +909,7 @@ func (r *Registry) getPrivateRegistryDockerConfigFile(
 
 	return &configfile.ConfigFile{
 		AuthConfigs: map[string]types.AuthConfig{
-			authConfigKey: types.AuthConfig{
+			authConfigKey: {
 				Username: string(basic.Username),
 				Password: string(basic.Password),
 				Auth:     generateAuthToken(string(basic.Username), string(basic.Password)),

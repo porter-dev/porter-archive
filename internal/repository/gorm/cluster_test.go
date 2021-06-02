@@ -73,7 +73,7 @@ func TestCreateClusterCandidateWithResolvers(t *testing.T) {
 		ProjectID:        tester.initProjects[0].ID,
 		CreatedClusterID: 0,
 		Resolvers: []models.ClusterResolver{
-			models.ClusterResolver{
+			{
 				Name:     models.ClusterLocalhost,
 				Resolved: false,
 			},

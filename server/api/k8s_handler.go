@@ -188,7 +188,7 @@ func (app *App) HandleCreateConfigMap(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// add all secret env variables to configmap with value PORTERSECRET_${configmap_name}
-	for key, _ := range configMap.SecretEnvVariables {
+	for key := range configMap.SecretEnvVariables {
 		configMap.EnvVariables[key] = fmt.Sprintf("PORTERSECRET_%s", configMap.Name)
 	}
 

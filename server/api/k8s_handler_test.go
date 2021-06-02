@@ -73,7 +73,7 @@ func testK8sRequests(t *testing.T, tests []*k8sTest, canQuery bool) {
 // ------------------------- TEST FIXTURES AND FUNCTIONS  ------------------------- //
 
 var listNamespacesTests = []*k8sTest{
-	&k8sTest{
+	{
 		initializers: []func(tester *tester){
 			initDefaultK8s,
 		},

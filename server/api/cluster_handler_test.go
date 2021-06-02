@@ -75,7 +75,7 @@ func testClusterRequests(t *testing.T, tests []*clusterTest, canQuery bool) {
 // ------------------------- TEST FIXTURES AND FUNCTIONS  ------------------------- //
 
 var createClusterTests = []*clusterTest{
-	&clusterTest{
+	{
 		initializers: []func(t *tester){
 			initUserDefault,
 			initProject,
@@ -99,7 +99,7 @@ func TestHandleCreateCluster(t *testing.T) {
 }
 
 var readProjectClusterTest = []*clusterTest{
-	&clusterTest{
+	{
 		initializers: []func(t *tester){
 			initUserDefault,
 			initProject,
@@ -123,7 +123,7 @@ func TestHandleReadProjectCluster(t *testing.T) {
 }
 
 var listProjectClustersTest = []*clusterTest{
-	&clusterTest{
+	{
 		initializers: []func(t *tester){
 			initUserDefault,
 			initProject,
@@ -147,7 +147,7 @@ func TestHandleListProjectClusters(t *testing.T) {
 }
 
 var updateClusterTests = []*clusterTest{
-	&clusterTest{
+	{
 		initializers: []func(t *tester){
 			initUserDefault,
 			initProject,
@@ -171,7 +171,7 @@ func TestHandleUpdateCluster(t *testing.T) {
 }
 
 var deleteClusterTests = []*clusterTest{
-	&clusterTest{
+	{
 		initializers: []func(t *tester){
 			initUserDefault,
 			initProject,
@@ -216,7 +216,7 @@ func TestHandleDeleteCluster(t *testing.T) {
 }
 
 var createProjectClusterCandidatesTests = []*clusterTest{
-	&clusterTest{
+	{
 		initializers: []func(t *tester){
 			initUserDefault,
 			initProject,
@@ -262,7 +262,7 @@ var createProjectClusterCandidatesTests = []*clusterTest{
 			},
 		},
 	},
-	&clusterTest{
+	{
 		initializers: []func(t *tester){
 			initUserDefault,
 			initProject,
@@ -285,7 +285,7 @@ func TestHandleCreateProjectClusterCandidate(t *testing.T) {
 }
 
 var listProjectClusterCandidatesTests = []*clusterTest{
-	&clusterTest{
+	{
 		initializers: []func(t *tester){
 			initUserDefault,
 			initProject,
@@ -309,7 +309,7 @@ func TestHandleListProjectClusterCandidates(t *testing.T) {
 }
 
 var resolveProjectClusterCandidatesTests = []*clusterTest{
-	&clusterTest{
+	{
 		initializers: []func(t *tester){
 			initUserDefault,
 			initProject,

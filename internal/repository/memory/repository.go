@@ -16,6 +16,7 @@ func NewRepository(canQuery bool) *repository.Repository {
 		Registry:         NewRegistryRepository(canQuery),
 		GitRepo:          NewGitRepoRepository(canQuery),
 		Invite:           NewInviteRepository(canQuery),
+		Release:          NewReleaseRepository(canQuery),
 		AuthCode:         NewAuthCodeRepository(canQuery),
 		DNSRecord:        NewDNSRecordRepository(canQuery),
 		PWResetToken:     NewPWResetTokenRepository(canQuery),

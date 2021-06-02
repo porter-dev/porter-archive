@@ -144,7 +144,7 @@ func dockerConfig(user *api.AuthCheckResponse, client *api.Client, args []string
 		if strings.Contains(regURL, "index.docker.io") {
 			isAuthenticated := false
 
-			for key, _ := range configFile.AuthConfigs {
+			for key := range configFile.AuthConfigs {
 				if key == "https://index.docker.io/v1/" {
 					isAuthenticated = true
 				}

@@ -1,7 +1,7 @@
 package create
 
 import (
-	"github.com/porter-dev/porter/cli/cmd/api"
+	"github.com/porter-dev/porter/api"
 	"github.com/porter-dev/porter/cli/cmd/docker"
 )
 

@@ -70,7 +70,7 @@ func testPublicIntegrationRequests(t *testing.T, tests []*publicIntTest, canQuer
 // ------------------------- TEST FIXTURES AND FUNCTIONS  ------------------------- //
 
 var listClusterIntegrationsTests = []*publicIntTest{
-	&publicIntTest{
+	{
 		initializers: []func(t *tester){
 			initUserDefault,
 		},
@@ -92,7 +92,7 @@ func TestHandleListClusterIntegrations(t *testing.T) {
 }
 
 var listRegistryIntegrationsTests = []*publicIntTest{
-	&publicIntTest{
+	{
 		initializers: []func(t *tester){
 			initUserDefault,
 		},
@@ -114,7 +114,7 @@ func TestHandleListRegistryIntegrations(t *testing.T) {
 }
 
 var listHelmRepoIntegrationsTest = []*publicIntTest{
-	&publicIntTest{
+	{
 		initializers: []func(t *tester){
 			initUserDefault,
 		},
@@ -136,7 +136,7 @@ func TestHandleListHelmRepoIntegrations(t *testing.T) {
 }
 
 var listRepoIntegrationsTests = []*publicIntTest{
-	&publicIntTest{
+	{
 		initializers: []func(t *tester){
 			initUserDefault,
 		},
@@ -158,7 +158,7 @@ func TestHandleListRepoIntegrations(t *testing.T) {
 }
 
 var createGCPIntegrationTests = []*publicIntTest{
-	&publicIntTest{
+	{
 		initializers: []func(t *tester){
 			initUserDefault,
 			initProject,
@@ -183,7 +183,7 @@ func TestHandleCreateGCPIntegration(t *testing.T) {
 }
 
 var createAWSIntegrationTests = []*publicIntTest{
-	&publicIntTest{
+	{
 		initializers: []func(t *tester){
 			initUserDefault,
 			initProject,
@@ -210,7 +210,7 @@ func TestHandleCreateAWSIntegration(t *testing.T) {
 }
 
 var createBasicIntegrationTests = []*publicIntTest{
-	&publicIntTest{
+	{
 		initializers: []func(t *tester){
 			initUserDefault,
 			initProject,

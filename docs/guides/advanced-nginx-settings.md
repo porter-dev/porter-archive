@@ -1,3 +1,7 @@
+> 🚧
+>
+> **Note:** these advanced configuration will only work if you've set up a [custom domain](https://docs.getporter.dev/docs/https-and-custom-domains). They will not work on `*.porter.run` domains. 
+
 Every cluster provisioned by Porter by default uses an NGINX [ingress controller](https://kubernetes.github.io/ingress-nginx) to connect your web applications to the internet. There are different options for customizing the NGINX configuration that a specific application uses. 
 
 Most of the time, you can customize the NGINX configuration by adding an "Ingress Annotation" when deploying a web service. This can be found in the "Advanced" tab of the web template:
@@ -20,4 +24,4 @@ If you are getting undesired `413 Request Entity Too Large` errors, you can incr
 nginx.ingress.kubernetes.io/proxy-body-size: 8m
 ```
 
-This will set the maximum client request body size to 8 megabytes. [Read more about NGINX units](http://nginx.org/en/docs/syntax.html). 
+This will set the maximum client request body size to 8 megabytes. [Read more about NGINX units](http://nginx.org/en/docs/syntax.html).

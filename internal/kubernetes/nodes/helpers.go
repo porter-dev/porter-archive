@@ -82,20 +82,6 @@ func maxResourceList(list, new corev1.ResourceList) {
 	}
 }
 
-// func IsHugePageResourceName(name corev1.ResourceName) bool {
-// 	return strings.HasPrefix(string(name), corev1.ResourceHugePagesPrefix)
-// }
-
-// var standardContainerResources = sets.NewString(
-// 	string(corev1.ResourceCPU),
-// 	string(corev1.ResourceMemory),
-// 	string(corev1.ResourceEphemeralStorage),
-// )
-
-// func IsStandardContainerResourceName(str string) bool {
-// 	return standardContainerResources.Has(str) || IsHugePageResourceName(corev1.ResourceName(str))
-// }
-
 func DescribeNodeResource(nodeNonTerminatedPodsList *corev1.PodList, node *corev1.Node) *NodeUsage {
 	allocatable := node.Status.Capacity
 	if len(node.Status.Allocatable) > 0 {
@@ -123,30 +109,6 @@ func DescribeNodeResource(nodeNonTerminatedPodsList *corev1.PodList, node *corev
 		fractionEphemeralStorageReqs = float64(ephemeralstorageReqs.Value()) / float64(allocatable.StorageEphemeral().Value()) * 100
 		fractionEphemeralStorageLimits = float64(ephemeralstorageLimits.Value()) / float64(allocatable.StorageEphemeral().Value()) * 100
 	}
-
-	// extResources := make([]string, 0, len(allocatable))
-	// hugePageResources := make([]string, 0, len(allocatable))
-	// for resource := range allocatable {
-	// 	if IsHugePageResourceName(resource) {
-	// 		hugePageResources = append(hugePageResources, string(resource))
-	// 	} else if !IsStandardContainerResourceName(string(resource)) && resource != corev1.ResourcePods {
-	// 		extResources = append(extResources, string(resource))
-	// 	}
-	// }
-
-	// sort.Strings(extResources)
-	// sort.Strings(hugePageResources)
-
-	// for _, resource := range hugePageResources {
-	// 	hugePageSizeRequests, hugePageSizeLimits, hugePageSizeAllocable := reqs[corev1.ResourceName(resource)], limits[corev1.ResourceName(resource)], allocatable[corev1.ResourceName(resource)]
-	// 	fractionHugePageSizeRequests := float64(0)
-	// 	fractionHugePageSizeLimits := float64(0)
-	// 	if hugePageSizeAllocable.Value() != 0 {
-	// 		fractionHugePageSizeRequests = float64(hugePageSizeRequests.Value()) / float64(hugePageSizeAllocable.Value()) * 100
-	// 		fractionHugePageSizeLimits = float64(hugePageSizeLimits.Value()) / float64(hugePageSizeAllocable.Value()) * 100
-	// 	}
-
-	// }
 
 	return &NodeUsage{
 		fractionCpuReqs,

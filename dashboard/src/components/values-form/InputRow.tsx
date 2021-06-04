@@ -11,6 +11,7 @@ type PropsType = {
   width?: string;
   disabled?: boolean;
   isRequired?: boolean;
+  className?: string;
 };
 
 type StateType = {
@@ -33,7 +34,7 @@ export default class InputRow extends Component<PropsType, StateType> {
   render() {
     let { label, value, type, unit, placeholder, width } = this.props;
     return (
-      <StyledInputRow>
+      <StyledInputRow className={this.props.className}>
         {label && (
           <Label>
             {label} <Required>{this.props.isRequired ? " *" : null}</Required>

@@ -31,7 +31,7 @@ const Table: React.FC<TableProps> = ({
       <StyledTable {...getTableProps()}>
         <StyledTHead>
           {headerGroups.map((headerGroup) => (
-            <StyledTr {...headerGroup.getHeaderGroupProps()}>
+            <StyledTr {...headerGroup.getHeaderGroupProps()} disableHover={true}>
               {headerGroup.headers.map((column) => (
                 <StyledTh {...column.getHeaderProps()}>
                   {column.render("Header")}
@@ -83,7 +83,6 @@ export const StyledTr = styled.tr`
 export const StyledTd = styled.td`
   font-size: 13px;
   color: #ffffff;
-  padding-left: 32px;
 `;
 
 export const StyledTHead = styled.thead`
@@ -95,14 +94,10 @@ export const StyledTh = styled.th`
   font-size: 13px;
   font-weight: 500;
   color: #aaaabb;
-  padding-left: 32px;
 `;
 
 export const StyledTable = styled.table`
   width: 100%;
-  margin-top: 5px;
-  padding-left: 32px;
-  padding-bottom: 20px;
   min-width: 500px;
   border-collapse: collapse;
 `;

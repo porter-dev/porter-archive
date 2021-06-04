@@ -31,7 +31,9 @@ export const Dashboard: React.FC = ({ children }) => {
     
     <>
       <TitleSection>
-        <i className="material-icons">device_hub</i>
+        <DashboardIcon>
+          <i className="material-icons">device_hub</i>
+        </DashboardIcon>
         <Title>{context.currentCluster.name}</Title>
       </TitleSection>
 
@@ -41,7 +43,7 @@ export const Dashboard: React.FC = ({ children }) => {
             <i className="material-icons">info</i> Info
           </InfoLabel>
         </TopRow>
-        <Description>Some text</Description>
+        <Description>Cluster dashboard for {context.currentCluster.name}</Description>
       </InfoSection>
 
       <TabSelector
@@ -57,6 +59,20 @@ export const Dashboard: React.FC = ({ children }) => {
   );
 };
 
+const DashboardIcon = styled.div`
+  height: 45px;
+  min-width: 45px;
+  width: 45px;
+  border-radius: 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #676c7c;
+  border: 2px solid #8e94aa;
+  > i {
+    font-size: 22px;
+  }
+`;
 
 const TopRow = styled.div`
   display: flex;
@@ -100,7 +116,6 @@ const Title = styled.div`
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  text-transform: capitalize;
 `;
 
 const TitleSection = styled.div`

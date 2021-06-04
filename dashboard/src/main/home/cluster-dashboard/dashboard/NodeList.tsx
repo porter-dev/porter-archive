@@ -41,7 +41,7 @@ const NodeList: React.FC = () => {
   }, [nodeList]);
 
   useEffect(() => {
-    let { currentCluster, currentProject } = context;
+    const { currentCluster, currentProject } = context;
     api
       .getClusterNodes(
         "<token>",
@@ -62,10 +62,30 @@ const NodeList: React.FC = () => {
   }, [context, setNodeList]);
 
   return (
-    <>
-      <Table columns={columns} data={data} />
-    </>
+    <NodeListWrapper>
+      <StyledChart>
+        <Table columns={columns} data={data} />
+      </StyledChart>
+    </NodeListWrapper>
   );
 };
 
 export default NodeList;
+
+const NodeListWrapper = styled.div`
+  margin-top: 35px;
+`
+
+const StyledChart = styled.div`
+  background: #26282f;
+  padding: 10px;
+  border-radius: 5px;
+  box-shadow: 0 5px 8px 0px #00000033;
+  position: relative;
+  border: 2px solid #9eb4ff00;
+  width: 100%;
+  height: 100%;
+  :not(:last-child) {
+    margin-bottom: 25px;
+  }
+`;

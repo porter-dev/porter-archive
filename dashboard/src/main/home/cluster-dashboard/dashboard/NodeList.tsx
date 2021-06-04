@@ -9,6 +9,7 @@ import { Context } from "shared/Context";
 const NodeList: React.FC = () => {
   const context = useContext(Context);
   const [nodeList, setNodeList] = useState([]);
+  const [loading, setLoading] = useState<boolean>(false);
 
   const columns = useMemo<Column<any>[]>(
     () => [
@@ -42,6 +43,7 @@ const NodeList: React.FC = () => {
 
   useEffect(() => {
     const { currentCluster, currentProject } = context;
+    setLoading(true)
     api
       .getClusterNodes(
         "<token>",
@@ -58,13 +60,14 @@ const NodeList: React.FC = () => {
       })
       .catch(() => {
         console.log({ error: true });
-      });
+      })
+      .finally(() => setLoading(false));
   }, [context, setNodeList]);
 
   return (
     <NodeListWrapper>
       <StyledChart>
-        <Table columns={columns} data={data} />
+        <Table columns={columns} data={data} isLoading={loading}/>
       </StyledChart>
     </NodeListWrapper>
   );
@@ -78,7 +81,7 @@ const NodeListWrapper = styled.div`
 
 const StyledChart = styled.div`
   background: #26282f;
-  padding: 10px;
+  padding: 14px;
   border-radius: 5px;
   box-shadow: 0 5px 8px 0px #00000033;
   position: relative;

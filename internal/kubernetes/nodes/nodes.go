@@ -29,7 +29,7 @@ type NodeWithUsageData struct {
 	FractionEphemeralStorageLimits float64 `json:"ephemeral_storage_limits"`
 }
 
-func (nu *NodeUsage) Externalize(node *v1.Node) *NodeWithUsageData {
+func (nu *NodeUsage) Externalize(node v1.Node) *NodeWithUsageData {
 	return &NodeWithUsageData{
 		Name:                           node.Name,
 		FractionCpuReqs:                nu.fractionCpuReqs,
@@ -45,16 +45,57 @@ func GetNodesUsage(clientset kubernetes.Interface) []*NodeWithUsageData {
 	nodeList, _ := clientset.CoreV1().Nodes().List(context.TODO(), metav1.ListOptions{})
 
 	extNodeList := make([]*NodeWithUsageData, len(nodeList.Items))
+	for index, currentNode := range nodeList.Items {
+		podList := getPodsForNode(clientset, currentNode.Name)
+		nodeUsage := DescribeNodeResource(podList, &currentNode)
 
-	for i, node := range nodeList.Items {
-		podList := getPodsForNode(clientset, node.Name)
-		nodeUsage := DescribeNodeResource(podList, &node)
-
-		extNodeList[i] = nodeUsage.Externalize(&node)
+		extNodeList[index] = nodeUsage.Externalize(currentNode)
 	}
 
 	return extNodeList
 }
+
+// func GetNodesUsage(clientset kubernetes.Interface) []*NodeWithUsageData {
+// 	nodeList, _ := clientset.CoreV1().Nodes().List(context.TODO(), metav1.ListOptions{})
+
+// 	extNodeList := make([]*NodeWithUsageData, len(nodeList.Items))
+// 	var wg sync.WaitGroup
+// 	for i, node := range nodeList.Items {
+// 		wg.Add(1)
+// 		go func(index int, currentNode *v1.Node) {
+// 			defer wg.Done()
+// 			podList := getPodsForNode(clientset, currentNode.Name)
+// 			nodeUsage := DescribeNodeResource(podList, currentNode)
+
+// 			extNodeList[index] = nodeUsage.Externalize(*currentNode)
+// 		}(i, &node)
+// 	}
+// 	wg.Wait()
+
+// 	return extNodeList
+// }
+
+// func GetNodesUsage(clientset kubernetes.Interface) []NodeWithUsageData {
+// 	nodeList, _ := clientset.CoreV1().Nodes().List(context.TODO(), metav1.ListOptions{})
+
+// 	nodeChan := make(chan NodeWithUsageData, len(nodeList.Items))
+
+// 	for _, node := range nodeList.Items {
+// 		go func(currentNode v1.Node, nc chan<- NodeWithUsageData) {
+// 			podList := getPodsForNode(clientset, currentNode.Name)
+// 			nodeUsage := DescribeNodeResource(podList, &currentNode)
+// 			nodeChan <- *nodeUsage.Externalize(currentNode)
+// 		}(node, nodeChan)
+// 	}
+
+// 	extNodeList := make([]NodeWithUsageData, len(nodeList.Items))
+
+// 	for i := 0; i < len(nodeList.Items); i++ {
+// 		extNodeList[i] = <-nodeChan
+// 	}
+
+// 	return extNodeList
+// }
 
 func getPodsForNode(clientset kubernetes.Interface, nodeName string) *v1.PodList {
 	fmt.Printf("%s", nodeName)

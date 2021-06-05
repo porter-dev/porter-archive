@@ -191,9 +191,8 @@ class LaunchTemplate extends Component<PropsType, StateType> {
           saveValuesStatus: parsedErr,
         });
 
-        
         setCurrentError(err);
-        
+
         window.analytics.track("Failed to Deploy Add-on", {
           name: this.props.currentTemplate.name,
           namespace: this.state.selectedNamespace,

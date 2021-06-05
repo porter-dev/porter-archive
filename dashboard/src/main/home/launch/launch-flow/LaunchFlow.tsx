@@ -188,7 +188,7 @@ class LaunchFlow extends Component<PropsType, StateType> {
         this.setState({
           saveValuesStatus: parsedErr,
         });
-        setCurrentError(err.response.data.errors[0]);
+        setCurrentError(err);
         window.analytics.track("Failed to Deploy Add-on", {
           name: this.props.currentTemplate.name,
           namespace: selectedNamespace,
@@ -274,7 +274,7 @@ class LaunchFlow extends Component<PropsType, StateType> {
               }
             )
             .then((res) => {
-              resolve(res.data?.external_url);
+              resolve(res?.data?.external_url);
             })
             .catch((err) => {
               let parsedErr =

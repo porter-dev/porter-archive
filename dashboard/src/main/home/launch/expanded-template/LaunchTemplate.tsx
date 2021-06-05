@@ -181,8 +181,19 @@ class LaunchTemplate extends Component<PropsType, StateType> {
         });
       })
       .catch((err) => {
-        this.setState({ saveValuesStatus: "error" });
-        setCurrentError(err.response.data.errors[0]);
+        let parsedErr =
+          err?.response?.data?.errors && err.response.data.errors[0];
+        if (parsedErr) {
+          err = parsedErr;
+        }
+
+        this.setState({
+          saveValuesStatus: parsedErr,
+        });
+
+        
+        setCurrentError(err);
+        
         window.analytics.track("Failed to Deploy Add-on", {
           name: this.props.currentTemplate.name,
           namespace: this.state.selectedNamespace,

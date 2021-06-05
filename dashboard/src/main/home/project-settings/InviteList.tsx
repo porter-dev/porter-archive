@@ -9,6 +9,7 @@ import Loading from "components/Loading";
 import InputRow from "components/values-form/InputRow";
 import Helper from "components/values-form/Helper";
 import Heading from "components/values-form/Heading";
+import CopyToClipboard from "components/CopyToClipboard";
 
 type PropsType = {};
 
@@ -113,22 +114,13 @@ export default class InviteList extends Component<PropsType, StateType> {
       .catch((err) => console.log(err));
   };
 
-  copyToClip = (index: number) => {
+  getInviteUrl = (index: number) => {
     let { currentProject } = this.context;
-    navigator.clipboard
-      .writeText(
-        `${this.state.isHTTPS ? "https://" : ""}${
-          window.location.host
-        }/api/projects/${currentProject.id}/invites/${
-          this.state.invites[index].token
-        }`
-      )
-      .then(
-        function () {},
-        function () {
-          console.log("couldn't copy link to clipboard");
-        }
-      );
+    return `${this.state.isHTTPS ? "https://" : ""}${
+      window.location.host
+    }/api/projects/${currentProject.id}/invites/${
+      this.state.invites[index].token
+    }`;
   };
 
   renderInvitations = () => {
@@ -188,9 +180,13 @@ export default class InviteList extends Component<PropsType, StateType> {
                     }`}
                     placeholder="Unable to retrieve link"
                   />
-                  <CopyButton onClick={() => this.copyToClip(i)}>
+                  <CopyToClipboard
+                    as={CopyButton}
+                    text={this.getInviteUrl(i)}
+                    onError={() => console.log("Couldn't copy to clipboard")}
+                  >
                     Copy Link
-                  </CopyButton>
+                  </CopyToClipboard>
                 </Rower>
               </LinkTd>
               <Td isTop={i === 0}>

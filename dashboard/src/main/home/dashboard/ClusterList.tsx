@@ -268,7 +268,8 @@ const DashboardIcon = styled.div`
 
 const TemplateTitle = styled.div`
   margin-bottom: 0px;
-  width: 80%;
+  margin-top: 13px;
+  width: 100%;
   text-align: center;
   font-size: 14px;
   white-space: nowrap;
@@ -362,6 +363,7 @@ const Url = styled.a`
   width: 100%;
   font-size: 13px;
   user-select: text;
+  font-weight: 400;
   display: flex;
   align-items: center;
   justify-content: center;

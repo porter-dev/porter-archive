@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/go-test/deep"
+	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/models"
 
 	"gorm.io/gorm"
@@ -54,9 +55,11 @@ func TestCreateProjectRole(t *testing.T) {
 	defer cleanup(tester, t)
 
 	role := &models.Role{
-		Kind:      models.RoleAdmin,
-		UserID:    0,
-		ProjectID: tester.initProjects[0].Model.ID,
+		Role: types.Role{
+			Kind:      types.RoleAdmin,
+			UserID:    0,
+			ProjectID: tester.initProjects[0].Model.ID,
+		},
 	}
 
 	role, err := tester.repo.Project.CreateProjectRole(tester.initProjects[0], role)
@@ -89,9 +92,11 @@ func TestCreateProjectRole(t *testing.T) {
 		Name: "project-test",
 		Roles: []models.Role{
 			{
-				Kind:      models.RoleAdmin,
-				UserID:    0,
-				ProjectID: 1,
+				Role: types.Role{
+					Kind:      types.RoleAdmin,
+					UserID:    0,
+					ProjectID: 1,
+				},
 			},
 		},
 	}
@@ -121,8 +126,10 @@ func TestListProjectsByUserID(t *testing.T) {
 	initProject(tester, t)
 
 	role := &models.Role{
-		Kind:   models.RoleAdmin,
-		UserID: 1,
+		Role: types.Role{
+			Kind:   types.RoleAdmin,
+			UserID: 1,
+		},
 	}
 
 	role, err := tester.repo.Project.CreateProjectRole(tester.initProjects[1], role)
@@ -149,9 +156,11 @@ func TestListProjectsByUserID(t *testing.T) {
 			Name: "project-test",
 			Roles: []models.Role{
 				{
-					Kind:      models.RoleAdmin,
-					UserID:    tester.initUsers[0].Model.ID,
-					ProjectID: uint(i + 1),
+					Role: types.Role{
+						Kind:      types.RoleAdmin,
+						UserID:    tester.initUsers[0].Model.ID,
+						ProjectID: uint(i + 1),
+					},
 				},
 			},
 		}
@@ -167,7 +176,42 @@ func TestListProjectsByUserID(t *testing.T) {
 			t.Error(diff)
 		}
 	}
+}
 
+func TestReadProjectRole(t *testing.T) {
+	tester := &tester{
+		dbFileName: "./get_project_role.db",
+	}
+
+	setupTestEnv(tester, t)
+	initUser(tester, t)
+
+	// create two projects, same name
+	initProject(tester, t)
+	initProjectRole(tester, t)
+
+	defer cleanup(tester, t)
+
+	role, err := tester.repo.Project.ReadProjectRole(1, 1)
+
+	if err != nil {
+		t.Fatalf("%v\n", err)
+	}
+
+	role.Model = gorm.Model{}
+
+	expRole := &models.Role{
+		Role: types.Role{
+			Kind:      types.RoleAdmin,
+			UserID:    1,
+			ProjectID: 1,
+		},
+	}
+
+	if diff := deep.Equal(role, expRole); diff != nil {
+		t.Errorf("incorrect role")
+		t.Error(diff)
+	}
 }
 
 func TestDeleteProject(t *testing.T) {

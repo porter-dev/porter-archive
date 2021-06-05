@@ -8,6 +8,7 @@ import (
 	"strconv"
 
 	"github.com/go-chi/chi"
+	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/forms"
 	"github.com/porter-dev/porter/internal/integrations/email"
 	"github.com/porter-dev/porter/internal/models"
@@ -169,9 +170,11 @@ func (app *App) HandleAcceptInvite(w http.ResponseWriter, r *http.Request) {
 
 	// create a new Role with the user as the admin
 	_, err = app.Repo.Project.CreateProjectRole(projModel, &models.Role{
-		UserID:    userID,
-		ProjectID: uint(projID),
-		Kind:      models.RoleAdmin,
+		Role: types.Role{
+			UserID:    userID,
+			ProjectID: uint(projID),
+			Kind:      types.RoleAdmin,
+		},
 	})
 
 	if err != nil {

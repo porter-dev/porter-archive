@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/go-test/deep"
+	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/models"
 )
 
@@ -154,9 +155,11 @@ func initProject(tester *tester) {
 
 	// create a new Role with the user as the owner
 	tester.repo.Project.CreateProjectRole(projModel, &models.Role{
-		UserID:    user.ID,
-		ProjectID: projModel.ID,
-		Kind:      models.RoleAdmin,
+		Role: types.Role{
+			UserID:    user.ID,
+			ProjectID: projModel.ID,
+			Kind:      types.RoleAdmin,
+		},
 	})
 }
 

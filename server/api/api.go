@@ -19,7 +19,7 @@ import (
 	"github.com/porter-dev/porter/internal/kubernetes"
 	lr "github.com/porter-dev/porter/internal/logger"
 	"github.com/porter-dev/porter/internal/repository"
-	memory "github.com/porter-dev/porter/internal/repository/memory"
+	"github.com/porter-dev/porter/internal/repository/test"
 	"github.com/porter-dev/porter/internal/validator"
 	segment "gopkg.in/segmentio/analytics-go.v3"
 	"helm.sh/helm/v3/pkg/storage"
@@ -129,7 +129,7 @@ func New(conf *AppConfig) (*App, error) {
 
 	// if repository not specified, default to in-memory
 	if app.Repo == nil {
-		app.Repo = memory.NewRepository(true)
+		app.Repo = test.NewRepository(true)
 	}
 
 	// create the session store

@@ -12,7 +12,7 @@ import (
 	"github.com/porter-dev/porter/internal/kubernetes"
 	lr "github.com/porter-dev/porter/internal/logger"
 	"github.com/porter-dev/porter/internal/repository"
-	memory "github.com/porter-dev/porter/internal/repository/memory"
+	"github.com/porter-dev/porter/internal/repository/test"
 	"github.com/porter-dev/porter/server/api"
 	"github.com/porter-dev/porter/server/router"
 
@@ -82,7 +82,7 @@ func newTester(canQuery bool) *tester {
 	}
 
 	logger := lr.NewConsole(appConf.Debug)
-	repo := memory.NewRepository(canQuery)
+	repo := test.NewRepository(canQuery)
 	store, _ := sessionstore.NewStore(repo, appConf.Server)
 	k8sAgent := kubernetes.GetAgentTesting()
 

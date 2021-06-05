@@ -3,7 +3,7 @@ package cmd
 import (
 	"os"
 
-	"github.com/porter-dev/porter/cli/cmd/api"
+	api "github.com/porter-dev/porter/api/client"
 	"github.com/porter-dev/porter/cli/cmd/connect"
 	"github.com/spf13/cobra"
 )

@@ -12,8 +12,8 @@ import (
 
 	"github.com/go-chi/chi"
 	"github.com/gorilla/sessions"
+	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/auth/token"
-	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/repository"
 )
 
@@ -225,7 +225,7 @@ func (auth *Auth) DoesUserHaveProjectAccess(
 					next.ServeHTTP(w, r)
 					return
 				} else if accessType == WriteAccess {
-					if role.Kind == models.RoleAdmin {
+					if role.Kind == types.RoleAdmin {
 						next.ServeHTTP(w, r)
 						return
 					}

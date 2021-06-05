@@ -4,6 +4,7 @@ import (
 	"os"
 	"testing"
 
+	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/adapter"
 	"github.com/porter-dev/porter/internal/config"
 	"github.com/porter-dev/porter/internal/models"
@@ -118,9 +119,11 @@ func initProjectRole(tester *tester, t *testing.T) {
 	t.Helper()
 
 	role := &models.Role{
-		Kind:      models.RoleAdmin,
-		UserID:    tester.initUsers[0].Model.ID,
-		ProjectID: tester.initProjects[0].Model.ID,
+		Role: types.Role{
+			Kind:      types.RoleAdmin,
+			UserID:    tester.initUsers[0].Model.ID,
+			ProjectID: tester.initProjects[0].Model.ID,
+		},
 	}
 
 	role, err := tester.repo.Project.CreateProjectRole(tester.initProjects[0], role)

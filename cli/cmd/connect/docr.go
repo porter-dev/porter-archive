@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/porter-dev/porter/cli/cmd/api"
+	api "github.com/porter-dev/porter/api/client"
 	"github.com/porter-dev/porter/cli/cmd/utils"
 
 	ints "github.com/porter-dev/porter/internal/models/integrations"

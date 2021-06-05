@@ -9,7 +9,7 @@ import (
 
 	"github.com/gorilla/securecookie"
 	"github.com/gorilla/sessions"
-	test "github.com/porter-dev/porter/internal/repository/memory"
+	"github.com/porter-dev/porter/internal/repository/test"
 
 	"github.com/porter-dev/porter/internal/auth/sessionstore"
 )

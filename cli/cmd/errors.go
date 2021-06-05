@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"github.com/fatih/color"
-	"github.com/porter-dev/porter/cli/cmd/api"
+	api "github.com/porter-dev/porter/api/client"
 )
 
 func checkLoginAndRun(args []string, runner func(user *api.AuthCheckResponse, client *api.Client, args []string) error) error {

@@ -3,7 +3,7 @@ import ClipboardJS from "clipboard";
 import React, { Component, RefObject } from "react";
 import Tooltip from "@material-ui/core/Tooltip";
 import styled from "styled-components";
-import { styled as materialStyled } from '@material-ui/core/styles';
+import { styled as materialStyled } from "@material-ui/core/styles";
 
 type PropsType = {
   text: string;
@@ -80,12 +80,18 @@ export default class CopyToClipboard extends Component<PropsType, StateType> {
   render() {
     return (
       <Tooltip
-        title={<div style={{ 
-          fontFamily: "Work Sans, sans-serif",
-          fontSize: "12px",
-          fontWeight: "normal",
-          padding: "5px 6px",
-        }}>Copied to clipboard</div>}
+        title={
+          <div
+            style={{
+              fontFamily: "Work Sans, sans-serif",
+              fontSize: "12px",
+              fontWeight: "normal",
+              padding: "5px 6px",
+            }}
+          >
+            Copied to clipboard
+          </div>
+        }
         open={this.state.success}
         placement="bottom"
         arrow

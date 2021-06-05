@@ -12,7 +12,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/porter-dev/porter/api"
+	api "github.com/porter-dev/porter/api/client"
 	"k8s.io/client-go/util/homedir"
 )
 

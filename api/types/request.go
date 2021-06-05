@@ -16,8 +16,8 @@ func ReadVerbGroup() APIVerbGroup {
 	return []APIVerb{APIVerbGet, APIVerbList}
 }
 
-func WriteVerbGroup() APIVerbGroup {
-	return []APIVerb{APIVerbCreate, APIVerbUpdate, APIVerbDelete}
+func ReadWriteVerbGroup() APIVerbGroup {
+	return []APIVerb{APIVerbGet, APIVerbList, APIVerbCreate, APIVerbUpdate, APIVerbDelete}
 }
 
 type HTTPVerb string
@@ -30,16 +30,13 @@ const (
 	HTTPVerbDelete HTTPVerb = "DELETE"
 )
 
-type EndpointPath struct{}
-
-type Endpoint struct {
-	Parent       *Endpoint
-	RelativePath EndpointPath
-	Permissions  []Permission
+type Path struct {
+	Parent       *Path
+	RelativePath string
 }
 
 type APIRequestMetadata struct {
-	Verb     APIVerb
-	Method   HTTPVerb
-	Endpoint *Endpoint
+	Verb   APIVerb
+	Method HTTPVerb
+	Path   *Path
 }

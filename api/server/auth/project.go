@@ -2,21 +2,59 @@ package auth
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 
+	"github.com/porter-dev/porter/api/server/shared"
+	"github.com/porter-dev/porter/api/server/shared/apierrors"
 	"github.com/porter-dev/porter/api/types"
+	"github.com/porter-dev/porter/internal/repository"
 )
 
-func NewProjectContext(ctx context.Context, project types.Project) context.Context {
-	return context.WithValue(ctx, types.ProjectScope, project)
+type ProjectScopedFactory struct {
+	projectRepo repository.ProjectRepository
+	config      *shared.Config
 }
 
-func ProjectScoped(h http.Handler, w http.ResponseWriter, r *http.Request) {
+func NewProjectScopedFactory(
+	projectRepo repository.ProjectRepository,
+	config *shared.Config,
+) *ProjectScopedFactory {
+	return &ProjectScopedFactory{projectRepo, config}
+}
+
+func (f *ProjectScopedFactory) NewProjectScoped(next http.Handler) http.Handler {
+	return &ProjectScoped{next, f.projectRepo, f.config}
+}
+
+type ProjectScoped struct {
+	next        http.Handler
+	projectRepo repository.ProjectRepository
+	config      *shared.Config
+}
+
+func (scope *ProjectScoped) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// read the project id from the request
+	projID, reqErr := GetURLParamUint(r, "project_id")
+
+	if reqErr != nil {
+		apierrors.HandleAPIError(w, scope.config.Logger, reqErr)
+		return
+	}
+
+	fmt.Println("PROJECT ID IS", projID)
 
 	// find a set of roles for this user and compute a policy document
 
 	// determine if policy document allows for project scope
 
-	// create a new project-scoped context
+	project := types.Project{}
+
+	// create a new project-scoped context and serve
+	req := r.Clone(NewProjectContext(r.Context(), project))
+	scope.next.ServeHTTP(w, req)
+}
+
+func NewProjectContext(ctx context.Context, project types.Project) context.Context {
+	return context.WithValue(ctx, types.ProjectScope, project)
 }

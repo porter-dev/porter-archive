@@ -31,9 +31,7 @@ func (s *Suite) SetupSuite() {
 		err error
 	)
 
-	// TODO: make it work with gorm.io/gorm, currently only works with jinzhu/gorm (gorm V1)
 	db, s.mock, err = sqlmock.New()
-	// db, s.mock, err = sqlmock.New(sqlmock.QueryMatcherOption(sqlmock.QueryMatcherRegexp))
 
 	require.NoError(s.T(), err)
 

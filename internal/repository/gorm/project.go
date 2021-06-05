@@ -52,6 +52,17 @@ func (repo *ProjectRepository) ReadProject(id uint) (*models.Project, error) {
 	return project, nil
 }
 
+// ReadProjectRole gets a role for a project specified by a user and project ID
+func (repo *ProjectRepository) ReadProjectRole(userID, projID uint) (*models.Role, error) {
+	role := &models.Role{}
+
+	if err := repo.db.Where("user_id = ? AND project_id = ?", userID, projID).First(&role).Error; err != nil {
+		return nil, err
+	}
+
+	return role, nil
+}
+
 // ListProjectsByUserID lists projects where a user has an associated role
 func (repo *ProjectRepository) ListProjectsByUserID(userID uint) ([]*models.Project, error) {
 	projects := make([]*models.Project, 0)

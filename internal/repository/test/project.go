@@ -52,6 +52,28 @@ func (repo *ProjectRepository) CreateProjectRole(project *models.Project, role *
 }
 
 // ReadProject gets a projects specified by a unique id
+func (repo *ProjectRepository) ReadProjectRole(userID, projID uint) (*models.Role, error) {
+	if !repo.canQuery {
+		return nil, errors.New("Cannot read from database")
+	}
+
+	if int(projID-1) >= len(repo.projects) || repo.projects[projID-1] == nil {
+		return nil, gorm.ErrRecordNotFound
+	}
+
+	// find role in project roles
+	index := int(projID - 1)
+
+	for _, role := range repo.projects[index].Roles {
+		if role.UserID == userID {
+			return &role, nil
+		}
+	}
+
+	return nil, gorm.ErrRecordNotFound
+}
+
+// ReadProject gets a projects specified by a unique id
 func (repo *ProjectRepository) ReadProject(id uint) (*models.Project, error) {
 	if !repo.canQuery {
 		return nil, errors.New("Cannot read from database")

@@ -15,7 +15,7 @@ import (
 	"github.com/porter-dev/porter/cli/cmd/utils"
 	"github.com/porter-dev/porter/internal/kubernetes/local"
 
-	"github.com/porter-dev/porter/cli/cmd/api"
+	api "github.com/porter-dev/porter/api/client"
 	"github.com/porter-dev/porter/internal/models"
 )
 

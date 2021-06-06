@@ -1,7 +1,8 @@
-package test
+package apitest
 
 import (
 	"os"
+	"testing"
 
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/internal/auth/sessionstore"
@@ -40,4 +41,16 @@ func (t *TestConfigLoader) LoadConfig() (*shared.Config, error) {
 		CookieName: configFromEnv.Server.CookieName,
 		TokenConf:  tokenConf,
 	}, nil
+}
+
+func LoadConfig(t *testing.T) *shared.Config {
+	configLoader := NewTestConfigLoader(true)
+
+	config, err := configLoader.LoadConfig()
+
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	return config
 }

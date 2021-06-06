@@ -1,7 +1,7 @@
 package shared
 
 import (
-	"github.com/porter-dev/porter/api/server/requestutils"
+	"github.com/porter-dev/porter/api/server/shared/requestutils"
 	"github.com/porter-dev/porter/api/types"
 )
 
@@ -13,11 +13,13 @@ type APIEndpoint struct {
 
 type APIEndpointFactory interface {
 	NewAPIEndpoint(metadata *types.APIRequestMetadata) *APIEndpoint
+	GetDecoderValidator() RequestDecoderValidator
+	GetResultWriter() ResultWriter
 }
 
 type APIObjectEndpointFactory struct {
-	decoderValidator RequestDecoderValidator
-	resultWriter     ResultWriter
+	DecoderValidator RequestDecoderValidator
+	ResultWriter     ResultWriter
 }
 
 func NewAPIObjectEndpointFactory(config *Config) APIEndpointFactory {
@@ -28,8 +30,8 @@ func NewAPIObjectEndpointFactory(config *Config) APIEndpointFactory {
 	resultWriter := NewDefaultResultWriter(config)
 
 	return &APIObjectEndpointFactory{
-		decoderValidator: decoderValidator,
-		resultWriter:     resultWriter,
+		DecoderValidator: decoderValidator,
+		ResultWriter:     resultWriter,
 	}
 }
 
@@ -38,7 +40,15 @@ func (factory *APIObjectEndpointFactory) NewAPIEndpoint(
 ) *APIEndpoint {
 	return &APIEndpoint{
 		Metadata:         metadata,
-		DecoderValidator: factory.decoderValidator,
-		Writer:           factory.resultWriter,
+		DecoderValidator: factory.DecoderValidator,
+		Writer:           factory.ResultWriter,
 	}
+}
+
+func (factory *APIObjectEndpointFactory) GetDecoderValidator() RequestDecoderValidator {
+	return factory.DecoderValidator
+}
+
+func (factory *APIObjectEndpointFactory) GetResultWriter() ResultWriter {
+	return factory.ResultWriter
 }

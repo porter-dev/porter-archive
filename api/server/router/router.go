@@ -20,6 +20,16 @@ func NewAPIRouter(config *shared.Config) *chi.Mux {
 			// all authenticated endpoints use the authn middleware
 			r.Use(authNFactory.NewAuthenticated)
 
+			// register all user-scoped routes
+			RegisterUserScopedRoutes(
+				r,
+				config,
+				&types.Path{
+					RelativePath: "",
+				},
+				endpointFactory,
+			)
+
 			// register all project-scoped routes
 			RegisterProjectScopedRoutes(
 				r,

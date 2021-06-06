@@ -3,6 +3,7 @@ package models
 import (
 	"gorm.io/gorm"
 
+	"github.com/porter-dev/porter/api/types"
 	ints "github.com/porter-dev/porter/internal/models/integrations"
 )
 
@@ -57,16 +58,24 @@ func (p *Project) Externalize() *ProjectExternal {
 		roles = append(roles, *role.Externalize())
 	}
 
-	repos := make([]GitRepoExternal, 0)
+	return &ProjectExternal{
+		ID:    p.ID,
+		Name:  p.Name,
+		Roles: roles,
+	}
+}
 
-	for _, repo := range p.GitRepos {
-		repos = append(repos, *repo.Externalize())
+// ToProjectType generates an external types.Project to be shared over REST
+func (p *Project) ToProjectType() *types.Project {
+	roles := make([]*types.Role, 0)
+
+	for _, role := range p.Roles {
+		roles = append(roles, role.ToRoleType())
 	}
 
-	return &ProjectExternal{
-		ID:       p.ID,
-		Name:     p.Name,
-		Roles:    roles,
-		GitRepos: repos,
+	return &types.Project{
+		ID:    p.ID,
+		Name:  p.Name,
+		Roles: roles,
 	}
 }

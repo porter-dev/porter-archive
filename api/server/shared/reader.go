@@ -3,8 +3,8 @@ package shared
 import (
 	"net/http"
 
-	"github.com/porter-dev/porter/api/server/requestutils"
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
+	"github.com/porter-dev/porter/api/server/shared/requestutils"
 )
 
 type RequestDecoderValidator interface {

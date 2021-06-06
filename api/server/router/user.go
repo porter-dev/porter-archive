@@ -3,11 +3,12 @@ package router
 import (
 	"github.com/go-chi/chi"
 	"github.com/porter-dev/porter/api/server/authz"
+	"github.com/porter-dev/porter/api/server/handlers/project"
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/types"
 )
 
-func RegisterProjectScopedRoutes(
+func RegisterUserScopedRoutes(
 	r chi.Router,
 	config *shared.Config,
 	basePath *types.Path,
@@ -25,11 +26,35 @@ func RegisterProjectScopedRoutes(
 	return r
 }
 
-func registerProjectEndpoints(
+func registerUserRoutes(
 	r chi.Router,
 	config *shared.Config,
 	basePath *types.Path,
 	factory shared.APIEndpointFactory,
 ) {
+	routes := make([]*Route, 0)
 
+	createEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbCreate,
+			Method: types.HTTPVerbPost,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: "/projects",
+			},
+		},
+	)
+
+	createHandler := project.NewProjectCreateHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &Route{
+		Endpoint: createEndpoint,
+		Handler:  createHandler,
+	})
+
+	registerRoutes(r, routes)
 }

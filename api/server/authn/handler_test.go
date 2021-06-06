@@ -9,9 +9,8 @@ import (
 
 	"github.com/porter-dev/porter/api/server/authn"
 	"github.com/porter-dev/porter/api/server/shared"
-	"github.com/porter-dev/porter/api/server/shared/test"
+	"github.com/porter-dev/porter/api/server/shared/apitest"
 	"github.com/porter-dev/porter/api/types"
-	"github.com/porter-dev/porter/internal/auth/token"
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/stretchr/testify/assert"
 	"gorm.io/gorm"
@@ -29,17 +28,8 @@ func TestAuthenticatedUserWithCookie(t *testing.T) {
 	rr := httptest.NewRecorder()
 
 	// create a new user and a cookie for them
-	user, err := config.Repo.User().CreateUser(&models.User{
-		Email:         "test@test.it",
-		Password:      "hello",
-		EmailVerified: true,
-	})
-
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	cookie := authenticateUserWithCookie(t, config, user, false)
+	user := apitest.CreateTestUser(t, config)
+	cookie := apitest.AuthenticateUserWithCookie(t, config, user, false)
 	req.AddCookie(cookie)
 
 	handler.ServeHTTP(rr, req)
@@ -76,17 +66,8 @@ func TestAuthenticatedUserWithToken(t *testing.T) {
 	rr := httptest.NewRecorder()
 
 	// create a new user for the token to reference
-	user, err := config.Repo.User().CreateUser(&models.User{
-		Email:         "test@test.it",
-		Password:      "hello",
-		EmailVerified: true,
-	})
-
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	tokenStr := authenticateUserWithToken(t, config, user.ID)
+	user := apitest.CreateTestUser(t, config)
+	tokenStr := apitest.AuthenticateUserWithToken(t, config, user.ID)
 	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", tokenStr))
 
 	handler.ServeHTTP(rr, req)
@@ -126,21 +107,12 @@ func TestAuthBadDatabaseRead(t *testing.T) {
 	rr := httptest.NewRecorder()
 
 	// create a new user and a cookie for them
-	user, err := config.Repo.User().CreateUser(&models.User{
-		Email:         "test@test.it",
-		Password:      "hello",
-		EmailVerified: true,
-	})
-
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	cookie := authenticateUserWithCookie(t, config, user, false)
+	user := apitest.CreateTestUser(t, config)
+	cookie := apitest.AuthenticateUserWithCookie(t, config, user, false)
 	req.AddCookie(cookie)
 
 	// set the repository interface to one that can't query from the db
-	configLoader := test.NewTestConfigLoader(false)
+	configLoader := apitest.NewTestConfigLoader(false)
 	config, err = configLoader.LoadConfig()
 	factory := authn.NewAuthNFactory(config)
 	handler = factory.NewAuthenticated(next)
@@ -162,19 +134,11 @@ func TestAuthBadSessionUserWrite(t *testing.T) {
 	rr := httptest.NewRecorder()
 
 	// create a new user and a cookie for them
-	_, err = config.Repo.User().CreateUser(&models.User{
-		Email:         "test@test.it",
-		Password:      "hello",
-		EmailVerified: true,
-	})
-
-	if err != nil {
-		t.Fatal(err)
-	}
+	apitest.CreateTestUser(t, config)
 
 	// create cookie where session values are incorrect
 	// i.e. written for a user that doesn't exist (id 500)
-	cookie := authenticateUserWithCookie(t, config, &models.User{
+	cookie := apitest.AuthenticateUserWithCookie(t, config, &models.User{
 		Model: gorm.Model{
 			ID: 500,
 		},
@@ -198,19 +162,11 @@ func TestAuthBadSessionUserIDType(t *testing.T) {
 	rr := httptest.NewRecorder()
 
 	// create a new user and a cookie for them
-	user, err := config.Repo.User().CreateUser(&models.User{
-		Email:         "test@test.it",
-		Password:      "hello",
-		EmailVerified: true,
-	})
-
-	if err != nil {
-		t.Fatal(err)
-	}
+	user := apitest.CreateTestUser(t, config)
 
 	// create cookie where session values are incorrect
 	// i.e. written for a user that doesn't exist (id 500)
-	cookie := authenticateUserWithCookie(t, config, user, true)
+	cookie := apitest.AuthenticateUserWithCookie(t, config, user, true)
 
 	req.AddCookie(cookie)
 	handler.ServeHTTP(rr, req)
@@ -232,13 +188,7 @@ func (t *testHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func loadHandlers(t *testing.T) (*shared.Config, http.Handler, *testHandler) {
-	configLoader := test.NewTestConfigLoader(true)
-
-	config, err := configLoader.LoadConfig()
-
-	if err != nil {
-		t.Fatal(err)
-	}
+	config := apitest.LoadConfig(t)
 
 	factory := authn.NewAuthNFactory(config)
 
@@ -246,67 +196,6 @@ func loadHandlers(t *testing.T) (*shared.Config, http.Handler, *testHandler) {
 	handler := factory.NewAuthenticated(next)
 
 	return config, handler, next
-}
-
-// authenticateUserWithCookie uses the session store to create a cookie for a user
-func authenticateUserWithCookie(
-	t *testing.T,
-	config *shared.Config,
-	user *models.User,
-	badUserIDType bool,
-) *http.Cookie {
-	rr2 := httptest.NewRecorder()
-	req2, err := http.NewRequest("GET", "/login", nil)
-
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	// set the user as authenticated
-	session, err := config.Store.Get(req2, config.CookieName)
-
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	session.Values["authenticated"] = true
-	session.Values["user_id"] = user.ID
-	session.Values["email"] = user.Email
-
-	if badUserIDType {
-		session.Values["user_id"] = "badtype"
-	}
-
-	if err := session.Save(req2, rr2); err != nil {
-		t.Fatal(err)
-	}
-
-	var cookie *http.Cookie
-
-	if cookies := rr2.Result().Cookies(); len(cookies) > 0 {
-		cookie = cookies[0]
-	} else {
-		t.Fatal(fmt.Errorf("no cookie in response"))
-	}
-
-	return cookie
-}
-
-// authenticateUserWithToken uses the JWT token generator to create a token for a user
-func authenticateUserWithToken(t *testing.T, config *shared.Config, userID uint) string {
-	issToken, err := token.GetTokenForUser(userID)
-
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	res, err := issToken.EncodeToken(config.TokenConf)
-
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	return res
 }
 
 func assertForbiddenError(t *testing.T, next *testHandler, rr *httptest.ResponseRecorder) {

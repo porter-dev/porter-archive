@@ -46,7 +46,7 @@ func (app *App) HandleCreateHelmRepo(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// handle write to the database
-	hr, err = app.Repo.HelmRepo.CreateHelmRepo(hr)
+	hr, err = app.Repo.HelmRepo().CreateHelmRepo(hr)
 
 	if err != nil {
 		app.handleErrorDataWrite(err, w)
@@ -74,7 +74,7 @@ func (app *App) HandleListProjectHelmRepos(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	hrs, err := app.Repo.HelmRepo.ListHelmReposByProjectID(uint(projID))
+	hrs, err := app.Repo.HelmRepo().ListHelmReposByProjectID(uint(projID))
 
 	if err != nil {
 		app.handleErrorRead(err, ErrProjectDataRead, w)
@@ -104,7 +104,7 @@ func (app *App) HandleListHelmRepoCharts(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	hr, err := app.Repo.HelmRepo.ReadHelmRepo(uint(helmID))
+	hr, err := app.Repo.HelmRepo().ReadHelmRepo(uint(helmID))
 
 	if err != nil {
 		app.handleErrorRead(err, ErrProjectDataRead, w)
@@ -115,7 +115,7 @@ func (app *App) HandleListHelmRepoCharts(w http.ResponseWriter, r *http.Request)
 	_hr := repo.HelmRepo(*hr)
 	hrAPI := &_hr
 
-	charts, err := hrAPI.ListCharts(*app.Repo)
+	charts, err := hrAPI.ListCharts(app.Repo)
 
 	if err != nil {
 		app.handleErrorRead(err, ErrProjectDataRead, w)

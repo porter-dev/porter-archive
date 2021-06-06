@@ -204,7 +204,7 @@ func (app *App) upsertUserFromToken(tok *oauth2.Token) (*models.User, error) {
 		return nil, err
 	}
 
-	user, err := app.Repo.User.ReadUserByGithubUserID(*githubUser.ID)
+	user, err := app.Repo.User().ReadUserByGithubUserID(*githubUser.ID)
 
 	// if the user does not exist, create new user
 	if err != nil && err == gorm.ErrRecordNotFound {
@@ -231,7 +231,7 @@ func (app *App) upsertUserFromToken(tok *oauth2.Token) (*models.User, error) {
 		}
 
 		// check if a user with that email address already exists
-		_, err = app.Repo.User.ReadUserByEmail(primary)
+		_, err = app.Repo.User().ReadUserByEmail(primary)
 
 		if err == gorm.ErrRecordNotFound {
 			user = &models.User{
@@ -240,7 +240,7 @@ func (app *App) upsertUserFromToken(tok *oauth2.Token) (*models.User, error) {
 				GithubUserID:  githubUser.GetID(),
 			}
 
-			user, err = app.Repo.User.CreateUser(user)
+			user, err = app.Repo.User().CreateUser(user)
 
 			if err != nil {
 				return nil, err
@@ -277,7 +277,7 @@ func (app *App) updateProjectFromToken(projectID uint, userID uint, tok *oauth2.
 	}
 
 	// create the oauth integration first
-	oauthInt, err = app.Repo.OAuthIntegration.CreateOAuthIntegration(oauthInt)
+	oauthInt, err = app.Repo.OAuthIntegration().CreateOAuthIntegration(oauthInt)
 
 	if err != nil {
 		return err
@@ -290,7 +290,7 @@ func (app *App) updateProjectFromToken(projectID uint, userID uint, tok *oauth2.
 		OAuthIntegrationID: oauthInt.ID,
 	}
 
-	gr, err = app.Repo.GitRepo.CreateGitRepo(gr)
+	gr, err = app.Repo.GitRepo().CreateGitRepo(gr)
 
 	return err
 }

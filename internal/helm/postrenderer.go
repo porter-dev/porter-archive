@@ -422,7 +422,7 @@ func (d *DockerSecretsPostRenderer) isRegistryNative(regName string) bool {
 
 	if strings.Contains(regName, "gcr") && d.Cluster.AuthMechanism == models.GCP {
 		// get the project id of the cluster
-		gcpInt, err := d.Repo.GCPIntegration.ReadGCPIntegration(d.Cluster.GCPIntegrationID)
+		gcpInt, err := d.Repo.GCPIntegration().ReadGCPIntegration(d.Cluster.GCPIntegrationID)
 
 		if err != nil {
 			return false
@@ -450,7 +450,7 @@ func (d *DockerSecretsPostRenderer) isRegistryNative(regName string) bool {
 		eksAccountID := matches[1]
 		eksRegion := matches[3]
 
-		awsInt, err := d.Repo.AWSIntegration.ReadAWSIntegration(d.Cluster.AWSIntegrationID)
+		awsInt, err := d.Repo.AWSIntegration().ReadAWSIntegration(d.Cluster.AWSIntegrationID)
 
 		if err != nil {
 			return false

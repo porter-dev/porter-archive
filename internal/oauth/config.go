@@ -89,7 +89,7 @@ func GetAccessToken(
 		o.AccessToken = []byte(token.AccessToken)
 		o.RefreshToken = []byte(token.RefreshToken)
 
-		o, err = repo.OAuthIntegration.UpdateOAuthIntegration(o)
+		o, err = repo.OAuthIntegration().UpdateOAuthIntegration(o)
 
 		if err != nil {
 			return "", nil, err

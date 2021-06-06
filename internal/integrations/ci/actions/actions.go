@@ -198,7 +198,7 @@ func (g *GithubActions) GetGithubActionYAML() ([]byte, error) {
 
 func (g *GithubActions) getClient() (*github.Client, error) {
 	// get the oauth integration
-	oauthInt, err := g.Repo.OAuthIntegration.ReadOAuthIntegration(g.GitIntegration.OAuthIntegrationID)
+	oauthInt, err := g.Repo.OAuthIntegration().ReadOAuthIntegration(g.GitIntegration.OAuthIntegrationID)
 
 	if err != nil {
 		return nil, err

@@ -70,7 +70,7 @@ func (app *App) HandleDeployTemplate(w http.ResponseWriter, r *http.Request) {
 
 	form.ReleaseForm.PopulateHelmOptionsFromQueryParams(
 		vals,
-		app.Repo.Cluster,
+		app.Repo.Cluster(),
 	)
 
 	if err := json.NewDecoder(r.Body).Decode(form); err != nil {
@@ -89,7 +89,7 @@ func (app *App) HandleDeployTemplate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	registries, err := app.Repo.Registry.ListRegistriesByProjectID(uint(projID))
+	registries, err := app.Repo.Registry().ListRegistriesByProjectID(uint(projID))
 
 	if err != nil {
 		app.handleErrorDataRead(err, w)
@@ -102,7 +102,7 @@ func (app *App) HandleDeployTemplate(w http.ResponseWriter, r *http.Request) {
 		Namespace:  form.ReleaseForm.Form.Namespace,
 		Values:     form.ChartTemplateForm.FormValues,
 		Cluster:    form.ReleaseForm.Cluster,
-		Repo:       *app.Repo,
+		Repo:       app.Repo,
 		Registries: registries,
 	}
 
@@ -142,7 +142,7 @@ func (app *App) HandleDeployTemplate(w http.ResponseWriter, r *http.Request) {
 		ImageRepoURI: repoStr,
 	}
 
-	_, err = app.Repo.Release.CreateRelease(release)
+	_, err = app.Repo.Release().CreateRelease(release)
 
 	if err != nil {
 		app.sendExternalError(err, http.StatusInternalServerError, HTTPError{
@@ -223,7 +223,7 @@ func (app *App) HandleUninstallTemplate(w http.ResponseWriter, r *http.Request) 
 			}, w)
 		}
 
-		release, err := app.Repo.Release.ReadRelease(uint(clusterID), name, resp.Release.Namespace)
+		release, err := app.Repo.Release().ReadRelease(uint(clusterID), name, resp.Release.Namespace)
 
 		if release != nil {
 			gitAction := release.GitActionConfig
@@ -242,7 +242,7 @@ func (app *App) HandleUninstallTemplate(w http.ResponseWriter, r *http.Request) 
 
 				yaml.Unmarshal(rawValues, cEnv)
 
-				gr, err := app.Repo.GitRepo.ReadGitRepo(gitAction.GitRepoID)
+				gr, err := app.Repo.GitRepo().ReadGitRepo(gitAction.GitRepoID)
 
 				if err != nil {
 					app.sendExternalError(err, http.StatusInternalServerError, HTTPError{
@@ -265,7 +265,7 @@ func (app *App) HandleUninstallTemplate(w http.ResponseWriter, r *http.Request) 
 					GitIntegration: gr,
 					GitRepoName:    repoSplit[1],
 					GitRepoOwner:   repoSplit[0],
-					Repo:           *app.Repo,
+					Repo:           app.Repo,
 					GithubConf:     app.GithubProjectConf,
 					WebhookToken:   release.WebhookToken,
 					ProjectID:      uint(projID),

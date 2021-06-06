@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/logger"
 )
 
@@ -88,10 +89,6 @@ func (e *ErrPassThroughToClient) GetStatusCode() int {
 	return e.statusCode
 }
 
-type externalError struct {
-	Error string `json:"error"`
-}
-
 func HandleAPIError(
 	w http.ResponseWriter,
 	logger *logger.Logger,
@@ -106,7 +103,9 @@ func HandleAPIError(
 		Msg("")
 
 	// send the external error
-	resp := &externalError{extErrorStr}
+	resp := &types.ExternalError{
+		Error: extErrorStr,
+	}
 
 	// write the status code
 	w.WriteHeader(err.GetStatusCode())

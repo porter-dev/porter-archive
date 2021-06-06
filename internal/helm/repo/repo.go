@@ -38,7 +38,7 @@ func (hr *HelmRepo) listChartsBasic(
 	repo repository.Repository,
 ) ([]*models.PorterChartList, error) {
 	// get the basic auth integration
-	basic, err := repo.BasicIntegration.ReadBasicIntegration(
+	basic, err := repo.BasicIntegration().ReadBasicIntegration(
 		hr.BasicAuthIntegrationID,
 	)
 
@@ -65,7 +65,7 @@ func (hr *HelmRepo) getChartBasic(
 	chartName, chartVersion string,
 ) (*chart.Chart, error) {
 	// get the basic auth integration
-	basic, err := repo.BasicIntegration.ReadBasicIntegration(
+	basic, err := repo.BasicIntegration().ReadBasicIntegration(
 		hr.BasicAuthIntegrationID,
 	)
 

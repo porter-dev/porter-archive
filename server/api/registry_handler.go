@@ -45,7 +45,7 @@ func (app *App) HandleCreateRegistry(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// convert the form to a registry
-	registry, err := form.ToRegistry(*app.Repo)
+	registry, err := form.ToRegistry(app.Repo)
 
 	if err != nil {
 		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
@@ -53,7 +53,7 @@ func (app *App) HandleCreateRegistry(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// handle write to the database
-	registry, err = app.Repo.Registry.CreateRegistry(registry)
+	registry, err = app.Repo.Registry().CreateRegistry(registry)
 
 	if err != nil {
 		app.handleErrorDataWrite(err, w)
@@ -81,7 +81,7 @@ func (app *App) HandleListProjectRegistries(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	regs, err := app.Repo.Registry.ListRegistriesByProjectID(uint(projID))
+	regs, err := app.Repo.Registry().ListRegistriesByProjectID(uint(projID))
 
 	if err != nil {
 		app.handleErrorRead(err, ErrProjectDataRead, w)
@@ -125,13 +125,13 @@ func (app *App) HandleGetProjectRegistryECRToken(w http.ResponseWriter, r *http.
 	}
 
 	// list registries and find one that matches the region
-	regs, err := app.Repo.Registry.ListRegistriesByProjectID(uint(projID))
+	regs, err := app.Repo.Registry().ListRegistriesByProjectID(uint(projID))
 	var token string
 	var expiresAt *time.Time
 
 	for _, reg := range regs {
 		if reg.AWSIntegrationID != 0 {
-			awsInt, err := app.Repo.AWSIntegration.ReadAWSIntegration(reg.AWSIntegrationID)
+			awsInt, err := app.Repo.AWSIntegration().ReadAWSIntegration(reg.AWSIntegrationID)
 
 			if err != nil {
 				app.handleErrorDataRead(err, w)
@@ -185,13 +185,13 @@ func (app *App) HandleGetProjectRegistryDockerhubToken(w http.ResponseWriter, r 
 	}
 
 	// list registries and find one that matches the region
-	regs, err := app.Repo.Registry.ListRegistriesByProjectID(uint(projID))
+	regs, err := app.Repo.Registry().ListRegistriesByProjectID(uint(projID))
 	var token string
 	var expiresAt *time.Time
 
 	for _, reg := range regs {
 		if reg.BasicIntegrationID != 0 && strings.Contains(reg.URL, "index.docker.io") {
-			basic, err := app.Repo.BasicIntegration.ReadBasicIntegration(reg.BasicIntegrationID)
+			basic, err := app.Repo.BasicIntegration().ReadBasicIntegration(reg.BasicIntegrationID)
 
 			if err != nil {
 				app.handleErrorDataRead(err, w)
@@ -241,7 +241,7 @@ func (app *App) HandleGetProjectRegistryGCRToken(w http.ResponseWriter, r *http.
 	}
 
 	// list registries and find one that matches the region
-	regs, err := app.Repo.Registry.ListRegistriesByProjectID(uint(projID))
+	regs, err := app.Repo.Registry().ListRegistriesByProjectID(uint(projID))
 	var token string
 	var expiresAt *time.Time
 
@@ -249,7 +249,7 @@ func (app *App) HandleGetProjectRegistryGCRToken(w http.ResponseWriter, r *http.
 		if reg.GCPIntegrationID != 0 && strings.Contains(reg.URL, reqBody.ServerURL) {
 			_reg := registry.Registry(*reg)
 
-			tokenCache, err := _reg.GetGCRToken(*app.Repo)
+			tokenCache, err := _reg.GetGCRToken(app.Repo)
 
 			if err != nil {
 				app.handleErrorDataRead(err, w)
@@ -293,20 +293,20 @@ func (app *App) HandleGetProjectRegistryDOCRToken(w http.ResponseWriter, r *http
 	}
 
 	// list registries and find one that matches the region
-	regs, err := app.Repo.Registry.ListRegistriesByProjectID(uint(projID))
+	regs, err := app.Repo.Registry().ListRegistriesByProjectID(uint(projID))
 	var token string
 	var expiresAt *time.Time
 
 	for _, reg := range regs {
 		if reg.DOIntegrationID != 0 && strings.Contains(reg.URL, reqBody.ServerURL) {
-			oauthInt, err := app.Repo.OAuthIntegration.ReadOAuthIntegration(reg.DOIntegrationID)
+			oauthInt, err := app.Repo.OAuthIntegration().ReadOAuthIntegration(reg.DOIntegrationID)
 
 			if err != nil {
 				app.handleErrorDataRead(err, w)
 				return
 			}
 
-			tok, expiry, err := oauth.GetAccessToken(oauthInt, app.DOConf, *app.Repo)
+			tok, expiry, err := oauth.GetAccessToken(oauthInt, app.DOConf, app.Repo)
 
 			if err != nil {
 				app.handleErrorDataRead(err, w)
@@ -365,7 +365,7 @@ func (app *App) HandleUpdateProjectRegistry(w http.ResponseWriter, r *http.Reque
 	}
 
 	// convert the form to a registry
-	registry, err := form.ToRegistry(app.Repo.Registry)
+	registry, err := form.ToRegistry(app.Repo.Registry())
 
 	if err != nil {
 		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
@@ -373,7 +373,7 @@ func (app *App) HandleUpdateProjectRegistry(w http.ResponseWriter, r *http.Reque
 	}
 
 	// handle write to the database
-	registry, err = app.Repo.Registry.UpdateRegistry(registry)
+	registry, err = app.Repo.Registry().UpdateRegistry(registry)
 
 	if err != nil {
 		app.handleErrorDataWrite(err, w)
@@ -399,14 +399,14 @@ func (app *App) HandleDeleteProjectRegistry(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	reg, err := app.Repo.Registry.ReadRegistry(uint(id))
+	reg, err := app.Repo.Registry().ReadRegistry(uint(id))
 
 	if err != nil {
 		app.handleErrorRead(err, ErrProjectDataRead, w)
 		return
 	}
 
-	err = app.Repo.Registry.DeleteRegistry(reg)
+	err = app.Repo.Registry().DeleteRegistry(reg)
 
 	if err != nil {
 		app.handleErrorRead(err, ErrProjectDataRead, w)
@@ -425,7 +425,7 @@ func (app *App) HandleListRepositories(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	reg, err := app.Repo.Registry.ReadRegistry(uint(regID))
+	reg, err := app.Repo.Registry().ReadRegistry(uint(regID))
 
 	if err != nil {
 		app.handleErrorRead(err, ErrProjectDataRead, w)
@@ -436,7 +436,7 @@ func (app *App) HandleListRepositories(w http.ResponseWriter, r *http.Request) {
 	_reg := registry.Registry(*reg)
 	regAPI := &_reg
 
-	repos, err := regAPI.ListRepositories(*app.Repo, app.DOConf)
+	repos, err := regAPI.ListRepositories(app.Repo, app.DOConf)
 
 	if err != nil {
 		app.handleErrorRead(err, ErrProjectDataRead, w)
@@ -462,7 +462,7 @@ func (app *App) HandleListImages(w http.ResponseWriter, r *http.Request) {
 
 	repoName := chi.URLParam(r, "*")
 
-	reg, err := app.Repo.Registry.ReadRegistry(uint(regID))
+	reg, err := app.Repo.Registry().ReadRegistry(uint(regID))
 
 	if err != nil {
 		app.handleErrorRead(err, ErrProjectDataRead, w)
@@ -473,7 +473,7 @@ func (app *App) HandleListImages(w http.ResponseWriter, r *http.Request) {
 	_reg := registry.Registry(*reg)
 	regAPI := &_reg
 
-	imgs, err := regAPI.ListImages(repoName, *app.Repo, app.DOConf)
+	imgs, err := regAPI.ListImages(repoName, app.Repo, app.DOConf)
 
 	if err != nil {
 		app.handleErrorRead(err, ErrProjectDataRead, w)

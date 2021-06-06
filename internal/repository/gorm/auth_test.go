@@ -27,13 +27,13 @@ func TestCreateKubeIntegration(t *testing.T) {
 
 	expKI := *ki
 
-	ki, err := tester.repo.KubeIntegration.CreateKubeIntegration(ki)
+	ki, err := tester.repo.KubeIntegration().CreateKubeIntegration(ki)
 
 	if err != nil {
 		t.Fatalf("%v\n", err)
 	}
 
-	ki, err = tester.repo.KubeIntegration.ReadKubeIntegration(ki.Model.ID)
+	ki, err = tester.repo.KubeIntegration().ReadKubeIntegration(ki.Model.ID)
 
 	if err != nil {
 		t.Fatalf("%v\n", err)
@@ -63,7 +63,7 @@ func TestListKubeIntegrationsByProjectID(t *testing.T) {
 	initKubeIntegration(tester, t)
 	defer cleanup(tester, t)
 
-	kis, err := tester.repo.KubeIntegration.ListKubeIntegrationsByProjectID(
+	kis, err := tester.repo.KubeIntegration().ListKubeIntegrationsByProjectID(
 		tester.initProjects[0].Model.ID,
 	)
 
@@ -113,13 +113,13 @@ func TestCreateBasicIntegration(t *testing.T) {
 
 	expBasic := *basic
 
-	basic, err := tester.repo.BasicIntegration.CreateBasicIntegration(basic)
+	basic, err := tester.repo.BasicIntegration().CreateBasicIntegration(basic)
 
 	if err != nil {
 		t.Fatalf("%v\n", err)
 	}
 
-	basic, err = tester.repo.BasicIntegration.ReadBasicIntegration(basic.Model.ID)
+	basic, err = tester.repo.BasicIntegration().ReadBasicIntegration(basic.Model.ID)
 
 	if err != nil {
 		t.Fatalf("%v\n", err)
@@ -149,7 +149,7 @@ func TestListBasicIntegrationsByProjectID(t *testing.T) {
 	initBasicIntegration(tester, t)
 	defer cleanup(tester, t)
 
-	basics, err := tester.repo.BasicIntegration.ListBasicIntegrationsByProjectID(
+	basics, err := tester.repo.BasicIntegration().ListBasicIntegrationsByProjectID(
 		tester.initProjects[0].Model.ID,
 	)
 
@@ -203,13 +203,13 @@ func TestCreateOIDCIntegration(t *testing.T) {
 
 	expOIDC := *oidc
 
-	oidc, err := tester.repo.OIDCIntegration.CreateOIDCIntegration(oidc)
+	oidc, err := tester.repo.OIDCIntegration().CreateOIDCIntegration(oidc)
 
 	if err != nil {
 		t.Fatalf("%v\n", err)
 	}
 
-	oidc, err = tester.repo.OIDCIntegration.ReadOIDCIntegration(oidc.Model.ID)
+	oidc, err = tester.repo.OIDCIntegration().ReadOIDCIntegration(oidc.Model.ID)
 
 	if err != nil {
 		t.Fatalf("%v\n", err)
@@ -239,7 +239,7 @@ func TestListOIDCIntegrationsByProjectID(t *testing.T) {
 	initOIDCIntegration(tester, t)
 	defer cleanup(tester, t)
 
-	oidcs, err := tester.repo.OIDCIntegration.ListOIDCIntegrationsByProjectID(
+	oidcs, err := tester.repo.OIDCIntegration().ListOIDCIntegrationsByProjectID(
 		tester.initProjects[0].Model.ID,
 	)
 
@@ -295,13 +295,13 @@ func TestCreateOAuthIntegration(t *testing.T) {
 
 	expOAuth := *oauth
 
-	oauth, err := tester.repo.OAuthIntegration.CreateOAuthIntegration(oauth)
+	oauth, err := tester.repo.OAuthIntegration().CreateOAuthIntegration(oauth)
 
 	if err != nil {
 		t.Fatalf("%v\n", err)
 	}
 
-	oauth, err = tester.repo.OAuthIntegration.ReadOAuthIntegration(oauth.Model.ID)
+	oauth, err = tester.repo.OAuthIntegration().ReadOAuthIntegration(oauth.Model.ID)
 
 	if err != nil {
 		t.Fatalf("%v\n", err)
@@ -331,7 +331,7 @@ func TestListOAuthIntegrationsByProjectID(t *testing.T) {
 	initOAuthIntegration(tester, t)
 	defer cleanup(tester, t)
 
-	oauths, err := tester.repo.OAuthIntegration.ListOAuthIntegrationsByProjectID(
+	oauths, err := tester.repo.OAuthIntegration().ListOAuthIntegrationsByProjectID(
 		tester.initProjects[0].Model.ID,
 	)
 
@@ -384,13 +384,13 @@ func TestCreateGCPIntegration(t *testing.T) {
 
 	expGCP := *gcp
 
-	gcp, err := tester.repo.GCPIntegration.CreateGCPIntegration(gcp)
+	gcp, err := tester.repo.GCPIntegration().CreateGCPIntegration(gcp)
 
 	if err != nil {
 		t.Fatalf("%v\n", err)
 	}
 
-	gcp, err = tester.repo.GCPIntegration.ReadGCPIntegration(gcp.Model.ID)
+	gcp, err = tester.repo.GCPIntegration().ReadGCPIntegration(gcp.Model.ID)
 
 	if err != nil {
 		t.Fatalf("%v\n", err)
@@ -420,7 +420,7 @@ func TestListGCPIntegrationsByProjectID(t *testing.T) {
 	initGCPIntegration(tester, t)
 	defer cleanup(tester, t)
 
-	gcps, err := tester.repo.GCPIntegration.ListGCPIntegrationsByProjectID(
+	gcps, err := tester.repo.GCPIntegration().ListGCPIntegrationsByProjectID(
 		tester.initProjects[0].Model.ID,
 	)
 
@@ -473,13 +473,13 @@ func TestCreateAWSIntegration(t *testing.T) {
 
 	expAWS := *aws
 
-	aws, err := tester.repo.AWSIntegration.CreateAWSIntegration(aws)
+	aws, err := tester.repo.AWSIntegration().CreateAWSIntegration(aws)
 
 	if err != nil {
 		t.Fatalf("%v\n", err)
 	}
 
-	aws, err = tester.repo.AWSIntegration.ReadAWSIntegration(aws.Model.ID)
+	aws, err = tester.repo.AWSIntegration().ReadAWSIntegration(aws.Model.ID)
 
 	if err != nil {
 		t.Fatalf("%v\n", err)
@@ -509,7 +509,7 @@ func TestListAWSIntegrationsByProjectID(t *testing.T) {
 	initAWSIntegration(tester, t)
 	defer cleanup(tester, t)
 
-	awss, err := tester.repo.AWSIntegration.ListAWSIntegrationsByProjectID(
+	awss, err := tester.repo.AWSIntegration().ListAWSIntegrationsByProjectID(
 		tester.initProjects[0].Model.ID,
 	)
 

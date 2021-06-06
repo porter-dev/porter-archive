@@ -21,13 +21,13 @@ func TestReadUserByGithubUserID(t *testing.T) {
 		GithubUserID: 5,
 	}
 
-	user, err := tester.repo.User.CreateUser(user)
+	user, err := tester.repo.User().CreateUser(user)
 
 	if err != nil {
 		t.Fatalf("%v\n", err)
 	}
 
-	readUser, err := tester.repo.User.ReadUserByGithubUserID(5)
+	readUser, err := tester.repo.User().ReadUserByGithubUserID(5)
 
 	if err != nil {
 		t.Fatalf("%v\n", err)
@@ -53,13 +53,13 @@ func TestReadUserByGoogleUserID(t *testing.T) {
 		GoogleUserID: "alsdkfjsldaf",
 	}
 
-	user, err := tester.repo.User.CreateUser(user)
+	user, err := tester.repo.User().CreateUser(user)
 
 	if err != nil {
 		t.Fatalf("%v\n", err)
 	}
 
-	readUser, err := tester.repo.User.ReadUserByGoogleUserID("alsdkfjsldaf")
+	readUser, err := tester.repo.User().ReadUserByGoogleUserID("alsdkfjsldaf")
 
 	if err != nil {
 		t.Fatalf("%v\n", err)

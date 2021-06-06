@@ -406,13 +406,13 @@ func TestClusters(t *testing.T) {
 		var cc *models.ClusterCandidate
 
 		for _, _cc := range ccs {
-			cc, err = tester.repo.Cluster.CreateClusterCandidate(_cc)
+			cc, err = tester.repo.Cluster().CreateClusterCandidate(_cc)
 
 			if err != nil {
 				t.Fatalf("%v\n", err)
 			}
 
-			cc, err = tester.repo.Cluster.ReadClusterCandidate(cc.ID)
+			cc, err = tester.repo.Cluster().ReadClusterCandidate(cc.ID)
 
 			if err != nil {
 				t.Fatalf("%v\n", err)
@@ -427,7 +427,7 @@ func TestClusters(t *testing.T) {
 		}
 
 		// resolve integration (should be kube with local)
-		err = form.ResolveIntegration(*tester.repo)
+		err = form.ResolveIntegration(tester.repo)
 
 		if err != nil {
 			t.Fatalf("%v\n", err)
@@ -436,7 +436,7 @@ func TestClusters(t *testing.T) {
 		switch c.expIntegration.(type) {
 		case *ints.KubeIntegration:
 			// make sure integration is equal, read integration from DB
-			gotIntegration, err := tester.repo.KubeIntegration.ReadKubeIntegration(form.IntegrationID)
+			gotIntegration, err := tester.repo.KubeIntegration().ReadKubeIntegration(form.IntegrationID)
 
 			if err != nil {
 				t.Fatalf("%v\n", err)
@@ -462,7 +462,7 @@ func TestClusters(t *testing.T) {
 			}
 		case *ints.OIDCIntegration:
 			// make sure integration is equal, read integration from DB
-			gotIntegration, err := tester.repo.OIDCIntegration.ReadOIDCIntegration(form.IntegrationID)
+			gotIntegration, err := tester.repo.OIDCIntegration().ReadOIDCIntegration(form.IntegrationID)
 
 			if err != nil {
 				t.Fatalf("%v\n", err)
@@ -479,7 +479,7 @@ func TestClusters(t *testing.T) {
 			}
 		case *ints.GCPIntegration:
 			// make sure integration is equal, read integration from DB
-			gotIntegration, err := tester.repo.GCPIntegration.ReadGCPIntegration(form.IntegrationID)
+			gotIntegration, err := tester.repo.GCPIntegration().ReadGCPIntegration(form.IntegrationID)
 
 			if err != nil {
 				t.Fatalf("%v\n", err)
@@ -496,7 +496,7 @@ func TestClusters(t *testing.T) {
 			}
 		case *ints.AWSIntegration:
 			// make sure integration is equal, read integration from DB
-			gotIntegration, err := tester.repo.AWSIntegration.ReadAWSIntegration(form.IntegrationID)
+			gotIntegration, err := tester.repo.AWSIntegration().ReadAWSIntegration(form.IntegrationID)
 
 			if err != nil {
 				t.Fatalf("%v\n", err)
@@ -514,7 +514,7 @@ func TestClusters(t *testing.T) {
 		}
 
 		// resolve cluster
-		gotCluster, err := form.ResolveCluster(*tester.repo)
+		gotCluster, err := form.ResolveCluster(tester.repo)
 
 		if err != nil {
 			t.Fatalf("%v\n", err)
@@ -556,7 +556,7 @@ func compareKubeconfig(t *testing.T, resKube []byte, expKube []byte) {
 // 	repo := test.NewRepository(true)
 
 // 	// create a new project
-// 	repo.Project.CreateProject(&models.Project{
+// 	repo.Project().CreateProject(&models.Project{
 // 		Name: "test-project",
 // 	})
 
@@ -621,7 +621,7 @@ func compareKubeconfig(t *testing.T, resKube []byte, expKube []byte) {
 // 	repo := test.NewRepository(true)
 
 // 	// create a new project
-// 	repo.Project.CreateProject(&models.Project{
+// 	repo.Project().CreateProject(&models.Project{
 // 		Name: "test-project",
 // 	})
 
@@ -686,7 +686,7 @@ func compareKubeconfig(t *testing.T, resKube []byte, expKube []byte) {
 // 	repo := test.NewRepository(true)
 
 // 	// create a new project
-// 	repo.Project.CreateProject(&models.Project{
+// 	repo.Project().CreateProject(&models.Project{
 // 		Name: "test-project",
 // 	})
 
@@ -751,7 +751,7 @@ func compareKubeconfig(t *testing.T, resKube []byte, expKube []byte) {
 // 	repo := test.NewRepository(true)
 
 // 	// create a new project
-// 	repo.Project.CreateProject(&models.Project{
+// 	repo.Project().CreateProject(&models.Project{
 // 		Name: "test-project",
 // 	})
 
@@ -828,7 +828,7 @@ func compareKubeconfig(t *testing.T, resKube []byte, expKube []byte) {
 // 	tokenData := "abcdefghijklmnop"
 
 // 	// create a new project
-// 	repo.Project.CreateProject(&models.Project{
+// 	repo.Project().CreateProject(&models.Project{
 // 		Name: "test-project",
 // 	})
 
@@ -883,7 +883,7 @@ func compareKubeconfig(t *testing.T, resKube []byte, expKube []byte) {
 // 	gcpKeyData := []byte(`{"key": "data"}`)
 
 // 	// create a new project
-// 	repo.Project.CreateProject(&models.Project{
+// 	repo.Project().CreateProject(&models.Project{
 // 		Name: "test-project",
 // 	})
 
@@ -937,7 +937,7 @@ func compareKubeconfig(t *testing.T, resKube []byte, expKube []byte) {
 // 	repo := test.NewRepository(true)
 
 // 	// create a new project
-// 	repo.Project.CreateProject(&models.Project{
+// 	repo.Project().CreateProject(&models.Project{
 // 		Name: "test-project",
 // 	})
 
@@ -1003,7 +1003,7 @@ func compareKubeconfig(t *testing.T, resKube []byte, expKube []byte) {
 // 	repo := test.NewRepository(true)
 
 // 	// create a new project
-// 	repo.Project.CreateProject(&models.Project{
+// 	repo.Project().CreateProject(&models.Project{
 // 		Name: "test-project",
 // 	})
 

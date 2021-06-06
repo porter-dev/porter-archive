@@ -84,7 +84,7 @@ func (app *App) HandleDOOAuthCallback(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// create the oauth integration first
-	oauthInt, err = app.Repo.OAuthIntegration.CreateOAuthIntegration(oauthInt)
+	oauthInt, err = app.Repo.OAuthIntegration().CreateOAuthIntegration(oauthInt)
 
 	if err != nil {
 		app.handleErrorDataWrite(err, w)

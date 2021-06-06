@@ -729,7 +729,7 @@ func (a *Agent) ProvisionDOCR(
 	provImageTag string,
 ) (*batchv1.Job, error) {
 	// get the token
-	oauthInt, err := repo.OAuthIntegration.ReadOAuthIntegration(
+	oauthInt, err := repo.OAuthIntegration().ReadOAuthIntegration(
 		infra.DOIntegrationID,
 	)
 
@@ -779,7 +779,7 @@ func (a *Agent) ProvisionDOKS(
 	provImageTag string,
 ) (*batchv1.Job, error) {
 	// get the token
-	oauthInt, err := repo.OAuthIntegration.ReadOAuthIntegration(
+	oauthInt, err := repo.OAuthIntegration().ReadOAuthIntegration(
 		infra.DOIntegrationID,
 	)
 
@@ -864,7 +864,7 @@ func (a *Agent) provision(
 	}
 
 	infra.LastApplied = prov.LastApplied
-	infra, err = repo.Infra.UpdateInfra(infra)
+	infra, err = repo.Infra().UpdateInfra(infra)
 
 	if err != nil {
 		return nil, err

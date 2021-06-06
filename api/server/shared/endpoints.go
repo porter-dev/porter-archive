@@ -1,9 +1,6 @@
 package shared
 
 import (
-	"encoding/json"
-	"net/http"
-
 	"github.com/porter-dev/porter/api/server/requestutils"
 	"github.com/porter-dev/porter/api/types"
 )
@@ -44,16 +41,4 @@ func (factory *APIObjectEndpointFactory) NewAPIEndpoint(
 		DecoderValidator: factory.decoderValidator,
 		Writer:           factory.resultWriter,
 	}
-}
-
-type JSONResponseWriter struct {
-	config *Config
-}
-
-func NewJSONResponseWriter(config *Config) *JSONResponseWriter {
-	return &JSONResponseWriter{config}
-}
-
-func (j *JSONResponseWriter) Write(w http.ResponseWriter, v interface{}) {
-	json.NewEncoder(w).Encode(v)
 }

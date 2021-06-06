@@ -25,13 +25,13 @@ func TestCreateRelease(t *testing.T) {
 		WebhookToken: "abcdefgh",
 	}
 
-	release, err := tester.repo.Release.CreateRelease(release)
+	release, err := tester.repo.Release().CreateRelease(release)
 
 	if err != nil {
 		t.Fatalf("%v\n", err)
 	}
 
-	release, err = tester.repo.Release.ReadRelease(1, release.Name, release.Namespace)
+	release, err = tester.repo.Release().ReadRelease(1, release.Name, release.Namespace)
 
 	if err != nil {
 		t.Fatalf("%v\n", err)
@@ -50,7 +50,7 @@ func TestCreateRelease(t *testing.T) {
 		t.Errorf("incorrect webhook token: expected %s, got %s\n", "abcdefgh", release.WebhookToken)
 	}
 
-	release, err = tester.repo.Release.ReadReleaseByWebhookToken(release.WebhookToken)
+	release, err = tester.repo.Release().ReadReleaseByWebhookToken(release.WebhookToken)
 
 	if release.Name != "denver-meister-dakota" {
 		t.Errorf("incorrect project name: expected %s, got %s\n", "denver-meister-dakota", release.Name)
@@ -85,7 +85,7 @@ func TestListReleasesByImageRepoURI(t *testing.T) {
 			ImageRepoURI: uri,
 		}
 
-		release, err := tester.repo.Release.CreateRelease(release)
+		release, err := tester.repo.Release().CreateRelease(release)
 
 		if err != nil {
 			t.Fatalf("%v\n", err)
@@ -96,7 +96,7 @@ func TestListReleasesByImageRepoURI(t *testing.T) {
 		}
 	}
 
-	resReleases, err := tester.repo.Release.ListReleasesByImageRepoURI(1, "uri1")
+	resReleases, err := tester.repo.Release().ListReleasesByImageRepoURI(1, "uri1")
 
 	if err != nil {
 		t.Fatalf("%v\n", err)
@@ -129,25 +129,25 @@ func TestDeleteRelease(t *testing.T) {
 		WebhookToken: "abcdefgh",
 	}
 
-	release, err := tester.repo.Release.CreateRelease(release)
+	release, err := tester.repo.Release().CreateRelease(release)
 
 	if err != nil {
 		t.Fatalf("%v\n", err)
 	}
 
-	release, err = tester.repo.Release.ReadRelease(1, release.Name, release.Namespace)
+	release, err = tester.repo.Release().ReadRelease(1, release.Name, release.Namespace)
 
 	if err != nil {
 		t.Fatalf("%v\n", err)
 	}
 
-	_, err = tester.repo.Release.DeleteRelease(release)
+	_, err = tester.repo.Release().DeleteRelease(release)
 
 	if err != nil {
 		t.Fatalf("%v\n", err)
 	}
 
-	_, err = tester.repo.Release.ReadRelease(1, release.Name, release.Namespace)
+	_, err = tester.repo.Release().ReadRelease(1, release.Name, release.Namespace)
 
 	if err != orm.ErrRecordNotFound {
 		t.Fatalf("incorrect error: expected %v, got %v\n", orm.ErrRecordNotFound, err)

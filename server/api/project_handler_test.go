@@ -142,19 +142,19 @@ func TestHandleDeleteProject(t *testing.T) {
 // ------------------------- INITIALIZERS AND VALIDATORS ------------------------- //
 
 func initProject(tester *tester) {
-	user, err := tester.repo.User.ReadUserByEmail("belanger@getporter.dev")
+	user, err := tester.repo.User().ReadUserByEmail("belanger@getporter.dev")
 
 	if err != nil {
 		panic(err)
 	}
 
 	// handle write to the database
-	projModel, _ := tester.repo.Project.CreateProject(&models.Project{
+	projModel, _ := tester.repo.Project().CreateProject(&models.Project{
 		Name: "project-test",
 	})
 
 	// create a new Role with the user as the owner
-	tester.repo.Project.CreateProjectRole(projModel, &models.Role{
+	tester.repo.Project().CreateProjectRole(projModel, &models.Role{
 		Role: types.Role{
 			UserID:    user.ID,
 			ProjectID: projModel.ID,

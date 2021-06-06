@@ -48,7 +48,7 @@ func (app *App) HandleCreateInvite(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// handle write to the database
-	invite, err = app.Repo.Invite.CreateInvite(invite)
+	invite, err = app.Repo.Invite().CreateInvite(invite)
 
 	if err != nil {
 		app.handleErrorDataWrite(err, w)
@@ -67,7 +67,7 @@ func (app *App) HandleCreateInvite(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// send invite email
-	project, err := app.Repo.Project.ReadProject(uint(projID))
+	project, err := app.Repo.Project().ReadProject(uint(projID))
 
 	if err != nil {
 		return
@@ -79,7 +79,7 @@ func (app *App) HandleCreateInvite(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, err := app.Repo.User.ReadUser(userID)
+	user, err := app.Repo.User().ReadUser(userID)
 
 	if err != nil {
 		return
@@ -111,7 +111,7 @@ func (app *App) HandleAcceptInvite(w http.ResponseWriter, r *http.Request) {
 
 	userID, _ := session.Values["user_id"].(uint)
 
-	user, err := app.Repo.User.ReadUser(userID)
+	user, err := app.Repo.User().ReadUser(userID)
 
 	if err != nil {
 		acceptInviteError(w, r)
@@ -132,7 +132,7 @@ func (app *App) HandleAcceptInvite(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	invite, err := app.Repo.Invite.ReadInviteByToken(token)
+	invite, err := app.Repo.Invite().ReadInviteByToken(token)
 
 	if err != nil || invite.ProjectID != uint(projID) {
 		vals := url.Values{}
@@ -161,7 +161,7 @@ func (app *App) HandleAcceptInvite(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// create a new role for the user in the project
-	projModel, err := app.Repo.Project.ReadProject(uint(projID))
+	projModel, err := app.Repo.Project().ReadProject(uint(projID))
 
 	if err != nil {
 		acceptInviteError(w, r)
@@ -169,7 +169,7 @@ func (app *App) HandleAcceptInvite(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// create a new Role with the user as the admin
-	_, err = app.Repo.Project.CreateProjectRole(projModel, &models.Role{
+	_, err = app.Repo.Project().CreateProjectRole(projModel, &models.Role{
 		Role: types.Role{
 			UserID:    userID,
 			ProjectID: uint(projID),
@@ -185,7 +185,7 @@ func (app *App) HandleAcceptInvite(w http.ResponseWriter, r *http.Request) {
 	// update the invite
 	invite.UserID = userID
 
-	_, err = app.Repo.Invite.UpdateInvite(invite)
+	_, err = app.Repo.Invite().UpdateInvite(invite)
 
 	if err != nil {
 		acceptInviteError(w, r)
@@ -212,7 +212,7 @@ func (app *App) HandleListProjectInvites(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	invites, err := app.Repo.Invite.ListInvitesByProjectID(uint(projID))
+	invites, err := app.Repo.Invite().ListInvitesByProjectID(uint(projID))
 
 	if err != nil {
 		app.handleErrorRead(err, ErrProjectDataRead, w)
@@ -242,14 +242,14 @@ func (app *App) HandleDeleteProjectInvite(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	invite, err := app.Repo.Invite.ReadInvite(uint(id))
+	invite, err := app.Repo.Invite().ReadInvite(uint(id))
 
 	if err != nil {
 		app.handleErrorRead(err, ErrProjectDataRead, w)
 		return
 	}
 
-	err = app.Repo.Invite.DeleteInvite(invite)
+	err = app.Repo.Invite().DeleteInvite(invite)
 
 	if err != nil {
 		app.handleErrorRead(err, ErrProjectDataRead, w)

@@ -85,7 +85,7 @@ var createInviteTests = []*inviteTest{
 		validators: []func(c *inviteTest, tester *tester, t *testing.T){
 			func(c *inviteTest, tester *tester, t *testing.T) {
 				// manually read the invite to get the expected token
-				invite, _ := tester.repo.Invite.ReadInvite(1)
+				invite, _ := tester.repo.Invite().ReadInvite(1)
 
 				gotBody := &models.InviteExternal{}
 				expBody := &models.InviteExternal{
@@ -125,7 +125,7 @@ var listInvitesTest = []*inviteTest{
 		validators: []func(c *inviteTest, tester *tester, t *testing.T){
 			func(c *inviteTest, tester *tester, t *testing.T) {
 				// manually read the invite to get the expected token
-				invite, _ := tester.repo.Invite.ReadInvite(1)
+				invite, _ := tester.repo.Invite().ReadInvite(1)
 
 				gotBody := []*models.InviteExternal{}
 				expBody := []*models.InviteExternal{}
@@ -165,13 +165,13 @@ var acceptInviteTests = []*inviteTest{
 		useCookie: true,
 		validators: []func(c *inviteTest, tester *tester, t *testing.T){
 			func(c *inviteTest, tester *tester, t *testing.T) {
-				user, err := tester.repo.User.ReadUserByEmail("test@test.it")
+				user, err := tester.repo.User().ReadUserByEmail("test@test.it")
 
 				if err != nil {
 					t.Fatalf("%v\n", err)
 				}
 
-				projects, err := tester.repo.Project.ListProjectsByUserID(user.ID)
+				projects, err := tester.repo.Project().ListProjectsByUserID(user.ID)
 
 				if len(projects) != 1 {
 					t.Fatalf("length of projects not 1\n")
@@ -267,7 +267,7 @@ func TestHandleAcceptInvite(t *testing.T) {
 // ------------------------- INITIALIZERS AND VALIDATORS ------------------------- //
 
 func initInvite(tester *tester) {
-	proj, _ := tester.repo.Project.ReadProject(1)
+	proj, _ := tester.repo.Project().ReadProject(1)
 
 	expiry := time.Now().Add(24 * time.Hour)
 
@@ -278,11 +278,11 @@ func initInvite(tester *tester) {
 		ProjectID: proj.Model.ID,
 	}
 
-	tester.repo.Invite.CreateInvite(invite)
+	tester.repo.Invite().CreateInvite(invite)
 }
 
 func initInviteExpiredToken(tester *tester) {
-	proj, _ := tester.repo.Project.ReadProject(1)
+	proj, _ := tester.repo.Project().ReadProject(1)
 
 	expiry := time.Now().Add(-1 * time.Hour)
 
@@ -293,5 +293,5 @@ func initInviteExpiredToken(tester *tester) {
 		ProjectID: proj.Model.ID,
 	}
 
-	tester.repo.Invite.CreateInvite(invite)
+	tester.repo.Invite().CreateInvite(invite)
 }

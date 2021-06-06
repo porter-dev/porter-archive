@@ -139,7 +139,7 @@ func (app *App) HandleGetRelease(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	k8sForm.PopulateK8sOptionsFromQueryParams(vals, app.Repo.Cluster)
+	k8sForm.PopulateK8sOptionsFromQueryParams(vals, app.Repo.Cluster())
 	k8sForm.DefaultNamespace = form.ReleaseForm.Namespace
 
 	// validate the form
@@ -214,7 +214,7 @@ func (app *App) HandleGetRelease(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// if the release was created from this server,
-	modelRelease, err := app.Repo.Release.ReadRelease(form.Cluster.ID, release.Name, release.Namespace)
+	modelRelease, err := app.Repo.Release().ReadRelease(form.Cluster.ID, release.Name, release.Namespace)
 
 	if modelRelease != nil {
 		gitAction := modelRelease.GitActionConfig
@@ -341,7 +341,7 @@ func (app *App) HandleGetReleaseControllers(w http.ResponseWriter, r *http.Reque
 		},
 	}
 
-	k8sForm.PopulateK8sOptionsFromQueryParams(vals, app.Repo.Cluster)
+	k8sForm.PopulateK8sOptionsFromQueryParams(vals, app.Repo.Cluster())
 	k8sForm.DefaultNamespace = form.ReleaseForm.Namespace
 
 	// validate the form
@@ -481,7 +481,7 @@ func (app *App) HandleGetReleaseAllPods(w http.ResponseWriter, r *http.Request) 
 		},
 	}
 
-	k8sForm.PopulateK8sOptionsFromQueryParams(vals, app.Repo.Cluster)
+	k8sForm.PopulateK8sOptionsFromQueryParams(vals, app.Repo.Cluster())
 	k8sForm.DefaultNamespace = form.ReleaseForm.Namespace
 
 	// validate the form
@@ -637,7 +637,7 @@ func (app *App) HandleGetReleaseToken(w http.ResponseWriter, r *http.Request) {
 		}, w)
 	}
 
-	release, err := app.Repo.Release.ReadRelease(uint(clusterID), name, namespace)
+	release, err := app.Repo.Release().ReadRelease(uint(clusterID), name, namespace)
 
 	if err != nil {
 		app.sendExternalError(err, http.StatusInternalServerError, HTTPError{
@@ -692,7 +692,7 @@ func (app *App) HandleUpgradeRelease(w http.ResponseWriter, r *http.Request) {
 
 	form.ReleaseForm.PopulateHelmOptionsFromQueryParams(
 		vals,
-		app.Repo.Cluster,
+		app.Repo.Cluster(),
 	)
 
 	if err := json.NewDecoder(r.Body).Decode(form); err != nil {
@@ -711,7 +711,7 @@ func (app *App) HandleUpgradeRelease(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	registries, err := app.Repo.Registry.ListRegistriesByProjectID(uint(projID))
+	registries, err := app.Repo.Registry().ListRegistriesByProjectID(uint(projID))
 
 	if err != nil {
 		app.handleErrorDataRead(err, w)
@@ -721,7 +721,7 @@ func (app *App) HandleUpgradeRelease(w http.ResponseWriter, r *http.Request) {
 	conf := &helm.UpgradeReleaseConfig{
 		Name:       form.Name,
 		Cluster:    form.ReleaseForm.Cluster,
-		Repo:       *app.Repo,
+		Repo:       app.Repo,
 		Registries: registries,
 	}
 
@@ -780,7 +780,7 @@ func (app *App) HandleUpgradeRelease(w http.ResponseWriter, r *http.Request) {
 			}, w)
 		}
 
-		release, err := app.Repo.Release.ReadRelease(uint(clusterID), name, rel.Namespace)
+		release, err := app.Repo.Release().ReadRelease(uint(clusterID), name, rel.Namespace)
 
 		if release != nil {
 			// update image repo uri if changed
@@ -793,7 +793,7 @@ func (app *App) HandleUpgradeRelease(w http.ResponseWriter, r *http.Request) {
 			}
 
 			if repoStr != release.ImageRepoURI {
-				release, err = app.Repo.Release.UpdateRelease(release)
+				release, err = app.Repo.Release().UpdateRelease(release)
 
 				if err != nil {
 					app.handleErrorInternal(err, w)
@@ -809,7 +809,7 @@ func (app *App) HandleUpgradeRelease(w http.ResponseWriter, r *http.Request) {
 
 				yaml.Unmarshal([]byte(form.Values), cEnv)
 
-				gr, err := app.Repo.GitRepo.ReadGitRepo(gitAction.GitRepoID)
+				gr, err := app.Repo.GitRepo().ReadGitRepo(gitAction.GitRepoID)
 
 				if err != nil {
 					app.sendExternalError(err, http.StatusInternalServerError, HTTPError{
@@ -825,7 +825,7 @@ func (app *App) HandleUpgradeRelease(w http.ResponseWriter, r *http.Request) {
 					GitIntegration: gr,
 					GitRepoName:    repoSplit[1],
 					GitRepoOwner:   repoSplit[0],
-					Repo:           *app.Repo,
+					Repo:           app.Repo,
 					GithubConf:     app.GithubProjectConf,
 					WebhookToken:   release.WebhookToken,
 					ProjectID:      uint(projID),
@@ -857,7 +857,7 @@ func (app *App) HandleReleaseDeployWebhook(w http.ResponseWriter, r *http.Reques
 	token := chi.URLParam(r, "token")
 
 	// retrieve release by token
-	release, err := app.Repo.Release.ReadReleaseByWebhookToken(token)
+	release, err := app.Repo.Release().ReadReleaseByWebhookToken(token)
 
 	if err != nil {
 		app.sendExternalError(err, http.StatusInternalServerError, HTTPError{
@@ -892,7 +892,7 @@ func (app *App) HandleReleaseDeployWebhook(w http.ResponseWriter, r *http.Reques
 
 	form.ReleaseForm.PopulateHelmOptionsFromQueryParams(
 		params,
-		app.Repo.Cluster,
+		app.Repo.Cluster(),
 	)
 
 	agent, err := app.getAgentFromReleaseForm(
@@ -934,7 +934,7 @@ func (app *App) HandleReleaseDeployWebhook(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	registries, err := app.Repo.Registry.ListRegistriesByProjectID(uint(form.ReleaseForm.Cluster.ProjectID))
+	registries, err := app.Repo.Registry().ListRegistriesByProjectID(uint(form.ReleaseForm.Cluster.ProjectID))
 
 	if err != nil {
 		app.handleErrorDataRead(err, w)
@@ -944,7 +944,7 @@ func (app *App) HandleReleaseDeployWebhook(w http.ResponseWriter, r *http.Reques
 	conf := &helm.UpgradeReleaseConfig{
 		Name:       form.Name,
 		Cluster:    form.ReleaseForm.Cluster,
-		Repo:       *app.Repo,
+		Repo:       app.Repo,
 		Registries: registries,
 		Values:     rel.Config,
 	}
@@ -996,7 +996,7 @@ func (app *App) HandleRollbackRelease(w http.ResponseWriter, r *http.Request) {
 
 	form.ReleaseForm.PopulateHelmOptionsFromQueryParams(
 		vals,
-		app.Repo.Cluster,
+		app.Repo.Cluster(),
 	)
 
 	if err := json.NewDecoder(r.Body).Decode(form); err != nil {
@@ -1049,7 +1049,7 @@ func (app *App) HandleRollbackRelease(w http.ResponseWriter, r *http.Request) {
 			}, w)
 		}
 
-		release, err := app.Repo.Release.ReadRelease(uint(clusterID), name, rel.Namespace)
+		release, err := app.Repo.Release().ReadRelease(uint(clusterID), name, rel.Namespace)
 
 		if release != nil {
 			// update image repo uri if changed
@@ -1062,7 +1062,7 @@ func (app *App) HandleRollbackRelease(w http.ResponseWriter, r *http.Request) {
 			}
 
 			if repoStr != release.ImageRepoURI {
-				release, err = app.Repo.Release.UpdateRelease(release)
+				release, err = app.Repo.Release().UpdateRelease(release)
 
 				if err != nil {
 					app.handleErrorInternal(err, w)
@@ -1086,7 +1086,7 @@ func (app *App) HandleRollbackRelease(w http.ResponseWriter, r *http.Request) {
 
 				yaml.Unmarshal(rawValues, cEnv)
 
-				gr, err := app.Repo.GitRepo.ReadGitRepo(gitAction.GitRepoID)
+				gr, err := app.Repo.GitRepo().ReadGitRepo(gitAction.GitRepoID)
 
 				if err != nil {
 					app.sendExternalError(err, http.StatusInternalServerError, HTTPError{
@@ -1109,7 +1109,7 @@ func (app *App) HandleRollbackRelease(w http.ResponseWriter, r *http.Request) {
 					GitIntegration: gr,
 					GitRepoName:    repoSplit[1],
 					GitRepoOwner:   repoSplit[0],
-					Repo:           *app.Repo,
+					Repo:           app.Repo,
 					GithubConf:     app.GithubProjectConf,
 					WebhookToken:   release.WebhookToken,
 					ProjectID:      uint(projID),
@@ -1156,7 +1156,7 @@ func (app *App) getAgentFromQueryParams(
 	}
 
 	for _, f := range populate {
-		err := f(vals, app.Repo.Cluster)
+		err := f(vals, app.Repo.Cluster())
 
 		if err != nil {
 			app.handleErrorInternal(err, w)

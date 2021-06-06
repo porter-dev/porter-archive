@@ -22,7 +22,7 @@ type Auth struct {
 	store      sessions.Store
 	cookieName string
 	tokenConf  *token.TokenGeneratorConf
-	repo       *repository.Repository
+	repo       repository.Repository
 }
 
 // NewAuth returns a new Auth instance
@@ -30,7 +30,7 @@ func NewAuth(
 	store sessions.Store,
 	cookieName string,
 	tokenConf *token.TokenGeneratorConf,
-	repo *repository.Repository,
+	repo repository.Repository,
 ) *Auth {
 	return &Auth{store, cookieName, tokenConf, repo}
 }
@@ -211,7 +211,7 @@ func (auth *Auth) DoesUserHaveProjectAccess(
 		}
 
 		// get the project
-		proj, err := auth.repo.Project.ReadProject(uint(projID))
+		proj, err := auth.repo.Project().ReadProject(uint(projID))
 
 		if err != nil {
 			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
@@ -263,7 +263,7 @@ func (auth *Auth) DoesUserHaveClusterAccess(
 		}
 
 		// get the service accounts belonging to the project
-		clusters, err := auth.repo.Cluster.ListClustersByProjectID(uint(projID))
+		clusters, err := auth.repo.Cluster().ListClustersByProjectID(uint(projID))
 
 		if err != nil {
 			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
@@ -313,7 +313,7 @@ func (auth *Auth) DoesUserHaveInviteAccess(
 		}
 
 		// get the service accounts belonging to the project
-		invites, err := auth.repo.Invite.ListInvitesByProjectID(uint(projID))
+		invites, err := auth.repo.Invite().ListInvitesByProjectID(uint(projID))
 
 		if err != nil {
 			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
@@ -363,7 +363,7 @@ func (auth *Auth) DoesUserHaveRegistryAccess(
 		}
 
 		// get the service accounts belonging to the project
-		regs, err := auth.repo.Registry.ListRegistriesByProjectID(uint(projID))
+		regs, err := auth.repo.Registry().ListRegistriesByProjectID(uint(projID))
 
 		if err != nil {
 			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
@@ -413,7 +413,7 @@ func (auth *Auth) DoesUserHaveGitRepoAccess(
 		}
 
 		// get the service accounts belonging to the project
-		grs, err := auth.repo.GitRepo.ListGitReposByProjectID(uint(projID))
+		grs, err := auth.repo.GitRepo().ListGitReposByProjectID(uint(projID))
 
 		if err != nil {
 			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
@@ -462,7 +462,7 @@ func (auth *Auth) DoesUserHaveInfraAccess(
 			return
 		}
 
-		infras, err := auth.repo.Infra.ListInfrasByProjectID(uint(projID))
+		infras, err := auth.repo.Infra().ListInfrasByProjectID(uint(projID))
 
 		if err != nil {
 			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
@@ -517,7 +517,7 @@ func (auth *Auth) DoesUserHaveAWSIntegrationAccess(
 			return
 		}
 
-		awsInts, err := auth.repo.AWSIntegration.ListAWSIntegrationsByProjectID(uint(projID))
+		awsInts, err := auth.repo.AWSIntegration().ListAWSIntegrationsByProjectID(uint(projID))
 
 		if err != nil {
 			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
@@ -572,7 +572,7 @@ func (auth *Auth) DoesUserHaveGCPIntegrationAccess(
 			return
 		}
 
-		gcpInts, err := auth.repo.GCPIntegration.ListGCPIntegrationsByProjectID(uint(projID))
+		gcpInts, err := auth.repo.GCPIntegration().ListGCPIntegrationsByProjectID(uint(projID))
 
 		if err != nil {
 			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
@@ -627,7 +627,7 @@ func (auth *Auth) DoesUserHaveDOIntegrationAccess(
 			return
 		}
 
-		oauthInts, err := auth.repo.OAuthIntegration.ListOAuthIntegrationsByProjectID(uint(projID))
+		oauthInts, err := auth.repo.OAuthIntegration().ListOAuthIntegrationsByProjectID(uint(projID))
 
 		if err != nil {
 			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)

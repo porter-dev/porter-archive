@@ -150,12 +150,12 @@ func (app *App) upsertGoogleUserFromToken(tok *oauth2.Token) (*models.User, erro
 		}
 	}
 
-	user, err := app.Repo.User.ReadUserByGoogleUserID(gInfo.Sub)
+	user, err := app.Repo.User().ReadUserByGoogleUserID(gInfo.Sub)
 
 	// if the user does not exist, create new user
 	if err != nil && err == gorm.ErrRecordNotFound {
 		// check if a user with that email address already exists
-		_, err = app.Repo.User.ReadUserByEmail(gInfo.Email)
+		_, err = app.Repo.User().ReadUserByEmail(gInfo.Email)
 
 		if err == gorm.ErrRecordNotFound {
 			user = &models.User{
@@ -164,7 +164,7 @@ func (app *App) upsertGoogleUserFromToken(tok *oauth2.Token) (*models.User, erro
 				GoogleUserID:  gInfo.Sub,
 			}
 
-			user, err = app.Repo.User.CreateUser(user)
+			user, err = app.Repo.User().CreateUser(user)
 
 			if err != nil {
 				return nil, err

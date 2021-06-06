@@ -20,7 +20,7 @@ type tester struct {
 	Key *[32]byte
 	DB  *_gorm.DB
 
-	repo         *repository.Repository
+	repo         repository.Repository
 	dbFileName   string
 	key          *[32]byte
 	initUsers    []*models.User
@@ -110,7 +110,7 @@ func initUser(tester *tester, t *testing.T) {
 		Password: "hello1234",
 	}
 
-	user, err := tester.repo.User.CreateUser(user)
+	user, err := tester.repo.User().CreateUser(user)
 
 	if err != nil {
 		t.Fatalf("%v\n", err)
@@ -126,7 +126,7 @@ func initProject(tester *tester, t *testing.T) {
 		Name: "project-test",
 	}
 
-	proj, err := tester.repo.Project.CreateProject(proj)
+	proj, err := tester.repo.Project().CreateProject(proj)
 
 	if err != nil {
 		t.Fatalf("%v\n", err)
@@ -146,7 +146,7 @@ func initProjectRole(tester *tester, t *testing.T) {
 		},
 	}
 
-	role, err := tester.repo.Project.CreateProjectRole(tester.initProjects[0], role)
+	role, err := tester.repo.Project().CreateProjectRole(tester.initProjects[0], role)
 
 	if err != nil {
 		t.Fatalf("%v\n", err)
@@ -176,7 +176,7 @@ func initKubeIntegration(tester *tester, t *testing.T) {
 		Password:              []byte("password"),
 	}
 
-	ki, err := tester.repo.KubeIntegration.CreateKubeIntegration(ki)
+	ki, err := tester.repo.KubeIntegration().CreateKubeIntegration(ki)
 
 	if err != nil {
 		t.Fatalf("%v\n", err)
@@ -203,7 +203,7 @@ func initBasicIntegration(tester *tester, t *testing.T) {
 		Password:  []byte("password"),
 	}
 
-	basic, err := tester.repo.BasicIntegration.CreateBasicIntegration(basic)
+	basic, err := tester.repo.BasicIntegration().CreateBasicIntegration(basic)
 
 	if err != nil {
 		t.Fatalf("%v\n", err)
@@ -235,7 +235,7 @@ func initOIDCIntegration(tester *tester, t *testing.T) {
 		RefreshToken:             []byte("refreshtoken"),
 	}
 
-	oidc, err := tester.repo.OIDCIntegration.CreateOIDCIntegration(oidc)
+	oidc, err := tester.repo.OIDCIntegration().CreateOIDCIntegration(oidc)
 
 	if err != nil {
 		t.Fatalf("%v\n", err)
@@ -264,7 +264,7 @@ func initOAuthIntegration(tester *tester, t *testing.T) {
 		RefreshToken: []byte("refreshtoken"),
 	}
 
-	oauth, err := tester.repo.OAuthIntegration.CreateOAuthIntegration(oauth)
+	oauth, err := tester.repo.OAuthIntegration().CreateOAuthIntegration(oauth)
 
 	if err != nil {
 		t.Fatalf("%v\n", err)
@@ -292,7 +292,7 @@ func initGCPIntegration(tester *tester, t *testing.T) {
 		GCPKeyData:   []byte("{\"test\":\"key\"}"),
 	}
 
-	gcp, err := tester.repo.GCPIntegration.CreateGCPIntegration(gcp)
+	gcp, err := tester.repo.GCPIntegration().CreateGCPIntegration(gcp)
 
 	if err != nil {
 		t.Fatalf("%v\n", err)
@@ -321,7 +321,7 @@ func initAWSIntegration(tester *tester, t *testing.T) {
 		AWSSessionToken:    []byte("optional"),
 	}
 
-	aws, err := tester.repo.AWSIntegration.CreateAWSIntegration(aws)
+	aws, err := tester.repo.AWSIntegration().CreateAWSIntegration(aws)
 
 	if err != nil {
 		t.Fatalf("%v\n", err)
@@ -349,7 +349,7 @@ func initClusterCandidate(tester *tester, t *testing.T) {
 		Kubeconfig:        []byte("current-context: testing\n"),
 	}
 
-	cc, err := tester.repo.Cluster.CreateClusterCandidate(cc)
+	cc, err := tester.repo.Cluster().CreateClusterCandidate(cc)
 
 	if err != nil {
 		t.Fatalf("%v\n", err)
@@ -383,7 +383,7 @@ func initCluster(tester *tester, t *testing.T) {
 		},
 	}
 
-	cluster, err := tester.repo.Cluster.CreateCluster(cluster)
+	cluster, err := tester.repo.Cluster().CreateCluster(cluster)
 
 	if err != nil {
 		t.Fatalf("%v\n", err)
@@ -409,7 +409,7 @@ func initGitRepo(tester *tester, t *testing.T) {
 		OAuthIntegrationID: tester.initOAuths[0].ID,
 	}
 
-	gr, err := tester.repo.GitRepo.CreateGitRepo(gr)
+	gr, err := tester.repo.GitRepo().CreateGitRepo(gr)
 
 	if err != nil {
 		t.Fatalf("%v\n", err)
@@ -436,7 +436,7 @@ func initRegistry(tester *tester, t *testing.T) {
 		},
 	}
 
-	reg, err := tester.repo.Registry.CreateRegistry(reg)
+	reg, err := tester.repo.Registry().CreateRegistry(reg)
 
 	if err != nil {
 		t.Fatalf("%v\n", err)
@@ -464,7 +464,7 @@ func initHelmRepo(tester *tester, t *testing.T) {
 		},
 	}
 
-	hr, err := tester.repo.HelmRepo.CreateHelmRepo(hr)
+	hr, err := tester.repo.HelmRepo().CreateHelmRepo(hr)
 
 	if err != nil {
 		t.Fatalf("%v\n", err)
@@ -487,7 +487,7 @@ func initInfra(tester *tester, t *testing.T) {
 		LastApplied: []byte("testing"),
 	}
 
-	infra, err := tester.repo.Infra.CreateInfra(infra)
+	infra, err := tester.repo.Infra().CreateInfra(infra)
 
 	if err != nil {
 		t.Fatalf("%v\n", err)
@@ -511,7 +511,7 @@ func initRelease(tester *tester, t *testing.T) {
 		WebhookToken: "abcdefgh",
 	}
 
-	release, err := tester.repo.Release.CreateRelease(release)
+	release, err := tester.repo.Release().CreateRelease(release)
 
 	if err != nil {
 		t.Fatalf("%v\n", err)

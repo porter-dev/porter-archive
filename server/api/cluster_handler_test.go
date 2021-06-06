@@ -232,7 +232,7 @@ var createProjectClusterCandidatesTests = []*clusterTest{
 			projectClusterCandidateBodyValidator,
 			// check that Cluster was created by default
 			func(c *clusterTest, tester *tester, t *testing.T) {
-				clusters, err := tester.repo.Cluster.ListClustersByProjectID(1)
+				clusters, err := tester.repo.Cluster().ListClustersByProjectID(1)
 
 				if err != nil {
 					t.Fatalf("%v\n", err)
@@ -335,7 +335,7 @@ func TestHandleResolveProjectClusterCandidate(t *testing.T) {
 // ------------------------- INITIALIZERS AND VALIDATORS ------------------------- //
 
 func initProjectClusterCandidate(tester *tester) {
-	proj, _ := tester.repo.Project.ReadProject(1)
+	proj, _ := tester.repo.Project().ReadProject(1)
 
 	form := &forms.CreateClusterCandidatesForm{
 		ProjectID:  proj.ID,
@@ -346,12 +346,12 @@ func initProjectClusterCandidate(tester *tester) {
 	ccs, _ := form.ToClusterCandidates(false)
 
 	for _, cc := range ccs {
-		tester.repo.Cluster.CreateClusterCandidate(cc)
+		tester.repo.Cluster().CreateClusterCandidate(cc)
 	}
 }
 
 func initProjectClusterDefault(tester *tester) {
-	proj, _ := tester.repo.Project.ReadProject(1)
+	proj, _ := tester.repo.Project().ReadProject(1)
 
 	form := &forms.CreateClusterCandidatesForm{
 		ProjectID:  proj.ID,
@@ -362,7 +362,7 @@ func initProjectClusterDefault(tester *tester) {
 	ccs, _ := form.ToClusterCandidates(false)
 
 	for _, cc := range ccs {
-		tester.repo.Cluster.CreateClusterCandidate(cc)
+		tester.repo.Cluster().CreateClusterCandidate(cc)
 	}
 
 	clusterForm := forms.ResolveClusterForm{
@@ -372,8 +372,8 @@ func initProjectClusterDefault(tester *tester) {
 		UserID:             1,
 	}
 
-	clusterForm.ResolveIntegration(*tester.repo)
-	clusterForm.ResolveCluster(*tester.repo)
+	clusterForm.ResolveIntegration(tester.repo)
+	clusterForm.ResolveCluster(tester.repo)
 }
 
 func projectClusterCandidateBodyValidator(c *clusterTest, tester *tester, t *testing.T) {

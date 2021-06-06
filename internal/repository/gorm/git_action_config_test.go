@@ -28,13 +28,13 @@ func TestCreateGitActionConfig(t *testing.T) {
 
 	expGA := *ga
 
-	ga, err := tester.repo.GitActionConfig.CreateGitActionConfig(ga)
+	ga, err := tester.repo.GitActionConfig().CreateGitActionConfig(ga)
 
 	if err != nil {
 		t.Fatalf("%v\n", err)
 	}
 
-	ga, err = tester.repo.GitActionConfig.ReadGitActionConfig(ga.Model.ID)
+	ga, err = tester.repo.GitActionConfig().ReadGitActionConfig(ga.Model.ID)
 
 	if err != nil {
 		t.Fatalf("%v\n", err)
@@ -54,7 +54,7 @@ func TestCreateGitActionConfig(t *testing.T) {
 	}
 
 	// read the release and make sure GitActionConfig is expected
-	release, err := tester.repo.Release.ReadRelease(1, "denver-meister-dakota", "default")
+	release, err := tester.repo.Release().ReadRelease(1, "denver-meister-dakota", "default")
 
 	if err != nil {
 		t.Fatalf("%v\n", err)

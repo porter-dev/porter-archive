@@ -31,7 +31,7 @@ func (cr *CreateRegistry) ToRegistry(repo repository.Repository) (*models.Regist
 	}
 
 	if registry.URL == "" && registry.AWSIntegrationID != 0 {
-		awsInt, err := repo.AWSIntegration.ReadAWSIntegration(registry.AWSIntegrationID)
+		awsInt, err := repo.AWSIntegration().ReadAWSIntegration(registry.AWSIntegrationID)
 
 		if err != nil {
 			return nil, err

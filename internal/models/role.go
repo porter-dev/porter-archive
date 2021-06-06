@@ -28,3 +28,11 @@ func (r *Role) Externalize() *RoleExternal {
 		},
 	}
 }
+
+func (r *Role) ToRoleType() *types.Role {
+	return &types.Role{
+		Kind:      r.Kind,
+		UserID:    r.UserID,
+		ProjectID: r.ProjectID,
+	}
+}

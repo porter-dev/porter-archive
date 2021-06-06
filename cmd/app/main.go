@@ -99,7 +99,7 @@ func main() {
 
 		errorChan := make(chan error)
 
-		go prov.GlobalStreamListener(redis, *repo, errorChan)
+		go prov.GlobalStreamListener(redis, repo, errorChan)
 	}
 
 	a, err := api.New(&api.AppConfig{

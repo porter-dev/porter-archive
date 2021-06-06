@@ -10,8 +10,8 @@ import (
 	"testing"
 
 	"github.com/go-test/deep"
-	"github.com/porter-dev/porter/api/server/requestutils"
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
+	"github.com/porter-dev/porter/api/server/shared/requestutils"
 	"github.com/stretchr/testify/assert"
 )
 

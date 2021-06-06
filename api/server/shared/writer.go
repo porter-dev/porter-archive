@@ -1,6 +1,11 @@
 package shared
 
-import "net/http"
+import (
+	"encoding/json"
+	"net/http"
+
+	"github.com/porter-dev/porter/api/server/shared/apierrors"
+)
 
 type ResultWriter interface {
 	WriteResult(w http.ResponseWriter, v interface{})
@@ -17,6 +22,9 @@ func NewDefaultResultWriter(config *Config) ResultWriter {
 }
 
 func (j *DefaultResultWriter) WriteResult(w http.ResponseWriter, v interface{}) {
-	// TODO: unimplemented
-	return
+	err := json.NewEncoder(w).Encode(v)
+
+	if err != nil {
+		apierrors.HandleAPIError(w, j.config.Logger, apierrors.NewErrInternal(err))
+	}
 }

@@ -21,7 +21,7 @@ import (
 
 type tester struct {
 	app    *api.App
-	repo   *repository.Repository
+	repo   repository.Repository
 	store  *sessionstore.PGStore
 	router *chi.Mux
 	req    *http.Request

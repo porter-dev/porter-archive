@@ -107,7 +107,7 @@ func GlobalStreamListener(
 			kind, projID, infraID, err := models.ParseUniqueName(fmt.Sprintf("%v", msg.Values["id"]))
 
 			if fmt.Sprintf("%v", msg.Values["status"]) == "created" {
-				infra, err := repo.Infra.ReadInfra(infraID)
+				infra, err := repo.Infra().ReadInfra(infraID)
 
 				if err != nil {
 					continue
@@ -115,7 +115,7 @@ func GlobalStreamListener(
 
 				infra.Status = models.StatusCreated
 
-				infra, err = repo.Infra.UpdateInfra(infra)
+				infra, err = repo.Infra().UpdateInfra(infra)
 
 				if err != nil {
 					continue
@@ -136,7 +136,7 @@ func GlobalStreamListener(
 						json.Unmarshal([]byte(dataString), reg)
 					}
 
-					awsInt, err := repo.AWSIntegration.ReadAWSIntegration(reg.AWSIntegrationID)
+					awsInt, err := repo.AWSIntegration().ReadAWSIntegration(reg.AWSIntegrationID)
 
 					if err != nil {
 						continue
@@ -158,7 +158,7 @@ func GlobalStreamListener(
 
 					reg.URL = *output.AuthorizationData[0].ProxyEndpoint
 
-					reg, err = repo.Registry.CreateRegistry(reg)
+					reg, err = repo.Registry().CreateRegistry(reg)
 
 					if err != nil {
 						continue
@@ -192,7 +192,7 @@ func GlobalStreamListener(
 						cluster.CertificateAuthorityData = []byte(decoded)
 					}
 
-					cluster, err := repo.Cluster.CreateCluster(cluster)
+					cluster, err := repo.Cluster().CreateCluster(cluster)
 
 					if err != nil {
 						continue
@@ -212,7 +212,7 @@ func GlobalStreamListener(
 						json.Unmarshal([]byte(dataString), reg)
 					}
 
-					reg, err = repo.Registry.CreateRegistry(reg)
+					reg, err = repo.Registry().CreateRegistry(reg)
 
 					if err != nil {
 						continue
@@ -246,7 +246,7 @@ func GlobalStreamListener(
 						cluster.CertificateAuthorityData = []byte(decoded)
 					}
 
-					cluster, err := repo.Cluster.CreateCluster(cluster)
+					cluster, err := repo.Cluster().CreateCluster(cluster)
 
 					if err != nil {
 						continue
@@ -265,7 +265,7 @@ func GlobalStreamListener(
 						json.Unmarshal([]byte(dataString), reg)
 					}
 
-					reg, err = repo.Registry.CreateRegistry(reg)
+					reg, err = repo.Registry().CreateRegistry(reg)
 
 					if err != nil {
 						continue
@@ -299,14 +299,14 @@ func GlobalStreamListener(
 						cluster.CertificateAuthorityData = []byte(decoded)
 					}
 
-					cluster, err := repo.Cluster.CreateCluster(cluster)
+					cluster, err := repo.Cluster().CreateCluster(cluster)
 
 					if err != nil {
 						continue
 					}
 				}
 			} else if fmt.Sprintf("%v", msg.Values["status"]) == "error" {
-				infra, err := repo.Infra.ReadInfra(infraID)
+				infra, err := repo.Infra().ReadInfra(infraID)
 
 				if err != nil {
 					continue
@@ -314,13 +314,13 @@ func GlobalStreamListener(
 
 				infra.Status = models.StatusError
 
-				infra, err = repo.Infra.UpdateInfra(infra)
+				infra, err = repo.Infra().UpdateInfra(infra)
 
 				if err != nil {
 					continue
 				}
 			} else if fmt.Sprintf("%v", msg.Values["status"]) == "destroyed" {
-				infra, err := repo.Infra.ReadInfra(infraID)
+				infra, err := repo.Infra().ReadInfra(infraID)
 
 				if err != nil {
 					continue
@@ -328,7 +328,7 @@ func GlobalStreamListener(
 
 				infra.Status = models.StatusDestroyed
 
-				infra, err = repo.Infra.UpdateInfra(infra)
+				infra, err = repo.Infra().UpdateInfra(infra)
 
 				if err != nil {
 					continue

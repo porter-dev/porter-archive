@@ -26,7 +26,7 @@ func (app *App) HandleListProjectGitRepos(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	grs, err := app.Repo.GitRepo.ListGitReposByProjectID(uint(projID))
+	grs, err := app.Repo.GitRepo().ListGitReposByProjectID(uint(projID))
 
 	if err != nil {
 		app.handleErrorRead(err, ErrProjectDataRead, w)
@@ -117,14 +117,14 @@ func (app *App) HandleDeleteProjectGitRepo(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	repo, err := app.Repo.GitRepo.ReadGitRepo(uint(id))
+	repo, err := app.Repo.GitRepo().ReadGitRepo(uint(id))
 
 	if err != nil {
 		app.handleErrorRead(err, ErrProjectDataRead, w)
 		return
 	}
 
-	err = app.Repo.GitRepo.DeleteGitRepo(repo)
+	err = app.Repo.GitRepo().DeleteGitRepo(repo)
 
 	if err != nil {
 		app.handleErrorRead(err, ErrProjectDataRead, w)
@@ -332,14 +332,14 @@ func (app *App) githubTokenFromRequest(
 	}
 
 	// query for the git repo
-	gr, err := app.Repo.GitRepo.ReadGitRepo(uint(grID))
+	gr, err := app.Repo.GitRepo().ReadGitRepo(uint(grID))
 
 	if err != nil {
 		return nil, err
 	}
 
 	// get the oauth integration
-	oauthInt, err := app.Repo.OAuthIntegration.ReadOAuthIntegration(gr.OAuthIntegrationID)
+	oauthInt, err := app.Repo.OAuthIntegration().ReadOAuthIntegration(gr.OAuthIntegrationID)
 
 	if err != nil {
 		return nil, err

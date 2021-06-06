@@ -1,8 +1,7 @@
-package auth
+package authz
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 
 	"github.com/porter-dev/porter/api/server/shared"
@@ -35,14 +34,12 @@ type ProjectScoped struct {
 
 func (scope *ProjectScoped) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// read the project id from the request
-	projID, reqErr := GetURLParamUint(r, "project_id")
+	_, reqErr := GetURLParamUint(r, "project_id")
 
 	if reqErr != nil {
 		apierrors.HandleAPIError(w, scope.config.Logger, reqErr)
 		return
 	}
-
-	fmt.Println("PROJECT ID IS", projID)
 
 	// find a set of roles for this user and compute a policy document
 
@@ -51,8 +48,8 @@ func (scope *ProjectScoped) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	project := types.Project{}
 
 	// create a new project-scoped context and serve
-	req := r.Clone(NewProjectContext(r.Context(), project))
-	scope.next.ServeHTTP(w, req)
+	r = r.WithContext(NewProjectContext(r.Context(), project))
+	scope.next.ServeHTTP(w, r)
 }
 
 func NewProjectContext(ctx context.Context, project types.Project) context.Context {

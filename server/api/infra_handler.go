@@ -18,7 +18,7 @@ func (app *App) HandleListProjectInfra(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	infras, err := app.Repo.Infra.ListInfrasByProjectID(uint(projID))
+	infras, err := app.Repo.Infra().ListInfrasByProjectID(uint(projID))
 
 	if err != nil {
 		app.handleErrorRead(err, ErrProjectDataRead, w)

@@ -254,7 +254,7 @@ func TestHandleDeleteRegistry(t *testing.T) {
 // ------------------------- INITIALIZERS AND VALIDATORS ------------------------- //
 
 func initRegistry(tester *tester) {
-	proj, _ := tester.repo.Project.ReadProject(1)
+	proj, _ := tester.repo.Project().ReadProject(1)
 
 	reg := &models.Registry{
 		Name:             "registry-test",
@@ -262,7 +262,7 @@ func initRegistry(tester *tester) {
 		AWSIntegrationID: 1,
 	}
 
-	tester.repo.Registry.CreateRegistry(reg)
+	tester.repo.Registry().CreateRegistry(reg)
 }
 
 func regBodyValidator(c *regTest, tester *tester, t *testing.T) {

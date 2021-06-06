@@ -1,43 +1,38 @@
-package server
+package router
 
 import (
 	"github.com/go-chi/chi"
-	"github.com/porter-dev/porter/api/server/auth"
+	"github.com/porter-dev/porter/api/server/authz"
 	"github.com/porter-dev/porter/api/server/handlers/project"
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/types"
 )
 
-func NewProjectRouter(
+func RegisterProjectScopedRoutes(
+	r chi.Router,
 	config *shared.Config,
 	basePath *types.Path,
 	factory shared.APIEndpointFactory,
-) *shared.Router {
-	router := chi.NewRouter()
-
+) chi.Router {
 	// Create a new "project-scoped" factory which will create a new project-scoped request
 	// after authorization. Each subsequent http.Handler can lookup the project in context.
-	authFactory := auth.NewProjectScopedFactory(config.Repo.Project, config)
+	projFactory := authz.NewProjectScopedFactory(config.Repo.Project(), config)
 
 	// attach middleware to router
-	router.Use(authFactory.NewProjectScoped)
+	r.Use(projFactory.NewProjectScoped)
 
-	routes := registerProjectEndpoints(config, basePath, factory, router)
+	registerProjectEndpoints(r, config, basePath, factory)
 
-	return &shared.Router{
-		Router: router,
-		Routes: routes,
-		Config: config,
-	}
+	return r
 }
 
 func registerProjectEndpoints(
+	r chi.Router,
 	config *shared.Config,
 	basePath *types.Path,
 	factory shared.APIEndpointFactory,
-	router *chi.Mux,
-) (routes []*shared.Route) {
-	routes = make([]*shared.Route, 0)
+) {
+	routes := make([]*Route, 0)
 
 	projectPath := &types.Path{
 		Parent:       basePath,
@@ -57,10 +52,10 @@ func registerProjectEndpoints(
 
 	createHandler := project.NewProjectCreateHandler(config, createEndpoint)
 
-	routes = append(routes, &shared.Route{
+	routes = append(routes, &Route{
 		Endpoint: createEndpoint,
 		Handler:  createHandler,
 	})
 
-	return routes
+	registerRoutes(r, routes)
 }

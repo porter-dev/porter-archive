@@ -14,7 +14,7 @@ import (
 )
 
 type tester struct {
-	repo         *repository.Repository
+	repo         repository.Repository
 	key          *[32]byte
 	dbFileName   string
 	initUsers    []*models.User
@@ -90,7 +90,7 @@ func initUser(tester *tester, t *testing.T) {
 		Password: "hello1234",
 	}
 
-	user, err := tester.repo.User.CreateUser(user)
+	user, err := tester.repo.User().CreateUser(user)
 
 	if err != nil {
 		t.Fatalf("%v\n", err)
@@ -106,7 +106,7 @@ func initProject(tester *tester, t *testing.T) {
 		Name: "project-test",
 	}
 
-	proj, err := tester.repo.Project.CreateProject(proj)
+	proj, err := tester.repo.Project().CreateProject(proj)
 
 	if err != nil {
 		t.Fatalf("%v\n", err)
@@ -126,7 +126,7 @@ func initProjectRole(tester *tester, t *testing.T) {
 		},
 	}
 
-	role, err := tester.repo.Project.CreateProjectRole(tester.initProjects[0], role)
+	role, err := tester.repo.Project().CreateProjectRole(tester.initProjects[0], role)
 
 	if err != nil {
 		t.Fatalf("%v\n", err)
@@ -151,7 +151,7 @@ func initKubeIntegration(tester *tester, t *testing.T) {
 		Kubeconfig: []byte("current-context: testing\n"),
 	}
 
-	ki, err := tester.repo.KubeIntegration.CreateKubeIntegration(ki)
+	ki, err := tester.repo.KubeIntegration().CreateKubeIntegration(ki)
 
 	if err != nil {
 		t.Fatalf("%v\n", err)
@@ -182,7 +182,7 @@ func initOIDCIntegration(tester *tester, t *testing.T) {
 		RefreshToken: []byte("refreshtoken"),
 	}
 
-	oidc, err := tester.repo.OIDCIntegration.CreateOIDCIntegration(oidc)
+	oidc, err := tester.repo.OIDCIntegration().CreateOIDCIntegration(oidc)
 
 	if err != nil {
 		t.Fatalf("%v\n", err)
@@ -211,7 +211,7 @@ func initOAuthIntegration(tester *tester, t *testing.T) {
 		RefreshToken: []byte("refreshtoken"),
 	}
 
-	oauth, err := tester.repo.OAuthIntegration.CreateOAuthIntegration(oauth)
+	oauth, err := tester.repo.OAuthIntegration().CreateOAuthIntegration(oauth)
 
 	if err != nil {
 		t.Fatalf("%v\n", err)
@@ -239,7 +239,7 @@ func initGCPIntegration(tester *tester, t *testing.T) {
 		GCPKeyData:   []byte("{\"test\":\"key\"}"),
 	}
 
-	gcp, err := tester.repo.GCPIntegration.CreateGCPIntegration(gcp)
+	gcp, err := tester.repo.GCPIntegration().CreateGCPIntegration(gcp)
 
 	if err != nil {
 		t.Fatalf("%v\n", err)
@@ -268,7 +268,7 @@ func initAWSIntegration(tester *tester, t *testing.T) {
 		AWSSessionToken:    []byte("optional"),
 	}
 
-	aws, err := tester.repo.AWSIntegration.CreateAWSIntegration(aws)
+	aws, err := tester.repo.AWSIntegration().CreateAWSIntegration(aws)
 
 	if err != nil {
 		t.Fatalf("%v\n", err)
@@ -296,7 +296,7 @@ func initClusterCandidate(tester *tester, t *testing.T) {
 		Kubeconfig:        []byte("current-context: testing\n"),
 	}
 
-	cc, err := tester.repo.Cluster.CreateClusterCandidate(cc)
+	cc, err := tester.repo.Cluster().CreateClusterCandidate(cc)
 
 	if err != nil {
 		t.Fatalf("%v\n", err)
@@ -324,7 +324,7 @@ func initCluster(tester *tester, t *testing.T) {
 		CertificateAuthorityData: []byte("-----BEGIN"),
 	}
 
-	cluster, err := tester.repo.Cluster.CreateCluster(cluster)
+	cluster, err := tester.repo.Cluster().CreateCluster(cluster)
 
 	if err != nil {
 		t.Fatalf("%v\n", err)
@@ -350,7 +350,7 @@ func initGitRepo(tester *tester, t *testing.T) {
 		OAuthIntegrationID: tester.initOAuths[0].ID,
 	}
 
-	gr, err := tester.repo.GitRepo.CreateGitRepo(gr)
+	gr, err := tester.repo.GitRepo().CreateGitRepo(gr)
 
 	if err != nil {
 		t.Fatalf("%v\n", err)

@@ -43,7 +43,7 @@ func (app *App) HandleCreateUser(w http.ResponseWriter, r *http.Request) {
 
 	user, err := app.writeUser(
 		form,
-		app.Repo.User.CreateUser,
+		app.Repo.User().CreateUser,
 		w,
 		r,
 		doesUserExist,
@@ -98,7 +98,7 @@ func (app *App) HandleAuthCheck(w http.ResponseWriter, r *http.Request) {
 
 	if tok != nil {
 		// read the user
-		user, err := app.Repo.User.ReadUser(tok.IBy)
+		user, err := app.Repo.User().ReadUser(tok.IBy)
 
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -123,7 +123,7 @@ func (app *App) HandleAuthCheck(w http.ResponseWriter, r *http.Request) {
 	userID, _ := session.Values["user_id"].(uint)
 	email, _ := session.Values["email"].(string)
 
-	user, err := app.Repo.User.ReadUser(userID)
+	user, err := app.Repo.User().ReadUser(userID)
 
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -188,7 +188,7 @@ func (app *App) HandleCLILoginUser(w http.ResponseWriter, r *http.Request) {
 		Expiry:            &expiry,
 	}
 
-	authCode, err = app.Repo.AuthCode.CreateAuthCode(authCode)
+	authCode, err = app.Repo.AuthCode().CreateAuthCode(authCode)
 
 	if err != nil {
 		app.handleErrorInternal(err, w)
@@ -216,7 +216,7 @@ func (app *App) HandleCLILoginExchangeToken(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	authCode, err := app.Repo.AuthCode.ReadAuthCode(req.AuthorizationCode)
+	authCode, err := app.Repo.AuthCode().ReadAuthCode(req.AuthorizationCode)
 
 	if err != nil || authCode.IsExpired() {
 		http.Error(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)
@@ -251,7 +251,7 @@ func (app *App) HandleLoginUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	storedUser, readErr := app.Repo.User.ReadUserByEmail(form.Email)
+	storedUser, readErr := app.Repo.User().ReadUserByEmail(form.Email)
 
 	if readErr != nil {
 		app.sendExternalError(readErr, http.StatusUnauthorized, HTTPError{
@@ -339,7 +339,7 @@ func (app *App) HandleListUserProjects(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	projects, err := app.Repo.Project.ListProjectsByUserID(uint(id))
+	projects, err := app.Repo.Project().ListProjectsByUserID(uint(id))
 
 	if err != nil {
 		app.handleErrorRead(err, ErrUserDataRead, w)
@@ -373,7 +373,7 @@ func (app *App) HandleDeleteUser(w http.ResponseWriter, r *http.Request) {
 		ID: uint(id),
 	}
 
-	user, err := app.writeUser(form, app.Repo.User.DeleteUser, w, r)
+	user, err := app.writeUser(form, app.Repo.User().DeleteUser, w, r)
 
 	if err == nil {
 		app.Logger.Info().Msgf("User deleted: %d", user.ID)
@@ -390,7 +390,7 @@ func (app *App) InitiateEmailVerifyUser(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	user, err := app.Repo.User.ReadUser(userID)
+	user, err := app.Repo.User().ReadUser(userID)
 
 	if err != nil {
 		app.handleErrorInternal(err, w)
@@ -415,7 +415,7 @@ func (app *App) InitiateEmailVerifyUser(w http.ResponseWriter, r *http.Request) 
 	}
 
 	// handle write to the database
-	pwReset, err = app.Repo.PWResetToken.CreatePWResetToken(pwReset)
+	pwReset, err = app.Repo.PWResetToken().CreatePWResetToken(pwReset)
 
 	if err != nil {
 		app.handleErrorDataWrite(err, w)
@@ -456,7 +456,7 @@ func (app *App) FinalizEmailVerifyUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, err := app.Repo.User.ReadUser(userID)
+	user, err := app.Repo.User().ReadUser(userID)
 
 	if err != nil {
 		app.handleErrorInternal(err, w)
@@ -495,7 +495,7 @@ func (app *App) FinalizEmailVerifyUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// verify the token is valid
-	token, err := app.Repo.PWResetToken.ReadPWResetToken(tokenID)
+	token, err := app.Repo.PWResetToken().ReadPWResetToken(tokenID)
 
 	if err != nil {
 		http.Redirect(w, r, "/dashboard?error="+url.QueryEscape("Email verification error: valid token required"), 302)
@@ -516,7 +516,7 @@ func (app *App) FinalizEmailVerifyUser(w http.ResponseWriter, r *http.Request) {
 
 	user.EmailVerified = true
 
-	user, err = app.Repo.User.UpdateUser(user)
+	user, err = app.Repo.User().UpdateUser(user)
 
 	if err != nil {
 		http.Redirect(w, r, "/dashboard?error="+url.QueryEscape("Could not verify email address"), 302)
@@ -526,7 +526,7 @@ func (app *App) FinalizEmailVerifyUser(w http.ResponseWriter, r *http.Request) {
 	// invalidate the token
 	token.IsValid = false
 
-	_, err = app.Repo.PWResetToken.UpdatePWResetToken(token)
+	_, err = app.Repo.PWResetToken().UpdatePWResetToken(token)
 
 	if err != nil {
 		http.Redirect(w, r, "/dashboard?error="+url.QueryEscape("Could not verify email address"), 302)
@@ -556,7 +556,7 @@ func (app *App) InitiatePWResetUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// check that the email exists; return 200 status code even if it doesn't
-	user, err := app.Repo.User.ReadUserByEmail(form.Email)
+	user, err := app.Repo.User().ReadUserByEmail(form.Email)
 
 	if err == gorm.ErrRecordNotFound {
 		w.WriteHeader(http.StatusOK)
@@ -597,7 +597,7 @@ func (app *App) InitiatePWResetUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// handle write to the database
-	pwReset, err = app.Repo.PWResetToken.CreatePWResetToken(pwReset)
+	pwReset, err = app.Repo.PWResetToken().CreatePWResetToken(pwReset)
 
 	if err != nil {
 		app.handleErrorDataWrite(err, w)
@@ -646,7 +646,7 @@ func (app *App) VerifyPWResetUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	token, err := app.Repo.PWResetToken.ReadPWResetToken(form.PWResetTokenID)
+	token, err := app.Repo.PWResetToken().ReadPWResetToken(form.PWResetTokenID)
 
 	if err != nil {
 		w.WriteHeader(http.StatusForbidden)
@@ -692,7 +692,7 @@ func (app *App) FinalizPWResetUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// verify the token is valid
-	token, err := app.Repo.PWResetToken.ReadPWResetToken(form.PWResetTokenID)
+	token, err := app.Repo.PWResetToken().ReadPWResetToken(form.PWResetTokenID)
 
 	if err != nil {
 		w.WriteHeader(http.StatusForbidden)
@@ -718,7 +718,7 @@ func (app *App) FinalizPWResetUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// check that the email exists
-	user, err := app.Repo.User.ReadUserByEmail(form.Email)
+	user, err := app.Repo.User().ReadUserByEmail(form.Email)
 
 	if err != nil {
 		w.WriteHeader(http.StatusForbidden)
@@ -734,7 +734,7 @@ func (app *App) FinalizPWResetUser(w http.ResponseWriter, r *http.Request) {
 
 	user.Password = string(hashedPW)
 
-	user, err = app.Repo.User.UpdateUser(user)
+	user, err = app.Repo.User().UpdateUser(user)
 
 	if err != nil {
 		app.handleErrorDataWrite(err, w)
@@ -744,7 +744,7 @@ func (app *App) FinalizPWResetUser(w http.ResponseWriter, r *http.Request) {
 	// invalidate the token
 	token.IsValid = false
 
-	_, err = app.Repo.PWResetToken.UpdatePWResetToken(token)
+	_, err = app.Repo.PWResetToken().UpdatePWResetToken(token)
 
 	if err != nil {
 		app.handleErrorDataWrite(err, w)
@@ -765,7 +765,7 @@ func (app *App) writeUser(
 	dbWrite repository.WriteUser,
 	w http.ResponseWriter,
 	r *http.Request,
-	validators ...func(repo *repository.Repository, user *models.User) *HTTPError,
+	validators ...func(repo repository.Repository, user *models.User) *HTTPError,
 ) (*models.User, error) {
 	// decode from JSON to form value
 	if err := json.NewDecoder(r.Body).Decode(form); err != nil {
@@ -780,7 +780,7 @@ func (app *App) writeUser(
 	}
 
 	// convert the form to a user model -- WriteUserForm must implement ToUser
-	userModel, err := form.ToUser(app.Repo.User)
+	userModel, err := form.ToUser(app.Repo.User())
 
 	if err != nil {
 		app.handleErrorFormDecoding(err, ErrUserDecode, w)
@@ -835,7 +835,7 @@ func (app *App) readUser(w http.ResponseWriter, r *http.Request) (*models.User, 
 		return nil, err
 	}
 
-	user, err := app.Repo.User.ReadUser(uint(id))
+	user, err := app.Repo.User().ReadUser(uint(id))
 
 	if err != nil {
 		app.handleErrorRead(err, ErrUserDataRead, w)
@@ -845,8 +845,8 @@ func (app *App) readUser(w http.ResponseWriter, r *http.Request) (*models.User, 
 	return user, nil
 }
 
-func doesUserExist(repo *repository.Repository, user *models.User) *HTTPError {
-	user, err := repo.User.ReadUserByEmail(user.Email)
+func doesUserExist(repo repository.Repository, user *models.User) *HTTPError {
+	user, err := repo.User().ReadUserByEmail(user.Email)
 
 	if user != nil && err == nil {
 		return &HTTPError{

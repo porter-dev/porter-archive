@@ -109,7 +109,7 @@ type ResolveClusterForm struct {
 func (rcf *ResolveClusterForm) ResolveIntegration(
 	repo repository.Repository,
 ) error {
-	cc, err := repo.Cluster.ReadClusterCandidate(rcf.ClusterCandidateID)
+	cc, err := repo.Cluster().ReadClusterCandidate(rcf.ClusterCandidateID)
 
 	if err != nil {
 		return err
@@ -206,7 +206,7 @@ func (rcf *ResolveClusterForm) resolveX509(
 	}
 
 	// return integration id if exists
-	ki, err := repo.KubeIntegration.CreateKubeIntegration(ki)
+	ki, err := repo.KubeIntegration().CreateKubeIntegration(ki)
 
 	if err != nil {
 		return 0, err
@@ -241,7 +241,7 @@ func (rcf *ResolveClusterForm) resolveToken(
 	}
 
 	// return integration id if exists
-	ki, err := repo.KubeIntegration.CreateKubeIntegration(ki)
+	ki, err := repo.KubeIntegration().CreateKubeIntegration(ki)
 
 	if err != nil {
 		return 0, err
@@ -273,7 +273,7 @@ func (rcf *ResolveClusterForm) resolveBasic(
 	}
 
 	// return integration id if exists
-	ki, err := repo.KubeIntegration.CreateKubeIntegration(ki)
+	ki, err := repo.KubeIntegration().CreateKubeIntegration(ki)
 
 	if err != nil {
 		return 0, err
@@ -294,7 +294,7 @@ func (rcf *ResolveClusterForm) resolveLocal(
 	}
 
 	// return integration id if exists
-	ki, err := repo.KubeIntegration.CreateKubeIntegration(ki)
+	ki, err := repo.KubeIntegration().CreateKubeIntegration(ki)
 
 	if err != nil {
 		return 0, err
@@ -349,7 +349,7 @@ func (rcf *ResolveClusterForm) resolveOIDC(
 	}
 
 	// return integration id if exists
-	oidc, err := repo.OIDCIntegration.CreateOIDCIntegration(oidc)
+	oidc, err := repo.OIDCIntegration().CreateOIDCIntegration(oidc)
 
 	if err != nil {
 		return 0, err
@@ -379,7 +379,7 @@ func (rcf *ResolveClusterForm) resolveGCP(
 	}
 
 	// return integration id if exists
-	gcp, err := repo.GCPIntegration.CreateGCPIntegration(gcp)
+	gcp, err := repo.GCPIntegration().CreateGCPIntegration(gcp)
 
 	if err != nil {
 		return 0, err
@@ -418,7 +418,7 @@ func (rcf *ResolveClusterForm) resolveAWS(
 	}
 
 	// return integration id if exists
-	aws, err := repo.AWSIntegration.CreateAWSIntegration(aws)
+	aws, err := repo.AWSIntegration().CreateAWSIntegration(aws)
 
 	if err != nil {
 		return 0, err
@@ -440,7 +440,7 @@ func (rcf *ResolveClusterForm) ResolveCluster(
 	}
 
 	// save cluster to db
-	return repo.Cluster.CreateCluster(cluster)
+	return repo.Cluster().CreateCluster(cluster)
 }
 
 func (rcf *ResolveClusterForm) buildCluster() (*models.Cluster, error) {

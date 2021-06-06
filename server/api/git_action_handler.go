@@ -39,7 +39,7 @@ func (app *App) HandleCreateGitAction(w http.ResponseWriter, r *http.Request) {
 		}, w)
 	}
 
-	release, err := app.Repo.Release.ReadRelease(uint(clusterID), name, namespace)
+	release, err := app.Repo.Release().ReadRelease(uint(clusterID), name, namespace)
 
 	if err != nil {
 		app.sendExternalError(err, http.StatusInternalServerError, HTTPError{
@@ -85,7 +85,7 @@ func (app *App) createGitActionFromForm(
 	// if the registry was provisioned through Porter, create a repository if necessary
 	if form.RegistryID != 0 {
 		// read the registry
-		reg, err := app.Repo.Registry.ReadRegistry(form.RegistryID)
+		reg, err := app.Repo.Registry().ReadRegistry(form.RegistryID)
 
 		if err != nil {
 			app.handleErrorDataRead(err, w)
@@ -99,7 +99,7 @@ func (app *App) createGitActionFromForm(
 		nameSpl := strings.Split(form.ImageRepoURI, "/")
 		repoName := nameSpl[len(nameSpl)-1]
 
-		err = regAPI.CreateRepository(*app.Repo, repoName)
+		err = regAPI.CreateRepository(app.Repo, repoName)
 
 		if err != nil {
 			app.handleErrorInternal(err, w)
@@ -116,7 +116,7 @@ func (app *App) createGitActionFromForm(
 	}
 
 	// read the git repo
-	gr, err := app.Repo.GitRepo.ReadGitRepo(gitAction.GitRepoID)
+	gr, err := app.Repo.GitRepo().ReadGitRepo(gitAction.GitRepoID)
 
 	if err != nil {
 		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
@@ -157,7 +157,7 @@ func (app *App) createGitActionFromForm(
 		GitIntegration: gr,
 		GitRepoName:    repoSplit[1],
 		GitRepoOwner:   repoSplit[0],
-		Repo:           *app.Repo,
+		Repo:           app.Repo,
 		GithubConf:     app.GithubProjectConf,
 		WebhookToken:   release.WebhookToken,
 		ProjectID:      uint(projID),
@@ -178,7 +178,7 @@ func (app *App) createGitActionFromForm(
 	}
 
 	// handle write to the database
-	ga, err := app.Repo.GitActionConfig.CreateGitActionConfig(gitAction)
+	ga, err := app.Repo.GitActionConfig().CreateGitActionConfig(gitAction)
 
 	if err != nil {
 		app.handleErrorDataWrite(err, w)
@@ -190,7 +190,7 @@ func (app *App) createGitActionFromForm(
 	// update the release in the db with the image repo uri
 	release.ImageRepoURI = gitAction.ImageRepoURI
 
-	_, err = app.Repo.Release.UpdateRelease(release)
+	_, err = app.Repo.Release().UpdateRelease(release)
 
 	if err != nil {
 		app.handleErrorDataWrite(err, w)

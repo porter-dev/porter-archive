@@ -118,7 +118,7 @@ func TestHandleListHelmRepos(t *testing.T) {
 // ------------------------- INITIALIZERS AND VALIDATORS ------------------------- //
 
 func initHelmRepo(tester *tester) {
-	proj, _ := tester.repo.Project.ReadProject(1)
+	proj, _ := tester.repo.Project().ReadProject(1)
 
 	hr := &models.HelmRepo{
 		Name:                   "helm-repo-test",
@@ -127,7 +127,7 @@ func initHelmRepo(tester *tester) {
 		BasicAuthIntegrationID: 1,
 	}
 
-	tester.repo.HelmRepo.CreateHelmRepo(hr)
+	tester.repo.HelmRepo().CreateHelmRepo(hr)
 }
 
 func helmRepoBodyValidator(c *helmTest, tester *tester, t *testing.T) {

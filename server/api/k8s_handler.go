@@ -45,7 +45,7 @@ func (app *App) HandleListNamespaces(w http.ResponseWriter, r *http.Request) {
 		},
 	}
 
-	form.PopulateK8sOptionsFromQueryParams(vals, app.Repo.Cluster)
+	form.PopulateK8sOptionsFromQueryParams(vals, app.Repo.Cluster())
 
 	// validate the form
 	if err := app.validator.Struct(form); err != nil {
@@ -96,7 +96,7 @@ func (app *App) HandleListPodEvents(w http.ResponseWriter, r *http.Request) {
 		},
 	}
 
-	form.PopulateK8sOptionsFromQueryParams(vals, app.Repo.Cluster)
+	form.PopulateK8sOptionsFromQueryParams(vals, app.Repo.Cluster())
 
 	// validate the form
 	if err := app.validator.Struct(form); err != nil {
@@ -142,7 +142,7 @@ func (app *App) HandleCreateConfigMap(w http.ResponseWriter, r *http.Request) {
 		},
 	}
 
-	form.PopulateK8sOptionsFromQueryParams(vals, app.Repo.Cluster)
+	form.PopulateK8sOptionsFromQueryParams(vals, app.Repo.Cluster())
 
 	// validate the form
 	if err := app.validator.Struct(form); err != nil {
@@ -225,7 +225,7 @@ func (app *App) HandleListConfigMaps(w http.ResponseWriter, r *http.Request) {
 		},
 	}
 
-	form.PopulateK8sOptionsFromQueryParams(vals, app.Repo.Cluster)
+	form.PopulateK8sOptionsFromQueryParams(vals, app.Repo.Cluster())
 
 	// validate the form
 	if err := app.validator.Struct(form); err != nil {
@@ -275,7 +275,7 @@ func (app *App) HandleGetConfigMap(w http.ResponseWriter, r *http.Request) {
 		},
 	}
 
-	form.PopulateK8sOptionsFromQueryParams(vals, app.Repo.Cluster)
+	form.PopulateK8sOptionsFromQueryParams(vals, app.Repo.Cluster())
 
 	// validate the form
 	if err := app.validator.Struct(form); err != nil {
@@ -324,7 +324,7 @@ func (app *App) HandleDeleteConfigMap(w http.ResponseWriter, r *http.Request) {
 		},
 	}
 
-	form.PopulateK8sOptionsFromQueryParams(vals, app.Repo.Cluster)
+	form.PopulateK8sOptionsFromQueryParams(vals, app.Repo.Cluster())
 
 	// validate the form
 	if err := app.validator.Struct(form); err != nil {
@@ -376,7 +376,7 @@ func (app *App) HandleUpdateConfigMap(w http.ResponseWriter, r *http.Request) {
 		},
 	}
 
-	form.PopulateK8sOptionsFromQueryParams(vals, app.Repo.Cluster)
+	form.PopulateK8sOptionsFromQueryParams(vals, app.Repo.Cluster())
 
 	// validate the form
 	if err := app.validator.Struct(form); err != nil {
@@ -477,7 +477,7 @@ func (app *App) HandleGetPodLogs(w http.ResponseWriter, r *http.Request) {
 		},
 	}
 
-	form.PopulateK8sOptionsFromQueryParams(vals, app.Repo.Cluster)
+	form.PopulateK8sOptionsFromQueryParams(vals, app.Repo.Cluster())
 
 	// validate the form
 	if err := app.validator.Struct(form); err != nil {
@@ -532,7 +532,7 @@ func (app *App) HandleDeletePod(w http.ResponseWriter, r *http.Request) {
 		},
 	}
 
-	form.PopulateK8sOptionsFromQueryParams(vals, app.Repo.Cluster)
+	form.PopulateK8sOptionsFromQueryParams(vals, app.Repo.Cluster())
 
 	// validate the form
 	if err := app.validator.Struct(form); err != nil {
@@ -590,7 +590,7 @@ func (app *App) HandleGetIngress(w http.ResponseWriter, r *http.Request) {
 		},
 	}
 
-	form.PopulateK8sOptionsFromQueryParams(vals, app.Repo.Cluster)
+	form.PopulateK8sOptionsFromQueryParams(vals, app.Repo.Cluster())
 
 	// validate the form
 	if err := app.validator.Struct(form); err != nil {
@@ -647,7 +647,7 @@ func (app *App) HandleListPods(w http.ResponseWriter, r *http.Request) {
 		},
 	}
 
-	form.PopulateK8sOptionsFromQueryParams(vals, app.Repo.Cluster)
+	form.PopulateK8sOptionsFromQueryParams(vals, app.Repo.Cluster())
 
 	// validate the form
 	if err := app.validator.Struct(form); err != nil {
@@ -707,7 +707,7 @@ func (app *App) HandleListJobsByChart(w http.ResponseWriter, r *http.Request) {
 		},
 	}
 
-	form.PopulateK8sOptionsFromQueryParams(vals, app.Repo.Cluster)
+	form.PopulateK8sOptionsFromQueryParams(vals, app.Repo.Cluster())
 
 	// validate the form
 	if err := app.validator.Struct(form); err != nil {
@@ -764,7 +764,7 @@ func (app *App) HandleStopJob(w http.ResponseWriter, r *http.Request) {
 		},
 	}
 
-	form.PopulateK8sOptionsFromQueryParams(vals, app.Repo.Cluster)
+	form.PopulateK8sOptionsFromQueryParams(vals, app.Repo.Cluster())
 
 	// validate the form
 	if err := app.validator.Struct(form); err != nil {
@@ -813,7 +813,7 @@ func (app *App) HandleListJobPods(w http.ResponseWriter, r *http.Request) {
 		},
 	}
 
-	form.PopulateK8sOptionsFromQueryParams(vals, app.Repo.Cluster)
+	form.PopulateK8sOptionsFromQueryParams(vals, app.Repo.Cluster())
 
 	// validate the form
 	if err := app.validator.Struct(form); err != nil {
@@ -870,7 +870,7 @@ func (app *App) HandleStreamControllerStatus(w http.ResponseWriter, r *http.Requ
 		},
 	}
 
-	form.PopulateK8sOptionsFromQueryParams(vals, app.Repo.Cluster)
+	form.PopulateK8sOptionsFromQueryParams(vals, app.Repo.Cluster())
 
 	// validate the form
 	if err := app.validator.Struct(form); err != nil {
@@ -923,7 +923,7 @@ func (app *App) HandleDetectPrometheusInstalled(w http.ResponseWriter, r *http.R
 		},
 	}
 
-	form.PopulateK8sOptionsFromQueryParams(vals, app.Repo.Cluster)
+	form.PopulateK8sOptionsFromQueryParams(vals, app.Repo.Cluster())
 
 	// validate the form
 	if err := app.validator.Struct(form); err != nil {
@@ -969,7 +969,7 @@ func (app *App) HandleListNGINXIngresses(w http.ResponseWriter, r *http.Request)
 		},
 	}
 
-	form.PopulateK8sOptionsFromQueryParams(vals, app.Repo.Cluster)
+	form.PopulateK8sOptionsFromQueryParams(vals, app.Repo.Cluster())
 
 	// validate the form
 	if err := app.validator.Struct(form); err != nil {
@@ -1020,7 +1020,7 @@ func (app *App) HandleGetPodMetrics(w http.ResponseWriter, r *http.Request) {
 		QueryOpts: &prometheus.QueryOpts{},
 	}
 
-	form.K8sForm.PopulateK8sOptionsFromQueryParams(vals, app.Repo.Cluster)
+	form.K8sForm.PopulateK8sOptionsFromQueryParams(vals, app.Repo.Cluster())
 
 	// decode from JSON to form value
 	decoder := schema.NewDecoder()
@@ -1089,7 +1089,7 @@ func (app *App) HandleGetTemporaryKubeconfig(w http.ResponseWriter, r *http.Requ
 		},
 	}
 
-	form.PopulateK8sOptionsFromQueryParams(vals, app.Repo.Cluster)
+	form.PopulateK8sOptionsFromQueryParams(vals, app.Repo.Cluster())
 
 	// get the API config
 	apiConf, err := form.OutOfClusterConfig.CreateRawConfigFromCluster()

@@ -23,13 +23,13 @@ func TestCreateInfra(t *testing.T) {
 		Status:    models.StatusCreated,
 	}
 
-	infra, err := tester.repo.Infra.CreateInfra(infra)
+	infra, err := tester.repo.Infra().CreateInfra(infra)
 
 	if err != nil {
 		t.Fatalf("%v\n", err)
 	}
 
-	infra, err = tester.repo.Infra.ReadInfra(infra.Model.ID)
+	infra, err = tester.repo.Infra().ReadInfra(infra.Model.ID)
 
 	if err != nil {
 		t.Fatalf("%v\n", err)
@@ -59,7 +59,7 @@ func TestListInfrasByProjectID(t *testing.T) {
 	initInfra(tester, t)
 	defer cleanup(tester, t)
 
-	infras, err := tester.repo.Infra.ListInfrasByProjectID(
+	infras, err := tester.repo.Infra().ListInfrasByProjectID(
 		tester.initProjects[0].Model.ID,
 	)
 

@@ -100,7 +100,7 @@ func GetAgentTesting(objects ...runtime.Object) *Agent {
 // This implements RESTClientGetter
 type OutOfClusterConfig struct {
 	Cluster          *models.Cluster
-	Repo             *repository.Repository
+	Repo             repository.Repository
 	DefaultNamespace string // optional
 
 	// Only required if using DigitalOcean OAuth as an auth mechanism
@@ -180,7 +180,7 @@ func (conf *OutOfClusterConfig) GetClientConfigFromCluster() (clientcmd.ClientCo
 	}
 
 	if conf.Cluster.AuthMechanism == models.Local {
-		kubeAuth, err := conf.Repo.KubeIntegration.ReadKubeIntegration(
+		kubeAuth, err := conf.Repo.KubeIntegration().ReadKubeIntegration(
 			conf.Cluster.KubeIntegrationID,
 		)
 
@@ -241,7 +241,7 @@ func (conf *OutOfClusterConfig) CreateRawConfigFromCluster() (*api.Config, error
 
 	switch cluster.AuthMechanism {
 	case models.X509:
-		kubeAuth, err := conf.Repo.KubeIntegration.ReadKubeIntegration(
+		kubeAuth, err := conf.Repo.KubeIntegration().ReadKubeIntegration(
 			cluster.KubeIntegrationID,
 		)
 
@@ -252,7 +252,7 @@ func (conf *OutOfClusterConfig) CreateRawConfigFromCluster() (*api.Config, error
 		authInfoMap[authInfoName].ClientCertificateData = kubeAuth.ClientCertificateData
 		authInfoMap[authInfoName].ClientKeyData = kubeAuth.ClientKeyData
 	case models.Basic:
-		kubeAuth, err := conf.Repo.KubeIntegration.ReadKubeIntegration(
+		kubeAuth, err := conf.Repo.KubeIntegration().ReadKubeIntegration(
 			cluster.KubeIntegrationID,
 		)
 
@@ -263,7 +263,7 @@ func (conf *OutOfClusterConfig) CreateRawConfigFromCluster() (*api.Config, error
 		authInfoMap[authInfoName].Username = string(kubeAuth.Username)
 		authInfoMap[authInfoName].Password = string(kubeAuth.Password)
 	case models.Bearer:
-		kubeAuth, err := conf.Repo.KubeIntegration.ReadKubeIntegration(
+		kubeAuth, err := conf.Repo.KubeIntegration().ReadKubeIntegration(
 			cluster.KubeIntegrationID,
 		)
 
@@ -273,7 +273,7 @@ func (conf *OutOfClusterConfig) CreateRawConfigFromCluster() (*api.Config, error
 
 		authInfoMap[authInfoName].Token = string(kubeAuth.Token)
 	case models.OIDC:
-		oidcAuth, err := conf.Repo.OIDCIntegration.ReadOIDCIntegration(
+		oidcAuth, err := conf.Repo.OIDCIntegration().ReadOIDCIntegration(
 			cluster.OIDCIntegrationID,
 		)
 
@@ -293,7 +293,7 @@ func (conf *OutOfClusterConfig) CreateRawConfigFromCluster() (*api.Config, error
 			},
 		}
 	case models.GCP:
-		gcpAuth, err := conf.Repo.GCPIntegration.ReadGCPIntegration(
+		gcpAuth, err := conf.Repo.GCPIntegration().ReadGCPIntegration(
 			cluster.GCPIntegrationID,
 		)
 
@@ -314,7 +314,7 @@ func (conf *OutOfClusterConfig) CreateRawConfigFromCluster() (*api.Config, error
 		// add this as a bearer token
 		authInfoMap[authInfoName].Token = tok
 	case models.AWS:
-		awsAuth, err := conf.Repo.AWSIntegration.ReadAWSIntegration(
+		awsAuth, err := conf.Repo.AWSIntegration().ReadAWSIntegration(
 			cluster.AWSIntegrationID,
 		)
 
@@ -331,7 +331,7 @@ func (conf *OutOfClusterConfig) CreateRawConfigFromCluster() (*api.Config, error
 		// add this as a bearer token
 		authInfoMap[authInfoName].Token = tok
 	case models.DO:
-		oauthInt, err := conf.Repo.OAuthIntegration.ReadOAuthIntegration(
+		oauthInt, err := conf.Repo.OAuthIntegration().ReadOAuthIntegration(
 			cluster.DOIntegrationID,
 		)
 
@@ -339,7 +339,7 @@ func (conf *OutOfClusterConfig) CreateRawConfigFromCluster() (*api.Config, error
 			return nil, err
 		}
 
-		tok, _, err := oauth.GetAccessToken(oauthInt, conf.DigitalOceanOAuth, *conf.Repo)
+		tok, _, err := oauth.GetAccessToken(oauthInt, conf.DigitalOceanOAuth, conf.Repo)
 
 		if err != nil {
 			return nil, err
@@ -373,7 +373,7 @@ func (conf *OutOfClusterConfig) getTokenCache() (tok *ints.TokenCache, err error
 }
 
 func (conf *OutOfClusterConfig) setTokenCache(token string, expiry time.Time) error {
-	_, err := conf.Repo.Cluster.UpdateClusterTokenCache(
+	_, err := conf.Repo.Cluster().UpdateClusterTokenCache(
 		&ints.ClusterTokenCache{
 			ClusterID: conf.Cluster.ID,
 			TokenCache: ints.TokenCache{

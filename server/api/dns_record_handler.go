@@ -30,7 +30,7 @@ func (app *App) HandleCreateDNSRecord(w http.ResponseWriter, r *http.Request) {
 		},
 	}
 
-	form.PopulateK8sOptionsFromQueryParams(vals, app.Repo.Cluster)
+	form.PopulateK8sOptionsFromQueryParams(vals, app.Repo.Cluster())
 
 	if err := json.NewDecoder(r.Body).Decode(form); err != nil {
 		app.handleErrorFormDecoding(err, ErrUserDecode, w)
@@ -67,7 +67,7 @@ func (app *App) HandleCreateDNSRecord(w http.ResponseWriter, r *http.Request) {
 
 	record := createDomain.NewDNSRecordForEndpoint()
 
-	record, err = app.Repo.DNSRecord.CreateDNSRecord(record)
+	record, err = app.Repo.DNSRecord().CreateDNSRecord(record)
 
 	if err != nil {
 		app.handleErrorDataWrite(err, w)

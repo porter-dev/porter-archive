@@ -26,7 +26,7 @@ type PGStore struct {
 	Codecs  []securecookie.Codec
 	Options *sessions.Options
 	Path    string
-	Repo    *repository.Repository
+	Repo    repository.Repository
 }
 
 // Helpers
@@ -60,7 +60,7 @@ func (store *PGStore) MaxAge(age int) {
 // load fetches a session by ID from the database and decodes its content
 // into session.Values.
 func (store *PGStore) load(session *sessions.Session) error {
-	res, err := store.Repo.Session.SelectSession(&models.Session{Key: session.ID})
+	res, err := store.Repo.Session().SelectSession(&models.Session{Key: session.ID})
 
 	if err != nil {
 		return err
@@ -99,18 +99,18 @@ func (store *PGStore) save(session *sessions.Session) error {
 	repo := store.Repo
 
 	if session.IsNew {
-		_, createErr := repo.Session.CreateSession(s)
+		_, createErr := repo.Session().CreateSession(s)
 		return createErr
 	}
 
-	_, updateErr := repo.Session.UpdateSession(s)
+	_, updateErr := repo.Session().UpdateSession(s)
 	return updateErr
 }
 
 // Implementation of the interface (Get, New, Save)
 
 // NewStore takes an initialized db and session key pairs to create a session-store in postgres db.
-func NewStore(repo *repository.Repository, conf config.ServerConf) (*PGStore, error) {
+func NewStore(repo repository.Repository, conf config.ServerConf) (*PGStore, error) {
 	keyPairs := [][]byte{}
 
 	for _, key := range conf.CookieSecrets {
@@ -190,7 +190,7 @@ func (store *PGStore) Save(r *http.Request, w http.ResponseWriter, session *sess
 
 	// Set delete if max-age is < 0
 	if session.Options.MaxAge < 0 {
-		if _, err := repo.Session.DeleteSession(&models.Session{Key: session.ID}); err != nil {
+		if _, err := repo.Session().DeleteSession(&models.Session{Key: session.ID}); err != nil {
 			return err
 		}
 		http.SetCookie(w, sessions.NewCookie(session.Name(), "", session.Options))

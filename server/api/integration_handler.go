@@ -106,7 +106,7 @@ func (app *App) HandleCreateGCPIntegration(w http.ResponseWriter, r *http.Reques
 	}
 
 	// handle write to the database
-	gcp, err = app.Repo.GCPIntegration.CreateGCPIntegration(gcp)
+	gcp, err = app.Repo.GCPIntegration().CreateGCPIntegration(gcp)
 
 	if err != nil {
 		app.handleErrorDataWrite(err, w)
@@ -167,7 +167,7 @@ func (app *App) HandleCreateAWSIntegration(w http.ResponseWriter, r *http.Reques
 	}
 
 	// handle write to the database
-	aws, err = app.Repo.AWSIntegration.CreateAWSIntegration(aws)
+	aws, err = app.Repo.AWSIntegration().CreateAWSIntegration(aws)
 
 	if err != nil {
 		app.handleErrorDataWrite(err, w)
@@ -228,7 +228,7 @@ func (app *App) HandleCreateBasicAuthIntegration(w http.ResponseWriter, r *http.
 	}
 
 	// handle write to the database
-	basic, err = app.Repo.BasicIntegration.CreateBasicIntegration(basic)
+	basic, err = app.Repo.BasicIntegration().CreateBasicIntegration(basic)
 
 	if err != nil {
 		app.handleErrorDataWrite(err, w)
@@ -256,7 +256,7 @@ func (app *App) HandleListProjectOAuthIntegrations(w http.ResponseWriter, r *htt
 		return
 	}
 
-	oauthInts, err := app.Repo.OAuthIntegration.ListOAuthIntegrationsByProjectID(uint(projID))
+	oauthInts, err := app.Repo.OAuthIntegration().ListOAuthIntegrationsByProjectID(uint(projID))
 
 	if err != nil {
 		app.handleErrorDataRead(err, w)

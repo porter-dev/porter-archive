@@ -44,7 +44,7 @@ func (app *App) HandleCreateProjectCluster(w http.ResponseWriter, r *http.Reques
 	}
 
 	// handle write to the database
-	cluster, err = app.Repo.Cluster.CreateCluster(cluster)
+	cluster, err = app.Repo.Cluster().CreateCluster(cluster)
 
 	if err != nil {
 		app.handleErrorDataWrite(err, w)
@@ -72,7 +72,7 @@ func (app *App) HandleReadProjectCluster(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	cluster, err := app.Repo.Cluster.ReadCluster(uint(id))
+	cluster, err := app.Repo.Cluster().ReadCluster(uint(id))
 
 	if err != nil {
 		app.handleErrorRead(err, ErrProjectDataRead, w)
@@ -98,7 +98,7 @@ func (app *App) HandleListProjectClusters(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	clusters, err := app.Repo.Cluster.ListClustersByProjectID(uint(projID))
+	clusters, err := app.Repo.Cluster().ListClustersByProjectID(uint(projID))
 
 	if err != nil {
 		app.handleErrorRead(err, ErrProjectDataRead, w)
@@ -152,7 +152,7 @@ func (app *App) HandleUpdateProjectCluster(w http.ResponseWriter, r *http.Reques
 	}
 
 	// convert the form to a registry
-	cluster, err := form.ToCluster(app.Repo.Cluster)
+	cluster, err := form.ToCluster(app.Repo.Cluster())
 
 	if err != nil {
 		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
@@ -160,7 +160,7 @@ func (app *App) HandleUpdateProjectCluster(w http.ResponseWriter, r *http.Reques
 	}
 
 	// handle write to the database
-	cluster, err = app.Repo.Cluster.UpdateCluster(cluster)
+	cluster, err = app.Repo.Cluster().UpdateCluster(cluster)
 
 	if err != nil {
 		app.handleErrorDataWrite(err, w)
@@ -186,14 +186,14 @@ func (app *App) HandleDeleteProjectCluster(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	cluster, err := app.Repo.Cluster.ReadCluster(uint(id))
+	cluster, err := app.Repo.Cluster().ReadCluster(uint(id))
 
 	if err != nil {
 		app.handleErrorRead(err, ErrProjectDataRead, w)
 		return
 	}
 
-	err = app.Repo.Cluster.DeleteCluster(cluster)
+	err = app.Repo.Cluster().DeleteCluster(cluster)
 
 	if err != nil {
 		app.handleErrorRead(err, ErrProjectDataRead, w)
@@ -250,7 +250,7 @@ func (app *App) HandleCreateProjectClusterCandidates(w http.ResponseWriter, r *h
 
 	for _, cc := range ccs {
 		// handle write to the database
-		cc, err = app.Repo.Cluster.CreateClusterCandidate(cc)
+		cc, err = app.Repo.Cluster().CreateClusterCandidate(cc)
 
 		if err != nil {
 			app.handleErrorDataWrite(err, w)
@@ -263,7 +263,7 @@ func (app *App) HandleCreateProjectClusterCandidates(w http.ResponseWriter, r *h
 		// automatically
 		if len(cc.Resolvers) == 0 {
 			// we query the repo again to get the decrypted version of the cluster candidate
-			cc, err = app.Repo.Cluster.ReadClusterCandidate(cc.ID)
+			cc, err = app.Repo.Cluster().ReadClusterCandidate(cc.ID)
 
 			if err != nil {
 				app.handleErrorDataRead(err, w)
@@ -277,21 +277,21 @@ func (app *App) HandleCreateProjectClusterCandidates(w http.ResponseWriter, r *h
 				UserID:             userID,
 			}
 
-			err := clusterForm.ResolveIntegration(*app.Repo)
+			err := clusterForm.ResolveIntegration(app.Repo)
 
 			if err != nil {
 				app.handleErrorDataWrite(err, w)
 				return
 			}
 
-			cluster, err := clusterForm.ResolveCluster(*app.Repo)
+			cluster, err := clusterForm.ResolveCluster(app.Repo)
 
 			if err != nil {
 				app.handleErrorDataWrite(err, w)
 				return
 			}
 
-			cc, err = app.Repo.Cluster.UpdateClusterCandidateCreatedClusterID(cc.ID, cluster.ID)
+			cc, err = app.Repo.Cluster().UpdateClusterCandidateCreatedClusterID(cc.ID, cluster.ID)
 
 			if err != nil {
 				app.handleErrorDataWrite(err, w)
@@ -322,7 +322,7 @@ func (app *App) HandleListProjectClusterCandidates(w http.ResponseWriter, r *htt
 		return
 	}
 
-	ccs, err := app.Repo.Cluster.ListClusterCandidatesByProjectID(uint(projID))
+	ccs, err := app.Repo.Cluster().ListClusterCandidatesByProjectID(uint(projID))
 
 	if err != nil {
 		app.handleErrorRead(err, ErrProjectDataRead, w)
@@ -385,21 +385,21 @@ func (app *App) HandleResolveClusterCandidate(w http.ResponseWriter, r *http.Req
 		UserID:             userID,
 	}
 
-	err = clusterResolver.ResolveIntegration(*app.Repo)
+	err = clusterResolver.ResolveIntegration(app.Repo)
 
 	if err != nil {
 		app.handleErrorDataWrite(err, w)
 		return
 	}
 
-	cluster, err := clusterResolver.ResolveCluster(*app.Repo)
+	cluster, err := clusterResolver.ResolveCluster(app.Repo)
 
 	if err != nil {
 		app.handleErrorDataWrite(err, w)
 		return
 	}
 
-	_, err = app.Repo.Cluster.UpdateClusterCandidateCreatedClusterID(uint(candID), cluster.ID)
+	_, err = app.Repo.Cluster().UpdateClusterCandidateCreatedClusterID(uint(candID), cluster.ID)
 
 	if err != nil {
 		app.handleErrorDataWrite(err, w)

@@ -38,7 +38,7 @@ type TestAgents struct {
 type AppConfig struct {
 	DB         *gorm.DB
 	Logger     *lr.Logger
-	Repository *repository.Repository
+	Repository repository.Repository
 	ServerConf config.ServerConf
 	RedisConf  *config.RedisConf
 	DBConf     config.DBConf
@@ -58,7 +58,7 @@ type App struct {
 	Logger *lr.Logger
 
 	// Repo implements a query repository
-	Repo *repository.Repository
+	Repo repository.Repository
 
 	// session store for cookie-based sessions
 	Store sessions.Store

@@ -45,7 +45,7 @@ func (app *App) HandleCreateProject(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// convert the form to a project model
-	projModel, err := form.ToProject(app.Repo.Project)
+	projModel, err := form.ToProject(app.Repo.Project())
 
 	if err != nil {
 		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
@@ -53,7 +53,7 @@ func (app *App) HandleCreateProject(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// handle write to the database
-	projModel, err = app.Repo.Project.CreateProject(projModel)
+	projModel, err = app.Repo.Project().CreateProject(projModel)
 
 	if err != nil {
 		app.handleErrorDataWrite(err, w)
@@ -61,7 +61,7 @@ func (app *App) HandleCreateProject(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// create a new Role with the user as the admin
-	_, err = app.Repo.Project.CreateProjectRole(projModel, &models.Role{
+	_, err = app.Repo.Project().CreateProjectRole(projModel, &models.Role{
 		Role: types.Role{
 			UserID:    userID,
 			ProjectID: projModel.ID,
@@ -96,7 +96,7 @@ func (app *App) HandleReadProject(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	proj, err := app.Repo.Project.ReadProject(uint(id))
+	proj, err := app.Repo.Project().ReadProject(uint(id))
 
 	if err != nil {
 		app.handleErrorRead(err, ErrProjectDataRead, w)
@@ -123,14 +123,14 @@ func (app *App) HandleDeleteProject(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	proj, err := app.Repo.Project.ReadProject(uint(id))
+	proj, err := app.Repo.Project().ReadProject(uint(id))
 
 	if err != nil {
 		app.handleErrorRead(err, ErrProjectDataRead, w)
 		return
 	}
 
-	proj, err = app.Repo.Project.DeleteProject(proj)
+	proj, err = app.Repo.Project().DeleteProject(proj)
 
 	if err != nil {
 		app.handleErrorRead(err, ErrProjectDataRead, w)

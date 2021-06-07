@@ -5,15 +5,17 @@ import { Context } from "shared/Context";
 import TabSelector from "components/TabSelector";
 
 import NodeList from "./NodeList";
+import { ClusterSettings } from "./ClusterSettings";
 
 
-type TabEnum = "nodes";
+type TabEnum = "nodes" | "settings";
 
 const tabOptions: {
   label: string;
   value: TabEnum
 }[] = [
   { label: "Nodes", value: "nodes" },
+  { label: "Settings", value: "settings"}
 ];
 
 export const Dashboard: React.FC = ({ children }) => {
@@ -21,6 +23,8 @@ export const Dashboard: React.FC = ({ children }) => {
   const context = useContext(Context);
   const renderTab = (cluster: any) => {
     switch (currentTab) {
+      case "settings": 
+        return <ClusterSettings />
       case "nodes":
       default:
         return <NodeList />;

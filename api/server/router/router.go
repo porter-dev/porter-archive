@@ -4,6 +4,8 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi"
+	"github.com/porter-dev/porter/api/server/authn"
+	"github.com/porter-dev/porter/api/server/authz"
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/types"
 )
@@ -26,7 +28,7 @@ func NewAPIRouter(config *shared.Config) *chi.Mux {
 			userRegisterer.Children...,
 		)
 
-		registerRoutes(userRoutes)
+		registerRoutes(config, userRoutes)
 	})
 
 	return r
@@ -50,8 +52,26 @@ type Registerer struct {
 	Children []*Registerer
 }
 
-func registerRoutes(routes []*Route) {
+func registerRoutes(config *shared.Config, routes []*Route) {
+	// Create a new "user-scoped" factory which will create a new user-scoped request
+	// after authentication. Each subsequent http.Handler can lookup the user in context.
+	authNFactory := authn.NewAuthNFactory(config)
+
+	// Create a new "project-scoped" factory which will create a new project-scoped request
+	// after authorization. Each subsequent http.Handler can lookup the project in context.
+	projFactory := authz.NewProjectScopedFactory(config)
+
 	for _, route := range routes {
+		atomicGroup := route.Router.Group(nil)
+
+		for _, scope := range route.Endpoint.Metadata.Scopes {
+			switch scope {
+			case types.UserScope:
+				atomicGroup.Use(authNFactory.NewAuthenticated)
+			case types.ProjectScope:
+				atomicGroup.Use(projFactory.Middleware)
+			}
+		}
 		route.Router.Method(
 			string(route.Endpoint.Metadata.Method),
 			route.Endpoint.Metadata.Path.RelativePath,

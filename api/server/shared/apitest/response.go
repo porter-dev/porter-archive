@@ -56,3 +56,15 @@ func AssertResponseInternalServerError(t *testing.T, rr *httptest.ResponseRecord
 	assert.Equal(t, http.StatusInternalServerError, rr.Result().StatusCode, "status code should be internal server error")
 	assert.Equal(t, expReqErr, reqErr, "body should be internal server error")
 }
+
+func AssertResponseError(t *testing.T, rr *httptest.ResponseRecorder, statusCode int, expReqErr *types.ExternalError) {
+	reqErr := &types.ExternalError{}
+	err := json.NewDecoder(rr.Result().Body).Decode(reqErr)
+
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	assert.Equal(t, statusCode, rr.Result().StatusCode, "status code should match")
+	assert.Equal(t, expReqErr, reqErr, "body should be internal server error")
+}

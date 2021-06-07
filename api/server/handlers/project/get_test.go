@@ -22,7 +22,7 @@ func TestGetProjectSuccessful(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	req, rr := apitest.GetRequestAndRecorder(t, nil)
+	req, rr := apitest.GetRequestAndRecorder(t, string(types.HTTPVerbPost), "/api/projects/1", nil)
 
 	req = apitest.WithAuthenticatedUser(t, req, user)
 	req = apitest.WithProject(t, req, proj)

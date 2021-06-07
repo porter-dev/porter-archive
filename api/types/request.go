@@ -30,6 +30,15 @@ const (
 	HTTPVerbDelete HTTPVerb = "DELETE"
 )
 
+type URLParam string
+
+const (
+	URLParamProjectID   URLParam = "project_id"
+	URLParamClusterID   URLParam = "cluster_id"
+	URLParamNamespace   URLParam = "namespace"
+	URLParamApplication URLParam = "application"
+)
+
 type Path struct {
 	Parent       *Path
 	RelativePath string
@@ -39,4 +48,5 @@ type APIRequestMetadata struct {
 	Verb   APIVerb
 	Method HTTPVerb
 	Path   *Path
+	Scopes []PermissionScope
 }

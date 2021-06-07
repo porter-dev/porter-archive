@@ -9,6 +9,7 @@ import (
 	"github.com/go-chi/chi"
 	"github.com/porter-dev/porter/api/server/authz"
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
+	"github.com/porter-dev/porter/api/server/shared/apitest"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -55,16 +56,7 @@ func TestGetURLUintParamsErrors(t *testing.T) {
 		r := httptest.NewRequest("POST", test.route, nil)
 
 		// set the context for testing
-		rctx := chi.NewRouteContext()
-		routeParams := &chi.RouteParams{}
-
-		for key, val := range test.routeParams {
-			routeParams.Add(key, val)
-		}
-
-		rctx.URLParams = *routeParams
-
-		r = r.WithContext(context.WithValue(r.Context(), chi.RouteCtxKey, rctx))
+		r = apitest.WithURLParams(t, r, test.routeParams)
 
 		_, err := authz.GetURLParamUint(r, test.paramReq)
 

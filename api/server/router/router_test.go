@@ -13,7 +13,7 @@ import (
 func TestRouter(t *testing.T) {
 	walkFunc := func(method string, route string, handler http.Handler, middlewares ...func(http.Handler) http.Handler) error {
 		route = strings.Replace(route, "/*/", "/", -1)
-		t.Errorf("%s %s\n", method, route)
+		t.Errorf("%s %s %d\n", method, route, len(middlewares))
 		return nil
 	}
 

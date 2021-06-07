@@ -33,6 +33,7 @@ export type TableProps = {
   data: any[];
   onRowClick?: (row: Row) => void;
   isLoading: boolean;
+  disableGlobalFilter?: boolean;
 };
 
 const Table: React.FC<TableProps> = ({
@@ -40,6 +41,7 @@ const Table: React.FC<TableProps> = ({
   data,
   onRowClick,
   isLoading,
+  disableGlobalFilter = false,
 }) => {
   const {
     getTableProps,
@@ -100,7 +102,7 @@ const Table: React.FC<TableProps> = ({
 
   return (
     <TableWrapper>
-      <GlobalFilter setGlobalFilter={setGlobalFilter} />
+      {!disableGlobalFilter && <GlobalFilter setGlobalFilter={setGlobalFilter} />}
       <StyledTable {...getTableProps()}>
         <StyledTHead>
           {headerGroups.map((headerGroup) => (

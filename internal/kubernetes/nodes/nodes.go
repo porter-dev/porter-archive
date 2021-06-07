@@ -21,13 +21,14 @@ type NodeUsage struct {
 }
 
 type NodeWithUsageData struct {
-	Name                           string  `json:"name"`
-	FractionCpuReqs                float64 `json:"cpu_reqs"`
-	FractionCpuLimits              float64 `json:"cpu_limits"`
-	FractionMemoryReqs             float64 `json:"memory_reqs"`
-	FractionMemoryLimits           float64 `json:"memory_limits"`
-	FractionEphemeralStorageReqs   float64 `json:"ephemeral_storage_reqs"`
-	FractionEphemeralStorageLimits float64 `json:"ephemeral_storage_limits"`
+	Name                           string             `json:"name"`
+	FractionCpuReqs                float64            `json:"cpu_reqs"`
+	FractionCpuLimits              float64            `json:"cpu_limits"`
+	FractionMemoryReqs             float64            `json:"memory_reqs"`
+	FractionMemoryLimits           float64            `json:"memory_limits"`
+	FractionEphemeralStorageReqs   float64            `json:"ephemeral_storage_reqs"`
+	FractionEphemeralStorageLimits float64            `json:"ephemeral_storage_limits"`
+	Condition                      []v1.NodeCondition `json:"node_conditions"`
 }
 
 func (nu *NodeUsage) Externalize(node v1.Node) *NodeWithUsageData {
@@ -39,6 +40,7 @@ func (nu *NodeUsage) Externalize(node v1.Node) *NodeWithUsageData {
 		FractionMemoryLimits:           nu.fractionMemoryLimits,
 		FractionEphemeralStorageReqs:   nu.fractionEphemeralStorageReqs,
 		FractionEphemeralStorageLimits: nu.fractionEphemeralStorageLimits,
+		Condition:                      node.Status.Conditions,
 	}
 }
 
@@ -47,15 +49,17 @@ func GetNodesUsage(clientset kubernetes.Interface) []*NodeWithUsageData {
 
 	extNodeList := make([]*NodeWithUsageData, len(nodeList.Items))
 	var wg sync.WaitGroup
-	for i, node := range nodeList.Items {
+	for i := range nodeList.Items {
+		index := i
+		currentNode := &nodeList.Items[index]
 		wg.Add(1)
-		go func(index int, currentNode *v1.Node) {
+		go func() {
 			defer wg.Done()
 			podList := getPodsForNode(clientset, currentNode.Name)
 			nodeUsage := DescribeNodeResource(podList, currentNode)
 
 			extNodeList[index] = nodeUsage.Externalize(*currentNode)
-		}(i, &node)
+		}()
 	}
 	wg.Wait()
 

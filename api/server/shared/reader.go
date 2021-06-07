@@ -19,9 +19,10 @@ type DefaultRequestDecoderValidator struct {
 
 func NewDefaultRequestDecoderValidator(
 	config *Config,
-	validator requestutils.Validator,
-	decoder requestutils.Decoder,
 ) RequestDecoderValidator {
+	validator := requestutils.NewDefaultValidator()
+	decoder := requestutils.NewDefaultDecoder()
+
 	return &DefaultRequestDecoderValidator{config, validator, decoder}
 }
 

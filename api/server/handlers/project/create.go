@@ -39,15 +39,30 @@ func (p *ProjectCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 		Name: request.Name,
 	}
 
-	proj, err := p.config.Repo.Project().CreateProject(proj)
+	var err error
+	proj, err = CreateProjectWithUser(p.config, proj, user)
 
 	if err != nil {
 		apierrors.HandleAPIError(w, p.config.Logger, apierrors.NewErrInternal(err))
 		return
 	}
 
+	p.writer.WriteResult(w, proj.ToProjectType())
+}
+
+func CreateProjectWithUser(
+	config *shared.Config,
+	proj *models.Project,
+	user *models.User,
+) (*models.Project, error) {
+	proj, err := config.Repo.Project().CreateProject(proj)
+
+	if err != nil {
+		return nil, err
+	}
+
 	// create a new Role with the user as the admin
-	_, err = p.config.Repo.Project().CreateProjectRole(proj, &models.Role{
+	_, err = config.Repo.Project().CreateProjectRole(proj, &models.Role{
 		Role: types.Role{
 			UserID:    user.ID,
 			ProjectID: proj.ID,
@@ -56,17 +71,15 @@ func (p *ProjectCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 	})
 
 	if err != nil {
-		apierrors.HandleAPIError(w, p.config.Logger, apierrors.NewErrInternal(err))
-		return
+		return nil, err
 	}
 
 	// read the project again to get the model with the role attached
-	proj, err = p.config.Repo.Project().ReadProject(proj.ID)
+	proj, err = config.Repo.Project().ReadProject(proj.ID)
 
 	if err != nil {
-		apierrors.HandleAPIError(w, p.config.Logger, apierrors.NewErrInternal(err))
-		return
+		return nil, err
 	}
 
-	p.writer.WriteResult(w, proj.ToProjectType())
+	return proj, nil
 }

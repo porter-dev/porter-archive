@@ -13,16 +13,17 @@ import (
 )
 
 type TestConfigLoader struct {
-	canQuery bool
+	canQuery           bool
+	failingRepoMethods []string
 }
 
-func NewTestConfigLoader(canQuery bool) shared.ConfigLoader {
-	return &TestConfigLoader{canQuery}
+func NewTestConfigLoader(canQuery bool, failingRepoMethods ...string) shared.ConfigLoader {
+	return &TestConfigLoader{canQuery, failingRepoMethods}
 }
 
 func (t *TestConfigLoader) LoadConfig() (*shared.Config, error) {
 	l := logger.New(true, os.Stdout)
-	repo := test.NewRepository(t.canQuery)
+	repo := test.NewRepository(t.canQuery, t.failingRepoMethods...)
 	configFromEnv := config.FromEnv()
 	store, err := sessionstore.NewStore(repo, configFromEnv.Server)
 
@@ -43,8 +44,8 @@ func (t *TestConfigLoader) LoadConfig() (*shared.Config, error) {
 	}, nil
 }
 
-func LoadConfig(t *testing.T) *shared.Config {
-	configLoader := NewTestConfigLoader(true)
+func LoadConfig(t *testing.T, failingRepoMethods ...string) *shared.Config {
+	configLoader := NewTestConfigLoader(true, failingRepoMethods...)
 
 	config, err := configLoader.LoadConfig()
 

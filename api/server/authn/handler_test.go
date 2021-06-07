@@ -1,7 +1,6 @@
 package authn_test
 
 import (
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -201,22 +200,10 @@ func loadHandlers(t *testing.T) (*shared.Config, http.Handler, *testHandler) {
 func assertForbiddenError(t *testing.T, next *testHandler, rr *httptest.ResponseRecorder) {
 	assert := assert.New(t)
 
+	// first assert that that the next middleware was not called
 	assert.False(next.WasCalled, "next handler should not have been called")
-	assert.Equal(http.StatusForbidden, rr.Result().StatusCode, "status code should be forbidden")
 
-	// json error should be forbidden
-	reqErr := &types.ExternalError{}
-	err := json.NewDecoder(rr.Result().Body).Decode(reqErr)
-
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	expReqErr := &types.ExternalError{
-		Error: "Forbidden",
-	}
-
-	assert.Equal(expReqErr, reqErr, "body should be forbidden error")
+	apitest.AssertResponseForbidden(t, rr)
 }
 
 func assertNextHandlerCalled(

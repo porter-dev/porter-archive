@@ -1,63 +1,32 @@
 package project_test
 
 import (
-	"context"
-	"encoding/json"
-	"net/http"
-	"net/http/httptest"
-	"strings"
 	"testing"
 
 	"github.com/porter-dev/porter/api/server/handlers/project"
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/apitest"
-	"github.com/porter-dev/porter/api/server/shared/requestutils"
 	"github.com/porter-dev/porter/api/types"
-	"github.com/stretchr/testify/assert"
+	"github.com/porter-dev/porter/internal/repository/test"
 )
 
 func TestCreateProjectSuccessful(t *testing.T) {
-	// create request for create project
-	data, err := json.Marshal(&types.CreateProjectRequest{
+	req, rr := apitest.GetRequestAndRecorder(t, &types.CreateProjectRequest{
 		Name: "test-project",
 	})
 
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	req, err := http.NewRequest("POST", "/api/projects", strings.NewReader(string(data)))
-
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	rr := httptest.NewRecorder()
-
-	// attach authenticated user to context
 	config := apitest.LoadConfig(t)
-
 	user := apitest.CreateTestUser(t, config)
+	req = apitest.WithAuthenticatedUser(t, req, user)
 
-	ctx := req.Context()
-	ctx = context.WithValue(ctx, types.UserScope, user)
-
-	req = req.WithContext(ctx)
-
-	// create the project
 	handler := project.NewProjectCreateHandler(
 		config,
-		shared.NewDefaultRequestDecoderValidator(
-			config,
-			requestutils.NewDefaultValidator(),
-			requestutils.NewDefaultDecoder(),
-		),
+		shared.NewDefaultRequestDecoderValidator(config),
 		shared.NewDefaultResultWriter(config),
 	)
 
 	handler.ServeHTTP(rr, req)
 
-	// ensure the API response is correct
 	expProject := &types.CreateProjectResponse{
 		ID:   1,
 		Name: "test-project",
@@ -72,16 +41,85 @@ func TestCreateProjectSuccessful(t *testing.T) {
 
 	gotProject := &types.CreateProjectResponse{}
 
-	err = json.NewDecoder(rr.Body).Decode(gotProject)
+	apitest.AssertResponseExpected(t, rr, expProject, gotProject)
+}
 
-	if err != nil {
-		t.Fatal(err)
-	}
+func TestFailingDecoderValidator(t *testing.T) {
+	req, rr := apitest.GetRequestAndRecorder(t, &types.CreateProjectRequest{
+		Name: "test-project",
+	})
 
-	assert.Equal(
-		t,
-		expProject,
-		gotProject,
-		"incorrect response data",
+	config := apitest.LoadConfig(t)
+	user := apitest.CreateTestUser(t, config)
+	req = apitest.WithAuthenticatedUser(t, req, user)
+
+	handler := project.NewProjectCreateHandler(
+		config,
+		apitest.NewFailingDecoderValidator(config),
+		shared.NewDefaultResultWriter(config),
 	)
+
+	handler.ServeHTTP(rr, req)
+
+	apitest.AssertResponseInternalServerError(t, rr)
+}
+
+func TestFailingCreateMethod(t *testing.T) {
+	req, rr := apitest.GetRequestAndRecorder(t, &types.CreateProjectRequest{
+		Name: "test-project",
+	})
+
+	config := apitest.LoadConfig(t, test.CreateProjectMethod)
+	user := apitest.CreateTestUser(t, config)
+	req = apitest.WithAuthenticatedUser(t, req, user)
+
+	handler := project.NewProjectCreateHandler(
+		config,
+		shared.NewDefaultRequestDecoderValidator(config),
+		shared.NewDefaultResultWriter(config),
+	)
+
+	handler.ServeHTTP(rr, req)
+
+	apitest.AssertResponseInternalServerError(t, rr)
+}
+
+func TestFailingCreateRoleMethod(t *testing.T) {
+	req, rr := apitest.GetRequestAndRecorder(t, &types.CreateProjectRequest{
+		Name: "test-project",
+	})
+
+	config := apitest.LoadConfig(t, test.CreateProjectRoleMethod)
+	user := apitest.CreateTestUser(t, config)
+	req = apitest.WithAuthenticatedUser(t, req, user)
+
+	handler := project.NewProjectCreateHandler(
+		config,
+		shared.NewDefaultRequestDecoderValidator(config),
+		shared.NewDefaultResultWriter(config),
+	)
+
+	handler.ServeHTTP(rr, req)
+
+	apitest.AssertResponseInternalServerError(t, rr)
+}
+
+func TestFailingReadMethod(t *testing.T) {
+	req, rr := apitest.GetRequestAndRecorder(t, &types.CreateProjectRequest{
+		Name: "test-project",
+	})
+
+	config := apitest.LoadConfig(t, test.ReadProjectMethod)
+	user := apitest.CreateTestUser(t, config)
+	req = apitest.WithAuthenticatedUser(t, req, user)
+
+	handler := project.NewProjectCreateHandler(
+		config,
+		shared.NewDefaultRequestDecoderValidator(config),
+		shared.NewDefaultResultWriter(config),
+	)
+
+	handler.ServeHTTP(rr, req)
+
+	apitest.AssertResponseInternalServerError(t, rr)
 }

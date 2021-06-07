@@ -1,7 +1,6 @@
 package shared
 
 import (
-	"github.com/porter-dev/porter/api/server/shared/requestutils"
 	"github.com/porter-dev/porter/api/types"
 )
 
@@ -23,10 +22,7 @@ type APIObjectEndpointFactory struct {
 }
 
 func NewAPIObjectEndpointFactory(config *Config) APIEndpointFactory {
-	validator := requestutils.NewDefaultValidator()
-	decoder := requestutils.NewDefaultDecoder()
-
-	decoderValidator := NewDefaultRequestDecoderValidator(config, validator, decoder)
+	decoderValidator := NewDefaultRequestDecoderValidator(config)
 	resultWriter := NewDefaultResultWriter(config)
 
 	return &APIObjectEndpointFactory{

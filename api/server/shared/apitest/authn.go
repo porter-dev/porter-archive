@@ -1,12 +1,14 @@
 package apitest
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
 	"github.com/porter-dev/porter/api/server/shared"
+	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/auth/token"
 	"github.com/porter-dev/porter/internal/models"
 )
@@ -70,4 +72,12 @@ func AuthenticateUserWithToken(t *testing.T, config *shared.Config, userID uint)
 	}
 
 	return res
+}
+
+func WithAuthenticatedUser(t *testing.T, req *http.Request, user *models.User) *http.Request {
+	ctx := req.Context()
+	ctx = context.WithValue(ctx, types.UserScope, user)
+	req = req.WithContext(ctx)
+
+	return req
 }

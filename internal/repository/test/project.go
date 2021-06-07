@@ -2,28 +2,37 @@ package test
 
 import (
 	"errors"
+	"strings"
 
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/repository"
 	"gorm.io/gorm"
 )
 
+const (
+	CreateProjectMethod        string = "create_project_0"
+	CreateProjectRoleMethod    string = "create_project_role_0"
+	ReadProjectMethod          string = "read_project_0"
+	ListProjectsByUserIDMethod string = "list_projects_by_user_id_0"
+)
+
 // ProjectRepository will return errors on queries if canQuery is false
 // and only stores a small set of projects in-memory that are indexed by their
 // array index + 1
 type ProjectRepository struct {
-	canQuery bool
-	projects []*models.Project
+	canQuery       bool
+	failingMethods string
+	projects       []*models.Project
 }
 
 // NewProjectRepository will return errors if canQuery is false
-func NewProjectRepository(canQuery bool) repository.ProjectRepository {
-	return &ProjectRepository{canQuery, []*models.Project{}}
+func NewProjectRepository(canQuery bool, failingMethods ...string) repository.ProjectRepository {
+	return &ProjectRepository{canQuery, strings.Join(failingMethods, ","), []*models.Project{}}
 }
 
 // CreateProject appends a new project to the in-memory projects array
 func (repo *ProjectRepository) CreateProject(project *models.Project) (*models.Project, error) {
-	if !repo.canQuery {
+	if !repo.canQuery || strings.Contains(repo.failingMethods, CreateProjectMethod) {
 		return nil, errors.New("Cannot write database")
 	}
 
@@ -35,7 +44,7 @@ func (repo *ProjectRepository) CreateProject(project *models.Project) (*models.P
 
 // CreateProjectRole appends a role to the existing array of roles
 func (repo *ProjectRepository) CreateProjectRole(project *models.Project, role *models.Role) (*models.Role, error) {
-	if !repo.canQuery {
+	if !repo.canQuery || strings.Contains(repo.failingMethods, CreateProjectRoleMethod) {
 		return nil, errors.New("Cannot write database")
 	}
 
@@ -75,7 +84,7 @@ func (repo *ProjectRepository) ReadProjectRole(userID, projID uint) (*models.Rol
 
 // ReadProject gets a projects specified by a unique id
 func (repo *ProjectRepository) ReadProject(id uint) (*models.Project, error) {
-	if !repo.canQuery {
+	if !repo.canQuery || strings.Contains(repo.failingMethods, ReadProjectMethod) {
 		return nil, errors.New("Cannot read from database")
 	}
 
@@ -89,7 +98,7 @@ func (repo *ProjectRepository) ReadProject(id uint) (*models.Project, error) {
 
 // ListProjectsByUserID lists projects where a user has an associated role
 func (repo *ProjectRepository) ListProjectsByUserID(userID uint) ([]*models.Project, error) {
-	if !repo.canQuery {
+	if !repo.canQuery || strings.Contains(repo.failingMethods, ListProjectsByUserIDMethod) {
 		return nil, errors.New("Cannot read from database")
 	}
 

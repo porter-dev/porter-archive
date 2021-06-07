@@ -7,12 +7,11 @@ import api from "shared/api";
 import { Context } from "shared/Context";
 import { NodeStatusModal } from "./NodeStatusModal";
 
-
 const NodeList: React.FC = () => {
   const context = useContext(Context);
   const [nodeList, setNodeList] = useState([]);
   const [loading, setLoading] = useState<boolean>(false);
-  const [selectedNode, setSelectedNode] = useState<any>(undefined)
+  const [selectedNode, setSelectedNode] = useState<any>(undefined);
 
   const triggerPopUp = (node?: any) => {
     if (node) {
@@ -20,8 +19,8 @@ const NodeList: React.FC = () => {
       return;
     }
 
-    setSelectedNode(undefined)
-  }
+    setSelectedNode(undefined);
+  };
 
   const columns = useMemo<Column<any>[]>(
     () => [
@@ -40,45 +39,60 @@ const NodeList: React.FC = () => {
       {
         Header: () => <StatusHeader>Node Condition</StatusHeader>,
         accessor: "is_node_healthy",
-        Cell: ({row}) => {
+        Cell: ({ row }) => {
           return (
-          <StatusButtonWrapper>
-            <StatusButton
+            <StatusButtonWrapper>
+              <StatusButton
                 success={row.values.is_node_healthy}
                 onClick={() => triggerPopUp(row.original)}
-            >
-              {row.values.is_node_healthy ? "Healthy" : "Unhealthy"}
-            </StatusButton>
-          </StatusButtonWrapper>
-        )}
-      }
+              >
+                {row.values.is_node_healthy ? "Healthy" : "Unhealthy"}
+              </StatusButton>
+            </StatusButtonWrapper>
+          );
+        },
+      },
     ],
     []
   );
 
   const data = useMemo(() => {
-    const percentFormatter = (number: number) => `${Number(number).toFixed(2)}%`
-    
-    return nodeList.map( node => {
-      return {
-        name: node.name,
-        cpu_usage: percentFormatter(node.cpu_reqs),
-        ram_usage: percentFormatter(node.memory_reqs),
-        node_conditions: node.node_conditions,
-        is_node_healthy:node.node_conditions.reduce((prevValue: boolean, current: any) => {
-          console.log(current)
-          if (current.type !== "Ready" && current.status !== "False") {
-            return false
-          } 
-          return prevValue
-        }, true),
-      }
-    })
+    const percentFormatter = (number: number) =>
+      `${Number(number).toFixed(2)}%`;
+
+    return nodeList
+      .map((node) => {
+        return {
+          name: node.name,
+          cpu_usage: percentFormatter(node.cpu_reqs),
+          ram_usage: percentFormatter(node.memory_reqs),
+          node_conditions: node.node_conditions,
+          is_node_healthy: node.node_conditions.reduce(
+            (prevValue: boolean, current: any) => {
+              if (current.type !== "Ready" && current.status !== "False") {
+                return false;
+              }
+              if (current.type === "Ready" && current.status !== "True") {
+                return false;
+              }
+              return prevValue;
+            },
+            true
+          ),
+        };
+      })
+      .sort((firstEl, secondElement) =>
+        firstEl.is_node_healthy === secondElement.is_node_healthy
+          ? 0
+          : firstEl.is_node_healthy
+          ? 1
+          : -1
+      );
   }, [nodeList]);
 
   useEffect(() => {
     const { currentCluster, currentProject } = context;
-    setLoading(true)
+    setLoading(true);
     api
       .getClusterNodes(
         "<token>",
@@ -102,10 +116,10 @@ const NodeList: React.FC = () => {
   return (
     <NodeListWrapper>
       <StyledChart>
-        <Table columns={columns} data={data} isLoading={loading}/>
+        <Table columns={columns} data={data} isLoading={loading} />
       </StyledChart>
       {selectedNode && (
-        <NodeStatusModal node={selectedNode} onClose={() => triggerPopUp()}/>
+        <NodeStatusModal node={selectedNode} onClose={() => triggerPopUp()} />
       )}
     </NodeListWrapper>
   );
@@ -115,7 +129,7 @@ export default NodeList;
 
 const NodeListWrapper = styled.div`
   margin-top: 35px;
-`
+`;
 
 const StyledChart = styled.div`
   background: #26282f;
@@ -134,14 +148,13 @@ const StyledChart = styled.div`
 const StatusHeader = styled.div`
   width: 100%;
   text-align: center;
-`
+`;
 
 const StatusButtonWrapper = styled.div`
   width: 100%;
   display: flex;
   justify-content: center;
-`
-
+`;
 
 const StatusButton = styled.div`
   cursor: pointer;

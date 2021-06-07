@@ -16,7 +16,7 @@ func NewAPIRouter(config *shared.Config) *chi.Mux {
 	userRegisterer := NewUserScopedRegisterer(projRegisterer)
 
 	r.Route("/api", func(r chi.Router) {
-		userRegisterer.Func(
+		userRoutes := userRegisterer.GetRoutes(
 			r,
 			config,
 			&types.Path{
@@ -25,6 +25,8 @@ func NewAPIRouter(config *shared.Config) *chi.Mux {
 			endpointFactory,
 			userRegisterer.Children...,
 		)
+
+		registerRoutes(userRoutes)
 	})
 
 	return r
@@ -33,23 +35,24 @@ func NewAPIRouter(config *shared.Config) *chi.Mux {
 type Route struct {
 	Endpoint *shared.APIEndpoint
 	Handler  http.Handler
+	Router   chi.Router
 }
 
 type Registerer struct {
-	Func func(
+	GetRoutes func(
 		r chi.Router,
 		config *shared.Config,
 		basePath *types.Path,
 		factory shared.APIEndpointFactory,
 		children ...*Registerer,
-	) chi.Router
+	) []*Route
 
 	Children []*Registerer
 }
 
-func registerRoutes(r chi.Router, routes []*Route) {
+func registerRoutes(routes []*Route) {
 	for _, route := range routes {
-		r.Method(
+		route.Router.Method(
 			string(route.Endpoint.Metadata.Method),
 			route.Endpoint.Metadata.Path.RelativePath,
 			route.Handler,

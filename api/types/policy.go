@@ -3,12 +3,12 @@ package types
 type PermissionScope string
 
 const (
-	UserScope      PermissionScope = "user"
-	ProjectScope   PermissionScope = "project"
-	ClusterScope   PermissionScope = "cluster"
-	NamespaceScope PermissionScope = "namespace"
-	SettingsScope  PermissionScope = "settings"
-	ReleaseScope   PermissionScope = "release"
+	UserScope        PermissionScope = "user"
+	ProjectScope     PermissionScope = "project"
+	ClusterScope     PermissionScope = "cluster"
+	NamespaceScope   PermissionScope = "namespace"
+	SettingsScope    PermissionScope = "settings"
+	ApplicationScope PermissionScope = "application"
 )
 
 type NameOrUInt struct {
@@ -39,7 +39,7 @@ var ScopeHeirarchy = ScopeTree{
 	ProjectScope: {
 		ClusterScope: {
 			NamespaceScope: {
-				ReleaseScope: {},
+				ApplicationScope: {},
 			},
 		},
 		SettingsScope: {},

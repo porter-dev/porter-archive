@@ -31,7 +31,7 @@ func TestListProjectsSuccessful(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	req, rr := apitest.GetRequestAndRecorder(t, nil)
+	req, rr := apitest.GetRequestAndRecorder(t, string(types.HTTPVerbGet), "/api/projects", nil)
 
 	req = apitest.WithAuthenticatedUser(t, req, user)
 
@@ -52,9 +52,12 @@ func TestListProjectsSuccessful(t *testing.T) {
 }
 
 func TestFailingListMethod(t *testing.T) {
-	req, rr := apitest.GetRequestAndRecorder(t, &types.CreateProjectRequest{
-		Name: "test-project",
-	})
+	req, rr := apitest.GetRequestAndRecorder(
+		t,
+		string(types.HTTPVerbGet),
+		"/api/projects",
+		nil,
+	)
 
 	config := apitest.LoadConfig(t, test.ListProjectsByUserIDMethod)
 	user := apitest.CreateTestUser(t, config)

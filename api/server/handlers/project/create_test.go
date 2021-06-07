@@ -11,9 +11,14 @@ import (
 )
 
 func TestCreateProjectSuccessful(t *testing.T) {
-	req, rr := apitest.GetRequestAndRecorder(t, &types.CreateProjectRequest{
-		Name: "test-project",
-	})
+	req, rr := apitest.GetRequestAndRecorder(
+		t,
+		string(types.HTTPVerbPost),
+		"/api/projects",
+		&types.CreateProjectRequest{
+			Name: "test-project",
+		},
+	)
 
 	config := apitest.LoadConfig(t)
 	user := apitest.CreateTestUser(t, config)
@@ -45,9 +50,14 @@ func TestCreateProjectSuccessful(t *testing.T) {
 }
 
 func TestFailingDecoderValidator(t *testing.T) {
-	req, rr := apitest.GetRequestAndRecorder(t, &types.CreateProjectRequest{
-		Name: "test-project",
-	})
+	req, rr := apitest.GetRequestAndRecorder(
+		t,
+		string(types.HTTPVerbPost),
+		"/api/projects",
+		&types.CreateProjectRequest{
+			Name: "test-project",
+		},
+	)
 
 	config := apitest.LoadConfig(t)
 	user := apitest.CreateTestUser(t, config)
@@ -65,9 +75,14 @@ func TestFailingDecoderValidator(t *testing.T) {
 }
 
 func TestFailingCreateMethod(t *testing.T) {
-	req, rr := apitest.GetRequestAndRecorder(t, &types.CreateProjectRequest{
-		Name: "test-project",
-	})
+	req, rr := apitest.GetRequestAndRecorder(
+		t,
+		string(types.HTTPVerbPost),
+		"/api/projects",
+		&types.CreateProjectRequest{
+			Name: "test-project",
+		},
+	)
 
 	config := apitest.LoadConfig(t, test.CreateProjectMethod)
 	user := apitest.CreateTestUser(t, config)
@@ -85,9 +100,14 @@ func TestFailingCreateMethod(t *testing.T) {
 }
 
 func TestFailingCreateRoleMethod(t *testing.T) {
-	req, rr := apitest.GetRequestAndRecorder(t, &types.CreateProjectRequest{
-		Name: "test-project",
-	})
+	req, rr := apitest.GetRequestAndRecorder(
+		t,
+		string(types.HTTPVerbPost),
+		"/api/projects",
+		&types.CreateProjectRequest{
+			Name: "test-project",
+		},
+	)
 
 	config := apitest.LoadConfig(t, test.CreateProjectRoleMethod)
 	user := apitest.CreateTestUser(t, config)
@@ -105,9 +125,14 @@ func TestFailingCreateRoleMethod(t *testing.T) {
 }
 
 func TestFailingReadMethod(t *testing.T) {
-	req, rr := apitest.GetRequestAndRecorder(t, &types.CreateProjectRequest{
-		Name: "test-project",
-	})
+	req, rr := apitest.GetRequestAndRecorder(
+		t,
+		string(types.HTTPVerbPost),
+		"/api/projects",
+		&types.CreateProjectRequest{
+			Name: "test-project",
+		},
+	)
 
 	config := apitest.LoadConfig(t, test.ReadProjectMethod)
 	user := apitest.CreateTestUser(t, config)

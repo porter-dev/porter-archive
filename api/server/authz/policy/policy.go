@@ -1,8 +1,6 @@
 package policy
 
 import (
-	"fmt"
-
 	"github.com/porter-dev/porter/api/types"
 )
 
@@ -15,7 +13,7 @@ type RequestAction struct {
 // resource (`resource+scope`) according to a `policy`.
 func HasScopeAccess(
 	policy []*types.PolicyDocument,
-	reqScopes map[types.PermissionScope]RequestAction,
+	reqScopes map[types.PermissionScope]*RequestAction,
 ) bool {
 	// iterate through policy documents until a match is found
 	for _, policyDoc := range policy {
@@ -96,7 +94,7 @@ func populateAndVerifyPolicyDocument(
 	tree types.ScopeTree,
 	currScope types.PermissionScope,
 	parentVerbs []types.APIVerb,
-	reqScopes map[types.PermissionScope]RequestAction,
+	reqScopes map[types.PermissionScope]*RequestAction,
 	currMatchDocs map[types.PermissionScope]*types.PolicyDocument,
 ) (ok bool, matchDocs map[types.PermissionScope]*types.PolicyDocument) {
 	if currMatchDocs == nil {
@@ -117,8 +115,6 @@ func populateAndVerifyPolicyDocument(
 	}
 
 	subTree, ok := tree[currDoc.Scope]
-
-	fmt.Println(currDoc.Scope, tree, currDoc.Scope, currScope)
 
 	if !ok || currDoc.Scope != currScope {
 		return false, matchDocs

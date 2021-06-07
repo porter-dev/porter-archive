@@ -4,54 +4,50 @@ import (
 	"context"
 	"net/http"
 
+	"github.com/porter-dev/porter/api/server/authz/policy"
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
 	"github.com/porter-dev/porter/api/types"
-	"github.com/porter-dev/porter/internal/repository"
+	"github.com/porter-dev/porter/internal/models"
 )
 
 type ProjectScopedFactory struct {
-	projectRepo repository.ProjectRepository
-	config      *shared.Config
+	config *shared.Config
 }
 
 func NewProjectScopedFactory(
-	projectRepo repository.ProjectRepository,
 	config *shared.Config,
 ) *ProjectScopedFactory {
-	return &ProjectScopedFactory{projectRepo, config}
+	return &ProjectScopedFactory{config}
 }
 
-func (f *ProjectScopedFactory) NewProjectScoped(next http.Handler) http.Handler {
-	return &ProjectScoped{next, f.projectRepo, f.config}
+func (p *ProjectScopedFactory) Middleware(next http.Handler) http.Handler {
+	return &ProjectScopedMiddleware{next, p.config}
 }
 
-type ProjectScoped struct {
-	next        http.Handler
-	projectRepo repository.ProjectRepository
-	config      *shared.Config
+type ProjectScopedMiddleware struct {
+	next   http.Handler
+	config *shared.Config
 }
 
-func (scope *ProjectScoped) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	// read the project id from the request
-	_, reqErr := GetURLParamUint(r, "project_id")
+func (p *ProjectScopedMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	// get the project id from the URL param context
+	reqScopes, _ := r.Context().Value(RequestScopeCtxKey).(map[types.PermissionScope]*policy.RequestAction)
 
-	if reqErr != nil {
-		apierrors.HandleAPIError(w, scope.config.Logger, reqErr)
+	projID := reqScopes[types.ProjectScope].Resource.UInt
+
+	project, err := p.config.Repo.Project().ReadProject(projID)
+
+	if err != nil {
+		apierrors.HandleAPIError(w, p.config.Logger, apierrors.NewErrInternal(err))
 		return
 	}
 
-	// find a set of roles for this user and compute a policy document
-
-	// determine if policy document allows for project scope
-
-	project := types.Project{}
-
-	// create a new project-scoped context and serve
-	r = r.WithContext(NewProjectContext(r.Context(), project))
-	scope.next.ServeHTTP(w, r)
+	ctx := NewProjectContext(r.Context(), project)
+	r = r.WithContext(ctx)
+	p.next.ServeHTTP(w, r)
 }
 
-func NewProjectContext(ctx context.Context, project types.Project) context.Context {
+func NewProjectContext(ctx context.Context, project *models.Project) context.Context {
 	return context.WithValue(ctx, types.ProjectScope, project)
 }

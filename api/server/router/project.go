@@ -2,7 +2,6 @@ package router
 
 import (
 	"github.com/go-chi/chi"
-	"github.com/porter-dev/porter/api/server/authz"
 	"github.com/porter-dev/porter/api/server/handlers/project"
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/types"
@@ -10,44 +9,50 @@ import (
 
 func NewProjectScopedRegisterer(children ...*Registerer) *Registerer {
 	return &Registerer{
-		Func:     RegisterProjectScopedRoutes,
-		Children: children,
+		GetRoutes: GetProjectScopedRoutes,
+		Children:  children,
 	}
 }
 
-func RegisterProjectScopedRoutes(
+func GetProjectScopedRoutes(
 	r chi.Router,
 	config *shared.Config,
 	basePath *types.Path,
 	factory shared.APIEndpointFactory,
 	children ...*Registerer,
-) chi.Router {
-	// Create a new "project-scoped" factory which will create a new project-scoped request
-	// after authorization. Each subsequent http.Handler can lookup the project in context.
-	projFactory := authz.NewProjectScopedFactory(config.Repo.Project(), config)
-
-	// attach middleware to router
-	r.Use(projFactory.NewProjectScoped)
-
-	projPath := registerProjectEndpoints(r, config, basePath, factory)
+) []*Route {
+	routes, projPath := getProjectRoutes(r, config, basePath, factory)
 
 	if len(children) > 0 {
 		r.Route(projPath.RelativePath, func(r chi.Router) {
 			for _, child := range children {
-				child.Func(r, config, basePath, factory, child.Children...)
+				childRoutes := child.GetRoutes(r, config, basePath, factory, child.Children...)
+
+				routes = append(routes, childRoutes...)
 			}
 		})
 	}
 
-	return r
+	// // Note that we can place the middleware r.Use below
+
+	// // all project-scoped routes
+
+	// // Create a new "project-scoped" factory which will create a new project-scoped request
+	// // after authorization. Each subsequent http.Handler can lookup the project in context.
+	// projFactory := authz.NewProjectScopedFactory(config)
+
+	// // attach middleware to router
+	// r.Use(projFactory.Middleware)
+
+	return routes
 }
 
-func registerProjectEndpoints(
+func getProjectRoutes(
 	r chi.Router,
 	config *shared.Config,
 	basePath *types.Path,
 	factory shared.APIEndpointFactory,
-) *types.Path {
+) ([]*Route, *types.Path) {
 	relPath := "/projects/{project_id}"
 
 	newPath := &types.Path{
@@ -77,9 +82,8 @@ func registerProjectEndpoints(
 	routes = append(routes, &Route{
 		Endpoint: getEndpoint,
 		Handler:  createHandler,
+		Router:   r,
 	})
 
-	registerRoutes(r, routes)
-
-	return newPath
+	return routes, newPath
 }

@@ -35,7 +35,7 @@ class Drawer extends Component<PropsType, StateType> {
             active={cluster.name === currentCluster.name}
             onClick={() => {
               setCurrentCluster(cluster, () => {
-                pushFiltered(this.props, "/applications", ["project_id"], {
+                pushFiltered(this.props, "/cluster-dashboard", ["project_id"], {
                   cluster: cluster.name,
                 });
               });

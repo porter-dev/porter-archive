@@ -8,7 +8,7 @@ import (
 func getPodsTotalRequestsAndLimits(podList *corev1.PodList) (reqs map[corev1.ResourceName]resource.Quantity, limits map[corev1.ResourceName]resource.Quantity) {
 	reqs, limits = map[corev1.ResourceName]resource.Quantity{}, map[corev1.ResourceName]resource.Quantity{}
 	for _, pod := range podList.Items {
-		podReqs, podLimits := PodRequestsAndLimits(&pod)
+		podReqs, podLimits := podRequestsAndLimits(&pod)
 		for podReqName, podReqValue := range podReqs {
 			if value, ok := reqs[podReqName]; !ok {
 				reqs[podReqName] = podReqValue.DeepCopy()
@@ -29,7 +29,7 @@ func getPodsTotalRequestsAndLimits(podList *corev1.PodList) (reqs map[corev1.Res
 	return
 }
 
-func PodRequestsAndLimits(pod *corev1.Pod) (reqs, limits corev1.ResourceList) {
+func podRequestsAndLimits(pod *corev1.Pod) (reqs, limits corev1.ResourceList) {
 	reqs, limits = corev1.ResourceList{}, corev1.ResourceList{}
 	for _, container := range pod.Spec.Containers {
 		addResourceList(reqs, container.Resources.Requests)
@@ -82,6 +82,7 @@ func maxResourceList(list, new corev1.ResourceList) {
 	}
 }
 
+// Returns the summatory of resources requested and their limits by a list of pods on a specific node in fraction values.
 func DescribeNodeResource(nodeNonTerminatedPodsList *corev1.PodList, node *corev1.Node) *NodeUsage {
 	allocatable := node.Status.Capacity
 	if len(node.Status.Allocatable) > 0 {

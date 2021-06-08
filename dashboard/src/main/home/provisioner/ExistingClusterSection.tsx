@@ -98,7 +98,7 @@ const Placeholder = styled.div`
   background: #26282f;
   margin-bottom: 27px;
   border-radius: 5px;
-  height: 170px;
+  height: 230px;
   display: flex;
   align-items: center;
   justify-content: center;

@@ -15,7 +15,7 @@ export const ClusterSettings = () => {
             color="#b91133"
             onClick={() => context.setCurrentModal("UpdateClusterModal")}
           >
-            Delete {context.currentCluster.name}
+            Delete cluster
           </Button>
         </StyledSettingsSection>
     </div>

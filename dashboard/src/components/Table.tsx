@@ -7,23 +7,20 @@ import Loading from "components/Loading";
 const GlobalFilter: React.FunctionComponent<any> = ({ setGlobalFilter }) => {
   const [value, setValue] = React.useState("");
   const onChange = (value: string) => {
+    setValue(value)
     setGlobalFilter(value || undefined);
   };
 
   return (
     <SearchRow>
       <i className="material-icons">search</i>
-      <SearchInput>
-        <StyledInputRow
-          placeholder="Search"
-          type="input"
-          value={value || ""}
-          setValue={(value) => {
-            setValue(value as string);
-            onChange(value as string);
-          }}
-        />
-      </SearchInput>
+      <SearchInput
+        value={value}
+        onChange={(e: any) => {
+          onChange(e.target.value);
+        }}
+        placeholder="Search"
+      />
     </SearchRow>
   );
 };
@@ -133,7 +130,7 @@ const TableWrapper = styled.div`
 export const StyledTr = styled.tr`
   line-height: 2.2em;
   cursor: ${(props: { disableHover?: boolean; selected?: boolean }) =>
-    props.disableHover ? "" : "pointer"};
+    props.disableHover ? "default" : "pointer"};
   background: ${(props: { disableHover?: boolean; selected?: boolean }) =>
     props.selected ? "#ffffff11" : ""};
   :hover {
@@ -145,6 +142,12 @@ export const StyledTr = styled.tr`
 export const StyledTd = styled.td`
   font-size: 13px;
   color: #ffffff;
+  :first-child{
+    padding-left: 10px;
+  }
+  :last-child{
+    padding-right: 10px;
+  }
 `;
 
 export const StyledTHead = styled.thead`
@@ -156,6 +159,12 @@ export const StyledTh = styled.th`
   font-size: 13px;
   font-weight: 500;
   color: #aaaabb;
+  :first-child{
+    padding-left: 10px;
+  }
+  :last-child{
+    padding-right: 10px;
+  }
 `;
 
 export const StyledTable = styled.table`
@@ -164,16 +173,40 @@ export const StyledTable = styled.table`
   border-collapse: collapse;
 `;
 
+
+const SearchInput = styled.input`
+  outline: none;
+  border: none;
+  font-size: 13px;
+  background: none;
+  width: 100%;
+  color: white;
+  padding: 0;
+  height: 20px;
+`;
+
 const SearchRow = styled.div`
   display: flex;
+  width: 100%;
+  font-size: 13px;
+  border-bottom: 1px solid #606166;
+  color: #ffffff;
+  user-select: none;
   align-items: center;
-  margin: 14px 0;
-`;
-
-const StyledInputRow = styled(InputRow)``;
-
-const SearchInput = styled.div`
-  ${StyledInputRow} {
-    margin: 0 0 0 10px;
+  padding: 10px 0px;
+  min-width: 300px;
+  max-width: min-content;  
+  background: #ffffff11;
+  margin-bottom: 7px;
+  margin-top: 7px;
+  i {
+    width: 18px;
+    height: 18px;
+    margin-left: 12px;
+    margin-right: 12px;
+    font-size: 20px;
   }
+
 `;
+
+

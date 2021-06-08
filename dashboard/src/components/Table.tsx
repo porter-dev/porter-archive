@@ -129,8 +129,6 @@ const TableWrapper = styled.div`
 
 export const StyledTr = styled.tr`
   line-height: 2.2em;
-  cursor: ${(props: { disableHover?: boolean; selected?: boolean }) =>
-    props.disableHover ? "default" : "pointer"};
   background: ${(props: { disableHover?: boolean; selected?: boolean }) =>
     props.selected ? "#ffffff11" : ""};
   :hover {
@@ -189,8 +187,8 @@ const SearchRow = styled.div`
   display: flex;
   width: 100%;
   font-size: 13px;
-  border-bottom: 1px solid #606166;
-  color: #ffffff;
+  color: #ffffff55;
+  border-radius: 4px; 
   user-select: none;
   align-items: center;
   padding: 10px 0px;

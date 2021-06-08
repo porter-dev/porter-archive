@@ -8,6 +8,7 @@ import { ClusterType } from "shared/types";
 
 import Drawer from "./Drawer";
 import { RouteComponentProps, withRouter } from "react-router";
+import { pushFiltered } from "shared/routing";
 
 type PropsType = RouteComponentProps & {
   forceCloseDrawer: boolean;
@@ -172,7 +173,7 @@ class ClusterSection extends Component<PropsType, StateType> {
       return (
         <ClusterSelector isSelected={false}>
           <LinkWrapper
-            onClick={() => this.context.setCurrentModal("UpdateClusterModal")}
+            onClick={() => pushFiltered(this.props, "/cluster-dashboard", [])}
           >
             <ClusterIcon>
               <i className="material-icons">device_hub</i>
@@ -275,7 +276,7 @@ const ClusterName = styled.div`
   width: 130px;
   margin-left: 3px;
   font-weight: 400;
-  color: #ffffff44;
+  color: #ffffff;
 `;
 
 const DropdownIcon = styled.span`
@@ -319,7 +320,7 @@ const ClusterIcon = styled.div`
     margin-bottom: 0px;
     margin-left: 17px;
     margin-right: 10px;
-    color: #ffffff44;
+    color: #ffffff;
   }
 `;
 

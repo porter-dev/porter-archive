@@ -273,12 +273,14 @@ export default class JobResource extends Component<PropsType, StateType> {
             <EndWrapper>
               <CommandString>{commandString}</CommandString>
               {this.renderStatus()}
-              <Trash onClick={(e) => {
-                e.stopPropagation();
-                this.props.handleDelete();
-              }} src={trash} />
               <MaterialIconTray disabled={false}>
                 {this.renderStopButton()}
+                <i className="material-icons" onClick={(e) => {
+                  e.stopPropagation();
+                  this.props.handleDelete();
+                }}>
+                  delete
+                </i>
                 <i className="material-icons" onClick={this.expandJob}>
                   {this.state.expanded ? "expand_less" : "expand_more"}
                 </i>
@@ -293,16 +295,6 @@ export default class JobResource extends Component<PropsType, StateType> {
 }
 
 JobResource.contextType = Context;
-
-const Trash = styled.img`
-  width: 28px;
-  height: 28px;
-  padding: 7px;
-  border-radius: 30px;
-  :hover {
-    background: #ffffff11;
-  }
-`;
 
 const Row = styled.div`
   margin-top: 20px;

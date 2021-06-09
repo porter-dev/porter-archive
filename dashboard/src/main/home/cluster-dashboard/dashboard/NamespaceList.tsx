@@ -3,6 +3,26 @@ import styled from "styled-components";
 import api from "shared/api";
 import { Context } from "shared/Context";
 
+const OptionsDropdown = () => {
+  const [isOpen, setIsOpen] = useState(false);
+  return (
+    <OptionsButton
+      onClick={() => setIsOpen(true)}
+      onBlur={() => setIsOpen(false)}
+    >
+      <i className="material-icons-outlined">more_vert</i>
+      {isOpen && (
+        <DropdownMenu>
+          <DropdownOption>
+            <i className="material-icons-outlined">delete</i>
+            <span>Delete</span>
+          </DropdownOption>
+        </DropdownMenu>
+      )}
+    </OptionsButton>
+  );
+};
+
 export const NamespaceList = () => {
   const context = useContext(Context);
   const [namespaces, setNamespaces] = useState([]);
@@ -27,7 +47,12 @@ export const NamespaceList = () => {
       </ControlRow>
 
       {namespaces.map((namespace) => {
-        return <StyledCard> {namespace?.metadata?.name} </StyledCard>;
+        return (
+          <StyledCard key={namespace?.metadata?.name}>
+            {namespace?.metadata?.name}
+            <OptionsDropdown />
+          </StyledCard>
+        );
       })}
     </NamespaceListWrapper>
   );
@@ -102,5 +127,62 @@ const StyledCard = styled.div`
   padding: 14px;
   :not(:last-child) {
     margin-bottom: 25px;
+  }
+`;
+
+const OptionsButton = styled.button`
+  position: relative;
+  border: none;
+  background: none;
+  color: white;
+  padding: 5px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 50%;
+  :hover {
+    background: #32343a;
+    cursor: pointer;
+  }
+`;
+
+const DropdownMenu = styled.div`
+  position: absolute;
+  right: 25px;
+  top: 10px;
+  overflow: hidden;
+  width: 120px;
+  height: auto;
+  background: #26282f;
+  box-shadow: 0 8px 20px 0px #00000088;
+`;
+
+const DropdownOption = styled.div`
+  width: 100%;
+  height: 37px;
+  font-size: 13px;
+  cursor: pointer;
+  padding-left: 10px;
+  padding-right: 10px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  :hover {
+    background: #ffffff22;
+  }
+  :not(:first-child) {
+    border-top: 1px solid #00000000;
+  }
+
+  :not(:last-child) {
+    border-bottom: 1px solid #ffffff15;
+  }
+
+  > i {
+    margin-right: 5px;
+    font-size: 16px;
   }
 `;

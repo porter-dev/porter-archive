@@ -1361,7 +1361,7 @@ func New(a *api.App) *chi.Mux {
 						mw.QueryParam,
 					),
 					mw.URLParam,
-					mw.ReadAccess,
+					mw.WriteAccess,
 				),
 			)
 

@@ -1,6 +1,7 @@
 import React, { Component } from "react";
 import styled from "styled-components";
 
+import api from "shared/api";
 import _ from "lodash";
 import { Context } from "shared/Context";
 import JobResource from "./JobResource";
@@ -44,13 +45,42 @@ export default class JobList extends Component<PropsType, StateType> {
     }
   };
 
+  deleteJob = () => {
+    let { currentCluster, currentProject, setCurrentError } = this.context;
+    let job = this.state.deletionCandidate
+
+    api
+      .deleteJob(
+        "<token>",
+        {
+          cluster_id: currentCluster.id,
+        },
+        {
+          id: currentProject.id,
+          name: job.metadata?.name,
+          namespace: job.metadata?.namespace,
+        }
+      )
+      .then((res) => {
+        this.setState({ deletionCandidate: null })
+      })
+      .catch((err) => {
+        let parsedErr =
+          err?.response?.data?.errors && err.response.data.errors[0];
+        if (parsedErr) {
+          err = parsedErr;
+        }
+        setCurrentError(err);
+      });
+  }
+
   render() {
     return (
       <>
         <ConfirmOverlay
           show={this.state.deletionCandidate}
           message={`Are you sure you want to delete this job run?`}
-          onYes={() => console.log()}
+          onYes={this.deleteJob}
           onNo={() => this.setState({ deletionCandidate: null })}
         />
         <JobListWrapper>

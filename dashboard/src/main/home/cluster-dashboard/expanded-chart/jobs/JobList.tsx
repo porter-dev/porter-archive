@@ -4,14 +4,21 @@ import styled from "styled-components";
 import _ from "lodash";
 import { Context } from "shared/Context";
 import JobResource from "./JobResource";
+import ConfirmOverlay from "components/ConfirmOverlay";
 
 type PropsType = {
   jobs: any[];
 };
 
-type StateType = {};
+type StateType = {
+  deletionCandidate: any;
+};
 
 export default class JobList extends Component<PropsType, StateType> {
+  state = {
+    deletionCandidate: null as any,
+  }
+
   renderJobList = () => {
     if (this.props.jobs.length === 0) {
       return (
@@ -24,7 +31,13 @@ export default class JobList extends Component<PropsType, StateType> {
       return (
         <>
           {this.props.jobs.map((job: any, i: number) => {
-            return <JobResource key={job?.metadata?.name} job={job} />;
+            return (
+              <JobResource
+                key={job?.metadata?.name}
+                job={job} 
+                handleDelete={() => this.setState({ deletionCandidate: job })}
+              />
+            );
           })}
         </>
       );
@@ -32,7 +45,19 @@ export default class JobList extends Component<PropsType, StateType> {
   };
 
   render() {
-    return <JobListWrapper>{this.renderJobList()}</JobListWrapper>;
+    return (
+      <>
+        <ConfirmOverlay
+          show={this.state.deletionCandidate}
+          message={`Are you sure you want to delete this job run?`}
+          onYes={() => console.log()}
+          onNo={() => this.setState({ deletionCandidate: null })}
+        />
+        <JobListWrapper>
+          {this.renderJobList()}
+        </JobListWrapper>
+      </>
+    );
   }
 }
 

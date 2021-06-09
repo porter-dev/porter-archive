@@ -7,10 +7,12 @@ import api from "shared/api";
 import Logs from "../status/Logs";
 import plus from "assets/plus.svg";
 import closeRounded from "assets/close-rounded.png";
+import trash from "assets/trash.png";
 import KeyValueArray from "components/values-form/KeyValueArray";
 
 type PropsType = {
   job: any;
+  handleDelete: () => void;
 };
 
 type StateType = {
@@ -55,7 +57,14 @@ export default class JobResource extends Component<PropsType, StateType> {
         }
       )
       .then((res) => {})
-      .catch((err) => setCurrentError(JSON.stringify(err)));
+      .catch((err) => {
+        let parsedErr =
+          err?.response?.data?.errors && err.response.data.errors[0];
+        if (parsedErr) {
+          err = parsedErr;
+        }
+        setCurrentError(err);
+      });
   };
 
   getPods = (callback: () => void) => {
@@ -249,35 +258,51 @@ export default class JobResource extends Component<PropsType, StateType> {
     );
 
     return (
-      <StyledJob>
-        <MainRow onClick={this.expandJob}>
-          <Flex>
-            <Icon src={icon && icon} />
-            <Description>
-              <Label>
-                Started at {this.readableDate(this.props.job.status?.startTime)}
-              </Label>
-              <Subtitle>{this.getSubtitle()}</Subtitle>
-            </Description>
-          </Flex>
-          <EndWrapper>
-            <CommandString>{commandString}</CommandString>
-            {this.renderStatus()}
-            <MaterialIconTray disabled={false}>
-              {this.renderStopButton()}
-              <i className="material-icons" onClick={this.expandJob}>
-                {this.state.expanded ? "expand_less" : "expand_more"}
-              </i>
-            </MaterialIconTray>
-          </EndWrapper>
-        </MainRow>
-        {this.renderLogsSection()}
-      </StyledJob>
+      <>
+        <StyledJob>
+          <MainRow onClick={this.expandJob}>
+            <Flex>
+              <Icon src={icon && icon} />
+              <Description>
+                <Label>
+                  Started at {this.readableDate(this.props.job.status?.startTime)}
+                </Label>
+                <Subtitle>{this.getSubtitle()}</Subtitle>
+              </Description>
+            </Flex>
+            <EndWrapper>
+              <CommandString>{commandString}</CommandString>
+              {this.renderStatus()}
+              <Trash onClick={(e) => {
+                e.stopPropagation();
+                this.props.handleDelete();
+              }} src={trash} />
+              <MaterialIconTray disabled={false}>
+                {this.renderStopButton()}
+                <i className="material-icons" onClick={this.expandJob}>
+                  {this.state.expanded ? "expand_less" : "expand_more"}
+                </i>
+              </MaterialIconTray>
+            </EndWrapper>
+          </MainRow>
+          {this.renderLogsSection()}
+        </StyledJob>
+      </>
     );
   }
 }
 
 JobResource.contextType = Context;
+
+const Trash = styled.img`
+  width: 28px;
+  height: 28px;
+  padding: 7px;
+  border-radius: 30px;
+  :hover {
+    background: #ffffff11;
+  }
+`;
 
 const Row = styled.div`
   margin-top: 20px;

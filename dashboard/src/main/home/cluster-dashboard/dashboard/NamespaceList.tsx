@@ -3,7 +3,7 @@ import styled from "styled-components";
 import api from "shared/api";
 import { Context } from "shared/Context";
 
-const OptionsDropdown = () => {
+const OptionsDropdown: React.FC = ({ children }) => {
   const [isOpen, setIsOpen] = useState(false);
   return (
     <OptionsButton
@@ -11,37 +11,40 @@ const OptionsDropdown = () => {
       onBlur={() => setIsOpen(false)}
     >
       <i className="material-icons-outlined">more_vert</i>
-      {isOpen && (
-        <DropdownMenu>
-          <DropdownOption>
-            <i className="material-icons-outlined">delete</i>
-            <span>Delete</span>
-          </DropdownOption>
-        </DropdownMenu>
-      )}
+      {isOpen && <DropdownMenu>{children}</DropdownMenu>}
     </OptionsButton>
   );
 };
 
-export const NamespaceList = () => {
-  const context = useContext(Context);
+export const NamespaceList: React.FunctionComponent = () => {
+  const {
+    currentCluster,
+    currentProject,
+    setCurrentModal,
+    setCurrentError,
+  } = useContext(Context);
   const [namespaces, setNamespaces] = useState([]);
 
   useEffect(() => {
     api
       .getNamespaces(
         "<token>",
-        { cluster_id: context.currentCluster.id },
-        { id: context.currentProject.id }
+        { cluster_id: currentCluster.id },
+        { id: currentProject.id }
       )
       .then(({ data }) => {
         setNamespaces(data.items);
       });
-  }, [context, setNamespaces]);
+  }, [currentCluster?.id, currentProject?.id, setNamespaces]);
+
+  const onDelete = (namespace: any) => {
+    setCurrentModal("DeleteNamespaceModal", namespace);
+  };
+
   return (
     <NamespaceListWrapper>
       <ControlRow>
-        <Button onClick={() => context.setCurrentModal("NamespaceModal")}>
+        <Button onClick={() => setCurrentModal("NamespaceModal")}>
           <i className="material-icons">add</i> Add namespace
         </Button>
       </ControlRow>
@@ -50,7 +53,12 @@ export const NamespaceList = () => {
         return (
           <StyledCard key={namespace?.metadata?.name}>
             {namespace?.metadata?.name}
-            <OptionsDropdown />
+            <OptionsDropdown>
+              <DropdownOption onClick={() => onDelete(namespace)}>
+                <i className="material-icons-outlined">delete</i>
+                <span>Delete</span>
+              </DropdownOption>
+            </OptionsDropdown>
           </StyledCard>
         );
       })}

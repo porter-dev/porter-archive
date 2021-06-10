@@ -1426,6 +1426,20 @@ func New(a *api.App) *chi.Mux {
 					mw.ReadAccess,
 				),
 			)
+
+			r.Method(
+				"POST",
+				"/projects/{project_id}/releases/image/update/batch",
+				auth.DoesUserHaveProjectAccess(
+					auth.DoesUserHaveClusterAccess(
+						requestlog.NewHandler(a.HandleReleaseBatchUpdateImage, l),
+						mw.URLParam,
+						mw.QueryParam,
+					),
+					mw.URLParam,
+					mw.WriteAccess,
+				),
+			)
 		})
 	})
 

@@ -251,7 +251,7 @@ export default class ExpandedJobChart extends Component<PropsType, StateType> {
     return ws;
   };
 
-  handleSaveValues = (config?: any) => {
+  handleSaveValues = (config?: any, runJob?: boolean) => {
     let { currentCluster, setCurrentError, currentProject } = this.context;
     this.setState({ saveValuesStatus: "loading" });
 
@@ -301,6 +301,12 @@ export default class ExpandedJobChart extends Component<PropsType, StateType> {
 
         _.set(values, "image.repository", imageUrl);
         _.set(values, "image.tag", `${tag}`);
+      }
+
+      if (runJob) {
+        _.set(values, "paused", false);
+      } else {
+        _.set(values, "paused", true);
       }
 
       // Weave in preexisting values and convert to yaml
@@ -392,6 +398,18 @@ export default class ExpandedJobChart extends Component<PropsType, StateType> {
   };
 
   renderTabContents = (currentTab: string, submitValues?: any) => {
+    console.log("CHART CONFIG", this.props.currentChart.config?.schedule?.enabled)
+    let saveButton = null
+
+    if (!this.props.currentChart.config?.schedule?.enabled) {
+      saveButton = <SaveButton
+        text="Rerun Job"
+        onClick={() => this.handleSaveValues(submitValues, true)}
+        status={this.state.saveValuesStatus}
+        makeFlush={true}
+      />
+    }
+
     switch (currentTab) {
       case "jobs":
         if (this.state.imageIsPlaceholder) {
@@ -410,12 +428,7 @@ export default class ExpandedJobChart extends Component<PropsType, StateType> {
         return (
           <TabWrapper>
             <JobList jobs={this.state.jobs} />
-            <SaveButton
-              text="Rerun Job"
-              onClick={() => this.handleSaveValues(submitValues)}
-              status={this.state.saveValuesStatus}
-              makeFlush={true}
-            />
+            {saveButton}
           </TabWrapper>
         );
       case "settings":
@@ -427,6 +440,7 @@ export default class ExpandedJobChart extends Component<PropsType, StateType> {
             setShowDeleteOverlay={(x: boolean) =>
               this.setState({ showDeleteOverlay: x })
             }
+            saveButtonText="Save Config"
           />
         );
       default:
@@ -584,8 +598,9 @@ export default class ExpandedJobChart extends Component<PropsType, StateType> {
               isInModal={true}
               renderTabContents={this.renderTabContents}
               tabOptionsOnly={true}
-              onSubmit={this.handleSaveValues}
+              onSubmit={(formValues) => this.handleSaveValues(formValues, false)}
               saveValuesStatus={this.state.saveValuesStatus}
+              saveButtonText="Save Config"
             />
           </BodyWrapper>
         </StyledExpandedChart>

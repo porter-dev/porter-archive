@@ -1055,6 +1055,7 @@ func (app *App) HandleReleaseBatchUpdateImage(w http.ResponseWriter, r *http.Req
 			image["repository"] = releases[index].ImageRepoURI
 			image["tag"] = form.Tag
 			rel.Config["image"] = image
+			rel.Config["paused"] = true
 
 			conf := &helm.UpgradeReleaseConfig{
 				Name:       releases[index].Name,

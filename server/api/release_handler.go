@@ -7,6 +7,7 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
+	"sync"
 
 	"github.com/porter-dev/porter/internal/kubernetes/prometheus"
 	"github.com/porter-dev/porter/internal/models"
@@ -969,6 +970,111 @@ func (app *App) HandleReleaseDeployWebhook(w http.ResponseWriter, r *http.Reques
 				Set("repository", repository),
 		})
 	}
+
+	w.WriteHeader(http.StatusOK)
+}
+
+// HandleReleaseJobUpdateImage
+func (app *App) HandleReleaseBatchUpdateImage(w http.ResponseWriter, r *http.Request) {
+	vals, err := url.ParseQuery(r.URL.RawQuery)
+
+	if err != nil {
+		app.handleErrorFormDecoding(err, ErrReleaseDecode, w)
+		return
+	}
+
+	form := &forms.UpdateImageForm{
+		ReleaseForm: &forms.ReleaseForm{
+			Form: &helm.Form{
+				Repo:              app.Repo,
+				DigitalOceanOAuth: app.DOConf,
+			},
+		},
+	}
+
+	form.ReleaseForm.PopulateHelmOptionsFromQueryParams(
+		vals,
+		app.Repo.Cluster,
+	)
+
+	if err := json.NewDecoder(r.Body).Decode(form); err != nil {
+		app.handleErrorFormDecoding(err, ErrUserDecode, w)
+		return
+	}
+
+	releases, err := app.Repo.Release.ListReleasesByImageRepoURI(form.Cluster.ID, form.ImageRepoURI)
+
+	if err != nil {
+		app.sendExternalError(err, http.StatusInternalServerError, HTTPError{
+			Code:   ErrReleaseReadData,
+			Errors: []string{"releases not found with given image repo uri"},
+		}, w)
+
+		return
+	}
+
+	agent, err := app.getAgentFromReleaseForm(
+		w,
+		r,
+		form.ReleaseForm,
+	)
+
+	// errors are handled in app.getAgentFromBodyParams
+	if err != nil {
+		return
+	}
+
+	registries, err := app.Repo.Registry.ListRegistriesByProjectID(uint(form.ReleaseForm.Cluster.ProjectID))
+
+	if err != nil {
+		app.handleErrorDataRead(err, w)
+		return
+	}
+
+	// asynchronously update releases with that image repo uri
+	var wg sync.WaitGroup
+	mu := &sync.Mutex{}
+	errors := make([]string, 0)
+
+	for i := range releases {
+		index := i
+		wg.Add(1)
+
+		go func() {
+			defer wg.Done()
+			// read release via agent
+			rel, err := agent.GetRelease(releases[index].Name, 0)
+
+			if err != nil {
+				mu.Lock()
+				errors = append(errors, err.Error())
+				mu.Unlock()
+			}
+
+			image := map[string]interface{}{}
+			image["repository"] = releases[index].ImageRepoURI
+			image["tag"] = form.Tag
+			rel.Config["image"] = image
+
+			conf := &helm.UpgradeReleaseConfig{
+				Name:       releases[index].Name,
+				Cluster:    form.ReleaseForm.Cluster,
+				Repo:       *app.Repo,
+				Registries: registries,
+				Values:     rel.Config,
+			}
+
+			_, err = agent.UpgradeReleaseByValues(conf, app.DOConf)
+
+			if err != nil {
+				mu.Lock()
+				errors = append(errors, err.Error())
+				mu.Unlock()
+			}
+		}()
+	}
+
+	wg.Wait()
 
 	w.WriteHeader(http.StatusOK)
 }

@@ -17,12 +17,9 @@ const OptionsDropdown: React.FC = ({ children }) => {
 };
 
 export const NamespaceList: React.FunctionComponent = () => {
-  const {
-    currentCluster,
-    currentProject,
-    setCurrentModal,
-    setCurrentError,
-  } = useContext(Context);
+  const { currentCluster, currentProject, setCurrentModal } = useContext(
+    Context
+  );
   const [namespaces, setNamespaces] = useState([]);
 
   useEffect(() => {
@@ -41,6 +38,12 @@ export const NamespaceList: React.FunctionComponent = () => {
     setCurrentModal("DeleteNamespaceModal", namespace);
   };
 
+  const isAvailableForDeletion = (namespaceName: string) => {
+    // Only the namespaces that doesn't start with kube- or has by name default will be
+    // available for deletion (as those are the k8s namespaces)
+    return !/(^default$)|(^kube-.*)/.test(namespaceName);
+  };
+
   return (
     <NamespaceListWrapper>
       <ControlRow>
@@ -53,12 +56,14 @@ export const NamespaceList: React.FunctionComponent = () => {
         return (
           <StyledCard key={namespace?.metadata?.name}>
             {namespace?.metadata?.name}
-            <OptionsDropdown>
-              <DropdownOption onClick={() => onDelete(namespace)}>
-                <i className="material-icons-outlined">delete</i>
-                <span>Delete</span>
-              </DropdownOption>
-            </OptionsDropdown>
+            {isAvailableForDeletion(namespace?.metadata?.name) && (
+              <OptionsDropdown>
+                <DropdownOption onClick={() => onDelete(namespace)}>
+                  <i className="material-icons-outlined">delete</i>
+                  <span>Delete</span>
+                </DropdownOption>
+              </OptionsDropdown>
+            )}
           </StyledCard>
         );
       })}

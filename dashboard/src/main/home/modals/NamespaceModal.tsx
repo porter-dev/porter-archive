@@ -21,7 +21,17 @@ export default class NamespaceModal extends Component<PropsType, StateType> {
     status: null as string | null,
   };
 
+  isValidName = (namespaceName: string) =>
+    !/(^default$)|(^kube-.*)/.test(namespaceName);
+
   createNamespace = () => {
+    if (!this.isValidName(this.state.namespaceName)) {
+      this.setState({
+        status: "The name cannot be default or start with kube-",
+      });
+      return;
+    }
+
     api
       .createNamespace(
         "<token>",
@@ -66,7 +76,9 @@ export default class NamespaceModal extends Component<PropsType, StateType> {
           <InputRow
             type="string"
             value={this.state.namespaceName}
-            setValue={(x: string) => this.setState({ namespaceName: x })}
+            setValue={(x: string) =>
+              this.setState({ namespaceName: x, status: null })
+            }
             placeholder="ex: porter-workers"
             width="480px"
           />

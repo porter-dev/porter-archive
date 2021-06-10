@@ -66,3 +66,12 @@ func (caf *CreateAWSIntegrationForm) ToAWSIntegration() (*ints.AWSIntegration, e
 		AWSSecretAccessKey: []byte(caf.AWSSecretAccessKey),
 	}, nil
 }
+
+// OverwriteAWSIntegrationForm represents the accepted values for overwriting an
+// AWS Integration
+type OverwriteAWSIntegrationForm struct {
+	UserID             uint   `json:"user_id" form:"required"`
+	ProjectID          uint   `json:"project_id" form:"required"`
+	AWSAccessKeyID     string `json:"aws_access_key_id"`
+	AWSSecretAccessKey string `json:"aws_secret_access_key"`
+}

@@ -499,6 +499,57 @@ func TestCreateAWSIntegration(t *testing.T) {
 	}
 }
 
+func TestOverwriteAWSIntegration(t *testing.T) {
+	tester := &tester{
+		dbFileName: "./porter_overwrite_aws.db",
+	}
+
+	setupTestEnv(tester, t)
+	initUser(tester, t)
+	initProject(tester, t)
+	initAWSIntegration(tester, t)
+	defer cleanup(tester, t)
+
+	aws, err := tester.repo.AWSIntegration.ReadAWSIntegration(1)
+
+	if err != nil {
+		t.Fatalf("%v\n", err)
+	}
+
+	aws.AWSAccessKeyID = []byte("accesskey2")
+	aws.AWSSecretAccessKey = []byte("secret2")
+
+	aws, err = tester.repo.AWSIntegration.OverwriteAWSIntegration(aws)
+
+	if err != nil {
+		t.Fatalf("%v\n", err)
+	}
+
+	gotAWS, err := tester.repo.AWSIntegration.ReadAWSIntegration(1)
+
+	expAWS := &ints.AWSIntegration{
+		ProjectID:          tester.initProjects[0].ID,
+		UserID:             tester.initUsers[0].ID,
+		AWSClusterID:       []byte("example-cluster-0"),
+		AWSAccessKeyID:     []byte("accesskey2"),
+		AWSSecretAccessKey: []byte("secret2"),
+		AWSSessionToken:    []byte("optional"),
+	}
+
+	// make sure id is 1
+	if gotAWS.Model.ID != 1 {
+		t.Errorf("incorrect aws integration ID: expected %d, got %d\n", 1, gotAWS.Model.ID)
+	}
+
+	// reset fields for deep.Equal
+	gotAWS.Model = orm.Model{}
+
+	if diff := deep.Equal(expAWS, gotAWS); diff != nil {
+		t.Errorf("incorrect aws integration")
+		t.Error(diff)
+	}
+}
+
 func TestListAWSIntegrationsByProjectID(t *testing.T) {
 	tester := &tester{
 		dbFileName: "./porter_list_awss.db",

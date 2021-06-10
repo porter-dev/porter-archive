@@ -100,7 +100,7 @@ const ClusterSettings: React.FC = () => {
       keyRotationSection = <div>
         <Heading>Credential Rotation</Heading>
         <Helper>
-          Rotate the credentials that this cluster uses to connect to the cluster.
+          Rotate the credentials that Porter uses to connect to the cluster.
         </Helper>
         <Button
           color="#616FEEcc"

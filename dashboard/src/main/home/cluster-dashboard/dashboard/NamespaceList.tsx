@@ -1,7 +1,7 @@
-import React, { useContext, useEffect, useState } from "react";
+import React, { useContext, useEffect, useRef, useState } from "react";
 import styled from "styled-components";
-import api from "shared/api";
 import { Context } from "shared/Context";
+import { ClusterType, ProjectType } from "shared/types";
 
 const OptionsDropdown: React.FC = ({ children }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -16,24 +16,49 @@ const OptionsDropdown: React.FC = ({ children }) => {
   );
 };
 
+const useWebsocket = (
+  currentProject: ProjectType,
+  currentCluster: ClusterType
+) => {
+  const wsRef = useRef<WebSocket | undefined>(undefined);
+
+  useEffect(() => {
+    let protocol = window.location.protocol == "https:" ? "wss" : "ws";
+    wsRef.current = new WebSocket(
+      `${protocol}://${window.location.host}/api/projects/${currentProject.id}/k8s/namespace/status?cluster_id=${currentCluster.id}`
+    );
+
+    wsRef.current.onopen = () => {
+      console.log("Connected to websocket");
+    };
+
+    wsRef.current.onmessage = (evt: MessageEvent) => {
+      console.log(evt);
+    };
+
+    wsRef.current.onclose = () => {
+      console.log("closing websocket");
+    };
+
+    wsRef.current.onerror = (err: ErrorEvent) => {
+      console.log(err);
+      wsRef.current.close();
+    };
+
+    return () => {
+      wsRef.current.close();
+    };
+  }, []);
+
+  return wsRef;
+};
+
 export const NamespaceList: React.FunctionComponent = () => {
   const { currentCluster, currentProject, setCurrentModal } = useContext(
     Context
   );
   const [namespaces, setNamespaces] = useState([]);
-
-  useEffect(() => {
-    api
-      .getNamespaces(
-        "<token>",
-        { cluster_id: currentCluster.id },
-        { id: currentProject.id }
-      )
-      .then(({ data }) => {
-        setNamespaces(data.items);
-      });
-  }, [currentCluster?.id, currentProject?.id, setNamespaces]);
-
+  const websocket = useWebsocket(currentProject, currentCluster);
   const onDelete = (namespace: any) => {
     setCurrentModal("DeleteNamespaceModal", namespace);
   };
@@ -44,6 +69,42 @@ export const NamespaceList: React.FunctionComponent = () => {
     return !/(^default$)|(^kube-.*)/.test(namespaceName);
   };
 
+  useEffect(() => {
+    if (!websocket) {
+      return;
+    }
+
+    websocket.current.onmessage = (evt: MessageEvent) => {
+      const data = JSON.parse(evt.data);
+      if (data.Kind !== "namespace") {
+        return;
+      }
+      if (data.event_type === "ADD") {
+        setNamespaces((oldNamespaces) => [...oldNamespaces, data.Object]);
+      }
+
+      if (data.event_type === "DELETE") {
+        setNamespaces((oldNamespaces) => {
+          const oldNamespaceIndex = oldNamespaces.findIndex(
+            (namespace) => namespace.metadata.name === data.Object.metadata.name
+          );
+          oldNamespaces.splice(oldNamespaceIndex, 1);
+          return [...oldNamespaces];
+        });
+      }
+
+      if (data.event_type === "UPDATE") {
+        setNamespaces((oldNamespaces) => {
+          const oldNamespaceIndex = oldNamespaces.findIndex(
+            (namespace) => namespace.metadata.name === data.Object.metadata.name
+          );
+          oldNamespaces.splice(oldNamespaceIndex, 1, data.Object);
+          return oldNamespaces;
+        });
+      }
+    };
+  }, [websocket]);
+
   return (
     <NamespaceListWrapper>
       <ControlRow>
@@ -51,28 +112,89 @@ export const NamespaceList: React.FunctionComponent = () => {
           <i className="material-icons">add</i> Add namespace
         </Button>
       </ControlRow>
-
-      {namespaces.map((namespace) => {
-        return (
-          <StyledCard key={namespace?.metadata?.name}>
-            {namespace?.metadata?.name}
-            {isAvailableForDeletion(namespace?.metadata?.name) && (
-              <OptionsDropdown>
-                <DropdownOption onClick={() => onDelete(namespace)}>
-                  <i className="material-icons-outlined">delete</i>
-                  <span>Delete</span>
-                </DropdownOption>
-              </OptionsDropdown>
-            )}
-          </StyledCard>
-        );
-      })}
+      <NamespacesGrid>
+        {namespaces.map((namespace) => {
+          return (
+            <StyledCard key={namespace?.metadata?.name}>
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  justifyContent: "space-between",
+                }}
+              >
+                {namespace?.metadata?.name}
+                <Status margin_left={"0px"}>
+                  <StatusColor status={namespace.status.phase} />
+                  {namespace?.status?.phase}
+                </Status>
+              </div>
+              {isAvailableForDeletion(namespace?.metadata?.name) && (
+                <OptionsDropdown>
+                  <DropdownOption onClick={() => onDelete(namespace)}>
+                    <i className="material-icons-outlined">delete</i>
+                    <span>Delete</span>
+                  </DropdownOption>
+                </OptionsDropdown>
+              )}
+            </StyledCard>
+          );
+        })}
+      </NamespacesGrid>
     </NamespaceListWrapper>
   );
 };
 
 const NamespaceListWrapper = styled.div`
   margin-top: 35px;
+  padding-bottom: 80px;
+`;
+
+const NamespacesGrid = styled.div`
+  overflow-y: auto;
+  margin-top: 32px;
+  padding-bottom: 150px;
+  display: grid;
+  grid-column-gap: 25px;
+  grid-row-gap: 25px;
+  grid-template-columns: repeat(2, minmax(200px, 1fr));
+`;
+
+const StatusColor = styled.div`
+  margin-top: 1px;
+  width: 8px;
+  height: 8px;
+  background: ${(props: { status: string }) =>
+    props.status === "Active"
+      ? "#4797ff"
+      : props.status === "Terminating"
+      ? "#ed5f85"
+      : "#f5cb42"};
+  border-radius: 20px;
+  margin-left: 3px;
+  margin-right: 16px;
+`;
+
+const Status = styled.div`
+  display: flex;
+  height: 20px;
+  font-size: 13px;
+  flex-direction: row;
+  text-transform: capitalize;
+  align-items: center;
+  font-family: "Work Sans", sans-serif;
+  color: #aaaabb;
+  animation: fadeIn 0.5s;
+  margin-left: ${(props: { margin_left: string }) => props.margin_left};
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
 `;
 
 const ControlRow = styled.div`
@@ -129,7 +251,7 @@ const Button = styled.div`
 
 const StyledCard = styled.div`
   background: #26282f;
-  min-height: 60px;
+  min-height: 80px;
   width: 100%;
   display: flex;
   justify-content: space-between;
@@ -138,9 +260,6 @@ const StyledCard = styled.div`
   box-shadow: 0 5px 8px 0px #00000033;
   border-radius: 5px;
   padding: 14px;
-  :not(:last-child) {
-    margin-bottom: 25px;
-  }
 `;
 
 const OptionsButton = styled.button`

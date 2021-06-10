@@ -284,6 +284,15 @@ func (a *Agent) ListJobsByLabel(namespace string, labels ...Label) ([]batchv1.Jo
 	return resp.Items, nil
 }
 
+// DeleteJob deletes the job in the given name and namespace.
+func (a *Agent) DeleteJob(name, namespace string) error {
+	return a.Clientset.BatchV1().Jobs(namespace).Delete(
+		context.TODO(),
+		name,
+		metav1.DeleteOptions{},
+	)
+}
+
 // GetJobPods lists all pods belonging to a job in a namespace
 func (a *Agent) GetJobPods(namespace, jobName string) ([]v1.Pod, error) {
 	resp, err := a.Clientset.CoreV1().Pods(namespace).List(

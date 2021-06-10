@@ -116,19 +116,13 @@ export const NamespaceList: React.FunctionComponent = () => {
         {namespaces.map((namespace) => {
           return (
             <StyledCard key={namespace?.metadata?.name}>
-              <div
-                style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  justifyContent: "space-between",
-                }}
-              >
+              <ContentContainer>
                 {namespace?.metadata?.name}
                 <Status margin_left={"0px"}>
                   <StatusColor status={namespace.status.phase} />
                   {namespace?.status?.phase}
                 </Status>
-              </div>
+              </ContentContainer>
               {isAvailableForDeletion(namespace?.metadata?.name) && (
                 <OptionsDropdown>
                   <DropdownOption onClick={() => onDelete(namespace)}>
@@ -260,6 +254,22 @@ const StyledCard = styled.div`
   box-shadow: 0 5px 8px 0px #00000033;
   border-radius: 5px;
   padding: 14px;
+  animation: fadeIn 0.5s;
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+`;
+
+const ContentContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 100%;
 `;
 
 const OptionsButton = styled.button`

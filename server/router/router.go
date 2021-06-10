@@ -697,11 +697,15 @@ func New(a *api.App) *chi.Mux {
 				"POST",
 				"/projects/{project_id}/integrations/aws/{aws_integration_id}/overwrite",
 				auth.DoesUserHaveProjectAccess(
-					auth.DoesUserHaveAWSIntegrationAccess(
-						requestlog.NewHandler(a.HandleOverwriteAWSIntegration, l),
+					auth.DoesUserHaveClusterAccess(
+						auth.DoesUserHaveAWSIntegrationAccess(
+							requestlog.NewHandler(a.HandleOverwriteAWSIntegration, l),
+							mw.URLParam,
+							mw.URLParam,
+							false,
+						),
 						mw.URLParam,
-						mw.URLParam,
-						false,
+						mw.QueryParam,
 					),
 					mw.URLParam,
 					mw.WriteAccess,

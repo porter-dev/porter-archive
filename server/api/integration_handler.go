@@ -3,6 +3,7 @@ package api
 import (
 	"encoding/json"
 	"net/http"
+	"net/url"
 	"strconv"
 
 	"github.com/go-chi/chi"
@@ -243,6 +244,35 @@ func (app *App) HandleOverwriteAWSIntegration(w http.ResponseWriter, r *http.Req
 	if err != nil {
 		app.handleErrorDataWrite(err, w)
 		return
+	}
+
+	// clear the cluster token cache if cluster_id exists
+	vals, err := url.ParseQuery(r.URL.RawQuery)
+
+	if err != nil {
+		app.handleErrorDataWrite(err, w)
+		return
+	}
+
+	if len(vals["cluster_id"]) > 0 {
+		clusterID, err := strconv.ParseUint(vals["cluster_id"][0], 10, 64)
+
+		if err != nil {
+			app.handleErrorDataWrite(err, w)
+			return
+		}
+
+		cluster, err := app.Repo.Cluster.ReadCluster(uint(clusterID))
+
+		// clear the token
+		cluster.TokenCache.Token = []byte("")
+
+		cluster, err = app.Repo.Cluster.UpdateClusterTokenCache(&cluster.TokenCache)
+
+		if err != nil {
+			app.handleErrorDataWrite(err, w)
+			return
+		}
 	}
 
 	app.Logger.Info().Msgf("AWS integration overwritten: %d", awsIntegration.ID)

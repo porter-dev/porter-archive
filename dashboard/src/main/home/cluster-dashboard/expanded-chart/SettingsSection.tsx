@@ -17,11 +17,13 @@ import Heading from "components/values-form/Heading";
 import Helper from "components/values-form/Helper";
 import InputRow from "components/values-form/InputRow";
 import _ from "lodash";
+import CopyToClipboard from "components/CopyToClipboard";
 
 type PropsType = {
   currentChart: ChartType;
   refreshChart: () => void;
   setShowDeleteOverlay: (x: boolean) => void;
+  showSource?: boolean;
 };
 
 type StateType = {
@@ -80,36 +82,78 @@ export default class SettingsSection extends Component<PropsType, StateType> {
       .catch(console.log);
   }
 
-  redeployWithNewImage = (img: string, tag: string) => {
-    this.setState({ saveValuesStatus: "loading" });
-    let { currentCluster, currentProject, setCurrentError } = this.context;
-
-    // If tag is explicitly declared, parse tag
-    let imgSplits = img.split(":");
-    let parsedTag = null;
-    if (imgSplits.length > 1) {
-      img = imgSplits[0];
-      parsedTag = imgSplits[1];
+  renderWebhookSection = () => {
+    if (!this.props.currentChart?.form?.hasSource) {
+      return;
     }
 
-    let image = {
-      image: {
-        repository: img,
-        tag: parsedTag || tag,
-      },
-    };
+    if (true || this.state.webhookToken) {
+      let webhookText = `curl -X POST 'https://dashboard.getporter.dev/api/webhooks/deploy/${this.state.webhookToken}?commit=YOUR_COMMIT_HASH'`;
+      return (
+        <>
+          {this.props.showSource && (
+            <>
+              <Heading>Source Settings</Heading>
+              <Helper>Specify an image tag to use.</Helper>
+              <ImageSelector
+                selectedTag={this.state.selectedTag}
+                selectedImageUrl={this.state.selectedImageUrl}
+                setSelectedImageUrl={(x: string) =>
+                  this.setState({ selectedImageUrl: x })
+                }
+                setSelectedTag={(x: string) =>
+                  this.setState({ selectedTag: x })
+                }
+                forceExpanded={true}
+                disableImageSelect={true}
+              />
+              <Br />
+            </>
+          )}
+          <Heading>Redeploy Webhook</Heading>
+          <Helper>
+            Programmatically deploy by calling this secret webhook.
+          </Helper>
+          <Webhook copiedToClipboard={this.state.highlightCopyButton}>
+            <div>{webhookText}</div>
+            <CopyToClipboard
+              as="i"
+              text={webhookText}
+              onSuccess={() => this.setState({ highlightCopyButton: true })}
+              wrapperProps={{
+                className: "material-icons",
+                onMouseLeave: () =>
+                  this.setState({ highlightCopyButton: false }),
+              }}
+            >
+              content_copy
+            </CopyToClipboard>
+          </Webhook>
+        </>
+      );
+    }
+  };
+
+  handleSubmit = () => {
+    let { currentCluster, setCurrentError, currentProject } = this.context;
+    this.setState({ saveValuesStatus: "loading" });
+
+    console.log(this.state.selectedImageUrl);
 
     let values = {};
-    let rawValues = this.props.currentChart.config;
-    for (let key in rawValues) {
-      _.set(values, key, rawValues[key]);
+    if (this.state.selectedTag) {
+      _.set(values, "image.repository", this.state.selectedImageUrl);
+      _.set(values, "image.tag", this.state.selectedTag);
     }
 
     // Weave in preexisting values and convert to yaml
-    let valuesYaml = yaml.dump({
-      ...values,
-      ...image,
-    });
+    let conf = yaml.dump(
+      {
+        ...(this.props.currentChart.config as Object),
+        ...values,
+      },
+      { forceQuotes: true }
+    );
 
     api
       .upgradeChartValues(
@@ -117,7 +161,7 @@ export default class SettingsSection extends Component<PropsType, StateType> {
         {
           namespace: this.props.currentChart.namespace,
           storage: StorageType.Secret,
-          values: valuesYaml,
+          values: conf,
         },
         {
           id: currentProject.id,
@@ -145,41 +189,10 @@ export default class SettingsSection extends Component<PropsType, StateType> {
       });
   };
 
-  renderWebhookSection = () => {
-    if (!this.props.currentChart?.form?.hasSource) {
-      return;
-    }
-
-    if (true || this.state.webhookToken) {
-      let webhookText = `curl -X POST 'https://dashboard.getporter.dev/api/webhooks/deploy/${this.state.webhookToken}?commit=YOUR_COMMIT_HASH'`;
-      return (
-        <>
-          <Heading>Redeploy Webhook</Heading>
-          <Helper>
-            Programmatically deploy by calling this secret webhook.
-          </Helper>
-          <Webhook copiedToClipboard={this.state.highlightCopyButton}>
-            <div>{webhookText}</div>
-            <i
-              className="material-icons"
-              onClick={() => {
-                navigator.clipboard.writeText(webhookText);
-                this.setState({ highlightCopyButton: true });
-              }}
-              onMouseLeave={() => this.setState({ highlightCopyButton: false })}
-            >
-              content_copy
-            </i>
-          </Webhook>
-        </>
-      );
-    }
-  };
-
   render() {
     return (
       <Wrapper>
-        <StyledSettingsSection>
+        <StyledSettingsSection showSource={this.props.showSource}>
           {this.renderWebhookSection()}
           <Heading>Additional Settings</Heading>
           <Button
@@ -189,12 +202,25 @@ export default class SettingsSection extends Component<PropsType, StateType> {
             Delete {this.props.currentChart.name}
           </Button>
         </StyledSettingsSection>
+        {this.props.showSource && (
+          <SaveButton
+            text="Deploy"
+            status={this.state.saveValuesStatus}
+            onClick={this.handleSubmit}
+            makeFlush={true}
+          />
+        )}
       </Wrapper>
     );
   }
 }
 
 SettingsSection.contextType = Context;
+
+const Br = styled.div`
+  width: 100%;
+  height: 10px;
+`;
 
 const Button = styled.button`
   height: 35px;
@@ -280,15 +306,15 @@ const Wrapper = styled.div`
   height: 100%;
 `;
 
-const StyledSettingsSection = styled.div`
+const StyledSettingsSection = styled.div<{ showSource: boolean }>`
   width: 100%;
-  height: calc(100%);
   background: #ffffff11;
   padding: 0 35px;
   padding-bottom: 50px;
   position: relative;
   border-radius: 5px;
   overflow: auto;
+  height: ${(props) => (props.showSource ? "calc(100% - 55px)" : "100%")};
 `;
 
 const Holder = styled.div`

@@ -6,6 +6,7 @@ import { ClusterType } from "shared/types";
 
 import ClusterList from "./ClusterList";
 import Loading from "components/Loading";
+import NoClusterPlaceholder from "../NoClusterPlaceholder";
 
 type PropsType = {
   currentCluster: ClusterType;
@@ -36,25 +37,14 @@ export default class ClusterPlaceholder extends Component<
   }
 
   render() {
-    if (this.state.loading) {
+    if (this.state.loading || this.props.currentCluster?.id === -1) {
       return (
         <LoadingWrapper>
           <Loading />
         </LoadingWrapper>
       );
     } else if (!this.props.currentCluster) {
-      return (
-        <StyledStatusPlaceholder>
-          You need to connect a cluster to use Porter.
-          <Highlight
-            onClick={() => {
-              this.context.setCurrentModal("ClusterInstructionsModal", {});
-            }}
-          >
-            + Connect an existing cluster
-          </Highlight>
-        </StyledStatusPlaceholder>
-      );
+      return <NoClusterPlaceholder />;
     } else {
       return <ClusterList currentCluster={this.props.currentCluster} />;
     }

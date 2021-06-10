@@ -9,6 +9,7 @@ import ConfirmOverlay from "components/ConfirmOverlay";
 
 type PropsType = {
   jobs: any[];
+  setJobs: (job: any) => void;
 };
 
 type StateType = {
@@ -62,7 +63,10 @@ export default class JobList extends Component<PropsType, StateType> {
         }
       )
       .then((res) => {
-        this.setState({ deletionCandidate: null })
+        let jobs = this.props.jobs.slice();
+        jobs = jobs.filter(job => job.metadata?.name !== this.state.deletionCandidate.metadata?.name);
+        this.props.setJobs(jobs);
+        this.setState({ deletionCandidate: null });
       })
       .catch((err) => {
         let parsedErr =

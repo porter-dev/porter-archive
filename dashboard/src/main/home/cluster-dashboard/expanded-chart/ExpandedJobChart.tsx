@@ -409,7 +409,12 @@ export default class ExpandedJobChart extends Component<PropsType, StateType> {
         }
         return (
           <TabWrapper>
-            <JobList jobs={this.state.jobs} />
+            <JobList 
+              jobs={this.state.jobs} 
+              setJobs={(jobs: any) => {
+                this.setState({ jobs })
+              }}
+            />
             <SaveButton
               text="Rerun Job"
               onClick={() => this.handleSaveValues(submitValues)}

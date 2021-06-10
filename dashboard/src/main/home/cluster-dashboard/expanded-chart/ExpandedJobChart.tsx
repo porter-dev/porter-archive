@@ -141,6 +141,14 @@ export default class ExpandedJobChart extends Component<PropsType, StateType> {
     this.sortJobsAndSave(jobs);
   };
 
+  removeJob = (deletedJob: any) => {
+    let jobs = this.state.jobs.filter(job => {
+      return deletedJob.metadata?.name !== job.metadata?.name
+    });
+
+    this.sortJobsAndSave(jobs);
+  }
+
   setupJobWebsocket = (chart: ChartType) => {
     let chartVersion = `${chart.chart.metadata.name}-${chart.chart.metadata.version}`;
 
@@ -172,6 +180,20 @@ export default class ExpandedJobChart extends Component<PropsType, StateType> {
           releaseLabel == chart.name
         ) {
           this.mergeNewJob(event.Object);
+        }
+      } else if (event.event_type == "DELETE") {
+        // filter job belonging to chart
+        let chartLabel = event.Object?.metadata?.labels["helm.sh/chart"];
+        let releaseLabel =
+          event.Object?.metadata?.labels["meta.helm.sh/release-name"];
+
+        if (
+          chartLabel &&
+          releaseLabel &&
+          chartLabel == chartVersion &&
+          releaseLabel == chart.name
+        ) {
+          this.removeJob(event.Object)
         }
       }
     };
@@ -409,7 +431,12 @@ export default class ExpandedJobChart extends Component<PropsType, StateType> {
         }
         return (
           <TabWrapper>
-            <JobList jobs={this.state.jobs} />
+            <JobList 
+              jobs={this.state.jobs} 
+              setJobs={(jobs: any) => {
+                this.setState({ jobs })
+              }}
+            />
             <SaveButton
               text="Rerun Job"
               onClick={() => this.handleSaveValues(submitValues)}

@@ -839,6 +839,14 @@ const deleteNamespace = baseApi<
   return `/api/projects/${id}/k8s/namespaces/delete`;
 });
 
+const deleteJob = baseApi<
+  { cluster_id: number },
+  { name: string; namespace: string; id: number }
+>("DELETE", (pathParams) => {
+  let { id, name, namespace } = pathParams;
+  return `/api/projects/${id}/k8s/jobs/${namespace}/${name}`;
+});
+
 const stopJob = baseApi<
   {},
   { name: string; namespace: string; id: number; cluster_id: number }
@@ -933,5 +941,6 @@ export default {
   updateUser,
   updateConfigMap,
   upgradeChartValues,
+  deleteJob,
   stopJob,
 };

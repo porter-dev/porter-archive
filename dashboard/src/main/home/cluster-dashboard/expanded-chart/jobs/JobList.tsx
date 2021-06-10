@@ -14,11 +14,13 @@ type PropsType = {
 
 type StateType = {
   deletionCandidate: any;
+  deletionJob: any;
 };
 
 export default class JobList extends Component<PropsType, StateType> {
   state = {
     deletionCandidate: null as any,
+    deletionJob: null as any,
   }
 
   renderJobList = () => {
@@ -38,6 +40,7 @@ export default class JobList extends Component<PropsType, StateType> {
                 key={job?.metadata?.name}
                 job={job} 
                 handleDelete={() => this.setState({ deletionCandidate: job })}
+                deleting={this.state.deletionJob?.metadata?.name == job.metadata?.name}
               />
             );
           })}
@@ -63,10 +66,10 @@ export default class JobList extends Component<PropsType, StateType> {
         }
       )
       .then((res) => {
-        let jobs = this.props.jobs.slice();
-        jobs = jobs.filter(job => job.metadata?.name !== this.state.deletionCandidate.metadata?.name);
-        this.props.setJobs(jobs);
-        this.setState({ deletionCandidate: null });
+        this.setState({
+          deletionJob: this.state.deletionCandidate,
+          deletionCandidate: null,
+        })
       })
       .catch((err) => {
         let parsedErr =

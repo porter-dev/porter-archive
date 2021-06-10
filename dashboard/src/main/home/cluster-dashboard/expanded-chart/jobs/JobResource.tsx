@@ -13,6 +13,7 @@ import KeyValueArray from "components/values-form/KeyValueArray";
 type PropsType = {
   job: any;
   handleDelete: () => void;
+  deleting: boolean;
 };
 
 type StateType = {
@@ -226,6 +227,10 @@ export default class JobResource extends Component<PropsType, StateType> {
   };
 
   renderStatus = () => {
+    if (this.props.deleting) {
+      return <Status color="#cc3d42">Deleting</Status>;
+    }
+
     if (this.props.job.status?.succeeded >= 1) {
       return <Status color="#38a88a">Succeeded</Status>;
     }

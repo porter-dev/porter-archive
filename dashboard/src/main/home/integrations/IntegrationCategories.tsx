@@ -7,6 +7,7 @@ import { integrationList } from "shared/common";
 import { RouteComponentProps, withRouter } from "react-router";
 import IntegrationList from "./IntegrationList";
 import api from "shared/api";
+import { pushFiltered } from "shared/routing";
 
 type PropsType = RouteComponentProps & {
   category: string;
@@ -129,7 +130,9 @@ class IntegrationCategories extends Component<PropsType, StateType> {
             <Flex>
               <i
                 className="material-icons"
-                onClick={() => this.props.history.push("/integrations")}
+                onClick={() =>
+                  pushFiltered(this.props, "/integrations", ["project_id"])
+                }
               >
                 keyboard_backspace
               </i>
@@ -141,8 +144,10 @@ class IntegrationCategories extends Component<PropsType, StateType> {
                 this.context.setCurrentModal("IntegrationsModal", {
                   category: currentCategory,
                   setCurrentIntegration: (x: string) =>
-                    this.props.history.push(
-                      `/integrations/${this.props.category}/create/${x}`
+                    pushFiltered(
+                      this.props,
+                      `/integrations/${this.props.category}/create/${x}`,
+                      ["project_id"]
                     ),
                 })
               }
@@ -172,7 +177,9 @@ class IntegrationCategories extends Component<PropsType, StateType> {
             <Flex>
               <i
                 className="material-icons"
-                onClick={() => this.props.history.push("/integrations")}
+                onClick={() =>
+                  pushFiltered(this.props, "/integrations", ["project_id"])
+                }
               >
                 keyboard_backspace
               </i>

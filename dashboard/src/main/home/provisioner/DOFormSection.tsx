@@ -5,7 +5,8 @@ import close from "assets/close.png";
 import { isAlphanumeric } from "shared/common";
 import api from "shared/api";
 import { Context } from "shared/Context";
-import { InfraType } from "shared/types";
+import { InfraType, ProjectType } from "shared/types";
+import { pushQueryParams } from "shared/routing";
 
 import InputRow from "components/values-form/InputRow";
 import CheckboxRow from "components/values-form/CheckboxRow";
@@ -133,7 +134,6 @@ export default class DOFormSection extends Component<PropsType, StateType> {
 
   // Step 1: Create a project
   createProject = (callback?: any) => {
-    console.log("Creating project");
     let { projectName } = this.props;
     let { user, setProjects, setCurrentProject } = this.context;
 
@@ -152,8 +152,7 @@ export default class DOFormSection extends Component<PropsType, StateType> {
           }
         );
         setProjects(res_1.data);
-        setCurrentProject(proj);
-        callback && callback(proj.id);
+        setCurrentProject(proj, () => callback && callback(proj.id));
       })
       .catch(this.catchError);
   };

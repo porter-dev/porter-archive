@@ -196,7 +196,7 @@ func executeRun(config *rest.Config, namespace, name, container string, args []s
 	req.Param("stdin", "true")
 	req.Param("stdout", "true")
 	req.Param("tty", "true")
-	req.Param("container", "sidecar")
+	req.Param("container", container)
 
 	t := term.TTY{
 		In:  os.Stdin,

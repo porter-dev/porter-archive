@@ -13,7 +13,6 @@ type PropsType = {
   currentCluster: ClusterType;
   namespace: string;
   sortType: string;
-  setCurrentChart: (c: ChartType) => void;
   currentView: PorterUrl;
 };
 
@@ -218,7 +217,8 @@ export default class ChartList extends Component<PropsType, StateType> {
   };
 
   componentDidMount() {
-    this.updateCharts(this.getControllers);
+    (this.props.namespace || this.props.namespace === "") &&
+      this.updateCharts(this.getControllers);
     this.setControllerWebsockets([
       "deployment",
       "statefulset",
@@ -243,14 +243,15 @@ export default class ChartList extends Component<PropsType, StateType> {
       prevProps.sortType !== this.props.sortType ||
       prevProps.currentView !== this.props.currentView
     ) {
-      this.updateCharts(this.getControllers);
+      (this.props.namespace || this.props.namespace === "") &&
+        this.updateCharts(this.getControllers);
     }
   }
 
   renderChartList = () => {
     let { loading, error, charts } = this.state;
 
-    if (loading) {
+    if (loading || (!this.props.namespace && this.props.namespace !== "")) {
       return (
         <LoadingWrapper>
           <Loading />
@@ -277,7 +278,6 @@ export default class ChartList extends Component<PropsType, StateType> {
         <Chart
           key={`${chart.namespace}-${chart.name}`}
           chart={chart}
-          setCurrentChart={this.props.setCurrentChart}
           controllers={
             this.state.controllers[`${chart.namespace}-${chart.name}`] ||
             ({} as Record<string, any>)

@@ -8,6 +8,7 @@ import { ClusterType } from "shared/types";
 
 import Drawer from "./Drawer";
 import { RouteComponentProps, withRouter } from "react-router";
+import { pushFiltered } from "shared/routing";
 
 type PropsType = RouteComponentProps & {
   forceCloseDrawer: boolean;
@@ -38,7 +39,12 @@ class ClusterSection extends Component<PropsType, StateType> {
   };
 
   updateClusters = () => {
-    let { user, currentProject, setCurrentCluster } = this.context;
+    let {
+      user,
+      currentProject,
+      setCurrentCluster,
+      currentCluster,
+    } = this.context;
 
     // TODO: query with selected filter once implemented
     api
@@ -55,11 +61,31 @@ class ClusterSection extends Component<PropsType, StateType> {
           let clusters = res.data;
           clusters.sort((a: any, b: any) => a.id - b.id);
           if (clusters.length > 0) {
+            let queryString = window.location.search;
+            let urlParams = new URLSearchParams(queryString);
+            let paramClusterName = urlParams.get("cluster");
+            let params = this.props.match.params as any;
+            let pathClusterName = params.cluster;
+
+            // Set cluster from URL if in path or params
+            let defaultCluster = null as ClusterType;
+            if (paramClusterName || pathClusterName) {
+              clusters.forEach((cluster: ClusterType) => {
+                if (!defaultCluster) {
+                  if (cluster.name === pathClusterName) {
+                    defaultCluster = cluster;
+                  } else if (cluster.name === paramClusterName) {
+                    defaultCluster = cluster;
+                  }
+                }
+              });
+            }
+
             this.setState({ clusters });
             let saved = JSON.parse(
               localStorage.getItem(currentProject.id + "-cluster")
             );
-            if (saved && saved !== "null") {
+            if (!defaultCluster && saved && saved !== "null") {
               // Ensures currentCluster isn't prematurely set (causes issues downstream)
               let loaded = false;
               for (let i = 0; i < clusters.length; i++) {
@@ -77,7 +103,7 @@ class ClusterSection extends Component<PropsType, StateType> {
                 setCurrentCluster(clusters[0]);
               }
             } else {
-              setCurrentCluster(clusters[0]);
+              setCurrentCluster(defaultCluster || clusters[0]);
             }
           } else if (
             this.props.currentView !== "provisioner" &&
@@ -85,7 +111,6 @@ class ClusterSection extends Component<PropsType, StateType> {
           ) {
             this.setState({ clusters: [] });
             setCurrentCluster(null);
-            // this.props.history.push("dashboard?tab=overview");
           }
         }
       })
@@ -148,7 +173,7 @@ class ClusterSection extends Component<PropsType, StateType> {
       return (
         <ClusterSelector isSelected={false}>
           <LinkWrapper
-            onClick={() => this.context.setCurrentModal("UpdateClusterModal")}
+            onClick={() => pushFiltered(this.props, "/cluster-dashboard", [])}
           >
             <ClusterIcon>
               <i className="material-icons">device_hub</i>
@@ -251,7 +276,7 @@ const ClusterName = styled.div`
   width: 130px;
   margin-left: 3px;
   font-weight: 400;
-  color: #ffffff44;
+  color: #ffffff;
 `;
 
 const DropdownIcon = styled.span`
@@ -295,7 +320,7 @@ const ClusterIcon = styled.div`
     margin-bottom: 0px;
     margin-left: 17px;
     margin-right: 10px;
-    color: #ffffff44;
+    color: #ffffff;
   }
 `;
 

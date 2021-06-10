@@ -4,6 +4,7 @@ import close from "assets/close.png";
 
 import api from "shared/api";
 import { Context } from "shared/Context";
+import { pushFiltered } from "shared/routing";
 
 import SaveButton from "components/SaveButton";
 import InputRow from "components/values-form/InputRow";
@@ -51,7 +52,9 @@ class UpdateClusterModal extends Component<PropsType, StateType> {
           this.props.setRefreshClusters(true);
           this.setState({ status: "successful", showDeleteOverlay: false });
           this.context.setCurrentModal(null, null);
-          this.props.history.push("dashboard?tab=overview");
+          pushFiltered(this.props, "/dashboard", ["project_id"], {
+            tab: "overview",
+          });
           return;
         }
 

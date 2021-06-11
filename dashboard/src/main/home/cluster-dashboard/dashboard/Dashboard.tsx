@@ -5,8 +5,10 @@ import { Context } from "shared/Context";
 import TabSelector from "components/TabSelector";
 
 import NodeList from "./NodeList";
-import { ClusterSettings } from "./ClusterSettings";
+
 import { NamespaceList } from "./NamespaceList";
+import ClusterSettings from "./ClusterSettings";
+
 
 type TabEnum = "nodes" | "settings" | "namespaces";
 

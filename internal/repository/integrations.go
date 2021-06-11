@@ -41,6 +41,7 @@ type OAuthIntegrationRepository interface {
 // mechanism
 type AWSIntegrationRepository interface {
 	CreateAWSIntegration(am *ints.AWSIntegration) (*ints.AWSIntegration, error)
+	OverwriteAWSIntegration(am *ints.AWSIntegration) (*ints.AWSIntegration, error)
 	ReadAWSIntegration(id uint) (*ints.AWSIntegration, error)
 	ListAWSIntegrationsByProjectID(projectID uint) ([]*ints.AWSIntegration, error)
 }

@@ -86,6 +86,9 @@ type ClusterExternal struct {
 
 	// The infra id, if cluster was provisioned with Porter
 	InfraID uint `json:"infra_id"`
+
+	// (optional) The aws integration id, if available
+	AWSIntegrationID uint `json:"aws_integration_id"`
 }
 
 // Externalize generates an external Cluster to be shared over REST
@@ -101,12 +104,13 @@ func (c *Cluster) Externalize() *ClusterExternal {
 	}
 
 	return &ClusterExternal{
-		ID:        c.ID,
-		ProjectID: c.ProjectID,
-		Name:      c.Name,
-		Server:    c.Server,
-		Service:   serv,
-		InfraID:   c.InfraID,
+		ID:               c.ID,
+		ProjectID:        c.ProjectID,
+		Name:             c.Name,
+		Server:           c.Server,
+		Service:          serv,
+		InfraID:          c.InfraID,
+		AWSIntegrationID: c.AWSIntegrationID,
 	}
 }
 

@@ -32,6 +32,19 @@ export default class NamespaceModal extends Component<PropsType, StateType> {
       return;
     }
 
+    const namespaceExists = this.context.currentModalData?.find(
+      (namespace: any) => {
+        return namespace?.value === this.state.namespaceName;
+      }
+    );
+
+    if (namespaceExists) {
+      this.setState({
+        status: "Namespace already exist, choose another name",
+      });
+      return;
+    }
+
     api
       .createNamespace(
         "<token>",

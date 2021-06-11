@@ -128,7 +128,16 @@ export const NamespaceList: React.FunctionComponent = () => {
   return (
     <NamespaceListWrapper>
       <ControlRow>
-        <Button onClick={() => setCurrentModal("NamespaceModal")}>
+        <Button
+          onClick={() =>
+            setCurrentModal(
+              "NamespaceModal",
+              namespaces.map((namespace) => ({
+                value: namespace.metadata.name,
+              }))
+            )
+          }
+        >
           <i className="material-icons">add</i> Add namespace
         </Button>
       </ControlRow>

@@ -45,6 +45,20 @@ const createAWSIntegration = baseApi<
   return `/api/projects/${pathParams.id}/integrations/aws`;
 });
 
+const overwriteAWSIntegration = baseApi<
+  {
+    aws_access_key_id: string,
+    aws_secret_access_key: string,
+  },
+  { 
+    projectID: number,
+    awsIntegrationID: number,
+    cluster_id: number,
+  }
+>("POST", (pathParams) => {
+  return `/api/projects/${pathParams.projectID}/integrations/aws/${pathParams.awsIntegrationID}/overwrite?cluster_id=${pathParams.cluster_id}`;
+});
+
 const createDOCR = baseApi<
   {
     do_integration_id: number;
@@ -861,6 +875,7 @@ export default {
   connectECRRegistry,
   connectGCRRegistry,
   createAWSIntegration,
+  overwriteAWSIntegration,
   createDOCR,
   createDOKS,
   createEmailVerification,

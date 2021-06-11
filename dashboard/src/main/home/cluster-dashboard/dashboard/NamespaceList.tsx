@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useRef, useState } from "react";
+import React, { useContext, useEffect, useMemo, useRef, useState } from "react";
 import styled from "styled-components";
 import { Context } from "shared/Context";
 import { ClusterType, ProjectType } from "shared/types";
@@ -32,17 +32,8 @@ const useWebsocket = (
       console.log("Connected to websocket");
     };
 
-    wsRef.current.onmessage = (evt: MessageEvent) => {
-      console.log(evt);
-    };
-
     wsRef.current.onclose = () => {
       console.log("closing websocket");
-    };
-
-    wsRef.current.onerror = (err: ErrorEvent) => {
-      console.log(err);
-      wsRef.current.close();
     };
 
     return () => {
@@ -54,9 +45,12 @@ const useWebsocket = (
 };
 
 export const NamespaceList: React.FunctionComponent = () => {
-  const { currentCluster, currentProject, setCurrentModal } = useContext(
-    Context
-  );
+  const {
+    currentCluster,
+    currentProject,
+    setCurrentModal,
+    setCurrentError,
+  } = useContext(Context);
   const [namespaces, setNamespaces] = useState([]);
   const websocket = useWebsocket(currentProject, currentCluster);
   const onDelete = (namespace: any) => {
@@ -73,6 +67,11 @@ export const NamespaceList: React.FunctionComponent = () => {
     if (!websocket) {
       return;
     }
+
+    websocket.current.onerror = (err: ErrorEvent) => {
+      setCurrentError(err.message);
+      websocket.current.close();
+    };
 
     websocket.current.onmessage = (evt: MessageEvent) => {
       const data = JSON.parse(evt.data);
@@ -105,6 +104,27 @@ export const NamespaceList: React.FunctionComponent = () => {
     };
   }, [websocket]);
 
+  const sortedNamespaces = useMemo<any[]>(() => {
+    return [...namespaces].sort((prev, current) => {
+      const prevName = prev.metadata.name;
+      const currentName = current.metadata.name;
+
+      if (
+        isAvailableForDeletion(prevName) &&
+        !isAvailableForDeletion(currentName)
+      ) {
+        return -1;
+      } else if (
+        !isAvailableForDeletion(prevName) &&
+        isAvailableForDeletion(currentName)
+      ) {
+        return 1;
+      } else {
+        return 0;
+      }
+    });
+  }, [namespaces]);
+
   return (
     <NamespaceListWrapper>
       <ControlRow>
@@ -113,7 +133,7 @@ export const NamespaceList: React.FunctionComponent = () => {
         </Button>
       </ControlRow>
       <NamespacesGrid>
-        {namespaces.map((namespace) => {
+        {sortedNamespaces.map((namespace) => {
           return (
             <StyledCard key={namespace?.metadata?.name}>
               <ContentContainer>

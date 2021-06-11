@@ -17,7 +17,7 @@ import ExpandedChartWrapper from "./expanded-chart/ExpandedChartWrapper";
 import { RouteComponentProps, withRouter } from "react-router";
 
 import api from "shared/api";
-import {Dashboard} from "./dashboard/Dashboard";
+import { Dashboard } from "./dashboard/Dashboard";
 
 type PropsType = RouteComponentProps & {
   currentCluster: ClusterType;
@@ -85,10 +85,13 @@ class ClusterDashboard extends Component<PropsType, StateType> {
     }
 
     if (prevProps.currentView !== this.props.currentView) {
+      let params = this.props.match.params as any;
+      let currentNamespace = params.namespace;
       this.setState(
         {
           sortType: "Newest",
           currentChart: null,
+          namespace: currentNamespace || "default",
         },
         () =>
           pushQueryParams(this.props, {

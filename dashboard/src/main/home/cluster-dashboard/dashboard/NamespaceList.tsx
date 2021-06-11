@@ -2,14 +2,23 @@ import React, { useContext, useEffect, useMemo, useRef, useState } from "react";
 import styled from "styled-components";
 import { Context } from "shared/Context";
 import { ClusterType, ProjectType } from "shared/types";
+import { pushFiltered } from "shared/routing";
+import { useHistory, useLocation } from "react-router";
 
 const OptionsDropdown: React.FC = ({ children }) => {
   const [isOpen, setIsOpen] = useState(false);
+
+  const handleClick = (e: any) => {
+    e.stopPropagation();
+    setIsOpen(true);
+  };
+
+  const handleOnBlur = () => {
+    setIsOpen(false);
+  };
+
   return (
-    <OptionsButton
-      onClick={() => setIsOpen(true)}
-      onBlur={() => setIsOpen(false)}
-    >
+    <OptionsButton onClick={handleClick} onBlur={handleOnBlur}>
       <i className="material-icons-outlined">more_vert</i>
       {isOpen && <DropdownMenu>{children}</DropdownMenu>}
     </OptionsButton>
@@ -51,6 +60,8 @@ export const NamespaceList: React.FunctionComponent = () => {
     setCurrentModal,
     setCurrentError,
   } = useContext(Context);
+  const location = useLocation();
+  const history = useHistory();
   const [namespaces, setNamespaces] = useState([]);
   const websocket = useWebsocket(currentProject, currentCluster);
   const onDelete = (namespace: any) => {
@@ -144,7 +155,17 @@ export const NamespaceList: React.FunctionComponent = () => {
       <NamespacesGrid>
         {sortedNamespaces.map((namespace) => {
           return (
-            <StyledCard key={namespace?.metadata?.name}>
+            <StyledCard
+              key={namespace?.metadata?.name}
+              onClick={() =>
+                pushFiltered(
+                  { location, history },
+                  `/applications/${currentCluster.name}/${namespace.metadata.name}`,
+                  [],
+                  {}
+                )
+              }
+            >
               <ContentContainer>
                 {namespace?.metadata?.name}
                 <Status margin_left={"0px"}>
@@ -174,7 +195,6 @@ const NamespaceListWrapper = styled.div`
 `;
 
 const NamespacesGrid = styled.div`
-  overflow-y: auto;
   margin-top: 32px;
   padding-bottom: 150px;
   display: grid;
@@ -291,6 +311,13 @@ const StyledCard = styled.div`
     to {
       opacity: 1;
     }
+  }
+
+  transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+  :hover {
+    transform: scale(1.05);
+    box-shadow: 0 8px 20px 0px #00000030;
+    cursor: pointer;
   }
 `;
 

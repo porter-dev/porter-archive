@@ -155,17 +155,7 @@ export const NamespaceList: React.FunctionComponent = () => {
       <NamespacesGrid>
         {sortedNamespaces.map((namespace) => {
           return (
-            <StyledCard
-              key={namespace?.metadata?.name}
-              onClick={() =>
-                pushFiltered(
-                  { location, history },
-                  `/applications/${currentCluster.name}/${namespace.metadata.name}`,
-                  [],
-                  {}
-                )
-              }
-            >
+            <StyledCard key={namespace?.metadata?.name}>
               <ContentContainer>
                 <Title>{namespace?.metadata?.name}</Title>
                 <Status margin_left={"0px"}>
@@ -318,13 +308,6 @@ const StyledCard = styled.div`
     to {
       opacity: 1;
     }
-  }
-
-  transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
-  :hover {
-    transform: scale(1.05);
-    box-shadow: 0 8px 20px 0px #00000030;
-    cursor: pointer;
   }
 `;
 

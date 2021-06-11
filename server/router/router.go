@@ -695,6 +695,25 @@ func New(a *api.App) *chi.Mux {
 
 			r.Method(
 				"POST",
+				"/projects/{project_id}/integrations/aws/{aws_integration_id}/overwrite",
+				auth.DoesUserHaveProjectAccess(
+					auth.DoesUserHaveClusterAccess(
+						auth.DoesUserHaveAWSIntegrationAccess(
+							requestlog.NewHandler(a.HandleOverwriteAWSIntegration, l),
+							mw.URLParam,
+							mw.URLParam,
+							false,
+						),
+						mw.URLParam,
+						mw.QueryParam,
+					),
+					mw.URLParam,
+					mw.WriteAccess,
+				),
+			)
+
+			r.Method(
+				"POST",
 				"/projects/{project_id}/integrations/basic",
 				auth.DoesUserHaveProjectAccess(
 					requestlog.NewHandler(a.HandleCreateBasicAuthIntegration, l),
@@ -1348,6 +1367,20 @@ func New(a *api.App) *chi.Mux {
 					),
 					mw.URLParam,
 					mw.ReadAccess,
+				),
+			)
+
+			r.Method(
+				"DELETE",
+				"/projects/{project_id}/k8s/jobs/{namespace}/{name}",
+				auth.DoesUserHaveProjectAccess(
+					auth.DoesUserHaveClusterAccess(
+						requestlog.NewHandler(a.HandleDeleteJob, l),
+						mw.URLParam,
+						mw.QueryParam,
+					),
+					mw.URLParam,
+					mw.WriteAccess,
 				),
 			)
 

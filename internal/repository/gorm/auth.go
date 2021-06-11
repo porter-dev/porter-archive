@@ -936,6 +936,23 @@ func (repo *AWSIntegrationRepository) CreateAWSIntegration(
 	return am, nil
 }
 
+// UpdateCluster modifies an existing Cluster in the database
+func (repo *AWSIntegrationRepository) OverwriteAWSIntegration(
+	am *ints.AWSIntegration,
+) (*ints.AWSIntegration, error) {
+	err := repo.EncryptAWSIntegrationData(am, repo.key)
+
+	if err != nil {
+		return nil, err
+	}
+
+	if err := repo.db.Save(am).Error; err != nil {
+		return nil, err
+	}
+
+	return am, nil
+}
+
 // ReadAWSIntegration finds a aws auth mechanism by id
 func (repo *AWSIntegrationRepository) ReadAWSIntegration(
 	id uint,

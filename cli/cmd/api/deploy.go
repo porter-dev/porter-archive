@@ -84,6 +84,7 @@ type UpdateBatchImageRequest struct {
 func (c *Client) UpdateBatchImage(
 	ctx context.Context,
 	projID, clusterID uint,
+	namespace string,
 	updateImageReq *UpdateBatchImageRequest,
 ) error {
 	data, err := json.Marshal(updateImageReq)
@@ -96,7 +97,7 @@ func (c *Client) UpdateBatchImage(
 		"POST",
 		fmt.Sprintf("%s/projects/%d/releases/image/update/batch?"+url.Values{
 			"cluster_id": []string{fmt.Sprintf("%d", clusterID)},
-			"namespace":  []string{"default"},
+			"namespace":  []string{namespace},
 			"storage":    []string{"secret"},
 		}.Encode(), c.BaseURL, projID),
 		strings.NewReader(string(data)),

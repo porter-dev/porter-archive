@@ -1,6 +1,10 @@
 package create
 
 import (
+	"fmt"
+	"os"
+	"path/filepath"
+
 	"github.com/porter-dev/porter/cli/cmd/api"
 	"github.com/porter-dev/porter/cli/cmd/docker"
 )
@@ -20,6 +24,7 @@ type CreateOpts struct {
 }
 
 func (c *CreateAgent) CreateFromDocker() error {
+
 	// read values from local file
 
 	// overwrite with docker image repository and tag
@@ -27,4 +32,22 @@ func (c *CreateAgent) CreateFromDocker() error {
 	// call subdomain creation if necessary
 
 	return nil
+}
+
+type CreateConfig struct {
+	DockerfilePath string
+}
+
+func (c *CreateAgent) DetectConfig(buildPath string) (*CreateConfig, error) {
+	// detect if there is a dockerfile at the path `./Dockerfile`
+	dockerFilePath := filepath.Join(buildPath, "./Dockerfile")
+
+	if info, err := os.Stat(dockerFilePath); !os.IsNotExist(err) && !info.IsDir() {
+		// path/to/whatever does not exist
+		return &CreateConfig{
+			DockerfilePath: dockerFilePath,
+		}, nil
+	}
+
+	return nil, fmt.Errorf("no supported build configuration detected")
 }

@@ -10,7 +10,7 @@ const OptionsDropdown: React.FC = ({ children }) => {
 
   const handleClick = (e: any) => {
     e.stopPropagation();
-    setIsOpen(true);
+    setIsOpen(!isOpen);
   };
 
   const handleOnBlur = () => {
@@ -19,7 +19,7 @@ const OptionsDropdown: React.FC = ({ children }) => {
 
   return (
     <OptionsButton onClick={handleClick} onBlur={handleOnBlur}>
-      <i className="material-icons-outlined">more_vert</i>
+      <i className="material-icons">{isOpen ? "expand_less" : "expand_more"}</i>
       {isOpen && <DropdownMenu>{children}</DropdownMenu>}
     </OptionsButton>
   );
@@ -167,7 +167,7 @@ export const NamespaceList: React.FunctionComponent = () => {
               }
             >
               <ContentContainer>
-                {namespace?.metadata?.name}
+                <Title>{namespace?.metadata?.name}</Title>
                 <Status margin_left={"0px"}>
                   <StatusColor status={namespace.status.phase} />
                   {namespace?.status?.phase}
@@ -201,6 +201,13 @@ const NamespacesGrid = styled.div`
   grid-column-gap: 25px;
   grid-row-gap: 25px;
   grid-template-columns: repeat(2, minmax(200px, 1fr));
+`;
+
+const Title = styled.div`
+  font-size: 14px;
+  font-family: "Work Sans", sans-serif;
+  font-weight: 500;
+  color: #ffffff;
 `;
 
 const StatusColor = styled.div`
@@ -338,6 +345,7 @@ const OptionsButton = styled.button`
   justify-content: center;
   align-items: center;
   border-radius: 50%;
+  color: #ffffff44;
   :hover {
     background: #32343a;
     cursor: pointer;
@@ -346,13 +354,14 @@ const OptionsButton = styled.button`
 
 const DropdownMenu = styled.div`
   position: absolute;
-  right: 25px;
-  top: 10px;
+  right: 12px;
+  top: 30px;
   overflow: hidden;
   width: 120px;
   height: auto;
   background: #26282f;
   box-shadow: 0 8px 20px 0px #00000088;
+  color: white;
 `;
 
 const DropdownOption = styled.div`

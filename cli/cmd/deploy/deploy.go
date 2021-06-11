@@ -21,10 +21,10 @@ type DeployBuildType string
 
 const (
 	// uses local Docker daemon to build and push images
-	deployBuildTypeDocker DeployBuildType = "docker"
+	DeployBuildTypeDocker DeployBuildType = "docker"
 
 	// uses cloud-native build pack to build and push images
-	deployBuildTypePack DeployBuildType = "pack"
+	DeployBuildTypePack DeployBuildType = "pack"
 )
 
 // DeployAgent handles the deployment and redeployment of an application on Porter
@@ -94,18 +94,18 @@ func NewDeployAgent(client *api.Client, app string, opts *DeployOpts) (*DeployAg
 			// if the git action config exists, and dockerfile path is not empty, build type
 			// is docker
 			if release.GitActionConfig.DockerfilePath != "" {
-				deployAgent.opts.Method = deployBuildTypeDocker
+				deployAgent.opts.Method = DeployBuildTypeDocker
 			}
 
 			// otherwise build type is pack
-			deployAgent.opts.Method = deployBuildTypePack
+			deployAgent.opts.Method = DeployBuildTypePack
 		} else {
 			// if the git action config does not exist, we use pack by default
-			deployAgent.opts.Method = deployBuildTypePack
+			deployAgent.opts.Method = DeployBuildTypePack
 		}
 	}
 
-	if deployAgent.opts.Method == deployBuildTypeDocker {
+	if deployAgent.opts.Method == DeployBuildTypeDocker {
 		if release.GitActionConfig != nil {
 			deployAgent.dockerfilePath = release.GitActionConfig.DockerfilePath
 		}
@@ -234,7 +234,7 @@ func (d *DeployAgent) Build() error {
 		d.imageExists = false
 	}
 
-	if d.opts.Method == deployBuildTypeDocker {
+	if d.opts.Method == DeployBuildTypeDocker {
 		return d.BuildDocker(dst, d.tag)
 	}
 

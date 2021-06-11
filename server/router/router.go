@@ -1474,7 +1474,7 @@ func New(a *api.App) *chi.Mux {
 				"/projects/{project_id}/releases/image/update/batch",
 				auth.DoesUserHaveProjectAccess(
 					auth.DoesUserHaveClusterAccess(
-						requestlog.NewHandler(a.HandleReleaseBatchUpdateImage, l),
+						requestlog.NewHandler(a.HandleReleaseUpdateJobImages, l),
 						mw.URLParam,
 						mw.QueryParam,
 					),

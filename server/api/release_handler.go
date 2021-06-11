@@ -975,7 +975,7 @@ func (app *App) HandleReleaseDeployWebhook(w http.ResponseWriter, r *http.Reques
 }
 
 // HandleReleaseJobUpdateImage
-func (app *App) HandleReleaseBatchUpdateImage(w http.ResponseWriter, r *http.Request) {
+func (app *App) HandleReleaseUpdateJobImages(w http.ResponseWriter, r *http.Request) {
 	vals, err := url.ParseQuery(r.URL.RawQuery)
 
 	if err != nil {
@@ -1051,26 +1051,28 @@ func (app *App) HandleReleaseBatchUpdateImage(w http.ResponseWriter, r *http.Req
 				mu.Unlock()
 			}
 
-			image := map[string]interface{}{}
-			image["repository"] = releases[index].ImageRepoURI
-			image["tag"] = form.Tag
-			rel.Config["image"] = image
-			rel.Config["paused"] = true
+			if rel.Chart.Name() == "job" {
+				image := map[string]interface{}{}
+				image["repository"] = releases[index].ImageRepoURI
+				image["tag"] = form.Tag
+				rel.Config["image"] = image
+				rel.Config["paused"] = true
 
-			conf := &helm.UpgradeReleaseConfig{
-				Name:       releases[index].Name,
-				Cluster:    form.ReleaseForm.Cluster,
-				Repo:       *app.Repo,
-				Registries: registries,
-				Values:     rel.Config,
-			}
+				conf := &helm.UpgradeReleaseConfig{
+					Name:       releases[index].Name,
+					Cluster:    form.ReleaseForm.Cluster,
+					Repo:       *app.Repo,
+					Registries: registries,
+					Values:     rel.Config,
+				}
 
-			_, err = agent.UpgradeReleaseByValues(conf, app.DOConf)
+				_, err = agent.UpgradeReleaseByValues(conf, app.DOConf)
 
-			if err != nil {
-				mu.Lock()
-				errors = append(errors, err.Error())
-				mu.Unlock()
+				if err != nil {
+					mu.Lock()
+					errors = append(errors, err.Error())
+					mu.Unlock()
+				}
 			}
 		}()
 	}

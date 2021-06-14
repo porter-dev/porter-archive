@@ -177,3 +177,24 @@ export interface CapabilityType {
   github: boolean;
   provisioner: boolean;
 }
+
+export interface ContextProps {
+  currentModal?: string;
+  currentModalData: any;
+  setCurrentModal: (currentModal: string, currentModalData?: any) => void;
+  currentError?: string;
+  setCurrentError: (currentError: string) => void;
+  currentCluster?: ClusterType;
+  setCurrentCluster: (currentCluster: ClusterType, callback?: any) => void;
+  currentProject?: ProjectType;
+  setCurrentProject: (currentProject: ProjectType, callback?: any) => void;
+  projects: ProjectType[];
+  setProjects: (projects: ProjectType[]) => void;
+  user: any;
+  setUser: (userId: number, email: string) => void;
+  devOpsMode: boolean;
+  setDevOpsMode: (devOpsMode: boolean) => void;
+  capabilities: CapabilityType;
+  setCapabilities: (capabilities: CapabilityType) => void;
+  clearContext: () => void;
+}

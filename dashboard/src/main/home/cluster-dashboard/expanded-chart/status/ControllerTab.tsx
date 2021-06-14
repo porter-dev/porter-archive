@@ -2,7 +2,7 @@ import React, { Component } from "react";
 import styled from "styled-components";
 import api from "shared/api";
 import { Context } from "shared/Context";
-
+import { ChartType } from "shared/types";
 import ResourceTab from "components/ResourceTab";
 import ConfirmOverlay from "components/ConfirmOverlay";
 
@@ -21,6 +21,8 @@ type StateType = {
   raw: any[];
   showTooltip: boolean[];
   podPendingDelete: any;
+  websockets: Record<string, any>;
+  selectors: string[];
 };
 
 // Controller tab in log section that displays list of pods on click.
@@ -30,36 +32,20 @@ export default class ControllerTab extends Component<PropsType, StateType> {
     raw: [] as any[],
     showTooltip: [] as boolean[],
     podPendingDelete: null as any,
+    websockets: {} as Record<string, any>,
+    selectors: [] as string[],
   };
 
   updatePods = () => {
     let { currentCluster, currentProject, setCurrentError } = this.context;
     let { controller, selectPod, isFirst } = this.props;
 
-    let selectors = [] as string[];
-    let ml =
-      controller?.spec?.selector?.matchLabels || controller?.spec?.selector;
-    let i = 1;
-    let selector = "";
-    for (var key in ml) {
-      selector += key + "=" + ml[key];
-      if (i != Object.keys(ml).length) {
-        selector += ",";
-      }
-      i += 1;
-    }
-    selectors.push(selector);
-
-    if (controller.kind.toLowerCase() == "job" && this.props.selectors) {
-      selectors = this.props.selectors;
-    }
-
     api
       .getMatchingPods(
         "<token>",
         {
           cluster_id: currentCluster.id,
-          selectors,
+          selectors: this.state.selectors,
         },
         {
           id: currentProject.id,
@@ -96,9 +82,92 @@ export default class ControllerTab extends Component<PropsType, StateType> {
       });
   };
 
-  componentDidMount() {
-    this.updatePods();
+  getPodSelectors = (callback: () => void) => {
+    let { controller } = this.props;
+
+    let selectors = [] as string[];
+    let ml =
+      controller?.spec?.selector?.matchLabels || controller?.spec?.selector;
+    let i = 1;
+    let selector = "";
+    for (var key in ml) {
+      selector += key + "=" + ml[key];
+      if (i != Object.keys(ml).length) {
+        selector += ",";
+      }
+      i += 1;
+    }
+    selectors.push(selector);
+    if (controller.kind.toLowerCase() == "job" && this.props.selectors) {
+      selectors = this.props.selectors;
+    }
+
+    this.setState({ selectors }, () =>{
+      callback();
+    })
   }
+
+  componentDidMount() {
+    this.getPodSelectors(() => {
+      this.updatePods();
+      this.setControllerWebsockets([this.props.controller.kind, "pod"])
+    })
+  }
+
+  componentWillUnmount() {
+    if (this.state.websockets) {
+      this.state.websockets.forEach((ws: WebSocket) => {
+        ws.close();
+      });
+    }
+  }
+
+  setControllerWebsockets = (controller_types: any[]) => {
+    let websockets = controller_types.map((kind: string) => {
+      return this.setupWebsocket(kind);
+    });
+    this.setState({ websockets });
+  };
+
+  setupWebsocket = (kind: string) => {
+    let { currentCluster, currentProject } = this.context;
+    let protocol = process.env.NODE_ENV == "production" ? "wss" : "ws";
+    let connString = `${protocol}://${process.env.API_SERVER}/api/projects/${currentProject.id}/k8s/${kind}/status?cluster_id=${currentCluster.id}`
+    
+    if (kind == "pod" && this.state.selectors) {
+      connString += `&selectors=${this.state.selectors[0]}`
+    }
+    let ws = new WebSocket(connString);
+
+    ws.onopen = () => {
+      console.log("connected to websocket");
+    };
+
+    ws.onmessage = (evt: MessageEvent) => {
+      let event = JSON.parse(evt.data);
+      let object = event.Object;
+      object.metadata.kind = event.Kind;
+
+      // update pods no matter what
+      if (event.Kind == "pod") {
+        this.updatePods();
+      }
+
+      if (object.metadata.uid != this.props.controller.metadata.uid) return;
+      this.updatePods();
+    };
+
+    ws.onclose = () => {
+      console.log("closing websocket");
+    };
+
+    ws.onerror = (err: ErrorEvent) => {
+      console.log(err);
+      ws.close();
+    };
+
+    return ws;
+  };
 
   getAvailability = (kind: string, c: any) => {
     switch (kind?.toLowerCase()) {

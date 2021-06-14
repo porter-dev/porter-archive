@@ -21,7 +21,7 @@ export default class JobList extends Component<PropsType, StateType> {
   state = {
     deletionCandidate: null as any,
     deletionJob: null as any,
-  }
+  };
 
   renderJobList = () => {
     if (this.props.jobs.length === 0) {
@@ -38,9 +38,11 @@ export default class JobList extends Component<PropsType, StateType> {
             return (
               <JobResource
                 key={job?.metadata?.name}
-                job={job} 
+                job={job}
                 handleDelete={() => this.setState({ deletionCandidate: job })}
-                deleting={this.state.deletionJob?.metadata?.name == job.metadata?.name}
+                deleting={
+                  this.state.deletionJob?.metadata?.name == job.metadata?.name
+                }
               />
             );
           })}
@@ -51,7 +53,7 @@ export default class JobList extends Component<PropsType, StateType> {
 
   deleteJob = () => {
     let { currentCluster, currentProject, setCurrentError } = this.context;
-    let job = this.state.deletionCandidate
+    let job = this.state.deletionCandidate;
 
     api
       .deleteJob(
@@ -69,7 +71,7 @@ export default class JobList extends Component<PropsType, StateType> {
         this.setState({
           deletionJob: this.state.deletionCandidate,
           deletionCandidate: null,
-        })
+        });
       })
       .catch((err) => {
         let parsedErr =
@@ -79,7 +81,7 @@ export default class JobList extends Component<PropsType, StateType> {
         }
         setCurrentError(err);
       });
-  }
+  };
 
   render() {
     return (
@@ -90,9 +92,7 @@ export default class JobList extends Component<PropsType, StateType> {
           onYes={this.deleteJob}
           onNo={() => this.setState({ deletionCandidate: null })}
         />
-        <JobListWrapper>
-          {this.renderJobList()}
-        </JobListWrapper>
+        <JobListWrapper>{this.renderJobList()}</JobListWrapper>
       </>
     );
   }

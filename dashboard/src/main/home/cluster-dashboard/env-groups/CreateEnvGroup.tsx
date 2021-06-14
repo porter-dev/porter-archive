@@ -122,12 +122,17 @@ export default class CreateEnvGroup extends Component<PropsType, StateType> {
       )
       .then((res) => {
         if (res.data) {
-          let namespaceOptions = res.data.items.map(
+          const availableNamespaces = res.data.items.filter(
+            (namespace: any) => {
+              return namespace.status.phase !== "Terminating";
+            }
+          );
+          const namespaceOptions = availableNamespaces.map(
             (x: { metadata: { name: string } }) => {
               return { label: x.metadata.name, value: x.metadata.name };
             }
           );
-          if (res.data.items.length > 0) {
+          if (availableNamespaces.length > 0) {
             this.setState({ namespaceOptions });
           }
         }

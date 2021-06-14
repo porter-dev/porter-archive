@@ -169,7 +169,7 @@ func (app *App) HandleDeployTemplate(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		app.createGitActionFromForm(projID, release, name, gaForm, w, r)
+		app.createGitActionFromForm(projID, release, form.ChartTemplateForm.Name, gaForm, w, r)
 	}
 
 	w.WriteHeader(http.StatusOK)

@@ -77,3 +77,9 @@ func (urf *UpdateRegistryForm) ToRegistry(repo repository.RegistryRepository) (*
 
 	return registry, nil
 }
+
+// CreateRepository represents the accepted values for creating an image repository
+// within a registry
+type CreateRepository struct {
+	ImageRepoURI string `json:"image_repo_uri" form:"required"`
+}

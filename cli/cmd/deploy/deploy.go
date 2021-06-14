@@ -12,7 +12,6 @@ import (
 	"github.com/porter-dev/porter/cli/cmd/api"
 	"github.com/porter-dev/porter/cli/cmd/docker"
 	"github.com/porter-dev/porter/cli/cmd/github"
-	"github.com/porter-dev/porter/cli/cmd/pack"
 	"k8s.io/client-go/util/homedir"
 )
 
@@ -45,14 +44,9 @@ type DeployAgent struct {
 
 // DeployOpts are the options for creating a new DeployAgent
 type DeployOpts struct {
-	ProjectID       uint
-	ClusterID       uint
-	Namespace       string
-	Local           bool
-	LocalPath       string
-	LocalDockerfile string
-	OverrideTag     string
-	Method          DeployBuildType
+	*SharedOpts
+
+	Local bool
 }
 
 // NewDeployAgent creates a new DeployAgent given a Porter API client, application
@@ -144,7 +138,7 @@ func NewDeployAgent(client *api.Client, app string, opts *DeployOpts) (*DeployAg
 }
 
 func (d *DeployAgent) GetBuildEnv() (map[string]string, error) {
-	return d.getEnvFromRelease()
+	return GetEnvFromConfig(d.release.Config)
 }
 
 func (d *DeployAgent) SetBuildEnv(envVars map[string]string) error {
@@ -226,6 +220,14 @@ func (d *DeployAgent) Build() error {
 
 	err = d.pullCurrentReleaseImage()
 
+	buildAgent := &BuildAgent{
+		SharedOpts:  d.opts.SharedOpts,
+		client:      d.client,
+		imageRepo:   d.imageRepo,
+		env:         d.env,
+		imageExists: d.imageExists,
+	}
+
 	// if image is not found, don't return an error
 	if err != nil && err != docker.PullImageErrNotFound {
 		return err
@@ -235,63 +237,10 @@ func (d *DeployAgent) Build() error {
 	}
 
 	if d.opts.Method == DeployBuildTypeDocker {
-		return d.BuildDocker(dst, d.tag)
+		return buildAgent.BuildDocker(d.agent, dst, d.tag)
 	}
 
-	return d.BuildPack(dst, d.tag)
-}
-
-func (d *DeployAgent) BuildDocker(dst, tag string) error {
-	opts := &docker.BuildOpts{
-		ImageRepo:    d.imageRepo,
-		Tag:          tag,
-		BuildContext: dst,
-		Env:          d.env,
-	}
-
-	return d.agent.BuildLocal(
-		opts,
-		d.dockerfilePath,
-	)
-}
-
-func (d *DeployAgent) BuildPack(dst, tag string) error {
-	// retag the image with "pack-cache" tag so that it doesn't re-pull from the registry
-	if d.imageExists {
-		err := d.agent.TagImage(
-			fmt.Sprintf("%s:%s", d.imageRepo, tag),
-			fmt.Sprintf("%s:%s", d.imageRepo, "pack-cache"),
-		)
-
-		if err != nil {
-			return err
-		}
-	}
-
-	// create pack agent and build opts
-	packAgent := &pack.Agent{}
-
-	opts := &docker.BuildOpts{
-		ImageRepo: d.imageRepo,
-		// We tag the image with a stable param "pack-cache" so that pack can use the
-		// local image without attempting to re-pull from registry. We handle getting
-		// registry credentials and pushing/pulling the image.
-		Tag:          "pack-cache",
-		BuildContext: dst,
-		Env:          d.env,
-	}
-
-	// call builder
-	err := packAgent.Build(opts)
-
-	if err != nil {
-		return err
-	}
-
-	return d.agent.TagImage(
-		fmt.Sprintf("%s:%s", d.imageRepo, "pack-cache"),
-		fmt.Sprintf("%s:%s", d.imageRepo, tag),
-	)
+	return buildAgent.BuildPack(d.agent, dst, d.tag)
 }
 
 func (d *DeployAgent) Push() error {
@@ -319,8 +268,8 @@ func (d *DeployAgent) CallWebhook() error {
 }
 
 // HELPER METHODS
-func (d *DeployAgent) getEnvFromRelease() (map[string]string, error) {
-	envConfig, err := getNestedMap(d.release.Config, "container", "env", "normal")
+func GetEnvFromConfig(config map[string]interface{}) (map[string]string, error) {
+	envConfig, err := getNestedMap(config, "container", "env", "normal")
 
 	// if the field is not found, set envConfig to an empty map; this release has no env set
 	if e := (&NestedMapFieldNotFoundError{}); errors.As(err, &e) {

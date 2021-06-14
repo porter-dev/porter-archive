@@ -369,14 +369,16 @@ func deployGetAgent(client *api.Client) (*deploy.DeployAgent, error) {
 
 	// initialize the deploy agent
 	return deploy.NewDeployAgent(client, app, &deploy.DeployOpts{
-		ProjectID:       config.Project,
-		ClusterID:       config.Cluster,
-		Namespace:       namespace,
-		Local:           local,
-		LocalPath:       localPath,
-		LocalDockerfile: dockerfile,
-		OverrideTag:     tag,
-		Method:          buildMethod,
+		SharedOpts: &deploy.SharedOpts{
+			ProjectID:       config.Project,
+			ClusterID:       config.Cluster,
+			Namespace:       namespace,
+			LocalPath:       localPath,
+			LocalDockerfile: dockerfile,
+			OverrideTag:     tag,
+			Method:          buildMethod,
+		},
+		Local: local,
 	})
 }
 

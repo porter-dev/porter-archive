@@ -87,18 +87,14 @@ class Home extends Component<PropsType, StateType> {
     if (!currentProject) return;
 
     api
-      .getCapabilities(
-        "<token>",
-        {},
-        {}
-      )
+      .getCapabilities("<token>", {}, {})
       .then((res) => {
-        this.context.setCapabilities(res.data)
+        this.context.setCapabilities(res.data);
       })
       .catch((err) => {
-        console.log(err)
+        console.log(err);
       });
-  }
+  };
 
   getProjects = (id?: number) => {
     let { user, setProjects } = this.context;

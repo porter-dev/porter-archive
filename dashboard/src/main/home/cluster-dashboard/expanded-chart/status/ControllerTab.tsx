@@ -102,16 +102,16 @@ export default class ControllerTab extends Component<PropsType, StateType> {
       selectors = this.props.selectors;
     }
 
-    this.setState({ selectors }, () =>{
+    this.setState({ selectors }, () => {
       callback();
-    })
-  }
+    });
+  };
 
   componentDidMount() {
     this.getPodSelectors(() => {
       this.updatePods();
-      this.setControllerWebsockets([this.props.controller.kind, "pod"])
-    })
+      this.setControllerWebsockets([this.props.controller.kind, "pod"]);
+    });
   }
 
   componentWillUnmount() {
@@ -132,10 +132,10 @@ export default class ControllerTab extends Component<PropsType, StateType> {
   setupWebsocket = (kind: string) => {
     let { currentCluster, currentProject } = this.context;
     let protocol = process.env.NODE_ENV == "production" ? "wss" : "ws";
-    let connString = `${protocol}://${process.env.API_SERVER}/api/projects/${currentProject.id}/k8s/${kind}/status?cluster_id=${currentCluster.id}`
-    
+    let connString = `${protocol}://${process.env.API_SERVER}/api/projects/${currentProject.id}/k8s/${kind}/status?cluster_id=${currentCluster.id}`;
+
     if (kind == "pod" && this.state.selectors) {
-      connString += `&selectors=${this.state.selectors[0]}`
+      connString += `&selectors=${this.state.selectors[0]}`;
     }
     let ws = new WebSocket(connString);
 

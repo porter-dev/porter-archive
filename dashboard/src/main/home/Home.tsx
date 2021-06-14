@@ -93,7 +93,6 @@ class Home extends Component<PropsType, StateType> {
         {}
       )
       .then((res) => {
-        console.log(res.data)
         this.context.setCapabilities(res.data)
       })
       .catch((err) => {

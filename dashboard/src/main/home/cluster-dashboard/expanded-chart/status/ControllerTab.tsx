@@ -23,6 +23,8 @@ type StateType = {
   podPendingDelete: any;
   websockets: Record<string, any>;
   selectors: string[];
+  available: number;
+  total: number;
 };
 
 // Controller tab in log section that displays list of pods on click.
@@ -34,6 +36,8 @@ export default class ControllerTab extends Component<PropsType, StateType> {
     podPendingDelete: null as any,
     websockets: {} as Record<string, any>,
     selectors: [] as string[],
+    available: null as number,
+    total: null as number,
   };
 
   updatePods = () => {
@@ -46,7 +50,7 @@ export default class ControllerTab extends Component<PropsType, StateType> {
         {
           cluster_id: currentCluster.id,
           namespace: controller?.metadata?.namespace,
-          selectors : this.state.selectors,
+          selectors: this.state.selectors,
         },
         {
           id: currentProject.id,
@@ -132,8 +136,8 @@ export default class ControllerTab extends Component<PropsType, StateType> {
 
   setupWebsocket = (kind: string) => {
     let { currentCluster, currentProject } = this.context;
-    let protocol = process.env.NODE_ENV == "production" ? "wss" : "ws";
-    let connString = `${protocol}://${process.env.API_SERVER}/api/projects/${currentProject.id}/k8s/${kind}/status?cluster_id=${currentCluster.id}`;
+    let protocol = window.location.protocol == "https:" ? "wss" : "ws";
+    let connString = `${protocol}://${window.location.host}/api/projects/${currentProject.id}/k8s/${kind}/status?cluster_id=${currentCluster.id}`;
 
     if (kind == "pod" && this.state.selectors) {
       connString += `&selectors=${this.state.selectors[0]}`;
@@ -149,12 +153,22 @@ export default class ControllerTab extends Component<PropsType, StateType> {
       let object = event.Object;
       object.metadata.kind = event.Kind;
 
-      // update pods no matter what
-      if (event.Kind == "pod") {
-        this.updatePods();
+      // update pods no matter what if ws message is a pod event.
+      // If controller event, check if ws message corresponds to the designated controller in props.
+      if (
+        event.Kind != "pod" &&
+        object.metadata.uid != this.props.controller.metadata.uid
+      )
+        return;
+
+      if (event.Kind != "pod") {
+        let [available, total] = this.getAvailability(
+          object.metadata.kind,
+          object
+        );
+        this.setState({ available, total });
       }
 
-      if (object.metadata.uid != this.props.controller.metadata.uid) return;
       this.updatePods();
     };
 
@@ -265,7 +279,7 @@ export default class ControllerTab extends Component<PropsType, StateType> {
 
   render() {
     let { controller, selectedPod, isLast, selectPod, isFirst } = this.props;
-    let [available, total] = this.getAvailability(controller.kind, controller);
+    let { available, total } = this.state;
     let status = available == total ? "running" : "waiting";
 
     controller?.status?.conditions?.forEach((condition: any) => {

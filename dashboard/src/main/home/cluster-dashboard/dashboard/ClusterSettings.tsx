@@ -1,9 +1,9 @@
-import React, { useContext, useState } from 'react'
-import styled from 'styled-components';
-import Heading from 'components/values-form/Heading';
+import React, { useContext, useState } from "react";
+import styled from "styled-components";
+import Heading from "components/values-form/Heading";
 import Helper from "components/values-form/Helper";
 import InputRow from "components/values-form/InputRow";
-import { Context } from 'shared/Context';
+import { Context } from "shared/Context";
 import api from "shared/api";
 
 const ClusterSettings: React.FC = () => {
@@ -14,124 +14,128 @@ const ClusterSettings: React.FC = () => {
   const [successfulRotate, setSuccessfulRotate] = useState<boolean>(false);
 
   let rotateCredentials = () => {
-    api.overwriteAWSIntegration(
-      "<token>",
-      {
-        aws_access_key_id: accessKeyId,
-        aws_secret_access_key: secretKey
-      },
-      {
-        projectID: context.currentProject.id,
-        awsIntegrationID: context.currentCluster.aws_integration_id,
-        cluster_id: context.currentCluster.id,
-      }
-    ).then(({ data }) => {
-      setSuccessfulRotate(true)
-    })
-    .catch(() => {
-      setSuccessfulRotate(false)
-    })
-  }
+    api
+      .overwriteAWSIntegration(
+        "<token>",
+        {
+          aws_access_key_id: accessKeyId,
+          aws_secret_access_key: secretKey,
+        },
+        {
+          projectID: context.currentProject.id,
+          awsIntegrationID: context.currentCluster.aws_integration_id,
+          cluster_id: context.currentCluster.id,
+        }
+      )
+      .then(({ data }) => {
+        setSuccessfulRotate(true);
+      })
+      .catch(() => {
+        setSuccessfulRotate(false);
+      });
+  };
 
-  let helperText = <Helper>
-    Delete this cluster and underlying infrastructure. To
-    ensure that everything has been properly destroyed, please visit
-    your cloud provider's console. Instructions to properly delete all
-    resources can be found
-    <a
-      target="none"
-      href="https://docs.getporter.dev/docs/deleting-dangling-resources"
-    >
-      {" "}
-      here
-    </a>.
-  </Helper>
+  let helperText = (
+    <Helper>
+      Delete this cluster and underlying infrastructure. To ensure that
+      everything has been properly destroyed, please visit your cloud provider's
+      console. Instructions to properly delete all resources can be found
+      <a
+        target="none"
+        href="https://docs.getporter.dev/docs/deleting-dangling-resources"
+      >
+        {" "}
+        here
+      </a>
+      .
+    </Helper>
+  );
 
   if (!context.currentCluster?.infra_id || !context.currentCluster?.service) {
-    helperText = <Helper>
-      Remove this cluster from Porter. Since this cluster was not provisioned by Porter, deleting the
-      cluster will only detach this cluster from your project. To delete the cluster itself, you must 
-      do so manually. This operation cannot be undone. 
-    </Helper>
+    helperText = (
+      <Helper>
+        Remove this cluster from Porter. Since this cluster was not provisioned
+        by Porter, deleting the cluster will only detach this cluster from your
+        project. To delete the cluster itself, you must do so manually. This
+        operation cannot be undone.
+      </Helper>
+    );
   }
 
-  let keyRotationSection = null
+  let keyRotationSection = null;
 
-  if (context.currentCluster?.aws_integration_id && context.currentCluster?.aws_integration_id != 0) {
+  if (
+    context.currentCluster?.aws_integration_id &&
+    context.currentCluster?.aws_integration_id != 0
+  ) {
     if (successfulRotate) {
-      keyRotationSection = <div>
-        <Heading>Credential Rotation</Heading>
-        <Helper>
-          Successfully rotated credentials!
-        </Helper>
+      keyRotationSection = (
+        <div>
+          <Heading>Credential Rotation</Heading>
+          <Helper>Successfully rotated credentials!</Helper>
         </div>
+      );
     } else if (startRotateCreds) {
-      keyRotationSection = <div>
-        <Heading>Credential Rotation</Heading>
-        <Helper>
-          Input the new credentials for the EKS cluster. 
-        </Helper>
-        <InputRow
-          type="text"
-          value={accessKeyId}
-          setValue={(x: string) => setAccessKeyId(x)}
-          label="👤 AWS Access ID"
-          placeholder="ex: AKIAIOSFODNN7EXAMPLE"
-          width="100%"
-          isRequired={true}
-        />
-        <InputRow
-          type="password"
-          value={secretKey}
-          setValue={(x: string) => setSecretKey(x)}
-          label="🔒 AWS Secret Key"
-          placeholder="○ ○ ○ ○ ○ ○ ○ ○ ○"
-          width="100%"
-          isRequired={true}
-        />
-        <Button
-          color="#616FEEcc"
-          onClick={rotateCredentials}
-        >
-          Submit
-        </Button>
-      </div>
+      keyRotationSection = (
+        <div>
+          <Heading>Credential Rotation</Heading>
+          <Helper>Input the new credentials for the EKS cluster.</Helper>
+          <InputRow
+            type="text"
+            value={accessKeyId}
+            setValue={(x: string) => setAccessKeyId(x)}
+            label="👤 AWS Access ID"
+            placeholder="ex: AKIAIOSFODNN7EXAMPLE"
+            width="100%"
+            isRequired={true}
+          />
+          <InputRow
+            type="password"
+            value={secretKey}
+            setValue={(x: string) => setSecretKey(x)}
+            label="🔒 AWS Secret Key"
+            placeholder="○ ○ ○ ○ ○ ○ ○ ○ ○"
+            width="100%"
+            isRequired={true}
+          />
+          <Button color="#616FEEcc" onClick={rotateCredentials}>
+            Submit
+          </Button>
+        </div>
+      );
     } else {
-      keyRotationSection = <div>
-        <Heading>Credential Rotation</Heading>
-        <Helper>
-          Rotate the credentials that Porter uses to connect to the cluster.
-        </Helper>
-        <Button
-          color="#616FEEcc"
-          onClick={() => setStartRotateCreds(true)}
-        >
-          Rotate Credentials
-        </Button>
-        
-      </div>
+      keyRotationSection = (
+        <div>
+          <Heading>Credential Rotation</Heading>
+          <Helper>
+            Rotate the credentials that Porter uses to connect to the cluster.
+          </Helper>
+          <Button color="#616FEEcc" onClick={() => setStartRotateCreds(true)}>
+            Rotate Credentials
+          </Button>
+        </div>
+      );
     }
-    
   }
 
   return (
     <div>
       <StyledSettingsSection showSource={false}>
-          {keyRotationSection}
-          <Heading>Delete Cluster</Heading>
-          {helperText}
-          <Button
-            color="#b91133"
-            onClick={() => context.setCurrentModal("UpdateClusterModal")}
-          >
-            Delete Cluster
-          </Button>
-        </StyledSettingsSection>
+        {keyRotationSection}
+        <Heading>Delete Cluster</Heading>
+        {helperText}
+        <Button
+          color="#b91133"
+          onClick={() => context.setCurrentModal("UpdateClusterModal")}
+        >
+          Delete Cluster
+        </Button>
+      </StyledSettingsSection>
     </div>
-  )
-}
+  );
+};
 
-export default ClusterSettings
+export default ClusterSettings;
 
 const StyledSettingsSection = styled.div<{ showSource: boolean }>`
   margin-top: 35px;

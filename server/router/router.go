@@ -805,6 +805,20 @@ func New(a *api.App) *chi.Mux {
 			)
 
 			r.Method(
+				"POST",
+				"/projects/{project_id}/registries/{registry_id}/repository",
+				auth.DoesUserHaveProjectAccess(
+					auth.DoesUserHaveRegistryAccess(
+						requestlog.NewHandler(a.HandleCreateRepository, l),
+						mw.URLParam,
+						mw.URLParam,
+					),
+					mw.URLParam,
+					mw.WriteAccess,
+				),
+			)
+
+			r.Method(
 				"GET",
 				"/projects/{project_id}/registries/ecr/{region}/token",
 				auth.DoesUserHaveProjectAccess(

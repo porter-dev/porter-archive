@@ -119,3 +119,62 @@ func (c *Client) UpdateBatchImage(
 
 	return nil
 }
+
+type DeployTemplateGitAction struct {
+	GitRepo        string            `json:"git_repo"`
+	GitBranch      string            `json:"git_branch"`
+	ImageRepoURI   string            `json:"image_repo_uri"`
+	DockerfilePath string            `json:"dockerfile_path"`
+	FolderPath     string            `json:"folder_path"`
+	GitRepoID      uint              `json:"git_repo_id"`
+	BuildEnv       map[string]string `json:"env"`
+	RegistryID     uint              `json:"registry_id"`
+}
+
+type DeployTemplateRequest struct {
+	TemplateName string                   `json:"templateName"`
+	ImageURL     string                   `json:"imageURL"`
+	FormValues   map[string]interface{}   `json:"formValues"`
+	Namespace    string                   `json:"namespace"`
+	Name         string                   `json:"name"`
+	GitAction    *DeployTemplateGitAction `json:"github_action"`
+}
+
+func (c *Client) DeployTemplate(
+	ctx context.Context,
+	projID, clusterID uint,
+	templateName string,
+	templateVersion string,
+	deployReq *DeployTemplateRequest,
+) error {
+	data, err := json.Marshal(deployReq)
+
+	if err != nil {
+		return err
+	}
+
+	req, err := http.NewRequest(
+		"POST",
+		fmt.Sprintf("%s/projects/%d/deploy/%s/%s?"+url.Values{
+			"cluster_id": []string{fmt.Sprintf("%d", clusterID)},
+			"storage":    []string{"secret"},
+		}.Encode(), c.BaseURL, projID, templateName, templateVersion),
+		strings.NewReader(string(data)),
+	)
+
+	if err != nil {
+		return err
+	}
+
+	req = req.WithContext(ctx)
+
+	if httpErr, err := c.sendRequest(req, nil, true); httpErr != nil || err != nil {
+		if httpErr != nil {
+			return fmt.Errorf("code %d, errors %v", httpErr.Code, httpErr.Errors)
+		}
+
+		return err
+	}
+
+	return nil
+}

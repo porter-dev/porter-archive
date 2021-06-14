@@ -158,12 +158,10 @@ export const NamespaceList: React.FunctionComponent = () => {
             <StyledCard
               key={namespace?.metadata?.name}
               onClick={() =>
-                pushFiltered(
-                  { location, history },
-                  `/applications/${currentCluster.name}/${namespace.metadata.name}`,
-                  [],
-                  {}
-                )
+                pushFiltered({ location, history }, `/applications`, [], {
+                  cluster: currentCluster.name,
+                  namespace: namespace.metadata.name,
+                })
               }
             >
               <ContentContainer>

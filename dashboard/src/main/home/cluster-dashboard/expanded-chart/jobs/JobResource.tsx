@@ -270,7 +270,8 @@ export default class JobResource extends Component<PropsType, StateType> {
               <Icon src={icon && icon} />
               <Description>
                 <Label>
-                  Started at {this.readableDate(this.props.job.status?.startTime)}
+                  Started at{" "}
+                  {this.readableDate(this.props.job.status?.startTime)}
                 </Label>
                 <Subtitle>{this.getSubtitle()}</Subtitle>
               </Description>
@@ -280,10 +281,13 @@ export default class JobResource extends Component<PropsType, StateType> {
               {this.renderStatus()}
               <MaterialIconTray disabled={false}>
                 {this.renderStopButton()}
-                <i className="material-icons" onClick={(e) => {
-                  e.stopPropagation();
-                  this.props.handleDelete();
-                }}>
+                <i
+                  className="material-icons"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    this.props.handleDelete();
+                  }}
+                >
                   delete
                 </i>
                 <i className="material-icons" onClick={this.expandJob}>

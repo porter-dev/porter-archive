@@ -55,10 +55,10 @@ const DeleteNamespaceModal = () => {
         <CloseButtonImg src={close} />
       </CloseButton>
 
-      <ModalTitle>Remove Namespace {currentModalData.metadata.name}</ModalTitle>
+      <ModalTitle>Delete Namespace</ModalTitle>
       <Subtitle>
         Please insert the name of the namespace to delete it:
-        <DangerText>{currentModalData.metadata.name}</DangerText>
+        <DangerText>{" " + currentModalData.metadata.name}</DangerText>
       </Subtitle>
 
       <InputWrapper>
@@ -89,7 +89,7 @@ const DeleteNamespaceModal = () => {
 
 export default DeleteNamespaceModal;
 
-const DangerText = styled.div`
+const DangerText = styled.span`
   color: #ed5f85;
 `;
 

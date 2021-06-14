@@ -1,14 +1,19 @@
-import React from 'react';
+import React from "react";
 import styled from "styled-components";
 
 interface Props {
-  disabled?: boolean
-  children: React.ReactNode
+  disabled?: boolean;
+  children: React.ReactNode;
+  onClick: () => void;
 }
 
-const Button = ({children, disabled} : Props) => {
-    return <ButtonWrapper disabled={disabled}>{children}</ButtonWrapper>
-}
+const Button = ({ children, disabled, onClick }: Props) => {
+  return (
+    <ButtonWrapper disabled={disabled} onClick={onClick}>
+      {children}
+    </ButtonWrapper>
+  );
+};
 
 export default Button;
 
@@ -28,13 +33,13 @@ const ButtonWrapper = styled.div`
   text-overflow: ellipsis;
   box-shadow: 0 5px 8px 0px #00000010;
   cursor: ${(props: { disabled?: boolean }) =>
-  props.disabled ? "not-allowed" : "pointer"};
+    props.disabled ? "not-allowed" : "pointer"};
 
   background: ${(props: { disabled?: boolean }) =>
-  props.disabled ? "#aaaabbee" : "#616FEEcc"};
+    props.disabled ? "#aaaabbee" : "#616FEEcc"};
   :hover {
     background: ${(props: { disabled?: boolean }) =>
-  props.disabled ? "" : "#505edddd"};
+      props.disabled ? "" : "#505edddd"};
   }
 
   > i {

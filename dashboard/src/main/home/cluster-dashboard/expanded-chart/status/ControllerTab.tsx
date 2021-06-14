@@ -132,7 +132,7 @@ export default class ControllerTab extends Component<PropsType, StateType> {
 
   setupWebsocket = (kind: string) => {
     let { currentCluster, currentProject } = this.context;
-    let protocol = process.env.NODE_ENV == "production" ? "wss" : "ws";
+    let protocol = window.location.protocol == "https:" ? "wss" : "ws";
     let connString = `${protocol}://${process.env.API_SERVER}/api/projects/${currentProject.id}/k8s/${kind}/status?cluster_id=${currentCluster.id}`;
 
     if (kind == "pod" && this.state.selectors) {

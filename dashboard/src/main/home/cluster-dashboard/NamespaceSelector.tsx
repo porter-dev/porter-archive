@@ -49,7 +49,12 @@ export default class NamespaceSelector extends Component<PropsType, StateType> {
           }
 
           let defaultNamespace = "default";
-          res.data.items.forEach(
+          const availableNamespaces = res.data.items.filter(
+            (namespace: any) => {
+              return namespace.status.phase !== "Terminating";
+            }
+          );
+          availableNamespaces.forEach(
             (x: { metadata: { name: string } }, i: number) => {
               namespaceOptions.push({
                 label: x.metadata.name,

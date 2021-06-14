@@ -21,7 +21,40 @@ export default class NamespaceModal extends Component<PropsType, StateType> {
     status: null as string | null,
   };
 
+  isValidName = (namespaceName: string) =>
+    !/(^default$)|(^kube-.*)/.test(namespaceName);
+
+  hasInvalidCharacters = (namespaceName: string) =>
+    !/([a-z0-9]|\-)+/.test(namespaceName);
+
   createNamespace = () => {
+    if (!this.isValidName(this.state.namespaceName)) {
+      this.setState({
+        status: "The name cannot be default or start with kube-",
+      });
+      return;
+    }
+
+    if (!this.hasInvalidCharacters(this.state.namespaceName)) {
+      this.setState({
+        status: "Only lowercase, numbers or dash (-) are allowed",
+      });
+      return;
+    }
+
+    const namespaceExists = this.context.currentModalData?.find(
+      (namespace: any) => {
+        return namespace?.value === this.state.namespaceName;
+      }
+    );
+
+    if (namespaceExists) {
+      this.setState({
+        status: "Namespace already exist, choose another name",
+      });
+      return;
+    }
+
     api
       .createNamespace(
         "<token>",
@@ -66,18 +99,13 @@ export default class NamespaceModal extends Component<PropsType, StateType> {
           <InputRow
             type="string"
             value={this.state.namespaceName}
-            setValue={(x: string) => this.setState({ namespaceName: x })}
+            setValue={(x: string) =>
+              this.setState({ namespaceName: x, status: null })
+            }
             placeholder="ex: porter-workers"
             width="480px"
           />
         </InputWrapper>
-
-        {/* <Help
-          href="https://docs.getporter.dev/docs/deleting-dangling-resources"
-          target="_blank"
-        >
-          <i className="material-icons">help_outline</i> Help
-        </Help> */}
 
         <SaveButton
           text="Create Namespace"
@@ -91,25 +119,6 @@ export default class NamespaceModal extends Component<PropsType, StateType> {
 }
 
 NamespaceModal.contextType = Context;
-
-const Help = styled.a`
-  position: absolute;
-  left: 31px;
-  bottom: 35px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #ffffff55;
-  font-size: 13px;
-  :hover {
-    color: #ffffff;
-  }
-
-  > i {
-    margin-right: 9px;
-    font-size: 16px;
-  }
-`;
 
 const DashboardIcon = styled.div`
   width: 32px;

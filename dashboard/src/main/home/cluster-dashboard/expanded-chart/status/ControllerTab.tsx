@@ -50,7 +50,7 @@ export default class ControllerTab extends Component<PropsType, StateType> {
         {
           cluster_id: currentCluster.id,
           namespace: controller?.metadata?.namespace,
-          selectors : this.state.selectors,
+          selectors: this.state.selectors,
         },
         {
           id: currentProject.id,
@@ -152,17 +152,23 @@ export default class ControllerTab extends Component<PropsType, StateType> {
       let event = JSON.parse(evt.data);
       let object = event.Object;
       object.metadata.kind = event.Kind;
-      console.log(object)
 
-      // update pods no matter what if ws message is a pod event. 
+      // update pods no matter what if ws message is a pod event.
       // If controller event, check if ws message corresponds to the designated controller in props.
-      if (event.Kind != "pod" && object.metadata.uid != this.props.controller.metadata.uid) return;
+      if (
+        event.Kind != "pod" &&
+        object.metadata.uid != this.props.controller.metadata.uid
+      )
+        return;
 
       if (event.Kind != "pod") {
-        let [ available, total ] = this.getAvailability(object.metadata.kind, object);
-        this.setState({ available, total })
+        let [available, total] = this.getAvailability(
+          object.metadata.kind,
+          object
+        );
+        this.setState({ available, total });
       }
-      
+
       this.updatePods();
     };
 

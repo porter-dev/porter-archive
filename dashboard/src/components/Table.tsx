@@ -7,7 +7,7 @@ import Loading from "components/Loading";
 const GlobalFilter: React.FunctionComponent<any> = ({ setGlobalFilter }) => {
   const [value, setValue] = React.useState("");
   const onChange = (value: string) => {
-    setValue(value)
+    setValue(value);
     setGlobalFilter(value || undefined);
   };
 
@@ -99,7 +99,9 @@ const Table: React.FC<TableProps> = ({
 
   return (
     <TableWrapper>
-      {!disableGlobalFilter && <GlobalFilter setGlobalFilter={setGlobalFilter} />}
+      {!disableGlobalFilter && (
+        <GlobalFilter setGlobalFilter={setGlobalFilter} />
+      )}
       <StyledTable {...getTableProps()}>
         <StyledTHead>
           {headerGroups.map((headerGroup) => (
@@ -140,10 +142,10 @@ export const StyledTr = styled.tr`
 export const StyledTd = styled.td`
   font-size: 13px;
   color: #ffffff;
-  :first-child{
+  :first-child {
     padding-left: 10px;
   }
-  :last-child{
+  :last-child {
     padding-right: 10px;
   }
 `;
@@ -157,10 +159,10 @@ export const StyledTh = styled.th`
   font-size: 13px;
   font-weight: 500;
   color: #aaaabb;
-  :first-child{
+  :first-child {
     padding-left: 10px;
   }
-  :last-child{
+  :last-child {
     padding-right: 10px;
   }
 `;
@@ -170,7 +172,6 @@ export const StyledTable = styled.table`
   min-width: 500px;
   border-collapse: collapse;
 `;
-
 
 const SearchInput = styled.input`
   outline: none;
@@ -188,12 +189,12 @@ const SearchRow = styled.div`
   width: 100%;
   font-size: 13px;
   color: #ffffff55;
-  border-radius: 4px; 
+  border-radius: 4px;
   user-select: none;
   align-items: center;
   padding: 10px 0px;
   min-width: 300px;
-  max-width: min-content;  
+  max-width: min-content;
   background: #ffffff11;
   margin-bottom: 7px;
   margin-top: 7px;
@@ -204,7 +205,4 @@ const SearchRow = styled.div`
     margin-right: 12px;
     font-size: 20px;
   }
-
 `;
-
-

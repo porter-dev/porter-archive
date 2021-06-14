@@ -17,7 +17,7 @@ import ExpandedChartWrapper from "./expanded-chart/ExpandedChartWrapper";
 import { RouteComponentProps, withRouter } from "react-router";
 
 import api from "shared/api";
-import {Dashboard} from "./dashboard/Dashboard";
+import { Dashboard } from "./dashboard/Dashboard";
 
 type PropsType = RouteComponentProps & {
   currentCluster: ClusterType;

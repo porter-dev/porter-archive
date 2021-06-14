@@ -6,7 +6,12 @@ import { Switch, Route } from "react-router-dom";
 
 import { Context } from "shared/Context";
 import { ChartType, ClusterType } from "shared/types";
-import { PorterUrl, pushFiltered, pushQueryParams } from "shared/routing";
+import {
+  getQueryParam,
+  PorterUrl,
+  pushFiltered,
+  pushQueryParams,
+} from "shared/routing";
 
 import ChartList from "./chart/ChartList";
 import EnvGroupDashboard from "./env-groups/EnvGroupDashboard";
@@ -87,6 +92,9 @@ class ClusterDashboard extends Component<PropsType, StateType> {
     if (prevProps.currentView !== this.props.currentView) {
       let params = this.props.match.params as any;
       let currentNamespace = params.namespace;
+      if (!currentNamespace) {
+        currentNamespace = getQueryParam(this.props, "namespace");
+      }
       this.setState(
         {
           sortType: "Newest",

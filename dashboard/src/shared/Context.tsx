@@ -1,8 +1,13 @@
 import React, { Component } from "react";
 
-import { ProjectType, ClusterType, CapabilityType } from "shared/types";
+import {
+  ProjectType,
+  ClusterType,
+  CapabilityType,
+  ContextProps,
+} from "shared/types";
 
-const Context = React.createContext({});
+const Context = React.createContext<Partial<ContextProps>>(null);
 
 const { Provider } = Context;
 const ContextConsumer = Context.Consumer;

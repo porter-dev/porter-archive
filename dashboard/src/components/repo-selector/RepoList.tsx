@@ -1,52 +1,50 @@
-import React, { Component } from "react";
+import React, { useState, useContext, useEffect } from "react";
 import styled from "styled-components";
 import github from "assets/github.png";
-import info from "assets/info.svg";
 
 import api from "shared/api";
 import { RepoType, ActionConfigType } from "shared/types";
 import { Context } from "shared/Context";
 
 import Loading from "../Loading";
+import Button from "../Button";
 
-type PropsType = {
+type Props = {
   actionConfig: ActionConfigType | null;
   setActionConfig: (x: ActionConfigType) => void;
   userId?: number;
   readOnly: boolean;
 };
 
-type StateType = {
-  repos: RepoType[];
-  loading: boolean;
-  error: boolean;
-  searchFilter: string;
-};
-
-export default class RepoList extends Component<PropsType, StateType> {
-  state = {
-    repos: [] as RepoType[],
-    loading: true,
-    error: false,
-    searchFilter: "",
-  };
+const RepoList = ({
+  actionConfig,
+  setActionConfig,
+  userId,
+  readOnly,
+}: Props) => {
+  const [repos, setRepos] = useState<RepoType[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+  const [searchFilter, setSearchFilter] = useState("");
+  const { currentProject } = useContext(Context);
 
   // TODO: Try to unhook before unmount
-  componentDidMount() {
-    let { currentProject } = this.context;
-
+  useEffect(() => {
     // Get repos
-    if (!this.props.userId && this.props.userId !== 0) {
+    if (!userId && userId !== 0) {
       api
         .getGitRepos("<token>", {}, { project_id: currentProject.id })
         .then(async (res) => {
           if (res.data.length == 0) {
-            this.setState({ loading: false, error: false });
+            setLoading(false);
+            setError(false);
             return;
           }
 
           var allRepos: any = [];
           var errors: any = [];
+
+          console.log(res);
 
           var promises = res.data.map((gitrepo: any, id: number) => {
             return new Promise((resolve, reject) => {
@@ -97,18 +95,21 @@ export default class RepoList extends Component<PropsType, StateType> {
           });
 
           if (allRepos.length == 0 && errors.length > 0) {
-            this.setState({ loading: false, error: true });
+            setLoading(false);
+            setError(true);
           } else {
-            this.setState({
-              repos: allRepos,
-              loading: false,
-              error: false,
-            });
+            setRepos(allRepos);
+            setLoading(false);
+            setError(false);
           }
         })
-        .catch((_) => this.setState({ loading: false, error: true }));
+        .catch((_) => {
+          setLoading(false);
+          setError(true);
+        });
     } else {
-      let grid = this.props.userId;
+      // ??? wouldn't this always be an undefined request?
+      let grid = userId;
 
       api
         .getGitRepoList(
@@ -132,25 +133,25 @@ export default class RepoList extends Component<PropsType, StateType> {
               return 0;
             }
           });
-
-          this.setState({ repos: repos, loading: false, error: false });
+          setRepos(repos);
+          setLoading(false);
+          setError(false);
         })
-        .catch((err) => {
-          this.setState({ loading: false, error: true });
+        .catch((_) => {
+          setLoading(false);
+          setError(true);
         });
     }
-  }
+  }, []);
 
-  setRepo = (x: RepoType) => {
-    let { actionConfig, setActionConfig } = this.props;
+  const setRepo = (x: RepoType) => {
     let updatedConfig = actionConfig;
     updatedConfig.git_repo = x.FullName;
     updatedConfig.git_repo_id = x.GHRepoID;
     setActionConfig(updatedConfig);
   };
 
-  renderRepoList = () => {
-    let { repos, loading, error } = this.state;
+  const renderRepoList = () => {
     if (loading) {
       return (
         <LoadingWrapper>
@@ -164,7 +165,7 @@ export default class RepoList extends Component<PropsType, StateType> {
         <LoadingWrapper>
           No connected Github repos found. You can
           <A
-            href={`/api/oauth/projects/${this.context.currentProject.id}/github?redirected=true`}
+            href={`/api/oauth/projects/${currentProject.id}/github?redirected=true`}
           >
             log in with GitHub
           </A>
@@ -175,16 +176,16 @@ export default class RepoList extends Component<PropsType, StateType> {
 
     return repos
       .filter((repo: RepoType, i: number) => {
-        return repo.FullName.includes(this.state.searchFilter || "");
+        return repo.FullName.includes(searchFilter || "");
       })
       .map((repo: RepoType, i: number) => {
         return (
           <RepoName
             key={i}
-            isSelected={repo.FullName === this.props.actionConfig.git_repo}
+            isSelected={repo.FullName === actionConfig.git_repo}
             lastItem={i === repos.length - 1}
-            onClick={() => this.setRepo(repo)}
-            readOnly={this.props.readOnly}
+            onClick={() => setRepo(repo)}
+            readOnly={readOnly}
           >
             <img src={github} />
             {repo.FullName}
@@ -193,38 +194,42 @@ export default class RepoList extends Component<PropsType, StateType> {
       });
   };
 
-  renderExpanded = () => {
-    if (this.props.readOnly) {
-      return <ExpandedWrapperAlt>{this.renderRepoList()}</ExpandedWrapperAlt>;
+  const renderExpanded = () => {
+    if (readOnly) {
+      return <ExpandedWrapperAlt>{renderRepoList()}</ExpandedWrapperAlt>;
     } else {
       return (
-        <ExpandedWrapper>
-          <InfoRow
-            isSelected={false}
-            lastItem={false}
-            readOnly={this.props.readOnly}
-          >
-            <i className="material-icons">search</i>
-            <SearchInput
-              value={this.state.searchFilter}
-              onChange={(e: any) => {
-                this.setState({ searchFilter: e.target.value });
-              }}
-              placeholder="Search repos..."
-            />
-          </InfoRow>
-          <ExpandedWrapper>{this.renderRepoList()}</ExpandedWrapper>
-        </ExpandedWrapper>
+        <>
+          <SearchRow>
+            <SearchBar>
+              <i className="material-icons">search</i>
+              <SearchInput
+                value={searchFilter}
+                onChange={(e: any) => {
+                  setSearchFilter(e.target.value);
+                }}
+                placeholder="Search repos..."
+              />
+            </SearchBar>
+            <Button>Search</Button>
+          </SearchRow>
+          <ExpandedWrapper>
+            <ExpandedWrapper>{renderRepoList()}</ExpandedWrapper>
+          </ExpandedWrapper>
+        </>
       );
     }
   };
 
-  render() {
-    return <>{this.renderExpanded()}</>;
-  }
-}
+  return <>{renderExpanded()}</>;
+};
 
-RepoList.contextType = Context;
+export default RepoList;
+
+const SearchRow = styled.div`
+  display: flex;
+  border-bottom: 1px solid #606166;
+`;
 
 const RepoName = styled.div`
   display: flex;
@@ -321,6 +326,13 @@ const A = styled.a`
   cursor: pointer;
 `;
 
+const SearchBar = styled.div`
+  display: flex;
+  flex: 1;
+  margin-top: 7px;
+  margin-left: 5px;
+`;
+
 const SearchInput = styled.input`
   outline: none;
   border: none;
@@ -328,6 +340,5 @@ const SearchInput = styled.input`
   background: none;
   width: 100%;
   color: white;
-  padding: 0;
   height: 20px;
 `;

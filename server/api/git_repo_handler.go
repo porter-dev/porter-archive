@@ -59,6 +59,18 @@ type DirectoryItem struct {
 	Type string
 }
 
+// HandleSearchRepos searches user repos
+func (app *App) HandleSearchRepos(w http.ResponseWriter, r *http.Request) {
+	tok, err := app.githubTokenFromRequest(r)
+
+	if err != nil {
+		app.handleErrorInternal(err, w)
+		return
+	}
+
+	json.NewEncoder(w).Encode(tok)
+}
+
 // HandleListRepos retrieves a list of repo names
 func (app *App) HandleListRepos(w http.ResponseWriter, r *http.Request) {
 	tok, err := app.githubTokenFromRequest(r)

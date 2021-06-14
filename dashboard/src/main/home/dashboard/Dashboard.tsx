@@ -102,12 +102,10 @@ class Dashboard extends Component<PropsType, StateType> {
       { label: "Project Overview", value: "overview" },
       { label: "Create a Cluster", value: "create-cluster" },
       { label: "Provisioner Status", value: "provisioner" },
-    ]
-    
+    ];
+
     if (!capabilities?.provisioner) {
-      tabOptions = [
-        { label: "Project Overview", value: "overview" },
-      ]
+      tabOptions = [{ label: "Project Overview", value: "overview" }];
     }
 
     return (

@@ -172,11 +172,8 @@ func (app *App) HandleDeleteNamespace(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	namespace := &forms.NamespaceForm{}
-
-	if err := json.NewDecoder(r.Body).Decode(namespace); err != nil {
-		app.handleErrorFormDecoding(err, ErrUserDecode, w)
-		return
+	namespace := &forms.NamespaceForm{
+		Name: vals.Get("name"),
 	}
 
 	err = agent.DeleteNamespace(namespace.Name)

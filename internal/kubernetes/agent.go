@@ -552,6 +552,8 @@ func (a *Agent) StreamControllerStatus(conn *websocket.Conn, kind string, select
 		informer = factory.Batch().V1().Jobs().Informer()
 	case "cronjob":
 		informer = factory.Batch().V1beta1().CronJobs().Informer()
+	case "namespace":
+		informer = factory.Core().V1().Namespaces().Informer()
 	case "pod":
 		informer = factory.Core().V1().Pods().Informer()
 	}

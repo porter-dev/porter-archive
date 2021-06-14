@@ -515,7 +515,7 @@ class Home extends Component<PropsType, StateType> {
           <Modal
             onRequestClose={() => setCurrentModal(null, null)}
             width="700px"
-            height="250px"
+            height="280px"
           >
             <DeleteNamespaceModal />
           </Modal>

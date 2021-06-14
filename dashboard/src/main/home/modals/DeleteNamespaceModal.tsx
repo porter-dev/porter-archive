@@ -73,7 +73,10 @@ const DeleteNamespaceModal = () => {
           width="480px"
         />
       </InputWrapper>
-
+      <Warning highlight={true}>
+        ⚠️ Deleting this namespace will remove all resources attached to this
+        namespace.
+      </Warning>
       <SaveButton
         text="Delete Namespace"
         color="#e62659"
@@ -115,7 +118,7 @@ const DashboardIcon = styled.div`
 const InputWrapper = styled.div`
   display: flex;
   align-items: center;
-  margin-bottom: 30px;
+  margin-bottom: 15px;
 `;
 
 const Subtitle = styled.div`
@@ -176,4 +179,22 @@ const StyledUpdateProjectModal = styled.div`
   overflow: hidden;
   border-radius: 6px;
   background: #202227;
+`;
+
+const Warning = styled.div`
+  font-size: 13px;
+  display: flex;
+  border-radius: 3px;
+  width: calc(100%);
+  margin-top: 10px;
+  margin-left: 2px;
+  line-height: 1.4em;
+  align-items: center;
+  color: white;
+  > i {
+    margin-right: 10px;
+    font-size: 18px;
+  }
+  color: ${(props: { highlight: boolean; makeFlush?: boolean }) =>
+    props.highlight ? "#f5cb42" : ""};
 `;

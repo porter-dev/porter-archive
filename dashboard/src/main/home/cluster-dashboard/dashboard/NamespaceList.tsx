@@ -115,25 +115,19 @@ export const NamespaceList: React.FunctionComponent = () => {
     };
   }, [websocket]);
 
-  const sortedNamespaces = useMemo<any[]>(() => {
-    return [...namespaces].sort((prev, current) => {
-      const prevName = prev.metadata.name;
-      const currentName = current.metadata.name;
+  const sortAlphabetically = (prev: any, current: any) => {
+    return prev.metadata.name > current.metadata.name ? 1 : -1;
+  };
 
-      if (
-        isAvailableForDeletion(prevName) &&
-        !isAvailableForDeletion(currentName)
-      ) {
-        return -1;
-      } else if (
-        !isAvailableForDeletion(prevName) &&
-        isAvailableForDeletion(currentName)
-      ) {
-        return 1;
-      } else {
-        return 0;
-      }
-    });
+  const sortedNamespaces = useMemo<any[]>(() => {
+    const nonDeletableNamespaces = namespaces
+      .filter((namespace) => !isAvailableForDeletion(namespace.metadata.name))
+      .sort(sortAlphabetically);
+    const deletableNamespaces = namespaces
+      .filter((namespace) => isAvailableForDeletion(namespace.metadata.name))
+      .sort(sortAlphabetically);
+
+    return [...deletableNamespaces, ...nonDeletableNamespaces];
   }, [namespaces]);
 
   return (

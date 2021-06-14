@@ -523,10 +523,17 @@ func (a *Agent) StopJobWithJobSidecar(namespace, name string) error {
 
 // StreamControllerStatus streams controller status. Supports Deployment, StatefulSet, ReplicaSet, and DaemonSet
 // TODO: Support Jobs
-func (a *Agent) StreamControllerStatus(conn *websocket.Conn, kind string) error {
-	factory := informers.NewSharedInformerFactory(
+func (a *Agent) StreamControllerStatus(conn *websocket.Conn, kind string, selectors string) error {
+	// selectors is an array of max length 1. StreamControllerStatus accepts calls without the selectors argument.
+	// selectors argument is a single string with comma separated key=value pairs. (e.g. "app=porter,porter=true")
+	tweakListOptionsFunc := func(options *metav1.ListOptions) {
+		options.LabelSelector = selectors
+	}
+
+	factory := informers.NewSharedInformerFactoryWithOptions(
 		a.Clientset,
 		0,
+		informers.WithTweakListOptions(tweakListOptionsFunc),
 	)
 
 	var informer cache.SharedInformer
@@ -545,6 +552,8 @@ func (a *Agent) StreamControllerStatus(conn *websocket.Conn, kind string) error 
 		informer = factory.Batch().V1().Jobs().Informer()
 	case "cronjob":
 		informer = factory.Batch().V1beta1().CronJobs().Informer()
+	case "pod":
+		informer = factory.Core().V1().Pods().Informer()
 	}
 
 	stopper := make(chan struct{})

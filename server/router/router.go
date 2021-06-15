@@ -1030,6 +1030,20 @@ func New(a *api.App) *chi.Mux {
 
 			r.Method(
 				"GET",
+				"/projects/{project_id}/gitrepos/{git_repo_id}/repos/{kind}/{owner}/{name}/{branch}/buildpack/detect",
+				auth.DoesUserHaveProjectAccess(
+					auth.DoesUserHaveGitRepoAccess(
+						requestlog.NewHandler(a.HandleDetectBuildpack, l),
+						mw.URLParam,
+						mw.URLParam,
+					),
+					mw.URLParam,
+					mw.ReadAccess,
+				),
+			)
+
+			r.Method(
+				"GET",
 				"/projects/{project_id}/gitrepos/{git_repo_id}/repos/{kind}/{owner}/{name}/{branch}/contents",
 				auth.DoesUserHaveProjectAccess(
 					auth.DoesUserHaveGitRepoAccess(

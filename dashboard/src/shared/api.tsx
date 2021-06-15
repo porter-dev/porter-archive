@@ -389,15 +389,6 @@ const getClusters = baseApi<{}, { id: number }>("GET", (pathParams) => {
   return `/api/projects/${pathParams.id}/clusters`;
 });
 
-const searchGitRepos = baseApi<
-  {},
-  {
-    project_id: number;
-  }
->("GET", (pathParams) => {
-  return `/api/projects/${pathParams.project_id}/gitrepos/search`;
-});
-
 const getGitRepoList = baseApi<
   {},
   {
@@ -856,7 +847,6 @@ export default {
   getClusterIntegrations,
   getClusters,
   getConfigMap,
-  searchGitRepos,
   getGitRepoList,
   getGitRepos,
   getImageRepos,

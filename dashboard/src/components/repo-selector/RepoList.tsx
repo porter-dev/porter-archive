@@ -32,22 +32,66 @@ const RepoList = ({
 
   // TODO: Try to unhook before unmount
   useEffect(() => {
-    // load git repo ids, only need to do this once through component lifecycle
-
-    if (!userId && userId !== 0) {
-      api
-        .getGitRepos("<token>", {}, { project_id: currentProject.id })
-        .then(async (res) => {
-          gitReposIDs.current = res.data.map((gitrepo: any) => gitrepo.id);
-          setLoading(false);
-        })
-        .catch((_) => {
-          setLoading(false);
-          setError(true);
-        });
-    } else {
-      gitReposIDs.current = [userId];
-    }
+    // load git repo ids, and then repo names from that
+    // this only happens once during the lifecycle
+    new Promise((resolve, reject) => {
+      if (!userId && userId !== 0) {
+        api
+          .getGitRepos("<token>", {}, { project_id: currentProject.id })
+          .then(async (res) => {
+            resolve(res.data.map((gitrepo: any) => gitrepo.id));
+          })
+          .catch((err) => {
+            reject(err);
+          });
+      } else {
+        resolve([userId]);
+      }
+    })
+      .then((ids: number[]) => {
+        Promise.all(
+          ids.map((id) => {
+            return new Promise((resolve, reject) => {
+              api
+                .getGitRepoList(
+                  "<token>",
+                  {},
+                  { project_id: currentProject.id, git_repo_id: id }
+                )
+                .then((res) => {
+                  resolve(res.data);
+                })
+                .catch((err) => {
+                  reject(err);
+                });
+            });
+          })
+        )
+          .then((repos: RepoType[][]) => {
+            const names = new Set();
+            // note: would be better to use .flat() here but you need es2019 for
+            setRepos(
+              repos
+                .reduce((acc, val) => acc.concat(val), [])
+                .reduce((acc, val) => {
+                  if (!names.has(val.FullName)) {
+                    names.add(val.FullName);
+                    return acc.concat(val);
+                  } else {
+                    return acc;
+                  }
+                }, [])
+            );
+          })
+          .catch((_) => {
+            setLoading(false);
+            setError(true);
+          });
+      })
+      .catch((_) => {
+        setLoading(false);
+        setError(true);
+      });
   }, []);
 
   const setRepo = (x: RepoType) => {
@@ -101,13 +145,7 @@ const RepoList = ({
   };
 
   const updateSearchResults = () => {
-    setLoading(true);
-
-    // api.
-    //   .searchGitRepos("<token>", {}, { project_id: currentProject.id })
-    //   .then((res: AxiosResponse) => {
-    //     console.log(res);
-    //   });
+    // setLoading(true);
   };
 
   const renderExpanded = () => {

@@ -26,8 +26,8 @@ const RepoList = ({
   const [repos, setRepos] = useState<RepoType[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
-  const [searchFilter, setSearchFilter] = useState("");
-  const gitReposIDs = useRef<number[]>(null);
+  const [searchFilter, setSearchFilter] = useState(null);
+  const [searchInput, setSearchInput] = useState("");
   const { currentProject } = useContext(Context);
 
   // TODO: Try to unhook before unmount
@@ -82,6 +82,7 @@ const RepoList = ({
                   }
                 }, [])
             );
+            setLoading(false);
           })
           .catch((_) => {
             setLoading(false);
@@ -108,9 +109,9 @@ const RepoList = ({
           <Loading />
         </LoadingWrapper>
       );
-    } else if (error || !gitReposIDs.current) {
+    } else if (error) {
       return <LoadingWrapper>Error loading repos.</LoadingWrapper>;
-    } else if (gitReposIDs.current.length == 0) {
+    } else if (repos.length == 0) {
       return (
         <LoadingWrapper>
           No connected Github repos found. You can
@@ -124,11 +125,17 @@ const RepoList = ({
       );
     }
 
-    return repos
-      .filter((repo: RepoType, i: number) => {
-        return repo.FullName.includes(searchFilter || "");
-      })
-      .map((repo: RepoType, i: number) => {
+    // show 10 most recently used repos if user hasn't searched anything yet
+    let results = searchFilter
+      ? repos.filter((repo: RepoType) => {
+          return repo.FullName.includes(searchFilter || "");
+        })
+      : repos.slice(0, 10);
+
+    if (results.length == 0) {
+      return <LoadingWrapper>No matching Github repos found.</LoadingWrapper>;
+    } else {
+      return results.map((repo: RepoType, i: number) => {
         return (
           <RepoName
             key={i}
@@ -142,10 +149,7 @@ const RepoList = ({
           </RepoName>
         );
       });
-  };
-
-  const updateSearchResults = () => {
-    // setLoading(true);
+    }
   };
 
   const renderExpanded = () => {
@@ -158,18 +162,18 @@ const RepoList = ({
             <SearchBar>
               <i className="material-icons">search</i>
               <SearchInput
-                value={searchFilter}
+                value={searchInput}
                 onChange={(e: any) => {
-                  setSearchFilter(e.target.value);
+                  setSearchInput(e.target.value);
                 }}
                 placeholder="Search repos..."
               />
             </SearchBar>
             <Button
-              onClick={updateSearchResults}
-              disabled={loading || !gitReposIDs.current}
+              onClick={() => setSearchFilter(searchInput)}
+              disabled={loading || error}
             >
-              {gitReposIDs.current ? "Search" : <Loading />}
+              Search
             </Button>
           </SearchRow>
           <ExpandedWrapper>

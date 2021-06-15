@@ -139,10 +139,13 @@ func NewDeployAgent(client *api.Client, app string, opts *DeployOpts) (*DeployAg
 	return deployAgent, nil
 }
 
+// GetBuildEnv retrieves the build env from the release config and returns it
 func (d *DeployAgent) GetBuildEnv() (map[string]string, error) {
 	return GetEnvFromConfig(d.release.Config)
 }
 
+// SetBuildEnv sets the build env vars in the process so that other commands can
+// use them
 func (d *DeployAgent) SetBuildEnv(envVars map[string]string) error {
 	d.env = envVars
 
@@ -162,6 +165,7 @@ func (d *DeployAgent) SetBuildEnv(envVars map[string]string) error {
 	return nil
 }
 
+// WriteBuildEnv writes the build env to either a file or stdout
 func (d *DeployAgent) WriteBuildEnv(fileDest string) error {
 	// join lines together
 	lines := make([]string, 0)
@@ -185,6 +189,8 @@ func (d *DeployAgent) WriteBuildEnv(fileDest string) error {
 	return nil
 }
 
+// Build uses the deploy agent options to build a new container image from either
+// buildpack or docker.
 func (d *DeployAgent) Build() error {
 	// if build is not local, fetch remote source
 	var dst string
@@ -247,10 +253,15 @@ func (d *DeployAgent) Build() error {
 	return buildAgent.BuildPack(d.agent, dst, d.tag)
 }
 
+// Push pushes a local image to the remote repository linked in the release
 func (d *DeployAgent) Push() error {
 	return d.agent.PushImage(fmt.Sprintf("%s:%s", d.imageRepo, d.tag))
 }
 
+// UpdateImageAndValues updates the current image for a release, along with new
+// configuration passed in via overrrideValues. If overrideValues is nil, it just
+// reuses the configuration set for the application. If overrideValues is not nil,
+// it will merge the overriding values with the existing configuration.
 func (d *DeployAgent) UpdateImageAndValues(overrideValues map[string]interface{}) error {
 	mergedValues := utils.CoalesceValues(d.release.Config, overrideValues)
 
@@ -279,7 +290,8 @@ func (d *DeployAgent) UpdateImageAndValues(overrideValues map[string]interface{}
 	)
 }
 
-// HELPER METHODS
+// GetEnvFromConfig gets the env vars for a standard Porter template config. These env
+// vars are found at `container.env.normal`.
 func GetEnvFromConfig(config map[string]interface{}) (map[string]string, error) {
 	envConfig, err := getNestedMap(config, "container", "env", "normal")
 

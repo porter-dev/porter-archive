@@ -18,6 +18,8 @@ type CreateAgent struct {
 	CreateOpts *CreateOpts
 }
 
+// CreateOpts are required options for creating a new application on Porter: the
+// "kind" (web, worker, job) and the name of the application.
 type CreateOpts struct {
 	*SharedOpts
 
@@ -25,11 +27,15 @@ type CreateOpts struct {
 	ReleaseName string
 }
 
+// GithubOpts are the options for linking a Github source to the app
 type GithubOpts struct {
 	Branch string
 	Repo   string
 }
 
+// CreateFromGithub uses the branch/repo to link the Github source for an application.
+// This function attempts to find a matching repository in the list of linked repositories
+// on Porter. If one is found, it will use that repository as the app source.
 func (c *CreateAgent) CreateFromGithub(
 	ghOpts *GithubOpts,
 	overrideValues map[string]interface{},
@@ -144,6 +150,7 @@ func (c *CreateAgent) CreateFromGithub(
 	return subdomain, nil
 }
 
+// CreateFromRegistry deploys a new application from an existing Docker repository + tag.
 func (c *CreateAgent) CreateFromRegistry(
 	image string,
 	overrideValues map[string]interface{},
@@ -200,6 +207,8 @@ func (c *CreateAgent) CreateFromRegistry(
 	return subdomain, nil
 }
 
+// CreateFromDocker uses a local build context and a local Docker daemon to build a new
+// container image, and then deploys it onto Porter.
 func (c *CreateAgent) CreateFromDocker(
 	overrideValues map[string]interface{},
 ) (string, error) {
@@ -327,10 +336,6 @@ func (c *CreateAgent) CreateFromDocker(
 	return subdomain, nil
 }
 
-type CreateConfig struct {
-	DockerfilePath string
-}
-
 // HasDefaultDockerfile detects if there is a dockerfile at the path `./Dockerfile`
 func (c *CreateAgent) HasDefaultDockerfile(buildPath string) bool {
 	dockerFilePath := filepath.Join(buildPath, "./Dockerfile")
@@ -340,6 +345,9 @@ func (c *CreateAgent) HasDefaultDockerfile(buildPath string) bool {
 	return err == nil && !os.IsNotExist(err) && !info.IsDir()
 }
 
+// GetImageRepoURL creates the image repository url by finding the first valid image
+// registry linked to Porter, and then generates a new name of the form:
+// `{registry}/{name}-{namespace}`
 func (c *CreateAgent) GetImageRepoURL(name, namespace string) (uint, string, error) {
 	// get all image registries linked to the project
 	// get the list of namespaces
@@ -369,6 +377,8 @@ func (c *CreateAgent) GetImageRepoURL(name, namespace string) (uint, string, err
 	return regID, imageURI, nil
 }
 
+// GetLatestTemplateVersion retrieves the latest template version for a specific
+// Porter template from the chart repository.
 func (c *CreateAgent) GetLatestTemplateVersion(templateName string) (string, error) {
 	templates, err := c.Client.ListTemplates(
 		context.Background(),
@@ -394,6 +404,8 @@ func (c *CreateAgent) GetLatestTemplateVersion(templateName string) (string, err
 	return version, nil
 }
 
+// GetLatestTemplateDefaultValues gets the default config (`values.yaml`) set for a specific
+// template.
 func (c *CreateAgent) GetLatestTemplateDefaultValues(templateName, templateVersion string) (map[string]interface{}, error) {
 	chart, err := c.Client.GetTemplate(
 		context.Background(),

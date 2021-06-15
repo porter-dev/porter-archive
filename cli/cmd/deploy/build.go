@@ -8,6 +8,7 @@ import (
 	"github.com/porter-dev/porter/cli/cmd/pack"
 )
 
+// BuildAgent builds a new Docker container image for a new version of an application
 type BuildAgent struct {
 	*SharedOpts
 
@@ -17,6 +18,7 @@ type BuildAgent struct {
 	imageExists bool
 }
 
+// BuildDocker uses the local Docker daemon to build the image
 func (b *BuildAgent) BuildDocker(dockerAgent *docker.Agent, dst, tag string) error {
 	opts := &docker.BuildOpts{
 		ImageRepo:    b.imageRepo,
@@ -31,6 +33,7 @@ func (b *BuildAgent) BuildDocker(dockerAgent *docker.Agent, dst, tag string) err
 	)
 }
 
+// BuildPack uses the cloud-native buildpack client to build a container image
 func (b *BuildAgent) BuildPack(dockerAgent *docker.Agent, dst, tag string) error {
 	// retag the image with "pack-cache" tag so that it doesn't re-pull from the registry
 	if b.imageExists {

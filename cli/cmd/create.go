@@ -142,7 +142,7 @@ func init() {
 		&image,
 		"image",
 		"",
-		"if the source is \"registry\", the image to use, in image-path:tag format",
+		"if the source is \"registry\", the image to use, in repository:tag format",
 	)
 }
 

@@ -7,7 +7,7 @@ interface Props {
   onClick: () => void;
 }
 
-const Button = ({ children, disabled, onClick }: Props) => {
+const Button: React.FC<Props> = ({ children, disabled, onClick }) => {
   return (
     <ButtonWrapper disabled={disabled} onClick={onClick}>
       {children}

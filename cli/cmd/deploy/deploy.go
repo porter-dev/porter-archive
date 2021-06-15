@@ -2,6 +2,7 @@ package deploy
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -12,6 +13,7 @@ import (
 	"github.com/porter-dev/porter/cli/cmd/api"
 	"github.com/porter-dev/porter/cli/cmd/docker"
 	"github.com/porter-dev/porter/cli/cmd/github"
+	"github.com/porter-dev/porter/internal/templater/utils"
 	"k8s.io/client-go/util/homedir"
 )
 
@@ -215,7 +217,9 @@ func (d *DeployAgent) Build() error {
 	}
 
 	if d.tag == "" {
-		d.tag = "latest"
+		currImageSection := d.release.Config["image"].(map[string]interface{})
+
+		d.tag = currImageSection["tag"].(string)
 	}
 
 	err = d.pullCurrentReleaseImage()
@@ -247,23 +251,31 @@ func (d *DeployAgent) Push() error {
 	return d.agent.PushImage(fmt.Sprintf("%s:%s", d.imageRepo, d.tag))
 }
 
-func (d *DeployAgent) CallWebhook() error {
-	releaseExt, err := d.client.GetReleaseWebhook(
-		context.Background(),
-		d.opts.ProjectID,
-		d.opts.ClusterID,
-		d.release.Name,
-		d.release.Namespace,
-	)
+func (d *DeployAgent) UpdateImageAndValues(overrideValues map[string]interface{}) error {
+	mergedValues := utils.CoalesceValues(d.release.Config, overrideValues)
+
+	// overwrite the tag based on a new image
+	currImageSection := mergedValues["image"].(map[string]interface{})
+
+	if d.tag != "" && currImageSection["tag"] != d.tag {
+		currImageSection["tag"] = d.tag
+	}
+
+	bytes, err := json.Marshal(mergedValues)
 
 	if err != nil {
 		return err
 	}
 
-	return d.client.DeployWithWebhook(
+	return d.client.UpgradeRelease(
 		context.Background(),
-		releaseExt.WebhookToken,
-		d.tag,
+		d.opts.ProjectID,
+		d.opts.ClusterID,
+		d.release.Name,
+		&api.UpgradeReleaseRequest{
+			Values:    string(bytes),
+			Namespace: d.release.Namespace,
+		},
 	)
 }
 
@@ -298,7 +310,11 @@ func GetEnvFromConfig(config map[string]interface{}) (map[string]string, error) 
 }
 
 func (d *DeployAgent) getReleaseImage() (string, error) {
-	// pull the currently deployed image to use cache, if possible
+	if d.release.ImageRepoURI != "" {
+		return d.release.ImageRepoURI, nil
+	}
+
+	// get the image from the conig
 	imageConfig, err := getNestedMap(d.release.Config, "image")
 
 	if err != nil {

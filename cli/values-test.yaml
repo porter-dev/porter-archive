@@ -1,2 +1,2 @@
-ingress:
-  enabled: false
+container:
+  port: 8080

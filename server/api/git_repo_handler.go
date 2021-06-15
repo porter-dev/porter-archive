@@ -4,13 +4,13 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"golang.org/x/oauth2"
 	"net/http"
 	"net/url"
 	"regexp"
 	"strconv"
 	"strings"
-
-	"golang.org/x/oauth2"
+	"sync"
 
 	"github.com/go-chi/chi"
 	"github.com/google/go-github/github"
@@ -59,18 +59,6 @@ type DirectoryItem struct {
 	Type string
 }
 
-// HandleSearchRepos searches user repos
-func (app *App) HandleSearchRepos(w http.ResponseWriter, r *http.Request) {
-	tok, err := app.githubTokenFromRequest(r)
-
-	if err != nil {
-		app.handleErrorInternal(err, w)
-		return
-	}
-
-	json.NewEncoder(w).Encode(tok)
-}
-
 // HandleListRepos retrieves a list of repo names
 func (app *App) HandleListRepos(w http.ResponseWriter, r *http.Request) {
 	tok, err := app.githubTokenFromRequest(r)
@@ -80,35 +68,62 @@ func (app *App) HandleListRepos(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	res := make([]Repo, 0)
-
 	client := github.NewClient(app.GithubProjectConf.Client(oauth2.NoContext, tok))
 
-	allRepos := make([]*github.Repository, 0)
-
+	// figure out number of repositories
 	opt := &github.RepositoryListOptions{
 		ListOptions: github.ListOptions{
 			PerPage: 100,
 		},
-		Sort: "updated",
 	}
 
-	for {
-		repos, resp, err := client.Repositories.List(context.Background(), "", opt)
+	allRepos, resp, err := client.Repositories.List(context.Background(), "", opt)
 
-		if err != nil {
-			app.handleErrorInternal(err, w)
-			return
-		}
-
-		allRepos = append(allRepos, repos...)
-
-		if resp.NextPage == 0 {
-			break
-		}
-
-		opt.Page = resp.NextPage
+	if err != nil {
+		app.handleErrorInternal(err, w)
+		return
 	}
+
+	// make workers to get pages concurrently
+	const WCOUNT = 5
+	numPages := resp.LastPage + 1
+	var mu sync.Mutex
+	var wg sync.WaitGroup
+
+	worker := func(cp int, wg *sync.WaitGroup) {
+		defer wg.Done()
+
+		for cp < numPages {
+			cur_opt := &github.RepositoryListOptions{
+				ListOptions: github.ListOptions{
+					Page:    cp,
+					PerPage: 100,
+				},
+			}
+
+			repos, _, err := client.Repositories.List(context.Background(), "", cur_opt)
+
+			if err != nil {
+				return
+			}
+
+			mu.Lock()
+			allRepos = append(allRepos, repos...)
+			mu.Unlock()
+
+			cp += WCOUNT
+		}
+	}
+
+	wg.Add(WCOUNT)
+	// page 1 is already loaded so we start with 2
+	for i := 1; i <= WCOUNT; i++ {
+		go worker(i+1, &wg)
+	}
+
+	wg.Wait()
+
+	res := make([]Repo, 0)
 
 	for _, repo := range allRepos {
 		res = append(res, Repo{
@@ -116,6 +131,8 @@ func (app *App) HandleListRepos(w http.ResponseWriter, r *http.Request) {
 			Kind:     "github",
 		})
 	}
+
+	fmt.Println(len(res))
 
 	json.NewEncoder(w).Encode(res)
 }

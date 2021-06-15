@@ -87,6 +87,7 @@ func (app *App) HandleListRepos(w http.ResponseWriter, r *http.Request) {
 	// make workers to get pages concurrently
 	const WCOUNT = 5
 	numPages := resp.LastPage + 1
+	var workerErr error
 	var mu sync.Mutex
 	var wg sync.WaitGroup
 
@@ -104,6 +105,9 @@ func (app *App) HandleListRepos(w http.ResponseWriter, r *http.Request) {
 			repos, _, err := client.Repositories.List(context.Background(), "", cur_opt)
 
 			if err != nil {
+				mu.Lock()
+				workerErr = err
+				mu.Unlock()
 				return
 			}
 
@@ -122,6 +126,10 @@ func (app *App) HandleListRepos(w http.ResponseWriter, r *http.Request) {
 	}
 
 	wg.Wait()
+
+	if workerErr != nil {
+
+	}
 
 	res := make([]Repo, 0)
 

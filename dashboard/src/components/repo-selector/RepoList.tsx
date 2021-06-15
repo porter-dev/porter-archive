@@ -17,12 +17,12 @@ type Props = {
   readOnly: boolean;
 };
 
-const RepoList = ({
+const RepoList: React.FC<Props> = ({
   actionConfig,
   setActionConfig,
   userId,
   readOnly,
-}: Props) => {
+}) => {
   const [repos, setRepos] = useState<RepoType[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
@@ -126,11 +126,12 @@ const RepoList = ({
     }
 
     // show 10 most recently used repos if user hasn't searched anything yet
-    let results = searchFilter
-      ? repos.filter((repo: RepoType) => {
-          return repo.FullName.includes(searchFilter || "");
-        })
-      : repos.slice(0, 10);
+    let results =
+      searchFilter != null
+        ? repos.filter((repo: RepoType) => {
+            return repo.FullName.includes(searchFilter || "");
+          })
+        : repos.slice(0, 10);
 
     if (results.length == 0) {
       return <LoadingWrapper>No matching Github repos found.</LoadingWrapper>;

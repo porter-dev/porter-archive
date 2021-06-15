@@ -27,7 +27,7 @@ const RepoList = ({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [searchFilter, setSearchFilter] = useState("");
-  const gitReposIDs = useRef<[number]>(null);
+  const gitReposIDs = useRef<number[]>(null);
   const { currentProject } = useContext(Context);
 
   // TODO: Try to unhook before unmount
@@ -39,6 +39,7 @@ const RepoList = ({
         .getGitRepos("<token>", {}, { project_id: currentProject.id })
         .then(async (res) => {
           gitReposIDs.current = res.data.map((gitrepo: any) => gitrepo.id);
+          setLoading(false);
         })
         .catch((_) => {
           setLoading(false);
@@ -47,117 +48,6 @@ const RepoList = ({
     } else {
       gitReposIDs.current = [userId];
     }
-
-    // if (!userId && userId !== 0) {
-    //   api
-    //     .getGitRepos("<token>", {}, { project_id: currentProject.id })
-    //     .then(async (res) => {
-    //       if (res.data.length == 0) {
-    //         setLoading(false);
-    //         setError(false);
-    //         return;
-    //       }
-    //
-    //       var allRepos: any = [];
-    //       var errors: any = [];
-    //
-    //       console.log(res);
-    //
-    //       var promises = res.data.map((gitrepo: any, id: number) => {
-    //         return new Promise((resolve, reject) => {
-    //           api
-    //             .getGitRepoList(
-    //               "<token>",
-    //               {},
-    //               { project_id: currentProject.id, git_repo_id: gitrepo.id }
-    //             )
-    //             .then((res) => {
-    //               res.data.forEach((repo: any, id: number) => {
-    //                 repo.GHRepoID = gitrepo.id;
-    //               });
-    //
-    //               resolve(res.data);
-    //             })
-    //             .catch((err) => {
-    //               errors.push(err);
-    //               resolve([]);
-    //             });
-    //         });
-    //       });
-    //
-    //       var sepRepos = await Promise.all(promises);
-    //
-    //       allRepos = [].concat.apply([], sepRepos);
-    //
-    //       // remove duplicates based on name
-    //       allRepos = allRepos.filter((repo: any, index: number, self: any) => {
-    //         var keep =
-    //           index ===
-    //           self.findIndex((_repo: any) => {
-    //             return repo.FullName === _repo.FullName;
-    //           });
-    //
-    //         return keep;
-    //       });
-    //
-    //       // sort repos based on name
-    //       allRepos.sort((a: any, b: any) => {
-    //         if (a.FullName < b.FullName) {
-    //           return -1;
-    //         } else if (a.FullName > b.FullName) {
-    //           return 1;
-    //         } else {
-    //           return 0;
-    //         }
-    //       });
-    //
-    //       if (allRepos.length == 0 && errors.length > 0) {
-    //         setLoading(false);
-    //         setError(true);
-    //       } else {
-    //         setRepos(allRepos);
-    //         setLoading(false);
-    //         setError(false);
-    //       }
-    //     })
-    //     .catch((_) => {
-    //       setLoading(false);
-    //       setError(true);
-    //     });
-    // } else {
-    //   let grid = userId;
-    //
-    //   api
-    //     .getGitRepoList(
-    //       "<token>",
-    //       {},
-    //       { project_id: currentProject.id, git_repo_id: grid }
-    //     )
-    //     .then((res) => {
-    //       var repos: any = res.data;
-    //
-    //       repos.forEach((repo: any, id: number) => {
-    //         repo.GHRepoID = grid;
-    //       });
-    //
-    //       repos.sort((a: any, b: any) => {
-    //         if (a.FullName < b.FullName) {
-    //           return -1;
-    //         } else if (a.FullName > b.FullName) {
-    //           return 1;
-    //         } else {
-    //           return 0;
-    //         }
-    //       });
-    //       setRepos(repos);
-    //       setLoading(false);
-    //       setError(false);
-    //     })
-    //     .catch((_) => {
-    //       setLoading(false);
-    //       setError(true);
-    //     });
-    // }
   }, []);
 
   const setRepo = (x: RepoType) => {
@@ -174,9 +64,9 @@ const RepoList = ({
           <Loading />
         </LoadingWrapper>
       );
-    } else if (error || !repos) {
+    } else if (error || !gitReposIDs.current) {
       return <LoadingWrapper>Error loading repos.</LoadingWrapper>;
-    } else if (repos.length == 0) {
+    } else if (gitReposIDs.current.length == 0) {
       return (
         <LoadingWrapper>
           No connected Github repos found. You can
@@ -239,9 +129,9 @@ const RepoList = ({
             </SearchBar>
             <Button
               onClick={updateSearchResults}
-              disabled={!searchFilter || !/\S/.test(searchFilter) || loading}
+              disabled={loading || !gitReposIDs.current}
             >
-              Search
+              {gitReposIDs.current ? "Search" : <Loading />}
             </Button>
           </SearchRow>
           <ExpandedWrapper>

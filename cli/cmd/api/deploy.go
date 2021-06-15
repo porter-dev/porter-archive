@@ -178,3 +178,47 @@ func (c *Client) DeployTemplate(
 
 	return nil
 }
+
+type UpgradeReleaseRequest struct {
+	Values    string `json:"values"`
+	Namespace string `json:"namespace"`
+}
+
+func (c *Client) UpgradeRelease(
+	ctx context.Context,
+	projID, clusterID uint,
+	name string,
+	upgradeReq *UpgradeReleaseRequest,
+) error {
+	data, err := json.Marshal(upgradeReq)
+
+	if err != nil {
+		return err
+	}
+
+	req, err := http.NewRequest(
+		"POST",
+		fmt.Sprintf("%s/projects/%d/releases/%s/upgrade?"+url.Values{
+			"namespace":  []string{upgradeReq.Namespace},
+			"cluster_id": []string{fmt.Sprintf("%d", clusterID)},
+			"storage":    []string{"secret"},
+		}.Encode(), c.BaseURL, projID, name),
+		strings.NewReader(string(data)),
+	)
+
+	if err != nil {
+		return err
+	}
+
+	req = req.WithContext(ctx)
+
+	if httpErr, err := c.sendRequest(req, nil, true); httpErr != nil || err != nil {
+		if httpErr != nil {
+			return fmt.Errorf("code %d, errors %v", httpErr.Code, httpErr.Errors)
+		}
+
+		return err
+	}
+
+	return nil
+}

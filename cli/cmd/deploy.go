@@ -32,6 +32,11 @@ local directory ~/path-to-dir with the tag "testing":
 
   %s
 
+To add new configuration or update existing configuration, you can pass a values.yaml file in via the 
+--values flag. For example;
+
+  %s
+
 If your application is set up to use a Dockerfile by default, you can use a buildpack via the flag 
 "--method pack". Conversely, if your application is set up to use a buildpack by default, you can 
 use a Dockerfile by passing the flag "--method docker". You can specify the relative path to a Dockerfile 
@@ -54,6 +59,7 @@ as documented above. For example:
 		color.New(color.FgBlue, color.Bold).Sprintf("Help for \"porter deploy\":"),
 		color.New(color.FgGreen, color.Bold).Sprintf("porter deploy --app example-app"),
 		color.New(color.FgGreen, color.Bold).Sprintf("porter deploy --app remote-git-app --local --path ~/path-to-dir --tag testing"),
+		color.New(color.FgGreen, color.Bold).Sprintf("porter deploy --app remote-git-app --values my-values.yaml"),
 		color.New(color.FgGreen, color.Bold).Sprintf("porter deploy --app remote-git-app --method docker --dockerfile ./docker/prod.Dockerfile"),
 		color.New(color.FgGreen, color.Bold).Sprintf("porter deploy --app local-app"),
 		color.New(color.FgGreen, color.Bold).Sprintf("porter deploy --app local-app --method docker --dockerfile ~/porter-test/prod.Dockerfile"),
@@ -169,27 +175,29 @@ linked it via "porter connect".
 }
 
 var deployCallWebhookCmd = &cobra.Command{
-	Use:   "call-webhook",
-	Short: "Calls the webhook for an application specified by the --app flag.",
+	Use:   "update-config",
+	Short: "Updates the configuration for an application specified by the --app flag.",
 	Long: fmt.Sprintf(`
 %s 
 
-Calls the webhook for an application specified by the --app flag. This webhook will 
-trigger a new deployment for the application, with the new image set. For example:
+Updates the configuration for an application specified by the --app flag, using the configuration
+given by the --values flag. This will trigger a new deployment for the application with 
+new configuration set. Note that this will merge your existing configuration with configuration
+specified in the --values file. For example:
 
   %s
 
-This command will by default call the webhook with image tag "latest," but you can 
-specify a different tag with the --tag flag:
+You can update the configuration with only a new tag with the --tag flag, which will only update
+the image that the application uses if no --values file is specified:
 
   %s
 `,
-		color.New(color.FgBlue, color.Bold).Sprintf("Help for \"porter deploy call-webhook\":"),
-		color.New(color.FgGreen, color.Bold).Sprintf("porter deploy call-webhook --app example-app"),
+		color.New(color.FgBlue, color.Bold).Sprintf("Help for \"porter deploy update-config\":"),
+		color.New(color.FgGreen, color.Bold).Sprintf("porter deploy call-webhook --app example-app --values my-values.yaml"),
 		color.New(color.FgGreen, color.Bold).Sprintf("porter deploy call-webhook --app example-app --tag custom-tag"),
 	),
 	Run: func(cmd *cobra.Command, args []string) {
-		err := checkLoginAndRun(args, deployCallWebhook)
+		err := checkLoginAndRun(args, deployUpgrade)
 
 		if err != nil {
 			os.Exit(1)
@@ -227,7 +235,7 @@ func init() {
 	deployCmd.PersistentFlags().BoolVar(
 		&local,
 		"local",
-		false,
+		true,
 		"Whether local context should be used for build",
 	)
 
@@ -245,6 +253,14 @@ func init() {
 		"t",
 		"",
 		"the specified tag to use, if not \"latest\"",
+	)
+
+	deployCmd.PersistentFlags().StringVarP(
+		&values,
+		"values",
+		"v",
+		"",
+		"Filepath to a values.yaml file",
 	)
 
 	deployCmd.PersistentFlags().StringVar(
@@ -296,7 +312,7 @@ func deployFull(resp *api.AuthCheckResponse, client *api.Client, args []string) 
 		return err
 	}
 
-	err = deployCallWebhookWithAgent(deployAgent)
+	err = deployUpgradeWithAgent(deployAgent)
 
 	if err != nil {
 		return err
@@ -349,14 +365,14 @@ func deployPush(resp *api.AuthCheckResponse, client *api.Client, args []string) 
 	return deployPushWithAgent(deployAgent)
 }
 
-func deployCallWebhook(resp *api.AuthCheckResponse, client *api.Client, args []string) error {
+func deployUpgrade(resp *api.AuthCheckResponse, client *api.Client, args []string) error {
 	deployAgent, err := deployGetAgent(client)
 
 	if err != nil {
 		return err
 	}
 
-	return deployCallWebhookWithAgent(deployAgent)
+	return deployUpgradeWithAgent(deployAgent)
 }
 
 // HELPER METHODS
@@ -409,11 +425,18 @@ func deployPushWithAgent(deployAgent *deploy.DeployAgent) error {
 	return deployAgent.Push()
 }
 
-func deployCallWebhookWithAgent(deployAgent *deploy.DeployAgent) error {
+func deployUpgradeWithAgent(deployAgent *deploy.DeployAgent) error {
 	// push the deployment
 	color.New(color.FgGreen).Println("Calling webhook for", app)
 
-	err := deployAgent.CallWebhook()
+	// read the values if necessary
+	valuesObj, err := readValuesFile()
+
+	if err != nil {
+		return err
+	}
+
+	err = deployAgent.UpdateImageAndValues(valuesObj)
 
 	if err != nil {
 		return err

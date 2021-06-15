@@ -82,6 +82,7 @@ type PorterRelease struct {
 	HasMetrics      bool                            `json:"has_metrics"`
 	LatestVersion   string                          `json:"latest_version"`
 	GitActionConfig *models.GitActionConfigExternal `json:"git_action_config"`
+	ImageRepoURI    string                          `json:"image_repo_uri"`
 }
 
 var porterApplications = map[string]string{"web": "", "job": "", "worker": ""}
@@ -163,7 +164,7 @@ func (app *App) HandleGetRelease(w http.ResponseWriter, r *http.Request) {
 		HelmRelease:   release,
 	}
 
-	res := &PorterRelease{release, nil, false, "", nil}
+	res := &PorterRelease{release, nil, false, "", nil, ""}
 
 	for _, file := range release.Chart.Files {
 		if strings.Contains(file.Name, "form.yaml") {
@@ -218,6 +219,8 @@ func (app *App) HandleGetRelease(w http.ResponseWriter, r *http.Request) {
 	modelRelease, err := app.Repo.Release.ReadRelease(form.Cluster.ID, release.Name, release.Namespace)
 
 	if modelRelease != nil {
+		res.ImageRepoURI = modelRelease.ImageRepoURI
+
 		gitAction := modelRelease.GitActionConfig
 
 		if gitAction.ID != 0 {

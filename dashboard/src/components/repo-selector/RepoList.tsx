@@ -72,6 +72,12 @@ const RepoList: React.FC<Props> = ({
             // note: would be better to use .flat() here but you need es2019 for
             setRepos(
               repos
+                .map((arr, idx) =>
+                  arr.map((el) => {
+                    el.GHRepoID = ids[idx];
+                    return el;
+                  })
+                )
                 .reduce((acc, val) => acc.concat(val), [])
                 .reduce((acc, val) => {
                   if (!names.has(val.FullName)) {
@@ -96,9 +102,13 @@ const RepoList: React.FC<Props> = ({
   }, []);
 
   const setRepo = (x: RepoType) => {
+    console.log(x);
+    console.log(repos);
     let updatedConfig = actionConfig;
     updatedConfig.git_repo = x.FullName;
     updatedConfig.git_repo_id = x.GHRepoID;
+    console.log(updatedConfig.git_repo);
+    console.log(updatedConfig.git_repo_id);
     setActionConfig(updatedConfig);
   };
 

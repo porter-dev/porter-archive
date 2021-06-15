@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/porter-dev/porter/cli/cmd/api"
 	"github.com/porter-dev/porter/cli/cmd/docker"
@@ -133,6 +134,62 @@ func (c *CreateAgent) CreateFromGithub(
 				BuildEnv:       env,
 				RegistryID:     regID,
 			},
+		},
+	)
+
+	if err != nil {
+		return "", err
+	}
+
+	return subdomain, nil
+}
+
+func (c *CreateAgent) CreateFromRegistry(
+	image string,
+	overrideValues map[string]interface{},
+) (string, error) {
+	if image == "" {
+		return "", fmt.Errorf("image cannot be empty")
+	}
+
+	// split image into image-path:tag format
+	imageSpl := strings.Split(image, ":")
+
+	if len(imageSpl) != 2 {
+		return "", fmt.Errorf("invalid image format: must be image-path:tag format")
+	}
+
+	opts := c.CreateOpts
+
+	latestVersion, mergedValues, err := c.getMergedValues(overrideValues)
+
+	if err != nil {
+		return "", err
+	}
+
+	mergedValues["image"] = map[string]interface{}{
+		"repository": imageSpl[0],
+		"tag":        imageSpl[1],
+	}
+
+	subdomain, err := c.CreateSubdomainIfRequired(mergedValues)
+
+	if err != nil {
+		return "", err
+	}
+
+	err = c.Client.DeployTemplate(
+		context.Background(),
+		opts.ProjectID,
+		opts.ClusterID,
+		opts.Kind,
+		latestVersion,
+		&api.DeployTemplateRequest{
+			TemplateName: opts.Kind,
+			ImageURL:     imageSpl[0],
+			FormValues:   mergedValues,
+			Namespace:    opts.Namespace,
+			Name:         opts.ReleaseName,
 		},
 	)
 

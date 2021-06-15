@@ -19,7 +19,48 @@ import (
 var createCmd = &cobra.Command{
 	Use:   "create [kind]",
 	Args:  cobra.ExactArgs(1),
-	Short: "TODO.",
+	Short: "Creates a new application with name given by the --app flag.",
+	Long: fmt.Sprintf(`
+%s 
+
+Creates a new application with name given by the --app flag and a "kind", which can be one of 
+web, worker, or job. For example:
+
+  %s
+
+To modify the default configuration of the application, you can pass a values.yaml file in via the 
+--values flag. 
+
+  %s
+
+To read more about the configuration options, go here: 
+
+https://docs.getporter.dev/docs/deploying-from-the-cli#common-configuration-options
+
+This command will automatically build from a local path, and will create a new Docker image in your 
+default Docker registry. The path can be configured via the --path flag. For example:
+  
+  %s
+
+To connect the application to Github, so that the application rebuilds and redeploys on each push 
+to a Github branch, you can specify "--source github". If your local branch is set to track changes 
+from an upstream remote branch, Porter will try to use the connected remote and remote branch as the 
+Github repository to link to. Otherwise, Porter will use the remote given by origin. For example:
+
+  %s
+
+To deploy an application from a Docker registry, use "--source registry" and pass the image in via the
+--image flag. The image flag must be of the form repository:tag. For example:
+
+  %s 
+`,
+		color.New(color.FgBlue, color.Bold).Sprintf("Help for \"porter create\":"),
+		color.New(color.FgGreen, color.Bold).Sprintf("porter create web --app example-app"),
+		color.New(color.FgGreen, color.Bold).Sprintf("porter create web --app example-app --values values.yaml"),
+		color.New(color.FgGreen, color.Bold).Sprintf("porter create web --app example-app --path ./path/to/app"),
+		color.New(color.FgGreen, color.Bold).Sprintf("porter create web --app example-app --source github"),
+		color.New(color.FgGreen, color.Bold).Sprintf("porter create web --app example-app --source registry --image gcr.io/snowflake-12345/example-app:latest"),
+	),
 	Run: func(cmd *cobra.Command, args []string) {
 		err := checkLoginAndRun(args, createFull)
 
@@ -32,24 +73,25 @@ var createCmd = &cobra.Command{
 var name string
 var values string
 var source string
+var image string
 
 func init() {
 	rootCmd.AddCommand(createCmd)
 
 	createCmd.PersistentFlags().StringVar(
 		&name,
-		"name",
+		"app",
 		"",
-		"Name of the new application/job/worker.",
+		"name of the new application/job/worker.",
 	)
 
-	createCmd.MarkPersistentFlagRequired("name")
+	createCmd.MarkPersistentFlagRequired("app")
 
 	createCmd.PersistentFlags().BoolVar(
 		&local,
 		"local",
 		true,
-		"Whether local context should be used for build",
+		"whether local context should be used for build",
 	)
 
 	createCmd.PersistentFlags().StringVarP(
@@ -57,14 +99,14 @@ func init() {
 		"path",
 		"p",
 		".",
-		"If local build, the path to the build directory",
+		"if local build, the path to the build directory",
 	)
 
 	createCmd.PersistentFlags().StringVar(
 		&namespace,
 		"namespace",
 		"default",
-		"Namespace of the application",
+		"namespace of the application",
 	)
 
 	createCmd.PersistentFlags().StringVarP(
@@ -72,7 +114,7 @@ func init() {
 		"values",
 		"v",
 		"",
-		"Filepath to a values.yaml file",
+		"filepath to a values.yaml file",
 	)
 
 	createCmd.PersistentFlags().StringVar(
@@ -93,7 +135,14 @@ func init() {
 		&source,
 		"source",
 		"local",
-		"the type of source (\"local\" or \"github\")",
+		"the type of source (\"local\", \"github\", or \"registry\")",
+	)
+
+	createCmd.PersistentFlags().StringVar(
+		&image,
+		"image",
+		"",
+		"if the source is \"registry\", the image to use, in image-path:tag format",
 	)
 }
 
@@ -152,8 +201,16 @@ func createFull(resp *api.AuthCheckResponse, client *api.Client, args []string) 
 		}
 
 		color.New(color.FgGreen).Printf("Your web application is ready at: %s\n", subdomain)
-	} else {
+	} else if source == "github" {
 		return createFromGithub(createAgent, valuesObj)
+	} else {
+		subdomain, err := createAgent.CreateFromRegistry(image, valuesObj)
+
+		if err != nil {
+			return err
+		}
+
+		color.New(color.FgGreen).Printf("Your web application is ready at: %s\n", subdomain)
 	}
 
 	return nil

@@ -8,6 +8,7 @@ import { PorterUrl } from "shared/routing";
 
 import Chart from "./Chart";
 import Loading from "components/Loading";
+import { useWebsockets } from "shared/hooks/useWebsockets";
 
 type PropsType = {
   currentCluster: ClusterType;
@@ -22,6 +23,12 @@ const ChartList: React.FunctionComponent<PropsType> = ({
   sortType,
   currentView,
 }) => {
+  const {
+    newWebsocket,
+    openWebsocket,
+    closeWebsocket,
+    closeAllWebsockets,
+  } = useWebsockets();
   const [charts, setCharts] = useState<ChartType[]>([]);
   const [chartLookupTable, setChartLookupTable] = useState<
     Record<string, string>
@@ -29,7 +36,6 @@ const ChartList: React.FunctionComponent<PropsType> = ({
   const [controllers, setControllers] = useState<
     Record<string, Record<string, any>>
   >({});
-  const [websockets, setWebsockets] = useState<WebSocket[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isError, setIsError] = useState(false);
 
@@ -104,52 +110,49 @@ const ChartList: React.FunctionComponent<PropsType> = ({
 
   const setupWebsocket = (kind: string) => {
     let { currentCluster, currentProject } = context;
-    let protocol = window.location.protocol == "https:" ? "wss" : "ws";
+    const apiPath = `/api/projects/${currentProject.id}/k8s/${kind}/status?cluster_id=${currentCluster.id}`;
 
-    let ws = new WebSocket(
-      `${protocol}://${window.location.host}/api/projects/${currentProject.id}/k8s/${kind}/status?cluster_id=${currentCluster.id}`
-    );
-    ws.onopen = () => {
-      console.log("connected to websocket");
+    const wsConfig = {
+      onopen: () => {
+        console.log("connected to websocket");
+      },
+      onmessage: (evt: MessageEvent) => {
+        let event = JSON.parse(evt.data);
+        let object = event.Object;
+        object.metadata.kind = event.Kind;
+        let chartKey = chartLookupTable[object.metadata.uid];
+
+        // ignore if updated object does not belong to any chart in the list.
+        if (!chartKey) {
+          return;
+        }
+
+        let chartControllers = controllers[chartKey];
+        chartControllers[object.metadata.uid] = object;
+
+        setControllers((oldControllers) => ({
+          ...oldControllers,
+          [chartKey]: chartControllers,
+        }));
+      },
+      onclose: () => {
+        console.log("closing websocket");
+      },
+      onerror: (err: ErrorEvent) => {
+        console.log(err);
+        closeWebsocket(kind);
+      },
     };
 
-    ws.onmessage = (evt: MessageEvent) => {
-      let event = JSON.parse(evt.data);
-      let object = event.Object;
-      object.metadata.kind = event.Kind;
-      let chartKey = chartLookupTable[object.metadata.uid];
+    newWebsocket(kind, apiPath, wsConfig);
 
-      // ignore if updated object does not belong to any chart in the list.
-      if (!chartKey) {
-        return;
-      }
-
-      let chartControllers = controllers[chartKey];
-      chartControllers[object.metadata.uid] = object;
-
-      setControllers((oldControllers) => ({
-        ...oldControllers,
-        [chartKey]: chartControllers,
-      }));
-    };
-
-    ws.onclose = () => {
-      console.log("closing websocket");
-    };
-
-    ws.onerror = (err: ErrorEvent) => {
-      console.log(err);
-      ws.close();
-    };
-
-    return ws;
+    openWebsocket(kind);
   };
 
   const setControllerWebsockets = (controllers: any[]) => {
-    let websockets = controllers.map((kind: string) => {
+    controllers.map((kind: string) => {
       return setupWebsocket(kind);
     });
-    setWebsockets(websockets);
   };
 
   const getControllerForChart = async (chart: ChartType) => {
@@ -207,18 +210,11 @@ const ChartList: React.FunctionComponent<PropsType> = ({
       "daemonset",
       "replicaset",
     ]);
-  }, []);
 
-  // Close Websockets on unmount
-  useEffect(() => {
     return () => {
-      if (websockets.length) {
-        websockets.forEach((ws) => {
-          ws.close();
-        });
-      }
+      closeAllWebsockets();
     };
-  }, [websockets]);
+  }, []);
 
   useEffect(() => {
     let isSubscribed = true;

@@ -91,7 +91,7 @@ func (app *App) HandleListRepos(w http.ResponseWriter, r *http.Request) {
 	var mu sync.Mutex
 	var wg sync.WaitGroup
 
-	worker := func(cp int, wg *sync.WaitGroup) {
+	worker := func(cp int) {
 		defer wg.Done()
 
 		for cp < numPages {
@@ -119,16 +119,25 @@ func (app *App) HandleListRepos(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	wg.Add(WCOUNT)
+	var numJobs int
+	if numPages > WCOUNT {
+		numJobs = WCOUNT
+	} else {
+		numJobs = numPages
+	}
+
+	wg.Add(numJobs)
+
 	// page 1 is already loaded so we start with 2
-	for i := 1; i <= WCOUNT; i++ {
-		go worker(i+1, &wg)
+	for i := 1; i <= numJobs; i++ {
+		go worker(i + 1)
 	}
 
 	wg.Wait()
 
 	if workerErr != nil {
-
+		app.handleErrorInternal(workerErr, w)
+		return
 	}
 
 	res := make([]Repo, 0)
@@ -139,8 +148,6 @@ func (app *App) HandleListRepos(w http.ResponseWriter, r *http.Request) {
 			Kind:     "github",
 		})
 	}
-
-	fmt.Println(len(res))
 
 	json.NewEncoder(w).Encode(res)
 }

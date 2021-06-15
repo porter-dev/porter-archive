@@ -209,6 +209,18 @@ func (app *App) HandleGetBranches(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(res)
 }
 
+// HandleDetectBuildpack attempts to figure which buildpack will be auto used based on directory contents
+func (app *App) HandleDetectBuildpack(w http.ResponseWriter, r *http.Request) {
+	tok, err := app.githubTokenFromRequest(r)
+
+	if err != nil {
+		app.handleErrorInternal(err, w)
+		return
+	}
+
+	json.NewEncoder(w).Encode(tok)
+}
+
 // HandleGetBranchContents retrieves the contents of a specific branch and subdirectory
 func (app *App) HandleGetBranchContents(w http.ResponseWriter, r *http.Request) {
 	tok, err := app.githubTokenFromRequest(r)

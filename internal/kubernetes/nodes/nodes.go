@@ -75,3 +75,19 @@ func getPodsForNode(clientset kubernetes.Interface, nodeName string) *v1.PodList
 
 	return podList
 }
+
+type NodeDetails struct {
+	NodeWithUsageData
+}
+
+func DescribeNode(clientset kubernetes.Interface, nodeName string) *NodeDetails {
+	node, _ := clientset.CoreV1().Nodes().Get(context.TODO(), nodeName, metav1.GetOptions{})
+
+	podList := getPodsForNode(clientset, node.Name)
+	nodeUsage := DescribeNodeResource(podList, node)
+	extNodeUsage := nodeUsage.Externalize(*node)
+
+	return &NodeDetails{
+		NodeWithUsageData: *extNodeUsage,
+	}
+}

@@ -59,6 +59,9 @@ const ActionConfEditor: React.FC<Props> = (props) => {
       props.dockerfilePath ||
       props.folderPath
     ) {
+      setAutoBuildpack({
+        valid: false,
+      });
       return;
     }
     api

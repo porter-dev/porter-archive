@@ -1,21 +1,37 @@
-import React, { useContext, useEffect } from "react";
-import { useParams } from "react-router";
+import React, { useContext, useEffect, useState } from "react";
+import { useHistory, useLocation, useParams } from "react-router";
 import styled from "styled-components";
 import closeImg from "assets/close.png";
 import api from "shared/api";
 import { Context } from "shared/Context";
 
 import nodePng from "assets/node.png";
+import TabSelector from "components/TabSelector";
+import { pushFiltered } from "shared/routing";
+import NodeUsage from "./NodeUsage";
+import { ConditionsTable } from "./ConditionsTable";
 
 type ExpandedNodeViewParams = {
   nodeId: string;
 };
 
+type TabEnum = "conditions";
+
+const tabOptions: {
+  label: string;
+  value: TabEnum;
+}[] = [{ label: "Conditions", value: "conditions" }];
+
 export const ExpandedNodeView = () => {
   const { nodeId } = useParams<ExpandedNodeViewParams>();
+  const history = useHistory();
+  const location = useLocation();
   const { currentCluster, currentProject } = useContext(Context);
+  const [node, setNode] = useState(undefined);
+  const [currentTab, setCurrentTab] = useState("conditions");
 
   useEffect(() => {
+    let isSubscribed = true;
     api
       .getClusterNode(
         "<token>",
@@ -27,14 +43,21 @@ export const ExpandedNodeView = () => {
         }
       )
       .then((res) => {
-        console.log(res);
+        if (isSubscribed) {
+          setNode(res.data);
+        }
       });
-  }, []);
 
-  const closeNodeView = () => {};
+    return () => (isSubscribed = false);
+  }, [nodeId, currentCluster.id, currentProject.id]);
+
+  const closeNodeView = () => {
+    pushFiltered({ history, location }, "/cluster-dashboard", []);
+  };
 
   return (
     <>
+      <CloseOverlay onClick={closeNodeView} />
       <StyledExpandedChart>
         <HeaderWrapper>
           <TitleSection>
@@ -50,7 +73,15 @@ export const ExpandedNodeView = () => {
             <CloseButtonImg src={closeImg} />
           </CloseButton>
         </HeaderWrapper>
-        <BodyWrapper>{nodeId}</BodyWrapper>
+        <BodyWrapper>
+          <NodeUsage node={node} />
+          <TabSelector
+            options={tabOptions}
+            currentTab={currentTab}
+            setCurrentTab={(value: TabEnum) => setCurrentTab(value)}
+          />
+          <ConditionsTable node={node} />
+        </BodyWrapper>
       </StyledExpandedChart>
     </>
   );
@@ -65,6 +96,26 @@ const BodyWrapper = styled.div`
 `;
 
 const HeaderWrapper = styled.div``;
+
+const CloseOverlay = styled.div`
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: #202227;
+  animation: fadeIn 0.2s 0s;
+  opacity: 0;
+  animation-fill-mode: forwards;
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+`;
 
 const IconWrapper = styled.div`
   color: #efefef;

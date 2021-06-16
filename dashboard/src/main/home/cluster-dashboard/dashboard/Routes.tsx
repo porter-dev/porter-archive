@@ -1,7 +1,7 @@
 import React from "react";
 import { Route, Switch, useRouteMatch } from "react-router";
 import { Dashboard } from "./Dashboard";
-import ExpandedNodeView from "./ExpandedNodeView";
+import ExpandedNodeView from "./node-view/ExpandedNodeView";
 
 export const Routes = () => {
   const { url } = useRouteMatch();

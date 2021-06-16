@@ -196,21 +196,25 @@ func createFull(resp *api.AuthCheckResponse, client *api.Client, args []string) 
 	if source == "local" {
 		subdomain, err := createAgent.CreateFromDocker(valuesObj)
 
-		if err != nil {
-			return err
-		}
-
-		color.New(color.FgGreen).Printf("Your web application is ready at: %s\n", subdomain)
+		return handleSubdomainCreate(subdomain, err)
 	} else if source == "github" {
 		return createFromGithub(createAgent, valuesObj)
-	} else {
-		subdomain, err := createAgent.CreateFromRegistry(image, valuesObj)
+	}
 
-		if err != nil {
-			return err
-		}
+	subdomain, err := createAgent.CreateFromRegistry(image, valuesObj)
 
+	return handleSubdomainCreate(subdomain, err)
+}
+
+func handleSubdomainCreate(subdomain string, err error) error {
+	if err != nil {
+		return err
+	}
+
+	if subdomain != "" {
 		color.New(color.FgGreen).Printf("Your web application is ready at: %s\n", subdomain)
+	} else {
+		color.New(color.FgGreen).Printf("Application created successfully")
 	}
 
 	return nil
@@ -246,9 +250,7 @@ func createFromGithub(createAgent *deploy.CreateAgent, overrideValues map[string
 		Repo:   remoteRepo,
 	}, overrideValues)
 
-	color.New(color.FgGreen).Printf("Your web application is ready at: %s\n", subdomain)
-
-	return err
+	return handleSubdomainCreate(subdomain, err)
 }
 
 func readValuesFile() (map[string]interface{}, error) {

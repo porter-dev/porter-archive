@@ -183,9 +183,9 @@ the image that the application uses if no --values file is specified:
 
   %s
 `,
-		color.New(color.FgBlue, color.Bold).Sprintf("Help for \"porter update update-config\":"),
-		color.New(color.FgGreen, color.Bold).Sprintf("porter update call-webhook --app example-app --values my-values.yaml"),
-		color.New(color.FgGreen, color.Bold).Sprintf("porter update call-webhook --app example-app --tag custom-tag"),
+		color.New(color.FgBlue, color.Bold).Sprintf("Help for \"porter update config\":"),
+		color.New(color.FgGreen, color.Bold).Sprintf("porter update config --app example-app --values my-values.yaml"),
+		color.New(color.FgGreen, color.Bold).Sprintf("porter update config --app example-app --tag custom-tag"),
 	),
 	Run: func(cmd *cobra.Command, args []string) {
 		err := checkLoginAndRun(args, updateUpgrade)

@@ -12,6 +12,9 @@ import (
 )
 
 type NodeUsage struct {
+	cpuReqs                        string
+	memoryReqs                     string
+	ephemeralStorageReqs           string
 	fractionCpuReqs                float64
 	fractionCpuLimits              float64
 	fractionMemoryReqs             float64
@@ -22,18 +25,24 @@ type NodeUsage struct {
 
 type NodeWithUsageData struct {
 	Name                           string             `json:"name"`
-	FractionCpuReqs                float64            `json:"cpu_reqs"`
-	FractionCpuLimits              float64            `json:"cpu_limits"`
-	FractionMemoryReqs             float64            `json:"memory_reqs"`
-	FractionMemoryLimits           float64            `json:"memory_limits"`
-	FractionEphemeralStorageReqs   float64            `json:"ephemeral_storage_reqs"`
-	FractionEphemeralStorageLimits float64            `json:"ephemeral_storage_limits"`
+	CpuReqs                        string             `json:"cpu_reqs"`
+	MemoryReqs                     string             `json:"memory_reqs"`
+	EphemeralStorageReqs           string             `json:"ephemeral_storage_reqs"`
+	FractionCpuReqs                float64            `json:"fraction_cpu_reqs"`
+	FractionCpuLimits              float64            `json:"fraction_cpu_limits"`
+	FractionMemoryReqs             float64            `json:"fraction_memory_reqs"`
+	FractionMemoryLimits           float64            `json:"fraction_memory_limits"`
+	FractionEphemeralStorageReqs   float64            `json:"fraction_ephemeral_storage_reqs"`
+	FractionEphemeralStorageLimits float64            `json:"fraction_ephemeral_storage_limits"`
 	Condition                      []v1.NodeCondition `json:"node_conditions"`
 }
 
 func (nu *NodeUsage) Externalize(node v1.Node) *NodeWithUsageData {
 	return &NodeWithUsageData{
 		Name:                           node.Name,
+		CpuReqs:                        nu.cpuReqs,
+		MemoryReqs:                     nu.memoryReqs,
+		EphemeralStorageReqs:           nu.ephemeralStorageReqs,
 		FractionCpuReqs:                nu.fractionCpuReqs,
 		FractionCpuLimits:              nu.fractionCpuLimits,
 		FractionMemoryReqs:             nu.fractionMemoryReqs,

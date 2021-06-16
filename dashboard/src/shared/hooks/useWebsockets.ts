@@ -25,6 +25,17 @@ export const useWebsockets = () => {
   
   const newWebsocket = (id: string, apiEndpoint: string, options: NewWebsocketOptions): WebsocketConfig => {
     
+    if (!id) {
+      console.log("Id cannot be empty");
+      return;
+    }
+
+    if (!apiEndpoint) {
+      console.log("Api endpoint string cannot be empty")
+      return;
+    }
+
+
     let protocol = window.location.protocol == "https:" ? "wss" : "ws";
 
     const url = `${protocol}://${window.location.host}${apiEndpoint}`
@@ -33,10 +44,10 @@ export const useWebsockets = () => {
     
     const wsConfig: WebsocketConfig = {
       url,
-      onopen: options.onopen || mockFunction,
-      onmessage: options.onmessage || mockFunction,
-      onerror: options.onerror || mockFunction,
-      onclose: options.onclose || mockFunction,
+      onopen: options?.onopen || mockFunction,
+      onmessage: options?.onmessage || mockFunction,
+      onerror: options?.onerror || mockFunction,
+      onclose: options?.onclose || mockFunction,
     }
     
     websocketConfigMap.current = {
@@ -67,6 +78,11 @@ export const useWebsockets = () => {
 
   const closeWebsocket = (id: string, code?: number, reason?: string) => {
     const ws = websocketMap.current[id];
+
+    if (!ws) {
+      console.log(`Couldn't find websocket to close for id: ${id}`);
+      return;
+    }
 
     ws.close(code, reason);
   }

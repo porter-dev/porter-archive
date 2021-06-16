@@ -3,6 +3,7 @@ package api
 import (
 	"encoding/json"
 	"net/http"
+	"net/url"
 	"strconv"
 
 	"github.com/go-chi/chi"
@@ -179,6 +180,106 @@ func (app *App) HandleCreateAWSIntegration(w http.ResponseWriter, r *http.Reques
 	w.WriteHeader(http.StatusCreated)
 
 	awsExt := aws.Externalize()
+
+	if err := json.NewEncoder(w).Encode(awsExt); err != nil {
+		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
+		return
+	}
+}
+
+// HandleOverwriteAWSIntegration overwrites the ID of an AWS integration in the DB
+func (app *App) HandleOverwriteAWSIntegration(w http.ResponseWriter, r *http.Request) {
+	userID, err := app.getUserIDFromRequest(r)
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	projID, err := strconv.ParseUint(chi.URLParam(r, "project_id"), 0, 64)
+
+	if err != nil || projID == 0 {
+		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
+		return
+	}
+
+	awsIntegrationID, err := strconv.ParseUint(chi.URLParam(r, "aws_integration_id"), 0, 64)
+
+	if err != nil || awsIntegrationID == 0 {
+		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
+		return
+	}
+
+	form := &forms.OverwriteAWSIntegrationForm{
+		UserID:    userID,
+		ProjectID: uint(projID),
+	}
+
+	// decode from JSON to form value
+	if err := json.NewDecoder(r.Body).Decode(form); err != nil {
+		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
+		return
+	}
+
+	// validate the form
+	if err := app.validator.Struct(form); err != nil {
+		app.handleErrorFormValidation(err, ErrProjectValidateFields, w)
+		return
+	}
+
+	// read the aws integration by ID and overwrite the access id/secret
+	awsIntegration, err := app.Repo.AWSIntegration.ReadAWSIntegration(uint(awsIntegrationID))
+
+	if err != nil {
+		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
+		return
+	}
+
+	awsIntegration.AWSAccessKeyID = []byte(form.AWSAccessKeyID)
+	awsIntegration.AWSSecretAccessKey = []byte(form.AWSSecretAccessKey)
+
+	// handle write to the database
+	awsIntegration, err = app.Repo.AWSIntegration.OverwriteAWSIntegration(awsIntegration)
+
+	if err != nil {
+		app.handleErrorDataWrite(err, w)
+		return
+	}
+
+	// clear the cluster token cache if cluster_id exists
+	vals, err := url.ParseQuery(r.URL.RawQuery)
+
+	if err != nil {
+		app.handleErrorDataWrite(err, w)
+		return
+	}
+
+	if len(vals["cluster_id"]) > 0 {
+		clusterID, err := strconv.ParseUint(vals["cluster_id"][0], 10, 64)
+
+		if err != nil {
+			app.handleErrorDataWrite(err, w)
+			return
+		}
+
+		cluster, err := app.Repo.Cluster.ReadCluster(uint(clusterID))
+
+		// clear the token
+		cluster.TokenCache.Token = []byte("")
+
+		cluster, err = app.Repo.Cluster.UpdateClusterTokenCache(&cluster.TokenCache)
+
+		if err != nil {
+			app.handleErrorDataWrite(err, w)
+			return
+		}
+	}
+
+	app.Logger.Info().Msgf("AWS integration overwritten: %d", awsIntegration.ID)
+
+	w.WriteHeader(http.StatusCreated)
+
+	awsExt := awsIntegration.Externalize()
 
 	if err := json.NewEncoder(w).Encode(awsExt); err != nil {
 		app.handleErrorFormDecoding(err, ErrProjectDecode, w)

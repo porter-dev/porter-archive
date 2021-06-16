@@ -17,7 +17,6 @@ export const NodeStatusModal: React.FunctionComponent<NodeStatusModalProps> = ({
   width = "800px",
   height = "min-content",
 }) => {
-
   const columns = useMemo<Column<any>[]>(
     () => [
       {
@@ -49,7 +48,12 @@ export const NodeStatusModal: React.FunctionComponent<NodeStatusModalProps> = ({
       <Modal onRequestClose={onClose} width={width} height={height}>
         Node {node?.name} conditions:
         <TableWrapper>
-          <Table columns={columns} data={data} isLoading={false} disableGlobalFilter={true}/>
+          <Table
+            columns={columns}
+            data={data}
+            isLoading={false}
+            disableGlobalFilter={true}
+          />
         </TableWrapper>
       </Modal>
     </div>
@@ -58,4 +62,4 @@ export const NodeStatusModal: React.FunctionComponent<NodeStatusModalProps> = ({
 
 const TableWrapper = styled.div`
   margin-top: 14px;
-`
+`;

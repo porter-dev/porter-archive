@@ -21,8 +21,9 @@ import ExpandedChart from "./expanded-chart/ExpandedChart";
 import ExpandedChartWrapper from "./expanded-chart/ExpandedChartWrapper";
 import { RouteComponentProps, withRouter } from "react-router";
 
+import { Routes as DashboardRoutes } from "./dashboard/Routes";
+
 import api from "shared/api";
-import { Dashboard } from "./dashboard/Dashboard";
 
 type PropsType = RouteComponentProps & {
   currentCluster: ClusterType;
@@ -207,7 +208,7 @@ class ClusterDashboard extends Component<PropsType, StateType> {
           {this.renderContents()}
         </Route>
         <Route path={["/cluster-dashboard"]}>
-          <Dashboard />
+          <DashboardRoutes />
         </Route>
       </Switch>
     );

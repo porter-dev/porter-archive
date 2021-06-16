@@ -1,17 +1,21 @@
 import React, { useContext, useEffect, useMemo, useState } from "react";
 
 import Table from "components/Table";
-import { Column } from "react-table";
+import { Column, Row } from "react-table";
 import styled from "styled-components";
 import api from "shared/api";
 import { Context } from "shared/Context";
 import { NodeStatusModal } from "./NodeStatusModal";
+import { pushFiltered } from "shared/routing";
+import { useHistory, useLocation } from "react-router";
 
 const NodeList: React.FC = () => {
   const context = useContext(Context);
   const [nodeList, setNodeList] = useState([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [selectedNode, setSelectedNode] = useState<any>(undefined);
+  const history = useHistory();
+  const location = useLocation();
 
   const triggerPopUp = (node?: any) => {
     if (node) {
@@ -113,10 +117,26 @@ const NodeList: React.FC = () => {
       .finally(() => setLoading(false));
   }, [context, setNodeList]);
 
+  const handleOnRowClick = (row: any) => {
+    pushFiltered(
+      {
+        history,
+        location,
+      },
+      `/cluster-dashboard/node-view/${row.original.name}`,
+      []
+    );
+  };
+
   return (
     <NodeListWrapper>
       <StyledChart>
-        <Table columns={columns} data={data} isLoading={loading} />
+        <Table
+          columns={columns}
+          data={data}
+          isLoading={loading}
+          onRowClick={handleOnRowClick}
+        />
       </StyledChart>
       {selectedNode && (
         <NodeStatusModal node={selectedNode} onClose={() => triggerPopUp()} />

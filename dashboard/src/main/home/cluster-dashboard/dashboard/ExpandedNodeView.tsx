@@ -1,7 +1,9 @@
-import React from "react";
+import React, { useContext, useEffect } from "react";
 import { useParams } from "react-router";
 import styled from "styled-components";
 import closeImg from "assets/close.png";
+import api from "shared/api";
+import { Context } from "shared/Context";
 
 type ExpandedNodeViewParams = {
   nodeId: string;
@@ -9,26 +11,34 @@ type ExpandedNodeViewParams = {
 
 export const ExpandedNodeView = () => {
   const { nodeId } = useParams<ExpandedNodeViewParams>();
+  const { currentCluster, currentProject } = useContext(Context);
+
+  useEffect(() => {
+    api
+      .getClusterNode(
+        "<token>",
+        {},
+        {
+          project_id: currentProject.id,
+          cluster_id: currentCluster.id,
+          nodeName: nodeId,
+        }
+      )
+      .then((res) => {
+        console.log(res);
+      });
+  }, []);
 
   const closeNodeView = () => {};
 
   return (
     <>
-      <CloseOverlay onClick={closeNodeView} />
       <StyledExpandedChart>
-        {/* <ConfirmOverlay
-            show={this.state.showDeleteOverlay}
-            message={`Are you sure you want to delete ${currentChart.name}?`}
-            onYes={this.handleUninstallChart}
-            onNo={() => this.setState({ showDeleteOverlay: false })}
-          />
-          {this.renderDeleteOverlay()} */}
-
         <HeaderWrapper>
           <TitleSection>
             <Title>
               <IconWrapper></IconWrapper>
-              {"Some name"}
+              {nodeId}
             </Title>
           </TitleSection>
 
@@ -50,167 +60,7 @@ const BodyWrapper = styled.div`
   overflow: hidden;
 `;
 
-const DeleteOverlay = styled.div`
-  position: absolute;
-  top: 0px;
-  opacity: 100%;
-  left: 0px;
-  width: 100%;
-  height: 100%;
-  z-index: 999;
-  display: flex;
-  padding-bottom: 30px;
-  align-items: center;
-  justify-content: center;
-  font-family: "Work Sans", sans-serif;
-  font-size: 18px;
-  font-weight: 500;
-  color: white;
-  flex-direction: column;
-  background: rgb(0, 0, 0, 0.73);
-  opacity: 0;
-  animation: lindEnter 0.2s;
-  animation-fill-mode: forwards;
-
-  @keyframes lindEnter {
-    from {
-      opacity: 0;
-    }
-    to {
-      opacity: 1;
-    }
-  }
-`;
-
-const Bolded = styled.div`
-  font-weight: 500;
-  color: #ffffff44;
-  margin-right: 6px;
-`;
-
-const Url = styled.a`
-  display: block;
-  margin-left: 2px;
-  font-size: 13px;
-  margin-top: 16px;
-  user-select: all;
-  margin-bottom: -5px;
-  user-select: text;
-  display: flex;
-  align-items: center;
-
-  > i {
-    font-size: 15px;
-    margin-right: 10px;
-  }
-`;
-
-const TabButton = styled.div`
-  position: absolute;
-  right: 0px;
-  height: 30px;
-  background: linear-gradient(to right, #26282f00, #26282f 20%);
-  padding-left: 30px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 13px;
-  color: ${(props: { devOpsMode: boolean }) =>
-    props.devOpsMode ? "#aaaabb" : "#aaaabb55"};
-  margin-left: 35px;
-  border-radius: 20px;
-  text-shadow: 0px 0px 8px
-    ${(props: { devOpsMode: boolean }) =>
-      props.devOpsMode ? "#ffffff66" : "none"};
-  cursor: pointer;
-  :hover {
-    color: ${(props: { devOpsMode: boolean }) =>
-      props.devOpsMode ? "" : "#aaaabb99"};
-  }
-
-  > i {
-    font-size: 17px;
-    margin-right: 9px;
-  }
-`;
-
-const CloseOverlay = styled.div`
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: #202227;
-  animation: fadeIn 0.2s 0s;
-  opacity: 0;
-  animation-fill-mode: forwards;
-  @keyframes fadeIn {
-    from {
-      opacity: 0;
-    }
-    to {
-      opacity: 1;
-    }
-  }
-`;
-
 const HeaderWrapper = styled.div``;
-
-const Dot = styled.div`
-  margin-right: 9px;
-`;
-
-const InfoWrapper = styled.div`
-  display: flex;
-  align-items: center;
-  margin-left: 6px;
-  margin-top: 22px;
-`;
-
-const LastDeployed = styled.div`
-  font-size: 13px;
-  margin-left: 10px;
-  margin-top: -1px;
-  display: flex;
-  align-items: center;
-  color: #aaaabb66;
-`;
-
-const TagWrapper = styled.div`
-  position: absolute;
-  bottom: 0px;
-  right: 0px;
-  height: 20px;
-  font-size: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #ffffff44;
-  border: 1px solid #ffffff44;
-  border-radius: 3px;
-  padding-left: 5px;
-  background: #26282e;
-`;
-
-const NamespaceTag = styled.div`
-  height: 20px;
-  margin-left: 6px;
-  color: #aaaabb;
-  background: #43454a;
-  border-radius: 3px;
-  font-size: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0px 6px;
-  padding-left: 7px;
-  border-top-left-radius: 0px;
-  border-bottom-left-radius: 0px;
-`;
-
-const Icon = styled.img`
-  width: 100%;
-`;
 
 const IconWrapper = styled.div`
   color: #efefef;

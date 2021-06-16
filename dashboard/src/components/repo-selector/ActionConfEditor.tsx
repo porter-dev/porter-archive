@@ -1,15 +1,14 @@
-import React, { Component } from "react";
+import React, { useState } from "react";
 import styled from "styled-components";
 
 import { ActionConfigType } from "shared/types";
-import { Context } from "shared/Context";
 
 import RepoList from "./RepoList";
 import BranchList from "./BranchList";
 import ContentsList from "./ContentsList";
 import ActionDetails from "./ActionDetails";
 
-type PropsType = {
+type Props = {
   actionConfig: ActionConfigType | null;
   branch: string;
   setActionConfig: (x: ActionConfigType) => void;
@@ -39,148 +38,138 @@ const defaultActionConfig: ActionConfigType = {
   git_repo_id: 0,
 };
 
-export default class ActionConfEditor extends Component<PropsType, StateType> {
-  state = {
-    loading: true,
-    error: false,
-  };
+const ActionConfEditor: React.FC<Props> = (props) => {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(false);
 
-  renderExpanded = () => {
-    let { actionConfig, branch, setActionConfig, setBranch } = this.props;
+  const { actionConfig, setBranch, setActionConfig } = props;
 
-    // set values for faster testing (THIS SHOULD NOT BE COMMITTED
-    actionConfig.git_repo = "igalakhov/flask-porter-test";
-    actionConfig.git_repo_id = 4;
-    branch = "main";
+  // set values for faster testing (SHOULD BE REMOVED)
+  actionConfig.git_repo = "igalakhov/flask-porter-test";
+  actionConfig.git_repo_id = 4;
+  let branch = "main";
 
-    if (!actionConfig.git_repo) {
-      return (
-        <ExpandedWrapper>
-          <RepoList
-            actionConfig={actionConfig}
-            setActionConfig={(x: ActionConfigType) => setActionConfig(x)}
-            readOnly={false}
-          />
-        </ExpandedWrapper>
-      );
-    } else if (!branch) {
-      return (
-        <>
-          <ExpandedWrapperAlt>
-            <BranchList
-              actionConfig={actionConfig}
-              setBranch={(branch: string) => setBranch(branch)}
-            />
-          </ExpandedWrapperAlt>
-          <Br />
-          <BackButton
-            width="135px"
-            onClick={() => {
-              setActionConfig({ ...defaultActionConfig });
-            }}
-          >
-            <i className="material-icons">keyboard_backspace</i>
-            Select Repo
-          </BackButton>
-        </>
-      );
-    } else if (!this.props.dockerfilePath && !this.props.folderPath) {
-      return (
-        <>
-          <AutoBuildpackInfo>
-            <b>Python</b> buildpack was detected automatically
-            <a
-              href="https://docs.getporter.dev/docs/auto-deploy-requirements#auto-build-with-cloud-native-buildpacks"
-              target="_blank"
-            >
-              <i className="material-icons">help_outline</i>
-            </a>
-            . Alternatively, select an application folder below:
-          </AutoBuildpackInfo>
-          <ExpandedWrapperAlt>
-            <ContentsList
-              actionConfig={actionConfig}
-              branch={branch}
-              setActionConfig={setActionConfig}
-              setDockerfilePath={(x: string) => this.props.setDockerfilePath(x)}
-              setProcfilePath={(x: string) => this.props.setProcfilePath(x)}
-              setFolderPath={(x: string) => this.props.setFolderPath(x)}
-            />
-          </ExpandedWrapperAlt>
-          <Br />
-          <BackButton
-            width="145px"
-            onClick={() => {
-              setBranch("");
-            }}
-          >
-            <i className="material-icons">keyboard_backspace</i>
-            Select Branch
-          </BackButton>
-        </>
-      );
-    }
-
-    if (
-      this.props.procfilePath &&
-      this.props.folderPath &&
-      !this.props.dockerfilePath &&
-      !this.props.procfileProcess
-    ) {
-      return (
-        <>
-          <ExpandedWrapperAlt>
-            <ContentsList
-              actionConfig={actionConfig}
-              branch={branch}
-              setActionConfig={setActionConfig}
-              procfilePath={this.props.procfilePath}
-              setDockerfilePath={(x: string) => this.props.setDockerfilePath(x)}
-              setProcfilePath={(x: string) => this.props.setProcfilePath(x)}
-              setProcfileProcess={(x: string) =>
-                this.props.setProcfileProcess(x)
-              }
-              setFolderPath={(x: string) => this.props.setFolderPath(x)}
-            />
-          </ExpandedWrapperAlt>
-          <Br />
-          <BackButton
-            width="145px"
-            onClick={() => {
-              setBranch("");
-            }}
-          >
-            <i className="material-icons">keyboard_backspace</i>
-            Select Branch
-          </BackButton>
-        </>
-      );
-    }
-
+  if (!actionConfig.git_repo) {
     return (
-      <ActionDetails
-        branch={branch}
-        setDockerfilePath={this.props.setDockerfilePath}
-        setFolderPath={this.props.setFolderPath}
-        setProcfilePath={this.props.setProcfilePath}
-        setProcfileProcess={this.props.setProcfileProcess}
-        actionConfig={actionConfig}
-        setActionConfig={setActionConfig}
-        dockerfilePath={this.props.dockerfilePath}
-        procfilePath={this.props.procfilePath}
-        folderPath={this.props.folderPath}
-        setSelectedRegistry={this.props.setSelectedRegistry}
-        selectedRegistry={this.props.selectedRegistry}
-      />
+      <ExpandedWrapper>
+        <RepoList
+          actionConfig={actionConfig}
+          setActionConfig={(x: ActionConfigType) => setActionConfig(x)}
+          readOnly={false}
+        />
+      </ExpandedWrapper>
     );
-  };
-
-  render() {
-    return <>{this.renderExpanded()}</>;
+  } else if (!branch) {
+    return (
+      <>
+        <ExpandedWrapperAlt>
+          <BranchList
+            actionConfig={actionConfig}
+            setBranch={(branch: string) => setBranch(branch)}
+          />
+        </ExpandedWrapperAlt>
+        <Br />
+        <BackButton
+          width="135px"
+          onClick={() => {
+            setActionConfig({ ...defaultActionConfig });
+          }}
+        >
+          <i className="material-icons">keyboard_backspace</i>
+          Select Repo
+        </BackButton>
+      </>
+    );
+  } else if (!props.dockerfilePath && !props.folderPath) {
+    return (
+      <>
+        <AutoBuildpackInfo>
+          <b>Python</b> buildpack was detected automatically
+          <a
+            href="https://docs.getporter.dev/docs/auto-deploy-requirements#auto-build-with-cloud-native-buildpacks"
+            target="_blank"
+          >
+            <i className="material-icons">help_outline</i>
+          </a>
+          . Alternatively, select an application folder below:
+        </AutoBuildpackInfo>
+        <ExpandedWrapperAlt>
+          <ContentsList
+            actionConfig={actionConfig}
+            branch={branch}
+            setActionConfig={setActionConfig}
+            setDockerfilePath={(x: string) => props.setDockerfilePath(x)}
+            setProcfilePath={(x: string) => props.setProcfilePath(x)}
+            setFolderPath={(x: string) => props.setFolderPath(x)}
+          />
+        </ExpandedWrapperAlt>
+        <Br />
+        <BackButton
+          width="145px"
+          onClick={() => {
+            setBranch("");
+          }}
+        >
+          <i className="material-icons">keyboard_backspace</i>
+          Select Branch
+        </BackButton>
+      </>
+    );
   }
-}
 
-ActionConfEditor.contextType = Context;
+  if (
+    props.procfilePath &&
+    props.folderPath &&
+    !props.dockerfilePath &&
+    !props.procfileProcess
+  ) {
+    return (
+      <>
+        <ExpandedWrapperAlt>
+          <ContentsList
+            actionConfig={actionConfig}
+            branch={branch}
+            setActionConfig={setActionConfig}
+            procfilePath={props.procfilePath}
+            setDockerfilePath={(x: string) => props.setDockerfilePath(x)}
+            setProcfilePath={(x: string) => props.setProcfilePath(x)}
+            setProcfileProcess={(x: string) => props.setProcfileProcess(x)}
+            setFolderPath={(x: string) => props.setFolderPath(x)}
+          />
+        </ExpandedWrapperAlt>
+        <Br />
+        <BackButton
+          width="145px"
+          onClick={() => {
+            setBranch("");
+          }}
+        >
+          <i className="material-icons">keyboard_backspace</i>
+          Select Branch
+        </BackButton>
+      </>
+    );
+  }
+
+  return (
+    <ActionDetails
+      branch={branch}
+      setDockerfilePath={props.setDockerfilePath}
+      setFolderPath={props.setFolderPath}
+      setProcfilePath={props.setProcfilePath}
+      setProcfileProcess={props.setProcfileProcess}
+      actionConfig={actionConfig}
+      setActionConfig={setActionConfig}
+      dockerfilePath={props.dockerfilePath}
+      procfilePath={props.procfilePath}
+      folderPath={props.folderPath}
+      setSelectedRegistry={props.setSelectedRegistry}
+      selectedRegistry={props.selectedRegistry}
+    />
+  );
+};
+
+export default ActionConfEditor;
 
 const AutoBuildpackInfo = styled.p`
   font-size: 13;

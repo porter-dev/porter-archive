@@ -5,7 +5,6 @@ import { Column, Row } from "react-table";
 import styled from "styled-components";
 import api from "shared/api";
 import { Context } from "shared/Context";
-import { NodeStatusModal } from "./NodeStatusModal";
 import { pushFiltered } from "shared/routing";
 import { useHistory, useLocation } from "react-router";
 
@@ -13,18 +12,8 @@ const NodeList: React.FC = () => {
   const context = useContext(Context);
   const [nodeList, setNodeList] = useState([]);
   const [loading, setLoading] = useState<boolean>(false);
-  const [selectedNode, setSelectedNode] = useState<any>(undefined);
   const history = useHistory();
   const location = useLocation();
-
-  const triggerPopUp = (node?: any) => {
-    if (node) {
-      setSelectedNode(node);
-      return;
-    }
-
-    setSelectedNode(undefined);
-  };
 
   const columns = useMemo<Column<any>[]>(
     () => [
@@ -46,10 +35,7 @@ const NodeList: React.FC = () => {
         Cell: ({ row }) => {
           return (
             <StatusButtonWrapper>
-              <StatusButton
-                success={row.values.is_node_healthy}
-                onClick={() => triggerPopUp(row.original)}
-              >
+              <StatusButton success={row.values.is_node_healthy}>
                 {row.values.is_node_healthy ? "Healthy" : "Unhealthy"}
               </StatusButton>
             </StatusButtonWrapper>
@@ -138,9 +124,6 @@ const NodeList: React.FC = () => {
           onRowClick={handleOnRowClick}
         />
       </StyledChart>
-      {selectedNode && (
-        <NodeStatusModal node={selectedNode} onClose={() => triggerPopUp()} />
-      )}
     </NodeListWrapper>
   );
 };

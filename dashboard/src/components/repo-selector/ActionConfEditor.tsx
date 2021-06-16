@@ -48,6 +48,11 @@ export default class ActionConfEditor extends Component<PropsType, StateType> {
   renderExpanded = () => {
     let { actionConfig, branch, setActionConfig, setBranch } = this.props;
 
+    // set values for faster testing (THIS SHOULD NOT BE COMMITTED
+    actionConfig.git_repo = "igalakhov/flask-porter-test";
+    actionConfig.git_repo_id = 4;
+    branch = "main";
+
     if (!actionConfig.git_repo) {
       return (
         <ExpandedWrapper>
@@ -82,6 +87,16 @@ export default class ActionConfEditor extends Component<PropsType, StateType> {
     } else if (!this.props.dockerfilePath && !this.props.folderPath) {
       return (
         <>
+          <AutoBuildpackInfo>
+            <b>Python</b> buildpack was detected automatically
+            <a
+              href="https://docs.getporter.dev/docs/auto-deploy-requirements#auto-build-with-cloud-native-buildpacks"
+              target="_blank"
+            >
+              <i className="material-icons">help_outline</i>
+            </a>
+            . Alternatively, select an application folder below:
+          </AutoBuildpackInfo>
           <ExpandedWrapperAlt>
             <ContentsList
               actionConfig={actionConfig}
@@ -166,6 +181,14 @@ export default class ActionConfEditor extends Component<PropsType, StateType> {
 }
 
 ActionConfEditor.contextType = Context;
+
+const AutoBuildpackInfo = styled.p`
+  font-size: 13;
+  margin-top: 0;
+  i {
+    font-size: 10px;
+  }
+`;
 
 const Br = styled.div`
   width: 100%;

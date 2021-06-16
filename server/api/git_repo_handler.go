@@ -59,6 +59,12 @@ type DirectoryItem struct {
 	Type string
 }
 
+// AutoBuildpack represents an automatically detected buildpack
+type AutoBuildpack struct {
+	Valid bool   `json:"valid"`
+	Name  string `json:"name"`
+}
+
 // HandleListRepos retrieves a list of repo names
 func (app *App) HandleListRepos(w http.ResponseWriter, r *http.Request) {
 	tok, err := app.githubTokenFromRequest(r)
@@ -218,7 +224,47 @@ func (app *App) HandleDetectBuildpack(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	json.NewEncoder(w).Encode(tok)
+	client := github.NewClient(app.GithubProjectConf.Client(oauth2.NoContext, tok))
+	owner := chi.URLParam(r, "owner")
+	name := chi.URLParam(r, "name")
+	branch := chi.URLParam(r, "branch")
+
+	repoContentOptions := github.RepositoryContentGetOptions{}
+	repoContentOptions.Ref = branch
+	_, directoryContents, _, err := client.Repositories.GetContents(context.Background(), owner, name, "", &repoContentOptions)
+	if err != nil {
+		app.handleErrorInternal(err, w)
+		return
+	}
+
+	var BREQS = map[string]string{
+		"requirements.txt": "Python",
+		"Gemfile":          "Ruby",
+		"package.json":     "Node.js",
+		"pom.xml":          "Java",
+		"composer.json":    "PHP",
+	}
+
+	res := AutoBuildpack{
+		Valid: true,
+	}
+	matches := 0
+
+	for i := range directoryContents {
+		name := *directoryContents[i].Path
+		bname, ok := BREQS[name]
+		if ok {
+			matches++
+			res.Name = bname
+		}
+	}
+
+	if matches != 1 {
+		res.Valid = false
+		res.Name = ""
+	}
+
+	json.NewEncoder(w).Encode(res)
 }
 
 // HandleGetBranchContents retrieves the contents of a specific branch and subdirectory

@@ -20,23 +20,23 @@ const NodeUsage: React.FunctionComponent<NodeUsageProps> = ({ node }) => {
       </UsageWrapper>
       <AllocatableWrapper>
         <span>
-          <Bolded>Cpu Allocatable:</Bolded>{" "}
+          <Bolded>Cpu Allocatable:</Bolded>
           {node?.allocatable_cpu || "Loading..."}
         </span>
         <span>
-          <Bolded>Memory Allocatable:</Bolded>{" "}
+          <Bolded>Memory Allocatable:</Bolded>
           {node?.allocatable_memory || "Loading..."}
         </span>
       </AllocatableWrapper>
       <FractionUsageWrapper>
         <span>
-          <Bolded>Cpu Usage:</Bolded>{" "}
+          <Bolded>Cpu Usage:</Bolded>
           {node?.fraction_cpu_reqs
             ? percentFormatter(node?.fraction_cpu_reqs)
             : "Loading..."}
         </span>
         <span>
-          <Bolded>Memory Usage:</Bolded>{" "}
+          <Bolded>Memory Usage:</Bolded>
           {node?.fraction_memory_reqs
             ? percentFormatter(node?.fraction_memory_reqs)
             : "Loading..."}

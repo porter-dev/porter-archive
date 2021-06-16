@@ -5,6 +5,8 @@ import closeImg from "assets/close.png";
 import api from "shared/api";
 import { Context } from "shared/Context";
 
+import nodePng from "assets/node.png";
+
 type ExpandedNodeViewParams = {
   nodeId: string;
 };
@@ -37,7 +39,9 @@ export const ExpandedNodeView = () => {
         <HeaderWrapper>
           <TitleSection>
             <Title>
-              <IconWrapper></IconWrapper>
+              <IconWrapper>
+                <img src={nodePng} />
+              </IconWrapper>
               {nodeId}
             </Title>
           </TitleSection>

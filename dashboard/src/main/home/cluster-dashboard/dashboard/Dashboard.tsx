@@ -5,26 +5,31 @@ import { Context } from "shared/Context";
 import TabSelector from "components/TabSelector";
 
 import NodeList from "./NodeList";
-import { ClusterSettings } from "./ClusterSettings";
+
+import { NamespaceList } from "./NamespaceList";
+import ClusterSettings from "./ClusterSettings";
 
 
-type TabEnum = "nodes" | "settings";
+type TabEnum = "nodes" | "settings" | "namespaces";
 
 const tabOptions: {
   label: string;
-  value: TabEnum
+  value: TabEnum;
 }[] = [
   { label: "Nodes", value: "nodes" },
-  { label: "Settings", value: "settings"}
+  { label: "Namespaces", value: "namespaces" },
+  { label: "Settings", value: "settings" },
 ];
 
-export const Dashboard: React.FC = ({ children }) => {
+export const Dashboard: React.FunctionComponent = () => {
   const [currentTab, setCurrentTab] = useState<TabEnum>("nodes");
   const context = useContext(Context);
-  const renderTab = (cluster: any) => {
+  const renderTab = () => {
     switch (currentTab) {
-      case "settings": 
-        return <ClusterSettings />
+      case "settings":
+        return <ClusterSettings />;
+      case "namespaces":
+        return <NamespaceList />;
       case "nodes":
       default:
         return <NodeList />;
@@ -32,7 +37,6 @@ export const Dashboard: React.FC = ({ children }) => {
   };
 
   return (
-    
     <>
       <TitleSection>
         <DashboardIcon>
@@ -47,18 +51,18 @@ export const Dashboard: React.FC = ({ children }) => {
             <i className="material-icons">info</i> Info
           </InfoLabel>
         </TopRow>
-        <Description>Cluster dashboard for {context.currentCluster.name}</Description>
+        <Description>
+          Cluster dashboard for {context.currentCluster.name}
+        </Description>
       </InfoSection>
 
       <TabSelector
         options={tabOptions}
         currentTab={currentTab}
-        setCurrentTab={(value: TabEnum) =>
-          setCurrentTab(value)
-        }
+        setCurrentTab={(value: TabEnum) => setCurrentTab(value)}
       />
 
-      {renderTab(context.currentCluster)}
+      {renderTab()}
     </>
   );
 };
@@ -134,8 +138,8 @@ const TitleSection = styled.div`
   > i {
     margin-left: 10px;
     cursor: pointer;
-    font-size 18px;
-    color: #858FAAaa;
+    font-size: 18px;
+    color: #858faaaa;
     padding: 5px;
     border-radius: 100px;
     :hover {

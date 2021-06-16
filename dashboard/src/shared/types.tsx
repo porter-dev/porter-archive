@@ -5,6 +5,7 @@ export interface ClusterType {
   service_account_id: number;
   infra_id?: number;
   service?: string;
+  aws_integration_id?: number;
 }
 
 export interface DetailedClusterType extends ClusterType {

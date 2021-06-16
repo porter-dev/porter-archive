@@ -68,8 +68,8 @@ const NodeList: React.FC = () => {
       .map((node) => {
         return {
           name: node.name,
-          cpu_usage: percentFormatter(node.cpu_reqs),
-          ram_usage: percentFormatter(node.memory_reqs),
+          cpu_usage: percentFormatter(node.fraction_cpu_reqs),
+          ram_usage: percentFormatter(node.fraction_memory_reqs),
           node_conditions: node.node_conditions,
           is_node_healthy: node.node_conditions.reduce(
             (prevValue: boolean, current: any) => {

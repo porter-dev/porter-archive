@@ -23,6 +23,13 @@ export const useWebsockets = () => {
   const websocketMap = useRef<WebsocketMap>({});
   const websocketConfigMap = useRef<WebsocketConfigMap>({})
   
+  /**
+   * Setup for a new websocket, after calling new websocket you can open the connection with openWebsocket
+   * @param id Id to access later the websocket config/connection
+   * @param apiEndpoint Endpoint to connect the websocket e.g: /api/websocket
+   * @param options Websocket listeners
+   * @returns 
+   */
   const newWebsocket = (id: string, apiEndpoint: string, options: NewWebsocketOptions): WebsocketConfig => {
     
     if (!id) {
@@ -57,25 +64,41 @@ export const useWebsockets = () => {
     return wsConfig;
   }
 
+  /**
+   * Opens the websocket connection based on a config previously setted by
+   * newWebsocket 
+   */
   const openWebsocket = (id: string) => {
     const wsConfig = websocketConfigMap.current[id];
 
+    // Prevent calling openWebsocket before newWebsocket
     if (!wsConfig) {
       console.log("Couldn't find ws config")
       return;
     }
+    // In case of having a previous websocket opened with the same ID, close the previous one
+    const prevWs = getWebsocket(id);
+
+    if (prevWs) {
+      prevWs.close();
+    }
+    
     const ws = new WebSocket(wsConfig.url);
     ws.onopen = wsConfig.onopen;
     ws.onmessage = wsConfig.onmessage;
     ws.onerror = wsConfig.onerror;
     ws.onclose = wsConfig.onclose;
     
+
     websocketMap.current = {
       ...websocketMap.current,
       [id]: ws,
     }
   }
 
+  /**
+   * Close specific websocket
+   */
   const closeWebsocket = (id: string, code?: number, reason?: string) => {
     const ws = websocketMap.current[id];
 
@@ -87,12 +110,18 @@ export const useWebsockets = () => {
     ws.close(code, reason);
   }
 
+  /** 
+   * Closes all websockets opened by the useWebsocket hook
+   */ 
   const closeAllWebsockets = () => {
     Object.keys(websocketMap.current).forEach(key => {
       closeWebsocket(key);
     })
   }
 
+  /**
+   * Get websocket by id
+   */
   const getWebsocket = (id: string) => {
     return websocketMap.current[id];
   }

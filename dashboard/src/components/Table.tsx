@@ -156,6 +156,7 @@ export const StyledTd = styled.td`
   :last-child {
     padding-right: 10px;
   }
+  user-select: text;
 `;
 
 export const StyledTHead = styled.thead`

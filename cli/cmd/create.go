@@ -214,7 +214,7 @@ func handleSubdomainCreate(subdomain string, err error) error {
 	if subdomain != "" {
 		color.New(color.FgGreen).Printf("Your web application is ready at: %s\n", subdomain)
 	} else {
-		color.New(color.FgGreen).Printf("Application created successfully")
+		color.New(color.FgGreen).Printf("Application created successfully\n")
 	}
 
 	return nil

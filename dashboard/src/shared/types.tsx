@@ -102,6 +102,7 @@ export interface Section {
 // FormElement represents a form element
 export interface FormElement {
   type: string;
+  info?: string;
   label: string;
   required?: boolean;
   name?: string;

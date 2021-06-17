@@ -98,6 +98,7 @@ export default class ValuesForm extends Component<PropsType, StateType> {
           return (
             <KeyValueArray
               key={key}
+              width="100%"
               envLoader={true}
               externalValues={this.props.externalValues}
               values={this.props.metaState[key]?.value}
@@ -121,6 +122,7 @@ export default class ValuesForm extends Component<PropsType, StateType> {
           return (
             <KeyValueArray
               key={key}
+              width="100%"
               externalValues={this.props.externalValues}
               values={this.props.metaState[key]?.value}
               setValues={(x: any) => this.props.setMetaState(key, x)}
@@ -132,6 +134,7 @@ export default class ValuesForm extends Component<PropsType, StateType> {
           return (
             <InputArray
               key={key}
+              width="100%"
               values={this.props.metaState[key]?.value}
               setValues={(x: string[]) => {
                 this.props.setMetaState(key, x);
@@ -145,6 +148,7 @@ export default class ValuesForm extends Component<PropsType, StateType> {
           return (
             <InputRow
               key={key}
+              width="100%"
               placeholder={item.placeholder}
               isRequired={item.required}
               type="text"
@@ -170,6 +174,7 @@ export default class ValuesForm extends Component<PropsType, StateType> {
           return (
             <InputRow
               key={key}
+              width="100%"
               isRequired={item.required}
               type="password"
               value={this.getInputValue(item)}
@@ -193,6 +198,7 @@ export default class ValuesForm extends Component<PropsType, StateType> {
           return (
             <InputRow
               key={key}
+              width="100%"
               isRequired={item.required}
               placeholder={item.placeholder}
               type="number"
@@ -252,6 +258,7 @@ export default class ValuesForm extends Component<PropsType, StateType> {
           return (
             <Base64InputRow
               key={key}
+              width="100%"
               isRequired={item.required}
               type="text"
               value={this.getInputValue(item)}

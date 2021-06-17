@@ -4,6 +4,7 @@ import randomWords from "random-words";
 import _ from "lodash";
 import { Context } from "shared/Context";
 import api from "shared/api";
+import { pushFiltered } from "shared/routing";
 import close from "assets/close.png";
 import { RouteComponentProps, withRouter } from "react-router";
 
@@ -162,11 +163,15 @@ class LaunchTemplate extends Component<PropsType, StateType> {
       .then((_) => {
         // this.props.setCurrentView('cluster-dashboard');
         this.setState({ saveValuesStatus: "successful" }, () => {
-          // redirect to dashboard
+          // TODO: redirect to appropriate cluster if not current context
           let dst =
-            this.props.currentTemplate.name === "job" ? "jobs" : "applications";
+            this.props.currentTemplate.name === "job"
+              ? "/jobs"
+              : "/applications";
           setTimeout(() => {
-            this.props.history.push(dst);
+            pushFiltered(this.props, dst, ["project_id"], {
+              cluster: currentCluster.name,
+            });
           }, 500);
           window.analytics.track("Deployed Add-on", {
             name: this.props.currentTemplate.name,
@@ -176,8 +181,18 @@ class LaunchTemplate extends Component<PropsType, StateType> {
         });
       })
       .catch((err) => {
-        this.setState({ saveValuesStatus: "error" });
-        setCurrentError(err.response.data.errors[0]);
+        let parsedErr =
+          err?.response?.data?.errors && err.response.data.errors[0];
+        if (parsedErr) {
+          err = parsedErr;
+        }
+
+        this.setState({
+          saveValuesStatus: parsedErr,
+        });
+
+        setCurrentError(err);
+
         window.analytics.track("Failed to Deploy Add-on", {
           name: this.props.currentTemplate.name,
           namespace: this.state.selectedNamespace,
@@ -301,39 +316,16 @@ class LaunchTemplate extends Component<PropsType, StateType> {
           setTimeout(() => {
             let dst =
               this.props.currentTemplate.name === "job"
-                ? "jobs"
-                : "applications";
-            this.props.history.push(dst);
+                ? "/jobs"
+                : "/applications";
+            pushFiltered(this.props, dst, ["project_id"], {
+              cluster: currentCluster.name,
+            });
           }, 1000);
         });
-        /*
-        try {
-          window.analytics.track("Deployed Application", {
-            name: this.props.currentTemplate.name,
-            namespace: this.state.selectedNamespace,
-            sourceType: this.state.sourceType,
-            values: values,
-          });
-        } catch (error) {
-          console.log(error);
-        }
-        */
       })
       .catch((err) => {
         this.setState({ saveValuesStatus: "error" });
-        /*
-        try {
-          window.analytics.track("Failed to Deploy Application", {
-            name: this.props.currentTemplate.name,
-            namespace: this.state.selectedNamespace,
-            sourceType: this.state.sourceType,
-            values: values,
-            error: err,
-          });
-        } catch (error) {
-          console.log(error);
-        }
-        */
       });
   };
 
@@ -452,12 +444,17 @@ class LaunchTemplate extends Component<PropsType, StateType> {
       )
       .then((res) => {
         if (res.data) {
-          let namespaceOptions = res.data.items.map(
+          const availableNamespaces = res.data.items.filter(
+            (namespace: any) => {
+              return namespace.status.phase !== "Terminating";
+            }
+          );
+          const namespaceOptions = availableNamespaces.map(
             (x: { metadata: { name: string } }) => {
               return { label: x.metadata.name, value: x.metadata.name };
             }
           );
-          if (res.data.items.length > 0) {
+          if (availableNamespaces.length > 0) {
             this.setState({ namespaceOptions });
           }
         }
@@ -584,7 +581,11 @@ class LaunchTemplate extends Component<PropsType, StateType> {
             Specify the container image you would like to connect to this
             template.
             <Highlight
-              onClick={() => this.props.history.push("integrations/registry")}
+              onClick={() =>
+                pushFiltered(this.props, "/integrations/registry", [
+                  "project_id",
+                ])
+              }
             >
               Manage Docker registries
             </Highlight>
@@ -610,7 +611,9 @@ class LaunchTemplate extends Component<PropsType, StateType> {
           <Subtitle>
             Provide a repo folder to use as source.
             <Highlight
-              onClick={() => this.props.history.push("integrations/repo")}
+              onClick={() =>
+                pushFiltered(this.props, "/integrations/repo", ["project_id"])
+              }
             >
               Manage Git repos
             </Highlight>
@@ -686,6 +689,7 @@ class LaunchTemplate extends Component<PropsType, StateType> {
   };
 
   render() {
+    console.log("RENDERING");
     let { name, icon } = this.props.currentTemplate;
     let { currentTemplate } = this.props;
 
@@ -755,6 +759,7 @@ class LaunchTemplate extends Component<PropsType, StateType> {
             setActiveValue={(namespace: string) =>
               this.setState({ selectedNamespace: namespace })
             }
+            addButton={true}
             options={this.state.namespaceOptions}
             width="250px"
             dropdownWidth="335px"

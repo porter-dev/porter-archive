@@ -12,6 +12,7 @@ type PropsType = {
   width?: string;
   disabled?: boolean;
   isRequired?: boolean;
+  className?: string;
 };
 
 type StateType = {
@@ -34,7 +35,7 @@ export default class InputRow extends Component<PropsType, StateType> {
   render() {
     let { label, value, type, unit, placeholder, width, info } = this.props;
     return (
-      <StyledInputRow>
+      <StyledInputRow className={this.props.className}>
         {(label || info) && (
           <Label>
             {label}
@@ -66,13 +67,21 @@ const Required = styled.div`
 `;
 
 const Unit = styled.div`
-  margin-left: 8px;
+  padding: 0 10px;
+  background: #ffffff05;
+  height: 35px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-left: 1px solid #ffffff55;
 `;
 
 const InputWrapper = styled.div`
   display: flex;
   margin-bottom: -1px;
   align-items: center;
+  border: 1px solid #ffffff55;
+  border-radius: 3px;
 `;
 
 const Input = styled.input<{ disabled: boolean; width: string }>`
@@ -80,9 +89,7 @@ const Input = styled.input<{ disabled: boolean; width: string }>`
   border: none;
   font-size: 13px;
   background: #ffffff11;
-  border: 1px solid #ffffff55;
   cursor: ${(props) => (props.disabled ? "not-allowed" : "")};
-  border-radius: 3px;
   width: ${(props) => (props.width ? props.width : "270px")};
   color: ${(props) => (props.disabled ? "#ffffff44" : "white")};
   padding: 5px 10px;

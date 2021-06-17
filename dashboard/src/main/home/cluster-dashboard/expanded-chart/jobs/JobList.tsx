@@ -1,17 +1,28 @@
 import React, { Component } from "react";
 import styled from "styled-components";
 
+import api from "shared/api";
 import _ from "lodash";
 import { Context } from "shared/Context";
 import JobResource from "./JobResource";
+import ConfirmOverlay from "components/ConfirmOverlay";
 
 type PropsType = {
   jobs: any[];
+  setJobs: (job: any) => void;
 };
 
-type StateType = {};
+type StateType = {
+  deletionCandidate: any;
+  deletionJob: any;
+};
 
 export default class JobList extends Component<PropsType, StateType> {
+  state = {
+    deletionCandidate: null as any,
+    deletionJob: null as any,
+  };
+
   renderJobList = () => {
     if (this.props.jobs.length === 0) {
       return (
@@ -24,15 +35,66 @@ export default class JobList extends Component<PropsType, StateType> {
       return (
         <>
           {this.props.jobs.map((job: any, i: number) => {
-            return <JobResource key={job?.metadata?.name} job={job} />;
+            return (
+              <JobResource
+                key={job?.metadata?.name}
+                job={job}
+                handleDelete={() => this.setState({ deletionCandidate: job })}
+                deleting={
+                  this.state.deletionJob?.metadata?.name == job.metadata?.name
+                }
+              />
+            );
           })}
         </>
       );
     }
   };
 
+  deleteJob = () => {
+    let { currentCluster, currentProject, setCurrentError } = this.context;
+    let job = this.state.deletionCandidate;
+
+    api
+      .deleteJob(
+        "<token>",
+        {
+          cluster_id: currentCluster.id,
+        },
+        {
+          id: currentProject.id,
+          name: job.metadata?.name,
+          namespace: job.metadata?.namespace,
+        }
+      )
+      .then((res) => {
+        this.setState({
+          deletionJob: this.state.deletionCandidate,
+          deletionCandidate: null,
+        });
+      })
+      .catch((err) => {
+        let parsedErr =
+          err?.response?.data?.errors && err.response.data.errors[0];
+        if (parsedErr) {
+          err = parsedErr;
+        }
+        setCurrentError(err);
+      });
+  };
+
   render() {
-    return <JobListWrapper>{this.renderJobList()}</JobListWrapper>;
+    return (
+      <>
+        <ConfirmOverlay
+          show={this.state.deletionCandidate}
+          message={`Are you sure you want to delete this job run?`}
+          onYes={this.deleteJob}
+          onNo={() => this.setState({ deletionCandidate: null })}
+        />
+        <JobListWrapper>{this.renderJobList()}</JobListWrapper>
+      </>
+    );
   }
 }
 

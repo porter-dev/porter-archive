@@ -130,8 +130,9 @@ export default class Logs extends Component<PropsType, StateType> {
       this.ws = null;
       this.setState({ logs: [] });
       this.setupWebsocket();
+    } else if (this.state.currentTab == "System") {
+      this.retrieveEvents(selectedPod);
     }
-    this.retrieveEvents(selectedPod);
   };
 
   componentDidUpdate = (prevProps: any, prevState: any) => {

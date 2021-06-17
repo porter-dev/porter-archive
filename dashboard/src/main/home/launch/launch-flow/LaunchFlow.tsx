@@ -6,6 +6,7 @@ import { RouteComponentProps, withRouter } from "react-router";
 
 import api from "shared/api";
 import { Context } from "shared/Context";
+import { pushFiltered } from "shared/routing";
 
 import hardcodedNames from "../hardcodedNameDict";
 import SourcePage from "./SourcePage";
@@ -163,9 +164,13 @@ class LaunchFlow extends Component<PropsType, StateType> {
         this.setState({ saveValuesStatus: "successful" }, () => {
           // redirect to dashboard
           let dst =
-            this.props.currentTemplate.name === "job" ? "jobs" : "applications";
+            this.props.currentTemplate.name === "job"
+              ? "/jobs"
+              : "/applications";
           setTimeout(() => {
-            this.props.history.push(dst);
+            pushFiltered(this.props, dst, ["project_id"], {
+              cluster: currentCluster.name,
+            });
           }, 500);
           window.analytics.track("Deployed Add-on", {
             name: this.props.currentTemplate.name,
@@ -183,7 +188,7 @@ class LaunchFlow extends Component<PropsType, StateType> {
         this.setState({
           saveValuesStatus: parsedErr,
         });
-        setCurrentError(err.response.data.errors[0]);
+        setCurrentError(err);
         window.analytics.track("Failed to Deploy Add-on", {
           name: this.props.currentTemplate.name,
           namespace: selectedNamespace,
@@ -269,7 +274,7 @@ class LaunchFlow extends Component<PropsType, StateType> {
               }
             )
             .then((res) => {
-              resolve(res.data?.external_url);
+              resolve(res?.data?.external_url);
             })
             .catch((err) => {
               let parsedErr =
@@ -311,7 +316,6 @@ class LaunchFlow extends Component<PropsType, StateType> {
       .then((res: any) => {
         if (sourceType === "repo") {
           let env = rawValues["container.env.normal"];
-          console.log(env);
           this.createGHAction(name, selectedNamespace, env);
         }
         // this.props.setCurrentView('cluster-dashboard');
@@ -320,9 +324,11 @@ class LaunchFlow extends Component<PropsType, StateType> {
           setTimeout(() => {
             let dst =
               this.props.currentTemplate.name === "job"
-                ? "jobs"
-                : "applications";
-            this.props.history.push(dst);
+                ? "/jobs"
+                : "/applications";
+            pushFiltered(this.props, dst, ["project_id"], {
+              cluster: currentCluster.name,
+            });
           }, 1000);
         });
       })

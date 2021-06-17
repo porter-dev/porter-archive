@@ -29,19 +29,11 @@ export const ConditionsTable: React.FunctionComponent<NodeStatusModalProps> = ({
         accessor: "message",
       },
       {
-        Header: "Last Heartbeat",
-        accessor: "lastHeartbeatTime",
-        Cell: ({ row }) => {
-          const date = new Date(row.values.lastHeartbeatTime);
-          return <>{date.toLocaleDateString("en-EU")}</>;
-        },
-      },
-      {
         Header: "Last Transition",
         accessor: "lastTransitionTime",
         Cell: ({ row }) => {
-          const date = new Date(row.values.lastHeartbeatTime);
-          return <>{date.toLocaleString("en-EU")}</>;
+          const date = new Date(row.values.lastTransitionTime);
+          return <>{date.toLocaleString()}</>;
         },
       },
     ],

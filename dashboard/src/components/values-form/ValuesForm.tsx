@@ -141,6 +141,7 @@ export default class ValuesForm extends Component<PropsType, StateType> {
             />
           );
         case "string-input":
+          console.log(item);
           return (
             <InputRow
               key={key}
@@ -160,6 +161,7 @@ export default class ValuesForm extends Component<PropsType, StateType> {
                 this.props.setMetaState(key, x);
               }}
               label={item.label}
+              info={item.info}
               unit={item.settings ? item.settings.unit : null}
               disabled={isDisabled}
             />

@@ -272,6 +272,7 @@ tabs:
       label: Required Field A
       required: true
       variable: field_a
+      info: This is some info
     - type: string-input
       placeholder: "ex: sapporo"
       required: true

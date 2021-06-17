@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState } from "react";
+import React, { useContext, useEffect, useMemo, useState } from "react";
 import { useHistory, useLocation, useParams } from "react-router";
 import styled from "styled-components";
 import closeImg from "assets/close.png";
@@ -55,6 +55,15 @@ export const ExpandedNodeView = () => {
     pushFiltered({ history, location }, "/cluster-dashboard", []);
   };
 
+  const instanceType = useMemo(() => {
+    const instanceType =
+      node?.labels && node?.labels["node.kubernetes.io/instance-type"];
+    if (instanceType) {
+      return ` (${instanceType})`;
+    }
+    return "";
+  }, [node?.labels]);
+
   return (
     <>
       <CloseOverlay onClick={closeNodeView} />
@@ -65,7 +74,7 @@ export const ExpandedNodeView = () => {
               <IconWrapper>
                 <img src={nodePng} />
               </IconWrapper>
-              {nodeId}
+              {nodeId} {instanceType}
             </Title>
           </TitleSection>
 

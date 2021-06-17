@@ -177,7 +177,7 @@ Output can also be written to a dotenv file via the `--file` flag, which should 
 porter update get-env --app example-app --file .env
 ```
 
-### `porter deploy build`
+### `porter update build`
 
 Builds a new version of the application specified by the `--app` flag. Depending on the configured settings, this command may work automatically or will require a specified `--method` flag. 
 

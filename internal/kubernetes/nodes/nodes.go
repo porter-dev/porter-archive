@@ -87,8 +87,9 @@ func getPodsForNode(clientset kubernetes.Interface, nodeName string) *v1.PodList
 
 type NodeDetails struct {
 	NodeWithUsageData
-	AllocatableCpu    string `json:"allocatable_cpu"`
-	AllocatableMemory string `json:"allocatable_memory"`
+	Labels            map[string]string `json:"labels"`
+	AllocatableCpu    string            `json:"allocatable_cpu"`
+	AllocatableMemory string            `json:"allocatable_memory"`
 }
 
 func DescribeNode(clientset kubernetes.Interface, nodeName string) *NodeDetails {
@@ -100,6 +101,7 @@ func DescribeNode(clientset kubernetes.Interface, nodeName string) *NodeDetails 
 
 	return &NodeDetails{
 		NodeWithUsageData: *extNodeUsage,
+		Labels:            node.Labels,
 		AllocatableCpu:    node.Status.Allocatable.Cpu().String(),
 		AllocatableMemory: node.Status.Allocatable.Memory().String(),
 	}

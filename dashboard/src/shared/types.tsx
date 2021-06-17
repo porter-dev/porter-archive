@@ -5,6 +5,17 @@ export interface ClusterType {
   service_account_id: number;
   infra_id?: number;
   service?: string;
+  aws_integration_id?: number;
+}
+
+export interface DetailedClusterType extends ClusterType {
+  ingress_ip?: string;
+  ingress_error?: DetailedIngressError;
+}
+
+export interface DetailedIngressError {
+  message: string;
+  error: string;
 }
 
 export interface ChartType {

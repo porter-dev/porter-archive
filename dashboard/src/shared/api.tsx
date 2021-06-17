@@ -45,6 +45,20 @@ const createAWSIntegration = baseApi<
   return `/api/projects/${pathParams.id}/integrations/aws`;
 });
 
+const overwriteAWSIntegration = baseApi<
+  {
+    aws_access_key_id: string;
+    aws_secret_access_key: string;
+  },
+  {
+    projectID: number;
+    awsIntegrationID: number;
+    cluster_id: number;
+  }
+>("POST", (pathParams) => {
+  return `/api/projects/${pathParams.projectID}/integrations/aws/${pathParams.awsIntegrationID}/overwrite?cluster_id=${pathParams.cluster_id}`;
+});
+
 const createDOCR = baseApi<
   {
     do_integration_id: number;
@@ -401,6 +415,26 @@ const getClusterIntegrations = baseApi("GET", "/api/integrations/cluster");
 
 const getClusters = baseApi<{}, { id: number }>("GET", (pathParams) => {
   return `/api/projects/${pathParams.id}/clusters`;
+});
+
+const getCluster = baseApi<
+  {},
+  {
+    project_id: number;
+    cluster_id: number;
+  }
+>("GET", (pathParams) => {
+  return `/api/projects/${pathParams.project_id}/clusters/${pathParams.cluster_id}`;
+});
+
+const getClusterNodes = baseApi<
+  {},
+  {
+    project_id: number;
+    cluster_id: number;
+  }
+>("GET", (pathParams) => {
+  return `/api/projects/${pathParams.project_id}/clusters/${pathParams.cluster_id}/nodes`;
 });
 
 const getGitRepoList = baseApi<
@@ -812,6 +846,35 @@ const deleteConfigMap = baseApi<
   return `/api/projects/${pathParams.id}/k8s/configmap/delete`;
 });
 
+const createNamespace = baseApi<
+  {
+    name: string;
+  },
+  { id: number; cluster_id: number }
+>("POST", (pathParams) => {
+  let { id, cluster_id } = pathParams;
+  return `/api/projects/${id}/k8s/namespaces/create?cluster_id=${cluster_id}`;
+});
+
+const deleteNamespace = baseApi<
+  {
+    name: string;
+    cluster_id: number;
+  },
+  { id: number }
+>("DELETE", (pathParams) => {
+  let { id } = pathParams;
+  return `/api/projects/${id}/k8s/namespaces/delete`;
+});
+
+const deleteJob = baseApi<
+  { cluster_id: number },
+  { name: string; namespace: string; id: number }
+>("DELETE", (pathParams) => {
+  let { id, name, namespace } = pathParams;
+  return `/api/projects/${id}/k8s/jobs/${namespace}/${name}`;
+});
+
 const stopJob = baseApi<
   {},
   { name: string; namespace: string; id: number; cluster_id: number }
@@ -826,6 +889,7 @@ export default {
   connectECRRegistry,
   connectGCRRegistry,
   createAWSIntegration,
+  overwriteAWSIntegration,
   createDOCR,
   createDOKS,
   createEmailVerification,
@@ -834,6 +898,7 @@ export default {
   createGHAction,
   createGKE,
   createInvite,
+  createNamespace,
   createPasswordReset,
   createPasswordResetVerify,
   createPasswordResetFinalize,
@@ -843,6 +908,7 @@ export default {
   deleteConfigMap,
   deleteGitRepoIntegration,
   deleteInvite,
+  deleteNamespace,
   deletePod,
   deleteProject,
   deleteRegistryIntegration,
@@ -861,6 +927,8 @@ export default {
   getChartControllers,
   getClusterIntegrations,
   getClusters,
+  getCluster,
+  getClusterNodes,
   getConfigMap,
   getGitRepoList,
   getGitRepos,
@@ -903,5 +971,6 @@ export default {
   updateUser,
   updateConfigMap,
   upgradeChartValues,
+  deleteJob,
   stopJob,
 };

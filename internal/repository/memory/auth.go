@@ -311,6 +311,23 @@ func (repo *AWSIntegrationRepository) CreateAWSIntegration(
 	return am, nil
 }
 
+func (repo *AWSIntegrationRepository) OverwriteAWSIntegration(
+	am *ints.AWSIntegration,
+) (*ints.AWSIntegration, error) {
+	if !repo.canQuery {
+		return nil, errors.New("Cannot write database")
+	}
+
+	if int(am.ID-1) >= len(repo.awsIntegrations) || repo.awsIntegrations[am.ID-1] == nil {
+		return nil, gorm.ErrRecordNotFound
+	}
+
+	index := int(am.ID - 1)
+	repo.awsIntegrations[index] = am
+
+	return am, nil
+}
+
 // ReadAWSIntegration finds a aws auth mechanism by id
 func (repo *AWSIntegrationRepository) ReadAWSIntegration(
 	id uint,

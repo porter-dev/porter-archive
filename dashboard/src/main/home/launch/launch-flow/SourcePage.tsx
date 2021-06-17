@@ -5,6 +5,7 @@ import { Context } from "shared/Context";
 import { RouteComponentProps, withRouter } from "react-router";
 import close from "assets/close.png";
 import { isAlphanumeric } from "shared/common";
+import { pushFiltered } from "shared/routing";
 
 import InputRow from "components/values-form/InputRow";
 import Helper from "components/values-form/Helper";
@@ -99,7 +100,11 @@ class SourcePage extends Component<PropsType, StateType> {
             Specify the container image you would like to connect to this
             template.
             <Highlight
-              onClick={() => this.props.history.push("integrations/registry")}
+              onClick={() =>
+                pushFiltered(this.props, "/integrations/registry", [
+                  "project_id",
+                ])
+              }
             >
               Manage Docker registries
             </Highlight>
@@ -145,7 +150,11 @@ class SourcePage extends Component<PropsType, StateType> {
         </CloseButton>
         <Subtitle>
           Provide a repo folder to use as source.
-          <Highlight onClick={() => history.push("integrations/repo")}>
+          <Highlight
+            onClick={() =>
+              pushFiltered(this.props, "/integrations/repo", ["project_id"])
+            }
+          >
             Manage Git repos
           </Highlight>
           <Required>*</Required>

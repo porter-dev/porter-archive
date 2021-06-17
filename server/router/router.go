@@ -600,6 +600,20 @@ func New(a *api.App) *chi.Mux {
 			)
 
 			r.Method(
+				"GET",
+				"/projects/{project_id}/clusters/{cluster_id}/nodes",
+				auth.DoesUserHaveProjectAccess(
+					auth.DoesUserHaveClusterAccess(
+						requestlog.NewHandler(a.HandleListNodes, l),
+						mw.URLParam,
+						mw.URLParam,
+					),
+					mw.URLParam,
+					mw.ReadAccess,
+				),
+			)
+
+			r.Method(
 				"POST",
 				"/projects/{project_id}/clusters/{cluster_id}",
 				auth.DoesUserHaveProjectAccess(
@@ -674,6 +688,25 @@ func New(a *api.App) *chi.Mux {
 				"/projects/{project_id}/integrations/aws",
 				auth.DoesUserHaveProjectAccess(
 					requestlog.NewHandler(a.HandleCreateAWSIntegration, l),
+					mw.URLParam,
+					mw.WriteAccess,
+				),
+			)
+
+			r.Method(
+				"POST",
+				"/projects/{project_id}/integrations/aws/{aws_integration_id}/overwrite",
+				auth.DoesUserHaveProjectAccess(
+					auth.DoesUserHaveClusterAccess(
+						auth.DoesUserHaveAWSIntegrationAccess(
+							requestlog.NewHandler(a.HandleOverwriteAWSIntegration, l),
+							mw.URLParam,
+							mw.URLParam,
+							false,
+						),
+						mw.URLParam,
+						mw.QueryParam,
+					),
 					mw.URLParam,
 					mw.WriteAccess,
 				),
@@ -1086,6 +1119,34 @@ func New(a *api.App) *chi.Mux {
 			)
 
 			r.Method(
+				"POST",
+				"/projects/{project_id}/k8s/namespaces/create",
+				auth.DoesUserHaveProjectAccess(
+					auth.DoesUserHaveClusterAccess(
+						requestlog.NewHandler(a.HandleCreateNamespace, l),
+						mw.URLParam,
+						mw.QueryParam,
+					),
+					mw.URLParam,
+					mw.ReadAccess,
+				),
+			)
+
+			r.Method(
+				"DELETE",
+				"/projects/{project_id}/k8s/namespaces/delete",
+				auth.DoesUserHaveProjectAccess(
+					auth.DoesUserHaveClusterAccess(
+						requestlog.NewHandler(a.HandleDeleteNamespace, l),
+						mw.URLParam,
+						mw.QueryParam,
+					),
+					mw.URLParam,
+					mw.ReadAccess,
+				),
+			)
+
+			r.Method(
 				"GET",
 				"/projects/{project_id}/k8s/kubeconfig",
 				auth.DoesUserHaveProjectAccess(
@@ -1320,6 +1381,20 @@ func New(a *api.App) *chi.Mux {
 					),
 					mw.URLParam,
 					mw.ReadAccess,
+				),
+			)
+
+			r.Method(
+				"DELETE",
+				"/projects/{project_id}/k8s/jobs/{namespace}/{name}",
+				auth.DoesUserHaveProjectAccess(
+					auth.DoesUserHaveClusterAccess(
+						requestlog.NewHandler(a.HandleDeleteJob, l),
+						mw.URLParam,
+						mw.QueryParam,
+					),
+					mw.URLParam,
+					mw.WriteAccess,
 				),
 			)
 

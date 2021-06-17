@@ -5,7 +5,7 @@ import styled from "styled-components";
 import api from "shared/api";
 import { H } from "highlight.run";
 import { Context } from "shared/Context";
-import { PorterUrl } from "shared/routing";
+import { PorterUrl, pushQueryParams, pushFiltered } from "shared/routing";
 import { ClusterType, ProjectType } from "shared/types";
 
 import ConfirmOverlay from "components/ConfirmOverlay";
@@ -19,10 +19,13 @@ import IntegrationsInstructionsModal from "./modals/IntegrationsInstructionsModa
 import IntegrationsModal from "./modals/IntegrationsModal";
 import Modal from "./modals/Modal";
 import UpdateClusterModal from "./modals/UpdateClusterModal";
+import NamespaceModal from "./modals/NamespaceModal";
 import Navbar from "./navbar/Navbar";
 import NewProject from "./new-project/NewProject";
 import ProjectSettings from "./project-settings/ProjectSettings";
 import Sidebar from "./sidebar/Sidebar";
+import PageNotFound from "components/PageNotFound";
+import DeleteNamespaceModal from "./modals/DeleteNamespaceModal";
 
 type PropsType = RouteComponentProps & {
   logOut: () => void;
@@ -43,6 +46,7 @@ type StateType = {
 };
 
 // TODO: Handle cluster connected but with some failed infras (no successful set)
+// TODO: Set up current view / sidebar tab as dynamic Routes
 class Home extends Component<PropsType, StateType> {
   state = {
     forceSidebar: true,
@@ -75,9 +79,11 @@ class Home extends Component<PropsType, StateType> {
           creating = res.data[i].status === "creating";
         }
         if (creating) {
-          this.props.history.push("dashboard?tab=provisioner");
+          pushFiltered(this.props, "/dashboard", ["project_id"], {
+            tab: "provisioner",
+          });
         } else if (this.state.ghRedirect) {
-          this.props.history.push("integrations");
+          pushFiltered(this.props, "/integrations", ["project_id"]);
           this.setState({ ghRedirect: false });
         }
       });
@@ -98,14 +104,21 @@ class Home extends Component<PropsType, StateType> {
   };
 
   getProjects = (id?: number) => {
-    let { user, setProjects } = this.context;
+    let { user, setProjects, setCurrentProject } = this.context;
     let { currentProject } = this.props;
+    let queryString = window.location.search;
+    let urlParams = new URLSearchParams(queryString);
+    let projectId = urlParams.get("project_id");
+    if (!projectId && currentProject?.id) {
+      pushQueryParams(this.props, { project_id: currentProject.id.toString() });
+    }
+
     api
       .getProjects("<token>", {}, { id: user.userId })
       .then((res) => {
         if (res.data) {
           if (res.data.length === 0) {
-            this.props.history.push("new-project");
+            pushFiltered(this.props, "/new-project", ["project_id"]);
           } else if (res.data.length > 0 && !currentProject) {
             setProjects(res.data);
 
@@ -116,7 +129,7 @@ class Home extends Component<PropsType, StateType> {
                   foundProject = project;
                 }
               });
-              this.context.setCurrentProject(foundProject);
+              setCurrentProject(foundProject || res.data[0]);
             }
             if (!foundProject) {
               res.data.forEach((project: ProjectType, i: number) => {
@@ -127,10 +140,9 @@ class Home extends Component<PropsType, StateType> {
                   foundProject = project;
                 }
               });
-              this.context.setCurrentProject(
-                foundProject ? foundProject : res.data[0]
+              setCurrentProject(foundProject || res.data[0], () =>
+                this.initializeView()
               );
-              this.initializeView();
             }
           }
         }
@@ -175,7 +187,9 @@ class Home extends Component<PropsType, StateType> {
         project_id: this.props.currentProject.id,
       }
     );
-    return this.props.history.push("dashboard?tab=provisioner");
+    return pushFiltered(this.props, "/dashboard", ["project_id"], {
+      tab: "provisioner",
+    });
   };
 
   checkDO = () => {
@@ -205,7 +219,9 @@ class Home extends Component<PropsType, StateType> {
             });
           } else if (infras[0] === "docr") {
             this.provisionDOCR(tgtIntegration.id, tier, () => {
-              this.props.history.push("dashboard?tab=provisioner");
+              pushFiltered(this.props, "/dashboard", ["project_id"], {
+                tab: "provisioner",
+              });
             });
           } else {
             this.provisionDOKS(tgtIntegration.id, region, clusterName);
@@ -217,6 +233,11 @@ class Home extends Component<PropsType, StateType> {
   };
 
   componentDidMount() {
+    let { match } = this.props;
+    let params = match.params as any;
+    let { cluster } = params;
+    console.log("cluster is", cluster);
+
     let { user } = this.context;
 
     // Initialize Highlight
@@ -238,9 +259,8 @@ class Home extends Component<PropsType, StateType> {
     }
 
     let provision = urlParams.get("provision");
-    let defaultProjectId = null;
+    let defaultProjectId = parseInt(urlParams.get("project_id"));
     if (provision === "do") {
-      defaultProjectId = parseInt(urlParams.get("project_id"));
       this.setState({ handleDO: true });
       this.checkDO();
     }
@@ -271,43 +291,16 @@ class Home extends Component<PropsType, StateType> {
 
   // TODO: move into ClusterDashboard
   renderDashboard = () => {
-    let { currentCluster, setCurrentModal } = this.context;
-    if (currentCluster && !currentCluster.name) {
+    let { currentCluster } = this.context;
+    if (currentCluster?.id === -1) {
+      return <Loading />;
+    } else if (!currentCluster || !currentCluster.name) {
       return (
         <DashboardWrapper>
-          <Placeholder>
-            <Bold>Porter - Getting</Bold>
-            <br />
-            <br />
-            1. Navigate to{" "}
-            <A onClick={() => setCurrentModal("ClusterConfigModal")}>
-              + Add a Cluster
-            </A>{" "}
-            and provide a kubeconfig. *<br />
-            <br />
-            2. Choose which contexts you would like to use from the{" "}
-            <A
-              onClick={() => {
-                setCurrentModal("ClusterConfigModal", { currentTab: "select" });
-              }}
-            >
-              Select Clusters
-            </A>{" "}
-            tab.
-            <br />
-            <br />
-            3. For additional information, please refer to our <A>docs</A>.
-            <br />
-            <br />
-            <br />* Make sure all fields are explicitly declared (e.g., certs
-            and keys).
-          </Placeholder>
+          <PageNotFound />
         </DashboardWrapper>
       );
-    } else if (!currentCluster) {
-      return <Loading />;
     }
-
     return (
       <DashboardWrapper>
         <ClusterDashboard
@@ -371,17 +364,18 @@ class Home extends Component<PropsType, StateType> {
   };
 
   projectOverlayCall = () => {
-    let { user, setProjects } = this.context;
+    let { user, setProjects, setCurrentProject } = this.context;
     api
       .getProjects("<token>", {}, { id: user.userId })
       .then((res) => {
         if (res.data) {
           setProjects(res.data);
           if (res.data.length > 0) {
-            this.context.setCurrentProject(res.data[0]);
+            setCurrentProject(res.data[0]);
           } else {
-            this.context.setCurrentProject(null);
-            this.props.history.push("new-project");
+            setCurrentProject(null, () =>
+              pushFiltered(this.props, "/new-project", ["project_id"])
+            );
           }
           this.context.setCurrentModal(null, null);
         }
@@ -460,7 +454,7 @@ class Home extends Component<PropsType, StateType> {
       })
       .catch(console.log);
     setCurrentModal(null, null);
-    this.props.history.push("dashboard?tab=overview");
+    pushFiltered(this.props, "/dashboard", []);
   };
 
   render() {
@@ -506,6 +500,24 @@ class Home extends Component<PropsType, StateType> {
             height="650px"
           >
             <IntegrationsInstructionsModal />
+          </Modal>
+        )}
+        {currentModal === "NamespaceModal" && (
+          <Modal
+            onRequestClose={() => setCurrentModal(null, null)}
+            width="600px"
+            height="220px"
+          >
+            <NamespaceModal />
+          </Modal>
+        )}
+        {currentModal === "DeleteNamespaceModal" && (
+          <Modal
+            onRequestClose={() => setCurrentModal(null, null)}
+            width="700px"
+            height="280px"
+          >
+            <DeleteNamespaceModal />
           </Modal>
         )}
 
@@ -555,27 +567,6 @@ const DashboardWrapper = styled.div`
   padding-top: 50px;
   min-width: 300px;
   padding-bottom: 120px;
-`;
-
-const A = styled.a`
-  color: #ffffff;
-  text-decoration: underline;
-  cursor: ${(props: { disabled?: boolean }) =>
-    props.disabled ? "not-allowed" : "pointer"};
-`;
-
-const Placeholder = styled.div`
-  font-family: "Work Sans", sans-serif;
-  color: #6f6f6f;
-  font-size: 16px;
-  margin-left: 20px;
-  margin-top: 24vh;
-  user-select: none;
-`;
-
-const Bold = styled.div`
-  font-weight: bold;
-  font-size: 20px;
 `;
 
 const StyledHome = styled.div`

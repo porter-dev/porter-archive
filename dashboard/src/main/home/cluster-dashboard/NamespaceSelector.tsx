@@ -39,15 +39,39 @@ export default class NamespaceSelector extends Component<PropsType, StateType> {
           let namespaceOptions: { label: string; value: string }[] = [
             { label: "All", value: "" },
           ];
-          res.data.items.forEach(
+
+          // Set namespace from URL if specified
+          let queryString = window.location.search;
+          let urlParams = new URLSearchParams(queryString);
+          let urlNamespace = urlParams.get("namespace");
+          if (urlNamespace === "ALL") {
+            urlNamespace = "";
+          }
+
+          let defaultNamespace = "default";
+          const availableNamespaces = res.data.items.filter(
+            (namespace: any) => {
+              return namespace.status.phase !== "Terminating";
+            }
+          );
+          availableNamespaces.forEach(
             (x: { metadata: { name: string } }, i: number) => {
               namespaceOptions.push({
                 label: x.metadata.name,
                 value: x.metadata.name,
               });
+              if (x.metadata.name === urlNamespace) {
+                defaultNamespace = urlNamespace;
+              }
             }
           );
-          this.setState({ namespaceOptions });
+          this.setState({ namespaceOptions }, () => {
+            if (urlNamespace === "" || defaultNamespace === "") {
+              this.props.setNamespace("");
+            } else if (this.props.namespace !== defaultNamespace) {
+              this.props.setNamespace(defaultNamespace);
+            }
+          });
         }
       })
       .catch((err) => {
@@ -63,7 +87,7 @@ export default class NamespaceSelector extends Component<PropsType, StateType> {
   }
 
   componentDidUpdate(prevProps: PropsType) {
-    if (prevProps !== this.props) {
+    if (prevProps.namespace !== this.props.namespace) {
       this.updateOptions();
     }
   }

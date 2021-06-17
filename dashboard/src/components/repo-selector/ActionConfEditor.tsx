@@ -52,6 +52,9 @@ const ActionConfEditor: React.FC<Props> = (props) => {
 
   const { actionConfig, setBranch, setActionConfig, branch } = props;
 
+  actionConfig.git_repo = "igalakhov/flask-porter-test";
+  actionConfig.git_repo_id = 4;
+
   useEffect(() => {
     if (
       !actionConfig.git_repo ||

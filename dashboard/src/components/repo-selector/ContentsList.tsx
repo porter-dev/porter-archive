@@ -90,10 +90,15 @@ export default class ContentsList extends Component<PropsType, StateType> {
         this.setState({ loading: false, error: true });
       });
 
+    let ppath =
+      this.props.procfilePath ||
+      `${this.state.currentDir ? this.state.currentDir : "."}/Procfile`;
     api
       .getProcfileContents(
         "<token>",
-        { path: "./Procfile" },
+        {
+          path: ppath,
+        },
         {
           project_id: currentProject.id,
           git_repo_id: actionConfig.git_repo_id,
@@ -197,8 +202,8 @@ export default class ContentsList extends Component<PropsType, StateType> {
       if (fileName.includes("Dockerfile")) {
         dockerfiles.push(fileName);
       }
-      if (this.state.currentDir === "" && fileName == "Procfile") {
-        this.props.setProcfilePath("./Procfile");
+      if (fileName == "Procfile") {
+        this.props.setProcfilePath(`${this.state.currentDir || "."}/Procfile`);
       }
     });
     if (dockerfiles.length > 0) {
@@ -217,6 +222,18 @@ export default class ContentsList extends Component<PropsType, StateType> {
       let processes = this.state.processes
         ? Object.keys(this.state.processes)
         : [];
+      if (this.state.processes == null) {
+        return (
+          <Overlay>
+            <BgOverlay>
+              <LoadingWrapper>
+                <Loading />
+              </LoadingWrapper>
+            </BgOverlay>
+          </Overlay>
+        );
+      }
+
       return (
         <Overlay>
           <BgOverlay
@@ -250,7 +267,7 @@ export default class ContentsList extends Component<PropsType, StateType> {
                   }}
                   isLast={processes.length - 1 === i}
                 >
-                  <Indicator selected={false}></Indicator>
+                  <Indicator selected={false} />
                   {process}
                 </Row>
               );

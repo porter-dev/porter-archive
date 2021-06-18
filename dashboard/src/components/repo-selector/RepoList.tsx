@@ -173,6 +173,11 @@ const RepoList: React.FC<Props> = ({
                 onChange={(e: any) => {
                   setSearchInput(e.target.value);
                 }}
+                onKeyPress={({ key }) => {
+                  if (key === "Enter") {
+                    setSearchFilter(searchInput);
+                  }
+                }}
                 placeholder="Search repos..."
               />
             </SearchBar>

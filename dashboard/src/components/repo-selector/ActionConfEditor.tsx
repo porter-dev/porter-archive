@@ -3,15 +3,10 @@ import styled from "styled-components";
 
 import { ActionConfigType } from "shared/types";
 
-import api from "shared/api";
-import { Context } from "shared/Context";
-
 import RepoList from "./RepoList";
 import BranchList from "./BranchList";
 import ContentsList from "./ContentsList";
 import ActionDetails from "./ActionDetails";
-import Loading from "../Loading";
-import { act } from "react-dom/test-utils";
 
 type Props = {
   actionConfig: ActionConfigType | null;
@@ -38,53 +33,8 @@ const defaultActionConfig: ActionConfigType = {
   git_repo_id: 0,
 };
 
-interface AutoBuildpack {
-  name?: string;
-  valid: boolean;
-}
-
 const ActionConfEditor: React.FC<Props> = (props) => {
-  const [buildpackLoading, setBuildpackLoading] = useState(false);
-  const [autoBuildpack, setAutoBuildpack] = useState<AutoBuildpack>({
-    valid: false,
-  });
-  const { currentProject } = useContext(Context);
-
   const { actionConfig, setBranch, setActionConfig, branch } = props;
-
-  useEffect(() => {
-    if (
-      !actionConfig.git_repo ||
-      !branch ||
-      props.dockerfilePath ||
-      props.folderPath
-    ) {
-      setAutoBuildpack({
-        valid: false,
-      });
-      return;
-    }
-    api
-      .detectBuildpack(
-        "<token>",
-        {},
-        {
-          project_id: currentProject.id,
-          git_repo_id: actionConfig.git_repo_id,
-          kind: "github",
-          owner: actionConfig.git_repo.split("/")[0],
-          name: actionConfig.git_repo.split("/")[1],
-          branch: branch,
-        }
-      )
-      .then(({ data }) => {
-        setAutoBuildpack(data);
-        setBuildpackLoading(false);
-      })
-      .catch((_) => {
-        setBuildpackLoading(false);
-      });
-  }, [actionConfig.git_repo, branch, props.dockerfilePath, props.folderPath]);
 
   if (!actionConfig.git_repo) {
     return (
@@ -118,37 +68,16 @@ const ActionConfEditor: React.FC<Props> = (props) => {
       </>
     );
   } else if (!props.dockerfilePath && !props.folderPath) {
-    if (buildpackLoading) {
-      return <Loading />;
-    }
-
     return (
       <>
-        {autoBuildpack && autoBuildpack.valid && (
-          <Banner>
-            <i className="material-icons">info</i>{" "}
-            <p>
-              <b>{autoBuildpack.name}</b> buildpack was{" "}
-              <a
-                href="https://docs.getporter.dev/docs/auto-deploy-requirements#auto-build-with-cloud-native-buildpacks"
-                target="_blank"
-              >
-                detected automatically
-              </a>
-              . Alternatively, select an application folder below:
-            </p>
-          </Banner>
-        )}
-        <ExpandedWrapperAlt>
-          <ContentsList
-            actionConfig={actionConfig}
-            branch={branch}
-            setActionConfig={setActionConfig}
-            setDockerfilePath={(x: string) => props.setDockerfilePath(x)}
-            setProcfilePath={(x: string) => props.setProcfilePath(x)}
-            setFolderPath={(x: string) => props.setFolderPath(x)}
-          />
-        </ExpandedWrapperAlt>
+        <ContentsList
+          actionConfig={actionConfig}
+          branch={branch}
+          setActionConfig={setActionConfig}
+          setDockerfilePath={(x: string) => props.setDockerfilePath(x)}
+          setProcfilePath={(x: string) => props.setProcfilePath(x)}
+          setFolderPath={(x: string) => props.setFolderPath(x)}
+        />
         <Br />
         <BackButton
           width="145px"
@@ -171,18 +100,16 @@ const ActionConfEditor: React.FC<Props> = (props) => {
   ) {
     return (
       <>
-        <ExpandedWrapperAlt>
-          <ContentsList
-            actionConfig={actionConfig}
-            branch={branch}
-            setActionConfig={setActionConfig}
-            procfilePath={props.procfilePath}
-            setDockerfilePath={(x: string) => props.setDockerfilePath(x)}
-            setProcfilePath={(x: string) => props.setProcfilePath(x)}
-            setProcfileProcess={(x: string) => props.setProcfileProcess(x)}
-            setFolderPath={(x: string) => props.setFolderPath(x)}
-          />
-        </ExpandedWrapperAlt>
+        <ContentsList
+          actionConfig={actionConfig}
+          branch={branch}
+          setActionConfig={setActionConfig}
+          procfilePath={props.procfilePath}
+          setDockerfilePath={(x: string) => props.setDockerfilePath(x)}
+          setProcfilePath={(x: string) => props.setProcfilePath(x)}
+          setProcfileProcess={(x: string) => props.setProcfileProcess(x)}
+          setFolderPath={(x: string) => props.setFolderPath(x)}
+        />
         <Br />
         <BackButton
           width="145px"
@@ -278,21 +205,5 @@ const BackButton = styled.div`
     color: white;
     font-size: 16px;
     margin-right: 6px;
-  }
-`;
-
-const Banner = styled.div`
-  height: 40px;
-  width: 100%;
-  margin: 5px 0 10px;
-  font-size: 13px;
-  display: flex;
-  border-radius: 5px;
-  padding-left: 15px;
-  align-items: center;
-  background: #ffffff11;
-  > i {
-    margin-right: 10px;
-    font-size: 18px;
   }
 `;

@@ -81,6 +81,7 @@ func (app *App) HandleListRepos(w http.ResponseWriter, r *http.Request) {
 		ListOptions: github.ListOptions{
 			PerPage: 100,
 		},
+		Sort: "updated",
 	}
 
 	allRepos, resp, err := client.Repositories.List(context.Background(), "", opt)
@@ -91,7 +92,7 @@ func (app *App) HandleListRepos(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// make workers to get pages concurrently
-	const WCOUNT = 5
+	const WCOUNT = 1
 	numPages := resp.LastPage + 1
 	var workerErr error
 	var mu sync.Mutex
@@ -106,6 +107,7 @@ func (app *App) HandleListRepos(w http.ResponseWriter, r *http.Request) {
 					Page:    cp,
 					PerPage: 100,
 				},
+				Sort: "updated",
 			}
 
 			repos, _, err := client.Repositories.List(context.Background(), "", cur_opt)
@@ -258,6 +260,7 @@ func (app *App) HandleDetectBuildpack(w http.ResponseWriter, r *http.Request) {
 
 	for i := range directoryContents {
 		name := *directoryContents[i].Path
+		fmt.Println(name)
 		bname, ok := BREQS[name]
 		if ok {
 			matches++

@@ -108,7 +108,7 @@ The default behavior of this command will vary depending on if the application a
 
 ## Building from Github 
 
-If you specify `--local false`, this command will look for a remote Github repository that has been linked to this application. If one is found, the command will download an archive of the Github repository from the latest commit of the linked branch, and will use that as the filesystem to build from. 
+If you specify `--source github`, this command will look for a remote Github repository that has been linked to this application. If one is found, the command will download an archive of the Github repository from the latest commit of the linked branch, and will use that as the filesystem to build from. 
 
 ## Updating Configuration without Building
 

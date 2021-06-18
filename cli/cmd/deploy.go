@@ -198,7 +198,6 @@ the image that the application uses if no --values file is specified:
 
 var app string
 var getEnvFileDest string
-var local bool
 var localPath string
 var tag string
 var dockerfile string
@@ -223,11 +222,11 @@ func init() {
 		"Namespace of the application",
 	)
 
-	updateCmd.PersistentFlags().BoolVar(
-		&local,
+	updateCmd.PersistentFlags().StringVar(
+		&source,
+		"source",
 		"local",
-		true,
-		"Whether local context should be used for build",
+		"the type of source (\"local\" or \"github\")",
 	)
 
 	updateCmd.PersistentFlags().StringVarP(
@@ -385,7 +384,7 @@ func updateGetAgent(client *api.Client) (*deploy.DeployAgent, error) {
 			OverrideTag:     tag,
 			Method:          buildMethod,
 		},
-		Local: local,
+		Local: source != "github",
 	})
 }
 

@@ -230,6 +230,8 @@ func createFromGithub(createAgent *deploy.CreateAgent, overrideValues map[string
 
 	if err != nil {
 		return err
+	} else if gitBranch == "" {
+		return fmt.Errorf("git branch not automatically detectable")
 	}
 
 	ok, remoteRepo := gitutils.ParseGithubRemote(remote)

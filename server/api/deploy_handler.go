@@ -156,6 +156,7 @@ func (app *App) HandleDeployTemplate(w http.ResponseWriter, r *http.Request) {
 		gaForm := &forms.CreateGitAction{
 			ReleaseID:      release.ID,
 			GitRepo:        form.GithubActionConfig.GitRepo,
+			GitBranch:      form.GithubActionConfig.GitBranch,
 			ImageRepoURI:   form.GithubActionConfig.ImageRepoURI,
 			DockerfilePath: form.GithubActionConfig.DockerfilePath,
 			GitRepoID:      form.GithubActionConfig.GitRepoID,

@@ -92,7 +92,7 @@ func (app *App) HandleListRepos(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// make workers to get pages concurrently
-	const WCOUNT = 1
+	const WCOUNT = 5
 	numPages := resp.LastPage + 1
 	var workerErr error
 	var mu sync.Mutex

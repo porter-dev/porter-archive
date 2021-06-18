@@ -87,13 +87,6 @@ func init() {
 
 	createCmd.MarkPersistentFlagRequired("app")
 
-	createCmd.PersistentFlags().BoolVar(
-		&local,
-		"local",
-		true,
-		"whether local context should be used for build",
-	)
-
 	createCmd.PersistentFlags().StringVarP(
 		&localPath,
 		"path",

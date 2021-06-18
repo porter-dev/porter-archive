@@ -29,7 +29,7 @@ local directory ~/path-to-dir with the tag "testing":
   %s
 
 If the application has a remote Git repository source configured, you can specify that the remote
-Git repository should be used to build the new image by specifying "--local false". Porter will use 
+Git repository should be used to build the new image by specifying "--source github". Porter will use 
 the latest commit from the remote repo and branch to update an application, and will use the latest 
 commit as the image tag.
 
@@ -51,7 +51,7 @@ specify it as follows:
 		color.New(color.FgBlue, color.Bold).Sprintf("Help for \"porter update\":"),
 		color.New(color.FgGreen, color.Bold).Sprintf("porter update --app example-app"),
 		color.New(color.FgGreen, color.Bold).Sprintf("porter update --app example-app --path ~/path-to-dir --tag testing"),
-		color.New(color.FgGreen, color.Bold).Sprintf("porter update --app remote-git-app --local false"),
+		color.New(color.FgGreen, color.Bold).Sprintf("porter update --app remote-git-app --source github"),
 		color.New(color.FgGreen, color.Bold).Sprintf("porter update --app example-app --values my-values.yaml"),
 		color.New(color.FgGreen, color.Bold).Sprintf("porter update --app example-app --method docker --dockerfile ./docker/prod.Dockerfile"),
 	),

@@ -64,6 +64,14 @@ export const ExpandedNodeView = () => {
     return "";
   }, [node?.labels]);
 
+  const currentTabPage = useMemo(() => {
+    switch (currentTab) {
+      case "conditions":
+      default:
+        return <ConditionsTable node={node} />;
+    }
+  }, [currentTab, node]);
+
   return (
     <>
       <CloseOverlay onClick={closeNodeView} />
@@ -89,7 +97,7 @@ export const ExpandedNodeView = () => {
             currentTab={currentTab}
             setCurrentTab={(value: TabEnum) => setCurrentTab(value)}
           />
-          <ConditionsTable node={node} />
+          {currentTabPage}
         </BodyWrapper>
       </StyledExpandedChart>
     </>

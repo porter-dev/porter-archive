@@ -1,3 +1,31 @@
+### Components 
+
+#### Functional Components and Migration
+Currently, most of the frontend is written using Class Components. If you contribute to any part of the frontend, you are encouraged to rewrite any class component into a functional component. While doing so, keep a few things in mind:
+
+#### Context
+If a prop is passed down more than three levels in the component heirarchy, it should be rewritten to be contained in a context. Make sure that all the components that then consume this context are functional, since the Context API isn't very good for class components.
+
+#### Typing and Internal Organization
+To keep a functional component consistent, it should be typed using `React.FC` with a `Props` interface. Internally, the hooks used by the component should be listed near each other at the start of the function body, to avoid confusion. For example, the following is a component that obeys these rules:
+
+```typescript
+interface Props {
+    ...
+}
+
+const MyComponent: React.FC<Props> = (props) => {
+    const [foo, updateFoo] = useState(...);
+    const [bar, updateBar] = useState(...);
+    const { baz } = useContext(...);
+    
+    const qux  = ...;
+    
+    ...
+}
+```
+
+
 ### Routing model for new standard:
 
 The idea is to keep something similar to what NextJS or Angular+2 with submodules does, if we have a route the folder structure should try to respect that path

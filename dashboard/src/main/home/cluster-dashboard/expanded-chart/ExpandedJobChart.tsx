@@ -420,16 +420,12 @@ export default class ExpandedJobChart extends Component<PropsType, StateType> {
   };
 
   renderTabContents = (currentTab: string, submitValues?: any) => {
-    let saveButton = null
-
-    if (!this.props.currentChart.config?.schedule?.enabled) {
-      saveButton = <SaveButton
+    let saveButton = <SaveButton
         text="Rerun Job"
         onClick={() => this.handleSaveValues(submitValues, true)}
         status={this.state.saveValuesStatus}
         makeFlush={true}
       />
-    }
 
     switch (currentTab) {
       case "jobs":

@@ -39,13 +39,6 @@ func init() {
 	rootCmd.AddCommand(runCmd)
 
 	runCmd.PersistentFlags().StringVar(
-		&host,
-		"host",
-		getHost(),
-		"host url of Porter instance",
-	)
-
-	runCmd.PersistentFlags().StringVar(
 		&namespace,
 		"namespace",
 		"default",
@@ -117,8 +110,8 @@ func run(_ *api.AuthCheckResponse, client *api.Client, args []string) error {
 }
 
 func getRESTConfig(client *api.Client) (*rest.Config, error) {
-	pID := getProjectID()
-	cID := getClusterID()
+	pID := config.Project
+	cID := config.Cluster
 
 	kubeResp, err := client.GetKubeconfig(context.TODO(), pID, cID)
 
@@ -156,8 +149,8 @@ type podSimple struct {
 }
 
 func getPods(client *api.Client, namespace, releaseName string) ([]podSimple, error) {
-	pID := getProjectID()
-	cID := getClusterID()
+	pID := config.Project
+	cID := config.Cluster
 
 	resp, err := client.GetK8sAllPods(context.TODO(), pID, cID, namespace, releaseName)
 

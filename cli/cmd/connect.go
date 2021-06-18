@@ -121,20 +121,6 @@ func init() {
 
 	connectCmd.AddCommand(connectKubeconfigCmd)
 
-	connectCmd.PersistentFlags().StringVar(
-		&host,
-		"host",
-		getHost(),
-		"host url of Porter instance",
-	)
-
-	projectID = *connectCmd.PersistentFlags().UintP(
-		"project-id",
-		"p",
-		getProjectID(),
-		"project id to use",
-	)
-
 	connectKubeconfigCmd.PersistentFlags().StringVarP(
 		&kubeconfigPath,
 		"kubeconfig",
@@ -161,7 +147,7 @@ func init() {
 func runConnectKubeconfig(_ *api.AuthCheckResponse, client *api.Client, _ []string) error {
 	isLocal := false
 
-	if getDriver() == "local" {
+	if config.Driver == "local" {
 		isLocal = true
 	}
 
@@ -169,7 +155,7 @@ func runConnectKubeconfig(_ *api.AuthCheckResponse, client *api.Client, _ []stri
 		client,
 		kubeconfigPath,
 		*contexts,
-		getProjectID(),
+		config.Project,
 		isLocal,
 	)
 
@@ -177,90 +163,90 @@ func runConnectKubeconfig(_ *api.AuthCheckResponse, client *api.Client, _ []stri
 		return err
 	}
 
-	return setCluster(id)
+	return config.SetCluster(id)
 }
 
 func runConnectECR(_ *api.AuthCheckResponse, client *api.Client, _ []string) error {
 	regID, err := connect.ECR(
 		client,
-		getProjectID(),
+		config.Project,
 	)
 
 	if err != nil {
 		return err
 	}
 
-	return setRegistry(regID)
+	return config.SetRegistry(regID)
 }
 
 func runConnectGCR(_ *api.AuthCheckResponse, client *api.Client, _ []string) error {
 	regID, err := connect.GCR(
 		client,
-		getProjectID(),
+		config.Project,
 	)
 
 	if err != nil {
 		return err
 	}
 
-	return setRegistry(regID)
+	return config.SetRegistry(regID)
 }
 
 func runConnectDOCR(_ *api.AuthCheckResponse, client *api.Client, _ []string) error {
 	regID, err := connect.DOCR(
 		client,
-		getProjectID(),
+		config.Project,
 	)
 
 	if err != nil {
 		return err
 	}
 
-	return setRegistry(regID)
+	return config.SetRegistry(regID)
 }
 
 func runConnectDockerhub(_ *api.AuthCheckResponse, client *api.Client, _ []string) error {
 	regID, err := connect.Dockerhub(
 		client,
-		getProjectID(),
+		config.Project,
 	)
 
 	if err != nil {
 		return err
 	}
 
-	return setRegistry(regID)
+	return config.SetRegistry(regID)
 }
 
 func runConnectRegistry(_ *api.AuthCheckResponse, client *api.Client, _ []string) error {
 	regID, err := connect.Registry(
 		client,
-		getProjectID(),
+		config.Project,
 	)
 
 	if err != nil {
 		return err
 	}
 
-	return setRegistry(regID)
+	return config.SetRegistry(regID)
 }
 
 func runConnectHelmRepoBasic(_ *api.AuthCheckResponse, client *api.Client, _ []string) error {
 	hrID, err := connect.Helm(
 		client,
-		getProjectID(),
+		config.Project,
 	)
 
 	if err != nil {
 		return err
 	}
 
-	return setHelmRepo(hrID)
+	return config.SetHelmRepo(hrID)
 }
 
 func runConnectActions(_ *api.AuthCheckResponse, client *api.Client, _ []string) error {
 	return connect.Actions(
 		client,
-		getProjectID(),
+		config.Project,
 	)
 }

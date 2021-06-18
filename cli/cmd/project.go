@@ -63,17 +63,8 @@ var listProjectCmd = &cobra.Command{
 func init() {
 	rootCmd.AddCommand(projectCmd)
 
-	projectCmd.PersistentFlags().StringVar(
-		&host,
-		"host",
-		getHost(),
-		"host url of Porter instance",
-	)
-
 	projectCmd.AddCommand(createProjectCmd)
-
 	projectCmd.AddCommand(deleteProjectCmd)
-
 	projectCmd.AddCommand(listProjectCmd)
 }
 
@@ -88,7 +79,7 @@ func createProject(_ *api.AuthCheckResponse, client *api.Client, args []string) 
 
 	color.New(color.FgGreen).Printf("Created project with name %s and id %d\n", args[0], resp.ID)
 
-	return setProject(resp.ID)
+	return config.SetProject(resp.ID)
 }
 
 func listProjects(user *api.AuthCheckResponse, client *api.Client, args []string) error {
@@ -103,7 +94,7 @@ func listProjects(user *api.AuthCheckResponse, client *api.Client, args []string
 
 	fmt.Fprintf(w, "%s\t%s\n", "ID", "NAME")
 
-	currProjectID := getProjectID()
+	currProjectID := config.Project
 
 	for _, project := range projects {
 		if currProjectID == project.ID {

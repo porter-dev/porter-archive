@@ -104,7 +104,7 @@ func GetAgentInClusterConfig(form *Form, l *logger.Logger) (*Agent, error) {
 }
 
 // GetAgentTesting creates a new Agent using an optional existing storage class
-func GetAgentTesting(form *Form, storage *storage.Storage, l *logger.Logger) *Agent {
+func GetAgentTesting(form *Form, storage *storage.Storage, l *logger.Logger, k8sAgent *kubernetes.Agent) *Agent {
 	testStorage := storage
 
 	if testStorage == nil {
@@ -122,5 +122,6 @@ func GetAgentTesting(form *Form, storage *storage.Storage, l *logger.Logger) *Ag
 			Capabilities: chartutil.DefaultCapabilities,
 			Log:          l.Printf,
 		},
+		K8sAgent: k8sAgent,
 	}
 }

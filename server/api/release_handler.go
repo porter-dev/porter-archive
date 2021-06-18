@@ -7,6 +7,7 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
+	"sync"
 
 	"github.com/porter-dev/porter/internal/kubernetes/prometheus"
 	"github.com/porter-dev/porter/internal/models"
@@ -77,9 +78,11 @@ func (app *App) HandleListReleases(w http.ResponseWriter, r *http.Request) {
 // PorterRelease is a helm release with a form attached
 type PorterRelease struct {
 	*release.Release
-	Form          *models.FormYAML `json:"form"`
-	HasMetrics    bool             `json:"has_metrics"`
-	LatestVersion string           `json:"latest_version"`
+	Form            *models.FormYAML                `json:"form"`
+	HasMetrics      bool                            `json:"has_metrics"`
+	LatestVersion   string                          `json:"latest_version"`
+	GitActionConfig *models.GitActionConfigExternal `json:"git_action_config"`
+	ImageRepoURI    string                          `json:"image_repo_uri"`
 }
 
 var porterApplications = map[string]string{"web": "", "job": "", "worker": ""}
@@ -161,7 +164,7 @@ func (app *App) HandleGetRelease(w http.ResponseWriter, r *http.Request) {
 		HelmRelease:   release,
 	}
 
-	res := &PorterRelease{release, nil, false, ""}
+	res := &PorterRelease{release, nil, false, "", nil, ""}
 
 	for _, file := range release.Chart.Files {
 		if strings.Contains(file.Name, "form.yaml") {
@@ -209,6 +212,19 @@ func (app *App) HandleGetRelease(w http.ResponseWriter, r *http.Request) {
 			if porterChart != nil && len(porterChart.Versions) > 0 {
 				res.LatestVersion = porterChart.Versions[0]
 			}
+		}
+	}
+
+	// if the release was created from this server,
+	modelRelease, err := app.Repo.Release.ReadRelease(form.Cluster.ID, release.Name, release.Namespace)
+
+	if modelRelease != nil {
+		res.ImageRepoURI = modelRelease.ImageRepoURI
+
+		gitAction := modelRelease.GitActionConfig
+
+		if gitAction.ID != 0 {
+			res.GitActionConfig = gitAction.Externalize()
 		}
 	}
 
@@ -771,6 +787,24 @@ func (app *App) HandleUpgradeRelease(w http.ResponseWriter, r *http.Request) {
 		release, err := app.Repo.Release.ReadRelease(uint(clusterID), name, rel.Namespace)
 
 		if release != nil {
+			// update image repo uri if changed
+			repository := rel.Config["image"].(map[string]interface{})["repository"]
+			repoStr, ok := repository.(string)
+
+			if !ok {
+				app.handleErrorInternal(fmt.Errorf("Could not find field repository in config"), w)
+				return
+			}
+
+			if repoStr != release.ImageRepoURI {
+				release, err = app.Repo.Release.UpdateRelease(release)
+
+				if err != nil {
+					app.handleErrorInternal(err, w)
+					return
+				}
+			}
+
 			gitAction := release.GitActionConfig
 
 			if gitAction.ID != 0 {
@@ -943,6 +977,114 @@ func (app *App) HandleReleaseDeployWebhook(w http.ResponseWriter, r *http.Reques
 	w.WriteHeader(http.StatusOK)
 }
 
+// HandleReleaseJobUpdateImage
+func (app *App) HandleReleaseUpdateJobImages(w http.ResponseWriter, r *http.Request) {
+	vals, err := url.ParseQuery(r.URL.RawQuery)
+
+	if err != nil {
+		app.handleErrorFormDecoding(err, ErrReleaseDecode, w)
+		return
+	}
+
+	form := &forms.UpdateImageForm{
+		ReleaseForm: &forms.ReleaseForm{
+			Form: &helm.Form{
+				Repo:              app.Repo,
+				DigitalOceanOAuth: app.DOConf,
+			},
+		},
+	}
+
+	form.ReleaseForm.PopulateHelmOptionsFromQueryParams(
+		vals,
+		app.Repo.Cluster,
+	)
+
+	if err := json.NewDecoder(r.Body).Decode(form); err != nil {
+		app.handleErrorFormDecoding(err, ErrUserDecode, w)
+		return
+	}
+
+	releases, err := app.Repo.Release.ListReleasesByImageRepoURI(form.Cluster.ID, form.ImageRepoURI)
+
+	if err != nil {
+		app.sendExternalError(err, http.StatusInternalServerError, HTTPError{
+			Code:   ErrReleaseReadData,
+			Errors: []string{"releases not found with given image repo uri"},
+		}, w)
+
+		return
+	}
+
+	agent, err := app.getAgentFromReleaseForm(
+		w,
+		r,
+		form.ReleaseForm,
+	)
+
+	// errors are handled in app.getAgentFromBodyParams
+	if err != nil {
+		return
+	}
+
+	registries, err := app.Repo.Registry.ListRegistriesByProjectID(uint(form.ReleaseForm.Cluster.ProjectID))
+
+	if err != nil {
+		app.handleErrorDataRead(err, w)
+		return
+	}
+
+	// asynchronously update releases with that image repo uri
+	var wg sync.WaitGroup
+	mu := &sync.Mutex{}
+	errors := make([]string, 0)
+
+	for i := range releases {
+		index := i
+		wg.Add(1)
+
+		go func() {
+			defer wg.Done()
+			// read release via agent
+			rel, err := agent.GetRelease(releases[index].Name, 0)
+
+			if err != nil {
+				mu.Lock()
+				errors = append(errors, err.Error())
+				mu.Unlock()
+			}
+
+			if rel.Chart.Name() == "job" {
+				image := map[string]interface{}{}
+				image["repository"] = releases[index].ImageRepoURI
+				image["tag"] = form.Tag
+				rel.Config["image"] = image
+				rel.Config["paused"] = true
+
+				conf := &helm.UpgradeReleaseConfig{
+					Name:       releases[index].Name,
+					Cluster:    form.ReleaseForm.Cluster,
+					Repo:       *app.Repo,
+					Registries: registries,
+					Values:     rel.Config,
+				}
+
+				_, err = agent.UpgradeReleaseByValues(conf, app.DOConf)
+
+				if err != nil {
+					mu.Lock()
+					errors = append(errors, err.Error())
+					mu.Unlock()
+				}
+			}
+		}()
+	}
+
+	wg.Wait()
+
+	w.WriteHeader(http.StatusOK)
+}
+
 // HandleRollbackRelease rolls a release back to a specified revision
 func (app *App) HandleRollbackRelease(w http.ResponseWriter, r *http.Request) {
 	name := chi.URLParam(r, "name")
@@ -1022,6 +1164,24 @@ func (app *App) HandleRollbackRelease(w http.ResponseWriter, r *http.Request) {
 		release, err := app.Repo.Release.ReadRelease(uint(clusterID), name, rel.Namespace)
 
 		if release != nil {
+			// update image repo uri if changed
+			repository := rel.Config["image"].(map[string]interface{})["repository"]
+			repoStr, ok := repository.(string)
+
+			if !ok {
+				app.handleErrorInternal(fmt.Errorf("Could not find field repository in config"), w)
+				return
+			}
+
+			if repoStr != release.ImageRepoURI {
+				release, err = app.Repo.Release.UpdateRelease(release)
+
+				if err != nil {
+					app.handleErrorInternal(err, w)
+					return
+				}
+			}
+
 			gitAction := release.GitActionConfig
 
 			if gitAction.ID != 0 {

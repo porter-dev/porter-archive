@@ -72,6 +72,62 @@ func (app *App) HandleCreateRegistry(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// HandleCreateRepository creates a new image repository in a registry, if the registry
+// does not allow for create-on-push behavior
+func (app *App) HandleCreateRepository(w http.ResponseWriter, r *http.Request) {
+	projID, err := strconv.ParseUint(chi.URLParam(r, "project_id"), 0, 64)
+
+	if err != nil || projID == 0 {
+		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
+		return
+	}
+
+	regID, err := strconv.ParseUint(chi.URLParam(r, "registry_id"), 0, 64)
+
+	if err != nil || projID == 0 {
+		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
+		return
+	}
+
+	form := &forms.CreateRepository{}
+
+	// decode from JSON to form value
+	if err := json.NewDecoder(r.Body).Decode(form); err != nil {
+		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
+		return
+	}
+
+	// validate the form
+	if err := app.validator.Struct(form); err != nil {
+		app.handleErrorFormValidation(err, ErrProjectValidateFields, w)
+		return
+	}
+
+	// read the registry
+	reg, err := app.Repo.Registry.ReadRegistry(uint(regID))
+
+	if err != nil {
+		app.handleErrorDataRead(err, w)
+		return
+	}
+
+	_reg := registry.Registry(*reg)
+	regAPI := &_reg
+
+	// parse the name from the registry
+	nameSpl := strings.Split(form.ImageRepoURI, "/")
+	repoName := nameSpl[len(nameSpl)-1]
+
+	err = regAPI.CreateRepository(*app.Repo, repoName)
+
+	if err != nil {
+		app.handleErrorInternal(err, w)
+		return
+	}
+
+	w.WriteHeader(http.StatusCreated)
+}
+
 // HandleListProjectRegistries returns a list of registries for a project
 func (app *App) HandleListProjectRegistries(w http.ResponseWriter, r *http.Request) {
 	projID, err := strconv.ParseUint(chi.URLParam(r, "project_id"), 0, 64)

@@ -432,7 +432,7 @@ func updateUpgradeWithAgent(updateAgent *deploy.DeployAgent) error {
 		return err
 	}
 
-	color.New(color.FgGreen).Println("Successfully re-updateed", app)
+	color.New(color.FgGreen).Println("Successfully updated", app)
 
 	return nil
 }

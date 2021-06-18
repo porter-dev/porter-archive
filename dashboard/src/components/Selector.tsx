@@ -84,7 +84,7 @@ export default class Selector extends Component<PropsType, StateType> {
       return (
         <NewOption
           onClick={() => {
-            this.context.setCurrentModal("NamespaceModal");
+            this.context.setCurrentModal("NamespaceModal", this.props.options);
           }}
         >
           <Plus>+</Plus>

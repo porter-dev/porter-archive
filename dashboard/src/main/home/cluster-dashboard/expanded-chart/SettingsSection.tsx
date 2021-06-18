@@ -24,6 +24,7 @@ type PropsType = {
   refreshChart: () => void;
   setShowDeleteOverlay: (x: boolean) => void;
   showSource?: boolean;
+  saveButtonText?: string | null;
 };
 
 type StateType = {
@@ -146,6 +147,11 @@ export default class SettingsSection extends Component<PropsType, StateType> {
       _.set(values, "image.tag", this.state.selectedTag);
     }
 
+    // if this is a job, set it to paused
+    if (this.props.currentChart.chart.metadata.name == "job") {
+      _.set(values, "paused", true);
+    }
+
     // Weave in preexisting values and convert to yaml
     let conf = yaml.dump(
       {
@@ -204,7 +210,7 @@ export default class SettingsSection extends Component<PropsType, StateType> {
         </StyledSettingsSection>
         {this.props.showSource && (
           <SaveButton
-            text="Deploy"
+            text={this.props.saveButtonText || "Save Config"}
             status={this.state.saveValuesStatus}
             onClick={this.handleSubmit}
             makeFlush={true}

@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/url"
 
+	"github.com/porter-dev/porter/server/api"
 	v1 "k8s.io/api/core/v1"
 )
 
@@ -75,6 +76,45 @@ func (c *Client) GetKubeconfig(
 
 	req = req.WithContext(ctx)
 	bodyResp := &GetKubeconfigResponse{}
+
+	if httpErr, err := c.sendRequest(req, bodyResp, true); httpErr != nil || err != nil {
+		if httpErr != nil {
+			return nil, fmt.Errorf("code %d, errors %v", httpErr.Code, httpErr.Errors)
+		}
+
+		return nil, err
+	}
+
+	return bodyResp, nil
+}
+
+// GetReleaseLatestRevision gets the latest revision of a Helm release
+type GetReleaseResponse api.PorterRelease
+
+// GetK8sAllPods gets all pods for a given release
+func (c *Client) GetRelease(
+	ctx context.Context,
+	projectID, clusterID uint,
+	namespace, name string,
+) (*GetReleaseResponse, error) {
+	cl := fmt.Sprintf("%d", clusterID)
+
+	req, err := http.NewRequest(
+		"GET",
+		fmt.Sprintf("%s/projects/%d/releases/%s/0?"+url.Values{
+			"cluster_id": []string{cl},
+			"namespace":  []string{namespace},
+			"storage":    []string{"secret"},
+		}.Encode(), c.BaseURL, projectID, name),
+		nil,
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	req = req.WithContext(ctx)
+	bodyResp := &GetReleaseResponse{}
 
 	if httpErr, err := c.sendRequest(req, bodyResp, true); httpErr != nil || err != nil {
 		if httpErr != nil {

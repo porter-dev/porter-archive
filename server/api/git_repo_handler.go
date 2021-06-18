@@ -224,6 +224,12 @@ func (app *App) HandleDetectBuildpack(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	queryParams, err := url.ParseQuery(r.URL.RawQuery)
+	if err != nil {
+		app.handleErrorFormDecoding(err, ErrReleaseDecode, w)
+		return
+	}
+
 	client := github.NewClient(app.GithubProjectConf.Client(oauth2.NoContext, tok))
 	owner := chi.URLParam(r, "owner")
 	name := chi.URLParam(r, "name")
@@ -231,7 +237,7 @@ func (app *App) HandleDetectBuildpack(w http.ResponseWriter, r *http.Request) {
 
 	repoContentOptions := github.RepositoryContentGetOptions{}
 	repoContentOptions.Ref = branch
-	_, directoryContents, _, err := client.Repositories.GetContents(context.Background(), owner, name, "", &repoContentOptions)
+	_, directoryContents, _, err := client.Repositories.GetContents(context.Background(), owner, name, queryParams["dir"][0], &repoContentOptions)
 	if err != nil {
 		app.handleErrorInternal(err, w)
 		return

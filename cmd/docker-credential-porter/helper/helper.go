@@ -1,22 +1,9 @@
 package helper
 
 import (
-	"context"
-	"encoding/base64"
-	"fmt"
-	"log"
-	"net/url"
-	"os"
-	"path/filepath"
-	"regexp"
-	"strings"
-	"time"
-
 	"github.com/docker/docker-credential-helpers/credentials"
 	"github.com/porter-dev/porter/cli/cmd"
-	"github.com/porter-dev/porter/cli/cmd/api"
-	"github.com/spf13/viper"
-	"k8s.io/client-go/util/homedir"
+	"github.com/porter-dev/porter/cli/cmd/docker"
 )
 
 // PorterHelper implements credentials.Helper: it acts as a credentials
@@ -24,7 +11,26 @@ import (
 type PorterHelper struct {
 	Debug bool
 
-	credCache CredentialsCache
+	ProjectID  uint
+	AuthGetter *docker.AuthGetter
+	Cache      docker.CredentialsCache
+}
+
+func NewPorterHelper(debug bool) *PorterHelper {
+	// get the current project ID
+	config := cmd.InitAndLoadNewConfig()
+	cache := docker.NewFileCredentialsCache()
+
+	return &PorterHelper{
+		Debug:     debug,
+		ProjectID: config.Project,
+		AuthGetter: &docker.AuthGetter{
+			Client:    cmd.GetAPIClient(config),
+			Cache:     cache,
+			ProjectID: config.Project,
+		},
+		Cache: cache,
+	}
 }
 
 // Add appends credentials to the store.
@@ -39,234 +45,21 @@ func (p *PorterHelper) Delete(serverURL string) error {
 	return nil
 }
 
-var ecrPattern = regexp.MustCompile(`(^[a-zA-Z0-9][a-zA-Z0-9-_]*)\.dkr\.ecr(\-fips)?\.([a-zA-Z0-9][a-zA-Z0-9-_]*)\.amazonaws\.com(\.cn)?`)
-
 // Get retrieves credentials from the store.
 // It returns username and secret as strings.
 func (p *PorterHelper) Get(serverURL string) (user string, secret string, err error) {
-	p.init()
-
-	if strings.Contains(serverURL, "gcr.io") {
-		return p.getGCR(serverURL)
-	} else if strings.Contains(serverURL, "registry.digitalocean.com") {
-		return p.getDOCR(serverURL)
-	}
-
-	return p.getECR(serverURL)
-}
-
-func (p *PorterHelper) getGCR(serverURL string) (user string, secret string, err error) {
-	urlP, err := url.Parse("https://" + serverURL)
-
-	if err != nil {
-		return "", "", err
-	}
-
-	credCache := BuildCredentialsCache(urlP.Host)
-	cachedEntry := credCache.Get(serverURL)
-
-	var token string
-
-	if cachedEntry != nil && cachedEntry.IsValid(time.Now()) {
-		token = cachedEntry.AuthorizationToken
-	} else {
-		projID := viper.GetUint("project")
-
-		client := cmd.GetAPIClient()
-
-		// get a token from the server
-		tokenResp, err := client.GetGCRAuthorizationToken(context.Background(), projID, &api.GetGCRTokenRequest{
-			ServerURL: serverURL,
-		})
-
-		if err != nil {
-			return "", "", err
-		}
-
-		token = tokenResp.Token
-
-		// set the token in cache
-		credCache.Set(serverURL, &AuthEntry{
-			AuthorizationToken: token,
-			RequestedAt:        time.Now(),
-			ExpiresAt:          *tokenResp.ExpiresAt,
-			ProxyEndpoint:      serverURL,
-		})
-	}
-
-	return "oauth2accesstoken", token, nil
-}
-
-func (p *PorterHelper) getDOCR(serverURL string) (user string, secret string, err error) {
-	urlP, err := url.Parse("https://" + serverURL)
-
-	if err != nil {
-		if p.Debug {
-			log.Printf("Error: %s\n", err.Error())
-		}
-
-		return "", "", err
-	}
-
-	credCache := BuildCredentialsCache(urlP.Host)
-	cachedEntry := credCache.Get(serverURL)
-
-	var token string
-
-	if p.Debug {
-		log.Printf("GETTING FROM DOCR", urlP)
-	}
-
-	if cachedEntry != nil && cachedEntry.IsValid(time.Now()) {
-		token = cachedEntry.AuthorizationToken
-
-		if p.Debug {
-			log.Printf("USING CACHED TOKEN", token)
-		}
-	} else {
-		host := viper.GetString("host")
-		projID := viper.GetUint("project")
-
-		client := cmd.GetAPIClient()
-
-		if p.Debug {
-			log.Printf("MAKING REQUEST", host, projID)
-		}
-
-		// get a token from the server
-		tokenResp, err := client.GetDOCRAuthorizationToken(context.Background(), projID, &api.GetDOCRTokenRequest{
-			ServerURL: serverURL,
-		})
-
-		if err != nil {
-			if p.Debug {
-				log.Printf("Error: %s\n", err.Error())
-			}
-
-			return "", "", err
-		}
-
-		token = tokenResp.Token
-
-		if t := *tokenResp.ExpiresAt; len(token) > 0 && !t.IsZero() {
-			// set the token in cache
-			credCache.Set(serverURL, &AuthEntry{
-				AuthorizationToken: token,
-				RequestedAt:        time.Now(),
-				ExpiresAt:          t,
-				ProxyEndpoint:      serverURL,
-			})
-		}
-
-	}
-
-	return token, token, nil
-}
-
-func (p *PorterHelper) getECR(serverURL string) (user string, secret string, err error) {
-	// parse the server url for region
-	matches := ecrPattern.FindStringSubmatch(serverURL)
-
-	if len(matches) == 0 {
-		err := fmt.Errorf("only ECR registry URLs are supported")
-
-		if p.Debug {
-			log.Printf("Error: %s\n", err.Error())
-		}
-
-		return "", "", err
-	} else if len(matches) < 3 {
-		err := fmt.Errorf("%s is not a valid ECR repository URI", serverURL)
-
-		if p.Debug {
-			log.Printf("Error: %s\n", err.Error())
-		}
-
-		return "", "", err
-	}
-
-	region := matches[3]
-
-	credCache := BuildCredentialsCache(region)
-	cachedEntry := credCache.Get(serverURL)
-
-	var token string
-
-	if cachedEntry != nil && cachedEntry.IsValid(time.Now()) {
-		token = cachedEntry.AuthorizationToken
-	} else {
-		projID := viper.GetUint("project")
-
-		client := cmd.GetAPIClient()
-
-		// get a token from the server
-		tokenResp, err := client.GetECRAuthorizationToken(context.Background(), projID, matches[3])
-
-		if err != nil {
-			return "", "", err
-		}
-
-		token = tokenResp.Token
-
-		// set the token in cache
-		credCache.Set(serverURL, &AuthEntry{
-			AuthorizationToken: token,
-			RequestedAt:        time.Now(),
-			ExpiresAt:          *tokenResp.ExpiresAt,
-			ProxyEndpoint:      serverURL,
-		})
-	}
-
-	return p.getAuth(token)
+	return p.AuthGetter.GetCredentials(serverURL)
 }
 
 // List returns the stored serverURLs and their associated usernames.
 func (p *PorterHelper) List() (map[string]string, error) {
-	p.init()
-
-	credCache := BuildCredentialsCache("")
-	entries := credCache.List()
+	entries := p.Cache.List()
 
 	res := make(map[string]string)
 
 	for _, entry := range entries {
-		user, _, err := p.getAuth(entry.AuthorizationToken)
-
-		if err != nil {
-			continue
-		}
-
-		res[entry.ProxyEndpoint] = user
+		res[entry.ProxyEndpoint] = entry.AuthorizationToken
 	}
 
 	return res, nil
-}
-
-func (p *PorterHelper) getAuth(token string) (string, string, error) {
-	decodedToken, err := base64.StdEncoding.DecodeString(token)
-
-	if err != nil {
-		return "", "", fmt.Errorf("Invalid token: %v", err)
-	}
-
-	parts := strings.SplitN(string(decodedToken), ":", 2)
-
-	if len(parts) < 2 {
-		return "", "", fmt.Errorf("Invalid token: expected two parts, got %d", len(parts))
-	}
-
-	return parts[0], parts[1], nil
-}
-
-func (p *PorterHelper) init() {
-	cmd.Setup()
-
-	if p.Debug {
-		var home = homedir.HomeDir()
-		file, err := os.OpenFile(filepath.Join(home, ".porter", "logs.txt"), os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0666)
-
-		if err == nil {
-			log.SetOutput(file)
-		}
-	}
 }

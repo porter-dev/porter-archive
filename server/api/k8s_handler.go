@@ -172,11 +172,8 @@ func (app *App) HandleDeleteNamespace(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	namespace := &forms.NamespaceForm{}
-
-	if err := json.NewDecoder(r.Body).Decode(namespace); err != nil {
-		app.handleErrorFormDecoding(err, ErrUserDecode, w)
-		return
+	namespace := &forms.NamespaceForm{
+		Name: vals.Get("name"),
 	}
 
 	err = agent.DeleteNamespace(namespace.Name)
@@ -1012,16 +1009,15 @@ func (app *App) HandleListJobPods(w http.ResponseWriter, r *http.Request) {
 // HandleStreamControllerStatus test calls
 // TODO: Refactor repeated calls.
 func (app *App) HandleStreamControllerStatus(w http.ResponseWriter, r *http.Request) {
-
-	// get session to retrieve correct kubeconfig
-	_, err := app.Store.Get(r, app.ServerConf.CookieName)
+	vals, err := url.ParseQuery(r.URL.RawQuery)
 
 	if err != nil {
 		app.handleErrorFormDecoding(err, ErrReleaseDecode, w)
 		return
 	}
 
-	vals, err := url.ParseQuery(r.URL.RawQuery)
+	// get session to retrieve correct kubeconfig
+	_, err = app.Store.Get(r, app.ServerConf.CookieName)
 
 	if err != nil {
 		app.handleErrorFormDecoding(err, ErrReleaseDecode, w)
@@ -1064,7 +1060,12 @@ func (app *App) HandleStreamControllerStatus(w http.ResponseWriter, r *http.Requ
 
 	// get path parameters
 	kind := chi.URLParam(r, "kind")
-	err = agent.StreamControllerStatus(conn, kind)
+
+	selectors := ""
+	if vals["selectors"] != nil {
+		selectors = vals["selectors"][0]
+	} 
+	err = agent.StreamControllerStatus(conn, kind, selectors)
 
 	if err != nil {
 		app.handleErrorWebsocketWrite(err, w)

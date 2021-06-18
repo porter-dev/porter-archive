@@ -47,13 +47,13 @@ const createAWSIntegration = baseApi<
 
 const overwriteAWSIntegration = baseApi<
   {
-    aws_access_key_id: string,
-    aws_secret_access_key: string,
+    aws_access_key_id: string;
+    aws_secret_access_key: string;
   },
-  { 
-    projectID: number,
-    awsIntegrationID: number,
-    cluster_id: number,
+  {
+    projectID: number;
+    awsIntegrationID: number;
+    cluster_id: number;
   }
 >("POST", (pathParams) => {
   return `/api/projects/${pathParams.projectID}/integrations/aws/${pathParams.awsIntegrationID}/overwrite?cluster_id=${pathParams.cluster_id}`;
@@ -420,8 +420,8 @@ const getClusterNodes = baseApi<
     cluster_id: number;
   }
 >("GET", (pathParams) => {
-  return `/api/projects/${pathParams.project_id}/clusters/${pathParams.cluster_id}/nodes`
-})
+  return `/api/projects/${pathParams.project_id}/clusters/${pathParams.cluster_id}/nodes`;
+});
 
 const getGitRepoList = baseApi<
   {},

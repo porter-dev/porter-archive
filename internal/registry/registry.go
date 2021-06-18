@@ -482,9 +482,12 @@ func (r *Registry) listECRImages(repoName string, repo repository.Repository) ([
 		return nil, err
 	}
 
+	var maxResults int64 = 999
+
 	describeResp, err := svc.DescribeImages(&ecr.DescribeImagesInput{
 		RepositoryName: &repoName,
 		ImageIds:       resp.ImageIds,
+		MaxResults:     &maxResults,
 	})
 
 	if err != nil {

@@ -310,7 +310,6 @@ export default class ValuesForm extends Component<PropsType, StateType> {
       return this.props.sections?.map((section: Section, i: number) => {
         // Hide collapsible section if deciding field is false
         if (section.show_if) {
-          console.log(this.props.metaState);
           if (
             !this.props.metaState[section.show_if] ||
             this.props.metaState[section.show_if].value === false

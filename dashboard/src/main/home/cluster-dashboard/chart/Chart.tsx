@@ -1,31 +1,27 @@
-import React, { Component } from "react";
+import React, { useContext, useEffect, useMemo, useState } from "react";
 import styled from "styled-components";
 
-import { ChartType } from "shared/types";
+import { ChartType, StorageType } from "shared/types";
 import { Context } from "shared/Context";
 import StatusIndicator from "components/StatusIndicator";
-import { pushFiltered, pushQueryParams } from "shared/routing";
-import { RouteComponentProps, withRouter } from "react-router";
+import { pushFiltered } from "shared/routing";
+import { useHistory, useLocation, useRouteMatch } from "react-router";
+import api from "shared/api";
 
-type PropsType = RouteComponentProps & {
+type Props = {
   chart: ChartType;
   controllers: Record<string, any>;
 };
 
-type StateType = {
-  expand: boolean;
-  update: any[];
-};
+const Chart: React.FunctionComponent<Props> = ({ chart, controllers }) => {
+  const [expand, setExpand] = useState<boolean>(false);
+  const [chartControllers, setChartControllers] = useState<any>([]);
+  const context = useContext(Context);
+  const location = useLocation();
+  const history = useHistory();
+  const match = useRouteMatch();
 
-class Chart extends Component<PropsType, StateType> {
-  state = {
-    expand: false,
-    update: [] as any[],
-  };
-
-  renderIcon = () => {
-    let { chart } = this.props;
-
+  const renderIcon = () => {
     if (chart.chart.metadata.icon && chart.chart.metadata.icon !== "") {
       return <Icon src={chart.chart.metadata.icon} />;
     } else {
@@ -33,65 +29,98 @@ class Chart extends Component<PropsType, StateType> {
     }
   };
 
-  readableDate = (s: string) => {
-    let ts = new Date(s);
-    let date = ts.toLocaleDateString();
-    let time = ts.toLocaleTimeString([], {
+  const getControllerForChart = async (chart: ChartType) => {
+    try {
+      const { currentCluster, currentProject } = context;
+      const res = await api.getChartControllers(
+        "<token>",
+        {
+          namespace: chart.namespace,
+          cluster_id: currentCluster.id,
+          storage: StorageType.Secret,
+        },
+        {
+          id: currentProject.id,
+          name: chart.name,
+          revision: chart.version,
+        }
+      );
+
+      const controllersUid = res.data.map((c: any) => {
+        return c.metadata.uid;
+      });
+      setChartControllers(controllersUid);
+    } catch (error) {
+      context.setCurrentError(JSON.stringify(error));
+    }
+  };
+
+  useEffect(() => {
+    getControllerForChart(chart);
+  }, [chart]);
+
+  const readableDate = (s: string) => {
+    const ts = new Date(s);
+    const date = ts.toLocaleDateString();
+    const time = ts.toLocaleTimeString([], {
       hour: "numeric",
       minute: "2-digit",
     });
     return `${time} on ${date}`;
   };
 
-  render() {
-    let { chart } = this.props;
+  const filteredControllers = useMemo(() => {
+    let tmpControllers: any = {};
+    chartControllers.forEach((uid: any) => {
+      if (!controllers[uid]) {
+        return;
+      }
+      tmpControllers[uid] = controllers[uid];
+    });
+    return tmpControllers;
+  }, [chartControllers, controllers]);
 
-    return (
-      <StyledChart
-        onMouseEnter={() => this.setState({ expand: true })}
-        onMouseLeave={() => this.setState({ expand: false })}
-        expand={this.state.expand}
-        onClick={() => {
-          let { location, match } = this.props;
-          let urlParams = new URLSearchParams(location.search);
-          let cluster = urlParams.get("cluster");
-          let route = `${match.url}/${cluster}/${chart.namespace}/${chart.name}`;
-          pushFiltered(this.props, route, ["project_id"]);
-        }}
-      >
-        <Title>
-          <IconWrapper>{this.renderIcon()}</IconWrapper>
-          {chart.name}
-        </Title>
+  return (
+    <StyledChart
+      onMouseEnter={() => setExpand(true)}
+      onMouseLeave={() => setExpand(false)}
+      expand={expand}
+      onClick={() => {
+        let urlParams = new URLSearchParams(location.search);
+        let cluster = urlParams.get("cluster");
+        let route = `${match.url}/${cluster}/${chart.namespace}/${chart.name}`;
+        pushFiltered({ location, history }, route, ["project_id"]);
+      }}
+    >
+      <Title>
+        <IconWrapper>{renderIcon()}</IconWrapper>
+        {chart.name}
+      </Title>
 
-        <BottomWrapper>
-          <InfoWrapper>
-            <StatusIndicator
-              controllers={this.props.controllers}
-              status={chart.info.status}
-              margin_left={"17px"}
-            />
-            <LastDeployed>
-              <Dot>•</Dot> Last deployed{" "}
-              {this.readableDate(chart.info.last_deployed)}
-            </LastDeployed>
-          </InfoWrapper>
+      <BottomWrapper>
+        <InfoWrapper>
+          <StatusIndicator
+            controllers={filteredControllers}
+            status={chart.info.status}
+            margin_left={"17px"}
+          />
+          <LastDeployed>
+            <Dot>•</Dot> Last deployed {readableDate(chart.info.last_deployed)}
+          </LastDeployed>
+        </InfoWrapper>
 
-          <TagWrapper>
-            Namespace
-            <NamespaceTag>{chart.namespace}</NamespaceTag>
-          </TagWrapper>
-        </BottomWrapper>
+        <TagWrapper>
+          Namespace
+          <NamespaceTag>{chart.namespace}</NamespaceTag>
+        </TagWrapper>
+      </BottomWrapper>
 
-        <Version>v{chart.version}</Version>
-      </StyledChart>
-    );
-  }
-}
+      <Version>v{chart.version}</Version>
+    </StyledChart>
+  );
+};
 
-Chart.contextType = Context;
-
-export default withRouter(Chart);
+export default Chart;
 
 const BottomWrapper = styled.div`
   display: flex;

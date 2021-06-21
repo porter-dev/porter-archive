@@ -17,6 +17,17 @@ const NodeUsage: React.FunctionComponent<NodeUsageProps> = ({ node }) => {
         <span>How to read memory and cpu units</span>
         <i className="material-icons">help_outline</i>
       </Help>
+
+      <Help
+        href="https://kubernetes.io/docs/tasks/administer-cluster/reserve-compute-resources/#node-allocatable"
+        target="_blank"
+      >
+        <span>
+          The memory value corresponds to the allocatable total on node, for
+          more info click here
+        </span>
+        <i className="material-icons">help_outline</i>
+      </Help>
       <Wrapper>
         <UsageWrapper>
           <span>

@@ -25,6 +25,7 @@ type NodeUsage struct {
 
 type NodeWithUsageData struct {
 	Name                           string             `json:"name"`
+	Labels                         map[string]string  `json:"labels"`
 	CpuReqs                        string             `json:"cpu_reqs"`
 	MemoryReqs                     string             `json:"memory_reqs"`
 	EphemeralStorageReqs           string             `json:"ephemeral_storage_reqs"`
@@ -40,6 +41,7 @@ type NodeWithUsageData struct {
 func (nu *NodeUsage) Externalize(node v1.Node) *NodeWithUsageData {
 	return &NodeWithUsageData{
 		Name:                           node.Name,
+		Labels:                         node.Labels,
 		CpuReqs:                        nu.cpuReqs,
 		MemoryReqs:                     nu.memoryReqs,
 		EphemeralStorageReqs:           nu.ephemeralStorageReqs,
@@ -87,9 +89,8 @@ func getPodsForNode(clientset kubernetes.Interface, nodeName string) *v1.PodList
 
 type NodeDetails struct {
 	NodeWithUsageData
-	Labels            map[string]string `json:"labels"`
-	AllocatableCpu    int64             `json:"allocatable_cpu"`
-	AllocatableMemory string            `json:"allocatable_memory"`
+	AllocatableCpu    int64  `json:"allocatable_cpu"`
+	AllocatableMemory string `json:"allocatable_memory"`
 }
 
 func DescribeNode(clientset kubernetes.Interface, nodeName string) *NodeDetails {
@@ -101,7 +102,6 @@ func DescribeNode(clientset kubernetes.Interface, nodeName string) *NodeDetails 
 
 	return &NodeDetails{
 		NodeWithUsageData: *extNodeUsage,
-		Labels:            node.Labels,
 		AllocatableCpu:    node.Status.Allocatable.Cpu().MilliValue(),
 		AllocatableMemory: node.Status.Allocatable.Memory().String(),
 	}

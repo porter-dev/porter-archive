@@ -22,6 +22,10 @@ const NodeList: React.FC = () => {
         accessor: "name",
       },
       {
+        Header: "Machine type",
+        accessor: "machine_type",
+      },
+      {
         Header: "CPU Usage",
         accessor: "cpu_usage",
       },
@@ -50,10 +54,15 @@ const NodeList: React.FC = () => {
     const percentFormatter = (number: number) =>
       `${Number(number).toFixed(2)}%`;
 
+    const getMachineType = (labels: any) => {
+      return (labels && labels["node.kubernetes.io/instance-type"]) || "N/A";
+    };
+
     return nodeList
       .map((node) => {
         return {
           name: node.name,
+          machine_type: getMachineType(node?.labels),
           cpu_usage: percentFormatter(node.fraction_cpu_reqs),
           ram_usage: percentFormatter(node.fraction_memory_reqs),
           node_conditions: node.node_conditions,

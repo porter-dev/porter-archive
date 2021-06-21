@@ -27,6 +27,7 @@ const RepoList: React.FC<Props> = ({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [searchFilter, setSearchFilter] = useState(null);
+  const [searchInput, setSearchInput] = useState("");
   const { currentProject } = useContext(Context);
 
   // TODO: Try to unhook before unmount
@@ -168,12 +169,26 @@ const RepoList: React.FC<Props> = ({
             <SearchBar>
               <i className="material-icons">search</i>
               <SearchInput
+                value={searchInput}
                 onChange={(e: any) => {
-                  setSearchFilter(e.target.value);
+                  setSearchInput(e.target.value);
+                }}
+                onKeyPress={({ key }) => {
+                  if (key === "Enter") {
+                    setSearchFilter(searchInput);
+                  }
                 }}
                 placeholder="Search repos..."
               />
             </SearchBar>
+            <ButtonWrapper disabled={loading || error}>
+              <Button
+                onClick={() => setSearchFilter(searchInput)}
+                disabled={loading || error}
+              >
+                Search
+              </Button>
+            </ButtonWrapper>
           </SearchRowTop>
           <RepoListWrapper>
             <ExpandedWrapper>{renderRepoList()}</ExpandedWrapper>
@@ -188,8 +203,16 @@ const RepoList: React.FC<Props> = ({
 
 export default RepoList;
 
-const SearchButton = styled(Button)`
-  margin: 5px 7px;
+const ButtonWrapper = styled.div`
+  background: ${(props: { disabled?: boolean }) =>
+    props.disabled ? "#aaaabbee" : "#616FEEcc"};
+  :hover {
+    background: ${(props: { disabled?: boolean }) =>
+      props.disabled ? "" : "#505edddd"};
+  }
+  height: 40px;
+  display: flex;
+  align-items: center;
 `;
 
 const RepoListWrapper = styled.div`

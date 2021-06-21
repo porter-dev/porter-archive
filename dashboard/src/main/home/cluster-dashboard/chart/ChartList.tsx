@@ -167,7 +167,7 @@ const ChartList: React.FunctionComponent<Props> = ({
       });
     }
     return () => (isSubscribed = false);
-  }, [namespace]);
+  }, [namespace, currentView]);
 
   const renderChartList = () => {
     if (isLoading || (!namespace && namespace !== "")) {

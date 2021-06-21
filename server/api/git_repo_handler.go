@@ -259,7 +259,8 @@ func (app *App) HandleDetectBuildpack(w http.ResponseWriter, r *http.Request) {
 	matches := 0
 
 	for i := range directoryContents {
-		name := *directoryContents[i].Path
+		name := *directoryContents[i].Name
+
 		bname, ok := BREQS[name]
 		if ok {
 			matches++

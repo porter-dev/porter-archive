@@ -35,7 +35,7 @@ export default class NamespaceModal extends Component<PropsType, StateType> {
       return;
     }
 
-    if (!this.hasInvalidCharacters(this.state.namespaceName)) {
+    if (this.hasInvalidCharacters(this.state.namespaceName)) {
       this.setState({
         status: "Only lowercase, numbers or dash (-) are allowed",
       });

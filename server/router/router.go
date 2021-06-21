@@ -824,6 +824,20 @@ func New(a *api.App) *chi.Mux {
 			)
 
 			r.Method(
+				"POST",
+				"/projects/{project_id}/registries/{registry_id}/repository",
+				auth.DoesUserHaveProjectAccess(
+					auth.DoesUserHaveRegistryAccess(
+						requestlog.NewHandler(a.HandleCreateRepository, l),
+						mw.URLParam,
+						mw.URLParam,
+					),
+					mw.URLParam,
+					mw.WriteAccess,
+				),
+			)
+
+			r.Method(
 				"GET",
 				"/projects/{project_id}/registries/ecr/{region}/token",
 				auth.DoesUserHaveProjectAccess(
@@ -1095,6 +1109,20 @@ func New(a *api.App) *chi.Mux {
 				auth.DoesUserHaveProjectAccess(
 					auth.DoesUserHaveGitRepoAccess(
 						requestlog.NewHandler(a.HandleGetProcfileContents, l),
+						mw.URLParam,
+						mw.URLParam,
+					),
+					mw.URLParam,
+					mw.ReadAccess,
+				),
+			)
+
+			r.Method(
+				"GET",
+				"/projects/{project_id}/gitrepos/{git_repo_id}/repos/{kind}/{owner}/{name}/{branch}/tarball_url",
+				auth.DoesUserHaveProjectAccess(
+					auth.DoesUserHaveGitRepoAccess(
+						requestlog.NewHandler(a.HandleGetRepoZIPDownloadURL, l),
 						mw.URLParam,
 						mw.URLParam,
 					),
@@ -1499,6 +1527,20 @@ func New(a *api.App) *chi.Mux {
 					),
 					mw.URLParam,
 					mw.ReadAccess,
+				),
+			)
+
+			r.Method(
+				"POST",
+				"/projects/{project_id}/releases/image/update/batch",
+				auth.DoesUserHaveProjectAccess(
+					auth.DoesUserHaveClusterAccess(
+						requestlog.NewHandler(a.HandleReleaseUpdateJobImages, l),
+						mw.URLParam,
+						mw.QueryParam,
+					),
+					mw.URLParam,
+					mw.WriteAccess,
 				),
 			)
 		})

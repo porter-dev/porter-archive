@@ -34,8 +34,8 @@ var startCmd = &cobra.Command{
 	Use:   "start",
 	Short: "Starts a Porter server instance on the host",
 	Run: func(cmd *cobra.Command, args []string) {
-		if getDriver() == "docker" {
-			setDriver("docker")
+		if config.Driver == "docker" {
+			config.SetDriver("docker")
 
 			err := startDocker(
 				opts.imageTag,
@@ -57,7 +57,7 @@ var startCmd = &cobra.Command{
 				os.Exit(1)
 			}
 		} else {
-			setDriver("local")
+			config.SetDriver("local")
 			err := startLocal(
 				opts.db,
 				*opts.port,
@@ -76,7 +76,7 @@ var stopCmd = &cobra.Command{
 	Use:   "stop",
 	Short: "Stops a Porter instance running on the Docker engine",
 	Run: func(cmd *cobra.Command, args []string) {
-		if getDriver() == "docker" {
+		if config.Driver == "docker" {
 			if err := stopDocker(); err != nil {
 				color.New(color.FgRed).Println("Shutdown unsuccessful:", err.Error())
 				os.Exit(1)
@@ -91,18 +91,13 @@ func init() {
 	serverCmd.AddCommand(startCmd)
 	serverCmd.AddCommand(stopCmd)
 
+	serverCmd.PersistentFlags().AddFlagSet(driverFlagSet)
+
 	startCmd.PersistentFlags().StringVar(
 		&opts.db,
 		"db",
 		"sqlite",
 		"the db to use, one of sqlite or postgres",
-	)
-
-	startCmd.PersistentFlags().StringVar(
-		&opts.driver,
-		"driver",
-		"local",
-		"the driver to use, one of \"local\" or \"docker\"",
 	)
 
 	startCmd.PersistentFlags().StringVar(
@@ -157,7 +152,7 @@ func startDocker(
 
 	green.Printf("Server ready: listening on localhost:%d\n", port)
 
-	return setHost(fmt.Sprintf("http://localhost:%d", port))
+	return config.SetHost(fmt.Sprintf("http://localhost:%d", port))
 }
 
 func startLocal(
@@ -168,7 +163,7 @@ func startLocal(
 		return fmt.Errorf("postgres not available for local driver, run \"porter server start --db postgres --driver docker\"")
 	}
 
-	setHost(fmt.Sprintf("http://localhost:%d", port))
+	config.SetHost(fmt.Sprintf("http://localhost:%d", port))
 
 	porterDir := filepath.Join(home, ".porter")
 	cmdPath := filepath.Join(home, ".porter", "portersvr")
@@ -260,6 +255,11 @@ func downloadMatchingRelease(porterDir string) error {
 		EntityID:            "porter-dev",
 		RepoName:            "porter",
 		IsPlatformDependent: true,
+		Downloader: &github.ZIPDownloader{
+			ZipFolderDest:   porterDir,
+			AssetFolderDest: porterDir,
+			ZipName:         "portersvr_latest.zip",
+		},
 	}
 
 	err := z.GetRelease(Version)
@@ -276,6 +276,11 @@ func downloadMatchingRelease(porterDir string) error {
 		EntityID:            "porter-dev",
 		RepoName:            "porter",
 		IsPlatformDependent: false,
+		Downloader: &github.ZIPDownloader{
+			ZipFolderDest:   porterDir,
+			AssetFolderDest: filepath.Join(porterDir, "static"),
+			ZipName:         "static_latest.zip",
+		},
 	}
 
 	return zStatic.GetRelease(Version)

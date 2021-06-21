@@ -68,13 +68,6 @@ var clusterNamespaceListCmd = &cobra.Command{
 func init() {
 	rootCmd.AddCommand(clusterCmd)
 
-	clusterCmd.PersistentFlags().UintVar(
-		&clusterID,
-		"cluster-id",
-		getClusterID(),
-		"id of the cluster",
-	)
-
 	clusterCmd.AddCommand(clusterNamespaceCmd)
 	clusterCmd.AddCommand(clusterListCmd)
 	clusterCmd.AddCommand(clusterDeleteCmd)
@@ -83,7 +76,7 @@ func init() {
 }
 
 func listClusters(user *api.AuthCheckResponse, client *api.Client, args []string) error {
-	clusters, err := client.ListProjectClusters(context.Background(), getProjectID())
+	clusters, err := client.ListProjectClusters(context.Background(), config.Project)
 
 	if err != nil {
 		return err
@@ -94,7 +87,7 @@ func listClusters(user *api.AuthCheckResponse, client *api.Client, args []string
 
 	fmt.Fprintf(w, "%s\t%s\t%s\n", "ID", "NAME", "SERVER")
 
-	currClusterID := getClusterID()
+	currClusterID := config.Cluster
 
 	for _, cluster := range clusters {
 		if currClusterID == cluster.ID {
@@ -129,7 +122,7 @@ func deleteCluster(user *api.AuthCheckResponse, client *api.Client, args []strin
 			return err
 		}
 
-		err = client.DeleteProjectCluster(context.Background(), getProjectID(), uint(id))
+		err = client.DeleteProjectCluster(context.Background(), config.Project, uint(id))
 
 		if err != nil {
 			return err
@@ -142,10 +135,10 @@ func deleteCluster(user *api.AuthCheckResponse, client *api.Client, args []strin
 }
 
 func listNamespaces(user *api.AuthCheckResponse, client *api.Client, args []string) error {
-	pID := getProjectID()
+	pID := config.Project
 
 	// get the service account based on the cluster id
-	cID := getClusterID()
+	cID := config.Cluster
 
 	// get the list of namespaces
 	namespaces, err := client.GetK8sNamespaces(

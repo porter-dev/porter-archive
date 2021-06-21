@@ -2,27 +2,32 @@ package docker
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
+	"os"
 	"strings"
 	"time"
 
+	"github.com/docker/distribution/reference"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/docker/api/types/network"
 	"github.com/docker/docker/api/types/volume"
 	"github.com/docker/docker/client"
+	"github.com/moby/moby/pkg/jsonmessage"
+	"github.com/moby/term"
 )
 
 // Agent is a Docker client for performing operations that interact
 // with the Docker engine over REST
 type Agent struct {
-	client *client.Client
-	ctx    context.Context
-	label  string
+	authGetter *AuthGetter
+	client     *client.Client
+	ctx        context.Context
+	label      string
 }
 
 // CreateLocalVolumeIfNotExist creates a volume using driver type "local" with the
@@ -134,6 +139,10 @@ func (a *Agent) ConnectContainerToNetwork(networkID, containerID, containerName 
 	return a.client.NetworkConnect(a.ctx, networkID, containerID, &network.EndpointSettings{})
 }
 
+func (a *Agent) TagImage(old, new string) error {
+	return a.client.ImageTag(a.ctx, old, new)
+}
+
 // PullImageEvent represents a response from the Docker API with an image pull event
 type PullImageEvent struct {
 	Status         string `json:"status"`
@@ -145,31 +154,164 @@ type PullImageEvent struct {
 	} `json:"progressDetail"`
 }
 
+var PullImageErrNotFound = fmt.Errorf("Requested image not found")
+
+var PullImageErrUnauthorized = fmt.Errorf("Could not pull image: unauthorized")
+
 // PullImage pulls an image specified by the image string
 func (a *Agent) PullImage(image string) error {
-	// pull the specified image
-	out, err := a.client.ImagePull(a.ctx, image, types.ImagePullOptions{})
+	opts, err := a.getPullOptions(image)
 
 	if err != nil {
-		return a.handleDockerClientErr(err, "Could not pull image"+image)
+		return err
 	}
 
-	decoder := json.NewDecoder(out)
+	// pull the specified image
+	out, err := a.client.ImagePull(a.ctx, image, opts)
 
-	var event *PullImageEvent
-
-	for {
-		if err := decoder.Decode(&event); err != nil {
-			if err == io.EOF {
-				break
-			}
-
-			return err
+	if err != nil {
+		if client.IsErrNotFound(err) {
+			return PullImageErrNotFound
+		} else if client.IsErrUnauthorized(err) {
+			return PullImageErrUnauthorized
+		} else {
+			return a.handleDockerClientErr(err, "Could not pull image "+image)
 		}
 	}
 
-	return nil
+	defer out.Close()
+
+	termFd, isTerm := term.GetFdInfo(os.Stderr)
+
+	return jsonmessage.DisplayJSONMessagesStream(out, os.Stderr, termFd, isTerm, nil)
 }
+
+// PushImage pushes an image specified by the image string
+func (a *Agent) PushImage(image string) error {
+	opts, err := a.getPushOptions(image)
+
+	if err != nil {
+		return err
+	}
+
+	out, err := a.client.ImagePush(
+		context.Background(),
+		image,
+		opts,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	defer out.Close()
+
+	termFd, isTerm := term.GetFdInfo(os.Stderr)
+
+	return jsonmessage.DisplayJSONMessagesStream(out, os.Stderr, termFd, isTerm, nil)
+}
+
+func (a *Agent) getPullOptions(image string) (types.ImagePullOptions, error) {
+	// check if agent has an auth getter; otherwise, assume public usage
+	if a.authGetter == nil {
+		return types.ImagePullOptions{}, nil
+	}
+
+	// get using server url
+	serverURL, err := GetServerURLFromTag(image)
+
+	if err != nil {
+		return types.ImagePullOptions{}, err
+	}
+
+	user, secret, err := a.authGetter.GetCredentials(serverURL)
+
+	if err != nil {
+		return types.ImagePullOptions{}, err
+	}
+
+	var authConfig = types.AuthConfig{
+		Username:      user,
+		Password:      secret,
+		ServerAddress: "https://" + serverURL,
+	}
+
+	authConfigBytes, _ := json.Marshal(authConfig)
+	authConfigEncoded := base64.URLEncoding.EncodeToString(authConfigBytes)
+
+	return types.ImagePullOptions{
+		RegistryAuth: authConfigEncoded,
+	}, nil
+}
+
+func (a *Agent) getPushOptions(image string) (types.ImagePushOptions, error) {
+	pullOpts, err := a.getPullOptions(image)
+
+	return types.ImagePushOptions(pullOpts), err
+}
+
+func GetServerURLFromTag(image string) (string, error) {
+	named, err := reference.ParseNamed(image)
+
+	if err != nil {
+		return "", err
+	}
+
+	domain := reference.Domain(named)
+
+	// if domain name is empty, use index.docker.io/v1
+	if domain == "" {
+		return "index.docker.io/v1", nil
+	}
+
+	return domain, nil
+
+	// else if matches := ecrPattern.FindStringSubmatch(image); matches >= 3 {
+	// 	// if this matches ECR, just use the domain name
+	// 	return domain, nil
+	// } else if strings.Contains(image, "gcr.io") || strings.Contains(image, "registry.digitalocean.com") {
+	// 	// if this matches GCR or DOCR, use the first path component
+	// 	return fmt.Sprintf("%s/%s", domain, strings.Split(path, "/")[0]), nil
+	// }
+
+	// // otherwise, best-guess is to get components of path that aren't the image name
+	// pathParts := strings.Split(path, "/")
+	// nonImagePath := ""
+
+	// if len(pathParts) > 1 {
+	// 	nonImagePath = strings.Join(pathParts[0:len(pathParts)-1], "/")
+	// }
+
+	// if err != nil {
+	// 	return "", err
+	// }
+
+	// return fmt.Sprintf("%s/%s", domain, nonImagePath), nil
+}
+
+// func imagePush(dockerClient *client.Client) error {
+// 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*120)
+// 	defer cancel()
+
+// 	authConfigBytes, _ := json.Marshal(authConfig)
+// 	authConfigEncoded := base64.URLEncoding.EncodeToString(authConfigBytes)
+
+// 	tag := dockerRegistryUserID + "/node-hello"
+// 	opts := types.ImagePushOptions{RegistryAuth: authConfigEncoded}
+// 	rd, err := dockerClient.ImagePush(ctx, tag, opts)
+// 	if err != nil {
+// 		return err
+// 	}
+
+// 	defer rd.Close()
+
+// 	err = print(rd)
+// 	if err != nil {
+// 		return err
+// 	}
+
+// 	return nil
+// }
 
 // WaitForContainerStop waits until a container has stopped to exit
 func (a *Agent) WaitForContainerStop(id string) error {

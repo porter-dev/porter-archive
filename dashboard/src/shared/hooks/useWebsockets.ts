@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react"
+import { useRef } from "react"
 
 interface NewWebsocketOptions {
   onopen?: () => void;
@@ -28,7 +28,7 @@ export const useWebsockets = () => {
    * @param id Id to access later the websocket config/connection
    * @param apiEndpoint Endpoint to connect the websocket e.g: /api/websocket
    * @param options Websocket listeners
-   * @returns 
+   * @returns An object with the config setted for that websocket. This config will be used to open the ws on openWebsocket
    */
   const newWebsocket = (id: string, apiEndpoint: string, options: NewWebsocketOptions): WebsocketConfig => {
     
@@ -82,13 +82,11 @@ export const useWebsockets = () => {
     if (prevWs) {
       prevWs.close();
     }
-    
+    const { url, ...listeners } = wsConfig;
+
     const ws = new WebSocket(wsConfig.url);
-    ws.onopen = wsConfig.onopen;
-    ws.onmessage = wsConfig.onmessage;
-    ws.onerror = wsConfig.onerror;
-    ws.onclose = wsConfig.onclose;
     
+    Object.assign(ws, listeners);
 
     websocketMap.current = {
       ...websocketMap.current,

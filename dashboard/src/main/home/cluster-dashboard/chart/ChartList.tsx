@@ -10,7 +10,7 @@ import Chart from "./Chart";
 import Loading from "components/Loading";
 import { useWebsockets } from "shared/hooks/useWebsockets";
 
-type PropsType = {
+type Props = {
   currentCluster: ClusterType;
   namespace: string;
   // TODO Convert to enum
@@ -18,7 +18,7 @@ type PropsType = {
   currentView: PorterUrl;
 };
 
-const ChartList: React.FunctionComponent<PropsType> = ({
+const ChartList: React.FunctionComponent<Props> = ({
   namespace,
   sortType,
   currentView,
@@ -30,9 +30,6 @@ const ChartList: React.FunctionComponent<PropsType> = ({
     closeAllWebsockets,
   } = useWebsockets();
   const [charts, setCharts] = useState<ChartType[]>([]);
-  const [chartLookupTable, setChartLookupTable] = useState<
-    Record<string, string>
-  >({});
   const [controllers, setControllers] = useState<
     Record<string, Record<string, any>>
   >({});
@@ -103,8 +100,6 @@ const ChartList: React.FunctionComponent<PropsType> = ({
       console.log(error);
       context.setCurrentError(JSON.stringify(error));
       setIsError(true);
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -120,19 +115,10 @@ const ChartList: React.FunctionComponent<PropsType> = ({
         let event = JSON.parse(evt.data);
         let object = event.Object;
         object.metadata.kind = event.Kind;
-        let chartKey = chartLookupTable[object.metadata.uid];
-
-        // ignore if updated object does not belong to any chart in the list.
-        if (!chartKey) {
-          return;
-        }
-
-        let chartControllers = controllers[chartKey];
-        chartControllers[object.metadata.uid] = object;
 
         setControllers((oldControllers) => ({
           ...oldControllers,
-          [chartKey]: chartControllers,
+          [object.metadata.uid]: object,
         }));
       },
       onclose: () => {
@@ -152,53 +138,6 @@ const ChartList: React.FunctionComponent<PropsType> = ({
   const setControllerWebsockets = (controllers: any[]) => {
     controllers.map((kind: string) => {
       return setupWebsocket(kind);
-    });
-  };
-
-  const getControllerForChart = async (chart: ChartType) => {
-    try {
-      const { currentCluster, currentProject } = context;
-      const res = await api.getChartControllers(
-        "<token>",
-        {
-          namespace: chart.namespace,
-          cluster_id: currentCluster.id,
-          storage: StorageType.Secret,
-        },
-        {
-          id: currentProject.id,
-          name: chart.name,
-          revision: chart.version,
-        }
-      );
-
-      let chartControllers = {} as Record<string, Record<string, any>>;
-
-      res.data.forEach((c: any) => {
-        c.metadata.kind = c.kind;
-        chartControllers[c.metadata.uid] = c;
-      });
-
-      res.data.forEach(async (c: any) => {
-        setChartLookupTable((oldChartLookupTable) => ({
-          ...oldChartLookupTable,
-          [c.metadata.uid]: `${chart.namespace}-${chart.name}`,
-        }));
-        setControllers((oldControllers) => ({
-          ...oldControllers,
-          [`${chart.namespace}-${chart.name}`]: chartControllers,
-        }));
-      });
-    } catch (error) {
-      context.setCurrentError(JSON.stringify(error));
-    }
-  };
-
-  const getControllers = (charts: any[]) => {
-    charts.forEach(async (chart: any) => {
-      // don't retrieve controllers for chart that failed to even deploy.
-      if (chart.info.status == "failed") return;
-      await getControllerForChart(chart);
     });
   };
 
@@ -223,7 +162,7 @@ const ChartList: React.FunctionComponent<PropsType> = ({
       updateCharts().then((charts) => {
         if (isSubscribed) {
           setCharts(charts);
-          getControllers(charts);
+          setIsLoading(false);
         }
       });
     }
@@ -258,10 +197,7 @@ const ChartList: React.FunctionComponent<PropsType> = ({
         <Chart
           key={`${chart.namespace}-${chart.name}`}
           chart={chart}
-          controllers={
-            controllers[`${chart.namespace}-${chart.name}`] ||
-            ({} as Record<string, any>)
-          }
+          controllers={controllers || {}}
         />
       );
     });

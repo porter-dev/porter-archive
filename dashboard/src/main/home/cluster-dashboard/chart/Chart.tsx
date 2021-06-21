@@ -11,9 +11,14 @@ import api from "shared/api";
 type Props = {
   chart: ChartType;
   controllers: Record<string, any>;
+  release: any;
 };
 
-const Chart: React.FunctionComponent<Props> = ({ chart, controllers }) => {
+const Chart: React.FunctionComponent<Props> = ({
+  chart,
+  controllers,
+  release,
+}) => {
   const [expand, setExpand] = useState<boolean>(false);
   const [chartControllers, setChartControllers] = useState<any>([]);
   const context = useContext(Context);
@@ -115,7 +120,7 @@ const Chart: React.FunctionComponent<Props> = ({ chart, controllers }) => {
         </TagWrapper>
       </BottomWrapper>
 
-      <Version>v{chart.version}</Version>
+      <Version>v{release?.metadata?.labels?.version || chart.version}</Version>
     </StyledChart>
   );
 };

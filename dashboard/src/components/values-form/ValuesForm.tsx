@@ -7,6 +7,7 @@ import {
   ShowIf,
   ShowIfOr,
   ShowIfAnd,
+  ShowIfNot,
 } from "shared/types";
 import { Context } from "shared/Context";
 
@@ -310,7 +311,7 @@ export default class ValuesForm extends Component<PropsType, StateType> {
     });
   };
 
-  evalShowIf = (vals: ShowIf) => {
+  evalShowIf: (vals: ShowIf) => boolean = (vals: ShowIf) => {
     if (!vals) {
       return false;
     }
@@ -334,6 +335,10 @@ export default class ValuesForm extends Component<PropsType, StateType> {
         }
       }
       return true;
+    }
+    if ((vals as ShowIfNot).not) {
+      vals = vals as ShowIfNot;
+      return !this.evalShowIf(vals.not);
     }
 
     return false;

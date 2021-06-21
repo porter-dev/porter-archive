@@ -112,7 +112,11 @@ export interface ShowIfOr {
   or: ShowIf[];
 }
 
-export type ShowIf = string | ShowIfAnd | ShowIfOr;
+export interface ShowIfNot {
+  not: ShowIf;
+}
+
+export type ShowIf = string | ShowIfAnd | ShowIfOr | ShowIfNot;
 
 export interface Section {
   name?: string;

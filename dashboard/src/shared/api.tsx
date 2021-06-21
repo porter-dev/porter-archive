@@ -304,6 +304,20 @@ const destroyCluster = baseApi<
   return `/api/projects/${pathParams.project_id}/infra/${pathParams.infra_id}/eks/destroy`;
 });
 
+const detectBuildpack = baseApi<
+  {},
+  {
+    project_id: number;
+    git_repo_id: number;
+    kind: string;
+    owner: string;
+    name: string;
+    branch: string;
+  }
+>("GET", (pathParams) => {
+  return `/api/projects/${pathParams.project_id}/gitrepos/${pathParams.git_repo_id}/repos/${pathParams.kind}/${pathParams.owner}/${pathParams.name}/${pathParams.branch}/buildpack/detect`;
+});
+
 const getBranchContents = baseApi<
   {
     dir: string;
@@ -903,6 +917,7 @@ export default {
   destroyEKS,
   destroyGKE,
   destroyDOKS,
+  detectBuildpack,
   getBranchContents,
   getBranches,
   getCapabilities,

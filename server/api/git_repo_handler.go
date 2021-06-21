@@ -4,13 +4,13 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"golang.org/x/oauth2"
 	"net/http"
 	"net/url"
 	"regexp"
 	"strconv"
 	"strings"
-
-	"golang.org/x/oauth2"
+	"sync"
 
 	"github.com/go-chi/chi"
 	"github.com/google/go-github/github"
@@ -59,6 +59,12 @@ type DirectoryItem struct {
 	Type string
 }
 
+// AutoBuildpack represents an automatically detected buildpack
+type AutoBuildpack struct {
+	Valid bool   `json:"valid"`
+	Name  string `json:"name"`
+}
+
 // HandleListRepos retrieves a list of repo names
 func (app *App) HandleListRepos(w http.ResponseWriter, r *http.Request) {
 	tok, err := app.githubTokenFromRequest(r)
@@ -68,12 +74,9 @@ func (app *App) HandleListRepos(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	res := make([]Repo, 0)
-
 	client := github.NewClient(app.GithubProjectConf.Client(oauth2.NoContext, tok))
 
-	allRepos := make([]*github.Repository, 0)
-
+	// figure out number of repositories
 	opt := &github.RepositoryListOptions{
 		ListOptions: github.ListOptions{
 			PerPage: 100,
@@ -81,22 +84,71 @@ func (app *App) HandleListRepos(w http.ResponseWriter, r *http.Request) {
 		Sort: "updated",
 	}
 
-	for {
-		repos, resp, err := client.Repositories.List(context.Background(), "", opt)
+	allRepos, resp, err := client.Repositories.List(context.Background(), "", opt)
 
-		if err != nil {
-			app.handleErrorInternal(err, w)
-			return
-		}
-
-		allRepos = append(allRepos, repos...)
-
-		if resp.NextPage == 0 {
-			break
-		}
-
-		opt.Page = resp.NextPage
+	if err != nil {
+		app.handleErrorInternal(err, w)
+		return
 	}
+
+	// make workers to get pages concurrently
+	const WCOUNT = 5
+	numPages := resp.LastPage + 1
+	var workerErr error
+	var mu sync.Mutex
+	var wg sync.WaitGroup
+
+	worker := func(cp int) {
+		defer wg.Done()
+
+		for cp < numPages {
+			cur_opt := &github.RepositoryListOptions{
+				ListOptions: github.ListOptions{
+					Page:    cp,
+					PerPage: 100,
+				},
+				Sort: "updated",
+			}
+
+			repos, _, err := client.Repositories.List(context.Background(), "", cur_opt)
+
+			if err != nil {
+				mu.Lock()
+				workerErr = err
+				mu.Unlock()
+				return
+			}
+
+			mu.Lock()
+			allRepos = append(allRepos, repos...)
+			mu.Unlock()
+
+			cp += WCOUNT
+		}
+	}
+
+	var numJobs int
+	if numPages > WCOUNT {
+		numJobs = WCOUNT
+	} else {
+		numJobs = numPages
+	}
+
+	wg.Add(numJobs)
+
+	// page 1 is already loaded so we start with 2
+	for i := 1; i <= numJobs; i++ {
+		go worker(i + 1)
+	}
+
+	wg.Wait()
+
+	if workerErr != nil {
+		app.handleErrorInternal(workerErr, w)
+		return
+	}
+
+	res := make([]Repo, 0)
 
 	for _, repo := range allRepos {
 		res = append(res, Repo{
@@ -160,6 +212,65 @@ func (app *App) HandleGetBranches(w http.ResponseWriter, r *http.Request) {
 	res := []string{}
 	for _, b := range branches {
 		res = append(res, b.GetName())
+	}
+
+	json.NewEncoder(w).Encode(res)
+}
+
+// HandleDetectBuildpack attempts to figure which buildpack will be auto used based on directory contents
+func (app *App) HandleDetectBuildpack(w http.ResponseWriter, r *http.Request) {
+	tok, err := app.githubTokenFromRequest(r)
+
+	if err != nil {
+		app.handleErrorInternal(err, w)
+		return
+	}
+
+	queryParams, err := url.ParseQuery(r.URL.RawQuery)
+	if err != nil {
+		app.handleErrorFormDecoding(err, ErrReleaseDecode, w)
+		return
+	}
+
+	client := github.NewClient(app.GithubProjectConf.Client(oauth2.NoContext, tok))
+	owner := chi.URLParam(r, "owner")
+	name := chi.URLParam(r, "name")
+	branch := chi.URLParam(r, "branch")
+
+	repoContentOptions := github.RepositoryContentGetOptions{}
+	repoContentOptions.Ref = branch
+	_, directoryContents, _, err := client.Repositories.GetContents(context.Background(), owner, name, queryParams["dir"][0], &repoContentOptions)
+	if err != nil {
+		app.handleErrorInternal(err, w)
+		return
+	}
+
+	var BREQS = map[string]string{
+		"requirements.txt": "Python",
+		"Gemfile":          "Ruby",
+		"package.json":     "Node.js",
+		"pom.xml":          "Java",
+		"composer.json":    "PHP",
+	}
+
+	res := AutoBuildpack{
+		Valid: true,
+	}
+	matches := 0
+
+	for i := range directoryContents {
+		name := *directoryContents[i].Name
+
+		bname, ok := BREQS[name]
+		if ok {
+			matches++
+			res.Name = bname
+		}
+	}
+
+	if matches != 1 {
+		res.Valid = false
+		res.Name = ""
 	}
 
 	json.NewEncoder(w).Encode(res)

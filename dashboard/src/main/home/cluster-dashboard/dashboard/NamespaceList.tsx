@@ -1,9 +1,9 @@
 import React, { useContext, useEffect, useMemo, useRef, useState } from "react";
 import styled from "styled-components";
 import { Context } from "shared/Context";
-import { ClusterType, ProjectType } from "shared/types";
 import { pushFiltered } from "shared/routing";
 import { useHistory, useLocation } from "react-router";
+import { useWebsockets } from "shared/hooks/useWebsockets";
 
 const OptionsDropdown: React.FC = ({ children }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -25,34 +25,6 @@ const OptionsDropdown: React.FC = ({ children }) => {
   );
 };
 
-const useWebsocket = (
-  currentProject: ProjectType,
-  currentCluster: ClusterType
-) => {
-  const wsRef = useRef<WebSocket | undefined>(undefined);
-
-  useEffect(() => {
-    let protocol = window.location.protocol == "https:" ? "wss" : "ws";
-    wsRef.current = new WebSocket(
-      `${protocol}://${window.location.host}/api/projects/${currentProject.id}/k8s/namespace/status?cluster_id=${currentCluster.id}`
-    );
-
-    wsRef.current.onopen = () => {
-      console.log("Connected to websocket");
-    };
-
-    wsRef.current.onclose = () => {
-      console.log("closing websocket");
-    };
-
-    return () => {
-      wsRef.current.close();
-    };
-  }, []);
-
-  return wsRef;
-};
-
 export const NamespaceList: React.FunctionComponent = () => {
   const {
     currentCluster,
@@ -63,7 +35,7 @@ export const NamespaceList: React.FunctionComponent = () => {
   const location = useLocation();
   const history = useHistory();
   const [namespaces, setNamespaces] = useState([]);
-  const websocket = useWebsocket(currentProject, currentCluster);
+  const { newWebsocket, openWebsocket, closeWebsocket } = useWebsockets();
   const onDelete = (namespace: any) => {
     setCurrentModal("DeleteNamespaceModal", namespace);
   };
@@ -75,45 +47,54 @@ export const NamespaceList: React.FunctionComponent = () => {
   };
 
   useEffect(() => {
-    if (!websocket) {
-      return;
-    }
+    const id = "namespaces";
 
-    websocket.current.onerror = (err: ErrorEvent) => {
-      setCurrentError(err.message);
-      websocket.current.close();
+    const apiEndpoint = `/api/projects/${currentProject.id}/k8s/namespace/status?cluster_id=${currentCluster.id}`;
+
+    const wsConfig = {
+      onerror: (err: ErrorEvent) => {
+        setCurrentError(err.message);
+        closeWebsocket(id);
+      },
+      onmessage: (evt: MessageEvent) => {
+        const data = JSON.parse(evt.data);
+        if (data.Kind !== "namespace") {
+          return;
+        }
+        if (data.event_type === "ADD") {
+          setNamespaces((oldNamespaces) => [...oldNamespaces, data.Object]);
+        }
+
+        if (data.event_type === "DELETE") {
+          setNamespaces((oldNamespaces) => {
+            const oldNamespaceIndex = oldNamespaces.findIndex(
+              (namespace) =>
+                namespace.metadata.name === data.Object.metadata.name
+            );
+            oldNamespaces.splice(oldNamespaceIndex, 1);
+            return [...oldNamespaces];
+          });
+        }
+
+        if (data.event_type === "UPDATE") {
+          setNamespaces((oldNamespaces) => {
+            const oldNamespaceIndex = oldNamespaces.findIndex(
+              (namespace) =>
+                namespace.metadata.name === data.Object.metadata.name
+            );
+            oldNamespaces.splice(oldNamespaceIndex, 1, data.Object);
+            return oldNamespaces;
+          });
+        }
+      },
     };
 
-    websocket.current.onmessage = (evt: MessageEvent) => {
-      const data = JSON.parse(evt.data);
-      if (data.Kind !== "namespace") {
-        return;
-      }
-      if (data.event_type === "ADD") {
-        setNamespaces((oldNamespaces) => [...oldNamespaces, data.Object]);
-      }
+    newWebsocket(id, apiEndpoint, wsConfig);
 
-      if (data.event_type === "DELETE") {
-        setNamespaces((oldNamespaces) => {
-          const oldNamespaceIndex = oldNamespaces.findIndex(
-            (namespace) => namespace.metadata.name === data.Object.metadata.name
-          );
-          oldNamespaces.splice(oldNamespaceIndex, 1);
-          return [...oldNamespaces];
-        });
-      }
+    openWebsocket(id);
 
-      if (data.event_type === "UPDATE") {
-        setNamespaces((oldNamespaces) => {
-          const oldNamespaceIndex = oldNamespaces.findIndex(
-            (namespace) => namespace.metadata.name === data.Object.metadata.name
-          );
-          oldNamespaces.splice(oldNamespaceIndex, 1, data.Object);
-          return oldNamespaces;
-        });
-      }
-    };
-  }, [websocket]);
+    return () => closeWebsocket(id);
+  }, [currentProject.id, currentCluster.id]);
 
   const sortAlphabetically = (prev: any, current: any) => {
     return prev.metadata.name > current.metadata.name ? 1 : -1;

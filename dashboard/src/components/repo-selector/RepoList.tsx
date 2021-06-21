@@ -27,7 +27,6 @@ const RepoList: React.FC<Props> = ({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [searchFilter, setSearchFilter] = useState(null);
-  const [searchInput, setSearchInput] = useState("");
   const { currentProject } = useContext(Context);
 
   // TODO: Try to unhook before unmount
@@ -165,32 +164,20 @@ const RepoList: React.FC<Props> = ({
     } else {
       return (
         <>
-          <SearchRow>
+          <SearchRowTop>
             <SearchBar>
               <i className="material-icons">search</i>
               <SearchInput
-                value={searchInput}
                 onChange={(e: any) => {
-                  setSearchInput(e.target.value);
-                }}
-                onKeyPress={({ key }) => {
-                  if (key === "Enter") {
-                    setSearchFilter(searchInput);
-                  }
+                  setSearchFilter(e.target.value);
                 }}
                 placeholder="Search repos..."
               />
             </SearchBar>
-            <Button
-              onClick={() => setSearchFilter(searchInput)}
-              disabled={loading || error}
-            >
-              Search
-            </Button>
-          </SearchRow>
-          <ExpandedWrapper>
+          </SearchRowTop>
+          <RepoListWrapper>
             <ExpandedWrapper>{renderRepoList()}</ExpandedWrapper>
-          </ExpandedWrapper>
+          </RepoListWrapper>
         </>
       );
     }
@@ -201,9 +188,29 @@ const RepoList: React.FC<Props> = ({
 
 export default RepoList;
 
+const SearchButton = styled(Button)`
+  margin: 5px 7px;
+`;
+
+const RepoListWrapper = styled.div`
+  border: 1px solid #ffffff55;
+  border-radius: 3px;
+  overflow-y: auto;
+`;
+
 const SearchRow = styled.div`
   display: flex;
+  align-items: center;
+  height: 40px;
+  background: #ffffff11;
   border-bottom: 1px solid #606166;
+  margin-bottom: 10px;
+`;
+
+const SearchRowTop = styled(SearchRow)`
+  border-bottom: 0;
+  border: 1px solid #ffffff55;
+  border-radius: 3px;
 `;
 
 const RepoName = styled.div`
@@ -276,7 +283,7 @@ const ExpandedWrapper = styled.div`
   width: 100%;
   border-radius: 3px;
   border: 0px solid #ffffff44;
-  max-height: 235px;
+  max-height: 221px;
   top: 40px;
 
   > i {
@@ -304,8 +311,14 @@ const A = styled.a`
 const SearchBar = styled.div`
   display: flex;
   flex: 1;
-  margin-top: 7px;
-  margin-left: 5px;
+
+  > i {
+    color: #aaaabb;
+    padding-top: 1px;
+    margin-left: 13px;
+    font-size: 18px;
+    margin-right: 8px;
+  }
 `;
 
 const SearchInput = styled.input`

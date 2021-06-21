@@ -34,6 +34,21 @@ func (repo *ReleaseRepository) ReadRelease(clusterID uint, name, namespace strin
 	return release, nil
 }
 
+// ReadRelease finds a single release based on their unique name and namespace pair.
+func (repo *ReleaseRepository) ListReleasesByImageRepoURI(clusterID uint, imageRepoURI string) ([]*models.Release, error) {
+	releases := make([]*models.Release, 0)
+
+	if imageRepoURI == "" {
+		return releases, nil
+	}
+
+	if err := repo.db.Preload("GitActionConfig").Where("cluster_id = ?", clusterID).Where("image_repo_uri = ?", imageRepoURI).Find(&releases).Error; err != nil {
+		return nil, err
+	}
+
+	return releases, nil
+}
+
 // ReadReleaseByWebhookToken finds a single release based on their unique webhook token.
 func (repo *ReleaseRepository) ReadReleaseByWebhookToken(token string) (*models.Release, error) {
 	release := &models.Release{}

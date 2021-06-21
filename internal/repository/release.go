@@ -12,6 +12,7 @@ type ReleaseRepository interface {
 	CreateRelease(release *models.Release) (*models.Release, error)
 	ReadRelease(clusterID uint, name, namespace string) (*models.Release, error)
 	ReadReleaseByWebhookToken(token string) (*models.Release, error)
+	ListReleasesByImageRepoURI(clusterID uint, imageRepoURI string) ([]*models.Release, error)
 	UpdateRelease(release *models.Release) (*models.Release, error)
 	DeleteRelease(release *models.Release) (*models.Release, error)
 }

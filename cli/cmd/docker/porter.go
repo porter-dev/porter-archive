@@ -9,6 +9,8 @@ import (
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/mount"
 	"github.com/docker/go-connections/nat"
+
+	specs "github.com/opencontainers/image-spec/specs-go/v1"
 )
 
 // PorterDB is used for enumerating DB types
@@ -261,7 +263,7 @@ func (a *Agent) pullAndCreatePorterContainer(opts PorterServerStartOpts) (id str
 	}, &container.HostConfig{
 		PortBindings: portBindings,
 		Mounts:       opts.Mounts,
-	}, nil, opts.Name)
+	}, nil, &specs.Platform{}, opts.Name)
 
 	if err != nil {
 		return "", a.handleDockerClientErr(err, "Could not create Porter container")
@@ -364,7 +366,7 @@ func (a *Agent) pullAndCreatePostgresContainer(opts PostgresOpts) (id string, er
 		},
 	}, &container.HostConfig{
 		Mounts: opts.Mounts,
-	}, nil, opts.Name)
+	}, nil, &specs.Platform{}, opts.Name)
 
 	if err != nil {
 		return "", a.handleDockerClientErr(err, "Could not create Porter container")

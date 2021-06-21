@@ -76,6 +76,9 @@ type GitActionConfigExternal struct {
 	// The git repo in ${owner}/${repo} form
 	GitRepo string `json:"git_repo"`
 
+	// The git branch to use
+	GitBranch string `json:"git_branch"`
+
 	// The complete image repository uri to pull from
 	ImageRepoURI string `json:"image_repo_uri"`
 
@@ -93,6 +96,7 @@ type GitActionConfigExternal struct {
 func (r *GitActionConfig) Externalize() *GitActionConfigExternal {
 	return &GitActionConfigExternal{
 		GitRepo:        r.GitRepo,
+		GitBranch:      r.GitBranch,
 		ImageRepoURI:   r.ImageRepoURI,
 		GitRepoID:      r.GitRepoID,
 		DockerfilePath: r.DockerfilePath,

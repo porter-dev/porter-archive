@@ -257,6 +257,12 @@ class LaunchFlow extends Component<PropsType, StateType> {
     }
 
     _.set(values, "ingress.provider", provider);
+
+    // pause jobs automatically
+    if (this.props.currentTemplate?.name == "job") {
+      _.set(values, "paused", true)
+    }
+
     var url: string;
     // check if template is docker and create external domain if necessary
     if (this.props.currentTemplate.name == "web") {

@@ -53,12 +53,7 @@ var helmRepoChartListCmd = &cobra.Command{
 func init() {
 	rootCmd.AddCommand(helmRepoCmd)
 
-	helmRepoCmd.PersistentFlags().UintVar(
-		&helmRepoID,
-		"helmrepo-id",
-		0,
-		"id of the helm repo",
-	)
+	helmRepoCmd.PersistentFlags().AddFlagSet(helmRepoFlagSet)
 
 	helmRepoCmd.AddCommand(helmRepoListCmd)
 	helmRepoCmd.AddCommand(helmRepoChartCmd)
@@ -67,7 +62,7 @@ func init() {
 }
 
 func listHelmRepos(user *api.AuthCheckResponse, client *api.Client, args []string) error {
-	pID := getProjectID()
+	pID := config.Project
 
 	hrs, err := client.ListHelmRepos(
 		context.Background(),
@@ -83,7 +78,7 @@ func listHelmRepos(user *api.AuthCheckResponse, client *api.Client, args []strin
 
 	fmt.Fprintf(w, "%s\t%s\t%s\t%s\n", "ID", "NAME", "URL", "SERVICE")
 
-	currHelmID := getHelmRepoID()
+	currHelmID := config.HelmRepo
 
 	for _, hr := range hrs {
 		if currHelmID == hr.ID {
@@ -99,8 +94,8 @@ func listHelmRepos(user *api.AuthCheckResponse, client *api.Client, args []strin
 }
 
 func listHelmRepoCharts(user *api.AuthCheckResponse, client *api.Client, args []string) error {
-	pID := getProjectID()
-	hrID := getHelmRepoID()
+	pID := config.Project
+	hrID := config.HelmRepo
 
 	charts, err := client.ListCharts(
 		context.Background(),

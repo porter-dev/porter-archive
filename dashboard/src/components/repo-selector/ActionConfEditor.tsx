@@ -38,23 +38,23 @@ const ActionConfEditor: React.FC<Props> = (props) => {
 
   if (!actionConfig.git_repo) {
     return (
-      <ExpandedWrapper>
+      <ExpandedWrapperAlt>
         <RepoList
           actionConfig={actionConfig}
           setActionConfig={(x: ActionConfigType) => setActionConfig(x)}
           readOnly={false}
         />
-      </ExpandedWrapper>
+      </ExpandedWrapperAlt>
     );
   } else if (!branch) {
     return (
       <>
-        <ExpandedWrapperAlt>
+        <ExpandedWrapper>
           <BranchList
             actionConfig={actionConfig}
             setBranch={(branch: string) => setBranch(branch)}
           />
-        </ExpandedWrapperAlt>
+        </ExpandedWrapper>
         <Br />
         <BackButton
           width="135px"
@@ -178,7 +178,10 @@ const ExpandedWrapper = styled.div`
   overflow-y: auto;
 `;
 
-const ExpandedWrapperAlt = styled(ExpandedWrapper)``;
+const ExpandedWrapperAlt = styled(ExpandedWrapper)`
+  border: 0;
+  overflow: hidden;
+`;
 
 const BackButton = styled.div`
   display: flex;

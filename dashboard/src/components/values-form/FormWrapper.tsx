@@ -12,6 +12,7 @@ type PropsType = {
   formData: any;
   onSubmit?: (formValues: any) => void;
   saveValuesStatus?: string | null;
+  saveButtonText?: string | null;
 
   // Handle additional non-form tabs
   // TODO: find cleaner way to share submitValues w/ rerun jobs button
@@ -385,7 +386,7 @@ export default class FormWrapper extends Component<PropsType, StateType> {
         {showSave && (
           <SaveButton
             disabled={this.isDisabled()}
-            text="Deploy"
+            text={this.props.saveButtonText || "Deploy"}
             onClick={this.handleSubmit}
             status={
               this.isDisabled() && this.props.saveValuesStatus != "loading"

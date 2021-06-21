@@ -141,7 +141,11 @@ func TestHandleDeleteProject(t *testing.T) {
 // ------------------------- INITIALIZERS AND VALIDATORS ------------------------- //
 
 func initProject(tester *tester) {
-	user, _ := tester.repo.User.ReadUserByEmail("belanger@getporter.dev")
+	user, err := tester.repo.User.ReadUserByEmail("belanger@getporter.dev")
+
+	if err != nil {
+		panic(err)
+	}
 
 	// handle write to the database
 	projModel, _ := tester.repo.Project.CreateProject(&models.Project{

@@ -11,10 +11,15 @@ import (
 // CreateGithubActionRequest represents the accepted fields for creating
 // a Github action
 type CreateGithubActionRequest struct {
-	GitRepo        string `json:"git_repo"`
-	ImageRepoURI   string `json:"image_repo_uri"`
-	DockerfilePath string `json:"dockerfile_path"`
-	GitRepoID      uint   `json:"git_repo_id"`
+	ReleaseID      uint              `json:"release_id" form:"required"`
+	GitRepo        string            `json:"git_repo" form:"required"`
+	GitBranch      string            `json:"git_branch"`
+	ImageRepoURI   string            `json:"image_repo_uri" form:"required"`
+	DockerfilePath string            `json:"dockerfile_path"`
+	FolderPath     string            `json:"folder_path"`
+	GitRepoID      uint              `json:"git_repo_id" form:"required"`
+	BuildEnv       map[string]string `json:"env"`
+	RegistryID     uint              `json:"registry_id"`
 }
 
 // CreateGithubAction creates a Github action with basic authentication

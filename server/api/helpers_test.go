@@ -39,11 +39,15 @@ func (t *tester) reset() {
 }
 
 func (t *tester) createUserSession(email string, pw string) {
-	req, _ := http.NewRequest(
+	req, err := http.NewRequest(
 		"POST",
 		"/api/users",
 		strings.NewReader(`{"email":"`+email+`","password":"`+pw+`"}`),
 	)
+
+	if err != nil {
+		panic(err)
+	}
 
 	t.req = req
 	t.execute()
@@ -67,6 +71,7 @@ func newTester(canQuery bool) *tester {
 			TimeoutIdle:          time.Second * 15,
 			IsTesting:            true,
 			TokenGeneratorSecret: "secret",
+			BasicLoginEnabled:    true,
 		},
 		// unimportant here
 		Db: config.DBConf{},
@@ -79,15 +84,16 @@ func newTester(canQuery bool) *tester {
 	logger := lr.NewConsole(appConf.Debug)
 	repo := memory.NewRepository(canQuery)
 	store, _ := sessionstore.NewStore(repo, appConf.Server)
+	k8sAgent := kubernetes.GetAgentTesting()
 
 	app, _ := api.New(&api.AppConfig{
 		Logger:     logger,
 		Repository: repo,
 		ServerConf: appConf.Server,
 		TestAgents: &api.TestAgents{
-			HelmAgent:             helm.GetAgentTesting(&helm.Form{}, nil, logger),
+			HelmAgent:             helm.GetAgentTesting(&helm.Form{}, nil, logger, k8sAgent),
 			HelmTestStorageDriver: helm.StorageMap["memory"](nil, nil, ""),
-			K8sAgent:              kubernetes.GetAgentTesting(),
+			K8sAgent:              k8sAgent,
 		},
 	})
 

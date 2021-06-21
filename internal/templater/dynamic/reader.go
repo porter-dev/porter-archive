@@ -58,6 +58,11 @@ func NewDynamicTemplateReader(client dynamic.Interface, obj *Object) templater.T
 		Resource: r.Object.Resource,
 	}
 
+	// just case on the "core" group and unset it
+	if r.Object.Group == "core" {
+		objRes.Group = ""
+	}
+
 	r.gvr = objRes
 
 	r.resource = r.Client.Resource(objRes).Namespace(r.Object.Namespace)

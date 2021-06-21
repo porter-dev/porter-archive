@@ -20,37 +20,22 @@ const NodeUsage: React.FunctionComponent<NodeUsageProps> = ({ node }) => {
       <Wrapper>
         <UsageWrapper>
           <span>
-            <Bolded>Cpu Requested:</Bolded> {node?.cpu_reqs || "Loading..."}
+            <Bolded>CPU:</Bolded>{" "}
+            {!node?.cpu_reqs && !node?.allocatable_cpu
+              ? "Loading..."
+              : `${node?.cpu_reqs} / ${
+                  node?.allocatable_cpu
+                }m - ${percentFormatter(node?.fraction_cpu_reqs)}`}
           </span>
           <span>
-            <Bolded>Memory Requested:</Bolded>{" "}
-            {node?.memory_reqs || "Loading..."}
+            <Bolded>RAM:</Bolded>{" "}
+            {!node?.memory_reqs && !node?.allocatable_memory
+              ? "Loading..."
+              : `${node?.memory_reqs} / ${
+                  node?.allocatable_memory
+                } - ${percentFormatter(node?.fraction_memory_reqs)}`}
           </span>
         </UsageWrapper>
-        <AllocatableWrapper>
-          <span>
-            <Bolded>Cpu Allocatable:</Bolded>
-            {node?.allocatable_cpu || "Loading..."}
-          </span>
-          <span>
-            <Bolded>Memory Allocatable:</Bolded>
-            {node?.allocatable_memory || "Loading..."}
-          </span>
-        </AllocatableWrapper>
-        <FractionUsageWrapper>
-          <span>
-            <Bolded>Cpu Usage:</Bolded>
-            {node?.fraction_cpu_reqs
-              ? percentFormatter(node?.fraction_cpu_reqs)
-              : "Loading..."}
-          </span>
-          <span>
-            <Bolded>Memory Usage:</Bolded>
-            {node?.fraction_memory_reqs
-              ? percentFormatter(node?.fraction_memory_reqs)
-              : "Loading..."}
-          </span>
-        </FractionUsageWrapper>
       </Wrapper>
     </NodeUsageWrapper>
   );
@@ -65,14 +50,11 @@ const UsageWrapper = styled.div`
   flex-direction: column;
   font-size: 14px;
   line-height: 24px;
+  user-select: text;
   :not(last-child) {
     margin-right: 20px;
   }
 `;
-
-const AllocatableWrapper = styled(UsageWrapper)``;
-
-const FractionUsageWrapper = styled(UsageWrapper)``;
 
 const Bolded = styled.span`
   font-weight: 500;

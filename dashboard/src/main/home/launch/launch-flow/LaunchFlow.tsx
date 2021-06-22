@@ -260,7 +260,7 @@ class LaunchFlow extends Component<PropsType, StateType> {
 
     // pause jobs automatically
     if (this.props.currentTemplate?.name == "job") {
-      _.set(values, "paused", true)
+      _.set(values, "paused", true);
     }
 
     var url: string;

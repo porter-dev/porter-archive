@@ -683,7 +683,27 @@ func (a *Agent) StreamHelmReleases(conn *websocket.Conn, selectors string) error
 
 	informer.AddEventHandler(cache.ResourceEventHandlerFuncs{
 		UpdateFunc: func(oldObj, newObj interface{}) {
-			obj, _ := decodeRelease(newObj.Data.release)
+			secretObj, ok := newObj.(*v1.Secret)
+
+			if !ok {
+				errorchan <- fmt.Errorf("could not cast to secret")
+				return
+			}
+
+			releaseData, ok := secretObj.Data["release"]
+
+			if !ok {
+				errorchan <- fmt.Errorf("release field not found")
+				return
+			}
+
+			obj, err := decodeRelease(string(releaseData))
+
+			if err != nil {
+				errorchan <- err
+				return
+			}
+
 			msg := Message{
 				EventType: "UPDATE",
 				Object:    obj,

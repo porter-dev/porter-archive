@@ -118,9 +118,8 @@ class LaunchFlow extends Component<PropsType, StateType> {
       .catch((err) => {
         let parsedErr =
           err?.response?.data?.errors && err.response.data.errors[0];
-        if (parsedErr) {
-          err = parsedErr;
-        }
+        err = parsedErr || err.message || JSON.stringify(err);
+
         this.setState({
           saveValuesStatus: `Could not create GitHub Action: ${err}`,
         });
@@ -140,9 +139,9 @@ class LaunchFlow extends Component<PropsType, StateType> {
     for (let key in wildcard) {
       _.set(values, key, wildcard[key]);
     }
-
+    console.log("OJKOKOKOK")
     api
-      .deployTemplate(
+      .deployAddon(
         "<token>",
         {
           templateName: this.props.currentTemplate.name,
@@ -180,14 +179,16 @@ class LaunchFlow extends Component<PropsType, StateType> {
         });
       })
       .catch((err) => {
+        console.log("ERROR HERE", err)
         let parsedErr =
           err?.response?.data?.errors && err.response.data.errors[0];
-        if (parsedErr) {
-          err = parsedErr;
-        }
+
+        err = parsedErr || err.message || JSON.stringify(err);
+
         this.setState({
-          saveValuesStatus: parsedErr,
+          saveValuesStatus: err,
         });
+
         setCurrentError(err);
         window.analytics.track("Failed to Deploy Add-on", {
           name: this.props.currentTemplate.name,

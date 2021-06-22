@@ -292,6 +292,27 @@ const deployTemplate = baseApi<
   return `/api/projects/${id}/deploy/${name}/${version}?cluster_id=${cluster_id}`;
 });
 
+const deployAddon = baseApi<
+  {
+    templateName: string;
+    formValues?: any;
+    storage: StorageType;
+    namespace: string;
+    name: string;
+  },
+  {
+    id: number;
+    cluster_id: number;
+    name: string;
+    version: string;
+    repo_url?: string;
+  }
+>("POST", (pathParams) => {
+  let { cluster_id, id, name, version, repo_url } = pathParams;
+
+  return `/api/projects/${id}/deploy/addon/${name}/${version}?cluster_id=${cluster_id}&repo_url=${repo_url}`;
+});
+
 const destroyCluster = baseApi<
   {
     eks_name: string;
@@ -914,6 +935,7 @@ export default {
   deleteRegistryIntegration,
   createSubdomain,
   deployTemplate,
+  deployAddon,
   destroyEKS,
   destroyGKE,
   destroyDOKS,

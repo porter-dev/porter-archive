@@ -139,7 +139,7 @@ class LaunchFlow extends Component<PropsType, StateType> {
     for (let key in wildcard) {
       _.set(values, key, wildcard[key]);
     }
-    console.log("OJKOKOKOK")
+
     api
       .deployAddon(
         "<token>",
@@ -179,7 +179,6 @@ class LaunchFlow extends Component<PropsType, StateType> {
         });
       })
       .catch((err) => {
-        console.log("ERROR HERE", err)
         let parsedErr =
           err?.response?.data?.errors && err.response.data.errors[0];
 
@@ -286,9 +285,7 @@ class LaunchFlow extends Component<PropsType, StateType> {
             .catch((err) => {
               let parsedErr =
                 err?.response?.data?.errors && err.response.data.errors[0];
-              if (parsedErr) {
-                err = parsedErr;
-              }
+              err = parsedErr || err.message || JSON.stringify(err);
               this.setState({
                 saveValuesStatus: `Could not create subdomain: ${err}`,
               });
@@ -342,10 +339,7 @@ class LaunchFlow extends Component<PropsType, StateType> {
       .catch((err: any) => {
         let parsedErr =
           err?.response?.data?.errors && err.response.data.errors[0];
-        console.log(parsedErr);
-        if (parsedErr) {
-          err = parsedErr;
-        }
+        err = parsedErr || err.message || JSON.stringify(err);
         this.setState({
           saveValuesStatus: `Could not deploy template: ${err}`,
         });

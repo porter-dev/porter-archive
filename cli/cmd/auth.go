@@ -80,7 +80,14 @@ func login() error {
 	user, _ := client.AuthCheck(context.Background())
 
 	if user != nil {
-		color.Yellow("You are already logged in. If you'd like to log out, run \"porter auth logout\".")
+		if config.Token != "" {
+			// set the token if the user calls login with the --token flag
+			config.SetToken(config.Token)
+			color.New(color.FgGreen).Println("Successfully logged in!")
+		} else {
+			color.Yellow("You are already logged in. If you'd like to log out, run \"porter auth logout\".")
+		}
+
 		return nil
 	}
 

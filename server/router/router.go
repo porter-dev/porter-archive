@@ -1476,6 +1476,20 @@ func New(a *api.App) *chi.Mux {
 					mw.ReadAccess,
 				),
 			)
+
+			r.Method(
+				"POST",
+				"/projects/{project_id}/deploy/addon/{name}/{version}",
+				auth.DoesUserHaveProjectAccess(
+					auth.DoesUserHaveClusterAccess(
+						requestlog.NewHandler(a.HandleDeployAddon, l),
+						mw.URLParam,
+						mw.QueryParam,
+					),
+					mw.URLParam,
+					mw.ReadAccess,
+				),
+			)
 		})
 
 		// Create group for long-running Helm operations

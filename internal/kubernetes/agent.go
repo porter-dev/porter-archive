@@ -690,6 +690,10 @@ func (a *Agent) StreamHelmReleases(conn *websocket.Conn, selectors string) error
 				return
 			}
 
+			if secretObj.Type != "helm.sh/release.v1" {
+				return
+			}
+
 			releaseData, ok := secretObj.Data["release"]
 
 			if !ok {
@@ -715,6 +719,31 @@ func (a *Agent) StreamHelmReleases(conn *websocket.Conn, selectors string) error
 			}
 		},
 		AddFunc: func(obj interface{}) {
+			secretObj, ok := obj.(*v1.Secret)
+
+			if secretObj.Type != "helm.sh/release.v1" {
+				return
+			}
+
+			if !ok {
+				errorchan <- fmt.Errorf("could not cast to secret")
+				return
+			}
+
+			releaseData, ok := secretObj.Data["release"]
+
+			if !ok {
+				errorchan <- fmt.Errorf("release field not found")
+				return
+			}
+
+			obj, err := decodeRelease(string(releaseData))
+
+			if err != nil {
+				errorchan <- err
+				return
+			}
+
 			msg := Message{
 				EventType: "ADD",
 				Object:    obj,
@@ -726,6 +755,31 @@ func (a *Agent) StreamHelmReleases(conn *websocket.Conn, selectors string) error
 			}
 		},
 		DeleteFunc: func(obj interface{}) {
+			secretObj, ok := obj.(*v1.Secret)
+
+			if secretObj.Type != "helm.sh/release.v1" {
+				return
+			}
+
+			if !ok {
+				errorchan <- fmt.Errorf("could not cast to secret")
+				return
+			}
+
+			releaseData, ok := secretObj.Data["release"]
+
+			if !ok {
+				errorchan <- fmt.Errorf("release field not found")
+				return
+			}
+
+			obj, err := decodeRelease(string(releaseData))
+
+			if err != nil {
+				errorchan <- err
+				return
+			}
+
 			msg := Message{
 				EventType: "DELETE",
 				Object:    obj,

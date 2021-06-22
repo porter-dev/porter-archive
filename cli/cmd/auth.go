@@ -84,6 +84,14 @@ func login() error {
 			// set the token if the user calls login with the --token flag
 			config.SetToken(config.Token)
 			color.New(color.FgGreen).Println("Successfully logged in!")
+
+			projID, err := api.GetProjectIDFromToken(token)
+
+			if err != nil {
+				return err
+			}
+
+			config.SetProject(projID)
 		} else {
 			color.Yellow("You are already logged in. If you'd like to log out, run \"porter auth logout\".")
 		}

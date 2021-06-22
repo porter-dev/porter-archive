@@ -36,7 +36,7 @@ type FormTab struct {
 type FormSection struct {
 	Context  *FormContext   `yaml:"context" json:"context"`
 	Name     string         `yaml:"name" json:"name"`
-	ShowIf   string         `yaml:"show_if" json:"show_if"`
+	ShowIf   interface{}    `yaml:"show_if" json:"show_if"`
 	Contents []*FormContent `yaml:"contents" json:"contents,omitempty"`
 }
 

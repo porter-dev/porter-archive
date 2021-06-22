@@ -311,7 +311,7 @@ export default class ValuesForm extends Component<PropsType, StateType> {
     });
   };
 
-  evalShowIf: (vals: ShowIf) => boolean = (vals: ShowIf) => {
+  evalShowIf = (vals: ShowIf): boolean => {
     if (!vals) {
       return false;
     }

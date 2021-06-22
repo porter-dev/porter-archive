@@ -85,7 +85,7 @@ func login() error {
 			config.SetToken(config.Token)
 			color.New(color.FgGreen).Println("Successfully logged in!")
 
-			projID, err := api.GetProjectIDFromToken(token)
+			projID, err := api.GetProjectIDFromToken(config.Token)
 
 			if err != nil {
 				return err

@@ -664,7 +664,17 @@ func decodeRelease(data string) (*rspb.Release, error) {
 	return &rls, nil
 }
 
-func (a *Agent) StreamHelmReleases(conn *websocket.Conn, selectors string) error {
+func contains(s []string, str string) bool {
+	for _, v := range s {
+		if v == str {
+			return true
+		}
+	}
+
+	return false
+}
+
+func (a *Agent) StreamHelmReleases(conn *websocket.Conn, chartList []string, selectors string) error {
 	tweakListOptionsFunc := func(options *metav1.ListOptions) {
 		options.LabelSelector = selectors
 	}
@@ -701,16 +711,20 @@ func (a *Agent) StreamHelmReleases(conn *websocket.Conn, selectors string) error
 				return
 			}
 
-			obj, err := decodeRelease(string(releaseData))
+			helm_object, err := decodeRelease(string(releaseData))
 
 			if err != nil {
 				errorchan <- err
 				return
 			}
 
+			if len(chartList) > 0 && !contains(chartList, helm_object.Name) {
+				return
+			}
+
 			msg := Message{
 				EventType: "UPDATE",
-				Object:    obj,
+				Object:    helm_object,
 			}
 
 			if writeErr := conn.WriteJSON(msg); writeErr != nil {
@@ -737,16 +751,20 @@ func (a *Agent) StreamHelmReleases(conn *websocket.Conn, selectors string) error
 				return
 			}
 
-			obj, err := decodeRelease(string(releaseData))
+			helm_object, err := decodeRelease(string(releaseData))
 
 			if err != nil {
 				errorchan <- err
 				return
 			}
 
+			if len(chartList) > 0 && !contains(chartList, helm_object.Name) {
+				return
+			}
+
 			msg := Message{
 				EventType: "ADD",
-				Object:    obj,
+				Object:    helm_object,
 			}
 
 			if writeErr := conn.WriteJSON(msg); writeErr != nil {
@@ -773,16 +791,20 @@ func (a *Agent) StreamHelmReleases(conn *websocket.Conn, selectors string) error
 				return
 			}
 
-			obj, err := decodeRelease(string(releaseData))
+			helm_object, err := decodeRelease(string(releaseData))
 
 			if err != nil {
 				errorchan <- err
 				return
 			}
 
+			if (len(chartList) > 0) && !contains(chartList, helm_object.Name) {
+				return
+			}
+
 			msg := Message{
 				EventType: "DELETE",
-				Object:    obj,
+				Object:    helm_object,
 			}
 
 			if writeErr := conn.WriteJSON(msg); writeErr != nil {

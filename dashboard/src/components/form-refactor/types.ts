@@ -3,15 +3,17 @@
   Will be merged with shared types later
 */
 
+// YAML Field interfaces
+
 export interface BasicFormField {
   type: string;
 }
 
-export interface HeadingField extends  BasicFormField {
+export interface HeadingField extends BasicFormField {
   label: string;
 }
 
-export interface SubtitleField extends  BasicFormField {
+export interface SubtitleField extends BasicFormField {
   label: string;
 }
 
@@ -34,12 +36,32 @@ export interface PorterFormData {
   tabs: Tab[];
 }
 
+// internal field state interfaces
+
+export interface StringInputFieldState {
+  value: string;
+}
+
+export type PorterFormFieldFieldState = StringInputFieldState;
+
+// reducer interfaces
+
 export interface PorterFormState {
-  components: string[];
+  components: {
+    [key: string]: PorterFormFieldFieldState
+  }
 }
 
-export interface PorterFormBaseAction {
-  type: string;
+export interface PorterFormInitFieldAction {
+  type: "init-field",
+  id: string;
+  initValue: PorterFormFieldFieldState;
 }
 
-export type PorterFormAction = PorterFormBaseAction;
+export interface PorterFormUpdateFieldAction {
+  type: "update-field",
+  id: string;
+  updateFunc: (prev: PorterFormFieldFieldState) => PorterFormFieldFieldState;
+}
+
+export type PorterFormAction = PorterFormInitFieldAction|PorterFormUpdateFieldAction;

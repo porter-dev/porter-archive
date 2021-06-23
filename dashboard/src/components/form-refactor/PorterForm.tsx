@@ -15,14 +15,14 @@ const PorterForm: React.FC<Props> = () => {
     formData.tabs.length > 0 ? formData.tabs[0].name : ""
   );
 
-  const renderSectionField = (field: FormField): JSX.Element => {
+  const renderSectionField = (field: FormField, id: string): JSX.Element => {
     switch (field.type) {
       case "heading":
         return <Heading>{field.label}</Heading>;
       case "subtitle":
         return <Helper>{field.label}</Helper>;
       case "string-input":
-        return <StringInput />;
+        return <StringInput id={id} />;
     }
     return <p>Not Implemented: {field.type}</p>;
   };
@@ -31,9 +31,10 @@ const PorterForm: React.FC<Props> = () => {
     return (
       <>
         {section.contents.map((field, i) => {
+          const id = `${section.name}-${field.type}-${i}`;
           return (
-            <React.Fragment key={`${section.name}-${field.type}-${i}`}>
-              {renderSectionField(field)}
+            <React.Fragment key={id}>
+              {renderSectionField(field, id)}
             </React.Fragment>
           );
         })}

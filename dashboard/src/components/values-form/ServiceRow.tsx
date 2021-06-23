@@ -5,39 +5,40 @@ import { hardcodedNames, hardcodedIcons } from "shared/hardcodedNameDict";
 
 type PropsType = {
   service: {
-    clusterIP: string,
-    name: string,
-    release: string,
-    app: string,
-    namespace: string,
-    type?: string,
-  }
+    clusterIP: string;
+    name: string;
+    release: string;
+    app: string;
+    namespace: string;
+    type?: string;
+  };
 };
 
 type StateType = any;
 
-export default class ServiceRow extends Component<
-  PropsType,
-  StateType
-> {
+export default class ServiceRow extends Component<PropsType, StateType> {
   render() {
     let { clusterIP, name, namespace, type, app, release } = this.props.service;
     name = name || release;
     type = type || app;
     return (
       <>
-      { name && type && hardcodedNames[type] && hardcodedIcons[type] && namespace !== "kube-system" &&
-        <StyledServiceRow>
-          <Flex>
-            <Icon src={hardcodedIcons[type]} />
-            <Type>{hardcodedNames[type]}</Type>
-            <Name>{name}</Name> <Dash>-</Dash> <IP>{clusterIP}</IP>
-          </Flex>
-          <TagWrapper>
-            Namespace: <NamespaceTag>{namespace}</NamespaceTag>
-          </TagWrapper>
-        </StyledServiceRow>
-      }
+        {name &&
+          type &&
+          hardcodedNames[type] &&
+          hardcodedIcons[type] &&
+          namespace !== "kube-system" && (
+            <StyledServiceRow>
+              <Flex>
+                <Icon src={hardcodedIcons[type]} />
+                <Type>{hardcodedNames[type]}</Type>
+                <Name>{name}</Name> <Dash>-</Dash> <IP>{clusterIP}</IP>
+              </Flex>
+              <TagWrapper>
+                Namespace: <NamespaceTag>{namespace}</NamespaceTag>
+              </TagWrapper>
+            </StyledServiceRow>
+          )}
       </>
     );
   }
@@ -76,7 +77,6 @@ const NamespaceTag = styled.div`
   border-top-left-radius: 0px;
   border-bottom-left-radius: 0px;
 `;
-
 
 const Dash = styled.div`
   margin-right: 10px;

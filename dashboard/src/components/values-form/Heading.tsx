@@ -1,17 +1,19 @@
 import React from "react";
 import styled from "styled-components";
 
-export default function Heading(props: { isAtTop?: boolean; children: any; docs?: string }) {
+export default function Heading(props: {
+  isAtTop?: boolean;
+  children: any;
+  docs?: string;
+}) {
   return (
     <StyledHeading isAtTop={props.isAtTop}>
       {props.children}
-      {
-        props.docs && (
-          <a href={props.docs} target="_blank">
-            <i className="material-icons">help_outline</i>
-          </a>
-        )
-      }
+      {props.docs && (
+        <a href={props.docs} target="_blank">
+          <i className="material-icons">help_outline</i>
+        </a>
+      )}
     </StyledHeading>
   );
 }

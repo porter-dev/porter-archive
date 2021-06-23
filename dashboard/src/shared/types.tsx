@@ -104,9 +104,23 @@ export interface FormYAML {
   }[];
 }
 
+export interface ShowIfAnd {
+  and: ShowIf[];
+}
+
+export interface ShowIfOr {
+  or: ShowIf[];
+}
+
+export interface ShowIfNot {
+  not: ShowIf;
+}
+
+export type ShowIf = string | ShowIfAnd | ShowIfOr | ShowIfNot;
+
 export interface Section {
   name?: string;
-  show_if?: string;
+  show_if?: ShowIf;
   contents: FormElement[];
 }
 
@@ -121,6 +135,7 @@ export interface FormElement {
   placeholder?: string;
   value?: any;
   settings?: {
+    docs?: string;
     default?: number | string | boolean;
     options?: any[];
     omitUnitFromValue?: boolean;

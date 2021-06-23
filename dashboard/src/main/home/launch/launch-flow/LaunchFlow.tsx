@@ -8,7 +8,7 @@ import api from "shared/api";
 import { Context } from "shared/Context";
 import { pushFiltered } from "shared/routing";
 
-import hardcodedNames from "../hardcodedNameDict";
+import { hardcodedNames } from "shared/hardcodedNameDict";
 import SourcePage from "./SourcePage";
 import SettingsPage from "./SettingsPage";
 

@@ -1,8 +1,10 @@
 import React, { ChangeEvent, Component } from "react";
+import Tooltip from "@material-ui/core/Tooltip";
 import styled from "styled-components";
 
 type PropsType = {
   label?: string;
+  info?: string;
   type: string;
   value: string | number;
   setValue?: (x: string | number) => void;
@@ -32,12 +34,34 @@ export default class InputRow extends Component<PropsType, StateType> {
   };
 
   render() {
-    let { label, value, type, unit, placeholder, width } = this.props;
+    let { label, value, type, unit, placeholder, width, info } = this.props;
     return (
       <StyledInputRow className={this.props.className}>
-        {label && (
+        {(label || info) && (
           <Label>
-            {label} <Required>{this.props.isRequired ? " *" : null}</Required>
+            {label}
+            {info && (
+              <Tooltip
+                title={
+                  <div
+                    style={{
+                      fontFamily: "Work Sans, sans-serif",
+                      fontSize: "12px",
+                      fontWeight: "normal",
+                      padding: "5px 6px",
+                    }}
+                  >
+                    {info}
+                  </div>
+                }
+                placement="top"
+              >
+                <StyledInfoTooltip>
+                  <i className="material-icons">help_outline</i>
+                </StyledInfoTooltip>
+              </Tooltip>
+            )}
+            {this.props.isRequired && <Required>{" *"}</Required>}
           </Label>
         )}
         <InputWrapper>
@@ -105,4 +129,22 @@ const Label = styled.div`
 const StyledInputRow = styled.div`
   margin-bottom: 15px;
   margin-top: 22px;
+`;
+
+const StyledInfoTooltip = styled.div`
+  display: inline-block;
+  position: relative;
+  margin-right: 2px;
+  > i {
+    display: flex;
+    align-items: center;
+    position: absolute;
+    top: -10px;
+    font-size: 10px;
+    color: #858faaaa;
+    cursor: pointer;
+    :hover {
+      color: #aaaabb;
+    }
+  }
 `;

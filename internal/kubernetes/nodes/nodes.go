@@ -2,7 +2,6 @@ package nodes
 
 import (
 	"context"
-	"fmt"
 	"sync"
 
 	v1 "k8s.io/api/core/v1"
@@ -78,8 +77,6 @@ func GetNodesUsage(clientset kubernetes.Interface) []*NodeWithUsageData {
 }
 
 func getPodsForNode(clientset kubernetes.Interface, nodeName string) *v1.PodList {
-	fmt.Printf("%s", nodeName)
-
 	podList, _ := clientset.CoreV1().Pods("").List(context.TODO(), metav1.ListOptions{
 		FieldSelector: "spec.nodeName=" + nodeName + ",status.phase=Running",
 	})

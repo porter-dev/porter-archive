@@ -2,6 +2,7 @@ package api
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -105,7 +106,7 @@ func (app *App) HandleDeployTemplate(w http.ResponseWriter, r *http.Request) {
 		Registries: registries,
 	}
 
-	_, err = agent.InstallChart(conf, app.DOConf)
+	rel, err := agent.InstallChart(conf, app.DOConf)
 
 	if err != nil {
 		app.sendExternalError(err, http.StatusInternalServerError, HTTPError{
@@ -124,12 +125,27 @@ func (app *App) HandleDeployTemplate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// create release with webhook token in db
+	image, ok := rel.Config["image"].(map[string]interface{})
+	if !ok {
+		app.handleErrorInternal(fmt.Errorf("Could not find field image in config"), w)
+		return
+	}
+
+	repository := image["repository"]
+	repoStr, ok := repository.(string)
+
+	if !ok {
+		app.handleErrorInternal(fmt.Errorf("Could not find field repository in config"), w)
+		return
+	}
+
 	release := &models.Release{
 		ClusterID:    form.ReleaseForm.Form.Cluster.ID,
 		ProjectID:    form.ReleaseForm.Form.Cluster.ProjectID,
 		Namespace:    form.ReleaseForm.Form.Namespace,
 		Name:         form.ChartTemplateForm.Name,
 		WebhookToken: token,
+		ImageRepoURI: repoStr,
 	}
 
 	_, err = app.Repo.Release.CreateRelease(release)
@@ -146,6 +162,7 @@ func (app *App) HandleDeployTemplate(w http.ResponseWriter, r *http.Request) {
 		gaForm := &forms.CreateGitAction{
 			ReleaseID:      release.ID,
 			GitRepo:        form.GithubActionConfig.GitRepo,
+			GitBranch:      form.GithubActionConfig.GitBranch,
 			ImageRepoURI:   form.GithubActionConfig.ImageRepoURI,
 			DockerfilePath: form.GithubActionConfig.DockerfilePath,
 			GitRepoID:      form.GithubActionConfig.GitRepoID,
@@ -159,7 +176,109 @@ func (app *App) HandleDeployTemplate(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		app.createGitActionFromForm(projID, release, name, gaForm, w, r)
+		app.createGitActionFromForm(projID, release, form.ChartTemplateForm.Name, gaForm, w, r)
+	}
+
+	w.WriteHeader(http.StatusOK)
+}
+
+// HandleDeployAddon triggers a addon deployment from a template
+func (app *App) HandleDeployAddon(w http.ResponseWriter, r *http.Request) {
+	projID, err := strconv.ParseUint(chi.URLParam(r, "project_id"), 0, 64)
+
+	if err != nil || projID == 0 {
+		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
+		return
+	}
+
+	name := chi.URLParam(r, "name")
+	version := chi.URLParam(r, "version")
+
+	// if version passed as latest, pass empty string to loader to get latest
+	if version == "latest" {
+		version = ""
+	}
+
+	getChartForm := &forms.ChartForm{
+		Name:    name,
+		Version: version,
+		RepoURL: app.ServerConf.DefaultApplicationHelmRepoURL,
+	}
+
+	// if a repo_url is passed as query param, it will be populated
+	vals, err := url.ParseQuery(r.URL.RawQuery)
+
+	if err != nil {
+		app.handleErrorFormDecoding(err, ErrReleaseDecode, w)
+		return
+	}
+
+	getChartForm.PopulateRepoURLFromQueryParams(vals)
+
+	chart, err := loader.LoadChartPublic(getChartForm.RepoURL, getChartForm.Name, getChartForm.Version)
+
+	if err != nil {
+		app.handleErrorFormDecoding(err, ErrReleaseDecode, w)
+		return
+	}
+
+	form := &forms.InstallChartTemplateForm{
+		ReleaseForm: &forms.ReleaseForm{
+			Form: &helm.Form{
+				Repo:              app.Repo,
+				DigitalOceanOAuth: app.DOConf,
+			},
+		},
+		ChartTemplateForm: &forms.ChartTemplateForm{},
+	}
+
+	form.ReleaseForm.PopulateHelmOptionsFromQueryParams(
+		vals,
+		app.Repo.Cluster,
+	)
+
+	if err := json.NewDecoder(r.Body).Decode(form); err != nil {
+		app.handleErrorFormDecoding(err, ErrUserDecode, w)
+		return
+	}
+
+	agent, err := app.getAgentFromReleaseForm(
+		w,
+		r,
+		form.ReleaseForm,
+	)
+
+	if err != nil {
+		app.handleErrorFormDecoding(err, ErrUserDecode, w)
+		return
+	}
+
+	registries, err := app.Repo.Registry.ListRegistriesByProjectID(uint(projID))
+
+	if err != nil {
+		app.handleErrorDataRead(err, w)
+		return
+	}
+
+	conf := &helm.InstallChartConfig{
+		Chart:      chart,
+		Name:       form.ChartTemplateForm.Name,
+		Namespace:  form.ReleaseForm.Form.Namespace,
+		Values:     form.ChartTemplateForm.FormValues,
+		Cluster:    form.ReleaseForm.Cluster,
+		Repo:       *app.Repo,
+		Registries: registries,
+	}
+
+	_, err = agent.InstallChart(conf, app.DOConf)
+
+	if err != nil {
+		app.sendExternalError(err, http.StatusInternalServerError, HTTPError{
+			Code:   ErrReleaseDeploy,
+			Errors: []string{"error installing a new chart: " + err.Error()},
+		}, w)
+
+		return
 	}
 
 	w.WriteHeader(http.StatusOK)

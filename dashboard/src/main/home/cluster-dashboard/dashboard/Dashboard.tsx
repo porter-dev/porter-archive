@@ -9,7 +9,6 @@ import NodeList from "./NodeList";
 import { NamespaceList } from "./NamespaceList";
 import ClusterSettings from "./ClusterSettings";
 
-
 type TabEnum = "nodes" | "settings" | "namespaces";
 
 const tabOptions: {

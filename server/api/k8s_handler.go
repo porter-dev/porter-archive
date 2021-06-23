@@ -1127,7 +1127,14 @@ func (app *App) HandleStreamHelmReleases(w http.ResponseWriter, r *http.Request)
 	if vals["selectors"] != nil {
 		selectors = vals["selectors"][0]
 	}
-	err = agent.StreamHelmReleases(conn, selectors)
+
+	var chartList []string
+
+	if vals["charts"] != nil {
+		chartList = vals["charts"]
+	}
+
+	err = agent.StreamHelmReleases(conn, chartList, selectors)
 
 	if err != nil {
 		app.handleErrorWebsocketWrite(err, w)

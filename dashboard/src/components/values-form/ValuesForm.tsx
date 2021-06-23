@@ -18,6 +18,7 @@ import SelectRow from "./SelectRow";
 import Helper from "./Helper";
 import Heading from "./Heading";
 import ExpandableResource from "../ExpandableResource";
+import ServiceRow from "./ServiceRow";
 import VeleroForm from "../forms/VeleroForm";
 import InputArray from "./InputArray";
 import KeyValueArray from "./KeyValueArray";
@@ -68,22 +69,38 @@ export default class ValuesForm extends Component<PropsType, StateType> {
 
       switch (item.type) {
         case "heading":
-          return <Heading key={i}>{item.label}</Heading>;
+          return (
+            <Heading key={i} docs={item.settings?.docs}>
+              {item.label}
+            </Heading>
+          );
         case "subtitle":
           return <Helper key={i}>{item.label}</Helper>;
+        case "service-ip-list":
+          if (Array.isArray(item.value)) {
+            return (
+              <ResourceList key={key}>
+                {item.value?.map((service: any, i: number) => {
+                  return <ServiceRow service={service} key={i} />;
+                })}
+              </ResourceList>
+            );
+          }
         case "resource-list":
           if (Array.isArray(item.value)) {
             return (
               <ResourceList key={key}>
                 {item.value?.map((resource: any, i: number) => {
-                  return (
-                    <ExpandableResource
-                      key={i}
-                      resource={resource}
-                      isLast={i === item.value.length - 1}
-                      roundAllCorners={true}
-                    />
-                  );
+                  if (resource.data) {
+                    return (
+                      <ExpandableResource
+                        key={i}
+                        resource={resource}
+                        isLast={i === item.value.length - 1}
+                        roundAllCorners={true}
+                      />
+                    );
+                  }
                 })}
               </ResourceList>
             );
@@ -181,6 +198,7 @@ export default class ValuesForm extends Component<PropsType, StateType> {
             <InputRow
               key={key}
               width="100%"
+              placeholder={item.placeholder}
               isRequired={item.required}
               type="password"
               value={this.getInputValue(item)}

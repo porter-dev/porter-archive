@@ -78,7 +78,10 @@ export default class FormWrapper extends Component<PropsType, StateType> {
       };
       if (tabs) {
         tabs.forEach((tab: any, i: number) => {
-          if (tab?.name && tab.label) {
+
+          // Exclude value if omitFromLaunch is set
+          let omit = tab.settings?.omitFromLaunch && this.props.externalValues?.isLaunch;
+          if (tab?.name && tab.label && !omit) {
             // If a tab is valid, extract state
             tab.sections?.forEach((section: Section, i: number) => {
               section?.contents?.forEach((item: FormElement, i: number) => {

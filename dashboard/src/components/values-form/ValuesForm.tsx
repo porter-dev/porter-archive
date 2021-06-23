@@ -69,7 +69,11 @@ export default class ValuesForm extends Component<PropsType, StateType> {
 
       switch (item.type) {
         case "heading":
-          return <Heading key={i} docs={item.settings?.docs}>{item.label}</Heading>;
+          return (
+            <Heading key={i} docs={item.settings?.docs}>
+              {item.label}
+            </Heading>
+          );
         case "subtitle":
           return <Helper key={i}>{item.label}</Helper>;
         case "service-ip-list":
@@ -77,9 +81,7 @@ export default class ValuesForm extends Component<PropsType, StateType> {
             return (
               <ResourceList key={key}>
                 {item.value?.map((service: any, i: number) => {
-                  return (
-                    <ServiceRow service={service} key={i} />
-                  );
+                  return <ServiceRow service={service} key={i} />;
                 })}
               </ResourceList>
             );

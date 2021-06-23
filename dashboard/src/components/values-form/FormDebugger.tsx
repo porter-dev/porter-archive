@@ -281,7 +281,10 @@ tabs:
     - type: subtitle
       label: "Note: Hidden required fields aren't supported yet (global only)"
   - name: controlled-by-external
-    show_if: checkbox_a
+    show_if:
+      or:
+        - checkbox_a
+        - not_a_variable
     contents:
     - type: heading
       label: Conditional Display (A)

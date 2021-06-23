@@ -80,7 +80,7 @@ func (app *App) HandleListNamespaces(w http.ResponseWriter, r *http.Request) {
 // HandleCreateNamespace creates a new namespace given the name.
 func (app *App) HandleCreateNamespace(w http.ResponseWriter, r *http.Request) {
 	vals, err := url.ParseQuery(r.URL.RawQuery)
-	fmt.Println(vals)
+
 	if err != nil {
 		app.handleErrorFormDecoding(err, ErrReleaseDecode, w)
 		return
@@ -1064,7 +1064,7 @@ func (app *App) HandleStreamControllerStatus(w http.ResponseWriter, r *http.Requ
 	selectors := ""
 	if vals["selectors"] != nil {
 		selectors = vals["selectors"][0]
-	} 
+	}
 	err = agent.StreamControllerStatus(conn, kind, selectors)
 
 	if err != nil {

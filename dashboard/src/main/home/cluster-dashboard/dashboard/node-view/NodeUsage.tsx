@@ -8,6 +8,31 @@ type NodeUsageProps = {
 const NodeUsage: React.FunctionComponent<NodeUsageProps> = ({ node }) => {
   const percentFormatter = (number: number) => `${Number(number).toFixed(2)}%`;
 
+  const formatMemoryUnitToMi = (memory: string) => {
+    if (memory.includes("Mi")) {
+      return memory;
+    }
+
+    if (memory.includes("Gi")) {
+      const [value] = memory.split("Gi");
+      const numValue = Number(value);
+      const giToMiValue = numValue * 1024;
+      return `${giToMiValue}Mi`;
+    }
+
+    if (memory.includes("Ki")) {
+      const [value] = memory.split("Ki");
+      const numValue = Number(value);
+      const kiToMiValue = numValue / 1024;
+      return `${kiToMiValue}Mi`;
+    }
+
+    const value = memory.replace(/[^0-9]/g, "");
+    const numValue = Number(value);
+    const unknownToMiValue = numValue * 1024 * 1024;
+    return `${unknownToMiValue}Mi`;
+  };
+
   return (
     <NodeUsageWrapper>
       <Help
@@ -42,9 +67,11 @@ const NodeUsage: React.FunctionComponent<NodeUsageProps> = ({ node }) => {
             <Bolded>RAM:</Bolded>{" "}
             {!node?.memory_reqs && !node?.allocatable_memory
               ? "Loading..."
-              : `${node?.memory_reqs} / ${
+              : `${formatMemoryUnitToMi(
+                  node?.memory_reqs
+                )} / ${formatMemoryUnitToMi(
                   node?.allocatable_memory
-                } - ${percentFormatter(node?.fraction_memory_reqs)}`}
+                )} - ${percentFormatter(node?.fraction_memory_reqs)}`}
           </span>
         </UsageWrapper>
       </Wrapper>

@@ -1,5 +1,5 @@
-import React, { createContext } from "react";
-import { PorterFormData } from "./types";
+import React, { createContext, useReducer } from "react";
+import { PorterFormData, PorterFormState, PorterFormAction } from "./types";
 
 interface Props {
   formData: PorterFormData;
@@ -7,6 +7,7 @@ interface Props {
 
 interface ContextProps {
   formData: PorterFormData;
+  dispatchAction: (event: PorterFormAction) => void;
 }
 
 export const PorterFormContext = createContext<ContextProps | undefined>(
@@ -15,7 +16,18 @@ export const PorterFormContext = createContext<ContextProps | undefined>(
 const { Provider } = PorterFormContext;
 
 export const PorterFormContextProvider: React.FC<Props> = (props) => {
+  const [state, dispatch] = useReducer(
+    (state: PorterFormState, action: PorterFormAction) => {
+      console.log(action);
+      return state;
+    },
+    {
+      components: [],
+    }
+  );
   return (
-    <Provider value={{ formData: props.formData }}>{props.children}</Provider>
+    <Provider value={{ formData: props.formData, dispatchAction: dispatch }}>
+      {props.children}
+    </Provider>
   );
 };

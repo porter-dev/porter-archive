@@ -1,6 +1,7 @@
 import React, { Component } from "react";
 import styled from "styled-components";
 import AceEditor from "react-ace";
+import PorterForm from "../form-refactor/PorterForm";
 import FormWrapper from "components/values-form/FormWrapper";
 import CheckboxRow from "components/values-form/CheckboxRow";
 import InputRow from "components/values-form/InputRow";
@@ -11,6 +12,7 @@ import "ace-builds/src-noconflict/mode-text";
 
 import Heading from "./Heading";
 import Helper from "./Helper";
+import { PorterFormData } from "../form-refactor/types";
 
 type PropsType = {
   goBack: () => void;
@@ -156,24 +158,25 @@ export default class FormDebugger extends Component<PropsType, StateType> {
 
         <Heading>🎨 Rendered Form</Heading>
         <Br />
-        <FormWrapper
-          valuesToOverride={this.state.valuesToOverride}
-          clearValuesToOverride={() =>
-            this.setState({ valuesToOverride: null })
-          }
-          showStateDebugger={this.state.showStateDebugger}
-          formData={formData}
-          isReadOnly={this.state.isReadOnly}
-          tabOptions={this.state.showBonusTabs ? tabOptions : []}
-          renderTabContents={
-            this.state.showBonusTabs ? this.renderTabContents : null
-          }
-          onSubmit={(values: any) => {
-            alert("Check console output.");
-            console.log("Raw submission values:");
-            console.log(values);
-          }}
-        />
+        <PorterForm formData={formData as PorterFormData} />
+        {/*<FormWrapper*/}
+        {/*  valuesToOverride={this.state.valuesToOverride}*/}
+        {/*  clearValuesToOverride={() =>*/}
+        {/*    this.setState({ valuesToOverride: null })*/}
+        {/*  }*/}
+        {/*  showStateDebugger={this.state.showStateDebugger}*/}
+        {/*  formData={formData}*/}
+        {/*  isReadOnly={this.state.isReadOnly}*/}
+        {/*  tabOptions={this.state.showBonusTabs ? tabOptions : []}*/}
+        {/*  renderTabContents={*/}
+        {/*    this.state.showBonusTabs ? this.renderTabContents : null*/}
+        {/*  }*/}
+        {/*  onSubmit={(values: any) => {*/}
+        {/*    alert("Check console output.");*/}
+        {/*    console.log("Raw submission values:");*/}
+        {/*    console.log(values);*/}
+        {/*  }}*/}
+        {/*/>*/}
       </StyledFormDebugger>
     );
   }

@@ -4,8 +4,13 @@ import styled from "styled-components";
 import TabSelector from "./TabSelector";
 import Loading from "./Loading";
 
+export interface TabOption {
+  label: string;
+  value: string;
+}
+
 type PropsType = {
-  options: { label: string; value: string }[];
+  options: TabOption[];
   currentTab: string;
   setCurrentTab: (x: string) => void;
   defaultTab?: string;

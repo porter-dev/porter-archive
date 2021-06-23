@@ -13,6 +13,7 @@ import "ace-builds/src-noconflict/mode-text";
 import Heading from "./Heading";
 import Helper from "./Helper";
 import { PorterFormData } from "../form-refactor/types";
+import { PorterFormContextProvider } from "../form-refactor/PorterFormContextProvider";
 
 type PropsType = {
   goBack: () => void;
@@ -158,7 +159,9 @@ export default class FormDebugger extends Component<PropsType, StateType> {
 
         <Heading>🎨 Rendered Form</Heading>
         <Br />
-        <PorterForm formData={formData as PorterFormData} />
+        <PorterFormContextProvider formData={formData as PorterFormData}>
+          <PorterForm />
+        </PorterFormContextProvider>
         {/*<FormWrapper*/}
         {/*  valuesToOverride={this.state.valuesToOverride}*/}
         {/*  clearValuesToOverride={() =>*/}

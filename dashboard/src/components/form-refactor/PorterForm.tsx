@@ -1,15 +1,16 @@
-import React, { useState } from "react";
+import React, { useContext, useState } from "react";
 import { PorterFormData, Section, FormField } from "./types";
 import TabRegion, { TabOption } from "../TabRegion";
 import Heading from "../values-form/Heading";
 import Helper from "../values-form/Helper";
-import styled from "styled-components";
+import StringInput from "./field-components/StringInput";
+import { PorterFormContext } from "./PorterFormContextProvider";
 
-interface Props {
-  formData: PorterFormData;
-}
+interface Props {}
 
-const PorterForm: React.FC<Props> = ({ formData }) => {
+const PorterForm: React.FC<Props> = () => {
+  const { formData } = useContext(PorterFormContext);
+
   const [currentTab, setCurrentTab] = useState(
     formData.tabs.length > 0 ? formData.tabs[0].name : ""
   );
@@ -20,12 +21,13 @@ const PorterForm: React.FC<Props> = ({ formData }) => {
         return <Heading>{field.label}</Heading>;
       case "subtitle":
         return <Helper>{field.label}</Helper>;
+      case "string-input":
+        return <StringInput />;
     }
     return <p>Not Implemented: {field.type}</p>;
   };
 
   const renderSection = (section: Section): JSX.Element => {
-    console.log(section);
     return (
       <>
         {section.contents.map((field, i) => {

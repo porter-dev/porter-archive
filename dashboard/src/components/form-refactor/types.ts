@@ -1,5 +1,6 @@
 /*
   Interfaces for the form YAML
+  Will be merged with shared types later
 */
 
 export interface BasicFormField {
@@ -32,3 +33,13 @@ export interface PorterFormData {
   hasSource: true;
   tabs: Tab[];
 }
+
+export interface PorterFormState {
+  components: string[];
+}
+
+export interface PorterFormBaseAction {
+  type: string;
+}
+
+export type PorterFormAction = PorterFormBaseAction;

@@ -421,7 +421,7 @@ const TitleSection = styled.div`
       align-items: center;
       margin-bottom: -2px;
       font-size: 18px;
-      margin-left: 18px;
+      margin-left: 15px;
       color: #858faaaa;
       :hover {
         color: #aaaabb;

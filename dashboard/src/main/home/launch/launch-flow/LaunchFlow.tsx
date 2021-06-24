@@ -8,7 +8,7 @@ import api from "shared/api";
 import { Context } from "shared/Context";
 import { pushFiltered } from "shared/routing";
 
-import hardcodedNames from "../hardcodedNameDict";
+import { hardcodedNames } from "shared/hardcodedNameDict";
 import SourcePage from "./SourcePage";
 import SettingsPage from "./SettingsPage";
 
@@ -118,9 +118,8 @@ class LaunchFlow extends Component<PropsType, StateType> {
       .catch((err) => {
         let parsedErr =
           err?.response?.data?.errors && err.response.data.errors[0];
-        if (parsedErr) {
-          err = parsedErr;
-        }
+        err = parsedErr || err.message || JSON.stringify(err);
+
         this.setState({
           saveValuesStatus: `Could not create GitHub Action: ${err}`,
         });
@@ -142,7 +141,7 @@ class LaunchFlow extends Component<PropsType, StateType> {
     }
 
     api
-      .deployTemplate(
+      .deployAddon(
         "<token>",
         {
           templateName: this.props.currentTemplate.name,
@@ -182,12 +181,13 @@ class LaunchFlow extends Component<PropsType, StateType> {
       .catch((err) => {
         let parsedErr =
           err?.response?.data?.errors && err.response.data.errors[0];
-        if (parsedErr) {
-          err = parsedErr;
-        }
+
+        err = parsedErr || err.message || JSON.stringify(err);
+
         this.setState({
-          saveValuesStatus: parsedErr,
+          saveValuesStatus: err,
         });
+
         setCurrentError(err);
         window.analytics.track("Failed to Deploy Add-on", {
           name: this.props.currentTemplate.name,
@@ -260,7 +260,7 @@ class LaunchFlow extends Component<PropsType, StateType> {
 
     // pause jobs automatically
     if (this.props.currentTemplate?.name == "job") {
-      _.set(values, "paused", true)
+      _.set(values, "paused", true);
     }
 
     var url: string;
@@ -285,9 +285,7 @@ class LaunchFlow extends Component<PropsType, StateType> {
             .catch((err) => {
               let parsedErr =
                 err?.response?.data?.errors && err.response.data.errors[0];
-              if (parsedErr) {
-                err = parsedErr;
-              }
+              err = parsedErr || err.message || JSON.stringify(err);
               this.setState({
                 saveValuesStatus: `Could not create subdomain: ${err}`,
               });
@@ -341,10 +339,7 @@ class LaunchFlow extends Component<PropsType, StateType> {
       .catch((err: any) => {
         let parsedErr =
           err?.response?.data?.errors && err.response.data.errors[0];
-        console.log(parsedErr);
-        if (parsedErr) {
-          err = parsedErr;
-        }
+        err = parsedErr || err.message || JSON.stringify(err);
         this.setState({
           saveValuesStatus: `Could not deploy template: ${err}`,
         });

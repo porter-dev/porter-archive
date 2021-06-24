@@ -292,6 +292,27 @@ const deployTemplate = baseApi<
   return `/api/projects/${id}/deploy/${name}/${version}?cluster_id=${cluster_id}`;
 });
 
+const deployAddon = baseApi<
+  {
+    templateName: string;
+    formValues?: any;
+    storage: StorageType;
+    namespace: string;
+    name: string;
+  },
+  {
+    id: number;
+    cluster_id: number;
+    name: string;
+    version: string;
+    repo_url?: string;
+  }
+>("POST", (pathParams) => {
+  let { cluster_id, id, name, version, repo_url } = pathParams;
+
+  return `/api/projects/${id}/deploy/addon/${name}/${version}?cluster_id=${cluster_id}&repo_url=${repo_url}`;
+});
+
 const destroyCluster = baseApi<
   {
     eks_name: string;
@@ -302,6 +323,20 @@ const destroyCluster = baseApi<
   }
 >("POST", (pathParams) => {
   return `/api/projects/${pathParams.project_id}/infra/${pathParams.infra_id}/eks/destroy`;
+});
+
+const detectBuildpack = baseApi<
+  {},
+  {
+    project_id: number;
+    git_repo_id: number;
+    kind: string;
+    owner: string;
+    name: string;
+    branch: string;
+  }
+>("GET", (pathParams) => {
+  return `/api/projects/${pathParams.project_id}/gitrepos/${pathParams.git_repo_id}/repos/${pathParams.kind}/${pathParams.owner}/${pathParams.name}/${pathParams.branch}/buildpack/detect`;
 });
 
 const getBranchContents = baseApi<
@@ -900,9 +935,11 @@ export default {
   deleteRegistryIntegration,
   createSubdomain,
   deployTemplate,
+  deployAddon,
   destroyEKS,
   destroyGKE,
   destroyDOKS,
+  detectBuildpack,
   getBranchContents,
   getBranches,
   getCapabilities,

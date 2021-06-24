@@ -420,12 +420,14 @@ export default class ExpandedJobChart extends Component<PropsType, StateType> {
   };
 
   renderTabContents = (currentTab: string, submitValues?: any) => {
-    let saveButton = <SaveButton
+    let saveButton = (
+      <SaveButton
         text="Rerun Job"
         onClick={() => this.handleSaveValues(submitValues, true)}
         status={this.state.saveValuesStatus}
         makeFlush={true}
       />
+    );
 
     switch (currentTab) {
       case "jobs":
@@ -620,7 +622,9 @@ export default class ExpandedJobChart extends Component<PropsType, StateType> {
               isInModal={true}
               renderTabContents={this.renderTabContents}
               tabOptionsOnly={true}
-              onSubmit={(formValues) => this.handleSaveValues(formValues, false)}
+              onSubmit={(formValues) =>
+                this.handleSaveValues(formValues, false)
+              }
               saveValuesStatus={this.state.saveValuesStatus}
               saveButtonText="Save Config"
             />

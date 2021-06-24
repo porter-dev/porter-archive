@@ -65,10 +65,23 @@ export default class FormWrapper extends Component<PropsType, StateType> {
       let tabOptions = [] as { value: string; label: string }[];
       let tabs = this.props.formData?.tabs;
       let requiredFields = [] as string[];
-      let metaState: any = {};
+      let metaState: any = {
+        "currentCluster.service.is_gcp": {
+          value: this.context.currentCluster.service == "gke",
+        },
+        "currentCluster.service.is_aws": {
+          value: this.context.currentCluster.service == "eks",
+        },
+        "currentCluster.service.is_do": {
+          value: this.context.currentCluster.service == "doks",
+        },
+      };
       if (tabs) {
         tabs.forEach((tab: any, i: number) => {
-          if (tab?.name && tab.label) {
+          // Exclude value if omitFromLaunch is set
+          let omit =
+            tab.settings?.omitFromLaunch && this.props.externalValues?.isLaunch;
+          if (tab?.name && tab.label && !omit) {
             // If a tab is valid, extract state
             tab.sections?.forEach((section: Section, i: number) => {
               section?.contents?.forEach((item: FormElement, i: number) => {

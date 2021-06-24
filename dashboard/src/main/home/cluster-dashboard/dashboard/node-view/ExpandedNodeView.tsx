@@ -73,6 +73,22 @@ export const ExpandedNodeView = () => {
     }
   }, [currentTab, node]);
 
+  const nodeStatus = useMemo(() => {
+    if (!node || !node.node_conditions) {
+      return "loading";
+    }
+
+    return node.node_conditions.reduce((prevValue: boolean, current: any) => {
+      if (current.type !== "Ready" && current.status !== "False") {
+        return "failed";
+      }
+      if (current.type === "Ready" && current.status !== "True") {
+        return "failed";
+      }
+      return prevValue;
+    }, "healthy");
+  }, [node]);
+
   return (
     <>
       <CloseOverlay onClick={closeNodeView} />
@@ -84,9 +100,7 @@ export const ExpandedNodeView = () => {
                 <img src={nodePng} />
               </IconWrapper>
               {nodeId}
-              <InstanceType>
-                {instanceType}
-              </InstanceType>
+              <InstanceType>{instanceType}</InstanceType>
             </Title>
           </TitleSection>
 
@@ -96,11 +110,11 @@ export const ExpandedNodeView = () => {
         </HeaderWrapper>
         <BodyWrapper>
           <NodeUsage node={node} />
-          {/*
-            <StatusWrapper>
-              <StatusSection status="healthy" />
-            </StatusWrapper>
-          */}
+
+          <StatusWrapper>
+            <StatusSection status={nodeStatus} />
+          </StatusWrapper>
+
           <TabSelector
             options={tabOptions}
             currentTab={currentTab}

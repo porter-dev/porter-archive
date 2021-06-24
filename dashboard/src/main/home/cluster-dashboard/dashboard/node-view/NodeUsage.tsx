@@ -17,20 +17,20 @@ const NodeUsage: React.FunctionComponent<NodeUsageProps> = ({ node }) => {
       const [value] = memory.split("Gi");
       const numValue = Number(value);
       const giToMiValue = numValue * 1024;
-      return `${giToMiValue}Mi`;
+      return `${giToMiValue.toFixed()}Mi`;
     }
 
     if (memory.includes("Ki")) {
       const [value] = memory.split("Ki");
       const numValue = Number(value);
       const kiToMiValue = numValue / 1024;
-      return `${kiToMiValue}Mi`;
+      return `${kiToMiValue.toFixed()}Mi`;
     }
 
     const value = memory.replace(/[^0-9]/g, "");
     const numValue = Number(value);
     const unknownToMiValue = numValue * 1024 * 1024;
-    return `${unknownToMiValue}Mi`;
+    return `${unknownToMiValue.toFixed()}Mi`;
   };
 
   return (

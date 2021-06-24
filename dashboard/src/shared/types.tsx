@@ -104,15 +104,30 @@ export interface FormYAML {
   }[];
 }
 
+export interface ShowIfAnd {
+  and: ShowIf[];
+}
+
+export interface ShowIfOr {
+  or: ShowIf[];
+}
+
+export interface ShowIfNot {
+  not: ShowIf;
+}
+
+export type ShowIf = string | ShowIfAnd | ShowIfOr | ShowIfNot;
+
 export interface Section {
   name?: string;
-  show_if?: string;
+  show_if?: ShowIf;
   contents: FormElement[];
 }
 
 // FormElement represents a form element
 export interface FormElement {
   type: string;
+  info?: string;
   label: string;
   required?: boolean;
   name?: string;
@@ -120,6 +135,7 @@ export interface FormElement {
   placeholder?: string;
   value?: any;
   settings?: {
+    docs?: string;
     default?: number | string | boolean;
     options?: any[];
     omitUnitFromValue?: boolean;
@@ -187,4 +203,25 @@ export interface ActionConfigType {
 export interface CapabilityType {
   github: boolean;
   provisioner: boolean;
+}
+
+export interface ContextProps {
+  currentModal?: string;
+  currentModalData: any;
+  setCurrentModal: (currentModal: string, currentModalData?: any) => void;
+  currentError?: string;
+  setCurrentError: (currentError: string) => void;
+  currentCluster?: ClusterType;
+  setCurrentCluster: (currentCluster: ClusterType, callback?: any) => void;
+  currentProject?: ProjectType;
+  setCurrentProject: (currentProject: ProjectType, callback?: any) => void;
+  projects: ProjectType[];
+  setProjects: (projects: ProjectType[]) => void;
+  user: any;
+  setUser: (userId: number, email: string) => void;
+  devOpsMode: boolean;
+  setDevOpsMode: (devOpsMode: boolean) => void;
+  capabilities: CapabilityType;
+  setCapabilities: (capabilities: CapabilityType) => void;
+  clearContext: () => void;
 }

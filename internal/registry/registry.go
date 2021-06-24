@@ -482,21 +482,36 @@ func (r *Registry) listECRImages(repoName string, repo repository.Repository) ([
 		return nil, err
 	}
 
-	var maxResults int64 = 999
-
 	describeResp, err := svc.DescribeImages(&ecr.DescribeImagesInput{
 		RepositoryName: &repoName,
 		ImageIds:       resp.ImageIds,
-		MaxResults:     &maxResults,
 	})
 
 	if err != nil {
 		return nil, err
 	}
 
+	imageDetails := describeResp.ImageDetails
+
+	nextToken := describeResp.NextToken
+
+	for nextToken != nil {
+		describeResp, err := svc.DescribeImages(&ecr.DescribeImagesInput{
+			RepositoryName: &repoName,
+			ImageIds:       resp.ImageIds,
+		})
+
+		if err != nil {
+			return nil, err
+		}
+
+		nextToken = describeResp.NextToken
+		imageDetails = append(imageDetails, describeResp.ImageDetails...)
+	}
+
 	res := make([]*Image, 0)
 
-	for _, img := range describeResp.ImageDetails {
+	for _, img := range imageDetails {
 		for _, tag := range img.ImageTags {
 			res = append(res, &Image{
 				Digest:         *img.ImageDigest,

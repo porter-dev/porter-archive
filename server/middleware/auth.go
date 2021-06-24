@@ -188,7 +188,7 @@ func (auth *Auth) DoesUserHaveProjectAccess(
 
 		var userID uint
 
-		if tok != nil && tok.ProjectID == uint(projID) {
+		if tok != nil && tok.ProjectID != 0 && tok.ProjectID == uint(projID) {
 			next.ServeHTTP(w, r)
 			return
 		} else if tok != nil {

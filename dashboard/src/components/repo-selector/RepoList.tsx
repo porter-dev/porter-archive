@@ -1,170 +1,128 @@
-import React, { Component } from "react";
+import React, { useState, useContext, useEffect, useRef } from "react";
 import styled from "styled-components";
 import github from "assets/github.png";
-import info from "assets/info.svg";
 
 import api from "shared/api";
 import { RepoType, ActionConfigType } from "shared/types";
 import { Context } from "shared/Context";
 
 import Loading from "../Loading";
+import Button from "../Button";
+import { AxiosResponse } from "axios";
 
-type PropsType = {
+type Props = {
   actionConfig: ActionConfigType | null;
   setActionConfig: (x: ActionConfigType) => void;
   userId?: number;
   readOnly: boolean;
 };
 
-type StateType = {
-  repos: RepoType[];
-  loading: boolean;
-  error: boolean;
-  searchFilter: string;
-};
-
-export default class RepoList extends Component<PropsType, StateType> {
-  state = {
-    repos: [] as RepoType[],
-    loading: true,
-    error: false,
-    searchFilter: "",
-  };
+const RepoList: React.FC<Props> = ({
+  actionConfig,
+  setActionConfig,
+  userId,
+  readOnly,
+}) => {
+  const [repos, setRepos] = useState<RepoType[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+  const [searchFilter, setSearchFilter] = useState(null);
+  const [searchInput, setSearchInput] = useState("");
+  const { currentProject } = useContext(Context);
 
   // TODO: Try to unhook before unmount
-  componentDidMount() {
-    let { currentProject } = this.context;
-
-    // Get repos
-    if (!this.props.userId && this.props.userId !== 0) {
-      api
-        .getGitRepos("<token>", {}, { project_id: currentProject.id })
-        .then(async (res) => {
-          if (res.data.length == 0) {
-            this.setState({ loading: false, error: false });
-            return;
-          }
-
-          var allRepos: any = [];
-          var errors: any = [];
-
-          var promises = res.data.map((gitrepo: any, id: number) => {
+  useEffect(() => {
+    // load git repo ids, and then repo names from that
+    // this only happens once during the lifecycle
+    new Promise((resolve, reject) => {
+      if (!userId && userId !== 0) {
+        api
+          .getGitRepos("<token>", {}, { project_id: currentProject.id })
+          .then(async (res) => {
+            resolve(res.data.map((gitrepo: any) => gitrepo.id));
+          })
+          .catch((err) => {
+            reject(err);
+          });
+      } else {
+        resolve([userId]);
+      }
+    })
+      .then((ids: number[]) => {
+        Promise.all(
+          ids.map((id) => {
             return new Promise((resolve, reject) => {
               api
                 .getGitRepoList(
                   "<token>",
                   {},
-                  { project_id: currentProject.id, git_repo_id: gitrepo.id }
+                  { project_id: currentProject.id, git_repo_id: id }
                 )
                 .then((res) => {
-                  res.data.forEach((repo: any, id: number) => {
-                    repo.GHRepoID = gitrepo.id;
-                  });
-
                   resolve(res.data);
                 })
                 .catch((err) => {
-                  errors.push(err);
-                  resolve([]);
+                  reject(err);
                 });
             });
-          });
-
-          var sepRepos = await Promise.all(promises);
-
-          allRepos = [].concat.apply([], sepRepos);
-
-          // remove duplicates based on name
-          allRepos = allRepos.filter((repo: any, index: number, self: any) => {
-            var keep =
-              index ===
-              self.findIndex((_repo: any) => {
-                return repo.FullName === _repo.FullName;
-              });
-
-            return keep;
-          });
-
-          // sort repos based on name
-          allRepos.sort((a: any, b: any) => {
-            if (a.FullName < b.FullName) {
-              return -1;
-            } else if (a.FullName > b.FullName) {
-              return 1;
-            } else {
-              return 0;
-            }
-          });
-
-          if (allRepos.length == 0 && errors.length > 0) {
-            this.setState({ loading: false, error: true });
-          } else {
-            this.setState({
-              repos: allRepos,
-              loading: false,
-              error: false,
-            });
-          }
-        })
-        .catch((_) => this.setState({ loading: false, error: true }));
-    } else {
-      let grid = this.props.userId;
-
-      api
-        .getGitRepoList(
-          "<token>",
-          {},
-          { project_id: currentProject.id, git_repo_id: grid }
+          })
         )
-        .then((res) => {
-          var repos: any = res.data;
-
-          repos.forEach((repo: any, id: number) => {
-            repo.GHRepoID = grid;
+          .then((repos: RepoType[][]) => {
+            const names = new Set();
+            // note: would be better to use .flat() here but you need es2019 for
+            setRepos(
+              repos
+                .map((arr, idx) =>
+                  arr.map((el) => {
+                    el.GHRepoID = ids[idx];
+                    return el;
+                  })
+                )
+                .reduce((acc, val) => acc.concat(val), [])
+                .reduce((acc, val) => {
+                  if (!names.has(val.FullName)) {
+                    names.add(val.FullName);
+                    return acc.concat(val);
+                  } else {
+                    return acc;
+                  }
+                }, [])
+            );
+            setLoading(false);
+          })
+          .catch((_) => {
+            setLoading(false);
+            setError(true);
           });
+      })
+      .catch((_) => {
+        setLoading(false);
+        setError(true);
+      });
+  }, []);
 
-          repos.sort((a: any, b: any) => {
-            if (a.FullName < b.FullName) {
-              return -1;
-            } else if (a.FullName > b.FullName) {
-              return 1;
-            } else {
-              return 0;
-            }
-          });
-
-          this.setState({ repos: repos, loading: false, error: false });
-        })
-        .catch((err) => {
-          this.setState({ loading: false, error: true });
-        });
-    }
-  }
-
-  setRepo = (x: RepoType) => {
-    let { actionConfig, setActionConfig } = this.props;
+  const setRepo = (x: RepoType) => {
     let updatedConfig = actionConfig;
     updatedConfig.git_repo = x.FullName;
     updatedConfig.git_repo_id = x.GHRepoID;
     setActionConfig(updatedConfig);
   };
 
-  renderRepoList = () => {
-    let { repos, loading, error } = this.state;
+  const renderRepoList = () => {
     if (loading) {
       return (
         <LoadingWrapper>
           <Loading />
         </LoadingWrapper>
       );
-    } else if (error || !repos) {
+    } else if (error) {
       return <LoadingWrapper>Error loading repos.</LoadingWrapper>;
     } else if (repos.length == 0) {
       return (
         <LoadingWrapper>
           No connected Github repos found. You can
           <A
-            href={`/api/oauth/projects/${this.context.currentProject.id}/github?redirected=true`}
+            href={`/api/oauth/projects/${currentProject.id}/github?redirected=true`}
           >
             log in with GitHub
           </A>
@@ -173,58 +131,110 @@ export default class RepoList extends Component<PropsType, StateType> {
       );
     }
 
-    return repos
-      .filter((repo: RepoType, i: number) => {
-        return repo.FullName.includes(this.state.searchFilter || "");
-      })
-      .map((repo: RepoType, i: number) => {
+    // show 10 most recently used repos if user hasn't searched anything yet
+    let results =
+      searchFilter != null
+        ? repos.filter((repo: RepoType) => {
+            return repo.FullName.includes(searchFilter || "");
+          })
+        : repos.slice(0, 10);
+
+    if (results.length == 0) {
+      return <LoadingWrapper>No matching Github repos found.</LoadingWrapper>;
+    } else {
+      return results.map((repo: RepoType, i: number) => {
         return (
           <RepoName
             key={i}
-            isSelected={repo.FullName === this.props.actionConfig.git_repo}
+            isSelected={repo.FullName === actionConfig.git_repo}
             lastItem={i === repos.length - 1}
-            onClick={() => this.setRepo(repo)}
-            readOnly={this.props.readOnly}
+            onClick={() => setRepo(repo)}
+            readOnly={readOnly}
           >
             <img src={github} />
             {repo.FullName}
           </RepoName>
         );
       });
+    }
   };
 
-  renderExpanded = () => {
-    if (this.props.readOnly) {
-      return <ExpandedWrapperAlt>{this.renderRepoList()}</ExpandedWrapperAlt>;
+  const renderExpanded = () => {
+    if (readOnly) {
+      return <ExpandedWrapperAlt>{renderRepoList()}</ExpandedWrapperAlt>;
     } else {
       return (
-        <ExpandedWrapper>
-          <InfoRow
-            isSelected={false}
-            lastItem={false}
-            readOnly={this.props.readOnly}
-          >
-            <i className="material-icons">search</i>
-            <SearchInput
-              value={this.state.searchFilter}
-              onChange={(e: any) => {
-                this.setState({ searchFilter: e.target.value });
-              }}
-              placeholder="Search repos..."
-            />
-          </InfoRow>
-          <ExpandedWrapper>{this.renderRepoList()}</ExpandedWrapper>
-        </ExpandedWrapper>
+        <>
+          <SearchRowTop>
+            <SearchBar>
+              <i className="material-icons">search</i>
+              <SearchInput
+                value={searchInput}
+                onChange={(e: any) => {
+                  setSearchInput(e.target.value);
+                }}
+                onKeyPress={({ key }) => {
+                  if (key === "Enter") {
+                    setSearchFilter(searchInput);
+                  }
+                }}
+                placeholder="Search repos..."
+              />
+            </SearchBar>
+            <ButtonWrapper disabled={loading || error}>
+              <Button
+                onClick={() => setSearchFilter(searchInput)}
+                disabled={loading || error}
+              >
+                Search
+              </Button>
+            </ButtonWrapper>
+          </SearchRowTop>
+          <RepoListWrapper>
+            <ExpandedWrapper>{renderRepoList()}</ExpandedWrapper>
+          </RepoListWrapper>
+        </>
       );
     }
   };
 
-  render() {
-    return <>{this.renderExpanded()}</>;
-  }
-}
+  return <>{renderExpanded()}</>;
+};
 
-RepoList.contextType = Context;
+export default RepoList;
+
+const ButtonWrapper = styled.div`
+  background: ${(props: { disabled?: boolean }) =>
+    props.disabled ? "#aaaabbee" : "#616FEEcc"};
+  :hover {
+    background: ${(props: { disabled?: boolean }) =>
+      props.disabled ? "" : "#505edddd"};
+  }
+  height: 40px;
+  display: flex;
+  align-items: center;
+`;
+
+const RepoListWrapper = styled.div`
+  border: 1px solid #ffffff55;
+  border-radius: 3px;
+  overflow-y: auto;
+`;
+
+const SearchRow = styled.div`
+  display: flex;
+  align-items: center;
+  height: 40px;
+  background: #ffffff11;
+  border-bottom: 1px solid #606166;
+  margin-bottom: 10px;
+`;
+
+const SearchRowTop = styled(SearchRow)`
+  border-bottom: 0;
+  border: 1px solid #ffffff55;
+  border-radius: 3px;
+`;
 
 const RepoName = styled.div`
   display: flex;
@@ -296,7 +306,7 @@ const ExpandedWrapper = styled.div`
   width: 100%;
   border-radius: 3px;
   border: 0px solid #ffffff44;
-  max-height: 235px;
+  max-height: 221px;
   top: 40px;
 
   > i {
@@ -321,6 +331,19 @@ const A = styled.a`
   cursor: pointer;
 `;
 
+const SearchBar = styled.div`
+  display: flex;
+  flex: 1;
+
+  > i {
+    color: #aaaabb;
+    padding-top: 1px;
+    margin-left: 13px;
+    font-size: 18px;
+    margin-right: 8px;
+  }
+`;
+
 const SearchInput = styled.input`
   outline: none;
   border: none;
@@ -328,6 +351,5 @@ const SearchInput = styled.input`
   background: none;
   width: 100%;
   color: white;
-  padding: 0;
   height: 20px;
 `;

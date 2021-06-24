@@ -1,7 +1,14 @@
 import React, { Component } from "react";
 import styled from "styled-components";
 
-import { Section, FormElement } from "shared/types";
+import {
+  Section,
+  FormElement,
+  ShowIf,
+  ShowIfOr,
+  ShowIfAnd,
+  ShowIfNot,
+} from "shared/types";
 import { Context } from "shared/Context";
 
 import CheckboxRow from "./CheckboxRow";
@@ -11,6 +18,7 @@ import SelectRow from "./SelectRow";
 import Helper from "./Helper";
 import Heading from "./Heading";
 import ExpandableResource from "../ExpandableResource";
+import ServiceRow from "./ServiceRow";
 import VeleroForm from "../forms/VeleroForm";
 import InputArray from "./InputArray";
 import KeyValueArray from "./KeyValueArray";
@@ -61,22 +69,38 @@ export default class ValuesForm extends Component<PropsType, StateType> {
 
       switch (item.type) {
         case "heading":
-          return <Heading key={i}>{item.label}</Heading>;
+          return (
+            <Heading key={i} docs={item.settings?.docs}>
+              {item.label}
+            </Heading>
+          );
         case "subtitle":
           return <Helper key={i}>{item.label}</Helper>;
+        case "service-ip-list":
+          if (Array.isArray(item.value)) {
+            return (
+              <ResourceList key={key}>
+                {item.value?.map((service: any, i: number) => {
+                  return <ServiceRow service={service} key={i} />;
+                })}
+              </ResourceList>
+            );
+          }
         case "resource-list":
           if (Array.isArray(item.value)) {
             return (
               <ResourceList key={key}>
                 {item.value?.map((resource: any, i: number) => {
-                  return (
-                    <ExpandableResource
-                      key={i}
-                      resource={resource}
-                      isLast={i === item.value.length - 1}
-                      roundAllCorners={true}
-                    />
-                  );
+                  if (resource.data) {
+                    return (
+                      <ExpandableResource
+                        key={i}
+                        resource={resource}
+                        isLast={i === item.value.length - 1}
+                        roundAllCorners={true}
+                      />
+                    );
+                  }
                 })}
               </ResourceList>
             );
@@ -164,6 +188,7 @@ export default class ValuesForm extends Component<PropsType, StateType> {
                 this.props.setMetaState(key, x);
               }}
               label={item.label}
+              info={item.info}
               unit={item.settings ? item.settings.unit : null}
               disabled={isDisabled}
             />
@@ -173,6 +198,7 @@ export default class ValuesForm extends Component<PropsType, StateType> {
             <InputRow
               key={key}
               width="100%"
+              placeholder={item.placeholder}
               isRequired={item.required}
               type="password"
               value={this.getInputValue(item)}
@@ -304,17 +330,45 @@ export default class ValuesForm extends Component<PropsType, StateType> {
     });
   };
 
+  evalShowIf = (vals: ShowIf): boolean => {
+    if (!vals) {
+      return false;
+    }
+    if (typeof vals == "string") {
+      return !!this.props.metaState[vals]?.value;
+    }
+    if ((vals as ShowIfOr).or) {
+      vals = vals as ShowIfOr;
+      for (let i = 0; i < vals.or.length; i++) {
+        if (this.evalShowIf(vals.or[i])) {
+          return true;
+        }
+      }
+      return false;
+    }
+    if ((vals as ShowIfAnd).and) {
+      vals = vals as ShowIfAnd;
+      for (let i = 0; i < vals.and.length; i++) {
+        if (!this.evalShowIf(vals.and[i])) {
+          return false;
+        }
+      }
+      return true;
+    }
+    if ((vals as ShowIfNot).not) {
+      vals = vals as ShowIfNot;
+      return !this.evalShowIf(vals.not);
+    }
+
+    return false;
+  };
+
   renderFormContents = () => {
     if (this.props.metaState) {
       return this.props.sections?.map((section: Section, i: number) => {
         // Hide collapsible section if deciding field is false
-        if (section.show_if) {
-          if (
-            !this.props.metaState[section.show_if] ||
-            this.props.metaState[section.show_if].value === false
-          ) {
-            return null;
-          }
+        if (section.show_if && !this.evalShowIf(section.show_if)) {
+          return null;
         }
 
         return <div key={i}>{this.renderSection(section)}</div>;

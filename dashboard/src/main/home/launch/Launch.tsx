@@ -11,7 +11,7 @@ import Loading from "components/Loading";
 import LaunchFlow from "./launch-flow/LaunchFlow";
 import NoClusterPlaceholder from "../NoClusterPlaceholder";
 
-import hardcodedNames from "./hardcodedNameDict";
+import { hardcodedNames } from "shared/hardcodedNameDict";
 import semver from "semver";
 
 const tabOptions = [
@@ -421,7 +421,7 @@ const TitleSection = styled.div`
       align-items: center;
       margin-bottom: -2px;
       font-size: 18px;
-      margin-left: 18px;
+      margin-left: 15px;
       color: #858faaaa;
       :hover {
         color: #aaaabb;

@@ -21,7 +21,7 @@ func newAgentFixture(t *testing.T, namespace string) *helm.Agent {
 		Namespace: namespace,
 	}
 
-	return helm.GetAgentTesting(form, nil, l)
+	return helm.GetAgentTesting(form, nil, l, nil)
 }
 
 type releaseStub struct {

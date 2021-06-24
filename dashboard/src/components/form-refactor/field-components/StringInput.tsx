@@ -1,13 +1,19 @@
 import React, { useContext, useEffect } from "react";
 import InputRow from "../../values-form/InputRow";
 import useFormField from "../hooks/useFormField";
-import { StringInputFieldState } from "../types";
+import { StringInputField, StringInputFieldState } from "../types";
 
-interface Props {
+interface Props extends StringInputField {
   id: string;
 }
 
-const StringInput: React.FC<Props> = ({ id }) => {
+const StringInput: React.FC<Props> = ({
+  id,
+  label,
+  required,
+  placeholder,
+  info,
+}) => {
   const { state, updateState } = useFormField<StringInputFieldState>(id, {
     value: "",
   });
@@ -30,6 +36,10 @@ const StringInput: React.FC<Props> = ({ id }) => {
           };
         });
       }}
+      label={label}
+      isRequired={required}
+      placeholder={placeholder}
+      info={info}
     />
   );
 };

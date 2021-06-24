@@ -614,6 +614,20 @@ func New(a *api.App) *chi.Mux {
 			)
 
 			r.Method(
+				"GET",
+				"/projects/{project_id}/clusters/{cluster_id}/node/{node_name}",
+				auth.DoesUserHaveProjectAccess(
+					auth.DoesUserHaveClusterAccess(
+						requestlog.NewHandler(a.HandleGetNode, l),
+						mw.URLParam,
+						mw.URLParam,
+					),
+					mw.URLParam,
+					mw.ReadAccess,
+				),
+			)
+
+			r.Method(
 				"POST",
 				"/projects/{project_id}/clusters/{cluster_id}",
 				auth.DoesUserHaveProjectAccess(

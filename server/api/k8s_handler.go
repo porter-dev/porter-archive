@@ -1317,3 +1317,45 @@ func (app *App) HandleListNodes(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 }
+
+func (app *App) HandleGetNode(w http.ResponseWriter, r *http.Request) {
+	cluster_id, err := strconv.ParseUint(chi.URLParam(r, "cluster_id"), 0, 64)
+	node_name := chi.URLParam(r, "node_name")
+
+	if err != nil || cluster_id == 0 {
+		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
+		return
+	}
+
+	cluster, err := app.Repo.Cluster.ReadCluster(uint(cluster_id))
+
+	if err != nil {
+		app.handleErrorRead(err, ErrProjectDataRead, w)
+		return
+	}
+
+	form := &forms.K8sForm{
+		OutOfClusterConfig: &kubernetes.OutOfClusterConfig{
+			Repo:              app.Repo,
+			DigitalOceanOAuth: app.DOConf,
+			Cluster:           cluster,
+		},
+	}
+
+	var agent *kubernetes.Agent
+
+	if app.ServerConf.IsTesting {
+		agent = app.TestAgents.K8sAgent
+	} else {
+		agent, _ = kubernetes.GetAgentOutOfClusterConfig(form.OutOfClusterConfig)
+	}
+
+	nodeWithUsageData := nodes.DescribeNode(agent.Clientset, node_name)
+
+	w.WriteHeader(http.StatusOK)
+
+	if err := json.NewEncoder(w).Encode(nodeWithUsageData); err != nil {
+		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
+		return
+	}
+}

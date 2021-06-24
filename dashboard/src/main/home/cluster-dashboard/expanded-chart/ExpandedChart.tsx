@@ -894,7 +894,7 @@ const Dot = styled.div`
 const InfoWrapper = styled.div`
   display: flex;
   align-items: center;
-  margin-left: 6px;
+  margin-left: 3px;
   margin-top: 22px;
 `;
 

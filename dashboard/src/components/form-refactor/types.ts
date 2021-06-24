@@ -5,19 +5,25 @@
 
 // YAML Field interfaces
 
-export interface BasicFormField {
-  type: string;
-}
-
-export interface HeadingField extends BasicFormField {
+export interface HeadingField {
+  type: "heading";
   label: string;
 }
 
-export interface SubtitleField extends BasicFormField {
+export interface SubtitleField {
+  type: "subtitle";
   label: string;
 }
 
-export type FormField = HeadingField|SubtitleField;
+export interface StringInputField {
+  type: "string-input";
+  label?: string;
+  required?: boolean;
+  placeholder?: string;
+  info?: string;
+}
+
+export type FormField = HeadingField|SubtitleField|StringInputField;
 
 export interface Section {
   name: string;

@@ -22,9 +22,9 @@ const PorterForm: React.FC<Props> = () => {
       case "subtitle":
         return <Helper>{field.label}</Helper>;
       case "string-input":
-        return <StringInput id={id} />;
+        return <StringInput id={id} {...field} />;
     }
-    return <p>Not Implemented: {field.type}</p>;
+    return <p>Not Implemented: {(field as any).type}</p>;
   };
 
   const renderSection = (section: Section): JSX.Element => {

@@ -10,7 +10,7 @@ import (
 )
 
 // Version will be linked by an ldflag during build
-var Version string = "v0.1.0-beta.3.4"
+var Version string = "v0.4.0"
 
 func main() {
 	var versionFlag bool
@@ -23,7 +23,7 @@ func main() {
 		os.Exit(0)
 	}
 
-	credentials.Serve(&helper.PorterHelper{
-		Debug: Version == "dev",
-	})
+	helper := helper.NewPorterHelper(Version == "dev")
+
+	credentials.Serve(helper)
 }

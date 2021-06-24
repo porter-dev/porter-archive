@@ -38,6 +38,9 @@ type ZIPReleaseGetter struct {
 
 	// If the asset is platform dependent
 	IsPlatformDependent bool
+
+	// The downloader/unzipper
+	Downloader *ZIPDownloader
 }
 
 // GetLatestRelease downloads the latest .zip release from a given Github repository
@@ -67,7 +70,7 @@ func (z *ZIPReleaseGetter) GetRelease(releaseTag string) error {
 func (z *ZIPReleaseGetter) getReleaseFromURL(releaseURL string) error {
 	fmt.Printf("getting release %s\n", releaseURL)
 
-	err := z.downloadToFile(releaseURL)
+	err := z.Downloader.DownloadToFile(releaseURL)
 
 	fmt.Printf("downloaded release %s to file %s\n", z.AssetName, filepath.Join(z.ZipFolderDest, z.ZipName))
 
@@ -77,7 +80,7 @@ func (z *ZIPReleaseGetter) getReleaseFromURL(releaseURL string) error {
 
 	fmt.Printf("unzipping %s to %s\n", z.AssetName, z.AssetFolderDest)
 
-	err = z.unzipToDir()
+	err = z.Downloader.UnzipToDir()
 
 	return err
 }
@@ -152,45 +155,15 @@ func (z *ZIPReleaseGetter) getDownloadRegexp() (*regexp.Regexp, error) {
 	return regexp.MustCompile(fmt.Sprintf(`(?i)%s_.*\.zip`, z.AssetName)), nil
 }
 
-// // DownloadLatestServerRelease retrieves the latest Porter server release from Github, unzips
-// // it, and adds the binary to the porter directory
-// func DownloadLatestServerRelease(porterDir string) error {
-// 	releaseURL, staticReleaseURL, err := getLatestReleaseDownloadURL()
+type ZIPDownloader struct {
+	ZipFolderDest   string
+	ZipName         string
+	AssetFolderDest string
 
-// 	if err != nil {
-// 		return err
-// 	}
+	RemoveAfterDownload bool
+}
 
-// 	zipFile := filepath.Join(porterDir, "portersrv_latest.zip")
-
-// 	err = downloadToFile(releaseURL, zipFile)
-
-// 	if err != nil {
-// 		return err
-// 	}
-
-// 	err = unzipToDir(zipFile, porterDir)
-
-// 	if err != nil {
-// 		return err
-// 	}
-
-// 	staticZipFile := filepath.Join(porterDir, "static_latest.zip")
-
-// 	err = downloadToFile(staticReleaseURL, staticZipFile)
-
-// 	if err != nil {
-// 		return err
-// 	}
-
-// 	staticDir := filepath.Join(porterDir, "static")
-
-// 	err = unzipToDir(staticZipFile, staticDir)
-
-// 	return err
-// }
-
-func (z *ZIPReleaseGetter) downloadToFile(url string) error {
+func (z *ZIPDownloader) DownloadToFile(url string) error {
 	// Get the data
 	resp, err := http.Get(url)
 
@@ -215,7 +188,7 @@ func (z *ZIPReleaseGetter) downloadToFile(url string) error {
 	return err
 }
 
-func (z *ZIPReleaseGetter) unzipToDir() error {
+func (z *ZIPDownloader) UnzipToDir() error {
 	r, err := zip.OpenReader(filepath.Join(z.ZipFolderDest, z.ZipName))
 
 	if err != nil {
@@ -266,6 +239,10 @@ func (z *ZIPReleaseGetter) unzipToDir() error {
 		if err != nil {
 			return err
 		}
+	}
+
+	if z.RemoveAfterDownload {
+		os.Remove(filepath.Join(z.ZipFolderDest, z.ZipName))
 	}
 
 	return nil

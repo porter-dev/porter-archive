@@ -82,6 +82,7 @@ const Table: React.FC<TableProps> = ({
           return (
             <StyledTr
               {...row.getRowProps()}
+              enablePointer={!!onRowClick}
               onClick={() => onRowClick && onRowClick(row)}
               selected={false}
             >
@@ -129,14 +130,21 @@ const TableWrapper = styled.div`
   padding-bottom: 20px;
 `;
 
+type StyledTrProps = {
+  enablePointer?: boolean;
+  disableHover?: boolean;
+  selected?: boolean;
+};
+
 export const StyledTr = styled.tr`
   line-height: 2.2em;
-  background: ${(props: { disableHover?: boolean; selected?: boolean }) =>
-    props.selected ? "#ffffff11" : ""};
+  background: ${(props: StyledTrProps) => (props.selected ? "#ffffff11" : "")};
   :hover {
-    background: ${(props: { disableHover?: boolean; selected?: boolean }) =>
+    background: ${(props: StyledTrProps) =>
       props.disableHover ? "" : "#ffffff22"};
   }
+  cursor: ${(props: StyledTrProps) =>
+    props.enablePointer ? "pointer" : "unset"};
 `;
 
 export const StyledTd = styled.td`
@@ -148,6 +156,7 @@ export const StyledTd = styled.td`
   :last-child {
     padding-right: 10px;
   }
+  user-select: text;
 `;
 
 export const StyledTHead = styled.thead`

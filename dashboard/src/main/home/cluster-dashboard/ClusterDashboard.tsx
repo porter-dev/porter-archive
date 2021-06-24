@@ -22,7 +22,7 @@ import ExpandedChartWrapper from "./expanded-chart/ExpandedChartWrapper";
 import { RouteComponentProps, withRouter } from "react-router";
 
 import api from "shared/api";
-import { Dashboard } from "./dashboard/Dashboard";
+import DashboardRoutes from "./dashboard/Routes";
 
 type PropsType = RouteComponentProps & {
   currentCluster: ClusterType;
@@ -207,7 +207,7 @@ class ClusterDashboard extends Component<PropsType, StateType> {
           {this.renderContents()}
         </Route>
         <Route path={["/cluster-dashboard"]}>
-          <Dashboard />
+          <DashboardRoutes />
         </Route>
       </Switch>
     );
@@ -388,7 +388,7 @@ const TitleSection = styled.div`
   > i {
     margin-left: 10px;
     cursor: pointer;
-    font-size 18px;
+    font-size: 18px;
     color: #858FAAaa;
     padding: 5px;
     border-radius: 100px;

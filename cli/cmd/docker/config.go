@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/docker/docker/client"
+	"github.com/porter-dev/porter/cli/cmd/api"
 )
 
 const label = "CreatedByPorterCLI"
@@ -26,4 +27,24 @@ func NewAgentFromEnv() (*Agent, error) {
 		ctx:    ctx,
 		label:  label,
 	}, nil
+}
+
+func NewAgentWithAuthGetter(client *api.Client, projID uint) (*Agent, error) {
+	agent, err := NewAgentFromEnv()
+
+	if err != nil {
+		return nil, err
+	}
+
+	cache := NewFileCredentialsCache()
+
+	authGetter := &AuthGetter{
+		Client:    client,
+		Cache:     cache,
+		ProjectID: projID,
+	}
+
+	agent.authGetter = authGetter
+
+	return agent, nil
 }

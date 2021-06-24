@@ -614,6 +614,20 @@ func New(a *api.App) *chi.Mux {
 			)
 
 			r.Method(
+				"GET",
+				"/projects/{project_id}/clusters/{cluster_id}/node/{node_name}",
+				auth.DoesUserHaveProjectAccess(
+					auth.DoesUserHaveClusterAccess(
+						requestlog.NewHandler(a.HandleGetNode, l),
+						mw.URLParam,
+						mw.URLParam,
+					),
+					mw.URLParam,
+					mw.ReadAccess,
+				),
+			)
+
+			r.Method(
 				"POST",
 				"/projects/{project_id}/clusters/{cluster_id}",
 				auth.DoesUserHaveProjectAccess(
@@ -815,6 +829,20 @@ func New(a *api.App) *chi.Mux {
 				auth.DoesUserHaveProjectAccess(
 					auth.DoesUserHaveRegistryAccess(
 						requestlog.NewHandler(a.HandleUpdateProjectRegistry, l),
+						mw.URLParam,
+						mw.URLParam,
+					),
+					mw.URLParam,
+					mw.WriteAccess,
+				),
+			)
+
+			r.Method(
+				"POST",
+				"/projects/{project_id}/registries/{registry_id}/repository",
+				auth.DoesUserHaveProjectAccess(
+					auth.DoesUserHaveRegistryAccess(
+						requestlog.NewHandler(a.HandleCreateRepository, l),
 						mw.URLParam,
 						mw.URLParam,
 					),
@@ -1063,6 +1091,20 @@ func New(a *api.App) *chi.Mux {
 
 			r.Method(
 				"GET",
+				"/projects/{project_id}/gitrepos/{git_repo_id}/repos/{kind}/{owner}/{name}/{branch}/buildpack/detect",
+				auth.DoesUserHaveProjectAccess(
+					auth.DoesUserHaveGitRepoAccess(
+						requestlog.NewHandler(a.HandleDetectBuildpack, l),
+						mw.URLParam,
+						mw.URLParam,
+					),
+					mw.URLParam,
+					mw.ReadAccess,
+				),
+			)
+
+			r.Method(
+				"GET",
 				"/projects/{project_id}/gitrepos/{git_repo_id}/repos/{kind}/{owner}/{name}/{branch}/contents",
 				auth.DoesUserHaveProjectAccess(
 					auth.DoesUserHaveGitRepoAccess(
@@ -1081,6 +1123,20 @@ func New(a *api.App) *chi.Mux {
 				auth.DoesUserHaveProjectAccess(
 					auth.DoesUserHaveGitRepoAccess(
 						requestlog.NewHandler(a.HandleGetProcfileContents, l),
+						mw.URLParam,
+						mw.URLParam,
+					),
+					mw.URLParam,
+					mw.ReadAccess,
+				),
+			)
+
+			r.Method(
+				"GET",
+				"/projects/{project_id}/gitrepos/{git_repo_id}/repos/{kind}/{owner}/{name}/{branch}/tarball_url",
+				auth.DoesUserHaveProjectAccess(
+					auth.DoesUserHaveGitRepoAccess(
+						requestlog.NewHandler(a.HandleGetRepoZIPDownloadURL, l),
 						mw.URLParam,
 						mw.URLParam,
 					),
@@ -1434,6 +1490,20 @@ func New(a *api.App) *chi.Mux {
 					mw.ReadAccess,
 				),
 			)
+
+			r.Method(
+				"POST",
+				"/projects/{project_id}/deploy/addon/{name}/{version}",
+				auth.DoesUserHaveProjectAccess(
+					auth.DoesUserHaveClusterAccess(
+						requestlog.NewHandler(a.HandleDeployAddon, l),
+						mw.URLParam,
+						mw.QueryParam,
+					),
+					mw.URLParam,
+					mw.ReadAccess,
+				),
+			)
 		})
 
 		// Create group for long-running Helm operations
@@ -1485,6 +1555,20 @@ func New(a *api.App) *chi.Mux {
 					),
 					mw.URLParam,
 					mw.ReadAccess,
+				),
+			)
+
+			r.Method(
+				"POST",
+				"/projects/{project_id}/releases/image/update/batch",
+				auth.DoesUserHaveProjectAccess(
+					auth.DoesUserHaveClusterAccess(
+						requestlog.NewHandler(a.HandleReleaseUpdateJobImages, l),
+						mw.URLParam,
+						mw.QueryParam,
+					),
+					mw.URLParam,
+					mw.WriteAccess,
 				),
 			)
 		})

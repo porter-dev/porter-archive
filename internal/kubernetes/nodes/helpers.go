@@ -112,11 +112,14 @@ func DescribeNodeResource(nodeNonTerminatedPodsList *corev1.PodList, node *corev
 	}
 
 	return &NodeUsage{
-		fractionCpuReqs,
-		fractionCpuLimits,
-		fractionMemoryReqs,
-		fractionMemoryLimits,
-		fractionEphemeralStorageReqs,
-		fractionEphemeralStorageLimits,
+		cpuReqs:                        cpuReqs.String(),
+		memoryReqs:                     memoryReqs.String(),
+		ephemeralStorageReqs:           ephemeralstorageReqs.String(),
+		fractionCpuReqs:                fractionCpuReqs,
+		fractionCpuLimits:              fractionCpuLimits,
+		fractionMemoryReqs:             fractionMemoryReqs,
+		fractionMemoryLimits:           fractionMemoryLimits,
+		fractionEphemeralStorageReqs:   fractionEphemeralStorageReqs,
+		fractionEphemeralStorageLimits: fractionEphemeralStorageLimits,
 	}
 }

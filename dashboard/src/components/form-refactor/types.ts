@@ -52,9 +52,19 @@ export type PorterFormFieldFieldState = StringInputFieldState;
 
 // reducer interfaces
 
+export interface PorterFormFieldValidationState {
+  loading: boolean;
+  error: boolean;
+  validated: boolean;
+  touched: boolean;
+}
+
 export interface PorterFormState {
   components: {
     [key: string]: PorterFormFieldFieldState
+  }
+  validation: {
+    [key: string]: PorterFormFieldValidationState
   }
 }
 
@@ -62,6 +72,7 @@ export interface PorterFormInitFieldAction {
   type: "init-field",
   id: string;
   initValue: PorterFormFieldFieldState;
+  initValidation?: Partial<PorterFormFieldValidationState>
 }
 
 export interface PorterFormUpdateFieldAction {

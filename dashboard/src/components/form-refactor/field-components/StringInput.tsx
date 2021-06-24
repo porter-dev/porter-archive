@@ -15,7 +15,12 @@ const StringInput: React.FC<Props> = ({
   info,
 }) => {
   const { state, updateState } = useFormField<StringInputFieldState>(id, {
-    value: "",
+    initValue: {
+      value: "",
+    },
+    initValidation: {
+      validated: !required,
+    },
   });
 
   // TODO: needs a loading wrapper

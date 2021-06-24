@@ -1,15 +1,23 @@
 import { useContext, useEffect } from "react";
 import { PorterFormContext } from "../PorterFormContextProvider";
-import { PorterFormFieldFieldState } from "../types";
+import {
+  PorterFormFieldFieldState,
+  PorterFormFieldValidationState,
+} from "../types";
 
 interface FormFieldData<T> {
   state: T;
   updateState: (updateFunc: (prev: T) => T) => void;
 }
 
+interface Options<T> {
+  initValue: T;
+  initValidation?: Partial<PorterFormFieldValidationState>;
+}
+
 const useFormField = <T extends PorterFormFieldFieldState>(
   fieldId: string,
-  initValue: T
+  { initValue, initValidation }: Options<T>
 ): FormFieldData<T> => {
   const { dispatchAction, formState } = useContext(PorterFormContext);
 
@@ -18,6 +26,7 @@ const useFormField = <T extends PorterFormFieldFieldState>(
       type: "init-field",
       id: fieldId,
       initValue,
+      initValidation,
     });
   }, []);
 

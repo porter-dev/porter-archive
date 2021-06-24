@@ -35,49 +35,50 @@ const NodeUsage: React.FunctionComponent<NodeUsageProps> = ({ node }) => {
 
   return (
     <NodeUsageWrapper>
-      <Help
-        href="https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/#meaning-of-cpu"
-        target="_blank"
-      >
-        <span>How to read memory and cpu units</span>
-        <i className="material-icons">help_outline</i>
-      </Help>
-
-      <Help
-        href="https://kubernetes.io/docs/tasks/administer-cluster/reserve-compute-resources/#node-allocatable"
-        target="_blank"
-      >
-        <span>
-          The memory value corresponds to the allocatable total on node, for
-          more info click here
-        </span>
-        <i className="material-icons">help_outline</i>
-      </Help>
       <Wrapper>
         <UsageWrapper>
           <span>
             <Bolded>CPU:</Bolded>{" "}
             {!node?.cpu_reqs && !node?.allocatable_cpu
               ? "Loading..."
-              : `${node?.cpu_reqs} / ${
+              : `${percentFormatter(node?.fraction_cpu_reqs)} (${node?.cpu_reqs}/${
                   node?.allocatable_cpu
-                }m - ${percentFormatter(node?.fraction_cpu_reqs)}`}
+                }m)`}
           </span>
+          <Buffer />
           <span>
             <Bolded>RAM:</Bolded>{" "}
             {!node?.memory_reqs && !node?.allocatable_memory
               ? "Loading..."
-              : `${formatMemoryUnitToMi(
+              : `${percentFormatter(node?.fraction_memory_reqs)} (${formatMemoryUnitToMi(
                   node?.memory_reqs
-                )} / ${formatMemoryUnitToMi(
+                )}/${formatMemoryUnitToMi(
                   node?.allocatable_memory
-                )} - ${percentFormatter(node?.fraction_memory_reqs)}`}
+                )})`}
           </span>
+          <I onClick={() => window.open("https://kubernetes.io/docs/tasks/administer-cluster/reserve-compute-resources/#node-allocatable")} className="material-icons">help_outline</I>
         </UsageWrapper>
       </Wrapper>
     </NodeUsageWrapper>
   );
 };
+
+const I = styled.i`
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  font-size: 17px;
+  margin-left: 12px;
+  color: #858faaaa;
+  :hover {
+    color: #aaaabb;
+  }
+`;
+
+const Buffer = styled.div`
+  width: 17px;
+  height: 20px;
+`;
 
 const Wrapper = styled.div`
   display: flex;
@@ -85,8 +86,9 @@ const Wrapper = styled.div`
 
 const UsageWrapper = styled.div`
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   font-size: 14px;
+  color: #aaaabb;
   line-height: 24px;
   user-select: text;
   :not(last-child) {
@@ -117,7 +119,7 @@ const Help = styled.a`
 `;
 
 const NodeUsageWrapper = styled.div`
-  margin: 16px 0px;
+  margin: 14px 0px 10px;
 `;
 
 export default NodeUsage;

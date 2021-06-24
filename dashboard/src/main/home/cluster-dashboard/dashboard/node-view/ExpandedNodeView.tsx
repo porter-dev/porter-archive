@@ -10,6 +10,7 @@ import TabSelector from "components/TabSelector";
 import { pushFiltered } from "shared/routing";
 import NodeUsage from "./NodeUsage";
 import { ConditionsTable } from "./ConditionsTable";
+import StatusSection from "components/StatusSection";
 
 type ExpandedNodeViewParams = {
   nodeId: string;
@@ -82,7 +83,10 @@ export const ExpandedNodeView = () => {
               <IconWrapper>
                 <img src={nodePng} />
               </IconWrapper>
-              {nodeId} {instanceType}
+              {nodeId}
+              <InstanceType>
+                {instanceType}
+              </InstanceType>
             </Title>
           </TitleSection>
 
@@ -92,6 +96,11 @@ export const ExpandedNodeView = () => {
         </HeaderWrapper>
         <BodyWrapper>
           <NodeUsage node={node} />
+          {/*
+            <StatusWrapper>
+              <StatusSection status="healthy" />
+            </StatusWrapper>
+          */}
           <TabSelector
             options={tabOptions}
             currentTab={currentTab}
@@ -105,6 +114,17 @@ export const ExpandedNodeView = () => {
 };
 
 export default ExpandedNodeView;
+
+const StatusWrapper = styled.div`
+  margin-left: 3px;
+  margin-bottom: 15px;
+`;
+
+const InstanceType = styled.div`
+  font-weight: 400;
+  color: #ffffff44;
+  margin-left: 12px;
+`;
 
 const BodyWrapper = styled.div`
   width: 100%;
@@ -135,7 +155,6 @@ const CloseOverlay = styled.div`
 `;
 
 const IconWrapper = styled.div`
-  color: #efefef;
   font-size: 16px;
   height: 20px;
   width: 20px;
@@ -145,8 +164,9 @@ const IconWrapper = styled.div`
   border-radius: 3px;
   margin-right: 12px;
 
-  > i {
-    font-size: 20px;
+  > img {
+    filter: brightness(50%);
+    width: 18px;
   }
 `;
 

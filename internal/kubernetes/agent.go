@@ -819,7 +819,7 @@ func (a *Agent) StreamHelmReleases(conn *websocket.Conn, chartList []string, sel
 		for {
 			if _, _, err := conn.ReadMessage(); err != nil {
 				defer conn.Close()
-				defer close(stopper)
+				close(stopper)
 				errorchan <- nil
 				return
 			}

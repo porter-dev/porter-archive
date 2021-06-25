@@ -120,8 +120,11 @@ func NewStore(repo *repository.Repository, conf config.ServerConf) (*PGStore, er
 	dbStore := &PGStore{
 		Codecs: securecookie.CodecsFromPairs(keyPairs...),
 		Options: &sessions.Options{
-			Path:   "/",
-			MaxAge: 86400 * 30,
+			Path:     "/",
+			MaxAge:   86400 * 30,
+			Secure:   true,
+			HttpOnly: true,
+			SameSite: http.SameSiteStrictMode,
 		},
 		Repo: repo,
 	}

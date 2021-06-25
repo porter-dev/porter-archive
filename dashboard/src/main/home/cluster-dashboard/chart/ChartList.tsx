@@ -33,6 +33,7 @@ const ChartList: React.FunctionComponent<Props> = ({
   const [controllers, setControllers] = useState<
     Record<string, Record<string, any>>
   >({});
+  const [releases, setReleases] = useState<Record<string, any>>({});
   const [isLoading, setIsLoading] = useState(false);
   const [isError, setIsError] = useState(false);
 
@@ -103,6 +104,28 @@ const ChartList: React.FunctionComponent<Props> = ({
     }
   };
 
+  const handleReleaseWSNotification = (object: any) => {
+    if (object.type === "helm.sh/release.v1") {
+      setReleases((oldReleases) => {
+        const currentRelease = oldReleases[object.metadata.labels.name];
+        const currentReleaseVersion = Number(
+          currentRelease?.metadata?.labels?.version
+        );
+        const newReleaseVersion = Number(object?.metadata?.labels?.version);
+        if (currentReleaseVersion > newReleaseVersion) {
+          return {
+            ...oldReleases,
+          };
+        }
+
+        return {
+          ...oldReleases,
+          [object.metadata.labels.name]: object,
+        };
+      });
+    }
+  };
+
   const setupWebsocket = (kind: string) => {
     let { currentCluster, currentProject } = context;
     const apiPath = `/api/projects/${currentProject.id}/k8s/${kind}/status?cluster_id=${currentCluster.id}`;
@@ -115,6 +138,11 @@ const ChartList: React.FunctionComponent<Props> = ({
         let event = JSON.parse(evt.data);
         let object = event.Object;
         object.metadata.kind = event.Kind;
+
+        if (event.Kind === "secrets") {
+          handleReleaseWSNotification(object);
+          return;
+        }
 
         setControllers((oldControllers) => ({
           ...oldControllers,
@@ -148,6 +176,7 @@ const ChartList: React.FunctionComponent<Props> = ({
       "statefulset",
       "daemonset",
       "replicaset",
+      "secrets",
     ]);
 
     return () => {
@@ -198,6 +227,7 @@ const ChartList: React.FunctionComponent<Props> = ({
           key={`${chart.namespace}-${chart.name}`}
           chart={chart}
           controllers={controllers || {}}
+          release={releases[chart.name] || {}}
         />
       );
     });

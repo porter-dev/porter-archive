@@ -1073,6 +1073,75 @@ func (app *App) HandleStreamControllerStatus(w http.ResponseWriter, r *http.Requ
 	}
 }
 
+func (app *App) HandleStreamHelmReleases(w http.ResponseWriter, r *http.Request) {
+	vals, err := url.ParseQuery(r.URL.RawQuery)
+
+	if err != nil {
+		app.handleErrorFormDecoding(err, ErrReleaseDecode, w)
+		return
+	}
+
+	// get session to retrieve correct kubeconfig
+	_, err = app.Store.Get(r, app.ServerConf.CookieName)
+
+	if err != nil {
+		app.handleErrorFormDecoding(err, ErrReleaseDecode, w)
+		return
+	}
+
+	// get the filter options
+	form := &forms.K8sForm{
+		OutOfClusterConfig: &kubernetes.OutOfClusterConfig{
+			Repo:              app.Repo,
+			DigitalOceanOAuth: app.DOConf,
+		},
+	}
+
+	form.PopulateK8sOptionsFromQueryParams(vals, app.Repo.Cluster)
+
+	// validate the form
+	if err := app.validator.Struct(form); err != nil {
+		app.handleErrorFormValidation(err, ErrK8sValidate, w)
+		return
+	}
+
+	// create a new agent
+	var agent *kubernetes.Agent
+
+	if app.ServerConf.IsTesting {
+		agent = app.TestAgents.K8sAgent
+	} else {
+		agent, err = kubernetes.GetAgentOutOfClusterConfig(form.OutOfClusterConfig)
+	}
+
+	upgrader.CheckOrigin = func(r *http.Request) bool { return true }
+
+	// upgrade to websocket.
+	conn, err := upgrader.Upgrade(w, r, nil)
+
+	if err != nil {
+		app.handleErrorUpgradeWebsocket(err, w)
+	}
+
+	selectors := ""
+	if vals["selectors"] != nil {
+		selectors = vals["selectors"][0]
+	}
+
+	var chartList []string
+
+	if vals["charts"] != nil {
+		chartList = vals["charts"]
+	}
+
+	err = agent.StreamHelmReleases(conn, chartList, selectors)
+
+	if err != nil {
+		app.handleErrorWebsocketWrite(err, w)
+		return
+	}
+}
+
 // HandleDetectPrometheusInstalled detects a prometheus installation in the target cluster
 func (app *App) HandleDetectPrometheusInstalled(w http.ResponseWriter, r *http.Request) {
 	vals, err := url.ParseQuery(r.URL.RawQuery)

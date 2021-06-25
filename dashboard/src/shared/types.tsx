@@ -135,6 +135,7 @@ export interface FormElement {
   placeholder?: string;
   value?: any;
   settings?: {
+    docs?: string;
     default?: number | string | boolean;
     options?: any[];
     omitUnitFromValue?: boolean;

@@ -110,7 +110,10 @@ const Chart: React.FunctionComponent<Props> = ({
             margin_left={"17px"}
           />
           <LastDeployed>
-            <Dot>•</Dot> Last deployed {readableDate(chart.info.last_deployed)}
+            <Dot>•</Dot> Last deployed{" "}
+            {readableDate(
+              release?.info?.last_deployed || chart.info.last_deployed
+            )}
           </LastDeployed>
         </InfoWrapper>
 
@@ -120,7 +123,7 @@ const Chart: React.FunctionComponent<Props> = ({
         </TagWrapper>
       </BottomWrapper>
 
-      <Version>v{release?.metadata?.labels?.version || chart.version}</Version>
+      <Version>v{release?.version || chart.version}</Version>
     </StyledChart>
   );
 };

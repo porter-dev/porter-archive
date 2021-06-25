@@ -9,7 +9,7 @@ import { PorterTemplate } from "shared/types";
 import Helper from "components/values-form/Helper";
 import Selector from "components/Selector";
 
-import hardcodedNames from "../hardcodedNameDict";
+import { hardcodedNames } from "shared/hardcodedNameDict";
 
 type PropsType = {
   currentTemplate: any;

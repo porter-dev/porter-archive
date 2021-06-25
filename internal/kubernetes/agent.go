@@ -3,10 +3,13 @@ package kubernetes
 import (
 	"bufio"
 	"bytes"
+	"compress/gzip"
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"strings"
 
 	"github.com/porter-dev/porter/internal/kubernetes/provisioner"
@@ -45,6 +48,8 @@ import (
 	"k8s.io/client-go/tools/remotecommand"
 
 	"github.com/porter-dev/porter/internal/config"
+
+	rspb "helm.sh/helm/v3/pkg/release"
 )
 
 // Agent is a Kubernetes agent for performing operations that interact with the
@@ -556,6 +561,8 @@ func (a *Agent) StreamControllerStatus(conn *websocket.Conn, kind string, select
 		informer = factory.Core().V1().Namespaces().Informer()
 	case "pod":
 		informer = factory.Core().V1().Pods().Informer()
+	case "secrets":
+		informer = factory.Core().V1().Secrets().Informer()
 	}
 
 	stopper := make(chan struct{})
@@ -605,7 +612,214 @@ func (a *Agent) StreamControllerStatus(conn *websocket.Conn, kind string, select
 		for {
 			if _, _, err := conn.ReadMessage(); err != nil {
 				defer conn.Close()
-				defer close(stopper)
+				close(stopper)
+				errorchan <- nil
+				return
+			}
+		}
+	}()
+
+	go informer.Run(stopper)
+
+	for {
+		select {
+		case err := <-errorchan:
+			return err
+		}
+	}
+}
+
+var b64 = base64.StdEncoding
+
+var magicGzip = []byte{0x1f, 0x8b, 0x08}
+
+func decodeRelease(data string) (*rspb.Release, error) {
+	// base64 decode string
+	b, err := b64.DecodeString(data)
+	if err != nil {
+		return nil, err
+	}
+
+	// For backwards compatibility with releases that were stored before
+	// compression was introduced we skip decompression if the
+	// gzip magic header is not found
+	if bytes.Equal(b[0:3], magicGzip) {
+		r, err := gzip.NewReader(bytes.NewReader(b))
+		if err != nil {
+			return nil, err
+		}
+		defer r.Close()
+		b2, err := ioutil.ReadAll(r)
+		if err != nil {
+			return nil, err
+		}
+		b = b2
+	}
+
+	var rls rspb.Release
+	// unmarshal release object bytes
+	if err := json.Unmarshal(b, &rls); err != nil {
+		return nil, err
+	}
+	return &rls, nil
+}
+
+func contains(s []string, str string) bool {
+	for _, v := range s {
+		if v == str {
+			return true
+		}
+	}
+
+	return false
+}
+
+func (a *Agent) StreamHelmReleases(conn *websocket.Conn, chartList []string, selectors string) error {
+	tweakListOptionsFunc := func(options *metav1.ListOptions) {
+		options.LabelSelector = selectors
+	}
+
+	factory := informers.NewSharedInformerFactoryWithOptions(
+		a.Clientset,
+		0,
+		informers.WithTweakListOptions(tweakListOptionsFunc),
+	)
+
+	informer := factory.Core().V1().Secrets().Informer()
+
+	stopper := make(chan struct{})
+	errorchan := make(chan error)
+	defer close(errorchan)
+
+	informer.AddEventHandler(cache.ResourceEventHandlerFuncs{
+		UpdateFunc: func(oldObj, newObj interface{}) {
+			secretObj, ok := newObj.(*v1.Secret)
+
+			if !ok {
+				errorchan <- fmt.Errorf("could not cast to secret")
+				return
+			}
+
+			if secretObj.Type != "helm.sh/release.v1" {
+				return
+			}
+
+			releaseData, ok := secretObj.Data["release"]
+
+			if !ok {
+				errorchan <- fmt.Errorf("release field not found")
+				return
+			}
+
+			helm_object, err := decodeRelease(string(releaseData))
+
+			if err != nil {
+				errorchan <- err
+				return
+			}
+
+			if len(chartList) > 0 && !contains(chartList, helm_object.Name) {
+				return
+			}
+
+			msg := Message{
+				EventType: "UPDATE",
+				Object:    helm_object,
+			}
+
+			if writeErr := conn.WriteJSON(msg); writeErr != nil {
+				errorchan <- writeErr
+				return
+			}
+		},
+		AddFunc: func(obj interface{}) {
+			secretObj, ok := obj.(*v1.Secret)
+
+			if secretObj.Type != "helm.sh/release.v1" {
+				return
+			}
+
+			if !ok {
+				errorchan <- fmt.Errorf("could not cast to secret")
+				return
+			}
+
+			releaseData, ok := secretObj.Data["release"]
+
+			if !ok {
+				errorchan <- fmt.Errorf("release field not found")
+				return
+			}
+
+			helm_object, err := decodeRelease(string(releaseData))
+
+			if err != nil {
+				errorchan <- err
+				return
+			}
+
+			if len(chartList) > 0 && !contains(chartList, helm_object.Name) {
+				return
+			}
+
+			msg := Message{
+				EventType: "ADD",
+				Object:    helm_object,
+			}
+
+			if writeErr := conn.WriteJSON(msg); writeErr != nil {
+				errorchan <- writeErr
+				return
+			}
+		},
+		DeleteFunc: func(obj interface{}) {
+			secretObj, ok := obj.(*v1.Secret)
+
+			if secretObj.Type != "helm.sh/release.v1" {
+				return
+			}
+
+			if !ok {
+				errorchan <- fmt.Errorf("could not cast to secret")
+				return
+			}
+
+			releaseData, ok := secretObj.Data["release"]
+
+			if !ok {
+				errorchan <- fmt.Errorf("release field not found")
+				return
+			}
+
+			helm_object, err := decodeRelease(string(releaseData))
+
+			if err != nil {
+				errorchan <- err
+				return
+			}
+
+			if (len(chartList) > 0) && !contains(chartList, helm_object.Name) {
+				return
+			}
+
+			msg := Message{
+				EventType: "DELETE",
+				Object:    helm_object,
+			}
+
+			if writeErr := conn.WriteJSON(msg); writeErr != nil {
+				errorchan <- writeErr
+				return
+			}
+		},
+	})
+
+	go func() {
+		// listens for websocket closing handshake
+		for {
+			if _, _, err := conn.ReadMessage(); err != nil {
+				defer conn.Close()
+				close(stopper)
 				errorchan <- nil
 				return
 			}

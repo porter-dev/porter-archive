@@ -11,7 +11,7 @@ import Loading from "components/Loading";
 import LaunchFlow from "./launch-flow/LaunchFlow";
 import NoClusterPlaceholder from "../NoClusterPlaceholder";
 
-import hardcodedNames from "./hardcodedNameDict";
+import { hardcodedNames } from "shared/hardcodedNameDict";
 import semver from "semver";
 
 const tabOptions = [

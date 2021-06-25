@@ -612,7 +612,7 @@ func (a *Agent) StreamControllerStatus(conn *websocket.Conn, kind string, select
 		for {
 			if _, _, err := conn.ReadMessage(); err != nil {
 				defer conn.Close()
-				defer close(stopper)
+				close(stopper)
 				errorchan <- nil
 				return
 			}

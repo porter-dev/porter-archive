@@ -672,6 +672,30 @@ func contains(s []string, str string) bool {
 	return false
 }
 
+func parseSecretToHelmRelease(secret v1.Secret, chartList []string) (*rspb.Release, bool, error) {
+	if secret.Type != "helm.sh/release.v1" {
+		return nil, true, nil
+	}
+
+	releaseData, ok := secret.Data["release"]
+
+	if !ok {
+		return nil, true, fmt.Errorf("release field not found")
+	}
+
+	helm_object, err := decodeRelease(string(releaseData))
+
+	if err != nil {
+		return nil, true, err
+	}
+
+	if len(chartList) > 0 && !contains(chartList, helm_object.Name) {
+		return nil, true, nil
+	}
+
+	return helm_object, false, nil
+}
+
 func (a *Agent) StreamHelmReleases(conn *websocket.Conn, chartList []string, selectors string) error {
 	tweakListOptionsFunc := func(options *metav1.ListOptions) {
 		options.LabelSelector = selectors
@@ -698,25 +722,14 @@ func (a *Agent) StreamHelmReleases(conn *websocket.Conn, chartList []string, sel
 				return
 			}
 
-			if secretObj.Type != "helm.sh/release.v1" {
+			helm_object, isNotHelmRelease, err := parseSecretToHelmRelease(*secretObj, chartList)
+
+			if isNotHelmRelease && err == nil {
 				return
 			}
-
-			releaseData, ok := secretObj.Data["release"]
-
-			if !ok {
-				errorchan <- fmt.Errorf("release field not found")
-				return
-			}
-
-			helm_object, err := decodeRelease(string(releaseData))
 
 			if err != nil {
 				errorchan <- err
-				return
-			}
-
-			if len(chartList) > 0 && !contains(chartList, helm_object.Name) {
 				return
 			}
 
@@ -733,30 +746,19 @@ func (a *Agent) StreamHelmReleases(conn *websocket.Conn, chartList []string, sel
 		AddFunc: func(obj interface{}) {
 			secretObj, ok := obj.(*v1.Secret)
 
-			if secretObj.Type != "helm.sh/release.v1" {
-				return
-			}
-
 			if !ok {
 				errorchan <- fmt.Errorf("could not cast to secret")
 				return
 			}
 
-			releaseData, ok := secretObj.Data["release"]
+			helm_object, isNotHelmRelease, err := parseSecretToHelmRelease(*secretObj, chartList)
 
-			if !ok {
-				errorchan <- fmt.Errorf("release field not found")
+			if isNotHelmRelease && err == nil {
 				return
 			}
-
-			helm_object, err := decodeRelease(string(releaseData))
 
 			if err != nil {
 				errorchan <- err
-				return
-			}
-
-			if len(chartList) > 0 && !contains(chartList, helm_object.Name) {
 				return
 			}
 
@@ -773,30 +775,19 @@ func (a *Agent) StreamHelmReleases(conn *websocket.Conn, chartList []string, sel
 		DeleteFunc: func(obj interface{}) {
 			secretObj, ok := obj.(*v1.Secret)
 
-			if secretObj.Type != "helm.sh/release.v1" {
-				return
-			}
-
 			if !ok {
 				errorchan <- fmt.Errorf("could not cast to secret")
 				return
 			}
 
-			releaseData, ok := secretObj.Data["release"]
+			helm_object, isNotHelmRelease, err := parseSecretToHelmRelease(*secretObj, chartList)
 
-			if !ok {
-				errorchan <- fmt.Errorf("release field not found")
+			if isNotHelmRelease && err == nil {
 				return
 			}
-
-			helm_object, err := decodeRelease(string(releaseData))
 
 			if err != nil {
 				errorchan <- err
-				return
-			}
-
-			if (len(chartList) > 0) && !contains(chartList, helm_object.Name) {
 				return
 			}
 

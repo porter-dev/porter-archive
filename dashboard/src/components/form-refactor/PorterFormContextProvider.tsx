@@ -68,8 +68,6 @@ export const PorterFormContextProvider: React.FC<Props> = (props) => {
     variables: {},
   });
 
-  console.log(state.variables);
-
   return (
     <Provider
       value={{

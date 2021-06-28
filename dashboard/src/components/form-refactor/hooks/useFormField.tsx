@@ -8,6 +8,7 @@ import {
 
 interface FormFieldData<T> {
   state: T;
+  variables: PorterFormVariableList;
   updateState: (updateFunc: (prev: T) => T) => void;
   mutateVars: (
     mutateFunc: (vars: PorterFormVariableList) => PorterFormVariableList
@@ -53,6 +54,7 @@ const useFormField = <T extends PorterFormFieldFieldState>(
 
   return {
     state: formState.components[fieldId] as T,
+    variables: formState.variables,
     updateState,
     mutateVars,
   };

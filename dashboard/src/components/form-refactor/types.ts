@@ -46,7 +46,6 @@ export interface PorterFormData {
 // internal field state interfaces
 
 export interface StringInputFieldState {
-  value: string;
 }
 
 export type PorterFormFieldFieldState = StringInputFieldState;

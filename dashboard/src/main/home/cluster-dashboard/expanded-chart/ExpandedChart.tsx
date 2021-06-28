@@ -3,6 +3,7 @@ import styled from "styled-components";
 import yaml from "js-yaml";
 import close from "assets/close.png";
 import _ from "lodash";
+import loading from "assets/loading.gif";
 
 import {
   ResourceType,
@@ -53,6 +54,8 @@ type StateType = {
   showDeleteOverlay: boolean;
   deleting: boolean;
   formData: any;
+  imageIsPlaceholder: boolean;
+  newestImage: string;
 };
 
 export default class ExpandedChart extends Component<PropsType, StateType> {
@@ -74,6 +77,8 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
     showDeleteOverlay: false,
     deleting: false,
     formData: {} as any,
+    imageIsPlaceholder: false,
+    newestImage: null as string,
   };
 
   // Retrieve full chart data (includes form and values)
@@ -97,8 +102,24 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
         }
       )
       .then((res) => {
+        let image = res.data?.config?.image?.repository;
+        let tag = res.data?.config?.image?.tag.toString();
+        let newestImage = tag ? image + ":" + tag : image;
+        let imageIsPlaceholder = false;
+        if (
+          (image === "porterdev/hello-porter" ||
+            image === "public.ecr.aws/o1j4x7p4/hello-porter") &&
+          !this.state.newestImage
+        ) {
+          imageIsPlaceholder = true;
+        } 
         this.updateComponents(
-          { currentChart: res.data, loading: false },
+          { 
+            currentChart: res.data, 
+            loading: false,
+            imageIsPlaceholder,
+            newestImage,
+          },
           res.data
         );
       })
@@ -362,7 +383,7 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
   };
 
   renderTabContents = (currentTab: string) => {
-    let { components, showRevisions } = this.state;
+    let { components, showRevisions, imageIsPlaceholder } = this.state;
     let { setSidebar } = this.props;
     let { currentChart } = this.state;
     let chart = currentChart;
@@ -371,7 +392,21 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
       case "metrics":
         return <MetricsSection currentChart={chart} />;
       case "status":
-        return <StatusSection currentChart={chart} />;
+        if (imageIsPlaceholder) {
+          return (
+            <Placeholder>
+              <TextWrap>
+                <Header>
+                  <Spinner src={loading} /> This application is currently being deployed
+                </Header>
+                Navigate to the "Actions" tab of your GitHub repo to view live
+                build logs.
+              </TextWrap>
+            </Placeholder>
+          );
+        } else {
+          return <StatusSection currentChart={chart} />;
+        }
       case "settings":
         return (
           <SettingsSection
@@ -746,6 +781,7 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
           </HeaderWrapper>
           <BodyWrapper>
             <FormWrapper
+              isReadOnly={this.state.imageIsPlaceholder}
               formData={this.state.formData}
               tabOptions={this.state.tabOptions}
               isInModal={true}
@@ -774,6 +810,34 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
 }
 
 ExpandedChart.contextType = Context;
+
+const TextWrap = styled.div``;
+
+const Header = styled.div`
+  font-weight: 500;
+  color: #aaaabb;
+  font-size: 16px;
+  margin-bottom: 15px;
+`;
+
+const Placeholder = styled.div`
+  height: 100%;
+  padding: 30px;
+  padding-bottom: 90px;
+  font-size: 13px;
+  color: #ffffff44;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+`;
+
+const Spinner = styled.img`
+  width: 15px;
+  height: 15px;
+  margin-right: 12px;
+  margin-bottom: -2px;
+`;
 
 const BodyWrapper = styled.div`
   width: 100%;

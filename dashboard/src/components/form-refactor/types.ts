@@ -45,8 +45,7 @@ export interface PorterFormData {
 
 // internal field state interfaces
 
-export interface StringInputFieldState {
-}
+export interface StringInputFieldState {}
 
 export type PorterFormFieldFieldState = StringInputFieldState;
 
@@ -65,12 +64,12 @@ export interface PorterFormVariableList {
 
 export interface PorterFormState {
   components: {
-    [key: string]: PorterFormFieldFieldState
+    [key: string]: {
+      state: PorterFormFieldFieldState
+      validation: PorterFormFieldValidationState
+    }
   }
   variables: PorterFormVariableList
-  validation: {
-    [key: string]: PorterFormFieldValidationState
-  }
 }
 
 export interface PorterFormInitFieldAction {

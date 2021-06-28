@@ -28,18 +28,17 @@ export const PorterFormContextProvider: React.FC<Props> = (props) => {
             ...state,
             components: {
               ...state.components,
-              [action.id]: action.initValue,
-            },
-            validation: {
-              ...state.validation,
               [action.id]: {
-                ...{
-                  error: false,
-                  loading: false,
-                  validated: false,
-                  touched: false,
+                state: action.initValue,
+                validation: {
+                  ...{
+                    error: false,
+                    loading: false,
+                    validated: false,
+                    touched: false,
+                  },
+                  ...action.initValidation,
                 },
-                ...action.initValidation,
               },
             },
           };
@@ -50,7 +49,10 @@ export const PorterFormContextProvider: React.FC<Props> = (props) => {
           ...state,
           components: {
             ...state.components,
-            [action.id]: action.updateFunc(state.components[action.id]),
+            [action.id]: {
+              ...state.components[action.id],
+              state: action.updateFunc(state.components[action.id]),
+            },
           },
         };
       case "mutate-vars":
@@ -64,7 +66,6 @@ export const PorterFormContextProvider: React.FC<Props> = (props) => {
 
   const [state, dispatch] = useReducer(handleAction, {
     components: {},
-    validation: {},
     variables: {},
   });
 

@@ -53,7 +53,7 @@ const useFormField = <T extends PorterFormFieldFieldState>(
   };
 
   return {
-    state: formState.components[fieldId] as T,
+    state: formState.components[fieldId]?.state as T,
     variables: formState.variables,
     updateState,
     mutateVars,

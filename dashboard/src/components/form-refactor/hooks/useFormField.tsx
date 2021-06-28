@@ -3,11 +3,15 @@ import { PorterFormContext } from "../PorterFormContextProvider";
 import {
   PorterFormFieldFieldState,
   PorterFormFieldValidationState,
+  PorterFormVariableList,
 } from "../types";
 
 interface FormFieldData<T> {
   state: T;
   updateState: (updateFunc: (prev: T) => T) => void;
+  mutateVars: (
+    mutateFunc: (vars: PorterFormVariableList) => PorterFormVariableList
+  ) => void;
 }
 
 interface Options<T> {
@@ -38,9 +42,19 @@ const useFormField = <T extends PorterFormFieldFieldState>(
     });
   };
 
+  const mutateVars = (
+    mutateFunc: (vars: PorterFormVariableList) => PorterFormVariableList
+  ) => {
+    dispatchAction({
+      type: "mutate-vars",
+      mutateFunc,
+    });
+  };
+
   return {
     state: formState.components[fieldId] as T,
     updateState,
+    mutateVars,
   };
 };
 

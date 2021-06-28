@@ -1,4 +1,4 @@
-import React, { useContext, useEffect } from "react";
+import React from "react";
 import InputRow from "../../values-form/InputRow";
 import useFormField from "../hooks/useFormField";
 import { StringInputField, StringInputFieldState } from "../types";
@@ -9,12 +9,17 @@ interface Props extends StringInputField {
 
 const StringInput: React.FC<Props> = ({
   id,
+  variable,
   label,
   required,
   placeholder,
   info,
 }) => {
-  const { state, updateState } = useFormField<StringInputFieldState>(id, {
+  const {
+    state,
+    updateState,
+    mutateVars,
+  } = useFormField<StringInputFieldState>(id, {
     initValue: {
       value: "",
     },
@@ -38,6 +43,12 @@ const StringInput: React.FC<Props> = ({
           return {
             ...prev,
             value: x,
+          };
+        });
+        mutateVars((vars) => {
+          return {
+            ...vars,
+            [variable]: x,
           };
         });
       }}

@@ -17,6 +17,7 @@ export interface SubtitleField {
 
 export interface StringInputField {
   type: "string-input";
+  variable: string;
   label?: string;
   required?: boolean;
   placeholder?: string;
@@ -59,10 +60,15 @@ export interface PorterFormFieldValidationState {
   touched: boolean;
 }
 
+export interface PorterFormVariableList {
+  [key: string]: any
+}
+
 export interface PorterFormState {
   components: {
     [key: string]: PorterFormFieldFieldState
   }
+  variables: PorterFormVariableList
   validation: {
     [key: string]: PorterFormFieldValidationState
   }
@@ -81,4 +87,9 @@ export interface PorterFormUpdateFieldAction {
   updateFunc: (prev: PorterFormFieldFieldState) => PorterFormFieldFieldState;
 }
 
-export type PorterFormAction = PorterFormInitFieldAction|PorterFormUpdateFieldAction;
+export interface PorterFormMutateVariablesAction {
+  type: "mutate-vars",
+  mutateFunc: (prev: PorterFormVariableList) => PorterFormVariableList;
+}
+
+export type PorterFormAction = PorterFormInitFieldAction|PorterFormUpdateFieldAction|PorterFormMutateVariablesAction;

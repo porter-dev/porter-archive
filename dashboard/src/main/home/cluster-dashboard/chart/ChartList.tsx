@@ -104,26 +104,45 @@ const ChartList: React.FunctionComponent<Props> = ({
     }
   };
 
-  const handleReleaseWSNotification = (object: any) => {
-    if (object.type === "helm.sh/release.v1") {
-      setReleases((oldReleases) => {
-        const currentRelease = oldReleases[object.metadata.labels.name];
-        const currentReleaseVersion = Number(
-          currentRelease?.metadata?.labels?.version
-        );
-        const newReleaseVersion = Number(object?.metadata?.labels?.version);
-        if (currentReleaseVersion > newReleaseVersion) {
+  const setupHelmReleasesWebsocket = () => {
+    const apiPath = `/api/projects/${context.currentProject.id}/k8s/helm_releases?cluster_id=${context.currentCluster.id}`;
+
+    const wsConfig = {
+      onopen: () => {
+        console.log("connected to chart live updates websocket");
+      },
+      onmessage: (evt: MessageEvent) => {
+        let event = JSON.parse(evt.data);
+        const object = event.Object;
+        setReleases((oldReleases) => {
+          const currentRelease = oldReleases[object?.name];
+          const currentReleaseVersion = Number(currentRelease?.version);
+          const newReleaseVersion = Number(object?.version);
+          if (currentReleaseVersion > newReleaseVersion) {
+            return {
+              ...oldReleases,
+            };
+          }
+
           return {
             ...oldReleases,
+            [object.name]: object,
           };
-        }
+        });
+      },
 
-        return {
-          ...oldReleases,
-          [object.metadata.labels.name]: object,
-        };
-      });
-    }
+      onclose: () => {
+        console.log("closing chart live updates websocket");
+      },
+
+      onerror: (err: ErrorEvent) => {
+        console.log(err);
+        closeWebsocket("helm_releases");
+      },
+    };
+
+    newWebsocket("helm_releases", apiPath, wsConfig);
+    openWebsocket("helm_releases");
   };
 
   const setupWebsocket = (kind: string) => {
@@ -138,11 +157,6 @@ const ChartList: React.FunctionComponent<Props> = ({
         let event = JSON.parse(evt.data);
         let object = event.Object;
         object.metadata.kind = event.Kind;
-
-        if (event.Kind === "secrets") {
-          handleReleaseWSNotification(object);
-          return;
-        }
 
         setControllers((oldControllers) => ({
           ...oldControllers,
@@ -176,8 +190,8 @@ const ChartList: React.FunctionComponent<Props> = ({
       "statefulset",
       "daemonset",
       "replicaset",
-      "secrets",
     ]);
+    setupHelmReleasesWebsocket();
 
     return () => {
       closeAllWebsockets();

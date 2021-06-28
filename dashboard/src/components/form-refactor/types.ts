@@ -24,7 +24,14 @@ export interface StringInputField {
   info?: string;
 }
 
-export type FormField = HeadingField|SubtitleField|StringInputField;
+export interface CheckboxField {
+  type: "checkbox";
+  label?: string;
+  variable: string;
+  required?: boolean;
+}
+
+export type FormField = HeadingField|SubtitleField|StringInputField|CheckboxField;
 
 export interface Section {
   name: string;
@@ -46,8 +53,9 @@ export interface PorterFormData {
 // internal field state interfaces
 
 export interface StringInputFieldState {}
+export interface CheckboxFieldState {}
 
-export type PorterFormFieldFieldState = StringInputFieldState;
+export type PorterFormFieldFieldState = StringInputFieldState|CheckboxFieldState;
 
 // reducer interfaces
 

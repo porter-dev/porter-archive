@@ -5,6 +5,7 @@ import Heading from "../values-form/Heading";
 import Helper from "../values-form/Helper";
 import StringInput from "./field-components/StringInput";
 import { PorterFormContext } from "./PorterFormContextProvider";
+import Checkbox from "./field-components/Checkbox";
 
 interface Props {}
 
@@ -23,6 +24,8 @@ const PorterForm: React.FC<Props> = () => {
         return <Helper>{field.label}</Helper>;
       case "string-input":
         return <StringInput id={id} {...field} />;
+      case "checkbox":
+        return <Checkbox id={id} {...field} />;
     }
     return <p>Not Implemented: {(field as any).type}</p>;
   };

@@ -12,13 +12,20 @@ module.exports = () => {
 
   return {
     entry: "./src/index.tsx",
+    output: {
+      filename: "main.js",
+      path: path.resolve(__dirname, "dist"),
+    },
     target: "web",
     mode: "development",
     module: {
       rules: [
         {
-          test: /\.(ts|tsx)$/,
-          loader: "ts-loader",
+          test: /\.(ts|tsx|m?js)$/,
+          exclude: /node_modules/,
+          use: {
+            loader: "babel-loader",
+          },
         },
         {
           enforce: "pre",

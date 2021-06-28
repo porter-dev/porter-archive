@@ -6,11 +6,12 @@ import Helper from "../values-form/Helper";
 import StringInput from "./field-components/StringInput";
 import { PorterFormContext } from "./PorterFormContextProvider";
 import Checkbox from "./field-components/Checkbox";
+import { ShowIf, ShowIfAnd, ShowIfNot, ShowIfOr } from "../../shared/types";
 
 interface Props {}
 
 const PorterForm: React.FC<Props> = () => {
-  const { formData } = useContext(PorterFormContext);
+  const { formData, formState } = useContext(PorterFormContext);
 
   const [currentTab, setCurrentTab] = useState(
     formData.tabs.length > 0 ? formData.tabs[0].name : ""
@@ -30,7 +31,43 @@ const PorterForm: React.FC<Props> = () => {
     return <p>Not Implemented: {(field as any).type}</p>;
   };
 
+  const evalShowIf = (vals: ShowIf): boolean => {
+    if (!vals) {
+      return false;
+    }
+    if (typeof vals == "string") {
+      return !!formState.variables[vals];
+    }
+    if ((vals as ShowIfOr).or) {
+      vals = vals as ShowIfOr;
+      for (let i = 0; i < vals.or.length; i++) {
+        if (evalShowIf(vals.or[i])) {
+          return true;
+        }
+      }
+      return false;
+    }
+    if ((vals as ShowIfAnd).and) {
+      vals = vals as ShowIfAnd;
+      for (let i = 0; i < vals.and.length; i++) {
+        if (!evalShowIf(vals.and[i])) {
+          return false;
+        }
+      }
+      return true;
+    }
+    if ((vals as ShowIfNot).not) {
+      vals = vals as ShowIfNot;
+      return !evalShowIf(vals.not);
+    }
+
+    return false;
+  };
+
   const renderSection = (section: Section): JSX.Element => {
+    if (section.show_if && !evalShowIf(section.show_if)) {
+      return null;
+    }
     return (
       <>
         {section.contents.map((field, i) => {

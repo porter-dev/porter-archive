@@ -1,21 +1,14 @@
 import React, { useMemo } from "react";
-import Modal from "../../modals/Modal";
 import Table from "components/Table";
 import { Column } from "react-table";
 import styled from "styled-components";
 
 type NodeStatusModalProps = {
-  onClose: () => void;
   node: any;
-  width?: string;
-  height?: string;
 };
 
-export const NodeStatusModal: React.FunctionComponent<NodeStatusModalProps> = ({
-  onClose,
+export const ConditionsTable: React.FunctionComponent<NodeStatusModalProps> = ({
   node,
-  width = "800px",
-  height = "min-content",
 }) => {
   const columns = useMemo<Column<any>[]>(
     () => [
@@ -35,27 +28,32 @@ export const NodeStatusModal: React.FunctionComponent<NodeStatusModalProps> = ({
         Header: "Message",
         accessor: "message",
       },
+      {
+        Header: "Last Transition",
+        accessor: "lastTransitionTime",
+        Cell: ({ row }) => {
+          const date = new Date(row.values.lastTransitionTime);
+          return <>{date.toLocaleString()}</>;
+        },
+      },
     ],
     []
   );
 
-  const data = useMemo(() => {
+  const data = useMemo<Array<any>>(() => {
     return node?.node_conditions || [];
   }, [node]);
 
   return (
     <div>
-      <Modal onRequestClose={onClose} width={width} height={height}>
-        Node {node?.name} conditions:
-        <TableWrapper>
-          <Table
-            columns={columns}
-            data={data}
-            isLoading={false}
-            disableGlobalFilter={true}
-          />
-        </TableWrapper>
-      </Modal>
+      <TableWrapper>
+        <Table
+          columns={columns}
+          data={data}
+          isLoading={!data.length}
+          disableGlobalFilter={true}
+        />
+      </TableWrapper>
     </div>
   );
 };

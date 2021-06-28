@@ -1316,6 +1316,20 @@ func New(a *api.App) *chi.Mux {
 
 			r.Method(
 				"GET",
+				"/projects/{project_id}/k8s/helm_releases",
+				auth.DoesUserHaveProjectAccess(
+					auth.DoesUserHaveClusterAccess(
+						requestlog.NewHandler(a.HandleStreamHelmReleases, l),
+						mw.URLParam,
+						mw.QueryParam,
+					),
+					mw.URLParam,
+					mw.ReadAccess,
+				),
+			)
+
+			r.Method(
+				"GET",
 				"/projects/{project_id}/k8s/pods",
 				auth.DoesUserHaveProjectAccess(
 					auth.DoesUserHaveClusterAccess(

@@ -53,6 +53,11 @@ export const PorterFormContextProvider: React.FC<Props> = (props) => {
             [action.id]: action.updateFunc(state.components[action.id]),
           },
         };
+      case "mutate-vars":
+        return {
+          ...state,
+          variables: action.mutateFunc(state.variables),
+        };
     }
     return state;
   };
@@ -60,7 +65,10 @@ export const PorterFormContextProvider: React.FC<Props> = (props) => {
   const [state, dispatch] = useReducer(handleAction, {
     components: {},
     validation: {},
+    variables: {},
   });
+
+  console.log(state.variables);
 
   return (
     <Provider

@@ -33,8 +33,23 @@ export interface CheckboxField {
 
 export type FormField = HeadingField|SubtitleField|StringInputField|CheckboxField;
 
+export interface ShowIfAnd {
+  and: ShowIf[];
+}
+
+export interface ShowIfOr {
+  or: ShowIf[];
+}
+
+export interface ShowIfNot {
+  not: ShowIf;
+}
+
+export type ShowIf = string | ShowIfAnd | ShowIfOr | ShowIfNot;
+
 export interface Section {
   name: string;
+  show_if?: ShowIf;
   contents: FormField[];
 }
 

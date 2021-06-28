@@ -286,8 +286,8 @@ tabs:
       variable: field_b
     - type: checkbox
       required: true
-      label: Checkbox C
-      variable: checkbox_c
+      label: Checkbox A alternatiev
+      variable: checkbox_a
     - type: subtitle
       label: "Note: Hidden required fields aren't supported yet (global only)"
   - name: controlled-by-external

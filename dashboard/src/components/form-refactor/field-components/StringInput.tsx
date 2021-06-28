@@ -15,18 +15,17 @@ const StringInput: React.FC<Props> = ({
   placeholder,
   info,
 }) => {
-  const {
-    state,
-    updateState,
-    mutateVars,
-  } = useFormField<StringInputFieldState>(id, {
-    initValue: {
-      value: "",
-    },
-    initValidation: {
-      validated: !required,
-    },
-  });
+  const { state, variables, mutateVars } = useFormField<StringInputFieldState>(
+    id,
+    {
+      initValue: {
+        value: "",
+      },
+      initValidation: {
+        validated: !required,
+      },
+    }
+  );
 
   // TODO: needs a loading wrapper
   if (state == undefined) {
@@ -37,14 +36,8 @@ const StringInput: React.FC<Props> = ({
     <InputRow
       width="100%"
       type="text"
-      value={state.value}
+      value={variables[variable] || ""}
       setValue={(x: string) => {
-        updateState((prev) => {
-          return {
-            ...prev,
-            value: x,
-          };
-        });
         mutateVars((vars) => {
           return {
             ...vars,

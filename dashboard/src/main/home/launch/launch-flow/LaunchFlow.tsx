@@ -37,7 +37,7 @@ type StateType = {
   imageTag: string;
 
   actionConfig: ActionConfigType;
-  procfileProcess?: string;
+  procfileProcess: string;
   branch: string;
   repoType: string;
   dockerfilePath: string | null;
@@ -69,7 +69,7 @@ class LaunchFlow extends Component<PropsType, StateType> {
     imageTag: "",
 
     actionConfig: { ...defaultActionConfig },
-    procfileProcess: null as string | null,
+    procfileProcess: "",
     branch: "",
     repoType: "",
     dockerfilePath: null as string | null,

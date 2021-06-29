@@ -11,9 +11,14 @@ import api from "shared/api";
 type Props = {
   chart: ChartType;
   controllers: Record<string, any>;
+  release: any;
 };
 
-const Chart: React.FunctionComponent<Props> = ({ chart, controllers }) => {
+const Chart: React.FunctionComponent<Props> = ({
+  chart,
+  controllers,
+  release,
+}) => {
   const [expand, setExpand] = useState<boolean>(false);
   const [chartControllers, setChartControllers] = useState<any>([]);
   const context = useContext(Context);
@@ -105,7 +110,10 @@ const Chart: React.FunctionComponent<Props> = ({ chart, controllers }) => {
             margin_left={"17px"}
           />
           <LastDeployed>
-            <Dot>•</Dot> Last deployed {readableDate(chart.info.last_deployed)}
+            <Dot>•</Dot> Last deployed{" "}
+            {readableDate(
+              release?.info?.last_deployed || chart.info.last_deployed
+            )}
           </LastDeployed>
         </InfoWrapper>
 
@@ -115,7 +123,7 @@ const Chart: React.FunctionComponent<Props> = ({ chart, controllers }) => {
         </TagWrapper>
       </BottomWrapper>
 
-      <Version>v{chart.version}</Version>
+      <Version>v{release?.version || chart.version}</Version>
     </StyledChart>
   );
 };

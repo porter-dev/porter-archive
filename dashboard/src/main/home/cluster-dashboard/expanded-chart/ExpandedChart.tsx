@@ -112,10 +112,10 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
           !this.state.newestImage
         ) {
           imageIsPlaceholder = true;
-        } 
+        }
         this.updateComponents(
-          { 
-            currentChart: res.data, 
+          {
+            currentChart: res.data,
             loading: false,
             imageIsPlaceholder,
             newestImage,
@@ -260,6 +260,11 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
       values = this.props.currentChart.config;
     }
 
+    // Override config from currentChart prop if we have it on the current state
+    if (this.state.currentChart.config) {
+      values = this.state.currentChart.config;
+    }
+
     for (let key in rawValues) {
       _.set(values, key, rawValues[key]);
     }
@@ -397,7 +402,8 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
             <Placeholder>
               <TextWrap>
                 <Header>
-                  <Spinner src={loading} /> This application is currently being deployed
+                  <Spinner src={loading} /> This application is currently being
+                  deployed
                 </Header>
                 Navigate to the "Actions" tab of your GitHub repo to view live
                 build logs.

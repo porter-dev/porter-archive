@@ -565,7 +565,7 @@ func (a *Agent) StreamControllerStatus(conn *websocket.Conn, kind string, select
 
 	stopper := make(chan struct{})
 	errorchan := make(chan error)
-	defer close(errorchan)
+	defer close(stopper)
 
 	informer.AddEventHandler(cache.ResourceEventHandlerFuncs{
 		UpdateFunc: func(oldObj, newObj interface{}) {
@@ -609,8 +609,7 @@ func (a *Agent) StreamControllerStatus(conn *websocket.Conn, kind string, select
 		// listens for websocket closing handshake
 		for {
 			if _, _, err := conn.ReadMessage(); err != nil {
-				defer conn.Close()
-				close(stopper)
+				conn.Close()
 				errorchan <- nil
 				return
 			}
@@ -711,7 +710,7 @@ func (a *Agent) StreamHelmReleases(conn *websocket.Conn, chartList []string, sel
 
 	stopper := make(chan struct{})
 	errorchan := make(chan error)
-	defer close(errorchan)
+	defer close(stopper)
 
 	informer.AddEventHandler(cache.ResourceEventHandlerFuncs{
 		UpdateFunc: func(oldObj, newObj interface{}) {
@@ -807,8 +806,7 @@ func (a *Agent) StreamHelmReleases(conn *websocket.Conn, chartList []string, sel
 		// listens for websocket closing handshake
 		for {
 			if _, _, err := conn.ReadMessage(); err != nil {
-				defer conn.Close()
-				close(stopper)
+				conn.Close()
 				errorchan <- nil
 				return
 			}

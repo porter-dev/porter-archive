@@ -9,7 +9,7 @@ import (
 	"net/url"
 	"strings"
 	"time"
-
+	
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/service/ecr"
 	"github.com/porter-dev/porter/internal/models"
@@ -697,6 +697,15 @@ type dockerHubImageResp struct {
 	Results []dockerHubImageResult `json:"results"`
 }
 
+type dockerHubLoginReq struct {
+	Username string `json:"username"`
+	Password string `json:"password"`
+}
+
+type dockerHubLoginResp struct {
+	Token string `json:"token"`
+}
+
 func (r *Registry) listDockerHubImages(repoName string, repo repository.Repository) ([]*Image, error) {
 	basic, err := repo.BasicIntegration.ReadBasicIntegration(
 		r.BasicIntegrationID,
@@ -708,7 +717,42 @@ func (r *Registry) listDockerHubImages(repoName string, repo repository.Reposito
 
 	client := &http.Client{}
 
+	// first, make a request for the access token
+
+	data, err := json.Marshal(&dockerHubLoginReq{
+		Username: string(basic.Username), 
+		Password: string(basic.Password),
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
 	req, err := http.NewRequest(
+		"POST",
+		"https://hub.docker.com/v2/users/login",
+		strings.NewReader(string(data)),
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", "application/json")
+
+	resp, err := client.Do(req)
+
+	if err != nil {
+		return nil, err
+	}
+
+	tokenObj := dockerHubLoginResp{}
+
+	if err := json.NewDecoder(resp.Body).Decode(&tokenObj); err != nil {
+		return nil, fmt.Errorf("Could not decode Dockerhub token from response: %v", err)
+	}
+
+	req, err = http.NewRequest(
 		"GET",
 		fmt.Sprintf("https://hub.docker.com/v2/repositories/%s/tags", strings.Split(r.URL, "docker.io/")[1]),
 		nil,
@@ -718,9 +762,9 @@ func (r *Registry) listDockerHubImages(repoName string, repo repository.Reposito
 		return nil, err
 	}
 
-	req.SetBasicAuth(string(basic.Username), string(basic.Password))
+	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", tokenObj.Token))
 
-	resp, err := client.Do(req)
+	resp, err = client.Do(req)
 
 	if err != nil {
 		return nil, err

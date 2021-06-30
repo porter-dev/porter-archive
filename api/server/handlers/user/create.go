@@ -10,6 +10,7 @@ import (
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/repository"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type UserCreateHandler struct {
@@ -55,8 +56,18 @@ func (u *UserCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// hash the password using bcrypt
+	hashedPw, err := bcrypt.GenerateFromPassword([]byte(user.Password), 8)
+
+	if err != nil {
+		apierrors.HandleAPIError(w, u.config.Logger, apierrors.NewErrInternal(err))
+		return
+	}
+
+	user.Password = string(hashedPw)
+
 	// write the user to the db
-	user, err := u.config.Repo.User().CreateUser(user)
+	user, err = u.config.Repo.User().CreateUser(user)
 
 	if err != nil {
 		apierrors.HandleAPIError(w, u.config.Logger, apierrors.NewErrInternal(err))

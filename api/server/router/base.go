@@ -47,5 +47,29 @@ func GetBaseRoutes(
 		Router:   r,
 	})
 
+	// POST /api/login -> user.NewUserLoginHandler
+	loginUserEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbUpdate,
+			Method: types.HTTPVerbPost,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: "/login",
+			},
+		},
+	)
+
+	loginUserHandler := user.NewUserLoginHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &Route{
+		Endpoint: loginUserEndpoint,
+		Handler:  loginUserHandler,
+		Router:   r,
+	})
+
 	return routes
 }

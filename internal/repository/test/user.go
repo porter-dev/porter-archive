@@ -11,8 +11,10 @@ import (
 )
 
 const (
-	CreateUserMethod string = "create_user_0"
-	DeleteUserMethod string = "delete_user_0"
+	CreateUserMethod      string = "create_user_0"
+	ReadUserMethod        string = "read_user_0"
+	ReadUserByEmailMethod string = "read_user_by_email_0"
+	DeleteUserMethod      string = "delete_user_0"
 )
 
 // UserRepository will return errors on queries if canQuery is false
@@ -51,7 +53,7 @@ func (repo *UserRepository) CreateUser(user *models.User) (*models.User, error) 
 
 // ReadUser finds a single user based on their unique id
 func (repo *UserRepository) ReadUser(id uint) (*models.User, error) {
-	if !repo.canQuery {
+	if !repo.canQuery || strings.Contains(repo.failingMethods, ReadUserMethod) {
 		return nil, errors.New("Cannot read from database")
 	}
 
@@ -65,7 +67,7 @@ func (repo *UserRepository) ReadUser(id uint) (*models.User, error) {
 
 // ReadUserByEmail finds a single user based on their unique email
 func (repo *UserRepository) ReadUserByEmail(email string) (*models.User, error) {
-	if !repo.canQuery {
+	if !repo.canQuery || strings.Contains(repo.failingMethods, ReadUserByEmailMethod) {
 		return nil, errors.New("Cannot read from database")
 	}
 

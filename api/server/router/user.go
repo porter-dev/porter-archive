@@ -21,13 +21,6 @@ func GetUserScopedRoutes(
 	factory shared.APIEndpointFactory,
 	children ...*Registerer,
 ) []*Route {
-	// // Create a new "user-scoped" factory which will create a new user-scoped request
-	// // after authentication. Each subsequent http.Handler can lookup the user in context.
-	// authNFactory := authn.NewAuthNFactory(config)
-
-	// // attach middleware to router
-	// r.Use(authNFactory.NewAuthenticated)
-
 	routes := getUserRoutes(r, config, basePath, factory)
 
 	for _, child := range children {
@@ -58,6 +51,7 @@ func getUserRoutes(
 				Parent:       basePath,
 				RelativePath: "/projects",
 			},
+			Scopes: []types.PermissionScope{types.UserScope},
 		},
 	)
 
@@ -82,6 +76,7 @@ func getUserRoutes(
 				Parent:       basePath,
 				RelativePath: "/projects",
 			},
+			Scopes: []types.PermissionScope{types.UserScope},
 		},
 	)
 

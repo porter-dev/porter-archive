@@ -13,6 +13,9 @@ import (
 func NewAPIRouter(config *shared.Config) *chi.Mux {
 	r := chi.NewRouter()
 
+	// set the content type for all API endpoints
+	r.Use(ContentTypeJSON)
+
 	endpointFactory := shared.NewAPIObjectEndpointFactory(config)
 	baseRegisterer := NewBaseRegisterer()
 	projRegisterer := NewProjectScopedRegisterer()
@@ -79,7 +82,12 @@ func registerRoutes(config *shared.Config, routes []*Route) {
 		for _, scope := range route.Endpoint.Metadata.Scopes {
 			switch scope {
 			case types.UserScope:
-				atomicGroup.Use(authNFactory.NewAuthenticated)
+				// if the endpoint should redirect when authn fails, attach redirect handler
+				if route.Endpoint.Metadata.ShouldRedirect {
+					atomicGroup.Use(authNFactory.NewAuthenticatedWithRedirect)
+				} else {
+					atomicGroup.Use(authNFactory.NewAuthenticated)
+				}
 			case types.ProjectScope:
 				atomicGroup.Use(projFactory.Middleware)
 			}
@@ -91,4 +99,12 @@ func registerRoutes(config *shared.Config, routes []*Route) {
 			route.Handler,
 		)
 	}
+}
+
+// ContentTypeJSON sets the content type for requests to application/json
+func ContentTypeJSON(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json;charset=utf8")
+		next.ServeHTTP(w, r)
+	})
 }

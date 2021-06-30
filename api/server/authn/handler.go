@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/gorilla/sessions"
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
 	"github.com/porter-dev/porter/api/types"
@@ -28,13 +29,21 @@ func NewAuthNFactory(
 // NewAuthenticated creates a new instance of `AuthN` that implements the http.Handler
 // interface.
 func (f *AuthNFactory) NewAuthenticated(next http.Handler) http.Handler {
-	return &AuthN{next, f.config}
+	return &AuthN{next, f.config, false}
+}
+
+// NewAuthenticatedWithRedirect creates a new instance of `AuthN` that implements the http.Handler
+// interface. This handler redirects the user to login if the user is not attached, and stores a
+// redirect URI in the session, if the session exists.
+func (f *AuthNFactory) NewAuthenticatedWithRedirect(next http.Handler) http.Handler {
+	return &AuthN{next, f.config, true}
 }
 
 // AuthN implements the authentication middleware
 type AuthN struct {
-	next   http.Handler
-	config *shared.Config
+	next     http.Handler
+	config   *shared.Config
+	redirect bool
 }
 
 // ServeHTTP attaches an authenticated subject to the request context,
@@ -58,7 +67,7 @@ func (authn *AuthN) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// if the bearer token is not found, look for a request cookie
-	session, err := authn.config.Store.Get(r, authn.config.CookieName)
+	session, err := authn.config.Store.Get(r, authn.config.ServerConf.CookieName)
 
 	if err != nil {
 		session.Values["authenticated"] = false
@@ -72,7 +81,7 @@ func (authn *AuthN) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if auth, ok := session.Values["authenticated"].(bool); !auth || !ok {
-		authn.sendForbiddenError(fmt.Errorf("stored cookie was not authenticated"), w)
+		authn.handleForbiddenForSession(w, r, fmt.Errorf("stored cookie was not authenticated"), session)
 		return
 	}
 
@@ -80,11 +89,35 @@ func (authn *AuthN) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	userID, ok := session.Values["user_id"].(uint)
 
 	if !ok {
-		authn.sendForbiddenError(fmt.Errorf("could not cast user_id to uint"), w)
+		authn.handleForbiddenForSession(w, r, fmt.Errorf("could not cast user_id to uint"), session)
 		return
 	}
 
 	authn.nextWithUserID(w, r, userID)
+}
+
+func (authn *AuthN) handleForbiddenForSession(
+	w http.ResponseWriter,
+	r *http.Request,
+	err error,
+	session *sessions.Session,
+) {
+	if authn.redirect {
+		// need state parameter to validate when redirected
+		if r.URL.RawQuery == "" {
+			session.Values["redirect"] = r.URL.Path
+		} else {
+			session.Values["redirect"] = r.URL.Path + "?" + r.URL.RawQuery
+		}
+
+		session.Save(r, w)
+
+		http.Redirect(w, r, "/dashboard", 302)
+	} else {
+		authn.sendForbiddenError(err, w)
+	}
+
+	return
 }
 
 // nextWithToken calls the next handler with either the service account or user corresponding

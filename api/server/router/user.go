@@ -161,5 +161,48 @@ func getUserRoutes(
 		Router:   r,
 	})
 
+	// GET /email/verify/initiate -> user.VerifyEmailInitiateHandler
+	emailVerifyInitiateEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbUpdate,
+			Method: types.HTTPVerbPost,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: "/email/verify/initiate",
+			},
+			Scopes: []types.PermissionScope{types.UserScope},
+		},
+	)
+
+	emailVerifyInitiateHandler := user.NewVerifyEmailInitiateHandler(config)
+
+	routes = append(routes, &Route{
+		Endpoint: emailVerifyInitiateEndpoint,
+		Handler:  emailVerifyInitiateHandler,
+		Router:   r,
+	})
+
+	// GET /email/verify/finalize -> user.VerifyEmailInitiateHandler
+	emailVerifyFinalizeEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: "/email/verify/finalize",
+			},
+			Scopes:         []types.PermissionScope{types.UserScope},
+			ShouldRedirect: true,
+		},
+	)
+
+	emailVerifyFinalizeHandler := user.NewVerifyEmailInitiateHandler(config)
+
+	routes = append(routes, &Route{
+		Endpoint: emailVerifyFinalizeEndpoint,
+		Handler:  emailVerifyFinalizeHandler,
+		Router:   r,
+	})
+
 	return routes
 }

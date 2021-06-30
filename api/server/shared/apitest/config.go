@@ -35,12 +35,15 @@ func (t *TestConfigLoader) LoadConfig() (*shared.Config, error) {
 		TokenSecret: configFromEnv.Server.TokenGeneratorSecret,
 	}
 
+	notifier := NewFakeUserNotifier()
+
 	return &shared.Config{
-		Logger:     l,
-		Repo:       repo,
-		Store:      store,
-		CookieName: configFromEnv.Server.CookieName,
-		TokenConf:  tokenConf,
+		Logger:       l,
+		Repo:         repo,
+		Store:        store,
+		ServerConf:   configFromEnv.Server,
+		TokenConf:    tokenConf,
+		UserNotifier: notifier,
 	}, nil
 }
 

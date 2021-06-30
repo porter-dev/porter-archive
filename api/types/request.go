@@ -45,8 +45,9 @@ type Path struct {
 }
 
 type APIRequestMetadata struct {
-	Verb   APIVerb
-	Method HTTPVerb
-	Path   *Path
-	Scopes []PermissionScope
+	Verb           APIVerb
+	Method         HTTPVerb
+	Path           *Path
+	Scopes         []PermissionScope
+	ShouldRedirect bool
 }

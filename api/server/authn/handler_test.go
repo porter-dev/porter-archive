@@ -27,7 +27,7 @@ func TestAuthenticatedUserWithCookie(t *testing.T) {
 	rr := httptest.NewRecorder()
 
 	// create a new user and a cookie for them
-	user := apitest.CreateTestUser(t, config)
+	user := apitest.CreateTestUser(t, config, true)
 	cookie := apitest.AuthenticateUserWithCookie(t, config, user, false)
 	req.AddCookie(cookie)
 
@@ -53,6 +53,31 @@ func TestUnauthenticatedUserWithCookie(t *testing.T) {
 	assertForbiddenError(t, next, rr)
 }
 
+func TestUnauthenticatedUserWithCookieRedirect(t *testing.T) {
+	_, handler, next := loadHandlersWithRedirect(t)
+
+	req, err := http.NewRequest("GET", "/auth-endpoint", nil)
+
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	rr := httptest.NewRecorder()
+
+	// make the request without a cookie set
+	handler.ServeHTTP(rr, req)
+
+	assert.Equal(t, http.StatusFound, rr.Result().StatusCode)
+	gotLoc, err := rr.Result().Location()
+
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	assert.Equal(t, "/dashboard", gotLoc.Path)
+	assert.False(t, next.WasCalled, "next handler should not have been called")
+}
+
 func TestAuthenticatedUserWithToken(t *testing.T) {
 	config, handler, next := loadHandlers(t)
 
@@ -65,7 +90,7 @@ func TestAuthenticatedUserWithToken(t *testing.T) {
 	rr := httptest.NewRecorder()
 
 	// create a new user for the token to reference
-	user := apitest.CreateTestUser(t, config)
+	user := apitest.CreateTestUser(t, config, true)
 	tokenStr := apitest.AuthenticateUserWithToken(t, config, user.ID)
 	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", tokenStr))
 
@@ -106,7 +131,7 @@ func TestAuthBadDatabaseRead(t *testing.T) {
 	rr := httptest.NewRecorder()
 
 	// create a new user and a cookie for them
-	user := apitest.CreateTestUser(t, config)
+	user := apitest.CreateTestUser(t, config, true)
 	cookie := apitest.AuthenticateUserWithCookie(t, config, user, false)
 	req.AddCookie(cookie)
 
@@ -133,7 +158,7 @@ func TestAuthBadSessionUserWrite(t *testing.T) {
 	rr := httptest.NewRecorder()
 
 	// create a new user and a cookie for them
-	apitest.CreateTestUser(t, config)
+	apitest.CreateTestUser(t, config, true)
 
 	// create cookie where session values are incorrect
 	// i.e. written for a user that doesn't exist (id 500)
@@ -161,7 +186,7 @@ func TestAuthBadSessionUserIDType(t *testing.T) {
 	rr := httptest.NewRecorder()
 
 	// create a new user and a cookie for them
-	user := apitest.CreateTestUser(t, config)
+	user := apitest.CreateTestUser(t, config, true)
 
 	// create cookie where session values are incorrect
 	// i.e. written for a user that doesn't exist (id 500)
@@ -193,6 +218,17 @@ func loadHandlers(t *testing.T) (*shared.Config, http.Handler, *testHandler) {
 
 	next := &testHandler{}
 	handler := factory.NewAuthenticated(next)
+
+	return config, handler, next
+}
+
+func loadHandlersWithRedirect(t *testing.T) (*shared.Config, http.Handler, *testHandler) {
+	config := apitest.LoadConfig(t)
+
+	factory := authn.NewAuthNFactory(config)
+
+	next := &testHandler{}
+	handler := factory.NewAuthenticatedWithRedirect(next)
 
 	return config, handler, next
 }

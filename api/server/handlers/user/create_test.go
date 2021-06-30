@@ -109,7 +109,7 @@ func TestCreateUserSameEmail(t *testing.T) {
 	config := apitest.LoadConfig(t)
 
 	// create the existing user
-	apitest.CreateTestUser(t, config)
+	apitest.CreateTestUser(t, config, true)
 
 	handler := user.NewUserCreateHandler(
 		config,

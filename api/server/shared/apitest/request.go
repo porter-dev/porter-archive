@@ -68,6 +68,13 @@ func (f *failingDecoderValidator) DecodeAndValidate(
 	return false
 }
 
+func (f *failingDecoderValidator) DecodeAndValidateNoWrite(
+	r *http.Request,
+	v interface{},
+) error {
+	return fmt.Errorf("fake error")
+}
+
 func NewFailingDecoderValidator(config *shared.Config) shared.RequestDecoderValidator {
 	return &failingDecoderValidator{config}
 }

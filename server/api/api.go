@@ -10,6 +10,8 @@ import (
 	vr "github.com/go-playground/validator/v10"
 	"github.com/porter-dev/porter/internal/auth/sessionstore"
 	"github.com/porter-dev/porter/internal/auth/token"
+	"github.com/porter-dev/porter/internal/notifier"
+	"github.com/porter-dev/porter/internal/notifier/sendgrid"
 	"github.com/porter-dev/porter/internal/oauth"
 	"golang.org/x/oauth2"
 	"gorm.io/gorm"
@@ -89,6 +91,7 @@ type App struct {
 	translator    *ut.Translator
 	tokenConf     *token.TokenGeneratorConf
 	segmentClient *segment.Client
+	notifier      notifier.UserNotifier
 }
 
 type AppCapabilities struct {
@@ -201,7 +204,21 @@ func New(conf *AppConfig) (*App, error) {
 		})
 	}
 
-	app.Capabilities.Email = sc.SendgridAPIKey != ""
+	if sc.SendgridAPIKey != "" {
+		app.Capabilities.Email = true
+
+		sgClient := &sendgrid.Client{
+			APIKey:                  sc.SendgridAPIKey,
+			PWResetTemplateID:       sc.SendgridPWResetTemplateID,
+			PWGHTemplateID:          sc.SendgridPWGHTemplateID,
+			VerifyEmailTemplateID:   sc.SendgridVerifyEmailTemplateID,
+			ProjectInviteTemplateID: sc.SendgridProjectInviteTemplateID,
+			SenderEmail:             sc.SendgridSenderEmail,
+		}
+
+		app.notifier = sendgrid.NewUserNotifier(sgClient)
+	}
+
 	app.Capabilities.Analytics = sc.SegmentClientKey != ""
 	app.Capabilities.BasicLogin = sc.BasicLoginEnabled
 

@@ -51,8 +51,10 @@ func (d *DefaultDecoder) Decode(
 
 	// decode into the request object
 	// a nil body is not a fatal error
-	if err := json.NewDecoder(r.Body).Decode(s); err != nil && !errors.Is(err, io.EOF) {
-		return requestErrorFromJSONErr(err)
+	if r.Body != nil {
+		if err := json.NewDecoder(r.Body).Decode(s); err != nil && !errors.Is(err, io.EOF) {
+			return requestErrorFromJSONErr(err)
+		}
 	}
 
 	return nil

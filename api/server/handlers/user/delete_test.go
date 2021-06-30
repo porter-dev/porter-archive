@@ -21,7 +21,7 @@ func TestDeleteUserSuccessful(t *testing.T) {
 	)
 
 	config := apitest.LoadConfig(t)
-	authUser := apitest.CreateTestUser(t, config)
+	authUser := apitest.CreateTestUser(t, config, true)
 	req = apitest.WithAuthenticatedUser(t, req, authUser)
 
 	handler := user.NewUserDeleteHandler(
@@ -58,7 +58,7 @@ func TestFailingDeleteUserMethod(t *testing.T) {
 	)
 
 	config := apitest.LoadConfig(t, test.DeleteUserMethod)
-	authUser := apitest.CreateTestUser(t, config)
+	authUser := apitest.CreateTestUser(t, config, true)
 	req = apitest.WithAuthenticatedUser(t, req, authUser)
 
 	handler := user.NewUserDeleteHandler(

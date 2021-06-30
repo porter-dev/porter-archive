@@ -28,7 +28,7 @@ func AuthenticateUserWithCookie(
 	}
 
 	// set the user as authenticated
-	session, err := config.Store.Get(req2, config.CookieName)
+	session, err := config.Store.Get(req2, config.ServerConf.CookieName)
 
 	if err != nil {
 		t.Fatal(err)

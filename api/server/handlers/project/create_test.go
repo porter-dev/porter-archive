@@ -21,7 +21,7 @@ func TestCreateProjectSuccessful(t *testing.T) {
 	)
 
 	config := apitest.LoadConfig(t)
-	user := apitest.CreateTestUser(t, config)
+	user := apitest.CreateTestUser(t, config, true)
 	req = apitest.WithAuthenticatedUser(t, req, user)
 
 	handler := project.NewProjectCreateHandler(
@@ -60,7 +60,7 @@ func TestFailingDecoderValidator(t *testing.T) {
 	)
 
 	config := apitest.LoadConfig(t)
-	user := apitest.CreateTestUser(t, config)
+	user := apitest.CreateTestUser(t, config, true)
 	req = apitest.WithAuthenticatedUser(t, req, user)
 
 	handler := project.NewProjectCreateHandler(
@@ -85,7 +85,7 @@ func TestFailingCreateMethod(t *testing.T) {
 	)
 
 	config := apitest.LoadConfig(t, test.CreateProjectMethod)
-	user := apitest.CreateTestUser(t, config)
+	user := apitest.CreateTestUser(t, config, true)
 	req = apitest.WithAuthenticatedUser(t, req, user)
 
 	handler := project.NewProjectCreateHandler(
@@ -110,7 +110,7 @@ func TestFailingCreateRoleMethod(t *testing.T) {
 	)
 
 	config := apitest.LoadConfig(t, test.CreateProjectRoleMethod)
-	user := apitest.CreateTestUser(t, config)
+	user := apitest.CreateTestUser(t, config, true)
 	req = apitest.WithAuthenticatedUser(t, req, user)
 
 	handler := project.NewProjectCreateHandler(
@@ -135,7 +135,7 @@ func TestFailingReadMethod(t *testing.T) {
 	)
 
 	config := apitest.LoadConfig(t, test.ReadProjectMethod)
-	user := apitest.CreateTestUser(t, config)
+	user := apitest.CreateTestUser(t, config, true)
 	req = apitest.WithAuthenticatedUser(t, req, user)
 
 	handler := project.NewProjectCreateHandler(

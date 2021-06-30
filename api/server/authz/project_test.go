@@ -18,7 +18,7 @@ import (
 func TestProjectMiddlewareSuccessful(t *testing.T) {
 	config, handler, next := loadProjectHandlers(t)
 
-	user := apitest.CreateTestUser(t, config)
+	user := apitest.CreateTestUser(t, config, true)
 	proj, err := project.CreateProjectWithUser(config, &models.Project{
 		Name: "test-project",
 	}, user)
@@ -46,7 +46,7 @@ func TestProjectMiddlewareSuccessful(t *testing.T) {
 func TestProjectMiddlewareFailedRead(t *testing.T) {
 	config, _, _ := loadProjectHandlers(t)
 
-	user := apitest.CreateTestUser(t, config)
+	user := apitest.CreateTestUser(t, config, true)
 	_, err := project.CreateProjectWithUser(config, &models.Project{
 		Name: "test-project",
 	}, user)

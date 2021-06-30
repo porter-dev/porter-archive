@@ -8,13 +8,13 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-func CreateTestUser(t *testing.T, config *shared.Config) *models.User {
+func CreateTestUser(t *testing.T, config *shared.Config, verified bool) *models.User {
 	hashedPw, _ := bcrypt.GenerateFromPassword([]byte("hello"), 8)
 
 	user, err := config.Repo.User().CreateUser(&models.User{
 		Email:         "test@test.it",
 		Password:      string(hashedPw),
-		EmailVerified: true,
+		EmailVerified: verified,
 	})
 
 	if err != nil {

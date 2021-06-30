@@ -24,7 +24,7 @@ func TestLoginUserSuccessful(t *testing.T) {
 	)
 
 	config := apitest.LoadConfig(t)
-	apitest.CreateTestUser(t, config)
+	apitest.CreateTestUser(t, config, true)
 
 	handler := user.NewUserLoginHandler(
 		config,
@@ -57,7 +57,7 @@ func TestLoginUserIncorrectPassword(t *testing.T) {
 	)
 
 	config := apitest.LoadConfig(t)
-	apitest.CreateTestUser(t, config)
+	apitest.CreateTestUser(t, config, true)
 
 	handler := user.NewUserLoginHandler(
 		config,
@@ -84,7 +84,7 @@ func TestLoginUserBadEmail(t *testing.T) {
 	)
 
 	config := apitest.LoadConfig(t)
-	apitest.CreateTestUser(t, config)
+	apitest.CreateTestUser(t, config, true)
 
 	handler := user.NewUserLoginHandler(
 		config,
@@ -111,7 +111,7 @@ func TestLoginUserEmptyPassword(t *testing.T) {
 	)
 
 	config := apitest.LoadConfig(t)
-	apitest.CreateTestUser(t, config)
+	apitest.CreateTestUser(t, config, true)
 
 	handler := user.NewUserLoginHandler(
 		config,
@@ -138,7 +138,7 @@ func TestLoginUserNotExist(t *testing.T) {
 	)
 
 	config := apitest.LoadConfig(t)
-	apitest.CreateTestUser(t, config)
+	apitest.CreateTestUser(t, config, true)
 
 	handler := user.NewUserLoginHandler(
 		config,
@@ -163,7 +163,7 @@ func TestLoginUserFailingReadUserByEmailMethod(t *testing.T) {
 	)
 
 	config := apitest.LoadConfig(t, test.ReadUserByEmailMethod)
-	apitest.CreateTestUser(t, config)
+	apitest.CreateTestUser(t, config, true)
 
 	handler := user.NewUserLoginHandler(
 		config,

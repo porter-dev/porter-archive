@@ -273,6 +273,10 @@ export default class ContentsList extends Component<PropsType, StateType> {
         );
       }
 
+      if (processes.length == 0) {
+        this.props.setProcfilePath("");
+      }
+
       return (
         <Overlay>
           <BgOverlay

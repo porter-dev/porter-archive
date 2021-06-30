@@ -14,10 +14,20 @@ func NewAPIRouter(config *shared.Config) *chi.Mux {
 	r := chi.NewRouter()
 
 	endpointFactory := shared.NewAPIObjectEndpointFactory(config)
+	baseRegisterer := NewBaseRegisterer()
 	projRegisterer := NewProjectScopedRegisterer()
 	userRegisterer := NewUserScopedRegisterer(projRegisterer)
 
 	r.Route("/api", func(r chi.Router) {
+		baseRoutes := baseRegisterer.GetRoutes(
+			r,
+			config,
+			&types.Path{
+				RelativePath: "",
+			},
+			endpointFactory,
+		)
+
 		userRoutes := userRegisterer.GetRoutes(
 			r,
 			config,
@@ -28,7 +38,9 @@ func NewAPIRouter(config *shared.Config) *chi.Mux {
 			userRegisterer.Children...,
 		)
 
-		registerRoutes(config, userRoutes)
+		routes := append(baseRoutes, userRoutes...)
+
+		registerRoutes(config, routes)
 	})
 
 	return r
@@ -72,7 +84,8 @@ func registerRoutes(config *shared.Config, routes []*Route) {
 				atomicGroup.Use(projFactory.Middleware)
 			}
 		}
-		route.Router.Method(
+
+		atomicGroup.Method(
 			string(route.Endpoint.Metadata.Method),
 			route.Endpoint.Metadata.Path.RelativePath,
 			route.Handler,

@@ -71,6 +71,10 @@ func getProjectRoutes(
 				Parent:       basePath,
 				RelativePath: relPath,
 			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+			},
 		},
 	)
 

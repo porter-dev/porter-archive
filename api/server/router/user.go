@@ -3,6 +3,7 @@ package router
 import (
 	"github.com/go-chi/chi"
 	"github.com/porter-dev/porter/api/server/handlers/project"
+	"github.com/porter-dev/porter/api/server/handlers/user"
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/types"
 )
@@ -41,6 +42,30 @@ func getUserRoutes(
 	factory shared.APIEndpointFactory,
 ) []*Route {
 	routes := make([]*Route, 0)
+
+	// GET /api/auth/check -> user.NewAuthCheckHandler
+	authCheckEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: "/auth/check",
+			},
+			Scopes: []types.PermissionScope{types.UserScope},
+		},
+	)
+
+	authCheckHandler := user.NewAuthCheckHandler(
+		config,
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &Route{
+		Endpoint: authCheckEndpoint,
+		Handler:  authCheckHandler,
+		Router:   r,
+	})
 
 	// POST /api/projects -> project.NewProjectCreateHandler
 	createEndpoint := factory.NewAPIEndpoint(

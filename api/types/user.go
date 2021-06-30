@@ -12,3 +12,5 @@ type CreateUserRequest struct {
 }
 
 type CreateUserResponse User
+
+type GetAuthenticatedUserResponse User

@@ -1,13 +1,16 @@
-package email
+package sendgrid
 
 import (
-	"os"
-
+	"github.com/porter-dev/porter/internal/notifier"
 	"github.com/sendgrid/sendgrid-go"
 	"github.com/sendgrid/sendgrid-go/helpers/mail"
 )
 
-type SendgridClient struct {
+type UserNotifier struct {
+	client *Client
+}
+
+type Client struct {
 	APIKey                  string
 	PWResetTemplateID       string
 	PWGHTemplateID          string
@@ -16,8 +19,12 @@ type SendgridClient struct {
 	SenderEmail             string
 }
 
-func (client *SendgridClient) SendPWResetEmail(url, email string) error {
-	request := sendgrid.GetRequest(os.Getenv("SENDGRID_API_KEY"), "/v3/mail/send", "https://api.sendgrid.com")
+func NewUserNotifier(client *Client) notifier.UserNotifier {
+	return &UserNotifier{client}
+}
+
+func (s *UserNotifier) SendPasswordResetEmail(opts *notifier.SendPasswordResetEmailOpts) error {
+	request := sendgrid.GetRequest(s.client.APIKey, "/v3/mail/send", "https://api.sendgrid.com")
 	request.Method = "POST"
 
 	sgMail := &mail.SGMailV3{
@@ -25,20 +32,20 @@ func (client *SendgridClient) SendPWResetEmail(url, email string) error {
 			{
 				To: []*mail.Email{
 					{
-						Address: email,
+						Address: opts.Email,
 					},
 				},
 				DynamicTemplateData: map[string]interface{}{
-					"url":   url,
-					"email": email,
+					"url":   opts.URL,
+					"email": opts.Email,
 				},
 			},
 		},
 		From: &mail.Email{
-			Address: client.SenderEmail,
+			Address: s.client.SenderEmail,
 			Name:    "Porter",
 		},
-		TemplateID: client.PWResetTemplateID,
+		TemplateID: s.client.PWResetTemplateID,
 	}
 
 	request.Body = mail.GetRequestBody(sgMail)
@@ -48,8 +55,8 @@ func (client *SendgridClient) SendPWResetEmail(url, email string) error {
 	return err
 }
 
-func (client *SendgridClient) SendGHPWEmail(url, email string) error {
-	request := sendgrid.GetRequest(os.Getenv("SENDGRID_API_KEY"), "/v3/mail/send", "https://api.sendgrid.com")
+func (s *UserNotifier) SendGithubRelinkEmail(opts *notifier.SendGithubRelinkEmailOpts) error {
+	request := sendgrid.GetRequest(s.client.APIKey, "/v3/mail/send", "https://api.sendgrid.com")
 	request.Method = "POST"
 
 	sgMail := &mail.SGMailV3{
@@ -57,20 +64,20 @@ func (client *SendgridClient) SendGHPWEmail(url, email string) error {
 			{
 				To: []*mail.Email{
 					{
-						Address: email,
+						Address: opts.Email,
 					},
 				},
 				DynamicTemplateData: map[string]interface{}{
-					"url":   url,
-					"email": email,
+					"url":   opts.URL,
+					"email": opts.Email,
 				},
 			},
 		},
 		From: &mail.Email{
-			Address: client.SenderEmail,
+			Address: s.client.SenderEmail,
 			Name:    "Porter",
 		},
-		TemplateID: client.PWGHTemplateID,
+		TemplateID: s.client.PWGHTemplateID,
 	}
 
 	request.Body = mail.GetRequestBody(sgMail)
@@ -80,8 +87,8 @@ func (client *SendgridClient) SendGHPWEmail(url, email string) error {
 	return err
 }
 
-func (client *SendgridClient) SendEmailVerification(url, email string) error {
-	request := sendgrid.GetRequest(os.Getenv("SENDGRID_API_KEY"), "/v3/mail/send", "https://api.sendgrid.com")
+func (s *UserNotifier) SendEmailVerification(opts *notifier.SendEmailVerificationOpts) error {
+	request := sendgrid.GetRequest(s.client.APIKey, "/v3/mail/send", "https://api.sendgrid.com")
 	request.Method = "POST"
 
 	sgMail := &mail.SGMailV3{
@@ -89,20 +96,20 @@ func (client *SendgridClient) SendEmailVerification(url, email string) error {
 			{
 				To: []*mail.Email{
 					{
-						Address: email,
+						Address: opts.Email,
 					},
 				},
 				DynamicTemplateData: map[string]interface{}{
-					"url":   url,
-					"email": email,
+					"url":   opts.URL,
+					"email": opts.Email,
 				},
 			},
 		},
 		From: &mail.Email{
-			Address: client.SenderEmail,
+			Address: s.client.SenderEmail,
 			Name:    "Porter",
 		},
-		TemplateID: client.VerifyEmailTemplateID,
+		TemplateID: s.client.VerifyEmailTemplateID,
 	}
 
 	request.Body = mail.GetRequestBody(sgMail)
@@ -112,8 +119,8 @@ func (client *SendgridClient) SendEmailVerification(url, email string) error {
 	return err
 }
 
-func (client *SendgridClient) SendProjectInviteEmail(url, project, projectOwnerEmail, email string) error {
-	request := sendgrid.GetRequest(os.Getenv("SENDGRID_API_KEY"), "/v3/mail/send", "https://api.sendgrid.com")
+func (s *UserNotifier) SendProjectInviteEmail(opts *notifier.SendProjectInviteEmailOpts) error {
+	request := sendgrid.GetRequest(s.client.APIKey, "/v3/mail/send", "https://api.sendgrid.com")
 	request.Method = "POST"
 
 	sgMail := &mail.SGMailV3{
@@ -121,21 +128,21 @@ func (client *SendgridClient) SendProjectInviteEmail(url, project, projectOwnerE
 			{
 				To: []*mail.Email{
 					{
-						Address: email,
+						Address: opts.InviteeEmail,
 					},
 				},
 				DynamicTemplateData: map[string]interface{}{
-					"url":          url,
-					"sender_email": projectOwnerEmail,
-					"project":      project,
+					"url":          opts.URL,
+					"sender_email": opts.ProjectOwnerEmail,
+					"project":      opts.Project,
 				},
 			},
 		},
 		From: &mail.Email{
-			Address: client.SenderEmail,
+			Address: s.client.SenderEmail,
 			Name:    "Porter",
 		},
-		TemplateID: client.ProjectInviteTemplateID,
+		TemplateID: s.client.ProjectInviteTemplateID,
 	}
 
 	request.Body = mail.GetRequestBody(sgMail)

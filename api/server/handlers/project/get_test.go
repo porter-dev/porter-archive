@@ -13,7 +13,7 @@ import (
 func TestGetProjectSuccessful(t *testing.T) {
 	// create a test project
 	config := apitest.LoadConfig(t)
-	user := apitest.CreateTestUser(t, config)
+	user := apitest.CreateTestUser(t, config, true)
 	proj, err := project.CreateProjectWithUser(config, &models.Project{
 		Name: "test-project",
 	}, user)

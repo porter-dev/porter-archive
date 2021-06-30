@@ -17,8 +17,8 @@ import (
 	"github.com/go-chi/chi"
 	"github.com/porter-dev/porter/internal/auth/token"
 	"github.com/porter-dev/porter/internal/forms"
-	"github.com/porter-dev/porter/internal/integrations/email"
 	"github.com/porter-dev/porter/internal/models"
+	"github.com/porter-dev/porter/internal/notifier"
 	"github.com/porter-dev/porter/internal/repository"
 	segment "gopkg.in/segmentio/analytics-go.v3"
 )
@@ -427,15 +427,11 @@ func (app *App) InitiateEmailVerifyUser(w http.ResponseWriter, r *http.Request) 
 		"token_id": []string{fmt.Sprintf("%d", pwReset.ID)},
 	}
 
-	sgClient := email.SendgridClient{
-		APIKey:                app.ServerConf.SendgridAPIKey,
-		VerifyEmailTemplateID: app.ServerConf.SendgridVerifyEmailTemplateID,
-		SenderEmail:           app.ServerConf.SendgridSenderEmail,
-	}
-
-	err = sgClient.SendEmailVerification(
-		fmt.Sprintf("%s/api/email/verify/finalize?%s", app.ServerConf.ServerURL, queryVals.Encode()),
-		form.Email,
+	err = app.notifier.SendEmailVerification(
+		&notifier.SendEmailVerificationOpts{
+			Email: user.Email,
+			URL:   fmt.Sprintf("%s/api/email/verify/finalize?%s", app.ServerConf.ServerURL, queryVals.Encode()),
+		},
 	)
 
 	if err != nil {
@@ -568,15 +564,11 @@ func (app *App) InitiatePWResetUser(w http.ResponseWriter, r *http.Request) {
 
 	// if the user is a Github user, send them a Github email
 	if user.GithubUserID != 0 {
-		sgClient := email.SendgridClient{
-			APIKey:         app.ServerConf.SendgridAPIKey,
-			PWGHTemplateID: app.ServerConf.SendgridPWGHTemplateID,
-			SenderEmail:    app.ServerConf.SendgridSenderEmail,
-		}
-
-		err = sgClient.SendGHPWEmail(
-			fmt.Sprintf("%s/api/oauth/login/github", app.ServerConf.ServerURL),
-			form.Email,
+		err := app.notifier.SendGithubRelinkEmail(
+			&notifier.SendGithubRelinkEmailOpts{
+				Email: user.Email,
+				URL:   fmt.Sprintf("%s/api/oauth/login/github", app.ServerConf.ServerURL),
+			},
 		)
 
 		if err != nil {
@@ -610,15 +602,11 @@ func (app *App) InitiatePWResetUser(w http.ResponseWriter, r *http.Request) {
 		"token_id": []string{fmt.Sprintf("%d", pwReset.ID)},
 	}
 
-	sgClient := email.SendgridClient{
-		APIKey:            app.ServerConf.SendgridAPIKey,
-		PWResetTemplateID: app.ServerConf.SendgridPWResetTemplateID,
-		SenderEmail:       app.ServerConf.SendgridSenderEmail,
-	}
-
-	err = sgClient.SendPWResetEmail(
-		fmt.Sprintf("%s/password/reset/finalize?%s", app.ServerConf.ServerURL, queryVals.Encode()),
-		form.Email,
+	err = app.notifier.SendPasswordResetEmail(
+		&notifier.SendPasswordResetEmailOpts{
+			Email: user.Email,
+			URL:   fmt.Sprintf("%s/password/reset/finalize?%s", app.ServerConf.ServerURL, queryVals.Encode()),
+		},
 	)
 
 	if err != nil {

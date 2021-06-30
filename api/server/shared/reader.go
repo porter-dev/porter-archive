@@ -1,6 +1,7 @@
 package shared
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
@@ -9,6 +10,7 @@ import (
 
 type RequestDecoderValidator interface {
 	DecodeAndValidate(w http.ResponseWriter, r *http.Request, v interface{}) bool
+	DecodeAndValidateNoWrite(r *http.Request, v interface{}) error
 }
 
 type DefaultRequestDecoderValidator struct {
@@ -46,4 +48,23 @@ func (j *DefaultRequestDecoderValidator) DecodeAndValidate(
 	}
 
 	return true
+}
+
+func (j *DefaultRequestDecoderValidator) DecodeAndValidateNoWrite(
+	r *http.Request,
+	v interface{},
+) error {
+	var requestErr apierrors.RequestError
+
+	// decode the request parameters (body and query)
+	if requestErr = j.decoder.Decode(v, r); requestErr != nil {
+		return fmt.Errorf(requestErr.InternalError())
+	}
+
+	// validate the request object
+	if requestErr = j.validator.Validate(v); requestErr != nil {
+		return fmt.Errorf(requestErr.InternalError())
+	}
+
+	return nil
 }

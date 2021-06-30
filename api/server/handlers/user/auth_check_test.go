@@ -10,9 +10,8 @@ import (
 )
 
 func TestAuthCheckSuccessful(t *testing.T) {
-	// create a test project
 	config := apitest.LoadConfig(t)
-	authUser := apitest.CreateTestUser(t, config)
+	authUser := apitest.CreateTestUser(t, config, true)
 	req, rr := apitest.GetRequestAndRecorder(t, string(types.HTTPVerbPost), "/api/auth/check", nil)
 
 	req = apitest.WithAuthenticatedUser(t, req, authUser)

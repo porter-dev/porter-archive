@@ -14,7 +14,7 @@ import (
 func TestListProjectsSuccessful(t *testing.T) {
 	// create a test project
 	config := apitest.LoadConfig(t)
-	user := apitest.CreateTestUser(t, config)
+	user := apitest.CreateTestUser(t, config, true)
 	proj1, err := project.CreateProjectWithUser(config, &models.Project{
 		Name: "test-project",
 	}, user)
@@ -60,7 +60,7 @@ func TestFailingListMethod(t *testing.T) {
 	)
 
 	config := apitest.LoadConfig(t, test.ListProjectsByUserIDMethod)
-	user := apitest.CreateTestUser(t, config)
+	user := apitest.CreateTestUser(t, config, true)
 	req = apitest.WithAuthenticatedUser(t, req, user)
 
 	handler := project.NewProjectListHandler(

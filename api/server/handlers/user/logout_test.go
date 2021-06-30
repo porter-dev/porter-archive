@@ -19,7 +19,7 @@ func TestLogoutUserSuccessful(t *testing.T) {
 	)
 
 	config := apitest.LoadConfig(t)
-	authUser := apitest.CreateTestUser(t, config)
+	authUser := apitest.CreateTestUser(t, config, true)
 	apitest.WithAuthenticatedUser(t, req, authUser)
 
 	handler := user.NewUserLogoutHandler(config)
@@ -29,7 +29,7 @@ func TestLogoutUserSuccessful(t *testing.T) {
 	assert.Equal(t, http.StatusOK, rr.Result().StatusCode, "status code should be 200")
 
 	// read the session to make sure "authenticated" is false
-	session, err := config.Store.Get(req, config.CookieName)
+	session, err := config.Store.Get(req, config.ServerConf.CookieName)
 
 	if err != nil {
 		t.Fatal(err)

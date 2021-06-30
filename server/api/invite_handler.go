@@ -10,8 +10,8 @@ import (
 	"github.com/go-chi/chi"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/forms"
-	"github.com/porter-dev/porter/internal/integrations/email"
 	"github.com/porter-dev/porter/internal/models"
+	"github.com/porter-dev/porter/internal/notifier"
 )
 
 // HandleCreateInvite creates a new invite for a project
@@ -85,17 +85,13 @@ func (app *App) HandleCreateInvite(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	sgClient := email.SendgridClient{
-		APIKey:                  app.ServerConf.SendgridAPIKey,
-		ProjectInviteTemplateID: app.ServerConf.SendgridProjectInviteTemplateID,
-		SenderEmail:             app.ServerConf.SendgridSenderEmail,
-	}
-
-	sgClient.SendProjectInviteEmail(
-		fmt.Sprintf("%s/api/projects/%d/invites/%s", app.ServerConf.ServerURL, projID, invite.Token),
-		project.Name,
-		user.Email,
-		form.Email,
+	app.notifier.SendProjectInviteEmail(
+		&notifier.SendProjectInviteEmailOpts{
+			InviteeEmail:      form.Email,
+			URL:               fmt.Sprintf("%s/api/projects/%d/invites/%s", app.ServerConf.ServerURL, projID, invite.Token),
+			Project:           project.Name,
+			ProjectOwnerEmail: user.Email,
+		},
 	)
 }
 

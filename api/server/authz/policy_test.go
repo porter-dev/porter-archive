@@ -27,7 +27,7 @@ func TestPolicyMiddlewareSuccessfulProjectCluster(t *testing.T) {
 		},
 	}, false, false)
 
-	user := apitest.CreateTestUser(t, config)
+	user := apitest.CreateTestUser(t, config, true)
 	_, err := project.CreateProjectWithUser(config, &models.Project{
 		Name: "test-project",
 	}, user)
@@ -75,7 +75,7 @@ func TestPolicyMiddlewareSuccessfulApplication(t *testing.T) {
 		},
 	}, false, false)
 
-	user := apitest.CreateTestUser(t, config)
+	user := apitest.CreateTestUser(t, config, true)
 	_, err := project.CreateProjectWithUser(config, &models.Project{
 		Name: "test-project",
 	}, user)
@@ -140,7 +140,7 @@ func TestPolicyMiddlewareInvalidPermissions(t *testing.T) {
 		},
 	}, false, true)
 
-	user := apitest.CreateTestUser(t, config)
+	user := apitest.CreateTestUser(t, config, true)
 	_, err := project.CreateProjectWithUser(config, &models.Project{
 		Name: "test-project",
 	}, user)
@@ -174,7 +174,7 @@ func TestPolicyMiddlewareFailInvalidLoader(t *testing.T) {
 		},
 	}, true, false)
 
-	user := apitest.CreateTestUser(t, config)
+	user := apitest.CreateTestUser(t, config, true)
 	_, err := project.CreateProjectWithUser(config, &models.Project{
 		Name: "test-project",
 	}, user)
@@ -207,7 +207,7 @@ func TestPolicyMiddlewareFailBadParam(t *testing.T) {
 		},
 	}, true, false)
 
-	user := apitest.CreateTestUser(t, config)
+	user := apitest.CreateTestUser(t, config, true)
 	_, err := project.CreateProjectWithUser(config, &models.Project{
 		Name: "test-project",
 	}, user)

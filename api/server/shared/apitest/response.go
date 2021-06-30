@@ -66,5 +66,5 @@ func AssertResponseError(t *testing.T, rr *httptest.ResponseRecorder, statusCode
 	}
 
 	assert.Equal(t, statusCode, rr.Result().StatusCode, "status code should match")
-	assert.Equal(t, expReqErr, reqErr, "body should be internal server error")
+	assert.Equal(t, expReqErr, reqErr, "body should be matching error")
 }

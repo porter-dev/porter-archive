@@ -172,6 +172,9 @@ func (store *PGStore) New(r *http.Request, name string) (*sessions.Session, erro
 				} else if strings.Contains(err.Error(), "expired timestamp") {
 					err = nil
 					session.IsNew = false
+				} else {
+					// if error is not record not found, db read is failing, so return fatal err
+					return nil, err
 				}
 			} else {
 				session.IsNew = false

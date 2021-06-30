@@ -2,6 +2,7 @@ package test
 
 import (
 	"errors"
+	"strings"
 
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/repository"
@@ -9,22 +10,27 @@ import (
 	"gorm.io/gorm"
 )
 
+const (
+	CreateUserMethod string = "create_user_0"
+)
+
 // UserRepository will return errors on queries if canQuery is false
 // and only stores a small set of users in-memory that are indexed by their
 // array index + 1
 type UserRepository struct {
-	canQuery bool
-	users    []*models.User
+	canQuery       bool
+	failingMethods string
+	users          []*models.User
 }
 
 // NewUserRepository will return errors if canQuery is false
-func NewUserRepository(canQuery bool) repository.UserRepository {
-	return &UserRepository{canQuery, []*models.User{}}
+func NewUserRepository(canQuery bool, failingMethods ...string) repository.UserRepository {
+	return &UserRepository{canQuery, strings.Join(failingMethods, ","), []*models.User{}}
 }
 
 // CreateUser adds a new User row to the Users table in array memory
 func (repo *UserRepository) CreateUser(user *models.User) (*models.User, error) {
-	if !repo.canQuery {
+	if !repo.canQuery || strings.Contains(repo.failingMethods, CreateUserMethod) {
 		return nil, errors.New("Cannot write database")
 	}
 

@@ -111,8 +111,8 @@ func (t *TestRepository) AWSIntegration() repository.AWSIntegrationRepository {
 // and accepts a parameter that can trigger read/write errors
 func NewRepository(canQuery bool, failingMethods ...string) repository.Repository {
 	return &TestRepository{
-		user:             NewUserRepository(canQuery),
-		session:          NewSessionRepository(canQuery),
+		user:             NewUserRepository(canQuery, failingMethods...),
+		session:          NewSessionRepository(canQuery, failingMethods...),
 		project:          NewProjectRepository(canQuery, failingMethods...),
 		cluster:          NewClusterRepository(canQuery),
 		helmRepo:         NewHelmRepoRepository(canQuery),

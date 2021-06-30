@@ -354,7 +354,7 @@ func (app *App) HandleGetProcfileContents(w http.ResponseWriter, r *http.Request
 	)
 
 	if err != nil {
-		app.handleErrorInternal(err, w)
+		http.NotFound(w, r)
 		return
 	}
 

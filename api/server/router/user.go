@@ -67,6 +67,30 @@ func getUserRoutes(
 		Router:   r,
 	})
 
+	// DELETE /api/users/current -> user.NewUserDeleteHandler
+	deleteUserEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbDelete,
+			Method: types.HTTPVerbDelete,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: "/users/current",
+			},
+			Scopes: []types.PermissionScope{types.UserScope},
+		},
+	)
+
+	deleteUserHandler := user.NewUserDeleteHandler(
+		config,
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &Route{
+		Endpoint: deleteUserEndpoint,
+		Handler:  deleteUserHandler,
+		Router:   r,
+	})
+
 	// POST /api/projects -> project.NewProjectCreateHandler
 	createEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{

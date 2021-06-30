@@ -16,7 +16,7 @@ func TestLoginUserSuccessful(t *testing.T) {
 	req, rr := apitest.GetRequestAndRecorder(
 		t,
 		string(types.HTTPVerbPost),
-		"/api/users/login",
+		"/api/login",
 		&types.LoginUserRequest{
 			Email:    "test@test.it",
 			Password: "hello",
@@ -49,7 +49,7 @@ func TestLoginUserIncorrectPassword(t *testing.T) {
 	req, rr := apitest.GetRequestAndRecorder(
 		t,
 		string(types.HTTPVerbPost),
-		"/api/users/login",
+		"/api/login",
 		&types.LoginUserRequest{
 			Email:    "test@test.it",
 			Password: "hello1",
@@ -76,7 +76,7 @@ func TestLoginUserBadEmail(t *testing.T) {
 	req, rr := apitest.GetRequestAndRecorder(
 		t,
 		string(types.HTTPVerbPost),
-		"/api/users/login",
+		"/api/login",
 		&types.LoginUserRequest{
 			Email:    "test",
 			Password: "hello1",
@@ -103,7 +103,7 @@ func TestLoginUserEmptyPassword(t *testing.T) {
 	req, rr := apitest.GetRequestAndRecorder(
 		t,
 		string(types.HTTPVerbPost),
-		"/api/users/login",
+		"/api/login",
 		&types.LoginUserRequest{
 			Email:    "test@test.it",
 			Password: "",
@@ -130,7 +130,7 @@ func TestLoginUserNotExist(t *testing.T) {
 	req, rr := apitest.GetRequestAndRecorder(
 		t,
 		string(types.HTTPVerbPost),
-		"/api/users/login",
+		"/api/login",
 		&types.LoginUserRequest{
 			Email:    "test@example.com",
 			Password: "hello",
@@ -155,7 +155,7 @@ func TestLoginUserFailingReadUserByEmailMethod(t *testing.T) {
 	req, rr := apitest.GetRequestAndRecorder(
 		t,
 		string(types.HTTPVerbPost),
-		"/api/users/login",
+		"/api/login",
 		&types.LoginUserRequest{
 			Email:    "test@test.it",
 			Password: "hello",

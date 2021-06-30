@@ -43,6 +43,27 @@ func getUserRoutes(
 ) []*Route {
 	routes := make([]*Route, 0)
 
+	// POST /api/logout -> user.NewUserLogoutHandler
+	logoutUserEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbUpdate,
+			Method: types.HTTPVerbPost,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: "/logout",
+			},
+			Scopes: []types.PermissionScope{types.UserScope},
+		},
+	)
+
+	logoutUserHandler := user.NewUserLogoutHandler(config)
+
+	routes = append(routes, &Route{
+		Endpoint: logoutUserEndpoint,
+		Handler:  logoutUserHandler,
+		Router:   r,
+	})
+
 	// GET /api/auth/check -> user.NewAuthCheckHandler
 	authCheckEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{

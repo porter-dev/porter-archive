@@ -216,19 +216,10 @@ func (d *DockerSecretsPostRenderer) getRegistriesToLink(renderedManifests *bytes
 
 		// read the image url
 		for _, image := range images {
-			named, err := reference.ParseNormalizedNamed(image)
+			regName, err := getRegNameFromImageRef(image)
 
 			if err != nil {
 				continue
-			}
-
-			domain := reference.Domain(named)
-			path := reference.Path(named)
-
-			regName := domain
-
-			if pathArr := strings.Split(path, "/"); len(pathArr) > 1 {
-				regName += "/" + strings.Join(pathArr[:len(pathArr)-1], "/")
 			}
 
 			// check if the integration is native to the cluster/registry combination
@@ -353,19 +344,10 @@ func (d *DockerSecretsPostRenderer) updatePodSpecs(secrets map[string]string) {
 				continue
 			}
 
-			named, err := reference.ParseNormalizedNamed(image)
+			regName, err := getRegNameFromImageRef(image)
 
 			if err != nil {
 				continue
-			}
-
-			domain := reference.Domain(named)
-			path := reference.Path(named)
-
-			regName := domain
-
-			if pathArr := strings.Split(path, "/"); len(pathArr) > 1 {
-				regName += "/" + strings.Join(pathArr[:len(pathArr)-1], "/")
 			}
 
 			if secretName, ok := secrets[regName]; ok && secretName != "" {
@@ -503,4 +485,30 @@ func getNestedResource(res resource, keys ...string) resource {
 	}
 
 	return curr
+}
+
+func getRegNameFromImageRef(image string) (string, error) {
+	named, err := reference.ParseNormalizedNamed(image)
+
+			if err != nil {
+				return "", err
+			}
+
+			domain := reference.Domain(named)
+			path := reference.Path(named)
+
+			var regName string
+
+			// if registry is dockerhub, leave the image name as-is
+			if strings.Contains(domain, "docker.io") {
+				regName = "index.docker.io/" + path
+			} else {
+				regName = domain
+
+				if pathArr := strings.Split(path, "/"); len(pathArr) > 1 {
+					regName += "/" + strings.Join(pathArr[:len(pathArr)-1], "/")
+				}
+			}
+
+			return regName, nil
 }

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/porter-dev/porter/api/server/authn"
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
 	"github.com/porter-dev/porter/api/types"
@@ -62,25 +63,8 @@ func (u *UserCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	session, err := u.config.Store.Get(r, u.config.CookieName)
-
-	if err != nil {
-		apierrors.HandleAPIError(w, u.config.Logger, apierrors.NewErrInternal(err))
-		return
-	}
-
-	var redirect string
-
-	if valR := session.Values["redirect"]; valR != nil {
-		redirect = session.Values["redirect"].(string)
-	}
-
-	session.Values["authenticated"] = true
-	session.Values["user_id"] = user.ID
-	session.Values["email"] = user.Email
-	session.Values["redirect"] = redirect
-
-	if err := session.Save(r, w); err != nil {
+	// save the user as authenticated in the session
+	if err := authn.SaveUserAuthenticated(w, r, u.config, user); err != nil {
 		apierrors.HandleAPIError(w, u.config.Logger, apierrors.NewErrInternal(err))
 		return
 	}

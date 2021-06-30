@@ -12,6 +12,7 @@ import (
 
 const (
 	CreateUserMethod string = "create_user_0"
+	DeleteUserMethod string = "delete_user_0"
 )
 
 // UserRepository will return errors on queries if canQuery is false
@@ -128,7 +129,7 @@ func (repo *UserRepository) UpdateUser(user *models.User) (*models.User, error) 
 
 // DeleteUser deletes a single user using their unique id
 func (repo *UserRepository) DeleteUser(user *models.User) (*models.User, error) {
-	if !repo.canQuery {
+	if !repo.canQuery || strings.Contains(repo.failingMethods, DeleteUserMethod) {
 		return nil, errors.New("Cannot write database")
 	}
 

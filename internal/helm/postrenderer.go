@@ -490,25 +490,25 @@ func getNestedResource(res resource, keys ...string) resource {
 func getRegNameFromImageRef(image string) (string, error) {
 	named, err := reference.ParseNormalizedNamed(image)
 
-			if err != nil {
-				return "", err
-			}
+	if err != nil {
+		return "", err
+	}
 
-			domain := reference.Domain(named)
-			path := reference.Path(named)
+	domain := reference.Domain(named)
+	path := reference.Path(named)
 
-			var regName string
+	var regName string
 
-			// if registry is dockerhub, leave the image name as-is
-			if strings.Contains(domain, "docker.io") {
-				regName = "index.docker.io/" + path
-			} else {
-				regName = domain
+	// if registry is dockerhub, leave the image name as-is
+	if strings.Contains(domain, "docker.io") {
+		regName = "index.docker.io/" + path
+	} else {
+		regName = domain
 
-				if pathArr := strings.Split(path, "/"); len(pathArr) > 1 {
-					regName += "/" + strings.Join(pathArr[:len(pathArr)-1], "/")
-				}
-			}
+		if pathArr := strings.Split(path, "/"); len(pathArr) > 1 {
+			regName += "/" + strings.Join(pathArr[:len(pathArr)-1], "/")
+		}
+	}
 
-			return regName, nil
+	return regName, nil
 }

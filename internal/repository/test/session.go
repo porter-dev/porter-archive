@@ -2,26 +2,33 @@ package test
 
 import (
 	"errors"
+	"strings"
 
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/repository"
 	"gorm.io/gorm"
 )
 
+const (
+	CreateSessionMethod string = "create_session_0"
+	SelectSessionMethod string = "select_session_0"
+)
+
 // SessionRepository uses gorm.DB for querying the database
 type SessionRepository struct {
-	canQuery bool
-	sessions []*models.Session
+	canQuery       bool
+	failingMethods string
+	sessions       []*models.Session
 }
 
 // NewSessionRepository returns pointer to repo along with the db
-func NewSessionRepository(canQuery bool) repository.SessionRepository {
-	return &SessionRepository{canQuery, []*models.Session{}}
+func NewSessionRepository(canQuery bool, failingMethods ...string) repository.SessionRepository {
+	return &SessionRepository{canQuery, strings.Join(failingMethods, ","), []*models.Session{}}
 }
 
 // CreateSession must take in Key, Data, and ExpiresAt as arguments.
 func (repo *SessionRepository) CreateSession(session *models.Session) (*models.Session, error) {
-	if !repo.canQuery {
+	if !repo.canQuery || strings.Contains(repo.failingMethods, CreateSessionMethod) {
 		return nil, errors.New("Cannot write database")
 	}
 
@@ -81,7 +88,7 @@ func (repo *SessionRepository) DeleteSession(session *models.Session) (*models.S
 
 // SelectSession returns a session with matching key
 func (repo *SessionRepository) SelectSession(session *models.Session) (*models.Session, error) {
-	if !repo.canQuery {
+	if !repo.canQuery || strings.Contains(repo.failingMethods, SelectSessionMethod) {
 		return nil, errors.New("Cannot write database")
 	}
 

@@ -225,6 +225,32 @@ export default class Logs extends Component<PropsType, StateType> {
               System
             </Tab>
           </LogTabs>
+          <Options>
+            <Scroll
+              onClick={() => {
+                this.setState({ scroll: !this.state.scroll }, () => {
+                  if (this.state.scroll) {
+                    this.scrollToBottom(true);
+                  }
+                });
+              }}
+            >
+              <input
+                type="checkbox"
+                checked={this.state.scroll}
+                onChange={() => {}}
+              />
+              Scroll to Bottom
+            </Scroll>
+            <Refresh
+              onClick={() => {
+                this.refreshLogs();
+              }}
+            >
+              <i className="material-icons">autorenew</i>
+              Refresh
+            </Refresh>
+          </Options>
         </LogStreamAlt>
       );
     }

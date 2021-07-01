@@ -103,7 +103,7 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
       )
       .then((res) => {
         let image = res.data?.config?.image?.repository;
-        let tag = res.data?.config?.image?.tag.toString();
+        let tag = res.data?.config?.image?.tag?.toString();
         let newestImage = tag ? image + ":" + tag : image;
         let imageIsPlaceholder = false;
         if (

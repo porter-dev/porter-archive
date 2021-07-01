@@ -1274,6 +1274,20 @@ func New(a *api.App) *chi.Mux {
 
 			r.Method(
 				"GET",
+				"/projects/{project_id}/k8s/{namespace}/{name}/jobs/status",
+				auth.DoesUserHaveProjectAccess(
+					auth.DoesUserHaveClusterAccess(
+						requestlog.NewHandler(a.HandleGetJobStatus, l),
+						mw.URLParam,
+						mw.QueryParam,
+					),
+					mw.URLParam,
+					mw.ReadAccess,
+				),
+			)
+
+			r.Method(
+				"GET",
 				"/projects/{project_id}/k8s/jobs/{namespace}/{name}/pods",
 				auth.DoesUserHaveProjectAccess(
 					auth.DoesUserHaveClusterAccess(

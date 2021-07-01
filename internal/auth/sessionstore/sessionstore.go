@@ -124,7 +124,7 @@ func NewStore(repo *repository.Repository, conf config.ServerConf) (*PGStore, er
 			MaxAge:   86400 * 30,
 			Secure:   true,
 			HttpOnly: true,
-			SameSite: http.SameSiteStrictMode,
+			SameSite: http.SameSiteLaxMode,
 		},
 		Repo: repo,
 	}

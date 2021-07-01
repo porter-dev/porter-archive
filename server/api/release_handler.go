@@ -582,6 +582,129 @@ func (app *App) HandleGetReleaseAllPods(w http.ResponseWriter, r *http.Request) 
 	}
 }
 
+type GetJobStatusResult struct {
+	Status string `json:"status"`
+}
+
+// HandleGetJobStatus gets the status for a specific job
+func (app *App) HandleGetJobStatus(w http.ResponseWriter, r *http.Request) {
+	name := chi.URLParam(r, "name")
+	namespace := chi.URLParam(r, "namespace")
+
+	form := &forms.GetReleaseForm{
+		ReleaseForm: &forms.ReleaseForm{
+			Form: &helm.Form{
+				Repo:              app.Repo,
+				DigitalOceanOAuth: app.DOConf,
+				Storage:           "secret",
+				Namespace:         namespace,
+			},
+		},
+		Name:     name,
+		Revision: 0,
+	}
+
+	agent, err := app.getAgentFromQueryParams(
+		w,
+		r,
+		form.ReleaseForm,
+		form.ReleaseForm.PopulateHelmOptionsFromQueryParams,
+	)
+
+	// errors are handled in app.getAgentFromQueryParams
+	if err != nil {
+		return
+	}
+
+	release, err := agent.GetRelease(form.Name, form.Revision)
+
+	if err != nil {
+		app.sendExternalError(err, http.StatusNotFound, HTTPError{
+			Code:   ErrReleaseReadData,
+			Errors: []string{"release not found"},
+		}, w)
+
+		return
+	}
+
+	vals, err := url.ParseQuery(r.URL.RawQuery)
+
+	if err != nil {
+		app.handleErrorFormDecoding(err, ErrReleaseDecode, w)
+		return
+	}
+
+	// get the filter options
+	k8sForm := &forms.K8sForm{
+		OutOfClusterConfig: &kubernetes.OutOfClusterConfig{
+			Repo:              app.Repo,
+			DigitalOceanOAuth: app.DOConf,
+		},
+	}
+
+	k8sForm.PopulateK8sOptionsFromQueryParams(vals, app.Repo.Cluster)
+	k8sForm.DefaultNamespace = form.ReleaseForm.Namespace
+
+	// validate the form
+	if err := app.validator.Struct(k8sForm); err != nil {
+		app.handleErrorFormValidation(err, ErrK8sValidate, w)
+		return
+	}
+
+	// create a new kubernetes agent
+	var k8sAgent *kubernetes.Agent
+
+	if app.ServerConf.IsTesting {
+		k8sAgent = app.TestAgents.K8sAgent
+	} else {
+		k8sAgent, err = kubernetes.GetAgentOutOfClusterConfig(k8sForm.OutOfClusterConfig)
+	}
+
+	jobs, err := k8sAgent.ListJobsByLabel(namespace, kubernetes.Label{
+		Key: "helm.sh/chart",
+		Val: fmt.Sprintf("%s-%s", release.Chart.Name(), release.Chart.Metadata.Version),
+	}, kubernetes.Label{
+		Key: "meta.helm.sh/release-name",
+		Val: name,
+	})
+
+	if err != nil {
+		app.handleErrorFormDecoding(err, ErrReleaseDecode, w)
+		return
+	}
+
+	res := &GetJobStatusResult{
+		Status: "succeeded",
+	}
+
+	// get the most recent job
+	if len(jobs) > 0 {
+		mostRecentJob := jobs[0]
+
+		for _, job := range jobs {
+			createdAt := job.ObjectMeta.CreationTimestamp
+
+			if mostRecentJob.CreationTimestamp.Before(&createdAt) {
+				mostRecentJob = job
+			}
+		}
+
+		// get the status of the most recent job
+		if mostRecentJob.Status.Succeeded >= 1 {
+			res.Status = "succeeded"
+		} else if mostRecentJob.Status.Active >= 1 {
+			res.Status = "running"
+		} else if mostRecentJob.Status.Failed >= 1 {
+			res.Status = "failed"
+		}
+	}
+
+	if err := json.NewEncoder(w).Encode(res); err != nil {
+		app.handleErrorFormDecoding(err, ErrK8sDecode, w)
+		return
+	}
+}
+
 // HandleListReleaseHistory retrieves a history of releases based on a release name
 func (app *App) HandleListReleaseHistory(w http.ResponseWriter, r *http.Request) {
 	name := chi.URLParam(r, "name")

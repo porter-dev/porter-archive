@@ -294,3 +294,51 @@ func (app *App) updateProjectFromToken(projectID uint, userID uint, tok *oauth2.
 
 	return err
 }
+
+func (app *App) HandleGithubAppOAuthCallback(w http.ResponseWriter, r *http.Request) {
+	session, err := app.Store.Get(r, app.ServerConf.CookieName)
+
+	if err != nil {
+		app.handleErrorDataRead(err, w)
+		return
+	}
+
+	if _, ok := session.Values["state"]; !ok {
+		app.sendExternalError(
+			err,
+			http.StatusForbidden,
+			HTTPError{
+				Code: http.StatusForbidden,
+				Errors: []string{
+					"Could not read cookie: are cookies enabled?",
+				},
+			},
+			w,
+		)
+
+		return
+	}
+
+	//if r.URL.Query().Get("state") != session.Values["state"] {
+	//	http.Error(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)
+	//	return
+	//}
+
+	token, err := app.GithubProjectConf.Exchange(oauth2.NoContext, r.URL.Query().Get("code"))
+
+	fmt.Println("exchanged token...")
+
+	if err != nil {
+		http.Error(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)
+		return
+	}
+
+	fmt.Println("here")
+
+	if !token.Valid() {
+		http.Error(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)
+		return
+	}
+
+	fmt.Println(token)
+}

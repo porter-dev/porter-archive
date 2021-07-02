@@ -340,5 +340,11 @@ func (app *App) HandleGithubAppOAuthCallback(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
+	//
+
+	//app.Repo.User.ReadUser(session.Values["user_id"].(uint))
+
+	//session.Values["user_id"]
+
 	fmt.Println(token)
 }

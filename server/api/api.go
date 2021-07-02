@@ -178,15 +178,11 @@ func New(conf *AppConfig) (*App, error) {
 		app.Capabilities.GithubLogin = sc.GithubLoginEnabled
 	}
 
-	fmt.Println("Github App Credentials:")
-	fmt.Println(sc.GithubAppClientID)
-	fmt.Println(sc.GithubAppClientSecret)
-
 	if sc.GithubAppClientID != "" && sc.GithubAppClientSecret != "" {
-		app.GithubAppConf = oauth.NewGithubClient(&oauth.Config{
+		app.GithubAppConf = oauth.NewGithubAppClient(&oauth.Config{
 			ClientID:     sc.GithubAppClientID,
 			ClientSecret: sc.GithubAppClientSecret,
-			Scopes:       []string{},
+			Scopes:       []string{"read:user"},
 			BaseURL:      sc.ServerURL,
 		})
 	}

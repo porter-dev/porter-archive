@@ -324,11 +324,11 @@ func (app *App) HandleGithubAppOAuthCallback(w http.ResponseWriter, r *http.Requ
 	//	return
 	//}
 
-	token, err := app.GithubProjectConf.Exchange(oauth2.NoContext, r.URL.Query().Get("code"))
-
-	fmt.Println("exchanged token...")
+	token, err := app.GithubAppConf.Exchange(oauth2.NoContext, r.URL.Query().Get("code"))
 
 	if err != nil {
+		fmt.Println("error")
+		fmt.Println(err)
 		http.Error(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)
 		return
 	}

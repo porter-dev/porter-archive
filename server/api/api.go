@@ -81,6 +81,7 @@ type App struct {
 	// oauth-specific clients
 	GithubUserConf    *oauth2.Config
 	GithubProjectConf *oauth2.Config
+	GithubAppConf     *oauth2.Config
 	DOConf            *oauth2.Config
 	GoogleUserConf    *oauth2.Config
 
@@ -175,6 +176,19 @@ func New(conf *AppConfig) (*App, error) {
 		})
 
 		app.Capabilities.GithubLogin = sc.GithubLoginEnabled
+	}
+
+	fmt.Println("Github App Credentials:")
+	fmt.Println(sc.GithubAppClientID)
+	fmt.Println(sc.GithubAppClientSecret)
+
+	if sc.GithubAppClientID != "" && sc.GithubAppClientSecret != "" {
+		app.GithubAppConf = oauth.NewGithubClient(&oauth.Config{
+			ClientID:     sc.GithubAppClientID,
+			ClientSecret: sc.GithubAppClientSecret,
+			Scopes:       []string{},
+			BaseURL:      sc.ServerURL,
+		})
 	}
 
 	if sc.GoogleClientID != "" && sc.GoogleClientSecret != "" {

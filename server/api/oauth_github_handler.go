@@ -340,11 +340,40 @@ func (app *App) HandleGithubAppOAuthCallback(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	//
+	userID, err := app.getUserIDFromRequest(r)
 
-	//app.Repo.User.ReadUser(session.Values["user_id"].(uint))
+	if err != nil {
+		app.handleErrorInternal(err, w)
+		return
+	}
 
-	//session.Values["user_id"]
+	user, err := app.Repo.User.ReadUser(userID)
 
-	fmt.Println(token)
+	if err != nil {
+		app.handleErrorInternal(err, w)
+		return
+	}
+
+	oauthInt := &integrations.OAuthIntegration{
+		Client:       integrations.OAuthGithub,
+		UserID:       userID,
+		AccessToken:  []byte(token.AccessToken),
+		RefreshToken: []byte(token.RefreshToken),
+	}
+
+	oauthInt, err = app.Repo.OAuthIntegration.CreateOAuthIntegration(oauthInt)
+
+	if err != nil {
+		app.handleErrorInternal(err, w)
+		return
+	}
+
+	user.GithubAppIntegrationID = oauthInt.ID
+
+	user, err = app.Repo.User.UpdateUser(user)
+
+	if err != nil {
+		app.handleErrorInternal(err, w)
+		return
+	}
 }

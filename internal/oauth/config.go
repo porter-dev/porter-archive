@@ -31,6 +31,19 @@ func NewGithubClient(cfg *Config) *oauth2.Config {
 	}
 }
 
+func NewGithubAppClient(cfg *Config) *oauth2.Config {
+	return &oauth2.Config{
+		ClientID:     cfg.ClientID,
+		ClientSecret: cfg.ClientSecret,
+		Endpoint: oauth2.Endpoint{
+			AuthURL:  "https://github.com/login/oauth/authorize",
+			TokenURL: "https://github.com/login/oauth/access_token",
+		},
+		RedirectURL: cfg.BaseURL + "/api/oauth/github-app/callback",
+		Scopes:      cfg.Scopes,
+	}
+}
+
 func NewDigitalOceanClient(cfg *Config) *oauth2.Config {
 	return &oauth2.Config{
 		ClientID:     cfg.ClientID,

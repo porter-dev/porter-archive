@@ -217,6 +217,12 @@ func New(a *api.App) *chi.Mux {
 
 			r.Method(
 				"GET",
+				"/oauth/github-app/callback",
+				requestlog.NewHandler(a.HandleGithubAppOAuthCallback, l),
+			)
+
+			r.Method(
+				"GET",
 				"/oauth/login/google",
 				requestlog.NewHandler(a.HandleGoogleStartUser, l),
 			)

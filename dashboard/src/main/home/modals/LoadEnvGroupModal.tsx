@@ -100,8 +100,8 @@ export default class LoadEnvGroupModal extends Component<PropsType, StateType> {
   };
 
   potentiallyOverriddenKeys(incoming: Record<string, string>): KeyValue[] {
-    return Object.entries(this.props.existingValues)
-      .filter(([key]) => incoming[key])
+    return Object.entries(incoming)
+      .filter(([key]) => this.props.existingValues[key])
       .map(([key, value]) => ({ key, value }));
   }
 
@@ -128,11 +128,11 @@ export default class LoadEnvGroupModal extends Component<PropsType, StateType> {
             </ClashingKeyTitle>
             <ClashingKeyDefinitions>
               <ClashingKeyLabel>Defined as</ClashingKeyLabel>
-              <ClashingKeyLabel>
-                {this.state.selectedEnvGroup.data[key] || emptyValue}
-              </ClashingKeyLabel>
+              <ClashingKeyValue>
+                {this.props.existingValues[key] || emptyValue}
+              </ClashingKeyValue>
               <ClashingKeyLabel>Replaced by</ClashingKeyLabel>
-              <ClashingKeyLabel>{value || emptyValue}</ClashingKeyLabel>
+              <ClashingKeyValue>{value || emptyValue}</ClashingKeyValue>
             </ClashingKeyDefinitions>
             {i !== clashingKeys.length - 1 && <ClashingKeyRowDivider />}
           </ClashingKeyRow>
@@ -285,6 +285,11 @@ const ClashingKeyDefinitions = styled.div`
 const ClashingKeyLabel = styled.p`
   margin: 0px;
   white-space: nowrap;
+`;
+
+const ClashingKeyValue = styled.p`
+  margin: 0px;
+  word-break: break-word;
 `;
 
 const EnvGroupList = styled.div`

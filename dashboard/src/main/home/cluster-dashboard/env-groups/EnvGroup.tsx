@@ -5,8 +5,13 @@ import key from "assets/key.svg";
 
 import { Context } from "shared/Context";
 
+export type EnvGroupData = {
+  data: Record<string, string>;
+  metadata: any;
+};
+
 type PropsType = {
-  envGroup: any;
+  envGroup: EnvGroupData;
   setExpanded: () => void;
 };
 

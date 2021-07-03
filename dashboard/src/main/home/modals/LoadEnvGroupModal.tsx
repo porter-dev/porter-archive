@@ -114,8 +114,34 @@ export default class LoadEnvGroupModal extends Component<PropsType, StateType> {
     }
   }
 
-  render() {
+  renderEnvGroupPreview(clashingKeys: KeyValue[]) {
     const emptyValue = <i>Empty value</i>;
+    return (
+      <PossibleClashingKeys>
+        {clashingKeys.map(({ key, value }, i) => (
+          <ClashingKeyRow key={key}>
+            <ClashingKeyTitle>
+              <i className="material-icons" style={{ fontSize: "18px" }}>
+                sync_problem
+              </i>
+              <b>{key}</b> is defined in both environments
+            </ClashingKeyTitle>
+            <ClashingKeyDefinitions>
+              <ClashingKeyLabel>Defined as</ClashingKeyLabel>
+              <ClashingKeyLabel>
+                {this.state.selectedEnvGroup.data[key] || emptyValue}
+              </ClashingKeyLabel>
+              <ClashingKeyLabel>Replaced by</ClashingKeyLabel>
+              <ClashingKeyLabel>{value || emptyValue}</ClashingKeyLabel>
+            </ClashingKeyDefinitions>
+            {i !== clashingKeys.length - 1 && <ClashingKeyRowDivider />}
+          </ClashingKeyRow>
+        ))}
+      </PossibleClashingKeys>
+    );
+  }
+
+  render() {
     const clashingKeys = this.state.selectedEnvGroup
       ? this.potentiallyOverriddenKeys(this.state.selectedEnvGroup.data)
       : [];
@@ -150,35 +176,7 @@ export default class LoadEnvGroupModal extends Component<PropsType, StateType> {
               {clashingKeys.length > 0 && (
                 <>
                   <ClashingKeyRowDivider />
-                  <PossibleClashingKeys>
-                    {clashingKeys.map(({ key, value }, i) => (
-                      <ClashingKeyRow key={key}>
-                        <ClashingKeyTitle>
-                          <i
-                            className="material-icons"
-                            style={{ fontSize: "18px" }}
-                          >
-                            sync_problem
-                          </i>
-                          <b>{key}</b> is defined in both environments
-                        </ClashingKeyTitle>
-                        <ClashingKeyDefinitions>
-                          <ClashingKeyLabel>Defined as</ClashingKeyLabel>
-                          <ClashingKeyLabel>
-                            {this.state.selectedEnvGroup.data[key] ||
-                              emptyValue}
-                          </ClashingKeyLabel>
-                          <ClashingKeyLabel>Replaced by</ClashingKeyLabel>
-                          <ClashingKeyLabel>
-                            {value || emptyValue}
-                          </ClashingKeyLabel>
-                        </ClashingKeyDefinitions>
-                        {i !== clashingKeys.length - 1 && (
-                          <ClashingKeyRowDivider />
-                        )}
-                      </ClashingKeyRow>
-                    ))}
-                  </PossibleClashingKeys>
+                  {this.renderEnvGroupPreview(clashingKeys)}
                 </>
               )}
             </SidebarSection>

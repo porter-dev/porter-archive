@@ -13,6 +13,7 @@ type PropsType = {
   namespace: string;
   clusterId: number;
   closeModal: () => void;
+  existingValues: KeyValue[];
   setValues: (values: any) => void;
 };
 

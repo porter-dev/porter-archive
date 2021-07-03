@@ -54,7 +54,7 @@ export default class SaveButton extends Component<PropsType, StateType> {
   render() {
     return (
       <ButtonWrapper makeFlush={this.props.makeFlush}>
-        {this.renderStatus()}
+        <StatusContainer>{this.renderStatus()}</StatusContainer>
         <Button
           disabled={this.props.disabled}
           onClick={this.props.onClick}
@@ -74,6 +74,10 @@ const LoadingGif = styled.img`
   margin-bottom: 0px;
 `;
 
+const StatusContainer = styled.div`
+  flex: 1;
+`;
+
 const StatusWrapper = styled.div`
   display: flex;
   align-items: center;
@@ -81,10 +85,11 @@ const StatusWrapper = styled.div`
   font-size: 13px;
   color: #ffffff55;
   margin-right: 25px;
-  padding: 0 10px;
+  flex: 1;
+  padding-inline-end: 10px;
 
   max-width: 500px;
-  white-space: nowrap;
+  white-space: break-spaces;
   overflow: hidden;
   text-overflow: ellipsis;
 
@@ -114,11 +119,13 @@ const ButtonWrapper = styled.div`
   display: flex;
   align-items: center;
   position: absolute;
+  justify-content: space-between;
   ${(props: { makeFlush: boolean }) => {
     if (!props.makeFlush) {
       return `
         bottom: 25px;
         right: 27px;
+        left: 27px;
       `;
     }
     return `

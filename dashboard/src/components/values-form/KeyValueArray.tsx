@@ -154,7 +154,7 @@ export default class KeyValueArray extends Component<PropsType, StateType> {
             namespace={this.props.externalValues?.namespace}
             clusterId={this.props.externalValues?.clusterId}
             closeModal={() => this.setState({ showEnvModal: false })}
-            setValues={(values: any) => {
+            setValues={(values) => {
               this.props.setValues(values);
               this.setState({ values: this.objectToValues(values) });
             }}

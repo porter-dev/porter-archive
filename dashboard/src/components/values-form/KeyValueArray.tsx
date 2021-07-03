@@ -8,6 +8,11 @@ import sliders from "assets/sliders.svg";
 import upload from "assets/upload.svg";
 import { keysIn } from "lodash";
 
+export type KeyValue = {
+  key: string;
+  value: string;
+};
+
 type PropsType = {
   label?: string;
   values: any;
@@ -51,15 +56,8 @@ export default class KeyValueArray extends Component<PropsType, StateType> {
     return obj;
   };
 
-  objectToValues = (obj: any) => {
-    let values = [] as any[];
-    Object.keys(obj).forEach((key: string, i: number) => {
-      let entry = {} as any;
-      entry.key = key;
-      entry.value = obj[key];
-      values.push(entry);
-    });
-    return values;
+  objectToValues = (obj: Record<string, string>): KeyValue[] => {
+    return Object.entries(obj).map(([key, value]) => ({ key, value }));
   };
 
   renderDeleteButton = (i: number) => {
@@ -152,6 +150,7 @@ export default class KeyValueArray extends Component<PropsType, StateType> {
           height="342px"
         >
           <LoadEnvGroupModal
+            existingValues={this.props.values}
             namespace={this.props.externalValues?.namespace}
             clusterId={this.props.externalValues?.clusterId}
             closeModal={() => this.setState({ showEnvModal: false })}

@@ -163,13 +163,9 @@ export default class LoadEnvGroupModal extends Component<PropsType, StateType> {
           {this.state.selectedEnvGroup ? (
             <SidebarSection>
               <GroupEnvPreview>
-                {Object.entries(this.state.selectedEnvGroup.data).map(
-                  ([key, value]) => (
-                    <div key={key}>
-                      {key}={value}
-                    </div>
-                  )
-                )}
+                {Object.entries(this.state.selectedEnvGroup.data)
+                  .map(([key, value]) => `${key}=${value}`)
+                  .join("\n")}
               </GroupEnvPreview>
               {clashingKeys.length > 0 && (
                 <>
@@ -202,7 +198,10 @@ const SidebarSection = styled.section`
 `;
 
 const GroupEnvPreview = styled.pre`
+  font-family: monospace;
   margin: 0 0 10px 0;
+  white-space: pre-line;
+  word-break: break-word;
 `;
 
 const ClashIcon = styled.i`

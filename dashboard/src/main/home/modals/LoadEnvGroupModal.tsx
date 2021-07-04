@@ -119,11 +119,9 @@ export default class LoadEnvGroupModal extends Component<PropsType, StateType> {
     return (
       <PossibleClashingKeys>
         {clashingKeys.map(({ key, value }, i) => (
-          <ClashingKeyRow key={key}>
+          <li key={key}>
             <ClashingKeyTitle>
-              <i className="material-icons" style={{ fontSize: "18px" }}>
-                sync_problem
-              </i>
+              <ClashIcon className="material-icons">sync_problem</ClashIcon>
               <b>{key}</b> is defined in both environments
             </ClashingKeyTitle>
             <ClashingKeyDefinitions>
@@ -135,7 +133,7 @@ export default class LoadEnvGroupModal extends Component<PropsType, StateType> {
               <ClashingKeyValue>{value || emptyValue}</ClashingKeyValue>
             </ClashingKeyDefinitions>
             {i !== clashingKeys.length - 1 && <ClashingKeyRowDivider />}
-          </ClashingKeyRow>
+          </li>
         ))}
       </PossibleClashingKeys>
     );
@@ -207,6 +205,12 @@ const GroupEnvPreview = styled.pre`
   margin: 0 0 10px 0;
 `;
 
+const ClashIcon = styled.i`
+  float: left;
+  margin-inline-end: 4px;
+  font-size: 18px;
+`;
+
 const Placeholder = styled.div`
   width: 100%;
   height: 150px;
@@ -268,8 +272,6 @@ const PossibleClashingKeys = styled.ul`
   }
 `;
 
-const ClashingKeyRow = styled.li``;
-
 const ClashingKeyRowDivider = styled.hr`
   margin: 16px 0;
   border: 1px solid #27292f;
@@ -309,13 +311,8 @@ const Subtitle = styled.div`
 `;
 
 const ClashingKeyTitle = styled(Subtitle)`
-  display: flex;
-  align-items: center;
   margin-top: 0;
   margin-bottom: 12px;
-  > * {
-    margin-inline-end: 4px;
-  }
 `;
 
 const ModalTitle = styled.div`

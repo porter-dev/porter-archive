@@ -427,3 +427,53 @@ func (repo *GCPIntegrationRepository) ListGCPIntegrationsByProjectID(
 
 	return res, nil
 }
+
+// GithubAppInstallationRepository implements repository.GithubAppInstallationRepository
+type GithubAppInstallationRepository struct {
+	canQuery               bool
+	githubAppInstallations []*ints.GithubAppInstallation
+}
+
+func NewGithubAppInstallationRepository(canQuery bool) repository.GithubAppInstallationRepository {
+	return &GithubAppInstallationRepository{
+		canQuery,
+		[]*ints.GithubAppInstallation{},
+	}
+}
+
+func (repo *GithubAppInstallationRepository) CreateGithubAppInstallation(am *ints.GithubAppInstallation) (*ints.GithubAppInstallation, error) {
+	if !repo.canQuery {
+		return nil, errors.New("cannot write database")
+	}
+
+	repo.githubAppInstallations = append(repo.githubAppInstallations, am)
+	am.ID = uint(len(repo.githubAppInstallations))
+
+	return am, nil
+}
+
+func (repo *GithubAppInstallationRepository) ReadGithubAppInstallation(id uint) (*ints.GithubAppInstallation, error) {
+	if !repo.canQuery {
+		return nil, errors.New("cannot write database")
+	}
+
+	if int(id-1) >= len(repo.githubAppInstallations) || repo.githubAppInstallations[id-1] == nil {
+		return nil, gorm.ErrRecordNotFound
+	}
+
+	return repo.githubAppInstallations[int(id-1)], nil
+}
+
+func (repo *GithubAppInstallationRepository) ReadGithubAppInstallationByAccountID(accountID string) (*ints.GithubAppInstallation, error) {
+	if !repo.canQuery {
+		return nil, errors.New("cannot write database")
+	}
+
+	for _, installation := range repo.githubAppInstallations {
+		if installation != nil && installation.AccountID == accountID {
+			return installation, nil
+		}
+	}
+
+	return nil, gorm.ErrRecordNotFound
+}

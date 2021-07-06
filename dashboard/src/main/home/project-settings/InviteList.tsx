@@ -386,7 +386,7 @@ const Status = styled.div<{ status: "accepted" | "expired" | "pending" }>`
   background: ${(props) => {
     if (props.status === "accepted") return "#38a88a";
     if (props.status === "expired") return "#cc3d42";
-    if (props.status === "pending") return "#cbce0f";
+    if (props.status === "pending") return "#ffffff11";
   }};
   font-size: 13px;
   border-radius: 3px;
@@ -395,7 +395,6 @@ const Status = styled.div<{ status: "accepted" | "expired" | "pending" }>`
   justify-content: center;
   max-height: 25px;
   max-width: 80px;
-  color: black;
   text-transform: capitalize;
   font-weight: 400;
   user-select: none;

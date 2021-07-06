@@ -2,8 +2,6 @@ package test
 
 import (
 	"errors"
-	"fmt"
-
 	"github.com/porter-dev/porter/internal/repository"
 	"gorm.io/gorm"
 
@@ -466,7 +464,6 @@ func (repo *GithubAppInstallationRepository) ReadGithubAppInstallation(id uint) 
 }
 
 func (repo *GithubAppInstallationRepository) ReadGithubAppInstallationByAccountID(accountID int64) (*ints.GithubAppInstallation, error) {
-	fmt.Println("calling memory handler")
 
 	if !repo.canQuery {
 		return nil, errors.New("cannot write database")
@@ -479,4 +476,18 @@ func (repo *GithubAppInstallationRepository) ReadGithubAppInstallationByAccountI
 	}
 
 	return nil, gorm.ErrRecordNotFound
+}
+
+func (repo *GithubAppInstallationRepository) DeleteGithubAppInstallationByAccountID(accountID int64) error {
+	if !repo.canQuery {
+		return errors.New("cannot write database")
+	}
+
+	for i, installation := range repo.githubAppInstallations {
+		if installation != nil && installation.AccountID == accountID {
+			repo.githubAppInstallations[i] = nil
+		}
+	}
+
+	return nil
 }

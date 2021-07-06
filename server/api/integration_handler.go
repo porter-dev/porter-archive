@@ -2,7 +2,6 @@ package api
 
 import (
 	"encoding/json"
-	"fmt"
 	"github.com/google/go-github/github"
 	"gorm.io/gorm"
 	"io/ioutil"
@@ -419,7 +418,12 @@ func (app *App) HandleGithubAppEvent(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 		if *e.Action == "deleted" {
-			fmt.Println("deletion event")
+			err := app.Repo.GithubAppInstallation.DeleteGithubAppInstallationByAccountID(*e.Installation.Account.ID)
+
+			if err != nil {
+				app.handleErrorInternal(err, w)
+				return
+			}
 		}
 	}
 

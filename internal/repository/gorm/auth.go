@@ -1124,3 +1124,11 @@ func (repo *GithubAppInstallationRepository) ReadGithubAppInstallationByAccountI
 
 	return ret, nil
 }
+
+func (repo *GithubAppInstallationRepository) DeleteGithubAppInstallationByAccountID(accountID int64) error {
+	if err := repo.db.Where("account_id = ?", accountID).Delete(ints.GithubAppInstallation{}).Error; err != nil {
+		return err
+	}
+
+	return nil
+}

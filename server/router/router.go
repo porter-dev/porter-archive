@@ -177,7 +177,7 @@ func New(a *api.App) *chi.Mux {
 			)
 
 			r.Method(
-				"GET",
+				"POST",
 				"/integrations/github-app/webhook",
 				requestlog.NewHandler(a.HandleGithubAppEvent, l),
 			)

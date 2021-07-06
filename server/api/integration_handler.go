@@ -2,6 +2,9 @@ package api
 
 import (
 	"encoding/json"
+	"fmt"
+	"github.com/google/go-github/github"
+	"io/ioutil"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -379,5 +382,26 @@ func (app *App) HandleListProjectOAuthIntegrations(w http.ResponseWriter, r *htt
 }
 
 func (app *App) HandleGithubAppEvent(w http.ResponseWriter, r *http.Request) {
+	payload, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		app.handleErrorInternal(err, w)
+		return
+	}
+
+	event, err := github.ParseWebHook(github.WebHookType(r), payload)
+
+	if err != nil {
+		app.handleErrorInternal(err, w)
+		return
+	}
+
+	switch e := event.(type) {
+	case *github.InstallationEvent:
+		fmt.Println("installation event")
+		fmt.Println("we want to insert the pair:")
+		fmt.Println(*e.Installation.ID)
+		fmt.Println(*e.Installation.Account.ID)
+		//fmt.Println(*e.Installation.Account.Login)
+	}
 
 }

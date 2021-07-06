@@ -52,10 +52,15 @@ type ServerConf struct {
 	SendgridProjectInviteTemplateID string `env:"SENDGRID_INVITE_TEMPLATE_ID"`
 	SendgridSenderEmail             string `env:"SENDGRID_SENDER_EMAIL"`
 
-	DOClientID          string `env:"DO_CLIENT_ID"`
-	DOClientSecret      string `env:"DO_CLIENT_SECRET"`
-	ProvisionerImageTag string `env:"PROV_IMAGE_TAG,default=latest"`
-	SegmentClientKey    string `env:"SEGMENT_CLIENT_KEY"`
+	DOClientID                 string `env:"DO_CLIENT_ID"`
+	DOClientSecret             string `env:"DO_CLIENT_SECRET"`
+	ProvisionerImageTag        string `env:"PROV_IMAGE_TAG,default=latest"`
+	ProvisionerImagePullSecret string `env:"PROV_IMAGE_PULL_SECRET"`
+	SegmentClientKey           string `env:"SEGMENT_CLIENT_KEY"`
+
+	ProvisionerCluster string `env:"PROVISIONER_CLUSTER"`
+	IngressCluster     string `env:"INGRESS_CLUSTER"`
+	SelfKubeconfig     string `env:"SELF_KUBECONFIG"`
 }
 
 // DBConf is the database configuration: if generated from environment variables,

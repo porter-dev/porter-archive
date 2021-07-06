@@ -176,6 +176,12 @@ func New(a *api.App) *chi.Mux {
 				),
 			)
 
+			r.Method(
+				"GET",
+				"/integrations/github-app/webhook",
+				requestlog.NewHandler(a.HandleGithubAppEvent, l),
+			)
+
 			// /api/templates routes
 			r.Method(
 				"GET",

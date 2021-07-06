@@ -8,7 +8,7 @@ type GithubAppInstallation struct {
 	gorm.Model
 
 	// Can belong to either a user or an organization
-	AccountID string `json:"account_id"`
+	AccountID string `json:"account_id" gorm:"unique"`
 
 	// Installation ID (used for authentication)
 	InstallationID string `json:"installation_id"`

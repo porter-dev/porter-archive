@@ -401,7 +401,7 @@ func (app *App) HandleGithubAppEvent(w http.ResponseWriter, r *http.Request) {
 			_, err := app.Repo.GithubAppInstallation.ReadGithubAppInstallationByAccountID(*e.Installation.Account.ID)
 
 			if err != nil && err == gorm.ErrRecordNotFound {
-				// insert account/installation pair into databse
+				// insert account/installation pair into database
 				_, err := app.Repo.GithubAppInstallation.CreateGithubAppInstallation(&ints.GithubAppInstallation{
 					AccountID:      *e.Installation.Account.ID,
 					InstallationID: *e.Installation.ID,

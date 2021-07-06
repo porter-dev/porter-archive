@@ -3,14 +3,17 @@ export type ScopeType =
   | "cluster"
   | "settings"
   | "namespace"
-  | "application";
+  | "application"
+  | "env_group"
+  | "job"
+  | "integrations";
 
 export type Verbs = "get" | "list" | "create" | "update" | "delete";
 
 export interface PolicyDocType {
   scope: ScopeType;
   verbs: Array<Verbs>;
-  resources: string[];
+  resources?: string[];
   children?: Partial<Record<ScopeType, PolicyDocType>>;
 }
 

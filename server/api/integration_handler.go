@@ -377,3 +377,7 @@ func (app *App) HandleListProjectOAuthIntegrations(w http.ResponseWriter, r *htt
 		return
 	}
 }
+
+func (app *App) HandleGithubAppEvent(w http.ResponseWriter, r *http.Request) {
+
+}

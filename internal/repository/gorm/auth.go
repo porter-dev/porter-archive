@@ -1114,7 +1114,8 @@ func (repo *GithubAppInstallationRepository) ReadGithubAppInstallation(id uint) 
 	return ret, nil
 }
 
-func (repo *GithubAppInstallationRepository) ReadGithubAppInstallationByAccountID(accountID string) (*ints.GithubAppInstallation, error) {
+func (repo *GithubAppInstallationRepository) ReadGithubAppInstallationByAccountID(accountID int64) (*ints.GithubAppInstallation, error) {
+
 	ret := &ints.GithubAppInstallation{}
 
 	if err := repo.db.Where("account_id = ?", accountID).First(&ret).Error; err != nil {

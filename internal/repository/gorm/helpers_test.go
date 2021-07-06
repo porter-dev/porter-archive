@@ -72,6 +72,7 @@ func setupTestEnv(tester *tester, t *testing.T) {
 		&ints.ClusterTokenCache{},
 		&ints.RegTokenCache{},
 		&ints.HelmRepoTokenCache{},
+		&ints.GithubAppInstallation{},
 	)
 
 	if err != nil {

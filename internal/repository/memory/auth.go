@@ -2,6 +2,7 @@ package test
 
 import (
 	"errors"
+	"fmt"
 
 	"github.com/porter-dev/porter/internal/repository"
 	"gorm.io/gorm"
@@ -464,7 +465,9 @@ func (repo *GithubAppInstallationRepository) ReadGithubAppInstallation(id uint) 
 	return repo.githubAppInstallations[int(id-1)], nil
 }
 
-func (repo *GithubAppInstallationRepository) ReadGithubAppInstallationByAccountID(accountID string) (*ints.GithubAppInstallation, error) {
+func (repo *GithubAppInstallationRepository) ReadGithubAppInstallationByAccountID(accountID int64) (*ints.GithubAppInstallation, error) {
+	fmt.Println("calling memory handler")
+
 	if !repo.canQuery {
 		return nil, errors.New("cannot write database")
 	}

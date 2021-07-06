@@ -8,20 +8,20 @@ type GithubAppInstallation struct {
 	gorm.Model
 
 	// Can belong to either a user or an organization
-	AccountID string `json:"account_id" gorm:"unique"`
+	AccountID int64 `json:"account_id" gorm:"unique"`
 
 	// Installation ID (used for authentication)
-	InstallationID string `json:"installation_id"`
+	InstallationID int64 `json:"installation_id"`
 }
 
 type GithubAppInstallationExternal struct {
 	ID uint `json:"id"`
 
 	// Can belong to either a user or an organization
-	AccountID string `json:"account_id"`
+	AccountID int64 `json:"account_id"`
 
 	// Installation ID (used for authentication)
-	InstallationID string `json:"installation_id"`
+	InstallationID int64 `json:"installation_id"`
 }
 
 func (r *GithubAppInstallation) Externalize() *GithubAppInstallationExternal {

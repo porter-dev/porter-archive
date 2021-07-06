@@ -58,5 +58,5 @@ type GCPIntegrationRepository interface {
 type GithubAppInstallationRepository interface {
 	CreateGithubAppInstallation(am *ints.GithubAppInstallation) (*ints.GithubAppInstallation, error)
 	ReadGithubAppInstallation(id uint) (*ints.GithubAppInstallation, error)
-	ReadGithubAppInstallationByAccountID(accountID string) (*ints.GithubAppInstallation, error)
+	ReadGithubAppInstallationByAccountID(accountID int64) (*ints.GithubAppInstallation, error)
 }

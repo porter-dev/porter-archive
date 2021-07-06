@@ -53,3 +53,10 @@ type GCPIntegrationRepository interface {
 	ReadGCPIntegration(id uint) (*ints.GCPIntegration, error)
 	ListGCPIntegrationsByProjectID(projectID uint) ([]*ints.GCPIntegration, error)
 }
+
+// GithubAppInstallationRepository represents the set of queries for github app installations
+type GithubAppInstallationRepository interface {
+	CreateGithubAppInstallation(am *ints.GithubAppInstallation) (*ints.GithubAppInstallation, error)
+	ReadGithubAppInstallation(id uint) (*ints.GithubAppInstallation, error)
+	ReadGithubAppInstallationByAccountID(accountID string) (*ints.GithubAppInstallation, error)
+}

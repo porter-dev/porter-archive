@@ -3,19 +3,52 @@ import { HIERARCHY_TREE, PolicyDocType, ScopeType, Verbs } from "./types";
 export const ADMIN_POLICY_MOCK: PolicyDocType = {
   scope: "project",
   verbs: ["get", "list", "create", "update", "delete"],
+};
+
+export const DEV_POLICY_MOCK: PolicyDocType = {
+  scope: "project",
+  verbs: ["get", "list", "create", "update", "delete"],
+  resources: [],
+  children: {
+    settings: {
+      scope: "settings",
+      verbs: ["get", "list"],
+      resources: [],
+    },
+  },
+};
+
+export const VIEWER_POLICY_MOCK: PolicyDocType = {
+  scope: "project",
+  verbs: ["get", "list"],
   resources: [],
   children: {
     settings: {
       scope: "settings",
       verbs: [],
+      resources: [],
     },
-  } as Record<ScopeType, PolicyDocType>,
+  },
+};
+
+export const POLICY_HIERARCHY_TREE: HIERARCHY_TREE = {
+  project: {
+    cluster: {
+      namespace: {
+        application: {},
+        job: {},
+        env_group: {},
+      },
+    },
+    settings: {},
+    integrations: {},
+  },
 };
 
 export const isAuthorized = (
   policy: PolicyDocType,
   scope: string,
-  resource: string,
+  resource: string | Array<string>,
   verb: Verbs | Array<Verbs>
 ): boolean => {
   if (!policy) {
@@ -23,11 +56,21 @@ export const isAuthorized = (
   }
 
   if (policy?.scope === scope) {
-    return (policy.resources.length === 0 ||
-      policy.resources.includes(resource)) &&
-      typeof verb === "string"
-      ? policy.verbs.includes(verb)
-      : (verb as Array<Verbs>).every((v) => policy.verbs.includes(v));
+    let isResourceIncluded = false;
+    if (policy.resources.length === 0) {
+      isResourceIncluded = true;
+    } else if (typeof resource === "string") {
+      isResourceIncluded = policy.resources.includes(resource);
+    } else {
+      isResourceIncluded = resource.every((r) => policy.resources.includes(r));
+    }
+
+    return (
+      isResourceIncluded &&
+      (typeof verb === "string"
+        ? policy.verbs.includes(verb)
+        : verb.every((v) => policy.verbs.includes(v)))
+    );
   } else {
     const isValid =
       policy?.children &&
@@ -43,17 +86,6 @@ export const isAuthorized = (
   }
 };
 
-export const POLICY_HIERARCHY_TREE: HIERARCHY_TREE = {
-  project: {
-    cluster: {
-      namespace: {
-        application: {},
-      },
-    },
-    settings: {},
-  },
-};
-
 export const populatePolicy = (
   currPolicy: PolicyDocType,
   tree: HIERARCHY_TREE,
@@ -63,6 +95,9 @@ export const populatePolicy = (
   const currTree = tree[currScope];
 
   const treeKeys = Object.keys(currTree) as Array<ScopeType>;
+
+  currPolicy.children = currPolicy?.children || {};
+  currPolicy.resources = currPolicy?.resources || [];
 
   for (const child of treeKeys) {
     let childPolicy = currPolicy?.children && currPolicy?.children[child];

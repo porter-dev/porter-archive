@@ -17,18 +17,20 @@ import ChartList from "./chart/ChartList";
 import EnvGroupDashboard from "./env-groups/EnvGroupDashboard";
 import NamespaceSelector from "./NamespaceSelector";
 import SortSelector from "./SortSelector";
-import ExpandedChart from "./expanded-chart/ExpandedChart";
 import ExpandedChartWrapper from "./expanded-chart/ExpandedChartWrapper";
 import { RouteComponentProps, withRouter } from "react-router";
 
 import api from "shared/api";
 import DashboardRoutes from "./dashboard/Routes";
+import GuardedRoute from "shared/auth/RouteGuard";
+import { withAuth, WithAuthProps } from "shared/auth/AuthorizationHoc";
 
-type PropsType = RouteComponentProps & {
-  currentCluster: ClusterType;
-  setSidebar: (x: boolean) => void;
-  currentView: PorterUrl;
-};
+type PropsType = RouteComponentProps &
+  WithAuthProps & {
+    currentCluster: ClusterType;
+    setSidebar: (x: boolean) => void;
+    currentView: PorterUrl;
+  };
 
 type StateType = {
   namespace: string;
@@ -131,11 +133,15 @@ class ClusterDashboard extends Component<PropsType, StateType> {
     return (
       <>
         <ControlRow>
-          <Button
-            onClick={() => pushFiltered(this.props, "/launch", ["project_id"])}
-          >
-            <i className="material-icons">add</i> Launch Template
-          </Button>
+          {this.props.isAuthorized("namespace", [], ["get", "create"]) && (
+            <Button
+              onClick={() =>
+                pushFiltered(this.props, "/launch", ["project_id"])
+              }
+            >
+              <i className="material-icons">add</i> Launch Template
+            </Button>
+          )}
           <SortFilterWrapper>
             <SortSelector
               setSortType={(sortType) => this.setState({ sortType })}
@@ -203,9 +209,30 @@ class ClusterDashboard extends Component<PropsType, StateType> {
             isMetricsInstalled={this.state.isMetricsInstalled}
           />
         </Route>
-        <Route path={["/jobs", "/applications", "/env-groups"]}>
+        <GuardedRoute
+          path={"/jobs"}
+          scope="job"
+          resource=""
+          verb={["get", "list"]}
+        >
           {this.renderContents()}
-        </Route>
+        </GuardedRoute>
+        <GuardedRoute
+          path={"/applications"}
+          scope="application"
+          resource=""
+          verb={["get", "list"]}
+        >
+          {this.renderContents()}
+        </GuardedRoute>
+        <GuardedRoute
+          path={"/env-groups"}
+          scope="env_group"
+          resource=""
+          verb={["get", "list"]}
+        >
+          {this.renderContents()}
+        </GuardedRoute>
         <Route path={["/cluster-dashboard"]}>
           <DashboardRoutes />
         </Route>
@@ -216,7 +243,7 @@ class ClusterDashboard extends Component<PropsType, StateType> {
 
 ClusterDashboard.contextType = Context;
 
-export default withRouter(ClusterDashboard);
+export default withRouter(withAuth(ClusterDashboard));
 
 const ControlRow = styled.div`
   display: flex;
@@ -389,7 +416,7 @@ const TitleSection = styled.div`
     margin-left: 10px;
     cursor: pointer;
     font-size: 18px;
-    color: #858FAAaa;
+    color: #858faaaa;
     padding: 5px;
     border-radius: 100px;
     :hover {

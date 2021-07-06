@@ -15,6 +15,7 @@ const GuardedRoute: React.FC<RouteProps & GuardedRouteProps> = ({
   scope,
   resource,
   verb,
+  children,
   ...rest
 }) => {
   const { currentPolicy } = useContext(AuthContext);
@@ -26,7 +27,11 @@ const GuardedRoute: React.FC<RouteProps & GuardedRouteProps> = ({
     <Route
       {...rest}
       render={(props) =>
-        auth === true ? <Component {...props} /> : <Redirect to="/" />
+        auth ? (
+          children || <Component {...props} />
+        ) : (
+          <div>"Unauthorized Page"</div>
+        )
       }
     />
   );
@@ -43,7 +48,7 @@ export const fakeGuardedRoute = <ComponentProps extends object>(
     return <Component {...props} />;
   }
 
-  return <Redirect to="/" />;
+  return <div>"Unauthorized Page"</div>;
 };
 
 export default GuardedRoute;

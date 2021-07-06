@@ -45,6 +45,7 @@ type Conf struct {
 	Postgres            *config.DBConf
 	Operation           ProvisionerOperation
 	ProvisionerImageTag string
+	ImagePullSecret     string
 	LastApplied         []byte
 
 	// provider-specific configurations
@@ -290,6 +291,14 @@ func (conf *Conf) GetProvisionerJobTemplate() (*batchv1.Job, error) {
 		env = conf.DOKS.AttachDOKSEnv(env)
 	}
 
+	imagePullSecrets := []v1.LocalObjectReference{}
+
+	if conf.ImagePullSecret != "" {
+		imagePullSecrets = append(imagePullSecrets, v1.LocalObjectReference{
+			Name: conf.ImagePullSecret,
+		})
+	}
+
 	return &batchv1.Job{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      conf.Name,
@@ -304,7 +313,8 @@ func (conf *Conf) GetProvisionerJobTemplate() (*batchv1.Job, error) {
 					Labels: labels,
 				},
 				Spec: v1.PodSpec{
-					RestartPolicy: v1.RestartPolicyNever,
+					RestartPolicy:    v1.RestartPolicyNever,
+					ImagePullSecrets: imagePullSecrets,
 					Containers: []v1.Container{
 						{
 							Name:            "provisioner",
@@ -312,24 +322,6 @@ func (conf *Conf) GetProvisionerJobTemplate() (*batchv1.Job, error) {
 							ImagePullPolicy: v1.PullAlways,
 							Args:            args,
 							Env:             env,
-							VolumeMounts: []v1.VolumeMount{
-								v1.VolumeMount{
-									MountPath: "/.terraform/plugin-cache",
-									Name:      "tf-cache",
-									ReadOnly:  true,
-								},
-							},
-						},
-					},
-					Volumes: []v1.Volume{
-						v1.Volume{
-							Name: "tf-cache",
-							VolumeSource: v1.VolumeSource{
-								PersistentVolumeClaim: &v1.PersistentVolumeClaimVolumeSource{
-									ClaimName: "tf-cache-pvc",
-									ReadOnly:  true,
-								},
-							},
 						},
 					},
 				},
@@ -431,10 +423,10 @@ func (conf *Conf) addTFEnv(env []v1.EnvVar) []v1.EnvVar {
 		Value: "./terraform",
 	})
 
-	env = append(env, v1.EnvVar{
-		Name:  "TF_PLUGIN_CACHE_DIR",
-		Value: "/.terraform/plugin-cache",
-	})
+	// env = append(env, v1.EnvVar{
+	// 	Name:  "TF_PLUGIN_CACHE_DIR",
+	// 	Value: "/.terraform/plugin-cache",
+	// })
 
 	env = append(env, v1.EnvVar{
 		Name:  "TF_PORTER_BACKEND",

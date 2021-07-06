@@ -26,6 +26,18 @@ import ProjectSettings from "./project-settings/ProjectSettings";
 import Sidebar from "./sidebar/Sidebar";
 import PageNotFound from "components/PageNotFound";
 import DeleteNamespaceModal from "./modals/DeleteNamespaceModal";
+import { fakeGuardedRoute } from "shared/auth/RouteGuard";
+
+// Guarded components
+const GuardedProjectSettings = fakeGuardedRoute("settings", "", [
+  "get",
+  "list",
+])(ProjectSettings);
+
+const GuardedIntegrations = fakeGuardedRoute("integrations", "", [
+  "get",
+  "list",
+])(Integrations);
 
 type PropsType = RouteComponentProps & {
   logOut: () => void;
@@ -336,9 +348,9 @@ class Home extends Component<PropsType, StateType> {
           </DashboardWrapper>
         );
       } else if (currentView === "integrations") {
-        return <Integrations />;
+        return <GuardedIntegrations />;
       } else if (currentView === "project-settings") {
-        return <ProjectSettings />;
+        return <GuardedProjectSettings />;
       }
       return <Templates />;
     } else if (currentView === "new-project") {

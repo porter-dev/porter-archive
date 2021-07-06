@@ -220,6 +220,8 @@ func (app *App) assignProvisionerAgent(sc *config.ServerConf) error {
 		}
 
 		app.ProvisionerAgent = agent
+
+		return nil
 	} else if sc.ProvisionerCluster == "kubeconfig" {
 		return fmt.Errorf(`"kubeconfig" cluster option requires path to kubeconfig`)
 	}
@@ -246,6 +248,8 @@ func (app *App) assignIngressAgent(sc *config.ServerConf) error {
 		}
 
 		app.IngressAgent = agent
+
+		return nil
 	} else if sc.IngressCluster == "kubeconfig" {
 		return fmt.Errorf(`"kubeconfig" cluster option requires path to kubeconfig`)
 	}

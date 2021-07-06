@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/google/go-github/github"
+	"gorm.io/gorm"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -397,11 +398,29 @@ func (app *App) HandleGithubAppEvent(w http.ResponseWriter, r *http.Request) {
 
 	switch e := event.(type) {
 	case *github.InstallationEvent:
-		fmt.Println("installation event")
-		fmt.Println("we want to insert the pair:")
-		fmt.Println(*e.Installation.ID)
-		fmt.Println(*e.Installation.Account.ID)
-		//fmt.Println(*e.Installation.Account.Login)
+		if *e.Action == "created" {
+			_, err := app.Repo.GithubAppInstallation.ReadGithubAppInstallationByAccountID(*e.Installation.Account.ID)
+
+			if err != nil && err == gorm.ErrRecordNotFound {
+				// insert account/installation pair into databse
+				_, err := app.Repo.GithubAppInstallation.CreateGithubAppInstallation(&ints.GithubAppInstallation{
+					AccountID:      *e.Installation.Account.ID,
+					InstallationID: *e.Installation.ID,
+				})
+
+				if err != nil {
+					app.handleErrorInternal(err, w)
+				}
+
+				return
+			} else if err != nil {
+				app.handleErrorInternal(err, w)
+				return
+			}
+		}
+		if *e.Action == "deleted" {
+			fmt.Println("deletion event")
+		}
 	}
 
 }

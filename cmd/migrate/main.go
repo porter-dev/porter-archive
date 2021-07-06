@@ -57,6 +57,7 @@ func main() {
 		&ints.ClusterTokenCache{},
 		&ints.RegTokenCache{},
 		&ints.HelmRepoTokenCache{},
+		&ints.GithubAppInstallation{},
 	)
 
 	if err != nil {

@@ -191,6 +191,14 @@ class ExpandedEnvGroup extends Component<PropsType, StateType> {
                 setValues={(x: any) => this.setState({ envVariables: x })}
                 fileUpload={true}
                 secretOption={true}
+                disabled={
+                  !this.props.isAuthorized("env_group", "", [
+                    "get",
+                    "create",
+                    "delete",
+                    "update",
+                  ])
+                }
               />
             </InnerWrapper>
             {this.props.isAuthorized("env_group", "", ["get", "update"]) && (

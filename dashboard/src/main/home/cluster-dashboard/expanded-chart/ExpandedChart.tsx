@@ -26,8 +26,9 @@ import ListSection from "./ListSection";
 import StatusSection from "./status/StatusSection";
 import SettingsSection from "./SettingsSection";
 import ChartList from "../chart/ChartList";
+import { withAuth, WithAuthProps } from "shared/auth/AuthorizationHoc";
 
-type PropsType = {
+type PropsType = WithAuthProps & {
   namespace: string;
   currentChart: ChartType;
   currentCluster: ClusterType;
@@ -58,7 +59,7 @@ type StateType = {
   newestImage: string;
 };
 
-export default class ExpandedChart extends Component<PropsType, StateType> {
+class ExpandedChart extends Component<PropsType, StateType> {
   state = {
     currentChart: this.props.currentChart,
     loading: true,
@@ -444,7 +445,13 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
         );
       case "values":
         return (
-          <ValuesYaml currentChart={chart} refreshChart={this.refreshChart} />
+          <ValuesYaml
+            currentChart={chart}
+            refreshChart={this.refreshChart}
+            disabled={
+              !this.props.isAuthorized("application", "", ["get", "update"])
+            }
+          />
         );
       default:
     }
@@ -474,7 +481,9 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
     }
 
     // Settings tab is always last
-    tabOptions.push({ label: "Settings", value: "settings" });
+    if (this.props.isAuthorized("application", "", ["get", "delete"])) {
+      tabOptions.push({ label: "Settings", value: "settings" });
+    }
 
     // Filter tabs if previewing an old revision or updating the chart version
     if (this.state.isPreview || this.state.isUpdatingChart) {
@@ -787,7 +796,10 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
           </HeaderWrapper>
           <BodyWrapper>
             <FormWrapper
-              isReadOnly={this.state.imageIsPlaceholder}
+              isReadOnly={
+                this.state.imageIsPlaceholder ||
+                !this.props.isAuthorized("application", "", ["get", "update"])
+              }
               formData={this.state.formData}
               tabOptions={this.state.tabOptions}
               isInModal={true}
@@ -816,6 +828,8 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
 }
 
 ExpandedChart.contextType = Context;
+
+export default withAuth(ExpandedChart);
 
 const TextWrap = styled.div``;
 

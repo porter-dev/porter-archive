@@ -319,21 +319,18 @@ func (app *App) HandleGithubAppOAuthCallback(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	//if r.URL.Query().Get("state") != session.Values["state"] {
-	//	http.Error(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)
-	//	return
-	//}
-
-	token, err := app.GithubAppConf.Exchange(oauth2.NoContext, r.URL.Query().Get("code"))
-
-	if err != nil {
-		fmt.Println("error")
-		fmt.Println(err)
+	if r.URL.Query().Get("state") != session.Values["state"] {
 		http.Error(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)
 		return
 	}
 
-	fmt.Println("here")
+	token, err := app.GithubAppConf.Exchange(oauth2.NoContext, r.URL.Query().Get("code"))
+
+	if err != nil {
+		fmt.Println(err)
+		http.Error(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)
+		return
+	}
 
 	if !token.Valid() {
 		http.Error(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)
@@ -356,11 +353,13 @@ func (app *App) HandleGithubAppOAuthCallback(w http.ResponseWriter, r *http.Requ
 
 	oauthInt := &integrations.OAuthIntegration{
 		Client:       integrations.OAuthGithub,
-		UserID:       userID,
+		UserID:       user.ID,
 		AccessToken:  []byte(token.AccessToken),
 		RefreshToken: []byte(token.RefreshToken),
 	}
 
+	// error happens here because OAuthIntegration needs to have a project ID
+	// and we don't actually have a project ID here
 	oauthInt, err = app.Repo.OAuthIntegration.CreateOAuthIntegration(oauthInt)
 
 	if err != nil {

@@ -23,6 +23,11 @@ export const VIEWER_POLICY_MOCK: PolicyDocType = {
   verbs: ["get", "list"],
   resources: [],
   children: {
+    integrations: {
+      scope: "integrations",
+      verbs: [],
+      resources: [],
+    },
     settings: {
       scope: "settings",
       verbs: [],

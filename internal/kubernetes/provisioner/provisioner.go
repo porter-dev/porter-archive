@@ -423,11 +423,6 @@ func (conf *Conf) addTFEnv(env []v1.EnvVar) []v1.EnvVar {
 		Value: "./terraform",
 	})
 
-	// env = append(env, v1.EnvVar{
-	// 	Name:  "TF_PLUGIN_CACHE_DIR",
-	// 	Value: "/.terraform/plugin-cache",
-	// })
-
 	env = append(env, v1.EnvVar{
 		Name:  "TF_PORTER_BACKEND",
 		Value: "postgres",

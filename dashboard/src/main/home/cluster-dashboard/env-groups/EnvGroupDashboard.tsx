@@ -14,10 +14,12 @@ import CreateEnvGroup from "./CreateEnvGroup";
 import ExpandedEnvGroup from "./ExpandedEnvGroup";
 import { RouteComponentProps, withRouter } from "react-router";
 import { pushQueryParams } from "shared/routing";
+import { withAuth, WithAuthProps } from "shared/auth/AuthorizationHoc";
 
-type PropsType = RouteComponentProps & {
-  currentCluster: ClusterType;
-};
+type PropsType = RouteComponentProps &
+  WithAuthProps & {
+    currentCluster: ClusterType;
+  };
 
 type StateType = {
   expand: boolean;
@@ -62,13 +64,15 @@ class EnvGroupDashboard extends Component<PropsType, StateType> {
       return (
         <>
           <ControlRow>
-            <Button
-              onClick={() =>
-                this.setState({ createEnvMode: !this.state.createEnvMode })
-              }
-            >
-              <i className="material-icons">add</i> Create Env Group
-            </Button>
+            {this.props.isAuthorized("env_group", "", ["get", "create"]) && (
+              <Button
+                onClick={() =>
+                  this.setState({ createEnvMode: !this.state.createEnvMode })
+                }
+              >
+                <i className="material-icons">add</i> Create Env Group
+              </Button>
+            )}
             <SortFilterWrapper>
               <SortSelector
                 setSortType={(sortType) => this.setState({ sortType })}
@@ -131,7 +135,7 @@ class EnvGroupDashboard extends Component<PropsType, StateType> {
 
 EnvGroupDashboard.contextType = Context;
 
-export default withRouter(EnvGroupDashboard);
+export default withRouter(withAuth(EnvGroupDashboard));
 
 const SortFilterWrapper = styled.div`
   width: 468px;

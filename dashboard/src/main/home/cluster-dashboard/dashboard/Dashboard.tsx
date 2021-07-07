@@ -1,4 +1,4 @@
-import React, { useContext, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import styled from "styled-components";
 
 import { Context } from "shared/Context";
@@ -8,6 +8,7 @@ import NodeList from "./NodeList";
 
 import { NamespaceList } from "./NamespaceList";
 import ClusterSettings from "./ClusterSettings";
+import useAuth from "shared/auth/useAuth";
 
 type TabEnum = "nodes" | "settings" | "namespaces";
 
@@ -22,6 +23,9 @@ const tabOptions: {
 
 export const Dashboard: React.FunctionComponent = () => {
   const [currentTab, setCurrentTab] = useState<TabEnum>("nodes");
+  const [currentTabOptions, setCurrentTabOptions] = useState(tabOptions);
+  const [isAuthorized] = useAuth();
+
   const context = useContext(Context);
   const renderTab = () => {
     switch (currentTab) {
@@ -34,6 +38,17 @@ export const Dashboard: React.FunctionComponent = () => {
         return <NodeList />;
     }
   };
+
+  useEffect(() => {
+    setCurrentTabOptions(
+      tabOptions.filter((option) => {
+        if (option.value === "settings") {
+          return isAuthorized("cluster", "", ["get", "delete"]);
+        }
+        return true;
+      })
+    );
+  }, [isAuthorized]);
 
   return (
     <>
@@ -56,7 +71,7 @@ export const Dashboard: React.FunctionComponent = () => {
       </InfoSection>
 
       <TabSelector
-        options={tabOptions}
+        options={currentTabOptions}
         currentTab={currentTab}
         setCurrentTab={(value: TabEnum) => setCurrentTab(value)}
       />

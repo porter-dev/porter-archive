@@ -48,6 +48,6 @@ jobs:
           docker push gcr.io/porter-dev-273614/porter:staging
       - name: Deploy to cluster
         run: |
-          aws eks --region ${{ secrets.AWS_REGION }} update-kubeconfig --name dev
+          aws eks --region ${{ secrets.AWS_REGION }} update-kubeconfig --name staging
             
           kubectl rollout restart deployment/porter

@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"encoding/json"
 	"github.com/google/go-github/github"
 	"github.com/porter-dev/porter/internal/oauth"
@@ -446,4 +447,88 @@ func (app *App) HandleGithubAppInstall(w http.ResponseWriter, r *http.Request) {
 	url := app.GithubAppConf.AuthCodeURL(state, oauth2.AccessTypeOffline)
 
 	http.Redirect(w, r, url, 302)
+}
+
+type HandleListGithubAppAccessResp struct {
+	HasAccess bool     `json:"has_access"`
+	LoginName string   `json:"username,omitempty"`
+	Orgs      []string `json:"organizations,omitempty"`
+}
+
+func (app *App) HandleListGithubAppAccess(w http.ResponseWriter, r *http.Request) {
+	tok, err := app.getGithubUserTokenFromRequest(r)
+
+	if err != nil {
+		res := HandleListGithubAppAccessResp{
+			HasAccess: false,
+		}
+		json.NewEncoder(w).Encode(res)
+		return
+	}
+
+	client := github.NewClient(app.GithubProjectConf.Client(oauth2.NoContext, tok))
+
+	opts := &github.ListOptions{
+		PerPage: 100,
+		Page:    1,
+	}
+
+	res := HandleListGithubAppAccessResp{
+		HasAccess: true,
+	}
+
+	for {
+		orgs, pages, err := client.Organizations.List(context.Background(), "", opts)
+
+		if err != nil {
+			app.handleErrorInternal(err, w)
+			return
+		}
+
+		for _, org := range orgs {
+			res.Orgs = append(res.Orgs, *org.Login)
+		}
+
+		if pages.NextPage == 0 {
+			break
+		}
+	}
+
+	AuthUser, _, err := client.Users.Get(context.Background(), "")
+
+	if err != nil {
+		app.handleErrorInternal(err, w)
+		return
+	}
+
+	res.LoginName = *AuthUser.Login
+
+	json.NewEncoder(w).Encode(res)
+}
+
+// getGithubUserTokenFromRequest
+func (app *App) getGithubUserTokenFromRequest(r *http.Request) (*oauth2.Token, error) {
+	userID, err := app.getUserIDFromRequest(r)
+
+	if err != nil {
+		return nil, err
+	}
+
+	user, err := app.Repo.User.ReadUser(userID)
+
+	if err != nil {
+		return nil, err
+	}
+
+	oauthInt, err := app.Repo.GithubAppOAuthIntegration.ReadGithubAppOauthIntegration(user.GithubAppIntegrationID)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &oauth2.Token{
+		AccessToken:  string(oauthInt.AccessToken),
+		RefreshToken: string(oauthInt.RefreshToken),
+		TokenType:    "Bearer",
+	}, nil
 }

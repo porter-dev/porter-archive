@@ -41,6 +41,7 @@ type OAuthIntegrationRepository interface {
 // mechanism
 type GithubAppOAuthIntegrationRepository interface {
 	CreateGithubAppOAuthIntegration(am *ints.GithubAppOAuthIntegration) (*ints.GithubAppOAuthIntegration, error)
+	ReadGithubAppOauthIntegration(id uint) (*ints.GithubAppOAuthIntegration, error)
 }
 
 // AWSIntegrationRepository represents the set of queries on the AWS auth
@@ -65,5 +66,6 @@ type GithubAppInstallationRepository interface {
 	CreateGithubAppInstallation(am *ints.GithubAppInstallation) (*ints.GithubAppInstallation, error)
 	ReadGithubAppInstallation(id uint) (*ints.GithubAppInstallation, error)
 	ReadGithubAppInstallationByAccountID(accountID int64) (*ints.GithubAppInstallation, error)
+	ReadGithubAppInstallationByAccountIDs(accountIDs []int64) ([]*ints.GithubAppInstallation, error)
 	DeleteGithubAppInstallationByAccountID(accountID int64) error
 }

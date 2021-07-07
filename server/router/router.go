@@ -188,6 +188,14 @@ func New(a *api.App) *chi.Mux {
 				requestlog.NewHandler(a.HandleGithubAppInstall, l),
 			)
 
+			r.Method(
+				"GET",
+				"/integrations/github-app/access",
+				auth.BasicAuthenticate(
+					requestlog.NewHandler(a.HandleListGithubAppAccess, l),
+				),
+			)
+
 			// /api/templates routes
 			r.Method(
 				"GET",

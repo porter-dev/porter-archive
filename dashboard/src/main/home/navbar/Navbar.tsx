@@ -31,7 +31,11 @@ export default class Navbar extends Component<PropsType, StateType> {
             <DropdownLabel>
               {this.context.user && this.context.user.email}
             </DropdownLabel>
-            <UserDropdownButton onClick={() => alert("hello")}>
+            <UserDropdownButton
+              onClick={() =>
+                this.context.setCurrentModal("AccountSettingsModal", {})
+              }
+            >
               Account Settings
             </UserDropdownButton>
             <UserDropdownButton onClick={this.props.logOut}>

@@ -7,8 +7,9 @@ import { Context } from "shared/Context";
 import { ChartType, StorageType } from "shared/types";
 
 import ConfirmOverlay from "components/ConfirmOverlay";
+import { withAuth, WithAuthProps } from "shared/auth/AuthorizationHoc";
 
-type PropsType = {
+type PropsType = WithAuthProps & {
   showRevisions: boolean;
   toggleShowRevisions: () => void;
   chart: ChartType;
@@ -31,7 +32,7 @@ type StateType = {
 };
 
 // TODO: handle refresh when new revision is generated from an old revision
-export default class RevisionSection extends Component<PropsType, StateType> {
+class RevisionSection extends Component<PropsType, StateType> {
   state = {
     revisions: [] as ChartType[],
     rollbackRevision: null as number | null,
@@ -227,7 +228,10 @@ export default class RevisionSection extends Component<PropsType, StateType> {
           <Td>v{revision.chart.metadata.version}</Td>
           <Td>
             <RollbackButton
-              disabled={isCurrent}
+              disabled={
+                isCurrent ||
+                !this.props.isAuthorized("application", "", ["get", "update"])
+              }
               onClick={() =>
                 this.setState({ rollbackRevision: revision.version })
               }
@@ -340,6 +344,8 @@ export default class RevisionSection extends Component<PropsType, StateType> {
 }
 
 RevisionSection.contextType = Context;
+
+export default withAuth(RevisionSection);
 
 const TableWrapper = styled.div`
   padding-bottom: 20px;

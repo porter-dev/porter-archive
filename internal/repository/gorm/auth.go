@@ -1125,6 +1125,16 @@ func (repo *GithubAppInstallationRepository) ReadGithubAppInstallationByAccountI
 	return ret, nil
 }
 
+func (repo *GithubAppInstallationRepository) ReadGithubAppInstallationByAccountIDs(accountIDs []int64) ([]*ints.GithubAppInstallation, error) {
+	ret := make([]*ints.GithubAppInstallation, 0)
+
+	if err := repo.db.Where("account_id IN ?", accountIDs).Find(&ret).Error; err != nil {
+		return nil, err
+	}
+
+	return ret, nil
+}
+
 func (repo *GithubAppInstallationRepository) DeleteGithubAppInstallationByAccountID(accountID int64) error {
 	if err := repo.db.Unscoped().Where("account_id = ?", accountID).Delete(&ints.GithubAppInstallation{}).Error; err != nil {
 		return err
@@ -1147,4 +1157,14 @@ func (repo *GithubAppOAuthIntegrationRepository) CreateGithubAppOAuthIntegration
 		return nil, err
 	}
 	return am, nil
+}
+
+func (repo *GithubAppOAuthIntegrationRepository) ReadGithubAppOauthIntegration(id uint) (*ints.GithubAppOAuthIntegration, error) {
+	ret := &ints.GithubAppOAuthIntegration{}
+
+	if err := repo.db.Where("id = ?", id).First(&ret).Error; err != nil {
+		return nil, err
+	}
+
+	return ret, nil
 }

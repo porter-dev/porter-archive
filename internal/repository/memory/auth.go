@@ -478,6 +478,26 @@ func (repo *GithubAppInstallationRepository) ReadGithubAppInstallationByAccountI
 	return nil, gorm.ErrRecordNotFound
 }
 
+func (repo *GithubAppInstallationRepository) ReadGithubAppInstallationByAccountIDs(accountIDs []int64) ([]*ints.GithubAppInstallation, error) {
+
+	if !repo.canQuery {
+		return nil, errors.New("cannot write database")
+	}
+
+	ret := make([]*ints.GithubAppInstallation, 0)
+
+	for _, installation := range repo.githubAppInstallations {
+		// O(n^2) can be made into O(n) if this is too slow
+		for _, id := range accountIDs {
+			if installation.AccountID == id {
+				ret = append(ret, installation)
+			}
+		}
+	}
+
+	return ret, nil
+}
+
 func (repo *GithubAppInstallationRepository) DeleteGithubAppInstallationByAccountID(accountID int64) error {
 	if !repo.canQuery {
 		return errors.New("cannot write database")
@@ -513,4 +533,16 @@ func (repo *GithubAppOAuthIntegrationRepository) CreateGithubAppOAuthIntegration
 	am.ID = uint(len(repo.githubAppOauthIntegrations))
 
 	return am, nil
+}
+
+func (repo *GithubAppOAuthIntegrationRepository) ReadGithubAppOauthIntegration(id uint) (*ints.GithubAppOAuthIntegration, error) {
+	if !repo.canQuery {
+		return nil, errors.New("cannot write database")
+	}
+
+	if int(id-1) >= len(repo.githubAppOauthIntegrations) || repo.githubAppOauthIntegrations[id-1] == nil {
+		return nil, gorm.ErrRecordNotFound
+	}
+
+	return repo.githubAppOauthIntegrations[int(id-1)], nil
 }

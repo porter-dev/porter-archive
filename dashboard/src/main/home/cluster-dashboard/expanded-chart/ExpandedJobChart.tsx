@@ -17,8 +17,9 @@ import JobList from "./jobs/JobList";
 import SettingsSection from "./SettingsSection";
 import FormWrapper from "components/values-form/FormWrapper";
 import { PlaceHolder } from "brace";
+import { withAuth, WithAuthProps } from "shared/auth/AuthorizationHoc";
 
-type PropsType = {
+type PropsType = WithAuthProps & {
   namespace: string;
   currentChart: ChartType;
   currentCluster: ClusterType;
@@ -43,7 +44,7 @@ type StateType = {
   valuesToOverride: any;
 };
 
-export default class ExpandedJobChart extends Component<PropsType, StateType> {
+class ExpandedJobChart extends Component<PropsType, StateType> {
   state = {
     currentChart: this.props.currentChart,
     imageIsPlaceholder: false,
@@ -457,15 +458,17 @@ export default class ExpandedJobChart extends Component<PropsType, StateType> {
         );
       case "settings":
         return (
-          <SettingsSection
-            showSource={true}
-            currentChart={this.state.currentChart}
-            refreshChart={() => this.refreshChart(0)}
-            setShowDeleteOverlay={(x: boolean) =>
-              this.setState({ showDeleteOverlay: x })
-            }
-            saveButtonText="Save Config"
-          />
+          this.props.isAuthorized("job", "", ["get", "delete"]) && (
+            <SettingsSection
+              showSource={true}
+              currentChart={this.state.currentChart}
+              refreshChart={() => this.refreshChart(0)}
+              setShowDeleteOverlay={(x: boolean) =>
+                this.setState({ showDeleteOverlay: x })
+              }
+              saveButtonText="Save Config"
+            />
+          )
         );
       default:
     }
@@ -494,7 +497,9 @@ export default class ExpandedJobChart extends Component<PropsType, StateType> {
       });
     }
 
-    tabOptions.push({ label: "Settings", value: "settings" });
+    if (this.props.isAuthorized("job", "", ["get", "delete"])) {
+      tabOptions.push({ label: "Settings", value: "settings" });
+    }
 
     // Filter tabs if previewing an old revision
     this.setState({ tabOptions });
@@ -612,7 +617,10 @@ export default class ExpandedJobChart extends Component<PropsType, StateType> {
 
           <BodyWrapper>
             <FormWrapper
-              isReadOnly={this.state.imageIsPlaceholder}
+              isReadOnly={
+                this.state.imageIsPlaceholder ||
+                !this.props.isAuthorized("job", "", ["get", "update"])
+              }
               valuesToOverride={this.state.valuesToOverride}
               clearValuesToOverride={() =>
                 this.setState({ valuesToOverride: {} })
@@ -636,6 +644,8 @@ export default class ExpandedJobChart extends Component<PropsType, StateType> {
 }
 
 ExpandedJobChart.contextType = Context;
+
+export default withAuth(ExpandedJobChart);
 
 const TextWrap = styled.div``;
 

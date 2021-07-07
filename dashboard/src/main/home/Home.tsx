@@ -485,19 +485,22 @@ class Home extends Component<PropsType, StateType> {
             <ClusterInstructionsModal />
           </Modal>
         )}
-        {currentModal === "UpdateClusterModal" && (
-          <Modal
-            onRequestClose={() => setCurrentModal(null, null)}
-            width="565px"
-            height="275px"
-          >
-            <UpdateClusterModal
-              setRefreshClusters={(x: boolean) =>
-                this.setState({ forceRefreshClusters: x })
-              }
-            />
-          </Modal>
-        )}
+
+        {/* We should be careful, as this component is named Update but is for deletion */}
+        {this.props.isAuthorized("cluster", "", ["get", "delete"]) &&
+          currentModal === "UpdateClusterModal" && (
+            <Modal
+              onRequestClose={() => setCurrentModal(null, null)}
+              width="565px"
+              height="275px"
+            >
+              <UpdateClusterModal
+                setRefreshClusters={(x: boolean) =>
+                  this.setState({ forceRefreshClusters: x })
+                }
+              />
+            </Modal>
+          )}
         {currentModal === "IntegrationsModal" && (
           <Modal
             onRequestClose={() => setCurrentModal(null, null)}

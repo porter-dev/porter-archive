@@ -32,6 +32,7 @@ type OIDCIntegrationRepository interface {
 // mechanism
 type OAuthIntegrationRepository interface {
 	CreateOAuthIntegration(am *ints.OAuthIntegration) (*ints.OAuthIntegration, error)
+	CreateUserOAuthIntegration(am *ints.OAuthIntegration) (*ints.OAuthIntegration, error)
 	ReadOAuthIntegration(id uint) (*ints.OAuthIntegration, error)
 	ListOAuthIntegrationsByProjectID(projectID uint) ([]*ints.OAuthIntegration, error)
 	UpdateOAuthIntegration(am *ints.OAuthIntegration) (*ints.OAuthIntegration, error)

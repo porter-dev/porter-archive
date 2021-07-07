@@ -219,7 +219,21 @@ func (repo *OAuthIntegrationRepository) CreateOAuthIntegration(
 	am *ints.OAuthIntegration,
 ) (*ints.OAuthIntegration, error) {
 	if !repo.canQuery {
-		return nil, errors.New("Cannot write database")
+		return nil, errors.New("cannot write database")
+	}
+
+	repo.oIntegrations = append(repo.oIntegrations, am)
+	am.ID = uint(len(repo.oIntegrations))
+
+	return am, nil
+}
+
+// CreateUserOAuthIntegration creates a new OAuth integration not tied to a project (ProjectID 0)
+func (repo *OAuthIntegrationRepository) CreateUserOAuthIntegration(
+	am *ints.OAuthIntegration,
+) (*ints.OAuthIntegration, error) {
+	if !repo.canQuery {
+		return nil, errors.New("cannot write database")
 	}
 
 	repo.oIntegrations = append(repo.oIntegrations, am)

@@ -6,8 +6,6 @@ import { Context } from "../../../shared/Context";
 const AccountSettingsModal = () => {
   const { setCurrentModal } = useContext(Context);
 
-  const handleConnectGithub = () => {};
-
   return (
     <>
       <CloseButton

@@ -269,11 +269,13 @@ func (app *App) updateProjectFromToken(projectID uint, userID uint, tok *oauth2.
 	}
 
 	oauthInt := &integrations.OAuthIntegration{
-		Client:       integrations.OAuthGithub,
-		UserID:       userID,
-		ProjectID:    projectID,
-		AccessToken:  []byte(tok.AccessToken),
-		RefreshToken: []byte(tok.RefreshToken),
+		SharedOAuthModel: integrations.SharedOAuthModel{
+			AccessToken:  []byte(tok.AccessToken),
+			RefreshToken: []byte(tok.RefreshToken),
+		},
+		Client:    integrations.OAuthGithub,
+		UserID:    userID,
+		ProjectID: projectID,
 	}
 
 	// create the oauth integration first
@@ -352,20 +354,22 @@ func (app *App) HandleGithubAppOAuthCallback(w http.ResponseWriter, r *http.Requ
 	}
 
 	oauthInt := &integrations.OAuthIntegration{
-		Client:       integrations.OAuthGithub,
-		UserID:       user.ID,
-		AccessToken:  []byte(token.AccessToken),
-		RefreshToken: []byte(token.RefreshToken),
+		SharedOAuthModel: integrations.SharedOAuthModel{
+			AccessToken:  []byte(token.AccessToken),
+			RefreshToken: []byte(token.RefreshToken),
+		},
+		Client: integrations.OAuthGithub,
+		UserID: user.ID,
 	}
 
-	// error happens here because OAuthIntegration needs to have a project ID
-	// and we don't actually have a project ID here
-	oauthInt, err = app.Repo.OAuthIntegration.CreateOAuthIntegration(oauthInt)
+	oauthInt, err = app.Repo.OAuthIntegration.CreateUserOAuthIntegration(oauthInt)
 
 	if err != nil {
 		app.handleErrorInternal(err, w)
 		return
 	}
+
+	fmt.Println(oauthInt.ID)
 
 	user.GithubAppIntegrationID = oauthInt.ID
 

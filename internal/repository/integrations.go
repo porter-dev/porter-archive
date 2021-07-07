@@ -32,10 +32,15 @@ type OIDCIntegrationRepository interface {
 // mechanism
 type OAuthIntegrationRepository interface {
 	CreateOAuthIntegration(am *ints.OAuthIntegration) (*ints.OAuthIntegration, error)
-	CreateUserOAuthIntegration(am *ints.OAuthIntegration) (*ints.OAuthIntegration, error)
 	ReadOAuthIntegration(id uint) (*ints.OAuthIntegration, error)
 	ListOAuthIntegrationsByProjectID(projectID uint) ([]*ints.OAuthIntegration, error)
 	UpdateOAuthIntegration(am *ints.OAuthIntegration) (*ints.OAuthIntegration, error)
+}
+
+// GithubAppOAuthIntegrationRepository represents the set of queries on the oauth
+// mechanism
+type GithubAppOAuthIntegrationRepository interface {
+	CreateGithubAppOAuthIntegration(am *ints.GithubAppOAuthIntegration) (*ints.GithubAppOAuthIntegration, error)
 }
 
 // AWSIntegrationRepository represents the set of queries on the AWS auth

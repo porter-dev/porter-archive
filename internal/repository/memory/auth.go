@@ -228,20 +228,6 @@ func (repo *OAuthIntegrationRepository) CreateOAuthIntegration(
 	return am, nil
 }
 
-// CreateUserOAuthIntegration creates a new OAuth integration not tied to a project (ProjectID 0)
-func (repo *OAuthIntegrationRepository) CreateUserOAuthIntegration(
-	am *ints.OAuthIntegration,
-) (*ints.OAuthIntegration, error) {
-	if !repo.canQuery {
-		return nil, errors.New("cannot write database")
-	}
-
-	repo.oIntegrations = append(repo.oIntegrations, am)
-	am.ID = uint(len(repo.oIntegrations))
-
-	return am, nil
-}
-
 // ReadOAuthIntegration finds a o auth mechanism by id
 func (repo *OAuthIntegrationRepository) ReadOAuthIntegration(
 	id uint,
@@ -504,4 +490,27 @@ func (repo *GithubAppInstallationRepository) DeleteGithubAppInstallationByAccoun
 	}
 
 	return nil
+}
+
+type GithubAppOAuthIntegrationRepository struct {
+	canQuery                   bool
+	githubAppOauthIntegrations []*ints.GithubAppOAuthIntegration
+}
+
+func NewGithubAppOAuthIntegrationRepository(canQuery bool) repository.GithubAppOAuthIntegrationRepository {
+	return &GithubAppOAuthIntegrationRepository{
+		canQuery,
+		[]*ints.GithubAppOAuthIntegration{},
+	}
+}
+
+func (repo *GithubAppOAuthIntegrationRepository) CreateGithubAppOAuthIntegration(am *ints.GithubAppOAuthIntegration) (*ints.GithubAppOAuthIntegration, error) {
+	if !repo.canQuery {
+		return nil, errors.New("cannot write database")
+	}
+
+	repo.githubAppOauthIntegrations = append(repo.githubAppOauthIntegrations, am)
+	am.ID = uint(len(repo.githubAppOauthIntegrations))
+
+	return am, nil
 }

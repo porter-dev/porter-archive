@@ -85,7 +85,7 @@ func GetAgentInClusterConfig() (*Agent, error) {
 		return nil, err
 	}
 
-	restClientGetter := newRESTClientGetterFromInClusterConfig(conf)
+	restClientGetter := NewRESTClientGetterFromInClusterConfig(conf)
 	clientset, err := kubernetes.NewForConfig(conf)
 
 	return &Agent{restClientGetter, clientset}, nil
@@ -386,9 +386,9 @@ func (conf *OutOfClusterConfig) setTokenCache(token string, expiry time.Time) er
 	return err
 }
 
-// newRESTClientGetterFromInClusterConfig returns a RESTClientGetter using
+// NewRESTClientGetterFromInClusterConfig returns a RESTClientGetter using
 // default values set from the *rest.Config
-func newRESTClientGetterFromInClusterConfig(conf *rest.Config) genericclioptions.RESTClientGetter {
+func NewRESTClientGetterFromInClusterConfig(conf *rest.Config) genericclioptions.RESTClientGetter {
 	cfs := genericclioptions.NewConfigFlags(false)
 
 	cfs.ClusterName = &conf.ServerName

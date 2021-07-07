@@ -24,7 +24,7 @@ services:
       - ./cmd:/porter/cmd
       - ./internal:/porter/internal
       - ./server:/porter/server
-      - /Users/abelanger/porter/porter-server/docker/kubeconfig.yaml:/porter/kubeconfig.yaml
+      - ./docker/kubeconfig.yaml:/porter/kubeconfig.yaml
   postgres:
     image: postgres:latest
     container_name: postgres

@@ -182,6 +182,12 @@ func New(a *api.App) *chi.Mux {
 				requestlog.NewHandler(a.HandleGithubAppEvent, l),
 			)
 
+			r.Method(
+				"GET",
+				"/integrations/github-app/install",
+				requestlog.NewHandler(a.HandleGithubAppInstall, l),
+			)
+
 			// /api/templates routes
 			r.Method(
 				"GET",

@@ -3,6 +3,8 @@ package api
 import (
 	"encoding/json"
 	"github.com/google/go-github/github"
+	"github.com/porter-dev/porter/internal/oauth"
+	"golang.org/x/oauth2"
 	"gorm.io/gorm"
 	"io/ioutil"
 	"net/http"
@@ -427,4 +429,21 @@ func (app *App) HandleGithubAppEvent(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+}
+
+// HandleGithubAppInstall starts the oauth2 flow for a project repo request.
+func (app *App) HandleGithubAppInstall(w http.ResponseWriter, r *http.Request) {
+	state := oauth.CreateRandomState()
+
+	err := app.populateOAuthSession(w, r, state, false)
+
+	if err != nil {
+		app.handleErrorDataRead(err, w)
+		return
+	}
+
+	// specify access type offline to get a refresh token
+	url := app.GithubAppConf.AuthCodeURL(state, oauth2.AccessTypeOffline)
+
+	http.Redirect(w, r, url, 302)
 }

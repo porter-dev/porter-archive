@@ -31,9 +31,12 @@ export default class Navbar extends Component<PropsType, StateType> {
             <DropdownLabel>
               {this.context.user && this.context.user.email}
             </DropdownLabel>
-            <LogOutButton onClick={this.props.logOut}>
+            <UserDropdownButton onClick={() => alert("hello")}>
+              Account Settings
+            </UserDropdownButton>
+            <UserDropdownButton onClick={this.props.logOut}>
               <i className="material-icons">keyboard_return</i> Log Out
-            </LogOutButton>
+            </UserDropdownButton>
           </Dropdown>
         </>
       );
@@ -81,7 +84,7 @@ const CloseOverlay = styled.div`
   cursor: default;
 `;
 
-const LogOutButton = styled.button`
+const UserDropdownButton = styled.button`
   padding: 13px;
   height: 40px;
   font-size: 13px;

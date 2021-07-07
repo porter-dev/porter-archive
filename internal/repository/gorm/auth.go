@@ -633,16 +633,6 @@ func (repo *OAuthIntegrationRepository) CreateOAuthIntegration(
 	return am, nil
 }
 
-// CreateUserOAuthIntegration creates a new OAuth integration not tied to a project (ProjectID 0)
-func (repo *OAuthIntegrationRepository) CreateUserOAuthIntegration(
-	am *ints.OAuthIntegration,
-) (*ints.OAuthIntegration, error) {
-	if err := repo.db.Create(am).Error; err != nil {
-		return nil, err
-	}
-	return am, nil
-}
-
 // ReadOAuthIntegration finds a oauth auth mechanism by id
 func (repo *OAuthIntegrationRepository) ReadOAuthIntegration(
 	id uint,
@@ -1141,4 +1131,20 @@ func (repo *GithubAppInstallationRepository) DeleteGithubAppInstallationByAccoun
 	}
 
 	return nil
+}
+
+// GithubAppOAuthIntegrationRepository implements repository.GithubAppOAuthIntegrationRepository
+type GithubAppOAuthIntegrationRepository struct {
+	db *gorm.DB
+}
+
+func NewGithubAppOAuthIntegrationRepository(db *gorm.DB) repository.GithubAppOAuthIntegrationRepository {
+	return &GithubAppOAuthIntegrationRepository{db}
+}
+
+func (repo *GithubAppOAuthIntegrationRepository) CreateGithubAppOAuthIntegration(am *ints.GithubAppOAuthIntegration) (*ints.GithubAppOAuthIntegration, error) {
+	if err := repo.db.Create(am).Error; err != nil {
+		return nil, err
+	}
+	return am, nil
 }

@@ -58,6 +58,8 @@ func main() {
 		&ints.RegTokenCache{},
 		&ints.HelmRepoTokenCache{},
 		&ints.GithubAppInstallation{},
+		&ints.GithubAppOAuthIntegration{},
+		&ints.GithubAppOAuthIntegration{},
 	)
 
 	if err != nil {

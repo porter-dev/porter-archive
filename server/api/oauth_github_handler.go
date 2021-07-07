@@ -353,23 +353,20 @@ func (app *App) HandleGithubAppOAuthCallback(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	oauthInt := &integrations.OAuthIntegration{
+	oauthInt := &integrations.GithubAppOAuthIntegration{
 		SharedOAuthModel: integrations.SharedOAuthModel{
 			AccessToken:  []byte(token.AccessToken),
 			RefreshToken: []byte(token.RefreshToken),
 		},
-		Client: integrations.OAuthGithub,
 		UserID: user.ID,
 	}
 
-	oauthInt, err = app.Repo.OAuthIntegration.CreateUserOAuthIntegration(oauthInt)
+	oauthInt, err = app.Repo.GithubAppOAuthIntegration.CreateGithubAppOAuthIntegration(oauthInt)
 
 	if err != nil {
 		app.handleErrorInternal(err, w)
 		return
 	}
-
-	fmt.Println(oauthInt.ID)
 
 	user.GithubAppIntegrationID = oauthInt.ID
 
@@ -378,5 +375,11 @@ func (app *App) HandleGithubAppOAuthCallback(w http.ResponseWriter, r *http.Requ
 	if err != nil {
 		app.handleErrorInternal(err, w)
 		return
+	}
+
+	if session.Values["query_params"] != "" {
+		http.Redirect(w, r, fmt.Sprintf("/dashboard?%s", session.Values["query_params"]), 302)
+	} else {
+		http.Redirect(w, r, "/dashboard", 302)
 	}
 }

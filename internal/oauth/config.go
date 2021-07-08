@@ -18,6 +18,12 @@ type Config struct {
 	BaseURL      string
 }
 
+// GithubAppConf is standard oauth2 config but it need to keeps track of the app name
+type GithubAppConf struct {
+	AppName string
+	oauth2.Config
+}
+
 func NewGithubClient(cfg *Config) *oauth2.Config {
 	return &oauth2.Config{
 		ClientID:     cfg.ClientID,
@@ -31,16 +37,19 @@ func NewGithubClient(cfg *Config) *oauth2.Config {
 	}
 }
 
-func NewGithubAppClient(cfg *Config) *oauth2.Config {
-	return &oauth2.Config{
-		ClientID:     cfg.ClientID,
-		ClientSecret: cfg.ClientSecret,
-		Endpoint: oauth2.Endpoint{
-			AuthURL:  "https://github.com/login/oauth/authorize",
-			TokenURL: "https://github.com/login/oauth/access_token",
+func NewGithubAppClient(cfg *Config, name string) *GithubAppConf {
+	return &GithubAppConf{
+		AppName: name,
+		Config: oauth2.Config{
+			ClientID:     cfg.ClientID,
+			ClientSecret: cfg.ClientSecret,
+			Endpoint: oauth2.Endpoint{
+				AuthURL:  "https://github.com/login/oauth/authorize",
+				TokenURL: "https://github.com/login/oauth/access_token",
+			},
+			RedirectURL: cfg.BaseURL + "/api/oauth/github-app/callback",
+			Scopes:      cfg.Scopes,
 		},
-		RedirectURL: cfg.BaseURL + "/api/oauth/github-app/callback",
-		Scopes:      cfg.Scopes,
 	}
 }
 

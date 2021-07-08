@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"github.com/google/go-github/github"
 	"github.com/porter-dev/porter/internal/oauth"
 	"golang.org/x/oauth2"
@@ -433,8 +434,8 @@ func (app *App) HandleGithubAppEvent(w http.ResponseWriter, r *http.Request) {
 
 }
 
-// HandleGithubAppInstall starts the oauth2 flow for a project repo request.
-func (app *App) HandleGithubAppInstall(w http.ResponseWriter, r *http.Request) {
+// HandleGithubAppAuthorize starts the oauth2 flow for a project repo request.
+func (app *App) HandleGithubAppAuthorize(w http.ResponseWriter, r *http.Request) {
 	state := oauth.CreateRandomState()
 
 	err := app.populateOAuthSession(w, r, state, false)
@@ -448,6 +449,10 @@ func (app *App) HandleGithubAppInstall(w http.ResponseWriter, r *http.Request) {
 	url := app.GithubAppConf.AuthCodeURL(state, oauth2.AccessTypeOffline)
 
 	http.Redirect(w, r, url, 302)
+}
+
+func (app *App) HandleGithubAppInstall(w http.ResponseWriter, r *http.Request) {
+	http.Redirect(w, r, fmt.Sprintf("https://github.com/apps/%s/installations/new", app.GithubAppConf.AppName), 302)
 }
 
 type HandleListGithubAppAccessResp struct {

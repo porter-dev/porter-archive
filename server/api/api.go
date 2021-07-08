@@ -10,6 +10,7 @@ import (
 	vr "github.com/go-playground/validator/v10"
 	"github.com/porter-dev/porter/internal/auth/sessionstore"
 	"github.com/porter-dev/porter/internal/auth/token"
+	"github.com/porter-dev/porter/internal/kubernetes/local"
 	"github.com/porter-dev/porter/internal/oauth"
 	"golang.org/x/oauth2"
 	"gorm.io/gorm"
@@ -67,7 +68,8 @@ type App struct {
 	TestAgents *TestAgents
 
 	// An in-cluster agent if service is running in cluster
-	InClusterAgent *kubernetes.Agent
+	ProvisionerAgent *kubernetes.Agent
+	IngressAgent     *kubernetes.Agent
 
 	// redis client for redis connection
 	RedisConf *config.RedisConf
@@ -140,21 +142,11 @@ func New(conf *AppConfig) (*App, error) {
 	}
 
 	app.Store = store
-
-	// if application is running in-cluster, set provisioning capabilities
-	if kubernetes.IsInCluster() {
-		app.Capabilities.Provisioning = true
-
-		agent, err := kubernetes.GetAgentInClusterConfig()
-
-		if err != nil {
-			return nil, fmt.Errorf("could not get in-cluster agent: %v", err)
-		}
-
-		app.InClusterAgent = agent
-	}
-
 	sc := conf.ServerConf
+
+	// get the InClusterAgent from either a file-based kubeconfig or the in-cluster agent
+	app.assignProvisionerAgent(&sc)
+	app.assignIngressAgent(&sc)
 
 	// if server config contains OAuth client info, create clients
 	if sc.GithubClientID != "" && sc.GithubClientSecret != "" {
@@ -215,6 +207,62 @@ func New(conf *AppConfig) (*App, error) {
 	}
 
 	return app, nil
+}
+
+func (app *App) assignProvisionerAgent(sc *config.ServerConf) error {
+	if sc.ProvisionerCluster == "kubeconfig" && sc.SelfKubeconfig != "" {
+		app.Capabilities.Provisioning = true
+
+		agent, err := local.GetSelfAgentFromFileConfig(sc.SelfKubeconfig)
+
+		if err != nil {
+			return fmt.Errorf("could not get in-cluster agent: %v", err)
+		}
+
+		app.ProvisionerAgent = agent
+
+		return nil
+	} else if sc.ProvisionerCluster == "kubeconfig" {
+		return fmt.Errorf(`"kubeconfig" cluster option requires path to kubeconfig`)
+	}
+
+	app.Capabilities.Provisioning = true
+
+	agent, err := kubernetes.GetAgentInClusterConfig()
+
+	if err != nil {
+		return fmt.Errorf("could not get in-cluster agent: %v", err)
+	}
+
+	app.ProvisionerAgent = agent
+
+	return nil
+}
+
+func (app *App) assignIngressAgent(sc *config.ServerConf) error {
+	if sc.IngressCluster == "kubeconfig" && sc.SelfKubeconfig != "" {
+		agent, err := local.GetSelfAgentFromFileConfig(sc.SelfKubeconfig)
+
+		if err != nil {
+			return fmt.Errorf("could not get in-cluster agent: %v", err)
+		}
+
+		app.IngressAgent = agent
+
+		return nil
+	} else if sc.IngressCluster == "kubeconfig" {
+		return fmt.Errorf(`"kubeconfig" cluster option requires path to kubeconfig`)
+	}
+
+	agent, err := kubernetes.GetAgentInClusterConfig()
+
+	if err != nil {
+		return fmt.Errorf("could not get in-cluster agent: %v", err)
+	}
+
+	app.IngressAgent = agent
+
+	return nil
 }
 
 func (app *App) getTokenFromRequest(r *http.Request) *token.Token {

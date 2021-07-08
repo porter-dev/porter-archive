@@ -197,3 +197,40 @@ func (app *App) HandleDeleteProject(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 }
+
+// HandleDeleteProjectRole deletes a project role from the db, reading from the project_id
+// in the URL param
+func (app *App) HandleDeleteProjectRole(w http.ResponseWriter, r *http.Request) {
+	id, err := strconv.ParseUint(chi.URLParam(r, "project_id"), 0, 64)
+
+	if err != nil || id == 0 {
+		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
+		return
+	}
+
+	userID, err := strconv.ParseUint(chi.URLParam(r, "user_id"), 0, 64)
+
+	if err != nil || id == 0 {
+		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
+		return
+	}
+
+	role, err := app.Repo.Project.ReadProjectRole(uint(id), uint(userID))
+
+	if err != nil {
+		http.Error(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)
+		return
+	}
+
+	role, err = app.Repo.Project.DeleteProjectRole(uint(id), uint(userID))
+
+	if err != nil {
+		app.handleErrorRead(err, ErrProjectDataRead, w)
+		return
+	}
+
+	if err := json.NewEncoder(w).Encode(role.Externalize()); err != nil {
+		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
+		return
+	}
+}

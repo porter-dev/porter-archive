@@ -834,6 +834,7 @@ func (a *Agent) ProvisionECR(
 	pgConf *config.DBConf,
 	redisConf *config.RedisConf,
 	provImageTag string,
+	provImagePullSecret string,
 ) (*batchv1.Job, error) {
 	id := infra.GetUniqueName()
 	prov := &provisioner.Conf{
@@ -844,6 +845,7 @@ func (a *Agent) ProvisionECR(
 		Redis:               redisConf,
 		Postgres:            pgConf,
 		ProvisionerImageTag: provImageTag,
+		ImagePullSecret:     provImagePullSecret,
 		LastApplied:         infra.LastApplied,
 		AWS: &aws.Conf{
 			AWSRegion:          awsConf.AWSRegion,
@@ -869,6 +871,7 @@ func (a *Agent) ProvisionEKS(
 	pgConf *config.DBConf,
 	redisConf *config.RedisConf,
 	provImageTag string,
+	provImagePullSecret string,
 ) (*batchv1.Job, error) {
 	id := infra.GetUniqueName()
 	prov := &provisioner.Conf{
@@ -879,6 +882,7 @@ func (a *Agent) ProvisionEKS(
 		Redis:               redisConf,
 		Postgres:            pgConf,
 		ProvisionerImageTag: provImageTag,
+		ImagePullSecret:     provImagePullSecret,
 		LastApplied:         infra.LastApplied,
 		AWS: &aws.Conf{
 			AWSRegion:          awsConf.AWSRegion,
@@ -904,6 +908,7 @@ func (a *Agent) ProvisionGCR(
 	pgConf *config.DBConf,
 	redisConf *config.RedisConf,
 	provImageTag string,
+	provImagePullSecret string,
 ) (*batchv1.Job, error) {
 	id := infra.GetUniqueName()
 	prov := &provisioner.Conf{
@@ -914,6 +919,7 @@ func (a *Agent) ProvisionGCR(
 		Redis:               redisConf,
 		Postgres:            pgConf,
 		ProvisionerImageTag: provImageTag,
+		ImagePullSecret:     provImagePullSecret,
 		LastApplied:         infra.LastApplied,
 		GCP: &gcp.Conf{
 			GCPRegion:    gcpConf.GCPRegion,
@@ -936,6 +942,7 @@ func (a *Agent) ProvisionGKE(
 	pgConf *config.DBConf,
 	redisConf *config.RedisConf,
 	provImageTag string,
+	provImagePullSecret string,
 ) (*batchv1.Job, error) {
 	id := infra.GetUniqueName()
 	prov := &provisioner.Conf{
@@ -946,6 +953,7 @@ func (a *Agent) ProvisionGKE(
 		Redis:               redisConf,
 		Postgres:            pgConf,
 		ProvisionerImageTag: provImageTag,
+		ImagePullSecret:     provImagePullSecret,
 		LastApplied:         infra.LastApplied,
 		GCP: &gcp.Conf{
 			GCPRegion:    gcpConf.GCPRegion,
@@ -972,6 +980,7 @@ func (a *Agent) ProvisionDOCR(
 	pgConf *config.DBConf,
 	redisConf *config.RedisConf,
 	provImageTag string,
+	provImagePullSecret string,
 ) (*batchv1.Job, error) {
 	// get the token
 	oauthInt, err := repo.OAuthIntegration.ReadOAuthIntegration(
@@ -997,6 +1006,7 @@ func (a *Agent) ProvisionDOCR(
 		Redis:               redisConf,
 		Postgres:            pgConf,
 		ProvisionerImageTag: provImageTag,
+		ImagePullSecret:     provImagePullSecret,
 		LastApplied:         infra.LastApplied,
 		DO: &do.Conf{
 			DOToken: tok,
@@ -1022,6 +1032,7 @@ func (a *Agent) ProvisionDOKS(
 	pgConf *config.DBConf,
 	redisConf *config.RedisConf,
 	provImageTag string,
+	provImagePullSecret string,
 ) (*batchv1.Job, error) {
 	// get the token
 	oauthInt, err := repo.OAuthIntegration.ReadOAuthIntegration(
@@ -1048,6 +1059,7 @@ func (a *Agent) ProvisionDOKS(
 		Postgres:            pgConf,
 		LastApplied:         infra.LastApplied,
 		ProvisionerImageTag: provImageTag,
+		ImagePullSecret:     provImagePullSecret,
 		DO: &do.Conf{
 			DOToken: tok,
 		},
@@ -1069,6 +1081,7 @@ func (a *Agent) ProvisionTest(
 	pgConf *config.DBConf,
 	redisConf *config.RedisConf,
 	provImageTag string,
+	provImagePullSecret string,
 ) (*batchv1.Job, error) {
 	id := infra.GetUniqueName()
 
@@ -1080,6 +1093,7 @@ func (a *Agent) ProvisionTest(
 		Redis:               redisConf,
 		Postgres:            pgConf,
 		ProvisionerImageTag: provImageTag,
+		ImagePullSecret:     provImagePullSecret,
 	}
 
 	return a.provision(prov, infra, repo)

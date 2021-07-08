@@ -300,6 +300,8 @@ func (app *App) updateProjectFromToken(projectID uint, userID uint, tok *oauth2.
 func (app *App) HandleGithubAppOAuthCallback(w http.ResponseWriter, r *http.Request) {
 	session, err := app.Store.Get(r, app.ServerConf.CookieName)
 
+	fmt.Println("hello...")
+
 	if err != nil {
 		app.handleErrorDataRead(err, w)
 		return
@@ -322,20 +324,22 @@ func (app *App) HandleGithubAppOAuthCallback(w http.ResponseWriter, r *http.Requ
 	}
 
 	if r.URL.Query().Get("state") != session.Values["state"] {
-		http.Error(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)
+		if session.Values["query_params"] != "" {
+			http.Redirect(w, r, fmt.Sprintf("/dashboard?%s", session.Values["query_params"]), 302)
+		} else {
+			http.Redirect(w, r, "/dashboard", 302)
+		}
 		return
 	}
 
 	token, err := app.GithubAppConf.Exchange(oauth2.NoContext, r.URL.Query().Get("code"))
 
-	if err != nil {
-		fmt.Println(err)
-		http.Error(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)
-		return
-	}
-
-	if !token.Valid() {
-		http.Error(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)
+	if err != nil || !token.Valid() {
+		if session.Values["query_params"] != "" {
+			http.Redirect(w, r, fmt.Sprintf("/dashboard?%s", session.Values["query_params"]), 302)
+		} else {
+			http.Redirect(w, r, "/dashboard", 302)
+		}
 		return
 	}
 

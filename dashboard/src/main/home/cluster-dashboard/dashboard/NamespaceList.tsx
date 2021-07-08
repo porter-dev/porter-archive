@@ -109,7 +109,7 @@ export const NamespaceList: React.FunctionComponent = () => {
             (namespace) => namespace.metadata.name === data.Object.metadata.name
           );
           oldNamespaces.splice(oldNamespaceIndex, 1, data.Object);
-          return oldNamespaces;
+          return [...oldNamespaces];
         });
       }
     };

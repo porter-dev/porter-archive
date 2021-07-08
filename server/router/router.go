@@ -276,6 +276,16 @@ func New(a *api.App) *chi.Mux {
 
 			r.Method(
 				"POST",
+				"/projects/{project_id}/roles/{user_id}",
+				auth.DoesUserHaveProjectAccess(
+					requestlog.NewHandler(a.HandleUpdateProjectRole, l),
+					mw.URLParam,
+					mw.WriteAccess,
+				),
+			)
+
+			r.Method(
+				"POST",
 				"/projects",
 				auth.BasicAuthenticate(
 					requestlog.NewHandler(a.HandleCreateProject, l),

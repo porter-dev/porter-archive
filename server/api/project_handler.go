@@ -84,6 +84,19 @@ func (app *App) HandleCreateProject(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// HandleGetProjectRoles lists the roles available to the project. For now, these
+// roles are static.
+func (app *App) HandleGetProjectRoles(w http.ResponseWriter, r *http.Request) {
+	roles := []string{models.RoleAdmin, models.RoleDeveloper, models.RoleViewer}
+
+	w.WriteHeader(http.StatusOK)
+
+	if err := json.NewEncoder(w).Encode(&roles); err != nil {
+		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
+		return
+	}
+}
+
 // HandleReadProject returns an externalized Project (models.ProjectExternal)
 // based on an ID
 func (app *App) HandleReadProject(w http.ResponseWriter, r *http.Request) {

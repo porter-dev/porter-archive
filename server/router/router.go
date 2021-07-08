@@ -255,6 +255,16 @@ func New(a *api.App) *chi.Mux {
 			)
 
 			r.Method(
+				"GET",
+				"/projects/{project_id}/policy",
+				auth.DoesUserHaveProjectAccess(
+					requestlog.NewHandler(a.HandleReadProjectPolicy, l),
+					mw.URLParam,
+					mw.ReadAccess,
+				),
+			)
+
+			r.Method(
 				"POST",
 				"/projects",
 				auth.BasicAuthenticate(

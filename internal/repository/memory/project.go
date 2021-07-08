@@ -51,6 +51,41 @@ func (repo *ProjectRepository) CreateProjectRole(project *models.Project, role *
 	return role, nil
 }
 
+// CreateProjectRole appends a role to the existing array of roles
+func (repo *ProjectRepository) UpdateProjectRole(projID uint, role *models.Role) (*models.Role, error) {
+	if !repo.canQuery {
+		return nil, errors.New("Cannot read from database")
+	}
+
+	var foundProject *models.Project
+
+	// find all roles matching
+	for _, project := range repo.projects {
+		if project.ID == projID {
+			foundProject = project
+		}
+	}
+
+	if foundProject == nil {
+		return nil, gorm.ErrRecordNotFound
+	}
+
+	var index int
+
+	for i, _role := range foundProject.Roles {
+		if _role.UserID == role.UserID {
+			index = i
+		}
+	}
+
+	if index == 0 {
+		return nil, gorm.ErrRecordNotFound
+	}
+
+	foundProject.Roles[index] = *role
+	return role, nil
+}
+
 // ReadProject gets a projects specified by a unique id
 func (repo *ProjectRepository) ReadProject(id uint) (*models.Project, error) {
 	if !repo.canQuery {
@@ -63,6 +98,42 @@ func (repo *ProjectRepository) ReadProject(id uint) (*models.Project, error) {
 
 	index := int(id - 1)
 	return repo.projects[index], nil
+}
+
+// ReadProjectRole gets a role specified by a project ID and user ID
+func (repo *ProjectRepository) ReadProjectRole(projID, userID uint) (*models.Role, error) {
+	if !repo.canQuery {
+		return nil, errors.New("Cannot write database")
+	}
+
+	var foundProject *models.Project
+
+	// find all roles matching
+	for _, project := range repo.projects {
+		if project.ID == projID {
+			foundProject = project
+		}
+	}
+
+	if foundProject == nil {
+		return nil, gorm.ErrRecordNotFound
+	}
+
+	var index int
+
+	for i, _role := range foundProject.Roles {
+		if _role.UserID == userID {
+			index = i
+		}
+	}
+
+	if index == 0 {
+		return nil, gorm.ErrRecordNotFound
+	}
+
+	res := foundProject.Roles[index]
+
+	return &res, nil
 }
 
 // ListProjectsByUserID lists projects where a user has an associated role
@@ -99,4 +170,40 @@ func (repo *ProjectRepository) DeleteProject(project *models.Project) (*models.P
 	repo.projects[index] = nil
 
 	return project, nil
+}
+
+func (repo *ProjectRepository) DeleteProjectRole(projID, userID uint) (*models.Role, error) {
+	if !repo.canQuery {
+		return nil, errors.New("Cannot write database")
+	}
+
+	var foundProject *models.Project
+
+	// find all roles matching
+	for _, project := range repo.projects {
+		if project.ID == projID {
+			foundProject = project
+		}
+	}
+
+	if foundProject == nil {
+		return nil, gorm.ErrRecordNotFound
+	}
+
+	var index int
+
+	for i, _role := range foundProject.Roles {
+		if _role.UserID == userID {
+			index = i
+		}
+	}
+
+	if index == 0 {
+		return nil, gorm.ErrRecordNotFound
+	}
+	res := foundProject.Roles[index]
+
+	foundProject.Roles = append(foundProject.Roles[:index], foundProject.Roles[index+1:]...)
+
+	return &res, nil
 }

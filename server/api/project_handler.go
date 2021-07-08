@@ -6,6 +6,7 @@ import (
 	"strconv"
 
 	"github.com/go-chi/chi"
+	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/forms"
 	"github.com/porter-dev/porter/internal/models"
 )
@@ -105,6 +106,46 @@ func (app *App) HandleReadProject(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 
 	if err := json.NewEncoder(w).Encode(projExt); err != nil {
+		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
+		return
+	}
+}
+
+// HandleReadProjectPolicy returns the policy document given the current user
+func (app *App) HandleReadProjectPolicy(w http.ResponseWriter, r *http.Request) {
+	id, err := strconv.ParseUint(chi.URLParam(r, "project_id"), 0, 64)
+
+	if err != nil || id == 0 {
+		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
+		return
+	}
+
+	userID, err := app.getUserIDFromRequest(r)
+
+	if err != nil {
+		app.handleErrorInternal(err, w)
+		return
+	}
+
+	role, err := app.Repo.Project.ReadProjectRole(uint(id), userID)
+
+	if err != nil {
+		app.handleErrorRead(err, ErrProjectDataRead, w)
+		return
+	}
+
+	// case on the role to get the policy document
+	var policy types.Policy
+	switch role.Kind {
+	case models.RoleAdmin:
+		policy = types.AdminPolicy
+	case models.RoleDeveloper:
+		policy = types.DeveloperPolicy
+	case models.RoleViewer:
+		policy = types.ViewerPolicy
+	}
+
+	if err := json.NewEncoder(w).Encode(policy); err != nil {
 		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
 		return
 	}

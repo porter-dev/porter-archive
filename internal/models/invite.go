@@ -14,6 +14,9 @@ type Invite struct {
 	Expiry *time.Time
 	Email  string
 
+	// Kind is the role kind that this refers to
+	Kind string
+
 	ProjectID uint
 	UserID    uint
 }
@@ -25,6 +28,7 @@ type InviteExternal struct {
 	Expired  bool   `json:"expired"`
 	Email    string `json:"email"`
 	Accepted bool   `json:"accepted"`
+	Kind     string `json:"kind"`
 }
 
 // Externalize generates an external Invite to be shared over REST

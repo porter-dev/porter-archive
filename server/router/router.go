@@ -292,6 +292,16 @@ func New(a *api.App) *chi.Mux {
 				),
 			)
 
+			r.Method(
+				"DELETE",
+				"/projects/{project_id}/role/{user_id}",
+				auth.DoesUserHaveProjectAccess(
+					requestlog.NewHandler(a.HandleDeleteProjectRole, l),
+					mw.URLParam,
+					mw.WriteAccess,
+				),
+			)
+
 			// /api/projects/{project_id}/ci routes
 			r.Method(
 				"POST",

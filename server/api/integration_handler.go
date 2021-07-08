@@ -10,6 +10,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"sort"
 	"strconv"
 
 	"github.com/go-chi/chi"
@@ -452,7 +453,7 @@ func (app *App) HandleGithubAppInstall(w http.ResponseWriter, r *http.Request) {
 type HandleListGithubAppAccessResp struct {
 	HasAccess bool     `json:"has_access"`
 	LoginName string   `json:"username,omitempty"`
-	Orgs      []string `json:"organizations,omitempty"`
+	Accounts  []string `json:"accounts,omitempty"`
 }
 
 func (app *App) HandleListGithubAppAccess(w http.ResponseWriter, r *http.Request) {
@@ -481,12 +482,15 @@ func (app *App) HandleListGithubAppAccess(w http.ResponseWriter, r *http.Request
 		orgs, pages, err := client.Organizations.List(context.Background(), "", opts)
 
 		if err != nil {
-			app.handleErrorInternal(err, w)
+			res := HandleListGithubAppAccessResp{
+				HasAccess: false,
+			}
+			json.NewEncoder(w).Encode(res)
 			return
 		}
 
 		for _, org := range orgs {
-			res.Orgs = append(res.Orgs, *org.Login)
+			res.Accounts = append(res.Accounts, *org.Login)
 		}
 
 		if pages.NextPage == 0 {
@@ -502,6 +506,20 @@ func (app *App) HandleListGithubAppAccess(w http.ResponseWriter, r *http.Request
 	}
 
 	res.LoginName = *AuthUser.Login
+
+	// check if user has app installed in their account
+	Installation, err := app.Repo.GithubAppInstallation.ReadGithubAppInstallationByAccountID(*AuthUser.ID)
+
+	if err != nil && err != gorm.ErrRecordNotFound {
+		app.handleErrorInternal(err, w)
+		return
+	}
+
+	if Installation != nil {
+		res.Accounts = append(res.Accounts, *AuthUser.Login)
+	}
+
+	sort.Strings(res.Accounts)
 
 	json.NewEncoder(w).Encode(res)
 }

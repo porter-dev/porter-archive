@@ -3,7 +3,7 @@ import styled from "styled-components";
 
 import { Context } from "shared/Context";
 
-import InviteList from "./InviteList";
+import InvitePage from "./InviteList";
 import TabRegion from "components/TabRegion";
 import Heading from "components/values-form/Heading";
 import Helper from "components/values-form/Helper";
@@ -33,7 +33,7 @@ export default class ProjectSettings extends Component<PropsType, StateType> {
 
   renderTabContents = () => {
     if (this.state.currentTab === "manage-access") {
-      return <InviteList />;
+      return <InvitePage />;
     } else {
       return (
         <>

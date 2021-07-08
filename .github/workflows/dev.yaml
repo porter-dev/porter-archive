@@ -13,6 +13,12 @@ jobs:
           project_id: ${{ secrets.GCP_PROJECT_ID }}
           service_account_key: ${{ secrets.GCP_SA_KEY }}
           export_default_credentials: true
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
       - name: Install kubectl
         uses: azure/setup-kubectl@v1
       - name: Log in to gcloud CLI
@@ -42,7 +48,6 @@ jobs:
           docker push gcr.io/porter-dev-273614/porter:dev
       - name: Deploy to cluster
         run: |
-          gcloud container clusters get-credentials \
-            dev --region us-central1 --project ${{ secrets.GCP_PROJECT_ID }}
+          aws eks --region ${{ secrets.AWS_REGION }} update-kubeconfig --name dev
             
           kubectl rollout restart deployment/porter

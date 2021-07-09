@@ -233,6 +233,7 @@ class Sidebar extends Component<PropsType, StateType> {
             <Img src={rocket} />
             Launch
           </NavButton>
+
           {this.props.isAuthorized("integrations", "", ["get"]) && (
             <NavButton
               selected={currentView === "integrations"}
@@ -244,24 +245,21 @@ class Sidebar extends Component<PropsType, StateType> {
               Integrations
             </NavButton>
           )}
-          {this.context.currentProject.roles.filter((obj: any) => {
-            return obj.user_id === this.context.user.userId;
-          })[0].kind === "admin" &&
-            this.props.isAuthorized("settings", "", [
-              "get",
-              "update",
-              "delete",
-            ]) && (
-              <NavButton
-                onClick={() =>
-                  pushFiltered(this.props, "/project-settings", ["project_id"])
-                }
-                selected={this.props.currentView === "project-settings"}
-              >
-                <Img enlarge={true} src={settings} />
-                Settings
-              </NavButton>
-            )}
+          {this.props.isAuthorized("settings", "", [
+            "get",
+            "update",
+            "delete",
+          ]) && (
+            <NavButton
+              onClick={() =>
+                pushFiltered(this.props, "/project-settings", ["project_id"])
+              }
+              selected={this.props.currentView === "project-settings"}
+            >
+              <Img enlarge={true} src={settings} />
+              Settings
+            </NavButton>
+          )}
 
           <br />
 

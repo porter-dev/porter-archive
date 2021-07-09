@@ -18,44 +18,107 @@ import Heading from "components/values-form/Heading";
 import CopyToClipboard from "components/CopyToClipboard";
 import { Column } from "react-table";
 import Table from "components/Table";
+import RadioSelector from "components/RadioSelector";
 
 type Props = {};
 
+export type Collaborator = {
+  id: string;
+  user_id: string;
+  project_id: string;
+  email: string;
+  kind: string;
+};
+
 const InvitePage: React.FunctionComponent<Props> = ({}) => {
-  const { currentProject } = useContext(Context);
+  const { currentProject, setCurrentModal, user } = useContext(Context);
   const [isLoading, setIsLoading] = useState(true);
   const [invites, setInvites] = useState<Array<InviteType>>([]);
   const [email, setEmail] = useState("");
+  const [role, setRole] = useState("developer");
+  const [roleList, setRoleList] = useState([]);
   const [isInvalidEmail, setIsInvalidEmail] = useState(false);
   const [isHTTPS] = useState(() => window.location.protocol === "https:");
 
   useEffect(() => {
-    getInviteData();
-  }, []);
-
-  const getInviteData = () => {
-    setIsLoading(true);
-
     api
-      .getInvites(
+      .getAvailableRoles("<token>", {}, { project_id: currentProject.id })
+      .then(({ data }: { data: string[] }) => {
+        const availableRoleList = data?.map((role) => ({
+          value: role,
+          label: capitalizeFirstLetter(role),
+        }));
+        setRoleList(availableRoleList);
+        setRole("developer");
+      });
+
+    getData();
+  }, [currentProject]);
+
+  const capitalizeFirstLetter = (string: string) => {
+    return string.charAt(0).toUpperCase() + string.slice(1);
+  };
+
+  const getData = async () => {
+    setIsLoading(true);
+    let invites = [];
+    try {
+      const response = await api.getInvites(
         "<token>",
         {},
         {
           id: currentProject.id,
         }
-      )
-      .then((res) => {
-        setInvites(res.data);
-        setIsLoading(false);
-      })
-      .catch((err) => console.log(err));
+      );
+      invites = response.data.filter((i: InviteType) => !i.accepted);
+    } catch (err) {
+      console.log(err);
+    }
+    let collaborators: any = [];
+    try {
+      const response = await api.getCollaborators(
+        "<token>",
+        {},
+        {
+          project_id: currentProject.id,
+        }
+      );
+      collaborators = parseCollaboratorsResponse(response.data);
+    } catch (err) {
+      console.log(err);
+    }
+    setInvites([...invites, ...collaborators]);
+    setIsLoading(false);
+  };
+
+  const parseCollaboratorsResponse = (
+    collaborators: Array<Collaborator>
+  ): Array<InviteType> => {
+    return (
+      collaborators
+        // Parse role id to number
+        .map((c) => ({ ...c, id: Number(c.id) }))
+        // Sort them so the owner will be first allways
+        .sort((curr, prev) => curr.id - prev.id)
+        // Remove the owner from list
+        .slice(1)
+        // Parse the remainings to InviteType
+        .map((c) => ({
+          email: c.email,
+          expired: false,
+          id: Number(c.user_id),
+          kind: c.kind,
+          accepted: true,
+          token: "",
+        }))
+    );
   };
 
   const createInvite = () => {
     api
-      .createInvite("<token>", { email }, { id: currentProject.id })
+      .createInvite("<token>", { email, kind: role }, { id: currentProject.id })
       .then(() => {
-        getInviteData();
+        getData();
         setEmail("");
       })
       .catch((err) => console.log(err));
@@ -71,15 +134,19 @@ const InvitePage: React.FunctionComponent<Props> = ({}) => {
           invId: inviteId,
         }
       )
-      .then(getInviteData)
+      .then(getData)
       .catch((err) => console.log(err));
   };
 
-  const replaceInvite = (inviteEmail: string, inviteId: number) => {
+  const replaceInvite = (
+    inviteEmail: string,
+    inviteId: number,
+    kind: string
+  ) => {
     api
       .createInvite(
         "<token>",
-        { email: inviteEmail },
+        { email: inviteEmail, kind },
         { id: currentProject.id }
       )
       .then(() =>
@@ -92,7 +159,7 @@ const InvitePage: React.FunctionComponent<Props> = ({}) => {
           }
         )
       )
-      .then(getInviteData)
+      .then(getData)
       .catch((err) => console.log(err));
   };
 
@@ -107,18 +174,52 @@ const InvitePage: React.FunctionComponent<Props> = ({}) => {
     createInvite();
   };
 
+  const openEditModal = (user: any) => {
+    if (setCurrentModal) {
+      console.log(user);
+      setCurrentModal("EditInviteOrCollaboratorModal", {
+        user,
+        isInvite: user.status !== "accepted",
+        refetchCallerData: getData,
+      });
+    }
+  };
+
+  const removeCollaborator = (user_id: number) => {
+    try {
+      api.removeCollaborator(
+        "<token>",
+        {},
+        { project_id: currentProject.id, user_id }
+      );
+      getData();
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
   const columns = useMemo<
     Column<{
       email: string;
       id: number;
       status: string;
       invite_link: string;
+      kind: string;
     }>[]
   >(
     () => [
       {
         Header: "Mail address",
         accessor: "email",
+      },
+      {
+        Header: "Role",
+        accessor: "kind",
+        Cell: ({ row }) => {
+          return (
+            <Status status={"accepted"}>{row.values.kind || "Admin"}</Status>
+          );
+        },
       },
       {
         Header: "Status",
@@ -136,7 +237,13 @@ const InvitePage: React.FunctionComponent<Props> = ({}) => {
           if (row.values.status === "expired") {
             return (
               <NewLinkButton
-                onClick={() => replaceInvite(row.values.email, row.values.id)}
+                onClick={() =>
+                  replaceInvite(
+                    row.values.email,
+                    row.values.id,
+                    row.values.kind
+                  )
+                }
               >
                 <u>Generate a new link</u>
               </NewLinkButton>
@@ -157,14 +264,37 @@ const InvitePage: React.FunctionComponent<Props> = ({}) => {
         },
       },
       {
-        accessor: "id",
-        Cell: ({ row }) => {
+        id: "edit_action",
+        Cell: ({ row }: any) => {
+          return (
+            <CopyButton
+              invis={row.original.currentUser}
+              onClick={() => openEditModal(row.original)}
+            >
+              Edit
+            </CopyButton>
+          );
+        },
+      },
+      {
+        id: "remove_invite_action",
+        Cell: ({ row }: any) => {
           if (row.values.status === "accepted") {
-            return <CopyButton invis={true}>Remove</CopyButton>;
+            return (
+              <CopyButton
+                invis={row.original.currentUser}
+                onClick={() => removeCollaborator(row.original.id)}
+              >
+                Remove
+              </CopyButton>
+            );
           }
           return (
             <>
-              <CopyButton onClick={() => deleteInvite(row.values.id)}>
+              <CopyButton
+                invis={row.original.currentUser}
+                onClick={() => deleteInvite(row.original.id)}
+              >
                 Delete Invite
               </CopyButton>
             </>
@@ -187,10 +317,13 @@ const InvitePage: React.FunctionComponent<Props> = ({}) => {
 
     const mappedInviteList = inviteList.map(
       ({ accepted, expired, token, ...rest }) => {
+        const currentUser: boolean = user.email === rest.email;
+        console.log(currentUser, user, rest);
         if (accepted) {
           return {
             status: "accepted",
             invite_link: buildInviteLink(token),
+            currentUser,
             ...rest,
           };
         }
@@ -199,6 +332,7 @@ const InvitePage: React.FunctionComponent<Props> = ({}) => {
           return {
             status: "expired",
             invite_link: buildInviteLink(token),
+            currentUser,
             ...rest,
           };
         }
@@ -206,18 +340,19 @@ const InvitePage: React.FunctionComponent<Props> = ({}) => {
         return {
           status: "pending",
           invite_link: buildInviteLink(token),
+          currentUser,
           ...rest,
         };
       }
     );
 
     return mappedInviteList || [];
-  }, [invites, currentProject?.id, window?.location?.host, isHTTPS]);
+  }, [invites, currentProject?.id, window?.location?.host, isHTTPS, user?.id]);
 
   return (
     <>
       <Heading isAtTop={true}>Share Project</Heading>
-      <Helper>Generate a project invite for another admin user.</Helper>
+      <Helper>Generate a project invite for another user.</Helper>
       <InputRowWrapper>
         <InputRow
           value={email}
@@ -227,6 +362,14 @@ const InvitePage: React.FunctionComponent<Props> = ({}) => {
           placeholder="ex: mrp@getporter.dev"
         />
       </InputRowWrapper>
+      <Helper>Select the role the user will have.</Helper>
+      <RoleSelectorWrapper>
+        <RadioSelector
+          selected={role}
+          setSelected={setRole}
+          options={roleList}
+        />
+      </RoleSelectorWrapper>
       <ButtonWrapper>
         <InviteButton disabled={false} onClick={() => validateEmail()}>
           Create Invite
@@ -258,6 +401,10 @@ const InvitePage: React.FunctionComponent<Props> = ({}) => {
 };
 
 export default InvitePage;
+
+const RoleSelectorWrapper = styled.div`
+  font-size: 14px;
+`;
 
 const Placeholder = styled.div`
   width: 100%;

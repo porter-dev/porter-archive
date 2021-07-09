@@ -113,6 +113,36 @@ func initUser(tester *tester, t *testing.T) {
 	tester.initUsers = append(tester.initUsers, user)
 }
 
+func initMultiUser(tester *tester, t *testing.T) {
+	t.Helper()
+
+	user := &models.User{
+		Email:    "example@example.com",
+		Password: "hello1234",
+	}
+
+	user, err := tester.repo.User.CreateUser(user)
+
+	if err != nil {
+		t.Fatalf("%v\n", err)
+	}
+
+	tester.initUsers = append(tester.initUsers, user)
+
+	user = &models.User{
+		Email:    "example2@example.com",
+		Password: "hello1234",
+	}
+
+	user, err = tester.repo.User.CreateUser(user)
+
+	if err != nil {
+		t.Fatalf("%v\n", err)
+	}
+
+	tester.initUsers = append(tester.initUsers, user)
+}
+
 func initProject(tester *tester, t *testing.T) {
 	t.Helper()
 

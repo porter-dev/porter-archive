@@ -203,11 +203,17 @@ func (app *App) HandleAcceptInvite(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	kind := invite.Kind
+
+	if kind == "" {
+		kind = models.RoleDeveloper
+	}
+
 	// create a new Role with the user as the admin
 	_, err = app.Repo.Project.CreateProjectRole(projModel, &models.Role{
 		UserID:    userID,
 		ProjectID: uint(projID),
-		Kind:      invite.Kind,
+		Kind:      kind,
 	})
 
 	if err != nil {

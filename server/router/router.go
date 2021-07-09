@@ -314,7 +314,7 @@ func New(a *api.App) *chi.Mux {
 
 			r.Method(
 				"DELETE",
-				"/projects/{project_id}/role/{user_id}",
+				"/projects/{project_id}/roles/{user_id}",
 				auth.DoesUserHaveProjectAccess(
 					requestlog.NewHandler(a.HandleDeleteProjectRole, l),
 					mw.URLParam,

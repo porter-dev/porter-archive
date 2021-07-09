@@ -158,9 +158,9 @@ class Dashboard extends Component<PropsType, StateType> {
                     </Overlay>
                   </DashboardIcon>
                   <Title>{currentProject && currentProject.name}</Title>
-                  {this.context.currentProject.roles.filter((obj: any) => {
+                  {this.context.currentProject?.roles?.filter((obj: any) => {
                     return obj.user_id === this.context.user.userId;
-                  })[0].kind === "admin" && (
+                  })[0].kind === "admin" || (
                     <i
                       className="material-icons"
                       onClick={onShowProjectSettings}

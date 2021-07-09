@@ -150,6 +150,7 @@ const createGKE = baseApi<
 const createInvite = baseApi<
   {
     email: string;
+    kind: string;
   },
   {
     id: number;
@@ -917,6 +918,38 @@ const stopJob = baseApi<
   return `/api/projects/${id}/k8s/jobs/${namespace}/${name}/stop?cluster_id=${cluster_id}`;
 });
 
+const getAvailableRoles = baseApi<{}, { project_id: number }>(
+  "GET",
+  ({ project_id }) => `/api/projects/${project_id}/roles`
+);
+
+const updateInvite = baseApi<
+  { kind: string },
+  { project_id: number; invite_id: number }
+>(
+  "POST",
+  ({ project_id, invite_id }) =>
+    `/api/projects/${project_id}/invites/${invite_id}`
+);
+
+const getCollaborators = baseApi<{}, { project_id: number }>(
+  "GET",
+  ({ project_id }) => `/api/projects/${project_id}/collaborators`
+);
+
+const updateCollaborator = baseApi<
+  { kind: string },
+  { project_id: number; user_id: number }
+>(
+  "POST",
+  ({ project_id, user_id }) => `/api/projects/${project_id}/roles/${user_id}`
+);
+
+const removeCollaborator = baseApi<{}, { project_id: number; user_id: number }>(
+  "DELETE",
+  ({ project_id, user_id }) => `/api/projects/${project_id}/roles/${user_id}`
+);
+
 // Bundle export to allow default api import (api.<method> is more readable)
 export default {
   checkAuth,
@@ -1009,4 +1042,9 @@ export default {
   upgradeChartValues,
   deleteJob,
   stopJob,
+  updateInvite,
+  getAvailableRoles,
+  getCollaborators,
+  updateCollaborator,
+  removeCollaborator,
 };

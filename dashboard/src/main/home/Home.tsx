@@ -28,6 +28,7 @@ import PageNotFound from "components/PageNotFound";
 import DeleteNamespaceModal from "./modals/DeleteNamespaceModal";
 import { fakeGuardedRoute } from "shared/auth/RouteGuard";
 import { withAuth, WithAuthProps } from "shared/auth/AuthorizationHoc";
+import EditInviteOrCollaboratorModal from "./modals/EditInviteOrCollaboratorModal";
 
 // Guarded components
 const GuardedProjectSettings = fakeGuardedRoute("settings", "", [
@@ -539,6 +540,16 @@ class Home extends Component<PropsType, StateType> {
               <DeleteNamespaceModal />
             </Modal>
           )}
+
+        {currentModal === "EditInviteOrCollaboratorModal" && (
+          <Modal
+            onRequestClose={() => setCurrentModal(null, null)}
+            width="600px"
+            height="250px"
+          >
+            <EditInviteOrCollaboratorModal />
+          </Modal>
+        )}
 
         {this.renderSidebar()}
 

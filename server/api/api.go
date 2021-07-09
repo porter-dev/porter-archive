@@ -170,13 +170,13 @@ func New(conf *AppConfig) (*App, error) {
 		app.Capabilities.GithubLogin = sc.GithubLoginEnabled
 	}
 
-	if sc.GithubAppClientID != "" && sc.GithubAppClientSecret != "" && sc.GithubAppName != "" {
+	if sc.GithubAppClientID != "" && sc.GithubAppClientSecret != "" && sc.GithubAppName != "" && sc.GithubAppWebhookSecret != "" {
 		app.GithubAppConf = oauth.NewGithubAppClient(&oauth.Config{
 			ClientID:     sc.GithubAppClientID,
 			ClientSecret: sc.GithubAppClientSecret,
 			Scopes:       []string{"read:user"},
 			BaseURL:      sc.ServerURL,
-		}, sc.GithubAppName)
+		}, sc.GithubAppName, sc.GithubAppWebhookSecret)
 	}
 
 	if sc.GoogleClientID != "" && sc.GoogleClientSecret != "" {

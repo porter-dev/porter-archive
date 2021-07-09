@@ -18,9 +18,10 @@ type Config struct {
 	BaseURL      string
 }
 
-// GithubAppConf is standard oauth2 config but it need to keeps track of the app name
+// GithubAppConf is standard oauth2 config but it need to keeps track of the app name and webhook secret
 type GithubAppConf struct {
-	AppName string
+	AppName       string
+	WebhookSecret string
 	oauth2.Config
 }
 
@@ -37,9 +38,10 @@ func NewGithubClient(cfg *Config) *oauth2.Config {
 	}
 }
 
-func NewGithubAppClient(cfg *Config, name string) *GithubAppConf {
+func NewGithubAppClient(cfg *Config, name string, secret string) *GithubAppConf {
 	return &GithubAppConf{
-		AppName: name,
+		AppName:       name,
+		WebhookSecret: secret,
 		Config: oauth2.Config{
 			ClientID:     cfg.ClientID,
 			ClientSecret: cfg.ClientSecret,

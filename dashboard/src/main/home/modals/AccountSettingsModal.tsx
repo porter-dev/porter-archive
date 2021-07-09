@@ -79,7 +79,7 @@ const AccountSettingsModal = () => {
           {accessData.has_access ? (
             <Placeholder>
               <User>
-                You are currently authorized as <B>{accessData.username || "jusrhee"}</B> and have access to the following repos:
+                You are currently authorized as <B>{accessData.username || "jusrhee"}</B> and have access to:
               </User>
               {!accessData.accounts || accessData.accounts?.length == 0 ? (
                 <ListWrapper>
@@ -96,7 +96,7 @@ const AccountSettingsModal = () => {
                     {accessData.accounts.map((name, i) => {
                       return (
                         <React.Fragment key={i}>
-                          <Row isLastItem={i === 1}>
+                          <Row isLastItem={i === accessData.accounts.length - 1}>
                             <i className="material-icons">bookmark</i>
                             {name}
                           </Row>

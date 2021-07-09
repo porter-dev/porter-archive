@@ -39,6 +39,7 @@ func (i *Invite) Externalize() *InviteExternal {
 		Email:    i.Email,
 		Expired:  i.IsExpired(),
 		Accepted: i.IsAccepted(),
+		Kind:     i.Kind,
 	}
 }
 

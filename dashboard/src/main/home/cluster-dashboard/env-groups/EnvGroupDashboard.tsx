@@ -61,10 +61,14 @@ class EnvGroupDashboard extends Component<PropsType, StateType> {
         />
       );
     } else {
+      const isAuthorizedToAdd = this.props.isAuthorized("env_group", "", [
+        "get",
+        "create",
+      ]);
       return (
         <>
-          <ControlRow>
-            {this.props.isAuthorized("env_group", "", ["get", "create"]) && (
+          <ControlRow hasMultipleChilds={isAuthorizedToAdd}>
+            {isAuthorizedToAdd && (
               <Button
                 onClick={() =>
                   this.setState({ createEnvMode: !this.state.createEnvMode })
@@ -145,7 +149,12 @@ const SortFilterWrapper = styled.div`
 
 const ControlRow = styled.div`
   display: flex;
-  justify-content: space-between;
+  justify-content: ${(props: { hasMultipleChilds: boolean }) => {
+    if (props.hasMultipleChilds) {
+      return "space-between";
+    }
+    return "flex-end";
+  }};
   align-items: center;
   margin-bottom: 35px;
   padding-left: 0px;

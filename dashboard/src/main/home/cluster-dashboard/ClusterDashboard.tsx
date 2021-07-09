@@ -130,10 +130,15 @@ class ClusterDashboard extends Component<PropsType, StateType> {
 
   renderBody = () => {
     let { currentCluster, currentView } = this.props;
+    const isAuthorizedToAdd = this.props.isAuthorized(
+      "namespace",
+      [],
+      ["get", "create"]
+    );
     return (
       <>
-        <ControlRow>
-          {this.props.isAuthorized("namespace", [], ["get", "create"]) && (
+        <ControlRow hasMultipleChilds={isAuthorizedToAdd}>
+          {isAuthorizedToAdd && (
             <Button
               onClick={() =>
                 pushFiltered(this.props, "/launch", ["project_id"])
@@ -247,7 +252,12 @@ export default withRouter(withAuth(ClusterDashboard));
 
 const ControlRow = styled.div`
   display: flex;
-  justify-content: space-between;
+  justify-content: ${(props: { hasMultipleChilds: boolean }) => {
+    if (props.hasMultipleChilds) {
+      return "space-between";
+    }
+    return "flex-end";
+  }};
   align-items: center;
   margin-bottom: 35px;
   padding-left: 0px;

@@ -29,7 +29,7 @@ import DeleteNamespaceModal from "./modals/DeleteNamespaceModal";
 import { fakeGuardedRoute } from "shared/auth/RouteGuard";
 import { withAuth, WithAuthProps } from "shared/auth/AuthorizationHoc";
 import EditInviteOrCollaboratorModal from "./modals/EditInviteOrCollaboratorModal";
-
+import AccountSettingsModal from "./modals/AccountSettingsModal";
 // Guarded components
 const GuardedProjectSettings = fakeGuardedRoute("settings", "", [
   "get",
@@ -105,9 +105,6 @@ class Home extends Component<PropsType, StateType> {
   };
 
   getCapabilities = () => {
-    let { currentProject } = this.props;
-    if (!currentProject) return;
-
     api
       .getCapabilities("<token>", {}, {})
       .then((res) => {
@@ -548,6 +545,15 @@ class Home extends Component<PropsType, StateType> {
             height="250px"
           >
             <EditInviteOrCollaboratorModal />
+          </Modal>
+        )}
+        {currentModal === "AccountSettingsModal" && (
+          <Modal
+            onRequestClose={() => setCurrentModal(null, null)}
+            width="760px"
+            height="440px"
+          >
+            <AccountSettingsModal />
           </Modal>
         )}
 

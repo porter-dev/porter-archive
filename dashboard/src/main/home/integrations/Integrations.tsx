@@ -72,11 +72,7 @@ class Integrations extends Component<PropsType, StateType> {
             if (!IntegrationCategoryStrings.includes(currentCategory)) {
               pushFiltered(this.props, "/integrations", ["project_id"]);
             }
-            return (
-              <IntegrationCategories
-                category={currentCategory}
-              ></IntegrationCategories>
-            );
+            return <IntegrationCategories category={currentCategory} />;
           }}
         />
         <Route>

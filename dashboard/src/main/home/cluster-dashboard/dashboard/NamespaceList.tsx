@@ -112,7 +112,7 @@ export const NamespaceList: React.FunctionComponent = () => {
             (namespace) => namespace.metadata.name === data.Object.metadata.name
           );
           oldNamespaces.splice(oldNamespaceIndex, 1, data.Object);
-          return oldNamespaces;
+          return [...oldNamespaces];
         });
       }
     };
@@ -171,7 +171,8 @@ export const NamespaceList: React.FunctionComponent = () => {
                 </Status>
               </ContentContainer>
               {isAuthorized("namespace", "", ["get", "delete"]) &&
-                isAvailableForDeletion(namespace?.metadata?.name) && (
+                isAvailableForDeletion(namespace?.metadata?.name) &&
+                namespace?.status?.phase === "Active" && (
                   <OptionsDropdown>
                     <DropdownOption onClick={() => onDelete(namespace)}>
                       <i className="material-icons-outlined">delete</i>

@@ -126,7 +126,8 @@ func (app *App) HandleListProjectCollaborators(w http.ResponseWriter, r *http.Re
 	idArr := make([]uint, 0)
 
 	for _, role := range roles {
-		roleMap[role.UserID] = &role
+		roleCp := role
+		roleMap[role.UserID] = &roleCp
 		idArr = append(idArr, role.UserID)
 	}
 

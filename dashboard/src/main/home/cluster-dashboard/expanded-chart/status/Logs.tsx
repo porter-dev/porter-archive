@@ -139,6 +139,8 @@ export default class Logs extends Component<PropsType, StateType> {
     if (prevState.currentTab !== this.state.currentTab) {
       let { selectedPod } = this.props;
 
+      this.ws?.close();
+
       this.setState({ logs: [] });
 
       if (this.state.currentTab == "Application") {

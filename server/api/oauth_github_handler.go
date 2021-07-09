@@ -297,10 +297,10 @@ func (app *App) updateProjectFromToken(projectID uint, userID uint, tok *oauth2.
 	return err
 }
 
+// HandleGithubAppOAuthCallback handles the oauth callback from the GitHub app oauth flow
+// this basically just involves generating an access token and then linking it to the current user
 func (app *App) HandleGithubAppOAuthCallback(w http.ResponseWriter, r *http.Request) {
 	session, err := app.Store.Get(r, app.ServerConf.CookieName)
-
-	fmt.Println("hello...")
 
 	if err != nil {
 		app.handleErrorDataRead(err, w)

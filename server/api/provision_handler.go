@@ -51,7 +51,7 @@ func (app *App) HandleProvisionTestInfra(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	_, err = app.InClusterAgent.ProvisionTest(
+	_, err = app.ProvisionerAgent.ProvisionTest(
 		uint(projID),
 		infra,
 		*app.Repo,
@@ -59,6 +59,7 @@ func (app *App) HandleProvisionTestInfra(w http.ResponseWriter, r *http.Request)
 		&app.DBConf,
 		app.RedisConf,
 		app.ServerConf.ProvisionerImageTag,
+		app.ServerConf.ProvisionerImagePullSecret,
 	)
 
 	if err != nil {
@@ -127,6 +128,7 @@ func (app *App) HandleDestroyTestInfra(w http.ResponseWriter, r *http.Request) {
 		&app.DBConf,
 		app.RedisConf,
 		app.ServerConf.ProvisionerImageTag,
+		app.ServerConf.ProvisionerImagePullSecret,
 	)
 
 	if err != nil {
@@ -191,7 +193,7 @@ func (app *App) HandleProvisionAWSECRInfra(w http.ResponseWriter, r *http.Reques
 	}
 
 	// launch provisioning pod
-	_, err = app.InClusterAgent.ProvisionECR(
+	_, err = app.ProvisionerAgent.ProvisionECR(
 		uint(projID),
 		awsInt,
 		form.ECRName,
@@ -201,6 +203,7 @@ func (app *App) HandleProvisionAWSECRInfra(w http.ResponseWriter, r *http.Reques
 		&app.DBConf,
 		app.RedisConf,
 		app.ServerConf.ProvisionerImageTag,
+		app.ServerConf.ProvisionerImagePullSecret,
 	)
 
 	if err != nil {
@@ -273,7 +276,7 @@ func (app *App) HandleDestroyAWSECRInfra(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	_, err = app.InClusterAgent.ProvisionECR(
+	_, err = app.ProvisionerAgent.ProvisionECR(
 		infra.ProjectID,
 		awsInt,
 		form.ECRName,
@@ -283,6 +286,7 @@ func (app *App) HandleDestroyAWSECRInfra(w http.ResponseWriter, r *http.Request)
 		&app.DBConf,
 		app.RedisConf,
 		app.ServerConf.ProvisionerImageTag,
+		app.ServerConf.ProvisionerImagePullSecret,
 	)
 
 	if err != nil {
@@ -347,7 +351,7 @@ func (app *App) HandleProvisionAWSEKSInfra(w http.ResponseWriter, r *http.Reques
 	}
 
 	// launch provisioning pod
-	_, err = app.InClusterAgent.ProvisionEKS(
+	_, err = app.ProvisionerAgent.ProvisionEKS(
 		uint(projID),
 		awsInt,
 		form.EKSName,
@@ -358,6 +362,7 @@ func (app *App) HandleProvisionAWSEKSInfra(w http.ResponseWriter, r *http.Reques
 		&app.DBConf,
 		app.RedisConf,
 		app.ServerConf.ProvisionerImageTag,
+		app.ServerConf.ProvisionerImagePullSecret,
 	)
 
 	if err != nil {
@@ -430,7 +435,7 @@ func (app *App) HandleDestroyAWSEKSInfra(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	_, err = app.InClusterAgent.ProvisionEKS(
+	_, err = app.ProvisionerAgent.ProvisionEKS(
 		infra.ProjectID,
 		awsInt,
 		form.EKSName,
@@ -441,6 +446,7 @@ func (app *App) HandleDestroyAWSEKSInfra(w http.ResponseWriter, r *http.Request)
 		&app.DBConf,
 		app.RedisConf,
 		app.ServerConf.ProvisionerImageTag,
+		app.ServerConf.ProvisionerImagePullSecret,
 	)
 
 	if err != nil {
@@ -505,7 +511,7 @@ func (app *App) HandleProvisionGCPGCRInfra(w http.ResponseWriter, r *http.Reques
 	}
 
 	// launch provisioning pod
-	_, err = app.InClusterAgent.ProvisionGCR(
+	_, err = app.ProvisionerAgent.ProvisionGCR(
 		uint(projID),
 		gcpInt,
 		*app.Repo,
@@ -514,6 +520,7 @@ func (app *App) HandleProvisionGCPGCRInfra(w http.ResponseWriter, r *http.Reques
 		&app.DBConf,
 		app.RedisConf,
 		app.ServerConf.ProvisionerImageTag,
+		app.ServerConf.ProvisionerImagePullSecret,
 	)
 
 	if err != nil {
@@ -588,7 +595,7 @@ func (app *App) HandleProvisionGCPGKEInfra(w http.ResponseWriter, r *http.Reques
 	}
 
 	// launch provisioning pod
-	_, err = app.InClusterAgent.ProvisionGKE(
+	_, err = app.ProvisionerAgent.ProvisionGKE(
 		uint(projID),
 		gcpInt,
 		form.GKEName,
@@ -598,6 +605,7 @@ func (app *App) HandleProvisionGCPGKEInfra(w http.ResponseWriter, r *http.Reques
 		&app.DBConf,
 		app.RedisConf,
 		app.ServerConf.ProvisionerImageTag,
+		app.ServerConf.ProvisionerImagePullSecret,
 	)
 
 	if err != nil {
@@ -670,7 +678,7 @@ func (app *App) HandleDestroyGCPGKEInfra(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	_, err = app.InClusterAgent.ProvisionGKE(
+	_, err = app.ProvisionerAgent.ProvisionGKE(
 		infra.ProjectID,
 		gcpInt,
 		form.GKEName,
@@ -680,6 +688,7 @@ func (app *App) HandleDestroyGCPGKEInfra(w http.ResponseWriter, r *http.Request)
 		&app.DBConf,
 		app.RedisConf,
 		app.ServerConf.ProvisionerImageTag,
+		app.ServerConf.ProvisionerImagePullSecret,
 	)
 
 	if err != nil {
@@ -788,7 +797,7 @@ func (app *App) HandleProvisionDODOCRInfra(w http.ResponseWriter, r *http.Reques
 	}
 
 	// launch provisioning pod
-	_, err = app.InClusterAgent.ProvisionDOCR(
+	_, err = app.ProvisionerAgent.ProvisionDOCR(
 		uint(projID),
 		oauthInt,
 		app.DOConf,
@@ -800,6 +809,7 @@ func (app *App) HandleProvisionDODOCRInfra(w http.ResponseWriter, r *http.Reques
 		&app.DBConf,
 		app.RedisConf,
 		app.ServerConf.ProvisionerImageTag,
+		app.ServerConf.ProvisionerImagePullSecret,
 	)
 
 	if err != nil {
@@ -872,7 +882,7 @@ func (app *App) HandleDestroyDODOCRInfra(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	_, err = app.InClusterAgent.ProvisionDOCR(
+	_, err = app.ProvisionerAgent.ProvisionDOCR(
 		infra.ProjectID,
 		oauthInt,
 		app.DOConf,
@@ -884,6 +894,7 @@ func (app *App) HandleDestroyDODOCRInfra(w http.ResponseWriter, r *http.Request)
 		&app.DBConf,
 		app.RedisConf,
 		app.ServerConf.ProvisionerImageTag,
+		app.ServerConf.ProvisionerImagePullSecret,
 	)
 
 	if err != nil {
@@ -948,7 +959,7 @@ func (app *App) HandleProvisionDODOKSInfra(w http.ResponseWriter, r *http.Reques
 	}
 
 	// launch provisioning pod
-	_, err = app.InClusterAgent.ProvisionDOKS(
+	_, err = app.ProvisionerAgent.ProvisionDOKS(
 		uint(projID),
 		oauthInt,
 		app.DOConf,
@@ -960,6 +971,7 @@ func (app *App) HandleProvisionDODOKSInfra(w http.ResponseWriter, r *http.Reques
 		&app.DBConf,
 		app.RedisConf,
 		app.ServerConf.ProvisionerImageTag,
+		app.ServerConf.ProvisionerImagePullSecret,
 	)
 
 	if err != nil {
@@ -1032,7 +1044,7 @@ func (app *App) HandleDestroyDODOKSInfra(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	_, err = app.InClusterAgent.ProvisionDOKS(
+	_, err = app.ProvisionerAgent.ProvisionDOKS(
 		infra.ProjectID,
 		oauthInt,
 		app.DOConf,
@@ -1044,6 +1056,7 @@ func (app *App) HandleDestroyDODOKSInfra(w http.ResponseWriter, r *http.Request)
 		&app.DBConf,
 		app.RedisConf,
 		app.ServerConf.ProvisionerImageTag,
+		app.ServerConf.ProvisionerImagePullSecret,
 	)
 
 	if err != nil {

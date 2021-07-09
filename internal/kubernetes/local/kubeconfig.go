@@ -9,6 +9,7 @@ import (
 
 	"github.com/porter-dev/porter/internal/kubernetes"
 
+	k8s "k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/tools/clientcmd/api"
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
@@ -56,6 +57,36 @@ func GetKubeconfigFromHost(kubeconfigPath string, contexts []string) ([]byte, er
 	}
 
 	return clientcmd.Write(strippedRawConf)
+}
+
+// GetSelfAgentFromFileConfig reads a kubeconfig from a local file and generates an
+// Agent from that kubeconfig
+func GetSelfAgentFromFileConfig(kubeconfigPath string) (*kubernetes.Agent, error) {
+	configBytes, err := GetKubeconfigFromHost(kubeconfigPath, []string{})
+
+	if err != nil {
+		return nil, err
+	}
+
+	cmdConf, err := clientcmd.NewClientConfigFromBytes(configBytes)
+
+	if err != nil {
+		return nil, err
+	}
+
+	restConf, err := cmdConf.ClientConfig()
+
+	if err != nil {
+		return nil, err
+	}
+
+	restClientGetter := kubernetes.NewRESTClientGetterFromInClusterConfig(restConf)
+	clientset, err := k8s.NewForConfig(restConf)
+
+	return &kubernetes.Agent{
+		RESTClientGetter: restClientGetter,
+		Clientset:        clientset,
+	}, nil
 }
 
 // ResolveKubeconfigPath finds the path to a kubeconfig, first searching for the

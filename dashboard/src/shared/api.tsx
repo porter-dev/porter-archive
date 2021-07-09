@@ -150,6 +150,7 @@ const createGKE = baseApi<
 const createInvite = baseApi<
   {
     email: string;
+    kind: string;
   },
   {
     id: number;

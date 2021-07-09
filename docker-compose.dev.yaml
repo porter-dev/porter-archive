@@ -24,6 +24,7 @@ services:
       - ./cmd:/porter/cmd
       - ./internal:/porter/internal
       - ./server:/porter/server
+      - ./api:/porter/api
       - ./docker/kubeconfig.yaml:/porter/kubeconfig.yaml
   postgres:
     image: postgres:latest

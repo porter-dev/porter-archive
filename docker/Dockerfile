@@ -11,6 +11,7 @@ COPY go.mod go.sum ./
 COPY /cmd ./cmd
 COPY /internal ./internal
 COPY /server ./server
+COPY /api ./api
 
 RUN --mount=type=cache,target=$GOPATH/pkg/mod \
     go mod download

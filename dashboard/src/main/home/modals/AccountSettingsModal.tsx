@@ -79,7 +79,7 @@ const AccountSettingsModal = () => {
           {accessData.has_access ? (
             <Placeholder>
               <User>
-                You are currently authorized as <B>{accessData.username || "jusrhee"}</B> and have access to:
+                You are currently authorized as <B>{accessData.username}</B> and have access to:
               </User>
               {!accessData.accounts || accessData.accounts?.length == 0 ? (
                 <ListWrapper>

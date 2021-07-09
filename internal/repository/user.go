@@ -15,6 +15,7 @@ type UserRepository interface {
 	ReadUserByEmail(email string) (*models.User, error)
 	ReadUserByGithubUserID(id int64) (*models.User, error)
 	ReadUserByGoogleUserID(id string) (*models.User, error)
+	ListUsersByIDs(ids []uint) ([]*models.User, error)
 	UpdateUser(user *models.User) (*models.User, error)
 	DeleteUser(user *models.User) (*models.User, error)
 }

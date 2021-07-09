@@ -26,6 +26,7 @@ import ProjectSettings from "./project-settings/ProjectSettings";
 import Sidebar from "./sidebar/Sidebar";
 import PageNotFound from "components/PageNotFound";
 import DeleteNamespaceModal from "./modals/DeleteNamespaceModal";
+import AccountSettingsModal from "./modals/AccountSettingsModal";
 
 type PropsType = RouteComponentProps & {
   logOut: () => void;
@@ -515,6 +516,15 @@ class Home extends Component<PropsType, StateType> {
             height="280px"
           >
             <DeleteNamespaceModal />
+          </Modal>
+        )}
+        {currentModal === "AccountSettingsModal" && (
+          <Modal
+            onRequestClose={() => setCurrentModal(null, null)}
+            width="760px"
+            height="440px"
+          >
+            <AccountSettingsModal />
           </Modal>
         )}
 

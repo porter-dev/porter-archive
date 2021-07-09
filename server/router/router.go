@@ -176,6 +176,32 @@ func New(a *api.App) *chi.Mux {
 				),
 			)
 
+			r.Method(
+				"POST",
+				"/integrations/github-app/webhook",
+				requestlog.NewHandler(a.HandleGithubAppEvent, l),
+			)
+
+			r.Method(
+				"GET",
+				"/integrations/github-app/authorize",
+				requestlog.NewHandler(a.HandleGithubAppAuthorize, l),
+			)
+
+			r.Method(
+				"GET",
+				"/integrations/github-app/install",
+				requestlog.NewHandler(a.HandleGithubAppInstall, l),
+			)
+
+			r.Method(
+				"GET",
+				"/integrations/github-app/access",
+				auth.BasicAuthenticate(
+					requestlog.NewHandler(a.HandleListGithubAppAccess, l),
+				),
+			)
+
 			// /api/templates routes
 			r.Method(
 				"GET",
@@ -213,6 +239,12 @@ func New(a *api.App) *chi.Mux {
 				"GET",
 				"/oauth/github/callback",
 				requestlog.NewHandler(a.HandleGithubOAuthCallback, l),
+			)
+
+			r.Method(
+				"GET",
+				"/oauth/github-app/callback",
+				requestlog.NewHandler(a.HandleGithubAppOAuthCallback, l),
 			)
 
 			r.Method(

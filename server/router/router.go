@@ -367,6 +367,20 @@ func New(a *api.App) *chi.Mux {
 			)
 
 			r.Method(
+				"POST",
+				"/projects/{project_id}/invites/{invite_id}",
+				auth.DoesUserHaveProjectAccess(
+					auth.DoesUserHaveInviteAccess(
+						requestlog.NewHandler(a.HandleUpdateInviteRole, l),
+						mw.URLParam,
+						mw.URLParam,
+					),
+					mw.URLParam,
+					mw.AdminAccess,
+				),
+			)
+
+			r.Method(
 				"DELETE",
 				"/projects/{project_id}/invites/{invite_id}",
 				auth.DoesUserHaveProjectAccess(

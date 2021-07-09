@@ -451,16 +451,20 @@ func (app *App) HandleGithubAppAuthorize(w http.ResponseWriter, r *http.Request)
 	http.Redirect(w, r, url, 302)
 }
 
+// HandleGithubAppInstall redirects the user to the Porter github app installation page
 func (app *App) HandleGithubAppInstall(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, fmt.Sprintf("https://github.com/apps/%s/installations/new", app.GithubAppConf.AppName), 302)
 }
 
+// HandleListGithubAppAccessResp is the response returned by HandleListGithubAppAccess
 type HandleListGithubAppAccessResp struct {
 	HasAccess bool     `json:"has_access"`
 	LoginName string   `json:"username,omitempty"`
 	Accounts  []string `json:"accounts,omitempty"`
 }
 
+// HandleListGithubAppAccess provides basic info on if the current user is authenticated through the GitHub app
+// and what accounts/organizations their authentication has access to
 func (app *App) HandleListGithubAppAccess(w http.ResponseWriter, r *http.Request) {
 	tok, err := app.getGithubUserTokenFromRequest(r)
 

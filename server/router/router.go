@@ -275,6 +275,16 @@ func New(a *api.App) *chi.Mux {
 			)
 
 			r.Method(
+				"GET",
+				"/projects/{project_id}/collaborators",
+				auth.DoesUserHaveProjectAccess(
+					requestlog.NewHandler(a.HandleListProjectCollaborators, l),
+					mw.URLParam,
+					mw.AdminAccess,
+				),
+			)
+
+			r.Method(
 				"POST",
 				"/projects/{project_id}/roles/{user_id}",
 				auth.DoesUserHaveProjectAccess(

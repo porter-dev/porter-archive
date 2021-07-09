@@ -156,6 +156,22 @@ func (repo *ProjectRepository) ListProjectsByUserID(userID uint) ([]*models.Proj
 	return resp, nil
 }
 
+// ListProjectRoles returns a list of roles for the project
+func (repo *ProjectRepository) ListProjectRoles(projID uint) ([]models.Role, error) {
+	if !repo.canQuery {
+		return nil, errors.New("Cannot read from database")
+	}
+
+	if int(projID-1) >= len(repo.projects) || repo.projects[projID-1] == nil {
+		return nil, gorm.ErrRecordNotFound
+	}
+
+	index := int(projID - 1)
+	repo.projects[index] = nil
+
+	return repo.projects[index].Roles, nil
+}
+
 // DeleteProject removes a project
 func (repo *ProjectRepository) DeleteProject(project *models.Project) (*models.Project, error) {
 	if !repo.canQuery {

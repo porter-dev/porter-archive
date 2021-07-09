@@ -93,6 +93,17 @@ func (repo *ProjectRepository) ListProjectsByUserID(userID uint) ([]*models.Proj
 	return projects, nil
 }
 
+// ReadProject gets a projects specified by a unique id
+func (repo *ProjectRepository) ListProjectRoles(projID uint) ([]models.Role, error) {
+	project := &models.Project{}
+
+	if err := repo.db.Preload("Roles").Where("id = ?", projID).First(&project).Error; err != nil {
+		return nil, err
+	}
+
+	return project.Roles, nil
+}
+
 // DeleteProject deletes a project (marking deleted in the db)
 func (repo *ProjectRepository) DeleteProject(project *models.Project) (*models.Project, error) {
 	if err := repo.db.Delete(&project).Error; err != nil {

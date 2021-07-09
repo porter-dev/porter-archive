@@ -97,6 +97,14 @@ func (app *App) HandleGetProjectRoles(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+type Collaborator struct {
+	ID        uint   `json:"id"`
+	Kind      string `json:"kind"`
+	UserID    uint   `json:"user_id"`
+	Email     string `json:"email"`
+	ProjectID uint   `json:"project_id"`
+}
+
 // HandleListProjectCollaborators lists the collaborators in the project
 func (app *App) HandleListProjectCollaborators(w http.ResponseWriter, r *http.Request) {
 	id, err := strconv.ParseUint(chi.URLParam(r, "project_id"), 0, 64)
@@ -113,10 +121,30 @@ func (app *App) HandleListProjectCollaborators(w http.ResponseWriter, r *http.Re
 		return
 	}
 
-	res := make([]*models.Role, 0)
+	res := make([]*Collaborator, 0)
+	roleMap := make(map[uint]*models.Role)
+	idArr := make([]uint, 0)
 
 	for _, role := range roles {
-		res = append(res, &role)
+		roleMap[role.UserID] = &role
+		idArr = append(idArr, role.UserID)
+	}
+
+	users, err := app.Repo.User.ListUsersByIDs(idArr)
+
+	if err != nil {
+		app.handleErrorRead(err, ErrProjectDataRead, w)
+		return
+	}
+
+	for _, user := range users {
+		res = append(res, &Collaborator{
+			ID:        roleMap[user.ID].ID,
+			Kind:      roleMap[user.ID].Kind,
+			UserID:    roleMap[user.ID].UserID,
+			Email:     user.Email,
+			ProjectID: roleMap[user.ID].ProjectID,
+		})
 	}
 
 	w.WriteHeader(http.StatusOK)

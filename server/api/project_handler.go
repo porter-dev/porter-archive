@@ -97,6 +97,36 @@ func (app *App) HandleGetProjectRoles(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// HandleListProjectCollaborators lists the collaborators in the project
+func (app *App) HandleListProjectCollaborators(w http.ResponseWriter, r *http.Request) {
+	id, err := strconv.ParseUint(chi.URLParam(r, "project_id"), 0, 64)
+
+	if err != nil || id == 0 {
+		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
+		return
+	}
+
+	roles, err := app.Repo.Project.ListProjectRoles(uint(id))
+
+	if err != nil {
+		app.handleErrorRead(err, ErrProjectDataRead, w)
+		return
+	}
+
+	res := make([]*models.Role, 0)
+
+	for _, role := range roles {
+		res = append(res, &role)
+	}
+
+	w.WriteHeader(http.StatusOK)
+
+	if err := json.NewEncoder(w).Encode(res); err != nil {
+		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
+		return
+	}
+}
+
 // HandleReadProject returns an externalized Project (models.ProjectExternal)
 // based on an ID
 func (app *App) HandleReadProject(w http.ResponseWriter, r *http.Request) {

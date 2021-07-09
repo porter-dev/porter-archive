@@ -209,7 +209,7 @@ const InvitePage: React.FunctionComponent<Props> = ({}) => {
   >(
     () => [
       {
-        Header: "Mail address",
+        Header: "User",
         accessor: "email",
       },
       {
@@ -217,7 +217,7 @@ const InvitePage: React.FunctionComponent<Props> = ({}) => {
         accessor: "kind",
         Cell: ({ row }) => {
           return (
-            <Status status={"accepted"}>{row.values.kind || "Admin"}</Status>
+            <Role>{row.values.kind || "Admin"}</Role>
           );
         },
       },
@@ -231,7 +231,7 @@ const InvitePage: React.FunctionComponent<Props> = ({}) => {
         },
       },
       {
-        Header: "Invite link",
+        Header: "",
         accessor: "invite_link",
         Cell: ({ row }) => {
           if (row.values.status === "expired") {
@@ -266,14 +266,7 @@ const InvitePage: React.FunctionComponent<Props> = ({}) => {
       {
         id: "edit_action",
         Cell: ({ row }: any) => {
-          return (
-            <CopyButton
-              invis={row.original.currentUser}
-              onClick={() => openEditModal(row.original)}
-            >
-              Edit
-            </CopyButton>
-          );
+          return <></>;
         },
       },
       {
@@ -281,12 +274,20 @@ const InvitePage: React.FunctionComponent<Props> = ({}) => {
         Cell: ({ row }: any) => {
           if (row.values.status === "accepted") {
             return (
-              <CopyButton
-                invis={row.original.currentUser}
-                onClick={() => removeCollaborator(row.original.id)}
-              >
-                Remove
-              </CopyButton>
+              <Flex>
+                <SettingsButton
+                  invis={row.original.currentUser}
+                  onClick={() => openEditModal(row.original)}
+                >
+                  <i className="material-icons">more_vert</i>
+                </SettingsButton>
+                <DeleteButton
+                  invis={row.original.currentUser}
+                  onClick={() => removeCollaborator(row.original.id)}
+                >
+                  <i className="material-icons">delete</i>
+                </DeleteButton>
+              </Flex>
             );
           }
           return (
@@ -362,7 +363,7 @@ const InvitePage: React.FunctionComponent<Props> = ({}) => {
           placeholder="ex: mrp@getporter.dev"
         />
       </InputRowWrapper>
-      <Helper>Select the role the user will have.</Helper>
+      <Helper>Specify a role for this user.</Helper>
       <RoleSelectorWrapper>
         <RadioSelector
           selected={role}
@@ -386,6 +387,7 @@ const InvitePage: React.FunctionComponent<Props> = ({}) => {
         <Table
           columns={columns}
           data={data}
+          disableHover={true}
           isLoading={false}
           disableGlobalFilter={true}
         />
@@ -401,6 +403,44 @@ const InvitePage: React.FunctionComponent<Props> = ({}) => {
 };
 
 export default InvitePage;
+
+const Flex = styled.div`
+  display: flex;
+  align-items: center;
+  width: 70px;
+  float: right;
+  justify-content: space-between;
+`;
+
+const DeleteButton = styled.div`
+  display: flex;
+  visibility: ${(props: { invis?: boolean }) => props.invis ? "hidden" : "visible"};
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  float: right;
+  height: 30px;
+  :hover {
+    background: #ffffff11;
+    border-radius: 20px;
+    cursor: pointer;
+  }
+
+  > i {
+    font-size: 20px;
+    color: #ffffff44;
+    border-radius: 20px;
+  }
+`;
+
+const SettingsButton = styled(DeleteButton)`
+  margin-right: -60px;
+`;
+
+const Role = styled.div`
+  text-transform: capitalize;
+  margin-right: 50px;
+`;
 
 const RoleSelectorWrapper = styled.div`
   font-size: 14px;

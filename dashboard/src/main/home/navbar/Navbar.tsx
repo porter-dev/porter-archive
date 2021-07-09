@@ -36,6 +36,9 @@ export default class Navbar extends Component<PropsType, StateType> {
                 this.context.setCurrentModal("AccountSettingsModal", {})
               }
             >
+              <SettingsIcon>
+                <i className="material-icons">settings</i>
+              </SettingsIcon> 
               Account Settings
             </UserDropdownButton>
             <UserDropdownButton onClick={this.props.logOut}>
@@ -63,8 +66,7 @@ export default class Navbar extends Component<PropsType, StateType> {
             this.setState({ showDropdown: !this.state.showDropdown })
           }
         >
-          <I className="material-icons-outlined">account_circle</I>
-          {this.context.user?.email}
+          <I className="material-icons">account_circle</I>
           {this.renderSettingsDropdown()}
         </NavButton>
       </StyledNavbar>
@@ -73,6 +75,22 @@ export default class Navbar extends Component<PropsType, StateType> {
 }
 
 Navbar.contextType = Context;
+
+const SettingsIcon = styled.div`
+  > i {
+    background: none;
+    border-radius: 3px;
+    display: flex;
+    font-size: 15px;
+    top: 11px;
+    margin-right: 10px;
+    padding: 1px;
+    align-items: center;
+    justify-content: center;
+    color: #ffffffaa;
+    border: 0;
+  }
+`;
 
 const I = styled.i`
   margin-right: 7px;

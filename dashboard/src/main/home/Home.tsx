@@ -524,8 +524,8 @@ class Home extends Component<PropsType, StateType> {
         {currentModal === "AccountSettingsModal" && (
           <Modal
             onRequestClose={() => setCurrentModal(null, null)}
-            width="700px"
-            height="280px"
+            width="760px"
+            height="440px"
           >
             <AccountSettingsModal />
           </Modal>

@@ -572,7 +572,7 @@ const Tooltip = styled.div`
   flex: 1;
   color: white;
   font-size: 12px;
-  font-family: "Assistant", sans-serif;
+  font-family: Work Sans, sans-serif;
   outline: 1px solid #ffffff55;
   opacity: 0;
   animation: faded-in 0.2s 0.15s;

@@ -90,9 +90,6 @@ class Home extends Component<PropsType, StateType> {
   };
 
   getCapabilities = () => {
-    let { currentProject } = this.props;
-    if (!currentProject) return;
-
     api
       .getCapabilities("<token>", {}, {})
       .then((res) => {

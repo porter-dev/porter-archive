@@ -87,9 +87,9 @@ const EditCollaboratorModal = () => {
       </CloseButton>
 
       <ModalTitle>
-        Update {isInvite ? "invite" : "collaborator"} {user?.email}
+        Update {isInvite ? "Invite" : "Collaborator"} {user?.email}
       </ModalTitle>
-      <Subtitle>Select the new role for the user</Subtitle>
+      <Subtitle>Specify a different role for this user.</Subtitle>
       <RoleSelectorWrapper>
         <RadioSelector
           selected={selectedRole}
@@ -99,7 +99,7 @@ const EditCollaboratorModal = () => {
       </RoleSelectorWrapper>
 
       <SaveButton
-        text={`Update ${isInvite ? "invite" : "collaborator"}`}
+        text={`Update ${isInvite ? "Invite" : "Collaborator"}`}
         color="#616FEEcc"
         onClick={() => handleUpdate()}
         status={status}

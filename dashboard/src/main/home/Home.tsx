@@ -26,6 +26,7 @@ import ProjectSettings from "./project-settings/ProjectSettings";
 import Sidebar from "./sidebar/Sidebar";
 import PageNotFound from "components/PageNotFound";
 import DeleteNamespaceModal from "./modals/DeleteNamespaceModal";
+import EditInviteOrCollaboratorModal from "./modals/EditInviteOrCollaboratorModal";
 
 type PropsType = RouteComponentProps & {
   logOut: () => void;
@@ -518,6 +519,16 @@ class Home extends Component<PropsType, StateType> {
             height="280px"
           >
             <DeleteNamespaceModal />
+          </Modal>
+        )}
+
+        {currentModal === "EditInviteOrCollaboratorModal" && (
+          <Modal
+            onRequestClose={() => setCurrentModal(null, null)}
+            width="600px"
+            height="250px"
+          >
+            <EditInviteOrCollaboratorModal />
           </Modal>
         )}
 

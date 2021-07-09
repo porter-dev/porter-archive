@@ -1,9 +1,17 @@
 package api
 
 import (
+	"context"
 	"encoding/json"
+	"fmt"
+	"github.com/google/go-github/github"
+	"github.com/porter-dev/porter/internal/oauth"
+	"golang.org/x/oauth2"
+	"gorm.io/gorm"
+	"io/ioutil"
 	"net/http"
 	"net/url"
+	"sort"
 	"strconv"
 
 	"github.com/go-chi/chi"
@@ -376,4 +384,174 @@ func (app *App) HandleListProjectOAuthIntegrations(w http.ResponseWriter, r *htt
 		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
 		return
 	}
+}
+
+func (app *App) HandleGithubAppEvent(w http.ResponseWriter, r *http.Request) {
+	payload, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		app.handleErrorInternal(err, w)
+		return
+	}
+
+	event, err := github.ParseWebHook(github.WebHookType(r), payload)
+
+	if err != nil {
+		app.handleErrorInternal(err, w)
+		return
+	}
+
+	switch e := event.(type) {
+	case *github.InstallationEvent:
+		if *e.Action == "created" {
+			_, err := app.Repo.GithubAppInstallation.ReadGithubAppInstallationByAccountID(*e.Installation.Account.ID)
+
+			if err != nil && err == gorm.ErrRecordNotFound {
+				// insert account/installation pair into database
+				_, err := app.Repo.GithubAppInstallation.CreateGithubAppInstallation(&ints.GithubAppInstallation{
+					AccountID:      *e.Installation.Account.ID,
+					InstallationID: *e.Installation.ID,
+				})
+
+				if err != nil {
+					app.handleErrorInternal(err, w)
+				}
+
+				return
+			} else if err != nil {
+				app.handleErrorInternal(err, w)
+				return
+			}
+		}
+		if *e.Action == "deleted" {
+			err := app.Repo.GithubAppInstallation.DeleteGithubAppInstallationByAccountID(*e.Installation.Account.ID)
+
+			if err != nil {
+				app.handleErrorInternal(err, w)
+				return
+			}
+		}
+	}
+
+}
+
+// HandleGithubAppAuthorize starts the oauth2 flow for a project repo request.
+func (app *App) HandleGithubAppAuthorize(w http.ResponseWriter, r *http.Request) {
+	state := oauth.CreateRandomState()
+
+	err := app.populateOAuthSession(w, r, state, false)
+
+	if err != nil {
+		app.handleErrorDataRead(err, w)
+		return
+	}
+
+	// specify access type offline to get a refresh token
+	url := app.GithubAppConf.AuthCodeURL(state, oauth2.AccessTypeOffline)
+
+	http.Redirect(w, r, url, 302)
+}
+
+func (app *App) HandleGithubAppInstall(w http.ResponseWriter, r *http.Request) {
+	http.Redirect(w, r, fmt.Sprintf("https://github.com/apps/%s/installations/new", app.GithubAppConf.AppName), 302)
+}
+
+type HandleListGithubAppAccessResp struct {
+	HasAccess bool     `json:"has_access"`
+	LoginName string   `json:"username,omitempty"`
+	Accounts  []string `json:"accounts,omitempty"`
+}
+
+func (app *App) HandleListGithubAppAccess(w http.ResponseWriter, r *http.Request) {
+	tok, err := app.getGithubUserTokenFromRequest(r)
+
+	if err != nil {
+		res := HandleListGithubAppAccessResp{
+			HasAccess: false,
+		}
+		json.NewEncoder(w).Encode(res)
+		return
+	}
+
+	client := github.NewClient(app.GithubProjectConf.Client(oauth2.NoContext, tok))
+
+	opts := &github.ListOptions{
+		PerPage: 100,
+		Page:    1,
+	}
+
+	res := HandleListGithubAppAccessResp{
+		HasAccess: true,
+	}
+
+	for {
+		orgs, pages, err := client.Organizations.List(context.Background(), "", opts)
+
+		if err != nil {
+			res := HandleListGithubAppAccessResp{
+				HasAccess: false,
+			}
+			json.NewEncoder(w).Encode(res)
+			return
+		}
+
+		for _, org := range orgs {
+			res.Accounts = append(res.Accounts, *org.Login)
+		}
+
+		if pages.NextPage == 0 {
+			break
+		}
+	}
+
+	AuthUser, _, err := client.Users.Get(context.Background(), "")
+
+	if err != nil {
+		app.handleErrorInternal(err, w)
+		return
+	}
+
+	res.LoginName = *AuthUser.Login
+
+	// check if user has app installed in their account
+	Installation, err := app.Repo.GithubAppInstallation.ReadGithubAppInstallationByAccountID(*AuthUser.ID)
+
+	if err != nil && err != gorm.ErrRecordNotFound {
+		app.handleErrorInternal(err, w)
+		return
+	}
+
+	if Installation != nil {
+		res.Accounts = append(res.Accounts, *AuthUser.Login)
+	}
+
+	sort.Strings(res.Accounts)
+
+	json.NewEncoder(w).Encode(res)
+}
+
+// getGithubUserTokenFromRequest
+func (app *App) getGithubUserTokenFromRequest(r *http.Request) (*oauth2.Token, error) {
+	userID, err := app.getUserIDFromRequest(r)
+
+	if err != nil {
+		return nil, err
+	}
+
+	user, err := app.Repo.User.ReadUser(userID)
+
+	if err != nil {
+		return nil, err
+	}
+
+	oauthInt, err := app.Repo.GithubAppOAuthIntegration.ReadGithubAppOauthIntegration(user.GithubAppIntegrationID)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &oauth2.Token{
+		AccessToken:  string(oauthInt.AccessToken),
+		RefreshToken: string(oauthInt.RefreshToken),
+		TokenType:    "Bearer",
+	}, nil
 }

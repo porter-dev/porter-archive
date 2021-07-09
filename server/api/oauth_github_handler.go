@@ -269,11 +269,13 @@ func (app *App) updateProjectFromToken(projectID uint, userID uint, tok *oauth2.
 	}
 
 	oauthInt := &integrations.OAuthIntegration{
-		Client:       integrations.OAuthGithub,
-		UserID:       userID,
-		ProjectID:    projectID,
-		AccessToken:  []byte(tok.AccessToken),
-		RefreshToken: []byte(tok.RefreshToken),
+		SharedOAuthModel: integrations.SharedOAuthModel{
+			AccessToken:  []byte(tok.AccessToken),
+			RefreshToken: []byte(tok.RefreshToken),
+		},
+		Client:    integrations.OAuthGithub,
+		UserID:    userID,
+		ProjectID: projectID,
 	}
 
 	// create the oauth integration first
@@ -293,4 +295,95 @@ func (app *App) updateProjectFromToken(projectID uint, userID uint, tok *oauth2.
 	gr, err = app.Repo.GitRepo.CreateGitRepo(gr)
 
 	return err
+}
+
+func (app *App) HandleGithubAppOAuthCallback(w http.ResponseWriter, r *http.Request) {
+	session, err := app.Store.Get(r, app.ServerConf.CookieName)
+
+	fmt.Println("hello...")
+
+	if err != nil {
+		app.handleErrorDataRead(err, w)
+		return
+	}
+
+	if _, ok := session.Values["state"]; !ok {
+		app.sendExternalError(
+			err,
+			http.StatusForbidden,
+			HTTPError{
+				Code: http.StatusForbidden,
+				Errors: []string{
+					"Could not read cookie: are cookies enabled?",
+				},
+			},
+			w,
+		)
+
+		return
+	}
+
+	if r.URL.Query().Get("state") != session.Values["state"] {
+		if session.Values["query_params"] != "" {
+			http.Redirect(w, r, fmt.Sprintf("/dashboard?%s", session.Values["query_params"]), 302)
+		} else {
+			http.Redirect(w, r, "/dashboard", 302)
+		}
+		return
+	}
+
+	token, err := app.GithubAppConf.Exchange(oauth2.NoContext, r.URL.Query().Get("code"))
+
+	if err != nil || !token.Valid() {
+		if session.Values["query_params"] != "" {
+			http.Redirect(w, r, fmt.Sprintf("/dashboard?%s", session.Values["query_params"]), 302)
+		} else {
+			http.Redirect(w, r, "/dashboard", 302)
+		}
+		return
+	}
+
+	userID, err := app.getUserIDFromRequest(r)
+
+	if err != nil {
+		app.handleErrorInternal(err, w)
+		return
+	}
+
+	user, err := app.Repo.User.ReadUser(userID)
+
+	if err != nil {
+		app.handleErrorInternal(err, w)
+		return
+	}
+
+	oauthInt := &integrations.GithubAppOAuthIntegration{
+		SharedOAuthModel: integrations.SharedOAuthModel{
+			AccessToken:  []byte(token.AccessToken),
+			RefreshToken: []byte(token.RefreshToken),
+		},
+		UserID: user.ID,
+	}
+
+	oauthInt, err = app.Repo.GithubAppOAuthIntegration.CreateGithubAppOAuthIntegration(oauthInt)
+
+	if err != nil {
+		app.handleErrorInternal(err, w)
+		return
+	}
+
+	user.GithubAppIntegrationID = oauthInt.ID
+
+	user, err = app.Repo.User.UpdateUser(user)
+
+	if err != nil {
+		app.handleErrorInternal(err, w)
+		return
+	}
+
+	if session.Values["query_params"] != "" {
+		http.Redirect(w, r, fmt.Sprintf("/dashboard?%s", session.Values["query_params"]), 302)
+	} else {
+		http.Redirect(w, r, "/dashboard", 302)
+	}
 }

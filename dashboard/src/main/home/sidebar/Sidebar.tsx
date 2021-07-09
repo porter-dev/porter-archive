@@ -16,14 +16,16 @@ import ProjectSectionContainer from "./ProjectSectionContainer";
 import loading from "assets/loading.gif";
 import { RouteComponentProps, withRouter } from "react-router";
 import { pushFiltered, pushQueryParams } from "shared/routing";
+import { withAuth, WithAuthProps } from "shared/auth/AuthorizationHoc";
 
-type PropsType = RouteComponentProps & {
-  forceSidebar: boolean;
-  setWelcome: (x: boolean) => void;
-  currentView: string;
-  forceRefreshClusters: boolean;
-  setRefreshClusters: (x: boolean) => void;
-};
+type PropsType = RouteComponentProps &
+  WithAuthProps & {
+    forceSidebar: boolean;
+    setWelcome: (x: boolean) => void;
+    currentView: string;
+    forceRefreshClusters: boolean;
+    setRefreshClusters: (x: boolean) => void;
+  };
 
 type StateType = {
   showSidebar: boolean;
@@ -231,18 +233,23 @@ class Sidebar extends Component<PropsType, StateType> {
             <Img src={rocket} />
             Launch
           </NavButton>
-          <NavButton
-            selected={currentView === "integrations"}
-            onClick={() =>
-              pushFiltered(this.props, "/integrations", ["project_id"])
-            }
-          >
-            <Img src={integrations} />
-            Integrations
-          </NavButton>
-          {this.context.currentProject?.roles?.filter((obj: any) => {
-            return obj.user_id === this.context.user.userId;
-          })[0].kind === "admin" || (
+
+          {this.props.isAuthorized("integrations", "", ["get"]) && (
+            <NavButton
+              selected={currentView === "integrations"}
+              onClick={() =>
+                pushFiltered(this.props, "/integrations", ["project_id"])
+              }
+            >
+              <Img src={integrations} />
+              Integrations
+            </NavButton>
+          )}
+          {this.props.isAuthorized("settings", "", [
+            "get",
+            "update",
+            "delete",
+          ]) && (
             <NavButton
               onClick={() =>
                 pushFiltered(this.props, "/project-settings", ["project_id"])
@@ -313,7 +320,7 @@ class Sidebar extends Component<PropsType, StateType> {
 
 Sidebar.contextType = Context;
 
-export default withRouter(Sidebar);
+export default withRouter(withAuth(Sidebar));
 
 const BranchPad = styled.div`
   width: 20px;

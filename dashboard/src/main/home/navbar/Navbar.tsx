@@ -5,19 +5,24 @@ import api from "shared/api";
 import { Context } from "shared/Context";
 
 import Feedback from "./Feedback";
+import { withAuth, WithAuthProps } from "shared/auth/AuthorizationHoc";
+import { Select, MenuItem } from "@material-ui/core";
+import { AuthContext } from "shared/auth/AuthContext";
 
-type PropsType = {
+type PropsType = WithAuthProps & {
   logOut: () => void;
   currentView: string;
 };
 
 type StateType = {
   showDropdown: boolean;
+  currentPolicy: string;
 };
 
-export default class Navbar extends Component<PropsType, StateType> {
+class Navbar extends Component<PropsType, StateType> {
   state = {
     showDropdown: false,
+    currentPolicy: "admin",
   };
 
   renderSettingsDropdown = () => {
@@ -49,6 +54,22 @@ export default class Navbar extends Component<PropsType, StateType> {
   render() {
     return (
       <StyledNavbar>
+        <AuthContext.Consumer>
+          {(value) => (
+            <PolicySelector
+              value={this.state.currentPolicy}
+              onChange={(e) => {
+                value.setPolicy(e.target.value as any);
+                this.setState({ currentPolicy: e.target.value as string });
+              }}
+            >
+              <MenuItem value={"admin"}>Admin</MenuItem>
+              <MenuItem value={"dev"}>Dev</MenuItem>
+              <MenuItem value={"viewer"}>Viewer</MenuItem>
+            </PolicySelector>
+          )}
+        </AuthContext.Consumer>
+
         {this.renderFeedbackButton()}
         <NavButton
           selected={this.state.showDropdown}
@@ -67,8 +88,17 @@ export default class Navbar extends Component<PropsType, StateType> {
 
 Navbar.contextType = Context;
 
+export default withAuth(Navbar);
+
 const I = styled.i`
   margin-right: 7px;
+`;
+
+const PolicySelector = styled(Select)`
+  height: 30px;
+  width: 100px;
+  margin-right: 15px;
+  color: white !important;
 `;
 
 const CloseOverlay = styled.div`

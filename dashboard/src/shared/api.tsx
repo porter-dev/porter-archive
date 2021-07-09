@@ -732,6 +732,10 @@ const linkGithubProject = baseApi<
   return `/api/oauth/projects/${pathParams.project_id}/github`;
 });
 
+const getGithubAccess = baseApi<{}, {}>("GET", () => {
+  return `/api/integrations/github-app/access`;
+});
+
 const logInUser = baseApi<{
   email: string;
   password: string;
@@ -996,6 +1000,7 @@ export default {
   getTemplates,
   getUser,
   linkGithubProject,
+  getGithubAccess,
   listConfigMaps,
   logInUser,
   logOutUser,

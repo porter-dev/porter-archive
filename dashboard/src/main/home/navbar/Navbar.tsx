@@ -31,9 +31,19 @@ export default class Navbar extends Component<PropsType, StateType> {
             <DropdownLabel>
               {this.context.user && this.context.user.email}
             </DropdownLabel>
-            <LogOutButton onClick={this.props.logOut}>
+            <UserDropdownButton
+              onClick={() =>
+                this.context.setCurrentModal("AccountSettingsModal", {})
+              }
+            >
+              <SettingsIcon>
+                <i className="material-icons">settings</i>
+              </SettingsIcon> 
+              Account Settings
+            </UserDropdownButton>
+            <UserDropdownButton onClick={this.props.logOut}>
               <i className="material-icons">keyboard_return</i> Log Out
-            </LogOutButton>
+            </UserDropdownButton>
           </Dropdown>
         </>
       );
@@ -56,8 +66,7 @@ export default class Navbar extends Component<PropsType, StateType> {
             this.setState({ showDropdown: !this.state.showDropdown })
           }
         >
-          <I className="material-icons-outlined">account_circle</I>
-          {this.context.user?.email}
+          <I className="material-icons">account_circle</I>
           {this.renderSettingsDropdown()}
         </NavButton>
       </StyledNavbar>
@@ -66,6 +75,22 @@ export default class Navbar extends Component<PropsType, StateType> {
 }
 
 Navbar.contextType = Context;
+
+const SettingsIcon = styled.div`
+  > i {
+    background: none;
+    border-radius: 3px;
+    display: flex;
+    font-size: 15px;
+    top: 11px;
+    margin-right: 10px;
+    padding: 1px;
+    align-items: center;
+    justify-content: center;
+    color: #ffffffaa;
+    border: 0;
+  }
+`;
 
 const I = styled.i`
   margin-right: 7px;
@@ -81,7 +106,7 @@ const CloseOverlay = styled.div`
   cursor: default;
 `;
 
-const LogOutButton = styled.button`
+const UserDropdownButton = styled.button`
   padding: 13px;
   height: 40px;
   font-size: 13px;

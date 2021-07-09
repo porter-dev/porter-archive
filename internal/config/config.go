@@ -41,6 +41,10 @@ type ServerConf struct {
 	GithubClientSecret string `env:"GITHUB_CLIENT_SECRET"`
 	GithubLoginEnabled bool   `env:"GITHUB_LOGIN_ENABLED,default=true"`
 
+	GithubAppClientID     string `env:"GITHUB_APP_CLIENT_ID"`
+	GithubAppClientSecret string `env:"GITHUB_APP_CLIENT_SECRET"`
+	GithubAppName         string `env:"GITHUB_APP_NAME"`
+
 	GoogleClientID         string `env:"GOOGLE_CLIENT_ID"`
 	GoogleClientSecret     string `env:"GOOGLE_CLIENT_SECRET"`
 	GoogleRestrictedDomain string `env:"GOOGLE_RESTRICTED_DOMAIN"`

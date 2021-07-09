@@ -1,3 +1,4 @@
+import UnauthorizedPage from "components/UnauthorizedPage";
 import React, { useMemo, useContext } from "react";
 import { Redirect, Route, RouteProps } from "react-router";
 import { AuthContext } from "./AuthContext";
@@ -27,11 +28,7 @@ const GuardedRoute: React.FC<RouteProps & GuardedRouteProps> = ({
     <Route
       {...rest}
       render={(props) =>
-        auth ? (
-          children || <Component {...props} />
-        ) : (
-          <div>"Unauthorized Page"</div>
-        )
+        auth ? children || <Component {...props} /> : <UnauthorizedPage />
       }
     />
   );
@@ -48,7 +45,7 @@ export const fakeGuardedRoute = <ComponentProps extends object>(
     return <Component {...props} />;
   }
 
-  return <div>"Unauthorized Page"</div>;
+  return <UnauthorizedPage />;
 };
 
 export default GuardedRoute;

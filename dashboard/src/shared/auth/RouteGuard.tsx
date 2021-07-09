@@ -24,14 +24,14 @@ const GuardedRoute: React.FC<RouteProps & GuardedRouteProps> = ({
     return isAuthorized(currentPolicy, scope, resource, verb);
   }, [currentPolicy, scope, resource, verb]);
 
-  return (
-    <Route
-      {...rest}
-      render={(props) =>
-        auth ? children || <Component {...props} /> : <UnauthorizedPage />
-      }
-    />
-  );
+  const render = (props: any) => {
+    if (auth) {
+      return children || <Component {...props} />;
+    }
+    return <UnauthorizedPage />;
+  };
+
+  return <Route {...rest} render={render} />;
 };
 
 export const fakeGuardedRoute = <ComponentProps extends object>(

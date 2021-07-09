@@ -2,9 +2,9 @@
 
 > 🚧
 >
-> **Note:** Porter currently uses an oauth app to authenticate and gain access to repositories. This mechanism will be phased out over the next few weeks to transition to the authentication method below. After this, all old applications will still work as intended but new applications will need to be authenticated through the GitHub Application.
+> **Note:** Porter currently uses a Github OAuth App to authenticate and gain access to repositories. This mechanism will be phased out over the next few weeks to transition to the authentication method below. After this, all old applications will still work as intended but new applications will need to be authenticated through a GitHub App.
 
-Porter uses a GitHub application to authorize and gain access to your GitHub repositories. In order to be able to deploy applications through GitHub repositories, you must first authorize the Porter GitHub application to have access to them.
+Porter uses a GitHub App to authorize and gain access to your GitHub repositories. In order to be able to deploy applications through GitHub repositories, you must first authorize the Porter GitHub App to have access to them.
 
 ## Step 1: Authorize the Porter Application
 
@@ -16,7 +16,7 @@ Then, follow the GitHub steps to authorize the application.
 
 ## Step 2: Install App in your repositories
 
-Once the Application is authorized, you can see a list of accounts and organization the Porter has access to through the same popup:
+Once the Porter Github App is authorized, you can see a list of accounts and organization the Porter has access to through the same popup:
 
 ![image](https://user-images.githubusercontent.com/25856165/125106692-ee7c0000-e0ad-11eb-9c79-44714f898aa5.png)
 

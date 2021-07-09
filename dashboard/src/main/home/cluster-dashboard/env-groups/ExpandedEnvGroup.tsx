@@ -279,10 +279,6 @@ class ExpandedEnvGroup extends Component<PropsType, StateType> {
     }
   };
 
-  getTabOptions = () => {
-    return tabOptions;
-  };
-
   render() {
     let { closeExpanded } = this.props;
     let { envGroup } = this.props;

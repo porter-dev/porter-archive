@@ -171,7 +171,7 @@ func (app *App) HandleAcceptInvite(w http.ResponseWriter, r *http.Request) {
 	_, err = app.Repo.Project.CreateProjectRole(projModel, &models.Role{
 		UserID:    userID,
 		ProjectID: uint(projID),
-		Kind:      models.RoleAdmin,
+		Kind:      invite.Kind,
 	})
 
 	if err != nil {

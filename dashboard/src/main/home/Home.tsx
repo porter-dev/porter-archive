@@ -26,13 +26,27 @@ import ProjectSettings from "./project-settings/ProjectSettings";
 import Sidebar from "./sidebar/Sidebar";
 import PageNotFound from "components/PageNotFound";
 import DeleteNamespaceModal from "./modals/DeleteNamespaceModal";
+import { fakeGuardedRoute } from "shared/auth/RouteGuard";
+import { withAuth, WithAuthProps } from "shared/auth/AuthorizationHoc";
 
-type PropsType = RouteComponentProps & {
-  logOut: () => void;
-  currentProject: ProjectType;
-  currentCluster: ClusterType;
-  currentRoute: PorterUrl;
-};
+// Guarded components
+const GuardedProjectSettings = fakeGuardedRoute("settings", "", [
+  "get",
+  "list",
+])(ProjectSettings);
+
+const GuardedIntegrations = fakeGuardedRoute("integrations", "", [
+  "get",
+  "list",
+])(Integrations);
+
+type PropsType = RouteComponentProps &
+  WithAuthProps & {
+    logOut: () => void;
+    currentProject: ProjectType;
+    currentCluster: ClusterType;
+    currentRoute: PorterUrl;
+  };
 
 type StateType = {
   forceSidebar: boolean;
@@ -336,9 +350,9 @@ class Home extends Component<PropsType, StateType> {
           </DashboardWrapper>
         );
       } else if (currentView === "integrations") {
-        return <Integrations />;
+        return <GuardedIntegrations />;
       } else if (currentView === "project-settings") {
-        return <ProjectSettings />;
+        return <GuardedProjectSettings />;
       }
       return <Templates />;
     } else if (currentView === "new-project") {
@@ -471,19 +485,22 @@ class Home extends Component<PropsType, StateType> {
             <ClusterInstructionsModal />
           </Modal>
         )}
-        {currentModal === "UpdateClusterModal" && (
-          <Modal
-            onRequestClose={() => setCurrentModal(null, null)}
-            width="565px"
-            height="275px"
-          >
-            <UpdateClusterModal
-              setRefreshClusters={(x: boolean) =>
-                this.setState({ forceRefreshClusters: x })
-              }
-            />
-          </Modal>
-        )}
+
+        {/* We should be careful, as this component is named Update but is for deletion */}
+        {this.props.isAuthorized("cluster", "", ["get", "delete"]) &&
+          currentModal === "UpdateClusterModal" && (
+            <Modal
+              onRequestClose={() => setCurrentModal(null, null)}
+              width="565px"
+              height="275px"
+            >
+              <UpdateClusterModal
+                setRefreshClusters={(x: boolean) =>
+                  this.setState({ forceRefreshClusters: x })
+                }
+              />
+            </Modal>
+          )}
         {currentModal === "IntegrationsModal" && (
           <Modal
             onRequestClose={() => setCurrentModal(null, null)}
@@ -502,24 +519,26 @@ class Home extends Component<PropsType, StateType> {
             <IntegrationsInstructionsModal />
           </Modal>
         )}
-        {currentModal === "NamespaceModal" && (
-          <Modal
-            onRequestClose={() => setCurrentModal(null, null)}
-            width="600px"
-            height="220px"
-          >
-            <NamespaceModal />
-          </Modal>
-        )}
-        {currentModal === "DeleteNamespaceModal" && (
-          <Modal
-            onRequestClose={() => setCurrentModal(null, null)}
-            width="700px"
-            height="280px"
-          >
-            <DeleteNamespaceModal />
-          </Modal>
-        )}
+        {this.props.isAuthorized("namespace", "", ["get", "create"]) &&
+          currentModal === "NamespaceModal" && (
+            <Modal
+              onRequestClose={() => setCurrentModal(null, null)}
+              width="600px"
+              height="220px"
+            >
+              <NamespaceModal />
+            </Modal>
+          )}
+        {this.props.isAuthorized("namespace", "", ["get", "delete"]) &&
+          currentModal === "DeleteNamespaceModal" && (
+            <Modal
+              onRequestClose={() => setCurrentModal(null, null)}
+              width="700px"
+              height="280px"
+            >
+              <DeleteNamespaceModal />
+            </Modal>
+          )}
 
         {this.renderSidebar()}
 
@@ -548,7 +567,7 @@ class Home extends Component<PropsType, StateType> {
 
 Home.contextType = Context;
 
-export default withRouter(Home);
+export default withRouter(withAuth(Home));
 
 const ViewWrapper = styled.div`
   height: 100%;

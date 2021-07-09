@@ -4,6 +4,7 @@ import { BrowserRouter } from "react-router-dom";
 import { ContextProvider } from "../shared/Context";
 import Main from "./Main";
 import { RouteComponentProps, withRouter } from "react-router";
+import AuthProvider from "shared/auth/AuthContext";
 
 type PropsType = RouteComponentProps & {};
 
@@ -14,7 +15,9 @@ class MainWrapper extends Component<PropsType, StateType> {
     let { history, location } = this.props;
     return (
       <ContextProvider history={history} location={location}>
-        <Main />
+        <AuthProvider>
+          <Main />
+        </AuthProvider>
       </ContextProvider>
     );
   }

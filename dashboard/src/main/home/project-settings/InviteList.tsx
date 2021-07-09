@@ -18,6 +18,7 @@ import Heading from "components/values-form/Heading";
 import CopyToClipboard from "components/CopyToClipboard";
 import { Column } from "react-table";
 import Table from "components/Table";
+import RadioSelector from "components/RadioSelector";
 
 type Props = {};
 
@@ -26,6 +27,7 @@ const InvitePage: React.FunctionComponent<Props> = ({}) => {
   const [isLoading, setIsLoading] = useState(true);
   const [invites, setInvites] = useState<Array<InviteType>>([]);
   const [email, setEmail] = useState("");
+  const [role, setRole] = useState("viewer");
   const [isInvalidEmail, setIsInvalidEmail] = useState(false);
   const [isHTTPS] = useState(() => window.location.protocol === "https:");
 
@@ -53,7 +55,7 @@ const InvitePage: React.FunctionComponent<Props> = ({}) => {
 
   const createInvite = () => {
     api
-      .createInvite("<token>", { email }, { id: currentProject.id })
+      .createInvite("<token>", { email, kind: role }, { id: currentProject.id })
       .then(() => {
         getInviteData();
         setEmail("");
@@ -75,11 +77,15 @@ const InvitePage: React.FunctionComponent<Props> = ({}) => {
       .catch((err) => console.log(err));
   };
 
-  const replaceInvite = (inviteEmail: string, inviteId: number) => {
+  const replaceInvite = (
+    inviteEmail: string,
+    inviteId: number,
+    kind: string
+  ) => {
     api
       .createInvite(
         "<token>",
-        { email: inviteEmail },
+        { email: inviteEmail, kind },
         { id: currentProject.id }
       )
       .then(() =>
@@ -113,12 +119,22 @@ const InvitePage: React.FunctionComponent<Props> = ({}) => {
       id: number;
       status: string;
       invite_link: string;
+      kind: string;
     }>[]
   >(
     () => [
       {
         Header: "Mail address",
         accessor: "email",
+      },
+      {
+        Header: "Role",
+        accessor: "kind",
+        Cell: ({ row }) => {
+          return (
+            <Status status={"accepted"}>{row.values.kind || "Admin"}</Status>
+          );
+        },
       },
       {
         Header: "Status",
@@ -136,7 +152,13 @@ const InvitePage: React.FunctionComponent<Props> = ({}) => {
           if (row.values.status === "expired") {
             return (
               <NewLinkButton
-                onClick={() => replaceInvite(row.values.email, row.values.id)}
+                onClick={() =>
+                  replaceInvite(
+                    row.values.email,
+                    row.values.id,
+                    row.values.kind
+                  )
+                }
               >
                 <u>Generate a new link</u>
               </NewLinkButton>
@@ -157,8 +179,17 @@ const InvitePage: React.FunctionComponent<Props> = ({}) => {
         },
       },
       {
-        accessor: "id",
-        Cell: ({ row }) => {
+        id: "edit_action",
+        Cell: ({ row }: any) => {
+          if (row.values.status === "accepted") {
+            return <CopyButton>Edit</CopyButton>;
+          }
+          return null;
+        },
+      },
+      {
+        id: "remove_invite_action",
+        Cell: ({ row }: any) => {
           if (row.values.status === "accepted") {
             return <CopyButton invis={true}>Remove</CopyButton>;
           }
@@ -217,7 +248,7 @@ const InvitePage: React.FunctionComponent<Props> = ({}) => {
   return (
     <>
       <Heading isAtTop={true}>Share Project</Heading>
-      <Helper>Generate a project invite for another admin user.</Helper>
+      <Helper>Generate a project invite for another user.</Helper>
       <InputRowWrapper>
         <InputRow
           value={email}
@@ -227,6 +258,18 @@ const InvitePage: React.FunctionComponent<Props> = ({}) => {
           placeholder="ex: mrp@getporter.dev"
         />
       </InputRowWrapper>
+      <Helper>Select the role the user will have.</Helper>
+      <RoleSelectorWrapper>
+        <RadioSelector
+          selected={role}
+          setSelected={setRole}
+          options={[
+            { value: "admin", label: "Admin" },
+            { value: "developer", label: "Developer" },
+            { value: "viewer", label: "Viewer" },
+          ]}
+        />
+      </RoleSelectorWrapper>
       <ButtonWrapper>
         <InviteButton disabled={false} onClick={() => validateEmail()}>
           Create Invite
@@ -258,6 +301,10 @@ const InvitePage: React.FunctionComponent<Props> = ({}) => {
 };
 
 export default InvitePage;
+
+const RoleSelectorWrapper = styled.div`
+  font-size: 14px;
+`;
 
 const Placeholder = styled.div`
   width: 100%;

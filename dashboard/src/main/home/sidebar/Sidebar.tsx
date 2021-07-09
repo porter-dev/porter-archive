@@ -240,9 +240,9 @@ class Sidebar extends Component<PropsType, StateType> {
             <Img src={integrations} />
             Integrations
           </NavButton>
-          {this.context.currentProject.roles.filter((obj: any) => {
+          {this.context.currentProject?.roles?.filter((obj: any) => {
             return obj.user_id === this.context.user.userId;
-          })[0].kind === "admin" && (
+          })[0].kind === "admin" || (
             <NavButton
               onClick={() =>
                 pushFiltered(this.props, "/project-settings", ["project_id"])

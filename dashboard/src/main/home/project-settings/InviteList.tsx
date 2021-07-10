@@ -291,14 +291,20 @@ const InvitePage: React.FunctionComponent<Props> = ({}) => {
             );
           }
           return (
-            <>
-              <CopyButton
+            <Flex>
+              <SettingsButton
+                invis={row.original.currentUser}
+                onClick={() => openEditModal(row.original)}
+              >
+                <i className="material-icons">more_vert</i>
+              </SettingsButton>
+              <DeleteButton
                 invis={row.original.currentUser}
                 onClick={() => deleteInvite(row.original.id)}
               >
-                Delete Invite
-              </CopyButton>
-            </>
+                <i className="material-icons">delete</i>
+              </DeleteButton>
+            </Flex>
           );
         },
       },

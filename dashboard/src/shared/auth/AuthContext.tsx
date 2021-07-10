@@ -26,7 +26,6 @@ const AuthProvider: React.FC = ({ children }) => {
             return;
           }
           const currentPolicy = res.data[0];
-          console.log(currentPolicy);
           setCurrentPolicy(
             populatePolicy(
               currentPolicy,

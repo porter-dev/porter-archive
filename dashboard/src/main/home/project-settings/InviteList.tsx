@@ -176,7 +176,6 @@ const InvitePage: React.FunctionComponent<Props> = ({}) => {
 
   const openEditModal = (user: any) => {
     if (setCurrentModal) {
-      console.log(user);
       setCurrentModal("EditInviteOrCollaboratorModal", {
         user,
         isInvite: user.status !== "accepted",
@@ -216,9 +215,7 @@ const InvitePage: React.FunctionComponent<Props> = ({}) => {
         Header: "Role",
         accessor: "kind",
         Cell: ({ row }) => {
-          return (
-            <Role>{row.values.kind || "Admin"}</Role>
-          );
+          return <Role>{row.values.kind || "Admin"}</Role>;
         },
       },
       {
@@ -325,7 +322,6 @@ const InvitePage: React.FunctionComponent<Props> = ({}) => {
     const mappedInviteList = inviteList.map(
       ({ accepted, expired, token, ...rest }) => {
         const currentUser: boolean = user.email === rest.email;
-        console.log(currentUser, user, rest);
         if (accepted) {
           return {
             status: "accepted",
@@ -420,7 +416,8 @@ const Flex = styled.div`
 
 const DeleteButton = styled.div`
   display: flex;
-  visibility: ${(props: { invis?: boolean }) => props.invis ? "hidden" : "visible"};
+  visibility: ${(props: { invis?: boolean }) =>
+    props.invis ? "hidden" : "visible"};
   align-items: center;
   justify-content: center;
   width: 30px;

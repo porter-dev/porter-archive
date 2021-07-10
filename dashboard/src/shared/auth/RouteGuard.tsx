@@ -25,6 +25,9 @@ const GuardedRoute: React.FC<RouteProps & GuardedRouteProps> = ({
   }, [currentPolicy, scope, resource, verb]);
 
   const render = (props: any) => {
+    if (!currentPolicy) {
+      return <div> Loading </div>;
+    }
     if (auth) {
       return children || <Component {...props} />;
     }
@@ -44,6 +47,9 @@ export const fakeGuardedRoute = <ComponentProps extends object>(
     return isAuthorized(currentPolicy, scope, resource, verb);
   }, [currentPolicy, scope, resource, verb]);
 
+  if (!currentPolicy) {
+    return <div>"loading"</div>;
+  }
   if (auth) {
     return <Component {...props} />;
   }

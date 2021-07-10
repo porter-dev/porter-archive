@@ -213,6 +213,7 @@ const GroupEnvPreview = styled.pre`
   margin: 0 0 10px 0;
   white-space: pre-line;
   word-break: break-word;
+  user-select: text;
 `;
 
 const ClashIcon = styled.i`

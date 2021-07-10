@@ -9,7 +9,10 @@ import { Context } from "shared/Context";
 import Loading from "components/Loading";
 import SaveButton from "components/SaveButton";
 import { KeyValue } from "components/values-form/KeyValueArray";
-import { EnvGroupData } from "../cluster-dashboard/env-groups/EnvGroup";
+import {
+  EnvGroupData,
+  formattedEnvironmentValue,
+} from "../cluster-dashboard/env-groups/EnvGroup";
 
 type PropsType = {
   namespace: string;
@@ -130,7 +133,9 @@ export default class LoadEnvGroupModal extends Component<PropsType, StateType> {
                 {this.props.existingValues[key] || emptyValue}
               </ClashingKeyValue>
               <ClashingKeyLabel>Replaced by</ClashingKeyLabel>
-              <ClashingKeyValue>{value || emptyValue}</ClashingKeyValue>
+              <ClashingKeyValue>
+                {formattedEnvironmentValue(value) || emptyValue}
+              </ClashingKeyValue>
             </ClashingKeyDefinitions>
             {i !== clashingKeys.length - 1 && <ClashingKeyRowDivider />}
           </li>
@@ -164,7 +169,10 @@ export default class LoadEnvGroupModal extends Component<PropsType, StateType> {
             <SidebarSection>
               <GroupEnvPreview>
                 {Object.entries(this.state.selectedEnvGroup.data)
-                  .map(([key, value]) => `${key}=${value}`)
+                  .map(
+                    ([key, value]) =>
+                      `${key}=${formattedEnvironmentValue(value)}`
+                  )
                   .join("\n")}
               </GroupEnvPreview>
               {clashingKeys.length > 0 && (

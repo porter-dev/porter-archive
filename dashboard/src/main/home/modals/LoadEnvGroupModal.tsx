@@ -128,11 +128,11 @@ export default class LoadEnvGroupModal extends Component<PropsType, StateType> {
               <b>{key}</b> is defined in both environments
             </ClashingKeyTitle>
             <ClashingKeyDefinitions>
-              <ClashingKeyLabel>Defined as</ClashingKeyLabel>
+              <ClashingKeyLabel>Old</ClashingKeyLabel>
               <ClashingKeyValue>
                 {this.props.existingValues[key] || emptyValue}
               </ClashingKeyValue>
-              <ClashingKeyLabel>Replaced by</ClashingKeyLabel>
+              <ClashingKeyLabel>New</ClashingKeyLabel>
               <ClashingKeyValue>
                 {formattedEnvironmentValue(value) || emptyValue}
               </ClashingKeyValue>

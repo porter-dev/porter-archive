@@ -122,11 +122,15 @@ export default class LoadEnvGroupModal extends Component<PropsType, StateType> {
     return (
       <PossibleClashingKeys>
         {clashingKeys.map(({ key, value }, i) => (
-          <li key={key}>
-            <ClashingKeyTitle>
-              <ClashIcon className="material-icons">sync_problem</ClashIcon>
-              <b>{key}</b> is defined in both environments
-            </ClashingKeyTitle>
+          <ClashingKeyItem key={key}>
+            <ClashingKeyTop>
+              <ClashIconWrapper>
+                <ClashIcon className="material-icons">sync_problem</ClashIcon>
+              </ClashIconWrapper>
+              <ClashingKeyExplanation>
+                <b>{key}</b> is defined in both environments
+              </ClashingKeyExplanation>
+            </ClashingKeyTop>
             <ClashingKeyDefinitions>
               <ClashingKeyLabel>Old</ClashingKeyLabel>
               <ClashingKeyValue>
@@ -137,8 +141,7 @@ export default class LoadEnvGroupModal extends Component<PropsType, StateType> {
                 {formattedEnvironmentValue(value) || emptyValue}
               </ClashingKeyValue>
             </ClashingKeyDefinitions>
-            {i !== clashingKeys.length - 1 && <ClashingKeyRowDivider />}
-          </li>
+          </ClashingKeyItem>
         ))}
       </PossibleClashingKeys>
     );
@@ -216,9 +219,18 @@ const GroupEnvPreview = styled.pre`
   user-select: text;
 `;
 
+const ClashingKeyExplanation = styled.div`
+  padding: 10px 15px;
+`;
+
+const ClashIconWrapper = styled.div`
+  padding: 10px;
+  background: #3d4048;
+  display: flex;
+  align-items: center;
+`;
+
 const ClashIcon = styled.i`
-  float: left;
-  margin-inline-end: 4px;
   font-size: 18px;
 `;
 
@@ -269,7 +281,7 @@ const GroupModalSections = styled.div`
   display: grid;
   gap: 10px;
   grid-template-columns: 1fr 1fr;
-  max-height: 160px;
+  max-height: 365px;
 `;
 
 const PossibleClashingKeys = styled.ul`
@@ -283,6 +295,11 @@ const PossibleClashingKeys = styled.ul`
   }
 `;
 
+const ClashingKeyItem = styled.li`
+  border: 1px solid #292c31;
+  border-radius: 5px;
+`;
+
 const ClashingKeyRowDivider = styled.hr`
   margin: 16px 0;
   border: 1px solid #27292f;
@@ -290,18 +307,23 @@ const ClashingKeyRowDivider = styled.hr`
 
 const ClashingKeyDefinitions = styled.div`
   grid-template-columns: min-content auto;
+  padding: 5px 0;
   column-gap: 6px;
-  row-gap: 4px;
   display: grid;
 `;
 
 const ClashingKeyLabel = styled.p`
   margin: 0px;
+  font-weight: bold;
+  padding: 5px 10px;
   white-space: nowrap;
 `;
 
 const ClashingKeyValue = styled.p`
   margin: 0px;
+  display: flex;
+  padding: 0;
+  align-items: center;
   word-break: break-word;
 `;
 
@@ -310,7 +332,6 @@ const EnvGroupList = styled.div`
   border-radius: 3px;
   background: #ffffff11;
   border: 1px solid #ffffff44;
-  max-height: 160px;
   overflow-y: auto;
 `;
 
@@ -321,9 +342,15 @@ const Subtitle = styled.div`
   color: #aaaabb;
 `;
 
+const ClashingKeyTop = styled.div`
+  padding: 10px 15px;
+  background: #2e3035;
+  display: flex;
+  align-items: stretch;
+`;
+
 const ClashingKeyTitle = styled(Subtitle)`
-  margin-top: 0;
-  margin-bottom: 12px;
+  padding: 10px 15px;
 `;
 
 const ModalTitle = styled.div`

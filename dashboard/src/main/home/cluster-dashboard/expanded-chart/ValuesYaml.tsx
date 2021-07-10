@@ -12,6 +12,7 @@ import SaveButton from "components/SaveButton";
 type PropsType = {
   currentChart: ChartType;
   refreshChart: () => void;
+  disabled?: boolean;
 };
 
 type StateType = {
@@ -89,14 +90,17 @@ export default class ValuesYaml extends Component<PropsType, StateType> {
           <YamlEditor
             value={this.state.values}
             onChange={(e: any) => this.setState({ values: e })}
+            readOnly={this.props.disabled}
           />
         </Wrapper>
-        <SaveButton
-          text="Update Values"
-          onClick={this.handleSaveValues}
-          status={this.state.saveValuesStatus}
-          makeFlush={true}
-        />
+        {!this.props.disabled && (
+          <SaveButton
+            text="Update Values"
+            onClick={this.handleSaveValues}
+            status={this.state.saveValuesStatus}
+            makeFlush={true}
+          />
+        )}
       </StyledValuesYaml>
     );
   }

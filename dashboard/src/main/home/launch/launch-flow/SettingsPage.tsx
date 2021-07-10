@@ -19,8 +19,9 @@ import Helper from "components/values-form/Helper";
 import FormWrapper from "components/values-form/FormWrapper";
 import Selector from "components/Selector";
 import Loading from "components/Loading";
+import { withAuth, WithAuthProps } from "shared/auth/AuthorizationHoc";
 
-type PropsType = {
+type PropsType = WithAuthProps & {
   onSubmit: (x?: any) => void;
   hasSource: boolean;
   setPage: (x: string) => void;
@@ -44,7 +45,7 @@ type StateType = {
   namespaceOptions: { label: string; value: string }[];
 };
 
-export default class SettingsPage extends Component<PropsType, StateType> {
+class SettingsPage extends Component<PropsType, StateType> {
   state = {
     tabOptions: [] as ChoiceType[],
     currentTab: "",
@@ -152,6 +153,9 @@ export default class SettingsPage extends Component<PropsType, StateType> {
               clusterId: this.context.currentCluster.id,
               isLaunch: true,
             }}
+            isReadOnly={
+              !this.props.isAuthorized("namespace", "", ["get", "create"])
+            }
             onSubmit={onSubmit}
           />
         </>
@@ -261,7 +265,10 @@ export default class SettingsPage extends Component<PropsType, StateType> {
               refreshOptions={() => {
                 this.updateNamespaces(this.context.currentCluster.id);
               }}
-              addButton={true}
+              addButton={this.props.isAuthorized("namespace", "", [
+                "get",
+                "create",
+              ])}
               activeValue={selectedNamespace}
               setActiveValue={setSelectedNamespace}
               options={this.state.namespaceOptions}
@@ -278,6 +285,8 @@ export default class SettingsPage extends Component<PropsType, StateType> {
 }
 
 SettingsPage.contextType = Context;
+
+export default withAuth(SettingsPage);
 
 const LoadingWrapper = styled.div`
   margin-top: 80px;

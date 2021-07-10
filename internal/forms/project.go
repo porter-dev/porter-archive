@@ -3,7 +3,6 @@ package forms
 import (
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/repository"
-	"gorm.io/gorm"
 )
 
 // WriteProjectForm is a generic form for write operations to the Project model
@@ -24,20 +23,8 @@ func (cpf *CreateProjectForm) ToProject(_ repository.ProjectRepository) (*models
 	}, nil
 }
 
-// CreateProjectRoleForm represents the accepted values for creating a project
+// UpdateProjectRoleForm represents the accepted values for updating a project
 // role
-type CreateProjectRoleForm struct {
-	WriteProjectForm
-	ID    uint          `json:"project_id" form:"required"`
-	Roles []models.Role `json:"roles"`
-}
-
-// ToProject converts the form to a gorm project model
-func (cprf *CreateProjectRoleForm) ToProject(_ repository.ProjectRepository) (*models.Project, error) {
-	return &models.Project{
-		Model: gorm.Model{
-			ID: cprf.ID,
-		},
-		Roles: cprf.Roles,
-	}, nil
+type UpdateProjectRoleForm struct {
+	Kind string `json:"kind"`
 }

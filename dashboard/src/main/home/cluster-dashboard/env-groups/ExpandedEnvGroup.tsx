@@ -15,8 +15,9 @@ import TabRegion from "components/TabRegion";
 import EnvGroupArray, { KeyValueType } from "./EnvGroupArray";
 import Heading from "components/values-form/Heading";
 import Helper from "components/values-form/Helper";
+import { withAuth, WithAuthProps } from "shared/auth/AuthorizationHoc";
 
-type PropsType = {
+type PropsType = WithAuthProps & {
   namespace: string;
   envGroup: any;
   currentCluster: ClusterType;
@@ -30,6 +31,7 @@ type StateType = {
   deleting: boolean;
   saveValuesStatus: string | null;
   envVariables: KeyValueType[];
+  tabOptions: { value: string; label: string }[];
 };
 
 const tabOptions = [
@@ -37,7 +39,7 @@ const tabOptions = [
   { value: "settings", label: "Settings" },
 ];
 
-export default class ExpandedEnvGroup extends Component<PropsType, StateType> {
+class ExpandedEnvGroup extends Component<PropsType, StateType> {
   state = {
     loading: true,
     currentTab: "environment",
@@ -45,6 +47,10 @@ export default class ExpandedEnvGroup extends Component<PropsType, StateType> {
     deleting: false,
     saveValuesStatus: null as string | null,
     envVariables: [] as KeyValueType[],
+    tabOptions: [
+      { value: "environment", label: "Environment Variables" },
+      { value: "settings", label: "Settings" },
+    ],
   };
 
   componentDidMount() {
@@ -63,6 +69,21 @@ export default class ExpandedEnvGroup extends Component<PropsType, StateType> {
     }
 
     this.setState({ envVariables });
+
+    // Filter the settings tab options as for now it only shows the delete button.
+    // In a future this should be removed and return to a constant if we want to show data
+    // inside the settings tab. (This is make to avoid confussion for the user)
+    this.setState((prevState) => {
+      return {
+        ...prevState,
+        tabOptions: prevState.tabOptions.filter((option) => {
+          if (option.value === "settings") {
+            return this.props.isAuthorized("env_group", "", ["get", "delete"]);
+          }
+          return true;
+        }),
+      };
+    });
   }
 
   handleUpdateValues = () => {
@@ -170,32 +191,44 @@ export default class ExpandedEnvGroup extends Component<PropsType, StateType> {
                 setValues={(x: any) => this.setState({ envVariables: x })}
                 fileUpload={true}
                 secretOption={true}
+                disabled={
+                  !this.props.isAuthorized("env_group", "", [
+                    "get",
+                    "create",
+                    "delete",
+                    "update",
+                  ])
+                }
               />
             </InnerWrapper>
-            <SaveButton
-              text="Update"
-              onClick={() => this.handleUpdateValues()}
-              status={this.state.saveValuesStatus}
-              makeFlush={true}
-            />
+            {this.props.isAuthorized("env_group", "", ["get", "update"]) && (
+              <SaveButton
+                text="Update"
+                onClick={() => this.handleUpdateValues()}
+                status={this.state.saveValuesStatus}
+                makeFlush={true}
+              />
+            )}
           </TabWrapper>
         );
       default:
         return (
           <TabWrapper>
-            <InnerWrapper full={true}>
-              <Heading>Manage Environment Group</Heading>
-              <Helper>
-                Permanently delete this set of environment variables. This
-                action cannot be undone.
-              </Helper>
-              <Button
-                color="#b91133"
-                onClick={() => this.setState({ showDeleteOverlay: true })}
-              >
-                Delete {name}
-              </Button>
-            </InnerWrapper>
+            {this.props.isAuthorized("env_group", "", ["get", "delete"]) && (
+              <InnerWrapper full={true}>
+                <Heading>Manage Environment Group</Heading>
+                <Helper>
+                  Permanently delete this set of environment variables. This
+                  action cannot be undone.
+                </Helper>
+                <Button
+                  color="#b91133"
+                  onClick={() => this.setState({ showDeleteOverlay: true })}
+                >
+                  Delete {name}
+                </Button>
+              </InnerWrapper>
+            )}
           </TabWrapper>
         );
     }
@@ -292,7 +325,7 @@ export default class ExpandedEnvGroup extends Component<PropsType, StateType> {
           <TabRegion
             currentTab={this.state.currentTab}
             setCurrentTab={(x: string) => this.setState({ currentTab: x })}
-            options={tabOptions}
+            options={this.state.tabOptions}
             color={null}
           >
             {this.renderTabContents()}
@@ -304,6 +337,8 @@ export default class ExpandedEnvGroup extends Component<PropsType, StateType> {
 }
 
 ExpandedEnvGroup.contextType = Context;
+
+export default withAuth(ExpandedEnvGroup);
 
 const Button = styled.button`
   height: 35px;

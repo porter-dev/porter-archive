@@ -87,7 +87,7 @@ const EditCollaboratorModal = () => {
       </CloseButton>
 
       <ModalTitle>
-        Update {isInvite ? "Invite" : "Collaborator"} {user?.email}
+        Update {isInvite ? "Invite for" : "Collaborator"} {user?.email}
       </ModalTitle>
       <Subtitle>Specify a different role for this user.</Subtitle>
       <RoleSelectorWrapper>

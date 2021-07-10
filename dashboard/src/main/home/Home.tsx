@@ -42,6 +42,9 @@ const GuardedProjectSettings = fakeGuardedRoute("settings", "", [
 const GuardedIntegrations = fakeGuardedRoute("integrations", "", [
   "get",
   "list",
+  "update",
+  "create",
+  "delete",
 ])(Integrations);
 
 type PropsType = RouteComponentProps &

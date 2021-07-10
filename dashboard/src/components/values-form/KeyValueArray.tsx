@@ -146,8 +146,8 @@ export default class KeyValueArray extends Component<PropsType, StateType> {
       return (
         <Modal
           onRequestClose={() => this.setState({ showEnvModal: false })}
-          width="665px"
-          height="342px"
+          width="765px"
+          height="542px"
         >
           <LoadEnvGroupModal
             existingValues={this.props.values}

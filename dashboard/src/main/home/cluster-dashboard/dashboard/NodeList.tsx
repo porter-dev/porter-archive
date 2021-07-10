@@ -18,11 +18,11 @@ const NodeList: React.FC = () => {
   const columns = useMemo<Column<any>[]>(
     () => [
       {
-        Header: "Node name",
+        Header: "Node Name",
         accessor: "name",
       },
       {
-        Header: "Machine type",
+        Header: "Machine Type",
         accessor: "machine_type",
       },
       {

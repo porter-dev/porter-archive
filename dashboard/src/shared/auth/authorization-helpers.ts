@@ -98,7 +98,6 @@ export const populatePolicy = (
   parentVerbs: Array<Verbs>
 ) => {
   const currTree = tree[currScope];
-
   const treeKeys = Object.keys(currTree) as Array<ScopeType>;
 
   currPolicy.children = currPolicy?.children || {};

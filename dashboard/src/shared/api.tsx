@@ -954,6 +954,11 @@ const removeCollaborator = baseApi<{}, { project_id: number; user_id: number }>(
   ({ project_id, user_id }) => `/api/projects/${project_id}/roles/${user_id}`
 );
 
+const getPolicyDocument = baseApi<{}, { project_id: number }>(
+  "GET",
+  ({ project_id }) => `/api/projects/${project_id}/policy`
+);
+
 // Bundle export to allow default api import (api.<method> is more readable)
 export default {
   checkAuth,
@@ -1052,4 +1057,5 @@ export default {
   getCollaborators,
   updateCollaborator,
   removeCollaborator,
+  getPolicyDocument,
 };

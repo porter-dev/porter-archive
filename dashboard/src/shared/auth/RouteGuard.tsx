@@ -39,9 +39,12 @@ export const fakeGuardedRoute = <ComponentProps extends object>(
   resource: string,
   verb: Verbs | Array<Verbs>
 ) => (Component: any) => (props: ComponentProps) => {
-  const authContext = useContext(AuthContext);
+  const { currentPolicy } = useContext(AuthContext);
+  const auth = useMemo(() => {
+    return isAuthorized(currentPolicy, scope, resource, verb);
+  }, [currentPolicy, scope, resource, verb]);
 
-  if (isAuthorized(authContext.currentPolicy, scope, resource, verb)) {
+  if (auth) {
     return <Component {...props} />;
   }
 

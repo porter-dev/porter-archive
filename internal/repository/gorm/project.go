@@ -41,6 +41,22 @@ func (repo *ProjectRepository) CreateProjectRole(project *models.Project, role *
 	return role, nil
 }
 
+func (repo *ProjectRepository) UpdateProjectRole(projID uint, role *models.Role) (*models.Role, error) {
+	foundRole := &models.Role{}
+
+	if err := repo.db.Where("project_id = ? AND user_id = ?", projID, role.UserID).First(&foundRole).Error; err != nil {
+		return nil, err
+	}
+
+	role.ID = foundRole.ID
+
+	if err := repo.db.Save(&role).Error; err != nil {
+		return nil, err
+	}
+
+	return role, nil
+}
+
 // ReadProject gets a projects specified by a unique id
 func (repo *ProjectRepository) ReadProject(id uint) (*models.Project, error) {
 	project := &models.Project{}
@@ -50,6 +66,18 @@ func (repo *ProjectRepository) ReadProject(id uint) (*models.Project, error) {
 	}
 
 	return project, nil
+}
+
+// ReadProject gets a projects specified by a unique id
+func (repo *ProjectRepository) ReadProjectRole(projID, userID uint) (*models.Role, error) {
+	// find the role
+	role := &models.Role{}
+
+	if err := repo.db.Where("project_id = ? AND user_id = ?", projID, userID).First(&role).Error; err != nil {
+		return nil, err
+	}
+
+	return role, nil
 }
 
 // ListProjectsByUserID lists projects where a user has an associated role
@@ -65,10 +93,36 @@ func (repo *ProjectRepository) ListProjectsByUserID(userID uint) ([]*models.Proj
 	return projects, nil
 }
 
+// ReadProject gets a projects specified by a unique id
+func (repo *ProjectRepository) ListProjectRoles(projID uint) ([]models.Role, error) {
+	project := &models.Project{}
+
+	if err := repo.db.Preload("Roles").Where("id = ?", projID).First(&project).Error; err != nil {
+		return nil, err
+	}
+
+	return project.Roles, nil
+}
+
 // DeleteProject deletes a project (marking deleted in the db)
 func (repo *ProjectRepository) DeleteProject(project *models.Project) (*models.Project, error) {
 	if err := repo.db.Delete(&project).Error; err != nil {
 		return nil, err
 	}
 	return project, nil
+}
+
+func (repo *ProjectRepository) DeleteProjectRole(projID, userID uint) (*models.Role, error) {
+	// find the role
+	role := &models.Role{}
+
+	if err := repo.db.Where("project_id = ? AND user_id = ?", projID, userID).First(&role).Error; err != nil {
+		return nil, err
+	}
+
+	if err := repo.db.Delete(&role).Error; err != nil {
+		return nil, err
+	}
+
+	return role, nil
 }

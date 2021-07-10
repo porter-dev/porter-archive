@@ -76,6 +76,13 @@ export default class EnvGroup extends Component<PropsType, StateType> {
   }
 }
 
+export function formattedEnvironmentValue(value: string) {
+  if (value.startsWith("PORTERSECRET_")) {
+    return "••••";
+  }
+  return value;
+}
+
 EnvGroup.contextType = Context;
 
 const BottomWrapper = styled.div`

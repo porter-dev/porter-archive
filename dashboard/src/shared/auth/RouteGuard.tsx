@@ -5,6 +5,8 @@ import { AuthContext } from "./AuthContext";
 import { isAuthorized } from "./authorization-helpers";
 import { ScopeType, Verbs } from "./types";
 
+import Loading from "components/Loading";
+
 type GuardedRouteProps = {
   scope: ScopeType;
   resource: string;
@@ -48,7 +50,7 @@ export const fakeGuardedRoute = <ComponentProps extends object>(
   }, [currentPolicy, scope, resource, verb]);
 
   if (!currentPolicy) {
-    return <div>"loading"</div>;
+    return <Loading />;
   }
   if (auth) {
     return <Component {...props} />;

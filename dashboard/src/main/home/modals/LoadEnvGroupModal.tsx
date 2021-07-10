@@ -1,5 +1,5 @@
 import React, { Component } from "react";
-import styled from "styled-components";
+import styled, { css } from "styled-components";
 import close from "assets/close.png";
 import sliders from "assets/sliders.svg";
 
@@ -156,11 +156,11 @@ export default class LoadEnvGroupModal extends Component<PropsType, StateType> {
         </Subtitle>
 
         <GroupModalSections>
-          <SidebarSection>
+          <SidebarSection $expanded={!this.state.selectedEnvGroup}>
             <EnvGroupList>{this.renderEnvGroupList()}</EnvGroupList>
           </SidebarSection>
 
-          {this.state.selectedEnvGroup ? (
+          {this.state.selectedEnvGroup && (
             <SidebarSection>
               <GroupEnvPreview>
                 {Object.entries(this.state.selectedEnvGroup.data)
@@ -174,8 +174,6 @@ export default class LoadEnvGroupModal extends Component<PropsType, StateType> {
                 </>
               )}
             </SidebarSection>
-          ) : (
-            <i>Select an environment group.</i>
           )}
         </GroupModalSections>
 
@@ -192,9 +190,14 @@ export default class LoadEnvGroupModal extends Component<PropsType, StateType> {
 
 LoadEnvGroupModal.contextType = Context;
 
-const SidebarSection = styled.section`
+const SidebarSection = styled.section<{ $expanded?: boolean }>`
   height: 100%;
   overflow-y: auto;
+  ${(props) =>
+    props.$expanded &&
+    css`
+      grid-column: span 2;
+    `}
 `;
 
 const GroupEnvPreview = styled.pre`

@@ -86,9 +86,11 @@ class ContextProvider extends Component<PropsType, StateType> {
     },
     currentProject: null,
     setCurrentProject: (currentProject: ProjectType, callback?: any) => {
-      pushQueryParams(this.props, { project_id: currentProject.id.toString() });
       if (currentProject) {
         localStorage.setItem("currentProject", currentProject.id.toString());
+        pushQueryParams(this.props, {
+          project_id: currentProject.id.toString(),
+        });
       } else {
         localStorage.removeItem("currentProject");
       }

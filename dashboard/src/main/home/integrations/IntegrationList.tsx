@@ -134,7 +134,7 @@ export default class IntegrationList extends Component<PropsType, StateType> {
             label={label}
             toggleCollapse={(e: MouseEvent) => this.toggleDisplay(e, i)}
             triggerDelete={(e: MouseEvent) => this.triggerDelete(e, i, item_id)}
-          ></IntegrationRow>
+          />
         );
       });
     } else if (integrations && integrations.length > 0) {

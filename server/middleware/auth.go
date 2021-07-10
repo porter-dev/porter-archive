@@ -163,6 +163,7 @@ type AccessType string
 
 // The various access types
 const (
+	AdminAccess AccessType = "admin"
 	ReadAccess  AccessType = "read"
 	WriteAccess AccessType = "write"
 )
@@ -221,16 +222,20 @@ func (auth *Auth) DoesUserHaveProjectAccess(
 		// look for the user role in the project
 		for _, role := range proj.Roles {
 			if role.UserID == userID {
-				if accessType == ReadAccess {
-					next.ServeHTTP(w, r)
-					return
-				} else if accessType == WriteAccess {
+				if accessType == AdminAccess {
 					if role.Kind == models.RoleAdmin {
 						next.ServeHTTP(w, r)
 						return
 					}
+				} else if accessType == WriteAccess {
+					if role.Kind == models.RoleAdmin || role.Kind == models.RoleDeveloper {
+						next.ServeHTTP(w, r)
+						return
+					}
+				} else if accessType == ReadAccess {
+					next.ServeHTTP(w, r)
+					return
 				}
-
 			}
 		}
 

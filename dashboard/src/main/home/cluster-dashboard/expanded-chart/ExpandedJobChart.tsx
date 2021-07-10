@@ -430,6 +430,10 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
       />
     );
 
+    if (!this.props.isAuthorized("job", "", ["get", "update", "create"])) {
+      saveButton = null;
+    }
+
     switch (currentTab) {
       case "jobs":
         if (this.state.imageIsPlaceholder) {

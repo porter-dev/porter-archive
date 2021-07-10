@@ -210,8 +210,8 @@ const SearchRow = styled.div`
   min-width: 300px;
   max-width: min-content;
   background: #ffffff11;
-  margin-bottom: 7px;
-  margin-top: 7px;
+  margin-bottom: 15px;
+  margin-top: 0px;
   i {
     width: 18px;
     height: 18px;

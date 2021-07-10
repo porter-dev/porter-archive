@@ -7,31 +7,43 @@ import InvitePage from "./InviteList";
 import TabRegion from "components/TabRegion";
 import Heading from "components/values-form/Heading";
 import Helper from "components/values-form/Helper";
+import { withAuth, WithAuthProps } from "shared/auth/AuthorizationHoc";
 
-type PropsType = {};
+type PropsType = WithAuthProps & {};
 
 type StateType = {
   projectName: string;
   currentTab: string;
+  tabOptions: { value: string; label: string }[];
 };
 
-const tabOptions = [
-  { value: "manage-access", label: "Manage Access" },
-  { value: "additional-settings", label: "Additional Settings" },
-];
-
-export default class ProjectSettings extends Component<PropsType, StateType> {
+class ProjectSettings extends Component<PropsType, StateType> {
   state = {
     projectName: "",
     currentTab: "manage-access",
+    tabOptions: [] as { value: string; label: string }[],
   };
 
   componentDidMount() {
     let { currentProject } = this.context;
     this.setState({ projectName: currentProject.name });
+    const tabOptions = [];
+    tabOptions.push({ value: "manage-access", label: "Manage Access" });
+    if (this.props.isAuthorized("settings", "", ["get", "delete"])) {
+      tabOptions.push({
+        value: "additional-settings",
+        label: "Additional Settings",
+      });
+    }
+
+    this.setState({ tabOptions });
   }
 
   renderTabContents = () => {
+    if (!this.props.isAuthorized("settings", "", ["get", "delete"])) {
+      return <InvitePage />;
+    }
+
     if (this.state.currentTab === "manage-access") {
       return <InvitePage />;
     } else {
@@ -85,7 +97,7 @@ export default class ProjectSettings extends Component<PropsType, StateType> {
         <TabRegion
           currentTab={this.state.currentTab}
           setCurrentTab={(x: string) => this.setState({ currentTab: x })}
-          options={tabOptions}
+          options={this.state.tabOptions}
         >
           {this.renderTabContents()}
         </TabRegion>
@@ -95,6 +107,8 @@ export default class ProjectSettings extends Component<PropsType, StateType> {
 }
 
 ProjectSettings.contextType = Context;
+
+export default withAuth(ProjectSettings);
 
 const Warning = styled.div`
   font-size: 13px;

@@ -31,6 +31,7 @@ export type TableProps = {
   onRowClick?: (row: Row) => void;
   isLoading: boolean;
   disableGlobalFilter?: boolean;
+  disableHover?: boolean;
 };
 
 const Table: React.FC<TableProps> = ({
@@ -39,6 +40,7 @@ const Table: React.FC<TableProps> = ({
   onRowClick,
   isLoading,
   disableGlobalFilter = false,
+  disableHover,
 }) => {
   const {
     getTableProps,
@@ -53,7 +55,7 @@ const Table: React.FC<TableProps> = ({
       columns: columnsData,
       data,
     },
-    useGlobalFilter
+    useGlobalFilter,
   );
 
   const renderRows = () => {
@@ -81,6 +83,7 @@ const Table: React.FC<TableProps> = ({
 
           return (
             <StyledTr
+              disableHover={disableHover}
               {...row.getRowProps()}
               enablePointer={!!onRowClick}
               onClick={() => onRowClick && onRowClick(row)}
@@ -161,6 +164,8 @@ export const StyledTd = styled.td`
 
 export const StyledTHead = styled.thead`
   width: 100%;
+  border-top: 1px solid #aaaabb22;
+  border-bottom: 1px solid #aaaabb22;
 `;
 
 export const StyledTh = styled.th`

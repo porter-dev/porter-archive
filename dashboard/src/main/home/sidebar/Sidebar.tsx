@@ -234,7 +234,12 @@ class Sidebar extends Component<PropsType, StateType> {
             Launch
           </NavButton>
 
-          {this.props.isAuthorized("integrations", "", ["get"]) && (
+          {this.props.isAuthorized("integrations", "", [
+            "get",
+            "create",
+            "update",
+            "delete",
+          ]) && (
             <NavButton
               selected={currentView === "integrations"}
               onClick={() =>

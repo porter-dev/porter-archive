@@ -27,6 +27,6 @@ You will note that the user that created the project will not be displayed on th
 
 # Removing Collaborators
 
-To remove an invite or a collaborator, you must be logged in with an **Admin** role. As an admin, you will se a **Settings** tab in the sidebar. Navigate to **Settings** and lookup on the table the invite/collaborator that you want to remove then click the trash icon when you're removing an invite.
+To remove an invite or a collaborator, you must be logged in with an **Admin** role. As an admin, you will se a **Settings** tab in the sidebar. Navigate to **Settings** and lookup on the table the invite/collaborator that you want to remove then click the trash icon to remove the user from the project or delete the invite.
 
 ![image](https://user-images.githubusercontent.com/23369263/125147206-3d528580-e100-11eb-9a58-51885ab8b298.png)

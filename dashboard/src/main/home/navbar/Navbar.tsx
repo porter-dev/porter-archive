@@ -64,22 +64,6 @@ class Navbar extends Component<PropsType, StateType> {
   render() {
     return (
       <StyledNavbar>
-        <AuthContext.Consumer>
-          {(value) => (
-            <PolicySelector
-              value={this.state.currentPolicy}
-              onChange={(e) => {
-                value.setPolicy(e.target.value as any);
-                this.setState({ currentPolicy: e.target.value as string });
-              }}
-            >
-              <MenuItem value={"admin"}>Admin</MenuItem>
-              <MenuItem value={"dev"}>Dev</MenuItem>
-              <MenuItem value={"viewer"}>Viewer</MenuItem>
-            </PolicySelector>
-          )}
-        </AuthContext.Consumer>
-
         {this.renderFeedbackButton()}
         <NavButton
           selected={this.state.showDropdown}

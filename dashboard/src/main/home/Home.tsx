@@ -34,6 +34,9 @@ import AccountSettingsModal from "./modals/AccountSettingsModal";
 const GuardedProjectSettings = fakeGuardedRoute("settings", "", [
   "get",
   "list",
+  "update",
+  "create",
+  "delete",
 ])(ProjectSettings);
 
 const GuardedIntegrations = fakeGuardedRoute("integrations", "", [

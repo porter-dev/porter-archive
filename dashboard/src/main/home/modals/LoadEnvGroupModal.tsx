@@ -296,6 +296,7 @@ const PossibleClashingKeys = styled.ul`
 `;
 
 const ClashingKeyItem = styled.li`
+  overflow: hidden;
   border: 1px solid #292c31;
   border-radius: 5px;
 `;
@@ -343,14 +344,9 @@ const Subtitle = styled.div`
 `;
 
 const ClashingKeyTop = styled.div`
-  padding: 10px 15px;
   background: #2e3035;
   display: flex;
   align-items: stretch;
-`;
-
-const ClashingKeyTitle = styled(Subtitle)`
-  padding: 10px 15px;
 `;
 
 const ModalTitle = styled.div`

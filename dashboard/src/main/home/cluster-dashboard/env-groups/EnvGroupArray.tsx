@@ -204,7 +204,8 @@ export default class EnvGroupArray extends Component<PropsType, StateType> {
     for (let key in envObj) {
       for (var i = 0; i < this.props.values.length; i++) {
         let existingKey = this.props.values[i]["key"];
-        if (key === existingKey) {
+        let isExistingKeyDeleted = this.props.values[i]["deleted"];
+        if (key === existingKey && !isExistingKeyDeleted) {
           _values[i]["value"] = envObj[key];
           push = false;
         }

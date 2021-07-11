@@ -22,25 +22,29 @@ export default class SaveButton extends Component<PropsType, StateType> {
       if (this.props.status === "successful") {
         return (
           <StatusWrapper successful={true}>
-            <i className="material-icons">done</i> Successfully updated
+            <i className="material-icons">done</i>
+            <StatusTextWrapper>Successfully updated</StatusTextWrapper>
           </StatusWrapper>
         );
       } else if (this.props.status === "loading") {
         return (
           <StatusWrapper successful={false}>
-            <LoadingGif src={loading} /> Updating . . .
+            <LoadingGif src={loading} />
+            <StatusTextWrapper>Updating . . .</StatusTextWrapper>
           </StatusWrapper>
         );
       } else if (this.props.status === "error") {
         return (
           <StatusWrapper successful={false}>
-            <i className="material-icons">error_outline</i> Could not update
+            <i className="material-icons">error_outline</i>
+            <StatusTextWrapper>Could not update</StatusTextWrapper>
           </StatusWrapper>
         );
       } else {
         return (
           <StatusWrapper successful={false}>
-            <i className="material-icons">error_outline</i> {this.props.status}
+            <i className="material-icons">error_outline</i>
+            <StatusTextWrapper>{this.props.status}</StatusTextWrapper>
           </StatusWrapper>
         );
       }
@@ -54,7 +58,7 @@ export default class SaveButton extends Component<PropsType, StateType> {
   render() {
     return (
       <ButtonWrapper makeFlush={this.props.makeFlush}>
-        <StatusContainer>{this.renderStatus()}</StatusContainer>
+        <div>{this.renderStatus()}</div>
         <Button
           disabled={this.props.disabled}
           onClick={this.props.onClick}
@@ -74,8 +78,13 @@ const LoadingGif = styled.img`
   margin-bottom: 0px;
 `;
 
-const StatusContainer = styled.div`
-  flex: 1;
+const StatusTextWrapper = styled.p`
+  display: -webkit-box;
+  line-clamp: 2;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  line-height: 19px;
+  margin: 0;
 `;
 
 const StatusWrapper = styled.div`
@@ -85,17 +94,14 @@ const StatusWrapper = styled.div`
   font-size: 13px;
   color: #ffffff55;
   margin-right: 25px;
-  flex: 1;
-  padding-inline-end: 10px;
-
   max-width: 500px;
-  white-space: break-spaces;
   overflow: hidden;
   text-overflow: ellipsis;
 
   > i {
     font-size: 18px;
     margin-right: 10px;
+    float: left;
     color: ${(props: { successful: boolean }) =>
       props.successful ? "#4797ff" : "#fcba03"};
   }
@@ -119,7 +125,7 @@ const ButtonWrapper = styled.div`
   display: flex;
   align-items: center;
   position: absolute;
-  justify-content: space-between;
+  justify-content: flex-end;
   ${(props: { makeFlush: boolean }) => {
     if (!props.makeFlush) {
       return `
@@ -141,6 +147,7 @@ const Button = styled.button`
   font-weight: 500;
   font-family: "Work Sans", sans-serif;
   color: white;
+  flex: 0 0 auto;
   padding: 6px 20px 7px 20px;
   text-align: left;
   border: 0;

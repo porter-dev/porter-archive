@@ -134,7 +134,8 @@ export default class LoadEnvGroupModal extends Component<PropsType, StateType> {
             <ClashingKeyDefinitions>
               <ClashingKeyLabel>Old</ClashingKeyLabel>
               <ClashingKeyValue>
-                {this.props.existingValues[key] || emptyValue}
+                {formattedEnvironmentValue(this.props.existingValues[key]) ||
+                  emptyValue}
               </ClashingKeyValue>
               <ClashingKeyLabel>New</ClashingKeyLabel>
               <ClashingKeyValue>

@@ -198,10 +198,10 @@ export default class EnvGroupArray extends Component<PropsType, StateType> {
 
   readFile = (env: string) => {
     let envObj = this.parseEnv(env, null);
-    let push = true;
     let _values = this.props.values;
 
     for (let key in envObj) {
+      let push = true;
       for (var i = 0; i < this.props.values.length; i++) {
         let existingKey = this.props.values[i]["key"];
         let isExistingKeyDeleted = this.props.values[i]["deleted"];

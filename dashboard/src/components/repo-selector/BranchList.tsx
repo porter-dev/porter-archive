@@ -46,7 +46,7 @@ const BranchList: React.FC<Props> = ({ setBranch, actionConfig }) => {
         setLoading(false);
         setError(true);
       });
-  });
+  }, []);
 
   const renderBranchList = () => {
     if (loading) {
@@ -90,6 +90,7 @@ const BranchList: React.FC<Props> = ({ setBranch, actionConfig }) => {
       <SearchBar
         setSearchFilter={setSearchFilter}
         disabled={error || loading}
+        prompt={"Search branches..."}
       />
       <BranchListWrapper>
         <ExpandedWrapper>{renderBranchList()}</ExpandedWrapper>

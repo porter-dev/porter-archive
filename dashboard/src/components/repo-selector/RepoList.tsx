@@ -168,6 +168,7 @@ const RepoList: React.FC<Props> = ({
           <SearchBar
             setSearchFilter={setSearchFilter}
             disabled={error || loading}
+            prompt={"Search repos..."}
           />
           <RepoListWrapper>
             <ExpandedWrapper>{renderRepoList()}</ExpandedWrapper>

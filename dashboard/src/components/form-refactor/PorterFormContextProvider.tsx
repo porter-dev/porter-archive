@@ -9,6 +9,8 @@ import { ShowIf, ShowIfAnd, ShowIfNot, ShowIfOr } from "../../shared/types";
 
 interface Props {
   rawFormData: PorterFormData;
+  initialVariables?: PorterFormVariableList;
+  overrideVariables?: PorterFormVariableList;
 }
 
 interface ContextProps {
@@ -65,6 +67,7 @@ export const PorterFormContextProvider: React.FC<Props> = (props) => {
         return {
           ...state,
           variables: action.mutateFunc(state.variables),
+          ...props.overrideVariables,
         };
     }
     return state;
@@ -72,8 +75,10 @@ export const PorterFormContextProvider: React.FC<Props> = (props) => {
 
   const [state, dispatch] = useReducer(handleAction, {
     components: {},
-    variables: {},
+    variables: props.initialVariables || {},
   });
+
+  console.log(state.variables);
 
   const evalShowIf = (
     vals: ShowIf,
@@ -121,9 +126,6 @@ export const PorterFormContextProvider: React.FC<Props> = (props) => {
     data: PorterFormData,
     variables: PorterFormVariableList
   ) => {
-    console.log(state.variables);
-    console.log(props.rawFormData);
-
     return {
       ...data,
       tabs: data.tabs.map((tab) => {

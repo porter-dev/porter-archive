@@ -159,7 +159,12 @@ export default class FormDebugger extends Component<PropsType, StateType> {
 
         <Heading>🎨 Rendered Form</Heading>
         <Br />
-        <PorterFormContextProvider rawFormData={formData as PorterFormData}>
+        <PorterFormContextProvider
+          rawFormData={formData as PorterFormData}
+          initialVariables={{
+            input_a: this.state.valuesToOverride.input_a.value,
+          }}
+        >
           <PorterForm
             rightTabOptions={this.state.showBonusTabs ? tabOptions : []}
             renderTabContents={this.renderTabContents}

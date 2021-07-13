@@ -49,12 +49,12 @@ const ActionConfEditor: React.FC<Props> = (props) => {
   } else if (!branch) {
     return (
       <>
-        <ExpandedWrapper>
+        <ExpandedWrapperAlt>
           <BranchList
             actionConfig={actionConfig}
             setBranch={(branch: string) => setBranch(branch)}
           />
-        </ExpandedWrapper>
+        </ExpandedWrapperAlt>
         <Br />
         <BackButton
           width="135px"

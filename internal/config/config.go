@@ -41,6 +41,11 @@ type ServerConf struct {
 	GithubClientSecret string `env:"GITHUB_CLIENT_SECRET"`
 	GithubLoginEnabled bool   `env:"GITHUB_LOGIN_ENABLED,default=true"`
 
+	GithubAppClientID      string `env:"GITHUB_APP_CLIENT_ID"`
+	GithubAppClientSecret  string `env:"GITHUB_APP_CLIENT_SECRET"`
+	GithubAppName          string `env:"GITHUB_APP_NAME"`
+	GithubAppWebhookSecret string `env:"GITHUB_APP_WEBHOOK_SECRET"`
+
 	GoogleClientID         string `env:"GOOGLE_CLIENT_ID"`
 	GoogleClientSecret     string `env:"GOOGLE_CLIENT_SECRET"`
 	GoogleRestrictedDomain string `env:"GOOGLE_RESTRICTED_DOMAIN"`
@@ -52,10 +57,15 @@ type ServerConf struct {
 	SendgridProjectInviteTemplateID string `env:"SENDGRID_INVITE_TEMPLATE_ID"`
 	SendgridSenderEmail             string `env:"SENDGRID_SENDER_EMAIL"`
 
-	DOClientID          string `env:"DO_CLIENT_ID"`
-	DOClientSecret      string `env:"DO_CLIENT_SECRET"`
-	ProvisionerImageTag string `env:"PROV_IMAGE_TAG,default=latest"`
-	SegmentClientKey    string `env:"SEGMENT_CLIENT_KEY"`
+	DOClientID                 string `env:"DO_CLIENT_ID"`
+	DOClientSecret             string `env:"DO_CLIENT_SECRET"`
+	ProvisionerImageTag        string `env:"PROV_IMAGE_TAG,default=latest"`
+	ProvisionerImagePullSecret string `env:"PROV_IMAGE_PULL_SECRET"`
+	SegmentClientKey           string `env:"SEGMENT_CLIENT_KEY"`
+
+	ProvisionerCluster string `env:"PROVISIONER_CLUSTER"`
+	IngressCluster     string `env:"INGRESS_CLUSTER"`
+	SelfKubeconfig     string `env:"SELF_KUBECONFIG"`
 }
 
 // DBConf is the database configuration: if generated from environment variables,

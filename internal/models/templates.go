@@ -30,6 +30,9 @@ type FormTab struct {
 	Name     string         `yaml:"name" json:"name"`
 	Label    string         `yaml:"label" json:"label"`
 	Sections []*FormSection `yaml:"sections" json:"sections,omitempty"`
+	Settings struct {
+		OmitFromLaunch bool `yaml:"omitFromLaunch,omitempty" json:"omitFromLaunch,omitempty"`
+	} `yaml:"settings,omitempty" json:"settings,omitempty"`
 }
 
 // FormSection is a section of a form
@@ -51,6 +54,7 @@ type FormContent struct {
 	Placeholder string       `yaml:"placeholder,omitempty" json:"placeholder,omitempty"`
 	Value       interface{}  `yaml:"value,omitempty" json:"value,omitempty"`
 	Settings    struct {
+		Docs               string      `yaml:"docs,omitempty" json:"docs,omitempty"`
 		Default            interface{} `yaml:"default,omitempty" json:"default,omitempty"`
 		Unit               interface{} `yaml:"unit,omitempty" json:"unit,omitempty"`
 		OmitUnitFromValue  bool        `yaml:"omitUnitFromValue,omitempty" json:"omitUnitFromValue,omitempty"`

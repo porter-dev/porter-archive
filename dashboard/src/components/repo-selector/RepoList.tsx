@@ -1,4 +1,4 @@
-import React, { useState, useContext, useEffect, useRef } from "react";
+import React, { useState, useContext, useEffect } from "react";
 import styled from "styled-components";
 import github from "assets/github.png";
 
@@ -7,8 +7,7 @@ import { RepoType, ActionConfigType } from "shared/types";
 import { Context } from "shared/Context";
 
 import Loading from "../Loading";
-import Button from "../Button";
-import { AxiosResponse } from "axios";
+import SearchBar from "../SearchBar";
 
 type Props = {
   actionConfig: ActionConfigType | null;
@@ -27,7 +26,6 @@ const RepoList: React.FC<Props> = ({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [searchFilter, setSearchFilter] = useState(null);
-  const [searchInput, setSearchInput] = useState("");
   const { currentProject } = useContext(Context);
 
   // TODO: Try to unhook before unmount
@@ -135,7 +133,9 @@ const RepoList: React.FC<Props> = ({
     let results =
       searchFilter != null
         ? repos.filter((repo: RepoType) => {
-            return repo.FullName.includes(searchFilter || "");
+            return repo.FullName.toLowerCase().includes(
+              searchFilter.toLowerCase() || ""
+            );
           })
         : repos.slice(0, 10);
 
@@ -151,7 +151,7 @@ const RepoList: React.FC<Props> = ({
             onClick={() => setRepo(repo)}
             readOnly={readOnly}
           >
-            <img src={github} />
+            <img src={github} alt={"github icon"} />
             {repo.FullName}
           </RepoName>
         );
@@ -165,31 +165,11 @@ const RepoList: React.FC<Props> = ({
     } else {
       return (
         <>
-          <SearchRowTop>
-            <SearchBar>
-              <i className="material-icons">search</i>
-              <SearchInput
-                value={searchInput}
-                onChange={(e: any) => {
-                  setSearchInput(e.target.value);
-                }}
-                onKeyPress={({ key }) => {
-                  if (key === "Enter") {
-                    setSearchFilter(searchInput);
-                  }
-                }}
-                placeholder="Search repos..."
-              />
-            </SearchBar>
-            <ButtonWrapper disabled={loading || error}>
-              <Button
-                onClick={() => setSearchFilter(searchInput)}
-                disabled={loading || error}
-              >
-                Search
-              </Button>
-            </ButtonWrapper>
-          </SearchRowTop>
+          <SearchBar
+            setSearchFilter={setSearchFilter}
+            disabled={error || loading}
+            prompt={"Search repos..."}
+          />
           <RepoListWrapper>
             <ExpandedWrapper>{renderRepoList()}</ExpandedWrapper>
           </RepoListWrapper>
@@ -203,37 +183,10 @@ const RepoList: React.FC<Props> = ({
 
 export default RepoList;
 
-const ButtonWrapper = styled.div`
-  background: ${(props: { disabled?: boolean }) =>
-    props.disabled ? "#aaaabbee" : "#616FEEcc"};
-  :hover {
-    background: ${(props: { disabled?: boolean }) =>
-      props.disabled ? "" : "#505edddd"};
-  }
-  height: 40px;
-  display: flex;
-  align-items: center;
-`;
-
 const RepoListWrapper = styled.div`
   border: 1px solid #ffffff55;
   border-radius: 3px;
   overflow-y: auto;
-`;
-
-const SearchRow = styled.div`
-  display: flex;
-  align-items: center;
-  height: 40px;
-  background: #ffffff11;
-  border-bottom: 1px solid #606166;
-  margin-bottom: 10px;
-`;
-
-const SearchRowTop = styled(SearchRow)`
-  border-bottom: 0;
-  border: 1px solid #ffffff55;
-  border-radius: 3px;
 `;
 
 const RepoName = styled.div`
@@ -280,18 +233,6 @@ const RepoName = styled.div`
   }
 `;
 
-const InfoRow = styled(RepoName)`
-  cursor: default;
-  color: #ffffff55;
-  :hover {
-    background: #ffffff11;
-
-    > i {
-      background: none;
-    }
-  }
-`;
-
 const LoadingWrapper = styled.div`
   padding: 30px 0px;
   background: #ffffff11;
@@ -329,27 +270,4 @@ const A = styled.a`
   text-decoration: underline;
   margin-left: 5px;
   cursor: pointer;
-`;
-
-const SearchBar = styled.div`
-  display: flex;
-  flex: 1;
-
-  > i {
-    color: #aaaabb;
-    padding-top: 1px;
-    margin-left: 13px;
-    font-size: 18px;
-    margin-right: 8px;
-  }
-`;
-
-const SearchInput = styled.input`
-  outline: none;
-  border: none;
-  font-size: 13px;
-  background: none;
-  width: 100%;
-  color: white;
-  height: 20px;
 `;

@@ -8,10 +8,17 @@ import { PorterFormContext } from "./PorterFormContextProvider";
 import Checkbox from "./field-components/Checkbox";
 import { ShowIf, ShowIfAnd, ShowIfNot, ShowIfOr } from "../../shared/types";
 
-interface Props {}
+interface Props {
+  leftTabOptions?: TabOption[];
+  rightTabOptions?: TabOption[];
+  renderTabContents?: (
+    currentTab: string,
+    submitValues?: any
+  ) => React.ReactElement;
+}
 
-const PorterForm: React.FC<Props> = () => {
-  const { formData, formState } = useContext(PorterFormContext);
+const PorterForm: React.FC<Props> = (props) => {
+  const { formData } = useContext(PorterFormContext);
 
   const [currentTab, setCurrentTab] = useState(
     formData.tabs.length > 0 ? formData.tabs[0].name : ""
@@ -47,16 +54,21 @@ const PorterForm: React.FC<Props> = () => {
   };
 
   const getTabOptions = (): TabOption[] => {
-    return formData.tabs.map((tab) => {
-      return { label: tab.label, value: tab.name };
-    });
+    return (props.leftTabOptions || [])
+      .concat(
+        formData.tabs.map((tab) => {
+          return { label: tab.label, value: tab.name };
+        })
+      )
+      .concat(props.rightTabOptions || []);
   };
 
   const renderTab = (name: string): JSX.Element => {
     const tab = formData.tabs.filter((tab) => tab.name == name)[0];
 
     if (!tab) {
-      return <></>;
+      // tab is external
+      return props.renderTabContents ? props.renderTabContents(name) : <></>;
     }
 
     return (

@@ -1,8 +1,14 @@
 import React, { createContext, useReducer } from "react";
-import { PorterFormData, PorterFormState, PorterFormAction } from "./types";
+import {
+  PorterFormData,
+  PorterFormState,
+  PorterFormAction,
+  PorterFormVariableList,
+} from "./types";
+import { ShowIf, ShowIfAnd, ShowIfNot, ShowIfOr } from "../../shared/types";
 
 interface Props {
-  formData: PorterFormData;
+  rawFormData: PorterFormData;
 }
 
 interface ContextProps {
@@ -69,10 +75,74 @@ export const PorterFormContextProvider: React.FC<Props> = (props) => {
     variables: {},
   });
 
+  const evalShowIf = (
+    vals: ShowIf,
+    variables: PorterFormVariableList
+  ): boolean => {
+    if (!vals) {
+      return false;
+    }
+    if (typeof vals == "string") {
+      return !!variables[vals];
+    }
+    if ((vals as ShowIfOr).or) {
+      vals = vals as ShowIfOr;
+      for (let i = 0; i < vals.or.length; i++) {
+        if (evalShowIf(vals.or[i], variables)) {
+          return true;
+        }
+      }
+      return false;
+    }
+    if ((vals as ShowIfAnd).and) {
+      vals = vals as ShowIfAnd;
+      for (let i = 0; i < vals.and.length; i++) {
+        if (!evalShowIf(vals.and[i], variables)) {
+          return false;
+        }
+      }
+      return true;
+    }
+    if ((vals as ShowIfNot).not) {
+      vals = vals as ShowIfNot;
+      return !evalShowIf(vals.not, variables);
+    }
+
+    return false;
+  };
+
+  /*
+  We don't want to have the actual <PorterForm> component to do as little form
+  logic as possible, so this structures the form object based on show_if statements
+
+  This computed structure also later lets us figure out which fields should be required
+  */
+  const computeFormStructure = (
+    data: PorterFormData,
+    variables: PorterFormVariableList
+  ) => {
+    console.log(state.variables);
+    console.log(props.rawFormData);
+
+    return {
+      ...data,
+      tabs: data.tabs.map((tab) => {
+        return {
+          ...tab,
+          sections: tab.sections.filter((section) => {
+            return !section.show_if || evalShowIf(section.show_if, variables);
+          }),
+        };
+      }),
+    };
+  };
+
+  const formData = computeFormStructure(props.rawFormData, state.variables);
+
   return (
     <Provider
       value={{
-        formData: props.formData,
+        formData: formData,
         formState: state,
         dispatchAction: dispatch,
       }}

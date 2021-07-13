@@ -201,16 +201,71 @@ func (app *App) HandleGetBranches(w http.ResponseWriter, r *http.Request) {
 	client := github.NewClient(app.GithubProjectConf.Client(oauth2.NoContext, tok))
 
 	// List all branches for a specified repo
-	branches, _, err := client.Repositories.ListBranches(context.Background(), owner, name, &github.ListOptions{
+	allBranches, resp, err := client.Repositories.ListBranches(context.Background(), owner, name, &github.ListOptions{
 		PerPage: 100,
 	})
 
 	if err != nil {
+		app.handleErrorInternal(err, w)
 		return
 	}
 
-	res := []string{}
-	for _, b := range branches {
+	// make workers to get branches concurrently
+	const WCOUNT = 5
+	numPages := resp.LastPage + 1
+	var workerErr error
+	var mu sync.Mutex
+	var wg sync.WaitGroup
+
+	worker := func(cp int) {
+		defer wg.Done()
+
+		for cp < numPages {
+			opts := &github.ListOptions{
+				Page:    cp,
+				PerPage: 100,
+			}
+
+			branches, _, err := client.Repositories.ListBranches(context.Background(), owner, name, opts)
+
+			if err != nil {
+				mu.Lock()
+				workerErr = err
+				mu.Unlock()
+				return
+			}
+
+			mu.Lock()
+			allBranches = append(allBranches, branches...)
+			mu.Unlock()
+
+			cp += WCOUNT
+		}
+	}
+
+	var numJobs int
+	if numPages > WCOUNT {
+		numJobs = WCOUNT
+	} else {
+		numJobs = numPages
+	}
+
+	wg.Add(numJobs)
+
+	// page 1 is already loaded so we start with 2
+	for i := 1; i <= numJobs; i++ {
+		go worker(i + 1)
+	}
+
+	wg.Wait()
+
+	if workerErr != nil {
+		app.handleErrorInternal(workerErr, w)
+		return
+	}
+
+	res := make([]string, 0)
+	for _, b := range allBranches {
 		res = append(res, b.GetName())
 	}
 
@@ -354,7 +409,7 @@ func (app *App) HandleGetProcfileContents(w http.ResponseWriter, r *http.Request
 	)
 
 	if err != nil {
-		app.handleErrorInternal(err, w)
+		http.NotFound(w, r)
 		return
 	}
 

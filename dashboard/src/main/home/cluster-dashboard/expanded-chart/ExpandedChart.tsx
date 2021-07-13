@@ -3,6 +3,7 @@ import styled from "styled-components";
 import yaml from "js-yaml";
 import close from "assets/close.png";
 import _ from "lodash";
+import loading from "assets/loading.gif";
 
 import {
   ResourceType,
@@ -25,8 +26,9 @@ import ListSection from "./ListSection";
 import StatusSection from "./status/StatusSection";
 import SettingsSection from "./SettingsSection";
 import ChartList from "../chart/ChartList";
+import { withAuth, WithAuthProps } from "shared/auth/AuthorizationHoc";
 
-type PropsType = {
+type PropsType = WithAuthProps & {
   namespace: string;
   currentChart: ChartType;
   currentCluster: ClusterType;
@@ -53,9 +55,11 @@ type StateType = {
   showDeleteOverlay: boolean;
   deleting: boolean;
   formData: any;
+  imageIsPlaceholder: boolean;
+  newestImage: string;
 };
 
-export default class ExpandedChart extends Component<PropsType, StateType> {
+class ExpandedChart extends Component<PropsType, StateType> {
   state = {
     currentChart: this.props.currentChart,
     loading: true,
@@ -74,6 +78,8 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
     showDeleteOverlay: false,
     deleting: false,
     formData: {} as any,
+    imageIsPlaceholder: false,
+    newestImage: null as string,
   };
 
   // Retrieve full chart data (includes form and values)
@@ -97,8 +103,24 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
         }
       )
       .then((res) => {
+        let image = res.data?.config?.image?.repository;
+        let tag = res.data?.config?.image?.tag?.toString();
+        let newestImage = tag ? image + ":" + tag : image;
+        let imageIsPlaceholder = false;
+        if (
+          (image === "porterdev/hello-porter" ||
+            image === "public.ecr.aws/o1j4x7p4/hello-porter") &&
+          !this.state.newestImage
+        ) {
+          imageIsPlaceholder = true;
+        }
         this.updateComponents(
-          { currentChart: res.data, loading: false },
+          {
+            currentChart: res.data,
+            loading: false,
+            imageIsPlaceholder,
+            newestImage,
+          },
           res.data
         );
       })
@@ -239,6 +261,11 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
       values = this.props.currentChart.config;
     }
 
+    // Override config from currentChart prop if we have it on the current state
+    if (this.state.currentChart.config) {
+      values = this.state.currentChart.config;
+    }
+
     for (let key in rawValues) {
       _.set(values, key, rawValues[key]);
     }
@@ -362,7 +389,7 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
   };
 
   renderTabContents = (currentTab: string) => {
-    let { components, showRevisions } = this.state;
+    let { components, showRevisions, imageIsPlaceholder } = this.state;
     let { setSidebar } = this.props;
     let { currentChart } = this.state;
     let chart = currentChart;
@@ -371,7 +398,22 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
       case "metrics":
         return <MetricsSection currentChart={chart} />;
       case "status":
-        return <StatusSection currentChart={chart} />;
+        if (imageIsPlaceholder) {
+          return (
+            <Placeholder>
+              <TextWrap>
+                <Header>
+                  <Spinner src={loading} /> This application is currently being
+                  deployed
+                </Header>
+                Navigate to the "Actions" tab of your GitHub repo to view live
+                build logs.
+              </TextWrap>
+            </Placeholder>
+          );
+        } else {
+          return <StatusSection currentChart={chart} />;
+        }
       case "settings":
         return (
           <SettingsSection
@@ -403,7 +445,13 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
         );
       case "values":
         return (
-          <ValuesYaml currentChart={chart} refreshChart={this.refreshChart} />
+          <ValuesYaml
+            currentChart={chart}
+            refreshChart={this.refreshChart}
+            disabled={
+              !this.props.isAuthorized("application", "", ["get", "update"])
+            }
+          />
         );
       default:
     }
@@ -433,7 +481,9 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
     }
 
     // Settings tab is always last
-    tabOptions.push({ label: "Settings", value: "settings" });
+    if (this.props.isAuthorized("application", "", ["get", "delete"])) {
+      tabOptions.push({ label: "Settings", value: "settings" });
+    }
 
     // Filter tabs if previewing an old revision or updating the chart version
     if (this.state.isPreview || this.state.isUpdatingChart) {
@@ -746,6 +796,10 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
           </HeaderWrapper>
           <BodyWrapper>
             <FormWrapper
+              isReadOnly={
+                this.state.imageIsPlaceholder ||
+                !this.props.isAuthorized("application", "", ["get", "update"])
+              }
               formData={this.state.formData}
               tabOptions={this.state.tabOptions}
               isInModal={true}
@@ -774,6 +828,36 @@ export default class ExpandedChart extends Component<PropsType, StateType> {
 }
 
 ExpandedChart.contextType = Context;
+
+export default withAuth(ExpandedChart);
+
+const TextWrap = styled.div``;
+
+const Header = styled.div`
+  font-weight: 500;
+  color: #aaaabb;
+  font-size: 16px;
+  margin-bottom: 15px;
+`;
+
+const Placeholder = styled.div`
+  height: 100%;
+  padding: 30px;
+  padding-bottom: 90px;
+  font-size: 13px;
+  color: #ffffff44;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+`;
+
+const Spinner = styled.img`
+  width: 15px;
+  height: 15px;
+  margin-right: 12px;
+  margin-bottom: -2px;
+`;
 
 const BodyWrapper = styled.div`
   width: 100%;
@@ -894,7 +978,7 @@ const Dot = styled.div`
 const InfoWrapper = styled.div`
   display: flex;
   align-items: center;
-  margin-left: 6px;
+  margin-left: 3px;
   margin-top: 22px;
 `;
 

@@ -1,5 +1,5 @@
 import React, { Component } from "react";
-import styled from "styled-components";
+import styled, { css } from "styled-components";
 import close from "assets/close.png";
 import sliders from "assets/sliders.svg";
 
@@ -8,19 +8,25 @@ import { Context } from "shared/Context";
 
 import Loading from "components/Loading";
 import SaveButton from "components/SaveButton";
+import { KeyValue } from "components/values-form/KeyValueArray";
+import {
+  EnvGroupData,
+  formattedEnvironmentValue,
+} from "../cluster-dashboard/env-groups/EnvGroup";
 
 type PropsType = {
   namespace: string;
   clusterId: number;
   closeModal: () => void;
-  setValues: (values: any) => void;
+  existingValues: Record<string, string>;
+  setValues: (values: Record<string, string>) => void;
 };
 
 type StateType = {
   envGroups: any[];
   loading: boolean;
   error: boolean;
-  selectedEnvGroup: any;
+  selectedEnvGroup: EnvGroupData | null;
   buttonStatus: string;
 };
 
@@ -29,7 +35,7 @@ export default class LoadEnvGroupModal extends Component<PropsType, StateType> {
     envGroups: [] as any[],
     loading: true,
     error: false,
-    selectedEnvGroup: null as any,
+    selectedEnvGroup: null as EnvGroupData | null,
     buttonStatus: "",
   };
 
@@ -96,7 +102,56 @@ export default class LoadEnvGroupModal extends Component<PropsType, StateType> {
     }
   };
 
+  potentiallyOverriddenKeys(incoming: Record<string, string>): KeyValue[] {
+    return Object.entries(incoming)
+      .filter(([key]) => this.props.existingValues[key])
+      .map(([key, value]) => ({ key, value }));
+  }
+
+  saveButtonStatus(hasClashingKeys: boolean): string {
+    if (!this.state.selectedEnvGroup) {
+      return "No env group selected";
+    }
+    if (hasClashingKeys) {
+      return "There are variables defined in this group that will override existing variables.";
+    }
+  }
+
+  renderEnvGroupPreview(clashingKeys: KeyValue[]) {
+    const emptyValue = <i>Empty value</i>;
+    return (
+      <PossibleClashingKeys>
+        {clashingKeys.map(({ key, value }, i) => (
+          <ClashingKeyItem key={key}>
+            <ClashingKeyTop>
+              <ClashIconWrapper>
+                <ClashIcon className="material-icons">sync_problem</ClashIcon>
+              </ClashIconWrapper>
+              <ClashingKeyExplanation>
+                <b>{key}</b> is defined in both environments
+              </ClashingKeyExplanation>
+            </ClashingKeyTop>
+            <ClashingKeyDefinitions>
+              <ClashingKeyLabel>Old</ClashingKeyLabel>
+              <ClashingKeyValue>
+                {formattedEnvironmentValue(this.props.existingValues[key]) ||
+                  emptyValue}
+              </ClashingKeyValue>
+              <ClashingKeyLabel>New</ClashingKeyLabel>
+              <ClashingKeyValue>
+                {formattedEnvironmentValue(value) || emptyValue}
+              </ClashingKeyValue>
+            </ClashingKeyDefinitions>
+          </ClashingKeyItem>
+        ))}
+      </PossibleClashingKeys>
+    );
+  }
+
   render() {
+    const clashingKeys = this.state.selectedEnvGroup
+      ? this.potentiallyOverriddenKeys(this.state.selectedEnvGroup.data)
+      : [];
     return (
       <StyledLoadEnvGroupModal>
         <CloseButton onClick={this.props.closeModal}>
@@ -109,16 +164,35 @@ export default class LoadEnvGroupModal extends Component<PropsType, StateType> {
           {this.props.namespace}).
         </Subtitle>
 
-        <EnvGroupList>{this.renderEnvGroupList()}</EnvGroupList>
+        <GroupModalSections>
+          <SidebarSection $expanded={!this.state.selectedEnvGroup}>
+            <EnvGroupList>{this.renderEnvGroupList()}</EnvGroupList>
+          </SidebarSection>
+
+          {this.state.selectedEnvGroup && (
+            <SidebarSection>
+              <GroupEnvPreview>
+                {Object.entries(this.state.selectedEnvGroup.data)
+                  .map(
+                    ([key, value]) =>
+                      `${key}=${formattedEnvironmentValue(value)}`
+                  )
+                  .join("\n")}
+              </GroupEnvPreview>
+              {clashingKeys.length > 0 && (
+                <>
+                  <ClashingKeyRowDivider />
+                  {this.renderEnvGroupPreview(clashingKeys)}
+                </>
+              )}
+            </SidebarSection>
+          )}
+        </GroupModalSections>
 
         <SaveButton
           disabled={!this.state.selectedEnvGroup}
           text="Load Selected Env Group"
-          status={
-            !this.state.selectedEnvGroup
-              ? "No env group selected"
-              : "Existing env variables will be overidden"
-          }
+          status={this.saveButtonStatus(clashingKeys.length > 0)}
           onClick={this.onSubmit}
         />
       </StyledLoadEnvGroupModal>
@@ -127,6 +201,39 @@ export default class LoadEnvGroupModal extends Component<PropsType, StateType> {
 }
 
 LoadEnvGroupModal.contextType = Context;
+
+const SidebarSection = styled.section<{ $expanded?: boolean }>`
+  height: 100%;
+  overflow-y: auto;
+  ${(props) =>
+    props.$expanded &&
+    css`
+      grid-column: span 2;
+    `}
+`;
+
+const GroupEnvPreview = styled.pre`
+  font-family: monospace;
+  margin: 0 0 10px 0;
+  white-space: pre-line;
+  word-break: break-word;
+  user-select: text;
+`;
+
+const ClashingKeyExplanation = styled.div`
+  padding: 10px 15px;
+`;
+
+const ClashIconWrapper = styled.div`
+  padding: 10px;
+  background: #3d4048;
+  display: flex;
+  align-items: center;
+`;
+
+const ClashIcon = styled.i`
+  font-size: 18px;
+`;
 
 const Placeholder = styled.div`
   width: 100%;
@@ -168,13 +275,65 @@ const EnvGroupRow = styled.div<{ lastItem?: boolean; isSelected: boolean }>`
   }
 `;
 
-const EnvGroupList = styled.div`
+const GroupModalSections = styled.div`
   margin-top: 20px;
+  width: 100%;
+  height: 100%;
+  display: grid;
+  gap: 10px;
+  grid-template-columns: 1fr 1fr;
+  max-height: 365px;
+`;
+
+const PossibleClashingKeys = styled.ul`
+  appearance: none;
+  color: #aaaabb;
+  margin: 0;
+  padding-inline-start: 0;
+  list-style: none;
+  > *:not(:last-child) {
+    margin-bottom: 8px;
+  }
+`;
+
+const ClashingKeyItem = styled.li`
+  overflow: hidden;
+  border: 1px solid #292c31;
+  border-radius: 5px;
+`;
+
+const ClashingKeyRowDivider = styled.hr`
+  margin: 16px 0;
+  border: 1px solid #27292f;
+`;
+
+const ClashingKeyDefinitions = styled.div`
+  grid-template-columns: min-content auto;
+  padding: 5px 0;
+  column-gap: 6px;
+  display: grid;
+`;
+
+const ClashingKeyLabel = styled.p`
+  margin: 0px;
+  font-weight: bold;
+  padding: 5px 10px;
+  white-space: nowrap;
+`;
+
+const ClashingKeyValue = styled.p`
+  margin: 0px;
+  display: flex;
+  padding: 0;
+  align-items: center;
+  word-break: break-word;
+`;
+
+const EnvGroupList = styled.div`
   width: 100%;
   border-radius: 3px;
   background: #ffffff11;
   border: 1px solid #ffffff44;
-  max-height: 160px;
   overflow-y: auto;
 `;
 
@@ -185,11 +344,17 @@ const Subtitle = styled.div`
   color: #aaaabb;
 `;
 
+const ClashingKeyTop = styled.div`
+  background: #2e3035;
+  display: flex;
+  align-items: stretch;
+`;
+
 const ModalTitle = styled.div`
   margin: 0px 0px 13px;
   display: flex;
   flex: 1;
-  font-family: "Assistant";
+  font-family: Work Sans, sans-serif;
   font-size: 18px;
   color: #ffffff;
   user-select: none;

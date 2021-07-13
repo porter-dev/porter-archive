@@ -1,32 +1,29 @@
 import React, { useContext, useEffect, useMemo, useState } from "react";
 
 import Table from "components/Table";
-import { Column } from "react-table";
+import { Column, Row } from "react-table";
 import styled from "styled-components";
 import api from "shared/api";
 import { Context } from "shared/Context";
-import { NodeStatusModal } from "./NodeStatusModal";
+import { pushFiltered } from "shared/routing";
+import { useHistory, useLocation } from "react-router";
 
 const NodeList: React.FC = () => {
   const context = useContext(Context);
   const [nodeList, setNodeList] = useState([]);
   const [loading, setLoading] = useState<boolean>(false);
-  const [selectedNode, setSelectedNode] = useState<any>(undefined);
-
-  const triggerPopUp = (node?: any) => {
-    if (node) {
-      setSelectedNode(node);
-      return;
-    }
-
-    setSelectedNode(undefined);
-  };
+  const history = useHistory();
+  const location = useLocation();
 
   const columns = useMemo<Column<any>[]>(
     () => [
       {
-        Header: "Node name",
+        Header: "Node Name",
         accessor: "name",
+      },
+      {
+        Header: "Machine Type",
+        accessor: "machine_type",
       },
       {
         Header: "CPU Usage",
@@ -42,10 +39,7 @@ const NodeList: React.FC = () => {
         Cell: ({ row }) => {
           return (
             <StatusButtonWrapper>
-              <StatusButton
-                success={row.values.is_node_healthy}
-                onClick={() => triggerPopUp(row.original)}
-              >
+              <StatusButton success={row.values.is_node_healthy}>
                 {row.values.is_node_healthy ? "Healthy" : "Unhealthy"}
               </StatusButton>
             </StatusButtonWrapper>
@@ -60,12 +54,17 @@ const NodeList: React.FC = () => {
     const percentFormatter = (number: number) =>
       `${Number(number).toFixed(2)}%`;
 
+    const getMachineType = (labels: any) => {
+      return (labels && labels["node.kubernetes.io/instance-type"]) || "N/A";
+    };
+
     return nodeList
       .map((node) => {
         return {
           name: node.name,
-          cpu_usage: percentFormatter(node.cpu_reqs),
-          ram_usage: percentFormatter(node.memory_reqs),
+          machine_type: getMachineType(node?.labels),
+          cpu_usage: percentFormatter(node.fraction_cpu_reqs),
+          ram_usage: percentFormatter(node.fraction_memory_reqs),
           node_conditions: node.node_conditions,
           is_node_healthy: node.node_conditions.reduce(
             (prevValue: boolean, current: any) => {
@@ -113,14 +112,27 @@ const NodeList: React.FC = () => {
       .finally(() => setLoading(false));
   }, [context, setNodeList]);
 
+  const handleOnRowClick = (row: any) => {
+    pushFiltered(
+      {
+        history,
+        location,
+      },
+      `/cluster-dashboard/node-view/${row.original.name}`,
+      []
+    );
+  };
+
   return (
     <NodeListWrapper>
       <StyledChart>
-        <Table columns={columns} data={data} isLoading={loading} />
+        <Table
+          columns={columns}
+          data={data}
+          isLoading={loading}
+          onRowClick={handleOnRowClick}
+        />
       </StyledChart>
-      {selectedNode && (
-        <NodeStatusModal node={selectedNode} onClose={() => triggerPopUp()} />
-      )}
     </NodeListWrapper>
   );
 };

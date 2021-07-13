@@ -35,6 +35,17 @@ func (repo *UserRepository) ReadUser(id uint) (*models.User, error) {
 	return user, nil
 }
 
+// ListUsersByIDs finds all users matching ids
+func (repo *UserRepository) ListUsersByIDs(ids []uint) ([]*models.User, error) {
+	users := make([]*models.User, 0)
+
+	if err := repo.db.Model(&models.User{}).Where("id IN (?)", ids).Find(&users).Error; err != nil {
+		return nil, err
+	}
+
+	return users, nil
+}
+
 // ReadUserByEmail finds a single user based on their unique email
 func (repo *UserRepository) ReadUserByEmail(email string) (*models.User, error) {
 	user := &models.User{}

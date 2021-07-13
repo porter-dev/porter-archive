@@ -31,6 +31,7 @@ export type TableProps = {
   onRowClick?: (row: Row) => void;
   isLoading: boolean;
   disableGlobalFilter?: boolean;
+  disableHover?: boolean;
 };
 
 const Table: React.FC<TableProps> = ({
@@ -39,6 +40,7 @@ const Table: React.FC<TableProps> = ({
   onRowClick,
   isLoading,
   disableGlobalFilter = false,
+  disableHover,
 }) => {
   const {
     getTableProps,
@@ -53,7 +55,7 @@ const Table: React.FC<TableProps> = ({
       columns: columnsData,
       data,
     },
-    useGlobalFilter
+    useGlobalFilter,
   );
 
   const renderRows = () => {
@@ -81,7 +83,9 @@ const Table: React.FC<TableProps> = ({
 
           return (
             <StyledTr
+              disableHover={disableHover}
               {...row.getRowProps()}
+              enablePointer={!!onRowClick}
               onClick={() => onRowClick && onRowClick(row)}
               selected={false}
             >
@@ -129,14 +133,21 @@ const TableWrapper = styled.div`
   padding-bottom: 20px;
 `;
 
+type StyledTrProps = {
+  enablePointer?: boolean;
+  disableHover?: boolean;
+  selected?: boolean;
+};
+
 export const StyledTr = styled.tr`
   line-height: 2.2em;
-  background: ${(props: { disableHover?: boolean; selected?: boolean }) =>
-    props.selected ? "#ffffff11" : ""};
+  background: ${(props: StyledTrProps) => (props.selected ? "#ffffff11" : "")};
   :hover {
-    background: ${(props: { disableHover?: boolean; selected?: boolean }) =>
+    background: ${(props: StyledTrProps) =>
       props.disableHover ? "" : "#ffffff22"};
   }
+  cursor: ${(props: StyledTrProps) =>
+    props.enablePointer ? "pointer" : "unset"};
 `;
 
 export const StyledTd = styled.td`
@@ -148,10 +159,13 @@ export const StyledTd = styled.td`
   :last-child {
     padding-right: 10px;
   }
+  user-select: text;
 `;
 
 export const StyledTHead = styled.thead`
   width: 100%;
+  border-top: 1px solid #aaaabb22;
+  border-bottom: 1px solid #aaaabb22;
 `;
 
 export const StyledTh = styled.th`
@@ -196,8 +210,8 @@ const SearchRow = styled.div`
   min-width: 300px;
   max-width: min-content;
   background: #ffffff11;
-  margin-bottom: 7px;
-  margin-top: 7px;
+  margin-bottom: 15px;
+  margin-top: 0px;
   i {
     width: 18px;
     height: 18px;

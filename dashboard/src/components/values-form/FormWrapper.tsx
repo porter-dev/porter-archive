@@ -78,7 +78,10 @@ export default class FormWrapper extends Component<PropsType, StateType> {
       };
       if (tabs) {
         tabs.forEach((tab: any, i: number) => {
-          if (tab?.name && tab.label) {
+          // Exclude value if omitFromLaunch is set
+          let omit =
+            tab.settings?.omitFromLaunch && this.props.externalValues?.isLaunch;
+          if (tab?.name && tab.label && !omit) {
             // If a tab is valid, extract state
             tab.sections?.forEach((section: Section, i: number) => {
               section?.contents?.forEach((item: FormElement, i: number) => {
@@ -198,7 +201,18 @@ export default class FormWrapper extends Component<PropsType, StateType> {
         });
       }
       if (this.props.tabOptions?.length > 0) {
-        tabOptions = tabOptions.concat(this.props.tabOptions);
+        let prependTabs = [] as { value: string; label: string }[];
+        let appendTabs = [] as { value: string; label: string }[];
+        this.props.tabOptions.forEach(
+          (tab: { value: string; label: string }) => {
+            if (tab.value === "status" || tab.value === "metrics") {
+              prependTabs.push(tab);
+            } else {
+              appendTabs.push(tab);
+            }
+          }
+        );
+        tabOptions = prependTabs.concat(tabOptions.concat(appendTabs));
       }
       this.setState({ tabOptions }, callback);
     }
@@ -255,6 +269,12 @@ export default class FormWrapper extends Component<PropsType, StateType> {
       !_.isEqual(prevProps.tabOptions, this.props.tabOptions) ||
       !_.isEqual(prevProps.formData, this.props.formData)
     ) {
+      if (
+        prevProps.tabOptions?.length === 0 &&
+        !_.isEqual(prevProps.tabOptions, this.props.tabOptions)
+      ) {
+        this.setState({ currentTab: "status" });
+      }
       let formHasChanged = !_.isEqual(prevProps.formData, this.props.formData);
       this.updateTabs(formHasChanged);
     }

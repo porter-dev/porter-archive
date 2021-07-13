@@ -7,8 +7,9 @@ import { Context } from "shared/Context";
 import { ChartType, StorageType } from "shared/types";
 
 import ConfirmOverlay from "components/ConfirmOverlay";
+import { withAuth, WithAuthProps } from "shared/auth/AuthorizationHoc";
 
-type PropsType = {
+type PropsType = WithAuthProps & {
   showRevisions: boolean;
   toggleShowRevisions: () => void;
   chart: ChartType;
@@ -31,7 +32,7 @@ type StateType = {
 };
 
 // TODO: handle refresh when new revision is generated from an old revision
-export default class RevisionSection extends Component<PropsType, StateType> {
+class RevisionSection extends Component<PropsType, StateType> {
   state = {
     revisions: [] as ChartType[],
     rollbackRevision: null as number | null,
@@ -67,6 +68,66 @@ export default class RevisionSection extends Component<PropsType, StateType> {
 
   componentDidMount() {
     this.refreshHistory();
+    this.connectToLiveUpdates();
+  }
+
+  connectToLiveUpdates() {
+    let { chart } = this.props;
+    let { currentCluster, currentProject } = this.context;
+
+    const apiPath = `/api/projects/${currentProject.id}/k8s/helm_releases?cluster_id=${currentCluster.id}&charts=${chart.name}`;
+    const protocol = window.location.protocol == "https:" ? "wss" : "ws";
+    const url = `${protocol}://${window.location.host}`;
+
+    const ws = new WebSocket(`${url}${apiPath}`);
+
+    ws.onopen = () => {
+      console.log("connected to chart live updates websocket");
+    };
+
+    ws.onmessage = (evt: MessageEvent) => {
+      let event = JSON.parse(evt.data);
+
+      if (event.event_type == "UPDATE") {
+        let object = event.Object;
+
+        this.setState(
+          (prevState) => {
+            const { revisions: oldRevisions } = prevState;
+            // Copy old array to clean up references
+            const prevRevisions = [...oldRevisions];
+
+            // Check if it's an update of a revision or if it's a new one
+            const revisionIndex = prevRevisions.findIndex((rev) => {
+              if (rev.version === object.version) {
+                return true;
+              }
+            });
+
+            // Place new one at top of the array or update the old one
+            if (revisionIndex > -1) {
+              prevRevisions.splice(revisionIndex, 1, object);
+            } else {
+              return { ...prevState, revisions: [object, ...prevRevisions] };
+            }
+
+            return { ...prevState, revisions: prevRevisions };
+          },
+          () => {
+            this.props.setRevision(this.state.revisions[0], true);
+          }
+        );
+      }
+    };
+
+    ws.onclose = () => {
+      console.log("closing chart live updates websocket");
+    };
+
+    ws.onerror = (err: ErrorEvent) => {
+      console.log(err);
+      ws.close();
+    };
   }
 
   // Handle update of values.yaml
@@ -167,7 +228,10 @@ export default class RevisionSection extends Component<PropsType, StateType> {
           <Td>v{revision.chart.metadata.version}</Td>
           <Td>
             <RollbackButton
-              disabled={isCurrent}
+              disabled={
+                isCurrent ||
+                !this.props.isAuthorized("application", "", ["get", "update"])
+              }
               onClick={() =>
                 this.setState({ rollbackRevision: revision.version })
               }
@@ -280,6 +344,8 @@ export default class RevisionSection extends Component<PropsType, StateType> {
 }
 
 RevisionSection.contextType = Context;
+
+export default withAuth(RevisionSection);
 
 const TableWrapper = styled.div`
   padding-bottom: 20px;

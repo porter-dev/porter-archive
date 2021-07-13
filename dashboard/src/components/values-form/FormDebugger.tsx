@@ -159,7 +159,7 @@ export default class FormDebugger extends Component<PropsType, StateType> {
 
         <Heading>🎨 Rendered Form</Heading>
         <Br />
-        <PorterFormContextProvider formData={formData as PorterFormData}>
+        <PorterFormContextProvider rawFormData={formData as PorterFormData}>
           <PorterForm />
         </PorterFormContextProvider>
         {/*<FormWrapper*/}

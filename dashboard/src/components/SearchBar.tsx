@@ -5,9 +5,10 @@ import styled from "styled-components";
 interface Props {
   setSearchFilter: (x: string) => void;
   disabled: boolean;
+  prompt?: string;
 }
 
-const SearchBar: React.FC<Props> = ({ setSearchFilter, disabled }) => {
+const SearchBar: React.FC<Props> = ({ setSearchFilter, disabled, prompt }) => {
   const [searchInput, setSearchInput] = useState("");
 
   return (
@@ -24,7 +25,7 @@ const SearchBar: React.FC<Props> = ({ setSearchFilter, disabled }) => {
               setSearchFilter(searchInput);
             }
           }}
-          placeholder="Search repos..."
+          placeholder={prompt}
         />
       </SearchBarWrapper>
       <ButtonWrapper disabled={disabled}>

@@ -10,10 +10,9 @@ To add a new collaborator to a Porter project, you must be logged in with an **A
 
 ![image](https://user-images.githubusercontent.com/23369263/125147098-b00f3100-e0ff-11eb-8579-cc28c1a0badc.png)
 
-**DISCLAIMER**
-
-The user has to register or access porter with the same email that the invitation was sent to.
-If not, it will not be able to look your project.
+> 🚧
+> 
+> If the user does not have a Porter account, they will be asked to register. After registering, if they are not automatically added to the project, the user should **click the invite link again**.  
 
 # Changing Collaborator Permissions
 

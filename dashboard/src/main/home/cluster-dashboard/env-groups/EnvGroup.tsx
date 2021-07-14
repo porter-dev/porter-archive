@@ -5,8 +5,13 @@ import key from "assets/key.svg";
 
 import { Context } from "shared/Context";
 
+export type EnvGroupData = {
+  data: Record<string, string>;
+  metadata: any;
+};
+
 type PropsType = {
-  envGroup: any;
+  envGroup: EnvGroupData;
   setExpanded: () => void;
 };
 
@@ -69,6 +74,13 @@ export default class EnvGroup extends Component<PropsType, StateType> {
       </StyledEnvGroup>
     );
   }
+}
+
+export function formattedEnvironmentValue(value: string) {
+  if (value.startsWith("PORTERSECRET_")) {
+    return "••••";
+  }
+  return value;
 }
 
 EnvGroup.contextType = Context;

@@ -6,6 +6,7 @@ import _ from "lodash";
 
 import { ChartType, StorageType, ClusterType } from "shared/types";
 import { Context } from "shared/Context";
+import { isAlphanumeric } from "shared/common";
 import api from "shared/api";
 
 import SaveButton from "components/SaveButton";
@@ -15,6 +16,7 @@ import TabRegion from "components/TabRegion";
 import EnvGroupArray, { KeyValueType } from "./EnvGroupArray";
 import Heading from "components/values-form/Heading";
 import Helper from "components/values-form/Helper";
+import InputRow from "components/values-form/InputRow";
 import { withAuth, WithAuthProps } from "shared/auth/AuthorizationHoc";
 
 type PropsType = WithAuthProps & {
@@ -30,6 +32,7 @@ type StateType = {
   showDeleteOverlay: boolean;
   deleting: boolean;
   saveValuesStatus: string | null;
+  envGroupName: string;
   envVariables: KeyValueType[];
   tabOptions: { value: string; label: string }[];
 };
@@ -46,6 +49,7 @@ class ExpandedEnvGroup extends Component<PropsType, StateType> {
     showDeleteOverlay: false,
     deleting: false,
     saveValuesStatus: null as string | null,
+    envGroupName: null as string,
     envVariables: [] as KeyValueType[],
     tabOptions: [
       { value: "environment", label: "Environment Variables" },
@@ -54,6 +58,7 @@ class ExpandedEnvGroup extends Component<PropsType, StateType> {
   };
 
   componentDidMount() {
+    const envGroupName = this.props.envGroup.metadata.name;
     // parse env group props into values type
     let envVariables = [] as KeyValueType[];
     let envGroupData = this.props.envGroup.data;
@@ -68,7 +73,7 @@ class ExpandedEnvGroup extends Component<PropsType, StateType> {
       });
     }
 
-    this.setState({ envVariables });
+    this.setState({ envGroupName, envVariables });
 
     // Filter the settings tab options as for now it only shows the delete button.
     // In a future this should be removed and return to a constant if we want to show data
@@ -85,6 +90,30 @@ class ExpandedEnvGroup extends Component<PropsType, StateType> {
       };
     });
   }
+
+  handleRename = () => {
+    const { envGroup } = this.props;
+    const name = envGroup.metadata.name;
+    const namespace = envGroup.metadata.namespace;
+    const newName = this.state.envGroupName;
+
+    api
+      .renameConfigMap(
+        "<token>",
+        {
+          name,
+          namespace,
+          new_name: newName,
+        },
+        {
+          id: this.context.currentProject.id,
+          cluster_id: this.props.currentCluster.id,
+        }
+      )
+      .then((res) => {
+        this.props.closeExpanded();
+      });
+  };
 
   handleUpdateValues = () => {
     let { envGroup } = this.props;
@@ -174,6 +203,8 @@ class ExpandedEnvGroup extends Component<PropsType, StateType> {
     let currentTab = this.state.currentTab;
     let { envGroup, namespace } = this.props;
     let name = envGroup.metadata.name;
+    const isEnvGroupNameValid =
+      isAlphanumeric(this.state.envGroupName) && this.state.envGroupName !== "";
 
     switch (currentTab) {
       case "environment":
@@ -216,6 +247,27 @@ class ExpandedEnvGroup extends Component<PropsType, StateType> {
           <TabWrapper>
             {this.props.isAuthorized("env_group", "", ["get", "delete"]) && (
               <InnerWrapper full={true}>
+                <Heading>Name</Heading>
+                <Subtitle>
+                  <Warning makeFlush={true} highlight={!isEnvGroupNameValid}>
+                    Lowercase letters, numbers, and "-" only.
+                  </Warning>
+                </Subtitle>
+                <DarkMatter antiHeight="-29px" />
+                <InputRow
+                  type="text"
+                  value={this.state.envGroupName}
+                  setValue={(x: string) => this.setState({ envGroupName: x })}
+                  placeholder="ex: doctor-scientist"
+                  width="100%"
+                />
+                <Button
+                  color="#616FEEcc"
+                  disabled={!isEnvGroupNameValid}
+                  onClick={this.handleRename}
+                >
+                  Rename {name}
+                </Button>
                 <Heading>Manage Environment Group</Heading>
                 <Helper>
                   Permanently delete this set of environment variables. This
@@ -570,4 +622,24 @@ const StyledExpandedChart = styled.div`
       transform: translateY(0px);
     }
   }
+`;
+
+const DarkMatter = styled.div<{ antiHeight?: string }>`
+  width: 100%;
+  margin-top: ${(props) => props.antiHeight || "-15px"};
+`;
+
+const Warning = styled.span<{ highlight: boolean; makeFlush?: boolean }>`
+  color: ${(props) => (props.highlight ? "#f5cb42" : "")};
+  margin-left: ${(props) => (props.makeFlush ? "" : "5px")};
+`;
+
+const Subtitle = styled.div`
+  padding: 11px 0px 16px;
+  font-family: "Work Sans", sans-serif;
+  font-size: 13px;
+  color: #aaaabb;
+  line-height: 1.6em;
+  display: flex;
+  align-items: center;
 `;

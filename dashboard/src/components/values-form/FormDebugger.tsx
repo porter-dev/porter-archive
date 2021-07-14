@@ -161,8 +161,8 @@ export default class FormDebugger extends Component<PropsType, StateType> {
         <Br />
         <PorterFormContextProvider
           rawFormData={formData as PorterFormData}
-          initialVariables={{
-            input_a: this.state.valuesToOverride.input_a.value,
+          overrideVariables={{
+            input_a: this.state.valuesToOverride?.input_a?.value,
           }}
         >
           <PorterForm

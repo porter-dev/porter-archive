@@ -5,6 +5,10 @@
 
 // YAML Field interfaces
 
+export interface DefaultFieldSettings {
+  required: boolean;
+}
+
 export interface HeadingField {
   type: "heading";
   label: string;
@@ -15,6 +19,10 @@ export interface SubtitleField {
   label: string;
 }
 
+export interface StringInputFieldSettings extends DefaultFieldSettings {
+  type: "text"|"password"|"number";
+}
+
 export interface StringInputField {
   type: "string-input";
   variable: string;
@@ -22,6 +30,7 @@ export interface StringInputField {
   required?: boolean;
   placeholder?: string;
   info?: string;
+  settings?: StringInputFieldSettings;
 }
 
 export interface CheckboxField {

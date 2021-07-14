@@ -565,6 +565,92 @@ func (app *App) HandleUpdateConfigMap(w http.ResponseWriter, r *http.Request) {
 	return
 }
 
+// HandleRenameConfigMap renames the configmap name given the current name, namespace and new name.
+func (app *App) HandleRenameConfigMap(w http.ResponseWriter, r *http.Request) {
+	vals, err := url.ParseQuery(r.URL.RawQuery)
+
+	if err != nil {
+		app.handleErrorFormDecoding(err, ErrReleaseDecode, w)
+		return
+	}
+
+	// get the filter options
+	form := &forms.K8sForm{
+		OutOfClusterConfig: &kubernetes.OutOfClusterConfig{
+			Repo:              app.Repo,
+			DigitalOceanOAuth: app.DOConf,
+		},
+	}
+
+	form.PopulateK8sOptionsFromQueryParams(vals, app.Repo.Cluster)
+
+	// validate the form
+	if err := app.validator.Struct(form); err != nil {
+		app.handleErrorFormValidation(err, ErrK8sValidate, w)
+		return
+	}
+
+	// create a new agent
+	var agent *kubernetes.Agent
+
+	if app.ServerConf.IsTesting {
+		agent = app.TestAgents.K8sAgent
+	} else {
+		agent, err = kubernetes.GetAgentOutOfClusterConfig(form.OutOfClusterConfig)
+	}
+
+	renameConfigMapForm := &forms.RenameConfigMapForm{}
+
+	if err := json.NewDecoder(r.Body).Decode(renameConfigMapForm); err != nil {
+		app.handleErrorFormDecoding(err, ErrEnvDecode, w)
+		return
+	}
+
+	configMap, err := agent.GetConfigMap(renameConfigMapForm.Name, renameConfigMapForm.Namespace)
+
+	if err != nil {
+		app.handleErrorInternal(err, w)
+		return
+	}
+
+	secret, err := agent.GetSecret(configMap.Name, configMap.Namespace)
+
+	if err != nil {
+		app.handleErrorInternal(err, w)
+		return
+	}
+
+	var decodedSecretData = make(map[string]string)
+	for k, v := range secret.Data {
+		decodedSecretData[k] = string(v)
+	}
+
+	if err := deleteConfigMap(agent, configMap.Name, configMap.Namespace); err != nil {
+		app.handleErrorInternal(err, w)
+		return
+	}
+
+	newConfigMap := &forms.ConfigMapForm{
+		Name:               renameConfigMapForm.NewName,
+		Namespace:          configMap.Namespace,
+		EnvVariables:       configMap.Data,
+		SecretEnvVariables: decodedSecretData,
+	}
+
+	if err := createConfigMap(agent, newConfigMap); err != nil {
+		app.handleErrorInternal(err, w)
+		return
+	}
+
+	if err := json.NewEncoder(w).Encode(newConfigMap); err != nil {
+		app.handleErrorFormDecoding(err, ErrEnvDecode, w)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	return
+}
+
 // HandleGetPodLogs returns real-time logs of the pod via websockets
 // TODO: Refactor repeated calls.
 func (app *App) HandleGetPodLogs(w http.ResponseWriter, r *http.Request) {

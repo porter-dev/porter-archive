@@ -14,6 +14,7 @@ const StringInput: React.FC<Props> = ({
   required,
   placeholder,
   info,
+  settings,
 }) => {
   const { state, variables, mutateVars } = useFormField<StringInputFieldState>(
     id,
@@ -30,12 +31,18 @@ const StringInput: React.FC<Props> = ({
     return <></>;
   }
 
+  const curValue =
+    settings?.type == "number"
+      ? parseFloat(variables[variable]) || ""
+      : variables[variable] || "";
+
   return (
     <InputRow
       width="100%"
-      type="text"
-      value={variables[variable] || ""}
-      setValue={(x: string) => {
+      type={settings?.type || "text"}
+      value={curValue}
+      unit={settings?.unit}
+      setValue={(x: string | number) => {
         mutateVars((vars) => {
           return {
             ...vars,

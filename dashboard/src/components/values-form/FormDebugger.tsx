@@ -283,18 +283,46 @@ tabs:
       label: Basic form demonstrating some of the features of form.yaml
     - type: string-input
       placeholder: "ex: pilsner"
-      label: Required Field A
+      label: Required String Input A
       required: true
       variable: field_a
       info: This is some info
+      settings:
+        type: text
     - type: string-input
-      placeholder: "ex: sapporo"
+      placeholder: "ex: pilsner"
+      label: Required String Input A with unit
       required: true
-      label: Required Field B
+      variable: field_a_unit
+      settings:
+        type: text
+        unit: m
+    - type: string-input
+      placeholder: "ex: pilsner"
+      label: Required Password Input B
+      required: true
       variable: field_b
+      info: This is some info
+      settings:
+        type: password
+    - type: string-input
+      placeholder: "ex: pilsner"
+      label: Non Required Number Input C
+      required: false
+      variable: field_c
+      settings:
+        type: number
+    - type: string-input
+      placeholder: "ex: pilsner"
+      label: Non Required Number Input C with unit
+      required: false
+      variable: field_c_unit
+      settings:
+        type: number
+        unit: km
     - type: checkbox
       required: true
-      label: Checkbox A alternatiev
+      label: Checkbox A alternative
       variable: checkbox_a
     - type: subtitle
       label: "Note: Hidden required fields aren't supported yet (global only)"

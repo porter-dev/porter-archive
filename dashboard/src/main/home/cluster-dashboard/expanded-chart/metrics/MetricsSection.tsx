@@ -549,12 +549,17 @@ export default class MetricsSection extends Component<PropsType, StateType> {
               </IconWrapper>
               {this.renderMetricsSettings()}
             </Relative>
-            <RefreshMetrics
+            {/* <RefreshMetrics
               className="material-icons-outlined"
               onClick={() => this.getMetrics()}
             >
               refresh
-            </RefreshMetrics>
+            </RefreshMetrics> */}
+
+          <Highlight color={"#7d7d81"} onClick={this.getMetrics}>
+            <i className="material-icons">autorenew</i>
+          </Highlight>
+
           </Flex>
           <RangeWrapper>
             <TabSelector
@@ -572,9 +577,13 @@ export default class MetricsSection extends Component<PropsType, StateType> {
         </MetricsHeader>
         {this.state.isLoading > 0 && <Loading />}
         {this.state.data.length === 0 && this.state.isLoading === 0 && (
-          <NoDataPlaceholder>
-            <div>No data available, please refresh</div>
-          </NoDataPlaceholder>
+            <Message>
+              No data available yet.
+              <Highlight color={"#8590ff"} onClick={this.getMetrics}>
+                <i className="material-icons">autorenew</i>
+                Refresh
+              </Highlight>
+            </Message>
         )}
 
         {this.state.data.length > 0 && this.state.isLoading === 0 && (
@@ -597,6 +606,21 @@ export default class MetricsSection extends Component<PropsType, StateType> {
 
 MetricsSection.contextType = Context;
 
+const Highlight = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 8px;
+  color: ${(props: {color: string}) => props.color};
+  cursor: pointer;
+
+
+  > i {
+    font-size: 20px;
+    margin-right: 3px;
+  }
+`;
+
 const RefreshMetrics = styled.span`
   :hover {
     cursor: pointer;
@@ -618,6 +642,18 @@ const Label = styled.div`
 const Relative = styled.div`
   position: relative;
 `;
+
+const Message = styled.div`
+display: flex;
+height: 100%;
+width: calc(100% - 150px);
+align-items: center;
+justify-content: center;
+margin-left: 75px;
+text-align: center;
+color: #ffffff44;
+font-size: 13px;
+`
 
 const IconWrapper = styled.div`
   display: flex;

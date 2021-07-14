@@ -238,6 +238,37 @@ func (app *App) HandleListPodEvents(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func createConfigMap(agent *kubernetes.Agent, configMap *forms.ConfigMapForm) error {
+	secretData := make(map[string][]byte)
+
+	for key, rawValue := range configMap.SecretEnvVariables {
+		// encodedValue := base64.StdEncoding.EncodeToString([]byte(rawValue))
+
+		// if err != nil {
+		// 	app.handleErrorInternal(err, w)
+		// 	return
+		// }
+
+		secretData[key] = []byte(rawValue)
+	}
+
+	// create secret first
+	if _, err := agent.CreateLinkedSecret(configMap.Name, configMap.Namespace, configMap.Name, secretData); err != nil {
+		return err
+	}
+
+	// add all secret env variables to configmap with value PORTERSECRET_${configmap_name}
+	for key, _ := range configMap.SecretEnvVariables {
+		configMap.EnvVariables[key] = fmt.Sprintf("PORTERSECRET_%s", configMap.Name)
+	}
+
+	if _, err := agent.CreateConfigMap(configMap.Name, configMap.Namespace, configMap.EnvVariables); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // HandleCreateConfigMap creates a configmap (and secret) given the name, namespace and variables.
 func (app *App) HandleCreateConfigMap(w http.ResponseWriter, r *http.Request) {
 	vals, err := url.ParseQuery(r.URL.RawQuery)
@@ -278,35 +309,7 @@ func (app *App) HandleCreateConfigMap(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	secretData := make(map[string][]byte)
-
-	for key, rawValue := range configMap.SecretEnvVariables {
-		// encodedValue := base64.StdEncoding.EncodeToString([]byte(rawValue))
-
-		// if err != nil {
-		// 	app.handleErrorInternal(err, w)
-		// 	return
-		// }
-
-		secretData[key] = []byte(rawValue)
-	}
-
-	// create secret first
-	_, err = agent.CreateLinkedSecret(configMap.Name, configMap.Namespace, configMap.Name, secretData)
-
-	if err != nil {
-		app.handleErrorInternal(err, w)
-		return
-	}
-
-	// add all secret env variables to configmap with value PORTERSECRET_${configmap_name}
-	for key, _ := range configMap.SecretEnvVariables {
-		configMap.EnvVariables[key] = fmt.Sprintf("PORTERSECRET_%s", configMap.Name)
-	}
-
-	_, err = agent.CreateConfigMap(configMap.Name, configMap.Namespace, configMap.EnvVariables)
-
-	if err != nil {
+	if err := createConfigMap(agent, configMap); err != nil {
 		app.handleErrorInternal(err, w)
 		return
 	}
@@ -420,6 +423,18 @@ func (app *App) HandleGetConfigMap(w http.ResponseWriter, r *http.Request) {
 	return
 }
 
+func deleteConfigMap(agent *kubernetes.Agent, name string, namespace string) error {
+	if err := agent.DeleteLinkedSecret(name, namespace); err != nil {
+		return err
+	}
+
+	if err := agent.DeleteConfigMap(name, namespace); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // HandleDeleteConfigMap deletes the configmap (and secret) given the name and namespace.
 func (app *App) HandleDeleteConfigMap(w http.ResponseWriter, r *http.Request) {
 	vals, err := url.ParseQuery(r.URL.RawQuery)
@@ -453,16 +468,7 @@ func (app *App) HandleDeleteConfigMap(w http.ResponseWriter, r *http.Request) {
 		agent, err = kubernetes.GetAgentOutOfClusterConfig(form.OutOfClusterConfig)
 	}
 
-	err = agent.DeleteLinkedSecret(vals["name"][0], vals["namespace"][0])
-
-	if err != nil {
-		app.handleErrorInternal(err, w)
-		return
-	}
-
-	err = agent.DeleteConfigMap(vals["name"][0], vals["namespace"][0])
-
-	if err != nil {
+	if err := deleteConfigMap(agent, vals["name"][0], vals["namespace"][0]); err != nil {
 		app.handleErrorInternal(err, w)
 		return
 	}

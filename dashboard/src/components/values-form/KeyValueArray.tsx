@@ -50,8 +50,21 @@ export default class KeyValueArray extends Component<PropsType, StateType> {
 
   valuesToObject = () => {
     let obj = {} as any;
+    const rg = /(?:^|[^\\])(\\n)/g;
+    const fixNewlines = (s: string) => {
+      while (rg.test(s)) {
+        s = s.replace(rg, (str) => {
+          if (str.length == 2) return "\n";
+          if (str[0] != "\\") return str[0] + "\n";
+          return "\\n";
+        });
+      }
+      return s;
+    };
     this.state.values.forEach((entry: any, i: number) => {
-      obj[entry.key] = entry.value;
+      console.log(entry.value);
+      console.log(fixNewlines(entry.value));
+      obj[entry.key] = fixNewlines(entry.value);
     });
     return obj;
   };

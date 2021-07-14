@@ -25,6 +25,7 @@ type StateType = {
   selectors: string[];
   available: number;
   total: number;
+  canUpdatePod: boolean;
 };
 
 // Controller tab in log section that displays list of pods on click.
@@ -38,6 +39,7 @@ export default class ControllerTab extends Component<PropsType, StateType> {
     selectors: [] as string[],
     available: null as number,
     total: null as number,
+    canUpdatePod: true,
   };
 
   updatePods = () => {
@@ -77,7 +79,13 @@ export default class ControllerTab extends Component<PropsType, StateType> {
           status === "failed" &&
             pod.status?.message &&
             this.props.setPodError(pod.status?.message);
-          selectPod(res.data[0]);
+          if (this.state.canUpdatePod) {
+            // this prevents multiple requests from changing the first pod
+            selectPod(res.data[0]);
+            this.setState({
+              canUpdatePod: false,
+            });
+          }
         }
       })
       .catch((err) => {
@@ -317,6 +325,9 @@ export default class ControllerTab extends Component<PropsType, StateType> {
                   pod.status?.message &&
                   this.props.setPodError(pod.status?.message);
                 selectPod(pod);
+                this.setState({
+                  canUpdatePod: false,
+                });
               }}
             >
               <Gutter>

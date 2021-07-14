@@ -238,7 +238,7 @@ func (app *App) HandleListPodEvents(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// HandleCreateConfigMap deletes the pod given the name and namespace.
+// HandleCreateConfigMap creates a configmap (and secret) given the name, namespace and variables.
 func (app *App) HandleCreateConfigMap(w http.ResponseWriter, r *http.Request) {
 	vals, err := url.ParseQuery(r.URL.RawQuery)
 	if err != nil {
@@ -420,7 +420,7 @@ func (app *App) HandleGetConfigMap(w http.ResponseWriter, r *http.Request) {
 	return
 }
 
-// HandleDeleteConfigMap deletes the pod given the name and namespace.
+// HandleDeleteConfigMap deletes the configmap (and secret) given the name and namespace.
 func (app *App) HandleDeleteConfigMap(w http.ResponseWriter, r *http.Request) {
 	vals, err := url.ParseQuery(r.URL.RawQuery)
 	if err != nil {
@@ -471,7 +471,7 @@ func (app *App) HandleDeleteConfigMap(w http.ResponseWriter, r *http.Request) {
 	return
 }
 
-// HandleUpdateConfigMap deletes the pod given the name and namespace.
+// HandleUpdateConfigMap updates the configmap (and secret) given the name, namespace and variables.
 func (app *App) HandleUpdateConfigMap(w http.ResponseWriter, r *http.Request) {
 	vals, err := url.ParseQuery(r.URL.RawQuery)
 
@@ -855,7 +855,7 @@ func (app *App) HandleListJobsByChart(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// HandleDeleteConfigMap deletes the pod given the name and namespace.
+// HandleDeleteJob deletes the job given the name and namespace.
 func (app *App) HandleDeleteJob(w http.ResponseWriter, r *http.Request) {
 	// get path parameters
 	namespace := chi.URLParam(r, "namespace")

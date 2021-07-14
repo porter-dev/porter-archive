@@ -61,10 +61,15 @@ export default class KeyValueArray extends Component<PropsType, StateType> {
       }
       return s;
     };
+    const isNumber = (s: string) => {
+      return !isNaN(!s ? NaN : Number(String(s).trim()));
+    };
     this.state.values.forEach((entry: any, i: number) => {
-      console.log(entry.value);
-      console.log(fixNewlines(entry.value));
-      obj[entry.key] = fixNewlines(entry.value);
+      if (isNumber(entry.value)) {
+        obj[entry.key] = '"' + entry.value + '"';
+      } else {
+        obj[entry.key] = fixNewlines(entry.value);
+      }
     });
     return obj;
   };

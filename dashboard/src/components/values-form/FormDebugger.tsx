@@ -2,7 +2,6 @@ import React, { Component } from "react";
 import styled from "styled-components";
 import AceEditor from "react-ace";
 import PorterForm from "../form-refactor/PorterForm";
-import FormWrapper from "components/values-form/FormWrapper";
 import CheckboxRow from "components/values-form/CheckboxRow";
 import InputRow from "components/values-form/InputRow";
 import yaml from "js-yaml";

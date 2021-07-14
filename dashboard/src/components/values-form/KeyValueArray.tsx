@@ -8,6 +8,11 @@ import sliders from "assets/sliders.svg";
 import upload from "assets/upload.svg";
 import { keysIn } from "lodash";
 
+export type KeyValue = {
+  key: string;
+  value: string;
+};
+
 type PropsType = {
   label?: string;
   values: any;
@@ -51,15 +56,8 @@ export default class KeyValueArray extends Component<PropsType, StateType> {
     return obj;
   };
 
-  objectToValues = (obj: any) => {
-    let values = [] as any[];
-    Object.keys(obj).forEach((key: string, i: number) => {
-      let entry = {} as any;
-      entry.key = key;
-      entry.value = obj[key];
-      values.push(entry);
-    });
-    return values;
+  objectToValues = (obj: Record<string, string>): KeyValue[] => {
+    return Object.entries(obj).map(([key, value]) => ({ key, value }));
   };
 
   renderDeleteButton = (i: number) => {
@@ -148,16 +146,18 @@ export default class KeyValueArray extends Component<PropsType, StateType> {
       return (
         <Modal
           onRequestClose={() => this.setState({ showEnvModal: false })}
-          width="665px"
-          height="342px"
+          width="765px"
+          height="542px"
         >
           <LoadEnvGroupModal
+            existingValues={this.props.values}
             namespace={this.props.externalValues?.namespace}
             clusterId={this.props.externalValues?.clusterId}
             closeModal={() => this.setState({ showEnvModal: false })}
-            setValues={(values: any) => {
-              this.props.setValues(values);
-              this.setState({ values: this.objectToValues(values) });
+            setValues={(values) => {
+              const newValues = { ...this.props.values, ...values };
+              this.props.setValues(newValues);
+              this.setState({ values: this.objectToValues(newValues) });
             }}
           />
         </Modal>

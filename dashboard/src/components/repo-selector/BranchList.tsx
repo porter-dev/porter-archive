@@ -1,36 +1,28 @@
-import React, { Component } from "react";
+import React, { useEffect, useState, useContext } from "react";
 import styled from "styled-components";
 import branch_icon from "assets/branch.png";
-import info from "assets/info.svg";
 
 import api from "../../shared/api";
 import { Context } from "../../shared/Context";
-import { ActionConfigType } from "../..//shared/types";
+import { ActionConfigType } from "../../shared/types";
 
 import Loading from "../Loading";
+import SearchBar from "../SearchBar";
 
-type PropsType = {
+type Props = {
   actionConfig: ActionConfigType;
   setBranch: (x: string) => void;
 };
 
-type StateType = {
-  loading: boolean;
-  error: boolean;
-  branches: string[];
-};
+const BranchList: React.FC<Props> = ({ setBranch, actionConfig }) => {
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+  const [branches, setBranches] = useState<string[]>([]);
+  const [searchFilter, setSearchFilter] = useState(null);
 
-export default class BranchList extends Component<PropsType, StateType> {
-  state = {
-    loading: true,
-    error: false,
-    branches: [] as string[],
-  };
+  const { currentProject } = useContext(Context);
 
-  componentDidMount() {
-    let { actionConfig } = this.props;
-    let { currentProject } = this.context;
-
+  useEffect(() => {
     // Get branches
     api
       .getBranches(
@@ -44,17 +36,19 @@ export default class BranchList extends Component<PropsType, StateType> {
           name: actionConfig.git_repo.split("/")[1],
         }
       )
-      .then((res) =>
-        this.setState({ branches: res.data, loading: false, error: false })
-      )
+      .then((res) => {
+        setBranches(res.data);
+        setLoading(false);
+        setError(false);
+      })
       .catch((err) => {
         console.log(err);
-        this.setState({ loading: false, error: true });
+        setLoading(false);
+        setError(true);
       });
-  }
+  }, []);
 
-  renderBranchList = () => {
-    let { branches, loading, error } = this.state;
+  const renderBranchList = () => {
     if (loading) {
       return (
         <LoadingWrapper>
@@ -65,34 +59,47 @@ export default class BranchList extends Component<PropsType, StateType> {
       return <LoadingWrapper>Error loading branches</LoadingWrapper>;
     }
 
-    return branches.map((branch: string, i: number) => {
+    let results =
+      searchFilter != null
+        ? branches.filter((branch) => {
+            return branch
+              .toLowerCase()
+              .includes(searchFilter.toLowerCase() || "");
+          })
+        : branches.slice(0, 10);
+
+    if (results.length == 0) {
+      return <LoadingWrapper>No matching Branches found.</LoadingWrapper>;
+    }
+    return results.map((branch: string, i: number) => {
       return (
         <BranchName
           key={i}
           lastItem={i === branches.length - 1}
-          onClick={() => this.props.setBranch(branch)}
+          onClick={() => setBranch(branch)}
         >
-          <img src={branch_icon} />
+          <img src={branch_icon} alt={"branch icon"} />
           {branch}
         </BranchName>
       );
     });
   };
 
-  render() {
-    return (
-      <>
-        <InfoRow lastItem={false}>
-          <img src={info} />
-          Select Branch
-        </InfoRow>
-        {this.renderBranchList()}
-      </>
-    );
-  }
-}
+  return (
+    <>
+      <SearchBar
+        setSearchFilter={setSearchFilter}
+        disabled={error || loading}
+        prompt={"Search branches..."}
+      />
+      <BranchListWrapper>
+        <ExpandedWrapper>{renderBranchList()}</ExpandedWrapper>
+      </BranchListWrapper>
+    </>
+  );
+};
 
-BranchList.contextType = Context;
+export default BranchList;
 
 const BranchName = styled.div`
   display: flex;
@@ -123,14 +130,6 @@ const BranchName = styled.div`
   }
 `;
 
-const InfoRow = styled(BranchName)`
-  cursor: default;
-  color: #ffffff55;
-  :hover {
-    background: #ffffff11;
-  }
-`;
-
 const LoadingWrapper = styled.div`
   padding: 30px 0px;
   background: #ffffff11;
@@ -139,4 +138,26 @@ const LoadingWrapper = styled.div`
   justify-content: center;
   font-size: 13px;
   color: #ffffff44;
+`;
+
+const BranchListWrapper = styled.div`
+  border: 1px solid #ffffff55;
+  border-radius: 3px;
+  overflow-y: auto;
+`;
+
+const ExpandedWrapper = styled.div`
+  width: 100%;
+  border-radius: 3px;
+  border: 0px solid #ffffff44;
+  max-height: 221px;
+  top: 40px;
+
+  > i {
+    font-size: 18px;
+    display: block;
+    position: absolute;
+    left: 10px;
+    top: 10px;
+  }
 `;

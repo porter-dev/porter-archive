@@ -32,6 +32,7 @@ type StateType = {
   data: MetricsData[];
   showMetricsSettings: boolean;
   metricsOptions: MetricsOption[];
+  isLoading: number;
 };
 
 type MetricsCPUDataResponse = {
@@ -106,6 +107,7 @@ export default class MetricsSection extends Component<PropsType, StateType> {
       { value: "memory", label: "RAM Utilization (Mi)" },
       { value: "network", label: "Network Received Bytes (Ki)" },
     ],
+    isLoading: 0,
   };
 
   componentDidMount() {
@@ -114,6 +116,9 @@ export default class MetricsSection extends Component<PropsType, StateType> {
     let { currentCluster, currentProject, setCurrentError } = this.context;
 
     if (currentChart.chart?.metadata?.name == "ingress-nginx") {
+      this.setState(({ isLoading }) => {
+        return { isLoading: isLoading + 1 };
+      });
       api
         .getNGINXIngresses(
           "<token>",
@@ -146,9 +151,16 @@ export default class MetricsSection extends Component<PropsType, StateType> {
         .catch((err) => {
           setCurrentError(JSON.stringify(err));
           this.setState({ controllerOptions: [] as any[] });
+        })
+        .finally(() => {
+          this.setState(({ isLoading }) => {
+            return { isLoading: isLoading - 1 };
+          });
         });
     }
-
+    this.setState(({ isLoading }) => {
+      return { isLoading: isLoading + 1 };
+    });
     api
       .getChartControllers(
         "<token>",
@@ -182,6 +194,11 @@ export default class MetricsSection extends Component<PropsType, StateType> {
       .catch((err) => {
         setCurrentError(JSON.stringify(err));
         this.setState({ controllerOptions: [] as any[] });
+      })
+      .finally(() => {
+        this.setState(({ isLoading }) => {
+          return { isLoading: isLoading - 1 };
+        });
       });
   }
 
@@ -241,6 +258,10 @@ export default class MetricsSection extends Component<PropsType, StateType> {
       shouldsum = false;
     }
 
+    this.setState(({ isLoading }) => {
+      return { isLoading: isLoading + 1 };
+    });
+
     api
       .getMetrics(
         "<token>",
@@ -259,6 +280,9 @@ export default class MetricsSection extends Component<PropsType, StateType> {
         }
       )
       .then((res) => {
+        if (!Array.isArray(res.data) || !res.data[0]?.results) {
+          return;
+        }
         // transform the metrics to expected form
         if (kind == "cpu") {
           let data = res.data as MetricsCPUDataResponse;
@@ -342,6 +366,11 @@ export default class MetricsSection extends Component<PropsType, StateType> {
       .catch((err) => {
         setCurrentError(JSON.stringify(err));
         // this.setState({ controllers: [], loading: false });
+      })
+      .finally(() => {
+        this.setState(({ isLoading }) => {
+          return { isLoading: isLoading - 1 };
+        });
       });
   };
 
@@ -363,6 +392,10 @@ export default class MetricsSection extends Component<PropsType, StateType> {
       i += 1;
     }
     selectors.push(selector);
+
+    this.setState(({ isLoading }) => {
+      return { isLoading: isLoading + 1 };
+    });
 
     api
       .getMatchingPods(
@@ -388,9 +421,13 @@ export default class MetricsSection extends Component<PropsType, StateType> {
         this.getMetrics();
       })
       .catch((err) => {
-        console.log(err);
         setCurrentError(JSON.stringify(err));
         return;
+      })
+      .finally(() => {
+        this.setState(({ isLoading }) => {
+          return { isLoading: isLoading - 1 };
+        });
       });
   };
 
@@ -512,6 +549,17 @@ export default class MetricsSection extends Component<PropsType, StateType> {
               </IconWrapper>
               {this.renderMetricsSettings()}
             </Relative>
+            {/* <RefreshMetrics
+              className="material-icons-outlined"
+              onClick={() => this.getMetrics()}
+            >
+              refresh
+            </RefreshMetrics> */}
+
+          <Highlight color={"#7d7d81"} onClick={this.getMetrics}>
+            <i className="material-icons">autorenew</i>
+          </Highlight>
+
           </Flex>
           <RangeWrapper>
             <TabSelector
@@ -527,9 +575,18 @@ export default class MetricsSection extends Component<PropsType, StateType> {
             />
           </RangeWrapper>
         </MetricsHeader>
-        {this.state.data.length === 0 ? (
-          <Loading />
-        ) : (
+        {this.state.isLoading > 0 && <Loading />}
+        {this.state.data.length === 0 && this.state.isLoading === 0 && (
+            <Message>
+              No data available yet.
+              <Highlight color={"#8590ff"} onClick={this.getMetrics}>
+                <i className="material-icons">autorenew</i>
+                Refresh
+              </Highlight>
+            </Message>
+        )}
+
+        {this.state.data.length > 0 && this.state.isLoading === 0 && (
           <ParentSize>
             {({ width, height }) => (
               <AreaChart
@@ -549,6 +606,35 @@ export default class MetricsSection extends Component<PropsType, StateType> {
 
 MetricsSection.contextType = Context;
 
+const Highlight = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 8px;
+  color: ${(props: {color: string}) => props.color};
+  cursor: pointer;
+
+
+  > i {
+    font-size: 20px;
+    margin-right: 3px;
+  }
+`;
+
+const RefreshMetrics = styled.span`
+  :hover {
+    cursor: pointer;
+  }
+`;
+
+const NoDataPlaceholder = styled.div`
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+`;
+
 const Label = styled.div`
   font-weight: bold;
 `;
@@ -556,6 +642,18 @@ const Label = styled.div`
 const Relative = styled.div`
   position: relative;
 `;
+
+const Message = styled.div`
+display: flex;
+height: 100%;
+width: calc(100% - 150px);
+align-items: center;
+justify-content: center;
+margin-left: 75px;
+text-align: center;
+color: #ffffff44;
+font-size: 13px;
+`
 
 const IconWrapper = styled.div`
   display: flex;

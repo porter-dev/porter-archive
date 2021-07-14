@@ -64,8 +64,6 @@ export const PorterFormContextProvider: React.FC<Props> = (props) => {
           },
         };
       case "mutate-vars":
-        console.log("mutating");
-        console.log(props.overrideVariables);
         return {
           ...state,
           variables: {
@@ -76,8 +74,6 @@ export const PorterFormContextProvider: React.FC<Props> = (props) => {
     }
     return state;
   };
-
-  console.log(props.overrideVariables);
 
   const [state, dispatch] = useReducer(handleAction, {
     components: {},

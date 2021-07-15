@@ -1,18 +1,13 @@
 import React, { useContext, useState } from "react";
-import {
-  PorterFormData,
-  Section,
-  FormField,
-  StringInputField,
-  CheckboxField,
-} from "./types";
+import { Section, FormField, StringInputField, CheckboxField } from "./types";
 import TabRegion, { TabOption } from "../TabRegion";
 import Heading from "../values-form/Heading";
 import Helper from "../values-form/Helper";
 import StringInput from "./field-components/StringInput";
 import { PorterFormContext } from "./PorterFormContextProvider";
 import Checkbox from "./field-components/Checkbox";
-import { ShowIf, ShowIfAnd, ShowIfNot, ShowIfOr } from "../../shared/types";
+import styled from "styled-components";
+import SaveButton from "../SaveButton";
 
 interface Props {
   leftTabOptions?: TabOption[];
@@ -21,6 +16,7 @@ interface Props {
     currentTab: string,
     submitValues?: any
   ) => React.ReactElement;
+  saveButtonText?: string;
 }
 
 const PorterForm: React.FC<Props> = (props) => {
@@ -101,10 +97,32 @@ const PorterForm: React.FC<Props> = (props) => {
         currentTab={currentTab}
         setCurrentTab={setCurrentTab}
       >
-        {renderTab(currentTab)}
+        <StyledPorterForm>{renderTab(currentTab)}</StyledPorterForm>
       </TabRegion>
+      <SaveButton
+        text={props.saveButtonText || "Deploy"}
+        onClick={() => {}}
+        makeFlush
+      />
+      <Spacer />
     </>
   );
 };
 
 export default PorterForm;
+
+const Spacer = styled.div`
+  height: 50px;
+`;
+
+const StyledPorterForm = styled.div`
+  width: 100%;
+  height: 100%;
+  background: #ffffff11;
+  color: #ffffff;
+  padding: 0px 35px 25px;
+  position: relative;
+  border-radius: 5px;
+  font-size: 13px;
+  overflow: auto;
+`;

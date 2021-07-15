@@ -322,11 +322,11 @@ tabs:
         type: number
         unit: km
     - type: checkbox
-      required: true
+      required: false
       label: Checkbox A alternative
       variable: checkbox_a
     - type: subtitle
-      label: "Note: Hidden required fields aren't supported yet (global only)"
+      label: "Note: Hidden required fields are definitely supported"
   - name: controlled-by-external
     show_if:
       or:
@@ -337,6 +337,10 @@ tabs:
       label: Conditional Display (A)
     - type: subtitle
       label: This section can be externally controlled by the value of checkbox_a
+    - type: string-input
+      label: Required Number Input D that could be hidden
+      required: true
+      variable: field_d
     - type: string-input
       variable: input_a
       placeholder: "Override w/ input_a"

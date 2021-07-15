@@ -21,15 +21,17 @@ const StringInput: React.FC<Props> = ({
   settings,
   isReadOnly,
 }) => {
-  const { state, variables, mutateVars } = useFormField<StringInputFieldState>(
-    id,
-    {
-      initValue: {},
-      initValidation: {
-        validated: !required,
-      },
-    }
-  );
+  const {
+    state,
+    variables,
+    mutateVars,
+    updateValidation,
+  } = useFormField<StringInputFieldState>(id, {
+    initValue: {},
+    initValidation: {
+      validated: false,
+    },
+  });
 
   // TODO: needs a loading wrapper
   if (state == undefined) {
@@ -38,7 +40,9 @@ const StringInput: React.FC<Props> = ({
 
   const curValue =
     settings?.type == "number"
-      ? parseFloat(variables[variable]) || ""
+      ? !isNaN(parseFloat(variables[variable]))
+        ? parseFloat(variables[variable])
+        : ""
       : variables[variable] || "";
 
   return (
@@ -52,6 +56,15 @@ const StringInput: React.FC<Props> = ({
           return {
             ...vars,
             [variable]: x,
+          };
+        });
+        updateValidation((prev) => {
+          return {
+            ...prev,
+            validated:
+              settings?.type == "number"
+                ? !isNaN(x as number)
+                : !!(x as string).trim(),
           };
         });
       }}

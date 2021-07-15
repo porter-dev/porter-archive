@@ -20,7 +20,9 @@ interface Props {
 }
 
 const PorterForm: React.FC<Props> = (props) => {
-  const { formData, isReadOnly } = useContext(PorterFormContext);
+  const { formData, isReadOnly, validationInfo } = useContext(
+    PorterFormContext
+  );
 
   const [currentTab, setCurrentTab] = useState(
     formData.tabs.length > 0 ? formData.tabs[0].name : ""
@@ -102,6 +104,8 @@ const PorterForm: React.FC<Props> = (props) => {
         text={props.saveButtonText || "Deploy"}
         onClick={() => {}}
         makeFlush
+        status={validationInfo.validated ? "" : validationInfo.error}
+        disabled={isReadOnly || !validationInfo.validated}
       />
       <Spacer />
     </>

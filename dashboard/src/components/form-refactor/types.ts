@@ -78,6 +78,11 @@ export interface PorterFormData {
   tabs: Tab[];
 }
 
+export interface PorterFormValidationInfo {
+  validated: boolean;
+  error?: string;
+}
+
 // internal field state interfaces
 
 export interface StringInputFieldState {}
@@ -121,9 +126,15 @@ export interface PorterFormUpdateFieldAction {
   updateFunc: (prev: PorterFormFieldFieldState) => PorterFormFieldFieldState;
 }
 
+export interface PorterFormUpdateValidationAction {
+  type: "update-validation",
+  id: string;
+  updateFunc: (prev: PorterFormFieldValidationState) => PorterFormFieldValidationState;
+}
+
 export interface PorterFormMutateVariablesAction {
   type: "mutate-vars",
   mutateFunc: (prev: PorterFormVariableList) => PorterFormVariableList;
 }
 
-export type PorterFormAction = PorterFormInitFieldAction|PorterFormUpdateFieldAction|PorterFormMutateVariablesAction;
+export type PorterFormAction = PorterFormInitFieldAction|PorterFormUpdateFieldAction|PorterFormMutateVariablesAction|PorterFormUpdateValidationAction;

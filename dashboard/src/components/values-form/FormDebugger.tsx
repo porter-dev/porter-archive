@@ -168,6 +168,7 @@ export default class FormDebugger extends Component<PropsType, StateType> {
           <PorterForm
             rightTabOptions={this.state.showBonusTabs ? tabOptions : []}
             renderTabContents={this.renderTabContents}
+            saveButtonText={"Test Submit"}
           />
         </PorterFormContextProvider>
         {/*<FormWrapper*/}

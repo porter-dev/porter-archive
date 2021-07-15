@@ -4,6 +4,7 @@ import {
   PorterFormState,
   PorterFormAction,
   PorterFormVariableList,
+  GenericInputField,
 } from "./types";
 import { ShowIf, ShowIfAnd, ShowIfNot, ShowIfOr } from "../../shared/types";
 
@@ -121,6 +122,7 @@ export const PorterFormContextProvider: React.FC<Props> = (props) => {
   /*
   We don't want to have the actual <PorterForm> component to do as little form
   logic as possible, so this structures the form object based on show_if statements
+  and assigns a unique id to each field
 
   This computed structure also later lets us figure out which fields should be required
   */
@@ -130,18 +132,56 @@ export const PorterFormContextProvider: React.FC<Props> = (props) => {
   ) => {
     return {
       ...data,
-      tabs: data.tabs.map((tab) => {
+      tabs: data.tabs.map((tab, i) => {
         return {
           ...tab,
-          sections: tab.sections.filter((section) => {
-            return !section.show_if || evalShowIf(section.show_if, variables);
-          }),
+          sections: tab.sections
+            .map((section, j) => {
+              return {
+                ...section,
+                contents: section.contents.map((field, k) => {
+                  return {
+                    ...field,
+                    id: `${i}-${j}-${k}`,
+                  };
+                }),
+              };
+            })
+            .filter((section) => {
+              return !section.show_if || evalShowIf(section.show_if, variables);
+            }),
         };
       }),
     };
   };
+  /*
+    compute a list of field ids who's input is required and a map from a variable value
+    to a list of fields that set it
+  */
+  const computeRequiredVariables = (
+    data: PorterFormData
+  ): [string[], Record<string, string[]>] => {
+    const requiredIds: string[] = [];
+    const mapping: Record<string, string[]> = {};
+    data.tabs.map((tab) =>
+      tab.sections.map((section) =>
+        section.contents.map((field) => {
+          if (field.type == "heading" || field.type == "subtitle") return;
+          if (field.required) {
+            requiredIds.push(field.id);
+            if (!mapping[field.variable]) {
+              mapping[field.variable] = [];
+            }
+            mapping[field.variable].push(field.id);
+          }
+        })
+      )
+    );
+    return [requiredIds, mapping];
+  };
 
   const formData = computeFormStructure(props.rawFormData, state.variables);
+  const [requiredIds, varMapping] = computeRequiredVariables(formData);
 
   return (
     <Provider

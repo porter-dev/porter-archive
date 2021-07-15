@@ -26,7 +26,7 @@ const PorterForm: React.FC<Props> = (props) => {
     formData.tabs.length > 0 ? formData.tabs[0].name : ""
   );
 
-  const renderSectionField = (field: FormField, id: string): JSX.Element => {
+  const renderSectionField = (field: FormField): JSX.Element => {
     const bundledProps = {
       ...field,
       isReadOnly,
@@ -37,9 +37,9 @@ const PorterForm: React.FC<Props> = (props) => {
       case "subtitle":
         return <Helper>{field.label}</Helper>;
       case "string-input":
-        return <StringInput id={id} {...(bundledProps as StringInputField)} />;
+        return <StringInput {...(bundledProps as StringInputField)} />;
       case "checkbox":
-        return <Checkbox id={id} {...(bundledProps as CheckboxField)} />;
+        return <Checkbox {...(bundledProps as CheckboxField)} />;
     }
     return <p>Not Implemented: {(field as any).type}</p>;
   };
@@ -48,10 +48,9 @@ const PorterForm: React.FC<Props> = (props) => {
     return (
       <>
         {section.contents.map((field, i) => {
-          const id = `${section.name}-${field.type}-${i}`;
           return (
-            <React.Fragment key={id}>
-              {renderSectionField(field, id)}
+            <React.Fragment key={field.id}>
+              {renderSectionField(field)}
             </React.Fragment>
           );
         })}

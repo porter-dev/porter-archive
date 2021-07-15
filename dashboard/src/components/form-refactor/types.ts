@@ -5,17 +5,22 @@
 
 // YAML Field interfaces
 
-export interface GenericFieldProps {
-  isReadOnly?: boolean;
-  required?: boolean;
+export interface GenericField {
+  id: string;
 }
 
-export interface HeadingField {
+export interface GenericInputField extends GenericField {
+  isReadOnly?: boolean;
+  required?: boolean;
+  variable: string;
+}
+
+export interface HeadingField extends GenericField{
   type: "heading";
   label: string;
 }
 
-export interface SubtitleField {
+export interface SubtitleField extends GenericField{
   type: "subtitle";
   label: string;
 }
@@ -26,19 +31,17 @@ export interface StringInputFieldSettings {
   omitUnitFromValue?: boolean;
 }
 
-export interface StringInputField extends GenericFieldProps {
+export interface StringInputField extends GenericInputField {
   type: "string-input";
-  variable: string;
   label?: string;
   placeholder?: string;
   info?: string;
   settings?: StringInputFieldSettings;
 }
 
-export interface CheckboxField extends GenericFieldProps {
+export interface CheckboxField extends GenericInputField {
   type: "checkbox";
   label?: string;
-  variable: string;
 }
 
 export type FormField = HeadingField|SubtitleField|StringInputField|CheckboxField;

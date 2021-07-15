@@ -2,7 +2,7 @@ import React from "react";
 import InputRow from "../../values-form/InputRow";
 import useFormField from "../hooks/useFormField";
 import {
-  GenericFieldProps,
+  GenericInputField,
   StringInputField,
   StringInputFieldState,
 } from "../types";

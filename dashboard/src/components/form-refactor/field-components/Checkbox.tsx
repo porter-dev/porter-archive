@@ -7,7 +7,13 @@ interface Props extends CheckboxField {
   id: string;
 }
 
-const Checkbox: React.FC<Props> = ({ id, label, required, variable }) => {
+const Checkbox: React.FC<Props> = ({
+  id,
+  label,
+  required,
+  variable,
+  isReadOnly,
+}) => {
   const { state, variables, mutateVars } = useFormField<CheckboxFieldState>(
     id,
     {
@@ -35,6 +41,7 @@ const Checkbox: React.FC<Props> = ({ id, label, required, variable }) => {
         });
       }}
       label={label}
+      disabled={isReadOnly}
     />
   );
 };

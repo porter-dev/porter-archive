@@ -163,6 +163,7 @@ export default class FormDebugger extends Component<PropsType, StateType> {
           overrideVariables={{
             input_a: this.state.valuesToOverride?.input_a?.value,
           }}
+          isReadOnly={this.state.isReadOnly}
         >
           <PorterForm
             rightTabOptions={this.state.showBonusTabs ? tabOptions : []}

@@ -4,7 +4,7 @@ import {
   PorterFormState,
   PorterFormAction,
   PorterFormVariableList,
-  GenericInputField,
+  PorterFormValidationInfo,
 } from "./types";
 import { ShowIf, ShowIfAnd, ShowIfNot, ShowIfOr } from "../../shared/types";
 
@@ -19,6 +19,7 @@ interface ContextProps {
   formData: PorterFormData;
   formState: PorterFormState;
   dispatchAction: (event: PorterFormAction) => void;
+  validationInfo: PorterFormValidationInfo;
   isReadOnly?: boolean;
 }
 
@@ -63,6 +64,19 @@ export const PorterFormContextProvider: React.FC<Props> = (props) => {
             [action.id]: {
               ...state.components[action.id],
               state: action.updateFunc(state.components[action.id]),
+            },
+          },
+        };
+      case "update-validation":
+        return {
+          ...state,
+          components: {
+            ...state.components,
+            [action.id]: {
+              ...state.components[action.id],
+              validation: action.updateFunc(
+                state.components[action.id].validation
+              ),
             },
           },
         };
@@ -169,19 +183,35 @@ export const PorterFormContextProvider: React.FC<Props> = (props) => {
           if (field.type == "heading" || field.type == "subtitle") return;
           if (field.required) {
             requiredIds.push(field.id);
-            if (!mapping[field.variable]) {
-              mapping[field.variable] = [];
-            }
-            mapping[field.variable].push(field.id);
           }
+          if (!mapping[field.variable]) {
+            mapping[field.variable] = [];
+          }
+          mapping[field.variable].push(field.id);
         })
       )
     );
     return [requiredIds, mapping];
   };
 
+  /*
+    Validate the form based
+    Will get more complicated over time
+   */
+  const doValidation = (requiredIds: string[]) =>
+    requiredIds
+      .map((id) => state.components[id]?.validation.validated)
+      .every((x) => x);
+
   const formData = computeFormStructure(props.rawFormData, state.variables);
   const [requiredIds, varMapping] = computeRequiredVariables(formData);
+  const isValidated = doValidation(requiredIds);
+
+  console.group("Validation Info:");
+  console.log(requiredIds);
+  console.log(varMapping);
+  console.log(isValidated);
+  console.groupEnd();
 
   return (
     <Provider
@@ -190,6 +220,10 @@ export const PorterFormContextProvider: React.FC<Props> = (props) => {
         formState: state,
         dispatchAction: dispatch,
         isReadOnly: props.isReadOnly,
+        validationInfo: {
+          validated: isValidated,
+          error: isValidated ? null : "Missing required fields",
+        },
       }}
     >
       {props.children}

@@ -13,6 +13,11 @@ interface FormFieldData<T> {
   mutateVars: (
     mutateFunc: (vars: PorterFormVariableList) => PorterFormVariableList
   ) => void;
+  updateValidation: (
+    updateFunc: (
+      state: PorterFormFieldValidationState
+    ) => PorterFormFieldValidationState
+  ) => void;
 }
 
 interface Options<T> {
@@ -52,11 +57,24 @@ const useFormField = <T extends PorterFormFieldFieldState>(
     });
   };
 
+  const updateValidation = (
+    updateFunc: (
+      state: PorterFormFieldValidationState
+    ) => PorterFormFieldValidationState
+  ) => {
+    dispatchAction({
+      id: fieldId,
+      type: "update-validation",
+      updateFunc,
+    });
+  };
+
   return {
     state: formState.components[fieldId]?.state as T,
     variables: formState.variables,
     updateState,
     mutateVars,
+    updateValidation,
   };
 };
 

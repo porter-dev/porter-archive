@@ -11,12 +11,14 @@ interface Props {
   rawFormData: PorterFormData;
   initialVariables?: PorterFormVariableList;
   overrideVariables?: PorterFormVariableList;
+  isReadOnly?: boolean;
 }
 
 interface ContextProps {
   formData: PorterFormData;
   formState: PorterFormState;
   dispatchAction: (event: PorterFormAction) => void;
+  isReadOnly?: boolean;
 }
 
 export const PorterFormContext = createContext<ContextProps | undefined>(
@@ -147,6 +149,7 @@ export const PorterFormContextProvider: React.FC<Props> = (props) => {
         formData: formData,
         formState: state,
         dispatchAction: dispatch,
+        isReadOnly: props.isReadOnly,
       }}
     >
       {props.children}

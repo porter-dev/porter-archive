@@ -1,5 +1,11 @@
 import React, { useContext, useState } from "react";
-import { PorterFormData, Section, FormField } from "./types";
+import {
+  PorterFormData,
+  Section,
+  FormField,
+  StringInputField,
+  CheckboxField,
+} from "./types";
 import TabRegion, { TabOption } from "../TabRegion";
 import Heading from "../values-form/Heading";
 import Helper from "../values-form/Helper";
@@ -18,22 +24,26 @@ interface Props {
 }
 
 const PorterForm: React.FC<Props> = (props) => {
-  const { formData } = useContext(PorterFormContext);
+  const { formData, isReadOnly } = useContext(PorterFormContext);
 
   const [currentTab, setCurrentTab] = useState(
     formData.tabs.length > 0 ? formData.tabs[0].name : ""
   );
 
   const renderSectionField = (field: FormField, id: string): JSX.Element => {
+    const bundledProps = {
+      ...field,
+      isReadOnly,
+    };
     switch (field.type) {
       case "heading":
         return <Heading>{field.label}</Heading>;
       case "subtitle":
         return <Helper>{field.label}</Helper>;
       case "string-input":
-        return <StringInput id={id} {...field} />;
+        return <StringInput id={id} {...(bundledProps as StringInputField)} />;
       case "checkbox":
-        return <Checkbox id={id} {...field} />;
+        return <Checkbox id={id} {...(bundledProps as CheckboxField)} />;
     }
     return <p>Not Implemented: {(field as any).type}</p>;
   };

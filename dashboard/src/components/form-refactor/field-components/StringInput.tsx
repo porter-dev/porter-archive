@@ -1,7 +1,11 @@
 import React from "react";
 import InputRow from "../../values-form/InputRow";
 import useFormField from "../hooks/useFormField";
-import { StringInputField, StringInputFieldState } from "../types";
+import {
+  GenericFieldProps,
+  StringInputField,
+  StringInputFieldState,
+} from "../types";
 
 interface Props extends StringInputField {
   id: string;
@@ -15,6 +19,7 @@ const StringInput: React.FC<Props> = ({
   placeholder,
   info,
   settings,
+  isReadOnly,
 }) => {
   const { state, variables, mutateVars } = useFormField<StringInputFieldState>(
     id,
@@ -54,6 +59,7 @@ const StringInput: React.FC<Props> = ({
       isRequired={required}
       placeholder={placeholder}
       info={info}
+      disabled={isReadOnly}
     />
   );
 };

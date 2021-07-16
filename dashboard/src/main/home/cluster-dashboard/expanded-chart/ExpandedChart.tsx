@@ -129,7 +129,7 @@ const ExpandedChart: React.FC<PropsType> = (props) => {
             currentChart: res.data,
             loading: false,
             imageIsPlaceholder,
-            newNewestImage,
+            newestImage: newNewestImage,
           },
           res.data
         );
@@ -222,6 +222,7 @@ const ExpandedChart: React.FC<PropsType> = (props) => {
   };
 
   const updateComponents = (state: any, currentChart: ChartType) => {
+    console.log("updating components...");
     api
       .getChartComponents(
         "<token>",
@@ -237,6 +238,10 @@ const ExpandedChart: React.FC<PropsType> = (props) => {
         }
       )
       .then((res) => {
+        console.log(state);
+        setLoading(state.loading);
+        setImageIsPlaceholer(state.imageIsPlaceholder);
+        setNewestImage(state.newestImage);
         setComponents(res.data.Objects);
         setPodSelectors(res.data.PodSelectors);
         updateTabs();
@@ -661,6 +666,13 @@ const ExpandedChart: React.FC<PropsType> = (props) => {
         ingressName = components[i].Name;
       }
     }
+
+    if (!ingressName) return;
+
+    console.group("data");
+    console.log(components);
+    console.log(ingressName);
+    console.groupEnd();
 
     api
       .getIngress(

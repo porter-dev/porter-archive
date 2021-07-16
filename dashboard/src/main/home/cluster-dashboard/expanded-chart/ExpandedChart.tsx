@@ -1,9 +1,9 @@
-import React, { Component } from "react";
+import React, { useContext, useState, useEffect, useRef } from "react";
 import styled from "styled-components";
 import yaml from "js-yaml";
 import close from "assets/close.png";
 import _ from "lodash";
-import loading from "assets/loading.gif";
+import loadingSrc from "assets/loading.gif";
 
 import {
   ResourceType,
@@ -59,35 +59,45 @@ type StateType = {
   newestImage: string;
 };
 
-class ExpandedChart extends Component<PropsType, StateType> {
-  state = {
-    currentChart: this.props.currentChart,
-    loading: true,
-    showRevisions: false,
-    components: [] as ResourceType[],
-    podSelectors: [] as string[],
-    isPreview: false,
-    isUpdatingChart: false,
-    devOpsMode: localStorage.getItem("devOpsMode") === "true",
-    tabOptions: [] as any[],
-    saveValuesStatus: null as string | null,
-    forceRefreshRevisions: false,
-    controllers: {} as Record<string, Record<string, any>>,
-    websockets: {} as Record<string, any>,
-    url: null as string | null,
-    showDeleteOverlay: false,
-    deleting: false,
-    formData: {} as any,
-    imageIsPlaceholder: false,
-    newestImage: null as string,
-  };
+const ExpandedChart: React.FC<PropsType> = (props) => {
+  const [currentChart, setCurrentChart] = useState<ChartType>(
+    props.currentChart
+  );
+  const [loading, setLoading] = useState<boolean>(true);
+  const [showRevisions, setShowRevisions] = useState<boolean>(false);
+  const [components, setComponents] = useState<ResourceType[]>([]);
+  const [podSelectors, setPodSelectors] = useState<string[]>([]);
+  const [isPreview, setIsPreview] = useState<boolean>(false);
+  const [isUpdatingChart, setIsUpdatingChart] = useState<boolean>(false);
+  const [devOpsMode, setDevOpsMode] = useState<boolean>(
+    localStorage.getItem("devOpsMode") === "true"
+  );
+  const [tabOptions, setTabOptions] = useState<any[]>([]);
+  const [saveValuesStatus, setSaveValueStatus] = useState<string>(null);
+  const [forceRefreshRevisions, setForceRefreshRevisions] = useState<boolean>(
+    false
+  );
+  const [controllers, setControllers] = useState<
+    Record<string, Record<string, any>>
+  >({});
+  const controllersCallback = useRef(null);
+  const [websockets, setWebsockets] = useState<Record<string, any>>({});
+  const [url, setUrl] = useState<string>(null);
+  const [showDeleteOverlay, setShowDeleteOverlay] = useState<boolean>(false);
+  const [deleting, setDeleting] = useState<boolean>(false);
+  const [formData, setFormData] = useState<any>({});
+  const [imageIsPlaceholder, setImageIsPlaceholer] = useState<boolean>(false);
+  const [newestImage, setNewestImage] = useState<string>(null);
+
+  const { currentCluster, currentProject, setCurrentError } = useContext(
+    Context
+  );
 
   // Retrieve full chart data (includes form and values)
-  getChartData = (chart: ChartType) => {
-    let { currentProject } = this.context;
-    let { currentCluster, currentChart } = this.props;
+  const getChartData = (chart: ChartType) => {
+    let { currentCluster, currentChart } = props;
 
-    this.setState({ loading: true });
+    setLoading(true);
     api
       .getChart(
         "<token>",
@@ -105,21 +115,21 @@ class ExpandedChart extends Component<PropsType, StateType> {
       .then((res) => {
         let image = res.data?.config?.image?.repository;
         let tag = res.data?.config?.image?.tag?.toString();
-        let newestImage = tag ? image + ":" + tag : image;
+        let newNewestImage = tag ? image + ":" + tag : image;
         let imageIsPlaceholder = false;
         if (
           (image === "porterdev/hello-porter" ||
             image === "public.ecr.aws/o1j4x7p4/hello-porter") &&
-          !this.state.newestImage
+          !newestImage
         ) {
           imageIsPlaceholder = true;
         }
-        this.updateComponents(
+        updateComponents(
           {
             currentChart: res.data,
             loading: false,
             imageIsPlaceholder,
-            newestImage,
+            newNewestImage,
           },
           res.data
         );
@@ -127,9 +137,7 @@ class ExpandedChart extends Component<PropsType, StateType> {
       .catch(console.log);
   };
 
-  getControllers = async (chart: ChartType) => {
-    let { currentCluster, currentProject, setCurrentError } = this.context;
-
+  const getControllers = async (chart: ChartType) => {
     // don't retrieve controllers for chart that failed to even deploy.
     if (chart.info.status == "failed") return;
 
@@ -153,17 +161,11 @@ class ExpandedChart extends Component<PropsType, StateType> {
           res.data?.forEach(async (c: any) => {
             await new Promise((nextController: (res?: any) => void) => {
               c.metadata.kind = c.kind;
-              this.setState(
-                {
-                  controllers: {
-                    ...this.state.controllers,
-                    [c.metadata.uid]: c,
-                  },
-                },
-                () => {
-                  nextController();
-                }
-              );
+              controllersCallback.current = nextController;
+              setControllers({
+                ...controllers,
+                [c.metadata.uid]: c,
+              });
             });
           });
           next();
@@ -172,8 +174,7 @@ class ExpandedChart extends Component<PropsType, StateType> {
     });
   };
 
-  setupWebsocket = (kind: string, chart: ChartType) => {
-    let { currentCluster, currentProject } = this.context;
+  const setupWebsocket = (kind: string, chart: ChartType) => {
     let protocol = window.location.protocol == "https:" ? "wss" : "ws";
     let ws = new WebSocket(
       `${protocol}://${window.location.host}/api/projects/${currentProject.id}/k8s/${kind}/status?cluster_id=${currentCluster.id}`
@@ -189,13 +190,11 @@ class ExpandedChart extends Component<PropsType, StateType> {
         let object = event.Object;
         object.metadata.kind = event.Kind;
 
-        if (!this.state.controllers[object.metadata.uid]) return;
+        if (!controllers[object.metadata.uid]) return;
 
-        this.setState({
-          controllers: {
-            ...this.state.controllers,
-            [object.metadata.uid]: object,
-          },
+        setControllers({
+          ...controllers,
+          [object.metadata.uid]: object,
         });
       }
     };
@@ -212,16 +211,17 @@ class ExpandedChart extends Component<PropsType, StateType> {
     return ws;
   };
 
-  setControllerWebsockets = (controller_types: any[], chart: ChartType) => {
+  const setControllerWebsockets = (
+    controller_types: any[],
+    chart: ChartType
+  ) => {
     let websockets = controller_types.map((kind: string) => {
-      return this.setupWebsocket(kind, chart);
+      return setupWebsocket(kind, chart);
     });
-    this.setState({ websockets });
+    setWebsockets(websockets);
   };
 
-  updateComponents = (state: any, currentChart: ChartType) => {
-    let { currentCluster, currentProject } = this.context;
-
+  const updateComponents = (state: any, currentChart: ChartType) => {
     api
       .getChartComponents(
         "<token>",
@@ -237,33 +237,27 @@ class ExpandedChart extends Component<PropsType, StateType> {
         }
       )
       .then((res) => {
-        let newState = state || {};
-
-        newState.components = res.data.Objects;
-        newState.podSelectors = res.data.PodSelectors;
-
-        this.setState(newState);
-        this.updateTabs();
+        setComponents(res.data.Objects);
+        setPodSelectors(res.data.PodSelectors);
+        updateTabs();
       })
       .catch(console.log);
   };
 
-  refreshChart = () => this.getChartData(this.state.currentChart);
+  const refreshChart = () => getChartData(currentChart);
 
-  onSubmit = (rawValues: any) => {
-    let { currentProject, currentCluster, setCurrentError } = this.context;
-
+  const onSubmit = (rawValues: any) => {
     // Convert dotted keys to nested objects
     let values = {};
 
     // Weave in preexisting values and convert to yaml
-    if (this.props.currentChart.config) {
-      values = this.props.currentChart.config;
+    if (props.currentChart.config) {
+      values = props.currentChart.config;
     }
 
     // Override config from currentChart prop if we have it on the current state
-    if (this.state.currentChart.config) {
-      values = this.state.currentChart.config;
+    if (currentChart.config) {
+      values = currentChart.config;
     }
 
     for (let key in rawValues) {
@@ -274,31 +268,29 @@ class ExpandedChart extends Component<PropsType, StateType> {
       ...values,
     });
 
-    this.setState({ saveValuesStatus: "loading" });
-    this.refreshChart();
+    setSaveValueStatus("loading");
+    refreshChart();
 
     api
       .upgradeChartValues(
         "<token>",
         {
-          namespace: this.state.currentChart.namespace,
+          namespace: currentChart.namespace,
           storage: StorageType.Secret,
           values: valuesYaml,
         },
         {
           id: currentProject.id,
-          name: this.state.currentChart.name,
+          name: currentChart.name,
           cluster_id: currentCluster.id,
         }
       )
-      .then((res) => {
-        this.setState({
-          saveValuesStatus: "successful",
-          forceRefreshRevisions: true,
-        });
+      .then(() => {
+        setSaveValueStatus("successful");
+        setForceRefreshRevisions(true);
 
         window.analytics.track("Chart Upgraded", {
-          chart: this.state.currentChart.name,
+          chart: currentChart.name,
           values: valuesYaml,
         });
       })
@@ -310,56 +302,50 @@ class ExpandedChart extends Component<PropsType, StateType> {
           err = parsedErr;
         }
 
-        this.setState({
-          saveValuesStatus: err,
-        });
+        setSaveValueStatus(err);
 
         setCurrentError(parsedErr);
 
         window.analytics.track("Failed to Upgrade Chart", {
-          chart: this.state.currentChart.name,
+          chart: currentChart.name,
           values: valuesYaml,
           error: err,
         });
       });
   };
 
-  handleUpgradeVersion = (version: string, cb: () => void) => {
-    let { currentProject, currentCluster, setCurrentError } = this.context;
-
+  const handleUpgradeVersion = (version: string, cb: () => void) => {
     // convert current values to yaml
-    let values = this.props.currentChart.config;
+    let values = currentChart.config;
 
     let valuesYaml = yaml.dump({
       ...values,
     });
 
-    this.setState({ saveValuesStatus: "loading" });
-    this.refreshChart();
+    setSaveValueStatus("loading");
+    refreshChart();
 
     api
       .upgradeChartValues(
         "<token>",
         {
-          namespace: this.state.currentChart.namespace,
+          namespace: currentChart.namespace,
           storage: StorageType.Secret,
           values: valuesYaml,
           version: version,
         },
         {
           id: currentProject.id,
-          name: this.state.currentChart.name,
+          name: currentChart.name,
           cluster_id: currentCluster.id,
         }
       )
-      .then((res) => {
-        this.setState({
-          saveValuesStatus: "successful",
-          forceRefreshRevisions: true,
-        });
+      .then(() => {
+        setSaveValueStatus("successful");
+        setForceRefreshRevisions(true);
 
         window.analytics.track("Chart Upgraded", {
-          chart: this.state.currentChart.name,
+          chart: currentChart.name,
           values: valuesYaml,
         });
 
@@ -373,25 +359,20 @@ class ExpandedChart extends Component<PropsType, StateType> {
           err = parsedErr;
         }
 
-        this.setState({
-          saveValuesStatus: err,
-          loading: false,
-        });
-
+        setSaveValueStatus(err);
+        setLoading(false);
         setCurrentError(parsedErr);
 
         window.analytics.track("Failed to Upgrade Chart", {
-          chart: this.state.currentChart.name,
+          chart: currentChart.name,
           values: valuesYaml,
           error: err,
         });
       });
   };
 
-  renderTabContents = (currentTab: string) => {
-    let { components, showRevisions, imageIsPlaceholder } = this.state;
-    let { setSidebar } = this.props;
-    let { currentChart } = this.state;
+  const renderTabContents = (currentTab: string) => {
+    let { setSidebar } = props;
     let chart = currentChart;
 
     switch (currentTab) {
@@ -403,8 +384,8 @@ class ExpandedChart extends Component<PropsType, StateType> {
             <Placeholder>
               <TextWrap>
                 <Header>
-                  <Spinner src={loading} /> This application is currently being
-                  deployed
+                  <Spinner src={loadingSrc} /> This application is currently
+                  being deployed
                 </Header>
                 Navigate to the "Actions" tab of your GitHub repo to view live
                 build logs.
@@ -418,10 +399,8 @@ class ExpandedChart extends Component<PropsType, StateType> {
         return (
           <SettingsSection
             currentChart={chart}
-            refreshChart={this.refreshChart}
-            setShowDeleteOverlay={(x: boolean) =>
-              this.setState({ showDeleteOverlay: x })
-            }
+            refreshChart={refreshChart}
+            setShowDeleteOverlay={(x: boolean) => setShowDeleteOverlay(x)}
           />
         );
       case "graph":
@@ -447,33 +426,31 @@ class ExpandedChart extends Component<PropsType, StateType> {
         return (
           <ValuesYaml
             currentChart={chart}
-            refreshChart={this.refreshChart}
-            disabled={
-              !this.props.isAuthorized("application", "", ["get", "update"])
-            }
+            refreshChart={refreshChart}
+            disabled={!props.isAuthorized("application", "", ["get", "update"])}
           />
         );
       default:
     }
   };
 
-  updateTabs() {
-    let formData = this.state.currentChart.form;
+  const updateTabs = () => {
+    let formData = currentChart.form;
     if (formData) {
-      this.setState({ formData });
+      setFormData(formData);
     }
 
     // Collate non-form tabs
     let tabOptions = [] as any[];
     tabOptions.push({ label: "Status", value: "status" });
 
-    if (this.props.isMetricsInstalled) {
+    if (props.isMetricsInstalled) {
       tabOptions.push({ label: "Metrics", value: "metrics" });
     }
 
     tabOptions.push({ label: "Chart Overview", value: "graph" });
 
-    if (this.state.devOpsMode) {
+    if (devOpsMode) {
       tabOptions.push(
         { label: "Manifests", value: "list" },
         { label: "Helm Values", value: "values" }
@@ -481,44 +458,32 @@ class ExpandedChart extends Component<PropsType, StateType> {
     }
 
     // Settings tab is always last
-    if (this.props.isAuthorized("application", "", ["get", "delete"])) {
+    if (props.isAuthorized("application", "", ["get", "delete"])) {
       tabOptions.push({ label: "Settings", value: "settings" });
     }
 
     // Filter tabs if previewing an old revision or updating the chart version
-    if (this.state.isPreview || this.state.isUpdatingChart) {
+    if (isPreview || isUpdatingChart) {
       let liveTabs = ["status", "settings", "deploy", "metrics"];
       tabOptions = tabOptions.filter(
         (tab: any) => !liveTabs.includes(tab.value)
       );
     }
 
-    this.setState({ tabOptions });
-  }
+    setTabOptions(tabOptions);
+  };
 
-  setRevision = (chart: ChartType, isCurrent?: boolean) => {
-    this.setState({ isPreview: !isCurrent });
-    this.getChartData(chart);
+  const setRevision = (chart: ChartType, isCurrent?: boolean) => {
+    setIsPreview(!isCurrent);
+    getChartData(chart);
   };
 
   // TODO: consolidate with pop + push in refreshTabs
-  toggleDevOpsMode = () => {
-    if (this.state.devOpsMode) {
-      this.setState({ devOpsMode: false }, () => {
-        this.updateTabs();
-        localStorage.setItem("devOpsMode", "false");
-      });
-    } else {
-      this.setState({ devOpsMode: true }, () => {
-        this.updateTabs();
-        localStorage.setItem("devOpsMode", "true");
-      });
-    }
+  const toggleDevOpsMode = () => {
+    setDevOpsMode(!devOpsMode);
   };
 
-  renderIcon = () => {
-    let { currentChart } = this.state;
-
+  const renderIcon = () => {
     if (
       currentChart.chart.metadata.icon &&
       currentChart.chart.metadata.icon !== ""
@@ -529,7 +494,7 @@ class ExpandedChart extends Component<PropsType, StateType> {
     }
   };
 
-  readableDate = (s: string) => {
+  const readableDate = (s: string) => {
     let ts = new Date(s);
     let date = ts.toLocaleDateString();
     let time = ts.toLocaleTimeString([], {
@@ -539,24 +504,22 @@ class ExpandedChart extends Component<PropsType, StateType> {
     return `${time} on ${date}`;
   };
 
-  getChartStatus = (chartStatus: string) => {
+  const getChartStatus = (chartStatus: string) => {
     if (chartStatus === "deployed") {
-      for (var uid in this.state.controllers) {
-        let value = this.state.controllers[uid];
-        let available = this.getAvailability(value.metadata.kind, value);
+      for (var uid in controllers) {
+        let value = controllers[uid];
+        let available = getAvailability(value.metadata.kind, value);
         let progressing = true;
 
-        this.state.controllers[uid]?.status?.conditions?.forEach(
-          (condition: any) => {
-            if (
-              condition.type == "Progressing" &&
-              condition.status == "False" &&
-              condition.reason == "ProgressDeadlineExceeded"
-            ) {
-              progressing = false;
-            }
+        controllers[uid]?.status?.conditions?.forEach((condition: any) => {
+          if (
+            condition.type == "Progressing" &&
+            condition.status == "False" &&
+            condition.reason == "ProgressDeadlineExceeded"
+          ) {
+            progressing = false;
           }
-        );
+        });
 
         if (!available && progressing) {
           return "loading";
@@ -569,7 +532,7 @@ class ExpandedChart extends Component<PropsType, StateType> {
     return chartStatus;
   };
 
-  getAvailability = (kind: string, c: any) => {
+  const getAvailability = (kind: string, c: any) => {
     switch (kind?.toLowerCase()) {
       case "deployment":
       case "replicaset":
@@ -581,17 +544,14 @@ class ExpandedChart extends Component<PropsType, StateType> {
     }
   };
 
-  componentDidMount() {
-    let { currentCluster, currentProject } = this.context;
-    let { currentChart } = this.state;
-
+  useEffect(() => {
     window.analytics.track("Opened Chart", {
       chart: currentChart.name,
     });
 
-    this.getChartData(currentChart);
-    this.getControllers(currentChart);
-    this.setControllerWebsockets(
+    getChartData(currentChart);
+    getControllers(currentChart); // isn't this async?
+    setControllerWebsockets(
       ["deployment", "statefulset", "daemonset", "replicaset"],
       currentChart
     );
@@ -610,69 +570,31 @@ class ExpandedChart extends Component<PropsType, StateType> {
           revision: currentChart.version,
         }
       )
-      .then((res) =>
-        this.setState({ components: res.data.Objects }, () => {
-          let ingressName = null;
-          for (var i = 0; i < this.state.components.length; i++) {
-            if (this.state.components[i].Kind === "Ingress") {
-              ingressName = this.state.components[i].Name;
-            }
-          }
-
-          api
-            .getIngress(
-              "<token>",
-              {
-                cluster_id: currentCluster.id,
-              },
-              {
-                id: currentProject.id,
-                name: ingressName,
-                namespace: `${this.state.currentChart.namespace}`,
-              }
-            )
-            .then((res) => {
-              if (res.data?.spec?.rules && res.data?.spec?.rules[0]?.host) {
-                this.setState({
-                  url: `https://${res.data?.spec?.rules[0]?.host}`,
-                });
-                return;
-              }
-
-              if (res.data?.status?.loadBalancer?.ingress) {
-                this.setState({
-                  url: `http://${res.data?.status?.loadBalancer?.ingress[0]?.hostname}`,
-                });
-                return;
-              }
-            })
-            .catch(console.log);
-        })
-      )
+      .then((res) => setComponents(res.data.Objects))
       .catch(console.log);
-  }
 
-  componentWillUnmount() {
-    if (this.state.websockets?.length > 0) {
-      this.state.websockets?.forEach((ws: WebSocket) => {
-        ws.close();
-      });
-    }
-  }
+    return () => {
+      if (websockets?.length > 0) {
+        websockets?.forEach((ws: WebSocket) => {
+          ws.close();
+        });
+      }
+    };
+  }, []);
 
-  renderUrl = () => {
-    if (this.state.url) {
+  const renderUrl = () => {
+    if (url) {
       return (
-        <Url href={this.state.url} target="_blank">
+        <Url href={url} target="_blank">
           <i className="material-icons">link</i>
-          {this.state.url}
+          {url}
         </Url>
       );
     } else {
       let serviceName = null as string;
       let serviceNamespace = null as string;
 
-      this.state.components?.forEach((c: any) => {
+      components?.forEach((c: any) => {
         if (c.Kind == "Service") {
           serviceName = c.Name;
           serviceNamespace = c.Namespace;
@@ -692,10 +614,8 @@ class ExpandedChart extends Component<PropsType, StateType> {
     }
   };
 
-  handleUninstallChart = () => {
-    let { currentProject, currentCluster } = this.context;
-    let { currentChart } = this.state;
-    this.setState({ deleting: true });
+  const handleUninstallChart = () => {
+    setDeleting(true);
     api
       .uninstallTemplate(
         "<token>",
@@ -709,14 +629,14 @@ class ExpandedChart extends Component<PropsType, StateType> {
         }
       )
       .then((res) => {
-        this.setState({ showDeleteOverlay: false });
-        this.props.closeChart();
+        setShowDeleteOverlay(false);
+        props.closeChart();
       })
       .catch(console.log);
   };
 
-  renderDeleteOverlay = () => {
-    if (this.state.deleting) {
+  const renderDeleteOverlay = () => {
+    if (deleting) {
       return (
         <DeleteOverlay>
           <Loading />
@@ -725,109 +645,144 @@ class ExpandedChart extends Component<PropsType, StateType> {
     }
   };
 
-  render() {
-    let { closeChart } = this.props;
-    let { currentChart } = this.state;
-    let chart = currentChart;
-    let status = this.getChartStatus(chart.info.status);
+  useEffect(() => {
+    if (controllersCallback.current) controllersCallback.current();
+  }, [controllers]);
 
-    return (
-      <>
-        <CloseOverlay onClick={closeChart} />
-        <StyledExpandedChart>
-          <ConfirmOverlay
-            show={this.state.showDeleteOverlay}
-            message={`Are you sure you want to delete ${currentChart.name}?`}
-            onYes={this.handleUninstallChart}
-            onNo={() => this.setState({ showDeleteOverlay: false })}
+  useEffect(() => {
+    updateTabs();
+    localStorage.setItem("devOpsMode", devOpsMode.toString());
+  }, [devOpsMode]);
+
+  useEffect(() => {
+    let ingressName = null;
+    for (var i = 0; i < components.length; i++) {
+      if (components[i].Kind === "Ingress") {
+        ingressName = components[i].Name;
+      }
+    }
+
+    api
+      .getIngress(
+        "<token>",
+        {
+          cluster_id: currentCluster.id,
+        },
+        {
+          id: currentProject.id,
+          name: ingressName,
+          namespace: `${currentChart.namespace}`,
+        }
+      )
+      .then((res) => {
+        if (res.data?.spec?.rules && res.data?.spec?.rules[0]?.host) {
+          setUrl(`https://${res.data?.spec?.rules[0]?.host}`);
+          return;
+        }
+
+        if (res.data?.status?.loadBalancer?.ingress) {
+          setUrl(
+            `http://${res.data?.status?.loadBalancer?.ingress[0]?.hostname}`
+          );
+          return;
+        }
+      })
+      .catch(console.log);
+  }, [components]);
+
+  let { closeChart } = props;
+  let chart = currentChart;
+  let status = getChartStatus(chart.info.status);
+
+  return (
+    <>
+      <CloseOverlay onClick={closeChart} />
+      <StyledExpandedChart>
+        <ConfirmOverlay
+          show={showDeleteOverlay}
+          message={`Are you sure you want to delete ${currentChart.name}?`}
+          onYes={handleUninstallChart}
+          onNo={() => setShowDeleteOverlay(false)}
+        />
+        {renderDeleteOverlay()}
+
+        <HeaderWrapper>
+          <TitleSection>
+            <Title>
+              <IconWrapper>{renderIcon()}</IconWrapper>
+              {chart.name}
+            </Title>
+            {chart.chart.metadata.name != "worker" &&
+              chart.chart.metadata.name != "job" &&
+              renderUrl()}
+            <InfoWrapper>
+              <StatusIndicator
+                controllers={controllers}
+                status={chart.info.status}
+                margin_left={"0px"}
+              />
+              <LastDeployed>
+                <Dot>•</Dot>Last deployed
+                {" " + readableDate(chart.info.last_deployed)}
+              </LastDeployed>
+            </InfoWrapper>
+
+            <TagWrapper>
+              Namespace <NamespaceTag>{chart.namespace}</NamespaceTag>
+            </TagWrapper>
+          </TitleSection>
+
+          <CloseButton onClick={closeChart}>
+            <CloseButtonImg src={close} />
+          </CloseButton>
+
+          <RevisionSection
+            showRevisions={showRevisions}
+            toggleShowRevisions={() => {
+              setShowRevisions(!showRevisions);
+            }}
+            chart={chart}
+            refreshChart={refreshChart}
+            setRevision={setRevision}
+            forceRefreshRevisions={forceRefreshRevisions}
+            refreshRevisionsOff={() => setForceRefreshRevisions(false)}
+            status={status}
+            shouldUpdate={
+              chart.latest_version &&
+              chart.latest_version !== chart.chart.metadata.version
+            }
+            latestVersion={chart.latest_version}
+            upgradeVersion={handleUpgradeVersion}
           />
-          {this.renderDeleteOverlay()}
-
-          <HeaderWrapper>
-            <TitleSection>
-              <Title>
-                <IconWrapper>{this.renderIcon()}</IconWrapper>
-                {chart.name}
-              </Title>
-              {chart.chart.metadata.name != "worker" &&
-                chart.chart.metadata.name != "job" &&
-                this.renderUrl()}
-              <InfoWrapper>
-                <StatusIndicator
-                  controllers={this.state.controllers}
-                  status={chart.info.status}
-                  margin_left={"0px"}
-                />
-                <LastDeployed>
-                  <Dot>•</Dot>Last deployed
-                  {" " + this.readableDate(chart.info.last_deployed)}
-                </LastDeployed>
-              </InfoWrapper>
-
-              <TagWrapper>
-                Namespace <NamespaceTag>{chart.namespace}</NamespaceTag>
-              </TagWrapper>
-            </TitleSection>
-
-            <CloseButton onClick={closeChart}>
-              <CloseButtonImg src={close} />
-            </CloseButton>
-
-            <RevisionSection
-              showRevisions={this.state.showRevisions}
-              toggleShowRevisions={() => {
-                this.setState({ showRevisions: !this.state.showRevisions });
-              }}
-              chart={chart}
-              refreshChart={this.refreshChart}
-              setRevision={this.setRevision}
-              forceRefreshRevisions={this.state.forceRefreshRevisions}
-              refreshRevisionsOff={() =>
-                this.setState({ forceRefreshRevisions: false })
-              }
-              status={status}
-              shouldUpdate={
-                chart.latest_version &&
-                chart.latest_version !== chart.chart.metadata.version
-              }
-              latestVersion={chart.latest_version}
-              upgradeVersion={this.handleUpgradeVersion}
-            />
-          </HeaderWrapper>
-          <BodyWrapper>
-            <FormWrapper
-              isReadOnly={
-                this.state.imageIsPlaceholder ||
-                !this.props.isAuthorized("application", "", ["get", "update"])
-              }
-              formData={this.state.formData}
-              tabOptions={this.state.tabOptions}
-              isInModal={true}
-              renderTabContents={this.renderTabContents}
-              onSubmit={this.onSubmit}
-              saveValuesStatus={this.state.saveValuesStatus}
-              externalValues={{
-                namespace: this.props.namespace,
-                clusterId: this.context.currentCluster.id,
-              }}
-              color={this.state.isPreview ? "#f5cb42" : null}
-              addendum={
-                <TabButton
-                  onClick={this.toggleDevOpsMode}
-                  devOpsMode={this.state.devOpsMode}
-                >
-                  <i className="material-icons">offline_bolt</i> DevOps Mode
-                </TabButton>
-              }
-            />
-          </BodyWrapper>
-        </StyledExpandedChart>
-      </>
-    );
-  }
-}
-
-ExpandedChart.contextType = Context;
+        </HeaderWrapper>
+        <BodyWrapper>
+          <FormWrapper
+            isReadOnly={
+              imageIsPlaceholder ||
+              props.isAuthorized("application", "", ["get", "update"])
+            }
+            formData={formData}
+            tabOptions={tabOptions}
+            isInModal={true}
+            renderTabContents={renderTabContents}
+            onSubmit={onSubmit}
+            saveValuesStatus={saveValuesStatus}
+            externalValues={{
+              namespace: props.namespace,
+              clusterId: currentCluster.id,
+            }}
+            color={isPreview ? "#f5cb42" : null}
+            addendum={
+              <TabButton onClick={toggleDevOpsMode} devOpsMode={devOpsMode}>
+                <i className="material-icons">offline_bolt</i> DevOps Mode
+              </TabButton>
+            }
+          />
+        </BodyWrapper>
+      </StyledExpandedChart>
+    </>
+  );
+};
 
 export default withAuth(ExpandedChart);
 

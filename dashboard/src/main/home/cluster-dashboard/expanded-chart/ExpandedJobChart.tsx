@@ -633,7 +633,7 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
               tabOptions={this.state.tabOptions}
               isInModal={true}
               renderTabContents={this.renderTabContents}
-              tabOptionsOnly={true}
+              tabOptionsOnly={false}
               onSubmit={(formValues) =>
                 this.handleSaveValues(formValues, false)
               }

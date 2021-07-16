@@ -771,7 +771,7 @@ const ExpandedChart: React.FC<PropsType> = (props) => {
           <FormWrapper
             isReadOnly={
               imageIsPlaceholder ||
-              props.isAuthorized("application", "", ["get", "update"])
+              !props.isAuthorized("application", "", ["get", "update"])
             }
             formData={formData}
             tabOptions={tabOptions}

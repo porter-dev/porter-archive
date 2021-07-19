@@ -37,13 +37,13 @@ const RepoList: React.FC<Props> = ({
         api
           .getGitRepos("<token>", {}, { project_id: currentProject.id })
           .then(async (res) => {
-            resolve(res.data.map((gitrepo: any) => gitrepo.id));
+            resolve(res.data);
           })
           .catch((err) => {
             reject(err);
           });
       } else {
-        resolve([userId]);
+        reject(null);
       }
     })
       .then((ids: number[]) => {

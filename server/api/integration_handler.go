@@ -494,7 +494,7 @@ type HandleListGithubAppAccessResp struct {
 // HandleListGithubAppAccess provides basic info on if the current user is authenticated through the GitHub app
 // and what accounts/organizations their authentication has access to
 func (app *App) HandleListGithubAppAccess(w http.ResponseWriter, r *http.Request) {
-	tok, err := app.getGithubUserTokenFromRequest(r)
+	tok, err := app.getGithubAppTokenFromRequest(r)
 
 	if err != nil {
 		res := HandleListGithubAppAccessResp{
@@ -561,8 +561,8 @@ func (app *App) HandleListGithubAppAccess(w http.ResponseWriter, r *http.Request
 	json.NewEncoder(w).Encode(res)
 }
 
-// getGithubUserTokenFromRequest
-func (app *App) getGithubUserTokenFromRequest(r *http.Request) (*oauth2.Token, error) {
+// getGithubAppTokenFromRequest
+func (app *App) getGithubAppTokenFromRequest(r *http.Request) (*oauth2.Token, error) {
 	userID, err := app.getUserIDFromRequest(r)
 
 	if err != nil {

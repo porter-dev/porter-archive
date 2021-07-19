@@ -111,16 +111,11 @@ func (app *App) HandleListRepos(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// figure out number of repositories
-	opt := &github.RepositoryListOptions{
-		ListOptions: github.ListOptions{
-			PerPage: 100,
-		},
-		Sort: "updated",
+	opt := &github.ListOptions{
+		PerPage: 100,
 	}
 
-	//client.Apps.ListRepos()
-
-	allRepos, resp, err := client.Repositories.List(context.Background(), "", opt)
+	allRepos, resp, err := client.Apps.ListRepos(context.Background(), opt)
 
 	if err != nil {
 		app.handleErrorInternal(err, w)
@@ -138,15 +133,12 @@ func (app *App) HandleListRepos(w http.ResponseWriter, r *http.Request) {
 		defer wg.Done()
 
 		for cp < numPages {
-			cur_opt := &github.RepositoryListOptions{
-				ListOptions: github.ListOptions{
-					Page:    cp,
-					PerPage: 100,
-				},
-				Sort: "updated",
+			cur_opt := &github.ListOptions{
+				Page:    cp,
+				PerPage: 100,
 			}
 
-			repos, _, err := client.Repositories.List(context.Background(), "", cur_opt)
+			repos, _, err := client.Apps.ListRepos(context.Background(), cur_opt)
 
 			if err != nil {
 				mu.Lock()

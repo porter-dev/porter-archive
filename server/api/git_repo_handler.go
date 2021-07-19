@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/porter-dev/porter/internal/models"
 	"golang.org/x/oauth2"
 	"net/http"
 	"net/url"
@@ -14,37 +15,70 @@ import (
 
 	"github.com/go-chi/chi"
 	"github.com/google/go-github/github"
-	"github.com/porter-dev/porter/internal/models"
 )
 
 // HandleListProjectGitRepos returns a list of git repos for a project
 func (app *App) HandleListProjectGitRepos(w http.ResponseWriter, r *http.Request) {
-	projID, err := strconv.ParseUint(chi.URLParam(r, "project_id"), 0, 64)
 
-	if err != nil || projID == 0 {
-		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
-		return
-	}
-
-	grs, err := app.Repo.GitRepo.ListGitReposByProjectID(uint(projID))
+	tok, err := app.getGithubAppTokenFromRequest(r)
 
 	if err != nil {
-		app.handleErrorRead(err, ErrProjectDataRead, w)
+		json.NewEncoder(w).Encode(make([]*models.GitRepoExternal, 0))
 		return
 	}
 
-	extGRs := make([]*models.GitRepoExternal, 0)
+	client := github.NewClient(app.GithubProjectConf.Client(oauth2.NoContext, tok))
 
-	for _, gr := range grs {
-		extGRs = append(extGRs, gr.Externalize())
-	}
+	accountIds := make([]int64, 0)
 
-	w.WriteHeader(http.StatusOK)
+	AuthUser, _, err := client.Users.Get(context.Background(), "")
 
-	if err := json.NewEncoder(w).Encode(extGRs); err != nil {
-		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
+	if err != nil {
+		app.handleErrorInternal(err, w)
 		return
 	}
+
+	accountIds = append(accountIds, *AuthUser.ID)
+
+	opts := &github.ListOptions{
+		PerPage: 100,
+		Page:    1,
+	}
+
+	for {
+		orgs, pages, err := client.Organizations.List(context.Background(), "", opts)
+
+		if err != nil {
+			res := HandleListGithubAppAccessResp{
+				HasAccess: false,
+			}
+			json.NewEncoder(w).Encode(res)
+			return
+		}
+
+		for _, org := range orgs {
+			accountIds = append(accountIds, *org.ID)
+		}
+
+		if pages.NextPage == 0 {
+			break
+		}
+	}
+
+	installationData, err := app.Repo.GithubAppInstallation.ReadGithubAppInstallationByAccountIDs(accountIds)
+
+	if err != nil {
+		app.handleErrorInternal(err, w)
+		return
+	}
+
+	installationIds := make([]int64, 0)
+
+	for _, v := range installationData {
+		installationIds = append(installationIds, v.InstallationID)
+	}
+
+	json.NewEncoder(w).Encode(installationIds)
 }
 
 // Repo represents a GitHub or Gitab repository

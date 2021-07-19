@@ -22,6 +22,8 @@ type Config struct {
 type GithubAppConf struct {
 	AppName       string
 	WebhookSecret string
+	SecretPath    string
+	AppID         int64
 	oauth2.Config
 }
 
@@ -38,10 +40,12 @@ func NewGithubClient(cfg *Config) *oauth2.Config {
 	}
 }
 
-func NewGithubAppClient(cfg *Config, name string, secret string) *GithubAppConf {
+func NewGithubAppClient(cfg *Config, name string, secret string, secretPath string, appID int64) *GithubAppConf {
 	return &GithubAppConf{
 		AppName:       name,
 		WebhookSecret: secret,
+		SecretPath:    secretPath,
+		AppID:         appID,
 		Config: oauth2.Config{
 			ClientID:     cfg.ClientID,
 			ClientSecret: cfg.ClientSecret,

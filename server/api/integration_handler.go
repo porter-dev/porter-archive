@@ -494,7 +494,7 @@ type HandleListGithubAppAccessResp struct {
 // HandleListGithubAppAccess provides basic info on if the current user is authenticated through the GitHub app
 // and what accounts/organizations their authentication has access to
 func (app *App) HandleListGithubAppAccess(w http.ResponseWriter, r *http.Request) {
-	tok, err := app.getGithubAppTokenFromRequest(r)
+	tok, err := app.getGithubAppOauthTokenFromRequest(r)
 
 	if err != nil {
 		res := HandleListGithubAppAccessResp{
@@ -561,8 +561,9 @@ func (app *App) HandleListGithubAppAccess(w http.ResponseWriter, r *http.Request
 	json.NewEncoder(w).Encode(res)
 }
 
-// getGithubAppTokenFromRequest
-func (app *App) getGithubAppTokenFromRequest(r *http.Request) (*oauth2.Token, error) {
+// getGithubAppOauthTokenFromRequest gets the oauth token from the request based on the currently
+// logged in user. Note that this authenticates as the user, rather than the installation.
+func (app *App) getGithubAppOauthTokenFromRequest(r *http.Request) (*oauth2.Token, error) {
 	userID, err := app.getUserIDFromRequest(r)
 
 	if err != nil {

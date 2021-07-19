@@ -1087,15 +1087,11 @@ func (app *App) HandleReleaseDeployWebhook(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	if app.segmentClient != nil {
-		client := *app.segmentClient
-		client.Enqueue(segment.Track{
-			UserId: "anonymous",
-			Event:  "Triggered Re-deploy via Webhook",
-			Properties: segment.NewProperties().
-				Set("repository", repository),
-		})
-	}
+	app.segmentClient.Track(
+		"anonymous",
+		"Triggered Re-deploy via Webhook",
+		segment.NewProperties().Set("repository", repository),
+	)
 
 	w.WriteHeader(http.StatusOK)
 }

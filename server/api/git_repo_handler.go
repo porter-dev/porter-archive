@@ -13,6 +13,7 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/bradleyfalzon/ghinstallation"
 	"github.com/go-chi/chi"
 	"github.com/google/go-github/github"
 )
@@ -20,7 +21,7 @@ import (
 // HandleListProjectGitRepos returns a list of git repos for a project
 func (app *App) HandleListProjectGitRepos(w http.ResponseWriter, r *http.Request) {
 
-	tok, err := app.getGithubAppTokenFromRequest(r)
+	tok, err := app.getGithubAppOauthTokenFromRequest(r)
 
 	if err != nil {
 		json.NewEncoder(w).Encode(make([]*models.GitRepoExternal, 0))
@@ -101,14 +102,13 @@ type AutoBuildpack struct {
 
 // HandleListRepos retrieves a list of repo names
 func (app *App) HandleListRepos(w http.ResponseWriter, r *http.Request) {
-	tok, err := app.githubTokenFromRequest(r)
+
+	client, err := app.githubAppClientFromRequest(r)
 
 	if err != nil {
 		app.handleErrorInternal(err, w)
 		return
 	}
-
-	client := github.NewClient(app.GithubProjectConf.Client(oauth2.NoContext, tok))
 
 	// figure out number of repositories
 	opt := &github.RepositoryListOptions{
@@ -117,6 +117,8 @@ func (app *App) HandleListRepos(w http.ResponseWriter, r *http.Request) {
 		},
 		Sort: "updated",
 	}
+
+	//client.Apps.ListRepos()
 
 	allRepos, resp, err := client.Repositories.List(context.Background(), "", opt)
 
@@ -519,6 +521,32 @@ func (app *App) HandleGetRepoZIPDownloadURL(w http.ResponseWriter, r *http.Reque
 	}
 
 	json.NewEncoder(w).Encode(apiResp)
+}
+
+// githubAppClientFromRequest gets the github app installation id from the request and authenticates
+// using it and a private key file
+func (app *App) githubAppClientFromRequest(r *http.Request) (*github.Client, error) {
+
+	installationID, err := strconv.ParseUint(chi.URLParam(r, "installation_id"), 0, 64)
+
+	if err != nil || installationID == 0 {
+		return nil, fmt.Errorf("could not read installation id")
+	}
+
+	fmt.Println(app.GithubAppConf.AppID)
+
+	itr, err := ghinstallation.NewKeyFromFile(
+		http.DefaultTransport,
+		app.GithubAppConf.AppID,
+		int64(installationID),
+		"/porter/docker/github_app_private_key.pem")
+
+	if err != nil {
+		fmt.Println(err)
+		return nil, err
+	}
+
+	return github.NewClient(&http.Client{Transport: itr}), nil
 }
 
 // finds the github token given the git repo id and the project id

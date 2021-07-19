@@ -403,44 +403,48 @@ func (auth *Auth) DoesUserHaveGitRepoAccess(
 	gitRepoLoc IDLocation,
 ) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		grID, err := findGitRepoIDInRequest(r, gitRepoLoc)
+		// TODO: needs to use new github integration implementation
 
-		if err != nil {
-			http.Error(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)
-			return
-		}
+		next.ServeHTTP(w, r)
 
-		projID, err := findProjIDInRequest(r, projLoc)
-
-		if err != nil {
-			http.Error(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)
-			return
-		}
-
-		// get the service accounts belonging to the project
-		grs, err := auth.repo.GitRepo.ListGitReposByProjectID(uint(projID))
-
-		if err != nil {
-			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-			return
-		}
-
-		doesExist := false
-
-		for _, gr := range grs {
-			if gr.ID == uint(grID) {
-				doesExist = true
-				break
-			}
-		}
-
-		if doesExist {
-			next.ServeHTTP(w, r)
-			return
-		}
-
-		http.Error(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)
-		return
+		//grID, err := findGitRepoIDInRequest(r, gitRepoLoc)
+		//
+		//if err != nil {
+		//	http.Error(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)
+		//	return
+		//}
+		//
+		//projID, err := findProjIDInRequest(r, projLoc)
+		//
+		//if err != nil {
+		//	http.Error(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)
+		//	return
+		//}
+		//
+		//// get the service accounts belonging to the project
+		//grs, err := auth.repo.GitRepo.ListGitReposByProjectID(uint(projID))
+		//
+		//if err != nil {
+		//	http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		//	return
+		//}
+		//
+		//doesExist := false
+		//
+		//for _, gr := range grs {
+		//	if gr.ID == uint(grID) {
+		//		doesExist = true
+		//		break
+		//	}
+		//}
+		//
+		//if doesExist {
+		//	next.ServeHTTP(w, r)
+		//	return
+		//}
+		//
+		//http.Error(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)
+		//return
 	})
 }
 

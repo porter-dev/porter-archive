@@ -1145,7 +1145,7 @@ func New(a *api.App) *chi.Mux {
 
 			r.Method(
 				"GET",
-				"/projects/{project_id}/gitrepos/{git_repo_id}/repos",
+				"/projects/{project_id}/gitrepos/{installation_id}/repos",
 				auth.DoesUserHaveProjectAccess(
 					auth.DoesUserHaveGitRepoAccess(
 						requestlog.NewHandler(a.HandleListRepos, l),

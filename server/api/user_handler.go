@@ -51,23 +51,9 @@ func (app *App) HandleCreateUser(w http.ResponseWriter, r *http.Request) {
 
 	if err == nil {
 		// send to segment
-		if app.segmentClient != nil {
-			client := *app.segmentClient
-
-			client.Enqueue(segment.Identify{
-				UserId: fmt.Sprintf("%v", user.ID),
-				Traits: segment.NewTraits().
-					SetEmail(user.Email).
-					Set("github", "false"),
-			})
-
-			client.Enqueue(segment.Track{
-				UserId: fmt.Sprintf("%v", user.ID),
-				Event:  "New User",
-				Properties: segment.NewProperties().
-					Set("email", user.Email),
-			})
-		}
+		userId := fmt.Sprintf("%v", user.ID)
+		app.segmentClient.Identify(userId, user.Email, false)
+		app.segmentClient.Track(userId, "New User", segment.NewProperties().Set("email", user.Email))
 
 		app.Logger.Info().Msgf("New user created: %d", user.ID)
 		var redirect string

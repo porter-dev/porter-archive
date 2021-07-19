@@ -96,22 +96,9 @@ func (app *App) HandleGoogleOAuthCallback(w http.ResponseWriter, r *http.Request
 	}
 
 	// send to segment
-	if app.segmentClient != nil {
-		client := *app.segmentClient
-		client.Enqueue(segment.Identify{
-			UserId: fmt.Sprintf("%v", user.ID),
-			Traits: segment.NewTraits().
-				SetEmail(user.Email).
-				Set("github", "true"),
-		})
-
-		client.Enqueue(segment.Track{
-			UserId: fmt.Sprintf("%v", user.ID),
-			Event:  "New User",
-			Properties: segment.NewProperties().
-				Set("email", user.Email),
-		})
-	}
+	userId := fmt.Sprintf("%v", user.ID)
+	app.segmentClient.Identify(userId, user.Email, true)
+	app.segmentClient.Track(userId, "New User", segment.NewProperties().Set("email", user.Email))
 
 	// log the user in
 	app.Logger.Info().Msgf("New user created: %d", user.ID)

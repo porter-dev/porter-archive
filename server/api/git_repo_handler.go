@@ -525,8 +525,6 @@ func (app *App) githubAppClientFromRequest(r *http.Request) (*github.Client, err
 		return nil, fmt.Errorf("could not read installation id")
 	}
 
-	fmt.Println(app.GithubAppConf.AppID)
-
 	itr, err := ghinstallation.NewKeyFromFile(
 		http.DefaultTransport,
 		app.GithubAppConf.AppID,
@@ -534,7 +532,6 @@ func (app *App) githubAppClientFromRequest(r *http.Request) (*github.Client, err
 		"/porter/docker/github_app_private_key.pem")
 
 	if err != nil {
-		fmt.Println(err)
 		return nil, err
 	}
 

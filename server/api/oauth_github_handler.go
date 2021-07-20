@@ -245,6 +245,11 @@ func (app *App) upsertUserFromToken(tok *oauth2.Token) (*models.User, error) {
 			if err != nil {
 				return nil, err
 			}
+
+			if !verified {
+				// non-fatal email verification flow
+				app.startEmailVerificationFlow(user)
+			}
 		} else if err == nil {
 			return nil, fmt.Errorf("email already registered")
 		} else if err != nil {

@@ -625,11 +625,6 @@ func (app *App) HandleRenameConfigMap(w http.ResponseWriter, r *http.Request) {
 		decodedSecretData[k] = string(v)
 	}
 
-	if err := deleteConfigMap(agent, configMap.Name, configMap.Namespace); err != nil {
-		app.handleErrorInternal(err, w)
-		return
-	}
-
 	newConfigMap := &forms.ConfigMapForm{
 		Name:               renameConfigMapForm.NewName,
 		Namespace:          configMap.Namespace,
@@ -638,6 +633,11 @@ func (app *App) HandleRenameConfigMap(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := createConfigMap(agent, newConfigMap); err != nil {
+		app.handleErrorInternal(err, w)
+		return
+	}
+
+	if err := deleteConfigMap(agent, configMap.Name, configMap.Namespace); err != nil {
 		app.handleErrorInternal(err, w)
 		return
 	}

@@ -87,11 +87,11 @@ type App struct {
 	DOConf            *oauth2.Config
 	GoogleUserConf    *oauth2.Config
 
-	db            *gorm.DB
-	validator     *vr.Validate
-	translator    *ut.Translator
-	tokenConf     *token.TokenGeneratorConf
-	segmentClient analytics.AnalyticsSegmentClient
+	db              *gorm.DB
+	validator       *vr.Validate
+	translator      *ut.Translator
+	tokenConf       *token.TokenGeneratorConf
+	analyticsClient analytics.AnalyticsSegmentClient
 }
 
 type AppCapabilities struct {
@@ -211,8 +211,8 @@ func New(conf *AppConfig) (*App, error) {
 		TokenSecret: conf.ServerConf.TokenGeneratorSecret,
 	}
 
-	newSegmentClient := analytics.Initialize(sc.SegmentClientKey)
-	app.segmentClient = newSegmentClient
+	newSegmentClient := analytics.Initialize(sc.SegmentClientKey, app.Logger)
+	app.analyticsClient = newSegmentClient
 
 	return app, nil
 }

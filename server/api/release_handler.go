@@ -939,29 +939,28 @@ func (app *App) HandleUpgradeRelease(w http.ResponseWriter, r *http.Request) {
 				gr, err := app.Repo.GitRepo.ReadGitRepo(gitAction.GitRepoID)
 
 				if err != nil {
-					app.sendExternalError(err, http.StatusInternalServerError, HTTPError{
-						Code:   ErrReleaseReadData,
-						Errors: []string{"github repo integration not found"},
-					}, w)
+					gr = nil
 				}
 
 				repoSplit := strings.Split(gitAction.GitRepo, "/")
 
 				gaRunner := &actions.GithubActions{
-					ServerURL:      app.ServerConf.ServerURL,
-					GitIntegration: gr,
-					GitRepoName:    repoSplit[1],
-					GitRepoOwner:   repoSplit[0],
-					Repo:           *app.Repo,
-					GithubConf:     app.GithubProjectConf,
-					WebhookToken:   release.WebhookToken,
-					ProjectID:      uint(projID),
-					ReleaseName:    name,
-					GitBranch:      gitAction.GitBranch,
-					DockerFilePath: gitAction.DockerfilePath,
-					FolderPath:     gitAction.FolderPath,
-					ImageRepoURL:   gitAction.ImageRepoURI,
-					BuildEnv:       cEnv.Container.Env.Normal,
+					ServerURL:            app.ServerConf.ServerURL,
+					GitIntegration:       gr,
+					GithubInstallationID: gitAction.GitRepoID,
+					GithubAppID:          app.GithubAppConf.AppID,
+					GitRepoName:          repoSplit[1],
+					GitRepoOwner:         repoSplit[0],
+					Repo:                 *app.Repo,
+					GithubConf:           app.GithubProjectConf,
+					WebhookToken:         release.WebhookToken,
+					ProjectID:            uint(projID),
+					ReleaseName:          name,
+					GitBranch:            gitAction.GitBranch,
+					DockerFilePath:       gitAction.DockerfilePath,
+					FolderPath:           gitAction.FolderPath,
+					ImageRepoURL:         gitAction.ImageRepoURI,
+					BuildEnv:             cEnv.Container.Env.Normal,
 				}
 
 				err = gaRunner.CreateEnvSecret()
@@ -1324,10 +1323,7 @@ func (app *App) HandleRollbackRelease(w http.ResponseWriter, r *http.Request) {
 				gr, err := app.Repo.GitRepo.ReadGitRepo(gitAction.GitRepoID)
 
 				if err != nil {
-					app.sendExternalError(err, http.StatusInternalServerError, HTTPError{
-						Code:   ErrReleaseReadData,
-						Errors: []string{"github repo integration not found"},
-					}, w)
+					gr = nil
 				}
 
 				repoSplit := strings.Split(gitAction.GitRepo, "/")
@@ -1340,20 +1336,22 @@ func (app *App) HandleRollbackRelease(w http.ResponseWriter, r *http.Request) {
 				}
 
 				gaRunner := &actions.GithubActions{
-					ServerURL:      app.ServerConf.ServerURL,
-					GitIntegration: gr,
-					GitRepoName:    repoSplit[1],
-					GitRepoOwner:   repoSplit[0],
-					Repo:           *app.Repo,
-					GithubConf:     app.GithubProjectConf,
-					WebhookToken:   release.WebhookToken,
-					ProjectID:      uint(projID),
-					ReleaseName:    name,
-					GitBranch:      gitAction.GitBranch,
-					DockerFilePath: gitAction.DockerfilePath,
-					FolderPath:     gitAction.FolderPath,
-					ImageRepoURL:   gitAction.ImageRepoURI,
-					BuildEnv:       cEnv.Container.Env.Normal,
+					ServerURL:            app.ServerConf.ServerURL,
+					GitIntegration:       gr,
+					GithubInstallationID: gitAction.GitRepoID,
+					GithubAppID:          app.GithubAppConf.AppID,
+					GitRepoName:          repoSplit[1],
+					GitRepoOwner:         repoSplit[0],
+					Repo:                 *app.Repo,
+					GithubConf:           app.GithubProjectConf,
+					WebhookToken:         release.WebhookToken,
+					ProjectID:            uint(projID),
+					ReleaseName:          name,
+					GitBranch:            gitAction.GitBranch,
+					DockerFilePath:       gitAction.DockerfilePath,
+					FolderPath:           gitAction.FolderPath,
+					ImageRepoURL:         gitAction.ImageRepoURI,
+					BuildEnv:             cEnv.Container.Env.Normal,
 				}
 
 				err = gaRunner.CreateEnvSecret()

@@ -28,6 +28,7 @@ func (ca *CreateGitAction) ToGitActionConfig() (*models.GitActionConfig, error) 
 		DockerfilePath: ca.DockerfilePath,
 		FolderPath:     ca.FolderPath,
 		GitRepoID:      ca.GitRepoID,
+		IsInstallation: true,
 	}, nil
 }
 

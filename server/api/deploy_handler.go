@@ -354,10 +354,7 @@ func (app *App) HandleUninstallTemplate(w http.ResponseWriter, r *http.Request) 
 				gr, err := app.Repo.GitRepo.ReadGitRepo(gitAction.GitRepoID)
 
 				if err != nil {
-					app.sendExternalError(err, http.StatusInternalServerError, HTTPError{
-						Code:   ErrReleaseReadData,
-						Errors: []string{"github repo integration not found"},
-					}, w)
+					gr = nil
 				}
 
 				repoSplit := strings.Split(gitAction.GitRepo, "/")
@@ -370,20 +367,22 @@ func (app *App) HandleUninstallTemplate(w http.ResponseWriter, r *http.Request) 
 				}
 
 				gaRunner := &actions.GithubActions{
-					ServerURL:      app.ServerConf.ServerURL,
-					GitIntegration: gr,
-					GitRepoName:    repoSplit[1],
-					GitRepoOwner:   repoSplit[0],
-					Repo:           *app.Repo,
-					GithubConf:     app.GithubProjectConf,
-					WebhookToken:   release.WebhookToken,
-					ProjectID:      uint(projID),
-					ReleaseName:    name,
-					GitBranch:      gitAction.GitBranch,
-					DockerFilePath: gitAction.DockerfilePath,
-					FolderPath:     gitAction.FolderPath,
-					ImageRepoURL:   gitAction.ImageRepoURI,
-					BuildEnv:       cEnv.Container.Env.Normal,
+					ServerURL:            app.ServerConf.ServerURL,
+					GitIntegration:       gr,
+					GithubAppID:          app.GithubAppConf.AppID,
+					GithubInstallationID: gitAction.GitRepoID,
+					GitRepoName:          repoSplit[1],
+					GitRepoOwner:         repoSplit[0],
+					Repo:                 *app.Repo,
+					GithubConf:           app.GithubProjectConf,
+					WebhookToken:         release.WebhookToken,
+					ProjectID:            uint(projID),
+					ReleaseName:          name,
+					GitBranch:            gitAction.GitBranch,
+					DockerFilePath:       gitAction.DockerfilePath,
+					FolderPath:           gitAction.FolderPath,
+					ImageRepoURL:         gitAction.ImageRepoURI,
+					BuildEnv:             cEnv.Container.Env.Normal,
 				}
 
 				err = gaRunner.Cleanup()

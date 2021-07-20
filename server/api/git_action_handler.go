@@ -115,14 +115,6 @@ func (app *App) createGitActionFromForm(
 		return nil
 	}
 
-	// read the git repo
-	gr, err := app.Repo.GitRepo.ReadGitRepo(gitAction.GitRepoID)
-
-	if err != nil {
-		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
-		return nil
-	}
-
 	repoSplit := strings.Split(gitAction.GitRepo, "/")
 
 	if len(repoSplit) != 2 {
@@ -164,21 +156,23 @@ func (app *App) createGitActionFromForm(
 
 	// create the commit in the git repo
 	gaRunner := &actions.GithubActions{
-		ServerURL:      app.ServerConf.ServerURL,
-		GitIntegration: gr,
-		GitRepoName:    repoSplit[1],
-		GitRepoOwner:   repoSplit[0],
-		Repo:           *app.Repo,
-		GithubConf:     app.GithubProjectConf,
-		WebhookToken:   release.WebhookToken,
-		ProjectID:      uint(projID),
-		ReleaseName:    name,
-		GitBranch:      gitAction.GitBranch,
-		DockerFilePath: gitAction.DockerfilePath,
-		FolderPath:     gitAction.FolderPath,
-		ImageRepoURL:   gitAction.ImageRepoURI,
-		PorterToken:    encoded,
-		BuildEnv:       form.BuildEnv,
+		ServerURL:            app.ServerConf.ServerURL,
+		GitIntegration:       nil,
+		GithubAppID:          app.GithubAppConf.AppID,
+		GithubInstallationID: form.GitRepoID,
+		GitRepoName:          repoSplit[1],
+		GitRepoOwner:         repoSplit[0],
+		Repo:                 *app.Repo,
+		GithubConf:           app.GithubProjectConf,
+		WebhookToken:         release.WebhookToken,
+		ProjectID:            uint(projID),
+		ReleaseName:          name,
+		GitBranch:            gitAction.GitBranch,
+		DockerFilePath:       gitAction.DockerfilePath,
+		FolderPath:           gitAction.FolderPath,
+		ImageRepoURL:         gitAction.ImageRepoURI,
+		PorterToken:          encoded,
+		BuildEnv:             form.BuildEnv,
 	}
 
 	_, err = gaRunner.Setup()

@@ -211,7 +211,7 @@ func New(conf *AppConfig) (*App, error) {
 		TokenSecret: conf.ServerConf.TokenGeneratorSecret,
 	}
 
-	newSegmentClient := analytics.Initialize(sc.SegmentClientKey, app.Logger)
+	newSegmentClient := analytics.InitializeAnalyticsSegmentClient(sc.SegmentClientKey, app.Logger)
 	app.analyticsClient = newSegmentClient
 
 	return app, nil

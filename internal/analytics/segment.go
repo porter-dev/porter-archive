@@ -21,7 +21,7 @@ type AnalyticsSegment struct {
 	Initialize the segment client and return a superset of it, the AnalyticsSegmentClient will handle cases when
 	the segment client failed on initialization or not enabled
 */
-func Initialize(segmentClientKey string, logger *logger.Logger) AnalyticsSegmentClient {
+func InitializeAnalyticsSegmentClient(segmentClientKey string, logger *logger.Logger) AnalyticsSegmentClient {
 	if segmentClientKey != "" {
 
 		client := segment.New(segmentClientKey)

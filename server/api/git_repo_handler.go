@@ -216,7 +216,8 @@ func (app *App) HandleDeleteProjectGitRepo(w http.ResponseWriter, r *http.Reques
 
 // HandleGetBranches retrieves a list of branch names for a specified repo
 func (app *App) HandleGetBranches(w http.ResponseWriter, r *http.Request) {
-	tok, err := app.githubTokenFromRequest(r)
+
+	client, err := app.githubAppClientFromRequest(r)
 
 	if err != nil {
 		app.handleErrorInternal(err, w)
@@ -225,8 +226,6 @@ func (app *App) HandleGetBranches(w http.ResponseWriter, r *http.Request) {
 
 	owner := chi.URLParam(r, "owner")
 	name := chi.URLParam(r, "name")
-
-	client := github.NewClient(app.GithubProjectConf.Client(oauth2.NoContext, tok))
 
 	// List all branches for a specified repo
 	allBranches, resp, err := client.Repositories.ListBranches(context.Background(), owner, name, &github.ListOptions{
@@ -302,7 +301,8 @@ func (app *App) HandleGetBranches(w http.ResponseWriter, r *http.Request) {
 
 // HandleDetectBuildpack attempts to figure which buildpack will be auto used based on directory contents
 func (app *App) HandleDetectBuildpack(w http.ResponseWriter, r *http.Request) {
-	tok, err := app.githubTokenFromRequest(r)
+
+	client, err := app.githubAppClientFromRequest(r)
 
 	if err != nil {
 		app.handleErrorInternal(err, w)
@@ -315,7 +315,6 @@ func (app *App) HandleDetectBuildpack(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	client := github.NewClient(app.GithubProjectConf.Client(oauth2.NoContext, tok))
 	owner := chi.URLParam(r, "owner")
 	name := chi.URLParam(r, "name")
 	branch := chi.URLParam(r, "branch")
@@ -361,14 +360,13 @@ func (app *App) HandleDetectBuildpack(w http.ResponseWriter, r *http.Request) {
 
 // HandleGetBranchContents retrieves the contents of a specific branch and subdirectory
 func (app *App) HandleGetBranchContents(w http.ResponseWriter, r *http.Request) {
-	tok, err := app.githubTokenFromRequest(r)
+
+	client, err := app.githubAppClientFromRequest(r)
 
 	if err != nil {
 		app.handleErrorInternal(err, w)
 		return
 	}
-
-	client := github.NewClient(app.GithubProjectConf.Client(oauth2.NoContext, tok))
 
 	queryParams, err := url.ParseQuery(r.URL.RawQuery)
 	if err != nil {
@@ -407,14 +405,14 @@ var procfileRegex = regexp.MustCompile("^([A-Za-z0-9_]+):\\s*(.+)$")
 
 // HandleGetProcfileContents retrieves the contents of a procfile in a github repo
 func (app *App) HandleGetProcfileContents(w http.ResponseWriter, r *http.Request) {
-	tok, err := app.githubTokenFromRequest(r)
+
+	client, err := app.githubAppClientFromRequest(r)
 
 	if err != nil {
 		app.handleErrorInternal(err, w)
 		return
 	}
 
-	client := github.NewClient(app.GithubProjectConf.Client(oauth2.NoContext, tok))
 	owner := chi.URLParam(r, "owner")
 	name := chi.URLParam(r, "name")
 	branch := chi.URLParam(r, "branch")

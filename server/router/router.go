@@ -1159,7 +1159,7 @@ func New(a *api.App) *chi.Mux {
 
 			r.Method(
 				"GET",
-				"/projects/{project_id}/gitrepos/{git_repo_id}/repos/{kind}/{owner}/{name}/branches",
+				"/projects/{project_id}/gitrepos/{installation_id}/repos/{kind}/{owner}/{name}/branches",
 				auth.DoesUserHaveProjectAccess(
 					auth.DoesUserHaveGitRepoAccess(
 						requestlog.NewHandler(a.HandleGetBranches, l),
@@ -1173,7 +1173,7 @@ func New(a *api.App) *chi.Mux {
 
 			r.Method(
 				"GET",
-				"/projects/{project_id}/gitrepos/{git_repo_id}/repos/{kind}/{owner}/{name}/{branch}/buildpack/detect",
+				"/projects/{project_id}/gitrepos/{installation_id}/repos/{kind}/{owner}/{name}/{branch}/buildpack/detect",
 				auth.DoesUserHaveProjectAccess(
 					auth.DoesUserHaveGitRepoAccess(
 						requestlog.NewHandler(a.HandleDetectBuildpack, l),
@@ -1187,7 +1187,7 @@ func New(a *api.App) *chi.Mux {
 
 			r.Method(
 				"GET",
-				"/projects/{project_id}/gitrepos/{git_repo_id}/repos/{kind}/{owner}/{name}/{branch}/contents",
+				"/projects/{project_id}/gitrepos/{installation_id}/repos/{kind}/{owner}/{name}/{branch}/contents",
 				auth.DoesUserHaveProjectAccess(
 					auth.DoesUserHaveGitRepoAccess(
 						requestlog.NewHandler(a.HandleGetBranchContents, l),
@@ -1201,7 +1201,7 @@ func New(a *api.App) *chi.Mux {
 
 			r.Method(
 				"GET",
-				"/projects/{project_id}/gitrepos/{git_repo_id}/repos/{kind}/{owner}/{name}/{branch}/procfile",
+				"/projects/{project_id}/gitrepos/{installation_id}/repos/{kind}/{owner}/{name}/{branch}/procfile",
 				auth.DoesUserHaveProjectAccess(
 					auth.DoesUserHaveGitRepoAccess(
 						requestlog.NewHandler(a.HandleGetProcfileContents, l),

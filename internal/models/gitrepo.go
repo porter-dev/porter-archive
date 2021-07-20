@@ -69,6 +69,9 @@ type GitActionConfig struct {
 
 	// The build context
 	FolderPath string `json:"folder_path"`
+
+	// Determines on how authentication is performed on this action
+	IsInstallation bool `json:"is_installation"`
 }
 
 // GitActionConfigExternal is an external GitActionConfig to be shared over REST

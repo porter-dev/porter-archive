@@ -15,12 +15,12 @@ import (
 	"gorm.io/gorm"
 
 	"github.com/go-chi/chi"
+	"github.com/porter-dev/porter/internal/analytics"
 	"github.com/porter-dev/porter/internal/auth/token"
 	"github.com/porter-dev/porter/internal/forms"
 	"github.com/porter-dev/porter/internal/integrations/email"
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/repository"
-	segment "gopkg.in/segmentio/analytics-go.v3"
 )
 
 // Enumeration of user API error codes, represented as int64
@@ -51,9 +51,8 @@ func (app *App) HandleCreateUser(w http.ResponseWriter, r *http.Request) {
 
 	if err == nil {
 		// send to segment
-		userId := fmt.Sprintf("%v", user.ID)
-		app.segmentClient.Identify(userId, user.Email, false)
-		app.segmentClient.Track(userId, "New User", segment.NewProperties().Set("email", user.Email))
+		app.analyticsClient.Identify(analytics.CreateSegmentIdentifyNewUser(user, false))
+		app.analyticsClient.Track(analytics.CreateSegmentNewUserTrack(user))
 
 		app.Logger.Info().Msgf("New user created: %d", user.ID)
 		var redirect string

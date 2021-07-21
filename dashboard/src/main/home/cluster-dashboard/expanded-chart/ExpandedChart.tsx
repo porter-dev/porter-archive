@@ -25,10 +25,10 @@ import MetricsSection from "./metrics/MetricsSection";
 import ListSection from "./ListSection";
 import StatusSection from "./status/StatusSection";
 import SettingsSection from "./SettingsSection";
-import ChartList from "../chart/ChartList";
-import { withAuth, WithAuthProps } from "shared/auth/AuthorizationHoc";
+import { useWebsockets } from "shared/hooks/useWebsockets";
+import useAuth from "shared/auth/useAuth";
 
-type PropsType = WithAuthProps & {
+type Props = {
   namespace: string;
   currentChart: ChartType;
   currentCluster: ClusterType;
@@ -37,38 +37,15 @@ type PropsType = WithAuthProps & {
   isMetricsInstalled: boolean;
 };
 
-type StateType = {
-  currentChart: ChartType;
-  loading: boolean;
-  showRevisions: boolean;
-  components: ResourceType[];
-  podSelectors: string[];
-  isPreview: boolean;
-  isUpdatingChart: boolean;
-  devOpsMode: boolean;
-  tabOptions: any[];
-  saveValuesStatus: string | null;
-  forceRefreshRevisions: boolean; // Update revisions after upgrading values
-  controllers: Record<string, Record<string, any>>;
-  websockets: Record<string, any>;
-  url: string | null;
-  showDeleteOverlay: boolean;
-  deleting: boolean;
-  formData: any;
-  imageIsPlaceholder: boolean;
-  newestImage: string;
-};
-
-const ExpandedChart: React.FC<PropsType> = (props) => {
+const ExpandedChart: React.FC<Props> = (props) => {
+  const [isAuthorized] = useAuth();
   const [currentChart, setCurrentChart] = useState<ChartType>(
     props.currentChart
   );
-  const [loading, setLoading] = useState<boolean>(true);
   const [showRevisions, setShowRevisions] = useState<boolean>(false);
   const [components, setComponents] = useState<ResourceType[]>([]);
   const [podSelectors, setPodSelectors] = useState<string[]>([]);
   const [isPreview, setIsPreview] = useState<boolean>(false);
-  const [isUpdatingChart, setIsUpdatingChart] = useState<boolean>(false);
   const [devOpsMode, setDevOpsMode] = useState<boolean>(
     localStorage.getItem("devOpsMode") === "true"
   );
@@ -80,8 +57,6 @@ const ExpandedChart: React.FC<PropsType> = (props) => {
   const [controllers, setControllers] = useState<
     Record<string, Record<string, any>>
   >({});
-  const controllersCallback = useRef(null);
-  const [websockets, setWebsockets] = useState<Record<string, any>>({});
   const [url, setUrl] = useState<string>(null);
   const [showDeleteOverlay, setShowDeleteOverlay] = useState<boolean>(false);
   const [deleting, setDeleting] = useState<boolean>(false);
@@ -89,142 +64,125 @@ const ExpandedChart: React.FC<PropsType> = (props) => {
   const [imageIsPlaceholder, setImageIsPlaceholer] = useState<boolean>(false);
   const [newestImage, setNewestImage] = useState<string>(null);
 
+  const {
+    newWebsocket,
+    openWebsocket,
+    closeAllWebsockets,
+    closeWebsocket,
+  } = useWebsockets();
+
   const { currentCluster, currentProject, setCurrentError } = useContext(
     Context
   );
 
   // Retrieve full chart data (includes form and values)
-  const getChartData = (chart: ChartType) => {
-    let { currentCluster, currentChart } = props;
-
-    setLoading(true);
-    api
-      .getChart(
-        "<token>",
-        {
-          namespace: currentChart.namespace,
-          cluster_id: currentCluster.id,
-          storage: StorageType.Secret,
-        },
-        {
-          name: chart.name,
-          revision: chart.version,
-          id: currentProject.id,
-        }
-      )
-      .then((res) => {
-        let image = res.data?.config?.image?.repository;
-        let tag = res.data?.config?.image?.tag?.toString();
-        let newNewestImage = tag ? image + ":" + tag : image;
-        let imageIsPlaceholder = false;
-        if (
-          (image === "porterdev/hello-porter" ||
-            image === "public.ecr.aws/o1j4x7p4/hello-porter") &&
-          !newestImage
-        ) {
-          imageIsPlaceholder = true;
-        }
-        updateComponents(
-          {
-            currentChart: res.data,
-            loading: false,
-            imageIsPlaceholder,
-            newestImage: newNewestImage,
-          },
-          res.data
-        );
-      })
-      .catch(console.log);
+  const getChartData = async (chart: ChartType) => {
+    const res = await api.getChart(
+      "<token>",
+      {
+        namespace: chart.namespace,
+        cluster_id: currentCluster.id,
+        storage: StorageType.Secret,
+      },
+      {
+        name: chart.name,
+        revision: chart.version,
+        id: currentProject.id,
+      }
+    );
+    const image = res.data?.config?.image?.repository;
+    const tag = res.data?.config?.image?.tag?.toString();
+    const newNewestImage = tag ? image + ":" + tag : image;
+    let imageIsPlaceholder = false;
+    if (
+      (image === "porterdev/hello-porter" ||
+        image === "public.ecr.aws/o1j4x7p4/hello-porter") &&
+      !newestImage
+    ) {
+      imageIsPlaceholder = true;
+    }
+    console.log("GET CHART DATA", chart, res.data, _.isEqual(chart, res.data));
+    updateComponents(
+      {
+        currentChart: res.data,
+        loading: false,
+        imageIsPlaceholder,
+        newestImage: newNewestImage,
+      },
+      res.data
+    );
   };
 
   const getControllers = async (chart: ChartType) => {
     // don't retrieve controllers for chart that failed to even deploy.
     if (chart.info.status == "failed") return;
 
-    // TODO: properly promisify
-    await new Promise((next: (res?: any) => void) => {
-      api
-        .getChartControllers(
-          "<token>",
-          {
-            namespace: chart.namespace,
-            cluster_id: currentCluster.id,
-            storage: StorageType.Secret,
-          },
-          {
-            id: currentProject.id,
-            name: chart.name,
-            revision: chart.version,
-          }
-        )
-        .then((res) => {
-          res.data?.forEach(async (c: any) => {
-            await new Promise((nextController: (res?: any) => void) => {
-              c.metadata.kind = c.kind;
-              controllersCallback.current = nextController;
-              setControllers({
-                ...controllers,
-                [c.metadata.uid]: c,
-              });
-            });
-          });
-          next();
-        })
-        .catch((err) => setCurrentError(JSON.stringify(err)));
-    });
-  };
+    try {
+      const { data: chartControllers } = await api.getChartControllers(
+        "<token>",
+        {
+          namespace: chart.namespace,
+          cluster_id: currentCluster.id,
+          storage: StorageType.Secret,
+        },
+        {
+          id: currentProject.id,
+          name: chart.name,
+          revision: chart.version,
+        }
+      );
 
-  const setupWebsocket = (kind: string, chart: ChartType) => {
-    let protocol = window.location.protocol == "https:" ? "wss" : "ws";
-    let ws = new WebSocket(
-      `${protocol}://${window.location.host}/api/projects/${currentProject.id}/k8s/${kind}/status?cluster_id=${currentCluster.id}`
-    );
-    ws.onopen = () => {
-      console.log("connected to websocket");
-    };
+      chartControllers.forEach((c: any) => {
+        c.metadata.kind = c.kind;
 
-    ws.onmessage = (evt: MessageEvent) => {
-      let event = JSON.parse(evt.data);
+        setControllers((oldControllers) => ({
+          ...oldControllers,
+          [c.metadata.kind]: c,
+        }));
+      });
 
-      if (event.event_type == "UPDATE") {
-        let object = event.Object;
-        object.metadata.kind = event.Kind;
-
-        if (!controllers[object.metadata.uid]) return;
-
-        setControllers({
-          ...controllers,
-          [object.metadata.uid]: object,
-        });
+      return;
+    } catch (error) {
+      if (typeof error !== "string") {
+        setCurrentError(JSON.stringify(error));
       }
-    };
-
-    ws.onclose = () => {
-      console.log("closing websocket");
-    };
-
-    ws.onerror = (err: ErrorEvent) => {
-      console.log(err);
-      ws.close();
-    };
-
-    return ws;
+      setCurrentError(error);
+    }
   };
 
-  const setControllerWebsockets = (
-    controller_types: any[],
-    chart: ChartType
-  ) => {
-    let websockets = controller_types.map((kind: string) => {
-      return setupWebsocket(kind, chart);
-    });
-    setWebsockets(websockets);
+  const setupWebsocket = (kind: string) => {
+    const apiEndpoint = `/api/projects/${currentProject.id}/k8s/${kind}/status?cluster_id=${currentCluster.id}`;
+
+    const wsConfig = {
+      onmessage(evt: MessageEvent) {
+        const event = JSON.parse(evt.data);
+
+        if (event.event_type == "UPDATE") {
+          let object = event.Object;
+          object.metadata.kind = event.Kind;
+
+          setControllers((oldControllers) => {
+            if (oldControllers[object.metadata.uid]) {
+              return oldControllers;
+            }
+            return {
+              ...oldControllers,
+              [object.metadata.uid]: object,
+            };
+          });
+        }
+      },
+      onerror() {
+        closeWebsocket(kind);
+      },
+    };
+
+    newWebsocket(kind, apiEndpoint, wsConfig);
   };
 
-  const updateComponents = (state: any, currentChart: ChartType) => {
-    console.log("updating components...");
-    api
-      .getChartComponents(
+  const updateComponents = async (state: any, currentChart: ChartType) => {
+    try {
+      const res = await api.getChartComponents(
         "<token>",
         {
           namespace: currentChart.namespace,
@@ -236,17 +194,15 @@ const ExpandedChart: React.FC<PropsType> = (props) => {
           name: currentChart.name,
           revision: currentChart.version,
         }
-      )
-      .then((res) => {
-        console.log(state);
-        setLoading(state.loading);
-        setImageIsPlaceholer(state.imageIsPlaceholder);
-        setNewestImage(state.newestImage);
-        setComponents(res.data.Objects);
-        setPodSelectors(res.data.PodSelectors);
-        updateTabs();
-      })
-      .catch(console.log);
+      );
+      setCurrentChart(state.currentChart);
+      setImageIsPlaceholer(state.imageIsPlaceholder);
+      setNewestImage(state.newestImage);
+      setComponents(res.data.Objects);
+      setPodSelectors(res.data.PodSelectors);
+    } catch (error) {
+      console.log(error);
+    }
   };
 
   const refreshChart = () => getChartData(currentChart);
@@ -365,7 +321,6 @@ const ExpandedChart: React.FC<PropsType> = (props) => {
         }
 
         setSaveValueStatus(err);
-        setLoading(false);
         setCurrentError(parsedErr);
 
         window.analytics.track("Failed to Upgrade Chart", {
@@ -432,7 +387,7 @@ const ExpandedChart: React.FC<PropsType> = (props) => {
           <ValuesYaml
             currentChart={chart}
             refreshChart={refreshChart}
-            disabled={!props.isAuthorized("application", "", ["get", "update"])}
+            disabled={!isAuthorized("application", "", ["get", "update"])}
           />
         );
       default:
@@ -463,12 +418,12 @@ const ExpandedChart: React.FC<PropsType> = (props) => {
     }
 
     // Settings tab is always last
-    if (props.isAuthorized("application", "", ["get", "delete"])) {
+    if (isAuthorized("application", "", ["get", "delete"])) {
       tabOptions.push({ label: "Settings", value: "settings" });
     }
 
     // Filter tabs if previewing an old revision or updating the chart version
-    if (isPreview || isUpdatingChart) {
+    if (isPreview) {
       let liveTabs = ["status", "settings", "deploy", "metrics"];
       tabOptions = tabOptions.filter(
         (tab: any) => !liveTabs.includes(tab.value)
@@ -549,44 +504,6 @@ const ExpandedChart: React.FC<PropsType> = (props) => {
     }
   };
 
-  useEffect(() => {
-    window.analytics.track("Opened Chart", {
-      chart: currentChart.name,
-    });
-
-    getChartData(currentChart);
-    getControllers(currentChart); // isn't this async?
-    setControllerWebsockets(
-      ["deployment", "statefulset", "daemonset", "replicaset"],
-      currentChart
-    );
-
-    api
-      .getChartComponents(
-        "<token>",
-        {
-          namespace: currentChart.namespace,
-          cluster_id: currentCluster.id,
-          storage: StorageType.Secret,
-        },
-        {
-          id: currentProject.id,
-          name: currentChart.name,
-          revision: currentChart.version,
-        }
-      )
-      .then((res) => setComponents(res.data.Objects))
-      .catch(console.log);
-
-    return () => {
-      if (websockets?.length > 0) {
-        websockets?.forEach((ws: WebSocket) => {
-          ws.close();
-        });
-      }
-    };
-  }, []);
-
   const renderUrl = () => {
     if (url) {
       return (
@@ -651,13 +568,32 @@ const ExpandedChart: React.FC<PropsType> = (props) => {
   };
 
   useEffect(() => {
-    if (controllersCallback.current) controllersCallback.current();
-  }, [controllers]);
+    window.analytics.track("Opened Chart", {
+      chart: currentChart.name,
+    });
+
+    getChartData(currentChart).then(() => {
+      getControllers(currentChart).then(() => {
+        ["deployment", "statefulset", "daemonset", "replicaset"]
+          .map((kind) => {
+            setupWebsocket(kind);
+            return kind;
+          })
+          .forEach((kind) => {
+            openWebsocket(kind);
+          });
+      });
+    });
+
+    return () => {
+      closeAllWebsockets();
+    };
+  }, []);
 
   useEffect(() => {
     updateTabs();
     localStorage.setItem("devOpsMode", devOpsMode.toString());
-  }, [devOpsMode]);
+  }, [devOpsMode, currentChart?.form, isPreview]);
 
   useEffect(() => {
     let ingressName = null;
@@ -668,11 +604,6 @@ const ExpandedChart: React.FC<PropsType> = (props) => {
     }
 
     if (!ingressName) return;
-
-    console.group("data");
-    console.log(components);
-    console.log(ingressName);
-    console.groupEnd();
 
     api
       .getIngress(
@@ -703,8 +634,7 @@ const ExpandedChart: React.FC<PropsType> = (props) => {
   }, [components]);
 
   let { closeChart } = props;
-  let chart = currentChart;
-  let status = getChartStatus(chart.info.status);
+  let status = getChartStatus(currentChart.info.status);
 
   return (
     <>
@@ -722,25 +652,25 @@ const ExpandedChart: React.FC<PropsType> = (props) => {
           <TitleSection>
             <Title>
               <IconWrapper>{renderIcon()}</IconWrapper>
-              {chart.name}
+              {currentChart.name}
             </Title>
-            {chart.chart.metadata.name != "worker" &&
-              chart.chart.metadata.name != "job" &&
+            {currentChart.chart.metadata.name != "worker" &&
+              currentChart.chart.metadata.name != "job" &&
               renderUrl()}
             <InfoWrapper>
               <StatusIndicator
                 controllers={controllers}
-                status={chart.info.status}
+                status={currentChart.info.status}
                 margin_left={"0px"}
               />
               <LastDeployed>
                 <Dot>•</Dot>Last deployed
-                {" " + readableDate(chart.info.last_deployed)}
+                {" " + readableDate(currentChart.info.last_deployed)}
               </LastDeployed>
             </InfoWrapper>
 
             <TagWrapper>
-              Namespace <NamespaceTag>{chart.namespace}</NamespaceTag>
+              Namespace <NamespaceTag>{currentChart.namespace}</NamespaceTag>
             </TagWrapper>
           </TitleSection>
 
@@ -753,17 +683,18 @@ const ExpandedChart: React.FC<PropsType> = (props) => {
             toggleShowRevisions={() => {
               setShowRevisions(!showRevisions);
             }}
-            chart={chart}
+            chart={currentChart}
             refreshChart={refreshChart}
             setRevision={setRevision}
             forceRefreshRevisions={forceRefreshRevisions}
             refreshRevisionsOff={() => setForceRefreshRevisions(false)}
             status={status}
             shouldUpdate={
-              chart.latest_version &&
-              chart.latest_version !== chart.chart.metadata.version
+              currentChart.latest_version &&
+              currentChart.latest_version !==
+                currentChart.chart.metadata.version
             }
-            latestVersion={chart.latest_version}
+            latestVersion={currentChart.latest_version}
             upgradeVersion={handleUpgradeVersion}
           />
         </HeaderWrapper>
@@ -771,7 +702,7 @@ const ExpandedChart: React.FC<PropsType> = (props) => {
           <FormWrapper
             isReadOnly={
               imageIsPlaceholder ||
-              !props.isAuthorized("application", "", ["get", "update"])
+              !isAuthorized("application", "", ["get", "update"])
             }
             formData={formData}
             tabOptions={tabOptions}
@@ -796,7 +727,7 @@ const ExpandedChart: React.FC<PropsType> = (props) => {
   );
 };
 
-export default withAuth(ExpandedChart);
+export default ExpandedChart;
 
 const TextWrap = styled.div``;
 

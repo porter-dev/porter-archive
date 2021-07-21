@@ -405,7 +405,6 @@ func (auth *Auth) DoesUserHaveRegistryAccess(
 // much overhead
 func (auth *Auth) DoesUserHaveGitInstallationAccess(
 	next http.Handler,
-	projLoc IDLocation,
 	gitRepoLoc IDLocation,
 ) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

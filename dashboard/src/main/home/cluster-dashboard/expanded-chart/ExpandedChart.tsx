@@ -1,4 +1,11 @@
-import React, { useContext, useState, useEffect, useRef } from "react";
+import React, {
+  useContext,
+  useState,
+  useEffect,
+  useRef,
+  useCallback,
+  useMemo,
+} from "react";
 import styled from "styled-components";
 import yaml from "js-yaml";
 import close from "assets/close.png";
@@ -37,14 +44,22 @@ type Props = {
   isMetricsInstalled: boolean;
 };
 
+const getReadableDate = (s: string) => {
+  let ts = new Date(s);
+  let date = ts.toLocaleDateString();
+  let time = ts.toLocaleTimeString([], {
+    hour: "numeric",
+    minute: "2-digit",
+  });
+  return `${time} on ${date}`;
+};
+
 const ExpandedChart: React.FC<Props> = (props) => {
-  const [isAuthorized] = useAuth();
   const [currentChart, setCurrentChart] = useState<ChartType>(
     props.currentChart
   );
   const [showRevisions, setShowRevisions] = useState<boolean>(false);
   const [components, setComponents] = useState<ResourceType[]>([]);
-  const [podSelectors, setPodSelectors] = useState<string[]>([]);
   const [isPreview, setIsPreview] = useState<boolean>(false);
   const [devOpsMode, setDevOpsMode] = useState<boolean>(
     localStorage.getItem("devOpsMode") === "true"
@@ -60,9 +75,10 @@ const ExpandedChart: React.FC<Props> = (props) => {
   const [url, setUrl] = useState<string>(null);
   const [showDeleteOverlay, setShowDeleteOverlay] = useState<boolean>(false);
   const [deleting, setDeleting] = useState<boolean>(false);
-  const [formData, setFormData] = useState<any>({});
   const [imageIsPlaceholder, setImageIsPlaceholer] = useState<boolean>(false);
   const [newestImage, setNewestImage] = useState<string>(null);
+
+  const [isAuthorized] = useAuth();
 
   const {
     newWebsocket,
@@ -101,7 +117,6 @@ const ExpandedChart: React.FC<Props> = (props) => {
     ) {
       imageIsPlaceholder = true;
     }
-    console.log("GET CHART DATA", chart, res.data, _.isEqual(chart, res.data));
     updateComponents(
       {
         currentChart: res.data,
@@ -199,15 +214,12 @@ const ExpandedChart: React.FC<Props> = (props) => {
       setImageIsPlaceholer(state.imageIsPlaceholder);
       setNewestImage(state.newestImage);
       setComponents(res.data.Objects);
-      setPodSelectors(res.data.PodSelectors);
     } catch (error) {
       console.log(error);
     }
   };
 
-  const refreshChart = () => getChartData(currentChart);
-
-  const onSubmit = (rawValues: any) => {
+  const onSubmit = async (rawValues: any) => {
     // Convert dotted keys to nested objects
     let values = {};
 
@@ -230,10 +242,9 @@ const ExpandedChart: React.FC<Props> = (props) => {
     });
 
     setSaveValueStatus("loading");
-    refreshChart();
-
-    api
-      .upgradeChartValues(
+    getChartData(currentChart);
+    try {
+      await api.upgradeChartValues(
         "<token>",
         {
           namespace: currentChart.namespace,
@@ -245,63 +256,62 @@ const ExpandedChart: React.FC<Props> = (props) => {
           name: currentChart.name,
           cluster_id: currentCluster.id,
         }
-      )
-      .then(() => {
-        setSaveValueStatus("successful");
-        setForceRefreshRevisions(true);
+      );
 
-        window.analytics.track("Chart Upgraded", {
-          chart: currentChart.name,
-          values: valuesYaml,
-        });
-      })
-      .catch((err) => {
-        let parsedErr =
-          err?.response?.data?.errors && err.response.data.errors[0];
+      setSaveValueStatus("successful");
+      setForceRefreshRevisions(true);
 
-        if (parsedErr) {
-          err = parsedErr;
-        }
-
-        setSaveValueStatus(err);
-
-        setCurrentError(parsedErr);
-
-        window.analytics.track("Failed to Upgrade Chart", {
-          chart: currentChart.name,
-          values: valuesYaml,
-          error: err,
-        });
+      window.analytics.track("Chart Upgraded", {
+        chart: currentChart.name,
+        values: valuesYaml,
       });
+    } catch (err) {
+      const parsedErr =
+        err?.response?.data?.errors && err.response.data.errors[0];
+
+      if (parsedErr) {
+        err = parsedErr;
+      }
+
+      setSaveValueStatus(err);
+
+      setCurrentError(parsedErr);
+
+      window.analytics.track("Failed to Upgrade Chart", {
+        chart: currentChart.name,
+        values: valuesYaml,
+        error: err,
+      });
+    }
   };
 
-  const handleUpgradeVersion = (version: string, cb: () => void) => {
-    // convert current values to yaml
-    let values = currentChart.config;
+  const handleUpgradeVersion = useCallback(
+    async (version: string, cb: () => void) => {
+      // convert current values to yaml
+      let values = currentChart.config;
 
-    let valuesYaml = yaml.dump({
-      ...values,
-    });
+      let valuesYaml = yaml.dump({
+        ...values,
+      });
 
-    setSaveValueStatus("loading");
-    refreshChart();
+      setSaveValueStatus("loading");
+      getChartData(currentChart);
 
-    api
-      .upgradeChartValues(
-        "<token>",
-        {
-          namespace: currentChart.namespace,
-          storage: StorageType.Secret,
-          values: valuesYaml,
-          version: version,
-        },
-        {
-          id: currentProject.id,
-          name: currentChart.name,
-          cluster_id: currentCluster.id,
-        }
-      )
-      .then(() => {
+      try {
+        await api.upgradeChartValues(
+          "<token>",
+          {
+            namespace: currentChart.namespace,
+            storage: StorageType.Secret,
+            values: valuesYaml,
+            version: version,
+          },
+          {
+            id: currentProject.id,
+            name: currentChart.name,
+            cluster_id: currentCluster.id,
+          }
+        );
         setSaveValueStatus("successful");
         setForceRefreshRevisions(true);
 
@@ -311,8 +321,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
         });
 
         cb && cb();
-      })
-      .catch((err) => {
+      } catch (err) {
         let parsedErr =
           err?.response?.data?.errors && err.response.data.errors[0];
 
@@ -328,8 +337,10 @@ const ExpandedChart: React.FC<Props> = (props) => {
           values: valuesYaml,
           error: err,
         });
-      });
-  };
+      }
+    },
+    [currentChart]
+  );
 
   const renderTabContents = (currentTab: string) => {
     let { setSidebar } = props;
@@ -359,7 +370,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
         return (
           <SettingsSection
             currentChart={chart}
-            refreshChart={refreshChart}
+            refreshChart={() => getChartData(currentChart)}
             setShowDeleteOverlay={(x: boolean) => setShowDeleteOverlay(x)}
           />
         );
@@ -386,7 +397,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
         return (
           <ValuesYaml
             currentChart={chart}
-            refreshChart={refreshChart}
+            refreshChart={() => getChartData(currentChart)}
             disabled={!isAuthorized("application", "", ["get", "update"])}
           />
         );
@@ -395,11 +406,6 @@ const ExpandedChart: React.FC<Props> = (props) => {
   };
 
   const updateTabs = () => {
-    let formData = currentChart.form;
-    if (formData) {
-      setFormData(formData);
-    }
-
     // Collate non-form tabs
     let tabOptions = [] as any[];
     tabOptions.push({ label: "Status", value: "status" });
@@ -454,17 +460,21 @@ const ExpandedChart: React.FC<Props> = (props) => {
     }
   };
 
-  const readableDate = (s: string) => {
-    let ts = new Date(s);
-    let date = ts.toLocaleDateString();
-    let time = ts.toLocaleTimeString([], {
-      hour: "numeric",
-      minute: "2-digit",
-    });
-    return `${time} on ${date}`;
-  };
+  const chartStatus = useMemo(() => {
+    const getAvailability = (kind: string, c: any) => {
+      switch (kind?.toLowerCase()) {
+        case "deployment":
+        case "replicaset":
+          return c.status.availableReplicas == c.status.replicas;
+        case "statefulset":
+          return c.status.readyReplicas == c.status.replicas;
+        case "daemonset":
+          return c.status.numberAvailable == c.status.desiredNumberScheduled;
+      }
+    };
 
-  const getChartStatus = (chartStatus: string) => {
+    const chartStatus = currentChart.info.status;
+
     if (chartStatus === "deployed") {
       for (var uid in controllers) {
         let value = controllers[uid];
@@ -490,19 +500,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
       return "deployed";
     }
     return chartStatus;
-  };
-
-  const getAvailability = (kind: string, c: any) => {
-    switch (kind?.toLowerCase()) {
-      case "deployment":
-      case "replicaset":
-        return c.status.availableReplicas == c.status.replicas;
-      case "statefulset":
-        return c.status.readyReplicas == c.status.replicas;
-      case "daemonset":
-        return c.status.numberAvailable == c.status.desiredNumberScheduled;
-    }
-  };
+  }, [currentChart, controllers]);
 
   const renderUrl = () => {
     if (url) {
@@ -512,34 +510,28 @@ const ExpandedChart: React.FC<Props> = (props) => {
           {url}
         </Url>
       );
-    } else {
-      let serviceName = null as string;
-      let serviceNamespace = null as string;
-
-      components?.forEach((c: any) => {
-        if (c.Kind == "Service") {
-          serviceName = c.Name;
-          serviceNamespace = c.Namespace;
-        }
-      });
-
-      if (!serviceName || !serviceNamespace) {
-        return;
-      }
-
-      return (
-        <Url>
-          <Bolded>Internal URI:</Bolded>
-          {`${serviceName}.${serviceNamespace}.svc.cluster.local`}
-        </Url>
-      );
     }
+
+    const service: any = components?.find((c) => {
+      return c.Kind === "Service";
+    });
+
+    if (!service?.Name || !service?.Namespace) {
+      return;
+    }
+
+    return (
+      <Url>
+        <Bolded>Internal URI:</Bolded>
+        {`${service.Name}.${service.Namespace}.svc.cluster.local`}
+      </Url>
+    );
   };
 
-  const handleUninstallChart = () => {
+  const handleUninstallChart = async () => {
     setDeleting(true);
-    api
-      .uninstallTemplate(
+    try {
+      await api.uninstallTemplate(
         "<token>",
         {},
         {
@@ -549,21 +541,12 @@ const ExpandedChart: React.FC<Props> = (props) => {
           id: currentProject.id,
           cluster_id: currentCluster.id,
         }
-      )
-      .then((res) => {
-        setShowDeleteOverlay(false);
-        props.closeChart();
-      })
-      .catch(console.log);
-  };
-
-  const renderDeleteOverlay = () => {
-    if (deleting) {
-      return (
-        <DeleteOverlay>
-          <Loading />
-        </DeleteOverlay>
       );
+      setShowDeleteOverlay(false);
+      props.closeChart();
+    } catch (error) {
+      console.log(error);
+      setCurrentError("Couldn't uninstall chart, please try again");
     }
   };
 
@@ -596,6 +579,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
   }, [devOpsMode, currentChart?.form, isPreview]);
 
   useEffect(() => {
+    let isSubscribed = true;
     let ingressName = null;
     for (var i = 0; i < components.length; i++) {
       if (components[i].Kind === "Ingress") {
@@ -618,6 +602,9 @@ const ExpandedChart: React.FC<Props> = (props) => {
         }
       )
       .then((res) => {
+        if (!isSubscribed) {
+          return;
+        }
         if (res.data?.spec?.rules && res.data?.spec?.rules[0]?.host) {
           setUrl(`https://${res.data?.spec?.rules[0]?.host}`);
           return;
@@ -631,14 +618,12 @@ const ExpandedChart: React.FC<Props> = (props) => {
         }
       })
       .catch(console.log);
+    return () => (isSubscribed = false);
   }, [components]);
-
-  let { closeChart } = props;
-  let status = getChartStatus(currentChart.info.status);
 
   return (
     <>
-      <CloseOverlay onClick={closeChart} />
+      <CloseOverlay onClick={props.closeChart} />
       <StyledExpandedChart>
         <ConfirmOverlay
           show={showDeleteOverlay}
@@ -646,8 +631,11 @@ const ExpandedChart: React.FC<Props> = (props) => {
           onYes={handleUninstallChart}
           onNo={() => setShowDeleteOverlay(false)}
         />
-        {renderDeleteOverlay()}
-
+        {deleting && (
+          <DeleteOverlay>
+            <Loading />
+          </DeleteOverlay>
+        )}
         <HeaderWrapper>
           <TitleSection>
             <Title>
@@ -665,7 +653,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
               />
               <LastDeployed>
                 <Dot>•</Dot>Last deployed
-                {" " + readableDate(currentChart.info.last_deployed)}
+                {" " + getReadableDate(currentChart.info.last_deployed)}
               </LastDeployed>
             </InfoWrapper>
 
@@ -674,7 +662,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
             </TagWrapper>
           </TitleSection>
 
-          <CloseButton onClick={closeChart}>
+          <CloseButton onClick={props.closeChart}>
             <CloseButtonImg src={close} />
           </CloseButton>
 
@@ -684,11 +672,11 @@ const ExpandedChart: React.FC<Props> = (props) => {
               setShowRevisions(!showRevisions);
             }}
             chart={currentChart}
-            refreshChart={refreshChart}
+            refreshChart={() => getChartData(currentChart)}
             setRevision={setRevision}
             forceRefreshRevisions={forceRefreshRevisions}
             refreshRevisionsOff={() => setForceRefreshRevisions(false)}
-            status={status}
+            status={chartStatus}
             shouldUpdate={
               currentChart.latest_version &&
               currentChart.latest_version !==
@@ -704,7 +692,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
               imageIsPlaceholder ||
               !isAuthorized("application", "", ["get", "update"])
             }
-            formData={formData}
+            formData={currentChart.form}
             tabOptions={tabOptions}
             isInModal={true}
             renderTabContents={renderTabContents}

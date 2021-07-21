@@ -3,6 +3,7 @@ package api
 import (
 	"encoding/json"
 	"fmt"
+	"gorm.io/gorm"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -354,6 +355,10 @@ func (app *App) HandleUninstallTemplate(w http.ResponseWriter, r *http.Request) 
 				gr, err := app.Repo.GitRepo.ReadGitRepo(gitAction.GitRepoID)
 
 				if err != nil {
+					if err != gorm.ErrRecordNotFound {
+						app.handleErrorInternal(err, w)
+						return
+					}
 					gr = nil
 				}
 

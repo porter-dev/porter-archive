@@ -218,6 +218,12 @@ func (d *DeployAgent) Build() error {
 		if err != nil {
 			return err
 		}
+
+		// if the local path is set it must be a relative path, so create a filepath with the dst
+		// and the relative path
+		if d.opts.LocalPath != "" {
+			dst = filepath.Join(dst, d.opts.LocalPath)
+		}
 	} else {
 		dst = filepath.Dir(d.opts.LocalPath)
 	}

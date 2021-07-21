@@ -117,15 +117,11 @@ const ExpandedChart: React.FC<Props> = (props) => {
     ) {
       imageIsPlaceholder = true;
     }
-    updateComponents(
-      {
-        currentChart: res.data,
-        loading: false,
-        imageIsPlaceholder,
-        newestImage: newNewestImage,
-      },
-      res.data
-    );
+    setCurrentChart(res.data);
+    setImageIsPlaceholer(imageIsPlaceholder);
+    setNewestImage(newNewestImage);
+
+    updateComponents(res.data);
   };
 
   const getControllers = async (chart: ChartType) => {
@@ -195,7 +191,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
     newWebsocket(kind, apiEndpoint, wsConfig);
   };
 
-  const updateComponents = async (state: any, currentChart: ChartType) => {
+  const updateComponents = async (currentChart: ChartType) => {
     try {
       const res = await api.getChartComponents(
         "<token>",
@@ -210,9 +206,6 @@ const ExpandedChart: React.FC<Props> = (props) => {
           revision: currentChart.version,
         }
       );
-      setCurrentChart(state.currentChart);
-      setImageIsPlaceholer(state.imageIsPlaceholder);
-      setNewestImage(state.newestImage);
       setComponents(res.data.Objects);
     } catch (error) {
       console.log(error);

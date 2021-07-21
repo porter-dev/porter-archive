@@ -23,7 +23,7 @@ func New(a *api.App) *chi.Mux {
 
 	auth := mw.NewAuth(a.Store, a.ServerConf.CookieName, &token.TokenGeneratorConf{
 		TokenSecret: a.ServerConf.TokenGeneratorSecret,
-	}, a.Repo)
+	}, a.Repo, a.GithubProjectConf)
 
 	r.Route("/api", func(r chi.Router) {
 		r.Use(mw.ContentTypeJSON)
@@ -1129,13 +1129,12 @@ func New(a *api.App) *chi.Mux {
 				),
 			)
 
-			r.Method(
+			r.Method( // this endpoint isn't going to be used anymore, should it get deleted?
 				"DELETE",
 				"/projects/{project_id}/gitrepos/{git_repo_id}",
 				auth.DoesUserHaveProjectAccess(
-					auth.DoesUserHaveGitRepoAccess(
+					auth.DoesUserHaveGitInstallationAccess(
 						requestlog.NewHandler(a.HandleDeleteProjectGitRepo, l),
-						mw.URLParam,
 						mw.URLParam,
 					),
 					mw.URLParam,
@@ -1147,9 +1146,8 @@ func New(a *api.App) *chi.Mux {
 				"GET",
 				"/projects/{project_id}/gitrepos/{installation_id}/repos",
 				auth.DoesUserHaveProjectAccess(
-					auth.DoesUserHaveGitRepoAccess(
+					auth.DoesUserHaveGitInstallationAccess(
 						requestlog.NewHandler(a.HandleListRepos, l),
-						mw.URLParam,
 						mw.URLParam,
 					),
 					mw.URLParam,
@@ -1161,9 +1159,8 @@ func New(a *api.App) *chi.Mux {
 				"GET",
 				"/projects/{project_id}/gitrepos/{installation_id}/repos/{kind}/{owner}/{name}/branches",
 				auth.DoesUserHaveProjectAccess(
-					auth.DoesUserHaveGitRepoAccess(
+					auth.DoesUserHaveGitInstallationAccess(
 						requestlog.NewHandler(a.HandleGetBranches, l),
-						mw.URLParam,
 						mw.URLParam,
 					),
 					mw.URLParam,
@@ -1175,9 +1172,8 @@ func New(a *api.App) *chi.Mux {
 				"GET",
 				"/projects/{project_id}/gitrepos/{installation_id}/repos/{kind}/{owner}/{name}/{branch}/buildpack/detect",
 				auth.DoesUserHaveProjectAccess(
-					auth.DoesUserHaveGitRepoAccess(
+					auth.DoesUserHaveGitInstallationAccess(
 						requestlog.NewHandler(a.HandleDetectBuildpack, l),
-						mw.URLParam,
 						mw.URLParam,
 					),
 					mw.URLParam,
@@ -1189,9 +1185,8 @@ func New(a *api.App) *chi.Mux {
 				"GET",
 				"/projects/{project_id}/gitrepos/{installation_id}/repos/{kind}/{owner}/{name}/{branch}/contents",
 				auth.DoesUserHaveProjectAccess(
-					auth.DoesUserHaveGitRepoAccess(
+					auth.DoesUserHaveGitInstallationAccess(
 						requestlog.NewHandler(a.HandleGetBranchContents, l),
-						mw.URLParam,
 						mw.URLParam,
 					),
 					mw.URLParam,
@@ -1203,9 +1198,8 @@ func New(a *api.App) *chi.Mux {
 				"GET",
 				"/projects/{project_id}/gitrepos/{installation_id}/repos/{kind}/{owner}/{name}/{branch}/procfile",
 				auth.DoesUserHaveProjectAccess(
-					auth.DoesUserHaveGitRepoAccess(
+					auth.DoesUserHaveGitInstallationAccess(
 						requestlog.NewHandler(a.HandleGetProcfileContents, l),
-						mw.URLParam,
 						mw.URLParam,
 					),
 					mw.URLParam,
@@ -1215,11 +1209,10 @@ func New(a *api.App) *chi.Mux {
 
 			r.Method(
 				"GET",
-				"/projects/{project_id}/gitrepos/{git_repo_id}/repos/{kind}/{owner}/{name}/{branch}/tarball_url",
+				"/projects/{project_id}/gitrepos/{installation_id}/repos/{kind}/{owner}/{name}/{branch}/tarball_url",
 				auth.DoesUserHaveProjectAccess(
-					auth.DoesUserHaveGitRepoAccess(
+					auth.DoesUserHaveGitInstallationAccess(
 						requestlog.NewHandler(a.HandleGetRepoZIPDownloadURL, l),
-						mw.URLParam,
 						mw.URLParam,
 					),
 					mw.URLParam,

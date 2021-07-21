@@ -39,8 +39,8 @@ const RepoList: React.FC<Props> = ({
           .then(async (res) => {
             resolve(res.data);
           })
-          .catch((err) => {
-            reject(err);
+          .catch(() => {
+            resolve([]);
           });
       } else {
         reject(null);
@@ -119,10 +119,8 @@ const RepoList: React.FC<Props> = ({
       return (
         <LoadingWrapper>
           No connected Github repos found. You can
-          <A
-            href={`/api/oauth/projects/${currentProject.id}/github?redirected=true`}
-          >
-            log in with GitHub
+          <A href={"/api/integrations/github-app/install"}>
+            Install Porter in more repositories
           </A>
           .
         </LoadingWrapper>

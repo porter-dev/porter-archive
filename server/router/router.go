@@ -1129,19 +1129,6 @@ func New(a *api.App) *chi.Mux {
 				),
 			)
 
-			r.Method( // this endpoint isn't going to be used anymore, should it get deleted?
-				"DELETE",
-				"/projects/{project_id}/gitrepos/{git_repo_id}",
-				auth.DoesUserHaveProjectAccess(
-					auth.DoesUserHaveGitInstallationAccess(
-						requestlog.NewHandler(a.HandleDeleteProjectGitRepo, l),
-						mw.URLParam,
-					),
-					mw.URLParam,
-					mw.WriteAccess,
-				),
-			)
-
 			r.Method(
 				"GET",
 				"/projects/{project_id}/gitrepos/{installation_id}/repos",

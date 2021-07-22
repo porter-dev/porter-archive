@@ -188,32 +188,6 @@ func (app *App) HandleListRepos(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(res)
 }
 
-// HandleDeleteProjectGitRepo handles the deletion of a Github Repo via the git repo ID
-func (app *App) HandleDeleteProjectGitRepo(w http.ResponseWriter, r *http.Request) {
-	id, err := strconv.ParseUint(chi.URLParam(r, "git_repo_id"), 0, 64)
-
-	if err != nil || id == 0 {
-		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
-		return
-	}
-
-	repo, err := app.Repo.GitRepo.ReadGitRepo(uint(id))
-
-	if err != nil {
-		app.handleErrorRead(err, ErrProjectDataRead, w)
-		return
-	}
-
-	err = app.Repo.GitRepo.DeleteGitRepo(repo)
-
-	if err != nil {
-		app.handleErrorRead(err, ErrProjectDataRead, w)
-		return
-	}
-
-	w.WriteHeader(http.StatusOK)
-}
-
 // HandleGetBranches retrieves a list of branch names for a specified repo
 func (app *App) HandleGetBranches(w http.ResponseWriter, r *http.Request) {
 

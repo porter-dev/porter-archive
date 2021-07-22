@@ -20,10 +20,10 @@ import (
 type GithubActions struct {
 	ServerURL string
 
-	GitIntegration *models.GitRepo
-	GitRepoName    string
-	GitRepoOwner   string
-	Repo           repository.Repository
+	GithubOAuthIntegration *models.GitRepo
+	GitRepoName            string
+	GitRepoOwner           string
+	Repo                   repository.Repository
 
 	GithubConf           *oauth2.Config // one of these will let us authenticate
 	GithubAppID          int64
@@ -202,10 +202,10 @@ func (g *GithubActions) GetGithubActionYAML() ([]byte, error) {
 func (g *GithubActions) getClient() (*github.Client, error) {
 
 	// in the case that this still uses the oauth integration
-	if g.GitIntegration != nil {
+	if g.GithubOAuthIntegration != nil {
 
 		// get the oauth integration
-		oauthInt, err := g.Repo.OAuthIntegration.ReadOAuthIntegration(g.GitIntegration.OAuthIntegrationID)
+		oauthInt, err := g.Repo.OAuthIntegration.ReadOAuthIntegration(g.GithubOAuthIntegration.OAuthIntegrationID)
 
 		if err != nil {
 			return nil, err
@@ -375,7 +375,7 @@ func (g *GithubActions) commitGithubFile(
 		SHA:     &sha,
 	}
 
-	if g.GitIntegration != nil {
+	if g.GithubOAuthIntegration != nil {
 		opts.Committer = &github.CommitAuthor{
 			Name:  github.String("Porter Bot"),
 			Email: github.String("contact@getporter.dev"),
@@ -423,7 +423,7 @@ func (g *GithubActions) deleteGithubFile(
 		SHA:     &sha,
 	}
 
-	if g.GitIntegration != nil {
+	if g.GithubOAuthIntegration != nil {
 		opts.Committer = &github.CommitAuthor{
 			Name:  github.String("Porter Bot"),
 			Email: github.String("contact@getporter.dev"),

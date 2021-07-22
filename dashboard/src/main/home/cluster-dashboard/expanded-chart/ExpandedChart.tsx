@@ -75,7 +75,9 @@ const ExpandedChart: React.FC<Props> = (props) => {
   const [url, setUrl] = useState<string>(null);
   const [showDeleteOverlay, setShowDeleteOverlay] = useState<boolean>(false);
   const [deleting, setDeleting] = useState<boolean>(false);
-  const [imageIsPlaceholder, setImageIsPlaceholer] = useState<boolean>(false);
+  const [imageIsPlaceholder, setImageIsPlaceholer] = useState<boolean | null>(
+    null
+  );
   const [newestImage, setNewestImage] = useState<string>(null);
 
   const [isAuthorized] = useAuth();
@@ -117,9 +119,10 @@ const ExpandedChart: React.FC<Props> = (props) => {
     ) {
       imageIsPlaceholder = true;
     }
-    setCurrentChart(res.data);
     setImageIsPlaceholer(imageIsPlaceholder);
     setNewestImage(newNewestImage);
+
+    setCurrentChart(res.data);
 
     updateComponents(res.data);
   };
@@ -510,7 +513,11 @@ const ExpandedChart: React.FC<Props> = (props) => {
     });
 
     if (!service?.Name || !service?.Namespace) {
-      return;
+      return (
+        <Url>
+          <Bolded>Loading...</Bolded>
+        </Url>
+      );
     }
 
     return (
@@ -573,12 +580,10 @@ const ExpandedChart: React.FC<Props> = (props) => {
 
   useEffect(() => {
     let isSubscribed = true;
-    let ingressName = null;
-    for (var i = 0; i < components.length; i++) {
-      if (components[i].Kind === "Ingress") {
-        ingressName = components[i].Name;
-      }
-    }
+
+    const ingressComponent = components?.find((c) => c.Kind === "Ingress");
+
+    const ingressName = ingressComponent?.Name;
 
     if (!ingressName) return;
 
@@ -612,7 +617,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
       })
       .catch(console.log);
     return () => (isSubscribed = false);
-  }, [components]);
+  }, [components, currentCluster, currentProject, currentChart]);
 
   return (
     <>

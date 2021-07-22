@@ -376,7 +376,9 @@ func (d *DeployAgent) pullCurrentReleaseImage() error {
 
 	fmt.Printf("attempting to pull image: %s\n", fmt.Sprintf("%s:%s", d.imageRepo, tagStr))
 
-	return d.agent.PullImage(fmt.Sprintf("%s:%s", d.imageRepo, tagStr))
+	// return d.agent.PullImage(fmt.Sprintf("%s:%s", d.imageRepo, tagStr))
+
+	return nil
 }
 
 func (d *DeployAgent) downloadRepoToDir(downloadURL string) (string, error) {

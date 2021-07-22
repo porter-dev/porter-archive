@@ -6,8 +6,8 @@ import (
 )
 
 type AnalyticsSegmentClient interface {
-	Identify(SegmentIdentifier) error
-	Track(SegmentTrack) error
+	Identify(segmentIdentifier) error
+	Track(segmentTrack) error
 }
 
 type AnalyticsSegment struct {
@@ -16,11 +16,8 @@ type AnalyticsSegment struct {
 	logger    *logger.Logger
 }
 
-//
-/*
-	Initialize the segment client and return a superset of it, the AnalyticsSegmentClient will handle cases when
-	the segment client failed on initialization or not enabled
-*/
+// Initialize the segment client and return a superset of it, the AnalyticsSegmentClient will handle cases when
+// the segment client failed on initialization or not enabled
 func InitializeAnalyticsSegmentClient(segmentClientKey string, logger *logger.Logger) AnalyticsSegmentClient {
 	if segmentClientKey != "" {
 
@@ -46,11 +43,10 @@ func InitializeAnalyticsSegmentClient(segmentClientKey string, logger *logger.Lo
 	}
 }
 
-/*
-	Superset of segment client identify function, this will accept analytics defined identifiers only
-	and will log an error if the client is not initialized
-*/
-func (c *AnalyticsSegment) Identify(identifier SegmentIdentifier) error {
+//	Superset of segment client identify function, this will accept analytics defined identifiers only
+//	and will log an error if the client is not initialized
+
+func (c *AnalyticsSegment) Identify(identifier segmentIdentifier) error {
 	if !c.isEnabled {
 		c.logger.Error().Msg("Analytics not enabled")
 		return nil
@@ -63,11 +59,9 @@ func (c *AnalyticsSegment) Identify(identifier SegmentIdentifier) error {
 	return err
 }
 
-/*
-	Superset of segment client track function, this will accept analytics defined tracks only
-	and will log an error if the client is not initialized
-*/
-func (c *AnalyticsSegment) Track(track SegmentTrack) error {
+//	Superset of segment client track function, this will accept analytics defined tracks only
+//	and will log an error if the client is not initialized
+func (c *AnalyticsSegment) Track(track segmentTrack) error {
 	if !c.isEnabled {
 		c.logger.Error().Msg("Analytics not enabled")
 		return nil

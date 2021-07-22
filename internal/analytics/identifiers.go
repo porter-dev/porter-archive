@@ -7,31 +7,33 @@ import (
 	segment "gopkg.in/segmentio/analytics-go.v3"
 )
 
-type SegmentIdentifier interface {
+type segmentIdentifier interface {
 	getUserId() string
 	getTraits() segment.Traits
 }
 
-type SegmentIdentifyNewUser struct {
+type segmentIdentifyNewUser struct {
 	userId    string
 	userEmail string
 	isGithub  bool
 }
 
-func CreateSegmentIdentifyNewUser(user *models.User, registeredViaGithub bool) *SegmentIdentifyNewUser {
+// Creates a segment Identifier struct for new users. As we handle registration with github, it also accepts a param
+// to check if the new user has registered with github or not.
+func CreateSegmentIdentifyNewUser(user *models.User, registeredViaGithub bool) *segmentIdentifyNewUser {
 	userId := fmt.Sprintf("%v", user.ID)
-	return &SegmentIdentifyNewUser{
+	return &segmentIdentifyNewUser{
 		userId:    userId,
 		userEmail: user.Email,
 		isGithub:  registeredViaGithub,
 	}
 }
 
-func (i SegmentIdentifyNewUser) getUserId() string {
+func (i segmentIdentifyNewUser) getUserId() string {
 	return i.userId
 }
 
-func (i SegmentIdentifyNewUser) getTraits() segment.Traits {
+func (i segmentIdentifyNewUser) getTraits() segment.Traits {
 	var githubTrait string
 
 	if i.isGithub {

@@ -4,10 +4,10 @@ import (
 	"context"
 	"crypto/rand"
 	"encoding/base64"
-	"time"
-
 	"github.com/porter-dev/porter/internal/models/integrations"
 	"github.com/porter-dev/porter/internal/repository"
+	"time"
+
 	"golang.org/x/oauth2"
 )
 
@@ -94,16 +94,31 @@ func CreateRandomState() string {
 	return state
 }
 
+// MakeUpdateOAuthIntegrationTokenFunction creates a function to be passed to GetAccessToken that updates the OauthIntegration
+// if it needs to be updated
+func MakeUpdateOAuthIntegrationTokenFunction(o *integrations.OAuthIntegration, repo repository.Repository) func(accessToken []byte, refreshToken []byte, expiry time.Time) error {
+	return func(accessToken []byte, refreshToken []byte, expiry time.Time) error {
+		o.AccessToken = accessToken
+		o.RefreshToken = refreshToken
+		o.Expiry = expiry
+
+		_, err := repo.OAuthIntegration.UpdateOAuthIntegration(o)
+
+		return err
+	}
+}
+
 // GetAccessToken retrieves an access token for a given client. It updates the
 // access token in the DB if necessary
 func GetAccessToken(
-	o *integrations.OAuthIntegration,
+	AccessToken []byte,
+	RefreshToken []byte,
 	conf *oauth2.Config,
-	repo repository.Repository,
+	updateToken func(accessToken []byte, refreshToken []byte, expiry time.Time) error,
 ) (string, *time.Time, error) {
 	tokSource := conf.TokenSource(context.TODO(), &oauth2.Token{
-		AccessToken:  string(o.AccessToken),
-		RefreshToken: string(o.RefreshToken),
+		AccessToken:  string(AccessToken),
+		RefreshToken: string(RefreshToken),
 		TokenType:    "Bearer",
 	})
 
@@ -113,11 +128,8 @@ func GetAccessToken(
 		return "", nil, err
 	}
 
-	if token.AccessToken != string(o.AccessToken) {
-		o.AccessToken = []byte(token.AccessToken)
-		o.RefreshToken = []byte(token.RefreshToken)
-
-		o, err = repo.OAuthIntegration.UpdateOAuthIntegration(o)
+	if token.AccessToken != string(AccessToken) {
+		err := updateToken(AccessToken, RefreshToken, token.Expiry)
 
 		if err != nil {
 			return "", nil, err

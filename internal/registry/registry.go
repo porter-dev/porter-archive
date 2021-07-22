@@ -9,7 +9,7 @@ import (
 	"net/url"
 	"strings"
 	"time"
-	
+
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/service/ecr"
 	"github.com/porter-dev/porter/internal/models"
@@ -226,7 +226,7 @@ func (r *Registry) listDOCRRepositories(
 		return nil, err
 	}
 
-	tok, _, err := oauth.GetAccessToken(oauthInt, doAuth, repo)
+	tok, _, err := oauth.GetAccessToken(oauthInt.AccessToken, oauthInt.RefreshToken, doAuth, oauth.MakeUpdateOAuthIntegrationTokenFunction(oauthInt, repo))
 
 	if err != nil {
 		return nil, err
@@ -598,7 +598,7 @@ func (r *Registry) listDOCRImages(
 		return nil, err
 	}
 
-	tok, _, err := oauth.GetAccessToken(oauthInt, doAuth, repo)
+	tok, _, err := oauth.GetAccessToken(oauthInt.AccessToken, oauthInt.RefreshToken, doAuth, oauth.MakeUpdateOAuthIntegrationTokenFunction(oauthInt, repo))
 
 	if err != nil {
 		return nil, err
@@ -720,7 +720,7 @@ func (r *Registry) listDockerHubImages(repoName string, repo repository.Reposito
 	// first, make a request for the access token
 
 	data, err := json.Marshal(&dockerHubLoginReq{
-		Username: string(basic.Username), 
+		Username: string(basic.Username),
 		Password: string(basic.Password),
 	})
 
@@ -919,7 +919,7 @@ func (r *Registry) getDOCRDockerConfigFile(
 		return nil, err
 	}
 
-	tok, _, err := oauth.GetAccessToken(oauthInt, doAuth, repo)
+	tok, _, err := oauth.GetAccessToken(oauthInt.AccessToken, oauthInt.RefreshToken, doAuth, oauth.MakeUpdateOAuthIntegrationTokenFunction(oauthInt, repo))
 
 	if err != nil {
 		return nil, err

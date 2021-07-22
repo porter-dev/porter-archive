@@ -2,6 +2,7 @@ package deploy
 
 import (
 	"fmt"
+	"path/filepath"
 
 	"github.com/porter-dev/porter/cli/cmd/api"
 	"github.com/porter-dev/porter/cli/cmd/docker"
@@ -27,9 +28,16 @@ func (b *BuildAgent) BuildDocker(dockerAgent *docker.Agent, dst, tag string) err
 		Env:          b.env,
 	}
 
+	// use the absolute path to the dockerfile
+	localDockerfileAbs, err := filepath.Abs(b.LocalDockerfile)
+
+	if err != nil {
+		return err
+	}
+
 	return dockerAgent.BuildLocal(
 		opts,
-		b.LocalDockerfile,
+		localDockerfileAbs,
 	)
 }
 

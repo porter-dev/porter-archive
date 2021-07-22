@@ -37,13 +37,13 @@ const RepoList: React.FC<Props> = ({
         api
           .getGitRepos("<token>", {}, { project_id: currentProject.id })
           .then(async (res) => {
-            resolve(res.data.map((gitrepo: any) => gitrepo.id));
+            resolve(res.data);
           })
-          .catch((err) => {
-            reject(err);
+          .catch(() => {
+            resolve([]);
           });
       } else {
-        resolve([userId]);
+        reject(null);
       }
     })
       .then((ids: number[]) => {
@@ -119,10 +119,8 @@ const RepoList: React.FC<Props> = ({
       return (
         <LoadingWrapper>
           No connected Github repos found. You can
-          <A
-            href={`/api/oauth/projects/${currentProject.id}/github?redirected=true`}
-          >
-            log in with GitHub
+          <A href={"/api/integrations/github-app/install"}>
+            Install Porter in more repositories
           </A>
           .
         </LoadingWrapper>

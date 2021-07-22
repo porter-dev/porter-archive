@@ -51,16 +51,12 @@ const AccountSettingsModal = () => {
       >
         <CloseButtonImg src={close} />
       </CloseButton>
-      <ModalTitle>
-        Account Settings
-      </ModalTitle>
+      <ModalTitle>Account Settings</ModalTitle>
 
       <TabSelector
         options={tabOptions}
         currentTab={currentTab}
-        setCurrentTab={(value: string) =>
-          setCurrentTab(value)
-        }
+        setCurrentTab={(value: string) => setCurrentTab(value)}
       />
 
       <Heading>
@@ -79,7 +75,8 @@ const AccountSettingsModal = () => {
           {accessData.has_access ? (
             <Placeholder>
               <User>
-                You are currently authorized as <B>{accessData.username}</B> and have access to:
+                You are currently authorized as <B>{accessData.username}</B> and
+                have access to:
               </User>
               {!accessData.accounts || accessData.accounts?.length == 0 ? (
                 <ListWrapper>
@@ -96,7 +93,9 @@ const AccountSettingsModal = () => {
                     {accessData.accounts.map((name, i) => {
                       return (
                         <React.Fragment key={i}>
-                          <Row isLastItem={i === accessData.accounts.length - 1}>
+                          <Row
+                            isLastItem={i === accessData.accounts.length - 1}
+                          >
                             <i className="material-icons">bookmark</i>
                             {name}
                           </Row>
@@ -115,9 +114,9 @@ const AccountSettingsModal = () => {
           ) : (
             <ListWrapper>
               <Helper>
-                No github integration detected. You can
-                <A href={"/api/integrations/github-app/authorize"}>
-                  connect your GitHub account
+                No connected repositories found.
+                <A href={"/api/integrations/github-app/install"}>
+                  Install Porter in your repositories
                 </A>
               </Helper>
             </ListWrapper>
@@ -167,7 +166,7 @@ const Row = styled.div<{ isLastItem?: boolean }>`
   color: #ffffff55;
   display: flex;
   align-items: center;
-  border-bottom: ${props => props.isLastItem ? "" : "1px solid #ffffff44"};
+  border-bottom: ${(props) => (props.isLastItem ? "" : "1px solid #ffffff44")};
   > i {
     font-size: 17px;
     margin-left: 10px;

@@ -2,6 +2,7 @@ package integrations
 
 import (
 	"gorm.io/gorm"
+	"time"
 )
 
 // OAuthIntegrationClient is the name of an OAuth mechanism client
@@ -24,6 +25,10 @@ type SharedOAuthModel struct {
 
 	// The end-user's refresh token
 	RefreshToken []byte `json:"refresh-token"`
+
+	// Time token expires and needs to be refreshed.
+	// If 0, token will never refresh
+	Expiry time.Time
 }
 
 // OAuthIntegration is an auth mechanism that uses oauth

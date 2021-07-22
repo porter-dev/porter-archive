@@ -7,6 +7,7 @@ require (
 	github.com/AlecAivazis/survey/v2 v2.2.9
 	github.com/DATA-DOG/go-sqlmock v1.5.0
 	github.com/aws/aws-sdk-go v1.35.4
+	github.com/bradleyfalzon/ghinstallation v1.1.1 // indirect
 	github.com/buildpacks/pack v0.19.0
 	github.com/cli/cli v1.11.0
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
@@ -24,7 +25,9 @@ require (
 	github.com/go-redis/redis/v8 v8.3.1
 	github.com/go-test/deep v1.0.7
 	github.com/google/go-github v17.0.0+incompatible
+	github.com/google/go-github/v29 v29.0.3 // indirect
 	github.com/google/go-github/v33 v33.0.0
+	github.com/google/go-querystring v1.1.0 // indirect
 	github.com/gorilla/schema v1.2.0
 	github.com/gorilla/securecookie v1.1.1
 	github.com/gorilla/sessions v1.2.1
@@ -50,7 +53,7 @@ require (
 	github.com/spf13/viper v1.7.0
 	github.com/stretchr/testify v1.7.0
 	github.com/xtgo/uuid v0.0.0-20140804021211-a0b114877d4c // indirect
-	golang.org/x/crypto v0.0.0-20210220033148-5ea612d1eb83
+	golang.org/x/crypto v0.0.0-20210711020723-a769d52b0f97
 	golang.org/x/oauth2 v0.0.0-20200902213428-5d25da1a8d43
 	google.golang.org/api v0.30.0
 	google.golang.org/genproto v0.0.0-20201110150050-8816d57aaa9a

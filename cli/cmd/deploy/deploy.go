@@ -194,6 +194,7 @@ func (d *DeployAgent) WriteBuildEnv(fileDest string) error {
 func (d *DeployAgent) Build() error {
 	// if build is not local, fetch remote source
 	var dst string
+	var buildCtx string
 	var err error
 
 	if !d.opts.Local {
@@ -222,10 +223,11 @@ func (d *DeployAgent) Build() error {
 		// if the local path is set it must be a relative path, so create a filepath with the dst
 		// and the relative path
 		if d.opts.LocalPath != "" {
-			dst = filepath.Join(dst, d.opts.LocalPath)
+			buildCtx = filepath.Join(dst, d.opts.LocalPath)
 		}
 	} else {
 		dst = filepath.Dir(d.opts.LocalPath)
+		buildCtx = filepath.Dir(d.opts.LocalPath)
 	}
 
 	if d.tag == "" {
@@ -253,10 +255,19 @@ func (d *DeployAgent) Build() error {
 	}
 
 	if d.opts.Method == DeployBuildTypeDocker {
-		return buildAgent.BuildDocker(d.agent, dst, d.tag)
+		var dockerfilePath string
+
+		// if the dockerfile path is set it must also be a relative path
+		if !d.opts.Local && d.dockerfilePath != "" {
+			dockerfilePath = filepath.Join(dst, d.dockerfilePath)
+		}
+
+		buildAgent.SharedOpts.LocalDockerfile = dockerfilePath
+
+		return buildAgent.BuildDocker(d.agent, buildCtx, d.tag)
 	}
 
-	return buildAgent.BuildPack(d.agent, dst, d.tag)
+	return buildAgent.BuildPack(d.agent, buildCtx, d.tag)
 }
 
 // Push pushes a local image to the remote repository linked in the release

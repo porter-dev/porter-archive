@@ -3,6 +3,7 @@ import InputRow from "../../values-form/InputRow";
 import useFormField from "../hooks/useFormField";
 import {
   GenericInputField,
+  GetFinalVariablesFunction,
   StringInputField,
   StringInputFieldState,
 } from "../types";
@@ -29,7 +30,10 @@ const StringInput: React.FC<Props> = ({
   } = useFormField<StringInputFieldState>(id, {
     initValue: {},
     initValidation: {
-      validated: false,
+      validated: settings?.default != undefined,
+    },
+    initVars: {
+      [variable]: settings?.default,
     },
   });
 
@@ -75,6 +79,22 @@ const StringInput: React.FC<Props> = ({
       disabled={isReadOnly}
     />
   );
+};
+
+export const getFinalVariablesForStringInput: GetFinalVariablesFunction = (
+  vars,
+  props: StringInputField
+) => {
+  if (vars[props.variable])
+    return {
+      [props.variable]:
+        props.settings?.unit && !props.settings?.omitUnitFromValue
+          ? vars[props.variable] + props.settings.unit
+          : vars[props.variable],
+    };
+  return {
+    [props.variable]: props.settings?.default,
+  };
 };
 
 export default StringInput;

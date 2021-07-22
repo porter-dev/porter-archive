@@ -5,11 +5,14 @@ import {
   PorterFormAction,
   PorterFormVariableList,
   PorterFormValidationInfo,
+  GetFinalVariablesFunction,
 } from "./types";
 import { ShowIf, ShowIfAnd, ShowIfNot, ShowIfOr } from "../../shared/types";
+import { getFinalVariablesForStringInput } from "./field-components/StringInput";
 
 interface Props {
   rawFormData: PorterFormData;
+  onSubmit: (vars: PorterFormVariableList) => void;
   initialVariables?: PorterFormVariableList;
   overrideVariables?: PorterFormVariableList;
   isReadOnly?: boolean;
@@ -18,6 +21,7 @@ interface Props {
 interface ContextProps {
   formData: PorterFormData;
   formState: PorterFormState;
+  onSubmit: () => void;
   dispatchAction: (event: PorterFormAction) => void;
   validationInfo: PorterFormValidationInfo;
   isReadOnly?: boolean;
@@ -38,6 +42,10 @@ export const PorterFormContextProvider: React.FC<Props> = (props) => {
         if (!(action.id in state.components)) {
           return {
             ...state,
+            variables: {
+              ...state.variables,
+              ...action.initVars,
+            },
             components: {
               ...state.components,
               [action.id]: {
@@ -168,6 +176,7 @@ export const PorterFormContextProvider: React.FC<Props> = (props) => {
       }),
     };
   };
+
   /*
     compute a list of field ids who's input is required and a map from a variable value
     to a list of fields that set it
@@ -195,8 +204,7 @@ export const PorterFormContextProvider: React.FC<Props> = (props) => {
   };
 
   /*
-    Validate the form based
-    Will get more complicated over time
+    Validate the form based on a list of required ids
    */
   const doValidation = (requiredIds: string[]) =>
     requiredIds
@@ -206,6 +214,44 @@ export const PorterFormContextProvider: React.FC<Props> = (props) => {
   const formData = computeFormStructure(props.rawFormData, state.variables);
   const [requiredIds, varMapping] = computeRequiredVariables(formData);
   const isValidated = doValidation(requiredIds);
+
+  /*
+  Handle submit
+  This involves going through all the (currently active) fields in the form and
+  using functions for each input to finalize the variables
+  This can take care of things like appending units to strings
+ */
+  const onSubmitWrapper = () => {
+    // we start off with a base list of the current variables for fields
+    // that don't need any processing on top (for example: checkbox)
+    // the assign here is important because that way state.variable isn't mutated
+    const varList: PorterFormVariableList[] = [
+      Object.assign({}, state.variables),
+    ];
+    const finalFunctions: Record<string, GetFinalVariablesFunction> = {
+      "string-input": getFinalVariablesForStringInput,
+    };
+
+    formData.tabs.map((tab) =>
+      tab.sections.map((section) =>
+        section.contents.map((field) => {
+          if (finalFunctions[field.type])
+            varList.push(
+              finalFunctions[field.type](
+                state.variables,
+                field,
+                state.components[field.id]
+              )
+            );
+        })
+      )
+    );
+
+    console.log("??");
+    console.log(state.variables);
+
+    props.onSubmit(Object.assign.apply({}, varList));
+  };
 
   console.group("Validation Info:");
   console.log(requiredIds);
@@ -224,6 +270,7 @@ export const PorterFormContextProvider: React.FC<Props> = (props) => {
           validated: isValidated,
           error: isValidated ? null : "Missing required fields",
         },
+        onSubmit: onSubmitWrapper,
       }}
     >
       {props.children}

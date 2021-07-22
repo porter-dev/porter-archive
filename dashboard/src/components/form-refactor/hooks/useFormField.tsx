@@ -23,11 +23,12 @@ interface FormFieldData<T> {
 interface Options<T> {
   initValue: T;
   initValidation?: Partial<PorterFormFieldValidationState>;
+  initVars?: PorterFormVariableList;
 }
 
 const useFormField = <T extends PorterFormFieldFieldState>(
   fieldId: string,
-  { initValue, initValidation }: Options<T>
+  { initValue, initVars, initValidation }: Options<T>
 ): FormFieldData<T> => {
   const { dispatchAction, formState } = useContext(PorterFormContext);
 
@@ -37,6 +38,7 @@ const useFormField = <T extends PorterFormFieldFieldState>(
       id: fieldId,
       initValue,
       initValidation,
+      initVars,
     });
   }, []);
 

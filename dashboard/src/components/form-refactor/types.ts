@@ -29,6 +29,7 @@ export interface StringInputFieldSettings {
   type?: "text"|"password"|"number";
   unit?: string;
   omitUnitFromValue?: boolean;
+  default: string|number;
 }
 
 export interface StringInputField extends GenericInputField {
@@ -118,6 +119,7 @@ export interface PorterFormInitFieldAction {
   id: string;
   initValue: PorterFormFieldFieldState;
   initValidation?: Partial<PorterFormFieldValidationState>
+  initVars?: PorterFormVariableList
 }
 
 export interface PorterFormUpdateFieldAction {
@@ -138,3 +140,5 @@ export interface PorterFormMutateVariablesAction {
 }
 
 export type PorterFormAction = PorterFormInitFieldAction|PorterFormUpdateFieldAction|PorterFormMutateVariablesAction|PorterFormUpdateValidationAction;
+
+export type GetFinalVariablesFunction = (vars: PorterFormVariableList, props: FormField, state: PorterFormFieldFieldState) => PorterFormVariableList;

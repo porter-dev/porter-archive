@@ -164,6 +164,10 @@ export default class FormDebugger extends Component<PropsType, StateType> {
             input_a: this.state.valuesToOverride?.input_a?.value,
           }}
           isReadOnly={this.state.isReadOnly}
+          onSubmit={(vars) => {
+            console.log("check console output");
+            console.log(vars);
+          }}
         >
           <PorterForm
             rightTabOptions={this.state.showBonusTabs ? tabOptions : []}
@@ -290,6 +294,7 @@ tabs:
       info: This is some info
       settings:
         type: text
+        default: hello
     - type: string-input
       placeholder: "ex: pilsner"
       label: Required String Input A with unit

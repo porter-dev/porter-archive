@@ -3,6 +3,7 @@ package api
 import (
 	"fmt"
 	"net/http"
+	"strconv"
 	"strings"
 
 	"github.com/go-playground/locales/en"
@@ -170,13 +171,20 @@ func New(conf *AppConfig) (*App, error) {
 		app.Capabilities.GithubLogin = sc.GithubLoginEnabled
 	}
 
-	if sc.GithubAppClientID != "" && sc.GithubAppClientSecret != "" && sc.GithubAppName != "" && sc.GithubAppWebhookSecret != "" {
-		app.GithubAppConf = oauth.NewGithubAppClient(&oauth.Config{
-			ClientID:     sc.GithubAppClientID,
-			ClientSecret: sc.GithubAppClientSecret,
-			Scopes:       []string{"read:user"},
-			BaseURL:      sc.ServerURL,
-		}, sc.GithubAppName, sc.GithubAppWebhookSecret)
+	if sc.GithubAppClientID != "" &&
+		sc.GithubAppClientSecret != "" &&
+		sc.GithubAppName != "" &&
+		sc.GithubAppWebhookSecret != "" &&
+		sc.GithubAppSecretPath != "" &&
+		sc.GithubAppID != "" {
+		if AppID, err := strconv.ParseInt(sc.GithubAppID, 10, 64); err == nil {
+			app.GithubAppConf = oauth.NewGithubAppClient(&oauth.Config{
+				ClientID:     sc.GithubAppClientID,
+				ClientSecret: sc.GithubAppClientSecret,
+				Scopes:       []string{"read:user"},
+				BaseURL:      sc.ServerURL,
+			}, sc.GithubAppName, sc.GithubAppWebhookSecret, sc.GithubAppSecretPath, AppID)
+		}
 	}
 
 	if sc.GoogleClientID != "" && sc.GoogleClientSecret != "" {

@@ -75,10 +75,9 @@ const ExpandedChart: React.FC<Props> = (props) => {
   const [url, setUrl] = useState<string>(null);
   const [showDeleteOverlay, setShowDeleteOverlay] = useState<boolean>(false);
   const [deleting, setDeleting] = useState<boolean>(false);
-  const [imageIsPlaceholder, setImageIsPlaceholer] = useState<boolean | null>(
-    null
-  );
+  const [imageIsPlaceholder, setImageIsPlaceholer] = useState<boolean>(false);
   const [newestImage, setNewestImage] = useState<string>(null);
+  const [isLoadingChartData, setIsLoadingChartData] = useState<boolean>(true);
 
   const [isAuthorized] = useAuth();
 
@@ -95,6 +94,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
 
   // Retrieve full chart data (includes form and values)
   const getChartData = async (chart: ChartType) => {
+    setIsLoadingChartData(true);
     const res = await api.getChart(
       "<token>",
       {
@@ -124,7 +124,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
 
     setCurrentChart(res.data);
 
-    updateComponents(res.data);
+    updateComponents(res.data).finally(() => setIsLoadingChartData(false));
   };
 
   const getControllers = async (chart: ChartType) => {
@@ -346,6 +346,17 @@ const ExpandedChart: React.FC<Props> = (props) => {
       case "metrics":
         return <MetricsSection currentChart={chart} />;
       case "status":
+        if (isLoadingChartData) {
+          return (
+            <Placeholder>
+              <TextWrap>
+                <Header>
+                  <Spinner src={loadingSrc} />
+                </Header>
+              </TextWrap>
+            </Placeholder>
+          );
+        }
         if (imageIsPlaceholder) {
           return (
             <Placeholder>

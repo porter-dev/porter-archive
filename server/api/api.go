@@ -22,9 +22,9 @@ import (
 	"github.com/porter-dev/porter/internal/repository"
 	memory "github.com/porter-dev/porter/internal/repository/memory"
 	"github.com/porter-dev/porter/internal/validator"
-	segment "gopkg.in/segmentio/analytics-go.v3"
 	"helm.sh/helm/v3/pkg/storage"
 
+	"github.com/porter-dev/porter/internal/analytics"
 	"github.com/porter-dev/porter/internal/config"
 )
 
@@ -87,11 +87,11 @@ type App struct {
 	DOConf            *oauth2.Config
 	GoogleUserConf    *oauth2.Config
 
-	db            *gorm.DB
-	validator     *vr.Validate
-	translator    *ut.Translator
-	tokenConf     *token.TokenGeneratorConf
-	segmentClient *segment.Client
+	db              *gorm.DB
+	validator       *vr.Validate
+	translator      *ut.Translator
+	tokenConf       *token.TokenGeneratorConf
+	analyticsClient analytics.AnalyticsSegmentClient
 }
 
 type AppCapabilities struct {
@@ -211,10 +211,8 @@ func New(conf *AppConfig) (*App, error) {
 		TokenSecret: conf.ServerConf.TokenGeneratorSecret,
 	}
 
-	if sc := conf.ServerConf; sc.SegmentClientKey != "" {
-		client := segment.New(sc.SegmentClientKey)
-		app.segmentClient = &client
-	}
+	newSegmentClient := analytics.InitializeAnalyticsSegmentClient(sc.SegmentClientKey, app.Logger)
+	app.analyticsClient = newSegmentClient
 
 	return app, nil
 }

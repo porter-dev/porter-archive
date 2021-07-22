@@ -7,6 +7,7 @@ import (
 	"github.com/bradleyfalzon/ghinstallation"
 	"github.com/google/go-github/v33/github"
 	"github.com/porter-dev/porter/internal/models"
+	"github.com/porter-dev/porter/internal/oauth"
 	"github.com/porter-dev/porter/internal/repository"
 	"golang.org/x/crypto/nacl/box"
 	"golang.org/x/oauth2"
@@ -211,13 +212,18 @@ func (g *GithubActions) getClient() (*github.Client, error) {
 			return nil, err
 		}
 
-		tok := &oauth2.Token{
-			AccessToken:  string(oauthInt.AccessToken),
-			RefreshToken: string(oauthInt.RefreshToken),
-			TokenType:    "Bearer",
+		_, _, err = oauth.GetAccessToken(oauthInt.SharedOAuthModel, g.GithubConf, oauth.MakeUpdateOAuthIntegrationTokenFunction(oauthInt, g.Repo))
+
+		if err != nil {
+			return nil, err
 		}
 
-		client := github.NewClient(g.GithubConf.Client(oauth2.NoContext, tok))
+		client := github.NewClient(g.GithubConf.Client(oauth2.NoContext, &oauth2.Token{
+			AccessToken:  string(oauthInt.AccessToken),
+			RefreshToken: string(oauthInt.RefreshToken),
+			Expiry:       oauthInt.Expiry,
+			TokenType:    "Bearer",
+		}))
 
 		return client, nil
 	}

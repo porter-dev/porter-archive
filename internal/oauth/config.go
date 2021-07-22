@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/rand"
 	"encoding/base64"
+	"fmt"
 	"github.com/porter-dev/porter/internal/models/integrations"
 	"github.com/porter-dev/porter/internal/repository"
 	"time"
@@ -108,18 +109,32 @@ func MakeUpdateOAuthIntegrationTokenFunction(o *integrations.OAuthIntegration, r
 	}
 }
 
+// MakeUpdateGithubAppOauthIntegrationFunction creates a function to be passed to GetAccessToken that updates the GithubAppOauthIntegration
+// if it needs to be updated
+func MakeUpdateGithubAppOauthIntegrationFunction(o *integrations.GithubAppOAuthIntegration, repo repository.Repository) func(accessToken []byte, refreshToken []byte, expiry time.Time) error {
+	return func(accessToken []byte, refreshToken []byte, expiry time.Time) error {
+		o.AccessToken = accessToken
+		o.RefreshToken = refreshToken
+		o.Expiry = expiry
+
+		_, err := repo.GithubAppOAuthIntegration.UpdateGithubAppOauthIntegration(o)
+
+		return err
+	}
+}
+
 // GetAccessToken retrieves an access token for a given client. It updates the
 // access token in the DB if necessary
 func GetAccessToken(
-	AccessToken []byte,
-	RefreshToken []byte,
+	prevToken integrations.SharedOAuthModel,
 	conf *oauth2.Config,
 	updateToken func(accessToken []byte, refreshToken []byte, expiry time.Time) error,
 ) (string, *time.Time, error) {
 	tokSource := conf.TokenSource(context.TODO(), &oauth2.Token{
-		AccessToken:  string(AccessToken),
-		RefreshToken: string(RefreshToken),
+		AccessToken:  string(prevToken.AccessToken),
+		RefreshToken: string(prevToken.RefreshToken),
 		TokenType:    "Bearer",
+		Expiry:       prevToken.Expiry,
 	})
 
 	token, err := tokSource.Token()
@@ -128,8 +143,9 @@ func GetAccessToken(
 		return "", nil, err
 	}
 
-	if token.AccessToken != string(AccessToken) {
-		err := updateToken(AccessToken, RefreshToken, token.Expiry)
+	if token.AccessToken != string(prevToken.AccessToken) {
+		fmt.Println("access happening...")
+		err := updateToken([]byte(token.AccessToken), []byte(token.RefreshToken), token.Expiry)
 
 		if err != nil {
 			return "", nil, err

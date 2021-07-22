@@ -339,7 +339,7 @@ func (conf *OutOfClusterConfig) CreateRawConfigFromCluster() (*api.Config, error
 			return nil, err
 		}
 
-		tok, _, err := oauth.GetAccessToken(oauthInt, conf.DigitalOceanOAuth, *conf.Repo)
+		tok, _, err := oauth.GetAccessToken(oauthInt.AccessToken, oauthInt.RefreshToken, conf.DigitalOceanOAuth, oauth.MakeUpdateOAuthIntegrationTokenFunction(oauthInt, *conf.Repo))
 
 		if err != nil {
 			return nil, err

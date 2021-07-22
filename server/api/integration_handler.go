@@ -17,6 +17,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/go-chi/chi"
 	"github.com/porter-dev/porter/internal/forms"
@@ -582,9 +583,30 @@ func (app *App) getGithubAppOauthTokenFromRequest(r *http.Request) (*oauth2.Toke
 		return nil, err
 	}
 
+	_, _, err = oauth.GetAccessToken(oauthInt.AccessToken, oauthInt.RefreshToken, &oauth2.Config{
+		ClientID:     app.GithubAppConf.ClientID,
+		ClientSecret: app.GithubAppConf.ClientSecret,
+		Endpoint:     app.GithubAppConf.Endpoint,
+		RedirectURL:  app.GithubAppConf.RedirectURL,
+		Scopes:       app.GithubAppConf.Scopes,
+	}, func(accessToken []byte, refreshToken []byte, expiry time.Time) error {
+		oauthInt.AccessToken = accessToken
+		oauthInt.RefreshToken = refreshToken
+		oauthInt.Expiry = expiry
+
+		_, err := app.Repo.GithubAppOAuthIntegration.UpdateGithubAppOauthIntegration(oauthInt)
+
+		return err
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
 	return &oauth2.Token{
 		AccessToken:  string(oauthInt.AccessToken),
 		RefreshToken: string(oauthInt.RefreshToken),
+		Expiry:       oauthInt.Expiry,
 		TokenType:    "Bearer",
 	}, nil
 }

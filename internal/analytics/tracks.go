@@ -7,58 +7,62 @@ import (
 	segment "gopkg.in/segmentio/analytics-go.v3"
 )
 
-type SegmentTrack interface {
+type segmentTrack interface {
 	getUserId() string
 	getEvent() SegmentEvent
 	getProperties() segment.Properties
 }
 
-type SegmentNewUserTrack struct {
+type segmentNewUserTrack struct {
 	userId    string
 	userEmail string
 }
 
-func CreateSegmentNewUserTrack(user *models.User) *SegmentNewUserTrack {
+// Constructor for track of type "New User"
+// Tracks when a user has registered
+func CreateSegmentNewUserTrack(user *models.User) *segmentNewUserTrack {
 	userId := fmt.Sprintf("%v", user.ID)
 
-	return &SegmentNewUserTrack{
+	return &segmentNewUserTrack{
 		userId:    userId,
 		userEmail: user.Email,
 	}
 }
 
-func (t *SegmentNewUserTrack) getUserId() string {
+func (t *segmentNewUserTrack) getUserId() string {
 	return t.userId
 }
 
-func (t *SegmentNewUserTrack) getEvent() SegmentEvent {
+func (t *segmentNewUserTrack) getEvent() SegmentEvent {
 	return NewUser
 }
 
-func (t *SegmentNewUserTrack) getProperties() segment.Properties {
+func (t *segmentNewUserTrack) getProperties() segment.Properties {
 	return segment.NewProperties().Set("email", t.userEmail)
 }
 
-type SegmentRedeployViaWebhookTrack struct {
+type segmentRedeployViaWebhookTrack struct {
 	userId     string
-	repository interface{}
+	repository string
 }
 
-func CreateSegmentRedeployViaWebhookTrack(userId string, repository interface{}) *SegmentRedeployViaWebhookTrack {
-	return &SegmentRedeployViaWebhookTrack{
+// Constructor for track of type "Triggered Re-deploy via Webhook"
+// tracks whenever a repository is redeployed via webhook call
+func CreateSegmentRedeployViaWebhookTrack(userId string, repository string) *segmentRedeployViaWebhookTrack {
+	return &segmentRedeployViaWebhookTrack{
 		userId:     userId,
 		repository: repository,
 	}
 }
 
-func (t *SegmentRedeployViaWebhookTrack) getUserId() string {
+func (t *segmentRedeployViaWebhookTrack) getUserId() string {
 	return t.userId
 }
 
-func (t *SegmentRedeployViaWebhookTrack) getEvent() SegmentEvent {
+func (t *segmentRedeployViaWebhookTrack) getEvent() SegmentEvent {
 	return RedeployViaWebhook
 }
 
-func (t *SegmentRedeployViaWebhookTrack) getProperties() segment.Properties {
+func (t *segmentRedeployViaWebhookTrack) getProperties() segment.Properties {
 	return segment.NewProperties().Set("repository", t.repository)
 }

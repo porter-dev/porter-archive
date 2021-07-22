@@ -309,15 +309,6 @@ func (app *App) HandleGithubAppOAuthCallback(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	if r.URL.Query().Get("state") != session.Values["state"] {
-		if session.Values["query_params"] != "" {
-			http.Redirect(w, r, fmt.Sprintf("/dashboard?%s", session.Values["query_params"]), 302)
-		} else {
-			http.Redirect(w, r, "/dashboard", 302)
-		}
-		return
-	}
-
 	token, err := app.GithubAppConf.Exchange(oauth2.NoContext, r.URL.Query().Get("code"))
 
 	if err != nil || !token.Valid() {
@@ -328,6 +319,10 @@ func (app *App) HandleGithubAppOAuthCallback(w http.ResponseWriter, r *http.Requ
 		}
 		return
 	}
+
+	fmt.Println("exchange happaned")
+	fmt.Println(token.AccessToken)
+	fmt.Println(token.RefreshToken)
 
 	userID, err := app.getUserIDFromRequest(r)
 
@@ -347,6 +342,7 @@ func (app *App) HandleGithubAppOAuthCallback(w http.ResponseWriter, r *http.Requ
 		SharedOAuthModel: integrations.SharedOAuthModel{
 			AccessToken:  []byte(token.AccessToken),
 			RefreshToken: []byte(token.RefreshToken),
+			Expiry:       token.Expiry,
 		},
 		UserID: user.ID,
 	}

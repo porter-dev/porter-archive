@@ -991,7 +991,7 @@ func (a *Agent) ProvisionDOCR(
 		return nil, err
 	}
 
-	tok, _, err := oauth.GetAccessToken(oauthInt, doAuth, repo)
+	tok, _, err := oauth.GetAccessToken(oauthInt.SharedOAuthModel, doAuth, oauth.MakeUpdateOAuthIntegrationTokenFunction(oauthInt, repo))
 
 	if err != nil {
 		return nil, err
@@ -1043,7 +1043,7 @@ func (a *Agent) ProvisionDOKS(
 		return nil, err
 	}
 
-	tok, _, err := oauth.GetAccessToken(oauthInt, doAuth, repo)
+	tok, _, err := oauth.GetAccessToken(oauthInt.SharedOAuthModel, doAuth, oauth.MakeUpdateOAuthIntegrationTokenFunction(oauthInt, repo))
 
 	if err != nil {
 		return nil, err

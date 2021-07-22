@@ -97,7 +97,9 @@ func CreateRandomState() string {
 
 // MakeUpdateOAuthIntegrationTokenFunction creates a function to be passed to GetAccessToken that updates the OauthIntegration
 // if it needs to be updated
-func MakeUpdateOAuthIntegrationTokenFunction(o *integrations.OAuthIntegration, repo repository.Repository) func(accessToken []byte, refreshToken []byte, expiry time.Time) error {
+func MakeUpdateOAuthIntegrationTokenFunction(
+	o *integrations.OAuthIntegration,
+	repo repository.Repository) func(accessToken []byte, refreshToken []byte, expiry time.Time) error {
 	return func(accessToken []byte, refreshToken []byte, expiry time.Time) error {
 		o.AccessToken = accessToken
 		o.RefreshToken = refreshToken
@@ -111,7 +113,9 @@ func MakeUpdateOAuthIntegrationTokenFunction(o *integrations.OAuthIntegration, r
 
 // MakeUpdateGithubAppOauthIntegrationFunction creates a function to be passed to GetAccessToken that updates the GithubAppOauthIntegration
 // if it needs to be updated
-func MakeUpdateGithubAppOauthIntegrationFunction(o *integrations.GithubAppOAuthIntegration, repo repository.Repository) func(accessToken []byte, refreshToken []byte, expiry time.Time) error {
+func MakeUpdateGithubAppOauthIntegrationFunction(
+	o *integrations.GithubAppOAuthIntegration,
+	repo repository.Repository) func(accessToken []byte, refreshToken []byte, expiry time.Time) error {
 	return func(accessToken []byte, refreshToken []byte, expiry time.Time) error {
 		o.AccessToken = accessToken
 		o.RefreshToken = refreshToken

@@ -21,6 +21,7 @@ const Checkbox: React.FC<Props> = ({
       initValidation: {
         validated: !required,
       },
+      initVars: {},
     }
   );
 

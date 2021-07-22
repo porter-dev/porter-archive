@@ -20,7 +20,7 @@ interface Props {
 }
 
 const PorterForm: React.FC<Props> = (props) => {
-  const { formData, isReadOnly, validationInfo } = useContext(
+  const { formData, isReadOnly, validationInfo, onSubmit } = useContext(
     PorterFormContext
   );
 
@@ -102,7 +102,7 @@ const PorterForm: React.FC<Props> = (props) => {
       </TabRegion>
       <SaveButton
         text={props.saveButtonText || "Deploy"}
-        onClick={() => {}}
+        onClick={onSubmit}
         makeFlush
         status={validationInfo.validated ? "" : validationInfo.error}
         disabled={isReadOnly || !validationInfo.validated}

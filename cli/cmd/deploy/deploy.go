@@ -193,8 +193,8 @@ func (d *DeployAgent) WriteBuildEnv(fileDest string) error {
 // buildpack or docker.
 func (d *DeployAgent) Build() error {
 	// if build is not local, fetch remote source
-	var dst string
-	var buildCtx string
+	var basePath string
+	buildCtx := d.opts.LocalPath
 	var err error
 
 	if !d.opts.Local {
@@ -209,25 +209,22 @@ func (d *DeployAgent) Build() error {
 		}
 
 		// download the repository from remote source into a temp directory
-		dst, err = d.downloadRepoToDir(zipResp.URLString)
-
-		if d.tag == "" {
-			shortRef := fmt.Sprintf("%.7s", zipResp.LatestCommitSHA)
-			d.tag = shortRef
-		}
+		basePath, err = d.downloadRepoToDir(zipResp.URLString)
 
 		if err != nil {
 			return err
 		}
 
-		// if the local path is set it must be a relative path, so create a filepath with the dst
-		// and the relative path
-		if d.opts.LocalPath != "" {
-			buildCtx = filepath.Join(dst, d.opts.LocalPath)
+		if d.tag == "" {
+			shortRef := fmt.Sprintf("%.7s", zipResp.LatestCommitSHA)
+			d.tag = shortRef
 		}
 	} else {
-		dst = filepath.Dir(d.opts.LocalPath)
-		buildCtx = filepath.Dir(d.opts.LocalPath)
+		basePath, err = filepath.Abs(".")
+
+		if err != nil {
+			return err
+		}
 	}
 
 	if d.tag == "" {
@@ -255,16 +252,13 @@ func (d *DeployAgent) Build() error {
 	}
 
 	if d.opts.Method == DeployBuildTypeDocker {
-		var dockerfilePath string
-
-		// if the dockerfile path is set it must also be a relative path
-		if !d.opts.Local && d.dockerfilePath != "" {
-			dockerfilePath = filepath.Join(dst, d.dockerfilePath)
-		}
-
-		buildAgent.SharedOpts.LocalDockerfile = dockerfilePath
-
-		return buildAgent.BuildDocker(d.agent, buildCtx, d.tag)
+		return buildAgent.BuildDocker(
+			d.agent,
+			basePath,
+			buildCtx,
+			d.dockerfilePath,
+			d.tag,
+		)
 	}
 
 	return buildAgent.BuildPack(d.agent, buildCtx, d.tag)

@@ -19,33 +19,39 @@ import (
 )
 
 type BuildOpts struct {
-	ImageRepo    string
-	Tag          string
-	BuildContext string
-	Env          map[string]string
+	ImageRepo         string
+	Tag               string
+	BuildContext      string
+	DockerfilePath    string
+	IsDockerfileInCtx bool
+
+	Env map[string]string
 }
 
 // BuildLocal
-func (a *Agent) BuildLocal(opts *BuildOpts, dockerfilePath string) error {
-	tarBuildContext, err := archive.TarWithOptions(opts.BuildContext, &archive.TarOptions{})
+func (a *Agent) BuildLocal(opts *BuildOpts) error {
+	dockerfilePath := opts.DockerfilePath
+	tar, err := archive.TarWithOptions(opts.BuildContext, &archive.TarOptions{})
 
 	if err != nil {
 		return err
 	}
 
-	dockerfileCtx, err := os.Open(dockerfilePath)
+	if !opts.IsDockerfileInCtx {
+		dockerfileCtx, err := os.Open(dockerfilePath)
 
-	if err != nil {
-		return errors.Errorf("unable to open Dockerfile: %v", err)
-	}
+		if err != nil {
+			return errors.Errorf("unable to open Dockerfile: %v", err)
+		}
 
-	defer dockerfileCtx.Close()
+		defer dockerfileCtx.Close()
 
-	// add the dockerfile to the build context
-	tar, relPath, err := AddDockerfileToBuildContext(dockerfileCtx, tarBuildContext)
+		// add the dockerfile to the build context
+		tar, dockerfilePath, err = AddDockerfileToBuildContext(dockerfileCtx, tar)
 
-	if err != nil {
-		return err
+		if err != nil {
+			return err
+		}
 	}
 
 	buildArgs := make(map[string]*string)
@@ -56,7 +62,7 @@ func (a *Agent) BuildLocal(opts *BuildOpts, dockerfilePath string) error {
 	}
 
 	out, err := a.client.ImageBuild(context.Background(), tar, types.ImageBuildOptions{
-		Dockerfile: relPath,
+		Dockerfile: dockerfilePath,
 		BuildArgs:  buildArgs,
 		Tags: []string{
 			fmt.Sprintf("%s:%s", opts.ImageRepo, opts.Tag),

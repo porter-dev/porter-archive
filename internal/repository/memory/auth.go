@@ -546,3 +546,18 @@ func (repo *GithubAppOAuthIntegrationRepository) ReadGithubAppOauthIntegration(i
 
 	return repo.githubAppOauthIntegrations[int(id-1)], nil
 }
+
+func (repo *GithubAppOAuthIntegrationRepository) UpdateGithubAppOauthIntegration(am *ints.GithubAppOAuthIntegration) (*ints.GithubAppOAuthIntegration, error) {
+	if !repo.canQuery {
+		return nil, errors.New("Cannot write database")
+	}
+
+	if int(am.ID-1) >= len(repo.githubAppOauthIntegrations) || repo.githubAppOauthIntegrations[am.ID-1] == nil {
+		return nil, gorm.ErrRecordNotFound
+	}
+
+	index := int(am.ID - 1)
+	repo.githubAppOauthIntegrations[index] = am
+
+	return am, nil
+}

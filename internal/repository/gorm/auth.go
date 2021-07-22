@@ -1179,3 +1179,15 @@ func (repo *GithubAppOAuthIntegrationRepository) ReadGithubAppOauthIntegration(i
 
 	return ret, nil
 }
+
+// UpdateGithubAppOauthIntegration updates a GithubAppOauthIntegration
+func (repo *GithubAppOAuthIntegrationRepository) UpdateGithubAppOauthIntegration(am *ints.GithubAppOAuthIntegration) (*ints.GithubAppOAuthIntegration, error) {
+
+	err := repo.db.Save(am).Error
+
+	if err != nil {
+		return nil, err
+	}
+
+	return am, nil
+}

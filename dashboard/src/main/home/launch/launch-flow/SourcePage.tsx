@@ -56,7 +56,7 @@ const defaultActionConfig: ActionConfigType = {
 
 class SourcePage extends Component<PropsType, StateType> {
   renderSourceSelector = () => {
-    let { capabilities } = this.context;
+    let { capabilities, setCurrentModal } = this.context;
     let { sourceType, setSourceType } = this.props;
 
     if (sourceType === "") {
@@ -151,9 +151,7 @@ class SourcePage extends Component<PropsType, StateType> {
         <Subtitle>
           Provide a repo folder to use as source.
           <Highlight
-            onClick={() =>
-              pushFiltered(this.props, "/integrations/repo", ["project_id"])
-            }
+            onClick={() => setCurrentModal("AccountSettingsModal", {})}
           >
             Manage Git repos
           </Highlight>

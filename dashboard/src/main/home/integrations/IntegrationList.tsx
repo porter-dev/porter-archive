@@ -92,23 +92,6 @@ export default class IntegrationList extends Component<PropsType, StateType> {
         .catch((err) => {
           this.context.setCurrentError(err);
         });
-    } else if (this.props.currentCategory === "repo") {
-      api
-        .deleteGitRepoIntegration(
-          "<token>",
-          {},
-          {
-            project_id: currentProject.id,
-            git_repo_id: this.state.deleteID,
-          }
-        )
-        .then(() => {
-          this.setState({ isDelete: false });
-          this.props.updateIntegrationList();
-        })
-        .catch((err) => {
-          this.context.setCurrentError(err);
-        });
     }
   };
 

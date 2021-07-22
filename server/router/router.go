@@ -13,6 +13,7 @@ import (
 	"github.com/porter-dev/porter/server/api"
 	mw "github.com/porter-dev/porter/server/middleware"
 	"github.com/porter-dev/porter/server/middleware/requestlog"
+	"golang.org/x/oauth2"
 )
 
 // New creates a new Chi router instance and registers all routes supported by the
@@ -21,9 +22,15 @@ func New(a *api.App) *chi.Mux {
 	l := a.Logger
 	r := chi.NewRouter()
 
+	var ghAppConf *oauth2.Config
+
+	if a.GithubAppConf != nil {
+		ghAppConf = &a.GithubAppConf.Config
+	}
+
 	auth := mw.NewAuth(a.Store, a.ServerConf.CookieName, &token.TokenGeneratorConf{
 		TokenSecret: a.ServerConf.TokenGeneratorSecret,
-	}, a.Repo, &a.GithubAppConf.Config)
+	}, a.Repo, ghAppConf)
 
 	r.Route("/api", func(r chi.Router) {
 		r.Use(mw.ContentTypeJSON)

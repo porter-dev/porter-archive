@@ -9,6 +9,7 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/porter-dev/porter/internal/analytics"
 	"github.com/porter-dev/porter/internal/kubernetes/prometheus"
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/templater/parser"
@@ -24,7 +25,6 @@ import (
 	"github.com/porter-dev/porter/internal/integrations/ci/actions"
 	"github.com/porter-dev/porter/internal/kubernetes"
 	"github.com/porter-dev/porter/internal/repository"
-	segment "gopkg.in/segmentio/analytics-go.v3"
 	"gopkg.in/yaml.v2"
 )
 
@@ -1087,15 +1087,7 @@ func (app *App) HandleReleaseDeployWebhook(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	if app.segmentClient != nil {
-		client := *app.segmentClient
-		client.Enqueue(segment.Track{
-			UserId: "anonymous",
-			Event:  "Triggered Re-deploy via Webhook",
-			Properties: segment.NewProperties().
-				Set("repository", repository),
-		})
-	}
+	app.analyticsClient.Track(analytics.CreateSegmentRedeployViaWebhookTrack("anonymous", repository.(string)))
 
 	w.WriteHeader(http.StatusOK)
 }

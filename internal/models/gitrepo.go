@@ -61,8 +61,8 @@ type GitActionConfig struct {
 	// The complete image repository uri to pull from
 	ImageRepoURI string `json:"image_repo_uri"`
 
-	// The git integration id
-	GitRepoID uint `json:"git_repo_id"`
+	// The git installation ID
+	GithubInstallationID uint `json:"git_repo_id"`
 
 	// The path to the dockerfile in the git repo
 	DockerfilePath string `json:"dockerfile_path"`
@@ -101,7 +101,7 @@ func (r *GitActionConfig) Externalize() *GitActionConfigExternal {
 		GitRepo:        r.GitRepo,
 		GitBranch:      r.GitBranch,
 		ImageRepoURI:   r.ImageRepoURI,
-		GitRepoID:      r.GitRepoID,
+		GitRepoID:      r.GithubInstallationID,
 		DockerfilePath: r.DockerfilePath,
 		FolderPath:     r.FolderPath,
 	}

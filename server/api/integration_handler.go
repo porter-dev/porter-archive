@@ -7,7 +7,9 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"github.com/go-chi/chi"
 	"github.com/google/go-github/github"
+	"github.com/porter-dev/porter/internal/forms"
 	"github.com/porter-dev/porter/internal/oauth"
 	"golang.org/x/oauth2"
 	"gorm.io/gorm"
@@ -17,10 +19,6 @@ import (
 	"sort"
 	"strconv"
 	"strings"
-	"time"
-
-	"github.com/go-chi/chi"
-	"github.com/porter-dev/porter/internal/forms"
 
 	"github.com/porter-dev/porter/internal/models/integrations"
 	ints "github.com/porter-dev/porter/internal/models/integrations"
@@ -583,21 +581,9 @@ func (app *App) getGithubAppOauthTokenFromRequest(r *http.Request) (*oauth2.Toke
 		return nil, err
 	}
 
-	_, _, err = oauth.GetAccessToken(oauthInt.AccessToken, oauthInt.RefreshToken, &oauth2.Config{
-		ClientID:     app.GithubAppConf.ClientID,
-		ClientSecret: app.GithubAppConf.ClientSecret,
-		Endpoint:     app.GithubAppConf.Endpoint,
-		RedirectURL:  app.GithubAppConf.RedirectURL,
-		Scopes:       app.GithubAppConf.Scopes,
-	}, func(accessToken []byte, refreshToken []byte, expiry time.Time) error {
-		oauthInt.AccessToken = accessToken
-		oauthInt.RefreshToken = refreshToken
-		oauthInt.Expiry = expiry
-
-		_, err := app.Repo.GithubAppOAuthIntegration.UpdateGithubAppOauthIntegration(oauthInt)
-
-		return err
-	})
+	_, _, err = oauth.GetAccessToken(oauthInt.SharedOAuthModel,
+		&app.GithubAppConf.Config,
+		oauth.MakeUpdateGithubAppOauthIntegrationFunction(oauthInt, *app.Repo))
 
 	if err != nil {
 		return nil, err

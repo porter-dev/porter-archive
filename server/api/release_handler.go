@@ -937,7 +937,7 @@ func (app *App) HandleUpgradeRelease(w http.ResponseWriter, r *http.Request) {
 
 				yaml.Unmarshal([]byte(form.Values), cEnv)
 
-				gr, err := app.Repo.GitRepo.ReadGitRepo(gitAction.GitRepoID)
+				gr, err := app.Repo.GitRepo.ReadGitRepo(gitAction.GithubInstallationID)
 
 				if err != nil {
 					if err != gorm.ErrRecordNotFound {
@@ -952,7 +952,7 @@ func (app *App) HandleUpgradeRelease(w http.ResponseWriter, r *http.Request) {
 				gaRunner := &actions.GithubActions{
 					ServerURL:              app.ServerConf.ServerURL,
 					GithubOAuthIntegration: gr,
-					GithubInstallationID:   gitAction.GitRepoID,
+					GithubInstallationID:   gitAction.GithubInstallationID,
 					GithubAppID:            app.GithubAppConf.AppID,
 					GitRepoName:            repoSplit[1],
 					GitRepoOwner:           repoSplit[0],
@@ -1325,7 +1325,7 @@ func (app *App) HandleRollbackRelease(w http.ResponseWriter, r *http.Request) {
 
 				yaml.Unmarshal(rawValues, cEnv)
 
-				gr, err := app.Repo.GitRepo.ReadGitRepo(gitAction.GitRepoID)
+				gr, err := app.Repo.GitRepo.ReadGitRepo(gitAction.GithubInstallationID)
 
 				if err != nil {
 					if err != gorm.ErrRecordNotFound {
@@ -1347,7 +1347,7 @@ func (app *App) HandleRollbackRelease(w http.ResponseWriter, r *http.Request) {
 				gaRunner := &actions.GithubActions{
 					ServerURL:              app.ServerConf.ServerURL,
 					GithubOAuthIntegration: gr,
-					GithubInstallationID:   gitAction.GitRepoID,
+					GithubInstallationID:   gitAction.GithubInstallationID,
 					GithubAppID:            app.GithubAppConf.AppID,
 					GitRepoName:            repoSplit[1],
 					GitRepoOwner:           repoSplit[0],

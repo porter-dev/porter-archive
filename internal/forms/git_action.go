@@ -21,14 +21,14 @@ type CreateGitAction struct {
 // ToGitActionConfig converts the form to a gorm git action config model
 func (ca *CreateGitAction) ToGitActionConfig() (*models.GitActionConfig, error) {
 	return &models.GitActionConfig{
-		ReleaseID:      ca.ReleaseID,
-		GitRepo:        ca.GitRepo,
-		GitBranch:      ca.GitBranch,
-		ImageRepoURI:   ca.ImageRepoURI,
-		DockerfilePath: ca.DockerfilePath,
-		FolderPath:     ca.FolderPath,
-		GitRepoID:      ca.GitRepoID,
-		IsInstallation: true,
+		ReleaseID:            ca.ReleaseID,
+		GitRepo:              ca.GitRepo,
+		GitBranch:            ca.GitBranch,
+		ImageRepoURI:         ca.ImageRepoURI,
+		DockerfilePath:       ca.DockerfilePath,
+		FolderPath:           ca.FolderPath,
+		GithubInstallationID: ca.GitRepoID,
+		IsInstallation:       true,
 	}, nil
 }
 

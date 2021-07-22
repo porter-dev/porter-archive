@@ -334,6 +334,10 @@ func (app *App) HandleGithubAppOAuthCallback(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
+	fmt.Println("exchange happaned")
+	fmt.Println(token.AccessToken)
+	fmt.Println(token.RefreshToken)
+
 	userID, err := app.getUserIDFromRequest(r)
 
 	if err != nil {
@@ -352,6 +356,7 @@ func (app *App) HandleGithubAppOAuthCallback(w http.ResponseWriter, r *http.Requ
 		SharedOAuthModel: integrations.SharedOAuthModel{
 			AccessToken:  []byte(token.AccessToken),
 			RefreshToken: []byte(token.RefreshToken),
+			Expiry:       token.Expiry,
 		},
 		UserID: user.ID,
 	}

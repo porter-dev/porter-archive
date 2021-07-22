@@ -226,7 +226,7 @@ func (r *Registry) listDOCRRepositories(
 		return nil, err
 	}
 
-	tok, _, err := oauth.GetAccessToken(oauthInt.AccessToken, oauthInt.RefreshToken, doAuth, oauth.MakeUpdateOAuthIntegrationTokenFunction(oauthInt, repo))
+	tok, _, err := oauth.GetAccessToken(oauthInt.SharedOAuthModel, doAuth, oauth.MakeUpdateOAuthIntegrationTokenFunction(oauthInt, repo))
 
 	if err != nil {
 		return nil, err
@@ -598,7 +598,7 @@ func (r *Registry) listDOCRImages(
 		return nil, err
 	}
 
-	tok, _, err := oauth.GetAccessToken(oauthInt.AccessToken, oauthInt.RefreshToken, doAuth, oauth.MakeUpdateOAuthIntegrationTokenFunction(oauthInt, repo))
+	tok, _, err := oauth.GetAccessToken(oauthInt.SharedOAuthModel, doAuth, oauth.MakeUpdateOAuthIntegrationTokenFunction(oauthInt, repo))
 
 	if err != nil {
 		return nil, err
@@ -919,7 +919,7 @@ func (r *Registry) getDOCRDockerConfigFile(
 		return nil, err
 	}
 
-	tok, _, err := oauth.GetAccessToken(oauthInt.AccessToken, oauthInt.RefreshToken, doAuth, oauth.MakeUpdateOAuthIntegrationTokenFunction(oauthInt, repo))
+	tok, _, err := oauth.GetAccessToken(oauthInt.SharedOAuthModel, doAuth, oauth.MakeUpdateOAuthIntegrationTokenFunction(oauthInt, repo))
 
 	if err != nil {
 		return nil, err

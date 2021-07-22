@@ -23,7 +23,7 @@ func New(a *api.App) *chi.Mux {
 
 	auth := mw.NewAuth(a.Store, a.ServerConf.CookieName, &token.TokenGeneratorConf{
 		TokenSecret: a.ServerConf.TokenGeneratorSecret,
-	}, a.Repo, a.GithubProjectConf)
+	}, a.Repo, &a.GithubAppConf.Config)
 
 	r.Route("/api", func(r chi.Router) {
 		r.Use(mw.ContentTypeJSON)

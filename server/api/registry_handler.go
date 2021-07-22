@@ -362,7 +362,7 @@ func (app *App) HandleGetProjectRegistryDOCRToken(w http.ResponseWriter, r *http
 				return
 			}
 
-			tok, expiry, err := oauth.GetAccessToken(oauthInt.AccessToken, oauthInt.RefreshToken, app.DOConf, oauth.MakeUpdateOAuthIntegrationTokenFunction(oauthInt, *app.Repo))
+			tok, expiry, err := oauth.GetAccessToken(oauthInt.SharedOAuthModel, app.DOConf, oauth.MakeUpdateOAuthIntegrationTokenFunction(oauthInt, *app.Repo))
 
 			if err != nil {
 				app.handleErrorDataRead(err, w)

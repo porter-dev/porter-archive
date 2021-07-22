@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"github.com/google/go-github/github"
+	"github.com/porter-dev/porter/internal/oauth"
 	"golang.org/x/oauth2"
 	"io/ioutil"
 	"net/http"
@@ -22,11 +23,11 @@ import (
 
 // Auth implements the authorization functions
 type Auth struct {
-	store             sessions.Store
-	cookieName        string
-	tokenConf         *token.TokenGeneratorConf
-	repo              *repository.Repository
-	GithubProjectConf *oauth2.Config
+	store         sessions.Store
+	cookieName    string
+	tokenConf     *token.TokenGeneratorConf
+	repo          *repository.Repository
+	GithubAppConf *oauth2.Config
 }
 
 // NewAuth returns a new Auth instance
@@ -35,9 +36,9 @@ func NewAuth(
 	cookieName string,
 	tokenConf *token.TokenGeneratorConf,
 	repo *repository.Repository,
-	GithubProjectConf *oauth2.Config,
+	GithubAppConf *oauth2.Config,
 ) *Auth {
-	return &Auth{store, cookieName, tokenConf, repo, GithubProjectConf}
+	return &Auth{store, cookieName, tokenConf, repo, GithubAppConf}
 }
 
 // BasicAuthenticate just checks that a user is logged in
@@ -408,8 +409,6 @@ func (auth *Auth) DoesUserHaveGitInstallationAccess(
 	gitRepoLoc IDLocation,
 ) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// TODO: needs to use new github integration implementation
-
 		grID, err := findGitInstallationIDInRequest(r, gitRepoLoc)
 
 		if err != nil {
@@ -454,7 +453,16 @@ func (auth *Auth) DoesUserHaveGitInstallationAccess(
 			return
 		}
 
-		client := github.NewClient(auth.GithubProjectConf.Client(oauth2.NoContext, &oauth2.Token{
+		_, _, err = oauth.GetAccessToken(oauthInt.SharedOAuthModel,
+			auth.GithubAppConf,
+			oauth.MakeUpdateGithubAppOauthIntegrationFunction(oauthInt, *auth.repo))
+
+		if err != nil {
+			http.Error(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)
+			return
+		}
+
+		client := github.NewClient(auth.GithubAppConf.Client(oauth2.NoContext, &oauth2.Token{
 			AccessToken:  string(oauthInt.AccessToken),
 			RefreshToken: string(oauthInt.RefreshToken),
 			TokenType:    "Bearer",

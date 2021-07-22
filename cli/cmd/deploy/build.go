@@ -20,11 +20,11 @@ type BuildAgent struct {
 }
 
 // BuildDocker uses the local Docker daemon to build the image
-func (b *BuildAgent) BuildDocker(dockerAgent *docker.Agent, dst, tag string) error {
+func (b *BuildAgent) BuildDocker(dockerAgent *docker.Agent, buildCtx, tag string) error {
 	opts := &docker.BuildOpts{
 		ImageRepo:    b.imageRepo,
 		Tag:          tag,
-		BuildContext: dst,
+		BuildContext: buildCtx,
 		Env:          b.env,
 	}
 

@@ -8,6 +8,13 @@ import { Context } from "shared/Context";
 
 import Loading from "../Loading";
 import SearchBar from "../SearchBar";
+import Helper from "../values-form/Helper";
+
+interface GithubAppAccessData {
+  has_access: boolean;
+  username?: string;
+  accounts?: string[];
+}
 
 type Props = {
   actionConfig: ActionConfigType | null;
@@ -23,13 +30,29 @@ const RepoList: React.FC<Props> = ({
   readOnly,
 }) => {
   const [repos, setRepos] = useState<RepoType[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(false);
+  const [repoLoading, setRepoLoading] = useState(true);
+  const [repoError, setRepoError] = useState(false);
+  const [accessLoading, setAccessLoading] = useState(true);
+  const [accessError, setAccessError] = useState(false);
+  const [accessData, setAccessData] = useState<GithubAppAccessData>({
+    has_access: false,
+  });
   const [searchFilter, setSearchFilter] = useState(null);
   const { currentProject } = useContext(Context);
 
   // TODO: Try to unhook before unmount
   useEffect(() => {
+    api
+      .getGithubAccess("<token>", {}, {})
+      .then(({ data }) => {
+        setAccessData(data);
+        setAccessLoading(false);
+      })
+      .catch(() => {
+        setAccessError(true);
+        setAccessLoading(false);
+      });
+
     // load git repo ids, and then repo names from that
     // this only happens once during the lifecycle
     new Promise((resolve, reject) => {
@@ -86,16 +109,16 @@ const RepoList: React.FC<Props> = ({
                   }
                 }, [])
             );
-            setLoading(false);
+            setRepoLoading(false);
           })
           .catch((_) => {
-            setLoading(false);
-            setError(true);
+            setRepoLoading(false);
+            setRepoError(true);
           });
       })
       .catch((_) => {
-        setLoading(false);
-        setError(true);
+        setRepoLoading(false);
+        setRepoError(true);
       });
   }, []);
 
@@ -107,22 +130,29 @@ const RepoList: React.FC<Props> = ({
   };
 
   const renderRepoList = () => {
-    if (loading) {
+    if (repoLoading || accessLoading) {
       return (
         <LoadingWrapper>
           <Loading />
         </LoadingWrapper>
       );
-    } else if (error) {
+    } else if (repoError || accessError) {
       return <LoadingWrapper>Error loading repos.</LoadingWrapper>;
     } else if (repos.length == 0) {
-      return (
+      return accessData.has_access ? (
         <LoadingWrapper>
           No connected Github repos found. You can
           <A href={"/api/integrations/github-app/install"}>
             Install Porter in more repositories
           </A>
           .
+        </LoadingWrapper>
+      ) : (
+        <LoadingWrapper>
+          No connected Github repos found.
+          <A href={"/api/integrations/github-app/oauth"}>
+            Authorize Porter to view your repositories.
+          </A>
         </LoadingWrapper>
       );
     }
@@ -165,7 +195,7 @@ const RepoList: React.FC<Props> = ({
         <>
           <SearchBar
             setSearchFilter={setSearchFilter}
-            disabled={error || loading}
+            disabled={repoError || repoLoading || accessError || accessLoading}
             prompt={"Search repos..."}
           />
           <RepoListWrapper>

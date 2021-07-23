@@ -115,8 +115,8 @@ const AccountSettingsModal = () => {
             <ListWrapper>
               <Helper>
                 No connected repositories found.
-                <A href={"/api/integrations/github-app/install"}>
-                  Install Porter in your repositories
+                <A href={"/api/integrations/github-app/oauth"}>
+                  Authorize Porter to view your repositories.
                 </A>
               </Helper>
             </ListWrapper>

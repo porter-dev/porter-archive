@@ -32,8 +32,8 @@ export interface StringInputFieldSettings {
   default: string|number;
 }
 
-export interface StringInputField extends GenericInputField {
-  type: "string-input";
+export interface InputField extends GenericInputField {
+  type: "input";
   label?: string;
   placeholder?: string;
   info?: string;
@@ -45,7 +45,7 @@ export interface CheckboxField extends GenericInputField {
   label?: string;
 }
 
-export type FormField = HeadingField|SubtitleField|StringInputField|CheckboxField;
+export type FormField = HeadingField|SubtitleField|InputField|CheckboxField;
 
 export interface ShowIfAnd {
   and: ShowIf[];

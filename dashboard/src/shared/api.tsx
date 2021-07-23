@@ -219,16 +219,6 @@ const deleteCluster = baseApi<
   return `/api/projects/${pathParams.project_id}/clusters/${pathParams.cluster_id}`;
 });
 
-const deleteGitRepoIntegration = baseApi<
-  {},
-  {
-    project_id: number;
-    git_repo_id: number;
-  }
->("DELETE", (pathParams) => {
-  return `/api/projects/${pathParams.project_id}/gitrepos/${pathParams.git_repo_id}`;
-});
-
 const deleteInvite = baseApi<{}, { id: number; invId: number }>(
   "DELETE",
   (pathParams) => {
@@ -982,7 +972,6 @@ export default {
   createConfigMap,
   deleteCluster,
   deleteConfigMap,
-  deleteGitRepoIntegration,
   deleteInvite,
   deleteNamespace,
   deletePod,

@@ -13,6 +13,7 @@ type PropsType = {
   // Makes flush with corner if not within a modal
   makeFlush?: boolean;
   clearPosition?: boolean;
+  statusPosition?: "right" | "left";
 };
 
 type StateType = {};
@@ -22,28 +23,37 @@ export default class SaveButton extends Component<PropsType, StateType> {
     if (this.props.status) {
       if (this.props.status === "successful") {
         return (
-          <StatusWrapper successful={true}>
+          <StatusWrapper position={this.props.statusPosition} successful={true}>
             <i className="material-icons">done</i>
             <StatusTextWrapper>Successfully updated</StatusTextWrapper>
           </StatusWrapper>
         );
       } else if (this.props.status === "loading") {
         return (
-          <StatusWrapper successful={false}>
+          <StatusWrapper
+            position={this.props.statusPosition}
+            successful={false}
+          >
             <LoadingGif src={loading} />
             <StatusTextWrapper>Updating . . .</StatusTextWrapper>
           </StatusWrapper>
         );
       } else if (this.props.status === "error") {
         return (
-          <StatusWrapper successful={false}>
+          <StatusWrapper
+            position={this.props.statusPosition}
+            successful={false}
+          >
             <i className="material-icons">error_outline</i>
             <StatusTextWrapper>Could not update</StatusTextWrapper>
           </StatusWrapper>
         );
       } else {
         return (
-          <StatusWrapper successful={false}>
+          <StatusWrapper
+            position={this.props.statusPosition}
+            successful={false}
+          >
             <i className="material-icons">error_outline</i>
             <StatusTextWrapper>{this.props.status}</StatusTextWrapper>
           </StatusWrapper>
@@ -51,7 +61,9 @@ export default class SaveButton extends Component<PropsType, StateType> {
       }
     } else if (this.props.helper) {
       return (
-        <StatusWrapper successful={true}>{this.props.helper}</StatusWrapper>
+        <StatusWrapper position={this.props.statusPosition} successful={true}>
+          {this.props.helper}
+        </StatusWrapper>
       );
     }
   };
@@ -62,7 +74,9 @@ export default class SaveButton extends Component<PropsType, StateType> {
         makeFlush={this.props.makeFlush}
         clearPosition={this.props.clearPosition}
       >
-        <div>{this.renderStatus()}</div>
+        {this.props.statusPosition !== "right" && (
+          <div>{this.renderStatus()}</div>
+        )}
         <Button
           disabled={this.props.disabled}
           onClick={this.props.onClick}
@@ -70,6 +84,9 @@ export default class SaveButton extends Component<PropsType, StateType> {
         >
           {this.props.text}
         </Button>
+        {this.props.statusPosition === "right" && (
+          <div>{this.renderStatus()}</div>
+        )}
       </ButtonWrapper>
     );
   }
@@ -91,13 +108,21 @@ const StatusTextWrapper = styled.p`
   margin: 0;
 `;
 
-const StatusWrapper = styled.div`
+const StatusWrapper = styled.div<{
+  successful: boolean;
+  position: "right" | "left";
+}>`
   display: flex;
   align-items: center;
   font-family: "Work Sans", sans-serif;
   font-size: 13px;
   color: #ffffff55;
-  margin-right: 25px;
+  ${(props) => {
+    if (props.position !== "right") {
+      return "margin-right: 25px;";
+    }
+    return "margin-left: 25px;";
+  }}
   max-width: 500px;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -106,8 +131,7 @@ const StatusWrapper = styled.div`
     font-size: 18px;
     margin-right: 10px;
     float: left;
-    color: ${(props: { successful: boolean }) =>
-      props.successful ? "#4797ff" : "#fcba03"};
+    color: ${(props) => (props.successful ? "#4797ff" : "#fcba03")};
   }
 
   animation: statusFloatIn 0.5s;
@@ -127,20 +151,20 @@ const StatusWrapper = styled.div`
 
 const ButtonWrapper = styled.div`
   ${(props: { makeFlush: boolean; clearPosition?: boolean }) => {
-    if (props.clearPosition) {
-      return "";
-    }
-
     const baseStyles = `
       display: flex;
       align-items: center;
-      position: absolute;
-      justify-content: flex-end;
     `;
+
+    if (props.clearPosition) {
+      return baseStyles;
+    }
 
     if (!props.makeFlush) {
       return `
         ${baseStyles}
+        position: absolute;
+        justify-content: flex-end;
         bottom: 25px;
         right: 27px;
         left: 27px;
@@ -148,6 +172,8 @@ const ButtonWrapper = styled.div`
     }
     return `
       ${baseStyles}
+      position: absolute;
+      justify-content: flex-end;
       bottom: 5px;
       right: 0;
     `;

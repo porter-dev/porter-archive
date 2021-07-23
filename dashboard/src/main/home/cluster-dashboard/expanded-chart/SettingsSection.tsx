@@ -40,6 +40,11 @@ const SettingsSection: React.FC<PropsType> = ({
     false
   );
   const [webhookToken, setWebhookToken] = useState<string>("");
+  const [
+    createWebhookButtonStatus,
+    setCreateWebhookButtonStatus,
+  ] = useState<string>("");
+
   const [action, setAction] = useState<ActionConfigType>({
     git_repo: "",
     image_repo_uri: "",
@@ -134,6 +139,41 @@ const SettingsSection: React.FC<PropsType> = ({
     }
   };
 
+  const handleCreateWebhookToken = async () => {
+    setCreateWebhookButtonStatus("loading");
+    const { id: cluster_id } = currentCluster;
+    const { id: project_id } = currentProject;
+    const { name: chart_name, namespace } = currentChart;
+    try {
+      const res = await api.createWebhookToken(
+        "<token>",
+        {},
+        {
+          project_id,
+          chart_name,
+          namespace,
+          cluster_id,
+          storage: StorageType.Secret,
+        }
+      );
+      setCreateWebhookButtonStatus("successful");
+      setTimeout(() => {
+        setAction(res.data.git_action_config);
+        setWebhookToken(res.data.webhook_token);
+      }, 500);
+    } catch (err) {
+      let parsedErr =
+        err?.response?.data?.errors && err.response.data.errors[0];
+
+      if (parsedErr) {
+        err = parsedErr;
+      }
+
+      setCreateWebhookButtonStatus(parsedErr);
+      setCurrentError(parsedErr);
+    }
+  };
+
   const renderWebhookSection = () => {
     if (!currentChart?.form?.hasSource) {
       return;
@@ -164,6 +204,15 @@ const SettingsSection: React.FC<PropsType> = ({
           <Helper>
             Programmatically deploy by calling this secret webhook.
           </Helper>
+          {!webhookToken.length && (
+            <SaveButton
+              text={"Create Webhook"}
+              status={createWebhookButtonStatus}
+              onClick={handleCreateWebhookToken}
+              clearPosition={true}
+              statusPosition={"right"}
+            />
+          )}
           {webhookToken.length > 0 && (
             <Webhook copiedToClipboard={highlightCopyButton}>
               <div>{curlWebhook}</div>

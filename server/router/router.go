@@ -13,6 +13,7 @@ import (
 	"github.com/porter-dev/porter/server/api"
 	mw "github.com/porter-dev/porter/server/middleware"
 	"github.com/porter-dev/porter/server/middleware/requestlog"
+	"golang.org/x/oauth2"
 )
 
 // New creates a new Chi router instance and registers all routes supported by the
@@ -21,9 +22,15 @@ func New(a *api.App) *chi.Mux {
 	l := a.Logger
 	r := chi.NewRouter()
 
+	var ghAppConf *oauth2.Config
+
+	if a.GithubAppConf != nil {
+		ghAppConf = &a.GithubAppConf.Config
+	}
+
 	auth := mw.NewAuth(a.Store, a.ServerConf.CookieName, &token.TokenGeneratorConf{
 		TokenSecret: a.ServerConf.TokenGeneratorSecret,
-	}, a.Repo)
+	}, a.Repo, ghAppConf)
 
 	r.Route("/api", func(r chi.Router) {
 		r.Use(mw.ContentTypeJSON)
@@ -186,6 +193,12 @@ func New(a *api.App) *chi.Mux {
 				"GET",
 				"/integrations/github-app/authorize",
 				requestlog.NewHandler(a.HandleGithubAppAuthorize, l),
+			)
+
+			r.Method(
+				"GET",
+				"/integrations/github-app/oauth",
+				requestlog.NewHandler(a.HandleGithubAppOauthInit, l),
 			)
 
 			r.Method(
@@ -1130,27 +1143,12 @@ func New(a *api.App) *chi.Mux {
 			)
 
 			r.Method(
-				"DELETE",
-				"/projects/{project_id}/gitrepos/{git_repo_id}",
-				auth.DoesUserHaveProjectAccess(
-					auth.DoesUserHaveGitRepoAccess(
-						requestlog.NewHandler(a.HandleDeleteProjectGitRepo, l),
-						mw.URLParam,
-						mw.URLParam,
-					),
-					mw.URLParam,
-					mw.WriteAccess,
-				),
-			)
-
-			r.Method(
 				"GET",
-				"/projects/{project_id}/gitrepos/{git_repo_id}/repos",
+				"/projects/{project_id}/gitrepos/{installation_id}/repos",
 				auth.DoesUserHaveProjectAccess(
-					auth.DoesUserHaveGitRepoAccess(
+					auth.DoesUserHaveGitInstallationAccess(
 						requestlog.NewHandler(a.HandleListRepos, l),
 						mw.URLParam,
-						mw.URLParam,
 					),
 					mw.URLParam,
 					mw.ReadAccess,
@@ -1159,12 +1157,11 @@ func New(a *api.App) *chi.Mux {
 
 			r.Method(
 				"GET",
-				"/projects/{project_id}/gitrepos/{git_repo_id}/repos/{kind}/{owner}/{name}/branches",
+				"/projects/{project_id}/gitrepos/{installation_id}/repos/{kind}/{owner}/{name}/branches",
 				auth.DoesUserHaveProjectAccess(
-					auth.DoesUserHaveGitRepoAccess(
+					auth.DoesUserHaveGitInstallationAccess(
 						requestlog.NewHandler(a.HandleGetBranches, l),
 						mw.URLParam,
-						mw.URLParam,
 					),
 					mw.URLParam,
 					mw.ReadAccess,
@@ -1173,12 +1170,11 @@ func New(a *api.App) *chi.Mux {
 
 			r.Method(
 				"GET",
-				"/projects/{project_id}/gitrepos/{git_repo_id}/repos/{kind}/{owner}/{name}/{branch}/buildpack/detect",
+				"/projects/{project_id}/gitrepos/{installation_id}/repos/{kind}/{owner}/{name}/{branch}/buildpack/detect",
 				auth.DoesUserHaveProjectAccess(
-					auth.DoesUserHaveGitRepoAccess(
+					auth.DoesUserHaveGitInstallationAccess(
 						requestlog.NewHandler(a.HandleDetectBuildpack, l),
 						mw.URLParam,
-						mw.URLParam,
 					),
 					mw.URLParam,
 					mw.ReadAccess,
@@ -1187,12 +1183,11 @@ func New(a *api.App) *chi.Mux {
 
 			r.Method(
 				"GET",
-				"/projects/{project_id}/gitrepos/{git_repo_id}/repos/{kind}/{owner}/{name}/{branch}/contents",
+				"/projects/{project_id}/gitrepos/{installation_id}/repos/{kind}/{owner}/{name}/{branch}/contents",
 				auth.DoesUserHaveProjectAccess(
-					auth.DoesUserHaveGitRepoAccess(
+					auth.DoesUserHaveGitInstallationAccess(
 						requestlog.NewHandler(a.HandleGetBranchContents, l),
 						mw.URLParam,
-						mw.URLParam,
 					),
 					mw.URLParam,
 					mw.ReadAccess,
@@ -1201,12 +1196,11 @@ func New(a *api.App) *chi.Mux {
 
 			r.Method(
 				"GET",
-				"/projects/{project_id}/gitrepos/{git_repo_id}/repos/{kind}/{owner}/{name}/{branch}/procfile",
+				"/projects/{project_id}/gitrepos/{installation_id}/repos/{kind}/{owner}/{name}/{branch}/procfile",
 				auth.DoesUserHaveProjectAccess(
-					auth.DoesUserHaveGitRepoAccess(
+					auth.DoesUserHaveGitInstallationAccess(
 						requestlog.NewHandler(a.HandleGetProcfileContents, l),
 						mw.URLParam,
-						mw.URLParam,
 					),
 					mw.URLParam,
 					mw.ReadAccess,
@@ -1215,11 +1209,10 @@ func New(a *api.App) *chi.Mux {
 
 			r.Method(
 				"GET",
-				"/projects/{project_id}/gitrepos/{git_repo_id}/repos/{kind}/{owner}/{name}/{branch}/tarball_url",
+				"/projects/{project_id}/gitrepos/{installation_id}/repos/{kind}/{owner}/{name}/{branch}/tarball_url",
 				auth.DoesUserHaveProjectAccess(
-					auth.DoesUserHaveGitRepoAccess(
+					auth.DoesUserHaveGitInstallationAccess(
 						requestlog.NewHandler(a.HandleGetRepoZIPDownloadURL, l),
-						mw.URLParam,
 						mw.URLParam,
 					),
 					mw.URLParam,

@@ -128,6 +128,7 @@ const TabWrapper = styled.div`
   margin-right: 10px;
   border-radius: 5px;
   overflow: hidden;
+  overflow-y: auto;
 `;
 
 const FlexWrapper = styled.div`

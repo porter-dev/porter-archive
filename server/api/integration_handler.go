@@ -478,6 +478,11 @@ func (app *App) HandleGithubAppAuthorize(w http.ResponseWriter, r *http.Request)
 	http.Redirect(w, r, url, 302)
 }
 
+// HandleGithubAppOauthInit redirects the user to the Porter github app authorization page
+func (app *App) HandleGithubAppOauthInit(w http.ResponseWriter, r *http.Request) {
+	http.Redirect(w, r, app.GithubAppConf.AuthCodeURL("", oauth2.AccessTypeOffline), 302)
+}
+
 // HandleGithubAppInstall redirects the user to the Porter github app installation page
 func (app *App) HandleGithubAppInstall(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, fmt.Sprintf("https://github.com/apps/%s/installations/new", app.GithubAppConf.AppName), 302)

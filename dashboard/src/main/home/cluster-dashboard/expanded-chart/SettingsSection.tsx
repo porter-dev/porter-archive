@@ -17,6 +17,8 @@ import Heading from "components/values-form/Heading";
 import Helper from "components/values-form/Helper";
 import _ from "lodash";
 import CopyToClipboard from "components/CopyToClipboard";
+import useAuth from "shared/auth/useAuth";
+import Loading from "components/Loading";
 
 type PropsType = {
   currentChart: ChartType;
@@ -44,6 +46,7 @@ const SettingsSection: React.FC<PropsType> = ({
     createWebhookButtonStatus,
     setCreateWebhookButtonStatus,
   ] = useState<string>("");
+  const [loadingWebhookToken, setLoadingWebhookToken] = useState<boolean>(true);
 
   const [action, setAction] = useState<ActionConfigType>({
     git_repo: "",
@@ -55,9 +58,11 @@ const SettingsSection: React.FC<PropsType> = ({
   const { currentCluster, currentProject, setCurrentError } = useContext(
     Context
   );
+  const [isAuthorized] = useAuth();
 
   useEffect(() => {
     let isSubscribed = true;
+    setLoadingWebhookToken(true);
     const image = currentChart?.config?.image;
     setSelectedImageUrl(image?.repository);
     setSelectedTag(image?.tag);
@@ -80,7 +85,8 @@ const SettingsSection: React.FC<PropsType> = ({
         setAction(res.data.git_action_config);
         setWebhookToken(res.data.webhook_token);
       })
-      .catch(console.log);
+      .catch(console.log)
+      .finally(() => setLoadingWebhookToken(false));
 
     return () => (isSubscribed = false);
   }, [currentChart, currentCluster, currentProject]);
@@ -181,6 +187,18 @@ const SettingsSection: React.FC<PropsType> = ({
 
     const curlWebhook = `curl -X POST 'https://dashboard.getporter.dev/api/webhooks/deploy/${webhookToken}?commit=YOUR_COMMIT_HASH'`;
 
+    const isAuthorizedToCreateWebhook = isAuthorized("application", "", [
+      "get",
+      "create",
+      "update",
+    ]);
+
+    let buttonStatus = createWebhookButtonStatus;
+
+    if (!isAuthorizedToCreateWebhook) {
+      buttonStatus = "Unauthorized to create webhook token";
+    }
+
     return (
       <>
         {showSource && (
@@ -204,13 +222,15 @@ const SettingsSection: React.FC<PropsType> = ({
           <Helper>
             Programmatically deploy by calling this secret webhook.
           </Helper>
-          {!webhookToken.length && (
+
+          {!loadingWebhookToken && !webhookToken.length && (
             <SaveButton
               text={"Create Webhook"}
-              status={createWebhookButtonStatus}
+              status={buttonStatus}
               onClick={handleCreateWebhookToken}
               clearPosition={true}
               statusPosition={"right"}
+              disabled={!isAuthorizedToCreateWebhook}
             />
           )}
           {webhookToken.length > 0 && (
@@ -236,14 +256,18 @@ const SettingsSection: React.FC<PropsType> = ({
 
   return (
     <Wrapper>
-      <StyledSettingsSection showSource={showSource}>
-        {renderWebhookSection()}
-        <Heading>Additional Settings</Heading>
-        <Button color="#b91133" onClick={() => setShowDeleteOverlay(true)}>
-          Delete {currentChart.name}
-        </Button>
-      </StyledSettingsSection>
-      {showSource && (
+      {!loadingWebhookToken ? (
+        <StyledSettingsSection showSource={showSource}>
+          {renderWebhookSection()}
+          <Heading>Additional Settings</Heading>
+          <Button color="#b91133" onClick={() => setShowDeleteOverlay(true)}>
+            Delete {currentChart.name}
+          </Button>
+        </StyledSettingsSection>
+      ) : (
+        <Loading />
+      )}
+      {!loadingWebhookToken && showSource && (
         <SaveButton
           text={saveButtonText || "Save Config"}
           status={saveValuesStatus}

@@ -39,7 +39,10 @@ func (app *App) HandleCreateUser(w http.ResponseWriter, r *http.Request) {
 		app.handleErrorDataRead(err, w)
 	}
 
-	form := &forms.CreateUserForm{}
+	form := &forms.CreateUserForm{
+		// if app can send email verification, set the email verified to false
+		EmailVerified: !app.Capabilities.Email,
+	}
 
 	user, err := app.writeUser(
 		form,

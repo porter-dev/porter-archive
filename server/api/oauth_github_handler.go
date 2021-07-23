@@ -298,22 +298,6 @@ func (app *App) HandleGithubAppOAuthCallback(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	if _, ok := session.Values["state"]; !ok {
-		app.sendExternalError(
-			err,
-			http.StatusForbidden,
-			HTTPError{
-				Code: http.StatusForbidden,
-				Errors: []string{
-					"Could not read cookie: are cookies enabled?",
-				},
-			},
-			w,
-		)
-
-		return
-	}
-
 	token, err := app.GithubAppConf.Exchange(oauth2.NoContext, r.URL.Query().Get("code"))
 
 	if err != nil || !token.Valid() {

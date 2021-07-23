@@ -9,19 +9,19 @@ import {
 interface FormFieldData<T> {
   state: T;
   variables: PorterFormVariableList;
-  updateState: (updateFunc: (prev: T) => T) => void;
-  mutateVars: (
-    mutateFunc: (vars: PorterFormVariableList) => PorterFormVariableList
+  setState: (setFunc: (prev: T) => T) => void;
+  setVars: (
+    setFunc: (vars: PorterFormVariableList) => PorterFormVariableList
   ) => void;
-  updateValidation: (
-    updateFunc: (
+  setValidation: (
+    setFunc: (
       state: PorterFormFieldValidationState
     ) => PorterFormFieldValidationState
   ) => void;
 }
 
 interface Options<T> {
-  initValue: T;
+  initValue?: T;
   initValidation?: Partial<PorterFormFieldValidationState>;
   initVars?: PorterFormVariableList;
 }
@@ -36,13 +36,15 @@ const useFormField = <T extends PorterFormFieldFieldState>(
     dispatchAction({
       type: "init-field",
       id: fieldId,
-      initValue,
-      initValidation,
-      initVars,
+      initValue: initValue || {},
+      initValidation: initValidation || {
+        validated: false,
+      },
+      initVars: initVars || {},
     });
   }, []);
 
-  const updateState = (updateFunc: (prev: T) => T) => {
+  const setState = (updateFunc: (prev: T) => T) => {
     dispatchAction({
       type: "update-field",
       id: fieldId,
@@ -50,7 +52,7 @@ const useFormField = <T extends PorterFormFieldFieldState>(
     });
   };
 
-  const mutateVars = (
+  const setVars = (
     mutateFunc: (vars: PorterFormVariableList) => PorterFormVariableList
   ) => {
     dispatchAction({
@@ -59,7 +61,7 @@ const useFormField = <T extends PorterFormFieldFieldState>(
     });
   };
 
-  const updateValidation = (
+  const setValidation = (
     updateFunc: (
       state: PorterFormFieldValidationState
     ) => PorterFormFieldValidationState
@@ -74,9 +76,9 @@ const useFormField = <T extends PorterFormFieldFieldState>(
   return {
     state: formState.components[fieldId]?.state as T,
     variables: formState.variables,
-    updateState,
-    mutateVars,
-    updateValidation,
+    setState,
+    setVars,
+    setValidation,
   };
 };
 

@@ -25,10 +25,9 @@ const Input: React.FC<Props> = ({
   const {
     state,
     variables,
-    mutateVars,
-    updateValidation,
+    setVars,
+    setValidation,
   } = useFormField<StringInputFieldState>(id, {
-    initValue: {},
     initValidation: {
       validated: settings?.default != undefined,
     },
@@ -37,7 +36,6 @@ const Input: React.FC<Props> = ({
     },
   });
 
-  // TODO: needs a loading wrapper
   if (state == undefined) {
     return <></>;
   }
@@ -56,13 +54,13 @@ const Input: React.FC<Props> = ({
       value={curValue}
       unit={settings?.unit}
       setValue={(x: string | number) => {
-        mutateVars((vars) => {
+        setVars((vars) => {
           return {
             ...vars,
             [variable]: x,
           };
         });
-        updateValidation((prev) => {
+        setValidation((prev) => {
           return {
             ...prev,
             validated:

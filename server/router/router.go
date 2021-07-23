@@ -1112,6 +1112,20 @@ func New(a *api.App) *chi.Mux {
 			)
 
 			r.Method(
+				"POST",
+				"/projects/{project_id}/releases/{name}/webhook_token",
+				auth.DoesUserHaveProjectAccess(
+					auth.DoesUserHaveClusterAccess(
+						requestlog.NewHandler(a.HandleCreateWebhookToken, l),
+						mw.URLParam,
+						mw.QueryParam,
+					),
+					mw.URLParam,
+					mw.WriteAccess,
+				),
+			)
+
+			r.Method(
 				"GET",
 				"/projects/{project_id}/releases/{name}/{revision}",
 				auth.DoesUserHaveProjectAccess(

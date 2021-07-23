@@ -83,7 +83,7 @@ class Integrations extends Component<PropsType, StateType> {
 
             <IntegrationList
               currentCategory={""}
-              integrations={["kubernetes", "registry", "repo"]}
+              integrations={["kubernetes", "registry"]}
               setCurrent={(x) =>
                 pushFiltered(this.props, `/integrations/${x}`, ["project_id"])
               }

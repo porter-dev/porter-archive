@@ -7,6 +7,7 @@ require (
 	github.com/AlecAivazis/survey/v2 v2.2.9
 	github.com/DATA-DOG/go-sqlmock v1.5.0
 	github.com/aws/aws-sdk-go v1.35.4
+	github.com/bradleyfalzon/ghinstallation v1.1.1 // indirect
 	github.com/buildpacks/pack v0.19.0
 	github.com/cli/cli v1.11.0
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
@@ -24,8 +25,10 @@ require (
 	github.com/go-redis/redis/v8 v8.11.0
 	github.com/go-test/deep v1.0.7
 	github.com/google/go-github v17.0.0+incompatible
+	github.com/google/go-github/v29 v29.0.3 // indirect
 	github.com/google/go-github/v33 v33.0.0
-	github.com/gorilla/mux v1.8.0 // indirect
+	github.com/google/go-querystring v1.1.0 // indirect
+  github.com/gorilla/mux v1.8.0 // indirect
 	github.com/gorilla/schema v1.2.0
 	github.com/gorilla/securecookie v1.1.1
 	github.com/gorilla/sessions v1.2.1

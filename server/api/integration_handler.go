@@ -7,7 +7,9 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"github.com/go-chi/chi"
 	"github.com/google/go-github/github"
+	"github.com/porter-dev/porter/internal/forms"
 	"github.com/porter-dev/porter/internal/oauth"
 	"golang.org/x/oauth2"
 	"gorm.io/gorm"
@@ -17,9 +19,6 @@ import (
 	"sort"
 	"strconv"
 	"strings"
-
-	"github.com/go-chi/chi"
-	"github.com/porter-dev/porter/internal/forms"
 
 	"github.com/porter-dev/porter/internal/models/integrations"
 	ints "github.com/porter-dev/porter/internal/models/integrations"
@@ -479,6 +478,11 @@ func (app *App) HandleGithubAppAuthorize(w http.ResponseWriter, r *http.Request)
 	http.Redirect(w, r, url, 302)
 }
 
+// HandleGithubAppOauthInit redirects the user to the Porter github app authorization page
+func (app *App) HandleGithubAppOauthInit(w http.ResponseWriter, r *http.Request) {
+	http.Redirect(w, r, app.GithubAppConf.AuthCodeURL("", oauth2.AccessTypeOffline), 302)
+}
+
 // HandleGithubAppInstall redirects the user to the Porter github app installation page
 func (app *App) HandleGithubAppInstall(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, fmt.Sprintf("https://github.com/apps/%s/installations/new", app.GithubAppConf.AppName), 302)
@@ -494,7 +498,7 @@ type HandleListGithubAppAccessResp struct {
 // HandleListGithubAppAccess provides basic info on if the current user is authenticated through the GitHub app
 // and what accounts/organizations their authentication has access to
 func (app *App) HandleListGithubAppAccess(w http.ResponseWriter, r *http.Request) {
-	tok, err := app.getGithubUserTokenFromRequest(r)
+	tok, err := app.getGithubAppOauthTokenFromRequest(r)
 
 	if err != nil {
 		res := HandleListGithubAppAccessResp{
@@ -561,8 +565,9 @@ func (app *App) HandleListGithubAppAccess(w http.ResponseWriter, r *http.Request
 	json.NewEncoder(w).Encode(res)
 }
 
-// getGithubUserTokenFromRequest
-func (app *App) getGithubUserTokenFromRequest(r *http.Request) (*oauth2.Token, error) {
+// getGithubAppOauthTokenFromRequest gets the oauth token from the request based on the currently
+// logged in user. Note that this authenticates as the user, rather than the installation.
+func (app *App) getGithubAppOauthTokenFromRequest(r *http.Request) (*oauth2.Token, error) {
 	userID, err := app.getUserIDFromRequest(r)
 
 	if err != nil {
@@ -581,9 +586,18 @@ func (app *App) getGithubUserTokenFromRequest(r *http.Request) (*oauth2.Token, e
 		return nil, err
 	}
 
+	_, _, err = oauth.GetAccessToken(oauthInt.SharedOAuthModel,
+		&app.GithubAppConf.Config,
+		oauth.MakeUpdateGithubAppOauthIntegrationFunction(oauthInt, *app.Repo))
+
+	if err != nil {
+		return nil, err
+	}
+
 	return &oauth2.Token{
 		AccessToken:  string(oauthInt.AccessToken),
 		RefreshToken: string(oauthInt.RefreshToken),
+		Expiry:       oauthInt.Expiry,
 		TokenType:    "Bearer",
 	}, nil
 }

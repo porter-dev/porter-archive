@@ -45,6 +45,8 @@ type ServerConf struct {
 	GithubAppClientSecret  string `env:"GITHUB_APP_CLIENT_SECRET"`
 	GithubAppName          string `env:"GITHUB_APP_NAME"`
 	GithubAppWebhookSecret string `env:"GITHUB_APP_WEBHOOK_SECRET"`
+	GithubAppID            string `env:"GITHUB_APP_ID"`
+	GithubAppSecretPath    string `env:"GITHUB_APP_SECRET_PATH"`
 
 	GoogleClientID         string `env:"GOOGLE_CLIENT_ID"`
 	GoogleClientSecret     string `env:"GOOGLE_CLIENT_SECRET"`

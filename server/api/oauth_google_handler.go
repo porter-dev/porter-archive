@@ -8,13 +8,12 @@ import (
 	"net/url"
 	"strings"
 
+	"github.com/porter-dev/porter/internal/analytics"
 	"github.com/porter-dev/porter/internal/models"
 	"gorm.io/gorm"
 
 	"github.com/porter-dev/porter/internal/oauth"
 	"golang.org/x/oauth2"
-
-	segment "gopkg.in/segmentio/analytics-go.v3"
 )
 
 // HandleGoogleStartUser starts the oauth2 flow for a user login request.
@@ -96,22 +95,9 @@ func (app *App) HandleGoogleOAuthCallback(w http.ResponseWriter, r *http.Request
 	}
 
 	// send to segment
-	if app.segmentClient != nil {
-		client := *app.segmentClient
-		client.Enqueue(segment.Identify{
-			UserId: fmt.Sprintf("%v", user.ID),
-			Traits: segment.NewTraits().
-				SetEmail(user.Email).
-				Set("github", "true"),
-		})
+	app.analyticsClient.Identify(analytics.CreateSegmentIdentifyNewUser(user, true))
 
-		client.Enqueue(segment.Track{
-			UserId: fmt.Sprintf("%v", user.ID),
-			Event:  "New User",
-			Properties: segment.NewProperties().
-				Set("email", user.Email),
-		})
-	}
+	app.analyticsClient.Track(analytics.CreateSegmentNewUserTrack(user))
 
 	// log the user in
 	app.Logger.Info().Msgf("New user created: %d", user.ID)

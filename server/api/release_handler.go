@@ -3,12 +3,14 @@ package api
 import (
 	"encoding/json"
 	"fmt"
+	"gorm.io/gorm"
 	"net/http"
 	"net/url"
 	"strconv"
 	"strings"
 	"sync"
 
+	"github.com/porter-dev/porter/internal/analytics"
 	"github.com/porter-dev/porter/internal/kubernetes/prometheus"
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/templater/parser"
@@ -24,7 +26,6 @@ import (
 	"github.com/porter-dev/porter/internal/integrations/ci/actions"
 	"github.com/porter-dev/porter/internal/kubernetes"
 	"github.com/porter-dev/porter/internal/repository"
-	segment "gopkg.in/segmentio/analytics-go.v3"
 	"gopkg.in/yaml.v2"
 )
 
@@ -936,32 +937,35 @@ func (app *App) HandleUpgradeRelease(w http.ResponseWriter, r *http.Request) {
 
 				yaml.Unmarshal([]byte(form.Values), cEnv)
 
-				gr, err := app.Repo.GitRepo.ReadGitRepo(gitAction.GitRepoID)
+				gr, err := app.Repo.GitRepo.ReadGitRepo(gitAction.GithubInstallationID)
 
 				if err != nil {
-					app.sendExternalError(err, http.StatusInternalServerError, HTTPError{
-						Code:   ErrReleaseReadData,
-						Errors: []string{"github repo integration not found"},
-					}, w)
+					if err != gorm.ErrRecordNotFound {
+						app.handleErrorInternal(err, w)
+						return
+					}
+					gr = nil
 				}
 
 				repoSplit := strings.Split(gitAction.GitRepo, "/")
 
 				gaRunner := &actions.GithubActions{
-					ServerURL:      app.ServerConf.ServerURL,
-					GitIntegration: gr,
-					GitRepoName:    repoSplit[1],
-					GitRepoOwner:   repoSplit[0],
-					Repo:           *app.Repo,
-					GithubConf:     app.GithubProjectConf,
-					WebhookToken:   release.WebhookToken,
-					ProjectID:      uint(projID),
-					ReleaseName:    name,
-					GitBranch:      gitAction.GitBranch,
-					DockerFilePath: gitAction.DockerfilePath,
-					FolderPath:     gitAction.FolderPath,
-					ImageRepoURL:   gitAction.ImageRepoURI,
-					BuildEnv:       cEnv.Container.Env.Normal,
+					ServerURL:              app.ServerConf.ServerURL,
+					GithubOAuthIntegration: gr,
+					GithubInstallationID:   gitAction.GithubInstallationID,
+					GithubAppID:            app.GithubAppConf.AppID,
+					GitRepoName:            repoSplit[1],
+					GitRepoOwner:           repoSplit[0],
+					Repo:                   *app.Repo,
+					GithubConf:             app.GithubProjectConf,
+					WebhookToken:           release.WebhookToken,
+					ProjectID:              uint(projID),
+					ReleaseName:            name,
+					GitBranch:              gitAction.GitBranch,
+					DockerFilePath:         gitAction.DockerfilePath,
+					FolderPath:             gitAction.FolderPath,
+					ImageRepoURL:           gitAction.ImageRepoURI,
+					BuildEnv:               cEnv.Container.Env.Normal,
 				}
 
 				err = gaRunner.CreateEnvSecret()
@@ -1087,15 +1091,7 @@ func (app *App) HandleReleaseDeployWebhook(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	if app.segmentClient != nil {
-		client := *app.segmentClient
-		client.Enqueue(segment.Track{
-			UserId: "anonymous",
-			Event:  "Triggered Re-deploy via Webhook",
-			Properties: segment.NewProperties().
-				Set("repository", repository),
-		})
-	}
+	app.analyticsClient.Track(analytics.CreateSegmentRedeployViaWebhookTrack("anonymous", repository.(string)))
 
 	w.WriteHeader(http.StatusOK)
 }
@@ -1321,13 +1317,14 @@ func (app *App) HandleRollbackRelease(w http.ResponseWriter, r *http.Request) {
 
 				yaml.Unmarshal(rawValues, cEnv)
 
-				gr, err := app.Repo.GitRepo.ReadGitRepo(gitAction.GitRepoID)
+				gr, err := app.Repo.GitRepo.ReadGitRepo(gitAction.GithubInstallationID)
 
 				if err != nil {
-					app.sendExternalError(err, http.StatusInternalServerError, HTTPError{
-						Code:   ErrReleaseReadData,
-						Errors: []string{"github repo integration not found"},
-					}, w)
+					if err != gorm.ErrRecordNotFound {
+						app.handleErrorInternal(err, w)
+						return
+					}
+					gr = nil
 				}
 
 				repoSplit := strings.Split(gitAction.GitRepo, "/")
@@ -1340,20 +1337,22 @@ func (app *App) HandleRollbackRelease(w http.ResponseWriter, r *http.Request) {
 				}
 
 				gaRunner := &actions.GithubActions{
-					ServerURL:      app.ServerConf.ServerURL,
-					GitIntegration: gr,
-					GitRepoName:    repoSplit[1],
-					GitRepoOwner:   repoSplit[0],
-					Repo:           *app.Repo,
-					GithubConf:     app.GithubProjectConf,
-					WebhookToken:   release.WebhookToken,
-					ProjectID:      uint(projID),
-					ReleaseName:    name,
-					GitBranch:      gitAction.GitBranch,
-					DockerFilePath: gitAction.DockerfilePath,
-					FolderPath:     gitAction.FolderPath,
-					ImageRepoURL:   gitAction.ImageRepoURI,
-					BuildEnv:       cEnv.Container.Env.Normal,
+					ServerURL:              app.ServerConf.ServerURL,
+					GithubOAuthIntegration: gr,
+					GithubInstallationID:   gitAction.GithubInstallationID,
+					GithubAppID:            app.GithubAppConf.AppID,
+					GitRepoName:            repoSplit[1],
+					GitRepoOwner:           repoSplit[0],
+					Repo:                   *app.Repo,
+					GithubConf:             app.GithubProjectConf,
+					WebhookToken:           release.WebhookToken,
+					ProjectID:              uint(projID),
+					ReleaseName:            name,
+					GitBranch:              gitAction.GitBranch,
+					DockerFilePath:         gitAction.DockerfilePath,
+					FolderPath:             gitAction.FolderPath,
+					ImageRepoURL:           gitAction.ImageRepoURI,
+					BuildEnv:               cEnv.Container.Env.Normal,
 				}
 
 				err = gaRunner.CreateEnvSecret()

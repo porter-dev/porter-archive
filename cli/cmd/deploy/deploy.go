@@ -193,7 +193,8 @@ func (d *DeployAgent) WriteBuildEnv(fileDest string) error {
 // buildpack or docker.
 func (d *DeployAgent) Build() error {
 	// if build is not local, fetch remote source
-	var dst string
+	var basePath string
+	buildCtx := d.opts.LocalPath
 	var err error
 
 	if !d.opts.Local {
@@ -208,18 +209,22 @@ func (d *DeployAgent) Build() error {
 		}
 
 		// download the repository from remote source into a temp directory
-		dst, err = d.downloadRepoToDir(zipResp.URLString)
+		basePath, err = d.downloadRepoToDir(zipResp.URLString)
+
+		if err != nil {
+			return err
+		}
 
 		if d.tag == "" {
 			shortRef := fmt.Sprintf("%.7s", zipResp.LatestCommitSHA)
 			d.tag = shortRef
 		}
+	} else {
+		basePath, err = filepath.Abs(".")
 
 		if err != nil {
 			return err
 		}
-	} else {
-		dst = filepath.Dir(d.opts.LocalPath)
 	}
 
 	if d.tag == "" {
@@ -247,10 +252,16 @@ func (d *DeployAgent) Build() error {
 	}
 
 	if d.opts.Method == DeployBuildTypeDocker {
-		return buildAgent.BuildDocker(d.agent, dst, d.tag)
+		return buildAgent.BuildDocker(
+			d.agent,
+			basePath,
+			buildCtx,
+			d.dockerfilePath,
+			d.tag,
+		)
 	}
 
-	return buildAgent.BuildPack(d.agent, dst, d.tag)
+	return buildAgent.BuildPack(d.agent, buildCtx, d.tag)
 }
 
 // Push pushes a local image to the remote repository linked in the release

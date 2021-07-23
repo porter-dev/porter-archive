@@ -30,6 +30,7 @@ import { fakeGuardedRoute } from "shared/auth/RouteGuard";
 import { withAuth, WithAuthProps } from "shared/auth/AuthorizationHoc";
 import EditInviteOrCollaboratorModal from "./modals/EditInviteOrCollaboratorModal";
 import AccountSettingsModal from "./modals/AccountSettingsModal";
+import discordLogo from "../../assets/discord.svg";
 // Guarded components
 const GuardedProjectSettings = fakeGuardedRoute("settings", "", [
   "get",
@@ -378,6 +379,15 @@ class Home extends Component<PropsType, StateType> {
           }
         />
       );
+    } else {
+      return (
+        <>
+          <DiscordButton href="https://discord.gg/34n7NN7FJ7" target="_blank">
+            <Icon src={discordLogo} />
+            Join Our Discord
+          </DiscordButton>
+        </>
+      );
     }
   };
 
@@ -632,4 +642,38 @@ const StyledHome = styled.div`
       transform: translateY(0px);
     }
   }
+`;
+
+const DiscordButton = styled.a`
+  position: absolute;
+  z-index: 100;
+  text-decoration: none;
+  bottom: 17px;
+  display: flex;
+  align-items: center;
+  width: 170px;
+  left: 15px;
+  border: 2px solid #ffffff44;
+  border-radius: 3px;
+  color: #ffffff44;
+  height: 40px;
+  font-family: Work Sans, sans-serif;
+  font-size: 14px;
+  font-weight: bold;
+  cursor: pointer;
+  :hover {
+    > img {
+      opacity: 60%;
+    }
+    color: #ffffff88;
+    border-color: #ffffff88;
+  }
+`;
+
+const Icon = styled.img`
+  height: 25px;
+  width: 25px;
+  opacity: 30%;
+  margin-left: 7px;
+  margin-right: 5px;
 `;

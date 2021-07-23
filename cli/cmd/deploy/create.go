@@ -279,7 +279,7 @@ func (c *CreateAgent) CreateFromDocker(
 	}
 
 	if opts.Method == DeployBuildTypeDocker {
-		err = buildAgent.BuildDocker(agent, opts.LocalPath, "latest")
+		err = buildAgent.BuildDocker(agent, opts.LocalPath, ".", opts.LocalDockerfile, "latest")
 	} else {
 		err = buildAgent.BuildPack(agent, opts.LocalPath, "latest")
 	}

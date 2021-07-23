@@ -94,10 +94,7 @@ export type PorterFormFieldFieldState = StringInputFieldState|CheckboxFieldState
 // reducer interfaces
 
 export interface PorterFormFieldValidationState {
-  loading: boolean;
-  error: boolean;
   validated: boolean;
-  touched: boolean;
 }
 
 export interface PorterFormVariableList {

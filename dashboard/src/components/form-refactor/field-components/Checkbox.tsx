@@ -14,7 +14,7 @@ const Checkbox: React.FC<Props> = ({
   variable,
   isReadOnly,
 }) => {
-  const { state, variables, mutateVars } = useFormField<CheckboxFieldState>(
+  const { state, variables, setVars } = useFormField<CheckboxFieldState>(
     id,
     {
       initValue: {},
@@ -34,7 +34,7 @@ const Checkbox: React.FC<Props> = ({
       isRequired={required}
       checked={variables[variable]}
       toggle={() => {
-        mutateVars((vars) => {
+        setVars((vars) => {
           return {
             ...vars,
             [variable]: !vars[variable],

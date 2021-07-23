@@ -52,10 +52,7 @@ export const PorterFormContextProvider: React.FC<Props> = (props) => {
                 state: action.initValue,
                 validation: {
                   ...{
-                    error: false,
-                    loading: false,
                     validated: false,
-                    touched: false,
                   },
                   ...action.initValidation,
                 },

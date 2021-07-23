@@ -222,7 +222,7 @@ func (app *App) upsertUserFromToken(tok *oauth2.Token) (*models.User, error) {
 		if err == gorm.ErrRecordNotFound {
 			user = &models.User{
 				Email:         primary,
-				EmailVerified: verified,
+				EmailVerified: !app.Capabilities.Email || verified,
 				GithubUserID:  githubUser.GetID(),
 			}
 

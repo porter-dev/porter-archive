@@ -17,7 +17,7 @@ const Checkbox: React.FC<Props> = ({
   const { state, variables, setVars } = useFormField<CheckboxFieldState>(
     id,
     {
-      initValue: {},
+      initState: {},
       initValidation: {
         validated: !required,
       },

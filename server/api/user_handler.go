@@ -55,6 +55,10 @@ func (app *App) HandleCreateUser(w http.ResponseWriter, r *http.Request) {
 		app.analyticsClient.Track(analytics.CreateSegmentNewUserTrack(user))
 
 		app.Logger.Info().Msgf("New user created: %d", user.ID)
+
+		// non-fatal email verification flow
+		app.startEmailVerificationFlow(user)
+
 		var redirect string
 
 		if valR := session.Values["redirect"]; valR != nil {
@@ -382,46 +386,7 @@ func (app *App) InitiateEmailVerifyUser(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	// error already handled by helper
-	if err != nil {
-		return
-	}
-
-	form := &forms.InitiateResetUserPasswordForm{
-		Email: user.Email,
-	}
-
-	// convert the form to a pw reset token model
-	pwReset, rawToken, err := form.ToPWResetToken()
-
-	if err != nil {
-		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
-		return
-	}
-
-	// handle write to the database
-	pwReset, err = app.Repo.PWResetToken.CreatePWResetToken(pwReset)
-
-	if err != nil {
-		app.handleErrorDataWrite(err, w)
-		return
-	}
-
-	queryVals := url.Values{
-		"token":    []string{rawToken},
-		"token_id": []string{fmt.Sprintf("%d", pwReset.ID)},
-	}
-
-	sgClient := email.SendgridClient{
-		APIKey:                app.ServerConf.SendgridAPIKey,
-		VerifyEmailTemplateID: app.ServerConf.SendgridVerifyEmailTemplateID,
-		SenderEmail:           app.ServerConf.SendgridSenderEmail,
-	}
-
-	err = sgClient.SendEmailVerification(
-		fmt.Sprintf("%s/api/email/verify/finalize?%s", app.ServerConf.ServerURL, queryVals.Encode()),
-		form.Email,
-	)
+	err = app.startEmailVerificationFlow(user)
 
 	if err != nil {
 		app.handleErrorInternal(err, w)
@@ -429,7 +394,6 @@ func (app *App) InitiateEmailVerifyUser(w http.ResponseWriter, r *http.Request) 
 	}
 
 	w.WriteHeader(http.StatusOK)
-	return
 }
 
 // FinalizEmailVerifyUser completes the email verification flow for a user.
@@ -887,4 +851,40 @@ func (app *App) getUserIDFromRequest(r *http.Request) (uint, error) {
 	userID, _ := session.Values["user_id"].(uint)
 
 	return userID, nil
+}
+
+func (app *App) startEmailVerificationFlow(user *models.User) error {
+	form := &forms.InitiateResetUserPasswordForm{
+		Email: user.Email,
+	}
+
+	// convert the form to a pw reset token model
+	pwReset, rawToken, err := form.ToPWResetToken()
+
+	if err != nil {
+		return err
+	}
+
+	// handle write to the database
+	pwReset, err = app.Repo.PWResetToken.CreatePWResetToken(pwReset)
+
+	if err != nil {
+		return err
+	}
+
+	queryVals := url.Values{
+		"token":    []string{rawToken},
+		"token_id": []string{fmt.Sprintf("%d", pwReset.ID)},
+	}
+
+	sgClient := email.SendgridClient{
+		APIKey:                app.ServerConf.SendgridAPIKey,
+		VerifyEmailTemplateID: app.ServerConf.SendgridVerifyEmailTemplateID,
+		SenderEmail:           app.ServerConf.SendgridSenderEmail,
+	}
+
+	return sgClient.SendEmailVerification(
+		fmt.Sprintf("%s/api/email/verify/finalize?%s", app.ServerConf.ServerURL, queryVals.Encode()),
+		form.Email,
+	)
 }

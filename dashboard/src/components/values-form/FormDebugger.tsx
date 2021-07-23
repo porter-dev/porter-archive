@@ -311,14 +311,14 @@ tabs:
       info: This is some info
       settings:
         type: password
-    - type: string-input
+    - type: number-input
       placeholder: "ex: pilsner"
       label: Non Required Number Input C
       required: false
       variable: field_c
       settings:
         type: number
-    - type: string-input
+    - type: number-input
       placeholder: "ex: pilsner"
       label: Non Required Number Input C with unit
       required: false

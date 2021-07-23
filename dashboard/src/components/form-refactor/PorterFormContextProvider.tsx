@@ -8,7 +8,7 @@ import {
   GetFinalVariablesFunction,
 } from "./types";
 import { ShowIf, ShowIfAnd, ShowIfNot, ShowIfOr } from "../../shared/types";
-import { getFinalVariablesForStringInput } from "./field-components/StringInput";
+import { getFinalVariablesForStringInput } from "./field-components/Input";
 
 interface Props {
   rawFormData: PorterFormData;
@@ -142,6 +142,60 @@ export const PorterFormContextProvider: React.FC<Props> = (props) => {
   };
 
   /*
+    Takes in old form data and changes it to use newer fields
+    For example, number-input becomes input with a setting that makes it
+    a number input
+   */
+  const restructureToNewFields = (data: PorterFormData) => {
+    return {
+      ...data,
+      tabs: data.tabs.map((tab) => {
+        return {
+          ...tab,
+          sections: tab.sections.map((section) => {
+            return {
+              ...section,
+              contents: section.contents.map((field: any) => {
+                if (field.type == "number-input") {
+                  return {
+                    ...field,
+                    type: "input",
+                    settings: {
+                      ...field.settings,
+                      type: "number",
+                    },
+                  };
+                }
+                if (field.type == "string-input") {
+                  return {
+                    ...field,
+                    type: "input",
+                    settings: {
+                      ...field.settings,
+                      type: "string",
+                    },
+                  };
+                }
+                if (field.type == "string-input-password") {
+                  return {
+                    ...field,
+                    type: "input",
+                    settings: {
+                      ...field.settings,
+                      type: "password",
+                    },
+                  };
+                }
+                return field;
+              }),
+            };
+          }),
+        };
+      }),
+    };
+  };
+
+  /*
   We don't want to have the actual <PorterForm> component to do as little form
   logic as possible, so this structures the form object based on show_if statements
   and assigns a unique id to each field
@@ -211,7 +265,10 @@ export const PorterFormContextProvider: React.FC<Props> = (props) => {
       .map((id) => state.components[id]?.validation.validated)
       .every((x) => x);
 
-  const formData = computeFormStructure(props.rawFormData, state.variables);
+  const formData = computeFormStructure(
+    restructureToNewFields(props.rawFormData),
+    state.variables
+  );
   const [requiredIds, varMapping] = computeRequiredVariables(formData);
   const isValidated = doValidation(requiredIds);
 

@@ -4,15 +4,15 @@ import useFormField from "../hooks/useFormField";
 import {
   GenericInputField,
   GetFinalVariablesFunction,
-  StringInputField,
+  InputField,
   StringInputFieldState,
 } from "../types";
 
-interface Props extends StringInputField {
+interface Props extends InputField {
   id: string;
 }
 
-const StringInput: React.FC<Props> = ({
+const Input: React.FC<Props> = ({
   id,
   variable,
   label,
@@ -83,7 +83,7 @@ const StringInput: React.FC<Props> = ({
 
 export const getFinalVariablesForStringInput: GetFinalVariablesFunction = (
   vars,
-  props: StringInputField
+  props: InputField
 ) => {
   if (vars[props.variable])
     return {
@@ -97,4 +97,4 @@ export const getFinalVariablesForStringInput: GetFinalVariablesFunction = (
   };
 };
 
-export default StringInput;
+export default Input;

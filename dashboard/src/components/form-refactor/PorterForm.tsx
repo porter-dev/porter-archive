@@ -1,9 +1,9 @@
 import React, { useContext, useState } from "react";
-import { Section, FormField, StringInputField, CheckboxField } from "./types";
+import { Section, FormField, InputField, CheckboxField } from "./types";
 import TabRegion, { TabOption } from "../TabRegion";
 import Heading from "../values-form/Heading";
 import Helper from "../values-form/Helper";
-import StringInput from "./field-components/StringInput";
+import Input from "./field-components/Input";
 import { PorterFormContext } from "./PorterFormContextProvider";
 import Checkbox from "./field-components/Checkbox";
 import styled from "styled-components";
@@ -38,8 +38,8 @@ const PorterForm: React.FC<Props> = (props) => {
         return <Heading>{field.label}</Heading>;
       case "subtitle":
         return <Helper>{field.label}</Helper>;
-      case "string-input":
-        return <StringInput {...(bundledProps as StringInputField)} />;
+      case "input":
+        return <Input {...(bundledProps as InputField)} />;
       case "checkbox":
         return <Checkbox {...(bundledProps as CheckboxField)} />;
     }

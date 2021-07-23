@@ -66,7 +66,7 @@ export default class KeyValueArray extends Component<PropsType, StateType> {
     };
     this.state.values.forEach((entry: any, i: number) => {
       if (isNumber(entry.value)) {
-        obj[entry.key] = '"' + entry.value + '"';
+        obj[entry.key] = entry.value;
       } else {
         obj[entry.key] = fixNewlines(entry.value);
       }

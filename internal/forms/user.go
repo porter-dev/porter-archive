@@ -19,6 +19,9 @@ type CreateUserForm struct {
 	WriteUserForm
 	Email    string `json:"email" form:"required,max=255,email"`
 	Password string `json:"password" form:"required,max=255"`
+
+	// ignore this field from the json
+	EmailVerified bool `json:"-"`
 }
 
 // ToUser converts a CreateUserForm to models.User
@@ -30,8 +33,9 @@ func (cuf *CreateUserForm) ToUser(_ repository.UserRepository) (*models.User, er
 	}
 
 	return &models.User{
-		Email:    cuf.Email,
-		Password: string(hashed),
+		Email:         cuf.Email,
+		Password:      string(hashed),
+		EmailVerified: cuf.EmailVerified,
 	}, nil
 }
 

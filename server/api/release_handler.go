@@ -809,11 +809,6 @@ func (app *App) HandleCreateWebhookToken(w http.ResponseWriter, r *http.Request)
 		app.Repo.Cluster,
 	)
 
-	if err := json.NewDecoder(r.Body).Decode(form); err != nil {
-		app.handleErrorFormDecoding(err, ErrUserDecode, w)
-		return
-	}
-
 	agent, err := app.getAgentFromReleaseForm(
 		w,
 		r,

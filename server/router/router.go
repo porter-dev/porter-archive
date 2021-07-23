@@ -197,6 +197,12 @@ func New(a *api.App) *chi.Mux {
 
 			r.Method(
 				"GET",
+				"/integrations/github-app/oauth",
+				requestlog.NewHandler(a.HandleGithubAppOauthInit, l),
+			)
+
+			r.Method(
+				"GET",
 				"/integrations/github-app/install",
 				requestlog.NewHandler(a.HandleGithubAppInstall, l),
 			)

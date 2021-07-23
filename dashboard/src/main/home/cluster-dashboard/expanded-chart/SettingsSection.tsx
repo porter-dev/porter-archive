@@ -1,4 +1,4 @@
-import React, { Component } from "react";
+import React, { Component, useContext, useEffect, useState } from "react";
 import styled from "styled-components";
 import api from "shared/api";
 import yaml from "js-yaml";
@@ -15,7 +15,6 @@ import ImageSelector from "components/image-selector/ImageSelector";
 import SaveButton from "components/SaveButton";
 import Heading from "components/values-form/Heading";
 import Helper from "components/values-form/Helper";
-import InputRow from "components/values-form/InputRow";
 import _ from "lodash";
 import CopyToClipboard from "components/CopyToClipboard";
 
@@ -27,201 +26,187 @@ type PropsType = {
   saveButtonText?: string | null;
 };
 
-type StateType = {
-  sourceType: string;
-  selectedImageUrl: string | null;
-  selectedTag: string | null;
-  saveValuesStatus: string | null;
-  values: string;
-  webhookToken: string;
-  highlightCopyButton: boolean;
-  action: ActionConfigType;
-};
+const SettingsSection: React.FC<PropsType> = ({
+  currentChart,
+  refreshChart,
+  setShowDeleteOverlay,
+  showSource,
+  saveButtonText,
+}) => {
+  const [selectedImageUrl, setSelectedImageUrl] = useState<string | null>("");
+  const [selectedTag, setSelectedTag] = useState<string | null>("");
+  const [saveValuesStatus, setSaveValuesStatus] = useState<string | null>(null);
+  const [highlightCopyButton, setHighlightCopyButton] = useState<boolean>(
+    false
+  );
+  const [webhookToken, setWebhookToken] = useState<string>("");
+  const [action, setAction] = useState<ActionConfigType>({
+    git_repo: "",
+    image_repo_uri: "",
+    git_repo_id: 0,
+    branch: "",
+  });
 
-export default class SettingsSection extends Component<PropsType, StateType> {
-  state = {
-    sourceType: "",
-    selectedImageUrl: "",
-    selectedTag: "",
-    values: "",
-    saveValuesStatus: null as string | null,
-    webhookToken: "",
-    highlightCopyButton: false,
-    action: {
-      git_repo: "",
-      image_repo_uri: "",
-      git_repo_id: 0,
-    } as ActionConfigType,
-  };
+  const { currentCluster, currentProject, setCurrentError } = useContext(
+    Context
+  );
 
-  // TODO: read in set image from form context instead of config
-  componentDidMount() {
-    let { currentCluster, currentProject } = this.context;
-
-    let image = this.props.currentChart.config?.image;
-    this.setState({
-      selectedImageUrl: image?.repository,
-      selectedTag: image?.tag,
-    });
+  useEffect(() => {
+    let isSubscribed = true;
+    const image = currentChart?.config?.image;
+    setSelectedImageUrl(image?.repository);
+    setSelectedTag(image?.tag);
 
     api
       .getReleaseToken(
         "<token>",
         {
-          namespace: this.props.currentChart.namespace,
+          namespace: currentChart?.namespace,
           cluster_id: currentCluster.id,
           storage: StorageType.Secret,
         },
-        { id: currentProject.id, name: this.props.currentChart.name }
+        { id: currentProject.id, name: currentChart?.name }
       )
       .then((res) => {
-        this.setState({
-          action: res.data.git_action_config,
-          webhookToken: res.data.webhook_token,
-        });
+        if (!isSubscribed) {
+          return;
+        }
+
+        setAction(res.data.git_action_config);
+        setWebhookToken(res.data.webhook_token);
       })
       .catch(console.log);
-  }
 
-  renderWebhookSection = () => {
-    if (!this.props.currentChart?.form?.hasSource) {
-      return;
-    }
+    return () => (isSubscribed = false);
+  }, [currentChart, currentCluster, currentProject]);
 
-    if (true || this.state.webhookToken) {
-      let webhookText = `curl -X POST 'https://dashboard.getporter.dev/api/webhooks/deploy/${this.state.webhookToken}?commit=YOUR_COMMIT_HASH'`;
-      return (
-        <>
-          {this.props.showSource && (
-            <>
-              <Heading>Source Settings</Heading>
-              <Helper>Specify an image tag to use.</Helper>
-              <ImageSelector
-                selectedTag={this.state.selectedTag}
-                selectedImageUrl={this.state.selectedImageUrl}
-                setSelectedImageUrl={(x: string) =>
-                  this.setState({ selectedImageUrl: x })
-                }
-                setSelectedTag={(x: string) =>
-                  this.setState({ selectedTag: x })
-                }
-                forceExpanded={true}
-                disableImageSelect={true}
-              />
-              <Br />
-            </>
-          )}
-          <Heading>Redeploy Webhook</Heading>
-          <Helper>
-            Programmatically deploy by calling this secret webhook.
-          </Helper>
-          <Webhook copiedToClipboard={this.state.highlightCopyButton}>
-            <div>{webhookText}</div>
-            <CopyToClipboard
-              as="i"
-              text={webhookText}
-              onSuccess={() => this.setState({ highlightCopyButton: true })}
-              wrapperProps={{
-                className: "material-icons",
-                onMouseLeave: () =>
-                  this.setState({ highlightCopyButton: false }),
-              }}
-            >
-              content_copy
-            </CopyToClipboard>
-          </Webhook>
-        </>
-      );
-    }
-  };
+  const handleSubmit = async () => {
+    setSaveValuesStatus("loading");
 
-  handleSubmit = () => {
-    let { currentCluster, setCurrentError, currentProject } = this.context;
-    this.setState({ saveValuesStatus: "loading" });
-
-    console.log(this.state.selectedImageUrl);
+    console.log(selectedImageUrl);
 
     let values = {};
-    if (this.state.selectedTag) {
-      _.set(values, "image.repository", this.state.selectedImageUrl);
-      _.set(values, "image.tag", this.state.selectedTag);
+    if (selectedTag) {
+      _.set(values, "image.repository", selectedImageUrl);
+      _.set(values, "image.tag", selectedTag);
     }
 
     // if this is a job, set it to paused
-    if (this.props.currentChart.chart.metadata.name == "job") {
+    if (currentChart?.chart?.metadata?.name == "job") {
       _.set(values, "paused", true);
     }
 
     // Weave in preexisting values and convert to yaml
     let conf = yaml.dump(
       {
-        ...(this.props.currentChart.config as Object),
+        ...(currentChart?.config as Object),
         ...values,
       },
       { forceQuotes: true }
     );
 
-    api
-      .upgradeChartValues(
+    try {
+      await api.upgradeChartValues(
         "<token>",
         {
-          namespace: this.props.currentChart.namespace,
+          namespace: currentChart?.namespace,
           storage: StorageType.Secret,
           values: conf,
         },
         {
           id: currentProject.id,
-          name: this.props.currentChart.name,
+          name: currentChart?.name,
           cluster_id: currentCluster.id,
         }
-      )
-      .then((res) => {
-        this.setState({ saveValuesStatus: "successful" });
-        this.props.refreshChart();
-      })
-      .catch((err) => {
-        let parsedErr =
-          err?.response?.data?.errors && err.response.data.errors[0];
+      );
+      setSaveValuesStatus("successful");
+      refreshChart();
+    } catch (err) {
+      let parsedErr =
+        err?.response?.data?.errors && err.response.data.errors[0];
 
-        if (parsedErr) {
-          err = parsedErr;
-        }
+      if (parsedErr) {
+        err = parsedErr;
+      }
 
-        this.setState({
-          saveValuesStatus: parsedErr,
-        });
-
-        setCurrentError(parsedErr);
-      });
+      setSaveValuesStatus(parsedErr);
+      setCurrentError(parsedErr);
+    }
   };
 
-  render() {
-    return (
-      <Wrapper>
-        <StyledSettingsSection showSource={this.props.showSource}>
-          {this.renderWebhookSection()}
-          <Heading>Additional Settings</Heading>
-          <Button
-            color="#b91133"
-            onClick={() => this.props.setShowDeleteOverlay(true)}
-          >
-            Delete {this.props.currentChart.name}
-          </Button>
-        </StyledSettingsSection>
-        {this.props.showSource && (
-          <SaveButton
-            text={this.props.saveButtonText || "Save Config"}
-            status={this.state.saveValuesStatus}
-            onClick={this.handleSubmit}
-            makeFlush={true}
-          />
-        )}
-      </Wrapper>
-    );
-  }
-}
+  const renderWebhookSection = () => {
+    if (!currentChart?.form?.hasSource) {
+      return;
+    }
 
-SettingsSection.contextType = Context;
+    const curlWebhook = `curl -X POST 'https://dashboard.getporter.dev/api/webhooks/deploy/${webhookToken}?commit=YOUR_COMMIT_HASH'`;
+
+    return (
+      <>
+        {showSource && (
+          <>
+            <Heading>Source Settings</Heading>
+            <Helper>Specify an image tag to use.</Helper>
+            <ImageSelector
+              selectedTag={selectedTag}
+              selectedImageUrl={selectedImageUrl}
+              setSelectedImageUrl={(x: string) => setSelectedImageUrl(x)}
+              setSelectedTag={(x: string) => setSelectedTag(x)}
+              forceExpanded={true}
+              disableImageSelect={true}
+            />
+            <Br />
+          </>
+        )}
+
+        <>
+          <Heading>Redeploy Webhook</Heading>
+          <Helper>
+            Programmatically deploy by calling this secret webhook.
+          </Helper>
+          {webhookToken.length > 0 && (
+            <Webhook copiedToClipboard={highlightCopyButton}>
+              <div>{curlWebhook}</div>
+              <CopyToClipboard
+                as="i"
+                text={curlWebhook}
+                onSuccess={() => setHighlightCopyButton(true)}
+                wrapperProps={{
+                  className: "material-icons",
+                  onMouseLeave: () => setHighlightCopyButton(false),
+                }}
+              >
+                content_copy
+              </CopyToClipboard>
+            </Webhook>
+          )}
+        </>
+      </>
+    );
+  };
+
+  return (
+    <Wrapper>
+      <StyledSettingsSection showSource={showSource}>
+        {renderWebhookSection()}
+        <Heading>Additional Settings</Heading>
+        <Button color="#b91133" onClick={() => setShowDeleteOverlay(true)}>
+          Delete {currentChart.name}
+        </Button>
+      </StyledSettingsSection>
+      {showSource && (
+        <SaveButton
+          text={saveButtonText || "Save Config"}
+          status={saveValuesStatus}
+          onClick={handleSubmit}
+          makeFlush={true}
+        />
+      )}
+    </Wrapper>
+  );
+};
+
+export default SettingsSection;
 
 const Br = styled.div`
   width: 100%;

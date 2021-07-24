@@ -146,7 +146,7 @@ func (app *App) upsertGoogleUserFromToken(tok *oauth2.Token) (*models.User, erro
 		if err == gorm.ErrRecordNotFound {
 			user = &models.User{
 				Email:         gInfo.Email,
-				EmailVerified: gInfo.EmailVerified,
+				EmailVerified: !app.Capabilities.Email || gInfo.EmailVerified,
 				GoogleUserID:  gInfo.Sub,
 			}
 

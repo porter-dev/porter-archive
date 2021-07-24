@@ -5,14 +5,15 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"github.com/google/go-github/github"
-	"github.com/porter-dev/porter/internal/oauth"
-	"golang.org/x/oauth2"
 	"io/ioutil"
 	"net/http"
 	"net/url"
 	"strconv"
 	"strings"
+
+	"github.com/google/go-github/github"
+	"github.com/porter-dev/porter/internal/oauth"
+	"golang.org/x/oauth2"
 
 	"github.com/go-chi/chi"
 	"github.com/gorilla/sessions"
@@ -215,6 +216,14 @@ func (auth *Auth) DoesUserHaveProjectAccess(
 				http.Error(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)
 				return
 			}
+		}
+
+		// read the user and make sure the email is verified
+		user, err := auth.repo.User.ReadUser(userID)
+
+		if err != nil || !user.EmailVerified {
+			http.Error(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)
+			return
 		}
 
 		// get the project

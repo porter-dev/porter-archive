@@ -3,12 +3,13 @@ package api
 import (
 	"encoding/json"
 	"fmt"
-	"gorm.io/gorm"
 	"net/http"
 	"net/url"
 	"strconv"
 	"strings"
 	"sync"
+
+	"gorm.io/gorm"
 
 	"github.com/porter-dev/porter/internal/analytics"
 	"github.com/porter-dev/porter/internal/kubernetes/prometheus"
@@ -772,6 +773,96 @@ func (app *App) HandleGetReleaseToken(w http.ResponseWriter, r *http.Request) {
 			Code:   ErrReleaseReadData,
 			Errors: []string{"release not found"},
 		}, w)
+	}
+
+	releaseExt := release.Externalize()
+
+	if err := json.NewEncoder(w).Encode(releaseExt); err != nil {
+		app.handleErrorFormDecoding(err, ErrReleaseDecode, w)
+		return
+	}
+}
+
+// HandleCreateWebhookToken creates a new webhook token for a release
+func (app *App) HandleCreateWebhookToken(w http.ResponseWriter, r *http.Request) {
+	name := chi.URLParam(r, "name")
+
+	vals, err := url.ParseQuery(r.URL.RawQuery)
+
+	if err != nil {
+		app.sendExternalError(err, http.StatusInternalServerError, HTTPError{
+			Code:   ErrReleaseReadData,
+			Errors: []string{"release not found"},
+		}, w)
+	}
+
+	// read the release from the target cluster
+	form := &forms.ReleaseForm{
+		Form: &helm.Form{
+			Repo:              app.Repo,
+			DigitalOceanOAuth: app.DOConf,
+		},
+	}
+
+	form.PopulateHelmOptionsFromQueryParams(
+		vals,
+		app.Repo.Cluster,
+	)
+
+	agent, err := app.getAgentFromReleaseForm(
+		w,
+		r,
+		form,
+	)
+
+	if err != nil {
+		app.handleErrorFormDecoding(err, ErrUserDecode, w)
+		return
+	}
+
+	rel, err := agent.GetRelease(name, 0)
+
+	if err != nil {
+		app.handleErrorDataRead(err, w)
+		return
+	}
+
+	token, err := repository.GenerateRandomBytes(16)
+
+	if err != nil {
+		app.handleErrorInternal(err, w)
+		return
+	}
+
+	// create release with webhook token in db
+	image, ok := rel.Config["image"].(map[string]interface{})
+	if !ok {
+		app.handleErrorInternal(fmt.Errorf("Could not find field image in config"), w)
+		return
+	}
+
+	repository := image["repository"]
+	repoStr, ok := repository.(string)
+
+	if !ok {
+		app.handleErrorInternal(fmt.Errorf("Could not find field repository in config"), w)
+		return
+	}
+
+	release := &models.Release{
+		ClusterID:    form.Form.Cluster.ID,
+		ProjectID:    form.Form.Cluster.ProjectID,
+		Namespace:    form.Form.Namespace,
+		Name:         name,
+		WebhookToken: token,
+		ImageRepoURI: repoStr,
+	}
+
+	release, err = app.Repo.Release.CreateRelease(release)
+
+	if err != nil {
+		app.handleErrorInternal(err, w)
+		return
 	}
 
 	releaseExt := release.Externalize()

@@ -60,13 +60,14 @@ func GetIngressesWithNGINXAnnotation(clientset kubernetes.Interface) ([]SimpleIn
 }
 
 type QueryOpts struct {
-	Metric     string   `schema:"metric"`
-	ShouldSum  bool     `schema:"shouldsum"`
-	PodList    []string `schema:"pods"`
-	Namespace  string   `schema:"namespace"`
-	StartRange uint     `schema:"startrange"`
-	EndRange   uint     `schema:"endrange"`
-	Resolution string   `schema:"resolution"`
+	Metric     string `schema:"metric"`
+	ShouldSum  bool   `schema:"shouldsum"`
+	Kind       string `schema:"kind"`
+	Name       string `schema:"name"`
+	Namespace  string `schema:"namespace"`
+	StartRange uint   `schema:"startrange"`
+	EndRange   uint   `schema:"endrange"`
+	Resolution string `schema:"resolution"`
 }
 
 func QueryPrometheus(
@@ -78,7 +79,13 @@ func QueryPrometheus(
 		return nil, fmt.Errorf("prometheus service has no exposed ports to query")
 	}
 
-	podSelector := fmt.Sprintf(`namespace="%s",pod=~"%s",container!="POD",container!=""`, opts.Namespace, strings.Join(opts.PodList, "|"))
+	podSelectionRegex, err := getPodSelectionRegex(opts.Kind, opts.Name)
+
+	if err != nil {
+		return nil, err
+	}
+
+	podSelector := fmt.Sprintf(`namespace="%s",pod=~"%s",container!="POD",container!=""`, opts.Namespace, podSelectionRegex)
 	query := ""
 
 	if opts.Metric == "cpu" {
@@ -86,11 +93,11 @@ func QueryPrometheus(
 	} else if opts.Metric == "memory" {
 		query = fmt.Sprintf("container_memory_usage_bytes{%s}", podSelector)
 	} else if opts.Metric == "network" {
-		netPodSelector := fmt.Sprintf(`namespace="%s",pod=~"%s",container="POD"`, opts.Namespace, strings.Join(opts.PodList, "|"))
+		netPodSelector := fmt.Sprintf(`namespace="%s",pod=~"%s",container="POD"`, opts.Namespace, podSelectionRegex)
 		query = fmt.Sprintf("rate(container_network_receive_bytes_total{%s}[5m])", netPodSelector)
 	} else if opts.Metric == "nginx:errors" {
-		num := fmt.Sprintf(`sum(rate(nginx_ingress_controller_requests{status=~"5.*",namespace="%s",ingress=~"%s"}[5m]) OR on() vector(0))`, opts.Namespace, strings.Join(opts.PodList, "|"))
-		denom := fmt.Sprintf(`sum(rate(nginx_ingress_controller_requests{namespace="%s",ingress=~"%s"}[5m]) > 0)`, opts.Namespace, strings.Join(opts.PodList, "|"))
+		num := fmt.Sprintf(`sum(rate(nginx_ingress_controller_requests{status=~"5.*",namespace="%s",ingress=~"%s"}[5m]) OR on() vector(0))`, opts.Namespace, podSelectionRegex)
+		denom := fmt.Sprintf(`sum(rate(nginx_ingress_controller_requests{namespace="%s",ingress=~"%s"}[5m]) > 0)`, opts.Namespace, podSelectionRegex)
 		query = fmt.Sprintf(`%s / %s * 100 OR on() vector(0)`, num, denom)
 	}
 
@@ -185,4 +192,23 @@ func parseQuery(rawQuery []byte, metric string) ([]byte, error) {
 	}
 
 	return json.Marshal(res)
+}
+
+func getPodSelectionRegex(kind, name string) (string, error) {
+	var suffix string
+
+	switch strings.ToLower(kind) {
+	case "deployment":
+		suffix = "[a-z0-9]+-[a-z0-9]+"
+	case "statefulset":
+		suffix = "[0-9]+"
+	case "job":
+		suffix = "[a-z0-9]+"
+	case "cronjob":
+		suffix = "[a-z0-9]+-[a-z0-9]+"
+	default:
+		return "", fmt.Errorf("not a supported controller to query for metrics")
+	}
+
+	return fmt.Sprintf("%s-%s", name, suffix), nil
 }

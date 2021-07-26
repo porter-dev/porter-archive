@@ -68,7 +68,10 @@ export const PorterFormContextProvider: React.FC<Props> = (props) => {
             ...state.components,
             [action.id]: {
               ...state.components[action.id],
-              state: action.updateFunc(state.components[action.id]),
+              state: {
+                ...state.components[action.id].state,
+                ...action.updateFunc(state.components[action.id].state),
+              },
             },
           },
         };

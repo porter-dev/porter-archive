@@ -15,12 +15,12 @@ export interface GenericInputField extends GenericField {
   variable: string;
 }
 
-export interface HeadingField extends GenericField{
+export interface HeadingField extends GenericField {
   type: "heading";
   label: string;
 }
 
-export interface SubtitleField extends GenericField{
+export interface SubtitleField extends GenericField {
   type: "subtitle";
   label: string;
 }
@@ -45,7 +45,15 @@ export interface CheckboxField extends GenericInputField {
   label?: string;
 }
 
-export type FormField = HeadingField|SubtitleField|InputField|CheckboxField;
+export interface KeyValueArrayField extends GenericInputField {
+  type: "key-value-array";
+  label?: string;
+  secretOption?: boolean;
+  envLoader?: boolean;
+  fileUpload?: boolean;
+}
+
+export type FormField = HeadingField|SubtitleField|InputField|CheckboxField|KeyValueArrayField;
 
 export interface ShowIfAnd {
   and: ShowIf[];
@@ -85,11 +93,18 @@ export interface PorterFormValidationInfo {
 }
 
 // internal field state interfaces
-
 export interface StringInputFieldState {}
 export interface CheckboxFieldState {}
+export interface KeyValueArrayFieldState {
+  values: {
+    key: string,
+    value: string
+  }[];
+  showEnvModal: boolean;
+  showEditorModal: boolean;
+}
 
-export type PorterFormFieldFieldState = StringInputFieldState|CheckboxFieldState;
+export type PorterFormFieldFieldState = StringInputFieldState|CheckboxFieldState|KeyValueArrayField;
 
 // reducer interfaces
 
@@ -122,7 +137,7 @@ export interface PorterFormInitFieldAction {
 export interface PorterFormUpdateFieldAction {
   type: "update-field",
   id: string;
-  updateFunc: (prev: PorterFormFieldFieldState) => PorterFormFieldFieldState;
+  updateFunc: (prev: PorterFormFieldFieldState) => Partial<PorterFormFieldFieldState>;
 }
 
 export interface PorterFormUpdateValidationAction {

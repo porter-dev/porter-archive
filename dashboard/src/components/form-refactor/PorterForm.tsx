@@ -1,11 +1,18 @@
 import React, { useContext, useState } from "react";
-import { Section, FormField, InputField, CheckboxField } from "./types";
+import {
+  Section,
+  FormField,
+  InputField,
+  CheckboxField,
+  KeyValueArrayField,
+} from "./types";
 import TabRegion, { TabOption } from "../TabRegion";
 import Heading from "../values-form/Heading";
 import Helper from "../values-form/Helper";
 import Input from "./field-components/Input";
 import { PorterFormContext } from "./PorterFormContextProvider";
 import Checkbox from "./field-components/Checkbox";
+import KeyValueArray from "./field-components/KeyValueArray";
 import styled from "styled-components";
 import SaveButton from "../SaveButton";
 
@@ -42,6 +49,8 @@ const PorterForm: React.FC<Props> = (props) => {
         return <Input {...(bundledProps as InputField)} />;
       case "checkbox":
         return <Checkbox {...(bundledProps as CheckboxField)} />;
+      case "key-value-array":
+        return <KeyValueArray {...(bundledProps as KeyValueArrayField)} />;
     }
     return <p>Not Implemented: {(field as any).type}</p>;
   };

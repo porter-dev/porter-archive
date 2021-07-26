@@ -9,7 +9,7 @@ import {
 interface FormFieldData<T> {
   state: T;
   variables: PorterFormVariableList;
-  setState: (setFunc: (prev: T) => T) => void;
+  setState: (setFunc: (prev: T) => Partial<T>) => void;
   setVars: (
     setFunc: (vars: PorterFormVariableList) => PorterFormVariableList
   ) => void;
@@ -44,7 +44,7 @@ const useFormField = <T extends PorterFormFieldFieldState>(
     });
   }, []);
 
-  const setState = (updateFunc: (prev: T) => T) => {
+  const setState = (updateFunc: (prev: T) => Partial<T>) => {
     dispatchAction({
       type: "update-field",
       id: fieldId,

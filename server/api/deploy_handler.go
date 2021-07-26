@@ -352,7 +352,7 @@ func (app *App) HandleUninstallTemplate(w http.ResponseWriter, r *http.Request) 
 
 				yaml.Unmarshal(rawValues, cEnv)
 
-				gr, err := app.Repo.GitRepo.ReadGitRepo(gitAction.GithubInstallationID)
+				gr, err := app.Repo.GitRepo.ReadGitRepo(gitAction.GitRepoID)
 
 				if err != nil {
 					if err != gorm.ErrRecordNotFound {

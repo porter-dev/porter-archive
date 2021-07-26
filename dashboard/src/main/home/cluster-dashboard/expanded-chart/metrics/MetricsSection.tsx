@@ -267,8 +267,10 @@ export default class MetricsSection extends Component<PropsType, StateType> {
         "<token>",
         {
           cluster_id: currentCluster.id,
-          metric: kind,
-          shouldsum: shouldsum,
+          // metric: kind,
+          // shouldsum: shouldsum,
+          metric: "memory_hpa_threshold",
+          shouldsum: false,
           kind: this.state.selectedController?.kind,
           name: this.state.selectedController?.metadata.name,
           namespace: namespace,

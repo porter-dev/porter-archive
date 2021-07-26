@@ -60,13 +60,14 @@ func GetIngressesWithNGINXAnnotation(clientset kubernetes.Interface) ([]SimpleIn
 }
 
 type QueryOpts struct {
-	Metric     string   `schema:"metric"`
-	ShouldSum  bool     `schema:"shouldsum"`
-	PodList    []string `schema:"pods"`
-	Namespace  string   `schema:"namespace"`
-	StartRange uint     `schema:"startrange"`
-	EndRange   uint     `schema:"endrange"`
-	Resolution string   `schema:"resolution"`
+	Metric     string `schema:"metric"`
+	ShouldSum  bool   `schema:"shouldsum"`
+	Kind       string `schema:"kind"`
+	Name       string `schema:"name"`
+	Namespace  string `schema:"namespace"`
+	StartRange uint   `schema:"startrange"`
+	EndRange   uint   `schema:"endrange"`
+	Resolution string `schema:"resolution"`
 }
 
 func QueryPrometheus(
@@ -78,7 +79,13 @@ func QueryPrometheus(
 		return nil, fmt.Errorf("prometheus service has no exposed ports to query")
 	}
 
-	podSelector := fmt.Sprintf(`namespace="%s",pod=~"%s",container!="POD",container!=""`, opts.Namespace, strings.Join(opts.PodList, "|"))
+	podSelectionRegex, err := getPodSelectionRegex(opts.Kind, opts.Name)
+
+	if err != nil {
+		return nil, err
+	}
+
+	podSelector := fmt.Sprintf(`namespace="%s",pod=~"%s",container!="POD",container!=""`, opts.Namespace, podSelectionRegex)
 	query := ""
 
 	if opts.Metric == "cpu" {
@@ -86,12 +93,16 @@ func QueryPrometheus(
 	} else if opts.Metric == "memory" {
 		query = fmt.Sprintf("container_memory_usage_bytes{%s}", podSelector)
 	} else if opts.Metric == "network" {
-		netPodSelector := fmt.Sprintf(`namespace="%s",pod=~"%s",container="POD"`, opts.Namespace, strings.Join(opts.PodList, "|"))
+		netPodSelector := fmt.Sprintf(`namespace="%s",pod=~"%s",container="POD"`, opts.Namespace, podSelectionRegex)
 		query = fmt.Sprintf("rate(container_network_receive_bytes_total{%s}[5m])", netPodSelector)
 	} else if opts.Metric == "nginx:errors" {
-		num := fmt.Sprintf(`sum(rate(nginx_ingress_controller_requests{status=~"5.*",namespace="%s",ingress=~"%s"}[5m]) OR on() vector(0))`, opts.Namespace, strings.Join(opts.PodList, "|"))
-		denom := fmt.Sprintf(`sum(rate(nginx_ingress_controller_requests{namespace="%s",ingress=~"%s"}[5m]) > 0)`, opts.Namespace, strings.Join(opts.PodList, "|"))
+		num := fmt.Sprintf(`sum(rate(nginx_ingress_controller_requests{status=~"5.*",namespace="%s",ingress=~"%s"}[5m]) OR on() vector(0))`, opts.Namespace, podSelectionRegex)
+		denom := fmt.Sprintf(`sum(rate(nginx_ingress_controller_requests{namespace="%s",ingress=~"%s"}[5m]) > 0)`, opts.Namespace, podSelectionRegex)
 		query = fmt.Sprintf(`%s / %s * 100 OR on() vector(0)`, num, denom)
+	} else if opts.Metric == "cpu_hpa_threshold" {
+		query = createHPAAbsoluteCPUThresholdQuery(podSelectionRegex, opts.Name, opts.Namespace)
+	} else if opts.Metric == "memory_hpa_threshold" {
+		query = createHPAAbsoluteMemoryThresholdQuery(podSelectionRegex, opts.Name, opts.Namespace)
 	}
 
 	if opts.ShouldSum {
@@ -174,6 +185,10 @@ func parseQuery(rawQuery []byte, metric string) ([]byte, error) {
 				singletonResult.Bytes = values[1]
 			} else if metric == "nginx:errors" {
 				singletonResult.ErrorPct = values[1]
+			} else if metric == "cpu_hpa_threshold" {
+				singletonResult.CPU = values[1]
+			} else if metric == "memory_hpa_threshold" {
+				singletonResult.Memory = values[1]
 			}
 
 			singletonResults = append(singletonResults, *singletonResult)
@@ -185,4 +200,65 @@ func parseQuery(rawQuery []byte, metric string) ([]byte, error) {
 	}
 
 	return json.Marshal(res)
+}
+
+func getPodSelectionRegex(kind, name string) (string, error) {
+	var suffix string
+
+	switch strings.ToLower(kind) {
+	case "deployment":
+		suffix = "[a-z0-9]+-[a-z0-9]+"
+	case "statefulset":
+		suffix = "[0-9]+"
+	case "job":
+		suffix = "[a-z0-9]+"
+	case "cronjob":
+		suffix = "[a-z0-9]+-[a-z0-9]+"
+	default:
+		return "", fmt.Errorf("not a supported controller to query for metrics")
+	}
+
+	return fmt.Sprintf("%s-%s", name, suffix), nil
+}
+
+func createHPAAbsoluteCPUThresholdQuery(podSelectionRegex, hpaName, namespace string) string {
+	requestCPU := fmt.Sprintf(
+		`sum by (hpa) (label_replace(kube_pod_container_resource_requests_cpu_cores{pod=~"%s",namespace="%s",container!="POD",container!=""},"hpa", "%s", "", ""))`,
+		podSelectionRegex,
+		namespace,
+		hpaName,
+	)
+
+	targetCPUUtilThreshold := fmt.Sprintf(
+		`kube_hpa_spec_target_metric{hpa="%s",namespace="%s",metric_name="cpu",metric_target_type="utilization"} / 100`,
+		hpaName,
+		namespace,
+	)
+
+	return fmt.Sprintf(`%s * on(hpa) %s`, requestCPU, targetCPUUtilThreshold)
+}
+
+func createHPAAbsoluteMemoryThresholdQuery(podSelectionRegex, hpaName, namespace string) string {
+	requestMem := fmt.Sprintf(
+		`sum by (hpa) (label_replace(kube_pod_container_resource_requests_memory_bytes{pod=~"%s",namespace="%s",container!="POD",container!=""},"hpa", "%s", "", ""))`,
+		podSelectionRegex,
+		namespace,
+		hpaName,
+	)
+
+	targetMemUtilThreshold := fmt.Sprintf(
+		`kube_hpa_spec_target_metric{hpa="%s",namespace="%s",metric_name="memory",metric_target_type="utilization"} / 100`,
+		hpaName,
+		namespace,
+	)
+
+	return fmt.Sprintf(`%s * on(hpa) %s`, requestMem, targetMemUtilThreshold)
+}
+
+func createHPACurrentReplicasQuery(hpaName, namespace string) string {
+	return fmt.Sprintf(
+		`kube_hpa_status_current_replicas{hpa="%s",namespace="%s"}`,
+		hpaName,
+		namespace,
+	)
 }

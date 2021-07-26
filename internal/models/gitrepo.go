@@ -62,7 +62,10 @@ type GitActionConfig struct {
 	ImageRepoURI string `json:"image_repo_uri"`
 
 	// The git installation ID
-	GithubInstallationID uint `json:"git_repo_id"`
+	GithubInstallationID uint `json:"git_installation_id"`
+
+	// The git repo ID (legacy field)
+	GitRepoID uint `json:"git_repo_id"`
 
 	// The path to the dockerfile in the git repo
 	DockerfilePath string `json:"dockerfile_path"`

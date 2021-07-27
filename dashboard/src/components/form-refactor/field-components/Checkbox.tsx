@@ -1,5 +1,10 @@
 import React from "react";
-import { CheckboxField, CheckboxFieldState } from "../types";
+import {
+  ArrayInputField,
+  CheckboxField,
+  CheckboxFieldState,
+  GetFinalVariablesFunction,
+} from "../types";
 import CheckboxRow from "../../values-form/CheckboxRow";
 import useFormField from "../hooks/useFormField";
 
@@ -48,3 +53,14 @@ const Checkbox: React.FC<Props> = ({
 };
 
 export default Checkbox;
+
+export const getFinalVariablesForCheckbox: GetFinalVariablesFunction = (
+  vars,
+  props: CheckboxField
+) => {
+  return vars[props.variable]
+    ? {}
+    : {
+        [props.variable]: !!props.settings?.default,
+      };
+};

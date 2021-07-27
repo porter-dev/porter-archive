@@ -385,13 +385,7 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
   };
 
   useEffect(() => {
-    if (
-      selectedMetric &&
-      selectedRange &&
-      selectedPod &&
-      selectedController &&
-      selectedIngress
-    ) {
+    if (selectedMetric && selectedRange && selectedPod && selectedController) {
       getMetrics();
     }
   }, [

@@ -16,7 +16,7 @@ const AuthProvider: React.FC = ({ children }) => {
 
   useEffect(() => {
     let isSubscribed = true;
-    if (!user) {
+    if (!user || !currentProject?.id) {
       setCurrentPolicy(null);
     } else {
       api

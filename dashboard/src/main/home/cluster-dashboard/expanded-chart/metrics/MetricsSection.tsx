@@ -259,7 +259,7 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
     }
 
     const kind = selectedMetric;
-    let shouldsum = true;
+    let shouldsum = selectedPod === "All";
     let namespace = currentChart.namespace;
 
     // calculate start and end range

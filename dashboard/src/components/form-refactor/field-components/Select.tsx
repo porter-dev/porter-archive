@@ -1,5 +1,10 @@
 import React, { useContext } from "react";
-import { SelectField, SelectFieldState } from "../types";
+import {
+  CheckboxField,
+  GetFinalVariablesFunction,
+  SelectField,
+  SelectFieldState,
+} from "../types";
 import Selector from "../../Selector";
 import styled from "styled-components";
 import useFormField from "../hooks/useFormField";
@@ -7,7 +12,6 @@ import { Context } from "../../../shared/Context";
 
 const Select: React.FC<SelectField> = (props) => {
   const { currentCluster } = useContext(Context);
-  console.log(currentCluster.service);
   const { variables, setVars } = useFormField<SelectFieldState>(props.id, {
     initVars: {
       [props.variable]: props.settings.default
@@ -57,6 +61,28 @@ const Select: React.FC<SelectField> = (props) => {
 };
 
 export default Select;
+
+export const getFinalVariablesForSelect: GetFinalVariablesFunction = (
+  vars,
+  props: SelectField,
+  state,
+  context
+) => {
+  return vars[props.variable]
+    ? {}
+    : {
+        [props.variable]: props.settings.default
+          ? props.settings.default
+          : props.settings.type == "provider"
+          ? ({
+              gke: "gcp",
+              eks: "aws",
+              doks: "do",
+            } as Record<string, string>)[context.currentCluster?.service] ||
+            "aws"
+          : props.settings.options[0].value,
+      };
+};
 
 const SelectWrapper = styled.div``;
 

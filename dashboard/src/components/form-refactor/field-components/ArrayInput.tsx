@@ -1,6 +1,10 @@
 import React from "react";
 import styled from "styled-components";
-import { ArrayInputField, ArrayInputFieldState } from "../types";
+import {
+  ArrayInputField,
+  ArrayInputFieldState,
+  GetFinalVariablesFunction,
+} from "../types";
 import useFormField from "../hooks/useFormField";
 
 const ArrayInput: React.FC<ArrayInputField> = (props) => {
@@ -91,6 +95,17 @@ const ArrayInput: React.FC<ArrayInputField> = (props) => {
 };
 
 export default ArrayInput;
+
+export const getFinalVariablesForArrayInput: GetFinalVariablesFunction = (
+  vars,
+  props: ArrayInputField
+) => {
+  return vars[props.variable]
+    ? {}
+    : {
+        [props.variable]: [],
+      };
+};
 
 const AddRowButton = styled.div`
   display: flex;

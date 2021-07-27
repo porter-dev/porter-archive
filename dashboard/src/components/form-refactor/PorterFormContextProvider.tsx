@@ -11,6 +11,9 @@ import { ShowIf, ShowIfAnd, ShowIfNot, ShowIfOr } from "../../shared/types";
 import { getFinalVariablesForStringInput } from "./field-components/Input";
 import { getFinalVariablesForKeyValueArray } from "./field-components/KeyValueArray";
 import { Context } from "../../shared/Context";
+import { getFinalVariablesForArrayInput } from "./field-components/ArrayInput";
+import { getFinalVariablesForCheckbox } from "./field-components/Checkbox";
+import { getFinalVariablesForSelect } from "./field-components/Select";
 
 interface Props {
   rawFormData: PorterFormData;
@@ -18,6 +21,7 @@ interface Props {
   initialVariables?: PorterFormVariableList;
   overrideVariables?: PorterFormVariableList;
   isReadOnly?: boolean;
+  doDebug?: boolean;
 }
 
 interface ContextProps {
@@ -35,7 +39,7 @@ export const PorterFormContext = createContext<ContextProps | undefined>(
 const { Provider } = PorterFormContext;
 
 export const PorterFormContextProvider: React.FC<Props> = (props) => {
-  const { currentCluster } = useContext(Context);
+  const context = useContext(Context);
 
   const handleAction = (
     state: PorterFormState,
@@ -321,19 +325,23 @@ export const PorterFormContextProvider: React.FC<Props> = (props) => {
       Object.assign({}, state.variables),
     ];
     const finalFunctions: Record<string, GetFinalVariablesFunction> = {
-      "string-input": getFinalVariablesForStringInput,
+      input: getFinalVariablesForStringInput,
+      "array-input": getFinalVariablesForArrayInput,
+      checkbox: getFinalVariablesForCheckbox,
       "key-value-array": getFinalVariablesForKeyValueArray,
+      select: getFinalVariablesForSelect,
     };
 
     formData.tabs.map((tab) =>
       tab.sections.map((section) =>
         section.contents.map((field) => {
-          if (finalFunctions[field.type] && state.components[field.id])
+          if (finalFunctions[field.type])
             varList.push(
               finalFunctions[field.type](
                 state.variables,
                 field,
-                state.components[field.id].state
+                state.components[field.id]?.state,
+                context
               )
             );
         })
@@ -343,11 +351,13 @@ export const PorterFormContextProvider: React.FC<Props> = (props) => {
     props.onSubmit(Object.assign.apply({}, varList));
   };
 
-  console.group("Validation Info:");
-  console.log(requiredIds);
-  console.log(varMapping);
-  console.log(isValidated);
-  console.groupEnd();
+  if (props.doDebug) {
+    console.group("Validation Info:");
+    console.log(requiredIds);
+    console.log(varMapping);
+    console.log(isValidated);
+    console.groupEnd();
+  }
 
   return (
     <Provider

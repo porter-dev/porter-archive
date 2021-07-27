@@ -286,7 +286,6 @@ const KeyValueArray: React.FC<Props> = (props) => {
             <AddRowButton
               onClick={() => {
                 setState((prev) => {
-                  console.log(prev);
                   return {
                     values: [...prev.values, { key: "", value: "" }],
                   };
@@ -336,6 +335,11 @@ export const getFinalVariablesForKeyValueArray: GetFinalVariablesFunction = (
   props: KeyValueArrayField,
   state: KeyValueArrayFieldState
 ) => {
+  if (!state)
+    return {
+      [props.variable]: {},
+    };
+
   let obj = {} as any;
   const rg = /(?:^|[^\\])(\\n)/g;
   const fixNewlines = (s: string) => {

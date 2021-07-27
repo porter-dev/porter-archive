@@ -5,6 +5,8 @@
 
 // YAML Field interfaces
 
+import { ContextProps } from "../../shared/types";
+
 export interface GenericField {
   id: string;
 }
@@ -198,4 +200,5 @@ export interface PorterFormMutateVariablesAction {
 
 export type PorterFormAction = PorterFormInitFieldAction|PorterFormUpdateFieldAction|PorterFormMutateVariablesAction|PorterFormUpdateValidationAction;
 
-export type GetFinalVariablesFunction = (vars: PorterFormVariableList, props: FormField, state: PorterFormFieldFieldState) => PorterFormVariableList;
+export type GetFinalVariablesFunction = (vars: PorterFormVariableList, props: FormField,
+                                         state: PorterFormFieldFieldState, context: Partial<ContextProps>) => PorterFormVariableList;

@@ -13,6 +13,7 @@ export interface GenericInputField extends GenericField {
   isReadOnly?: boolean;
   required?: boolean;
   variable: string;
+  settings: any
 }
 
 export interface HeadingField extends GenericField {

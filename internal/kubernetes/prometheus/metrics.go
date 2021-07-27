@@ -117,6 +117,8 @@ func QueryPrometheus(
 		query = fmt.Sprintf("sum(%s)", query)
 	}
 
+	fmt.Println(query)
+
 	queryParams := map[string]string{
 		"query": query,
 		"start": fmt.Sprintf("%d", opts.StartRange),
@@ -231,14 +233,14 @@ func getPodSelectionRegex(kind, name string) (string, error) {
 
 func createHPAAbsoluteCPUThresholdQuery(podSelectionRegex, hpaName, namespace string) string {
 	requestCPU := fmt.Sprintf(
-		`sum by (hpa) (label_replace(kube_pod_container_resource_requests_cpu_cores{pod=~"%s",namespace="%s",container!="POD",container!=""},"hpa", "%s", "", ""))`,
+		`sum by (hpa) (label_replace(kube_pod_container_resource_requests_cpu_cores{pod=~"%s",namespace="%s",container!="POD",container!="",app_kubernetes_io_instance="prometheus"},"hpa", "%s", "", ""))`,
 		podSelectionRegex,
 		namespace,
 		hpaName,
 	)
 
 	targetCPUUtilThreshold := fmt.Sprintf(
-		`kube_hpa_spec_target_metric{hpa="%s",namespace="%s",metric_name="cpu",metric_target_type="utilization"} / 100`,
+		`kube_hpa_spec_target_metric{hpa="%s",namespace="%s",metric_name="cpu",metric_target_type="utilization",app_kubernetes_io_instance="prometheus"} / 100`,
 		hpaName,
 		namespace,
 	)
@@ -248,14 +250,14 @@ func createHPAAbsoluteCPUThresholdQuery(podSelectionRegex, hpaName, namespace st
 
 func createHPAAbsoluteMemoryThresholdQuery(podSelectionRegex, hpaName, namespace string) string {
 	requestMem := fmt.Sprintf(
-		`sum by (hpa) (label_replace(kube_pod_container_resource_requests_memory_bytes{pod=~"%s",namespace="%s",container!="POD",container!=""},"hpa", "%s", "", ""))`,
+		`sum by (hpa) (label_replace(kube_pod_container_resource_requests_memory_bytes{pod=~"%s",namespace="%s",container!="POD",container!="",app_kubernetes_io_instance="prometheus"},"hpa", "%s", "", ""))`,
 		podSelectionRegex,
 		namespace,
 		hpaName,
 	)
 
 	targetMemUtilThreshold := fmt.Sprintf(
-		`kube_hpa_spec_target_metric{hpa="%s",namespace="%s",metric_name="memory",metric_target_type="utilization"} / 100`,
+		`kube_hpa_spec_target_metric{hpa="%s",namespace="%s",metric_name="memory",metric_target_type="utilization",app_kubernetes_io_instance="prometheus"} / 100`,
 		hpaName,
 		namespace,
 	)

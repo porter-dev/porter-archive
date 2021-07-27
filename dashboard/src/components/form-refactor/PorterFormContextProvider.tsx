@@ -255,7 +255,13 @@ export const PorterFormContextProvider: React.FC<Props> = (props) => {
     data.tabs.map((tab) =>
       tab.sections.map((section) =>
         section.contents.map((field) => {
-          if (field.type == "heading" || field.type == "subtitle") return;
+          if (
+            field.type == "heading" ||
+            field.type == "subtitle" ||
+            field.type == "resource-list" ||
+            field.type == "service-ip-list"
+          )
+            return;
           if (field.required) {
             requiredIds.push(field.id);
           }

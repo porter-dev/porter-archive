@@ -202,6 +202,7 @@ func startLocal(
 		"SQL_LITE=true",
 		"SQL_LITE_PATH=" + sqlLitePath,
 		"STATIC_FILE_PATH=" + staticFilePath,
+		fmt.Sprintf("SERVER_PORT=%d", port),
 		"REDIS_ENABLED=false",
 	}...)
 

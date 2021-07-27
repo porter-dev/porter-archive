@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/porter-dev/porter/internal/models"
 	"golang.org/x/oauth2"
 	"net/http"
 	"net/url"
@@ -12,39 +13,73 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/bradleyfalzon/ghinstallation"
 	"github.com/go-chi/chi"
 	"github.com/google/go-github/github"
-	"github.com/porter-dev/porter/internal/models"
 )
 
 // HandleListProjectGitRepos returns a list of git repos for a project
 func (app *App) HandleListProjectGitRepos(w http.ResponseWriter, r *http.Request) {
-	projID, err := strconv.ParseUint(chi.URLParam(r, "project_id"), 0, 64)
 
-	if err != nil || projID == 0 {
-		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
-		return
-	}
-
-	grs, err := app.Repo.GitRepo.ListGitReposByProjectID(uint(projID))
+	tok, err := app.getGithubAppOauthTokenFromRequest(r)
 
 	if err != nil {
-		app.handleErrorRead(err, ErrProjectDataRead, w)
+		json.NewEncoder(w).Encode(make([]*models.GitRepoExternal, 0))
 		return
 	}
 
-	extGRs := make([]*models.GitRepoExternal, 0)
+	client := github.NewClient(app.GithubProjectConf.Client(oauth2.NoContext, tok))
 
-	for _, gr := range grs {
-		extGRs = append(extGRs, gr.Externalize())
-	}
+	accountIds := make([]int64, 0)
 
-	w.WriteHeader(http.StatusOK)
+	AuthUser, _, err := client.Users.Get(context.Background(), "")
 
-	if err := json.NewEncoder(w).Encode(extGRs); err != nil {
-		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
+	if err != nil {
+		app.handleErrorInternal(err, w)
 		return
 	}
+
+	accountIds = append(accountIds, *AuthUser.ID)
+
+	opts := &github.ListOptions{
+		PerPage: 100,
+		Page:    1,
+	}
+
+	for {
+		orgs, pages, err := client.Organizations.List(context.Background(), "", opts)
+
+		if err != nil {
+			res := HandleListGithubAppAccessResp{
+				HasAccess: false,
+			}
+			json.NewEncoder(w).Encode(res)
+			return
+		}
+
+		for _, org := range orgs {
+			accountIds = append(accountIds, *org.ID)
+		}
+
+		if pages.NextPage == 0 {
+			break
+		}
+	}
+
+	installationData, err := app.Repo.GithubAppInstallation.ReadGithubAppInstallationByAccountIDs(accountIds)
+
+	if err != nil {
+		app.handleErrorInternal(err, w)
+		return
+	}
+
+	installationIds := make([]int64, 0)
+
+	for _, v := range installationData {
+		installationIds = append(installationIds, v.InstallationID)
+	}
+
+	json.NewEncoder(w).Encode(installationIds)
 }
 
 // Repo represents a GitHub or Gitab repository
@@ -67,24 +102,20 @@ type AutoBuildpack struct {
 
 // HandleListRepos retrieves a list of repo names
 func (app *App) HandleListRepos(w http.ResponseWriter, r *http.Request) {
-	tok, err := app.githubTokenFromRequest(r)
+
+	client, err := app.githubAppClientFromRequest(r)
 
 	if err != nil {
 		app.handleErrorInternal(err, w)
 		return
 	}
 
-	client := github.NewClient(app.GithubProjectConf.Client(oauth2.NoContext, tok))
-
 	// figure out number of repositories
-	opt := &github.RepositoryListOptions{
-		ListOptions: github.ListOptions{
-			PerPage: 100,
-		},
-		Sort: "updated",
+	opt := &github.ListOptions{
+		PerPage: 100,
 	}
 
-	allRepos, resp, err := client.Repositories.List(context.Background(), "", opt)
+	allRepos, resp, err := client.Apps.ListRepos(context.Background(), opt)
 
 	if err != nil {
 		app.handleErrorInternal(err, w)
@@ -102,15 +133,12 @@ func (app *App) HandleListRepos(w http.ResponseWriter, r *http.Request) {
 		defer wg.Done()
 
 		for cp < numPages {
-			cur_opt := &github.RepositoryListOptions{
-				ListOptions: github.ListOptions{
-					Page:    cp,
-					PerPage: 100,
-				},
-				Sort: "updated",
+			cur_opt := &github.ListOptions{
+				Page:    cp,
+				PerPage: 100,
 			}
 
-			repos, _, err := client.Repositories.List(context.Background(), "", cur_opt)
+			repos, _, err := client.Apps.ListRepos(context.Background(), cur_opt)
 
 			if err != nil {
 				mu.Lock()
@@ -160,35 +188,10 @@ func (app *App) HandleListRepos(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(res)
 }
 
-// HandleDeleteProjectGitRepo handles the deletion of a Github Repo via the git repo ID
-func (app *App) HandleDeleteProjectGitRepo(w http.ResponseWriter, r *http.Request) {
-	id, err := strconv.ParseUint(chi.URLParam(r, "git_repo_id"), 0, 64)
-
-	if err != nil || id == 0 {
-		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
-		return
-	}
-
-	repo, err := app.Repo.GitRepo.ReadGitRepo(uint(id))
-
-	if err != nil {
-		app.handleErrorRead(err, ErrProjectDataRead, w)
-		return
-	}
-
-	err = app.Repo.GitRepo.DeleteGitRepo(repo)
-
-	if err != nil {
-		app.handleErrorRead(err, ErrProjectDataRead, w)
-		return
-	}
-
-	w.WriteHeader(http.StatusOK)
-}
-
 // HandleGetBranches retrieves a list of branch names for a specified repo
 func (app *App) HandleGetBranches(w http.ResponseWriter, r *http.Request) {
-	tok, err := app.githubTokenFromRequest(r)
+
+	client, err := app.githubAppClientFromRequest(r)
 
 	if err != nil {
 		app.handleErrorInternal(err, w)
@@ -197,8 +200,6 @@ func (app *App) HandleGetBranches(w http.ResponseWriter, r *http.Request) {
 
 	owner := chi.URLParam(r, "owner")
 	name := chi.URLParam(r, "name")
-
-	client := github.NewClient(app.GithubProjectConf.Client(oauth2.NoContext, tok))
 
 	// List all branches for a specified repo
 	allBranches, resp, err := client.Repositories.ListBranches(context.Background(), owner, name, &github.ListOptions{
@@ -274,7 +275,8 @@ func (app *App) HandleGetBranches(w http.ResponseWriter, r *http.Request) {
 
 // HandleDetectBuildpack attempts to figure which buildpack will be auto used based on directory contents
 func (app *App) HandleDetectBuildpack(w http.ResponseWriter, r *http.Request) {
-	tok, err := app.githubTokenFromRequest(r)
+
+	client, err := app.githubAppClientFromRequest(r)
 
 	if err != nil {
 		app.handleErrorInternal(err, w)
@@ -287,7 +289,6 @@ func (app *App) HandleDetectBuildpack(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	client := github.NewClient(app.GithubProjectConf.Client(oauth2.NoContext, tok))
 	owner := chi.URLParam(r, "owner")
 	name := chi.URLParam(r, "name")
 	branch := chi.URLParam(r, "branch")
@@ -333,14 +334,13 @@ func (app *App) HandleDetectBuildpack(w http.ResponseWriter, r *http.Request) {
 
 // HandleGetBranchContents retrieves the contents of a specific branch and subdirectory
 func (app *App) HandleGetBranchContents(w http.ResponseWriter, r *http.Request) {
-	tok, err := app.githubTokenFromRequest(r)
+
+	client, err := app.githubAppClientFromRequest(r)
 
 	if err != nil {
 		app.handleErrorInternal(err, w)
 		return
 	}
-
-	client := github.NewClient(app.GithubProjectConf.Client(oauth2.NoContext, tok))
 
 	queryParams, err := url.ParseQuery(r.URL.RawQuery)
 	if err != nil {
@@ -379,14 +379,14 @@ var procfileRegex = regexp.MustCompile("^([A-Za-z0-9_]+):\\s*(.+)$")
 
 // HandleGetProcfileContents retrieves the contents of a procfile in a github repo
 func (app *App) HandleGetProcfileContents(w http.ResponseWriter, r *http.Request) {
-	tok, err := app.githubTokenFromRequest(r)
+
+	client, err := app.githubAppClientFromRequest(r)
 
 	if err != nil {
 		app.handleErrorInternal(err, w)
 		return
 	}
 
-	client := github.NewClient(app.GithubProjectConf.Client(oauth2.NoContext, tok))
 	owner := chi.URLParam(r, "owner")
 	name := chi.URLParam(r, "name")
 	branch := chi.URLParam(r, "branch")
@@ -440,14 +440,14 @@ type HandleGetRepoZIPDownloadURLResp struct {
 // HandleGetRepoZIPDownloadURL gets the URL for downloading a zip file from a Github
 // repository
 func (app *App) HandleGetRepoZIPDownloadURL(w http.ResponseWriter, r *http.Request) {
-	tok, err := app.githubTokenFromRequest(r)
+
+	client, err := app.githubAppClientFromRequest(r)
 
 	if err != nil {
 		app.handleErrorInternal(err, w)
 		return
 	}
 
-	client := github.NewClient(app.GithubProjectConf.Client(oauth2.NoContext, tok))
 	owner := chi.URLParam(r, "owner")
 	name := chi.URLParam(r, "name")
 	branch := chi.URLParam(r, "branch")
@@ -485,6 +485,29 @@ func (app *App) HandleGetRepoZIPDownloadURL(w http.ResponseWriter, r *http.Reque
 	}
 
 	json.NewEncoder(w).Encode(apiResp)
+}
+
+// githubAppClientFromRequest gets the github app installation id from the request and authenticates
+// using it and a private key file
+func (app *App) githubAppClientFromRequest(r *http.Request) (*github.Client, error) {
+
+	installationID, err := strconv.ParseUint(chi.URLParam(r, "installation_id"), 0, 64)
+
+	if err != nil || installationID == 0 {
+		return nil, fmt.Errorf("could not read installation id")
+	}
+
+	itr, err := ghinstallation.NewKeyFromFile(
+		http.DefaultTransport,
+		app.GithubAppConf.AppID,
+		int64(installationID),
+		"/porter/docker/github_app_private_key.pem")
+
+	if err != nil {
+		return nil, err
+	}
+
+	return github.NewClient(&http.Client{Transport: itr}), nil
 }
 
 // finds the github token given the git repo id and the project id

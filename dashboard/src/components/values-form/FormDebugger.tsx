@@ -158,23 +158,25 @@ export default class FormDebugger extends Component<PropsType, StateType> {
 
         <Heading>🎨 Rendered Form</Heading>
         <Br />
-        <PorterFormContextProvider
-          rawFormData={formData as PorterFormData}
-          overrideVariables={{
-            input_a: this.state.valuesToOverride?.input_a?.value,
-          }}
-          isReadOnly={this.state.isReadOnly}
-          onSubmit={(vars) => {
-            console.log("check console output");
-            console.log(vars);
-          }}
-        >
-          <PorterForm
-            rightTabOptions={this.state.showBonusTabs ? tabOptions : []}
-            renderTabContents={this.renderTabContents}
-            saveButtonText={"Test Submit"}
-          />
-        </PorterFormContextProvider>
+        {(formData as any).name && (
+          <PorterFormContextProvider
+            rawFormData={formData as PorterFormData}
+            overrideVariables={{
+              input_a: this.state.valuesToOverride?.input_a?.value,
+            }}
+            isReadOnly={this.state.isReadOnly}
+            onSubmit={(vars) => {
+              alert("check console output");
+              console.log(vars);
+            }}
+          >
+            <PorterForm
+              rightTabOptions={this.state.showBonusTabs ? tabOptions : []}
+              renderTabContents={this.renderTabContents}
+              saveButtonText={"Test Submit"}
+            />
+          </PorterFormContextProvider>
+        )}
         {/*<FormWrapper*/}
         {/*  valuesToOverride={this.state.valuesToOverride}*/}
         {/*  clearValuesToOverride={() =>*/}

@@ -236,7 +236,7 @@ export default class MetricsSection extends Component<PropsType, StateType> {
     let { currentChart } = this.props;
     let { currentCluster, currentProject, setCurrentError } = this.context;
     let kind = this.state.selectedMetric;
-    let shouldsum = true;
+    let shouldsum = this.state.selectedPod == "All";
     let namespace = currentChart.namespace;
 
     // calculate start and end range
@@ -244,11 +244,9 @@ export default class MetricsSection extends Component<PropsType, StateType> {
     var end = Math.round(d.getTime() / 1000);
     var start = end - secondsBeforeNow[this.state.selectedRange];
 
-    let pods = this.state.pods.map((pod: any) => {
-      return pod.value;
-    });
+    let pods = [] as string[]
 
-    if (this.state.selectedPod != "All") {
+    if (!shouldsum) {
       pods = [this.state.selectedPod];
     }
 
@@ -269,6 +267,7 @@ export default class MetricsSection extends Component<PropsType, StateType> {
           cluster_id: currentCluster.id,
           metric: kind,
           shouldsum: shouldsum,
+          pods,
           kind: this.state.selectedController?.kind,
           name: this.state.selectedController?.metadata.name,
           namespace: namespace,

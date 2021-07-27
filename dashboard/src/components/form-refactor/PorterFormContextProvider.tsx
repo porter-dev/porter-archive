@@ -1,4 +1,4 @@
-import React, { createContext, useReducer } from "react";
+import React, { createContext, useContext, useReducer } from "react";
 import {
   PorterFormData,
   PorterFormState,
@@ -10,6 +10,7 @@ import {
 import { ShowIf, ShowIfAnd, ShowIfNot, ShowIfOr } from "../../shared/types";
 import { getFinalVariablesForStringInput } from "./field-components/Input";
 import { getFinalVariablesForKeyValueArray } from "./field-components/KeyValueArray";
+import { Context } from "../../shared/Context";
 
 interface Props {
   rawFormData: PorterFormData;
@@ -34,6 +35,8 @@ export const PorterFormContext = createContext<ContextProps | undefined>(
 const { Provider } = PorterFormContext;
 
 export const PorterFormContextProvider: React.FC<Props> = (props) => {
+  const { currentCluster } = useContext(Context);
+
   const handleAction = (
     state: PorterFormState,
     action: PorterFormAction
@@ -274,7 +277,9 @@ export const PorterFormContextProvider: React.FC<Props> = (props) => {
             field.type == "velero-create-backup"
           )
             return;
-          if (field.required) {
+          // fields that have defaults can't be required since we can always
+          // compute their value
+          if (field.required && !field.settings?.default) {
             requiredIds.push(field.id);
           }
           if (!mapping[field.variable]) {

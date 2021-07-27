@@ -37,7 +37,7 @@ class Dashboard extends Component<PropsType, StateType> {
     infras: [] as InfraType[],
     pressingCtrl: false,
     pressingK: false,
-    showFormDebugger: false,
+    showFormDebugger: true,
   };
 
   refreshInfras = () => {

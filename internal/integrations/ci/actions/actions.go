@@ -4,12 +4,14 @@ import (
 	"context"
 	"encoding/base64"
 	"fmt"
-
+	"github.com/bradleyfalzon/ghinstallation"
 	"github.com/google/go-github/v33/github"
 	"github.com/porter-dev/porter/internal/models"
+	"github.com/porter-dev/porter/internal/oauth"
 	"github.com/porter-dev/porter/internal/repository"
 	"golang.org/x/crypto/nacl/box"
 	"golang.org/x/oauth2"
+	"net/http"
 
 	"strings"
 
@@ -19,12 +21,14 @@ import (
 type GithubActions struct {
 	ServerURL string
 
-	GitIntegration *models.GitRepo
-	GitRepoName    string
-	GitRepoOwner   string
-	Repo           repository.Repository
+	GithubOAuthIntegration *models.GitRepo
+	GitRepoName            string
+	GitRepoOwner           string
+	Repo                   repository.Repository
 
-	GithubConf *oauth2.Config
+	GithubConf           *oauth2.Config // one of these will let us authenticate
+	GithubAppID          int64
+	GithubInstallationID uint
 
 	WebhookToken string
 	PorterToken  string
@@ -197,22 +201,45 @@ func (g *GithubActions) GetGithubActionYAML() ([]byte, error) {
 }
 
 func (g *GithubActions) getClient() (*github.Client, error) {
-	// get the oauth integration
-	oauthInt, err := g.Repo.OAuthIntegration.ReadOAuthIntegration(g.GitIntegration.OAuthIntegrationID)
+
+	// in the case that this still uses the oauth integration
+	if g.GithubOAuthIntegration != nil {
+
+		// get the oauth integration
+		oauthInt, err := g.Repo.OAuthIntegration.ReadOAuthIntegration(g.GithubOAuthIntegration.OAuthIntegrationID)
+
+		if err != nil {
+			return nil, err
+		}
+
+		_, _, err = oauth.GetAccessToken(oauthInt.SharedOAuthModel, g.GithubConf, oauth.MakeUpdateOAuthIntegrationTokenFunction(oauthInt, g.Repo))
+
+		if err != nil {
+			return nil, err
+		}
+
+		client := github.NewClient(g.GithubConf.Client(oauth2.NoContext, &oauth2.Token{
+			AccessToken:  string(oauthInt.AccessToken),
+			RefreshToken: string(oauthInt.RefreshToken),
+			Expiry:       oauthInt.Expiry,
+			TokenType:    "Bearer",
+		}))
+
+		return client, nil
+	}
+
+	// authenticate as github app installation
+	itr, err := ghinstallation.NewKeyFromFile(
+		http.DefaultTransport,
+		g.GithubAppID,
+		int64(g.GithubInstallationID),
+		"/porter/docker/github_app_private_key.pem")
 
 	if err != nil {
 		return nil, err
 	}
 
-	tok := &oauth2.Token{
-		AccessToken:  string(oauthInt.AccessToken),
-		RefreshToken: string(oauthInt.RefreshToken),
-		TokenType:    "Bearer",
-	}
-
-	client := github.NewClient(g.GithubConf.Client(oauth2.NoContext, tok))
-
-	return client, nil
+	return github.NewClient(&http.Client{Transport: itr}), nil
 }
 
 func (g *GithubActions) createGithubSecret(
@@ -352,10 +379,13 @@ func (g *GithubActions) commitGithubFile(
 		Content: contents,
 		Branch:  github.String(branch),
 		SHA:     &sha,
-		Committer: &github.CommitAuthor{
+	}
+
+	if g.GithubOAuthIntegration != nil {
+		opts.Committer = &github.CommitAuthor{
 			Name:  github.String("Porter Bot"),
 			Email: github.String("contact@getporter.dev"),
-		},
+		}
 	}
 
 	resp, _, err := client.Repositories.UpdateFile(
@@ -397,10 +427,13 @@ func (g *GithubActions) deleteGithubFile(
 		Message: github.String(fmt.Sprintf("Delete %s file", filename)),
 		Branch:  github.String(g.defaultBranch),
 		SHA:     &sha,
-		Committer: &github.CommitAuthor{
+	}
+
+	if g.GithubOAuthIntegration != nil {
+		opts.Committer = &github.CommitAuthor{
 			Name:  github.String("Porter Bot"),
 			Email: github.String("contact@getporter.dev"),
-		},
+		}
 	}
 
 	_, _, err := client.Repositories.DeleteFile(

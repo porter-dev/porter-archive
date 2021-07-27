@@ -35,6 +35,10 @@ export interface ResourceListField extends GenericField {
   value: any[];
 }
 
+export interface VeleroBackupField extends GenericField {
+  type: "velero-create-backup";
+}
+
 export interface InputField extends GenericInputField {
   type: "input";
   label?: string;
@@ -87,7 +91,8 @@ export interface SelectField extends GenericInputField {
 }
 
 export type FormField = HeadingField|SubtitleField|InputField|CheckboxField
-  |KeyValueArrayField|ArrayInputField|SelectField|ServiceIPListField|ResourceListField;
+  |KeyValueArrayField|ArrayInputField|SelectField|ServiceIPListField|ResourceListField
+  |VeleroBackupField;
 
 export interface ShowIfAnd {
   and: ShowIf[];

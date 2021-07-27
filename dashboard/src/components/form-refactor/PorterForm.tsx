@@ -23,6 +23,7 @@ import ArrayInput from "./field-components/ArrayInput";
 import Select from "./field-components/Select";
 import ServiceIPList from "./field-components/ServiceIPList";
 import ResourceList from "./field-components/ResourceList";
+import VeleroForm from "../forms/VeleroForm";
 
 interface Props {
   leftTabOptions?: TabOption[];
@@ -67,6 +68,8 @@ const PorterForm: React.FC<Props> = (props) => {
         return <ServiceIPList {...(bundledProps as ServiceIPListField)} />;
       case "resource-list":
         return <ResourceList {...(bundledProps as ResourceListField)} />;
+      case "velero-create-backup":
+        return <VeleroForm />;
     }
     return <p>Not Implemented: {(field as any).type}</p>;
   };

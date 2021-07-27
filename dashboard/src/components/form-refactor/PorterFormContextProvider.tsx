@@ -259,7 +259,8 @@ export const PorterFormContextProvider: React.FC<Props> = (props) => {
             field.type == "heading" ||
             field.type == "subtitle" ||
             field.type == "resource-list" ||
-            field.type == "service-ip-list"
+            field.type == "service-ip-list" ||
+            field.type == "velero-create-backup"
           )
             return;
           if (field.required) {

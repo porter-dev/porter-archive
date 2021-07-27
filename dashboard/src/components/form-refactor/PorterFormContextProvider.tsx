@@ -295,7 +295,7 @@ export const PorterFormContextProvider: React.FC<Props> = (props) => {
     formData.tabs.map((tab) =>
       tab.sections.map((section) =>
         section.contents.map((field) => {
-          if (finalFunctions[field.type])
+          if (finalFunctions[field.type] && state.components[field.id])
             varList.push(
               finalFunctions[field.type](
                 state.variables,

@@ -282,8 +282,20 @@ tabs:
   - name: only-section
     contents:
       - type: array-input
-        label: testing array-input
+        label: Testing Array Input
         variable: array-input-variable
+      - type: select
+        label: Testing Select
+        variable: select-variable
+        settings:
+          options:
+          - label: One
+            value: 1
+          - label: Two
+            value: 2
+          - label: Three
+            value: 3
+        
 - name: main
   label: Basic Inputs
   sections:
@@ -297,7 +309,6 @@ tabs:
     - type: string-input
       placeholder: "ex: pilsner"
       label: Required String Input A
-      required: true
       variable: field_a
       info: This is some info
       settings:
@@ -306,7 +317,6 @@ tabs:
     - type: string-input
       placeholder: "ex: pilsner"
       label: Required String Input A with unit
-      required: true
       variable: field_a_unit
       settings:
         type: text
@@ -314,7 +324,6 @@ tabs:
     - type: string-input
       placeholder: "ex: pilsner"
       label: Required Password Input B
-      required: true
       variable: field_b
       info: This is some info
       settings:

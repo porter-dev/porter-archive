@@ -151,7 +151,20 @@ const KeyValueArray: React.FC<Props> = (props) => {
               })
             }
             setValues={(values) => {
-              alert("not implemented yet");
+              setState((prev) => {
+                return {
+                  // might be broken
+                  values: {
+                    ...prev.values,
+                    ...Object.entries(values).map(([k, v]) => {
+                      return {
+                        key: k,
+                        value: v,
+                      };
+                    }),
+                  },
+                };
+              });
             }}
           />
         </Modal>

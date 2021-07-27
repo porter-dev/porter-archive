@@ -198,6 +198,17 @@ export const PorterFormContextProvider: React.FC<Props> = (props) => {
                     },
                   };
                 }
+                if (field.type == "env-key-value-array") {
+                  return {
+                    ...field,
+                    type: "key-value-array",
+                    secretOption: true,
+                    envLoader: true,
+                    settings: {
+                      type: "env",
+                    },
+                  };
+                }
                 return field;
               }),
             };

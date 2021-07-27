@@ -66,6 +66,9 @@ export interface KeyValueArrayField extends GenericInputField {
   secretOption?: boolean;
   envLoader?: boolean;
   fileUpload?: boolean;
+  settings?: {
+    type: "env"|"normal";
+  }
 }
 
 export interface ArrayInputField extends GenericInputField {

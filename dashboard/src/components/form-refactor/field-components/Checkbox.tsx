@@ -13,17 +13,17 @@ const Checkbox: React.FC<Props> = ({
   required,
   variable,
   isReadOnly,
+  settings,
 }) => {
-  const { state, variables, setVars } = useFormField<CheckboxFieldState>(
-    id,
-    {
-      initState: {},
-      initValidation: {
-        validated: !required,
-      },
-      initVars: {},
-    }
-  );
+  const { state, variables, setVars } = useFormField<CheckboxFieldState>(id, {
+    initState: {},
+    initValidation: {
+      validated: !required,
+    },
+    initVars: {
+      [variable]: !!settings?.default,
+    },
+  });
 
   if (state == undefined) {
     return <></>;

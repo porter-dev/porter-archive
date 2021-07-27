@@ -25,24 +25,25 @@ export interface SubtitleField extends GenericField {
   label: string;
 }
 
-export interface StringInputFieldSettings {
-  type?: "text"|"password"|"number";
-  unit?: string;
-  omitUnitFromValue?: boolean;
-  default: string|number;
-}
-
 export interface InputField extends GenericInputField {
   type: "input";
   label?: string;
   placeholder?: string;
   info?: string;
-  settings?: StringInputFieldSettings;
+  settings?: {
+    type?: "text"|"password"|"number";
+    unit?: string;
+    omitUnitFromValue?: boolean;
+    default: string|number;
+  };
 }
 
 export interface CheckboxField extends GenericInputField {
   type: "checkbox";
   label?: string;
+  settings?: {
+    default: boolean
+  }
 }
 
 export interface KeyValueArrayField extends GenericInputField {

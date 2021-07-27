@@ -219,16 +219,6 @@ const deleteCluster = baseApi<
   return `/api/projects/${pathParams.project_id}/clusters/${pathParams.cluster_id}`;
 });
 
-const deleteGitRepoIntegration = baseApi<
-  {},
-  {
-    project_id: number;
-    git_repo_id: number;
-  }
->("DELETE", (pathParams) => {
-  return `/api/projects/${pathParams.project_id}/gitrepos/${pathParams.git_repo_id}`;
-});
-
 const deleteInvite = baseApi<{}, { id: number; invId: number }>(
   "DELETE",
   (pathParams) => {
@@ -959,6 +949,21 @@ const getPolicyDocument = baseApi<{}, { project_id: number }>(
   ({ project_id }) => `/api/projects/${project_id}/policy`
 );
 
+const createWebhookToken = baseApi<
+  {},
+  {
+    project_id: number;
+    chart_name: string;
+    namespace: string;
+    cluster_id: number;
+    storage: StorageType;
+  }
+>(
+  "POST",
+  ({ project_id, chart_name, namespace, cluster_id, storage }) =>
+    `/api/projects/${project_id}/releases/${chart_name}/webhook_token?namespace=${namespace}&cluster_id=${cluster_id}&storage=${storage}`
+);
+
 // Bundle export to allow default api import (api.<method> is more readable)
 export default {
   checkAuth,
@@ -982,7 +987,6 @@ export default {
   createConfigMap,
   deleteCluster,
   deleteConfigMap,
-  deleteGitRepoIntegration,
   deleteInvite,
   deleteNamespace,
   deletePod,
@@ -1058,4 +1062,5 @@ export default {
   updateCollaborator,
   removeCollaborator,
   getPolicyDocument,
+  createWebhookToken,
 };

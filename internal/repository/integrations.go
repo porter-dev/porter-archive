@@ -42,6 +42,7 @@ type OAuthIntegrationRepository interface {
 type GithubAppOAuthIntegrationRepository interface {
 	CreateGithubAppOAuthIntegration(am *ints.GithubAppOAuthIntegration) (*ints.GithubAppOAuthIntegration, error)
 	ReadGithubAppOauthIntegration(id uint) (*ints.GithubAppOAuthIntegration, error)
+	UpdateGithubAppOauthIntegration(am *ints.GithubAppOAuthIntegration) (*ints.GithubAppOAuthIntegration, error)
 }
 
 // AWSIntegrationRepository represents the set of queries on the AWS auth

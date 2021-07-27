@@ -1,7 +1,7 @@
 import React, { Component } from "react";
 import styled from "styled-components";
 import AceEditor from "react-ace";
-import FormWrapper from "components/values-form/FormWrapper";
+import PorterForm from "../form-refactor/PorterForm";
 import CheckboxRow from "components/values-form/CheckboxRow";
 import InputRow from "components/values-form/InputRow";
 import yaml from "js-yaml";
@@ -11,6 +11,8 @@ import "ace-builds/src-noconflict/mode-text";
 
 import Heading from "./Heading";
 import Helper from "./Helper";
+import { PorterFormData } from "../form-refactor/types";
+import { PorterFormContextProvider } from "../form-refactor/PorterFormContextProvider";
 
 type PropsType = {
   goBack: () => void;
@@ -156,24 +158,43 @@ export default class FormDebugger extends Component<PropsType, StateType> {
 
         <Heading>🎨 Rendered Form</Heading>
         <Br />
-        <FormWrapper
-          valuesToOverride={this.state.valuesToOverride}
-          clearValuesToOverride={() =>
-            this.setState({ valuesToOverride: null })
-          }
-          showStateDebugger={this.state.showStateDebugger}
-          formData={formData}
-          isReadOnly={this.state.isReadOnly}
-          tabOptions={this.state.showBonusTabs ? tabOptions : []}
-          renderTabContents={
-            this.state.showBonusTabs ? this.renderTabContents : null
-          }
-          onSubmit={(values: any) => {
-            alert("Check console output.");
-            console.log("Raw submission values:");
-            console.log(values);
-          }}
-        />
+        {(formData as any).name && (
+          <PorterFormContextProvider
+            rawFormData={formData as PorterFormData}
+            overrideVariables={{
+              input_a: this.state.valuesToOverride?.input_a?.value,
+            }}
+            isReadOnly={this.state.isReadOnly}
+            onSubmit={(vars) => {
+              alert("check console output");
+              console.log(vars);
+            }}
+          >
+            <PorterForm
+              rightTabOptions={this.state.showBonusTabs ? tabOptions : []}
+              renderTabContents={this.renderTabContents}
+              saveButtonText={"Test Submit"}
+            />
+          </PorterFormContextProvider>
+        )}
+        {/*<FormWrapper*/}
+        {/*  valuesToOverride={this.state.valuesToOverride}*/}
+        {/*  clearValuesToOverride={() =>*/}
+        {/*    this.setState({ valuesToOverride: null })*/}
+        {/*  }*/}
+        {/*  showStateDebugger={this.state.showStateDebugger}*/}
+        {/*  formData={formData}*/}
+        {/*  isReadOnly={this.state.isReadOnly}*/}
+        {/*  tabOptions={this.state.showBonusTabs ? tabOptions : []}*/}
+        {/*  renderTabContents={*/}
+        {/*    this.state.showBonusTabs ? this.renderTabContents : null*/}
+        {/*  }*/}
+        {/*  onSubmit={(values: any) => {*/}
+        {/*    alert("Check console output.");*/}
+        {/*    console.log("Raw submission values:");*/}
+        {/*    console.log(values);*/}
+        {/*  }}*/}
+        {/*/>*/}
       </StyledFormDebugger>
     );
   }
@@ -257,8 +278,31 @@ const Button = styled.div`
 const initYaml = `name: Porter Example
 hasSource: true
 tabs:
+- name: complex
+  label: Complex Inputs
+  sections:
+  - name: only-section
+    contents:
+      - type: array-input
+        label: Testing Array Input
+        variable: array-input-variable
+      - type: select
+        label: Testing Select
+        variable: select-variable
+        settings:
+          options:
+          - label: One
+            value: 1
+          - label: Two
+            value: 2
+          - label: Three
+            value: 3
+      - type: provider-select
+        label: Testing Provider Select
+        variable: provider-select-variable
+        
 - name: main
-  label: Main
+  label: Basic Inputs
   sections:
   - name: header
     contents: 
@@ -269,17 +313,47 @@ tabs:
       label: Basic form demonstrating some of the features of form.yaml
     - type: string-input
       placeholder: "ex: pilsner"
-      label: Required Field A
-      required: true
+      label: Required String Input A
       variable: field_a
       info: This is some info
+      settings:
+        type: text
+        default: hello
     - type: string-input
-      placeholder: "ex: sapporo"
-      required: true
-      label: Required Field B
+      placeholder: "ex: pilsner"
+      label: Required String Input A with unit
+      variable: field_a_unit
+      settings:
+        type: text
+        unit: m
+    - type: string-input
+      placeholder: "ex: pilsner"
+      label: Required Password Input B
       variable: field_b
+      info: This is some info
+      settings:
+        type: password
+    - type: number-input
+      placeholder: "ex: pilsner"
+      label: Non Required Number Input C
+      required: false
+      variable: field_c
+      settings:
+        type: number
+    - type: number-input
+      placeholder: "ex: pilsner"
+      label: Non Required Number Input C with unit
+      required: false
+      variable: field_c_unit
+      settings:
+        type: number
+        unit: km
+    - type: checkbox
+      required: false
+      label: Checkbox A alternative
+      variable: checkbox_a
     - type: subtitle
-      label: "Note: Hidden required fields aren't supported yet (global only)"
+      label: "Note: Hidden required fields are definitely supported"
   - name: controlled-by-external
     show_if:
       or:
@@ -290,6 +364,10 @@ tabs:
       label: Conditional Display (A)
     - type: subtitle
       label: This section can be externally controlled by the value of checkbox_a
+    - type: string-input
+      label: Required Number Input D that could be hidden
+      required: true
+      variable: field_d
     - type: string-input
       variable: input_a
       placeholder: "Override w/ input_a"

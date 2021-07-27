@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/porter-dev/porter/internal/analytics"
 	"github.com/porter-dev/porter/internal/models"
 	"gorm.io/gorm"
 
@@ -17,7 +18,6 @@ import (
 	"golang.org/x/oauth2"
 
 	"github.com/porter-dev/porter/internal/models/integrations"
-	segment "gopkg.in/segmentio/analytics-go.v3"
 )
 
 // HandleGithubOAuthStartUser starts the oauth2 flow for a user login request.
@@ -131,22 +131,8 @@ func (app *App) HandleGithubOAuthCallback(w http.ResponseWriter, r *http.Request
 		}
 
 		// send to segment
-		if app.segmentClient != nil {
-			client := *app.segmentClient
-			client.Enqueue(segment.Identify{
-				UserId: fmt.Sprintf("%v", user.ID),
-				Traits: segment.NewTraits().
-					SetEmail(user.Email).
-					Set("github", "true"),
-			})
-
-			client.Enqueue(segment.Track{
-				UserId: fmt.Sprintf("%v", user.ID),
-				Event:  "New User",
-				Properties: segment.NewProperties().
-					Set("email", user.Email),
-			})
-		}
+		app.analyticsClient.Identify(analytics.CreateSegmentIdentifyNewUser(user, true))
+		app.analyticsClient.Track(analytics.CreateSegmentNewUserTrack(user))
 
 		// log the user in
 		app.Logger.Info().Msgf("New user created: %d", user.ID)
@@ -236,7 +222,7 @@ func (app *App) upsertUserFromToken(tok *oauth2.Token) (*models.User, error) {
 		if err == gorm.ErrRecordNotFound {
 			user = &models.User{
 				Email:         primary,
-				EmailVerified: verified,
+				EmailVerified: !app.Capabilities.Email || verified,
 				GithubUserID:  githubUser.GetID(),
 			}
 
@@ -244,6 +230,11 @@ func (app *App) upsertUserFromToken(tok *oauth2.Token) (*models.User, error) {
 
 			if err != nil {
 				return nil, err
+			}
+
+			if !verified {
+				// non-fatal email verification flow
+				app.startEmailVerificationFlow(user)
 			}
 		} else if err == nil {
 			return nil, fmt.Errorf("email already registered")
@@ -307,31 +298,6 @@ func (app *App) HandleGithubAppOAuthCallback(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	if _, ok := session.Values["state"]; !ok {
-		app.sendExternalError(
-			err,
-			http.StatusForbidden,
-			HTTPError{
-				Code: http.StatusForbidden,
-				Errors: []string{
-					"Could not read cookie: are cookies enabled?",
-				},
-			},
-			w,
-		)
-
-		return
-	}
-
-	if r.URL.Query().Get("state") != session.Values["state"] {
-		if session.Values["query_params"] != "" {
-			http.Redirect(w, r, fmt.Sprintf("/dashboard?%s", session.Values["query_params"]), 302)
-		} else {
-			http.Redirect(w, r, "/dashboard", 302)
-		}
-		return
-	}
-
 	token, err := app.GithubAppConf.Exchange(oauth2.NoContext, r.URL.Query().Get("code"))
 
 	if err != nil || !token.Valid() {
@@ -342,6 +308,10 @@ func (app *App) HandleGithubAppOAuthCallback(w http.ResponseWriter, r *http.Requ
 		}
 		return
 	}
+
+	fmt.Println("exchange happaned")
+	fmt.Println(token.AccessToken)
+	fmt.Println(token.RefreshToken)
 
 	userID, err := app.getUserIDFromRequest(r)
 
@@ -361,6 +331,7 @@ func (app *App) HandleGithubAppOAuthCallback(w http.ResponseWriter, r *http.Requ
 		SharedOAuthModel: integrations.SharedOAuthModel{
 			AccessToken:  []byte(token.AccessToken),
 			RefreshToken: []byte(token.RefreshToken),
+			Expiry:       token.Expiry,
 		},
 		UserID: user.ID,
 	}

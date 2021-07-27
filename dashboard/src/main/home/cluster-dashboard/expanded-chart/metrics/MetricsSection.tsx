@@ -1,4 +1,11 @@
-import React, { Component } from "react";
+import React, {
+  Component,
+  Props,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import styled from "styled-components";
 import ParentSize from "@visx/responsive/lib/components/ParentSize";
 
@@ -11,6 +18,7 @@ import TabSelector from "components/TabSelector";
 import Loading from "components/Loading";
 import SelectRow from "components/values-form/SelectRow";
 import AreaChart, { MetricsData } from "./AreaChart";
+import useAuth from "shared/auth/useAuth";
 
 type PropsType = {
   currentChart: ChartType;
@@ -86,39 +94,38 @@ const secondsBeforeNow: { [range: string]: number } = {
   "1M": 60 * 60 * 24 * 30,
 };
 
-export default class MetricsSection extends Component<PropsType, StateType> {
-  state = {
-    pods: [] as any[],
-    selectedPod: "",
-    controllerOptions: [] as any[],
-    selectedController: null as any,
-    ingressOptions: [] as any[],
-    selectedIngress: null as any,
-    selectedRange: "1H",
-    selectedMetric: "cpu",
-    selectedMetricLabel: "CPU Utilization (vCPUs)",
-    dropdownExpanded: false,
-    podDropdownExpanded: false,
-    controllerDropdownExpanded: false,
-    data: [] as MetricsData[],
-    showMetricsSettings: false,
-    metricsOptions: [
-      { value: "cpu", label: "CPU Utilization (vCPUs)" },
-      { value: "memory", label: "RAM Utilization (Mi)" },
-      { value: "network", label: "Network Received Bytes (Ki)" },
-    ],
-    isLoading: 0,
-  };
+const MetricsSection: React.FunctionComponent<PropsType> = ({
+  currentChart,
+}) => {
+  const [pods, setPods] = useState([]);
+  const [selectedPod, setSelectedPod] = useState("");
+  const [controllerOptions, setControllerOptions] = useState([]);
+  const [selectedController, setSelectedController] = useState(null);
+  const [ingressOptions, setIngressOptions] = useState([]);
+  const [selectedIngress, setSelectedIngress] = useState(null);
+  const [selectedRange, setSelectedRange] = useState("1H");
+  const [selectedMetric, setSelectedMetric] = useState("cpu");
+  const [selectedMetricLabel, setSelectedMetricLabel] = useState(
+    "CPU Utilization (vCPUs)"
+  );
+  const [dropdownExpanded, setDropdownExpanded] = useState(false);
+  const [data, setData] = useState<MetricsData[]>([]);
+  const [showMetricsSettings, setShowMetricsSettings] = useState(false);
+  const [metricsOptions, setMetricsOptions] = useState([
+    { value: "cpu", label: "CPU Utilization (vCPUs)" },
+    { value: "memory", label: "RAM Utilization (Mi)" },
+    { value: "network", label: "Network Received Bytes (Ki)" },
+  ]);
+  const [isLoading, setIsLoading] = useState(0);
 
-  componentDidMount() {
-    // get all controllers and read in a list of pods
-    let { currentChart } = this.props;
-    let { currentCluster, currentProject, setCurrentError } = this.context;
+  const { currentCluster, currentProject, setCurrentError } = useContext(
+    Context
+  );
 
-    if (currentChart.chart?.metadata?.name == "ingress-nginx") {
-      this.setState(({ isLoading }) => {
-        return { isLoading: isLoading + 1 };
-      });
+  useEffect(() => {
+    if (currentChart?.chart?.metadata?.name == "ingress-nginx") {
+      setIsLoading((prev) => prev + 1);
+
       api
         .getNGINXIngresses(
           "<token>",
@@ -130,37 +137,36 @@ export default class MetricsSection extends Component<PropsType, StateType> {
           }
         )
         .then((res) => {
-          let metricsOptions = this.state.metricsOptions;
-          metricsOptions.push({
-            value: "nginx:errors",
-            label: "5XX Error Percentage",
+          setMetricsOptions((prev) => {
+            return [
+              ...prev,
+              {
+                value: "nginx:errors",
+                label: "5XX Error Percentage",
+              },
+            ];
           });
 
-          let ingressOptions = [] as any[];
-          res.data.map((ingress: any) => {
-            ingressOptions.push({ value: ingress, label: ingress.name });
-          });
-
+          const ingressOptions = res.data.map((ingress: any) => ({
+            value: ingress,
+            label: ingress.name,
+          }));
+          setIngressOptions(ingressOptions);
+          setSelectedIngress(ingressOptions[0]?.value);
           // iterate through the controllers to get the list of pods
-          this.setState({
-            metricsOptions,
-            ingressOptions,
-            selectedIngress: ingressOptions[0].value,
-          });
         })
         .catch((err) => {
           setCurrentError(JSON.stringify(err));
-          this.setState({ controllerOptions: [] as any[] });
+          setControllerOptions([]);
         })
         .finally(() => {
-          this.setState(({ isLoading }) => {
-            return { isLoading: isLoading - 1 };
+          setIsLoading((prev) => {
+            return prev - 1;
           });
         });
     }
-    this.setState(({ isLoading }) => {
-      return { isLoading: isLoading + 1 };
-    });
+    setIsLoading((prev) => prev + 1);
+
     api
       .getChartControllers(
         "<token>",
@@ -176,91 +182,97 @@ export default class MetricsSection extends Component<PropsType, StateType> {
         }
       )
       .then((res) => {
-        // TODO -- check at least one controller returned
-        let controllerOptions = [] as any[];
-        res.data.map((controller: any) => {
+        const controllerOptions = res.data.map((controller: any) => {
           let name = controller?.metadata?.name;
-          controllerOptions.push({ value: controller, label: name });
+          return { value: controller, label: name };
         });
 
-        // iterate through the controllers to get the list of pods
-        this.setState({
-          controllerOptions,
-          selectedController: controllerOptions[0].value,
-        });
-
-        this.getPods();
+        setControllerOptions(controllerOptions);
+        setSelectedController(controllerOptions[0]?.value);
       })
       .catch((err) => {
         setCurrentError(JSON.stringify(err));
-        this.setState({ controllerOptions: [] as any[] });
+        setControllerOptions([]);
       })
       .finally(() => {
-        this.setState(({ isLoading }) => {
-          return { isLoading: isLoading - 1 };
-        });
+        setIsLoading((prev) => prev - 1);
       });
-  }
+  }, [currentChart, currentCluster, currentProject]);
 
-  componentDidUpdate(prevProps: PropsType, prevState: StateType) {
-    // if resolution, data kind, controllers, or pods have changed, update data
-    if (this.state.selectedMetric != prevState.selectedMetric) {
-      this.getMetrics();
+  useEffect(() => {
+    getPods();
+  }, [selectedController]);
+
+  const getPods = () => {
+    let selectors = [] as string[];
+    let ml =
+      selectedController?.spec?.selector?.matchLabels ||
+      selectedController?.spec?.selector;
+    let i = 1;
+    let selector = "";
+    for (var key in ml) {
+      selector += key + "=" + ml[key];
+      if (i != Object.keys(ml).length) {
+        selector += ",";
+      }
+      i += 1;
     }
+    selectors.push(selector);
 
-    if (this.state.selectedRange != prevState.selectedRange) {
-      this.getMetrics();
-    }
+    setIsLoading((prev) => prev + 1);
 
-    if (this.state.selectedPod != prevState.selectedPod) {
-      this.getMetrics();
-    }
+    api
+      .getMatchingPods(
+        "<token>",
+        {
+          cluster_id: currentCluster.id,
+          namespace: selectedController?.metadata?.namespace,
+          selectors,
+        },
+        {
+          id: currentProject.id,
+        }
+      )
+      .then((res) => {
+        let pods = [{ value: "All", label: "All (Summed)" }] as any[];
+        res?.data?.forEach((pod: any) => {
+          let name = pod?.metadata?.name;
+          pods.push({ value: name, label: name });
+        });
+        setPods(pods);
+        setSelectedPod("All");
 
-    if (
-      this.state.selectedController?.metadata?.name !=
-      prevState.selectedController?.metadata?.name
-    ) {
-      this.getMetrics();
-    }
+        getMetrics();
+      })
+      .catch((err) => {
+        setCurrentError(JSON.stringify(err));
+        return;
+      })
+      .finally(() => {
+        setIsLoading((prev) => prev - 1);
+      });
+  };
 
-    if (this.state.selectedIngress?.name != prevState.selectedIngress?.name) {
-      this.getMetrics();
-    }
-  }
-
-  getMetrics = () => {
-    if (this.state.pods.length == 0) {
+  const getMetrics = () => {
+    if (pods?.length == 0) {
       return;
     }
 
-    let { currentChart } = this.props;
-    let { currentCluster, currentProject, setCurrentError } = this.context;
-    let kind = this.state.selectedMetric;
+    const kind = selectedMetric;
     let shouldsum = true;
     let namespace = currentChart.namespace;
 
     // calculate start and end range
-    var d = new Date();
-    var end = Math.round(d.getTime() / 1000);
-    var start = end - secondsBeforeNow[this.state.selectedRange];
+    const d = new Date();
+    const end = Math.round(d.getTime() / 1000);
+    const start = end - secondsBeforeNow[selectedRange];
 
-    let pods = this.state.pods.map((pod: any) => {
-      return pod.value;
-    });
-
-    if (this.state.selectedPod != "All") {
-      pods = [this.state.selectedPod];
-    }
-
-    if (this.state.selectedMetric == "nginx:errors") {
-      pods = [this.state.selectedIngress?.name];
-      namespace = this.state.selectedIngress?.namespace || "default";
+    if (selectedMetric == "nginx:errors") {
+      namespace = selectedIngress?.namespace || "default";
       shouldsum = false;
     }
 
-    this.setState(({ isLoading }) => {
-      return { isLoading: isLoading + 1 };
-    });
+    setIsLoading((prev) => prev + 1);
 
     api
       .getMetrics(
@@ -269,12 +281,12 @@ export default class MetricsSection extends Component<PropsType, StateType> {
           cluster_id: currentCluster.id,
           metric: kind,
           shouldsum: shouldsum,
-          kind: this.state.selectedController?.kind,
-          name: this.state.selectedController?.metadata.name,
+          kind: selectedController?.kind,
+          name: selectedController?.metadata.name,
           namespace: namespace,
           startrange: start,
           endrange: end,
-          resolution: resolutions[this.state.selectedRange],
+          resolution: resolutions[selectedRange],
         },
         {
           id: currentProject.id,
@@ -304,7 +316,7 @@ export default class MetricsSection extends Component<PropsType, StateType> {
             }
           );
 
-          this.setState({ data: tData });
+          setData(tData);
         } else if (kind == "memory") {
           let data = res.data as MetricsMemoryDataResponse;
 
@@ -323,7 +335,7 @@ export default class MetricsSection extends Component<PropsType, StateType> {
             }
           );
 
-          this.setState({ data: tData });
+          setData(tData);
         } else if (kind == "network") {
           let data = res.data as MetricsNetworkDataResponse;
 
@@ -342,7 +354,7 @@ export default class MetricsSection extends Component<PropsType, StateType> {
             }
           );
 
-          this.setState({ data: tData });
+          setData(tData);
         } else if (kind == "nginx:errors") {
           let data = res.data as MetricsNGINXErrorsDataResponse;
 
@@ -361,135 +373,48 @@ export default class MetricsSection extends Component<PropsType, StateType> {
             }
           );
 
-          this.setState({ data: tData });
+          setData(tData);
         }
       })
       .catch((err) => {
         setCurrentError(JSON.stringify(err));
-        // this.setState({ controllers: [], loading: false });
       })
       .finally(() => {
-        this.setState(({ isLoading }) => {
-          return { isLoading: isLoading - 1 };
-        });
+        setIsLoading((prev) => prev - 1);
       });
   };
 
-  getPods = () => {
-    let { selectedController } = this.state;
-    let { currentCluster, currentProject, setCurrentError } = this.context;
-
-    let selectors = [] as string[];
-    let ml =
-      selectedController?.spec?.selector?.matchLabels ||
-      selectedController?.spec?.selector;
-    let i = 1;
-    let selector = "";
-    for (var key in ml) {
-      selector += key + "=" + ml[key];
-      if (i != Object.keys(ml).length) {
-        selector += ",";
-      }
-      i += 1;
+  useEffect(() => {
+    if (
+      selectedMetric &&
+      selectedRange &&
+      selectedPod &&
+      selectedController &&
+      selectedIngress
+    ) {
+      getMetrics();
     }
-    selectors.push(selector);
+  }, [
+    selectedMetric,
+    selectedRange,
+    selectedPod,
+    selectedController,
+    selectedIngress,
+  ]);
 
-    this.setState(({ isLoading }) => {
-      return { isLoading: isLoading + 1 };
-    });
-
-    api
-      .getMatchingPods(
-        "<token>",
-        {
-          cluster_id: currentCluster.id,
-          namespace: selectedController?.metadata?.namespace,
-          selectors,
-        },
-        {
-          id: currentProject.id,
-        }
-      )
-      .then((res) => {
-        let pods = [{ value: "All", label: "All (Summed)" }] as any[];
-        res?.data?.forEach((pod: any) => {
-          let name = pod?.metadata?.name;
-          pods.push({ value: name, label: name });
-        });
-
-        this.setState({ pods, selectedPod: "All" });
-
-        this.getMetrics();
-      })
-      .catch((err) => {
-        setCurrentError(JSON.stringify(err));
-        return;
-      })
-      .finally(() => {
-        this.setState(({ isLoading }) => {
-          return { isLoading: isLoading - 1 };
-        });
-      });
-  };
-
-  renderDropdown = () => {
-    if (this.state.dropdownExpanded) {
-      return (
-        <>
-          <DropdownOverlay
-            onClick={() => this.setState({ dropdownExpanded: false })}
-          />
-          <Dropdown
-            dropdownWidth="230px"
-            dropdownMaxHeight="200px"
-            onClick={() => this.setState({ dropdownExpanded: false })}
-          >
-            {this.renderOptionList()}
-          </Dropdown>
-        </>
-      );
-    }
-  };
-
-  renderOptionList = () => {
-    return this.state.metricsOptions.map(
-      (option: { value: string; label: string }, i: number) => {
-        return (
-          <Option
-            key={i}
-            selected={option.value === this.state.selectedMetric}
-            onClick={() =>
-              this.setState({
-                selectedMetric: option.value,
-                selectedMetricLabel: option.label,
-              })
-            }
-            lastItem={i === this.state.metricsOptions.length - 1}
-          >
-            {option.label}
-          </Option>
-        );
-      }
-    );
-  };
-
-  renderMetricsSettings = () => {
-    if (this.state.showMetricsSettings && true) {
-      if (this.state.selectedMetric == "nginx:errors") {
+  const renderMetricsSettings = () => {
+    if (showMetricsSettings && true) {
+      if (selectedMetric == "nginx:errors") {
         return (
           <>
-            <DropdownOverlay
-              onClick={() => this.setState({ showMetricsSettings: false })}
-            />
+            <DropdownOverlay onClick={() => setShowMetricsSettings(false)} />
             <DropdownAlt dropdownWidth="330px" dropdownMaxHeight="300px">
               <Label>Additional Settings</Label>
               <SelectRow
                 label="Target Ingress"
-                value={this.state.selectedIngress}
-                setActiveValue={(x: any) =>
-                  this.setState({ selectedIngress: x })
-                }
-                options={this.state.ingressOptions}
+                value={selectedIngress}
+                setActiveValue={(x: any) => setSelectedIngress(x)}
+                options={ingressOptions}
                 width="100%"
               />
             </DropdownAlt>
@@ -499,25 +424,21 @@ export default class MetricsSection extends Component<PropsType, StateType> {
 
       return (
         <>
-          <DropdownOverlay
-            onClick={() => this.setState({ showMetricsSettings: false })}
-          />
+          <DropdownOverlay onClick={() => setShowMetricsSettings(false)} />
           <DropdownAlt dropdownWidth="330px" dropdownMaxHeight="300px">
             <Label>Additional Settings</Label>
             <SelectRow
               label="Target Controller"
-              value={this.state.selectedController}
-              setActiveValue={(x: any) =>
-                this.setState({ selectedController: x })
-              }
-              options={this.state.controllerOptions}
+              value={selectedController}
+              setActiveValue={(x: any) => setSelectedController(x)}
+              options={controllerOptions}
               width="100%"
             />
             <SelectRow
               label="Target Pod"
-              value={this.state.selectedPod}
-              setActiveValue={(x: any) => this.setState({ selectedPod: x })}
-              options={this.state.pods}
+              value={selectedPod}
+              setActiveValue={(x: any) => setSelectedPod(x)}
+              options={pods}
               width="100%"
             />
           </DropdownAlt>
@@ -526,85 +447,108 @@ export default class MetricsSection extends Component<PropsType, StateType> {
     }
   };
 
-  render() {
-    return (
-      <StyledMetricsSection>
-        <MetricsHeader>
-          <Flex>
-            <MetricSelector
-              onClick={() =>
-                this.setState({
-                  dropdownExpanded: !this.state.dropdownExpanded,
-                })
-              }
-            >
-              <MetricsLabel>{this.state.selectedMetricLabel}</MetricsLabel>
-              <i className="material-icons">arrow_drop_down</i>
-              {this.renderDropdown()}
-            </MetricSelector>
-            <Relative>
-              <IconWrapper
-                onClick={() => this.setState({ showMetricsSettings: true })}
-              >
-                <SettingsIcon src={settings} />
-              </IconWrapper>
-              {this.renderMetricsSettings()}
-            </Relative>
-            {/* <RefreshMetrics
-              className="material-icons-outlined"
-              onClick={() => this.getMetrics()}
-            >
-              refresh
-            </RefreshMetrics> */}
+  const renderDropdown = () => {
+    if (dropdownExpanded) {
+      return (
+        <>
+          <DropdownOverlay onClick={() => setDropdownExpanded(false)} />
+          <Dropdown
+            dropdownWidth="230px"
+            dropdownMaxHeight="200px"
+            onClick={() => setDropdownExpanded(false)}
+          >
+            {renderOptionList()}
+          </Dropdown>
+        </>
+      );
+    }
+  };
 
-            <Highlight color={"#7d7d81"} onClick={this.getMetrics}>
-              <i className="material-icons">autorenew</i>
-            </Highlight>
-          </Flex>
-          <RangeWrapper>
-            <TabSelector
-              noBuffer={true}
-              options={[
-                { value: "1H", label: "1H" },
-                { value: "6H", label: "6H" },
-                { value: "1D", label: "1D" },
-                { value: "1M", label: "1M" },
-              ]}
-              currentTab={this.state.selectedRange}
-              setCurrentTab={(x: string) => this.setState({ selectedRange: x })}
-            />
-          </RangeWrapper>
-        </MetricsHeader>
-        {this.state.isLoading > 0 && <Loading />}
-        {this.state.data.length === 0 && this.state.isLoading === 0 && (
-          <Message>
-            No data available yet.
-            <Highlight color={"#8590ff"} onClick={this.getMetrics}>
-              <i className="material-icons">autorenew</i>
-              Refresh
-            </Highlight>
-          </Message>
-        )}
-
-        {this.state.data.length > 0 && this.state.isLoading === 0 && (
-          <ParentSize>
-            {({ width, height }) => (
-              <AreaChart
-                data={this.state.data}
-                width={width}
-                height={height - 10}
-                resolution={this.state.selectedRange}
-                margin={{ top: 40, right: -40, bottom: 0, left: 50 }}
-              />
-            )}
-          </ParentSize>
-        )}
-      </StyledMetricsSection>
+  const renderOptionList = () => {
+    return metricsOptions.map(
+      (option: { value: string; label: string }, i: number) => {
+        return (
+          <Option
+            key={i}
+            selected={option.value === selectedMetric}
+            onClick={() => {
+              setSelectedMetric(option.value);
+              setSelectedMetricLabel(option.label);
+            }}
+            lastItem={i === metricsOptions.length - 1}
+          >
+            {option.label}
+          </Option>
+        );
+      }
     );
-  }
-}
+  };
 
-MetricsSection.contextType = Context;
+  return (
+    <StyledMetricsSection>
+      <MetricsHeader>
+        <Flex>
+          <MetricSelector
+            onClick={() => setDropdownExpanded(!dropdownExpanded)}
+          >
+            <MetricsLabel>{selectedMetricLabel}</MetricsLabel>
+            <i className="material-icons">arrow_drop_down</i>
+            {renderDropdown()}
+          </MetricSelector>
+          <Relative>
+            <IconWrapper onClick={() => setShowMetricsSettings(true)}>
+              <SettingsIcon src={settings} />
+            </IconWrapper>
+            {renderMetricsSettings()}
+          </Relative>
+
+          <Highlight color={"#7d7d81"} onClick={getMetrics}>
+            <i className="material-icons">autorenew</i>
+          </Highlight>
+        </Flex>
+        <RangeWrapper>
+          <TabSelector
+            noBuffer={true}
+            options={[
+              { value: "1H", label: "1H" },
+              { value: "6H", label: "6H" },
+              { value: "1D", label: "1D" },
+              { value: "1M", label: "1M" },
+            ]}
+            currentTab={selectedRange}
+            setCurrentTab={(x: string) => setSelectedRange(x)}
+          />
+        </RangeWrapper>
+      </MetricsHeader>
+      {isLoading > 0 && <Loading />}
+      {data.length === 0 && isLoading === 0 && (
+        <Message>
+          No data available yet.
+          <Highlight color={"#8590ff"} onClick={getMetrics}>
+            <i className="material-icons">autorenew</i>
+            Refresh
+          </Highlight>
+        </Message>
+      )}
+
+      {data.length > 0 && isLoading === 0 && (
+        <ParentSize>
+          {({ width, height }) => (
+            <AreaChart
+              data={data}
+              width={width}
+              height={height - 10}
+              resolution={selectedRange}
+              margin={{ top: 40, right: -40, bottom: 0, left: 50 }}
+            />
+          )}
+        </ParentSize>
+      )}
+    </StyledMetricsSection>
+  );
+};
+
+export default MetricsSection;
 
 const Highlight = styled.div`
   display: flex;

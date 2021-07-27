@@ -267,7 +267,14 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
     const end = Math.round(d.getTime() / 1000);
     const start = end - secondsBeforeNow[selectedRange];
 
+    let podNames = [] as string[];
+
+    if (!shouldsum) {
+      podNames = [selectedPod];
+    }
+
     if (selectedMetric == "nginx:errors") {
+      podNames = [selectedIngress?.name];
       namespace = selectedIngress?.namespace || "default";
       shouldsum = false;
     }
@@ -287,6 +294,7 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
           startrange: start,
           endrange: end,
           resolution: resolutions[selectedRange],
+          pods: podNames,
         },
         {
           id: currentProject.id,

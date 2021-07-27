@@ -34,6 +34,7 @@ type GithubActions struct {
 	PorterToken  string
 	BuildEnv     map[string]string
 	ProjectID    uint
+	ClusterID    uint
 	ReleaseName  string
 
 	GitBranch      string
@@ -71,8 +72,20 @@ func (g *GithubActions) Setup() (string, error) {
 		return "", err
 	}
 
-	// create a new secret with a porter token
+	// create new secrets porter token, project id, and cluster id
 	err = g.createGithubSecret(client, g.getPorterTokenSecretName(), g.PorterToken)
+
+	if err != nil {
+		return "", err
+	}
+
+	err = g.createGithubSecret(client, g.getPorterProjectIDSecretName(), g.PorterToken)
+
+	if err != nil {
+		return "", err
+	}
+
+	err = g.createGithubSecret(client, g.getPorterClusterIDSecretName(), g.PorterToken)
 
 	if err != nil {
 		return "", err
@@ -343,6 +356,14 @@ func (g *GithubActions) getPorterYMLFileName() string {
 
 func (g *GithubActions) getPorterTokenSecretName() string {
 	return fmt.Sprintf("PORTER_TOKEN_%d", g.ProjectID)
+}
+
+func (g *GithubActions) getPorterProjectIDSecretName() string {
+	return fmt.Sprintf("PORTER_PROJECT_ID_%d", g.ProjectID)
+}
+
+func (g *GithubActions) getPorterClusterIDSecretName() string {
+	return fmt.Sprintf("PORTER_CLUSTER_ID_%d", g.ProjectID)
 }
 
 func (g *GithubActions) commitGithubFile(

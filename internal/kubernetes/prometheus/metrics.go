@@ -60,14 +60,15 @@ func GetIngressesWithNGINXAnnotation(clientset kubernetes.Interface) ([]SimpleIn
 }
 
 type QueryOpts struct {
-	Metric     string `schema:"metric"`
-	ShouldSum  bool   `schema:"shouldsum"`
-	Kind       string `schema:"kind"`
-	Name       string `schema:"name"`
-	Namespace  string `schema:"namespace"`
-	StartRange uint   `schema:"startrange"`
-	EndRange   uint   `schema:"endrange"`
-	Resolution string `schema:"resolution"`
+	Metric     string   `schema:"metric"`
+	ShouldSum  bool     `schema:"shouldsum"`
+	Kind       string   `schema:"kind"`
+	PodList    []string `schema:"pods"`
+	Name       string   `schema:"name"`
+	Namespace  string   `schema:"namespace"`
+	StartRange uint     `schema:"startrange"`
+	EndRange   uint     `schema:"endrange"`
+	Resolution string   `schema:"resolution"`
 }
 
 func QueryPrometheus(
@@ -85,7 +86,14 @@ func QueryPrometheus(
 		return nil, err
 	}
 
-	podSelector := fmt.Sprintf(`namespace="%s",pod=~"%s",container!="POD",container!=""`, opts.Namespace, podSelectionRegex)
+	var podSelector string
+
+	if len(opts.PodList) > 0 {
+		podSelector = fmt.Sprintf(`namespace="%s",pod=~"%s",container!="POD",container!=""`, opts.Namespace, strings.Join(opts.PodList, "|"))
+	} else {
+		podSelector = fmt.Sprintf(`namespace="%s",pod=~"%s",container!="POD",container!=""`, opts.Namespace, podSelectionRegex)
+	}
+
 	query := ""
 
 	if opts.Metric == "cpu" {

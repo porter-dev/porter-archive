@@ -54,7 +54,12 @@ export interface KeyValueArrayField extends GenericInputField {
   fileUpload?: boolean;
 }
 
-export type FormField = HeadingField|SubtitleField|InputField|CheckboxField|KeyValueArrayField;
+export interface ArrayInputField extends GenericInputField {
+  type: "array-input"
+  label?: string
+}
+
+export type FormField = HeadingField|SubtitleField|InputField|CheckboxField|KeyValueArrayField|ArrayInputField;
 
 export interface ShowIfAnd {
   and: ShowIf[];
@@ -104,8 +109,9 @@ export interface KeyValueArrayFieldState {
   showEnvModal: boolean;
   showEditorModal: boolean;
 }
+export interface ArrayInputFieldState {}
 
-export type PorterFormFieldFieldState = StringInputFieldState|CheckboxFieldState|KeyValueArrayField;
+export type PorterFormFieldFieldState = StringInputFieldState|CheckboxFieldState|KeyValueArrayField|ArrayInputFieldState;
 
 // reducer interfaces
 

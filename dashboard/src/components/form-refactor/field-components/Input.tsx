@@ -8,11 +8,7 @@ import {
   StringInputFieldState,
 } from "../types";
 
-interface Props extends InputField {
-  id: string;
-}
-
-const Input: React.FC<Props> = ({
+const Input: React.FC<InputField> = ({
   id,
   variable,
   label,

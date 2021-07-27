@@ -276,8 +276,16 @@ const Button = styled.div`
 const initYaml = `name: Porter Example
 hasSource: true
 tabs:
+- name: complex
+  label: Complex Inputs
+  sections:
+  - name: only-section
+    contents:
+      - type: array-input
+        label: testing array-input
+        variable: array-input-variable
 - name: main
-  label: Main
+  label: Basic Inputs
   sections:
   - name: header
     contents: 

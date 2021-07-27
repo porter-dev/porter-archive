@@ -93,6 +93,7 @@ export const PorterFormContextProvider: React.FC<Props> = (props) => {
         return {
           ...state,
           variables: {
+            ...state.variables,
             ...action.mutateFunc(state.variables),
             ...props.overrideVariables,
           },

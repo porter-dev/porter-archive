@@ -295,6 +295,9 @@ tabs:
             value: 2
           - label: Three
             value: 3
+      - type: provider-select
+        label: Testing Provider Select
+        variable: provider-select-variable
         
 - name: main
   label: Basic Inputs

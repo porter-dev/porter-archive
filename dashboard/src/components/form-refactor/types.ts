@@ -62,7 +62,12 @@ export interface ArrayInputField extends GenericInputField {
 export interface SelectField extends GenericInputField {
   type: "select"
   settings: {
+    type: "normal"
     options: { value: string; label: string }[]
+    default?: string,
+  }|{
+    type: "provider"
+    default?: string,
   }
   width: string;
   label?: string;

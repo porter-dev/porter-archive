@@ -1,11 +1,32 @@
-import React from "react";
+import React, { useContext } from "react";
 import { SelectField, SelectFieldState } from "../types";
 import Selector from "../../Selector";
 import styled from "styled-components";
 import useFormField from "../hooks/useFormField";
+import { Context } from "../../../shared/Context";
 
 const Select: React.FC<SelectField> = (props) => {
-  const { variables, setVars } = useFormField<SelectFieldState>(props.id, {});
+  const { currentCluster } = useContext(Context);
+  console.log(currentCluster.service);
+  const { variables, setVars } = useFormField<SelectFieldState>(props.id, {
+    initVars: {
+      [props.variable]: props.settings.default
+        ? props.settings.default
+        : props.settings.type == "provider"
+        ? ({
+            gke: "gcp",
+            eks: "aws",
+            doks: "do",
+          } as Record<string, string>)[currentCluster.service] || "aws"
+        : props.settings.options[0].value,
+    },
+  });
+
+  const providerOptions = [
+    { value: "aws", label: "Amazon Web Services (AWS)" },
+    { value: "gcp", label: "Google Cloud Platform (GCP)" },
+    { value: "do", label: "DigitalOcean" },
+  ];
 
   return (
     <StyledSelectRow>
@@ -20,7 +41,11 @@ const Select: React.FC<SelectField> = (props) => {
               };
             });
           }}
-          options={props.settings.options}
+          options={
+            props.settings.type == "provider"
+              ? providerOptions
+              : props.settings.options
+          }
           dropdownLabel={props.dropdownLabel}
           width={props.width || "270px"}
           dropdownWidth={props.width}

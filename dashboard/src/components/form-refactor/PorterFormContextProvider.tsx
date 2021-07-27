@@ -188,6 +188,16 @@ export const PorterFormContextProvider: React.FC<Props> = (props) => {
                     },
                   };
                 }
+                if (field.type == "provider-select") {
+                  return {
+                    ...field,
+                    type: "select",
+                    settings: {
+                      ...field.settings,
+                      type: "provider",
+                    },
+                  };
+                }
                 return field;
               }),
             };

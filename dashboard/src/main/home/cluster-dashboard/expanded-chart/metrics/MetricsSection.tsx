@@ -117,6 +117,7 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
     { value: "network", label: "Network Received Bytes (Ki)" },
   ]);
   const [isLoading, setIsLoading] = useState(0);
+  const [hpaData, setHpaData] = useState([]);
 
   const { currentCluster, currentProject, setCurrentError } = useContext(
     Context
@@ -253,6 +254,51 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
       });
   };
 
+  const getAutoscalingThreshold = (
+    kind: string,
+    shouldsum: boolean,
+    namespace: string,
+    start: number,
+    end: number
+  ) => {
+    return api.getMetrics(
+      "<token>",
+      {
+        cluster_id: currentCluster.id,
+        metric: kind,
+        shouldsum: shouldsum,
+        kind: selectedController?.kind,
+        name: selectedController?.metadata.name,
+        namespace: namespace,
+        startrange: start,
+        endrange: end,
+        resolution: resolutions[selectedRange],
+        pods: [],
+      },
+      {
+        id: currentProject.id,
+      }
+    );
+  };
+
+  const parseCPUMetrics = (arr: Array<{ date: number; cpu: string }>) => {
+    return arr.map((d) => {
+      return {
+        date: d.date,
+        value: parseFloat(d.cpu),
+      };
+    });
+  };
+
+  const parseMemoryMetrics = (arr: Array<{ date: number; memory: string }>) => {
+    return arr.map((d) => {
+      return {
+        date: d.date,
+        value: parseFloat(d.memory) / (1024 * 1024), // put units in Mi
+      };
+    });
+  };
+
   const getMetrics = () => {
     if (pods?.length == 0) {
       return;
@@ -304,45 +350,39 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
         if (!Array.isArray(res.data) || !res.data[0]?.results) {
           return;
         }
+
         // transform the metrics to expected form
         if (kind == "cpu") {
           let data = res.data as MetricsCPUDataResponse;
 
           // if summed, just look at the first data
-          let tData = data[0].results.map(
-            (
-              d: {
-                date: number;
-                cpu: string;
-              },
-              i: number
-            ) => {
-              return {
-                date: d.date,
-                value: parseFloat(d.cpu),
-              };
-            }
-          );
-
-          setData(tData);
+          let tData = parseCPUMetrics(data[0].results);
+          getAutoscalingThreshold(
+            "cpu_hpa_threshold",
+            shouldsum,
+            namespace,
+            start,
+            end
+          ).then((res) => {
+            const data = res.data as MetricsCPUDataResponse;
+            setHpaData(parseCPUMetrics(data[0].results));
+            setData(tData);
+          });
         } else if (kind == "memory") {
           let data = res.data as MetricsMemoryDataResponse;
 
-          let tData = data[0].results.map(
-            (
-              d: {
-                date: number;
-                memory: string;
-              },
-              i: number
-            ) => {
-              return {
-                date: d.date,
-                value: parseFloat(d.memory) / (1024 * 1024), // put units in Mi
-              };
-            }
-          );
-
+          let tData = parseMemoryMetrics(data[0].results);
+          getAutoscalingThreshold(
+            "memory_hpa_threshold",
+            shouldsum,
+            namespace,
+            start,
+            end
+          ).then((res) => {
+            const data = res.data as MetricsMemoryDataResponse;
+            setHpaData(parseMemoryMetrics(data[0].results));
+            setData(tData);
+          });
           setData(tData);
         } else if (kind == "network") {
           let data = res.data as MetricsNetworkDataResponse;
@@ -538,6 +578,7 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
           {({ width, height }) => (
             <AreaChart
               data={data}
+              hpaData={hpaData}
               width={width}
               height={height - 10}
               resolution={selectedRange}

@@ -323,7 +323,31 @@ export const getFinalVariablesForKeyValueArray: GetFinalVariablesFunction = (
   props: KeyValueArrayField,
   state: KeyValueArrayFieldState
 ) => {
-  return {};
+  let obj = {} as any;
+  const rg = /(?:^|[^\\])(\\n)/g;
+  const fixNewlines = (s: string) => {
+    while (rg.test(s)) {
+      s = s.replace(rg, (str) => {
+        if (str.length == 2) return "\n";
+        if (str[0] != "\\") return str[0] + "\n";
+        return "\\n";
+      });
+    }
+    return s;
+  };
+  const isNumber = (s: string) => {
+    return !isNaN(!s ? NaN : Number(String(s).trim()));
+  };
+  state.values.forEach((entry: any, i: number) => {
+    if (isNumber(entry.value)) {
+      obj[entry.key] = entry.value;
+    } else {
+      obj[entry.key] = fixNewlines(entry.value);
+    }
+  });
+  return {
+    [props.variable]: obj,
+  };
 };
 
 export default KeyValueArray;

@@ -9,6 +9,7 @@ import {
 } from "./types";
 import { ShowIf, ShowIfAnd, ShowIfNot, ShowIfOr } from "../../shared/types";
 import { getFinalVariablesForStringInput } from "./field-components/Input";
+import { getFinalVariablesForKeyValueArray } from "./field-components/KeyValueArray";
 
 interface Props {
   rawFormData: PorterFormData;
@@ -287,6 +288,7 @@ export const PorterFormContextProvider: React.FC<Props> = (props) => {
     ];
     const finalFunctions: Record<string, GetFinalVariablesFunction> = {
       "string-input": getFinalVariablesForStringInput,
+      "key-value-array": getFinalVariablesForKeyValueArray,
     };
 
     formData.tabs.map((tab) =>
@@ -297,15 +299,12 @@ export const PorterFormContextProvider: React.FC<Props> = (props) => {
               finalFunctions[field.type](
                 state.variables,
                 field,
-                state.components[field.id]
+                state.components[field.id].state
               )
             );
         })
       )
     );
-
-    console.log("??");
-    console.log(state.variables);
 
     props.onSubmit(Object.assign.apply({}, varList));
   };

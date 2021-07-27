@@ -41,6 +41,8 @@ const { Provider } = PorterFormContext;
 export const PorterFormContextProvider: React.FC<Props> = (props) => {
   const context = useContext(Context);
 
+  console.log(props.rawFormData);
+
   const handleAction = (
     state: PorterFormState,
     action: PorterFormAction

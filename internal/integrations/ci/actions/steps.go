@@ -12,8 +12,7 @@ func getCheckoutCodeStep() GithubActionYAMLStep {
 	}
 }
 
-const download string = `
-name=$(curl -s https://api.github.com/repos/porter-dev/porter/releases/latest | grep "browser_download_url.*/porter_.*_Linux_x86_64\.zip" | cut -d ":" -f 2,3 | tr -d \")
+const download string = `name=$(curl -s https://api.github.com/repos/porter-dev/porter/releases/latest | grep "browser_download_url.*/porter_.*_Linux_x86_64\.zip" | cut -d ":" -f 2,3 | tr -d \")
 name=$(basename $name)
 curl -L https://github.com/porter-dev/porter/releases/latest/download/$name --output $name
 unzip -a $name
@@ -30,17 +29,20 @@ func getDownloadPorterStep() GithubActionYAMLStep {
 	}
 }
 
-const configure string = `
-sudo porter config set-host %s
-sudo porter auth login --token ${{secrets.%s}}
-sudo porter docker configure
+const configure string = `sudo porter config set-host %s
+porter update --app %s
 `
 
-func getConfigurePorterStep(serverURL, porterTokenSecretName string) GithubActionYAMLStep {
+func getConfigurePorterStep(serverURL, porterTokenSecretName string, projectIDSecretName string, clusterIDSecretName string, appName string) GithubActionYAMLStep {
 	return GithubActionYAMLStep{
 		Name: "Configure Porter",
 		ID:   "configure_porter",
-		Run:  fmt.Sprintf(configure, serverURL, porterTokenSecretName),
+		Run:  fmt.Sprintf(configure, serverURL, appName),
+		Env: GithubActionEnvConfig{
+			PorterToken: fmt.Sprintf("{{ secrets.%s }}", porterTokenSecretName),
+			ProjectID:   fmt.Sprintf("{{ secrets.%s }}", projectIDSecretName),
+			ClusterID:   fmt.Sprintf("{{ secrets.%s }}", clusterIDSecretName),
+		},
 	}
 }
 

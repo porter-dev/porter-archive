@@ -59,7 +59,19 @@ export interface ArrayInputField extends GenericInputField {
   label?: string
 }
 
-export type FormField = HeadingField|SubtitleField|InputField|CheckboxField|KeyValueArrayField|ArrayInputField;
+export interface SelectField extends GenericInputField {
+  type: "select"
+  settings: {
+    options: { value: string; label: string }[]
+  }
+  width: string;
+  label?: string;
+  dropdownLabel?: string;
+  dropdownWidth?: number;
+  dropdownMaxHeight?: string;
+}
+
+export type FormField = HeadingField|SubtitleField|InputField|CheckboxField|KeyValueArrayField|ArrayInputField|SelectField;
 
 export interface ShowIfAnd {
   and: ShowIf[];
@@ -110,8 +122,9 @@ export interface KeyValueArrayFieldState {
   showEditorModal: boolean;
 }
 export interface ArrayInputFieldState {}
+export interface SelectFieldState {}
 
-export type PorterFormFieldFieldState = StringInputFieldState|CheckboxFieldState|KeyValueArrayField|ArrayInputFieldState;
+export type PorterFormFieldFieldState = StringInputFieldState|CheckboxFieldState|KeyValueArrayField|ArrayInputFieldState|SelectFieldState;
 
 // reducer interfaces
 

@@ -6,6 +6,7 @@ import {
   CheckboxField,
   KeyValueArrayField,
   ArrayInputField,
+  SelectField,
 } from "./types";
 import TabRegion, { TabOption } from "../TabRegion";
 import Heading from "../values-form/Heading";
@@ -17,6 +18,7 @@ import KeyValueArray from "./field-components/KeyValueArray";
 import styled from "styled-components";
 import SaveButton from "../SaveButton";
 import ArrayInput from "./field-components/ArrayInput";
+import Select from "./field-components/Select";
 
 interface Props {
   leftTabOptions?: TabOption[];
@@ -55,6 +57,8 @@ const PorterForm: React.FC<Props> = (props) => {
         return <KeyValueArray {...(bundledProps as KeyValueArrayField)} />;
       case "array-input":
         return <ArrayInput {...(bundledProps as ArrayInputField)} />;
+      case "select":
+        return <Select {...(bundledProps as SelectField)} />;
     }
     return <p>Not Implemented: {(field as any).type}</p>;
   };

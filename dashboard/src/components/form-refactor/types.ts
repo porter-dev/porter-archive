@@ -25,6 +25,16 @@ export interface SubtitleField extends GenericField {
   label: string;
 }
 
+export interface ServiceIPListField extends GenericField {
+  type: "service-ip-list";
+  value: any[];
+}
+
+export interface ResourceListField extends GenericField {
+  type: "resource-list";
+  value: any[];
+}
+
 export interface InputField extends GenericInputField {
   type: "input";
   label?: string;
@@ -76,7 +86,8 @@ export interface SelectField extends GenericInputField {
   dropdownMaxHeight?: string;
 }
 
-export type FormField = HeadingField|SubtitleField|InputField|CheckboxField|KeyValueArrayField|ArrayInputField|SelectField;
+export type FormField = HeadingField|SubtitleField|InputField|CheckboxField
+  |KeyValueArrayField|ArrayInputField|SelectField|ServiceIPListField|ResourceListField;
 
 export interface ShowIfAnd {
   and: ShowIf[];

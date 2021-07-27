@@ -7,6 +7,8 @@ import {
   KeyValueArrayField,
   ArrayInputField,
   SelectField,
+  ServiceIPListField,
+  ResourceListField,
 } from "./types";
 import TabRegion, { TabOption } from "../TabRegion";
 import Heading from "../values-form/Heading";
@@ -19,6 +21,8 @@ import styled from "styled-components";
 import SaveButton from "../SaveButton";
 import ArrayInput from "./field-components/ArrayInput";
 import Select from "./field-components/Select";
+import ServiceIPList from "./field-components/ServiceIPList";
+import ResourceList from "./field-components/ResourceList";
 
 interface Props {
   leftTabOptions?: TabOption[];
@@ -59,6 +63,10 @@ const PorterForm: React.FC<Props> = (props) => {
         return <ArrayInput {...(bundledProps as ArrayInputField)} />;
       case "select":
         return <Select {...(bundledProps as SelectField)} />;
+      case "service-ip-list":
+        return <ServiceIPList {...(bundledProps as ServiceIPListField)} />;
+      case "resource-list":
+        return <ResourceList {...(bundledProps as ResourceListField)} />;
     }
     return <p>Not Implemented: {(field as any).type}</p>;
   };

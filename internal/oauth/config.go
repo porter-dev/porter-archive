@@ -148,7 +148,6 @@ func GetAccessToken(
 	}
 
 	if token.AccessToken != string(prevToken.AccessToken) {
-		//fmt.Println("access happening...")
 		err := updateToken([]byte(token.AccessToken), []byte(token.RefreshToken), token.Expiry)
 
 		if err != nil {

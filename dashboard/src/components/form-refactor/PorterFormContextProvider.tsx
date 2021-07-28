@@ -41,8 +41,6 @@ const { Provider } = PorterFormContext;
 export const PorterFormContextProvider: React.FC<Props> = (props) => {
   const context = useContext(Context);
 
-  console.log(props.rawFormData);
-
   const handleAction = (
     state: PorterFormState,
     action: PorterFormAction
@@ -111,9 +109,28 @@ export const PorterFormContextProvider: React.FC<Props> = (props) => {
     return state;
   };
 
+  // get variables initiated by variable field
+  const getInitialVariables = (data: PorterFormData) => {
+    const ret: Record<string, any> = {};
+    data.tabs.map((tab) =>
+      tab.sections.map((section) =>
+        section.contents.map((field) => {
+          if (field.type == "variable") {
+            ret[field.variable] = field.settings?.default;
+          }
+        })
+      )
+    );
+    return ret;
+  };
+
   const [state, dispatch] = useReducer(handleAction, {
     components: {},
-    variables: props.initialVariables || {},
+    variables: {
+      ...props.initialVariables,
+      ...getInitialVariables(props.rawFormData),
+      ...props.overrideVariables,
+    },
   });
 
   const evalShowIf = (
@@ -166,60 +183,64 @@ export const PorterFormContextProvider: React.FC<Props> = (props) => {
           sections: tab.sections.map((section) => {
             return {
               ...section,
-              contents: section.contents.map((field: any) => {
-                if (field.type == "number-input") {
-                  return {
-                    ...field,
-                    type: "input",
-                    settings: {
-                      ...field.settings,
-                      type: "number",
-                    },
-                  };
-                }
-                if (field.type == "string-input") {
-                  return {
-                    ...field,
-                    type: "input",
-                    settings: {
-                      ...field.settings,
-                      type: "string",
-                    },
-                  };
-                }
-                if (field.type == "string-input-password") {
-                  return {
-                    ...field,
-                    type: "input",
-                    settings: {
-                      ...field.settings,
-                      type: "password",
-                    },
-                  };
-                }
-                if (field.type == "provider-select") {
-                  return {
-                    ...field,
-                    type: "select",
-                    settings: {
-                      ...field.settings,
-                      type: "provider",
-                    },
-                  };
-                }
-                if (field.type == "env-key-value-array") {
-                  return {
-                    ...field,
-                    type: "key-value-array",
-                    secretOption: true,
-                    envLoader: true,
-                    settings: {
-                      type: "env",
-                    },
-                  };
-                }
-                return field;
-              }),
+              contents: section.contents
+                .map((field: any) => {
+                  if (field.type == "number-input") {
+                    return {
+                      ...field,
+                      type: "input",
+                      settings: {
+                        ...field.settings,
+                        type: "number",
+                      },
+                    };
+                  }
+                  if (field.type == "string-input") {
+                    return {
+                      ...field,
+                      type: "input",
+                      settings: {
+                        ...field.settings,
+                        type: "string",
+                      },
+                    };
+                  }
+                  if (field.type == "string-input-password") {
+                    return {
+                      ...field,
+                      type: "input",
+                      settings: {
+                        ...field.settings,
+                        type: "password",
+                      },
+                    };
+                  }
+                  if (field.type == "provider-select") {
+                    return {
+                      ...field,
+                      type: "select",
+                      settings: {
+                        ...field.settings,
+                        type: "provider",
+                      },
+                    };
+                  }
+                  if (field.type == "env-key-value-array") {
+                    return {
+                      ...field,
+                      type: "key-value-array",
+                      secretOption: true,
+                      envLoader: true,
+                      fileUpload: true,
+                      settings: {
+                        type: "env",
+                      },
+                    };
+                  }
+                  if (field.type == "variable") return null;
+                  return field;
+                })
+                .filter((x) => x != null),
             };
           }),
         };

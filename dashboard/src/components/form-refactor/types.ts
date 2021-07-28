@@ -96,9 +96,16 @@ export interface SelectField extends GenericInputField {
   dropdownMaxHeight?: string;
 }
 
+export interface VariableField extends GenericInputField {
+  type: "variable",
+  settings?: {
+    default: any
+  }
+}
+
 export type FormField = HeadingField|SubtitleField|InputField|CheckboxField
   |KeyValueArrayField|ArrayInputField|SelectField|ServiceIPListField|ResourceListField
-  |VeleroBackupField;
+  |VeleroBackupField|VariableField;
 
 export interface ShowIfAnd {
   and: ShowIf[];

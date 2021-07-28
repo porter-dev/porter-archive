@@ -18,7 +18,6 @@ interface Props extends KeyValueArrayField {
 }
 
 const KeyValueArray: React.FC<Props> = (props) => {
-  console.log(props);
   const { state, setState, variables } = useFormField<KeyValueArrayFieldState>(
     props.id,
     {

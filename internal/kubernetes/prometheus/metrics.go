@@ -108,9 +108,10 @@ func QueryPrometheus(
 		denom := fmt.Sprintf(`sum(rate(nginx_ingress_controller_requests{namespace="%s",ingress=~"%s"}[5m]) > 0)`, opts.Namespace, podSelectionRegex)
 		query = fmt.Sprintf(`%s / %s * 100 OR on() vector(0)`, num, denom)
 	} else if opts.Metric == "cpu_hpa_threshold" {
-		query = createHPAAbsoluteCPUThresholdQuery(podSelectionRegex, opts.Name, opts.Namespace)
+		// attempt to get service "app" label
+		query = createHPAAbsoluteCPUThresholdQuery(podSelectionRegex, opts.Name, opts.Namespace, service.ObjectMeta.Labels["app"])
 	} else if opts.Metric == "memory_hpa_threshold" {
-		query = createHPAAbsoluteMemoryThresholdQuery(podSelectionRegex, opts.Name, opts.Namespace)
+		query = createHPAAbsoluteMemoryThresholdQuery(podSelectionRegex, opts.Name, opts.Namespace, service.ObjectMeta.Labels["app"])
 	}
 
 	if opts.ShouldSum {
@@ -231,38 +232,72 @@ func getPodSelectionRegex(kind, name string) (string, error) {
 	return fmt.Sprintf("%s-%s", name, suffix), nil
 }
 
-func createHPAAbsoluteCPUThresholdQuery(podSelectionRegex, hpaName, namespace string) string {
-	requestCPU := fmt.Sprintf(
-		`sum by (hpa) (label_replace(kube_pod_container_resource_requests_cpu_cores{pod=~"%s",namespace="%s",container!="POD",container!="",app_kubernetes_io_instance="prometheus"},"hpa", "%s", "", ""))`,
-		podSelectionRegex,
+func createHPAAbsoluteCPUThresholdQuery(podSelectionRegex, hpaName, namespace, appLabel string) string {
+	kubeMetricsPodSelector := getKubeMetricsPodSelector(podSelectionRegex, namespace)
+
+	kubeMetricsHPASelector := fmt.Sprintf(
+		`hpa="%s",namespace="%s",metric_name="cpu",metric_target_type="utilization"`,
+		hpaName,
 		namespace,
+	)
+
+	// the kube-state-metrics queries are less prone to error if the field app_kubernetes_io_instance is matched
+	// as well
+	if appLabel != "" {
+		kubeMetricsPodSelector += fmt.Sprintf(`,app_kubernetes_io_instance="%s"`, appLabel)
+		kubeMetricsHPASelector += fmt.Sprintf(`,app_kubernetes_io_instance="%s"`, appLabel)
+	}
+
+	requestCPU := fmt.Sprintf(
+		`sum by (hpa) (label_replace(kube_pod_container_resource_requests_cpu_cores{%s},"hpa", "%s", "", ""))`,
+		kubeMetricsPodSelector,
 		hpaName,
 	)
 
 	targetCPUUtilThreshold := fmt.Sprintf(
-		`kube_hpa_spec_target_metric{hpa="%s",namespace="%s",metric_name="cpu",metric_target_type="utilization",app_kubernetes_io_instance="prometheus"} / 100`,
-		hpaName,
-		namespace,
+		`kube_hpa_spec_target_metric{%s} / 100`,
+		kubeMetricsHPASelector,
 	)
 
 	return fmt.Sprintf(`%s * on(hpa) %s`, requestCPU, targetCPUUtilThreshold)
 }
 
-func createHPAAbsoluteMemoryThresholdQuery(podSelectionRegex, hpaName, namespace string) string {
-	requestMem := fmt.Sprintf(
-		`sum by (hpa) (label_replace(kube_pod_container_resource_requests_memory_bytes{pod=~"%s",namespace="%s",container!="POD",container!="",app_kubernetes_io_instance="prometheus"},"hpa", "%s", "", ""))`,
-		podSelectionRegex,
+func createHPAAbsoluteMemoryThresholdQuery(podSelectionRegex, hpaName, namespace, appLabel string) string {
+	kubeMetricsPodSelector := getKubeMetricsPodSelector(podSelectionRegex, namespace)
+
+	kubeMetricsHPASelector := fmt.Sprintf(
+		`hpa="%s",namespace="%s",metric_name="memory",metric_target_type="utilization"`,
+		hpaName,
 		namespace,
+	)
+
+	// the kube-state-metrics queries are less prone to error if the field app_kubernetes_io_instance is matched
+	// as well
+	if appLabel != "" {
+		kubeMetricsPodSelector += fmt.Sprintf(`,app_kubernetes_io_instance="%s"`, appLabel)
+		kubeMetricsHPASelector += fmt.Sprintf(`,app_kubernetes_io_instance="%s"`, appLabel)
+	}
+
+	requestMem := fmt.Sprintf(
+		`sum by (hpa) (label_replace(kube_pod_container_resource_requests_memory_bytes{%s},"hpa", "%s", "", ""))`,
+		kubeMetricsPodSelector,
 		hpaName,
 	)
 
 	targetMemUtilThreshold := fmt.Sprintf(
-		`kube_hpa_spec_target_metric{hpa="%s",namespace="%s",metric_name="memory",metric_target_type="utilization",app_kubernetes_io_instance="prometheus"} / 100`,
-		hpaName,
-		namespace,
+		`kube_hpa_spec_target_metric{%s} / 100`,
+		kubeMetricsHPASelector,
 	)
 
 	return fmt.Sprintf(`%s * on(hpa) %s`, requestMem, targetMemUtilThreshold)
+}
+
+func getKubeMetricsPodSelector(podSelectionRegex, namespace string) string {
+	return fmt.Sprintf(
+		`pod=~"%s",namespace="%s",container!="POD",container!=""`,
+		podSelectionRegex,
+		namespace,
+	)
 }
 
 func createHPACurrentReplicasQuery(hpaName, namespace string) string {

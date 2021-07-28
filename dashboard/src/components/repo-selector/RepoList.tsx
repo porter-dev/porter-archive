@@ -51,74 +51,75 @@ const RepoList: React.FC<Props> = ({
       .catch(() => {
         setAccessError(true);
         setAccessLoading(false);
-      });
-
-    // load git repo ids, and then repo names from that
-    // this only happens once during the lifecycle
-    new Promise((resolve, reject) => {
-      if (!userId && userId !== 0) {
-        api
-          .getGitRepos("<token>", {}, { project_id: currentProject.id })
-          .then(async (res) => {
-            resolve(res.data);
-          })
-          .catch(() => {
-            resolve([]);
-          });
-      } else {
-        reject(null);
-      }
-    })
-      .then((ids: number[]) => {
-        Promise.all(
-          ids.map((id) => {
-            return new Promise((resolve, reject) => {
-              api
-                .getGitRepoList(
-                  "<token>",
-                  {},
-                  { project_id: currentProject.id, git_repo_id: id }
-                )
-                .then((res) => {
-                  resolve(res.data);
-                })
-                .catch((err) => {
-                  reject(err);
+      })
+      .finally(() => {
+        // load git repo ids, and then repo names from that
+        // this only happens once during the lifecycle
+        new Promise((resolve, reject) => {
+          if (!userId && userId !== 0) {
+            api
+              .getGitRepos("<token>", {}, { project_id: currentProject.id })
+              .then(async (res) => {
+                resolve(res.data);
+              })
+              .catch(() => {
+                resolve([]);
+              });
+          } else {
+            reject(null);
+          }
+        })
+          .then((ids: number[]) => {
+            Promise.all(
+              ids.map((id) => {
+                return new Promise((resolve, reject) => {
+                  api
+                    .getGitRepoList(
+                      "<token>",
+                      {},
+                      { project_id: currentProject.id, git_repo_id: id }
+                    )
+                    .then((res) => {
+                      resolve(res.data);
+                    })
+                    .catch((err) => {
+                      reject(err);
+                    });
                 });
-            });
-          })
-        )
-          .then((repos: RepoType[][]) => {
-            const names = new Set();
-            // note: would be better to use .flat() here but you need es2019 for
-            setRepos(
-              repos
-                .map((arr, idx) =>
-                  arr.map((el) => {
-                    el.GHRepoID = ids[idx];
-                    return el;
-                  })
-                )
-                .reduce((acc, val) => acc.concat(val), [])
-                .reduce((acc, val) => {
-                  if (!names.has(val.FullName)) {
-                    names.add(val.FullName);
-                    return acc.concat(val);
-                  } else {
-                    return acc;
-                  }
-                }, [])
-            );
-            setRepoLoading(false);
+              })
+            )
+              .then((repos: RepoType[][]) => {
+                const names = new Set();
+                // note: would be better to use .flat() here but you need es2019 for
+                setRepos(
+                  repos
+                    .map((arr, idx) =>
+                      arr.map((el) => {
+                        el.GHRepoID = ids[idx];
+                        return el;
+                      })
+                    )
+                    .reduce((acc, val) => acc.concat(val), [])
+                    .reduce((acc, val) => {
+                      if (!names.has(val.FullName)) {
+                        names.add(val.FullName);
+                        return acc.concat(val);
+                      } else {
+                        return acc;
+                      }
+                    }, [])
+                );
+                setRepoLoading(false);
+              })
+              .catch((_) => {
+                setRepoLoading(false);
+                setRepoError(true);
+              });
           })
           .catch((_) => {
             setRepoLoading(false);
             setRepoError(true);
           });
-      })
-      .catch((_) => {
-        setRepoLoading(false);
-        setRepoError(true);
       });
   }, []);
 

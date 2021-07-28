@@ -231,6 +231,7 @@ export const PorterFormContextProvider: React.FC<Props> = (props) => {
                       type: "key-value-array",
                       secretOption: true,
                       envLoader: true,
+                      fileUpload: true,
                       settings: {
                         type: "env",
                       },

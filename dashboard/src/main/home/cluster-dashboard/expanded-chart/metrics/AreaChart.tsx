@@ -5,7 +5,6 @@ import { scaleTime, scaleLinear } from "@visx/scale";
 import { AxisLeft, AxisBottom } from "@visx/axis";
 
 import {
-  withTooltip,
   Tooltip,
   TooltipWithBounds,
   defaultStyles,
@@ -14,25 +13,20 @@ import {
 
 import { GridRows, GridColumns } from "@visx/grid";
 
-import { WithTooltipProvidedProps } from "@visx/tooltip/lib/enhancers/withTooltip";
 import { localPoint } from "@visx/event";
 import { LinearGradient } from "@visx/gradient";
 import { max, extent, bisector } from "d3-array";
 import { timeFormat } from "d3-time-format";
+import { NormalizedMetricsData } from "./types";
 
 /*
 export const accentColor = '#f5cb42';
 export const accentColorDark = '#949eff';
 */
 
-export type MetricsData = {
-  date: number; // unix timestamp
-  value: number; // value
-};
+type TooltipData = NormalizedMetricsData;
 
-type TooltipData = MetricsData;
-
-var globalData: MetricsData[];
+var globalData: NormalizedMetricsData[];
 
 export const background = "#3b697800";
 export const background2 = "#20405100";
@@ -60,15 +54,16 @@ const formats: { [range: string]: (date: Date) => string } = {
 };
 
 // accessors
-const getDate = (d: MetricsData) => new Date(d.date * 1000);
-const getValue = (d: MetricsData) => d.value;
+const getDate = (d: NormalizedMetricsData) => new Date(d.date * 1000);
+const getValue = (d: NormalizedMetricsData) => d.value;
 
-const bisectDate = bisector<MetricsData, Date>((d) => new Date(d.date * 1000))
-  .left;
+const bisectDate = bisector<NormalizedMetricsData, Date>(
+  (d) => new Date(d.date * 1000)
+).left;
 
 export type AreaProps = {
-  data: MetricsData[];
-  hpaData: MetricsData[];
+  data: NormalizedMetricsData[];
+  hpaData: NormalizedMetricsData[];
   resolution: string;
   width: number;
   height: number;
@@ -93,7 +88,7 @@ const AreaChart: React.FunctionComponent<AreaProps> = ({
     tooltipData,
     tooltipTop,
     tooltipLeft,
-  } = useTooltip<MetricsData>();
+  } = useTooltip<NormalizedMetricsData>();
 
   // bounds
   const innerWidth = width - margin.left - margin.right - 40;
@@ -159,7 +154,7 @@ const AreaChart: React.FunctionComponent<AreaProps> = ({
         tooltipTop: valueScale(getValue(d)) || 0,
       });
     },
-    [showTooltip, valueScale, dateScale, width, height, data]
+    [showTooltip, valueScale, dateScale, width, height, data, hpaData]
   );
 
   if (width == 0 || height == 0 || width < 10) {
@@ -207,7 +202,7 @@ const AreaChart: React.FunctionComponent<AreaProps> = ({
           strokeOpacity={0.2}
           pointerEvents="none"
         />
-        <AreaClosed<MetricsData>
+        <AreaClosed<NormalizedMetricsData>
           data={data}
           x={(d) => dateScale(getDate(d)) ?? 0}
           y={(d) => valueScale(getValue(d)) ?? 0}
@@ -218,7 +213,7 @@ const AreaChart: React.FunctionComponent<AreaProps> = ({
           fill="url(#area-gradient)"
           curve={curveMonotoneX}
         />
-        <LinePath<MetricsData>
+        <LinePath<NormalizedMetricsData>
           stroke="#fd0101"
           strokeWidth={2}
           data={hpaData}

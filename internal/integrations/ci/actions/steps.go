@@ -35,9 +35,10 @@ porter update --app %s
 
 func getConfigurePorterStep(serverURL, porterTokenSecretName string, projectIDSecretName string, clusterIDSecretName string, appName string) GithubActionYAMLStep {
 	return GithubActionYAMLStep{
-		Name: "Configure Porter",
-		ID:   "configure_porter",
-		Run:  fmt.Sprintf(configure, serverURL, appName),
+		Name:    "Update Porter App",
+		ID:      "configure_porter",
+		Run:     fmt.Sprintf(configure, serverURL, appName),
+		Timeout: 10,
 		Env: GithubActionEnvConfig{
 			PorterToken: fmt.Sprintf("{{ secrets.%s }}", porterTokenSecretName),
 			ProjectID:   fmt.Sprintf("{{ secrets.%s }}", projectIDSecretName),

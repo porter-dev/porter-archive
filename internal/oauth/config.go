@@ -138,7 +138,8 @@ func GetAccessToken(
 		AccessToken:  string(prevToken.AccessToken),
 		RefreshToken: string(prevToken.RefreshToken),
 		TokenType:    "Bearer",
-		Expiry:       prevToken.Expiry,
+		Expiry:       time.Now().Add(time.Duration(-10) * time.Minute),
+		//Expiry:       prevToken.Expiry,
 	})
 
 	token, err := tokSource.Token()

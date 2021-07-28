@@ -5,7 +5,7 @@ import ParentSize from "@visx/responsive/lib/components/ParentSize";
 import settings from "assets/settings.svg";
 import api from "shared/api";
 import { Context } from "shared/Context";
-import { ChartType, StorageType } from "shared/types";
+import { ChartTypeWithExtendedConfig, StorageType } from "shared/types";
 
 import TabSelector from "components/TabSelector";
 import Loading from "components/Loading";
@@ -15,7 +15,7 @@ import { MetricNormalizer } from "./MetricNormalizer";
 import { AvailableMetrics, NormalizedMetricsData } from "./types";
 
 type PropsType = {
-  currentChart: ChartType;
+  currentChart: ChartTypeWithExtendedConfig;
 };
 
 const resolutions: { [range: string]: string } = {
@@ -56,6 +56,7 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
   ]);
   const [isLoading, setIsLoading] = useState(0);
   const [hpaData, setHpaData] = useState([]);
+  const [hpaEnabled, setHpaEnabled] = useState(false);
 
   const { currentCluster, currentProject, setCurrentError } = useContext(
     Context
@@ -192,7 +193,7 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
   };
 
   const getAutoscalingThreshold = async (
-    kind: string,
+    metricType: "cpu_hpa_threshold" | "memory_hpa_threshold",
     shouldsum: boolean,
     namespace: string,
     start: number,
@@ -205,7 +206,7 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
         "<token>",
         {
           cluster_id: currentCluster.id,
-          metric: kind,
+          metric: metricType,
           shouldsum: shouldsum,
           kind: selectedController?.kind,
           name: selectedController?.metadata.name,
@@ -223,6 +224,8 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
       if (!Array.isArray(res.data) || !res.data[0]?.results) {
         return;
       }
+      const autoscalingMetrics = new MetricNormalizer(res.data, metricType);
+      setHpaData(autoscalingMetrics.getParsedData());
       return;
     } catch (error) {
       console.error(error);
@@ -278,16 +281,35 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
         }
       );
 
-      let tData = [];
+      setHpaData([]);
+      const isHpaEnabled = currentChart.config.autoscaling.enabled;
+      if (shouldsum && isHpaEnabled) {
+        if (selectedMetric === "cpu") {
+          await getAutoscalingThreshold(
+            "cpu_hpa_threshold",
+            shouldsum,
+            namespace,
+            start,
+            end
+          );
+        } else if (selectedMetric === "memory") {
+          await getAutoscalingThreshold(
+            "memory_hpa_threshold",
+            shouldsum,
+            namespace,
+            start,
+            end
+          );
+        }
+      }
 
       const metrics = new MetricNormalizer(
         res.data,
         selectedMetric as AvailableMetrics
       );
 
-      tData = metrics.getParsedData();
       // transform the metrics to expected form
-      setData(tData);
+      setData(metrics.getParsedData());
     } catch (error) {
       setCurrentError(JSON.stringify(error));
     } finally {

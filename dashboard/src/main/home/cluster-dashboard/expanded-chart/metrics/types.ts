@@ -46,4 +46,10 @@ export type NormalizedMetricsData = {
   value: number; // value
 };
 
-export type AvailableMetrics = "cpu" | "memory" | "network" | "nginx:errors";
+export type AvailableMetrics =
+  | "cpu"
+  | "memory"
+  | "network"
+  | "nginx:errors"
+  | "cpu_hpa_threshold"
+  | "memory_hpa_threshold";

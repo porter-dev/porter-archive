@@ -185,7 +185,11 @@ const SettingsSection: React.FC<PropsType> = ({
       return;
     }
 
-    const curlWebhook = `curl -X POST 'https://dashboard.getporter.dev/api/webhooks/deploy/${webhookToken}?commit=YOUR_COMMIT_HASH'`;
+    const protocol = window.location.protocol == "https:" ? "https" : "http";
+
+    const url = `${protocol}://${window.location.host}`;
+
+    const curlWebhook = `curl -X POST '${url}/api/webhooks/deploy/${webhookToken}?commit=YOUR_COMMIT_HASH'`;
 
     const isAuthorizedToCreateWebhook = isAuthorized("application", "", [
       "get",

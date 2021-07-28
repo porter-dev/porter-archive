@@ -1,11 +1,4 @@
-import React, {
-  Component,
-  Props,
-  useContext,
-  useEffect,
-  useMemo,
-  useState,
-} from "react";
+import React, { useContext, useEffect, useState } from "react";
 import styled from "styled-components";
 import ParentSize from "@visx/responsive/lib/components/ParentSize";
 
@@ -17,67 +10,12 @@ import { ChartType, StorageType } from "shared/types";
 import TabSelector from "components/TabSelector";
 import Loading from "components/Loading";
 import SelectRow from "components/values-form/SelectRow";
-import AreaChart, { MetricsData } from "./AreaChart";
-import useAuth from "shared/auth/useAuth";
+import AreaChart from "./AreaChart";
+import { MetricNormalizer } from "./MetricNormalizer";
+import { AvailableMetrics, NormalizedMetricsData } from "./types";
 
 type PropsType = {
   currentChart: ChartType;
-};
-
-type StateType = {
-  controllerOptions: any[];
-  ingressOptions: any[];
-  selectedController: any;
-  selectedIngress: any;
-  pods: any[];
-  selectedPod: string;
-  selectedRange: string;
-  selectedMetric: string;
-  selectedMetricLabel: string;
-  controllerDropdownExpanded: boolean;
-  podDropdownExpanded: boolean;
-  dropdownExpanded: boolean;
-  data: MetricsData[];
-  showMetricsSettings: boolean;
-  metricsOptions: MetricsOption[];
-  isLoading: number;
-};
-
-type MetricsCPUDataResponse = {
-  pod?: string;
-  results: {
-    date: number;
-    cpu: string;
-  }[];
-}[];
-
-type MetricsMemoryDataResponse = {
-  pod?: string;
-  results: {
-    date: number;
-    memory: string;
-  }[];
-}[];
-
-type MetricsNetworkDataResponse = {
-  pod?: string;
-  results: {
-    date: number;
-    bytes: string;
-  }[];
-}[];
-
-type MetricsNGINXErrorsDataResponse = {
-  pod?: string;
-  results: {
-    date: number;
-    error_pct: string;
-  }[];
-}[];
-
-type MetricsOption = {
-  value: string;
-  label: string;
 };
 
 const resolutions: { [range: string]: string } = {
@@ -109,7 +47,7 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
     "CPU Utilization (vCPUs)"
   );
   const [dropdownExpanded, setDropdownExpanded] = useState(false);
-  const [data, setData] = useState<MetricsData[]>([]);
+  const [data, setData] = useState<NormalizedMetricsData[]>([]);
   const [showMetricsSettings, setShowMetricsSettings] = useState(false);
   const [metricsOptions, setMetricsOptions] = useState([
     { value: "cpu", label: "CPU Utilization (vCPUs)" },
@@ -161,11 +99,10 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
           setControllerOptions([]);
         })
         .finally(() => {
-          setIsLoading((prev) => {
-            return prev - 1;
-          });
+          setIsLoading((prev) => prev - 1);
         });
     }
+
     setIsLoading((prev) => prev + 1);
 
     api
@@ -254,85 +191,79 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
       });
   };
 
-  const getAutoscalingThreshold = (
+  const getAutoscalingThreshold = async (
     kind: string,
     shouldsum: boolean,
     namespace: string,
     start: number,
     end: number
   ) => {
-    return api.getMetrics(
-      "<token>",
-      {
-        cluster_id: currentCluster.id,
-        metric: kind,
-        shouldsum: shouldsum,
-        kind: selectedController?.kind,
-        name: selectedController?.metadata.name,
-        namespace: namespace,
-        startrange: start,
-        endrange: end,
-        resolution: resolutions[selectedRange],
-        pods: [],
-      },
-      {
-        id: currentProject.id,
-      }
-    );
-  };
-
-  const parseCPUMetrics = (arr: Array<{ date: number; cpu: string }>) => {
-    return arr.map((d) => {
-      return {
-        date: d.date,
-        value: parseFloat(d.cpu),
-      };
-    });
-  };
-
-  const parseMemoryMetrics = (arr: Array<{ date: number; memory: string }>) => {
-    return arr.map((d) => {
-      return {
-        date: d.date,
-        value: parseFloat(d.memory) / (1024 * 1024), // put units in Mi
-      };
-    });
-  };
-
-  const getMetrics = () => {
-    if (pods?.length == 0) {
-      return;
-    }
-
-    const kind = selectedMetric;
-    let shouldsum = selectedPod === "All";
-    let namespace = currentChart.namespace;
-
-    // calculate start and end range
-    const d = new Date();
-    const end = Math.round(d.getTime() / 1000);
-    const start = end - secondsBeforeNow[selectedRange];
-
-    let podNames = [] as string[];
-
-    if (!shouldsum) {
-      podNames = [selectedPod];
-    }
-
-    if (selectedMetric == "nginx:errors") {
-      podNames = [selectedIngress?.name];
-      namespace = selectedIngress?.namespace || "default";
-      shouldsum = false;
-    }
-
     setIsLoading((prev) => prev + 1);
-
-    api
-      .getMetrics(
+    setHpaData([]);
+    try {
+      const res = await api.getMetrics(
         "<token>",
         {
           cluster_id: currentCluster.id,
           metric: kind,
+          shouldsum: shouldsum,
+          kind: selectedController?.kind,
+          name: selectedController?.metadata.name,
+          namespace: namespace,
+          startrange: start,
+          endrange: end,
+          resolution: resolutions[selectedRange],
+          pods: [],
+        },
+        {
+          id: currentProject.id,
+        }
+      );
+
+      if (!Array.isArray(res.data) || !res.data[0]?.results) {
+        return;
+      }
+      return;
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setIsLoading((prev) => prev - 1);
+    }
+  };
+
+  const getMetrics = async () => {
+    if (pods?.length == 0) {
+      return;
+    }
+    try {
+      let shouldsum = selectedPod === "All";
+      let namespace = currentChart.namespace;
+
+      // calculate start and end range
+      const d = new Date();
+      const end = Math.round(d.getTime() / 1000);
+      const start = end - secondsBeforeNow[selectedRange];
+
+      let podNames = [] as string[];
+
+      if (!shouldsum) {
+        podNames = [selectedPod];
+      }
+
+      if (selectedMetric == "nginx:errors") {
+        podNames = [selectedIngress?.name];
+        namespace = selectedIngress?.namespace || "default";
+        shouldsum = false;
+      }
+
+      setIsLoading((prev) => prev + 1);
+      setData([]);
+
+      const res = await api.getMetrics(
+        "<token>",
+        {
+          cluster_id: currentCluster.id,
+          metric: selectedMetric,
           shouldsum: shouldsum,
           kind: selectedController?.kind,
           name: selectedController?.metadata.name,
@@ -345,91 +276,23 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
         {
           id: currentProject.id,
         }
-      )
-      .then((res) => {
-        if (!Array.isArray(res.data) || !res.data[0]?.results) {
-          return;
-        }
+      );
 
-        // transform the metrics to expected form
-        if (kind == "cpu") {
-          let data = res.data as MetricsCPUDataResponse;
+      let tData = [];
 
-          // if summed, just look at the first data
-          let tData = parseCPUMetrics(data[0].results);
-          getAutoscalingThreshold(
-            "cpu_hpa_threshold",
-            shouldsum,
-            namespace,
-            start,
-            end
-          ).then((res) => {
-            const data = res.data as MetricsCPUDataResponse;
-            setHpaData(parseCPUMetrics(data[0].results));
-            setData(tData);
-          });
-        } else if (kind == "memory") {
-          let data = res.data as MetricsMemoryDataResponse;
+      const metrics = new MetricNormalizer(
+        res.data,
+        selectedMetric as AvailableMetrics
+      );
 
-          let tData = parseMemoryMetrics(data[0].results);
-          getAutoscalingThreshold(
-            "memory_hpa_threshold",
-            shouldsum,
-            namespace,
-            start,
-            end
-          ).then((res) => {
-            const data = res.data as MetricsMemoryDataResponse;
-            setHpaData(parseMemoryMetrics(data[0].results));
-            setData(tData);
-          });
-          setData(tData);
-        } else if (kind == "network") {
-          let data = res.data as MetricsNetworkDataResponse;
-
-          let tData = data[0].results.map(
-            (
-              d: {
-                date: number;
-                bytes: string;
-              },
-              i: number
-            ) => {
-              return {
-                date: d.date,
-                value: parseFloat(d.bytes) / 1024, // put units in Ki
-              };
-            }
-          );
-
-          setData(tData);
-        } else if (kind == "nginx:errors") {
-          let data = res.data as MetricsNGINXErrorsDataResponse;
-
-          let tData = data[0].results.map(
-            (
-              d: {
-                date: number;
-                error_pct: string;
-              },
-              i: number
-            ) => {
-              return {
-                date: d.date,
-                value: parseFloat(d.error_pct), // put units in Ki
-              };
-            }
-          );
-
-          setData(tData);
-        }
-      })
-      .catch((err) => {
-        setCurrentError(JSON.stringify(err));
-      })
-      .finally(() => {
-        setIsLoading((prev) => prev - 1);
-      });
+      tData = metrics.getParsedData();
+      // transform the metrics to expected form
+      setData(tData);
+    } catch (error) {
+      setCurrentError(JSON.stringify(error));
+    } finally {
+      setIsLoading((prev) => prev - 1);
+    }
   };
 
   useEffect(() => {

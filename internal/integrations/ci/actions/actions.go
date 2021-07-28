@@ -151,11 +151,12 @@ type GithubActionEnvConfig struct {
 }
 
 type GithubActionYAMLStep struct {
-	Name string                `yaml:"name,omitempty"`
-	ID   string                `yaml:"id,omitempty"`
-	Uses string                `yaml:"uses,omitempty"`
-	Run  string                `yaml:"run,omitempty"`
-	Env  GithubActionEnvConfig `yaml:"env,omitempty"`
+	Name    string                `yaml:"name,omitempty"`
+	ID      string                `yaml:"id,omitempty"`
+	Timeout uint64                `yaml:"timeout-minutes,omitempty"`
+	Uses    string                `yaml:"uses,omitempty"`
+	Run     string                `yaml:"run,omitempty"`
+	Env     GithubActionEnvConfig `yaml:"env,omitempty"`
 }
 
 type GithubActionYAMLOnPushBranches struct {

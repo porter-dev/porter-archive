@@ -1,4 +1,4 @@
-import React, { useMemo, useCallback } from "react";
+import React, { useMemo, useCallback, useRef } from "react";
 import { AreaClosed, Line, Bar, LinePath } from "@visx/shape";
 import { curveMonotoneX } from "@visx/curve";
 import { scaleTime, scaleLinear } from "@visx/scale";
@@ -55,7 +55,7 @@ const formats: { [range: string]: (date: Date) => string } = {
 
 // accessors
 const getDate = (d: NormalizedMetricsData) => new Date(d.date * 1000);
-const getValue = (d: NormalizedMetricsData) => d.value;
+const getValue = (d: NormalizedMetricsData) => d?.value;
 
 const bisectDate = bisector<NormalizedMetricsData, Date>(
   (d) => new Date(d.date * 1000)
@@ -63,7 +63,9 @@ const bisectDate = bisector<NormalizedMetricsData, Date>(
 
 export type AreaProps = {
   data: NormalizedMetricsData[];
-  hpaData: NormalizedMetricsData[];
+  dataKey: string;
+  hpaEnabled?: boolean;
+  hpaData?: NormalizedMetricsData[];
   resolution: string;
   width: number;
   height: number;
@@ -74,7 +76,8 @@ export type AreaProps = {
 
 const AreaChart: React.FunctionComponent<AreaProps> = ({
   data,
-  hpaData,
+  hpaEnabled = false,
+  hpaData = [],
   resolution,
   width,
   height,
@@ -88,8 +91,12 @@ const AreaChart: React.FunctionComponent<AreaProps> = ({
     tooltipData,
     tooltipTop,
     tooltipLeft,
-  } = useTooltip<NormalizedMetricsData>();
+  } = useTooltip<{
+    data: NormalizedMetricsData;
+    tooltipHpaData: NormalizedMetricsData;
+  }>();
 
+  const svgContainer = useRef();
   // bounds
   const innerWidth = width - margin.left - margin.right - 40;
   const innerHeight = height - margin.top - margin.bottom - 20;
@@ -101,7 +108,7 @@ const AreaChart: React.FunctionComponent<AreaProps> = ({
         range: [margin.left, innerWidth + margin.left],
         domain: extent([...globalData, ...hpaData], getDate) as [Date, Date],
       }),
-    [innerWidth, margin.left, width, height, data, hpaData]
+    [margin.left, width, height, data, hpaData]
   );
   const valueScale = useMemo(
     () =>
@@ -110,31 +117,19 @@ const AreaChart: React.FunctionComponent<AreaProps> = ({
         domain: [0, 1.25 * max([...globalData, ...hpaData], getValue)],
         nice: true,
       }),
-    [margin.top, innerHeight, width, height, data, hpaData]
+    [margin.top, width, height, data, hpaData]
   );
-
-  const xScale = useMemo(
-    () =>
-      scaleTime({
-        domain: extent(hpaData, getDate) as number[],
-        range: [0, width],
-      }),
-    [width, hpaData]
-  );
-  const yScale = useMemo(() => {
-    return scaleLinear({
-      domain: extent(hpaData, getValue) as number[],
-      range: [innerHeight + margin.top, margin.top],
-    });
-  }, [margin.top, innerHeight, width, height, hpaData]);
 
   // tooltip handler
   const handleTooltip = useCallback(
     (
       event: React.TouchEvent<SVGRectElement> | React.MouseEvent<SVGRectElement>
     ) => {
+      const isHpaEnabled = hpaEnabled && !!hpaData.length;
+
       const { x } = localPoint(event) || { x: 0 };
       const x0 = dateScale.invert(x);
+
       const index = bisectDate(globalData, x0, 1);
       const d0 = globalData[index - 1];
       const d1 = globalData[index];
@@ -148,22 +143,71 @@ const AreaChart: React.FunctionComponent<AreaProps> = ({
             : d0;
       }
 
+      if (!isHpaEnabled) {
+        showTooltip({
+          tooltipData: { data: d, tooltipHpaData: undefined },
+          tooltipLeft: x || 0,
+          tooltipTop: valueScale(getValue(d)) || 0,
+        });
+        return;
+      }
+
+      const tooltipHpaData0 = hpaData[index - 1];
+      const tooltipHpaData1 = hpaData[index];
+      let tooltipHpaData = tooltipHpaData0;
+
+      if (tooltipHpaData1 && getDate(tooltipHpaData1)) {
+        tooltipHpaData =
+          x0.valueOf() - getDate(tooltipHpaData0).valueOf() >
+          getDate(tooltipHpaData1).valueOf() - x0.valueOf()
+            ? tooltipHpaData1
+            : tooltipHpaData0;
+      }
+
+      const container: SVGSVGElement = svgContainer.current;
+
+      let point = container.createSVGPoint();
+      // @ts-ignore
+      point.x = (event as any)?.clientX || 0;
+      // @ts-ignore
+      point.y = (event as any)?.clientY || 0;
+      point = point?.matrixTransform(container.getScreenCTM().inverse());
+
       showTooltip({
-        tooltipData: d,
+        tooltipData: { data: d, tooltipHpaData },
         tooltipLeft: x || 0,
-        tooltipTop: valueScale(getValue(d)) || 0,
+        tooltipTop: point.y || 0,
       });
     },
-    [showTooltip, valueScale, dateScale, width, height, data, hpaData]
+    [
+      showTooltip,
+      valueScale,
+      dateScale,
+      width,
+      height,
+      data,
+      hpaData,
+      svgContainer,
+      hpaEnabled,
+    ]
   );
 
   if (width == 0 || height == 0 || width < 10) {
     return null;
   }
+  const hpaGraphTooltipGlyphPosition =
+    (hpaEnabled &&
+      tooltipData?.tooltipHpaData &&
+      valueScale(getValue(tooltipData?.tooltipHpaData))) ||
+    0;
 
+  const dataGraphTooltipGlyphPosition =
+    (tooltipData?.data && valueScale(getValue(tooltipData.data))) || 0;
+
+  const isHpaEnabled = hpaEnabled && !!hpaData.length;
   return (
     <div>
-      <svg width={width} height={height}>
+      <svg width={width} height={height} ref={svgContainer}>
         <rect
           x={0}
           y={0}
@@ -214,11 +258,14 @@ const AreaChart: React.FunctionComponent<AreaProps> = ({
           curve={curveMonotoneX}
         />
         <LinePath<NormalizedMetricsData>
-          stroke="#fd0101"
+          stroke="#ffffff"
           strokeWidth={2}
           data={hpaData}
           x={(d) => dateScale(getDate(d)) ?? 0}
           y={(d) => valueScale(getValue(d)) ?? 0}
+          strokeDasharray="6,4"
+          strokeOpacity={1}
+          pointerEvents="none"
         />
         <AxisLeft
           left={10}
@@ -270,7 +317,7 @@ const AreaChart: React.FunctionComponent<AreaProps> = ({
             />
             <circle
               cx={tooltipLeft}
-              cy={tooltipTop + 1}
+              cy={dataGraphTooltipGlyphPosition + 1}
               r={4}
               fill="black"
               fillOpacity={0.1}
@@ -281,13 +328,37 @@ const AreaChart: React.FunctionComponent<AreaProps> = ({
             />
             <circle
               cx={tooltipLeft}
-              cy={tooltipTop}
+              cy={dataGraphTooltipGlyphPosition}
               r={4}
               fill={accentColorDark}
               stroke="white"
               strokeWidth={2}
               pointerEvents="none"
             />
+            {isHpaEnabled && (
+              <>
+                <circle
+                  cx={tooltipLeft}
+                  cy={hpaGraphTooltipGlyphPosition + 1}
+                  r={4}
+                  fill="black"
+                  fillOpacity={0.1}
+                  stroke="black"
+                  strokeOpacity={0.1}
+                  strokeWidth={2}
+                  pointerEvents="none"
+                />
+                <circle
+                  cx={tooltipLeft}
+                  cy={hpaGraphTooltipGlyphPosition}
+                  r={4}
+                  fill={accentColorDark}
+                  stroke="white"
+                  strokeWidth={2}
+                  pointerEvents="none"
+                />
+              </>
+            )}
           </g>
         )}
       </svg>
@@ -297,31 +368,23 @@ const AreaChart: React.FunctionComponent<AreaProps> = ({
             key={Math.random()}
             top={tooltipTop - 12}
             left={tooltipLeft + 12}
-            style={tooltipStyles}
-          >
-            {getValue(tooltipData)}
-          </TooltipWithBounds>
-          <Tooltip
-            top={-10}
-            left={tooltipLeft}
             style={{
               ...defaultStyles,
               background: "#26272f",
               color: "#aaaabb",
-              width: 100,
-              paddingTop: 35,
               textAlign: "center",
-              transform: "translateX(-60px)",
             }}
           >
-            {formatDate(getDate(tooltipData))}
-          </Tooltip>
+            {formatDate(getDate(tooltipData.data))}
+            <div>CPU DATA: {getValue(tooltipData.data)}</div>
+            {isHpaEnabled && (
+              <div>HPA DATA: {getValue(tooltipData.tooltipHpaData)}</div>
+            )}
+          </TooltipWithBounds>
         </div>
       )}
     </div>
   );
 };
-
-const TooltipHelper = () => {};
 
 export default AreaChart;

@@ -462,8 +462,10 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
         <ParentSize>
           {({ width, height }) => (
             <AreaChart
+              dataKey={selectedMetricLabel}
               data={data}
               hpaData={hpaData}
+              hpaEnabled={currentChart?.config?.autoscaling?.enabled}
               width={width}
               height={height - 10}
               resolution={selectedRange}

@@ -415,7 +415,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
   const updateTabs = () => {
     // Collate non-form tabs
     let tabOptions = [] as any[];
-    tabOptions.push({ label: "Status", value: "status" });
+    // tabOptions.push({ label: "Status", value: "status" });
 
     if (props.isMetricsInstalled) {
       tabOptions.push({ label: "Metrics", value: "metrics" });

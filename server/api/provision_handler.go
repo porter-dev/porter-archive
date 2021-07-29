@@ -11,8 +11,9 @@ import (
 	"github.com/porter-dev/porter/internal/kubernetes"
 	"github.com/porter-dev/porter/internal/kubernetes/provisioner"
 	"github.com/porter-dev/porter/internal/models"
-	segment "gopkg.in/segmentio/analytics-go.v3"
+	"github.com/porter-dev/porter/internal/analytics"
 	"fmt"
+
 	"github.com/porter-dev/porter/internal/adapter"
 )
 
@@ -376,18 +377,7 @@ func (app *App) HandleProvisionAWSEKSInfra(w http.ResponseWriter, r *http.Reques
 	}
 
 	app.Logger.Info().Msgf("New aws eks infra created: %d", infra.ID)
-
-	if app.segmentClient != nil {
-		client := *app.segmentClient
-
-		client.Enqueue(segment.Track{
-			UserId: fmt.Sprintf("%v", userID),
-			Event:  "Provisioned a New EKS Cluster",
-			Properties: segment.NewProperties().
-				Set("project_id", projID).
-				Set("cluster_name", form.EKSName),
-		})
-	}
+	app.analyticsClient.Track(analytics.CreateSegmentNewClusterEvent(fmt.Sprintf("%v", userID), fmt.Sprintf("%v", projID), form.EKSName, "EKS", "provisioned"))
 
 	w.WriteHeader(http.StatusCreated)
 
@@ -470,19 +460,7 @@ func (app *App) HandleDestroyAWSEKSInfra(w http.ResponseWriter, r *http.Request)
 	}
 
 	app.Logger.Info().Msgf("AWS EKS infra marked for destruction: %d", infra.ID)
-
-
-	if app.segmentClient != nil {
-		client := *app.segmentClient
-
-		client.Enqueue(segment.Track{
-			UserId: fmt.Sprintf("%v", userID),
-			Event:  "Destroyed an EKS Cluster",
-			Properties: segment.NewProperties().
-				Set("project_id", infra.ProjectID).
-				Set("cluster_name", form.EKSName),
-		})
-	}
+	app.analyticsClient.Track(analytics.CreateSegmentNewClusterEvent(fmt.Sprintf("%v", userID), fmt.Sprintf("%v", infra.ProjectID), form.EKSName, "EKS", "destroyed"))
 
 	w.WriteHeader(http.StatusOK)
 }
@@ -646,18 +624,7 @@ func (app *App) HandleProvisionGCPGKEInfra(w http.ResponseWriter, r *http.Reques
 	}
 
 	app.Logger.Info().Msgf("New gcp gke infra created: %d", infra.ID)
-
-	if app.segmentClient != nil {
-		client := *app.segmentClient
-
-		client.Enqueue(segment.Track{
-			UserId: fmt.Sprintf("%v", userID),
-			Event:  "Provisioned a New GKE Cluster",
-			Properties: segment.NewProperties().
-				Set("project_id", projID).
-				Set("cluster_name", form.GKEName),
-		})
-	}
+	app.analyticsClient.Track(analytics.CreateSegmentNewClusterEvent(fmt.Sprintf("%v", userID), fmt.Sprintf("%v", projID), form.GKEName, "GKE", "provisioned"))
 
 	w.WriteHeader(http.StatusCreated)
 
@@ -739,18 +706,7 @@ func (app *App) HandleDestroyGCPGKEInfra(w http.ResponseWriter, r *http.Request)
 	}
 
 	app.Logger.Info().Msgf("GCP GKE infra marked for destruction: %d", infra.ID)
-
-	if app.segmentClient != nil {
-		client := *app.segmentClient
-
-		client.Enqueue(segment.Track{
-			UserId: fmt.Sprintf("%v", userID),
-			Event:  "Destroyed a GKE Cluster",
-			Properties: segment.NewProperties().
-				Set("project_id", infra.ProjectID).
-				Set("cluster_name", form.GKEName),
-		})
-	}
+	app.analyticsClient.Track(analytics.CreateSegmentNewClusterEvent(fmt.Sprintf("%v", userID), fmt.Sprintf("%v", infra.ProjectID), form.GKEName, "GKE", "destroyed"))
 
 	w.WriteHeader(http.StatusOK)
 }
@@ -1038,18 +994,7 @@ func (app *App) HandleProvisionDODOKSInfra(w http.ResponseWriter, r *http.Reques
 	}
 
 	app.Logger.Info().Msgf("New do doks infra created: %d", infra.ID)
-
-	if app.segmentClient != nil {
-		client := *app.segmentClient
-
-		client.Enqueue(segment.Track{
-			UserId: fmt.Sprintf("%v", userID),
-			Event:  "Provisioned a New DOKS Cluster",
-			Properties: segment.NewProperties().
-				Set("project_id", projID).
-				Set("cluster_name", form.DOKSName),
-		})
-	}
+	app.analyticsClient.Track(analytics.CreateSegmentNewClusterEvent(fmt.Sprintf("%v", userID), fmt.Sprintf("%v", projID), form.DOKSName, "DOKS", "provisioned"))
 
 	w.WriteHeader(http.StatusCreated)
 
@@ -1133,18 +1078,7 @@ func (app *App) HandleDestroyDODOKSInfra(w http.ResponseWriter, r *http.Request)
 	}
 
 	app.Logger.Info().Msgf("DO DOKS infra marked for destruction: %d", infra.ID)
-	
-	if app.segmentClient != nil {
-		client := *app.segmentClient
-
-		client.Enqueue(segment.Track{
-			UserId: fmt.Sprintf("%v", userID),
-			Event:  "Destroyed a DOKS Cluster",
-			Properties: segment.NewProperties().
-				Set("project_id", infra.ProjectID).
-				Set("cluster_name", form.DOKSName),
-		})
-	}
+	app.analyticsClient.Track(analytics.CreateSegmentNewClusterEvent(fmt.Sprintf("%v", userID), fmt.Sprintf("%v", infra.ProjectID), form.DOKSName, "DOKS", "destroyed"))
 
 	w.WriteHeader(http.StatusOK)
 }

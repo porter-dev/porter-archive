@@ -11,18 +11,10 @@ import IntegrationList from "./IntegrationList";
 
 type PropsType = RouteComponentProps;
 
-type StateType = {
-  currentIntegrationData: any[];
-};
-
 const IntegrationCategoryStrings = ["registry", "slack"]; /*"kubernetes",*/
 
-class Integrations extends Component<PropsType, StateType> {
-  state = {
-    currentIntegrationData: [] as any[],
-  };
-
-  render = () => (
+const Integrations: React.FC<PropsType> = (props) => {
+  return (
     <StyledIntegrations>
       <Switch>
         <Route
@@ -30,7 +22,7 @@ class Integrations extends Component<PropsType, StateType> {
           render={(rp) => {
             const { integration, category } = rp.match.params;
             if (!IntegrationCategoryStrings.includes(category)) {
-              pushFiltered(this.props, "/integrations", ["project_id"]);
+              pushFiltered(props, "/integrations", ["project_id"]);
             }
             let icon =
               integrationList[integration] && integrationList[integration].icon;
@@ -41,7 +33,7 @@ class Integrations extends Component<PropsType, StateType> {
                     <i
                       className="material-icons"
                       onClick={() =>
-                        pushFiltered(this.props, `/integrations/${category}`, [
+                        pushFiltered(props, `/integrations/${category}`, [
                           "project_id",
                         ])
                       }
@@ -55,7 +47,7 @@ class Integrations extends Component<PropsType, StateType> {
                 <CreateIntegrationForm
                   integrationName={integration}
                   closeForm={() => {
-                    pushFiltered(this.props, `/integrations/${category}`, [
+                    pushFiltered(props, `/integrations/${category}`, [
                       "project_id",
                     ]);
                   }}
@@ -70,7 +62,7 @@ class Integrations extends Component<PropsType, StateType> {
           render={(rp) => {
             const currentCategory = rp.match.params.category;
             if (!IntegrationCategoryStrings.includes(currentCategory)) {
-              pushFiltered(this.props, "/integrations", ["project_id"]);
+              pushFiltered(props, "/integrations", ["project_id"]);
             }
             return <IntegrationCategories category={currentCategory} />;
           }}
@@ -83,9 +75,9 @@ class Integrations extends Component<PropsType, StateType> {
 
             <IntegrationList
               currentCategory={""}
-              integrations={["kubernetes", "registry", "slack"]}
+              integrations={["registry", "slack"]}
               setCurrent={(x) =>
-                pushFiltered(this.props, `/integrations/${x}`, ["project_id"])
+                pushFiltered(props, `/integrations/${x}`, ["project_id"])
               }
               isCategory={true}
               updateIntegrationList={() => {}}
@@ -95,7 +87,7 @@ class Integrations extends Component<PropsType, StateType> {
       </Switch>
     </StyledIntegrations>
   );
-}
+};
 
 export default withRouter(Integrations);
 

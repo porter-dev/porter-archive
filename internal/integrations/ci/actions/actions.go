@@ -79,18 +79,6 @@ func (g *GithubActions) Setup() (string, error) {
 		return "", err
 	}
 
-	err = g.createGithubSecret(client, g.getProjectIDSecretName(), g.PorterToken)
-
-	if err != nil {
-		return "", err
-	}
-
-	err = g.createGithubSecret(client, g.getClusterIDSecretName(), g.PorterToken)
-
-	if err != nil {
-		return "", err
-	}
-
 	// create a new secret with the build variables
 	err = g.createEnvSecret(client)
 
@@ -144,19 +132,12 @@ func (g *GithubActions) Cleanup() error {
 	return g.deleteGithubFile(client, g.getPorterYMLFileName())
 }
 
-type GithubActionEnvConfig struct {
-	PorterToken string `yaml:"PORTER_TOKEN"`
-	ProjectID   string `yaml:"PORTER_PROJECT"`
-	ClusterID   string `yaml:"PORTER_CLUSTER"`
-}
-
 type GithubActionYAMLStep struct {
-	Name    string                `yaml:"name,omitempty"`
-	ID      string                `yaml:"id,omitempty"`
-	Timeout uint64                `yaml:"timeout-minutes,omitempty"`
-	Uses    string                `yaml:"uses,omitempty"`
-	Run     string                `yaml:"run,omitempty"`
-	Env     GithubActionEnvConfig `yaml:"env,omitempty"`
+	Name    string `yaml:"name,omitempty"`
+	ID      string `yaml:"id,omitempty"`
+	Timeout uint64 `yaml:"timeout-minutes,omitempty"`
+	Uses    string `yaml:"uses,omitempty"`
+	Run     string `yaml:"run,omitempty"`
 }
 
 type GithubActionYAMLOnPushBranches struct {
@@ -184,16 +165,8 @@ func (g *GithubActions) GetGithubActionYAML() ([]byte, error) {
 	gaSteps := []GithubActionYAMLStep{
 		getCheckoutCodeStep(),
 		getDownloadPorterStep(),
-		getConfigurePorterStep(g.ServerURL, g.getPorterTokenSecretName(), g.getProjectIDSecretName(), g.getClusterIDSecretName(), g.ReleaseName),
+		getConfigurePorterStep(g.ServerURL, g.getPorterTokenSecretName(), g.ProjectID, g.ClusterID, g.ReleaseName),
 	}
-
-	//if g.DockerFilePath == "" {
-	//	gaSteps = append(gaSteps, getBuildPackPushStep(g.getBuildEnvSecretName(), g.FolderPath, g.ImageRepoURL))
-	//} else {
-	//	gaSteps = append(gaSteps, getDockerBuildPushStep(g.getBuildEnvSecretName(), g.DockerFilePath, g.ImageRepoURL))
-	//}
-	//
-	//gaSteps = append(gaSteps, deployPorterWebhookStep(g.ServerURL, g.getWebhookSecretName()))
 
 	branch := g.GitBranch
 
@@ -364,14 +337,6 @@ func (g *GithubActions) getPorterYMLFileName() string {
 
 func (g *GithubActions) getPorterTokenSecretName() string {
 	return fmt.Sprintf("PORTER_TOKEN_%d", g.ProjectID)
-}
-
-func (g *GithubActions) getProjectIDSecretName() string {
-	return fmt.Sprintf("PORTER_PROJECT_ID_%d", g.ProjectID)
-}
-
-func (g *GithubActions) getClusterIDSecretName() string {
-	return fmt.Sprintf("PORTER_CLUSTER_ID_%d", g.ProjectID)
 }
 
 func (g *GithubActions) commitGithubFile(

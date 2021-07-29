@@ -170,20 +170,19 @@ const ExpandedChart: React.FC<Props> = (props) => {
     const wsConfig = {
       onmessage(evt: MessageEvent) {
         const event = JSON.parse(evt.data);
-
         if (event.event_type == "UPDATE") {
-          let object = event.Object;
-          object.metadata.kind = event.Kind;
+        let object = event.Object;
+        object.metadata.kind = event.Kind;
 
-          setControllers((oldControllers) => {
-            if (oldControllers[object.metadata.uid]) {
-              return oldControllers;
-            }
-            return {
-              ...oldControllers,
-              [object.metadata.uid]: object,
-            };
-          });
+        setControllers((oldControllers) => {
+          if (oldControllers[object.metadata.uid] == object) {
+            return oldControllers;
+          }
+          return {
+            ...oldControllers,
+            [object.metadata.uid]: object,
+          };
+        });
         }
       },
       onerror() {

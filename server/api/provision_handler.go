@@ -11,7 +11,8 @@ import (
 	"github.com/porter-dev/porter/internal/kubernetes"
 	"github.com/porter-dev/porter/internal/kubernetes/provisioner"
 	"github.com/porter-dev/porter/internal/models"
-
+	segment "gopkg.in/segmentio/analytics-go.v3"
+	"fmt"
 	"github.com/porter-dev/porter/internal/adapter"
 )
 
@@ -302,6 +303,7 @@ func (app *App) HandleDestroyAWSECRInfra(w http.ResponseWriter, r *http.Request)
 // HandleProvisionAWSEKSInfra provisions a new aws EKS instance for a project
 func (app *App) HandleProvisionAWSEKSInfra(w http.ResponseWriter, r *http.Request) {
 	projID, err := strconv.ParseUint(chi.URLParam(r, "project_id"), 0, 64)
+	userID, err := app.getUserIDFromRequest(r)
 
 	if err != nil || projID == 0 {
 		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
@@ -375,6 +377,18 @@ func (app *App) HandleProvisionAWSEKSInfra(w http.ResponseWriter, r *http.Reques
 
 	app.Logger.Info().Msgf("New aws eks infra created: %d", infra.ID)
 
+	if app.segmentClient != nil {
+		client := *app.segmentClient
+
+		client.Enqueue(segment.Track{
+			UserId: fmt.Sprintf("%v", userID),
+			Event:  "Provisioned a New EKS Cluster",
+			Properties: segment.NewProperties().
+				Set("project_id", projID).
+				Set("cluster_name", form.EKSName),
+		})
+	}
+
 	w.WriteHeader(http.StatusCreated)
 
 	infraExt := infra.Externalize()
@@ -389,6 +403,7 @@ func (app *App) HandleProvisionAWSEKSInfra(w http.ResponseWriter, r *http.Reques
 func (app *App) HandleDestroyAWSEKSInfra(w http.ResponseWriter, r *http.Request) {
 	// get path parameters
 	infraID, err := strconv.ParseUint(chi.URLParam(r, "infra_id"), 10, 64)
+	userID, err := app.getUserIDFromRequest(r)
 
 	if err != nil {
 		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
@@ -455,6 +470,19 @@ func (app *App) HandleDestroyAWSEKSInfra(w http.ResponseWriter, r *http.Request)
 	}
 
 	app.Logger.Info().Msgf("AWS EKS infra marked for destruction: %d", infra.ID)
+
+
+	if app.segmentClient != nil {
+		client := *app.segmentClient
+
+		client.Enqueue(segment.Track{
+			UserId: fmt.Sprintf("%v", userID),
+			Event:  "Destroyed an EKS Cluster",
+			Properties: segment.NewProperties().
+				Set("project_id", infra.ProjectID).
+				Set("cluster_name", form.EKSName),
+		})
+	}
 
 	w.WriteHeader(http.StatusOK)
 }
@@ -546,6 +574,7 @@ func (app *App) HandleProvisionGCPGCRInfra(w http.ResponseWriter, r *http.Reques
 // HandleProvisionGCPGKEInfra provisions a new GKE instance for a project
 func (app *App) HandleProvisionGCPGKEInfra(w http.ResponseWriter, r *http.Request) {
 	projID, err := strconv.ParseUint(chi.URLParam(r, "project_id"), 0, 64)
+	userID, err := app.getUserIDFromRequest(r)
 
 	if err != nil || projID == 0 {
 		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
@@ -618,6 +647,18 @@ func (app *App) HandleProvisionGCPGKEInfra(w http.ResponseWriter, r *http.Reques
 
 	app.Logger.Info().Msgf("New gcp gke infra created: %d", infra.ID)
 
+	if app.segmentClient != nil {
+		client := *app.segmentClient
+
+		client.Enqueue(segment.Track{
+			UserId: fmt.Sprintf("%v", userID),
+			Event:  "Provisioned a New GKE Cluster",
+			Properties: segment.NewProperties().
+				Set("project_id", projID).
+				Set("cluster_name", form.GKEName),
+		})
+	}
+
 	w.WriteHeader(http.StatusCreated)
 
 	infraExt := infra.Externalize()
@@ -632,6 +673,7 @@ func (app *App) HandleProvisionGCPGKEInfra(w http.ResponseWriter, r *http.Reques
 func (app *App) HandleDestroyGCPGKEInfra(w http.ResponseWriter, r *http.Request) {
 	// get path parameters
 	infraID, err := strconv.ParseUint(chi.URLParam(r, "infra_id"), 10, 64)
+	userID, err := app.getUserIDFromRequest(r)
 
 	if err != nil {
 		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
@@ -697,6 +739,18 @@ func (app *App) HandleDestroyGCPGKEInfra(w http.ResponseWriter, r *http.Request)
 	}
 
 	app.Logger.Info().Msgf("GCP GKE infra marked for destruction: %d", infra.ID)
+
+	if app.segmentClient != nil {
+		client := *app.segmentClient
+
+		client.Enqueue(segment.Track{
+			UserId: fmt.Sprintf("%v", userID),
+			Event:  "Destroyed a GKE Cluster",
+			Properties: segment.NewProperties().
+				Set("project_id", infra.ProjectID).
+				Set("cluster_name", form.GKEName),
+		})
+	}
 
 	w.WriteHeader(http.StatusOK)
 }
@@ -910,6 +964,7 @@ func (app *App) HandleDestroyDODOCRInfra(w http.ResponseWriter, r *http.Request)
 // HandleProvisionDODOKSInfra provisions a new DO DOKS instance for a project
 func (app *App) HandleProvisionDODOKSInfra(w http.ResponseWriter, r *http.Request) {
 	projID, err := strconv.ParseUint(chi.URLParam(r, "project_id"), 0, 64)
+	userID, err := app.getUserIDFromRequest(r)
 
 	if err != nil || projID == 0 {
 		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
@@ -984,6 +1039,18 @@ func (app *App) HandleProvisionDODOKSInfra(w http.ResponseWriter, r *http.Reques
 
 	app.Logger.Info().Msgf("New do doks infra created: %d", infra.ID)
 
+	if app.segmentClient != nil {
+		client := *app.segmentClient
+
+		client.Enqueue(segment.Track{
+			UserId: fmt.Sprintf("%v", userID),
+			Event:  "Provisioned a New DOKS Cluster",
+			Properties: segment.NewProperties().
+				Set("project_id", projID).
+				Set("cluster_name", form.DOKSName),
+		})
+	}
+
 	w.WriteHeader(http.StatusCreated)
 
 	infraExt := infra.Externalize()
@@ -998,6 +1065,7 @@ func (app *App) HandleProvisionDODOKSInfra(w http.ResponseWriter, r *http.Reques
 func (app *App) HandleDestroyDODOKSInfra(w http.ResponseWriter, r *http.Request) {
 	// get path parameters
 	infraID, err := strconv.ParseUint(chi.URLParam(r, "infra_id"), 10, 64)
+	userID, err := app.getUserIDFromRequest(r)
 
 	if err != nil {
 		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
@@ -1065,6 +1133,18 @@ func (app *App) HandleDestroyDODOKSInfra(w http.ResponseWriter, r *http.Request)
 	}
 
 	app.Logger.Info().Msgf("DO DOKS infra marked for destruction: %d", infra.ID)
+	
+	if app.segmentClient != nil {
+		client := *app.segmentClient
+
+		client.Enqueue(segment.Track{
+			UserId: fmt.Sprintf("%v", userID),
+			Event:  "Destroyed a DOKS Cluster",
+			Properties: segment.NewProperties().
+				Set("project_id", infra.ProjectID).
+				Set("cluster_name", form.DOKSName),
+		})
+	}
 
 	w.WriteHeader(http.StatusOK)
 }

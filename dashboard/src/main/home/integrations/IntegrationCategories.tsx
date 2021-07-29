@@ -1,4 +1,4 @@
-import React, { Component } from "react";
+import React, { useEffect, useContext, useState } from "react";
 import styled from "styled-components";
 import GHIcon from "assets/GithubIcon";
 
@@ -8,44 +8,27 @@ import { RouteComponentProps, withRouter } from "react-router";
 import IntegrationList from "./IntegrationList";
 import api from "shared/api";
 import { pushFiltered } from "shared/routing";
+import Loading from "../../../components/Loading";
 
-type PropsType = RouteComponentProps & {
+type Props = RouteComponentProps & {
   category: string;
 };
 
-type StateType = {
-  // currentIntegration: string | null;
-  currentOptions: any[];
-  currentTitles: any[];
-  currentIds: any[];
-  currentIntegrationData: any[];
-};
+const IntegrationCategories: React.FC<Props> = (props) => {
+  const [currentOptions, setCurrentOptions] = useState([]);
+  const [currentTitles, setCurrentTitles] = useState([]);
+  const [currentIds, setCurrentIds] = useState([]);
+  const [currentIntegrationData, setCurrentIntegrationData] = useState([]);
+  const [loading, setLoading] = useState(false);
 
-class IntegrationCategories extends Component<PropsType, StateType> {
-  state = {
-    currentOptions: [] as any[],
-    currentTitles: [] as any[],
-    currentIds: [] as any[],
-    currentIntegrationData: [] as any[],
-  };
+  const { currentProject, setCurrentModal } = useContext(Context);
 
-  componentDidMount() {
-    this.getIntegrationsForCategory(this.props.category);
-  }
+  const getIntegrationsForCategory = (categoryType: string) => {
+    setLoading(true);
+    setCurrentOptions([]);
+    setCurrentTitles([]);
+    setCurrentIntegrationData([]);
 
-  componentDidUpdate(prevProps: PropsType, prevState: StateType) {
-    if (this.props.category != prevProps.category) {
-      this.getIntegrationsForCategory(this.props.category);
-    }
-  }
-
-  getIntegrationsForCategory = (categoryType: string) => {
-    const { currentProject } = this.context;
-    this.setState({
-      currentOptions: [],
-      currentTitles: [],
-      currentIntegrationData: [],
-    });
     switch (categoryType) {
       case "kubernetes":
         api
@@ -72,39 +55,16 @@ class IntegrationCategories extends Component<PropsType, StateType> {
                 val.sort((a: any, b: any) => (a.name > b.name ? 1 : -1))
               );
             });
-
-            let currentOptions = [] as string[];
-            let currentTitles = [] as string[];
+            let newCurrentOptions = [] as string[];
+            let newCurrentTitles = [] as string[];
             final.forEach((integration: any, i: number) => {
-              currentOptions.push(integration.service);
-              currentTitles.push(integration.name);
+              newCurrentOptions.push(integration.service);
+              newCurrentTitles.push(integration.name);
             });
-            this.setState({
-              currentOptions,
-              currentTitles,
-              currentIntegrationData: final,
-            });
-          })
-          .catch(console.log);
-        break;
-      case "repo":
-        api
-          .getGitRepos("<token>", {}, { project_id: currentProject.id })
-          .then((res) => {
-            let currentOptions = [] as string[];
-            let currentTitles = [] as string[];
-            let currentIds = [] as any[];
-            res.data.forEach((item: any) => {
-              currentOptions.push(item.service);
-              currentTitles.push(item.repo_entity);
-              currentIds.push(item.id);
-            });
-            this.setState({
-              currentOptions,
-              currentTitles,
-              currentIds,
-              currentIntegrationData: res.data,
-            });
+            setCurrentOptions(newCurrentOptions);
+            setCurrentTitles(newCurrentTitles);
+            setCurrentIntegrationData(final);
+            setLoading(false);
           })
           .catch(console.log);
         break;
@@ -116,113 +76,73 @@ class IntegrationCategories extends Component<PropsType, StateType> {
     }
   };
 
-  render = () => {
-    const { category: currentCategory } = this.props;
-    let icon =
-      integrationList[currentCategory] && integrationList[currentCategory].icon;
-    let label =
-      integrationList[currentCategory] &&
-      integrationList[currentCategory].label;
-    let buttonText =
-      integrationList[currentCategory] &&
-      integrationList[currentCategory].buttonText;
-    if (currentCategory !== "repo") {
-      return (
-        <div>
-          <TitleSectionAlt>
-            <Flex>
-              <i
-                className="material-icons"
-                onClick={() =>
-                  pushFiltered(this.props, "/integrations", ["project_id"])
-                }
-              >
-                keyboard_backspace
-              </i>
-              <Icon src={icon && icon} />
-              <Title>{label}</Title>
-            </Flex>
-            <Button
-              onClick={() => {
-                if (this.props.category != "slack") {
-                  this.context.setCurrentModal("IntegrationsModal", {
-                    category: currentCategory,
-                    setCurrentIntegration: (x: string) =>
-                      pushFiltered(
-                        this.props,
-                        `/integrations/${this.props.category}/create/${x}`,
-                        ["project_id"]
-                      ),
-                  });
-                } else {
-                  alert("redirect to install link...");
-                }
-              }}
-            >
-              <i className="material-icons">add</i>
-              {buttonText}
-            </Button>
-          </TitleSectionAlt>
+  useEffect(() => {
+    getIntegrationsForCategory(props.category);
+  }, [props.category]);
 
-          <LineBreak />
+  const { category: currentCategory } = props;
+  const icon =
+    integrationList[currentCategory] && integrationList[currentCategory].icon;
+  const label =
+    integrationList[currentCategory] && integrationList[currentCategory].label;
+  const buttonText =
+    integrationList[currentCategory] &&
+    integrationList[currentCategory].buttonText;
 
-          <IntegrationList
-            currentCategory={currentCategory}
-            integrations={this.state.currentOptions}
-            titles={this.state.currentTitles}
-            itemIdentifier={this.state.currentIntegrationData}
-            updateIntegrationList={() =>
-              this.getIntegrationsForCategory(this.props.category)
+  return (
+    <div>
+      <TitleSectionAlt>
+        <Flex>
+          <i
+            className="material-icons"
+            onClick={() => pushFiltered(props, "/integrations", ["project_id"])}
+          >
+            keyboard_backspace
+          </i>
+          <Icon src={icon && icon} />
+          <Title>{label}</Title>
+        </Flex>
+        <Button
+          onClick={() => {
+            if (props.category != "slack") {
+              setCurrentModal("IntegrationsModal", {
+                category: currentCategory,
+                setCurrentIntegration: (x: string) =>
+                  pushFiltered(
+                    props,
+                    `/integrations/${props.category}/create/${x}`,
+                    ["project_id"]
+                  ),
+              });
+            } else {
+              alert("redirect to install link...");
+              // /api/oauth/projects/{project_id}/slack
             }
-          />
-        </div>
-      );
-    } else {
-      return (
-        <div>
-          <TitleSectionAlt>
-            <Flex>
-              <i
-                className="material-icons"
-                onClick={() =>
-                  pushFiltered(this.props, "/integrations", ["project_id"])
-                }
-              >
-                keyboard_backspace
-              </i>
-              <Icon src={icon && icon} />
-              <Title>{label}</Title>
-            </Flex>
-            <Button
-              onClick={() =>
-                window.open(
-                  `/api/oauth/projects/${this.context.currentProject.id}/github`
-                )
-              }
-            >
-              <GHIcon />
-              {buttonText}
-            </Button>
-          </TitleSectionAlt>
+          }}
+        >
+          <i className="material-icons">add</i>
+          {buttonText}
+        </Button>
+      </TitleSectionAlt>
 
-          <LineBreak />
+      <LineBreak />
 
-          <IntegrationList
-            currentCategory={currentCategory}
-            integrations={this.state.currentOptions}
-            titles={this.state.currentTitles}
-            itemIdentifier={this.state.currentIds}
-            updateIntegrationList={() =>
-              this.getIntegrationsForCategory(this.props.category)
-            }
-          />
-        </div>
-      );
-    }
-  };
-}
-
-IntegrationCategories.contextType = Context;
+      {loading ? (
+        <Loading />
+      ) : (
+        <IntegrationList
+          currentCategory={props.category}
+          integrations={currentOptions}
+          titles={currentTitles}
+          itemIdentifier={currentIntegrationData}
+          updateIntegrationList={() =>
+            getIntegrationsForCategory(props.category)
+          }
+        />
+      )}
+    </div>
+  );
+};
 
 export default withRouter(IntegrationCategories);
 

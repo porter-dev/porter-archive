@@ -179,7 +179,11 @@ const ExpandedChart: React.FC<Props> = (props) => {
             case "DELETE":
               delete oldControllers[object.metadata.uid];
             case "UPDATE":
-              if (oldControllers && oldControllers[object.metadata.uid]?.status?.conditions == object.status?.conditions) {
+              if (
+                oldControllers &&
+                oldControllers[object.metadata.uid]?.status?.conditions ==
+                  object.status?.conditions
+              ) {
                 return oldControllers;
               }
               return {
@@ -188,7 +192,6 @@ const ExpandedChart: React.FC<Props> = (props) => {
               };
           }
         });
-        
       },
       onerror() {
         closeWebsocket(kind);
@@ -536,7 +539,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
           <Bolded>Loading...</Bolded>
         </Url>
       );
-    }    
+    }
 
     if (!service?.Name || !service?.Namespace) {
       return;

@@ -76,8 +76,7 @@ export default class FormWrapper extends Component<PropsType, StateType> {
           value: this.context.currentCluster.service == "doks",
         },
       };
-      if (tabs) {
-        tabs.forEach((tab: any, i: number) => {
+        tabs?.forEach((tab: any, i: number) => {
           // Exclude value if omitFromLaunch is set
           let omit =
             tab.settings?.omitFromLaunch && this.props.externalValues?.isLaunch;
@@ -168,10 +167,23 @@ export default class FormWrapper extends Component<PropsType, StateType> {
             }
           }
         });
-      }
+
       if (this.props.tabOptions?.length > 0) {
-        tabOptions = tabOptions.concat(this.props.tabOptions);
+        let prependTabs = [] as { value: string; label: string }[];
+        let appendTabs = [] as { value: string; label: string }[];
+        this.props.tabOptions.forEach(
+          (tab: { value: string; label: string }) => {
+            if (tab.value === "status" || tab.value === "metrics") {
+              prependTabs.push(tab);
+            } else {
+              appendTabs.push(tab);
+            }
+          }
+        );
+        tabOptions = prependTabs.concat(tabOptions.concat(appendTabs));
       }
+
+
       if (tabOptions.length > 0) {
         this.setState(
           {
@@ -193,13 +205,12 @@ export default class FormWrapper extends Component<PropsType, StateType> {
       // Handle change only to external tabs (e.g. DevOps mode toggle)
       let tabOptions = [] as { value: string; label: string }[];
       let tabs = this.props.formData?.tabs;
-      if (tabs) {
-        tabs.forEach((tab: any, i: number) => {
-          if (tab?.name && tab.label) {
-            tabOptions.push({ value: tab.name, label: tab.label });
-          }
-        });
-      }
+      tabs?.forEach((tab: any, i: number) => {
+        if (tab?.name && tab.label) {
+          tabOptions.push({ value: tab.name, label: tab.label });
+        }
+      });
+
       if (this.props.tabOptions?.length > 0) {
         let prependTabs = [] as { value: string; label: string }[];
         let appendTabs = [] as { value: string; label: string }[];

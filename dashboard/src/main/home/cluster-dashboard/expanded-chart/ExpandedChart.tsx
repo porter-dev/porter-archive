@@ -171,20 +171,24 @@ const ExpandedChart: React.FC<Props> = (props) => {
     const wsConfig = {
       onmessage(evt: MessageEvent) {
         const event = JSON.parse(evt.data);
-        if (event.event_type == "UPDATE") {
         let object = event.Object;
         object.metadata.kind = event.Kind;
 
         setControllers((oldControllers) => {
-          if (oldControllers[object.metadata.uid] == object) {
-            return oldControllers;
+          switch (event.event_type) {
+            case "DELETE":
+              delete oldControllers[object.metadata.uid];
+            case "UPDATE":
+              if (oldControllers && oldControllers[object.metadata.uid]?.status?.conditions == object.status?.conditions) {
+                return oldControllers;
+              }
+              return {
+                ...oldControllers,
+                [object.metadata.uid]: object,
+              };
           }
-          return {
-            ...oldControllers,
-            [object.metadata.uid]: object,
-          };
         });
-        }
+        
       },
       onerror() {
         closeWebsocket(kind);

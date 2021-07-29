@@ -39,10 +39,10 @@ export default class VerifyEmail extends Component<PropsType, StateType> {
           <StatusText>A verification email should have been sent to</StatusText>
           <Email>{this.context.user?.email}</Email>
         </InputWrapper>
-        <StatusText>
-          Didn't get it?
-        </StatusText>
-        <Button onClick={this.handleSendEmail}>Resend Verification Email</Button>
+        <StatusText>Didn't get it?</StatusText>
+        <Button onClick={this.handleSendEmail}>
+          Resend Verification Email
+        </Button>
       </div>
     );
 

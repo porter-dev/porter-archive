@@ -41,22 +41,31 @@ const NodeUsage: React.FunctionComponent<NodeUsageProps> = ({ node }) => {
             <Bolded>CPU:</Bolded>{" "}
             {!node?.cpu_reqs && !node?.allocatable_cpu
               ? "Loading..."
-              : `${percentFormatter(node?.fraction_cpu_reqs)} (${node?.cpu_reqs}/${
-                  node?.allocatable_cpu
-                }m)`}
+              : `${percentFormatter(node?.fraction_cpu_reqs)} (${
+                  node?.cpu_reqs
+                }/${node?.allocatable_cpu}m)`}
           </span>
           <Buffer />
           <span>
             <Bolded>RAM:</Bolded>{" "}
             {!node?.memory_reqs && !node?.allocatable_memory
               ? "Loading..."
-              : `${percentFormatter(node?.fraction_memory_reqs)} (${formatMemoryUnitToMi(
+              : `${percentFormatter(
+                  node?.fraction_memory_reqs
+                )} (${formatMemoryUnitToMi(
                   node?.memory_reqs
-                )}/${formatMemoryUnitToMi(
-                  node?.allocatable_memory
-                )})`}
+                )}/${formatMemoryUnitToMi(node?.allocatable_memory)})`}
           </span>
-          <I onClick={() => window.open("https://kubernetes.io/docs/tasks/administer-cluster/reserve-compute-resources/#node-allocatable")} className="material-icons">help_outline</I>
+          <I
+            onClick={() =>
+              window.open(
+                "https://kubernetes.io/docs/tasks/administer-cluster/reserve-compute-resources/#node-allocatable"
+              )
+            }
+            className="material-icons"
+          >
+            help_outline
+          </I>
         </UsageWrapper>
       </Wrapper>
     </NodeUsageWrapper>

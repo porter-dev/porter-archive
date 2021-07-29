@@ -20,6 +20,7 @@ const IntegrationCategories: React.FC<Props> = (props) => {
   const [currentIds, setCurrentIds] = useState([]);
   const [currentIntegrationData, setCurrentIntegrationData] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [slackData, setSlackData] = useState([]);
 
   const { currentProject, setCurrentModal } = useContext(Context);
 
@@ -69,7 +70,13 @@ const IntegrationCategories: React.FC<Props> = (props) => {
           .catch(console.log);
         break;
       case "slack":
-        // to be implemented
+        api
+          .getSlackIntegrations("<token>", {}, { id: currentProject.id })
+          .then((res) => {
+            setSlackData(res.data);
+            setLoading(false);
+          })
+          .catch(console.log);
         break;
       default:
         console.log("Unknown integration category.");
@@ -115,8 +122,7 @@ const IntegrationCategories: React.FC<Props> = (props) => {
                   ),
               });
             } else {
-              alert("redirect to install link...");
-              // /api/oauth/projects/{project_id}/slack
+              window.location.href = `/api/oauth/projects/${currentProject.id}/slack`;
             }
           }}
         >
@@ -129,6 +135,17 @@ const IntegrationCategories: React.FC<Props> = (props) => {
 
       {loading ? (
         <Loading />
+      ) : props.category == "slack" ? (
+        <>
+          {slackData.map((inst) => {
+            return (
+              <>
+                <img src={inst.team_icon_url} alt="team icon" height={"15"} />
+                &nbsp; Team ID {inst.team_id}: in channel {inst.channel}
+              </>
+            );
+          })}
+        </>
       ) : (
         <IntegrationList
           currentCategory={props.category}

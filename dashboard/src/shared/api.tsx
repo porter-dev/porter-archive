@@ -679,6 +679,13 @@ const getRepos = baseApi<{}, { id: number }>("GET", (pathParams) => {
   return `/api/projects/${pathParams.id}/repos`;
 });
 
+const getSlackIntegrations = baseApi<{}, { id: number }>(
+  "GET",
+  (pathParams) => {
+    return `/api/projects/${pathParams.id}/slack_integrations`;
+  }
+);
+
 const getRevisions = baseApi<
   {
     namespace: string;
@@ -1036,6 +1043,7 @@ export default {
   getRegistryIntegrations,
   getReleaseToken,
   getRepoIntegrations,
+  getSlackIntegrations,
   getRepos,
   getRevisions,
   getTemplateInfo,

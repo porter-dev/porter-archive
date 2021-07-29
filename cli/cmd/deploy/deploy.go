@@ -299,18 +299,6 @@ func (d *DeployAgent) UpdateImageAndValues(overrideValues map[string]interface{}
 		currImageSection["tag"] = d.tag
 	}
 
-	// if opts.Kind == "web" || opts.Kind == "worker" {
-	// 	mergedValues["image"] = map[string]interface{}{
-	// 		"repository": "public.ecr.aws/o1j4x7p4/hello-porter",
-	// 		"tag":        "latest",
-	// 	}
-	// } else if opts.Kind == "job" {
-	// 	mergedValues["image"] = map[string]interface{}{
-	// 		"repository": "public.ecr.aws/o1j4x7p4/hello-porter-job",
-	// 		"tag":        "latest",
-	// 	}
-	// }
-
 	bytes, err := json.Marshal(mergedValues)
 
 	if err != nil {

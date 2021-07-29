@@ -288,6 +288,22 @@ func New(a *api.App) *chi.Mux {
 				requestlog.NewHandler(a.HandleDOOAuthCallback, l),
 			)
 
+			r.Method(
+				"GET",
+				"/oauth/projects/{project_id}/slack",
+				auth.DoesUserHaveProjectAccess(
+					requestlog.NewHandler(a.HandleSlackOAuthStartProject, l),
+					mw.URLParam,
+					mw.WriteAccess,
+				),
+			)
+
+			r.Method(
+				"GET",
+				"/oauth/slack/callback",
+				requestlog.NewHandler(a.HandleSlackOAuthCallback, l),
+			)
+
 			// /api/projects routes
 			r.Method(
 				"GET",
@@ -836,6 +852,17 @@ func New(a *api.App) *chi.Mux {
 				"/projects/{project_id}/integrations/oauth",
 				auth.DoesUserHaveProjectAccess(
 					requestlog.NewHandler(a.HandleListProjectOAuthIntegrations, l),
+					mw.URLParam,
+					mw.WriteAccess,
+				),
+			)
+
+			// /api/projects/{project_id}/slack_integrations routes
+			r.Method(
+				"GET",
+				"/projects/{project_id}/slack_integrations",
+				auth.DoesUserHaveProjectAccess(
+					requestlog.NewHandler(a.HandleListSlackIntegrations, l),
 					mw.URLParam,
 					mw.WriteAccess,
 				),

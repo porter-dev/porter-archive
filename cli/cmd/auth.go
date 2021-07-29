@@ -91,7 +91,17 @@ func login() error {
 				return err
 			}
 
-			config.SetProject(projID)
+			err = config.SetProject(projID)
+
+			if err != nil {
+				return err
+			}
+
+			err = setProjectCluster(client, projID)
+
+			if err != nil {
+				return err
+			}
 		} else {
 			color.Yellow("You are already logged in. If you'd like to log out, run \"porter auth logout\".")
 		}
@@ -141,6 +151,12 @@ func login() error {
 
 		if len(projects) > 0 {
 			config.SetProject(projects[0].ID)
+
+			err = setProjectCluster(client, projects[0].ID)
+
+			if err != nil {
+				return err
+			}
 		}
 	} else {
 		// set the token in config
@@ -168,6 +184,12 @@ func login() error {
 		}
 
 		config.SetProject(projID)
+
+		err = setProjectCluster(client, projID)
+
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
@@ -215,6 +237,12 @@ func loginManual() error {
 
 	if len(projects) > 0 {
 		config.SetProject(projects[0].ID)
+
+		err = setProjectCluster(client, projects[0].ID)
+
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil

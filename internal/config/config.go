@@ -59,6 +59,9 @@ type ServerConf struct {
 	SendgridProjectInviteTemplateID string `env:"SENDGRID_INVITE_TEMPLATE_ID"`
 	SendgridSenderEmail             string `env:"SENDGRID_SENDER_EMAIL"`
 
+	SlackClientID     string `env:"SLACK_CLIENT_ID"`
+	SlackClientSecret string `env:"SLACK_CLIENT_SECRET"`
+
 	DOClientID                 string `env:"DO_CLIENT_ID"`
 	DOClientSecret             string `env:"DO_CLIENT_SECRET"`
 	ProvisionerImageTag        string `env:"PROV_IMAGE_TAG,default=latest"`

@@ -279,9 +279,37 @@ func (d *DeployAgent) UpdateImageAndValues(overrideValues map[string]interface{}
 	// overwrite the tag based on a new image
 	currImageSection := mergedValues["image"].(map[string]interface{})
 
+	// if the current image section is hello-porter, the image must be overriden
+	if currImageSection["repository"] == "public.ecr.aws/o1j4x7p4/hello-porter" ||
+		currImageSection["repository"] == "public.ecr.aws/o1j4x7p4/hello-porter-job" {
+		newImage, err := d.getReleaseImage()
+
+		if err != nil {
+			return fmt.Errorf("could not overwrite hello-porter image: %s", err.Error())
+		}
+
+		currImageSection["repository"] = newImage
+
+		// set to latest just to be safe -- this will be overriden if "d.tag" is set in
+		// the agent
+		currImageSection["tag"] = "latest"
+	}
+
 	if d.tag != "" && currImageSection["tag"] != d.tag {
 		currImageSection["tag"] = d.tag
 	}
+
+	// if opts.Kind == "web" || opts.Kind == "worker" {
+	// 	mergedValues["image"] = map[string]interface{}{
+	// 		"repository": "public.ecr.aws/o1j4x7p4/hello-porter",
+	// 		"tag":        "latest",
+	// 	}
+	// } else if opts.Kind == "job" {
+	// 	mergedValues["image"] = map[string]interface{}{
+	// 		"repository": "public.ecr.aws/o1j4x7p4/hello-porter-job",
+	// 		"tag":        "latest",
+	// 	}
+	// }
 
 	bytes, err := json.Marshal(mergedValues)
 

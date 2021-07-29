@@ -59,6 +59,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
     props.currentChart
   );
   const [showRevisions, setShowRevisions] = useState<boolean>(false);
+  const [loading, setLoading] = useState<boolean>(false);
   const [components, setComponents] = useState<ResourceType[]>([]);
   const [isPreview, setIsPreview] = useState<boolean>(false);
   const [devOpsMode, setDevOpsMode] = useState<boolean>(
@@ -194,6 +195,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
   };
 
   const updateComponents = async (currentChart: ChartType) => {
+    setLoading(true);
     try {
       const res = await api.getChartComponents(
         "<token>",
@@ -209,8 +211,10 @@ const ExpandedChart: React.FC<Props> = (props) => {
         }
       );
       setComponents(res.data.Objects);
+      setLoading(false);
     } catch (error) {
       console.log(error);
+      setLoading(false);
     }
   };
 
@@ -522,12 +526,16 @@ const ExpandedChart: React.FC<Props> = (props) => {
       return c.Kind === "Service";
     });
 
-    if (!service?.Name || !service?.Namespace) {
+    if (loading) {
       return (
         <Url>
           <Bolded>Loading...</Bolded>
         </Url>
       );
+    }    
+
+    if (!service?.Name || !service?.Namespace) {
+      return;
     }
 
     return (

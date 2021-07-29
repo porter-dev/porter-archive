@@ -2,7 +2,6 @@ package actions
 
 import (
 	"fmt"
-	"path/filepath"
 )
 
 func getCheckoutCodeStep() GithubActionYAMLStep {
@@ -29,65 +28,19 @@ func getDownloadPorterStep() GithubActionYAMLStep {
 	}
 }
 
-const configure string = `sudo porter config set-host %s
-porter update --app %s
-`
+const configure string = `porter update --app %s`
 
-func getConfigurePorterStep(serverURL, porterTokenSecretName string, projectIDSecretName string, clusterIDSecretName string, appName string) GithubActionYAMLStep {
+func getConfigurePorterStep(serverURL, porterTokenSecretName string, projectID uint, clusterID uint, appName string) GithubActionYAMLStep {
 	return GithubActionYAMLStep{
 		Name:    "Update Porter App",
-		ID:      "configure_porter",
-		Run:     fmt.Sprintf(configure, serverURL, appName),
+		ID:      "update_porter",
+		Run:     fmt.Sprintf(configure, appName),
 		Timeout: 10,
-		Env: GithubActionEnvConfig{
-			PorterToken: fmt.Sprintf("{{ secrets.%s }}", porterTokenSecretName),
-			ProjectID:   fmt.Sprintf("{{ secrets.%s }}", projectIDSecretName),
-			ClusterID:   fmt.Sprintf("{{ secrets.%s }}", clusterIDSecretName),
+		Env: map[string]string{
+			"PORTER_TOKEN":   fmt.Sprintf("${{ secrets.%s }}", porterTokenSecretName),
+			"PORTER_HOST":    serverURL,
+			"PORTER_PROJECT": fmt.Sprintf("%d", projectID),
+			"PORTER_CLUSTER": fmt.Sprintf("%d", clusterID),
 		},
-	}
-}
-
-const dockerBuildPush string = `
-export $(echo "${{secrets.%s}}" | xargs)
-echo "${{secrets.%s}}" > ./env_porter
-sudo docker build %s $(cat ./env_porter | awk 'NF' | sed 's@^@--build-arg @g' | paste -s -d " " -) --file %s -t %s:$(git rev-parse --short HEAD)
-sudo docker push %s:$(git rev-parse --short HEAD)
-`
-
-func getDockerBuildPushStep(envSecretName, dockerFilePath, repoURL string) GithubActionYAMLStep {
-	return GithubActionYAMLStep{
-		Name: "Docker build, push",
-		ID:   "docker_build_push",
-		Run:  fmt.Sprintf(dockerBuildPush, envSecretName, envSecretName, filepath.Dir(dockerFilePath), dockerFilePath, repoURL, repoURL),
-	}
-}
-
-const buildPackPush string = `
-export $(echo "${{secrets.%s}}" | xargs)
-echo "${{secrets.%s}}" > ./env_porter
-sudo add-apt-repository ppa:cncf-buildpacks/pack-cli
-sudo apt-get update
-sudo apt-get install pack-cli
-sudo pack build %s:$(git rev-parse --short HEAD) --path %s --builder heroku/buildpacks:18 --env-file ./env_porter
-sudo docker push %s:$(git rev-parse --short HEAD)
-`
-
-func getBuildPackPushStep(envSecretName, folderPath, repoURL string) GithubActionYAMLStep {
-	return GithubActionYAMLStep{
-		Name: "Docker build, push",
-		ID:   "docker_build_push",
-		Run:  fmt.Sprintf(buildPackPush, envSecretName, envSecretName, repoURL, folderPath, repoURL),
-	}
-}
-
-const deployPorter string = `
-curl -X POST "%s/api/webhooks/deploy/${{secrets.%s}}?commit=$(git rev-parse --short HEAD)"
-`
-
-func deployPorterWebhookStep(serverURL, webhookTokenSecretName string) GithubActionYAMLStep {
-	return GithubActionYAMLStep{
-		Name: "Deploy on Porter",
-		ID:   "deploy_porter",
-		Run:  fmt.Sprintf(deployPorter, serverURL, webhookTokenSecretName),
 	}
 }

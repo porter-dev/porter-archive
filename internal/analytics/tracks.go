@@ -66,3 +66,35 @@ func (t *segmentRedeployViaWebhookTrack) getEvent() SegmentEvent {
 func (t *segmentRedeployViaWebhookTrack) getProperties() segment.Properties {
 	return segment.NewProperties().Set("repository", t.repository)
 }
+
+type segmentNewClusterEventTrack struct {
+	userId    string
+	projId string
+	clusterName string
+	clusterType string // EKS, DOKS, or GKE
+	eventType string // connected, provisioned, or destroyed
+}
+
+// Constructor for track of type "New Cluster Event"
+// tracks whenever a cluster is newly provisioned, connected, or destroyed.
+func CreateSegmentNewClusterEvent(userId string, projId string, clusterName string, clusterType string, eventType string) *segmentNewClusterEventTrack {
+	return &segmentNewClusterEventTrack{
+		userId:     userId,
+		projId: projId,
+		clusterName: clusterName,
+		clusterType: clusterType,
+		eventType: eventType, 
+	}
+}
+
+func (t *segmentNewClusterEventTrack) getUserId() string {
+	return t.userId
+}
+
+func (t *segmentNewClusterEventTrack) getEvent() SegmentEvent {
+	return NewClusterEvent
+}
+
+func (t *segmentNewClusterEventTrack) getProperties() segment.Properties {
+	return segment.NewProperties().Set("Project ID", t.projId).Set("Cluster Name", t.clusterName).Set("Cluster Type", t.clusterType).Set("Event Type", t.eventType)
+}

@@ -116,6 +116,7 @@ const IntegrationCategories: React.FC<Props> = (props) => {
               });
             } else {
               alert("redirect to install link...");
+              // /api/oauth/projects/{project_id}/slack
             }
           }}
         >

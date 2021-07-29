@@ -56,7 +56,6 @@ var logoutCmd = &cobra.Command{
 	},
 }
 
-var token string = ""
 var manual bool = false
 
 func init() {
@@ -80,27 +79,39 @@ func login() error {
 	user, _ := client.AuthCheck(context.Background())
 
 	if user != nil {
+		// set the token if the user calls login with the --token flag or the PORTER_TOKEN env
 		if config.Token != "" {
-			// set the token if the user calls login with the --token flag
 			config.SetToken(config.Token)
 			color.New(color.FgGreen).Println("Successfully logged in!")
 
-			projID, err := api.GetProjectIDFromToken(config.Token)
+			projID, exists, err := api.GetProjectIDFromToken(config.Token)
 
 			if err != nil {
 				return err
 			}
 
-			err = config.SetProject(projID)
+			// if project ID does not exist for the token, this is a user-issued CLI token, so the project
+			// ID should be queried
+			if !exists {
+				err = setProjectForUser(client, user.ID)
 
-			if err != nil {
-				return err
-			}
+				if err != nil {
+					return err
+				}
+			} else {
+				// if the project ID does exist for the token, this is a project-issued token, and
+				// the project should be set automatically
+				err = config.SetProject(projID)
 
-			err = setProjectCluster(client, projID)
+				if err != nil {
+					return err
+				}
 
-			if err != nil {
-				return err
+				err = setProjectCluster(client, projID)
+
+				if err != nil {
+					return err
+				}
 			}
 		} else {
 			color.Yellow("You are already logged in. If you'd like to log out, run \"porter auth logout\".")
@@ -114,78 +125,46 @@ func login() error {
 		return loginManual()
 	}
 
-	// check for a token
-	var err error
+	// log the user in
+	token, err := loginBrowser.Login(config.Host)
 
-	if token == "" {
-		token, err = loginBrowser.Login(config.Host)
+	if err != nil {
+		return err
+	}
 
-		if err != nil {
-			return err
-		}
+	// set the token in config
+	err = config.SetToken(token)
 
-		// set the token in config
-		err = config.SetToken(token)
+	if err != nil {
+		return err
+	}
 
-		if err != nil {
-			return err
-		}
+	client = api.NewClientWithToken(config.Host+"/api", token)
 
-		client := api.NewClientWithToken(config.Host+"/api", token)
+	user, err = client.AuthCheck(context.Background())
 
-		user, err := client.AuthCheck(context.Background())
+	if user == nil {
+		color.Red("Invalid token.")
+		return err
+	}
 
-		if user == nil {
-			color.Red("Invalid token.")
-			return err
-		}
+	color.New(color.FgGreen).Println("Successfully logged in!")
 
-		color.New(color.FgGreen).Println("Successfully logged in!")
+	return setProjectForUser(client, user.ID)
+}
 
-		// get a list of projects, and set the current project
-		projects, err := client.ListUserProjects(context.Background(), user.ID)
+func setProjectForUser(client *api.Client, userID uint) error {
+	// get a list of projects, and set the current project
+	projects, err := client.ListUserProjects(context.Background(), userID)
 
-		if err != nil {
-			return err
-		}
+	if err != nil {
+		return err
+	}
 
-		if len(projects) > 0 {
-			config.SetProject(projects[0].ID)
+	if len(projects) > 0 {
+		config.SetProject(projects[0].ID)
 
-			err = setProjectCluster(client, projects[0].ID)
-
-			if err != nil {
-				return err
-			}
-		}
-	} else {
-		// set the token in config
-		err = config.SetToken(token)
-
-		if err != nil {
-			return err
-		}
-
-		client := api.NewClientWithToken(config.Host+"/api", token)
-
-		user, err := client.AuthCheck(context.Background())
-
-		if user == nil {
-			color.Red("Invalid token.")
-			return err
-		}
-
-		color.New(color.FgGreen).Println("Successfully logged in!")
-
-		projID, err := api.GetProjectIDFromToken(token)
-
-		if err != nil {
-			return err
-		}
-
-		config.SetProject(projID)
-
-		err = setProjectCluster(client, projID)
+		err = setProjectCluster(client, projects[0].ID)
 
 		if err != nil {
 			return err

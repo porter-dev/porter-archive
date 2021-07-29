@@ -112,6 +112,8 @@ func QueryPrometheus(
 		query = createHPAAbsoluteCPUThresholdQuery(podSelectionRegex, opts.Name, opts.Namespace, service.ObjectMeta.Labels["app"])
 	} else if opts.Metric == "memory_hpa_threshold" {
 		query = createHPAAbsoluteMemoryThresholdQuery(podSelectionRegex, opts.Name, opts.Namespace, service.ObjectMeta.Labels["app"])
+	} else if opts.Metric == "hpa_replicas" {
+		query = createHPACurrentReplicasQuery(opts.Name, opts.Namespace, service.ObjectMeta.Labels["app"])
 	}
 
 	if opts.ShouldSum {
@@ -159,6 +161,7 @@ type promRawQuery struct {
 type promParsedSingletonQueryResult struct {
 	Date     interface{} `json:"date,omitempty"`
 	CPU      interface{} `json:"cpu,omitempty"`
+	Replicas interface{} `json:"replicas,omitempty"`
 	Memory   interface{} `json:"memory,omitempty"`
 	Bytes    interface{} `json:"bytes,omitempty"`
 	ErrorPct interface{} `json:"error_pct,omitempty"`
@@ -200,6 +203,8 @@ func parseQuery(rawQuery []byte, metric string) ([]byte, error) {
 				singletonResult.CPU = values[1]
 			} else if metric == "memory_hpa_threshold" {
 				singletonResult.Memory = values[1]
+			} else if metric == "hpa_replicas" {
+				singletonResult.Replicas = values[1]
 			}
 
 			singletonResults = append(singletonResults, *singletonResult)
@@ -300,10 +305,21 @@ func getKubeMetricsPodSelector(podSelectionRegex, namespace string) string {
 	)
 }
 
-func createHPACurrentReplicasQuery(hpaName, namespace string) string {
-	return fmt.Sprintf(
-		`kube_hpa_status_current_replicas{hpa="%s",namespace="%s"}`,
+func createHPACurrentReplicasQuery(hpaName, namespace, appLabel string) string {
+	kubeMetricsHPASelector := fmt.Sprintf(
+		`hpa="%s",namespace="%s"`,
 		hpaName,
 		namespace,
+	)
+
+	// the kube-state-metrics queries are less prone to error if the field app_kubernetes_io_instance is matched
+	// as well
+	if appLabel != "" {
+		kubeMetricsHPASelector += fmt.Sprintf(`,app_kubernetes_io_instance="%s"`, appLabel)
+	}
+
+	return fmt.Sprintf(
+		`kube_hpa_status_current_replicas{%s}`,
+		kubeMetricsHPASelector,
 	)
 }

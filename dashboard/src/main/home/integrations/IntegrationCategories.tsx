@@ -108,6 +108,9 @@ class IntegrationCategories extends Component<PropsType, StateType> {
           })
           .catch(console.log);
         break;
+      case "slack":
+        // to be implemented
+        break;
       default:
         console.log("Unknown integration category.");
     }
@@ -140,17 +143,21 @@ class IntegrationCategories extends Component<PropsType, StateType> {
               <Title>{label}</Title>
             </Flex>
             <Button
-              onClick={() =>
-                this.context.setCurrentModal("IntegrationsModal", {
-                  category: currentCategory,
-                  setCurrentIntegration: (x: string) =>
-                    pushFiltered(
-                      this.props,
-                      `/integrations/${this.props.category}/create/${x}`,
-                      ["project_id"]
-                    ),
-                })
-              }
+              onClick={() => {
+                if (this.props.category != "slack") {
+                  this.context.setCurrentModal("IntegrationsModal", {
+                    category: currentCategory,
+                    setCurrentIntegration: (x: string) =>
+                      pushFiltered(
+                        this.props,
+                        `/integrations/${this.props.category}/create/${x}`,
+                        ["project_id"]
+                      ),
+                  });
+                } else {
+                  alert("redirect to install link...");
+                }
+              }}
             >
               <i className="material-icons">add</i>
               {buttonText}

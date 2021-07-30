@@ -13,6 +13,7 @@ import SelectRow from "components/values-form/SelectRow";
 import AreaChart from "./AreaChart";
 import { MetricNormalizer } from "./MetricNormalizer";
 import { AvailableMetrics, NormalizedMetricsData } from "./types";
+import CheckboxRow from "components/values-form/CheckboxRow";
 
 type PropsType = {
   currentChart: ChartTypeWithExtendedConfig;
@@ -56,7 +57,9 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
   ]);
   const [isLoading, setIsLoading] = useState(0);
   const [hpaData, setHpaData] = useState([]);
-  const [hpaEnabled, setHpaEnabled] = useState(false);
+  const [hpaEnabled, setHpaEnabled] = useState(
+    currentChart?.config?.autoscaling?.enabled
+  );
 
   const { currentCluster, currentProject, setCurrentError } = useContext(
     Context
@@ -432,6 +435,14 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
           <Highlight color={"#7d7d81"} onClick={getMetrics}>
             <i className="material-icons">autorenew</i>
           </Highlight>
+
+          {currentChart?.config?.autoscaling?.enabled && (
+            <CheckboxRow
+              toggle={() => setHpaEnabled((prev) => !prev)}
+              checked={hpaEnabled}
+              label="Enable HPA Metrics"
+            />
+          )}
         </Flex>
         <RangeWrapper>
           <TabSelector
@@ -465,7 +476,7 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
               dataKey={selectedMetricLabel}
               data={data}
               hpaData={hpaData}
-              hpaEnabled={currentChart?.config?.autoscaling?.enabled}
+              hpaEnabled={hpaEnabled}
               width={width}
               height={height - 10}
               resolution={selectedRange}

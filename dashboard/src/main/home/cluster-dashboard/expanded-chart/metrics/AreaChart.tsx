@@ -76,6 +76,7 @@ export type AreaProps = {
 
 const AreaChart: React.FunctionComponent<AreaProps> = ({
   data,
+  dataKey,
   hpaEnabled = false,
   hpaData = [],
   resolution,
@@ -100,24 +101,32 @@ const AreaChart: React.FunctionComponent<AreaProps> = ({
   // bounds
   const innerWidth = width - margin.left - margin.right - 40;
   const innerHeight = height - margin.top - margin.bottom - 20;
+  const isHpaEnabled = hpaEnabled && !!hpaData.length;
 
   // scales
   const dateScale = useMemo(
     () =>
       scaleTime({
         range: [margin.left, innerWidth + margin.left],
-        domain: extent([...globalData, ...hpaData], getDate) as [Date, Date],
+        domain: extent(
+          [...globalData, ...(isHpaEnabled ? hpaData : [])],
+          getDate
+        ) as [Date, Date],
       }),
-    [margin.left, width, height, data, hpaData]
+    [margin.left, width, height, data, hpaData, isHpaEnabled]
   );
   const valueScale = useMemo(
     () =>
       scaleLinear({
         range: [innerHeight + margin.top, margin.top],
-        domain: [0, 1.25 * max([...globalData, ...hpaData], getValue)],
+        domain: [
+          0,
+          1.25 *
+            max([...globalData, ...(isHpaEnabled ? hpaData : [])], getValue),
+        ],
         nice: true,
       }),
-    [margin.top, width, height, data, hpaData]
+    [margin.top, width, height, data, hpaData, isHpaEnabled]
   );
 
   // tooltip handler
@@ -204,7 +213,6 @@ const AreaChart: React.FunctionComponent<AreaProps> = ({
   const dataGraphTooltipGlyphPosition =
     (tooltipData?.data && valueScale(getValue(tooltipData.data))) || 0;
 
-  const isHpaEnabled = hpaEnabled && !!hpaData.length;
   return (
     <div>
       <svg width={width} height={height} ref={svgContainer}>
@@ -257,16 +265,19 @@ const AreaChart: React.FunctionComponent<AreaProps> = ({
           fill="url(#area-gradient)"
           curve={curveMonotoneX}
         />
-        <LinePath<NormalizedMetricsData>
-          stroke="#ffffff"
-          strokeWidth={2}
-          data={hpaData}
-          x={(d) => dateScale(getDate(d)) ?? 0}
-          y={(d) => valueScale(getValue(d)) ?? 0}
-          strokeDasharray="6,4"
-          strokeOpacity={1}
-          pointerEvents="none"
-        />
+        {isHpaEnabled && (
+          <LinePath<NormalizedMetricsData>
+            stroke="#ffffff"
+            strokeWidth={2}
+            data={hpaData}
+            x={(d) => dateScale(getDate(d)) ?? 0}
+            y={(d) => valueScale(getValue(d)) ?? 0}
+            strokeDasharray="6,4"
+            strokeOpacity={1}
+            pointerEvents="none"
+          />
+        )}
+
         <AxisLeft
           left={10}
           scale={valueScale}
@@ -376,9 +387,13 @@ const AreaChart: React.FunctionComponent<AreaProps> = ({
             }}
           >
             {formatDate(getDate(tooltipData.data))}
-            <div>CPU DATA: {getValue(tooltipData.data)}</div>
+            <div style={{ color: accentColor }}>
+              {dataKey}: {getValue(tooltipData.data)}
+            </div>
             {isHpaEnabled && (
-              <div>HPA DATA: {getValue(tooltipData.tooltipHpaData)}</div>
+              <div style={{ color: "#FFF" }}>
+                HPA Threshold: {getValue(tooltipData.tooltipHpaData)}
+              </div>
             )}
           </TooltipWithBounds>
         </div>

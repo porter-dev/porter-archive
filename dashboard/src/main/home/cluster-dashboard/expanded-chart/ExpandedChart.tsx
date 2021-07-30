@@ -24,7 +24,7 @@ import api from "shared/api";
 import ConfirmOverlay from "components/ConfirmOverlay";
 import Loading from "components/Loading";
 import StatusIndicator from "components/StatusIndicator";
-import FormWrapper from "components/values-form/FormWrapper";
+import PorterFormWrapper from "components/form-refactor/PorterFormWrapper";
 import RevisionSection from "./RevisionSection";
 import ValuesYaml from "./ValuesYaml";
 import GraphSection from "./GraphSection";
@@ -64,7 +64,8 @@ const ExpandedChart: React.FC<Props> = (props) => {
   const [devOpsMode, setDevOpsMode] = useState<boolean>(
     localStorage.getItem("devOpsMode") === "true"
   );
-  const [tabOptions, setTabOptions] = useState<any[]>([]);
+  const [rightTabOptions, setRightTabOptions] = useState<any[]>([]);
+  const [leftTabOptions, setLeftTabOptions] = useState<any[]>([]);
   const [saveValuesStatus, setSaveValueStatus] = useState<string>(null);
   const [forceRefreshRevisions, setForceRefreshRevisions] = useState<boolean>(
     false
@@ -414,17 +415,18 @@ const ExpandedChart: React.FC<Props> = (props) => {
 
   const updateTabs = () => {
     // Collate non-form tabs
-    let tabOptions = [] as any[];
-    tabOptions.push({ label: "Status", value: "status" });
+    let rightTabOptions = [] as any[];
+    let leftTabOptions = [] as any[];
+    rightTabOptions.push({ label: "Status", value: "status" });
 
     if (props.isMetricsInstalled) {
-      tabOptions.push({ label: "Metrics", value: "metrics" });
+      rightTabOptions.push({ label: "Metrics", value: "metrics" });
     }
 
-    tabOptions.push({ label: "Chart Overview", value: "graph" });
+    rightTabOptions.push({ label: "Chart Overview", value: "graph" });
 
     if (devOpsMode) {
-      tabOptions.push(
+      rightTabOptions.push(
         { label: "Manifests", value: "list" },
         { label: "Helm Values", value: "values" }
       );
@@ -432,18 +434,22 @@ const ExpandedChart: React.FC<Props> = (props) => {
 
     // Settings tab is always last
     if (isAuthorized("application", "", ["get", "delete"])) {
-      tabOptions.push({ label: "Settings", value: "settings" });
+      rightTabOptions.push({ label: "Settings", value: "settings" });
     }
 
     // Filter tabs if previewing an old revision or updating the chart version
     if (isPreview) {
       let liveTabs = ["status", "settings", "deploy", "metrics"];
-      tabOptions = tabOptions.filter(
+      rightTabOptions = rightTabOptions.filter(
+        (tab: any) => !liveTabs.includes(tab.value)
+      );
+      leftTabOptions = leftTabOptions.filter(
         (tab: any) => !liveTabs.includes(tab.value)
       );
     }
 
-    setTabOptions(tabOptions);
+    setRightTabOptions(rightTabOptions);
+    setLeftTabOptions(leftTabOptions);
   };
 
   const setRevision = (chart: ChartType, isCurrent?: boolean) => {
@@ -696,27 +702,32 @@ const ExpandedChart: React.FC<Props> = (props) => {
           />
         </HeaderWrapper>
         <BodyWrapper>
-          <FormWrapper
+          <PorterFormWrapper
+            formData={currentChart.form}
+            valuesToOverride={{
+              namespace: props.namespace,
+              clusterId: currentCluster.id,
+            }}
+            renderTabContents={renderTabContents}
             isReadOnly={
               imageIsPlaceholder ||
               !isAuthorized("application", "", ["get", "update"])
             }
-            formData={currentChart.form}
-            tabOptions={tabOptions}
-            isInModal={true}
-            renderTabContents={renderTabContents}
             onSubmit={onSubmit}
-            saveValuesStatus={saveValuesStatus}
-            externalValues={{
-              namespace: props.namespace,
-              clusterId: currentCluster.id,
-            }}
+            rightTabOptions={rightTabOptions}
+            leftTabOptions={leftTabOptions}
+            isInModal={true}
             color={isPreview ? "#f5cb42" : null}
             addendum={
               <TabButton onClick={toggleDevOpsMode} devOpsMode={devOpsMode}>
                 <i className="material-icons">offline_bolt</i> DevOps Mode
               </TabButton>
             }
+            saveValuesStatus={saveValuesStatus}
+            externalValues={{
+              namespace: props.namespace,
+              clusterId: currentCluster.id,
+            }}
           />
         </BodyWrapper>
       </StyledExpandedChart>

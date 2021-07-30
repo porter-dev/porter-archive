@@ -435,14 +435,6 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
           <Highlight color={"#7d7d81"} onClick={getMetrics}>
             <i className="material-icons">autorenew</i>
           </Highlight>
-
-          {currentChart?.config?.autoscaling?.enabled && (
-            <CheckboxRow
-              toggle={() => setHpaEnabled((prev) => !prev)}
-              checked={hpaEnabled}
-              label="Enable HPA Metrics"
-            />
-          )}
         </Flex>
         <RangeWrapper>
           <TabSelector
@@ -470,20 +462,32 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
       )}
 
       {data.length > 0 && isLoading === 0 && (
-        <ParentSize>
-          {({ width, height }) => (
-            <AreaChart
-              dataKey={selectedMetricLabel}
-              data={data}
-              hpaData={hpaData}
-              hpaEnabled={hpaEnabled}
-              width={width}
-              height={height - 10}
-              resolution={selectedRange}
-              margin={{ top: 40, right: -40, bottom: 0, left: 50 }}
-            />
-          )}
-        </ParentSize>
+        <>
+          {currentChart?.config?.autoscaling?.enabled &&
+            ["cpu", "memory"].includes(selectedMetric) && (
+              <CheckboxRow
+                toggle={() => setHpaEnabled((prev) => !prev)}
+                checked={hpaEnabled}
+                label="Enable HPA Metrics"
+              />
+            )}
+          <ParentSize>
+            {({ width, height }) => (
+              <AreaChart
+                dataKey={selectedMetricLabel}
+                data={data}
+                hpaData={hpaData}
+                hpaEnabled={
+                  hpaEnabled && ["cpu", "memory"].includes(selectedMetric)
+                }
+                width={width}
+                height={height - 10}
+                resolution={selectedRange}
+                margin={{ top: 40, right: -40, bottom: 0, left: 50 }}
+              />
+            )}
+          </ParentSize>
+        </>
       )}
     </StyledMetricsSection>
   );

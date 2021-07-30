@@ -55,7 +55,8 @@ const formats: { [range: string]: (date: Date) => string } = {
 
 // accessors
 const getDate = (d: NormalizedMetricsData) => new Date(d.date * 1000);
-const getValue = (d: NormalizedMetricsData) => d?.value;
+const getValue = (d: NormalizedMetricsData) =>
+  d?.value && Number(d.value?.toFixed(4));
 
 const bisectDate = bisector<NormalizedMetricsData, Date>(
   (d) => new Date(d.date * 1000)

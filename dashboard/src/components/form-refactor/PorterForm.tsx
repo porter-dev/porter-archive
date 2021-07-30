@@ -33,6 +33,12 @@ interface Props {
     submitValues?: any
   ) => React.ReactElement;
   saveButtonText?: string;
+  isReadOnly?: boolean;
+  isInModal?: boolean;
+  color?: string;
+  addendum?: any;
+  saveValuesStatus?: string;
+  externalValues?: any;
 }
 
 const PorterForm: React.FC<Props> = (props) => {
@@ -41,7 +47,9 @@ const PorterForm: React.FC<Props> = (props) => {
   );
 
   const [currentTab, setCurrentTab] = useState(
-    formData.tabs.length > 0 ? formData.tabs[0].name : ""
+    props.leftTabOptions?.length > 0 ? props.leftTabOptions[0].value : (
+      formData.tabs.length > 0 ? formData.tabs[0].name : ""
+    )
   );
 
   const renderSectionField = (field: FormField): JSX.Element => {
@@ -98,16 +106,36 @@ const PorterForm: React.FC<Props> = (props) => {
       .concat(props.rightTabOptions || []);
   };
 
-  const renderTab = (name: string): JSX.Element => {
-    const tab = formData.tabs.filter((tab) => tab.name == name)[0];
+  const showSaveButton = (): boolean => {
+    if (props.isReadOnly) {
+      return false;
+    }
 
+    let returnVal = true;
+    props.leftTabOptions?.forEach((tab: any) => {
+      if (tab.value === currentTab) {
+        returnVal = false;
+      }
+    });
+    props.rightTabOptions?.forEach((tab: any) => {
+      if (tab.value === currentTab) {
+        returnVal = false;
+      }
+    });
+
+    return returnVal;
+  };
+
+  const renderTab = (): JSX.Element => {
+    const tab = formData.tabs.filter((tab) => tab.name == currentTab)[0];
+
+    // Handle external tab
     if (!tab) {
-      // tab is external
-      return props.renderTabContents ? props.renderTabContents(name) : <></>;
+      return props.renderTabContents ? props.renderTabContents(currentTab) : <></>;
     }
 
     return (
-      <>
+      <StyledPorterForm showSave={showSaveButton()}>
         {tab.sections.map((section) => {
           return (
             <React.Fragment key={section.name}>
@@ -115,26 +143,48 @@ const PorterForm: React.FC<Props> = (props) => {
             </React.Fragment>
           );
         })}
-      </>
+      </StyledPorterForm>
     );
   };
+
+  const isDisabled = () => {
+    if (props.saveValuesStatus == "loading") {
+      return true;
+    }
+
+    return isReadOnly || !validationInfo.validated;
+  };
+
+  const renderSaveStatus = (): string => {
+    if (isDisabled() && props.saveValuesStatus !== "loading") {
+      return "Missing required fields";
+    }
+    return props.saveValuesStatus;
+  }
 
   return (
     <>
       <TabRegion
+        addendum={props.addendum}
+        color={props.color}
         options={getTabOptions()}
         currentTab={currentTab}
         setCurrentTab={setCurrentTab}
       >
-        <StyledPorterForm>{renderTab(currentTab)}</StyledPorterForm>
+        {renderTab()}
       </TabRegion>
-      <SaveButton
-        text={props.saveButtonText || "Deploy"}
-        onClick={onSubmit}
-        makeFlush
-        status={validationInfo.validated ? "" : validationInfo.error}
-        disabled={isReadOnly || !validationInfo.validated}
-      />
+      <br />
+      {
+        showSaveButton() && (
+          <SaveButton
+            text={props.saveButtonText || "Deploy"}
+            onClick={onSubmit}
+            makeFlush={!props.isInModal}
+            status={validationInfo.validated ? renderSaveStatus() : validationInfo.error}
+            disabled={isDisabled()}
+          /> 
+        )
+      }
       <Spacer />
     </>
   );
@@ -146,9 +196,9 @@ const Spacer = styled.div`
   height: 50px;
 `;
 
-const StyledPorterForm = styled.div`
+const StyledPorterForm = styled.div<{ showSave?: boolean }>`
   width: 100%;
-  height: 100%;
+  height: ${props => props.showSave ? 'calc(100% - 50px)' : '100%'};
   background: #ffffff11;
   color: #ffffff;
   padding: 0px 35px 25px;

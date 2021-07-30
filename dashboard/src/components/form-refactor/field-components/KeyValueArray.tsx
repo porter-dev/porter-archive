@@ -421,6 +421,7 @@ const LoadButton = styled(AddRowButton)`
 const UploadButton = styled(AddRowButton)`
   background: none;
   position: relative;
+  margin-left: 10px;
   border: 1px solid #ffffff55;
   > i {
     color: #ffffff44;

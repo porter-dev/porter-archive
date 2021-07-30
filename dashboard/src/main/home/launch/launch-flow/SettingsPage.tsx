@@ -16,7 +16,7 @@ import { isAlphanumeric } from "shared/common";
 import InputRow from "components/values-form/InputRow";
 import SaveButton from "components/SaveButton";
 import Helper from "components/values-form/Helper";
-import FormWrapper from "components/values-form/FormWrapper";
+import PorterFormWrapper from "components/form-refactor/PorterFormWrapper";
 import Selector from "components/Selector";
 import Loading from "components/Loading";
 import { withAuth, WithAuthProps } from "shared/auth/AuthorizationHoc";
@@ -143,20 +143,17 @@ class SettingsPage extends Component<PropsType, StateType> {
           <Helper>
             Configure additional settings for this template. (Optional)
           </Helper>
-          <FormWrapper
+          <PorterFormWrapper
             formData={form}
-            saveValuesStatus={saveValuesStatus}
             valuesToOverride={valuesToOverride}
-            clearValuesToOverride={clearValuesToOverride}
+            isReadOnly={!this.props.isAuthorized("namespace", "", ["get", "create"])}
+            onSubmit={onSubmit}
+            saveValuesStatus={saveValuesStatus}
             externalValues={{
               namespace: selectedNamespace,
               clusterId: this.context.currentCluster.id,
               isLaunch: true,
             }}
-            isReadOnly={
-              !this.props.isAuthorized("namespace", "", ["get", "create"])
-            }
-            onSubmit={onSubmit}
           />
         </>
       );

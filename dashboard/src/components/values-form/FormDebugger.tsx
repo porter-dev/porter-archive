@@ -1,7 +1,7 @@
 import React, { Component } from "react";
 import styled from "styled-components";
 import AceEditor from "react-ace";
-import PorterForm from "../form-refactor/PorterForm";
+import PorterFormWrapper from "../form-refactor/PorterFormWrapper";
 import CheckboxRow from "components/values-form/CheckboxRow";
 import InputRow from "components/values-form/InputRow";
 import yaml from "js-yaml";
@@ -11,8 +11,6 @@ import "ace-builds/src-noconflict/mode-text";
 
 import Heading from "./Heading";
 import Helper from "./Helper";
-import { PorterFormData } from "../form-refactor/types";
-import { PorterFormContextProvider } from "../form-refactor/PorterFormContextProvider";
 
 type PropsType = {
   goBack: () => void;
@@ -158,43 +156,20 @@ export default class FormDebugger extends Component<PropsType, StateType> {
 
         <Heading>🎨 Rendered Form</Heading>
         <Br />
-        {formData && (formData as any).name && (
-          <PorterFormContextProvider
-            rawFormData={formData as PorterFormData}
-            overrideVariables={{
-              input_a: this.state.valuesToOverride?.input_a?.value,
-            }}
-            isReadOnly={this.state.isReadOnly}
-            onSubmit={(vars) => {
-              alert("check console output");
-              console.log(vars);
-            }}
-          >
-            <PorterForm
-              rightTabOptions={this.state.showBonusTabs ? tabOptions : []}
-              renderTabContents={this.renderTabContents}
-              saveButtonText={"Test Submit"}
-            />
-          </PorterFormContextProvider>
-        )}
-        {/*<FormWrapper*/}
-        {/*  valuesToOverride={this.state.valuesToOverride}*/}
-        {/*  clearValuesToOverride={() =>*/}
-        {/*    this.setState({ valuesToOverride: null })*/}
-        {/*  }*/}
-        {/*  showStateDebugger={this.state.showStateDebugger}*/}
-        {/*  formData={formData}*/}
-        {/*  isReadOnly={this.state.isReadOnly}*/}
-        {/*  tabOptions={this.state.showBonusTabs ? tabOptions : []}*/}
-        {/*  renderTabContents={*/}
-        {/*    this.state.showBonusTabs ? this.renderTabContents : null*/}
-        {/*  }*/}
-        {/*  onSubmit={(values: any) => {*/}
-        {/*    alert("Check console output.");*/}
-        {/*    console.log("Raw submission values:");*/}
-        {/*    console.log(values);*/}
-        {/*  }}*/}
-        {/*/>*/}
+        <PorterFormWrapper
+          formData={formData}
+          valuesToOverride={{
+            input_a: this.state.valuesToOverride?.input_a?.value,
+          }}
+          isReadOnly={this.state.isReadOnly}
+          onSubmit={(vars) => {
+            alert("check console output");
+            console.log(vars);
+          }}
+          rightTabOptions={this.state.showBonusTabs ? tabOptions : []}
+          renderTabContents={this.renderTabContents}
+          saveButtonText={"Test Submit"}
+        />
       </StyledFormDebugger>
     );
   }

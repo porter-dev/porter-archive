@@ -12,10 +12,9 @@ import api from "shared/api";
 import SaveButton from "components/SaveButton";
 import ConfirmOverlay from "components/ConfirmOverlay";
 import Loading from "components/Loading";
-import TabRegion from "components/TabRegion";
 import JobList from "./jobs/JobList";
 import SettingsSection from "./SettingsSection";
-import FormWrapper from "components/values-form/FormWrapper";
+import PorterFormWrapper from "components/form-refactor/PorterFormWrapper";
 import { PlaceHolder } from "brace";
 import { withAuth, WithAuthProps } from "shared/auth/AuthorizationHoc";
 
@@ -33,7 +32,8 @@ type StateType = {
   newestImage: string;
   loading: boolean;
   jobs: any[];
-  tabOptions: any[];
+  leftTabOptions: any[];
+  rightTabOptions: any[];
   tabContents: any;
   currentTab: string | null;
   websockets: Record<string, any>;
@@ -51,7 +51,8 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
     newestImage: null as string,
     loading: true,
     jobs: [] as any[],
-    tabOptions: [] as any[],
+    leftTabOptions: [] as any[],
+    rightTabOptions: [] as any[],
     tabContents: [] as any,
     currentTab: null as string | null,
     websockets: {} as Record<string, any>,
@@ -485,28 +486,16 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
         formData,
       });
     }
-    let tabOptions = [] as any[];
-
-    // Append universal tabs
-    tabOptions.push({ label: "Jobs", value: "jobs" });
-
-    if (formData) {
-      formData.tabs.map((tab: any, i: number) => {
-        tabOptions.push({
-          value: tab.name,
-          label: tab.label,
-          sections: tab.sections,
-          context: tab.context,
-        });
-      });
-    }
-
+    let rightTabOptions = [] as any[];
     if (this.props.isAuthorized("job", "", ["get", "delete"])) {
-      tabOptions.push({ label: "Settings", value: "settings" });
+      rightTabOptions.push({ label: "Settings", value: "settings" });
     }
 
     // Filter tabs if previewing an old revision
-    this.setState({ tabOptions });
+    this.setState({ 
+      leftTabOptions: [{ label: "Jobs", value: "jobs" }],
+      rightTabOptions,
+    });
   }
 
   renderIcon = () => {
@@ -620,23 +609,20 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
           </HeaderWrapper>
 
           <BodyWrapper>
-            <FormWrapper
+            <PorterFormWrapper
+              formData={this.state.formData}
+              valuesToOverride={this.state.valuesToOverride}
+              isInModal={true}
+              renderTabContents={this.renderTabContents}
               isReadOnly={
                 this.state.imageIsPlaceholder ||
                 !this.props.isAuthorized("job", "", ["get", "update"])
               }
-              valuesToOverride={this.state.valuesToOverride}
-              clearValuesToOverride={() =>
-                this.setState({ valuesToOverride: {} })
-              }
-              formData={this.state.formData}
-              tabOptions={this.state.tabOptions}
-              isInModal={true}
-              renderTabContents={this.renderTabContents}
-              tabOptionsOnly={false}
               onSubmit={(formValues) =>
                 this.handleSaveValues(formValues, false)
               }
+              leftTabOptions={this.state.leftTabOptions}
+              rightTabOptions={this.state.rightTabOptions}
               saveValuesStatus={this.state.saveValuesStatus}
               saveButtonText="Save Config"
             />

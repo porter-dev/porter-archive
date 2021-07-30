@@ -1,21 +1,23 @@
 package upgrade
 
 import (
+	"fmt"
+
 	semver "github.com/Masterminds/semver/v3"
 	"sigs.k8s.io/yaml"
 )
 
 // UpgradeFile is a collection of upgrade notes between specific versions
 type UpgradeFile struct {
-	UpgradeNotes []*UpgradeNote `yaml:"upgrade_notes"`
+	UpgradeNotes []*UpgradeNote `yaml:"upgrade_notes" json:"upgrade_notes"`
 }
 
 // UpgradeNote is a single note for upgrading between a previous version and
 // a target version.
 type UpgradeNote struct {
-	PreviousVersion string `yaml:"previous"`
-	TargetVersion   string `yaml:"target"`
-	Note            string `yaml:"note"`
+	PreviousVersion string `yaml:"previous" json:"previous"`
+	TargetVersion   string `yaml:"target" json:"target"`
+	Note            string `yaml:"note" json:"note"`
 }
 
 // ParseUpgradeFileFromBytes parses the raw bytes of an upgrade file and returns an
@@ -24,7 +26,7 @@ func ParseUpgradeFileFromBytes(upgradeNotes []byte) (*UpgradeFile, error) {
 	// parse bytes into object
 	res := &UpgradeFile{}
 
-	err := yaml.Unmarshal(bytes, form)
+	err := yaml.Unmarshal(upgradeNotes, res)
 
 	if err != nil {
 		return nil, err
@@ -53,23 +55,27 @@ func (u *UpgradeFile) GetUpgradeFileBetweenVersions(prev, target string) (*Upgra
 	resNotes := make([]*UpgradeNote, 0)
 
 	for _, note := range u.UpgradeNotes {
+		fmt.Println("ONE NOTE IS", note)
+
 		notePrevVersion, err := semver.NewVersion(note.PreviousVersion)
 
 		if err != nil {
 			return nil, err
 		}
 
-		noteTargetVersion, err := semver.NewVersion(note.PreviousVersion)
+		noteTargetVersion, err := semver.NewVersion(note.TargetVersion)
 
 		if err != nil {
 			return nil, err
 		}
 
+		fmt.Println(prev, target, prevVersion.Compare(notePrevVersion), targetVersion.Compare(noteTargetVersion))
+
 		// check that the previous version is not smaller than the note previous version
 		if comp := prevVersion.Compare(notePrevVersion); comp != -1 {
-			// check that the target version is not larger than the note target version
-			if comp := targetVersion.Compare(noteTargetVersion); comp != 1 {
-				resNotes := append(resNotes, note)
+			// check that the target version is smaller than the note target version
+			if comp := targetVersion.Compare(noteTargetVersion); comp != -1 {
+				resNotes = append(resNotes, note)
 			}
 		}
 	}

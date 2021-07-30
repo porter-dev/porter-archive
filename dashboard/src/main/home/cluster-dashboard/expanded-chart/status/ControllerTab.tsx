@@ -1,10 +1,11 @@
-import React, { Component } from "react";
+import React, { Component, useContext, useEffect, useState } from "react";
 import styled from "styled-components";
 import api from "shared/api";
 import { Context } from "shared/Context";
 import { ChartType } from "shared/types";
 import ResourceTab from "components/ResourceTab";
 import ConfirmOverlay from "components/ConfirmOverlay";
+import { useWebsockets } from "shared/hooks/useWebsockets";
 
 type PropsType = {
   controller: any;
@@ -29,7 +30,7 @@ type StateType = {
 };
 
 // Controller tab in log section that displays list of pods on click.
-export default class ControllerTab extends Component<PropsType, StateType> {
+class ControllerTab extends Component<PropsType, StateType> {
   state = {
     pods: [] as any[],
     raw: [] as any[],
@@ -370,6 +371,87 @@ export default class ControllerTab extends Component<PropsType, StateType> {
 }
 
 ControllerTab.contextType = Context;
+
+export default ControllerTab;
+
+const ControllerTabFC: React.FunctionComponent<PropsType> = ({
+  controller,
+  selectPod,
+  isFirst,
+}) => {
+  const [pods, setPods] = useState<any[]>([]);
+  const [raw, setRaw] = useState<any[]>([]);
+  const [showTooltip, setShowTooltip] = useState<boolean[]>([]);
+  const [podPendingDelete, setPodPendingDelete] = useState<any>(null);
+  const [selectors, setSelectors] = useState<string[]>([]);
+  const [available, setAvailable] = useState<number>(null);
+  const [total, setTotal] = useState<number>(null);
+
+  const { currentCluster, currentProject, setCurrentError } = useContext(
+    Context
+  );
+  const {} = useWebsockets();
+
+  useEffect(() => {
+    let isSubscribed = true;
+    api
+      .getMatchingPods(
+        "<token>",
+        {
+          cluster_id: currentCluster.id,
+          namespace: controller?.metadata?.namespace,
+          selectors: selectors,
+        },
+        {
+          id: currentProject.id,
+        }
+      )
+      .then((res) => {
+        let pods = res?.data?.map((pod: any) => {
+          return {
+            namespace: pod?.metadata?.namespace,
+            name: pod?.metadata?.name,
+            phase: pod?.status?.phase,
+          };
+        });
+        let showTooltip = new Array(pods.length);
+        for (let j = 0; j < pods.length; j++) {
+          showTooltip[j] = false;
+        }
+
+        this.setState({ pods, raw: res.data, showTooltip });
+
+        if (isFirst) {
+          let pod = res.data[0];
+          let status = this.getPodStatus(pod.status);
+          status === "failed" &&
+            pod.status?.message &&
+            this.props.setPodError(pod.status?.message);
+          if (this.state.canUpdatePod) {
+            // this prevents multiple requests from changing the first pod
+            selectPod(res.data[0]);
+            this.setState({
+              canUpdatePod: false,
+            });
+          }
+        }
+      })
+      .catch((err) => {
+        console.log(err);
+        setCurrentError(JSON.stringify(err));
+        return;
+      });
+    return () => (isSubscribed = false);
+  }, [
+    currentCluster,
+    currentProject,
+    setCurrentError,
+    controller,
+    selectPod,
+    isFirst,
+  ]);
+  return <div> </div>;
+};
 
 const CloseIcon = styled.i`
   font-size: 14px;

@@ -460,7 +460,6 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
           </Highlight>
         </Message>
       )}
-
       {data.length > 0 && isLoading === 0 && (
         <>
           {currentChart?.config?.autoscaling?.enabled &&

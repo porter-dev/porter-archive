@@ -173,6 +173,7 @@ func (app *App) createGitActionFromForm(
 		ImageRepoURL:           gitAction.ImageRepoURI,
 		PorterToken:            encoded,
 		BuildEnv:               form.BuildEnv,
+		ClusterID:              release.ClusterID,
 	}
 
 	_, err = gaRunner.Setup()

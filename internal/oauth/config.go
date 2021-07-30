@@ -4,7 +4,6 @@ import (
 	"context"
 	"crypto/rand"
 	"encoding/base64"
-	"fmt"
 	"github.com/porter-dev/porter/internal/models/integrations"
 	"github.com/porter-dev/porter/internal/repository"
 	"time"
@@ -148,7 +147,6 @@ func GetAccessToken(
 	}
 
 	if token.AccessToken != string(prevToken.AccessToken) {
-		fmt.Println("access happening...")
 		err := updateToken([]byte(token.AccessToken), []byte(token.RefreshToken), token.Expiry)
 
 		if err != nil {

@@ -205,6 +205,7 @@ class ExpandedEnvGroup extends Component<PropsType, StateType> {
     let name = envGroup.metadata.name;
     const isEnvGroupNameValid =
       isAlphanumeric(this.state.envGroupName) && this.state.envGroupName !== "";
+    const isEnvGroupNameDifferent = this.state.envGroupName !== name;
 
     switch (currentTab) {
       case "environment":
@@ -263,7 +264,7 @@ class ExpandedEnvGroup extends Component<PropsType, StateType> {
                 />
                 <Button
                   color="#616FEEcc"
-                  disabled={!isEnvGroupNameValid}
+                  disabled={!(isEnvGroupNameDifferent && isEnvGroupNameValid)}
                   onClick={this.handleRename}
                 >
                   Rename {name}

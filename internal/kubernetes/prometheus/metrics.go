@@ -117,7 +117,7 @@ func QueryPrometheus(
 
 		query = createHPAAbsoluteMemoryThresholdQuery(metricName, podSelectionRegex, opts.Name, opts.Namespace, service.ObjectMeta.Labels["app"])
 	} else if opts.Metric == "hpa_replicas" {
-		metricName := getKubeHPAMetricName(clientset, service, opts, "current_replicas")
+		metricName := getKubeHPAMetricName(clientset, service, opts, "status_current_replicas")
 
 		query = createHPACurrentReplicasQuery(metricName, opts.Name, opts.Namespace, service.ObjectMeta.Labels["app"])
 	}

@@ -2,15 +2,16 @@ package api
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strconv"
-	"fmt"
+
 	"github.com/go-chi/chi"
+	"github.com/porter-dev/porter/internal/analytics"
 	"github.com/porter-dev/porter/internal/forms"
 	"github.com/porter-dev/porter/internal/kubernetes"
 	"github.com/porter-dev/porter/internal/kubernetes/domain"
 	"github.com/porter-dev/porter/internal/models"
-	"github.com/porter-dev/porter/internal/analytics"
 )
 
 // HandleCreateProjectCluster creates a new cluster
@@ -56,7 +57,15 @@ func (app *App) HandleCreateProjectCluster(w http.ResponseWriter, r *http.Reques
 	}
 
 	app.Logger.Info().Msgf("New cluster created: %d", cluster.ID)
-	app.analyticsClient.Track(analytics.CreateSegmentNewClusterEvent(fmt.Sprintf("%v", userID), fmt.Sprintf("%v", projID), cluster.Name, "", "connected"))
+	app.analyticsClient.Track(analytics.CreateSegmentNewClusterEvent(
+		&analytics.NewClusterEventOpts{
+			UserId:      fmt.Sprintf("%d", userID),
+			ProjId:      fmt.Sprintf("%d", projID),
+			ClusterName: cluster.Name,
+			ClusterType: "EKS",
+			EventType:   "connected",
+		},
+	))
 
 	w.WriteHeader(http.StatusCreated)
 
@@ -438,7 +447,15 @@ func (app *App) HandleResolveClusterCandidate(w http.ResponseWriter, r *http.Req
 	}
 
 	app.Logger.Info().Msgf("New cluster created: %d", cluster.ID)
-	app.analyticsClient.Track(analytics.CreateSegmentNewClusterEvent(fmt.Sprintf("%v", userID), fmt.Sprintf("%v", projID), cluster.Name, "", "connected"))
+	app.analyticsClient.Track(analytics.CreateSegmentNewClusterEvent(
+		&analytics.NewClusterEventOpts{
+			UserId:      fmt.Sprintf("%d", userID),
+			ProjId:      fmt.Sprintf("%d", projID),
+			ClusterName: cluster.Name,
+			ClusterType: "",
+			EventType:   "connected",
+		},
+	))
 
 	clusterExt := cluster.Externalize()
 

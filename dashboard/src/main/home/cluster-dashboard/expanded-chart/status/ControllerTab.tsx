@@ -1,4 +1,10 @@
-import React, { Component, useContext, useEffect, useState } from "react";
+import React, {
+  Component,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import styled from "styled-components";
 import api from "shared/api";
 import { Context } from "shared/Context";
@@ -6,6 +12,7 @@ import { ChartType } from "shared/types";
 import ResourceTab from "components/ResourceTab";
 import ConfirmOverlay from "components/ConfirmOverlay";
 import { useWebsockets } from "shared/hooks/useWebsockets";
+import PodRow from "./PodRow";
 
 type PropsType = {
   controller: any;
@@ -286,9 +293,187 @@ class ControllerTab extends Component<PropsType, StateType> {
     );
   };
 
-  render() {
-    let { controller, selectedPod, isLast, selectPod, isFirst } = this.props;
-    let { available, total } = this.state;
+  // render() {
+  //   let { controller, selectedPod, isLast, selectPod, isFirst } = this.props;
+  //   let { available, total } = this.state;
+  //   let status = available == total ? "running" : "waiting";
+
+  //   controller?.status?.conditions?.forEach((condition: any) => {
+  //     if (
+  //       condition.type == "Progressing" &&
+  //       condition.status == "False" &&
+  //       condition.reason == "ProgressDeadlineExceeded"
+  //     ) {
+  //       status = "failed";
+  //     }
+  //   });
+
+  //   if (controller.kind.toLowerCase() === "job" && this.state.raw.length == 0) {
+  //     status = "completed";
+  //   }
+
+  //   return (
+  //     <ResourceTab
+  //       label={controller.kind}
+  //       // handle CronJob case
+  //       name={controller.metadata?.name || controller.name}
+  //       status={{ label: status, available, total }}
+  //       isLast={isLast}
+  //       expanded={isFirst}
+  //     >
+  //       {this.state.raw.map((pod, i) => {
+  //         let status = this.getPodStatus(pod.status);
+  //         return (
+  //           <Tab
+  //             key={pod.metadata?.name}
+  //             selected={selectedPod?.metadata?.name === pod?.metadata?.name}
+  //             onClick={() => {
+  //               this.props.setPodError("");
+  //               status === "failed" &&
+  //                 pod.status?.message &&
+  //                 this.props.setPodError(pod.status?.message);
+  //               selectPod(pod);
+  //               this.setState({
+  //                 canUpdatePod: false,
+  //               });
+  //             }}
+  //           >
+  //             <Gutter>
+  //               <Rail />
+  //               <Circle />
+  //               <Rail lastTab={i === this.state.raw.length - 1} />
+  //             </Gutter>
+  //             <Name
+  //               onMouseOver={() => {
+  //                 let showTooltip = this.state.showTooltip;
+  //                 showTooltip[i] = true;
+  //                 this.setState({ showTooltip });
+  //               }}
+  //               onMouseOut={() => {
+  //                 let showTooltip = this.state.showTooltip;
+  //                 showTooltip[i] = false;
+  //                 this.setState({ showTooltip });
+  //               }}
+  //             >
+  //               {pod.metadata?.name}
+  //             </Name>
+  //             {this.renderTooltip(pod.metadata?.name, i)}
+  //             <Status>
+  //               <StatusColor status={status} />
+  //               {status}
+  //               {status === "failed" && this.renderDeleteButton(pod)}
+  //             </Status>
+  //           </Tab>
+  //         );
+  //       })}
+  //       <ConfirmOverlay
+  //         message="Are you sure you want to delete this pod?"
+  //         show={this.state.podPendingDelete}
+  //         onYes={() => this.handleDeletePod(this.state.podPendingDelete)}
+  //         onNo={() => this.setState({ podPendingDelete: null })}
+  //       />
+  //     </ResourceTab>
+  //   );
+  // }
+}
+
+ControllerTab.contextType = Context;
+
+// export default ControllerTab;
+
+export type ControllerTabPodType = {
+  namespace: string;
+  name: string;
+  phase: string;
+  status: any;
+  replicaSetName: string;
+};
+
+const ControllerTabFC: React.FunctionComponent<PropsType> = ({
+  controller,
+  selectPod,
+  isFirst,
+  isLast,
+  selectors,
+  setPodError,
+  selectedPod,
+}) => {
+  const [pods, setPods] = useState<ControllerTabPodType[]>([]);
+  const [podPendingDelete, setPodPendingDelete] = useState<any>(null);
+  const [available, setAvailable] = useState<number>(null);
+  const [total, setTotal] = useState<number>(null);
+  const [userSelectedPod, setUserSelectedPod] = useState<boolean>(false);
+
+  const { currentCluster, currentProject, setCurrentError } = useContext(
+    Context
+  );
+  const {} = useWebsockets();
+
+  const currentSelectors = useMemo(() => {
+    if (controller.kind.toLowerCase() == "job" && selectors) {
+      return [...selectors];
+    }
+    let newSelectors = [] as string[];
+    let ml =
+      controller?.spec?.selector?.matchLabels || controller?.spec?.selector;
+    let i = 1;
+    let selector = "";
+    for (var key in ml) {
+      selector += key + "=" + ml[key];
+      if (i != Object.keys(ml).length) {
+        selector += ",";
+      }
+      i += 1;
+    }
+    newSelectors.push(selector);
+    return [...newSelectors];
+  }, [controller, selectors]);
+
+  const updatePods = async () => {
+    try {
+      const res = await api.getMatchingPods(
+        "<token>",
+        {
+          cluster_id: currentCluster.id,
+          namespace: controller?.metadata?.namespace,
+          selectors: currentSelectors,
+        },
+        {
+          id: currentProject.id,
+        }
+      );
+      const data = res?.data as any[];
+      let newPods = data
+        // Parse only data that we need
+        .map<ControllerTabPodType>((pod: any) => {
+          const replicaSetName =
+            Array.isArray(pod?.metadata?.ownerReferences) &&
+            pod?.metadata?.ownerReferences[0]?.name;
+          return {
+            namespace: pod?.metadata?.namespace,
+            name: pod?.metadata?.name,
+            phase: pod?.status?.phase,
+            status: pod?.status,
+            replicaSetName,
+          };
+        });
+
+      setPods(newPods);
+      if (!userSelectedPod) {
+        let status = getPodStatus(newPods[0].status);
+        status === "failed" &&
+          newPods[0].status?.message &&
+          setPodError(newPods[0].status?.message);
+        selectPod(newPods[0]);
+      }
+    } catch (error) {}
+  };
+
+  useEffect(() => {
+    updatePods();
+  }, [currentSelectors, controller, currentCluster, currentProject]);
+
+  const currentControllerStatus = useMemo(() => {
     let status = available == total ? "running" : "waiting";
 
     controller?.status?.conditions?.forEach((condition: any) => {
@@ -301,157 +486,128 @@ class ControllerTab extends Component<PropsType, StateType> {
       }
     });
 
-    if (controller.kind.toLowerCase() === "job" && this.state.raw.length == 0) {
+    if (controller.kind.toLowerCase() === "job" && pods.length == 0) {
       status = "completed";
     }
+    return status;
+  }, [controller, available, total, pods]);
 
-    return (
-      <ResourceTab
-        label={controller.kind}
-        // handle CronJob case
-        name={controller.metadata?.name || controller.name}
-        status={{ label: status, available, total }}
-        isLast={isLast}
-        expanded={isFirst}
-      >
-        {this.state.raw.map((pod, i) => {
-          let status = this.getPodStatus(pod.status);
-          return (
-            <Tab
-              key={pod.metadata?.name}
-              selected={selectedPod?.metadata?.name === pod?.metadata?.name}
-              onClick={() => {
-                this.props.setPodError("");
-                status === "failed" &&
-                  pod.status?.message &&
-                  this.props.setPodError(pod.status?.message);
-                selectPod(pod);
-                this.setState({
-                  canUpdatePod: false,
-                });
-              }}
-            >
-              <Gutter>
-                <Rail />
-                <Circle />
-                <Rail lastTab={i === this.state.raw.length - 1} />
-              </Gutter>
-              <Name
-                onMouseOver={() => {
-                  let showTooltip = this.state.showTooltip;
-                  showTooltip[i] = true;
-                  this.setState({ showTooltip });
-                }}
-                onMouseOut={() => {
-                  let showTooltip = this.state.showTooltip;
-                  showTooltip[i] = false;
-                  this.setState({ showTooltip });
-                }}
-              >
-                {pod.metadata?.name}
-              </Name>
-              {this.renderTooltip(pod.metadata?.name, i)}
-              <Status>
-                <StatusColor status={status} />
-                {status}
-                {status === "failed" && this.renderDeleteButton(pod)}
-              </Status>
-            </Tab>
-          );
-        })}
-        <ConfirmOverlay
-          message="Are you sure you want to delete this pod?"
-          show={this.state.podPendingDelete}
-          onYes={() => this.handleDeletePod(this.state.podPendingDelete)}
-          onNo={() => this.setState({ podPendingDelete: null })}
-        />
-      </ResourceTab>
-    );
-  }
-}
+  const getPodStatus = (status: any) => {
+    if (
+      status?.phase === "Pending" &&
+      status?.containerStatuses !== undefined
+    ) {
+      return status.containerStatuses[0].state.waiting.reason;
+    } else if (status?.phase === "Pending") {
+      return "Pending";
+    }
 
-ControllerTab.contextType = Context;
+    if (status?.phase === "Failed") {
+      return "failed";
+    }
 
-export default ControllerTab;
+    if (status?.phase === "Running") {
+      let collatedStatus = "running";
 
-const ControllerTabFC: React.FunctionComponent<PropsType> = ({
-  controller,
-  selectPod,
-  isFirst,
-}) => {
-  const [pods, setPods] = useState<any[]>([]);
-  const [raw, setRaw] = useState<any[]>([]);
-  const [showTooltip, setShowTooltip] = useState<boolean[]>([]);
-  const [podPendingDelete, setPodPendingDelete] = useState<any>(null);
-  const [selectors, setSelectors] = useState<string[]>([]);
-  const [available, setAvailable] = useState<number>(null);
-  const [total, setTotal] = useState<number>(null);
+      status?.containerStatuses?.forEach((s: any) => {
+        if (s.state?.waiting) {
+          collatedStatus =
+            s.state?.waiting.reason === "CrashLoopBackOff"
+              ? "failed"
+              : "waiting";
+        } else if (s.state?.terminated) {
+          collatedStatus = "failed";
+        }
+      });
+      return collatedStatus;
+    }
+  };
 
-  const { currentCluster, currentProject, setCurrentError } = useContext(
-    Context
-  );
-  const {} = useWebsockets();
-
-  useEffect(() => {
-    let isSubscribed = true;
+  const handleDeletePod = (pod: any) => {
     api
-      .getMatchingPods(
+      .deletePod(
         "<token>",
         {
           cluster_id: currentCluster.id,
-          namespace: controller?.metadata?.namespace,
-          selectors: selectors,
         },
         {
+          name: pod.metadata?.name,
+          namespace: pod.metadata?.namespace,
           id: currentProject.id,
         }
       )
       .then((res) => {
-        let pods = res?.data?.map((pod: any) => {
-          return {
-            namespace: pod?.metadata?.namespace,
-            name: pod?.metadata?.name,
-            phase: pod?.status?.phase,
-          };
-        });
-        let showTooltip = new Array(pods.length);
-        for (let j = 0; j < pods.length; j++) {
-          showTooltip[j] = false;
-        }
-
-        this.setState({ pods, raw: res.data, showTooltip });
-
-        if (isFirst) {
-          let pod = res.data[0];
-          let status = this.getPodStatus(pod.status);
-          status === "failed" &&
-            pod.status?.message &&
-            this.props.setPodError(pod.status?.message);
-          if (this.state.canUpdatePod) {
-            // this prevents multiple requests from changing the first pod
-            selectPod(res.data[0]);
-            this.setState({
-              canUpdatePod: false,
-            });
-          }
-        }
+        updatePods();
+        setPodPendingDelete(null);
       })
       .catch((err) => {
-        console.log(err);
         setCurrentError(JSON.stringify(err));
-        return;
+        setPodPendingDelete(null);
       });
-    return () => (isSubscribed = false);
-  }, [
-    currentCluster,
-    currentProject,
-    setCurrentError,
-    controller,
-    selectPod,
-    isFirst,
-  ]);
-  return <div> </div>;
+  };
+
+  const replicaSetArray = useMemo(() => {
+    const podsDividedByReplicaSet = pods.reduce<
+      Array<Array<ControllerTabPodType>>
+    >(function (prev, currentPod, i) {
+      if (
+        !i ||
+        prev[prev.length - 1][0].replicaSetName !== currentPod.replicaSetName
+      ) {
+        return prev.concat([[currentPod]]);
+      }
+      prev[prev.length - 1].push(currentPod);
+      return prev;
+    }, []);
+
+    if (podsDividedByReplicaSet.length === 1) {
+      return [];
+    } else {
+      return podsDividedByReplicaSet;
+    }
+  }, [pods]);
+
+  return (
+    <ResourceTab
+      label={controller.kind}
+      // handle CronJob case
+      name={controller.metadata?.name || controller.name}
+      status={{ label: currentControllerStatus, available, total }}
+      isLast={isLast}
+      expanded={isFirst}
+    >
+      {pods.map((pod, i) => {
+        let status = getPodStatus(pod.status);
+        return (
+          <PodRow
+            key={i}
+            pod={pod}
+            isSelected={selectedPod?.name === pod?.name}
+            podStatus={status}
+            isLastItem={i === pods.length - 1}
+            onTabClick={() => {
+              setPodError("");
+              status === "failed" &&
+                pod.status?.message &&
+                setPodError(pod.status?.message);
+              selectPod(pod);
+              setUserSelectedPod(true);
+            }}
+            onDeleteClick={() => setPodPendingDelete(pod)}
+          />
+        );
+      })}
+      <ConfirmOverlay
+        message="Are you sure you want to delete this pod?"
+        show={podPendingDelete}
+        onYes={() => handleDeletePod(podPendingDelete)}
+        onNo={() => setPodPendingDelete(null)}
+      />
+    </ResourceTab>
+  );
 };
+
+export default ControllerTabFC;
 
 const CloseIcon = styled.i`
   font-size: 14px;
@@ -469,80 +625,6 @@ const CloseIcon = styled.i`
   :hover {
     background: #ffffff44;
   }
-`;
-
-const Rail = styled.div`
-  width: 2px;
-  background: ${(props: { lastTab?: boolean }) =>
-    props.lastTab ? "" : "#52545D"};
-  height: 50%;
-`;
-
-const Circle = styled.div`
-  min-width: 10px;
-  min-height: 2px;
-  margin-bottom: -2px;
-  margin-left: 8px;
-  background: #52545d;
-`;
-
-const Gutter = styled.div`
-  position: absolute;
-  top: 0px;
-  left: 10px;
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  overflow: visible;
-`;
-
-const Status = styled.div`
-  display: flex;
-  font-size: 12px;
-  text-transform: capitalize;
-  margin-left: 5px;
-  justify-content: flex-end;
-  align-items: center;
-  font-family: "Work Sans", sans-serif;
-  color: #aaaabb;
-  animation: fadeIn 0.5s;
-  @keyframes fadeIn {
-    from {
-      opacity: 0;
-    }
-    to {
-      opacity: 1;
-    }
-  }
-`;
-
-const StatusColor = styled.div`
-  margin-right: 7px;
-  width: 7px;
-  min-width: 7px;
-  height: 7px;
-  background: ${(props: { status: string }) =>
-    props.status === "running"
-      ? "#4797ff"
-      : props.status === "failed"
-      ? "#ed5f85"
-      : props.status === "completed"
-      ? "#00d12a"
-      : "#f5cb42"};
-  border-radius: 20px;
-`;
-
-const Name = styled.div`
-  overflow: hidden;
-  text-overflow: ellipsis;
-  line-height: 16px;
-  word-wrap: break-word;
-  max-height: 32px;
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
 `;
 
 const Tooltip = styled.div`
@@ -572,27 +654,5 @@ const Tooltip = styled.div`
     to {
       opacity: 1;
     }
-  }
-`;
-
-const Tab = styled.div`
-  width: 100%;
-  height: 50px;
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  color: ${(props: { selected: boolean }) =>
-    props.selected ? "white" : "#ffffff66"};
-  background: ${(props: { selected: boolean }) =>
-    props.selected ? "#ffffff18" : ""};
-  font-size: 13px;
-  padding: 20px 19px 20px 42px;
-  text-shadow: 0px 0px 8px none;
-  overflow: visible;
-  cursor: pointer;
-  :hover {
-    color: white;
-    background: #ffffff18;
   }
 `;

@@ -4,6 +4,8 @@ import (
 	"context"
 	"encoding/base64"
 	"fmt"
+	"net/http"
+
 	"github.com/bradleyfalzon/ghinstallation"
 	"github.com/google/go-github/v33/github"
 	"github.com/porter-dev/porter/internal/models"
@@ -11,7 +13,6 @@ import (
 	"github.com/porter-dev/porter/internal/repository"
 	"golang.org/x/crypto/nacl/box"
 	"golang.org/x/oauth2"
-	"net/http"
 
 	"strings"
 
@@ -34,6 +35,7 @@ type GithubActions struct {
 	PorterToken  string
 	BuildEnv     map[string]string
 	ProjectID    uint
+	ClusterID    uint
 	ReleaseName  string
 
 	GitBranch      string
@@ -71,7 +73,7 @@ func (g *GithubActions) Setup() (string, error) {
 		return "", err
 	}
 
-	// create a new secret with a porter token
+	// create new secrets porter token, project id, and cluster id
 	err = g.createGithubSecret(client, g.getPorterTokenSecretName(), g.PorterToken)
 
 	if err != nil {
@@ -132,10 +134,12 @@ func (g *GithubActions) Cleanup() error {
 }
 
 type GithubActionYAMLStep struct {
-	Name string `yaml:"name,omitempty"`
-	ID   string `yaml:"id,omitempty"`
-	Uses string `yaml:"uses,omitempty"`
-	Run  string `yaml:"run,omitempty"`
+	Name    string            `yaml:"name,omitempty"`
+	ID      string            `yaml:"id,omitempty"`
+	Timeout uint64            `yaml:"timeout-minutes,omitempty"`
+	Uses    string            `yaml:"uses,omitempty"`
+	Run     string            `yaml:"run,omitempty"`
+	Env     map[string]string `yaml:"env,omitempty"`
 }
 
 type GithubActionYAMLOnPushBranches struct {
@@ -163,16 +167,8 @@ func (g *GithubActions) GetGithubActionYAML() ([]byte, error) {
 	gaSteps := []GithubActionYAMLStep{
 		getCheckoutCodeStep(),
 		getDownloadPorterStep(),
-		getConfigurePorterStep(g.ServerURL, g.getPorterTokenSecretName()),
+		getConfigurePorterStep(g.ServerURL, g.getPorterTokenSecretName(), g.ProjectID, g.ClusterID, g.ReleaseName),
 	}
-
-	if g.DockerFilePath == "" {
-		gaSteps = append(gaSteps, getBuildPackPushStep(g.getBuildEnvSecretName(), g.FolderPath, g.ImageRepoURL))
-	} else {
-		gaSteps = append(gaSteps, getDockerBuildPushStep(g.getBuildEnvSecretName(), g.DockerFilePath, g.ImageRepoURL))
-	}
-
-	gaSteps = append(gaSteps, deployPorterWebhookStep(g.ServerURL, g.getWebhookSecretName()))
 
 	branch := g.GitBranch
 

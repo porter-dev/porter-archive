@@ -65,6 +65,27 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
     Context
   );
 
+  // Add or remove hpa replicas chart option when current chart is updated
+  useEffect(() => {
+    if (currentChart?.config?.autoscaling?.enabled) {
+      setMetricsOptions((prev) => {
+        if (prev.find((option) => option.value === "hpa_replicas")) {
+          return [...prev];
+        }
+        return [...prev, { value: "hpa_replicas", label: "HPA Replicas" }];
+      });
+    } else {
+      setMetricsOptions((prev) => {
+        const hpaReplicasOptionIndex = prev.findIndex(
+          (option) => option.value === "hpa_replicas"
+        );
+        const options = [...prev];
+        options.splice(hpaReplicasOptionIndex, 1);
+        return [...options];
+      });
+    }
+  }, [currentChart]);
+
   useEffect(() => {
     if (currentChart?.chart?.metadata?.name == "ingress-nginx") {
       setIsLoading((prev) => prev + 1);

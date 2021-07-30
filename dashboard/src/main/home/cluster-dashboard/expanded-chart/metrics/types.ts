@@ -30,6 +30,14 @@ export type MetricsNGINXErrorsDataResponse = {
   }[];
 };
 
+export type MetricsHpaReplicasDataResponse = {
+  pod?: string;
+  results: {
+    date: number;
+    replicas: string;
+  }[];
+};
+
 export type GenericMetricResponse = {
   pod?: string;
   results: {
@@ -38,6 +46,7 @@ export type GenericMetricResponse = {
     memory: string;
     bytes: string;
     error_pct: string;
+    replicas: string;
   }[];
 };
 
@@ -52,4 +61,5 @@ export type AvailableMetrics =
   | "network"
   | "nginx:errors"
   | "cpu_hpa_threshold"
-  | "memory_hpa_threshold";
+  | "memory_hpa_threshold"
+  | "hpa_replicas";

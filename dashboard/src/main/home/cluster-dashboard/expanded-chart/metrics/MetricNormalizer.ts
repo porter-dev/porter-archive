@@ -6,6 +6,7 @@ import {
   MetricsNetworkDataResponse,
   MetricsNGINXErrorsDataResponse,
   AvailableMetrics,
+  MetricsHpaReplicasDataResponse,
 } from "./types";
 
 export class MetricNormalizer {
@@ -32,6 +33,9 @@ export class MetricNormalizer {
     }
     if (this.kind.includes("nginx:errors")) {
       return this.parseNGINXErrorsMetrics(this.metric_results);
+    }
+    if (this.kind.includes("hpa_replicas")) {
+      return this.parseHpaReplicaMetrics(this.metric_results);
     }
     return [];
   }
@@ -69,7 +73,18 @@ export class MetricNormalizer {
     return arr.map((d) => {
       return {
         date: d.date,
-        value: parseFloat(d.error_pct), // put units in Ki
+        value: parseFloat(d.error_pct),
+      };
+    });
+  }
+
+  private parseHpaReplicaMetrics(
+    arr: MetricsHpaReplicasDataResponse["results"]
+  ) {
+    return arr.map((d) => {
+      return {
+        date: d.date,
+        value: parseInt(d.replicas),
       };
     });
   }

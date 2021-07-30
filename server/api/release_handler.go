@@ -1057,6 +1057,7 @@ func (app *App) HandleUpgradeRelease(w http.ResponseWriter, r *http.Request) {
 					FolderPath:             gitAction.FolderPath,
 					ImageRepoURL:           gitAction.ImageRepoURI,
 					BuildEnv:               cEnv.Container.Env.Normal,
+					ClusterID:              release.ClusterID,
 				}
 
 				err = gaRunner.CreateEnvSecret()
@@ -1444,6 +1445,7 @@ func (app *App) HandleRollbackRelease(w http.ResponseWriter, r *http.Request) {
 					FolderPath:             gitAction.FolderPath,
 					ImageRepoURL:           gitAction.ImageRepoURI,
 					BuildEnv:               cEnv.Container.Env.Normal,
+					ClusterID:              release.ClusterID,
 				}
 
 				err = gaRunner.CreateEnvSecret()

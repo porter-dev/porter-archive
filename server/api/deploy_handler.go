@@ -388,6 +388,7 @@ func (app *App) HandleUninstallTemplate(w http.ResponseWriter, r *http.Request) 
 					FolderPath:             gitAction.FolderPath,
 					ImageRepoURL:           gitAction.ImageRepoURI,
 					BuildEnv:               cEnv.Container.Env.Normal,
+					ClusterID:              release.ClusterID,
 				}
 
 				err = gaRunner.Cleanup()

@@ -19,9 +19,15 @@ func redirect(
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
 		fmt.Fprint(w, successScreen)
 
-		queryParams, _ := url.ParseQuery(r.URL.RawQuery)
+		queryParams, err := url.ParseQuery(r.URL.RawQuery)
 
-		codechan <- queryParams["code"][0]
+		if err != nil {
+			return
+		}
+
+		if codeParam, exists := queryParams["code"]; exists && len(codeParam) > 0 {
+			codechan <- queryParams["code"][0]
+		}
 	}
 }
 

@@ -108,19 +108,23 @@ func QueryPrometheus(
 		denom := fmt.Sprintf(`sum(rate(nginx_ingress_controller_requests{namespace="%s",ingress=~"%s"}[5m]) > 0)`, opts.Namespace, podSelectionRegex)
 		query = fmt.Sprintf(`%s / %s * 100 OR on() vector(0)`, num, denom)
 	} else if opts.Metric == "cpu_hpa_threshold" {
-		// attempt to get service "app" label
-		query = createHPAAbsoluteCPUThresholdQuery(podSelectionRegex, opts.Name, opts.Namespace, service.ObjectMeta.Labels["app"])
+		// get the name of the kube hpa metric
+		metricName := getKubeHPAMetricName(clientset, service, opts, "spec_target_metric")
+
+		query = createHPAAbsoluteCPUThresholdQuery(metricName, podSelectionRegex, opts.Name, opts.Namespace, service.ObjectMeta.Labels["app"])
 	} else if opts.Metric == "memory_hpa_threshold" {
-		query = createHPAAbsoluteMemoryThresholdQuery(podSelectionRegex, opts.Name, opts.Namespace, service.ObjectMeta.Labels["app"])
+		metricName := getKubeHPAMetricName(clientset, service, opts, "spec_target_metric")
+
+		query = createHPAAbsoluteMemoryThresholdQuery(metricName, podSelectionRegex, opts.Name, opts.Namespace, service.ObjectMeta.Labels["app"])
 	} else if opts.Metric == "hpa_replicas" {
-		query = createHPACurrentReplicasQuery(opts.Name, opts.Namespace, service.ObjectMeta.Labels["app"])
+		metricName := getKubeHPAMetricName(clientset, service, opts, "current_replicas")
+
+		query = createHPACurrentReplicasQuery(metricName, opts.Name, opts.Namespace, service.ObjectMeta.Labels["app"])
 	}
 
 	if opts.ShouldSum {
 		query = fmt.Sprintf("sum(%s)", query)
 	}
-
-	fmt.Println(query)
 
 	queryParams := map[string]string{
 		"query": query,
@@ -237,7 +241,7 @@ func getPodSelectionRegex(kind, name string) (string, error) {
 	return fmt.Sprintf("%s-%s", name, suffix), nil
 }
 
-func createHPAAbsoluteCPUThresholdQuery(podSelectionRegex, hpaName, namespace, appLabel string) string {
+func createHPAAbsoluteCPUThresholdQuery(metricName, podSelectionRegex, hpaName, namespace, appLabel string) string {
 	kubeMetricsPodSelector := getKubeMetricsPodSelector(podSelectionRegex, namespace)
 
 	kubeMetricsHPASelector := fmt.Sprintf(
@@ -260,14 +264,15 @@ func createHPAAbsoluteCPUThresholdQuery(podSelectionRegex, hpaName, namespace, a
 	)
 
 	targetCPUUtilThreshold := fmt.Sprintf(
-		`kube_hpa_spec_target_metric{%s} / 100`,
+		`%s{%s} / 100`,
+		metricName,
 		kubeMetricsHPASelector,
 	)
 
 	return fmt.Sprintf(`%s * on(hpa) %s`, requestCPU, targetCPUUtilThreshold)
 }
 
-func createHPAAbsoluteMemoryThresholdQuery(podSelectionRegex, hpaName, namespace, appLabel string) string {
+func createHPAAbsoluteMemoryThresholdQuery(metricName, podSelectionRegex, hpaName, namespace, appLabel string) string {
 	kubeMetricsPodSelector := getKubeMetricsPodSelector(podSelectionRegex, namespace)
 
 	kubeMetricsHPASelector := fmt.Sprintf(
@@ -290,7 +295,8 @@ func createHPAAbsoluteMemoryThresholdQuery(podSelectionRegex, hpaName, namespace
 	)
 
 	targetMemUtilThreshold := fmt.Sprintf(
-		`kube_hpa_spec_target_metric{%s} / 100`,
+		`%s{%s} / 100`,
+		metricName,
 		kubeMetricsHPASelector,
 	)
 
@@ -305,7 +311,7 @@ func getKubeMetricsPodSelector(podSelectionRegex, namespace string) string {
 	)
 }
 
-func createHPACurrentReplicasQuery(hpaName, namespace, appLabel string) string {
+func createHPACurrentReplicasQuery(metricName, hpaName, namespace, appLabel string) string {
 	kubeMetricsHPASelector := fmt.Sprintf(
 		`hpa="%s",namespace="%s"`,
 		hpaName,
@@ -319,7 +325,54 @@ func createHPACurrentReplicasQuery(hpaName, namespace, appLabel string) string {
 	}
 
 	return fmt.Sprintf(
-		`kube_hpa_status_current_replicas{%s}`,
+		`%s{%s}`,
+		metricName,
 		kubeMetricsHPASelector,
 	)
+}
+
+type promRawValuesQuery struct {
+	Status string   `json:"status"`
+	Data   []string `json:"data"`
+}
+
+// getKubeHPAMetricName performs a "best guess" for the name of the kube HPA metric,
+// which was renamed to kube_horizontal_pod_autoscaler... in later versions of kube-state-metrics.
+// we query Prometheus for a list of metric names to see if any match the new query
+// value, otherwise we return the deprecated name.
+func getKubeHPAMetricName(
+	clientset kubernetes.Interface,
+	service *v1.Service,
+	opts *QueryOpts,
+	suffix string,
+) string {
+	queryParams := map[string]string{
+		"match[]": fmt.Sprintf("kube_horizontal_pod_autoscaler_%s", suffix),
+		"start":   fmt.Sprintf("%d", opts.StartRange),
+		"end":     fmt.Sprintf("%d", opts.EndRange),
+	}
+
+	resp := clientset.CoreV1().Services(service.Namespace).ProxyGet(
+		"http",
+		service.Name,
+		fmt.Sprintf("%d", service.Spec.Ports[0].Port),
+		"/api/v1/label/__name__/values",
+		queryParams,
+	)
+
+	rawQuery, err := resp.DoRaw(context.TODO())
+
+	if err != nil {
+		return fmt.Sprintf("kube_hpa_%s", suffix)
+	}
+
+	rawQueryObj := &promRawValuesQuery{}
+
+	json.Unmarshal(rawQuery, rawQueryObj)
+
+	if rawQueryObj.Status == "success" && len(rawQueryObj.Data) == 1 {
+		return fmt.Sprintf("kube_horizontal_pod_autoscaler_%s", suffix)
+	}
+
+	return fmt.Sprintf("kube_hpa_%s", suffix)
 }

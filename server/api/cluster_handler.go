@@ -4,17 +4,19 @@ import (
 	"encoding/json"
 	"net/http"
 	"strconv"
-
+	"fmt"
 	"github.com/go-chi/chi"
 	"github.com/porter-dev/porter/internal/forms"
 	"github.com/porter-dev/porter/internal/kubernetes"
 	"github.com/porter-dev/porter/internal/kubernetes/domain"
 	"github.com/porter-dev/porter/internal/models"
+	"github.com/porter-dev/porter/internal/analytics"
 )
 
 // HandleCreateProjectCluster creates a new cluster
 func (app *App) HandleCreateProjectCluster(w http.ResponseWriter, r *http.Request) {
 	projID, err := strconv.ParseUint(chi.URLParam(r, "project_id"), 0, 64)
+	userID, err := app.getUserIDFromRequest(r)
 
 	if err != nil || projID == 0 {
 		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
@@ -54,6 +56,7 @@ func (app *App) HandleCreateProjectCluster(w http.ResponseWriter, r *http.Reques
 	}
 
 	app.Logger.Info().Msgf("New cluster created: %d", cluster.ID)
+	app.analyticsClient.Track(analytics.CreateSegmentNewClusterEvent(fmt.Sprintf("%v", userID), fmt.Sprintf("%v", projID), cluster.Name, "", "connected"))
 
 	w.WriteHeader(http.StatusCreated)
 
@@ -435,6 +438,7 @@ func (app *App) HandleResolveClusterCandidate(w http.ResponseWriter, r *http.Req
 	}
 
 	app.Logger.Info().Msgf("New cluster created: %d", cluster.ID)
+	app.analyticsClient.Track(analytics.CreateSegmentNewClusterEvent(fmt.Sprintf("%v", userID), fmt.Sprintf("%v", projID), cluster.Name, "", "connected"))
 
 	clusterExt := cluster.Externalize()
 

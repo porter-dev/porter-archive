@@ -18,8 +18,8 @@ type segmentNewUserTrack struct {
 	userEmail string
 }
 
-// Constructor for track of type "New User"
-// Tracks when a user has registered
+// CreateSegmentNewUserTrack creates a track of type "New User", which
+// tracks when a user has registered
 func CreateSegmentNewUserTrack(user *models.User) *segmentNewUserTrack {
 	userId := fmt.Sprintf("%v", user.ID)
 
@@ -46,7 +46,7 @@ type segmentRedeployViaWebhookTrack struct {
 	repository string
 }
 
-// Constructor for track of type "Triggered Re-deploy via Webhook"
+// CreateSegmentRedeployViaWebhookTrack creates a track of type "Triggered Re-deploy via Webhook", which
 // tracks whenever a repository is redeployed via webhook call
 func CreateSegmentRedeployViaWebhookTrack(userId string, repository string) *segmentRedeployViaWebhookTrack {
 	return &segmentRedeployViaWebhookTrack{
@@ -68,22 +68,31 @@ func (t *segmentRedeployViaWebhookTrack) getProperties() segment.Properties {
 }
 
 type segmentNewClusterEventTrack struct {
-	userId    string
-	projId string
+	userId      string
+	projId      string
 	clusterName string
 	clusterType string // EKS, DOKS, or GKE
-	eventType string // connected, provisioned, or destroyed
+	eventType   string // connected, provisioned, or destroyed
 }
 
-// Constructor for track of type "New Cluster Event"
+// NewClusterEventOpts are the parameters for creating a "New Cluster Event" track
+type NewClusterEventOpts struct {
+	UserId      string
+	ProjId      string
+	ClusterName string
+	ClusterType string // EKS, DOKS, or GKE
+	EventType   string // connected, provisioned, or destroyed
+}
+
+// CreateSegmentNewClusterEvent creates a track of type "New Cluster Event", which
 // tracks whenever a cluster is newly provisioned, connected, or destroyed.
-func CreateSegmentNewClusterEvent(userId string, projId string, clusterName string, clusterType string, eventType string) *segmentNewClusterEventTrack {
+func CreateSegmentNewClusterEvent(opts *NewClusterEventOpts) *segmentNewClusterEventTrack {
 	return &segmentNewClusterEventTrack{
-		userId:     userId,
-		projId: projId,
-		clusterName: clusterName,
-		clusterType: clusterType,
-		eventType: eventType, 
+		userId:      opts.UserId,
+		projId:      opts.ProjId,
+		clusterName: opts.ClusterName,
+		clusterType: opts.ClusterType,
+		eventType:   opts.EventType,
 	}
 }
 

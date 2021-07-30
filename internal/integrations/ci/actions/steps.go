@@ -35,7 +35,7 @@ func getConfigurePorterStep(serverURL, porterTokenSecretName string, projectID u
 		Name:    "Update Porter App",
 		ID:      "update_porter",
 		Run:     fmt.Sprintf(configure, appName),
-		Timeout: 10,
+		Timeout: 20,
 		Env: map[string]string{
 			"PORTER_TOKEN":   fmt.Sprintf("${{ secrets.%s }}", porterTokenSecretName),
 			"PORTER_HOST":    serverURL,

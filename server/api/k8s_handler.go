@@ -632,6 +632,11 @@ func (app *App) HandleRenameConfigMap(w http.ResponseWriter, r *http.Request) {
 		SecretEnvVariables: decodedSecretData,
 	}
 
+	if newConfigMap.Name == configMap.Name {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
 	if err := createConfigMap(agent, newConfigMap); err != nil {
 		app.handleErrorInternal(err, w)
 		return

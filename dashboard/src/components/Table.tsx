@@ -55,7 +55,7 @@ const Table: React.FC<TableProps> = ({
       columns: columnsData,
       data,
     },
-    useGlobalFilter,
+    useGlobalFilter
   );
 
   const renderRows = () => {

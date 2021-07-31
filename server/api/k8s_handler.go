@@ -238,7 +238,7 @@ func (app *App) HandleListPodEvents(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func createConfigMap(agent *kubernetes.Agent, configMap *forms.ConfigMapForm) error {
+func createConfigMap(agent *kubernetes.Agent, configMap *forms.ConfigMapForm) (*v1.ConfigMap, error) {
 	secretData := make(map[string][]byte)
 
 	for key, rawValue := range configMap.SecretEnvVariables {
@@ -254,7 +254,7 @@ func createConfigMap(agent *kubernetes.Agent, configMap *forms.ConfigMapForm) er
 
 	// create secret first
 	if _, err := agent.CreateLinkedSecret(configMap.Name, configMap.Namespace, configMap.Name, secretData); err != nil {
-		return err
+		return nil, err
 	}
 
 	// add all secret env variables to configmap with value PORTERSECRET_${configmap_name}
@@ -262,11 +262,7 @@ func createConfigMap(agent *kubernetes.Agent, configMap *forms.ConfigMapForm) er
 		configMap.EnvVariables[key] = fmt.Sprintf("PORTERSECRET_%s", configMap.Name)
 	}
 
-	if _, err := agent.CreateConfigMap(configMap.Name, configMap.Namespace, configMap.EnvVariables); err != nil {
-		return err
-	}
-
-	return nil
+	return agent.CreateConfigMap(configMap.Name, configMap.Namespace, configMap.EnvVariables)
 }
 
 // HandleCreateConfigMap creates a configmap (and secret) given the name, namespace and variables.
@@ -302,19 +298,19 @@ func (app *App) HandleCreateConfigMap(w http.ResponseWriter, r *http.Request) {
 		agent, err = kubernetes.GetAgentOutOfClusterConfig(form.OutOfClusterConfig)
 	}
 
-	configMap := &forms.ConfigMapForm{}
+	configMapForm := &forms.ConfigMapForm{}
 
-	if err := json.NewDecoder(r.Body).Decode(configMap); err != nil {
+	if err := json.NewDecoder(r.Body).Decode(configMapForm); err != nil {
 		app.handleErrorFormDecoding(err, ErrUserDecode, w)
 		return
 	}
 
-	if err := createConfigMap(agent, configMap); err != nil {
+	if _, err := createConfigMap(agent, configMapForm); err != nil {
 		app.handleErrorInternal(err, w)
 		return
 	}
 
-	if err := json.NewEncoder(w).Encode(configMap); err != nil {
+	if err := json.NewEncoder(w).Encode(configMapForm); err != nil {
 		app.handleErrorFormDecoding(err, ErrEnvDecode, w)
 		return
 	}
@@ -625,25 +621,31 @@ func (app *App) HandleRenameConfigMap(w http.ResponseWriter, r *http.Request) {
 		decodedSecretData[k] = string(v)
 	}
 
-	newConfigMap := &forms.ConfigMapForm{
+	newConfigMapForm := &forms.ConfigMapForm{
 		Name:               renameConfigMapForm.NewName,
 		Namespace:          configMap.Namespace,
 		EnvVariables:       configMap.Data,
 		SecretEnvVariables: decodedSecretData,
 	}
 
-	if newConfigMap.Name == configMap.Name {
+	if newConfigMapForm.Name == configMap.Name {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
-	if err := createConfigMap(agent, newConfigMap); err != nil {
+	newConfigMap, err := createConfigMap(agent, newConfigMapForm)
+	if err != nil {
 		app.handleErrorInternal(err, w)
 		return
 	}
 
 	if err := deleteConfigMap(agent, configMap.Name, configMap.Namespace); err != nil {
 		app.handleErrorInternal(err, w)
+		return
+	}
+
+	if err := json.NewEncoder(w).Encode(newConfigMap); err != nil {
+		app.handleErrorFormDecoding(err, ErrEnvDecode, w)
 		return
 	}
 

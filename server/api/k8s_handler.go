@@ -647,11 +647,6 @@ func (app *App) HandleRenameConfigMap(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := json.NewEncoder(w).Encode(newConfigMap); err != nil {
-		app.handleErrorFormDecoding(err, ErrEnvDecode, w)
-		return
-	}
-
 	w.WriteHeader(http.StatusOK)
 	return
 }

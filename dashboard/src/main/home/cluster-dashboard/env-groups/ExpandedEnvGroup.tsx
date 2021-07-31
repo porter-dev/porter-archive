@@ -32,9 +32,15 @@ type StateType = {
   showDeleteOverlay: boolean;
   deleting: boolean;
   saveValuesStatus: string | null;
-  envGroupName: string;
-  envVariables: KeyValueType[];
+  envGroup: EnvGroup;
   tabOptions: { value: string; label: string }[];
+  newEnvGroupName: string;
+};
+
+type EnvGroup = {
+  name: string;
+  timestamp: string;
+  variables: KeyValueType[];
 };
 
 const tabOptions = [
@@ -49,31 +55,48 @@ class ExpandedEnvGroup extends Component<PropsType, StateType> {
     showDeleteOverlay: false,
     deleting: false,
     saveValuesStatus: null as string | null,
-    envGroupName: null as string,
-    envVariables: [] as KeyValueType[],
+    envGroup: {
+      name: null as string,
+      timestamp: null as string,
+      variables: [] as KeyValueType[],
+    },
     tabOptions: [
       { value: "environment", label: "Environment Variables" },
       { value: "settings", label: "Settings" },
     ],
+    newEnvGroupName: null as string,
   };
 
-  componentDidMount() {
-    const envGroupName = this.props.envGroup.metadata.name;
+  populateEnvGroup = (envGroup: any) => {
+    const {
+      metadata: { name, creationTimestamp: timestamp },
+      data,
+    } = envGroup;
     // parse env group props into values type
-    let envVariables = [] as KeyValueType[];
-    let envGroupData = this.props.envGroup.data;
+    const variables = [] as KeyValueType[];
 
-    for (const key in envGroupData) {
-      envVariables.push({
+    for (const key in data) {
+      variables.push({
         key: key,
-        value: envGroupData[key],
-        hidden: envGroupData[key].includes("PORTERSECRET"),
-        locked: envGroupData[key].includes("PORTERSECRET"),
+        value: data[key],
+        hidden: data[key].includes("PORTERSECRET"),
+        locked: data[key].includes("PORTERSECRET"),
         deleted: false,
       });
     }
 
-    this.setState({ envGroupName, envVariables });
+    this.setState({
+      envGroup: {
+        name,
+        timestamp,
+        variables,
+      },
+      newEnvGroupName: name,
+    });
+  };
+
+  componentDidMount() {
+    this.populateEnvGroup(this.props.envGroup);
 
     // Filter the settings tab options as for now it only shows the delete button.
     // In a future this should be removed and return to a constant if we want to show data
@@ -92,10 +115,11 @@ class ExpandedEnvGroup extends Component<PropsType, StateType> {
   }
 
   handleRename = () => {
-    const { envGroup } = this.props;
-    const name = envGroup.metadata.name;
-    const namespace = envGroup.metadata.namespace;
-    const newName = this.state.envGroupName;
+    const { namespace } = this.props;
+    const {
+      envGroup: { name },
+      newEnvGroupName: newName,
+    } = this.state;
 
     api
       .renameConfigMap(
@@ -111,29 +135,28 @@ class ExpandedEnvGroup extends Component<PropsType, StateType> {
         }
       )
       .then((res) => {
-        this.props.closeExpanded();
+        this.populateEnvGroup(res.data);
       });
   };
 
   handleUpdateValues = () => {
-    let { envGroup } = this.props;
-    let name = envGroup.metadata.name;
-    let namespace = envGroup.metadata.namespace;
+    const { namespace } = this.props;
+    const {
+      envGroup: { name, variables: envVariables },
+    } = this.state;
 
-    let apiEnvVariables: Record<string, string> = {};
-    let secretEnvVariables: Record<string, string> = {};
-
-    let envVariables = this.state.envVariables;
+    const apiEnvVariables: Record<string, string> = {};
+    const secretEnvVariables: Record<string, string> = {};
 
     envVariables
       .filter((envVar: KeyValueType, index: number, self: KeyValueType[]) => {
         // remove any collisions that are marked as deleted and are duplicates, unless they are
         // all delete collisions
-        let numDeleteCollisions = self.reduce((n, _envVar: KeyValueType) => {
+        const numDeleteCollisions = self.reduce((n, _envVar: KeyValueType) => {
           return n + (_envVar.key === envVar.key && envVar.deleted ? 1 : 0);
         }, 0);
 
-        let numCollisions = self.reduce((n, _envVar: KeyValueType) => {
+        const numCollisions = self.reduce((n, _envVar: KeyValueType) => {
           return n + (_envVar.key === envVar.key ? 1 : 0);
         }, 0);
 
@@ -200,12 +223,15 @@ class ExpandedEnvGroup extends Component<PropsType, StateType> {
   };
 
   renderTabContents = () => {
-    let currentTab = this.state.currentTab;
-    let { envGroup, namespace } = this.props;
-    let name = envGroup.metadata.name;
-    const isEnvGroupNameValid =
-      isAlphanumeric(this.state.envGroupName) && this.state.envGroupName !== "";
-    const isEnvGroupNameDifferent = this.state.envGroupName !== name;
+    const { namespace } = this.props;
+    const {
+      envGroup: { name, variables },
+      newEnvGroupName: newName,
+      currentTab,
+    } = this.state;
+
+    const isEnvGroupNameValid = isAlphanumeric(newName) && newName !== "";
+    const isEnvGroupNameDifferent = newName !== name;
 
     switch (currentTab) {
       case "environment":
@@ -219,8 +245,12 @@ class ExpandedEnvGroup extends Component<PropsType, StateType> {
               </Helper>
               <EnvGroupArray
                 namespace={namespace}
-                values={this.state.envVariables}
-                setValues={(x: any) => this.setState({ envVariables: x })}
+                values={variables}
+                setValues={(x: any) =>
+                  this.setState((prevState) => ({
+                    envGroup: { ...prevState.envGroup, variables: x },
+                  }))
+                }
                 fileUpload={true}
                 secretOption={true}
                 disabled={
@@ -257,8 +287,10 @@ class ExpandedEnvGroup extends Component<PropsType, StateType> {
                 <DarkMatter antiHeight="-29px" />
                 <InputRow
                   type="text"
-                  value={this.state.envGroupName}
-                  setValue={(x: string) => this.setState({ envGroupName: x })}
+                  value={newName}
+                  setValue={(x: string) =>
+                    this.setState({ newEnvGroupName: x })
+                  }
                   placeholder="ex: doctor-scientist"
                   width="100%"
                 />
@@ -288,9 +320,9 @@ class ExpandedEnvGroup extends Component<PropsType, StateType> {
   };
 
   readableDate = (s: string) => {
-    let ts = new Date(s);
-    let date = ts.toLocaleDateString();
-    let time = ts.toLocaleTimeString([], {
+    const ts = new Date(s);
+    const date = ts.toLocaleDateString();
+    const time = ts.toLocaleTimeString([], {
       hour: "numeric",
       minute: "2-digit",
     });
@@ -298,9 +330,10 @@ class ExpandedEnvGroup extends Component<PropsType, StateType> {
   };
 
   handleDeleteEnvGroup = () => {
-    let { envGroup } = this.props;
-    let name = envGroup.metadata.name;
-    let namespace = envGroup.metadata.namespace;
+    const { namespace } = this.props;
+    const {
+      envGroup: { name },
+    } = this.state;
 
     this.setState({ deleting: true });
     api
@@ -333,11 +366,10 @@ class ExpandedEnvGroup extends Component<PropsType, StateType> {
   };
 
   render() {
-    let { closeExpanded } = this.props;
-    let { envGroup } = this.props;
-    let name = envGroup.metadata.name;
-    let timestamp = envGroup.metadata.creationTimestamp;
-    let namespace = envGroup.metadata.namespace;
+    const { namespace, closeExpanded } = this.props;
+    const {
+      envGroup: { name, timestamp },
+    } = this.state;
 
     return (
       <>

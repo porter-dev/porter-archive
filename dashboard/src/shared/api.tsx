@@ -699,6 +699,16 @@ const getTemplateInfo = baseApi<
   return `/api/templates/${pathParams.name}/${pathParams.version}`;
 });
 
+const getTemplateUpgradeNotes = baseApi<
+  {
+    repo_url?: string;
+    prev_version: string;
+  },
+  { name: string; version: string }
+>("GET", (pathParams) => {
+  return `/api/templates/upgrade_notes/${pathParams.name}/${pathParams.version}`;
+});
+
 const getTemplates = baseApi<
   {
     repo_url?: string;
@@ -1039,6 +1049,7 @@ export default {
   getRepos,
   getRevisions,
   getTemplateInfo,
+  getTemplateUpgradeNotes,
   getTemplates,
   getUser,
   linkGithubProject,

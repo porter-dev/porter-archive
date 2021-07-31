@@ -864,6 +864,18 @@ const updateConfigMap = baseApi<
   return `/api/projects/${id}/k8s/configmap/update?cluster_id=${cluster_id}`;
 });
 
+const renameConfigMap = baseApi<
+  {
+    name: string;
+    namespace: string;
+    new_name: string;
+  },
+  { id: number; cluster_id: number }
+>("POST", (pathParams) => {
+  let { id, cluster_id } = pathParams;
+  return `/api/projects/${id}/k8s/configmap/rename?cluster_id=${cluster_id}`;
+});
+
 const deleteConfigMap = baseApi<
   {
     name: string;
@@ -1052,6 +1064,7 @@ export default {
   rollbackChart,
   uninstallTemplate,
   updateUser,
+  renameConfigMap,
   updateConfigMap,
   upgradeChartValues,
   deleteJob,

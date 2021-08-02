@@ -125,6 +125,8 @@ func QueryPrometheus(
 	if opts.ShouldSum {
 		query = fmt.Sprintf("sum(%s)", query)
 	}
+	
+	fmt.Println("QUERY IS:", query)
 
 	queryParams := map[string]string{
 		"query": query,

@@ -28,6 +28,7 @@ func TokenToSlackIntegration(token *oauth2.Token) (*integrations.SlackIntegratio
 			AccessToken: []byte(token.AccessToken),
 		},
 		TeamID:           teamInfo.Team.ID,
+		TeamName:         teamInfo.Team.Name,
 		TeamIconURL:      teamInfo.Team.Icon.Image132,
 		Channel:          webhookConfig["channel"].(string),
 		ChannelID:        webhookConfig["channel_id"].(string),

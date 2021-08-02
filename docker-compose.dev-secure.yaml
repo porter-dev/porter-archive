@@ -59,8 +59,12 @@ services:
     ports:
       - 443:443
     volumes:
-      - ./docker/localhost.crt:/etc/ssl/localhost.crt
-      - ./docker/localhost.key:/etc/ssl/localhost.key
+      - type: bind
+        source: ./docker/localhost.crt
+        target: /etc/ssl/localhost.crt
+      - type: bind
+        source: ./docker/localhost.key
+        target: /etc/ssl/localhost.key
       - ./docker/nginx_local_secure.conf:/etc/nginx/nginx.conf:ro
     depends_on:
       - porter

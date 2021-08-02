@@ -19,6 +19,9 @@ type SlackIntegration struct {
 	// The ID for the Slack team
 	TeamID string
 
+	// The name of the Slack team
+	TeamName string
+
 	// The icon url for the Slack team
 	TeamIconURL string
 
@@ -49,21 +52,29 @@ type SlackIntegrationExternal struct {
 	// The ID for the Slack team
 	TeamID string `json:"team_id"`
 
+	// The name of the Slack team
+	TeamName string `json:"team_name"`
+
 	// The icon url for the Slack team
 	TeamIconURL string `json:"team_icon_url"`
 
 	// The channel name that the Slack app is installed in
 	Channel string `json:"channel"`
+
+	// The URL for configuring the workspace app instance
+	ConfigurationURL string `json:"configuration_url"`
 }
 
 // Externalize generates an external SlackIntegration to be shared over
 // rest
 func (s *SlackIntegration) Externalize() *SlackIntegrationExternal {
 	return &SlackIntegrationExternal{
-		ID:          s.ID,
-		ProjectID:   s.ProjectID,
-		TeamID:      s.TeamID,
-		TeamIconURL: s.TeamIconURL,
-		Channel:     s.Channel,
+		ID:               s.ID,
+		ProjectID:        s.ProjectID,
+		TeamID:           s.TeamID,
+		TeamName:         s.TeamName,
+		TeamIconURL:      s.TeamIconURL,
+		Channel:          s.Channel,
+		ConfigurationURL: s.ConfigurationURL,
 	}
 }

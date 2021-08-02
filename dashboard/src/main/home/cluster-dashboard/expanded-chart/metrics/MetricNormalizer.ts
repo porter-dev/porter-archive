@@ -9,6 +9,11 @@ import {
   MetricsHpaReplicasDataResponse,
 } from "./types";
 
+/**
+ * Normalize values from the API to be readable by the AreaChart component.
+ * This class was created to reduce the amount of parsing inside the MetricsSection component
+ * and improve readability
+ */
 export class MetricNormalizer {
   metric_results: GenericMetricResponse["results"];
   kind: AvailableMetrics;

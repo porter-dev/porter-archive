@@ -612,7 +612,6 @@ const ViewWrapper = styled.div`
   justify-content: center;
   background: #202227;
   position: relative;
-  
 `;
 
 const DashboardWrapper = styled.div`

@@ -135,7 +135,7 @@ const FlexWrapper = styled.div`
   display: flex;
   flex: 1;
   height: 100%;
-  overflow: visible
+  overflow: visible;
 `;
 
 const StyledListSection = styled.div`

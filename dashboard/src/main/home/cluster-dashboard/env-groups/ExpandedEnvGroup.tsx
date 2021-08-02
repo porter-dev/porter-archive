@@ -388,10 +388,7 @@ class ExpandedEnvGroup extends Component<PropsType, StateType> {
           />
           {this.renderDeleteOverlay()}
 
-          <TitleSection 
-            icon={key}
-            iconWidth="33px"
-          >
+          <TitleSection icon={key} iconWidth="33px">
             {name}
             <TagWrapper>
               Namespace <NamespaceTag>{namespace}</NamespaceTag>
@@ -425,7 +422,7 @@ export default withAuth(ExpandedEnvGroup);
 const BackButton = styled.div`
   position: absolute;
   top: 0px;
-  right: 0px;;
+  right: 0px;
   display: flex;
   width: 36px;
   cursor: pointer;
@@ -439,7 +436,7 @@ const BackButton = styled.div`
   :hover {
     background: #ffffff22;
     > img {
-      opacity: 1.0;
+      opacity: 1;
     }
   }
 `;

@@ -651,7 +651,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
         <BackButton onClick={props.closeChart}>
           <BackButtonImg src={backArrow} />
         </BackButton>
-        
+
         <ConfirmOverlay
           show={showDeleteOverlay}
           message={`Are you sure you want to delete ${currentChart.name}?`}
@@ -664,7 +664,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
           </DeleteOverlay>
         )}
         <HeaderWrapper>
-          <TitleSection 
+          <TitleSection
             icon={currentChart.chart.metadata.icon}
             iconWidth="33px"
           >
@@ -674,11 +674,9 @@ const ExpandedChart: React.FC<Props> = (props) => {
             </TagWrapper>
           </TitleSection>
 
-          {
-            currentChart.chart.metadata.name != "worker" &&
+          {currentChart.chart.metadata.name != "worker" &&
             currentChart.chart.metadata.name != "job" &&
-            renderUrl()
-          }
+            renderUrl()}
           <InfoWrapper>
             <StatusIndicator
               controllers={controllers}
@@ -744,7 +742,7 @@ const TextWrap = styled.div``;
 const BackButton = styled.div`
   position: absolute;
   top: 0px;
-  right: 0px;;
+  right: 0px;
   display: flex;
   width: 36px;
   cursor: pointer;
@@ -758,7 +756,7 @@ const BackButton = styled.div`
   :hover {
     background: #ffffff22;
     > img {
-      opacity: 1.0;
+      opacity: 1;
     }
   }
 `;

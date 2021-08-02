@@ -23,7 +23,7 @@ func NewSlackIntegrationRepository(
 	return &SlackIntegrationRepository{db, key}
 }
 
-// CreateKubeIntegration creates a new kube auth mechanism
+// CreateSlackIntegration creates a new kube auth mechanism
 func (repo *SlackIntegrationRepository) CreateSlackIntegration(
 	slackInt *ints.SlackIntegration,
 ) (*ints.SlackIntegration, error) {
@@ -56,6 +56,17 @@ func (repo *SlackIntegrationRepository) ListSlackIntegrationsByProjectID(
 	}
 
 	return slackInts, nil
+}
+
+// DeleteSlackIntegration deletes a slack integration by ID
+func (repo *SlackIntegrationRepository) DeleteSlackIntegration(
+	integrationID uint,
+) error {
+	if err := repo.db.Where("id = ?", integrationID).Delete(&ints.SlackIntegration{}).Error; err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // EncryptSlackIntegrationData will encrypt the slack integration data before

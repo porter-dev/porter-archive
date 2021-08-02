@@ -49,6 +49,7 @@ type GithubAppOAuthIntegrationRepository interface {
 type SlackIntegrationRepository interface {
 	CreateSlackIntegration(slackInt *ints.SlackIntegration) (*ints.SlackIntegration, error)
 	ListSlackIntegrationsByProjectID(projectID uint) ([]*ints.SlackIntegration, error)
+	DeleteSlackIntegration(integrationID uint) error
 }
 
 // AWSIntegrationRepository represents the set of queries on the AWS auth

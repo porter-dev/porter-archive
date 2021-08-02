@@ -868,6 +868,16 @@ func New(a *api.App) *chi.Mux {
 				),
 			)
 
+			r.Method(
+				"DELETE",
+				"/projects/{project_id}/slack_integrations/{slack_integration_id}",
+				auth.DoesUserHaveProjectAccess(
+					requestlog.NewHandler(a.HandleDeleteSlackIntegration, l),
+					mw.URLParam,
+					mw.WriteAccess,
+				),
+			)
+
 			// /api/projects/{project_id}/helmrepos routes
 			r.Method(
 				"POST",

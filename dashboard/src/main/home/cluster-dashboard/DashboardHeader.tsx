@@ -3,6 +3,8 @@ import styled from "styled-components";
 
 import { Context } from "shared/Context";
 
+import TitleSection from "components/TitleSection";
+
 type PropsType = {
   image: any;
   title: string;
@@ -15,10 +17,11 @@ export default class DashboardHeader extends Component<PropsType, StateType> {
   render() {
     return (
       <>
-        <TitleSection>
-          <Img src={this.props.image} />
-          <Title>{this.props.title}</Title>
+        <TitleSection capitalize={true} icon={this.props.image}>
+          {this.props.title}
         </TitleSection>
+
+        <Br />
 
         <InfoSection>
           <TopRow>
@@ -37,8 +40,9 @@ export default class DashboardHeader extends Component<PropsType, StateType> {
 
 DashboardHeader.contextType = Context;
 
-const Img = styled.img`
-  width: 30px;
+const Br = styled.div`
+  width: 100%;
+  height: 1px;
 `;
 
 const LineBreak = styled.div`
@@ -82,16 +86,6 @@ const InfoSection = styled.div`
   margin-bottom: 35px;
 `;
 
-const Title = styled.div`
-  font-size: 20px;
-  font-weight: 500;
-  font-family: "Work Sans", sans-serif;
-  margin-left: 18px;
-  color: #ffffff;
-  text-transform: capitalize;
-  white-space: nowrap;
-`;
-
 const ClusterLabel = styled.div`
   color: #ffffff22;
   font-size: 14px;
@@ -100,27 +94,4 @@ const ClusterLabel = styled.div`
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-`;
-
-const TitleSection = styled.div`
-  height: 80px;
-  margin-top: 10px;
-  margin-bottom: 10px;
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  padding-left: 0px;
-
-  > i {
-    margin-left: 10px;
-    cursor: pointer;
-    font-size 18px;
-    color: #858FAAaa;
-    padding: 5px;
-    border-radius: 100px;
-    :hover {
-      background: #ffffff11;
-    }
-    margin-bottom: -3px;
-  }
 `;

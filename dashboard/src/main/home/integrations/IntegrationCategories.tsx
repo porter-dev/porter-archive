@@ -8,6 +8,7 @@ import { RouteComponentProps, withRouter } from "react-router";
 import IntegrationList from "./IntegrationList";
 import api from "shared/api";
 import { pushFiltered } from "shared/routing";
+import TitleSection from "components/TitleSection";
 
 type PropsType = RouteComponentProps & {
   category: string;
@@ -125,20 +126,16 @@ class IntegrationCategories extends Component<PropsType, StateType> {
       integrationList[currentCategory].buttonText;
     if (currentCategory !== "repo") {
       return (
-        <div>
-          <TitleSectionAlt>
-            <Flex>
-              <i
-                className="material-icons"
-                onClick={() =>
-                  pushFiltered(this.props, "/integrations", ["project_id"])
-                }
-              >
-                keyboard_backspace
-              </i>
-              <Icon src={icon && icon} />
-              <Title>{label}</Title>
-            </Flex>
+        <>
+          <Flex>
+            <TitleSection
+              handleNavBack={() =>
+                pushFiltered(this.props, "/integrations", ["project_id"])
+              }
+              icon={icon}
+            >
+              {label}
+            </TitleSection>
             <Button
               onClick={() =>
                 this.context.setCurrentModal("IntegrationsModal", {
@@ -155,9 +152,7 @@ class IntegrationCategories extends Component<PropsType, StateType> {
               <i className="material-icons">add</i>
               {buttonText}
             </Button>
-          </TitleSectionAlt>
-
-          <LineBreak />
+          </Flex>
 
           <IntegrationList
             currentCategory={currentCategory}
@@ -168,24 +163,20 @@ class IntegrationCategories extends Component<PropsType, StateType> {
               this.getIntegrationsForCategory(this.props.category)
             }
           />
-        </div>
+        </>
       );
     } else {
       return (
-        <div>
-          <TitleSectionAlt>
-            <Flex>
-              <i
-                className="material-icons"
-                onClick={() =>
-                  pushFiltered(this.props, "/integrations", ["project_id"])
-                }
-              >
-                keyboard_backspace
-              </i>
-              <Icon src={icon && icon} />
-              <Title>{label}</Title>
-            </Flex>
+        <>
+          <Flex>
+            <TitleSection
+              handleNavBack={() =>
+                pushFiltered(this.props, "/integrations", ["project_id"])
+              }
+              icon={icon}
+            >
+              {label}
+            </TitleSection>
             <Button
               onClick={() =>
                 window.open(
@@ -196,9 +187,7 @@ class IntegrationCategories extends Component<PropsType, StateType> {
               <GHIcon />
               {buttonText}
             </Button>
-          </TitleSectionAlt>
-
-          <LineBreak />
+          </Flex>
 
           <IntegrationList
             currentCategory={currentCategory}
@@ -209,7 +198,7 @@ class IntegrationCategories extends Component<PropsType, StateType> {
               this.getIntegrationsForCategory(this.props.category)
             }
           />
-        </div>
+        </>
       );
     }
   };
@@ -228,6 +217,8 @@ const Icon = styled.img`
 const Flex = styled.div`
   display: flex;
   align-items: center;
+  margin-bottom: -20px;
+  justify-content: space-between;
 
   > i {
     cursor: pointer;
@@ -244,6 +235,7 @@ const Flex = styled.div`
 
 const Button = styled.div`
   height: 100%;
+  margin-top: -12px;
   background: #616feecc;
   :hover {
     background: #505edddd;
@@ -271,33 +263,9 @@ const Button = styled.div`
   }
 `;
 
-const Title = styled.div`
-  font-size: 24px;
-  font-weight: 600;
-  font-family: "Work Sans", sans-serif;
-  color: #ffffff;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-`;
-
-const TitleSection = styled.div`
-  margin-bottom: 20px;
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: space-between;
-  height: 40px;
-`;
-
-const TitleSectionAlt = styled(TitleSection)`
-  margin-left: -42px;
-  width: calc(100% + 42px);
-`;
-
 const LineBreak = styled.div`
   width: calc(100% - 0px);
   height: 2px;
   background: #ffffff20;
-  margin: 32px 0px 24px;
+  margin: 18px 0px 24px;
 `;

@@ -605,20 +605,19 @@ export default withRouter(withAuth(Home));
 const ViewWrapper = styled.div`
   height: 100%;
   width: 100vw;
-  padding-top: 30px;
+  padding-top: 90px;
   overflow-y: auto;
   display: flex;
   flex: 1;
   justify-content: center;
   background: #202227;
   position: relative;
+  
 `;
 
 const DashboardWrapper = styled.div`
-  width: 80%;
-  padding-top: 50px;
+  width: 83%;
   min-width: 300px;
-  padding-bottom: 120px;
 `;
 
 const StyledHome = styled.div`

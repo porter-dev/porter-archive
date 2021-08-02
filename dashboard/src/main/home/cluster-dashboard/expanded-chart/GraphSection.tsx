@@ -48,9 +48,22 @@ GraphSection.contextType = Context;
 
 const StyledGraphSection = styled.div`
   width: 100%;
-  height: 100%;
-  background: #ffffff11;
+  height: 450px;
   font-size: 13px;
-  border-radius: 5px;
   overflow: hidden;
+  border-radius: 10px;
+  border: 1px solid #ffffff33;
+  animation: floatIn 0.3s;
+  animation-timing-function: ease-out;
+  animation-fill-mode: forwards;
+  @keyframes floatIn {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0px);
+    }
+  }
 `;

@@ -350,10 +350,10 @@ const ControllerTabFC: React.FunctionComponent<Props> = ({
       expanded={isFirst}
     >
       {!!replicaSetArray.length &&
-        replicaSetArray.map((subArray) => {
+        replicaSetArray.map((subArray, index) => {
           const firstItem = subArray[0];
           return (
-            <div>
+            <div key={firstItem.replicaSetName + index}>
               {firstItem.replicaSetName}
               {mapPods(subArray)}
             </div>

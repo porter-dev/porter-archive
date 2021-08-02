@@ -9,6 +9,8 @@ import IntegrationList from "./IntegrationList";
 import api from "shared/api";
 import { pushFiltered } from "shared/routing";
 import Loading from "../../../components/Loading";
+import ConfirmOverlay from "../../../components/ConfirmOverlay";
+import SlackIntegrationList from "./SlackIntegrationList";
 
 type Props = RouteComponentProps & {
   category: string;
@@ -136,26 +138,7 @@ const IntegrationCategories: React.FC<Props> = (props) => {
       {loading ? (
         <Loading />
       ) : props.category == "slack" ? (
-        <StyledIntegrationList>
-          {slackData.map((inst) => {
-            return (
-              <Integration
-                onClick={() => {}}
-                disabled={false}
-                key={`${inst.team_id}-{inst.channel}`}
-              >
-                <MainRow disabled={false}>
-                  <Flex>
-                    <Icon src={inst.team_icon_url && inst.team_icon_url} />
-                    <Label>
-                      {inst.team_name || inst.team_id} - {inst.channel}
-                    </Label>
-                  </Flex>
-                </MainRow>
-              </Integration>
-            );
-          })}
-        </StyledIntegrationList>
+        <SlackIntegrationList slackData={slackData} />
       ) : (
         <IntegrationList
           currentCategory={props.category}

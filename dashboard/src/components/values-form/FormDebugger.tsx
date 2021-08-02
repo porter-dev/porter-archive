@@ -250,108 +250,151 @@ const Button = styled.div`
   }
 `;
 
-const initYaml = `name: Porter Example
+const initYaml = `name: Web
 hasSource: true
+includeHiddenFields: true
 tabs:
-- name: complex
-  label: Complex Inputs
-  sections:
-  - name: only-section
-    contents:
-      - type: array-input
-        label: Testing Array Input
-        variable: array-input-variable
-      - type: select
-        label: Testing Select
-        variable: select-variable
-        settings:
-          options:
-          - label: One
-            value: 1
-          - label: Two
-            value: 2
-          - label: Three
-            value: 3
-      - type: provider-select
-        label: Testing Provider Select
-        variable: provider-select-variable
-        
 - name: main
-  label: Basic Inputs
+  label: Main
   sections:
-  - name: header
+  - name: section_one
     contents: 
     - type: heading
-      label: 🍺 Porter Demo Form
+      label: Container Settings
+    - type: variable
+      variable: showStartCommand
+      settings:
+        default: true
+  - name: command
+    show_if: showStartCommand
+    contents:
     - type: subtitle
       name: command_description
-      label: Basic form demonstrating some of the features of form.yaml
+      label: (Optional) Set a start command for this service.
     - type: string-input
-      placeholder: "ex: pilsner"
-      label: Required String Input A
-      variable: field_a
-      info: This is some info
-      settings:
-        type: text
-        default: hello
-    - type: string-input
-      placeholder: "ex: pilsner"
-      label: Required String Input A with unit
-      variable: field_a_unit
-      settings:
-        type: text
-        unit: m
-    - type: string-input
-      placeholder: "ex: pilsner"
-      label: Required Password Input B
-      variable: field_b
-      info: This is some info
-      settings:
-        type: password
-    - type: number-input
-      placeholder: "ex: pilsner"
-      label: Non Required Number Input C
-      required: false
-      variable: field_c
-      settings:
-        type: number
-    - type: number-input
-      placeholder: "ex: pilsner"
-      label: Non Required Number Input C with unit
-      required: false
-      variable: field_c_unit
-      settings:
-        type: number
-        unit: km
-    - type: checkbox
-      required: false
-      label: Checkbox A alternative
-      variable: checkbox_a
+      label: Start Command
+      placeholder: "ex: sh ./script.sh"
+      variable: container.command
+  - name: section_one_cont
+    contents:
     - type: subtitle
-      label: "Note: Hidden required fields are definitely supported"
-  - name: controlled-by-external
-    show_if:
-      or:
-        - checkbox_a
-        - not_a_variable
+      label: Specify the port your application is running on.
+    - type: number-input
+      variable: container.port
+      label: Container Port
+      placeholder: "ex: 80"
+      settings:
+        default: 80
+    - type: heading
+      label: Deploy Webhook
+    - type: checkbox
+      variable: auto_deploy
+      label: Auto-deploy when webhook is called.
+      settings:
+        default: true
+  - name: network
     contents:
     - type: heading
-      label: Conditional Display (A)
+      label: Network Settings
     - type: subtitle
-      label: This section can be externally controlled by the value of checkbox_a
-    - type: string-input
-      label: Required Number Input D that could be hidden
-      required: true
-      variable: field_d
-    - type: string-input
-      variable: input_a
-      placeholder: "Override w/ input_a"
+      label: For containers that you do not want to expose to external traffic (e.g. databases and add-ons), you may make them accessible only to other internal services running within the same cluster. 
+    - type: checkbox
+      variable: ingress.enabled
+      label: Expose to external traffic
+      settings:
+        default: true
+  - name: domain_toggle
+    show_if: ingress.enabled
+    contents:
+    - type: subtitle
+      label: Assign custom domain to your deployment. You must first create an A record in your domain provider that points to your cluster load balancer's IP address for this.
+    - type: checkbox
+      variable: ingress.custom_domain
+      label: Configure Custom Domain
+      settings:
+        default: false 
   - name: domain_name
     show_if: ingress.custom_domain
     contents:
     - type: array-input
       variable: ingress.hosts
       label: Domain Name
+  - name: do_wildcard
+    show_if: 
+      and:
+      - ingress.custom_domain
+      - currentCluster.service.is_do
+    contents:
+    - type: subtitle
+      label: If you're hosting on Digital Ocean and have enabled the wildcard domains from the 'HTTPS Issuer', you can use a wildcard certificate.
+    - type: checkbox
+      variable: ingress.wildcard
+      label: Use Wildcard Certificate
+- name: resources
+  label: Resources
+  sections:
+  - name: main_section
+    contents:
+    - type: heading
+      label: Resources
+    - type: subtitle
+      label: Configure resources assigned to this container.
+    - type: number-input
+      label: RAM
+      variable: resources.requests.memory
+      placeholder: "ex: 256"
+      settings:
+        unit: Mi
+        default: 256
+    - type: number-input
+      label: CPU
+      variable: resources.requests.cpu
+      placeholder: "ex: 100"
+      settings:
+        unit: m
+        default: 100
+    - type: number-input
+      label: Replicas
+      variable: replicaCount
+      placeholder: "ex: 1"
+      settings:
+        default: 1
+    - type: checkbox
+      variable: autoscaling.enabled
+      label: Enable autoscaling
+      settings:
+        default: false
+  - name: autoscaler
+    show_if: autoscaling.enabled
+    contents:
+    - type: number-input
+      label: Minimum Replicas
+      variable: autoscaling.minReplicas
+      placeholder: "ex: 1"
+      settings:
+        default: 1
+    - type: number-input
+      label: Maximum Replicas
+      variable: autoscaling.maxReplicas
+      placeholder: "ex: 10"
+      settings:
+        default: 10
+    - type: number-input
+      label: Target CPU Utilization
+      variable: autoscaling.targetCPUUtilizationPercentage
+      placeholder: "ex: 50"
+      settings:
+        omitUnitFromValue: true
+        unit: "%"
+        default: 50
+    - type: number-input
+      label: Target RAM Utilization
+      variable: autoscaling.targetMemoryUtilizationPercentage
+      placeholder: "ex: 50"
+      settings:
+        omitUnitFromValue: true
+        unit: "%"
+        default: 50
 - name: env
   label: Environment
   sections:
@@ -367,10 +410,127 @@ tabs:
 - name: advanced
   label: Advanced
   sections:
-  - name: advanced
+  - name: ingress_annotations
     contents:
     - type: heading
-      label: Some Header
+      label: Ingress Custom Annotations
     - type: subtitle
-      label: Some helper text
-`;
+      label: Assign custom annotations to Ingress. These annotations will overwrite the annotations Porter assigns by default.
+    - type: key-value-array
+      variable: ingress.annotations
+      settings:
+        default: {}
+  - name: health_check
+    contents:
+    - type: heading
+      label: Custom Health Checks
+    - type: subtitle
+      label: Define custom health check endpoints to ensure zero down-time deployments.
+    - type: checkbox
+      variable: health.enabled
+      label: Enable Custom Health Checks
+      settings:
+        default: false
+  - name: health_check_endpoint
+    show_if: health.enabled
+    contents:
+    - type: string-input
+      label: Health Check Endpoint
+      variable: health.path
+      placeholder: "ex: /healthz"
+      settings:
+        default: /healthz
+    - type: heading
+      label: Custom Health Check Rules
+    - type: subtitle
+      label: Configure how many times a health check will be performed before deeming the container as failed. 
+    - type: number-input
+      label: Failure Threshold
+      variable: health.failureThreshold
+      placeholder: "ex: 3"
+    - type: subtitle
+      label: Configure the interval at which health check is repeated in the case of failure.
+    - type: number-input
+      label: Repeat Interval
+      variable: health.periodSeconds
+      placeholder: "ex: 30"
+  - name: persistence_toggle
+    contents:
+    - type: heading
+      label: Persistent Disks
+    - type: subtitle
+      label: Attach persistent disks to your deployment to retain data across releases.
+    - type: checkbox
+      label: Enable Persistence
+      variable: pvc.enabled
+  - name: persistent_storage
+    show_if: pvc.enabled
+    contents:
+    - type: number-input
+      label: Persistent Storage
+      variable: pvc.storage
+      placeholder: "ex: 20"
+      settings:
+        unit: Gi
+        default: 20
+    - type: string-input
+      label: Mount Path
+      variable: pvc.mountPath
+      placeholder: "ex: /mypath"
+      settings:
+        default: /mypath
+  - name: termination_grace_period
+    contents:
+    - type: heading
+      label: Termination Grace Period
+    - type: subtitle
+      label: Specify how much time app processes have to gracefully shut down on SIGTERM.
+    - type: number-input
+      label: Termination Grace Period (seconds)
+      variable: terminationGracePeriodSeconds
+      placeholder: "ex: 30"
+      settings:
+        default: 30
+  - name: container_hooks
+    contents:
+    - type: heading
+      label: Container hooks
+    - type: subtitle
+      label: (Optional) Set post start or pre stop commands for this service.
+    - type: string-input
+      label: Post start command
+      placeholder: "ex: /bin/sh ./myscript.sh"
+      variable: container.lifecycle.postStart
+    - type: string-input
+      label: Pre stop command
+      placeholder: "ex: /bin/sh ./myscript.sh"
+      variable: container.lifecycle.preStop
+  - name: cloud_sql_toggle
+    show_if: currentCluster.service.is_gcp
+    contents:
+    - type: heading
+      label: Google Cloud SQL
+    - type: subtitle
+      label: Securely connect to Google Cloud SQL (GKE only).
+    - type: checkbox
+      variable: cloudsql.enabled
+      label: Enable Google Cloud SQL Proxy
+      settings:
+        default: false
+  - name: cloud_sql_contents
+    show_if: cloudsql.enabled
+    contents:
+    - type: string-input
+      label: Instance Connection Name
+      variable: cloudsql.connectionName
+      placeholder: "ex: project-123:us-east1:pachyderm"
+    - type: number-input
+      label: DB Port
+      variable: cloudsql.dbPort
+      placeholder: "ex: 5432"
+      settings:
+        default: 5432
+    - type: string-input
+      label: Service Account JSON
+      variable: cloudsql.serviceAccountJSON
+      placeholder: "ex: { <SERVICE_ACCOUNT_JSON> }"`;

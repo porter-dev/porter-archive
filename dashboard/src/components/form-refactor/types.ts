@@ -135,7 +135,8 @@ export interface Tab {
 
 export interface PorterFormData {
   name: string;
-  hasSource: true;
+  hasSource: boolean;
+  includeHiddenFields: boolean;
   tabs: Tab[];
 }
 

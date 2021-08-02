@@ -128,3 +128,41 @@ func (app *App) HandleListSlackIntegrations(w http.ResponseWriter, r *http.Reque
 		return
 	}
 }
+
+// HandleDeleteSlackIntegration deletes a slack integration for a project by ID
+func (app *App) HandleDeleteSlackIntegration(w http.ResponseWriter, r *http.Request) {
+	// check that slack integration belongs to given project
+	projID, err := strconv.ParseUint(chi.URLParam(r, "project_id"), 0, 64)
+
+	if err != nil || projID == 0 {
+		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
+		return
+	}
+
+	integrationID, err := strconv.ParseUint(chi.URLParam(r, "slack_integration_id"), 0, 64)
+
+	if err != nil || projID == 0 {
+		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
+		return
+	}
+
+	slackInts, err := app.Repo.SlackIntegration.ListSlackIntegrationsByProjectID(uint(projID))
+
+	if err != nil {
+		app.handleErrorRead(err, ErrProjectDataRead, w)
+		return
+	}
+
+	for _, slackInt := range slackInts {
+		if slackInt.ID == uint(integrationID) {
+			err = app.Repo.SlackIntegration.DeleteSlackIntegration(slackInt.ID)
+			if err != nil {
+				app.handleErrorInternal(err, w)
+				return
+			}
+			w.WriteHeader(http.StatusOK)
+		}
+	}
+
+	w.WriteHeader(http.StatusNotFound)
+}

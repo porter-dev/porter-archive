@@ -136,16 +136,26 @@ const IntegrationCategories: React.FC<Props> = (props) => {
       {loading ? (
         <Loading />
       ) : props.category == "slack" ? (
-        <>
+        <StyledIntegrationList>
           {slackData.map((inst) => {
             return (
-              <>
-                <img src={inst.team_icon_url} alt="team icon" height={"15"} />
-                &nbsp; Team ID {inst.team_id}: in channel {inst.channel}
-              </>
+              <Integration
+                onClick={() => {}}
+                disabled={false}
+                key={`${inst.team_id}-{inst.channel}`}
+              >
+                <MainRow disabled={false}>
+                  <Flex>
+                    <Icon src={inst.team_icon_url && inst.team_icon_url} />
+                    <Label>
+                      {inst.team_id} - {inst.channel}
+                    </Label>
+                  </Flex>
+                </MainRow>
+              </Integration>
             );
           })}
-        </>
+        </StyledIntegrationList>
       ) : (
         <IntegrationList
           currentCategory={props.category}
@@ -162,6 +172,59 @@ const IntegrationCategories: React.FC<Props> = (props) => {
 };
 
 export default withRouter(IntegrationCategories);
+
+const Label = styled.div`
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 500;
+`;
+
+const MainRow = styled.div`
+  height: 70px;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 25px;
+  border-radius: 5px;
+  :hover {
+    background: ${(props: { disabled: boolean }) =>
+      props.disabled ? "" : "#ffffff11"};
+    > i {
+      background: ${(props: { disabled: boolean }) =>
+        props.disabled ? "" : "#ffffff11"};
+    }
+  }
+
+  > i {
+    border-radius: 20px;
+    font-size: 18px;
+    padding: 5px;
+    color: #ffffff44;
+    margin-right: -7px;
+    :hover {
+      background: ${(props: { disabled: boolean }) =>
+        props.disabled ? "" : "#ffffff11"};
+    }
+  }
+`;
+
+const Integration = styled.div`
+  margin-left: -2px;
+  display: flex;
+  flex-direction: column;
+  background: #26282f;
+  cursor: ${(props: { disabled: boolean }) =>
+    props.disabled ? "not-allowed" : "pointer"};
+  margin-bottom: 15px;
+  border-radius: 5px;
+  box-shadow: 0 5px 8px 0px #00000033;
+`;
+
+const StyledIntegrationList = styled.div`
+  margin-top: 20px;
+  margin-bottom: 80px;
+`;
 
 const Icon = styled.img`
   width: 27px;

@@ -1,75 +1,22 @@
-import React, { Component } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import styled from "styled-components";
 import ParentSize from "@visx/responsive/lib/components/ParentSize";
 
 import settings from "assets/settings.svg";
 import api from "shared/api";
 import { Context } from "shared/Context";
-import { ChartType, StorageType } from "shared/types";
+import { ChartTypeWithExtendedConfig, StorageType } from "shared/types";
 
 import TabSelector from "components/TabSelector";
 import Loading from "components/Loading";
 import SelectRow from "components/values-form/SelectRow";
-import AreaChart, { MetricsData } from "./AreaChart";
+import AreaChart from "./AreaChart";
+import { MetricNormalizer } from "./MetricNormalizer";
+import { AvailableMetrics, NormalizedMetricsData } from "./types";
+import CheckboxRow from "components/values-form/CheckboxRow";
 
 type PropsType = {
-  currentChart: ChartType;
-};
-
-type StateType = {
-  controllerOptions: any[];
-  ingressOptions: any[];
-  selectedController: any;
-  selectedIngress: any;
-  pods: any[];
-  selectedPod: string;
-  selectedRange: string;
-  selectedMetric: string;
-  selectedMetricLabel: string;
-  controllerDropdownExpanded: boolean;
-  podDropdownExpanded: boolean;
-  dropdownExpanded: boolean;
-  data: MetricsData[];
-  showMetricsSettings: boolean;
-  metricsOptions: MetricsOption[];
-  isLoading: number;
-};
-
-type MetricsCPUDataResponse = {
-  pod?: string;
-  results: {
-    date: number;
-    cpu: string;
-  }[];
-}[];
-
-type MetricsMemoryDataResponse = {
-  pod?: string;
-  results: {
-    date: number;
-    memory: string;
-  }[];
-}[];
-
-type MetricsNetworkDataResponse = {
-  pod?: string;
-  results: {
-    date: number;
-    bytes: string;
-  }[];
-}[];
-
-type MetricsNGINXErrorsDataResponse = {
-  pod?: string;
-  results: {
-    date: number;
-    error_pct: string;
-  }[];
-}[];
-
-type MetricsOption = {
-  value: string;
-  label: string;
+  currentChart: ChartTypeWithExtendedConfig;
 };
 
 const resolutions: { [range: string]: string } = {
@@ -86,39 +33,63 @@ const secondsBeforeNow: { [range: string]: number } = {
   "1M": 60 * 60 * 24 * 30,
 };
 
-export default class MetricsSection extends Component<PropsType, StateType> {
-  state = {
-    pods: [] as any[],
-    selectedPod: "",
-    controllerOptions: [] as any[],
-    selectedController: null as any,
-    ingressOptions: [] as any[],
-    selectedIngress: null as any,
-    selectedRange: "1H",
-    selectedMetric: "cpu",
-    selectedMetricLabel: "CPU Utilization (vCPUs)",
-    dropdownExpanded: false,
-    podDropdownExpanded: false,
-    controllerDropdownExpanded: false,
-    data: [] as MetricsData[],
-    showMetricsSettings: false,
-    metricsOptions: [
-      { value: "cpu", label: "CPU Utilization (vCPUs)" },
-      { value: "memory", label: "RAM Utilization (Mi)" },
-      { value: "network", label: "Network Received Bytes (Ki)" },
-    ],
-    isLoading: 0,
-  };
+const MetricsSection: React.FunctionComponent<PropsType> = ({
+  currentChart,
+}) => {
+  const [pods, setPods] = useState([]);
+  const [selectedPod, setSelectedPod] = useState("");
+  const [controllerOptions, setControllerOptions] = useState([]);
+  const [selectedController, setSelectedController] = useState(null);
+  const [ingressOptions, setIngressOptions] = useState([]);
+  const [selectedIngress, setSelectedIngress] = useState(null);
+  const [selectedRange, setSelectedRange] = useState("1H");
+  const [selectedMetric, setSelectedMetric] = useState("cpu");
+  const [selectedMetricLabel, setSelectedMetricLabel] = useState(
+    "CPU Utilization (vCPUs)"
+  );
+  const [dropdownExpanded, setDropdownExpanded] = useState(false);
+  const [data, setData] = useState<NormalizedMetricsData[]>([]);
+  const [showMetricsSettings, setShowMetricsSettings] = useState(false);
+  const [metricsOptions, setMetricsOptions] = useState([
+    { value: "cpu", label: "CPU Utilization (vCPUs)" },
+    { value: "memory", label: "RAM Utilization (Mi)" },
+    { value: "network", label: "Network Received Bytes (Ki)" },
+  ]);
+  const [isLoading, setIsLoading] = useState(0);
+  const [hpaData, setHpaData] = useState([]);
+  const [hpaEnabled, setHpaEnabled] = useState(
+    currentChart?.config?.autoscaling?.enabled
+  );
 
-  componentDidMount() {
-    // get all controllers and read in a list of pods
-    let { currentChart } = this.props;
-    let { currentCluster, currentProject, setCurrentError } = this.context;
+  const { currentCluster, currentProject, setCurrentError } = useContext(
+    Context
+  );
 
-    if (currentChart.chart?.metadata?.name == "ingress-nginx") {
-      this.setState(({ isLoading }) => {
-        return { isLoading: isLoading + 1 };
+  // Add or remove hpa replicas chart option when current chart is updated
+  useEffect(() => {
+    if (currentChart?.config?.autoscaling?.enabled) {
+      setMetricsOptions((prev) => {
+        if (prev.find((option) => option.value === "hpa_replicas")) {
+          return [...prev];
+        }
+        return [...prev, { value: "hpa_replicas", label: "HPA Replicas" }];
       });
+    } else {
+      setMetricsOptions((prev) => {
+        const hpaReplicasOptionIndex = prev.findIndex(
+          (option) => option.value === "hpa_replicas"
+        );
+        const options = [...prev];
+        options.splice(hpaReplicasOptionIndex, 1);
+        return [...options];
+      });
+    }
+  }, [currentChart]);
+
+  useEffect(() => {
+    if (currentChart?.chart?.metadata?.name == "ingress-nginx") {
+      setIsLoading((prev) => prev + 1);
+
       api
         .getNGINXIngresses(
           "<token>",
@@ -130,37 +101,35 @@ export default class MetricsSection extends Component<PropsType, StateType> {
           }
         )
         .then((res) => {
-          let metricsOptions = this.state.metricsOptions;
-          metricsOptions.push({
-            value: "nginx:errors",
-            label: "5XX Error Percentage",
+          setMetricsOptions((prev) => {
+            return [
+              ...prev,
+              {
+                value: "nginx:errors",
+                label: "5XX Error Percentage",
+              },
+            ];
           });
 
-          let ingressOptions = [] as any[];
-          res.data.map((ingress: any) => {
-            ingressOptions.push({ value: ingress, label: ingress.name });
-          });
-
+          const ingressOptions = res.data.map((ingress: any) => ({
+            value: ingress,
+            label: ingress.name,
+          }));
+          setIngressOptions(ingressOptions);
+          setSelectedIngress(ingressOptions[0]?.value);
           // iterate through the controllers to get the list of pods
-          this.setState({
-            metricsOptions,
-            ingressOptions,
-            selectedIngress: ingressOptions[0].value,
-          });
         })
         .catch((err) => {
           setCurrentError(JSON.stringify(err));
-          this.setState({ controllerOptions: [] as any[] });
+          setControllerOptions([]);
         })
         .finally(() => {
-          this.setState(({ isLoading }) => {
-            return { isLoading: isLoading - 1 };
-          });
+          setIsLoading((prev) => prev - 1);
         });
     }
-    this.setState(({ isLoading }) => {
-      return { isLoading: isLoading + 1 };
-    });
+
+    setIsLoading((prev) => prev + 1);
+
     api
       .getChartControllers(
         "<token>",
@@ -176,208 +145,28 @@ export default class MetricsSection extends Component<PropsType, StateType> {
         }
       )
       .then((res) => {
-        // TODO -- check at least one controller returned
-        let controllerOptions = [] as any[];
-        res.data.map((controller: any) => {
+        const controllerOptions = res.data.map((controller: any) => {
           let name = controller?.metadata?.name;
-          controllerOptions.push({ value: controller, label: name });
+          return { value: controller, label: name };
         });
 
-        // iterate through the controllers to get the list of pods
-        this.setState({
-          controllerOptions,
-          selectedController: controllerOptions[0].value,
-        });
-
-        this.getPods();
+        setControllerOptions(controllerOptions);
+        setSelectedController(controllerOptions[0]?.value);
       })
       .catch((err) => {
         setCurrentError(JSON.stringify(err));
-        this.setState({ controllerOptions: [] as any[] });
+        setControllerOptions([]);
       })
       .finally(() => {
-        this.setState(({ isLoading }) => {
-          return { isLoading: isLoading - 1 };
-        });
+        setIsLoading((prev) => prev - 1);
       });
-  }
+  }, [currentChart, currentCluster, currentProject]);
 
-  componentDidUpdate(prevProps: PropsType, prevState: StateType) {
-    // if resolution, data kind, controllers, or pods have changed, update data
-    if (this.state.selectedMetric != prevState.selectedMetric) {
-      this.getMetrics();
-    }
+  useEffect(() => {
+    getPods();
+  }, [selectedController]);
 
-    if (this.state.selectedRange != prevState.selectedRange) {
-      this.getMetrics();
-    }
-
-    if (this.state.selectedPod != prevState.selectedPod) {
-      this.getMetrics();
-    }
-
-    if (
-      this.state.selectedController?.metadata?.name !=
-      prevState.selectedController?.metadata?.name
-    ) {
-      this.getMetrics();
-    }
-
-    if (this.state.selectedIngress?.name != prevState.selectedIngress?.name) {
-      this.getMetrics();
-    }
-  }
-
-  getMetrics = () => {
-    if (this.state.pods.length == 0) {
-      return;
-    }
-
-    let { currentChart } = this.props;
-    let { currentCluster, currentProject, setCurrentError } = this.context;
-    let kind = this.state.selectedMetric;
-    let shouldsum = true;
-    let namespace = currentChart.namespace;
-
-    // calculate start and end range
-    var d = new Date();
-    var end = Math.round(d.getTime() / 1000);
-    var start = end - secondsBeforeNow[this.state.selectedRange];
-
-    let pods = this.state.pods.map((pod: any) => {
-      return pod.value;
-    });
-
-    if (this.state.selectedPod != "All") {
-      pods = [this.state.selectedPod];
-    }
-
-    if (this.state.selectedMetric == "nginx:errors") {
-      pods = [this.state.selectedIngress?.name];
-      namespace = this.state.selectedIngress?.namespace || "default";
-      shouldsum = false;
-    }
-
-    this.setState(({ isLoading }) => {
-      return { isLoading: isLoading + 1 };
-    });
-
-    api
-      .getMetrics(
-        "<token>",
-        {
-          cluster_id: currentCluster.id,
-          metric: kind,
-          shouldsum: shouldsum,
-          pods,
-          namespace: namespace,
-          startrange: start,
-          endrange: end,
-          resolution: resolutions[this.state.selectedRange],
-        },
-        {
-          id: currentProject.id,
-        }
-      )
-      .then((res) => {
-        if (!Array.isArray(res.data) || !res.data[0]?.results) {
-          return;
-        }
-        // transform the metrics to expected form
-        if (kind == "cpu") {
-          let data = res.data as MetricsCPUDataResponse;
-
-          // if summed, just look at the first data
-          let tData = data[0].results.map(
-            (
-              d: {
-                date: number;
-                cpu: string;
-              },
-              i: number
-            ) => {
-              return {
-                date: d.date,
-                value: parseFloat(d.cpu),
-              };
-            }
-          );
-
-          this.setState({ data: tData });
-        } else if (kind == "memory") {
-          let data = res.data as MetricsMemoryDataResponse;
-
-          let tData = data[0].results.map(
-            (
-              d: {
-                date: number;
-                memory: string;
-              },
-              i: number
-            ) => {
-              return {
-                date: d.date,
-                value: parseFloat(d.memory) / (1024 * 1024), // put units in Mi
-              };
-            }
-          );
-
-          this.setState({ data: tData });
-        } else if (kind == "network") {
-          let data = res.data as MetricsNetworkDataResponse;
-
-          let tData = data[0].results.map(
-            (
-              d: {
-                date: number;
-                bytes: string;
-              },
-              i: number
-            ) => {
-              return {
-                date: d.date,
-                value: parseFloat(d.bytes) / 1024, // put units in Ki
-              };
-            }
-          );
-
-          this.setState({ data: tData });
-        } else if (kind == "nginx:errors") {
-          let data = res.data as MetricsNGINXErrorsDataResponse;
-
-          let tData = data[0].results.map(
-            (
-              d: {
-                date: number;
-                error_pct: string;
-              },
-              i: number
-            ) => {
-              return {
-                date: d.date,
-                value: parseFloat(d.error_pct), // put units in Ki
-              };
-            }
-          );
-
-          this.setState({ data: tData });
-        }
-      })
-      .catch((err) => {
-        setCurrentError(JSON.stringify(err));
-        // this.setState({ controllers: [], loading: false });
-      })
-      .finally(() => {
-        this.setState(({ isLoading }) => {
-          return { isLoading: isLoading - 1 };
-        });
-      });
-  };
-
-  getPods = () => {
-    let { selectedController } = this.state;
-    let { currentCluster, currentProject, setCurrentError } = this.context;
-
+  const getPods = () => {
     let selectors = [] as string[];
     let ml =
       selectedController?.spec?.selector?.matchLabels ||
@@ -393,9 +182,7 @@ export default class MetricsSection extends Component<PropsType, StateType> {
     }
     selectors.push(selector);
 
-    this.setState(({ isLoading }) => {
-      return { isLoading: isLoading + 1 };
-    });
+    setIsLoading((prev) => prev + 1);
 
     api
       .getMatchingPods(
@@ -415,80 +202,170 @@ export default class MetricsSection extends Component<PropsType, StateType> {
           let name = pod?.metadata?.name;
           pods.push({ value: name, label: name });
         });
+        setPods(pods);
+        setSelectedPod("All");
 
-        this.setState({ pods, selectedPod: "All" });
-
-        this.getMetrics();
+        getMetrics();
       })
       .catch((err) => {
         setCurrentError(JSON.stringify(err));
         return;
       })
       .finally(() => {
-        this.setState(({ isLoading }) => {
-          return { isLoading: isLoading - 1 };
-        });
+        setIsLoading((prev) => prev - 1);
       });
   };
 
-  renderDropdown = () => {
-    if (this.state.dropdownExpanded) {
-      return (
-        <>
-          <DropdownOverlay
-            onClick={() => this.setState({ dropdownExpanded: false })}
-          />
-          <Dropdown
-            dropdownWidth="230px"
-            dropdownMaxHeight="200px"
-            onClick={() => this.setState({ dropdownExpanded: false })}
-          >
-            {this.renderOptionList()}
-          </Dropdown>
-        </>
+  const getAutoscalingThreshold = async (
+    metricType: "cpu_hpa_threshold" | "memory_hpa_threshold",
+    shouldsum: boolean,
+    namespace: string,
+    start: number,
+    end: number
+  ) => {
+    setIsLoading((prev) => prev + 1);
+    setHpaData([]);
+    try {
+      const res = await api.getMetrics(
+        "<token>",
+        {
+          cluster_id: currentCluster.id,
+          metric: metricType,
+          shouldsum: shouldsum,
+          kind: selectedController?.kind,
+          name: selectedController?.metadata.name,
+          namespace: namespace,
+          startrange: start,
+          endrange: end,
+          resolution: resolutions[selectedRange],
+          pods: [],
+        },
+        {
+          id: currentProject.id,
+        }
       );
+
+      if (!Array.isArray(res.data) || !res.data[0]?.results) {
+        return;
+      }
+      const autoscalingMetrics = new MetricNormalizer(res.data, metricType);
+      setHpaData(autoscalingMetrics.getParsedData());
+      return;
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setIsLoading((prev) => prev - 1);
     }
   };
 
-  renderOptionList = () => {
-    return this.state.metricsOptions.map(
-      (option: { value: string; label: string }, i: number) => {
-        return (
-          <Option
-            key={i}
-            selected={option.value === this.state.selectedMetric}
-            onClick={() =>
-              this.setState({
-                selectedMetric: option.value,
-                selectedMetricLabel: option.label,
-              })
-            }
-            lastItem={i === this.state.metricsOptions.length - 1}
-          >
-            {option.label}
-          </Option>
-        );
+  const getMetrics = async () => {
+    if (pods?.length == 0) {
+      return;
+    }
+    try {
+      let shouldsum = selectedPod === "All";
+      let namespace = currentChart.namespace;
+
+      // calculate start and end range
+      const d = new Date();
+      const end = Math.round(d.getTime() / 1000);
+      const start = end - secondsBeforeNow[selectedRange];
+
+      let podNames = [] as string[];
+
+      if (!shouldsum) {
+        podNames = [selectedPod];
       }
-    );
+
+      if (selectedMetric == "nginx:errors") {
+        podNames = [selectedIngress?.name];
+        namespace = selectedIngress?.namespace || "default";
+        shouldsum = false;
+      }
+
+      setIsLoading((prev) => prev + 1);
+      setData([]);
+
+      const res = await api.getMetrics(
+        "<token>",
+        {
+          cluster_id: currentCluster.id,
+          metric: selectedMetric,
+          shouldsum: shouldsum,
+          kind: selectedController?.kind,
+          name: selectedController?.metadata.name,
+          namespace: namespace,
+          startrange: start,
+          endrange: end,
+          resolution: resolutions[selectedRange],
+          pods: podNames,
+        },
+        {
+          id: currentProject.id,
+        }
+      );
+
+      setHpaData([]);
+      const isHpaEnabled = currentChart.config.autoscaling.enabled;
+      if (shouldsum && isHpaEnabled) {
+        if (selectedMetric === "cpu") {
+          await getAutoscalingThreshold(
+            "cpu_hpa_threshold",
+            shouldsum,
+            namespace,
+            start,
+            end
+          );
+        } else if (selectedMetric === "memory") {
+          await getAutoscalingThreshold(
+            "memory_hpa_threshold",
+            shouldsum,
+            namespace,
+            start,
+            end
+          );
+        }
+      }
+
+      const metrics = new MetricNormalizer(
+        res.data,
+        selectedMetric as AvailableMetrics
+      );
+
+      // transform the metrics to expected form
+      setData(metrics.getParsedData());
+    } catch (error) {
+      setCurrentError(JSON.stringify(error));
+    } finally {
+      setIsLoading((prev) => prev - 1);
+    }
   };
 
-  renderMetricsSettings = () => {
-    if (this.state.showMetricsSettings && true) {
-      if (this.state.selectedMetric == "nginx:errors") {
+  useEffect(() => {
+    if (selectedMetric && selectedRange && selectedPod && selectedController) {
+      getMetrics();
+    }
+  }, [
+    selectedMetric,
+    selectedRange,
+    selectedPod,
+    selectedController,
+    selectedIngress,
+  ]);
+
+  const renderMetricsSettings = () => {
+    if (showMetricsSettings && true) {
+      if (selectedMetric == "nginx:errors") {
         return (
           <>
-            <DropdownOverlay
-              onClick={() => this.setState({ showMetricsSettings: false })}
-            />
+            <DropdownOverlay onClick={() => setShowMetricsSettings(false)} />
             <DropdownAlt dropdownWidth="330px" dropdownMaxHeight="300px">
               <Label>Additional Settings</Label>
               <SelectRow
                 label="Target Ingress"
-                value={this.state.selectedIngress}
-                setActiveValue={(x: any) =>
-                  this.setState({ selectedIngress: x })
-                }
-                options={this.state.ingressOptions}
+                value={selectedIngress}
+                setActiveValue={(x: any) => setSelectedIngress(x)}
+                options={ingressOptions}
                 width="100%"
               />
             </DropdownAlt>
@@ -498,25 +375,21 @@ export default class MetricsSection extends Component<PropsType, StateType> {
 
       return (
         <>
-          <DropdownOverlay
-            onClick={() => this.setState({ showMetricsSettings: false })}
-          />
+          <DropdownOverlay onClick={() => setShowMetricsSettings(false)} />
           <DropdownAlt dropdownWidth="330px" dropdownMaxHeight="300px">
             <Label>Additional Settings</Label>
             <SelectRow
               label="Target Controller"
-              value={this.state.selectedController}
-              setActiveValue={(x: any) =>
-                this.setState({ selectedController: x })
-              }
-              options={this.state.controllerOptions}
+              value={selectedController}
+              setActiveValue={(x: any) => setSelectedController(x)}
+              options={controllerOptions}
               width="100%"
             />
             <SelectRow
               label="Target Pod"
-              value={this.state.selectedPod}
-              setActiveValue={(x: any) => this.setState({ selectedPod: x })}
-              options={this.state.pods}
+              value={selectedPod}
+              setActiveValue={(x: any) => setSelectedPod(x)}
+              options={pods}
               width="100%"
             />
           </DropdownAlt>
@@ -525,85 +398,122 @@ export default class MetricsSection extends Component<PropsType, StateType> {
     }
   };
 
-  render() {
-    return (
-      <StyledMetricsSection>
-        <MetricsHeader>
-          <Flex>
-            <MetricSelector
-              onClick={() =>
-                this.setState({
-                  dropdownExpanded: !this.state.dropdownExpanded,
-                })
-              }
-            >
-              <MetricsLabel>{this.state.selectedMetricLabel}</MetricsLabel>
-              <i className="material-icons">arrow_drop_down</i>
-              {this.renderDropdown()}
-            </MetricSelector>
-            <Relative>
-              <IconWrapper
-                onClick={() => this.setState({ showMetricsSettings: true })}
-              >
-                <SettingsIcon src={settings} />
-              </IconWrapper>
-              {this.renderMetricsSettings()}
-            </Relative>
-            {/* <RefreshMetrics
-              className="material-icons-outlined"
-              onClick={() => this.getMetrics()}
-            >
-              refresh
-            </RefreshMetrics> */}
+  const renderDropdown = () => {
+    if (dropdownExpanded) {
+      return (
+        <>
+          <DropdownOverlay onClick={() => setDropdownExpanded(false)} />
+          <Dropdown
+            dropdownWidth="230px"
+            dropdownMaxHeight="200px"
+            onClick={() => setDropdownExpanded(false)}
+          >
+            {renderOptionList()}
+          </Dropdown>
+        </>
+      );
+    }
+  };
 
-            <Highlight color={"#7d7d81"} onClick={this.getMetrics}>
-              <i className="material-icons">autorenew</i>
-            </Highlight>
-          </Flex>
-          <RangeWrapper>
-            <TabSelector
-              noBuffer={true}
-              options={[
-                { value: "1H", label: "1H" },
-                { value: "6H", label: "6H" },
-                { value: "1D", label: "1D" },
-                { value: "1M", label: "1M" },
-              ]}
-              currentTab={this.state.selectedRange}
-              setCurrentTab={(x: string) => this.setState({ selectedRange: x })}
-            />
-          </RangeWrapper>
-        </MetricsHeader>
-        {this.state.isLoading > 0 && <Loading />}
-        {this.state.data.length === 0 && this.state.isLoading === 0 && (
-          <Message>
-            No data available yet.
-            <Highlight color={"#8590ff"} onClick={this.getMetrics}>
-              <i className="material-icons">autorenew</i>
-              Refresh
-            </Highlight>
-          </Message>
-        )}
+  const renderOptionList = () => {
+    return metricsOptions.map(
+      (option: { value: string; label: string }, i: number) => {
+        return (
+          <Option
+            key={i}
+            selected={option.value === selectedMetric}
+            onClick={() => {
+              setSelectedMetric(option.value);
+              setSelectedMetricLabel(option.label);
+            }}
+            lastItem={i === metricsOptions.length - 1}
+          >
+            {option.label}
+          </Option>
+        );
+      }
+    );
+  };
 
-        {this.state.data.length > 0 && this.state.isLoading === 0 && (
+  return (
+    <StyledMetricsSection>
+      <MetricsHeader>
+        <Flex>
+          <MetricSelector
+            onClick={() => setDropdownExpanded(!dropdownExpanded)}
+          >
+            <MetricsLabel>{selectedMetricLabel}</MetricsLabel>
+            <i className="material-icons">arrow_drop_down</i>
+            {renderDropdown()}
+          </MetricSelector>
+          <Relative>
+            <IconWrapper onClick={() => setShowMetricsSettings(true)}>
+              <SettingsIcon src={settings} />
+            </IconWrapper>
+            {renderMetricsSettings()}
+          </Relative>
+
+          <Highlight color={"#7d7d81"} onClick={getMetrics}>
+            <i className="material-icons">autorenew</i>
+          </Highlight>
+        </Flex>
+        <RangeWrapper>
+          <TabSelector
+            noBuffer={true}
+            options={[
+              { value: "1H", label: "1H" },
+              { value: "6H", label: "6H" },
+              { value: "1D", label: "1D" },
+              { value: "1M", label: "1M" },
+            ]}
+            currentTab={selectedRange}
+            setCurrentTab={(x: string) => setSelectedRange(x)}
+          />
+        </RangeWrapper>
+      </MetricsHeader>
+      {isLoading > 0 && <Loading />}
+      {data.length === 0 && isLoading === 0 && (
+        <Message>
+          No data available yet.
+          <Highlight color={"#8590ff"} onClick={getMetrics}>
+            <i className="material-icons">autorenew</i>
+            Refresh
+          </Highlight>
+        </Message>
+      )}
+      {data.length > 0 && isLoading === 0 && (
+        <>
+          {currentChart?.config?.autoscaling?.enabled &&
+            ["cpu", "memory"].includes(selectedMetric) && (
+              <CheckboxRow
+                toggle={() => setHpaEnabled((prev) => !prev)}
+                checked={hpaEnabled}
+                label="Enable HPA Metrics"
+              />
+            )}
           <ParentSize>
             {({ width, height }) => (
               <AreaChart
-                data={this.state.data}
+                dataKey={selectedMetricLabel}
+                data={data}
+                hpaData={hpaData}
+                hpaEnabled={
+                  hpaEnabled && ["cpu", "memory"].includes(selectedMetric)
+                }
                 width={width}
                 height={height - 10}
-                resolution={this.state.selectedRange}
+                resolution={selectedRange}
                 margin={{ top: 40, right: -40, bottom: 0, left: 50 }}
               />
             )}
           </ParentSize>
-        )}
-      </StyledMetricsSection>
-    );
-  }
-}
+        </>
+      )}
+    </StyledMetricsSection>
+  );
+};
 
-MetricsSection.contextType = Context;
+export default MetricsSection;
 
 const Highlight = styled.div`
   display: flex;
@@ -617,20 +527,6 @@ const Highlight = styled.div`
     font-size: 20px;
     margin-right: 3px;
   }
-`;
-
-const RefreshMetrics = styled.span`
-  :hover {
-    cursor: pointer;
-  }
-`;
-
-const NoDataPlaceholder = styled.div`
-  width: 100%;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
 `;
 
 const Label = styled.div`

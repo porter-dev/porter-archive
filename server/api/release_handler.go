@@ -25,6 +25,7 @@ import (
 	"github.com/porter-dev/porter/internal/helm/grapher"
 	"github.com/porter-dev/porter/internal/helm/loader"
 	"github.com/porter-dev/porter/internal/integrations/ci/actions"
+	"github.com/porter-dev/porter/internal/integrations/slack"
 	"github.com/porter-dev/porter/internal/kubernetes"
 	"github.com/porter-dev/porter/internal/repository"
 	"gopkg.in/yaml.v2"
@@ -977,9 +978,31 @@ func (app *App) HandleUpgradeRelease(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	slackInts, _ := app.Repo.SlackIntegration.ListSlackIntegrationsByProjectID(uint(projID))
+	notifier := slack.NewSlackNotifier(slackInts...)
+
+	notifyOpts := &slack.NotifyOpts{
+		ProjectID:   uint(projID),
+		ClusterID:   form.Cluster.ID,
+		ClusterName: form.Cluster.Name,
+		Name:        name,
+		Namespace:   form.Namespace,
+		URL: fmt.Sprintf(
+			"%s/applications/%s/%s/%s",
+			app.ServerConf.ServerURL,
+			url.PathEscape(form.Cluster.Name),
+			form.Namespace,
+			name,
+		) + fmt.Sprintf("?project_id=%d", uint(projID)),
+	}
+
 	rel, err := agent.UpgradeRelease(conf, form.Values, app.DOConf)
 
 	if err != nil {
+		notifyOpts.Status = slack.StatusFailed
+
+		notifier.Notify(notifyOpts)
+
 		app.sendExternalError(err, http.StatusInternalServerError, HTTPError{
 			Code:   ErrReleaseDeploy,
 			Errors: []string{err.Error()},
@@ -987,6 +1010,11 @@ func (app *App) HandleUpgradeRelease(w http.ResponseWriter, r *http.Request) {
 
 		return
 	}
+
+	notifyOpts.Status = string(rel.Info.Status)
+	notifyOpts.Version = rel.Version
+
+	notifier.Notify(notifyOpts)
 
 	// update the github actions env if the release exists and is built from source
 	if cName := rel.Chart.Metadata.Name; cName == "job" || cName == "web" || cName == "worker" {
@@ -1171,9 +1199,31 @@ func (app *App) HandleReleaseDeployWebhook(w http.ResponseWriter, r *http.Reques
 		Values:     rel.Config,
 	}
 
-	_, err = agent.UpgradeReleaseByValues(conf, app.DOConf)
+	slackInts, _ := app.Repo.SlackIntegration.ListSlackIntegrationsByProjectID(uint(form.ReleaseForm.Cluster.ProjectID))
+	notifier := slack.NewSlackNotifier(slackInts...)
+
+	notifyOpts := &slack.NotifyOpts{
+		ProjectID:   uint(form.ReleaseForm.Cluster.ProjectID),
+		ClusterID:   form.Cluster.ID,
+		ClusterName: form.Cluster.Name,
+		Name:        rel.Name,
+		Namespace:   rel.Namespace,
+		URL: fmt.Sprintf(
+			"%s/applications/%s/%s/%s",
+			app.ServerConf.ServerURL,
+			url.PathEscape(form.Cluster.Name),
+			form.Namespace,
+			rel.Name,
+		) + fmt.Sprintf("?project_id=%d", uint(form.ReleaseForm.Cluster.ProjectID)),
+	}
+
+	rel, err = agent.UpgradeReleaseByValues(conf, app.DOConf)
 
 	if err != nil {
+		notifyOpts.Status = slack.StatusFailed
+
+		notifier.Notify(notifyOpts)
+
 		app.sendExternalError(err, http.StatusInternalServerError, HTTPError{
 			Code:   ErrReleaseDeploy,
 			Errors: []string{err.Error()},
@@ -1181,6 +1231,11 @@ func (app *App) HandleReleaseDeployWebhook(w http.ResponseWriter, r *http.Reques
 
 		return
 	}
+
+	notifyOpts.Status = string(rel.Info.Status)
+	notifyOpts.Version = rel.Version
+
+	notifier.Notify(notifyOpts)
 
 	app.analyticsClient.Track(analytics.CreateSegmentRedeployViaWebhookTrack("anonymous", repository.(string)))
 

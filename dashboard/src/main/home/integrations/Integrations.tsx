@@ -37,7 +37,7 @@ class Integrations extends Component<PropsType, StateType> {
               integrationList[integration] && integrationList[integration].icon;
             return (
               <div>
-                <TitleSection 
+                <TitleSection
                   icon={icon}
                   handleNavBack={() =>
                     pushFiltered(this.props, `/integrations/${category}`, [

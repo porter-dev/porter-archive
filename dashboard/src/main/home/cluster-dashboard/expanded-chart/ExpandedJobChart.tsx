@@ -639,7 +639,7 @@ export default withAuth(ExpandedJobChart);
 const BackButton = styled.div`
   position: absolute;
   top: 0px;
-  right: 0px;;
+  right: 0px;
   display: flex;
   width: 36px;
   cursor: pointer;
@@ -653,7 +653,7 @@ const BackButton = styled.div`
   :hover {
     background: #ffffff22;
     > img {
-      opacity: 1.0;
+      opacity: 1;
     }
   }
 `;

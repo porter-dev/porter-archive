@@ -67,7 +67,8 @@ class YamlEditor extends Component<PropsType, StateType> {
 export default YamlEditor;
 
 const Editor = styled.form`
-  border-radius: ${(props: { border: boolean }) => (props.border ? "10px" : "")};
+  border-radius: ${(props: { border: boolean }) =>
+    props.border ? "10px" : ""};
   border: ${(props: { border: boolean }) =>
     props.border ? "1px solid #ffffff33" : ""};
 `;

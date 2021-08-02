@@ -9,8 +9,8 @@ interface Props {
   handleNavBack?: () => void;
 }
 
-const TitleSection: React.FC<Props> = ({ 
-  children, 
+const TitleSection: React.FC<Props> = ({
+  children,
   icon,
   iconWidth,
   capitalize,
@@ -18,20 +18,14 @@ const TitleSection: React.FC<Props> = ({
 }) => {
   return (
     <StyledTitleSection>
-      {
-        handleNavBack && (
-          <BackButton>
-            <i className="material-icons" onClick={handleNavBack}>
-              keyboard_backspace
-            </i>
-          </BackButton>
-        )
-      }
-      {
-        icon && (
-          <Icon width={iconWidth} src={icon}/>
-        )
-      }
+      {handleNavBack && (
+        <BackButton>
+          <i className="material-icons" onClick={handleNavBack}>
+            keyboard_backspace
+          </i>
+        </BackButton>
+      )}
+      {icon && <Icon width={iconWidth} src={icon} />}
       <StyledTitle capitalize={capitalize}>{children}</StyledTitle>
     </StyledTitleSection>
   );
@@ -61,7 +55,7 @@ const StyledTitleSection = styled.div`
 `;
 
 const Icon = styled.img<{ width: string }>`
-  width: ${props => props.width || "28px"};
+  width: ${(props) => props.width || "28px"};
   margin-right: 16px;
 `;
 
@@ -69,7 +63,7 @@ const StyledTitle = styled.div<{ capitalize: boolean }>`
   font-size: 24px;
   font-weight: 600;
   user-select: text;
-  text-transform: ${props => props.capitalize ? "capitalize" : ""};
+  text-transform: ${(props) => (props.capitalize ? "capitalize" : "")};
   display: flex;
   align-items: center;
 
@@ -85,7 +79,7 @@ const StyledTitle = styled.div<{ capitalize: boolean }>`
     }
     margin-bottom: -3px;
   }
-  
+
   > a {
     > i {
       display: flex;

@@ -19,25 +19,12 @@ import { max, extent, bisector } from "d3-array";
 import { timeFormat } from "d3-time-format";
 import { NormalizedMetricsData } from "./types";
 
-/*
-export const accentColor = '#f5cb42';
-export const accentColorDark = '#949eff';
-*/
-
-type TooltipData = NormalizedMetricsData;
-
 var globalData: NormalizedMetricsData[];
 
 export const background = "#3b697800";
 export const background2 = "#20405100";
 export const accentColor = "#949eff";
 export const accentColorDark = "#949eff";
-const tooltipStyles = {
-  ...defaultStyles,
-  background,
-  border: "1px solid white",
-  color: "white",
-};
 
 // util
 const formatDate = timeFormat("%H:%M:%S %b %d, '%y");
@@ -72,8 +59,6 @@ export type AreaProps = {
   height: number;
   margin?: { top: number; right: number; bottom: number; left: number };
 };
-
-// export default withTooltip<AreaProps, TooltipData>();
 
 const AreaChart: React.FunctionComponent<AreaProps> = ({
   data,

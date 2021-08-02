@@ -558,7 +558,9 @@ const getMetrics = baseApi<
     cluster_id: number;
     metric: string;
     shouldsum: boolean;
-    pods: string[];
+    pods?: string[];
+    kind?: string; // the controller kind
+    name: string;
     namespace: string;
     startrange: number;
     endrange: number;

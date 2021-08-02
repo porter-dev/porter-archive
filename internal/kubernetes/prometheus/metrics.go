@@ -29,6 +29,23 @@ func GetPrometheusService(clientset kubernetes.Interface) (*v1.Service, bool, er
 	return &services.Items[0], true, nil
 }
 
+// returns the prometheus service name
+func getKubeStateMetricsService(clientset kubernetes.Interface) (*v1.Service, bool, error) {
+	services, err := clientset.CoreV1().Services("").List(context.TODO(), metav1.ListOptions{
+		LabelSelector: "app.kubernetes.io/name=kube-state-metrics",
+	})
+
+	if err != nil {
+		return nil, false, err
+	}
+
+	if len(services.Items) == 0 {
+		return nil, false, nil
+	}
+
+	return &services.Items[0], true, nil
+}
+
 type SimpleIngress struct {
 	Name      string `json:"name"`
 	Namespace string `json:"namespace"`
@@ -110,16 +127,34 @@ func QueryPrometheus(
 	} else if opts.Metric == "cpu_hpa_threshold" {
 		// get the name of the kube hpa metric
 		metricName := getKubeHPAMetricName(clientset, service, opts, "spec_target_metric")
+		ksmSvc, found, _ := getKubeStateMetricsService(clientset)
+		appLabel := ""
 
-		query = createHPAAbsoluteCPUThresholdQuery(metricName, podSelectionRegex, opts.Name, opts.Namespace, service.ObjectMeta.Labels["app"])
+		if found {
+			appLabel = ksmSvc.ObjectMeta.Labels["app.kubernetes.io/instance"]
+		}
+
+		query = createHPAAbsoluteCPUThresholdQuery(metricName, podSelectionRegex, opts.Name, opts.Namespace, appLabel)
 	} else if opts.Metric == "memory_hpa_threshold" {
 		metricName := getKubeHPAMetricName(clientset, service, opts, "spec_target_metric")
+		ksmSvc, found, _ := getKubeStateMetricsService(clientset)
+		appLabel := ""
 
-		query = createHPAAbsoluteMemoryThresholdQuery(metricName, podSelectionRegex, opts.Name, opts.Namespace, service.ObjectMeta.Labels["app"])
+		if found {
+			appLabel = ksmSvc.ObjectMeta.Labels["app.kubernetes.io/instance"]
+		}
+
+		query = createHPAAbsoluteMemoryThresholdQuery(metricName, podSelectionRegex, opts.Name, opts.Namespace, appLabel)
 	} else if opts.Metric == "hpa_replicas" {
 		metricName := getKubeHPAMetricName(clientset, service, opts, "status_current_replicas")
+		ksmSvc, found, _ := getKubeStateMetricsService(clientset)
+		appLabel := ""
 
-		query = createHPACurrentReplicasQuery(metricName, opts.Name, opts.Namespace, service.ObjectMeta.Labels["app"])
+		if found {
+			appLabel = ksmSvc.ObjectMeta.Labels["app.kubernetes.io/instance"]
+		}
+
+		query = createHPACurrentReplicasQuery(metricName, opts.Name, opts.Namespace, appLabel)
 	}
 
 	if opts.ShouldSum {

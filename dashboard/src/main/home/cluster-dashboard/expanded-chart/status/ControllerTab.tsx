@@ -91,6 +91,14 @@ const ControllerTabFC: React.FunctionComponent<PropsType> = ({
     return [...newSelectors];
   }, [controller, selectors]);
 
+  useEffect(() => {
+    updatePods();
+    [controller?.kind, "pod"].forEach((kind) => {
+      setupWebsocket(kind, controller?.metadata?.uid);
+    });
+    () => closeAllWebsockets();
+  }, [currentSelectors, controller, currentCluster, currentProject]);
+
   const updatePods = async () => {
     try {
       const res = await api.getMatchingPods(
@@ -122,6 +130,7 @@ const ControllerTabFC: React.FunctionComponent<PropsType> = ({
 
       setPods(newPods);
       setRawPodList(data);
+      // If the user didn't click a pod, select the first returned from list.
       if (!userSelectedPod) {
         let status = getPodStatus(newPods[0].status);
         status === "failed" &&
@@ -132,6 +141,15 @@ const ControllerTabFC: React.FunctionComponent<PropsType> = ({
     } catch (error) {}
   };
 
+  /**
+   * handleSelectPod is a wrapper for the selectPod function received from parent.
+   * Internally we use the ControllerPodType but we want to pass to the parent the
+   * raw pod returned from the API.
+   *
+   * @param pod A ControllerPodType pod that will be used to search the raw pod to pass
+   * @param rawList A rawList of pods in case we don't want to use the state one. Useful to
+   * avoid problems with reactivity
+   */
   const handleSelectPod = (pod: ControllerTabPodType, rawList?: any[]) => {
     console.log(rawPodList);
     const rawPod = [...rawPodList, ...(rawList || [])].find(
@@ -153,14 +171,6 @@ const ControllerTabFC: React.FunctionComponent<PropsType> = ({
       replicaSetName,
     } as ControllerTabPodType;
   }, [selectedPod]);
-
-  useEffect(() => {
-    updatePods();
-    [controller?.kind, "pod"].forEach((kind) => {
-      setupWebsocket(kind, controller?.metadata?.uid);
-    });
-    () => closeAllWebsockets();
-  }, [currentSelectors, controller, currentCluster, currentProject]);
 
   const currentControllerStatus = useMemo(() => {
     let status = available == total ? "running" : "waiting";

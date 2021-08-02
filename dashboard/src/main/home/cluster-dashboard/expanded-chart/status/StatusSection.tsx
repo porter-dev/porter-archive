@@ -150,14 +150,27 @@ const TabWrapper = styled.div`
 `;
 
 const StyledStatusSection = styled.div`
-  width: 100%;
-  height: 100%;
-  position: relative;
-  font-size: 13px;
   padding: 0px;
   user-select: text;
-  border-radius: 5px;
   overflow: hidden;
+  width: 100%;
+  height: 450px;
+  font-size: 13px;
+  overflow: hidden;
+  border-radius: 10px;
+  animation: floatIn 0.3s;
+  animation-timing-function: ease-out;
+  animation-fill-mode: forwards;
+  @keyframes floatIn {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0px);
+    }
+  }
 `;
 
 const Wrapper = styled.div`

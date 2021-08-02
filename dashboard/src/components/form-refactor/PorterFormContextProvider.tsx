@@ -370,7 +370,7 @@ export const PorterFormContextProvider: React.FC<Props> = (props) => {
         })
       )
     );
-
+    if (props.doDebug) console.log(Object.assign.apply({}, varList));
     props.onSubmit(Object.assign.apply({}, varList));
   };
 

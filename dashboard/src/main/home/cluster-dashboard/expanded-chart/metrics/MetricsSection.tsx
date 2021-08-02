@@ -20,7 +20,7 @@ type PropsType = {
 };
 
 const resolutions: { [range: string]: string } = {
-  "1H": "15s",
+  "1H": "1s",
   "6H": "15s",
   "1D": "15s",
   "1M": "5h",

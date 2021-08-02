@@ -81,3 +81,52 @@ If the hook that you're creating may be used all over the application you can ad
 #### Typing and documentation
 
 Please note that every hook that you may create will be used by other people, so typing it and adding comments on how it works/why you create such hook is super useful and we encourage this behaviour.
+
+### Forms
+
+On the frontend, there are two components responsible for making forms work and are separated such that one only handles 
+the form logic while the other does the rendering. The first one is `PorterFormContextProvider`,
+which provides a context that the second component `PorterForm` subscribes to using a custom hook.
+This relationship should be kept in mind when adding new functionality to this system: logic and rendering must be
+separated between these components.
+
+### Form State
+As a whole, the frontend form stores its state in three places:
+1. The variables of the form - these are shared and can be modified by any form field
+2. The state specific to each form field which can only be modified by the form field itself
+3. The validation information for each field which can only be modified by the form field itself
+
+This state is exposed to each form field through the `useFormFieldHook<T>` (where `T` is the interface describing the state of the component), which every component calls with a unique id passed down
+to it through props:
+```typescript
+interface FieldStateInterface {
+    some: string;
+    fields: boolean;
+}
+
+const { state, variables, setVars, setState, setValidation } = useFormField<FieldStateInterface>(
+    props.id,
+    {
+      initState: {
+          some: "foo",
+          fields: false,
+      },
+      initValidation: {
+        validated: !props.required
+      },
+      initVars: {},
+    }
+  );
+```
+The returned state changing functions behave in the same way as the `setState` function behaves in Class components. So,
+for example, if we wanted to change the value of variable "foo" in the form, we could write:
+```typescript
+setVars((vars) => {
+    return {
+        ...vars,
+        foo: "bar"
+    }
+})
+```
+To see more about how this system works, check out the implementation for some simpler form components like `Checkbox` or 
+`Input`.

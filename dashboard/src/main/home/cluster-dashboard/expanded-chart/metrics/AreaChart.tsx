@@ -391,7 +391,7 @@ const AreaChart: React.FunctionComponent<AreaProps> = ({
             </div>
             {isHpaEnabled && hpaGraphTooltipGlyphPosition !== undefined && (
               <div style={{ color: "#FFF" }}>
-                HPA Threshold: {getValue(tooltipData.tooltipHpaData)}
+                Autoscaling Threshold: {getValue(tooltipData.tooltipHpaData)}
               </div>
             )}
           </TooltipWithBounds>

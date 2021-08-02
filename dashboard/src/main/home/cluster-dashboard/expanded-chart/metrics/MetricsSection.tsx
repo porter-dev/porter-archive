@@ -72,7 +72,10 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
         if (prev.find((option) => option.value === "hpa_replicas")) {
           return [...prev];
         }
-        return [...prev, { value: "hpa_replicas", label: "HPA Replicas" }];
+        return [
+          ...prev,
+          { value: "hpa_replicas", label: "Number of replicas" },
+        ];
       });
     } else {
       setMetricsOptions((prev) => {
@@ -488,7 +491,7 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
               <CheckboxRow
                 toggle={() => setHpaEnabled((prev) => !prev)}
                 checked={hpaEnabled}
-                label="Enable HPA Metrics"
+                label="Show Autoscaling Threshold"
               />
             )}
           <ParentSize>

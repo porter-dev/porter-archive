@@ -355,7 +355,11 @@ export const PorterFormContextProvider: React.FC<Props> = (props) => {
       select: getFinalVariablesForSelect,
     };
 
-    formData.tabs.map((tab) =>
+    const data = props.rawFormData.includeHiddenFields
+      ? restructureToNewFields(props.rawFormData)
+      : formData;
+
+    data.tabs.map((tab) =>
       tab.sections.map((section) =>
         section.contents.map((field) => {
           if (finalFunctions[field.type])
@@ -370,7 +374,7 @@ export const PorterFormContextProvider: React.FC<Props> = (props) => {
         })
       )
     );
-
+    if (props.doDebug) console.log(Object.assign.apply({}, varList));
     props.onSubmit(Object.assign.apply({}, varList));
   };
 

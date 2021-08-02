@@ -7,26 +7,14 @@ import ConfirmOverlay from "components/ConfirmOverlay";
 import { NewWebsocketOptions, useWebsockets } from "shared/hooks/useWebsockets";
 import PodRow from "./PodRow";
 
-type PropsType = {
+type Props = {
   controller: any;
   selectedPod: any;
-  selectPod: Function;
+  selectPod: (newPod: any) => unknown;
   selectors: any;
   isLast?: boolean;
   isFirst?: boolean;
   setPodError: (x: string) => void;
-};
-
-type StateType = {
-  pods: any[];
-  raw: any[];
-  showTooltip: boolean[];
-  podPendingDelete: any;
-  websockets: Record<string, any>;
-  selectors: string[];
-  available: number;
-  total: number;
-  canUpdatePod: boolean;
 };
 
 // Controller tab in log section that displays list of pods on click.
@@ -38,7 +26,7 @@ export type ControllerTabPodType = {
   replicaSetName: string;
 };
 
-const ControllerTabFC: React.FunctionComponent<PropsType> = ({
+const ControllerTabFC: React.FunctionComponent<Props> = ({
   controller,
   selectPod,
   isFirst,
@@ -383,51 +371,3 @@ const ControllerTabFC: React.FunctionComponent<PropsType> = ({
 };
 
 export default ControllerTabFC;
-
-const CloseIcon = styled.i`
-  font-size: 14px;
-  display: flex;
-  font-weight: bold;
-  align-items: center;
-  justify-content: center;
-  border-radius: 5px;
-  background: #ffffff22;
-  width: 18px;
-  height: 18px;
-  margin-right: -6px;
-  margin-left: 10px;
-  cursor: pointer;
-  :hover {
-    background: #ffffff44;
-  }
-`;
-
-const Tooltip = styled.div`
-  position: absolute;
-  left: 35px;
-  word-wrap: break-word;
-  top: 38px;
-  min-height: 18px;
-  max-width: calc(100% - 75px);
-  padding: 2px 5px;
-  background: #383842dd;
-  display: flex;
-  justify-content: center;
-  flex: 1;
-  color: white;
-  text-transform: none;
-  font-size: 12px;
-  font-family: "Work Sans", sans-serif;
-  outline: 1px solid #ffffff55;
-  opacity: 0;
-  animation: faded-in 0.2s 0.15s;
-  animation-fill-mode: forwards;
-  @keyframes faded-in {
-    from {
-      opacity: 0;
-    }
-    to {
-      opacity: 1;
-    }
-  }
-`;

@@ -148,7 +148,7 @@ const IntegrationCategories: React.FC<Props> = (props) => {
                   <Flex>
                     <Icon src={inst.team_icon_url && inst.team_icon_url} />
                     <Label>
-                      {inst.team_id} - {inst.channel}
+                      {inst.team_name || inst.team_id} - {inst.channel}
                     </Label>
                   </Flex>
                 </MainRow>

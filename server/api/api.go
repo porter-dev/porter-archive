@@ -18,6 +18,7 @@ import (
 
 	"github.com/gorilla/sessions"
 	"github.com/porter-dev/porter/internal/helm"
+	"github.com/porter-dev/porter/internal/helm/loader"
 	"github.com/porter-dev/porter/internal/kubernetes"
 	lr "github.com/porter-dev/porter/internal/logger"
 	"github.com/porter-dev/porter/internal/repository"
@@ -80,6 +81,11 @@ type App struct {
 
 	// config for capabilities
 	Capabilities *AppCapabilities
+
+	// ChartLookupURLs contains an in-memory store of Porter chart names matched with
+	// a repo URL, so that finding a chart does not involve multiple lookups to our
+	// chart repo's index.yaml file
+	ChartLookupURLs map[string]string
 
 	// oauth-specific clients
 	GithubUserConf    *oauth2.Config
@@ -222,6 +228,8 @@ func New(conf *AppConfig) (*App, error) {
 	newSegmentClient := analytics.InitializeAnalyticsSegmentClient(sc.SegmentClientKey, app.Logger)
 	app.analyticsClient = newSegmentClient
 
+	app.updateChartRepoURLs()
+
 	return app, nil
 }
 
@@ -295,4 +303,25 @@ func (app *App) getTokenFromRequest(r *http.Request) *token.Token {
 	tok, _ := token.GetTokenFromEncoded(reqToken, app.tokenConf)
 
 	return tok
+}
+
+func (app *App) updateChartRepoURLs() {
+	newCharts := make(map[string]string)
+
+	for _, chartRepo := range []string{
+		app.ServerConf.DefaultApplicationHelmRepoURL,
+		app.ServerConf.DefaultAddonHelmRepoURL,
+	} {
+		indexFile, err := loader.LoadRepoIndexPublic(chartRepo)
+
+		if err != nil {
+			continue
+		}
+
+		for chartName, _ := range indexFile.Entries {
+			newCharts[chartName] = chartRepo
+		}
+	}
+
+	app.ChartLookupURLs = newCharts
 }

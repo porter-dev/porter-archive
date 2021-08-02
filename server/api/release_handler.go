@@ -87,8 +87,6 @@ type PorterRelease struct {
 	ImageRepoURI    string                          `json:"image_repo_uri"`
 }
 
-var porterApplications = map[string]string{"web": "", "job": "", "worker": ""}
-
 // HandleGetRelease retrieves a single release based on a name and revision
 func (app *App) HandleGetRelease(w http.ResponseWriter, r *http.Request) {
 	name := chi.URLParam(r, "name")
@@ -205,11 +203,21 @@ func (app *App) HandleGetRelease(w http.ResponseWriter, r *http.Request) {
 
 	// detect if Porter application chart and attempt to get the latest version
 	// from chart repo
-	if _, found := porterApplications[res.Chart.Metadata.Name]; found {
-		repoIndex, err := loader.LoadRepoIndexPublic(app.ServerConf.DefaultApplicationHelmRepoURL)
+	chartRepoURL, firstFound := app.ChartLookupURLs[res.Chart.Metadata.Name]
+
+	if !firstFound {
+		app.updateChartRepoURLs()
+
+		chartRepoURL, _ = app.ChartLookupURLs[res.Chart.Metadata.Name]
+	}
+
+	if chartRepoURL != "" {
+		repoIndex, err := loader.LoadRepoIndexPublic(chartRepoURL)
 
 		if err == nil {
 			porterChart := loader.FindPorterChartInIndexList(repoIndex, res.Chart.Metadata.Name)
+
+			fmt.Println("PORTER CHART IS", porterChart.Versions)
 
 			if porterChart != nil && len(porterChart.Versions) > 0 {
 				res.LatestVersion = porterChart.Versions[0]
@@ -951,20 +959,22 @@ func (app *App) HandleUpgradeRelease(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			app.sendExternalError(err, http.StatusNotFound, HTTPError{
 				Code:   ErrReleaseReadData,
-				Errors: []string{"release not found"},
+				Errors: []string{"chart version not found"},
 			}, w)
 
 			return
 		}
 
-		if _, found := porterApplications[release.Chart.Metadata.Name]; found {
-			chart, err := loader.LoadChartPublic(
-				app.ServerConf.DefaultApplicationHelmRepoURL,
-				release.Chart.Metadata.Name,
-				form.ChartVersion,
-			)
+		chartRepoURL, foundFirst := app.ChartLookupURLs[release.Chart.Metadata.Name]
 
-			if err != nil {
+		if !foundFirst {
+			app.updateChartRepoURLs()
+
+			var found bool
+
+			chartRepoURL, found = app.ChartLookupURLs[release.Chart.Metadata.Name]
+
+			if !found {
 				app.sendExternalError(err, http.StatusNotFound, HTTPError{
 					Code:   ErrReleaseReadData,
 					Errors: []string{"chart not found"},
@@ -972,9 +982,24 @@ func (app *App) HandleUpgradeRelease(w http.ResponseWriter, r *http.Request) {
 
 				return
 			}
-
-			conf.Chart = chart
 		}
+
+		chart, err := loader.LoadChartPublic(
+			chartRepoURL,
+			release.Chart.Metadata.Name,
+			form.ChartVersion,
+		)
+
+		if err != nil {
+			app.sendExternalError(err, http.StatusNotFound, HTTPError{
+				Code:   ErrReleaseReadData,
+				Errors: []string{"chart not found"},
+			}, w)
+
+			return
+		}
+
+		conf.Chart = chart
 	}
 
 	rel, err := agent.UpgradeRelease(conf, form.Values, app.DOConf)

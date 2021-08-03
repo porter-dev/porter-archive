@@ -8,6 +8,7 @@ import { pushFiltered } from "shared/routing";
 import CreateIntegrationForm from "./create-integration/CreateIntegrationForm";
 import IntegrationCategories from "./IntegrationCategories";
 import IntegrationList from "./IntegrationList";
+import TitleSection from "components/TitleSection";
 
 type PropsType = RouteComponentProps;
 
@@ -27,23 +28,17 @@ const Integrations: React.FC<PropsType> = (props) => {
             let icon =
               integrationList[integration] && integrationList[integration].icon;
             return (
-              <div>
-                <TitleSectionAlt>
-                  <Flex>
-                    <i
-                      className="material-icons"
-                      onClick={() =>
-                        pushFiltered(props, `/integrations/${category}`, [
-                          "project_id",
-                        ])
-                      }
-                    >
-                      keyboard_backspace
-                    </i>
-                    <Icon src={icon && icon} />
-                    <Title>{integrationList[integration].label}</Title>
-                  </Flex>
-                </TitleSectionAlt>
+              <Flex>
+                <TitleSection
+                  handleNavBack={() =>
+                    pushFiltered(props, `/integrations/${category}`, [
+                      "project_id",
+                    ])
+                  }
+                  icon={icon}
+                >
+                    {integrationList[integration].label}
+                </TitleSection>
                 <CreateIntegrationForm
                   integrationName={integration}
                   closeForm={() => {
@@ -53,7 +48,7 @@ const Integrations: React.FC<PropsType> = (props) => {
                   }}
                 />
                 <Br />
-              </div>
+              </Flex>
             );
           }}
         />
@@ -69,9 +64,7 @@ const Integrations: React.FC<PropsType> = (props) => {
         />
         <Route>
           <div>
-            <TitleSection>
-              <Title>Integrations</Title>
-            </TitleSection>
+            <TitleSection>Integrations</TitleSection>
 
             <IntegrationList
               currentCategory={""}
@@ -90,6 +83,11 @@ const Integrations: React.FC<PropsType> = (props) => {
 };
 
 export default withRouter(Integrations);
+
+const Buffer = styled.div`
+  width: 100%;
+  height: 10px;
+`;
 
 const Br = styled.div`
   width: 100%;
@@ -119,32 +117,12 @@ const Flex = styled.div`
   }
 `;
 
-const Title = styled.div`
-  font-size: 24px;
-  font-weight: 600;
-  font-family: "Work Sans", sans-serif;
-  color: #ffffff;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-`;
-
-const TitleSection = styled.div`
-  margin-bottom: 20px;
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: space-between;
-  height: 40px;
-`;
-
 const TitleSectionAlt = styled(TitleSection)`
   margin-left: -42px;
   width: calc(100% + 42px);
 `;
 
 const StyledIntegrations = styled.div`
-  width: calc(90% - 150px);
+  width: 83%;
   min-width: 300px;
-  padding-top: 75px;
 `;

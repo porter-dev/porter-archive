@@ -642,9 +642,7 @@ const DropdownAlt = styled(Dropdown)`
 `;
 
 const RangeWrapper = styled.div`
-  position: absolute;
-  top: 0;
-  right: 0;
+  float: right;
   font-weight: bold;
   width: 156px;
   margin-top: -8px;
@@ -681,11 +679,27 @@ const MetricsLabel = styled.div`
 
 const StyledMetricsSection = styled.div`
   width: 100%;
-  height: 100%;
+  min-height: 450px;
+  height: 50vh;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
   position: relative;
   font-size: 13px;
-  border-radius: 5px;
-  overflow: hidden;
+  border-radius: 10px;
+  border: 1px solid #ffffff33;
+  padding: 18px 22px;
+  animation: floatIn 0.3s;
+  animation-timing-function: ease-out;
+  animation-fill-mode: forwards;
+  @keyframes floatIn {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0px);
+    }
+  }
 `;

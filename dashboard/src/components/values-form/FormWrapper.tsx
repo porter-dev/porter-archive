@@ -445,7 +445,7 @@ export default class FormWrapper extends Component<PropsType, StateType> {
     let showSave = this.showSaveButton();
     return (
       <>
-        {this.props.isInModal ? (
+        {this.props.isInModal || !showSave ? (
           <StyledValuesWrapper showSave={showSave}>
             {this.renderContents(showSave)}
           </StyledValuesWrapper>

@@ -679,7 +679,9 @@ const MetricsLabel = styled.div`
 
 const StyledMetricsSection = styled.div`
   width: 100%;
-  height: 450px;
+  min-height: 450px;
+  height: 50vh;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
   position: relative;

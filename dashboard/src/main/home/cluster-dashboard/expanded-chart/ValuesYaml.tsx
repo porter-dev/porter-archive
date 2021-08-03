@@ -119,7 +119,8 @@ const StyledValuesYaml = styled.div`
   display: flex;
   flex-direction: column;
   width: 100%;
-  height: 450px;
+  min-height: 450px;
+  height: 50vh;
   font-size: 13px;
   overflow: hidden;
   border-radius: 10px;

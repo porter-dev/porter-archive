@@ -22,7 +22,9 @@ const KeyValueArray: React.FC<Props> = (props) => {
     props.id,
     {
       initState: {
-        values: [],
+        values: (props.value && props.value[0]) ? Object.entries(props.value[0]).map(([k, v]) => {
+          return { key: k, value: v };
+        }) as any[] : [],
         showEnvModal: false,
         showEditorModal: false,
       },

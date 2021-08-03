@@ -185,7 +185,7 @@ const IconWrapper = styled.div`
 `;
 
 const Title = styled.div`
-  font-size: 18px;
+  font-size: 20px;
   font-weight: 500;
   display: flex;
   align-items: center;

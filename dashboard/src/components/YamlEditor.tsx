@@ -52,7 +52,7 @@ class YamlEditor extends Component<PropsType, StateType> {
             editorProps={{ $blockScrolling: true }}
             height={this.props.height}
             width="100%"
-            style={{ borderRadius: "5px" }}
+            style={{ borderRadius: "10px" }}
             showPrintMargin={false}
             showGutter={true}
             highlightActiveLine={true}
@@ -67,9 +67,10 @@ class YamlEditor extends Component<PropsType, StateType> {
 export default YamlEditor;
 
 const Editor = styled.form`
-  border-radius: ${(props: { border: boolean }) => (props.border ? "5px" : "")};
+  border-radius: ${(props: { border: boolean }) =>
+    props.border ? "10px" : ""};
   border: ${(props: { border: boolean }) =>
-    props.border ? "1px solid #ffffff22" : ""};
+    props.border ? "1px solid #ffffff33" : ""};
 `;
 
 const Holder = styled.div`

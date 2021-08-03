@@ -371,6 +371,7 @@ const A = styled.a`
 
 const Wrapper = styled.div`
   width: 100%;
+  padding-bottom: 65px;
   height: 100%;
 `;
 

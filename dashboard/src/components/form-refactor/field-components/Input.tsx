@@ -29,7 +29,7 @@ const Input: React.FC<InputField> = ({
       validated: settings?.default != undefined,
     },
     initVars: {
-      [variable]: value ? value[0] : settings?.default, 
+      [variable]: value ? value[0] : settings?.default,
     },
   });
 

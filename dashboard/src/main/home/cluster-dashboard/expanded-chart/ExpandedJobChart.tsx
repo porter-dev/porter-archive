@@ -494,7 +494,7 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
     }
 
     // Filter tabs if previewing an old revision
-    this.setState({ 
+    this.setState({
       leftTabOptions: [{ label: "Jobs", value: "jobs" }],
       rightTabOptions,
     });

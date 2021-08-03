@@ -1,6 +1,7 @@
 import React, { Component } from "react";
 import styled from "styled-components";
 import close from "assets/close.png";
+import backArrow from "assets/back_arrow.png";
 import key from "assets/key.svg";
 import _ from "lodash";
 
@@ -9,6 +10,7 @@ import { Context } from "shared/Context";
 import { isAlphanumeric } from "shared/common";
 import api from "shared/api";
 
+import TitleSection from "components/TitleSection";
 import SaveButton from "components/SaveButton";
 import ConfirmOverlay from "components/ConfirmOverlay";
 import Loading from "components/Loading";
@@ -373,8 +375,11 @@ class ExpandedEnvGroup extends Component<PropsType, StateType> {
 
     return (
       <>
-        <CloseOverlay onClick={closeExpanded} />
         <StyledExpandedChart>
+          <BackButton onClick={closeExpanded}>
+            <BackButtonImg src={backArrow} />
+          </BackButton>
+
           <ConfirmOverlay
             show={this.state.showDeleteOverlay}
             message={`Are you sure you want to delete ${name}?`}
@@ -383,29 +388,18 @@ class ExpandedEnvGroup extends Component<PropsType, StateType> {
           />
           {this.renderDeleteOverlay()}
 
-          <HeaderWrapper>
-            <TitleSection>
-              <Title>
-                <IconWrapper>
-                  <Icon src={key} />
-                </IconWrapper>
-                {name}
-              </Title>
-              <InfoWrapper>
-                <LastDeployed>
-                  Last updated {this.readableDate(timestamp)}
-                </LastDeployed>
-              </InfoWrapper>
+          <TitleSection icon={key} iconWidth="33px">
+            {name}
+            <TagWrapper>
+              Namespace <NamespaceTag>{namespace}</NamespaceTag>
+            </TagWrapper>
+          </TitleSection>
 
-              <TagWrapper>
-                Namespace <NamespaceTag>{namespace}</NamespaceTag>
-              </TagWrapper>
-            </TitleSection>
-
-            <CloseButton onClick={closeExpanded}>
-              <CloseButtonImg src={close} />
-            </CloseButton>
-          </HeaderWrapper>
+          <InfoWrapper>
+            <LastDeployed>
+              Last updated {this.readableDate(timestamp)}
+            </LastDeployed>
+          </InfoWrapper>
 
           <TabRegion
             currentTab={this.state.currentTab}
@@ -424,6 +418,33 @@ class ExpandedEnvGroup extends Component<PropsType, StateType> {
 ExpandedEnvGroup.contextType = Context;
 
 export default withAuth(ExpandedEnvGroup);
+
+const BackButton = styled.div`
+  position: absolute;
+  top: 0px;
+  right: 0px;
+  display: flex;
+  width: 36px;
+  cursor: pointer;
+  height: 36px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #ffffff55;
+  border-radius: 100px;
+  background: #ffffff11;
+
+  :hover {
+    background: #ffffff22;
+    > img {
+      opacity: 1;
+    }
+  }
+`;
+
+const BackButtonImg = styled.img`
+  width: 16px;
+  opacity: 0.75;
+`;
 
 const Button = styled.button`
   height: 35px;
@@ -464,6 +485,7 @@ const InnerWrapper = styled.div<{ full?: boolean }>`
 const TabWrapper = styled.div`
   height: 100%;
   width: 100%;
+  padding-bottom: 65px;
   overflow: hidden;
 `;
 
@@ -499,37 +521,10 @@ const DeleteOverlay = styled.div`
   }
 `;
 
-const CloseOverlay = styled.div`
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: #202227;
-  animation: fadeIn 0.2s 0s;
-  opacity: 0;
-  animation-fill-mode: forwards;
-  @keyframes fadeIn {
-    from {
-      opacity: 0;
-    }
-    to {
-      opacity: 1;
-    }
-  }
-`;
-
-const HeaderWrapper = styled.div``;
-
-const Dot = styled.div`
-  margin-right: 9px;
-  margin-left: 9px;
-`;
-
 const InfoWrapper = styled.div`
   display: flex;
   align-items: center;
-  margin: 24px 0px 17px 0px;
+  margin: 10px 0px 17px 0px;
   height: 20px;
 `;
 
@@ -543,13 +538,13 @@ const LastDeployed = styled.div`
 `;
 
 const TagWrapper = styled.div`
-  position: absolute;
-  right: 0px;
-  bottom: 0px;
   height: 20px;
   font-size: 12px;
   display: flex;
+  margin-left: 20px;
+  margin-bottom: -3px;
   align-items: center;
+  font-weight: 400;
   justify-content: center;
   color: #ffffff44;
   border: 1px solid #ffffff44;
@@ -574,85 +569,25 @@ const NamespaceTag = styled.div`
   border-bottom-left-radius: 0px;
 `;
 
-const Icon = styled.img`
-  width: 100%;
-`;
-
-const IconWrapper = styled.div`
-  color: #efefef;
-  font-size: 16px;
-  height: 20px;
-  width: 20px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  border-radius: 3px;
-  margin-right: 12px;
-
-  > i {
-    font-size: 20px;
-  }
-`;
-
-const Title = styled.div`
-  font-size: 18px;
-  font-weight: 500;
-  display: flex;
-  align-items: center;
-`;
-
-const TitleSection = styled.div`
-  width: 100%;
-  position: relative;
-`;
-
-const CloseButton = styled.div`
-  position: absolute;
-  display: block;
-  width: 40px;
-  height: 40px;
-  padding: 13px 0 12px 0;
-  text-align: center;
-  border-radius: 50%;
-  right: 15px;
-  top: 12px;
-  cursor: pointer;
-  :hover {
-    background-color: #ffffff11;
-  }
-`;
-
-const CloseButtonImg = styled.img`
-  width: 14px;
-  margin: 0 auto;
-`;
-
 const StyledExpandedChart = styled.div`
-  width: calc(100% - 50px);
-  height: calc(100% - 50px);
+  width: 100%;
   z-index: 0;
-  position: absolute;
-  top: 25px;
-  left: 25px;
-  overflow: hidden;
-  border-radius: 10px;
-  background: #26272f;
-  box-shadow: 0 5px 12px 4px #00000033;
-  animation: floatIn 0.3s;
+  position: relative;
+  animation: fadeIn 0.3s;
   animation-timing-function: ease-out;
   animation-fill-mode: forwards;
-  padding: 25px;
   display: flex;
+  overflow-y: auto;
+  padding-bottom: 120px;
   flex-direction: column;
+  overflow: visible;
 
-  @keyframes floatIn {
+  @keyframes fadeIn {
     from {
       opacity: 0;
-      transform: translateY(30px);
     }
     to {
       opacity: 1;
-      transform: translateY(0px);
     }
   }
 `;

@@ -19,6 +19,8 @@ export interface DetailedIngressError {
 }
 
 export interface ChartType {
+  image_repo_uri: string;
+  git_action_config: any;
   name: string;
   info: {
     last_deployed: string;

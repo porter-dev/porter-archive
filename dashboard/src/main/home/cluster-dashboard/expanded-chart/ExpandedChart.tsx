@@ -35,6 +35,7 @@ import SettingsSection from "./SettingsSection";
 import { useWebsockets } from "shared/hooks/useWebsockets";
 import useAuth from "shared/auth/useAuth";
 import TitleSection from "components/TitleSection";
+import { integrationList } from "shared/common";
 
 type Props = {
   namespace: string;
@@ -645,6 +646,19 @@ const ExpandedChart: React.FC<Props> = (props) => {
     return () => (isSubscribed = false);
   }, [components, currentCluster, currentProject, currentChart]);
 
+  const renderDeploymentType = () => {
+    const githubRepository = currentChart?.git_action_config?.git_repo;
+    const icon = githubRepository
+      ? integrationList.repo.icon
+      : integrationList.registry.icon;
+    return (
+      <DeploymentImageContainer>
+        <DeploymentTypeIcon src={icon} />
+        {githubRepository || currentChart?.image_repo_uri}
+      </DeploymentImageContainer>
+    );
+  };
+
   return (
     <>
       <StyledExpandedChart>
@@ -672,6 +686,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
             <TagWrapper>
               Namespace <NamespaceTag>{currentChart.namespace}</NamespaceTag>
             </TagWrapper>
+            {renderDeploymentType()}
           </TitleSection>
 
           {currentChart.chart.metadata.name != "worker" &&
@@ -971,4 +986,22 @@ const StyledExpandedChart = styled.div`
       opacity: 1;
     }
   }
+`;
+
+const DeploymentImageContainer = styled.div`
+  height: 20px;
+  font-size: 14px;
+  display: flex;
+  margin-left: 20px;
+  margin-bottom: -3px;
+  align-items: center;
+  font-weight: 400;
+  justify-content: center;
+  color: #ffffff66;
+  padding-left: 5px;
+`;
+
+const DeploymentTypeIcon = styled(Icon)`
+  width: 25px;
+  margin-right: 5px;
 `;

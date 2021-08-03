@@ -35,7 +35,7 @@ const PodRow: React.FunctionComponent<PodRowProps> = ({
           setShowTooltip(false);
         }}
       >
-        {pod?.name}
+        Pod hash: {pod?.hash}
       </Name>
       {showTooltip && <Tooltip>{pod?.name}</Tooltip>}
       <Status>

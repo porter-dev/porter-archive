@@ -24,6 +24,7 @@ export type ControllerTabPodType = {
   phase: string;
   status: any;
   replicaSetName: string;
+  hash: string;
 };
 
 const ControllerTabFC: React.FunctionComponent<Props> = ({
@@ -100,12 +101,14 @@ const ControllerTabFC: React.FunctionComponent<Props> = ({
           const replicaSetName =
             Array.isArray(pod?.metadata?.ownerReferences) &&
             pod?.metadata?.ownerReferences[0]?.name;
+          const [hash] = (pod?.metadata?.name as string).split("-").reverse();
           return {
             namespace: pod?.metadata?.namespace,
             name: pod?.metadata?.name,
             phase: pod?.status?.phase,
             status: pod?.status,
             replicaSetName,
+            hash,
           };
         });
 
@@ -317,7 +320,7 @@ const ControllerTabFC: React.FunctionComponent<Props> = ({
   };
 
   const mapPods = (podList: ControllerTabPodType[]) => {
-    return podList.map((pod, i) => {
+    return podList.map((pod, i, arr) => {
       let status = getPodStatus(pod.status);
       return (
         <PodRow
@@ -325,7 +328,7 @@ const ControllerTabFC: React.FunctionComponent<Props> = ({
           pod={pod}
           isSelected={currentSelectedPod?.name === pod?.name}
           podStatus={status}
-          isLastItem={i === pods.length - 1}
+          isLastItem={i === arr.length - 1}
           onTabClick={() => {
             setPodError("");
             status === "failed" &&
@@ -352,9 +355,17 @@ const ControllerTabFC: React.FunctionComponent<Props> = ({
       {!!replicaSetArray.length &&
         replicaSetArray.map((subArray, index) => {
           const firstItem = subArray[0];
+          const [replicaSetHash] = firstItem.replicaSetName
+            .split("-")
+            .reverse();
           return (
             <div key={firstItem.replicaSetName + index}>
-              {firstItem.replicaSetName}
+              <ReplicaSetContainer>
+                <ReplicaSetName>
+                  ReplicaSet hash: {replicaSetHash}
+                </ReplicaSetName>
+                <div> Revision: V1.0</div>
+              </ReplicaSetContainer>
               {mapPods(subArray)}
             </div>
           );
@@ -371,3 +382,11 @@ const ControllerTabFC: React.FunctionComponent<Props> = ({
 };
 
 export default ControllerTabFC;
+
+const ReplicaSetContainer = styled.div`
+  padding: 10px 5px;
+  display: flex;
+  justify-content: space-between;
+`;
+
+const ReplicaSetName = styled.span``;

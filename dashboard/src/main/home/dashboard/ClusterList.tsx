@@ -322,8 +322,8 @@ const TemplateList = styled.div`
 `;
 
 const Title = styled.div`
-  font-size: 24px;
-  font-weight: 600;
+  font-size: 20px;
+  font-weight: 500;
   font-family: "Work Sans", sans-serif;
   color: #ffffff;
   white-space: nowrap;

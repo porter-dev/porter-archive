@@ -509,34 +509,3 @@ func (app *App) githubAppClientFromRequest(r *http.Request) (*github.Client, err
 
 	return github.NewClient(&http.Client{Transport: itr}), nil
 }
-
-// finds the github token given the git repo id and the project id
-func (app *App) githubTokenFromRequest(
-	r *http.Request,
-) (*oauth2.Token, error) {
-	grID, err := strconv.ParseUint(chi.URLParam(r, "git_repo_id"), 0, 64)
-
-	if err != nil || grID == 0 {
-		return nil, fmt.Errorf("could not read git repo id")
-	}
-
-	// query for the git repo
-	gr, err := app.Repo.GitRepo.ReadGitRepo(uint(grID))
-
-	if err != nil {
-		return nil, err
-	}
-
-	// get the oauth integration
-	oauthInt, err := app.Repo.OAuthIntegration.ReadOAuthIntegration(gr.OAuthIntegrationID)
-
-	if err != nil {
-		return nil, err
-	}
-
-	return &oauth2.Token{
-		AccessToken:  string(oauthInt.AccessToken),
-		RefreshToken: string(oauthInt.RefreshToken),
-		TokenType:    "Bearer",
-	}, nil
-}

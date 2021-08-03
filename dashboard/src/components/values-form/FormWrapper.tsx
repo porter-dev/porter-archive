@@ -76,102 +76,113 @@ export default class FormWrapper extends Component<PropsType, StateType> {
           value: this.context.currentCluster.service == "doks",
         },
       };
-      if (tabs) {
-        tabs.forEach((tab: any, i: number) => {
-          // Exclude value if omitFromLaunch is set
-          let omit =
-            tab.settings?.omitFromLaunch && this.props.externalValues?.isLaunch;
-          if (tab?.name && tab.label && !omit) {
-            // If a tab is valid, extract state
-            tab.sections?.forEach((section: Section, i: number) => {
-              section?.contents?.forEach((item: FormElement, i: number) => {
-                if (item === null || item === undefined) {
-                  return;
-                }
+      tabs?.forEach((tab: any, i: number) => {
+        // Exclude value if omitFromLaunch is set
+        let omit =
+          tab.settings?.omitFromLaunch && this.props.externalValues?.isLaunch;
+        if (tab?.name && tab.label && !omit) {
+          // If a tab is valid, extract state
+          tab.sections?.forEach((section: Section, i: number) => {
+            section?.contents?.forEach((item: FormElement, i: number) => {
+              if (item === null || item === undefined) {
+                return;
+              }
 
-                if (
-                  item.type === "variable" &&
-                  item.variable &&
-                  item.settings?.default
-                ) {
-                  metaState[item.variable] = { value: item.settings.default };
-                  return;
-                }
+              if (
+                item.type === "variable" &&
+                item.variable &&
+                item.settings?.default
+              ) {
+                metaState[item.variable] = { value: item.settings.default };
+                return;
+              }
 
-                // If no name is assigned use values.yaml variable as identifier
-                let key = item.name || item.variable;
+              // If no name is assigned use values.yaml variable as identifier
+              let key = item.name || item.variable;
 
-                let def =
-                  item.settings &&
-                  item.settings.unit &&
-                  !item.settings.omitUnitFromValue
-                    ? `${item.settings.default}${item.settings.unit}`
-                    : item.settings?.default;
-                def = (item.value && item.value[0]) || def;
+              let def =
+                item.settings &&
+                item.settings.unit &&
+                !item.settings.omitUnitFromValue
+                  ? `${item.settings.default}${item.settings.unit}`
+                  : item.settings?.default;
+              def = (item.value && item.value[0]) || def;
 
-                if (item.type === "checkbox") {
-                  def = item.value && item.value[0];
-                }
+              if (item.type === "checkbox") {
+                def = item.value && item.value[0];
+              }
 
-                // Handle add to list of required fields
-                if (item.required && key) {
-                  requiredFields.push(key);
-                }
+              // Handle add to list of required fields
+              if (item.required && key) {
+                requiredFields.push(key);
+              }
 
-                let value: any = def;
-                switch (item.type) {
-                  case "checkbox":
-                    value = def || false;
-                    break;
-                  case "string-input":
-                    value = def || "";
-                    break;
-                  case "string-input-password":
-                    value = def || item.settings.default;
-                  case "array-input":
-                    value = def || [];
-                    break;
-                  case "env-key-value-array":
-                    value = def || {};
-                    break;
-                  case "key-value-array":
-                    value = def || {};
-                    break;
-                  case "number-input":
-                    value = def?.toString() ? def : "";
-                    break;
-                  case "select":
-                    value = def || item.settings.options[0].value;
-                    break;
-                  case "provider-select":
-                    let providerMap: any = {
-                      gke: "gcp",
-                      eks: "aws",
-                      doks: "do",
-                    };
-                    def = providerMap[this.context.currentCluster.service];
-                    value = def || "aws";
-                    break;
-                  case "base-64":
-                    value = def || "";
-                  case "base-64-password":
-                    value = def || "";
-                  default:
-                }
-                if (value !== null && value !== undefined) {
-                  metaState[key] = { value };
-                }
-              });
+              let value: any = def;
+              switch (item.type) {
+                case "checkbox":
+                  value = def || false;
+                  break;
+                case "string-input":
+                  value = def || "";
+                  break;
+                case "string-input-password":
+                  value = def || item.settings.default;
+                case "array-input":
+                  value = def || [];
+                  break;
+                case "env-key-value-array":
+                  value = def || {};
+                  break;
+                case "key-value-array":
+                  value = def || {};
+                  break;
+                case "number-input":
+                  value = def?.toString() ? def : "";
+                  break;
+                case "select":
+                  value = def || item.settings.options[0].value;
+                  break;
+                case "provider-select":
+                  let providerMap: any = {
+                    gke: "gcp",
+                    eks: "aws",
+                    doks: "do",
+                  };
+                  def = providerMap[this.context.currentCluster.service];
+                  value = def || "aws";
+                  break;
+                case "base-64":
+                  value = def || "";
+                case "base-64-password":
+                  value = def || "";
+                default:
+              }
+              if (value !== null && value !== undefined) {
+                metaState[key] = { value };
+              }
             });
-            if (!this.props.tabOptionsOnly) {
-              tabOptions.push({ value: tab.name, label: tab.label });
+          });
+          if (!this.props.tabOptionsOnly) {
+            tabOptions.push({ value: tab.name, label: tab.label });
+          }
+        }
+      });
+
+      if (this.props.tabOptions?.length > 0) {
+        let prependTabs = [] as { value: string; label: string }[];
+        let appendTabs = [] as { value: string; label: string }[];
+        this.props.tabOptions.forEach(
+          (tab: { value: string; label: string }) => {
+            if (tab.value === "status" || tab.value === "metrics") {
+              prependTabs.push(tab);
+            } else {
+              appendTabs.push(tab);
             }
           }
-        });
+        );
+        tabOptions = prependTabs.concat(tabOptions.concat(appendTabs));
       }
-      if (this.props.tabOptions?.length > 0) {
-        tabOptions = tabOptions.concat(this.props.tabOptions);
-      }
+
       if (tabOptions.length > 0) {
         this.setState(
           {
@@ -193,13 +204,12 @@ export default class FormWrapper extends Component<PropsType, StateType> {
       // Handle change only to external tabs (e.g. DevOps mode toggle)
       let tabOptions = [] as { value: string; label: string }[];
       let tabs = this.props.formData?.tabs;
-      if (tabs) {
-        tabs.forEach((tab: any, i: number) => {
-          if (tab?.name && tab.label) {
-            tabOptions.push({ value: tab.name, label: tab.label });
-          }
-        });
-      }
+      tabs?.forEach((tab: any, i: number) => {
+        if (tab?.name && tab.label) {
+          tabOptions.push({ value: tab.name, label: tab.label });
+        }
+      });
+
       if (this.props.tabOptions?.length > 0) {
         let prependTabs = [] as { value: string; label: string }[];
         let appendTabs = [] as { value: string; label: string }[];
@@ -435,7 +445,7 @@ export default class FormWrapper extends Component<PropsType, StateType> {
     let showSave = this.showSaveButton();
     return (
       <>
-        {this.props.isInModal ? (
+        {this.props.isInModal || !showSave ? (
           <StyledValuesWrapper showSave={showSave}>
             {this.renderContents(showSave)}
           </StyledValuesWrapper>

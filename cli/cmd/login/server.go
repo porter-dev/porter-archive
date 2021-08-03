@@ -55,7 +55,14 @@ func Login(
 	}()
 
 	// open browser for host login
-	redirectHost := fmt.Sprintf("http://localhost:%d", port)
+	var redirectHost string
+	if utils.CheckIfWsl() {
+		fmt.Println("Got till here")
+		redirectHost = fmt.Sprintf("http://%s:%d", utils.GetWslHostName(), port)
+	} else {
+		redirectHost = fmt.Sprintf("http://localhost:%d", port)
+	}
+
 	loginURL := fmt.Sprintf("%s/api/cli/login?redirect=%s", host, url.QueryEscape(redirectHost))
 
 	err = utils.OpenBrowser(loginURL)

@@ -1,7 +1,8 @@
 import React, { Component } from "react";
 import styled from "styled-components";
 import yaml from "js-yaml";
-import close from "assets/close.png";
+
+import backArrow from "assets/back_arrow.png";
 import _ from "lodash";
 import loading from "assets/loading.gif";
 
@@ -12,11 +13,10 @@ import api from "shared/api";
 import SaveButton from "components/SaveButton";
 import ConfirmOverlay from "components/ConfirmOverlay";
 import Loading from "components/Loading";
-import TabRegion from "components/TabRegion";
+import TitleSection from "components/TitleSection";
 import JobList from "./jobs/JobList";
 import SettingsSection from "./SettingsSection";
 import FormWrapper from "components/values-form/FormWrapper";
-import { PlaceHolder } from "brace";
 import { withAuth, WithAuthProps } from "shared/auth/AuthorizationHoc";
 
 type PropsType = WithAuthProps & {
@@ -509,19 +509,6 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
     this.setState({ tabOptions });
   }
 
-  renderIcon = () => {
-    let { currentChart } = this.state;
-
-    if (
-      currentChart.chart.metadata.icon &&
-      currentChart.chart.metadata.icon !== ""
-    ) {
-      return <Icon src={currentChart.chart.metadata.icon} />;
-    } else {
-      return <i className="material-icons">tonality</i>;
-    }
-  };
-
   readableDate = (s: string) => {
     let ts = new Date(s);
     let date = ts.toLocaleDateString();
@@ -585,8 +572,11 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
 
     return (
       <>
-        <CloseOverlay onClick={closeChart} />
         <StyledExpandedChart>
+          <BackButton onClick={closeChart}>
+            <BackButtonImg src={backArrow} />
+          </BackButton>
+
           <ConfirmOverlay
             show={this.state.showDeleteOverlay}
             message={`Are you sure you want to delete ${currentChart.name}?`}
@@ -596,27 +586,23 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
           {this.renderDeleteOverlay()}
 
           <HeaderWrapper>
-            <TitleSection>
-              <Title>
-                <IconWrapper>{this.renderIcon()}</IconWrapper>
-                {chart.name}
-              </Title>
-              <InfoWrapper>
-                <LastDeployed>
-                  Run {this.state.jobs.length} times <Dot>•</Dot>Last template
-                  update at
-                  {" " + this.readableDate(chart.info.last_deployed)}
-                </LastDeployed>
-              </InfoWrapper>
-
+            <TitleSection
+              icon={currentChart.chart.metadata.icon}
+              iconWidth="33px"
+            >
+              {chart.name}
               <TagWrapper>
                 Namespace <NamespaceTag>{chart.namespace}</NamespaceTag>
               </TagWrapper>
             </TitleSection>
 
-            <CloseButton onClick={closeChart}>
-              <CloseButtonImg src={close} />
-            </CloseButton>
+            <InfoWrapper>
+              <LastDeployed>
+                Run {this.state.jobs.length} times <Dot>•</Dot>Last template
+                update at
+                {" " + this.readableDate(chart.info.last_deployed)}
+              </LastDeployed>
+            </InfoWrapper>
           </HeaderWrapper>
 
           <BodyWrapper>
@@ -631,7 +617,6 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
               }
               formData={this.state.formData}
               tabOptions={this.state.tabOptions}
-              isInModal={true}
               renderTabContents={this.renderTabContents}
               tabOptionsOnly={true}
               onSubmit={(formValues) =>
@@ -650,6 +635,33 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
 ExpandedJobChart.contextType = Context;
 
 export default withAuth(ExpandedJobChart);
+
+const BackButton = styled.div`
+  position: absolute;
+  top: 0px;
+  right: 0px;
+  display: flex;
+  width: 36px;
+  cursor: pointer;
+  height: 36px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #ffffff55;
+  border-radius: 100px;
+  background: #ffffff11;
+
+  :hover {
+    background: #ffffff22;
+    > img {
+      opacity: 1;
+    }
+  }
+`;
+
+const BackButtonImg = styled.img`
+  width: 16px;
+  opacity: 0.75;
+`;
 
 const TextWrap = styled.div``;
 
@@ -688,6 +700,7 @@ const BodyWrapper = styled.div`
 const TabWrapper = styled.div`
   height: 100%;
   width: 100%;
+  padding-bottom: 47px;
   overflow: hidden;
 `;
 
@@ -723,26 +736,6 @@ const DeleteOverlay = styled.div`
   }
 `;
 
-const CloseOverlay = styled.div`
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: #202227;
-  animation: fadeIn 0.2s 0s;
-  opacity: 0;
-  animation-fill-mode: forwards;
-  @keyframes fadeIn {
-    from {
-      opacity: 0;
-    }
-    to {
-      opacity: 1;
-    }
-  }
-`;
-
 const HeaderWrapper = styled.div``;
 
 const Dot = styled.div`
@@ -767,13 +760,13 @@ const LastDeployed = styled.div`
 `;
 
 const TagWrapper = styled.div`
-  position: absolute;
-  right: 0px;
-  bottom: 0px;
   height: 20px;
   font-size: 12px;
   display: flex;
+  margin-left: 20px;
+  margin-bottom: -3px;
   align-items: center;
+  font-weight: 400;
   justify-content: center;
   color: #ffffff44;
   border: 1px solid #ffffff44;
@@ -818,65 +811,25 @@ const IconWrapper = styled.div`
   }
 `;
 
-const Title = styled.div`
-  font-size: 18px;
-  font-weight: 500;
-  display: flex;
-  align-items: center;
-`;
-
-const TitleSection = styled.div`
-  width: 100%;
-  position: relative;
-`;
-
-const CloseButton = styled.div`
-  position: absolute;
-  display: block;
-  width: 40px;
-  height: 40px;
-  padding: 13px 0 12px 0;
-  text-align: center;
-  border-radius: 50%;
-  right: 15px;
-  top: 12px;
-  cursor: pointer;
-  :hover {
-    background-color: #ffffff11;
-  }
-`;
-
-const CloseButtonImg = styled.img`
-  width: 14px;
-  margin: 0 auto;
-`;
-
 const StyledExpandedChart = styled.div`
-  width: calc(100% - 50px);
-  height: calc(100% - 50px);
+  width: 100%;
   z-index: 0;
-  position: absolute;
-  top: 25px;
-  left: 25px;
-  border-radius: 10px;
-  background: #26272f;
-  box-shadow: 0 5px 12px 4px #00000033;
-  animation: floatIn 0.3s;
+  position: relative;
+  animation: fadeIn 0.3s;
   animation-timing-function: ease-out;
   animation-fill-mode: forwards;
-  padding: 25px;
   display: flex;
-  overflow: hidden;
+  overflow-y: auto;
+  padding-bottom: 120px;
   flex-direction: column;
+  overflow: visible;
 
-  @keyframes floatIn {
+  @keyframes fadeIn {
     from {
       opacity: 0;
-      transform: translateY(30px);
     }
     to {
       opacity: 1;
-      transform: translateY(0px);
     }
   }
 `;

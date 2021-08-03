@@ -74,6 +74,7 @@ func main() {
 		&ints.HelmRepoTokenCache{},
 		&ints.GithubAppInstallation{},
 		&ints.GithubAppOAuthIntegration{},
+		&ints.SlackIntegration{},
 	)
 
 	if err != nil {

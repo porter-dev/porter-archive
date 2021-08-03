@@ -16,6 +16,9 @@ export interface GenericInputField extends GenericField {
   required?: boolean;
   variable: string;
   settings?: any
+
+  // Read in value from Helm for existing revisions
+  value?: any[];
 }
 
 export interface HeadingField extends GenericField {

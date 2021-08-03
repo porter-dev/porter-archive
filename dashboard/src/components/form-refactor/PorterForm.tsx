@@ -39,10 +39,11 @@ interface Props {
   addendum?: any;
   saveValuesStatus?: string;
   externalValues?: any;
+  showStateDebugger?: boolean;
 }
 
 const PorterForm: React.FC<Props> = (props) => {
-  const { formData, isReadOnly, validationInfo, onSubmit } = useContext(
+  const { formData, isReadOnly, validationInfo, onSubmit, formState } = useContext(
     PorterFormContext
   );
 
@@ -185,12 +186,22 @@ const PorterForm: React.FC<Props> = (props) => {
           /> 
         )
       }
+      { 
+        props.showStateDebugger && (
+          <Pre>{JSON.stringify(formState, undefined, 2)}</Pre>
+        )
+      }
       <Spacer />
     </>
   );
 };
 
 export default PorterForm;
+
+const Pre = styled.pre`
+  font-size: 13px;
+  color: #aaaabb;
+`;
 
 const Spacer = styled.div`
   height: 50px;

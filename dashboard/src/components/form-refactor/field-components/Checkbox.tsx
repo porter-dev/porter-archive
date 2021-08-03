@@ -19,6 +19,7 @@ const Checkbox: React.FC<Props> = ({
   variable,
   isReadOnly,
   settings,
+  value,
 }) => {
   const { state, variables, setVars } = useFormField<CheckboxFieldState>(id, {
     initState: {},
@@ -26,7 +27,7 @@ const Checkbox: React.FC<Props> = ({
       validated: !required,
     },
     initVars: {
-      [variable]: !!settings?.default,
+      [variable]: value ? value[0] : !!settings?.default,
     },
   });
 
@@ -58,9 +59,10 @@ export const getFinalVariablesForCheckbox: GetFinalVariablesFunction = (
   vars,
   props: CheckboxField
 ) => {
-  return vars[props.variable]
-    ? {}
-    : {
-        [props.variable]: !!props.settings?.default,
-      };
+  return vars[props.variable] === false
+    ? {
+      [props.variable]: false,
+    } : {
+      [props.variable]: !!props.settings?.default,
+    };
 };

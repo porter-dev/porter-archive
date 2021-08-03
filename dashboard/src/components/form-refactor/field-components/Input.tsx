@@ -17,6 +17,7 @@ const Input: React.FC<InputField> = ({
   info,
   settings,
   isReadOnly,
+  value,
 }) => {
   const {
     state,
@@ -28,7 +29,7 @@ const Input: React.FC<InputField> = ({
       validated: settings?.default != undefined,
     },
     initVars: {
-      [variable]: settings?.default,
+      [variable]: value ? value[0] : settings?.default, 
     },
   });
 

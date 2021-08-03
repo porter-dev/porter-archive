@@ -651,7 +651,6 @@ const ExpandedChart: React.FC<Props> = (props) => {
     return () => (isSubscribed = false);
   }, [components, currentCluster, currentProject, currentChart]);
 
-  console.log("i see", props.currentChart.form);
   return (
     <>
       <StyledExpandedChart>

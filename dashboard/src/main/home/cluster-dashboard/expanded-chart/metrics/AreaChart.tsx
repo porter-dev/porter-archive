@@ -4,12 +4,7 @@ import { curveMonotoneX } from "@visx/curve";
 import { scaleTime, scaleLinear } from "@visx/scale";
 import { AxisLeft, AxisBottom } from "@visx/axis";
 
-import {
-  Tooltip,
-  TooltipWithBounds,
-  defaultStyles,
-  useTooltip,
-} from "@visx/tooltip";
+import { TooltipWithBounds, defaultStyles, useTooltip } from "@visx/tooltip";
 
 import { GridRows, GridColumns } from "@visx/grid";
 
@@ -18,15 +13,6 @@ import { LinearGradient } from "@visx/gradient";
 import { max, extent, bisector } from "d3-array";
 import { timeFormat } from "d3-time-format";
 import { NormalizedMetricsData } from "./types";
-import {
-  AnimatedAreaSeries,
-  AnimatedLineSeries,
-  Axis,
-  Grid,
-  XYChart,
-  Tooltip as XYTooltip,
-  darkTheme,
-} from "@visx/xychart";
 
 var globalData: NormalizedMetricsData[];
 
@@ -207,7 +193,7 @@ const AreaChart: React.FunctionComponent<AreaProps> = ({
     (hpaEnabled &&
       tooltipData?.tooltipHpaData &&
       valueScale(getValue(tooltipData?.tooltipHpaData))) ||
-    undefined;
+    null;
 
   const dataGraphTooltipGlyphPosition =
     (tooltipData?.data && valueScale(getValue(tooltipData.data))) || 0;
@@ -345,7 +331,7 @@ const AreaChart: React.FunctionComponent<AreaProps> = ({
               strokeWidth={2}
               pointerEvents="none"
             />
-            {isHpaEnabled && hpaGraphTooltipGlyphPosition !== undefined && (
+            {isHpaEnabled && hpaGraphTooltipGlyphPosition !== null && (
               <>
                 <circle
                   cx={tooltipLeft}
@@ -389,7 +375,7 @@ const AreaChart: React.FunctionComponent<AreaProps> = ({
             <div style={{ color: accentColor }}>
               {dataKey}: {getValue(tooltipData.data)}
             </div>
-            {isHpaEnabled && hpaGraphTooltipGlyphPosition !== undefined && (
+            {isHpaEnabled && hpaGraphTooltipGlyphPosition !== null && (
               <div style={{ color: "#FFF" }}>
                 Autoscaling Threshold: {getValue(tooltipData.tooltipHpaData)}
               </div>

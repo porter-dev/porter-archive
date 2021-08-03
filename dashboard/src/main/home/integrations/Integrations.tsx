@@ -132,6 +132,6 @@ const TitleSectionAlt = styled(TitleSection)`
 `;
 
 const StyledIntegrations = styled.div`
-  width: calc(83% + 50px);
+  width: calc(85%);
   min-width: 300px;
 `;

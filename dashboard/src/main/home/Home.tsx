@@ -605,7 +605,7 @@ export default withRouter(withAuth(Home));
 const ViewWrapper = styled.div`
   height: 100%;
   width: 100vw;
-  padding-top: 30px;
+  padding-top: 10vh;
   overflow-y: auto;
   display: flex;
   flex: 1;
@@ -615,10 +615,8 @@ const ViewWrapper = styled.div`
 `;
 
 const DashboardWrapper = styled.div`
-  width: 80%;
-  padding-top: 50px;
+  width: calc(83% + 50px);
   min-width: 300px;
-  padding-bottom: 120px;
 `;
 
 const StyledHome = styled.div`

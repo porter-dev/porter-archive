@@ -210,6 +210,15 @@ func (a *Agent) GetConfigMap(name string, namespace string) (*v1.ConfigMap, erro
 	)
 }
 
+// GetSecret retrieves the secret given its name and namespace
+func (a *Agent) GetSecret(name string, namespace string) (*v1.Secret, error) {
+	return a.Clientset.CoreV1().Secrets(namespace).Get(
+		context.TODO(),
+		name,
+		metav1.GetOptions{},
+	)
+}
+
 // ListConfigMaps simply lists namespaces
 func (a *Agent) ListConfigMaps(namespace string) (*v1.ConfigMapList, error) {
 	return a.Clientset.CoreV1().ConfigMaps(namespace).List(

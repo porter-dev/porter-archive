@@ -591,7 +591,20 @@ func (app *App) getGithubAppOauthTokenFromRequest(r *http.Request) (*oauth2.Toke
 		oauth.MakeUpdateGithubAppOauthIntegrationFunction(oauthInt, *app.Repo))
 
 	if err != nil {
-		return nil, err
+		// try again, in case the token got updated
+		oauthInt2, err := app.Repo.GithubAppOAuthIntegration.ReadGithubAppOauthIntegration(user.GithubAppIntegrationID)
+
+		if err != nil {
+			return nil, err
+		}
+
+		if oauthInt2.Expiry == oauthInt.Expiry {
+			return nil, err
+		} else {
+			oauthInt.AccessToken = oauthInt2.AccessToken
+			oauthInt.RefreshToken = oauthInt2.RefreshToken
+			oauthInt.Expiry = oauthInt2.Expiry
+		}
 	}
 
 	return &oauth2.Token{

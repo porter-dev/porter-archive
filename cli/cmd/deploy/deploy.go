@@ -91,10 +91,10 @@ func NewDeployAgent(client *api.Client, app string, opts *DeployOpts) (*DeployAg
 			// is docker
 			if release.GitActionConfig.DockerfilePath != "" {
 				deployAgent.opts.Method = DeployBuildTypeDocker
+			} else {
+				// otherwise build type is pack
+				deployAgent.opts.Method = DeployBuildTypePack
 			}
-
-			// otherwise build type is pack
-			deployAgent.opts.Method = DeployBuildTypePack
 		} else {
 			// if the git action config does not exist, we use docker by default
 			deployAgent.opts.Method = DeployBuildTypeDocker
@@ -278,6 +278,22 @@ func (d *DeployAgent) UpdateImageAndValues(overrideValues map[string]interface{}
 
 	// overwrite the tag based on a new image
 	currImageSection := mergedValues["image"].(map[string]interface{})
+
+	// if the current image section is hello-porter, the image must be overriden
+	if currImageSection["repository"] == "public.ecr.aws/o1j4x7p4/hello-porter" ||
+		currImageSection["repository"] == "public.ecr.aws/o1j4x7p4/hello-porter-job" {
+		newImage, err := d.getReleaseImage()
+
+		if err != nil {
+			return fmt.Errorf("could not overwrite hello-porter image: %s", err.Error())
+		}
+
+		currImageSection["repository"] = newImage
+
+		// set to latest just to be safe -- this will be overriden if "d.tag" is set in
+		// the agent
+		currImageSection["tag"] = "latest"
+	}
 
 	if d.tag != "" && currImageSection["tag"] != d.tag {
 		currImageSection["tag"] = d.tag

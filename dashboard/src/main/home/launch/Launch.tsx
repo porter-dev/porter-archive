@@ -10,6 +10,7 @@ import ExpandedTemplate from "./expanded-template/ExpandedTemplate";
 import Loading from "components/Loading";
 import LaunchFlow from "./launch-flow/LaunchFlow";
 import NoClusterPlaceholder from "../NoClusterPlaceholder";
+import TitleSection from "components/TitleSection";
 
 import { hardcodedNames } from "shared/hardcodedNameDict";
 import semver from "semver";
@@ -235,7 +236,7 @@ export default class Templates extends Component<PropsType, StateType> {
       return (
         <TemplatesWrapper>
           <TitleSection>
-            <Title>Launch</Title>
+            Launch
             <a href="https://docs.getporter.dev/docs/add-ons" target="_blank">
               <i className="material-icons">help_outline</i>
             </a>
@@ -399,39 +400,7 @@ const TemplateList = styled.div`
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
 `;
 
-const Title = styled.div`
-  font-size: 24px;
-  font-weight: 600;
-  font-family: "Work Sans", sans-serif;
-  color: #ffffff;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-`;
-
-const TitleSection = styled.div`
-  margin-bottom: 20px;
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-
-  > a {
-    > i {
-      display: flex;
-      align-items: center;
-      margin-bottom: -2px;
-      font-size: 18px;
-      margin-left: 15px;
-      color: #858faaaa;
-      :hover {
-        color: #aaaabb;
-      }
-    }
-  }
-`;
-
 const TemplatesWrapper = styled.div`
-  width: calc(90% - 130px);
+  width: calc(83% + 50px);
   min-width: 300px;
-  padding-top: 75px;
 `;

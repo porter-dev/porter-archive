@@ -96,4 +96,5 @@ const StyledTabRegion = styled.div`
   height: 100%;
   position: relative;
   overflow-y: auto;
+  overflow: visible;
 `;

@@ -605,7 +605,7 @@ export default withRouter(withAuth(Home));
 const ViewWrapper = styled.div`
   height: 100%;
   width: 100vw;
-  padding-top: 90px;
+  padding-top: 10vh;
   overflow-y: auto;
   display: flex;
   flex: 1;

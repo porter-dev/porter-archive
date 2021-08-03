@@ -5,19 +5,19 @@ import { PorterFormData } from "./types";
 import { PorterFormContextProvider } from "./PorterFormContextProvider";
 
 type PropsType = {
-  formData: any,
-  valuesToOverride?: any,
-  isReadOnly?: boolean,
-  onSubmit?: (values: any) => void, 
-  renderTabContents?: (currentTab: string, submitValues?: any) => any,
-  leftTabOptions?: { value: string, label: string }[],
-  rightTabOptions?: { value: string, label: string }[],
-  saveButtonText?: string,
-  isInModal?: boolean,
-  color?: string,
-  addendum?: any,
-  saveValuesStatus?: string,
-  externalValues?: any,
+  formData: any;
+  valuesToOverride?: any;
+  isReadOnly?: boolean;
+  onSubmit?: (values: any) => void;
+  renderTabContents?: (currentTab: string, submitValues?: any) => any;
+  leftTabOptions?: { value: string; label: string }[];
+  rightTabOptions?: { value: string; label: string }[];
+  saveButtonText?: string;
+  isInModal?: boolean;
+  color?: string;
+  addendum?: any;
+  saveValuesStatus?: string;
+  externalValues?: any;
   showStateDebugger?: boolean;
 };
 

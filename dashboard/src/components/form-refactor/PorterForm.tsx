@@ -43,14 +43,20 @@ interface Props {
 }
 
 const PorterForm: React.FC<Props> = (props) => {
-  const { formData, isReadOnly, validationInfo, onSubmit, formState } = useContext(
-    PorterFormContext
-  );
+  const {
+    formData,
+    isReadOnly,
+    validationInfo,
+    onSubmit,
+    formState,
+  } = useContext(PorterFormContext);
 
   const [currentTab, setCurrentTab] = useState(
-    props.leftTabOptions?.length > 0 ? props.leftTabOptions[0].value : (
-      formData.tabs.length > 0 ? formData.tabs[0].name : ""
-    )
+    props.leftTabOptions?.length > 0
+      ? props.leftTabOptions[0].value
+      : formData.tabs.length > 0
+      ? formData.tabs[0].name
+      : ""
   );
 
   const renderSectionField = (field: FormField): JSX.Element => {
@@ -132,7 +138,11 @@ const PorterForm: React.FC<Props> = (props) => {
 
     // Handle external tab
     if (!tab) {
-      return props.renderTabContents ? props.renderTabContents(currentTab) : <></>;
+      return props.renderTabContents ? (
+        props.renderTabContents(currentTab)
+      ) : (
+        <></>
+      );
     }
 
     return (
@@ -161,7 +171,7 @@ const PorterForm: React.FC<Props> = (props) => {
       return "Missing required fields";
     }
     return props.saveValuesStatus;
-  }
+  };
 
   return (
     <>
@@ -175,22 +185,20 @@ const PorterForm: React.FC<Props> = (props) => {
         {renderTab()}
       </TabRegion>
       <br />
-      {
-        showSaveButton() && (
-          <SaveButton
-            text={props.saveButtonText || "Deploy"}
-            onClick={onSubmit}
-            makeFlush={!props.isInModal}
-            status={validationInfo.validated ? renderSaveStatus() : validationInfo.error}
-            disabled={isDisabled()}
-          /> 
-        )
-      }
-      { 
-        props.showStateDebugger && (
-          <Pre>{JSON.stringify(formState, undefined, 2)}</Pre>
-        )
-      }
+      {showSaveButton() && (
+        <SaveButton
+          text={props.saveButtonText || "Deploy"}
+          onClick={onSubmit}
+          makeFlush={!props.isInModal}
+          status={
+            validationInfo.validated ? renderSaveStatus() : validationInfo.error
+          }
+          disabled={isDisabled()}
+        />
+      )}
+      {props.showStateDebugger && (
+        <Pre>{JSON.stringify(formState, undefined, 2)}</Pre>
+      )}
       <Spacer />
     </>
   );
@@ -209,7 +217,7 @@ const Spacer = styled.div`
 
 const StyledPorterForm = styled.div<{ showSave?: boolean }>`
   width: 100%;
-  height: ${props => props.showSave ? 'calc(100% - 50px)' : '100%'};
+  height: ${(props) => (props.showSave ? "calc(100% - 50px)" : "100%")};
   background: #ffffff11;
   color: #ffffff;
   padding: 0px 35px 25px;

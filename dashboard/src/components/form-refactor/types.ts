@@ -15,7 +15,7 @@ export interface GenericInputField extends GenericField {
   isReadOnly?: boolean;
   required?: boolean;
   variable: string;
-  settings?: any
+  settings?: any;
 
   // Read in value from Helm for existing revisions
   value?: any[];
@@ -51,10 +51,10 @@ export interface InputField extends GenericInputField {
   placeholder?: string;
   info?: string;
   settings?: {
-    type?: "text"|"password"|"number";
+    type?: "text" | "password" | "number";
     unit?: string;
     omitUnitFromValue?: boolean;
-    default: string|number;
+    default: string | number;
   };
 }
 
@@ -62,8 +62,8 @@ export interface CheckboxField extends GenericInputField {
   type: "checkbox";
   label?: string;
   settings?: {
-    default: boolean
-  }
+    default: boolean;
+  };
 }
 
 export interface KeyValueArrayField extends GenericInputField {
@@ -73,25 +73,27 @@ export interface KeyValueArrayField extends GenericInputField {
   envLoader?: boolean;
   fileUpload?: boolean;
   settings?: {
-    type: "env"|"normal";
-  }
+    type: "env" | "normal";
+  };
 }
 
 export interface ArrayInputField extends GenericInputField {
-  type: "array-input"
-  label?: string
+  type: "array-input";
+  label?: string;
 }
 
 export interface SelectField extends GenericInputField {
-  type: "select"
-  settings: {
-    type: "normal"
-    options: { value: string; label: string }[]
-    default?: string,
-  }|{
-    type: "provider"
-    default?: string,
-  }
+  type: "select";
+  settings:
+    | {
+        type: "normal";
+        options: { value: string; label: string }[];
+        default?: string;
+      }
+    | {
+        type: "provider";
+        default?: string;
+      };
   width: string;
   label?: string;
   dropdownLabel?: string;
@@ -100,15 +102,24 @@ export interface SelectField extends GenericInputField {
 }
 
 export interface VariableField extends GenericInputField {
-  type: "variable",
+  type: "variable";
   settings?: {
-    default: any
-  }
+    default: any;
+  };
 }
 
-export type FormField = HeadingField|SubtitleField|InputField|CheckboxField
-  |KeyValueArrayField|ArrayInputField|SelectField|ServiceIPListField|ResourceListField
-  |VeleroBackupField|VariableField;
+export type FormField =
+  | HeadingField
+  | SubtitleField
+  | InputField
+  | CheckboxField
+  | KeyValueArrayField
+  | ArrayInputField
+  | SelectField
+  | ServiceIPListField
+  | ResourceListField
+  | VeleroBackupField
+  | VariableField;
 
 export interface ShowIfAnd {
   and: ShowIf[];
@@ -153,8 +164,8 @@ export interface StringInputFieldState {}
 export interface CheckboxFieldState {}
 export interface KeyValueArrayFieldState {
   values: {
-    key: string,
-    value: string
+    key: string;
+    value: string;
   }[];
   showEnvModal: boolean;
   showEditorModal: boolean;
@@ -162,7 +173,12 @@ export interface KeyValueArrayFieldState {
 export interface ArrayInputFieldState {}
 export interface SelectFieldState {}
 
-export type PorterFormFieldFieldState = StringInputFieldState|CheckboxFieldState|KeyValueArrayField|ArrayInputFieldState|SelectFieldState;
+export type PorterFormFieldFieldState =
+  | StringInputFieldState
+  | CheckboxFieldState
+  | KeyValueArrayField
+  | ArrayInputFieldState
+  | SelectFieldState;
 
 // reducer interfaces
 
@@ -171,45 +187,57 @@ export interface PorterFormFieldValidationState {
 }
 
 export interface PorterFormVariableList {
-  [key: string]: any
+  [key: string]: any;
 }
 
 export interface PorterFormState {
   components: {
     [key: string]: {
-      state: PorterFormFieldFieldState
-      validation: PorterFormFieldValidationState
-    }
-  }
-  variables: PorterFormVariableList
+      state: PorterFormFieldFieldState;
+      validation: PorterFormFieldValidationState;
+    };
+  };
+  variables: PorterFormVariableList;
 }
 
 export interface PorterFormInitFieldAction {
-  type: "init-field",
+  type: "init-field";
   id: string;
   initValue: PorterFormFieldFieldState;
-  initValidation?: Partial<PorterFormFieldValidationState>
-  initVars?: PorterFormVariableList
+  initValidation?: Partial<PorterFormFieldValidationState>;
+  initVars?: PorterFormVariableList;
 }
 
 export interface PorterFormUpdateFieldAction {
-  type: "update-field",
+  type: "update-field";
   id: string;
-  updateFunc: (prev: PorterFormFieldFieldState) => Partial<PorterFormFieldFieldState>;
+  updateFunc: (
+    prev: PorterFormFieldFieldState
+  ) => Partial<PorterFormFieldFieldState>;
 }
 
 export interface PorterFormUpdateValidationAction {
-  type: "update-validation",
+  type: "update-validation";
   id: string;
-  updateFunc: (prev: PorterFormFieldValidationState) => PorterFormFieldValidationState;
+  updateFunc: (
+    prev: PorterFormFieldValidationState
+  ) => PorterFormFieldValidationState;
 }
 
 export interface PorterFormMutateVariablesAction {
-  type: "mutate-vars",
+  type: "mutate-vars";
   mutateFunc: (prev: PorterFormVariableList) => PorterFormVariableList;
 }
 
-export type PorterFormAction = PorterFormInitFieldAction|PorterFormUpdateFieldAction|PorterFormMutateVariablesAction|PorterFormUpdateValidationAction;
+export type PorterFormAction =
+  | PorterFormInitFieldAction
+  | PorterFormUpdateFieldAction
+  | PorterFormMutateVariablesAction
+  | PorterFormUpdateValidationAction;
 
-export type GetFinalVariablesFunction = (vars: PorterFormVariableList, props: FormField,
-                                         state: PorterFormFieldFieldState, context: Partial<ContextProps>) => PorterFormVariableList;
+export type GetFinalVariablesFunction = (
+  vars: PorterFormVariableList,
+  props: FormField,
+  state: PorterFormFieldFieldState,
+  context: Partial<ContextProps>
+) => PorterFormVariableList;

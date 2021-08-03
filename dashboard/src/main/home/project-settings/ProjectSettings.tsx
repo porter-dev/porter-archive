@@ -117,7 +117,7 @@ const Warning = styled.div`
 `;
 
 const StyledProjectSettings = styled.div`
-  width: calc(83% + 50px);
+  width: calc(85%);
   min-width: 300px;
   height: 100vh;
 `;

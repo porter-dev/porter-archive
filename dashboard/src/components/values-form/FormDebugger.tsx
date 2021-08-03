@@ -68,7 +68,7 @@ export default class FormDebugger extends Component<PropsType, StateType> {
           <i className="material-icons">keyboard_backspace</i>
           Back
         </Button>
-        <Heading>✨ Form.yaml Editor</Heading>
+        <Heading isAtTop={true}>✨ Form.yaml Editor</Heading>
         <Helper>Write and test form.yaml free of consequence.</Helper>
 
         <EditorWrapper>
@@ -157,6 +157,7 @@ export default class FormDebugger extends Component<PropsType, StateType> {
         <Heading>🎨 Rendered Form</Heading>
         <Br />
         <PorterFormWrapper
+          showStateDebugger={this.state.showStateDebugger}
           formData={formData}
           valuesToOverride={{
             input_a: this.state.valuesToOverride?.input_a?.value,

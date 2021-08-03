@@ -14,7 +14,7 @@ const Select: React.FC<SelectField> = (props) => {
   const { currentCluster } = useContext(Context);
   const { variables, setVars } = useFormField<SelectFieldState>(props.id, {
     initVars: {
-      [props.variable]: props.settings.default
+      [props.variable]: props.value ? props.value[0] : props.settings.default
         ? props.settings.default
         : props.settings.type == "provider"
         ? ({

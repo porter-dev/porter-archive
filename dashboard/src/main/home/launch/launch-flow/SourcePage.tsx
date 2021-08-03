@@ -174,12 +174,8 @@ class SourcePage extends Component<PropsType, StateType> {
           setProcfileProcess={(procfileProcess: string) => {
             setProcfileProcess(procfileProcess);
             setValuesToOverride({
-              "container.command": {
-                value: procfileProcess || "",
-              },
-              showStartCommand: {
-                value: !procfileProcess,
-              },
+              "container.command": procfileProcess || "",
+              showStartCommand: !procfileProcess,
             });
           }}
           setBranch={setBranch}

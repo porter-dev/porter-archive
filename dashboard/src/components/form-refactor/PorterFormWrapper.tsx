@@ -18,6 +18,7 @@ type PropsType = {
   addendum?: any,
   saveValuesStatus?: string,
   externalValues?: any,
+  showStateDebugger?: boolean;
 };
 
 const PorterFormWrapper: React.FunctionComponent<PropsType> = ({
@@ -34,6 +35,7 @@ const PorterFormWrapper: React.FunctionComponent<PropsType> = ({
   addendum,
   saveValuesStatus,
   externalValues,
+  showStateDebugger,
 }) => {
   return (
     <>
@@ -45,6 +47,7 @@ const PorterFormWrapper: React.FunctionComponent<PropsType> = ({
           onSubmit={onSubmit}
         >
           <PorterForm
+            showStateDebugger={showStateDebugger}
             addendum={addendum}
             isReadOnly={isReadOnly}
             leftTabOptions={leftTabOptions}

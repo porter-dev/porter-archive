@@ -11,7 +11,7 @@ import (
 	"github.com/porter-dev/porter/internal/kubernetes/domain"
 )
 
-// HandleCreateProjectCluster creates a new cluster
+// HandleCreateDNSRecord creates a new DNS record
 func (app *App) HandleCreateDNSRecord(w http.ResponseWriter, r *http.Request) {
 	vals, err := url.ParseQuery(r.URL.RawQuery)
 

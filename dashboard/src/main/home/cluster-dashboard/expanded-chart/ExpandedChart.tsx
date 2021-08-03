@@ -8,7 +8,7 @@ import React, {
 } from "react";
 import styled from "styled-components";
 import yaml from "js-yaml";
-import close from "assets/close.png";
+import backArrow from "assets/back_arrow.png";
 import _ from "lodash";
 import loadingSrc from "assets/loading.gif";
 
@@ -34,6 +34,7 @@ import StatusSection from "./status/StatusSection";
 import SettingsSection from "./SettingsSection";
 import { useWebsockets } from "shared/hooks/useWebsockets";
 import useAuth from "shared/auth/useAuth";
+import TitleSection from "components/TitleSection";
 
 type Props = {
   namespace: string;
@@ -59,6 +60,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
     props.currentChart
   );
   const [showRevisions, setShowRevisions] = useState<boolean>(false);
+  const [loading, setLoading] = useState<boolean>(false);
   const [components, setComponents] = useState<ResourceType[]>([]);
   const [isPreview, setIsPreview] = useState<boolean>(false);
   const [devOpsMode, setDevOpsMode] = useState<boolean>(
@@ -170,21 +172,27 @@ const ExpandedChart: React.FC<Props> = (props) => {
     const wsConfig = {
       onmessage(evt: MessageEvent) {
         const event = JSON.parse(evt.data);
+        let object = event.Object;
+        object.metadata.kind = event.Kind;
 
-        if (event.event_type == "UPDATE") {
-          let object = event.Object;
-          object.metadata.kind = event.Kind;
-
-          setControllers((oldControllers) => {
-            if (oldControllers[object.metadata.uid]) {
-              return oldControllers;
-            }
-            return {
-              ...oldControllers,
-              [object.metadata.uid]: object,
-            };
-          });
-        }
+        setControllers((oldControllers) => {
+          switch (event.event_type) {
+            case "DELETE":
+              delete oldControllers[object.metadata.uid];
+            case "UPDATE":
+              if (
+                oldControllers &&
+                oldControllers[object.metadata.uid]?.status?.conditions ==
+                  object.status?.conditions
+              ) {
+                return oldControllers;
+              }
+              return {
+                ...oldControllers,
+                [object.metadata.uid]: object,
+              };
+          }
+        });
       },
       onerror() {
         closeWebsocket(kind);
@@ -195,6 +203,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
   };
 
   const updateComponents = async (currentChart: ChartType) => {
+    setLoading(true);
     try {
       const res = await api.getChartComponents(
         "<token>",
@@ -210,8 +219,10 @@ const ExpandedChart: React.FC<Props> = (props) => {
         }
       );
       setComponents(res.data.Objects);
+      setLoading(false);
     } catch (error) {
       console.log(error);
+      setLoading(false);
     }
   };
 
@@ -523,12 +534,16 @@ const ExpandedChart: React.FC<Props> = (props) => {
       return c.Kind === "Service";
     });
 
-    if (!service?.Name || !service?.Namespace) {
+    if (loading) {
       return (
         <Url>
           <Bolded>Loading...</Bolded>
         </Url>
       );
+    }
+
+    if (!service?.Name || !service?.Namespace) {
+      return;
     }
 
     return (
@@ -632,8 +647,11 @@ const ExpandedChart: React.FC<Props> = (props) => {
 
   return (
     <>
-      <CloseOverlay onClick={props.closeChart} />
       <StyledExpandedChart>
+        <BackButton onClick={props.closeChart}>
+          <BackButtonImg src={backArrow} />
+        </BackButton>
+
         <ConfirmOverlay
           show={showDeleteOverlay}
           message={`Are you sure you want to delete ${currentChart.name}?`}
@@ -646,34 +664,30 @@ const ExpandedChart: React.FC<Props> = (props) => {
           </DeleteOverlay>
         )}
         <HeaderWrapper>
-          <TitleSection>
-            <Title>
-              <IconWrapper>{renderIcon()}</IconWrapper>
-              {currentChart.name}
-            </Title>
-            {currentChart.chart.metadata.name != "worker" &&
-              currentChart.chart.metadata.name != "job" &&
-              renderUrl()}
-            <InfoWrapper>
-              <StatusIndicator
-                controllers={controllers}
-                status={currentChart.info.status}
-                margin_left={"0px"}
-              />
-              <LastDeployed>
-                <Dot>•</Dot>Last deployed
-                {" " + getReadableDate(currentChart.info.last_deployed)}
-              </LastDeployed>
-            </InfoWrapper>
-
+          <TitleSection
+            icon={currentChart.chart.metadata.icon}
+            iconWidth="33px"
+          >
+            {currentChart.name}
             <TagWrapper>
               Namespace <NamespaceTag>{currentChart.namespace}</NamespaceTag>
             </TagWrapper>
           </TitleSection>
 
-          <CloseButton onClick={props.closeChart}>
-            <CloseButtonImg src={close} />
-          </CloseButton>
+          {currentChart.chart.metadata.name != "worker" &&
+            currentChart.chart.metadata.name != "job" &&
+            renderUrl()}
+          <InfoWrapper>
+            <StatusIndicator
+              controllers={controllers}
+              status={currentChart.info.status}
+              margin_left={"0px"}
+            />
+            <LastDeployed>
+              <Dot>•</Dot>Last deployed
+              {" " + getReadableDate(currentChart.info.last_deployed)}
+            </LastDeployed>
+          </InfoWrapper>
 
           <RevisionSection
             showRevisions={showRevisions}
@@ -695,30 +709,27 @@ const ExpandedChart: React.FC<Props> = (props) => {
             upgradeVersion={handleUpgradeVersion}
           />
         </HeaderWrapper>
-        <BodyWrapper>
-          <FormWrapper
-            isReadOnly={
-              imageIsPlaceholder ||
-              !isAuthorized("application", "", ["get", "update"])
-            }
-            formData={currentChart.form}
-            tabOptions={tabOptions}
-            isInModal={true}
-            renderTabContents={renderTabContents}
-            onSubmit={onSubmit}
-            saveValuesStatus={saveValuesStatus}
-            externalValues={{
-              namespace: props.namespace,
-              clusterId: currentCluster.id,
-            }}
-            color={isPreview ? "#f5cb42" : null}
-            addendum={
-              <TabButton onClick={toggleDevOpsMode} devOpsMode={devOpsMode}>
-                <i className="material-icons">offline_bolt</i> DevOps Mode
-              </TabButton>
-            }
-          />
-        </BodyWrapper>
+        <FormWrapper
+          isReadOnly={
+            imageIsPlaceholder ||
+            !isAuthorized("application", "", ["get", "update"])
+          }
+          formData={currentChart.form}
+          tabOptions={tabOptions}
+          renderTabContents={renderTabContents}
+          onSubmit={onSubmit}
+          saveValuesStatus={saveValuesStatus}
+          externalValues={{
+            namespace: props.namespace,
+            clusterId: currentCluster.id,
+          }}
+          color={isPreview ? "#f5cb42" : null}
+          addendum={
+            <TabButton onClick={toggleDevOpsMode} devOpsMode={devOpsMode}>
+              <i className="material-icons">offline_bolt</i> DevOps Mode
+            </TabButton>
+          }
+        />
       </StyledExpandedChart>
     </>
   );
@@ -727,6 +738,33 @@ const ExpandedChart: React.FC<Props> = (props) => {
 export default ExpandedChart;
 
 const TextWrap = styled.div``;
+
+const BackButton = styled.div`
+  position: absolute;
+  top: 0px;
+  right: 0px;
+  display: flex;
+  width: 36px;
+  cursor: pointer;
+  height: 36px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #ffffff55;
+  border-radius: 100px;
+  background: #ffffff11;
+
+  :hover {
+    background: #ffffff22;
+    > img {
+      opacity: 1;
+    }
+  }
+`;
+
+const BackButtonImg = styled.img`
+  width: 16px;
+  opacity: 0.75;
+`;
 
 const Header = styled.div`
   font-weight: 500;
@@ -752,12 +790,6 @@ const Spinner = styled.img`
   height: 15px;
   margin-right: 12px;
   margin-bottom: -2px;
-`;
-
-const BodyWrapper = styled.div`
-  width: 100%;
-  height: 100%;
-  overflow: hidden;
 `;
 
 const DeleteOverlay = styled.div`
@@ -844,26 +876,6 @@ const TabButton = styled.div`
   }
 `;
 
-const CloseOverlay = styled.div`
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: #202227;
-  animation: fadeIn 0.2s 0s;
-  opacity: 0;
-  animation-fill-mode: forwards;
-  @keyframes fadeIn {
-    from {
-      opacity: 0;
-    }
-    to {
-      opacity: 1;
-    }
-  }
-`;
-
 const HeaderWrapper = styled.div``;
 
 const Dot = styled.div`
@@ -887,13 +899,13 @@ const LastDeployed = styled.div`
 `;
 
 const TagWrapper = styled.div`
-  position: absolute;
-  bottom: 0px;
-  right: 0px;
   height: 20px;
   font-size: 12px;
   display: flex;
+  margin-left: 20px;
+  margin-bottom: -3px;
   align-items: center;
+  font-weight: 400;
   justify-content: center;
   color: #ffffff44;
   border: 1px solid #ffffff44;
@@ -938,66 +950,25 @@ const IconWrapper = styled.div`
   }
 `;
 
-const Title = styled.div`
-  font-size: 18px;
-  font-weight: 500;
-  display: flex;
-  align-items: center;
-  user-select: text;
-`;
-
-const TitleSection = styled.div`
-  width: 100%;
-  position: relative;
-`;
-
-const CloseButton = styled.div`
-  position: absolute;
-  display: block;
-  width: 40px;
-  height: 40px;
-  padding: 13px 0 12px 0;
-  text-align: center;
-  border-radius: 50%;
-  right: 15px;
-  top: 12px;
-  cursor: pointer;
-  :hover {
-    background-color: #ffffff11;
-  }
-`;
-
-const CloseButtonImg = styled.img`
-  width: 14px;
-  margin: 0 auto;
-`;
-
 const StyledExpandedChart = styled.div`
-  width: calc(100% - 50px);
-  height: calc(100% - 50px);
+  width: 100%;
   z-index: 0;
-  position: absolute;
-  top: 25px;
-  left: 25px;
-  border-radius: 10px;
-  background: #26272f;
-  box-shadow: 0 5px 12px 4px #00000033;
-  animation: floatIn 0.3s;
+  position: relative;
+  animation: fadeIn 0.3s;
   animation-timing-function: ease-out;
   animation-fill-mode: forwards;
-  padding: 25px;
   display: flex;
-  overflow: hidden;
+  overflow-y: auto;
+  padding-bottom: 120px;
   flex-direction: column;
+  overflow: visible;
 
-  @keyframes floatIn {
+  @keyframes fadeIn {
     from {
       opacity: 0;
-      transform: translateY(30px);
     }
     to {
       opacity: 1;
-      transform: translateY(0px);
     }
   }
 `;

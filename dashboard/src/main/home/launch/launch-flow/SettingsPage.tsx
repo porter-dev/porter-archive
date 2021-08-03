@@ -149,10 +149,7 @@ class SettingsPage extends Component<PropsType, StateType> {
             isReadOnly={
               !this.props.isAuthorized("namespace", "", ["get", "create"])
             }
-            onSubmit={(val) => {
-              console.log(val)
-              onSubmit(val)
-            }}
+            onSubmit={(val) => onSubmit(val)}
           />
         </>
       );

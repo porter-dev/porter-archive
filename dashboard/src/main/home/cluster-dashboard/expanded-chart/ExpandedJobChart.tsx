@@ -600,7 +600,6 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
             <PorterFormWrapper
               formData={this.state.formData}
               valuesToOverride={this.state.valuesToOverride}
-              isInModal={true}
               renderTabContents={this.renderTabContents}
               isReadOnly={
                 this.state.imageIsPlaceholder ||
@@ -681,8 +680,7 @@ const Spinner = styled.img`
 `;
 
 const BodyWrapper = styled.div`
-  width: 100%;
-  height: 100%;
+  position: relative;
   overflow: hidden;
 `;
 

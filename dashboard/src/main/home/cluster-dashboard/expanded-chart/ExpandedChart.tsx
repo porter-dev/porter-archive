@@ -730,7 +730,6 @@ const ExpandedChart: React.FC<Props> = (props) => {
             onSubmit={onSubmit}
             rightTabOptions={rightTabOptions}
             leftTabOptions={leftTabOptions}
-            isInModal={true}
             color={isPreview ? "#f5cb42" : null}
             addendum={
               <TabButton onClick={toggleDevOpsMode} devOpsMode={devOpsMode}>
@@ -754,8 +753,7 @@ export default ExpandedChart;
 const TextWrap = styled.div``;
 
 const BodyWrapper = styled.div`
-  width: 100%;
-  height: 100%;
+  position: relative;
   overflow: hidden;
 `;
 

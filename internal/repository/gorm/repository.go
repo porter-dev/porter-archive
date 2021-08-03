@@ -31,5 +31,6 @@ func NewRepository(db *gorm.DB, key *[32]byte) *repository.Repository {
 		AWSIntegration:            NewAWSIntegrationRepository(db, key),
 		GithubAppInstallation:     NewGithubAppInstallationRepository(db),
 		GithubAppOAuthIntegration: NewGithubAppOAuthIntegrationRepository(db),
+		SlackIntegration:          NewSlackIntegrationRepository(db, key),
 	}
 }

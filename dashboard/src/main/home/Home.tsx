@@ -255,7 +255,6 @@ class Home extends Component<PropsType, StateType> {
     let { match } = this.props;
     let params = match.params as any;
     let { cluster } = params;
-    console.log("cluster is", cluster);
 
     let { user } = this.context;
 

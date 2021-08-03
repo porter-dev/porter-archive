@@ -258,6 +258,16 @@ const deleteRegistryIntegration = baseApi<
   return `/api/projects/${pathParams.project_id}/registries/${pathParams.registry_id}`;
 });
 
+const deleteSlackIntegration = baseApi<
+  {},
+  {
+    project_id: number;
+    slack_integration_id: number;
+  }
+>("DELETE", (pathParams) => {
+  return `/api/projects/${pathParams.project_id}/slack_integrations/${pathParams.slack_integration_id}`;
+});
+
 const deployTemplate = baseApi<
   {
     templateName: string;
@@ -999,6 +1009,7 @@ export default {
   deletePod,
   deleteProject,
   deleteRegistryIntegration,
+  deleteSlackIntegration,
   createSubdomain,
   deployTemplate,
   deployAddon,

@@ -1,6 +1,8 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useContext } from "react";
 import ConfirmOverlay from "../../../components/ConfirmOverlay";
 import styled from "styled-components";
+import { Context } from "../../../shared/Context";
+import api from "../../../shared/api";
 
 interface Props {
   slackData: any[];
@@ -8,27 +10,46 @@ interface Props {
 
 const SlackIntegrationList: React.FC<Props> = (props) => {
   const [isDelete, setIsDelete] = useState(false);
-  const [deleteObj, setDeleteObj] = useState({
-    id: 0,
-    team_name: "",
-    team_id: "",
-    channel: "",
-  }); // guaranteed to be set when used
+  const [deleteIndex, setDeleteIndex] = useState(-1); // guaranteed to be set when used
+  const { currentProject, setCurrentError } = useContext(Context);
+  const deleted = useRef(new Set());
+
+  const handleDelete = () => {
+    api
+      .deleteSlackIntegration(
+        "<token>",
+        {},
+        {
+          project_id: currentProject.id,
+          slack_integration_id: props.slackData[deleteIndex].id,
+        }
+      )
+      .then(() => {
+        deleted.current.add(deleteIndex);
+        setIsDelete(false);
+      })
+      .catch((err) => {
+        setCurrentError(err);
+      });
+  };
 
   return (
     <>
       <ConfirmOverlay
         show={isDelete}
-        message={`Are you sure you want to delete the slack integration for team ${
-          deleteObj.team_name || deleteObj.team_id
-        } in channel ${deleteObj.channel}?`}
-        onYes={() => {
-          setIsDelete(false);
-        }}
+        message={
+          deleteIndex != -1 &&
+          `Are you sure you want to delete the slack integration for team ${
+            props.slackData[deleteIndex].team_name ||
+            props.slackData[deleteIndex].team_id
+          } in channel ${props.slackData[deleteIndex].channel}?`
+        }
+        onYes={handleDelete}
         onNo={() => setIsDelete(false)}
       />
       <StyledIntegrationList>
-        {props.slackData.map((inst) => {
+        {props.slackData.map((inst, idx) => {
+          if (deleted.current.has(idx)) return null;
           return (
             <Integration
               onClick={() => {}}
@@ -42,15 +63,25 @@ const SlackIntegrationList: React.FC<Props> = (props) => {
                     {inst.team_name || inst.team_id} - {inst.channel}
                   </Label>
                 </Flex>
-                <i
-                  className="material-icons"
-                  onClick={() => {
-                    setDeleteObj(inst);
-                    setIsDelete(true);
-                  }}
-                >
-                  delete
-                </i>
+                <MaterialIconTray disabled={false}>
+                  <i
+                    className="material-icons"
+                    onClick={() => {
+                      setDeleteIndex(idx);
+                      setIsDelete(true);
+                    }}
+                  >
+                    delete
+                  </i>
+                  <i
+                    className="material-icons"
+                    onClick={() => {
+                      window.open(inst.configuration_url, "_blank");
+                    }}
+                  >
+                    launch
+                  </i>
+                </MaterialIconTray>
               </MainRow>
             </Integration>
           );
@@ -134,6 +165,25 @@ const Flex = styled.div`
     border-radius: 100px;
     :hover {
       background: #ffffff11;
+    }
+  }
+`;
+
+const MaterialIconTray = styled.div`
+  max-width: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  > i {
+    background: #26282f;
+    border-radius: 20px;
+    font-size: 18px;
+    padding: 5px;
+    margin: 0 5px;
+    color: #ffffff44;
+    :hover {
+      background: ${(props: { disabled: boolean }) =>
+        props.disabled ? "" : "#ffffff11"};
     }
   }
 `;

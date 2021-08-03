@@ -1,22 +1,10 @@
 package utils
 
 import (
+	"fmt"
 	"os/exec"
-	"regexp"
 	"runtime"
 )
-
-func checkIfWsl() bool {
-	out, err := exec.Command("uname", "-a").Output()
-	if err != nil {
-		return false
-	}
-	// On some cases, uname on wsl outputs microsoft capitalized
-	if matched, err := regexp.Match(`microsoft|Microsoft`, out); err != nil {
-		return matched
-	}
-	return false
-}
 
 // OpenBrowser opens the specified URL in the default browser of the user.
 func OpenBrowser(url string) error {
@@ -30,12 +18,14 @@ func OpenBrowser(url string) error {
 	case "darwin":
 		cmd = "open"
 	default: // "linux", "freebsd", "openbsd", "netbsd"
-		if checkIfWsl() {
-			cmd = "explorer.exe"
+		if CheckIfWsl() {
+			cmd = "cmd.exe"
+			args = []string{"/c", "start"}
 		} else {
 			cmd = "xdg-open"
 		}
 	}
+	fmt.Println(url)
 	args = append(args, url)
 	return exec.Command(cmd, args...).Start()
 }

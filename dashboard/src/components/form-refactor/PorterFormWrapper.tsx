@@ -57,7 +57,6 @@ const PorterFormWrapper: React.FunctionComponent<PropsType> = ({
             isInModal={isInModal}
             color={color}
             saveValuesStatus={saveValuesStatus}
-            externalValues={externalValues}
           />
         </PorterFormContextProvider>
       )}

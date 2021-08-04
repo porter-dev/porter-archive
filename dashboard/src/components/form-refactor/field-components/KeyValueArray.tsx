@@ -130,7 +130,6 @@ const KeyValueArray: React.FC<Props> = (props) => {
   };
 
   const renderEnvModal = () => {
-    console.log(variables.namespace);
     if (state.showEnvModal) {
       return (
         <Modal

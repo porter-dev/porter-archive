@@ -70,8 +70,13 @@ export const PorterFormContextProvider: React.FC<Props> = (props) => {
         }
         break;
       case "update-field":
+        console.log("update field");
         return {
           ...state,
+          variables: {
+            ...state.variables,
+            ...props.overrideVariables,
+          },
           components: {
             ...state.components,
             [action.id]: {

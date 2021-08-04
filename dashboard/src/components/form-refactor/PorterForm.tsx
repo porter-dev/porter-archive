@@ -38,7 +38,6 @@ interface Props {
   color?: string;
   addendum?: any;
   saveValuesStatus?: string;
-  externalValues?: any;
   showStateDebugger?: boolean;
 }
 

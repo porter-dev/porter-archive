@@ -181,6 +181,7 @@ const PorterForm: React.FC<Props> = (props) => {
         options={getTabOptions()}
         currentTab={currentTab}
         setCurrentTab={setCurrentTab}
+        suppressAnimation={true}
       >
         {renderTab()}
       </TabRegion>

@@ -1,4 +1,4 @@
-import React, { Component } from "react";
+import React, { useEffect, useContext, useState } from "react";
 import styled from "styled-components";
 import GHIcon from "assets/GithubIcon";
 
@@ -8,45 +8,31 @@ import { RouteComponentProps, withRouter } from "react-router";
 import IntegrationList from "./IntegrationList";
 import api from "shared/api";
 import { pushFiltered } from "shared/routing";
+import Loading from "../../../components/Loading";
+import ConfirmOverlay from "../../../components/ConfirmOverlay";
+import SlackIntegrationList from "./SlackIntegrationList";
 import TitleSection from "components/TitleSection";
 
-type PropsType = RouteComponentProps & {
+type Props = RouteComponentProps & {
   category: string;
 };
 
-type StateType = {
-  // currentIntegration: string | null;
-  currentOptions: any[];
-  currentTitles: any[];
-  currentIds: any[];
-  currentIntegrationData: any[];
-};
+const IntegrationCategories: React.FC<Props> = (props) => {
+  const [currentOptions, setCurrentOptions] = useState([]);
+  const [currentTitles, setCurrentTitles] = useState([]);
+  const [currentIds, setCurrentIds] = useState([]);
+  const [currentIntegrationData, setCurrentIntegrationData] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [slackData, setSlackData] = useState([]);
 
-class IntegrationCategories extends Component<PropsType, StateType> {
-  state = {
-    currentOptions: [] as any[],
-    currentTitles: [] as any[],
-    currentIds: [] as any[],
-    currentIntegrationData: [] as any[],
-  };
+  const { currentProject, setCurrentModal } = useContext(Context);
 
-  componentDidMount() {
-    this.getIntegrationsForCategory(this.props.category);
-  }
+  const getIntegrationsForCategory = (categoryType: string) => {
+    setLoading(true);
+    setCurrentOptions([]);
+    setCurrentTitles([]);
+    setCurrentIntegrationData([]);
 
-  componentDidUpdate(prevProps: PropsType, prevState: StateType) {
-    if (this.props.category != prevProps.category) {
-      this.getIntegrationsForCategory(this.props.category);
-    }
-  }
-
-  getIntegrationsForCategory = (categoryType: string) => {
-    const { currentProject } = this.context;
-    this.setState({
-      currentOptions: [],
-      currentTitles: [],
-      currentIntegrationData: [],
-    });
     switch (categoryType) {
       case "kubernetes":
         api
@@ -73,39 +59,25 @@ class IntegrationCategories extends Component<PropsType, StateType> {
                 val.sort((a: any, b: any) => (a.name > b.name ? 1 : -1))
               );
             });
-
-            let currentOptions = [] as string[];
-            let currentTitles = [] as string[];
+            let newCurrentOptions = [] as string[];
+            let newCurrentTitles = [] as string[];
             final.forEach((integration: any, i: number) => {
-              currentOptions.push(integration.service);
-              currentTitles.push(integration.name);
+              newCurrentOptions.push(integration.service);
+              newCurrentTitles.push(integration.name);
             });
-            this.setState({
-              currentOptions,
-              currentTitles,
-              currentIntegrationData: final,
-            });
+            setCurrentOptions(newCurrentOptions);
+            setCurrentTitles(newCurrentTitles);
+            setCurrentIntegrationData(final);
+            setLoading(false);
           })
           .catch(console.log);
         break;
-      case "repo":
+      case "slack":
         api
-          .getGitRepos("<token>", {}, { project_id: currentProject.id })
+          .getSlackIntegrations("<token>", {}, { id: currentProject.id })
           .then((res) => {
-            let currentOptions = [] as string[];
-            let currentTitles = [] as string[];
-            let currentIds = [] as any[];
-            res.data.forEach((item: any) => {
-              currentOptions.push(item.service);
-              currentTitles.push(item.repo_entity);
-              currentIds.push(item.id);
-            });
-            this.setState({
-              currentOptions,
-              currentTitles,
-              currentIds,
-              currentIntegrationData: res.data,
-            });
+            setSlackData(res.data);
+            setLoading(false);
           })
           .catch(console.log);
         break;
@@ -114,99 +86,127 @@ class IntegrationCategories extends Component<PropsType, StateType> {
     }
   };
 
-  render = () => {
-    const { category: currentCategory } = this.props;
-    let icon =
-      integrationList[currentCategory] && integrationList[currentCategory].icon;
-    let label =
-      integrationList[currentCategory] &&
-      integrationList[currentCategory].label;
-    let buttonText =
-      integrationList[currentCategory] &&
-      integrationList[currentCategory].buttonText;
-    if (currentCategory !== "repo") {
-      return (
-        <>
-          <Flex>
-            <TitleSection
-              handleNavBack={() =>
-                pushFiltered(this.props, "/integrations", ["project_id"])
-              }
-              icon={icon}
-            >
-              {label}
-            </TitleSection>
-            <Button
-              onClick={() =>
-                this.context.setCurrentModal("IntegrationsModal", {
-                  category: currentCategory,
-                  setCurrentIntegration: (x: string) =>
-                    pushFiltered(
-                      this.props,
-                      `/integrations/${this.props.category}/create/${x}`,
-                      ["project_id"]
-                    ),
-                })
-              }
-            >
-              <i className="material-icons">add</i>
-              {buttonText}
-            </Button>
-          </Flex>
+  useEffect(() => {
+    getIntegrationsForCategory(props.category);
+  }, [props.category]);
 
-          <IntegrationList
-            currentCategory={currentCategory}
-            integrations={this.state.currentOptions}
-            titles={this.state.currentTitles}
-            itemIdentifier={this.state.currentIntegrationData}
-            updateIntegrationList={() =>
-              this.getIntegrationsForCategory(this.props.category)
+  const { category: currentCategory } = props;
+  const icon =
+    integrationList[currentCategory] && integrationList[currentCategory].icon;
+  const label =
+    integrationList[currentCategory] && integrationList[currentCategory].label;
+  const buttonText =
+    integrationList[currentCategory] &&
+    integrationList[currentCategory].buttonText;
+
+  return (
+    <>
+      <Flex>
+        <TitleSection
+          handleNavBack={() =>
+            pushFiltered(props, "/integrations", ["project_id"])
+          }
+          icon={icon}
+        >
+          {label}
+        </TitleSection>
+        <Button
+          onClick={() => {
+            if (props.category != "slack") {
+              setCurrentModal("IntegrationsModal", {
+                category: currentCategory,
+                setCurrentIntegration: (x: string) =>
+                  pushFiltered(
+                    props,
+                    `/integrations/${props.category}/create/${x}`,
+                    ["project_id"]
+                  ),
+              });
+            } else {
+              window.location.href = `/api/oauth/projects/${currentProject.id}/slack`;
             }
-          />
-        </>
-      );
-    } else {
-      return (
-        <>
-          <Flex>
-            <TitleSection
-              handleNavBack={() =>
-                pushFiltered(this.props, "/integrations", ["project_id"])
-              }
-              icon={icon}
-            >
-              {label}
-            </TitleSection>
-            <Button
-              onClick={() =>
-                window.open(
-                  `/api/oauth/projects/${this.context.currentProject.id}/github`
-                )
-              }
-            >
-              <GHIcon />
-              {buttonText}
-            </Button>
-          </Flex>
+          }}
+        >
+          <i className="material-icons">add</i>
+          {buttonText}
+        </Button>
+      </Flex>
 
-          <IntegrationList
-            currentCategory={currentCategory}
-            integrations={this.state.currentOptions}
-            titles={this.state.currentTitles}
-            itemIdentifier={this.state.currentIds}
-            updateIntegrationList={() =>
-              this.getIntegrationsForCategory(this.props.category)
-            }
-          />
-        </>
-      );
-    }
-  };
-}
+      <LineBreak />
 
-IntegrationCategories.contextType = Context;
+      {loading ? (
+        <Loading />
+      ) : props.category == "slack" ? (
+        <SlackIntegrationList slackData={slackData} />
+      ) : (
+        <IntegrationList
+          currentCategory={props.category}
+          integrations={currentOptions}
+          titles={currentTitles}
+          itemIdentifier={currentIntegrationData}
+          updateIntegrationList={() =>
+            getIntegrationsForCategory(props.category)
+          }
+        />
+      )}
+    </>
+  );
+};
 
 export default withRouter(IntegrationCategories);
+
+const Label = styled.div`
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 500;
+`;
+
+const MainRow = styled.div`
+  height: 70px;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 25px;
+  border-radius: 5px;
+  :hover {
+    background: ${(props: { disabled: boolean }) =>
+      props.disabled ? "" : "#ffffff11"};
+    > i {
+      background: ${(props: { disabled: boolean }) =>
+        props.disabled ? "" : "#ffffff11"};
+    }
+  }
+
+  > i {
+    border-radius: 20px;
+    font-size: 18px;
+    padding: 5px;
+    color: #ffffff44;
+    margin-right: -7px;
+    :hover {
+      background: ${(props: { disabled: boolean }) =>
+        props.disabled ? "" : "#ffffff11"};
+    }
+  }
+`;
+
+const Integration = styled.div`
+  margin-left: -2px;
+  display: flex;
+  flex-direction: column;
+  background: #26282f;
+  cursor: ${(props: { disabled: boolean }) =>
+    props.disabled ? "not-allowed" : "pointer"};
+  margin-bottom: 15px;
+  border-radius: 5px;
+  box-shadow: 0 5px 8px 0px #00000033;
+`;
+
+const StyledIntegrationList = styled.div`
+  margin-top: 20px;
+  margin-bottom: 80px;
+`;
 
 const Icon = styled.img`
   width: 27px;

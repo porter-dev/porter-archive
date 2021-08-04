@@ -43,7 +43,6 @@ type StateType = {
   deleting: boolean;
   saveValuesStatus: string | null;
   formData: any;
-  valuesToOverride: any;
 };
 
 class ExpandedJobChart extends Component<PropsType, StateType> {
@@ -62,7 +61,6 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
     deleting: false,
     saveValuesStatus: null as string | null,
     formData: {} as any,
-    valuesToOverride: {} as any,
   };
 
   // Retrieve full chart data (includes form and values)
@@ -570,10 +568,6 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
     return (
       <>
         <StyledExpandedChart>
-          <BackButton onClick={closeChart}>
-            <BackButtonImg src={backArrow} />
-          </BackButton>
-
           <ConfirmOverlay
             show={this.state.showDeleteOverlay}
             message={`Are you sure you want to delete ${currentChart.name}?`}
@@ -583,6 +577,9 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
           {this.renderDeleteOverlay()}
 
           <HeaderWrapper>
+            <BackButton onClick={closeChart}>
+              <BackButtonImg src={backArrow} />
+            </BackButton>
             <TitleSection
               icon={currentChart.chart.metadata.icon}
               iconWidth="33px"
@@ -611,7 +608,10 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
               ) && (
                 <PorterFormWrapper
                   formData={this.state.formData}
-                  valuesToOverride={this.state.valuesToOverride}
+                  valuesToOverride={{
+                    namespace: chart.namespace,
+                    clusterId: this.props.currentCluster.id,
+                  }}
                   renderTabContents={this.renderTabContents}
                   isReadOnly={
                     this.state.imageIsPlaceholder ||
@@ -742,7 +742,9 @@ const DeleteOverlay = styled.div`
   }
 `;
 
-const HeaderWrapper = styled.div``;
+const HeaderWrapper = styled.div`
+  position: relative;
+`;
 
 const Dot = styled.div`
   margin-right: 9px;
@@ -820,7 +822,6 @@ const IconWrapper = styled.div`
 const StyledExpandedChart = styled.div`
   width: 100%;
   z-index: 0;
-  position: relative;
   animation: fadeIn 0.3s;
   animation-timing-function: ease-out;
   animation-fill-mode: forwards;

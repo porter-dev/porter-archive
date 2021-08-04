@@ -255,7 +255,6 @@ class Home extends Component<PropsType, StateType> {
     let { match } = this.props;
     let params = match.params as any;
     let { cluster } = params;
-    console.log("cluster is", cluster);
 
     let { user } = this.context;
 
@@ -615,7 +614,7 @@ const ViewWrapper = styled.div`
 `;
 
 const DashboardWrapper = styled.div`
-  width: 83%;
+  width: calc(85%);
   min-width: 300px;
 `;
 

@@ -1,4 +1,4 @@
-import React, { Component } from "react";
+import React, { useEffect, useContext, useState } from "react";
 import styled from "styled-components";
 import GHIcon from "assets/GithubIcon";
 
@@ -8,45 +8,31 @@ import { RouteComponentProps, withRouter } from "react-router";
 import IntegrationList from "./IntegrationList";
 import api from "shared/api";
 import { pushFiltered } from "shared/routing";
+import Loading from "../../../components/Loading";
+import ConfirmOverlay from "../../../components/ConfirmOverlay";
+import SlackIntegrationList from "./SlackIntegrationList";
 import TitleSection from "components/TitleSection";
 
-type PropsType = RouteComponentProps & {
+type Props = RouteComponentProps & {
   category: string;
 };
 
-type StateType = {
-  // currentIntegration: string | null;
-  currentOptions: any[];
-  currentTitles: any[];
-  currentIds: any[];
-  currentIntegrationData: any[];
-};
+const IntegrationCategories: React.FC<Props> = (props) => {
+  const [currentOptions, setCurrentOptions] = useState([]);
+  const [currentTitles, setCurrentTitles] = useState([]);
+  const [currentIds, setCurrentIds] = useState([]);
+  const [currentIntegrationData, setCurrentIntegrationData] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [slackData, setSlackData] = useState([]);
 
-class IntegrationCategories extends Component<PropsType, StateType> {
-  state = {
-    currentOptions: [] as any[],
-    currentTitles: [] as any[],
-    currentIds: [] as any[],
-    currentIntegrationData: [] as any[],
-  };
+  const { currentProject, setCurrentModal } = useContext(Context);
 
-  componentDidMount() {
-    this.getIntegrationsForCategory(this.props.category);
-  }
+  const getIntegrationsForCategory = (categoryType: string) => {
+    setLoading(true);
+    setCurrentOptions([]);
+    setCurrentTitles([]);
+    setCurrentIntegrationData([]);
 
-  componentDidUpdate(prevProps: PropsType, prevState: StateType) {
-    if (this.props.category != prevProps.category) {
-      this.getIntegrationsForCategory(this.props.category);
-    }
-  }
-
-  getIntegrationsForCategory = (categoryType: string) => {
-    const { currentProject } = this.context;
-    this.setState({
-      currentOptions: [],
-      currentTitles: [],
-      currentIntegrationData: [],
-    });
     switch (categoryType) {
       case "kubernetes":
         api
@@ -73,39 +59,25 @@ class IntegrationCategories extends Component<PropsType, StateType> {
                 val.sort((a: any, b: any) => (a.name > b.name ? 1 : -1))
               );
             });
-
-            let currentOptions = [] as string[];
-            let currentTitles = [] as string[];
+            let newCurrentOptions = [] as string[];
+            let newCurrentTitles = [] as string[];
             final.forEach((integration: any, i: number) => {
-              currentOptions.push(integration.service);
-              currentTitles.push(integration.name);
+              newCurrentOptions.push(integration.service);
+              newCurrentTitles.push(integration.name);
             });
-            this.setState({
-              currentOptions,
-              currentTitles,
-              currentIntegrationData: final,
-            });
+            setCurrentOptions(newCurrentOptions);
+            setCurrentTitles(newCurrentTitles);
+            setCurrentIntegrationData(final);
+            setLoading(false);
           })
           .catch(console.log);
         break;
-      case "repo":
+      case "slack":
         api
-          .getGitRepos("<token>", {}, { project_id: currentProject.id })
+          .getSlackIntegrations("<token>", {}, { id: currentProject.id })
           .then((res) => {
-            let currentOptions = [] as string[];
-            let currentTitles = [] as string[];
-            let currentIds = [] as any[];
-            res.data.forEach((item: any) => {
-              currentOptions.push(item.service);
-              currentTitles.push(item.repo_entity);
-              currentIds.push(item.id);
-            });
-            this.setState({
-              currentOptions,
-              currentTitles,
-              currentIds,
-              currentIntegrationData: res.data,
-            });
+            setSlackData(res.data);
+            setLoading(false);
           })
           .catch(console.log);
         break;
@@ -114,105 +86,71 @@ class IntegrationCategories extends Component<PropsType, StateType> {
     }
   };
 
-  render = () => {
-    const { category: currentCategory } = this.props;
-    let icon =
-      integrationList[currentCategory] && integrationList[currentCategory].icon;
-    let label =
-      integrationList[currentCategory] &&
-      integrationList[currentCategory].label;
-    let buttonText =
-      integrationList[currentCategory] &&
-      integrationList[currentCategory].buttonText;
-    if (currentCategory !== "repo") {
-      return (
-        <>
-          <Flex>
-            <TitleSection
-              handleNavBack={() =>
-                pushFiltered(this.props, "/integrations", ["project_id"])
-              }
-              icon={icon}
-            >
-              {label}
-            </TitleSection>
-            <Button
-              onClick={() =>
-                this.context.setCurrentModal("IntegrationsModal", {
-                  category: currentCategory,
-                  setCurrentIntegration: (x: string) =>
-                    pushFiltered(
-                      this.props,
-                      `/integrations/${this.props.category}/create/${x}`,
-                      ["project_id"]
-                    ),
-                })
-              }
-            >
-              <i className="material-icons">add</i>
-              {buttonText}
-            </Button>
-          </Flex>
+  useEffect(() => {
+    getIntegrationsForCategory(props.category);
+  }, [props.category]);
 
-          <IntegrationList
-            currentCategory={currentCategory}
-            integrations={this.state.currentOptions}
-            titles={this.state.currentTitles}
-            itemIdentifier={this.state.currentIntegrationData}
-            updateIntegrationList={() =>
-              this.getIntegrationsForCategory(this.props.category)
+  const { category: currentCategory } = props;
+  const icon =
+    integrationList[currentCategory] && integrationList[currentCategory].icon;
+  const label =
+    integrationList[currentCategory] && integrationList[currentCategory].label;
+  const buttonText =
+    integrationList[currentCategory] &&
+    integrationList[currentCategory].buttonText;
+
+  return (
+    <>
+      <Flex>
+        <TitleSection
+          handleNavBack={() =>
+            pushFiltered(props, "/integrations", ["project_id"])
+          }
+          icon={icon}
+        >
+          {label}
+        </TitleSection>
+        <Button
+          onClick={() => {
+            if (props.category != "slack") {
+              setCurrentModal("IntegrationsModal", {
+                category: currentCategory,
+                setCurrentIntegration: (x: string) =>
+                  pushFiltered(
+                    props,
+                    `/integrations/${props.category}/create/${x}`,
+                    ["project_id"]
+                  ),
+              });
+            } else {
+              window.location.href = `/api/oauth/projects/${currentProject.id}/slack`;
             }
-          />
-        </>
-      );
-    } else {
-      return (
-        <>
-          <Flex>
-            <TitleSection
-              handleNavBack={() =>
-                pushFiltered(this.props, "/integrations", ["project_id"])
-              }
-              icon={icon}
-            >
-              {label}
-            </TitleSection>
-            <Button
-              onClick={() =>
-                window.open(
-                  `/api/oauth/projects/${this.context.currentProject.id}/github`
-                )
-              }
-            >
-              <GHIcon />
-              {buttonText}
-            </Button>
-          </Flex>
-
-          <IntegrationList
-            currentCategory={currentCategory}
-            integrations={this.state.currentOptions}
-            titles={this.state.currentTitles}
-            itemIdentifier={this.state.currentIds}
-            updateIntegrationList={() =>
-              this.getIntegrationsForCategory(this.props.category)
-            }
-          />
-        </>
-      );
-    }
-  };
-}
-
-IntegrationCategories.contextType = Context;
+          }}
+        >
+          <i className="material-icons">add</i>
+          {buttonText}
+        </Button>
+      </Flex>
+      {loading ? (
+        <Loading />
+      ) : props.category == "slack" ? (
+        <SlackIntegrationList slackData={slackData} />
+      ) : (
+        <IntegrationList
+          currentCategory={props.category}
+          integrations={currentOptions}
+          titles={currentTitles}
+          itemIdentifier={currentIntegrationData}
+          updateIntegrationList={() =>
+            getIntegrationsForCategory(props.category)
+          }
+        />
+      )}
+    </>
+  );
+};
 
 export default withRouter(IntegrationCategories);
-
-const Icon = styled.img`
-  width: 27px;
-  margin-right: 12px;
-  margin-bottom: -1px;
-`;
 
 const Flex = styled.div`
   display: flex;
@@ -261,11 +199,4 @@ const Button = styled.div`
     margin-right: 10px;
     justify-content: center;
   }
-`;
-
-const LineBreak = styled.div`
-  width: calc(100% - 0px);
-  height: 2px;
-  background: #ffffff20;
-  margin: 18px 0px 24px;
 `;

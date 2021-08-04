@@ -8,14 +8,14 @@ import { Context } from "shared/Context";
 import { InfraType, ProjectType } from "shared/types";
 import { pushQueryParams, pushFiltered } from "shared/routing";
 
-import UploadArea from "components/values-form/UploadArea";
-import SelectRow from "components/values-form/SelectRow";
-import CheckboxRow from "components/values-form/CheckboxRow";
-import InputRow from "components/values-form/InputRow";
-import Helper from "components/values-form/Helper";
-import Heading from "components/values-form/Heading";
+import UploadArea from "components/form-components/UploadArea";
+import SelectRow from "components/form-components/SelectRow";
+import CheckboxRow from "components/form-components/CheckboxRow";
+import InputRow from "components/form-components/InputRow";
+import Helper from "components/form-components/Helper";
+import Heading from "components/form-components/Heading";
 import SaveButton from "components/SaveButton";
-import CheckboxList from "components/values-form/CheckboxList";
+import CheckboxList from "components/form-components/CheckboxList";
 import { RouteComponentProps, withRouter } from "react-router";
 
 type PropsType = RouteComponentProps & {

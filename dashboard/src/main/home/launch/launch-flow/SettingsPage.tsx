@@ -13,10 +13,10 @@ import {
 
 import { isAlphanumeric } from "shared/common";
 
-import InputRow from "components/values-form/InputRow";
+import InputRow from "components/form-components/InputRow";
 import SaveButton from "components/SaveButton";
-import Helper from "components/values-form/Helper";
-import FormWrapper from "components/values-form/FormWrapper";
+import Helper from "components/form-components/Helper";
+import PorterFormWrapper from "components/porter-form/PorterFormWrapper";
 import Selector from "components/Selector";
 import Loading from "components/Loading";
 import { withAuth, WithAuthProps } from "shared/auth/AuthorizationHoc";
@@ -138,27 +138,30 @@ class SettingsPage extends Component<PropsType, StateType> {
         onSubmit,
       } = this.props;
       return (
-        <>
+        <FadeWrapper>
           <Heading>Additional Settings</Heading>
           <Helper>
             Configure additional settings for this template. (Optional)
           </Helper>
-          <FormWrapper
+          <PorterFormWrapper
             formData={form}
             saveValuesStatus={saveValuesStatus}
-            valuesToOverride={valuesToOverride}
-            clearValuesToOverride={clearValuesToOverride}
-            externalValues={{
+            valuesToOverride={{
+              ...valuesToOverride,
               namespace: selectedNamespace,
               clusterId: this.context.currentCluster.id,
-              isLaunch: true,
             }}
+            //externalValues={{
+            //  isLaunch: true,
+            //}}
             isReadOnly={
               !this.props.isAuthorized("namespace", "", ["get", "create"])
             }
-            onSubmit={onSubmit}
+            onSubmit={(val) => {
+              onSubmit(val);
+            }}
           />
-        </>
+        </FadeWrapper>
       );
     } else {
       return (
@@ -357,6 +360,10 @@ const NamespaceLabel = styled.div`
 
 const Link = styled.a`
   margin-left: 5px;
+`;
+
+const FadeWrapper = styled.div`
+  animation: fadeIn 0.25s 0s;
 `;
 
 const Wrapper = styled.div`

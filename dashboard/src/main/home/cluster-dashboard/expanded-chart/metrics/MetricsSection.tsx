@@ -9,18 +9,18 @@ import { ChartTypeWithExtendedConfig, StorageType } from "shared/types";
 
 import TabSelector from "components/TabSelector";
 import Loading from "components/Loading";
-import SelectRow from "components/values-form/SelectRow";
+import SelectRow from "components/form-components/SelectRow";
 import AreaChart from "./AreaChart";
 import { MetricNormalizer } from "./MetricNormalizer";
 import { AvailableMetrics, NormalizedMetricsData } from "./types";
-import CheckboxRow from "components/values-form/CheckboxRow";
+import CheckboxRow from "components/form-components/CheckboxRow";
 
 type PropsType = {
   currentChart: ChartTypeWithExtendedConfig;
 };
 
 const resolutions: { [range: string]: string } = {
-  "1H": "15s",
+  "1H": "1s",
   "6H": "15s",
   "1D": "15s",
   "1M": "5h",
@@ -72,7 +72,10 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
         if (prev.find((option) => option.value === "hpa_replicas")) {
           return [...prev];
         }
-        return [...prev, { value: "hpa_replicas", label: "HPA Replicas" }];
+        return [
+          ...prev,
+          { value: "hpa_replicas", label: "Number of replicas" },
+        ];
       });
     } else {
       setMetricsOptions((prev) => {
@@ -488,7 +491,7 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
               <CheckboxRow
                 toggle={() => setHpaEnabled((prev) => !prev)}
                 checked={hpaEnabled}
-                label="Enable HPA Metrics"
+                label="Show Autoscaling Threshold"
               />
             )}
           <ParentSize>
@@ -679,7 +682,7 @@ const MetricsLabel = styled.div`
 
 const StyledMetricsSection = styled.div`
   width: 100%;
-  min-height: 450px;
+  min-height: 400px;
   height: 50vh;
   overflow: hidden;
   display: flex;

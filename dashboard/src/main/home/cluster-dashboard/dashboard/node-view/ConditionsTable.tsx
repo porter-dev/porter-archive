@@ -59,5 +59,5 @@ export const ConditionsTable: React.FunctionComponent<NodeStatusModalProps> = ({
 };
 
 const TableWrapper = styled.div`
-  margin-top: 14px;
+  margin-top: 36px;
 `;

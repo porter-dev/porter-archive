@@ -651,10 +651,19 @@ const ExpandedChart: React.FC<Props> = (props) => {
     const icon = githubRepository
       ? integrationList.repo.icon
       : integrationList.registry.icon;
+
+    const isWebOrWorkerDeployment = ["web", "worker"].includes(
+      currentChart?.chart?.metadata?.name
+    );
+    if (!isWebOrWorkerDeployment) {
+      return null;
+    }
     return (
       <DeploymentImageContainer>
         <DeploymentTypeIcon src={icon} />
-        {githubRepository || currentChart?.image_repo_uri}
+        {githubRepository ||
+          currentChart?.image_repo_uri ||
+          currentChart?.config?.image?.repository}
       </DeploymentImageContainer>
     );
   };

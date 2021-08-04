@@ -179,7 +179,8 @@ const ExpandedChart: React.FC<Props> = (props) => {
         setControllers((oldControllers) => {
           switch (event.event_type) {
             case "DELETE":
-              typeof oldControllers !== "undefined" && delete oldControllers[object.metadata.uid];
+              typeof oldControllers !== "undefined" &&
+                delete oldControllers[object.metadata.uid];
             case "UPDATE":
               if (
                 oldControllers &&
@@ -707,8 +708,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
           status={chartStatus}
           shouldUpdate={
             currentChart.latest_version &&
-            currentChart.latest_version !==
-              currentChart.chart.metadata.version
+            currentChart.latest_version !== currentChart.chart.metadata.version
           }
           latestVersion={currentChart.latest_version}
           upgradeVersion={handleUpgradeVersion}

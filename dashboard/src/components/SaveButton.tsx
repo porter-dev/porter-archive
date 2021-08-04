@@ -197,17 +197,17 @@ const Button = styled.button<{
   padding: 6px 20px 7px 20px;
   text-align: left;
   border: 0;
-  border-radius: ${props => props.rounded ? "100px" : "5px"};
-  background: ${props => (!props.disabled ? props.color : "#aaaabb")};
-  box-shadow: ${props =>
+  border-radius: ${(props) => (props.rounded ? "100px" : "5px")};
+  background: ${(props) => (!props.disabled ? props.color : "#aaaabb")};
+  box-shadow: ${(props) =>
     !props.disabled ? "0 2px 5px 0 #00000030" : "none"};
-  cursor: ${props => !props.disabled ? "pointer" : "default"};
+  cursor: ${(props) => (!props.disabled ? "pointer" : "default")};
   user-select: none;
   :focus {
     outline: 0;
   }
   :hover {
-    filter: ${props => !props.disabled ? "brightness(120%)" : ""};
+    filter: ${(props) => (!props.disabled ? "brightness(120%)" : "")};
   }
 
   > i {

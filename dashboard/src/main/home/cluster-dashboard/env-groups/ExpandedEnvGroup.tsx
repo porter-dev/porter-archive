@@ -16,9 +16,9 @@ import ConfirmOverlay from "components/ConfirmOverlay";
 import Loading from "components/Loading";
 import TabRegion from "components/TabRegion";
 import EnvGroupArray, { KeyValueType } from "./EnvGroupArray";
-import Heading from "components/values-form/Heading";
-import Helper from "components/values-form/Helper";
-import InputRow from "components/values-form/InputRow";
+import Heading from "components/form-components/Heading";
+import Helper from "components/form-components/Helper";
+import InputRow from "components/form-components/InputRow";
 import { withAuth, WithAuthProps } from "shared/auth/AuthorizationHoc";
 
 type PropsType = WithAuthProps & {

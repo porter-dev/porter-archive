@@ -7,8 +7,8 @@ import close from "assets/close.png";
 import { isAlphanumeric } from "shared/common";
 import { pushFiltered } from "shared/routing";
 
-import InputRow from "components/values-form/InputRow";
-import Helper from "components/values-form/Helper";
+import InputRow from "components/form-components/InputRow";
+import Helper from "components/form-components/Helper";
 import ImageSelector from "components/image-selector/ImageSelector";
 import ActionConfEditor from "components/repo-selector/ActionConfEditor";
 import SaveButton from "components/SaveButton";

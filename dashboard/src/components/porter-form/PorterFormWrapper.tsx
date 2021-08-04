@@ -52,7 +52,7 @@ const PorterFormWrapper: React.FunctionComponent<PropsType> = ({
     } else {
       return "";
     }
-  }
+  };
 
   const [currentTab, setCurrentTab] = useState(getInitialTab());
 

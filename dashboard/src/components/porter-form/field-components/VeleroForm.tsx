@@ -1,8 +1,8 @@
 import React, { Component } from "react";
 
-import Heading from "../values-form/Heading";
-import InputRow from "../values-form/InputRow";
-import MultiSelect from "../values-form/MultiSelect";
+import Heading from "../../form-components/Heading";
+import InputRow from "../../form-components/InputRow";
+import MultiSelect from "./MultiSelect";
 
 type PropsType = {};
 

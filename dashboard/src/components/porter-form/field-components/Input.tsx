@@ -1,5 +1,5 @@
 import React from "react";
-import InputRow from "../../values-form/InputRow";
+import InputRow from "../../form-components/InputRow";
 import useFormField from "../hooks/useFormField";
 import {
   GenericInputField,

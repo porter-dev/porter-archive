@@ -600,33 +600,29 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
           </HeaderWrapper>
 
           <BodyWrapper>
-            {
-              (
-                this.state.leftTabOptions?.length > 0 ||
-                this.state.formData.tabs?.length > 0 ||
-                this.state.rightTabOptions?.length > 0
-              ) && (
-                <PorterFormWrapper
-                  formData={this.state.formData}
-                  valuesToOverride={{
-                    namespace: chart.namespace,
-                    clusterId: this.props.currentCluster.id,
-                  }}
-                  renderTabContents={this.renderTabContents}
-                  isReadOnly={
-                    this.state.imageIsPlaceholder ||
-                    !this.props.isAuthorized("job", "", ["get", "update"])
-                  }
-                  onSubmit={(formValues) =>
-                    this.handleSaveValues(formValues, false)
-                  }
-                  leftTabOptions={this.state.leftTabOptions}
-                  rightTabOptions={this.state.rightTabOptions}
-                  saveValuesStatus={this.state.saveValuesStatus}
-                  saveButtonText="Save Config"
-                />
-              )
-            }
+            {(this.state.leftTabOptions?.length > 0 ||
+              this.state.formData.tabs?.length > 0 ||
+              this.state.rightTabOptions?.length > 0) && (
+              <PorterFormWrapper
+                formData={this.state.formData}
+                valuesToOverride={{
+                  namespace: chart.namespace,
+                  clusterId: this.props.currentCluster.id,
+                }}
+                renderTabContents={this.renderTabContents}
+                isReadOnly={
+                  this.state.imageIsPlaceholder ||
+                  !this.props.isAuthorized("job", "", ["get", "update"])
+                }
+                onSubmit={(formValues) =>
+                  this.handleSaveValues(formValues, false)
+                }
+                leftTabOptions={this.state.leftTabOptions}
+                rightTabOptions={this.state.rightTabOptions}
+                saveValuesStatus={this.state.saveValuesStatus}
+                saveButtonText="Save Config"
+              />
+            )}
           </BodyWrapper>
         </StyledExpandedChart>
       </>

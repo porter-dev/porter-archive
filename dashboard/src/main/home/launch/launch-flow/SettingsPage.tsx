@@ -158,7 +158,7 @@ class SettingsPage extends Component<PropsType, StateType> {
               !this.props.isAuthorized("namespace", "", ["get", "create"])
             }
             onSubmit={(val) => {
-              onSubmit(val)
+              onSubmit(val);
             }}
           />
         </FadeWrapper>

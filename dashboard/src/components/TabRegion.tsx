@@ -42,23 +42,21 @@ export default class TabRegion extends Component<PropsType, StateType> {
   render() {
     return (
       <StyledTabRegion suppressAnimation={this.props.suppressAnimation}>
-        {
-          !this.props.currentTab ? (
-            <Loading />
-          ) : (
-            <>
-              <TabSelector
-                options={this.props.options}
-                color={this.props.color}
-                currentTab={this.props.currentTab}
-                setCurrentTab={(x: string) => this.props.setCurrentTab(x)}
-                addendum={this.props.addendum}
-              />
-              <Gap />
-              <TabContents>{this.props.children}</TabContents>
-            </>
-          )
-        }
+        {!this.props.currentTab ? (
+          <Loading />
+        ) : (
+          <>
+            <TabSelector
+              options={this.props.options}
+              color={this.props.color}
+              currentTab={this.props.currentTab}
+              setCurrentTab={(x: string) => this.props.setCurrentTab(x)}
+              addendum={this.props.addendum}
+            />
+            <Gap />
+            <TabContents>{this.props.children}</TabContents>
+          </>
+        )}
       </StyledTabRegion>
     );
   }
@@ -77,7 +75,7 @@ const Gap = styled.div`
 const StyledTabRegion = styled.div<{ suppressAnimation: boolean }>`
   width: 100%;
   height: 100%;
-  animation: ${props => props.suppressAnimation ? "" : "fadeIn 0.25s 0s"};
+  animation: ${(props) => (props.suppressAnimation ? "" : "fadeIn 0.25s 0s")};
   position: relative;
   overflow-y: auto;
   overflow: visible;

@@ -37,7 +37,7 @@ const Integrations: React.FC<PropsType> = (props) => {
                   }
                   icon={icon}
                 >
-                    {integrationList[integration].label}
+                  {integrationList[integration].label}
                 </TitleSection>
                 <CreateIntegrationForm
                   integrationName={integration}

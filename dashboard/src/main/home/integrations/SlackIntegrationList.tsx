@@ -48,50 +48,48 @@ const SlackIntegrationList: React.FC<Props> = (props) => {
         onNo={() => setIsDelete(false)}
       />
       <StyledIntegrationList>
-        {
-          props.slackData?.length > 0 ? (
-            props.slackData.map((inst, idx) => {
-              if (deleted.current.has(idx)) return null;
-              return (
-                <Integration
-                  onClick={() => {}}
-                  disabled={false}
-                  key={`${inst.team_id}-${inst.channel}`}
-                >
-                  <MainRow disabled={false}>
-                    <Flex>
-                      <Icon src={inst.team_icon_url && inst.team_icon_url} />
-                      <Label>
-                        {inst.team_name || inst.team_id} - {inst.channel}
-                      </Label>
-                    </Flex>
-                    <MaterialIconTray disabled={false}>
-                      <i
-                        className="material-icons"
-                        onClick={() => {
-                          setDeleteIndex(idx);
-                          setIsDelete(true);
-                        }}
-                      >
-                        delete
-                      </i>
-                      <i
-                        className="material-icons"
-                        onClick={() => {
-                          window.open(inst.configuration_url, "_blank");
-                        }}
-                      >
-                        launch
-                      </i>
-                    </MaterialIconTray>
-                  </MainRow>
-                </Integration>
-              );
-            })
-          ) : (
-            <Placeholder>No Slack integrations set up yet.</Placeholder>
-          )
-        }
+        {props.slackData?.length > 0 ? (
+          props.slackData.map((inst, idx) => {
+            if (deleted.current.has(idx)) return null;
+            return (
+              <Integration
+                onClick={() => {}}
+                disabled={false}
+                key={`${inst.team_id}-${inst.channel}`}
+              >
+                <MainRow disabled={false}>
+                  <Flex>
+                    <Icon src={inst.team_icon_url && inst.team_icon_url} />
+                    <Label>
+                      {inst.team_name || inst.team_id} - {inst.channel}
+                    </Label>
+                  </Flex>
+                  <MaterialIconTray disabled={false}>
+                    <i
+                      className="material-icons"
+                      onClick={() => {
+                        setDeleteIndex(idx);
+                        setIsDelete(true);
+                      }}
+                    >
+                      delete
+                    </i>
+                    <i
+                      className="material-icons"
+                      onClick={() => {
+                        window.open(inst.configuration_url, "_blank");
+                      }}
+                    >
+                      launch
+                    </i>
+                  </MaterialIconTray>
+                </MainRow>
+              </Integration>
+            );
+          })
+        ) : (
+          <Placeholder>No Slack integrations set up yet.</Placeholder>
+        )}
       </StyledIntegrationList>
     </>
   );

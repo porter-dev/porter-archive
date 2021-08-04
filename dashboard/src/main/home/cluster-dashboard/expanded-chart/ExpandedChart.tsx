@@ -157,7 +157,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
 
         setControllers((oldControllers) => ({
           ...oldControllers,
-          [c.metadata.kind]: c,
+          [c.metadata.uid]: c,
         }));
       });
 
@@ -179,24 +179,22 @@ const ExpandedChart: React.FC<Props> = (props) => {
         let object = event.Object;
         object.metadata.kind = event.Kind;
 
+        if (event.event_type != "UPDATE") {
+          return;
+        }
+
         setControllers((oldControllers) => {
-          switch (event.event_type) {
-            case "DELETE":
-              typeof oldControllers !== "undefined" &&
-                delete oldControllers[object.metadata.uid];
-            case "UPDATE":
-              if (
-                oldControllers &&
-                oldControllers[object.metadata.uid]?.status?.conditions ==
-                  object.status?.conditions
-              ) {
-                return oldControllers;
-              }
-              return {
-                ...oldControllers,
-                [object.metadata.uid]: object,
-              };
+          if (
+            oldControllers &&
+            oldControllers[object.metadata.uid]?.status?.conditions ==
+              object.status?.conditions
+          ) {
+            return oldControllers;
           }
+          return {
+            ...oldControllers,
+            [object.metadata.uid]: object,
+          };
         });
       },
       onerror() {

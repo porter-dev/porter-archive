@@ -39,6 +39,8 @@ interface Props {
   addendum?: any;
   saveValuesStatus?: string;
   showStateDebugger?: boolean;
+  currentTab: string;
+  setCurrentTab: (nt: string) => void;
 }
 
 const PorterForm: React.FC<Props> = (props) => {
@@ -50,13 +52,7 @@ const PorterForm: React.FC<Props> = (props) => {
     formState,
   } = useContext(PorterFormContext);
 
-  const [currentTab, setCurrentTab] = useState(
-    props.leftTabOptions?.length > 0
-      ? props.leftTabOptions[0].value
-      : formData.tabs?.length > 0
-      ? formData.tabs[0].name
-      : ""
-  );
+  const { currentTab, setCurrentTab } = props;
 
   const renderSectionField = (field: FormField): JSX.Element => {
     const bundledProps = {

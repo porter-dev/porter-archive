@@ -16,9 +16,9 @@ import ConfirmOverlay from "components/ConfirmOverlay";
 import Loading from "components/Loading";
 import TabRegion from "components/TabRegion";
 import EnvGroupArray, { KeyValueType } from "./EnvGroupArray";
-import Heading from "components/values-form/Heading";
-import Helper from "components/values-form/Helper";
-import InputRow from "components/values-form/InputRow";
+import Heading from "components/form-components/Heading";
+import Helper from "components/form-components/Helper";
+import InputRow from "components/form-components/InputRow";
 import { withAuth, WithAuthProps } from "shared/auth/AuthorizationHoc";
 
 type PropsType = WithAuthProps & {
@@ -376,10 +376,6 @@ class ExpandedEnvGroup extends Component<PropsType, StateType> {
     return (
       <>
         <StyledExpandedChart>
-          <BackButton onClick={closeExpanded}>
-            <BackButtonImg src={backArrow} />
-          </BackButton>
-
           <ConfirmOverlay
             show={this.state.showDeleteOverlay}
             message={`Are you sure you want to delete ${name}?`}
@@ -388,12 +384,17 @@ class ExpandedEnvGroup extends Component<PropsType, StateType> {
           />
           {this.renderDeleteOverlay()}
 
-          <TitleSection icon={key} iconWidth="33px">
-            {name}
-            <TagWrapper>
-              Namespace <NamespaceTag>{namespace}</NamespaceTag>
-            </TagWrapper>
-          </TitleSection>
+          <HeaderWrapper>
+            <BackButton onClick={closeExpanded}>
+              <BackButtonImg src={backArrow} />
+            </BackButton>
+            <TitleSection icon={key} iconWidth="33px">
+              {name}
+              <TagWrapper>
+                Namespace <NamespaceTag>{namespace}</NamespaceTag>
+              </TagWrapper>
+            </TitleSection>
+          </HeaderWrapper>
 
           <InfoWrapper>
             <LastDeployed>
@@ -418,6 +419,10 @@ class ExpandedEnvGroup extends Component<PropsType, StateType> {
 ExpandedEnvGroup.contextType = Context;
 
 export default withAuth(ExpandedEnvGroup);
+
+const HeaderWrapper = styled.div`
+  position: relative;
+`;
 
 const BackButton = styled.div`
   position: absolute;
@@ -572,7 +577,6 @@ const NamespaceTag = styled.div`
 const StyledExpandedChart = styled.div`
   width: 100%;
   z-index: 0;
-  position: relative;
   animation: fadeIn 0.3s;
   animation-timing-function: ease-out;
   animation-fill-mode: forwards;

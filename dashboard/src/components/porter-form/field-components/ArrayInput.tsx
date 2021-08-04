@@ -1,33 +1,36 @@
-import React, { Component } from "react";
+import React from "react";
 import styled from "styled-components";
+import {
+  ArrayInputField,
+  ArrayInputFieldState,
+  GetFinalVariablesFunction,
+} from "../types";
+import useFormField from "../hooks/useFormField";
 
-type PropsType = {
-  label?: string;
-  values: string[];
-  setValues: (x: string[]) => void;
-  width?: string;
-  disabled?: boolean;
-};
-
-type StateType = {};
-
-export default class InputArray extends Component<PropsType, StateType> {
-  dict2arr = (dict: Record<string, any>) => {
-    let arr = [];
-    for (let key in dict) {
-      arr.push(`${key}: ${dict[key]}`);
+const ArrayInput: React.FC<ArrayInputField> = (props) => {
+  const { state, variables, setVars } = useFormField<ArrayInputFieldState>(
+    props.id,
+    {
+      initVars: {
+        [props.variable]: props.value ? props.value[0] : [],
+      },
     }
-    return arr;
-  };
+  );
 
-  renderDeleteButton = (values: string[], i: number) => {
-    if (!this.props.disabled) {
+  if (state == undefined) return <></>;
+
+  const renderDeleteButton = (values: string[], i: number) => {
+    if (!props.isReadOnly) {
       return (
         <DeleteButton
           onClick={() => {
-            let v = [...values];
-            v.splice(i, 1);
-            this.props.setValues(v);
+            setVars((prev) => {
+              return {
+                [props.variable]: prev[props.variable]
+                  .slice(0, i)
+                  .concat(prev[props.variable].slice(i + 1)),
+              };
+            });
           }}
         >
           <i className="material-icons">cancel</i>
@@ -36,7 +39,7 @@ export default class InputArray extends Component<PropsType, StateType> {
     }
   };
 
-  renderInputList = (values: string[]) => {
+  const renderInputList = (values: string[]) => {
     return (
       <>
         {values.map((value: string, i: number) => {
@@ -47,13 +50,20 @@ export default class InputArray extends Component<PropsType, StateType> {
                 width="270px"
                 value={value}
                 onChange={(e: any) => {
-                  let v = [...values];
-                  v[i] = e.target.value;
-                  this.props.setValues(v);
+                  e.persist();
+                  setVars((prev) => {
+                    return {
+                      [props.variable]: prev[props.variable].map(
+                        (t: string, j: number) => {
+                          return i == j ? e.target.value : t;
+                        }
+                      ),
+                    };
+                  });
                 }}
-                disabled={this.props.disabled}
+                disabled={props.isReadOnly}
               />
-              {this.renderDeleteButton(values, i)}
+              {renderDeleteButton(values, i)}
             </InputWrapper>
           );
         })}
@@ -61,30 +71,41 @@ export default class InputArray extends Component<PropsType, StateType> {
     );
   };
 
-  render() {
-    let { values } = this.props;
+  return (
+    <StyledInputArray>
+      <Label>{props.label}</Label>
+      {variables[props.variable] === 0 ? (
+        <></>
+      ) : (
+        renderInputList(variables[props.variable])
+      )}
+      <AddRowButton
+        onClick={() => {
+          setVars((prev) => {
+            return {
+              [props.variable]: [...prev[props.variable], ""],
+            };
+          });
+        }}
+      >
+        <i className="material-icons">add</i> Add Row
+      </AddRowButton>
+    </StyledInputArray>
+  );
+};
 
-    if (!Array.isArray(values)) {
-      values = this.dict2arr(values);
-    }
+export default ArrayInput;
 
-    return (
-      <StyledInputArray>
-        <Label>{this.props.label}</Label>
-        {values.length === 0 ? <></> : this.renderInputList(values)}
-        <AddRowButton
-          onClick={() => {
-            let v = [...values];
-            v.push("");
-            this.props.setValues(v);
-          }}
-        >
-          <i className="material-icons">add</i> Add Row
-        </AddRowButton>
-      </StyledInputArray>
-    );
-  }
-}
+export const getFinalVariablesForArrayInput: GetFinalVariablesFunction = (
+  vars,
+  props: ArrayInputField
+) => {
+  return vars[props.variable]
+    ? {}
+    : {
+        [props.variable]: [],
+      };
+};
 
 const AddRowButton = styled.div`
   display: flex;

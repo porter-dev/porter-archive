@@ -7,7 +7,7 @@ import { Context } from "shared/Context";
 import { pushFiltered } from "shared/routing";
 
 import SaveButton from "components/SaveButton";
-import InputRow from "components/values-form/InputRow";
+import InputRow from "components/form-components/InputRow";
 import ConfirmOverlay from "components/ConfirmOverlay";
 import { RouteComponentProps, withRouter } from "react-router";
 

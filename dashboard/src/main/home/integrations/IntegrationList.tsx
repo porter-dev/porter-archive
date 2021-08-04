@@ -254,7 +254,7 @@ const Icon = styled.img`
 
 const Placeholder = styled.div`
   width: 100%;
-  height: 150px;
+  height: 250px;
   display: flex;
   align-items: center;
   font-size: 13px;

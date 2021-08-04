@@ -4,11 +4,11 @@ import styled from "styled-components";
 import { Context } from "shared/Context";
 import api from "shared/api";
 
-import InputRow from "components/values-form/InputRow";
-import TextArea from "components/values-form/TextArea";
+import InputRow from "components/form-components/InputRow";
+import TextArea from "components/form-components/TextArea";
 import SaveButton from "components/SaveButton";
-import Heading from "components/values-form/Heading";
-import Helper from "components/values-form/Helper";
+import Heading from "components/form-components/Heading";
+import Helper from "components/form-components/Helper";
 
 type PropsType = {
   closeForm: () => void;

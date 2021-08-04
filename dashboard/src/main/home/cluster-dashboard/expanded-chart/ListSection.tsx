@@ -142,7 +142,7 @@ const StyledListSection = styled.div`
   display: flex;
   font-size: 13px;
   width: 100%;
-  min-height: 450px;
+  min-height: 400px;
   height: 50vh;
   font-size: 13px;
   overflow: hidden;

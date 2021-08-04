@@ -37,7 +37,7 @@ const Integrations: React.FC<PropsType> = (props) => {
                   }
                   icon={icon}
                 >
-                    {integrationList[integration].label}
+                  {integrationList[integration].label}
                 </TitleSection>
                 <CreateIntegrationForm
                   integrationName={integration}
@@ -123,6 +123,6 @@ const TitleSectionAlt = styled(TitleSection)`
 `;
 
 const StyledIntegrations = styled.div`
-  width: 83%;
+  width: calc(85%);
   min-width: 300px;
 `;

@@ -16,7 +16,8 @@ import Loading from "components/Loading";
 import TitleSection from "components/TitleSection";
 import JobList from "./jobs/JobList";
 import SettingsSection from "./SettingsSection";
-import FormWrapper from "components/values-form/FormWrapper";
+import PorterFormWrapper from "components/porter-form/PorterFormWrapper";
+import { PlaceHolder } from "brace";
 import { withAuth, WithAuthProps } from "shared/auth/AuthorizationHoc";
 
 type PropsType = WithAuthProps & {
@@ -33,7 +34,8 @@ type StateType = {
   newestImage: string;
   loading: boolean;
   jobs: any[];
-  tabOptions: any[];
+  leftTabOptions: any[];
+  rightTabOptions: any[];
   tabContents: any;
   currentTab: string | null;
   websockets: Record<string, any>;
@@ -41,7 +43,6 @@ type StateType = {
   deleting: boolean;
   saveValuesStatus: string | null;
   formData: any;
-  valuesToOverride: any;
 };
 
 class ExpandedJobChart extends Component<PropsType, StateType> {
@@ -51,7 +52,8 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
     newestImage: null as string,
     loading: true,
     jobs: [] as any[],
-    tabOptions: [] as any[],
+    leftTabOptions: [] as any[],
+    rightTabOptions: [] as any[],
     tabContents: [] as any,
     currentTab: null as string | null,
     websockets: {} as Record<string, any>,
@@ -59,7 +61,6 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
     deleting: false,
     saveValuesStatus: null as string | null,
     formData: {} as any,
-    valuesToOverride: {} as any,
   };
 
   // Retrieve full chart data (includes form and values)
@@ -422,12 +423,18 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
 
   renderTabContents = (currentTab: string, submitValues?: any) => {
     let saveButton = (
-      <SaveButton
-        text="Rerun Job"
-        onClick={() => this.handleSaveValues(submitValues, true)}
-        status={this.state.saveValuesStatus}
-        makeFlush={true}
-      />
+      <ButtonWrapper>
+        <SaveButton
+          onClick={() => this.handleSaveValues(submitValues, true)}
+          status={this.state.saveValuesStatus}
+          makeFlush={true}
+          clearPosition={true}
+          rounded={true}
+          statusPosition="right"
+        >
+          <i className="material-icons">play_arrow</i> Run Job
+        </SaveButton>
+      </ButtonWrapper>
     );
 
     if (!this.props.isAuthorized("job", "", ["get", "update", "create"])) {
@@ -451,13 +458,13 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
         }
         return (
           <TabWrapper>
+            {saveButton}
             <JobList
               jobs={this.state.jobs}
               setJobs={(jobs: any) => {
                 this.setState({ jobs });
               }}
             />
-            {saveButton}
           </TabWrapper>
         );
       case "settings":
@@ -485,28 +492,16 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
         formData,
       });
     }
-    let tabOptions = [] as any[];
-
-    // Append universal tabs
-    tabOptions.push({ label: "Jobs", value: "jobs" });
-
-    if (formData) {
-      formData.tabs.map((tab: any, i: number) => {
-        tabOptions.push({
-          value: tab.name,
-          label: tab.label,
-          sections: tab.sections,
-          context: tab.context,
-        });
-      });
-    }
-
+    let rightTabOptions = [] as any[];
     if (this.props.isAuthorized("job", "", ["get", "delete"])) {
-      tabOptions.push({ label: "Settings", value: "settings" });
+      rightTabOptions.push({ label: "Settings", value: "settings" });
     }
 
     // Filter tabs if previewing an old revision
-    this.setState({ tabOptions });
+    this.setState({
+      leftTabOptions: [{ label: "Jobs", value: "jobs" }],
+      rightTabOptions,
+    });
   }
 
   readableDate = (s: string) => {
@@ -573,10 +568,6 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
     return (
       <>
         <StyledExpandedChart>
-          <BackButton onClick={closeChart}>
-            <BackButtonImg src={backArrow} />
-          </BackButton>
-
           <ConfirmOverlay
             show={this.state.showDeleteOverlay}
             message={`Are you sure you want to delete ${currentChart.name}?`}
@@ -586,6 +577,9 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
           {this.renderDeleteOverlay()}
 
           <HeaderWrapper>
+            <BackButton onClick={closeChart}>
+              <BackButtonImg src={backArrow} />
+            </BackButton>
             <TitleSection
               icon={currentChart.chart.metadata.icon}
               iconWidth="33px"
@@ -606,25 +600,29 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
           </HeaderWrapper>
 
           <BodyWrapper>
-            <FormWrapper
-              isReadOnly={
-                this.state.imageIsPlaceholder ||
-                !this.props.isAuthorized("job", "", ["get", "update"])
-              }
-              valuesToOverride={this.state.valuesToOverride}
-              clearValuesToOverride={() =>
-                this.setState({ valuesToOverride: {} })
-              }
-              formData={this.state.formData}
-              tabOptions={this.state.tabOptions}
-              renderTabContents={this.renderTabContents}
-              tabOptionsOnly={true}
-              onSubmit={(formValues) =>
-                this.handleSaveValues(formValues, false)
-              }
-              saveValuesStatus={this.state.saveValuesStatus}
-              saveButtonText="Save Config"
-            />
+            {(this.state.leftTabOptions?.length > 0 ||
+              this.state.formData.tabs?.length > 0 ||
+              this.state.rightTabOptions?.length > 0) && (
+              <PorterFormWrapper
+                formData={this.state.formData}
+                valuesToOverride={{
+                  namespace: chart.namespace,
+                  clusterId: this.props.currentCluster.id,
+                }}
+                renderTabContents={this.renderTabContents}
+                isReadOnly={
+                  this.state.imageIsPlaceholder ||
+                  !this.props.isAuthorized("job", "", ["get", "update"])
+                }
+                onSubmit={(formValues) =>
+                  this.handleSaveValues(formValues, false)
+                }
+                leftTabOptions={this.state.leftTabOptions}
+                rightTabOptions={this.state.rightTabOptions}
+                saveValuesStatus={this.state.saveValuesStatus}
+                saveButtonText="Save Config"
+              />
+            )}
           </BodyWrapper>
         </StyledExpandedChart>
       </>
@@ -635,6 +633,10 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
 ExpandedJobChart.contextType = Context;
 
 export default withAuth(ExpandedJobChart);
+
+const ButtonWrapper = styled.div`
+  margin: 5px 0 35px;
+`;
 
 const BackButton = styled.div`
   position: absolute;
@@ -673,7 +675,8 @@ const Header = styled.div`
 `;
 
 const Placeholder = styled.div`
-  height: 100%;
+  min-height: 400px;
+  height: 50vh;
   padding: 30px;
   padding-bottom: 70px;
   font-size: 13px;
@@ -692,8 +695,7 @@ const Spinner = styled.img`
 `;
 
 const BodyWrapper = styled.div`
-  width: 100%;
-  height: 100%;
+  position: relative;
   overflow: hidden;
 `;
 
@@ -736,7 +738,9 @@ const DeleteOverlay = styled.div`
   }
 `;
 
-const HeaderWrapper = styled.div``;
+const HeaderWrapper = styled.div`
+  position: relative;
+`;
 
 const Dot = styled.div`
   margin-right: 9px;
@@ -814,7 +818,6 @@ const IconWrapper = styled.div`
 const StyledExpandedChart = styled.div`
   width: 100%;
   z-index: 0;
-  position: relative;
   animation: fadeIn 0.3s;
   animation-timing-function: ease-out;
   animation-fill-mode: forwards;

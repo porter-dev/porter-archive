@@ -6,7 +6,7 @@ import api from "shared/api";
 import { Context } from "shared/Context";
 
 import SaveButton from "components/SaveButton";
-import InputRow from "components/values-form/InputRow";
+import InputRow from "components/form-components/InputRow";
 
 type PropsType = {};
 

@@ -6,6 +6,7 @@ import ResourceTab from "components/ResourceTab";
 import ConfirmOverlay from "components/ConfirmOverlay";
 import { NewWebsocketOptions, useWebsockets } from "shared/hooks/useWebsockets";
 import PodRow from "./PodRow";
+import { timeFormat } from "d3-time-format";
 
 type Props = {
   controller: any;
@@ -24,8 +25,12 @@ export type ControllerTabPodType = {
   phase: string;
   status: any;
   replicaSetName: string;
-  hash: string;
+  restartCount: number | string;
+  podAge: string;
+  revisionNumber?: number;
 };
+
+const formatCreationTimestamp = timeFormat("%H:%M:%S %b %d, '%y");
 
 const ControllerTabFC: React.FunctionComponent<Props> = ({
   controller,
@@ -101,14 +106,27 @@ const ControllerTabFC: React.FunctionComponent<Props> = ({
           const replicaSetName =
             Array.isArray(pod?.metadata?.ownerReferences) &&
             pod?.metadata?.ownerReferences[0]?.name;
-          const [hash] = (pod?.metadata?.name as string).split("-").reverse();
+          const containerStatus =
+            Array.isArray(pod?.status?.containerStatuses) &&
+            pod?.status?.containerStatuses[0];
+
+          const restartCount = containerStatus
+            ? containerStatus.restartCount
+            : "N/A";
+
+          const podAge = formatCreationTimestamp(
+            new Date(pod?.metadata?.creationTimestamp)
+          );
+
           return {
             namespace: pod?.metadata?.namespace,
             name: pod?.metadata?.name,
             phase: pod?.status?.phase,
             status: pod?.status,
             replicaSetName,
-            hash,
+            restartCount,
+            podAge: pod?.metadata?.creationTimestamp ? podAge : "N/A",
+            revisionNumber: pod?.metadata?.revisionNumber || "N/A",
           };
         });
 
@@ -355,16 +373,14 @@ const ControllerTabFC: React.FunctionComponent<Props> = ({
       {!!replicaSetArray.length &&
         replicaSetArray.map((subArray, index) => {
           const firstItem = subArray[0];
-          const [replicaSetHash] = firstItem.replicaSetName
-            .split("-")
-            .reverse();
+
           return (
             <div key={firstItem.replicaSetName + index}>
               <ReplicaSetContainer>
                 <ReplicaSetName>
-                  ReplicaSet hash: {replicaSetHash}
+                  Replicaset: {firstItem.replicaSetName}
                 </ReplicaSetName>
-                <div> Revision: V1.0</div>
+                <div> Revision: {firstItem.revisionNumber}</div>
               </ReplicaSetContainer>
               {mapPods(subArray)}
             </div>

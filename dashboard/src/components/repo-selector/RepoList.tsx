@@ -8,7 +8,7 @@ import { Context } from "shared/Context";
 
 import Loading from "../Loading";
 import SearchBar from "../SearchBar";
-import Helper from "../values-form/Helper";
+import Helper from "../form-components/Helper";
 
 interface GithubAppAccessData {
   has_access: boolean;

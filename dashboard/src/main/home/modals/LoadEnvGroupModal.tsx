@@ -8,7 +8,7 @@ import { Context } from "shared/Context";
 
 import Loading from "components/Loading";
 import SaveButton from "components/SaveButton";
-import { KeyValue } from "components/values-form/KeyValueArray";
+import { KeyValue } from "components/form-components/KeyValueArray";
 import {
   EnvGroupData,
   formattedEnvironmentValue,

@@ -16,7 +16,7 @@ import Loading from "components/Loading";
 import TitleSection from "components/TitleSection";
 import JobList from "./jobs/JobList";
 import SettingsSection from "./SettingsSection";
-import PorterFormWrapper from "components/form-refactor/PorterFormWrapper";
+import PorterFormWrapper from "components/porter-form/PorterFormWrapper";
 import { PlaceHolder } from "brace";
 import { withAuth, WithAuthProps } from "shared/auth/AuthorizationHoc";
 

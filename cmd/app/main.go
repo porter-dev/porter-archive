@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/repository/gorm"
 
 	"github.com/porter-dev/porter/server/api"
@@ -18,7 +17,6 @@ import (
 	"github.com/porter-dev/porter/server/router"
 
 	prov "github.com/porter-dev/porter/internal/kubernetes/provisioner"
-	ints "github.com/porter-dev/porter/internal/models/integrations"
 )
 
 // Version will be linked by an ldflag during build
@@ -45,37 +43,7 @@ func main() {
 		return
 	}
 
-	err = db.AutoMigrate(
-		&models.Project{},
-		&models.Role{},
-		&models.User{},
-		&models.Session{},
-		&models.GitRepo{},
-		&models.Registry{},
-		&models.HelmRepo{},
-		&models.Cluster{},
-		&models.ClusterCandidate{},
-		&models.ClusterResolver{},
-		&models.Infra{},
-		&models.GitActionConfig{},
-		&models.Invite{},
-		&models.AuthCode{},
-		&models.DNSRecord{},
-		&models.PWResetToken{},
-		&ints.KubeIntegration{},
-		&ints.BasicIntegration{},
-		&ints.OIDCIntegration{},
-		&ints.OAuthIntegration{},
-		&ints.GCPIntegration{},
-		&ints.AWSIntegration{},
-		&ints.TokenCache{},
-		&ints.ClusterTokenCache{},
-		&ints.RegTokenCache{},
-		&ints.HelmRepoTokenCache{},
-		&ints.GithubAppInstallation{},
-		&ints.GithubAppOAuthIntegration{},
-		&ints.SlackIntegration{},
-	)
+	err = gorm.AutoMigrate(db)
 
 	if err != nil {
 		logger.Fatal().Err(err).Msg("")

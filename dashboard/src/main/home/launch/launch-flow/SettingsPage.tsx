@@ -146,10 +146,20 @@ class SettingsPage extends Component<PropsType, StateType> {
           <PorterFormWrapper
             formData={form}
             saveValuesStatus={saveValuesStatus}
+            valuesToOverride={{
+              ...valuesToOverride,
+              namespace: selectedNamespace,
+              clusterId: this.context.currentCluster.id,
+            }}
+            externalValues={{
+              isLaunch: true,
+            }}
             isReadOnly={
               !this.props.isAuthorized("namespace", "", ["get", "create"])
             }
-            onSubmit={(val) => onSubmit(val)}
+            onSubmit={(val) => {
+              onSubmit(val)
+            }}
           />
         </>
       );

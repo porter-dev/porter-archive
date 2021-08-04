@@ -179,7 +179,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
         setControllers((oldControllers) => {
           switch (event.event_type) {
             case "DELETE":
-              delete oldControllers[object.metadata.uid];
+              typeof oldControllers !== "undefined" && delete oldControllers[object.metadata.uid];
             case "UPDATE":
               if (
                 oldControllers &&
@@ -651,14 +651,9 @@ const ExpandedChart: React.FC<Props> = (props) => {
     return () => (isSubscribed = false);
   }, [components, currentCluster, currentProject, currentChart]);
 
-  console.log(currentChart.form)
   return (
     <>
       <StyledExpandedChart>
-        <BackButton onClick={props.closeChart}>
-          <BackButtonImg src={backArrow} />
-        </BackButton>
-
         <ConfirmOverlay
           show={showDeleteOverlay}
           message={`Are you sure you want to delete ${currentChart.name}?`}
@@ -671,6 +666,9 @@ const ExpandedChart: React.FC<Props> = (props) => {
           </DeleteOverlay>
         )}
         <HeaderWrapper>
+          <BackButton onClick={props.closeChart}>
+            <BackButtonImg src={backArrow} />
+          </BackButton>
           <TitleSection
             icon={currentChart.chart.metadata.icon}
             iconWidth="33px"
@@ -895,7 +893,9 @@ const TabButton = styled.div`
   }
 `;
 
-const HeaderWrapper = styled.div``;
+const HeaderWrapper = styled.div`
+  position: relative;
+`;
 
 const Dot = styled.div`
   margin-right: 9px;
@@ -972,7 +972,6 @@ const IconWrapper = styled.div`
 const StyledExpandedChart = styled.div`
   width: 100%;
   z-index: 0;
-  position: relative;
   animation: fadeIn 0.3s;
   animation-timing-function: ease-out;
   animation-fill-mode: forwards;

@@ -42,13 +42,19 @@ const PorterFormWrapper: React.FunctionComponent<PropsType> = ({
     }, 0);
   };
 
-  const [currentTab, setCurrentTab] = useState(
-    leftTabOptions?.length > 0
-      ? leftTabOptions[0].value
-      : formData.tabs?.length > 0
-      ? formData.tabs[0].name
-      : ""
-  );
+  const getInitialTab = (): string => {
+    if (leftTabOptions?.length > 0) {
+      return leftTabOptions[0].value;
+    } else if (formData.tabs?.length > 0) {
+      return formData.tabs[0].name;
+    } else if (rightTabOptions?.length > 0) {
+      return rightTabOptions[0].value;
+    } else {
+      return "";
+    }
+  }
+
+  const [currentTab, setCurrentTab] = useState(getInitialTab());
 
   return (
     <React.Fragment key={hashCode(JSON.stringify(formData))}>

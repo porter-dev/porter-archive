@@ -117,9 +117,9 @@ export const PorterFormContextProvider: React.FC<Props> = (props) => {
   // get variables initiated by variable field
   const getInitialVariables = (data: PorterFormData) => {
     const ret: Record<string, any> = {};
-    data.tabs.map((tab) =>
-      tab.sections.map((section) =>
-        section.contents.map((field) => {
+    data?.tabs?.map((tab) =>
+      tab.sections?.map((section) =>
+        section.contents?.map((field) => {
           if (field.type == "variable") {
             ret[field.variable] = field.settings?.default;
           }
@@ -150,7 +150,7 @@ export const PorterFormContextProvider: React.FC<Props> = (props) => {
     }
     if ((vals as ShowIfOr).or) {
       vals = vals as ShowIfOr;
-      for (let i = 0; i < vals.or.length; i++) {
+      for (let i = 0; i < vals.or?.length; i++) {
         if (evalShowIf(vals.or[i], variables)) {
           return true;
         }
@@ -159,7 +159,7 @@ export const PorterFormContextProvider: React.FC<Props> = (props) => {
     }
     if ((vals as ShowIfAnd).and) {
       vals = vals as ShowIfAnd;
-      for (let i = 0; i < vals.and.length; i++) {
+      for (let i = 0; i < vals.and?.length; i++) {
         if (!evalShowIf(vals.and[i], variables)) {
           return false;
         }
@@ -182,14 +182,14 @@ export const PorterFormContextProvider: React.FC<Props> = (props) => {
   const restructureToNewFields = (data: PorterFormData) => {
     return {
       ...data,
-      tabs: data.tabs.map((tab) => {
+      tabs: data?.tabs?.map((tab) => {
         return {
           ...tab,
-          sections: tab.sections.map((section) => {
+          sections: tab.sections?.map((section) => {
             return {
               ...section,
               contents: section.contents
-                .map((field: any) => {
+                ?.map((field: any) => {
                   if (field.type == "number-input") {
                     return {
                       ...field,
@@ -266,14 +266,14 @@ export const PorterFormContextProvider: React.FC<Props> = (props) => {
   ) => {
     return {
       ...data,
-      tabs: data.tabs.map((tab, i) => {
+      tabs: data?.tabs?.map((tab, i) => {
         return {
           ...tab,
           sections: tab.sections
-            .map((section, j) => {
+            ?.map((section, j) => {
               return {
                 ...section,
-                contents: section.contents.map((field, k) => {
+                contents: section.contents?.map((field, k) => {
                   return {
                     ...field,
                     id: `${i}-${j}-${k}`,
@@ -298,9 +298,9 @@ export const PorterFormContextProvider: React.FC<Props> = (props) => {
   ): [string[], Record<string, string[]>] => {
     const requiredIds: string[] = [];
     const mapping: Record<string, string[]> = {};
-    data.tabs.map((tab) =>
-      tab.sections.map((section) =>
-        section.contents.map((field) => {
+    data?.tabs?.map((tab) =>
+      tab.sections?.map((section) =>
+        section.contents?.map((field) => {
           if (
             field.type == "heading" ||
             field.type == "subtitle" ||
@@ -329,7 +329,7 @@ export const PorterFormContextProvider: React.FC<Props> = (props) => {
    */
   const doValidation = (requiredIds: string[]) =>
     requiredIds
-      .map((id) => state.components[id]?.validation.validated)
+      ?.map((id) => state.components[id]?.validation.validated)
       .every((x) => x);
 
   const formData = computeFormStructure(
@@ -364,9 +364,9 @@ export const PorterFormContextProvider: React.FC<Props> = (props) => {
       ? restructureToNewFields(props.rawFormData)
       : formData;
 
-    data.tabs.map((tab) =>
-      tab.sections.map((section) =>
-        section.contents.map((field) => {
+    data?.tabs?.map((tab) =>
+      tab.sections?.map((section) =>
+        section.contents?.map((field) => {
           if (finalFunctions[field.type])
             varList.push(
               finalFunctions[field.type](

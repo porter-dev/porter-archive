@@ -45,8 +45,8 @@ const PorterFormWrapper: React.FunctionComponent<PropsType> = ({
   const getInitialTab = (): string => {
     if (leftTabOptions?.length > 0) {
       return leftTabOptions[0].value;
-    } else if (formData.tabs?.length > 0) {
-      return formData.tabs[0].name;
+    } else if (formData?.tabs?.length > 0) {
+      return formData?.tabs[0].name;
     } else if (rightTabOptions?.length > 0) {
       return rightTabOptions[0].value;
     } else {

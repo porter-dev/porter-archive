@@ -131,9 +131,6 @@ const IntegrationCategories: React.FC<Props> = (props) => {
           {buttonText}
         </Button>
       </Flex>
-
-      <LineBreak />
-
       {loading ? (
         <Loading />
       ) : props.category == "slack" ? (
@@ -154,65 +151,6 @@ const IntegrationCategories: React.FC<Props> = (props) => {
 };
 
 export default withRouter(IntegrationCategories);
-
-const Label = styled.div`
-  color: #ffffff;
-  font-size: 14px;
-  font-weight: 500;
-`;
-
-const MainRow = styled.div`
-  height: 70px;
-  width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 25px;
-  border-radius: 5px;
-  :hover {
-    background: ${(props: { disabled: boolean }) =>
-      props.disabled ? "" : "#ffffff11"};
-    > i {
-      background: ${(props: { disabled: boolean }) =>
-        props.disabled ? "" : "#ffffff11"};
-    }
-  }
-
-  > i {
-    border-radius: 20px;
-    font-size: 18px;
-    padding: 5px;
-    color: #ffffff44;
-    margin-right: -7px;
-    :hover {
-      background: ${(props: { disabled: boolean }) =>
-        props.disabled ? "" : "#ffffff11"};
-    }
-  }
-`;
-
-const Integration = styled.div`
-  margin-left: -2px;
-  display: flex;
-  flex-direction: column;
-  background: #26282f;
-  cursor: ${(props: { disabled: boolean }) =>
-    props.disabled ? "not-allowed" : "pointer"};
-  margin-bottom: 15px;
-  border-radius: 5px;
-  box-shadow: 0 5px 8px 0px #00000033;
-`;
-
-const StyledIntegrationList = styled.div`
-  margin-top: 20px;
-  margin-bottom: 80px;
-`;
-
-const Icon = styled.img`
-  width: 27px;
-  margin-right: 12px;
-  margin-bottom: -1px;
-`;
 
 const Flex = styled.div`
   display: flex;
@@ -261,11 +199,4 @@ const Button = styled.div`
     margin-right: 10px;
     justify-content: center;
   }
-`;
-
-const LineBreak = styled.div`
-  width: calc(100% - 0px);
-  height: 2px;
-  background: #ffffff20;
-  margin: 18px 0px 24px;
 `;

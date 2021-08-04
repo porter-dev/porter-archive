@@ -1,0 +1,76 @@
+version: "3"
+services:
+  webpack:
+    build:
+      context: ./dashboard
+      dockerfile: ./docker/dev.Dockerfile
+    env_file:
+      - ./dashboard/.env
+    restart: on-failure
+    volumes:
+      - ./dashboard/src:/webpack/src:rw,cached
+      - ./dashboard/package.json:/webpack/package.json
+  porter:
+    build:
+      context: .
+      dockerfile: ./docker/dev.Dockerfile
+    depends_on:
+      - postgres
+    env_file:
+      - ./docker/.env
+    command: /bin/sh -c '/porter/bin/migrate; air -c .air.toml;'
+    restart: on-failure
+    volumes:
+      - ./cmd:/porter/cmd
+      - ./internal:/porter/internal
+      - ./server:/porter/server
+      - ./api:/porter/api
+      - ./docker/kubeconfig.yaml:/porter/kubeconfig.yaml
+      - ./docker/github_app_private_key.pem:/porter/docker/github_app_private_key.pem
+  postgres:
+    image: postgres:latest
+    container_name: postgres
+    environment:
+      - POSTGRES_USER=porter
+      - POSTGRES_PASSWORD=porter
+      - POSTGRES_DB=porter
+    ports:
+      - 5400:5432
+    volumes:
+      - database:/var/lib/postgresql/data
+  redis:
+    image: redis:latest
+    container_name: redis
+    ports:
+      - 6379:6379
+    volumes:
+      - database:/var/lib/postgresql/data
+  chartmuseum:
+    image: docker.io/bitnami/chartmuseum:0-debian-10
+    container_name: chartmuseum
+    ports:
+      - 5000:8080
+    volumes:
+      - chartmuseum:/bitnami/data
+  nginx:
+    image: nginx:mainline-alpine
+    container_name: nginx
+    restart: unless-stopped
+    ports:
+      - 443:443
+    volumes:
+      - type: bind
+        source: ./docker/localhost.crt
+        target: /etc/ssl/localhost.crt
+      - type: bind
+        source: ./docker/localhost.key
+        target: /etc/ssl/localhost.key
+      - ./docker/nginx_local_secure.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - porter
+      - webpack
+
+volumes:
+  database:
+  metabase:
+  chartmuseum:

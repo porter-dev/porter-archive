@@ -26,6 +26,11 @@ export const integrationList: any = {
     label: "Git Repository",
     buttonText: "Link a Github Account",
   },
+  slack: {
+    icon: "https://image.flaticon.com/icons/png/512/2111/2111615.png",
+    label: "Slack",
+    buttonText: "Install Application",
+  },
   registry: {
     icon:
       "https://cdn4.iconfinder.com/data/icons/logos-and-brands/512/97_Docker_logo_logos-512.png",

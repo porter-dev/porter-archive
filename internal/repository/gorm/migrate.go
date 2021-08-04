@@ -38,5 +38,6 @@ func AutoMigrate(db *gorm.DB) error {
 		&ints.HelmRepoTokenCache{},
 		&ints.GithubAppInstallation{},
 		&ints.GithubAppOAuthIntegration{},
+		&ints.SlackIntegration{},
 	)
 }

@@ -16,6 +16,7 @@ type PropsType = {
   defaultTab?: string;
   addendum?: any;
   color?: string | null;
+  suppressAnimation?: boolean;
 };
 
 type StateType = {};
@@ -38,48 +39,30 @@ export default class TabRegion extends Component<PropsType, StateType> {
     }
   }
 
-  renderContents = () => {
-    if (!this.props.currentTab) {
-      return <Loading />;
-    }
-
-    return (
-      <Div>
-        <TabSelector
-          options={this.props.options}
-          color={this.props.color}
-          currentTab={this.props.currentTab}
-          setCurrentTab={(x: string) => this.props.setCurrentTab(x)}
-          addendum={this.props.addendum}
-        />
-        <Gap />
-        <TabContents>{this.props.children}</TabContents>
-      </Div>
-    );
-  };
-
   render() {
-    return <StyledTabRegion>{this.renderContents()}</StyledTabRegion>;
+    return (
+      <StyledTabRegion suppressAnimation={this.props.suppressAnimation}>
+        {
+          !this.props.currentTab ? (
+            <Loading />
+          ) : (
+            <>
+              <TabSelector
+                options={this.props.options}
+                color={this.props.color}
+                currentTab={this.props.currentTab}
+                setCurrentTab={(x: string) => this.props.setCurrentTab(x)}
+                addendum={this.props.addendum}
+              />
+              <Gap />
+              <TabContents>{this.props.children}</TabContents>
+            </>
+          )
+        }
+      </StyledTabRegion>
+    );
   }
 }
-
-const Placeholder = styled.div`
-  width: 100%;
-  height: 200px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: #ffffff11;
-  border-radius: 5px;
-  color: #ffffff44;
-  font-size: 13px;
-`;
-
-const Div = styled.div`
-  width: 100%;
-  height: 100%;
-  animation: fadeIn 0.25s 0s;
-`;
 
 const TabContents = styled.div`
   height: calc(100% - 65px);
@@ -91,9 +74,10 @@ const Gap = styled.div`
   height: 30px;
 `;
 
-const StyledTabRegion = styled.div`
+const StyledTabRegion = styled.div<{ suppressAnimation: boolean }>`
   width: 100%;
   height: 100%;
+  animation: ${props => props.suppressAnimation ? "" : "fadeIn 0.25s 0s"};
   position: relative;
   overflow-y: auto;
   overflow: visible;

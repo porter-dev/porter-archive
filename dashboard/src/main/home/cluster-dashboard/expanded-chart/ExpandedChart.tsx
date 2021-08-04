@@ -736,10 +736,6 @@ const ExpandedChart: React.FC<Props> = (props) => {
               </TabButton>
             }
             saveValuesStatus={saveValuesStatus}
-            externalValues={{
-              namespace: props.namespace,
-              clusterId: currentCluster.id,
-            }}
           />
         </BodyWrapper>
       </StyledExpandedChart>
@@ -791,7 +787,8 @@ const Header = styled.div`
 `;
 
 const Placeholder = styled.div`
-  height: 100%;
+  min-height: 400px;
+  height: 50vh;
   padding: 30px;
   padding-bottom: 90px;
   font-size: 13px;

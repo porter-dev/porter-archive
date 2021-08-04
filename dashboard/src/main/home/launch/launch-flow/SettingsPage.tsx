@@ -138,7 +138,7 @@ class SettingsPage extends Component<PropsType, StateType> {
         onSubmit,
       } = this.props;
       return (
-        <>
+        <FadeWrapper>
           <Heading>Additional Settings</Heading>
           <Helper>
             Configure additional settings for this template. (Optional)
@@ -151,9 +151,9 @@ class SettingsPage extends Component<PropsType, StateType> {
               namespace: selectedNamespace,
               clusterId: this.context.currentCluster.id,
             }}
-            externalValues={{
-              isLaunch: true,
-            }}
+            //externalValues={{
+            //  isLaunch: true,
+            //}}
             isReadOnly={
               !this.props.isAuthorized("namespace", "", ["get", "create"])
             }
@@ -161,7 +161,7 @@ class SettingsPage extends Component<PropsType, StateType> {
               onSubmit(val)
             }}
           />
-        </>
+        </FadeWrapper>
       );
     } else {
       return (
@@ -360,6 +360,10 @@ const NamespaceLabel = styled.div`
 
 const Link = styled.a`
   margin-left: 5px;
+`;
+
+const FadeWrapper = styled.div`
+  animation: fadeIn 0.25s 0s;
 `;
 
 const Wrapper = styled.div`

@@ -661,7 +661,8 @@ const Header = styled.div`
 `;
 
 const Placeholder = styled.div`
-  height: 100%;
+  min-height: 400px;
+  height: 50vh;
   padding: 30px;
   padding-bottom: 70px;
   font-size: 13px;

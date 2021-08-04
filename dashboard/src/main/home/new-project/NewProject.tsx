@@ -5,8 +5,8 @@ import gradient from "assets/gradient.png";
 import { Context } from "shared/Context";
 import { isAlphanumeric } from "shared/common";
 
-import InputRow from "components/values-form/InputRow";
-import Helper from "components/values-form/Helper";
+import InputRow from "components/form-components/InputRow";
+import Helper from "components/form-components/Helper";
 import ProvisionerSettings from "../provisioner/ProvisionerSettings";
 import TitleSection from "components/TitleSection";
 

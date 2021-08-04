@@ -48,7 +48,7 @@ GraphSection.contextType = Context;
 
 const StyledGraphSection = styled.div`
   width: 100%;
-  min-height: 450px;
+  min-height: 400px;
   height: 50vh;
   font-size: 13px;
   overflow: hidden;

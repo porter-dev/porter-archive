@@ -11,7 +11,7 @@ import ClusterPlaceholderContainer from "./ClusterPlaceholderContainer";
 import { RouteComponentProps, withRouter } from "react-router";
 import TabRegion from "components/TabRegion";
 import Provisioner from "../provisioner/Provisioner";
-import FormDebugger from "components/values-form/FormDebugger";
+import FormDebugger from "components/porter-form/FormDebugger";
 import TitleSection from "components/TitleSection";
 
 import { pushQueryParams, pushFiltered } from "shared/routing";

@@ -266,6 +266,12 @@ export interface ContextProps {
   currentModal?: string;
   currentModalData: any;
   setCurrentModal: (currentModal: string, currentModalData?: any) => void;
+  currentOverlay: {
+    message: string,
+    onYes: any,
+    onNo: any,
+  };
+  setCurrentOverlay: (x: any) => void;
   currentError?: string;
   setCurrentError: (currentError: string) => void;
   currentCluster?: ClusterType;

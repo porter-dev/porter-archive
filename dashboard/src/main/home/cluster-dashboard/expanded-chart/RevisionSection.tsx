@@ -216,6 +216,13 @@ class RevisionSection extends Component<PropsType, StateType> {
   renderRevisionList = () => {
     return this.state.revisions.map((revision: ChartType, i: number) => {
       let isCurrent = revision.version === this.state.maxVersion;
+      const isGithubApp = !!this.props.chart.git_action_config;
+      const imageTag = revision.config?.image?.tag;
+
+      const parsedImageTag = isGithubApp
+        ? String(imageTag).slice(0, 7)
+        : imageTag;
+
       return (
         <Tr
           key={i}
@@ -224,7 +231,7 @@ class RevisionSection extends Component<PropsType, StateType> {
         >
           <Td>{revision.version}</Td>
           <Td>{this.readableDate(revision.info.last_deployed)}</Td>
-          <Td>{revision.config?.image?.tag || "N/A"}</Td>
+          <Td>{parsedImageTag || "N/A"}</Td>
           <Td>v{revision.chart.metadata.version}</Td>
           <Td>
             <RollbackButton

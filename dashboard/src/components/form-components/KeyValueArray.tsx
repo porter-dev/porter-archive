@@ -75,7 +75,7 @@ export default class KeyValueArray extends Component<PropsType, StateType> {
   };
 
   objectToValues = (obj: Record<string, string>): KeyValue[] => {
-    return Object.entries(obj).map(([key, value]) => ({ key, value }));
+    return Object.entries(obj)?.map(([key, value]) => ({ key, value }));
   };
 
   renderDeleteButton = (i: number) => {
@@ -109,7 +109,7 @@ export default class KeyValueArray extends Component<PropsType, StateType> {
   renderInputList = () => {
     return (
       <>
-        {this.state.values.map((entry: any, i: number) => {
+        {this.state.values?.map((entry: any, i: number) => {
           // Preprocess non-string env values set via raw Helm values
           let { value } = entry;
           if (typeof value === "object") {

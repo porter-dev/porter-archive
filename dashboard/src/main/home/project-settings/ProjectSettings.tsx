@@ -5,8 +5,8 @@ import { Context } from "shared/Context";
 
 import InvitePage from "./InviteList";
 import TabRegion from "components/TabRegion";
-import Heading from "components/values-form/Heading";
-import Helper from "components/values-form/Helper";
+import Heading from "components/form-components/Heading";
+import Helper from "components/form-components/Helper";
 import TitleSection from "components/TitleSection";
 import { withAuth, WithAuthProps } from "shared/auth/AuthorizationHoc";
 

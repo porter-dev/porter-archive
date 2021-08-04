@@ -13,10 +13,10 @@ import {
 
 import { isAlphanumeric } from "shared/common";
 
-import InputRow from "components/values-form/InputRow";
+import InputRow from "components/form-components/InputRow";
 import SaveButton from "components/SaveButton";
-import Helper from "components/values-form/Helper";
-import PorterFormWrapper from "components/form-refactor/PorterFormWrapper";
+import Helper from "components/form-components/Helper";
+import PorterFormWrapper from "components/porter-form/PorterFormWrapper";
 import Selector from "components/Selector";
 import Loading from "components/Loading";
 import { withAuth, WithAuthProps } from "shared/auth/AuthorizationHoc";

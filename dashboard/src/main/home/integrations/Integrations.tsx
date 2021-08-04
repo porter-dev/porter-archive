@@ -12,18 +12,10 @@ import TitleSection from "components/TitleSection";
 
 type PropsType = RouteComponentProps;
 
-type StateType = {
-  currentIntegrationData: any[];
-};
+const IntegrationCategoryStrings = ["registry", "slack"]; /*"kubernetes",*/
 
-const IntegrationCategoryStrings = ["registry", "repo"]; /*"kubernetes",*/
-
-class Integrations extends Component<PropsType, StateType> {
-  state = {
-    currentIntegrationData: [] as any[],
-  };
-
-  render = () => (
+const Integrations: React.FC<PropsType> = (props) => {
+  return (
     <StyledIntegrations>
       <Switch>
         <Route
@@ -31,33 +23,32 @@ class Integrations extends Component<PropsType, StateType> {
           render={(rp) => {
             const { integration, category } = rp.match.params;
             if (!IntegrationCategoryStrings.includes(category)) {
-              pushFiltered(this.props, "/integrations", ["project_id"]);
+              pushFiltered(props, "/integrations", ["project_id"]);
             }
             let icon =
               integrationList[integration] && integrationList[integration].icon;
             return (
-              <div>
+              <Flex>
                 <TitleSection
-                  icon={icon}
                   handleNavBack={() =>
-                    pushFiltered(this.props, `/integrations/${category}`, [
+                    pushFiltered(props, `/integrations/${category}`, [
                       "project_id",
                     ])
                   }
+                  icon={icon}
                 >
-                  {integrationList[integration].label}
+                    {integrationList[integration].label}
                 </TitleSection>
-                <Buffer />
                 <CreateIntegrationForm
                   integrationName={integration}
                   closeForm={() => {
-                    pushFiltered(this.props, `/integrations/${category}`, [
+                    pushFiltered(props, `/integrations/${category}`, [
                       "project_id",
                     ]);
                   }}
                 />
                 <Br />
-              </div>
+              </Flex>
             );
           }}
         />
@@ -66,7 +57,7 @@ class Integrations extends Component<PropsType, StateType> {
           render={(rp) => {
             const currentCategory = rp.match.params.category;
             if (!IntegrationCategoryStrings.includes(currentCategory)) {
-              pushFiltered(this.props, "/integrations", ["project_id"]);
+              pushFiltered(props, "/integrations", ["project_id"]);
             }
             return <IntegrationCategories category={currentCategory} />;
           }}
@@ -77,9 +68,9 @@ class Integrations extends Component<PropsType, StateType> {
 
             <IntegrationList
               currentCategory={""}
-              integrations={["kubernetes", "registry"]}
+              integrations={["registry", "slack"]}
               setCurrent={(x) =>
-                pushFiltered(this.props, `/integrations/${x}`, ["project_id"])
+                pushFiltered(props, `/integrations/${x}`, ["project_id"])
               }
               isCategory={true}
               updateIntegrationList={() => {}}
@@ -89,7 +80,7 @@ class Integrations extends Component<PropsType, StateType> {
       </Switch>
     </StyledIntegrations>
   );
-}
+};
 
 export default withRouter(Integrations);
 

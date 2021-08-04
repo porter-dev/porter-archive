@@ -40,7 +40,6 @@ export default class TabRegion extends Component<PropsType, StateType> {
   }
 
   render() {
-    console.log(this.props.currentTab)
     return (
       <StyledTabRegion suppressAnimation={this.props.suppressAnimation}>
         {

@@ -178,7 +178,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
         setControllers((oldControllers) => {
           switch (event.event_type) {
             case "DELETE":
-              delete oldControllers[object.metadata.uid];
+              typeof oldControllers !== "undefined" && delete oldControllers[object.metadata.uid];
             case "UPDATE":
               if (
                 oldControllers &&

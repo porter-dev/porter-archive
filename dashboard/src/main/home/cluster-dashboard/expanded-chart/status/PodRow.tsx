@@ -20,6 +20,8 @@ const PodRow: React.FunctionComponent<PodRowProps> = ({
   podStatus,
 }) => {
   const [showTooltip, setShowTooltip] = useState(false);
+  const [showInfoTooltip, setShowInfoTooltip] = useState(false);
+
   return (
     <Tab key={pod?.name} selected={isSelected} onClick={onTabClick}>
       <Gutter>
@@ -35,21 +37,40 @@ const PodRow: React.FunctionComponent<PodRowProps> = ({
           setShowTooltip(false);
         }}
       >
-        Pod hash: {pod?.hash}
+        {pod?.name}
       </Name>
       {showTooltip && <Tooltip>{pod?.name}</Tooltip>}
-      <Status>
-        <StatusColor status={podStatus} />
-        {podStatus}
-        {podStatus === "failed" && (
-          <CloseIcon
-            className="material-icons-outlined"
-            onClick={onDeleteClick}
-          >
-            close
-          </CloseIcon>
+      <DetailsWrapper
+        onMouseOver={() => {
+          setShowInfoTooltip(true);
+        }}
+        onMouseOut={() => {
+          setShowInfoTooltip(false);
+        }}
+      >
+        <div>
+          <i className="material-icons">info</i>
+        </div>
+        {showInfoTooltip && (
+          <DetailsTooltip>
+            <span>Restart count: {pod.restartCount}</span>
+            <span>Created on: {pod.podAge}</span>
+          </DetailsTooltip>
         )}
-      </Status>
+
+        <Status>
+          <StatusColor status={podStatus} />
+          {podStatus}
+          {podStatus === "failed" && (
+            <CloseIcon
+              className="material-icons-outlined"
+              onClick={onDeleteClick}
+            >
+              close
+            </CloseIcon>
+          )}
+        </Status>
+      </DetailsWrapper>
     </Tab>
   );
 };
@@ -198,4 +219,38 @@ const Name = styled.div`
   display: -webkit-box;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
+`;
+
+const DetailsWrapper = styled.div`
+  position: relative;
+  display: flex;
+`;
+
+const DetailsTooltip = styled.div`
+  display: flex;
+  flex-direction: column;
+  position: absolute;
+  top: 1px;
+  right: 90px;
+
+  width: 200px;
+  padding: 2px 5px;
+  background: #383842dd;
+  color: white;
+  text-transform: none;
+  font-size: 12px;
+  font-family: "Work Sans", sans-serif;
+  word-wrap: unset;
+  outline: 1px solid #ffffff55;
+  opacity: 0;
+  animation: faded-in 0.1s 0.05s;
+  animation-fill-mode: forwards;
+  @keyframes faded-in {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
 `;

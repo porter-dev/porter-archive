@@ -24,7 +24,7 @@ import api from "shared/api";
 import ConfirmOverlay from "components/ConfirmOverlay";
 import Loading from "components/Loading";
 import StatusIndicator from "components/StatusIndicator";
-import FormWrapper from "components/values-form/FormWrapper";
+import PorterFormWrapper from "components/porter-form/PorterFormWrapper";
 import RevisionSection from "./RevisionSection";
 import ValuesYaml from "./ValuesYaml";
 import GraphSection from "./GraphSection";
@@ -66,7 +66,8 @@ const ExpandedChart: React.FC<Props> = (props) => {
   const [devOpsMode, setDevOpsMode] = useState<boolean>(
     localStorage.getItem("devOpsMode") === "true"
   );
-  const [tabOptions, setTabOptions] = useState<any[]>([]);
+  const [rightTabOptions, setRightTabOptions] = useState<any[]>([]);
+  const [leftTabOptions, setLeftTabOptions] = useState<any[]>([]);
   const [saveValuesStatus, setSaveValueStatus] = useState<string>(null);
   const [forceRefreshRevisions, setForceRefreshRevisions] = useState<boolean>(
     false
@@ -178,7 +179,8 @@ const ExpandedChart: React.FC<Props> = (props) => {
         setControllers((oldControllers) => {
           switch (event.event_type) {
             case "DELETE":
-              typeof oldControllers !== "undefined" && delete oldControllers[object.metadata.uid];
+              typeof oldControllers !== "undefined" &&
+                delete oldControllers[object.metadata.uid];
             case "UPDATE":
               if (
                 oldControllers &&
@@ -425,17 +427,18 @@ const ExpandedChart: React.FC<Props> = (props) => {
 
   const updateTabs = () => {
     // Collate non-form tabs
-    let tabOptions = [] as any[];
-    tabOptions.push({ label: "Status", value: "status" });
+    let rightTabOptions = [] as any[];
+    let leftTabOptions = [] as any[];
+    rightTabOptions.push({ label: "Status", value: "status" });
 
     if (props.isMetricsInstalled) {
-      tabOptions.push({ label: "Metrics", value: "metrics" });
+      rightTabOptions.push({ label: "Metrics", value: "metrics" });
     }
 
-    tabOptions.push({ label: "Chart Overview", value: "graph" });
+    rightTabOptions.push({ label: "Chart Overview", value: "graph" });
 
     if (devOpsMode) {
-      tabOptions.push(
+      rightTabOptions.push(
         { label: "Manifests", value: "list" },
         { label: "Helm Values", value: "values" }
       );
@@ -443,18 +446,22 @@ const ExpandedChart: React.FC<Props> = (props) => {
 
     // Settings tab is always last
     if (isAuthorized("application", "", ["get", "delete"])) {
-      tabOptions.push({ label: "Settings", value: "settings" });
+      rightTabOptions.push({ label: "Settings", value: "settings" });
     }
 
     // Filter tabs if previewing an old revision or updating the chart version
     if (isPreview) {
       let liveTabs = ["status", "settings", "deploy", "metrics"];
-      tabOptions = tabOptions.filter(
+      rightTabOptions = rightTabOptions.filter(
+        (tab: any) => !liveTabs.includes(tab.value)
+      );
+      leftTabOptions = leftTabOptions.filter(
         (tab: any) => !liveTabs.includes(tab.value)
       );
     }
 
-    setTabOptions(tabOptions);
+    setRightTabOptions(rightTabOptions);
+    setLeftTabOptions(leftTabOptions);
   };
 
   const setRevision = (chart: ChartType, isCurrent?: boolean) => {
@@ -648,10 +655,6 @@ const ExpandedChart: React.FC<Props> = (props) => {
   return (
     <>
       <StyledExpandedChart>
-        <BackButton onClick={props.closeChart}>
-          <BackButtonImg src={backArrow} />
-        </BackButton>
-
         <ConfirmOverlay
           show={showDeleteOverlay}
           message={`Are you sure you want to delete ${currentChart.name}?`}
@@ -664,6 +667,9 @@ const ExpandedChart: React.FC<Props> = (props) => {
           </DeleteOverlay>
         )}
         <HeaderWrapper>
+          <BackButton onClick={props.closeChart}>
+            <BackButtonImg src={backArrow} />
+          </BackButton>
           <TitleSection
             icon={currentChart.chart.metadata.icon}
             iconWidth="33px"
@@ -688,48 +694,49 @@ const ExpandedChart: React.FC<Props> = (props) => {
               {" " + getReadableDate(currentChart.info.last_deployed)}
             </LastDeployed>
           </InfoWrapper>
-
-          <RevisionSection
-            showRevisions={showRevisions}
-            toggleShowRevisions={() => {
-              setShowRevisions(!showRevisions);
-            }}
-            chart={currentChart}
-            refreshChart={() => getChartData(currentChart)}
-            setRevision={setRevision}
-            forceRefreshRevisions={forceRefreshRevisions}
-            refreshRevisionsOff={() => setForceRefreshRevisions(false)}
-            status={chartStatus}
-            shouldUpdate={
-              currentChart.latest_version &&
-              currentChart.latest_version !==
-                currentChart.chart.metadata.version
-            }
-            latestVersion={currentChart.latest_version}
-            upgradeVersion={handleUpgradeVersion}
-          />
         </HeaderWrapper>
-        <FormWrapper
-          isReadOnly={
-            imageIsPlaceholder ||
-            !isAuthorized("application", "", ["get", "update"])
-          }
-          formData={currentChart.form}
-          tabOptions={tabOptions}
-          renderTabContents={renderTabContents}
-          onSubmit={onSubmit}
-          saveValuesStatus={saveValuesStatus}
-          externalValues={{
-            namespace: props.namespace,
-            clusterId: currentCluster.id,
+        <RevisionSection
+          showRevisions={showRevisions}
+          toggleShowRevisions={() => {
+            setShowRevisions(!showRevisions);
           }}
-          color={isPreview ? "#f5cb42" : null}
-          addendum={
-            <TabButton onClick={toggleDevOpsMode} devOpsMode={devOpsMode}>
-              <i className="material-icons">offline_bolt</i> DevOps Mode
-            </TabButton>
+          chart={currentChart}
+          refreshChart={() => getChartData(currentChart)}
+          setRevision={setRevision}
+          forceRefreshRevisions={forceRefreshRevisions}
+          refreshRevisionsOff={() => setForceRefreshRevisions(false)}
+          status={chartStatus}
+          shouldUpdate={
+            currentChart.latest_version &&
+            currentChart.latest_version !== currentChart.chart.metadata.version
           }
+          latestVersion={currentChart.latest_version}
+          upgradeVersion={handleUpgradeVersion}
         />
+        <BodyWrapper>
+          <PorterFormWrapper
+            formData={currentChart.form}
+            valuesToOverride={{
+              namespace: props.namespace,
+              clusterId: currentCluster.id,
+            }}
+            renderTabContents={renderTabContents}
+            isReadOnly={
+              imageIsPlaceholder ||
+              !isAuthorized("application", "", ["get", "update"])
+            }
+            onSubmit={onSubmit}
+            rightTabOptions={rightTabOptions}
+            leftTabOptions={leftTabOptions}
+            color={isPreview ? "#f5cb42" : null}
+            addendum={
+              <TabButton onClick={toggleDevOpsMode} devOpsMode={devOpsMode}>
+                <i className="material-icons">offline_bolt</i> DevOps Mode
+              </TabButton>
+            }
+            saveValuesStatus={saveValuesStatus}
+          />
+        </BodyWrapper>
       </StyledExpandedChart>
     </>
   );
@@ -738,6 +745,11 @@ const ExpandedChart: React.FC<Props> = (props) => {
 export default ExpandedChart;
 
 const TextWrap = styled.div``;
+
+const BodyWrapper = styled.div`
+  position: relative;
+  overflow: hidden;
+`;
 
 const BackButton = styled.div`
   position: absolute;
@@ -774,7 +786,8 @@ const Header = styled.div`
 `;
 
 const Placeholder = styled.div`
-  height: 100%;
+  min-height: 400px;
+  height: 50vh;
   padding: 30px;
   padding-bottom: 90px;
   font-size: 13px;
@@ -876,7 +889,9 @@ const TabButton = styled.div`
   }
 `;
 
-const HeaderWrapper = styled.div``;
+const HeaderWrapper = styled.div`
+  position: relative;
+`;
 
 const Dot = styled.div`
   margin-right: 9px;
@@ -953,7 +968,6 @@ const IconWrapper = styled.div`
 const StyledExpandedChart = styled.div`
   width: 100%;
   z-index: 0;
-  position: relative;
   animation: fadeIn 0.3s;
   animation-timing-function: ease-out;
   animation-fill-mode: forwards;

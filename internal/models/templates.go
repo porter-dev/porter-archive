@@ -66,10 +66,11 @@ type FormContent struct {
 
 // FormYAML represents a chart's values.yaml form abstraction
 type FormYAML struct {
-	Name        string     `yaml:"name" json:"name"`
-	Icon        string     `yaml:"icon" json:"icon"`
-	HasSource   string     `yaml:"hasSource" json:"hasSource"`
-	Description string     `yaml:"description" json:"description"`
-	Tags        []string   `yaml:"tags" json:"tags"`
-	Tabs        []*FormTab `yaml:"tabs" json:"tabs,omitempty"`
+	Name                string     `yaml:"name" json:"name"`
+	Icon                string     `yaml:"icon" json:"icon"`
+	HasSource           string     `yaml:"hasSource" json:"hasSource"`
+	IncludeHiddenFields string     `yaml:"includeHiddenFields,omitempty" json:"includeHiddenFields,omitempty"`
+	Description         string     `yaml:"description" json:"description"`
+	Tags                []string   `yaml:"tags" json:"tags"`
+	Tabs                []*FormTab `yaml:"tabs" json:"tabs,omitempty"`
 }

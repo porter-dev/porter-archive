@@ -13,8 +13,8 @@ import { Context } from "shared/Context";
 
 import ImageSelector from "components/image-selector/ImageSelector";
 import SaveButton from "components/SaveButton";
-import Heading from "components/values-form/Heading";
-import Helper from "components/values-form/Helper";
+import Heading from "components/form-components/Heading";
+import Helper from "components/form-components/Helper";
 import _ from "lodash";
 import CopyToClipboard from "components/CopyToClipboard";
 import useAuth from "shared/auth/useAuth";

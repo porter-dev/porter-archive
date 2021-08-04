@@ -614,7 +614,7 @@ const ViewWrapper = styled.div`
 `;
 
 const DashboardWrapper = styled.div`
-  width: 83%;
+  width: calc(85%);
   min-width: 300px;
 `;
 

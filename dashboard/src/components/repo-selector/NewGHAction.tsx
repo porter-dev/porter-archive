@@ -3,7 +3,7 @@ import styled from "styled-components";
 
 import { ChartType } from "shared/types";
 import { Context } from "shared/Context";
-import InputRow from "components/values-form/InputRow";
+import InputRow from "components/form-components/InputRow";
 
 import Loading from "../Loading";
 

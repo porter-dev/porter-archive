@@ -8,7 +8,7 @@ import Logs from "../status/Logs";
 import plus from "assets/plus.svg";
 import closeRounded from "assets/close-rounded.png";
 import trash from "assets/trash.png";
-import KeyValueArray from "components/values-form/KeyValueArray";
+import KeyValueArray from "components/form-components/KeyValueArray";
 
 type PropsType = {
   job: any;

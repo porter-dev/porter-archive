@@ -76,7 +76,6 @@ const ExpandedChart: React.FC<Props> = (props) => {
     Record<string, Record<string, any>>
   >({});
   const [url, setUrl] = useState<string>(null);
-  const [showDeleteOverlay, setShowDeleteOverlay] = useState<boolean>(false);
   const [deleting, setDeleting] = useState<boolean>(false);
   const [imageIsPlaceholder, setImageIsPlaceholer] = useState<boolean>(false);
   const [newestImage, setNewestImage] = useState<string>(null);
@@ -91,9 +90,13 @@ const ExpandedChart: React.FC<Props> = (props) => {
     closeWebsocket,
   } = useWebsockets();
 
-  const { currentCluster, currentProject, setCurrentError } = useContext(
-    Context
-  );
+  const { 
+    currentCluster, 
+    currentProject, 
+    setCurrentError,
+    currentOverlay,
+    setCurrentOverlay,
+  } = useContext(Context);
 
   // Retrieve full chart data (includes form and values)
   const getChartData = async (chart: ChartType) => {
@@ -154,7 +157,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
 
         setControllers((oldControllers) => ({
           ...oldControllers,
-          [c.metadata.kind]: c,
+          [c.metadata.uid]: c,
         }));
       });
 
@@ -176,24 +179,22 @@ const ExpandedChart: React.FC<Props> = (props) => {
         let object = event.Object;
         object.metadata.kind = event.Kind;
 
+        if (event.event_type != "UPDATE") {
+          return;
+        }
+
         setControllers((oldControllers) => {
-          switch (event.event_type) {
-            case "DELETE":
-              typeof oldControllers !== "undefined" &&
-                delete oldControllers[object.metadata.uid];
-            case "UPDATE":
-              if (
-                oldControllers &&
-                oldControllers[object.metadata.uid]?.status?.conditions ==
-                  object.status?.conditions
-              ) {
-                return oldControllers;
-              }
-              return {
-                ...oldControllers,
-                [object.metadata.uid]: object,
-              };
+          if (
+            oldControllers &&
+            oldControllers[object.metadata.uid]?.status?.conditions ==
+              object.status?.conditions
+          ) {
+            return oldControllers;
           }
+          return {
+            ...oldControllers,
+            [object.metadata.uid]: object,
+          };
         });
       },
       onerror() {
@@ -391,7 +392,17 @@ const ExpandedChart: React.FC<Props> = (props) => {
           <SettingsSection
             currentChart={chart}
             refreshChart={() => getChartData(currentChart)}
-            setShowDeleteOverlay={(x: boolean) => setShowDeleteOverlay(x)}
+            setShowDeleteOverlay={(x: boolean) => {
+              if (x) {
+                setCurrentOverlay({
+                  message: `Are you sure you want to delete ${currentChart.name}?`,
+                  onYes: handleUninstallChart,
+                  onNo: () => setCurrentOverlay(null),
+                });
+              } else {
+                setCurrentOverlay(null);
+              }
+            }}
           />
         );
       case "graph":
@@ -562,7 +573,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
   };
 
   const handleUninstallChart = async () => {
-    setDeleting(true);
+    setCurrentOverlay(null);
     try {
       await api.uninstallTemplate(
         "<token>",
@@ -575,7 +586,6 @@ const ExpandedChart: React.FC<Props> = (props) => {
           cluster_id: currentCluster.id,
         }
       );
-      setShowDeleteOverlay(false);
       props.closeChart();
     } catch (error) {
       console.log(error);
@@ -655,17 +665,11 @@ const ExpandedChart: React.FC<Props> = (props) => {
   return (
     <>
       <StyledExpandedChart>
-        <ConfirmOverlay
-          show={showDeleteOverlay}
-          message={`Are you sure you want to delete ${currentChart.name}?`}
-          onYes={handleUninstallChart}
-          onNo={() => setShowDeleteOverlay(false)}
-        />
-        {deleting && (
-          <DeleteOverlay>
-            <Loading />
-          </DeleteOverlay>
-        )}
+      {deleting && (
+        <DeleteOverlay>
+          <Loading />
+        </DeleteOverlay>
+      )}
         <HeaderWrapper>
           <BackButton onClick={props.closeChart}>
             <BackButtonImg src={backArrow} />
@@ -749,6 +753,7 @@ const TextWrap = styled.div``;
 const BodyWrapper = styled.div`
   position: relative;
   overflow: hidden;
+  margin-bottom: 120px;
 `;
 
 const BackButton = styled.div`
@@ -967,15 +972,13 @@ const IconWrapper = styled.div`
 
 const StyledExpandedChart = styled.div`
   width: 100%;
+  overflow: hidden;
   z-index: 0;
   animation: fadeIn 0.3s;
   animation-timing-function: ease-out;
   animation-fill-mode: forwards;
   display: flex;
-  overflow-y: auto;
-  padding-bottom: 120px;
   flex-direction: column;
-  overflow: visible;
 
   @keyframes fadeIn {
     from {

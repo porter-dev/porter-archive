@@ -126,7 +126,10 @@ const ControllerTabFC: React.FunctionComponent<Props> = ({
             replicaSetName,
             restartCount,
             podAge: pod?.metadata?.creationTimestamp ? podAge : "N/A",
-            revisionNumber: pod?.metadata?.revisionNumber || "N/A",
+            revisionNumber:
+              (pod?.metadata?.annotations &&
+                pod?.metadata?.annotations["helm.sh/revision"]) ||
+              "N/A",
           };
         });
 

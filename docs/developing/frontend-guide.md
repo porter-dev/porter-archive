@@ -130,3 +130,20 @@ setVars((vars) => {
 ```
 To see more about how this system works, check out the implementation for some simpler form components like `Checkbox` or 
 `Input`.
+
+### Extracting Variables on Submit
+
+If you looked at the implementations of other form fields, you may have noticed that each form field file
+exports a function in the form `getFinalVariablesFor[FieldName]`. This function is neccesarry for two reasons:
+1. Sometimes, when the form is submitted, some fields have not yet been rendered but still need their values included
+in the final variable output (for example, if a string input has a default value).
+   
+2. Sometimes, a field wants to make modification to the variable/state belonging to it before the form is submitted
+   (for example, a string input could append units to its value on submission).
+   
+So, if a field has a default/wants to modify variables on submit, this functions should be included in the file
+(and in the appropriate place in the `PorterFormContextProvider`). In general, this function takes in three arguments:
+the list of unmodified variables on submission, the props of the field, and the state of the field upon submission. It 
+returns an object that will be applied on top of the variable list. Also note that the state passed into this function
+could be `null` or `undefined` if the field has never been rendered. For more details, look at the implementation of this function for `Input`.
+   

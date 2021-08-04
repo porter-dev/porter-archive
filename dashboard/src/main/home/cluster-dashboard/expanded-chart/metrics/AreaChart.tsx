@@ -4,12 +4,7 @@ import { curveMonotoneX } from "@visx/curve";
 import { scaleTime, scaleLinear } from "@visx/scale";
 import { AxisLeft, AxisBottom } from "@visx/axis";
 
-import {
-  Tooltip,
-  TooltipWithBounds,
-  defaultStyles,
-  useTooltip,
-} from "@visx/tooltip";
+import { TooltipWithBounds, defaultStyles, useTooltip } from "@visx/tooltip";
 
 import { GridRows, GridColumns } from "@visx/grid";
 
@@ -138,7 +133,11 @@ const AreaChart: React.FunctionComponent<AreaProps> = ({
             : d0;
       }
 
-      if (!isHpaEnabled) {
+      const hpaIndex = bisectDate(hpaData, x0, 1);
+      // Get new index without min value to be sure that data exists for HPA
+      const hpaIndex2 = bisectDate(hpaData, x0);
+
+      if (!isHpaEnabled || hpaIndex !== hpaIndex2) {
         showTooltip({
           tooltipData: { data: d, tooltipHpaData: undefined },
           tooltipLeft: x || 0,
@@ -147,8 +146,8 @@ const AreaChart: React.FunctionComponent<AreaProps> = ({
         return;
       }
 
-      const tooltipHpaData0 = hpaData[index - 1];
-      const tooltipHpaData1 = hpaData[index];
+      const tooltipHpaData0 = hpaData[hpaIndex - 1];
+      const tooltipHpaData1 = hpaData[hpaIndex];
       let tooltipHpaData = tooltipHpaData0;
 
       if (tooltipHpaData1 && getDate(tooltipHpaData1)) {
@@ -194,7 +193,7 @@ const AreaChart: React.FunctionComponent<AreaProps> = ({
     (hpaEnabled &&
       tooltipData?.tooltipHpaData &&
       valueScale(getValue(tooltipData?.tooltipHpaData))) ||
-    0;
+    null;
 
   const dataGraphTooltipGlyphPosition =
     (tooltipData?.data && valueScale(getValue(tooltipData.data))) || 0;
@@ -332,7 +331,7 @@ const AreaChart: React.FunctionComponent<AreaProps> = ({
               strokeWidth={2}
               pointerEvents="none"
             />
-            {isHpaEnabled && (
+            {isHpaEnabled && hpaGraphTooltipGlyphPosition !== null && (
               <>
                 <circle
                   cx={tooltipLeft}
@@ -376,9 +375,9 @@ const AreaChart: React.FunctionComponent<AreaProps> = ({
             <div style={{ color: accentColor }}>
               {dataKey}: {getValue(tooltipData.data)}
             </div>
-            {isHpaEnabled && (
+            {isHpaEnabled && hpaGraphTooltipGlyphPosition !== null && (
               <div style={{ color: "#FFF" }}>
-                HPA Threshold: {getValue(tooltipData.tooltipHpaData)}
+                Autoscaling Threshold: {getValue(tooltipData.tooltipHpaData)}
               </div>
             )}
           </TooltipWithBounds>

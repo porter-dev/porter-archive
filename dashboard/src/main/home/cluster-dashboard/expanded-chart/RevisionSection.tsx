@@ -224,7 +224,7 @@ class RevisionSection extends Component<PropsType, StateType> {
         >
           <Td>{revision.version}</Td>
           <Td>{this.readableDate(revision.info.last_deployed)}</Td>
-          <Td>{this.renderStatus(revision)}</Td>
+          <Td>{revision.config?.image?.tag || "N/A"}</Td>
           <Td>v{revision.chart.metadata.version}</Td>
           <Td>
             <RollbackButton
@@ -253,7 +253,9 @@ class RevisionSection extends Component<PropsType, StateType> {
               <Tr disableHover={true}>
                 <Th>Revision No.</Th>
                 <Th>Timestamp</Th>
-                <Th>Status</Th>
+                <Th>
+                  {this.props.chart.git_action_config ? "Commit" : "Image Tag"}
+                </Th>
                 <Th>Template Version</Th>
                 <Th>Rollback</Th>
               </Tr>

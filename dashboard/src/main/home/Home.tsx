@@ -255,7 +255,6 @@ class Home extends Component<PropsType, StateType> {
     let { match } = this.props;
     let params = match.params as any;
     let { cluster } = params;
-    console.log("cluster is", cluster);
 
     let { user } = this.context;
 
@@ -605,7 +604,7 @@ export default withRouter(withAuth(Home));
 const ViewWrapper = styled.div`
   height: 100%;
   width: 100vw;
-  padding-top: 30px;
+  padding-top: 10vh;
   overflow-y: auto;
   display: flex;
   flex: 1;
@@ -615,10 +614,8 @@ const ViewWrapper = styled.div`
 `;
 
 const DashboardWrapper = styled.div`
-  width: 80%;
-  padding-top: 50px;
+  width: 83%;
   min-width: 300px;
-  padding-bottom: 120px;
 `;
 
 const StyledHome = styled.div`

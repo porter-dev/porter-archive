@@ -1,13 +1,16 @@
 import React, { Component } from "react";
 import styled from "styled-components";
 import close from "assets/close.png";
+import backArrow from "assets/back_arrow.png";
 import key from "assets/key.svg";
 import _ from "lodash";
 
 import { ChartType, StorageType, ClusterType } from "shared/types";
 import { Context } from "shared/Context";
+import { isAlphanumeric } from "shared/common";
 import api from "shared/api";
 
+import TitleSection from "components/TitleSection";
 import SaveButton from "components/SaveButton";
 import ConfirmOverlay from "components/ConfirmOverlay";
 import Loading from "components/Loading";
@@ -15,6 +18,7 @@ import TabRegion from "components/TabRegion";
 import EnvGroupArray, { KeyValueType } from "./EnvGroupArray";
 import Heading from "components/values-form/Heading";
 import Helper from "components/values-form/Helper";
+import InputRow from "components/values-form/InputRow";
 import { withAuth, WithAuthProps } from "shared/auth/AuthorizationHoc";
 
 type PropsType = WithAuthProps & {
@@ -30,8 +34,15 @@ type StateType = {
   showDeleteOverlay: boolean;
   deleting: boolean;
   saveValuesStatus: string | null;
-  envVariables: KeyValueType[];
+  envGroup: EnvGroup;
   tabOptions: { value: string; label: string }[];
+  newEnvGroupName: string;
+};
+
+type EnvGroup = {
+  name: string;
+  timestamp: string;
+  variables: KeyValueType[];
 };
 
 const tabOptions = [
@@ -46,29 +57,48 @@ class ExpandedEnvGroup extends Component<PropsType, StateType> {
     showDeleteOverlay: false,
     deleting: false,
     saveValuesStatus: null as string | null,
-    envVariables: [] as KeyValueType[],
+    envGroup: {
+      name: null as string,
+      timestamp: null as string,
+      variables: [] as KeyValueType[],
+    },
     tabOptions: [
       { value: "environment", label: "Environment Variables" },
       { value: "settings", label: "Settings" },
     ],
+    newEnvGroupName: null as string,
   };
 
-  componentDidMount() {
+  populateEnvGroup = (envGroup: any) => {
+    const {
+      metadata: { name, creationTimestamp: timestamp },
+      data,
+    } = envGroup;
     // parse env group props into values type
-    let envVariables = [] as KeyValueType[];
-    let envGroupData = this.props.envGroup.data;
+    const variables = [] as KeyValueType[];
 
-    for (const key in envGroupData) {
-      envVariables.push({
+    for (const key in data) {
+      variables.push({
         key: key,
-        value: envGroupData[key],
-        hidden: envGroupData[key].includes("PORTERSECRET"),
-        locked: envGroupData[key].includes("PORTERSECRET"),
+        value: data[key],
+        hidden: data[key].includes("PORTERSECRET"),
+        locked: data[key].includes("PORTERSECRET"),
         deleted: false,
       });
     }
 
-    this.setState({ envVariables });
+    this.setState({
+      envGroup: {
+        name,
+        timestamp,
+        variables,
+      },
+      newEnvGroupName: name,
+    });
+  };
+
+  componentDidMount() {
+    this.populateEnvGroup(this.props.envGroup);
 
     // Filter the settings tab options as for now it only shows the delete button.
     // In a future this should be removed and return to a constant if we want to show data
@@ -86,25 +116,49 @@ class ExpandedEnvGroup extends Component<PropsType, StateType> {
     });
   }
 
+  handleRename = () => {
+    const { namespace } = this.props;
+    const {
+      envGroup: { name },
+      newEnvGroupName: newName,
+    } = this.state;
+
+    api
+      .renameConfigMap(
+        "<token>",
+        {
+          name,
+          namespace,
+          new_name: newName,
+        },
+        {
+          id: this.context.currentProject.id,
+          cluster_id: this.props.currentCluster.id,
+        }
+      )
+      .then((res) => {
+        this.populateEnvGroup(res.data);
+      });
+  };
+
   handleUpdateValues = () => {
-    let { envGroup } = this.props;
-    let name = envGroup.metadata.name;
-    let namespace = envGroup.metadata.namespace;
+    const { namespace } = this.props;
+    const {
+      envGroup: { name, variables: envVariables },
+    } = this.state;
 
-    let apiEnvVariables: Record<string, string> = {};
-    let secretEnvVariables: Record<string, string> = {};
-
-    let envVariables = this.state.envVariables;
+    const apiEnvVariables: Record<string, string> = {};
+    const secretEnvVariables: Record<string, string> = {};
 
     envVariables
       .filter((envVar: KeyValueType, index: number, self: KeyValueType[]) => {
         // remove any collisions that are marked as deleted and are duplicates, unless they are
         // all delete collisions
-        let numDeleteCollisions = self.reduce((n, _envVar: KeyValueType) => {
+        const numDeleteCollisions = self.reduce((n, _envVar: KeyValueType) => {
           return n + (_envVar.key === envVar.key && envVar.deleted ? 1 : 0);
         }, 0);
 
-        let numCollisions = self.reduce((n, _envVar: KeyValueType) => {
+        const numCollisions = self.reduce((n, _envVar: KeyValueType) => {
           return n + (_envVar.key === envVar.key ? 1 : 0);
         }, 0);
 
@@ -171,9 +225,15 @@ class ExpandedEnvGroup extends Component<PropsType, StateType> {
   };
 
   renderTabContents = () => {
-    let currentTab = this.state.currentTab;
-    let { envGroup, namespace } = this.props;
-    let name = envGroup.metadata.name;
+    const { namespace } = this.props;
+    const {
+      envGroup: { name, variables },
+      newEnvGroupName: newName,
+      currentTab,
+    } = this.state;
+
+    const isEnvGroupNameValid = isAlphanumeric(newName) && newName !== "";
+    const isEnvGroupNameDifferent = newName !== name;
 
     switch (currentTab) {
       case "environment":
@@ -187,8 +247,12 @@ class ExpandedEnvGroup extends Component<PropsType, StateType> {
               </Helper>
               <EnvGroupArray
                 namespace={namespace}
-                values={this.state.envVariables}
-                setValues={(x: any) => this.setState({ envVariables: x })}
+                values={variables}
+                setValues={(x: any) =>
+                  this.setState((prevState) => ({
+                    envGroup: { ...prevState.envGroup, variables: x },
+                  }))
+                }
                 fileUpload={true}
                 secretOption={true}
                 disabled={
@@ -216,6 +280,29 @@ class ExpandedEnvGroup extends Component<PropsType, StateType> {
           <TabWrapper>
             {this.props.isAuthorized("env_group", "", ["get", "delete"]) && (
               <InnerWrapper full={true}>
+                <Heading>Name</Heading>
+                <Subtitle>
+                  <Warning makeFlush={true} highlight={!isEnvGroupNameValid}>
+                    Lowercase letters, numbers, and "-" only.
+                  </Warning>
+                </Subtitle>
+                <DarkMatter antiHeight="-29px" />
+                <InputRow
+                  type="text"
+                  value={newName}
+                  setValue={(x: string) =>
+                    this.setState({ newEnvGroupName: x })
+                  }
+                  placeholder="ex: doctor-scientist"
+                  width="100%"
+                />
+                <Button
+                  color="#616FEEcc"
+                  disabled={!(isEnvGroupNameDifferent && isEnvGroupNameValid)}
+                  onClick={this.handleRename}
+                >
+                  Rename {name}
+                </Button>
                 <Heading>Manage Environment Group</Heading>
                 <Helper>
                   Permanently delete this set of environment variables. This
@@ -235,9 +322,9 @@ class ExpandedEnvGroup extends Component<PropsType, StateType> {
   };
 
   readableDate = (s: string) => {
-    let ts = new Date(s);
-    let date = ts.toLocaleDateString();
-    let time = ts.toLocaleTimeString([], {
+    const ts = new Date(s);
+    const date = ts.toLocaleDateString();
+    const time = ts.toLocaleTimeString([], {
       hour: "numeric",
       minute: "2-digit",
     });
@@ -245,9 +332,10 @@ class ExpandedEnvGroup extends Component<PropsType, StateType> {
   };
 
   handleDeleteEnvGroup = () => {
-    let { envGroup } = this.props;
-    let name = envGroup.metadata.name;
-    let namespace = envGroup.metadata.namespace;
+    const { namespace } = this.props;
+    const {
+      envGroup: { name },
+    } = this.state;
 
     this.setState({ deleting: true });
     api
@@ -280,16 +368,18 @@ class ExpandedEnvGroup extends Component<PropsType, StateType> {
   };
 
   render() {
-    let { closeExpanded } = this.props;
-    let { envGroup } = this.props;
-    let name = envGroup.metadata.name;
-    let timestamp = envGroup.metadata.creationTimestamp;
-    let namespace = envGroup.metadata.namespace;
+    const { namespace, closeExpanded } = this.props;
+    const {
+      envGroup: { name, timestamp },
+    } = this.state;
 
     return (
       <>
-        <CloseOverlay onClick={closeExpanded} />
         <StyledExpandedChart>
+          <BackButton onClick={closeExpanded}>
+            <BackButtonImg src={backArrow} />
+          </BackButton>
+
           <ConfirmOverlay
             show={this.state.showDeleteOverlay}
             message={`Are you sure you want to delete ${name}?`}
@@ -298,29 +388,18 @@ class ExpandedEnvGroup extends Component<PropsType, StateType> {
           />
           {this.renderDeleteOverlay()}
 
-          <HeaderWrapper>
-            <TitleSection>
-              <Title>
-                <IconWrapper>
-                  <Icon src={key} />
-                </IconWrapper>
-                {name}
-              </Title>
-              <InfoWrapper>
-                <LastDeployed>
-                  Last updated {this.readableDate(timestamp)}
-                </LastDeployed>
-              </InfoWrapper>
+          <TitleSection icon={key} iconWidth="33px">
+            {name}
+            <TagWrapper>
+              Namespace <NamespaceTag>{namespace}</NamespaceTag>
+            </TagWrapper>
+          </TitleSection>
 
-              <TagWrapper>
-                Namespace <NamespaceTag>{namespace}</NamespaceTag>
-              </TagWrapper>
-            </TitleSection>
-
-            <CloseButton onClick={closeExpanded}>
-              <CloseButtonImg src={close} />
-            </CloseButton>
-          </HeaderWrapper>
+          <InfoWrapper>
+            <LastDeployed>
+              Last updated {this.readableDate(timestamp)}
+            </LastDeployed>
+          </InfoWrapper>
 
           <TabRegion
             currentTab={this.state.currentTab}
@@ -339,6 +418,33 @@ class ExpandedEnvGroup extends Component<PropsType, StateType> {
 ExpandedEnvGroup.contextType = Context;
 
 export default withAuth(ExpandedEnvGroup);
+
+const BackButton = styled.div`
+  position: absolute;
+  top: 0px;
+  right: 0px;
+  display: flex;
+  width: 36px;
+  cursor: pointer;
+  height: 36px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #ffffff55;
+  border-radius: 100px;
+  background: #ffffff11;
+
+  :hover {
+    background: #ffffff22;
+    > img {
+      opacity: 1;
+    }
+  }
+`;
+
+const BackButtonImg = styled.img`
+  width: 16px;
+  opacity: 0.75;
+`;
 
 const Button = styled.button`
   height: 35px;
@@ -379,6 +485,7 @@ const InnerWrapper = styled.div<{ full?: boolean }>`
 const TabWrapper = styled.div`
   height: 100%;
   width: 100%;
+  padding-bottom: 65px;
   overflow: hidden;
 `;
 
@@ -414,37 +521,10 @@ const DeleteOverlay = styled.div`
   }
 `;
 
-const CloseOverlay = styled.div`
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: #202227;
-  animation: fadeIn 0.2s 0s;
-  opacity: 0;
-  animation-fill-mode: forwards;
-  @keyframes fadeIn {
-    from {
-      opacity: 0;
-    }
-    to {
-      opacity: 1;
-    }
-  }
-`;
-
-const HeaderWrapper = styled.div``;
-
-const Dot = styled.div`
-  margin-right: 9px;
-  margin-left: 9px;
-`;
-
 const InfoWrapper = styled.div`
   display: flex;
   align-items: center;
-  margin: 24px 0px 17px 0px;
+  margin: 10px 0px 17px 0px;
   height: 20px;
 `;
 
@@ -458,13 +538,13 @@ const LastDeployed = styled.div`
 `;
 
 const TagWrapper = styled.div`
-  position: absolute;
-  right: 0px;
-  bottom: 0px;
   height: 20px;
   font-size: 12px;
   display: flex;
+  margin-left: 20px;
+  margin-bottom: -3px;
   align-items: center;
+  font-weight: 400;
   justify-content: center;
   color: #ffffff44;
   border: 1px solid #ffffff44;
@@ -489,85 +569,45 @@ const NamespaceTag = styled.div`
   border-bottom-left-radius: 0px;
 `;
 
-const Icon = styled.img`
-  width: 100%;
-`;
-
-const IconWrapper = styled.div`
-  color: #efefef;
-  font-size: 16px;
-  height: 20px;
-  width: 20px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  border-radius: 3px;
-  margin-right: 12px;
-
-  > i {
-    font-size: 20px;
-  }
-`;
-
-const Title = styled.div`
-  font-size: 18px;
-  font-weight: 500;
-  display: flex;
-  align-items: center;
-`;
-
-const TitleSection = styled.div`
-  width: 100%;
-  position: relative;
-`;
-
-const CloseButton = styled.div`
-  position: absolute;
-  display: block;
-  width: 40px;
-  height: 40px;
-  padding: 13px 0 12px 0;
-  text-align: center;
-  border-radius: 50%;
-  right: 15px;
-  top: 12px;
-  cursor: pointer;
-  :hover {
-    background-color: #ffffff11;
-  }
-`;
-
-const CloseButtonImg = styled.img`
-  width: 14px;
-  margin: 0 auto;
-`;
-
 const StyledExpandedChart = styled.div`
-  width: calc(100% - 50px);
-  height: calc(100% - 50px);
+  width: 100%;
   z-index: 0;
-  position: absolute;
-  top: 25px;
-  left: 25px;
-  overflow: hidden;
-  border-radius: 10px;
-  background: #26272f;
-  box-shadow: 0 5px 12px 4px #00000033;
-  animation: floatIn 0.3s;
+  position: relative;
+  animation: fadeIn 0.3s;
   animation-timing-function: ease-out;
   animation-fill-mode: forwards;
-  padding: 25px;
   display: flex;
+  overflow-y: auto;
+  padding-bottom: 120px;
   flex-direction: column;
+  overflow: visible;
 
-  @keyframes floatIn {
+  @keyframes fadeIn {
     from {
       opacity: 0;
-      transform: translateY(30px);
     }
     to {
       opacity: 1;
-      transform: translateY(0px);
     }
   }
+`;
+
+const DarkMatter = styled.div<{ antiHeight?: string }>`
+  width: 100%;
+  margin-top: ${(props) => props.antiHeight || "-15px"};
+`;
+
+const Warning = styled.span<{ highlight: boolean; makeFlush?: boolean }>`
+  color: ${(props) => (props.highlight ? "#f5cb42" : "")};
+  margin-left: ${(props) => (props.makeFlush ? "" : "5px")};
+`;
+
+const Subtitle = styled.div`
+  padding: 11px 0px 16px;
+  font-family: "Work Sans", sans-serif;
+  font-size: 13px;
+  color: #aaaabb;
+  line-height: 1.6em;
+  display: flex;
+  align-items: center;
 `;

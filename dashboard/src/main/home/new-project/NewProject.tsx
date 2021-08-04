@@ -8,6 +8,7 @@ import { isAlphanumeric } from "shared/common";
 import InputRow from "components/values-form/InputRow";
 import Helper from "components/values-form/Helper";
 import ProvisionerSettings from "../provisioner/ProvisionerSettings";
+import TitleSection from "components/TitleSection";
 
 type PropsType = {};
 
@@ -27,9 +28,7 @@ export default class NewProject extends Component<PropsType, StateType> {
     let { projectName } = this.state;
     return (
       <StyledNewProject>
-        <TitleSection>
-          <Title>New Project</Title>
-        </TitleSection>
+        <TitleSection>New Project</TitleSection>
         <Helper>
           Project name
           <Warning
@@ -130,8 +129,8 @@ const Warning = styled.span`
 `;
 
 const Title = styled.div`
-  font-size: 24px;
-  font-weight: 600;
+  font-size: 20px;
+  font-weight: 500;
   font-family: "Work Sans", sans-serif;
   color: #ffffff;
   white-space: nowrap;
@@ -139,32 +138,9 @@ const Title = styled.div`
   text-overflow: ellipsis;
 `;
 
-const TitleSection = styled.div`
-  margin-bottom: 20px;
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-
-  > a {
-    > i {
-      display: flex;
-      align-items: center;
-      margin-bottom: -2px;
-      font-size: 18px;
-      margin-left: 18px;
-      color: #858faaaa;
-      cursor: pointer;
-      :hover {
-        color: #aaaabb;
-      }
-    }
-  }
-`;
-
 const StyledNewProject = styled.div`
   width: calc(90% - 130px);
   min-width: 300px;
   position: relative;
-  padding-top: 50px;
   margin-top: calc(50vh - 340px);
 `;

@@ -1,9 +1,3 @@
-import aws from "../assets/aws.png";
-import digitalOcean from "../assets/do.png";
-import gcp from "../assets/gcp.png";
-import github from "../assets/github.png";
-import { InfraType } from "../shared/types";
-
 export const infraNames: any = {
   ecr: "Elastic Container Registry (ECR)",
   eks: "Elastic Kubernetes Service (EKS)",
@@ -61,19 +55,23 @@ export const integrationList: any = {
     label: "Elastic Container Registry (ECR)",
   },
   aws: {
-    icon: aws,
+    icon:
+      "https://uxwing.com/wp-content/themes/uxwing/download/10-brands-and-social-media/aws.png",
     label: "AWS",
   },
   gcp: {
-    icon: gcp,
+    icon:
+      "https://uxwing.com/wp-content/themes/uxwing/download/10-brands-and-social-media/google-cloud.png",
     label: "GCP",
   },
   do: {
-    icon: digitalOcean,
+    icon:
+      "https://uxwing.com/wp-content/themes/uxwing/download/10-brands-and-social-media/digitalocean.png",
     label: "DigitalOcean",
   },
   github: {
-    icon: github,
+    icon:
+      "https://uxwing.com/wp-content/themes/uxwing/download/10-brands-and-social-media/github.png",
     label: "GitHub",
   },
   gitlab: {

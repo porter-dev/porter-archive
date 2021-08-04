@@ -258,6 +258,16 @@ const deleteRegistryIntegration = baseApi<
   return `/api/projects/${pathParams.project_id}/registries/${pathParams.registry_id}`;
 });
 
+const deleteSlackIntegration = baseApi<
+  {},
+  {
+    project_id: number;
+    slack_integration_id: number;
+  }
+>("DELETE", (pathParams) => {
+  return `/api/projects/${pathParams.project_id}/slack_integrations/${pathParams.slack_integration_id}`;
+});
+
 const deployTemplate = baseApi<
   {
     templateName: string;
@@ -681,6 +691,13 @@ const getRepos = baseApi<{}, { id: number }>("GET", (pathParams) => {
   return `/api/projects/${pathParams.id}/repos`;
 });
 
+const getSlackIntegrations = baseApi<{}, { id: number }>(
+  "GET",
+  (pathParams) => {
+    return `/api/projects/${pathParams.id}/slack_integrations`;
+  }
+);
+
 const getRevisions = baseApi<
   {
     namespace: string;
@@ -1006,6 +1023,7 @@ export default {
   deletePod,
   deleteProject,
   deleteRegistryIntegration,
+  deleteSlackIntegration,
   createSubdomain,
   deployTemplate,
   deployAddon,
@@ -1050,6 +1068,7 @@ export default {
   getRegistryIntegrations,
   getReleaseToken,
   getRepoIntegrations,
+  getSlackIntegrations,
   getRepos,
   getRevisions,
   getTemplateInfo,

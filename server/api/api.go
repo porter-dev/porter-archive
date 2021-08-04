@@ -93,6 +93,7 @@ type App struct {
 	GithubAppConf     *oauth.GithubAppConf
 	DOConf            *oauth2.Config
 	GoogleUserConf    *oauth2.Config
+	SlackConf         *oauth2.Config
 
 	db              *gorm.DB
 	validator       *vr.Validate
@@ -102,13 +103,14 @@ type App struct {
 }
 
 type AppCapabilities struct {
-	Provisioning bool `json:"provisioner"`
-	Github       bool `json:"github"`
-	BasicLogin   bool `json:"basic_login"`
-	GithubLogin  bool `json:"github_login"`
-	GoogleLogin  bool `json:"google_login"`
-	Email        bool `json:"email"`
-	Analytics    bool `json:"analytics"`
+	Provisioning       bool `json:"provisioner"`
+	Github             bool `json:"github"`
+	BasicLogin         bool `json:"basic_login"`
+	GithubLogin        bool `json:"github_login"`
+	GoogleLogin        bool `json:"google_login"`
+	SlackNotifications bool `json:"slack_notifs"`
+	Email              bool `json:"email"`
+	Analytics          bool `json:"analytics"`
 }
 
 // New returns a new App instance
@@ -203,6 +205,20 @@ func New(conf *AppConfig) (*App, error) {
 				"openid",
 				"profile",
 				"email",
+			},
+			BaseURL: sc.ServerURL,
+		})
+	}
+
+	if sc.SlackClientID != "" && sc.SlackClientSecret != "" {
+		app.Capabilities.SlackNotifications = true
+
+		app.SlackConf = oauth.NewSlackClient(&oauth.Config{
+			ClientID:     sc.SlackClientID,
+			ClientSecret: sc.SlackClientSecret,
+			Scopes: []string{
+				"incoming-webhook",
+				"team:read",
 			},
 			BaseURL: sc.ServerURL,
 		})

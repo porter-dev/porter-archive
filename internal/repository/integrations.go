@@ -45,6 +45,13 @@ type GithubAppOAuthIntegrationRepository interface {
 	UpdateGithubAppOauthIntegration(am *ints.GithubAppOAuthIntegration) (*ints.GithubAppOAuthIntegration, error)
 }
 
+// SlackIntegrationRepository represents the set of queries on a Slack integration
+type SlackIntegrationRepository interface {
+	CreateSlackIntegration(slackInt *ints.SlackIntegration) (*ints.SlackIntegration, error)
+	ListSlackIntegrationsByProjectID(projectID uint) ([]*ints.SlackIntegration, error)
+	DeleteSlackIntegration(integrationID uint) error
+}
+
 // AWSIntegrationRepository represents the set of queries on the AWS auth
 // mechanism
 type AWSIntegrationRepository interface {

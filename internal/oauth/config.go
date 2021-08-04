@@ -4,9 +4,10 @@ import (
 	"context"
 	"crypto/rand"
 	"encoding/base64"
+	"time"
+
 	"github.com/porter-dev/porter/internal/models/integrations"
 	"github.com/porter-dev/porter/internal/repository"
-	"time"
 
 	"golang.org/x/oauth2"
 )
@@ -81,6 +82,19 @@ func NewGoogleClient(cfg *Config) *oauth2.Config {
 			TokenURL: "https://oauth2.googleapis.com/token",
 		},
 		RedirectURL: cfg.BaseURL + "/api/oauth/google/callback",
+		Scopes:      cfg.Scopes,
+	}
+}
+
+func NewSlackClient(cfg *Config) *oauth2.Config {
+	return &oauth2.Config{
+		ClientID:     cfg.ClientID,
+		ClientSecret: cfg.ClientSecret,
+		Endpoint: oauth2.Endpoint{
+			AuthURL:  "https://slack.com/oauth/v2/authorize",
+			TokenURL: "https://slack.com/api/oauth.v2.access",
+		},
+		RedirectURL: cfg.BaseURL + "/api/oauth/slack/callback",
 		Scopes:      cfg.Scopes,
 	}
 }

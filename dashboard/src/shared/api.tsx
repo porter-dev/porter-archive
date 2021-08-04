@@ -258,6 +258,16 @@ const deleteRegistryIntegration = baseApi<
   return `/api/projects/${pathParams.project_id}/registries/${pathParams.registry_id}`;
 });
 
+const deleteSlackIntegration = baseApi<
+  {},
+  {
+    project_id: number;
+    slack_integration_id: number;
+  }
+>("DELETE", (pathParams) => {
+  return `/api/projects/${pathParams.project_id}/slack_integrations/${pathParams.slack_integration_id}`;
+});
+
 const deployTemplate = baseApi<
   {
     templateName: string;
@@ -558,7 +568,9 @@ const getMetrics = baseApi<
     cluster_id: number;
     metric: string;
     shouldsum: boolean;
-    pods: string[];
+    pods?: string[];
+    kind?: string; // the controller kind
+    name: string;
     namespace: string;
     startrange: number;
     endrange: number;
@@ -678,6 +690,13 @@ const getRepoIntegrations = baseApi("GET", "/api/integrations/repo");
 const getRepos = baseApi<{}, { id: number }>("GET", (pathParams) => {
   return `/api/projects/${pathParams.id}/repos`;
 });
+
+const getSlackIntegrations = baseApi<{}, { id: number }>(
+  "GET",
+  (pathParams) => {
+    return `/api/projects/${pathParams.id}/slack_integrations`;
+  }
+);
 
 const getRevisions = baseApi<
   {
@@ -874,6 +893,18 @@ const updateConfigMap = baseApi<
   return `/api/projects/${id}/k8s/configmap/update?cluster_id=${cluster_id}`;
 });
 
+const renameConfigMap = baseApi<
+  {
+    name: string;
+    namespace: string;
+    new_name: string;
+  },
+  { id: number; cluster_id: number }
+>("POST", (pathParams) => {
+  let { id, cluster_id } = pathParams;
+  return `/api/projects/${id}/k8s/configmap/rename?cluster_id=${cluster_id}`;
+});
+
 const deleteConfigMap = baseApi<
   {
     name: string;
@@ -1002,6 +1033,7 @@ export default {
   deletePod,
   deleteProject,
   deleteRegistryIntegration,
+  deleteSlackIntegration,
   createSubdomain,
   deployTemplate,
   deployAddon,
@@ -1046,6 +1078,7 @@ export default {
   getRegistryIntegrations,
   getReleaseToken,
   getRepoIntegrations,
+  getSlackIntegrations,
   getRepos,
   getRevisions,
   getTemplateInfo,
@@ -1063,6 +1096,7 @@ export default {
   rollbackChart,
   uninstallTemplate,
   updateUser,
+  renameConfigMap,
   updateConfigMap,
   upgradeChartValues,
   deleteJob,

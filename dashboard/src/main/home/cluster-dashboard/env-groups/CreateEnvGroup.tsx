@@ -325,8 +325,8 @@ const Subtitle = styled.div`
 `;
 
 const Title = styled.div`
-  font-size: 24px;
-  font-weight: 600;
+  font-size: 20px;
+  font-weight: 500;
   font-family: "Work Sans", sans-serif;
   margin-left: 15px;
   border-radius: 2px;

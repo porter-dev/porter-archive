@@ -693,27 +693,26 @@ const ExpandedChart: React.FC<Props> = (props) => {
               {" " + getReadableDate(currentChart.info.last_deployed)}
             </LastDeployed>
           </InfoWrapper>
-
-          <RevisionSection
-            showRevisions={showRevisions}
-            toggleShowRevisions={() => {
-              setShowRevisions(!showRevisions);
-            }}
-            chart={currentChart}
-            refreshChart={() => getChartData(currentChart)}
-            setRevision={setRevision}
-            forceRefreshRevisions={forceRefreshRevisions}
-            refreshRevisionsOff={() => setForceRefreshRevisions(false)}
-            status={chartStatus}
-            shouldUpdate={
-              currentChart.latest_version &&
-              currentChart.latest_version !==
-                currentChart.chart.metadata.version
-            }
-            latestVersion={currentChart.latest_version}
-            upgradeVersion={handleUpgradeVersion}
-          />
         </HeaderWrapper>
+        <RevisionSection
+          showRevisions={showRevisions}
+          toggleShowRevisions={() => {
+            setShowRevisions(!showRevisions);
+          }}
+          chart={currentChart}
+          refreshChart={() => getChartData(currentChart)}
+          setRevision={setRevision}
+          forceRefreshRevisions={forceRefreshRevisions}
+          refreshRevisionsOff={() => setForceRefreshRevisions(false)}
+          status={chartStatus}
+          shouldUpdate={
+            currentChart.latest_version &&
+            currentChart.latest_version !==
+              currentChart.chart.metadata.version
+          }
+          latestVersion={currentChart.latest_version}
+          upgradeVersion={handleUpgradeVersion}
+        />
         <BodyWrapper>
           <PorterFormWrapper
             formData={currentChart.form}

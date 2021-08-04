@@ -425,12 +425,18 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
 
   renderTabContents = (currentTab: string, submitValues?: any) => {
     let saveButton = (
-      <SaveButton
-        text="Rerun Job"
-        onClick={() => this.handleSaveValues(submitValues, true)}
-        status={this.state.saveValuesStatus}
-        makeFlush={true}
-      />
+      <ButtonWrapper>
+        <SaveButton
+          onClick={() => this.handleSaveValues(submitValues, true)}
+          status={this.state.saveValuesStatus}
+          makeFlush={true}
+          clearPosition={true}
+          rounded={true}
+          statusPosition="right"
+        >
+          <i className="material-icons">play_arrow</i> Run Job
+        </SaveButton>
+      </ButtonWrapper>
     );
 
     if (!this.props.isAuthorized("job", "", ["get", "update", "create"])) {
@@ -454,13 +460,13 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
         }
         return (
           <TabWrapper>
+            {saveButton}
             <JobList
               jobs={this.state.jobs}
               setJobs={(jobs: any) => {
                 this.setState({ jobs });
               }}
             />
-            {saveButton}
           </TabWrapper>
         );
       case "settings":
@@ -631,6 +637,10 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
 ExpandedJobChart.contextType = Context;
 
 export default withAuth(ExpandedJobChart);
+
+const ButtonWrapper = styled.div`
+  margin: 5px 0 35px;
+`;
 
 const BackButton = styled.div`
   position: absolute;

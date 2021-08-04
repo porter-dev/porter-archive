@@ -48,50 +48,70 @@ const SlackIntegrationList: React.FC<Props> = (props) => {
         onNo={() => setIsDelete(false)}
       />
       <StyledIntegrationList>
-        {props.slackData.map((inst, idx) => {
-          if (deleted.current.has(idx)) return null;
-          return (
-            <Integration
-              onClick={() => {}}
-              disabled={false}
-              key={`${inst.team_id}-${inst.channel}`}
-            >
-              <MainRow disabled={false}>
-                <Flex>
-                  <Icon src={inst.team_icon_url && inst.team_icon_url} />
-                  <Label>
-                    {inst.team_name || inst.team_id} - {inst.channel}
-                  </Label>
-                </Flex>
-                <MaterialIconTray disabled={false}>
-                  <i
-                    className="material-icons"
-                    onClick={() => {
-                      setDeleteIndex(idx);
-                      setIsDelete(true);
-                    }}
-                  >
-                    delete
-                  </i>
-                  <i
-                    className="material-icons"
-                    onClick={() => {
-                      window.open(inst.configuration_url, "_blank");
-                    }}
-                  >
-                    launch
-                  </i>
-                </MaterialIconTray>
-              </MainRow>
-            </Integration>
-          );
-        })}
+        {
+          props.slackData?.length > 0 ? (
+            props.slackData.map((inst, idx) => {
+              if (deleted.current.has(idx)) return null;
+              return (
+                <Integration
+                  onClick={() => {}}
+                  disabled={false}
+                  key={`${inst.team_id}-${inst.channel}`}
+                >
+                  <MainRow disabled={false}>
+                    <Flex>
+                      <Icon src={inst.team_icon_url && inst.team_icon_url} />
+                      <Label>
+                        {inst.team_name || inst.team_id} - {inst.channel}
+                      </Label>
+                    </Flex>
+                    <MaterialIconTray disabled={false}>
+                      <i
+                        className="material-icons"
+                        onClick={() => {
+                          setDeleteIndex(idx);
+                          setIsDelete(true);
+                        }}
+                      >
+                        delete
+                      </i>
+                      <i
+                        className="material-icons"
+                        onClick={() => {
+                          window.open(inst.configuration_url, "_blank");
+                        }}
+                      >
+                        launch
+                      </i>
+                    </MaterialIconTray>
+                  </MainRow>
+                </Integration>
+              );
+            })
+          ) : (
+            <Placeholder>No Slack integrations set up yet.</Placeholder>
+          )
+        }
       </StyledIntegrationList>
     </>
   );
 };
 
 export default SlackIntegrationList;
+
+const Placeholder = styled.div`
+  width: 100%;
+  height: 250px;
+  display: flex;
+  align-items: center;
+  font-size: 13px;
+  font-family: "Work Sans", sans-serif;
+  justify-content: center;
+  margin-top: 30px;
+  background: #ffffff11;
+  color: #ffffff44;
+  border-radius: 5px;
+`;
 
 const Label = styled.div`
   color: #ffffff;

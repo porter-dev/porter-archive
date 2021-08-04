@@ -39,7 +39,6 @@ const PorterFormWrapper: React.FunctionComponent<PropsType> = ({
 }) => {
   return (
     <>
-      {formData && (formData as any).name && (
         <PorterFormContextProvider
           rawFormData={formData as PorterFormData}
           overrideVariables={valuesToOverride}
@@ -59,7 +58,6 @@ const PorterFormWrapper: React.FunctionComponent<PropsType> = ({
             saveValuesStatus={saveValuesStatus}
           />
         </PorterFormContextProvider>
-      )}
     </>
   );
 };

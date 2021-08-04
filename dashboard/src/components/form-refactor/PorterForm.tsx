@@ -53,7 +53,7 @@ const PorterForm: React.FC<Props> = (props) => {
   const [currentTab, setCurrentTab] = useState(
     props.leftTabOptions?.length > 0
       ? props.leftTabOptions[0].value
-      : formData.tabs.length > 0
+      : formData.tabs?.length > 0
       ? formData.tabs[0].name
       : ""
   );
@@ -91,7 +91,7 @@ const PorterForm: React.FC<Props> = (props) => {
   const renderSection = (section: Section): JSX.Element => {
     return (
       <>
-        {section.contents.map((field, i) => {
+        {section.contents?.map((field, i) => {
           return (
             <React.Fragment key={field.id}>
               {renderSectionField(field)}
@@ -103,13 +103,14 @@ const PorterForm: React.FC<Props> = (props) => {
   };
 
   const getTabOptions = (): TabOption[] => {
-    return (props.leftTabOptions || [])
+    let options = (props.leftTabOptions || [])
       .concat(
-        formData.tabs.map((tab) => {
+        formData?.tabs?.map((tab) => {
           return { label: tab.label, value: tab.name };
         })
       )
       .concat(props.rightTabOptions || []);
+    return options.filter((x) => x !== undefined);
   };
 
   const showSaveButton = (): boolean => {
@@ -133,7 +134,11 @@ const PorterForm: React.FC<Props> = (props) => {
   };
 
   const renderTab = (): JSX.Element => {
-    const tab = formData.tabs.filter((tab) => tab.name == currentTab)[0];
+    if (!formData) {
+      return props.renderTabContents(currentTab);
+    }
+
+    const tab = formData.tabs?.filter((tab) => tab.name == currentTab)[0];
 
     // Handle external tab
     if (!tab) {
@@ -146,7 +151,7 @@ const PorterForm: React.FC<Props> = (props) => {
 
     return (
       <StyledPorterForm showSave={showSaveButton()}>
-        {tab.sections.map((section) => {
+        {tab.sections?.map((section) => {
           return (
             <React.Fragment key={section.name}>
               {renderSection(section)}

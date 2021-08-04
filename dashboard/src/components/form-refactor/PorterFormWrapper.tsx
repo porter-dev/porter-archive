@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 
 import PorterForm from "./PorterForm";
 import { PorterFormData } from "./types";
@@ -17,7 +17,6 @@ type PropsType = {
   color?: string;
   addendum?: any;
   saveValuesStatus?: string;
-  externalValues?: any;
   showStateDebugger?: boolean;
 };
 
@@ -34,31 +33,47 @@ const PorterFormWrapper: React.FunctionComponent<PropsType> = ({
   color,
   addendum,
   saveValuesStatus,
-  externalValues,
   showStateDebugger,
 }) => {
+  const hashCode = (s: string) => {
+    return s.split("").reduce(function (a, b) {
+      a = (a << 5) - a + b.charCodeAt(0);
+      return a & a;
+    }, 0);
+  };
+
+  const [currentTab, setCurrentTab] = useState(
+    leftTabOptions?.length > 0
+      ? leftTabOptions[0].value
+      : formData.tabs?.length > 0
+      ? formData.tabs[0].name
+      : ""
+  );
+
   return (
-    <>
-        <PorterFormContextProvider
-          rawFormData={formData as PorterFormData}
-          overrideVariables={valuesToOverride}
+    <React.Fragment key={hashCode(JSON.stringify(formData))}>
+      <PorterFormContextProvider
+        rawFormData={formData as PorterFormData}
+        overrideVariables={valuesToOverride}
+        isReadOnly={isReadOnly}
+        onSubmit={onSubmit}
+      >
+        <PorterForm
+          showStateDebugger={showStateDebugger}
+          addendum={addendum}
           isReadOnly={isReadOnly}
-          onSubmit={onSubmit}
-        >
-          <PorterForm
-            showStateDebugger={showStateDebugger}
-            addendum={addendum}
-            isReadOnly={isReadOnly}
-            leftTabOptions={leftTabOptions}
-            rightTabOptions={rightTabOptions}
-            renderTabContents={renderTabContents}
-            saveButtonText={saveButtonText}
-            isInModal={isInModal}
-            color={color}
-            saveValuesStatus={saveValuesStatus}
-          />
-        </PorterFormContextProvider>
-    </>
+          leftTabOptions={leftTabOptions}
+          rightTabOptions={rightTabOptions}
+          renderTabContents={renderTabContents}
+          saveButtonText={saveButtonText}
+          isInModal={isInModal}
+          color={color}
+          saveValuesStatus={saveValuesStatus}
+          currentTab={currentTab}
+          setCurrentTab={setCurrentTab}
+        />
+      </PorterFormContextProvider>
+    </React.Fragment>
   );
 };
 

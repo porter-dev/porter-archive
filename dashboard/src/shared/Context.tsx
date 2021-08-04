@@ -25,6 +25,12 @@ export interface GlobalContextType {
   currentModal: string;
   currentModalData: any;
   setCurrentModal: (currentModal: string, currentModalData?: any) => void;
+  currentOverlay: {
+    message: string,
+    onYes: any,
+    onNo: any,
+  };
+  setCurrentOverlay: (x: any) => void;
   currentError: string | null;
   setCurrentError: (currentError: string) => void;
   currentCluster: ClusterType;
@@ -63,6 +69,8 @@ class ContextProvider extends Component<PropsType, StateType> {
     setCurrentModal: (currentModal: string, currentModalData?: any) => {
       this.setState({ currentModal, currentModalData });
     },
+    currentOverlay: null,
+    setCurrentOverlay: (x: any) => this.setState({ currentOverlay: x }),
     currentError: null,
     setCurrentError: (currentError: string) => {
       this.setState({ currentError });

@@ -485,7 +485,13 @@ class Home extends Component<PropsType, StateType> {
   };
 
   render() {
-    let { currentModal, setCurrentModal, currentProject } = this.context;
+    let { 
+      currentModal, 
+      setCurrentModal, 
+      currentProject,
+      currentOverlay,
+      setCurrentOverlay,
+    } = this.context;
 
     return (
       <StyledHome>
@@ -571,6 +577,17 @@ class Home extends Component<PropsType, StateType> {
             <AccountSettingsModal />
           </Modal>
         )}
+
+        {
+          currentOverlay && (
+            <ConfirmOverlay
+              show={true}
+              message={currentOverlay.message}
+              onYes={currentOverlay.onYes}
+              onNo={currentOverlay.onNo}
+            />
+          )
+        }
 
         {this.renderSidebar()}
 

@@ -85,7 +85,7 @@ export const getFinalVariablesForStringInput: GetFinalVariablesFunction = (
   const val = vars[props.variable] || props.settings?.default;
   return {
     [props.variable]:
-      props.settings?.unit && props.settings?.omitUnitFromValue === false
+      props.settings?.unit && !props.settings.omitUnitFromValue
         ? val + props.settings.unit
         : val,
   };

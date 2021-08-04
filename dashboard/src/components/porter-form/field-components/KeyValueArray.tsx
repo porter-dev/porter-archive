@@ -24,7 +24,7 @@ const KeyValueArray: React.FC<Props> = (props) => {
       initState: {
         values:
           props.value && props.value[0]
-            ? (Object.entries(props.value[0]).map(([k, v]) => {
+            ? (Object.entries(props.value[0])?.map(([k, v]) => {
                 return { key: k, value: v };
               }) as any[])
             : [],
@@ -132,7 +132,16 @@ const KeyValueArray: React.FC<Props> = (props) => {
     }
   };
 
+  const getProcessedValues = (): any => {
+    let obj = {} as any;
+    state.values?.forEach(({ key, value }) => {
+      obj[key] = value;
+    });
+    return obj;
+  }
+
   const renderEnvModal = () => {
+    console.log(state.values)
     if (state.showEnvModal) {
       return (
         <Modal
@@ -145,7 +154,7 @@ const KeyValueArray: React.FC<Props> = (props) => {
           height="542px"
         >
           <LoadEnvGroupModal
-            existingValues={variables}
+            existingValues={getProcessedValues()}
             namespace={variables.namespace}
             clusterId={variables.clusterId}
             closeModal={() =>
@@ -159,15 +168,15 @@ const KeyValueArray: React.FC<Props> = (props) => {
               setState((prev) => {
                 return {
                   // might be broken
-                  values: {
+                  values: [
                     ...prev.values,
-                    ...Object.entries(values).map(([k, v]) => {
+                    ...Object.entries(values)?.map(([k, v]) => {
                       return {
                         key: k,
                         value: v,
                       };
                     }),
-                  },
+                  ],
                 };
               });
             }}
@@ -211,7 +220,7 @@ const KeyValueArray: React.FC<Props> = (props) => {
   const renderInputList = () => {
     return (
       <>
-        {state.values.map((entry: any, i: number) => {
+        {state.values?.map((entry: any, i: number) => {
           // Preprocess non-string env values set via raw Helm values
           let { value } = entry;
           if (typeof value === "object") {
@@ -230,7 +239,7 @@ const KeyValueArray: React.FC<Props> = (props) => {
                   e.persist();
                   setState((prev) => {
                     return {
-                      values: prev.values.map((t, j) => {
+                      values: prev.values?.map((t, j) => {
                         if (j == i) {
                           return {
                             ...t,
@@ -254,7 +263,7 @@ const KeyValueArray: React.FC<Props> = (props) => {
                   e.persist();
                   setState((prev) => {
                     return {
-                      values: prev.values.map((t, j) => {
+                      values: prev.values?.map((t, j) => {
                         if (j == i) {
                           return {
                             ...t,

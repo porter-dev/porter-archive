@@ -7,7 +7,7 @@ import { Context } from "shared/Context";
 import api from "shared/api";
 import Loading from "components/Loading";
 import { ActionConfigType } from "../../shared/types";
-import InputRow from "../values-form/InputRow";
+import InputRow from "../form-components/InputRow";
 import InfoTooltip from "components/InfoTooltip";
 
 type PropsType = {

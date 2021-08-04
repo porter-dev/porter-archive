@@ -11,8 +11,8 @@ import {
   ResourceListField,
 } from "./types";
 import TabRegion, { TabOption } from "../TabRegion";
-import Heading from "../values-form/Heading";
-import Helper from "../values-form/Helper";
+import Heading from "../form-components/Heading";
+import Helper from "../form-components/Helper";
 import Input from "./field-components/Input";
 import { PorterFormContext } from "./PorterFormContextProvider";
 import Checkbox from "./field-components/Checkbox";
@@ -23,7 +23,7 @@ import ArrayInput from "./field-components/ArrayInput";
 import Select from "./field-components/Select";
 import ServiceIPList from "./field-components/ServiceIPList";
 import ResourceList from "./field-components/ResourceList";
-import VeleroForm from "../forms/VeleroForm";
+import VeleroForm from "./field-components/VeleroForm";
 
 interface Props {
   leftTabOptions?: TabOption[];

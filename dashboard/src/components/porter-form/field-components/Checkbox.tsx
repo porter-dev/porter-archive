@@ -5,7 +5,7 @@ import {
   CheckboxFieldState,
   GetFinalVariablesFunction,
 } from "../types";
-import CheckboxRow from "../../values-form/CheckboxRow";
+import CheckboxRow from "../../form-components/CheckboxRow";
 import useFormField from "../hooks/useFormField";
 
 interface Props extends CheckboxField {

@@ -112,8 +112,8 @@ export default withAuth(JobList);
 
 const Placeholder = styled.div`
   width: 100%;
-  min-height: 400px;
-  height: 50vh;
+  min-height: 250px;
+  height: 30vh;
   display: flex;
   align-items: center;
   justify-content: center;

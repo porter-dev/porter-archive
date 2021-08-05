@@ -684,12 +684,11 @@ const StyledMetricsSection = styled.div`
   width: 100%;
   min-height: 400px;
   height: 50vh;
-  overflow: hidden;
   display: flex;
   flex-direction: column;
   position: relative;
   font-size: 13px;
-  border-radius: 10px;
+  border-radius: 8px;
   border: 1px solid #ffffff33;
   padding: 18px 22px;
   animation: floatIn 0.3s;

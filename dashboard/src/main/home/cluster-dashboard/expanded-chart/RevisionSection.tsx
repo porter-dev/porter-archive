@@ -480,7 +480,7 @@ const StyledRevisionSection = styled.div`
   background: #ffffff11;
   margin: 25px 0px 18px;
   overflow: hidden;
-  border-radius: 5px;
+  border-radius: 8px;
   animation: ${(props: { showRevisions: boolean }) =>
     props.showRevisions ? "expandRevisions 0.3s" : ""};
   animation-timing-function: ease-out;

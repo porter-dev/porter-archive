@@ -52,7 +52,7 @@ const StyledGraphSection = styled.div`
   height: 50vh;
   font-size: 13px;
   overflow: hidden;
-  border-radius: 10px;
+  border-radius: 8px;
   border: 1px solid #ffffff33;
   animation: floatIn 0.3s;
   animation-timing-function: ease-out;

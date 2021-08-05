@@ -92,23 +92,6 @@ export default class IntegrationList extends Component<PropsType, StateType> {
         .catch((err) => {
           this.context.setCurrentError(err);
         });
-    } else if (this.props.currentCategory === "repo") {
-      api
-        .deleteGitRepoIntegration(
-          "<token>",
-          {},
-          {
-            project_id: currentProject.id,
-            git_repo_id: this.state.deleteID,
-          }
-        )
-        .then(() => {
-          this.setState({ isDelete: false });
-          this.props.updateIntegrationList();
-        })
-        .catch((err) => {
-          this.context.setCurrentError(err);
-        });
     }
   };
 
@@ -134,7 +117,7 @@ export default class IntegrationList extends Component<PropsType, StateType> {
             label={label}
             toggleCollapse={(e: MouseEvent) => this.toggleDisplay(e, i)}
             triggerDelete={(e: MouseEvent) => this.triggerDelete(e, i, item_id)}
-          ></IntegrationRow>
+          />
         );
       });
     } else if (integrations && integrations.length > 0) {
@@ -271,7 +254,7 @@ const Icon = styled.img`
 
 const Placeholder = styled.div`
   width: 100%;
-  height: 150px;
+  height: 250px;
   display: flex;
   align-items: center;
   font-size: 13px;

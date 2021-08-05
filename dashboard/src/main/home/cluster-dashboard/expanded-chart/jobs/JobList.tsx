@@ -6,8 +6,9 @@ import _ from "lodash";
 import { Context } from "shared/Context";
 import JobResource from "./JobResource";
 import ConfirmOverlay from "components/ConfirmOverlay";
+import { withAuth, WithAuthProps } from "shared/auth/AuthorizationHoc";
 
-type PropsType = {
+type PropsType = WithAuthProps & {
   jobs: any[];
   setJobs: (job: any) => void;
 };
@@ -17,7 +18,7 @@ type StateType = {
   deletionJob: any;
 };
 
-export default class JobList extends Component<PropsType, StateType> {
+class JobList extends Component<PropsType, StateType> {
   state = {
     deletionCandidate: null as any,
     deletionJob: null as any,
@@ -42,6 +43,13 @@ export default class JobList extends Component<PropsType, StateType> {
                 handleDelete={() => this.setState({ deletionCandidate: job })}
                 deleting={
                   this.state.deletionJob?.metadata?.name == job.metadata?.name
+                }
+                readOnly={
+                  !this.props.isAuthorized("job", "", [
+                    "get",
+                    "update",
+                    "delete",
+                  ])
                 }
               />
             );
@@ -100,9 +108,12 @@ export default class JobList extends Component<PropsType, StateType> {
 
 JobList.contextType = Context;
 
+export default withAuth(JobList);
+
 const Placeholder = styled.div`
   width: 100%;
-  height: 100%;
+  min-height: 250px;
+  height: 30vh;
   display: flex;
   align-items: center;
   justify-content: center;

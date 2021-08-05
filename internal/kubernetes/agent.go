@@ -3,10 +3,13 @@ package kubernetes
 import (
 	"bufio"
 	"bytes"
+	"compress/gzip"
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"strings"
 
 	"github.com/porter-dev/porter/internal/kubernetes/provisioner"
@@ -45,6 +48,8 @@ import (
 	"k8s.io/client-go/tools/remotecommand"
 
 	"github.com/porter-dev/porter/internal/config"
+
+	rspb "helm.sh/helm/v3/pkg/release"
 )
 
 // Agent is a Kubernetes agent for performing operations that interact with the
@@ -199,6 +204,15 @@ func (a *Agent) DeleteLinkedSecret(name, namespace string) error {
 // GetConfigMap retrieves the configmap given its name and namespace
 func (a *Agent) GetConfigMap(name string, namespace string) (*v1.ConfigMap, error) {
 	return a.Clientset.CoreV1().ConfigMaps(namespace).Get(
+		context.TODO(),
+		name,
+		metav1.GetOptions{},
+	)
+}
+
+// GetSecret retrieves the secret given its name and namespace
+func (a *Agent) GetSecret(name string, namespace string) (*v1.Secret, error) {
+	return a.Clientset.CoreV1().Secrets(namespace).Get(
 		context.TODO(),
 		name,
 		metav1.GetOptions{},
@@ -560,7 +574,7 @@ func (a *Agent) StreamControllerStatus(conn *websocket.Conn, kind string, select
 
 	stopper := make(chan struct{})
 	errorchan := make(chan error)
-	defer close(errorchan)
+	defer close(stopper)
 
 	informer.AddEventHandler(cache.ResourceEventHandlerFuncs{
 		UpdateFunc: func(oldObj, newObj interface{}) {
@@ -604,8 +618,204 @@ func (a *Agent) StreamControllerStatus(conn *websocket.Conn, kind string, select
 		// listens for websocket closing handshake
 		for {
 			if _, _, err := conn.ReadMessage(); err != nil {
-				defer conn.Close()
-				defer close(stopper)
+				conn.Close()
+				errorchan <- nil
+				return
+			}
+		}
+	}()
+
+	go informer.Run(stopper)
+
+	for {
+		select {
+		case err := <-errorchan:
+			return err
+		}
+	}
+}
+
+var b64 = base64.StdEncoding
+
+var magicGzip = []byte{0x1f, 0x8b, 0x08}
+
+func decodeRelease(data string) (*rspb.Release, error) {
+	// base64 decode string
+	b, err := b64.DecodeString(data)
+	if err != nil {
+		return nil, err
+	}
+
+	// For backwards compatibility with releases that were stored before
+	// compression was introduced we skip decompression if the
+	// gzip magic header is not found
+	if bytes.Equal(b[0:3], magicGzip) {
+		r, err := gzip.NewReader(bytes.NewReader(b))
+		if err != nil {
+			return nil, err
+		}
+		defer r.Close()
+		b2, err := ioutil.ReadAll(r)
+		if err != nil {
+			return nil, err
+		}
+		b = b2
+	}
+
+	var rls rspb.Release
+	// unmarshal release object bytes
+	if err := json.Unmarshal(b, &rls); err != nil {
+		return nil, err
+	}
+	return &rls, nil
+}
+
+func contains(s []string, str string) bool {
+	for _, v := range s {
+		if v == str {
+			return true
+		}
+	}
+
+	return false
+}
+
+func parseSecretToHelmRelease(secret v1.Secret, chartList []string) (*rspb.Release, bool, error) {
+	if secret.Type != "helm.sh/release.v1" {
+		return nil, true, nil
+	}
+
+	releaseData, ok := secret.Data["release"]
+
+	if !ok {
+		return nil, true, fmt.Errorf("release field not found")
+	}
+
+	helm_object, err := decodeRelease(string(releaseData))
+
+	if err != nil {
+		return nil, true, err
+	}
+
+	if len(chartList) > 0 && !contains(chartList, helm_object.Name) {
+		return nil, true, nil
+	}
+
+	return helm_object, false, nil
+}
+
+func (a *Agent) StreamHelmReleases(conn *websocket.Conn, chartList []string, selectors string) error {
+	tweakListOptionsFunc := func(options *metav1.ListOptions) {
+		options.LabelSelector = selectors
+	}
+
+	factory := informers.NewSharedInformerFactoryWithOptions(
+		a.Clientset,
+		0,
+		informers.WithTweakListOptions(tweakListOptionsFunc),
+	)
+
+	informer := factory.Core().V1().Secrets().Informer()
+
+	stopper := make(chan struct{})
+	errorchan := make(chan error)
+	defer close(stopper)
+
+	informer.AddEventHandler(cache.ResourceEventHandlerFuncs{
+		UpdateFunc: func(oldObj, newObj interface{}) {
+			secretObj, ok := newObj.(*v1.Secret)
+
+			if !ok {
+				errorchan <- fmt.Errorf("could not cast to secret")
+				return
+			}
+
+			helm_object, isNotHelmRelease, err := parseSecretToHelmRelease(*secretObj, chartList)
+
+			if isNotHelmRelease && err == nil {
+				return
+			}
+
+			if err != nil {
+				errorchan <- err
+				return
+			}
+
+			msg := Message{
+				EventType: "UPDATE",
+				Object:    helm_object,
+			}
+
+			if writeErr := conn.WriteJSON(msg); writeErr != nil {
+				errorchan <- writeErr
+				return
+			}
+		},
+		AddFunc: func(obj interface{}) {
+			secretObj, ok := obj.(*v1.Secret)
+
+			if !ok {
+				errorchan <- fmt.Errorf("could not cast to secret")
+				return
+			}
+
+			helm_object, isNotHelmRelease, err := parseSecretToHelmRelease(*secretObj, chartList)
+
+			if isNotHelmRelease && err == nil {
+				return
+			}
+
+			if err != nil {
+				errorchan <- err
+				return
+			}
+
+			msg := Message{
+				EventType: "ADD",
+				Object:    helm_object,
+			}
+
+			if writeErr := conn.WriteJSON(msg); writeErr != nil {
+				errorchan <- writeErr
+				return
+			}
+		},
+		DeleteFunc: func(obj interface{}) {
+			secretObj, ok := obj.(*v1.Secret)
+
+			if !ok {
+				errorchan <- fmt.Errorf("could not cast to secret")
+				return
+			}
+
+			helm_object, isNotHelmRelease, err := parseSecretToHelmRelease(*secretObj, chartList)
+
+			if isNotHelmRelease && err == nil {
+				return
+			}
+
+			if err != nil {
+				errorchan <- err
+				return
+			}
+
+			msg := Message{
+				EventType: "DELETE",
+				Object:    helm_object,
+			}
+
+			if writeErr := conn.WriteJSON(msg); writeErr != nil {
+				errorchan <- writeErr
+				return
+			}
+		},
+	})
+
+	go func() {
+		// listens for websocket closing handshake
+		for {
+			if _, _, err := conn.ReadMessage(); err != nil {
+				conn.Close()
 				errorchan <- nil
 				return
 			}
@@ -633,6 +843,7 @@ func (a *Agent) ProvisionECR(
 	pgConf *config.DBConf,
 	redisConf *config.RedisConf,
 	provImageTag string,
+	provImagePullSecret string,
 ) (*batchv1.Job, error) {
 	id := infra.GetUniqueName()
 	prov := &provisioner.Conf{
@@ -643,6 +854,7 @@ func (a *Agent) ProvisionECR(
 		Redis:               redisConf,
 		Postgres:            pgConf,
 		ProvisionerImageTag: provImageTag,
+		ImagePullSecret:     provImagePullSecret,
 		LastApplied:         infra.LastApplied,
 		AWS: &aws.Conf{
 			AWSRegion:          awsConf.AWSRegion,
@@ -668,6 +880,7 @@ func (a *Agent) ProvisionEKS(
 	pgConf *config.DBConf,
 	redisConf *config.RedisConf,
 	provImageTag string,
+	provImagePullSecret string,
 ) (*batchv1.Job, error) {
 	id := infra.GetUniqueName()
 	prov := &provisioner.Conf{
@@ -678,6 +891,7 @@ func (a *Agent) ProvisionEKS(
 		Redis:               redisConf,
 		Postgres:            pgConf,
 		ProvisionerImageTag: provImageTag,
+		ImagePullSecret:     provImagePullSecret,
 		LastApplied:         infra.LastApplied,
 		AWS: &aws.Conf{
 			AWSRegion:          awsConf.AWSRegion,
@@ -703,6 +917,7 @@ func (a *Agent) ProvisionGCR(
 	pgConf *config.DBConf,
 	redisConf *config.RedisConf,
 	provImageTag string,
+	provImagePullSecret string,
 ) (*batchv1.Job, error) {
 	id := infra.GetUniqueName()
 	prov := &provisioner.Conf{
@@ -713,6 +928,7 @@ func (a *Agent) ProvisionGCR(
 		Redis:               redisConf,
 		Postgres:            pgConf,
 		ProvisionerImageTag: provImageTag,
+		ImagePullSecret:     provImagePullSecret,
 		LastApplied:         infra.LastApplied,
 		GCP: &gcp.Conf{
 			GCPRegion:    gcpConf.GCPRegion,
@@ -735,6 +951,7 @@ func (a *Agent) ProvisionGKE(
 	pgConf *config.DBConf,
 	redisConf *config.RedisConf,
 	provImageTag string,
+	provImagePullSecret string,
 ) (*batchv1.Job, error) {
 	id := infra.GetUniqueName()
 	prov := &provisioner.Conf{
@@ -745,6 +962,7 @@ func (a *Agent) ProvisionGKE(
 		Redis:               redisConf,
 		Postgres:            pgConf,
 		ProvisionerImageTag: provImageTag,
+		ImagePullSecret:     provImagePullSecret,
 		LastApplied:         infra.LastApplied,
 		GCP: &gcp.Conf{
 			GCPRegion:    gcpConf.GCPRegion,
@@ -771,6 +989,7 @@ func (a *Agent) ProvisionDOCR(
 	pgConf *config.DBConf,
 	redisConf *config.RedisConf,
 	provImageTag string,
+	provImagePullSecret string,
 ) (*batchv1.Job, error) {
 	// get the token
 	oauthInt, err := repo.OAuthIntegration.ReadOAuthIntegration(
@@ -781,7 +1000,7 @@ func (a *Agent) ProvisionDOCR(
 		return nil, err
 	}
 
-	tok, _, err := oauth.GetAccessToken(oauthInt, doAuth, repo)
+	tok, _, err := oauth.GetAccessToken(oauthInt.SharedOAuthModel, doAuth, oauth.MakeUpdateOAuthIntegrationTokenFunction(oauthInt, repo))
 
 	if err != nil {
 		return nil, err
@@ -796,6 +1015,7 @@ func (a *Agent) ProvisionDOCR(
 		Redis:               redisConf,
 		Postgres:            pgConf,
 		ProvisionerImageTag: provImageTag,
+		ImagePullSecret:     provImagePullSecret,
 		LastApplied:         infra.LastApplied,
 		DO: &do.Conf{
 			DOToken: tok,
@@ -821,6 +1041,7 @@ func (a *Agent) ProvisionDOKS(
 	pgConf *config.DBConf,
 	redisConf *config.RedisConf,
 	provImageTag string,
+	provImagePullSecret string,
 ) (*batchv1.Job, error) {
 	// get the token
 	oauthInt, err := repo.OAuthIntegration.ReadOAuthIntegration(
@@ -831,7 +1052,7 @@ func (a *Agent) ProvisionDOKS(
 		return nil, err
 	}
 
-	tok, _, err := oauth.GetAccessToken(oauthInt, doAuth, repo)
+	tok, _, err := oauth.GetAccessToken(oauthInt.SharedOAuthModel, doAuth, oauth.MakeUpdateOAuthIntegrationTokenFunction(oauthInt, repo))
 
 	if err != nil {
 		return nil, err
@@ -847,6 +1068,7 @@ func (a *Agent) ProvisionDOKS(
 		Postgres:            pgConf,
 		LastApplied:         infra.LastApplied,
 		ProvisionerImageTag: provImageTag,
+		ImagePullSecret:     provImagePullSecret,
 		DO: &do.Conf{
 			DOToken: tok,
 		},
@@ -868,6 +1090,7 @@ func (a *Agent) ProvisionTest(
 	pgConf *config.DBConf,
 	redisConf *config.RedisConf,
 	provImageTag string,
+	provImagePullSecret string,
 ) (*batchv1.Job, error) {
 	id := infra.GetUniqueName()
 
@@ -879,6 +1102,7 @@ func (a *Agent) ProvisionTest(
 		Redis:               redisConf,
 		Postgres:            pgConf,
 		ProvisionerImageTag: provImageTag,
+		ImagePullSecret:     provImagePullSecret,
 	}
 
 	return a.provision(prov, infra, repo)

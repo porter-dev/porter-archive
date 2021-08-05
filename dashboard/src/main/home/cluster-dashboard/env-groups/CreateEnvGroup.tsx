@@ -7,10 +7,10 @@ import api from "shared/api";
 import { Context } from "shared/Context";
 import { ClusterType } from "shared/types";
 
-import InputRow from "components/values-form/InputRow";
+import InputRow from "components/form-components/InputRow";
 import EnvGroupArray, { KeyValueType } from "./EnvGroupArray";
 import Selector from "components/Selector";
-import Helper from "components/values-form/Helper";
+import Helper from "components/form-components/Helper";
 import SaveButton from "components/SaveButton";
 import { isAlphanumeric } from "shared/common";
 
@@ -325,8 +325,8 @@ const Subtitle = styled.div`
 `;
 
 const Title = styled.div`
-  font-size: 24px;
-  font-weight: 600;
+  font-size: 20px;
+  font-weight: 500;
   font-family: "Work Sans", sans-serif;
   margin-left: 15px;
   border-radius: 2px;

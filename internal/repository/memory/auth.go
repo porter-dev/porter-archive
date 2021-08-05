@@ -2,7 +2,6 @@ package test
 
 import (
 	"errors"
-
 	"github.com/porter-dev/porter/internal/repository"
 	"gorm.io/gorm"
 
@@ -220,7 +219,7 @@ func (repo *OAuthIntegrationRepository) CreateOAuthIntegration(
 	am *ints.OAuthIntegration,
 ) (*ints.OAuthIntegration, error) {
 	if !repo.canQuery {
-		return nil, errors.New("Cannot write database")
+		return nil, errors.New("cannot write database")
 	}
 
 	repo.oIntegrations = append(repo.oIntegrations, am)
@@ -426,4 +425,139 @@ func (repo *GCPIntegrationRepository) ListGCPIntegrationsByProjectID(
 	}
 
 	return res, nil
+}
+
+// GithubAppInstallationRepository implements repository.GithubAppInstallationRepository
+type GithubAppInstallationRepository struct {
+	canQuery               bool
+	githubAppInstallations []*ints.GithubAppInstallation
+}
+
+func NewGithubAppInstallationRepository(canQuery bool) repository.GithubAppInstallationRepository {
+	return &GithubAppInstallationRepository{
+		canQuery,
+		[]*ints.GithubAppInstallation{},
+	}
+}
+
+func (repo *GithubAppInstallationRepository) CreateGithubAppInstallation(am *ints.GithubAppInstallation) (*ints.GithubAppInstallation, error) {
+	if !repo.canQuery {
+		return nil, errors.New("cannot write database")
+	}
+
+	repo.githubAppInstallations = append(repo.githubAppInstallations, am)
+	am.ID = uint(len(repo.githubAppInstallations))
+
+	return am, nil
+}
+
+func (repo *GithubAppInstallationRepository) ReadGithubAppInstallation(id uint) (*ints.GithubAppInstallation, error) {
+	if !repo.canQuery {
+		return nil, errors.New("cannot write database")
+	}
+
+	if int(id-1) >= len(repo.githubAppInstallations) || repo.githubAppInstallations[id-1] == nil {
+		return nil, gorm.ErrRecordNotFound
+	}
+
+	return repo.githubAppInstallations[int(id-1)], nil
+}
+
+func (repo *GithubAppInstallationRepository) ReadGithubAppInstallationByAccountID(accountID int64) (*ints.GithubAppInstallation, error) {
+
+	if !repo.canQuery {
+		return nil, errors.New("cannot write database")
+	}
+
+	for _, installation := range repo.githubAppInstallations {
+		if installation != nil && installation.AccountID == accountID {
+			return installation, nil
+		}
+	}
+
+	return nil, gorm.ErrRecordNotFound
+}
+
+func (repo *GithubAppInstallationRepository) ReadGithubAppInstallationByAccountIDs(accountIDs []int64) ([]*ints.GithubAppInstallation, error) {
+
+	if !repo.canQuery {
+		return nil, errors.New("cannot write database")
+	}
+
+	ret := make([]*ints.GithubAppInstallation, 0)
+
+	for _, installation := range repo.githubAppInstallations {
+		// O(n^2) can be made into O(n) if this is too slow
+		for _, id := range accountIDs {
+			if installation.AccountID == id {
+				ret = append(ret, installation)
+			}
+		}
+	}
+
+	return ret, nil
+}
+
+func (repo *GithubAppInstallationRepository) DeleteGithubAppInstallationByAccountID(accountID int64) error {
+	if !repo.canQuery {
+		return errors.New("cannot write database")
+	}
+
+	for i, installation := range repo.githubAppInstallations {
+		if installation != nil && installation.AccountID == accountID {
+			repo.githubAppInstallations[i] = nil
+		}
+	}
+
+	return nil
+}
+
+type GithubAppOAuthIntegrationRepository struct {
+	canQuery                   bool
+	githubAppOauthIntegrations []*ints.GithubAppOAuthIntegration
+}
+
+func NewGithubAppOAuthIntegrationRepository(canQuery bool) repository.GithubAppOAuthIntegrationRepository {
+	return &GithubAppOAuthIntegrationRepository{
+		canQuery,
+		[]*ints.GithubAppOAuthIntegration{},
+	}
+}
+
+func (repo *GithubAppOAuthIntegrationRepository) CreateGithubAppOAuthIntegration(am *ints.GithubAppOAuthIntegration) (*ints.GithubAppOAuthIntegration, error) {
+	if !repo.canQuery {
+		return nil, errors.New("cannot write database")
+	}
+
+	repo.githubAppOauthIntegrations = append(repo.githubAppOauthIntegrations, am)
+	am.ID = uint(len(repo.githubAppOauthIntegrations))
+
+	return am, nil
+}
+
+func (repo *GithubAppOAuthIntegrationRepository) ReadGithubAppOauthIntegration(id uint) (*ints.GithubAppOAuthIntegration, error) {
+	if !repo.canQuery {
+		return nil, errors.New("cannot write database")
+	}
+
+	if int(id-1) >= len(repo.githubAppOauthIntegrations) || repo.githubAppOauthIntegrations[id-1] == nil {
+		return nil, gorm.ErrRecordNotFound
+	}
+
+	return repo.githubAppOauthIntegrations[int(id-1)], nil
+}
+
+func (repo *GithubAppOAuthIntegrationRepository) UpdateGithubAppOauthIntegration(am *ints.GithubAppOAuthIntegration) (*ints.GithubAppOAuthIntegration, error) {
+	if !repo.canQuery {
+		return nil, errors.New("Cannot write database")
+	}
+
+	if int(am.ID-1) >= len(repo.githubAppOauthIntegrations) || repo.githubAppOauthIntegrations[am.ID-1] == nil {
+		return nil, gorm.ErrRecordNotFound
+	}
+
+	index := int(am.ID - 1)
+	repo.githubAppOauthIntegrations[index] = am
+
+	return am, nil
 }

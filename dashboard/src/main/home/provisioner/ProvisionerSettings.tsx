@@ -5,7 +5,7 @@ import { Context } from "shared/Context";
 import { integrationList } from "shared/common";
 import { InfraType } from "shared/types";
 
-import Helper from "components/values-form/Helper";
+import Helper from "components/form-components/Helper";
 import AWSFormSection from "./AWSFormSection";
 import GCPFormSection from "./GCPFormSection";
 import DOFormSection from "./DOFormSection";

@@ -8,7 +8,7 @@ import {
   DetailedClusterType,
   DetailedIngressError,
 } from "shared/types";
-import Helper from "components/values-form/Helper";
+import Helper from "components/form-components/Helper";
 import { pushFiltered } from "shared/routing";
 
 import { RouteComponentProps, withRouter } from "react-router";
@@ -322,8 +322,8 @@ const TemplateList = styled.div`
 `;
 
 const Title = styled.div`
-  font-size: 24px;
-  font-weight: 600;
+  font-size: 20px;
+  font-weight: 500;
   font-family: "Work Sans", sans-serif;
   color: #ffffff;
   white-space: nowrap;

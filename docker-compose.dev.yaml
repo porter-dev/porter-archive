@@ -24,6 +24,9 @@ services:
       - ./cmd:/porter/cmd
       - ./internal:/porter/internal
       - ./server:/porter/server
+      - ./api:/porter/api
+      - ./docker/kubeconfig.yaml:/porter/kubeconfig.yaml
+      - ./docker/github_app_private_key.pem:/porter/docker/github_app_private_key.pem
   postgres:
     image: postgres:latest
     container_name: postgres

@@ -12,6 +12,9 @@ type User struct {
 	Password      string `json:"password"`
 	EmailVerified bool   `json:"email_verified"`
 
+	// ID of oauth integration for github connection (optional)
+	GithubAppIntegrationID uint
+
 	// The github user id used for login (optional)
 	GithubUserID int64
 	GoogleUserID string

@@ -11,14 +11,17 @@ import ClusterPlaceholderContainer from "./ClusterPlaceholderContainer";
 import { RouteComponentProps, withRouter } from "react-router";
 import TabRegion from "components/TabRegion";
 import Provisioner from "../provisioner/Provisioner";
-import FormDebugger from "components/values-form/FormDebugger";
+import FormDebugger from "components/porter-form/FormDebugger";
+import TitleSection from "components/TitleSection";
 
 import { pushQueryParams, pushFiltered } from "shared/routing";
+import { withAuth, WithAuthProps } from "shared/auth/AuthorizationHoc";
 
-type PropsType = RouteComponentProps & {
-  projectId: number | null;
-  setRefreshClusters: (x: boolean) => void;
-};
+type PropsType = RouteComponentProps &
+  WithAuthProps & {
+    projectId: number | null;
+    setRefreshClusters: (x: boolean) => void;
+  };
 
 // TODO: rethink this list, should be coupled with tabOptions
 const tabOptionStrings = ["overview", "create-cluster", "provisioner"];
@@ -126,11 +129,13 @@ class Dashboard extends Component<PropsType, StateType> {
     let { currentProject, capabilities } = this.context;
     let { onShowProjectSettings } = this;
 
-    let tabOptions = [
-      { label: "Project Overview", value: "overview" },
-      { label: "Create a Cluster", value: "create-cluster" },
-      { label: "Provisioner Status", value: "provisioner" },
-    ];
+    let tabOptions = [{ label: "Project Overview", value: "overview" }];
+
+    if (this.props.isAuthorized("cluster", "", ["get", "create"])) {
+      tabOptions.push({ label: "Create a Cluster", value: "create-cluster" });
+    }
+
+    tabOptions.push({ label: "Provisioner Status", value: "provisioner" });
 
     if (!capabilities?.provisioner) {
       tabOptions = [{ label: "Project Overview", value: "overview" }];
@@ -153,10 +158,10 @@ class Dashboard extends Component<PropsType, StateType> {
                       {currentProject && currentProject.name[0].toUpperCase()}
                     </Overlay>
                   </DashboardIcon>
-                  <Title>{currentProject && currentProject.name}</Title>
-                  {this.context.currentProject.roles.filter((obj: any) => {
+                  {currentProject && currentProject.name}
+                  {this.context.currentProject?.roles?.filter((obj: any) => {
                     return obj.user_id === this.context.user.userId;
-                  })[0].kind === "admin" && (
+                  })[0].kind === "admin" || (
                     <i
                       className="material-icons"
                       onClick={onShowProjectSettings}
@@ -165,6 +170,7 @@ class Dashboard extends Component<PropsType, StateType> {
                     </i>
                   )}
                 </TitleSection>
+                <Br />
 
                 <InfoSection>
                   <TopRow>
@@ -195,7 +201,12 @@ class Dashboard extends Component<PropsType, StateType> {
 
 Dashboard.contextType = Context;
 
-export default withRouter(Dashboard);
+export default withRouter(withAuth(Dashboard));
+
+const Br = styled.div`
+  width: 100%;
+  height: 1px;
+`;
 
 const DashboardWrapper = styled.div`
   padding-bottom: 100px;
@@ -284,6 +295,7 @@ const DashboardImage = styled.img`
 const DashboardIcon = styled.div`
   position: relative;
   height: 45px;
+  margin-right: 17px;
   width: 45px;
   border-radius: 5px;
   display: flex;
@@ -292,39 +304,5 @@ const DashboardIcon = styled.div`
 
   > i {
     font-size: 22px;
-  }
-`;
-
-const Title = styled.div`
-  font-size: 20px;
-  font-weight: 500;
-  font-family: "Work Sans", sans-serif;
-  margin-left: 18px;
-  color: #ffffff;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-`;
-
-const TitleSection = styled.div`
-  height: 80px;
-  margin-top: 10px;
-  margin-bottom: 10px;
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  padding-left: 0px;
-
-  > i {
-    margin-left: 10px;
-    cursor: pointer;
-    font-size 18px;
-    color: #858FAAaa;
-    padding: 5px;
-    border-radius: 100px;
-    :hover {
-      background: #ffffff11;
-    }
-    margin-bottom: -3px;
   }
 `;

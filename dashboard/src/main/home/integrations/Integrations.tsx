@@ -8,21 +8,14 @@ import { pushFiltered } from "shared/routing";
 import CreateIntegrationForm from "./create-integration/CreateIntegrationForm";
 import IntegrationCategories from "./IntegrationCategories";
 import IntegrationList from "./IntegrationList";
+import TitleSection from "components/TitleSection";
 
 type PropsType = RouteComponentProps;
 
-type StateType = {
-  currentIntegrationData: any[];
-};
+const IntegrationCategoryStrings = ["registry", "slack"]; /*"kubernetes",*/
 
-const IntegrationCategoryStrings = ["registry", "repo"]; /*"kubernetes",*/
-
-class Integrations extends Component<PropsType, StateType> {
-  state = {
-    currentIntegrationData: [] as any[],
-  };
-
-  render = () => (
+const Integrations: React.FC<PropsType> = (props) => {
+  return (
     <StyledIntegrations>
       <Switch>
         <Route
@@ -30,38 +23,32 @@ class Integrations extends Component<PropsType, StateType> {
           render={(rp) => {
             const { integration, category } = rp.match.params;
             if (!IntegrationCategoryStrings.includes(category)) {
-              pushFiltered(this.props, "/integrations", ["project_id"]);
+              pushFiltered(props, "/integrations", ["project_id"]);
             }
             let icon =
               integrationList[integration] && integrationList[integration].icon;
             return (
-              <div>
-                <TitleSectionAlt>
-                  <Flex>
-                    <i
-                      className="material-icons"
-                      onClick={() =>
-                        pushFiltered(this.props, `/integrations/${category}`, [
-                          "project_id",
-                        ])
-                      }
-                    >
-                      keyboard_backspace
-                    </i>
-                    <Icon src={icon && icon} />
-                    <Title>{integrationList[integration].label}</Title>
-                  </Flex>
-                </TitleSectionAlt>
+              <Flex>
+                <TitleSection
+                  handleNavBack={() =>
+                    pushFiltered(props, `/integrations/${category}`, [
+                      "project_id",
+                    ])
+                  }
+                  icon={icon}
+                >
+                  {integrationList[integration].label}
+                </TitleSection>
                 <CreateIntegrationForm
                   integrationName={integration}
                   closeForm={() => {
-                    pushFiltered(this.props, `/integrations/${category}`, [
+                    pushFiltered(props, `/integrations/${category}`, [
                       "project_id",
                     ]);
                   }}
                 />
                 <Br />
-              </div>
+              </Flex>
             );
           }}
         />
@@ -70,26 +57,20 @@ class Integrations extends Component<PropsType, StateType> {
           render={(rp) => {
             const currentCategory = rp.match.params.category;
             if (!IntegrationCategoryStrings.includes(currentCategory)) {
-              pushFiltered(this.props, "/integrations", ["project_id"]);
+              pushFiltered(props, "/integrations", ["project_id"]);
             }
-            return (
-              <IntegrationCategories
-                category={currentCategory}
-              ></IntegrationCategories>
-            );
+            return <IntegrationCategories category={currentCategory} />;
           }}
         />
         <Route>
           <div>
-            <TitleSection>
-              <Title>Integrations</Title>
-            </TitleSection>
+            <TitleSection>Integrations</TitleSection>
 
             <IntegrationList
               currentCategory={""}
-              integrations={["kubernetes", "registry", "repo"]}
+              integrations={["registry", "slack"]}
               setCurrent={(x) =>
-                pushFiltered(this.props, `/integrations/${x}`, ["project_id"])
+                pushFiltered(props, `/integrations/${x}`, ["project_id"])
               }
               isCategory={true}
               updateIntegrationList={() => {}}
@@ -99,9 +80,14 @@ class Integrations extends Component<PropsType, StateType> {
       </Switch>
     </StyledIntegrations>
   );
-}
+};
 
 export default withRouter(Integrations);
+
+const Buffer = styled.div`
+  width: 100%;
+  height: 10px;
+`;
 
 const Br = styled.div`
   width: 100%;
@@ -131,32 +117,12 @@ const Flex = styled.div`
   }
 `;
 
-const Title = styled.div`
-  font-size: 24px;
-  font-weight: 600;
-  font-family: "Work Sans", sans-serif;
-  color: #ffffff;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-`;
-
-const TitleSection = styled.div`
-  margin-bottom: 20px;
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: space-between;
-  height: 40px;
-`;
-
 const TitleSectionAlt = styled(TitleSection)`
   margin-left: -42px;
   width: calc(100% + 42px);
 `;
 
 const StyledIntegrations = styled.div`
-  width: calc(90% - 150px);
+  width: calc(85%);
   min-width: 300px;
-  padding-top: 75px;
 `;

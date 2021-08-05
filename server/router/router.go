@@ -13,6 +13,7 @@ import (
 	"github.com/porter-dev/porter/server/api"
 	mw "github.com/porter-dev/porter/server/middleware"
 	"github.com/porter-dev/porter/server/middleware/requestlog"
+	"golang.org/x/oauth2"
 )
 
 // New creates a new Chi router instance and registers all routes supported by the
@@ -21,9 +22,15 @@ func New(a *api.App) *chi.Mux {
 	l := a.Logger
 	r := chi.NewRouter()
 
+	var ghAppConf *oauth2.Config
+
+	if a.GithubAppConf != nil {
+		ghAppConf = &a.GithubAppConf.Config
+	}
+
 	auth := mw.NewAuth(a.Store, a.ServerConf.CookieName, &token.TokenGeneratorConf{
 		TokenSecret: a.ServerConf.TokenGeneratorSecret,
-	}, a.Repo)
+	}, a.Repo, ghAppConf)
 
 	r.Route("/api", func(r chi.Router) {
 		r.Use(mw.ContentTypeJSON)
@@ -176,6 +183,38 @@ func New(a *api.App) *chi.Mux {
 				),
 			)
 
+			r.Method(
+				"POST",
+				"/integrations/github-app/webhook",
+				requestlog.NewHandler(a.HandleGithubAppEvent, l),
+			)
+
+			r.Method(
+				"GET",
+				"/integrations/github-app/authorize",
+				requestlog.NewHandler(a.HandleGithubAppAuthorize, l),
+			)
+
+			r.Method(
+				"GET",
+				"/integrations/github-app/oauth",
+				requestlog.NewHandler(a.HandleGithubAppOauthInit, l),
+			)
+
+			r.Method(
+				"GET",
+				"/integrations/github-app/install",
+				requestlog.NewHandler(a.HandleGithubAppInstall, l),
+			)
+
+			r.Method(
+				"GET",
+				"/integrations/github-app/access",
+				auth.BasicAuthenticate(
+					requestlog.NewHandler(a.HandleListGithubAppAccess, l),
+				),
+			)
+
 			// /api/templates routes
 			r.Method(
 				"GET",
@@ -217,6 +256,12 @@ func New(a *api.App) *chi.Mux {
 
 			r.Method(
 				"GET",
+				"/oauth/github-app/callback",
+				requestlog.NewHandler(a.HandleGithubAppOAuthCallback, l),
+			)
+
+			r.Method(
+				"GET",
 				"/oauth/login/google",
 				requestlog.NewHandler(a.HandleGoogleStartUser, l),
 			)
@@ -243,6 +288,22 @@ func New(a *api.App) *chi.Mux {
 				requestlog.NewHandler(a.HandleDOOAuthCallback, l),
 			)
 
+			r.Method(
+				"GET",
+				"/oauth/projects/{project_id}/slack",
+				auth.DoesUserHaveProjectAccess(
+					requestlog.NewHandler(a.HandleSlackOAuthStartProject, l),
+					mw.URLParam,
+					mw.WriteAccess,
+				),
+			)
+
+			r.Method(
+				"GET",
+				"/oauth/slack/callback",
+				requestlog.NewHandler(a.HandleSlackOAuthCallback, l),
+			)
+
 			// /api/projects routes
 			r.Method(
 				"GET",
@@ -251,6 +312,46 @@ func New(a *api.App) *chi.Mux {
 					requestlog.NewHandler(a.HandleReadProject, l),
 					mw.URLParam,
 					mw.ReadAccess,
+				),
+			)
+
+			r.Method(
+				"GET",
+				"/projects/{project_id}/policy",
+				auth.DoesUserHaveProjectAccess(
+					requestlog.NewHandler(a.HandleReadProjectPolicy, l),
+					mw.URLParam,
+					mw.ReadAccess,
+				),
+			)
+
+			r.Method(
+				"GET",
+				"/projects/{project_id}/roles",
+				auth.DoesUserHaveProjectAccess(
+					requestlog.NewHandler(a.HandleGetProjectRoles, l),
+					mw.URLParam,
+					mw.AdminAccess,
+				),
+			)
+
+			r.Method(
+				"GET",
+				"/projects/{project_id}/collaborators",
+				auth.DoesUserHaveProjectAccess(
+					requestlog.NewHandler(a.HandleListProjectCollaborators, l),
+					mw.URLParam,
+					mw.AdminAccess,
+				),
+			)
+
+			r.Method(
+				"POST",
+				"/projects/{project_id}/roles/{user_id}",
+				auth.DoesUserHaveProjectAccess(
+					requestlog.NewHandler(a.HandleUpdateProjectRole, l),
+					mw.URLParam,
+					mw.AdminAccess,
 				),
 			)
 
@@ -268,7 +369,17 @@ func New(a *api.App) *chi.Mux {
 				auth.DoesUserHaveProjectAccess(
 					requestlog.NewHandler(a.HandleDeleteProject, l),
 					mw.URLParam,
-					mw.WriteAccess,
+					mw.AdminAccess,
+				),
+			)
+
+			r.Method(
+				"DELETE",
+				"/projects/{project_id}/roles/{user_id}",
+				auth.DoesUserHaveProjectAccess(
+					requestlog.NewHandler(a.HandleDeleteProjectRole, l),
+					mw.URLParam,
+					mw.AdminAccess,
 				),
 			)
 
@@ -283,7 +394,7 @@ func New(a *api.App) *chi.Mux {
 						mw.QueryParam,
 					),
 					mw.URLParam,
-					mw.ReadAccess,
+					mw.WriteAccess,
 				),
 			)
 
@@ -294,7 +405,7 @@ func New(a *api.App) *chi.Mux {
 				auth.DoesUserHaveProjectAccess(
 					requestlog.NewHandler(a.HandleCreateInvite, l),
 					mw.URLParam,
-					mw.WriteAccess,
+					mw.AdminAccess,
 				),
 			)
 
@@ -304,7 +415,7 @@ func New(a *api.App) *chi.Mux {
 				auth.DoesUserHaveProjectAccess(
 					requestlog.NewHandler(a.HandleListProjectInvites, l),
 					mw.URLParam,
-					mw.ReadAccess,
+					mw.AdminAccess,
 				),
 			)
 
@@ -313,6 +424,20 @@ func New(a *api.App) *chi.Mux {
 				"/projects/{project_id}/invites/{token}",
 				auth.BasicAuthenticateWithRedirect(
 					requestlog.NewHandler(a.HandleAcceptInvite, l),
+				),
+			)
+
+			r.Method(
+				"POST",
+				"/projects/{project_id}/invites/{invite_id}",
+				auth.DoesUserHaveProjectAccess(
+					auth.DoesUserHaveInviteAccess(
+						requestlog.NewHandler(a.HandleUpdateInviteRole, l),
+						mw.URLParam,
+						mw.URLParam,
+					),
+					mw.URLParam,
+					mw.AdminAccess,
 				),
 			)
 
@@ -326,7 +451,7 @@ func New(a *api.App) *chi.Mux {
 						mw.URLParam,
 					),
 					mw.URLParam,
-					mw.WriteAccess,
+					mw.AdminAccess,
 				),
 			)
 
@@ -348,7 +473,7 @@ func New(a *api.App) *chi.Mux {
 				auth.DoesUserHaveProjectAccess(
 					requestlog.NewHandler(a.HandleProvisionTestInfra, l),
 					mw.URLParam,
-					mw.ReadAccess,
+					mw.WriteAccess,
 				),
 			)
 
@@ -363,7 +488,7 @@ func New(a *api.App) *chi.Mux {
 						false,
 					),
 					mw.URLParam,
-					mw.ReadAccess,
+					mw.WriteAccess,
 				),
 			)
 
@@ -378,7 +503,7 @@ func New(a *api.App) *chi.Mux {
 						false,
 					),
 					mw.URLParam,
-					mw.ReadAccess,
+					mw.WriteAccess,
 				),
 			)
 
@@ -393,7 +518,7 @@ func New(a *api.App) *chi.Mux {
 						false,
 					),
 					mw.URLParam,
-					mw.ReadAccess,
+					mw.WriteAccess,
 				),
 			)
 
@@ -408,7 +533,7 @@ func New(a *api.App) *chi.Mux {
 						false,
 					),
 					mw.URLParam,
-					mw.ReadAccess,
+					mw.WriteAccess,
 				),
 			)
 
@@ -423,7 +548,7 @@ func New(a *api.App) *chi.Mux {
 						false,
 					),
 					mw.URLParam,
-					mw.ReadAccess,
+					mw.WriteAccess,
 				),
 			)
 
@@ -438,26 +563,12 @@ func New(a *api.App) *chi.Mux {
 						false,
 					),
 					mw.URLParam,
-					mw.ReadAccess,
+					mw.WriteAccess,
 				),
 			)
 
 			r.Method(
 				"GET",
-				"/projects/{project_id}/provision/{kind}/{infra_id}/logs",
-				auth.DoesUserHaveProjectAccess(
-					auth.DoesUserHaveInfraAccess(
-						requestlog.NewHandler(a.HandleGetProvisioningLogs, l),
-						mw.URLParam,
-						mw.URLParam,
-					),
-					mw.URLParam,
-					mw.ReadAccess,
-				),
-			)
-
-			r.Method(
-				"POST",
 				"/projects/{project_id}/provision/{kind}/{infra_id}/logs",
 				auth.DoesUserHaveProjectAccess(
 					auth.DoesUserHaveInfraAccess(
@@ -480,7 +591,7 @@ func New(a *api.App) *chi.Mux {
 						mw.URLParam,
 					),
 					mw.URLParam,
-					mw.ReadAccess,
+					mw.WriteAccess,
 				),
 			)
 
@@ -494,7 +605,7 @@ func New(a *api.App) *chi.Mux {
 						mw.URLParam,
 					),
 					mw.URLParam,
-					mw.ReadAccess,
+					mw.WriteAccess,
 				),
 			)
 
@@ -508,7 +619,7 @@ func New(a *api.App) *chi.Mux {
 						mw.URLParam,
 					),
 					mw.URLParam,
-					mw.ReadAccess,
+					mw.WriteAccess,
 				),
 			)
 
@@ -522,7 +633,7 @@ func New(a *api.App) *chi.Mux {
 						mw.URLParam,
 					),
 					mw.URLParam,
-					mw.ReadAccess,
+					mw.WriteAccess,
 				),
 			)
 
@@ -536,7 +647,7 @@ func New(a *api.App) *chi.Mux {
 						mw.URLParam,
 					),
 					mw.URLParam,
-					mw.ReadAccess,
+					mw.WriteAccess,
 				),
 			)
 
@@ -550,7 +661,7 @@ func New(a *api.App) *chi.Mux {
 						mw.URLParam,
 					),
 					mw.URLParam,
-					mw.ReadAccess,
+					mw.WriteAccess,
 				),
 			)
 
@@ -746,6 +857,27 @@ func New(a *api.App) *chi.Mux {
 				),
 			)
 
+			// /api/projects/{project_id}/slack_integrations routes
+			r.Method(
+				"GET",
+				"/projects/{project_id}/slack_integrations",
+				auth.DoesUserHaveProjectAccess(
+					requestlog.NewHandler(a.HandleListSlackIntegrations, l),
+					mw.URLParam,
+					mw.WriteAccess,
+				),
+			)
+
+			r.Method(
+				"DELETE",
+				"/projects/{project_id}/slack_integrations/{slack_integration_id}",
+				auth.DoesUserHaveProjectAccess(
+					requestlog.NewHandler(a.HandleDeleteSlackIntegration, l),
+					mw.URLParam,
+					mw.WriteAccess,
+				),
+			)
+
 			// /api/projects/{project_id}/helmrepos routes
 			r.Method(
 				"POST",
@@ -773,7 +905,7 @@ func New(a *api.App) *chi.Mux {
 				auth.DoesUserHaveProjectAccess(
 					requestlog.NewHandler(a.HandleListProjectHelmRepos, l),
 					mw.URLParam,
-					mw.WriteAccess,
+					mw.ReadAccess,
 				),
 			)
 
@@ -783,7 +915,7 @@ func New(a *api.App) *chi.Mux {
 				auth.DoesUserHaveProjectAccess(
 					requestlog.NewHandler(a.HandleListHelmRepoCharts, l),
 					mw.URLParam,
-					mw.WriteAccess,
+					mw.ReadAccess,
 				),
 			)
 
@@ -819,7 +951,7 @@ func New(a *api.App) *chi.Mux {
 				auth.DoesUserHaveProjectAccess(
 					requestlog.NewHandler(a.HandleListProjectRegistries, l),
 					mw.URLParam,
-					mw.WriteAccess,
+					mw.ReadAccess,
 				),
 			)
 
@@ -833,7 +965,7 @@ func New(a *api.App) *chi.Mux {
 						mw.URLParam,
 					),
 					mw.URLParam,
-					mw.WriteAccess,
+					mw.ReadAccess,
 				),
 			)
 
@@ -933,7 +1065,7 @@ func New(a *api.App) *chi.Mux {
 						mw.URLParam,
 					),
 					mw.URLParam,
-					mw.WriteAccess,
+					mw.ReadAccess,
 				),
 			)
 
@@ -1023,6 +1155,20 @@ func New(a *api.App) *chi.Mux {
 			)
 
 			r.Method(
+				"POST",
+				"/projects/{project_id}/releases/{name}/webhook_token",
+				auth.DoesUserHaveProjectAccess(
+					auth.DoesUserHaveClusterAccess(
+						requestlog.NewHandler(a.HandleCreateWebhookToken, l),
+						mw.URLParam,
+						mw.QueryParam,
+					),
+					mw.URLParam,
+					mw.WriteAccess,
+				),
+			)
+
+			r.Method(
 				"GET",
 				"/projects/{project_id}/releases/{name}/{revision}",
 				auth.DoesUserHaveProjectAccess(
@@ -1048,27 +1194,12 @@ func New(a *api.App) *chi.Mux {
 			)
 
 			r.Method(
-				"DELETE",
-				"/projects/{project_id}/gitrepos/{git_repo_id}",
-				auth.DoesUserHaveProjectAccess(
-					auth.DoesUserHaveGitRepoAccess(
-						requestlog.NewHandler(a.HandleDeleteProjectGitRepo, l),
-						mw.URLParam,
-						mw.URLParam,
-					),
-					mw.URLParam,
-					mw.WriteAccess,
-				),
-			)
-
-			r.Method(
 				"GET",
-				"/projects/{project_id}/gitrepos/{git_repo_id}/repos",
+				"/projects/{project_id}/gitrepos/{installation_id}/repos",
 				auth.DoesUserHaveProjectAccess(
-					auth.DoesUserHaveGitRepoAccess(
+					auth.DoesUserHaveGitInstallationAccess(
 						requestlog.NewHandler(a.HandleListRepos, l),
 						mw.URLParam,
-						mw.URLParam,
 					),
 					mw.URLParam,
 					mw.ReadAccess,
@@ -1077,12 +1208,11 @@ func New(a *api.App) *chi.Mux {
 
 			r.Method(
 				"GET",
-				"/projects/{project_id}/gitrepos/{git_repo_id}/repos/{kind}/{owner}/{name}/branches",
+				"/projects/{project_id}/gitrepos/{installation_id}/repos/{kind}/{owner}/{name}/branches",
 				auth.DoesUserHaveProjectAccess(
-					auth.DoesUserHaveGitRepoAccess(
+					auth.DoesUserHaveGitInstallationAccess(
 						requestlog.NewHandler(a.HandleGetBranches, l),
 						mw.URLParam,
-						mw.URLParam,
 					),
 					mw.URLParam,
 					mw.ReadAccess,
@@ -1091,12 +1221,11 @@ func New(a *api.App) *chi.Mux {
 
 			r.Method(
 				"GET",
-				"/projects/{project_id}/gitrepos/{git_repo_id}/repos/{kind}/{owner}/{name}/{branch}/buildpack/detect",
+				"/projects/{project_id}/gitrepos/{installation_id}/repos/{kind}/{owner}/{name}/{branch}/buildpack/detect",
 				auth.DoesUserHaveProjectAccess(
-					auth.DoesUserHaveGitRepoAccess(
+					auth.DoesUserHaveGitInstallationAccess(
 						requestlog.NewHandler(a.HandleDetectBuildpack, l),
 						mw.URLParam,
-						mw.URLParam,
 					),
 					mw.URLParam,
 					mw.ReadAccess,
@@ -1105,12 +1234,11 @@ func New(a *api.App) *chi.Mux {
 
 			r.Method(
 				"GET",
-				"/projects/{project_id}/gitrepos/{git_repo_id}/repos/{kind}/{owner}/{name}/{branch}/contents",
+				"/projects/{project_id}/gitrepos/{installation_id}/repos/{kind}/{owner}/{name}/{branch}/contents",
 				auth.DoesUserHaveProjectAccess(
-					auth.DoesUserHaveGitRepoAccess(
+					auth.DoesUserHaveGitInstallationAccess(
 						requestlog.NewHandler(a.HandleGetBranchContents, l),
 						mw.URLParam,
-						mw.URLParam,
 					),
 					mw.URLParam,
 					mw.ReadAccess,
@@ -1119,12 +1247,11 @@ func New(a *api.App) *chi.Mux {
 
 			r.Method(
 				"GET",
-				"/projects/{project_id}/gitrepos/{git_repo_id}/repos/{kind}/{owner}/{name}/{branch}/procfile",
+				"/projects/{project_id}/gitrepos/{installation_id}/repos/{kind}/{owner}/{name}/{branch}/procfile",
 				auth.DoesUserHaveProjectAccess(
-					auth.DoesUserHaveGitRepoAccess(
+					auth.DoesUserHaveGitInstallationAccess(
 						requestlog.NewHandler(a.HandleGetProcfileContents, l),
 						mw.URLParam,
-						mw.URLParam,
 					),
 					mw.URLParam,
 					mw.ReadAccess,
@@ -1133,11 +1260,10 @@ func New(a *api.App) *chi.Mux {
 
 			r.Method(
 				"GET",
-				"/projects/{project_id}/gitrepos/{git_repo_id}/repos/{kind}/{owner}/{name}/{branch}/tarball_url",
+				"/projects/{project_id}/gitrepos/{installation_id}/repos/{kind}/{owner}/{name}/{branch}/tarball_url",
 				auth.DoesUserHaveProjectAccess(
-					auth.DoesUserHaveGitRepoAccess(
+					auth.DoesUserHaveGitInstallationAccess(
 						requestlog.NewHandler(a.HandleGetRepoZIPDownloadURL, l),
-						mw.URLParam,
 						mw.URLParam,
 					),
 					mw.URLParam,
@@ -1274,6 +1400,20 @@ func New(a *api.App) *chi.Mux {
 
 			r.Method(
 				"GET",
+				"/projects/{project_id}/k8s/{namespace}/{name}/jobs/status",
+				auth.DoesUserHaveProjectAccess(
+					auth.DoesUserHaveClusterAccess(
+						requestlog.NewHandler(a.HandleGetJobStatus, l),
+						mw.URLParam,
+						mw.QueryParam,
+					),
+					mw.URLParam,
+					mw.ReadAccess,
+				),
+			)
+
+			r.Method(
+				"GET",
 				"/projects/{project_id}/k8s/jobs/{namespace}/{name}/pods",
 				auth.DoesUserHaveProjectAccess(
 					auth.DoesUserHaveClusterAccess(
@@ -1316,6 +1456,20 @@ func New(a *api.App) *chi.Mux {
 
 			r.Method(
 				"GET",
+				"/projects/{project_id}/k8s/helm_releases",
+				auth.DoesUserHaveProjectAccess(
+					auth.DoesUserHaveClusterAccess(
+						requestlog.NewHandler(a.HandleStreamHelmReleases, l),
+						mw.URLParam,
+						mw.QueryParam,
+					),
+					mw.URLParam,
+					mw.ReadAccess,
+				),
+			)
+
+			r.Method(
+				"GET",
 				"/projects/{project_id}/k8s/pods",
 				auth.DoesUserHaveProjectAccess(
 					auth.DoesUserHaveClusterAccess(
@@ -1338,7 +1492,7 @@ func New(a *api.App) *chi.Mux {
 						mw.QueryParam,
 					),
 					mw.URLParam,
-					mw.ReadAccess,
+					mw.WriteAccess,
 				),
 			)
 
@@ -1366,7 +1520,7 @@ func New(a *api.App) *chi.Mux {
 						mw.QueryParam,
 					),
 					mw.URLParam,
-					mw.ReadAccess,
+					mw.WriteAccess,
 				),
 			)
 
@@ -1380,7 +1534,7 @@ func New(a *api.App) *chi.Mux {
 						mw.QueryParam,
 					),
 					mw.URLParam,
-					mw.ReadAccess,
+					mw.WriteAccess,
 				),
 			)
 
@@ -1422,7 +1576,21 @@ func New(a *api.App) *chi.Mux {
 						mw.QueryParam,
 					),
 					mw.URLParam,
-					mw.ReadAccess,
+					mw.WriteAccess,
+				),
+			)
+
+			r.Method(
+				"POST",
+				"/projects/{project_id}/k8s/configmap/rename",
+				auth.DoesUserHaveProjectAccess(
+					auth.DoesUserHaveClusterAccess(
+						requestlog.NewHandler(a.HandleRenameConfigMap, l),
+						mw.URLParam,
+						mw.QueryParam,
+					),
+					mw.URLParam,
+					mw.WriteAccess,
 				),
 			)
 
@@ -1450,7 +1618,7 @@ func New(a *api.App) *chi.Mux {
 						mw.QueryParam,
 					),
 					mw.URLParam,
-					mw.ReadAccess,
+					mw.WriteAccess,
 				),
 			)
 
@@ -1465,7 +1633,7 @@ func New(a *api.App) *chi.Mux {
 						mw.QueryParam,
 					),
 					mw.URLParam,
-					mw.ReadAccess,
+					mw.WriteAccess,
 				),
 			)
 
@@ -1487,7 +1655,7 @@ func New(a *api.App) *chi.Mux {
 						mw.QueryParam,
 					),
 					mw.URLParam,
-					mw.ReadAccess,
+					mw.WriteAccess,
 				),
 			)
 
@@ -1501,7 +1669,7 @@ func New(a *api.App) *chi.Mux {
 						mw.QueryParam,
 					),
 					mw.URLParam,
-					mw.ReadAccess,
+					mw.WriteAccess,
 				),
 			)
 		})
@@ -1520,7 +1688,7 @@ func New(a *api.App) *chi.Mux {
 						mw.QueryParam,
 					),
 					mw.URLParam,
-					mw.ReadAccess,
+					mw.WriteAccess,
 				),
 			)
 
@@ -1540,7 +1708,7 @@ func New(a *api.App) *chi.Mux {
 						mw.QueryParam,
 					),
 					mw.URLParam,
-					mw.ReadAccess,
+					mw.WriteAccess,
 				),
 			)
 
@@ -1554,7 +1722,7 @@ func New(a *api.App) *chi.Mux {
 						mw.QueryParam,
 					),
 					mw.URLParam,
-					mw.ReadAccess,
+					mw.WriteAccess,
 				),
 			)
 

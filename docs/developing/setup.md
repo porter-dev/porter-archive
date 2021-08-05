@@ -53,3 +53,28 @@ Once WSL is installed, head to docker and enable WSL Integration.
 ![Docker Enable WSL Integration](https://i.imgur.com/QzMyxQx.png)
 
 Next, continue with the Getting Started Section
+
+## Secure Localhost Setup
+
+Sometimes, it may be necessary to serve securely over `https://localhost` (for example, required by Slack integrations). Run the following command from the repository root:
+
+```sh
+openssl req -x509 -out ./docker/localhost.crt -keyout ./docker/localhost.key \
+  -newkey rsa:2048 -nodes -sha256 \
+  -subj '/CN=localhost' -extensions EXT -config <( \
+   printf "[dn]\nCN=localhost\n[req]\ndistinguished_name = dn\n[EXT]\nsubjectAltName=DNS:localhost\nkeyUsage=digitalSignature\nextendedKeyUsage=serverAuth")
+```
+
+Update `./docker/.env` with the following:
+
+```
+SERVER_URL=https://localhost
+```
+
+If using Chrome, paste the following into the Chrome address bar:
+
+> chrome://flags/#allow-insecure-localhost
+
+And then Enable the **Allow invalid certificates for resources loaded from localhost** field. 
+
+Finally, run `docker-compose -f docker-compose.dev-secure.yaml up` instead of the standard docker-compose file. 

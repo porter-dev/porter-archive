@@ -56,6 +56,25 @@ func (repo *UserRepository) ReadUser(id uint) (*models.User, error) {
 	return repo.users[index], nil
 }
 
+func (repo *UserRepository) ListUsersByIDs(ids []uint) ([]*models.User, error) {
+	if !repo.canQuery {
+		return nil, errors.New("Cannot read from database")
+	}
+
+	resp := make([]*models.User, 0)
+
+	// find all roles matching
+	for _, user := range repo.users {
+		for _, userID := range ids {
+			if userID == user.ID {
+				resp = append(resp, user)
+			}
+		}
+	}
+
+	return resp, nil
+}
+
 // ReadUserByEmail finds a single user based on their unique email
 func (repo *UserRepository) ReadUserByEmail(email string) (*models.User, error) {
 	if !repo.canQuery {

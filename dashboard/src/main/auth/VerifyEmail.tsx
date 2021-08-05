@@ -36,13 +36,13 @@ export default class VerifyEmail extends Component<PropsType, StateType> {
     let formSection = (
       <div>
         <InputWrapper>
-          <StatusText>A verification email will be sent to</StatusText>
+          <StatusText>A verification email should have been sent to</StatusText>
           <Email>{this.context.user?.email}</Email>
         </InputWrapper>
-        <StatusText>
-          Proceed below to verify your email and finish setting up your profile
-        </StatusText>
-        <Button onClick={this.handleSendEmail}>Send Verification Email</Button>
+        <StatusText>Didn't get it?</StatusText>
+        <Button onClick={this.handleSendEmail}>
+          Resend Verification Email
+        </Button>
       </div>
     );
 

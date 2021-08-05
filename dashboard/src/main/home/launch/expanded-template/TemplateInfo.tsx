@@ -6,7 +6,7 @@ import Markdown from "markdown-to-jsx";
 import { Context } from "shared/Context";
 
 import { PorterTemplate } from "shared/types";
-import Helper from "components/values-form/Helper";
+import Helper from "components/form-components/Helper";
 import Selector from "components/Selector";
 
 import { hardcodedNames } from "shared/hardcodedNameDict";
@@ -318,8 +318,8 @@ const Polymer = styled.div`
 `;
 
 const Title = styled.div`
-  font-size: 24px;
-  font-weight: 600;
+  font-size: 20px;
+  font-weight: 500;
   font-family: "Work Sans", sans-serif;
   margin-left: 10px;
   border-radius: 2px;

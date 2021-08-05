@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"io/ioutil"
@@ -9,6 +10,10 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
+
+	"github.com/google/go-github/github"
+	"github.com/porter-dev/porter/internal/oauth"
+	"golang.org/x/oauth2"
 
 	"github.com/go-chi/chi"
 	"github.com/gorilla/sessions"
@@ -19,10 +24,11 @@ import (
 
 // Auth implements the authorization functions
 type Auth struct {
-	store      sessions.Store
-	cookieName string
-	tokenConf  *token.TokenGeneratorConf
-	repo       *repository.Repository
+	store         sessions.Store
+	cookieName    string
+	tokenConf     *token.TokenGeneratorConf
+	repo          *repository.Repository
+	GithubAppConf *oauth2.Config
 }
 
 // NewAuth returns a new Auth instance
@@ -31,8 +37,9 @@ func NewAuth(
 	cookieName string,
 	tokenConf *token.TokenGeneratorConf,
 	repo *repository.Repository,
+	GithubAppConf *oauth2.Config,
 ) *Auth {
-	return &Auth{store, cookieName, tokenConf, repo}
+	return &Auth{store, cookieName, tokenConf, repo, GithubAppConf}
 }
 
 // BasicAuthenticate just checks that a user is logged in
@@ -163,6 +170,7 @@ type AccessType string
 
 // The various access types
 const (
+	AdminAccess AccessType = "admin"
 	ReadAccess  AccessType = "read"
 	WriteAccess AccessType = "write"
 )
@@ -210,6 +218,14 @@ func (auth *Auth) DoesUserHaveProjectAccess(
 			}
 		}
 
+		// read the user and make sure the email is verified
+		user, err := auth.repo.User.ReadUser(userID)
+
+		if err != nil || !user.EmailVerified {
+			http.Error(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)
+			return
+		}
+
 		// get the project
 		proj, err := auth.repo.Project.ReadProject(uint(projID))
 
@@ -221,16 +237,20 @@ func (auth *Auth) DoesUserHaveProjectAccess(
 		// look for the user role in the project
 		for _, role := range proj.Roles {
 			if role.UserID == userID {
-				if accessType == ReadAccess {
-					next.ServeHTTP(w, r)
-					return
-				} else if accessType == WriteAccess {
+				if accessType == AdminAccess {
 					if role.Kind == models.RoleAdmin {
 						next.ServeHTTP(w, r)
 						return
 					}
+				} else if accessType == WriteAccess {
+					if role.Kind == models.RoleAdmin || role.Kind == models.RoleDeveloper {
+						next.ServeHTTP(w, r)
+						return
+					}
+				} else if accessType == ReadAccess {
+					next.ServeHTTP(w, r)
+					return
 				}
-
 			}
 		}
 
@@ -389,53 +409,117 @@ func (auth *Auth) DoesUserHaveRegistryAccess(
 	})
 }
 
-// DoesUserHaveGitRepoAccess looks for a project_id parameter and a
-// git_repo_id parameter, and verifies that the git repo belongs
-// to the project
-func (auth *Auth) DoesUserHaveGitRepoAccess(
+// DoesUserHaveGitInstallationAccess checks that a user has access to an installation id
+// by ensuring the installation id exists for one org or account they have access to
+// note that this makes a github API request, but the endpoint is fast so this doesn't add
+// much overhead
+func (auth *Auth) DoesUserHaveGitInstallationAccess(
 	next http.Handler,
-	projLoc IDLocation,
 	gitRepoLoc IDLocation,
 ) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		grID, err := findGitRepoIDInRequest(r, gitRepoLoc)
+		grID, err := findGitInstallationIDInRequest(r, gitRepoLoc)
 
 		if err != nil {
 			http.Error(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)
 			return
 		}
 
-		projID, err := findProjIDInRequest(r, projLoc)
+		tok := auth.getTokenFromRequest(r)
+
+		var userID uint
+
+		if tok != nil {
+			userID = tok.IBy
+		} else {
+			session, err := auth.store.Get(r, auth.cookieName)
+
+			if err != nil {
+				http.Error(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)
+				return
+			}
+
+			sessionUserID, ok := session.Values["user_id"]
+			userID = sessionUserID.(uint)
+
+			if !ok {
+				http.Error(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)
+				return
+			}
+		}
+
+		user, err := auth.repo.User.ReadUser(userID)
 
 		if err != nil {
 			http.Error(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)
 			return
 		}
 
-		// get the service accounts belonging to the project
-		grs, err := auth.repo.GitRepo.ListGitReposByProjectID(uint(projID))
+		oauthInt, err := auth.repo.GithubAppOAuthIntegration.ReadGithubAppOauthIntegration(user.GithubAppIntegrationID)
 
 		if err != nil {
-			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+			http.Error(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)
 			return
 		}
 
-		doesExist := false
+		_, _, err = oauth.GetAccessToken(oauthInt.SharedOAuthModel,
+			auth.GithubAppConf,
+			oauth.MakeUpdateGithubAppOauthIntegrationFunction(oauthInt, *auth.repo))
 
-		for _, gr := range grs {
-			if gr.ID == uint(grID) {
-				doesExist = true
+		if err != nil {
+			http.Error(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)
+			return
+		}
+
+		client := github.NewClient(auth.GithubAppConf.Client(oauth2.NoContext, &oauth2.Token{
+			AccessToken:  string(oauthInt.AccessToken),
+			RefreshToken: string(oauthInt.RefreshToken),
+			TokenType:    "Bearer",
+		}))
+
+		accountIDs := make([]int64, 0)
+
+		AuthUser, _, err := client.Users.Get(context.Background(), "")
+
+		if err != nil {
+			http.Error(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)
+			return
+		}
+
+		accountIDs = append(accountIDs, *AuthUser.ID)
+
+		opts := &github.ListOptions{
+			PerPage: 100,
+			Page:    1,
+		}
+
+		for {
+			orgs, pages, err := client.Organizations.List(context.Background(), "", opts)
+
+			if err != nil {
+				http.Error(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)
+				return
+			}
+
+			for _, org := range orgs {
+				accountIDs = append(accountIDs, *org.ID)
+			}
+
+			if pages.NextPage == 0 {
 				break
 			}
 		}
 
-		if doesExist {
-			next.ServeHTTP(w, r)
-			return
+		installations, err := auth.repo.GithubAppInstallation.ReadGithubAppInstallationByAccountIDs(accountIDs)
+
+		for _, installation := range installations {
+			if uint64(installation.InstallationID) == grID {
+				next.ServeHTTP(w, r)
+				return
+			}
 		}
 
 		http.Error(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)
-		return
 	})
 }
 
@@ -933,12 +1017,13 @@ func findRegistryIDInRequest(r *http.Request, registryLoc IDLocation) (uint64, e
 	return regID, nil
 }
 
-func findGitRepoIDInRequest(r *http.Request, gitRepoLoc IDLocation) (uint64, error) {
+// findGitInstallationIDInRequest extracts and installation ID from a request
+func findGitInstallationIDInRequest(r *http.Request, gitRepoLoc IDLocation) (uint64, error) {
 	var grID uint64
 	var err error
 
 	if gitRepoLoc == URLParam {
-		grID, err = strconv.ParseUint(chi.URLParam(r, "git_repo_id"), 0, 64)
+		grID, err = strconv.ParseUint(chi.URLParam(r, "installation_id"), 0, 64)
 
 		if err != nil {
 			return 0, err
@@ -968,10 +1053,10 @@ func findGitRepoIDInRequest(r *http.Request, gitRepoLoc IDLocation) (uint64, err
 			return 0, err
 		}
 
-		if regStrArr, ok := vals["git_repo_id"]; ok && len(regStrArr) == 1 {
+		if regStrArr, ok := vals["installation_id"]; ok && len(regStrArr) == 1 {
 			grID, err = strconv.ParseUint(regStrArr[0], 10, 64)
 		} else {
-			return 0, errors.New("git repo id not found")
+			return 0, errors.New("git app installation id not found")
 		}
 	}
 

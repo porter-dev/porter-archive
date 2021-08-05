@@ -33,6 +33,7 @@ const ChartList: React.FunctionComponent<Props> = ({
   const [controllers, setControllers] = useState<
     Record<string, Record<string, any>>
   >({});
+  const [releases, setReleases] = useState<Record<string, any>>({});
   const [isLoading, setIsLoading] = useState(false);
   const [isError, setIsError] = useState(false);
 
@@ -103,6 +104,47 @@ const ChartList: React.FunctionComponent<Props> = ({
     }
   };
 
+  const setupHelmReleasesWebsocket = () => {
+    const apiPath = `/api/projects/${context.currentProject.id}/k8s/helm_releases?cluster_id=${context.currentCluster.id}`;
+
+    const wsConfig = {
+      onopen: () => {
+        console.log("connected to chart live updates websocket");
+      },
+      onmessage: (evt: MessageEvent) => {
+        let event = JSON.parse(evt.data);
+        const object = event.Object;
+        setReleases((oldReleases) => {
+          const currentRelease = oldReleases[object?.name];
+          const currentReleaseVersion = Number(currentRelease?.version);
+          const newReleaseVersion = Number(object?.version);
+          if (currentReleaseVersion > newReleaseVersion) {
+            return {
+              ...oldReleases,
+            };
+          }
+
+          return {
+            ...oldReleases,
+            [object.name]: object,
+          };
+        });
+      },
+
+      onclose: () => {
+        console.log("closing chart live updates websocket");
+      },
+
+      onerror: (err: ErrorEvent) => {
+        console.log(err);
+        closeWebsocket("helm_releases");
+      },
+    };
+
+    newWebsocket("helm_releases", apiPath, wsConfig);
+    openWebsocket("helm_releases");
+  };
+
   const setupWebsocket = (kind: string) => {
     let { currentCluster, currentProject } = context;
     const apiPath = `/api/projects/${currentProject.id}/k8s/${kind}/status?cluster_id=${currentCluster.id}`;
@@ -149,6 +191,7 @@ const ChartList: React.FunctionComponent<Props> = ({
       "daemonset",
       "replicaset",
     ]);
+    setupHelmReleasesWebsocket();
 
     return () => {
       closeAllWebsockets();
@@ -198,6 +241,7 @@ const ChartList: React.FunctionComponent<Props> = ({
           key={`${chart.namespace}-${chart.name}`}
           chart={chart}
           controllers={controllers || {}}
+          release={releases[chart.name] || {}}
         />
       );
     });
@@ -216,7 +260,7 @@ const Placeholder = styled.div`
   color: #ffffff44;
   background: #26282f;
   border-radius: 5px;
-  height: 320px;
+  height: 370px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -234,5 +278,5 @@ const LoadingWrapper = styled.div`
 `;
 
 const StyledChartList = styled.div`
-  padding-bottom: 85px;
+  padding-bottom: 105px;
 `;

@@ -8,12 +8,13 @@ import Logs from "../status/Logs";
 import plus from "assets/plus.svg";
 import closeRounded from "assets/close-rounded.png";
 import trash from "assets/trash.png";
-import KeyValueArray from "components/values-form/KeyValueArray";
+import KeyValueArray from "components/form-components/KeyValueArray";
 
 type PropsType = {
   job: any;
   handleDelete: () => void;
   deleting: boolean;
+  readOnly?: boolean;
 };
 
 type StateType = {
@@ -243,6 +244,10 @@ export default class JobResource extends Component<PropsType, StateType> {
   };
 
   renderStopButton = () => {
+    if (this.props.readOnly) {
+      return null;
+    }
+
     if (!this.props.job.status?.succeeded && !this.props.job.status?.failed) {
       // look for a sidecar container
       if (this.props.job?.spec?.template?.spec?.containers.length == 2) {
@@ -281,15 +286,17 @@ export default class JobResource extends Component<PropsType, StateType> {
               {this.renderStatus()}
               <MaterialIconTray disabled={false}>
                 {this.renderStopButton()}
-                <i
-                  className="material-icons"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    this.props.handleDelete();
-                  }}
-                >
-                  delete
-                </i>
+                {!this.props.readOnly && (
+                  <i
+                    className="material-icons"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      this.props.handleDelete();
+                    }}
+                  >
+                    delete
+                  </i>
+                )}
                 <i className="material-icons" onClick={this.expandJob}>
                   {this.state.expanded ? "expand_less" : "expand_more"}
                 </i>

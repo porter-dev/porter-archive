@@ -4,6 +4,7 @@ import { Context } from "shared/Context";
 import { ClusterType, ProjectType } from "shared/types";
 import { pushFiltered } from "shared/routing";
 import { useHistory, useLocation } from "react-router";
+import useAuth from "shared/auth/useAuth";
 
 const OptionsDropdown: React.FC = ({ children }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -68,6 +69,8 @@ export const NamespaceList: React.FunctionComponent = () => {
     setCurrentModal("DeleteNamespaceModal", namespace);
   };
 
+  const [isAuthorized] = useAuth();
+
   const isAvailableForDeletion = (namespaceName: string) => {
     // Only the namespaces that doesn't start with kube- or has by name default will be
     // available for deletion (as those are the k8s namespaces)
@@ -109,7 +112,7 @@ export const NamespaceList: React.FunctionComponent = () => {
             (namespace) => namespace.metadata.name === data.Object.metadata.name
           );
           oldNamespaces.splice(oldNamespaceIndex, 1, data.Object);
-          return oldNamespaces;
+          return [...oldNamespaces];
         });
       }
     };
@@ -133,18 +136,20 @@ export const NamespaceList: React.FunctionComponent = () => {
   return (
     <NamespaceListWrapper>
       <ControlRow>
-        <Button
-          onClick={() =>
-            setCurrentModal(
-              "NamespaceModal",
-              namespaces.map((namespace) => ({
-                value: namespace.metadata.name,
-              }))
-            )
-          }
-        >
-          <i className="material-icons">add</i> Add namespace
-        </Button>
+        {isAuthorized("namespace", "", ["get", "create"]) && (
+          <Button
+            onClick={() =>
+              setCurrentModal(
+                "NamespaceModal",
+                namespaces.map((namespace) => ({
+                  value: namespace.metadata.name,
+                }))
+              )
+            }
+          >
+            <i className="material-icons">add</i> Add namespace
+          </Button>
+        )}
       </ControlRow>
       <NamespacesGrid>
         {sortedNamespaces.map((namespace) => {
@@ -165,14 +170,16 @@ export const NamespaceList: React.FunctionComponent = () => {
                   {namespace?.status?.phase}
                 </Status>
               </ContentContainer>
-              {isAvailableForDeletion(namespace?.metadata?.name) && (
-                <OptionsDropdown>
-                  <DropdownOption onClick={() => onDelete(namespace)}>
-                    <i className="material-icons-outlined">delete</i>
-                    <span>Delete</span>
-                  </DropdownOption>
-                </OptionsDropdown>
-              )}
+              {isAuthorized("namespace", "", ["get", "delete"]) &&
+                isAvailableForDeletion(namespace?.metadata?.name) &&
+                namespace?.status?.phase === "Active" && (
+                  <OptionsDropdown>
+                    <DropdownOption onClick={() => onDelete(namespace)}>
+                      <i className="material-icons-outlined">delete</i>
+                      <span>Delete</span>
+                    </DropdownOption>
+                  </OptionsDropdown>
+                )}
             </StyledCard>
           );
         })}

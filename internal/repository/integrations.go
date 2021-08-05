@@ -37,6 +37,21 @@ type OAuthIntegrationRepository interface {
 	UpdateOAuthIntegration(am *ints.OAuthIntegration) (*ints.OAuthIntegration, error)
 }
 
+// GithubAppOAuthIntegrationRepository represents the set of queries on the oauth
+// mechanism
+type GithubAppOAuthIntegrationRepository interface {
+	CreateGithubAppOAuthIntegration(am *ints.GithubAppOAuthIntegration) (*ints.GithubAppOAuthIntegration, error)
+	ReadGithubAppOauthIntegration(id uint) (*ints.GithubAppOAuthIntegration, error)
+	UpdateGithubAppOauthIntegration(am *ints.GithubAppOAuthIntegration) (*ints.GithubAppOAuthIntegration, error)
+}
+
+// SlackIntegrationRepository represents the set of queries on a Slack integration
+type SlackIntegrationRepository interface {
+	CreateSlackIntegration(slackInt *ints.SlackIntegration) (*ints.SlackIntegration, error)
+	ListSlackIntegrationsByProjectID(projectID uint) ([]*ints.SlackIntegration, error)
+	DeleteSlackIntegration(integrationID uint) error
+}
+
 // AWSIntegrationRepository represents the set of queries on the AWS auth
 // mechanism
 type AWSIntegrationRepository interface {
@@ -52,4 +67,13 @@ type GCPIntegrationRepository interface {
 	CreateGCPIntegration(am *ints.GCPIntegration) (*ints.GCPIntegration, error)
 	ReadGCPIntegration(id uint) (*ints.GCPIntegration, error)
 	ListGCPIntegrationsByProjectID(projectID uint) ([]*ints.GCPIntegration, error)
+}
+
+// GithubAppInstallationRepository represents the set of queries for github app installations
+type GithubAppInstallationRepository interface {
+	CreateGithubAppInstallation(am *ints.GithubAppInstallation) (*ints.GithubAppInstallation, error)
+	ReadGithubAppInstallation(id uint) (*ints.GithubAppInstallation, error)
+	ReadGithubAppInstallationByAccountID(accountID int64) (*ints.GithubAppInstallation, error)
+	ReadGithubAppInstallationByAccountIDs(accountIDs []int64) ([]*ints.GithubAppInstallation, error)
+	DeleteGithubAppInstallationByAccountID(accountID int64) error
 }

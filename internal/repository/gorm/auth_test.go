@@ -285,12 +285,14 @@ func TestCreateOAuthIntegration(t *testing.T) {
 	defer cleanup(tester, t)
 
 	oauth := &ints.OAuthIntegration{
-		Client:       ints.OAuthGithub,
-		ProjectID:    tester.initProjects[0].ID,
-		UserID:       tester.initUsers[0].ID,
-		ClientID:     []byte("exampleclientid"),
-		AccessToken:  []byte("idtoken"),
-		RefreshToken: []byte("refreshtoken"),
+		SharedOAuthModel: ints.SharedOAuthModel{
+			ClientID:     []byte("exampleclientid"),
+			AccessToken:  []byte("idtoken"),
+			RefreshToken: []byte("refreshtoken"),
+		},
+		Client:    ints.OAuthGithub,
+		ProjectID: tester.initProjects[0].ID,
+		UserID:    tester.initUsers[0].ID,
 	}
 
 	expOAuth := *oauth
@@ -345,12 +347,14 @@ func TestListOAuthIntegrationsByProjectID(t *testing.T) {
 
 	// make sure data is correct
 	expOAuth := ints.OAuthIntegration{
-		Client:       ints.OAuthGithub,
-		ProjectID:    tester.initProjects[0].ID,
-		UserID:       tester.initUsers[0].ID,
-		ClientID:     []byte("exampleclientid"),
-		AccessToken:  []byte("idtoken"),
-		RefreshToken: []byte("refreshtoken"),
+		SharedOAuthModel: ints.SharedOAuthModel{
+			ClientID:     []byte("exampleclientid"),
+			AccessToken:  []byte("idtoken"),
+			RefreshToken: []byte("refreshtoken"),
+		},
+		Client:    ints.OAuthGithub,
+		ProjectID: tester.initProjects[0].ID,
+		UserID:    tester.initUsers[0].ID,
 	}
 
 	oauth := oauths[0]

@@ -18,6 +18,6 @@ export default ServiceIPList;
 const ResourceList = styled.div`
   margin-bottom: 15px;
   margin-top: 20px;
-  border-radius: 5px;
+  border-radius: 8px;
   overflow: hidden;
 `;

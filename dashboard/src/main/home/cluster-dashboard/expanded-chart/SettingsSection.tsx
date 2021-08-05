@@ -379,9 +379,9 @@ const StyledSettingsSection = styled.div<{ showSource: boolean }>`
   width: 100%;
   background: #ffffff11;
   padding: 0 35px;
-  padding-bottom: 50px;
+  padding-bottom: 15px;
   position: relative;
-  border-radius: 5px;
+  border-radius: 8px;
   overflow: auto;
   height: ${(props) => (props.showSource ? "calc(100% - 55px)" : "100%")};
 `;

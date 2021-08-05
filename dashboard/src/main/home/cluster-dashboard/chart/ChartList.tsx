@@ -278,5 +278,5 @@ const LoadingWrapper = styled.div`
 `;
 
 const StyledChartList = styled.div`
-  padding-bottom: 85px;
+  padding-bottom: 105px;
 `;

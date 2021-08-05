@@ -642,7 +642,7 @@ const Banner = styled.div`
   margin: 5px 0 10px;
   font-size: 13px;
   display: flex;
-  border-radius: 5px;
+  border-radius: 8px;
   padding-left: 15px;
   align-items: center;
   background: #ffffff11;

@@ -194,9 +194,11 @@ export interface PorterFormState {
   components: {
     [key: string]: {
       state: PorterFormFieldFieldState;
-      validation: PorterFormFieldValidationState;
     };
   };
+  validation: {
+    [key: string]: PorterFormFieldValidationState;
+  }
   variables: PorterFormVariableList;
 }
 

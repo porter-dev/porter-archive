@@ -252,7 +252,7 @@ const StyledChart = styled.div`
   cursor: pointer;
   margin-bottom: 25px;
   padding: 1px;
-  border-radius: 5px;
+  border-radius: 8px;
   box-shadow: 0 5px 8px 0px #00000033;
   position: relative;
   border: 2px solid #9eb4ff00;

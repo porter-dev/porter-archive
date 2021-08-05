@@ -150,6 +150,7 @@ const createGKE = baseApi<
 const createInvite = baseApi<
   {
     email: string;
+    kind: string;
   },
   {
     id: number;
@@ -218,16 +219,6 @@ const deleteCluster = baseApi<
   return `/api/projects/${pathParams.project_id}/clusters/${pathParams.cluster_id}`;
 });
 
-const deleteGitRepoIntegration = baseApi<
-  {},
-  {
-    project_id: number;
-    git_repo_id: number;
-  }
->("DELETE", (pathParams) => {
-  return `/api/projects/${pathParams.project_id}/gitrepos/${pathParams.git_repo_id}`;
-});
-
 const deleteInvite = baseApi<{}, { id: number; invId: number }>(
   "DELETE",
   (pathParams) => {
@@ -265,6 +256,16 @@ const deleteRegistryIntegration = baseApi<
   }
 >("DELETE", (pathParams) => {
   return `/api/projects/${pathParams.project_id}/registries/${pathParams.registry_id}`;
+});
+
+const deleteSlackIntegration = baseApi<
+  {},
+  {
+    project_id: number;
+    slack_integration_id: number;
+  }
+>("DELETE", (pathParams) => {
+  return `/api/projects/${pathParams.project_id}/slack_integrations/${pathParams.slack_integration_id}`;
 });
 
 const deployTemplate = baseApi<
@@ -567,7 +568,9 @@ const getMetrics = baseApi<
     cluster_id: number;
     metric: string;
     shouldsum: boolean;
-    pods: string[];
+    pods?: string[];
+    kind?: string; // the controller kind
+    name: string;
     namespace: string;
     startrange: number;
     endrange: number;
@@ -688,6 +691,13 @@ const getRepos = baseApi<{}, { id: number }>("GET", (pathParams) => {
   return `/api/projects/${pathParams.id}/repos`;
 });
 
+const getSlackIntegrations = baseApi<{}, { id: number }>(
+  "GET",
+  (pathParams) => {
+    return `/api/projects/${pathParams.id}/slack_integrations`;
+  }
+);
+
 const getRevisions = baseApi<
   {
     namespace: string;
@@ -730,6 +740,10 @@ const linkGithubProject = baseApi<
   }
 >("GET", (pathParams) => {
   return `/api/oauth/projects/${pathParams.project_id}/github`;
+});
+
+const getGithubAccess = baseApi<{}, {}>("GET", () => {
+  return `/api/integrations/github-app/access`;
 });
 
 const logInUser = baseApi<{
@@ -869,6 +883,18 @@ const updateConfigMap = baseApi<
   return `/api/projects/${id}/k8s/configmap/update?cluster_id=${cluster_id}`;
 });
 
+const renameConfigMap = baseApi<
+  {
+    name: string;
+    namespace: string;
+    new_name: string;
+  },
+  { id: number; cluster_id: number }
+>("POST", (pathParams) => {
+  let { id, cluster_id } = pathParams;
+  return `/api/projects/${id}/k8s/configmap/rename?cluster_id=${cluster_id}`;
+});
+
 const deleteConfigMap = baseApi<
   {
     name: string;
@@ -917,6 +943,58 @@ const stopJob = baseApi<
   return `/api/projects/${id}/k8s/jobs/${namespace}/${name}/stop?cluster_id=${cluster_id}`;
 });
 
+const getAvailableRoles = baseApi<{}, { project_id: number }>(
+  "GET",
+  ({ project_id }) => `/api/projects/${project_id}/roles`
+);
+
+const updateInvite = baseApi<
+  { kind: string },
+  { project_id: number; invite_id: number }
+>(
+  "POST",
+  ({ project_id, invite_id }) =>
+    `/api/projects/${project_id}/invites/${invite_id}`
+);
+
+const getCollaborators = baseApi<{}, { project_id: number }>(
+  "GET",
+  ({ project_id }) => `/api/projects/${project_id}/collaborators`
+);
+
+const updateCollaborator = baseApi<
+  { kind: string },
+  { project_id: number; user_id: number }
+>(
+  "POST",
+  ({ project_id, user_id }) => `/api/projects/${project_id}/roles/${user_id}`
+);
+
+const removeCollaborator = baseApi<{}, { project_id: number; user_id: number }>(
+  "DELETE",
+  ({ project_id, user_id }) => `/api/projects/${project_id}/roles/${user_id}`
+);
+
+const getPolicyDocument = baseApi<{}, { project_id: number }>(
+  "GET",
+  ({ project_id }) => `/api/projects/${project_id}/policy`
+);
+
+const createWebhookToken = baseApi<
+  {},
+  {
+    project_id: number;
+    chart_name: string;
+    namespace: string;
+    cluster_id: number;
+    storage: StorageType;
+  }
+>(
+  "POST",
+  ({ project_id, chart_name, namespace, cluster_id, storage }) =>
+    `/api/projects/${project_id}/releases/${chart_name}/webhook_token?namespace=${namespace}&cluster_id=${cluster_id}&storage=${storage}`
+);
+
 // Bundle export to allow default api import (api.<method> is more readable)
 export default {
   checkAuth,
@@ -940,12 +1018,12 @@ export default {
   createConfigMap,
   deleteCluster,
   deleteConfigMap,
-  deleteGitRepoIntegration,
   deleteInvite,
   deleteNamespace,
   deletePod,
   deleteProject,
   deleteRegistryIntegration,
+  deleteSlackIntegration,
   createSubdomain,
   deployTemplate,
   deployAddon,
@@ -990,12 +1068,14 @@ export default {
   getRegistryIntegrations,
   getReleaseToken,
   getRepoIntegrations,
+  getSlackIntegrations,
   getRepos,
   getRevisions,
   getTemplateInfo,
   getTemplates,
   getUser,
   linkGithubProject,
+  getGithubAccess,
   listConfigMaps,
   logInUser,
   logOutUser,
@@ -1005,8 +1085,16 @@ export default {
   rollbackChart,
   uninstallTemplate,
   updateUser,
+  renameConfigMap,
   updateConfigMap,
   upgradeChartValues,
   deleteJob,
   stopJob,
+  updateInvite,
+  getAvailableRoles,
+  getCollaborators,
+  updateCollaborator,
+  removeCollaborator,
+  getPolicyDocument,
+  createWebhookToken,
 };

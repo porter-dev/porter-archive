@@ -3,15 +3,18 @@ import styled from "styled-components";
 import loading from "assets/loading.gif";
 
 type PropsType = {
-  text: string;
+  text?: string;
   onClick: () => void;
   disabled?: boolean;
   status?: string | null;
   color?: string;
+  rounded?: boolean;
   helper?: string | null;
 
   // Makes flush with corner if not within a modal
   makeFlush?: boolean;
+  clearPosition?: boolean;
+  statusPosition?: "right" | "left";
 };
 
 type StateType = {};
@@ -21,47 +24,71 @@ export default class SaveButton extends Component<PropsType, StateType> {
     if (this.props.status) {
       if (this.props.status === "successful") {
         return (
-          <StatusWrapper successful={true}>
-            <i className="material-icons">done</i> Successfully updated
+          <StatusWrapper position={this.props.statusPosition} successful={true}>
+            <i className="material-icons">done</i>
+            <StatusTextWrapper>Successfully updated</StatusTextWrapper>
           </StatusWrapper>
         );
       } else if (this.props.status === "loading") {
         return (
-          <StatusWrapper successful={false}>
-            <LoadingGif src={loading} /> Updating . . .
+          <StatusWrapper
+            position={this.props.statusPosition}
+            successful={false}
+          >
+            <LoadingGif src={loading} />
+            <StatusTextWrapper>Updating . . .</StatusTextWrapper>
           </StatusWrapper>
         );
       } else if (this.props.status === "error") {
         return (
-          <StatusWrapper successful={false}>
-            <i className="material-icons">error_outline</i> Could not update
+          <StatusWrapper
+            position={this.props.statusPosition}
+            successful={false}
+          >
+            <i className="material-icons">error_outline</i>
+            <StatusTextWrapper>Could not update</StatusTextWrapper>
           </StatusWrapper>
         );
       } else {
         return (
-          <StatusWrapper successful={false}>
-            <i className="material-icons">error_outline</i> {this.props.status}
+          <StatusWrapper
+            position={this.props.statusPosition}
+            successful={false}
+          >
+            <i className="material-icons">error_outline</i>
+            <StatusTextWrapper>{this.props.status}</StatusTextWrapper>
           </StatusWrapper>
         );
       }
     } else if (this.props.helper) {
       return (
-        <StatusWrapper successful={true}>{this.props.helper}</StatusWrapper>
+        <StatusWrapper position={this.props.statusPosition} successful={true}>
+          {this.props.helper}
+        </StatusWrapper>
       );
     }
   };
 
   render() {
     return (
-      <ButtonWrapper makeFlush={this.props.makeFlush}>
-        {this.renderStatus()}
+      <ButtonWrapper
+        makeFlush={this.props.makeFlush}
+        clearPosition={this.props.clearPosition}
+      >
+        {this.props.statusPosition !== "right" && (
+          <div>{this.renderStatus()}</div>
+        )}
         <Button
+          rounded={this.props.rounded}
           disabled={this.props.disabled}
           onClick={this.props.onClick}
           color={this.props.color || "#616FEEcc"}
         >
-          {this.props.text}
+          {this.props.children || this.props.text}
         </Button>
+        {this.props.statusPosition === "right" && (
+          <div>{this.renderStatus()}</div>
+        )}
       </ButtonWrapper>
     );
   }
@@ -74,25 +101,39 @@ const LoadingGif = styled.img`
   margin-bottom: 0px;
 `;
 
-const StatusWrapper = styled.div`
+const StatusTextWrapper = styled.p`
+  display: -webkit-box;
+  line-clamp: 2;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  line-height: 19px;
+  margin: 0;
+`;
+
+const StatusWrapper = styled.div<{
+  successful: boolean;
+  position: "right" | "left";
+}>`
   display: flex;
   align-items: center;
   font-family: "Work Sans", sans-serif;
   font-size: 13px;
   color: #ffffff55;
-  margin-right: 25px;
-  padding: 0 10px;
-
+  ${(props) => {
+    if (props.position !== "right") {
+      return "margin-right: 25px;";
+    }
+    return "margin-left: 25px;";
+  }}
   max-width: 500px;
-  white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 
   > i {
     font-size: 18px;
     margin-right: 10px;
-    color: ${(props: { successful: boolean }) =>
-      props.successful ? "#4797ff" : "#fcba03"};
+    float: left;
+    color: ${(props) => (props.successful ? "#4797ff" : "#fcba03")};
   }
 
   animation: statusFloatIn 0.5s;
@@ -111,33 +152,52 @@ const StatusWrapper = styled.div`
 `;
 
 const ButtonWrapper = styled.div`
-  display: flex;
-  align-items: center;
-  position: absolute;
-  ${(props: { makeFlush: boolean }) => {
+  ${(props: { makeFlush: boolean; clearPosition?: boolean }) => {
+    const baseStyles = `
+      display: flex;
+      align-items: center;
+    `;
+
+    if (props.clearPosition) {
+      return baseStyles;
+    }
+
     if (!props.makeFlush) {
       return `
+        ${baseStyles}
+        position: absolute;
+        justify-content: flex-end;
         bottom: 25px;
         right: 27px;
+        left: 27px;
       `;
     }
     return `
+      ${baseStyles}
+      position: absolute;
+      justify-content: flex-end;
       bottom: 5px;
       right: 0;
     `;
   }}
 `;
 
-const Button = styled.button`
+const Button = styled.button<{
+  disabled: boolean;
+  color: string;
+  rounded: boolean;
+}>`
   height: 35px;
   font-size: 13px;
   font-weight: 500;
   font-family: "Work Sans", sans-serif;
   color: white;
+  display: flex;
+  align-items: center;
   padding: 6px 20px 7px 20px;
   text-align: left;
   border: 0;
-  border-radius: 5px;
+  border-radius: ${(props) => (props.rounded ? "100px" : "5px")};
   background: ${(props) => (!props.disabled ? props.color : "#aaaabb")};
   box-shadow: ${(props) =>
     !props.disabled ? "0 2px 5px 0 #00000030" : "none"};
@@ -148,5 +208,19 @@ const Button = styled.button`
   }
   :hover {
     filter: ${(props) => (!props.disabled ? "brightness(120%)" : "")};
+  }
+
+  > i {
+    color: white;
+    width: 18px;
+    height: 18px;
+    font-weight: 600;
+    font-size: 14px;
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    margin-right: 10px;
+    margin-left: -5px;
+    justify-content: center;
   }
 `;

@@ -13,22 +13,25 @@ import {
   pushQueryParams,
 } from "shared/routing";
 
+import DashboardHeader from "./DashboardHeader";
 import ChartList from "./chart/ChartList";
 import EnvGroupDashboard from "./env-groups/EnvGroupDashboard";
 import NamespaceSelector from "./NamespaceSelector";
 import SortSelector from "./SortSelector";
-import ExpandedChart from "./expanded-chart/ExpandedChart";
 import ExpandedChartWrapper from "./expanded-chart/ExpandedChartWrapper";
 import { RouteComponentProps, withRouter } from "react-router";
 
 import api from "shared/api";
 import DashboardRoutes from "./dashboard/Routes";
+import GuardedRoute from "shared/auth/RouteGuard";
+import { withAuth, WithAuthProps } from "shared/auth/AuthorizationHoc";
 
-type PropsType = RouteComponentProps & {
-  currentCluster: ClusterType;
-  setSidebar: (x: boolean) => void;
-  currentView: PorterUrl;
-};
+type PropsType = RouteComponentProps &
+  WithAuthProps & {
+    currentCluster: ClusterType;
+    setSidebar: (x: boolean) => void;
+    currentView: PorterUrl;
+  };
 
 type StateType = {
   namespace: string;
@@ -110,14 +113,6 @@ class ClusterDashboard extends Component<PropsType, StateType> {
     }
   }
 
-  renderDashboardIcon = () => {
-    if (this.props.currentView === "jobs") {
-      return <Img src={monojob} />;
-    } else {
-      return <Img src={monoweb} />;
-    }
-  };
-
   getDescription = (currentView: string): string => {
     if (currentView === "jobs") {
       return "Scripts and tasks that run once or on a repeating interval.";
@@ -128,14 +123,23 @@ class ClusterDashboard extends Component<PropsType, StateType> {
 
   renderBody = () => {
     let { currentCluster, currentView } = this.props;
+    const isAuthorizedToAdd = this.props.isAuthorized(
+      "namespace",
+      [],
+      ["get", "create"]
+    );
     return (
       <>
-        <ControlRow>
-          <Button
-            onClick={() => pushFiltered(this.props, "/launch", ["project_id"])}
-          >
-            <i className="material-icons">add</i> Launch Template
-          </Button>
+        <ControlRow hasMultipleChilds={isAuthorizedToAdd}>
+          {isAuthorizedToAdd && (
+            <Button
+              onClick={() =>
+                pushFiltered(this.props, "/launch", ["project_id"])
+              }
+            >
+              <i className="material-icons">add</i> Launch Template
+            </Button>
+          )}
           <SortFilterWrapper>
             <SortSelector
               setSortType={(sortType) => this.setState({ sortType })}
@@ -172,22 +176,11 @@ class ClusterDashboard extends Component<PropsType, StateType> {
 
     return (
       <>
-        <TitleSection>
-          {this.renderDashboardIcon()}
-          <Title>{currentView}</Title>
-        </TitleSection>
-
-        <InfoSection>
-          <TopRow>
-            <InfoLabel>
-              <i className="material-icons">info</i> Info
-            </InfoLabel>
-          </TopRow>
-          <Description>{this.getDescription(currentView)}</Description>
-        </InfoSection>
-
-        <LineBreak />
-
+        <DashboardHeader
+          image={currentView === "jobs" ? monojob : monoweb}
+          title={currentView}
+          description={this.getDescription(currentView)}
+        />
         {this.renderBody()}
       </>
     );
@@ -203,9 +196,30 @@ class ClusterDashboard extends Component<PropsType, StateType> {
             isMetricsInstalled={this.state.isMetricsInstalled}
           />
         </Route>
-        <Route path={["/jobs", "/applications", "/env-groups"]}>
+        <GuardedRoute
+          path={"/jobs"}
+          scope="job"
+          resource=""
+          verb={["get", "list"]}
+        >
           {this.renderContents()}
-        </Route>
+        </GuardedRoute>
+        <GuardedRoute
+          path={"/applications"}
+          scope="application"
+          resource=""
+          verb={["get", "list"]}
+        >
+          {this.renderContents()}
+        </GuardedRoute>
+        <GuardedRoute
+          path={"/env-groups"}
+          scope="env_group"
+          resource=""
+          verb={["get", "list"]}
+        >
+          {this.renderContents()}
+        </GuardedRoute>
         <Route path={["/cluster-dashboard"]}>
           <DashboardRoutes />
         </Route>
@@ -216,11 +230,21 @@ class ClusterDashboard extends Component<PropsType, StateType> {
 
 ClusterDashboard.contextType = Context;
 
-export default withRouter(ClusterDashboard);
+export default withRouter(withAuth(ClusterDashboard));
+
+const Br = styled.div`
+  width: 100%;
+  height: 1px;
+`;
 
 const ControlRow = styled.div`
   display: flex;
-  justify-content: space-between;
+  justify-content: ${(props: { hasMultipleChilds: boolean }) => {
+    if (props.hasMultipleChilds) {
+      return "space-between";
+    }
+    return "flex-end";
+  }};
   align-items: center;
   margin-bottom: 35px;
   padding-left: 0px;
@@ -362,41 +386,6 @@ const DashboardIcon = styled.div`
 
 const Img = styled.img`
   width: 30px;
-`;
-
-const Title = styled.div`
-  font-size: 20px;
-  font-weight: 500;
-  font-family: "Work Sans", sans-serif;
-  margin-left: 18px;
-  color: #ffffff;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  text-transform: capitalize;
-`;
-
-const TitleSection = styled.div`
-  height: 80px;
-  margin-top: 10px;
-  margin-bottom: 10px;
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  padding-left: 0px;
-
-  > i {
-    margin-left: 10px;
-    cursor: pointer;
-    font-size: 18px;
-    color: #858FAAaa;
-    padding: 5px;
-    border-radius: 100px;
-    :hover {
-      background: #ffffff11;
-    }
-    margin-bottom: -3px;
-  }
 `;
 
 const SortFilterWrapper = styled.div`

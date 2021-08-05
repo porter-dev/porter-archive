@@ -1,6 +1,7 @@
 .DS_Store
 .env
 docker/.env
+docker/github_app_private_key.pem
 app
 *.db
 test.yaml
@@ -10,6 +11,8 @@ internal/local_templates
 gon*.hcl
 *prod.Dockerfile
 staging.sh
+*.crt
+*.key
 
 # Local .terraform directories
 **/.terraform/*

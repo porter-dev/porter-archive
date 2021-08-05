@@ -120,28 +120,44 @@ ListSection.contextType = Context;
 const YamlWrapper = styled.div`
   width: 100%;
   height: 100%;
+  overflow: visible;
 `;
 
 const TabWrapper = styled.div`
   min-width: 200px;
   width: 35%;
   margin-right: 10px;
-  border-radius: 5px;
   overflow: hidden;
+  overflow-y: auto;
 `;
 
 const FlexWrapper = styled.div`
   display: flex;
   flex: 1;
   height: 100%;
+  overflow: visible;
 `;
 
 const StyledListSection = styled.div`
-  width: 100%;
-  height: 100%;
   display: flex;
-  position: relative;
   font-size: 13px;
-  border-radius: 5px;
+  width: 100%;
+  min-height: 400px;
+  height: 50vh;
+  font-size: 13px;
   overflow: hidden;
+  border-radius: 8px;
+  animation: floatIn 0.3s;
+  animation-timing-function: ease-out;
+  animation-fill-mode: forwards;
+  @keyframes floatIn {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0px);
+    }
+  }
 `;

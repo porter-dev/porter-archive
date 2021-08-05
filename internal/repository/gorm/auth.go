@@ -1087,3 +1087,107 @@ func (repo *AWSIntegrationRepository) DecryptAWSIntegrationData(
 
 	return nil
 }
+
+// GithubAppInstallationRepository implements repository.GithubAppInstallationRepository
+type GithubAppInstallationRepository struct {
+	db *gorm.DB
+}
+
+// NewGithubAppInstallationRepository creates a new GithubAppInstallationRepository
+func NewGithubAppInstallationRepository(db *gorm.DB) repository.GithubAppInstallationRepository {
+	return &GithubAppInstallationRepository{db}
+}
+
+// CreateGithubAppInstallation creates a new GithubAppInstallation instance
+func (repo *GithubAppInstallationRepository) CreateGithubAppInstallation(am *ints.GithubAppInstallation) (*ints.GithubAppInstallation, error) {
+	if err := repo.db.Create(am).Error; err != nil {
+		return nil, err
+	}
+	return am, nil
+}
+
+// ReadGithubAppInstallation finds a GithubAppInstallation by id
+func (repo *GithubAppInstallationRepository) ReadGithubAppInstallation(id uint) (*ints.GithubAppInstallation, error) {
+	ret := &ints.GithubAppInstallation{}
+
+	if err := repo.db.Where("id = ?", id).First(&ret).Error; err != nil {
+		return nil, err
+	}
+
+	return ret, nil
+}
+
+// ReadGithubAppInstallationByAccountID finds a GithubAppInstallation by an account ID
+func (repo *GithubAppInstallationRepository) ReadGithubAppInstallationByAccountID(accountID int64) (*ints.GithubAppInstallation, error) {
+
+	ret := &ints.GithubAppInstallation{}
+
+	if err := repo.db.Where("account_id = ?", accountID).First(&ret).Error; err != nil {
+		return nil, err
+	}
+
+	return ret, nil
+}
+
+// ReadGithubAppInstallationByAccountIDs finds all instances of GithubInstallations given a list of account IDs
+// note that if there is not Installation for a given ID, no error will be generated
+func (repo *GithubAppInstallationRepository) ReadGithubAppInstallationByAccountIDs(accountIDs []int64) ([]*ints.GithubAppInstallation, error) {
+	ret := make([]*ints.GithubAppInstallation, 0)
+
+	if err := repo.db.Where("account_id IN ?", accountIDs).Find(&ret).Error; err != nil {
+		return nil, err
+	}
+
+	return ret, nil
+}
+
+// DeleteGithubAppInstallationByAccountID deletes a GithubAppInstallation given an account ID
+// note that this deletion is done with db.Unscoped(), so the record is actually deleted
+func (repo *GithubAppInstallationRepository) DeleteGithubAppInstallationByAccountID(accountID int64) error {
+	if err := repo.db.Unscoped().Where("account_id = ?", accountID).Delete(&ints.GithubAppInstallation{}).Error; err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// GithubAppOAuthIntegrationRepository implements repository.GithubAppOAuthIntegrationRepository
+type GithubAppOAuthIntegrationRepository struct {
+	db *gorm.DB
+}
+
+// NewGithubAppOAuthIntegrationRepository creates a GithubAppOAuthIntegrationRepository
+func NewGithubAppOAuthIntegrationRepository(db *gorm.DB) repository.GithubAppOAuthIntegrationRepository {
+	return &GithubAppOAuthIntegrationRepository{db}
+}
+
+// CreateGithubAppOAuthIntegration creates a new GithubAppOAuthIntegration
+func (repo *GithubAppOAuthIntegrationRepository) CreateGithubAppOAuthIntegration(am *ints.GithubAppOAuthIntegration) (*ints.GithubAppOAuthIntegration, error) {
+	if err := repo.db.Create(am).Error; err != nil {
+		return nil, err
+	}
+	return am, nil
+}
+
+// ReadGithubAppOauthIntegration finds a GithubAppOauthIntegration by id
+func (repo *GithubAppOAuthIntegrationRepository) ReadGithubAppOauthIntegration(id uint) (*ints.GithubAppOAuthIntegration, error) {
+	ret := &ints.GithubAppOAuthIntegration{}
+
+	if err := repo.db.Where("id = ?", id).First(&ret).Error; err != nil {
+		return nil, err
+	}
+
+	return ret, nil
+}
+
+// UpdateGithubAppOauthIntegration updates a GithubAppOauthIntegration
+func (repo *GithubAppOAuthIntegrationRepository) UpdateGithubAppOauthIntegration(am *ints.GithubAppOAuthIntegration) (*ints.GithubAppOAuthIntegration, error) {
+
+	err := repo.db.Save(am).Error
+
+	if err != nil {
+		return nil, err
+	}
+
+	return am, nil
+}

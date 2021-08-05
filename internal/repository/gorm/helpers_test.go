@@ -72,6 +72,7 @@ func setupTestEnv(tester *tester, t *testing.T) {
 		&ints.ClusterTokenCache{},
 		&ints.RegTokenCache{},
 		&ints.HelmRepoTokenCache{},
+		&ints.GithubAppInstallation{},
 	)
 
 	if err != nil {
@@ -105,6 +106,36 @@ func initUser(tester *tester, t *testing.T) {
 	}
 
 	user, err := tester.repo.User.CreateUser(user)
+
+	if err != nil {
+		t.Fatalf("%v\n", err)
+	}
+
+	tester.initUsers = append(tester.initUsers, user)
+}
+
+func initMultiUser(tester *tester, t *testing.T) {
+	t.Helper()
+
+	user := &models.User{
+		Email:    "example@example.com",
+		Password: "hello1234",
+	}
+
+	user, err := tester.repo.User.CreateUser(user)
+
+	if err != nil {
+		t.Fatalf("%v\n", err)
+	}
+
+	tester.initUsers = append(tester.initUsers, user)
+
+	user = &models.User{
+		Email:    "example2@example.com",
+		Password: "hello1234",
+	}
+
+	user, err = tester.repo.User.CreateUser(user)
 
 	if err != nil {
 		t.Fatalf("%v\n", err)
@@ -242,12 +273,14 @@ func initOAuthIntegration(tester *tester, t *testing.T) {
 	}
 
 	oauth := &ints.OAuthIntegration{
-		Client:       ints.OAuthGithub,
-		ProjectID:    tester.initProjects[0].ID,
-		UserID:       tester.initUsers[0].ID,
-		ClientID:     []byte("exampleclientid"),
-		AccessToken:  []byte("idtoken"),
-		RefreshToken: []byte("refreshtoken"),
+		SharedOAuthModel: ints.SharedOAuthModel{
+			ClientID:     []byte("exampleclientid"),
+			AccessToken:  []byte("idtoken"),
+			RefreshToken: []byte("refreshtoken"),
+		},
+		Client:    ints.OAuthGithub,
+		ProjectID: tester.initProjects[0].ID,
+		UserID:    tester.initUsers[0].ID,
 	}
 
 	oauth, err := tester.repo.OAuthIntegration.CreateOAuthIntegration(oauth)

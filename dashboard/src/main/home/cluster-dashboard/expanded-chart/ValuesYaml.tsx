@@ -12,6 +12,7 @@ import SaveButton from "components/SaveButton";
 type PropsType = {
   currentChart: ChartType;
   refreshChart: () => void;
+  disabled?: boolean;
 };
 
 type StateType = {
@@ -89,14 +90,17 @@ export default class ValuesYaml extends Component<PropsType, StateType> {
           <YamlEditor
             value={this.state.values}
             onChange={(e: any) => this.setState({ values: e })}
+            readOnly={this.props.disabled}
           />
         </Wrapper>
-        <SaveButton
-          text="Update Values"
-          onClick={this.handleSaveValues}
-          status={this.state.saveValuesStatus}
-          makeFlush={true}
-        />
+        {!this.props.disabled && (
+          <SaveButton
+            text="Update Values"
+            onClick={this.handleSaveValues}
+            status={this.state.saveValuesStatus}
+            makeFlush={true}
+          />
+        )}
       </StyledValuesYaml>
     );
   }
@@ -107,13 +111,30 @@ ValuesYaml.contextType = Context;
 const Wrapper = styled.div`
   overflow: auto;
   height: calc(100% - 60px);
-  border-radius: 5px;
-  border: 1px solid #ffffff22;
+  border-radius: 8px;
+  border: 1px solid #ffffff33;
 `;
 
 const StyledValuesYaml = styled.div`
   display: flex;
   flex-direction: column;
   width: 100%;
-  height: 100%;
+  min-height: 400px;
+  height: 50vh;
+  font-size: 13px;
+  overflow: hidden;
+  border-radius: 8px;
+  animation: floatIn 0.3s;
+  animation-timing-function: ease-out;
+  animation-fill-mode: forwards;
+  @keyframes floatIn {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0px);
+    }
+  }
 `;

@@ -91,10 +91,10 @@ func NewDeployAgent(client *api.Client, app string, opts *DeployOpts) (*DeployAg
 			// is docker
 			if release.GitActionConfig.DockerfilePath != "" {
 				deployAgent.opts.Method = DeployBuildTypeDocker
+			} else {
+				// otherwise build type is pack
+				deployAgent.opts.Method = DeployBuildTypePack
 			}
-
-			// otherwise build type is pack
-			deployAgent.opts.Method = DeployBuildTypePack
 		} else {
 			// if the git action config does not exist, we use docker by default
 			deployAgent.opts.Method = DeployBuildTypeDocker
@@ -193,7 +193,8 @@ func (d *DeployAgent) WriteBuildEnv(fileDest string) error {
 // buildpack or docker.
 func (d *DeployAgent) Build() error {
 	// if build is not local, fetch remote source
-	var dst string
+	var basePath string
+	buildCtx := d.opts.LocalPath
 	var err error
 
 	if !d.opts.Local {
@@ -208,18 +209,22 @@ func (d *DeployAgent) Build() error {
 		}
 
 		// download the repository from remote source into a temp directory
-		dst, err = d.downloadRepoToDir(zipResp.URLString)
+		basePath, err = d.downloadRepoToDir(zipResp.URLString)
+
+		if err != nil {
+			return err
+		}
 
 		if d.tag == "" {
 			shortRef := fmt.Sprintf("%.7s", zipResp.LatestCommitSHA)
 			d.tag = shortRef
 		}
+	} else {
+		basePath, err = filepath.Abs(".")
 
 		if err != nil {
 			return err
 		}
-	} else {
-		dst = filepath.Dir(d.opts.LocalPath)
 	}
 
 	if d.tag == "" {
@@ -247,10 +252,16 @@ func (d *DeployAgent) Build() error {
 	}
 
 	if d.opts.Method == DeployBuildTypeDocker {
-		return buildAgent.BuildDocker(d.agent, dst, d.tag)
+		return buildAgent.BuildDocker(
+			d.agent,
+			basePath,
+			buildCtx,
+			d.dockerfilePath,
+			d.tag,
+		)
 	}
 
-	return buildAgent.BuildPack(d.agent, dst, d.tag)
+	return buildAgent.BuildPack(d.agent, buildCtx, d.tag)
 }
 
 // Push pushes a local image to the remote repository linked in the release
@@ -267,6 +278,22 @@ func (d *DeployAgent) UpdateImageAndValues(overrideValues map[string]interface{}
 
 	// overwrite the tag based on a new image
 	currImageSection := mergedValues["image"].(map[string]interface{})
+
+	// if the current image section is hello-porter, the image must be overriden
+	if currImageSection["repository"] == "public.ecr.aws/o1j4x7p4/hello-porter" ||
+		currImageSection["repository"] == "public.ecr.aws/o1j4x7p4/hello-porter-job" {
+		newImage, err := d.getReleaseImage()
+
+		if err != nil {
+			return fmt.Errorf("could not overwrite hello-porter image: %s", err.Error())
+		}
+
+		currImageSection["repository"] = newImage
+
+		// set to latest just to be safe -- this will be overriden if "d.tag" is set in
+		// the agent
+		currImageSection["tag"] = "latest"
+	}
 
 	if d.tag != "" && currImageSection["tag"] != d.tag {
 		currImageSection["tag"] = d.tag

@@ -26,13 +26,35 @@ import ProjectSettings from "./project-settings/ProjectSettings";
 import Sidebar from "./sidebar/Sidebar";
 import PageNotFound from "components/PageNotFound";
 import DeleteNamespaceModal from "./modals/DeleteNamespaceModal";
+import { fakeGuardedRoute } from "shared/auth/RouteGuard";
+import { withAuth, WithAuthProps } from "shared/auth/AuthorizationHoc";
+import EditInviteOrCollaboratorModal from "./modals/EditInviteOrCollaboratorModal";
+import AccountSettingsModal from "./modals/AccountSettingsModal";
+import discordLogo from "../../assets/discord.svg";
+// Guarded components
+const GuardedProjectSettings = fakeGuardedRoute("settings", "", [
+  "get",
+  "list",
+  "update",
+  "create",
+  "delete",
+])(ProjectSettings);
 
-type PropsType = RouteComponentProps & {
-  logOut: () => void;
-  currentProject: ProjectType;
-  currentCluster: ClusterType;
-  currentRoute: PorterUrl;
-};
+const GuardedIntegrations = fakeGuardedRoute("integrations", "", [
+  "get",
+  "list",
+  "update",
+  "create",
+  "delete",
+])(Integrations);
+
+type PropsType = RouteComponentProps &
+  WithAuthProps & {
+    logOut: () => void;
+    currentProject: ProjectType;
+    currentCluster: ClusterType;
+    currentRoute: PorterUrl;
+  };
 
 type StateType = {
   forceSidebar: boolean;
@@ -90,9 +112,6 @@ class Home extends Component<PropsType, StateType> {
   };
 
   getCapabilities = () => {
-    let { currentProject } = this.props;
-    if (!currentProject) return;
-
     api
       .getCapabilities("<token>", {}, {})
       .then((res) => {
@@ -236,7 +255,6 @@ class Home extends Component<PropsType, StateType> {
     let { match } = this.props;
     let params = match.params as any;
     let { cluster } = params;
-    console.log("cluster is", cluster);
 
     let { user } = this.context;
 
@@ -336,9 +354,9 @@ class Home extends Component<PropsType, StateType> {
           </DashboardWrapper>
         );
       } else if (currentView === "integrations") {
-        return <Integrations />;
+        return <GuardedIntegrations />;
       } else if (currentView === "project-settings") {
-        return <ProjectSettings />;
+        return <GuardedProjectSettings />;
       }
       return <Templates />;
     } else if (currentView === "new-project") {
@@ -359,6 +377,15 @@ class Home extends Component<PropsType, StateType> {
             this.setState({ forceRefreshClusters: x })
           }
         />
+      );
+    } else {
+      return (
+        <>
+          <DiscordButton href="https://discord.gg/34n7NN7FJ7" target="_blank">
+            <Icon src={discordLogo} />
+            Join Our Discord
+          </DiscordButton>
+        </>
       );
     }
   };
@@ -458,7 +485,13 @@ class Home extends Component<PropsType, StateType> {
   };
 
   render() {
-    let { currentModal, setCurrentModal, currentProject } = this.context;
+    let {
+      currentModal,
+      setCurrentModal,
+      currentProject,
+      currentOverlay,
+      setCurrentOverlay,
+    } = this.context;
 
     return (
       <StyledHome>
@@ -471,19 +504,22 @@ class Home extends Component<PropsType, StateType> {
             <ClusterInstructionsModal />
           </Modal>
         )}
-        {currentModal === "UpdateClusterModal" && (
-          <Modal
-            onRequestClose={() => setCurrentModal(null, null)}
-            width="565px"
-            height="275px"
-          >
-            <UpdateClusterModal
-              setRefreshClusters={(x: boolean) =>
-                this.setState({ forceRefreshClusters: x })
-              }
-            />
-          </Modal>
-        )}
+
+        {/* We should be careful, as this component is named Update but is for deletion */}
+        {this.props.isAuthorized("cluster", "", ["get", "delete"]) &&
+          currentModal === "UpdateClusterModal" && (
+            <Modal
+              onRequestClose={() => setCurrentModal(null, null)}
+              width="565px"
+              height="275px"
+            >
+              <UpdateClusterModal
+                setRefreshClusters={(x: boolean) =>
+                  this.setState({ forceRefreshClusters: x })
+                }
+              />
+            </Modal>
+          )}
         {currentModal === "IntegrationsModal" && (
           <Modal
             onRequestClose={() => setCurrentModal(null, null)}
@@ -502,23 +538,53 @@ class Home extends Component<PropsType, StateType> {
             <IntegrationsInstructionsModal />
           </Modal>
         )}
-        {currentModal === "NamespaceModal" && (
+        {this.props.isAuthorized("namespace", "", ["get", "create"]) &&
+          currentModal === "NamespaceModal" && (
+            <Modal
+              onRequestClose={() => setCurrentModal(null, null)}
+              width="600px"
+              height="220px"
+            >
+              <NamespaceModal />
+            </Modal>
+          )}
+        {this.props.isAuthorized("namespace", "", ["get", "delete"]) &&
+          currentModal === "DeleteNamespaceModal" && (
+            <Modal
+              onRequestClose={() => setCurrentModal(null, null)}
+              width="700px"
+              height="280px"
+            >
+              <DeleteNamespaceModal />
+            </Modal>
+          )}
+
+        {currentModal === "EditInviteOrCollaboratorModal" && (
           <Modal
             onRequestClose={() => setCurrentModal(null, null)}
             width="600px"
-            height="220px"
+            height="250px"
           >
-            <NamespaceModal />
+            <EditInviteOrCollaboratorModal />
           </Modal>
         )}
-        {currentModal === "DeleteNamespaceModal" && (
+        {currentModal === "AccountSettingsModal" && (
           <Modal
             onRequestClose={() => setCurrentModal(null, null)}
-            width="700px"
-            height="280px"
+            width="760px"
+            height="440px"
           >
-            <DeleteNamespaceModal />
+            <AccountSettingsModal />
           </Modal>
+        )}
+
+        {currentOverlay && (
+          <ConfirmOverlay
+            show={true}
+            message={currentOverlay.message}
+            onYes={currentOverlay.onYes}
+            onNo={currentOverlay.onNo}
+          />
         )}
 
         {this.renderSidebar()}
@@ -548,12 +614,12 @@ class Home extends Component<PropsType, StateType> {
 
 Home.contextType = Context;
 
-export default withRouter(Home);
+export default withRouter(withAuth(Home));
 
 const ViewWrapper = styled.div`
   height: 100%;
   width: 100vw;
-  padding-top: 30px;
+  padding-top: 10vh;
   overflow-y: auto;
   display: flex;
   flex: 1;
@@ -563,10 +629,8 @@ const ViewWrapper = styled.div`
 `;
 
 const DashboardWrapper = styled.div`
-  width: 80%;
-  padding-top: 50px;
+  width: calc(85%);
   min-width: 300px;
-  padding-bottom: 120px;
 `;
 
 const StyledHome = styled.div`
@@ -590,4 +654,38 @@ const StyledHome = styled.div`
       transform: translateY(0px);
     }
   }
+`;
+
+const DiscordButton = styled.a`
+  position: absolute;
+  z-index: 100;
+  text-decoration: none;
+  bottom: 17px;
+  display: flex;
+  align-items: center;
+  width: 170px;
+  left: 15px;
+  border: 2px solid #ffffff44;
+  border-radius: 3px;
+  color: #ffffff44;
+  height: 40px;
+  font-family: Work Sans, sans-serif;
+  font-size: 14px;
+  font-weight: bold;
+  cursor: pointer;
+  :hover {
+    > img {
+      opacity: 60%;
+    }
+    color: #ffffff88;
+    border-color: #ffffff88;
+  }
+`;
+
+const Icon = styled.img`
+  height: 25px;
+  width: 25px;
+  opacity: 30%;
+  margin-left: 7px;
+  margin-right: 5px;
 `;

@@ -1,7 +1,7 @@
 import React from "react";
 import styled from "styled-components";
 import { Column, Row, useGlobalFilter, useTable } from "react-table";
-import InputRow from "./values-form/InputRow";
+import InputRow from "./form-components/InputRow";
 import Loading from "components/Loading";
 
 const GlobalFilter: React.FunctionComponent<any> = ({ setGlobalFilter }) => {
@@ -31,6 +31,7 @@ export type TableProps = {
   onRowClick?: (row: Row) => void;
   isLoading: boolean;
   disableGlobalFilter?: boolean;
+  disableHover?: boolean;
 };
 
 const Table: React.FC<TableProps> = ({
@@ -39,6 +40,7 @@ const Table: React.FC<TableProps> = ({
   onRowClick,
   isLoading,
   disableGlobalFilter = false,
+  disableHover,
 }) => {
   const {
     getTableProps,
@@ -81,6 +83,7 @@ const Table: React.FC<TableProps> = ({
 
           return (
             <StyledTr
+              disableHover={disableHover}
               {...row.getRowProps()}
               enablePointer={!!onRowClick}
               onClick={() => onRowClick && onRowClick(row)}
@@ -161,6 +164,8 @@ export const StyledTd = styled.td`
 
 export const StyledTHead = styled.thead`
   width: 100%;
+  border-top: 1px solid #aaaabb22;
+  border-bottom: 1px solid #aaaabb22;
 `;
 
 export const StyledTh = styled.th`
@@ -205,8 +210,8 @@ const SearchRow = styled.div`
   min-width: 300px;
   max-width: min-content;
   background: #ffffff11;
-  margin-bottom: 7px;
-  margin-top: 7px;
+  margin-bottom: 15px;
+  margin-top: 0px;
   i {
     width: 18px;
     height: 18px;

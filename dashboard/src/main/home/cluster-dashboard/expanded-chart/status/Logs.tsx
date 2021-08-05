@@ -139,6 +139,8 @@ export default class Logs extends Component<PropsType, StateType> {
     if (prevState.currentTab !== this.state.currentTab) {
       let { selectedPod } = this.props;
 
+      this.ws?.close();
+
       this.setState({ logs: [] });
 
       if (this.state.currentTab == "Application") {
@@ -225,6 +227,32 @@ export default class Logs extends Component<PropsType, StateType> {
               System
             </Tab>
           </LogTabs>
+          <Options>
+            <Scroll
+              onClick={() => {
+                this.setState({ scroll: !this.state.scroll }, () => {
+                  if (this.state.scroll) {
+                    this.scrollToBottom(true);
+                  }
+                });
+              }}
+            >
+              <input
+                type="checkbox"
+                checked={this.state.scroll}
+                onChange={() => {}}
+              />
+              Scroll to Bottom
+            </Scroll>
+            <Refresh
+              onClick={() => {
+                this.refreshLogs();
+              }}
+            >
+              <i className="material-icons">autorenew</i>
+              Refresh
+            </Refresh>
+          </Options>
         </LogStreamAlt>
       );
     }
@@ -354,7 +382,7 @@ const Refresh = styled.div`
 const LogTabs = styled.div`
   width: 100%;
   height: 25px;
-  background: #202227;
+  background: #121318;
   display: flex;
   flex-direction: row;
   align-items: center;
@@ -384,7 +412,7 @@ const LogStream = styled.div`
   flex: 1;
   float: right;
   height: 100%;
-  background: #202227;
+  background: #121318;
   user-select: text;
   max-width: 65%;
   overflow-y: auto;

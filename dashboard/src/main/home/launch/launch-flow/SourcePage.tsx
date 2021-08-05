@@ -7,8 +7,8 @@ import close from "assets/close.png";
 import { isAlphanumeric } from "shared/common";
 import { pushFiltered } from "shared/routing";
 
-import InputRow from "components/values-form/InputRow";
-import Helper from "components/values-form/Helper";
+import InputRow from "components/form-components/InputRow";
+import Helper from "components/form-components/Helper";
 import ImageSelector from "components/image-selector/ImageSelector";
 import ActionConfEditor from "components/repo-selector/ActionConfEditor";
 import SaveButton from "components/SaveButton";
@@ -56,7 +56,7 @@ const defaultActionConfig: ActionConfigType = {
 
 class SourcePage extends Component<PropsType, StateType> {
   renderSourceSelector = () => {
-    let { capabilities } = this.context;
+    let { capabilities, setCurrentModal } = this.context;
     let { sourceType, setSourceType } = this.props;
 
     if (sourceType === "") {
@@ -151,9 +151,7 @@ class SourcePage extends Component<PropsType, StateType> {
         <Subtitle>
           Provide a repo folder to use as source.
           <Highlight
-            onClick={() =>
-              pushFiltered(this.props, "/integrations/repo", ["project_id"])
-            }
+            onClick={() => setCurrentModal("AccountSettingsModal", {})}
           >
             Manage Git repos
           </Highlight>
@@ -176,12 +174,8 @@ class SourcePage extends Component<PropsType, StateType> {
           setProcfileProcess={(procfileProcess: string) => {
             setProcfileProcess(procfileProcess);
             setValuesToOverride({
-              "container.command": {
-                value: procfileProcess || "",
-              },
-              showStartCommand: {
-                value: !procfileProcess,
-              },
+              "container.command": procfileProcess || "",
+              showStartCommand: !procfileProcess,
             });
           }}
           setBranch={setBranch}

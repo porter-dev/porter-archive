@@ -61,7 +61,10 @@ type GitActionConfig struct {
 	// The complete image repository uri to pull from
 	ImageRepoURI string `json:"image_repo_uri"`
 
-	// The git integration id
+	// The git installation ID
+	GithubInstallationID uint `json:"git_installation_id"`
+
+	// The git repo ID (legacy field)
 	GitRepoID uint `json:"git_repo_id"`
 
 	// The path to the dockerfile in the git repo
@@ -69,6 +72,9 @@ type GitActionConfig struct {
 
 	// The build context
 	FolderPath string `json:"folder_path"`
+
+	// Determines on how authentication is performed on this action
+	IsInstallation bool `json:"is_installation"`
 }
 
 // GitActionConfigExternal is an external GitActionConfig to be shared over REST
@@ -98,7 +104,7 @@ func (r *GitActionConfig) Externalize() *GitActionConfigExternal {
 		GitRepo:        r.GitRepo,
 		GitBranch:      r.GitBranch,
 		ImageRepoURI:   r.ImageRepoURI,
-		GitRepoID:      r.GitRepoID,
+		GitRepoID:      r.GithubInstallationID,
 		DockerfilePath: r.DockerfilePath,
 		FolderPath:     r.FolderPath,
 	}

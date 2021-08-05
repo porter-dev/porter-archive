@@ -1,8 +1,11 @@
 const hardcodedNames: { [key: string]: string } = {
+  agones: "Agones System",
   docker: "Docker",
   "https-issuer": "HTTPS Issuer",
   metabase: "Metabase",
   mongodb: "MongoDB",
+  datadog: "Datadog",
+  "wallarm-ingress": "Wallarm Ingress",
   mysql: "MySQL",
   postgresql: "PostgreSQL",
   redis: "Redis",
@@ -25,6 +28,10 @@ const hardcodedIcons: { [key: string]: string } = {
     "https://pbs.twimg.com/profile_images/961380992727465985/4unoiuHt.jpg",
   mongodb:
     "https://bitnami.com/assets/stacks/mongodb/img/mongodb-stack-220x234.png",
+  datadog: "https://datadog-live.imgix.net/img/dd_logo_70x75.png",
+  wallarm:
+    "https://assets.website-files.com/5fe3434623c64c793987363d/6006cb97f71f76f8a5e85a32_Frame%201923.png",
+  agones: "https://avatars.githubusercontent.com/u/36940055?v=4",
   mysql: "https://www.mysql.com/common/logos/logo-mysql-170x115.png",
   postgresql:
     "https://bitnami.com/assets/stacks/postgresql/img/postgresql-stack-110x117.png",

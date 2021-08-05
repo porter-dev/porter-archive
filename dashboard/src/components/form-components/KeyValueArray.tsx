@@ -8,6 +8,11 @@ import sliders from "assets/sliders.svg";
 import upload from "assets/upload.svg";
 import { keysIn } from "lodash";
 
+export type KeyValue = {
+  key: string;
+  value: string;
+};
+
 type PropsType = {
   label?: string;
   values: any;
@@ -45,21 +50,32 @@ export default class KeyValueArray extends Component<PropsType, StateType> {
 
   valuesToObject = () => {
     let obj = {} as any;
+    const rg = /(?:^|[^\\])(\\n)/g;
+    const fixNewlines = (s: string) => {
+      while (rg.test(s)) {
+        s = s.replace(rg, (str) => {
+          if (str.length == 2) return "\n";
+          if (str[0] != "\\") return str[0] + "\n";
+          return "\\n";
+        });
+      }
+      return s;
+    };
+    const isNumber = (s: string) => {
+      return !isNaN(!s ? NaN : Number(String(s).trim()));
+    };
     this.state.values.forEach((entry: any, i: number) => {
-      obj[entry.key] = entry.value;
+      if (isNumber(entry.value)) {
+        obj[entry.key] = entry.value;
+      } else {
+        obj[entry.key] = fixNewlines(entry.value);
+      }
     });
     return obj;
   };
 
-  objectToValues = (obj: any) => {
-    let values = [] as any[];
-    Object.keys(obj).forEach((key: string, i: number) => {
-      let entry = {} as any;
-      entry.key = key;
-      entry.value = obj[key];
-      values.push(entry);
-    });
-    return values;
+  objectToValues = (obj: Record<string, string>): KeyValue[] => {
+    return Object.entries(obj)?.map(([key, value]) => ({ key, value }));
   };
 
   renderDeleteButton = (i: number) => {
@@ -93,7 +109,7 @@ export default class KeyValueArray extends Component<PropsType, StateType> {
   renderInputList = () => {
     return (
       <>
-        {this.state.values.map((entry: any, i: number) => {
+        {this.state.values?.map((entry: any, i: number) => {
           // Preprocess non-string env values set via raw Helm values
           let { value } = entry;
           if (typeof value === "object") {
@@ -148,16 +164,18 @@ export default class KeyValueArray extends Component<PropsType, StateType> {
       return (
         <Modal
           onRequestClose={() => this.setState({ showEnvModal: false })}
-          width="665px"
-          height="342px"
+          width="765px"
+          height="542px"
         >
           <LoadEnvGroupModal
+            existingValues={this.props.values}
             namespace={this.props.externalValues?.namespace}
             clusterId={this.props.externalValues?.clusterId}
             closeModal={() => this.setState({ showEnvModal: false })}
-            setValues={(values: any) => {
-              this.props.setValues(values);
-              this.setState({ values: this.objectToValues(values) });
+            setValues={(values) => {
+              const newValues = { ...this.props.values, ...values };
+              this.props.setValues(newValues);
+              this.setState({ values: this.objectToValues(newValues) });
             }}
           />
         </Modal>

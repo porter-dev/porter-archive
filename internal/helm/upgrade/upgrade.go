@@ -1,8 +1,6 @@
 package upgrade
 
 import (
-	"fmt"
-
 	semver "github.com/Masterminds/semver/v3"
 	"sigs.k8s.io/yaml"
 )
@@ -55,8 +53,6 @@ func (u *UpgradeFile) GetUpgradeFileBetweenVersions(prev, target string) (*Upgra
 	resNotes := make([]*UpgradeNote, 0)
 
 	for _, note := range u.UpgradeNotes {
-		fmt.Println("ONE NOTE IS", note)
-
 		notePrevVersion, err := semver.NewVersion(note.PreviousVersion)
 
 		if err != nil {
@@ -68,8 +64,6 @@ func (u *UpgradeFile) GetUpgradeFileBetweenVersions(prev, target string) (*Upgra
 		if err != nil {
 			return nil, err
 		}
-
-		fmt.Println(prev, target, prevVersion.Compare(notePrevVersion), targetVersion.Compare(noteTargetVersion))
 
 		// check that the previous version is not smaller than the note previous version
 		if comp := prevVersion.Compare(notePrevVersion); comp != -1 {

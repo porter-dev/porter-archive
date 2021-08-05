@@ -8,6 +8,15 @@ import {
   StringInputFieldState,
 } from "../types";
 
+const clipOffUnit = (unit: string, x: string) => {
+  if (typeof x === "string" && unit) {
+    return unit === x.slice(x.length - unit.length, x.length)
+      ? x.slice(0, x.length - unit.length)
+      : x;
+  }
+  return x;
+};
+
 const Input: React.FC<InputField> = ({
   id,
   variable,
@@ -19,16 +28,6 @@ const Input: React.FC<InputField> = ({
   isReadOnly,
   value,
 }) => {
-  const clipOffUnit = (x: string) => {
-    let unit = settings?.unit;
-    if (typeof x === "string" && unit) {
-      return unit === x.slice(x.length - unit.length, x.length)
-        ? x.slice(0, x.length - unit.length)
-        : x;
-    }
-    return x;
-  };
-
   const {
     state,
     variables,
@@ -41,7 +40,9 @@ const Input: React.FC<InputField> = ({
         : settings?.default != undefined,
     },
     initVars: {
-      [variable]: value ? clipOffUnit(value[0]) : settings?.default,
+      [variable]: value
+        ? clipOffUnit(settings?.unit, value[0])
+        : settings?.default,
     },
   });
 
@@ -92,7 +93,11 @@ export const getFinalVariablesForStringInput: GetFinalVariablesFunction = (
   vars,
   props: InputField
 ) => {
-  const val = vars[props.variable] || props.settings?.default;
+  const val =
+    vars[props.variable] ||
+    (props.value
+      ? clipOffUnit(props.settings?.unit, props.value[0])
+      : props.settings?.default);
   return {
     [props.variable]:
       props.settings?.unit && !props.settings.omitUnitFromValue

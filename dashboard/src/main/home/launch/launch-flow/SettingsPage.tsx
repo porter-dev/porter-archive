@@ -156,6 +156,7 @@ class SettingsPage extends Component<PropsType, StateType> {
               !this.props.isAuthorized("namespace", "", ["get", "create"])
             }
             onSubmit={(val) => {
+              console.log(val);
               onSubmit(val);
             }}
           />

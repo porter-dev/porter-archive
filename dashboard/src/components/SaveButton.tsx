@@ -110,6 +110,8 @@ const StatusTextWrapper = styled.p`
   margin: 0;
 `;
 
+// TODO: prevent status re-render on form refresh to allow animation
+// animation: statusFloatIn 0.5s;
 const StatusWrapper = styled.div<{
   successful: boolean;
   position: "right" | "left";
@@ -136,7 +138,6 @@ const StatusWrapper = styled.div<{
     color: ${(props) => (props.successful ? "#4797ff" : "#fcba03")};
   }
 
-  animation: statusFloatIn 0.5s;
   animation-fill-mode: forwards;
 
   @keyframes statusFloatIn {

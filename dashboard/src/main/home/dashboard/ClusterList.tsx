@@ -232,7 +232,6 @@ const CodeBlock = styled.span`
   width: 90%;
   margin-left: 5%;
   margin-top: 20px;
-  overflow-x: hidden;
   overflow-y: auto;
   padding: 10px;
   overflow-wrap: break-word;
@@ -241,6 +240,7 @@ const CodeBlock = styled.span`
 const StyledClusterList = styled.div`
   margin-top: -17px;
   padding-left: 2px;
+  overflow: visible;
 `;
 
 const TitleContainer = styled.div`
@@ -282,7 +282,7 @@ const TemplateBlock = styled.div`
   border: 1px solid #ffffff00;
   align-items: center;
   user-select: none;
-  border-radius: 5px;
+  border-radius: 8px;
   display: flex;
   font-size: 13px;
   font-weight: 500;
@@ -295,7 +295,7 @@ const TemplateBlock = styled.div`
   color: #ffffff;
   position: relative;
   background: #26282f;
-  box-shadow: 0 5px 8px 0px #00000033;
+  box-shadow: 0 4px 15px 0px #00000055;
   :hover {
     background: #ffffff11;
   }
@@ -313,50 +313,13 @@ const TemplateBlock = styled.div`
 
 const TemplateList = styled.div`
   overflow-y: auto;
+  overflow: visible;
   margin-top: 32px;
   padding-bottom: 150px;
   display: grid;
   grid-column-gap: 25px;
   grid-row-gap: 25px;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-`;
-
-const Title = styled.div`
-  font-size: 20px;
-  font-weight: 500;
-  font-family: "Work Sans", sans-serif;
-  color: #ffffff;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-`;
-
-const TitleSection = styled.div`
-  margin-bottom: 20px;
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-
-  > a {
-    > i {
-      display: flex;
-      align-items: center;
-      margin-bottom: -2px;
-      font-size: 18px;
-      margin-left: 18px;
-      color: #858faaaa;
-      cursor: pointer;
-      :hover {
-        color: #aaaabb;
-      }
-    }
-  }
-`;
-
-const TemplatesWrapper = styled.div`
-  width: calc(90% - 150px);
-  min-width: 300px;
-  padding-top: 50px;
 `;
 
 const Url = styled.a`

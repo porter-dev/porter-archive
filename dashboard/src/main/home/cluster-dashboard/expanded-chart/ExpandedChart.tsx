@@ -28,7 +28,6 @@ import FormWrapper from "components/values-form/FormWrapper";
 import RevisionSection from "./RevisionSection";
 import ValuesYaml from "./ValuesYaml";
 import GraphSection from "./GraphSection";
-import UpgradeSection from "./upgrade/UpgradeSection"
 import MetricsSection from "./metrics/MetricsSection";
 import ListSection from "./ListSection";
 import StatusSection from "./status/StatusSection";
@@ -355,8 +354,6 @@ const ExpandedChart: React.FC<Props> = (props) => {
     let chart = currentChart;
 
     switch (currentTab) {
-      case "upgrade":
-        return <UpgradeSection currentChart={chart} />;
       case "metrics":
         return <MetricsSection currentChart={chart} />;
       case "status":
@@ -434,9 +431,6 @@ const ExpandedChart: React.FC<Props> = (props) => {
     if (props.isMetricsInstalled) {
       tabOptions.push({ label: "Metrics", value: "metrics" });
     }
-
-    // TODO: case if upgrade is available
-    tabOptions.push({ label: "Upgrade", value: "upgrade" });
 
     tabOptions.push({ label: "Chart Overview", value: "graph" });
 
@@ -657,7 +651,6 @@ const ExpandedChart: React.FC<Props> = (props) => {
         <BackButton onClick={props.closeChart}>
           <BackButtonImg src={backArrow} />
         </BackButton>
-
         <ConfirmOverlay
           show={showDeleteOverlay}
           message={`Are you sure you want to delete ${currentChart.name}?`}

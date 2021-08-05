@@ -726,30 +726,34 @@ const ExpandedChart: React.FC<Props> = (props) => {
               latestVersion={currentChart.latest_version}
               upgradeVersion={handleUpgradeVersion}
             />
-            <BodyWrapper>
-              <PorterFormWrapper
-                formData={currentChart.form}
-                valuesToOverride={{
-                  namespace: props.namespace,
-                  clusterId: currentCluster.id,
-                }}
-                renderTabContents={renderTabContents}
-                isReadOnly={
-                  imageIsPlaceholder ||
-                  !isAuthorized("application", "", ["get", "update"])
-                }
-                onSubmit={onSubmit}
-                rightTabOptions={rightTabOptions}
-                leftTabOptions={leftTabOptions}
-                color={isPreview ? "#f5cb42" : null}
-                addendum={
-                  <TabButton onClick={toggleDevOpsMode} devOpsMode={devOpsMode}>
-                    <i className="material-icons">offline_bolt</i> DevOps Mode
-                  </TabButton>
-                }
-                saveValuesStatus={saveValuesStatus}
-              />
-            </BodyWrapper>
+            {
+              leftTabOptions.length > 0 && (
+                <BodyWrapper>
+                  <PorterFormWrapper
+                    formData={currentChart.form}
+                    valuesToOverride={{
+                      namespace: props.namespace,
+                      clusterId: currentCluster.id,
+                    }}
+                    renderTabContents={renderTabContents}
+                    isReadOnly={
+                      imageIsPlaceholder ||
+                      !isAuthorized("application", "", ["get", "update"])
+                    }
+                    onSubmit={onSubmit}
+                    rightTabOptions={rightTabOptions}
+                    leftTabOptions={leftTabOptions}
+                    color={isPreview ? "#f5cb42" : null}
+                    addendum={
+                      <TabButton onClick={toggleDevOpsMode} devOpsMode={devOpsMode}>
+                        <i className="material-icons">offline_bolt</i> DevOps Mode
+                      </TabButton>
+                    }
+                    saveValuesStatus={saveValuesStatus}
+                  />
+                </BodyWrapper>
+              )
+            }
           </>
         )}
       </StyledExpandedChart>

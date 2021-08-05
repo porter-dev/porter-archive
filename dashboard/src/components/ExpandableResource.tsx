@@ -73,7 +73,7 @@ const Status = styled.div`
 `;
 
 const StatusSection = styled.div`
-  border-radius: 5px;
+  border-radius: 8px;
   background: #ffffff11;
   font-size: 13px;
   padding: 20px 20px 25px;

@@ -184,13 +184,14 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
       }
       i += 1;
     }
-    selectors.push(selector);
 
-    setIsLoading((prev) => prev + 1);
+    selectors.push(selector);
 
     if (selectors[0] === "") {
       return;
     }
+
+    setIsLoading((prev) => prev + 1);
 
     api
       .getMatchingPods(

@@ -392,30 +392,30 @@ class ExpandedEnvGroup extends Component<PropsType, StateType> {
             </LastDeployed>
           </InfoWrapper>
 
-          {
-            this.state.deleting ? (
-              <>
-                <LineBreak />
-                <Placeholder>
-                  <TextWrap>
-                    <Header>
-                      <Spinner src={loading} /> Deleting "{this.state.envGroup.name}"
-                    </Header>
-                    You will be automatically redirected after deletion is complete.
-                  </TextWrap>
-                </Placeholder>
-              </>
-            ) : (
-              <TabRegion
-                currentTab={this.state.currentTab}
-                setCurrentTab={(x: string) => this.setState({ currentTab: x })}
-                options={this.state.tabOptions}
-                color={null}
-              >
-                {this.renderTabContents()}
-              </TabRegion>
-            )
-          }
+          {this.state.deleting ? (
+            <>
+              <LineBreak />
+              <Placeholder>
+                <TextWrap>
+                  <Header>
+                    <Spinner src={loading} /> Deleting "
+                    {this.state.envGroup.name}"
+                  </Header>
+                  You will be automatically redirected after deletion is
+                  complete.
+                </TextWrap>
+              </Placeholder>
+            </>
+          ) : (
+            <TabRegion
+              currentTab={this.state.currentTab}
+              setCurrentTab={(x: string) => this.setState({ currentTab: x })}
+              options={this.state.tabOptions}
+              color={null}
+            >
+              {this.renderTabContents()}
+            </TabRegion>
+          )}
         </StyledExpandedChart>
       </>
     );

@@ -42,12 +42,6 @@ func (u *UpgradeFile) GetUpgradeFileBetweenVersions(prev, target string) (*Upgra
 		return nil, err
 	}
 
-	// targetVersion, err := semver.NewVersion(target)
-
-	// if err != nil {
-	// 	return nil, err
-	// }
-
 	// for each upgrade note, determine if it's geq than the previous version, leq the target
 	// version
 	resNotes := make([]*UpgradeNote, 0)

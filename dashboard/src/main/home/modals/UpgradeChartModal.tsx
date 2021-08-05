@@ -44,7 +44,7 @@ export default class UpgradeChartModal extends Component<PropsType, StateType> {
       version: this.props.currentChart.latest_version,
     })
     .then((res) => {
-      if (res.data.upgrade_notes.length == 0) {
+      if (!res.data.upgrade_notes || res.data.upgrade_notes.length == 0) {
         this.setState({ notes: `
 ## Version ${this.props.currentChart.chart.metadata.version} -> ${this.props.currentChart.latest_version}
 No upgrade notes available. This update should be backwards-compatible. 

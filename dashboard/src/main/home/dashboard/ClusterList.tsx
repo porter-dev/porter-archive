@@ -8,7 +8,7 @@ import {
   DetailedClusterType,
   DetailedIngressError,
 } from "shared/types";
-import Helper from "components/values-form/Helper";
+import Helper from "components/form-components/Helper";
 import { pushFiltered } from "shared/routing";
 
 import { RouteComponentProps, withRouter } from "react-router";

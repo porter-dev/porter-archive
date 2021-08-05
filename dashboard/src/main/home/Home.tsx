@@ -485,7 +485,13 @@ class Home extends Component<PropsType, StateType> {
   };
 
   render() {
-    let { currentModal, setCurrentModal, currentProject } = this.context;
+    let { 
+      currentModal, 
+      setCurrentModal, 
+      currentProject,
+      currentOverlay,
+      setCurrentOverlay,
+    } = this.context;
 
     return (
       <StyledHome>
@@ -572,6 +578,17 @@ class Home extends Component<PropsType, StateType> {
           </Modal>
         )}
 
+        {
+          currentOverlay && (
+            <ConfirmOverlay
+              show={true}
+              message={currentOverlay.message}
+              onYes={currentOverlay.onYes}
+              onNo={currentOverlay.onNo}
+            />
+          )
+        }
+
         {this.renderSidebar()}
 
         <ViewWrapper>
@@ -614,7 +631,7 @@ const ViewWrapper = styled.div`
 `;
 
 const DashboardWrapper = styled.div`
-  width: 83%;
+  width: calc(85%);
   min-width: 300px;
 `;
 

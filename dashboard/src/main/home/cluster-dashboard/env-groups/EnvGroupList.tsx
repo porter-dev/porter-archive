@@ -144,7 +144,7 @@ const Placeholder = styled.div`
   color: #ffffff44;
   background: #26282f;
   border-radius: 5px;
-  height: 320px;
+  height: 370px;
   display: flex;
   align-items: center;
   justify-content: center;

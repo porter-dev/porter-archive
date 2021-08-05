@@ -13,8 +13,8 @@ import { Context } from "shared/Context";
 
 import ImageSelector from "components/image-selector/ImageSelector";
 import SaveButton from "components/SaveButton";
-import Heading from "components/values-form/Heading";
-import Helper from "components/values-form/Helper";
+import Heading from "components/form-components/Heading";
+import Helper from "components/form-components/Helper";
 import _ from "lodash";
 import CopyToClipboard from "components/CopyToClipboard";
 import useAuth from "shared/auth/useAuth";
@@ -379,9 +379,9 @@ const StyledSettingsSection = styled.div<{ showSource: boolean }>`
   width: 100%;
   background: #ffffff11;
   padding: 0 35px;
-  padding-bottom: 50px;
+  padding-bottom: 15px;
   position: relative;
-  border-radius: 5px;
+  border-radius: 8px;
   overflow: auto;
   height: ${(props) => (props.showSource ? "calc(100% - 55px)" : "100%")};
 `;

@@ -111,7 +111,7 @@ ValuesYaml.contextType = Context;
 const Wrapper = styled.div`
   overflow: auto;
   height: calc(100% - 60px);
-  border-radius: 10px;
+  border-radius: 8px;
   border: 1px solid #ffffff33;
 `;
 
@@ -119,11 +119,11 @@ const StyledValuesYaml = styled.div`
   display: flex;
   flex-direction: column;
   width: 100%;
-  min-height: 450px;
+  min-height: 400px;
   height: 50vh;
   font-size: 13px;
   overflow: hidden;
-  border-radius: 10px;
+  border-radius: 8px;
   animation: floatIn 0.3s;
   animation-timing-function: ease-out;
   animation-fill-mode: forwards;

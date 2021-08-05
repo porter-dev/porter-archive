@@ -4,6 +4,7 @@ import close from "assets/close.png";
 import backArrow from "assets/back_arrow.png";
 import key from "assets/key.svg";
 import _ from "lodash";
+import loading from "assets/loading.gif";
 
 import { ChartType, StorageType, ClusterType } from "shared/types";
 import { Context } from "shared/Context";
@@ -12,13 +13,12 @@ import api from "shared/api";
 
 import TitleSection from "components/TitleSection";
 import SaveButton from "components/SaveButton";
-import ConfirmOverlay from "components/ConfirmOverlay";
 import Loading from "components/Loading";
 import TabRegion from "components/TabRegion";
 import EnvGroupArray, { KeyValueType } from "./EnvGroupArray";
-import Heading from "components/values-form/Heading";
-import Helper from "components/values-form/Helper";
-import InputRow from "components/values-form/InputRow";
+import Heading from "components/form-components/Heading";
+import Helper from "components/form-components/Helper";
+import InputRow from "components/form-components/InputRow";
 import { withAuth, WithAuthProps } from "shared/auth/AuthorizationHoc";
 
 type PropsType = WithAuthProps & {
@@ -31,7 +31,6 @@ type PropsType = WithAuthProps & {
 type StateType = {
   loading: boolean;
   currentTab: string | null;
-  showDeleteOverlay: boolean;
   deleting: boolean;
   saveValuesStatus: string | null;
   envGroup: EnvGroup;
@@ -54,7 +53,6 @@ class ExpandedEnvGroup extends Component<PropsType, StateType> {
   state = {
     loading: true,
     currentTab: "environment",
-    showDeleteOverlay: false,
     deleting: false,
     saveValuesStatus: null as string | null,
     envGroup: {
@@ -303,6 +301,9 @@ class ExpandedEnvGroup extends Component<PropsType, StateType> {
                 >
                   Rename {name}
                 </Button>
+
+                <DarkMatter />
+
                 <Heading>Manage Environment Group</Heading>
                 <Helper>
                   Permanently delete this set of environment variables. This
@@ -310,7 +311,13 @@ class ExpandedEnvGroup extends Component<PropsType, StateType> {
                 </Helper>
                 <Button
                   color="#b91133"
-                  onClick={() => this.setState({ showDeleteOverlay: true })}
+                  onClick={() => {
+                    this.context.setCurrentOverlay({
+                      message: `Are you sure you want to delete ${this.state.envGroup.name}?`,
+                      onYes: this.handleDeleteEnvGroup,
+                      onNo: () => this.context.setCurrentOverlay(null),
+                    });
+                  }}
                 >
                   Delete {name}
                 </Button>
@@ -338,6 +345,7 @@ class ExpandedEnvGroup extends Component<PropsType, StateType> {
     } = this.state;
 
     this.setState({ deleting: true });
+    this.context.setCurrentOverlay(null);
     api
       .deleteConfigMap(
         "<token>",
@@ -353,18 +361,8 @@ class ExpandedEnvGroup extends Component<PropsType, StateType> {
         this.setState({ deleting: false });
       })
       .catch((err) => {
-        this.setState({ deleting: false, showDeleteOverlay: false });
+        this.setState({ deleting: false });
       });
-  };
-
-  renderDeleteOverlay = () => {
-    if (this.state.deleting) {
-      return (
-        <DeleteOverlay>
-          <Loading />
-        </DeleteOverlay>
-      );
-    }
   };
 
   render() {
@@ -376,24 +374,17 @@ class ExpandedEnvGroup extends Component<PropsType, StateType> {
     return (
       <>
         <StyledExpandedChart>
-          <BackButton onClick={closeExpanded}>
-            <BackButtonImg src={backArrow} />
-          </BackButton>
-
-          <ConfirmOverlay
-            show={this.state.showDeleteOverlay}
-            message={`Are you sure you want to delete ${name}?`}
-            onYes={this.handleDeleteEnvGroup}
-            onNo={() => this.setState({ showDeleteOverlay: false })}
-          />
-          {this.renderDeleteOverlay()}
-
-          <TitleSection icon={key} iconWidth="33px">
-            {name}
-            <TagWrapper>
-              Namespace <NamespaceTag>{namespace}</NamespaceTag>
-            </TagWrapper>
-          </TitleSection>
+          <HeaderWrapper>
+            <BackButton onClick={closeExpanded}>
+              <BackButtonImg src={backArrow} />
+            </BackButton>
+            <TitleSection icon={key} iconWidth="33px">
+              {name}
+              <TagWrapper>
+                Namespace <NamespaceTag>{namespace}</NamespaceTag>
+              </TagWrapper>
+            </TitleSection>
+          </HeaderWrapper>
 
           <InfoWrapper>
             <LastDeployed>
@@ -401,14 +392,30 @@ class ExpandedEnvGroup extends Component<PropsType, StateType> {
             </LastDeployed>
           </InfoWrapper>
 
-          <TabRegion
-            currentTab={this.state.currentTab}
-            setCurrentTab={(x: string) => this.setState({ currentTab: x })}
-            options={this.state.tabOptions}
-            color={null}
-          >
-            {this.renderTabContents()}
-          </TabRegion>
+          {
+            this.state.deleting ? (
+              <>
+                <LineBreak />
+                <Placeholder>
+                  <TextWrap>
+                    <Header>
+                      <Spinner src={loading} /> Deleting "{this.state.envGroup.name}"
+                    </Header>
+                    You will be automatically redirected after deletion is complete.
+                  </TextWrap>
+                </Placeholder>
+              </>
+            ) : (
+              <TabRegion
+                currentTab={this.state.currentTab}
+                setCurrentTab={(x: string) => this.setState({ currentTab: x })}
+                options={this.state.tabOptions}
+                color={null}
+              >
+                {this.renderTabContents()}
+              </TabRegion>
+            )
+          }
         </StyledExpandedChart>
       </>
     );
@@ -418,6 +425,46 @@ class ExpandedEnvGroup extends Component<PropsType, StateType> {
 ExpandedEnvGroup.contextType = Context;
 
 export default withAuth(ExpandedEnvGroup);
+
+const Header = styled.div`
+  font-weight: 500;
+  color: #aaaabb;
+  font-size: 16px;
+  margin-bottom: 15px;
+`;
+
+const Placeholder = styled.div`
+  min-height: 400px;
+  height: 50vh;
+  padding: 30px;
+  padding-bottom: 90px;
+  font-size: 13px;
+  color: #ffffff44;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+`;
+
+const Spinner = styled.img`
+  width: 15px;
+  height: 15px;
+  margin-right: 12px;
+  margin-bottom: -2px;
+`;
+
+const TextWrap = styled.div``;
+
+const LineBreak = styled.div`
+  width: calc(100% - 0px);
+  height: 2px;
+  background: #ffffff20;
+  margin: 15px 0px 55px;
+`;
+
+const HeaderWrapper = styled.div`
+  position: relative;
+`;
 
 const BackButton = styled.div`
   position: absolute;
@@ -476,9 +523,9 @@ const InnerWrapper = styled.div<{ full?: boolean }>`
   height: ${(props) => (props.full ? "100%" : "calc(100% - 65px)")};
   background: #ffffff11;
   padding: 0 35px;
-  padding-bottom: 50px;
+  padding-bottom: 15px;
   position: relative;
-  border-radius: 5px;
+  border-radius: 8px;
   overflow: auto;
 `;
 
@@ -487,38 +534,6 @@ const TabWrapper = styled.div`
   width: 100%;
   padding-bottom: 65px;
   overflow: hidden;
-`;
-
-const DeleteOverlay = styled.div`
-  position: absolute;
-  top: 0px;
-  opacity: 100%;
-  left: 0px;
-  width: 100%;
-  height: 100%;
-  z-index: 999;
-  display: flex;
-  padding-bottom: 30px;
-  align-items: center;
-  justify-content: center;
-  font-family: "Work Sans", sans-serif;
-  font-size: 18px;
-  font-weight: 500;
-  color: white;
-  flex-direction: column;
-  background: rgb(0, 0, 0, 0.73);
-  opacity: 0;
-  animation: lindEnter 0.2s;
-  animation-fill-mode: forwards;
-
-  @keyframes lindEnter {
-    from {
-      opacity: 0;
-    }
-    to {
-      opacity: 1;
-    }
-  }
 `;
 
 const InfoWrapper = styled.div`
@@ -572,7 +587,6 @@ const NamespaceTag = styled.div`
 const StyledExpandedChart = styled.div`
   width: 100%;
   z-index: 0;
-  position: relative;
   animation: fadeIn 0.3s;
   animation-timing-function: ease-out;
   animation-fill-mode: forwards;

@@ -147,7 +147,7 @@ const StyledPageNotFound = styled.div`
   color: #6f6f6f;
   font-size: 16px;
   user-select: none;
-  padding-bottom: 20px;
+  margin-top: -80px;
   width: 100%;
   height: 100%;
   display: flex;

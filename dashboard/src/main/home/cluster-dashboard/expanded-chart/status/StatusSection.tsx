@@ -154,11 +154,11 @@ const StyledStatusSection = styled.div`
   user-select: text;
   overflow: hidden;
   width: 100%;
-  min-height: 450px;
+  min-height: 400px;
   height: 50vh;
   font-size: 13px;
   overflow: hidden;
-  border-radius: 10px;
+  border-radius: 8px;
   animation: floatIn 0.3s;
   animation-timing-function: ease-out;
   animation-fill-mode: forwards;

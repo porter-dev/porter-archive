@@ -11,7 +11,6 @@ import { Context } from "shared/Context";
 import api from "shared/api";
 
 import SaveButton from "components/SaveButton";
-import ConfirmOverlay from "components/ConfirmOverlay";
 import Loading from "components/Loading";
 import TitleSection from "components/TitleSection";
 import JobList from "./jobs/JobList";
@@ -39,7 +38,6 @@ type StateType = {
   tabContents: any;
   currentTab: string | null;
   websockets: Record<string, any>;
-  showDeleteOverlay: boolean;
   deleting: boolean;
   saveValuesStatus: string | null;
   formData: any;
@@ -57,7 +55,6 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
     tabContents: [] as any,
     currentTab: null as string | null,
     websockets: {} as Record<string, any>,
-    showDeleteOverlay: false,
     deleting: false,
     saveValuesStatus: null as string | null,
     formData: {} as any,
@@ -474,9 +471,18 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
               showSource={true}
               currentChart={this.state.currentChart}
               refreshChart={() => this.refreshChart(0)}
-              setShowDeleteOverlay={(x: boolean) =>
-                this.setState({ showDeleteOverlay: x })
-              }
+              setShowDeleteOverlay={(x: boolean) => {
+                let { setCurrentOverlay } = this.context;
+                if (x) {
+                  setCurrentOverlay({
+                    message: `Are you sure you want to delete ${this.state.currentChart.name}?`,
+                    onYes: this.handleUninstallChart,
+                    onNo: () => setCurrentOverlay(null),
+                  });
+                } else {
+                  setCurrentOverlay(null);
+                }
+              }}
               saveButtonText="Save Config"
             />
           )
@@ -528,9 +534,10 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
   }
 
   handleUninstallChart = () => {
-    let { currentProject, currentCluster } = this.context;
+    let { currentProject, currentCluster, setCurrentOverlay } = this.context;
     let { currentChart } = this.state;
     this.setState({ deleting: true });
+    setCurrentOverlay(null);
     api
       .uninstallTemplate(
         "<token>",
@@ -544,20 +551,9 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
         }
       )
       .then((res) => {
-        this.setState({ showDeleteOverlay: false });
         this.props.closeChart();
       })
       .catch(console.log);
-  };
-
-  renderDeleteOverlay = () => {
-    if (this.state.deleting) {
-      return (
-        <DeleteOverlay>
-          <Loading />
-        </DeleteOverlay>
-      );
-    }
   };
 
   render() {
@@ -568,14 +564,6 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
     return (
       <>
         <StyledExpandedChart>
-          <ConfirmOverlay
-            show={this.state.showDeleteOverlay}
-            message={`Are you sure you want to delete ${currentChart.name}?`}
-            onYes={this.handleUninstallChart}
-            onNo={() => this.setState({ showDeleteOverlay: false })}
-          />
-          {this.renderDeleteOverlay()}
-
           <HeaderWrapper>
             <BackButton onClick={closeChart}>
               <BackButtonImg src={backArrow} />
@@ -599,31 +587,48 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
             </InfoWrapper>
           </HeaderWrapper>
 
-          <BodyWrapper>
-            {(this.state.leftTabOptions?.length > 0 ||
-              this.state.formData.tabs?.length > 0 ||
-              this.state.rightTabOptions?.length > 0) && (
-              <PorterFormWrapper
-                formData={this.state.formData}
-                valuesToOverride={{
-                  namespace: chart.namespace,
-                  clusterId: this.props.currentCluster.id,
-                }}
-                renderTabContents={this.renderTabContents}
-                isReadOnly={
-                  this.state.imageIsPlaceholder ||
-                  !this.props.isAuthorized("job", "", ["get", "update"])
-                }
-                onSubmit={(formValues) =>
-                  this.handleSaveValues(formValues, false)
-                }
-                leftTabOptions={this.state.leftTabOptions}
-                rightTabOptions={this.state.rightTabOptions}
-                saveValuesStatus={this.state.saveValuesStatus}
-                saveButtonText="Save Config"
-              />
-            )}
-          </BodyWrapper>
+          {
+            this.state.deleting ? (
+              <>
+                <LineBreak />
+                <Placeholder>
+                  <TextWrap>
+                    <Header>
+                      <Spinner src={loading} /> Deleting "{currentChart.name}"
+                    </Header>
+                    You will be automatically redirected after deletion is complete.
+                  </TextWrap>
+                </Placeholder>
+              </>
+            ) : (
+              <BodyWrapper>
+                {(this.state.leftTabOptions?.length > 0 ||
+                  this.state.formData.tabs?.length > 0 ||
+                  this.state.rightTabOptions?.length > 0) && (
+                  <PorterFormWrapper
+                    formData={this.state.formData}
+                    valuesToOverride={{
+                      namespace: chart.namespace,
+                      clusterId: this.props.currentCluster.id,
+                    }}
+                    renderTabContents={this.renderTabContents}
+                    isReadOnly={
+                      this.state.imageIsPlaceholder ||
+                      !this.props.isAuthorized("job", "", ["get", "update"])
+                    }
+                    onSubmit={(formValues) => {
+                      console.log(formValues)
+                      this.handleSaveValues(formValues, false)
+                    }}
+                    leftTabOptions={this.state.leftTabOptions}
+                    rightTabOptions={this.state.rightTabOptions}
+                    saveValuesStatus={this.state.saveValuesStatus}
+                    saveButtonText="Save Config"
+                  />
+                )}
+              </BodyWrapper>
+            )
+          }
         </StyledExpandedChart>
       </>
     );
@@ -633,6 +638,13 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
 ExpandedJobChart.contextType = Context;
 
 export default withAuth(ExpandedJobChart);
+
+const LineBreak = styled.div`
+  width: calc(100% - 0px);
+  height: 2px;
+  background: #ffffff20;
+  margin: 15px 0px 55px;
+`;
 
 const ButtonWrapper = styled.div`
   margin: 5px 0 35px;
@@ -704,38 +716,6 @@ const TabWrapper = styled.div`
   width: 100%;
   padding-bottom: 47px;
   overflow: hidden;
-`;
-
-const DeleteOverlay = styled.div`
-  position: absolute;
-  top: 0px;
-  opacity: 100%;
-  left: 0px;
-  width: 100%;
-  height: 100%;
-  z-index: 999;
-  display: flex;
-  padding-bottom: 30px;
-  align-items: center;
-  justify-content: center;
-  font-family: "Work Sans", sans-serif;
-  font-size: 18px;
-  font-weight: 500;
-  color: white;
-  flex-direction: column;
-  background: rgb(0, 0, 0, 0.73);
-  opacity: 0;
-  animation: lindEnter 0.2s;
-  animation-fill-mode: forwards;
-
-  @keyframes lindEnter {
-    from {
-      opacity: 0;
-    }
-    to {
-      opacity: 1;
-    }
-  }
 `;
 
 const HeaderWrapper = styled.div`

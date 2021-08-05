@@ -21,7 +21,6 @@ import {
 import { Context } from "shared/Context";
 import api from "shared/api";
 
-import ConfirmOverlay from "components/ConfirmOverlay";
 import Loading from "components/Loading";
 import StatusIndicator from "components/StatusIndicator";
 import PorterFormWrapper from "components/porter-form/PorterFormWrapper";
@@ -94,7 +93,6 @@ const ExpandedChart: React.FC<Props> = (props) => {
     currentCluster, 
     currentProject, 
     setCurrentError,
-    currentOverlay,
     setCurrentOverlay,
   } = useContext(Context);
 
@@ -440,10 +438,10 @@ const ExpandedChart: React.FC<Props> = (props) => {
     // Collate non-form tabs
     let rightTabOptions = [] as any[];
     let leftTabOptions = [] as any[];
-    rightTabOptions.push({ label: "Status", value: "status" });
+    leftTabOptions.push({ label: "Status", value: "status" });
 
     if (props.isMetricsInstalled) {
-      rightTabOptions.push({ label: "Metrics", value: "metrics" });
+      leftTabOptions.push({ label: "Metrics", value: "metrics" });
     }
 
     rightTabOptions.push({ label: "Chart Overview", value: "graph" });
@@ -470,9 +468,9 @@ const ExpandedChart: React.FC<Props> = (props) => {
         (tab: any) => !liveTabs.includes(tab.value)
       );
     }
-
-    setRightTabOptions(rightTabOptions);
+    
     setLeftTabOptions(leftTabOptions);
+    setRightTabOptions(rightTabOptions);
   };
 
   const setRevision = (chart: ChartType, isCurrent?: boolean) => {
@@ -573,6 +571,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
   };
 
   const handleUninstallChart = async () => {
+    setDeleting(true);
     setCurrentOverlay(null);
     try {
       await api.uninstallTemplate(
@@ -665,11 +664,6 @@ const ExpandedChart: React.FC<Props> = (props) => {
   return (
     <>
       <StyledExpandedChart>
-      {deleting && (
-        <DeleteOverlay>
-          <Loading />
-        </DeleteOverlay>
-      )}
         <HeaderWrapper>
           <BackButton onClick={props.closeChart}>
             <BackButtonImg src={backArrow} />
@@ -699,48 +693,66 @@ const ExpandedChart: React.FC<Props> = (props) => {
             </LastDeployed>
           </InfoWrapper>
         </HeaderWrapper>
-        <RevisionSection
-          showRevisions={showRevisions}
-          toggleShowRevisions={() => {
-            setShowRevisions(!showRevisions);
-          }}
-          chart={currentChart}
-          refreshChart={() => getChartData(currentChart)}
-          setRevision={setRevision}
-          forceRefreshRevisions={forceRefreshRevisions}
-          refreshRevisionsOff={() => setForceRefreshRevisions(false)}
-          status={chartStatus}
-          shouldUpdate={
-            currentChart.latest_version &&
-            currentChart.latest_version !== currentChart.chart.metadata.version
-          }
-          latestVersion={currentChart.latest_version}
-          upgradeVersion={handleUpgradeVersion}
-        />
-        <BodyWrapper>
-          <PorterFormWrapper
-            formData={currentChart.form}
-            valuesToOverride={{
-              namespace: props.namespace,
-              clusterId: currentCluster.id,
-            }}
-            renderTabContents={renderTabContents}
-            isReadOnly={
-              imageIsPlaceholder ||
-              !isAuthorized("application", "", ["get", "update"])
-            }
-            onSubmit={onSubmit}
-            rightTabOptions={rightTabOptions}
-            leftTabOptions={leftTabOptions}
-            color={isPreview ? "#f5cb42" : null}
-            addendum={
-              <TabButton onClick={toggleDevOpsMode} devOpsMode={devOpsMode}>
-                <i className="material-icons">offline_bolt</i> DevOps Mode
-              </TabButton>
-            }
-            saveValuesStatus={saveValuesStatus}
-          />
-        </BodyWrapper>
+        {
+          deleting ? (
+            <>
+              <LineBreak />
+              <Placeholder>
+                <TextWrap>
+                  <Header>
+                    <Spinner src={loadingSrc} /> Deleting "{currentChart.name}"
+                  </Header>
+                  You will be automatically redirected after deletion is complete.
+                </TextWrap>
+              </Placeholder>
+            </>
+          ) : (
+            <>
+              <RevisionSection
+                showRevisions={showRevisions}
+                toggleShowRevisions={() => {
+                  setShowRevisions(!showRevisions);
+                }}
+                chart={currentChart}
+                refreshChart={() => getChartData(currentChart)}
+                setRevision={setRevision}
+                forceRefreshRevisions={forceRefreshRevisions}
+                refreshRevisionsOff={() => setForceRefreshRevisions(false)}
+                status={chartStatus}
+                shouldUpdate={
+                  currentChart.latest_version &&
+                  currentChart.latest_version !== currentChart.chart.metadata.version
+                }
+                latestVersion={currentChart.latest_version}
+                upgradeVersion={handleUpgradeVersion}
+              />
+              <BodyWrapper>
+                <PorterFormWrapper
+                  formData={currentChart.form}
+                  valuesToOverride={{
+                    namespace: props.namespace,
+                    clusterId: currentCluster.id,
+                  }}
+                  renderTabContents={renderTabContents}
+                  isReadOnly={
+                    imageIsPlaceholder ||
+                    !isAuthorized("application", "", ["get", "update"])
+                  }
+                  onSubmit={onSubmit}
+                  rightTabOptions={rightTabOptions}
+                  leftTabOptions={leftTabOptions}
+                  color={isPreview ? "#f5cb42" : null}
+                  addendum={
+                    <TabButton onClick={toggleDevOpsMode} devOpsMode={devOpsMode}>
+                      <i className="material-icons">offline_bolt</i> DevOps Mode
+                    </TabButton>
+                  }
+                  saveValuesStatus={saveValuesStatus}
+                />
+              </BodyWrapper>
+            </>
+          )
+        }
       </StyledExpandedChart>
     </>
   );
@@ -749,6 +761,13 @@ const ExpandedChart: React.FC<Props> = (props) => {
 export default ExpandedChart;
 
 const TextWrap = styled.div``;
+
+const LineBreak = styled.div`
+  width: calc(100% - 0px);
+  height: 2px;
+  background: #ffffff20;
+  margin: 35px 0px;
+`;
 
 const BodyWrapper = styled.div`
   position: relative;
@@ -810,38 +829,6 @@ const Spinner = styled.img`
   margin-bottom: -2px;
 `;
 
-const DeleteOverlay = styled.div`
-  position: absolute;
-  top: 0px;
-  opacity: 100%;
-  left: 0px;
-  width: 100%;
-  height: 100%;
-  z-index: 999;
-  display: flex;
-  padding-bottom: 30px;
-  align-items: center;
-  justify-content: center;
-  font-family: "Work Sans", sans-serif;
-  font-size: 18px;
-  font-weight: 500;
-  color: white;
-  flex-direction: column;
-  background: rgb(0, 0, 0, 0.73);
-  opacity: 0;
-  animation: lindEnter 0.2s;
-  animation-fill-mode: forwards;
-
-  @keyframes lindEnter {
-    from {
-      opacity: 0;
-    }
-    to {
-      opacity: 1;
-    }
-  }
-`;
-
 const Bolded = styled.div`
   font-weight: 500;
   color: #ffffff44;
@@ -869,7 +856,7 @@ const TabButton = styled.div`
   position: absolute;
   right: 0px;
   height: 30px;
-  background: linear-gradient(to right, #26282f00, #26282f 20%);
+  background: linear-gradient(to right, #20222700, #202227 20%);
   padding-left: 30px;
   display: flex;
   align-items: center;

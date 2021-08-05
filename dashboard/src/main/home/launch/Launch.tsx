@@ -361,7 +361,7 @@ const TemplateBlock = styled.div`
   border: 1px solid #ffffff00;
   align-items: center;
   user-select: none;
-  border-radius: 5px;
+  border-radius: 8px;
   display: flex;
   font-size: 13px;
   font-weight: 500;
@@ -374,7 +374,7 @@ const TemplateBlock = styled.div`
   color: #ffffff;
   position: relative;
   background: #26282f;
-  box-shadow: 0 5px 8px 0px #00000033;
+  box-shadow: 0 4px 15px 0px #00000044;
   :hover {
     background: #ffffff11;
   }
@@ -391,7 +391,7 @@ const TemplateBlock = styled.div`
 `;
 
 const TemplateList = styled.div`
-  overflow-y: auto;
+  overflow: visible;
   margin-top: 35px;
   padding-bottom: 150px;
   display: grid;
@@ -402,5 +402,6 @@ const TemplateList = styled.div`
 
 const TemplatesWrapper = styled.div`
   width: calc(85%);
+  overflow: visible;
   min-width: 300px;
 `;

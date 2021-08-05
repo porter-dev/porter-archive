@@ -22,14 +22,12 @@ const Input: React.FC<InputField> = ({
   const clipOffUnit = (x: string) => {
     let unit = settings?.unit;
     if (typeof x === "string" && unit) {
-      return unit === x.slice(x.length - unit.length, x.length) ? (
-        x.slice(0, x.length - unit.length)
-      ) : (
-        x
-      );
+      return unit === x.slice(x.length - unit.length, x.length)
+        ? x.slice(0, x.length - unit.length)
+        : x;
     }
     return x;
-  }
+  };
 
   const {
     state,

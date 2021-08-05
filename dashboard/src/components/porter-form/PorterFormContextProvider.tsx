@@ -310,7 +310,7 @@ export const PorterFormContextProvider: React.FC<Props> = (props) => {
             return;
           // fields that have defaults can't be required since we can always
           // compute their value
-          if (field.required && !field.settings?.default) {
+          if (field.required && !field.settings?.default && !field.value) {
             requiredIds.push(field.id);
           }
           if (!mapping[field.variable]) {

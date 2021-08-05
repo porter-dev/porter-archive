@@ -27,6 +27,6 @@ export default ResourceList;
 const ResourceListWrapper = styled.div`
   margin-bottom: 15px;
   margin-top: 20px;
-  border-radius: 5px;
+  border-radius: 8px;
   overflow: hidden;
 `;

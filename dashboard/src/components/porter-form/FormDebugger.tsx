@@ -185,7 +185,7 @@ const TabWrapper = styled.div`
   background: #ffffff11;
   height: 200px;
   width: 100%;
-  border-radius: 5px;
+  border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;

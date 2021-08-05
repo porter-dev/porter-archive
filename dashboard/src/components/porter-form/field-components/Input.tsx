@@ -19,6 +19,18 @@ const Input: React.FC<InputField> = ({
   isReadOnly,
   value,
 }) => {
+  const clipOffUnit = (x: string) => {
+    let unit = settings?.unit;
+    if (typeof x === "string" && unit) {
+      return unit === x.slice(x.length - unit.length, x.length) ? (
+        x.slice(0, x.length - unit.length)
+      ) : (
+        x
+      );
+    }
+    return x;
+  }
+
   const {
     state,
     variables,
@@ -31,7 +43,7 @@ const Input: React.FC<InputField> = ({
         : settings?.default != undefined,
     },
     initVars: {
-      [variable]: value ? value[0] : settings?.default,
+      [variable]: value ? clipOffUnit(value[0]) : settings?.default,
     },
   });
 

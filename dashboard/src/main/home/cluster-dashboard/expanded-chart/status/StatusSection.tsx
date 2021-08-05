@@ -158,7 +158,7 @@ const StyledStatusSection = styled.div`
   height: 50vh;
   font-size: 13px;
   overflow: hidden;
-  border-radius: 10px;
+  border-radius: 8px;
   animation: floatIn 0.3s;
   animation-timing-function: ease-out;
   animation-fill-mode: forwards;

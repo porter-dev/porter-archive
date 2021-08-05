@@ -50,7 +50,9 @@ const PorterFormWrapper: React.FunctionComponent<PropsType> = ({
     } else if (formData?.tabs?.length > 0) {
       let includedTabs = formData.tabs;
       if (isLaunch) {
-        includedTabs = formData.tabs.filter((tab: any) => !tab?.settings?.omitFromLaunch);
+        includedTabs = formData.tabs.filter(
+          (tab: any) => !tab?.settings?.omitFromLaunch
+        );
       }
       return includedTabs[0].name;
     } else if (rightTabOptions?.length > 0) {

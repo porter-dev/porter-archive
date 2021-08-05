@@ -83,7 +83,9 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
           (option) => option.value === "hpa_replicas"
         );
         const options = [...prev];
-        options.splice(hpaReplicasOptionIndex, 1);
+        if (hpaReplicasOptionIndex > -1) {
+          options.splice(hpaReplicasOptionIndex, 1);
+        }
         return [...options];
       });
     }
@@ -124,7 +126,6 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
         })
         .catch((err) => {
           setCurrentError(JSON.stringify(err));
-          setControllerOptions([]);
         })
         .finally(() => {
           setIsLoading((prev) => prev - 1);
@@ -313,7 +314,7 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
       );
 
       setHpaData([]);
-      const isHpaEnabled = currentChart.config.autoscaling.enabled;
+      const isHpaEnabled = currentChart?.config?.autoscaling?.enabled;
       if (shouldsum && isHpaEnabled) {
         if (selectedMetric === "cpu") {
           await getAutoscalingThreshold(
@@ -493,7 +494,7 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
           {currentChart?.config?.autoscaling?.enabled &&
             ["cpu", "memory"].includes(selectedMetric) && (
               <CheckboxRow
-                toggle={() => setHpaEnabled((prev) => !prev)}
+                toggle={() => setHpaEnabled((prev: any) => !prev)}
                 checked={hpaEnabled}
                 label="Show Autoscaling Threshold"
               />

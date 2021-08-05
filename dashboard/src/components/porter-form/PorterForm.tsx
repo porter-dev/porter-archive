@@ -223,7 +223,7 @@ const StyledPorterForm = styled.div<{ showSave?: boolean }>`
   color: #ffffff;
   padding: 0px 35px 25px;
   position: relative;
-  border-radius: 5px;
+  border-radius: 8px;
   font-size: 13px;
   overflow: auto;
 `;

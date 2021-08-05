@@ -93,7 +93,7 @@ class ExpandedChartWrapper extends Component<PropsType, StateType> {
     let { baseRoute, namespace } = match.params as any;
     let { loading, currentChart } = this.state;
     if (loading) {
-      return <Loading />;
+      return <LoadingWrapper><Loading /></LoadingWrapper>;
     } else if (currentChart && baseRoute === "jobs") {
       return (
         <ExpandedJobChart
@@ -134,10 +134,8 @@ ExpandedChartWrapper.contextType = Context;
 
 export default withRouter(ExpandedChartWrapper);
 
-const NotFoundPlaceholder = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: center;
+const LoadingWrapper = styled.div`
   width: 100%;
   height: 100%;
+  margin-top: -50px;
 `;

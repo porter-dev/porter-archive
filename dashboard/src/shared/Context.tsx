@@ -26,9 +26,9 @@ export interface GlobalContextType {
   currentModalData: any;
   setCurrentModal: (currentModal: string, currentModalData?: any) => void;
   currentOverlay: {
-    message: string,
-    onYes: any,
-    onNo: any,
+    message: string;
+    onYes: any;
+    onNo: any;
   };
   setCurrentOverlay: (x: any) => void;
   currentError: string | null;

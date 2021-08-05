@@ -188,6 +188,10 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
 
     setIsLoading((prev) => prev + 1);
 
+    if (selectors[0] === "") {
+      return;
+    }
+
     api
       .getMatchingPods(
         "<token>",

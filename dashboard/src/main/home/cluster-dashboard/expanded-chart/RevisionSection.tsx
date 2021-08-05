@@ -327,23 +327,6 @@ class RevisionSection extends Component<PropsType, StateType> {
                 <i className="material-icons">notification_important</i>
                 Template Update Available
               </RevisionUpdateMessage>
-              
-              {/* <ConfirmOverlay
-                show={!!this.state.upgradeVersion}
-                message={`Are you sure you want to redeploy and upgrade to version ${this.state.upgradeVersion}?`}
-                onYes={(e) => {
-                  e.stopPropagation();
-
-                  this.props.upgradeVersion(this.state.upgradeVersion, () => {
-                    this.setState({ loading: false });
-                  });
-                  this.setState({ upgradeVersion: "", loading: true });
-                }}
-                onNo={(e) => {
-                  e.stopPropagation();
-                  this.setState({ upgradeVersion: "" });
-                }}
-              /> */}
             </div>
           )}
         </RevisionHeader>

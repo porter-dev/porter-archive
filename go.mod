@@ -6,6 +6,7 @@ require (
 	cloud.google.com/go v0.65.0
 	github.com/AlecAivazis/survey/v2 v2.2.9
 	github.com/DATA-DOG/go-sqlmock v1.5.0
+	github.com/Masterminds/semver/v3 v3.1.1
 	github.com/aws/aws-sdk-go v1.35.4
 	github.com/bradleyfalzon/ghinstallation v1.1.1
 	github.com/buildpacks/pack v0.19.0

@@ -228,6 +228,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
   };
 
   const onSubmit = async (rawValues: any) => {
+    console.log("raw", rawValues);
     // Convert dotted keys to nested objects
     let values = {};
 
@@ -251,6 +252,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
 
     setSaveValueStatus("loading");
     getChartData(currentChart);
+    console.log("valuesYaml", valuesYaml)
     try {
       await api.upgradeChartValues(
         "<token>",
@@ -727,7 +729,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
               upgradeVersion={handleUpgradeVersion}
             />
             {
-              leftTabOptions.length > 0 && (
+              (isPreview || leftTabOptions.length > 0) && (
                 <BodyWrapper>
                   <PorterFormWrapper
                     formData={currentChart.form}

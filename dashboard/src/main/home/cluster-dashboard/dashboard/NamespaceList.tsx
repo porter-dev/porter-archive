@@ -306,8 +306,8 @@ const StyledCard = styled.div`
   justify-content: space-between;
   align-items: center;
   border: 1px solid #26282f;
-  box-shadow: 0 5px 8px 0px #00000033;
-  border-radius: 5px;
+  box-shadow: 0 4px 15px 0px #00000055;
+  border-radius: 8px;
   padding: 14px;
   animation: fadeIn 0.5s;
   @keyframes fadeIn {

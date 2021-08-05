@@ -89,9 +89,9 @@ const ExpandedChart: React.FC<Props> = (props) => {
     closeWebsocket,
   } = useWebsockets();
 
-  const { 
-    currentCluster, 
-    currentProject, 
+  const {
+    currentCluster,
+    currentProject,
     setCurrentError,
     setCurrentOverlay,
   } = useContext(Context);
@@ -468,7 +468,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
         (tab: any) => !liveTabs.includes(tab.value)
       );
     }
-    
+
     setLeftTabOptions(leftTabOptions);
     setRightTabOptions(rightTabOptions);
   };
@@ -693,66 +693,65 @@ const ExpandedChart: React.FC<Props> = (props) => {
             </LastDeployed>
           </InfoWrapper>
         </HeaderWrapper>
-        {
-          deleting ? (
-            <>
-              <LineBreak />
-              <Placeholder>
-                <TextWrap>
-                  <Header>
-                    <Spinner src={loadingSrc} /> Deleting "{currentChart.name}"
-                  </Header>
-                  You will be automatically redirected after deletion is complete.
-                </TextWrap>
-              </Placeholder>
-            </>
-          ) : (
-            <>
-              <RevisionSection
-                showRevisions={showRevisions}
-                toggleShowRevisions={() => {
-                  setShowRevisions(!showRevisions);
+        {deleting ? (
+          <>
+            <LineBreak />
+            <Placeholder>
+              <TextWrap>
+                <Header>
+                  <Spinner src={loadingSrc} /> Deleting "{currentChart.name}"
+                </Header>
+                You will be automatically redirected after deletion is complete.
+              </TextWrap>
+            </Placeholder>
+          </>
+        ) : (
+          <>
+            <RevisionSection
+              showRevisions={showRevisions}
+              toggleShowRevisions={() => {
+                setShowRevisions(!showRevisions);
+              }}
+              chart={currentChart}
+              refreshChart={() => getChartData(currentChart)}
+              setRevision={setRevision}
+              forceRefreshRevisions={forceRefreshRevisions}
+              refreshRevisionsOff={() => setForceRefreshRevisions(false)}
+              status={chartStatus}
+              shouldUpdate={
+                currentChart.latest_version &&
+                currentChart.latest_version !==
+                  currentChart.chart.metadata.version
+              }
+              latestVersion={currentChart.latest_version}
+              upgradeVersion={handleUpgradeVersion}
+            />
+            <BodyWrapper>
+              <PorterFormWrapper
+                formData={currentChart.form}
+                valuesToOverride={{
+                  namespace: props.namespace,
+                  clusterId: currentCluster.id,
                 }}
-                chart={currentChart}
-                refreshChart={() => getChartData(currentChart)}
-                setRevision={setRevision}
-                forceRefreshRevisions={forceRefreshRevisions}
-                refreshRevisionsOff={() => setForceRefreshRevisions(false)}
-                status={chartStatus}
-                shouldUpdate={
-                  currentChart.latest_version &&
-                  currentChart.latest_version !== currentChart.chart.metadata.version
+                renderTabContents={renderTabContents}
+                isReadOnly={
+                  imageIsPlaceholder ||
+                  !isAuthorized("application", "", ["get", "update"])
                 }
-                latestVersion={currentChart.latest_version}
-                upgradeVersion={handleUpgradeVersion}
+                onSubmit={onSubmit}
+                rightTabOptions={rightTabOptions}
+                leftTabOptions={leftTabOptions}
+                color={isPreview ? "#f5cb42" : null}
+                addendum={
+                  <TabButton onClick={toggleDevOpsMode} devOpsMode={devOpsMode}>
+                    <i className="material-icons">offline_bolt</i> DevOps Mode
+                  </TabButton>
+                }
+                saveValuesStatus={saveValuesStatus}
               />
-              <BodyWrapper>
-                <PorterFormWrapper
-                  formData={currentChart.form}
-                  valuesToOverride={{
-                    namespace: props.namespace,
-                    clusterId: currentCluster.id,
-                  }}
-                  renderTabContents={renderTabContents}
-                  isReadOnly={
-                    imageIsPlaceholder ||
-                    !isAuthorized("application", "", ["get", "update"])
-                  }
-                  onSubmit={onSubmit}
-                  rightTabOptions={rightTabOptions}
-                  leftTabOptions={leftTabOptions}
-                  color={isPreview ? "#f5cb42" : null}
-                  addendum={
-                    <TabButton onClick={toggleDevOpsMode} devOpsMode={devOpsMode}>
-                      <i className="material-icons">offline_bolt</i> DevOps Mode
-                    </TabButton>
-                  }
-                  saveValuesStatus={saveValuesStatus}
-                />
-              </BodyWrapper>
-            </>
-          )
-        }
+            </BodyWrapper>
+          </>
+        )}
       </StyledExpandedChart>
     </>
   );

@@ -126,7 +126,8 @@ func QueryPrometheus(
 		query = fmt.Sprintf(`%s / %s * 100 OR on() vector(0)`, num, denom)
 	} else if opts.Metric == "cpu_hpa_threshold" {
 		// get the name of the kube hpa metric
-		metricName := getKubeHPAMetricName(clientset, service, opts, "spec_target_metric")
+		metricName, hpaMetricName := getKubeHPAMetricName(clientset, service, opts, "spec_target_metric")
+		cpuMetricName := getKubeCPUMetricName(clientset, service, opts)
 		ksmSvc, found, _ := getKubeStateMetricsService(clientset)
 		appLabel := ""
 
@@ -134,9 +135,10 @@ func QueryPrometheus(
 			appLabel = ksmSvc.ObjectMeta.Labels["app.kubernetes.io/instance"]
 		}
 
-		query = createHPAAbsoluteCPUThresholdQuery(metricName, podSelectionRegex, opts.Name, opts.Namespace, appLabel)
+		query = createHPAAbsoluteCPUThresholdQuery(cpuMetricName, metricName, podSelectionRegex, opts.Name, opts.Namespace, appLabel, hpaMetricName)
 	} else if opts.Metric == "memory_hpa_threshold" {
-		metricName := getKubeHPAMetricName(clientset, service, opts, "spec_target_metric")
+		metricName, hpaMetricName := getKubeHPAMetricName(clientset, service, opts, "spec_target_metric")
+		memMetricName := getKubeMemoryMetricName(clientset, service, opts)
 		ksmSvc, found, _ := getKubeStateMetricsService(clientset)
 		appLabel := ""
 
@@ -144,9 +146,9 @@ func QueryPrometheus(
 			appLabel = ksmSvc.ObjectMeta.Labels["app.kubernetes.io/instance"]
 		}
 
-		query = createHPAAbsoluteMemoryThresholdQuery(metricName, podSelectionRegex, opts.Name, opts.Namespace, appLabel)
+		query = createHPAAbsoluteMemoryThresholdQuery(memMetricName, metricName, podSelectionRegex, opts.Name, opts.Namespace, appLabel, hpaMetricName)
 	} else if opts.Metric == "hpa_replicas" {
-		metricName := getKubeHPAMetricName(clientset, service, opts, "status_current_replicas")
+		metricName, hpaMetricName := getKubeHPAMetricName(clientset, service, opts, "status_current_replicas")
 		ksmSvc, found, _ := getKubeStateMetricsService(clientset)
 		appLabel := ""
 
@@ -154,7 +156,7 @@ func QueryPrometheus(
 			appLabel = ksmSvc.ObjectMeta.Labels["app.kubernetes.io/instance"]
 		}
 
-		query = createHPACurrentReplicasQuery(metricName, opts.Name, opts.Namespace, appLabel)
+		query = createHPACurrentReplicasQuery(metricName, opts.Name, opts.Namespace, appLabel, hpaMetricName)
 	}
 
 	if opts.ShouldSum {
@@ -162,6 +164,8 @@ func QueryPrometheus(
 	}
 	
 	fmt.Println("QUERY IS:", query)
+
+	fmt.Println("QUERY IS", query)
 
 	queryParams := map[string]string{
 		"query": query,
@@ -278,14 +282,19 @@ func getPodSelectionRegex(kind, name string) (string, error) {
 	return fmt.Sprintf("%s-%s", name, suffix), nil
 }
 
-func createHPAAbsoluteCPUThresholdQuery(metricName, podSelectionRegex, hpaName, namespace, appLabel string) string {
+func createHPAAbsoluteCPUThresholdQuery(cpuMetricName, metricName, podSelectionRegex, hpaName, namespace, appLabel, hpaMetricName string) string {
 	kubeMetricsPodSelector := getKubeMetricsPodSelector(podSelectionRegex, namespace)
 
 	kubeMetricsHPASelector := fmt.Sprintf(
-		`hpa="%s",namespace="%s",metric_name="cpu",metric_target_type="utilization"`,
+		`%s="%s",namespace="%s",metric_name="cpu",metric_target_type="utilization"`,
+		hpaMetricName,
 		hpaName,
 		namespace,
 	)
+
+	if cpuMetricName == "kube_pod_container_resource_requests" {
+		kubeMetricsPodSelector += `,resource="cpu",unit="core"`
+	}
 
 	// the kube-state-metrics queries are less prone to error if the field app_kubernetes_io_instance is matched
 	// as well
@@ -295,8 +304,11 @@ func createHPAAbsoluteCPUThresholdQuery(metricName, podSelectionRegex, hpaName, 
 	}
 
 	requestCPU := fmt.Sprintf(
-		`sum by (hpa) (label_replace(kube_pod_container_resource_requests_cpu_cores{%s},"hpa", "%s", "", ""))`,
+		`sum by (%s) (label_replace(%s{%s},"%s", "%s", "", ""))`,
+		hpaMetricName,
+		cpuMetricName,
 		kubeMetricsPodSelector,
+		hpaMetricName,
 		hpaName,
 	)
 
@@ -306,17 +318,22 @@ func createHPAAbsoluteCPUThresholdQuery(metricName, podSelectionRegex, hpaName, 
 		kubeMetricsHPASelector,
 	)
 
-	return fmt.Sprintf(`%s * on(hpa) %s`, requestCPU, targetCPUUtilThreshold)
+	return fmt.Sprintf(`%s * on(%s) %s`, requestCPU, hpaMetricName, targetCPUUtilThreshold)
 }
 
-func createHPAAbsoluteMemoryThresholdQuery(metricName, podSelectionRegex, hpaName, namespace, appLabel string) string {
+func createHPAAbsoluteMemoryThresholdQuery(memMetricName, metricName, podSelectionRegex, hpaName, namespace, appLabel, hpaMetricName string) string {
 	kubeMetricsPodSelector := getKubeMetricsPodSelector(podSelectionRegex, namespace)
 
 	kubeMetricsHPASelector := fmt.Sprintf(
-		`hpa="%s",namespace="%s",metric_name="memory",metric_target_type="utilization"`,
+		`%s="%s",namespace="%s",metric_name="memory",metric_target_type="utilization"`,
+		hpaMetricName,
 		hpaName,
 		namespace,
 	)
+
+	if memMetricName == "kube_pod_container_resource_requests" {
+		kubeMetricsPodSelector += `,resource="memory",unit="byte"`
+	}
 
 	// the kube-state-metrics queries are less prone to error if the field app_kubernetes_io_instance is matched
 	// as well
@@ -326,8 +343,11 @@ func createHPAAbsoluteMemoryThresholdQuery(metricName, podSelectionRegex, hpaNam
 	}
 
 	requestMem := fmt.Sprintf(
-		`sum by (hpa) (label_replace(kube_pod_container_resource_requests_memory_bytes{%s},"hpa", "%s", "", ""))`,
+		`sum by (%s) (label_replace(%s{%s},"%s", "%s", "", ""))`,
+		hpaMetricName,
+		memMetricName,
 		kubeMetricsPodSelector,
+		hpaMetricName,
 		hpaName,
 	)
 
@@ -337,7 +357,7 @@ func createHPAAbsoluteMemoryThresholdQuery(metricName, podSelectionRegex, hpaNam
 		kubeMetricsHPASelector,
 	)
 
-	return fmt.Sprintf(`%s * on(hpa) %s`, requestMem, targetMemUtilThreshold)
+	return fmt.Sprintf(`%s * on(%s) %s`, requestMem, hpaMetricName, targetMemUtilThreshold)
 }
 
 func getKubeMetricsPodSelector(podSelectionRegex, namespace string) string {
@@ -348,9 +368,10 @@ func getKubeMetricsPodSelector(podSelectionRegex, namespace string) string {
 	)
 }
 
-func createHPACurrentReplicasQuery(metricName, hpaName, namespace, appLabel string) string {
+func createHPACurrentReplicasQuery(metricName, hpaName, namespace, appLabel, hpaMetricName string) string {
 	kubeMetricsHPASelector := fmt.Sprintf(
-		`hpa="%s",namespace="%s"`,
+		`%s="%s",namespace="%s"`,
+		hpaMetricName,
 		hpaName,
 		namespace,
 	)
@@ -382,7 +403,7 @@ func getKubeHPAMetricName(
 	service *v1.Service,
 	opts *QueryOpts,
 	suffix string,
-) string {
+) (string, string) {
 	queryParams := map[string]string{
 		"match[]": fmt.Sprintf("kube_horizontalpodautoscaler_%s", suffix),
 		"start":   fmt.Sprintf("%d", opts.StartRange),
@@ -400,7 +421,7 @@ func getKubeHPAMetricName(
 	rawQuery, err := resp.DoRaw(context.TODO())
 
 	if err != nil {
-		return fmt.Sprintf("kube_hpa_%s", suffix)
+		return fmt.Sprintf("kube_hpa_%s", suffix), "hpa"
 	}
 
 	rawQueryObj := &promRawValuesQuery{}
@@ -408,8 +429,80 @@ func getKubeHPAMetricName(
 	json.Unmarshal(rawQuery, rawQueryObj)
 
 	if rawQueryObj.Status == "success" && len(rawQueryObj.Data) == 1 {
-		return fmt.Sprintf("kube_horizontalpodautoscaler_%s", suffix)
+		return fmt.Sprintf("kube_horizontalpodautoscaler_%s", suffix), "horizontalpodautoscaler"
 	}
 
-	return fmt.Sprintf("kube_hpa_%s", suffix)
+	return fmt.Sprintf("kube_hpa_%s", suffix), "hpa"
+}
+
+func getKubeCPUMetricName(
+	clientset kubernetes.Interface,
+	service *v1.Service,
+	opts *QueryOpts,
+) string {
+	queryParams := map[string]string{
+		"match[]": "kube_pod_container_resource_requests",
+		"start":   fmt.Sprintf("%d", opts.StartRange),
+		"end":     fmt.Sprintf("%d", opts.EndRange),
+	}
+
+	resp := clientset.CoreV1().Services(service.Namespace).ProxyGet(
+		"http",
+		service.Name,
+		fmt.Sprintf("%d", service.Spec.Ports[0].Port),
+		"/api/v1/label/__name__/values",
+		queryParams,
+	)
+
+	rawQuery, err := resp.DoRaw(context.TODO())
+
+	if err != nil {
+		return "kube_pod_container_resource_requests_cpu_cores"
+	}
+
+	rawQueryObj := &promRawValuesQuery{}
+
+	json.Unmarshal(rawQuery, rawQueryObj)
+
+	if rawQueryObj.Status == "success" && len(rawQueryObj.Data) == 1 {
+		return "kube_pod_container_resource_requests"
+	}
+
+	return "kube_pod_container_resource_requests_cpu_cores"
+}
+
+func getKubeMemoryMetricName(
+	clientset kubernetes.Interface,
+	service *v1.Service,
+	opts *QueryOpts,
+) string {
+	queryParams := map[string]string{
+		"match[]": "kube_pod_container_resource_requests",
+		"start":   fmt.Sprintf("%d", opts.StartRange),
+		"end":     fmt.Sprintf("%d", opts.EndRange),
+	}
+
+	resp := clientset.CoreV1().Services(service.Namespace).ProxyGet(
+		"http",
+		service.Name,
+		fmt.Sprintf("%d", service.Spec.Ports[0].Port),
+		"/api/v1/label/__name__/values",
+		queryParams,
+	)
+
+	rawQuery, err := resp.DoRaw(context.TODO())
+
+	if err != nil {
+		return "kube_pod_container_resource_requests_memory_bytes"
+	}
+
+	rawQueryObj := &promRawValuesQuery{}
+
+	json.Unmarshal(rawQuery, rawQueryObj)
+
+	if rawQueryObj.Status == "success" && len(rawQueryObj.Data) == 1 {
+		return "kube_pod_container_resource_requests"
+	}
+
+	return "kube_pod_container_resource_requests_memory_bytes"
 }

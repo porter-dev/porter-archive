@@ -145,6 +145,9 @@ export interface Tab {
   name: string;
   label: string;
   sections: Section[];
+  settings?: {
+    omitFromLaunch?: boolean;
+  }
 }
 
 export interface PorterFormData {

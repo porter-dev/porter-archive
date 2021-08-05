@@ -151,9 +151,7 @@ class SettingsPage extends Component<PropsType, StateType> {
               namespace: selectedNamespace,
               clusterId: this.context.currentCluster.id,
             }}
-            //externalValues={{
-            //  isLaunch: true,
-            //}}
+            isLaunch={true}
             isReadOnly={
               !this.props.isAuthorized("namespace", "", ["get", "create"])
             }

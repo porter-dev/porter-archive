@@ -41,6 +41,7 @@ interface Props {
   showStateDebugger?: boolean;
   currentTab: string;
   setCurrentTab: (nt: string) => void;
+  isLaunch?: boolean;
 }
 
 const PorterForm: React.FC<Props> = (props) => {
@@ -102,11 +103,14 @@ const PorterForm: React.FC<Props> = (props) => {
     let options = (props.leftTabOptions || [])
       .concat(
         formData?.tabs?.map((tab) => {
+          if (props.isLaunch && tab?.settings?.omitFromLaunch) {
+            return undefined;
+          }
           return { label: tab.label, value: tab.name };
         })
       )
       .concat(props.rightTabOptions || []);
-    return options.filter((x) => x !== undefined);
+    return options.filter(x => !!x);
   };
 
   const showSaveButton = (): boolean => {
@@ -131,10 +135,13 @@ const PorterForm: React.FC<Props> = (props) => {
 
   const renderTab = (): JSX.Element => {
     if (!formData) {
+      console.log("hm fuck")
       return props.renderTabContents(currentTab);
     }
 
     const tab = formData.tabs?.filter((tab) => tab.name == currentTab)[0];
+    console.log("currentTab", currentTab)
+    console.log("tab", tab);
 
     // Handle external tab
     if (!tab) {
@@ -173,6 +180,7 @@ const PorterForm: React.FC<Props> = (props) => {
     return props.saveValuesStatus;
   };
 
+  console.log(getTabOptions());
   return (
     <>
       <TabRegion

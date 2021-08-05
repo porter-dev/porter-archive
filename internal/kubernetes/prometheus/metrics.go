@@ -374,7 +374,7 @@ type promRawValuesQuery struct {
 }
 
 // getKubeHPAMetricName performs a "best guess" for the name of the kube HPA metric,
-// which was renamed to kube_horizontal_pod_autoscaler... in later versions of kube-state-metrics.
+// which was renamed to kube_horizontalpodautoscaler... in later versions of kube-state-metrics.
 // we query Prometheus for a list of metric names to see if any match the new query
 // value, otherwise we return the deprecated name.
 func getKubeHPAMetricName(
@@ -384,7 +384,7 @@ func getKubeHPAMetricName(
 	suffix string,
 ) string {
 	queryParams := map[string]string{
-		"match[]": fmt.Sprintf("kube_horizontal_pod_autoscaler_%s", suffix),
+		"match[]": fmt.Sprintf("kube_horizontalpodautoscaler_%s", suffix),
 		"start":   fmt.Sprintf("%d", opts.StartRange),
 		"end":     fmt.Sprintf("%d", opts.EndRange),
 	}
@@ -408,7 +408,7 @@ func getKubeHPAMetricName(
 	json.Unmarshal(rawQuery, rawQueryObj)
 
 	if rawQueryObj.Status == "success" && len(rawQueryObj.Data) == 1 {
-		return fmt.Sprintf("kube_horizontal_pod_autoscaler_%s", suffix)
+		return fmt.Sprintf("kube_horizontalpodautoscaler_%s", suffix)
 	}
 
 	return fmt.Sprintf("kube_hpa_%s", suffix)

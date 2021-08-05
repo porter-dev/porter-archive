@@ -138,10 +138,9 @@ const KeyValueArray: React.FC<Props> = (props) => {
       obj[key] = value;
     });
     return obj;
-  }
+  };
 
   const renderEnvModal = () => {
-    console.log(state.values)
     if (state.showEnvModal) {
       return (
         <Modal

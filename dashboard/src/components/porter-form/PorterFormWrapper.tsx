@@ -18,6 +18,7 @@ type PropsType = {
   addendum?: any;
   saveValuesStatus?: string;
   showStateDebugger?: boolean;
+  isLaunch?: boolean;
 };
 
 const PorterFormWrapper: React.FunctionComponent<PropsType> = ({
@@ -34,6 +35,7 @@ const PorterFormWrapper: React.FunctionComponent<PropsType> = ({
   addendum,
   saveValuesStatus,
   showStateDebugger,
+  isLaunch,
 }) => {
   const hashCode = (s: string) => {
     return s.split("").reduce(function (a, b) {
@@ -46,7 +48,13 @@ const PorterFormWrapper: React.FunctionComponent<PropsType> = ({
     if (leftTabOptions?.length > 0) {
       return leftTabOptions[0].value;
     } else if (formData?.tabs?.length > 0) {
-      return formData?.tabs[0].name;
+      let includedTabs = formData.tabs;
+      if (isLaunch) {
+        includedTabs = formData.tabs.filter(
+          (tab: any) => !tab?.settings?.omitFromLaunch
+        );
+      }
+      return includedTabs[0].name;
     } else if (rightTabOptions?.length > 0) {
       return rightTabOptions[0].value;
     } else {
@@ -54,6 +62,7 @@ const PorterFormWrapper: React.FunctionComponent<PropsType> = ({
     }
   };
 
+  // Lifted into PorterFormWrapper to allow tab to be remembered on re-render (e.g., on revision select)
   const [currentTab, setCurrentTab] = useState(getInitialTab());
 
   return (
@@ -77,6 +86,7 @@ const PorterFormWrapper: React.FunctionComponent<PropsType> = ({
           saveValuesStatus={saveValuesStatus}
           currentTab={currentTab}
           setCurrentTab={setCurrentTab}
+          isLaunch={isLaunch}
         />
       </PorterFormContextProvider>
     </React.Fragment>

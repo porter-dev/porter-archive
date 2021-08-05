@@ -401,6 +401,6 @@ const TemplateList = styled.div`
 `;
 
 const TemplatesWrapper = styled.div`
-  width: 83%;
+  width: calc(85%);
   min-width: 300px;
 `;

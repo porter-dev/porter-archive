@@ -8,7 +8,7 @@ import { Context } from "shared/Context";
 
 import Loading from "components/Loading";
 import SaveButton from "components/SaveButton";
-import { KeyValue } from "components/values-form/KeyValueArray";
+import { KeyValue } from "components/form-components/KeyValueArray";
 import {
   EnvGroupData,
   formattedEnvironmentValue,
@@ -103,6 +103,7 @@ export default class LoadEnvGroupModal extends Component<PropsType, StateType> {
   };
 
   potentiallyOverriddenKeys(incoming: Record<string, string>): KeyValue[] {
+    console.log(incoming, this.props.existingValues);
     return Object.entries(incoming)
       .filter(([key]) => this.props.existingValues[key])
       .map(([key, value]) => ({ key, value }));

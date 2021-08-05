@@ -21,10 +21,9 @@ import {
 import { Context } from "shared/Context";
 import api from "shared/api";
 
-import ConfirmOverlay from "components/ConfirmOverlay";
 import Loading from "components/Loading";
 import StatusIndicator from "components/StatusIndicator";
-import FormWrapper from "components/values-form/FormWrapper";
+import PorterFormWrapper from "components/porter-form/PorterFormWrapper";
 import RevisionSection from "./RevisionSection";
 import ValuesYaml from "./ValuesYaml";
 import GraphSection from "./GraphSection";
@@ -66,7 +65,8 @@ const ExpandedChart: React.FC<Props> = (props) => {
   const [devOpsMode, setDevOpsMode] = useState<boolean>(
     localStorage.getItem("devOpsMode") === "true"
   );
-  const [tabOptions, setTabOptions] = useState<any[]>([]);
+  const [rightTabOptions, setRightTabOptions] = useState<any[]>([]);
+  const [leftTabOptions, setLeftTabOptions] = useState<any[]>([]);
   const [saveValuesStatus, setSaveValueStatus] = useState<string>(null);
   const [forceRefreshRevisions, setForceRefreshRevisions] = useState<boolean>(
     false
@@ -75,7 +75,6 @@ const ExpandedChart: React.FC<Props> = (props) => {
     Record<string, Record<string, any>>
   >({});
   const [url, setUrl] = useState<string>(null);
-  const [showDeleteOverlay, setShowDeleteOverlay] = useState<boolean>(false);
   const [deleting, setDeleting] = useState<boolean>(false);
   const [imageIsPlaceholder, setImageIsPlaceholer] = useState<boolean>(false);
   const [newestImage, setNewestImage] = useState<string>(null);
@@ -90,9 +89,12 @@ const ExpandedChart: React.FC<Props> = (props) => {
     closeWebsocket,
   } = useWebsockets();
 
-  const { currentCluster, currentProject, setCurrentError } = useContext(
-    Context
-  );
+  const { 
+    currentCluster, 
+    currentProject, 
+    setCurrentError,
+    setCurrentOverlay,
+  } = useContext(Context);
 
   // Retrieve full chart data (includes form and values)
   const getChartData = async (chart: ChartType) => {
@@ -153,7 +155,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
 
         setControllers((oldControllers) => ({
           ...oldControllers,
-          [c.metadata.kind]: c,
+          [c.metadata.uid]: c,
         }));
       });
 
@@ -175,23 +177,22 @@ const ExpandedChart: React.FC<Props> = (props) => {
         let object = event.Object;
         object.metadata.kind = event.Kind;
 
+        if (event.event_type != "UPDATE") {
+          return;
+        }
+
         setControllers((oldControllers) => {
-          switch (event.event_type) {
-            case "DELETE":
-              delete oldControllers[object.metadata.uid];
-            case "UPDATE":
-              if (
-                oldControllers &&
-                oldControllers[object.metadata.uid]?.status?.conditions ==
-                  object.status?.conditions
-              ) {
-                return oldControllers;
-              }
-              return {
-                ...oldControllers,
-                [object.metadata.uid]: object,
-              };
+          if (
+            oldControllers &&
+            oldControllers[object.metadata.uid]?.status?.conditions ==
+              object.status?.conditions
+          ) {
+            return oldControllers;
           }
+          return {
+            ...oldControllers,
+            [object.metadata.uid]: object,
+          };
         });
       },
       onerror() {
@@ -389,7 +390,17 @@ const ExpandedChart: React.FC<Props> = (props) => {
           <SettingsSection
             currentChart={chart}
             refreshChart={() => getChartData(currentChart)}
-            setShowDeleteOverlay={(x: boolean) => setShowDeleteOverlay(x)}
+            setShowDeleteOverlay={(x: boolean) => {
+              if (x) {
+                setCurrentOverlay({
+                  message: `Are you sure you want to delete ${currentChart.name}?`,
+                  onYes: handleUninstallChart,
+                  onNo: () => setCurrentOverlay(null),
+                });
+              } else {
+                setCurrentOverlay(null);
+              }
+            }}
           />
         );
       case "graph":
@@ -425,17 +436,18 @@ const ExpandedChart: React.FC<Props> = (props) => {
 
   const updateTabs = () => {
     // Collate non-form tabs
-    let tabOptions = [] as any[];
-    tabOptions.push({ label: "Status", value: "status" });
+    let rightTabOptions = [] as any[];
+    let leftTabOptions = [] as any[];
+    leftTabOptions.push({ label: "Status", value: "status" });
 
     if (props.isMetricsInstalled) {
-      tabOptions.push({ label: "Metrics", value: "metrics" });
+      leftTabOptions.push({ label: "Metrics", value: "metrics" });
     }
 
-    tabOptions.push({ label: "Chart Overview", value: "graph" });
+    rightTabOptions.push({ label: "Chart Overview", value: "graph" });
 
     if (devOpsMode) {
-      tabOptions.push(
+      rightTabOptions.push(
         { label: "Manifests", value: "list" },
         { label: "Helm Values", value: "values" }
       );
@@ -443,18 +455,22 @@ const ExpandedChart: React.FC<Props> = (props) => {
 
     // Settings tab is always last
     if (isAuthorized("application", "", ["get", "delete"])) {
-      tabOptions.push({ label: "Settings", value: "settings" });
+      rightTabOptions.push({ label: "Settings", value: "settings" });
     }
 
     // Filter tabs if previewing an old revision or updating the chart version
     if (isPreview) {
       let liveTabs = ["status", "settings", "deploy", "metrics"];
-      tabOptions = tabOptions.filter(
+      rightTabOptions = rightTabOptions.filter(
+        (tab: any) => !liveTabs.includes(tab.value)
+      );
+      leftTabOptions = leftTabOptions.filter(
         (tab: any) => !liveTabs.includes(tab.value)
       );
     }
-
-    setTabOptions(tabOptions);
+    
+    setLeftTabOptions(leftTabOptions);
+    setRightTabOptions(rightTabOptions);
   };
 
   const setRevision = (chart: ChartType, isCurrent?: boolean) => {
@@ -556,6 +572,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
 
   const handleUninstallChart = async () => {
     setDeleting(true);
+    setCurrentOverlay(null);
     try {
       await api.uninstallTemplate(
         "<token>",
@@ -568,7 +585,6 @@ const ExpandedChart: React.FC<Props> = (props) => {
           cluster_id: currentCluster.id,
         }
       );
-      setShowDeleteOverlay(false);
       props.closeChart();
     } catch (error) {
       console.log(error);
@@ -648,21 +664,10 @@ const ExpandedChart: React.FC<Props> = (props) => {
   return (
     <>
       <StyledExpandedChart>
-        <BackButton onClick={props.closeChart}>
-          <BackButtonImg src={backArrow} />
-        </BackButton>
-        <ConfirmOverlay
-          show={showDeleteOverlay}
-          message={`Are you sure you want to delete ${currentChart.name}?`}
-          onYes={handleUninstallChart}
-          onNo={() => setShowDeleteOverlay(false)}
-        />
-        {deleting && (
-          <DeleteOverlay>
-            <Loading />
-          </DeleteOverlay>
-        )}
         <HeaderWrapper>
+          <BackButton onClick={props.closeChart}>
+            <BackButtonImg src={backArrow} />
+          </BackButton>
           <TitleSection
             icon={currentChart.chart.metadata.icon}
             iconWidth="33px"
@@ -687,48 +692,67 @@ const ExpandedChart: React.FC<Props> = (props) => {
               {" " + getReadableDate(currentChart.info.last_deployed)}
             </LastDeployed>
           </InfoWrapper>
-
-          <RevisionSection
-            showRevisions={showRevisions}
-            toggleShowRevisions={() => {
-              setShowRevisions(!showRevisions);
-            }}
-            chart={currentChart}
-            refreshChart={() => getChartData(currentChart)}
-            setRevision={setRevision}
-            forceRefreshRevisions={forceRefreshRevisions}
-            refreshRevisionsOff={() => setForceRefreshRevisions(false)}
-            status={chartStatus}
-            shouldUpdate={
-              currentChart.latest_version &&
-              currentChart.latest_version !==
-                currentChart.chart.metadata.version
-            }
-            latestVersion={currentChart.latest_version}
-            upgradeVersion={handleUpgradeVersion}
-          />
         </HeaderWrapper>
-        <FormWrapper
-          isReadOnly={
-            imageIsPlaceholder ||
-            !isAuthorized("application", "", ["get", "update"])
-          }
-          formData={currentChart.form}
-          tabOptions={tabOptions}
-          renderTabContents={renderTabContents}
-          onSubmit={onSubmit}
-          saveValuesStatus={saveValuesStatus}
-          externalValues={{
-            namespace: props.namespace,
-            clusterId: currentCluster.id,
-          }}
-          color={isPreview ? "#f5cb42" : null}
-          addendum={
-            <TabButton onClick={toggleDevOpsMode} devOpsMode={devOpsMode}>
-              <i className="material-icons">offline_bolt</i> DevOps Mode
-            </TabButton>
-          }
-        />
+        {
+          deleting ? (
+            <>
+              <LineBreak />
+              <Placeholder>
+                <TextWrap>
+                  <Header>
+                    <Spinner src={loadingSrc} /> Deleting "{currentChart.name}"
+                  </Header>
+                  You will be automatically redirected after deletion is complete.
+                </TextWrap>
+              </Placeholder>
+            </>
+          ) : (
+            <>
+              <RevisionSection
+                showRevisions={showRevisions}
+                toggleShowRevisions={() => {
+                  setShowRevisions(!showRevisions);
+                }}
+                chart={currentChart}
+                refreshChart={() => getChartData(currentChart)}
+                setRevision={setRevision}
+                forceRefreshRevisions={forceRefreshRevisions}
+                refreshRevisionsOff={() => setForceRefreshRevisions(false)}
+                status={chartStatus}
+                shouldUpdate={
+                  currentChart.latest_version &&
+                  currentChart.latest_version !== currentChart.chart.metadata.version
+                }
+                latestVersion={currentChart.latest_version}
+                upgradeVersion={handleUpgradeVersion}
+              />
+              <BodyWrapper>
+                <PorterFormWrapper
+                  formData={currentChart.form}
+                  valuesToOverride={{
+                    namespace: props.namespace,
+                    clusterId: currentCluster.id,
+                  }}
+                  renderTabContents={renderTabContents}
+                  isReadOnly={
+                    imageIsPlaceholder ||
+                    !isAuthorized("application", "", ["get", "update"])
+                  }
+                  onSubmit={onSubmit}
+                  rightTabOptions={rightTabOptions}
+                  leftTabOptions={leftTabOptions}
+                  color={isPreview ? "#f5cb42" : null}
+                  addendum={
+                    <TabButton onClick={toggleDevOpsMode} devOpsMode={devOpsMode}>
+                      <i className="material-icons">offline_bolt</i> DevOps Mode
+                    </TabButton>
+                  }
+                  saveValuesStatus={saveValuesStatus}
+                />
+              </BodyWrapper>
+            </>
+          )
+        }
       </StyledExpandedChart>
     </>
   );
@@ -737,6 +761,19 @@ const ExpandedChart: React.FC<Props> = (props) => {
 export default ExpandedChart;
 
 const TextWrap = styled.div``;
+
+const LineBreak = styled.div`
+  width: calc(100% - 0px);
+  height: 2px;
+  background: #ffffff20;
+  margin: 35px 0px;
+`;
+
+const BodyWrapper = styled.div`
+  position: relative;
+  overflow: hidden;
+  margin-bottom: 120px;
+`;
 
 const BackButton = styled.div`
   position: absolute;
@@ -773,7 +810,8 @@ const Header = styled.div`
 `;
 
 const Placeholder = styled.div`
-  height: 100%;
+  min-height: 400px;
+  height: 50vh;
   padding: 30px;
   padding-bottom: 90px;
   font-size: 13px;
@@ -789,38 +827,6 @@ const Spinner = styled.img`
   height: 15px;
   margin-right: 12px;
   margin-bottom: -2px;
-`;
-
-const DeleteOverlay = styled.div`
-  position: absolute;
-  top: 0px;
-  opacity: 100%;
-  left: 0px;
-  width: 100%;
-  height: 100%;
-  z-index: 999;
-  display: flex;
-  padding-bottom: 30px;
-  align-items: center;
-  justify-content: center;
-  font-family: "Work Sans", sans-serif;
-  font-size: 18px;
-  font-weight: 500;
-  color: white;
-  flex-direction: column;
-  background: rgb(0, 0, 0, 0.73);
-  opacity: 0;
-  animation: lindEnter 0.2s;
-  animation-fill-mode: forwards;
-
-  @keyframes lindEnter {
-    from {
-      opacity: 0;
-    }
-    to {
-      opacity: 1;
-    }
-  }
 `;
 
 const Bolded = styled.div`
@@ -850,7 +856,7 @@ const TabButton = styled.div`
   position: absolute;
   right: 0px;
   height: 30px;
-  background: linear-gradient(to right, #26282f00, #26282f 20%);
+  background: linear-gradient(to right, #20222700, #202227 20%);
   padding-left: 30px;
   display: flex;
   align-items: center;
@@ -875,7 +881,9 @@ const TabButton = styled.div`
   }
 `;
 
-const HeaderWrapper = styled.div``;
+const HeaderWrapper = styled.div`
+  position: relative;
+`;
 
 const Dot = styled.div`
   margin-right: 9px;
@@ -951,16 +959,13 @@ const IconWrapper = styled.div`
 
 const StyledExpandedChart = styled.div`
   width: 100%;
+  overflow: hidden;
   z-index: 0;
-  position: relative;
   animation: fadeIn 0.3s;
   animation-timing-function: ease-out;
   animation-fill-mode: forwards;
   display: flex;
-  overflow-y: auto;
-  padding-bottom: 120px;
   flex-direction: column;
-  overflow: visible;
 
   @keyframes fadeIn {
     from {

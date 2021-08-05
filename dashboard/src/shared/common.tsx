@@ -1,3 +1,17 @@
+import github from "../assets/github.png";
+import gitlab from "../assets/gitlab-icon.png";
+import digitalocean from "../assets/digitalocean-icon.png";
+import googlecloud from "../assets/googlecloud-icon.png";
+import aws from "../assets/aws-icon.png";
+import ecr from "../assets/ecr-icon.png";
+import gcr from "../assets/gcr-icon.png";
+import docker from "../assets/docker-icon.png";
+import kube from "../assets/kubernetes-icon.png";
+import eks from "../assets/amazoneks-icon.png";
+import gke from "../assets/gke-icon.png";
+import registry from "../assets/dockerregistry-icon.png";
+import repo from "../assets/gitrepo-icon.png";
+
 export const infraNames: any = {
   ecr: "Elastic Container Registry (ECR)",
   eks: "Elastic Kubernetes Service (EKS)",
@@ -9,49 +23,42 @@ export const infraNames: any = {
 
 export const integrationList: any = {
   kubernetes: {
-    icon:
-      "https://uxwing.com/wp-content/themes/uxwing/download/10-brands-and-social-media/kubernetes.png",
+    icon: kube,
     label: "Kubernetes",
     buttonText: "Add a Cluster",
   },
   repo: {
-    icon:
-      "https://3.bp.blogspot.com/-xhNpNJJyQhk/XIe4GY78RQI/AAAAAAAAItc/ouueFUj2Hqo5dntmnKqEaBJR4KQ4Q2K3ACK4BGAYYCw/s1600/logo%2Bgit%2Bicon.png",
+    icon: repo,
     label: "Git Repository",
     buttonText: "Link a Github Account",
   },
   registry: {
-    icon:
-      "https://cdn4.iconfinder.com/data/icons/logos-and-brands/512/97_Docker_logo_logos-512.png",
+    icon: registry,
     label: "Docker Registry",
     buttonText: "Add a Registry",
   },
   gke: {
-    icon: "https://sysdig.com/wp-content/uploads/2016/08/GKE_color.png",
+    icon: gke,
     label: "Google Kubernetes Engine (GKE)",
   },
   eks: {
-    icon: "https://img.stackshare.io/service/7991/amazon-eks.png",
+    icon: eks,
     label: "Amazon Elastic Kubernetes Service (EKS)",
   },
   kube: {
-    icon:
-      "https://uxwing.com/wp-content/themes/uxwing/download/10-brands-and-social-media/kubernetes.png",
+    icon: kube,
     label: "Upload Kubeconfig",
   },
   docker: {
-    icon:
-      "https://cdn4.iconfinder.com/data/icons/logos-and-brands/512/97_Docker_logo_logos-512.png",
+    icon: docker,
     label: "Docker Hub",
   },
   gcr: {
-    icon:
-      "https://carlossanchez.files.wordpress.com/2019/06/21046548.png?w=640",
+    icon: gcr,
     label: "Google Container Registry (GCR)",
   },
   ecr: {
-    icon:
-      "https://avatars2.githubusercontent.com/u/52505464?s=400&u=da920f994c67665c7ad6c606a5286557d4f8555f&v=4",
+    icon: ecr,
     label: "Elastic Container Registry (ECR)",
   },
   aws: {
@@ -60,13 +67,11 @@ export const integrationList: any = {
     label: "AWS",
   },
   gcp: {
-    icon:
-      "https://uxwing.com/wp-content/themes/uxwing/download/10-brands-and-social-media/google-cloud.png",
+    icon: googlecloud,
     label: "GCP",
   },
   do: {
-    icon:
-      "https://uxwing.com/wp-content/themes/uxwing/download/10-brands-and-social-media/digitalocean.png",
+    icon: digitalocean,
     label: "DigitalOcean",
   },
   github: {
@@ -75,7 +80,7 @@ export const integrationList: any = {
     label: "GitHub",
   },
   gitlab: {
-    icon: "https://about.gitlab.com/images/press/logo/png/gitlab-icon-rgb.png",
+    icon: gitlab,
     label: "Gitlab",
   },
 };

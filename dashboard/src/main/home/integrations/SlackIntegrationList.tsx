@@ -160,8 +160,8 @@ const Integration = styled.div`
   cursor: ${(props: { disabled: boolean }) =>
     props.disabled ? "not-allowed" : "pointer"};
   margin-bottom: 15px;
-  border-radius: 5px;
-  box-shadow: 0 5px 8px 0px #00000033;
+  border-radius: 8px;
+  box-shadow: 0 4px 15px 0px #00000055;
 `;
 
 const Icon = styled.img`

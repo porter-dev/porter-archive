@@ -58,12 +58,15 @@ export const PorterFormContextProvider: React.FC<Props> = (props) => {
               ...state.components,
               [action.id]: {
                 state: action.initValue,
-                validation: {
-                  ...{
-                    validated: false,
-                  },
-                  ...action.initValidation,
+              },
+            },
+            validation: {
+              ...state.validation,
+              [action.id]: {
+                ...{
+                  validated: false,
                 },
+                ...action.initValidation,
               },
             },
           };
@@ -94,9 +97,12 @@ export const PorterFormContextProvider: React.FC<Props> = (props) => {
             ...state.components,
             [action.id]: {
               ...state.components[action.id],
-              validation: action.updateFunc(
-                state.components[action.id].validation
-              ),
+            },
+          },
+          validation: {
+            ...state.validation,
+            [action.id]: {
+              ...action.updateFunc(state.validation[action.id]),
             },
           },
         };
@@ -128,8 +134,36 @@ export const PorterFormContextProvider: React.FC<Props> = (props) => {
     return ret;
   };
 
+  const getInitialValidation = (data: PorterFormData) => {
+    const ret: Record<string, any> = {};
+    data?.tabs?.map((tab, i) =>
+      tab.sections?.map((section, j) =>
+        section.contents?.map((field, k) => {
+          if (
+            field.type == "heading" ||
+            field.type == "subtitle" ||
+            field.type == "resource-list" ||
+            field.type == "service-ip-list" ||
+            field.type == "velero-create-backup"
+          )
+            return;
+          if (
+            field.required &&
+            (field.settings?.default || (field.value && field.value[0]))
+          ) {
+            ret[`${i}-${j}-${k}`] = {
+              validated: true,
+            };
+          }
+        })
+      )
+    );
+    return ret;
+  };
+
   const [state, dispatch] = useReducer(handleAction, {
     components: {},
+    validation: getInitialValidation(props.rawFormData),
     variables: {
       ...props.initialVariables,
       ...getInitialVariables(props.rawFormData),
@@ -310,7 +344,7 @@ export const PorterFormContextProvider: React.FC<Props> = (props) => {
             return;
           // fields that have defaults can't be required since we can always
           // compute their value
-          if (field.required && !field.settings?.default) {
+          if (field.required) {
             requiredIds.push(field.id);
           }
           if (!mapping[field.variable]) {
@@ -327,9 +361,7 @@ export const PorterFormContextProvider: React.FC<Props> = (props) => {
     Validate the form based on a list of required ids
    */
   const doValidation = (requiredIds: string[]) =>
-    requiredIds
-      ?.map((id) => state.components[id]?.validation.validated)
-      .every((x) => x);
+    requiredIds?.map((id) => state.validation[id]?.validated).every((x) => x);
 
   const formData = computeFormStructure(
     restructureToNewFields(props.rawFormData),

@@ -42,11 +42,11 @@ func (u *UpgradeFile) GetUpgradeFileBetweenVersions(prev, target string) (*Upgra
 		return nil, err
 	}
 
-	targetVersion, err := semver.NewVersion(target)
+	// targetVersion, err := semver.NewVersion(target)
 
-	if err != nil {
-		return nil, err
-	}
+	// if err != nil {
+	// 	return nil, err
+	// }
 
 	// for each upgrade note, determine if it's geq than the previous version, leq the target
 	// version
@@ -65,10 +65,9 @@ func (u *UpgradeFile) GetUpgradeFileBetweenVersions(prev, target string) (*Upgra
 			return nil, err
 		}
 
-		// check that the previous version is not smaller than the note previous version
-		if comp := prevVersion.Compare(notePrevVersion); comp != -1 {
-			// check that the target version is smaller than the note target version
-			if comp := targetVersion.Compare(noteTargetVersion); comp != -1 {
+		// if note(prev) <= prev and note(next) >= prev, render the note
+		if comp := notePrevVersion.Compare(prevVersion); comp != -1 {
+			if comp := noteTargetVersion.Compare(prevVersion); comp != -1 {
 				resNotes = append(resNotes, note)
 			}
 		}

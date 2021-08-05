@@ -147,7 +147,10 @@ export const PorterFormContextProvider: React.FC<Props> = (props) => {
             field.type == "velero-create-backup"
           )
             return;
-          if (field.required && (field.settings?.default || field.value)) {
+          if (
+            field.required &&
+            (field.settings?.default || (field.value && field.value[0]))
+          ) {
             ret[`${i}-${j}-${k}`] = {
               validated: true,
             };

@@ -1,16 +1,16 @@
-import github from "../assets/github.png";
-import gitlab from "../assets/gitlab-icon.png";
-import digitalocean from "../assets/digitalocean-icon.png";
-import googlecloud from "../assets/googlecloud-icon.png";
+import eks from "../assets/amazoneks-icon.png";
 import aws from "../assets/aws-icon.png";
+import digitalocean from "../assets/digitalocean-icon.png";
+import docker from "../assets/docker-icon.png";
+import registry from "../assets/dockerregistry-icon.png";
 import ecr from "../assets/ecr-icon.png";
 import gcr from "../assets/gcr-icon.png";
-import docker from "../assets/docker-icon.png";
-import kube from "../assets/kubernetes-icon.png";
-import eks from "../assets/amazoneks-icon.png";
-import gke from "../assets/gke-icon.png";
-import registry from "../assets/dockerregistry-icon.png";
+import github from "../assets/github.png";
+import gitlab from "../assets/gitlab-icon.png";
 import repo from "../assets/gitrepo-icon.png";
+import gke from "../assets/gke-icon.png";
+import googlecloud from "../assets/googlecloud-icon.png";
+import kube from "../assets/kubernetes-icon.png";
 
 export const infraNames: any = {
   ecr: "Elastic Container Registry (ECR)",
@@ -62,8 +62,7 @@ export const integrationList: any = {
     label: "Elastic Container Registry (ECR)",
   },
   aws: {
-    icon:
-      "https://uxwing.com/wp-content/themes/uxwing/download/10-brands-and-social-media/aws.png",
+    icon: aws,
     label: "AWS",
   },
   gcp: {
@@ -75,8 +74,7 @@ export const integrationList: any = {
     label: "DigitalOcean",
   },
   github: {
-    icon:
-      "https://uxwing.com/wp-content/themes/uxwing/download/10-brands-and-social-media/github.png",
+    icon: github,
     label: "GitHub",
   },
   gitlab: {

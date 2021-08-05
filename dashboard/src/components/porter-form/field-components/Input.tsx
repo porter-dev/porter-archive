@@ -36,7 +36,7 @@ const Input: React.FC<InputField> = ({
   } = useFormField<StringInputFieldState>(id, {
     initValidation: {
       validated: value
-        ? value[0] !== undefined
+        ? value[0] !== undefined && value[0] !== ""
         : settings?.default != undefined,
     },
     initVars: {

@@ -6,6 +6,8 @@ import api from "shared/api";
 import { Context } from "shared/Context";
 import { ChartType } from "shared/types";
 
+import Loading from "components/Loading";
+
 import Markdown from "markdown-to-jsx";
 import SaveButton from "components/SaveButton";
 
@@ -21,7 +23,7 @@ type StateType = {
 
 export default class UpgradeChartModal extends Component<PropsType, StateType> {
   state = {
-    notes: "Loading..."
+    notes: "Loading"
   };
 
   componentDidMount() {
@@ -42,6 +44,15 @@ export default class UpgradeChartModal extends Component<PropsType, StateType> {
       version: this.props.currentChart.latest_version,
     })
     .then((res) => {
+      if (res.data.upgrade_notes.length == 0) {
+        this.setState({ notes: `
+## Version ${this.props.currentChart.chart.metadata.version} -> ${this.props.currentChart.latest_version}
+No upgrade notes available. This update should be backwards-compatible. 
+        `})
+
+        return
+      }
+
         let noteArr = res.data.upgrade_notes.map((note : any) => {
             return `
 ## Version ${note.previous} -> ${note.target}
@@ -54,21 +65,25 @@ ${note.note}
     .catch((err) => console.log(err));
 }
 
+  renderContent() {
+    if (this.state.notes == "Loading") {
+      return <Loading />
+    }
+
+    return <Markdown>{this.state.notes}</Markdown>
+  }
+
   render() {
     return (
       <StyledUpgradeChartModal>
         <CloseButton onClick={this.props.closeModal}>
           <CloseButtonImg src={close} />
         </CloseButton>
-
-        <Markdown>{this.state.notes}</Markdown>
-
+        {this.renderContent()}
         <SaveButton
           disabled={false}
-          text="Submit"
-          status={
-            "This will update your application"
-          }
+          text="Upgrade Template"
+          status={""}
           onClick={this.props.onSubmit}
         />
       </StyledUpgradeChartModal>

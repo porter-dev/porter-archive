@@ -73,14 +73,16 @@ export const getFinalVariablesForSelect: GetFinalVariablesFunction = (
   return vars[props.variable]
     ? {}
     : {
-        [props.variable]: props.settings.default
+        [props.variable]: props.value
+          ? props.value[0]
+          : props.settings.default
           ? props.settings.default
           : props.settings.type == "provider"
           ? ({
               gke: "gcp",
               eks: "aws",
               doks: "do",
-            } as Record<string, string>)[context.currentCluster?.service] ||
+            } as Record<string, string>)[context.currentCluster.service] ||
             "aws"
           : props.settings.options[0].value,
       };

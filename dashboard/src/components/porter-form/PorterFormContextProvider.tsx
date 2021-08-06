@@ -45,7 +45,7 @@ export const PorterFormContextProvider: React.FC<Props> = (props) => {
     state: PorterFormState,
     action: PorterFormAction
   ): PorterFormState => {
-    switch (action.type) {
+    switch (action?.type) {
       case "init-field":
         if (!(action.id in state.components)) {
           return {
@@ -125,7 +125,7 @@ export const PorterFormContextProvider: React.FC<Props> = (props) => {
     data?.tabs?.map((tab) =>
       tab.sections?.map((section) =>
         section.contents?.map((field) => {
-          if (field.type == "variable") {
+          if (field?.type == "variable") {
             ret[field.variable] = field.settings?.default;
           }
         })
@@ -140,11 +140,11 @@ export const PorterFormContextProvider: React.FC<Props> = (props) => {
       tab.sections?.map((section, j) =>
         section.contents?.map((field, k) => {
           if (
-            field.type == "heading" ||
-            field.type == "subtitle" ||
-            field.type == "resource-list" ||
-            field.type == "service-ip-list" ||
-            field.type == "velero-create-backup"
+            field?.type == "heading" ||
+            field?.type == "subtitle" ||
+            field?.type == "resource-list" ||
+            field?.type == "service-ip-list" ||
+            field?.type == "velero-create-backup"
           )
             return;
           if (
@@ -223,7 +223,7 @@ export const PorterFormContextProvider: React.FC<Props> = (props) => {
               ...section,
               contents: section.contents
                 ?.map((field: any) => {
-                  if (field.type == "number-input") {
+                  if (field?.type == "number-input") {
                     return {
                       ...field,
                       type: "input",
@@ -233,7 +233,7 @@ export const PorterFormContextProvider: React.FC<Props> = (props) => {
                       },
                     };
                   }
-                  if (field.type == "string-input") {
+                  if (field?.type == "string-input") {
                     return {
                       ...field,
                       type: "input",
@@ -243,7 +243,7 @@ export const PorterFormContextProvider: React.FC<Props> = (props) => {
                       },
                     };
                   }
-                  if (field.type == "string-input-password") {
+                  if (field?.type == "string-input-password") {
                     return {
                       ...field,
                       type: "input",
@@ -253,7 +253,7 @@ export const PorterFormContextProvider: React.FC<Props> = (props) => {
                       },
                     };
                   }
-                  if (field.type == "provider-select") {
+                  if (field?.type == "provider-select") {
                     return {
                       ...field,
                       type: "select",
@@ -263,7 +263,7 @@ export const PorterFormContextProvider: React.FC<Props> = (props) => {
                       },
                     };
                   }
-                  if (field.type == "env-key-value-array") {
+                  if (field?.type == "env-key-value-array") {
                     return {
                       ...field,
                       type: "key-value-array",
@@ -275,7 +275,7 @@ export const PorterFormContextProvider: React.FC<Props> = (props) => {
                       },
                     };
                   }
-                  if (field.type == "variable") return null;
+                  if (field?.type == "variable") return null;
                   return field;
                 })
                 .filter((x) => x != null),
@@ -335,11 +335,11 @@ export const PorterFormContextProvider: React.FC<Props> = (props) => {
       tab.sections?.map((section) =>
         section.contents?.map((field) => {
           if (
-            field.type == "heading" ||
-            field.type == "subtitle" ||
-            field.type == "resource-list" ||
-            field.type == "service-ip-list" ||
-            field.type == "velero-create-backup"
+            field?.type == "heading" ||
+            field?.type == "subtitle" ||
+            field?.type == "resource-list" ||
+            field?.type == "service-ip-list" ||
+            field?.type == "velero-create-backup"
           )
             return;
           // fields that have defaults can't be required since we can always
@@ -398,9 +398,9 @@ export const PorterFormContextProvider: React.FC<Props> = (props) => {
     data?.tabs?.map((tab) =>
       tab.sections?.map((section) =>
         section.contents?.map((field) => {
-          if (finalFunctions[field.type])
+          if (finalFunctions[field?.type])
             varList.push(
-              finalFunctions[field.type](
+              finalFunctions[field?.type](
                 state.variables,
                 field,
                 state.components[field.id]?.state,

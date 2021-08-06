@@ -3,6 +3,7 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"io"
 	"os"
 	"strings"
 	"time"
@@ -299,7 +300,7 @@ func executeRunEphemeral(config *rest.Config, namespace, name, container string,
 	}
 
 	for i := 0; i < 5; i++ {
-		fmt.Printf("attempting connection %d/5\n", i)
+		fmt.Printf("attempting connection %d/5\n", i+1)
 
 		err = t.Safe(fn)
 
@@ -308,12 +309,53 @@ func executeRunEphemeral(config *rest.Config, namespace, name, container string,
 		}
 
 		time.Sleep(2 * time.Second)
+
+		// ugly way to catch non-TTY errors, such as when running command "echo \"hello\""
+		if i == 4 && err != nil && strings.Contains(err.Error(), "not found in pod") {
+			fmt.Printf("Could not open a shell to this container. Container logs:\n")
+
+			err = pipePodLogsToStdout(config, namespace, podName, container, false)
+		}
 	}
 
 	// delete the ephemeral pod
 	deletePod(config, podName, namespace)
 
 	return err
+}
+
+func pipePodLogsToStdout(config *rest.Config, namespace, name, container string, follow bool) error {
+	podLogOpts := v1.PodLogOptions{
+		Container: container,
+		Follow:    follow,
+	}
+
+	// creates the clientset
+	clientset, err := kubernetes.NewForConfig(config)
+
+	if err != nil {
+		return err
+	}
+
+	req := clientset.CoreV1().Pods(namespace).GetLogs(name, &podLogOpts)
+
+	podLogs, err := req.Stream(
+		context.Background(),
+	)
+
+	if err != nil {
+		return err
+	}
+
+	defer podLogs.Close()
+
+	_, err = io.Copy(os.Stdout, podLogs)
+
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func getExistingPod(config *rest.Config, name, namespace string) (*v1.Pod, error) {

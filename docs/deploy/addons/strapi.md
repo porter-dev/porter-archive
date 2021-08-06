@@ -1,10 +1,10 @@
 # Deploy Strapi with Porter
-This is a quickstart repository you can fork to deploy Strapi to Kubernetes on AWS/GCP/DO with Porter. This sample repository uses PostgresDB by default. Modify the files in `/app/config/env/production` to customize your database settings.
+This is a quick guide on deploying Strapi to a Kubernetes cluster in AWS/GCP/DO using Porter. This guide uses PostgresDB by default - to customize your database settings, modify the files in `/app/config/env/production` in the [example repository](https://github.com/porter-dev/strapi).
 
 # Quick Deploy
 ## Deploying Strapi
 1. Create an account on [Porter](https://dashboard.getporter.dev).
-2. [One-click provision a Kubernetes cluster](https://docs.getporter.dev/docs/getting-started-with-porter-on-aws) in a cloud provider of your choice, or [connect an existing cluster.](https://docs.getporter.dev/docs/cli-documentation#connecting-to-an-existing-cluster)
+2. [One-click provision a Kubernetes cluster](https://docs.porter.run/docs/getting-started-with-porter-on-aws) in a cloud provider of your choice, or [connect an existing cluster.](https://docs.porter.run/docs/cli-documentation#connecting-to-an-existing-cluster)
 3. Fork [this repository](https://github.com/porter-dev/strapi).
 4. From the [Launch tab](https://dashboard.getporter.dev/launch), navigate to **Web Service > Deploy from Git Repository**. Then select the forked repository and `Dockerfile` in the root directory.
 5. Configure the port to `1337`, add environment variable `NODE_ENV=production`, and set resources to the [recommended settings](https://strapi.io/documentation/developer-docs/latest/setup-deployment-guides/deployment.html#general-guidelines) (i.e. 2048Mi RAM, 1000 CPU).

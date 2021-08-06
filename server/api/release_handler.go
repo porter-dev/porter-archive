@@ -11,6 +11,7 @@ import (
 
 	"gorm.io/gorm"
 
+	semver "github.com/Masterminds/semver/v3"
 	"github.com/porter-dev/porter/internal/analytics"
 	"github.com/porter-dev/porter/internal/kubernetes/prometheus"
 	"github.com/porter-dev/porter/internal/models"
@@ -217,10 +218,13 @@ func (app *App) HandleGetRelease(w http.ResponseWriter, r *http.Request) {
 
 		if err == nil {
 			porterChart := loader.FindPorterChartInIndexList(repoIndex, res.Chart.Metadata.Name)
+			res.LatestVersion = res.Chart.Metadata.Version
 
-			fmt.Println("PORTER CHART IS", porterChart.Versions)
+			// set latest version to the greater of porterChart.Versions and res.Chart.Metadata.Version
+			porterChartVersion, porterChartErr := semver.NewVersion(porterChart.Versions[0])
+			currChartVersion, currChartErr := semver.NewVersion(res.Chart.Metadata.Version)
 
-			if porterChart != nil && len(porterChart.Versions) > 0 {
+			if currChartErr == nil && porterChartErr == nil && porterChartVersion.GreaterThan(currChartVersion) {
 				res.LatestVersion = porterChart.Versions[0]
 			}
 		}

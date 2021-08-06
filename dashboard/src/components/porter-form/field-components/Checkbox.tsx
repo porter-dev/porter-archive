@@ -59,11 +59,22 @@ export const getFinalVariablesForCheckbox: GetFinalVariablesFunction = (
   vars,
   props: CheckboxField
 ) => {
+  // Read from revision values if unrendered (and therefore not in form state)
+  if (vars[props.variable] === null || vars[props.variable] === undefined) {
+    if (props.value[0] === false) {
+      return { [props.variable]: false };
+    } else if (props.value[0] === true) {
+      return { [props.variable]: true };
+    }
+  }
+
+  // Read from form state if set by user
   if (vars[props.variable] === false) {
     return { [props.variable]: false };
   } else if (vars[props.variable] === true) {
     return { [props.variable]: true };
   }
+
   return {
     [props.variable]: props.value ? props.value[0] : !!props.settings?.default,
   };

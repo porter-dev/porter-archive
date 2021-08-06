@@ -12,7 +12,7 @@ const ArrayInput: React.FC<ArrayInputField> = (props) => {
     props.id,
     {
       initVars: {
-        [props.variable]: props.value ? props.value[0] : [],
+        [props.variable]: props.value && props.value[0] ? props.value[0] : [],
       },
     }
   );
@@ -42,7 +42,7 @@ const ArrayInput: React.FC<ArrayInputField> = (props) => {
   const renderInputList = (values: string[]) => {
     return (
       <>
-        {values.map((value: string, i: number) => {
+        {values?.map((value: string, i: number) => {
           return (
             <InputWrapper>
               <Input
@@ -53,7 +53,7 @@ const ArrayInput: React.FC<ArrayInputField> = (props) => {
                   e.persist();
                   setVars((prev) => {
                     return {
-                      [props.variable]: prev[props.variable].map(
+                      [props.variable]: prev[props.variable]?.map(
                         (t: string, j: number) => {
                           return i == j ? e.target.value : t;
                         }
@@ -103,7 +103,7 @@ export const getFinalVariablesForArrayInput: GetFinalVariablesFunction = (
   return vars[props.variable]
     ? {}
     : {
-        [props.variable]: [],
+        [props.variable]: props.value ? props.value[0] : [],
       };
 };
 

@@ -381,9 +381,8 @@ const ControllerTabFC: React.FunctionComponent<Props> = ({
             <div key={firstItem.replicaSetName + index}>
               <ReplicaSetContainer>
                 <ReplicaSetName>
-                  Replicaset: {firstItem.replicaSetName}
+                  <Bold>Revision 301:</Bold> {firstItem.replicaSetName}
                 </ReplicaSetName>
-                <div> Revision: {firstItem.revisionNumber}</div>
               </ReplicaSetContainer>
               {mapPods(subArray)}
             </div>
@@ -402,10 +401,35 @@ const ControllerTabFC: React.FunctionComponent<Props> = ({
 
 export default ControllerTabFC;
 
+const Bold = styled.span`
+  font-weight: 500;
+  display: inline;
+  color: #ffffff;
+`;
+
+const RevisionLabel = styled.div`
+  font-size: 12px;
+  color: #ffffff33;
+  width: 78px;
+  text-align: right;
+  padding-top: 7px;
+  margin-right: 10px;
+  margin-left: 10px;
+  overflow-wrap: anywhere;
+`;
+
 const ReplicaSetContainer = styled.div`
   padding: 10px 5px;
   display: flex;
+  overflow-wrap: anywhere;
   justify-content: space-between;
+  border-top: 2px solid #ffffff11;
 `;
 
-const ReplicaSetName = styled.span``;
+const ReplicaSetName = styled.span`
+  padding-left: 10px;
+  overflow-wrap: anywhere;
+  max-width: calc(100% - 45px);
+  line-height: 1.5em;
+  color: #ffffff33;
+`;

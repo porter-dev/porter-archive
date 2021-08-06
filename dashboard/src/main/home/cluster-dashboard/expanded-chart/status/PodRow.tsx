@@ -39,24 +39,15 @@ const PodRow: React.FunctionComponent<PodRowProps> = ({
       >
         {pod?.name}
       </Name>
-      {showTooltip && <Tooltip>{pod?.name}</Tooltip>}
-      <DetailsWrapper
-        onMouseOver={() => {
-          setShowInfoTooltip(true);
-        }}
-        onMouseOut={() => {
-          setShowInfoTooltip(false);
-        }}
-      >
-        <div>
-          <i className="material-icons">info</i>
-        </div>
-        {showInfoTooltip && (
-          <DetailsTooltip>
-            <span>Restart count: {pod.restartCount}</span>
-            <span>Created on: {pod.podAge}</span>
-          </DetailsTooltip>
-        )}
+      {
+        showTooltip && (
+          <Tooltip>
+            {pod?.name}
+            <Grey>Restart count: {pod.restartCount}</Grey>
+            <Grey>Created on: {pod.podAge}</Grey>
+          </Tooltip>
+        )
+      }
 
         <Status>
           <StatusColor status={podStatus} />
@@ -70,12 +61,20 @@ const PodRow: React.FunctionComponent<PodRowProps> = ({
             </CloseIcon>
           )}
         </Status>
-      </DetailsWrapper>
     </Tab>
   );
 };
 
 export default PodRow;
+
+const InfoIcon = styled.div`
+  width: 22px;
+`;
+
+const Grey = styled.div`
+  margin-top: 5px;
+  color: #aaaabb;
+`;
 
 const Tooltip = styled.div`
   position: absolute;
@@ -84,9 +83,11 @@ const Tooltip = styled.div`
   top: 38px;
   min-height: 18px;
   max-width: calc(100% - 75px);
-  padding: 2px 5px;
-  background: #383842dd;
+  padding: 5px 7px;
+  background: #272731;
+  z-index: 999;
   display: flex;
+  flex-direction: column;
   justify-content: center;
   flex: 1;
   color: white;
@@ -213,44 +214,9 @@ const StatusColor = styled.div`
 const Name = styled.div`
   overflow: hidden;
   text-overflow: ellipsis;
-  line-height: 16px;
-  word-wrap: break-word;
-  max-height: 32px;
+  line-height: 1.5em;
   display: -webkit-box;
+  overflow-wrap: anywhere;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
-`;
-
-const DetailsWrapper = styled.div`
-  position: relative;
-  display: flex;
-`;
-
-const DetailsTooltip = styled.div`
-  display: flex;
-  flex-direction: column;
-  position: absolute;
-  top: 1px;
-  right: 90px;
-
-  width: 200px;
-  padding: 2px 5px;
-  background: #383842dd;
-  color: white;
-  text-transform: none;
-  font-size: 12px;
-  font-family: "Work Sans", sans-serif;
-  word-wrap: unset;
-  outline: 1px solid #ffffff55;
-  opacity: 0;
-  animation: faded-in 0.1s 0.05s;
-  animation-fill-mode: forwards;
-  @keyframes faded-in {
-    from {
-      opacity: 0;
-    }
-    to {
-      opacity: 1;
-    }
-  }
 `;

@@ -103,7 +103,7 @@ export const getFinalVariablesForArrayInput: GetFinalVariablesFunction = (
   return vars[props.variable]
     ? {}
     : {
-        [props.variable]: [],
+        [props.variable]: props.value ? props.value[0] : [],
       };
 };
 

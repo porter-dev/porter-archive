@@ -1,6 +1,6 @@
 import { useRef } from "react";
 
-interface NewWebsocketOptions {
+export interface NewWebsocketOptions {
   onopen?: () => void;
   onmessage?: (evt: MessageEvent) => void;
   onerror?: (err: ErrorEvent) => void;

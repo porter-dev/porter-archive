@@ -376,12 +376,15 @@ const ControllerTabFC: React.FunctionComponent<Props> = ({
       {!!replicaSetArray.length &&
         replicaSetArray.map((subArray, index) => {
           const firstItem = subArray[0];
-
           return (
             <div key={firstItem.replicaSetName + index}>
               <ReplicaSetContainer>
                 <ReplicaSetName>
-                  <Bold>Revision 301:</Bold> {firstItem.replicaSetName}
+                  {
+                    firstItem?.revisionNumber && firstItem?.revisionNumber.toString() != "N/A" && (
+                      <Bold>Revision {firstItem.revisionNumber}:</Bold>
+                    )
+                  } {firstItem.replicaSetName}
                 </ReplicaSetName>
               </ReplicaSetContainer>
               {mapPods(subArray)}

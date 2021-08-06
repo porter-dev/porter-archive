@@ -9,6 +9,9 @@ import { ChartType, StorageType } from "shared/types";
 import ConfirmOverlay from "components/ConfirmOverlay";
 import { withAuth, WithAuthProps } from "shared/auth/AuthorizationHoc";
 
+import Modal from "main/home/modals/Modal";
+import UpgradeChartModal from "main/home/modals/UpgradeChartModal";
+
 type PropsType = WithAuthProps & {
   showRevisions: boolean;
   toggleShowRevisions: () => void;
@@ -281,6 +284,26 @@ class RevisionSection extends Component<PropsType, StateType> {
       this.state.maxVersion === 0;
     return (
       <div>
+        {this.state.upgradeVersion &&
+              <Modal
+                onRequestClose={() => this.setState({ upgradeVersion: "" })}
+                width="500px"
+                height="450px"
+              >
+                <UpgradeChartModal 
+                  currentChart={this.props.chart}
+                  closeModal={() => {
+                    this.setState({ upgradeVersion: "" });
+                  }}
+                  onSubmit={() => {
+                    this.props.upgradeVersion(this.state.upgradeVersion, () => {
+                      this.setState({ loading: false });
+                    });
+                    this.setState({ upgradeVersion: "", loading: true });
+                  }}
+                />
+              </Modal>
+              }
         <RevisionHeader
           showRevisions={this.props.showRevisions}
           isCurrent={isCurrent}
@@ -304,22 +327,6 @@ class RevisionSection extends Component<PropsType, StateType> {
                 <i className="material-icons">notification_important</i>
                 Template Update Available
               </RevisionUpdateMessage>
-              <ConfirmOverlay
-                show={!!this.state.upgradeVersion}
-                message={`Are you sure you want to redeploy and upgrade to version ${this.state.upgradeVersion}?`}
-                onYes={(e) => {
-                  e.stopPropagation();
-
-                  this.props.upgradeVersion(this.state.upgradeVersion, () => {
-                    this.setState({ loading: false });
-                  });
-                  this.setState({ upgradeVersion: "", loading: true });
-                }}
-                onNo={(e) => {
-                  e.stopPropagation();
-                  this.setState({ upgradeVersion: "" });
-                }}
-              />
             </div>
           )}
         </RevisionHeader>

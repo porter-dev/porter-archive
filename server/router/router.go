@@ -232,6 +232,14 @@ func New(a *api.App) *chi.Mux {
 				),
 			)
 
+			r.Method(
+				"GET",
+				"/templates/upgrade_notes/{name}/{version}",
+				auth.BasicAuthenticate(
+					requestlog.NewHandler(a.HandleGetTemplateUpgradeNotes, l),
+				),
+			)
+
 			// /api/oauth routes
 			r.Method(
 				"GET",

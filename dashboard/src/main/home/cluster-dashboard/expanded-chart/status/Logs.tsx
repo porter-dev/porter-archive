@@ -337,7 +337,7 @@ const Scroll = styled.div`
   }
 
   > input {
-    width; 18px;
+    width: 18px;
     margin-left: 10px;
     margin-right: 6px;
     pointer-events: none;

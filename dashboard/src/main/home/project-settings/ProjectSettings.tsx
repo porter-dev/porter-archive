@@ -5,8 +5,9 @@ import { Context } from "shared/Context";
 
 import InvitePage from "./InviteList";
 import TabRegion from "components/TabRegion";
-import Heading from "components/values-form/Heading";
-import Helper from "components/values-form/Helper";
+import Heading from "components/form-components/Heading";
+import Helper from "components/form-components/Helper";
+import TitleSection from "components/TitleSection";
 import { withAuth, WithAuthProps } from "shared/auth/AuthorizationHoc";
 
 type PropsType = WithAuthProps & {};
@@ -91,9 +92,7 @@ class ProjectSettings extends Component<PropsType, StateType> {
   render() {
     return (
       <StyledProjectSettings>
-        <TitleSection>
-          <Title>Project Settings</Title>
-        </TitleSection>
+        <TitleSection>Project Settings</TitleSection>
         <TabRegion
           currentTab={this.state.currentTab}
           setCurrentTab={(x: string) => this.setState({ currentTab: x })}
@@ -117,28 +116,9 @@ const Warning = styled.div`
   margin-bottom: 20px;
 `;
 
-const Title = styled.div`
-  font-size: 24px;
-  font-weight: 600;
-  font-family: "Work Sans", sans-serif;
-  color: #ffffff;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-`;
-
-const TitleSection = styled.div`
-  margin-bottom: 13px;
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  height: 40px;
-`;
-
 const StyledProjectSettings = styled.div`
-  width: calc(90% - 130px);
+  width: calc(85%);
   min-width: 300px;
-  padding-top: 70px;
   height: 100vh;
 `;
 

@@ -11,6 +11,7 @@ import { pushFiltered } from "shared/routing";
 import { hardcodedNames } from "shared/hardcodedNameDict";
 import SourcePage from "./SourcePage";
 import SettingsPage from "./SettingsPage";
+import TitleSection from "components/TitleSection";
 
 import {
   PorterTemplate,
@@ -455,14 +456,9 @@ class LaunchFlow extends Component<PropsType, StateType> {
 
     return (
       <StyledLaunchFlow>
-        <TitleSection>
-          <i className="material-icons" onClick={this.props.hideLaunchFlow}>
-            keyboard_backspace
-          </i>
+        <TitleSection handleNavBack={this.props.hideLaunchFlow}>
           {this.renderIcon()}
-          <Title>
-            New {name} {currentTab === "porter" ? null : "Instance"}
-          </Title>
+          New {name} {currentTab === "porter" ? null : "Instance"}
         </TitleSection>
         {this.renderCurrentPage()}
         <Br />
@@ -509,54 +505,8 @@ const Polymer = styled.div`
   }
 `;
 
-const Title = styled.div`
-  font-size: 24px;
-  font-weight: 600;
-  font-family: "Work Sans", sans-serif;
-  color: #ffffff;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-`;
-
-const TitleSection = styled.div`
-  margin-bottom: 20px;
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-
-  > i {
-    cursor: pointer;
-    font-size 24px;
-    color: #969Fbbaa;
-    margin-right: 10px;
-    padding: 3px;
-    margin-left: 0px;
-    border-radius: 100px;
-    :hover {
-      background: #ffffff11;
-    }
-  }
-
-  > a {
-    > i {
-      display: flex;
-      align-items: center;
-      margin-bottom: -2px;
-      font-size: 18px;
-      margin-left: 18px;
-      color: #858faaaa;
-      cursor: pointer;
-      :hover {
-        color: #aaaabb;
-      }
-    }
-  }
-`;
-
 const StyledLaunchFlow = styled.div`
   width: calc(90% - 130px);
   min-width: 300px;
-  padding-top: 20px;
-  margin-top: calc(50vh - 340px);
+  margin-top: calc(50vh - 380px);
 `;

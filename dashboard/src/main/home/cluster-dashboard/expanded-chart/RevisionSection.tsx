@@ -9,6 +9,9 @@ import { ChartType, StorageType } from "shared/types";
 import ConfirmOverlay from "components/ConfirmOverlay";
 import { withAuth, WithAuthProps } from "shared/auth/AuthorizationHoc";
 
+import Modal from "main/home/modals/Modal";
+import UpgradeChartModal from "main/home/modals/UpgradeChartModal";
+
 type PropsType = WithAuthProps & {
   showRevisions: boolean;
   toggleShowRevisions: () => void;
@@ -216,6 +219,13 @@ class RevisionSection extends Component<PropsType, StateType> {
   renderRevisionList = () => {
     return this.state.revisions.map((revision: ChartType, i: number) => {
       let isCurrent = revision.version === this.state.maxVersion;
+      const isGithubApp = !!this.props.chart.git_action_config;
+      const imageTag = revision.config?.image?.tag;
+
+      const parsedImageTag = isGithubApp
+        ? String(imageTag).slice(0, 7)
+        : imageTag;
+
       return (
         <Tr
           key={i}
@@ -224,7 +234,7 @@ class RevisionSection extends Component<PropsType, StateType> {
         >
           <Td>{revision.version}</Td>
           <Td>{this.readableDate(revision.info.last_deployed)}</Td>
-          <Td>{this.renderStatus(revision)}</Td>
+          <Td>{parsedImageTag || "N/A"}</Td>
           <Td>v{revision.chart.metadata.version}</Td>
           <Td>
             <RollbackButton
@@ -253,7 +263,9 @@ class RevisionSection extends Component<PropsType, StateType> {
               <Tr disableHover={true}>
                 <Th>Revision No.</Th>
                 <Th>Timestamp</Th>
-                <Th>Status</Th>
+                <Th>
+                  {this.props.chart.git_action_config ? "Commit" : "Image Tag"}
+                </Th>
                 <Th>Template Version</Th>
                 <Th>Rollback</Th>
               </Tr>
@@ -281,6 +293,26 @@ class RevisionSection extends Component<PropsType, StateType> {
       this.state.maxVersion === 0;
     return (
       <div>
+        {this.state.upgradeVersion &&
+              <Modal
+                onRequestClose={() => this.setState({ upgradeVersion: "" })}
+                width="500px"
+                height="450px"
+              >
+                <UpgradeChartModal 
+                  currentChart={this.props.chart}
+                  closeModal={() => {
+                    this.setState({ upgradeVersion: "" });
+                  }}
+                  onSubmit={() => {
+                    this.props.upgradeVersion(this.state.upgradeVersion, () => {
+                      this.setState({ loading: false });
+                    });
+                    this.setState({ upgradeVersion: "", loading: true });
+                  }}
+                />
+              </Modal>
+              }
         <RevisionHeader
           showRevisions={this.props.showRevisions}
           isCurrent={isCurrent}
@@ -304,22 +336,6 @@ class RevisionSection extends Component<PropsType, StateType> {
                 <i className="material-icons">notification_important</i>
                 Template Update Available
               </RevisionUpdateMessage>
-              <ConfirmOverlay
-                show={!!this.state.upgradeVersion}
-                message={`Are you sure you want to redeploy and upgrade to version ${this.state.upgradeVersion}?`}
-                onYes={(e) => {
-                  e.stopPropagation();
-
-                  this.props.upgradeVersion(this.state.upgradeVersion, () => {
-                    this.setState({ loading: false });
-                  });
-                  this.setState({ upgradeVersion: "", loading: true });
-                }}
-                onNo={(e) => {
-                  e.stopPropagation();
-                  this.setState({ upgradeVersion: "" });
-                }}
-              />
             </div>
           )}
         </RevisionHeader>
@@ -480,7 +496,7 @@ const StyledRevisionSection = styled.div`
   background: #ffffff11;
   margin: 25px 0px 18px;
   overflow: hidden;
-  border-radius: 5px;
+  border-radius: 8px;
   animation: ${(props: { showRevisions: boolean }) =>
     props.showRevisions ? "expandRevisions 0.3s" : ""};
   animation-timing-function: ease-out;

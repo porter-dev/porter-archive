@@ -232,6 +232,14 @@ func New(a *api.App) *chi.Mux {
 				),
 			)
 
+			r.Method(
+				"GET",
+				"/templates/upgrade_notes/{name}/{version}",
+				auth.BasicAuthenticate(
+					requestlog.NewHandler(a.HandleGetTemplateUpgradeNotes, l),
+				),
+			)
+
 			// /api/oauth routes
 			r.Method(
 				"GET",
@@ -286,6 +294,22 @@ func New(a *api.App) *chi.Mux {
 				"GET",
 				"/oauth/digitalocean/callback",
 				requestlog.NewHandler(a.HandleDOOAuthCallback, l),
+			)
+
+			r.Method(
+				"GET",
+				"/oauth/projects/{project_id}/slack",
+				auth.DoesUserHaveProjectAccess(
+					requestlog.NewHandler(a.HandleSlackOAuthStartProject, l),
+					mw.URLParam,
+					mw.WriteAccess,
+				),
+			)
+
+			r.Method(
+				"GET",
+				"/oauth/slack/callback",
+				requestlog.NewHandler(a.HandleSlackOAuthCallback, l),
 			)
 
 			// /api/projects routes
@@ -836,6 +860,27 @@ func New(a *api.App) *chi.Mux {
 				"/projects/{project_id}/integrations/oauth",
 				auth.DoesUserHaveProjectAccess(
 					requestlog.NewHandler(a.HandleListProjectOAuthIntegrations, l),
+					mw.URLParam,
+					mw.WriteAccess,
+				),
+			)
+
+			// /api/projects/{project_id}/slack_integrations routes
+			r.Method(
+				"GET",
+				"/projects/{project_id}/slack_integrations",
+				auth.DoesUserHaveProjectAccess(
+					requestlog.NewHandler(a.HandleListSlackIntegrations, l),
+					mw.URLParam,
+					mw.WriteAccess,
+				),
+			)
+
+			r.Method(
+				"DELETE",
+				"/projects/{project_id}/slack_integrations/{slack_integration_id}",
+				auth.DoesUserHaveProjectAccess(
+					requestlog.NewHandler(a.HandleDeleteSlackIntegration, l),
 					mw.URLParam,
 					mw.WriteAccess,
 				),
@@ -1535,6 +1580,20 @@ func New(a *api.App) *chi.Mux {
 				auth.DoesUserHaveProjectAccess(
 					auth.DoesUserHaveClusterAccess(
 						requestlog.NewHandler(a.HandleUpdateConfigMap, l),
+						mw.URLParam,
+						mw.QueryParam,
+					),
+					mw.URLParam,
+					mw.WriteAccess,
+				),
+			)
+
+			r.Method(
+				"POST",
+				"/projects/{project_id}/k8s/configmap/rename",
+				auth.DoesUserHaveProjectAccess(
+					auth.DoesUserHaveClusterAccess(
+						requestlog.NewHandler(a.HandleRenameConfigMap, l),
 						mw.URLParam,
 						mw.QueryParam,
 					),

@@ -255,7 +255,6 @@ class Home extends Component<PropsType, StateType> {
     let { match } = this.props;
     let params = match.params as any;
     let { cluster } = params;
-    console.log("cluster is", cluster);
 
     let { user } = this.context;
 
@@ -486,7 +485,13 @@ class Home extends Component<PropsType, StateType> {
   };
 
   render() {
-    let { currentModal, setCurrentModal, currentProject } = this.context;
+    let {
+      currentModal,
+      setCurrentModal,
+      currentProject,
+      currentOverlay,
+      setCurrentOverlay,
+    } = this.context;
 
     return (
       <StyledHome>
@@ -573,6 +578,15 @@ class Home extends Component<PropsType, StateType> {
           </Modal>
         )}
 
+        {currentOverlay && (
+          <ConfirmOverlay
+            show={true}
+            message={currentOverlay.message}
+            onYes={currentOverlay.onYes}
+            onNo={currentOverlay.onNo}
+          />
+        )}
+
         {this.renderSidebar()}
 
         <ViewWrapper>
@@ -605,7 +619,7 @@ export default withRouter(withAuth(Home));
 const ViewWrapper = styled.div`
   height: 100%;
   width: 100vw;
-  padding-top: 30px;
+  padding-top: 10vh;
   overflow-y: auto;
   display: flex;
   flex: 1;
@@ -615,10 +629,8 @@ const ViewWrapper = styled.div`
 `;
 
 const DashboardWrapper = styled.div`
-  width: 80%;
-  padding-top: 50px;
+  width: calc(85%);
   min-width: 300px;
-  padding-bottom: 120px;
 `;
 
 const StyledHome = styled.div`

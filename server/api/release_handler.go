@@ -11,6 +11,7 @@ import (
 
 	"gorm.io/gorm"
 
+	semver "github.com/Masterminds/semver/v3"
 	"github.com/porter-dev/porter/internal/analytics"
 	"github.com/porter-dev/porter/internal/kubernetes/prometheus"
 	"github.com/porter-dev/porter/internal/models"
@@ -25,6 +26,7 @@ import (
 	"github.com/porter-dev/porter/internal/helm/grapher"
 	"github.com/porter-dev/porter/internal/helm/loader"
 	"github.com/porter-dev/porter/internal/integrations/ci/actions"
+	"github.com/porter-dev/porter/internal/integrations/slack"
 	"github.com/porter-dev/porter/internal/kubernetes"
 	"github.com/porter-dev/porter/internal/repository"
 	"gopkg.in/yaml.v2"
@@ -86,8 +88,6 @@ type PorterRelease struct {
 	GitActionConfig *models.GitActionConfigExternal `json:"git_action_config"`
 	ImageRepoURI    string                          `json:"image_repo_uri"`
 }
-
-var porterApplications = map[string]string{"web": "", "job": "", "worker": ""}
 
 // HandleGetRelease retrieves a single release based on a name and revision
 func (app *App) HandleGetRelease(w http.ResponseWriter, r *http.Request) {
@@ -205,13 +205,26 @@ func (app *App) HandleGetRelease(w http.ResponseWriter, r *http.Request) {
 
 	// detect if Porter application chart and attempt to get the latest version
 	// from chart repo
-	if _, found := porterApplications[res.Chart.Metadata.Name]; found {
-		repoIndex, err := loader.LoadRepoIndexPublic(app.ServerConf.DefaultApplicationHelmRepoURL)
+	chartRepoURL, firstFound := app.ChartLookupURLs[res.Chart.Metadata.Name]
+
+	if !firstFound {
+		app.updateChartRepoURLs()
+
+		chartRepoURL, _ = app.ChartLookupURLs[res.Chart.Metadata.Name]
+	}
+
+	if chartRepoURL != "" {
+		repoIndex, err := loader.LoadRepoIndexPublic(chartRepoURL)
 
 		if err == nil {
 			porterChart := loader.FindPorterChartInIndexList(repoIndex, res.Chart.Metadata.Name)
+			res.LatestVersion = res.Chart.Metadata.Version
 
-			if porterChart != nil && len(porterChart.Versions) > 0 {
+			// set latest version to the greater of porterChart.Versions and res.Chart.Metadata.Version
+			porterChartVersion, porterChartErr := semver.NewVersion(porterChart.Versions[0])
+			currChartVersion, currChartErr := semver.NewVersion(res.Chart.Metadata.Version)
+
+			if currChartErr == nil && porterChartErr == nil && porterChartVersion.GreaterThan(currChartVersion) {
 				res.LatestVersion = porterChart.Versions[0]
 			}
 		}
@@ -951,20 +964,22 @@ func (app *App) HandleUpgradeRelease(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			app.sendExternalError(err, http.StatusNotFound, HTTPError{
 				Code:   ErrReleaseReadData,
-				Errors: []string{"release not found"},
+				Errors: []string{"chart version not found"},
 			}, w)
 
 			return
 		}
 
-		if _, found := porterApplications[release.Chart.Metadata.Name]; found {
-			chart, err := loader.LoadChartPublic(
-				app.ServerConf.DefaultApplicationHelmRepoURL,
-				release.Chart.Metadata.Name,
-				form.ChartVersion,
-			)
+		chartRepoURL, foundFirst := app.ChartLookupURLs[release.Chart.Metadata.Name]
 
-			if err != nil {
+		if !foundFirst {
+			app.updateChartRepoURLs()
+
+			var found bool
+
+			chartRepoURL, found = app.ChartLookupURLs[release.Chart.Metadata.Name]
+
+			if !found {
 				app.sendExternalError(err, http.StatusNotFound, HTTPError{
 					Code:   ErrReleaseReadData,
 					Errors: []string{"chart not found"},
@@ -972,14 +987,51 @@ func (app *App) HandleUpgradeRelease(w http.ResponseWriter, r *http.Request) {
 
 				return
 			}
-
-			conf.Chart = chart
 		}
+
+		chart, err := loader.LoadChartPublic(
+			chartRepoURL,
+			release.Chart.Metadata.Name,
+			form.ChartVersion,
+		)
+
+		if err != nil {
+			app.sendExternalError(err, http.StatusNotFound, HTTPError{
+				Code:   ErrReleaseReadData,
+				Errors: []string{"chart not found"},
+			}, w)
+
+			return
+		}
+
+		conf.Chart = chart
+	}
+
+	slackInts, _ := app.Repo.SlackIntegration.ListSlackIntegrationsByProjectID(uint(projID))
+	notifier := slack.NewSlackNotifier(slackInts...)
+
+	notifyOpts := &slack.NotifyOpts{
+		ProjectID:   uint(projID),
+		ClusterID:   form.Cluster.ID,
+		ClusterName: form.Cluster.Name,
+		Name:        name,
+		Namespace:   form.Namespace,
+		URL: fmt.Sprintf(
+			"%s/applications/%s/%s/%s",
+			app.ServerConf.ServerURL,
+			url.PathEscape(form.Cluster.Name),
+			form.Namespace,
+			name,
+		) + fmt.Sprintf("?project_id=%d", uint(projID)),
 	}
 
 	rel, err := agent.UpgradeRelease(conf, form.Values, app.DOConf)
 
 	if err != nil {
+		notifyOpts.Status = slack.StatusFailed
+
+		notifier.Notify(notifyOpts)
+
 		app.sendExternalError(err, http.StatusInternalServerError, HTTPError{
 			Code:   ErrReleaseDeploy,
 			Errors: []string{err.Error()},
@@ -987,6 +1039,11 @@ func (app *App) HandleUpgradeRelease(w http.ResponseWriter, r *http.Request) {
 
 		return
 	}
+
+	notifyOpts.Status = string(rel.Info.Status)
+	notifyOpts.Version = rel.Version
+
+	notifier.Notify(notifyOpts)
 
 	// update the github actions env if the release exists and is built from source
 	if cName := rel.Chart.Metadata.Name; cName == "job" || cName == "web" || cName == "worker" {
@@ -1057,6 +1114,7 @@ func (app *App) HandleUpgradeRelease(w http.ResponseWriter, r *http.Request) {
 					FolderPath:             gitAction.FolderPath,
 					ImageRepoURL:           gitAction.ImageRepoURI,
 					BuildEnv:               cEnv.Container.Env.Normal,
+					ClusterID:              release.ClusterID,
 				}
 
 				err = gaRunner.CreateEnvSecret()
@@ -1171,9 +1229,31 @@ func (app *App) HandleReleaseDeployWebhook(w http.ResponseWriter, r *http.Reques
 		Values:     rel.Config,
 	}
 
-	_, err = agent.UpgradeReleaseByValues(conf, app.DOConf)
+	slackInts, _ := app.Repo.SlackIntegration.ListSlackIntegrationsByProjectID(uint(form.ReleaseForm.Cluster.ProjectID))
+	notifier := slack.NewSlackNotifier(slackInts...)
+
+	notifyOpts := &slack.NotifyOpts{
+		ProjectID:   uint(form.ReleaseForm.Cluster.ProjectID),
+		ClusterID:   form.Cluster.ID,
+		ClusterName: form.Cluster.Name,
+		Name:        rel.Name,
+		Namespace:   rel.Namespace,
+		URL: fmt.Sprintf(
+			"%s/applications/%s/%s/%s",
+			app.ServerConf.ServerURL,
+			url.PathEscape(form.Cluster.Name),
+			form.Namespace,
+			rel.Name,
+		) + fmt.Sprintf("?project_id=%d", uint(form.ReleaseForm.Cluster.ProjectID)),
+	}
+
+	rel, err = agent.UpgradeReleaseByValues(conf, app.DOConf)
 
 	if err != nil {
+		notifyOpts.Status = slack.StatusFailed
+
+		notifier.Notify(notifyOpts)
+
 		app.sendExternalError(err, http.StatusInternalServerError, HTTPError{
 			Code:   ErrReleaseDeploy,
 			Errors: []string{err.Error()},
@@ -1181,6 +1261,11 @@ func (app *App) HandleReleaseDeployWebhook(w http.ResponseWriter, r *http.Reques
 
 		return
 	}
+
+	notifyOpts.Status = string(rel.Info.Status)
+	notifyOpts.Version = rel.Version
+
+	notifier.Notify(notifyOpts)
 
 	app.analyticsClient.Track(analytics.CreateSegmentRedeployViaWebhookTrack("anonymous", repository.(string)))
 
@@ -1444,6 +1529,7 @@ func (app *App) HandleRollbackRelease(w http.ResponseWriter, r *http.Request) {
 					FolderPath:             gitAction.FolderPath,
 					ImageRepoURL:           gitAction.ImageRepoURI,
 					BuildEnv:               cEnv.Container.Env.Normal,
+					ClusterID:              release.ClusterID,
 				}
 
 				err = gaRunner.CreateEnvSecret()

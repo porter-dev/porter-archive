@@ -19,6 +19,8 @@ export interface DetailedIngressError {
 }
 
 export interface ChartType {
+  image_repo_uri: string;
+  git_action_config: any;
   name: string;
   info: {
     last_deployed: string;
@@ -46,6 +48,63 @@ export interface ChartType {
   version: number;
   namespace: string;
   latest_version: string;
+}
+
+export interface ChartTypeWithExtendedConfig extends ChartType {
+  config: {
+    auto_deploy: boolean;
+    autoscaling: {
+      enabled: boolean;
+      maxReplicas: number;
+      minReplicas: number;
+      targetCPUUtilizationPercentage: number;
+      targetMemoryUtilizationPercentage: number;
+    };
+    cloudsql: {
+      connectionName: string;
+      dbPort: number;
+      enabled: boolean;
+      serviceAccountJSON: string;
+    };
+    container: {
+      command: string;
+      env: any;
+      lifecycle: { postStart: string; preStop: string };
+      port: number;
+    };
+    currentCluster: {
+      service: { is_aws: boolean; is_do: boolean; is_gcp: boolean };
+    };
+    health: {
+      enabled: boolean;
+      failureThreshold: number;
+      path: string;
+      periodSeconds: number;
+    };
+    image: {
+      pullPolicy: string;
+      repository: string;
+      tag: string;
+    };
+    ingress: {
+      annotations: any;
+      custom_domain: boolean;
+      custom_paths: any[];
+      enabled: boolean;
+      hosts: any[];
+      porter_hosts: string[];
+      provider: string;
+      wildcard: boolean;
+    };
+    pvc: { enabled: boolean; mountPath: string; storage: string };
+    replicaCount: number;
+    resources: { requests: { cpu: string; memory: string } };
+    service: { port: number };
+    serviceAccount: { annotations: any; create: boolean; name: string };
+    showStartCommand: boolean;
+    statefulset: { enabled: boolean };
+    terminationGracePeriodSeconds: number;
+  };
 }
 
 export interface ResourceType {
@@ -209,6 +268,12 @@ export interface ContextProps {
   currentModal?: string;
   currentModalData: any;
   setCurrentModal: (currentModal: string, currentModalData?: any) => void;
+  currentOverlay: {
+    message: string;
+    onYes: any;
+    onNo: any;
+  };
+  setCurrentOverlay: (x: any) => void;
   currentError?: string;
   setCurrentError: (currentError: string) => void;
   currentCluster?: ClusterType;

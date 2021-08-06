@@ -252,8 +252,8 @@ const StyledChart = styled.div`
   cursor: pointer;
   margin-bottom: 25px;
   padding: 1px;
-  border-radius: 5px;
-  box-shadow: 0 5px 8px 0px #00000033;
+  border-radius: 8px;
+  box-shadow: 0 4px 15px 0px #00000055;
   position: relative;
   border: 2px solid #9eb4ff00;
   width: calc(100% + 2px);
@@ -271,7 +271,7 @@ const StyledChart = styled.div`
       padding-top: 4px;
       padding-bottom: 14px;
       margin-left: 0px;
-      box-shadow: 0 5px 8px 0px #00000033;
+      box-shadow: 0 4px 15px 0px #00000055;
       padding-left: 1px;
       margin-bottom: 25px;
       margin-top: 0px;
@@ -304,7 +304,7 @@ const StyledChart = styled.div`
       padding-top: 4px;
       padding-bottom: 14px;
       margin-left: 0px;
-      box-shadow: 0 5px 8px 0px #00000033;
+      box-shadow: 0 4px 15px 0px #00000055;
       padding-left: 1px;
       margin-bottom: 25px;
       margin-top: 0px;

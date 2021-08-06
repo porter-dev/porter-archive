@@ -1,8 +1,8 @@
 import React, { useContext, useState } from "react";
 import styled from "styled-components";
-import Heading from "components/values-form/Heading";
-import Helper from "components/values-form/Helper";
-import InputRow from "components/values-form/InputRow";
+import Heading from "components/form-components/Heading";
+import Helper from "components/form-components/Helper";
+import InputRow from "components/form-components/InputRow";
 import { Context } from "shared/Context";
 import api from "shared/api";
 
@@ -122,6 +122,7 @@ const ClusterSettings: React.FC = () => {
     <div>
       <StyledSettingsSection showSource={false}>
         {keyRotationSection}
+        <DarkMatter />
         <Heading>Delete Cluster</Heading>
         {helperText}
         <Button
@@ -137,14 +138,19 @@ const ClusterSettings: React.FC = () => {
 
 export default ClusterSettings;
 
+const DarkMatter = styled.div`
+  width: 100%;
+  margin-top: -15px;
+`;
+
 const StyledSettingsSection = styled.div<{ showSource: boolean }>`
   margin-top: 35px;
   width: 100%;
   background: #ffffff11;
   padding: 0 35px;
-  padding-bottom: 50px;
+  padding-bottom: 15px;
   position: relative;
-  border-radius: 5px;
+  border-radius: 8px;
   overflow: auto;
   height: ${(props) => (props.showSource ? "calc(100% - 55px)" : "100%")};
 `;

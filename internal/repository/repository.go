@@ -24,4 +24,5 @@ type Repository struct {
 	AWSIntegration            AWSIntegrationRepository
 	GithubAppInstallation     GithubAppInstallationRepository
 	GithubAppOAuthIntegration GithubAppOAuthIntegrationRepository
+	SlackIntegration          SlackIntegrationRepository
 }

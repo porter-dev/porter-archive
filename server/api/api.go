@@ -18,6 +18,7 @@ import (
 
 	"github.com/gorilla/sessions"
 	"github.com/porter-dev/porter/internal/helm"
+	"github.com/porter-dev/porter/internal/helm/loader"
 	"github.com/porter-dev/porter/internal/kubernetes"
 	lr "github.com/porter-dev/porter/internal/logger"
 	"github.com/porter-dev/porter/internal/repository"
@@ -81,12 +82,18 @@ type App struct {
 	// config for capabilities
 	Capabilities *AppCapabilities
 
+	// ChartLookupURLs contains an in-memory store of Porter chart names matched with
+	// a repo URL, so that finding a chart does not involve multiple lookups to our
+	// chart repo's index.yaml file
+	ChartLookupURLs map[string]string
+
 	// oauth-specific clients
 	GithubUserConf    *oauth2.Config
 	GithubProjectConf *oauth2.Config
 	GithubAppConf     *oauth.GithubAppConf
 	DOConf            *oauth2.Config
 	GoogleUserConf    *oauth2.Config
+	SlackConf         *oauth2.Config
 
 	db              *gorm.DB
 	validator       *vr.Validate
@@ -96,13 +103,14 @@ type App struct {
 }
 
 type AppCapabilities struct {
-	Provisioning bool `json:"provisioner"`
-	Github       bool `json:"github"`
-	BasicLogin   bool `json:"basic_login"`
-	GithubLogin  bool `json:"github_login"`
-	GoogleLogin  bool `json:"google_login"`
-	Email        bool `json:"email"`
-	Analytics    bool `json:"analytics"`
+	Provisioning       bool `json:"provisioner"`
+	Github             bool `json:"github"`
+	BasicLogin         bool `json:"basic_login"`
+	GithubLogin        bool `json:"github_login"`
+	GoogleLogin        bool `json:"google_login"`
+	SlackNotifications bool `json:"slack_notifs"`
+	Email              bool `json:"email"`
+	Analytics          bool `json:"analytics"`
 }
 
 // New returns a new App instance
@@ -202,6 +210,20 @@ func New(conf *AppConfig) (*App, error) {
 		})
 	}
 
+	if sc.SlackClientID != "" && sc.SlackClientSecret != "" {
+		app.Capabilities.SlackNotifications = true
+
+		app.SlackConf = oauth.NewSlackClient(&oauth.Config{
+			ClientID:     sc.SlackClientID,
+			ClientSecret: sc.SlackClientSecret,
+			Scopes: []string{
+				"incoming-webhook",
+				"team:read",
+			},
+			BaseURL: sc.ServerURL,
+		})
+	}
+
 	if sc.DOClientID != "" && sc.DOClientSecret != "" {
 		app.DOConf = oauth.NewDigitalOceanClient(&oauth.Config{
 			ClientID:     sc.DOClientID,
@@ -221,6 +243,8 @@ func New(conf *AppConfig) (*App, error) {
 
 	newSegmentClient := analytics.InitializeAnalyticsSegmentClient(sc.SegmentClientKey, app.Logger)
 	app.analyticsClient = newSegmentClient
+
+	app.updateChartRepoURLs()
 
 	return app, nil
 }
@@ -295,4 +319,25 @@ func (app *App) getTokenFromRequest(r *http.Request) *token.Token {
 	tok, _ := token.GetTokenFromEncoded(reqToken, app.tokenConf)
 
 	return tok
+}
+
+func (app *App) updateChartRepoURLs() {
+	newCharts := make(map[string]string)
+
+	for _, chartRepo := range []string{
+		app.ServerConf.DefaultApplicationHelmRepoURL,
+		app.ServerConf.DefaultAddonHelmRepoURL,
+	} {
+		indexFile, err := loader.LoadRepoIndexPublic(chartRepo)
+
+		if err != nil {
+			continue
+		}
+
+		for chartName, _ := range indexFile.Entries {
+			newCharts[chartName] = chartRepo
+		}
+	}
+
+	app.ChartLookupURLs = newCharts
 }

@@ -6,17 +6,15 @@ import backArrow from "assets/back_arrow.png";
 import _ from "lodash";
 import loading from "assets/loading.gif";
 
-import { ChartType, StorageType, ClusterType } from "shared/types";
+import { ChartType, ClusterType, StorageType } from "shared/types";
 import { Context } from "shared/Context";
 import api from "shared/api";
 
 import SaveButton from "components/SaveButton";
-import Loading from "components/Loading";
 import TitleSection from "components/TitleSection";
 import JobList from "./jobs/JobList";
 import SettingsSection from "./SettingsSection";
 import PorterFormWrapper from "components/porter-form/PorterFormWrapper";
-import { PlaceHolder } from "brace";
 import { withAuth, WithAuthProps } from "shared/auth/AuthorizationHoc";
 
 type PropsType = WithAuthProps & {

@@ -3,7 +3,6 @@ import ClipboardJS from "clipboard";
 import React, { Component, RefObject } from "react";
 import Tooltip from "@material-ui/core/Tooltip";
 import styled from "styled-components";
-import { styled as materialStyled } from "@material-ui/core/styles";
 
 type PropsType = {
   text: string;

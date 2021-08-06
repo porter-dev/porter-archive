@@ -1,11 +1,6 @@
 import React, { Component } from "react";
 
-import {
-  ProjectType,
-  ClusterType,
-  CapabilityType,
-  ContextProps,
-} from "shared/types";
+import { CapabilityType, ClusterType, ContextProps, ProjectType } from "shared/types";
 
 import { pushQueryParams } from "shared/routing";
 

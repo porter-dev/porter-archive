@@ -1,14 +1,14 @@
-import React, { useContext, useState } from "react";
+import React, { useContext } from "react";
 import {
-  Section,
+  ArrayInputField,
+  CheckboxField,
   FormField,
   InputField,
-  CheckboxField,
   KeyValueArrayField,
-  ArrayInputField,
-  SelectField,
-  ServiceIPListField,
   ResourceListField,
+  Section,
+  SelectField,
+  ServiceIPListField
 } from "./types";
 import TabRegion, { TabOption } from "../TabRegion";
 import Heading from "../form-components/Heading";

@@ -1,4 +1,4 @@
-import React, { Component } from "react";
+import React from "react";
 import { Route, RouteComponentProps, Switch, withRouter } from "react-router";
 
 import { integrationList } from "shared/common";

@@ -12,7 +12,7 @@ const ArrayInput: React.FC<ArrayInputField> = (props) => {
     props.id,
     {
       initVars: {
-        [props.variable]: props.value ? props.value[0] : [],
+        [props.variable]: props.value && props.value[0] ? props.value[0] : [],
       },
     }
   );

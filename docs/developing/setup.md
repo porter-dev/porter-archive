@@ -89,7 +89,7 @@ Follow the steps to install WSL on Windows here https://docs.microsoft.com/en-us
 ### Requirements
 
 `sudo apt install xdg-utils` <br/>
-`sudo apt install postgres`
+`sudo apt install postgresql`
 
 ### Setup Process
 

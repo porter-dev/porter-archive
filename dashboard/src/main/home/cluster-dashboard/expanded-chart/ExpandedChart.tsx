@@ -80,7 +80,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
   const [imageIsPlaceholder, setImageIsPlaceholer] = useState<boolean>(false);
   const [newestImage, setNewestImage] = useState<string>(null);
   const [isLoadingChartData, setIsLoadingChartData] = useState<boolean>(true);
-
+  const [showRepoTooltip, setShowRepoTooltip] = useState(false);
   const [isAuthorized] = useAuth();
 
   const {
@@ -689,7 +689,21 @@ const ExpandedChart: React.FC<Props> = (props) => {
     return (
       <DeploymentImageContainer>
         <DeploymentTypeIcon src={icon} />
-        {repository}
+        <RepositoryName
+          onMouseOver={() => {
+            setShowRepoTooltip(true);
+          }}
+          onMouseOut={() => {
+            setShowRepoTooltip(false);
+          }}
+        >
+          {repository}
+        </RepositoryName>
+        {
+          showRepoTooltip && (
+            <Tooltip>{repository}</Tooltip>
+          )
+        }
       </DeploymentImageContainer>
     );
   };
@@ -706,10 +720,10 @@ const ExpandedChart: React.FC<Props> = (props) => {
             iconWidth="33px"
           >
             {currentChart.name}
+            {renderDeploymentType()}
             <TagWrapper>
               Namespace <NamespaceTag>{currentChart.namespace}</NamespaceTag>
             </TagWrapper>
-            {renderDeploymentType()}
           </TitleSection>
 
           {currentChart.chart.metadata.name != "worker" &&
@@ -796,6 +810,41 @@ const ExpandedChart: React.FC<Props> = (props) => {
 };
 
 export default ExpandedChart;
+
+const RepositoryName = styled.div`
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 390px;
+  position: relative;
+  margin-right: 3px;
+`;
+
+const Tooltip = styled.div`
+  position: absolute;
+  left: -40px;
+  top: 28px;
+  min-height: 18px;
+  max-width: calc(700px);
+  padding: 5px 7px;
+  background: #272731;
+  z-index: 999;
+  color: white;
+  font-size: 12px;
+  font-family: "Work Sans", sans-serif;
+  outline: 1px solid #ffffff55;
+  opacity: 0;
+  animation: faded-in 0.2s 0.15s;
+  animation-fill-mode: forwards;
+  @keyframes faded-in {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+`;
 
 const TextWrap = styled.div``;
 
@@ -946,7 +995,7 @@ const TagWrapper = styled.div`
   height: 20px;
   font-size: 12px;
   display: flex;
-  margin-left: 20px;
+  margin-left: 15px;
   margin-bottom: -3px;
   align-items: center;
   font-weight: 400;
@@ -1016,9 +1065,10 @@ const StyledExpandedChart = styled.div`
 
 const DeploymentImageContainer = styled.div`
   height: 20px;
-  font-size: 14px;
+  font-size: 13px;
+  position: relative;
   display: flex;
-  margin-left: 20px;
+  margin-left: 15px;
   margin-bottom: -3px;
   align-items: center;
   font-weight: 400;
@@ -1028,6 +1078,6 @@ const DeploymentImageContainer = styled.div`
 `;
 
 const DeploymentTypeIcon = styled(Icon)`
-  width: 25px;
-  margin-right: 5px;
+  width: 20px;
+  margin-right: 10px;
 `;

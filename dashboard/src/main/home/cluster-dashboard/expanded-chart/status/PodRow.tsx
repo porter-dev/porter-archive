@@ -20,7 +20,6 @@ const PodRow: React.FunctionComponent<PodRowProps> = ({
   podStatus,
 }) => {
   const [showTooltip, setShowTooltip] = useState(false);
-  const [showInfoTooltip, setShowInfoTooltip] = useState(false);
 
   return (
     <Tab key={pod?.name} selected={isSelected} onClick={onTabClick}>

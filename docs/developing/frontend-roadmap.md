@@ -2,7 +2,7 @@
 
 We know that the current state of the Porter Dashboard is not the most updated one in terms of React practices, but the idea is not to keep it that way. That's why we want to introduce a new roadmap that every contributor can help on in terms to improve the current functionality!
 
-If you want to see the current state of the roadmap you can check out this document! [Frontend Roadmap Status]()
+If you want to see the current state of the roadmap you can check out this document! [Frontend Roadmap Status](frontend-roadmap-status.md)
 
 ## Roadmap
 
@@ -43,4 +43,4 @@ With this questions in mind, is pretty obvious that the work for clean up can be
 
 This one is a little bit more trickier in terms of implementation, as its not aimed for just one component but instead, for a whole set of components that have deep relations between them. A clear example of this is the applications module, it's a tightly coupled set of components that are mixed with jobs and env groups, even if they don't share any logic and a really small sets of components, this is clearly not clean in any way and this step should help the project to be more organized for exploring it and to know where to add new stuff or find the component that we want to change!
 
-You can find more about the routing system that we will implement on the frontend guide document!
+You can find more about the routing system that we will implement on the [frontend guide document](frontend-guide.md)!

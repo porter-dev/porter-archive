@@ -64,5 +64,7 @@ export const getFinalVariablesForCheckbox: GetFinalVariablesFunction = (
   } else if (vars[props.variable] === true) {
     return { [props.variable]: true };
   }
-  return { [props.variable]: !!props.settings?.default };
+  return {
+    [props.variable]: props.value ? props.value[0] : !!props.settings?.default,
+  };
 };

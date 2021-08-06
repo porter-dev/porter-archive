@@ -5,7 +5,7 @@ import api from "shared/api";
 import { ProjectType } from "shared/types";
 import { isAlphanumeric } from "shared/common";
 import { Context } from "shared/Context";
-import { pushQueryParams, pushFiltered } from "shared/routing";
+import { pushFiltered } from "shared/routing";
 
 import SaveButton from "components/SaveButton";
 import { RouteComponentProps, withRouter } from "react-router";

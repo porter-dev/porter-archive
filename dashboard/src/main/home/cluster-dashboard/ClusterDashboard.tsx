@@ -2,16 +2,11 @@ import React, { Component } from "react";
 import styled from "styled-components";
 import monojob from "assets/monojob.png";
 import monoweb from "assets/monoweb.png";
-import { Switch, Route } from "react-router-dom";
+import { Route, Switch } from "react-router-dom";
 
 import { Context } from "shared/Context";
 import { ChartType, ClusterType } from "shared/types";
-import {
-  getQueryParam,
-  PorterUrl,
-  pushFiltered,
-  pushQueryParams,
-} from "shared/routing";
+import { getQueryParam, PorterUrl, pushFiltered, pushQueryParams } from "shared/routing";
 
 import DashboardHeader from "./DashboardHeader";
 import ChartList from "./chart/ChartList";

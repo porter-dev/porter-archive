@@ -1,11 +1,11 @@
 import React, { createContext, useContext, useReducer } from "react";
 import {
+  GetFinalVariablesFunction,
+  PorterFormAction,
   PorterFormData,
   PorterFormState,
-  PorterFormAction,
-  PorterFormVariableList,
   PorterFormValidationInfo,
-  GetFinalVariablesFunction,
+  PorterFormVariableList
 } from "./types";
 import { ShowIf, ShowIfAnd, ShowIfNot, ShowIfOr } from "../../shared/types";
 import { getFinalVariablesForStringInput } from "./field-components/Input";

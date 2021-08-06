@@ -348,10 +348,16 @@ export const getFinalVariablesForKeyValueArray: GetFinalVariablesFunction = (
   props: KeyValueArrayField,
   state: KeyValueArrayFieldState
 ) => {
-  if (!state)
+  if (!state) {
     return {
-      [props.variable]: {},
+      [props.variable]:
+        props.value && props.value[0]
+          ? (Object.entries(props.value[0])?.map(([k, v]) => {
+              return { key: k, value: v };
+            }) as any[])
+          : [],
     };
+  }
 
   let obj = {} as any;
   const rg = /(?:^|[^\\])(\\n)/g;

@@ -11,6 +11,8 @@ internal/local_templates
 gon*.hcl
 *prod.Dockerfile
 staging.sh
+*.crt
+*.key
 
 # Local .terraform directories
 **/.terraform/*

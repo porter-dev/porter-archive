@@ -1,4 +1,4 @@
-import React, { Component } from "react";
+import React, { Component, useContext, useEffect, useState } from "react";
 import styled from "styled-components";
 
 import api from "shared/api";
@@ -9,82 +9,108 @@ import Loading from "components/Loading";
 import Logs from "./Logs";
 import ControllerTab from "./ControllerTab";
 
-type PropsType = {
+type Props = {
   selectors?: string[];
   currentChart: ChartType;
 };
 
-type StateType = {
-  logs: string[];
-  pods: any[];
-  selectedPod: any;
-  controllers: any[];
-  loading: boolean;
-  podError: string;
-};
+const StatusSectionFC: React.FunctionComponent<Props> = ({
+  currentChart,
+  selectors,
+}) => {
+  const [selectedPod, setSelectedPod] = useState<any>({});
+  const [controllers, setControllers] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [podError, setPodError] = useState<string>("");
 
-export default class StatusSection extends Component<PropsType, StateType> {
-  state = {
-    logs: [] as string[],
-    pods: [] as any[],
-    selectedPod: {} as any,
-    controllers: [] as any[],
-    loading: true,
-    podError: "",
-  };
+  const { currentProject, currentCluster, setCurrentError } = useContext(
+    Context
+  );
 
-  renderLogs = () => {
+  useEffect(() => {
+    let isSubscribed = true;
+    api
+      .getChartControllers(
+        "<token>",
+        {
+          namespace: currentChart.namespace,
+          cluster_id: currentCluster.id,
+          storage: StorageType.Secret,
+        },
+        {
+          id: currentProject.id,
+          name: currentChart.name,
+          revision: currentChart.version,
+        }
+      )
+      .then((res: any) => {
+        if (!isSubscribed) {
+          return;
+        }
+        let controllers =
+          currentChart.chart.metadata.name == "job"
+            ? res.data[0]?.status.active
+            : res.data;
+        setControllers(controllers);
+        setIsLoading(false);
+      })
+      .catch((err) => {
+        if (!isSubscribed) {
+          return;
+        }
+        setCurrentError(JSON.stringify(err));
+        setControllers([]);
+        setIsLoading(false);
+      });
+    return () => (isSubscribed = false);
+  }, [currentProject, currentCluster, setCurrentError, currentChart]);
+
+  const renderLogs = () => {
     return (
       <Logs
-        podError={this.state.podError}
-        key={this.state.selectedPod?.metadata?.name}
-        selectedPod={this.state.selectedPod}
+        podError={podError}
+        key={selectedPod?.metadata?.name}
+        selectedPod={selectedPod}
       />
     );
   };
 
-  selectPod = (pod: any) => {
-    this.setState({
-      selectedPod: pod,
-    });
-  };
-
-  renderTabs = () => {
-    return this.state.controllers.map((c, i) => {
+  const renderTabs = () => {
+    return controllers.map((c, i) => {
       return (
         <ControllerTab
           // handle CronJob case
           key={c.metadata?.uid || c.uid}
-          selectedPod={this.state.selectedPod}
-          selectPod={this.selectPod.bind(this)}
-          selectors={this.props.selectors ? [this.props.selectors[i]] : null}
+          selectedPod={selectedPod}
+          selectPod={setSelectedPod}
+          selectors={selectors ? [selectors[i]] : null}
           controller={c}
-          isLast={i === this.state.controllers?.length - 1}
+          isLast={i === controllers?.length - 1}
           isFirst={i === 0}
-          setPodError={(x: string) => this.setState({ podError: x })}
+          setPodError={(x: string) => setPodError(x)}
         />
       );
     });
   };
 
-  renderStatusSection = () => {
-    if (this.state.loading) {
+  const renderStatusSection = () => {
+    if (isLoading) {
       return (
         <NoControllers>
           <Loading />
         </NoControllers>
       );
     }
-    if (this.state.controllers?.length > 0) {
+    if (controllers?.length > 0) {
       return (
         <Wrapper>
-          <TabWrapper>{this.renderTabs()}</TabWrapper>
-          {this.renderLogs()}
+          <TabWrapper>{renderTabs()}</TabWrapper>
+          {renderLogs()}
         </Wrapper>
       );
     }
 
-    if (this.props.currentChart.chart.metadata.name === "job") {
+    if (currentChart?.chart?.metadata?.name === "job") {
       return (
         <NoControllers>
           <i className="material-icons">category</i>
@@ -102,45 +128,10 @@ export default class StatusSection extends Component<PropsType, StateType> {
     );
   };
 
-  componentDidMount() {
-    const { currentChart } = this.props;
-    let { currentCluster, currentProject, setCurrentError } = this.context;
+  return <StyledStatusSection>{renderStatusSection()}</StyledStatusSection>;
+};
 
-    api
-      .getChartControllers(
-        "<token>",
-        {
-          namespace: currentChart.namespace,
-          cluster_id: currentCluster.id,
-          storage: StorageType.Secret,
-        },
-        {
-          id: currentProject.id,
-          name: currentChart.name,
-          revision: currentChart.version,
-        }
-      )
-      .then((res: any) => {
-        let controllers =
-          currentChart.chart.metadata.name == "job"
-            ? res.data[0]?.status.active
-            : res.data;
-        this.setState({ controllers, loading: false });
-      })
-      .catch((err) => {
-        setCurrentError(JSON.stringify(err));
-        this.setState({ controllers: [], loading: false });
-      });
-  }
-
-  render() {
-    return (
-      <StyledStatusSection>{this.renderStatusSection()}</StyledStatusSection>
-    );
-  }
-}
-
-StatusSection.contextType = Context;
+export default StatusSectionFC;
 
 const TabWrapper = styled.div`
   width: 35%;
@@ -150,14 +141,28 @@ const TabWrapper = styled.div`
 `;
 
 const StyledStatusSection = styled.div`
-  width: 100%;
-  height: 100%;
-  position: relative;
-  font-size: 13px;
   padding: 0px;
   user-select: text;
-  border-radius: 5px;
   overflow: hidden;
+  width: 100%;
+  min-height: 400px;
+  height: 50vh;
+  font-size: 13px;
+  overflow: hidden;
+  border-radius: 8px;
+  animation: floatIn 0.3s;
+  animation-timing-function: ease-out;
+  animation-fill-mode: forwards;
+  @keyframes floatIn {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0px);
+    }
+  }
 `;
 
 const Wrapper = styled.div`

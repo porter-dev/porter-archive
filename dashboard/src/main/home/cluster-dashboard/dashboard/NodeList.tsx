@@ -146,8 +146,8 @@ const NodeListWrapper = styled.div`
 const StyledChart = styled.div`
   background: #26282f;
   padding: 14px;
-  border-radius: 5px;
-  box-shadow: 0 5px 8px 0px #00000033;
+  border-radius: 8px;
+  box-shadow: 0 4px 15px 0px #00000055;
   position: relative;
   border: 2px solid #9eb4ff00;
   width: 100%;

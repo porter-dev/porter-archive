@@ -7,8 +7,8 @@ import github from "assets/github.png";
 import { Context } from "../../../shared/Context";
 import api from "../../../shared/api";
 import Loading from "../../../components/Loading";
-import Heading from "components/values-form/Heading";
-import Helper from "components/values-form/Helper";
+import Heading from "components/form-components/Heading";
+import Helper from "components/form-components/Helper";
 
 import TabSelector from "components/TabSelector";
 

@@ -1,7 +1,7 @@
 import React from "react";
 import styled from "styled-components";
 import { Column, Row, useGlobalFilter, useTable } from "react-table";
-import InputRow from "./values-form/InputRow";
+import InputRow from "./form-components/InputRow";
 import Loading from "components/Loading";
 
 const GlobalFilter: React.FunctionComponent<any> = ({ setGlobalFilter }) => {
@@ -55,7 +55,7 @@ const Table: React.FC<TableProps> = ({
       columns: columnsData,
       data,
     },
-    useGlobalFilter,
+    useGlobalFilter
   );
 
   const renderRows = () => {

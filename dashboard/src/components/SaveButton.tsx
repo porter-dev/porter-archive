@@ -3,11 +3,12 @@ import styled from "styled-components";
 import loading from "assets/loading.gif";
 
 type PropsType = {
-  text: string;
+  text?: string;
   onClick: () => void;
   disabled?: boolean;
   status?: string | null;
   color?: string;
+  rounded?: boolean;
   helper?: string | null;
 
   // Makes flush with corner if not within a modal
@@ -78,11 +79,12 @@ export default class SaveButton extends Component<PropsType, StateType> {
           <div>{this.renderStatus()}</div>
         )}
         <Button
+          rounded={this.props.rounded}
           disabled={this.props.disabled}
           onClick={this.props.onClick}
           color={this.props.color || "#616FEEcc"}
         >
-          {this.props.text}
+          {this.props.children || this.props.text}
         </Button>
         {this.props.statusPosition === "right" && (
           <div>{this.renderStatus()}</div>
@@ -108,6 +110,8 @@ const StatusTextWrapper = styled.p`
   margin: 0;
 `;
 
+// TODO: prevent status re-render on form refresh to allow animation
+// animation: statusFloatIn 0.5s;
 const StatusWrapper = styled.div<{
   successful: boolean;
   position: "right" | "left";
@@ -134,7 +138,6 @@ const StatusWrapper = styled.div<{
     color: ${(props) => (props.successful ? "#4797ff" : "#fcba03")};
   }
 
-  animation: statusFloatIn 0.5s;
   animation-fill-mode: forwards;
 
   @keyframes statusFloatIn {
@@ -180,17 +183,22 @@ const ButtonWrapper = styled.div`
   }}
 `;
 
-const Button = styled.button`
+const Button = styled.button<{
+  disabled: boolean;
+  color: string;
+  rounded: boolean;
+}>`
   height: 35px;
   font-size: 13px;
   font-weight: 500;
   font-family: "Work Sans", sans-serif;
   color: white;
-  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
   padding: 6px 20px 7px 20px;
   text-align: left;
   border: 0;
-  border-radius: 5px;
+  border-radius: ${(props) => (props.rounded ? "100px" : "5px")};
   background: ${(props) => (!props.disabled ? props.color : "#aaaabb")};
   box-shadow: ${(props) =>
     !props.disabled ? "0 2px 5px 0 #00000030" : "none"};
@@ -201,5 +209,19 @@ const Button = styled.button`
   }
   :hover {
     filter: ${(props) => (!props.disabled ? "brightness(120%)" : "")};
+  }
+
+  > i {
+    color: white;
+    width: 18px;
+    height: 18px;
+    font-weight: 600;
+    font-size: 14px;
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    margin-right: 10px;
+    margin-left: -5px;
+    justify-content: center;
   }
 `;

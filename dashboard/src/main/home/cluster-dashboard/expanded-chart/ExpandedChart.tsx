@@ -8,7 +8,7 @@ import React, {
 } from "react";
 import styled from "styled-components";
 import yaml from "js-yaml";
-import close from "assets/close.png";
+import backArrow from "assets/back_arrow.png";
 import _ from "lodash";
 import loadingSrc from "assets/loading.gif";
 
@@ -21,10 +21,9 @@ import {
 import { Context } from "shared/Context";
 import api from "shared/api";
 
-import ConfirmOverlay from "components/ConfirmOverlay";
 import Loading from "components/Loading";
 import StatusIndicator from "components/StatusIndicator";
-import FormWrapper from "components/values-form/FormWrapper";
+import PorterFormWrapper from "components/porter-form/PorterFormWrapper";
 import RevisionSection from "./RevisionSection";
 import ValuesYaml from "./ValuesYaml";
 import GraphSection from "./GraphSection";
@@ -34,6 +33,8 @@ import StatusSection from "./status/StatusSection";
 import SettingsSection from "./SettingsSection";
 import { useWebsockets } from "shared/hooks/useWebsockets";
 import useAuth from "shared/auth/useAuth";
+import TitleSection from "components/TitleSection";
+import { integrationList } from "shared/common";
 
 type Props = {
   namespace: string;
@@ -59,12 +60,14 @@ const ExpandedChart: React.FC<Props> = (props) => {
     props.currentChart
   );
   const [showRevisions, setShowRevisions] = useState<boolean>(false);
+  const [loading, setLoading] = useState<boolean>(false);
   const [components, setComponents] = useState<ResourceType[]>([]);
   const [isPreview, setIsPreview] = useState<boolean>(false);
   const [devOpsMode, setDevOpsMode] = useState<boolean>(
     localStorage.getItem("devOpsMode") === "true"
   );
-  const [tabOptions, setTabOptions] = useState<any[]>([]);
+  const [rightTabOptions, setRightTabOptions] = useState<any[]>([]);
+  const [leftTabOptions, setLeftTabOptions] = useState<any[]>([]);
   const [saveValuesStatus, setSaveValueStatus] = useState<string>(null);
   const [forceRefreshRevisions, setForceRefreshRevisions] = useState<boolean>(
     false
@@ -73,12 +76,11 @@ const ExpandedChart: React.FC<Props> = (props) => {
     Record<string, Record<string, any>>
   >({});
   const [url, setUrl] = useState<string>(null);
-  const [showDeleteOverlay, setShowDeleteOverlay] = useState<boolean>(false);
   const [deleting, setDeleting] = useState<boolean>(false);
   const [imageIsPlaceholder, setImageIsPlaceholer] = useState<boolean>(false);
   const [newestImage, setNewestImage] = useState<string>(null);
   const [isLoadingChartData, setIsLoadingChartData] = useState<boolean>(true);
-
+  const [showRepoTooltip, setShowRepoTooltip] = useState(false);
   const [isAuthorized] = useAuth();
 
   const {
@@ -88,9 +90,12 @@ const ExpandedChart: React.FC<Props> = (props) => {
     closeWebsocket,
   } = useWebsockets();
 
-  const { currentCluster, currentProject, setCurrentError } = useContext(
-    Context
-  );
+  const {
+    currentCluster,
+    currentProject,
+    setCurrentError,
+    setCurrentOverlay,
+  } = useContext(Context);
 
   // Retrieve full chart data (includes form and values)
   const getChartData = async (chart: ChartType) => {
@@ -151,7 +156,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
 
         setControllers((oldControllers) => ({
           ...oldControllers,
-          [c.metadata.kind]: c,
+          [c.metadata.uid]: c,
         }));
       });
 
@@ -170,21 +175,26 @@ const ExpandedChart: React.FC<Props> = (props) => {
     const wsConfig = {
       onmessage(evt: MessageEvent) {
         const event = JSON.parse(evt.data);
+        let object = event.Object;
+        object.metadata.kind = event.Kind;
 
-        if (event.event_type == "UPDATE") {
-          let object = event.Object;
-          object.metadata.kind = event.Kind;
-
-          setControllers((oldControllers) => {
-            if (oldControllers[object.metadata.uid]) {
-              return oldControllers;
-            }
-            return {
-              ...oldControllers,
-              [object.metadata.uid]: object,
-            };
-          });
+        if (event.event_type != "UPDATE") {
+          return;
         }
+
+        setControllers((oldControllers) => {
+          if (
+            oldControllers &&
+            oldControllers[object.metadata.uid]?.status?.conditions ==
+              object.status?.conditions
+          ) {
+            return oldControllers;
+          }
+          return {
+            ...oldControllers,
+            [object.metadata.uid]: object,
+          };
+        });
       },
       onerror() {
         closeWebsocket(kind);
@@ -195,6 +205,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
   };
 
   const updateComponents = async (currentChart: ChartType) => {
+    setLoading(true);
     try {
       const res = await api.getChartComponents(
         "<token>",
@@ -210,12 +221,15 @@ const ExpandedChart: React.FC<Props> = (props) => {
         }
       );
       setComponents(res.data.Objects);
+      setLoading(false);
     } catch (error) {
       console.log(error);
+      setLoading(false);
     }
   };
 
   const onSubmit = async (rawValues: any) => {
+    console.log("raw", rawValues);
     // Convert dotted keys to nested objects
     let values = {};
 
@@ -239,6 +253,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
 
     setSaveValueStatus("loading");
     getChartData(currentChart);
+    console.log("valuesYaml", valuesYaml)
     try {
       await api.upgradeChartValues(
         "<token>",
@@ -378,7 +393,17 @@ const ExpandedChart: React.FC<Props> = (props) => {
           <SettingsSection
             currentChart={chart}
             refreshChart={() => getChartData(currentChart)}
-            setShowDeleteOverlay={(x: boolean) => setShowDeleteOverlay(x)}
+            setShowDeleteOverlay={(x: boolean) => {
+              if (x) {
+                setCurrentOverlay({
+                  message: `Are you sure you want to delete ${currentChart.name}?`,
+                  onYes: handleUninstallChart,
+                  onNo: () => setCurrentOverlay(null),
+                });
+              } else {
+                setCurrentOverlay(null);
+              }
+            }}
           />
         );
       case "graph":
@@ -414,17 +439,18 @@ const ExpandedChart: React.FC<Props> = (props) => {
 
   const updateTabs = () => {
     // Collate non-form tabs
-    let tabOptions = [] as any[];
-    tabOptions.push({ label: "Status", value: "status" });
+    let rightTabOptions = [] as any[];
+    let leftTabOptions = [] as any[];
+    leftTabOptions.push({ label: "Status", value: "status" });
 
     if (props.isMetricsInstalled) {
-      tabOptions.push({ label: "Metrics", value: "metrics" });
+      leftTabOptions.push({ label: "Metrics", value: "metrics" });
     }
 
-    tabOptions.push({ label: "Chart Overview", value: "graph" });
+    rightTabOptions.push({ label: "Chart Overview", value: "graph" });
 
     if (devOpsMode) {
-      tabOptions.push(
+      rightTabOptions.push(
         { label: "Manifests", value: "list" },
         { label: "Helm Values", value: "values" }
       );
@@ -432,18 +458,22 @@ const ExpandedChart: React.FC<Props> = (props) => {
 
     // Settings tab is always last
     if (isAuthorized("application", "", ["get", "delete"])) {
-      tabOptions.push({ label: "Settings", value: "settings" });
+      rightTabOptions.push({ label: "Settings", value: "settings" });
     }
 
     // Filter tabs if previewing an old revision or updating the chart version
     if (isPreview) {
       let liveTabs = ["status", "settings", "deploy", "metrics"];
-      tabOptions = tabOptions.filter(
+      rightTabOptions = rightTabOptions.filter(
+        (tab: any) => !liveTabs.includes(tab.value)
+      );
+      leftTabOptions = leftTabOptions.filter(
         (tab: any) => !liveTabs.includes(tab.value)
       );
     }
 
-    setTabOptions(tabOptions);
+    setLeftTabOptions(leftTabOptions);
+    setRightTabOptions(rightTabOptions);
   };
 
   const setRevision = (chart: ChartType, isCurrent?: boolean) => {
@@ -523,12 +553,16 @@ const ExpandedChart: React.FC<Props> = (props) => {
       return c.Kind === "Service";
     });
 
-    if (!service?.Name || !service?.Namespace) {
+    if (loading) {
       return (
         <Url>
           <Bolded>Loading...</Bolded>
         </Url>
       );
+    }
+
+    if (!service?.Name || !service?.Namespace) {
+      return;
     }
 
     return (
@@ -541,6 +575,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
 
   const handleUninstallChart = async () => {
     setDeleting(true);
+    setCurrentOverlay(null);
     try {
       await api.uninstallTemplate(
         "<token>",
@@ -553,7 +588,6 @@ const ExpandedChart: React.FC<Props> = (props) => {
           cluster_id: currentCluster.id,
         }
       );
-      setShowDeleteOverlay(false);
       props.closeChart();
     } catch (error) {
       console.log(error);
@@ -630,95 +664,146 @@ const ExpandedChart: React.FC<Props> = (props) => {
     return () => (isSubscribed = false);
   }, [components, currentCluster, currentProject, currentChart]);
 
+  const renderDeploymentType = () => {
+    const githubRepository = currentChart?.git_action_config?.git_repo;
+    const icon = githubRepository
+      ? integrationList.repo.icon
+      : integrationList.registry.icon;
+
+    const isWebOrWorkerDeployment = ["web", "worker"].includes(
+      currentChart?.chart?.metadata?.name
+    );
+    if (!isWebOrWorkerDeployment) {
+      return null;
+    }
+
+    const repository =
+      githubRepository ||
+      currentChart?.image_repo_uri ||
+      currentChart?.config?.image?.repository;
+
+    if (repository?.includes("hello-porter")) {
+      return null;
+    }
+
+    return (
+      <DeploymentImageContainer>
+        <DeploymentTypeIcon src={icon} />
+        <RepositoryName
+          onMouseOver={() => {
+            setShowRepoTooltip(true);
+          }}
+          onMouseOut={() => {
+            setShowRepoTooltip(false);
+          }}
+        >
+          {repository}
+        </RepositoryName>
+        {
+          showRepoTooltip && (
+            <Tooltip>{repository}</Tooltip>
+          )
+        }
+      </DeploymentImageContainer>
+    );
+  };
+
   return (
     <>
-      <CloseOverlay onClick={props.closeChart} />
       <StyledExpandedChart>
-        <ConfirmOverlay
-          show={showDeleteOverlay}
-          message={`Are you sure you want to delete ${currentChart.name}?`}
-          onYes={handleUninstallChart}
-          onNo={() => setShowDeleteOverlay(false)}
-        />
-        {deleting && (
-          <DeleteOverlay>
-            <Loading />
-          </DeleteOverlay>
-        )}
         <HeaderWrapper>
-          <TitleSection>
-            <Title>
-              <IconWrapper>{renderIcon()}</IconWrapper>
-              {currentChart.name}
-            </Title>
-            {currentChart.chart.metadata.name != "worker" &&
-              currentChart.chart.metadata.name != "job" &&
-              renderUrl()}
-            <InfoWrapper>
-              <StatusIndicator
-                controllers={controllers}
-                status={currentChart.info.status}
-                margin_left={"0px"}
-              />
-              <LastDeployed>
-                <Dot>•</Dot>Last deployed
-                {" " + getReadableDate(currentChart.info.last_deployed)}
-              </LastDeployed>
-            </InfoWrapper>
-
+          <BackButton onClick={props.closeChart}>
+            <BackButtonImg src={backArrow} />
+          </BackButton>
+          <TitleSection
+            icon={currentChart.chart.metadata.icon}
+            iconWidth="33px"
+          >
+            {currentChart.name}
+            {renderDeploymentType()}
             <TagWrapper>
               Namespace <NamespaceTag>{currentChart.namespace}</NamespaceTag>
             </TagWrapper>
           </TitleSection>
 
-          <CloseButton onClick={props.closeChart}>
-            <CloseButtonImg src={close} />
-          </CloseButton>
-
-          <RevisionSection
-            showRevisions={showRevisions}
-            toggleShowRevisions={() => {
-              setShowRevisions(!showRevisions);
-            }}
-            chart={currentChart}
-            refreshChart={() => getChartData(currentChart)}
-            setRevision={setRevision}
-            forceRefreshRevisions={forceRefreshRevisions}
-            refreshRevisionsOff={() => setForceRefreshRevisions(false)}
-            status={chartStatus}
-            shouldUpdate={
-              currentChart.latest_version &&
-              currentChart.latest_version !==
-                currentChart.chart.metadata.version
-            }
-            latestVersion={currentChart.latest_version}
-            upgradeVersion={handleUpgradeVersion}
-          />
+          {currentChart.chart.metadata.name != "worker" &&
+            currentChart.chart.metadata.name != "job" &&
+            renderUrl()}
+          <InfoWrapper>
+            <StatusIndicator
+              controllers={controllers}
+              status={currentChart.info.status}
+              margin_left={"0px"}
+            />
+            <LastDeployed>
+              <Dot>•</Dot>Last deployed
+              {" " + getReadableDate(currentChart.info.last_deployed)}
+            </LastDeployed>
+          </InfoWrapper>
         </HeaderWrapper>
-        <BodyWrapper>
-          <FormWrapper
-            isReadOnly={
-              imageIsPlaceholder ||
-              !isAuthorized("application", "", ["get", "update"])
+        {deleting ? (
+          <>
+            <LineBreak />
+            <Placeholder>
+              <TextWrap>
+                <Header>
+                  <Spinner src={loadingSrc} /> Deleting "{currentChart.name}"
+                </Header>
+                You will be automatically redirected after deletion is complete.
+              </TextWrap>
+            </Placeholder>
+          </>
+        ) : (
+          <>
+            <RevisionSection
+              showRevisions={showRevisions}
+              toggleShowRevisions={() => {
+                setShowRevisions(!showRevisions);
+              }}
+              chart={currentChart}
+              refreshChart={() => getChartData(currentChart)}
+              setRevision={setRevision}
+              forceRefreshRevisions={forceRefreshRevisions}
+              refreshRevisionsOff={() => setForceRefreshRevisions(false)}
+              status={chartStatus}
+              shouldUpdate={
+                currentChart.latest_version &&
+                currentChart.latest_version !==
+                  currentChart.chart.metadata.version
+              }
+              latestVersion={currentChart.latest_version}
+              upgradeVersion={handleUpgradeVersion}
+            />
+            {
+              (isPreview || leftTabOptions.length > 0) && (
+                <BodyWrapper>
+                  <PorterFormWrapper
+                    formData={currentChart.form}
+                    valuesToOverride={{
+                      namespace: props.namespace,
+                      clusterId: currentCluster.id,
+                    }}
+                    renderTabContents={renderTabContents}
+                    isReadOnly={
+                      imageIsPlaceholder ||
+                      !isAuthorized("application", "", ["get", "update"])
+                    }
+                    onSubmit={onSubmit}
+                    rightTabOptions={rightTabOptions}
+                    leftTabOptions={leftTabOptions}
+                    color={isPreview ? "#f5cb42" : null}
+                    addendum={
+                      <TabButton onClick={toggleDevOpsMode} devOpsMode={devOpsMode}>
+                        <i className="material-icons">offline_bolt</i> DevOps Mode
+                      </TabButton>
+                    }
+                    saveValuesStatus={saveValuesStatus}
+                  />
+                </BodyWrapper>
+              )
             }
-            formData={currentChart.form}
-            tabOptions={tabOptions}
-            isInModal={true}
-            renderTabContents={renderTabContents}
-            onSubmit={onSubmit}
-            saveValuesStatus={saveValuesStatus}
-            externalValues={{
-              namespace: props.namespace,
-              clusterId: currentCluster.id,
-            }}
-            color={isPreview ? "#f5cb42" : null}
-            addendum={
-              <TabButton onClick={toggleDevOpsMode} devOpsMode={devOpsMode}>
-                <i className="material-icons">offline_bolt</i> DevOps Mode
-              </TabButton>
-            }
-          />
-        </BodyWrapper>
+          </>
+        )}
       </StyledExpandedChart>
     </>
   );
@@ -726,7 +811,82 @@ const ExpandedChart: React.FC<Props> = (props) => {
 
 export default ExpandedChart;
 
+const RepositoryName = styled.div`
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 390px;
+  position: relative;
+  margin-right: 3px;
+`;
+
+const Tooltip = styled.div`
+  position: absolute;
+  left: -40px;
+  top: 28px;
+  min-height: 18px;
+  max-width: calc(700px);
+  padding: 5px 7px;
+  background: #272731;
+  z-index: 999;
+  color: white;
+  font-size: 12px;
+  font-family: "Work Sans", sans-serif;
+  outline: 1px solid #ffffff55;
+  opacity: 0;
+  animation: faded-in 0.2s 0.15s;
+  animation-fill-mode: forwards;
+  @keyframes faded-in {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+`;
+
 const TextWrap = styled.div``;
+
+const LineBreak = styled.div`
+  width: calc(100% - 0px);
+  height: 2px;
+  background: #ffffff20;
+  margin: 35px 0px;
+`;
+
+const BodyWrapper = styled.div`
+  position: relative;
+  overflow: hidden;
+  margin-bottom: 120px;
+`;
+
+const BackButton = styled.div`
+  position: absolute;
+  top: 0px;
+  right: 0px;
+  display: flex;
+  width: 36px;
+  cursor: pointer;
+  height: 36px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #ffffff55;
+  border-radius: 100px;
+  background: #ffffff11;
+
+  :hover {
+    background: #ffffff22;
+    > img {
+      opacity: 1;
+    }
+  }
+`;
+
+const BackButtonImg = styled.img`
+  width: 16px;
+  opacity: 0.75;
+`;
 
 const Header = styled.div`
   font-weight: 500;
@@ -736,7 +896,8 @@ const Header = styled.div`
 `;
 
 const Placeholder = styled.div`
-  height: 100%;
+  min-height: 400px;
+  height: 50vh;
   padding: 30px;
   padding-bottom: 90px;
   font-size: 13px;
@@ -752,44 +913,6 @@ const Spinner = styled.img`
   height: 15px;
   margin-right: 12px;
   margin-bottom: -2px;
-`;
-
-const BodyWrapper = styled.div`
-  width: 100%;
-  height: 100%;
-  overflow: hidden;
-`;
-
-const DeleteOverlay = styled.div`
-  position: absolute;
-  top: 0px;
-  opacity: 100%;
-  left: 0px;
-  width: 100%;
-  height: 100%;
-  z-index: 999;
-  display: flex;
-  padding-bottom: 30px;
-  align-items: center;
-  justify-content: center;
-  font-family: "Work Sans", sans-serif;
-  font-size: 18px;
-  font-weight: 500;
-  color: white;
-  flex-direction: column;
-  background: rgb(0, 0, 0, 0.73);
-  opacity: 0;
-  animation: lindEnter 0.2s;
-  animation-fill-mode: forwards;
-
-  @keyframes lindEnter {
-    from {
-      opacity: 0;
-    }
-    to {
-      opacity: 1;
-    }
-  }
 `;
 
 const Bolded = styled.div`
@@ -819,7 +942,7 @@ const TabButton = styled.div`
   position: absolute;
   right: 0px;
   height: 30px;
-  background: linear-gradient(to right, #26282f00, #26282f 20%);
+  background: linear-gradient(to right, #20222700, #202227 20%);
   padding-left: 30px;
   display: flex;
   align-items: center;
@@ -844,27 +967,9 @@ const TabButton = styled.div`
   }
 `;
 
-const CloseOverlay = styled.div`
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: #202227;
-  animation: fadeIn 0.2s 0s;
-  opacity: 0;
-  animation-fill-mode: forwards;
-  @keyframes fadeIn {
-    from {
-      opacity: 0;
-    }
-    to {
-      opacity: 1;
-    }
-  }
+const HeaderWrapper = styled.div`
+  position: relative;
 `;
-
-const HeaderWrapper = styled.div``;
 
 const Dot = styled.div`
   margin-right: 9px;
@@ -887,13 +992,13 @@ const LastDeployed = styled.div`
 `;
 
 const TagWrapper = styled.div`
-  position: absolute;
-  bottom: 0px;
-  right: 0px;
   height: 20px;
   font-size: 12px;
   display: flex;
+  margin-left: 15px;
+  margin-bottom: -3px;
   align-items: center;
+  font-weight: 400;
   justify-content: center;
   color: #ffffff44;
   border: 1px solid #ffffff44;
@@ -938,66 +1043,41 @@ const IconWrapper = styled.div`
   }
 `;
 
-const Title = styled.div`
-  font-size: 18px;
-  font-weight: 500;
-  display: flex;
-  align-items: center;
-  user-select: text;
-`;
-
-const TitleSection = styled.div`
-  width: 100%;
-  position: relative;
-`;
-
-const CloseButton = styled.div`
-  position: absolute;
-  display: block;
-  width: 40px;
-  height: 40px;
-  padding: 13px 0 12px 0;
-  text-align: center;
-  border-radius: 50%;
-  right: 15px;
-  top: 12px;
-  cursor: pointer;
-  :hover {
-    background-color: #ffffff11;
-  }
-`;
-
-const CloseButtonImg = styled.img`
-  width: 14px;
-  margin: 0 auto;
-`;
-
 const StyledExpandedChart = styled.div`
-  width: calc(100% - 50px);
-  height: calc(100% - 50px);
+  width: 100%;
+  overflow: hidden;
   z-index: 0;
-  position: absolute;
-  top: 25px;
-  left: 25px;
-  border-radius: 10px;
-  background: #26272f;
-  box-shadow: 0 5px 12px 4px #00000033;
-  animation: floatIn 0.3s;
+  animation: fadeIn 0.3s;
   animation-timing-function: ease-out;
   animation-fill-mode: forwards;
-  padding: 25px;
   display: flex;
-  overflow: hidden;
   flex-direction: column;
 
-  @keyframes floatIn {
+  @keyframes fadeIn {
     from {
       opacity: 0;
-      transform: translateY(30px);
     }
     to {
       opacity: 1;
-      transform: translateY(0px);
     }
   }
+`;
+
+const DeploymentImageContainer = styled.div`
+  height: 20px;
+  font-size: 13px;
+  position: relative;
+  display: flex;
+  margin-left: 15px;
+  margin-bottom: -3px;
+  align-items: center;
+  font-weight: 400;
+  justify-content: center;
+  color: #ffffff66;
+  padding-left: 5px;
+`;
+
+const DeploymentTypeIcon = styled(Icon)`
+  width: 20px;
+  margin-right: 10px;
 `;

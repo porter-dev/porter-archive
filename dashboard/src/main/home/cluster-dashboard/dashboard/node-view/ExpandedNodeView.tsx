@@ -1,7 +1,7 @@
 import React, { useContext, useEffect, useMemo, useState } from "react";
 import { useHistory, useLocation, useParams } from "react-router";
 import styled from "styled-components";
-import closeImg from "assets/close.png";
+import backArrow from "assets/back_arrow.png";
 import api from "shared/api";
 import { Context } from "shared/Context";
 
@@ -11,6 +11,7 @@ import { pushFiltered } from "shared/routing";
 import NodeUsage from "./NodeUsage";
 import { ConditionsTable } from "./ConditionsTable";
 import StatusSection from "components/StatusSection";
+import TitleSection from "components/TitleSection";
 
 type ExpandedNodeViewParams = {
   nodeId: string;
@@ -90,54 +91,73 @@ export const ExpandedNodeView = () => {
   }, [node]);
 
   return (
-    <>
-      <CloseOverlay onClick={closeNodeView} />
-      <StyledExpandedChart>
-        <HeaderWrapper>
-          <TitleSection>
-            <Title>
-              <IconWrapper>
-                <img src={nodePng} />
-              </IconWrapper>
-              {nodeId}
-              <InstanceType>{instanceType}</InstanceType>
-            </Title>
-          </TitleSection>
+    <StyledExpandedNodeView>
+      <HeaderWrapper>
+        <BackButton onClick={closeNodeView}>
+          <BackButtonImg src={backArrow} />
+        </BackButton>
+        <TitleSection icon={nodePng}>
+          {nodeId}
+          <InstanceType>{instanceType}</InstanceType>
+        </TitleSection>
+      </HeaderWrapper>
+      <BodyWrapper>
+        <NodeUsage node={node} />
 
-          <CloseButton onClick={closeNodeView}>
-            <CloseButtonImg src={closeImg} />
-          </CloseButton>
-        </HeaderWrapper>
-        <BodyWrapper>
-          <NodeUsage node={node} />
+        <StatusWrapper>
+          <StatusSection status={nodeStatus} />
+        </StatusWrapper>
 
-          <StatusWrapper>
-            <StatusSection status={nodeStatus} />
-          </StatusWrapper>
-
-          <TabSelector
-            options={tabOptions}
-            currentTab={currentTab}
-            setCurrentTab={(value: TabEnum) => setCurrentTab(value)}
-          />
-          {currentTabPage}
-        </BodyWrapper>
-      </StyledExpandedChart>
-    </>
+        <TabSelector
+          options={tabOptions}
+          currentTab={currentTab}
+          setCurrentTab={(value: TabEnum) => setCurrentTab(value)}
+        />
+        {currentTabPage}
+      </BodyWrapper>
+    </StyledExpandedNodeView>
   );
 };
 
 export default ExpandedNodeView;
 
+const BackButton = styled.div`
+  position: absolute;
+  top: 0px;
+  right: 0px;
+  display: flex;
+  width: 36px;
+  cursor: pointer;
+  height: 36px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #ffffff55;
+  border-radius: 100px;
+  background: #ffffff11;
+
+  :hover {
+    background: #ffffff22;
+    > img {
+      opacity: 1;
+    }
+  }
+`;
+
+const BackButtonImg = styled.img`
+  width: 16px;
+  opacity: 0.75;
+`;
+
 const StatusWrapper = styled.div`
   margin-left: 3px;
-  margin-bottom: 15px;
+  margin-bottom: 20px;
 `;
 
 const InstanceType = styled.div`
   font-weight: 400;
   color: #ffffff44;
   margin-left: 12px;
+  font-size: 16px;
 `;
 
 const BodyWrapper = styled.div`
@@ -146,104 +166,28 @@ const BodyWrapper = styled.div`
   overflow: hidden;
 `;
 
-const HeaderWrapper = styled.div``;
+const HeaderWrapper = styled.div`
+  position: relative;
+`;
 
-const CloseOverlay = styled.div`
-  position: absolute;
-  top: 0;
-  left: 0;
+const StyledExpandedNodeView = styled.div`
   width: 100%;
-  height: 100%;
-  background: #202227;
-  animation: fadeIn 0.2s 0s;
-  opacity: 0;
+  z-index: 0;
+  animation: fadeIn 0.3s;
+  animation-timing-function: ease-out;
   animation-fill-mode: forwards;
+  display: flex;
+  overflow-y: auto;
+  padding-bottom: 120px;
+  flex-direction: column;
+  overflow: visible;
+
   @keyframes fadeIn {
     from {
       opacity: 0;
     }
     to {
       opacity: 1;
-    }
-  }
-`;
-
-const IconWrapper = styled.div`
-  font-size: 16px;
-  height: 20px;
-  width: 20px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  border-radius: 3px;
-  margin-right: 12px;
-
-  > img {
-    filter: brightness(50%);
-    width: 18px;
-  }
-`;
-
-const Title = styled.div`
-  font-size: 18px;
-  font-weight: 500;
-  display: flex;
-  align-items: center;
-  user-select: text;
-`;
-
-const TitleSection = styled.div`
-  width: 100%;
-  position: relative;
-`;
-
-const CloseButton = styled.div`
-  position: absolute;
-  display: block;
-  width: 40px;
-  height: 40px;
-  padding: 13px 0 12px 0;
-  text-align: center;
-  border-radius: 50%;
-  right: 15px;
-  top: 12px;
-  cursor: pointer;
-  :hover {
-    background-color: #ffffff11;
-  }
-`;
-
-const CloseButtonImg = styled.img`
-  width: 14px;
-  margin: 0 auto;
-`;
-
-const StyledExpandedChart = styled.div`
-  width: calc(100% - 50px);
-  height: calc(100% - 50px);
-  z-index: 0;
-  position: absolute;
-  top: 25px;
-  left: 25px;
-  border-radius: 10px;
-  background: #26272f;
-  box-shadow: 0 5px 12px 4px #00000033;
-  animation: floatIn 0.3s;
-  animation-timing-function: ease-out;
-  animation-fill-mode: forwards;
-  padding: 25px;
-  display: flex;
-  overflow: hidden;
-  flex-direction: column;
-
-  @keyframes floatIn {
-    from {
-      opacity: 0;
-      transform: translateY(30px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0px);
     }
   }
 `;

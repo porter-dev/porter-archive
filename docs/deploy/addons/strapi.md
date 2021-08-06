@@ -24,7 +24,7 @@ DATABASE_PASSWORD=
 For details on how to connect to the deployed database, [see this guide](https://docs.getporter.dev/docs/postgresdb#connecting-to-the-database).
 
 # Development
-To develop, clone this repository to your local environment and run `npm install && npm run develop;` from the `app` directory. Porter will automatically handle CI/CD and propagate your changes to production on every push to the repository.
+To develop, clone the [example repository](https://github.com/porter-dev/strapi) to your local environment and run `npm install && npm run develop;` from the `app` directory. Porter will automatically handle CI/CD and propagate your changes to production on every push to the repository.
 
 # Questions?
 Join the [Porter Discord community](https://discord.gg/FaaFjb6DXA) if you have any questions or need help.

@@ -676,12 +676,20 @@ const ExpandedChart: React.FC<Props> = (props) => {
     if (!isWebOrWorkerDeployment) {
       return null;
     }
+
+    const repository =
+      githubRepository ||
+      currentChart?.image_repo_uri ||
+      currentChart?.config?.image?.repository;
+
+    if (repository?.includes("hello-porter")) {
+      return null;
+    }
+
     return (
       <DeploymentImageContainer>
         <DeploymentTypeIcon src={icon} />
-        {githubRepository ||
-          currentChart?.image_repo_uri ||
-          currentChart?.config?.image?.repository}
+        {repository}
       </DeploymentImageContainer>
     );
   };

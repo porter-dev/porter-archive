@@ -36,7 +36,7 @@ const Input: React.FC<InputField> = ({
   } = useFormField<StringInputFieldState>(id, {
     initValidation: {
       validated: value
-        ? value[0] !== undefined && value[0] !== ""
+        ? value[0] !== undefined && value[0] !== "" && value[0] != null
         : settings?.default != undefined,
     },
     initVars: {
@@ -49,6 +49,8 @@ const Input: React.FC<InputField> = ({
   if (state == undefined) {
     return <></>;
   }
+
+  console.log(value);
 
   const curValue =
     settings?.type == "number"

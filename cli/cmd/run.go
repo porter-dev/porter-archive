@@ -64,7 +64,6 @@ func init() {
 
 func run(_ *api.AuthCheckResponse, client *api.Client, args []string) error {
 	color.New(color.FgGreen).Println("Running", strings.Join(args[1:], " "), "for release", args[0])
-	color.New(color.FgGreen).Println("If you don't see a command prompt, try pressing enter.")
 
 	podsSimple, err := getPods(client, namespace, args[0])
 
@@ -299,9 +298,9 @@ func executeRunEphemeral(config *rest.Config, namespace, name, container string,
 		})
 	}
 
-	for i := 0; i < 5; i++ {
-		fmt.Printf("attempting connection %d/5\n", i+1)
+	color.New(color.FgYellow).Println("Attempting connection to the container, this may take up to 10 seconds. If you don't see a command prompt, try pressing enter.")
 
+	for i := 0; i < 5; i++ {
 		err = t.Safe(fn)
 
 		if err == nil {

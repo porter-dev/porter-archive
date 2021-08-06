@@ -1,5 +1,5 @@
 # Deploy Strapi with Porter
-This is a quick guide on deploying Strapi to a Kubernetes cluster in AWS/GCP/DO using Porter. This guide uses PostgresDB by default - to customize your database settings, modify the files in `/app/config/env/production` in the [example repository](https://github.com/porter-dev/strapi).
+This is a quick guide on how to deploy Strapi to a Kubernetes cluster in AWS/GCP/DO using Porter. This guide uses PostgresDB by default - to customize your database settings, modify the files in `/app/config/env/production` in the [example repository](https://github.com/porter-dev/strapi).
 
 # Quick Deploy
 ## Deploying Strapi
@@ -21,7 +21,7 @@ DATABASE_NAME=
 DATABASE_USERNAME=
 DATABASE_PASSWORD=
 ```
-For details on how to connect to the deployed database, [see this guide](https://docs.getporter.dev/docs/postgresdb#connecting-to-the-database).
+To determine what the correct environment variables are in order to connect to the deployed database, [see this guide](https://docs.getporter.dev/docs/postgresdb#connecting-to-the-database).
 
 # Development
 To develop, clone the [example repository](https://github.com/porter-dev/strapi) to your local environment and run `npm install && npm run develop;` from the `app` directory. Porter will automatically handle CI/CD and propagate your changes to production on every push to the repository.

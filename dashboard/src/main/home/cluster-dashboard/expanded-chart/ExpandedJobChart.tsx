@@ -11,12 +11,10 @@ import { Context } from "shared/Context";
 import api from "shared/api";
 
 import SaveButton from "components/SaveButton";
-import Loading from "components/Loading";
 import TitleSection from "components/TitleSection";
-import JobList from "./jobs/JobList";
+import TempJobList from "./jobs/TempJobList";
 import SettingsSection from "./SettingsSection";
 import PorterFormWrapper from "components/porter-form/PorterFormWrapper";
-import { PlaceHolder } from "brace";
 import { withAuth, WithAuthProps } from "shared/auth/AuthorizationHoc";
 
 type PropsType = WithAuthProps & {
@@ -273,8 +271,6 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
   };
 
   handleSaveValues = (config?: any, runJob?: boolean) => {
-    console.log("config is", config);
-    /*
     let { currentCluster, setCurrentError, currentProject } = this.context;
     this.setState({ saveValuesStatus: "loading" });
 
@@ -374,7 +370,6 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
 
         setCurrentError(parsedErr);
       });
-      */
   };
 
   getJobs = async (chart: ChartType) => {
@@ -422,25 +417,6 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
   };
 
   renderTabContents = (currentTab: string, submitValues?: any) => {
-    let saveButton = (
-      <ButtonWrapper>
-        <SaveButton
-          onClick={() => this.handleSaveValues(submitValues, true)}
-          status={this.state.saveValuesStatus}
-          makeFlush={true}
-          clearPosition={true}
-          rounded={true}
-          statusPosition="right"
-        >
-          <i className="material-icons">play_arrow</i> Run Job
-        </SaveButton>
-      </ButtonWrapper>
-    );
-
-    if (!this.props.isAuthorized("job", "", ["get", "update", "create"])) {
-      saveButton = null;
-    }
-
     switch (currentTab) {
       case "jobs":
         if (this.state.imageIsPlaceholder) {
@@ -458,12 +434,12 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
         }
         return (
           <TabWrapper>
-            {saveButton}
-            <JobList
+            <TempJobList 
+              handleSaveValues={this.handleSaveValues}
               jobs={this.state.jobs}
-              setJobs={(jobs: any) => {
-                this.setState({ jobs });
-              }}
+              setJobs={(jobs: any) => this.setState({ jobs })}
+              isAuthorized={this.props.isAuthorized}
+              saveValuesStatus={this.state.saveValuesStatus}
             />
           </TabWrapper>
         );

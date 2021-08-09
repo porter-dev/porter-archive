@@ -132,7 +132,9 @@ const KeyValueArray: React.FC<Props> = (props) => {
     }
   };
 
-  const getProcessedValues = (objectArray: { key: string, value: string }[]): any => {
+  const getProcessedValues = (
+    objectArray: { key: string; value: string }[]
+  ): any => {
     let obj = {} as any;
     objectArray?.forEach(({ key, value }) => {
       obj[key] = value;

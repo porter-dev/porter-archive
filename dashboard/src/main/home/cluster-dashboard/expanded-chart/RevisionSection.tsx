@@ -293,26 +293,26 @@ class RevisionSection extends Component<PropsType, StateType> {
       this.state.maxVersion === 0;
     return (
       <div>
-        {this.state.upgradeVersion &&
-              <Modal
-                onRequestClose={() => this.setState({ upgradeVersion: "" })}
-                width="500px"
-                height="450px"
-              >
-                <UpgradeChartModal 
-                  currentChart={this.props.chart}
-                  closeModal={() => {
-                    this.setState({ upgradeVersion: "" });
-                  }}
-                  onSubmit={() => {
-                    this.props.upgradeVersion(this.state.upgradeVersion, () => {
-                      this.setState({ loading: false });
-                    });
-                    this.setState({ upgradeVersion: "", loading: true });
-                  }}
-                />
-              </Modal>
-              }
+        {this.state.upgradeVersion && (
+          <Modal
+            onRequestClose={() => this.setState({ upgradeVersion: "" })}
+            width="500px"
+            height="450px"
+          >
+            <UpgradeChartModal
+              currentChart={this.props.chart}
+              closeModal={() => {
+                this.setState({ upgradeVersion: "" });
+              }}
+              onSubmit={() => {
+                this.props.upgradeVersion(this.state.upgradeVersion, () => {
+                  this.setState({ loading: false });
+                });
+                this.setState({ upgradeVersion: "", loading: true });
+              }}
+            />
+          </Modal>
+        )}
         <RevisionHeader
           showRevisions={this.props.showRevisions}
           isCurrent={isCurrent}

@@ -81,6 +81,7 @@ class Templates extends Component<PropsType, StateType> {
         {},
         { project_id: this.context.currentProject.id, cluster_id: clusterId }
       );
+      console.log(res);
       if (res.data) {
         this.setState((prevState) => {
           const currentCluster = prevState.clusters[currentClusterIndex];

@@ -485,9 +485,9 @@ class Home extends Component<PropsType, StateType> {
   };
 
   render() {
-    let { 
-      currentModal, 
-      setCurrentModal, 
+    let {
+      currentModal,
+      setCurrentModal,
       currentProject,
       currentOverlay,
       setCurrentOverlay,
@@ -578,16 +578,14 @@ class Home extends Component<PropsType, StateType> {
           </Modal>
         )}
 
-        {
-          currentOverlay && (
-            <ConfirmOverlay
-              show={true}
-              message={currentOverlay.message}
-              onYes={currentOverlay.onYes}
-              onNo={currentOverlay.onNo}
-            />
-          )
-        }
+        {currentOverlay && (
+          <ConfirmOverlay
+            show={true}
+            message={currentOverlay.message}
+            onYes={currentOverlay.onYes}
+            onNo={currentOverlay.onNo}
+          />
+        )}
 
         {this.renderSidebar()}
 

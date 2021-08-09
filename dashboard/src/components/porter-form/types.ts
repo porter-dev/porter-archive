@@ -145,6 +145,9 @@ export interface Tab {
   name: string;
   label: string;
   sections: Section[];
+  settings?: {
+    omitFromLaunch?: boolean;
+  };
 }
 
 export interface PorterFormData {
@@ -194,8 +197,10 @@ export interface PorterFormState {
   components: {
     [key: string]: {
       state: PorterFormFieldFieldState;
-      validation: PorterFormFieldValidationState;
     };
+  };
+  validation: {
+    [key: string]: PorterFormFieldValidationState;
   };
   variables: PorterFormVariableList;
 }

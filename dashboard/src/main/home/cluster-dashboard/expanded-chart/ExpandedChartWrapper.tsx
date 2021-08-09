@@ -93,7 +93,11 @@ class ExpandedChartWrapper extends Component<PropsType, StateType> {
     let { baseRoute, namespace } = match.params as any;
     let { loading, currentChart } = this.state;
     if (loading) {
-      return <LoadingWrapper><Loading /></LoadingWrapper>;
+      return (
+        <LoadingWrapper>
+          <Loading />
+        </LoadingWrapper>
+      );
     } else if (currentChart && baseRoute === "jobs") {
       return (
         <ExpandedJobChart

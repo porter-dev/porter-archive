@@ -50,8 +50,6 @@ const Input: React.FC<InputField> = ({
     return <></>;
   }
 
-  console.log(value);
-
   const curValue =
     settings?.type == "number"
       ? !isNaN(parseFloat(variables[variable]))

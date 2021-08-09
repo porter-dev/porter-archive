@@ -273,6 +273,8 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
   };
 
   handleSaveValues = (config?: any, runJob?: boolean) => {
+    console.log("config is", config);
+    /*
     let { currentCluster, setCurrentError, currentProject } = this.context;
     this.setState({ saveValuesStatus: "loading" });
 
@@ -372,6 +374,7 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
 
         setCurrentError(parsedErr);
       });
+      */
   };
 
   getJobs = async (chart: ChartType) => {
@@ -616,10 +619,7 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
                     this.state.imageIsPlaceholder ||
                     !this.props.isAuthorized("job", "", ["get", "update"])
                   }
-                  onSubmit={(formValues) => {
-                    console.log(formValues);
-                    this.handleSaveValues(formValues, false);
-                  }}
+                  onSubmit={(formValues) => this.handleSaveValues(formValues, false)}
                   leftTabOptions={this.state.leftTabOptions}
                   rightTabOptions={this.state.rightTabOptions}
                   saveValuesStatus={this.state.saveValuesStatus}

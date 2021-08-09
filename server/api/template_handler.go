@@ -9,6 +9,7 @@ import (
 	"github.com/go-chi/chi"
 	"github.com/porter-dev/porter/internal/forms"
 	"github.com/porter-dev/porter/internal/helm/loader"
+	"github.com/porter-dev/porter/internal/helm/upgrade"
 	"github.com/porter-dev/porter/internal/templater/parser"
 
 	"github.com/porter-dev/porter/internal/models"
@@ -96,6 +97,68 @@ func (app *App) HandleReadTemplate(w http.ResponseWriter, r *http.Request) {
 			res.Form = formYAML
 		} else if strings.Contains(file.Name, "README.md") {
 			res.Markdown = string(file.Data)
+		}
+	}
+
+	json.NewEncoder(w).Encode(res)
+}
+
+// HandleGetTemplateUpgradeNotes gets the upgrade notes for a template
+func (app *App) HandleGetTemplateUpgradeNotes(w http.ResponseWriter, r *http.Request) {
+	name := chi.URLParam(r, "name")
+	version := chi.URLParam(r, "version")
+
+	// if version passed as latest, pass empty string to loader to get latest
+	if version == "latest" {
+		version = ""
+	}
+
+	form := &forms.ChartForm{
+		Name:    name,
+		Version: version,
+		RepoURL: app.ServerConf.DefaultApplicationHelmRepoURL,
+	}
+
+	// look for the prev_version in the query params
+	vals, err := url.ParseQuery(r.URL.RawQuery)
+
+	if err != nil {
+		app.handleErrorFormDecoding(err, ErrReleaseDecode, w)
+		return
+	}
+
+	form.PopulateRepoURLFromQueryParams(vals)
+
+	prevVersion := "v0.0.0"
+
+	if prevVersionArr, ok := vals["prev_version"]; ok && len(prevVersionArr) == 1 {
+		prevVersion = prevVersionArr[0]
+	}
+
+	chart, err := loader.LoadChartPublic(form.RepoURL, form.Name, form.Version)
+
+	if err != nil {
+		app.handleErrorFormDecoding(err, ErrReleaseDecode, w)
+		return
+	}
+
+	res := &upgrade.UpgradeFile{}
+
+	for _, file := range chart.Files {
+		if strings.Contains(file.Name, "upgrade.yaml") {
+			upgradeFile, err := upgrade.ParseUpgradeFileFromBytes(file.Data)
+
+			if err != nil {
+				break
+			}
+
+			upgradeFile, err = upgradeFile.GetUpgradeFileBetweenVersions(prevVersion, version)
+
+			if err != nil {
+				break
+			}
+
+			res = upgradeFile
 		}
 	}
 

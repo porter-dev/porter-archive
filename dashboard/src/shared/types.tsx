@@ -19,6 +19,8 @@ export interface DetailedIngressError {
 }
 
 export interface ChartType {
+  image_repo_uri: string;
+  git_action_config: any;
   name: string;
   info: {
     last_deployed: string;
@@ -267,9 +269,9 @@ export interface ContextProps {
   currentModalData: any;
   setCurrentModal: (currentModal: string, currentModalData?: any) => void;
   currentOverlay: {
-    message: string,
-    onYes: any,
-    onNo: any,
+    message: string;
+    onYes: any;
+    onNo: any;
   };
   setCurrentOverlay: (x: any) => void;
   currentError?: string;

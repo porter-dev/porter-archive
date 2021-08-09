@@ -132,16 +132,17 @@ const KeyValueArray: React.FC<Props> = (props) => {
     }
   };
 
-  const getProcessedValues = (): any => {
+  const getProcessedValues = (
+    objectArray: { key: string; value: string }[]
+  ): any => {
     let obj = {} as any;
-    state.values?.forEach(({ key, value }) => {
+    objectArray?.forEach(({ key, value }) => {
       obj[key] = value;
     });
     return obj;
-  }
+  };
 
   const renderEnvModal = () => {
-    console.log(state.values)
     if (state.showEnvModal) {
       return (
         <Modal
@@ -154,7 +155,7 @@ const KeyValueArray: React.FC<Props> = (props) => {
           height="542px"
         >
           <LoadEnvGroupModal
-            existingValues={getProcessedValues()}
+            existingValues={getProcessedValues(state.values)}
             namespace={variables.namespace}
             clusterId={variables.clusterId}
             closeModal={() =>
@@ -349,10 +350,11 @@ export const getFinalVariablesForKeyValueArray: GetFinalVariablesFunction = (
   props: KeyValueArrayField,
   state: KeyValueArrayFieldState
 ) => {
-  if (!state)
+  if (!state) {
     return {
-      [props.variable]: {},
+      [props.variable]: props.value ? props.value[0] : [],
     };
+  }
 
   let obj = {} as any;
   const rg = /(?:^|[^\\])(\\n)/g;

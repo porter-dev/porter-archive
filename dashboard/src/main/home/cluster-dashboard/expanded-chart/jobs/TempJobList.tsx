@@ -6,11 +6,11 @@ import JobList from "./JobList";
 import SaveButton from "components/SaveButton";
 
 interface Props {
-  isAuthorized: any,
-  saveValuesStatus: string,
-  setJobs: any,
-  jobs: any,
-  handleSaveValues: any,
+  isAuthorized: any;
+  saveValuesStatus: string;
+  setJobs: any;
+  jobs: any;
+  handleSaveValues: any;
 }
 
 /**
@@ -18,9 +18,7 @@ interface Props {
  * form context (until ExpandedJobChart is migrated to FC)
  */
 const TempJobList: React.FC<Props> = (props) => {
-  const {
-    getSubmitValues
-  } = useContext(PorterFormContext);
+  const { getSubmitValues } = useContext(PorterFormContext);
   const [searchInput, setSearchInput] = useState("");
 
   let saveButton = (
@@ -45,10 +43,7 @@ const TempJobList: React.FC<Props> = (props) => {
   return (
     <>
       {saveButton}
-      <JobList
-        jobs={props.jobs}
-        setJobs={props.setJobs}
-      />
+      <JobList jobs={props.jobs} setJobs={props.setJobs} />
     </>
   );
 };

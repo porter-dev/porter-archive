@@ -380,11 +380,11 @@ const ControllerTabFC: React.FunctionComponent<Props> = ({
             <div key={firstItem.replicaSetName + index}>
               <ReplicaSetContainer>
                 <ReplicaSetName>
-                  {
-                    firstItem?.revisionNumber && firstItem?.revisionNumber.toString() != "N/A" && (
+                  {firstItem?.revisionNumber &&
+                    firstItem?.revisionNumber.toString() != "N/A" && (
                       <Bold>Revision {firstItem.revisionNumber}:</Bold>
-                    )
-                  } {firstItem.replicaSetName}
+                    )}{" "}
+                  {firstItem.replicaSetName}
                 </ReplicaSetName>
               </ReplicaSetContainer>
               {mapPods(subArray)}

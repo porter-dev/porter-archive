@@ -38,28 +38,26 @@ const PodRow: React.FunctionComponent<PodRowProps> = ({
       >
         {pod?.name}
       </Name>
-      {
-        showTooltip && (
-          <Tooltip>
-            {pod?.name}
-            <Grey>Restart count: {pod.restartCount}</Grey>
-            <Grey>Created on: {pod.podAge}</Grey>
-          </Tooltip>
-        )
-      }
+      {showTooltip && (
+        <Tooltip>
+          {pod?.name}
+          <Grey>Restart count: {pod.restartCount}</Grey>
+          <Grey>Created on: {pod.podAge}</Grey>
+        </Tooltip>
+      )}
 
-        <Status>
-          <StatusColor status={podStatus} />
-          {podStatus}
-          {podStatus === "failed" && (
-            <CloseIcon
-              className="material-icons-outlined"
-              onClick={onDeleteClick}
-            >
-              close
-            </CloseIcon>
-          )}
-        </Status>
+      <Status>
+        <StatusColor status={podStatus} />
+        {podStatus}
+        {podStatus === "failed" && (
+          <CloseIcon
+            className="material-icons-outlined"
+            onClick={onDeleteClick}
+          >
+            close
+          </CloseIcon>
+        )}
+      </Status>
     </Tab>
   );
 };

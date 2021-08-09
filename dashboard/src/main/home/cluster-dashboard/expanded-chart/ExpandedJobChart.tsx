@@ -434,7 +434,7 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
         }
         return (
           <TabWrapper>
-            <TempJobList 
+            <TempJobList
               handleSaveValues={this.handleSaveValues}
               jobs={this.state.jobs}
               setJobs={(jobs: any) => this.setState({ jobs })}
@@ -595,7 +595,9 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
                     this.state.imageIsPlaceholder ||
                     !this.props.isAuthorized("job", "", ["get", "update"])
                   }
-                  onSubmit={(formValues) => this.handleSaveValues(formValues, false)}
+                  onSubmit={(formValues) =>
+                    this.handleSaveValues(formValues, false)
+                  }
                   leftTabOptions={this.state.leftTabOptions}
                   rightTabOptions={this.state.rightTabOptions}
                   saveValuesStatus={this.state.saveValuesStatus}

@@ -23,54 +23,62 @@ type StateType = {
 
 export default class UpgradeChartModal extends Component<PropsType, StateType> {
   state = {
-    notes: "Loading"
+    notes: "Loading",
   };
 
   componentDidMount() {
     // get the chart update notes from the api
-    let repoURL = process.env.ADDON_CHART_REPO_URL
-    let chartName = this.props.currentChart.chart.metadata.name.toLowerCase().trim()
+    let repoURL = process.env.ADDON_CHART_REPO_URL;
+    let chartName = this.props.currentChart.chart.metadata.name
+      .toLowerCase()
+      .trim();
 
     if (chartName == "web" || chartName == "worker") {
-        repoURL = process.env.APPLICATION_CHART_REPO_URL
+      repoURL = process.env.APPLICATION_CHART_REPO_URL;
     }
 
     api
-    .getTemplateUpgradeNotes("<token>", {
-        repo_url: repoURL,
-        prev_version: this.props.currentChart.chart.metadata.version,
-     }, {
-      name: chartName,
-      version: this.props.currentChart.latest_version,
-    })
-    .then((res) => {
-      if (!res.data.upgrade_notes || res.data.upgrade_notes.length == 0) {
-        this.setState({ notes: `
+      .getTemplateUpgradeNotes(
+        "<token>",
+        {
+          repo_url: repoURL,
+          prev_version: this.props.currentChart.chart.metadata.version,
+        },
+        {
+          name: chartName,
+          version: this.props.currentChart.latest_version,
+        }
+      )
+      .then((res) => {
+        if (!res.data.upgrade_notes || res.data.upgrade_notes.length == 0) {
+          this.setState({
+            notes: `
 ## Version ${this.props.currentChart.chart.metadata.version} -> ${this.props.currentChart.latest_version}
 No upgrade notes available. This update should be backwards-compatible. 
-        `})
+        `,
+          });
 
-        return
-      }
+          return;
+        }
 
-        let noteArr = res.data.upgrade_notes.map((note : any) => {
-            return `
+        let noteArr = res.data.upgrade_notes.map((note: any) => {
+          return `
 ## Version ${note.previous} -> ${note.target}
 ${note.note}
-            `
-        })
+            `;
+        });
 
-        this.setState({ notes: noteArr.join("\n")})
-    })
-    .catch((err) => console.log(err));
-}
+        this.setState({ notes: noteArr.join("\n") });
+      })
+      .catch((err) => console.log(err));
+  }
 
   renderContent() {
     if (this.state.notes == "Loading") {
-      return <Loading />
+      return <Loading />;
     }
 
-    return <Markdown>{this.state.notes}</Markdown>
+    return <Markdown>{this.state.notes}</Markdown>;
   }
 
   render() {
@@ -140,7 +148,7 @@ const StyledUpgradeChartModal = styled.div`
   overflow: hidden;
   border-radius: 6px;
   background: #202227;
-  font-size: 13px; 
-  line-height: 1.8em; 
+  font-size: 13px;
+  line-height: 1.8em;
   font-family: Work Sans, sans-serif;
 `;

@@ -159,6 +159,7 @@ func (app *App) createGitActionFromForm(
 		ServerURL:              app.ServerConf.ServerURL,
 		GithubOAuthIntegration: nil,
 		GithubAppID:            app.GithubAppConf.AppID,
+		GithubAppSecretPath:    app.GithubAppConf.SecretPath,
 		GithubInstallationID:   form.GitRepoID,
 		GitRepoName:            repoSplit[1],
 		GitRepoOwner:           repoSplit[0],

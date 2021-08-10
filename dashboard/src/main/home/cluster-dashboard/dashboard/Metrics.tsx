@@ -102,6 +102,10 @@ const Metrics: React.FC = () => {
                 value: "nginx:errors",
                 label: "5XX Error Percentage",
               },
+              {
+                value: "nginx:latency",
+                label: "Request Latency",
+              },
             ]);
             setLoading(false);
           })
@@ -203,7 +207,7 @@ const Metrics: React.FC = () => {
         {
           cluster_id: currentCluster.id,
           metric: selectedMetric,
-          shouldsum: shouldsum,
+          shouldsum: selectedMetric == "nginx:errors",
           kind: "Ingress",
           namespace: selectedIngress.namespace,
           startrange: start,

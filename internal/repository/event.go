@@ -13,6 +13,9 @@ type ListEventOpts struct {
 	// can only be "timestamp" for now
 	SortBy string `schema:"sort_by"`
 
+	OwnerType string `schema:"owner_type"`
+	OwnerName string `schema:"owner_name"`
+
 	// Decrypt is whether to decrypt the underlying Data field, which may not be desired
 	// for basic list operations
 	Decrypt bool

@@ -29,6 +29,7 @@ type GithubActions struct {
 
 	GithubConf           *oauth2.Config // one of these will let us authenticate
 	GithubAppID          int64
+	GithubAppSecretPath  string
 	GithubInstallationID uint
 
 	WebhookToken string
@@ -229,7 +230,7 @@ func (g *GithubActions) getClient() (*github.Client, error) {
 		http.DefaultTransport,
 		g.GithubAppID,
 		int64(g.GithubInstallationID),
-		"/porter/docker/github_app_private_key.pem")
+		g.GithubAppSecretPath)
 
 	if err != nil {
 		return nil, err

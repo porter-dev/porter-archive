@@ -37,9 +37,6 @@ const Metrics: React.FC = () => {
   const [detected, setDetected] = useState(false);
   const [metricsOptions, setMetricsOptions] = useState([]);
   const [dropdownExpanded, setDropdownExpanded] = useState(false);
-  const [selectedPod, setSelectedPod] = useState("");
-  const [controllerOptions, setControllerOptions] = useState([]);
-  const [selectedController, setSelectedController] = useState(null);
   const [ingressOptions, setIngressOptions] = useState([]);
   const [selectedIngress, setSelectedIngress] = useState(null);
   const [selectedRange, setSelectedRange] = useState("1H");
@@ -53,16 +50,10 @@ const Metrics: React.FC = () => {
   const [hpaData, setHpaData] = useState([]);
 
   useEffect(() => {
-    if (selectedMetric && selectedRange && selectedPod && selectedController) {
+    if (selectedMetric && selectedRange) {
       getMetrics();
     }
-  }, [
-    selectedMetric,
-    selectedRange,
-    selectedPod,
-    selectedController,
-    selectedIngress,
-  ]);
+  }, [selectedMetric, selectedRange, selectedIngress]);
 
   useEffect(() => {
     Promise.all([
@@ -86,14 +77,50 @@ const Metrics: React.FC = () => {
     ])
       .then(() => {
         setDetected(true);
-        setMetricsOptions([
-          ...metricsOptions,
-          {
-            value: "nginx:errors",
-            label: "5XX Error Percentage",
-          },
-        ]);
-        setLoading(false);
+        setIsLoading((prev) => prev + 1);
+
+        api
+          .getNGINXIngresses(
+            "<token>",
+            {
+              cluster_id: currentCluster.id,
+            },
+            {
+              id: currentProject.id,
+            }
+          )
+          .then((res) => {
+            setMetricsOptions((prev) => {
+              return [
+                ...prev,
+                {
+                  value: "nginx:errors",
+                  label: "5XX Error Percentage",
+                },
+              ];
+            });
+
+            const ingressOptions = res.data.map((ingress: any) => ({
+              value: ingress,
+              label: ingress.name,
+            }));
+            setIngressOptions(ingressOptions);
+            setSelectedIngress(ingressOptions[0]?.value);
+            setMetricsOptions([
+              ...metricsOptions,
+              {
+                value: "nginx:errors",
+                label: "5XX Error Percentage",
+              },
+            ]);
+            setLoading(false);
+          })
+          .catch((err) => {
+            setCurrentError(JSON.stringify(err));
+          })
+          .finally(() => {
+            setIsLoading((prev) => prev - 1);
+          });
       })
       .catch(() => {
         setDetected(false);
@@ -162,7 +189,7 @@ const Metrics: React.FC = () => {
 
   const getMetrics = async () => {
     try {
-      let shouldsum = selectedPod === "All";
+      let shouldsum = true;
       let namespace = "default";
 
       // calculate start and end range
@@ -171,10 +198,6 @@ const Metrics: React.FC = () => {
       const start = end - secondsBeforeNow[selectedRange];
 
       let podNames = [] as string[];
-
-      if (!shouldsum) {
-        podNames = [selectedPod];
-      }
 
       if (selectedMetric == "nginx:errors") {
         podNames = [selectedIngress?.name];
@@ -484,6 +507,7 @@ const StyledMetricsSection = styled.div`
   animation: floatIn 0.3s;
   animation-timing-function: ease-out;
   animation-fill-mode: forwards;
+  margin-top: 20px;
   @keyframes floatIn {
     from {
       opacity: 0;

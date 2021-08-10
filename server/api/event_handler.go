@@ -82,6 +82,8 @@ func (app *App) HandleListEvents(w http.ResponseWriter, r *http.Request) {
 
 	decoder := schema.NewDecoder()
 
+	decoder.IgnoreUnknownKeys(true)
+
 	if err := decoder.Decode(opts, vals); err != nil {
 		app.sendExternalError(err, http.StatusInternalServerError, HTTPError{
 			Code:   ErrReleaseReadData,

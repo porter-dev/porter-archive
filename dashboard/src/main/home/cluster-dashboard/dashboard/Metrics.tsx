@@ -50,7 +50,7 @@ const Metrics: React.FC = () => {
   const [hpaData, setHpaData] = useState([]);
 
   useEffect(() => {
-    if (selectedMetric && selectedRange) {
+    if (selectedMetric && selectedRange && selectedIngress) {
       getMetrics();
     }
   }, [selectedMetric, selectedRange, selectedIngress]);
@@ -90,16 +90,6 @@ const Metrics: React.FC = () => {
             }
           )
           .then((res) => {
-            setMetricsOptions((prev) => {
-              return [
-                ...prev,
-                {
-                  value: "nginx:errors",
-                  label: "5XX Error Percentage",
-                },
-              ];
-            });
-
             const ingressOptions = res.data.map((ingress: any) => ({
               value: ingress,
               label: ingress.name,
@@ -214,9 +204,8 @@ const Metrics: React.FC = () => {
           cluster_id: currentCluster.id,
           metric: selectedMetric,
           shouldsum: shouldsum,
-          kind: "Deployment",
-          name: "nginx-ingress-ingress-nginx-controller",
-          namespace: namespace,
+          kind: "Ingress",
+          namespace: selectedIngress.namespace,
           startrange: start,
           endrange: end,
           resolution: resolutions[selectedRange],

@@ -41,7 +41,7 @@ func TestCreateEvent(t *testing.T) {
 		t.Fatalf("%v\n", err)
 	}
 
-	event, err = tester.repo.Event.ReadEvent(event.Model.ID)
+	event, err = tester.repo.Event.ReadEvent(event.Model.ID, 1, 1)
 
 	if err != nil {
 		t.Fatalf("%v\n", err)
@@ -74,9 +74,10 @@ func TestListEventsByProjectIDWithLimit(t *testing.T) {
 	defer cleanup(tester, t)
 
 	testListEventsByProjectID(tester, t, &repository.ListEventOpts{
-		Limit:   10,
-		Type:    "node",
-		Decrypt: true,
+		ClusterID: 1,
+		Limit:     10,
+		Type:      "node",
+		Decrypt:   true,
 	}, tester.initEvents[50:60])
 }
 
@@ -94,9 +95,10 @@ func TestListEventsByProjectIDWithSkip(t *testing.T) {
 	defer cleanup(tester, t)
 
 	testListEventsByProjectID(tester, t, &repository.ListEventOpts{
-		Limit:   25,
-		Skip:    10,
-		Decrypt: true,
+		ClusterID: 1,
+		Limit:     25,
+		Skip:      10,
+		Decrypt:   true,
 	}, tester.initEvents[10:35])
 }
 
@@ -114,11 +116,12 @@ func TestListEventsByProjectIDWithSortBy(t *testing.T) {
 	defer cleanup(tester, t)
 
 	testListEventsByProjectID(tester, t, &repository.ListEventOpts{
-		Limit:   1,
-		Skip:    0,
-		Type:    "node",
-		Decrypt: true,
-		SortBy:  "timestamp",
+		ClusterID: 1,
+		Limit:     1,
+		Skip:      0,
+		Type:      "node",
+		Decrypt:   true,
+		SortBy:    "timestamp",
 	}, tester.initEvents[99:])
 }
 

@@ -421,6 +421,34 @@ func New(a *api.App) *chi.Mux {
 				),
 			)
 
+			r.Method(
+				"GET",
+				"/projects/{project_id}/events",
+				auth.DoesUserHaveProjectAccess(
+					auth.DoesUserHaveClusterAccess(
+						requestlog.NewHandler(a.HandleListEvents, l),
+						mw.URLParam,
+						mw.QueryParam,
+					),
+					mw.URLParam,
+					mw.AdminAccess,
+				),
+			)
+
+			r.Method(
+				"GET",
+				"/projects/{project_id}/events/{event_id}",
+				auth.DoesUserHaveProjectAccess(
+					auth.DoesUserHaveClusterAccess(
+						requestlog.NewHandler(a.HandleGetEvent, l),
+						mw.URLParam,
+						mw.QueryParam,
+					),
+					mw.URLParam,
+					mw.AdminAccess,
+				),
+			)
+
 			// /api/projects/{project_id}/invites routes
 			r.Method(
 				"POST",

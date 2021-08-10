@@ -406,6 +406,21 @@ func New(a *api.App) *chi.Mux {
 				),
 			)
 
+			// /api/projects/{project_id}/events routes
+			r.Method(
+				"POST",
+				"/projects/{project_id}/events",
+				auth.DoesUserHaveProjectAccess(
+					auth.DoesUserHaveClusterAccess(
+						requestlog.NewHandler(a.HandleCreateEvent, l),
+						mw.URLParam,
+						mw.QueryParam,
+					),
+					mw.URLParam,
+					mw.AdminAccess,
+				),
+			)
+
 			// /api/projects/{project_id}/invites routes
 			r.Method(
 				"POST",

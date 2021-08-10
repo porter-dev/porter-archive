@@ -38,14 +38,32 @@ type EventExternal struct {
 	OwnerType string `json:"owner_name"`
 	OwnerName string `json:"owner_type"`
 
-	EventType    string `json:"event_type"`
-	RefType      string `json:"ref_type"`
-	RefName      string `json:"ref_name"`
-	RefNamespace string `json:"ref_namespace"`
-	Message      string `json:"message"`
-	Reason       string `json:"reason"`
-	Timestamp    time.Time
-	Data         []byte `json:"data"`
+	EventType    string    `json:"event_type"`
+	RefType      string    `json:"resource_type"`
+	RefName      string    `json:"name"`
+	RefNamespace string    `json:"namespace"`
+	Message      string    `json:"message"`
+	Reason       string    `json:"reason"`
+	Data         []byte    `json:"data"`
+	Timestamp    time.Time `json:"timestamp"`
+}
+
+type EventExternalSimple struct {
+	ID uint `json:"id"`
+
+	ProjectID uint `json:"project_id"`
+	ClusterID uint `json:"cluster_id"`
+
+	OwnerType string `json:"owner_name"`
+	OwnerName string `json:"owner_type"`
+
+	EventType    string    `json:"event_type"`
+	RefType      string    `json:"resource_type"`
+	RefName      string    `json:"name"`
+	RefNamespace string    `json:"namespace"`
+	Message      string    `json:"message"`
+	Reason       string    `json:"reason"`
+	Timestamp    time.Time `json:"timestamp"`
 }
 
 // Externalize generates an external Event to be shared over REST
@@ -63,5 +81,22 @@ func (e *Event) Externalize() *EventExternal {
 		Reason:       e.Reason,
 		Timestamp:    e.Timestamp,
 		Data:         e.Data,
+	}
+}
+
+// Externalize generates an external Event to be shared over REST
+func (e *Event) ExternalizeSimple() *EventExternalSimple {
+	return &EventExternalSimple{
+		ID:           e.ID,
+		ProjectID:    e.ProjectID,
+		ClusterID:    e.ClusterID,
+		OwnerName:    e.OwnerName,
+		OwnerType:    e.OwnerType,
+		EventType:    e.EventType,
+		RefType:      e.RefType,
+		RefName:      e.RefName,
+		RefNamespace: e.RefNamespace,
+		Reason:       e.Reason,
+		Timestamp:    e.Timestamp,
 	}
 }

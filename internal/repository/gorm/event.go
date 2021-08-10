@@ -40,12 +40,17 @@ func (repo *EventRepository) CreateEvent(
 
 // ReadEvent finds an event by id
 func (repo *EventRepository) ReadEvent(
-	id uint,
+	id, projID, clusterID uint,
 ) (*models.Event, error) {
 	event := &models.Event{}
 
 	// preload Clusters association
-	if err := repo.db.Where("id = ?", id).First(&event).Error; err != nil {
+	if err := repo.db.Where(
+		"id = ? AND project_id = ? AND cluster_id = ?",
+		id,
+		projID,
+		clusterID,
+	).First(&event).Error; err != nil {
 		return nil, err
 	}
 
@@ -72,7 +77,7 @@ func (repo *EventRepository) ListEventsByProjectID(
 
 	events := []*models.Event{}
 
-	query := repo.db.Where("project_id = ?", projectID)
+	query := repo.db.Where("project_id = ? AND cluster_id = ?", projectID, opts.ClusterID)
 
 	if listOpts.Type != "" {
 		query = repo.db.Where(

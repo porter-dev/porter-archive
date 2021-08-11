@@ -2,7 +2,7 @@ import React, { Component } from "react";
 import styled from "styled-components";
 
 import { Context } from "shared/Context";
-import { ResourceType, ChartType } from "shared/types";
+import { ChartType, ResourceType } from "shared/types";
 
 import GraphDisplay from "./graph/GraphDisplay";
 import Loading from "components/Loading";

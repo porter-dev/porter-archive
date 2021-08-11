@@ -1,4 +1,4 @@
-import React, { Component, createRef } from "react";
+import React, { Component } from "react";
 import styled from "styled-components";
 import close from "assets/close.png";
 import AceEditor from "react-ace";

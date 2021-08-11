@@ -5,8 +5,8 @@ import close from "assets/close.png";
 import { isAlphanumeric } from "shared/common";
 import api from "shared/api";
 import { Context } from "shared/Context";
-import { InfraType, ProjectType } from "shared/types";
-import { pushQueryParams, pushFiltered } from "shared/routing";
+import { InfraType } from "shared/types";
+import { pushFiltered } from "shared/routing";
 
 import SelectRow from "components/form-components/SelectRow";
 import InputRow from "components/form-components/InputRow";

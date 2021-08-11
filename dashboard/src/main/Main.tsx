@@ -1,6 +1,6 @@
 import React, { Component } from "react";
 import styled, { createGlobalStyle } from "styled-components";
-import { BrowserRouter, Route, Redirect, Switch } from "react-router-dom";
+import { Redirect, Route, Switch } from "react-router-dom";
 
 import api from "shared/api";
 import { Context } from "shared/Context";

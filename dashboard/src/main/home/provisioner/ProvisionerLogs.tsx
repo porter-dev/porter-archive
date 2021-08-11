@@ -6,7 +6,6 @@ import { RouteComponentProps, withRouter } from "react-router";
 
 import ansiparse from "shared/ansiparser";
 import loading from "assets/loading.gif";
-import warning from "assets/warning.png";
 
 type PropsType = RouteComponentProps & {
   selectedInfra: InfraType;

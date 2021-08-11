@@ -1,5 +1,3 @@
-import { Location } from "history";
-
 export type PorterUrl =
   | "dashboard"
   | "launch"

@@ -1,27 +1,13 @@
-import React, {
-  useContext,
-  useState,
-  useEffect,
-  useRef,
-  useCallback,
-  useMemo,
-} from "react";
+import React, { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import styled from "styled-components";
 import yaml from "js-yaml";
 import backArrow from "assets/back_arrow.png";
 import _ from "lodash";
 import loadingSrc from "assets/loading.gif";
 
-import {
-  ResourceType,
-  ChartType,
-  StorageType,
-  ClusterType,
-} from "shared/types";
+import { ChartType, ClusterType, ResourceType, StorageType } from "shared/types";
 import { Context } from "shared/Context";
 import api from "shared/api";
-
-import Loading from "components/Loading";
 import StatusIndicator from "components/StatusIndicator";
 import PorterFormWrapper from "components/porter-form/PorterFormWrapper";
 import RevisionSection from "./RevisionSection";

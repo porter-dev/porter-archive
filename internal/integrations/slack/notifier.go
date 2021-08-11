@@ -2,8 +2,10 @@ package slack
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/porter-dev/porter/internal/models/integrations"
@@ -58,80 +60,152 @@ func NewSlackNotifier(slackInts ...*integrations.SlackIntegration) Notifier {
 	}
 }
 
+type SlackPayload struct {
+	Blocks []*SlackBlock `json:"blocks"`
+}
+
+type SlackBlock struct {
+	Type string     `json:"type"`
+	Text *SlackText `json:"text,omitempty"`
+}
+
+type SlackText struct {
+	Type string `json:"type"`
+	Text string `json:"text"`
+}
+
 func (s *SlackNotifier) Notify(opts *NotifyOpts) error {
-	var statusPayload string
-
-	switch opts.Status {
-	case StatusDeployed:
-		statusPayload = getSuccessPayload(opts)
-	case StatusFailed:
-		statusPayload = getFailedPayload(opts)
+	blocks := []*SlackBlock{
+		getMessageBlock(opts),
+		getDividerBlock(),
+		getMarkdownBlock(fmt.Sprintf("*Name:* %s", "`"+opts.Name+"`")),
+		getMarkdownBlock(fmt.Sprintf("*Namespace:* %s", "`"+opts.Namespace+"`")),
+		getMarkdownBlock(fmt.Sprintf("*Version:* %d", opts.Version)),
 	}
 
-	payload := fmt.Sprintf(`
-	{
-		"blocks": [
-			%s
-			{
-				"type": "divider"
-			},
-			{
-				"type": "section",
-				"text": {
-					"type": "mrkdwn",
-					"text": "*Name:* %s"
-				}
-			},
-			{
-				"type": "section",
-				"text": {
-					"type": "mrkdwn",
-					"text": "*Namespace:* %s"
-				}
-			},
-			{
-				"type": "section",
-				"text": {
-					"type": "mrkdwn",
-					"text": "*Version:* %d"
-				}
-			}
-		]
+	// we create a basic payload as a fallback if the detailed payload with "info" fails, due to
+	// marshaling errors on the Slack API side.
+	basicSlackPayload := &SlackPayload{
+		Blocks: blocks,
 	}
-	`, statusPayload, "`"+opts.Name+"`", "`"+opts.Namespace+"`", opts.Version)
 
-	reqBody := bytes.NewReader([]byte(payload))
+	infoBlock := getInfoBlock(opts)
+
+	if infoBlock != nil {
+		blocks = append(blocks, infoBlock)
+	}
+
+	slackPayload := &SlackPayload{
+		Blocks: blocks,
+	}
+
+	basicPayload, err := json.Marshal(basicSlackPayload)
+
+	if err != nil {
+		return err
+	}
+
+	payload, err := json.Marshal(slackPayload)
+
+	if err != nil {
+		return err
+	}
+
+	basicReqBody := bytes.NewReader(basicPayload)
+	reqBody := bytes.NewReader(payload)
 	client := &http.Client{
 		Timeout: time.Second * 5,
 	}
 
 	for _, slackInt := range s.slackInts {
-		client.Post(string(slackInt.Webhook), "application/json", reqBody)
+		resp, err := client.Post(string(slackInt.Webhook), "application/json", reqBody)
+
+		if err != nil || resp.StatusCode != 200 {
+			client.Post(string(slackInt.Webhook), "application/json", basicReqBody)
+		}
 	}
 
 	return nil
 }
 
-func getSuccessPayload(opts *NotifyOpts) string {
-	return fmt.Sprintf(`
-		{
-			"type": "section",
-			"text": {
-				"type": "mrkdwn",
-				"text": ":rocket: Your application %s was successfully updated on Porter! <%s|View the new release.>"
-			}
-		},
-	`, "`"+opts.Name+"`", opts.URL)
+func getDividerBlock() *SlackBlock {
+	return &SlackBlock{
+		Type: "divider",
+	}
 }
 
-func getFailedPayload(opts *NotifyOpts) string {
-	return fmt.Sprintf(`
-		{
-			"type": "section",
-			"text": {
-				"type": "mrkdwn",
-				"text": ":x: Your application %s failed to deploy on Porter. <%s|View the status here.>"
-			}
+func getMarkdownBlock(md string) *SlackBlock {
+	return &SlackBlock{
+		Type: "section",
+		Text: &SlackText{
+			Type: "mrkdwn",
+			Text: md,
 		},
-	`, "`"+opts.Name+"`", opts.URL)
+	}
+}
+
+func getMessageBlock(opts *NotifyOpts) *SlackBlock {
+	var md string
+
+	switch opts.Status {
+	case StatusDeployed:
+		md = getSuccessMessage(opts)
+	case StatusFailed:
+		md = getFailedMessage(opts)
+	}
+
+	return getMarkdownBlock(md)
+}
+
+func getInfoBlock(opts *NotifyOpts) *SlackBlock {
+	var md string
+
+	switch opts.Status {
+	case StatusFailed:
+		md = getFailedInfoMessage(opts)
+	default:
+		return nil
+	}
+
+	return getMarkdownBlock(md)
+}
+
+func getSuccessMessage(opts *NotifyOpts) string {
+	return fmt.Sprintf(
+		":rocket: Your application %s was successfully updated on Porter! <%s|View the new release.>",
+		"`"+opts.Name+"`",
+		opts.URL,
+	)
+}
+
+func getFailedMessage(opts *NotifyOpts) string {
+	return fmt.Sprintf(
+		":x: Your application %s failed to deploy on Porter. <%s|View the status here.>",
+		"`"+opts.Name+"`",
+		opts.URL,
+	)
+}
+
+func getFailedInfoMessage(opts *NotifyOpts) string {
+	info := opts.Info
+
+	// TODO: this casing is quite ugly and looks for particular types of API server
+	// errors, otherwise it truncates the error message to 200 characters. This should
+	// handle the errors more gracefully.
+	if strings.Contains(info, "Invalid value:") {
+		errArr := strings.Split(info, "Invalid value:")
+
+		// look for "unmarshalerDecoder" error
+		if strings.Contains(info, "unmarshalerDecoder") {
+			udArr := strings.Split(info, "unmarshalerDecoder:")
+
+			info = errArr[0] + udArr[1]
+		} else {
+			info = errArr[0] + "..."
+		}
+	} else if len(info) > 200 {
+		info = info[0:200] + "..."
+	}
+
+	return fmt.Sprintf("```\n%s\n```", info)
 }

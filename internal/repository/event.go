@@ -4,7 +4,7 @@ import "github.com/porter-dev/porter/internal/models"
 
 // ListEventOpts are the options for listing events
 type ListEventOpts struct {
-	ClusterID uint `schema:"cluster_id"`
+	ClusterID uint
 
 	Limit int    `schema:"limit"`
 	Skip  int    `schema:"skip"`

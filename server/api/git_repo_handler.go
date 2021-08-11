@@ -501,7 +501,7 @@ func (app *App) githubAppClientFromRequest(r *http.Request) (*github.Client, err
 		http.DefaultTransport,
 		app.GithubAppConf.AppID,
 		int64(installationID),
-		"/porter/docker/github_app_private_key.pem")
+		app.GithubAppConf.SecretPath)
 
 	if err != nil {
 		return nil, err

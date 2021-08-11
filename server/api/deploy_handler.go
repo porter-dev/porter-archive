@@ -375,6 +375,7 @@ func (app *App) HandleUninstallTemplate(w http.ResponseWriter, r *http.Request) 
 					ServerURL:              app.ServerConf.ServerURL,
 					GithubOAuthIntegration: gr,
 					GithubAppID:            app.GithubAppConf.AppID,
+					GithubAppSecretPath:    app.GithubAppConf.SecretPath,
 					GithubInstallationID:   gitAction.GithubInstallationID,
 					GitRepoName:            repoSplit[1],
 					GitRepoOwner:           repoSplit[0],

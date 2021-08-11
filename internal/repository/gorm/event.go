@@ -1,7 +1,6 @@
 package gorm
 
 import (
-	"fmt"
 	"strings"
 
 	"github.com/porter-dev/porter/internal/models"
@@ -77,8 +76,6 @@ func (repo *EventRepository) ListEventsByProjectID(
 	}
 
 	events := []*models.Event{}
-
-	fmt.Println("OPTS ARE", listOpts, listOpts.OwnerName, listOpts.OwnerType)
 
 	query := repo.db.Where("project_id = ? AND cluster_id = ?", projectID, opts.ClusterID)
 

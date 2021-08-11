@@ -4,7 +4,7 @@ import gradient from "assets/gradient.png";
 
 import { Context } from "shared/Context";
 import { ProjectType } from "shared/types";
-import { pushQueryParams, pushFiltered } from "shared/routing";
+import { pushFiltered } from "shared/routing";
 import { RouteComponentProps, withRouter } from "react-router";
 
 type PropsType = RouteComponentProps & {

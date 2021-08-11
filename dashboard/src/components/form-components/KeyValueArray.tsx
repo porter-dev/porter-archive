@@ -6,7 +6,6 @@ import EnvEditorModal from "../../main/home/modals/EnvEditorModal";
 
 import sliders from "assets/sliders.svg";
 import upload from "assets/upload.svg";
-import { keysIn } from "lodash";
 
 export type KeyValue = {
   key: string;

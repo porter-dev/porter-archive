@@ -35,8 +35,8 @@ type EventExternal struct {
 	ProjectID uint `json:"project_id"`
 	ClusterID uint `json:"cluster_id"`
 
-	OwnerType string `json:"owner_name"`
-	OwnerName string `json:"owner_type"`
+	OwnerType string `json:"owner_type"`
+	OwnerName string `json:"owner_name"`
 
 	EventType    string    `json:"event_type"`
 	RefType      string    `json:"resource_type"`
@@ -54,8 +54,8 @@ type EventExternalSimple struct {
 	ProjectID uint `json:"project_id"`
 	ClusterID uint `json:"cluster_id"`
 
-	OwnerType string `json:"owner_name"`
-	OwnerName string `json:"owner_type"`
+	OwnerType string `json:"owner_type"`
+	OwnerName string `json:"owner_name"`
 
 	EventType    string    `json:"event_type"`
 	RefType      string    `json:"resource_type"`

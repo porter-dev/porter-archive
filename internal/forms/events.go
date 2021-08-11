@@ -11,8 +11,8 @@ import (
 type CreateEventForm struct {
 	ResourceType string    `json:"resource_type"`
 	Name         string    `json:"name"`
-	OwnerType    string    `json:"owner_name"`
-	OwnerName    string    `json:"owner_type"`
+	OwnerType    string    `json:"owner_type"`
+	OwnerName    string    `json:"owner_name"`
 	EventType    string    `json:"event_type"`
 	Namespace    string    `json:"namespace"`
 	Message      string    `json:"message"`

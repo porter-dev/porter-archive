@@ -10,7 +10,7 @@ export default class App extends Component {
     return (
       <StyledMain>
         <GlobalStyle />
-        <PorterErrorBoundary>
+        <PorterErrorBoundary errorBoundaryLocation="globalErrorBoundary">
           <BrowserRouter>
             <MainWrapper />
           </BrowserRouter>

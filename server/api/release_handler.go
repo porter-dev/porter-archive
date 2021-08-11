@@ -1029,8 +1029,10 @@ func (app *App) HandleUpgradeRelease(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		notifyOpts.Status = slack.StatusFailed
+		notifyOpts.Info = err.Error()
 
-		notifier.Notify(notifyOpts)
+		slackErr := notifier.Notify(notifyOpts)
+		fmt.Println("SLACK ERROR IS", slackErr)
 
 		app.sendExternalError(err, http.StatusInternalServerError, HTTPError{
 			Code:   ErrReleaseDeploy,
@@ -1252,6 +1254,7 @@ func (app *App) HandleReleaseDeployWebhook(w http.ResponseWriter, r *http.Reques
 
 	if err != nil {
 		notifyOpts.Status = slack.StatusFailed
+		notifyOpts.Info = err.Error()
 
 		notifier.Notify(notifyOpts)
 

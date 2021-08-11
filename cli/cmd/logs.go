@@ -102,5 +102,7 @@ func logs(_ *api.AuthCheckResponse, client *api.Client, args []string) error {
 		return fmt.Errorf("Could not retrieve kube credentials: %s", err.Error())
 	}
 
-	return pipePodLogsToStdout(restConf, namespace, selectedPod.Name, selectedContainerName, follow)
+	_, err = pipePodLogsToStdout(restConf, namespace, selectedPod.Name, selectedContainerName, follow)
+
+	return err
 }

@@ -76,7 +76,7 @@ func run(_ *api.AuthCheckResponse, client *api.Client, args []string) error {
 
 	if len(podsSimple) == 0 {
 		return fmt.Errorf("At least one pod must exist in this deployment.")
-	} else if len(podsSimple) == 1 {
+	} else if len(podsSimple) == 1 || !existingPod {
 		selectedPod = podsSimple[0]
 	} else {
 		podNames := make([]string, 0)
@@ -309,11 +309,19 @@ func executeRunEphemeral(config *rest.Config, namespace, name, container string,
 
 		time.Sleep(2 * time.Second)
 
-		// ugly way to catch non-TTY errors, such as when running command "echo \"hello\""
-		if i == 4 && err != nil && strings.Contains(err.Error(), "not found in pod") {
-			fmt.Printf("Could not open a shell to this container. Container logs:\n")
+		// ugly way to catch no TTY errors, such as when running command "echo \"hello\""
+		if i == 4 && err != nil {
+			color.New(color.FgYellow).Println("Could not open a shell to this container. Container logs:\n")
 
-			err = pipePodLogsToStdout(config, namespace, podName, container, false)
+			var writtenBytes int64
+
+			writtenBytes, err = pipePodLogsToStdout(config, namespace, podName, container, false)
+
+			if writtenBytes == 0 {
+				color.New(color.FgYellow).Println("Could not get logs. Pod events:\n")
+
+				err = pipeEventsToStdout(config, namespace, podName, container, false)
+			}
 		}
 	}
 
@@ -323,7 +331,7 @@ func executeRunEphemeral(config *rest.Config, namespace, name, container string,
 	return err
 }
 
-func pipePodLogsToStdout(config *rest.Config, namespace, name, container string, follow bool) error {
+func pipePodLogsToStdout(config *rest.Config, namespace, name, container string, follow bool) (int64, error) {
 	podLogOpts := v1.PodLogOptions{
 		Container: container,
 		Follow:    follow,
@@ -333,7 +341,7 @@ func pipePodLogsToStdout(config *rest.Config, namespace, name, container string,
 	clientset, err := kubernetes.NewForConfig(config)
 
 	if err != nil {
-		return err
+		return 0, err
 	}
 
 	req := clientset.CoreV1().Pods(namespace).GetLogs(name, &podLogOpts)
@@ -343,15 +351,35 @@ func pipePodLogsToStdout(config *rest.Config, namespace, name, container string,
 	)
 
 	if err != nil {
-		return err
+		return 0, err
 	}
 
 	defer podLogs.Close()
 
-	_, err = io.Copy(os.Stdout, podLogs)
+	return io.Copy(os.Stdout, podLogs)
+}
+
+func pipeEventsToStdout(config *rest.Config, namespace, name, container string, follow bool) error {
+	// creates the clientset
+	clientset, err := kubernetes.NewForConfig(config)
 
 	if err != nil {
 		return err
+	}
+
+	resp, err := clientset.CoreV1().Events(namespace).List(
+		context.TODO(),
+		metav1.ListOptions{
+			FieldSelector: fmt.Sprintf("involvedObject.name=%s,involvedObject.namespace=%s", name, namespace),
+		},
+	)
+
+	if err != nil {
+		return err
+	}
+
+	for _, event := range resp.Items {
+		color.New(color.FgRed).Println(event.Message)
 	}
 
 	return nil
@@ -418,6 +446,7 @@ func createPodFromExisting(config *rest.Config, existing *v1.Pod, args []string)
 	newPod.Spec.Containers[0].TTY = true
 	newPod.Spec.Containers[0].Stdin = true
 	newPod.Spec.Containers[0].StdinOnce = true
+	newPod.Spec.NodeName = ""
 
 	// create the pod and return it
 	return clientset.CoreV1().Pods(existing.ObjectMeta.Namespace).Create(

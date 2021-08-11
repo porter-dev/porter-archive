@@ -92,7 +92,7 @@ export class MetricNormalizer {
     return arr.map((d) => {
       return {
         date: d.date,
-        value: parseFloat(d.latency),
+        value: d.latency != "NaN" ? parseFloat(d.latency) : 0,
       };
     });
   }

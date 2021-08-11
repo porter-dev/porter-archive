@@ -35,6 +35,7 @@ import { useWebsockets } from "shared/hooks/useWebsockets";
 import useAuth from "shared/auth/useAuth";
 import TitleSection from "components/TitleSection";
 import { integrationList } from "shared/common";
+import EventsTab from "./events/EventsTab";
 
 type Props = {
   namespace: string;
@@ -433,6 +434,8 @@ const ExpandedChart: React.FC<Props> = (props) => {
             disabled={!isAuthorized("application", "", ["get", "update"])}
           />
         );
+      case "events":
+        return <EventsTab />;
       default:
     }
   };
@@ -441,6 +444,8 @@ const ExpandedChart: React.FC<Props> = (props) => {
     // Collate non-form tabs
     let rightTabOptions = [] as any[];
     let leftTabOptions = [] as any[];
+    leftTabOptions.push({ label: "Events", value: "events" });
+
     leftTabOptions.push({ label: "Status", value: "status" });
 
     if (props.isMetricsInstalled) {

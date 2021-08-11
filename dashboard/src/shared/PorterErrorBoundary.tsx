@@ -2,21 +2,34 @@ import UnexpectedErrorPage from "components/UnexpectedErrorPage";
 import React from "react";
 import { ErrorBoundary } from "react-error-boundary";
 
-const PorterErrorBoundary: React.FC = ({ children }) => {
+export type PorterErrorBoundaryProps<OnResetProps = {}> = {
+  errorBoundaryLocation: string;
+  onReset?: (props: OnResetProps) => unknown;
+};
+
+const PorterErrorBoundary: React.FC<PorterErrorBoundaryProps> = ({
+  errorBoundaryLocation,
+  onReset,
+  children,
+}) => {
   const handleError = (error: Error, info: { componentStack: string }) => {
-    window?.analytics?.track("React error", {
-      location: "global-error-boundary",
+    window?.analytics?.track("React Error", {
+      location: errorBoundaryLocation,
       error: error.message,
       componentStack: info?.componentStack,
       url: window.location.toString(),
     });
-    window.location.reload();
+  };
+
+  const handleOnReset = (props: unknown) => {
+    typeof onReset === "function" ? onReset(props) : window.location.reload();
   };
 
   return (
     <ErrorBoundary
+      onError={handleError}
       FallbackComponent={UnexpectedErrorPage}
-      onReset={handleError}
+      onReset={handleOnReset}
     >
       {children}
     </ErrorBoundary>

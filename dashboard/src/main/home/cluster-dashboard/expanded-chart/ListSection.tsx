@@ -22,10 +22,6 @@ type StateType = {
   selectedResource: { kind: string; name: string } | null;
 };
 
-const ErrorComponent = () => {
-  throw new Error("Something went wrong");
-};
-
 export default class ListSection extends Component<PropsType, StateType> {
   state = {
     showKindLabels: true,
@@ -114,7 +110,6 @@ export default class ListSection extends Component<PropsType, StateType> {
             />
           </YamlWrapper>
         </FlexWrapper>
-        <ErrorComponent />
       </StyledListSection>
     );
   }

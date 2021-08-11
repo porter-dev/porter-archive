@@ -127,9 +127,9 @@ func QueryPrometheus(
 	} else if opts.Metric == "nginx:latency" {
 		opts.Namespace = ".*"
 		selectionRegex = ".*"
-		num := fmt.Sprintf(`sum(rate(nginx_ingress_controller_ingress_upstream_latency_seconds_sum{namespace=~"%s",ingress=~"%s"}[5m]) OR on() vector(0))`, opts.Namespace, selectionRegex)
-		denom := fmt.Sprintf(`sum(rate(nginx_ingress_controller_ingress_upstream_latency_seconds_count{namespace=~"%s",ingress=~"%s"}[5m]))`, opts.Namespace, selectionRegex)
-		query = fmt.Sprintf(`%s / %s * 1000 OR on() vector(0)`, num, denom)
+		num := fmt.Sprintf(`sum(rate(nginx_ingress_controller_request_duration_seconds_sum{namespace=~"%s",ingress=~"%s"}[5m]) OR on() vector(0))`, opts.Namespace, selectionRegex)
+		denom := fmt.Sprintf(`sum(rate(nginx_ingress_controller_request_duration_seconds_count{namespace=~"%s",ingress=~"%s"}[5m]))`, opts.Namespace, selectionRegex)
+		query = fmt.Sprintf(`%s / %s OR on() vector(0)`, num, denom)
 	} else if opts.Metric == "cpu_hpa_threshold" {
 		// get the name of the kube hpa metric
 		metricName, hpaMetricName := getKubeHPAMetricName(clientset, service, opts, "spec_target_metric")

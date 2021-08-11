@@ -132,7 +132,6 @@ export const PorterFormContextProvider: React.FC<Props> = (props) => {
         })
       )
     );
-    console.log(context.currentCluster);
     return {
       ...ret,
       ...{

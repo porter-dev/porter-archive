@@ -132,7 +132,17 @@ export const PorterFormContextProvider: React.FC<Props> = (props) => {
         })
       )
     );
-    return ret;
+    return {
+      ...ret,
+      ...{
+        "currentCluster.service.is_gcp":
+          context.currentCluster?.service == "gke",
+        "currentCluster.service.is_aws":
+          context.currentCluster?.service == "eks",
+        "currentCluster.service.is_do":
+          context.currentCluster?.service == "doks",
+      },
+    };
   };
 
   const getInitialValidation = (data: PorterFormData) => {

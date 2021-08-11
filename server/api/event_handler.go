@@ -23,9 +23,7 @@ func (app *App) HandleCreateEvent(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	vals, err := url.ParseQuery(r.URL.RawQuery)
-
-	clusterID, err := strconv.ParseUint(vals["cluster_id"][0], 10, 64)
+	clusterID, err := strconv.ParseUint(chi.URLParam(r, "cluster_id"), 0, 64)
 
 	if err != nil {
 		app.sendExternalError(err, http.StatusInternalServerError, HTTPError{
@@ -76,9 +74,20 @@ func (app *App) HandleListEvents(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	clusterID, err := strconv.ParseUint(chi.URLParam(r, "cluster_id"), 0, 64)
+
+	if err != nil {
+		app.sendExternalError(err, http.StatusInternalServerError, HTTPError{
+			Code:   ErrReleaseReadData,
+			Errors: []string{"cluster not found"},
+		}, w)
+	}
+
 	vals, err := url.ParseQuery(r.URL.RawQuery)
 
-	opts := &repository.ListEventOpts{}
+	opts := &repository.ListEventOpts{
+		ClusterID: uint(clusterID),
+	}
 
 	decoder := schema.NewDecoder()
 
@@ -122,9 +131,7 @@ func (app *App) HandleGetEvent(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	vals, err := url.ParseQuery(r.URL.RawQuery)
-
-	clusterID, err := strconv.ParseUint(vals["cluster_id"][0], 10, 64)
+	clusterID, err := strconv.ParseUint(chi.URLParam(r, "cluster_id"), 0, 64)
 
 	if err != nil {
 		app.sendExternalError(err, http.StatusInternalServerError, HTTPError{

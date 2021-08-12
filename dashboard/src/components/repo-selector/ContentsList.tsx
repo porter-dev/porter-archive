@@ -7,7 +7,7 @@ import close from "assets/close.png";
 
 import api from "../../shared/api";
 import { Context } from "../../shared/Context";
-import { FileType, ActionConfigType } from "../../shared/types";
+import { ActionConfigType, FileType } from "../../shared/types";
 
 import Loading from "../Loading";
 

@@ -1,5 +1,4 @@
 import React, { Component } from "react";
-import styled from "styled-components";
 
 import { Context } from "shared/Context";
 import ProjectSection from "./ProjectSection";

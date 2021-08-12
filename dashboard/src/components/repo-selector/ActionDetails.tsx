@@ -1,4 +1,3 @@
-import ImageSelector from "components/image-selector/ImageSelector";
 import React, { Component } from "react";
 import styled from "styled-components";
 
@@ -8,7 +7,6 @@ import api from "shared/api";
 import Loading from "components/Loading";
 import { ActionConfigType } from "../../shared/types";
 import InputRow from "../form-components/InputRow";
-import InfoTooltip from "components/InfoTooltip";
 
 type PropsType = {
   actionConfig: ActionConfigType | null;

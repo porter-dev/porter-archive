@@ -2,7 +2,6 @@ import React, { Component } from "react";
 import styled from "styled-components";
 
 import api from "shared/api";
-import _ from "lodash";
 import { Context } from "shared/Context";
 import JobResource from "./JobResource";
 import ConfirmOverlay from "components/ConfirmOverlay";

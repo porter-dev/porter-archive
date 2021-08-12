@@ -11,7 +11,7 @@ func OpenBrowser(url string) error {
 	var cmd string
 	var args []string
 
-	fmt.Printf("Attempting to open your browser. If this does not work, please navigate to: %s", url)
+	fmt.Printf("Attempting to open your browser. If this does not work, please navigate to: %s\n", url)
 
 	switch runtime.GOOS {
 	case "windows":

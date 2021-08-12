@@ -13,13 +13,7 @@ import SourcePage from "./SourcePage";
 import SettingsPage from "./SettingsPage";
 import TitleSection from "components/TitleSection";
 
-import {
-  PorterTemplate,
-  ActionConfigType,
-  ChoiceType,
-  ClusterType,
-  StorageType,
-} from "shared/types";
+import { ActionConfigType, PorterTemplate, StorageType } from "shared/types";
 
 type PropsType = RouteComponentProps & {
   currentTab?: string;

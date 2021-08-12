@@ -1,4 +1,4 @@
-import React, { Component, useContext, useMemo, useState } from "react";
+import React, { useContext, useState } from "react";
 import styled from "styled-components";
 import close from "assets/close.png";
 

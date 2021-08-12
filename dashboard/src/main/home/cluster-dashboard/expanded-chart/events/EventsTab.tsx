@@ -1,7 +1,9 @@
-import EventCard from "components/EventCard";
-import EventLogs from "components/EventLogs";
 import React, { useEffect, useState } from "react";
 import styled from "styled-components";
+import backArrow from "assets/back_arrow.png";
+import Dropdown from "components/Dropdown";
+import EventCard from "components/EventCard";
+import EventLogs from "components/EventLogs";
 
 const mockData = [
   {
@@ -110,12 +112,17 @@ type EventsTabProps = {};
 const EventsTab: React.FunctionComponent<EventsTabProps> = () => {
   const [eventList, setEventList] = useState<Event[]>([]);
   const [selectedEvent, setSelectedEvent] = useState<Event>(null);
+  const [currentFilter, setCurrentFilter] = useState<string>("all");
 
   useEffect(() => {
     setTimeout(() => {
-      setEventList(mockData as Event[]);
+      setEventList(
+        (mockData as Event[]).filter(
+          (e) => currentFilter === "all" || e.resource_type === currentFilter
+        )
+      );
     }, 500);
-  }, []);
+  }, [currentFilter]);
 
   const selectEvent = (id: number) => {
     const event = eventList.find((e) => e.id === id);
@@ -126,29 +133,54 @@ const EventsTab: React.FunctionComponent<EventsTabProps> = () => {
     setSelectedEvent(null);
   };
 
+  const handleEventTypeSelection = (option: {
+    label: string;
+    value: string;
+  }) => {
+    console.log(option);
+    setCurrentFilter(option.value);
+  };
+
   return (
     <NamespaceListWrapper>
-      <ControlRow>
-        <button>
-          <i className="material-icons">add</i> Add namespace
-        </button>
-      </ControlRow>
-
       {!selectedEvent && (
-        <EventsGrid>
-          {eventList.map((event) => {
-            return (
-              <EventCard
-                key={event.id}
-                event={event}
-                selectEvent={selectEvent}
+        <>
+          <ControlRow>
+            <div>
+              <Dropdown
+                options={[
+                  { label: "All", value: "all" },
+                  { label: "Pods", value: "pod" },
+                  { label: "HPA", value: "HPA" },
+                ]}
+                onSelect={handleEventTypeSelection}
               />
-            );
-          })}
-        </EventsGrid>
+            </div>
+          </ControlRow>
+          <EventsGrid>
+            {eventList.map((event) => {
+              return (
+                <EventCard
+                  key={event.id}
+                  event={event}
+                  selectEvent={selectEvent}
+                />
+              );
+            })}
+          </EventsGrid>
+        </>
       )}
       {selectedEvent && (
-        <EventLogs event={selectedEvent} goBack={clearSelectedEvent} />
+        <>
+          <ControlRow>
+            <div>
+              <BackButton onClick={clearSelectedEvent}>
+                <BackButtonImg src={backArrow} />
+              </BackButton>
+            </div>
+          </ControlRow>
+          <EventLogs event={selectedEvent} />
+        </>
       )}
     </NamespaceListWrapper>
   );
@@ -173,4 +205,28 @@ const EventsGrid = styled.div`
   display: grid;
   grid-row-gap: 15px;
   grid-template-columns: 1;
+`;
+
+const BackButton = styled.div`
+  display: flex;
+  width: 36px;
+  cursor: pointer;
+  height: 36px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #ffffff55;
+  border-radius: 100px;
+  background: #ffffff11;
+
+  :hover {
+    background: #ffffff22;
+    > img {
+      opacity: 1;
+    }
+  }
+`;
+
+const BackButtonImg = styled.img`
+  width: 16px;
+  opacity: 0.75;
 `;

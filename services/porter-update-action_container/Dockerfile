@@ -1,5 +1,5 @@
-FROM ubuntu:latest
-RUN apt-get update && apt-get install -y curl unzip
-COPY . /action/
-RUN /action/get-porter-cli.sh
+FROM public.ecr.aws/o1j4x7p4/porter-cli:latest
+
+COPY entrypoint.sh /action/
+
 ENTRYPOINT ["/action/entrypoint.sh"]

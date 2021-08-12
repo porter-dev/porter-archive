@@ -886,6 +886,27 @@ func New(a *api.App) *chi.Mux {
 				),
 			)
 
+			r.Method(
+				"GET",
+				"/projects/{project_id}/slack_integrations/exists",
+				auth.DoesUserHaveProjectAccess(
+					requestlog.NewHandler(a.HandleSlackIntegrationExists, l),
+					mw.URLParam,
+					mw.WriteAccess,
+				),
+			)
+
+			// /projects/{project_id}/releases/{name}/notifications routes
+			r.Method(
+				"POST",
+				"/projects/{project_id}/releases/{name}/notifications",
+				auth.DoesUserHaveProjectAccess(
+					requestlog.NewHandler(a.HandleUpdateNotificationConfig, l),
+					mw.URLParam,
+					mw.WriteAccess,
+				),
+			)
+
 			// /api/projects/{project_id}/helmrepos routes
 			r.Method(
 				"POST",

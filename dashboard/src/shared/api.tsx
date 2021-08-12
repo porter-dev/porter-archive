@@ -268,6 +268,20 @@ const deleteSlackIntegration = baseApi<
   return `/api/projects/${pathParams.project_id}/slack_integrations/${pathParams.slack_integration_id}`;
 });
 
+const updateNotificationConfig = baseApi<
+  {
+    payload: any;
+    namespace: string;
+  },
+  {
+    project_id: number;
+    cluster_id: number;
+    name: string;
+  }
+>("POST", (pathParams) => {
+  return `/api/projects/${pathParams.project_id}/releases/${pathParams.name}/notifications`;
+});
+
 const deployTemplate = baseApi<
   {
     templateName: string;
@@ -1034,6 +1048,7 @@ export default {
   deleteProject,
   deleteRegistryIntegration,
   deleteSlackIntegration,
+  updateNotificationConfig,
   createSubdomain,
   deployTemplate,
   deployAddon,

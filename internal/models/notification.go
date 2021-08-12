@@ -11,3 +11,10 @@ type NotificationConfig struct {
 	Success bool `gorm:"default:true"`
 	Failure bool `gorm:"default:true"`
 }
+
+type NotificationConfigExternal struct {
+	Enabled bool `json:"enabled"`
+	Deploy  bool `json:"deploy"`
+	Success bool `json:"success"`
+	Failure bool `json:"failure"`
+}

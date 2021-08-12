@@ -264,7 +264,7 @@ const SettingsSection: React.FC<PropsType> = ({
       {!loadingWebhookToken ? (
         <StyledSettingsSection showSource={showSource}>
           {renderWebhookSection()}
-          <NotificationSettingsSection />
+          <NotificationSettingsSection currentChart={currentChart} />
           <Heading>Additional Settings</Heading>
           <Button color="#b91133" onClick={() => setShowDeleteOverlay(true)}>
             Delete {currentChart.name}

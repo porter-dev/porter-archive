@@ -1,5 +1,4 @@
 import React, { Component } from "react";
-import { BrowserRouter } from "react-router-dom";
 
 import { ContextProvider } from "../shared/Context";
 import Main from "./Main";

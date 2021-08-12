@@ -1,10 +1,5 @@
 import React from "react";
-import {
-  ArrayInputField,
-  CheckboxField,
-  CheckboxFieldState,
-  GetFinalVariablesFunction,
-} from "../types";
+import { CheckboxField, CheckboxFieldState, GetFinalVariablesFunction } from "../types";
 import CheckboxRow from "../../form-components/CheckboxRow";
 import useFormField from "../hooks/useFormField";
 

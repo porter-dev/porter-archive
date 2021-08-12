@@ -1,4 +1,4 @@
-import React, { ChangeEvent, Component, useContext } from "react";
+import React, { ChangeEvent, Component } from "react";
 import styled from "styled-components";
 import logo from "assets/logo.png";
 import github from "assets/github-icon.png";

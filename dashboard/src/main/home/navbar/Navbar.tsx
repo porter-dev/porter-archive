@@ -1,13 +1,10 @@
 import React, { Component } from "react";
 import styled from "styled-components";
-
-import api from "shared/api";
 import { Context } from "shared/Context";
 
 import Feedback from "./Feedback";
 import { withAuth, WithAuthProps } from "shared/auth/AuthorizationHoc";
-import { Select, MenuItem } from "@material-ui/core";
-import { AuthContext } from "shared/auth/AuthContext";
+import { Select } from "@material-ui/core";
 
 type PropsType = WithAuthProps & {
   logOut: () => void;

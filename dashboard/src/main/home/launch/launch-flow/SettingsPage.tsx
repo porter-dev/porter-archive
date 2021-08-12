@@ -4,12 +4,7 @@ import api from "shared/api";
 
 import { Context } from "shared/Context";
 
-import {
-  ActionConfigType,
-  ChoiceType,
-  ClusterType,
-  StorageType,
-} from "shared/types";
+import { ChoiceType, ClusterType } from "shared/types";
 
 import { isAlphanumeric } from "shared/common";
 

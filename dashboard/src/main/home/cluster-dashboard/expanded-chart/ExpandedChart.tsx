@@ -1,27 +1,13 @@
-import React, {
-  useContext,
-  useState,
-  useEffect,
-  useRef,
-  useCallback,
-  useMemo,
-} from "react";
+import React, { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import styled from "styled-components";
 import yaml from "js-yaml";
 import backArrow from "assets/back_arrow.png";
 import _ from "lodash";
 import loadingSrc from "assets/loading.gif";
 
-import {
-  ResourceType,
-  ChartType,
-  StorageType,
-  ClusterType,
-} from "shared/types";
+import { ChartType, ClusterType, ResourceType, StorageType } from "shared/types";
 import { Context } from "shared/Context";
 import api from "shared/api";
-
-import Loading from "components/Loading";
 import StatusIndicator from "components/StatusIndicator";
 import PorterFormWrapper from "components/porter-form/PorterFormWrapper";
 import RevisionSection from "./RevisionSection";
@@ -253,7 +239,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
 
     setSaveValueStatus("loading");
     getChartData(currentChart);
-    console.log("valuesYaml", valuesYaml)
+    console.log("valuesYaml", valuesYaml);
     try {
       await api.upgradeChartValues(
         "<token>",
@@ -699,11 +685,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
         >
           {repository}
         </RepositoryName>
-        {
-          showRepoTooltip && (
-            <Tooltip>{repository}</Tooltip>
-          )
-        }
+        {showRepoTooltip && <Tooltip>{repository}</Tooltip>}
       </DeploymentImageContainer>
     );
   };
@@ -774,34 +756,35 @@ const ExpandedChart: React.FC<Props> = (props) => {
               latestVersion={currentChart.latest_version}
               upgradeVersion={handleUpgradeVersion}
             />
-            {
-              (isPreview || leftTabOptions.length > 0) && (
-                <BodyWrapper>
-                  <PorterFormWrapper
-                    formData={currentChart.form}
-                    valuesToOverride={{
-                      namespace: props.namespace,
-                      clusterId: currentCluster.id,
-                    }}
-                    renderTabContents={renderTabContents}
-                    isReadOnly={
-                      imageIsPlaceholder ||
-                      !isAuthorized("application", "", ["get", "update"])
-                    }
-                    onSubmit={onSubmit}
-                    rightTabOptions={rightTabOptions}
-                    leftTabOptions={leftTabOptions}
-                    color={isPreview ? "#f5cb42" : null}
-                    addendum={
-                      <TabButton onClick={toggleDevOpsMode} devOpsMode={devOpsMode}>
-                        <i className="material-icons">offline_bolt</i> DevOps Mode
-                      </TabButton>
-                    }
-                    saveValuesStatus={saveValuesStatus}
-                  />
-                </BodyWrapper>
-              )
-            }
+            {(isPreview || leftTabOptions.length > 0) && (
+              <BodyWrapper>
+                <PorterFormWrapper
+                  formData={currentChart.form}
+                  valuesToOverride={{
+                    namespace: props.namespace,
+                    clusterId: currentCluster.id,
+                  }}
+                  renderTabContents={renderTabContents}
+                  isReadOnly={
+                    imageIsPlaceholder ||
+                    !isAuthorized("application", "", ["get", "update"])
+                  }
+                  onSubmit={onSubmit}
+                  rightTabOptions={rightTabOptions}
+                  leftTabOptions={leftTabOptions}
+                  color={isPreview ? "#f5cb42" : null}
+                  addendum={
+                    <TabButton
+                      onClick={toggleDevOpsMode}
+                      devOpsMode={devOpsMode}
+                    >
+                      <i className="material-icons">offline_bolt</i> DevOps Mode
+                    </TabButton>
+                  }
+                  saveValuesStatus={saveValuesStatus}
+                />
+              </BodyWrapper>
+            )}
           </>
         )}
       </StyledExpandedChart>

@@ -6,17 +6,15 @@ import backArrow from "assets/back_arrow.png";
 import _ from "lodash";
 import loading from "assets/loading.gif";
 
-import { ChartType, StorageType, ClusterType } from "shared/types";
+import { ChartType, ClusterType, StorageType } from "shared/types";
 import { Context } from "shared/Context";
 import api from "shared/api";
 
 import SaveButton from "components/SaveButton";
-import Loading from "components/Loading";
 import TitleSection from "components/TitleSection";
-import JobList from "./jobs/JobList";
+import TempJobList from "./jobs/TempJobList";
 import SettingsSection from "./SettingsSection";
 import PorterFormWrapper from "components/porter-form/PorterFormWrapper";
-import { PlaceHolder } from "brace";
 import { withAuth, WithAuthProps } from "shared/auth/AuthorizationHoc";
 
 type PropsType = WithAuthProps & {
@@ -419,25 +417,6 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
   };
 
   renderTabContents = (currentTab: string, submitValues?: any) => {
-    let saveButton = (
-      <ButtonWrapper>
-        <SaveButton
-          onClick={() => this.handleSaveValues(submitValues, true)}
-          status={this.state.saveValuesStatus}
-          makeFlush={true}
-          clearPosition={true}
-          rounded={true}
-          statusPosition="right"
-        >
-          <i className="material-icons">play_arrow</i> Run Job
-        </SaveButton>
-      </ButtonWrapper>
-    );
-
-    if (!this.props.isAuthorized("job", "", ["get", "update", "create"])) {
-      saveButton = null;
-    }
-
     switch (currentTab) {
       case "jobs":
         if (this.state.imageIsPlaceholder) {
@@ -455,12 +434,12 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
         }
         return (
           <TabWrapper>
-            {saveButton}
-            <JobList
+            <TempJobList
+              handleSaveValues={this.handleSaveValues}
               jobs={this.state.jobs}
-              setJobs={(jobs: any) => {
-                this.setState({ jobs });
-              }}
+              setJobs={(jobs: any) => this.setState({ jobs })}
+              isAuthorized={this.props.isAuthorized}
+              saveValuesStatus={this.state.saveValuesStatus}
             />
           </TabWrapper>
         );
@@ -616,10 +595,9 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
                     this.state.imageIsPlaceholder ||
                     !this.props.isAuthorized("job", "", ["get", "update"])
                   }
-                  onSubmit={(formValues) => {
-                    console.log(formValues);
-                    this.handleSaveValues(formValues, false);
-                  }}
+                  onSubmit={(formValues) =>
+                    this.handleSaveValues(formValues, false)
+                  }
                   leftTabOptions={this.state.leftTabOptions}
                   rightTabOptions={this.state.rightTabOptions}
                   saveValuesStatus={this.state.saveValuesStatus}

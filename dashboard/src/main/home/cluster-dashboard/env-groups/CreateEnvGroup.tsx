@@ -1,7 +1,5 @@
 import React, { Component } from "react";
 import styled from "styled-components";
-
-import sliders from "assets/sliders.svg";
 import api from "shared/api";
 
 import { Context } from "shared/Context";

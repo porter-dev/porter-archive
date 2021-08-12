@@ -1,7 +1,7 @@
 import React, { Component } from "react";
 import styled from "styled-components";
 
-import { ResourceType, NodeType, EdgeType, ChartType } from "shared/types";
+import { ChartType, EdgeType, NodeType, ResourceType } from "shared/types";
 
 import Node from "./Node";
 import Edge from "./Edge";

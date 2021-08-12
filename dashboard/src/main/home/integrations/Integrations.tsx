@@ -1,4 +1,4 @@
-import React, { Component } from "react";
+import React from "react";
 import { Route, RouteComponentProps, Switch, withRouter } from "react-router";
 
 import { integrationList } from "shared/common";
@@ -39,6 +39,7 @@ const Integrations: React.FC<PropsType> = (props) => {
                 >
                   {integrationList[integration].label}
                 </TitleSection>
+                <Buffer />
                 <CreateIntegrationForm
                   integrationName={integration}
                   closeForm={() => {
@@ -101,8 +102,7 @@ const Icon = styled.img`
 `;
 
 const Flex = styled.div`
-  display: flex;
-  align-items: center;
+  width: 100%;
 
   > i {
     cursor: pointer;

@@ -1,6 +1,6 @@
 import UnauthorizedPage from "components/UnauthorizedPage";
-import React, { useMemo, useContext } from "react";
-import { Redirect, Route, RouteProps } from "react-router";
+import React, { useContext, useMemo } from "react";
+import { Route, RouteProps } from "react-router";
 import { AuthContext } from "./AuthContext";
 import { isAuthorized } from "./authorization-helpers";
 import { ScopeType, Verbs } from "./types";

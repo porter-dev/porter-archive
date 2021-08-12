@@ -1,10 +1,5 @@
 import React from "react";
-import {
-  GetFinalVariablesFunction,
-  InputField,
-  KeyValueArrayField,
-  KeyValueArrayFieldState,
-} from "../types";
+import { GetFinalVariablesFunction, KeyValueArrayField, KeyValueArrayFieldState } from "../types";
 import sliders from "../../../assets/sliders.svg";
 import upload from "../../../assets/upload.svg";
 import styled from "styled-components";
@@ -132,7 +127,9 @@ const KeyValueArray: React.FC<Props> = (props) => {
     }
   };
 
-  const getProcessedValues = (objectArray: { key: string, value: string }[]): any => {
+  const getProcessedValues = (
+    objectArray: { key: string; value: string }[]
+  ): any => {
     let obj = {} as any;
     objectArray?.forEach(({ key, value }) => {
       obj[key] = value;

@@ -3,7 +3,7 @@ import styled from "styled-components";
 import yaml from "js-yaml";
 
 import { Context } from "shared/Context";
-import { ResourceType, ChartType } from "shared/types";
+import { ChartType, ResourceType } from "shared/types";
 
 import Loading from "components/Loading";
 import ResourceTab from "components/ResourceTab";

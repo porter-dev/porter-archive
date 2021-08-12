@@ -1322,6 +1322,35 @@ func New(a *api.App) *chi.Mux {
 				),
 			)
 
+			// api/projects/{project_id}/agent routes
+			r.Method(
+				"POST",
+				"/projects/{project_id}/agent/deploy",
+				auth.DoesUserHaveProjectAccess(
+					auth.DoesUserHaveClusterAccess(
+						requestlog.NewHandler(a.HandleDeployAgent, l),
+						mw.URLParam,
+						mw.QueryParam,
+					),
+					mw.URLParam,
+					mw.WriteAccess,
+				),
+			)
+
+			r.Method(
+				"GET",
+				"/projects/{project_id}/agent/detect",
+				auth.DoesUserHaveProjectAccess(
+					auth.DoesUserHaveClusterAccess(
+						requestlog.NewHandler(a.HandleDetectPorterAgentInstalled, l),
+						mw.URLParam,
+						mw.QueryParam,
+					),
+					mw.URLParam,
+					mw.ReadAccess,
+				),
+			)
+
 			// /api/projects/{project_id}/k8s routes
 			r.Method(
 				"GET",

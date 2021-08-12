@@ -5,7 +5,7 @@ import styled from "styled-components";
 import api from "shared/api";
 import { H } from "highlight.run";
 import { Context } from "shared/Context";
-import { PorterUrl, pushQueryParams, pushFiltered } from "shared/routing";
+import { PorterUrl, pushFiltered, pushQueryParams } from "shared/routing";
 import { ClusterType, ProjectType } from "shared/types";
 
 import ConfirmOverlay from "components/ConfirmOverlay";

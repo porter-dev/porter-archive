@@ -1,5 +1,4 @@
-import React, { useCallback } from "react";
-import { useContext } from "react";
+import React, { useCallback, useContext } from "react";
 import { AuthContext } from "./AuthContext";
 import { isAuthorized } from "./authorization-helpers";
 import { ScopeType, Verbs } from "./types";

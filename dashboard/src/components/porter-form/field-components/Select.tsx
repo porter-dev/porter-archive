@@ -1,10 +1,5 @@
 import React, { useContext } from "react";
-import {
-  CheckboxField,
-  GetFinalVariablesFunction,
-  SelectField,
-  SelectFieldState,
-} from "../types";
+import { GetFinalVariablesFunction, SelectField, SelectFieldState } from "../types";
 import Selector from "../../Selector";
 import styled from "styled-components";
 import useFormField from "../hooks/useFormField";

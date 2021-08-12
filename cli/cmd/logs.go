@@ -96,11 +96,17 @@ func logs(_ *api.AuthCheckResponse, client *api.Client, args []string) error {
 		selectedContainerName = selectedContainer
 	}
 
-	restConf, err := getRESTConfig(client)
+	config := &PorterRunSharedConfig{
+		Client: client,
+	}
+
+	err = config.setSharedConfig()
 
 	if err != nil {
 		return fmt.Errorf("Could not retrieve kube credentials: %s", err.Error())
 	}
 
-	return pipePodLogsToStdout(restConf, namespace, selectedPod.Name, selectedContainerName, follow)
+	_, err = pipePodLogsToStdout(config, namespace, selectedPod.Name, selectedContainerName, follow)
+
+	return err
 }

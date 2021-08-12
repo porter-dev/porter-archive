@@ -76,7 +76,7 @@ func run(_ *api.AuthCheckResponse, client *api.Client, args []string) error {
 
 	if len(podsSimple) == 0 {
 		return fmt.Errorf("At least one pod must exist in this deployment.")
-	} else if len(podsSimple) == 1 {
+	} else if len(podsSimple) == 1 || !existingPod {
 		selectedPod = podsSimple[0]
 	} else {
 		podNames := make([]string, 0)
@@ -116,27 +116,38 @@ func run(_ *api.AuthCheckResponse, client *api.Client, args []string) error {
 		selectedContainerName = selectedContainer
 	}
 
-	restConf, err := getRESTConfig(client)
+	config := &PorterRunSharedConfig{
+		Client: client,
+	}
+
+	err = config.setSharedConfig()
 
 	if err != nil {
 		return fmt.Errorf("Could not retrieve kube credentials: %s", err.Error())
 	}
 
 	if existingPod {
-		return executeRun(restConf, namespace, selectedPod.Name, selectedContainerName, args[1:])
+		return executeRun(config, namespace, selectedPod.Name, selectedContainerName, args[1:])
 	}
 
-	return executeRunEphemeral(restConf, namespace, selectedPod.Name, selectedContainerName, args[1:])
+	return executeRunEphemeral(config, namespace, selectedPod.Name, selectedContainerName, args[1:])
 }
 
-func getRESTConfig(client *api.Client) (*rest.Config, error) {
+type PorterRunSharedConfig struct {
+	Client     *api.Client
+	RestConf   *rest.Config
+	Clientset  *kubernetes.Clientset
+	RestClient *rest.RESTClient
+}
+
+func (p *PorterRunSharedConfig) setSharedConfig() error {
 	pID := config.Project
 	cID := config.Cluster
 
-	kubeResp, err := client.GetKubeconfig(context.TODO(), pID, cID)
+	kubeResp, err := p.Client.GetKubeconfig(context.TODO(), pID, cID)
 
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	kubeBytes := kubeResp.Kubeconfig
@@ -144,13 +155,13 @@ func getRESTConfig(client *api.Client) (*rest.Config, error) {
 	cmdConf, err := clientcmd.NewClientConfigFromBytes(kubeBytes)
 
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	restConf, err := cmdConf.ClientConfig()
 
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	restConf.GroupVersion = &schema.GroupVersion{
@@ -160,7 +171,25 @@ func getRESTConfig(client *api.Client) (*rest.Config, error) {
 
 	restConf.NegotiatedSerializer = runtime.NewSimpleNegotiatedSerializer(runtime.SerializerInfo{})
 
-	return restConf, nil
+	p.RestConf = restConf
+
+	clientset, err := kubernetes.NewForConfig(restConf)
+
+	if err != nil {
+		return err
+	}
+
+	p.Clientset = clientset
+
+	restClient, err := rest.RESTClientFor(restConf)
+
+	if err != nil {
+		return err
+	}
+
+	p.RestClient = restClient
+
+	return nil
 }
 
 type podSimple struct {
@@ -196,14 +225,8 @@ func getPods(client *api.Client, namespace, releaseName string) ([]podSimple, er
 	return res, nil
 }
 
-func executeRun(config *rest.Config, namespace, name, container string, args []string) error {
-	restClient, err := rest.RESTClientFor(config)
-
-	if err != nil {
-		return err
-	}
-
-	req := restClient.Post().
+func executeRun(config *PorterRunSharedConfig, namespace, name, container string, args []string) error {
+	req := config.RestClient.Post().
 		Resource("pods").
 		Name(name).
 		Namespace(namespace).
@@ -224,7 +247,7 @@ func executeRun(config *rest.Config, namespace, name, container string, args []s
 	}
 
 	fn := func() error {
-		exec, err := remotecommand.NewSPDYExecutor(config, "POST", req.URL())
+		exec, err := remotecommand.NewSPDYExecutor(config.RestConf, "POST", req.URL())
 
 		if err != nil {
 			return err
@@ -242,10 +265,10 @@ func executeRun(config *rest.Config, namespace, name, container string, args []s
 		return err
 	}
 
-	return err
+	return nil
 }
 
-func executeRunEphemeral(config *rest.Config, namespace, name, container string, args []string) error {
+func executeRunEphemeral(config *PorterRunSharedConfig, namespace, name, container string, args []string) error {
 	existing, err := getExistingPod(config, name, namespace)
 
 	if err != nil {
@@ -267,13 +290,7 @@ func executeRunEphemeral(config *rest.Config, namespace, name, container string,
 	}
 
 	fn := func() error {
-		restClient, err := rest.RESTClientFor(config)
-
-		if err != nil {
-			return err
-		}
-
-		req := restClient.Post().
+		req := config.RestClient.Post().
 			Resource("pods").
 			Name(podName).
 			Namespace("default").
@@ -284,7 +301,7 @@ func executeRunEphemeral(config *rest.Config, namespace, name, container string,
 		req.Param("tty", "true")
 		req.Param("container", container)
 
-		exec, err := remotecommand.NewSPDYExecutor(config, "POST", req.URL())
+		exec, err := remotecommand.NewSPDYExecutor(config.RestConf, "POST", req.URL())
 
 		if err != nil {
 			return err
@@ -309,11 +326,19 @@ func executeRunEphemeral(config *rest.Config, namespace, name, container string,
 
 		time.Sleep(2 * time.Second)
 
-		// ugly way to catch non-TTY errors, such as when running command "echo \"hello\""
-		if i == 4 && err != nil && strings.Contains(err.Error(), "not found in pod") {
-			fmt.Printf("Could not open a shell to this container. Container logs:\n")
+		// ugly way to catch no TTY errors, such as when running command "echo \"hello\""
+		if i == 4 && err != nil {
+			color.New(color.FgYellow).Println("Could not open a shell to this container. Container logs:\n")
 
-			err = pipePodLogsToStdout(config, namespace, podName, container, false)
+			var writtenBytes int64
+
+			writtenBytes, err = pipePodLogsToStdout(config, namespace, podName, container, false)
+
+			if writtenBytes == 0 {
+				color.New(color.FgYellow).Println("Could not get logs. Pod events:\n")
+
+				err = pipeEventsToStdout(config, namespace, podName, container, false)
+			}
 		}
 	}
 
@@ -323,75 +348,76 @@ func executeRunEphemeral(config *rest.Config, namespace, name, container string,
 	return err
 }
 
-func pipePodLogsToStdout(config *rest.Config, namespace, name, container string, follow bool) error {
+func pipePodLogsToStdout(config *PorterRunSharedConfig, namespace, name, container string, follow bool) (int64, error) {
 	podLogOpts := v1.PodLogOptions{
 		Container: container,
 		Follow:    follow,
 	}
 
-	// creates the clientset
-	clientset, err := kubernetes.NewForConfig(config)
-
-	if err != nil {
-		return err
-	}
-
-	req := clientset.CoreV1().Pods(namespace).GetLogs(name, &podLogOpts)
+	req := config.Clientset.CoreV1().Pods(namespace).GetLogs(name, &podLogOpts)
 
 	podLogs, err := req.Stream(
 		context.Background(),
 	)
 
 	if err != nil {
-		return err
+		return 0, err
 	}
 
 	defer podLogs.Close()
 
-	_, err = io.Copy(os.Stdout, podLogs)
+	return io.Copy(os.Stdout, podLogs)
+}
+
+func pipeEventsToStdout(config *PorterRunSharedConfig, namespace, name, container string, follow bool) error {
+	// creates the clientset
+	resp, err := config.Clientset.CoreV1().Events(namespace).List(
+		context.TODO(),
+		metav1.ListOptions{
+			FieldSelector: fmt.Sprintf("involvedObject.name=%s,involvedObject.namespace=%s", name, namespace),
+		},
+	)
 
 	if err != nil {
 		return err
+	}
+
+	for _, event := range resp.Items {
+		color.New(color.FgRed).Println(event.Message)
 	}
 
 	return nil
 }
 
-func getExistingPod(config *rest.Config, name, namespace string) (*v1.Pod, error) {
-	clientset, err := kubernetes.NewForConfig(config)
-
-	if err != nil {
-		return nil, err
-	}
-
-	return clientset.CoreV1().Pods(namespace).Get(
+func getExistingPod(config *PorterRunSharedConfig, name, namespace string) (*v1.Pod, error) {
+	return config.Clientset.CoreV1().Pods(namespace).Get(
 		context.Background(),
 		name,
 		metav1.GetOptions{},
 	)
 }
 
-func deletePod(config *rest.Config, name, namespace string) error {
-	clientset, err := kubernetes.NewForConfig(config)
+func deletePod(config *PorterRunSharedConfig, name, namespace string) error {
+	// update the config in case the operation has taken longer than token expiry time
+	config.setSharedConfig()
 
-	if err != nil {
-		return err
-	}
-
-	return clientset.CoreV1().Pods(namespace).Delete(
+	err := config.Clientset.CoreV1().Pods(namespace).Delete(
 		context.Background(),
 		name,
 		metav1.DeleteOptions{},
 	)
-}
-
-func createPodFromExisting(config *rest.Config, existing *v1.Pod, args []string) (*v1.Pod, error) {
-	clientset, err := kubernetes.NewForConfig(config)
 
 	if err != nil {
-		return nil, err
+		color.New(color.FgRed).Println("Could not delete ephemeral pod: %s", err.Error())
+		return err
 	}
 
+	color.New(color.FgGreen).Println("Sucessfully deleted ephemeral pod")
+
+	return nil
+}
+
+func createPodFromExisting(config *PorterRunSharedConfig, existing *v1.Pod, args []string) (*v1.Pod, error) {
 	newPod := existing.DeepCopy()
 
 	// only copy the pod spec, overwrite metadata
@@ -418,9 +444,10 @@ func createPodFromExisting(config *rest.Config, existing *v1.Pod, args []string)
 	newPod.Spec.Containers[0].TTY = true
 	newPod.Spec.Containers[0].Stdin = true
 	newPod.Spec.Containers[0].StdinOnce = true
+	newPod.Spec.NodeName = ""
 
 	// create the pod and return it
-	return clientset.CoreV1().Pods(existing.ObjectMeta.Namespace).Create(
+	return config.Clientset.CoreV1().Pods(existing.ObjectMeta.Namespace).Create(
 		context.Background(),
 		newPod,
 		metav1.CreateOptions{},

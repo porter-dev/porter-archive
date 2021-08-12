@@ -6,7 +6,7 @@ import backArrow from "assets/back_arrow.png";
 import _ from "lodash";
 import loading from "assets/loading.gif";
 
-import { ChartType, StorageType, ClusterType } from "shared/types";
+import { ChartType, ClusterType, StorageType } from "shared/types";
 import { Context } from "shared/Context";
 import api from "shared/api";
 

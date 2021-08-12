@@ -3,7 +3,6 @@ import React from "react";
 
 type EventLogsProps = {
   event: Event;
-  goBack: () => void;
 };
 
 const EventLogs: React.FunctionComponent<EventLogsProps> = ({}) => {

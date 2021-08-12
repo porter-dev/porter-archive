@@ -91,10 +91,13 @@ func (app *App) HandleDeployAgent(w http.ResponseWriter, r *http.Request) {
 	}
 
 	porterAgentValues := map[string]interface{}{
+		"secret": map[string]interface{}{
+			"token": encoded,
+		},
 		"config": map[string]interface{}{
-			"token":     encoded,
-			"projectID": projID,
-			"clusterID": releaseForm.Cluster.ID,
+			"projectID":  projID,
+			"clusterID":  releaseForm.Cluster.ID,
+			"porterHost": app.ServerConf.ServerURL,
 		},
 	}
 

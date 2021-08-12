@@ -1,9 +1,10 @@
-import React from "react";
+import React, { useState } from "react";
 import styled from "styled-components";
 import { Event } from "main/home/cluster-dashboard/expanded-chart/events/EventsTab";
 
 type CardProps = {
   event: Event;
+  selectEvent: (id: number) => void;
 };
 const getReadableDate = (s: string) => {
   let ts = new Date(s);
@@ -16,7 +17,12 @@ const getReadableDate = (s: string) => {
 };
 
 // Rename to Event Card
-const Card: React.FunctionComponent<CardProps> = ({ event }) => {
+const EventCard: React.FunctionComponent<CardProps> = ({
+  event,
+  selectEvent,
+}) => {
+  const [showTooltip, setShowTooltip] = useState(false);
+
   return (
     <StyledCard>
       <ContentContainer>
@@ -34,15 +40,29 @@ const Card: React.FunctionComponent<CardProps> = ({ event }) => {
           </EventReason>
         </EventInformation>
       </ContentContainer>
-      <ActionContainer>
-        <span className="material-icons-outlined">access_time</span>
-        <span>{getReadableDate(event.timestamp)}</span>
+      <ActionContainer hasOneChild={event.event_type === "normal"}>
+        {event.event_type === "critical" && (
+          <HistoryButton
+            onClick={() => selectEvent(event.id)}
+            onMouseEnter={() => setShowTooltip(true)}
+            onMouseLeave={() => setShowTooltip(false)}
+          >
+            <span className="material-icons-outlined">manage_search</span>
+            {showTooltip && <Tooltip>Open logs</Tooltip>}
+          </HistoryButton>
+        )}
+        <TimestampContainer>
+          <TimestampIcon className="material-icons-outlined">
+            access_time
+          </TimestampIcon>
+          <span>{getReadableDate(event.timestamp)}</span>
+        </TimestampContainer>
       </ActionContainer>
     </StyledCard>
   );
 };
 
-export default Card;
+export default EventCard;
 
 const StyledCard = styled.div`
   background: #26282f;
@@ -114,4 +134,67 @@ const ActionContainer = styled.div`
   align-items: center;
   white-space: nowrap;
   height: 100%;
+  flex-direction: column;
+  justify-content: ${(props: { hasOneChild: boolean }) => {
+    return props.hasOneChild ? "flex-end" : "space-between";
+  }};
+`;
+
+const HistoryButton = styled.button`
+  position: relative;
+  border: none;
+  background: none;
+  color: white;
+  padding: 5px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 50%;
+  color: #ffffff44;
+  :hover {
+    background: #32343a;
+    cursor: pointer;
+  }
+`;
+
+const Tooltip = styled.div`
+  position: absolute;
+  left: 0px;
+  word-wrap: break-word;
+  top: 38px;
+  min-height: 18px;
+  padding: 5px 7px;
+  background: #272731;
+  z-index: 999;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  flex: 1;
+  color: white;
+  text-transform: none;
+  font-size: 12px;
+  font-family: "Work Sans", sans-serif;
+  outline: 1px solid #ffffff55;
+  opacity: 0;
+  animation: faded-in 0.2s 0.15s;
+  animation-fill-mode: forwards;
+  @keyframes faded-in {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+`;
+
+const TimestampContainer = styled.div`
+  display: flex;
+  white-space: nowrap;
+  align-items: center;
+  justify-self: flex-end;
+`;
+
+const TimestampIcon = styled.span`
+  margin-right: 5px;
 `;

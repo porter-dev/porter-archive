@@ -59,7 +59,7 @@ func (c *CreateAgent) CreateFromGithub(
 		githubRepos, err := c.Client.ListGithubRepos(
 			context.Background(),
 			c.CreateOpts.ProjectID,
-			gitRepo.ID,
+			gitRepo,
 		)
 
 		if err != nil {
@@ -68,7 +68,7 @@ func (c *CreateAgent) CreateFromGithub(
 
 		for _, githubRepo := range githubRepos {
 			if githubRepo.FullName == ghOpts.Repo {
-				gitRepoMatch = gitRepo.ID
+				gitRepoMatch = gitRepo
 				break
 			}
 		}

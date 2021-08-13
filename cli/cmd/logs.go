@@ -13,6 +13,7 @@ import (
 // without any subcommands
 var logsCmd = &cobra.Command{
 	Use:   "logs [release]",
+	Args:  cobra.ExactArgs(1),
 	Short: "Logs the output from a given application.",
 	Run: func(cmd *cobra.Command, args []string) {
 		err := checkLoginAndRun(args, logs)

@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import styled from "styled-components";
-import { Event } from "main/home/cluster-dashboard/expanded-chart/events/EventsTab";
+import { Event } from "./EventsContext";
 
 type CardProps = {
   event: Event;

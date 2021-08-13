@@ -2,8 +2,8 @@ package api
 
 import (
 	"encoding/json"
-	"fmt"
 	"github.com/go-chi/chi"
+	"github.com/porter-dev/porter/internal/models"
 	"net/http"
 )
 
@@ -38,5 +38,35 @@ func (app *App) HandleUpdateNotificationConfig(w http.ResponseWriter, r *http.Re
 		}, w)
 	}
 
-	fmt.Println(release)
+	// either create a new notification config or update the current one
+	newConfig := &models.NotificationConfig{
+		Enabled: form.Payload.Enabled,
+		Deploy:  form.Payload.Deploy,
+		Success: form.Payload.Success,
+		Failure: form.Payload.Failure,
+	}
+
+	if release.NotificationConfig == 0 {
+		newConfig, err = app.Repo.NotificationConfig.CreateNotificationConfig(newConfig)
+
+		if err != nil {
+			app.handleErrorInternal(err, w)
+			return
+		}
+
+		release.NotificationConfig = newConfig.ID
+
+		release, err = app.Repo.Release.UpdateRelease(release)
+
+	} else {
+		newConfig.ID = release.NotificationConfig
+		newConfig, err = app.Repo.NotificationConfig.UpdateNotificationConfig(newConfig)
+	}
+
+	if err != nil {
+		app.handleErrorInternal(err, w)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
 }

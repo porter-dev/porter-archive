@@ -10,7 +10,7 @@ import (
 )
 
 // ListGitRepoResponse is the list of Git repo integrations for a project
-type ListGitRepoResponse []models.GitRepoExternal
+type ListGitRepoResponse []uint
 
 // ListGitRepos returns a list of Git repos for a project
 func (c *Client) ListGitRepos(

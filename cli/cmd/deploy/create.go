@@ -49,7 +49,6 @@ func (c *CreateAgent) CreateFromGithub(
 	)
 
 	if err != nil {
-		fmt.Println("could not list git repos")
 		return "", err
 	}
 
@@ -64,7 +63,6 @@ func (c *CreateAgent) CreateFromGithub(
 		)
 
 		if err != nil {
-			fmt.Println("could not list github repos")
 			return "", err
 		}
 

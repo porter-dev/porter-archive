@@ -44,6 +44,8 @@ func (app *App) HandleDeployAgent(w http.ResponseWriter, r *http.Request) {
 		Form: &helm.Form{
 			Repo:              app.Repo,
 			DigitalOceanOAuth: app.DOConf,
+			Storage:           "secret",
+			Namespace:         "porter-agent-system",
 		},
 	}
 
@@ -64,7 +66,7 @@ func (app *App) HandleDeployAgent(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// create namespace if not exists
-	_, err = agent.K8sAgent.CreateNamespace("porter")
+	_, err = agent.K8sAgent.CreateNamespace("porter-agent-system")
 
 	if err != nil {
 		app.handleErrorFormDecoding(err, ErrUserDecode, w)
@@ -104,7 +106,7 @@ func (app *App) HandleDeployAgent(w http.ResponseWriter, r *http.Request) {
 	conf := &helm.InstallChartConfig{
 		Chart:     chart,
 		Name:      "porter-agent",
-		Namespace: releaseForm.Form.Namespace,
+		Namespace: "porter-agent-system",
 		Cluster:   releaseForm.Cluster,
 		Repo:      *app.Repo,
 		Values:    porterAgentValues,

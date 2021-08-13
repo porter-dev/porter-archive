@@ -1,7 +1,6 @@
 package api
 
 import (
-	"bytes"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -96,13 +95,6 @@ func (c *Client) sendRequest(req *http.Request, v interface{}, useCookie bool) (
 	}
 
 	if v != nil {
-		body, _ := ioutil.ReadAll(res.Body)
-
-		fmt.Println("BODY IS", string(body))
-
-		// need to create a new stream for the body
-		res.Body = ioutil.NopCloser(bytes.NewReader(body))
-
 		if err = json.NewDecoder(res.Body).Decode(v); err != nil {
 			return nil, err
 		}

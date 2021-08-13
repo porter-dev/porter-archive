@@ -12,4 +12,4 @@ RUN npm i -g http-parser-js
 
 COPY . ./
 
-CMD npm start
+CMD npm start -- --host 0.0.0.0

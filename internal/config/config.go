@@ -68,9 +68,10 @@ type ServerConf struct {
 	ProvisionerImagePullSecret string `env:"PROV_IMAGE_PULL_SECRET"`
 	SegmentClientKey           string `env:"SEGMENT_CLIENT_KEY"`
 
-	ProvisionerCluster  string `env:"PROVISIONER_CLUSTER"`
-	IngressCluster      string `env:"INGRESS_CLUSTER"`
-	SelfKubeconfig      string `env:"SELF_KUBECONFIG"`
+	ProvisionerCluster string `env:"PROVISIONER_CLUSTER"`
+	IngressCluster     string `env:"INGRESS_CLUSTER"`
+	SelfKubeconfig     string `env:"SELF_KUBECONFIG"`
+
 	UpdateAppGHAVersion string `env:"UPDATE_APP_GHA_VERSION,default=v0.1.0"`
 }
 

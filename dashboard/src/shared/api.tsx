@@ -272,14 +272,26 @@ const updateNotificationConfig = baseApi<
   {
     payload: any;
     namespace: string;
-    cluster_id: string;
+    cluster_id: number;
   },
   {
     project_id: number;
-    cluster_id: number;
     name: string;
   }
 >("POST", (pathParams) => {
+  return `/api/projects/${pathParams.project_id}/releases/${pathParams.name}/notifications`;
+});
+
+const getNotificationConfig = baseApi<
+  {
+    namespace: string;
+    cluster_id: number;
+  },
+  {
+    project_id: number;
+    name: string;
+  }
+>("GET", (pathParams) => {
   return `/api/projects/${pathParams.project_id}/releases/${pathParams.name}/notifications`;
 });
 
@@ -1050,6 +1062,7 @@ export default {
   deleteRegistryIntegration,
   deleteSlackIntegration,
   updateNotificationConfig,
+  getNotificationConfig,
   createSubdomain,
   deployTemplate,
   deployAddon,

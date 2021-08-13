@@ -5,6 +5,8 @@ import (
 	"github.com/go-chi/chi"
 	"github.com/porter-dev/porter/internal/models"
 	"net/http"
+	"net/url"
+	"strconv"
 )
 
 type HandleUpdateNotificationConfigForm struct {
@@ -69,4 +71,59 @@ func (app *App) HandleUpdateNotificationConfig(w http.ResponseWriter, r *http.Re
 	}
 
 	w.WriteHeader(http.StatusOK)
+}
+
+// HandleGetNotificationConfig gets the notification config for a given release
+func (app *App) HandleGetNotificationConfig(w http.ResponseWriter, r *http.Request) {
+	projID, err := strconv.ParseUint(chi.URLParam(r, "project_id"), 0, 64)
+
+	if err != nil || projID == 0 {
+		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
+		return
+	}
+
+	vals, err := url.ParseQuery(r.URL.RawQuery)
+	name := chi.URLParam(r, "name")
+	namespace := vals["namespace"][0]
+
+	clusterID, err := strconv.ParseUint(vals["cluster_id"][0], 10, 64)
+
+	if err != nil {
+		app.sendExternalError(err, http.StatusInternalServerError, HTTPError{
+			Code:   ErrReleaseReadData,
+			Errors: []string{"release not found"},
+		}, w)
+	}
+
+	release, err := app.Repo.Release.ReadRelease(uint(clusterID), name, namespace)
+
+	if err != nil {
+		app.sendExternalError(err, http.StatusInternalServerError, HTTPError{
+			Code:   ErrReleaseReadData,
+			Errors: []string{"release not found"},
+		}, w)
+	}
+
+	config := &models.NotificationConfigExternal{
+		Enabled: true,
+		Deploy:  true,
+		Success: true,
+		Failure: true,
+	}
+
+	if release.NotificationConfig != 0 {
+		notifConfig, err := app.Repo.NotificationConfig.ReadNotificationConfig(release.NotificationConfig)
+
+		if err != nil {
+			app.handleErrorInternal(err, w)
+		}
+
+		config = notifConfig.Externalize()
+	}
+
+	err = json.NewEncoder(w).Encode(config)
+
+	if err != nil {
+		app.handleErrorInternal(err, w)
+	}
 }

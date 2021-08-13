@@ -18,3 +18,12 @@ type NotificationConfigExternal struct {
 	Success bool `json:"success"`
 	Failure bool `json:"failure"`
 }
+
+func (conf *NotificationConfig) Externalize() *NotificationConfigExternal {
+	return &NotificationConfigExternal{
+		Enabled: conf.Enabled,
+		Deploy:  conf.Deploy,
+		Success: conf.Success,
+		Failure: conf.Failure,
+	}
+}

@@ -1,4 +1,4 @@
-import React, { useContext, useState } from "react";
+import React, { useContext, useState, useEffect } from "react";
 import Heading from "../../../../components/form-components/Heading";
 import CheckboxRow from "../../../../components/form-components/CheckboxRow";
 import Helper from "../../../../components/form-components/Helper";
@@ -6,6 +6,7 @@ import SaveButton from "../../../../components/SaveButton";
 import api from "../../../../shared/api";
 import { Context } from "../../../../shared/Context";
 import { ChartType } from "../../../../shared/types";
+import Loading from "../../../../components/Loading";
 
 const NOTIF_CATEGORIES = ["deploy", "success", "fail"];
 
@@ -24,10 +25,37 @@ const NotificationSettingsSection: React.FC<Props> = (props) => {
       };
     }, {})
   );
+  const [initLoading, setInitLoading] = useState(true);
+  const [saveLoading, setSaveLoading] = useState(false);
+  const [numSaves, setNumSaves] = useState(0);
 
   const { currentProject, currentCluster } = useContext(Context);
 
+  useEffect(() => {
+    api
+      .getNotificationConfig(
+        "<token>",
+        {
+          namespace: props.currentChart.namespace,
+          cluster_id: currentCluster.id,
+        },
+        {
+          project_id: currentProject.id,
+          name: props.currentChart.name,
+        }
+      )
+      .then(({ data }) => {
+        setNotificationsOn(data.enabled);
+        delete data.enabled;
+        setCategories({
+          ...data,
+        });
+        setInitLoading(false);
+      });
+  }, []);
+
   const saveChanges = () => {
+    setSaveLoading(true);
     let payload = {
       enabled: notificationsOn,
       deploy: notificationsOn,
@@ -44,55 +72,65 @@ const NotificationSettingsSection: React.FC<Props> = (props) => {
         },
         {
           project_id: currentProject.id,
-          cluster_id: currentCluster.id,
           name: props.currentChart.name,
         }
       )
-      .then((data) => {
-        console.log(data);
+      .then(() => {
+        setNumSaves(numSaves + 1);
+        setSaveLoading(false);
       });
   };
 
   return (
     <>
       <Heading>Notification Settings</Heading>
-      <CheckboxRow
-        label={"Notifications Enabled"}
-        checked={notificationsOn}
-        toggle={() => setNotificationsOn(!notificationsOn)}
-        disabled={props.disabled}
-      />
-      {notificationsOn && (
+      {initLoading ? (
+        <Loading />
+      ) : (
         <>
-          <Helper>Send notifications on:</Helper>
-          {Object.entries(categories).map(([k, v]: [string, boolean]) => {
-            return (
-              <React.Fragment key={k}>
-                <CheckboxRow
-                  label={k}
-                  checked={v}
-                  toggle={() =>
-                    setCategories((prev) => {
-                      return {
-                        ...prev,
-                        [k]: !v,
-                      };
-                    })
-                  }
-                  disabled={props.disabled}
-                />
-              </React.Fragment>
-            );
-          })}
+          <CheckboxRow
+            label={"Notifications Enabled"}
+            checked={notificationsOn}
+            toggle={() => setNotificationsOn(!notificationsOn)}
+            disabled={props.disabled}
+          />
+          {notificationsOn && (
+            <>
+              <Helper>Send notifications on:</Helper>
+              {Object.entries(categories).map(([k, v]: [string, boolean]) => {
+                return (
+                  <React.Fragment key={k}>
+                    <CheckboxRow
+                      label={k}
+                      checked={v}
+                      toggle={() =>
+                        setCategories((prev) => {
+                          return {
+                            ...prev,
+                            [k]: !v,
+                          };
+                        })
+                      }
+                      disabled={props.disabled}
+                    />
+                  </React.Fragment>
+                );
+              })}
+            </>
+          )}
+          <SaveButton
+            onClick={() => saveChanges()}
+            text={"Save Changes"}
+            clearPosition={true}
+            statusPosition={"right"}
+            disabled={props.disabled || initLoading || saveLoading}
+            status={
+              saveLoading ? "loading" : numSaves > 0 ? "successful" : null
+            }
+            saveText={"Saving . . ."}
+          />
         </>
       )}
-      <SaveButton
-        onClick={() => saveChanges()}
-        text={"Save Changes"}
-        clearPosition={true}
-        statusPosition={"right"}
-        disabled={props.disabled}
-      />
     </>
   );
 };

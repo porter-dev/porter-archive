@@ -165,6 +165,7 @@ func (app *App) createGitActionFromForm(
 		GitRepoOwner:           repoSplit[0],
 		Repo:                   *app.Repo,
 		GithubConf:             app.GithubProjectConf,
+		WebhookToken:           release.WebhookToken,
 		ProjectID:              uint(projID),
 		ReleaseName:            name,
 		GitBranch:              gitAction.GitBranch,

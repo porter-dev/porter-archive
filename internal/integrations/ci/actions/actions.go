@@ -32,12 +32,11 @@ type GithubActions struct {
 	GithubAppSecretPath  string
 	GithubInstallationID uint
 
-	WebhookToken string
-	PorterToken  string
-	BuildEnv     map[string]string
-	ProjectID    uint
-	ClusterID    uint
-	ReleaseName  string
+	PorterToken string
+	BuildEnv    map[string]string
+	ProjectID   uint
+	ClusterID   uint
+	ReleaseName string
 
 	GitBranch      string
 	DockerFilePath string

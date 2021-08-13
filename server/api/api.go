@@ -316,7 +316,11 @@ func (app *App) getTokenFromRequest(r *http.Request) *token.Token {
 
 	reqToken = strings.TrimSpace(splitToken[1])
 
-	tok, _ := token.GetTokenFromEncoded(reqToken, app.tokenConf)
+	tok, err := token.GetTokenFromEncoded(reqToken, app.tokenConf)
+
+	if err != nil {
+		return nil
+	}
 
 	return tok
 }

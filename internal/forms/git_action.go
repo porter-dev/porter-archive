@@ -7,19 +7,18 @@ import (
 // CreateGitAction represents the accepted values for creating a
 // github action integration
 type CreateGitAction struct {
-	ReleaseID      uint              `json:"release_id" form:"required"`
-	GitRepo        string            `json:"git_repo" form:"required"`
-	GitBranch      string            `json:"git_branch"`
-	ImageRepoURI   string            `json:"image_repo_uri" form:"required"`
-	DockerfilePath string            `json:"dockerfile_path"`
-	FolderPath     string            `json:"folder_path"`
-	GitRepoID      uint              `json:"git_repo_id" form:"required"`
-	BuildEnv       map[string]string `json:"env"`
-	RegistryID     uint              `json:"registry_id"`
+	ReleaseID      uint   `json:"release_id" form:"required"`
+	GitRepo        string `json:"git_repo" form:"required"`
+	GitBranch      string `json:"git_branch"`
+	ImageRepoURI   string `json:"image_repo_uri" form:"required"`
+	DockerfilePath string `json:"dockerfile_path"`
+	FolderPath     string `json:"folder_path"`
+	GitRepoID      uint   `json:"git_repo_id" form:"required"`
+	RegistryID     uint   `json:"registry_id"`
 }
 
 // ToGitActionConfig converts the form to a gorm git action config model
-func (ca *CreateGitAction) ToGitActionConfig() (*models.GitActionConfig, error) {
+func (ca *CreateGitAction) ToGitActionConfig(version string) (*models.GitActionConfig, error) {
 	return &models.GitActionConfig{
 		ReleaseID:            ca.ReleaseID,
 		GitRepo:              ca.GitRepo,
@@ -29,6 +28,7 @@ func (ca *CreateGitAction) ToGitActionConfig() (*models.GitActionConfig, error) 
 		FolderPath:           ca.FolderPath,
 		GithubInstallationID: ca.GitRepoID,
 		IsInstallation:       true,
+		Version:              version,
 	}, nil
 }
 

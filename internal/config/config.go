@@ -71,8 +71,6 @@ type ServerConf struct {
 	ProvisionerCluster string `env:"PROVISIONER_CLUSTER"`
 	IngressCluster     string `env:"INGRESS_CLUSTER"`
 	SelfKubeconfig     string `env:"SELF_KUBECONFIG"`
-
-	UpdateAppGHAVersion string `env:"UPDATE_APP_GHA_VERSION,default=v0.1.0"`
 }
 
 // DBConf is the database configuration: if generated from environment variables,

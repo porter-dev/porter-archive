@@ -1,118 +1,80 @@
-import React, { useContext, useEffect, useState } from "react";
+import React, { useContext, useEffect, useMemo, useState } from "react";
 import styled from "styled-components";
 import Dropdown from "components/Dropdown";
-import { Event, EventContext } from "./EventsContext";
+import { EventContext } from "./EventsContext";
 import EventCard from "./EventCard";
 
-const mockData = [
-  {
-    id: 1,
-    project_id: 1,
-    cluster_id: 6,
-    owner_name: "pod-test",
-    owner_type: "deployment",
-    event_type: "critical",
-    resource_type: "pod",
-    name: "pod-test-1",
-    namespace: "default",
-    message: "",
-    reason: "OOM killed",
-    timestamp: "2021-06-30T21:48:23Z",
-  },
-  {
-    id: 2,
-    project_id: 1,
-    cluster_id: 6,
-    owner_name: "pod-test",
-    owner_type: "deployment",
-    event_type: "normal",
-    resource_type: "pod",
-    name: "pod-test-2",
-    namespace: "default",
-    message: "",
-    reason: "OOM killed",
-    timestamp: "2021-06-30T21:48:23Z",
-  },
-  {
-    id: 3,
-    project_id: 1,
-    cluster_id: 6,
-    owner_name: "pod-test",
-    owner_type: "deployment",
-    event_type: "critical",
-    resource_type: "pod",
-    name: "pod-test-2",
-    namespace: "default",
-    message: "",
-    reason: "OOM killed",
-    timestamp: "2021-06-30T21:48:23Z",
-  },
-  {
-    id: 4,
-    project_id: 1,
-    cluster_id: 6,
-    owner_name: "pod-test",
-    owner_type: "deployment",
-    event_type: "critical",
-    resource_type: "pod",
-    name: "pod-test-2",
-    namespace: "default",
-    message: "",
-    reason: "OOM killed",
-    timestamp: "2021-06-30T21:48:23Z",
-  },
-  {
-    id: 5,
-    project_id: 1,
-    cluster_id: 6,
-    owner_name: "pod-test",
-    owner_type: "deployment",
-    event_type: "critical",
-    resource_type: "pod",
-    name: "pod-test-2",
-    namespace: "default",
-    message: "",
-    reason: "OOM killed",
-    timestamp: "2021-06-30T21:48:23Z",
-  },
-  {
-    id: 6,
-    project_id: 1,
-    cluster_id: 6,
-    owner_name: "pod-test",
-    owner_type: "deployment",
-    event_type: "critical",
-    resource_type: "pod",
-    name: "pod-test-2",
-    namespace: "default",
-    message: "",
-    reason: "OOM killed",
-    timestamp: "2021-06-30T21:48:23Z",
-  },
-];
-
 const EventsList: React.FunctionComponent = ({}) => {
-  const { eventList, selectEvent, setResourceType } = useContext(EventContext);
+  const {
+    eventList,
+    selectEvent,
+    setResourceType,
+    setLimit,
+    availableControllers,
+    setSelectedController,
+    enableNodeEvents,
+  } = useContext(EventContext);
 
-  const handleEventTypeSelection = (option: {
+  const handleResourceTypeSelection = (option: {
     label: string;
     value: "pod" | "hpa";
   }) => {
     setResourceType(option.value);
   };
 
+  const handleSetLimit = (option: { label: string; value: number }) => {
+    setLimit(option.value);
+  };
+
+  const handleControllerSelection = (option: {
+    label: string;
+    value: { type: string; name: string };
+  }) => {
+    setSelectedController(option.value);
+  };
+
+  const resourceTypes = useMemo(() => {
+    if (enableNodeEvents) {
+      return [
+        { label: "Pods", value: "pod" },
+        { label: "HPA", value: "hpa" },
+        { label: "Node", value: "node" },
+      ];
+    }
+    return [
+      { label: "Pods", value: "pod" },
+      { label: "HPA", value: "hpa" },
+    ];
+  }, [enableNodeEvents]);
+
+  const controllers = useMemo(() => {
+    return availableControllers.map((c) => ({
+      label: c.name,
+      value: c,
+    }));
+  }, [availableControllers]);
+
   return (
     <div>
       <ControlRow>
-        <div>
+        <Dropdown
+          options={resourceTypes}
+          onSelect={handleResourceTypeSelection}
+        />
+        <RightFilters>
           <Dropdown
             options={[
-              { label: "Pods", value: "pod" },
-              { label: "HPA", value: "hpa" },
+              { label: "10 events", value: 10 },
+              { label: "20 events", value: 20 },
+              { label: "50 events", value: 50 },
             ]}
-            onSelect={handleEventTypeSelection}
+            onSelect={handleSetLimit}
           />
-        </div>
+          <Dropdown
+            options={controllers}
+            onSelect={handleControllerSelection}
+          />
+        </RightFilters>
       </ControlRow>
       <EventsGrid>
         {eventList.map((event) => {
@@ -139,4 +101,13 @@ const EventsGrid = styled.div`
   display: grid;
   grid-row-gap: 15px;
   grid-template-columns: 1;
+`;
+
+const RightFilters = styled.div`
+  display: flex;
+  > div {
+    :not(:last-child) {
+      margin-right: 15px;
+    }
+  }
 `;

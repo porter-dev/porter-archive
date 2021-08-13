@@ -851,7 +851,17 @@ func (app *App) getUserIDFromRequest(r *http.Request) (uint, error) {
 		return 0, err
 	}
 
-	userID, _ := session.Values["user_id"].(uint)
+	sessID, ok := session.Values["user_id"]
+
+	if !ok {
+		return 0, fmt.Errorf("could not get user id from session")
+	}
+
+	userID, ok := sessID.(uint)
+
+	if !ok {
+		return 0, fmt.Errorf("could not get user id from session")
+	}
 
 	return userID, nil
 }

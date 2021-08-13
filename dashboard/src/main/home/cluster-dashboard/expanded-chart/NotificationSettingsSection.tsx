@@ -29,6 +29,7 @@ const NotificationSettingsSection: React.FC<Props> = (props) => {
   const [saveLoading, setSaveLoading] = useState(false);
   const [numSaves, setNumSaves] = useState(0);
   const [hasNotifications, setHasNotifications] = useState(null);
+  const [hasRelease, setHasRelease] = useState(false);
 
   const { currentProject, currentCluster } = useContext(Context);
 
@@ -63,6 +64,9 @@ const NotificationSettingsSection: React.FC<Props> = (props) => {
       )
       .then(({ data }) => {
         setHasNotifications(data.length > 0);
+      })
+      .catch((ret) => {
+        console.log(ret);
       });
   }, []);
 

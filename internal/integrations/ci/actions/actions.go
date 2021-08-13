@@ -44,6 +44,7 @@ type GithubActions struct {
 	ImageRepoURL   string
 
 	defaultBranch string
+	Version       string
 }
 
 func (g *GithubActions) Setup() (string, error) {
@@ -151,7 +152,7 @@ type GithubActionYAML struct {
 func (g *GithubActions) GetGithubActionYAML() ([]byte, error) {
 	gaSteps := []GithubActionYAMLStep{
 		getCheckoutCodeStep(),
-		getUpdateAppStep(g.ServerURL, g.getPorterTokenSecretName(), g.ProjectID, g.ClusterID, g.ReleaseName),
+		getUpdateAppStep(g.ServerURL, g.getPorterTokenSecretName(), g.ProjectID, g.ClusterID, g.ReleaseName, g.Version),
 	}
 
 	branch := g.GitBranch

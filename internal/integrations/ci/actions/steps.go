@@ -4,6 +4,8 @@ import (
 	"fmt"
 )
 
+const updateAppActionName = "porter-dev/porter-update-action"
+
 func getCheckoutCodeStep() GithubActionYAMLStep {
 	return GithubActionYAMLStep{
 		Name: "Checkout code",
@@ -11,10 +13,10 @@ func getCheckoutCodeStep() GithubActionYAMLStep {
 	}
 }
 
-func getUpdateAppStep(serverURL, porterTokenSecretName string, projectID uint, clusterID uint, appName string) GithubActionYAMLStep {
+func getUpdateAppStep(serverURL, porterTokenSecretName string, projectID uint, clusterID uint, appName string, actionVersion string) GithubActionYAMLStep {
 	return GithubActionYAMLStep{
 		Name: "Update Porter App",
-		Uses: "porter-dev/porter-update-action@v0.1.0",
+		Uses: fmt.Sprintf("%s@%s", updateAppActionName, actionVersion),
 		With: map[string]string{
 			"app":     appName,
 			"cluster": fmt.Sprintf("%d", clusterID),

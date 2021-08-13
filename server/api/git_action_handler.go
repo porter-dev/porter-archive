@@ -108,7 +108,7 @@ func (app *App) createGitActionFromForm(
 	}
 
 	// convert the form to a git action config
-	gitAction, err := form.ToGitActionConfig()
+	gitAction, err := form.ToGitActionConfig(app.ServerConf.UpdateAppGHAVersion)
 
 	if err != nil {
 		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
@@ -173,6 +173,7 @@ func (app *App) createGitActionFromForm(
 		ImageRepoURL:           gitAction.ImageRepoURI,
 		PorterToken:            encoded,
 		ClusterID:              release.ClusterID,
+		Version:                gitAction.Version,
 	}
 
 	_, err = gaRunner.Setup()

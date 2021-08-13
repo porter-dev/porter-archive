@@ -29,7 +29,7 @@ const NotificationSettingsSection: React.FC<Props> = (props) => {
   const [saveLoading, setSaveLoading] = useState(false);
   const [numSaves, setNumSaves] = useState(0);
   const [hasNotifications, setHasNotifications] = useState(null);
-  const [hasRelease, setHasRelease] = useState(false);
+  const [hasRelease, setHasRelease] = useState(true);
 
   const { currentProject, currentCluster } = useContext(Context);
 
@@ -53,6 +53,10 @@ const NotificationSettingsSection: React.FC<Props> = (props) => {
           ...data,
         });
         setInitLoading(false);
+      })
+      .catch(() => {
+        setHasRelease(false);
+        setInitLoading(false);
       });
     api
       .getSlackIntegrations(
@@ -64,9 +68,6 @@ const NotificationSettingsSection: React.FC<Props> = (props) => {
       )
       .then(({ data }) => {
         setHasNotifications(data.length > 0);
-      })
-      .catch((ret) => {
-        console.log(ret);
       });
   }, []);
 
@@ -94,6 +95,10 @@ const NotificationSettingsSection: React.FC<Props> = (props) => {
       .then(() => {
         setNumSaves(numSaves + 1);
         setSaveLoading(false);
+      })
+      .catch(() => {
+        setHasRelease(false);
+        setSaveLoading(false);
       });
   };
 
@@ -102,6 +107,11 @@ const NotificationSettingsSection: React.FC<Props> = (props) => {
       <Heading>Notification Settings</Heading>
       {initLoading ? (
         <Loading />
+      ) : !hasRelease ? (
+        <Heading>
+          This message appears when the release isn't in the database, so Porter
+          can't laod in notifications for it
+        </Heading>
       ) : (
         <>
           {hasNotifications != null && !hasNotifications && (

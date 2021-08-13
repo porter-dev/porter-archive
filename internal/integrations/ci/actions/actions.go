@@ -67,24 +67,8 @@ func (g *GithubActions) Setup() (string, error) {
 
 	g.defaultBranch = repo.GetDefaultBranch()
 
-	// create a new secret with a webhook token
-	err = g.createGithubSecret(client, g.getWebhookSecretName(), g.WebhookToken)
-
-	if err != nil {
-		return "", err
-	}
-
-	// create new secrets porter token, project id, and cluster id
-	err = g.createGithubSecret(client, g.getPorterTokenSecretName(), g.PorterToken)
-
-	if err != nil {
-		return "", err
-	}
-
-	// create a new secret with the build variables
-	err = g.createEnvSecret(client)
-
-	if err != nil {
+	// create porter token secret
+	if err := g.createGithubSecret(client, g.getPorterTokenSecretName(), g.PorterToken); err != nil {
 		return "", err
 	}
 

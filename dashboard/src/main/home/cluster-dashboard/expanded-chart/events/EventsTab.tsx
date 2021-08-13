@@ -4,22 +4,39 @@ import styled from "styled-components";
 import EventLogs from "components/events/EventLogs";
 import EventsList from "components/events/EventsList";
 import EventsContextProvider, {
-  Event,
   EventContext,
   EventsContextType,
 } from "components/events/EventsContext";
-import Loading from "components/Loading";
 import loadingSrc from "assets/loading.gif";
 
-type EventsTabProps = {};
+type EventsTabProps = {
+  controllers: { type: string; name: string }[];
+};
 
-const EventsTab: React.FunctionComponent<EventsTabProps> = () => {
+const EventsTab: React.FunctionComponent<EventsTabProps> = ({
+  controllers,
+}) => {
   const renderContent = ({
     isLoading,
     isPorterAgentInstalled,
+    isPorterAgentInstalling,
     selectedEvent,
     installPorterAgent,
   }: EventsContextType) => {
+    if (isPorterAgentInstalling) {
+      return (
+        <Placeholder>
+          <div>
+            <Header>
+              <Spinner src={loadingSrc} /> Installing porter agent
+            </Header>
+            This should be quick, if it takes too long please contact the porter
+            team.
+          </div>
+        </Placeholder>
+      );
+    }
+
     if (isLoading) {
       return (
         <Placeholder>
@@ -55,7 +72,7 @@ const EventsTab: React.FunctionComponent<EventsTabProps> = () => {
 
   return (
     <EventsPageWrapper>
-      <EventsContextProvider controllers={[]} enableNodeEvents={false}>
+      <EventsContextProvider controllers={controllers} enableNodeEvents={false}>
         <EventContext.Consumer>
           {(context) => renderContent(context)}
         </EventContext.Consumer>

@@ -49,6 +49,7 @@ func (c *CreateAgent) CreateFromGithub(
 	)
 
 	if err != nil {
+		fmt.Println("could not list git repos")
 		return "", err
 	}
 
@@ -59,16 +60,17 @@ func (c *CreateAgent) CreateFromGithub(
 		githubRepos, err := c.Client.ListGithubRepos(
 			context.Background(),
 			c.CreateOpts.ProjectID,
-			gitRepo.ID,
+			gitRepo,
 		)
 
 		if err != nil {
+			fmt.Println("could not list github repos")
 			return "", err
 		}
 
 		for _, githubRepo := range githubRepos {
 			if githubRepo.FullName == ghOpts.Repo {
-				gitRepoMatch = gitRepo.ID
+				gitRepoMatch = gitRepo
 				break
 			}
 		}

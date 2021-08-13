@@ -67,17 +67,17 @@ var connectRegistryCmd = &cobra.Command{
 	},
 }
 
-var connectActionsCmd = &cobra.Command{
-	Use:   "actions",
-	Short: "Adds Github Actions to a project",
-	Run: func(cmd *cobra.Command, args []string) {
-		err := checkLoginAndRun(args, runConnectActions)
+// var connectActionsCmd = &cobra.Command{
+// 	Use:   "actions",
+// 	Short: "Adds Github Actions to a project",
+// 	Run: func(cmd *cobra.Command, args []string) {
+// 		err := checkLoginAndRun(args, runConnectActions)
 
-		if err != nil {
-			os.Exit(1)
-		}
-	},
-}
+// 		if err != nil {
+// 			os.Exit(1)
+// 		}
+// 	},
+// }
 
 var connectGCRCmd = &cobra.Command{
 	Use:   "gcr",
@@ -135,7 +135,7 @@ func init() {
 		"the context to connect (defaults to the current context)",
 	)
 
-	connectCmd.AddCommand(connectActionsCmd)
+	// connectCmd.AddCommand(connectActionsCmd)
 	connectCmd.AddCommand(connectECRCmd)
 	connectCmd.AddCommand(connectRegistryCmd)
 	connectCmd.AddCommand(connectDockerhubCmd)
@@ -244,9 +244,9 @@ func runConnectHelmRepoBasic(_ *api.AuthCheckResponse, client *api.Client, _ []s
 	return config.SetHelmRepo(hrID)
 }
 
-func runConnectActions(_ *api.AuthCheckResponse, client *api.Client, _ []string) error {
-	return connect.Actions(
-		client,
-		config.Project,
-	)
-}
+// func runConnectActions(_ *api.AuthCheckResponse, client *api.Client, _ []string) error {
+// 	return connect.Actions(
+// 		client,
+// 		config.Project,
+// 	)
+// }

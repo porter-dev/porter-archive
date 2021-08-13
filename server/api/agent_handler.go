@@ -1,6 +1,7 @@
 package api
 
 import (
+	"fmt"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -93,13 +94,16 @@ func (app *App) HandleDeployAgent(w http.ResponseWriter, r *http.Request) {
 	}
 
 	porterAgentValues := map[string]interface{}{
-		"secret": map[string]interface{}{
-			"token": encoded,
-		},
-		"config": map[string]interface{}{
-			"projectID":  projID,
-			"clusterID":  releaseForm.Cluster.ID,
-			"porterHost": app.ServerConf.ServerURL,
+		"agent": map[string]interface{}{
+			"image":       "public.ecr.aws/o1j4x7p4/porter-agent:latest",
+			"porterHost":  app.ServerConf.ServerURL,
+			"porterPort":  "443",
+			"porterToken": encoded,
+			"privateRegistry": map[string]interface{}{
+				"enabled": false,
+			},
+			"clusterID": fmt.Sprintf("%d", releaseForm.Cluster.ID),
+			"projectID": fmt.Sprintf("%d", projID),
 		},
 	}
 

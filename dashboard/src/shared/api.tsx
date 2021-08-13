@@ -1004,6 +1004,56 @@ const createWebhookToken = baseApi<
     `/api/projects/${project_id}/releases/${chart_name}/webhook_token?namespace=${namespace}&cluster_id=${cluster_id}&storage=${storage}`
 );
 
+const getPorterAgentIsInstalled = baseApi<
+  {
+    cluster_id: number;
+  },
+  { project_id: number }
+>("GET", (pathParams) => {
+  return `/api/projects/${pathParams.project_id}/k8s/agent/detect`;
+});
+
+const installPorterAgent = baseApi<
+  {
+    cluster_id: number;
+  },
+  { project_id: number }
+>("GET", (pathParams) => {
+  return `/api/projects/${pathParams.project_id}/k8s/agent/deploy`;
+});
+
+const getEvents = baseApi<
+  {
+    limit: number;
+    skip: number;
+    type: "pod" | "node" | "hpa";
+    owner_type: string;
+    owner_name: string;
+    sort_by: "timestamp";
+  },
+  {
+    project_id: number;
+    cluster_id: number;
+  }
+>(
+  "GET",
+  (pathParams) =>
+    `api/projects/${pathParams.project_id}/clusters/${pathParams.cluster_id}/events`
+);
+
+const getEventById = baseApi<
+  {},
+  {
+    project_id: number;
+    cluster_id: number;
+    event_id: number;
+  }
+>(
+  "GET",
+  ({ project_id, cluster_id, event_id }) =>
+    `/api/projects/${project_id}/clusters/${cluster_id}/events/${event_id}`
+);
+
 // Bundle export to allow default api import (api.<method> is more readable)
 export default {
   checkAuth,
@@ -1107,4 +1157,8 @@ export default {
   removeCollaborator,
   getPolicyDocument,
   createWebhookToken,
+  getPorterAgentIsInstalled,
+  installPorterAgent,
+  getEvents,
+  getEventById,
 };

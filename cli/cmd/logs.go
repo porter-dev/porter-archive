@@ -13,6 +13,7 @@ import (
 // without any subcommands
 var logsCmd = &cobra.Command{
 	Use:   "logs [release]",
+	Args:  cobra.ExactArgs(1),
 	Short: "Logs the output from a given application.",
 	Run: func(cmd *cobra.Command, args []string) {
 		err := checkLoginAndRun(args, logs)
@@ -96,11 +97,17 @@ func logs(_ *api.AuthCheckResponse, client *api.Client, args []string) error {
 		selectedContainerName = selectedContainer
 	}
 
-	restConf, err := getRESTConfig(client)
+	config := &PorterRunSharedConfig{
+		Client: client,
+	}
+
+	err = config.setSharedConfig()
 
 	if err != nil {
 		return fmt.Errorf("Could not retrieve kube credentials: %s", err.Error())
 	}
 
-	return pipePodLogsToStdout(restConf, namespace, selectedPod.Name, selectedContainerName, follow)
+	_, err = pipePodLogsToStdout(config, namespace, selectedPod.Name, selectedContainerName, follow)
+
+	return err
 }

@@ -1,10 +1,4 @@
-import React, {
-  Component,
-  useState,
-  useEffect,
-  useContext,
-  useMemo,
-} from "react";
+import React, { useContext, useEffect, useMemo, useState } from "react";
 import styled from "styled-components";
 
 import { InviteType } from "shared/types";

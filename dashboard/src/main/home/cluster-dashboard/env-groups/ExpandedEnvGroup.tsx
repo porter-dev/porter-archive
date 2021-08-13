@@ -1,19 +1,16 @@
 import React, { Component } from "react";
 import styled from "styled-components";
-import close from "assets/close.png";
 import backArrow from "assets/back_arrow.png";
 import key from "assets/key.svg";
-import _ from "lodash";
 import loading from "assets/loading.gif";
 
-import { ChartType, StorageType, ClusterType } from "shared/types";
+import { ClusterType } from "shared/types";
 import { Context } from "shared/Context";
 import { isAlphanumeric } from "shared/common";
 import api from "shared/api";
 
 import TitleSection from "components/TitleSection";
 import SaveButton from "components/SaveButton";
-import Loading from "components/Loading";
 import TabRegion from "components/TabRegion";
 import EnvGroupArray, { KeyValueType } from "./EnvGroupArray";
 import Heading from "components/form-components/Heading";

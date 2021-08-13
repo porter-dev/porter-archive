@@ -25,6 +25,7 @@ import (
 )
 
 var namespace string
+var verbose bool
 
 // runCmd represents the "porter run" base command when called
 // without any subcommands
@@ -59,6 +60,14 @@ func init() {
 		"e",
 		false,
 		"whether to connect to an existing pod",
+	)
+
+	runCmd.PersistentFlags().BoolVarP(
+		&verbose,
+		"verbose",
+		"v",
+		false,
+		"whether to print verbose output",
 	)
 }
 
@@ -326,20 +335,25 @@ func executeRunEphemeral(config *PorterRunSharedConfig, namespace, name, contain
 
 		time.Sleep(2 * time.Second)
 
-		// ugly way to catch no TTY errors, such as when running command "echo \"hello\""
-		if i == 4 && err != nil {
-			color.New(color.FgYellow).Println("Could not open a shell to this container. Container logs:\n")
+	}
 
-			var writtenBytes int64
+	// ugly way to catch no TTY errors, such as when running command "echo \"hello\""
+	if err != nil {
+		color.New(color.FgYellow).Println("Could not open a shell to this container. Container logs:\n")
 
-			writtenBytes, err = pipePodLogsToStdout(config, namespace, podName, container, false)
+		var writtenBytes int64
 
-			if writtenBytes == 0 {
-				color.New(color.FgYellow).Println("Could not get logs. Pod events:\n")
+		writtenBytes, err = pipePodLogsToStdout(config, namespace, podName, container, false)
 
-				err = pipeEventsToStdout(config, namespace, podName, container, false)
-			}
+		if verbose || writtenBytes == 0 {
+			color.New(color.FgYellow).Println("Could not get logs. Pod events:\n")
+
+			err = pipeEventsToStdout(config, namespace, podName, container, false)
 		}
+	} else if verbose {
+		color.New(color.FgYellow).Println("Pod events:\n")
+
+		pipeEventsToStdout(config, namespace, podName, container, false)
 	}
 
 	// delete the ephemeral pod
@@ -370,6 +384,9 @@ func pipePodLogsToStdout(config *PorterRunSharedConfig, namespace, name, contain
 }
 
 func pipeEventsToStdout(config *PorterRunSharedConfig, namespace, name, container string, follow bool) error {
+	// update the config in case the operation has taken longer than token expiry time
+	config.setSharedConfig()
+
 	// creates the clientset
 	resp, err := config.Clientset.CoreV1().Events(namespace).List(
 		context.TODO(),

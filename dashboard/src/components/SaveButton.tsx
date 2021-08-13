@@ -2,7 +2,7 @@ import React, { Component } from "react";
 import styled from "styled-components";
 import loading from "assets/loading.gif";
 
-type PropsType = {
+type Props = {
   text?: string;
   onClick: () => void;
   disabled?: boolean;
@@ -18,84 +18,69 @@ type PropsType = {
   statusPosition?: "right" | "left";
 };
 
-type StateType = {};
-
-export default class SaveButton extends Component<PropsType, StateType> {
-  renderStatus = () => {
-    if (this.props.status) {
-      if (this.props.status === "successful") {
+const SaveButton: React.FC<Props> = (props) => {
+  const renderStatus = () => {
+    if (props.status) {
+      if (props.status === "successful") {
         return (
-          <StatusWrapper position={this.props.statusPosition} successful={true}>
+          <StatusWrapper position={props.statusPosition} successful={true}>
             <i className="material-icons">done</i>
             <StatusTextWrapper>Successfully updated</StatusTextWrapper>
           </StatusWrapper>
         );
-      } else if (this.props.status === "loading") {
+      } else if (props.status === "loading") {
         return (
-          <StatusWrapper
-            position={this.props.statusPosition}
-            successful={false}
-          >
+          <StatusWrapper position={props.statusPosition} successful={false}>
             <LoadingGif src={loading} />
             <StatusTextWrapper>
-              {this.props.saveText || "Updating . . ."}
+              {props.saveText || "Updating . . ."}
             </StatusTextWrapper>
           </StatusWrapper>
         );
-      } else if (this.props.status === "error") {
+      } else if (props.status === "error") {
         return (
-          <StatusWrapper
-            position={this.props.statusPosition}
-            successful={false}
-          >
+          <StatusWrapper position={props.statusPosition} successful={false}>
             <i className="material-icons">error_outline</i>
             <StatusTextWrapper>Could not update</StatusTextWrapper>
           </StatusWrapper>
         );
       } else {
         return (
-          <StatusWrapper
-            position={this.props.statusPosition}
-            successful={false}
-          >
+          <StatusWrapper position={props.statusPosition} successful={false}>
             <i className="material-icons">error_outline</i>
-            <StatusTextWrapper>{this.props.status}</StatusTextWrapper>
+            <StatusTextWrapper>{props.status}</StatusTextWrapper>
           </StatusWrapper>
         );
       }
-    } else if (this.props.helper) {
+    } else if (props.helper) {
       return (
-        <StatusWrapper position={this.props.statusPosition} successful={true}>
-          {this.props.helper}
+        <StatusWrapper position={props.statusPosition} successful={true}>
+          {props.helper}
         </StatusWrapper>
       );
     }
   };
 
-  render() {
-    return (
-      <ButtonWrapper
-        makeFlush={this.props.makeFlush}
-        clearPosition={this.props.clearPosition}
+  return (
+    <ButtonWrapper
+      makeFlush={props.makeFlush}
+      clearPosition={props.clearPosition}
+    >
+      {props.statusPosition !== "right" && <div>{renderStatus()}</div>}
+      <Button
+        rounded={props.rounded}
+        disabled={props.disabled}
+        onClick={props.onClick}
+        color={props.color || "#616FEEcc"}
       >
-        {this.props.statusPosition !== "right" && (
-          <div>{this.renderStatus()}</div>
-        )}
-        <Button
-          rounded={this.props.rounded}
-          disabled={this.props.disabled}
-          onClick={this.props.onClick}
-          color={this.props.color || "#616FEEcc"}
-        >
-          {this.props.children || this.props.text}
-        </Button>
-        {this.props.statusPosition === "right" && (
-          <div>{this.renderStatus()}</div>
-        )}
-      </ButtonWrapper>
-    );
-  }
-}
+        {props.children || props.text}
+      </Button>
+      {props.statusPosition === "right" && <div>{renderStatus()}</div>}
+    </ButtonWrapper>
+  );
+};
+
+export default SaveButton;
 
 const LoadingGif = styled.img`
   width: 15px;

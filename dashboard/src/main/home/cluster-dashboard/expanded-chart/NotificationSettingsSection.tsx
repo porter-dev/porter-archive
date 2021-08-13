@@ -28,6 +28,7 @@ const NotificationSettingsSection: React.FC<Props> = (props) => {
   const [initLoading, setInitLoading] = useState(true);
   const [saveLoading, setSaveLoading] = useState(false);
   const [numSaves, setNumSaves] = useState(0);
+  const [hasNotifications, setHasNotifications] = useState(null);
 
   const { currentProject, currentCluster } = useContext(Context);
 
@@ -51,6 +52,17 @@ const NotificationSettingsSection: React.FC<Props> = (props) => {
           ...data,
         });
         setInitLoading(false);
+      });
+    api
+      .getSlackIntegrations(
+        "<token>",
+        {},
+        {
+          id: currentProject.id,
+        }
+      )
+      .then(({ data }) => {
+        setHasNotifications(data.length > 0);
       });
   }, []);
 
@@ -88,6 +100,12 @@ const NotificationSettingsSection: React.FC<Props> = (props) => {
         <Loading />
       ) : (
         <>
+          {hasNotifications != null && !hasNotifications && (
+            <Helper>
+              This message appears when there are no notification integrations
+              for the project
+            </Helper>
+          )}
           <CheckboxRow
             label={"Notifications Enabled"}
             checked={notificationsOn}

@@ -1,14 +1,9 @@
-import React, { Component, useContext, useEffect, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import styled from "styled-components";
 import api from "shared/api";
 import yaml from "js-yaml";
 
-import {
-  ChartType,
-  RepoType,
-  StorageType,
-  ActionConfigType,
-} from "shared/types";
+import { ActionConfigType, ChartType, StorageType } from "shared/types";
 import { Context } from "shared/Context";
 
 import ImageSelector from "components/image-selector/ImageSelector";

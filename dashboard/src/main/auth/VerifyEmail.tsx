@@ -1,9 +1,8 @@
-import React, { ChangeEvent, Component } from "react";
+import React, { Component } from "react";
 import styled from "styled-components";
 import logo from "assets/logo.png";
 
 import api from "shared/api";
-import { emailRegex } from "shared/regex";
 import { Context } from "shared/Context";
 
 type PropsType = {

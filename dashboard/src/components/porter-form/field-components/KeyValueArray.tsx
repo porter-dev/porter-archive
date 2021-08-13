@@ -1,10 +1,5 @@
 import React from "react";
-import {
-  GetFinalVariablesFunction,
-  InputField,
-  KeyValueArrayField,
-  KeyValueArrayFieldState,
-} from "../types";
+import { GetFinalVariablesFunction, KeyValueArrayField, KeyValueArrayFieldState } from "../types";
 import sliders from "../../../assets/sliders.svg";
 import upload from "../../../assets/upload.svg";
 import styled from "styled-components";

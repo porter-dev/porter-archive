@@ -1,11 +1,11 @@
 import React, { createContext, useContext, useReducer } from "react";
 import {
+  GetFinalVariablesFunction,
+  PorterFormAction,
   PorterFormData,
   PorterFormState,
-  PorterFormAction,
-  PorterFormVariableList,
   PorterFormValidationInfo,
-  GetFinalVariablesFunction,
+  PorterFormVariableList
 } from "./types";
 import { ShowIf, ShowIfAnd, ShowIfNot, ShowIfOr } from "../../shared/types";
 import { getFinalVariablesForStringInput } from "./field-components/Input";
@@ -132,7 +132,17 @@ export const PorterFormContextProvider: React.FC<Props> = (props) => {
         })
       )
     );
-    return ret;
+    return {
+      ...ret,
+      ...{
+        "currentCluster.service.is_gcp":
+          context.currentCluster?.service == "gke",
+        "currentCluster.service.is_aws":
+          context.currentCluster?.service == "eks",
+        "currentCluster.service.is_do":
+          context.currentCluster?.service == "doks",
+      },
+    };
   };
 
   const getInitialValidation = (data: PorterFormData) => {

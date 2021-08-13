@@ -1,6 +1,5 @@
-import React, { useEffect, useContext, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import styled from "styled-components";
-import GHIcon from "assets/GithubIcon";
 
 import { Context } from "shared/Context";
 import { integrationList } from "shared/common";
@@ -9,7 +8,6 @@ import IntegrationList from "./IntegrationList";
 import api from "shared/api";
 import { pushFiltered } from "shared/routing";
 import Loading from "../../../components/Loading";
-import ConfirmOverlay from "../../../components/ConfirmOverlay";
 import SlackIntegrationList from "./SlackIntegrationList";
 import TitleSection from "components/TitleSection";
 

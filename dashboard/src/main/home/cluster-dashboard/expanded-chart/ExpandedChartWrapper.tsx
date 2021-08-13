@@ -3,14 +3,9 @@ import styled from "styled-components";
 import { Context } from "shared/Context";
 import { RouteComponentProps, withRouter } from "react-router";
 
-import {
-  ResourceType,
-  ChartType,
-  StorageType,
-  ClusterType,
-} from "shared/types";
+import { ChartType, StorageType } from "shared/types";
 import api from "shared/api";
-import { PorterUrl, pushQueryParams, pushFiltered } from "shared/routing";
+import { pushFiltered } from "shared/routing";
 import ExpandedJobChart from "./ExpandedJobChart";
 import ExpandedChart from "./ExpandedChart";
 import Loading from "components/Loading";

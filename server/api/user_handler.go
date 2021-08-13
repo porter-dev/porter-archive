@@ -848,7 +848,7 @@ func (app *App) getUserIDFromRequest(r *http.Request) (uint, error) {
 	session, err := app.Store.Get(r, app.ServerConf.CookieName)
 
 	if err != nil {
-		return 0, err
+		return 0, fmt.Errorf("could not get session: %s", err.Error())
 	}
 
 	sessID, ok := session.Values["user_id"]

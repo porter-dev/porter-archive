@@ -10,6 +10,7 @@ type PropsType = {
   color?: string;
   rounded?: boolean;
   helper?: string | null;
+  saveText?: string | null;
 
   // Makes flush with corner if not within a modal
   makeFlush?: boolean;
@@ -36,7 +37,9 @@ export default class SaveButton extends Component<PropsType, StateType> {
             successful={false}
           >
             <LoadingGif src={loading} />
-            <StatusTextWrapper>Updating . . .</StatusTextWrapper>
+            <StatusTextWrapper>
+              {this.props.saveText || "Updating . . ."}
+            </StatusTextWrapper>
           </StatusWrapper>
         );
       } else if (this.props.status === "error") {

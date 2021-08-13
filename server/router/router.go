@@ -907,6 +907,16 @@ func New(a *api.App) *chi.Mux {
 				),
 			)
 
+			r.Method(
+				"GET",
+				"/projects/{project_id}/releases/{name}/notifications",
+				auth.DoesUserHaveProjectAccess(
+					requestlog.NewHandler(a.HandleGetNotificationConfig, l),
+					mw.URLParam,
+					mw.WriteAccess,
+				),
+			)
+
 			// /api/projects/{project_id}/helmrepos routes
 			r.Method(
 				"POST",

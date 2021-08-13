@@ -38,8 +38,9 @@ const NotificationSettingsSection: React.FC<Props> = (props) => {
       .updateNotificationConfig(
         "<token>",
         {
-          payload: JSON.stringify(payload),
           namespace: props.currentChart.namespace,
+          cluster_id: currentCluster.id,
+          payload,
         },
         {
           project_id: currentProject.id,

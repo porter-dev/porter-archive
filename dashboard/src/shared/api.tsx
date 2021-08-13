@@ -272,6 +272,7 @@ const updateNotificationConfig = baseApi<
   {
     payload: any;
     namespace: string;
+    cluster_id: string;
   },
   {
     project_id: number;

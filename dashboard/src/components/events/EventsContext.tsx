@@ -17,17 +17,22 @@ export type Event = {
   timestamp: string;
 };
 
-type EventsContextType = {
+type EventController = { type: string; name: string };
+
+export type EventsContextType = {
   isPorterAgentInstalled: boolean;
   isPorterAgentInstalling: boolean;
   isLoading: boolean;
   eventList: Event[];
   selectedEvent: Event | null;
+  availableControllers: EventController[];
+  enableNodeEvents: boolean;
   selectEvent: (id: number) => void;
   clearSelectedEvent: () => void;
   setLimit: (limit: number) => void;
   setResourceType: (newResourceType: "pod" | "hpa" | "node") => void;
   installPorterAgent: () => Promise<void>;
+  setSelectedController: (controllerName: EventController) => void;
 };
 
 const defaultEventContext: EventsContextType = {
@@ -36,18 +41,19 @@ const defaultEventContext: EventsContextType = {
   isPorterAgentInstalling: false,
   isLoading: true,
   selectedEvent: null,
+  enableNodeEvents: false,
+  availableControllers: [],
   selectEvent: () => {},
   clearSelectedEvent: () => {},
   setLimit: () => {},
   setResourceType: () => {},
   installPorterAgent: async () => {},
+  setSelectedController: async () => {},
 };
 
 export const EventContext = createContext<EventsContextType>(
   defaultEventContext
 );
-
-type EventController = { type: string; name: string };
 
 type Props = {
   controllers: EventController[];
@@ -104,6 +110,10 @@ const EventsContextProvider: React.FC<Props> = ({
   }, [isPorterAgentInstalling]);
 
   useEffect(() => {
+    if (!selectedController || !isPorterAgentInstalled) {
+      return;
+    }
+
     setIsLoading(true);
     // Clear out event list if the resource type or the selected controller changed
     if (
@@ -113,8 +123,8 @@ const EventsContextProvider: React.FC<Props> = ({
       setEventList([]);
     }
 
-    getEventList();
-  }, [isPorterAgentInstalled, selectedController, resourceType, sortBy]);
+    getEventList().then(() => setIsLoading(false));
+  }, [isPorterAgentInstalled, selectedController, resourceType, sortBy, limit]);
 
   const checkIfPorterAgentIsInstalled = async () => {
     try {
@@ -130,7 +140,6 @@ const EventsContextProvider: React.FC<Props> = ({
       setIsPorterAgentInstalled(true);
     } catch (error) {
       setIsPorterAgentInstalled(false);
-      setCurrentError(JSON.stringify(error));
     }
   };
 
@@ -167,8 +176,8 @@ const EventsContextProvider: React.FC<Props> = ({
           skip: eventList.length,
           type: resourceType,
           sort_by: sortBy,
-          owner_name: selectedController.name,
-          owner_type: selectedController.type,
+          owner_name: selectedController?.name,
+          owner_type: selectedController?.type,
         },
         {
           cluster_id: currentCluster.id,
@@ -179,7 +188,7 @@ const EventsContextProvider: React.FC<Props> = ({
       setEventList(newEventList);
     } catch (error) {
       setEventList([]);
-      setCurrentError(JSON.stringify(error));
+      setCurrentError((error as Error)?.message || JSON.stringify(error));
     }
   };
 
@@ -195,16 +204,19 @@ const EventsContextProvider: React.FC<Props> = ({
   return (
     <EventContext.Provider
       value={{
+        enableNodeEvents,
         isPorterAgentInstalled,
         isPorterAgentInstalling,
         isLoading,
         eventList,
         selectedEvent,
+        availableControllers: controllers,
         selectEvent,
         clearSelectedEvent,
         setLimit,
         setResourceType,
         installPorterAgent,
+        setSelectedController,
       }}
     >
       {children}

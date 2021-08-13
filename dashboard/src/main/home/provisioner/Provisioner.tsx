@@ -9,8 +9,6 @@ import Loading from "components/Loading";
 import InfraStatuses from "./InfraStatuses";
 import ProvisionerLogs from "./ProvisionerLogs";
 import { RouteComponentProps, withRouter } from "react-router";
-import { stringify } from "qs";
-import { forEach } from "lodash";
 
 type PropsType = RouteComponentProps & {
   setRefreshClusters: (x: boolean) => void;

@@ -445,6 +445,9 @@ func createPodFromExisting(config *PorterRunSharedConfig, existing *v1.Pod, args
 
 	newPod.Status = v1.PodStatus{}
 
+	// only use "primary" container
+	newPod.Spec.Containers = newPod.Spec.Containers[0:1]
+
 	// set restart policy to never
 	newPod.Spec.RestartPolicy = v1.RestartPolicyNever
 
@@ -462,6 +465,11 @@ func createPodFromExisting(config *PorterRunSharedConfig, existing *v1.Pod, args
 	newPod.Spec.Containers[0].Stdin = true
 	newPod.Spec.Containers[0].StdinOnce = true
 	newPod.Spec.NodeName = ""
+
+	// remove health checks and probes
+	newPod.Spec.Containers[0].LivenessProbe = nil
+	newPod.Spec.Containers[0].ReadinessProbe = nil
+	newPod.Spec.Containers[0].StartupProbe = nil
 
 	// create the pod and return it
 	return config.Clientset.CoreV1().Pods(existing.ObjectMeta.Namespace).Create(

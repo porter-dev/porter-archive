@@ -2,7 +2,6 @@ import aws from "../assets/aws.png";
 import digitalOcean from "../assets/do.png";
 import gcp from "../assets/gcp.png";
 import github from "../assets/github.png";
-import { InfraType } from "../shared/types";
 
 export const infraNames: any = {
   ecr: "Elastic Container Registry (ECR)",

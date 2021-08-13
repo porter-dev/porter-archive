@@ -210,7 +210,13 @@ func (auth *Auth) DoesUserHaveProjectAccess(
 			}
 
 			sessionUserID, ok := session.Values["user_id"]
-			userID = sessionUserID.(uint)
+
+			if !ok {
+				http.Error(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)
+				return
+			}
+
+			userID, ok = sessionUserID.(uint)
 
 			if !ok {
 				http.Error(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)
@@ -440,7 +446,13 @@ func (auth *Auth) DoesUserHaveGitInstallationAccess(
 			}
 
 			sessionUserID, ok := session.Values["user_id"]
-			userID = sessionUserID.(uint)
+
+			if !ok {
+				http.Error(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)
+				return
+			}
+
+			userID, ok = sessionUserID.(uint)
 
 			if !ok {
 				http.Error(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)
@@ -741,7 +753,13 @@ func (auth *Auth) DoesUserHaveDOIntegrationAccess(
 func (auth *Auth) doesSessionMatchID(r *http.Request, id uint) bool {
 	session, _ := auth.store.Get(r, auth.cookieName)
 
-	if sessID, ok := session.Values["user_id"].(uint); !ok || sessID != id {
+	userID, ok := session.Values["user_id"]
+
+	if !ok {
+		return false
+	}
+
+	if sessID, ok := userID.(uint); !ok || sessID != id {
 		return false
 	}
 

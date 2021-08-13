@@ -1,16 +1,16 @@
-import React, { useMemo, useCallback, useRef } from "react";
-import { AreaClosed, Line, Bar, LinePath } from "@visx/shape";
+import React, { useCallback, useMemo, useRef } from "react";
+import { AreaClosed, Bar, Line, LinePath } from "@visx/shape";
 import { curveMonotoneX } from "@visx/curve";
-import { scaleTime, scaleLinear } from "@visx/scale";
-import { AxisLeft, AxisBottom } from "@visx/axis";
+import { scaleLinear, scaleTime } from "@visx/scale";
+import { AxisBottom, AxisLeft } from "@visx/axis";
 
-import { TooltipWithBounds, defaultStyles, useTooltip } from "@visx/tooltip";
+import { defaultStyles, TooltipWithBounds, useTooltip } from "@visx/tooltip";
 
-import { GridRows, GridColumns } from "@visx/grid";
+import { GridColumns, GridRows } from "@visx/grid";
 
 import { localPoint } from "@visx/event";
 import { LinearGradient } from "@visx/gradient";
-import { max, extent, bisector } from "d3-array";
+import { bisector, extent, max } from "d3-array";
 import { timeFormat } from "d3-time-format";
 import { NormalizedMetricsData } from "./types";
 

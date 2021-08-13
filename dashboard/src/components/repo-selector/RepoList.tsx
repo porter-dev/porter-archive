@@ -1,14 +1,13 @@
-import React, { useState, useContext, useEffect } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import styled from "styled-components";
 import github from "assets/github.png";
 
 import api from "shared/api";
-import { RepoType, ActionConfigType } from "shared/types";
+import { ActionConfigType, RepoType } from "shared/types";
 import { Context } from "shared/Context";
 
 import Loading from "../Loading";
 import SearchBar from "../SearchBar";
-import Helper from "../form-components/Helper";
 
 interface GithubAppAccessData {
   has_access: boolean;

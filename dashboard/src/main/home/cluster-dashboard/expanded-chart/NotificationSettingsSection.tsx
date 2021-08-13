@@ -8,7 +8,7 @@ import { Context } from "../../../../shared/Context";
 import { ChartType } from "../../../../shared/types";
 import Loading from "../../../../components/Loading";
 
-const NOTIF_CATEGORIES = ["deploy", "success", "fail"];
+const NOTIF_CATEGORIES = ["success", "fail"];
 
 interface Props {
   disabled?: boolean;
@@ -50,7 +50,8 @@ const NotificationSettingsSection: React.FC<Props> = (props) => {
         setNotificationsOn(data.enabled);
         delete data.enabled;
         setCategories({
-          ...data,
+          success: data.success,
+          failure: data.failure,
         });
         setInitLoading(false);
       })
@@ -75,7 +76,6 @@ const NotificationSettingsSection: React.FC<Props> = (props) => {
     setSaveLoading(true);
     let payload = {
       enabled: notificationsOn,
-      deploy: notificationsOn,
       ...categories,
     };
 

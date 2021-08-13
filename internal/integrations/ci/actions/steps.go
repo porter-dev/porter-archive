@@ -14,8 +14,7 @@ func getCheckoutCodeStep() GithubActionYAMLStep {
 func getUpdateAppStep(serverURL, porterTokenSecretName string, projectID uint, clusterID uint, appName string) GithubActionYAMLStep {
 	return GithubActionYAMLStep{
 		Name: "Update Porter App",
-		// TODO: tag a version (v2.0.0?) and pin here
-		Uses: "porter-dev/porter-update-action@main",
+		Uses: "porter-dev/porter-update-action@v0.1.0",
 		With: map[string]string{
 			"app":     appName,
 			"cluster": fmt.Sprintf("%d", clusterID),

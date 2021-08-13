@@ -1,11 +1,22 @@
-import React, { useCallback, useContext, useEffect, useMemo, useState } from "react";
+import React, {
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import styled from "styled-components";
 import yaml from "js-yaml";
 import backArrow from "assets/back_arrow.png";
 import _ from "lodash";
 import loadingSrc from "assets/loading.gif";
 
-import { ChartType, ClusterType, ResourceType, StorageType } from "shared/types";
+import {
+  ChartType,
+  ClusterType,
+  ResourceType,
+  StorageType,
+} from "shared/types";
 import { Context } from "shared/Context";
 import api from "shared/api";
 import StatusIndicator from "components/StatusIndicator";
@@ -421,7 +432,13 @@ const ExpandedChart: React.FC<Props> = (props) => {
           />
         );
       case "events":
-        return <EventsTab />;
+        const parsedControllers = Object.values(controllers).map((c) => {
+          return {
+            name: c?.metadata?.name,
+            type: c?.kind,
+          };
+        });
+        return <EventsTab controllers={parsedControllers} />;
       default:
     }
   };

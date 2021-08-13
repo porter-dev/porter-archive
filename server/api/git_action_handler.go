@@ -172,7 +172,6 @@ func (app *App) createGitActionFromForm(
 		FolderPath:             gitAction.FolderPath,
 		ImageRepoURL:           gitAction.ImageRepoURI,
 		PorterToken:            encoded,
-		BuildEnv:               form.BuildEnv,
 		ClusterID:              release.ClusterID,
 	}
 

@@ -140,6 +140,7 @@ type GithubActionYAMLStep struct {
 	Timeout uint64            `yaml:"timeout-minutes,omitempty"`
 	Uses    string            `yaml:"uses,omitempty"`
 	Run     string            `yaml:"run,omitempty"`
+	With    map[string]string `yaml:"with,omitempty"`
 	Env     map[string]string `yaml:"env,omitempty"`
 }
 
@@ -167,8 +168,7 @@ type GithubActionYAML struct {
 func (g *GithubActions) GetGithubActionYAML() ([]byte, error) {
 	gaSteps := []GithubActionYAMLStep{
 		getCheckoutCodeStep(),
-		getDownloadPorterStep(),
-		getConfigurePorterStep(g.ServerURL, g.getPorterTokenSecretName(), g.ProjectID, g.ClusterID, g.ReleaseName),
+		getUpdateAppStep(g.ServerURL, g.getPorterTokenSecretName(), g.ProjectID, g.ClusterID, g.ReleaseName),
 	}
 
 	branch := g.GitBranch

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"github.com/go-chi/chi"
 	"github.com/porter-dev/porter/internal/models"
+	"gorm.io/gorm"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -34,6 +35,11 @@ func (app *App) HandleUpdateNotificationConfig(w http.ResponseWriter, r *http.Re
 	release, err := app.Repo.Release.ReadRelease(form.ClusterID, name, form.Namespace)
 
 	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			w.WriteHeader(http.StatusNotFound)
+			return
+		}
+
 		app.sendExternalError(err, http.StatusInternalServerError, HTTPError{
 			Code:   ErrReleaseReadData,
 			Errors: []string{"release not found"},
@@ -98,6 +104,11 @@ func (app *App) HandleGetNotificationConfig(w http.ResponseWriter, r *http.Reque
 	release, err := app.Repo.Release.ReadRelease(uint(clusterID), name, namespace)
 
 	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			w.WriteHeader(http.StatusNotFound)
+			return
+		}
+
 		app.sendExternalError(err, http.StatusInternalServerError, HTTPError{
 			Code:   ErrReleaseReadData,
 			Errors: []string{"release not found"},

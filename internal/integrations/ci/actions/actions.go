@@ -32,12 +32,11 @@ type GithubActions struct {
 	GithubAppSecretPath  string
 	GithubInstallationID uint
 
-	WebhookToken string
-	PorterToken  string
-	BuildEnv     map[string]string
-	ProjectID    uint
-	ClusterID    uint
-	ReleaseName  string
+	PorterToken string
+	BuildEnv    map[string]string
+	ProjectID   uint
+	ClusterID   uint
+	ReleaseName string
 
 	GitBranch      string
 	DockerFilePath string
@@ -101,17 +100,8 @@ func (g *GithubActions) Cleanup() error {
 
 	g.defaultBranch = repo.GetDefaultBranch()
 
-	// delete the webhook token secret
-	err = g.deleteGithubSecret(client, g.getWebhookSecretName())
-
-	if err != nil {
-		return err
-	}
-
 	// delete the env secret
-	err = g.deleteGithubSecret(client, g.getBuildEnvSecretName())
-
-	if err != nil {
+	if err := g.deleteGithubSecret(client, g.getBuildEnvSecretName()); err != nil {
 		return err
 	}
 
@@ -302,12 +292,6 @@ func (g *GithubActions) createEnvSecret(client *github.Client) error {
 	secretName := g.getBuildEnvSecretName()
 
 	return g.createGithubSecret(client, secretName, strings.Join(lines, "\n"))
-}
-
-func (g *GithubActions) getWebhookSecretName() string {
-	return fmt.Sprintf("WEBHOOK_%s", strings.Replace(
-		strings.ToUpper(g.ReleaseName), "-", "_", -1),
-	)
 }
 
 func (g *GithubActions) getBuildEnvSecretName() string {

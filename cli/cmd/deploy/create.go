@@ -25,6 +25,7 @@ type CreateOpts struct {
 
 	Kind        string
 	ReleaseName string
+	RegistryURL string
 }
 
 // GithubOpts are the options for linking a Github source to the app
@@ -375,7 +376,13 @@ func (c *CreateAgent) GetImageRepoURL(name, namespace string) (uint, string, err
 	var regID uint
 
 	for _, reg := range registries {
-		if reg.URL != "" {
+		if c.CreateOpts.RegistryURL != "" {
+			if c.CreateOpts.RegistryURL == reg.URL {
+				regID = reg.ID
+				imageURI = fmt.Sprintf("%s/%s-%s", reg.URL, name, namespace)
+				break
+			}
+		} else if reg.URL != "" {
 			regID = reg.ID
 			imageURI = fmt.Sprintf("%s/%s-%s", reg.URL, name, namespace)
 			break

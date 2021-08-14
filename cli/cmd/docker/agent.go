@@ -206,16 +206,24 @@ func (a *Agent) PushImage(image string, retryCount int) error {
 			opts,
 		)
 
+		// an error in this case is fatal, since it likely means the docker daemon is
+		// not running
 		if err != nil {
-			time.Sleep(1 * time.Second)
-			continue
+			return err
 		}
 
 		defer out.Close()
 
 		termFd, isTerm := term.GetFdInfo(os.Stderr)
 
-		return jsonmessage.DisplayJSONMessagesStream(out, os.Stderr, termFd, isTerm, nil)
+		err = jsonmessage.DisplayJSONMessagesStream(out, os.Stderr, termFd, isTerm, nil)
+
+		if err != nil {
+			time.Sleep(1 * time.Second)
+			continue
+		} else {
+			break
+		}
 	}
 
 	return err

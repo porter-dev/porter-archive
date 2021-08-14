@@ -302,7 +302,15 @@ func (c *CreateAgent) CreateFromDocker(
 		return "", err
 	}
 
-	err = agent.PushImage(fmt.Sprintf("%s:%s", imageURL, "latest"))
+	retryCount := 1
+
+	// sometimes newly created gcr repositories aren't ready on the initial
+	// creation, so retry count is set higher
+	if strings.Contains(imageURL, "gcr.io") {
+		retryCount = 5
+	}
+
+	err = agent.PushImage(fmt.Sprintf("%s:%s", imageURL, "latest"), retryCount)
 
 	if err != nil {
 		return "", err

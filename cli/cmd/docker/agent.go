@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"strings"
 	"time"
@@ -187,28 +188,37 @@ func (a *Agent) PullImage(image string) error {
 }
 
 // PushImage pushes an image specified by the image string
-func (a *Agent) PushImage(image string) error {
+func (a *Agent) PushImage(image string, retryCount int) error {
+	var err error
+
 	opts, err := a.getPushOptions(image)
 
 	if err != nil {
 		return err
 	}
 
-	out, err := a.client.ImagePush(
-		context.Background(),
-		image,
-		opts,
-	)
+	var out io.ReadCloser
 
-	if err != nil {
-		return err
+	for i := 0; i < retryCount; i++ {
+		out, err = a.client.ImagePush(
+			context.Background(),
+			image,
+			opts,
+		)
+
+		if err != nil {
+			time.Sleep(1 * time.Second)
+			continue
+		}
+
+		defer out.Close()
+
+		termFd, isTerm := term.GetFdInfo(os.Stderr)
+
+		return jsonmessage.DisplayJSONMessagesStream(out, os.Stderr, termFd, isTerm, nil)
 	}
 
-	defer out.Close()
-
-	termFd, isTerm := term.GetFdInfo(os.Stderr)
-
-	return jsonmessage.DisplayJSONMessagesStream(out, os.Stderr, termFd, isTerm, nil)
+	return err
 }
 
 func (a *Agent) getPullOptions(image string) (types.ImagePullOptions, error) {

@@ -266,15 +266,7 @@ func (d *DeployAgent) Build() error {
 
 // Push pushes a local image to the remote repository linked in the release
 func (d *DeployAgent) Push() error {
-	retryCount := 1
-
-	// sometimes newly created gcr repositories aren't ready on the initial
-	// creation, so retry count is set higher
-	if strings.Contains(d.imageRepo, "gcr.io") {
-		retryCount = 5
-	}
-
-	return d.agent.PushImage(fmt.Sprintf("%s:%s", d.imageRepo, d.tag), retryCount)
+	return d.agent.PushImage(fmt.Sprintf("%s:%s", d.imageRepo, d.tag))
 }
 
 // UpdateImageAndValues updates the current image for a release, along with new

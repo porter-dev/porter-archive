@@ -7,14 +7,12 @@ type NotificationConfig struct {
 
 	Enabled bool `gorm:"default:true"` // if notifications are enabled at all
 
-	Deploy  bool `gorm:"default:true"` // for specific events
 	Success bool `gorm:"default:true"`
 	Failure bool `gorm:"default:true"`
 }
 
 type NotificationConfigExternal struct {
 	Enabled bool `json:"enabled"`
-	Deploy  bool `json:"deploy"`
 	Success bool `json:"success"`
 	Failure bool `json:"failure"`
 }
@@ -22,7 +20,6 @@ type NotificationConfigExternal struct {
 func (conf *NotificationConfig) Externalize() *NotificationConfigExternal {
 	return &NotificationConfigExternal{
 		Enabled: conf.Enabled,
-		Deploy:  conf.Deploy,
 		Success: conf.Success,
 		Failure: conf.Failure,
 	}

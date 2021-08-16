@@ -147,11 +147,10 @@ const EventsContextProvider: React.FC<Props> = ({
     try {
       await api.installPorterAgent(
         "<token>",
-        {
-          cluster_id: currentCluster.id,
-        },
+        {},
         {
           project_id: currentProject.id,
+          cluster_id: currentCluster.id,
         }
       );
       setIsPorterAgentInstalling(true);

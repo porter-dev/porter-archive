@@ -53,47 +53,26 @@ const LaunchFlow: React.FC<PropsType> = (props) => {
   const [folderPath, setFolderPath] = useState(null);
   const [selectedRegistry, setSelectedRegistry] = useState(null);
 
-  const createGHAction = (chartName: string, chartNamespace: string) => {
-    let { currentProject, currentCluster, setCurrentError } = context;
-    let imageRepoUri = `${selectedRegistry.url}/${chartName}-${chartNamespace}`;
+  const getGHActionConfig = (chartName: string) => {
+    let imageRepoUri = `${selectedRegistry.url}/${chartName}-${selectedNamespace}`;
 
     // DockerHub registry integration is per repo
     if (selectedRegistry.service === "dockerhub") {
       imageRepoUri = selectedRegistry.url;
     }
 
-    api
-      .createGHAction(
-        "<token>",
-        {
-          git_repo: actionConfig.git_repo,
-          git_branch: branch,
-          registry_id: selectedRegistry.id,
-          dockerfile_path: dockerfilePath,
-          folder_path: folderPath,
-          image_repo_uri: imageRepoUri,
-          git_repo_id: actionConfig.git_repo_id,
-        },
-        {
-          project_id: currentProject.id,
-          CLUSTER_ID: currentCluster.id,
-          RELEASE_NAME: chartName,
-          RELEASE_NAMESPACE: chartNamespace,
-        }
-      )
-      .then((res) => console.log(""))
-      .catch((err) => {
-        let parsedErr =
-          err?.response?.data?.errors && err.response.data.errors[0];
-        err = parsedErr || err.message || JSON.stringify(err);
-
-        setSaveValuesStatus(`Could not create GitHub Action: ${err}`);
-
-        setCurrentError(err);
-      });
+    return {
+      git_repo: actionConfig.git_repo,
+      git_branch: branch,
+      registry_id: selectedRegistry.id,
+      dockerfile_path: dockerfilePath,
+      folder_path: folderPath,
+      image_repo_uri: imageRepoUri,
+      git_repo_id: actionConfig.git_repo_id,
+    };
   };
 
-  const onSubmitAddon = (wildcard?: any) => {
+  const handleSubmitAddon = (wildcard?: any) => {
     let { currentCluster, currentProject, setCurrentError } = context;
     let name = templateName || randomWords({ exactly: 3, join: "-" });
     setSaveValuesStatus("loading");
@@ -156,7 +135,7 @@ const LaunchFlow: React.FC<PropsType> = (props) => {
       });
   };
 
-  const onSubmit = async (rawValues: any) => {
+  const handleSubmit = async (rawValues: any) => {
     let { currentCluster, currentProject, setCurrentError } = context;
     let name = templateName || randomWords({ exactly: 3, join: "-" });
     setSaveValuesStatus("loading");
@@ -248,6 +227,11 @@ const LaunchFlow: React.FC<PropsType> = (props) => {
       }
     }
 
+    let githubActionConfig = null;
+    if (sourceType == "repo") {
+      githubActionConfig = getGHActionConfig(name);
+    }
+
     api
       .deployTemplate(
         "<token>",
@@ -258,6 +242,7 @@ const LaunchFlow: React.FC<PropsType> = (props) => {
           formValues: values,
           namespace: selectedNamespace,
           name,
+          githubActionConfig,
         },
         {
           id: currentProject.id,
@@ -268,9 +253,6 @@ const LaunchFlow: React.FC<PropsType> = (props) => {
         }
       )
       .then((res: any) => {
-        if (sourceType === "repo") {
-          createGHAction(name, selectedNamespace);
-        }
         // props.setCurrentView('cluster-dashboard');
         setSaveValuesStatus("successful");
         // redirect to dashboard with namespace
@@ -330,7 +312,7 @@ const LaunchFlow: React.FC<PropsType> = (props) => {
     // Display main (non-source) settings page
     return (
       <SettingsPage
-        onSubmit={currentTab === "porter" ? onSubmit : onSubmitAddon}
+        onSubmit={currentTab === "porter" ? handleSubmit : handleSubmitAddon}
         saveValuesStatus={saveValuesStatus}
         selectedNamespace={selectedNamespace}
         setSelectedNamespace={setSelectedNamespace}

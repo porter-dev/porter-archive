@@ -50,7 +50,7 @@ export default class Templates extends Component<PropsType, StateType> {
       .getTemplates(
         "<token>",
         {
-          repo_url: process.env.ADDON_CHART_REPO_URL,
+          repo_url: import.meta.env.VITE_ADDON_CHART_REPO_URL as string,
         },
         {}
       )
@@ -86,7 +86,7 @@ export default class Templates extends Component<PropsType, StateType> {
       .getTemplates(
         "<token>",
         {
-          repo_url: process.env.APPLICATION_CHART_REPO_URL,
+          repo_url: import.meta.env.VITE_APPLICATION_CHART_REPO_URL as string,
         },
         {}
       )

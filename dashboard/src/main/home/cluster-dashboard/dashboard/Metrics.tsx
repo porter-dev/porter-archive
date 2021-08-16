@@ -123,8 +123,11 @@ const Metrics: React.FC = () => {
   }, []);
 
   const renderMetricsSettings = () => {
-    if (showMetricsSettings && true) {
-      if (selectedMetric == "nginx:errors") {
+    if (showMetricsSettings) {
+      if (
+        selectedMetric == "nginx:errors" ||
+        selectedMetric == "nginx:latency"
+      ) {
         return (
           <>
             <DropdownOverlay onClick={() => setShowMetricsSettings(false)} />
@@ -193,11 +196,7 @@ const Metrics: React.FC = () => {
 
       let podNames = [] as string[];
 
-      if (selectedMetric == "nginx:errors") {
-        podNames = [selectedIngress?.name];
-        namespace = selectedIngress?.namespace || "default";
-        shouldsum = false;
-      }
+      podNames = [selectedIngress?.name];
 
       setIsLoading((prev) => prev + 1);
       setData([]);
@@ -207,13 +206,14 @@ const Metrics: React.FC = () => {
         {
           cluster_id: currentCluster.id,
           metric: selectedMetric,
-          shouldsum: selectedMetric == "nginx:errors",
+          shouldsum: false,
           kind: "Ingress",
-          namespace: selectedIngress.namespace,
+          namespace: selectedIngress?.namespace || "default",
           startrange: start,
           endrange: end,
           resolution: resolutions[selectedRange],
           pods: podNames,
+          name: selectedIngress?.name,
         },
         {
           id: currentProject.id,

@@ -13,7 +13,6 @@ import (
 type HandleUpdateNotificationConfigForm struct {
 	Payload struct {
 		Enabled bool `json:"enabled"`
-		Deploy  bool `json:"deploy"`
 		Success bool `json:"success"`
 		Failure bool `json:"failure"`
 	} `json:"payload"`
@@ -49,7 +48,6 @@ func (app *App) HandleUpdateNotificationConfig(w http.ResponseWriter, r *http.Re
 	// either create a new notification config or update the current one
 	newConfig := &models.NotificationConfig{
 		Enabled: form.Payload.Enabled,
-		Deploy:  form.Payload.Deploy,
 		Success: form.Payload.Success,
 		Failure: form.Payload.Failure,
 	}
@@ -117,7 +115,6 @@ func (app *App) HandleGetNotificationConfig(w http.ResponseWriter, r *http.Reque
 
 	config := &models.NotificationConfigExternal{
 		Enabled: true,
-		Deploy:  true,
 		Success: true,
 		Failure: true,
 	}

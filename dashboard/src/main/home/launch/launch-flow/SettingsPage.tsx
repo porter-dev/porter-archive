@@ -189,11 +189,11 @@ class SettingsPage extends Component<PropsType, StateType> {
         <BackButton
           width="155px"
           onClick={() => {
-            this.props.setPage("source");
+            this.props.setPage("workflow");
           }}
         >
           <i className="material-icons">first_page</i>
-          Source Settings
+          GitHub Actions
         </BackButton>
       );
     }

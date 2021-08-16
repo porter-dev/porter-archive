@@ -1,6 +1,6 @@
 import { baseApi } from "./baseApi";
 
-import { StorageType } from "./types";
+import { FullActionConfigType, StorageType } from "./types";
 
 /**
  * Generic api call format
@@ -246,6 +246,19 @@ const deleteSlackIntegration = baseApi<
   return `/api/projects/${pathParams.project_id}/slack_integrations/${pathParams.slack_integration_id}`;
 });
 
+const generateGHAWorkflow = baseApi<
+  FullActionConfigType,
+  {
+    cluster_id: number;
+    project_id: number;
+    name: string;
+  }
+>("POST", (pathParams) => {
+  const { name, cluster_id, project_id } = pathParams;
+
+  return `/api/projects/${project_id}/ci/actions/generate?cluster_id=${cluster_id}&name=${name}`;
+});
+
 const deployTemplate = baseApi<
   {
     templateName: string;
@@ -254,7 +267,7 @@ const deployTemplate = baseApi<
     storage: StorageType;
     namespace: string;
     name: string;
-    githubActionConfig?: any;
+    githubActionConfig?: FullActionConfigType;
   },
   {
     id: number;
@@ -1033,6 +1046,7 @@ export default {
   getClusterNodes,
   getClusterNode,
   getConfigMap,
+  generateGHAWorkflow,
   getGitRepoList,
   getGitRepos,
   getImageRepos,

@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 
+	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
 	"gorm.io/gorm"
 )
@@ -83,13 +84,16 @@ func (g *GCPIntegration) GetBearerToken(
 	getTokenCache GetTokenCacheFunc,
 	setTokenCache SetTokenCacheFunc,
 	scopes ...string,
-) (string, error) {
+) (*oauth2.Token, error) {
 	cache, err := getTokenCache()
 
 	// check the token cache for a non-expired token
 	if cache != nil {
 		if tok := cache.Token; err == nil && !cache.IsExpired() && len(tok) > 0 {
-			return string(tok), nil
+			return &oauth2.Token{
+				AccessToken: string(cache.Token),
+				Expiry:      cache.Expiry,
+			}, nil
 		}
 	}
 
@@ -100,19 +104,19 @@ func (g *GCPIntegration) GetBearerToken(
 	)
 
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	tok, err := creds.TokenSource.Token()
 
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	// update the token cache
 	setTokenCache(tok.AccessToken, tok.Expiry)
 
-	return tok.AccessToken, nil
+	return tok, nil
 }
 
 // credentialsFile is the unmarshalled representation of a GCP credentials file.

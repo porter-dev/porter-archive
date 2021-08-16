@@ -74,6 +74,7 @@ var name string
 var values string
 var source string
 var image string
+var registryURL string
 
 func init() {
 	rootCmd.AddCommand(createCmd)
@@ -137,6 +138,13 @@ func init() {
 		"",
 		"if the source is \"registry\", the image to use, in repository:tag format",
 	)
+
+	createCmd.PersistentFlags().StringVar(
+		&registryURL,
+		"registry-url",
+		"",
+		"the registry URL to use (must exist in \"porter registries list\")",
+	)
 }
 
 var supportedKinds = map[string]string{"web": "", "job": "", "worker": ""}
@@ -183,6 +191,7 @@ func createFull(resp *api.AuthCheckResponse, client *api.Client, args []string) 
 			},
 			Kind:        args[0],
 			ReleaseName: name,
+			RegistryURL: registryURL,
 		},
 	}
 

@@ -1,14 +1,12 @@
 import {
-  AvailableMetrics,
   GenericMetricResponse,
   MetricsCPUDataResponse,
-  MetricsHpaReplicasDataResponse,
   MetricsMemoryDataResponse,
   MetricsNetworkDataResponse,
   MetricsNGINXErrorsDataResponse,
   AvailableMetrics,
   MetricsHpaReplicasDataResponse, 
-  MetricsNGINXLatencyDataResponse
+  MetricsNGINXLatencyDataResponse,
   NormalizedMetricsData,
 } from "./types";
 

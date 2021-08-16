@@ -32,7 +32,7 @@ const Metrics: React.FC = () => {
   const [selectedRange, setSelectedRange] = useState("1H");
   const [selectedMetric, setSelectedMetric] = useState("nginx:errors");
   const [selectedMetricLabel, setSelectedMetricLabel] = useState(
-    "5XX Error Percentage (s)"
+    "5XX Error Percentage"
   );
   const [selectedPercentile, setSelectedPercentile] = useState("0.99");
   const [data, setData] = useState<NormalizedMetricsData[]>([]);
@@ -91,7 +91,7 @@ const Metrics: React.FC = () => {
               ...metricsOptions,
               {
                 value: "nginx:errors",
-                label: "5XX Error Percentage (s)",
+                label: "5XX Error Percentage",
               },
               {
                 value: "nginx:latency",

@@ -1010,7 +1010,7 @@ const getPorterAgentIsInstalled = baseApi<
   },
   { project_id: number }
 >("GET", (pathParams) => {
-  return `/api/projects/${pathParams.project_id}/k8s/agent/detect`;
+  return `/api/projects/${pathParams.project_id}/agent/detect`;
 });
 
 const installPorterAgent = baseApi<
@@ -1018,8 +1018,8 @@ const installPorterAgent = baseApi<
     cluster_id: number;
   },
   { project_id: number }
->("GET", (pathParams) => {
-  return `/api/projects/${pathParams.project_id}/k8s/agent/deploy`;
+>("POST", (pathParams) => {
+  return `/api/projects/${pathParams.project_id}/agent/deploy`;
 });
 
 const getEvents = baseApi<

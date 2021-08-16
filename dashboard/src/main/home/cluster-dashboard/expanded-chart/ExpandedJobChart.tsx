@@ -602,6 +602,7 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
                   rightTabOptions={this.state.rightTabOptions}
                   saveValuesStatus={this.state.saveValuesStatus}
                   saveButtonText="Save Config"
+                  includeHiddenFields
                 />
               )}
             </BodyWrapper>

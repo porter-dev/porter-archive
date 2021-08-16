@@ -1,7 +1,11 @@
 import React from "react";
 import InputRow from "../../form-components/InputRow";
 import useFormField from "../hooks/useFormField";
-import { GetFinalVariablesFunction, InputField, StringInputFieldState } from "../types";
+import {
+  GetFinalVariablesFunction,
+  InputField,
+  StringInputFieldState,
+} from "../types";
 
 const clipOffUnit = (unit: string, x: string) => {
   if (typeof x === "string" && unit) {

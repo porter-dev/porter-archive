@@ -270,7 +270,7 @@ class SourcePage extends Component<PropsType, StateType> {
         <SaveButton
           text="Continue"
           disabled={!this.checkSourceSelected()}
-          onClick={() => setPage("settings")}
+          onClick={() => setPage("workflow")}
           status={this.getButtonStatus()}
           makeFlush={true}
           helper={this.getButtonHelper()}

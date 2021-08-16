@@ -10,10 +10,16 @@ import { pushFiltered } from "shared/routing";
 
 import { hardcodedNames } from "shared/hardcodedNameDict";
 import SourcePage from "./SourcePage";
+import WorkflowPage from "./WorkflowPage";
 import SettingsPage from "./SettingsPage";
 import TitleSection from "components/TitleSection";
 
-import { ActionConfigType, PorterTemplate, StorageType } from "shared/types";
+import {
+  ActionConfigType,
+  FullActionConfigType,
+  PorterTemplate,
+  StorageType,
+} from "shared/types";
 
 type PropsType = RouteComponentProps & {
   currentTab?: string;
@@ -52,9 +58,17 @@ const LaunchFlow: React.FC<PropsType> = (props) => {
   const [procfilePath, setProcfilePath] = useState(null);
   const [folderPath, setFolderPath] = useState(null);
   const [selectedRegistry, setSelectedRegistry] = useState(null);
+  const [shouldCreateWorkflow, setShouldCreateWorkflow] = useState(true);
 
-  const getGHActionConfig = (chartName: string) => {
-    let imageRepoUri = `${selectedRegistry.url}/${chartName}-${selectedNamespace}`;
+  const setRandomNameIfEmpty = () => {
+    if (!templateName) {
+      const randomTemplateName = randomWords({ exactly: 3, join: "-" });
+      setTemplateName(randomTemplateName);
+    }
+  };
+
+  const getFullActionConfig = (): FullActionConfigType => {
+    let imageRepoUri = `${selectedRegistry.url}/${templateName}-${selectedNamespace}`;
 
     // DockerHub registry integration is per repo
     if (selectedRegistry.service === "dockerhub") {
@@ -63,18 +77,18 @@ const LaunchFlow: React.FC<PropsType> = (props) => {
 
     return {
       git_repo: actionConfig.git_repo,
-      git_branch: branch,
+      branch: branch,
       registry_id: selectedRegistry.id,
       dockerfile_path: dockerfilePath,
       folder_path: folderPath,
       image_repo_uri: imageRepoUri,
       git_repo_id: actionConfig.git_repo_id,
+      should_create_workflow: shouldCreateWorkflow,
     };
   };
 
   const handleSubmitAddon = (wildcard?: any) => {
     let { currentCluster, currentProject, setCurrentError } = context;
-    let name = templateName || randomWords({ exactly: 3, join: "-" });
     setSaveValuesStatus("loading");
 
     let values = {};
@@ -90,7 +104,7 @@ const LaunchFlow: React.FC<PropsType> = (props) => {
           storage: StorageType.Secret,
           formValues: values,
           namespace: selectedNamespace,
-          name,
+          name: templateName,
         },
         {
           id: currentProject.id,
@@ -137,7 +151,6 @@ const LaunchFlow: React.FC<PropsType> = (props) => {
 
   const handleSubmit = async (rawValues: any) => {
     let { currentCluster, currentProject, setCurrentError } = context;
-    let name = templateName || randomWords({ exactly: 3, join: "-" });
     setSaveValuesStatus("loading");
 
     // Convert dotted keys to nested objects
@@ -203,7 +216,7 @@ const LaunchFlow: React.FC<PropsType> = (props) => {
             .createSubdomain(
               "<token>",
               {
-                release_name: name,
+                release_name: templateName,
               },
               {
                 id: currentProject.id,
@@ -227,9 +240,9 @@ const LaunchFlow: React.FC<PropsType> = (props) => {
       }
     }
 
-    let githubActionConfig = null;
+    let githubActionConfig: FullActionConfigType = null;
     if (sourceType == "repo") {
-      githubActionConfig = getGHActionConfig(name);
+      githubActionConfig = getFullActionConfig();
     }
 
     api
@@ -241,7 +254,7 @@ const LaunchFlow: React.FC<PropsType> = (props) => {
           storage: StorageType.Secret,
           formValues: values,
           namespace: selectedNamespace,
-          name,
+          name: templateName,
           githubActionConfig,
         },
         {
@@ -309,6 +322,21 @@ const LaunchFlow: React.FC<PropsType> = (props) => {
       );
     }
 
+    setRandomNameIfEmpty();
+
+    if (currentPage === "workflow" && currentTab === "porter") {
+      const fullActionConfig = getFullActionConfig();
+      return (
+        <WorkflowPage
+          name={templateName}
+          fullActionConfig={fullActionConfig}
+          shouldCreateWorkflow={shouldCreateWorkflow}
+          setShouldCreateWorkflow={setShouldCreateWorkflow}
+          setPage={setCurrentPage}
+        />
+      );
+    }
+
     // Display main (non-source) settings page
     return (
       <SettingsPage
@@ -341,16 +369,16 @@ const LaunchFlow: React.FC<PropsType> = (props) => {
   };
 
   let { currentTab } = props;
-  let { name } = props.currentTemplate;
-  if (hardcodedNames[name]) {
-    name = hardcodedNames[name];
+  let currentTemplateName = props.currentTemplate.name;
+  if (hardcodedNames[currentTemplateName]) {
+    currentTemplateName = hardcodedNames[currentTemplateName];
   }
 
   return (
     <StyledLaunchFlow>
       <TitleSection handleNavBack={props.hideLaunchFlow}>
         {renderIcon()}
-        New {name} {currentTab === "porter" ? null : "Instance"}
+        New {currentTemplateName} {currentTab === "porter" ? null : "Instance"}
       </TitleSection>
       {renderCurrentPage()}
       <Br />

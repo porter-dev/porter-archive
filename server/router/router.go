@@ -394,7 +394,21 @@ func New(a *api.App) *chi.Mux {
 			// /api/projects/{project_id}/ci routes
 			r.Method(
 				"POST",
-				"/projects/{project_id}/ci/actions",
+				"/projects/{project_id}/ci/actions/generate",
+				auth.DoesUserHaveProjectAccess(
+					auth.DoesUserHaveClusterAccess(
+						requestlog.NewHandler(a.HandleGenerateGitAction, l),
+						mw.URLParam,
+						mw.QueryParam,
+					),
+					mw.URLParam,
+					mw.WriteAccess,
+				),
+			)
+
+			r.Method(
+				"POST",
+				"/projects/{project_id}/ci/actions/create",
 				auth.DoesUserHaveProjectAccess(
 					auth.DoesUserHaveClusterAccess(
 						requestlog.NewHandler(a.HandleCreateGitAction, l),

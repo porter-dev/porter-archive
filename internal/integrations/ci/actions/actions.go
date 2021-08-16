@@ -45,13 +45,16 @@ type GithubActions struct {
 
 	defaultBranch string
 	Version       string
+
+	ShouldGenerateOnly   bool
+	ShouldCreateWorkflow bool
 }
 
-func (g *GithubActions) Setup() (string, error) {
+func (g *GithubActions) Setup() ([]byte, error) {
 	client, err := g.getClient()
 
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	// get the repository to find the default branch
@@ -62,23 +65,32 @@ func (g *GithubActions) Setup() (string, error) {
 	)
 
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	g.defaultBranch = repo.GetDefaultBranch()
 
-	// create porter token secret
-	if err := g.createGithubSecret(client, g.getPorterTokenSecretName(), g.PorterToken); err != nil {
-		return "", err
+	if !g.ShouldGenerateOnly {
+		// create porter token secret
+		if err := g.createGithubSecret(client, g.getPorterTokenSecretName(), g.PorterToken); err != nil {
+			return nil, err
+		}
 	}
 
-	fileBytes, err := g.GetGithubActionYAML()
+	workflowYAML, err := g.GetGithubActionYAML()
 
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
-	return g.commitGithubFile(client, g.getPorterYMLFileName(), fileBytes)
+	if !g.ShouldGenerateOnly && g.ShouldCreateWorkflow {
+		_, err = g.commitGithubFile(client, g.getPorterYMLFileName(), workflowYAML)
+		if err != nil {
+			return workflowYAML, err
+		}
+	}
+
+	return workflowYAML, err
 }
 
 func (g *GithubActions) Cleanup() error {
@@ -161,7 +173,7 @@ func (g *GithubActions) GetGithubActionYAML() ([]byte, error) {
 		branch = g.defaultBranch
 	}
 
-	actionYAML := &GithubActionYAML{
+	actionYAML := GithubActionYAML{
 		On: GithubActionYAMLOnPush{
 			Push: GithubActionYAMLOnPushBranches{
 				Branches: []string{

@@ -274,9 +274,9 @@ func (a *Agent) CreateNamespace(name string) (*v1.Namespace, error) {
 }
 
 func (a *Agent) GetPorterAgent() (*appsv1.Deployment, error) {
-	return a.Clientset.AppsV1().Deployments("porter").Get(
+	return a.Clientset.AppsV1().Deployments("porter-agent-system").Get(
 		context.TODO(),
-		"porter-agent",
+		"porter-agent-controller-manager",
 		metav1.GetOptions{},
 	)
 }

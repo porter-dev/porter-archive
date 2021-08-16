@@ -26,7 +26,7 @@ func (app *App) HandleDeployAgent(w http.ResponseWriter, r *http.Request) {
 	chart, err := loader.LoadChartPublic(
 		app.ServerConf.DefaultAddonHelmRepoURL,
 		"porter-agent",
-		"latest",
+		"",
 	)
 
 	if err != nil {

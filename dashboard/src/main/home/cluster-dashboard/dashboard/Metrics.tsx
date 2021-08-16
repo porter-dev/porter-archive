@@ -14,20 +14,10 @@ import {
 } from "../expanded-chart/metrics/types";
 import SelectRow from "../../../../components/form-components/SelectRow";
 import { MetricNormalizer } from "../expanded-chart/metrics/MetricNormalizer";
-
-const resolutions: { [range: string]: string } = {
-  "1H": "1s",
-  "6H": "15s",
-  "1D": "15s",
-  "1M": "5h",
-};
-
-const secondsBeforeNow: { [range: string]: number } = {
-  "1H": 60 * 60,
-  "6H": 60 * 60 * 6,
-  "1D": 60 * 60 * 24,
-  "1M": 60 * 60 * 24 * 30,
-};
+import {
+  resolutions,
+  secondsBeforeNow,
+} from "../expanded-chart/metrics/MetricsSection";
 
 const Metrics: React.FC = () => {
   const { currentProject, currentCluster, setCurrentError } = useContext(
@@ -40,11 +30,9 @@ const Metrics: React.FC = () => {
   const [ingressOptions, setIngressOptions] = useState([]);
   const [selectedIngress, setSelectedIngress] = useState(null);
   const [selectedRange, setSelectedRange] = useState("1H");
-  const [selectedMetric, setSelectedMetric] = useState(
-    "nginx:latency-histogram"
-  );
+  const [selectedMetric, setSelectedMetric] = useState("nginx:errors");
   const [selectedMetricLabel, setSelectedMetricLabel] = useState(
-    "Latency Histogram"
+    "5XX Error Percentage (s)"
   );
   const [selectedPercentile, setSelectedPercentile] = useState("0.99");
   const [data, setData] = useState<NormalizedMetricsData[]>([]);
@@ -103,15 +91,15 @@ const Metrics: React.FC = () => {
               ...metricsOptions,
               {
                 value: "nginx:errors",
-                label: "5XX Error Percentage",
+                label: "5XX Error Percentage (s)",
               },
               {
                 value: "nginx:latency",
-                label: "Request Latency",
+                label: "Request Latency (s)",
               },
               {
                 value: "nginx:latency-histogram",
-                label: "Latency Histogram",
+                label: "Percentile Response Times (s)",
               },
             ]);
             setLoading(false);

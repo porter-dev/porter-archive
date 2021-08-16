@@ -25,6 +25,7 @@ import (
 )
 
 var namespace string
+var verbose bool
 
 // runCmd represents the "porter run" base command when called
 // without any subcommands
@@ -59,6 +60,14 @@ func init() {
 		"e",
 		false,
 		"whether to connect to an existing pod",
+	)
+
+	runCmd.PersistentFlags().BoolVarP(
+		&verbose,
+		"verbose",
+		"v",
+		false,
+		"whether to print verbose output",
 	)
 }
 
@@ -326,20 +335,25 @@ func executeRunEphemeral(config *PorterRunSharedConfig, namespace, name, contain
 
 		time.Sleep(2 * time.Second)
 
-		// ugly way to catch no TTY errors, such as when running command "echo \"hello\""
-		if i == 4 && err != nil {
-			color.New(color.FgYellow).Println("Could not open a shell to this container. Container logs:\n")
+	}
 
-			var writtenBytes int64
+	// ugly way to catch no TTY errors, such as when running command "echo \"hello\""
+	if err != nil {
+		color.New(color.FgYellow).Println("Could not open a shell to this container. Container logs:\n")
 
-			writtenBytes, err = pipePodLogsToStdout(config, namespace, podName, container, false)
+		var writtenBytes int64
 
-			if writtenBytes == 0 {
-				color.New(color.FgYellow).Println("Could not get logs. Pod events:\n")
+		writtenBytes, err = pipePodLogsToStdout(config, namespace, podName, container, false)
 
-				err = pipeEventsToStdout(config, namespace, podName, container, false)
-			}
+		if verbose || writtenBytes == 0 {
+			color.New(color.FgYellow).Println("Could not get logs. Pod events:\n")
+
+			err = pipeEventsToStdout(config, namespace, podName, container, false)
 		}
+	} else if verbose {
+		color.New(color.FgYellow).Println("Pod events:\n")
+
+		pipeEventsToStdout(config, namespace, podName, container, false)
 	}
 
 	// delete the ephemeral pod
@@ -370,6 +384,9 @@ func pipePodLogsToStdout(config *PorterRunSharedConfig, namespace, name, contain
 }
 
 func pipeEventsToStdout(config *PorterRunSharedConfig, namespace, name, container string, follow bool) error {
+	// update the config in case the operation has taken longer than token expiry time
+	config.setSharedConfig()
+
 	// creates the clientset
 	resp, err := config.Clientset.CoreV1().Events(namespace).List(
 		context.TODO(),
@@ -428,6 +445,9 @@ func createPodFromExisting(config *PorterRunSharedConfig, existing *v1.Pod, args
 
 	newPod.Status = v1.PodStatus{}
 
+	// only use "primary" container
+	newPod.Spec.Containers = newPod.Spec.Containers[0:1]
+
 	// set restart policy to never
 	newPod.Spec.RestartPolicy = v1.RestartPolicyNever
 
@@ -445,6 +465,11 @@ func createPodFromExisting(config *PorterRunSharedConfig, existing *v1.Pod, args
 	newPod.Spec.Containers[0].Stdin = true
 	newPod.Spec.Containers[0].StdinOnce = true
 	newPod.Spec.NodeName = ""
+
+	// remove health checks and probes
+	newPod.Spec.Containers[0].LivenessProbe = nil
+	newPod.Spec.Containers[0].ReadinessProbe = nil
+	newPod.Spec.Containers[0].StartupProbe = nil
 
 	// create the pod and return it
 	return config.Clientset.CoreV1().Pods(existing.ObjectMeta.Namespace).Create(

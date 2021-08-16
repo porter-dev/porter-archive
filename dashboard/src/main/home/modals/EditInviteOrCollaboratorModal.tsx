@@ -5,7 +5,7 @@ import SaveButton from "components/SaveButton";
 import { Context } from "shared/Context";
 import RadioSelector from "components/RadioSelector";
 import api from "shared/api";
-import { setTimeout } from "timers";
+// import { setTimeout } from "timers";
 
 const EditCollaboratorModal = () => {
   const {

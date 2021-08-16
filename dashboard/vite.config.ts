@@ -1,18 +1,19 @@
 import { defineConfig } from "vite";
 import reactRefresh from "@vitejs/plugin-react-refresh";
+import path from "path";
 
 // https://vitejs.dev/config/
 export default defineConfig({
-  assetsInclude: "./src/assets",
+  assetsInclude: path.resolve(__dirname, "/src/assets"),
   server: {
     port: 8080,
   },
   resolve: {
     alias: {
-      shared: "./src/shared",
-      main: "./src/main",
-      components: "./src/components",
-      assets: "./src/assets",
+      shared: path.resolve(__dirname, "/src/shared"),
+      main: path.resolve(__dirname, "/src/main"),
+      components: path.resolve(__dirname, "/src/components"),
+      assets: path.resolve(__dirname, "/src/assets"),
     },
   },
   plugins: [reactRefresh()],

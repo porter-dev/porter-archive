@@ -33,12 +33,11 @@ func (ca *CreateGitAction) ToGitActionConfig(version string) (*models.GitActionC
 }
 
 type CreateGitActionOptional struct {
-	GitRepo        string            `json:"git_repo"`
-	GitBranch      string            `json:"git_branch"`
-	ImageRepoURI   string            `json:"image_repo_uri"`
-	DockerfilePath string            `json:"dockerfile_path"`
-	FolderPath     string            `json:"folder_path"`
-	GitRepoID      uint              `json:"git_repo_id"`
-	BuildEnv       map[string]string `json:"env"`
-	RegistryID     uint              `json:"registry_id"`
+	GitRepo        string `json:"git_repo"`
+	GitBranch      string `json:"git_branch"`
+	ImageRepoURI   string `json:"image_repo_uri"`
+	DockerfilePath string `json:"dockerfile_path"`
+	FolderPath     string `json:"folder_path"`
+	GitRepoID      uint   `json:"git_repo_id"`
+	RegistryID     uint   `json:"registry_id"`
 }

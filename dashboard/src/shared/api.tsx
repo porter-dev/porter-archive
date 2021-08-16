@@ -113,27 +113,6 @@ const createGCR = baseApi<
   return `/api/projects/${pathParams.project_id}/provision/gcr`;
 });
 
-const createGHAction = baseApi<
-  {
-    git_repo: string;
-    git_branch: string;
-    registry_id: number;
-    image_repo_uri: string;
-    dockerfile_path: string;
-    folder_path: string;
-    git_repo_id: number;
-  },
-  {
-    project_id: number;
-    CLUSTER_ID: number;
-    RELEASE_NAME: string;
-    RELEASE_NAMESPACE: string;
-  }
->("POST", (pathParams) => {
-  let { project_id, CLUSTER_ID, RELEASE_NAME, RELEASE_NAMESPACE } = pathParams;
-  return `/api/projects/${project_id}/ci/actions?cluster_id=${CLUSTER_ID}&name=${RELEASE_NAME}&namespace=${RELEASE_NAMESPACE}`;
-});
-
 const createGKE = baseApi<
   {
     gcp_integration_id: number;
@@ -275,6 +254,7 @@ const deployTemplate = baseApi<
     storage: StorageType;
     namespace: string;
     name: string;
+    githubActionConfig?: any;
   },
   {
     id: number;
@@ -1017,7 +997,6 @@ export default {
   createEmailVerification,
   createGCPIntegration,
   createGCR,
-  createGHAction,
   createGKE,
   createInvite,
   createNamespace,

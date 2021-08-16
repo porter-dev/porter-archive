@@ -200,7 +200,9 @@ func (a *Agent) PushImage(image string) error {
 		opts,
 	)
 
-	defer out.Close()
+	if out != nil {
+		defer out.Close()
+	}
 
 	if err != nil {
 		return err

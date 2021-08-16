@@ -23,6 +23,7 @@ type PropsType = RouteComponentProps & {
 
 type StateType = {
   selectedProvider: string | null;
+  displayCosts: boolean;
   infras: InfraType[];
 };
 
@@ -31,6 +32,7 @@ const providers = ["aws", "gcp", "do"];
 class NewProject extends Component<PropsType, StateType> {
   state = {
     selectedProvider: null as string | null,
+    displayCosts: true,
     infras: [] as InfraType[],
   };
 
@@ -95,6 +97,7 @@ class NewProject extends Component<PropsType, StateType> {
             handleError={this.handleError}
             projectName={projectName}
             infras={infras}
+            displayCosts={this.state.displayCosts}
             setSelectedProvisioner={(x: string | null) => {
               this.setState({ selectedProvider: x });
             }}
@@ -214,11 +217,25 @@ class NewProject extends Component<PropsType, StateType> {
                 <Block
                   key={i}
                   onClick={() => {
-                    this.setState({ selectedProvider: provider });
+                    this.setState({
+                      selectedProvider: provider,
+                      displayCosts: false,
+                    });
                   }}
                 >
                   <Icon src={providerInfo.icon} />
                   <BlockTitle>{providerInfo.label}</BlockTitle>
+                  <p
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      this.setState({
+                        selectedProvider: provider,
+                        displayCosts: true,
+                      });
+                    }}
+                  >
+                    $cost/Month
+                  </p>
                   <BlockDescription>Hosted in your own cloud.</BlockDescription>
                 </Block>
               );

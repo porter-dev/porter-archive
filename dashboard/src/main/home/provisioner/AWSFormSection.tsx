@@ -22,6 +22,7 @@ type PropsType = RouteComponentProps & {
   handleError: () => void;
   projectName: string;
   infras: InfraType[];
+  displayCosts?: boolean;
 };
 
 type StateType = {
@@ -393,6 +394,7 @@ class AWSFormSection extends Component<PropsType, StateType> {
             setActiveValue={(x: string) => this.setState({ awsMachineType: x })}
             label="⚙️ AWS Machine Type"
           />
+          {this.props.displayCosts && <p>Cost Display</p>}
           <InputRow
             type="text"
             value={awsAccessId}

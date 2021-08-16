@@ -571,6 +571,7 @@ const getMetrics = baseApi<
     pods?: string[];
     kind?: string; // the controller kind
     name?: string;
+    percentile?: number;
     namespace: string;
     startrange: number;
     endrange: number;

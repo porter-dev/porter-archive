@@ -46,6 +46,7 @@ const Metrics: React.FC = () => {
   const [selectedMetricLabel, setSelectedMetricLabel] = useState(
     "Latency Histogram"
   );
+  const [selectedPercentile, setSelectedPercentile] = useState("0.99");
   const [data, setData] = useState<NormalizedMetricsData[]>([]);
   const [showMetricsSettings, setShowMetricsSettings] = useState(false);
   const [isLoading, setIsLoading] = useState(0);
@@ -55,7 +56,7 @@ const Metrics: React.FC = () => {
     if (selectedMetric && selectedRange && selectedIngress) {
       getMetrics();
     }
-  }, [selectedMetric, selectedRange, selectedIngress]);
+  }, [selectedMetric, selectedRange, selectedIngress, selectedPercentile]);
 
   useEffect(() => {
     Promise.all([
@@ -142,6 +143,30 @@ const Metrics: React.FC = () => {
               options={ingressOptions}
               width="100%"
             />
+            {selectedMetric == "nginx:latency-histogram" && (
+              <SelectRow
+                label="Percentile"
+                value={selectedPercentile}
+                setActiveValue={(x) => {
+                  setSelectedPercentile(x);
+                }}
+                options={[
+                  {
+                    label: "99",
+                    value: "0.99",
+                  },
+                  {
+                    label: "95",
+                    value: "0.95",
+                  },
+                  {
+                    label: "50",
+                    value: "0.5",
+                  },
+                ]}
+                width="100%"
+              />
+            )}
           </DropdownAlt>
         </>
       );
@@ -210,6 +235,10 @@ const Metrics: React.FC = () => {
           shouldsum: false,
           kind: "Ingress",
           namespace: selectedIngress?.namespace || "default",
+          percentile:
+            selectedMetric == "nginx:latency-histogram"
+              ? parseFloat(selectedPercentile)
+              : undefined,
           startrange: start,
           endrange: end,
           resolution: resolutions[selectedRange],
@@ -248,7 +277,7 @@ const Metrics: React.FC = () => {
     </p>
   ) : (
     <StyledMetricsSection>
-      <MetricsHeader>
+      <Header>
         <Flex>
           <MetricSelector
             onClick={() => setDropdownExpanded(!dropdownExpanded)}
@@ -281,7 +310,7 @@ const Metrics: React.FC = () => {
             setCurrentTab={(x: string) => setSelectedRange(x)}
           />
         </RangeWrapper>
-      </MetricsHeader>
+      </Header>
       {isLoading > 0 && <Loading />}
       {data.length === 0 && isLoading === 0 && (
         <Message>
@@ -512,4 +541,11 @@ const StyledMetricsSection = styled.div`
       transform: translateY(0px);
     }
   }
+`;
+
+const Header = styled.div`
+  font-weight: 500;
+  color: #aaaabb;
+  font-size: 16px;
+  margin-bottom: 15px;
 `;

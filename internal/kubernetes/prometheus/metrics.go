@@ -86,6 +86,7 @@ type QueryOpts struct {
 	StartRange uint     `schema:"startrange"`
 	EndRange   uint     `schema:"endrange"`
 	Resolution string   `schema:"resolution"`
+	Percentile float64  `schema:"percentile"`
 }
 
 func QueryPrometheus(
@@ -129,7 +130,7 @@ func QueryPrometheus(
 		denom := fmt.Sprintf(`sum(rate(nginx_ingress_controller_request_duration_seconds_count{namespace=~"%s",ingress=~"%s"}[5m]))`, opts.Namespace, selectionRegex)
 		query = fmt.Sprintf(`%s / %s OR on() vector(0)`, num, denom)
 	} else if opts.Metric == "nginx:latency-histogram" {
-		query = fmt.Sprintf(`histogram_quantile(0.99, sum(rate(nginx_ingress_controller_request_duration_seconds_bucket{status!="404",status!="500",namespace=~"%s",ingress=~"%s"}[5m])) by (le, ingress))`, opts.Namespace, selectionRegex)
+		query = fmt.Sprintf(`histogram_quantile(%f, sum(rate(nginx_ingress_controller_request_duration_seconds_bucket{status!="404",status!="500",namespace=~"%s",ingress=~"%s"}[5m])) by (le, ingress))`, opts.Percentile, opts.Namespace, selectionRegex)
 	} else if opts.Metric == "cpu_hpa_threshold" {
 		// get the name of the kube hpa metric
 		metricName, hpaMetricName := getKubeHPAMetricName(clientset, service, opts, "spec_target_metric")

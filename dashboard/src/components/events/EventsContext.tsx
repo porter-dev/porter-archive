@@ -128,15 +128,15 @@ const EventsContextProvider: React.FC<Props> = ({
 
   const checkIfPorterAgentIsInstalled = async () => {
     try {
-      await api.getPorterAgentIsInstalled(
-        "<token>",
-        {
-          cluster_id: currentCluster.id,
-        },
-        {
-          project_id: currentProject.id,
-        }
-      );
+      // await api.getPorterAgentIsInstalled(
+      //   "<token>",
+      //   {
+      //     cluster_id: currentCluster.id,
+      //   },
+      //   {
+      //     project_id: currentProject.id,
+      //   }
+      // );
       setIsPorterAgentInstalled(true);
     } catch (error) {
       setIsPorterAgentInstalled(false);

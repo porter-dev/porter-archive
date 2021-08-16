@@ -10,8 +10,9 @@ import NodeList from "./NodeList";
 import { NamespaceList } from "./NamespaceList";
 import ClusterSettings from "./ClusterSettings";
 import useAuth from "shared/auth/useAuth";
+import ClusterEventsTab from "./EventsTab";
 
-type TabEnum = "nodes" | "settings" | "namespaces";
+type TabEnum = "nodes" | "settings" | "namespaces" | "events";
 
 const tabOptions: {
   label: string;
@@ -20,6 +21,7 @@ const tabOptions: {
   { label: "Nodes", value: "nodes" },
   { label: "Namespaces", value: "namespaces" },
   { label: "Settings", value: "settings" },
+  { label: "Events", value: "events" },
 ];
 
 export const Dashboard: React.FunctionComponent = () => {
@@ -34,6 +36,8 @@ export const Dashboard: React.FunctionComponent = () => {
         return <ClusterSettings />;
       case "namespaces":
         return <NamespaceList />;
+      case "events":
+        return <ClusterEventsTab />;
       case "nodes":
       default:
         return <NodeList />;

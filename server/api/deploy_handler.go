@@ -167,7 +167,6 @@ func (app *App) HandleDeployTemplate(w http.ResponseWriter, r *http.Request) {
 			ImageRepoURI:   form.GithubActionConfig.ImageRepoURI,
 			DockerfilePath: form.GithubActionConfig.DockerfilePath,
 			GitRepoID:      form.GithubActionConfig.GitRepoID,
-			BuildEnv:       form.GithubActionConfig.BuildEnv,
 			RegistryID:     form.GithubActionConfig.RegistryID,
 		}
 
@@ -381,7 +380,6 @@ func (app *App) HandleUninstallTemplate(w http.ResponseWriter, r *http.Request) 
 					GitRepoOwner:           repoSplit[0],
 					Repo:                   *app.Repo,
 					GithubConf:             app.GithubProjectConf,
-					WebhookToken:           release.WebhookToken,
 					ProjectID:              uint(projID),
 					ReleaseName:            name,
 					GitBranch:              gitAction.GitBranch,

@@ -75,6 +75,8 @@ type GitActionConfig struct {
 
 	// Determines on how authentication is performed on this action
 	IsInstallation bool `json:"is_installation"`
+
+	Version string `json:"version" gorm:"default:v0.0.1"`
 }
 
 // GitActionConfigExternal is an external GitActionConfig to be shared over REST

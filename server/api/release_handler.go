@@ -40,6 +40,10 @@ const (
 	ErrReleaseDeploy
 )
 
+var (
+	createEnvSecretConstraint, _ = semver.NewConstraint(" < 0.1.0")
+)
+
 // HandleListReleases retrieves a list of releases for a cluster
 // with various filter options
 func (app *App) HandleListReleases(w http.ResponseWriter, r *http.Request) {
@@ -1117,7 +1121,6 @@ func (app *App) HandleUpgradeRelease(w http.ResponseWriter, r *http.Request) {
 					GitRepoOwner:           repoSplit[0],
 					Repo:                   *app.Repo,
 					GithubConf:             app.GithubProjectConf,
-					WebhookToken:           release.WebhookToken,
 					ProjectID:              uint(projID),
 					ReleaseName:            name,
 					GitBranch:              gitAction.GitBranch,
@@ -1126,15 +1129,21 @@ func (app *App) HandleUpgradeRelease(w http.ResponseWriter, r *http.Request) {
 					ImageRepoURL:           gitAction.ImageRepoURI,
 					BuildEnv:               cEnv.Container.Env.Normal,
 					ClusterID:              release.ClusterID,
+					Version:                gitAction.Version,
 				}
 
-				err = gaRunner.CreateEnvSecret()
-
+				actionVersion, err := semver.NewVersion(gaRunner.Version)
 				if err != nil {
-					app.sendExternalError(err, http.StatusInternalServerError, HTTPError{
-						Code:   ErrReleaseReadData,
-						Errors: []string{"could not update github secret"},
-					}, w)
+					app.handleErrorInternal(err, w)
+				}
+
+				if createEnvSecretConstraint.Check(actionVersion) {
+					if err := gaRunner.CreateEnvSecret(); err != nil {
+						app.sendExternalError(err, http.StatusInternalServerError, HTTPError{
+							Code:   ErrReleaseReadData,
+							Errors: []string{"could not update github secret"},
+						}, w)
+					}
 				}
 			}
 		}
@@ -1536,7 +1545,6 @@ func (app *App) HandleRollbackRelease(w http.ResponseWriter, r *http.Request) {
 					GitRepoOwner:           repoSplit[0],
 					Repo:                   *app.Repo,
 					GithubConf:             app.GithubProjectConf,
-					WebhookToken:           release.WebhookToken,
 					ProjectID:              uint(projID),
 					ReleaseName:            name,
 					GitBranch:              gitAction.GitBranch,
@@ -1545,15 +1553,21 @@ func (app *App) HandleRollbackRelease(w http.ResponseWriter, r *http.Request) {
 					ImageRepoURL:           gitAction.ImageRepoURI,
 					BuildEnv:               cEnv.Container.Env.Normal,
 					ClusterID:              release.ClusterID,
+					Version:                gitAction.Version,
 				}
 
-				err = gaRunner.CreateEnvSecret()
-
+				actionVersion, err := semver.NewVersion(gaRunner.Version)
 				if err != nil {
-					app.sendExternalError(err, http.StatusInternalServerError, HTTPError{
-						Code:   ErrReleaseReadData,
-						Errors: []string{"could not update github secret"},
-					}, w)
+					app.handleErrorInternal(err, w)
+				}
+
+				if createEnvSecretConstraint.Check(actionVersion) {
+					if err := gaRunner.CreateEnvSecret(); err != nil {
+						app.sendExternalError(err, http.StatusInternalServerError, HTTPError{
+							Code:   ErrReleaseReadData,
+							Errors: []string{"could not update github secret"},
+						}, w)
+					}
 				}
 			}
 		}

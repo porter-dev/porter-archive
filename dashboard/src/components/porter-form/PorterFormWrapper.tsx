@@ -19,6 +19,7 @@ type PropsType = {
   saveValuesStatus?: string;
   showStateDebugger?: boolean;
   isLaunch?: boolean;
+  includeHiddenFields?: boolean;
 };
 
 const PorterFormWrapper: React.FunctionComponent<PropsType> = ({
@@ -36,6 +37,7 @@ const PorterFormWrapper: React.FunctionComponent<PropsType> = ({
   saveValuesStatus,
   showStateDebugger,
   isLaunch,
+  includeHiddenFields,
 }) => {
   const hashCode = (s: string) => {
     return s?.split("").reduce(function (a, b) {
@@ -72,6 +74,7 @@ const PorterFormWrapper: React.FunctionComponent<PropsType> = ({
         overrideVariables={valuesToOverride}
         isReadOnly={isReadOnly}
         onSubmit={onSubmit}
+        includeHiddenFields={includeHiddenFields}
       >
         <PorterForm
           showStateDebugger={showStateDebugger}

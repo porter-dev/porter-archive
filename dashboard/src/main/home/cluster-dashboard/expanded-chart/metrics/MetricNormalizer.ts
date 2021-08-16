@@ -39,7 +39,7 @@ export class MetricNormalizer {
     if (this.kind.includes("nginx:errors")) {
       return this.parseNGINXErrorsMetrics(this.metric_results);
     }
-    if (this.kind.includes("nginx:latency")) {
+    if (this.kind.includes("nginx:latency") || this.kind.includes("nginx:latency-histogram")) {
       return this.parseNGINXLatencyMetrics(this.metric_results);
     }
     if (this.kind.includes("hpa_replicas")) {

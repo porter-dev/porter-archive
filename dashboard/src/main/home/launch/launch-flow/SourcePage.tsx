@@ -28,7 +28,7 @@ type PropsType = RouteComponentProps & {
   setImageTag: (x: string) => void;
 
   actionConfig: ActionConfigType;
-  setActionConfig: (x: ActionConfigType) => void;
+  setActionConfig: React.Dispatch<React.SetStateAction<ActionConfigType>>;
   procfileProcess: string;
   setProcfileProcess: (x: string) => void;
   branch: string;
@@ -162,7 +162,10 @@ class SourcePage extends Component<PropsType, StateType> {
           actionConfig={actionConfig}
           branch={branch}
           setActionConfig={(actionConfig: ActionConfigType) => {
-            setActionConfig(actionConfig);
+            setActionConfig((currentActionConfig: ActionConfigType) => ({
+              ...currentActionConfig,
+              ...actionConfig,
+            }));
             setImageUrl(actionConfig.image_repo_uri);
             /*
             setParentState({ actionConfig }, () =>
@@ -173,10 +176,11 @@ class SourcePage extends Component<PropsType, StateType> {
           procfileProcess={procfileProcess}
           setProcfileProcess={(procfileProcess: string) => {
             setProcfileProcess(procfileProcess);
-            setValuesToOverride({
+            setValuesToOverride((v: any) => ({
+              ...v,
               "container.command": procfileProcess || "",
               showStartCommand: !procfileProcess,
-            });
+            }));
           }}
           setBranch={setBranch}
           setDockerfilePath={setDockerfilePath}

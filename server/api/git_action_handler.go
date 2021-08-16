@@ -16,6 +16,10 @@ import (
 	"github.com/porter-dev/porter/internal/registry"
 )
 
+const (
+	updateAppActionVersion = "v0.1.0"
+)
+
 // HandleCreateGitAction creates a new Github action in a repository for a given
 // release
 func (app *App) HandleCreateGitAction(w http.ResponseWriter, r *http.Request) {
@@ -108,7 +112,7 @@ func (app *App) createGitActionFromForm(
 	}
 
 	// convert the form to a git action config
-	gitAction, err := form.ToGitActionConfig()
+	gitAction, err := form.ToGitActionConfig(updateAppActionVersion)
 
 	if err != nil {
 		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
@@ -159,12 +163,12 @@ func (app *App) createGitActionFromForm(
 		ServerURL:              app.ServerConf.ServerURL,
 		GithubOAuthIntegration: nil,
 		GithubAppID:            app.GithubAppConf.AppID,
+		GithubAppSecretPath:    app.GithubAppConf.SecretPath,
 		GithubInstallationID:   form.GitRepoID,
 		GitRepoName:            repoSplit[1],
 		GitRepoOwner:           repoSplit[0],
 		Repo:                   *app.Repo,
 		GithubConf:             app.GithubProjectConf,
-		WebhookToken:           release.WebhookToken,
 		ProjectID:              uint(projID),
 		ReleaseName:            name,
 		GitBranch:              gitAction.GitBranch,
@@ -172,8 +176,8 @@ func (app *App) createGitActionFromForm(
 		FolderPath:             gitAction.FolderPath,
 		ImageRepoURL:           gitAction.ImageRepoURI,
 		PorterToken:            encoded,
-		BuildEnv:               form.BuildEnv,
 		ClusterID:              release.ClusterID,
+		Version:                gitAction.Version,
 	}
 
 	_, err = gaRunner.Setup()

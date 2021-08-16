@@ -2,7 +2,6 @@ import React from "react";
 import InputRow from "../../form-components/InputRow";
 import useFormField from "../hooks/useFormField";
 import {
-  GenericInputField,
   GetFinalVariablesFunction,
   InputField,
   StringInputFieldState,
@@ -49,8 +48,6 @@ const Input: React.FC<InputField> = ({
   if (state == undefined) {
     return <></>;
   }
-
-  console.log(value);
 
   const curValue =
     settings?.type == "number"

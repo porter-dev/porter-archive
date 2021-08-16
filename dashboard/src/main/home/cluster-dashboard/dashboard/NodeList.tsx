@@ -1,7 +1,7 @@
 import React, { useContext, useEffect, useMemo, useState } from "react";
 
 import Table from "components/Table";
-import { Column, Row } from "react-table";
+import { Column } from "react-table";
 import styled from "styled-components";
 import api from "shared/api";
 import { Context } from "shared/Context";

@@ -1,7 +1,7 @@
 import React, { Component } from "react";
 import styled from "styled-components";
 import { Context } from "shared/Context";
-import { hardcodedNames, hardcodedIcons } from "shared/hardcodedNameDict";
+import { hardcodedIcons, hardcodedNames } from "shared/hardcodedNameDict";
 
 type PropsType = {
   service: {

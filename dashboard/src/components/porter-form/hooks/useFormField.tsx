@@ -1,10 +1,6 @@
 import { useContext, useEffect } from "react";
 import { PorterFormContext } from "../PorterFormContextProvider";
-import {
-  PorterFormFieldFieldState,
-  PorterFormFieldValidationState,
-  PorterFormVariableList,
-} from "../types";
+import { PorterFormFieldFieldState, PorterFormFieldValidationState, PorterFormVariableList } from "../types";
 
 interface FormFieldData<T> {
   state: T;

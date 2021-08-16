@@ -312,7 +312,7 @@ func (conf *OutOfClusterConfig) CreateRawConfigFromCluster() (*api.Config, error
 		}
 
 		// add this as a bearer token
-		authInfoMap[authInfoName].Token = tok
+		authInfoMap[authInfoName].Token = tok.AccessToken
 	case models.AWS:
 		awsAuth, err := conf.Repo.AWSIntegration.ReadAWSIntegration(
 			cluster.AWSIntegrationID,

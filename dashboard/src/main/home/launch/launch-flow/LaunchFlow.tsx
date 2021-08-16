@@ -13,13 +13,7 @@ import SourcePage from "./SourcePage";
 import SettingsPage from "./SettingsPage";
 import TitleSection from "components/TitleSection";
 
-import {
-  PorterTemplate,
-  ActionConfigType,
-  ChoiceType,
-  ClusterType,
-  StorageType,
-} from "shared/types";
+import { ActionConfigType, PorterTemplate, StorageType } from "shared/types";
 
 type PropsType = RouteComponentProps & {
   currentTab?: string;
@@ -79,7 +73,7 @@ class LaunchFlow extends Component<PropsType, StateType> {
     selectedRegistry: null as any,
   };
 
-  createGHAction = (chartName: string, chartNamespace: string, env?: any) => {
+  createGHAction = (chartName: string, chartNamespace: string) => {
     let { currentProject, currentCluster, setCurrentError } = this.context;
     let {
       actionConfig,
@@ -106,7 +100,6 @@ class LaunchFlow extends Component<PropsType, StateType> {
           folder_path: folderPath,
           image_repo_uri: imageRepoUri,
           git_repo_id: actionConfig.git_repo_id,
-          env: env,
         },
         {
           project_id: currentProject.id,
@@ -320,8 +313,7 @@ class LaunchFlow extends Component<PropsType, StateType> {
       )
       .then((res: any) => {
         if (sourceType === "repo") {
-          let env = rawValues["container.env.normal"];
-          this.createGHAction(name, selectedNamespace, env);
+          this.createGHAction(name, selectedNamespace);
         }
         // this.props.setCurrentView('cluster-dashboard');
         this.setState({ saveValuesStatus: "successful" }, () => {

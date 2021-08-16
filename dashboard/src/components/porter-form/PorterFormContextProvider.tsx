@@ -1,11 +1,11 @@
 import React, { createContext, useContext, useReducer } from "react";
 import {
+  GetFinalVariablesFunction,
+  PorterFormAction,
   PorterFormData,
   PorterFormState,
-  PorterFormAction,
-  PorterFormVariableList,
   PorterFormValidationInfo,
-  GetFinalVariablesFunction,
+  PorterFormVariableList,
 } from "./types";
 import { ShowIf, ShowIfAnd, ShowIfNot, ShowIfOr } from "../../shared/types";
 import { getFinalVariablesForStringInput } from "./field-components/Input";
@@ -20,6 +20,7 @@ interface Props {
   onSubmit: (vars: PorterFormVariableList) => void;
   initialVariables?: PorterFormVariableList;
   overrideVariables?: PorterFormVariableList;
+  includeHiddenFields?: boolean;
   isReadOnly?: boolean;
   doDebug?: boolean;
 }
@@ -30,6 +31,7 @@ interface ContextProps {
   onSubmit: () => void;
   dispatchAction: (event: PorterFormAction) => void;
   validationInfo: PorterFormValidationInfo;
+  getSubmitValues: () => PorterFormVariableList;
   isReadOnly?: boolean;
 }
 
@@ -131,7 +133,17 @@ export const PorterFormContextProvider: React.FC<Props> = (props) => {
         })
       )
     );
-    return ret;
+    return {
+      ...ret,
+      ...{
+        "currentCluster.service.is_gcp":
+          context.currentCluster?.service == "gke",
+        "currentCluster.service.is_aws":
+          context.currentCluster?.service == "eks",
+        "currentCluster.service.is_do":
+          context.currentCluster?.service == "doks",
+      },
+    };
   };
 
   const getInitialValidation = (data: PorterFormData) => {
@@ -376,7 +388,7 @@ export const PorterFormContextProvider: React.FC<Props> = (props) => {
   using functions for each input to finalize the variables
   This can take care of things like appending units to strings
  */
-  const onSubmitWrapper = () => {
+  const getSubmitValues = () => {
     // we start off with a base list of the current variables for fields
     // that don't need any processing on top (for example: checkbox)
     // the assign here is important because that way state.variable isn't mutated
@@ -391,7 +403,9 @@ export const PorterFormContextProvider: React.FC<Props> = (props) => {
       select: getFinalVariablesForSelect,
     };
 
-    const data = props.rawFormData.includeHiddenFields
+    const data = props.includeHiddenFields
+      ? restructureToNewFields(props.rawFormData)
+      : props.rawFormData.includeHiddenFields
       ? restructureToNewFields(props.rawFormData)
       : formData;
 
@@ -411,7 +425,12 @@ export const PorterFormContextProvider: React.FC<Props> = (props) => {
       )
     );
     if (props.doDebug) console.log(Object.assign.apply({}, varList));
-    props.onSubmit(Object.assign.apply({}, varList));
+
+    return Object.assign.apply({}, varList);
+  };
+
+  const onSubmitWrapper = () => {
+    props.onSubmit(getSubmitValues());
   };
 
   if (props.doDebug) {
@@ -434,6 +453,7 @@ export const PorterFormContextProvider: React.FC<Props> = (props) => {
           error: isValidated ? null : "Missing required fields",
         },
         onSubmit: onSubmitWrapper,
+        getSubmitValues,
       }}
     >
       {props.children}

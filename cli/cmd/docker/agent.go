@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
 	"os"
 	"strings"
 	"time"
@@ -188,45 +187,28 @@ func (a *Agent) PullImage(image string) error {
 }
 
 // PushImage pushes an image specified by the image string
-func (a *Agent) PushImage(image string, retryCount int) error {
-	var err error
-
+func (a *Agent) PushImage(image string) error {
 	opts, err := a.getPushOptions(image)
 
 	if err != nil {
 		return err
 	}
 
-	var out io.ReadCloser
+	out, err := a.client.ImagePush(
+		context.Background(),
+		image,
+		opts,
+	)
 
-	for i := 0; i < retryCount; i++ {
-		out, err = a.client.ImagePush(
-			context.Background(),
-			image,
-			opts,
-		)
+	defer out.Close()
 
-		// an error in this case is fatal, since it likely means the docker daemon is
-		// not running
-		if err != nil {
-			return err
-		}
-
-		defer out.Close()
-
-		termFd, isTerm := term.GetFdInfo(os.Stderr)
-
-		err = jsonmessage.DisplayJSONMessagesStream(out, os.Stderr, termFd, isTerm, nil)
-
-		if err != nil {
-			time.Sleep(1 * time.Second)
-			continue
-		} else {
-			break
-		}
+	if err != nil {
+		return err
 	}
 
-	return err
+	termFd, isTerm := term.GetFdInfo(os.Stderr)
+
+	return jsonmessage.DisplayJSONMessagesStream(out, os.Stderr, termFd, isTerm, nil)
 }
 
 func (a *Agent) getPullOptions(image string) (types.ImagePullOptions, error) {

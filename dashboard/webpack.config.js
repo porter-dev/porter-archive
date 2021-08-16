@@ -54,6 +54,7 @@ module.exports = () => {
       publicPath: "/",
     },
     devServer: {
+      port: env["PORT"],
       historyApiFallback: true,
       disableHostCheck: true,
     },

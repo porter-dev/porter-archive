@@ -25,7 +25,7 @@ const tabOptions: {
 ];
 
 export const Dashboard: React.FunctionComponent = () => {
-  const [currentTab, setCurrentTab] = useState<TabEnum>("metrics");
+  const [currentTab, setCurrentTab] = useState<TabEnum>("nodes");
   const [currentTabOptions, setCurrentTabOptions] = useState(tabOptions);
   const [isAuthorized] = useAuth();
 

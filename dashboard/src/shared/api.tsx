@@ -1036,7 +1036,7 @@ const getEvents = baseApi<
 >(
   "GET",
   (pathParams) =>
-    `api/projects/${pathParams.project_id}/clusters/${pathParams.cluster_id}/events`
+    `/api/projects/${pathParams.project_id}/clusters/${pathParams.cluster_id}/events`
 );
 
 const getEventById = baseApi<

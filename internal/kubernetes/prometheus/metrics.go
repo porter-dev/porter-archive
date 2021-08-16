@@ -128,6 +128,8 @@ func QueryPrometheus(
 		num := fmt.Sprintf(`sum(rate(nginx_ingress_controller_request_duration_seconds_sum{namespace=~"%s",ingress=~"%s"}[5m]) OR on() vector(0))`, opts.Namespace, selectionRegex)
 		denom := fmt.Sprintf(`sum(rate(nginx_ingress_controller_request_duration_seconds_count{namespace=~"%s",ingress=~"%s"}[5m]))`, opts.Namespace, selectionRegex)
 		query = fmt.Sprintf(`%s / %s OR on() vector(0)`, num, denom)
+	} else if opts.Metric == "nginx:latency-histogram" {
+		query = fmt.Sprintf(`histogram_quantile(0.99, sum(rate(nginx_ingress_controller_request_duration_seconds_bucket{status!="404",status!="500",namespace=~"%s",ingress=~"%s"}[5m])) by (le, ingress))`, opts.Namespace, selectionRegex)
 	} else if opts.Metric == "cpu_hpa_threshold" {
 		// get the name of the kube hpa metric
 		metricName, hpaMetricName := getKubeHPAMetricName(clientset, service, opts, "spec_target_metric")
@@ -253,7 +255,7 @@ func parseQuery(rawQuery []byte, metric string) ([]byte, error) {
 				singletonResult.Memory = values[1]
 			} else if metric == "hpa_replicas" {
 				singletonResult.Replicas = values[1]
-			} else if metric == "nginx:latency" {
+			} else if metric == "nginx:latency" || metric == "nginx:latency-histogram" {
 				singletonResult.Latency = values[1]
 			}
 

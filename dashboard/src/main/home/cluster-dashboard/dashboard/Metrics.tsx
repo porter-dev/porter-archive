@@ -40,9 +40,11 @@ const Metrics: React.FC = () => {
   const [ingressOptions, setIngressOptions] = useState([]);
   const [selectedIngress, setSelectedIngress] = useState(null);
   const [selectedRange, setSelectedRange] = useState("1H");
-  const [selectedMetric, setSelectedMetric] = useState("nginx:errors");
+  const [selectedMetric, setSelectedMetric] = useState(
+    "nginx:latency-histogram"
+  );
   const [selectedMetricLabel, setSelectedMetricLabel] = useState(
-    "5XX Error Percentage "
+    "Latency Histogram"
   );
   const [data, setData] = useState<NormalizedMetricsData[]>([]);
   const [showMetricsSettings, setShowMetricsSettings] = useState(false);
@@ -106,6 +108,10 @@ const Metrics: React.FC = () => {
                 value: "nginx:latency",
                 label: "Request Latency",
               },
+              {
+                value: "nginx:latency-histogram",
+                label: "Latency Histogram",
+              },
             ]);
             setLoading(false);
           })
@@ -124,26 +130,21 @@ const Metrics: React.FC = () => {
 
   const renderMetricsSettings = () => {
     if (showMetricsSettings) {
-      if (
-        selectedMetric == "nginx:errors" ||
-        selectedMetric == "nginx:latency"
-      ) {
-        return (
-          <>
-            <DropdownOverlay onClick={() => setShowMetricsSettings(false)} />
-            <DropdownAlt dropdownWidth="330px" dropdownMaxHeight="300px">
-              <Label>Additional Settings</Label>
-              <SelectRow
-                label="Target Ingress"
-                value={selectedIngress}
-                setActiveValue={(x: any) => setSelectedIngress(x)}
-                options={ingressOptions}
-                width="100%"
-              />
-            </DropdownAlt>
-          </>
-        );
-      }
+      return (
+        <>
+          <DropdownOverlay onClick={() => setShowMetricsSettings(false)} />
+          <DropdownAlt dropdownWidth="330px" dropdownMaxHeight="300px">
+            <Label>Additional Settings</Label>
+            <SelectRow
+              label="Target Ingress"
+              value={selectedIngress}
+              setActiveValue={(x: any) => setSelectedIngress(x)}
+              options={ingressOptions}
+              width="100%"
+            />
+          </DropdownAlt>
+        </>
+      );
     }
   };
 

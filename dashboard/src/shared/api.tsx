@@ -1014,12 +1014,10 @@ const getPorterAgentIsInstalled = baseApi<
 });
 
 const installPorterAgent = baseApi<
-  {
-    cluster_id: number;
-  },
-  { project_id: number }
+  {},
+  { project_id: number, cluster_id: number }
 >("POST", (pathParams) => {
-  return `/api/projects/${pathParams.project_id}/agent/deploy`;
+  return `/api/projects/${pathParams.project_id}/agent/deploy?cluster_id=${pathParams.cluster_id}`;
 });
 
 const getEvents = baseApi<

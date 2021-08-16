@@ -10,14 +10,16 @@ import NodeList from "./NodeList";
 import { NamespaceList } from "./NamespaceList";
 import ClusterSettings from "./ClusterSettings";
 import useAuth from "shared/auth/useAuth";
+import Metrics from "./Metrics";
 
-type TabEnum = "nodes" | "settings" | "namespaces";
+type TabEnum = "nodes" | "settings" | "namespaces" | "metrics";
 
 const tabOptions: {
   label: string;
   value: TabEnum;
 }[] = [
   { label: "Nodes", value: "nodes" },
+  { label: "Metrics", value: "metrics" },
   { label: "Namespaces", value: "namespaces" },
   { label: "Settings", value: "settings" },
 ];
@@ -32,6 +34,8 @@ export const Dashboard: React.FunctionComponent = () => {
     switch (currentTab) {
       case "settings":
         return <ClusterSettings />;
+      case "metrics":
+        return <Metrics />;
       case "namespaces":
         return <NamespaceList />;
       case "nodes":

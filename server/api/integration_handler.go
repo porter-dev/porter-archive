@@ -7,18 +7,19 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"github.com/go-chi/chi"
-	"github.com/google/go-github/github"
-	"github.com/porter-dev/porter/internal/forms"
-	"github.com/porter-dev/porter/internal/oauth"
-	"golang.org/x/oauth2"
-	"gorm.io/gorm"
 	"io/ioutil"
 	"net/http"
 	"net/url"
 	"sort"
 	"strconv"
 	"strings"
+
+	"github.com/go-chi/chi"
+	"github.com/google/go-github/github"
+	"github.com/porter-dev/porter/internal/forms"
+	"github.com/porter-dev/porter/internal/oauth"
+	"golang.org/x/oauth2"
+	"gorm.io/gorm"
 
 	"github.com/porter-dev/porter/internal/models/integrations"
 	ints "github.com/porter-dev/porter/internal/models/integrations"
@@ -583,7 +584,7 @@ func (app *App) getGithubAppOauthTokenFromRequest(r *http.Request) (*oauth2.Toke
 	oauthInt, err := app.Repo.GithubAppOAuthIntegration.ReadGithubAppOauthIntegration(user.GithubAppIntegrationID)
 
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Could not get GH app integration for user %d: %s", user.ID, err.Error())
 	}
 
 	_, _, err = oauth.GetAccessToken(oauthInt.SharedOAuthModel,

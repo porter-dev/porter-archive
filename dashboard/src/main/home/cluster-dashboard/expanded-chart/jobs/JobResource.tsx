@@ -1,4 +1,4 @@
-import React, { MouseEvent, Component } from "react";
+import React, { Component, MouseEvent } from "react";
 import styled from "styled-components";
 import { Context } from "shared/Context";
 import _ from "lodash";
@@ -7,7 +7,6 @@ import api from "shared/api";
 import Logs from "../status/Logs";
 import plus from "assets/plus.svg";
 import closeRounded from "assets/close-rounded.png";
-import trash from "assets/trash.png";
 import KeyValueArray from "components/form-components/KeyValueArray";
 
 type PropsType = {

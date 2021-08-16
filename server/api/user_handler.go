@@ -838,12 +838,6 @@ func (app *App) sendUser(w http.ResponseWriter, userID uint, email string, email
 }
 
 func (app *App) getUserIDFromRequest(r *http.Request) (uint, error) {
-	session, err := app.Store.Get(r, app.ServerConf.CookieName)
-
-	if err != nil {
-		return 0, err
-	}
-
 	// first, check for token
 	tok := app.getTokenFromRequest(r)
 
@@ -851,7 +845,23 @@ func (app *App) getUserIDFromRequest(r *http.Request) (uint, error) {
 		return tok.IBy, nil
 	}
 
-	userID, _ := session.Values["user_id"].(uint)
+	session, err := app.Store.Get(r, app.ServerConf.CookieName)
+
+	if err != nil {
+		return 0, fmt.Errorf("could not get session: %s", err.Error())
+	}
+
+	sessID, ok := session.Values["user_id"]
+
+	if !ok {
+		return 0, fmt.Errorf("could not get user id from session")
+	}
+
+	userID, ok := sessID.(uint)
+
+	if !ok {
+		return 0, fmt.Errorf("could not get user id from session")
+	}
 
 	return userID, nil
 }

@@ -4,14 +4,15 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/porter-dev/porter/internal/models"
-	"golang.org/x/oauth2"
 	"net/http"
 	"net/url"
 	"regexp"
 	"strconv"
 	"strings"
 	"sync"
+
+	"github.com/porter-dev/porter/internal/models"
+	"golang.org/x/oauth2"
 
 	"github.com/bradleyfalzon/ghinstallation"
 	"github.com/go-chi/chi"
@@ -20,10 +21,13 @@ import (
 
 // HandleListProjectGitRepos returns a list of git repos for a project
 func (app *App) HandleListProjectGitRepos(w http.ResponseWriter, r *http.Request) {
-
 	tok, err := app.getGithubAppOauthTokenFromRequest(r)
 
 	if err != nil {
+		app.Logger.Warn().Err(err).
+			Str("info", "github app oauth token error").
+			Msg("")
+
 		json.NewEncoder(w).Encode(make([]*models.GitRepoExternal, 0))
 		return
 	}
@@ -35,6 +39,7 @@ func (app *App) HandleListProjectGitRepos(w http.ResponseWriter, r *http.Request
 	AuthUser, _, err := client.Users.Get(context.Background(), "")
 
 	if err != nil {
+
 		app.handleErrorInternal(err, w)
 		return
 	}
@@ -501,7 +506,7 @@ func (app *App) githubAppClientFromRequest(r *http.Request) (*github.Client, err
 		http.DefaultTransport,
 		app.GithubAppConf.AppID,
 		int64(installationID),
-		"/porter/docker/github_app_private_key.pem")
+		app.GithubAppConf.SecretPath)
 
 	if err != nil {
 		return nil, err

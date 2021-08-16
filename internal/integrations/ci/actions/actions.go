@@ -29,14 +29,14 @@ type GithubActions struct {
 
 	GithubConf           *oauth2.Config // one of these will let us authenticate
 	GithubAppID          int64
+	GithubAppSecretPath  string
 	GithubInstallationID uint
 
-	WebhookToken string
-	PorterToken  string
-	BuildEnv     map[string]string
-	ProjectID    uint
-	ClusterID    uint
-	ReleaseName  string
+	PorterToken string
+	BuildEnv    map[string]string
+	ProjectID   uint
+	ClusterID   uint
+	ReleaseName string
 
 	GitBranch      string
 	DockerFilePath string
@@ -44,6 +44,7 @@ type GithubActions struct {
 	ImageRepoURL   string
 
 	defaultBranch string
+	Version       string
 }
 
 func (g *GithubActions) Setup() (string, error) {
@@ -66,24 +67,8 @@ func (g *GithubActions) Setup() (string, error) {
 
 	g.defaultBranch = repo.GetDefaultBranch()
 
-	// create a new secret with a webhook token
-	err = g.createGithubSecret(client, g.getWebhookSecretName(), g.WebhookToken)
-
-	if err != nil {
-		return "", err
-	}
-
-	// create new secrets porter token, project id, and cluster id
-	err = g.createGithubSecret(client, g.getPorterTokenSecretName(), g.PorterToken)
-
-	if err != nil {
-		return "", err
-	}
-
-	// create a new secret with the build variables
-	err = g.createEnvSecret(client)
-
-	if err != nil {
+	// create porter token secret
+	if err := g.createGithubSecret(client, g.getPorterTokenSecretName(), g.PorterToken); err != nil {
 		return "", err
 	}
 
@@ -139,6 +124,7 @@ type GithubActionYAMLStep struct {
 	Timeout uint64            `yaml:"timeout-minutes,omitempty"`
 	Uses    string            `yaml:"uses,omitempty"`
 	Run     string            `yaml:"run,omitempty"`
+	With    map[string]string `yaml:"with,omitempty"`
 	Env     map[string]string `yaml:"env,omitempty"`
 }
 
@@ -166,8 +152,7 @@ type GithubActionYAML struct {
 func (g *GithubActions) GetGithubActionYAML() ([]byte, error) {
 	gaSteps := []GithubActionYAMLStep{
 		getCheckoutCodeStep(),
-		getDownloadPorterStep(),
-		getConfigurePorterStep(g.ServerURL, g.getPorterTokenSecretName(), g.ProjectID, g.ClusterID, g.ReleaseName),
+		getUpdateAppStep(g.ServerURL, g.getPorterTokenSecretName(), g.ProjectID, g.ClusterID, g.ReleaseName, g.Version),
 	}
 
 	branch := g.GitBranch
@@ -229,7 +214,7 @@ func (g *GithubActions) getClient() (*github.Client, error) {
 		http.DefaultTransport,
 		g.GithubAppID,
 		int64(g.GithubInstallationID),
-		"/porter/docker/github_app_private_key.pem")
+		g.GithubAppSecretPath)
 
 	if err != nil {
 		return nil, err

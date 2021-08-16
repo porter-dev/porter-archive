@@ -40,6 +40,10 @@ const (
 	ErrReleaseDeploy
 )
 
+var (
+	createEnvSecretConstraint, _ = semver.NewConstraint(" < 0.1.0")
+)
+
 // HandleListReleases retrieves a list of releases for a cluster
 // with various filter options
 func (app *App) HandleListReleases(w http.ResponseWriter, r *http.Request) {
@@ -777,6 +781,8 @@ func (app *App) HandleGetReleaseToken(w http.ResponseWriter, r *http.Request) {
 			Code:   ErrReleaseReadData,
 			Errors: []string{"release not found"},
 		}, w)
+
+		return
 	}
 
 	release, err := app.Repo.Release.ReadRelease(uint(clusterID), name, namespace)
@@ -786,6 +792,8 @@ func (app *App) HandleGetReleaseToken(w http.ResponseWriter, r *http.Request) {
 			Code:   ErrReleaseReadData,
 			Errors: []string{"release not found"},
 		}, w)
+
+		return
 	}
 
 	releaseExt := release.Externalize()
@@ -807,6 +815,8 @@ func (app *App) HandleCreateWebhookToken(w http.ResponseWriter, r *http.Request)
 			Code:   ErrReleaseReadData,
 			Errors: []string{"release not found"},
 		}, w)
+
+		return
 	}
 
 	// read the release from the target cluster
@@ -1029,8 +1039,10 @@ func (app *App) HandleUpgradeRelease(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		notifyOpts.Status = slack.StatusFailed
+		notifyOpts.Info = err.Error()
 
-		notifier.Notify(notifyOpts)
+		slackErr := notifier.Notify(notifyOpts)
+		fmt.Println("SLACK ERROR IS", slackErr)
 
 		app.sendExternalError(err, http.StatusInternalServerError, HTTPError{
 			Code:   ErrReleaseDeploy,
@@ -1054,6 +1066,8 @@ func (app *App) HandleUpgradeRelease(w http.ResponseWriter, r *http.Request) {
 				Code:   ErrReleaseReadData,
 				Errors: []string{"release not found"},
 			}, w)
+
+			return
 		}
 
 		release, err := app.Repo.Release.ReadRelease(uint(clusterID), name, rel.Namespace)
@@ -1102,11 +1116,11 @@ func (app *App) HandleUpgradeRelease(w http.ResponseWriter, r *http.Request) {
 					GithubOAuthIntegration: gr,
 					GithubInstallationID:   gitAction.GithubInstallationID,
 					GithubAppID:            app.GithubAppConf.AppID,
+					GithubAppSecretPath:    app.GithubAppConf.SecretPath,
 					GitRepoName:            repoSplit[1],
 					GitRepoOwner:           repoSplit[0],
 					Repo:                   *app.Repo,
 					GithubConf:             app.GithubProjectConf,
-					WebhookToken:           release.WebhookToken,
 					ProjectID:              uint(projID),
 					ReleaseName:            name,
 					GitBranch:              gitAction.GitBranch,
@@ -1115,15 +1129,21 @@ func (app *App) HandleUpgradeRelease(w http.ResponseWriter, r *http.Request) {
 					ImageRepoURL:           gitAction.ImageRepoURI,
 					BuildEnv:               cEnv.Container.Env.Normal,
 					ClusterID:              release.ClusterID,
+					Version:                gitAction.Version,
 				}
 
-				err = gaRunner.CreateEnvSecret()
-
+				actionVersion, err := semver.NewVersion(gaRunner.Version)
 				if err != nil {
-					app.sendExternalError(err, http.StatusInternalServerError, HTTPError{
-						Code:   ErrReleaseReadData,
-						Errors: []string{"could not update github secret"},
-					}, w)
+					app.handleErrorInternal(err, w)
+				}
+
+				if createEnvSecretConstraint.Check(actionVersion) {
+					if err := gaRunner.CreateEnvSecret(); err != nil {
+						app.sendExternalError(err, http.StatusInternalServerError, HTTPError{
+							Code:   ErrReleaseReadData,
+							Errors: []string{"could not update github secret"},
+						}, w)
+					}
 				}
 			}
 		}
@@ -1251,6 +1271,7 @@ func (app *App) HandleReleaseDeployWebhook(w http.ResponseWriter, r *http.Reques
 
 	if err != nil {
 		notifyOpts.Status = slack.StatusFailed
+		notifyOpts.Info = err.Error()
 
 		notifier.Notify(notifyOpts)
 
@@ -1454,6 +1475,8 @@ func (app *App) HandleRollbackRelease(w http.ResponseWriter, r *http.Request) {
 				Code:   ErrReleaseReadData,
 				Errors: []string{"release not found"},
 			}, w)
+
+			return
 		}
 
 		release, err := app.Repo.Release.ReadRelease(uint(clusterID), name, rel.Namespace)
@@ -1517,11 +1540,11 @@ func (app *App) HandleRollbackRelease(w http.ResponseWriter, r *http.Request) {
 					GithubOAuthIntegration: gr,
 					GithubInstallationID:   gitAction.GithubInstallationID,
 					GithubAppID:            app.GithubAppConf.AppID,
+					GithubAppSecretPath:    app.GithubAppConf.SecretPath,
 					GitRepoName:            repoSplit[1],
 					GitRepoOwner:           repoSplit[0],
 					Repo:                   *app.Repo,
 					GithubConf:             app.GithubProjectConf,
-					WebhookToken:           release.WebhookToken,
 					ProjectID:              uint(projID),
 					ReleaseName:            name,
 					GitBranch:              gitAction.GitBranch,
@@ -1530,15 +1553,21 @@ func (app *App) HandleRollbackRelease(w http.ResponseWriter, r *http.Request) {
 					ImageRepoURL:           gitAction.ImageRepoURI,
 					BuildEnv:               cEnv.Container.Env.Normal,
 					ClusterID:              release.ClusterID,
+					Version:                gitAction.Version,
 				}
 
-				err = gaRunner.CreateEnvSecret()
-
+				actionVersion, err := semver.NewVersion(gaRunner.Version)
 				if err != nil {
-					app.sendExternalError(err, http.StatusInternalServerError, HTTPError{
-						Code:   ErrReleaseReadData,
-						Errors: []string{"could not update github secret"},
-					}, w)
+					app.handleErrorInternal(err, w)
+				}
+
+				if createEnvSecretConstraint.Check(actionVersion) {
+					if err := gaRunner.CreateEnvSecret(); err != nil {
+						app.sendExternalError(err, http.StatusInternalServerError, HTTPError{
+							Code:   ErrReleaseReadData,
+							Errors: []string{"could not update github secret"},
+						}, w)
+					}
 				}
 			}
 		}

@@ -13,9 +13,8 @@ import { Context } from "shared/Context";
 
 import ClusterSection from "./ClusterSection";
 import ProjectSectionContainer from "./ProjectSectionContainer";
-import loading from "assets/loading.gif";
 import { RouteComponentProps, withRouter } from "react-router";
-import { pushFiltered, pushQueryParams } from "shared/routing";
+import { pushFiltered } from "shared/routing";
 import { withAuth, WithAuthProps } from "shared/auth/AuthorizationHoc";
 
 type PropsType = RouteComponentProps &

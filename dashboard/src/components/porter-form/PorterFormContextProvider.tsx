@@ -5,7 +5,7 @@ import {
   PorterFormData,
   PorterFormState,
   PorterFormValidationInfo,
-  PorterFormVariableList
+  PorterFormVariableList,
 } from "./types";
 import { ShowIf, ShowIfAnd, ShowIfNot, ShowIfOr } from "../../shared/types";
 import { getFinalVariablesForStringInput } from "./field-components/Input";
@@ -20,6 +20,7 @@ interface Props {
   onSubmit: (vars: PorterFormVariableList) => void;
   initialVariables?: PorterFormVariableList;
   overrideVariables?: PorterFormVariableList;
+  includeHiddenFields?: boolean;
   isReadOnly?: boolean;
   doDebug?: boolean;
 }
@@ -402,7 +403,9 @@ export const PorterFormContextProvider: React.FC<Props> = (props) => {
       select: getFinalVariablesForSelect,
     };
 
-    const data = props.rawFormData.includeHiddenFields
+    const data = props.includeHiddenFields
+      ? restructureToNewFields(props.rawFormData)
+      : props.rawFormData.includeHiddenFields
       ? restructureToNewFields(props.rawFormData)
       : formData;
 

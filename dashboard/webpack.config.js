@@ -25,7 +25,7 @@ module.exports = () => {
    * @type {webpack.Configuration}
    */
   const config = {
-    entry: "./src/index.tsx",
+    entry: ["regenerator-runtime/runtime.js", "./src/index.tsx"],
     target: "web",
     mode: isDevelopment ? "development" : "production",
     module: {

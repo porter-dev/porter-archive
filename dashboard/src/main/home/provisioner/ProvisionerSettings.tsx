@@ -237,7 +237,9 @@ class NewProject extends Component<PropsType, StateType> {
                       });
                     }}
                   >
-                    $cost/Month
+                    {provider == "aws" && "$200/Month"}
+                    {provider == "gcp" && "$200/Month"}
+                    {provider == "do" && "$100/Month"}
                     <InfoTooltip text={"aa"} />
                   </CostSection>
                   <BlockDescription>Hosted in your own cloud.</BlockDescription>

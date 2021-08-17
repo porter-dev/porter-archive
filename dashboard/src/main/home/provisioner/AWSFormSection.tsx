@@ -75,12 +75,12 @@ const machineTypeOptions = [
 ];
 
 const costMapping: Record<string, number> = {
-  "t2.medium": 100,
-  "t2.xlarge": 200,
-  "t2.2xlarge": 300,
-  "t3.medium": 400,
-  "t3.xlarge": 500,
-  "t3.2xlarge": 600,
+  "t2.medium": 200,
+  "t2.xlarge": 530,
+  "t2.2xlarge": 930,
+  "t3.medium": 190,
+  "t3.xlarge": 480,
+  "t3.2xlarge": 830,
 };
 
 // TODO: Consolidate across forms w/ HOC

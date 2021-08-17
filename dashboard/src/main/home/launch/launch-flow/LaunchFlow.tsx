@@ -241,7 +241,7 @@ const LaunchFlow: React.FC<PropsType> = (props) => {
     }
 
     let githubActionConfig: FullActionConfigType = null;
-    if (sourceType == "repo") {
+    if (sourceType === "repo") {
       githubActionConfig = getFullActionConfig();
     }
 

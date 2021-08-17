@@ -192,21 +192,17 @@ class SettingsPage extends Component<PropsType, StateType> {
     } = this.props;
 
     if (hasSource) {
-      if (sourceType === "repo") {
-        return (
-          <BackButton width="155px" onClick={() => setPage("workflow")}>
-            <i className="material-icons">first_page</i>
-            GitHub Actions
-          </BackButton>
-        );
-      } else if (sourceType === "registry") {
-        return (
-          <BackButton width="155px" onClick={() => setPage("source")}>
-            <i className="material-icons">first_page</i>
-            Source Settings
-          </BackButton>
-        );
-      }
+      const [pageKey, pageName] =
+        sourceType === "repo"
+          ? ["workflow", "GitHub Actions"]
+          : ["source", "Source Settings"];
+
+      return (
+        <BackButton width="155px" onClick={() => setPage(pageKey)}>
+          <i className="material-icons">first_page</i>
+          {pageName}
+        </BackButton>
+      );
     }
 
     return (

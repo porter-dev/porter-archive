@@ -81,7 +81,7 @@ module.exports = () => {
       historyApiFallback: true,
       disableHostCheck: true,
       host: "0.0.0.0",
-      port: 8081,
+      port: env.DEV_SERVER_PORT || 8080,
       hot: true,
     },
     plugins: [
@@ -133,11 +133,18 @@ module.exports = () => {
   if (env.ENABLE_ANALYZER) {
     config.plugins.push(new BundleAnalyzerPlugin());
   }
-
-  if (env.ENABLE_PROXY === true) {
+  console.log(env);
+  if (env.ENABLE_PROXY) {
+    console.log("WORKED!");
+    if (!env.API_SERVER) {
+      throw new Error(
+        "API_SERVER is not present on .env! Please setup the api server url if you want the proxy to work! API_SERVER example: http://localhost:8080"
+      );
+    }
     config.devServer.proxy = {
       "/api": {
-        target: "http://localhost:8081", // target host
+        logLevel: "debug",
+        target: env.API_SERVER, // target host
         changeOrigin: true, // needed for virtual hosted sites
         ws: true, // proxy websockets
       },

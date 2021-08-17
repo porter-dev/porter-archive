@@ -22,7 +22,7 @@ type PropsType = RouteComponentProps & {
   handleError: () => void;
   projectName: string;
   infras: InfraType[];
-  displayCosts?: boolean;
+  highlightCosts?: boolean;
 };
 
 type StateType = {
@@ -73,6 +73,15 @@ const machineTypeOptions = [
   { value: "t3.xlarge", label: "t3.xlarge" },
   { value: "t3.2xlarge", label: "t3.2xlarge" },
 ];
+
+const costMapping: Record<string, number> = {
+  "t2.medium": 100,
+  "t2.xlarge": 200,
+  "t2.2xlarge": 300,
+  "t3.medium": 400,
+  "t3.xlarge": 500,
+  "t3.2xlarge": 600,
+};
 
 // TODO: Consolidate across forms w/ HOC
 class AWSFormSection extends Component<PropsType, StateType> {
@@ -394,7 +403,12 @@ class AWSFormSection extends Component<PropsType, StateType> {
             setActiveValue={(x: string) => this.setState({ awsMachineType: x })}
             label="⚙️ AWS Machine Type"
           />
-          {this.props.displayCosts && <p>Cost Display</p>}
+          <Helper>
+            Estimated Cost:{" "}
+            <CostHighlight highlight={this.props.highlightCosts}>
+              {`\$${costMapping[this.state.awsMachineType]}/Month`}
+            </CostHighlight>
+          </Helper>
           <InputRow
             type="text"
             value={awsAccessId}
@@ -552,4 +566,8 @@ const GuideButton = styled.a`
 const CloseButtonImg = styled.img`
   width: 14px;
   margin: 0 auto;
+`;
+
+const CostHighlight = styled.span<{ highlight: boolean }>`
+  background-color: ${(props) => props.highlight && "yellow"};
 `;

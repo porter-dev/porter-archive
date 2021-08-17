@@ -22,6 +22,7 @@ type PropsType = RouteComponentProps & {
   setSelectedProvisioner: (x: string | null) => void;
   handleError: () => void;
   projectName: string;
+  highlightCosts?: boolean;
   infras: InfraType[];
 };
 
@@ -377,8 +378,8 @@ class GCPFormSection extends Component<PropsType, StateType> {
           />
           {this.renderClusterNameSection()}
           <Helper>
-            By default, Porter creates a cluster with three e2-medium instances
-            (2vCPUs and 4GB RAM each). Google Cloud will bill you for any
+            By default, Porter creates a cluster with three custom-2-4096
+            instances (2 CPU, 4 GB RAM each). Google Cloud will bill you for any
             provisioned resources. Learn more about GKE pricing
             <Highlight
               href="https://cloud.google.com/kubernetes-engine/pricing"
@@ -387,6 +388,12 @@ class GCPFormSection extends Component<PropsType, StateType> {
               here
             </Highlight>
             .
+          </Helper>
+          <Helper>
+            Estimated Cost:{" "}
+            <CostHighlight highlight={this.props.highlightCosts}>
+              $COST/Month
+            </CostHighlight>
           </Helper>
           <CheckboxRow
             isRequired={true}
@@ -502,4 +509,8 @@ const GuideButton = styled.a`
 const CloseButtonImg = styled.img`
   width: 14px;
   margin: 0 auto;
+`;
+
+const CostHighlight = styled.span<{ highlight: boolean }>`
+  background-color: ${(props) => props.highlight && "yellow"};
 `;

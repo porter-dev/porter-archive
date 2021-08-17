@@ -19,6 +19,7 @@ type PropsType = {
   setSelectedProvisioner: (x: string | null) => void;
   handleError: () => void;
   projectName: string;
+  highlightCosts?: boolean;
   infras: InfraType[];
 };
 
@@ -277,6 +278,12 @@ export default class DOFormSection extends Component<PropsType, StateType> {
             </Highlight>
             .
           </Helper>
+          <Helper>
+            Estimated Cost:{" "}
+            <CostHighlight highlight={this.props.highlightCosts}>
+              $COST/Month
+            </CostHighlight>
+          </Helper>
           <CheckboxRow
             isRequired={true}
             checked={this.state.provisionConfirmed}
@@ -387,4 +394,8 @@ const GuideButton = styled.a`
 const CloseButtonImg = styled.img`
   width: 14px;
   margin: 0 auto;
+`;
+
+const CostHighlight = styled.span<{ highlight: boolean }>`
+  background-color: ${(props) => props.highlight && "yellow"};
 `;

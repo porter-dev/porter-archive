@@ -159,7 +159,7 @@ const Chart: React.FunctionComponent<Props> = ({
       </BottomWrapper>
 
       <TopRightContainer>
-        {isJob && jobStatus && (
+        {isJob && jobStatus?.status && (
           <>
             <JobStatus status={jobStatus.status}>
               Last run {jobStatus.status.toUpperCase()} at{" "}

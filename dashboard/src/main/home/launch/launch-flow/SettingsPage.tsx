@@ -19,6 +19,7 @@ import { withAuth, WithAuthProps } from "shared/auth/AuthorizationHoc";
 type PropsType = WithAuthProps & {
   onSubmit: (x?: any) => void;
   hasSource: boolean;
+  sourceType: string;
   setPage: (x: string) => void;
   form: any;
   valuesToOverride: any;
@@ -182,20 +183,30 @@ class SettingsPage extends Component<PropsType, StateType> {
   };
 
   renderHeaderSection = () => {
-    let { hasSource, templateName, setTemplateName } = this.props;
+    let {
+      hasSource,
+      sourceType,
+      templateName,
+      setPage,
+      setTemplateName,
+    } = this.props;
 
     if (hasSource) {
-      return (
-        <BackButton
-          width="155px"
-          onClick={() => {
-            this.props.setPage("workflow");
-          }}
-        >
-          <i className="material-icons">first_page</i>
-          GitHub Actions
-        </BackButton>
-      );
+      if (sourceType === "repo") {
+        return (
+          <BackButton width="155px" onClick={() => setPage("workflow")}>
+            <i className="material-icons">first_page</i>
+            GitHub Actions
+          </BackButton>
+        );
+      } else if (sourceType === "registry") {
+        return (
+          <BackButton width="155px" onClick={() => setPage("source")}>
+            <i className="material-icons">first_page</i>
+            Source Settings
+          </BackButton>
+        );
+      }
     }
 
     return (

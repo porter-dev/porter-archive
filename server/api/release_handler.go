@@ -602,7 +602,8 @@ func (app *App) HandleGetReleaseAllPods(w http.ResponseWriter, r *http.Request) 
 }
 
 type GetJobStatusResult struct {
-	Status string `json:"status"`
+	Status    string       `json:"status"`
+	StartTime *metav1.Time `json:"start_time"`
 }
 
 // HandleGetJobStatus gets the status for a specific job
@@ -707,6 +708,8 @@ func (app *App) HandleGetJobStatus(w http.ResponseWriter, r *http.Request) {
 				mostRecentJob = job
 			}
 		}
+
+		res.StartTime = mostRecentJob.Status.StartTime
 
 		// get the status of the most recent job
 		if mostRecentJob.Status.Succeeded >= 1 {

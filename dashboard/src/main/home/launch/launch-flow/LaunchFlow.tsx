@@ -347,6 +347,7 @@ const LaunchFlow: React.FC<PropsType> = (props) => {
         templateName={templateName}
         setTemplateName={setTemplateName}
         hasSource={currentTab === "porter"}
+        sourceType={sourceType}
         setPage={setCurrentPage}
         form={form}
         valuesToOverride={valuesToOverride}

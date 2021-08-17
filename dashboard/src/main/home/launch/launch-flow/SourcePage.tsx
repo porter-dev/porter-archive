@@ -227,6 +227,16 @@ class SourcePage extends Component<PropsType, StateType> {
     }
   };
 
+  handleContinue = () => {
+    const { sourceType, setPage } = this.props;
+
+    if (sourceType == "repo") {
+      setPage("workflow");
+    } else if (sourceType == "registry") {
+      setPage("settings");
+    }
+  };
+
   render() {
     let { templateName, setTemplateName, setPage } = this.props;
 
@@ -270,7 +280,7 @@ class SourcePage extends Component<PropsType, StateType> {
         <SaveButton
           text="Continue"
           disabled={!this.checkSourceSelected()}
-          onClick={() => setPage("workflow")}
+          onClick={this.handleContinue}
           status={this.getButtonStatus()}
           makeFlush={true}
           helper={this.getButtonHelper()}

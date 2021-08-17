@@ -109,7 +109,7 @@ const WorkflowPage: React.FC<PropsType> = (props) => {
   );
 };
 
-export default withRouter(WorkflowPage);
+export default WorkflowPage;
 
 const StyledWorkflowPage = styled.div`
   position: relative;

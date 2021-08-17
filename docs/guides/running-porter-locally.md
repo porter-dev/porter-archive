@@ -1,19 +1,31 @@
-While it requires a few additional steps, it is possible to run Porter locally. These are the steps to start using Porter on your local machine.
+While it requires a few additional steps, it is possible to run Porter locally. Porter can either be run inside a Docker container, or the binary can be run directly.
+
+## Running the Binary
+
+To run the Porter binary, follow these steps: 
 
 1. [Install our CLI](https://docs.getporter.dev/docs/cli-documentation#installation)
 
 2. Run `porter server start`. This will spin up a local Porter instance on port 8080.
 
-By default, GitHub login and the deploying from GitHub repo is disabled on the local version of Porter - this is due to security reasons. However, you can add these functionalities to your local instance by creating your own GitHub OAuth application. These are the steps to enable the GitHub features on the local version of Porter:
+3. Navigate to http://localhost:8080/register, and create a new user with an email and password. 
 
-1. [Create a new GitHub Oauth App](https://docs.github.com/en/developers/apps/creating-an-oauth-app). This app should be created with `http://localhost:8080/api/oauth/github/callback` as the callback URL. 
+## Running with Docker
 
-2. Copy the Client ID and the Client secrets. Then add these lines into your `.bashrc` file:
+The easiest way to run the Docker container is to use SQLite as the persistence option. To accomplish this, you can simply run:
 
-```txt
-export GITHUB_CLIENT_ID=YOUR_CLIENT_ID
-export GITHUB_CLIENT_SECRET=YOUR_CLIENT_SECRET
-export GITHUB_ENABLED=true
+```
+docker volume create porter_sqlite
+docker run \
+  --mount type=volume,source=porter_sqlite,target=/sqlite,readonly=false \
+  -e REDIS_ENABLED=false \
+  -e SQL_LITE_PATH=/sqlite/porter.db \
+  -p 8080:8080 \
+  -d porter1/porter:latest
 ```
 
-3. When you run `porter server start`, Porter will automatically read these variables in and enable the GitHub features.
+Then navigate to http://localhost:8080/register, and create a new user with an email and password. 
+
+## Setting up Integrations
+
+While basic functionality is supported on the local binary/Docker image, more configuration is required to support various integrations. See [this document](https://docs.porter.run/docs/sso) for instructions on adding integrations like Github application access.

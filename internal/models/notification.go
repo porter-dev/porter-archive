@@ -5,10 +5,10 @@ import "gorm.io/gorm"
 type NotificationConfig struct {
 	gorm.Model
 
-	Enabled bool `gorm:"default:true"` // if notifications are enabled at all
+	Enabled bool // if notifications are enabled at all
 
-	Success bool `gorm:"default:true"`
-	Failure bool `gorm:"default:true"`
+	Success bool
+	Failure bool
 }
 
 type NotificationConfigExternal struct {

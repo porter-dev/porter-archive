@@ -1,6 +1,8 @@
 const path = require("path");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
 const webpack = require("webpack");
+const ReactRefreshWebpackPlugin = require("@pmmmwh/react-refresh-webpack-plugin");
+
 const dotenv = require("dotenv");
 
 const BundleAnalyzerPlugin = require("webpack-bundle-analyzer")
@@ -31,7 +33,16 @@ module.exports = () => {
         {
           test: /\.(ts|tsx|mjs|js|jsx)$/,
           exclude: /node_modules/,
-          loader: "babel-loader",
+          use: [
+            {
+              loader: require.resolve("babel-loader"),
+              options: {
+                plugins: [
+                  isDevelopment && require.resolve("react-refresh/babel"),
+                ].filter(Boolean),
+              },
+            },
+          ],
         },
         {
           enforce: "pre",
@@ -70,7 +81,7 @@ module.exports = () => {
       historyApiFallback: true,
       disableHostCheck: true,
       host: "0.0.0.0",
-      port: 8080,
+      port: 8081,
       hot: true,
     },
     plugins: [
@@ -79,7 +90,8 @@ module.exports = () => {
         segmentKey: `${process.env.SEGMENT_PUBLIC_KEY}`,
       }),
       new webpack.DefinePlugin(envKeys),
-    ],
+      isDevelopment && new ReactRefreshWebpackPlugin(),
+    ].filter(Boolean),
   };
 
   if (!isDevelopment) {

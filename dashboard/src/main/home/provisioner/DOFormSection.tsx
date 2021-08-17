@@ -281,7 +281,7 @@ export default class DOFormSection extends Component<PropsType, StateType> {
           <Helper>
             Estimated Cost:{" "}
             <CostHighlight highlight={this.props.highlightCosts}>
-              $COST/Month
+              $100/Month
             </CostHighlight>
           </Helper>
           <CheckboxRow

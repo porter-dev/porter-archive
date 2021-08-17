@@ -392,7 +392,7 @@ class GCPFormSection extends Component<PropsType, StateType> {
           <Helper>
             Estimated Cost:{" "}
             <CostHighlight highlight={this.props.highlightCosts}>
-              $COST/Month
+              $200/Month
             </CostHighlight>
           </Helper>
           <CheckboxRow

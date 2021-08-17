@@ -602,8 +602,8 @@ func (app *App) HandleGetReleaseAllPods(w http.ResponseWriter, r *http.Request) 
 }
 
 type GetJobStatusResult struct {
-	Status    string       `json:"status"`
-	StartTime *metav1.Time `json:"start_time"`
+	Status    string       `json:"status,omitempty"`
+	StartTime *metav1.Time `json:"start_time,omitempty"`
 }
 
 // HandleGetJobStatus gets the status for a specific job
@@ -693,9 +693,7 @@ func (app *App) HandleGetJobStatus(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	res := &GetJobStatusResult{
-		Status: "succeeded",
-	}
+	res := &GetJobStatusResult{}
 
 	// get the most recent job
 	if len(jobs) > 0 {

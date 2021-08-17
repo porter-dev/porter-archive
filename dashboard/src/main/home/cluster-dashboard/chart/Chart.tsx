@@ -11,16 +11,24 @@ import api from "shared/api";
 type Props = {
   chart: ChartType;
   controllers: Record<string, any>;
+  isJob: boolean;
   release: any;
+};
+
+type JobStatusType = {
+  status: "succeeded" | "running" | "failed";
+  start_time: string;
 };
 
 const Chart: React.FunctionComponent<Props> = ({
   chart,
   controllers,
+  isJob,
   release,
 }) => {
   const [expand, setExpand] = useState<boolean>(false);
   const [chartControllers, setChartControllers] = useState<any>([]);
+  const [jobStatus, setJobStatus] = useState<JobStatusType>(null);
   const context = useContext(Context);
   const location = useLocation();
   const history = useHistory();
@@ -63,6 +71,33 @@ const Chart: React.FunctionComponent<Props> = ({
   useEffect(() => {
     getControllerForChart(chart);
   }, [chart]);
+
+  const getJobStatus = () => {
+    let { currentCluster, currentProject, setCurrentError } = context;
+
+    api
+      .getJobStatus(
+        "<token>",
+        {
+          cluster_id: currentCluster.id,
+        },
+        {
+          id: currentProject.id,
+          name: chart.name,
+          namespace: chart.namespace,
+        }
+      )
+      .then((res) => {
+        setJobStatus(res.data);
+      })
+      .catch((err) => setCurrentError(err));
+  };
+
+  useEffect(() => {
+    if (isJob) {
+      getJobStatus();
+    }
+  }, [isJob]);
 
   const readableDate = (s: string) => {
     const ts = new Date(s);
@@ -123,7 +158,18 @@ const Chart: React.FunctionComponent<Props> = ({
         </TagWrapper>
       </BottomWrapper>
 
-      <Version>v{release?.version || chart.version}</Version>
+      <TopRightContainer>
+        {isJob && jobStatus && (
+          <>
+            <JobStatus status={jobStatus.status}>
+              Last run {jobStatus.status.toUpperCase()} at{" "}
+              {readableDate(jobStatus.start_time)}
+            </JobStatus>
+            <StatusDot>•</StatusDot>
+          </>
+        )}
+        <span>v{release?.version || chart.version}</span>
+      </TopRightContainer>
     </StyledChart>
   );
 };
@@ -138,7 +184,7 @@ const BottomWrapper = styled.div`
   margin-top: 12px;
 `;
 
-const Version = styled.div`
+const TopRightContainer = styled.div`
   position: absolute;
   top: 12px;
   right: 12px;
@@ -148,6 +194,10 @@ const Version = styled.div`
 
 const Dot = styled.div`
   margin-right: 9px;
+`;
+
+const StatusDot = styled.span`
+  margin: 0 9px;
 `;
 
 const InfoWrapper = styled.div`
@@ -245,6 +295,19 @@ const Title = styled.div`
     width: 24px;
     position: absolute;
   }
+`;
+
+const JobStatus = styled.span`
+  font-weight: bold;
+  ${(props: { status: string }) => `
+  color: ${
+    props.status === "succeeded"
+      ? "rgb(56, 168, 138)"
+      : props.status === "failed"
+      ? "rgb(204, 61, 66)"
+      : "#aaaabb"
+  }
+`}
 `;
 
 const StyledChart = styled.div`

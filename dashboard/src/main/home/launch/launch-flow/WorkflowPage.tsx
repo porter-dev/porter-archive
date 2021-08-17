@@ -87,6 +87,15 @@ const WorkflowPage: React.FC<PropsType> = (props) => {
       <Helper>
         You may copy the YAML to an existing workflow and uncheck this box to
         prevent Porter from creating a new workflow file.
+        <GitHubActionLink show={!props.shouldCreateWorkflow}>
+          The GitHub Action can be found at{" "}
+          <a
+            href="https://github.com/porter-dev/porter-update-action"
+            target="_blank"
+          >
+            porter-dev/porter-update-action
+          </a>
+        </GitHubActionLink>
       </Helper>
       <Buffer />
       <SaveButton
@@ -167,4 +176,9 @@ const BackButton = styled.div`
     margin-right: 6px;
     margin-left: -2px;
   }
+`;
+
+const GitHubActionLink = styled.p`
+  visibility: ${(props: { show: boolean }) =>
+    props.show ? "visible" : "hidden"};
 `;

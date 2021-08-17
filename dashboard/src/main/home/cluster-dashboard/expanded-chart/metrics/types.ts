@@ -30,6 +30,14 @@ export type MetricsNGINXErrorsDataResponse = {
   }[];
 };
 
+export type MetricsNGINXLatencyDataResponse = {
+  pod?: string;
+  results: {
+    date: number;
+    latency: string;
+  }[];
+};
+
 export type MetricsHpaReplicasDataResponse = {
   pod?: string;
   results: {
@@ -47,6 +55,7 @@ export type GenericMetricResponse = {
     bytes: string;
     error_pct: string;
     replicas: string;
+    latency: string;
   }[];
 };
 
@@ -60,6 +69,7 @@ export type AvailableMetrics =
   | "memory"
   | "network"
   | "nginx:errors"
+  | "nginx:latency"
   | "cpu_hpa_threshold"
   | "memory_hpa_threshold"
   | "hpa_replicas";

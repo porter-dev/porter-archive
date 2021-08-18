@@ -1059,8 +1059,7 @@ func (app *App) HandleUpgradeRelease(w http.ResponseWriter, r *http.Request) {
 		notifyOpts.Status = slack.StatusFailed
 		notifyOpts.Info = upgradeErr.Error()
 
-		slackErr := notifier.Notify(notifyOpts)
-		fmt.Println("SLACK ERROR IS", slackErr)
+		notifier.Notify(notifyOpts)
 
 		app.sendExternalError(err, http.StatusInternalServerError, HTTPError{
 			Code:   ErrReleaseDeploy,
@@ -1316,7 +1315,18 @@ func (app *App) HandleReleaseDeployWebhook(w http.ResponseWriter, r *http.Reques
 
 	notifier.Notify(notifyOpts)
 
-	app.analyticsClient.Track(analytics.CreateSegmentRedeployViaWebhookTrack("anonymous", repository.(string)))
+	userID, _ := app.getUserIDFromRequest(r)
+
+	app.analyticsClient.Track(analytics.ApplicationDeploymentWebhookTrack(&analytics.ApplicationDeploymentWebhookTrackOpts{
+		ImageURI: fmt.Sprintf("%v", repository),
+		ApplicationScopedTrackOpts: analytics.GetApplicationScopedTrackOpts(
+			userID,
+			release.ProjectID,
+			release.ClusterID,
+			release.Name,
+			release.Namespace,
+		),
+	}))
 
 	w.WriteHeader(http.StatusOK)
 }

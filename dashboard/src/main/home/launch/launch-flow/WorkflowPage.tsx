@@ -1,5 +1,5 @@
 import React, { useContext, useEffect, useState } from "react";
-import { RouteComponentProps, withRouter } from "react-router";
+import { RouteComponentProps } from "react-router";
 import { FullActionConfigType } from "../../../../shared/types";
 import api from "../../../../shared/api";
 import { Context } from "../../../../shared/Context";
@@ -14,8 +14,8 @@ type PropsType = RouteComponentProps & {
   name: string;
   fullActionConfig: FullActionConfigType;
   shouldCreateWorkflow: boolean;
-  setShouldCreateWorkflow: React.Dispatch<React.SetStateAction<boolean>>;
-  setPage: React.Dispatch<React.SetStateAction<string>>;
+  setShouldCreateWorkflow: (x: (prevState: boolean) => boolean) => void;
+  setPage: (x: string) => void;
 };
 
 const WorkflowPage: React.FC<PropsType> = (props) => {

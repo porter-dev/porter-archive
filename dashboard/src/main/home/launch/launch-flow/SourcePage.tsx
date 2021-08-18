@@ -28,7 +28,9 @@ type PropsType = RouteComponentProps & {
   setImageTag: (x: string) => void;
 
   actionConfig: ActionConfigType;
-  setActionConfig: React.Dispatch<React.SetStateAction<ActionConfigType>>;
+  setActionConfig: (
+    x: ActionConfigType | ((prevState: ActionConfigType) => ActionConfigType)
+  ) => void;
   procfileProcess: string;
   setProcfileProcess: (x: string) => void;
   branch: string;

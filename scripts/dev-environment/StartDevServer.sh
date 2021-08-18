@@ -1,5 +1,6 @@
 #!/bin/bash
 
+printf "\033c"
 
 startFrontend() {
   cd ./dashboard && npm start;
@@ -22,3 +23,11 @@ startBackend() {
 startBackend &
 startFrontend &
 wait
+
+cleanup() {
+    rv=$?
+    clear
+    exit $rv
+}
+
+trap "cleanup" EXIT

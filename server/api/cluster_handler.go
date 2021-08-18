@@ -269,14 +269,7 @@ func (app *App) HandleCreateProjectClusterCandidates(w http.ResponseWriter, r *h
 
 	extClusters := make([]*models.ClusterCandidateExternal, 0)
 
-	session, err := app.Store.Get(r, app.ServerConf.CookieName)
-
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	userID, _ := session.Values["user_id"].(uint)
+	userID, _ := app.getUserIDFromRequest(r)
 
 	for _, cc := range ccs {
 		// handle write to the database
@@ -405,14 +398,7 @@ func (app *App) HandleResolveClusterCandidate(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	session, err := app.Store.Get(r, app.ServerConf.CookieName)
-
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	userID, _ := session.Values["user_id"].(uint)
+	userID, _ := app.getUserIDFromRequest(r)
 
 	// decode actions from request
 	resolver := &models.ClusterResolverAll{}

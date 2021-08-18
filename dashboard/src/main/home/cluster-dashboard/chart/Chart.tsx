@@ -1,30 +1,46 @@
 import React, { useContext, useEffect, useMemo, useState } from "react";
 import styled from "styled-components";
+import { useHistory, useLocation, useRouteMatch } from "react-router";
 
 import { ChartType, StorageType } from "shared/types";
 import { Context } from "shared/Context";
 import StatusIndicator from "components/StatusIndicator";
 import { pushFiltered } from "shared/routing";
-import { useHistory, useLocation, useRouteMatch } from "react-router";
+import { useWebsockets } from "shared/hooks/useWebsockets";
 import api from "shared/api";
 
 type Props = {
   chart: ChartType;
   controllers: Record<string, any>;
+  isJob: boolean;
   release: any;
+};
+
+type JobStatusType = {
+  status: "succeeded" | "running" | "failed";
+  start_time: string;
 };
 
 const Chart: React.FunctionComponent<Props> = ({
   chart,
   controllers,
+  isJob,
   release,
 }) => {
   const [expand, setExpand] = useState<boolean>(false);
   const [chartControllers, setChartControllers] = useState<any>([]);
+  const [jobStatus, setJobStatus] = useState<JobStatusType>(null);
   const context = useContext(Context);
   const location = useLocation();
   const history = useHistory();
   const match = useRouteMatch();
+
+  const {
+    newWebsocket,
+    openWebsocket,
+    closeAllWebsockets,
+    closeWebsocket,
+  } = useWebsockets();
 
   const renderIcon = () => {
     if (chart.chart.metadata.icon && chart.chart.metadata.icon !== "") {
@@ -63,6 +79,59 @@ const Chart: React.FunctionComponent<Props> = ({
   useEffect(() => {
     getControllerForChart(chart);
   }, [chart]);
+
+  const setupWebsocket = (kind: string) => {
+    const { currentProject, currentCluster } = context;
+
+    const apiEndpoint = `/api/projects/${currentProject.id}/k8s/${kind}/status?cluster_id=${currentCluster.id}`;
+
+    const wsConfig = {
+      onmessage(evt: MessageEvent) {
+        const event = JSON.parse(evt.data);
+        let object = event.Object;
+        object.metadata.kind = event.Kind;
+        if (event.event_type != "UPDATE") {
+          return;
+        }
+        getJobStatus();
+      },
+      onerror() {
+        closeWebsocket(kind);
+      },
+    };
+
+    newWebsocket(kind, apiEndpoint, wsConfig);
+    openWebsocket(kind);
+  };
+
+  const getJobStatus = () => {
+    let { currentCluster, currentProject, setCurrentError } = context;
+
+    api
+      .getJobStatus(
+        "<token>",
+        {
+          cluster_id: currentCluster.id,
+        },
+        {
+          id: currentProject.id,
+          name: chart.name,
+          namespace: chart.namespace,
+        }
+      )
+      .then((res) => {
+        setJobStatus(res.data);
+      })
+      .catch((err) => setCurrentError(err));
+  };
+
+  useEffect(() => {
+    if (isJob) {
+      getJobStatus();
+      setupWebsocket("job");
+    }
+    return () => closeAllWebsockets();
+  }, [isJob]);
 
   const readableDate = (s: string) => {
     const ts = new Date(s);
@@ -123,7 +192,18 @@ const Chart: React.FunctionComponent<Props> = ({
         </TagWrapper>
       </BottomWrapper>
 
-      <Version>v{release?.version || chart.version}</Version>
+      <TopRightContainer>
+        {isJob && jobStatus?.status && (
+          <>
+            <JobStatus status={jobStatus.status}>
+              Last run {jobStatus.status.toUpperCase()} at{" "}
+              {readableDate(jobStatus.start_time)}
+            </JobStatus>
+            <StatusDot>•</StatusDot>
+          </>
+        )}
+        <span>v{release?.version || chart.version}</span>
+      </TopRightContainer>
     </StyledChart>
   );
 };
@@ -138,7 +218,7 @@ const BottomWrapper = styled.div`
   margin-top: 12px;
 `;
 
-const Version = styled.div`
+const TopRightContainer = styled.div`
   position: absolute;
   top: 12px;
   right: 12px;
@@ -148,6 +228,10 @@ const Version = styled.div`
 
 const Dot = styled.div`
   margin-right: 9px;
+`;
+
+const StatusDot = styled.span`
+  margin: 0 9px;
 `;
 
 const InfoWrapper = styled.div`
@@ -245,6 +329,19 @@ const Title = styled.div`
     width: 24px;
     position: absolute;
   }
+`;
+
+const JobStatus = styled.span`
+  font-weight: bold;
+  ${(props: { status: string }) => `
+  color: ${
+    props.status === "succeeded"
+      ? "rgb(56, 168, 138)"
+      : props.status === "failed"
+      ? "rgb(204, 61, 66)"
+      : "#aaaabb"
+  }
+`}
 `;
 
 const StyledChart = styled.div`

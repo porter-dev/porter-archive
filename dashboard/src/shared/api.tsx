@@ -267,6 +267,33 @@ const deleteSlackIntegration = baseApi<
   return `/api/projects/${pathParams.project_id}/slack_integrations/${pathParams.slack_integration_id}`;
 });
 
+const updateNotificationConfig = baseApi<
+  {
+    payload: any;
+    namespace: string;
+    cluster_id: number;
+  },
+  {
+    project_id: number;
+    name: string;
+  }
+>("POST", (pathParams) => {
+  return `/api/projects/${pathParams.project_id}/releases/${pathParams.name}/notifications`;
+});
+
+const getNotificationConfig = baseApi<
+  {
+    namespace: string;
+    cluster_id: number;
+  },
+  {
+    project_id: number;
+    name: string;
+  }
+>("GET", (pathParams) => {
+  return `/api/projects/${pathParams.project_id}/releases/${pathParams.name}/notifications`;
+});
+
 const deployTemplate = baseApi<
   {
     templateName: string;
@@ -542,6 +569,15 @@ const getJobs = baseApi<
   return `/api/projects/${pathParams.id}/k8s/${pathParams.namespace}/${pathParams.chart}/${pathParams.release_name}/jobs`;
 });
 
+const getJobStatus = baseApi<
+  {
+    cluster_id: number;
+  },
+  { name: string; namespace: string; id: number }
+>("GET", (pathParams) => {
+  return `/api/projects/${pathParams.id}/k8s/${pathParams.namespace}/${pathParams.name}/jobs/status`;
+});
+
 const getJobPods = baseApi<
   {
     cluster_id: number;
@@ -569,7 +605,8 @@ const getMetrics = baseApi<
     shouldsum: boolean;
     pods?: string[];
     kind?: string; // the controller kind
-    name: string;
+    name?: string;
+    percentile?: number;
     namespace: string;
     startrange: number;
     endrange: number;
@@ -1033,6 +1070,8 @@ export default {
   deleteProject,
   deleteRegistryIntegration,
   deleteSlackIntegration,
+  updateNotificationConfig,
+  getNotificationConfig,
   createSubdomain,
   deployTemplate,
   deployAddon,
@@ -1061,6 +1100,7 @@ export default {
   getIngress,
   getInvites,
   getJobs,
+  getJobStatus,
   getJobPods,
   getMatchingPods,
   getMetrics,

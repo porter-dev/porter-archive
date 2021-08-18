@@ -1,11 +1,12 @@
 import React, { useContext, useEffect, useMemo, useState } from "react";
 import styled from "styled-components";
+import { useHistory, useLocation, useRouteMatch } from "react-router";
 
 import { ChartType, StorageType } from "shared/types";
 import { Context } from "shared/Context";
 import StatusIndicator from "components/StatusIndicator";
 import { pushFiltered } from "shared/routing";
-import { useHistory, useLocation, useRouteMatch } from "react-router";
+import { useWebsockets } from "shared/hooks/useWebsockets";
 import api from "shared/api";
 
 type Props = {
@@ -33,6 +34,13 @@ const Chart: React.FunctionComponent<Props> = ({
   const location = useLocation();
   const history = useHistory();
   const match = useRouteMatch();
+
+  const {
+    newWebsocket,
+    openWebsocket,
+    closeAllWebsockets,
+    closeWebsocket,
+  } = useWebsockets();
 
   const renderIcon = () => {
     if (chart.chart.metadata.icon && chart.chart.metadata.icon !== "") {
@@ -72,6 +80,30 @@ const Chart: React.FunctionComponent<Props> = ({
     getControllerForChart(chart);
   }, [chart]);
 
+  const setupWebsocket = (kind: string) => {
+    const { currentProject, currentCluster } = context;
+
+    const apiEndpoint = `/api/projects/${currentProject.id}/k8s/${kind}/status?cluster_id=${currentCluster.id}`;
+
+    const wsConfig = {
+      onmessage(evt: MessageEvent) {
+        const event = JSON.parse(evt.data);
+        let object = event.Object;
+        object.metadata.kind = event.Kind;
+        if (event.event_type != "UPDATE") {
+          return;
+        }
+        getJobStatus();
+      },
+      onerror() {
+        closeWebsocket(kind);
+      },
+    };
+
+    newWebsocket(kind, apiEndpoint, wsConfig);
+    openWebsocket(kind);
+  };
+
   const getJobStatus = () => {
     let { currentCluster, currentProject, setCurrentError } = context;
 
@@ -96,7 +128,9 @@ const Chart: React.FunctionComponent<Props> = ({
   useEffect(() => {
     if (isJob) {
       getJobStatus();
+      setupWebsocket("job");
     }
+    return () => closeAllWebsockets();
   }, [isJob]);
 
   const readableDate = (s: string) => {

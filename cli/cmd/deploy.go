@@ -202,6 +202,7 @@ var localPath string
 var tag string
 var dockerfile string
 var method string
+var stream bool
 
 func init() {
 	rootCmd.AddCommand(updateCmd)
@@ -265,6 +266,13 @@ func init() {
 		"method",
 		"",
 		"the build method to use (\"docker\" or \"pack\")",
+	)
+
+	updateCmd.PersistentFlags().BoolVar(
+		&stream,
+		"stream",
+		false,
+		"stream update logs to porter dashboard",
 	)
 
 	updateCmd.AddCommand(updateGetEnvCmd)
@@ -392,9 +400,28 @@ func updateBuildWithAgent(updateAgent *deploy.DeployAgent) error {
 	// build the deployment
 	color.New(color.FgGreen).Println("Building docker image for", app)
 
+	if stream {
+		updateAgent.StreamEvent(&deploy.Event{
+			Id:     "build",
+			Name:   "Build",
+			Index:  100,
+			Status: deploy.EventStatusInProgress,
+			Info:   "",
+		})
+	}
+
 	buildEnv, err := updateAgent.GetBuildEnv()
 
 	if err != nil {
+		if stream {
+			updateAgent.StreamEvent(&deploy.Event{
+				Id:     "build",
+				Name:   "Build",
+				Index:  110,
+				Status: deploy.EventStatusInProgress,
+				Info:   err.Error(),
+			})
+		}
 		return err
 	}
 
@@ -402,7 +429,26 @@ func updateBuildWithAgent(updateAgent *deploy.DeployAgent) error {
 	err = updateAgent.SetBuildEnv(buildEnv)
 
 	if err != nil {
+		if stream {
+			updateAgent.StreamEvent(&deploy.Event{
+				Id:     "build",
+				Name:   "Build",
+				Index:  120,
+				Status: deploy.EventStatusInProgress,
+				Info:   err.Error(),
+			})
+		}
 		return err
+	}
+
+	if stream {
+		updateAgent.StreamEvent(&deploy.Event{
+			Id:     "build",
+			Name:   "Build",
+			Index:  130,
+			Status: deploy.EventStatusSuccess,
+			Info:   "",
+		})
 	}
 
 	return updateAgent.Build()

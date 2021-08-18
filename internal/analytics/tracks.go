@@ -3,6 +3,7 @@ package analytics
 import (
 	"fmt"
 
+	"github.com/porter-dev/porter/internal/models"
 	segment "gopkg.in/segmentio/analytics-go.v3"
 )
 
@@ -34,14 +35,17 @@ func ProjectCreateTrack(opts *ProjectCreateTrackOpts) segmentTrack {
 }
 
 type ClusterProvisioningStartTrackOpts struct {
+	// note that this is a project-scoped track, since the cluster has not been created yet
 	*ProjectScopedTrackOpts
 
-	ClusterType string // EKS, DOKS, or GKE
+	ClusterType models.InfraKind
+	InfraID     uint
 }
 
 func ClusterProvisioningStartTrack(opts *ClusterProvisioningStartTrackOpts) segmentTrack {
 	additionalProps := make(map[string]interface{})
 	additionalProps["cluster_type"] = opts.ClusterType
+	additionalProps["infra_id"] = opts.InfraID
 
 	return getSegmentProjectTrack(
 		opts.ProjectScopedTrackOpts,
@@ -50,19 +54,20 @@ func ClusterProvisioningStartTrack(opts *ClusterProvisioningStartTrackOpts) segm
 }
 
 type ClusterProvisioningErrorTrackOpts struct {
-	*ClusterScopedTrackOpts
+	// note that this is a project-scoped track, since the cluster has not been created yet
+	*ProjectScopedTrackOpts
 
-	ClusterType string // EKS, DOKS, or GKE
-	Errors      []string
+	ClusterType models.InfraKind
+	InfraID     uint
 }
 
 func ClusterProvisioningErrorTrack(opts *ClusterProvisioningErrorTrackOpts) segmentTrack {
 	additionalProps := make(map[string]interface{})
 	additionalProps["cluster_type"] = opts.ClusterType
-	additionalProps["errors"] = opts.Errors
+	additionalProps["infra_id"] = opts.InfraID
 
-	return getSegmentClusterTrack(
-		opts.ClusterScopedTrackOpts,
+	return getSegmentProjectTrack(
+		opts.ProjectScopedTrackOpts,
 		getDefaultSegmentTrack(additionalProps, ClusterProvisioningError),
 	)
 }
@@ -70,18 +75,114 @@ func ClusterProvisioningErrorTrack(opts *ClusterProvisioningErrorTrackOpts) segm
 type ClusterProvisioningSuccessTrackOpts struct {
 	*ClusterScopedTrackOpts
 
-	ClusterType   string // EKS, DOKS, or GKE
-	ClusterServer string
+	ClusterType models.InfraKind
+	InfraID     uint
 }
 
 func ClusterProvisioningSuccessTrack(opts *ClusterProvisioningSuccessTrackOpts) segmentTrack {
 	additionalProps := make(map[string]interface{})
 	additionalProps["cluster_type"] = opts.ClusterType
-	additionalProps["cluster_server"] = opts.ClusterServer
+	additionalProps["infra_id"] = opts.InfraID
 
 	return getSegmentClusterTrack(
 		opts.ClusterScopedTrackOpts,
 		getDefaultSegmentTrack(additionalProps, ClusterProvisioningSuccess),
+	)
+}
+
+type ClusterConnectionStartTrackOpts struct {
+	// note that this is a project-scoped track, since the cluster has not been created yet
+	*ProjectScopedTrackOpts
+
+	ClusterCandidateID uint
+}
+
+func ClusterConnectionStartTrack(opts *ClusterConnectionStartTrackOpts) segmentTrack {
+	additionalProps := make(map[string]interface{})
+	additionalProps["cc_id"] = opts.ClusterCandidateID
+
+	return getSegmentProjectTrack(
+		opts.ProjectScopedTrackOpts,
+		getDefaultSegmentTrack(additionalProps, ClusterConnectionStart),
+	)
+}
+
+type ClusterConnectionSuccessTrackOpts struct {
+	*ClusterScopedTrackOpts
+
+	ClusterCandidateID uint
+}
+
+func ClusterConnectionSuccessTrack(opts *ClusterConnectionSuccessTrackOpts) segmentTrack {
+	additionalProps := make(map[string]interface{})
+	additionalProps["cc_id"] = opts.ClusterCandidateID
+
+	return getSegmentClusterTrack(
+		opts.ClusterScopedTrackOpts,
+		getDefaultSegmentTrack(additionalProps, ClusterConnectionSuccess),
+	)
+}
+
+type RegistryConnectionStartTrackOpts struct {
+	// note that this is a project-scoped track, since the cluster has not been created yet
+	*ProjectScopedTrackOpts
+
+	// a random id assigned to this connection request
+	FlowID string
+}
+
+func RegistryConnectionStartTrack(opts *RegistryConnectionStartTrackOpts) segmentTrack {
+	additionalProps := make(map[string]interface{})
+	additionalProps["flow_id"] = opts.FlowID
+
+	return getSegmentProjectTrack(
+		opts.ProjectScopedTrackOpts,
+		getDefaultSegmentTrack(additionalProps, RegistryConnectionStart),
+	)
+}
+
+type RegistryConnectionSuccessTrackOpts struct {
+	*RegistryScopedTrackOpts
+
+	// a random id assigned to this connection request
+	FlowID string
+}
+
+func RegistryConnectionSuccessTrack(opts *RegistryConnectionSuccessTrackOpts) segmentTrack {
+	additionalProps := make(map[string]interface{})
+	additionalProps["flow_id"] = opts.FlowID
+
+	return getSegmentRegistryTrack(
+		opts.RegistryScopedTrackOpts,
+		getDefaultSegmentTrack(additionalProps, RegistryConnectionSuccess),
+	)
+}
+
+type GithubConnectionStartTrackOpts struct {
+	// note that this is a user-scoped track, since github repos are tied to the user
+	*UserScopedTrackOpts
+}
+
+func GithubConnectionStartTrack(opts *GithubConnectionStartTrackOpts) segmentTrack {
+	additionalProps := make(map[string]interface{})
+
+	return getSegmentUserTrack(
+		opts.UserScopedTrackOpts,
+		getDefaultSegmentTrack(additionalProps, GithubConnectionStart),
+	)
+}
+
+type GithubConnectionSuccessTrackOpts struct {
+	// note that this is a user-scoped track, since github repos are tied to the user
+	*UserScopedTrackOpts
+}
+
+func GithubConnectionSuccessTrack(opts *GithubConnectionSuccessTrackOpts) segmentTrack {
+	additionalProps := make(map[string]interface{})
+
+	return getSegmentUserTrack(
+		opts.UserScopedTrackOpts,
+		getDefaultSegmentTrack(additionalProps, GithubConnectionSuccess),
 	)
 }
 
@@ -98,6 +199,62 @@ func ApplicationDeploymentWebhookTrack(opts *ApplicationDeploymentWebhookTrackOp
 	return getSegmentApplicationTrack(
 		opts.ApplicationScopedTrackOpts,
 		getDefaultSegmentTrack(additionalProps, ApplicationDeploymentWebhook),
+	)
+}
+
+type RegistryProvisioningStartTrackOpts struct {
+	// note that this is a project-scoped track, since the registry has not been created yet
+	*ProjectScopedTrackOpts
+
+	RegistryType models.InfraKind
+	InfraID      uint
+}
+
+func RegistryProvisioningStartTrack(opts *RegistryProvisioningStartTrackOpts) segmentTrack {
+	additionalProps := make(map[string]interface{})
+	additionalProps["registry_type"] = opts.RegistryType
+	additionalProps["infra_id"] = opts.InfraID
+
+	return getSegmentProjectTrack(
+		opts.ProjectScopedTrackOpts,
+		getDefaultSegmentTrack(additionalProps, RegistryProvisioningStart),
+	)
+}
+
+type RegistryProvisioningErrorTrackOpts struct {
+	// note that this is a project-scoped track, since the registry has not been created yet
+	*ProjectScopedTrackOpts
+
+	RegistryType models.InfraKind
+	InfraID      uint
+}
+
+func RegistryProvisioningErrorTrack(opts *RegistryProvisioningErrorTrackOpts) segmentTrack {
+	additionalProps := make(map[string]interface{})
+	additionalProps["registry_type"] = opts.RegistryType
+	additionalProps["infra_id"] = opts.InfraID
+
+	return getSegmentProjectTrack(
+		opts.ProjectScopedTrackOpts,
+		getDefaultSegmentTrack(additionalProps, RegistryProvisioningError),
+	)
+}
+
+type RegistryProvisioningSuccessTrackOpts struct {
+	*RegistryScopedTrackOpts
+
+	RegistryType models.InfraKind
+	InfraID      uint
+}
+
+func RegistryProvisioningSuccessTrack(opts *RegistryProvisioningSuccessTrackOpts) segmentTrack {
+	additionalProps := make(map[string]interface{})
+	additionalProps["registry_type"] = opts.RegistryType
+	additionalProps["infra_id"] = opts.InfraID
+
+	return getSegmentRegistryTrack(
+		opts.RegistryScopedTrackOpts,
+		getDefaultSegmentTrack(additionalProps, RegistryProvisioningSuccess),
 	)
 }
 
@@ -156,6 +313,10 @@ func (p segmentProperties) addProjectProperties(opts *ProjectScopedTrackOpts) {
 
 func (p segmentProperties) addClusterProperties(opts *ClusterScopedTrackOpts) {
 	p["cluster_id"] = opts.ClusterID
+}
+
+func (p segmentProperties) addRegistryProperties(opts *RegistryScopedTrackOpts) {
+	p["registry_id"] = opts.RegistryID
 }
 
 func (p segmentProperties) addApplicationProperties(opts *ApplicationScopedTrackOpts) {
@@ -226,6 +387,34 @@ func getSegmentProjectTrack(opts *ProjectScopedTrackOpts, track *defaultSegmentT
 	}
 }
 
+type RegistryScopedTrack struct {
+	*ProjectScopedTrack
+
+	registryID uint
+}
+
+type RegistryScopedTrackOpts struct {
+	*ProjectScopedTrackOpts
+
+	RegistryID uint
+}
+
+func GetRegistryScopedTrackOpts(userID, projID, regID uint) *RegistryScopedTrackOpts {
+	return &RegistryScopedTrackOpts{
+		ProjectScopedTrackOpts: GetProjectScopedTrackOpts(userID, projID),
+		RegistryID:             regID,
+	}
+}
+
+func getSegmentRegistryTrack(opts *RegistryScopedTrackOpts, track *defaultSegmentTrack) *RegistryScopedTrack {
+	track.properties.addRegistryProperties(opts)
+
+	return &RegistryScopedTrack{
+		ProjectScopedTrack: getSegmentProjectTrack(opts.ProjectScopedTrackOpts, track),
+		registryID:         opts.RegistryID,
+	}
+}
+
 type ClusterScopedTrack struct {
 	*ProjectScopedTrack
 
@@ -285,151 +474,3 @@ func getSegmentApplicationTrack(opts *ApplicationScopedTrackOpts, track *default
 		namespace:          opts.Namespace,
 	}
 }
-
-// type segmentProjectScopedTrack struct {
-// 	*UserScopedTrack
-
-// 	ProjID uint
-// 	ProjName string
-// }
-
-// type segmentClusterScopedTrack struct {
-// 	*segmentProjectScopedTrack
-
-// 	clusterID uint
-// 	clusterName string
-// }
-
-// type segmentApplicationScopedTrack struct {
-// 	*segmentClusterScopedTrack
-
-// 	appName string
-// 	appNamespace string
-// }
-
-// // CreateSegmentNewUserTrack creates a track of type "New User", which
-// // tracks when a user has registered
-// func CreateSegmentNewUserTrack(user *models.User) *segmentNewUserTrack {
-// 	userId := fmt.Sprintf("%v", user.ID)
-
-// 	return &segmentNewUserTrack{
-// 		userId:    userId,
-// 		userEmail: user.Email,
-// 	}
-// }
-
-// func (t *segmentNewUserTrack) getUserId() string {
-// 	return t.userId
-// }
-
-// func (t *segmentNewUserTrack) getEvent() SegmentEvent {
-// 	return NewUser
-// }
-
-// func (t *segmentNewUserTrack) getProperties() segment.Properties {
-// 	return segment.NewProperties().Set("email", t.userEmail)
-// }
-
-// type segmentRedeployViaWebhookTrack struct {
-// 	userId     string
-// 	repository string
-// }
-
-// // CreateSegmentRedeployViaWebhookTrack creates a track of type "Triggered Re-deploy via Webhook", which
-// // tracks whenever a repository is redeployed via webhook call
-// func CreateSegmentRedeployViaWebhookTrack(userId string, repository string) *segmentRedeployViaWebhookTrack {
-// 	return &segmentRedeployViaWebhookTrack{
-// 		userId:     userId,
-// 		repository: repository,
-// 	}
-// }
-
-// func (t *segmentRedeployViaWebhookTrack) getUserId() string {
-// 	return t.userId
-// }
-
-// func (t *segmentRedeployViaWebhookTrack) getEvent() SegmentEvent {
-// 	return RedeployViaWebhook
-// }
-
-// func (t *segmentRedeployViaWebhookTrack) getProperties() segment.Properties {
-// 	return segment.NewProperties().Set("repository", t.repository)
-// }
-
-// type segmentNewProjectEventTrack struct {
-// 	userId   string
-// 	projId   string
-// 	projName string
-// }
-
-// // NewProjectEventOpts are the parameters for creating a "New Project Event" track
-// type NewProjectEventOpts struct {
-// 	UserID   string
-// 	ProjID   string
-// 	ProjName string
-// }
-
-// // CreateSegmentNewProjectEvent creates a track of type "New Project Event", which
-// // tracks whenever a cluster is newly provisioned, connected, or destroyed.
-// func CreateSegmentNewProjectEvent(opts *NewProjectEventOpts) *segmentNewProjectEventTrack {
-// 	return &segmentNewProjectEventTrack{
-// 		userId:   opts.UserID,
-// 		projId:   opts.ProjID,
-// 		projName: opts.ProjName,
-// 	}
-// }
-
-// func (t *segmentNewProjectEventTrack) getUserId() string {
-// 	return t.userId
-// }
-
-// func (t *segmentNewProjectEventTrack) getEvent() SegmentEvent {
-// 	return NewProjectEvent
-// }
-
-// func (t *segmentNewProjectEventTrack) getProperties() segment.Properties {
-// 	return segment.NewProperties().
-// 		Set("Project ID", t.projId).
-// 		Set("Project Name", t.projName)
-// }
-
-// type segmentNewClusterEventTrack struct {
-// 	userId      string
-// 	projId      string
-// 	clusterName string
-// 	clusterType string // EKS, DOKS, or GKE
-// 	eventType   string // connected, provisioned, or destroyed
-// }
-
-// // NewClusterEventOpts are the parameters for creating a "New Cluster Event" track
-// type NewClusterEventOpts struct {
-// 	UserId      string
-// 	ProjId      string
-// 	ClusterName string
-// 	ClusterType string // EKS, DOKS, or GKE
-// 	EventType   string // connected, provisioned, or destroyed
-// }
-
-// // CreateSegmentNewClusterEvent creates a track of type "New Cluster Event", which
-// // tracks whenever a cluster is newly provisioned, connected, or destroyed.
-// func CreateSegmentNewClusterEvent(opts *NewClusterEventOpts) *segmentNewClusterEventTrack {
-// 	return &segmentNewClusterEventTrack{
-// 		userId:      opts.UserId,
-// 		projId:      opts.ProjId,
-// 		clusterName: opts.ClusterName,
-// 		clusterType: opts.ClusterType,
-// 		eventType:   opts.EventType,
-// 	}
-// }
-
-// func (t *segmentNewClusterEventTrack) getUserId() string {
-// 	return t.userId
-// }
-
-// func (t *segmentNewClusterEventTrack) getEvent() SegmentEvent {
-// 	return NewClusterEvent
-// }
-
-// func (t *segmentNewClusterEventTrack) getProperties() segment.Properties {
-// 	return segment.NewProperties().Set("Project ID", t.projId).Set("Cluster Name", t.clusterName).Set("Cluster Type", t.clusterType).Set("Event Type", t.eventType)
-// }

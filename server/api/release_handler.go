@@ -1289,7 +1289,7 @@ func (app *App) HandleReleaseDeployWebhook(w http.ResponseWriter, r *http.Reques
 
 	userID, _ := app.getUserIDFromRequest(r)
 
-	app.analyticsClient.Track(analytics.ApplicationDeploymentWebhookTrack(&analytics.ApplicationDeploymentWebhookTrackOpts{
+	app.AnalyticsClient.Track(analytics.ApplicationDeploymentWebhookTrack(&analytics.ApplicationDeploymentWebhookTrackOpts{
 		ImageURI: fmt.Sprintf("%v", repository),
 		ApplicationScopedTrackOpts: analytics.GetApplicationScopedTrackOpts(
 			userID,

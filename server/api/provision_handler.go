@@ -20,6 +20,7 @@ import (
 // container pod
 func (app *App) HandleProvisionTestInfra(w http.ResponseWriter, r *http.Request) {
 	projID, err := strconv.ParseUint(chi.URLParam(r, "project_id"), 0, 64)
+	userID, err := app.getUserIDFromRequest(r)
 
 	if err != nil || projID == 0 {
 		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
@@ -43,6 +44,8 @@ func (app *App) HandleProvisionTestInfra(w http.ResponseWriter, r *http.Request)
 		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
 		return
 	}
+
+	infra.CreatedByUserID = userID
 
 	// handle write to the database
 	infra, err = app.Repo.Infra.CreateInfra(infra)
@@ -145,6 +148,7 @@ func (app *App) HandleDestroyTestInfra(w http.ResponseWriter, r *http.Request) {
 // HandleProvisionAWSECRInfra provisions a new aws ECR instance for a project
 func (app *App) HandleProvisionAWSECRInfra(w http.ResponseWriter, r *http.Request) {
 	projID, err := strconv.ParseUint(chi.URLParam(r, "project_id"), 0, 64)
+	userID, err := app.getUserIDFromRequest(r)
 
 	if err != nil || projID == 0 {
 		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
@@ -174,6 +178,8 @@ func (app *App) HandleProvisionAWSECRInfra(w http.ResponseWriter, r *http.Reques
 		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
 		return
 	}
+
+	infra.CreatedByUserID = userID
 
 	// handle write to the database
 	infra, err = app.Repo.Infra.CreateInfra(infra)
@@ -216,6 +222,14 @@ func (app *App) HandleProvisionAWSECRInfra(w http.ResponseWriter, r *http.Reques
 	}
 
 	app.Logger.Info().Msgf("New aws ecr infra created: %d", infra.ID)
+
+	app.AnalyticsClient.Track(analytics.RegistryProvisioningStartTrack(
+		&analytics.RegistryProvisioningStartTrackOpts{
+			ProjectScopedTrackOpts: analytics.GetProjectScopedTrackOpts(userID, uint(projID)),
+			RegistryType:           models.InfraECR,
+			InfraID:                infra.ID,
+		},
+	))
 
 	w.WriteHeader(http.StatusCreated)
 
@@ -334,6 +348,8 @@ func (app *App) HandleProvisionAWSEKSInfra(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
+	infra.CreatedByUserID = userID
+
 	// handle write to the database
 	infra, err = app.Repo.Infra.CreateInfra(infra)
 
@@ -377,10 +393,11 @@ func (app *App) HandleProvisionAWSEKSInfra(w http.ResponseWriter, r *http.Reques
 
 	app.Logger.Info().Msgf("New aws eks infra created: %d", infra.ID)
 
-	app.analyticsClient.Track(analytics.ClusterProvisioningStartTrack(
+	app.AnalyticsClient.Track(analytics.ClusterProvisioningStartTrack(
 		&analytics.ClusterProvisioningStartTrackOpts{
 			ProjectScopedTrackOpts: analytics.GetProjectScopedTrackOpts(userID, uint(projID)),
-			ClusterType:            "EKS",
+			ClusterType:            models.InfraEKS,
+			InfraID:                infra.ID,
 		},
 	))
 
@@ -472,6 +489,7 @@ func (app *App) HandleDestroyAWSEKSInfra(w http.ResponseWriter, r *http.Request)
 // HandleProvisionGCPGCRInfra enables GCR for a project
 func (app *App) HandleProvisionGCPGCRInfra(w http.ResponseWriter, r *http.Request) {
 	projID, err := strconv.ParseUint(chi.URLParam(r, "project_id"), 0, 64)
+	userID, err := app.getUserIDFromRequest(r)
 
 	if err != nil || projID == 0 {
 		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
@@ -501,6 +519,8 @@ func (app *App) HandleProvisionGCPGCRInfra(w http.ResponseWriter, r *http.Reques
 		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
 		return
 	}
+
+	infra.CreatedByUserID = userID
 
 	// handle write to the database
 	infra, err = app.Repo.Infra.CreateInfra(infra)
@@ -542,6 +562,14 @@ func (app *App) HandleProvisionGCPGCRInfra(w http.ResponseWriter, r *http.Reques
 	}
 
 	app.Logger.Info().Msgf("New gcp gcr infra created: %d", infra.ID)
+
+	app.AnalyticsClient.Track(analytics.RegistryProvisioningStartTrack(
+		&analytics.RegistryProvisioningStartTrackOpts{
+			ProjectScopedTrackOpts: analytics.GetProjectScopedTrackOpts(userID, uint(projID)),
+			RegistryType:           models.InfraGCR,
+			InfraID:                infra.ID,
+		},
+	))
 
 	w.WriteHeader(http.StatusCreated)
 
@@ -587,6 +615,8 @@ func (app *App) HandleProvisionGCPGKEInfra(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
+	infra.CreatedByUserID = userID
+
 	// handle write to the database
 	infra, err = app.Repo.Infra.CreateInfra(infra)
 
@@ -629,10 +659,11 @@ func (app *App) HandleProvisionGCPGKEInfra(w http.ResponseWriter, r *http.Reques
 
 	app.Logger.Info().Msgf("New gcp gke infra created: %d", infra.ID)
 
-	app.analyticsClient.Track(analytics.ClusterProvisioningStartTrack(
+	app.AnalyticsClient.Track(analytics.ClusterProvisioningStartTrack(
 		&analytics.ClusterProvisioningStartTrackOpts{
 			ProjectScopedTrackOpts: analytics.GetProjectScopedTrackOpts(userID, uint(projID)),
-			ClusterType:            "GKE",
+			ClusterType:            models.InfraGKE,
+			InfraID:                infra.ID,
 		},
 	))
 
@@ -767,6 +798,7 @@ func (app *App) HandleGetProvisioningLogs(w http.ResponseWriter, r *http.Request
 // HandleProvisionDODOCRInfra provisions a new digitalocean DOCR instance for a project
 func (app *App) HandleProvisionDODOCRInfra(w http.ResponseWriter, r *http.Request) {
 	projID, err := strconv.ParseUint(chi.URLParam(r, "project_id"), 0, 64)
+	userID, err := app.getUserIDFromRequest(r)
 
 	if err != nil || projID == 0 {
 		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
@@ -796,6 +828,8 @@ func (app *App) HandleProvisionDODOCRInfra(w http.ResponseWriter, r *http.Reques
 		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
 		return
 	}
+
+	infra.CreatedByUserID = userID
 
 	// handle write to the database
 	infra, err = app.Repo.Infra.CreateInfra(infra)
@@ -840,6 +874,14 @@ func (app *App) HandleProvisionDODOCRInfra(w http.ResponseWriter, r *http.Reques
 	}
 
 	app.Logger.Info().Msgf("New do docr infra created: %d", infra.ID)
+
+	app.AnalyticsClient.Track(analytics.RegistryProvisioningStartTrack(
+		&analytics.RegistryProvisioningStartTrackOpts{
+			ProjectScopedTrackOpts: analytics.GetProjectScopedTrackOpts(userID, uint(projID)),
+			RegistryType:           models.InfraDOCR,
+			InfraID:                infra.ID,
+		},
+	))
 
 	w.WriteHeader(http.StatusCreated)
 
@@ -960,6 +1002,8 @@ func (app *App) HandleProvisionDODOKSInfra(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
+	infra.CreatedByUserID = userID
+
 	// handle write to the database
 	infra, err = app.Repo.Infra.CreateInfra(infra)
 
@@ -1004,10 +1048,11 @@ func (app *App) HandleProvisionDODOKSInfra(w http.ResponseWriter, r *http.Reques
 
 	app.Logger.Info().Msgf("New do doks infra created: %d", infra.ID)
 
-	app.analyticsClient.Track(analytics.ClusterProvisioningStartTrack(
+	app.AnalyticsClient.Track(analytics.ClusterProvisioningStartTrack(
 		&analytics.ClusterProvisioningStartTrackOpts{
 			ProjectScopedTrackOpts: analytics.GetProjectScopedTrackOpts(userID, uint(projID)),
-			ClusterType:            "DOKS",
+			ClusterType:            models.InfraDOKS,
+			InfraID:                infra.ID,
 		},
 	))
 

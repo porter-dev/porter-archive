@@ -15,15 +15,14 @@ const (
 	RegistryProvisioningError   SegmentEvent = "Registry Provisioning Error"
 	RegistryProvisioningSuccess SegmentEvent = "Registry Provisioning Success"
 
-	ClusterConnectedStart   SegmentEvent = "Cluster Connection Started"
-	ClusterConnectedError   SegmentEvent = "Cluster Connection Started"
-	ClusterConnectedSuccess SegmentEvent = "Cluster Connection Error"
+	ClusterConnectionStart   SegmentEvent = "Cluster Connection Started"
+	ClusterConnectionSuccess SegmentEvent = "Cluster Connection Success"
 
-	RegistryConnectedSuccess SegmentEvent = "Registry Connection Success"
-	RegistryConnectedError   SegmentEvent = "Registry Connection Error"
+	RegistryConnectionStart   SegmentEvent = "Registry Connection Started"
+	RegistryConnectionSuccess SegmentEvent = "Registry Connection Success"
 
-	GithubConnectedSuccess SegmentEvent = "Github Connection Success"
-	GithubConnectedError   SegmentEvent = "Github Connection Error"
+	GithubConnectionStart   SegmentEvent = "Github Connection Started"
+	GithubConnectionSuccess SegmentEvent = "Github Connection Success"
 
 	// launch flow
 	ApplicationLaunch            SegmentEvent = "New Application Launched"

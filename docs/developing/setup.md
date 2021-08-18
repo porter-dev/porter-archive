@@ -32,33 +32,13 @@ While docker is an awesome way of getting started as it simulates the real envir
 
 In order to decrease the complexity of all the environment, you can just run the development environment locally without docker.
 
-To do so you should follow the next steps:
+After cloning the repo you should only execute `make start-dev` this will ask you to install the dependencies and also run the server and the frontend in a single console.
+It will also create some env files with default values that will simplify the process!
 
-1- First, inside the folder where you cloned the repo (e.g: /home/user/porter) run `make setup`. This should download all the modules for go to work and install all the dependencies that the frontend needs to work!
+### Disclaimer
 
-2- After installing everything you should update the env variables:
-The `/dashboard/.env` should look like this:
-
-```
-NODE_ENV=development
-DEV_SERVER_PORT=8081 # Tell the webpack dev server in wich port we wanna run, it defaults to 8080 but we have to be carefull this is not the same port as the backend
-ENABLE_PROXY=true # Usually we would use nginx, but for this environment we're going to enable webpack-dev-server proxy
-API_SERVER=http://localhost:8080 # API server url, this url will be used for the proxy to redirect all /api calls
-```
-
-And the `/docker/.env` variables should look like this:
-
-```
-SERVER_URL=http://localhost:8080
-SERVER_PORT=8080
-SQL_LITE=true
-SQL_LITE_PATH=./porter.db
-REDIS_ENABLED=false
-```
-
-In this case SQLLite is the simplest solution for getting the environment running, but you can enable postgres or redis if you want!
-
-3- Open two terminals and run `make run-server` and in the second one `make run-frontend`. This should get everything up and running!
+For the command `make start-dev` to work, you should be working under a bash environment (WSL on windows, Linux or MacOS), also you will need go, node and npm installed
+for it to work.
 
 ### Disclaimer
 

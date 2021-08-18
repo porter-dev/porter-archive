@@ -95,9 +95,9 @@ func (app *App) HandleGoogleOAuthCallback(w http.ResponseWriter, r *http.Request
 	}
 
 	// send to segment
-	app.analyticsClient.Identify(analytics.CreateSegmentIdentifyUser(user))
+	app.AnalyticsClient.Identify(analytics.CreateSegmentIdentifyUser(user))
 
-	app.analyticsClient.Track(analytics.UserCreateTrack(&analytics.UserCreateTrackOpts{
+	app.AnalyticsClient.Track(analytics.UserCreateTrack(&analytics.UserCreateTrackOpts{
 		UserScopedTrackOpts: analytics.GetUserScopedTrackOpts(user.ID),
 	}))
 

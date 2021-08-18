@@ -6,6 +6,7 @@ import (
 	"strconv"
 
 	"github.com/go-chi/chi"
+	"github.com/porter-dev/porter/internal/analytics"
 	"github.com/porter-dev/porter/internal/forms"
 	"github.com/porter-dev/porter/internal/kubernetes"
 	"github.com/porter-dev/porter/internal/kubernetes/domain"
@@ -286,6 +287,13 @@ func (app *App) HandleCreateProjectClusterCandidates(w http.ResponseWriter, r *h
 			return
 		}
 
+		app.AnalyticsClient.Track(analytics.ClusterConnectionStartTrack(
+			&analytics.ClusterConnectionStartTrackOpts{
+				ProjectScopedTrackOpts: analytics.GetProjectScopedTrackOpts(userID, uint(projID)),
+				ClusterCandidateID:     cc.ID,
+			},
+		))
+
 		app.Logger.Info().Msgf("New cluster candidate created: %d", cc.ID)
 
 		// if the ClusterCandidate does not have any actions to perform, create the Cluster
@@ -328,6 +336,13 @@ func (app *App) HandleCreateProjectClusterCandidates(w http.ResponseWriter, r *h
 			}
 
 			app.Logger.Info().Msgf("New cluster created: %d", cluster.ID)
+
+			app.AnalyticsClient.Track(analytics.ClusterConnectionSuccessTrack(
+				&analytics.ClusterConnectionSuccessTrackOpts{
+					ClusterScopedTrackOpts: analytics.GetClusterScopedTrackOpts(userID, uint(projID), cluster.ID),
+					ClusterCandidateID:     cc.ID,
+				},
+			))
 		}
 
 		extClusters = append(extClusters, cc.Externalize())
@@ -436,6 +451,13 @@ func (app *App) HandleResolveClusterCandidate(w http.ResponseWriter, r *http.Req
 	}
 
 	app.Logger.Info().Msgf("New cluster created: %d", cluster.ID)
+
+	app.AnalyticsClient.Track(analytics.ClusterConnectionSuccessTrack(
+		&analytics.ClusterConnectionSuccessTrackOpts{
+			ClusterScopedTrackOpts: analytics.GetClusterScopedTrackOpts(userID, uint(projID), cluster.ID),
+			ClusterCandidateID:     uint(candID),
+		},
+	))
 
 	clusterExt := cluster.Externalize()
 

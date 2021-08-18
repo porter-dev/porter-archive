@@ -1017,8 +1017,27 @@ func (app *App) HandleUpgradeRelease(w http.ResponseWriter, r *http.Request) {
 		conf.Chart = chart
 	}
 
+	rel, upgradeErr := agent.UpgradeRelease(conf, form.Values, app.DOConf)
+
 	slackInts, _ := app.Repo.SlackIntegration.ListSlackIntegrationsByProjectID(uint(projID))
-	notifier := slack.NewSlackNotifier(slackInts...)
+
+	clusterID, err := strconv.ParseUint(vals["cluster_id"][0], 10, 64)
+	release, _ := app.Repo.Release.ReadRelease(uint(clusterID), name, form.Namespace)
+
+	var notifConf *models.NotificationConfigExternal
+	notifConf = nil
+	if release != nil && release.NotificationConfig != 0 {
+		conf, err := app.Repo.NotificationConfig.ReadNotificationConfig(release.NotificationConfig)
+
+		if err != nil {
+			app.handleErrorInternal(err, w)
+			return
+		}
+
+		notifConf = conf.Externalize()
+	}
+
+	notifier := slack.NewSlackNotifier(notifConf, slackInts...)
 
 	notifyOpts := &slack.NotifyOpts{
 		ProjectID:   uint(projID),
@@ -1035,18 +1054,16 @@ func (app *App) HandleUpgradeRelease(w http.ResponseWriter, r *http.Request) {
 		) + fmt.Sprintf("?project_id=%d", uint(projID)),
 	}
 
-	rel, err := agent.UpgradeRelease(conf, form.Values, app.DOConf)
-
-	if err != nil {
+	if upgradeErr != nil {
 		notifyOpts.Status = slack.StatusFailed
-		notifyOpts.Info = err.Error()
+		notifyOpts.Info = upgradeErr.Error()
 
 		slackErr := notifier.Notify(notifyOpts)
 		fmt.Println("SLACK ERROR IS", slackErr)
 
 		app.sendExternalError(err, http.StatusInternalServerError, HTTPError{
 			Code:   ErrReleaseDeploy,
-			Errors: []string{err.Error()},
+			Errors: []string{upgradeErr.Error()},
 		}, w)
 
 		return
@@ -1059,8 +1076,6 @@ func (app *App) HandleUpgradeRelease(w http.ResponseWriter, r *http.Request) {
 
 	// update the github actions env if the release exists and is built from source
 	if cName := rel.Chart.Metadata.Name; cName == "job" || cName == "web" || cName == "worker" {
-		clusterID, err := strconv.ParseUint(vals["cluster_id"][0], 10, 64)
-
 		if err != nil {
 			app.sendExternalError(err, http.StatusInternalServerError, HTTPError{
 				Code:   ErrReleaseReadData,
@@ -1069,8 +1084,6 @@ func (app *App) HandleUpgradeRelease(w http.ResponseWriter, r *http.Request) {
 
 			return
 		}
-
-		release, err := app.Repo.Release.ReadRelease(uint(clusterID), name, rel.Namespace)
 
 		if release != nil {
 			// update image repo uri if changed
@@ -1250,7 +1263,21 @@ func (app *App) HandleReleaseDeployWebhook(w http.ResponseWriter, r *http.Reques
 	}
 
 	slackInts, _ := app.Repo.SlackIntegration.ListSlackIntegrationsByProjectID(uint(form.ReleaseForm.Cluster.ProjectID))
-	notifier := slack.NewSlackNotifier(slackInts...)
+
+	var notifConf *models.NotificationConfigExternal
+	notifConf = nil
+	if release != nil && release.NotificationConfig != 0 {
+		conf, err := app.Repo.NotificationConfig.ReadNotificationConfig(release.NotificationConfig)
+
+		if err != nil {
+			app.handleErrorInternal(err, w)
+			return
+		}
+
+		notifConf = conf.Externalize()
+	}
+
+	notifier := slack.NewSlackNotifier(notifConf, slackInts...)
 
 	notifyOpts := &slack.NotifyOpts{
 		ProjectID:   uint(form.ReleaseForm.Cluster.ProjectID),

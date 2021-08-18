@@ -14,6 +14,7 @@ import _ from "lodash";
 import CopyToClipboard from "components/CopyToClipboard";
 import useAuth from "shared/auth/useAuth";
 import Loading from "components/Loading";
+import NotificationSettingsSection from "./NotificationSettingsSection";
 
 type PropsType = {
   currentChart: ChartType;
@@ -258,6 +259,7 @@ const SettingsSection: React.FC<PropsType> = ({
       {!loadingWebhookToken ? (
         <StyledSettingsSection showSource={showSource}>
           {renderWebhookSection()}
+          <NotificationSettingsSection currentChart={currentChart} />
           <Heading>Additional Settings</Heading>
           <Button color="#b91133" onClick={() => setShowDeleteOverlay(true)}>
             Delete {currentChart.name}

@@ -40,6 +40,7 @@ func (app *App) HandleGenerateGitAction(w http.ResponseWriter, r *http.Request) 
 			Code:   ErrReleaseReadData,
 			Errors: []string{"release not found"},
 		}, w)
+		return
 	}
 
 	form := &forms.CreateGitAction{

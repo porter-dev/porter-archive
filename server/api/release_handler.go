@@ -1017,12 +1017,12 @@ func (app *App) HandleUpgradeRelease(w http.ResponseWriter, r *http.Request) {
 		conf.Chart = chart
 	}
 
-	rel, err := agent.UpgradeRelease(conf, form.Values, app.DOConf)
+	rel, upgradeErr := agent.UpgradeRelease(conf, form.Values, app.DOConf)
 
 	slackInts, _ := app.Repo.SlackIntegration.ListSlackIntegrationsByProjectID(uint(projID))
 
 	clusterID, err := strconv.ParseUint(vals["cluster_id"][0], 10, 64)
-	release, _ := app.Repo.Release.ReadRelease(uint(clusterID), name, rel.Namespace)
+	release, _ := app.Repo.Release.ReadRelease(uint(clusterID), name, form.Namespace)
 
 	var notifConf *models.NotificationConfigExternal
 	notifConf = nil
@@ -1054,16 +1054,16 @@ func (app *App) HandleUpgradeRelease(w http.ResponseWriter, r *http.Request) {
 		) + fmt.Sprintf("?project_id=%d", uint(projID)),
 	}
 
-	if err != nil {
+	if upgradeErr != nil {
 		notifyOpts.Status = slack.StatusFailed
-		notifyOpts.Info = err.Error()
+		notifyOpts.Info = upgradeErr.Error()
 
 		slackErr := notifier.Notify(notifyOpts)
 		fmt.Println("SLACK ERROR IS", slackErr)
 
 		app.sendExternalError(err, http.StatusInternalServerError, HTTPError{
 			Code:   ErrReleaseDeploy,
-			Errors: []string{err.Error()},
+			Errors: []string{upgradeErr.Error()},
 		}, w)
 
 		return

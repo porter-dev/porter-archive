@@ -25,7 +25,8 @@ Let's get started!
 > If you specify a folder in your repo to use as source, Porter will autodetect the language runtime and build your application using Cloud Native Buildpacks. For more details refer to our guide on [requirements for auto build](https://docs.getporter.dev/docs/auto-deploy-requirements).
 
 4. Click **Continue** once your source has been connected. This will take you to the **GitHub Actions** page, where you can see a workflow that will be created in the selected repository for automatically deploying new changes as they are pushed.  
-You can skip the creation of this workflow using the **Create workflow file** toggle, in case you wish to manually add the [`porter-update-action`](https://github.com/porter-dev/porter-update-action) to a different workflow of your choice.
+You can skip the creation of this workflow using the **Create workflow file** toggle, in case you wish to manually add the [`porter-update-action`](https://github.com/porter-dev/porter-update-action) to a different workflow of your choice.  
+You can proceed further by clicking **Continue** after this step.
 
 
 ![GitHub Actions page](https://user-images.githubusercontent.com/44864521/129893348-44d63d54-115b-436b-bc41-48c6d8c94dc2.png)

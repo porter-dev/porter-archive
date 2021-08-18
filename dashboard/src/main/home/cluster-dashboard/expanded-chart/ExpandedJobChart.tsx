@@ -534,6 +534,18 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
     this.setupCronJobWebsocket(currentChart);
   }
 
+  componentDidUpdate(
+    prevProps: Readonly<PropsType>,
+    prevState: Readonly<StateType>
+  ) {
+    const { devOpsMode } = this.state;
+
+    if (devOpsMode !== prevState.devOpsMode) {
+      this.updateTabs();
+      localStorage.setItem("devOpsMode", devOpsMode.toString());
+    }
+  }
+
   handleUninstallChart = () => {
     let { currentProject, currentCluster, setCurrentOverlay } = this.context;
     let { currentChart } = this.state;

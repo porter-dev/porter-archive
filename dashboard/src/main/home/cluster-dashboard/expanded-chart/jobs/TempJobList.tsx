@@ -24,7 +24,10 @@ const TempJobList: React.FC<Props> = (props) => {
   let saveButton = (
     <ButtonWrapper>
       <SaveButton
-        onClick={() => props.handleSaveValues(getSubmitValues(), true)}
+        onClick={() => {
+          console.log(getSubmitValues());
+          props.handleSaveValues(getSubmitValues(), true);
+        }}
         status={props.saveValuesStatus}
         makeFlush={true}
         clearPosition={true}

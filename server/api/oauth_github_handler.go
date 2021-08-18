@@ -131,8 +131,11 @@ func (app *App) HandleGithubOAuthCallback(w http.ResponseWriter, r *http.Request
 		}
 
 		// send to segment
-		app.analyticsClient.Identify(analytics.CreateSegmentIdentifyNewUser(user, true))
-		app.analyticsClient.Track(analytics.CreateSegmentNewUserTrack(user))
+		app.analyticsClient.Identify(analytics.CreateSegmentIdentifyUser(user))
+
+		app.analyticsClient.Track(analytics.UserCreateTrack(&analytics.UserCreateTrackOpts{
+			UserScopedTrackOpts: analytics.GetUserScopedTrackOpts(user.ID),
+		}))
 
 		// log the user in
 		app.Logger.Info().Msgf("New user created: %d", user.ID)

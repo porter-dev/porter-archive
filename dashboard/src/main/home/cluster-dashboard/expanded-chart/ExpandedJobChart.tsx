@@ -16,6 +16,7 @@ import TempJobList from "./jobs/TempJobList";
 import SettingsSection from "./SettingsSection";
 import PorterFormWrapper from "components/porter-form/PorterFormWrapper";
 import { withAuth, WithAuthProps } from "shared/auth/AuthorizationHoc";
+import ValuesYaml from "./ValuesYaml";
 
 type PropsType = WithAuthProps & {
   namespace: string;
@@ -39,6 +40,7 @@ type StateType = {
   deleting: boolean;
   saveValuesStatus: string | null;
   formData: any;
+  devOpsMode: boolean;
 };
 
 class ExpandedJobChart extends Component<PropsType, StateType> {
@@ -56,6 +58,7 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
     deleting: false,
     saveValuesStatus: null as string | null,
     formData: {} as any,
+    devOpsMode: localStorage.getItem("devOpsMode") === "true",
   };
 
   // Retrieve full chart data (includes form and values)
@@ -372,6 +375,12 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
       });
   };
 
+  toggleDevOpsMode = () => {
+    this.setState((prevState) => ({
+      devOpsMode: !prevState.devOpsMode,
+    }));
+  };
+
   getJobs = async (chart: ChartType) => {
     let { currentCluster, currentProject, setCurrentError } = this.context;
 
@@ -443,6 +452,14 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
             />
           </TabWrapper>
         );
+      case "values":
+        return (
+          <ValuesYaml
+            currentChart={this.state.currentChart}
+            refreshChart={() => this.refreshChart(0)}
+            disabled={!this.props.isAuthorized("job", "", ["get", "update"])}
+          />
+        );
       case "settings":
         return (
           this.props.isAuthorized("job", "", ["get", "delete"]) && (
@@ -478,6 +495,11 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
       });
     }
     let rightTabOptions = [] as any[];
+
+    if (this.state.devOpsMode) {
+      rightTabOptions.push({ label: "Helm Values", value: "values" });
+    }
+
     if (this.props.isAuthorized("job", "", ["get", "delete"])) {
       rightTabOptions.push({ label: "Settings", value: "settings" });
     }
@@ -602,6 +624,15 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
                   rightTabOptions={this.state.rightTabOptions}
                   saveValuesStatus={this.state.saveValuesStatus}
                   saveButtonText="Save Config"
+                  includeHiddenFields
+                  addendum={
+                    <TabButton
+                      onClick={this.toggleDevOpsMode}
+                      devOpsMode={this.state.devOpsMode}
+                    >
+                      <i className="material-icons">offline_bolt</i> DevOps Mode
+                    </TabButton>
+                  }
                 />
               )}
             </BodyWrapper>
@@ -791,5 +822,34 @@ const StyledExpandedChart = styled.div`
     to {
       opacity: 1;
     }
+  }
+`;
+
+const TabButton = styled.div`
+  position: absolute;
+  right: 0px;
+  height: 30px;
+  background: linear-gradient(to right, #20222700, #202227 20%);
+  padding-left: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  color: ${(props: { devOpsMode: boolean }) =>
+    props.devOpsMode ? "#aaaabb" : "#aaaabb55"};
+  margin-left: 35px;
+  border-radius: 20px;
+  text-shadow: 0px 0px 8px
+    ${(props: { devOpsMode: boolean }) =>
+      props.devOpsMode ? "#ffffff66" : "none"};
+  cursor: pointer;
+  :hover {
+    color: ${(props: { devOpsMode: boolean }) =>
+      props.devOpsMode ? "" : "#aaaabb99"};
+  }
+
+  > i {
+    font-size: 17px;
+    margin-right: 9px;
   }
 `;

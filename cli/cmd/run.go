@@ -14,6 +14,7 @@ import (
 	"github.com/spf13/cobra"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/kubectl/pkg/util/term"
 
 	"k8s.io/apimachinery/pkg/runtime"
@@ -277,6 +278,37 @@ func executeRun(config *PorterRunSharedConfig, namespace, name, container string
 	return nil
 }
 
+func waitForPod(config *PorterRunSharedConfig, pod *v1.Pod) error {
+	watch, err := config.Clientset.CoreV1().Pods(pod.Namespace).Watch(context.Background(), metav1.ListOptions{
+		FieldSelector: fields.OneTermEqualSelector("metadata.name", pod.Name).String(),
+	})
+	if err != nil {
+		return err
+	}
+	defer watch.Stop()
+	for {
+		select {
+		case evt := <-watch.ResultChan():
+			pod, ok := evt.Object.(*v1.Pod)
+			if !ok {
+				return fmt.Errorf("unexpected object type: %T", evt.Object)
+			}
+			ready := false
+			conditions := pod.Status.Conditions
+			for i := range conditions {
+				if conditions[i].Type == v1.PodReady {
+					ready = pod.Status.Conditions[i].Status == v1.ConditionTrue
+				}
+			}
+			if ready {
+				return nil
+			}
+		case <-time.After(time.Second * 30):
+			return fmt.Errorf("timed out waiting for pod")
+		}
+	}
+}
+
 func executeRunEphemeral(config *PorterRunSharedConfig, namespace, name, container string, args []string) error {
 	existing, err := getExistingPod(config, name, namespace)
 
@@ -285,20 +317,12 @@ func executeRunEphemeral(config *PorterRunSharedConfig, namespace, name, contain
 	}
 
 	newPod, err := createPodFromExisting(config, existing, args)
-
-	if err != nil {
-		return err
-	}
-
 	podName := newPod.ObjectMeta.Name
 
-	t := term.TTY{
-		In:  os.Stdin,
-		Out: os.Stdout,
-		Raw: true,
-	}
+	err = waitForPod(config, newPod)
 
-	fn := func() error {
+	if err == nil {
+		color.New(color.FgYellow).Println("Attempting connection to the container, this may take up to 10 seconds. If you don't see a command prompt, try pressing enter.")
 		req := config.RestClient.Post().
 			Resource("pods").
 			Name(podName).
@@ -310,31 +334,26 @@ func executeRunEphemeral(config *PorterRunSharedConfig, namespace, name, contain
 		req.Param("tty", "true")
 		req.Param("container", container)
 
-		exec, err := remotecommand.NewSPDYExecutor(config.RestConf, "POST", req.URL())
-
-		if err != nil {
-			return err
+		t := term.TTY{
+			In:  os.Stdin,
+			Out: os.Stdout,
+			Raw: true,
 		}
-
-		return exec.Stream(remotecommand.StreamOptions{
-			Stdin:  os.Stdin,
-			Stdout: os.Stdout,
-			Stderr: os.Stderr,
-			Tty:    true,
+		size := t.GetSize()
+		sizeQueue := t.MonitorSize(size)
+		err = t.Safe(func() error {
+			exec, err := remotecommand.NewSPDYExecutor(config.RestConf, "POST", req.URL())
+			if err != nil {
+				return err
+			}
+			return exec.Stream(remotecommand.StreamOptions{
+				Stdin:             os.Stdin,
+				Stdout:            os.Stdout,
+				Stderr:            os.Stderr,
+				Tty:               true,
+				TerminalSizeQueue: sizeQueue,
+			})
 		})
-	}
-
-	color.New(color.FgYellow).Println("Attempting connection to the container, this may take up to 10 seconds. If you don't see a command prompt, try pressing enter.")
-
-	for i := 0; i < 5; i++ {
-		err = t.Safe(fn)
-
-		if err == nil {
-			break
-		}
-
-		time.Sleep(2 * time.Second)
-
 	}
 
 	// ugly way to catch no TTY errors, such as when running command "echo \"hello\""

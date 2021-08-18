@@ -1,5 +1,5 @@
 import React, { useContext, useEffect, useState } from "react";
-import { RouteComponentProps, withRouter } from "react-router";
+import { RouteComponentProps } from "react-router";
 import { FullActionConfigType } from "../../../../shared/types";
 import api from "../../../../shared/api";
 import { Context } from "../../../../shared/Context";
@@ -14,8 +14,8 @@ type PropsType = RouteComponentProps & {
   name: string;
   fullActionConfig: FullActionConfigType;
   shouldCreateWorkflow: boolean;
-  setShouldCreateWorkflow: React.Dispatch<React.SetStateAction<boolean>>;
-  setPage: React.Dispatch<React.SetStateAction<string>>;
+  setShouldCreateWorkflow: (x: (prevState: boolean) => boolean) => void;
+  setPage: (x: string) => void;
 };
 
 const WorkflowPage: React.FC<PropsType> = (props) => {
@@ -87,6 +87,15 @@ const WorkflowPage: React.FC<PropsType> = (props) => {
       <Helper>
         You may copy the YAML to an existing workflow and uncheck this box to
         prevent Porter from creating a new workflow file.
+        <GitHubActionLink show={!props.shouldCreateWorkflow}>
+          The GitHub Action can be found at{" "}
+          <a
+            href="https://github.com/porter-dev/porter-update-action"
+            target="_blank"
+          >
+            porter-dev/porter-update-action
+          </a>
+        </GitHubActionLink>
       </Helper>
       <Buffer />
       <SaveButton
@@ -100,7 +109,7 @@ const WorkflowPage: React.FC<PropsType> = (props) => {
   );
 };
 
-export default withRouter(WorkflowPage);
+export default WorkflowPage;
 
 const StyledWorkflowPage = styled.div`
   position: relative;
@@ -167,4 +176,9 @@ const BackButton = styled.div`
     margin-right: 6px;
     margin-left: -2px;
   }
+`;
+
+const GitHubActionLink = styled.p`
+  visibility: ${(props: { show: boolean }) =>
+    props.show ? "visible" : "hidden"};
 `;

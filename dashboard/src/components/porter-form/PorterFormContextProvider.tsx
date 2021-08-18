@@ -220,23 +220,25 @@ export const PorterFormContextProvider: React.FC<Props> = (props) => {
   };
 
   /*
-    Takes in old form data and changes it to use newer fields
+    Takes in old form data and changes it to use newer fields and assigns ids
     For example, number-input becomes input with a setting that makes it
     a number input
    */
   const restructureToNewFields = (data: PorterFormData) => {
     return {
       ...data,
-      tabs: data?.tabs?.map((tab) => {
+      tabs: data?.tabs?.map((tab, i) => {
         return {
           ...tab,
-          sections: tab.sections?.map((section) => {
+          sections: tab.sections?.map((section, j) => {
             return {
               ...section,
               contents: section.contents
-                ?.map((field: any) => {
+                ?.map((field: any, k) => {
+                  const id = `${i}-${j}-${k}`;
                   if (field?.type == "number-input") {
                     return {
+                      id,
                       ...field,
                       type: "input",
                       settings: {
@@ -247,6 +249,7 @@ export const PorterFormContextProvider: React.FC<Props> = (props) => {
                   }
                   if (field?.type == "string-input") {
                     return {
+                      id,
                       ...field,
                       type: "input",
                       settings: {
@@ -257,6 +260,7 @@ export const PorterFormContextProvider: React.FC<Props> = (props) => {
                   }
                   if (field?.type == "string-input-password") {
                     return {
+                      id,
                       ...field,
                       type: "input",
                       settings: {
@@ -267,6 +271,7 @@ export const PorterFormContextProvider: React.FC<Props> = (props) => {
                   }
                   if (field?.type == "provider-select") {
                     return {
+                      id,
                       ...field,
                       type: "select",
                       settings: {
@@ -277,6 +282,7 @@ export const PorterFormContextProvider: React.FC<Props> = (props) => {
                   }
                   if (field?.type == "env-key-value-array") {
                     return {
+                      id,
                       ...field,
                       type: "key-value-array",
                       secretOption: true,
@@ -288,7 +294,10 @@ export const PorterFormContextProvider: React.FC<Props> = (props) => {
                     };
                   }
                   if (field?.type == "variable") return null;
-                  return field;
+                  return {
+                    id,
+                    ...field,
+                  };
                 })
                 .filter((x) => x != null),
             };
@@ -321,7 +330,6 @@ export const PorterFormContextProvider: React.FC<Props> = (props) => {
                 contents: section.contents?.map((field, k) => {
                   return {
                     ...field,
-                    id: `${i}-${j}-${k}`,
                   };
                 }),
               };
@@ -412,7 +420,7 @@ export const PorterFormContextProvider: React.FC<Props> = (props) => {
     data?.tabs?.map((tab) =>
       tab.sections?.map((section) =>
         section.contents?.map((field) => {
-          if (finalFunctions[field?.type])
+          if (finalFunctions[field?.type]) {
             varList.push(
               finalFunctions[field?.type](
                 state.variables,
@@ -421,6 +429,7 @@ export const PorterFormContextProvider: React.FC<Props> = (props) => {
                 context
               )
             );
+          }
         })
       )
     );

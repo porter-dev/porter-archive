@@ -602,7 +602,8 @@ func (app *App) HandleGetReleaseAllPods(w http.ResponseWriter, r *http.Request) 
 }
 
 type GetJobStatusResult struct {
-	Status string `json:"status"`
+	Status    string       `json:"status,omitempty"`
+	StartTime *metav1.Time `json:"start_time,omitempty"`
 }
 
 // HandleGetJobStatus gets the status for a specific job
@@ -692,9 +693,7 @@ func (app *App) HandleGetJobStatus(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	res := &GetJobStatusResult{
-		Status: "succeeded",
-	}
+	res := &GetJobStatusResult{}
 
 	// get the most recent job
 	if len(jobs) > 0 {
@@ -707,6 +706,8 @@ func (app *App) HandleGetJobStatus(w http.ResponseWriter, r *http.Request) {
 				mostRecentJob = job
 			}
 		}
+
+		res.StartTime = mostRecentJob.Status.StartTime
 
 		// get the status of the most recent job
 		if mostRecentJob.Status.Succeeded >= 1 {
@@ -1017,12 +1018,12 @@ func (app *App) HandleUpgradeRelease(w http.ResponseWriter, r *http.Request) {
 		conf.Chart = chart
 	}
 
-	rel, err := agent.UpgradeRelease(conf, form.Values, app.DOConf)
+	rel, upgradeErr := agent.UpgradeRelease(conf, form.Values, app.DOConf)
 
 	slackInts, _ := app.Repo.SlackIntegration.ListSlackIntegrationsByProjectID(uint(projID))
 
 	clusterID, err := strconv.ParseUint(vals["cluster_id"][0], 10, 64)
-	release, _ := app.Repo.Release.ReadRelease(uint(clusterID), name, rel.Namespace)
+	release, _ := app.Repo.Release.ReadRelease(uint(clusterID), name, form.Namespace)
 
 	var notifConf *models.NotificationConfigExternal
 	notifConf = nil
@@ -1054,16 +1055,15 @@ func (app *App) HandleUpgradeRelease(w http.ResponseWriter, r *http.Request) {
 		) + fmt.Sprintf("?project_id=%d", uint(projID)),
 	}
 
-	if err != nil {
+	if upgradeErr != nil {
 		notifyOpts.Status = slack.StatusFailed
-		notifyOpts.Info = err.Error()
+		notifyOpts.Info = upgradeErr.Error()
 
-		slackErr := notifier.Notify(notifyOpts)
-		fmt.Println("SLACK ERROR IS", slackErr)
+		notifier.Notify(notifyOpts)
 
 		app.sendExternalError(err, http.StatusInternalServerError, HTTPError{
 			Code:   ErrReleaseDeploy,
-			Errors: []string{err.Error()},
+			Errors: []string{upgradeErr.Error()},
 		}, w)
 
 		return
@@ -1315,7 +1315,19 @@ func (app *App) HandleReleaseDeployWebhook(w http.ResponseWriter, r *http.Reques
 
 	notifier.Notify(notifyOpts)
 
-	app.analyticsClient.Track(analytics.CreateSegmentRedeployViaWebhookTrack("anonymous", repository.(string)))
+	userID, _ := app.getUserIDFromRequest(r)
+
+	app.AnalyticsClient.Track(analytics.ApplicationDeploymentWebhookTrack(&analytics.ApplicationDeploymentWebhookTrackOpts{
+		ImageURI: fmt.Sprintf("%v", repository),
+		ApplicationScopedTrackOpts: analytics.GetApplicationScopedTrackOpts(
+			userID,
+			release.ProjectID,
+			release.ClusterID,
+			release.Name,
+			release.Namespace,
+			rel.Chart.Metadata.Name,
+		),
+	}))
 
 	w.WriteHeader(http.StatusOK)
 }

@@ -13,6 +13,7 @@ gon*.hcl
 staging.sh
 *.crt
 *.key
+bin
 
 # Local .terraform directories
 **/.terraform/*

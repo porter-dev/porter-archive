@@ -1235,6 +1235,34 @@ func New(a *api.App) *chi.Mux {
 				),
 			)
 
+			r.Method(
+				"GET",
+				"/projects/{project_id}/releases/{name}/steps",
+				auth.DoesUserHaveProjectAccess(
+					auth.DoesUserHaveClusterAccess(
+						requestlog.NewHandler(a.HandleGetReleaseSteps, l),
+						mw.URLParam,
+						mw.QueryParam,
+					),
+					mw.URLParam,
+					mw.ReadAccess,
+				),
+			)
+
+			r.Method(
+				"POST",
+				"/projects/{project_id}/releases/{name}/steps",
+				auth.DoesUserHaveProjectAccess(
+					auth.DoesUserHaveClusterAccess(
+						requestlog.NewHandler(a.HandleUpdateReleaseSteps, l),
+						mw.URLParam,
+						mw.QueryParam,
+					),
+					mw.URLParam,
+					mw.ReadAccess,
+				),
+			)
+
 			// /api/projects/{project_id}/gitrepos routes
 			r.Method(
 				"GET",

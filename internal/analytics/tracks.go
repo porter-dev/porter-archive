@@ -186,6 +186,38 @@ func GithubConnectionSuccessTrack(opts *GithubConnectionSuccessTrackOpts) segmen
 	)
 }
 
+type ApplicationLaunchStartTrackOpts struct {
+	*ClusterScopedTrackOpts
+
+	FlowID string
+}
+
+func ApplicationLaunchStartTrack(opts *ApplicationLaunchStartTrackOpts) segmentTrack {
+	additionalProps := make(map[string]interface{})
+	additionalProps["flow_id"] = opts.FlowID
+
+	return getSegmentClusterTrack(
+		opts.ClusterScopedTrackOpts,
+		getDefaultSegmentTrack(additionalProps, ApplicationLaunchStart),
+	)
+}
+
+type ApplicationLaunchSuccessTrackOpts struct {
+	*ApplicationScopedTrackOpts
+
+	FlowID string
+}
+
+func ApplicationLaunchSuccessTrack(opts *ApplicationLaunchSuccessTrackOpts) segmentTrack {
+	additionalProps := make(map[string]interface{})
+	additionalProps["flow_id"] = opts.FlowID
+
+	return getSegmentApplicationTrack(
+		opts.ApplicationScopedTrackOpts,
+		getDefaultSegmentTrack(additionalProps, ApplicationLaunchSuccess),
+	)
+}
+
 type ApplicationDeploymentWebhookTrackOpts struct {
 	*ApplicationScopedTrackOpts
 
@@ -322,6 +354,7 @@ func (p segmentProperties) addRegistryProperties(opts *RegistryScopedTrackOpts) 
 func (p segmentProperties) addApplicationProperties(opts *ApplicationScopedTrackOpts) {
 	p["app_name"] = opts.Name
 	p["app_namespace"] = opts.Namespace
+	p["chart_name"] = opts.ChartName
 }
 
 func (p segmentProperties) addAdditionalProperties(props map[string]interface{}) {
@@ -455,9 +488,10 @@ type ApplicationScopedTrackOpts struct {
 
 	Name      string
 	Namespace string
+	ChartName string
 }
 
-func GetApplicationScopedTrackOpts(userID, projID, clusterID uint, name, namespace string) *ApplicationScopedTrackOpts {
+func GetApplicationScopedTrackOpts(userID, projID, clusterID uint, name, namespace, chartName string) *ApplicationScopedTrackOpts {
 	return &ApplicationScopedTrackOpts{
 		ClusterScopedTrackOpts: GetClusterScopedTrackOpts(userID, projID, clusterID),
 		Name:                   name,

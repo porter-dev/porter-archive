@@ -5,6 +5,13 @@ import (
 	"gorm.io/gorm"
 )
 
+// The roles available for a project
+const (
+	RoleAdmin     string = "admin"
+	RoleDeveloper string = "developer"
+	RoleViewer    string = "viewer"
+)
+
 // Role type that extends gorm.Model
 type Role struct {
 	gorm.Model

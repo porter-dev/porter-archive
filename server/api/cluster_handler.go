@@ -2,17 +2,22 @@ package api
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strconv"
 
 	"github.com/go-chi/chi"
+	"github.com/porter-dev/porter/internal/analytics"
 	"github.com/porter-dev/porter/internal/forms"
+	"github.com/porter-dev/porter/internal/kubernetes"
+	"github.com/porter-dev/porter/internal/kubernetes/domain"
 	"github.com/porter-dev/porter/internal/models"
 )
 
 // HandleCreateProjectCluster creates a new cluster
 func (app *App) HandleCreateProjectCluster(w http.ResponseWriter, r *http.Request) {
 	projID, err := strconv.ParseUint(chi.URLParam(r, "project_id"), 0, 64)
+	userID, err := app.getUserIDFromRequest(r)
 
 	if err != nil || projID == 0 {
 		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
@@ -52,6 +57,15 @@ func (app *App) HandleCreateProjectCluster(w http.ResponseWriter, r *http.Reques
 	}
 
 	app.Logger.Info().Msgf("New cluster created: %d", cluster.ID)
+	app.analyticsClient.Track(analytics.CreateSegmentNewClusterEvent(
+		&analytics.NewClusterEventOpts{
+			UserId:      fmt.Sprintf("%d", userID),
+			ProjId:      fmt.Sprintf("%d", projID),
+			ClusterName: cluster.Name,
+			ClusterType: "EKS",
+			EventType:   "connected",
+		},
+	))
 
 	w.WriteHeader(http.StatusCreated)
 
@@ -79,7 +93,33 @@ func (app *App) HandleReadProjectCluster(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	clusterExt := cluster.Externalize()
+	clusterExt := cluster.DetailedExternalize()
+
+	form := &forms.K8sForm{
+		OutOfClusterConfig: &kubernetes.OutOfClusterConfig{
+			Repo:              app.Repo,
+			DigitalOceanOAuth: app.DOConf,
+			Cluster:           cluster,
+		},
+	}
+
+	var agent *kubernetes.Agent
+
+	if app.ServerConf.IsTesting {
+		agent = app.TestAgents.K8sAgent
+	} else {
+		agent, _ = kubernetes.GetAgentOutOfClusterConfig(form.OutOfClusterConfig)
+	}
+
+	endpoint, found, ingressErr := domain.GetNGINXIngressServiceIP(agent.Clientset)
+
+	if found {
+		clusterExt.IngressIP = endpoint
+	}
+
+	if !found && ingressErr != nil {
+		clusterExt.IngressError = kubernetes.CatchK8sConnectionError(ingressErr).Externalize()
+	}
 
 	w.WriteHeader(http.StatusOK)
 
@@ -407,6 +447,15 @@ func (app *App) HandleResolveClusterCandidate(w http.ResponseWriter, r *http.Req
 	}
 
 	app.Logger.Info().Msgf("New cluster created: %d", cluster.ID)
+	app.analyticsClient.Track(analytics.CreateSegmentNewClusterEvent(
+		&analytics.NewClusterEventOpts{
+			UserId:      fmt.Sprintf("%d", userID),
+			ProjId:      fmt.Sprintf("%d", projID),
+			ClusterName: cluster.Name,
+			ClusterType: "",
+			EventType:   "connected",
+		},
+	))
 
 	clusterExt := cluster.Externalize()
 

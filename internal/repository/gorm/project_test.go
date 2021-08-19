@@ -113,6 +113,72 @@ func TestCreateProjectRole(t *testing.T) {
 	}
 }
 
+func TestUpdateProjectRole(t *testing.T) {
+	tester := &tester{
+		dbFileName: "./porter_update_proj_role.db",
+	}
+
+	setupTestEnv(tester, t)
+	initProject(tester, t)
+	initUser(tester, t)
+	initProjectRole(tester, t)
+	defer cleanup(tester, t)
+
+	role := &models.Role{
+		Kind:      models.RoleViewer,
+		UserID:    tester.initUsers[0].Model.ID,
+		ProjectID: tester.initProjects[0].Model.ID,
+	}
+
+	role, err := tester.repo.Project.UpdateProjectRole(tester.initProjects[0].Model.ID, role)
+
+	if err != nil {
+		t.Fatalf("%v\n", err)
+	}
+
+	proj, err := tester.repo.Project.ReadProject(tester.initProjects[0].Model.ID)
+
+	if err != nil {
+		t.Fatalf("%v\n", err)
+	}
+
+	// make sure IDs are correct
+	if proj.Model.ID != 1 {
+		t.Errorf("incorrect project ID: expected %d, got %d\n", 1, proj.Model.ID)
+	}
+
+	if len(proj.Roles) != 1 {
+		t.Fatalf("project roles incorrect length: expected %d, got %d\n", 1, len(proj.Roles))
+	}
+
+	if proj.Roles[0].Model.ID != 1 {
+		t.Fatalf("incorrect role ID: expected %d, got %d\n", 1, proj.Roles[0].Model.ID)
+	}
+
+	// make sure data is correct
+	expProj := &models.Project{
+		Name: "project-test",
+		Roles: []models.Role{
+			{
+				Kind:      models.RoleViewer,
+				UserID:    1,
+				ProjectID: 1,
+			},
+		},
+	}
+
+	copyProj := proj
+
+	// reset fields for reflect.DeepEqual
+	copyProj.Model = orm.Model{}
+	copyProj.Roles[0].Model = orm.Model{}
+
+	if diff := deep.Equal(copyProj, expProj); diff != nil {
+		t.Errorf("incorrect project")
+		t.Error(diff)
+	}
+}
+
 func TestListProjectsByUserID(t *testing.T) {
 	tester := &tester{
 		dbFileName: "./list_projects_user_id.db",
@@ -216,7 +282,7 @@ func TestReadProjectRole(t *testing.T) {
 
 func TestDeleteProject(t *testing.T) {
 	tester := &tester{
-		dbFileName: "./porter_create_proj_role.db",
+		dbFileName: "./porter_delete_proj.db",
 	}
 
 	setupTestEnv(tester, t)
@@ -234,5 +300,55 @@ func TestDeleteProject(t *testing.T) {
 
 	if err != gorm.ErrRecordNotFound {
 		t.Fatalf("read should have returned record not found: returned %v\n", err)
+	}
+}
+
+func TestDeleteProjectRole(t *testing.T) {
+	tester := &tester{
+		dbFileName: "./porter_delete_proj_role.db",
+	}
+
+	setupTestEnv(tester, t)
+	initProject(tester, t)
+	initUser(tester, t)
+	initProjectRole(tester, t)
+	defer cleanup(tester, t)
+
+	_, err := tester.repo.Project.DeleteProjectRole(tester.initProjects[0].Model.ID, tester.initUsers[0].Model.ID)
+
+	if err != nil {
+		t.Fatalf("%v\n", err)
+	}
+
+	// attempt to read the project and ensure that the error is gorm.ErrRecordNotFound
+	proj, err := tester.repo.Project.ReadProject(tester.initProjects[0].Model.ID)
+
+	if err != nil {
+		t.Fatalf("%v\n", err)
+	}
+
+	// make sure IDs are correct
+	if proj.Model.ID != 1 {
+		t.Errorf("incorrect project ID: expected %d, got %d\n", 1, proj.Model.ID)
+	}
+
+	if len(proj.Roles) != 0 {
+		t.Fatalf("project roles incorrect length: expected %d, got %d\n", 0, len(proj.Roles))
+	}
+
+	// make sure data is correct
+	expProj := &models.Project{
+		Name:  "project-test",
+		Roles: []models.Role{},
+	}
+
+	copyProj := proj
+
+	// reset fields for reflect.DeepEqual
+	copyProj.Model = orm.Model{}
+
+	if diff := deep.Equal(copyProj, expProj); diff != nil {
+		t.Errorf("incorrect project")
+		t.Error(diff)
 	}
 }

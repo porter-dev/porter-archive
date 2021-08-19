@@ -130,13 +130,16 @@ export default class Logs extends Component<PropsType, StateType> {
       this.ws = null;
       this.setState({ logs: [] });
       this.setupWebsocket();
+    } else if (this.state.currentTab == "System") {
+      this.retrieveEvents(selectedPod);
     }
-    this.retrieveEvents(selectedPod);
   };
 
   componentDidUpdate = (prevProps: any, prevState: any) => {
     if (prevState.currentTab !== this.state.currentTab) {
       let { selectedPod } = this.props;
+
+      this.ws?.close();
 
       this.setState({ logs: [] });
 
@@ -224,6 +227,32 @@ export default class Logs extends Component<PropsType, StateType> {
               System
             </Tab>
           </LogTabs>
+          <Options>
+            <Scroll
+              onClick={() => {
+                this.setState({ scroll: !this.state.scroll }, () => {
+                  if (this.state.scroll) {
+                    this.scrollToBottom(true);
+                  }
+                });
+              }}
+            >
+              <input
+                type="checkbox"
+                checked={this.state.scroll}
+                onChange={() => {}}
+              />
+              Scroll to Bottom
+            </Scroll>
+            <Refresh
+              onClick={() => {
+                this.refreshLogs();
+              }}
+            >
+              <i className="material-icons">autorenew</i>
+              Refresh
+            </Refresh>
+          </Options>
         </LogStreamAlt>
       );
     }
@@ -308,7 +337,7 @@ const Scroll = styled.div`
   }
 
   > input {
-    width; 18px;
+    width: 18px;
     margin-left: 10px;
     margin-right: 6px;
     pointer-events: none;
@@ -353,7 +382,7 @@ const Refresh = styled.div`
 const LogTabs = styled.div`
   width: 100%;
   height: 25px;
-  background: #202227;
+  background: #121318;
   display: flex;
   flex-direction: row;
   align-items: center;
@@ -383,7 +412,7 @@ const LogStream = styled.div`
   flex: 1;
   float: right;
   height: 100%;
-  background: #202227;
+  background: #121318;
   user-select: text;
   max-width: 65%;
   overflow-y: auto;

@@ -144,11 +144,11 @@ type TokenProjectID struct {
 	ProjectID uint `json:"project_id"`
 }
 
-func GetProjectIDFromToken(token string) (uint, error) {
+func GetProjectIDFromToken(token string) (uint, bool, error) {
 	var encoded string
 
 	if tokenSplit := strings.Split(token, "."); len(tokenSplit) != 3 {
-		return 0, fmt.Errorf("invalid jwt token format")
+		return 0, false, fmt.Errorf("invalid jwt token format")
 	} else {
 		encoded = tokenSplit[1]
 	}
@@ -156,7 +156,7 @@ func GetProjectIDFromToken(token string) (uint, error) {
 	decodedBytes, err := base64.RawStdEncoding.DecodeString(encoded)
 
 	if err != nil {
-		return 0, fmt.Errorf("could not decode jwt token from base64: %v", err)
+		return 0, false, fmt.Errorf("could not decode jwt token from base64: %v", err)
 	}
 
 	res := &TokenProjectID{}
@@ -164,8 +164,13 @@ func GetProjectIDFromToken(token string) (uint, error) {
 	err = json.Unmarshal(decodedBytes, res)
 
 	if err != nil {
-		return 0, fmt.Errorf("could not get token project id: %v", err)
+		return 0, false, fmt.Errorf("could not get token project id: %v", err)
 	}
 
-	return res.ProjectID, nil
+	// if the project ID is 0, this is a token signed for a user, not a specific project
+	if res.ProjectID == 0 {
+		return 0, false, nil
+	}
+
+	return res.ProjectID, true, nil
 }

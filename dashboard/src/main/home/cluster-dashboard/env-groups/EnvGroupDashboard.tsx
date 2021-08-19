@@ -13,10 +13,13 @@ import EnvGroupList from "./EnvGroupList";
 import CreateEnvGroup from "./CreateEnvGroup";
 import ExpandedEnvGroup from "./ExpandedEnvGroup";
 import { RouteComponentProps, withRouter } from "react-router";
+import { pushQueryParams } from "shared/routing";
+import { withAuth, WithAuthProps } from "shared/auth/AuthorizationHoc";
 
-type PropsType = RouteComponentProps & {
-  currentCluster: ClusterType;
-};
+type PropsType = RouteComponentProps &
+  WithAuthProps & {
+    currentCluster: ClusterType;
+  };
 
 type StateType = {
   expand: boolean;
@@ -31,7 +34,7 @@ class EnvGroupDashboard extends Component<PropsType, StateType> {
   state = {
     expand: false,
     update: [] as any[],
-    namespace: "default",
+    namespace: null as string,
     expandedEnvGroup: null as any,
     createEnvMode: false,
     sortType: localStorage.getItem("SortType")
@@ -58,23 +61,35 @@ class EnvGroupDashboard extends Component<PropsType, StateType> {
         />
       );
     } else {
+      const isAuthorizedToAdd = this.props.isAuthorized("env_group", "", [
+        "get",
+        "create",
+      ]);
       return (
         <>
-          <ControlRow>
-            <Button
-              onClick={() =>
-                this.setState({ createEnvMode: !this.state.createEnvMode })
-              }
-            >
-              <i className="material-icons">add</i> Create Env Group
-            </Button>
+          <ControlRow hasMultipleChilds={isAuthorizedToAdd}>
+            {isAuthorizedToAdd && (
+              <Button
+                onClick={() =>
+                  this.setState({ createEnvMode: !this.state.createEnvMode })
+                }
+              >
+                <i className="material-icons">add</i> Create Env Group
+              </Button>
+            )}
             <SortFilterWrapper>
               <SortSelector
                 setSortType={(sortType) => this.setState({ sortType })}
                 sortType={this.state.sortType}
               />
               <NamespaceSelector
-                setNamespace={(namespace) => this.setState({ namespace })}
+                setNamespace={(namespace) =>
+                  this.setState({ namespace }, () => {
+                    pushQueryParams(this.props, {
+                      namespace: this.state.namespace || "ALL",
+                    });
+                  })
+                }
                 namespace={this.state.namespace}
               />
             </SortFilterWrapper>
@@ -124,7 +139,7 @@ class EnvGroupDashboard extends Component<PropsType, StateType> {
 
 EnvGroupDashboard.contextType = Context;
 
-export default withRouter(EnvGroupDashboard);
+export default withRouter(withAuth(EnvGroupDashboard));
 
 const SortFilterWrapper = styled.div`
   width: 468px;
@@ -134,7 +149,12 @@ const SortFilterWrapper = styled.div`
 
 const ControlRow = styled.div`
   display: flex;
-  justify-content: space-between;
+  justify-content: ${(props: { hasMultipleChilds: boolean }) => {
+    if (props.hasMultipleChilds) {
+      return "space-between";
+    }
+    return "flex-end";
+  }};
   align-items: center;
   margin-bottom: 35px;
   padding-left: 0px;

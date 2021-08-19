@@ -140,3 +140,17 @@ func deleteProject(_ *api.AuthCheckResponse, client *api.Client, args []string) 
 
 	return nil
 }
+
+func setProjectCluster(client *api.Client, projectID uint) error {
+	clusters, err := client.ListProjectClusters(context.Background(), projectID)
+
+	if err != nil {
+		return err
+	}
+
+	if len(clusters) > 0 {
+		config.SetCluster(clusters[0].ID)
+	}
+
+	return nil
+}

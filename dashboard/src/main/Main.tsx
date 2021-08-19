@@ -1,6 +1,5 @@
 import React, { Component } from "react";
-import styled, { createGlobalStyle } from "styled-components";
-import { BrowserRouter, Route, Redirect, Switch } from "react-router-dom";
+import { Route, Redirect, Switch } from "react-router-dom";
 
 import api from "shared/api";
 import { Context } from "shared/Context";
@@ -142,7 +141,7 @@ export default class Main extends Component<PropsType, StateType> {
           path="/register"
           render={() => {
             if (!this.state.isLoggedIn) {
-              return <Register authenticate={this.initialize} />;
+              return <Register authenticate={this.authenticate} />;
             } else {
               return <Redirect to="/" />;
             }
@@ -180,7 +179,7 @@ export default class Main extends Component<PropsType, StateType> {
           }}
         />
         <Route
-          path={`/:baseRoute`}
+          path={`/:baseRoute/:cluster?/:namespace?`}
           render={(routeProps) => {
             const baseRoute = routeProps.match.params.baseRoute;
             if (
@@ -208,44 +207,12 @@ export default class Main extends Component<PropsType, StateType> {
 
   render() {
     return (
-      <StyledMain>
-        <GlobalStyle />
-        <BrowserRouter>{this.renderMain()}</BrowserRouter>
+      <>
+        {this.renderMain()}
         <CurrentError currentError={this.context.currentError} />
-      </StyledMain>
+      </>
     );
   }
 }
 
 Main.contextType = Context;
-
-const GlobalStyle = createGlobalStyle`
-  * {
-    box-sizing: border-box;
-    font-family: 'Work Sans', sans-serif;
-  }
-  
-  body {
-    background: #202227;
-    overscroll-behavior-x: none;
-  }
-
-  a {
-    color: #949eff;
-    text-decoration: none;
-  }
-
-  img {
-    max-width: 100%;
-  }
-`;
-
-const StyledMain = styled.div`
-  height: 100vh;
-  width: 100vw;
-  position: fixed;
-  top: 0;
-  left: 0;
-  background: #202227;
-  color: white;
-`;

@@ -13,16 +13,18 @@ import { Context } from "shared/Context";
 
 import ClusterSection from "./ClusterSection";
 import ProjectSectionContainer from "./ProjectSectionContainer";
-import loading from "assets/loading.gif";
 import { RouteComponentProps, withRouter } from "react-router";
+import { pushFiltered } from "shared/routing";
+import { withAuth, WithAuthProps } from "shared/auth/AuthorizationHoc";
 
-type PropsType = RouteComponentProps & {
-  forceSidebar: boolean;
-  setWelcome: (x: boolean) => void;
-  currentView: string;
-  forceRefreshClusters: boolean;
-  setRefreshClusters: (x: boolean) => void;
-};
+type PropsType = RouteComponentProps &
+  WithAuthProps & {
+    forceSidebar: boolean;
+    setWelcome: (x: boolean) => void;
+    currentView: string;
+    forceRefreshClusters: boolean;
+    setRefreshClusters: (x: boolean) => void;
+  };
 
 type StateType = {
   showSidebar: boolean;
@@ -106,7 +108,30 @@ class Sidebar extends Component<PropsType, StateType> {
           <NavButton
             selected={currentView === "applications"}
             onClick={() => {
-              this.props.history.push("/applications");
+              let params = this.props.match.params as any;
+              let pathNamespace = params.namespace;
+
+              // If namespace is currently only in path (ex: ExpandedChart) set to param
+              if (pathNamespace) {
+                pushFiltered(
+                  this.props,
+                  "/applications",
+                  ["project_id", "cluster", "namespace"],
+                  {
+                    cluster: currentCluster.name,
+                    namespace: pathNamespace,
+                  }
+                );
+              } else {
+                pushFiltered(
+                  this.props,
+                  "/applications",
+                  ["project_id", "cluster", "namespace"],
+                  {
+                    cluster: currentCluster.name,
+                  }
+                );
+              }
             }}
           >
             <Img src={monoweb} />
@@ -115,7 +140,30 @@ class Sidebar extends Component<PropsType, StateType> {
           <NavButton
             selected={currentView === "jobs"}
             onClick={() => {
-              this.props.history.push("/jobs");
+              let params = this.props.match.params as any;
+              let pathNamespace = params.namespace;
+
+              // If namespace is currently only in path (ex: ExpandedChart) set to param
+              if (pathNamespace) {
+                pushFiltered(
+                  this.props,
+                  "/jobs",
+                  ["project_id", "cluster", "namespace"],
+                  {
+                    cluster: currentCluster.name,
+                    namespace: pathNamespace,
+                  }
+                );
+              } else {
+                pushFiltered(
+                  this.props,
+                  "/jobs",
+                  ["project_id", "cluster", "namespace"],
+                  {
+                    cluster: currentCluster.name,
+                  }
+                );
+              }
             }}
           >
             <Img src={monojob} />
@@ -124,7 +172,30 @@ class Sidebar extends Component<PropsType, StateType> {
           <NavButton
             selected={currentView === "env-groups"}
             onClick={() => {
-              this.props.history.push("/env-groups");
+              let params = this.props.match.params as any;
+              let pathNamespace = params.namespace;
+
+              // If namespace is currently only in path (ex: ExpandedChart) set to param
+              if (pathNamespace) {
+                pushFiltered(
+                  this.props,
+                  "/env-groups",
+                  ["project_id", "cluster", "namespace"],
+                  {
+                    cluster: currentCluster.name,
+                    namespace: pathNamespace,
+                  }
+                );
+              } else {
+                pushFiltered(
+                  this.props,
+                  "/env-groups",
+                  ["project_id", "cluster", "namespace"],
+                  {
+                    cluster: currentCluster.name,
+                  }
+                );
+              }
             }}
           >
             <Img src={sliders} />
@@ -136,7 +207,7 @@ class Sidebar extends Component<PropsType, StateType> {
   };
 
   renderProjectContents = () => {
-    let { currentView } = this.props;
+    let { currentView, history, location } = this.props;
     let { currentProject, setCurrentModal } = this.context;
     if (currentProject) {
       return (
@@ -145,7 +216,7 @@ class Sidebar extends Component<PropsType, StateType> {
           <NavButton
             onClick={() =>
               currentView !== "provisioner" &&
-              this.props.history.push("/dashboard?tab=overview")
+              pushFiltered(this.props, "/dashboard", ["project_id"])
             }
             selected={
               currentView === "dashboard" || currentView === "provisioner"
@@ -155,29 +226,38 @@ class Sidebar extends Component<PropsType, StateType> {
             Dashboard
           </NavButton>
           <NavButton
-            onClick={() => this.props.history.push("/launch")}
+            onClick={() => pushFiltered(this.props, "/launch", ["project_id"])}
             selected={currentView === "launch"}
           >
             <Img src={rocket} />
             Launch
           </NavButton>
-          <NavButton
-            selected={currentView === "integrations"}
-            onClick={() => {
-              this.props.history.push("/integrations");
-            }}
-            // onClick={() => {
-            //   setCurrentModal("IntegrationsInstructionsModal", {});
-            // }}
-          >
-            <Img src={integrations} />
-            Integrations
-          </NavButton>
-          {this.context.currentProject.roles.filter((obj: any) => {
-            return obj.user_id === this.context.user.userId;
-          })[0].kind === "admin" && (
+
+          {this.props.isAuthorized("integrations", "", [
+            "get",
+            "create",
+            "update",
+            "delete",
+          ]) && (
             <NavButton
-              onClick={() => this.props.history.push("/project-settings")}
+              selected={currentView === "integrations"}
+              onClick={() =>
+                pushFiltered(this.props, "/integrations", ["project_id"])
+              }
+            >
+              <Img src={integrations} />
+              Integrations
+            </NavButton>
+          )}
+          {this.props.isAuthorized("settings", "", [
+            "get",
+            "update",
+            "delete",
+          ]) && (
+            <NavButton
+              onClick={() =>
+                pushFiltered(this.props, "/project-settings", ["project_id"])
+              }
               selected={this.props.currentView === "project-settings"}
             >
               <Img enlarge={true} src={settings} />
@@ -244,7 +324,7 @@ class Sidebar extends Component<PropsType, StateType> {
 
 Sidebar.contextType = Context;
 
-export default withRouter(Sidebar);
+export default withRouter(withAuth(Sidebar));
 
 const BranchPad = styled.div`
   width: 20px;
@@ -503,7 +583,7 @@ const Tooltip = styled.div`
   flex: 1;
   color: white;
   font-size: 12px;
-  font-family: "Assistant", sans-serif;
+  font-family: Work Sans, sans-serif;
   outline: 1px solid #ffffff55;
   opacity: 0;
   animation: faded-in 0.2s 0.15s;

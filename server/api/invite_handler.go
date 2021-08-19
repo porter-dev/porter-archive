@@ -8,7 +8,6 @@ import (
 	"strconv"
 
 	"github.com/go-chi/chi"
-	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/forms"
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/notifier"
@@ -95,6 +94,42 @@ func (app *App) HandleCreateInvite(w http.ResponseWriter, r *http.Request) {
 	)
 }
 
+// HandleUpdateInviteRole updates the role for a pending invitation
+func (app *App) HandleUpdateInviteRole(w http.ResponseWriter, r *http.Request) {
+	id, err := strconv.ParseUint(chi.URLParam(r, "invite_id"), 0, 64)
+
+	if err != nil || id == 0 {
+		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
+		return
+	}
+
+	invite, err := app.Repo.Invite.ReadInvite(uint(id))
+
+	if err != nil {
+		app.handleErrorRead(err, ErrProjectDataRead, w)
+		return
+	}
+
+	form := &forms.UpdateProjectRoleForm{}
+
+	// decode from JSON to form value
+	if err := json.NewDecoder(r.Body).Decode(form); err != nil {
+		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
+		return
+	}
+
+	invite.Kind = form.Kind
+
+	invite, err = app.Repo.Invite.UpdateInvite(invite)
+
+	if err != nil {
+		app.handleErrorRead(err, ErrProjectDataRead, w)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+}
+
 // HandleAcceptInvite accepts an invite to a new project: if successful, a new role
 // is created for that user in the project
 func (app *App) HandleAcceptInvite(w http.ResponseWriter, r *http.Request) {
@@ -164,13 +199,17 @@ func (app *App) HandleAcceptInvite(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	kind := invite.Kind
+
+	if kind == "" {
+		kind = models.RoleDeveloper
+	}
+
 	// create a new Role with the user as the admin
-	_, err = app.Repo.Project().CreateProjectRole(projModel, &models.Role{
-		Role: types.Role{
-			UserID:    userID,
-			ProjectID: uint(projID),
-			Kind:      types.RoleAdmin,
-		},
+	_, err = app.Repo.Project.CreateProjectRole(projModel, &models.Role{
+		UserID:    userID,
+		ProjectID: uint(projID),
+		Kind:      kind,
 	})
 
 	if err != nil {

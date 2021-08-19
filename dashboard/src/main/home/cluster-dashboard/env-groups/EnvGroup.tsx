@@ -3,12 +3,15 @@ import styled from "styled-components";
 
 import key from "assets/key.svg";
 
-import { ChartType, StorageType } from "shared/types";
 import { Context } from "shared/Context";
-import StatusIndicator from "components/StatusIndicator";
+
+export type EnvGroupData = {
+  data: Record<string, string>;
+  metadata: any;
+};
 
 type PropsType = {
-  envGroup: any;
+  envGroup: EnvGroupData;
   setExpanded: () => void;
 };
 
@@ -71,6 +74,13 @@ export default class EnvGroup extends Component<PropsType, StateType> {
       </StyledEnvGroup>
     );
   }
+}
+
+export function formattedEnvironmentValue(value: string) {
+  if (value.startsWith("PORTERSECRET_")) {
+    return "••••";
+  }
+  return value;
 }
 
 EnvGroup.contextType = Context;
@@ -198,8 +208,8 @@ const StyledEnvGroup = styled.div`
   cursor: pointer;
   margin-bottom: 25px;
   padding: 1px;
-  border-radius: 5px;
-  box-shadow: 0 5px 8px 0px #00000033;
+  border-radius: 8px;
+  box-shadow: 0 4px 15px 0px #00000055;
   position: relative;
   border: 2px solid #9eb4ff00;
   width: calc(100% + 2px);
@@ -217,7 +227,7 @@ const StyledEnvGroup = styled.div`
       padding-top: 4px;
       padding-bottom: 14px;
       margin-left: 0px;
-      box-shadow: 0 5px 8px 0px #00000033;
+      box-shadow: 0 4px 15px 0px #00000055;
       padding-left: 1px;
       margin-bottom: 25px;
       margin-top: 0px;
@@ -250,7 +260,7 @@ const StyledEnvGroup = styled.div`
       padding-top: 4px;
       padding-bottom: 14px;
       margin-left: 0px;
-      box-shadow: 0 5px 8px 0px #00000033;
+      box-shadow: 0 4px 15px 0px #00000055;
       padding-left: 1px;
       margin-bottom: 25px;
       margin-top: 0px;

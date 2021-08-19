@@ -46,7 +46,6 @@ type Project struct {
 type ProjectExternal struct {
 	ID       uint              `json:"id"`
 	Name     string            `json:"name"`
-	Roles    []RoleExternal    `json:"roles"`
 	GitRepos []GitRepoExternal `json:"git_repos,omitempty"`
 }
 

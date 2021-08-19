@@ -2,6 +2,7 @@ package deploy
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -12,7 +13,7 @@ import (
 	api "github.com/porter-dev/porter/api/client"
 	"github.com/porter-dev/porter/cli/cmd/docker"
 	"github.com/porter-dev/porter/cli/cmd/github"
-	"github.com/porter-dev/porter/cli/cmd/pack"
+	"github.com/porter-dev/porter/internal/templater/utils"
 	"k8s.io/client-go/util/homedir"
 )
 
@@ -21,10 +22,10 @@ type DeployBuildType string
 
 const (
 	// uses local Docker daemon to build and push images
-	deployBuildTypeDocker DeployBuildType = "docker"
+	DeployBuildTypeDocker DeployBuildType = "docker"
 
 	// uses cloud-native build pack to build and push images
-	deployBuildTypePack DeployBuildType = "pack"
+	DeployBuildTypePack DeployBuildType = "pack"
 )
 
 // DeployAgent handles the deployment and redeployment of an application on Porter
@@ -45,14 +46,9 @@ type DeployAgent struct {
 
 // DeployOpts are the options for creating a new DeployAgent
 type DeployOpts struct {
-	ProjectID       uint
-	ClusterID       uint
-	Namespace       string
-	Local           bool
-	LocalPath       string
-	LocalDockerfile string
-	OverrideTag     string
-	Method          DeployBuildType
+	*SharedOpts
+
+	Local bool
 }
 
 // NewDeployAgent creates a new DeployAgent given a Porter API client, application
@@ -94,18 +90,18 @@ func NewDeployAgent(client *api.Client, app string, opts *DeployOpts) (*DeployAg
 			// if the git action config exists, and dockerfile path is not empty, build type
 			// is docker
 			if release.GitActionConfig.DockerfilePath != "" {
-				deployAgent.opts.Method = deployBuildTypeDocker
+				deployAgent.opts.Method = DeployBuildTypeDocker
+			} else {
+				// otherwise build type is pack
+				deployAgent.opts.Method = DeployBuildTypePack
 			}
-
-			// otherwise build type is pack
-			deployAgent.opts.Method = deployBuildTypePack
 		} else {
-			// if the git action config does not exist, we use pack by default
-			deployAgent.opts.Method = deployBuildTypePack
+			// if the git action config does not exist, we use docker by default
+			deployAgent.opts.Method = DeployBuildTypeDocker
 		}
 	}
 
-	if deployAgent.opts.Method == deployBuildTypeDocker {
+	if deployAgent.opts.Method == DeployBuildTypeDocker {
 		if release.GitActionConfig != nil {
 			deployAgent.dockerfilePath = release.GitActionConfig.DockerfilePath
 		}
@@ -143,10 +139,13 @@ func NewDeployAgent(client *api.Client, app string, opts *DeployOpts) (*DeployAg
 	return deployAgent, nil
 }
 
+// GetBuildEnv retrieves the build env from the release config and returns it
 func (d *DeployAgent) GetBuildEnv() (map[string]string, error) {
-	return d.getEnvFromRelease()
+	return GetEnvFromConfig(d.release.Config)
 }
 
+// SetBuildEnv sets the build env vars in the process so that other commands can
+// use them
 func (d *DeployAgent) SetBuildEnv(envVars map[string]string) error {
 	d.env = envVars
 
@@ -166,6 +165,7 @@ func (d *DeployAgent) SetBuildEnv(envVars map[string]string) error {
 	return nil
 }
 
+// WriteBuildEnv writes the build env to either a file or stdout
 func (d *DeployAgent) WriteBuildEnv(fileDest string) error {
 	// join lines together
 	lines := make([]string, 0)
@@ -189,9 +189,12 @@ func (d *DeployAgent) WriteBuildEnv(fileDest string) error {
 	return nil
 }
 
+// Build uses the deploy agent options to build a new container image from either
+// buildpack or docker.
 func (d *DeployAgent) Build() error {
 	// if build is not local, fetch remote source
-	var dst string
+	var basePath string
+	buildCtx := d.opts.LocalPath
 	var err error
 
 	if !d.opts.Local {
@@ -206,25 +209,39 @@ func (d *DeployAgent) Build() error {
 		}
 
 		// download the repository from remote source into a temp directory
-		dst, err = d.downloadRepoToDir(zipResp.URLString)
+		basePath, err = d.downloadRepoToDir(zipResp.URLString)
+
+		if err != nil {
+			return err
+		}
 
 		if d.tag == "" {
 			shortRef := fmt.Sprintf("%.7s", zipResp.LatestCommitSHA)
 			d.tag = shortRef
 		}
+	} else {
+		basePath, err = filepath.Abs(".")
 
 		if err != nil {
 			return err
 		}
-	} else {
-		dst = filepath.Dir(d.opts.LocalPath)
 	}
 
 	if d.tag == "" {
-		d.tag = "latest"
+		currImageSection := d.release.Config["image"].(map[string]interface{})
+
+		d.tag = currImageSection["tag"].(string)
 	}
 
 	err = d.pullCurrentReleaseImage()
+
+	buildAgent := &BuildAgent{
+		SharedOpts:  d.opts.SharedOpts,
+		client:      d.client,
+		imageRepo:   d.imageRepo,
+		env:         d.env,
+		imageExists: d.imageExists,
+	}
 
 	// if image is not found, don't return an error
 	if err != nil && err != docker.PullImageErrNotFound {
@@ -234,93 +251,76 @@ func (d *DeployAgent) Build() error {
 		d.imageExists = false
 	}
 
-	if d.opts.Method == deployBuildTypeDocker {
-		return d.BuildDocker(dst, d.tag)
-	}
-
-	return d.BuildPack(dst, d.tag)
-}
-
-func (d *DeployAgent) BuildDocker(dst, tag string) error {
-	opts := &docker.BuildOpts{
-		ImageRepo:    d.imageRepo,
-		Tag:          tag,
-		BuildContext: dst,
-		Env:          d.env,
-	}
-
-	return d.agent.BuildLocal(
-		opts,
-		d.dockerfilePath,
-	)
-}
-
-func (d *DeployAgent) BuildPack(dst, tag string) error {
-	// retag the image with "pack-cache" tag so that it doesn't re-pull from the registry
-	if d.imageExists {
-		err := d.agent.TagImage(
-			fmt.Sprintf("%s:%s", d.imageRepo, tag),
-			fmt.Sprintf("%s:%s", d.imageRepo, "pack-cache"),
+	if d.opts.Method == DeployBuildTypeDocker {
+		return buildAgent.BuildDocker(
+			d.agent,
+			basePath,
+			buildCtx,
+			d.dockerfilePath,
+			d.tag,
 		)
-
-		if err != nil {
-			return err
-		}
 	}
 
-	// create pack agent and build opts
-	packAgent := &pack.Agent{}
-
-	opts := &docker.BuildOpts{
-		ImageRepo: d.imageRepo,
-		// We tag the image with a stable param "pack-cache" so that pack can use the
-		// local image without attempting to re-pull from registry. We handle getting
-		// registry credentials and pushing/pulling the image.
-		Tag:          "pack-cache",
-		BuildContext: dst,
-		Env:          d.env,
-	}
-
-	// call builder
-	err := packAgent.Build(opts)
-
-	if err != nil {
-		return err
-	}
-
-	return d.agent.TagImage(
-		fmt.Sprintf("%s:%s", d.imageRepo, "pack-cache"),
-		fmt.Sprintf("%s:%s", d.imageRepo, tag),
-	)
+	return buildAgent.BuildPack(d.agent, buildCtx, d.tag)
 }
 
+// Push pushes a local image to the remote repository linked in the release
 func (d *DeployAgent) Push() error {
 	return d.agent.PushImage(fmt.Sprintf("%s:%s", d.imageRepo, d.tag))
 }
 
-func (d *DeployAgent) CallWebhook() error {
-	releaseExt, err := d.client.GetReleaseWebhook(
-		context.Background(),
-		d.opts.ProjectID,
-		d.opts.ClusterID,
-		d.release.Name,
-		d.release.Namespace,
-	)
+// UpdateImageAndValues updates the current image for a release, along with new
+// configuration passed in via overrrideValues. If overrideValues is nil, it just
+// reuses the configuration set for the application. If overrideValues is not nil,
+// it will merge the overriding values with the existing configuration.
+func (d *DeployAgent) UpdateImageAndValues(overrideValues map[string]interface{}) error {
+	mergedValues := utils.CoalesceValues(d.release.Config, overrideValues)
+
+	// overwrite the tag based on a new image
+	currImageSection := mergedValues["image"].(map[string]interface{})
+
+	// if the current image section is hello-porter, the image must be overriden
+	if currImageSection["repository"] == "public.ecr.aws/o1j4x7p4/hello-porter" ||
+		currImageSection["repository"] == "public.ecr.aws/o1j4x7p4/hello-porter-job" {
+		newImage, err := d.getReleaseImage()
+
+		if err != nil {
+			return fmt.Errorf("could not overwrite hello-porter image: %s", err.Error())
+		}
+
+		currImageSection["repository"] = newImage
+
+		// set to latest just to be safe -- this will be overriden if "d.tag" is set in
+		// the agent
+		currImageSection["tag"] = "latest"
+	}
+
+	if d.tag != "" && currImageSection["tag"] != d.tag {
+		currImageSection["tag"] = d.tag
+	}
+
+	bytes, err := json.Marshal(mergedValues)
 
 	if err != nil {
 		return err
 	}
 
-	return d.client.DeployWithWebhook(
+	return d.client.UpgradeRelease(
 		context.Background(),
-		releaseExt.WebhookToken,
-		d.tag,
+		d.opts.ProjectID,
+		d.opts.ClusterID,
+		d.release.Name,
+		&api.UpgradeReleaseRequest{
+			Values:    string(bytes),
+			Namespace: d.release.Namespace,
+		},
 	)
 }
 
-// HELPER METHODS
-func (d *DeployAgent) getEnvFromRelease() (map[string]string, error) {
-	envConfig, err := getNestedMap(d.release.Config, "container", "env", "normal")
+// GetEnvFromConfig gets the env vars for a standard Porter template config. These env
+// vars are found at `container.env.normal`.
+func GetEnvFromConfig(config map[string]interface{}) (map[string]string, error) {
+	envConfig, err := getNestedMap(config, "container", "env", "normal")
 
 	// if the field is not found, set envConfig to an empty map; this release has no env set
 	if e := (&NestedMapFieldNotFoundError{}); errors.As(err, &e) {
@@ -349,7 +349,11 @@ func (d *DeployAgent) getEnvFromRelease() (map[string]string, error) {
 }
 
 func (d *DeployAgent) getReleaseImage() (string, error) {
-	// pull the currently deployed image to use cache, if possible
+	if d.release.ImageRepoURI != "" {
+		return d.release.ImageRepoURI, nil
+	}
+
+	// get the image from the conig
 	imageConfig, err := getNestedMap(d.release.Config, "image")
 
 	if err != nil {

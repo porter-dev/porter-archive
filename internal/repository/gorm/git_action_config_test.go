@@ -20,10 +20,10 @@ func TestCreateGitActionConfig(t *testing.T) {
 	defer cleanup(tester, t)
 
 	ga := &models.GitActionConfig{
-		ReleaseID:    1,
-		GitRepo:      "porter-dev/porter",
-		ImageRepoURI: "gcr.io/project-123456/nginx",
-		GitRepoID:    1,
+		ReleaseID:            1,
+		GitRepo:              "porter-dev/porter",
+		ImageRepoURI:         "gcr.io/project-123456/nginx",
+		GithubInstallationID: 1,
 	}
 
 	expGA := *ga

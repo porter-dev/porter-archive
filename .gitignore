@@ -1,6 +1,7 @@
 .DS_Store
 .env
 docker/.env
+docker/github_app_private_key.pem
 app
 *.db
 test.yaml
@@ -10,6 +11,9 @@ internal/local_templates
 gon*.hcl
 *prod.Dockerfile
 staging.sh
+*.crt
+*.key
+bin
 
 # Local .terraform directories
 **/.terraform/*
@@ -52,3 +56,5 @@ override.tf.json
 # Ignore CLI configuration files
 .terraformrc
 terraform.rc
+
+tmp

@@ -1,11 +1,50 @@
 import React, { Component } from "react";
 
-import { ProjectType, ClusterType, CapabilityType } from "shared/types";
+import { CapabilityType, ClusterType, ContextProps, ProjectType } from "shared/types";
 
-const Context = React.createContext({});
+import { pushQueryParams } from "shared/routing";
+
+const Context = React.createContext<Partial<ContextProps>>(null);
 
 const { Provider } = Context;
 const ContextConsumer = Context.Consumer;
+
+type PropsType = {
+  history: any;
+  location: any;
+};
+
+type StateType = GlobalContextType;
+
+export interface GlobalContextType {
+  currentModal: string;
+  currentModalData: any;
+  setCurrentModal: (currentModal: string, currentModalData?: any) => void;
+  currentOverlay: {
+    message: string;
+    onYes: any;
+    onNo: any;
+  };
+  setCurrentOverlay: (x: any) => void;
+  currentError: string | null;
+  setCurrentError: (currentError: string) => void;
+  currentCluster: ClusterType;
+  setCurrentCluster: (currentCluster: ClusterType, callback?: any) => void;
+  currentProject: ProjectType | null;
+  setCurrentProject: (
+    currentProject: ProjectType,
+    callback?: () => void
+  ) => void;
+  projects: ProjectType[];
+  setProjects: (projects: ProjectType[]) => void;
+  user: any;
+  setUser: (userId: number, email: string) => void;
+  devOpsMode: boolean;
+  setDevOpsMode: (devOpsMode: boolean) => void;
+  capabilities: CapabilityType;
+  setCapabilities: (capabilities: CapabilityType) => void;
+  clearContext: () => void;
+}
 
 /**
  * Component managing a universal (application-wide) data store.
@@ -18,18 +57,27 @@ const ContextConsumer = Context.Consumer;
  *    components consuming Context)
  * 4) As a rule of thumb, Context should not be used for UI-related state
  */
-class ContextProvider extends Component {
-  state = {
-    currentModal: null as string | null,
-    currentModalData: null as any,
+class ContextProvider extends Component<PropsType, StateType> {
+  state: GlobalContextType = {
+    currentModal: null,
+    currentModalData: null,
     setCurrentModal: (currentModal: string, currentModalData?: any) => {
       this.setState({ currentModal, currentModalData });
     },
-    currentError: null as string | null,
+    currentOverlay: null,
+    setCurrentOverlay: (x: any) => this.setState({ currentOverlay: x }),
+    currentError: null,
     setCurrentError: (currentError: string) => {
       this.setState({ currentError });
     },
-    currentCluster: null as ClusterType | null,
+    currentCluster: {
+      id: -1,
+      name: "",
+      server: "",
+      service_account_id: -1,
+      infra_id: -1,
+      service: "",
+    },
     setCurrentCluster: (currentCluster: ClusterType, callback?: any) => {
       localStorage.setItem(
         this.state.currentProject.id + "-cluster",
@@ -39,10 +87,13 @@ class ContextProvider extends Component {
         callback && callback();
       });
     },
-    currentProject: null as ProjectType | null,
+    currentProject: null,
     setCurrentProject: (currentProject: ProjectType, callback?: any) => {
       if (currentProject) {
         localStorage.setItem("currentProject", currentProject.id.toString());
+        pushQueryParams(this.props, {
+          project_id: currentProject.id.toString(),
+        });
       } else {
         localStorage.removeItem("currentProject");
       }
@@ -50,12 +101,12 @@ class ContextProvider extends Component {
         callback && callback();
       });
     },
-    projects: [] as ProjectType[],
+    projects: [],
     setProjects: (projects: ProjectType[]) => {
       projects.sort((a: any, b: any) => (a.name > b.name ? 1 : -1));
       this.setState({ projects });
     },
-    user: null as any,
+    user: null,
     setUser: (userId: number, email: string) => {
       this.setState({ user: { userId, email } });
     },
@@ -63,7 +114,7 @@ class ContextProvider extends Component {
     setDevOpsMode: (devOpsMode: boolean) => {
       this.setState({ devOpsMode });
     },
-    capabilities: null as CapabilityType,
+    capabilities: null,
     setCapabilities: (capabilities: CapabilityType) => {
       this.setState({ capabilities });
     },

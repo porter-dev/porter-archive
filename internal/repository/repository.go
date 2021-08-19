@@ -4,6 +4,7 @@ type Repository interface {
 	User() UserRepository
 	Project() ProjectRepository
 	Release() ReleaseRepository
+	Session() SessionRepository
 	GitRepo() GitRepoRepository
 	Cluster() ClusterRepository
 	HelmRepo() HelmRepoRepository
@@ -14,11 +15,14 @@ type Repository interface {
 	AuthCode() AuthCodeRepository
 	DNSRecord() DNSRecordRepository
 	PWResetToken() PWResetTokenRepository
-	Session() SessionRepository
 	KubeIntegration() KubeIntegrationRepository
 	BasicIntegration() BasicIntegrationRepository
 	OIDCIntegration() OIDCIntegrationRepository
 	OAuthIntegration() OAuthIntegrationRepository
 	GCPIntegration() GCPIntegrationRepository
 	AWSIntegration() AWSIntegrationRepository
+	GithubAppInstallation() GithubAppInstallationRepository
+	GithubAppOAuthIntegration() GithubAppOAuthIntegrationRepository
+	SlackIntegration() SlackIntegrationRepository
+	NotificationConfig() NotificationConfigRepository
 }

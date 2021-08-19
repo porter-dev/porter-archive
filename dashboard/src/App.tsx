@@ -1,18 +1,52 @@
 import React, { Component } from "react";
+import { BrowserRouter } from "react-router-dom";
+import PorterErrorBoundary from "shared/PorterErrorBoundary";
+import styled, { createGlobalStyle } from "styled-components";
 
-import { ContextProvider } from "./shared/Context";
-import Main from "./main/Main";
+import MainWrapper from "./main/MainWrapper";
 
-type PropsType = {};
-
-type StateType = {};
-
-export default class App extends Component<PropsType, StateType> {
+export default class App extends Component {
   render() {
     return (
-      <ContextProvider>
-        <Main />
-      </ContextProvider>
+      <StyledMain>
+        <GlobalStyle />
+        <PorterErrorBoundary errorBoundaryLocation="globalErrorBoundary">
+          <BrowserRouter>
+            <MainWrapper />
+          </BrowserRouter>
+        </PorterErrorBoundary>
+      </StyledMain>
     );
   }
 }
+
+const GlobalStyle = createGlobalStyle`
+  * {
+    box-sizing: border-box;
+    font-family: 'Work Sans', sans-serif;
+  }
+  
+  body {
+    background: #202227;
+    overscroll-behavior-x: none;
+  }
+
+  a {
+    color: #949eff;
+    text-decoration: none;
+  }
+
+  img {
+    max-width: 100%;
+  }
+`;
+
+const StyledMain = styled.div`
+  height: 100vh;
+  width: 100vw;
+  position: fixed;
+  top: 0;
+  left: 0;
+  background: #202227;
+  color: white;
+`;

@@ -15,12 +15,12 @@ import (
 	"gorm.io/gorm"
 
 	"github.com/go-chi/chi"
+	"github.com/porter-dev/porter/internal/analytics"
 	"github.com/porter-dev/porter/internal/auth/token"
 	"github.com/porter-dev/porter/internal/forms"
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/notifier"
 	"github.com/porter-dev/porter/internal/repository"
-	segment "gopkg.in/segmentio/analytics-go.v3"
 )
 
 // Enumeration of user API error codes, represented as int64
@@ -39,7 +39,10 @@ func (app *App) HandleCreateUser(w http.ResponseWriter, r *http.Request) {
 		app.handleErrorDataRead(err, w)
 	}
 
-	form := &forms.CreateUserForm{}
+	form := &forms.CreateUserForm{
+		// if app can send email verification, set the email verified to false
+		EmailVerified: !app.Capabilities.Email,
+	}
 
 	user, err := app.writeUser(
 		form,
@@ -51,25 +54,14 @@ func (app *App) HandleCreateUser(w http.ResponseWriter, r *http.Request) {
 
 	if err == nil {
 		// send to segment
-		if app.segmentClient != nil {
-			client := *app.segmentClient
-
-			client.Enqueue(segment.Identify{
-				UserId: fmt.Sprintf("%v", user.ID),
-				Traits: segment.NewTraits().
-					SetEmail(user.Email).
-					Set("github", "false"),
-			})
-
-			client.Enqueue(segment.Track{
-				UserId: fmt.Sprintf("%v", user.ID),
-				Event:  "New User",
-				Properties: segment.NewProperties().
-					Set("email", user.Email),
-			})
-		}
+		app.analyticsClient.Identify(analytics.CreateSegmentIdentifyNewUser(user, false))
+		app.analyticsClient.Track(analytics.CreateSegmentNewUserTrack(user))
 
 		app.Logger.Info().Msgf("New user created: %d", user.ID)
+
+		// non-fatal email verification flow
+		app.startEmailVerificationFlow(user)
+
 		var redirect string
 
 		if valR := session.Values["redirect"]; valR != nil {
@@ -397,42 +389,7 @@ func (app *App) InitiateEmailVerifyUser(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	// error already handled by helper
-	if err != nil {
-		return
-	}
-
-	form := &forms.InitiateResetUserPasswordForm{
-		Email: user.Email,
-	}
-
-	// convert the form to a pw reset token model
-	pwReset, rawToken, err := form.ToPWResetToken()
-
-	if err != nil {
-		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
-		return
-	}
-
-	// handle write to the database
-	pwReset, err = app.Repo.PWResetToken().CreatePWResetToken(pwReset)
-
-	if err != nil {
-		app.handleErrorDataWrite(err, w)
-		return
-	}
-
-	queryVals := url.Values{
-		"token":    []string{rawToken},
-		"token_id": []string{fmt.Sprintf("%d", pwReset.ID)},
-	}
-
-	err = app.notifier.SendEmailVerification(
-		&notifier.SendEmailVerificationOpts{
-			Email: user.Email,
-			URL:   fmt.Sprintf("%s/api/email/verify/finalize?%s", app.ServerConf.ServerURL, queryVals.Encode()),
-		},
-	)
+	err = app.startEmailVerificationFlow(user)
 
 	if err != nil {
 		app.handleErrorInternal(err, w)
@@ -440,7 +397,6 @@ func (app *App) InitiateEmailVerifyUser(w http.ResponseWriter, r *http.Request) 
 	}
 
 	w.WriteHeader(http.StatusOK)
-	return
 }
 
 // FinalizEmailVerifyUser completes the email verification flow for a user.
@@ -874,12 +830,6 @@ func (app *App) sendUser(w http.ResponseWriter, userID uint, email string, email
 }
 
 func (app *App) getUserIDFromRequest(r *http.Request) (uint, error) {
-	session, err := app.Store.Get(r, app.ServerConf.CookieName)
-
-	if err != nil {
-		return 0, err
-	}
-
 	// first, check for token
 	tok := app.getTokenFromRequest(r)
 
@@ -887,7 +837,59 @@ func (app *App) getUserIDFromRequest(r *http.Request) (uint, error) {
 		return tok.IBy, nil
 	}
 
-	userID, _ := session.Values["user_id"].(uint)
+	session, err := app.Store.Get(r, app.ServerConf.CookieName)
+
+	if err != nil {
+		return 0, fmt.Errorf("could not get session: %s", err.Error())
+	}
+
+	sessID, ok := session.Values["user_id"]
+
+	if !ok {
+		return 0, fmt.Errorf("could not get user id from session")
+	}
+
+	userID, ok := sessID.(uint)
+
+	if !ok {
+		return 0, fmt.Errorf("could not get user id from session")
+	}
 
 	return userID, nil
+}
+
+func (app *App) startEmailVerificationFlow(user *models.User) error {
+	form := &forms.InitiateResetUserPasswordForm{
+		Email: user.Email,
+	}
+
+	// convert the form to a pw reset token model
+	pwReset, rawToken, err := form.ToPWResetToken()
+
+	if err != nil {
+		return err
+	}
+
+	// handle write to the database
+	pwReset, err = app.Repo.PWResetToken.CreatePWResetToken(pwReset)
+
+	if err != nil {
+		return err
+	}
+
+	queryVals := url.Values{
+		"token":    []string{rawToken},
+		"token_id": []string{fmt.Sprintf("%d", pwReset.ID)},
+	}
+
+	sgClient := email.SendgridClient{
+		APIKey:                app.ServerConf.SendgridAPIKey,
+		VerifyEmailTemplateID: app.ServerConf.SendgridVerifyEmailTemplateID,
+		SenderEmail:           app.ServerConf.SendgridSenderEmail,
+	}
+
+	return sgClient.SendEmailVerification(
+		fmt.Sprintf("%s/api/email/verify/finalize?%s", app.ServerConf.ServerURL, queryVals.Encode()),
+		form.Email,
+	)
 }

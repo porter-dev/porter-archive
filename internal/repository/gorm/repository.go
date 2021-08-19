@@ -5,6 +5,7 @@ import (
 	"gorm.io/gorm"
 )
 
+<<<<<<< HEAD
 type GormRepository struct {
 	user             repository.UserRepository
 	session          repository.SessionRepository
@@ -132,5 +133,35 @@ func NewRepository(db *gorm.DB, key *[32]byte) repository.Repository {
 		oauthIntegration: NewOAuthIntegrationRepository(db, key),
 		gcpIntegration:   NewGCPIntegrationRepository(db, key),
 		awsIntegration:   NewAWSIntegrationRepository(db, key),
+=======
+// NewRepository returns a Repository which uses
+// gorm.DB for querying the database
+func NewRepository(db *gorm.DB, key *[32]byte) *repository.Repository {
+	return &repository.Repository{
+		User:                      NewUserRepository(db),
+		Session:                   NewSessionRepository(db),
+		Project:                   NewProjectRepository(db),
+		Release:                   NewReleaseRepository(db),
+		GitRepo:                   NewGitRepoRepository(db, key),
+		Cluster:                   NewClusterRepository(db, key),
+		HelmRepo:                  NewHelmRepoRepository(db, key),
+		Registry:                  NewRegistryRepository(db, key),
+		Infra:                     NewInfraRepository(db, key),
+		GitActionConfig:           NewGitActionConfigRepository(db),
+		Invite:                    NewInviteRepository(db),
+		AuthCode:                  NewAuthCodeRepository(db),
+		DNSRecord:                 NewDNSRecordRepository(db),
+		PWResetToken:              NewPWResetTokenRepository(db),
+		KubeIntegration:           NewKubeIntegrationRepository(db, key),
+		BasicIntegration:          NewBasicIntegrationRepository(db, key),
+		OIDCIntegration:           NewOIDCIntegrationRepository(db, key),
+		OAuthIntegration:          NewOAuthIntegrationRepository(db, key),
+		GCPIntegration:            NewGCPIntegrationRepository(db, key),
+		AWSIntegration:            NewAWSIntegrationRepository(db, key),
+		GithubAppInstallation:     NewGithubAppInstallationRepository(db),
+		GithubAppOAuthIntegration: NewGithubAppOAuthIntegrationRepository(db),
+		SlackIntegration:          NewSlackIntegrationRepository(db, key),
+		NotificationConfig:        NewNotificationConfigRepository(db),
+>>>>>>> master
 	}
 }

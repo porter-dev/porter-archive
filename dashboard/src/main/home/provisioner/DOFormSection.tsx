@@ -7,13 +7,13 @@ import api from "shared/api";
 import { Context } from "shared/Context";
 import { InfraType } from "shared/types";
 
-import InputRow from "components/values-form/InputRow";
-import CheckboxRow from "components/values-form/CheckboxRow";
-import SelectRow from "components/values-form/SelectRow";
-import Helper from "components/values-form/Helper";
-import Heading from "components/values-form/Heading";
+import InputRow from "components/form-components/InputRow";
+import CheckboxRow from "components/form-components/CheckboxRow";
+import SelectRow from "components/form-components/SelectRow";
+import Helper from "components/form-components/Helper";
+import Heading from "components/form-components/Heading";
 import SaveButton from "components/SaveButton";
-import CheckboxList from "components/values-form/CheckboxList";
+import CheckboxList from "components/form-components/CheckboxList";
 
 type PropsType = {
   setSelectedProvisioner: (x: string | null) => void;
@@ -133,7 +133,6 @@ export default class DOFormSection extends Component<PropsType, StateType> {
 
   // Step 1: Create a project
   createProject = (callback?: any) => {
-    console.log("Creating project");
     let { projectName } = this.props;
     let { user, setProjects, setCurrentProject } = this.context;
 
@@ -152,8 +151,7 @@ export default class DOFormSection extends Component<PropsType, StateType> {
           }
         );
         setProjects(res_1.data);
-        setCurrentProject(proj);
-        callback && callback(proj.id);
+        setCurrentProject(proj, () => callback && callback(proj.id));
       })
       .catch(this.catchError);
   };

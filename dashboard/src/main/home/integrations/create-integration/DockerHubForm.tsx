@@ -1,7 +1,7 @@
 import React, { Component } from "react";
 import styled from "styled-components";
 
-import InputRow from "components/values-form/InputRow";
+import InputRow from "components/form-components/InputRow";
 import SaveButton from "components/SaveButton";
 
 type PropsType = {

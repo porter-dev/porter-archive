@@ -18,6 +18,7 @@ type PropsType = {
   setSelectedImageUrl: (x: string) => void;
   setSelectedTag: (x: string) => void;
   setClickedImage: (x: ImageType) => void;
+  disableImageSelect?: boolean;
 };
 
 type StateType = {
@@ -162,11 +163,6 @@ export default class ImageList extends Component<PropsType, StateType> {
     }
   }
 
-  /*
-  <Highlight onClick={() => this.props.setCurrentView('integrations')}>
-    Link your registry.
-  </Highlight>
-  */
   renderImageList = () => {
     let { images, loading, error } = this.state;
 
@@ -206,8 +202,8 @@ export default class ImageList extends Component<PropsType, StateType> {
   };
 
   renderBackButton = () => {
-    let { setSelectedImageUrl } = this.props;
-    if (this.props.clickedImage) {
+    let { setSelectedImageUrl, clickedImage, disableImageSelect } = this.props;
+    if (clickedImage && !disableImageSelect) {
       return (
         <BackButton
           width="175px"

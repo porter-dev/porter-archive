@@ -1,16 +1,14 @@
 import React, { Component } from "react";
 import styled from "styled-components";
-
-import sliders from "assets/sliders.svg";
 import api from "shared/api";
 
 import { Context } from "shared/Context";
 import { ClusterType } from "shared/types";
 
-import InputRow from "components/values-form/InputRow";
+import InputRow from "components/form-components/InputRow";
 import EnvGroupArray, { KeyValueType } from "./EnvGroupArray";
 import Selector from "components/Selector";
-import Helper from "components/values-form/Helper";
+import Helper from "components/form-components/Helper";
 import SaveButton from "components/SaveButton";
 import { isAlphanumeric } from "shared/common";
 
@@ -122,12 +120,17 @@ export default class CreateEnvGroup extends Component<PropsType, StateType> {
       )
       .then((res) => {
         if (res.data) {
-          let namespaceOptions = res.data.items.map(
+          const availableNamespaces = res.data.items.filter(
+            (namespace: any) => {
+              return namespace.status.phase !== "Terminating";
+            }
+          );
+          const namespaceOptions = availableNamespaces.map(
             (x: { metadata: { name: string } }) => {
               return { label: x.metadata.name, value: x.metadata.name };
             }
           );
-          if (res.data.items.length > 0) {
+          if (availableNamespaces.length > 0) {
             this.setState({ namespaceOptions });
           }
         }
@@ -320,8 +323,8 @@ const Subtitle = styled.div`
 `;
 
 const Title = styled.div`
-  font-size: 24px;
-  font-weight: 600;
+  font-size: 20px;
+  font-weight: 500;
   font-family: "Work Sans", sans-serif;
   margin-left: 15px;
   border-radius: 2px;

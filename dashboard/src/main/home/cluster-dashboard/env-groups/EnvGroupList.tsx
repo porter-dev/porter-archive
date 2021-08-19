@@ -61,7 +61,6 @@ export default class EnvGroupList extends Component<PropsType, StateType> {
             sortedGroups.sort((a: any, b: any) =>
               a.metadata.name > b.metadata.name ? 1 : -1
             );
-            console.log(sortedGroups);
             break;
           default:
             sortedGroups.sort((a: any, b: any) =>
@@ -90,14 +89,15 @@ export default class EnvGroupList extends Component<PropsType, StateType> {
       prevProps.namespace !== this.props.namespace ||
       prevProps.sortType !== this.props.sortType
     ) {
-      this.updateEnvGroups();
+      (this.props.namespace || this.props.namespace === "") &&
+        this.updateEnvGroups();
     }
   }
 
   renderEnvGroupList = () => {
     let { loading, error, envGroups } = this.state;
 
-    if (loading) {
+    if (loading || (!this.props.namespace && this.props.namespace !== "")) {
       return (
         <LoadingWrapper>
           <Loading />
@@ -144,7 +144,7 @@ const Placeholder = styled.div`
   color: #ffffff44;
   background: #26282f;
   border-radius: 5px;
-  height: 320px;
+  height: 370px;
   display: flex;
   align-items: center;
   justify-content: center;

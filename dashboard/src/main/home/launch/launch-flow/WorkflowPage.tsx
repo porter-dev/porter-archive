@@ -10,7 +10,7 @@ import Helper from "../../../../components/form-components/Helper";
 import CheckboxRow from "../../../../components/form-components/CheckboxRow";
 import SaveButton from "../../../../components/SaveButton";
 
-type PropsType = RouteComponentProps & {
+type PropsType = {
   name: string;
   fullActionConfig: FullActionConfigType;
   shouldCreateWorkflow: boolean;
